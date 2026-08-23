@@ -169,6 +169,33 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
 .goal .v{font-family:"IBM Plex Mono",monospace;font-size:1.5rem;color:var(--bone);line-height:1;font-variant-numeric:tabular-nums;}
 .goal p{font-size:.86rem;color:var(--bone-dim);}
 
+/* ================= 게임플레이 띠 ================= */
+.band{position:relative;margin-top:32px;border:1px solid var(--line);background:#0d0b0a;overflow:hidden;}
+/* 비율은 캔버스가 직접 갖는다. 부모에 aspect-ratio 를 주고 자식에 height:100% 를
+   물리면 높이가 서로를 참조해 0 으로 잡힌다. */
+.band canvas{
+  display:block;width:100%;height:auto;
+  opacity:0;transition:opacity .6s ease;
+}
+.band canvas.is-ready{opacity:1;}
+#regionBand{aspect-ratio:1280/260;}
+#beastBand{aspect-ratio:1280/170;}
+.band-label{
+  position:absolute;left:20px;bottom:16px;
+  font-family:Hahmlet,serif;font-weight:700;font-size:1.15rem;
+  color:var(--bone);text-shadow:0 2px 16px rgba(13,11,10,.95);
+  pointer-events:none;
+}
+.band-label::before{
+  content:"";display:inline-block;width:6px;height:6px;
+  background:var(--ember);margin-right:10px;vertical-align:middle;
+}
+@media (max-width:600px){
+  #regionBand{aspect-ratio:1280/420;}
+  #beastBand{aspect-ratio:1280/280;}
+  .band-label{font-size:1rem;left:14px;bottom:12px;}
+}
+
 /* ================= 보스 ================= */
 .bosses{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));
