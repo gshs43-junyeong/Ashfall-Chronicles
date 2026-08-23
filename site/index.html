@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>별이 잠든 땅 — Ashfall Chronicles</title>
+<meta name="description" content="테라리아식 2D 샌드박스 위에 스토리·RPG 성장·무기 빌드를 얹은 어드벤처 게임. 브라우저에서 바로 플레이하거나 Windows·macOS용으로 내려받으세요.">
+<meta property="og:title" content="별이 잠든 땅 — Ashfall Chronicles">
+<meta property="og:description" content="별 조각이 잠들면 세계는 자기 정의를 잊는다. 15개 챕터의 샌드박스 어드벤처.">
+<meta property="og:image" content="play/assets/bg/title_key.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="play/assets/ui/cursor_pick.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ 히어로 ============ -->
+<header class="hero">
+  <div class="hero-bg pixel" style="background-image:url('play/assets/bg/title_key.png')"></div>
+  <div class="hero-veil"></div>
+  <div class="wrap hero-inner">
+    <p class="eyebrow">Ashfall Chronicles</p>
+    <h1>별이 잠든 땅</h1>
+    <p class="tagline">별 조각은 홀로 남으면 잠들고, 잠들면 꿈을 꾼다. 그리고 그 꿈이 세계에게 자기가 무엇이었는지를 잊게 만든다.</p>
+
+    <div class="badges">
+      <span class="badge hot mono">v1.0.5</span>
+      <span class="badge mono">15개 챕터</span>
+      <span class="badge mono">Windows · macOS</span>
+      <span class="badge mono">브라우저에서 바로 실행</span>
+    </div>
+
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#play">지금 바로 플레이</a>
+      <a class="btn" href="#download">내려받기 <span class="sz">56.3 MiB</span></a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ 플레이 ============ -->
+<section id="play">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">설치 없이</p></div>
+    <h2>브라우저에서 바로</h2>
+    <p class="sec-lede">내려받은 버전과 완전히 같은 게임입니다. 아래를 누르면 이 페이지 안에서 시작됩니다.</p>
+
+    <div class="stage" id="stage">
+      <button class="stage-cover pixel" id="stageCover" type="button"
+              style="background-image:url('play/assets/bg/title_key.png')">
+        <span class="play-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </span>
+        <span class="label">게임 시작</span>
+        <span class="hint">키보드가 있는 환경을 권합니다 · 소리가 나옵니다</span>
+      </button>
+    </div>
+
+    <div class="stage-mobile">
+      <p><strong>이 게임은 키보드로 조작합니다.</strong></p>
+      <p style="margin-top:8px">모바일에서는 플레이할 수 없습니다. PC에서 이 페이지를 다시 열어 주세요.</p>
+    </div>
+
+    <div class="alert" style="margin-top:22px">
+      <b>저장에 대해</b>
+      진행 상황은 <b style="display:inline;text-transform:none;letter-spacing:0;font-family:inherit;font-size:1em">서버가 아니라 브라우저 안에</b> 저장됩니다(localStorage). 그래서 브라우저를 바꾸거나 "사이트 데이터 삭제"를 누르면 사라지고, 시크릿 모드에서는 창을 닫는 순간 없어집니다. <strong>웹에서 한 저장과 내려받은 버전의 저장은 서로 다른 곳에 쌓입니다</strong> — 이어서 하려면 같은 쪽을 계속 쓰세요.
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다운로드 ============ -->
+<section id="download">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">내려받기</p></div>
+    <h2>내 컴퓨터에 두고 하기</h2>
+    <p class="sec-lede">인터넷 없이 돌아가고, 이 폴더 밖 어디에도 파일을 설치하지 않습니다. 실행에 <strong>Python 3</strong>이 필요합니다.</p>
+
+    <div class="dl-grid" id="dlGrid">
+      <div class="dl" data-os="windows">
+        <div class="dl-os">
+          <h3>Windows</h3>
+          <span class="dl-you" hidden>당신의 운영체제</span>
+        </div>
+        <a class="btn btn-primary" data-dl href="#">Windows용 내려받기</a>
+        <div class="dl-meta">
+          <div><span class="k">버전</span> 1.0.5</div>
+          <div><span class="k">크기</span> 56.3 MiB</div>
+          <div><span class="k">요구</span> Windows 10 이상 + Python 3</div>
+          <div class="hash"><span class="k">SHA-256</span> 6e52490a</div>
+        </div>
+      </div>
+
+      <div class="dl" data-os="macos">
+        <div class="dl-os">
+          <h3>macOS</h3>
+          <span class="dl-you" hidden>당신의 운영체제</span>
+        </div>
+        <a class="btn btn-primary" data-dl href="#">macOS용 내려받기</a>
+        <div class="dl-meta">
+          <div><span class="k">버전</span> 1.0.5</div>
+          <div><span class="k">크기</span> 56.3 MiB</div>
+          <div><span class="k">요구</span> Python 3 (대개 기본 내장)</div>
+          <div class="hash"><span class="k">SHA-256</span> 6d86de8a</div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:18px;font-size:.84rem;color:var(--bone-faint)">
+      전체 해시는 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/download/v1.0.5/SHA256SUMS.txt">SHA256SUMS.txt</a>에,
+      지난 버전은 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases">릴리스 목록</a>에 있습니다.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 실행 방법 ============ -->
+<section id="run">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">실행 방법</p></div>
+    <h2>압축을 푼 다음</h2>
+    <p class="sec-lede">두 방식 모두 로컬 웹 서버를 하나 띄우고 그 주소로 브라우저를 엽니다. 인터넷 연결이 필요 없습니다.</p>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-win" aria-controls="panel-win" aria-selected="true">Windows</button>
+      <button class="tab" role="tab" id="tab-mac" aria-controls="panel-mac" aria-selected="false">macOS</button>
+    </div>
+
+    <div class="panel" id="panel-win" role="tabpanel" aria-labelledby="tab-win">
+      <ol>
+        <li>zip을 풀고 폴더 안의 <strong>AshfallChronicles.bat</strong>을 더블클릭합니다. 검은 명령 창이 뜨고 잠시 뒤 브라우저로 게임이 열립니다.</li>
+        <li>게임을 끝내려면 그 명령 창을 닫습니다. 서버도 같이 꺼집니다.</li>
+      </ol>
+      <div class="alert hot">
+        <b>Python 3이 없다면</b>
+        안내 문구가 뜹니다. <a href="https://www.python.org/downloads/">python.org</a>에서 설치하되, 설치 화면의 <strong>"Add python.exe to PATH"를 반드시 체크</strong>하세요. 이걸 놓치면 설치해도 실행되지 않습니다.
+      </div>
+      <div class="alert">
+        <b>SmartScreen 경고가 뜨면</b>
+        <strong>추가 정보 → 실행</strong>을 누르세요. 로컬 서버만 띄우는 배치 파일이라 인터넷으로 나가지 않습니다.
+      </div>
+    </div>
+
+    <div class="panel" id="panel-mac" role="tabpanel" aria-labelledby="tab-mac" hidden>
+      <ol>
+        <li><strong>AshfallChronicles.command</strong>를 더블클릭합니다. 터미널 창이 자동으로 뜨고 브라우저로 게임이 열립니다.</li>
+        <li>터미널을 쓰고 싶다면 대신 이렇게 해도 됩니다.
+          <pre class="cmd"><code>cd 압축을_푼_폴더_경로
+bash launch.sh</code></pre>
+        </li>
+        <li>게임을 끝내려면 터미널 창을 닫습니다.</li>
+      </ol>
+      <div class="alert hot">
+        <b>"확인되지 않은 개발자" 경고</b>
+        앱을 지우거나 막는 경고가 아니라 그냥 확인창입니다. 파일을 <strong>우클릭 → 열기</strong>로 실행하면 그 뒤로는 경고 없이 바로 열립니다. 더블클릭에서 "취소"를 누른 뒤 다시 우클릭 → 열기를 시도해도 됩니다.
+      </div>
+      <div class="alert">
+        <b>그래도 막힌다면</b>
+        터미널에서 격리 속성을 지우고 다시 시도하세요.
+        <pre class="cmd" style="margin-top:10px"><code>xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 특징 ============ -->
+<section id="about">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">무엇을 하는 게임인가</p></div>
+    <h2>파고, 짓고, 끝까지 간다</h2>
+    <p class="sec-lede">테라리아식 2D 샌드박스 위에 스토리와 RPG 성장, 무기·능력 빌드를 얹었습니다.</p>
+
+    <div class="feats">
+      <div class="feat">
+        <span class="n">채굴 · 건설</span>
+        <h3>파낸 만큼 지어진다</h3>
+        <p>지형을 직접 깎고 블록을 놓습니다. 작업대·용광로·책장은 레벨 1~3으로 올라가며 그림도 함께 바뀝니다.</p>
+      </div>
+      <div class="feat">
+        <span class="n">스토리</span>
+        <h3>15개 챕터</h3>
+        <p>서 장부터 세션 2 종 장까지. 각 장은 목표와 보상, 그리고 다음 장으로 넘어가는 이야기를 갖습니다.</p>
+      </div>
+      <div class="feat">
+        <span class="n">빌드</span>
+        <h3>무기와 능력을 고른다</h3>
+        <p>스킬 슬롯 네 칸(<kbd>Q</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>F</kbd>)과 특성·장신구를 조합해 자기 방식대로 키웁니다.</p>
+      </div>
+      <div class="feat">
+        <span class="n">저장 슬롯</span>
+        <h3>세 명을 따로 키운다</h3>
+        <p>타이틀 화면이 슬롯 목록입니다. 슬롯마다 이름·레벨·마지막 저장 시각이 따로 표시됩니다.</p>
+      </div>
+      <div class="feat">
+        <span class="n">여명 마을</span>
+        <h3>마을이 3단계로 자란다</h3>
+        <p>분수대에 금화를 던져 소원을 빌고, 성벽이 올라가고, 2층 집이 생깁니다. 금고에 넣어 둔 금화는 죽어도 잃지 않습니다.</p>
+      </div>
+      <div class="feat">
+        <span class="n">환경</span>
+        <h3>지역마다 다른 하늘</h3>
+        <p>얼음 지형에는 비 대신 눈이 내립니다. 울림 정글 호수에는 밟고 건널 수 있는 수련잎이 떠 있습니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 챕터 ============ -->
+<section id="chapters">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">여정</p></div>
+    <h2>열다섯 개의 장</h2>
+    <p class="sec-lede">제목과 한 줄만 적었습니다. 나머지는 직접 보시는 편이 낫습니다.</p>
+    <div class="chapters" id="chapters"></div>
+  </div>
+</section>
+
+<!-- ============ 조작 ============ -->
+<section id="controls">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">조작</p></div>
+    <h2>손에 익히면 되는 것들</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>입력</th><th>동작</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>A</kbd> <kbd>D</kbd></td><td>이동</td></tr>
+          <tr><td><kbd>Space</kbd></td><td>점프 (특성·장신구로 이중 점프)</td></tr>
+          <tr><td><kbd>S</kbd></td><td>나무 발판 아래로 내려가기</td></tr>
+          <tr><td>좌클릭</td><td>장착 무기로 공격 — 곡괭이/괭이를 든 상태면 채굴·밭갈이</td></tr>
+          <tr><td>우클릭</td><td>블록·기계 설치 · NPC·상자·제단 상호작용 · 낚싯대는 물에 던지기</td></tr>
+          <tr><td><kbd>Shift</kbd></td><td>회피 대시 (무적 프레임)</td></tr>
+          <tr><td><kbd>Q</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>F</kbd></td><td>스킬 슬롯</td></tr>
+          <tr><td><kbd>1</kbd>~<kbd>9</kbd> <kbd>0</kbd></td><td>핫바 — 마우스 휠로도 전환</td></tr>
+          <tr><td><kbd>I</kbd> <kbd>K</kbd> <kbd>J</kbd> <kbd>H</kbd></td><td>가방 · 능력 · 일지 · 제작</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>일시정지 (설정 창 포함)</td></tr>
+          <tr><td><kbd>F5</kbd></td><td>저장</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문제 해결 ============ -->
+<section id="trouble">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">막혔을 때</p></div>
+    <h2>대개 이 넷 중 하나입니다</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>증상</th><th>확인할 것</th></tr></thead>
+        <tbody>
+          <tr><td>더블클릭해도 반응이 없다</td><td>우클릭 → 열기로 다시 시도. 그래도 안 되면 터미널에서 <code>bash launch.sh</code></td></tr>
+          <tr><td>화면이 하얗거나 그림이 안 뜬다</td><td>브라우저 새로고침. 그래도 안 되면 터미널 창을 닫고 다시 실행</td></tr>
+          <tr><td>소리가 안 난다</td><td>브라우저 창을 한 번 클릭하거나 키를 눌러 보세요. 브라우저 정책상 첫 입력 전에는 소리가 자동으로 나오지 않습니다</td></tr>
+          <tr><td>"포트가 이미 사용 중"</td><td>이미 다른 터미널 창에서 켜져 있는 상태입니다. 그 창을 찾아 이어 쓰거나 닫고 다시 켜세요</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 변경 이력 ============ -->
+<section id="changelog">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">변경 이력</p></div>
+    <h2>이번에 달라진 것</h2>
+
+    <details class="log" open>
+      <summary>v1.0.5 — 저장 슬롯과 금고</summary>
+      <div class="log-body">
+        <ul>
+          <li><strong>플레이어 이름 지정 + 저장 슬롯 3개.</strong> 타이틀 화면이 슬롯 목록으로 바뀌었습니다. 이전 버전의 저장 기록은 첫 실행 때 1번 슬롯으로 자동 이전됩니다.</li>
+          <li><strong>여명 마을 금고.</strong> 금화를 넣고 뺄 수 있고, 죽어도 넣어 둔 금화는 잃지 않습니다.</li>
+          <li><strong>울림 정글 폭포 호수.</strong> 수면의 수련잎은 밟고 건널 수 있는 발판이고, 비단잉어가 헤엄쳐 다닙니다.</li>
+          <li>타이틀 화면에서도 설정을 열 수 있습니다.</li>
+          <li>작업대·용광로 레벨별 그림이 실제로 반영되도록 고쳤습니다.</li>
+          <li>NPC와 작은 동물이 공중에 떠 보이던 문제를 그림마다 여백을 재서 고쳤습니다.</li>
+          <li>얼음 지형에서는 비 대신 눈이 내립니다.</li>
+          <li>여명 마을 3단계의 성문·성벽·2층 바닥을 손봤습니다.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="log">
+      <summary>v1.0.4 — 여명 마을 재설계</summary>
+      <div class="log-body">
+        <ul>
+          <li>마을 좌표 배치를 배치표로 관리하도록 전면 재설계. 배치 뒤 겹침을 자동 검사합니다.</li>
+          <li>분수대 재제작 — 상호작용하면 금화를 던지고 소원을 빌 수 있습니다(버프 획득).</li>
+          <li>성문 신규 제작, 여관 침대 재제작.</li>
+          <li>작업대·용광로·책장을 2칸 크기로 확대하고 레벨마다 다른 그림을 넣었습니다.</li>
+          <li>제작(<kbd>H</kbd>) 탭이 실제로 가까이 있는 시설만 보여주도록 수정.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="log">
+      <summary>v1.0.3 — 밸런스와 배치</summary>
+      <div class="log-body">
+        <ul>
+          <li>최초의 파수꾼(7장) 봉인실을 여명 마을 지하로 옮겼습니다.</li>
+          <li>뿌리 신전 유적 제거 — 세션 1 경로의 유적 밀도를 낮췄습니다.</li>
+          <li>울림 정글 지상 몹의 체력·공격력을 15% 낮춰 뒤 지역과 균형을 맞췄습니다.</li>
+        </ul>
+      </div>
+    </details>
+
+    <p style="margin-top:20px;font-size:.84rem;color:var(--bone-faint)">
+      전체 이력은 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases">릴리스 목록</a>에서 볼 수 있습니다.
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <p>별이 잠든 땅 — Ashfall Chronicles <span class="mono">v1.0.5</span></p>
+    <nav class="foot-links">
+      <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles">저장소</a>
+      <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases">릴리스</a>
+      <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/issues">문제 제보</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var REPO = 'gshs43-junyeong/Ashfall-Chronicles';
+  var VERSION = '1.0.5';
+
+  /* ---- 다운로드 링크 ---- */
+  var FILES = {
+    windows: 'AshfallChronicles-' + VERSION + '-Windows.zip',
+    macos:   'AshfallChronicles-' + VERSION + '-macOS.zip'
+  };
+
+  document.querySelectorAll('.dl').forEach(function (card) {
+    var os = card.dataset.os;
+    card.querySelector('[data-dl]').href =
+      'https://github.com/' + REPO + '/releases/download/v' + VERSION + '/' + FILES[os];
+  });
+
+  /* ---- 운영체제 추정: 맞는 카드를 앞으로 끌어올린다 ---- */
+  var ua = navigator.userAgent;
+  var guess = /Mac|iPhone|iPad/.test(ua) ? 'macos' : /Win/.test(ua) ? 'windows' : null;
+  if (guess) {
+    var mine = document.querySelector('.dl[data-os="' + guess + '"]');
+    if (mine) {
+      mine.dataset.recommended = '1';
+      mine.querySelector('.dl-you').hidden = false;
+      mine.parentNode.prepend(mine);
+    }
+  }
+
+  /* ---- 히어로에서 게임 시작 ---- */
+  var cover = document.getElementById('stageCover');
+  if (cover) {
+    cover.addEventListener('click', function () {
+      var frame = document.createElement('iframe');
+      frame.src = 'play/index.html';
+      frame.title = '별이 잠든 땅 — Ashfall Chronicles';
+      frame.allow = 'autoplay; fullscreen';
+      document.getElementById('stage').appendChild(frame);
+      cover.remove();
+      frame.focus();
+    });
+  }
+
+  /* ---- 실행 방법 탭 ---- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+
+  function select(tab) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+  }
+
+  tabs.forEach(function (tab, i) {
+    tab.addEventListener('click', function () { select(tab); });
+    tab.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      var next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+      select(next);
+      next.focus();
+    });
+  });
+
+  if (guess === 'macos') select(document.getElementById('tab-mac'));
+
+  /* ---- 챕터 ---- */
+  var CHAPTERS = [
+    [0,  '서 장',            '떨어진 별',            '별이 부서진 밤',                    'chapter_0_fallen_star'],
+    [1,  '제 1 장',          '잿빛 야영지',          '혼자이지 않기를 꿈꾼 것',           'chapter_1_ash_village'],
+    [2,  '제 2 장',          '뼈가 쌓인 곳',         '잠든 것들의 꿈을 대신 꾼 조각',     'chapter_2_bone_pit'],
+    [3,  '제 3 장',          '부패한 숲',            '굶주림을 꿈꾼 것',                  'chapter_3_corrupt_forest'],
+    [4,  '제 4 장',          '서리 왕좌',            '조각을 재우지 않은 사람',           'chapter_4_frost_throne'],
+    [5,  '제 5 장',          '별이 잠든 땅',         '꿈꿀 필요가 없었던 조각',           'chapter_5_sleeping_star'],
+    [6,  '제 6 장',          '구름 위의 계단',       '이 일은 처음이 아니었다',           'chapter_6_sky_stair'],
+    [7,  '제 7 장',          '최초의 유적',          '우리보다 잘 하라',                  'chapter_7_first_ruin'],
+    [8,  '종 장',            '별을 쫓아온 것',       '이번에는 넘기지 않는다',            'chapter_8_pursuer'],
+    [9,  '세션 2 · 서 장',   '아무도 세우지 않은 도시', '손자국이 하나도 없다',           'chapter_9_nobody_built'],
+    [10, '세션 2 · 제 1 장', '지하 공창',            '멈추라고 가르친 사람이 없었다',     'chapter_10_underworks'],
+    [11, '세션 2 · 제 2 장', '굴뚝이 선 마을',       '하루아침에 늘어난 것',              'chapter_11_chimneys'],
+    [12, '세션 2 · 제 3 장', '폭주로',               '결재자 없음 — 자동 승인',           'chapter_12_runaway'],
+    [13, '세션 2 · 제 4 장', '헤파',                 '멈추면 아무도 남지 않는다',         'chapter_13_hepha'],
+    [14, '세션 2 · 종 장',   '벽 너머',              '남기고 간 것이 아니라, 남아 있던 것', 'chapter_14_beyond_wall']
+  ];
+
+  var grid = document.getElementById('chapters');
+  CHAPTERS.forEach(function (c) {
+    var card = document.createElement('article');
+    card.className = 'ch';
+
+    var art = document.createElement('div');
+    art.className = 'ch-art';
+    art.style.backgroundImage = "url('play/assets/bg/" + c[4] + ".png')";
+
+    var body = document.createElement('div');
+    body.className = 'ch-body';
+
+    var sub = document.createElement('span');
+    sub.className = 'ch-sub';
+    sub.textContent = c[1];
+
+    var title = document.createElement('h3');
+    title.className = 'ch-title';
+    title.textContent = c[2];
+
+    var line = document.createElement('p');
+    line.className = 'ch-line';
+    line.textContent = c[3];
+
+    body.append(sub, title, line);
+    card.append(art, body);
+    grid.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

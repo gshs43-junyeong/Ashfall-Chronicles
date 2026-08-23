@@ -1,0 +1,12 @@
+# 배포 산출물 — 절대 커밋하지 않는다.
+# 한 번 커밋한 대용량 zip은 지워도 git 히스토리에 영구히 남는다.
+dist/
+*.zip
+
+# 사이트 빌드 시 game/ 을 복사해 넣는 자리
+site/play/
+
+# OS 부스러기
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ashfall Chronicles — 별이 잠든 땅</title>
+<link rel="stylesheet" href="css/style.css?v=183">
+</head>
+<body>
+
+<div id="app">
+  <canvas id="game"></canvas>
+
+  <!-- ================= HUD ================= -->
+  <div id="hud">
+    <div id="hud-left">
+      <div class="orb-row">
+        <div class="bar hp">
+          <div class="fill" id="hp-fill"></div>
+          <span class="bar-label" id="hp-text">100 / 100</span>
+        </div>
+        <div class="bar mp">
+          <div class="fill" id="mp-fill"></div>
+          <span class="bar-label" id="mp-text">50 / 50</span>
+        </div>
+        <div class="bar xp">
+          <div class="fill" id="xp-fill"></div>
+          <span class="bar-label" id="xp-text">Lv.1  0 / 40</span>
+        </div>
+        <div class="bar pw" id="pw-bar">
+          <div class="fill" id="pw-fill"></div>
+          <span class="bar-label" id="pw-text">200 / 200</span>
+        </div>
+      </div>
+      <div id="buffs"></div>
+    </div>
+
+    <div id="hud-right">
+      <div id="clock-box">
+        <span id="clock-icon">☀</span><span id="clock-text">06:00</span>
+        <span id="depth-text">지표 0m</span>
+        <span id="gold-text">🪙 0</span>
+      </div>
+      <canvas id="minimap" width="180" height="130"></canvas>
+    </div>
+
+    <div id="quest-tracker">
+      <div class="qt-title">진행 중</div>
+      <div id="qt-body"></div>
+    </div>
+
+    <div id="skillbar"></div>
+    <div id="hotbar"></div>
+    <div id="hint">A/D 이동 · Space 점프 · 좌클릭 공격/채굴 · 우클릭 설치/상호작용 · Q E R F 스킬 · Shift 대시</div>
+  </div>
+
+  <!-- ================= 패널 ================= -->
+  <div id="panels">
+    <!-- 인벤토리 -->
+    <section class="panel" id="panel-inv">
+      <header><h2>가방</h2><button class="x" data-close>✕</button></header>
+      <div class="inv-wrap">
+        <div class="equip-col">
+          <div class="equip-title"><span class="section-ic" data-ui-icon="equip" aria-hidden="true"></span>장비</div>
+          <div class="equip-grid">
+            <div class="slot equip" data-eq="weapon"><span class="eqtag">무기</span></div>
+            <div class="slot equip" data-eq="helm"><span class="eqtag">투구</span></div>
+            <div class="slot equip" data-eq="chest"><span class="eqtag">갑옷</span></div>
+            <div class="slot equip" data-eq="boots"><span class="eqtag">신발</span></div>
+            <div class="slot equip" data-eq="acc1"><span class="eqtag">장신구</span></div>
+            <div class="slot equip" data-eq="acc2"><span class="eqtag">장신구</span></div>
+            <div class="slot equip" data-eq="pet1"><span class="eqtag">펫</span></div>
+            <div class="slot equip" data-eq="pet2"><span class="eqtag">펫</span></div>
+            <div class="slot equip" data-eq="bag"><span class="eqtag">가방</span></div>
+            <div class="slot trash-zone" id="trash-zone"><span class="trash-ic" data-ui-icon="trash" aria-hidden="true"></span><span class="eqtag">버리기</span></div>
+          </div>
+          <div id="stat-sheet"></div>
+        </div>
+        <div class="bag-col">
+          <div class="equip-title">소지품 <small>(좌클릭 집기 · 우클릭 사용/장착 · Shift+좌클릭 버리기 · Ctrl+좌클릭 잠금)</small>
+            <button type="button" id="btn-sort-bag" class="mini-btn">정리</button></div>
+          <div id="bag-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 스킬/특성 -->
+    <section class="panel wide" id="panel-skill">
+      <header><h2>능력과 특성</h2><button class="x" data-close>✕</button></header>
+      <div class="skill-top">
+        <div class="pts">스탯 포인트 <b id="stat-pts">0</b> · 특성 포인트 <b id="skill-pts">0</b></div>
+        <div id="stat-alloc"></div>
+      </div>
+      <div id="tree-wrap"></div>
+      <div class="skill-assign">
+        <div class="equip-title">스킬 슬롯 <small>(트리에서 배운 액티브를 우클릭해 슬롯에 등록)</small></div>
+        <div id="skill-slots"></div>
+      </div>
+    </section>
+
+    <!-- 퀘스트 / 일지 -->
+    <section class="panel" id="panel-quest">
+      <header><h2>여정의 기록</h2><button class="x" data-close>✕</button></header>
+      <div id="quest-body"></div>
+    </section>
+
+    <!-- 제작 -->
+    <section class="panel" id="panel-craft">
+      <header><h2>제작</h2><button class="x" data-close>✕</button></header>
+      <div id="craft-note"></div>
+      <div id="craft-list"></div>
+    </section>
+
+    <!-- 상자 -->
+    <section class="panel" id="panel-chest">
+      <header><h2 id="chest-title">상자</h2><button class="x" data-close>✕</button></header>
+      <div id="chest-grid"></div>
+    </section>
+
+    <!-- 보관고 (여명 마을) -->
+    <section class="panel wide" id="panel-vault">
+      <header><h2 id="vault-title">보관고</h2><button class="x" data-close>✕</button></header>
+      <div id="vault-gold-row" class="vault-gold-row">
+        <span>보관된 금화 <b id="vault-gold-amt">0</b></span>
+        <button id="btn-vault-deposit">넣기</button>
+        <button id="btn-vault-withdraw">빼기</button>
+      </div>
+      <div class="vault-wrap">
+        <div class="vault-col">
+          <div class="equip-title">보관고 <small>(클릭해서 가방으로 꺼내기)</small></div>
+          <div id="vault-grid"></div>
+        </div>
+        <div class="vault-col">
+          <div class="equip-title">소지품 <small>(클릭해서 보관고에 넣기)</small></div>
+          <div id="vault-bag"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 의뢰 게시판 -->
+    <section class="panel" id="panel-board">
+      <header><h2 id="board-title">의뢰 게시판</h2><button class="x" data-close>✕</button></header>
+      <div id="board-body"></div>
+    </section>
+
+    <!-- 마을 회관 -->
+    <section class="panel" id="panel-town">
+      <header><h2 id="town-title">여명 마을</h2><button class="x" data-close>✕</button></header>
+      <div id="town-body"></div>
+    </section>
+
+    <!-- 기계 (공장) -->
+    <section class="panel" id="panel-machine">
+      <header><h2 id="mach-title">기계</h2><button class="x" data-close>✕</button></header>
+      <div id="mach-body"></div>
+    </section>
+
+    <!-- 재련대 -->
+    <section class="panel" id="panel-reforge">
+      <header><h2 id="reforge-title">재련대</h2><button class="x" data-close>✕</button></header>
+      <div id="reforge-note"></div>
+      <div id="reforge-grid"></div>
+    </section>
+
+    <!-- 전체 지도 -->
+    <section class="panel fullmap" id="panel-fullmap">
+      <header><h2>지도</h2><button class="x" data-close>✕</button></header>
+      <div id="fullmap-wrap">
+        <canvas id="fullmap-canvas"></canvas>
+        <div id="fullmap-hint">휠: 확대/축소 · 드래그: 이동 · 눈으로 본 곳만 표시된다</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 대화 -->
+  <div id="dialogue">
+    <div class="dlg-box">
+      <div class="dlg-portrait" id="dlg-portrait">◆</div>
+      <div class="dlg-main">
+        <div class="dlg-name" id="dlg-name">???</div>
+        <div class="dlg-text" id="dlg-text"></div>
+        <div class="dlg-choices" id="dlg-choices"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 챕터 연출 -->
+  <div id="cc-art"></div>
+  <div id="chapter-card"><div class="cc-sub" id="cc-sub"></div><div class="cc-title" id="cc-title"></div><div class="cc-line" id="cc-line"></div></div>
+
+  <!-- 보스 체력 -->
+  <div id="bossbar"><div class="bb-name" id="bb-name"></div><div class="bb-track"><div class="bb-fill" id="bb-fill"></div></div></div>
+
+  <!-- 토스트 -->
+  <div id="toasts"></div>
+
+  <!-- 툴팁 -->
+  <div id="tooltip"></div>
+
+  <!-- 로딩 -->
+  <div id="loading"><div class="ld-inner"><div class="ld-spin"></div><div id="loading-text">세계를 빚는 중…</div></div></div>
+
+  <!-- 타이틀 -->
+  <div id="title-screen">
+    <div class="ts-version">v1.0.5</div>
+    <div class="ts-inner">
+      <div class="ts-sub">별이 잠든 땅</div>
+      <h1>ASHFALL<span class="ts-h1b">CHRONICLES</span></h1>
+      <p class="ts-tag">떨어진 별이 대지를 갈랐다. 잿빛이 번지기 전에, 다섯 개의 심장을 되찾아라.</p>
+      <div id="slot-list" class="slot-list"></div>
+      <div class="ts-menu2">
+        <button id="btn-help">조작법</button>
+        <button id="btn-settings-title">설정</button>
+      </div>
+    </div>
+    <div id="help-box">
+      <div class="help-inner">
+        <h3>조작</h3>
+        <ul>
+          <li><b>A / D</b> 이동 · <b>Space</b> 점프(이중 점프 특성) · <b>S</b> 발판 내려가기</li>
+          <li><b>좌클릭</b> 공격 / 채굴 &nbsp; <b>우클릭</b> 블록 설치 · NPC/상자 상호작용</li>
+          <li><b>Shift</b> 회피 대시 (무적 프레임)</li>
+          <li><b>Q E R F</b> 스킬 · <b>0~9</b> 핫바</li>
+          <li><b>I</b> 가방 · <b>K</b> 능력 · <b>J</b> 일지 · <b>H</b> 제작 · <b>Esc</b> 메뉴</li>
+          <li><b>기계</b> 우클릭으로 설치 · 설치된 기계를 우클릭하면 설정 · 좌클릭(도구)으로 회수</li>
+          <li><b>F5</b> 저장 · 사망 시 경험치 일부와 금화를 잃습니다</li>
+        </ul>
+        <button id="btn-help-close" class="set-close">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 일시정지 -->
+  <div id="pause-screen">
+    <div class="ps-inner">
+      <h2>일시정지</h2>
+      <div class="ps-menu">
+        <button id="btn-resume">계속하기</button>
+        <button id="btn-save">저장하기</button>
+        <button id="btn-settings-pause">설정</button>
+        <button id="btn-title">타이틀로</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 설정 (타이틀·일시정지 공통) -->
+  <div id="settings-screen">
+    <div class="settings">
+      <div class="set-title">설정</div>
+      <label class="set-row"><span>음악</span>
+        <input type="range" id="set-music" min="0" max="100" step="5"><b id="set-music-v">42%</b></label>
+      <label class="set-row"><span>효과음</span>
+        <input type="range" id="set-sfx" min="0" max="100" step="5"><b id="set-sfx-v">50%</b></label>
+      <label class="set-row"><span>화면 흔들림</span>
+        <input type="range" id="set-shake" min="0" max="150" step="10"><b id="set-shake-v">100%</b></label>
+      <label class="set-row chk"><span>피해 숫자</span><input type="checkbox" id="set-dmgnum"></label>
+      <label class="set-row chk"><span>미니맵</span><input type="checkbox" id="set-minimap"></label>
+      <label class="set-row chk"><span>조작 안내줄</span><input type="checkbox" id="set-hint"></label>
+      <button id="set-reset" class="set-reset">기본값으로</button>
+      <button id="btn-settings-close" class="set-close">닫기</button>
+    </div>
+  </div>
+
+  <!-- 사망 -->
+  <div id="death-screen">
+    <div class="ds-inner">
+      <h2>쓰러졌다</h2>
+      <p id="death-line"></p>
+      <button id="btn-respawn">다시 일어서기</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/util.js?v=183"></script>
+<script src="js/data.js?v=183"></script>
+<script src="js/world.js?v=183"></script>
+<script src="js/tileart.js?v=183"></script>
+<script src="js/itemart.js?v=183"></script>
+<script src="assets/sprites.js?v=183"></script>
+<script src="js/entity.js?v=183"></script>
+<script src="js/factory.js?v=183"></script>
+<script src="js/ui.js?v=183"></script>
+<script src="js/music.js?v=183"></script>
+<script src="js/game.js?v=183"></script>
+</body>
+</html>

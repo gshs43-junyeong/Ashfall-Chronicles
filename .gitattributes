@@ -1,0 +1,18 @@
+* text=auto eol=lf
+
+# 배치 파일은 CRLF 여야 Windows에서 정상 동작한다
+*.bat  text eol=crlf
+
+# 셸 스크립트는 반드시 LF
+*.sh      text eol=lf
+*.command text eol=lf
+
+# 바이너리 — 줄바꿈 변환이 닿으면 파일이 깨진다
+*.m4a binary
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.zip binary

@@ -1,0 +1,40 @@
+name: Release
+
+# v1.0.6 같은 태그를 push하면 zip 두 개를 만들어 Release에 첨부한다.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '버전 (예: 1.0.5)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 버전 결정
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: zip 빌드
+        run: bash tools/build.sh "${{ steps.ver.outputs.value }}"
+
+      - name: Release에 첨부
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/AshfallChronicles-*.zip
+            dist/SHA256SUMS.txt
+          generate_release_notes: true
