@@ -1,4 +1,4 @@
-/* 별이 잠든 땅 — Ashfall Chronicles 배포 사이트
+/* 별이 잠든 땅 — Ashfall Chronicles
    재빛 바탕 위에 잔불 주황(행동)과 별빛 파랑(정보)만 얹는다.
    어두운 화면 전용 디자인이므로 모든 색을 명시한다. */
 
@@ -37,8 +37,8 @@ img{max-width:100%;display:block;}
 .pixel{image-rendering:pixelated;}
 
 h1,h2,h3{font-family:Hahmlet,"IBM Plex Sans KR",serif;margin:0;line-height:1.28;text-wrap:balance;}
-h1{font-size:clamp(2.3rem,6.5vw,4rem);font-weight:700;letter-spacing:-.03em;}
-h2{font-size:clamp(1.55rem,3.6vw,2.1rem);font-weight:700;letter-spacing:-.02em;}
+h1{font-size:clamp(2.4rem,7vw,4.4rem);font-weight:700;letter-spacing:-.03em;}
+h2{font-size:clamp(1.55rem,3.6vw,2.15rem);font-weight:700;letter-spacing:-.02em;}
 h3{font-size:1.05rem;font-weight:700;}
 p{margin:0;}
 a{color:var(--star);text-underline-offset:3px;}
@@ -52,42 +52,80 @@ a:hover{color:var(--bone);}
 }
 
 .wrap{max-width:1020px;margin:0 auto;padding:0 22px;}
+.wrap-wide{max-width:1240px;margin:0 auto;padding:0 22px;}
 section{padding:88px 0;border-top:1px solid var(--line-soft);}
 .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:10px;}
 .sec-head::after{content:"";flex:1;height:1px;background:var(--line-soft);}
 .sec-lede{color:var(--bone-dim);max-width:60ch;margin-top:14px;}
 
-/* ---------------- 히어로 ---------------- */
-.hero{
-  position:relative;border-top:none;
-  padding:0;overflow:hidden;
-  border-bottom:1px solid var(--line);
+/* ================= 네비게이션 ================= */
+.nav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(13,11,10,.86);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line-soft);
 }
-.hero-bg{
-  position:absolute;inset:0;
-  background-size:cover;background-position:center 28%;
-  image-rendering:pixelated;
-  opacity:.42;
+.nav-inner{
+  max-width:1240px;margin:0 auto;padding:0 22px;
+  height:58px;display:flex;align-items:center;gap:26px;
 }
-.hero-veil{
-  position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(13,11,10,.55) 0%,rgba(13,11,10,.82) 55%,var(--ash) 100%);
+.nav-brand{
+  font-family:Hahmlet,serif;font-weight:700;font-size:1rem;
+  color:var(--bone);text-decoration:none;letter-spacing:-.01em;
+  display:flex;align-items:center;gap:9px;white-space:nowrap;
 }
-.hero-inner{position:relative;padding:110px 0 84px;}
-.hero h1{margin:16px 0 0;}
+.nav-brand .spark{width:7px;height:7px;background:var(--ember);flex:none;}
+.nav-links{display:flex;gap:4px;margin-left:auto;align-items:center;}
+.nav-links a{
+  font-size:.88rem;font-weight:600;color:var(--bone-faint);
+  text-decoration:none;padding:7px 14px;border-bottom:2px solid transparent;
+  transition:color .16s,border-color .16s;white-space:nowrap;
+}
+.nav-links a:hover{color:var(--bone-dim);}
+.nav-links a[aria-current="page"]{color:var(--ember);border-bottom-color:var(--ember);}
+.nav-cta{
+  font-size:.84rem;font-weight:600;text-decoration:none;
+  background:var(--ember);color:#1a0d07;padding:8px 16px;
+  margin-left:10px;white-space:nowrap;transition:background .16s;
+}
+.nav-cta:hover{background:#ff8a63;color:#1a0d07;}
+
+/* ================= 히어로 ================= */
+.hero{position:relative;border-top:none;padding:0;overflow:hidden;}
+.hero-canvas-wrap{position:absolute;inset:0;}
+#heroCanvas{
+  width:100%;height:100%;display:block;
+  background:#150f0d;
+  opacity:0;transition:opacity .7s ease;
+}
+#heroCanvas.is-ready{opacity:1;}
+.hero-inner{
+  position:relative;
+  min-height:min(76vh,620px);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:120px 0 68px;
+}
+.hero-inner::before{
+  content:"";position:absolute;inset:-40px -40px 0;
+  background:radial-gradient(120% 80% at 22% 78%,rgba(13,11,10,.86) 0%,rgba(13,11,10,.35) 55%,transparent 78%);
+  pointer-events:none;
+}
+.hero-inner > *{position:relative;}
+.hero h1{margin:14px 0 0;text-shadow:0 3px 34px rgba(13,11,10,.9);}
 .hero .tagline{
-  font-family:Hahmlet,serif;font-size:clamp(1.05rem,2.4vw,1.3rem);
-  color:var(--bone-dim);margin-top:16px;max-width:34ch;
+  font-family:Hahmlet,serif;font-size:clamp(1.05rem,2.3vw,1.32rem);
+  color:var(--bone-dim);margin-top:18px;max-width:36ch;
+  text-shadow:0 2px 18px rgba(13,11,10,.9);
 }
 .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;}
 .badge{
   font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.06em;
-  border:1px solid var(--line);background:rgba(28,25,23,.7);
+  border:1px solid var(--line);background:rgba(28,25,23,.78);
   padding:4px 11px;color:var(--bone-dim);
 }
 .badge.hot{border-color:var(--ember-deep);color:var(--ember);}
 
-.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px;}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px;}
 .btn{
   display:inline-flex;align-items:center;gap:10px;
   font-family:"IBM Plex Sans KR",sans-serif;font-size:.95rem;font-weight:600;
@@ -99,20 +137,85 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
 .btn:hover{border-color:var(--bone-faint);background:var(--soot-2);color:var(--bone);}
 .btn-primary{background:var(--ember);border-color:var(--ember);color:#1a0d07;}
 .btn-primary:hover{background:#ff8a63;border-color:#ff8a63;color:#1a0d07;}
+.btn-lg{padding:16px 30px;font-size:1rem;}
 .btn .sz{font-family:"IBM Plex Mono",monospace;font-size:.74rem;opacity:.72;font-weight:400;}
 
-/* ---------------- 플레이 임베드 ---------------- */
-.stage{
-  position:relative;border:1px solid var(--line);background:#000;
-  aspect-ratio:16/9;overflow:hidden;margin-top:30px;
+/* ================= 수치 띠 ================= */
+.figures{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));
+  gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
 }
+.fig{background:var(--ash);padding:22px 20px;text-align:center;}
+.fig .n{
+  font-family:"IBM Plex Mono",monospace;font-size:1.75rem;font-weight:500;
+  font-variant-numeric:tabular-nums;color:var(--ember);
+  display:block;line-height:1.1;letter-spacing:-.02em;
+}
+.fig .l{font-size:.78rem;color:var(--bone-faint);display:block;margin-top:6px;}
+
+/* ================= 전제 ================= */
+.premise{max-width:60ch;}
+.premise p + p{margin-top:18px;}
+.premise .lead{
+  font-family:Hahmlet,serif;font-size:clamp(1.15rem,2.6vw,1.5rem);
+  line-height:1.6;color:var(--bone);
+}
+.premise .body{color:var(--bone-dim);}
+
+/* ================= 목표 ================= */
+.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:16px;margin-top:32px;}
+.goal{border:1px solid var(--line);background:var(--soot);padding:20px;display:flex;flex-direction:column;gap:8px;}
+.goal .k{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--star);}
+.goal .v{font-family:"IBM Plex Mono",monospace;font-size:1.5rem;color:var(--bone);line-height:1;font-variant-numeric:tabular-nums;}
+.goal p{font-size:.86rem;color:var(--bone-dim);}
+
+/* ================= 보스 ================= */
+.bosses{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));
+  gap:1px;background:var(--line);border:1px solid var(--line);margin-top:32px;
+}
+.boss{
+  background:var(--soot);padding:16px 12px 14px;
+  display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;
+  transition:background .18s;
+}
+.boss:hover{background:var(--soot-2);}
+.boss-art{
+  height:78px;width:100%;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.boss-art canvas{
+  image-rendering:pixelated;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.6));
+  display:block;
+}
+.boss-name{font-family:Hahmlet,serif;font-weight:700;font-size:.92rem;line-height:1.35;}
+.boss-ch{font-family:"IBM Plex Mono",monospace;font-size:.64rem;letter-spacing:.08em;color:var(--bone-faint);}
+
+/* ================= 기능 ================= */
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:32px;}
+.feat{background:var(--soot);padding:24px;}
+.feat h3{margin-bottom:7px;}
+.feat p{font-size:.89rem;color:var(--bone-dim);}
+.feat .n{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--ember);letter-spacing:.1em;display:block;margin-bottom:11px;}
+
+/* ================= 챕터 ================= */
+.chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:14px;margin-top:32px;}
+.ch{border:1px solid var(--line);background:var(--soot);overflow:hidden;display:flex;flex-direction:column;}
+.ch-art{aspect-ratio:16/10;background-size:cover;background-position:center;image-rendering:pixelated;border-bottom:1px solid var(--line);}
+.ch-body{padding:13px 15px 16px;display:flex;flex-direction:column;gap:3px;}
+.ch-sub{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.1em;color:var(--star);}
+.ch-title{font-family:Hahmlet,serif;font-weight:700;font-size:1rem;}
+.ch-line{font-size:.79rem;color:var(--bone-faint);line-height:1.6;}
+
+/* ================= 플레이 임베드 ================= */
+.stage{position:relative;border:1px solid var(--line);background:#000;aspect-ratio:16/9;overflow:hidden;margin-top:32px;}
 .stage iframe{width:100%;height:100%;border:0;display:block;}
 .stage-cover{
   position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:18px;
   background-size:cover;background-position:center;
-  cursor:pointer;border:0;width:100%;color:var(--bone);
-  font-family:inherit;
+  cursor:pointer;border:0;width:100%;color:var(--bone);font-family:inherit;
 }
 .stage-cover::before{content:"";position:absolute;inset:0;background:rgba(13,11,10,.62);}
 .stage-cover > *{position:relative;}
@@ -128,16 +231,28 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
 .stage-cover .hint{font-size:.82rem;color:var(--bone-dim);}
 .stage-mobile{
   display:none;border:1px solid var(--line);background:var(--soot);
-  padding:34px 24px;text-align:center;color:var(--bone-dim);font-size:.92rem;
-  margin-top:30px;
+  padding:34px 24px;text-align:center;color:var(--bone-dim);font-size:.92rem;margin-top:32px;
 }
 
-/* ---------------- 다운로드 ---------------- */
-.dl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-top:30px;}
-.dl{
-  border:1px solid var(--line);background:var(--soot);
-  padding:22px;display:flex;flex-direction:column;gap:14px;
+/* ================= 하단 다운로드 유도 ================= */
+.getit{
+  border-top:1px solid var(--line);
+  background:linear-gradient(180deg,#141110 0%,var(--ash) 100%);
+  padding:88px 0;
 }
+.getit-inner{text-align:center;max-width:52ch;margin:0 auto;}
+.getit h2{margin-bottom:16px;}
+.getit p{color:var(--bone-dim);}
+.getit .cta-row{justify-content:center;margin-top:32px;}
+.getit .fine{font-size:.8rem;color:var(--bone-faint);margin-top:20px;}
+
+/* ================= 다운로드 페이지 ================= */
+.page-head{padding:72px 0 0;}
+.page-head h1{font-size:clamp(2rem,5vw,3rem);}
+.page-head .sec-lede{margin-top:18px;}
+
+.dl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-top:32px;}
+.dl{border:1px solid var(--line);background:var(--soot);padding:22px;display:flex;flex-direction:column;gap:14px;}
 .dl[data-recommended="1"]{border-color:var(--ember-deep);box-shadow:inset 0 2px 0 var(--ember);}
 .dl-os{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .dl-os h3{font-family:"IBM Plex Sans KR",sans-serif;font-size:1.1rem;}
@@ -150,8 +265,7 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
 .dl-meta .k{color:var(--bone-dim);}
 .dl-meta .hash{word-break:break-all;}
 
-/* ---------------- 탭 ---------------- */
-.tabs{display:flex;gap:0;margin-top:28px;border-bottom:1px solid var(--line);}
+.tabs{display:flex;gap:0;margin-top:32px;border-bottom:1px solid var(--line);}
 .tab{
   font-family:"IBM Plex Sans KR",sans-serif;font-size:.9rem;font-weight:600;
   background:none;border:0;border-bottom:2px solid transparent;
@@ -171,30 +285,13 @@ pre.cmd{
   font-family:"IBM Plex Mono",monospace;font-size:.8rem;line-height:1.7;
   color:var(--bone);white-space:pre;
 }
-pre.cmd .c{color:var(--bone-faint);}
 
 .alert{border-left:3px solid var(--star);background:var(--star-deep);padding:15px 18px;font-size:.9rem;color:var(--bone-dim);}
 .alert.hot{border-left-color:var(--ember);background:#2a1710;}
-.alert b{display:block;color:var(--bone);font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace;margin-bottom:4px;}
+.alert b.h{display:block;color:var(--bone);font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace;margin-bottom:4px;}
 
-/* ---------------- 특징 ---------------- */
-.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:30px;}
-.feat{background:var(--soot);padding:22px;}
-.feat h3{margin-bottom:6px;}
-.feat p{font-size:.89rem;color:var(--bone-dim);}
-.feat .n{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--ember);letter-spacing:.1em;display:block;margin-bottom:10px;}
-
-/* ---------------- 챕터 ---------------- */
-.chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:14px;margin-top:30px;}
-.ch{border:1px solid var(--line);background:var(--soot);overflow:hidden;display:flex;flex-direction:column;}
-.ch-art{aspect-ratio:16/10;background-size:cover;background-position:center;image-rendering:pixelated;border-bottom:1px solid var(--line);}
-.ch-body{padding:13px 15px 16px;display:flex;flex-direction:column;gap:3px;}
-.ch-sub{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.1em;color:var(--star);}
-.ch-title{font-family:Hahmlet,serif;font-weight:700;font-size:1rem;}
-.ch-line{font-size:.79rem;color:var(--bone-faint);line-height:1.6;}
-
-/* ---------------- 표 ---------------- */
-.tscroll{overflow-x:auto;border:1px solid var(--line);margin-top:30px;background:var(--soot);}
+/* ================= 표 ================= */
+.tscroll{overflow-x:auto;border:1px solid var(--line);margin-top:32px;background:var(--soot);}
 table{border-collapse:collapse;width:100%;min-width:460px;font-size:.88rem;}
 th,td{text-align:left;padding:10px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top;}
 thead th{
@@ -202,32 +299,46 @@ thead th{
   color:var(--bone-faint);font-weight:500;background:#141110;border-bottom:1px solid var(--line);
 }
 tbody tr:last-child td{border-bottom:none;}
-td kbd{
+kbd{
   font-family:"IBM Plex Mono",monospace;font-size:.78rem;
   background:#000;border:1px solid var(--line);border-radius:3px;
   padding:1px 7px;color:var(--bone);white-space:nowrap;
 }
 
-/* ---------------- 변경 이력 ---------------- */
+/* ================= 변경 이력 ================= */
 details.log{border:1px solid var(--line);background:var(--soot);margin-top:12px;}
-details.log summary{
-  padding:14px 18px;cursor:pointer;font-weight:600;
-  display:flex;align-items:center;gap:12px;list-style:none;
-}
+details.log summary{padding:14px 18px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:12px;list-style:none;}
 details.log summary::-webkit-details-marker{display:none;}
 details.log summary::before{content:"+";font-family:"IBM Plex Mono",monospace;color:var(--ember);font-size:1.05rem;}
 details.log[open] summary::before{content:"\2212";}
 details.log .log-body{padding:0 18px 18px 44px;color:var(--bone-dim);font-size:.89rem;}
 details.log .log-body ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:7px;}
 
-/* ---------------- 푸터 ---------------- */
+/* ================= 푸터 ================= */
 footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--bone-faint);font-size:.82rem;}
 .foot-row{display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;align-items:baseline;}
 .foot-links{display:flex;flex-wrap:wrap;gap:18px;}
 
+/* ================= 스크롤 등장 =================
+   기본은 "보이는" 상태다. 스크립트가 관찰자를 실제로 띄웠을 때만 html.anim 이 붙어
+   숨기기가 시작된다. 반대로 만들면(기본 숨김) 스크립트가 안 돌거나 관찰자가 발동하지
+   않는 환경에서 본문이 통째로 사라진다. */
+.reveal{transition:opacity .6s ease,transform .6s ease;}
+html.anim .reveal{opacity:0;transform:translateY(14px);}
+html.anim .reveal.in{opacity:1;transform:none;}
+@media (prefers-reduced-motion:reduce){
+  html.anim .reveal{opacity:1;transform:none;}
+}
+
 @media (max-width:760px){
   section{padding:64px 0;}
-  .hero-inner{padding:76px 0 60px;}
+  .hero-inner{min-height:auto;padding:92px 0 52px;}
   .stage{display:none;}
   .stage-mobile{display:block;}
+  .nav-links a{padding:7px 10px;font-size:.84rem;}
+  .nav-inner{gap:12px;}
+  .getit{padding:64px 0;}
+}
+@media (max-width:420px){
+  .nav-brand span:last-child{display:none;}
 }
