@@ -1,8 +1,9 @@
 name: Pages
 
+# 배포는 Vercel 이 맡는다(https://ashfall-chronicles.vercel.app).
+# 이 워크플로는 GitHub Pages 로도 올리고 싶을 때를 위한 예비 경로라 수동 실행만 둔다.
+# push 마다 돌게 해 두면 Pages 를 켜지 않은 상태에서 매번 실패로 표시된다.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -23,12 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 게임 본체를 사이트 안으로 복사한다. 이러면 /play/ 에서 바로 플레이된다.
-      - name: game/ → site/play/
-        run: |
-          rm -rf site/play
-          mkdir -p site/play
-          cp -R game/. site/play/
+      # Vercel 의 buildCommand 와 같은 스크립트를 쓴다 — 산출물이 갈라지지 않게.
+      - name: 사이트 빌드
+        run: bash tools/build-site.sh
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
