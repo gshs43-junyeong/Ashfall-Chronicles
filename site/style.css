@@ -1,0 +1,233 @@
+/* 별이 잠든 땅 — Ashfall Chronicles 배포 사이트
+   재빛 바탕 위에 잔불 주황(행동)과 별빛 파랑(정보)만 얹는다.
+   어두운 화면 전용 디자인이므로 모든 색을 명시한다. */
+
+:root{
+  --ash:#0d0b0a;
+  --soot:#1c1917;
+  --soot-2:#252120;
+  --line:#332d29;
+  --line-soft:#221e1c;
+  --bone:#e9e2d7;
+  --bone-dim:#a89c8e;
+  --bone-faint:#7a7067;
+  --ember:#f97449;
+  --ember-deep:#c2410c;
+  --star:#78b0c6;
+  --star-deep:#1d3038;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *{animation:none!important;transition:none!important;}
+}
+
+body{
+  margin:0;
+  background:var(--ash);
+  color:var(--bone);
+  font-family:"IBM Plex Sans KR","Malgun Gothic",system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block;}
+.pixel{image-rendering:pixelated;}
+
+h1,h2,h3{font-family:Hahmlet,"IBM Plex Sans KR",serif;margin:0;line-height:1.28;text-wrap:balance;}
+h1{font-size:clamp(2.3rem,6.5vw,4rem);font-weight:700;letter-spacing:-.03em;}
+h2{font-size:clamp(1.55rem,3.6vw,2.1rem);font-weight:700;letter-spacing:-.02em;}
+h3{font-size:1.05rem;font-weight:700;}
+p{margin:0;}
+a{color:var(--star);text-underline-offset:3px;}
+a:hover{color:var(--bone);}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px;}
+
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;font-size:.7rem;font-weight:500;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--bone-faint);
+}
+
+.wrap{max-width:1020px;margin:0 auto;padding:0 22px;}
+section{padding:88px 0;border-top:1px solid var(--line-soft);}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:10px;}
+.sec-head::after{content:"";flex:1;height:1px;background:var(--line-soft);}
+.sec-lede{color:var(--bone-dim);max-width:60ch;margin-top:14px;}
+
+/* ---------------- 히어로 ---------------- */
+.hero{
+  position:relative;border-top:none;
+  padding:0;overflow:hidden;
+  border-bottom:1px solid var(--line);
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center 28%;
+  image-rendering:pixelated;
+  opacity:.42;
+}
+.hero-veil{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(13,11,10,.55) 0%,rgba(13,11,10,.82) 55%,var(--ash) 100%);
+}
+.hero-inner{position:relative;padding:110px 0 84px;}
+.hero h1{margin:16px 0 0;}
+.hero .tagline{
+  font-family:Hahmlet,serif;font-size:clamp(1.05rem,2.4vw,1.3rem);
+  color:var(--bone-dim);margin-top:16px;max-width:34ch;
+}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;}
+.badge{
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.06em;
+  border:1px solid var(--line);background:rgba(28,25,23,.7);
+  padding:4px 11px;color:var(--bone-dim);
+}
+.badge.hot{border-color:var(--ember-deep);color:var(--ember);}
+
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px;}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:"IBM Plex Sans KR",sans-serif;font-size:.95rem;font-weight:600;
+  padding:13px 24px;border:1px solid var(--line);
+  background:var(--soot);color:var(--bone);
+  text-decoration:none;cursor:pointer;
+  transition:border-color .16s,background .16s,color .16s;
+}
+.btn:hover{border-color:var(--bone-faint);background:var(--soot-2);color:var(--bone);}
+.btn-primary{background:var(--ember);border-color:var(--ember);color:#1a0d07;}
+.btn-primary:hover{background:#ff8a63;border-color:#ff8a63;color:#1a0d07;}
+.btn .sz{font-family:"IBM Plex Mono",monospace;font-size:.74rem;opacity:.72;font-weight:400;}
+
+/* ---------------- 플레이 임베드 ---------------- */
+.stage{
+  position:relative;border:1px solid var(--line);background:#000;
+  aspect-ratio:16/9;overflow:hidden;margin-top:30px;
+}
+.stage iframe{width:100%;height:100%;border:0;display:block;}
+.stage-cover{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;
+  background-size:cover;background-position:center;
+  cursor:pointer;border:0;width:100%;color:var(--bone);
+  font-family:inherit;
+}
+.stage-cover::before{content:"";position:absolute;inset:0;background:rgba(13,11,10,.62);}
+.stage-cover > *{position:relative;}
+.play-mark{
+  width:74px;height:74px;border:2px solid var(--ember);border-radius:50%;
+  display:grid;place-items:center;background:rgba(13,11,10,.5);
+  transition:background .16s,transform .16s;
+}
+.stage-cover:hover .play-mark{background:var(--ember);transform:scale(1.05);}
+.play-mark svg{width:26px;height:26px;fill:var(--ember);margin-left:4px;transition:fill .16s;}
+.stage-cover:hover .play-mark svg{fill:#1a0d07;}
+.stage-cover .label{font-weight:600;font-size:1.05rem;}
+.stage-cover .hint{font-size:.82rem;color:var(--bone-dim);}
+.stage-mobile{
+  display:none;border:1px solid var(--line);background:var(--soot);
+  padding:34px 24px;text-align:center;color:var(--bone-dim);font-size:.92rem;
+  margin-top:30px;
+}
+
+/* ---------------- 다운로드 ---------------- */
+.dl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-top:30px;}
+.dl{
+  border:1px solid var(--line);background:var(--soot);
+  padding:22px;display:flex;flex-direction:column;gap:14px;
+}
+.dl[data-recommended="1"]{border-color:var(--ember-deep);box-shadow:inset 0 2px 0 var(--ember);}
+.dl-os{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.dl-os h3{font-family:"IBM Plex Sans KR",sans-serif;font-size:1.1rem;}
+.dl-you{
+  font-family:"IBM Plex Mono",monospace;font-size:.64rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ember);border:1px solid var(--ember-deep);
+  padding:2px 8px;white-space:nowrap;
+}
+.dl-meta{font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--bone-faint);line-height:1.9;}
+.dl-meta .k{color:var(--bone-dim);}
+.dl-meta .hash{word-break:break-all;}
+
+/* ---------------- 탭 ---------------- */
+.tabs{display:flex;gap:0;margin-top:28px;border-bottom:1px solid var(--line);}
+.tab{
+  font-family:"IBM Plex Sans KR",sans-serif;font-size:.9rem;font-weight:600;
+  background:none;border:0;border-bottom:2px solid transparent;
+  color:var(--bone-faint);padding:11px 20px;cursor:pointer;
+  transition:color .16s,border-color .16s;
+}
+.tab:hover{color:var(--bone-dim);}
+.tab[aria-selected="true"]{color:var(--ember);border-bottom-color:var(--ember);}
+.panel{padding-top:26px;display:flex;flex-direction:column;gap:18px;}
+.panel[hidden]{display:none;}
+.panel ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:12px;}
+.panel li::marker{color:var(--ember);font-weight:600;}
+
+pre.cmd{
+  margin:0;padding:14px 16px;overflow-x:auto;
+  background:#000;border:1px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:.8rem;line-height:1.7;
+  color:var(--bone);white-space:pre;
+}
+pre.cmd .c{color:var(--bone-faint);}
+
+.alert{border-left:3px solid var(--star);background:var(--star-deep);padding:15px 18px;font-size:.9rem;color:var(--bone-dim);}
+.alert.hot{border-left-color:var(--ember);background:#2a1710;}
+.alert b{display:block;color:var(--bone);font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace;margin-bottom:4px;}
+
+/* ---------------- 특징 ---------------- */
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:30px;}
+.feat{background:var(--soot);padding:22px;}
+.feat h3{margin-bottom:6px;}
+.feat p{font-size:.89rem;color:var(--bone-dim);}
+.feat .n{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--ember);letter-spacing:.1em;display:block;margin-bottom:10px;}
+
+/* ---------------- 챕터 ---------------- */
+.chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:14px;margin-top:30px;}
+.ch{border:1px solid var(--line);background:var(--soot);overflow:hidden;display:flex;flex-direction:column;}
+.ch-art{aspect-ratio:16/10;background-size:cover;background-position:center;image-rendering:pixelated;border-bottom:1px solid var(--line);}
+.ch-body{padding:13px 15px 16px;display:flex;flex-direction:column;gap:3px;}
+.ch-sub{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.1em;color:var(--star);}
+.ch-title{font-family:Hahmlet,serif;font-weight:700;font-size:1rem;}
+.ch-line{font-size:.79rem;color:var(--bone-faint);line-height:1.6;}
+
+/* ---------------- 표 ---------------- */
+.tscroll{overflow-x:auto;border:1px solid var(--line);margin-top:30px;background:var(--soot);}
+table{border-collapse:collapse;width:100%;min-width:460px;font-size:.88rem;}
+th,td{text-align:left;padding:10px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top;}
+thead th{
+  font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--bone-faint);font-weight:500;background:#141110;border-bottom:1px solid var(--line);
+}
+tbody tr:last-child td{border-bottom:none;}
+td kbd{
+  font-family:"IBM Plex Mono",monospace;font-size:.78rem;
+  background:#000;border:1px solid var(--line);border-radius:3px;
+  padding:1px 7px;color:var(--bone);white-space:nowrap;
+}
+
+/* ---------------- 변경 이력 ---------------- */
+details.log{border:1px solid var(--line);background:var(--soot);margin-top:12px;}
+details.log summary{
+  padding:14px 18px;cursor:pointer;font-weight:600;
+  display:flex;align-items:center;gap:12px;list-style:none;
+}
+details.log summary::-webkit-details-marker{display:none;}
+details.log summary::before{content:"+";font-family:"IBM Plex Mono",monospace;color:var(--ember);font-size:1.05rem;}
+details.log[open] summary::before{content:"\2212";}
+details.log .log-body{padding:0 18px 18px 44px;color:var(--bone-dim);font-size:.89rem;}
+details.log .log-body ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:7px;}
+
+/* ---------------- 푸터 ---------------- */
+footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--bone-faint);font-size:.82rem;}
+.foot-row{display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;align-items:baseline;}
+.foot-links{display:flex;flex-wrap:wrap;gap:18px;}
+
+@media (max-width:760px){
+  section{padding:64px 0;}
+  .hero-inner{padding:76px 0 60px;}
+  .stage{display:none;}
+  .stage-mobile{display:block;}
+}
