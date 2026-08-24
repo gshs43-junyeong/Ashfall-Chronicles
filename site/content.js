@@ -129,9 +129,9 @@
       art.appendChild(canvas);
       drawFirstFrame(canvas, b[0], b[4], b[5], locked);
 
-      /* 체력은 가리지 않는다 — 이름 없이 숫자만 커지는 게 오히려 예고가 된다. */
+      /* 잠긴 보스는 체력도 숨긴다 — 숫자가 곧 순서와 규모를 알려 준다. */
       var meta = el('span', 'boss-ch',
-        (locked ? MASK : b[2]) + ' · ' + b[3].toLocaleString('ko-KR') + ' HP');
+        locked ? MASK : b[2] + ' · ' + b[3].toLocaleString('ko-KR') + ' HP');
 
       card.append(art, el('h3', 'boss-name', locked ? MASK : b[1]), meta);
       bossGrid.appendChild(card);
