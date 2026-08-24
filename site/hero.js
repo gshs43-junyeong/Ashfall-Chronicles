@@ -15,7 +15,9 @@
   var ctx = canvas.getContext('2d', { alpha: false });
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var BASE = 'play/assets/';
+  /* 페이지가 site/home/ 안에 있으므로 한 단계 올라가야 애셋 뿌리에 닿는다.
+   * '../' 로 두면 주소가 /home 이든 /home/ 이든 똑같이 사이트 루트로 풀린다. */
+  var BASE = '../play/assets/';
 
   /* 뒤에서 앞으로. speed 는 스크롤 배속, y 는 바닥에서 띄울 높이(논리 픽셀). */
   var LAYERS = [

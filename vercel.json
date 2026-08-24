@@ -3,6 +3,12 @@
   "buildCommand": "bash tools/build-site.sh",
   "outputDirectory": "site",
   "framework": null,
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/", "destination": "/home", "permanent": false },
+    { "source": "/index.html", "destination": "/home", "permanent": true },
+    { "source": "/download.html", "destination": "/download", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/play/assets/(.*)",
