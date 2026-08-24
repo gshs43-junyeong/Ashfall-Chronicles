@@ -120,16 +120,6 @@ button:active{transform:translateY(1px)}
 .slot.r1{border-color:#3a6a3a}.slot.r2{border-color:#2f5f96}.slot.r3{border-color:#6a3f9c}
 .slot.r4{border-color:#9c6218}.slot.r5{border-color:#9c2f34}
 
-#hint{position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:10.5px;color:#6b6759;
-  padding-bottom:2px;white-space:nowrap}
-@media (max-width:1080px){#hint{display:none}}
-@media (max-height:620px){#hint{display:none}}
-/* 사이트 임베드(html.embedded — game.js 참고)에서는 안내줄도, 그걸 켜는 설정도 내놓지
-   않는다. 그 페이지에 조작법이 따로 적혀 있다. 켤 수 없는 스위치를 남겨 두면 눌러도
-   아무 일이 없어 더 헷갈린다. */
-html.embedded #hint,
-html.embedded #set-hint-row{display:none}
-
 /* ================= 패널 ================= */
 #panels{position:absolute;inset:0;pointer-events:none}
 .panel{
