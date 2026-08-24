@@ -17,7 +17,9 @@
 | `game/` | 게임 본체. 이 폴더만 있으면 정적 서버 위에서 그대로 돌아갑니다. |
 | `launchers/windows/` | `AshfallChronicles.bat` + Windows용 README |
 | `launchers/macos/` | `AshfallChronicles.command`, `launch.sh` + macOS용 README |
-| `site/` | GitHub Pages 배포 소스. 빌드할 때 `game/`이 `site/play/`로 복사됩니다. |
+| `site/` | 배포 사이트. 빌드할 때 `game/`이 `site/play/`로 복사됩니다. |
+| `site/home/` | 홈 페이지 — 주소는 `/home` (루트 `/`는 이쪽으로 넘깁니다) |
+| `site/download/` | 다운로드 페이지 — 주소는 `/download` |
 | `tools/` | 배포용 zip 빌드 스크립트 |
 | `.github/workflows/` | Release 자동 첨부, Pages 자동 배포 |
 

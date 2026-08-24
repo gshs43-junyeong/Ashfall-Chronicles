@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var ART = 'play/assets/';
+  var ART = '../play/assets/';
 
   /* 여기까지만 보여 주고 나머지는 ??? 로 가린다. 뒤 이야기는 직접 만나는 게 낫다.
    * 챕터는 서 장부터 제 4 장까지, 보스는 서리 마녀까지. */
