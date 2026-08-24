@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ashfall Chronicles — 별이 잠든 땅</title>
+<meta name="description" content="별 조각이 잠들면 세계는 자기가 무엇이었는지를 잊는다. 파고, 짓고, 싸우며 열다섯 개의 장을 건너는 2D 샌드박스 어드벤처. 브라우저에서 바로 플레이하세요.">
+<meta property="og:title" content="Ashfall Chronicles — 별이 잠든 땅">
+<meta property="og:description" content="별 조각이 잠들면 세계는 자기가 무엇이었는지를 잊는다. 열다섯 개의 장, 열두 번의 결착.">
+<meta property="og:image" content="https://ashfall-chronicles.vercel.app/play/assets/bg/title_key.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ashfall-chronicles.vercel.app/home">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://ashfall-chronicles.vercel.app/home">
+<link rel="icon" href="../play/assets/ui/cursor_pick.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="../home">
+      <span class="spark" aria-hidden="true"></span>
+      <span>Ashfall Chronicles</span>
+    </a>
+    <div class="nav-links">
+      <a href="../home" aria-current="page">홈</a>
+      <a href="../download">다운로드</a>
+      <a href="#play">바로 플레이</a>
+    </div>
+    <a class="nav-cta" href="../download">내려받기</a>
+  </div>
+</nav>
+
+<!-- ============ 히어로 ============ -->
+<header class="hero">
+  <div class="hero-canvas-wrap" aria-hidden="true">
+    <canvas id="heroCanvas"></canvas>
+  </div>
+  <div class="wrap-wide hero-inner">
+    <p class="eyebrow">v1.0.5</p>
+    <h1>Ashfall Chronicles</h1>
+    <p class="subtitle">별이 잠든 땅</p>
+    <p class="tagline">별 조각은 홀로 남으면 잠들고, 잠들면 꿈을 꾼다.<br>그 꿈이 세계에게 자기가 무엇이었는지를 잊게 만든다.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary btn-lg" href="#play">지금 바로 플레이</a>
+      <a class="btn btn-lg" href="../download">내려받기</a>
+    </div>
+  </div>
+</header>
+
+<div class="figures">
+  <div class="fig"><span class="n">319</span><span class="l">종의 아이템</span></div>
+  <div class="fig"><span class="n">79</span><span class="l">종의 몬스터</span></div>
+  <div class="fig"><span class="n">22</span><span class="l">종의 기계</span></div>
+  <div class="fig"><span class="n">11</span><span class="l">개 지역</span></div>
+  <div class="fig"><span class="n">15</span><span class="l">개의 장</span></div>
+  <div class="fig"><span class="n">12</span><span class="l">번의 결착</span></div>
+</div>
+
+<main>
+
+<!-- ============ 전제 ============ -->
+<section id="premise">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">무슨 일이 있었나</p></div>
+    <div class="premise reveal">
+      <p class="lead">한밤중에 하늘이 갈라졌다. 떨어진 것은 돌이 아니었다 — 부딪히기 직전, 그것은 분명히 몸을 뒤틀어 피하려 했다.</p>
+      <p class="body">그것은 다섯 갈래 빛으로 부서져 흩어졌고, 그중 한 조각이 당신의 오른손에 박혔다. 눈을 떴을 때 세계는 색을 잃어가고 있었다. 사람들은 그것을 잿빛이라 불렀다.</p>
+      <p class="body">잿빛은 재가 아니다. 잠든 별 조각의 꿈이 주변 물질에게 <strong>"너는 무엇이었지?"</strong>를 잊게 만드는 것이다. 색이 빠지고, 형태가 흐려지고, 결국 아무것도 아닌 것이 된다.</p>
+      <p class="body">흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 무엇을 하는가 ============ -->
+<section id="loop">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">무엇을 하는 게임인가</p></div>
+    <h2>파고, 짓고, 끝까지 간다</h2>
+    <p class="sec-lede">테라리아식 2D 샌드박스입니다. 지형을 직접 깎아 길을 내고, 캔 재료로 장비를 만들고, 그 장비로 다음 지역을 엽니다. 나머지는 열어 보는 편이 낫기에 여기서는 뼈대만 적어 둡니다.</p>
+
+    <div class="feats">
+      <div class="feat reveal">
+        <span class="n">채굴 · 건설</span>
+        <h3>파낸 만큼 지어진다</h3>
+        <p>지형을 깎고 블록을 놓습니다. 작업 시설은 원하는 곳에 설치했다가 다시 걷어낼 수 있습니다.</p>
+      </div>
+      <div class="feat reveal">
+        <span class="n">전투</span>
+        <h3>싸우는 방식을 고른다</h3>
+        <p>근접 · 원거리 · 마법 세 갈래 중에서 키울 쪽을 정하고, 고른 것을 스킬 슬롯 네 칸(<kbd>Q</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>F</kbd>)에 걸어 씁니다. 부화시킨 펫도 곁에서 함께 싸웁니다.</p>
+      </div>
+      <div class="feat reveal">
+        <span class="n">탐험</span>
+        <h3>들어가면 길이 다르다</h3>
+        <p>지역마다 숨은 던전이 있습니다. 함정과 상자가 깔린 방을 지나 안쪽 끝에 닿으면, 거기서만 만날 수 있는 것이 기다립니다.</p>
+      </div>
+      <div class="feat reveal">
+        <span class="n">생산</span>
+        <h3>먹을 것은 직접 댄다</h3>
+        <p>밭을 갈아 작물을 기르고 물가에서 낚습니다. 거둔 것을 요리해 두면 던전을 돌지 않아도 보급이 끊기지 않습니다.</p>
+      </div>
+      <div class="feat reveal">
+        <span class="n">자동화</span>
+        <h3>손을 떼도 돌아간다</h3>
+        <p>전력을 대고 기계를 이어 붙여 생산 라인을 짭니다. 캐고, 나르고, 처리하고, 갈라 담는 일을 대신 시킬 수 있습니다.</p>
+      </div>
+      <div class="feat reveal">
+        <span class="n">마을</span>
+        <h3>돌아올 곳을 키운다</h3>
+        <p>여명 마을은 당신이 하는 일에 따라 자랍니다. 집이 서고 사람이 늘고, 죽어도 잃지 않는 것을 맡겨 둘 곳이 생깁니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 지역 띠 ============ -->
+<section id="regions">
+  <div class="wrap-wide">
+    <div class="sec-head"><p class="eyebrow">열한 곳</p></div>
+    <h2>서로 다른 땅을 지난다</h2>
+    <p class="sec-lede">지역마다 지형도 날씨도 사는 것도 다릅니다. 어떤 땅에는 비 대신 눈이 내리고, 어떤 물 위는 밟고 건널 수 있습니다.</p>
+
+    <div class="band band-region">
+      <canvas id="regionBand" aria-hidden="true"></canvas>
+      <p class="band-label" id="regionLabel">잿빛 숲</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 목표 ============ -->
+<section id="goals">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">무엇을 향해 가는가</p></div>
+    <h2>끝이 정해져 있는 샌드박스</h2>
+    <p class="sec-lede">자유롭게 파고 짓되, 갈 곳은 분명합니다. 장마다 목표가 주어지고 그것을 끝내야 다음 장이 열립니다.</p>
+
+    <div class="goals">
+      <div class="goal reveal"><span class="k">토벌</span><span class="v">33</span><p>지역마다 다른 적을 정해진 수만큼 정리해 길을 엽니다.</p></div>
+      <div class="goal reveal"><span class="k">수집</span><span class="v">19</span><p>다음 장비에 필요한 재료를 캐고 모읍니다.</p></div>
+      <div class="goal reveal"><span class="k">결착</span><span class="v">12</span><p>각 지역의 주인과 맞붙습니다. 아래에 전부 있습니다.</p></div>
+      <div class="goal reveal"><span class="k">제작</span><span class="v">10</span><p>정해진 물건을 직접 만들어야 넘어갑니다.</p></div>
+      <div class="goal reveal"><span class="k">잠수</span><span class="v">4</span><p>특정 깊이까지 파고 내려갑니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 몬스터 ============ -->
+<section id="beasts">
+  <div class="wrap-wide">
+    <div class="sec-head"><p class="eyebrow">일흔아홉 종</p></div>
+    <h2>길에서 마주치는 것들</h2>
+    <p class="sec-lede">지역마다 다른 것이 나옵니다. 아래는 그중 스물두 종입니다.</p>
+
+    <div class="band band-beast">
+      <canvas id="beastBand" aria-hidden="true"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 보스 ============ -->
+<section id="bosses">
+  <div class="wrap-wide">
+    <div class="sec-head"><p class="eyebrow">열두 번의 결착</p></div>
+    <h2>길을 막고 선 것들</h2>
+    <p class="sec-lede">각 지역의 끝에는 그 지역을 그렇게 만든 존재가 있습니다. 초반 넷만 밝혀 두었고 나머지는 형체만 남겼습니다 — 무엇인지는 직접 마주치는 편이 낫습니다.</p>
+    <div class="bosses" id="bossGrid"></div>
+  </div>
+</section>
+
+<!-- ============ 챕터 ============ -->
+<section id="chapters">
+  <div class="wrap-wide">
+    <div class="sec-head"><p class="eyebrow">여정</p></div>
+    <h2>열다섯 개의 장</h2>
+    <p class="sec-lede">제 4 장까지만 제목을 적어 두었습니다. 그 뒤로는 어디로 가는지 미리 알지 않는 편이 낫습니다.</p>
+    <div class="chapters" id="chapterGrid"></div>
+  </div>
+</section>
+
+<!-- ============ 플레이 ============ -->
+<section id="play">
+  <div class="wrap-wide">
+    <div class="sec-head"><p class="eyebrow">설치 없이</p></div>
+    <h2>지금 이 페이지에서</h2>
+    <p class="sec-lede">내려받은 버전과 완전히 같은 게임입니다. 계정도, 설치도 필요 없습니다.</p>
+
+    <div class="stage" id="stage">
+      <button class="stage-cover pixel" id="stageCover" type="button"
+              style="background-image:url('../play/assets/bg/title_key.png')">
+        <span class="play-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </span>
+        <span class="label">게임 시작</span>
+        <span class="hint">키보드로 조작합니다 · 소리가 나옵니다</span>
+      </button>
+    </div>
+
+    <div class="stage-mobile">
+      <p><strong>이 게임은 키보드로 조작합니다.</strong></p>
+      <p style="margin-top:8px">모바일에서는 플레이할 수 없습니다. PC에서 이 페이지를 다시 열어 주세요.</p>
+    </div>
+
+    <div class="alert" style="margin-top:22px">
+      <b class="h">저장에 대해</b>
+      진행 상황은 서버가 아니라 <strong>브라우저 안에</strong> 저장됩니다. 웹에서 한 저장과 내려받은 버전의 저장은 서로 다른 곳에 쌓이니, 이어서 하려면 같은 쪽을 계속 쓰세요.
+      자세한 내용은 <a href="../download#save">다운로드 페이지</a>에 있습니다.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ 하단 다운로드 유도 ============ -->
+<section class="getit">
+  <div class="wrap getit-inner">
+    <p class="eyebrow">내 컴퓨터에 두고 하기</p>
+    <h2>인터넷 없이, 계속 하려면</h2>
+    <p>내려받은 버전은 연결 없이 돌아가고, 이 폴더 밖 어디에도 파일을 설치하지 않습니다. 브라우저 데이터를 지워도 저장이 날아가지 않습니다.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary btn-lg" href="../download">다운로드 <span class="sz">56.3 MiB</span></a>
+      <a class="btn btn-lg" href="https://github.com/gshs43-junyeong/Ashfall-Chronicles">저장소 보기</a>
+    </div>
+    <p class="fine">Windows · macOS · 실행에 Python 3이 필요합니다</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-row">
+    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.0.5</span></p>
+    <nav class="foot-links">
+      <a href="../download">다운로드</a>
+      <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles">저장소</a>
+      <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases">릴리스</a>
+      <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/issues">문제 제보</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../hero.js"></script>
+<script src="../showcase.js"></script>
+<script src="../content.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ---- 히어로에서 게임 시작 ---- */
+  var cover = document.getElementById('stageCover');
+  if (cover) {
+    cover.addEventListener('click', function () {
+      var frame = document.createElement('iframe');
+      frame.src = '../play/index.html';
+      frame.title = 'Ashfall Chronicles — 별이 잠든 땅';
+      frame.allow = 'autoplay; fullscreen';
+      document.getElementById('stage').appendChild(frame);
+      cover.remove();
+      frame.focus();
+    });
+  }
+
+  /* ---- 스크롤 등장 ----
+   * 숨기기는 관찰자를 실제로 띄운 뒤에만 시작한다(html.anim).
+   * 그래도 관찰자가 끝내 발동하지 않는 경우가 있어 — 배경 탭으로 열렸다가
+   * 그대로 두는 식 — 몇 초 뒤 전부 드러내는 안전장치를 함께 둔다. */
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var targets = document.querySelectorAll('.reveal');
+
+  function revealAll() {
+    targets.forEach(function (el) { el.classList.add('in'); });
+  }
+
+  if (!reduced && 'IntersectionObserver' in window && !document.hidden) {
+    document.documentElement.classList.add('anim');
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px -12% 0px' });
+
+    targets.forEach(function (el, i) {
+      el.style.transitionDelay = (i % 6) * 55 + 'ms';
+      io.observe(el);
+    });
+
+    setTimeout(revealAll, 5000);
+  } else {
+    revealAll();
+  }
+})();
+</script>
+</body>
+</html>
