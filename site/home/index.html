@@ -198,6 +198,28 @@
         <span class="label">게임 시작</span>
         <span class="hint">키보드로 조작합니다 · 소리가 나옵니다</span>
       </button>
+
+      <!-- 전체 화면일 때만 뜬다. 게임 HUD 가 왼쪽 위(체력)·오른쪽 위(시계·미니맵)·
+           아래 가운데(핫바)를 쓰고 있어서 비어 있는 자리는 오른쪽 아래뿐이다. -->
+      <button class="fs-exit" id="fsExit" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>
+        </svg>
+        <span>전체 화면 나가기</span>
+      </button>
+    </div>
+
+    <div class="stage-bar" id="stageBar" hidden>
+      <p class="stage-note">
+        전체 화면에서는 <kbd>Esc</kbd> 가 전체 화면을 빠져나오는 데 쓰입니다.
+        일시정지를 열려면 먼저 전체 화면을 나오세요.
+      </p>
+      <button class="btn btn-sm" id="fsBtn" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
+        </svg>
+        <span id="fsLabel">전체 화면</span>
+      </button>
     </div>
 
     <div class="stage-mobile">
@@ -248,19 +270,67 @@
 (function () {
   'use strict';
 
-  /* ---- 히어로에서 게임 시작 ---- */
+  /* ---- 게임 시작과 전체 화면 ---- */
+  var stage = document.getElementById('stage');
   var cover = document.getElementById('stageCover');
-  if (cover) {
+  var bar = document.getElementById('stageBar');
+  var fsBtn = document.getElementById('fsBtn');
+  var fsExit = document.getElementById('fsExit');
+  var fsLabel = document.getElementById('fsLabel');
+  var frame = null;
+
+  /* 전체 화면 API 는 접두사가 갈린다. 사파리는 아직 webkit- 만 있다. */
+  function fsElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+  function fsSupported() {
+    if (!stage) return false;
+    /* 권한 정책으로 막혀 있으면 호출해도 거절만 당한다 — 버튼을 아예 내놓지 않는다 */
+    if (document.fullscreenEnabled === false || document.webkitFullscreenEnabled === false) return false;
+    return !!(stage.requestFullscreen || stage.webkitRequestFullscreen);
+  }
+  function enterFs() {
+    var r = stage.requestFullscreen ? stage.requestFullscreen()
+          : stage.webkitRequestFullscreen ? stage.webkitRequestFullscreen() : null;
+    /* 거절될 수 있다(권한 정책, 사용자 제스처 없음). 조용히 넘긴다 — 창 모드로 계속 된다. */
+    if (r && r['catch']) r['catch'](function () {});
+  }
+  function leaveFs() {
+    if (document.exitFullscreen) return document.exitFullscreen();
+    if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+  }
+
+  function syncFs() {
+    var on = fsElement() === stage;
+    if (fsLabel) fsLabel.textContent = on ? '전체 화면 나가기' : '전체 화면';
+    if (fsBtn) fsBtn.setAttribute('aria-pressed', String(on));
+    /* 들어가고 나올 때마다 초점을 게임으로 돌려준다 — 버튼에 초점이 남아 있으면
+     * 키 입력이 게임까지 가지 않고 스페이스가 버튼을 누른다. */
+    if (frame) frame.focus();
+  }
+
+  function toggleFs() {
+    if (fsElement() === stage) leaveFs(); else enterFs();
+  }
+
+  if (cover && stage) {
     cover.addEventListener('click', function () {
-      var frame = document.createElement('iframe');
+      frame = document.createElement('iframe');
       frame.src = '../play/index.html';
       frame.title = 'Ashfall Chronicles — 별이 잠든 땅';
       frame.allow = 'autoplay; fullscreen';
-      document.getElementById('stage').appendChild(frame);
+      stage.appendChild(frame);
       cover.remove();
       frame.focus();
+      /* 표지를 보고 있을 때는 전체 화면으로 갈 이유가 없다. 시작한 다음에 꺼낸다. */
+      if (bar && fsSupported()) bar.hidden = false;
     });
   }
+
+  if (fsBtn) fsBtn.addEventListener('click', toggleFs);
+  if (fsExit) fsExit.addEventListener('click', toggleFs);
+  document.addEventListener('fullscreenchange', syncFs);
+  document.addEventListener('webkitfullscreenchange', syncFs);
 
   /* ---- 스크롤 등장 ----
    * 숨기기는 관찰자를 실제로 띄운 뒤에만 시작한다(html.anim).

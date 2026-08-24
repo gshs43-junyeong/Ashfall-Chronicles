@@ -285,6 +285,42 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
 .stage-cover:hover .play-mark svg{fill:#1a0d07;}
 .stage-cover .label{font-weight:600;font-size:1.05rem;}
 .stage-cover .hint{font-size:.82rem;color:var(--bone-dim);}
+
+/* ---- 전체 화면 ---- */
+/* 무대 아래 줄. 게임이 시작되기 전에는 JS 가 hidden 으로 접어 둔다. */
+.stage-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:18px;flex-wrap:wrap;margin-top:14px;
+}
+.stage-bar[hidden]{display:none;}
+.stage-note{font-size:.8rem;color:var(--bone-faint);margin:0;max-width:62ch;}
+.btn-sm{padding:9px 15px;font-size:.85rem;gap:8px;}
+.btn-sm svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2;}
+
+/* 전체 화면에서는 16:9 틀을 풀고 화면을 다 쓴다.
+   :fullscreen 과 :-webkit-full-screen 은 반드시 규칙을 나눠 써야 한다 —
+   한 선택자에 묶으면 둘 중 하나를 모르는 브라우저가 규칙 전체를 버린다. */
+#stage:fullscreen{aspect-ratio:auto;width:100%;height:100%;margin:0;border:0;}
+#stage:-webkit-full-screen{aspect-ratio:auto;width:100%;height:100%;margin:0;border:0;}
+
+/* 전체 화면 중에만 뜨는 나가기 버튼. 게임을 가리지 않게 평소엔 흐리게 두고
+   마우스를 올리거나 초점이 오면 또렷해진다. */
+.fs-exit{
+  /* 아래로 더 붙이면 타이틀 화면의 버전 표기(v1.0.5)와 겹친다 */
+  display:none;position:absolute;right:14px;bottom:42px;z-index:2;
+  align-items:center;gap:8px;padding:8px 13px;
+  background:rgba(13,11,10,.72);border:1px solid rgba(214,196,171,.22);
+  color:var(--bone);font-family:inherit;font-size:.8rem;font-weight:600;
+  cursor:pointer;opacity:.3;
+  transition:opacity .18s,background .18s,border-color .18s;
+}
+.fs-exit:hover,.fs-exit:focus-visible{
+  opacity:1;background:rgba(13,11,10,.94);border-color:var(--bone-faint);
+}
+.fs-exit svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:2;}
+#stage:fullscreen .fs-exit{display:inline-flex;}
+#stage:-webkit-full-screen .fs-exit{display:inline-flex;}
+
 .stage-mobile{
   display:none;border:1px solid var(--line);background:var(--soot);
   padding:34px 24px;text-align:center;color:var(--bone-dim);font-size:.92rem;margin-top:32px;
@@ -389,7 +425,7 @@ html.anim .reveal.in{opacity:1;transform:none;}
 @media (max-width:760px){
   section{padding:64px 0;}
   .hero-inner{min-height:auto;padding:92px 0 52px;}
-  .stage{display:none;}
+  .stage,.stage-bar{display:none;}
   .stage-mobile{display:block;}
   .nav-links a{padding:7px 10px;font-size:.84rem;}
   .nav-inner{gap:12px;}
