@@ -6,18 +6,9 @@ const SAVE_SLOTS = 3;
 const slotKey = (i) => `${SAVE_KEY}_slot${i}`;
 const SET_KEY = 'ashfall_settings';
 /* 설정 기본값. 세이브와 별개로 저장되므로 새 게임을 시작해도 유지된다 */
-const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1, hint: 1 };
+const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1 };
 // 완전한 암흑(0)은 지도에 남기지 않는다. 1 이상이면 횃불·용암·햇빛 등으로 최소한 보이는 상태다.
 const MAP_REVEAL_LIGHT = 1;
-
-/* 사이트에 얹힌 판인지. 홈의 "지금 이 페이지에서"는 이 게임을 iframe 으로 띄우는데,
- * 그 페이지에는 조작법이 따로 적혀 있어서 화면 아래 안내줄이 군더더기가 된다.
- * 내려받아 실행하면 최상위 문서라 여기서 false 가 되고 안내줄은 그대로 나온다.
- * (교차 출처라 window.top 접근이 막히는 경우도 얹힌 것으로 본다) */
-const EMBEDDED = (function () {
-  try { return window.self !== window.top; } catch (e) { return true; }
-})();
-if (EMBEDDED) document.documentElement.classList.add('embedded');
 
 const G = {
   cv: null, ctx: null, mm: null, mmx: null,
@@ -2219,7 +2210,6 @@ const G = {
     if (window.Sfx) Sfx.vol = s.sfx / 100;
     if (window.Ambient) Ambient.vol = 0.45 * (s.sfx / 100);
     const mm = $('#minimap'); if (mm) mm.style.display = s.minimap ? '' : 'none';
-    const hint = $('#hint'); if (hint) hint.style.display = s.hint ? '' : 'none';
     UI.syncSettings();
   },
   setOpt(k, v) {

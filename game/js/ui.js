@@ -112,7 +112,7 @@ const UI = {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('input', () => G.setOpt(key, +el.value));
     }
-    for (const [key, id] of [['dmgnum', 'set-dmgnum'], ['minimap', 'set-minimap'], ['hint', 'set-hint']]) {
+    for (const [key, id] of [['dmgnum', 'set-dmgnum'], ['minimap', 'set-minimap']]) {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('change', () => G.setOpt(key, el.checked ? 1 : 0));
     }
@@ -132,7 +132,7 @@ const UI = {
     set('set-music', s.music); txt('set-music-v', s.music);
     set('set-sfx', s.sfx); txt('set-sfx-v', s.sfx);
     set('set-shake', s.shake); txt('set-shake-v', s.shake);
-    chk('set-dmgnum', s.dmgnum); chk('set-minimap', s.minimap); chk('set-hint', s.hint);
+    chk('set-dmgnum', s.dmgnum); chk('set-minimap', s.minimap);
   },
 
   /** 아이템이 아닌 순수 텍스트 툴팁(휴지통 안내 등) */
