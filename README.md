@@ -1,4 +1,6 @@
-# 별이 잠든 땅 — Ashfall Chronicles
+# Ashfall Chronicles
+
+> 별이 잠든 땅
 
 테라리아식 2D 샌드박스 위에 스토리·RPG 성장·무기/능력 빌드를 얹은 어드벤처 게임.
 순수 HTML5 + JavaScript로 만들어졌고, 브라우저 안에서 돌아갑니다.

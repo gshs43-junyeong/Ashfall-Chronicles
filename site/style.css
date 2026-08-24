@@ -112,9 +112,19 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
 }
 .hero-inner > *{position:relative;}
 .hero h1{margin:14px 0 0;text-shadow:0 3px 34px rgba(13,11,10,.9);}
+/* 부제 — 주 이름 바로 아래. 잔불색으로 한 번만 튀게 둔다. */
+.hero .subtitle{
+  font-family:Hahmlet,serif;font-weight:500;
+  font-size:clamp(1.15rem,2.8vw,1.6rem);
+  color:var(--ember);margin-top:10px;letter-spacing:-.01em;
+  text-shadow:0 2px 24px rgba(13,11,10,.95);
+}
+/* 이름(세리프) → 부제(세리프·잔불) 아래에까지 세리프를 쓰면 세 단이 뭉갠다.
+   설명 줄만 산세리프로 내려 위계를 갈랐다. */
 .hero .tagline{
-  font-family:Hahmlet,serif;font-size:clamp(1.05rem,2.3vw,1.32rem);
-  color:var(--bone-dim);margin-top:18px;max-width:36ch;
+  font-family:"IBM Plex Sans KR",sans-serif;
+  font-size:clamp(.95rem,2vw,1.08rem);line-height:1.7;
+  color:var(--bone-dim);margin-top:16px;max-width:42ch;
   text-shadow:0 2px 18px rgba(13,11,10,.9);
 }
 .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;}
@@ -381,6 +391,13 @@ html.anim .reveal.in{opacity:1;transform:none;}
   .nav-inner{gap:12px;}
   .getit{padding:64px 0;}
 }
-@media (max-width:420px){
-  .nav-brand span:last-child{display:none;}
+/* 좁은 화면에서 자리가 모자라면 사이트 이름이 아니라 중복되는 것부터 접는다.
+   "바로 플레이"는 히어로에 큰 버튼으로 또 있고, CTA "내려받기"는 바로 옆
+   "다운로드" 링크와 목적지가 같다. 둘 다 빼면 이름이 온전히 남는다. */
+@media (max-width:560px){
+  .nav-links a[href$="#play"]{display:none;}
+}
+@media (max-width:480px){
+  .nav-cta{display:none;}
+  .nav-inner{gap:14px;}
 }
