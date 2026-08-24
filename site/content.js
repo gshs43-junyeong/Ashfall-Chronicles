@@ -6,6 +6,12 @@
 
   var ART = 'play/assets/';
 
+  /* 여기까지만 보여 주고 나머지는 ??? 로 가린다. 뒤 이야기는 직접 만나는 게 낫다.
+   * 챕터는 서 장부터 제 4 장까지, 보스는 서리 마녀까지. */
+  var REVEAL_CHAPTERS = 5;
+  var REVEAL_BOSSES = 4;
+  var MASK = '???';
+
   /* [id, 장 표기, 제목, 한 줄, 배경 파일] */
   var CHAPTERS = [
     [0,  '서 장',            '떨어진 별',              '별이 부서진 밤',                        'chapter_0_fallen_star'],
@@ -56,17 +62,19 @@
   /* ---- 챕터 ---- */
   var chapterGrid = document.getElementById('chapterGrid');
   if (chapterGrid) {
-    CHAPTERS.forEach(function (c) {
-      var card = el('article', 'ch reveal');
+    CHAPTERS.forEach(function (c, i) {
+      var locked = i >= REVEAL_CHAPTERS;
+      var card = el('article', 'ch reveal' + (locked ? ' ch--locked' : ''));
 
       var art = el('div', 'ch-art');
+      /* 잠긴 장도 그림은 깔되 CSS 로 흐린다. 분위기는 남고 내용은 안 읽힌다. */
       art.style.backgroundImage = "url('" + ART + "bg/" + c[4] + ".png')";
 
       var body = el('div', 'ch-body');
       body.append(
-        el('span', 'ch-sub', c[1]),
-        el('h3', 'ch-title', c[2]),
-        el('p', 'ch-line', c[3])
+        el('span', 'ch-sub', c[1]),                       /* 몇 장인지는 가리지 않는다 */
+        el('h3', 'ch-title', locked ? MASK : c[2]),
+        el('p', 'ch-line', locked ? '직접 도착해서 확인하세요' : c[3])
       );
 
       card.append(art, body);
@@ -77,7 +85,7 @@
   /* ---- 보스 ---- */
   var BOX_H = 78;   /* 카드 안 그림 높이(px). 원본 비율을 지키며 이 높이에 맞춘다. */
 
-  function drawFirstFrame(canvas, file, fw, fh) {
+  function drawFirstFrame(canvas, file, fw, fh, silhouette) {
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var ratio = Math.min(BOX_H / (fh * BOSS_SCALE), 1);
     var w = Math.round(fw * BOSS_SCALE * ratio);
@@ -95,25 +103,37 @@
     img.onload = function () {
       ctx.drawImage(img, 0, 0, fw * BOSS_SCALE, fh * BOSS_SCALE,
                     0, 0, canvas.width, canvas.height);
+
+      /* 아직 만나지 않은 보스는 형체만 남긴다. source-atop 이라 이미 그린 픽셀
+       * 위에만 칠해지고 투명한 배경은 건드리지 않는다 — 윤곽이 그대로 남는다. */
+      if (silhouette) {
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = '#3a322d';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'source-over';
+      }
     };
     img.src = ART + 'boss/' + file + '.png';
   }
 
   var bossGrid = document.getElementById('bossGrid');
   if (bossGrid) {
-    BOSSES.forEach(function (b) {
-      var card = el('article', 'boss reveal');
+    BOSSES.forEach(function (b, i) {
+      var locked = i >= REVEAL_BOSSES;
+      var card = el('article', 'boss reveal' + (locked ? ' boss--locked' : ''));
 
       var art = el('div', 'boss-art');
       var canvas = document.createElement('canvas');
       canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', b[1]);
+      canvas.setAttribute('aria-label', locked ? '아직 만나지 않은 보스' : b[1]);
       art.appendChild(canvas);
-      drawFirstFrame(canvas, b[0], b[4], b[5]);
+      drawFirstFrame(canvas, b[0], b[4], b[5], locked);
 
-      var meta = el('span', 'boss-ch', b[2] + ' · ' + b[3].toLocaleString('ko-KR') + ' HP');
+      /* 체력은 가리지 않는다 — 이름 없이 숫자만 커지는 게 오히려 예고가 된다. */
+      var meta = el('span', 'boss-ch',
+        (locked ? MASK : b[2]) + ' · ' + b[3].toLocaleString('ko-KR') + ' HP');
 
-      card.append(art, el('h3', 'boss-name', b[1]), meta);
+      card.append(art, el('h3', 'boss-name', locked ? MASK : b[1]), meta);
       bossGrid.appendChild(card);
     });
   }
