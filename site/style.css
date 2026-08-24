@@ -219,6 +219,21 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
 .boss-name{font-family:Hahmlet,serif;font-weight:700;font-size:.92rem;line-height:1.35;}
 .boss-ch{font-family:"IBM Plex Mono",monospace;font-size:.64rem;letter-spacing:.08em;color:var(--bone-faint);}
 
+/* 아직 만나지 않은 것 — 실루엣은 캔버스에서 칠하고, 여기서는 글자만 죽인다 */
+.boss--locked .boss-name,
+.ch--locked .ch-title{
+  font-family:"IBM Plex Mono",monospace;
+  letter-spacing:.22em;
+  color:var(--bone-faint);
+}
+.boss--locked .boss-art canvas{filter:none;opacity:.85;}
+.ch--locked .ch-art{
+  filter:blur(7px) brightness(.42) saturate(.35);
+  transform:scale(1.09);       /* 흐림 때문에 가장자리가 비는 것을 덮는다 */
+}
+.ch--locked .ch-line{color:var(--bone-faint);font-style:normal;opacity:.75;}
+.ch--locked .ch-sub{color:var(--bone-faint);}
+
 /* ================= 기능 ================= */
 .feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:32px;}
 .feat{background:var(--soot);padding:24px;}
