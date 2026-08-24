@@ -188,12 +188,15 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
   opacity:0;transition:opacity .6s ease;
 }
 .band canvas.is-ready{opacity:1;}
-#regionBand{aspect-ratio:1280/260;}
+#regionBand{aspect-ratio:1280/320;}
 #beastBand{aspect-ratio:1280/170;}
+/* 지형을 덜 가리려고 띠 아래 전체를 덮던 그늘을 걷어냈다. 대신 이름표만 제 밑을 깐다. */
 .band-label{
-  position:absolute;left:20px;bottom:16px;
+  position:absolute;left:16px;bottom:14px;
+  padding:6px 14px 7px;background:rgba(13,11,10,.72);
+  border:1px solid rgba(214,196,171,.16);backdrop-filter:blur(3px);
   font-family:Hahmlet,serif;font-weight:700;font-size:1.15rem;
-  color:var(--bone);text-shadow:0 2px 16px rgba(13,11,10,.95);
+  color:var(--bone);text-shadow:0 2px 10px rgba(13,11,10,.9);
   pointer-events:none;
 }
 .band-label::before{
@@ -201,9 +204,10 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
   background:var(--ember);margin-right:10px;vertical-align:middle;
 }
 @media (max-width:600px){
-  #regionBand{aspect-ratio:1280/420;}
-  #beastBand{aspect-ratio:1280/280;}
-  .band-label{font-size:1rem;left:14px;bottom:12px;}
+  /* 좁은 화면에서는 showcase.js 가 논리 폭을 640 으로 낮춘다. 비율도 같이 맞춘다. */
+  #regionBand{aspect-ratio:640/280;}
+  #beastBand{aspect-ratio:640/180;}
+  .band-label{font-size:1rem;left:12px;bottom:10px;padding:5px 11px 6px;}
 }
 
 /* ================= 보스 ================= */
