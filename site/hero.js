@@ -28,6 +28,10 @@
 
   var PLAYER = { file: 'char/player.png', fw: 80, fh: 160, walk: [2, 3, 4, 5], fps: 9 };
 
+  /* 플레이어가 설 가로 위치(논리 폭에 대한 비율). 좁아지면 글이 폭을 다 쓰고 버튼도
+   * 줄바꿈되므로 더 바깥으로 민다. resize 때마다 다시 잡는다. */
+  var PLAYER_X = 0.68;
+
   /* 논리 좌표계. 실제 픽셀은 DPR 만큼 더 쓰고, CSS 크기에 맞춰 늘린다. */
   var W = 1280, H = 480;
   var GROUND = 400;
@@ -66,6 +70,7 @@
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var rect = canvas.getBoundingClientRect();
     if (!rect.width) return;
+    PLAYER_X = rect.width < 760 ? 0.90 : 0.68;
     canvas.width = Math.round(rect.width * dpr);
     canvas.height = Math.round(rect.height * dpr);
     /* 논리 좌표를 CSS 폭에 맞춘다 — 세로는 비율 유지, 아래를 기준으로 붙인다. */
@@ -93,7 +98,9 @@
     var frame = PLAYER.walk[Math.floor(t * PLAYER.fps) % PLAYER.walk.length];
     var scale = 0.92;
     var w = PLAYER.fw * scale, h = PLAYER.fh * scale;
-    var x = W * 0.19;
+    /* 글 반대쪽. 왼쪽(0.19)에 두었더니 제목·설명 줄과 버튼 상자에 그대로 파묻혔다.
+     * 히어로 글은 전부 왼쪽에 붙으므로 오른쪽 트인 자리로 옮긴다. */
+    var x = W * PLAYER_X;
     /* 걷는 동안 아주 살짝 위아래로 흔들린다 — 게임의 걷기 모션과 같은 리듬 */
     var bob = Math.sin(t * PLAYER.fps * Math.PI) * 1.6;
     var y = GROUND - h + 12 + bob;

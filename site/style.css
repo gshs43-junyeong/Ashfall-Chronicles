@@ -105,9 +105,11 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
   display:flex;flex-direction:column;justify-content:flex-end;
   padding:120px 0 68px;
 }
+/* 글을 읽히게 하는 그늘. 글은 왼쪽에만 있으므로 왼쪽에서만 짙고 오른쪽은 놓아 준다 —
+   넓게 퍼뜨리면 오른쪽에서 걷는 플레이어까지 함께 어두워진다. */
 .hero-inner::before{
   content:"";position:absolute;inset:-40px -40px 0;
-  background:radial-gradient(120% 80% at 22% 78%,rgba(13,11,10,.86) 0%,rgba(13,11,10,.35) 55%,transparent 78%);
+  background:radial-gradient(78% 74% at 14% 78%,rgba(13,11,10,.9) 0%,rgba(13,11,10,.46) 42%,transparent 72%);
   pointer-events:none;
 }
 .hero-inner > *{position:relative;}
