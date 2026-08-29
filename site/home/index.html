@@ -45,6 +45,7 @@
     <h1>Ashfall Chronicles</h1>
     <p class="subtitle">별이 잠든 땅</p>
     <p class="tagline">별 조각은 홀로 남으면 잠들고, 잠들면 꿈을 꾼다.<br>그 꿈이 세계에게 자기가 무엇이었는지를 잊게 만든다.</p>
+    <p class="hero-what">파고, 짓고, 싸우는 2D 샌드박스입니다. 다만 <strong>끝이 있습니다</strong> — 열다섯 개의 장을 지나면 이야기가 닫힙니다.</p>
     <div class="cta-row">
       <a class="btn btn-primary btn-lg" href="#play">지금 바로 플레이</a>
       <a class="btn btn-lg" href="../download">내려받기</a>
@@ -52,16 +53,106 @@
   </div>
 </header>
 
-<div class="figures">
-  <div class="fig"><span class="n">319</span><span class="l">종의 아이템</span></div>
-  <div class="fig"><span class="n">79</span><span class="l">종의 몬스터</span></div>
-  <div class="fig"><span class="n">22</span><span class="l">종의 기계</span></div>
-  <div class="fig"><span class="n">11</span><span class="l">개 지역</span></div>
-  <div class="fig"><span class="n">15</span><span class="l">개의 장</span></div>
-  <div class="fig"><span class="n">12</span><span class="l">번의 결착</span></div>
-</div>
 
 <main>
+
+<!-- ============ 플레이 ============ -->
+<section id="play">
+  <div class="wrap-wide">
+    <div class="sec-head"><p class="eyebrow">읽기 전에, 해 보세요</p></div>
+    <h2>지금 이 페이지에서</h2>
+    <p class="sec-lede">아래 화면이 게임 전체입니다. 내려받은 것과 같은 판이고, 설치도 계정도 없습니다.</p>
+
+    <div class="stage" id="stage">
+      <button class="stage-cover pixel" id="stageCover" type="button"
+              style="background-image:url('../play/assets/bg/title_key.png')">
+        <span class="play-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </span>
+        <span class="label">게임 시작</span>
+        <span class="hint">키보드로 조작합니다 · 소리가 나옵니다</span>
+      </button>
+
+      <!-- 전체 화면일 때만 뜬다. 게임 HUD 가 왼쪽 위(체력)·오른쪽 위(시계·미니맵)·
+           아래 가운데(핫바)를 쓰고 있어서 비어 있는 자리는 오른쪽 아래뿐이다. -->
+      <button class="fs-exit" id="fsExit" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>
+        </svg>
+        <span>전체 화면 나가기</span>
+      </button>
+    </div>
+
+    <div class="stage-bar" id="stageBar" hidden>
+      <p class="stage-note">
+        전체 화면에서는 <kbd>Esc</kbd> 가 전체 화면을 빠져나오는 데 쓰입니다.
+        일시정지를 열려면 먼저 전체 화면을 나오세요.
+      </p>
+      <button class="btn btn-sm" id="fsBtn" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
+        </svg>
+        <span id="fsLabel">전체 화면</span>
+      </button>
+    </div>
+
+    <div class="stage-mobile">
+      <p><strong>이 게임은 키보드로 조작합니다.</strong></p>
+      <p style="margin-top:8px">모바일에서는 플레이할 수 없습니다. PC에서 이 페이지를 다시 열어 주세요.</p>
+    </div>
+
+    <p class="stage-fine">진행 상황은 이 브라우저 안에 저장됩니다 ·
+      <a href="../download#save">저장에 대해 자세히</a></p>
+  </div>
+</section>
+
+
+<!-- ============ 스크린샷 ============ -->
+<section id="shots">
+  <div class="wrap-wide">
+    <div class="sec-head"><p class="eyebrow">실제 화면</p></div>
+    <h2>이렇게 생겼습니다</h2>
+    <p class="sec-lede">손대지 않은 플레이 화면입니다. 한 세계를 끝에서 끝까지 걸으며 지역마다 한 장씩 찍었습니다.</p>
+
+    <div class="shots">
+      <figure class="shot reveal">
+        <img src="../shots/forest.png" width="960" height="405"
+             alt="판잣집과 작업대가 놓인 베이스캠프 광장, 잿빛 숲의 마른 나무들">
+        <figcaption>잿빛 숲 · 베이스캠프</figcaption>
+      </figure>
+      <figure class="shot reveal">
+        <img src="../shots/snow.png" width="960" height="405" loading="lazy"
+             alt="눈 덮인 지표와 얼음 벽돌 구조물, 비 대신 눈이 내리는 하늘">
+        <figcaption>서리 지대</figcaption>
+      </figure>
+      <figure class="shot reveal">
+        <img src="../shots/jungle.png" width="960" height="405" loading="lazy"
+             alt="빽빽한 초록 캐노피와 굵은 덩굴 기둥이 늘어선 정글">
+        <figcaption>울림 정글</figcaption>
+      </figure>
+      <figure class="shot reveal">
+        <img src="../shots/desert.png" width="960" height="405" loading="lazy"
+             alt="모래 언덕과 멀리 보이는 사암 절벽, 지하로 뚫린 수직 갱도">
+        <figcaption>메마른 사구</figcaption>
+      </figure>
+      <figure class="shot reveal">
+        <img src="../shots/glowfen.png" width="960" height="405" loading="lazy"
+             alt="청록빛으로 빛나는 거대 버섯과 발광 이끼가 깔린 습지">
+        <figcaption>버섯 골짜기</figcaption>
+      </figure>
+      <figure class="shot reveal">
+        <img src="../shots/corrupt.png" width="960" height="405" loading="lazy"
+             alt="보랏빛 흑요석 지형과 뒤틀린 나무가 선 부패 지대">
+        <figcaption>부패한 땅</figcaption>
+      </figure>
+      <figure class="shot reveal">
+        <img src="../shots/cavern.png" width="960" height="405" loading="lazy"
+             alt="횃불로 밝힌 지하 동굴, 수정 광맥과 고인 물웅덩이">
+        <figcaption>큰 동굴</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
 
 <!-- ============ 전제 ============ -->
 <section id="premise">
@@ -72,6 +163,7 @@
       <p class="body">그것은 다섯 갈래 빛으로 부서져 흩어졌고, 그중 한 조각이 당신의 오른손에 박혔다. 눈을 떴을 때 세계는 색을 잃어가고 있었다. 사람들은 그것을 잿빛이라 불렀다.</p>
       <p class="body">잿빛은 재가 아니다. 잠든 별 조각의 꿈이 주변 물질에게 <strong>"너는 무엇이었지?"</strong>를 잊게 만드는 것이다. 색이 빠지고, 형태가 흐려지고, 결국 아무것도 아닌 것이 된다.</p>
       <p class="body">흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.</p>
+      <p class="body bridge">그리고 그 일은 결국 손으로 하는 일이다. 땅을 파고, 쓸 것을 만들고, 길을 막는 것과 싸운다.</p>
     </div>
   </div>
 </section>
@@ -81,7 +173,7 @@
   <div class="wrap">
     <div class="sec-head"><p class="eyebrow">무엇을 하는 게임인가</p></div>
     <h2>파고, 짓고, 끝까지 간다</h2>
-    <p class="sec-lede">테라리아식 2D 샌드박스입니다. 지형을 직접 깎아 길을 내고, 캔 재료로 장비를 만들고, 그 장비로 다음 지역을 엽니다. 나머지는 열어 보는 편이 낫기에 여기서는 뼈대만 적어 둡니다.</p>
+    <p class="sec-lede">지형을 직접 깎아 길을 내고, 캔 재료로 장비를 만들고, 그 장비로 다음 지역을 엽니다. 여느 샌드박스와 갈리는 지점은 둘입니다 — <strong>장마다 끝내야 할 목표가 있고</strong>, 손을 떼도 돌아가는 <strong>생산 라인을 직접 짭니다</strong>.</p>
 
     <div class="feats">
       <div class="feat reveal">
@@ -146,6 +238,16 @@
       <div class="goal reveal"><span class="k">제작</span><span class="v">10</span><p>정해진 물건을 직접 만들어야 넘어갑니다.</p></div>
       <div class="goal reveal"><span class="k">잠수</span><span class="v">4</span><p>특정 깊이까지 파고 내려갑니다.</p></div>
     </div>
+
+    <p class="fig-lede">세어 보면 이만큼입니다. 위 화면과 아래 목록이 이 숫자의 실물입니다.</p>
+<div class="figures figures-inline">
+  <div class="fig"><span class="n">319</span><span class="l">종의 아이템</span></div>
+  <div class="fig"><span class="n">79</span><span class="l">종의 몬스터</span></div>
+  <div class="fig"><span class="n">22</span><span class="l">종의 기계</span></div>
+  <div class="fig"><span class="n">11</span><span class="l">개 지역</span></div>
+  <div class="fig"><span class="n">15</span><span class="l">개의 장</span></div>
+  <div class="fig"><span class="n">12</span><span class="l">번의 결착</span></div>
+</div>
   </div>
 </section>
 
@@ -167,7 +269,7 @@
   <div class="wrap-wide">
     <div class="sec-head"><p class="eyebrow">열두 번의 결착</p></div>
     <h2>길을 막고 선 것들</h2>
-    <p class="sec-lede">각 지역의 끝에는 그 지역을 그렇게 만든 존재가 있습니다. 초반 넷만 밝혀 두었고 나머지는 형체만 남겼습니다 — 무엇인지는 직접 마주치는 편이 낫습니다.</p>
+    <p class="sec-lede">각 지역의 끝에는 그 지역을 그렇게 만든 존재가 있습니다. 전부 세 번 모습을 바꾸고, 형태가 바뀔 때마다 통하던 자리가 죽는 자리가 됩니다.</p>
     <div class="bosses" id="bossGrid"></div>
   </div>
 </section>
@@ -177,61 +279,8 @@
   <div class="wrap-wide">
     <div class="sec-head"><p class="eyebrow">여정</p></div>
     <h2>열다섯 개의 장</h2>
-    <p class="sec-lede">제 4 장까지만 제목을 적어 두었습니다. 그 뒤로는 어디로 가는지 미리 알지 않는 편이 낫습니다.</p>
+    <p class="sec-lede">1부에 해당하는 여덟 장을 그대로 펼쳐 두었습니다. 종장부터는 결말이라 가렸습니다.</p>
     <div class="chapters" id="chapterGrid"></div>
-  </div>
-</section>
-
-<!-- ============ 플레이 ============ -->
-<section id="play">
-  <div class="wrap-wide">
-    <div class="sec-head"><p class="eyebrow">설치 없이</p></div>
-    <h2>지금 이 페이지에서</h2>
-    <p class="sec-lede">내려받은 버전과 완전히 같은 게임입니다. 계정도, 설치도 필요 없습니다.</p>
-
-    <div class="stage" id="stage">
-      <button class="stage-cover pixel" id="stageCover" type="button"
-              style="background-image:url('../play/assets/bg/title_key.png')">
-        <span class="play-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </span>
-        <span class="label">게임 시작</span>
-        <span class="hint">키보드로 조작합니다 · 소리가 나옵니다</span>
-      </button>
-
-      <!-- 전체 화면일 때만 뜬다. 게임 HUD 가 왼쪽 위(체력)·오른쪽 위(시계·미니맵)·
-           아래 가운데(핫바)를 쓰고 있어서 비어 있는 자리는 오른쪽 아래뿐이다. -->
-      <button class="fs-exit" id="fsExit" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>
-        </svg>
-        <span>전체 화면 나가기</span>
-      </button>
-    </div>
-
-    <div class="stage-bar" id="stageBar" hidden>
-      <p class="stage-note">
-        전체 화면에서는 <kbd>Esc</kbd> 가 전체 화면을 빠져나오는 데 쓰입니다.
-        일시정지를 열려면 먼저 전체 화면을 나오세요.
-      </p>
-      <button class="btn btn-sm" id="fsBtn" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
-        </svg>
-        <span id="fsLabel">전체 화면</span>
-      </button>
-    </div>
-
-    <div class="stage-mobile">
-      <p><strong>이 게임은 키보드로 조작합니다.</strong></p>
-      <p style="margin-top:8px">모바일에서는 플레이할 수 없습니다. PC에서 이 페이지를 다시 열어 주세요.</p>
-    </div>
-
-    <div class="alert" style="margin-top:22px">
-      <b class="h">저장에 대해</b>
-      진행 상황은 서버가 아니라 <strong>브라우저 안에</strong> 저장됩니다. 웹에서 한 저장과 내려받은 버전의 저장은 서로 다른 곳에 쌓이니, 이어서 하려면 같은 쪽을 계속 쓰세요.
-      자세한 내용은 <a href="../download#save">다운로드 페이지</a>에 있습니다.
-    </div>
   </div>
 </section>
 
@@ -247,7 +296,7 @@
       <a class="btn btn-primary btn-lg" href="../download">다운로드 <span class="sz">56.3 MiB</span></a>
       <a class="btn btn-lg" href="https://github.com/gshs43-junyeong/Ashfall-Chronicles">저장소 보기</a>
     </div>
-    <p class="fine">Windows · macOS · 실행에 Python 3이 필요합니다</p>
+    <p class="fine">Windows · macOS</p>
   </div>
 </section>
 
