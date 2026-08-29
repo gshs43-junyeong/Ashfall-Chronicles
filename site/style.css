@@ -129,6 +129,15 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
   color:var(--bone-dim);margin-top:16px;max-width:42ch;
   text-shadow:0 2px 18px rgba(13,11,10,.9);
 }
+/* 시적인 태그라인 다음에 곧바로 스펙 시트로 넘어가면 톤이 끊긴다.
+   이 한 줄이 그 사이에서 "그래서 무슨 게임인가"를 평범한 말로 받아 준다. */
+.hero-what{
+  font-family:"IBM Plex Sans KR",sans-serif;
+  font-size:clamp(.9rem,1.8vw,1rem);line-height:1.7;
+  color:var(--bone);margin-top:18px;max-width:46ch;
+  text-shadow:0 2px 18px rgba(13,11,10,.95);
+}
+.hero-what strong{color:var(--ember);font-weight:600;}
 .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;}
 .badge{
   font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.06em;
@@ -157,6 +166,16 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
   display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));
   gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
 }
+/* 원래는 히어로 바로 아래 전면 띠였다. 페이지를 열자마자 큰 숫자부터 들이밀면
+   "양으로 때우나"로 읽히기 쉬워서, 실제 화면을 먼저 보여 준 뒤 목표 섹션 안으로
+   내려 맥락과 함께 두기로 했다. 그 자리에서는 테두리가 겹치므로 위아래 선을 뗀다. */
+.figures-inline{
+  border:1px solid var(--line);margin-top:18px;
+  grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+}
+.figures-inline .fig{padding:16px 12px;}
+.figures-inline .fig .n{font-size:1.35rem;}
+.fig-lede{margin-top:34px;font-size:.86rem;color:var(--bone-dim);}
 .fig{background:var(--ash);padding:22px 20px;text-align:center;}
 .fig .n{
   font-family:"IBM Plex Mono",monospace;font-size:1.75rem;font-weight:500;
@@ -287,6 +306,30 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
 .stage-cover:hover .play-mark svg{fill:#1a0d07;}
 .stage-cover .label{font-weight:600;font-size:1.05rem;}
 .stage-cover .hint{font-size:.82rem;color:var(--bone-dim);}
+.stage-fine{margin-top:16px;font-size:.82rem;color:var(--bone-faint);}
+.stage-fine a{color:var(--bone-dim);}
+
+/* ================= 스크린샷 ================= */
+/* 픽셀아트 게임에서 가장 강한 카드는 화면 그 자체다. 글과 숫자보다 앞에 둔다. */
+.shots{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
+  gap:18px;margin-top:32px;
+}
+.shot{margin:0;border:1px solid var(--line);background:var(--soot);}
+.shot img{
+  display:block;width:100%;height:auto;
+  image-rendering:pixelated;   /* 축소본이라도 픽셀 경계를 뭉개지 않는다 */
+  border-bottom:1px solid var(--line);
+}
+.shot figcaption{
+  padding:10px 14px 11px;font-size:.82rem;color:var(--bone-dim);
+  display:flex;align-items:center;gap:9px;
+}
+.shot figcaption::before{
+  content:"";width:5px;height:5px;background:var(--ember);flex:none;
+}
+/* 첫 장은 한 칸을 통째로 써서 크게 — 위에서 게임을 켜지 않은 사람도 여기서 한 번은 크게 본다 */
+.shots .shot:first-child{grid-column:1 / -1;}
 
 /* ---- 전체 화면 ---- */
 /* 무대 아래 줄. 게임이 시작되기 전에는 JS 가 hidden 으로 접어 둔다. */
