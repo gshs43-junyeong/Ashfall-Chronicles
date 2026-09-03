@@ -254,6 +254,18 @@
         <input type="range" id="set-shake" min="0" max="150" step="10"><b id="set-shake-v">100%</b></label>
       <label class="set-row chk"><span>피해 숫자</span><input type="checkbox" id="set-dmgnum"></label>
       <label class="set-row chk"><span>미니맵</span><input type="checkbox" id="set-minimap"></label>
+      <label class="set-row"><span>시야 범위</span>
+        <input type="range" id="set-view" min="70" max="140" step="5"><b id="set-view-v">100%</b></label>
+      <p class="set-note">낮추면 넓게, 높이면 크게 보입니다. 미니맵 범위는 그대로입니다.</p>
+
+      <div class="set-sub">알림</div>
+      <div id="set-notices"></div>
+
+      <div class="set-sub">조작키</div>
+      <p class="set-note">항목을 누르고 새 키를 누르세요. <b>Esc</b> 는 바꿀 수 없습니다.</p>
+      <div id="set-keys"></div>
+      <button id="set-keys-reset" class="set-reset">조작키만 기본값으로</button>
+
       <button id="set-reset" class="set-reset">기본값으로</button>
       <button id="btn-settings-close" class="set-close">닫기</button>
     </div>

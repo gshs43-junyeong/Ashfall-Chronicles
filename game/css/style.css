@@ -594,3 +594,28 @@ body.sprites-on #game.mining{cursor:url(../assets/ui/cursor_pick.png) 3 29, poin
   #skillbar{bottom:62px;gap:5px}
   #quest-tracker{display:none}
 }
+
+/* ================= 새 게임 폼 — 캐릭터 · 난이도 ================= */
+/* 여기서 고른 것은 되돌릴 수 없다(설정에 없다). 그래서 고르는 자리에 설명을 붙여 둔다. */
+.slot-card.wide{grid-column:1/-1}
+.nf-sec{color:var(--gold);font-size:11px;letter-spacing:.14em;margin:10px 0 6px}
+.nf-chars,.nf-modes{display:flex;flex-wrap:wrap;gap:6px}
+.nf-char,.nf-mode{padding:7px 12px;font-size:12.5px;border:1px solid var(--frame);
+  background:linear-gradient(#22221c,#141310);border-radius:3px}
+.nf-char.on{border-color:var(--gold);color:#fff;background:linear-gradient(#3a3626,#22201a)}
+.nf-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;
+  vertical-align:middle;box-shadow:0 0 0 1px #0008}
+.nf-mode{border-color:color-mix(in srgb,var(--mc) 45%,var(--frame))}
+.nf-mode.on{border-color:var(--mc);color:var(--mc);background:color-mix(in srgb,var(--mc) 14%,#141310)}
+.nf-desc{font-size:11.5px;color:var(--dim);line-height:1.6;margin:7px 0 2px;min-height:2.2em}
+
+/* ================= 설정 — 시야 · 알림 · 조작키 ================= */
+.set-sub{color:var(--gold);font-size:11px;letter-spacing:.14em;margin:16px 0 6px;
+  border-top:1px solid var(--frame2);padding-top:12px}
+.set-note{font-size:11px;color:var(--dim);line-height:1.6;margin:2px 0 8px}
+.set-row.key{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:3px 0}
+.keybtn{min-width:132px;padding:5px 10px;font-size:11.5px;font-family:inherit}
+.keybtn.waiting{border-color:var(--gold);color:var(--gold)}
+
+/* 불가능 모드로 기록이 지워진 사망 화면 — 부활 버튼이 의미 없으므로 감춘다 */
+#death-screen.wipe #btn-respawn{display:none}

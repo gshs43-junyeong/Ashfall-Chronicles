@@ -663,8 +663,11 @@ class Enemy extends Ent {
     const d = ENEMIES[type];
     super(x, y, d.w, d.h);
     this.type = type; this.def = d;
-    this.maxHp = Math.round(d.hp * scale); this.hp = this.maxHp;
-    this.dmg = d.dmg * scale; this.armor = d.def * scale;
+    /* 난이도 배율은 체력·공격력에만 곱한다. scale 은 장·레벨에 따른 기존 성장분이고
+       경험치·금화도 같이 타므로, 난이도로 보상까지 부풀지 않게 여기서만 따로 곱한다. */
+    const md = (typeof G !== 'undefined' && G.modeMul) ? G.modeMul() : 1;
+    this.maxHp = Math.round(d.hp * scale * md); this.hp = this.maxHp;
+    this.dmg = d.dmg * scale * md; this.armor = d.def * scale;
     this.spd = d.spd; this.xp = Math.round(d.xp * scale); this.gold = Math.round(d.gold * scale);
     this.boss = !!d.boss;
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
