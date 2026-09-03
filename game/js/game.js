@@ -17,6 +17,7 @@ const G = {
   world: null, player: null, rng: new RNG(1),
   ents: [], projs: [], parts: [], texts: [], drops: [], pending: [],
   time: 0, dayT: 6 * 60, shake: 0, uiOpen: false,
+  mode: 'normal',        // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
   chapter: 0, boss: null,
   /* 제작 시설: nearSt는 지금 어떤 시설 앞에 서 있는가. 개조 단계(lv)는 이제 시설 개체마다
      따로 붙는다(o.lv) — 캠프 작업대를 올려도 마을 작업대는 그대로다. */
@@ -75,37 +76,60 @@ const G = {
     $('#btn-respawn').onclick = () => this.respawn();
     requestAnimationFrame(t => this.loop(t));
   },
+  /** 설정의 시야 배율. 1 보다 크면 확대(좁게 보임), 작으면 축소(넓게 보임). */
+  viewZoom() { return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6); },
+
   resize() {
     const dpr = Math.min(2, devicePixelRatio || 1);
-    this.W = innerWidth; this.H = innerHeight;
-    this.cv.width = this.W * dpr; this.cv.height = this.H * dpr;
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const z = this.viewZoom();
+    this.cv.width = innerWidth * dpr; this.cv.height = innerHeight * dpr;
+    /* W·H 는 이제 화면 픽셀이 아니라 **월드 좌표계로 본 시야 크기**다. 확대는 캔버스
+       변환이 통째로 처리하므로, 카메라·타일 범위·컬링에서 W·H 를 쓰던 코드는 그대로
+       둬도 맞는다. 미니맵은 제 캔버스(MW/MH)로 계산하므로 여기 영향을 받지 않는다 —
+       "미니맵 범위는 변하면 안 된다"는 요구가 이 구조로 저절로 지켜진다. */
+    this.W = innerWidth / z; this.H = innerHeight / z;
+    this.ctx.setTransform(dpr * z, 0, 0, dpr * z, 0, 0);
     this.ctx.imageSmoothingEnabled = false;
   },
 
   /* ================= 입력 ================= */
+  /** 이 액션에 걸린 키 목록. 설정에서 바꿨으면 그것을, 아니면 기본값을 쓴다. */
+  keysFor(id) {
+    const custom = this.settings && this.settings.keys && this.settings.keys[id];
+    if (custom && custom.length) return custom;
+    const a = KEY_ACTIONS.find(k => k.id === id);
+    return a ? a.def : [];
+  },
+  /** 지금 눌려 있는가 */
+  held(id) { const K = this.keys; return this.keysFor(id).some(c => K[c]); },
+  /** 방금 눌린 code 가 이 액션인가 */
+  isKey(id, code) { return this.keysFor(id).indexOf(code) >= 0; },
+
   bindInput() {
     const K = {};
     this.keys = K;
     addEventListener('keydown', e => {
       if (e.repeat) { K[e.code] = 1; return; }
+      // 조작키를 다시 매기는 중이면 그 키를 여기서 삼킨다
+      if (UI.captureKey && UI.captureKey(e.code)) { e.preventDefault(); return; }
       K[e.code] = 1;
       if (this.state !== 'play') return;
       const k = e.code;
-      if (k === 'KeyI') { UI.togglePanel('inv'); e.preventDefault(); }
-      else if (k === 'KeyK') { UI.togglePanel('skill'); e.preventDefault(); }
-      else if (k === 'KeyJ') { UI.togglePanel('quest'); e.preventDefault(); }
-      else if (k === 'KeyH') { UI.craftTab = 'hand'; UI.togglePanel('craft'); e.preventDefault(); }
-      else if (k === 'Escape') { if (UI.open || UI.dlg) { UI.closePanel(); UI.closeDialogue(); } else this.setPause($('#pause-screen').className !== 'open'); }
-      else if (k === 'F5') { e.preventDefault(); this.saveGame(); }
+      /* Esc 는 바꿀 수 없게 둔다 — 다시 못 빠져나오는 자리를 만들지 않기 위해서다. */
+      if (k === 'Escape') { if (UI.open || UI.dlg) { UI.closePanel(); UI.closeDialogue(); } else this.setPause($('#pause-screen').className !== 'open'); }
+      else if (this.isKey('inv', k)) { UI.togglePanel('inv'); e.preventDefault(); }
+      else if (this.isKey('skills', k)) { UI.togglePanel('skill'); e.preventDefault(); }
+      else if (this.isKey('quest', k)) { UI.togglePanel('quest'); e.preventDefault(); }
+      else if (this.isKey('craft', k)) { UI.craftTab = 'hand'; UI.togglePanel('craft'); e.preventDefault(); }
+      else if (this.isKey('save', k)) { e.preventDefault(); this.saveGame(); }
       else if (k.startsWith('Digit')) {
         const n = +k.slice(5); this.player.sel = (n === 0 ? 9 : n - 1); UI.refreshHotbar();
       }
       else if (!UI.dlg && !UI.open) {
-        if (k === 'KeyQ') this.player.useSkill(0, this.input.wx, this.input.wy);
-        else if (k === 'KeyE') this.player.useSkill(1, this.input.wx, this.input.wy);
-        else if (k === 'KeyR') this.player.useSkill(2, this.input.wx, this.input.wy);
-        else if (k === 'KeyF') this.player.useSkill(3, this.input.wx, this.input.wy);
+        if (this.isKey('skill1', k)) this.player.useSkill(0, this.input.wx, this.input.wy);
+        else if (this.isKey('skill2', k)) this.player.useSkill(1, this.input.wx, this.input.wy);
+        else if (this.isKey('skill3', k)) this.player.useSkill(2, this.input.wx, this.input.wy);
+        else if (this.isKey('skill4', k)) this.player.useSkill(3, this.input.wx, this.input.wy);
       }
     });
     addEventListener('keyup', e => { K[e.code] = 0; });
@@ -128,37 +152,43 @@ const G = {
     $('#dialogue').addEventListener('click', () => { if (UI.dlg) UI.nextLine(false); });
   },
   readInput() {
-    const K = this.keys, I = this.input;
+    const I = this.input;
     const block = this.uiOpen || this.state !== 'play';
-    I.left = !block && (K.KeyA || K.ArrowLeft) ? 1 : 0;
-    I.right = !block && (K.KeyD || K.ArrowRight) ? 1 : 0;
-    I.down = !block && (K.KeyS || K.ArrowDown) ? 1 : 0;
-    I.jump = !block && (K.Space || K.KeyW || K.ArrowUp) ? 1 : 0;
-    I.dash = !block && (K.ShiftLeft || K.ShiftRight) ? 1 : 0;
-    I.wx = I.mx + this.cam.x; I.wy = I.my + this.cam.y;
+    I.left = !block && this.held('left') ? 1 : 0;
+    I.right = !block && this.held('right') ? 1 : 0;
+    I.down = !block && this.held('down') ? 1 : 0;
+    I.jump = !block && this.held('jump') ? 1 : 0;
+    I.dash = !block && this.held('dash') ? 1 : 0;
+    const z = this.viewZoom();
+    I.wx = I.mx / z + this.cam.x; I.wy = I.my / z + this.cam.y;
   },
 
   /* ================= 게임 시작 ================= */
   showLoading(msg) { $('#loading-text').textContent = msg; $('#loading').classList.add('open'); },
   hideLoading() { $('#loading').classList.remove('open'); },
 
-  newGame(seedStr, slot, name) {
+  newGame(seedStr, slot, name, charId, mode) {
     const seed = seedStr || ('' + Math.floor(Math.random() * 1e9));
     this.currentSlot = slot;
     this.showLoading('세계를 빚는 중…');
     // 다음 프레임에 생성해서 로딩 화면이 먼저 그려지게 한다
-    setTimeout(() => { try { this._newGame(seed, name); } finally { this.hideLoading(); } }, 40);
+    setTimeout(() => { try { this._newGame(seed, name, charId, mode); } finally { this.hideLoading(); } }, 40);
   },
-  _newGame(seed, name) {
+  _newGame(seed, name, charId, mode) {
     this.rng = new RNG(seed + '_g');
     this.world = new World(seed).generate();
     this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
     const p = this.player;
     p.name = (name || '').trim().slice(0, 12) || '이름 없는 모험가';
-    p.bag[0] = makeItem('sword_wood'); p.bag[1] = makeItem('pick_copper');
-    p.bag[2] = makeItem('torch', 20); p.bag[3] = makeItem('potion_hp_small', 3);
-    p.equip.weapon = makeItem('sword_wood'); p.bag[0] = null;
+    /* 난이도와 캐릭터는 새 게임에서 한 번 정하고 끝이다 — 설정에서 못 바꾼다. */
+    this.mode = MODE_OF(mode).id;
+    const ch = CHAR_OF(charId);
+    p.charId = ch.id;
+    p.base = Object.assign({}, ch.base);
+    if (ch.weapon) p.equip.weapon = makeItem(ch.weapon);
     p.equip.chest = makeItem('chest_cloth'); p.equip.boots = makeItem('boots_cloth');
+    if (ch.gold) p.gold = ch.gold;
+    ch.bag.forEach(([id, n], i) => { p.bag[i] = makeItem(id, ITEMS[id].stack > 1 ? n : 1); });
     p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
     this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = [];
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
@@ -391,10 +421,32 @@ const G = {
       this.checkChapter();
     }
 
-    // 쓰러진 자리로 돌아오면 표식을 지운다 — 되찾을 것이 없어도, 돌아왔다는 것 자체가 매듭이다
-    if (this.deathMark && dist(p.cx, p.cy, this.deathMark.x, this.deathMark.y) < 90) {
-      this.deathMark = null;
-      this.toast('쓰러졌던 자리로 돌아왔다', 'good');
+    /* 비석 — 닿으면 잃은 것의 절반을 돌려준다. 게임 시간 12시간이 지나면 사라진다.
+       절반만 주는 것은 "돌아갈 이유는 주되 죽음을 공짜로 만들지 않는다"는 선이다. */
+    if (this.deathMark) {
+      const dm = this.deathMark;
+      const now = this.dayCount * 1440 + this.dayT;
+      if (now - (dm.at || 0) >= 720) {          // 12시간 = 720분
+        this.deathMark = null;
+        this.toast('비석이 잿빛에 삼켜졌다', 'bad');
+      } else if (dist(p.cx, p.cy, dm.x, dm.y) < 70) {
+        const gxp = Math.floor((dm.xp || 0) / 2), ggold = Math.floor((dm.gold || 0) / 2);
+        if (gxp) p.addXp(gxp);
+        if (ggold) p.gold += ggold;
+        const back = (dm.items || []).slice(0, Math.ceil((dm.items || []).length / 2));
+        let dropped = 0;
+        for (const it of back) if (!p.addItem(it)) { this.drops.push(new Drop(p.cx, p.cy, it)); dropped++; }
+        this.deathMark = null;
+        for (let i = 0; i < 18; i++) this.parts.push(new Part(p.cx, p.cy - 10, '#ffe08a', -90, 1));
+        const bits = [];
+        if (gxp) bits.push(`경험치 ${fmt(gxp)}`);
+        if (ggold) bits.push(`금화 ${fmt(ggold)}`);
+        if (back.length) bits.push(`물건 ${back.length}칸`);
+        this.toast(bits.length ? bits.join(' · ') + '을 되찾았다' : '쓰러졌던 자리로 돌아왔다', 'good');
+        if (dropped) this.toast('가방이 차서 일부는 바닥에 떨어졌다', 'info');
+        UI.refreshBag();
+        this.sfx('chapter');
+      }
     }
 
     this.mmTimer -= dt;
@@ -1350,6 +1402,8 @@ const G = {
     UI.bossBar(null);
   },
   scale() { return 1 + this.chapter * 0.22 + this.player.level * 0.03; },
+  /** 난이도가 몹의 체력·공격력에만 곱하는 값. 경험치·금화는 건드리지 않는다. */
+  modeMul() { return MODE_OF(this.mode).mul; },
 
   /* ================= 소비 / 제작 ================= */
   useConsumable(slot) {
@@ -1875,9 +1929,39 @@ const G = {
     p.xp -= lostXp; p.gold -= lostG;
     // 죽은 자리를 남긴다 — 세계가 4200타일이라 "어디서 죽었더라"를 기억으로 버티기 어렵다.
     // 화면 가장자리 나침반과 지도 양쪽에 뜨고, 그 자리에 다시 가면 저절로 지워진다.
-    this.deathMark = { x: p.cx, y: p.cy, gold: lostG, xp: lostXp, t: this.time };
-    $('#death-line').textContent = `경험치 ${fmt(lostXp)}와 금화 ${fmt(lostG)}를 잃었다.` +
-      ` 쓰러진 자리가 지도에 남았다.`;
+    /* 하드는 가방의 절반까지 비석에 함께 담는다. 불가능은 아래에서 슬롯째 지운다. */
+    const md = MODE_OF(this.mode);
+    let lostItems = [];
+    if (md.death === 'drop') {
+      const filled = p.bag.map((it, i) => it ? i : -1).filter(i => i >= 0);
+      // 잠근 칸(Ctrl+좌클릭)은 남긴다 — 잠금은 "이건 잃고 싶지 않다"는 표시다
+      const droppable = filled.filter(i => !p.bag[i].lock);
+      for (let n = Math.floor(droppable.length / 2); n > 0; n--) {
+        const k = droppable.splice(Math.floor(Math.random() * droppable.length), 1)[0];
+        lostItems.push(p.bag[k]); p.bag[k] = null;
+      }
+      UI.refreshBag();
+    }
+    this.deathMark = {
+      x: p.cx, y: p.cy, gold: lostG, xp: lostXp, items: lostItems,
+      // 게임 시간 12시간이 지나면 사라진다. dayT 는 하루 1440분이라 절대 시각으로 재둔다.
+      at: this.dayCount * 1440 + this.dayT
+    };
+    if (md.death === 'wipe') {
+      // 불가능 모드 — 이 슬롯의 기록을 지운다. 비석도 남지 않는다.
+      this.deathMark = null;
+      if (this.currentSlot !== null) localStorage.removeItem(slotKey(this.currentSlot));
+      $('#death-line').textContent = '불가능 모드였다. 이 슬롯의 기록이 지워졌다.';
+      $('#death-screen').classList.add('open');
+      $('#death-screen').classList.add('wipe');
+      this.paused = true;
+      this.sfx('death');
+      return;
+    }
+    const parts = [`경험치 ${fmt(lostXp)}와 금화 ${fmt(lostG)}를 잃었다.`];
+    if (lostItems.length) parts.push(`가방에서 ${lostItems.length}칸이 떨어졌다.`);
+    parts.push('쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.');
+    $('#death-line').textContent = parts.join(' ');
     $('#death-screen').classList.add('open');
     this.paused = true;
     this.sfx('death');
@@ -2013,7 +2097,15 @@ const G = {
     $('#pause-screen').classList.toggle('open', on);
     if (on) UI.syncSettings();      // 열 때마다 현재 값으로 맞춘다
   },
-  toast(m, k) { UI.toast(m, k); },
+  /* 설정에서 끈 갈래는 띄우지 않는다. 'bad'(죽음·실패)와 갈래 없는 것은 항상 띄운다 —
+     놓치면 곤란한 것까지 끌 수 있게 두지는 않는다. */
+  toast(m, k) {
+    if (k && k !== 'bad') {
+      const n = this.settings && this.settings.notice;
+      if (n && n[k] === 0) return;
+    }
+    UI.toast(m, k);
+  },
 
   /* ================= 저장 ================= */
   saveGame() {
@@ -2021,7 +2113,7 @@ const G = {
     try {
       const p = this.player;
       const data = {
-        v: 1, name: p.name, savedAt: Date.now(),
+        v: 1, name: p.name, savedAt: Date.now(), mode: this.mode, charId: p.charId,
         world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
         talked: this.talked, crafted: this.crafted,
         sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
@@ -2032,6 +2124,7 @@ const G = {
         p: {
           x: p.x, y: p.y, level: p.level, xp: p.xp, xpNext: p.xpNext, statPts: p.statPts, skillPts: p.skillPts,
           base: p.base, hp: p.hp, mp: p.mp, charge: p.charge, gold: p.gold, bag: p.bag, equip: p.equip, sel: p.sel,
+          charId: p.charId,
           skills: p.skills, slots: p.slots, kills: p.kills, mined: p.mined, bossKilled: p.bossKilled,
           deepest: p.deepest, highest: p.highest, gathered: p.gathered
         }
@@ -2065,6 +2158,7 @@ const G = {
         skills: d.p.skills, slots: d.p.slots, kills: d.p.kills, mined: d.p.mined,
         bossKilled: d.p.bossKilled, deepest: d.p.deepest, highest: d.p.highest, gathered: d.p.gathered || {}
       });
+      p.charId = CHAR_OF(d.p.charId).id;
       // v1.0.1까지의 세이브는 펫이 도감(pets{}/activePet)이었다 — 그때 모은 펫을 잃지 않도록
       // 전부 아이템으로 바꿔 가방에 넣고, 쓰고 있던 펫은 그대로 펫 슬롯에 끼워 준다.
       if (d.p.pets) {
@@ -2085,6 +2179,7 @@ const G = {
       this.sideActive = d.sideActive || {}; this.sideDone = d.sideDone || {};
       this.tabletsRead = d.tabletsRead || {}; this.termsRead = d.termsRead || {}; this.loreRead = d.loreRead || {};
       this.deathMark = d.deathMark || null;
+      this.mode = MODE_OF(d.mode).id;
       this.villageUnlocked = d.villageUnlocked || false; this.goldRate = d.goldRate || 1;
       this.dayCount = d.dayCount || 0; this.market = {}; this.trainedToday = 0;
       this.nearStObj = { work: null, forge: null };
@@ -2177,7 +2272,23 @@ const G = {
   /** 빈 슬롯 카드를 이름·씨앗 입력 폼으로 바꾼다 */
   showNewGameForm(slot) {
     const card = $(`.slot-card[data-slot="${slot}"]`);
+    /* 캐릭터·난이도는 여기서만 정한다 — 시작한 뒤에는 설정에서 못 바꾼다.
+       그래서 고르는 순간 무엇이 달라지는지 한 줄씩 붙여 둔다. */
+    let ci = 0, mi = 0;
+    card.classList.add('wide');
     card.innerHTML = `<div class="slot-form">
+      <div class="nf-sec">캐릭터</div>
+      <div class="nf-chars">${CHARACTERS.map((ch, i) => `
+        <button class="nf-char${i ? '' : ' on'}" data-i="${i}" title="${escHtml(ch.d)}">
+          <span class="nf-dot" style="background:${ch.tint || '#d8cdb8'}"></span>${escHtml(ch.n)}
+        </button>`).join('')}</div>
+      <p class="nf-desc" id="nf-cdesc">${escHtml(CHARACTERS[0].d)}</p>
+
+      <div class="nf-sec">난이도</div>
+      <div class="nf-modes">${MODES.map((m, i) => `
+        <button class="nf-mode${i ? '' : ' on'}" data-i="${i}" style="--mc:${m.c}">${escHtml(m.n)}</button>`).join('')}</div>
+      <p class="nf-desc" id="nf-mdesc">${escHtml(MODES[0].d)}</p>
+
       <label>이름 <input class="slot-name-input" placeholder="이름 없는 모험가" maxlength="12"></label>
       <label>세계 씨앗 <input class="slot-seed-input" placeholder="비워두면 무작위"></label>
       <div class="slot-form-btns">
@@ -2185,10 +2296,23 @@ const G = {
         <button class="slot-cancel-btn">취소</button>
       </div>
     </div>`;
+    card.querySelectorAll('.nf-char').forEach(b => b.onclick = () => {
+      ci = +b.dataset.i;
+      card.querySelectorAll('.nf-char').forEach(x => x.classList.toggle('on', x === b));
+      $('#nf-cdesc').textContent = CHARACTERS[ci].d;
+    });
+    card.querySelectorAll('.nf-mode').forEach(b => b.onclick = () => {
+      mi = +b.dataset.i;
+      card.querySelectorAll('.nf-mode').forEach(x => x.classList.toggle('on', x === b));
+      $('#nf-mdesc').textContent = MODES[mi].d;
+    });
     card.querySelector('.slot-start-btn').onclick = () => {
       const name = card.querySelector('.slot-name-input').value;
       const seed = card.querySelector('.slot-seed-input').value.trim();
-      this.newGame(seed, slot, name);
+      // 되돌릴 수 없는 선택이라 불가능 모드만 한 번 더 묻는다
+      if (MODES[mi].id === 'impossible' &&
+          !confirm('불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?')) return;
+      this.newGame(seed, slot, name, CHARACTERS[ci].id, MODES[mi].id);
     };
     card.querySelector('.slot-cancel-btn').onclick = () => this.renderSlotScreen();
   },
@@ -2210,6 +2334,8 @@ const G = {
     if (window.Sfx) Sfx.vol = s.sfx / 100;
     if (window.Ambient) Ambient.vol = 0.45 * (s.sfx / 100);
     const mm = $('#minimap'); if (mm) mm.style.display = s.minimap ? '' : 'none';
+    // 시야 배율은 캔버스 변환에 들어가므로 값이 바뀌면 다시 잡아 준다
+    if (this._viewApplied !== s.view) { this._viewApplied = s.view; this.resize(); }
     UI.syncSettings();
   },
   setOpt(k, v) {
@@ -2423,6 +2549,29 @@ const G = {
     }
 
     // ---- 플레이어 ----
+    /* 비석 — 쓰러진 자리에 실제로 세워 둔다. 지금까지는 지도 표식만 있어서
+       현장에 가도 아무것도 안 보였다. 남은 시간에 따라 잿빛에 잠겨 간다. */
+    if (this.deathMark) {
+      const dm = this.deathMark;
+      const left = 1 - (this.dayCount * 1440 + this.dayT - (dm.at || 0)) / 720;
+      const gx = Math.round(dm.x - camX), gy = Math.round(dm.y - camY);
+      if (gx > -60 && gx < this.W + 60 && gy > -80 && gy < this.H + 80) {
+        c.save();
+        c.globalAlpha = clamp(0.35 + left * 0.65, 0.2, 1);
+        c.fillStyle = '#6a6458';
+        c.fillRect(gx - 9, gy - 20, 18, 22);                 // 비석 몸
+        c.fillRect(gx - 13, gy + 1, 26, 4);                  // 받침
+        c.fillStyle = '#4a463c';
+        c.beginPath(); c.arc(gx, gy - 20, 9, Math.PI, 0); c.fill();   // 둥근 윗머리
+        c.fillStyle = '#2a2620';
+        c.fillRect(gx - 1.5, gy - 16, 3, 11);                // 십자
+        c.fillRect(gx - 5, gy - 13, 10, 3);
+        c.globalAlpha = clamp(left, 0, 1) * (0.5 + 0.5 * Math.sin(this.time * 2.2));
+        c.fillStyle = '#ffe08a';
+        c.beginPath(); c.arc(gx, gy - 26, 2.6, 0, TAU); c.fill();     // 남아 있다는 불빛
+        c.restore();
+      }
+    }
     this.drawPlayer(c, p, p.x - camX, p.y - camY);
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
 
@@ -2980,6 +3129,18 @@ const G = {
     if (p.iframe > 0 && Math.floor(this.time * 24) % 2 === 0) c.globalAlpha = 0.45;
     // 손그림 스프라이트가 있으면 그것으로, 없으면 아래 절차 렌더로 폴백
     if (this.spritesOn && Sprites.draw(c, 'player', this.playerFrame(p), sx, sy, p.facing < 0)) {
+      /* 캐릭터 색조. 시트는 다섯이 한 장을 같이 쓰므로 색으로만 가른다.
+         source-atop 이라 이미 그린 픽셀 위에만 얹히고 배경은 건드리지 않는다. */
+      const tint = CHAR_OF(p.charId).tint;
+      if (tint) {
+        const m = Sprites.meta && Sprites.meta.characters.sheets.player;
+        c.save();
+        c.globalCompositeOperation = 'source-atop';
+        c.globalAlpha = 0.34;
+        c.fillStyle = tint;
+        c.fillRect(sx - 2, sy - 2, (m ? m.frameW : p.w) + 4, (m ? m.frameH : p.h) + 4);
+        c.restore();
+      }
       this.drawHeldWeapon(c, p, sx, sy, 0);
       c.restore();
       return;

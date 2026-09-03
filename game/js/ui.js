@@ -116,12 +116,71 @@ const UI = {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('change', () => G.setOpt(key, el.checked ? 1 : 0));
     }
+    const view = $('#set-view');
+    if (view) view.addEventListener('input', () => G.setOpt('view', +view.value));
+
+    this.buildNotices();
+    this.buildKeys();
+
+    const kr = $('#set-keys-reset');
+    if (kr) kr.addEventListener('click', () => {
+      if (!G.settings) return;
+      G.settings.keys = null; G.applySettings(); G.saveSettings();
+      this.buildKeys(); this.toast('조작키를 기본값으로 되돌렸다');
+    });
+
     const r = $('#set-reset');
     if (r) r.addEventListener('click', () => {
       G.settings = Object.assign({}, SET_DEFAULT);
       G.applySettings(); G.saveSettings();
+      this.buildNotices(); this.buildKeys();
       this.toast('설정을 기본값으로 되돌렸다');
     });
+  },
+
+  /* ---- 알림 갈래 ---- */
+  /* 'bad'(죽음·실패)는 목록에 없다 — 끌 수 있게 두면 놓치면 곤란한 것까지 사라진다. */
+  buildNotices() {
+    const box = $('#set-notices'); if (!box) return;
+    const off = (G.settings && G.settings.notice) || {};
+    box.innerHTML = NOTICE_KINDS.map(k =>
+      `<label class="set-row chk"><span>${k.n}</span>` +
+      `<input type="checkbox" data-notice="${k.id}"${off[k.id] === 0 ? '' : ' checked'}></label>`).join('');
+    box.querySelectorAll('[data-notice]').forEach(el => el.addEventListener('change', () => {
+      const n = Object.assign({}, (G.settings && G.settings.notice) || {});
+      n[el.dataset.notice] = el.checked ? 1 : 0;
+      G.setOpt('notice', n);
+    }));
+  },
+
+  /* ---- 조작키 ---- */
+  /* 누르면 그 항목이 대기 상태가 되고, 다음에 눌린 키를 그 자리에 넣는다.
+     Esc 는 취소로만 쓴다 — 바꿀 수 있게 두면 메뉴를 못 여는 상태를 만들 수 있다. */
+  buildKeys() {
+    const box = $('#set-keys'); if (!box) return;
+    const label = c => c.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Arrow/, '←↑→↓ ')
+      .replace('ShiftLeft', 'Shift(왼)').replace('ShiftRight', 'Shift(오)').replace('Space', 'Space');
+    box.innerHTML = KEY_ACTIONS.map(a =>
+      `<div class="set-row key"><span>${a.n}</span>` +
+      `<button class="keybtn" data-act="${a.id}">${G.keysFor(a.id).map(label).join(' · ')}</button></div>`).join('');
+    box.querySelectorAll('.keybtn').forEach(btn => btn.addEventListener('click', () => {
+      if (this.keyWait) return;
+      btn.classList.add('waiting'); btn.textContent = '키를 누르세요…';
+      this.keyWait = { act: btn.dataset.act, btn };
+    }));
+  },
+  /** bindInput 의 keydown 이 설정 창에서 먼저 들르는 자리 */
+  captureKey(code) {
+    if (!this.keyWait) return false;
+    const { act } = this.keyWait;
+    this.keyWait = null;
+    if (code !== 'Escape') {
+      const keys = Object.assign({}, (G.settings && G.settings.keys) || {});
+      keys[act] = [code];
+      G.setOpt('keys', keys);
+    }
+    this.buildKeys();
+    return true;
   },
   /** G.settings → 화면 (열 때와 값이 바뀔 때마다) */
   syncSettings() {
@@ -133,6 +192,7 @@ const UI = {
     set('set-sfx', s.sfx); txt('set-sfx-v', s.sfx);
     set('set-shake', s.shake); txt('set-shake-v', s.shake);
     chk('set-dmgnum', s.dmgnum); chk('set-minimap', s.minimap);
+    set('set-view', s.view); txt('set-view-v', s.view);
   },
 
   /** 아이템이 아닌 순수 텍스트 툴팁(휴지통 안내 등) */

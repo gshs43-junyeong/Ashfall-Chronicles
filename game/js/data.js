@@ -1240,6 +1240,79 @@ const VILLAGE = [
   }
 ];
 
+/* ---------------- 시작 캐릭터 ---------------- */
+/* 그림은 char/player.png 한 장을 다섯이 같이 쓰고 색조(tint)로만 가른다 —
+   시트를 다섯 벌 그리는 대신이다. 실제 차이는 시작 능력치 배분과 손에 쥔 것이고,
+   전부 초반 몇 장에서 체감되고 나면 성장으로 덮인다(고정 페널티를 두지 않았다).
+   저장에는 charId 만 남는다. 게임 도중에는 바꿀 수 없다. */
+const CHARACTERS = [
+  { id: 'wanderer', n: '떠돌이', tint: null, d: '치우침이 없다. 처음이라면 이쪽.',
+    base: { str: 5, dex: 5, int: 5, vit: 5 },
+    weapon: 'sword_wood',
+    bag: [['pick_copper', 1], ['torch', 20], ['potion_hp_small', 3]] },
+  { id: 'digger', n: '굴 파는 이', tint: '#c8934a', d: '더 튼튼하고, 곡괭이를 먼저 쥐고 시작한다.',
+    base: { str: 6, dex: 4, int: 4, vit: 6 },
+    weapon: 'pick_copper',
+    bag: [['sword_wood', 1], ['torch', 40], ['potion_hp_small', 2]] },
+  { id: 'ranger', n: '사냥꾼', tint: '#6aa85a', d: '활을 들고 나온다. 거리를 두고 싸운다.',
+    base: { str: 4, dex: 7, int: 4, vit: 5 },
+    weapon: 'bow_hunt',
+    bag: [['pick_copper', 1], ['torch', 16], ['potion_hp_small', 2]] },
+  { id: 'adept', n: '수련생', tint: '#7f6fd8', d: '지팡이와 마나 물약. 마법으로 연다.',
+    base: { str: 4, dex: 4, int: 7, vit: 5 },
+    weapon: 'staff_branch',
+    bag: [['pick_copper', 1], ['torch', 16], ['potion_mp_small', 3], ['potion_hp_small', 1]] },
+  { id: 'stray', n: '빈손', tint: '#9a9a9a', d: '아무것도 없이 시작한다. 금화만 조금 쥐었다.',
+    base: { str: 5, dex: 5, int: 5, vit: 5 },
+    weapon: null, gold: 120,
+    bag: [['torch', 8]] }
+];
+
+/* ---------------- 난이도 ---------------- */
+/* 새 게임에서 한 번 고르고 끝이다 — 설정에서 바꿀 수 없다. 저장에 남는다.
+   mul 은 몹의 체력·공격력에만 곱한다(경험치·금화는 건드리지 않는다).
+   death: 'normal' 잃은 것만 · 'drop' 인벤토리 절반까지 · 'wipe' 슬롯 삭제 */
+const MODES = [
+  { id: 'normal', n: '일반', mul: 1, death: 'normal', c: '#8fb87a',
+    d: '경험치 일부와 금화를 잃습니다. 쓰러진 자리에서 절반을 되찾을 수 있습니다.' },
+  { id: 'hard', n: '하드', mul: 2, death: 'drop', c: '#e0a03a',
+    d: '몬스터의 체력과 공격력이 2배. 죽으면 가방의 절반까지 그 자리에 떨어집니다.' },
+  { id: 'impossible', n: '불가능', mul: 5, death: 'wipe', c: '#d0564c',
+    d: '몬스터의 체력과 공격력이 5배. 한 번 죽으면 이 슬롯의 기록이 지워집니다.' }
+];
+const MODE_OF = id => MODES.find(m => m.id === id) || MODES[0];
+const CHAR_OF = id => CHARACTERS.find(c => c.id === id) || CHARACTERS[0];
+
+/* ---------------- 조작키 ---------------- */
+/* 설정에서 바꾼다. 저장은 설정(SET_KEY)에 붙고 세이브와는 무관하다.
+   값은 KeyboardEvent.code — 자판 배열이 달라도 자리로 잡히게. */
+const KEY_ACTIONS = [
+  { id: 'left', n: '왼쪽', def: ['KeyA', 'ArrowLeft'] },
+  { id: 'right', n: '오른쪽', def: ['KeyD', 'ArrowRight'] },
+  { id: 'down', n: '내려가기', def: ['KeyS', 'ArrowDown'] },
+  { id: 'jump', n: '점프', def: ['Space', 'KeyW', 'ArrowUp'] },
+  { id: 'dash', n: '대시', def: ['ShiftLeft', 'ShiftRight'] },
+  { id: 'skill1', n: '스킬 1', def: ['KeyQ'] },
+  { id: 'skill2', n: '스킬 2', def: ['KeyE'] },
+  { id: 'skill3', n: '스킬 3', def: ['KeyR'] },
+  { id: 'skill4', n: '스킬 4', def: ['KeyF'] },
+  { id: 'inv', n: '가방', def: ['KeyI'] },
+  { id: 'skills', n: '능력', def: ['KeyK'] },
+  { id: 'quest', n: '일지', def: ['KeyJ'] },
+  { id: 'craft', n: '제작', def: ['KeyH'] },
+  { id: 'save', n: '저장', def: ['F5'] }
+];
+
+/* ---------------- 알림 갈래 ---------------- */
+/* toast 두 번째 인자에 넘기는 갈래. 설정에서 갈래마다 끌 수 있다.
+   'bad' 는 죽음·실패처럼 놓치면 안 되는 것이라 목록에 두지 않는다(항상 뜬다). */
+const NOTICE_KINDS = [
+  { id: 'good', n: '획득 · 성공', def: 1 },
+  { id: 'info', n: '안내 · 발견', def: 1 },
+  { id: 'quest', n: '목표 진행', def: 1 },
+  { id: 'craft', n: '제작 · 설치', def: 1 }
+];
+
 /* ---------------- 적 ---------------- */
 // ai: walker / jumper / flyer / archer / caster / boss별 전용
 //
