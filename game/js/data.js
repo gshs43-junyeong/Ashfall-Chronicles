@@ -1241,28 +1241,40 @@ const VILLAGE = [
 ];
 
 /* ---------------- 시작 캐릭터 ---------------- */
-/* 그림은 char/player.png 한 장을 다섯이 같이 쓰고 색조(tint)로만 가른다 —
-   시트를 다섯 벌 그리는 대신이다. 실제 차이는 시작 능력치 배분과 손에 쥔 것이고,
-   전부 초반 몇 장에서 체감되고 나면 성장으로 덮인다(고정 페널티를 두지 않았다).
+/* 다섯이 각자 제 시트를 쓴다 — char/player_<id>.png (13프레임, 원본 player.png와
+   프레임 순서가 완전히 동일하다: idle1 idle2 walk1..4 jump fall dash atk1..3 hurt).
+   시트는 tools/mkchars.py 가 player.png의 부위를 가려내 색과 실루엣을 바꿔 굽는다.
+   tint 는 시트를 못 읽었을 때의 폴백 겸 선택 화면의 표식으로만 남겨 둔다.
+   능력치 차이는 초반 몇 장에서만 체감되고 성장으로 덮인다(고정 페널티는 없다).
    저장에는 charId 만 남는다. 게임 도중에는 바꿀 수 없다. */
 const CHARACTERS = [
   { id: 'wanderer', n: '떠돌이', tint: null, d: '치우침이 없다. 처음이라면 이쪽.',
+    story: '재가 내리기 전, 어느 마을의 문을 마지막으로 잠근 사람. ' +
+           '이름도 고향도 그 문 안에 두고 왔다. 지도 대신 제 걸음을 믿는다.',
     base: { str: 5, dex: 5, int: 5, vit: 5 },
     weapon: 'sword_wood',
     bag: [['pick_copper', 1], ['torch', 20], ['potion_hp_small', 3]] },
   { id: 'digger', n: '굴 파는 이', tint: '#c8934a', d: '더 튼튼하고, 곡괭이를 먼저 쥐고 시작한다.',
+    story: '3번 갱이 무너지던 날 걸어 나온 하나. 안전모의 불은 그때부터 꺼뜨린 적이 없다. ' +
+           '아래는 무섭지 않다 — 위가 무섭다.',
     base: { str: 6, dex: 4, int: 4, vit: 6 },
     weapon: 'pick_copper',
     bag: [['sword_wood', 1], ['torch', 40], ['potion_hp_small', 2]] },
   { id: 'ranger', n: '사냥꾼', tint: '#6aa85a', d: '활을 들고 나온다. 거리를 두고 싸운다.',
+    story: '숲이 마르기 전을 기억한다. 재가 내려도 짐승은 남았고, ' +
+           '남은 것을 세는 법을 아는 사람은 이제 몇 없다.',
     base: { str: 4, dex: 7, int: 4, vit: 5 },
     weapon: 'bow_hunt',
     bag: [['pick_copper', 1], ['torch', 16], ['potion_hp_small', 2]] },
   { id: 'adept', n: '수련생', tint: '#7f6fd8', d: '지팡이와 마나 물약. 마법으로 연다.',
+    story: '다 타 버린 서고의 마지막 학생. 스승은 책을 지키다 재가 되었다. ' +
+           '외운 세 줄이 가진 전부다.',
     base: { str: 4, dex: 4, int: 7, vit: 5 },
     weapon: 'staff_branch',
     bag: [['pick_copper', 1], ['torch', 16], ['potion_mp_small', 3], ['potion_hp_small', 1]] },
   { id: 'stray', n: '빈손', tint: '#9a9a9a', d: '아무것도 없이 시작한다. 금화만 조금 쥐었다.',
+    story: '재 속에서 주워졌다. 누가 두고 갔는지는 아무도 모른다. ' +
+           '가진 것은 동전 몇 닢과 이름 없는 목숨뿐.',
     base: { str: 5, dex: 5, int: 5, vit: 5 },
     weapon: null, gold: 120,
     bag: [['torch', 8]] }

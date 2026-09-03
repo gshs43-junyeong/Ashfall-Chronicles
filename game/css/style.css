@@ -608,6 +608,14 @@ body.sprites-on #game.mining{cursor:url(../assets/ui/cursor_pick.png) 3 29, poin
 .nf-mode{border-color:color-mix(in srgb,var(--mc) 45%,var(--frame))}
 .nf-mode.on{border-color:var(--mc);color:var(--mc);background:color-mix(in srgb,var(--mc) 14%,#141310)}
 .nf-desc{font-size:11.5px;color:var(--dim);line-height:1.6;margin:7px 0 2px;min-height:2.2em}
+/* 고른 캐릭터의 실제 시트 첫 프레임(20x40)을 그대로 잘라 보여 준다.
+   시트는 1040x160(13프레임 x 4배)이라 절반 크기로 깔면 한 칸이 40x80이 된다. */
+.nf-card{display:flex;gap:12px;align-items:flex-start;margin:7px 0 2px;text-align:left}
+.nf-por{flex:none;width:40px;height:80px;background-size:520px 80px;background-position:0 0;
+  background-repeat:no-repeat;image-rendering:pixelated;
+  border:1px solid var(--frame);border-radius:3px;background-color:#15140f}
+.nf-card .nf-desc{margin:0}
+.nf-story{font-size:11px;color:#8d8676;line-height:1.65;margin:6px 0 0;min-height:3.3em}
 
 /* ================= 설정 — 시야 · 알림 · 조작키 ================= */
 .set-sub{color:var(--gold);font-size:11px;letter-spacing:.14em;margin:16px 0 6px;

@@ -2282,7 +2282,13 @@ const G = {
         <button class="nf-char${i ? '' : ' on'}" data-i="${i}" title="${escHtml(ch.d)}">
           <span class="nf-dot" style="background:${ch.tint || '#d8cdb8'}"></span>${escHtml(ch.n)}
         </button>`).join('')}</div>
-      <p class="nf-desc" id="nf-cdesc">${escHtml(CHARACTERS[0].d)}</p>
+      <div class="nf-card">
+        <span class="nf-por" id="nf-por" style="background-image:url(assets/char/player_${CHARACTERS[0].id}.png)"></span>
+        <div>
+          <p class="nf-desc" id="nf-cdesc">${escHtml(CHARACTERS[0].d)}</p>
+          <p class="nf-story" id="nf-cstory">${escHtml(CHARACTERS[0].story)}</p>
+        </div>
+      </div>
 
       <div class="nf-sec">난이도</div>
       <div class="nf-modes">${MODES.map((m, i) => `
@@ -2300,6 +2306,8 @@ const G = {
       ci = +b.dataset.i;
       card.querySelectorAll('.nf-char').forEach(x => x.classList.toggle('on', x === b));
       $('#nf-cdesc').textContent = CHARACTERS[ci].d;
+      $('#nf-cstory').textContent = CHARACTERS[ci].story;
+      $('#nf-por').style.backgroundImage = `url(assets/char/player_${CHARACTERS[ci].id}.png)`;
     });
     card.querySelectorAll('.nf-mode').forEach(b => b.onclick = () => {
       mi = +b.dataset.i;
@@ -3128,16 +3136,23 @@ const G = {
     c.save();
     if (p.iframe > 0 && Math.floor(this.time * 24) % 2 === 0) c.globalAlpha = 0.45;
     // 손그림 스프라이트가 있으면 그것으로, 없으면 아래 절차 렌더로 폴백
-    if (this.spritesOn && Sprites.draw(c, 'player', this.playerFrame(p), sx, sy, p.facing < 0)) {
-      /* 캐릭터 색조. 시트는 다섯이 한 장을 같이 쓰므로 색으로만 가른다.
-         source-atop 이라 이미 그린 픽셀 위에만 얹히고 배경은 건드리지 않는다. */
-      const tint = CHAR_OF(p.charId).tint;
-      if (tint) {
+    /* 캐릭터마다 제 시트를 쓴다 (char/player_<id>.png). 프레임 순서는 다섯 장 모두
+       원본 player.png와 같으므로 playerFrame() 은 그대로 쓴다. */
+    const ch = CHAR_OF(p.charId);
+    const fr = this.playerFrame(p);
+    if (this.spritesOn && Sprites.draw(c, 'player_' + ch.id, fr, sx, sy, p.facing < 0)) {
+      this.drawHeldWeapon(c, p, sx, sy, 0);
+      c.restore();
+      return;
+    }
+    /* 전용 시트를 못 읽었으면 옛 방식 — 공용 시트 한 장에 색조만 얹는다 */
+    if (this.spritesOn && Sprites.draw(c, 'player', fr, sx, sy, p.facing < 0)) {
+      if (ch.tint) {
         const m = Sprites.meta && Sprites.meta.characters.sheets.player;
         c.save();
         c.globalCompositeOperation = 'source-atop';
         c.globalAlpha = 0.34;
-        c.fillStyle = tint;
+        c.fillStyle = ch.tint;
         c.fillRect(sx - 2, sy - 2, (m ? m.frameW : p.w) + 4, (m ? m.frameH : p.h) + 4);
         c.restore();
       }
