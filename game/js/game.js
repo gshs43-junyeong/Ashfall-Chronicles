@@ -2739,7 +2739,10 @@ const G = {
       const ph = r > .66 ? 0 : r > .33 ? 1 : 2;
       return ph * 2 + (Math.floor(this.time * 2.5) % 2);
     }
-    if (e.atkCd > 1.4) return 4;                                    // 공격 직후
+    /* 예전에는 `atkCd > 1.4` 로 공격 직후를 판정했다. 그런데 atkCd 는 화살·마법을
+       쏘는 놈만 쓰는 값이라, 접촉으로 때리는 근접 몹은 늘 0 이었다 — 프레임 4(공격
+       그림)를 한 번도 못 보여 주고 있었다. 이제 때린 순간에 켜는 atkPose 를 본다. */
+    if (e.atkPose > 0) return 4;
     if (Math.abs(e.vx) > 6) return 2 + (Math.floor(this.time * 7) % 2);
     return Math.floor(this.time * 2.4) % 2;
   },
@@ -3037,6 +3040,27 @@ const G = {
     }
   },
 
+  /** 손그림 몹 위에 얹는 것들 — 피격 섬광 · 체력 막대 · 페이즈 전환 섬광.
+      절차 흔들림 경로와 일반 경로가 같은 것을 그려야 해서 따로 뺐다. */
+  drawEnemyOverlay(c, e, sx, sy, dy, meta) {
+    const w = meta ? meta.frameW : e.w;
+    if (e.flash > 0) {   // 피격 섬광 — 판정 박스가 아니라 실제로 그려진 그림을 덮는다
+      c.save(); c.globalAlpha = Math.min(.75, e.flash * 6); c.fillStyle = '#fff';
+      c.fillRect(sx, sy - dy, w, e.h + dy); c.restore();
+    }
+    /* 페이즈가 막 넘어간 보스를 금빛으로 덮는다. 시트가 페이즈마다 idle 두 장뿐이고
+       그림 차이가 3% 안팎인 보스가 있어, 이게 없으면 바뀐 걸 알 수가 없다. */
+    if (e.phaseT > 0) {
+      c.save(); c.globalAlpha = Math.min(.55, e.phaseT * 0.8); c.fillStyle = '#ffe08a';
+      c.fillRect(sx, sy - dy, w, e.h + dy); c.restore();
+    }
+    if (e.hp < e.maxHp && !e.boss) {
+      const bw = Math.max(22, e.w);
+      c.fillStyle = '#000a'; c.fillRect(sx + (e.w - bw) / 2, sy - dy - 8, bw, 4);
+      c.fillStyle = '#d0564c'; c.fillRect(sx + (e.w - bw) / 2, sy - dy - 8, bw * (e.hp / e.maxHp), 4);
+    }
+  },
+
   drawEnemy(c, e, sx, sy) {
     /* 손그림 스프라이트 우선. 프레임이 판정 박스보다 크면 **바닥을 맞춰** 그린다.
        들토끼·눈산토끼는 판정 박스가 12px인데 시트 프레임은 40px이고, 그림 속 토끼 발이
@@ -3049,16 +3073,34 @@ const G = {
     // 남아 있어(들토끼류 실측 2.25px) 판정 박스가 작을수록 그만큼 더 떠 보였다.
     // Sprites.footInset가 실측한 여백이라 그만큼 덜 밀어 올린다.
     const dy = meta ? Math.max(0, meta.frameH - e.h - (Sprites.footInset[e.type] || 0)) : 0;
+
+    /* 그림이 거의 안 움직이는 개체는(ENEMIES 의 stiff — 프레임 간 픽셀 차를 재서
+       골랐다) 렌더러가 대신 흔들어 준다. 걸을 때는 속도에 맞춰 위아래로 튀고 진행
+       방향으로 살짝 기울이고, 보스처럼 서 있기만 하는 것은 숨을 쉬게 한다.
+       그림을 다시 그리기 전까지의 가림막이라, 다시 그린 개체는 stiff 를 떼면 된다. */
+    const st = e.def.stiff;
+    if (st && this.spritesOn) {
+      const moving = Math.abs(e.vx) > 6;
+      if (moving) {
+        const ph = this.time * 7 * Math.PI;                 // 걸음 프레임과 같은 박자
+        const bob = Math.abs(Math.sin(ph)) * 2.6 * st;
+        const lean = Math.sin(ph * 0.5) * 0.035 * st * (e.facing < 0 ? -1 : 1);
+        c.save();
+        c.translate(sx + e.w / 2, sy + e.h);
+        c.rotate(lean);
+        c.translate(-(sx + e.w / 2), -(sy + e.h) - bob);
+      } else {
+        const br = Math.sin(this.time * 2.4 * Math.PI) * 1.1 * st;   // idle 박자
+        c.save();
+        c.translate(0, br);
+      }
+      const ok = Sprites.draw(c, e.type, this.enemyFrame(e), sx, sy - dy, e.facing < 0);
+      c.restore();
+      if (ok) { this.drawEnemyOverlay(c, e, sx, sy, dy, meta); return; }
+    }
+
     if (this.spritesOn && Sprites.draw(c, e.type, this.enemyFrame(e), sx, sy - dy, e.facing < 0)) {
-      if (e.flash > 0) {   // 피격 섬광 — 판정 박스가 아니라 실제로 그려진 그림을 덮는다
-        c.save(); c.globalAlpha = Math.min(.75, e.flash * 6); c.fillStyle = '#fff';
-        c.fillRect(sx, sy - dy, meta ? meta.frameW : e.w, e.h + dy); c.restore();
-      }
-      if (e.hp < e.maxHp && !e.boss) {
-        const bw = Math.max(22, e.w);
-        c.fillStyle = '#000a'; c.fillRect(sx + (e.w - bw) / 2, sy - dy - 8, bw, 4);
-        c.fillStyle = '#d0564c'; c.fillRect(sx + (e.w - bw) / 2, sy - dy - 8, bw * (e.hp / e.maxHp), 4);
-      }
+      this.drawEnemyOverlay(c, e, sx, sy, dy, meta);
       return;
     }
     const f = 1;

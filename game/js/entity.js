@@ -669,6 +669,11 @@ class Enemy extends Ent {
     this.boss = !!d.boss;
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
     this.flash = 0; this.atkCd = 0; this.jumpCd = 0; this.think = 0;
+    /* 공격 포즈를 띄워 둘 시간. 예전에는 atkCd > 1.4 로 대신했는데, atkCd 는
+       화살·마법을 쏘는 놈만 쓴다 — 근접은 접촉 피해라 값이 늘 0이었고, 그래서
+       프레임 4(공격 그림)를 한 번도 못 보여 주고 있었다. 때린 순간에 직접 켠다. */
+    this.atkPose = 0;
+    this.lastPhase = 0;
     this.slowT = 0; this.slowF = 1; this.dots = [];
     this.phase = 0; this.state = 0; this.stateT = 0;
     this.facing = -1;
@@ -718,6 +723,7 @@ class Enemy extends Ent {
   }
 
   update(dt, world, player) {
+    this.atkPose -= dt;
     this.flash -= dt; this.atkCd -= dt; this.jumpCd -= dt; this.hitCd -= dt;
     if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slowF = 1; }
     for (let i = this.dots.length - 1; i >= 0; i--) {
@@ -743,6 +749,7 @@ class Enemy extends Ent {
       if (this.hitWall && this.onGround && this.jumpCd <= 0) { this.vy = -420; this.jumpCd = 0.6; }
       if (AI === 'archer' && this.atkCd <= 0 && dd < Math.min(range, this.aggro) && Math.abs(dy) < 180) {
         this.atkCd = 1.8 + Math.random() * 0.6;
+        this.atkPose = 0.26;
         const a = angleTo(this.cx, this.cy, player.cx, player.cy - 6);
         const p = new Proj(this.cx, this.cy, Math.cos(a) * 460, Math.sin(a) * 460, this.dmg, 'enemy', this.def.proj || 'arrow');
         p.grav = 220; G.projs.push(p);
@@ -765,6 +772,7 @@ class Enemy extends Ent {
       else { this.vx *= 0.95; this.vy = lerp(this.vy, Math.sin(G.time * 3 + this.x) * 40, dt * 2); }
       if (this.atkCd <= 0 && dd < Math.min(range, this.aggro)) {
         this.atkCd = 2.0 + Math.random() * 0.8;
+        this.atkPose = 0.26;
         const a = angleTo(this.cx, this.cy, player.cx, player.cy);
         const kind = this.def.proj || (this.type === 'frostling' ? 'frost' : this.type === 'imp' ? 'fire' : 'dark');
         G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 320, Math.sin(a) * 320, this.dmg, 'enemy', kind));
@@ -809,6 +817,7 @@ class Enemy extends Ent {
     if (!this.def.passive && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
       player.hurt(this.dmg * (this.boss ? 1 : 0.9), this.cx);
       this.hitCd = 0.7;
+      this.atkPose = 0.22;
     }
   }
 
@@ -818,6 +827,21 @@ class Enemy extends Ent {
     this.stateT -= dt;
     const hpr = this.hp / this.maxHp;
     this.phase = hpr < 0.33 ? 2 : hpr < 0.66 ? 1 : 0;
+    /* 페이즈가 올라가는 순간을 연출로 알린다. 보스 시트는 페이즈마다 idle 두 장뿐이고
+       그림 차이가 작은 보스가 여럿이라(void_king 1.5% · bone_lord 3.3% · shaft_maw 6.6%)
+       그림만으로는 바뀐 걸 알아챌 수 없었다. 그림을 다시 그리기 전까지 이걸로 메운다. */
+    if (this.phase > this.lastPhase) {
+      this.lastPhase = this.phase;
+      this.phaseT = 0.7;
+      G.shake = Math.max(G.shake, 11);
+      for (let i = 0; i < 26; i++) {
+        G.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w,
+                              this.cy + (Math.random() - 0.5) * this.h,
+                              i % 3 ? this.def.c : '#ffe08a', -120, 0.9));
+      }
+      G.sfxAt('chapter', this.cx / TS, this.cy / TS);
+    }
+    this.phaseT = (this.phaseT || 0) - dt;
 
     if (AI === 'b_slime') {
       if (this.onGround) {

@@ -1242,19 +1242,38 @@ const VILLAGE = [
 
 /* ---------------- 적 ---------------- */
 // ai: walker / jumper / flyer / archer / caster / boss별 전용
+//
+// stiff: 그림이 거의 안 움직여서 렌더러가 절차적으로 흔들어 줘야 하는 개체.
+//   시트의 프레임끼리 실제로 얼마나 다른지를 재서(겹쳤을 때 달라지는 픽셀이
+//   불투명 면적의 몇 %인가) 5% 안팎으로 사실상 정지인 것만 골랐다. 값은 흔드는
+//   세기이고, drawEnemy 가 속도에 맞춰 위아래 흔들림과 기울임을 얹는다.
+//
+//   측정값 (idle쌍 / move쌍 / idle→move):
+//     ballast_form 38.9 /  3.1 /  1.6   걸음 두 장이 같아 상자가 미끄러진다
+//     lost_miner   33.3 / 23.0 /  9.6   걸음은 있으나 서 있을 때와 구분이 약하다
+//     lavaslug     16.2 / 19.5 /  0.0   idle1 과 move1 이 같은 그림
+//     riveter       0.0 / 44.6 /  0.0   서 있으면 완전 정지 + idle1 == move1
+//     crystalcrab  20.5 / 58.0 /  0.0   idle1 == move1 이라 걷기 시작이 안 보인다
+//     scrapcrawler  0.0 / 72.2 / 18.3   걸음은 건강하고 서 있을 때만 정지
+//     glow_snail    0.0 /  0.0 /  0.0   일곱 장이 전부 같은 그림
+//     arctic_hare  34.0 /  0.0 /  0.0   걸음 두 장이 같다
+//     ash_vole     62.6 /  8.0 /  3.7   서 있을 때만 움직인다
+//     jungle_frog   0.0 / 48.3 / 76.9   뛰는 동작은 건강하고 서 있을 때만 정지
+//   golem·corrupttree·zombie 는 느리지만 팔다리가 실제로 움직여서 뺐다.
+//   근본 해결은 프레임을 다시 그리는 것이고, 이건 그때까지의 가림막이다.
 const ENEMIES = {
   /* --- 순한 동물: 적대하지 않고 어슬렁거리다 맞으면 도망친다. 잡으면 생고기를 준다 --- */
   rabbit:      { n: '들토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', w: 16, h: 12, c: '#ad9678', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
-  arctic_hare: { n: '눈산토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', w: 16, h: 12, c: '#e8eef2', xp: 2, gold: 0, passive: 1,
+  arctic_hare: { n: '눈산토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', stiff: 1.2, w: 16, h: 12, c: '#e8eef2', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
   sand_lizard: { n: '모래 도마뱀', hp: 10, dmg: 0, def: 0, spd: 60, ai: 'critter', w: 18, h: 10, c: '#c8a45a', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
-  jungle_frog: { n: '정글 개구리', hp: 9, dmg: 0, def: 0, spd: 90, ai: 'critter', w: 14, h: 12, c: '#5ab04a', xp: 2, gold: 0, passive: 1,
+  jungle_frog: { n: '정글 개구리', hp: 9, dmg: 0, def: 0, spd: 90, ai: 'critter', stiff: 0.7, w: 14, h: 12, c: '#5ab04a', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
-  glow_snail:  { n: '빛달팽이', hp: 12, dmg: 0, def: 0, spd: 24, ai: 'critter', w: 16, h: 12, c: '#7fe0c8', xp: 2, gold: 0, passive: 1,
+  glow_snail:  { n: '빛달팽이', hp: 12, dmg: 0, def: 0, spd: 24, ai: 'critter', stiff: 1.3, w: 16, h: 12, c: '#7fe0c8', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1], ['glowcap', .15, 1, 1]] },
-  ash_vole:    { n: '잿들쥐', hp: 9, dmg: 0, def: 0, spd: 85, ai: 'critter', w: 14, h: 10, c: '#8a7a8c', xp: 2, gold: 0, passive: 1,
+  ash_vole:    { n: '잿들쥐', hp: 9, dmg: 0, def: 0, spd: 85, ai: 'critter', stiff: 1.1, w: 14, h: 10, c: '#8a7a8c', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
 
   slime:      { n: '잿빛 슬라임', hp: 34, dmg: 8, def: 0, spd: 34, ai: 'jumper', w: 26, h: 20, c: '#6f8ba0', xp: 9, gold: 3, biome: 'surface', aggro: 320,
@@ -1295,9 +1314,9 @@ const ENEMIES = {
                 drops: [['ice_fang', .6, 1, 3], ['ice_shard', .7, 2, 4], ['dagger_frost', .03, 1, 1], ['charm_hawk', .06, 1, 1]] },
   corrupttree:{ n: '부패한 나무', hp: 260, dmg: 40, def: 20, spd: 26, ai: 'walker', w: 34, h: 48, c: '#5a3f78', xp: 86, gold: 40, biome: 'corrupt', aggro: 340,
                 drops: [['corrupt_ess', .8, 2, 4], ['moss_core', .45, 1, 2], ['wood', .9, 3, 8], ['mace_thorn', .025, 1, 1]] },
-  crystalcrab:{ n: '수정 게', hp: 300, dmg: 44, def: 28, spd: 44, ai: 'walker', w: 34, h: 24, c: '#7fd8e8', xp: 110, gold: 55, biome: 'deep', aggro: 400,
+  crystalcrab:{ n: '수정 게', hp: 300, dmg: 44, def: 28, spd: 44, ai: 'walker', stiff: 0.9, w: 34, h: 24, c: '#7fd8e8', xp: 110, gold: 55, biome: 'deep', aggro: 400,
                 drops: [['crystal_claw', .6, 1, 2], ['crystal', .7, 2, 5], ['dagger_void', .025, 1, 1], ['tome_void', .02, 1, 1]] },
-  lavaslug:   { n: '용암 슬러그', hp: 340, dmg: 52, def: 18, spd: 40, ai: 'walker', w: 32, h: 22, c: '#e0703a', xp: 120, gold: 58, biome: 'hell', aggro: 360,
+  lavaslug:   { n: '용암 슬러그', hp: 340, dmg: 52, def: 18, spd: 40, ai: 'walker', stiff: 0.9, w: 32, h: 22, c: '#e0703a', xp: 120, gold: 58, biome: 'hell', aggro: 360,
                 drops: [['lava_gel', .7, 1, 3], ['hell_ore', .5, 1, 3], ['mace_lava', .035, 1, 1]] },
   cloudjelly: { n: '구름 해파리', hp: 300, dmg: 48, def: 14, spd: 62, ai: 'flyer', w: 28, h: 30, c: '#e8f0fa', xp: 130, gold: 60, biome: 'sky', aggro: 460,
                 drops: [['cloud_jelly', .7, 1, 3], ['cloud_block', .6, 3, 8]] },
@@ -1315,11 +1334,11 @@ const ENEMIES = {
                 drops: [['aether_shard', .5, 1, 3], ['crystal', .5, 2, 5]] },
 
   /* --- 세션 2: 지하 공창 --- */
-  scrapcrawler: { n: '고철 기어다니개', hp: 900, dmg: 62, def: 30, spd: 92, ai: 'walker', w: 30, h: 22, c: '#6a6a74', xp: 900, gold: 240, aggro: 420,
+  scrapcrawler: { n: '고철 기어다니개', hp: 900, dmg: 62, def: 30, spd: 92, ai: 'walker', stiff: 0.7, w: 30, h: 22, c: '#6a6a74', xp: 900, gold: 240, aggro: 420,
                  drops: [['steel_plate', 1, 3, 7], ['conduit_part', .5, 1, 2], ['gun_scrap', .02, 1, 1]] },
   sparkwisp:    { n: '불티 정령', hp: 620, dmg: 55, def: 18, spd: 168, ai: 'flyer', w: 20, h: 20, c: '#e8a53a', xp: 820, gold: 210, aggro: 500,
                  drops: [['power_core', .6, 1, 2], ['conduit_part', 1, 1, 3]] },
-  riveter:      { n: '대갈못 사수', hp: 1150, dmg: 74, def: 34, spd: 74, ai: 'archer', w: 24, h: 40, c: '#8a8a96', xp: 1150, gold: 300, aggro: 620, proj: 'bone',
+  riveter:      { n: '대갈못 사수', hp: 1150, dmg: 74, def: 34, spd: 74, ai: 'archer', stiff: 0.9, w: 24, h: 40, c: '#8a8a96', xp: 1150, gold: 300, aggro: 620, proj: 'bone',
                  drops: [['steel_plate', 1, 4, 9], ['iron_bar', .6, 2, 4], ['gun_scrap', .025, 1, 1]] },
   foreman:      { n: '옛 십장', hp: 1900, dmg: 88, def: 44, spd: 88, ai: 'caster', w: 26, h: 42, c: '#c8a06a', xp: 1700, gold: 480, aggro: 640, range: 380, proj: 'rune',
                  drops: [['power_core', 1, 2, 4], ['steel_plate', 1, 5, 10], ['blueprint_frag', .4, 1, 1]] },
@@ -1409,7 +1428,7 @@ const ENEMIES = {
 
   storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 96, def: 38, spd: 150, ai: 'b_storm', w: 66, h: 70, c: '#bcd8f0', xp: 16000, gold: 8000, boss: 1,
                  drops: [['sky_feather', 1, 30, 50], ['aether_shard', 1, 20, 35], ['charm_feather', 1, 1, 1], ['star_heart', 1, 1, 1]] },
-  first_keeper: { n: '최초의 파수꾼', hp: 20000, dmg: 120, def: 52, spd: 96, ai: 'b_keeper', w: 70, h: 88, c: '#c8b98a', xp: 40000, gold: 20000, boss: 1,
+  first_keeper: { n: '최초의 파수꾼', hp: 20000, dmg: 120, def: 52, spd: 96, ai: 'b_keeper', w: 70, h: 88, c: '#c8b98a', xp: 40000, gold: 20000, stiff: 1, boss: 1,
                  minion: 'ruin_guard',
                  drops: [['aether_shard', 1, 40, 60], ['ruin_brick', 1, 40, 70], ['charm_rune', 1, 1, 1], ['star_heart', 1, 2, 2]] },
 
@@ -1451,7 +1470,7 @@ const ENEMIES = {
                  drops: [['orbit_plate', 1, 3, 8], ['orbit_gear', .5, 1, 2], ['aether_shard', .4, 2, 5]] },
   meridian_eye: { n: '자오선의 눈', hp: 2600, dmg: 116, def: 44, spd: 186, ai: 'flyer', w: 26, h: 26, c: '#7fe0ff', xp: 4800, gold: 1100, aggro: 720,
                  drops: [['void_lens', .25, 1, 1], ['orbit_gear', .6, 1, 3], ['sky_feather', .7, 2, 5]] },
-  ballast_form: { n: '평형추', hp: 5200, dmg: 152, def: 96, spd: 54, ai: 'walker', w: 38, h: 54, c: '#5a6a80', xp: 6400, gold: 1500, aggro: 460,
+  ballast_form: { n: '평형추', hp: 5200, dmg: 152, def: 96, spd: 54, ai: 'walker', stiff: 1.15, w: 38, h: 54, c: '#5a6a80', xp: 6400, gold: 1500, aggro: 460,
                  drops: [['orbit_plate', 1, 6, 12], ['star_ash', .3, 1, 2], ['orbit_gear', .5, 2, 4]] },
 
   /* 부유 성채의 주인 — 지금까지 나온 무엇보다 세다.
@@ -1465,7 +1484,7 @@ const ENEMIES = {
                  drops: [['deep_alloy', 1, 2, 5], ['gloom_pearl', .2, 1, 1], ['bone_frag', .6, 3, 7]] },
   damp_wisp:    { n: '가스 도깨비불', hp: 1800, dmg: 104, def: 28, spd: 158, ai: 'flyer', w: 22, h: 22, c: '#8aa05a', xp: 3800, gold: 820, aggro: 620,
                  drops: [['deep_alloy', .6, 1, 3], ['hell_ore', .5, 3, 8]] },
-  lost_miner:   { n: '올라오지 못한 사람', hp: 4200, dmg: 136, def: 68, spd: 88, ai: 'walker', w: 22, h: 42, c: '#7a6a58', xp: 5600, gold: 1300, aggro: 600,
+  lost_miner:   { n: '올라오지 못한 사람', hp: 4200, dmg: 136, def: 68, spd: 88, ai: 'walker', stiff: 0.8, w: 22, h: 42, c: '#7a6a58', xp: 5600, gold: 1300, aggro: 600,
                  drops: [['miner_tag', .5, 1, 1], ['deep_alloy', 1, 3, 7], ['lost_lamp', .35, 1, 2]] },
 
   /* 무너진 갱의 주인 — 스토리와 무관한 순수 탐험 보상 */
