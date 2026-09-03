@@ -48,6 +48,36 @@
         "frameH": 40,
         "count": 13
       },
+      "player_wanderer": {
+        "file": "char/player_wanderer.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 13
+      },
+      "player_digger": {
+        "file": "char/player_digger.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 13
+      },
+      "player_ranger": {
+        "file": "char/player_ranger.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 13
+      },
+      "player_adept": {
+        "file": "char/player_adept.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 13
+      },
+      "player_stray": {
+        "file": "char/player_stray.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 13
+      },
       "slime": {
         "file": "char/slime.png",
         "frameW": 26,
