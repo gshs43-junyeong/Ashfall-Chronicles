@@ -1295,6 +1295,15 @@ const MODES = [
 const MODE_OF = id => MODES.find(m => m.id === id) || MODES[0];
 const CHAR_OF = id => CHARACTERS.find(c => c.id === id) || CHARACTERS[0];
 
+/* ---------------- 활·총을 든 손 ---------------- */
+/* 활은 겨눈 쪽으로 돌려 그리는데, 손 바로 위에 그리면 몸을 파고든다. 팔을 뻗은 만큼
+   앞으로 밀어 두고(BOW_HAND), 화살은 활 끝에서 나가게 한다(BOW_TIP).
+   BOW_TIP 은 BOW_HAND + 아이콘 안에서 화살촉이 놓인 자리(26px 상자 기준 +11.4)다.
+   그리는 쪽(game.js drawHeldWeapon)과 쏘는 쪽(entity.js fireProj)이 같은 값을 봐야
+   화살이 활 끝에서 나가는 것처럼 보인다 — 한쪽만 고치지 말 것. */
+const BOW_HAND = 18;
+const BOW_TIP = BOW_HAND + 11.4;
+
 /* ---------------- 조작키 ---------------- */
 /* 설정에서 바꾼다. 저장은 설정(SET_KEY)에 붙고 세이브와는 무관하다.
    값은 KeyboardEvent.code — 자판 배열이 달라도 자리로 잡히게. */

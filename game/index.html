@@ -206,26 +206,48 @@
       <div class="ts-sub">별이 잠든 땅</div>
       <h1>ASHFALL<span class="ts-h1b">CHRONICLES</span></h1>
       <p class="ts-tag">떨어진 별이 대지를 갈랐다. 잿빛이 번지기 전에, 다섯 개의 심장을 되찾아라.</p>
-      <div id="slot-list" class="slot-list"></div>
-      <div class="ts-menu2">
-        <button id="btn-help">조작법</button>
+      <div class="ts-menu">
+        <button id="btn-single">싱글플레이</button>
         <button id="btn-settings-title">설정</button>
+        <button id="btn-credits">크레딧</button>
+        <button id="btn-quit">나가기</button>
       </div>
     </div>
-    <div id="help-box">
-      <div class="help-inner">
-        <h3>조작</h3>
-        <ul>
-          <li><b>A / D</b> 이동 · <b>Space</b> 점프(이중 점프 특성) · <b>S</b> 발판 내려가기</li>
-          <li><b>좌클릭</b> 공격 / 채굴 &nbsp; <b>우클릭</b> 블록 설치 · NPC/상자 상호작용</li>
-          <li><b>Shift</b> 회피 대시 (무적 프레임)</li>
-          <li><b>Q E R F</b> 스킬 · <b>0~9</b> 핫바</li>
-          <li><b>I</b> 가방 · <b>K</b> 능력 · <b>J</b> 일지 · <b>H</b> 제작 · <b>Esc</b> 메뉴</li>
-          <li><b>기계</b> 우클릭으로 설치 · 설치된 기계를 우클릭하면 설정 · 좌클릭(도구)으로 회수</li>
-          <li><b>F5</b> 저장 · 사망 시 경험치 일부와 금화를 잃습니다</li>
-        </ul>
-        <button id="btn-help-close" class="set-close">닫기</button>
-      </div>
+  </div>
+
+  <!-- 저장 슬롯 (싱글플레이) -->
+  <div id="slots-screen" class="modal">
+    <div class="modal-box">
+      <div class="set-title">저장 슬롯</div>
+      <div id="slot-list" class="slot-list"></div>
+      <button id="btn-slots-close" class="set-close">닫기</button>
+    </div>
+  </div>
+
+  <!-- 새 게임 — 캐릭터 · 난이도 · 이름 · 씨앗 -->
+  <div id="newgame-screen" class="modal">
+    <div class="modal-box ng-box" id="newgame-box"></div>
+  </div>
+
+  <!-- 크레딧 -->
+  <div id="credits-screen" class="modal">
+    <div class="modal-box">
+      <div class="set-title">크레딧</div>
+      <dl class="credits">
+        <dt>기획</dt><dd>gshs43-junyeong</dd>
+        <dt>제작</dt><dd>Claude Opus 5</dd>
+        <dt>음악 · 효과음</dt><dd>Suno · ElevenLabs</dd>
+      </dl>
+      <button id="btn-credits-close" class="set-close">닫기</button>
+    </div>
+  </div>
+
+  <!-- 나가기 — 브라우저가 창을 못 닫을 때의 인사 -->
+  <div id="bye-screen" class="modal">
+    <div class="modal-box bye">
+      <p>재가 가라앉을 때까지, 안녕히.</p>
+      <p class="bye-sub">이 탭은 이제 닫으셔도 됩니다.</p>
+      <button id="btn-bye-back" class="set-close">돌아가기</button>
     </div>
   </div>
 
@@ -265,6 +287,15 @@
       <p class="set-note">항목을 누르고 새 키를 누르세요. <b>Esc</b> 는 바꿀 수 없습니다.</p>
       <div id="set-keys"></div>
       <button id="set-keys-reset" class="set-reset">조작키만 기본값으로</button>
+
+      <div class="set-sub">조작법</div>
+      <ul class="set-help">
+        <li><b>좌클릭</b> 공격 / 채굴 &nbsp; <b>우클릭</b> 블록 설치 · NPC/상자 상호작용</li>
+        <li>점프는 이중 점프 특성을 얻으면 두 번까지 됩니다.</li>
+        <li><b>기계</b> 우클릭으로 설치 · 설치된 기계를 우클릭하면 설정 · 도구로 좌클릭하면 회수</li>
+        <li><b>F5</b> 저장 · 쓰러진 자리의 비석에서 잃은 것의 절반을 되찾습니다(12시간 안에)</li>
+        <li>그 밖의 키는 바로 위 <b>조작키</b> 목록에서 확인하고 바꿀 수 있습니다.</li>
+      </ul>
 
       <button id="set-reset" class="set-reset">기본값으로</button>
       <button id="btn-settings-close" class="set-close">닫기</button>
