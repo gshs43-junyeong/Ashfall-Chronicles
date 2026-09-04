@@ -72,6 +72,16 @@ const ISPEC = {
   charm_star: { k: 'star', c: '#ffe58a', glow: '#ffd24a', big: 1 },
   charm_hawk: { k: 'feather', c: '#c8a06a' },
   ring_brand: { k: 'ring', c: '#c0762f', gem: '#ff6a2a' },
+
+  /* 유적 유물 여덟 — 유적마다 하나씩. 색으로도 어느 유적 것인지 알아보게 갈랐다 */
+  relic_frostpane:  { k: 'crystal', c: '#9fe0ff', glow: 1 },
+  relic_sundial:    { k: 'amulet', c: '#d8b13d', gem: '#ffe08a', shape: 'drop' },
+  relic_lastlamp:   { k: 'torchitem' },
+  relic_rotcore:    { k: 'heart', c: '#7a9c4a', glow: '#a8d060' },
+  relic_sporebell:  { k: 'wisp', c: '#7fd8c0', glow: 1 },
+  relic_frostmark:  { k: 'sigil', c: '#bcd8f0' },
+  relic_mazeeye:    { k: 'sigil', c: '#c8a04a' },
+  relic_hollowseed: { k: 'crystal', c: '#6a4a8a', glow: 1 },
   charm_conduit: { k: 'cell', c: '#4f9cf0', fill: 1, glow: '#8fd0f0' },
   charm_zenith: { k: 'amulet', c: '#bcd8f0', gem: '#e8f0fa', shape: 'wing' },
 

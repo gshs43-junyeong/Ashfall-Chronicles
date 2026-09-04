@@ -630,67 +630,78 @@
         "file": "boss/ice_warden.png",
         "frameW": 54,
         "frameH": 72,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "sand_guardian": {
         "file": "boss/sand_guardian.png",
         "frameW": 60,
         "frameH": 76,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "mine_horror": {
         "file": "boss/mine_horror.png",
         "frameW": 66,
         "frameH": 58,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "blight_maw": {
         "file": "boss/blight_maw.png",
         "frameW": 64,
         "frameH": 64,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "vine_lord": {
         "file": "boss/vine_lord.png",
         "frameW": 62,
         "frameH": 80,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "spore_queen": {
         "file": "boss/spore_queen.png",
         "frameW": 58,
         "frameH": 78,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "proliferator": {
         "file": "boss/proliferator.png",
         "frameW": 72,
         "frameH": 66,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "hepha": {
         "file": "boss/hepha.png",
         "frameW": 88,
         "frameH": 110,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "archetype": {
         "file": "boss/archetype.png",
         "frameW": 96,
         "frameH": 116,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "restorer": {
         "file": "boss/restorer.png",
         "frameW": 118,
         "frameH": 132,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "shaft_maw": {
         "file": "boss/shaft_maw.png",
         "frameW": 92,
         "frameH": 84,
-        "count": 6
+        "count": 6,
+        "gap": 0
       }
     }
   },

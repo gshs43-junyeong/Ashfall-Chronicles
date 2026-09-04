@@ -624,16 +624,24 @@ class World {
   }
 
   /** 작물 한 단계 성장. 낮에 더 잘 자란다. dayF: 0(밤)~1(한낮) */
+  /** 자란 칸을 돌려준다 — 화면에 보이는 밭이면 게임 쪽에서 티를 낸다.
+      { grew: [키…], ripe: [키…] }. ripe 는 이번에 다 여문 칸이다. */
   growCrops(rng, dayF) {
-    if (!this.crops.size) return;
+    const out = { grew: [], ripe: [] };
+    if (!this.crops.size) return out;
     for (const k of this.crops) {
       const def = TILE_DEF[this.tiles[k]];
       if (!def.crop) { this.crops.delete(k); continue; }   // 캐갔거나 덮였다
       if (!def.crop.next) continue;                        // 이미 다 여물었다
       const x = k % WW, y = (k / WW) | 0;
       if (!TILE_DEF[this.get(x, y + 1)].farm) { this.crops.delete(k); continue; }   // 밭이 없어졌다
-      if (rng.chance(0.22 * (0.55 + dayF * 0.75))) this.tiles[k] = def.crop.next;
+      if (rng.chance(0.22 * (0.55 + dayF * 0.75))) {
+        this.tiles[k] = def.crop.next;
+        const nd = TILE_DEF[def.crop.next];
+        (nd.crop && nd.crop.ripe ? out.ripe : out.grew).push(k);
+      }
     }
+    return out;
   }
 
   /** 부서지는 바닥 — 밟으면 잠깐 뒤 무너지고, 한참 뒤 되돌아온다 */
@@ -1841,9 +1849,13 @@ class World {
         // 함정 개수와 지킴이 수가 유적 등급을 그대로 탄다 — 갱도는 2마리, 부패한 둥지는 5마리
         for (let k = 0; k < 1 + Math.round(rank * 0.7); k++) this.putTileTrap(r, fy, rng.pick(spec.traps), rng);
         for (let x = r.x + 2; x < r.x + r.w - 2; x++) if (rng.chance(SPIKE)) this.set(x, fy, T.SPIKE);
+        /* 이 유적의 유물은 입구에서 가장 먼 보물방에만 들어간다 — 유적마다 하나뿐이고,
+           끝까지 들어가 본 사람만 갖는다. relic 은 상자 객체에 붙어 세이브에 남는다. */
+        const relic = roles.get(r) === 'vault' && r === rest[0] ? RUIN_RELIC[spec.id] : null;
         this.objects.push({
           type: 'chest', tier: clamp(spec.tier + 1, 1, 6),
           x: cx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null,
+          relic: relic || undefined,
           guard: { t: rng.pick(spec.mobs), n: clamp(1 + Math.round(rank * 0.6), 2, 5) }
         });
         continue;
@@ -1926,6 +1938,9 @@ class World {
       const ex = clamp(cx, x0 + 3, x0 + w - 4);
       this._entranceLandX = null;
       this._carveEntranceShaft(ex, this.surface[ex] + 1, y0 + 1, { entryKind: sp.entryKind, bg: 10, w }, rng);
+      // 이 유적의 유물이 들어갈 방 — 내려온 통로에서 가장 먼 방(석판방은 뺀다)
+      const far = rooms.filter(r => r !== main)
+        .sort((a, b) => Math.abs(b.x - ex) - Math.abs(a.x - ex))[0];
       for (const r of rooms) {
         const fy = r.y + r.h - 3, rcx = r.x + (r.w >> 1);
         for (let x = r.x + 3; x < r.x + r.w - 2; x += 6) this.set(x, r.y + 2, T.TORCH);
@@ -1935,18 +1950,20 @@ class World {
         if (rng.chance(sp.trap)) this.putTileTrap(r, fy, rng.pick(sp.traps), rng);
         if (i >= 1 && rng.chance(sp.trap * 0.5)) this.putTileTrap(r, fy, rng.pick(sp.traps), rng);
         if (rng.chance(sp.spike)) for (let k = 0; k < rng.int(2, 3 + i); k++) this.set(r.x + 3 + k, fy, T.SPIKE);
-        if (rng.chance(sp.chest))
+        // 유물 방은 상자가 확률이 아니라 확정이다 — 유물은 유적마다 하나뿐이라 굴리면 안 된다
+        if (r === far || rng.chance(sp.chest))
           this.objects.push({ type: 'chest', tier: sp.tier + (r.w * r.h < 180 ? 1 : 0),
-            x: (rcx + rng.int(-2, 2)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
+            x: (rcx + rng.int(-2, 2)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null,
+            relic: r === far ? RUIN_RELIC['story' + i] : undefined });
       }
-      this.ruins.push({ x: cx, y: cy, w, h });
+      this.ruins.push({ id: 'story' + i, x: cx, y: cy, w, h });
     });
 
     // --- 바이옴 유적 5곳 (스토리와 무관한 탐험 콘텐츠) ---
     this.ruinSites = [];
     RUIN_SPEC.forEach((spec, i) => {
       this.ruinSites.push(this.buildRuinSite(spec, i, rng));
-      this.ruins.push({ x: spec.x, y: spec.y + (spec.h >> 1), w: spec.w, h: spec.h });
+      this.ruins.push({ id: spec.id, x: spec.x, y: spec.y + (spec.h >> 1), w: spec.w, h: spec.h });
     });
 
     // 심층 봉인실 — 봉인석 문 너머에 최초의 파수꾼 제단
@@ -1978,10 +1995,15 @@ class World {
 
   /** 좌표가 유적 내부인지 */
   inRuin(tx, ty) {
-    if (!this.ruins) return false;
+    return !!this.ruinAt(tx, ty);
+  }
+  /** 이 좌표가 속한 유적 자체를 돌려준다 (id 가 붙어 있으면 어느 유적인지도 안다).
+      예전 세이브의 ruins 항목에는 id 가 없다 — 그때는 그냥 "유적 안"으로만 쓴다. */
+  ruinAt(tx, ty) {
+    if (!this.ruins) return null;
     for (const r of this.ruins)
-      if (tx > r.x - r.w / 2 && tx < r.x + r.w / 2 && ty > r.y - r.h / 2 && ty < r.y + r.h / 2) return true;
-    return false;
+      if (tx > r.x - r.w / 2 && tx < r.x + r.w / 2 && ty > r.y - r.h / 2 && ty < r.y + r.h / 2) return r;
+    return null;
   }
   /** 이 좌표가 속한 바이옴 유적의 잡몹 배율. 유적마다 난이도를 따로 매겨 뒀다.
       스토리 유적·봉인실처럼 RUIN_SPEC에 없는 곳은 1(그대로). */
