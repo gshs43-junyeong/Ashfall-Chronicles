@@ -122,6 +122,11 @@ const UI = {
     this.buildNotices();
     this.buildKeys();
 
+    /* 갈래 전환. 열 때는 늘 첫 갈래(화면·소리)로 돌아간다 — 지난번에 조작 갈래를
+       보다 닫았다고 다음에 조작부터 열리면, 소리를 줄이러 온 사람이 헤맨다. */
+    const tabs = document.querySelectorAll('.set-tab');
+    tabs.forEach(t => t.addEventListener('click', () => this.setTab(t.dataset.tab)));
+
     const kr = $('#set-keys-reset');
     if (kr) kr.addEventListener('click', () => {
       if (!G.settings) return;
@@ -136,6 +141,13 @@ const UI = {
       this.buildNotices(); this.buildKeys();
       this.toast('설정을 기본값으로 되돌렸다');
     });
+  },
+
+  /** 설정 갈래를 고른다 (disp · noti · keys) */
+  setTab(id) {
+    document.querySelectorAll('.set-tab').forEach(t => t.classList.toggle('on', t.dataset.tab === id));
+    document.querySelectorAll('.set-pane').forEach(p => p.classList.toggle('on', p.dataset.pane === id));
+    const body = $('.set-body'); if (body) body.scrollTop = 0;
   },
 
   /* ---- 알림 갈래 ---- */
@@ -186,6 +198,7 @@ const UI = {
   },
   /** G.settings → 화면 (열 때와 값이 바뀔 때마다) */
   syncSettings() {
+    this.setTab('disp');                       // 열 때는 늘 첫 갈래부터
     const s = G.settings; if (!s) return;
     const set = (id, v) => { const el = $('#' + id); if (el) el.value = v; };
     const txt = (id, v) => { const el = $('#' + id); if (el) el.textContent = v + '%'; };

@@ -350,6 +350,17 @@ OPS = {'strap': op_strap, 'pouch': op_pouch, 'brim': op_brim, 'lamp': op_lamp,
 # ---------------------------------------------------------------------- 굽기
 def read_frames():
     im = Image.open(SRC).convert('RGBA')
+    # tools/unclip.py 를 돌린 뒤라면 프레임이 사방 한 논리픽셀씩 넓어져 있다.
+    # 여기서는 옛 규격(20x40)을 기준으로 부위를 가려내므로 여백을 도로 벗겨 낸다.
+    # (구워 낸 다섯 장에는 마지막에 unclip.py 를 다시 돌려 같은 여백을 주면 된다)
+    pad = (im.size[0] - FW * S * N) // (2 * N)
+    if pad:
+        cut = Image.new('RGBA', (FW * S * N, FH * S), (0, 0, 0, 0))
+        step = FW * S + 2 * pad
+        for f in range(N):
+            cut.paste(im.crop((f * step + pad, pad, f * step + pad + FW * S, pad + FH * S)),
+                      (f * FW * S, 0))
+        im = cut
     assert im.size == (FW * S * N, FH * S), im.size
     out = []
     for f in range(N):

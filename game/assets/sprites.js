@@ -81,13 +81,24 @@ const Sprites = {
     const S = this.scale;
     const isBoss = !!this.meta.bosses.sheets[key];
     const gap = m.gap !== undefined ? m.gap : (isBoss ? this.meta.bosses.gap : 0);
-    const sw = m.frameW * S, sh = m.frameH * S;
+    let fw = m.frameW, fh = m.frameH, ox = m.ox || 0, oy = m.oy || 0;
+    /* 시트를 다시 구워 프레임 크기가 바뀌었는데 브라우저가 옛 그림을 캐시에서 내주면
+       (매니페스트는 no-cache라 새것, 그림은 ?v= 그대로라 옛것) 칸이 어긋나 그림이
+       썰려 보인다. 실제 그림 크기가 매니페스트와 다르면 그림 쪽을 믿는다 — 옛 그림은
+       여백이 없으니 ox/oy 도 0으로 되돌린다. (간격 없는 시트에만 쓸 수 있다) */
+    if (!gap && im.naturalWidth && m.count &&
+        Math.round(im.naturalWidth / S / m.count) !== fw) {
+      fw = Math.round(im.naturalWidth / S / m.count);
+      fh = Math.round(im.naturalHeight / S);
+      ox = oy = 0;
+    }
+    const sw = fw * S, sh = fh * S;
     const sx = frame * (sw + gap);
     c.save();
     c.imageSmoothingEnabled = false;
-    if (flip) { c.translate(Math.round(x) + m.frameW, Math.round(y)); c.scale(-1, 1); }
-    else c.translate(Math.round(x), Math.round(y));
-    c.drawImage(im, sx, 0, sw, sh, 0, 0, m.frameW, m.frameH);
+    if (flip) { c.translate(Math.round(x) + ox + fw, Math.round(y) + oy); c.scale(-1, 1); }
+    else c.translate(Math.round(x) + ox, Math.round(y) + oy);
+    c.drawImage(im, sx, 0, sw, sh, 0, 0, fw, fh);
     c.restore();
     return true;
   },

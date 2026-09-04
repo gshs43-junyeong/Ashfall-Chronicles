@@ -197,10 +197,18 @@
   <div id="tooltip"></div>
 
   <!-- 로딩 -->
-  <div id="loading"><div class="ld-inner"><div class="ld-spin"></div><div id="loading-text">세계를 빚는 중…</div></div></div>
+  <!-- 로딩 — 처음 켤 때부터 애셋이 다 붙을 때까지, 그리고 세계를 빚는 동안.
+       예전 타이틀 배경(별똥별 그림)이 여기로 왔다. -->
+  <div id="loading" class="open"><div class="ld-inner">
+    <div class="ld-mark">ASHFALL <span>CHRONICLES</span></div>
+    <div class="ld-spin"></div>
+    <div id="loading-text">불러오는 중…</div>
+  </div></div>
 
   <!-- 타이틀 -->
   <div id="title-screen">
+    <!-- 움직이는 배경 (js/titlebg.js) — 그림이 안 붙어도 하늘·별·재는 그려진다 -->
+    <canvas id="title-bg"></canvas>
     <div class="ts-version">v1.0.5</div>
     <div class="ts-inner">
       <div class="ts-sub">별이 잠든 땅</div>
@@ -264,41 +272,60 @@
     </div>
   </div>
 
-  <!-- 설정 (타이틀·일시정지 공통) -->
+  <!-- 설정 (타이틀·일시정지 공통)
+       세 갈래로 나눠 둔다. 예전에는 화면·알림·조작키·조작법이 한 줄로 이어져
+       세로로 화면을 두 배 넘게 넘쳤고, 원하는 항목까지 한참 굴려 내려가야 했다. -->
   <div id="settings-screen">
     <div class="settings">
-      <div class="set-title">설정</div>
-      <label class="set-row"><span>음악</span>
-        <input type="range" id="set-music" min="0" max="100" step="5"><b id="set-music-v">42%</b></label>
-      <label class="set-row"><span>효과음</span>
-        <input type="range" id="set-sfx" min="0" max="100" step="5"><b id="set-sfx-v">50%</b></label>
-      <label class="set-row"><span>화면 흔들림</span>
-        <input type="range" id="set-shake" min="0" max="150" step="10"><b id="set-shake-v">100%</b></label>
-      <label class="set-row chk"><span>피해 숫자</span><input type="checkbox" id="set-dmgnum"></label>
-      <label class="set-row chk"><span>미니맵</span><input type="checkbox" id="set-minimap"></label>
-      <label class="set-row"><span>시야 범위</span>
-        <input type="range" id="set-view" min="70" max="140" step="5"><b id="set-view-v">100%</b></label>
-      <p class="set-note">낮추면 넓게, 높이면 크게 보입니다. 미니맵 범위는 그대로입니다.</p>
+      <div class="set-head">
+        <div class="set-title">설정</div>
+        <div class="set-tabs">
+          <button class="set-tab on" data-tab="disp">화면 · 소리</button>
+          <button class="set-tab" data-tab="noti">알림</button>
+          <button class="set-tab" data-tab="keys">조작</button>
+        </div>
+      </div>
 
-      <div class="set-sub">알림</div>
-      <div id="set-notices"></div>
+      <div class="set-body">
+        <section class="set-pane on" data-pane="disp">
+          <label class="set-row"><span>음악</span>
+            <input type="range" id="set-music" min="0" max="100" step="5"><b id="set-music-v">42%</b></label>
+          <label class="set-row"><span>효과음</span>
+            <input type="range" id="set-sfx" min="0" max="100" step="5"><b id="set-sfx-v">50%</b></label>
+          <label class="set-row"><span>화면 흔들림</span>
+            <input type="range" id="set-shake" min="0" max="150" step="10"><b id="set-shake-v">100%</b></label>
+          <label class="set-row"><span>시야 범위</span>
+            <input type="range" id="set-view" min="70" max="140" step="5"><b id="set-view-v">100%</b></label>
+          <p class="set-note">시야를 낮추면 넓게, 높이면 크게 보입니다. 미니맵 범위는 그대로입니다.</p>
+          <div class="set-grid">
+            <label class="set-row chk"><span>피해 숫자</span><input type="checkbox" id="set-dmgnum"></label>
+            <label class="set-row chk"><span>미니맵</span><input type="checkbox" id="set-minimap"></label>
+          </div>
+        </section>
 
-      <div class="set-sub">조작키</div>
-      <p class="set-note">항목을 누르고 새 키를 누르세요. <b>Esc</b> 는 바꿀 수 없습니다.</p>
-      <div id="set-keys"></div>
-      <button id="set-keys-reset" class="set-reset">조작키만 기본값으로</button>
+        <section class="set-pane" data-pane="noti">
+          <p class="set-note">꺼 둔 갈래는 화면에 뜨지 않습니다. 죽음 · 실패 알림은 끌 수 없습니다.</p>
+          <div id="set-notices" class="set-grid"></div>
+        </section>
 
-      <div class="set-sub">조작법</div>
-      <ul class="set-help">
-        <li><b>좌클릭</b> 공격 / 채굴 &nbsp; <b>우클릭</b> 블록 설치 · NPC/상자 상호작용</li>
-        <li>점프는 이중 점프 특성을 얻으면 두 번까지 됩니다.</li>
-        <li><b>기계</b> 우클릭으로 설치 · 설치된 기계를 우클릭하면 설정 · 도구로 좌클릭하면 회수</li>
-        <li><b>F5</b> 저장 · 쓰러진 자리의 비석에서 잃은 것의 절반을 되찾습니다(12시간 안에)</li>
-        <li>그 밖의 키는 바로 위 <b>조작키</b> 목록에서 확인하고 바꿀 수 있습니다.</li>
-      </ul>
+        <section class="set-pane" data-pane="keys">
+          <p class="set-note">항목을 누르고 새 키를 누르세요. <b>Esc</b> 는 바꿀 수 없습니다.</p>
+          <div id="set-keys" class="set-grid"></div>
+          <button id="set-keys-reset" class="set-reset">조작키만 기본값으로</button>
+          <div class="set-sub">조작법</div>
+          <ul class="set-help">
+            <li><b>좌클릭</b> 공격 / 채굴 &nbsp; <b>우클릭</b> 블록 설치 · NPC/상자 상호작용</li>
+            <li>점프는 이중 점프 특성을 얻으면 두 번까지 됩니다.</li>
+            <li><b>기계</b> 우클릭으로 설치 · 설치된 기계를 우클릭하면 설정 · 도구로 좌클릭하면 회수</li>
+            <li><b>F5</b> 저장 · 쓰러진 자리의 비석에서 잃은 것의 절반을 되찾습니다(12시간 안에)</li>
+          </ul>
+        </section>
+      </div>
 
-      <button id="set-reset" class="set-reset">기본값으로</button>
-      <button id="btn-settings-close" class="set-close">닫기</button>
+      <div class="set-foot">
+        <button id="set-reset" class="set-reset">기본값으로</button>
+        <button id="btn-settings-close" class="set-close">닫기</button>
+      </div>
     </div>
   </div>
 
@@ -317,6 +344,7 @@
 <script src="js/world.js?v=183"></script>
 <script src="js/tileart.js?v=183"></script>
 <script src="js/itemart.js?v=183"></script>
+<script src="js/titlebg.js?v=183"></script>
 <script src="assets/sprites.js?v=183"></script>
 <script src="js/entity.js?v=183"></script>
 <script src="js/factory.js?v=183"></script>

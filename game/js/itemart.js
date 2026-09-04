@@ -39,6 +39,7 @@ const ISPEC = {
   fish_deep: { k: 'fishitem', c: '#7a5a9c', glow: '#a878e0' },
   ring_angler: { k: 'ring', c: '#8a6a4a', gem: '#4f9cf0' },
   pick_copper: { k: 'pick', c: '#c0762f' },
+  pick_sharp: { k: 'pick', c: '#d9903f' },      // 날을 세운 구리 — 조금 더 밝다
   pick_iron: { k: 'pick', c: '#b8bcc4' },
   pick_mythril: { k: 'pick', c: '#5fd0c0', glow: '#5fd0c0' },
   pick_soul: { k: 'pick', c: '#c49fff', glow: '#c49fff' },

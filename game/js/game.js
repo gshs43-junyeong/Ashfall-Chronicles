@@ -44,6 +44,12 @@ const G = {
     TileArt.build();
     Art.build();
     UI.init();
+    /* 다 불러올 때까지 로딩 화면을 띄워 둔다.
+       예전에는 애셋을 붙이는 동안에도 타이틀이 그대로 떠 있어서, 배경 없는 맨 글자가
+       먼저 보이고 몇 초 뒤에 그림이 툭 얹혔다. 이제 그림이 다 붙은 다음에 연다. */
+    document.body.classList.add('booting');
+    this.showLoading('불러오는 중…');
+    if (typeof TitleBG !== 'undefined') TitleBG.init();
     // 손그림 애셋은 비동기로 붙인다 — 실패해도 절차 생성 렌더로 계속 동작
     if (window.Sprites) {
       Sprites.ready().then(() => {
@@ -56,8 +62,14 @@ const G = {
           for (const id in Sprites.meta.items.files) Art.applyItemSprite(id, Sprites.img['item_' + id]);
           UI.refreshBag(); UI.refreshEquip();
         }
-      }).catch(e => { console.warn('sprite load failed, using procedural render', e); });
+        if (typeof TitleBG !== 'undefined') TitleBG.useSprites();
+      }).catch(e => { console.warn('sprite load failed, using procedural render', e); })
+        .finally(() => this.bootDone());
+    } else {
+      this.bootDone();
     }
+    // 애셋 하나가 영영 안 오더라도 로딩에 갇히지 않게 — 8초면 그냥 연다
+    setTimeout(() => this.bootDone(), 8000);
     this.bindInput();
     this.loadSettings();
     if (window.Music) Music.armStart(() => this.pickBgm());
@@ -84,6 +96,7 @@ const G = {
     $('#btn-settings-close').onclick = () => $('#settings-screen').classList.remove('open');
     $('#btn-title').onclick = () => {
       this.setPause(false); this.state = 'title'; $('#title-screen').style.display = '';
+      if (typeof TitleBG !== 'undefined') TitleBG.start();
       UI.bossBar(null); this.renderSlotScreen();
     };
     $('#btn-respawn').onclick = () => this.respawn();
@@ -181,8 +194,27 @@ const G = {
   },
 
   /* ================= 게임 시작 ================= */
-  showLoading(msg) { $('#loading-text').textContent = msg; $('#loading').classList.add('open'); },
-  hideLoading() { $('#loading').classList.remove('open'); },
+  showLoading(msg) {
+    const el = $('#loading');
+    $('#loading-text').textContent = msg;
+    el.classList.remove('fade'); el.classList.add('open');
+  },
+  hideLoading() { const el = $('#loading'); el.classList.remove('open', 'fade'); },
+
+  /** 애셋이 다 붙었다 — 로딩을 걷고 타이틀을 연다 (한 번만) */
+  bootDone() {
+    if (this.booted) return;
+    this.booted = true;
+    /* 글꼴까지 기다린다. 안 그러면 로고가 기본 글꼴로 한 번 그려졌다가 바뀐다. */
+    const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+    fonts.catch(() => {}).then(() => {
+      document.body.classList.remove('booting');
+      if (this.state === 'title' && typeof TitleBG !== 'undefined') TitleBG.start();
+      const el = $('#loading');
+      el.classList.add('fade');
+      setTimeout(() => { if (el.classList.contains('fade')) el.classList.remove('open', 'fade'); }, 480);
+    });
+  },
 
   newGame(seedStr, slot, name, charId, mode) {
     const seed = seedStr || ('' + Math.floor(Math.random() * 1e9));
@@ -221,6 +253,7 @@ const G = {
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
     this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
     $('#title-screen').style.display = 'none';
+    if (typeof TitleBG !== 'undefined') TitleBG.stop();   // 화면 밖이면 프레임을 낭비하지 않는다
     this.closeAllModals();
     this.state = 'play';
     this.petEnts = []; this.syncPets();
@@ -2365,6 +2398,7 @@ const G = {
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
       this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
       $('#title-screen').style.display = 'none';
+    if (typeof TitleBG !== 'undefined') TitleBG.stop();   // 화면 밖이면 프레임을 낭비하지 않는다
       this.closeAllModals();
       this.state = 'play'; this.paused = false;
       this.petEnts = []; this.syncPets();
