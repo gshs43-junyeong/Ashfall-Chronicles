@@ -26,7 +26,10 @@
     { file: 'bg/parallax_forest.png',  speed: 58,  y: -16, alpha: 1 }
   ];
 
-  var PLAYER = { file: 'char/player.png', fw: 80, fh: 160, walk: [2, 3, 4, 5], fps: 9 };
+  /* 프레임은 22x40 논리픽셀의 4배다. tools/unclip.py 로 잘린 가장자리를 되살리면서
+ * 사방에 한 논리픽셀씩 여백이 붙어 80x160 -> 88x164 가 됐다. 여기 숫자가 어긋나면
+ * 프레임이 밀려 사람이 옆 프레임을 물고 잘린다. */
+var PLAYER = { file: 'char/player.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps: 9 };
 
   /* 플레이어가 설 가로 위치(논리 폭에 대한 비율). 좁아지면 글이 폭을 다 쓰고 버튼도
    * 줄바꿈되므로 더 바깥으로 민다. resize 때마다 다시 잡는다. */

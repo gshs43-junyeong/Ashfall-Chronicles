@@ -1,51 +1,58 @@
 /* js/titlebg.js — 타이틀 화면 배경.
 
    예전에는 별똥별 그림 한 장(bg/title_key.png)을 깔아 두기만 했다. 정지 화면이라
-   처음 몇 초는 예쁘고 그 뒤로는 벽지였다. 그 그림은 이제 로딩 화면으로 옮기고,
-   타이틀에는 **움직이는 풍경**을 세운다 — 홈페이지 첫 화면과 같은 결로.
+   처음 몇 초는 예쁘고 그 뒤로는 벽지였다. 그 그림은 로딩 화면으로 옮기고, 타이틀에는
+   **홈페이지 첫 화면과 같은 풍경**을 세운다.
 
-   영상 파일을 새로 만들지 않는다. 게임이 실제로 쓰는 애셋을 그대로 움직인다.
-     bg/parallax_*.png   1920x400, 가로로 이음매 없이 이어지고 위쪽은 투명하다
-   여기에 하늘 그러데이션 · 별 · 재 · 잉걸불 노을 · 이따금 지나가는 별똥별을 얹는다.
+   ★ 색과 구성은 site/hero.js 를 그대로 따른다. 처음에는 푸른 밤하늘로 그렸는데,
+     홈페이지는 재가 내린 뒤의 **따뜻한 갈색 노을**이라 "웹사이트처럼"이 되지 않았다.
+       하늘   #150f0d -> #24191a -> #3a2620   (세로 그러데이션)
+       잔광   rgba(249,116,73,.30)            떨어진 별이 남긴 자리
+       능선   parallax_sky / village / forest  속도만 다르게, 색은 손대지 않는다
+       사람   char/player.png 의 걷기 네 장    땅 위를 계속 걸어간다
+       재     동그란 점이 비스듬히 내려온다
+       아래   페이지 바탕색(#0d0b0a)으로 녹인다
 
-   화면에 안 보이면 아예 돌지 않는다(멈춤 상태에서 프레임을 낭비하지 않게).
-   접근성 설정에서 움직임 줄이기를 켜 두었으면 한 장만 그리고 멈춘다. */
+   영상 파일을 새로 만들지 않는다 — 게임이 쓰는 애셋이 그대로 움직인다.
+   화면에 안 보이면 아예 돌지 않고, 접근성 "움직임 줄이기"면 한 장만 그리고 멈춘다. */
 const TitleBG = {
-  cv: null, ctx: null, layers: [], flakes: [], stars: [],
-  t: 0, last: 0, on: false, still: false, raf: 0,
+  cv: null, ctx: null, layers: [], flakes: [], player: null,
+  t: 0, last: 0, on: false, still: false, raf: 0, w: 0, h: 0,
 
-  /* 뒤에서 앞으로. speed 는 가로로 흐르는 속도(논리픽셀/초), y 는 바닥에서 띄운 높이 */
+  /* 뒤에서 앞으로. speed 는 흐르는 속도(그림 원본 픽셀/초), y 는 바닥에서 띄운 높이 */
   LAYER_SPEC: [
-    { key: 'parallax_sky', speed: 5, y: 42, alpha: 0.42, tint: '#1b2340' },
-    { key: 'parallax_snow', speed: 11, y: 20, alpha: 0.5, tint: '#232b46' },
-    { key: 'parallax_village', speed: 22, y: 0, alpha: 0.78, tint: '#171a2a' },
-    { key: 'parallax_forest', speed: 46, y: -26, alpha: 1, tint: null }
+    { key: 'parallax_sky', speed: 10, y: 6, alpha: 0.55 },
+    { key: 'parallax_village', speed: 26, y: 0, alpha: 0.85 },
+    { key: 'parallax_forest', speed: 58, y: -16, alpha: 1 }
   ],
+  WALK: [2, 3, 4, 5],          // player.png 의 걷기 프레임 (idle1 idle2 walk1..4 …)
+  FPS: 9,
 
   init() {
     this.cv = document.getElementById('title-bg');
     if (!this.cv) return;
     this.ctx = this.cv.getContext('2d');
     this.still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    for (let i = 0; i < 150; i++) {
-      this.stars.push({ x: Math.random(), y: Math.random() * 0.62,
-        r: 0.5 + Math.random() * 1.3, ph: Math.random() * 7, sp: 0.5 + Math.random() * 1.6 });
-    }
-    for (let i = 0; i < 110; i++) {
+    for (let i = 0; i < 120; i++) {
       this.flakes.push({ x: Math.random(), y: Math.random(),
-        r: 0.5 + Math.random() * 1.8, vy: 7 + Math.random() * 20,
-        drift: 0.3 + Math.random() * 1.3, ph: Math.random() * 7, a: 0.12 + Math.random() * 0.36 });
+        r: 0.6 + Math.random() * 1.7, vy: 8 + Math.random() * 22,
+        drift: 0.4 + Math.random() * 1.4, ph: Math.random() * 7, a: 0.15 + Math.random() * 0.4 });
     }
     addEventListener('resize', () => this.resize());
     this.resize();
   },
 
-  /** Sprites 가 다 붙은 뒤 한 번 불러 준다 — 그때 비로소 시차 그림을 쓸 수 있다 */
+  /** Sprites 가 다 붙은 뒤 한 번 불러 준다 — 그때 비로소 그림을 쓸 수 있다 */
   useSprites() {
-    if (!window.Sprites || !Sprites.img) return;
+    if (typeof Sprites === 'undefined' || !Sprites.img) return;
     this.layers = this.LAYER_SPEC
       .map(s => Object.assign({}, s, { im: Sprites.img[s.key] }))
       .filter(l => l.im && l.im.width);
+    const im = Sprites.img.player;
+    const m = Sprites.meta && Sprites.meta.characters.sheets.player;
+    // 프레임 크기는 매니페스트에서 가져온다 — 시트를 다시 구우면 여기도 저절로 따라온다
+    if (im && im.width && m) this.player = { im, fw: m.frameW * Sprites.scale, fh: m.frameH * Sprites.scale };
+    if (!this.on) this.frame(0);
   },
 
   resize() {
@@ -81,98 +88,80 @@ const TitleBG = {
   frame(dt) {
     const c = this.ctx; if (!c) return;
     const W = this.w, H = this.h, t = this.t;
-    const ground = H * 1.03;                  // 지평선 — 능선을 화면 밖까지 내려 이음매를 없앤다
+    const ground = H * 0.93;                  // 사람이 딛는 줄
+    const sc = Math.max(1, (H * 0.62) / 400); // 능선 그림(400px)을 화면 높이에 맞춘 배율
 
-    /* ---- 하늘 ---- */
+    /* ---- 하늘 (site/hero.js 의 drawSky 와 같은 색) ---- */
     const sky = c.createLinearGradient(0, 0, 0, ground);
-    sky.addColorStop(0, '#05060f');
-    sky.addColorStop(0.42, '#0c1024');
-    sky.addColorStop(0.78, '#1d1a2c');
-    sky.addColorStop(1, '#3a2418');
+    sky.addColorStop(0, '#150f0d');
+    sky.addColorStop(0.45, '#24191a');
+    sky.addColorStop(1, '#3a2620');
     c.fillStyle = sky; c.fillRect(0, 0, W, H);
 
-    /* ---- 별 ---- */
-    for (const s of this.stars) {
-      const tw = 0.55 + 0.45 * Math.sin(t * s.sp + s.ph);
-      c.globalAlpha = tw * 0.85;
-      c.fillStyle = '#dfe6ff';
-      c.fillRect(Math.round(s.x * W), Math.round(s.y * H), s.r, s.r);
-    }
-    c.globalAlpha = 1;
+    /* ---- 떨어진 별이 남긴 잔광 ---- */
+    const gx = W * 0.74, gy = H * 0.2, gr = Math.max(W, H) * 0.42;
+    const glow = c.createRadialGradient(gx, gy, 0, gx, gy, gr);
+    glow.addColorStop(0, 'rgba(249,116,73,0.30)');
+    glow.addColorStop(1, 'rgba(249,116,73,0)');
+    c.fillStyle = glow; c.fillRect(0, 0, W, H);
 
-
-    /* ---- 떨어지는 별 — 7초에 한 번, 2초 동안 하늘을 가른다 ---- */
-    const cyc = (t % 7.4) / 2.0;
-    if (cyc < 1) {
-      const sx = W * 0.08, sy = H * 0.06, ex = W * 0.74, ey = H * 0.56;
-      const px = sx + (ex - sx) * cyc, py = sy + (ey - sy) * cyc;
-      const tail = 0.16;
-      const qx = sx + (ex - sx) * Math.max(0, cyc - tail), qy = sy + (ey - sy) * Math.max(0, cyc - tail);
-      const g2 = c.createLinearGradient(qx, qy, px, py);
-      g2.addColorStop(0, 'rgba(255,214,140,0)');
-      g2.addColorStop(1, 'rgba(255,235,190,' + (0.75 * Math.sin(cyc * Math.PI)).toFixed(3) + ')');
-      c.strokeStyle = g2; c.lineWidth = 2; c.lineCap = 'round';
-      c.beginPath(); c.moveTo(qx, qy); c.lineTo(px, py); c.stroke();
-    }
-
-    /* ---- 시차 능선 — 게임이 쓰는 그림 그대로.
-       먼 능선 둘을 먼저 놓고, 그 위에 노을을 얹고, 가까운 능선 둘을 다시 얹는다.
-       그래야 잉걸불 빛이 앞 능선을 실루엣으로 만들어 깊이가 생긴다. ---- */
-    const band = (L) => {
+    /* ---- 시차 능선 — 게임이 쓰는 그림 그대로, 색은 손대지 않는다 ---- */
+    c.imageSmoothingEnabled = false;
+    for (const L of this.layers) {
       const im = L.im;
-      const sc = Math.max(1, (H * 0.56) / im.height);         // 화면 높이에 맞춘 배율
-      const w = im.width * sc, h = im.height * sc;
-      const y = ground - h + L.y * sc * 0.5;
+      const w = im.width * sc, h = 400 * sc;
+      const y = ground - h + L.y * sc;
       const off = -((t * L.speed * sc) % w);
       c.globalAlpha = L.alpha;
       for (let x = off; x < W; x += w) c.drawImage(im, Math.round(x), Math.round(y), w, h);
       c.globalAlpha = 1;
-      if (L.tint) {                                           // 멀수록 푸르게 가라앉힌다
-        c.save();
-        c.globalCompositeOperation = 'source-atop';
-        c.globalAlpha = 0.42;
-        c.fillStyle = L.tint;
-        c.fillRect(0, y, W, h);
-        c.restore();
-      }
-    };
-    c.imageSmoothingEnabled = false;
-    for (let i = 0; i < this.layers.length && i < 2; i++) band(this.layers[i]);
+    }
 
-    /* ---- 노을 · 잉걸불 — 능선 너머에서 번지는 온기 ---- */
-    const gx = W * 0.74, gy = ground - H * 0.2;
-    const glow = c.createRadialGradient(gx, gy, 0, gx, gy, H * 0.62);
-    glow.addColorStop(0, 'rgba(255,190,104,0.34)');
-    glow.addColorStop(0.3, 'rgba(226,124,56,0.17)');
-    glow.addColorStop(0.66, 'rgba(150,72,44,0.06)');
-    glow.addColorStop(1, 'rgba(150,72,44,0)');
-    c.fillStyle = glow; c.fillRect(0, 0, W, H);
-
-    for (let i = 2; i < this.layers.length; i++) band(this.layers[i]);
+    /* ---- 걸어가는 사람 — 메뉴를 피해 오른쪽 트인 자리에 ---- */
+    const P = this.player;
+    if (P) {
+      const ph = H * 0.19, pw = ph * (P.fw / P.fh);
+      const fr = this.WALK[Math.floor(t * this.FPS) % this.WALK.length];
+      const bob = Math.sin(t * this.FPS * Math.PI) * (ph * 0.012);
+      const x = W * (W < 900 ? 0.8 : 0.76), y = ground - ph + bob;
+      c.save();                                          // 발밑 그림자
+      c.globalAlpha = 0.3; c.fillStyle = '#000';
+      c.beginPath();
+      c.ellipse(x + pw / 2, ground + ph * 0.03, pw * 0.34, ph * 0.028, 0, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+      c.drawImage(P.im, fr * P.fw, 0, P.fw, P.fh, Math.round(x), Math.round(y), Math.round(pw), Math.round(ph));
+    }
     c.imageSmoothingEnabled = true;
 
-    /* ---- 땅 — 능선 아래로 남는 자리를 메운다 ---- */
-    c.fillStyle = '#08070a';
-    c.fillRect(0, ground, W, H - ground + 2);
-
-    /* ---- 재 ---- */
+    /* ---- 재 — 비스듬히 내려오는 동그란 점 ---- */
+    c.fillStyle = '#c9bdb0';
     for (const f of this.flakes) {
-      if (!this.still) {
+      if (!this.still && dt) {
         f.y += (f.vy / H) * dt;
-        if (f.y > 1.02) { f.y = -0.02; f.x = Math.random(); }
+        f.x -= (f.drift * f.vy * 0.5 / W) * dt;
+        if (f.y > 1.01) { f.y = -0.01; f.x = Math.random(); }
+        if (f.x < -0.01) f.x = 1.01;
       }
-      const x = f.x * W + Math.sin(t * f.drift + f.ph) * 14;
-      c.globalAlpha = f.a;
-      c.fillStyle = '#d8c7a8';
-      c.fillRect(Math.round(x), Math.round(f.y * H), f.r, f.r);
+      c.globalAlpha = f.a * (0.7 + 0.3 * Math.sin(t * 1.5 + f.ph));
+      c.beginPath(); c.arc(f.x * W, f.y * H, f.r, 0, Math.PI * 2); c.fill();
     }
     c.globalAlpha = 1;
 
-    /* ---- 비네트 — 글자가 앉을 가운데를 살짝 눌러 준다 ---- */
-    const vig = c.createRadialGradient(W / 2, H * 0.42, H * 0.16, W / 2, H * 0.42, H * 0.92);
-    vig.addColorStop(0, 'rgba(4,5,11,0.06)');
-    vig.addColorStop(0.55, 'rgba(4,5,11,0.34)');
-    vig.addColorStop(1, 'rgba(4,5,11,0.78)');
+    /* ---- 아래쪽을 바탕색으로 녹인다 (홈페이지와 같은 마무리).
+       녹이는 구간은 **딛는 줄 아래**로만 둔다 — 홈페이지처럼 90px 위에서부터 덮었더니
+       걸어가는 사람의 다리가 절반쯤 먹혔다. 여기는 사람이 더 크게 보이는 화면이다. */
+    const fade = c.createLinearGradient(0, ground - H * 0.05, 0, ground + H * 0.03);
+    fade.addColorStop(0, 'rgba(13,11,10,0)');
+    fade.addColorStop(1, '#0d0b0a');
+    c.fillStyle = fade; c.fillRect(0, ground - H * 0.05, W, H);
+    c.fillStyle = '#0d0b0a'; c.fillRect(0, ground + H * 0.03, W, H);
+
+    /* ---- 글자가 앉을 가운데를 살짝 눌러 준다 ---- */
+    const vig = c.createRadialGradient(W / 2, H * 0.4, H * 0.12, W / 2, H * 0.4, H * 0.9);
+    vig.addColorStop(0, 'rgba(13,11,10,0.20)');
+    vig.addColorStop(0.5, 'rgba(13,11,10,0.42)');
+    vig.addColorStop(1, 'rgba(13,11,10,0.80)');
     c.fillStyle = vig; c.fillRect(0, 0, W, H);
   }
 };
