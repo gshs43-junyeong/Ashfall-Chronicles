@@ -502,6 +502,17 @@ const ITEMS = {
   relic_hollowseed: { n: '빈 씨앗', i: '🌑', type: 'acc', b: { int: 6, str: 6, critD: 30 },
                       d: '흔들어도 소리가 없다. 심으면 안 된다고 석판에 적혀 있었다.', lvReq: 22 },
 
+  /* --- 유적 위치 지도 ---
+     입구가 없는 유적은 이것 없이는 못 찾는다. 쓰면 그 유적 자리가 나침반에 잡힌다.
+     지도 자체는 다른 유적의 보물방 상자에 들어 있다(RUIN_MAP_IN) — 한 곳을 털면
+     다음 곳이 열리는 사슬이다. 쓰고 나면 사라지지만 표시는 세이브에 남는다. */
+  ruinmap_ice:    { n: '얼어붙은 골짜기 지도', i: '🗺', type: 'map', ruin: 'ice', stack: 1,
+                    d: '가죽에 그린 골짜기 지도. 한 지점에만 구멍이 뚫려 있다.' },
+  ruinmap_spore:  { n: '포자 굴 지도', i: '🗺', type: 'map', ruin: 'spore', stack: 1,
+                    d: '지도라기보다 냄새의 기록이다. 짙은 쪽으로 가면 된다고 적혀 있다.' },
+  ruinmap_blight: { n: '둥지 지도', i: '🗺', type: 'map', ruin: 'blight', stack: 1,
+                    d: '그린 사람이 도중에 손을 떨었다. 동쪽 끝에서 선이 끊긴다.' },
+
   /* === 2부: 하늘 섬 / 숨겨진 유적 === */
   sword_aether: { n: '에테르 검', i: '⚔', type: 'weapon', wc: 'melee', dmg: 150, spd: 2.5, kb: 6, reach: 58, tier: 7, d: '무게가 느껴지지 않는다. 손이 아니라 바람이 든 것 같다.'  },
   bow_gale:     { n: '질풍궁', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 118, spd: 3.0, kb: 3, tier: 7, proj: 'star', multi: 3, d: '구름 위에서는 화살이 떨어지지 않는다.'  },
@@ -1753,14 +1764,82 @@ const RUIN_SPEC = [
    개수를 보장한다(carveRuinEntrance/_carveEntranceShaft, world.js). */
 /* 방 개수도 rank를 따라간다 — 예전에는 가장 순한 갱도(rank 1)가 방 15개로 제일 크고,
    가장 사나운 부패한 둥지(rank 6)가 12개로 제일 작아서 체감이 거꾸로였다. */
-RUIN_SPEC[0].arch = 'surface'; RUIN_SPEC[0].rooms = 12; RUIN_SPEC[0].entryKind = 'foothold';    // ice   rank 2
-RUIN_SPEC[1].arch = 'surface'; RUIN_SPEC[1].rooms = 16; RUIN_SPEC[1].entryKind = 'maze';         // pyramid rank 4 — "보이는 것과 실제 난이도가 다르다"는 설정과도 맞는다
-RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].rooms = 10; RUIN_SPEC[2].entryKind = 'foothold';     // mine  rank 1 — 가장 작다, 가장 순하다
-RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].rooms = 18;                                          // blight rank 6 — 가장 크다, 입구 없음
-// RUIN_SPEC[4](포자 굴)는 자기 객체 리터럴 안에 arch/rooms를 이미 갖고 있다 — 여기서
-// 또 지정하지 않는다. 원래 이 자리는 '뿌리 신전'(root) 몫이었는데 v1.0.3에서 유적을
-// 지우면서 포자 굴이 인덱스 4로 당겨졌다. 예전처럼 여기서 다시 지정하면 포자 굴의
-// arch를 'buried'에서 'gated'로 덮어써 버그가 난다.
+/* ---------------- 유적 도면 · 입구 · 고유 요소 ----------------
+   ★ 예전에는 유적이 전부 "직사각형 하나를 벽으로 채우고 BSP로 자른 것"이었다.
+     겉모양이 열 곳 다 같은 상자였고, 지상에서 내려가는 입구가 여섯 곳이나 있어
+     "우연히 발견했다"가 성립하지 않았다. 셋을 한꺼번에 고친다.
+
+   plan  — 유적을 굵은 격자로 나눠 어느 칸에 방을 둘지 그린 도면.
+           `#` 칸에 들어간 방만 남기고, 남은 방들의 자리만 벽으로 채운다.
+           그래서 유적 겉모양이 방 배치를 그대로 따라간다 (고리·ㄷ자·계단…).
+           `.` 칸은 손대지 않은 땅 그대로라, 고리형이면 가운데가 통짜 암반이 된다.
+   arch  — 어떻게 발견되는가.
+           buried:  입구가 없다. 위치 지도를 구해야 찾는다 (지도는 다른 유적 상자에)
+           sunken:  지표 아래에 묻힌 수직 통로. 지상에는 부러진 기둥 하나뿐 —
+                    눈에 띄지만 파 내려가야 열린다
+           gated:   문틀까지 세운 뚜렷한 입구 (버려진 광산 하나뿐 — 첫 유적이라)
+           surface: 윗부분이 지상으로 솟아 있다 (피라미드 하나뿐 — 그게 피라미드다)
+   decor — 그 유적에만 놓이는 장식. [타일, 배치방식, 밀도]
+   sig   — 그 유적에만 있는 방 하나 (가장 큰 방 다음으로 넓은 방에 놓는다)
+   event — 그 유적에서만 일어나는 일. game.js 의 ruinEvent 가 돌린다
+   bonus — 그 유적 상자에만 섞이는 전리품 */
+RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].rooms = 12;   // 얼음
+RUIN_SPEC[1].plan = 'steps';  RUIN_SPEC[1].arch = 'surface'; RUIN_SPEC[1].rooms = 16;   // 피라미드
+RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].rooms = 10;   // 광산
+RUIN_SPEC[3].plan = 'cross';  RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].rooms = 18;   // 부패한 둥지
+RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].rooms = 14; // 포자 굴
+
+RUIN_SPEC[0].decor = ['pillar', T.ICE, 0.5];
+RUIN_SPEC[1].decor = ['statue', T.SANDBRICK, 0.45];
+RUIN_SPEC[2].decor = ['prop', T.MINEWOOD, 0.55];
+RUIN_SPEC[3].decor = ['growth', T.CORRUPTLEAF, 0.6];
+RUIN_SPEC[4].decor = ['growth', T.GLOWCAP, 0.7];
+
+RUIN_SPEC[0].sig = 'frozen';   RUIN_SPEC[0].event = 'blackout';
+RUIN_SPEC[1].sig = 'sunshaft'; RUIN_SPEC[1].event = 'password';
+RUIN_SPEC[2].sig = 'shaft';    RUIN_SPEC[2].event = 'collapse';
+RUIN_SPEC[3].sig = 'heart';    RUIN_SPEC[3].event = 'swarm';
+RUIN_SPEC[4].sig = 'bloom';    RUIN_SPEC[4].event = 'bloom';
+
+RUIN_SPEC[0].bonus = 'ice_shard';
+RUIN_SPEC[1].bonus = 'gold_ore';
+RUIN_SPEC[2].bonus = 'coal';
+RUIN_SPEC[3].bonus = 'corrupt_ess';
+RUIN_SPEC[4].bonus = 'mushroom';
+
+/* 도면 — 굵은 격자(가로 4칸 x 세로 3칸). `#` 에 방을 둔다.
+   방 하나가 최소 11x9라 격자 한 칸에 방 하나둘이 들어간다. 도면이 너무 빡빡해서
+   남는 방이 셋도 안 되면 생성기가 도면을 버리고 통짜로 판다(안전장치). */
+const RUIN_PLANS = {
+  full:      ['####', '####', '####'],
+  ring:      ['####', '#..#', '####'],   // O — 가운데가 통짜 암반으로 남는다
+  horseshoe: ['####', '#...', '####'],   // C — 한쪽이 트인 고리
+  cross:     ['.##.', '####', '.##.'],   // 十
+  spine:     ['###.', '..#.', '.###'],   // 두 덩이를 좁은 목이 잇는다
+  steps:     ['##..', '.##.', '..##'],   // 계단식 — 피라미드
+  hook:      ['#...', '#...', '####'],   // ㄴ
+  tee:       ['####', '.##.', '.##.'],   // T
+  hall:      ['#..#', '####', '#..#']    // H
+};
+
+/* 스토리 유적 셋(석판)의 도면·입구·고유 요소. buildRuins 가 참조한다.
+   셋은 제7장에 한 번에 열리는 본편 경로라 입구를 아주 없애지는 않았다 —
+   대신 지표 아래에 묻어(sunken) 부러진 기둥 하나만 지상에 남긴다. */
+const STORY_RUIN = [
+  { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', decor: ['pillar', T.ICE, 0.4],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
+  { n: '겹친 길', plan: 'tee',  arch: 'sunken', decor: ['statue', T.RUINBRICK, 0.4], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
+  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', decor: ['growth', T.CORRUPTLEAF, 0.5], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
+];
+
+/* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다.
+   지도는 그 유적이 아니라 **다른 유적의 보물방 상자**에 들어간다 — 한 곳을 털면
+   다음 곳이 열리는 사슬이다. 사슬의 시작(광산·피라미드)은 지도 없이 들어갈 수 있다.
+   { 지도가 가리키는 유적: 지도가 들어 있는 유적 } */
+const RUIN_MAP_IN = {
+  ice: 'mine',        // 광산(입구 있음) → 얼음 던전
+  spore: 'pyramid',   // 피라미드(지상에 솟음) → 포자 굴
+  blight: 'spore'     // 포자 굴 → 부패한 둥지 (가장 깊은 사슬 끝)
+};
 
 /* ---------------- 유적 비문 ----------------
    다섯 유적은 원래 "스토리와 무관한 탐험 콘텐츠"였는데, 그러다 보니 세계가 넓기만 하고

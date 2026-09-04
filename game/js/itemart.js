@@ -82,6 +82,9 @@ const ISPEC = {
   relic_frostmark:  { k: 'sigil', c: '#bcd8f0' },
   relic_mazeeye:    { k: 'sigil', c: '#c8a04a' },
   relic_hollowseed: { k: 'crystal', c: '#6a4a8a', glow: 1 },
+  ruinmap_ice:    { k: 'sigil', c: '#9fe0ff' },
+  ruinmap_spore:  { k: 'sigil', c: '#7fd8c0' },
+  ruinmap_blight: { k: 'sigil', c: '#9a5fd8' },
   charm_conduit: { k: 'cell', c: '#4f9cf0', fill: 1, glow: '#8fd0f0' },
   charm_zenith: { k: 'amulet', c: '#bcd8f0', gem: '#e8f0fa', shape: 'wing' },
 
