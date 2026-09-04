@@ -215,7 +215,7 @@ const G = {
     this.deathMark = null;
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
     this.nearStObj = { work: null, forge: null };
-    this.event = null; this.eventRolled = -1; this.lairs = {}; this.trapTimer = 0;
+    this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.trapTimer = 0;
     this.rainT = 0; this.rainDrops = null;
     this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = [];
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
@@ -375,7 +375,29 @@ const G = {
 
     // 작물 — 심어 둔 것만 훑으므로 플레이어가 어디 있든 자란다
     this.cropTimer = (this.cropTimer || 0) - dt;
-    if (this.cropTimer <= 0) { this.cropTimer = 4; w.growCrops(this.rng, this.dayFactor()); }
+    if (this.cropTimer <= 0) {
+      this.cropTimer = 4;
+      /* 밭은 여태 아무 기별 없이 조용히 자랐다 — 4초마다 타일만 바뀌니, 보고 있어도
+         뭐가 일어나는지 알 수가 없었다. 자란 칸에서 잎이 튀고, 다 여문 칸에서는
+         금빛이 튄다. 화면 밖은 건너뛴다(밭 하나에 수백 칸이 될 수 있다). */
+      const g = w.growCrops(this.rng, this.dayFactor());
+      const onScreen = (x, y) => Math.abs(x * TS - this.cam.x - this.W / 2) < this.W / 2 + TS &&
+                                 Math.abs(y * TS - this.cam.y - this.H / 2) < this.H / 2 + TS;
+      for (const k of g.grew) {
+        const x = k % WW, y = (k / WW) | 0;
+        if (!onScreen(x, y)) continue;
+        for (let i = 0; i < 2; i++)
+          this.parts.push(new Part((x + .5) * TS, (y + .6) * TS, '#8fc85a', -18, .45));
+      }
+      for (const k of g.ripe) {
+        const x = k % WW, y = (k / WW) | 0;
+        if (!onScreen(x, y)) continue;
+        for (let i = 0; i < 5; i++)
+          this.parts.push(new Part((x + .5) * TS, (y + .5) * TS, '#ffe08a', -26, .6));
+      }
+    }
+
+    this.checkRuinEntry();
 
     // 마을 경비병 — 요새 단계에서 마을에 들어와 있는 동안만 감시탑마다 하나씩 선다
     if (this.villageLv() >= 3) {
@@ -876,6 +898,11 @@ const G = {
     const baited = p.removeItem('raw_meat', 1);
     const fishBonus = (rod.fishBonus || 0) + (baited ? 0.20 : 0) + (quality === 'reel' ? 0.12 : 0);
     const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === 'reel' ? 0.05 : 0)) * rareMul, 0, 0.85);
+    // 줄을 걷는 순간 물이 튄다 — 챔질(reel)이면 더 크게. 찌를 지우기 전에 자리를 챙긴다
+    const wx = (p.fish.tx + .5) * TS, wy = p.fish.ty * TS;
+    for (let i = 0; i < (quality === 'reel' ? 14 : 7); i++)
+      this.parts.push(new Part(wx, wy, '#cfe8ff', -40 - Math.random() * 40, .55));
+    this.sfx('splash');
     p.fish = null;
 
     if (this.rng.chance(itemChance)) {
@@ -922,6 +949,13 @@ const G = {
         const tx = Math.floor(o.x / TS), ty = Math.floor(o.y / TS);
         const source = o.loot || this.world.chestLootProfile(tx, ty);
         o.items = rollChest(o.tier, new RNG(Math.floor(o.x) * 7919 + Math.floor(o.y) * 104729 + hashStr(this.world.seed)), source);
+        /* 유적 유물은 굴리지 않는다 — 유적마다 하나뿐이라 확률에 맡기면
+           끝까지 들어간 값이 안 된다. 상자를 처음 열 때 맨 앞에 놓는다. */
+        if (o.relic && ITEMS[o.relic]) {
+          const relic = makeItem(o.relic, 1);
+          o.items.unshift(relic);
+          this.toast(`${itemName(relic)} — 이 유적의 것`, 'good');
+        }
       }
       UI.openChest(o); this.sfx('open');
       // 지킴이가 붙은 상자 — 열면 그 자리에서 깨어난다. 상자만 훔치고 달아나지 못하게.
@@ -2135,6 +2169,7 @@ const G = {
         world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
         talked: this.talked, crafted: this.crafted,
         sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
+        seenRuins: this.seenRuins,
         deathMark: this.deathMark,
         villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
         lairs: this.lairs,
@@ -2196,6 +2231,7 @@ const G = {
       this.talked = d.talked || {}; this.crafted = d.crafted || {};
       this.sideActive = d.sideActive || {}; this.sideDone = d.sideDone || {};
       this.tabletsRead = d.tabletsRead || {}; this.termsRead = d.termsRead || {}; this.loreRead = d.loreRead || {};
+      this.seenRuins = d.seenRuins || {};
       this.deathMark = d.deathMark || null;
       this.mode = MODE_OF(d.mode).id;
       this.villageUnlocked = d.villageUnlocked || false; this.goldRate = d.goldRate || 1;
@@ -2647,7 +2683,9 @@ const G = {
         c.restore();
       }
     }
+    this.drawRipeCrops(c, camX, camY);
     this.drawPlayer(c, p, p.x - camX, p.y - camY);
+    this.drawFishing(c, p, camX, camY);
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
 
     // ---- 조명 (부드러운 그라디언트 오버레이) ----
@@ -3250,6 +3288,104 @@ const G = {
   },
 
   /** 장착 무기 + 스윙 궤적 + 채널링 링 (두 렌더 경로가 공유) */
+  /** 유적에 처음 발을 들였을 때 — 그 유적만의 카드를 한 번 띄운다.
+
+      유적이 열 곳인데 밖에서는 다 똑같은 벽돌 더미였고, 들어가도 "여기가 어디였나"를
+      말해 주는 게 없었다. 한 번뿐인 카드라 다시 와도 뜨지 않는다(seenRuins 는 세이브에
+      남는다). 어느 유적인지 알 수 없는 옛 세이브의 유적은 조용히 건너뛴다. */
+  checkRuinEntry() {
+    const p = this.player, w = this.world;
+    const r = w.ruinAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
+    if (!r || !r.id) return;
+    if (!this.seenRuins) this.seenRuins = {};
+    if (this.seenRuins[r.id]) return;
+    this.seenRuins[r.id] = 1;
+    const card = RUIN_CARD[r.id];
+    const spec = RUIN_SPEC.find(s => s.id === r.id);
+    const name = spec ? spec.n : (RUIN_LORE[r.id] && RUIN_LORE[r.id].n) || '이름 없는 유적';
+    if (card) UI.chapterCard({ sub: card.sub, title: name, line: card.line });
+    this.sfx('chapter');
+  },
+
+  /** 다 여문 작물에 얹는 반짝임.
+
+      밭을 한참 키워 놓고도 어느 줄이 거둘 때가 됐는지 알려면 타일 그림을 하나하나
+      들여다봐야 했다. 다 여문 칸만 천천히 반짝이게 해서 멀리서도 한눈에 보이게 한다.
+      world.crops 는 심은 칸만 들고 있어서 밭이 커도 도는 양이 그만큼이다. */
+  drawRipeCrops(c, camX, camY) {
+    const w = this.world;
+    if (!w.crops || !w.crops.size) return;
+    c.save();
+    c.fillStyle = '#ffe9a8';
+    for (const k of w.crops) {
+      const def = TILE_DEF[w.tiles[k]];
+      if (!def || !def.crop || !def.crop.ripe) continue;
+      const x = k % WW, y = (k / WW) | 0;
+      const sx = x * TS - camX, sy = y * TS - camY;
+      if (sx < -TS || sy < -TS || sx > this.W || sy > this.H) continue;
+      // 칸마다 위상을 어긋나게 — 밭 전체가 한꺼번에 깜빡이면 경고등처럼 보인다
+      const ph = (this.time * 0.8 + (x * 7 + y * 13) * 0.19) % 1;
+      if (ph > 0.34) continue;
+      c.globalAlpha = Math.sin(ph / 0.34 * Math.PI);
+      const gx = sx + 4 + ((x * 5 + y * 3) % 3) * 5;
+      const gy = sy + 4 + ((x * 3 + y * 7) % 3) * 4;
+      c.fillRect(gx, gy - 3, 1, 7);
+      c.fillRect(gx - 3, gy, 7, 1);
+      c.fillRect(gx - 1, gy - 1, 3, 3);
+    }
+    c.restore();
+  },
+
+  /** 드리운 낚싯줄 · 찌 · 물결.
+
+      낚시는 여태 글자로만 돌아갔다 — "낚싯줄을 드리웠다" 토스트가 뜨고, 물에는
+      아무것도 안 보이고, 입질도 토스트로만 알렸다. 어디에 던졌는지조차 화면에
+      없었다. 줄과 찌를 실제로 그려서, 던진 자리와 입질을 눈으로 보게 한다. */
+  drawFishing(c, p, camX, camY) {
+    const f = p.fish; if (!f) return;
+    const bx = (f.tx + 0.5) * TS - camX;
+    const wy = f.ty * TS - camY;
+    // 찌는 평소엔 물결 따라 까딱이고, 입질 중엔 쑥 잠겼다 튀어오른다
+    const t = this.time;
+    const bob = f.biting
+      ? Math.sin(t * 26) * 3.4 + 3
+      : Math.sin(t * 2.4 + f.tx * 0.7) * 1.3;
+    const by = wy + bob;
+    const hx = p.cx - camX + p.facing * 9, hy = p.cy - camY - 8;   // 낚싯대 끝
+    c.save();
+    // 줄 — 입질 중엔 팽팽해지고, 아니면 살짝 늘어진다
+    c.strokeStyle = f.biting ? '#fff1c8' : '#cfd6dd';
+    c.globalAlpha = f.biting ? 0.95 : 0.7;
+    c.lineWidth = 1;
+    c.beginPath();
+    c.moveTo(hx, hy);
+    c.quadraticCurveTo((hx + bx) / 2, (hy + by) / 2 + (f.biting ? 0 : 7), bx, by);
+    c.stroke();
+    // 물결 — 찌가 앉은 자리에서 번져 나간다
+    c.globalAlpha = 0.5;
+    c.strokeStyle = f.biting ? '#ffd98a' : '#9fd0e8';
+    for (let i = 0; i < 2; i++) {
+      const ph = ((t * (f.biting ? 1.9 : 0.75) + i * 0.5) % 1);
+      c.globalAlpha = (1 - ph) * (f.biting ? 0.6 : 0.35);
+      c.beginPath();
+      c.ellipse(bx, wy + 1, 3 + ph * (f.biting ? 15 : 10), 1 + ph * (f.biting ? 4 : 3), 0, 0, TAU);
+      c.stroke();
+    }
+    // 찌
+    c.globalAlpha = 1;
+    c.fillStyle = '#c8433c';
+    c.beginPath(); c.arc(bx, by - 2, 2.6, 0, TAU); c.fill();
+    c.fillStyle = '#e8e3d4';
+    c.fillRect(bx - 0.6, by - 6, 1.4, 4);
+    if (f.biting) {                                   // 입질 — 느낌표 하나
+      c.globalAlpha = 0.6 + 0.4 * Math.sin(t * 18);
+      c.fillStyle = '#ffe08a';
+      c.fillRect(bx - 1, by - 17, 2, 6);
+      c.fillRect(bx - 1, by - 9, 2, 2);
+    }
+    c.restore();
+  },
+
   /** 지금 겨누고 있는 각도 — doAttack 이 화살을 쏘는 각도와 같은 식이다.
       겨눈 곳이 아직 없으면(터치 등) 바라보는 쪽으로 둔다. */
   aimAngle(p) {

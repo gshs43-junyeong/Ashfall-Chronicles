@@ -74,7 +74,13 @@ const Sprites = {
     const im = this.img[key]; if (!im || !im.width) return false;
     const m = (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
     if (!m) return false;
-    const S = this.scale, gap = this.meta.bosses.sheets[key] ? this.meta.bosses.gap : 0;
+    /* 프레임 간격은 시트마다 다르다 — 보스 20장 중 11장은 간격 없이 구워져 있는데
+       예전에는 bosses.gap(4)을 전부에 적용해서, 그 열한 마리는 프레임 하나 넘어갈 때마다
+       1게임픽셀씩 오른쪽으로 밀려 옆 프레임을 물고 잘렸다(마지막 프레임은 5px이 날아갔다).
+       시트가 제 gap을 들고 있으면 그것을 쓰고, 없을 때만 무리 기본값으로 떨어진다. */
+    const S = this.scale;
+    const isBoss = !!this.meta.bosses.sheets[key];
+    const gap = m.gap !== undefined ? m.gap : (isBoss ? this.meta.bosses.gap : 0);
     const sw = m.frameW * S, sh = m.frameH * S;
     const sx = frame * (sw + gap);
     c.save();
