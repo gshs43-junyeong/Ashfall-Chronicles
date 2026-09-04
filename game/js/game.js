@@ -898,11 +898,6 @@ const G = {
     const baited = p.removeItem('raw_meat', 1);
     const fishBonus = (rod.fishBonus || 0) + (baited ? 0.20 : 0) + (quality === 'reel' ? 0.12 : 0);
     const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === 'reel' ? 0.05 : 0)) * rareMul, 0, 0.85);
-    // 줄을 걷는 순간 물이 튄다 — 챔질(reel)이면 더 크게. 찌를 지우기 전에 자리를 챙긴다
-    const wx = (p.fish.tx + .5) * TS, wy = p.fish.ty * TS;
-    for (let i = 0; i < (quality === 'reel' ? 14 : 7); i++)
-      this.parts.push(new Part(wx, wy, '#cfe8ff', -40 - Math.random() * 40, .55));
-    this.sfx('splash');
     p.fish = null;
 
     if (this.rng.chance(itemChance)) {
@@ -2685,7 +2680,6 @@ const G = {
     }
     this.drawRipeCrops(c, camX, camY);
     this.drawPlayer(c, p, p.x - camX, p.y - camY);
-    this.drawFishing(c, p, camX, camY);
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
 
     // ---- 조명 (부드러운 그라디언트 오버레이) ----
@@ -3332,56 +3326,6 @@ const G = {
       c.fillRect(gx, gy - 3, 1, 7);
       c.fillRect(gx - 3, gy, 7, 1);
       c.fillRect(gx - 1, gy - 1, 3, 3);
-    }
-    c.restore();
-  },
-
-  /** 드리운 낚싯줄 · 찌 · 물결.
-
-      낚시는 여태 글자로만 돌아갔다 — "낚싯줄을 드리웠다" 토스트가 뜨고, 물에는
-      아무것도 안 보이고, 입질도 토스트로만 알렸다. 어디에 던졌는지조차 화면에
-      없었다. 줄과 찌를 실제로 그려서, 던진 자리와 입질을 눈으로 보게 한다. */
-  drawFishing(c, p, camX, camY) {
-    const f = p.fish; if (!f) return;
-    const bx = (f.tx + 0.5) * TS - camX;
-    const wy = f.ty * TS - camY;
-    // 찌는 평소엔 물결 따라 까딱이고, 입질 중엔 쑥 잠겼다 튀어오른다
-    const t = this.time;
-    const bob = f.biting
-      ? Math.sin(t * 26) * 3.4 + 3
-      : Math.sin(t * 2.4 + f.tx * 0.7) * 1.3;
-    const by = wy + bob;
-    const hx = p.cx - camX + p.facing * 9, hy = p.cy - camY - 8;   // 낚싯대 끝
-    c.save();
-    // 줄 — 입질 중엔 팽팽해지고, 아니면 살짝 늘어진다
-    c.strokeStyle = f.biting ? '#fff1c8' : '#cfd6dd';
-    c.globalAlpha = f.biting ? 0.95 : 0.7;
-    c.lineWidth = 1;
-    c.beginPath();
-    c.moveTo(hx, hy);
-    c.quadraticCurveTo((hx + bx) / 2, (hy + by) / 2 + (f.biting ? 0 : 7), bx, by);
-    c.stroke();
-    // 물결 — 찌가 앉은 자리에서 번져 나간다
-    c.globalAlpha = 0.5;
-    c.strokeStyle = f.biting ? '#ffd98a' : '#9fd0e8';
-    for (let i = 0; i < 2; i++) {
-      const ph = ((t * (f.biting ? 1.9 : 0.75) + i * 0.5) % 1);
-      c.globalAlpha = (1 - ph) * (f.biting ? 0.6 : 0.35);
-      c.beginPath();
-      c.ellipse(bx, wy + 1, 3 + ph * (f.biting ? 15 : 10), 1 + ph * (f.biting ? 4 : 3), 0, 0, TAU);
-      c.stroke();
-    }
-    // 찌
-    c.globalAlpha = 1;
-    c.fillStyle = '#c8433c';
-    c.beginPath(); c.arc(bx, by - 2, 2.6, 0, TAU); c.fill();
-    c.fillStyle = '#e8e3d4';
-    c.fillRect(bx - 0.6, by - 6, 1.4, 4);
-    if (f.biting) {                                   // 입질 — 느낌표 하나
-      c.globalAlpha = 0.6 + 0.4 * Math.sin(t * 18);
-      c.fillStyle = '#ffe08a';
-      c.fillRect(bx - 1, by - 17, 2, 6);
-      c.fillRect(bx - 1, by - 9, 2, 2);
     }
     c.restore();
   },
