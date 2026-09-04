@@ -326,14 +326,14 @@ const ITEMS = {
   scythe_void:  { n: '공허의 낫', i: '🌑', type: 'weapon', wc: 'melee', dmg: 128, spd: 2.1, kb: 7, reach: 66, tier: 6, lifesteal: 9, d: '벤 자리에 잠시 별이 보인다.'  },
 
   /* --- 원거리 --- */
-  bow_hunt:     { n: '사냥용 활', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 11, spd: 1.9, kb: 2, tier: 0, proj: 'arrow', d: '숲의 첫 친구.'  },
+  bow_hunt:     { n: '사냥용 활', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 10, spd: 2.0, kb: 2, tier: 0, proj: 'arrow', d: '숲의 첫 친구.'  },
   bow_copper:   { n: '구리 강궁', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 19, spd: 2.0, kb: 3, tier: 1, proj: 'arrow'  },
   bow_iron:     { n: '강철 장궁', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 32, spd: 2.1, kb: 3, tier: 2, proj: 'arrow'  },
   bow_storm:    { n: '폭풍의 활', i: '🌪', type: 'weapon', wc: 'ranged', dmg: 48, spd: 2.6, kb: 3, tier: 4, proj: 'arrow', multi: 2, d: '시위를 놓으면 바람이 먼저 간다.'  },
   bow_starfall: { n: '별똥의 사수', i: '☄', type: 'weapon', wc: 'ranged', dmg: 96, spd: 2.4, kb: 4, tier: 6, proj: 'star', multi: 3, d: '떨어진 별의 파편으로 만든 시위.'  },
 
   /* --- 마법 --- */
-  staff_branch: { n: '옹이진 나뭇가지', i: '🪄', type: 'weapon', wc: 'magic', dmg: 12, spd: 1.7, kb: 2, mana: 4, tier: 0, proj: 'bolt', d: '마을 마녀가 쥐여준 물건.'  },
+  staff_branch: { n: '옹이진 나뭇가지', i: '🪄', type: 'weapon', wc: 'magic', dmg: 11, spd: 1.8, kb: 2, mana: 4, tier: 0, proj: 'bolt', d: '마을 마녀가 쥐여준 물건.'  },
   staff_flame:  { n: '불꽃의 홀', i: '🔥', type: 'weapon', wc: 'magic', dmg: 26, spd: 1.6, kb: 3, mana: 7, tier: 2, proj: 'fire', d: '손잡이가 늘 따뜻하다.'  },
   staff_frost:  { n: '서리 지팡이', i: '❄', type: 'weapon', wc: 'magic', dmg: 40, spd: 1.9, kb: 2, mana: 8, tier: 3, proj: 'frost', d: '맞은 것은 느려진다.'  },
   staff_soul:   { n: '영혼 수확자', i: '💠', type: 'weapon', wc: 'magic', dmg: 62, spd: 2.2, kb: 2, mana: 9, tier: 4, proj: 'soul', multi: 2  },
@@ -341,6 +341,10 @@ const ITEMS = {
 
   /* --- 도구 --- */
   pick_copper:  { n: '구리 곡괭이', i: '⛏', type: 'tool', power: 1, dmg: 6, spd: 2.2, d: '돌 · 얼음 · 구리 · 철까지 캘 수 있다.' , lvReq: 0},
+  /* 굴 파는 이의 시작 곡괭이. 채굴 등급(power)과 속도는 구리 곡괭이와 똑같고
+     날만 세워 두어 공격력이 조금 높다 — 곡괭이 하나로 시작해도 다른 넷과
+     초반 화력이 같아지도록 맞춘 값이다(9 × 2.2 = 19.8, 목검과 동일). */
+  pick_sharp:   { n: '날카로운 곡괭이', i: '⛏', type: 'tool', power: 1, dmg: 9, spd: 2.2, d: '구리 곡괭이와 같은 것을 캐지만, 날을 세워 두어 더 아프게 때린다.' , lvReq: 0},
   pick_iron:    { n: '강철 곡괭이', i: '⛏', type: 'tool', power: 2, dmg: 9, spd: 2.4, d: '금 · 수정 · 미스릴을 캘 수 있다.' , lvReq: 5},
   pick_mythril: { n: '미스릴 곡괭이', i: '⛏', type: 'tool', power: 3, dmg: 14, spd: 2.7, d: '흑요암 · 영혼석 · 지옥석을 캘 수 있다.' , lvReq: 10},
   pick_soul:    { n: '영혼 착암기', i: '⛏', type: 'tool', power: 4, dmg: 20, spd: 3.2, d: '기반암 외의 모든 것을 뚫는다.' , lvReq: 16},
@@ -1291,7 +1295,18 @@ const VILLAGE = [
    시트는 tools/mkchars.py 가 player.png의 부위를 가려내 색과 실루엣을 바꿔 굽는다.
    tint 는 시트를 못 읽었을 때의 폴백 겸 선택 화면의 표식으로만 남겨 둔다.
    능력치 차이는 초반 몇 장에서만 체감되고 성장으로 덮인다(고정 페널티는 없다).
-   저장에는 charId 만 남는다. 게임 도중에는 바꿀 수 없다. */
+   저장에는 charId 만 남는다. 게임 도중에는 바꿀 수 없다.
+
+   ★ 시작 무기는 **넷 다 초당 피해가 같다**(19.8~20.0). 예전에는 곡괭이로 시작하는
+     굴 파는 이만 13.2 라서, 고른 캐릭터 하나 때문에 초반이 통째로 팍팍했다.
+       금 간 목검     9 × 2.2 = 19.8   (근접, 사거리 40)
+       날카로운 곡괭이 9 × 2.2 = 19.8   (근접 + 채굴)
+       사냥용 활     10 × 2.0 = 20.0   (거리를 둔다)
+       옹이진 나뭇가지 11 × 1.8 = 19.8   (마나 4 를 쓴다)
+     성격 차이는 사거리 · 마나 · 탄속으로 남기고 숫자만 맞췄다.
+   ★ **곡괭이는 다섯 모두가 들고 시작한다.** 곡괭이가 없으면 첫 나무·첫 돌에서
+     막혀 시작 자체가 안 된다. 곡괭이를 무기로 드는 굴 파는 이만 구리 곡괭이 대신
+     날카로운 곡괭이를 든다(캐는 것은 똑같다). */
 const CHARACTERS = [
   { id: 'wanderer', n: '떠돌이', tint: null, d: '치우침이 없다. 처음이라면 이쪽.',
     story: '재가 내리기 전, 어느 마을의 문을 마지막으로 잠근 사람. ' +
@@ -1299,11 +1314,11 @@ const CHARACTERS = [
     base: { str: 5, dex: 5, int: 5, vit: 5 },
     weapon: 'sword_wood',
     bag: [['pick_copper', 1], ['torch', 20], ['potion_hp_small', 3]] },
-  { id: 'digger', n: '굴 파는 이', tint: '#c8934a', d: '더 튼튼하고, 곡괭이를 먼저 쥐고 시작한다.',
+  { id: 'digger', n: '굴 파는 이', tint: '#c8934a', d: '더 튼튼하고, 날 세운 곡괭이 하나로 캐고 싸운다.',
     story: '3번 갱이 무너지던 날 걸어 나온 하나. 안전모의 불은 그때부터 꺼뜨린 적이 없다. ' +
            '아래는 무섭지 않다 — 위가 무섭다.',
     base: { str: 6, dex: 4, int: 4, vit: 6 },
-    weapon: 'pick_copper',
+    weapon: 'pick_sharp',
     bag: [['sword_wood', 1], ['torch', 40], ['potion_hp_small', 2]] },
   { id: 'ranger', n: '사냥꾼', tint: '#6aa85a', d: '활을 들고 나온다. 거리를 두고 싸운다.',
     story: '숲이 마르기 전을 기억한다. 재가 내려도 짐승은 남았고, ' +
@@ -1317,12 +1332,12 @@ const CHARACTERS = [
     base: { str: 4, dex: 4, int: 7, vit: 5 },
     weapon: 'staff_branch',
     bag: [['pick_copper', 1], ['torch', 16], ['potion_mp_small', 3], ['potion_hp_small', 1]] },
-  { id: 'stray', n: '빈손', tint: '#9a9a9a', d: '아무것도 없이 시작한다. 금화만 조금 쥐었다.',
+  { id: 'stray', n: '빈손', tint: '#9a9a9a', d: '무기 없이 시작한다. 곡괭이와 금화만 쥐었다.',
     story: '재 속에서 주워졌다. 누가 두고 갔는지는 아무도 모른다. ' +
-           '가진 것은 동전 몇 닢과 이름 없는 목숨뿐.',
+           '가진 것은 곡괭이 한 자루와 동전 몇 닢, 이름 없는 목숨뿐.',
     base: { str: 5, dex: 5, int: 5, vit: 5 },
     weapon: null, gold: 120,
-    bag: [['torch', 8]] }
+    bag: [['pick_copper', 1], ['torch', 8]] }
 ];
 
 /* ---------------- 난이도 ---------------- */

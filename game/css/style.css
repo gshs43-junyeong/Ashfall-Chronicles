@@ -494,12 +494,32 @@ button:active{transform:translateY(1px)}
 #settings-screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
   background:#04050ae0;backdrop-filter:blur(3px);z-index:51;padding:20px;overflow:auto}
 #settings-screen.open{display:flex}
-/* 조작키·조작법까지 들어와 길어졌다 — 화면을 넘치면 안쪽에서 스크롤한다.
-   (넘칠 때 닫기 버튼이 화면 밖으로 나가 못 닫는 자리가 생기지 않게) */
-.settings{width:290px;max-height:calc(100vh - 40px);overflow:auto;text-align:left;
+/* 세 갈래(화면·소리 / 알림 / 조작)로 나눠 세로 길이를 잡는다.
+   예전에는 한 줄로 이어 붙여 화면 높이의 두 배를 넘었고, 조작키를 보려면
+   한참을 굴려 내려가야 했다. 이제 머리(탭)와 발(닫기)은 붙박이고 가운데만 구른다. */
+.settings{width:440px;max-width:calc(100vw - 32px);max-height:calc(100vh - 56px);
+  display:flex;flex-direction:column;text-align:left;
   background:#100f0ad0;border:1px solid var(--frame);
   border-radius:5px;padding:14px 16px 12px;box-shadow:0 6px 22px #000a}
+.set-head{flex:0 0 auto}
+.set-body{flex:1 1 auto;overflow:auto;min-height:0;padding:2px 2px 0 0}
+.set-foot{flex:0 0 auto;display:flex;gap:8px;padding-top:10px;margin-top:8px;
+  border-top:1px solid var(--frame)}
+.set-foot .set-reset,.set-foot .set-close{flex:1;margin:0!important;width:auto!important}
 .set-title{color:var(--gold);font-size:11px;letter-spacing:.16em;margin-bottom:10px}
+.set-tabs{display:flex;gap:6px;margin-bottom:12px}
+.set-tabs .set-tab{flex:1;padding:7px 4px!important;font-size:11.5px;
+  background:#15130ca0;border:1px solid var(--frame);color:#8d8774;border-radius:3px;
+  cursor:pointer;font:inherit;font-size:11.5px;transition:color .14s,border-color .14s}
+.set-tabs .set-tab:hover{color:var(--ink)}
+.set-tabs .set-tab.on{color:var(--gold);border-color:var(--gold);background:#1d1a10}
+.set-pane{display:none}
+.set-pane.on{display:block}
+/* 알림 갈래와 조작키는 항목이 많다 — 두 칸으로 접어 세로를 절반으로 줄인다 */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px}
+.set-grid .set-row{margin-bottom:5px}
+.set-grid .set-row span{width:auto;flex:1 1 auto}
+.set-grid .set-row.chk{justify-content:space-between}
 .set-row{display:flex;align-items:center;gap:9px;font-size:12px;color:#a49e88;
   margin-bottom:9px;cursor:pointer}
 .set-row span{width:80px;flex:0 0 80px}
@@ -512,7 +532,8 @@ button:active{transform:translateY(1px)}
 .set-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--gold);cursor:pointer}
 .set-reset{width:100%!important;margin:12px 0 0!important;padding:6px!important;font-size:11.5px}
 .set-close{width:100%!important;margin:8px 0 0!important;padding:6px!important;font-size:11.5px}
-@media (max-width:820px){.settings{width:250px}.help-inner{width:270px}}
+@media (max-width:820px){.settings{width:calc(100vw - 32px)}.help-inner{width:270px}
+  .set-grid{grid-template-columns:1fr}}
 #death-line{font-size:13px;color:#8d8774;margin-bottom:22px;line-height:1.8}
 
 /* ===== 절차 생성 스프라이트 아이콘 ===== */
@@ -534,14 +555,11 @@ button:active{transform:translateY(1px)}
 .sk.empty .ic{background-image:none !important}
 
 /* ===== 손그림 애셋 ===== */
-#title-screen.has-art{
-  background:#06070c url(../assets/bg/title_key.png) center/cover no-repeat;
-  image-rendering:pixelated;   /* 확대돼도 도트가 뭉개지지 않게 — 16비트 화면처럼 */
-}
-#title-screen.has-art:before{
-  content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse at 50% 32%,#0a0c18aa 0%,#04050bdd 68%);
-}
+/* 타이틀 배경은 이제 움직이는 캔버스다(js/titlebg.js). 그림 한 장을 벽지처럼 깔던
+   자리를 대신하고, 그 그림(title_key.png)은 로딩 화면으로 옮겼다. */
+#title-bg{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+#title-screen .ts-inner{position:relative;z-index:1}
+#title-screen .ts-version{z-index:1}
 #title-screen.has-art .ts-inner{position:relative;z-index:1}
 
 #cc-art{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1.04);
@@ -557,15 +575,27 @@ button:active{transform:translateY(1px)}
 body.sprites-on #game{cursor:url(../assets/ui/cursor_aim.png) 16 16, crosshair}
 body.sprites-on #game.mining{cursor:url(../assets/ui/cursor_pick.png) 3 29, pointer}
 
-/* ===== 로딩 ===== */
+/* ===== 로딩 =====
+   옛 타이틀 배경(별똥별)이 여기로 왔다. 처음 켤 때부터 애셋이 다 붙을 때까지,
+   그리고 세계를 빚는 동안 이 화면이 떠 있는다. */
 #loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
-  background:#05060ae8;backdrop-filter:blur(2px);z-index:60}
+  background:#05060a url(../assets/bg/title_key.png) center/cover no-repeat;
+  image-rendering:pixelated;z-index:60;opacity:1;transition:opacity .45s}
+#loading:before{content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 44%,#080a1466 0%,#04050bcc 62%,#04050bee 100%)}
 #loading.open{display:flex}
-.ld-inner{text-align:center}
+#loading.fade{opacity:0;pointer-events:none}
+.ld-inner{text-align:center;position:relative;z-index:1}
+.ld-mark{font-size:22px;font-weight:900;letter-spacing:.22em;color:#e8c98a;margin-bottom:26px;
+  text-shadow:0 2px 0 #3d2409,0 0 30px #d8a94b44}
+.ld-mark span{display:block;font-size:.52em;letter-spacing:.34em;color:#a9a292;
+  font-weight:600;margin-top:5px;text-shadow:none}
 .ld-spin{width:34px;height:34px;margin:0 auto 16px;border:2px solid #2b2818;border-top-color:var(--gold);
   border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 #loading-text{font-size:12px;letter-spacing:.2em;color:var(--dim)}
+/* 다 불러올 때까지 타이틀은 숨겨 둔다 — 배경 없는 맨 글자가 한 프레임 비치지 않게 */
+body.booting #title-screen{visibility:hidden}
 
 /* ===== 레이어 순서 ===== */
 #chapter-card{z-index:5}
@@ -608,13 +638,16 @@ body.sprites-on #game.mining{cursor:url(../assets/ui/cursor_pick.png) 3 29, poin
 .ng-char{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;
   padding:9px 4px 8px;font-size:11.5px;color:#8d8774;border:1px solid var(--frame);
   border-radius:4px;background:linear-gradient(#1a1915,#0f0e0a)}
-.ng-char .por{width:40px;height:80px;background-size:520px 80px;background-position:0 0;
+/* 시트 한 프레임을 잘라 보여 준다 — 프레임이 22x41(4배 = 88x164)로 넓어졌으므로
+   (tools/unclip.py 로 잘린 가장자리를 되살리며 사방에 한 칸씩 여백이 생겼다)
+   상자 크기와 background-size 도 같이 맞춘다. 어긋나면 옆 프레임이 물려 보인다. */
+.ng-char .por{width:44px;height:82px;background-size:572px 82px;background-position:0 0;
   background-repeat:no-repeat;image-rendering:pixelated}
 .ng-char:hover{border-color:#5a5340}
 .ng-char.on{border-color:var(--gold);color:#fff;background:linear-gradient(#3a3626,#22201a)}
 .ng-detail{display:flex;gap:15px;margin-top:11px;padding:13px 14px;
   border:1px solid var(--frame2);border-radius:4px;background:#0b0a07a0}
-.ng-detail .por-big{flex:none;width:80px;height:160px;background-size:1040px 160px;
+.ng-detail .por-big{flex:none;width:88px;height:164px;background-size:1144px 164px;
   background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated;
   border:1px solid var(--frame);border-radius:3px;background-color:#15140f}
 .ng-body{min-width:0}

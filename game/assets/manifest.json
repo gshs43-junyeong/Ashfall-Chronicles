@@ -44,38 +44,50 @@
     "sheets": {
       "player": {
         "file": "char/player.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
         "count": 13
       },
       "player_wanderer": {
         "file": "char/player_wanderer.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
         "count": 13
       },
       "player_digger": {
         "file": "char/player_digger.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
         "count": 13
       },
       "player_ranger": {
         "file": "char/player_ranger.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
         "count": 13
       },
       "player_adept": {
         "file": "char/player_adept.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
         "count": 13
       },
       "player_stray": {
         "file": "char/player_stray.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
         "count": 13
       },
       "slime": {
