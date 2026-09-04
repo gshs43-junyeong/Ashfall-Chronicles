@@ -158,8 +158,10 @@ const UI = {
      Esc 는 취소로만 쓴다 — 바꿀 수 있게 두면 메뉴를 못 여는 상태를 만들 수 있다. */
   buildKeys() {
     const box = $('#set-keys'); if (!box) return;
-    const label = c => c.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Arrow/, '←↑→↓ ')
-      .replace('ShiftLeft', 'Shift(왼)').replace('ShiftRight', 'Shift(오)').replace('Space', 'Space');
+    const ARROW = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
+    const NAMED = { ShiftLeft: 'Shift(왼)', ShiftRight: 'Shift(오)', ControlLeft: 'Ctrl(왼)',
+      ControlRight: 'Ctrl(오)', AltLeft: 'Alt(왼)', AltRight: 'Alt(오)', Space: 'Space' };
+    const label = c => ARROW[c] || NAMED[c] || c.replace(/^Key/, '').replace(/^Digit/, '');
     box.innerHTML = KEY_ACTIONS.map(a =>
       `<div class="set-row key"><span>${a.n}</span>` +
       `<button class="keybtn" data-act="${a.id}">${G.keysFor(a.id).map(label).join(' · ')}</button></div>`).join('');

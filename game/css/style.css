@@ -453,13 +453,11 @@ button:active{transform:translateY(1px)}
 .ts-tag{font-size:13px;color:#8d8774;line-height:1.9;margin-bottom:34px}
 .ts-menu{display:flex;flex-direction:column;gap:9px;width:230px;margin:0 auto}
 .ts-menu button{padding:11px}
-.ts-menu2{margin-top:16px;display:flex;gap:9px;justify-content:center}
-.ts-menu2 button{padding:9px 18px}
 .ts-seed{margin-top:22px;font-size:11px;color:#6f6b5c}
 .ts-seed input{background:#0c0b08;border:1px solid var(--frame);color:var(--ink);padding:5px 9px;
   border-radius:2px;font:inherit;font-size:11px;width:150px;margin-left:6px}
 /* ---- 세이브 슬롯 목록 (타이틀 화면) ---- */
-.slot-list{display:flex;flex-direction:column;gap:10px;width:340px;margin:0 auto}
+.slot-list{display:flex;flex-direction:column;gap:10px;width:100%;margin:0 auto}
 .slot-card{border:1px solid var(--frame);border-radius:4px;background:#0e0d09b0;padding:12px 16px;
   text-align:left}
 .slot-card.filled{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;
@@ -474,29 +472,32 @@ button:active{transform:translateY(1px)}
 .slot-card.empty{text-align:center}
 .slot-empty-label{font-size:12px;color:#6f6b5c;margin-bottom:9px}
 .slot-new-btn{width:100%;padding:10px}
-.slot-form label{display:block;font-size:11px;color:#8d8774;margin-bottom:8px;text-align:left}
-.slot-form input{background:#0c0b08;border:1px solid var(--frame);color:var(--ink);padding:6px 9px;
-  border-radius:2px;font:inherit;font-size:12px;width:100%;margin-top:4px;box-sizing:border-box}
-.slot-form-btns{display:flex;gap:8px;margin-top:10px}
-.slot-form-btns button{flex:1;padding:9px}
-/* 조작법 — 설정창과 같은 방식(가운데 오버레이)으로 연다 */
-#help-box{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
-  background:#04050ae0;backdrop-filter:blur(3px);z-index:51}
-#help-box.open{display:flex}
-.help-inner{width:340px;text-align:left;background:#100f0ad0;border:1px solid var(--frame);
-  border-radius:5px;padding:16px 20px;box-shadow:0 6px 22px #000a;font-size:12px;line-height:2;color:#a8a292}
-.help-inner h3{font-size:11px;letter-spacing:.14em;color:var(--gold);margin-bottom:8px}
-.help-inner ul{list-style:none}
-.help-inner b{color:#fff;font-weight:600}
+/* ---- 타이틀에서 뜨는 팝업들 (슬롯 · 새 게임 · 크레딧 · 작별) ---- */
+.modal{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:#04050ae8;backdrop-filter:blur(3px);z-index:52;padding:20px;overflow:auto}
+.modal.open{display:flex}
+.modal-box{width:360px;max-height:calc(100vh - 40px);overflow:auto;text-align:left;
+  background:#100f0ad0;border:1px solid var(--frame);border-radius:5px;
+  padding:16px 18px 14px;box-shadow:0 6px 26px #000c}
+.credits{font-size:12.5px;line-height:1.9;color:#a8a292;margin:4px 0 14px}
+.credits dt{color:var(--gold);font-size:10.5px;letter-spacing:.14em;margin-top:11px}
+.credits dd{color:#fff;font-size:13.5px}
+.modal-box.bye{width:300px;text-align:center;font-size:13px;color:#a8a292;line-height:2}
+.bye-sub{font-size:11.5px;color:#6f6b5c}
+.set-help{list-style:none;font-size:11.5px;line-height:1.95;color:#8d8774}
+.set-help b{color:#c9c2ad;font-weight:600}
 .ps-inner,.ds-inner{text-align:center}
 .ps-inner h2,.ds-inner h2{font-size:28px;font-weight:300;letter-spacing:.2em;margin-bottom:22px}
 .ds-inner h2{color:#b8433c}
 .ps-inner button,.ds-inner button{display:block;width:210px;margin:8px auto}
 /* ---- 설정 (타이틀·일시정지 공통 오버레이) ---- */
 #settings-screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
-  background:#04050ae0;backdrop-filter:blur(3px);z-index:51}
+  background:#04050ae0;backdrop-filter:blur(3px);z-index:51;padding:20px;overflow:auto}
 #settings-screen.open{display:flex}
-.settings{width:290px;text-align:left;background:#100f0ad0;border:1px solid var(--frame);
+/* 조작키·조작법까지 들어와 길어졌다 — 화면을 넘치면 안쪽에서 스크롤한다.
+   (넘칠 때 닫기 버튼이 화면 밖으로 나가 못 닫는 자리가 생기지 않게) */
+.settings{width:290px;max-height:calc(100vh - 40px);overflow:auto;text-align:left;
+  background:#100f0ad0;border:1px solid var(--frame);
   border-radius:5px;padding:14px 16px 12px;box-shadow:0 6px 22px #000a}
 .set-title{color:var(--gold);font-size:11px;letter-spacing:.16em;margin-bottom:10px}
 .set-row{display:flex;align-items:center;gap:9px;font-size:12px;color:#a49e88;
@@ -595,27 +596,55 @@ body.sprites-on #game.mining{cursor:url(../assets/ui/cursor_pick.png) 3 29, poin
   #quest-tracker{display:none}
 }
 
-/* ================= 새 게임 폼 — 캐릭터 · 난이도 ================= */
-/* 여기서 고른 것은 되돌릴 수 없다(설정에 없다). 그래서 고르는 자리에 설명을 붙여 둔다. */
-.slot-card.wide{grid-column:1/-1}
-.nf-sec{color:var(--gold);font-size:11px;letter-spacing:.14em;margin:10px 0 6px}
-.nf-chars,.nf-modes{display:flex;flex-wrap:wrap;gap:6px}
-.nf-char,.nf-mode{padding:7px 12px;font-size:12.5px;border:1px solid var(--frame);
-  background:linear-gradient(#22221c,#141310);border-radius:3px}
-.nf-char.on{border-color:var(--gold);color:#fff;background:linear-gradient(#3a3626,#22201a)}
-.nf-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;
-  vertical-align:middle;box-shadow:0 0 0 1px #0008}
-.nf-mode{border-color:color-mix(in srgb,var(--mc) 45%,var(--frame))}
-.nf-mode.on{border-color:var(--mc);color:var(--mc);background:color-mix(in srgb,var(--mc) 14%,#141310)}
-.nf-desc{font-size:11.5px;color:var(--dim);line-height:1.6;margin:7px 0 2px;min-height:2.2em}
-/* 고른 캐릭터의 실제 시트 첫 프레임(20x40)을 그대로 잘라 보여 준다.
-   시트는 1040x160(13프레임 x 4배)이라 절반 크기로 깔면 한 칸이 40x80이 된다. */
-.nf-card{display:flex;gap:12px;align-items:flex-start;margin:7px 0 2px;text-align:left}
-.nf-por{flex:none;width:40px;height:80px;background-size:520px 80px;background-position:0 0;
-  background-repeat:no-repeat;image-rendering:pixelated;
+/* ================= 새 게임 팝업 — 캐릭터 · 난이도 · 이름 · 씨앗 ================= */
+/* 여기서 고른 캐릭터와 난이도는 되돌릴 수 없다(설정에 없다).
+   그래서 캐릭터를 가장 크게 두고, 고르는 자리에 무엇이 달라지는지 붙여 둔다.
+   초상은 그 캐릭터의 실제 시트 첫 프레임이다 — 시트가 1040x160(13프레임 x 4배)이라
+   그대로 깔면 한 칸이 80x160, 절반으로 깔면 40x80이 된다. */
+.ng-box{width:560px}
+.ng-sec{color:var(--gold);font-size:11px;letter-spacing:.14em;margin:15px 0 8px}
+.ng-sec:first-child{margin-top:2px}
+.ng-chars{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.ng-char{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;
+  padding:9px 4px 8px;font-size:11.5px;color:#8d8774;border:1px solid var(--frame);
+  border-radius:4px;background:linear-gradient(#1a1915,#0f0e0a)}
+.ng-char .por{width:40px;height:80px;background-size:520px 80px;background-position:0 0;
+  background-repeat:no-repeat;image-rendering:pixelated}
+.ng-char:hover{border-color:#5a5340}
+.ng-char.on{border-color:var(--gold);color:#fff;background:linear-gradient(#3a3626,#22201a)}
+.ng-detail{display:flex;gap:15px;margin-top:11px;padding:13px 14px;
+  border:1px solid var(--frame2);border-radius:4px;background:#0b0a07a0}
+.ng-detail .por-big{flex:none;width:80px;height:160px;background-size:1040px 160px;
+  background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated;
   border:1px solid var(--frame);border-radius:3px;background-color:#15140f}
-.nf-card .nf-desc{margin:0}
-.nf-story{font-size:11px;color:#8d8676;line-height:1.65;margin:6px 0 0;min-height:3.3em}
+.ng-body{min-width:0}
+.ng-name{font-size:17px;color:#fff;font-weight:600;margin-bottom:5px}
+.ng-desc{font-size:12px;color:var(--gold);line-height:1.6;margin-bottom:7px}
+.ng-story{font-size:11.5px;color:#8d8676;line-height:1.85;margin-bottom:10px;min-height:3.7em}
+.ng-stats{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11px;color:#8d8774}
+.ng-stats b{color:#e8e0cc;font-weight:600;font-size:12px}
+.ng-kit{font-size:11px;color:#8d8774;line-height:1.8;margin-top:8px}
+.ng-kit b{color:#c9c2ad;font-weight:600}
+.ng-modes{display:flex;gap:8px}
+.ng-mode{flex:1;padding:10px;font-size:13px;border-radius:3px;
+  background:linear-gradient(#22221c,#141310);
+  border:1px solid color-mix(in srgb,var(--mc) 45%,var(--frame))}
+.ng-mode.on{border-color:var(--mc);color:var(--mc);background:color-mix(in srgb,var(--mc) 14%,#141310)}
+.ng-mdesc{font-size:11.5px;color:var(--dim);line-height:1.6;margin:9px 0 2px;min-height:2.2em}
+.ng-fields{display:flex;gap:10px;margin-top:6px}
+.ng-fields label{flex:1;font-size:11px;color:#8d8774}
+.ng-fields input{width:100%;margin-top:5px;padding:7px 9px;border-radius:3px;
+  background:#0c0b08;border:1px solid var(--frame);color:var(--ink);
+  font-family:inherit;font-size:12.5px}
+.ng-btns{display:flex;gap:8px;margin-top:15px}
+.ng-btns button{flex:1;padding:10px}
+.ng-start{border-color:var(--gold);color:#fff}
+@media (max-width:620px){
+  .ng-box{width:100%}
+  .ng-chars{grid-template-columns:repeat(3,1fr)}
+  .ng-detail{flex-direction:column;align-items:center;text-align:center}
+  .ng-stats{justify-content:center}
+}
 
 /* ================= 설정 — 시야 · 알림 · 조작키 ================= */
 .set-sub{color:var(--gold);font-size:11px;letter-spacing:.14em;margin:16px 0 6px;

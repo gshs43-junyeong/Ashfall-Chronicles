@@ -5,8 +5,11 @@ const SAVE_KEY = 'ashfall_save_v3';   // v1: 640×232 · v2: 2800×480 — 세�
 const SAVE_SLOTS = 3;
 const slotKey = (i) => `${SAVE_KEY}_slot${i}`;
 const SET_KEY = 'ashfall_settings';
-/* 설정 기본값. 세이브와 별개로 저장되므로 새 게임을 시작해도 유지된다 */
-const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1 };
+/* 설정 기본값. 세이브와 별개로 저장되므로 새 게임을 시작해도 유지된다.
+   view 는 시야 배율(%), keys 는 바꾼 조작키만 담는 표, notice 는 끈 알림만 담는 표 —
+   둘 다 null 이면 "손댄 적 없음"이라 KEY_ACTIONS·NOTICE_KINDS 의 기본을 그대로 쓴다. */
+const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1,
+  view: 100, keys: null, notice: null };
 // 완전한 암흑(0)은 지도에 남기지 않는다. 1 이상이면 횃불·용암·햇빛 등으로 최소한 보이는 상태다.
 const MAP_REVEAL_LIGHT = 1;
 
@@ -60,9 +63,19 @@ const G = {
     if (window.Music) Music.armStart(() => this.pickBgm());
     this.migrateLegacySave();
     this.renderSlotScreen();
-    // 조작법·설정 — 둘 다 같은 방식(가운데 오버레이, 전용 닫기 버튼)으로 연다
-    $('#btn-help').onclick = () => $('#help-box').classList.add('open');
-    $('#btn-help-close').onclick = () => $('#help-box').classList.remove('open');
+    /* 타이틀에는 버튼 넷만 둔다 — 저장 슬롯도, 캐릭터 선택도 팝업으로 뺐다.
+       조작법은 설정 안으로 합쳤다(조작키 목록 바로 아래). */
+    $('#btn-single').onclick = () => { this.renderSlotScreen(); this.openModal('#slots-screen'); };
+    $('#btn-slots-close').onclick = () => this.closeModal('#slots-screen');
+    $('#btn-credits').onclick = () => this.openModal('#credits-screen');
+    $('#btn-credits-close').onclick = () => this.closeModal('#credits-screen');
+    $('#btn-quit').onclick = () => this.quit();
+    $('#btn-bye-back').onclick = () => this.closeModal('#bye-screen');
+    // 바깥을 누르면 닫힌다 (새 게임 폼은 입력 중 실수로 닫히면 곤란해 뺀다)
+    ['#slots-screen', '#credits-screen'].forEach(sel => {
+      const el = $(sel);
+      el.onclick = e => { if (e.target === el) this.closeModal(sel); };
+    });
     $('#btn-resume').onclick = () => this.setPause(false);
     $('#btn-save').onclick = () => this.saveGame();
     const openSettings = () => { UI.syncSettings(); $('#settings-screen').classList.add('open'); };
@@ -113,7 +126,11 @@ const G = {
       // 조작키를 다시 매기는 중이면 그 키를 여기서 삼킨다
       if (UI.captureKey && UI.captureKey(e.code)) { e.preventDefault(); return; }
       K[e.code] = 1;
-      if (this.state !== 'play') return;
+      // 타이틀에서는 Esc 로 열려 있는 팝업을 한 겹씩 닫는다
+      if (this.state !== 'play') {
+        if (e.code === 'Escape' && this.closeTopModal()) e.preventDefault();
+        return;
+      }
       const k = e.code;
       /* Esc 는 바꿀 수 없게 둔다 — 다시 못 빠져나오는 자리를 만들지 않기 위해서다. */
       if (k === 'Escape') { if (UI.open || UI.dlg) { UI.closePanel(); UI.closeDialogue(); } else this.setPause($('#pause-screen').className !== 'open'); }
@@ -204,6 +221,7 @@ const G = {
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
     this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
     $('#title-screen').style.display = 'none';
+    this.closeAllModals();
     this.state = 'play';
     this.petEnts = []; this.syncPets();
     UI.refreshBag(); UI.refreshEquip(); UI.refreshTracker(); UI.refreshSkillbar(); UI.refreshStatAlloc();
@@ -2195,6 +2213,7 @@ const G = {
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
       this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
       $('#title-screen').style.display = 'none';
+      this.closeAllModals();
       this.state = 'play'; this.paused = false;
       this.petEnts = []; this.syncPets();
       UI.refreshBag(); UI.refreshEquip(); UI.refreshTracker(); UI.refreshSkillbar(); UI.refreshStatAlloc(); UI.refreshSkillSlots();
@@ -2269,60 +2288,108 @@ const G = {
       btn.addEventListener('click', () => this.showNewGameForm(+btn.dataset.slot));
     });
   },
-  /** 빈 슬롯 카드를 이름·씨앗 입력 폼으로 바꾼다 */
+
+  /* ---- 타이틀 팝업 ---- */
+  openModal(sel) { $(sel).classList.add('open'); },
+  closeModal(sel) { $(sel).classList.remove('open'); },
+  /* 팝업은 여러 겹으로 열린다(슬롯 위에 새 게임). 위에서부터 닫아야 한다. */
+  MODAL_STACK: ['#newgame-screen', '#bye-screen', '#credits-screen', '#settings-screen', '#slots-screen'],
+  /** 열려 있는 팝업 중 가장 위의 것을 닫는다. 닫을 게 없으면 false. */
+  closeTopModal() {
+    for (const sel of this.MODAL_STACK) {
+      const el = $(sel);
+      if (el && el.classList.contains('open')) { el.classList.remove('open'); return true; }
+    }
+    return false;
+  },
+  /** 게임에 들어갈 때 — 타이틀에서 열려 있던 팝업을 전부 걷는다 */
+  closeAllModals() { this.MODAL_STACK.forEach(sel => { const el = $(sel); if (el) el.classList.remove('open'); }); },
+  /** 나가기. 스크립트가 연 창이 아니면 브라우저가 close()를 막으므로,
+      정말 닫혔는지 한 박자 뒤에 확인하고 안 닫혔으면 작별 화면을 띄운다. */
+  quit() {
+    try { window.close(); } catch (e) { }
+    setTimeout(() => { if (!window.closed) this.openModal('#bye-screen'); }, 120);
+  },
+
+  /** 새 게임 팝업 — 캐릭터를 가장 크게 고르고, 난이도·이름·씨앗을 그 아래에서 정한다.
+      여기서 고른 캐릭터와 난이도는 되돌릴 수 없다(설정에 없다). */
   showNewGameForm(slot) {
-    const card = $(`.slot-card[data-slot="${slot}"]`);
-    /* 캐릭터·난이도는 여기서만 정한다 — 시작한 뒤에는 설정에서 못 바꾼다.
-       그래서 고르는 순간 무엇이 달라지는지 한 줄씩 붙여 둔다. */
+    const box = $('#newgame-box');
     let ci = 0, mi = 0;
-    card.classList.add('wide');
-    card.innerHTML = `<div class="slot-form">
-      <div class="nf-sec">캐릭터</div>
-      <div class="nf-chars">${CHARACTERS.map((ch, i) => `
-        <button class="nf-char${i ? '' : ' on'}" data-i="${i}" title="${escHtml(ch.d)}">
-          <span class="nf-dot" style="background:${ch.tint || '#d8cdb8'}"></span>${escHtml(ch.n)}
+    const kit = ch => {
+      const nameOf = id => (ITEMS[id] && ITEMS[id].n) || id;
+      const parts = [ch.weapon ? `<b>${escHtml(nameOf(ch.weapon))}</b>` : '<b>맨손</b>'];
+      (ch.bag || []).forEach(([id, n]) => parts.push(`${escHtml(nameOf(id))} ×${n}`));
+      if (ch.gold) parts.push(`금화 ${ch.gold}`);
+      return parts.join(' · ');
+    };
+    const sheet = ch => `assets/char/player_${ch.id}.png`;
+    box.innerHTML = `
+      <div class="ng-sec">캐릭터</div>
+      <div class="ng-chars">${CHARACTERS.map((ch, i) => `
+        <button class="ng-char${i ? '' : ' on'}" data-i="${i}">
+          <span class="por" style="background-image:url(${sheet(ch)})"></span>
+          <span>${escHtml(ch.n)}</span>
         </button>`).join('')}</div>
-      <div class="nf-card">
-        <span class="nf-por" id="nf-por" style="background-image:url(assets/char/player_${CHARACTERS[0].id}.png)"></span>
-        <div>
-          <p class="nf-desc" id="nf-cdesc">${escHtml(CHARACTERS[0].d)}</p>
-          <p class="nf-story" id="nf-cstory">${escHtml(CHARACTERS[0].story)}</p>
+      <div class="ng-detail">
+        <span class="por-big" id="ng-por" style="background-image:url(${sheet(CHARACTERS[0])})"></span>
+        <div class="ng-body">
+          <div class="ng-name" id="ng-name"></div>
+          <p class="ng-desc" id="ng-desc"></p>
+          <p class="ng-story" id="ng-story"></p>
+          <div class="ng-stats" id="ng-stats"></div>
+          <p class="ng-kit" id="ng-kit"></p>
         </div>
       </div>
 
-      <div class="nf-sec">난이도</div>
-      <div class="nf-modes">${MODES.map((m, i) => `
-        <button class="nf-mode${i ? '' : ' on'}" data-i="${i}" style="--mc:${m.c}">${escHtml(m.n)}</button>`).join('')}</div>
-      <p class="nf-desc" id="nf-mdesc">${escHtml(MODES[0].d)}</p>
+      <div class="ng-sec">난이도</div>
+      <div class="ng-modes">${MODES.map((m, i) => `
+        <button class="ng-mode${i ? '' : ' on'}" data-i="${i}" style="--mc:${m.c}">${escHtml(m.n)}</button>`).join('')}</div>
+      <p class="ng-mdesc" id="ng-mdesc">${escHtml(MODES[0].d)}</p>
 
-      <label>이름 <input class="slot-name-input" placeholder="이름 없는 모험가" maxlength="12"></label>
-      <label>세계 씨앗 <input class="slot-seed-input" placeholder="비워두면 무작위"></label>
-      <div class="slot-form-btns">
-        <button class="slot-start-btn">시작</button>
-        <button class="slot-cancel-btn">취소</button>
+      <div class="ng-fields">
+        <label>이름<input class="ng-name-input" placeholder="이름 없는 모험가" maxlength="12"></label>
+        <label>세계 씨앗<input class="ng-seed-input" placeholder="비워두면 무작위"></label>
       </div>
-    </div>`;
-    card.querySelectorAll('.nf-char').forEach(b => b.onclick = () => {
+      <div class="ng-btns">
+        <button class="ng-start">시작</button>
+        <button class="ng-cancel">취소</button>
+      </div>`;
+
+    const paint = () => {
+      const ch = CHARACTERS[ci];
+      $('#ng-por').style.backgroundImage = `url(${sheet(ch)})`;
+      $('#ng-name').textContent = ch.n;
+      $('#ng-desc').textContent = ch.d;
+      $('#ng-story').textContent = ch.story;
+      $('#ng-stats').innerHTML = [['힘', 'str'], ['민첩', 'dex'], ['지능', 'int'], ['체력', 'vit']]
+        .map(([n, k]) => `<span>${n} <b>${ch.base[k]}</b></span>`).join('');
+      $('#ng-kit').innerHTML = kit(ch);
+    };
+    paint();
+
+    box.querySelectorAll('.ng-char').forEach(b => b.onclick = () => {
       ci = +b.dataset.i;
-      card.querySelectorAll('.nf-char').forEach(x => x.classList.toggle('on', x === b));
-      $('#nf-cdesc').textContent = CHARACTERS[ci].d;
-      $('#nf-cstory').textContent = CHARACTERS[ci].story;
-      $('#nf-por').style.backgroundImage = `url(assets/char/player_${CHARACTERS[ci].id}.png)`;
+      box.querySelectorAll('.ng-char').forEach(x => x.classList.toggle('on', x === b));
+      paint();
     });
-    card.querySelectorAll('.nf-mode').forEach(b => b.onclick = () => {
+    box.querySelectorAll('.ng-mode').forEach(b => b.onclick = () => {
       mi = +b.dataset.i;
-      card.querySelectorAll('.nf-mode').forEach(x => x.classList.toggle('on', x === b));
-      $('#nf-mdesc').textContent = MODES[mi].d;
+      box.querySelectorAll('.ng-mode').forEach(x => x.classList.toggle('on', x === b));
+      $('#ng-mdesc').textContent = MODES[mi].d;
     });
-    card.querySelector('.slot-start-btn').onclick = () => {
-      const name = card.querySelector('.slot-name-input').value;
-      const seed = card.querySelector('.slot-seed-input').value.trim();
+    box.querySelector('.ng-start').onclick = () => {
+      const name = box.querySelector('.ng-name-input').value;
+      const seed = box.querySelector('.ng-seed-input').value.trim();
       // 되돌릴 수 없는 선택이라 불가능 모드만 한 번 더 묻는다
       if (MODES[mi].id === 'impossible' &&
           !confirm('불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?')) return;
+      this.closeModal('#newgame-screen');
+      this.closeModal('#slots-screen');
       this.newGame(seed, slot, name, CHARACTERS[ci].id, MODES[mi].id);
     };
-    card.querySelector('.slot-cancel-btn').onclick = () => this.renderSlotScreen();
+    box.querySelector('.ng-cancel').onclick = () => this.closeModal('#newgame-screen');
+    this.openModal('#newgame-screen');
   },
 
   /* ================= 설정 ================= */
@@ -3183,6 +3250,14 @@ const G = {
   },
 
   /** 장착 무기 + 스윙 궤적 + 채널링 링 (두 렌더 경로가 공유) */
+  /** 지금 겨누고 있는 각도 — doAttack 이 화살을 쏘는 각도와 같은 식이다.
+      겨눈 곳이 아직 없으면(터치 등) 바라보는 쪽으로 둔다. */
+  aimAngle(p) {
+    const i = this.input;
+    if (!i || i.wx === undefined || i.wy === undefined) return p.facing > 0 ? 0 : Math.PI;
+    return angleTo(p.cx, p.cy, i.wx, i.wy);
+  },
+
   drawHeldWeapon(c, p, sx, sy, bob) {
     /* 손에 그려지는 것은 "지금 실제로 쓰는 것"이어야 한다. 곡괭이·괭이·낚싯대를 핫바에서
        고르면 그것으로 캐고 갈고 던지는데, 예전에는 장착 무기(검)만 그려서 화면과 조작이
@@ -3194,10 +3269,20 @@ const G = {
       const d = idef(wep);
       c.save();
       c.translate(sx + 10, sy + 20 + bob);
-      let ang = p.swing > 0 ? (p.swingAng + (p.swingDir > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2.0) : (p.facing > 0 ? -0.4 : Math.PI + 0.4);
-      c.rotate(ang);
-      // 스프라이트는 위를 향하므로 90° 돌려 자루가 손에 오게 한다
-      c.translate(15, 0); c.rotate(Math.PI / 2);
+      /* 활·쇠뇌·총은 겨눈 쪽을 향해야 한다. 아이콘이 이미 오른쪽(+x)을 쏘는 그림이라
+         (활: 메긴 화살이 오른쪽, 레일건: 총구가 오른쪽) 겨눔 각도만큼 돌리면 그대로
+         발사 방향이 된다. 자루 무기용 90° 보정을 여기서 걸면 아래를 겨누게 된다. */
+      if (!tool && d.wc === 'ranged') {
+        c.rotate(this.aimAngle(p));
+        c.translate(BOW_HAND, 0);          // 팔을 뻗은 만큼 앞으로 — 몸에 겹치지 않게
+      } else {
+        const ang = p.swing > 0
+          ? (p.swingAng + (p.swingDir > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2.0)
+          : (p.facing > 0 ? -0.4 : Math.PI + 0.4);
+        c.rotate(ang);
+        // 스프라이트는 위를 향하므로 90° 돌려 자루가 손에 오게 한다
+        c.translate(15, 0); c.rotate(Math.PI / 2);
+      }
       Art.drawItem(c, wep.id, -13, -13, 26);
       c.restore();
       // 스윙 궤적 — 무기를 실제로 휘두를 때만(도구를 들고 있으면 베는 게 아니다)

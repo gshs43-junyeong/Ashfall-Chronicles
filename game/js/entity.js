@@ -388,7 +388,7 @@ class Player extends Ent {
       const n = d.multi || 1;
       for (let i = 0; i < n; i++) {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.09 : 0);
-        this.fireProj(d.proj || 'arrow', a, base, 'dex');
+        this.fireProj(d.proj || 'arrow', a, base, 'dex', BOW_TIP);
       }
       G.sfx('bow');
     } else if (d.wc === 'magic') {
@@ -425,11 +425,25 @@ class Player extends Ent {
     const c = this.d.crit / 100;
     return Math.random() < c;
   }
-  fireProj(type, ang, base, kind) {
+  fireProj(type, ang, base, kind, off) {
     const dmg = this.scaleDmg(base, kind);
     const crit = this.rollCrit();
     const spd = type === 'arrow' ? 760 : type === 'star' ? 900 : 560;
-    const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), 'player', type);
+    /* off 가 있으면 그 거리만큼 겨눈 쪽으로 밀어 낸다 — 활 끝에서 화살이 나가게.
+       다만 활 끝이 벽 너머면(벽에 붙어 쏘는 경우) 화살이 벽을 그냥 건너뛰어 버리므로,
+       몸에서 활 끝까지를 반 칸 간격으로 훑어 막힌 데가 있으면 거기서 멈춘다. */
+    let ox = 0, oy = -4;
+    if (off) {
+      const cs = Math.cos(ang), sn = Math.sin(ang);
+      let reach = 0;
+      for (let t = TS / 2; t <= off; t += TS / 2) {
+        if (G.world.solid(Math.floor((this.cx + cs * t) / TS), Math.floor((this.cy + sn * t) / TS))) break;
+        reach = t;
+      }
+      if (reach >= off - TS / 2) reach = off;   // 끝까지 뚫려 있으면 활 끝 그대로
+      if (reach > 0) { ox = cs * reach; oy = sn * reach; }
+    }
+    const p = new Proj(this.cx + ox, this.cy + oy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), 'player', type);
     p.crit = crit;
     if (this.d.fire) p.fire = this.d.fire;
     if (this.d.frost) p.frost = this.d.frost;
