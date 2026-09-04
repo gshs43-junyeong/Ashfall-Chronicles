@@ -253,7 +253,7 @@ const G = {
     this.deathMark = null;
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
     this.nearStObj = { work: null, forge: null };
-    this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
+    this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
     this.rainT = 0; this.rainDrops = null;
     this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = [];
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
@@ -437,6 +437,7 @@ const G = {
     }
 
     this.checkRuinEntry();
+    this.checkBiomeEntry();
     this.checkRuinEvent();
     /* 유적 고유 이벤트의 여운 — 꺼진 불(화면 어둠)과 홀씨(지속 피해)는 시간이 지나면 걷힌다 */
     if (this.ruinDark > 0) this.ruinDark -= dt;
@@ -2323,7 +2324,7 @@ const G = {
         world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
         talked: this.talked, crafted: this.crafted,
         sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
-        seenRuins: this.seenRuins, ruinMarks: this.ruinMarks, ruinEvDone: this.ruinEvDone,
+        seenRuins: this.seenRuins, seenBiomes: this.seenBiomes, ruinMarks: this.ruinMarks, ruinEvDone: this.ruinEvDone,
         deathMark: this.deathMark,
         villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
         lairs: this.lairs,
@@ -2386,6 +2387,7 @@ const G = {
       this.sideActive = d.sideActive || {}; this.sideDone = d.sideDone || {};
       this.tabletsRead = d.tabletsRead || {}; this.termsRead = d.termsRead || {}; this.loreRead = d.loreRead || {};
       this.seenRuins = d.seenRuins || {};
+      this.seenBiomes = d.seenBiomes || {};
       this.ruinMarks = d.ruinMarks || {}; this.ruinEvDone = d.ruinEvDone || {};
       this.deathMark = d.deathMark || null;
       this.mode = MODE_OF(d.mode).id;
@@ -2485,12 +2487,16 @@ const G = {
   openModal(sel) { $(sel).classList.add('open'); },
   closeModal(sel) { $(sel).classList.remove('open'); },
   /* 팝업은 여러 겹으로 열린다(슬롯 위에 새 게임). 위에서부터 닫아야 한다. */
-  MODAL_STACK: ['#newgame-screen', '#bye-screen', '#credits-screen', '#settings-screen', '#slots-screen'],
+  MODAL_STACK: ['#code-screen', '#newgame-screen', '#bye-screen', '#credits-screen',
+                '#settings-screen', '#slots-screen'],
   /** 열려 있는 팝업 중 가장 위의 것을 닫는다. 닫을 게 없으면 false. */
   closeTopModal() {
     for (const sel of this.MODAL_STACK) {
       const el = $(sel);
-      if (el && el.classList.contains('open')) { el.classList.remove('open'); return true; }
+      if (!el || !el.classList.contains('open')) continue;
+      if (sel === '#code-screen') this.closeCodeDoor();   // 딸린 상태까지 같이 푼다
+      else el.classList.remove('open');
+      return true;
     }
     return false;
   },
@@ -2879,6 +2885,19 @@ const G = {
        불이 꺼졌을 때(ruinDark)는 타일을 건드리지 않고 화면만 어둡게 한다 — 장식을
        부수면 되돌릴 방법이 없다. 홀씨(ruinSpore)는 초록빛으로 시야를 흐린다.
        둘 다 끝날 때 마지막 2초 동안 서서히 걷힌다. */
+    /* 그 땅의 공기색 — 아주 옅게. 없으면 일곱 땅이 다 같은 색으로 읽힌다. */
+    const air = this.biomeAir(camX, camY);
+    if (air) {
+      c.save();
+      c.globalCompositeOperation = 'soft-light';
+      c.globalAlpha = Math.min(0.18, air.a * 2.2);
+      c.fillStyle = air.c;
+      c.fillRect(0, 0, this.W, this.H);
+      c.globalCompositeOperation = 'source-over';
+      c.globalAlpha = air.a;
+      c.fillRect(0, 0, this.W, this.H);
+      c.restore();
+    }
     if (this.ruinDark > 0) {
       c.save();
       c.globalAlpha = Math.min(1, this.ruinDark / 2) * 0.72;
@@ -3610,18 +3629,56 @@ const G = {
     return String(100 + (h % 900));
   },
 
-  /** 숫자 잠긴 문 — 세 자리를 맞추면 열린다 */
+  /** 숫자 잠긴 문 — 세 자리를 맞추면 열린다.
+      예전에는 브라우저 prompt() 를 띄웠다. 창 밖에 뜨는 데다 그동안 게임이 통째로
+      얼어붙어서, 유적 한복판에서 갑자기 브라우저 대화상자를 마주하는 꼴이었다.
+      이제 게임 안 창(#code-screen)으로 받는다. */
   openCodeDoor(o) {
-    const w = this.world;
     if (o.opened) { this.toast('이미 열려 있다'); return; }
-    const code = this.ruinCode(o.ruin);
-    const got = prompt('돌판에 숫자 세 자리를 넣는 홈이 있다.\n(유적 안 비문 흔적에 한 자리씩 적혀 있다)');
-    if (got === null) return;
-    if (got.trim() !== code) {
-      this.toast('맞지 않는다 — 홈이 그대로다', 'bad');
+    const el = $('#code-screen'), inp = $('#code-input'), msg = $('#code-msg');
+    inp.value = ''; msg.textContent = ''; msg.classList.remove('ok');
+    this.codeDoor = o;
+    this.openModal('#code-screen');
+    this.uiOpen = true;
+    setTimeout(() => inp.focus(), 30);
+    this.sfx('open');
+    if (el.dataset.bound) return;              // 배선은 한 번만
+    el.dataset.bound = '1';
+    // 숫자만 받는다 — 세 자리를 채우면 바로 넣어 본다
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/\D/g, '').slice(0, 3);
+      if (inp.value.length === 3) this.tryCodeDoor();
+    });
+    inp.addEventListener('keydown', e => {
+      e.stopPropagation();                     // 게임 조작키로 새지 않게
+      if (e.key === 'Enter') this.tryCodeDoor();
+      if (e.key === 'Escape') this.closeCodeDoor();
+    });
+    $('#btn-code-ok').onclick = () => this.tryCodeDoor();
+    $('#btn-code-cancel').onclick = () => this.closeCodeDoor();
+    el.onclick = e => { if (e.target === el) this.closeCodeDoor(); };
+  },
+
+  closeCodeDoor() {
+    this.closeModal('#code-screen');
+    this.codeDoor = null;
+    this.uiOpen = false;
+  },
+
+  /** 넣은 세 자리를 맞춰 본다 */
+  tryCodeDoor() {
+    const o = this.codeDoor; if (!o) return;
+    const w = this.world, inp = $('#code-input'), msg = $('#code-msg');
+    if (inp.value.length < 3) { msg.classList.remove('ok'); msg.textContent = '세 자리를 다 넣어야 한다'; return; }
+    if (inp.value !== this.ruinCode(o.ruin)) {
+      msg.classList.remove('ok');
+      msg.textContent = '맞지 않는다 — 홈이 그대로다';
+      inp.value = ''; inp.focus();
       this.sfx('mine');
       return;
     }
+    msg.classList.add('ok');
+    msg.textContent = '맞물리는 소리가 났다';
     o.opened = true;
     for (let y = o.dy - 4; y <= o.dy; y++) w.set(o.dx, y, T.AIR);
     for (let i = 0; i < 30; i++)
@@ -3629,6 +3686,7 @@ const G = {
     this.shake = 10;
     this.toast('맞물리는 소리가 났다', 'good');
     this.sfx('chapter');
+    setTimeout(() => this.closeCodeDoor(), 700);
   },
 
   /** 유적에 처음 발을 들였을 때 — 그 유적만의 카드를 한 번 띄운다.
@@ -3651,6 +3709,44 @@ const G = {
       : (st && STORY_RUIN[+st[1]] && STORY_RUIN[+st[1]].n) || '이름 없는 유적';
     if (card) UI.chapterCard({ sub: card.sub, title: name, line: card.line });
     this.sfx('chapter');
+  },
+
+  /** 바이옴에 처음 들어섰을 때 — 그 땅이 어떤 곳인지 한 번 알린다.
+
+      유적에는 카드가 있는데 땅에는 없어서, 걷다 보면 눈이 흙으로 바뀌고 흙이 모래로
+      바뀌는데도 "여기가 어디"라는 말이 한 번도 없었다. 유적과 같은 카드를 쓰되
+      **무엇이 사는가가 아니라 그 땅이 어떤 곳인가**를 적는다(BIOMES[].card).
+      한 번뿐이라 다시 지나가도 뜨지 않는다(seenBiomes 는 세이브에 남는다). */
+  checkBiomeEntry() {
+    if (this.time < 3) return;                 // 시작 직후엔 장 카드와 겹친다
+    const p = this.player;
+    const b = this.world.biomeAt(clamp(Math.floor(p.cx / TS), 0, WW - 1));
+    if (!b || !b.card) return;
+    if (!this.seenBiomes) this.seenBiomes = {};
+    if (this.seenBiomes[b.id]) return;
+    /* 경계에서 한 발짝씩 오갈 때 카드가 번갈아 뜨지 않게, 경계 띠 안에서는 알리지
+       않는다 — 그 땅 안쪽으로 확실히 들어섰을 때만 센다. */
+    const tx = Math.floor(p.cx / TS);
+    if (tx - b.x0 < 24 || b.x1 - tx < 24) return;
+    this.seenBiomes[b.id] = 1;
+    UI.chapterCard({ sub: b.card.sub, title: b.n, line: b.card.line });
+    this.sfx('chapter');
+  },
+
+  /** 그 땅의 공기색. 경계에서는 두 색을 섞어 선이 보이지 않게 한다.
+      깊이 내려갈수록 옅어진다 — 지옥에는 지옥의 색이 따로 있다. */
+  biomeAir(camX, camY) {
+    const w = this.world;
+    const tx = clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1);
+    const [i, j, k] = w.biomeMix(tx);
+    const A = BIOMES[i].air, B = BIOMES[j].air;
+    if (!A || !B) return null;
+    const ty = (camY + this.H / 2) / TS;
+    // 지표 위에서는 그대로, 지옥에 가까울수록 사라진다
+    const depth = 1 - clamp((ty - SURF_BASE - 60) / (HELL_Y - SURF_BASE - 60), 0, 1);
+    const a = (A.a * (1 - k) + B.a * k) * (0.4 + 0.6 * depth);
+    if (a < 0.004) return null;
+    return { c: k > 0.25 ? B.c : A.c, a };
   },
 
   /** 다 여문 작물에 얹는 반짝임.
