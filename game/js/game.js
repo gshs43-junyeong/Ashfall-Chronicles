@@ -48,6 +48,7 @@ const G = {
        예전에는 애셋을 붙이는 동안에도 타이틀이 그대로 떠 있어서, 배경 없는 맨 글자가
        먼저 보이고 몇 초 뒤에 그림이 툭 얹혔다. 이제 그림이 다 붙은 다음에 연다. */
     document.body.classList.add('booting');
+    window.__acBooting = 1;                   // 로딩 화면은 이제 이쪽이 맡는다 (index.html 참고)
     this.showLoading('불러오는 중…');
     if (typeof TitleBG !== 'undefined') TitleBG.init();
     // 손그림 애셋은 비동기로 붙인다 — 실패해도 절차 생성 렌더로 계속 동작
@@ -205,8 +206,13 @@ const G = {
   bootDone() {
     if (this.booted) return;
     this.booted = true;
-    /* 글꼴까지 기다린다. 안 그러면 로고가 기본 글꼴로 한 번 그려졌다가 바뀐다. */
-    const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+    window.__acBooted = 1;                    // index.html 의 안전장치에게 알린다
+    /* 글꼴까지 기다린다. 안 그러면 로고가 기본 글꼴로 한 번 그려졌다가 바뀐다.
+       다만 이 약속이 끝내 안 풀리는 브라우저가 있어 1.5초로 끊는다 — 글꼴 하나
+       때문에 로딩에 갇히면 안 된다. */
+    const fr = document.fonts && document.fonts.ready;
+    const fonts = fr ? Promise.race([fr, new Promise(r => setTimeout(r, 1500))])
+                     : Promise.resolve();
     fonts.catch(() => {}).then(() => {
       document.body.classList.remove('booting');
       if (this.state === 'title' && typeof TitleBG !== 'undefined') TitleBG.start();

@@ -204,6 +204,29 @@
     <div class="ld-spin"></div>
     <div id="loading-text">불러오는 중…</div>
   </div></div>
+  <script>
+  /* ★ 로딩 화면의 안전장치 — 이 파일이 직접 들고 있는다.
+     로딩은 HTML 이 뜨는 순간부터(위 class="open") 떠 있다가 js/game.js 의
+     bootDone() 이 걷어 준다. 그런데 index.html 은 새로 받아 오면서 js/*.js 는
+     브라우저 캐시에 남은 옛것이 오는 일이 있다 — 개발 중에는 ?v= 를 안 올리므로
+     흔하고, 실제로 그래서 로딩에 갇혔다. 옛 game.js 에는 걷어 줄 코드가 없다.
+     스크립트 파일에 두면 그 파일이 같이 옛것일 때 소용이 없으므로 HTML 안에 둔다.
+       __acBooting : 새 game.js 가 로딩 화면을 넘겨받았다 (init)
+       __acBooted  : 정상적으로 부팅이 끝났다 (bootDone) */
+  (function () {
+    function clear() {
+      var el = document.getElementById('loading');
+      if (el) el.classList.remove('open', 'fade');
+      if (document.body) document.body.classList.remove('booting');
+    }
+    // ① 넘겨받을 코드가 아예 없으면(옛 game.js) 곧바로 걷는다
+    addEventListener('load', function () {
+      setTimeout(function () { if (!window.__acBooting) clear(); }, 200);
+    });
+    // ② 넘겨받았는데 애셋 하나가 영영 안 와도 갇히지 않게
+    setTimeout(function () { if (!window.__acBooted) clear(); }, 6000);
+  })();
+  </script>
 
   <!-- 타이틀 -->
   <div id="title-screen">
