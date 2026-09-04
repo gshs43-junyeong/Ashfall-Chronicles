@@ -58,7 +58,12 @@ const T = {
      캐노피의 "표면 조각"만 그리는 전용 타일을 따로 둔다. */
   GLOWLEAF: 123,
   /* --- v1.0.5: 울림 정글 호수 수면 장식 --- */
-  LILY: 124
+  LILY: 124,
+  /* --- v1.1: 유적 함정 셋 (기계가 아니라 타일만으로 돈다) ---
+     SPARKCOIL 은 마주 보는 코일끼리 전기 아크를 잇고, GASVENT 는 유독 가스를 뿜고,
+     GRINDER 는 벽에 박힌 톱니가 튀어나온다. 세션 2 지역(공창·폭주로)은 전기 문명이라
+     코일을 더 많이 세운다. */
+  SPARKCOIL: 125, GASVENT: 126, GRINDER: 127
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -227,7 +232,14 @@ const TILE_DEF = [
   { n: '유독 가스', c: '#6a7a4a', solid: 0, hard: 99, hurt: 14, light: 2 },
   { n: '갓 조각', c: '#6fe0c0', solid: 0, hard: 0, drop: 'glowcap', tree: 1, leaf: 1, light: 4,
     leafDrop: [['none', 55], ['glowcap', 30], ['spore_sac', 15]] },
-  { n: '수련', c: '#3a9a6a', solid: 2, hard: 0, drop: 'lily_pad' }
+  { n: '수련', c: '#3a9a6a', solid: 2, hard: 0, drop: 'lily_pad' },
+  /* --- v1.1: 새 유적 함정 ---
+     tcoil: 마주 보는 코일을 찾아 그 사이에 전기 아크를 놓는다 (세션 2 전기 문명)
+     tgas:  유독 가스를 위로 뿜는다. 예고가 길고 범위가 넓다 — 지나갈 틈을 재는 함정
+     tgrind: 벽에서 톱니가 튀어나온다. 붙어 걷지 못하게 만든다 */
+  { n: '방전 코일', c: '#5a8aa8', solid: 1, hard: 3, drop: 'copper_ore', tcoil: 1, light: 3 },
+  { n: '가스 분출구', c: '#6a7a4a', solid: 1, hard: 2, drop: 'stone', tgas: 1 },
+  { n: '톱니 구멍', c: '#6a6058', solid: 1, hard: 3, drop: 'iron_ore', tgrind: 1 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -248,6 +260,7 @@ const TILE_SPRITE = {
   junglegrass: T.JUNGLEGRASS, mud: T.MUD, jungleleaf: T.JUNGLELEAF, fern: T.FERN, orchid: T.ORCHID,
   glowmoss: T.GLOWMOSS, sporestone: T.SPORESTONE, glowcap: T.GLOWCAP, glowleaf: T.GLOWLEAF, lily: T.LILY,
   dart_l: T.DART_L, dart_r: T.DART_R, flamevent: T.FLAMEVENT, crumble: T.CRUMBLE,
+  sparkcoil: T.SPARKCOIL, gasvent: T.GASVENT, grinder: T.GRINDER,
   slagsteel: T.SLAGSTEEL, coreglass: T.COREGLASS,
   water: T.WATER, falls: T.FALLS,
   archestone: T.ARCHESTONE, draftglass: T.DRAFTGLASS, archseal: T.ARCHSEAL,
@@ -1677,6 +1690,10 @@ const BUFFS = {
      않게 회복은 일부러 넣지 않았다 — 이쪽은 "운을 산다"는 쪽이다. */
   wish: { n: '분수의 축복', i: '🪙', dur: 420, b: { allStat: 3, crit: 5 } },
   rested: { n: '잘 쉼', i: '🛏', dur: 600, b: { allStat: 4, hpreg: 1.5, mpreg: 20 } },
+  /* 유적의 신비한 방에서만 붙는다. 한 세계에 두세 곳뿐이라 세게 잡았다 */
+  starlit: { n: '별빛', i: '✨', dur: 480, b: { allStat: 6, crit: 8, ms: 10 } },
+  echoed: { n: '메아리', i: '🌀', dur: 480, b: { cdr: 14, mpreg: 24, int: 6 } },
+  weighed: { n: '저울에 오름', i: '⚖', dur: 480, b: { dmgP: 0.22, def: 14 } },
   /* 음식 버프 — 앞에 fed_ 가 붙은 것은 한 번에 하나만 유지된다.
      여러 개를 겹쳐 두면 요리를 고를 이유가 없어지기 때문이다. */
   fed_bread: { n: '갓 구운 빵', i: '🍞', dur: 300, b: { hpreg: 1.8, vit: 4 } },
@@ -1712,31 +1729,31 @@ const RUIN_SPEC = [
   {
     id: 'ice', n: '얼음 던전', x: 300, y: 150, w: 74, h: 44,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
-    traps: ['dart', 'crumble'], boss: 'ice_warden',
+    traps: ['dart', 'crumble', 'grind'], boss: 'ice_warden',
     mobs: ['frostling', 'icewolf'],
     rank: 2, tier: 3, trapRate: 0.46, spikeRate: 0.26, chestRate: 0.34, mobMul: 1.0
   },
   {
-    id: 'pyramid', n: '피라미드', x: 2180, y: 96, w: 66, h: 52,
+    id: 'pyramid', n: '피라미드', x: 2180, y: 96, w: 80, h: 56,
     wall: T.SANDBRICK, floor: T.SANDSTONE, bg: 8, torch: T.TORCH,
-    traps: ['dart', 'vent', 'crumble'], boss: 'sand_guardian',
+    traps: ['dart', 'vent', 'crumble', 'gas'], boss: 'sand_guardian',
     mobs: ['scorpion', 'sandmaw', 'skeleton'],
     // 지상으로 튀어나온 데다 얕아서 일찍 눈에 띄지만, 안은 함정이 가장 촘촘하다 —
     // "보이는 것과 실제 난이도가 다른" 유적 하나는 있어야 한다
     rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.42, mobMul: 1.35
   },
   {
-    id: 'mine', n: '버려진 광산', x: 820, y: 168, w: 64, h: 34,
+    id: 'mine', n: '버려진 광산', x: 820, y: 168, w: 72, h: 38,
     wall: T.MINEWOOD, floor: T.PLANK, bg: 4, torch: T.TORCH,
-    traps: ['dart', 'crumble'], boss: 'mine_horror',
+    traps: ['dart', 'crumble', 'gas'], boss: 'mine_horror',
     mobs: ['minerghost', 'spider', 'bat'],
     // 베이스캠프 바로 옆. 처음 들어가 보는 유적이라 가장 순하게 둔다
     rank: 1, tier: 2, trapRate: 0.32, spikeRate: 0.16, chestRate: 0.30, mobMul: 0.85
   },
   {
-    id: 'blight', n: '부패한 둥지', x: 4020, y: 196, w: 84, h: 52,
+    id: 'blight', n: '부패한 둥지', x: 4020, y: 196, w: 100, h: 60,
     wall: T.EBONSTONE, floor: T.EBONSTONE, bg: 3, torch: T.TORCH,
-    traps: ['dart', 'vent'], boss: 'blight_maw',
+    traps: ['dart', 'vent', 'gas', 'coil'], boss: 'blight_maw',
     mobs: ['crawler', 'shadoweye'],
     // 동쪽 끝 + 가장 깊다. 여섯 중 마지막에 닿는 곳이라 제일 세게
     rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.52, mobMul: 1.85
@@ -1744,7 +1761,7 @@ const RUIN_SPEC = [
   {
     id: 'spore', n: '포자 굴', x: 3620, y: 176, w: 68, h: 42,
     wall: T.SPORESTONE, floor: T.GLOWMOSS, bg: 12, torch: T.GLOWCAP,
-    traps: ['vent', 'dart'], boss: 'spore_queen',
+    traps: ['vent', 'dart', 'gas', 'coil'], boss: 'spore_queen',
     mobs: ['sporeling', 'capbeast'], arch: 'buried', rooms: 14,
     // 입구가 없어 우연히 뚫고 들어가는 곳. 준비 없이 떨어질 수 있으니 함정은 낮추고
     // 대신 잡몹을 세게 — 도망칠 길이 없다는 게 이 유적의 압박이다
@@ -1783,17 +1800,24 @@ const RUIN_SPEC = [
    sig   — 그 유적에만 있는 방 하나 (가장 큰 방 다음으로 넓은 방에 놓는다)
    event — 그 유적에서만 일어나는 일. game.js 의 ruinEvent 가 돌린다
    bonus — 그 유적 상자에만 섞이는 전리품 */
-RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].rooms = 12;   // 얼음
-RUIN_SPEC[1].plan = 'steps';  RUIN_SPEC[1].arch = 'surface'; RUIN_SPEC[1].rooms = 16;   // 피라미드
-RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].rooms = 10;   // 광산
-RUIN_SPEC[3].plan = 'cross';  RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].rooms = 18;   // 부패한 둥지
-RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].rooms = 14; // 포자 굴
+/* bsp: [자르는 깊이, 방 최소 가로, 방 최소 세로].
+   가로 스크롤 게임이라 방은 **가로로 넓어야** 한다 — 세로로 길면 걸어 다닐 데가 없고
+   사다리 통로처럼 보인다. 그래서 최소 가로를 최소 세로의 두 배 가까이 잡는다.
+   피라미드와 부패한 둥지는 깊이를 6까지 줘서 **방 스무 개가 넘는 큰 유적**으로 만든다. */
+RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].bsp = [5, 17, 9];   // 얼음
+RUIN_SPEC[1].plan = 'pyramid'; RUIN_SPEC[1].arch = 'surface'; RUIN_SPEC[1].bsp = [6, 10, 6];  // 피라미드 (방 20+)
+RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].bsp = [5, 14, 7];   // 광산
+RUIN_SPEC[3].plan = 'warren'; RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].bsp = [6, 13, 7];   // 부패한 둥지 (방 20+)
+RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp = [5, 16, 8]; // 포자 굴
 
-RUIN_SPEC[0].decor = ['pillar', T.ICE, 0.5];
-RUIN_SPEC[1].decor = ['statue', T.SANDBRICK, 0.45];
-RUIN_SPEC[2].decor = ['prop', T.MINEWOOD, 0.55];
-RUIN_SPEC[3].decor = ['growth', T.CORRUPTLEAF, 0.6];
-RUIN_SPEC[4].decor = ['growth', T.GLOWCAP, 0.7];
+/* 겉으로 보이는 재질을 유적마다 갈랐다 — 나무 · 돌 · 구리 · 얼음 · 유기물.
+   [배치방식, 타일, 밀도] 를 여럿 줄 수 있고 방마다 전부 돌린다.
+   배치방식은 putRuinDecor 참고. 걷는 줄(fy · fy-1)은 어떤 것도 막지 않는다. */
+RUIN_SPEC[0].decor = [['pillar', T.ICE, 0.5], ['stalac', T.ICE, 0.5], ['brazier', T.TORCH, 0.35]];
+RUIN_SPEC[1].decor = [['statue', T.SANDBRICK, 0.5], ['frieze', T.GOLD, 0.35], ['brazier', T.TORCH, 0.3]];
+RUIN_SPEC[2].decor = [['beam', T.MINEWOOD, 0.6], ['rail', T.PLANK, 0.5], ['crate', T.MINEWOOD, 0.4]];
+RUIN_SPEC[3].decor = [['growth', T.CORRUPTLEAF, 0.6], ['stalac', T.EBONSTONE, 0.4], ['web', T.VINE, 0.35]];
+RUIN_SPEC[4].decor = [['growth', T.GLOWCAP, 0.7], ['moss', T.GLOWMOSS, 0.5], ['stalac', T.SPORESTONE, 0.35]];
 
 RUIN_SPEC[0].sig = 'frozen';   RUIN_SPEC[0].event = 'blackout';
 RUIN_SPEC[1].sig = 'sunshaft'; RUIN_SPEC[1].event = 'password';
@@ -1816,7 +1840,9 @@ const RUIN_PLANS = {
   horseshoe: ['####', '#...', '####'],   // C — 한쪽이 트인 고리
   cross:     ['.##.', '####', '.##.'],   // 十
   spine:     ['###.', '..#.', '.###'],   // 두 덩이를 좁은 목이 잇는다
-  steps:     ['##..', '.##.', '..##'],   // 계단식 — 피라미드
+  steps:     ['##..', '.##.', '..##'],   // 계단식
+  pyramid:   ['#...', '##..', '###.', '####'],   // 삼각형 — 진짜 피라미드 단면
+  warren:    ['####', '#.##', '####', '.###'],   // 잔방 투성이 (구멍 몇 개 뚫린 벌집)
   hook:      ['#...', '#...', '####'],   // ㄴ
   tee:       ['####', '.##.', '.##.'],   // T
   hall:      ['#..#', '####', '#..#']    // H
@@ -1826,15 +1852,36 @@ const RUIN_PLANS = {
    셋은 제7장에 한 번에 열리는 본편 경로라 입구를 아주 없애지는 않았다 —
    대신 지표 아래에 묻어(sunken) 부러진 기둥 하나만 지상에 남긴다. */
 const STORY_RUIN = [
-  { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', decor: ['pillar', T.ICE, 0.4],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
-  { n: '겹친 길', plan: 'tee',  arch: 'sunken', decor: ['statue', T.RUINBRICK, 0.4], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
-  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', decor: ['growth', T.CORRUPTLEAF, 0.5], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
+  { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
+  { n: '겹친 길', plan: 'tee',  arch: 'sunken', decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
+  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
 ];
 
 /* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다.
    지도는 그 유적이 아니라 **다른 유적의 보물방 상자**에 들어간다 — 한 곳을 털면
    다음 곳이 열리는 사슬이다. 사슬의 시작(광산·피라미드)은 지도 없이 들어갈 수 있다.
    { 지도가 가리키는 유적: 지도가 들어 있는 유적 } */
+/* 신비한 방 — 한 세계에 두세 곳. 유적 아무 데나 붙는 게 아니라 유적마다 하나씩만
+   후보로 두고 그중 셋을 고른다. 싸움이 아니라 "고르는 것"이 내용이라, 방에는
+   함정도 몹도 두지 않는다. 한 번 쓰면 끝난다(o.used, 세이브에 남는다). */
+const MYSTIC = {
+  well: { n: '가라앉은 우물', tile: 'WATER',
+    lines: ['바닥이 안 보이는 우물이다. 물이 아니라 그보다 무거운 것이 담겨 있다.',
+            '가장자리에 손자국이 여럿 있다. 전부 안쪽을 향해 나 있다.'],
+    ask: '금화를 던진다 (200)', cost: 200, buff: 'weighed',
+    got: '무언가가 저울에 오른 기분이 든다' },
+  echo: { n: '메아리 방', tile: 'RUNESTONE',
+    lines: ['방이 소리를 되돌려 준다. 그런데 되돌아오는 것이 내가 낸 소리가 아니다.',
+            '벽에 귀를 대면, 아주 오래전에 여기서 한 말이 아직 돌고 있다.'],
+    ask: '가만히 듣는다', cost: 0, buff: 'echoed',
+    got: '무슨 말인지는 모르겠는데, 머리가 맑아졌다' },
+  star: { n: '별빛 웅덩이', tile: 'CRYSTAL',
+    lines: ['천장이 뚫려 있지도 않은데 별빛이 고여 있다.',
+            '떨어진 별의 조각이 이 아래 어딘가에 아직 박혀 있는 모양이다.'],
+    ask: '빛에 손을 담근다', cost: 0, buff: 'starlit', heal: 1,
+    got: '몸이 가벼워지고 상처가 아물었다' }
+};
+
 const RUIN_MAP_IN = {
   ice: 'mine',        // 광산(입구 있음) → 얼음 던전
   spore: 'pyramid',   // 피라미드(지상에 솟음) → 포자 굴

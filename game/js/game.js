@@ -518,9 +518,10 @@ const G = {
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
         const def = TILE_DEF[w.get(x, y)];
-        if (!def.tdart && !def.tvent) continue;
+        if (!def.tdart && !def.tvent && !def.tcoil && !def.tgas && !def.tgrind) continue;
         // 좌표마다 다른 위상 — 한꺼번에 터지지 않게
         const ph = tileHash(x, y);
+        if (def.tcoil || def.tgas || def.tgrind) { this.tickTileTrap2(def, x, y); continue; }
         if (def.tdart) {
           if ((this.time / 2.4 + ph) % 1 > 0.09) continue;     // 2.4초에 한 번
           const dir = def.tdart;
@@ -554,6 +555,71 @@ const G = {
           if (Math.random() < 0.3) this.sfxAt('zap', x, y);
         }
       }
+    }
+  },
+
+  /** v1.1 새 함정 셋. tickTileTraps 의 자리별 위상(tileHash)을 그대로 쓴다 —
+      같은 자리는 언제 와도 같은 박자라, 외워서 지나갈 수 있어야 함정이 함정이다. */
+  tickTileTrap2(def, x, y) {
+    const w = this.world, p = this.player;
+    const ph = tileHash(x, y);
+    if (def.tcoil) {
+      /* 방전 코일 — 마주 보는 코일을 찾아 그 사이에 아크를 놓는다.
+         짝이 없으면 아무 일도 안 한다(혼자 선 코일은 장식). */
+      let mate = -1;
+      for (let k = 2; k <= 10; k++) {
+        const t = w.get(x + k, y);
+        if (TILE_DEF[t].tcoil) { mate = x + k; break; }
+        if (TILE_DEF[t].solid === 1) break;
+      }
+      if (mate < 0) return;
+      const t = (this.time / 2.8 + ph) % 1;
+      if (t > 0.3) return;
+      if (t < 0.18) {                                   // 예고 — 양 끝에 불꽃만 튄다
+        if (Math.random() < 0.5) this.parts.push(new Part(x * TS + TS, y * TS + TS / 2, '#9fd8ff', -30, .25));
+        return;
+      }
+      for (let tx = x + 1; tx < mate; tx++) {
+        if (Math.random() < 0.6)
+          this.parts.push(new Part(tx * TS + TS / 2, y * TS + TS / 2 + (Math.random() - .5) * 10, '#bfe8ff', -10, .2));
+        const r = { x: tx * TS, y: y * TS, w: TS, h: TS };
+        if (aabb(r, p.rect()) && p.iframe <= 0) p.hurt(26 + this.player.level * 1.1);
+        for (const e of this.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) e.hurt(34, false, null, 0);
+      }
+      if (Math.random() < 0.35) this.sfxAt('zap', x, y);
+    } else if (def.tgas) {
+      // 가스 분출 — 위로 다섯 칸까지 넓게 퍼진다. 예고가 길어 지나갈 틈을 잴 수 있다
+      const t = (this.time / 4.4 + ph) % 1;
+      if (t > 0.34) return;
+      if (t < 0.16) {
+        if (Math.random() < 0.3) this.parts.push(new Part(x * TS + TS / 2, y * TS, '#8aa860', -18, .5));
+        return;
+      }
+      for (let k = 1; k <= 5; k++) {
+        const ty = y - k;
+        if (w.solid(x, ty)) break;
+        for (let dx = -1; dx <= 1; dx++) {
+          if (Math.random() < 0.35)
+            this.parts.push(new Part((x + dx) * TS + TS / 2, ty * TS + 10, '#9ac070', -50, .55));
+          const r = { x: (x + dx) * TS, y: ty * TS, w: TS, h: TS };
+          if (aabb(r, p.rect()) && p.iframe <= 0) p.hurt(16 + this.player.level * 0.7);
+        }
+      }
+    } else if (def.tgrind) {
+      // 톱니 — 벽에서 두 칸 튀어나온다. 벽에 붙어 걷지 못하게 만든다
+      const t = (this.time / 1.9 + ph) % 1;
+      if (t > 0.26) return;
+      const dir = w.solid(x - 1, y) ? 1 : -1;           // 뚫린 쪽으로 튀어나온다
+      for (let k = 1; k <= 2; k++) {
+        const tx = x + dir * k;
+        if (w.solid(tx, y)) break;
+        if (Math.random() < 0.5)
+          this.parts.push(new Part(tx * TS + TS / 2, y * TS + TS / 2, '#c8ccd4', 0, .2));
+        const r = { x: tx * TS, y: y * TS, w: TS, h: TS };
+        if (aabb(r, p.rect()) && p.iframe <= 0) p.hurt(24 + this.player.level * 1.0);
+        for (const e of this.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) e.hurt(30, false, null, 0);
+      }
+      if (Math.random() < 0.2) this.sfxAt('mine', x, y);
     }
   },
 
@@ -1003,6 +1069,8 @@ const G = {
       this.openSeal(o);
     } else if (o.type === 'codedoor') {
       this.openCodeDoor(o);
+    } else if (o.type === 'mystic') {
+      this.useMystic(o);
     } else if (o.type === 'vault') {
       UI.openVault(); this.sfx('open');
     } else if (o.type === 'board') {
@@ -1672,7 +1740,7 @@ const G = {
   },
 
   /* ================= 스폰 ================= */
-  zoneTable(zone, night, tx) {
+  zoneTable(zone, night, tx, ty) {
     // 사막은 지상/동굴 판정 안에 들어가므로 x로 따로 갈라준다
     const desert = tx !== undefined && this.world.biomeAt(clamp(tx, 0, WW - 1)).id === 'desert';
     switch (zone) {
@@ -1691,7 +1759,18 @@ const G = {
       case 'ice': return night ? ['frostling', 'icewolf', 'zombie'] : ['frostling', 'icewolf', 'slime', 'arctic_hare', 'arctic_hare'];
       case 'hell': return ['imp', 'golem', 'lavaslug', 'imp'];
       case 'sky': return ['gale', 'sky_sentry', 'cloudjelly', 'gale'];
-      case 'ruin': return ['ruin_guard', 'lantern', 'archivist'];
+      case 'ruin': {
+        /* 유적은 여덟 곳인데 나오는 몹이 셋으로 다 같았다 — 어디를 들어가도 같은 곳처럼
+           느껴지던 가장 큰 이유다. 이제 그 유적에 매긴 무리(RUIN_SPEC[].mobs)를 쓴다.
+           석판 유적과 심층 봉인실은 RUIN_SPEC 에 없으므로 예전 표가 그대로 남는다. */
+        const r = ty !== undefined && this.world.ruinAt(tx, ty);
+        const sp = r && r.id && RUIN_SPEC.find(q => q.id === r.id);
+        if (sp && sp.mobs) {
+          // 유적 지킴이(ruin_guard)는 어디에나 한 자리 섞는다 — 여덟 곳을 잇는 공통 설정이다
+          return night ? [...sp.mobs, ...sp.mobs, 'ruin_guard'] : [...sp.mobs, 'ruin_guard', 'lantern'];
+        }
+        return ['ruin_guard', 'lantern', 'archivist'];
+      }
       case 'works': return ['scrapcrawler', 'sparkwisp', 'riveter', 'foreman'];
       case 'runaway': return ['splitter', 'weldarm', 'coreling', 'splitter'];
       case 'atelier': return ['draft_form', 'scribe_hand', 'mold_walker', 'draft_form'];
@@ -1871,7 +1950,7 @@ const G = {
       // 이벤트 중에는 해당 구역의 스폰표를 통째로 갈아 끼운다 — 단, 비처럼 table이 없는
       // 이벤트는 몹 종류는 그대로 두고 세기만(buff) 바꾼다
       const evHere = ev && ev.zones.indexOf(zone) >= 0 ? ev : null;
-      const table = (evHere && evHere.table) ? evHere.table : this.zoneTable(zone, night, tx);
+      const table = (evHere && evHere.table) ? evHere.table : this.zoneTable(zone, night, tx, ty);
       const type = table[Math.floor(Math.random() * table.length)];
       const flying = ENEMIES[type].ai === 'flyer' || ENEMIES[type].ai === 'caster';
       let sy2 = ty;
@@ -2669,6 +2748,20 @@ const G = {
           c.fillStyle = '#a06fff'; c.fillRect(sx + o.w / 2 - 1.5, sy + 8, 3, o.h - 16);
           c.globalAlpha = 1; c.lineWidth = 1;
         }
+      } else if (o.type === 'mystic') {
+        // 떠 있는 빛무리 하나 — 여기 무언가 있다는 것만 알리고, 무엇인지는 다가가야 안다
+        const t = this.time;
+        c.save();
+        for (let i = 0; i < 3; i++) {
+          const a = t * (0.5 + i * 0.2) + i * 2.1;
+          c.globalAlpha = o.used ? 0.16 : 0.34 + Math.sin(t * 1.6 + i) * 0.2;
+          c.fillStyle = o.used ? '#5a5a66' : '#bfe8ff';
+          c.beginPath();
+          c.arc(sx + o.w / 2 + Math.cos(a) * (10 + i * 5), sy + o.h / 2 + Math.sin(a * 1.3) * (7 + i * 3),
+            2.4 - i * 0.4, 0, TAU);
+          c.fill();
+        }
+        c.restore();
       } else if (o.type === 'codedoor') {
         /* 숫자 잠긴 문 — 세 자리를 넣는 홈 셋을 그려서, 무엇을 요구하는 문인지
            설명 없이도 보이게 한다. 열리면 홈만 남은 문틀이 된다. */
@@ -3439,6 +3532,35 @@ const G = {
       this.toast('벽 너머에 빈 곳이 있다 — 숫자를 맞춰야 열린다');
       this.sfx('open');
     }
+  },
+
+  /** 신비한 방 — 한 세계에 세 곳뿐이고, 한 번 쓰면 끝난다.
+      싸움이 아니라 "고르는 것"이 내용이라 되돌릴 수 없게 뒀다. */
+  useMystic(o) {
+    const m = MYSTIC[o.mk]; if (!m) return;
+    const p = this.player;
+    if (o.used) { UI.openLore(m.n, ['한 번 쓰고 나면 아무 일도 일어나지 않는다.'], []); this.sfx('open'); return; }
+    const choices = [];
+    const afford = !m.cost || p.gold >= m.cost;
+    choices.push({
+      t: m.ask + (afford ? '' : ' (금화가 모자란다)'),
+      fn: () => {
+        if (!afford) { this.toast('금화가 모자란다', 'bad'); UI.closeDialogue(); return; }
+        if (m.cost) p.gold -= m.cost;
+        o.used = 1;
+        p.addBuff(m.buff);
+        if (m.heal) { p.hp = p.d.maxHp; p.mp = p.d.maxMp; }
+        p.addXp(Math.round(900 * this.scale()));
+        for (let i = 0; i < 44; i++)
+          this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#bfe8ff', -34, 1.3));
+        this.shake = 8;
+        this.toast(m.got, 'good');
+        this.sfx('chapter');
+        UI.closeDialogue(); UI.refreshBag(); UI.updateHUD();
+      }
+    });
+    UI.openLore(m.n, m.lines, choices);
+    this.sfx('open');
   },
 
   /** 유적마다 다른 세 자리 숫자. 세계 씨앗에서 뽑으므로 세계마다 다르다.

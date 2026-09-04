@@ -125,6 +125,9 @@ ART[T.M_FROST] = { k: 'mk_jet', c: '#6a9ab0', a: 1 };
 ART[T.DART_L] = { k: 'darthole', c: '#4a4238', d: -1 };
 ART[T.DART_R] = { k: 'darthole', c: '#4a4238', d: 1 };
 ART[T.FLAMEVENT] = { k: 'flamevent', c: '#8a4a2a' };
+ART[T.SPARKCOIL] = { k: 'flamevent', c: '#5a8aa8' };
+ART[T.GASVENT] = { k: 'flamevent', c: '#6a7a4a' };
+ART[T.GRINDER] = { k: 'flamevent', c: '#6a6058' };
 ART[T.CRUMBLE] = { k: 'crumble', c: '#6a6050' };
 /* --- 7단계: 폭주로 --- */
 ART[T.SLAGSTEEL] = { k: 'slag', c: '#5a4a44' };
