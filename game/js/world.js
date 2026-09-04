@@ -11,14 +11,34 @@ const SKY_Y = 40;           // 하늘 섬 구역 (이보다 위)
 const MIN_CAVE = 30;        // 이보다 작고 고립된 공동은 동굴로 치지 않고 메운다(타일 수)
 const CAMP_X0 = 1000, CAMP_X1 = 1100;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
 
+/* 바이옴.
+   card 는 처음 발을 들일 때 한 번 뜨는 안내(유적 카드와 같은 자리를 쓴다).
+     ★ 무엇이 사는가가 아니라 **그 땅이 어떤 곳인가**를 적는다 — 몹 소개가 아니다.
+   air 는 그 땅의 공기색. 화면 전체에 아주 옅게 덮는다(a 는 0.05 안팎).
+     세면 화면이 물든 것처럼 보이고, 없으면 일곱 땅이 다 같은 색으로 읽힌다.
+     경계에서는 biomeMix 로 두 색을 섞어 넘어가므로 선이 보이지 않는다. */
 const BIOMES = [
-  { id: 'ice', x0: 0, x1: 620, n: '서리 지대' },
-  { id: 'forest', x0: 620, x1: 1400, n: '잿빛 숲' },
-  { id: 'jungle', x0: 1400, x1: 2000, n: '울림 정글' },
-  { id: 'desert', x0: 2000, x1: 2680, n: '메마른 사구' },
-  { id: 'forest2', x0: 2680, x1: 3300, n: '동쪽 숲' },
-  { id: 'glowfen', x0: 3300, x1: 3760, n: '버섯 골짜기' },
-  { id: 'corrupt', x0: 3760, x1: WW, n: '부패한 땅' }
+  { id: 'ice', x0: 0, x1: 620, n: '서리 지대',
+    card: { sub: '서쪽 끝', line: '눈이 소리를 먹는다. 밟은 자리가 오래 남는 땅.' },
+    air: { c: '#a8c8ee', a: 0.075 } },
+  { id: 'forest', x0: 620, x1: 1400, n: '잿빛 숲',
+    card: { sub: '시작한 자리', line: '재가 잎을 대신한 숲. 나무는 서 있으나 그늘이 없다.' },
+    air: { c: '#b0aa90', a: 0.045 } },
+  { id: 'jungle', x0: 1400, x1: 2000, n: '울림 정글',
+    card: { sub: '남쪽 골짜기', line: '골이 깊어 소리가 되돌아온다. 젖은 공기가 무겁다.' },
+    air: { c: '#5fbf86', a: 0.06 } },
+  { id: 'desert', x0: 2000, x1: 2680, n: '메마른 사구',
+    card: { sub: '가운데 모래', line: '물이 마른 자리에 바람이 길을 낸다. 낮과 밤이 다른 땅.' },
+    air: { c: '#e8be74', a: 0.07 } },
+  { id: 'forest2', x0: 2680, x1: 3300, n: '동쪽 숲',
+    card: { sub: '마을 언저리', line: '재가 덜 닿은 숲. 사람이 아직 길을 내고 사는 곳.' },
+    air: { c: '#93c47a', a: 0.045 } },
+  { id: 'glowfen', x0: 3300, x1: 3760, n: '버섯 골짜기',
+    card: { sub: '내려앉은 땅', line: '땅이 통째로 꺼져 갓이 자랐다. 어둠이 스스로 빛난다.' },
+    air: { c: '#6fe0c4', a: 0.07 } },
+  { id: 'corrupt', x0: 3760, x1: WW, n: '부패한 땅',
+    card: { sub: '동쪽 끝', line: '별이 떨어진 자리. 흙까지 물들어 되돌릴 수 없다.' },
+    air: { c: '#a874e0', a: 0.08 } }
 ];
 const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
 
@@ -474,7 +494,8 @@ class World {
        유적을 지은 뒤에도 동굴·물·갱도가 유적을 헐고 지나가므로, 다 만든 다음에 봐야
        한다. 자세한 것은 _ensureWalkable 참고. */
     this.restoreSealRoom();      // 동굴이 헐고 간 봉인실 바닥·문 앞 복도를 되돌린다
-    for (const j of this._walkJobs || []) this._ensureWalkable(j[0], j[1], j[2], j[3], j[4], j[5]);
+    for (const j of this._walkJobs || []) this._ensureWalkable(j[0], j[1], j[2], j[3], j[4], j[5], j[6], rng);
+    this.ensureEntranceTraps(rng);   // 함정 없이 그냥 걸어 들어가는 문을 남기지 않는다
 
     this.spawnX = (vx0 + vx1) >> 1;
     this.spawnY = vh - 3;
@@ -1732,7 +1753,7 @@ class World {
   }
 
   /** 두 자리를 걸어 다닐 수 있게 잇는다 — 가로 굴을 내고 세로로 발판 사다리를 세운다 */
-  _digStair(ax, ay, tx, ty, floor, box) {
+  _digStair(ax, ay, tx, ty, floor, box, traps, rng) {
     const yT = Math.min(ay, ty), yB = Math.max(ay, ty);
     const c = clamp(tx, box[0] + 1, box[2] - 2);
     /* ★ 이미 놓인 발판은 절대 지우지 않는다.
@@ -1757,11 +1778,16 @@ class World {
     for (let y = yB - 2; y > yT; y -= 3) { this.set(c, y, T.PLATFORM); this.set(c + 1, y, T.PLATFORM); }
     if (yB - yT >= 2) { this.set(c, yT + 1, T.PLATFORM); this.set(c + 1, yT + 1, T.PLATFORM); }
     if (TILE_DEF[this.get(c, yB + 1)].solid === 0) { this.set(c, yB + 1, floor); this.set(c + 1, yB + 1, floor); }
+    /* ★ 이 계단에도 함정을 하나 심는다.
+       여기서 파는 길은 "걸어서 못 가던 곳"을 잇는 길이라, 그중에는 유적 밖으로
+       빠져나가는 길도 있다. 그대로 두면 함정 하나 없이 드나드는 샛길이 생긴다 —
+       입구인지 출구인지 가리지 않고 유적으로 통하는 길은 다 값을 치러야 한다. */
+    if (rng) this.putPathTrap(Math.round((ax + c) / 2), ay, rng);
   }
 
   /** spots 의 모든 자리를 서로 걸어 다닐 수 있게 만든다.
       spots[0] 이 기준점이므로 입구가 있으면 입구를, 없으면 보스방을 맨 앞에 둔다 */
-  _ensureWalkable(x0, y0, w, h, spots, floor) {
+  _ensureWalkable(x0, y0, w, h, spots, floor, traps, rng) {
     if (spots.length < 2) return;
     // 검사 범위는 유적 둘레 열두 칸. 입구 통로처럼 유적보다 위에 있는 자리가 끼면
     // 그만큼 위로 넓힌다 — 안 그러면 "나가는 길"을 검사에서 빼놓게 된다
@@ -1774,19 +1800,19 @@ class World {
        양방향으로 쓸 수 있으므로, 두 방향을 다 훑으면 왕복이 보장된다. */
     const d0 = p => Math.abs(p[0] - spots[0][0]) + Math.abs(p[1] - spots[0][1]);
     const far = spots.reduce((b, p) => (d0(p) > d0(b) ? p : b), spots[1]);
-    for (const anchor of [spots[0], far]) this._walkPass(box, anchor, spots, floor);
+    for (const anchor of [spots[0], far]) this._walkPass(box, anchor, spots, floor, traps, rng);
     /* 가는 길과 오는 길을 번갈아 손본다. 한쪽만 마지막에 손대면 그 굴이 반대쪽 길을
        도로 끊어 놓는다 — 실측에서 마지막이 "가는 길"이었을 때 석판 유적 2가
        들어가기는 다 되는데(28/28) 나오기는 여덟 자리밖에 안 됐다. */
-    this._walkBack(box, spots, floor);
-    this._walkPass(box, spots[0], spots, floor);
-    this._walkBack(box, spots, floor);
+    this._walkBack(box, spots, floor, traps, rng);
+    this._walkPass(box, spots[0], spots, floor, traps, rng);
+    this._walkBack(box, spots, floor, traps, rng);
   }
 
   /** 자리마다 **기준점으로 돌아올 수 있는지** 하나씩 걸어 보고, 못 돌아오면 길을 낸다.
       앞의 훑기는 "기준점에서 갈 수 있는가"만 본다. 떨어져 들어간 방은 갈 수는 있어도
       못 나오는데, 그것이 그대로 "보스는 잡았는데 못 나옴"이 된다 */
-  _walkBack(box, spots, floor) {
+  _walkBack(box, spots, floor, traps, rng) {
     const near = (set, tx, ty) => {
       let b = null, bd = 1e9;
       for (const k of set) {
@@ -1825,7 +1851,7 @@ class World {
           if (d < bd) { bd = d; b = [x, y]; }
         }
         if (!a || !b) break;
-        this._digStair(a[0], a[1], b[0], b[1], floor, box);
+        this._digStair(a[0], a[1], b[0], b[1], floor, box, traps, rng);
         home = this._standSet(box, spots[0][0], spots[0][1]);
         root = home.values().next().value;
         done = new Set();                                     // 길이 바뀌었으니 다시 센다
@@ -1833,7 +1859,7 @@ class World {
     }
   }
 
-  _walkPass(box, anchor, spots, floor) {
+  _walkPass(box, anchor, spots, floor, traps, rng) {
     // 넉넉하게 잡으면 "닿은 칸 옆"을 닿았다고 세어 버린다 — 바짝 붙여 본다
     const hit = (seen, p) => {
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 2; dy++)
@@ -1856,11 +1882,80 @@ class World {
         const d = Math.abs(x - a[0]) + Math.abs(y - a[1]);
         if (d < bd) { bd = d; best = [x, y]; }
       }
-      this._digStair(a[0], a[1], best[0], best[1], floor, box);
+      this._digStair(a[0], a[1], best[0], best[1], floor, box, traps, rng);
     }
   }
 
-  /** 방 하나에 타일 함정을 놓는다. 기계가 아니라 순수 타일이라 저장할 상태가 없다 */
+  /** 입구 통로의 작은 방마다 함정이 **하나는 남아 있게** 마무리한다.
+
+      통로를 팔 때 방마다 하나씩 심는데, 그 뒤에 다음 방의 벽을 세우고 · 내려가는 목을
+      뚫고 · 통행 보수로 굴을 파면서 앞서 놓은 함정이 지워지곤 했다(실측: 여덟 방 중
+      한둘이 빈 채로 남았다). 세계를 다 만든 뒤 한 번 훑어 빠진 방만 채운다 —
+      여기가 타일을 건드리는 마지막 자리다. */
+  ensureEntranceTraps(rng) {
+    const TRAPT = [T.SPIKE, T.DART_L, T.DART_R, T.FLAMEVENT, T.CRUMBLE,
+                   T.SPARKCOIL, T.GASVENT, T.GRINDER];
+    for (const site of this.ruinSites || []) {
+      for (const b of site.ent || []) {
+        let hit = false;
+        for (let x = b[0]; x <= b[0] + b[2] && !hit; x++)
+          for (let y = b[1]; y <= b[1] + b[3]; y++)
+            if (TRAPT.indexOf(this.get(x, y)) >= 0) { hit = true; break; }
+        if (hit) continue;
+        const fy = b[4] === undefined ? b[1] + b[3] - 2 : b[4];
+        let put = false;
+        // ① 방 바닥 줄 어디든 — 가시나 부서지는 바닥을 놓을 수 있는 자리를 찾는다
+        for (let dy = 0; dy <= 2 && !put; dy++)
+          for (let x = b[0] + 2; x < b[0] + b[2] - 2 && !put; x++) put = this.putPathTrap(x, fy + dy, rng);
+        // ② 벽이 남아 있으면 화살 구멍
+        if (!put) put = this.putTileTrap({ x: b[0], y: b[1], w: b[2], h: b[3] }, fy, 'dart', rng);
+        /* ③ 그래도 안 되면 — 바닥이 통째로 파여 나간 방이다. 걷는 줄 한 칸에
+           부서지는 바닥을 되살려 넣는다. 밟으면 무너지고 아홉 초 뒤 돌아오므로
+           길을 영영 막지는 않는다. 여기까지 와야 하는 방은 쉰 곳 중 서넛이다. */
+        for (let x = b[0] + 2; x < b[0] + b[2] - 2 && !put; x++) {
+          if (this.get(x, fy) !== T.AIR || this.get(x, fy - 1) !== T.AIR) continue;
+          this.set(x, fy + 1, T.CRUMBLE);
+          this.set(x, fy + 2, T.AIR);
+          put = true;
+        }
+      }
+    }
+  }
+
+  /** 길목(입구 목 · 통행 보수로 판 계단)에 함정을 하나 남긴다.
+
+      ★ 방에 놓는 함정(putTileTrap)을 그대로 쓰면 안 된다. 화살 구멍 · 방전 코일 ·
+        톱니 · 가스 분출구는 **전부 solid: 1** 이라, 좁은 통로 한복판에 놓이면 길을
+        그대로 봉해 버린다. 실측에서 보수로 판 계단이 그렇게 막혀 유적 하나가
+        통째로 끊겼다(방 24곳 중 0곳 도달).
+      그래서 여기서는 **걷는 줄을 막지 않는 둘만** 쓴다.
+        가시        — 통과되는 타일(solid 0). 밟으면 아프지만 길은 열려 있다
+        부서지는 바닥 — 바닥 줄을 갈아 끼운다. 밑을 두 칸 파 두어 실제로 떨어진다 */
+  putPathTrap(cx, fy, rng) {
+    const solid = (x, y) => TILE_DEF[this.get(x, y)].solid === 1;
+    if (rng.chance(0.5)) {
+      let put = 0;
+      for (let k = 0; k <= 1; k++)
+        if (this.get(cx + k, fy) === T.AIR && solid(cx + k, fy + 1)) { this.set(cx + k, fy, T.SPIKE); put++; }
+      if (put) return true;
+    }
+    let put = 0;
+    for (let k = 0; k <= 1; k++) {
+      const x = cx + k;
+      if (!solid(x, fy + 1)) continue;
+      const f = this.get(x, fy + 1);
+      this.set(x, fy + 2, T.AIR); this.set(x, fy + 3, T.AIR);
+      if (!solid(x, fy + 4)) this.set(x, fy + 4, f);   // 두 칸 구덩이 — 점프로 나올 수 있다
+      this.set(x, fy + 1, T.CRUMBLE);
+      put++;
+    }
+    return put > 0;
+  }
+
+  /** 방 하나에 타일 함정을 놓는다. 기계가 아니라 순수 타일이라 저장할 상태가 없다.
+      **실제로 놓았으면 true.** 화살 구멍·톱니 같은 것은 벽이 있어야 박히는데,
+      갓 파낸 통로처럼 사방이 빈 자리에서는 아무것도 안 놓고 조용히 지나갔다 —
+      그래서 "함정이 하나는 있다"고 믿었던 입구 통로에 함정이 없는 방이 생겼다. */
   putTileTrap(r, fy, kind, rng) {
     if (kind === 'coil') {
       /* 방전 코일 — 마주 보는 두 개를 같은 줄에 세워야 아크가 흐른다.
@@ -1873,36 +1968,69 @@ class World {
       } else {                                   // 허공이면 바닥에 박아 세운다
         this.set(sx, fy + 1, T.SPARKCOIL); this.set(sx + gap, fy + 1, T.SPARKCOIL);
       }
-      return;
+      return true;
     }
     if (kind === 'gas') {
       const vx = r.x + rng.int(2, Math.max(2, r.w - 4));
-      if (this.get(vx, fy + 1) !== T.AIR) this.set(vx, fy + 1, T.GASVENT);
-      return;
+      if (this.get(vx, fy + 1) === T.AIR) return false;
+      this.set(vx, fy + 1, T.GASVENT);
+      return true;
     }
     if (kind === 'grind') {
       // 벽에 박는다 — 벽에 붙어 걷는 길을 끊는 함정이라 벽이어야 의미가 있다
       const left = rng.chance(0.5);
       const tx = left ? r.x : r.x + r.w - 1;
       const ty = fy - rng.int(0, 1);
-      if (this.get(tx, ty) !== T.AIR) this.set(tx, ty, T.GRINDER);
-      return;
+      if (this.get(tx, ty) === T.AIR) return false;
+      this.set(tx, ty, T.GRINDER);
+      return true;
     }
     if (kind === 'dart') {
       // 벽에 구멍을 뚫는다. 방 안쪽을 향해야 하므로 왼쪽 벽이면 오른쪽으로 쏜다
       const left = rng.chance(0.5);
       const tx = left ? r.x : r.x + r.w - 1;
       const ty = fy - rng.int(0, 1);
-      if (this.get(tx, ty) !== T.AIR) this.set(tx, ty, left ? T.DART_R : T.DART_L);
+      if (this.get(tx, ty) === T.AIR) return false;
+      this.set(tx, ty, left ? T.DART_R : T.DART_L);
+      return true;
     } else if (kind === 'vent') {
       const vx = r.x + rng.int(2, Math.max(2, r.w - 4));
-      if (this.get(vx, fy + 1) !== T.AIR) this.set(vx, fy + 1, T.FLAMEVENT);
+      if (this.get(vx, fy + 1) === T.AIR) return false;
+      this.set(vx, fy + 1, T.FLAMEVENT);
+      return true;
     } else {
-      // 바닥 한 구간을 부서지는 바닥으로. 아래가 비어 있어야 무너질 맛이 난다
+      /* 부서지는 바닥.
+         ★ **밑이 빈 자리에만 놓는다.** 예전에는 바닥 줄에 그냥 얹었는데, 그 밑은
+         대개 단단한 암반이라 밟아서 무너져도 한 칸 내려서는 것으로 끝났다 —
+         "사라지는 타일"인데 사라져도 아무 일이 없었다.
+         빈 자리가 마땅치 않으면 **두 칸짜리 구덩이를 같이 판다.** 그래야 예전과
+         같은 밀도를 유지하면서도 밟으면 실제로 떨어진다. 깊이를 두 칸으로 묶은 것은
+         점프(세 칸)로 반드시 다시 올라올 수 있게 하기 위해서다. */
       const cx0 = r.x + rng.int(2, Math.max(2, r.w - 6));
-      for (let k = 0; k < rng.int(2, 4); k++) {
-        if (this.get(cx0 + k, fy + 1) !== T.AIR) this.set(cx0 + k, fy + 1, T.CRUMBLE);
+      const n = rng.int(2, 4);
+      const hollow = x => TILE_DEF[this.get(x, fy + 2)].solid !== 1;
+      // 이미 밑이 빈 자리를 먼저 찾는다 (방 바닥이 갱도나 다른 방 위를 지날 때가 있다)
+      let sx = -1;
+      for (let x = r.x + 2; x < r.x + r.w - 2 - n; x++) {
+        let ok = true;
+        for (let k = 0; k < n; k++) if (!hollow(x + k) || this.get(x + k, fy + 1) === T.AIR) { ok = false; break; }
+        if (ok) { sx = x; break; }
       }
+      if (sx < 0) {                       // 없으면 판다
+        sx = clamp(cx0, r.x + 2, r.x + r.w - 2 - n);
+        const floorTile = this.get(sx, fy + 1);          // 구덩이 바닥은 이 방 바닥과 같은 재질로
+        for (let k = 0; k < n; k++) {
+          if (this.get(sx + k, fy + 1) === T.AIR) continue;   // 원래 구멍이면 그대로
+          this.set(sx + k, fy + 2, T.AIR);
+          this.set(sx + k, fy + 3, T.AIR);
+          if (TILE_DEF[this.get(sx + k, fy + 4)].solid !== 1) this.set(sx + k, fy + 4, floorTile);
+        }
+        if (rng.chance(0.45)) this.set(sx + rng.int(0, n - 1), fy + 3, T.SPIKE);
+      }
+      let put = 0;
+      for (let k = 0; k < n; k++)
+        if (this.get(sx + k, fy + 1) !== T.AIR) { this.set(sx + k, fy + 1, T.CRUMBLE); put++; }
+      return put > 0;
     }
   }
 
@@ -1910,6 +2038,7 @@ class World {
       돌아오는 값은 "입구 방"으로 삼을 x좌표(없으면 null = 입구 없음) */
   carveRuinEntrance(spec, x0, y0, rng) {
     this._entranceSpots = [];                                 // 입구가 없으면 빈 채로 둔다
+    this._entranceRooms = [];
     const ex = clamp(spec.x + rng.int(-(spec.w >> 2), spec.w >> 2), x0 + 3, x0 + spec.w - 4);
     const surf = this.surface[ex];
 
@@ -2013,9 +2142,14 @@ class World {
        이 자리들까지 걸어 오갈 수 있는지 검사한다 — 그래야 "들어는 갔는데 못 나오는
        통로"가 안 남는다. */
     this._entranceSpots = [];
+    this._entranceRooms = [];   // 작은 방의 상자 — 진단이 함정 유무를 잰다
     // 입구 목 — 먼저 뚫어 둔다. 방을 두를 때 세우는 벽은 이미 AIR인 칸을 건너뛰므로
     // 여기서 뚫어 놓으면 다시 막히지 않는다 (막혀서 지상에서 못 들어가던 일이 있었다)
     for (let y = yTop - 2; y <= yTop + 1; y++) for (let dx = -1; dx <= 1; dx++) dig(ex + dx, y);
+    /* ★ 목에도 함정을 하나 심는다. 아래 작은 방마다 함정이 들어가긴 하지만, 문지방을
+       넘는 순간부터 무사한 구간이 있으면 "그냥 걸어 들어가는 문"이 된다.
+       들어가는 쪽·나오는 쪽을 가리지 않는다 — 어느 방향이든 여기를 지난다. */
+    this.putPathTrap(ex, yTop + 1, rng);
     let cx = ex, cy = yTop;
     let n = 0;
     while (cy < yBot - 3 && n < 8) {
@@ -2043,9 +2177,20 @@ class World {
       for (let y = fy - 2; y > ry; y -= 3)
         for (let dx = -1; dx <= 1; dx++) this.set(clamp(inX + dx, rx, rx + rw - 1), y, T.PLATFORM);
       this._entranceSpots.push([inX, fy]);
+      this._entranceRooms.push([rx - 1, ry - 1, rw + 2, rh + 2, fy]);
       // 함정 — 방마다 반드시 하나, 절반은 둘. 확률로만 두면 함정 없는 길이 생긴다
       const fake = { x: rx - 1, y: ry - 1, w: rw + 2, h: rh + 2 };
-      this.putTileTrap(fake, fy, rng.pick(traps), rng);
+      /* ★ 방마다 함정이 **반드시** 하나는 놓인다.
+         고른 종류가 못 놓이는 자리면(벽이 없어 화살 구멍이 안 박히는 등) 다른 종류로
+         물러서고, 그래도 안 되면 길목 함정(가시·부서지는 바닥)으로 마무리한다.
+         "함정 없이 그냥 걸어 들어가는 문"을 하나도 남기지 않기 위해서다 —
+         들어가는 쪽인지 나오는 쪽인지는 가리지 않는다. */
+      let placed = this.putTileTrap(fake, fy, rng.pick(traps), rng);
+      for (const alt of ['crumble', 'vent', 'gas', 'dart']) {
+        if (placed) break;
+        placed = this.putTileTrap(fake, fy, alt, rng);
+      }
+      if (!placed) this.putPathTrap(rx + 1, fy, rng);
       if (rng.chance(0.5)) this.putTileTrap(fake, fy, rng.pick(traps), rng);
       if (kind === 'nofoothold' && rng.chance(0.6)) this.set(rx + rng.int(1, rw - 2), fy, T.SPIKE);
       if (rng.chance(0.45)) this.set(rx + 1, ry + 1, spec.torch || T.TORCH);
@@ -2272,6 +2417,8 @@ class World {
     const site = { id: spec.id, n: spec.n, x: spec.x, y: y0 + (spec.h >> 1), w: spec.w, h: spec.h, rooms, idx };
 
     const ex = this.carveRuinEntrance(spec, x0, y0, rng);
+    // 입구 통로의 작은 방 자리 — 진단이 "이 길에 함정이 있나"를 재는 데 쓴다
+    site.ent = (this._entranceRooms || []).slice();
 
     /* 방 성격을 배분한다. 입구에서 먼 방일수록 좋은 것이 나오게 — 한 방만 털고 나가지 않도록.
        vault(보물방)는 보스방 다음으로 먼 곳에, 비문은 중간쯤에 둔다. */
@@ -2415,7 +2562,7 @@ class World {
     }
     /* 실제 손질은 세계를 다 만든 뒤에 한다 — 유적을 지은 다음에도 큰 동굴·물웅덩이·
        심층 갱도가 유적을 가로질러 바닥을 헐어 놓는다. 그 뒤에 봐야 진짜 모습이다. */
-    this._walkJobs.push([x0, y0, spec.w, spec.h, spots, spec.floor]);
+    this._walkJobs.push([x0, y0, spec.w, spec.h, spots, spec.floor, spec.traps]);
     return site;
   }
 
@@ -2493,9 +2640,10 @@ class World {
         const ent = this._entranceSpots.slice(), mouth = ent.pop();
         wsp.unshift(...(mouth ? [mouth] : []), ...ent, [clamp(ex, x0 + 1, x0 + w - 2), y0 + 1]);
       }
-      this._walkJobs.push([x0, y0, w, h, wsp, T.RUINTILE]);   // 걸어서 닿는지는 마지막에 본다
+      this._walkJobs.push([x0, y0, w, h, wsp, T.RUINTILE, sp.traps]);  // 걸어서 닿는지는 마지막에
       this.ruins.push({ id: 'story' + i, x: cx, y: cy, w, h });
-      this.ruinSites.push({ id: 'story' + i, n: spec.n, x: cx, y: cy, w, h, rooms, idx: i });
+      this.ruinSites.push({ id: 'story' + i, n: spec.n, x: cx, y: cy, w, h, rooms, idx: i,
+                            ent: (this._entranceRooms || []).slice() });
     });
 
     /* --- 바이옴 유적 5곳 (스토리와 무관한 탐험 콘텐츠) ---
@@ -2555,7 +2703,8 @@ class World {
     const ent = this._entranceSpots.slice(), mouth = ent.pop();
     const jx0 = sx0 - 2, jw = dx0 - jx0 - 12;
     this._walkJobs.push([jx0, ky - 8, jw, 20,
-      [...(mouth ? [mouth] : []), ...ent, [dx0 - 4, ky + 4]], T.RUINTILE]);
+      [...(mouth ? [mouth] : []), ...ent, [dx0 - 4, ky + 4]], T.RUINTILE,
+      ['dart', 'crumble', 'gas']]);
   }
 
   /** 심층 봉인실의 방·문·복도를 (다시) 짓는다. 씨앗을 쓰지 않으므로 몇 번 불러도 같다.

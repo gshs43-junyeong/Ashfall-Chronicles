@@ -273,6 +273,23 @@
     </div>
   </div>
 
+  <!-- 유적 암호문 — 브라우저 prompt() 대신 게임 안 창으로.
+       prompt 는 창 밖에 뜨는 데다 게임 화면을 얼려 버려서 유적 분위기가 끊겼다. -->
+  <div id="code-screen" class="modal">
+    <div class="modal-box code-box">
+      <div class="set-title">돌판의 홈</div>
+      <p class="code-line">숫자 세 자리를 넣는 홈이 파여 있다.<br>
+        <span class="code-hint">유적 안 비문 흔적에 한 자리씩 적혀 있다.</span></p>
+      <input id="code-input" class="code-input" type="text" inputmode="numeric"
+             maxlength="3" autocomplete="off" placeholder="000">
+      <p id="code-msg" class="code-msg"></p>
+      <div class="code-btns">
+        <button id="btn-code-ok">넣는다</button>
+        <button id="btn-code-cancel">물러선다</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 나가기 — 브라우저가 창을 못 닫을 때의 인사 -->
   <div id="bye-screen" class="modal">
     <div class="modal-box bye">

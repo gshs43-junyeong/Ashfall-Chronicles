@@ -106,14 +106,17 @@ var PLAYER = { file: 'char/player.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps
     var x = W * PLAYER_X;
     /* 걷는 동안 아주 살짝 위아래로 흔들린다 — 게임의 걷기 모션과 같은 리듬 */
     var bob = Math.sin(t * PLAYER.fps * Math.PI) * 1.6;
-    var y = GROUND - h + 12 + bob;
+    /* 발끝이 지면 줄에 거의 맞게. 예전에는 12px 을 더 내려 지면 아래로 밀어 넣었는데,
+     * 아래쪽 페이드가 GROUND-90 에서부터 덮어 와서 다리와 신발이 통째로 먹혔다
+     * (화면에서는 "플레이어가 짤려" 보였다). */
+    var y = GROUND - h + 4 + bob;
 
     ctx.save();
     ctx.globalAlpha = 0.28;
     ctx.filter = 'blur(2px)';
     ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.ellipse(x + w / 2, GROUND + 8, w * 0.34, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + w / 2, GROUND + 2, w * 0.34, 5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
@@ -162,11 +165,15 @@ var PLAYER = { file: 'char/player.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps
     /* 아래쪽을 페이지 배경으로 녹인다.
      * 캔버스 바닥은 논리 y=H 이므로 그 아래까지 덮어야 한다 — GROUND+60 에서 끊으면
      * 맨 밑에 하늘 그라데이션 끝색이 띠로 남는다. */
-    var fade = ctx.createLinearGradient(0, GROUND - 90, 0, GROUND + 40);
+    /* 녹이는 구간은 **발 딛는 줄 아래**로만 둔다 — 90px 위에서부터 덮으면 걸어가는
+     * 사람의 다리가 절반쯤 먹혀 잘린 것처럼 보인다. 아래는 통째로 바탕색으로 채운다. */
+    var fade = ctx.createLinearGradient(0, GROUND - 16, 0, GROUND + 26);
     fade.addColorStop(0, 'rgba(13,11,10,0)');
     fade.addColorStop(1, '#0d0b0a');
     ctx.fillStyle = fade;
-    ctx.fillRect(0, GROUND - 90, W, H);
+    ctx.fillRect(0, GROUND - 16, W, H);
+    ctx.fillStyle = '#0d0b0a';
+    ctx.fillRect(0, GROUND + 26, W, H);
   }
 
   var last = 0;

@@ -483,6 +483,19 @@ button:active{transform:translateY(1px)}
 .credits dt{color:var(--gold);font-size:10.5px;letter-spacing:.14em;margin-top:11px}
 .credits dd{color:#fff;font-size:13.5px}
 .modal-box.bye{width:300px;text-align:center;font-size:13px;color:#a8a292;line-height:2}
+/* ---- 유적 암호문 (브라우저 prompt 대신) ---- */
+.modal-box.code-box{width:300px;text-align:center}
+.code-line{font-size:12.5px;color:#a8a292;line-height:1.9;margin:6px 0 14px}
+.code-hint{font-size:11.5px;color:var(--dim)}
+.code-input{width:150px;margin:0 auto;display:block;background:#0c0b08;
+  border:1px solid var(--frame);border-radius:3px;color:var(--gold);
+  font:inherit;font-size:30px;font-weight:700;letter-spacing:.36em;text-align:center;
+  padding:8px 0 8px .36em;outline:none}
+.code-input:focus{border-color:var(--gold)}
+.code-msg{min-height:1.4em;margin:9px 0 2px;font-size:11.5px;color:#c47a6a}
+.code-msg.ok{color:#8fb87a}
+.code-btns{display:flex;gap:8px;margin-top:8px}
+.code-btns button{flex:1;padding:8px!important;font-size:12px}
 .bye-sub{font-size:11.5px;color:#6f6b5c}
 .set-help{list-style:none;font-size:11.5px;line-height:1.95;color:#8d8774}
 .set-help b{color:#c9c2ad;font-weight:600}

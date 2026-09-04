@@ -97,9 +97,16 @@ WALK_JS = r"""
     const y0 = r.y - (r.h >> 1), y1 = r.y + (r.h >> 1);
     const box = [x0 - 14, 2, x1 + 14, Math.min(478, y1 + 14)];
 
-    // 석판 유적에는 둥지 대신 석판이 놓인다 — 거기가 "가장 안쪽"이다
-    const lair = w.objects.find(o => (o.type === 'lair' || o.type === 'altar' || o.type === 'tablet') &&
-      o.x / 22 > x0 - 4 && o.x / 22 < x1 + 4 && o.y / 22 > y0 - 4 && o.y / 22 < y1 + 6);
+    /* 그 유적의 "가장 안쪽" — 바이옴 유적은 둥지·제단, 석판 유적은 제 번호의 석판.
+       ★ 자리만 보고 아무거나 집으면 안 된다. 유적 상자끼리 겹치는 자리가 있어서
+         (실측: 석판 유적 2의 상자 x3916~3984 와 부패한 둥지 x3970~4070),
+         부패한 둥지를 재면서 옆 유적의 석판에서 걷기 시작한 적이 있다 —
+         "방 24곳 중 0곳"이 그렇게 나왔다. 종류를 먼저 맞춘다. */
+    const st0 = /^story(\d)$/.exec(r.id);
+    const inBox = o => o.x / 22 > x0 - 4 && o.x / 22 < x1 + 4 && o.y / 22 > y0 - 4 && o.y / 22 < y1 + 6;
+    const lair = st0
+      ? w.objects.find(o => o.type === 'tablet' && o.tablet === +st0[1])
+      : w.objects.find(o => (o.type === 'lair' || o.type === 'altar') && inBox(o));
     const chests = w.objects.filter(o => o.type === 'chest' &&
       o.x / 22 > x0 - 4 && o.x / 22 < x1 + 4 && o.y / 22 > y0 - 4 && o.y / 22 < y1 + 6);
 
@@ -130,11 +137,27 @@ WALK_JS = r"""
       return false; }).length;
     const chestHit = chests.filter(o => near(seen, Math.round(o.x / 22), Math.round(o.y / 22), 3)).length;
 
+    /* 입구에 함정이 있는가 — "함정 없이 그냥 걸어 들어가는 문"이 없어야 한다.
+       통로의 작은 방 자리(site.ent) 둘레 세 칸 안에 함정 타일이 있는지 센다.
+       입구가 없는 유적(buried)은 잴 것이 없다. */
+    const TRAPT = [T.SPIKE, T.DART_L, T.DART_R, T.FLAMEVENT, T.CRUMBLE,
+                   T.SPARKCOIL, T.GASVENT, T.GRINDER];
+    let entRooms = 0, entTrapped = 0;
+    for (const bx of ((site && site.ent) || [])) {
+      entRooms++;
+      let hit = false;
+      for (let x = bx[0]; x <= bx[0] + bx[2] && !hit; x++)
+        for (let y = bx[1]; y <= bx[1] + bx[3]; y++)
+          if (TRAPT.includes(w.get(x, y))) { hit = true; break; }
+      if (hit) entTrapped++;
+    }
+
     out.push(Object.assign(res, {
       // 입구 없는 유적은 파고 드나드는 곳이라 "걸어서 나가기"를 묻지 않는다
       보스에서밖으로: buried ? '해당없음' : outOfRuin,
       방: roomHit + '/' + rooms.length,
       상자: chestHit + '/' + chests.length,
+      입구함정: entRooms ? entTrapped + '/' + entRooms : '-',
       칸수: seen.size
     }));
   }
@@ -171,11 +194,17 @@ async def main():
                 rh, rn = (int(v) for v in r['방'].split('/'))
                 # 봉인방처럼 BSP 방이 없는 곳은 "보스까지 갔다 나올 수 있는가"만 본다
                 ok = (r['보스에서밖으로'] in (True, '해당없음')) and (rn == 0 or rh / rn >= 0.8)
+                # 입구 통로의 작은 방은 하나도 빠짐없이 함정을 물고 있어야 한다
+                et = r['입구함정']
+                if et != '-':
+                    a, b2 = (int(v) for v in et.split('/'))
+                    if a < b2:
+                        ok = False
                 if not ok:
                     bad += 1
-                print('  %-8s %-8s 방%-6s 보스↔밖 %-5s 상자 %-6s 칸 %-6s %s'
+                print('  %-8s %-8s 방%-6s 보스↔밖 %-5s 상자 %-6s 입구함정 %-5s 칸 %-6s %s'
                       % (r['id'], r['arch'], r['방'], r['보스에서밖으로'], r['상자'],
-                         r['칸수'], '' if ok else '  <-- 문제'))
+                         r['입구함정'], r['칸수'], '' if ok else '  <-- 문제'))
 
             ev = await pg.evaluate("""() => {
               const out = [];
@@ -196,11 +225,16 @@ async def main():
 
             extra = await pg.evaluate("""() => {
               const w = G.world;
+              /* 암호문은 이제 게임 안 창(#code-screen)으로 받는다 — 창을 열고,
+                 맞는 숫자를 넣고, 확인을 누르는 것까지 그대로 흉내 낸다. */
               const cd = w.objects.filter(o => o.type === 'codedoor');
               let codeOK = true;
               for (const o of cd) {
-                window.prompt = () => G.ruinCode(o.ruin);
                 G.openCodeDoor(o);
+                if (!document.querySelector('#code-screen').classList.contains('open')) { codeOK = false; continue; }
+                document.querySelector('#code-input').value = G.ruinCode(o.ruin);
+                G.tryCodeDoor();
+                G.closeCodeDoor();
                 if (!o.opened) codeOK = false;
               }
               const my = w.objects.filter(o => o.type === 'mystic');
