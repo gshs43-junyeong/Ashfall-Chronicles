@@ -215,7 +215,7 @@ const G = {
     this.deathMark = null;
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
     this.nearStObj = { work: null, forge: null };
-    this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.trapTimer = 0;
+    this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
     this.rainT = 0; this.rainDrops = null;
     this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = [];
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
@@ -398,6 +398,19 @@ const G = {
     }
 
     this.checkRuinEntry();
+    this.checkRuinEvent();
+    /* 유적 고유 이벤트의 여운 — 꺼진 불(화면 어둠)과 홀씨(지속 피해)는 시간이 지나면 걷힌다 */
+    if (this.ruinDark > 0) this.ruinDark -= dt;
+    if (this.ruinSpore > 0) {
+      this.ruinSpore -= dt;
+      this.sporeTick = (this.sporeTick || 0) - dt;
+      if (this.sporeTick <= 0) {
+        this.sporeTick = 1;
+        p.hurt(6 + this.player.level * 0.5);
+        for (let i = 0; i < 6; i++)
+          this.parts.push(new Part(p.cx + (Math.random() - .5) * 30, p.cy, '#8fd0a0', -20, .7));
+      }
+    }
 
     // 마을 경비병 — 요새 단계에서 마을에 들어와 있는 동안만 감시탑마다 하나씩 선다
     if (this.villageLv() >= 3) {
@@ -713,6 +726,8 @@ const G = {
     {
       const hc = p.held();
       if (hc && idef(hc).type === 'consum') { this.useConsumable(p.sel); return; }
+      // 1.7) 유적 위치 지도 — 펴 보면 그 유적 자리가 나침반에 잡힌다
+      if (hc && idef(hc).type === 'map') { this.useRuinMap(p.sel); return; }
     }
     // 2) 기계: 이미 놓인 것은 열고, 손에 든 것은 설치한다
     const mtx = Math.floor(this.input.wx / TS), mty = Math.floor(this.input.wy / TS);
@@ -951,6 +966,10 @@ const G = {
           o.items.unshift(relic);
           this.toast(`${itemName(relic)} — 이 유적의 것`, 'good');
         }
+        // 다른 유적의 위치 지도 — 입구 없는 유적으로 이어지는 사슬
+        if (o.ruinmap && ITEMS[o.ruinmap]) o.items.unshift(makeItem(o.ruinmap, 1));
+        // 그 유적 상자에만 섞이는 전리품
+        if (o.bonus && ITEMS[o.bonus]) o.items.push(makeItem(o.bonus, this.rng.int(2, 5)));
       }
       UI.openChest(o); this.sfx('open');
       // 지킴이가 붙은 상자 — 열면 그 자리에서 깨어난다. 상자만 훔치고 달아나지 못하게.
@@ -982,6 +1001,8 @@ const G = {
       this.readTablet(o);
     } else if (o.type === 'seal') {
       this.openSeal(o);
+    } else if (o.type === 'codedoor') {
+      this.openCodeDoor(o);
     } else if (o.type === 'vault') {
       UI.openVault(); this.sfx('open');
     } else if (o.type === 'board') {
@@ -1179,7 +1200,18 @@ const G = {
       const hs = RUIN_HINTS[o.lore];
       const h = hs && hs[o.hint];
       if (!h) return;
-      UI.openLore(h[0], h[1], []);
+      /* 숫자 잠긴 문이 있는 유적이면, 흔적 세 개에 세 자리를 한 자리씩 흩어 둔다.
+         돌아다니며 셋을 다 읽어야 문이 열린다 — 흔적을 읽을 이유가 그제야 생긴다. */
+      let lines = h[1];
+      const sp = RUIN_SPEC.find(q => q.id === o.lore);
+      if (sp && sp.event === 'password' && o.hint < 3) {
+        const digit = this.ruinCode(o.lore)[o.hint];
+        lines = lines.concat([
+          '',
+          `— 구석에 다른 손으로 새긴 것이 있다. 『${['첫', '둘째', '셋째'][o.hint]} 자리는 ${digit}』`
+        ]);
+      }
+      UI.openLore(h[0], lines, []);
       this.sfx('open');
       return;
     }
@@ -2022,6 +2054,15 @@ const G = {
     const w = this.world, ch = CHAPTERS[this.chapter];
     const out = [];
     if (this.deathMark) out.push({ x: this.deathMark.x, y: this.deathMark.y, k: 'death', t: '쓰러진 자리' });
+    /* 지도를 편 유적 — 입구가 없어 지도 없이는 못 찾는 곳이라, 표시가 곧 길이다.
+       그 유적에 한 번 들어가 보고 나면 표시를 거둔다(다 아는 자리를 계속 가리키지 않게). */
+    for (const id in (this.ruinMarks || {})) {
+      if (this.seenRuins && this.seenRuins[id]) continue;
+      const r = w && w.ruins && w.ruins.find(q => q.id === id);
+      if (!r) continue;
+      const sp = RUIN_SPEC.find(q => q.id === id);
+      out.push({ x: (r.x + 0.5) * TS, y: r.y * TS, k: 'ruin', t: (sp ? sp.n : '유적') + ' — 지도의 자리' });
+    }
     if (!ch || !w) return out;
     ch.obj.forEach((o, i) => {
       if (this.objProgress(ch, i).done) return;
@@ -2043,7 +2084,7 @@ const G = {
   drawCompass(c, camX, camY) {
     const targets = this.questTargets();
     if (!targets.length) return;
-    const COL = { boss: '#e0563c', npc: '#7fe0a0', tablet: '#c8a86a', death: '#9fa8c0' };
+    const COL = { boss: '#e0563c', npc: '#7fe0a0', tablet: '#c8a86a', death: '#9fa8c0', ruin: '#c8a04a' };
     const p = this.player;
     const ox = p.cx - camX, oy = p.cy - camY;      // 플레이어의 화면 좌표
     const R = 132;
@@ -2164,7 +2205,7 @@ const G = {
         world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
         talked: this.talked, crafted: this.crafted,
         sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
-        seenRuins: this.seenRuins,
+        seenRuins: this.seenRuins, ruinMarks: this.ruinMarks, ruinEvDone: this.ruinEvDone,
         deathMark: this.deathMark,
         villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
         lairs: this.lairs,
@@ -2227,6 +2268,7 @@ const G = {
       this.sideActive = d.sideActive || {}; this.sideDone = d.sideDone || {};
       this.tabletsRead = d.tabletsRead || {}; this.termsRead = d.termsRead || {}; this.loreRead = d.loreRead || {};
       this.seenRuins = d.seenRuins || {};
+      this.ruinMarks = d.ruinMarks || {}; this.ruinEvDone = d.ruinEvDone || {};
       this.deathMark = d.deathMark || null;
       this.mode = MODE_OF(d.mode).id;
       this.villageUnlocked = d.villageUnlocked || false; this.goldRate = d.goldRate || 1;
@@ -2627,6 +2669,22 @@ const G = {
           c.fillStyle = '#a06fff'; c.fillRect(sx + o.w / 2 - 1.5, sy + 8, 3, o.h - 16);
           c.globalAlpha = 1; c.lineWidth = 1;
         }
+      } else if (o.type === 'codedoor') {
+        /* 숫자 잠긴 문 — 세 자리를 넣는 홈 셋을 그려서, 무엇을 요구하는 문인지
+           설명 없이도 보이게 한다. 열리면 홈만 남은 문틀이 된다. */
+        c.fillStyle = o.opened ? '#2b2a22' : '#4a4432';
+        c.fillRect(sx, sy, o.w, o.h);
+        for (let i = 0; i < 3; i++) {
+          const gy = sy + o.h * (0.24 + i * 0.24);
+          c.fillStyle = '#191712';
+          c.fillRect(sx + o.w * 0.22, gy, o.w * 0.56, 5);
+          if (!o.opened) {
+            c.globalAlpha = .45 + Math.sin(this.time * 2.2 + i) * .3;
+            c.fillStyle = '#e0c86a';
+            c.fillRect(sx + o.w * 0.3, gy + 1.5, o.w * 0.4, 2);
+            c.globalAlpha = 1;
+          }
+        }
       } else if (o.type === 'npc') {
         this.drawNpc(c, o, sx, sy, f);
       } else {
@@ -2684,6 +2742,24 @@ const G = {
 
     // ---- 조명 (부드러운 그라디언트 오버레이) ----
     this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
+    /* 유적 고유 이벤트의 여운을 화면에 덮는다.
+       불이 꺼졌을 때(ruinDark)는 타일을 건드리지 않고 화면만 어둡게 한다 — 장식을
+       부수면 되돌릴 방법이 없다. 홀씨(ruinSpore)는 초록빛으로 시야를 흐린다.
+       둘 다 끝날 때 마지막 2초 동안 서서히 걷힌다. */
+    if (this.ruinDark > 0) {
+      c.save();
+      c.globalAlpha = Math.min(1, this.ruinDark / 2) * 0.72;
+      c.fillStyle = '#04050a';
+      c.fillRect(0, 0, this.W, this.H);
+      c.restore();
+    }
+    if (this.ruinSpore > 0) {
+      c.save();
+      c.globalAlpha = Math.min(1, this.ruinSpore / 2) * 0.26;
+      c.fillStyle = '#7fd08a';
+      c.fillRect(0, 0, this.W, this.H);
+      c.restore();
+    }
 
     // ---- 폭발/타격 이펙트 ----
     if (this.bursts) for (let i = this.bursts.length - 1; i >= 0; i--) {
@@ -3282,6 +3358,117 @@ const G = {
   },
 
   /** 장착 무기 + 스윙 궤적 + 채널링 링 (두 렌더 경로가 공유) */
+  /* ================= 유적 — 지도 · 고유 이벤트 · 암호문 ================= */
+
+  /** 위치 지도를 편다. 그 유적 자리가 나침반에 잡히고, 지도는 사라진다.
+      입구가 없는 유적(arch: 'buried')은 이것 없이는 사실상 못 찾는다. */
+  useRuinMap(slot) {
+    const p = this.player, it = p.bag[slot];
+    const d = it && idef(it); if (!d || d.type !== 'map') return;
+    if (!this.ruinMarks) this.ruinMarks = {};
+    const r = this.world.ruins.find(q => q.id === d.ruin);
+    if (!r) { this.toast('여기서는 쓸 수 없다', 'bad'); return; }
+    if (this.ruinMarks[d.ruin]) { this.toast('이미 자리를 안다'); return; }
+    this.ruinMarks[d.ruin] = 1;
+    it.c--; if (it.c <= 0) p.bag[slot] = null;
+    const spec = RUIN_SPEC.find(s => s.id === d.ruin);
+    this.toast(`${spec ? spec.n : '유적'}의 자리를 알았다 — 나침반을 보라`, 'good');
+    this.sfx('chapter');
+    UI.refreshBag();
+  },
+
+  /** 그 유적에만 있는 방을 밟으면 한 번 터지는 일. 한 번 겪으면 세이브에 남는다. */
+  checkRuinEvent() {
+    const p = this.player, evs = this.world.ruinEvents;
+    if (!evs || !evs.length) return;
+    if (!this.ruinEvDone) this.ruinEvDone = {};
+    for (const e of evs) {
+      if (this.ruinEvDone[e.ruin]) continue;
+      if (p.cx < e.x || p.cx > e.x + e.w || p.cy < e.y || p.cy > e.y + e.h) continue;
+      this.ruinEvDone[e.ruin] = 1;
+      this.fireRuinEvent(e);
+      return;
+    }
+  },
+
+  /** 유적 잡몹을 플레이어 둘레에 불러낸다 — swarm·blackout·bloom 이 같이 쓴다 */
+  _ruinSpawn(ruinId, n, spread) {
+    const spec = RUIN_SPEC.find(s => s.id === ruinId);
+    const pool = (spec && spec.mobs) || ['crawler', 'skeleton'];
+    const p = this.player;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TAU + Math.random() * 0.4;
+      const e = new Enemy(pool[i % pool.length],
+        p.cx + Math.cos(a) * spread, p.cy - 20 + Math.sin(a) * spread * 0.5);
+      this.ents.push(e);
+      for (let k = 0; k < 8; k++) this.parts.push(new Part(e.cx, e.cy, '#a06fff', -40, .7));
+    }
+  },
+
+  fireRuinEvent(e) {
+    const p = this.player;
+    if (e.ev === 'blackout') {
+      /* 불이 꺼진다 — 화면이 한동안 어두워지고 서리 것들이 몰려온다.
+         타일을 지우지 않고 화면만 덮는다(장식을 부수면 되돌릴 수가 없다). */
+      this.ruinDark = 16;
+      this.shake = 10; this.sfx('chapter');
+      this.toast('불이 한꺼번에 꺼졌다', 'bad');
+      this._ruinSpawn(e.ruin, 5, 150);
+    } else if (e.ev === 'swarm') {
+      this.shake = 14; this.sfx('chapter');
+      this.toast('둥지가 깨어났다', 'bad');
+      this._ruinSpawn(e.ruin, 8, 170);
+    } else if (e.ev === 'collapse') {
+      /* 갱도가 무너진다 — 발밑 바닥이 부서지는 바닥으로 바뀌고 천장에서 돌이 떨어진다 */
+      const w = this.world, ty = Math.floor((p.y + p.h + 2) / TS);
+      const tx = Math.floor(p.cx / TS);
+      for (let x = tx - 8; x <= tx + 8; x++)
+        if (TILE_DEF[w.get(x, ty)].solid === 1) w.set(x, ty, T.CRUMBLE);
+      this.shake = 18; this.sfx('chapter');
+      this.toast('발밑이 내려앉는다', 'bad');
+      for (let i = 0; i < 40; i++)
+        this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 260, p.cy - 90, '#6a5a48', 40, 1.1));
+      this._ruinSpawn(e.ruin, 3, 190);
+    } else if (e.ev === 'bloom') {
+      /* 홀씨가 터진다 — 한동안 독에 잠기고 굴의 것들이 깨어난다 */
+      this.ruinSpore = 9;                     // 이 동안 홀씨에 잠긴다 (update 가 깎으며 물린다)
+      this.shake = 8; this.sfx('chapter');
+      this.toast('홀씨가 한꺼번에 터졌다', 'bad');
+      this._ruinSpawn(e.ruin, 5, 150);
+    } else if (e.ev === 'password') {
+      this.toast('벽 너머에 빈 곳이 있다 — 숫자를 맞춰야 열린다');
+      this.sfx('open');
+    }
+  },
+
+  /** 유적마다 다른 세 자리 숫자. 세계 씨앗에서 뽑으므로 세계마다 다르다.
+      비문 흔적에 한 자리씩 흩어져 있다(readLorestone 이 덧붙인다). */
+  ruinCode(id) {
+    const h = hashStr(this.world.seed + ':' + id);
+    return String(100 + (h % 900));
+  },
+
+  /** 숫자 잠긴 문 — 세 자리를 맞추면 열린다 */
+  openCodeDoor(o) {
+    const w = this.world;
+    if (o.opened) { this.toast('이미 열려 있다'); return; }
+    const code = this.ruinCode(o.ruin);
+    const got = prompt('돌판에 숫자 세 자리를 넣는 홈이 있다.\n(유적 안 비문 흔적에 한 자리씩 적혀 있다)');
+    if (got === null) return;
+    if (got.trim() !== code) {
+      this.toast('맞지 않는다 — 홈이 그대로다', 'bad');
+      this.sfx('mine');
+      return;
+    }
+    o.opened = true;
+    for (let y = o.dy - 4; y <= o.dy; y++) w.set(o.dx, y, T.AIR);
+    for (let i = 0; i < 30; i++)
+      this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#ffe08a', -30, 1.1));
+    this.shake = 10;
+    this.toast('맞물리는 소리가 났다', 'good');
+    this.sfx('chapter');
+  },
+
   /** 유적에 처음 발을 들였을 때 — 그 유적만의 카드를 한 번 띄운다.
 
       유적이 열 곳인데 밖에서는 다 똑같은 벽돌 더미였고, 들어가도 "여기가 어디였나"를
@@ -3296,7 +3483,10 @@ const G = {
     this.seenRuins[r.id] = 1;
     const card = RUIN_CARD[r.id];
     const spec = RUIN_SPEC.find(s => s.id === r.id);
-    const name = spec ? spec.n : (RUIN_LORE[r.id] && RUIN_LORE[r.id].n) || '이름 없는 유적';
+    // 석판 유적 셋은 RUIN_SPEC 에 없다 — STORY_RUIN 에서 이름을 가져온다
+    const st = /^story(\d)$/.exec(r.id);
+    const name = spec ? spec.n
+      : (st && STORY_RUIN[+st[1]] && STORY_RUIN[+st[1]].n) || '이름 없는 유적';
     if (card) UI.chapterCard({ sub: card.sub, title: name, line: card.line });
     this.sfx('chapter');
   },

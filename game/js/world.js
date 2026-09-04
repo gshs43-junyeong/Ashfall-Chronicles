@@ -1558,15 +1558,34 @@ class World {
   /** 방 묶음 던전을 짓고 방 목록을 돌려준다 */
   carveDungeon(cfg) {
     const { x0, y0, w, h, wall, floor, bg, rng } = cfg;
-    // 1) 통째로 벽으로 채운다
-    for (let x = x0 - 1; x <= x0 + w; x++)
-      for (let y = y0 - 1; y <= y0 + h; y++) { this.set(x, y, wall); this.setWall(x, y, bg); }
-    // 2) BSP로 방을 뽑는다
-    const leaves = [];
-    this.bspSplit(x0, y0, w, h, cfg.depth || 4, cfg.minW || 11, cfg.minH || 9, rng, leaves);
-    /* 3) 각 방 속을 판다 (테두리 1칸은 벽으로 남긴다).
+    // 1) BSP로 방을 뽑는다
+    const all = [];
+    this.bspSplit(x0, y0, w, h, cfg.depth || 4, cfg.minW || 11, cfg.minH || 9, rng, all);
+    /* 2) 도면(plan)이 있으면 그 칸에 든 방만 남긴다.
+       예전에는 직사각형을 통째로 벽으로 채우고 잘랐다 — 그래서 유적 겉모양이 열 곳 다
+       같은 상자였다. 이제 **남긴 방들의 자리만** 벽으로 채우므로 겉모양이 방 배치를
+       그대로 따라간다. 고리 도면이면 가운데가 손 안 댄 암반으로 남아 O 자가 된다.
+       도면이 너무 빡빡해 방이 셋도 안 남으면 통짜로 되돌린다(막힌 유적을 만들지 않는다). */
+    let leaves = all;
+    const plan = cfg.plan && RUIN_PLANS[cfg.plan];
+    if (plan) {
+      const rows = plan.length, cols = plan[0].length;
+      const inPlan = r => {
+        const cxr = clamp(Math.floor((r.x + r.w / 2 - x0) / w * cols), 0, cols - 1);
+        const cyr = clamp(Math.floor((r.y + r.h / 2 - y0) / h * rows), 0, rows - 1);
+        return plan[cyr][cxr] !== '.';
+      };
+      const kept = all.filter(inPlan);
+      if (kept.length >= 3) leaves = kept;
+    }
+    // 3) 남긴 방들의 자리만 벽으로 채운다 (테두리 한 칸 포함).
+    //    도면이 없으면 BSP가 직사각형을 빈틈없이 나누므로 결과가 예전과 똑같다.
+    for (const r of leaves)
+      for (let x = r.x - 1; x <= r.x + r.w; x++)
+        for (let y = r.y - 1; y <= r.y + r.h; y++) { this.set(x, y, wall); this.setWall(x, y, bg); }
+    /* 4) 각 방 속을 판다 (테두리 1칸은 벽으로 남긴다).
        네모만 이어 붙이면 열 방이 다 똑같아 보여서, 방마다 생김새를 굴린다.
-       단 **바닥 쪽 세 줄은 어떤 모양이든 통째로 비워 둔다** — 4)의 문 뚫기가 바닥 높이에서
+       단 **바닥 쪽 세 줄은 어떤 모양이든 통째로 비워 둔다** — 5)의 문 뚫기가 바닥 높이에서
        일어나기 때문에, 여기까지 깎으면 방이 서로 안 이어진다. */
     const shapes = cfg.shapes || ['rect', 'rect', 'round', 'octagon', 'pillars'];
     for (const r of leaves) {
@@ -1597,11 +1616,11 @@ class World {
         }
       for (let x = r.x + 1; x < x1; x++) this.set(x, y1 - 1, floor);
     }
-    // 4) 맞닿은 방끼리 잇는다
+    // 5) 맞닿은 방끼리 잇는다
     for (let i = 0; i < leaves.length; i++)
       for (let j = i + 1; j < leaves.length; j++) this._linkRooms(leaves[i], leaves[j], floor);
-    // 5) 그래도 못 들어가는 방이 남으면 직접 굴을 뚫는다.
-    //    공유 벽이 너무 짧으면 4)가 실패할 수 있어서, 여기서 반드시 메꿔야
+    // 6) 그래도 못 들어가는 방이 남으면 직접 굴을 뚫는다.
+    //    공유 벽이 너무 짧으면 5)가 실패할 수 있어서, 여기서 반드시 메꿔야
     //    "문이 없는 방"이 생기지 않는다
     this._ensureConnected(x0, y0, w, h, leaves);
     return leaves;
@@ -1690,6 +1709,28 @@ class World {
           if (rng.chance(0.55)) { this.set(x, y, T.AIR); this.setWall(x, y, spec.bg); }
         }
       return null;
+    }
+
+    if (spec.arch === 'sunken') {
+      /* 지표 아래에 묻힌 통로. 지상에는 부러진 기둥 하나와 흩어진 벽돌만 남아 있어
+         눈에는 띄지만, 통로 입구가 흙 아래 대여섯 칸에 있어 파 내려가야 열린다.
+         "입구가 보이는 유적"과 "입구가 없는 유적" 사이를 메우는 자리다. */
+      const cap = surf + rng.int(4, 7);                // 통로가 시작되는 깊이
+      for (let dy = 0; dy < 3; dy++) {                 // 부러진 기둥 — 지상 표식
+        this.set(ex, surf - 1 - dy, spec.wall);
+        this.setWall(ex, surf - 1 - dy, spec.bg);
+      }
+      for (let dx = -3; dx <= 3; dx++) {
+        if (dx === 0 || !rng.chance(0.55)) continue;   // 무너져 흩어진 벽돌
+        this.set(ex + dx, this.surface[clamp(ex + dx, 0, WW - 1)] - 1, spec.wall);
+      }
+      this._entranceLandX = null;
+      this._carveEntranceShaft(ex, cap, y0 + 1, spec, rng);
+      // 통로 맨 위를 흙으로 다시 덮는다 — 파야 열린다
+      for (let y = surf; y < cap; y++)
+        for (let dx = -1; dx <= 1; dx++)
+          if (this.get(ex + dx, y) === T.AIR) this.set(ex + dx, y, T.DIRT);
+      return this._entranceLandX === null ? ex : this._entranceLandX;
     }
 
     if (spec.arch === 'surface') {
@@ -1791,6 +1832,112 @@ class World {
     this._entranceLandX = cx;                             // buildRuinSite에서 방 배치 기준으로 쓸 수 있게
   }
 
+  /** 그 유적에만 놓이는 장식. 방 하나하나가 "어느 유적인지" 말하게 만든다 —
+      예전에는 벽 색만 다르고 안은 전부 횃불 몇 개에 깃발 둘이었다.
+      전부 통행을 막지 않는 자리(바닥 위 한 줄 · 천장 밑)에만 놓는다. */
+  putRuinDecor(spec, r, fy, rng) {
+    const d = spec.decor; if (!d) return;
+    const [kind, tile, dens] = d;
+    const x1 = r.x + r.w - 2;
+    /* ★ 규칙: 장식은 **걷는 줄(fy · fy-1)을 절대 막지 않는다.**
+       바닥 타일은 fy+1 이고 플레이어 키가 두 칸이라, 그 두 줄이 통로다.
+       처음에 얼음 기둥과 석상을 바닥까지 세웠더니 방문을 그대로 봉해서
+       유적 절반이 못 들어가는 곳이 됐다(연결 검사 9/10 · 8/12 · 5/10).
+       - 막는 타일(solid 1)은 천장 쪽에만, 또는 이미 벽인 자리를 갈아끼울 때만
+       - 걷는 줄에 놓는 것은 통과되는 타일(solid 0)만 */
+    if (kind === 'pillar') {
+      // 천장에서 내려오다 두 칸 남기고 멈추는 기둥 — 밑으로 지나다닐 수 있다
+      for (let x = r.x + 3; x < x1 - 1; x += 5) {
+        if (!rng.chance(dens)) continue;
+        for (let y = r.y + 2; y <= fy - 2; y++) if (this.get(x, y) === T.AIR) this.set(x, y, tile);
+      }
+    } else if (kind === 'statue') {
+      // 벽에 새긴 좌상 — 이미 벽인 칸만 갈아끼운다. 문이 뚫린 자리는 AIR라 건드리지 않는다
+      for (const bx of [r.x, r.x + r.w - 1]) {
+        if (!rng.chance(dens)) continue;
+        for (let y = fy; y >= fy - 3; y--) if (this.get(bx, y) === spec.wall) this.set(bx, y, tile);
+      }
+    } else if (kind === 'prop') {
+      // 천장을 받치는 갱목 — 천장 줄에만 건다
+      for (let x = r.x + 2; x < x1; x += 4) {
+        if (!rng.chance(dens)) continue;
+        if (this.get(x, r.y + 2) === T.AIR) this.set(x, r.y + 2, tile);
+        if (rng.chance(0.5) && this.get(x, r.y + 3) === T.AIR) this.set(x, r.y + 3, tile);
+      }
+    } else if (kind === 'growth') {
+      // 벽과 천장에서 자라나온 것 — 통과되는 타일이라 바닥 줄에 놓아도 안전하다
+      for (let x = r.x + 2; x < x1; x++) {
+        if (rng.chance(dens * 0.4) && this.get(x, r.y + 2) === T.AIR) this.set(x, r.y + 2, tile);
+        if (rng.chance(dens * 0.3) && this.get(x, fy) === T.AIR) this.set(x, fy, tile);
+      }
+    }
+  }
+
+  /** 그 유적에만 있는 방 하나. 고유 이벤트가 터지는 자리이기도 하다.
+      site.event 를 게임 쪽에서 읽을 수 있게 'ruinsig' 객체를 함께 놓는다. */
+  buildSigRoom(spec, r, fy, cx, idx, rng) {
+    const x1 = r.x + r.w - 2, sig = spec.sig;
+    for (let x = r.x + 2; x < x1; x += 4) this.set(x, r.y + 2, spec.torch);
+
+    if (sig === 'frozen') {
+      // 얼어붙은 회랑 — 바닥이 통째로 얼음이고 천장에서 고드름이 내려온다
+      for (let x = r.x + 1; x <= x1; x++) {
+        this.set(x, fy + 1, T.ICE);                          // 바닥이 통째로 얼음
+        if (rng.chance(0.4)) this.set(x, r.y + 2, T.ICE);    // 천장 고드름
+      }
+      for (let x = r.x + 3; x < x1; x += 3)
+        if (this.get(x, r.y + 3) === T.AIR) this.set(x, r.y + 3, T.ICE);   // 더 길게 자란 것
+    } else if (sig === 'sunshaft') {
+      // 빛우물 — 천장에 뚫린 구멍으로 빛이 떨어지고 그 아래에 제단이 있다
+      const hx = cx;
+      for (let y = r.y - 1; y >= r.y - 7; y--)
+        for (let dx = -1; dx <= 1; dx++) { this.set(hx + dx, y, T.AIR); this.setWall(hx + dx, y, spec.bg); }
+      for (let dx = -2; dx <= 2; dx++) this.set(hx + dx, fy, T.ALTARSTONE);
+      this.set(hx, fy - 1, T.RUNESTONE);
+      /* 숫자 잠긴 골방 — 방 오른쪽 끝에 봉인석 문을 세우고 그 너머에 상자를 둔다.
+         세 자리 숫자는 비문 흔적에 한 자리씩 흩어져 있다(game.js ruinCode).
+         "암호를 넣어야 열리는 유적"이 여기다. */
+      const dx0 = x1 - 6;
+      for (let y = fy - 4; y <= fy; y++)
+        for (let x = dx0 + 1; x <= x1; x++) { this.set(x, y, T.AIR); this.setWall(x, y, spec.bg); }
+      for (let y = fy - 4; y <= fy; y++) this.set(dx0, y, T.SEALSTONE);
+      this.objects.push({ type: 'codedoor', ruin: spec.id, dx: dx0, dy: fy,
+        x: dx0 * TS, y: (fy - 3) * TS, w: TS, h: TS * 4 });
+      this.objects.push({ type: 'chest', tier: clamp(spec.tier + 2, 1, 6), locked: 1,
+        x: (x1 - 2) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
+    } else if (sig === 'shaft') {
+      // 무너진 갱도 — 바닥 절반이 부서지는 바닥이고 아래는 비어 있다
+      for (let x = r.x + 3; x < x1 - 2; x++) {
+        this.set(x, fy + 1, T.CRUMBLE);
+        this.set(x, fy + 2, T.AIR); this.set(x, fy + 3, T.AIR);
+      }
+      for (let x = r.x + 3; x < x1 - 2; x += 2) this.set(x, fy + 4, T.SPIKE);
+    } else if (sig === 'heart') {
+      // 둥지의 심장 — 방 한가운데에 살덩이가 부풀어 있다
+      // 천장에 매달린 살덩이 — 바닥에 놓으면 방을 가로막아 지나갈 수가 없다
+      for (let dy = 0; dy < 5; dy++)
+        for (let dx = -3 + Math.abs(dy - 2); dx <= 3 - Math.abs(dy - 2); dx++)
+          this.set(cx + dx, r.y + 2 + dy, T.EBONSTONE);
+      for (let dx = -4; dx <= 4; dx++) if (rng.chance(0.6)) this.set(cx + dx, r.y + 2, T.CORRUPTLEAF);
+    } else if (sig === 'bloom') {
+      // 발광 버섯 정원 — 바닥이 이끼고 갓이 무리 지어 자란다
+      for (let x = r.x + 1; x <= x1; x++) {
+        this.set(x, fy + 1, T.GLOWMOSS);
+        if (rng.chance(0.55)) this.set(x, fy, T.GLOWCAP);
+      }
+      for (let x = r.x + 2; x < x1; x += 3) if (rng.chance(0.5)) this.set(x, r.y + 2, T.GLOWCAP);
+    }
+
+    /* 이 방을 밟으면 유적 고유 이벤트가 한 번 터진다.
+       world.objects 가 아니라 따로 둔다 — objects 는 우클릭 대상 목록이라, 방 하나만 한
+       상자를 끼워 넣으면 그 방 안의 진짜 상자·비문을 가려 버린다. */
+    if (spec.event) {
+      if (!this.ruinEvents) this.ruinEvents = [];
+      this.ruinEvents.push({ ruin: spec.id, ev: spec.event, sig,
+        x: (r.x + 1) * TS, y: (r.y + 1) * TS, w: (r.w - 2) * TS, h: (r.h - 2) * TS });
+    }
+  }
+
   /** 유적 하나를 짓는다 — 방·함정·상자·비문·미니보스 둥지까지.
       방마다 성격(role)을 달리 줘서, 열 개가 다 똑같은 네모가 되지 않게 한다. */
   buildRuinSite(spec, idx, rng) {
@@ -1799,7 +1946,8 @@ class World {
     const tight = (spec.rooms || 12) >= 15;
     const rooms = this.carveDungeon({
       x0, y0, w: spec.w, h: spec.h, wall: spec.wall, floor: spec.floor, bg: spec.bg,
-      rng, depth: tight ? 5 : 4, minW: tight ? 8 : 11, minH: tight ? 7 : 9
+      rng, depth: tight ? 5 : 4, minW: tight ? 8 : 11, minH: tight ? 7 : 9,
+      plan: spec.plan                                        // 겉모양이 방 배치를 따라간다
     });
     rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
     const boss = rooms[0];                                   // 가장 넓은 방이 보스방
@@ -1818,6 +1966,11 @@ class World {
     if (rest[Math.floor(rest.length / 2)]) roles.set(rest[Math.floor(rest.length / 2)], 'lore');
     for (const r of rest) if (!roles.has(r) && rng.chance(0.3)) roles.set(r, 'gauntlet');
 
+    /* 고유 방 — 그 유적에만 있는 방 하나. 보물방 다음으로 먼 방에 놓는다.
+       고유 이벤트는 이 방을 밟는 순간 터진다(game.js 의 ruinEvent). */
+    const sigRoom = rest.find(r => !roles.has(r)) || rest[2] || rest[0];
+    if (spec.sig && sigRoom) roles.set(sigRoom, 'sig');
+
     let hintSlot = 0;                                        // 흔적을 방마다 하나씩 순서대로
     // 유적마다 개별로 매긴 난이도 — 없으면 예전 기본값으로 떨어진다
     const TRAP = spec.trapRate === undefined ? 0.8 : spec.trapRate;
@@ -1831,6 +1984,7 @@ class World {
       // 양쪽 벽에 깃발을 하나씩 걸어 방 하나하나가 "누가 살았던 자리"로 읽히게 한다
       // (역할 상관없이 전부 — 함정/상자 자리는 안 건드리는 천장 쪽 줄이라 안전하다)
       if (r.h > 6) { this.set(r.x + 1, r.y + 4, T.BANNER); this.set(r.x + r.w - 2, r.y + 4, T.BANNER); }
+      this.putRuinDecor(spec, r, fy, rng);                   // 그 유적에만 있는 장식
       if (r === boss) {
         // 보스방: 넓게 비우고 둥지를 놓는다. 함정은 두지 않는다 — 싸울 자리는 깨끗해야 한다
         this.objects.push({ type: 'lair', boss: spec.boss, ruin: idx,
@@ -1851,13 +2005,23 @@ class World {
         for (let x = r.x + 2; x < r.x + r.w - 2; x++) if (rng.chance(SPIKE)) this.set(x, fy, T.SPIKE);
         /* 이 유적의 유물은 입구에서 가장 먼 보물방에만 들어간다 — 유적마다 하나뿐이고,
            끝까지 들어가 본 사람만 갖는다. relic 은 상자 객체에 붙어 세이브에 남는다. */
-        const relic = roles.get(r) === 'vault' && r === rest[0] ? RUIN_RELIC[spec.id] : null;
+        const first = r === rest[0];
+        const relic = first ? RUIN_RELIC[spec.id] : null;
+        // 다른 유적의 위치 지도가 여기 들어간다 — 한 곳을 털면 다음 곳이 열리는 사슬
+        const mapFor = first ? Object.keys(RUIN_MAP_IN).find(k => RUIN_MAP_IN[k] === spec.id) : null;
         this.objects.push({
           type: 'chest', tier: clamp(spec.tier + 1, 1, 6),
           x: cx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null,
           relic: relic || undefined,
+          ruinmap: mapFor ? 'ruinmap_' + mapFor : undefined,
+          bonus: spec.bonus,
           guard: { t: rng.pick(spec.mobs), n: clamp(1 + Math.round(rank * 0.6), 2, 5) }
         });
+        continue;
+      }
+
+      if (role === 'sig') {
+        this.buildSigRoom(spec, r, fy, cx, idx, rng);
         continue;
       }
 
@@ -1902,12 +2066,18 @@ class World {
           x: (cx + rng.int(-2, 2)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
       }
     }
+    /* ★ 마지막에 연결을 한 번 더 보장한다.
+       carveDungeon 안에서도 하지만, 그 뒤에 바닥을 통째로 갈아 까는 방(얼어붙은 회랑의
+       얼음 바닥, 포자 정원의 이끼 바닥)이 있어서 거기로 지나가던 굴이 도로 메워졌다.
+       실측으로 포자 굴이 10칸 중 4칸만 닿았다 — 여기서 다시 뚫으면 10/10이 된다. */
+    this._ensureConnected(x0, y0, spec.w, spec.h, rooms);
     return site;
   }
 
   /* ---- 숨겨진 유적 3곳 + 심층 봉인실 ---- */
   buildRuins(rng) {
     this.ruins = [];
+    this.ruinEvents = [];
     // 스토리 유적 3곳 — 예전엔 큰 상자 하나였는데, 석판 하나 놓인 빈 방이라 들를 이유가 없었다.
     // 같은 방 생성기를 태워 방을 여럿 두고 함정·상자를 흩뿌렸다. 석판은 가장 넓은 방에 둔다.
     /* 스토리 유적 3곳 — 석판 하나 놓인 빈 방이던 것을 방 생성기로 채웠다.
@@ -1926,27 +2096,38 @@ class World {
     spots.forEach((sp, i) => {
       const cx = sp.x, cy = sp.y, w = sp.w, h = sp.h;
       const x0 = cx - (w >> 1), y0 = cy - (h >> 1);
+      /* 석판 유적도 바이옴 유적과 같은 규격을 쓴다 — 도면(겉모양) · 묻힌 입구 ·
+         고유 장식 · 고유 방 · 고유 이벤트. 예전에는 이 셋만 별도 코드라 저쪽을
+         고쳐도 여기엔 안 미쳤다. */
+      const st = STORY_RUIN[i] || {};
+      const spec = {
+        id: 'story' + i, n: '석판 유적 ' + (i + 1), x: cx, y: y0, w, h,
+        wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10, torch: T.TORCH,
+        entryKind: sp.entryKind, plan: st.plan, arch: st.arch,
+        decor: st.decor, sig: st.sig, event: st.event, bonus: st.bonus
+      };
       const rooms = this.carveDungeon({
         x0, y0, w, h, wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10,
-        rng, depth: 4, minW: 12, minH: 9
+        rng, depth: 4, minW: 12, minH: 9, plan: st.plan
       });
       rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
       const main = rooms[0], fy0 = main.y + main.h - 3;
       for (let x = main.x + 3; x < main.x + main.w - 2; x += 8) this.set(x, main.y + 2, T.RUNESTONE);
       this.objects.push({ type: 'tablet', tablet: i, x: (main.x + (main.w >> 1)) * TS, y: (fy0 + 1) * TS - 48, w: 34, h: 48 });
-      // 지상에서 내려오는 통로 — carveRuinEntrance와 같은 통로 생성기를 쓴다
-      const ex = clamp(cx, x0 + 3, x0 + w - 4);
-      this._entranceLandX = null;
-      this._carveEntranceShaft(ex, this.surface[ex] + 1, y0 + 1, { entryKind: sp.entryKind, bg: 10, w }, rng);
-      // 이 유적의 유물이 들어갈 방 — 내려온 통로에서 가장 먼 방(석판방은 뺀다)
-      const far = rooms.filter(r => r !== main)
-        .sort((a, b) => Math.abs(b.x - ex) - Math.abs(a.x - ex))[0];
+      // 지상에서 내려오는 통로 — 이제 지표 아래에 묻는다(sunken). 지상에는 부러진 기둥만
+      const ex = this.carveRuinEntrance(spec, x0, y0, rng);
+      const entX = ex === null ? cx : ex;
+      // 유물이 들어갈 방과 고유 방 — 통로에서 먼 것부터
+      const rest = rooms.filter(r => r !== main)
+        .sort((a, b) => Math.abs(b.x - entX) - Math.abs(a.x - entX));
+      const far = rest[0], sigRoom = rest[1] || rest[0];
       for (const r of rooms) {
         const fy = r.y + r.h - 3, rcx = r.x + (r.w >> 1);
         for (let x = r.x + 3; x < r.x + r.w - 2; x += 6) this.set(x, r.y + 2, T.TORCH);
-        // buildRuinSite와 같은 벽 장식 — 이 세 유적은 별도 코드라 저기 고친 게 안 미친다
         if (r.h > 6) { this.set(r.x + 1, r.y + 4, T.BANNER); this.set(r.x + r.w - 2, r.y + 4, T.BANNER); }
+        this.putRuinDecor(spec, r, fy, rng);
         if (r === main) continue;
+        if (r === sigRoom && st.sig) { this.buildSigRoom(spec, r, fy, rcx, i, rng); continue; }
         if (rng.chance(sp.trap)) this.putTileTrap(r, fy, rng.pick(sp.traps), rng);
         if (i >= 1 && rng.chance(sp.trap * 0.5)) this.putTileTrap(r, fy, rng.pick(sp.traps), rng);
         if (rng.chance(sp.spike)) for (let k = 0; k < rng.int(2, 3 + i); k++) this.set(r.x + 3 + k, fy, T.SPIKE);
@@ -1954,8 +2135,11 @@ class World {
         if (r === far || rng.chance(sp.chest))
           this.objects.push({ type: 'chest', tier: sp.tier + (r.w * r.h < 180 ? 1 : 0),
             x: (rcx + rng.int(-2, 2)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null,
-            relic: r === far ? RUIN_RELIC['story' + i] : undefined });
+            relic: r === far ? RUIN_RELIC['story' + i] : undefined,
+            bonus: r === far ? st.bonus : undefined });
       }
+      // 바닥을 갈아 까는 고유 방이 굴을 메울 수 있으므로 마지막에 연결을 다시 보장한다
+      this._ensureConnected(x0, y0, w, h, rooms);
       this.ruins.push({ id: 'story' + i, x: cx, y: cy, w, h });
     });
 
@@ -2505,7 +2689,7 @@ class World {
   /* ================= 저장 ================= */
   serialize() {
     return {
-      seed: this.seed, ww: WW, wh: WH, ruinSites: this.ruinSites,
+      seed: this.seed, ww: WW, wh: WH, ruinSites: this.ruinSites, ruinEvents: this.ruinEvents,
       tiles: rleEncode(this.tiles),
       walls: rleEncode(this.walls),
       surface: Array.from(this.surface),
@@ -2538,7 +2722,7 @@ class World {
     w.dawnY = d.dawnY; w.dawnCity = d.dawnCity; w.works = d.works; w.runaway = d.runaway;
     w.atelier = d.atelier || null;   // 설계실이 생기기 전 세이브에는 없다
     w.citadel = d.citadel || null; w.deepShaft = d.deepShaft || null;
-    w.dungeon = d.dungeon; w.ruins = d.ruins; w.sealRoom = d.sealRoom; w.ruinSites = d.ruinSites || [];
+    w.dungeon = d.dungeon; w.ruins = d.ruins; w.sealRoom = d.sealRoom; w.ruinSites = d.ruinSites || []; w.ruinEvents = d.ruinEvents || [];
     w.skyIslands = d.skyIslands; w.skyGate = d.skyGate; w.giantTree = d.giantTree;
     // 물이 생기기 전의 세이브에는 이 둘이 없다 — 타일에는 이미 물이 없으니 빈 배열이 맞다
     w.caverns = d.caverns || []; w.pools = d.pools || [];
