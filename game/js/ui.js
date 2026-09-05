@@ -808,9 +808,24 @@ const UI = {
             if (ch.hook) h += `<p class="cdesc-hook">◆ ${ch.hook}</p>`;
           }
           h += '</div>';
-          if (state === 'cur') for (let i = 0; i < ch.obj.length; i++) {
-            const o = ch.obj[i], p = g.objProgress(ch, i);
-            h += `<div class="obj ${p.done ? 'ok' : ''}">${p.done ? '✔' : '◆'} ${o.t} <b>${p.cur}/${p.max}</b></div>`;
+          /* 목록은 여기(일지)에만 편다. HUD 에는 한 줄만 나간다.
+             넷 중 몇 개만 채우면 되는 것이므로 "몇 개 중 몇 개"를 머리에 적어 준다. */
+          if (state === 'cur') {
+            const st = g.chapterState(ch);
+            h += `<div class="obj-head">준비 <b>${st.done}/${st.need}</b>` +
+              (st.missing.length ? ' · <em>이 장의 일이 남았다</em>' : '') + '</div>';
+            for (const b of st.basics) {
+              const must = (ch.require || []).includes(b.o.verb);
+              h += `<div class="obj ${b.p.done ? 'ok' : ''}${must ? ' must' : ''}">` +
+                `${b.p.done ? '✔' : '◆'} ${b.o.t}${must ? ' <span class="objreq">꼭</span>' : ''} ` +
+                `<b>${b.p.cur}/${b.p.max}</b></div>`;
+            }
+            if (st.goal) {
+              const gp = st.goal.p;
+              h += `<div class="obj-head">결착</div>`;
+              h += `<div class="obj goal ${gp.done ? 'ok' : ''}${st.ready ? '' : ' locked'}">` +
+                `${gp.done ? '✔' : (st.ready ? '◆' : '🔒')} ${st.goal.o.t} <b>${gp.cur}/${gp.max}</b></div>`;
+            }
           }
         } else h += `<div class="cdesc">???</div>`;
         h += '</div>';
@@ -873,10 +888,19 @@ const UI = {
     const ch = CHAPTERS[G.chapter];
     let h = '';
     if (ch) {
+      /* ★ HUD 는 한 줄이다. 예전에는 남은 목표를 전부 세로로 쌓아서 다섯 줄이 뜨고,
+         화면 오른쪽이 할 일 목록이 되어 있었다. 무엇을 하든 "아직 넷 남았다"가
+         계속 보이니, 그게 이 게임을 숙제처럼 느끼게 하는 가장 큰 몫이었다.
+         자세한 것은 일지(J)에 있다. */
+      const st = G.chapterState(ch);
       h += `<div style="color:#c9b07a;margin-bottom:4px">${ch.title}</div>`;
-      for (let i = 0; i < ch.obj.length; i++) {
-        const o = ch.obj[i], p = G.objProgress(ch, i);
-        h += `<div class="qt-obj ${p.done ? 'done' : ''}">${o.t} <b>${p.cur}/${p.max}</b></div>`;
+      if (st.ready) {
+        h += `<div class="qt-obj">목표 — ${st.goal ? st.goal.o.t : '결착'}</div>`;
+      } else {
+        const pick = st.basics.find(b => !b.p.done && st.missing.includes(b.o.verb))
+                  || st.basics.find(b => !b.p.done);
+        h += `<div class="qt-obj">준비 <b>${st.done}/${st.need}</b>` +
+          (pick ? ` · ${pick.o.t} <b>${pick.p.cur}/${pick.p.max}</b>` : '') + '</div>';
       }
     }
     const activeSide = Object.values(G.sideActive).filter(Boolean);

@@ -378,6 +378,13 @@ const G = {
     // 스킬 채널 중 이동 제한 등은 Player 내부에서 처리
     p.update(dt, w, this.input);
     this.updateFishing(dt);
+    /* 11장의 결착은 "세우고 · 물리고 · 끊기"다. 가운데 걸음(동력이 돈 적이 있다)은
+       지나가면 사라지므로 여기서 한 번 적어 둔다. 그 장에서만 본다. */
+    if (this.chapter === 11 && !this.asmRan && this.world && this.world.machines
+        && typeof Factory !== 'undefined') {
+      for (const m of this.world.machines.values())
+        if (m.t === 'assembler' && Factory.sat(this.world, m) > 0) { this.asmRan = 1; break; }
+    }
     // 펫 — 장비창 상태와 맞춘 뒤 각자 알아서 따라오고 알아서 문다
     this.syncPets();
     for (const pet of this.petEnts) if (pet) pet.update(dt, p);
@@ -1518,10 +1525,16 @@ const G = {
   tellQuest() {
     const ch = CHAPTERS[this.chapter];
     if (!ch) { this.toast('모든 여정이 끝났다.'); return; }
-    const remain = ch.obj.map((o, i) => ({ o, p: this.objProgress(ch, i) })).filter(x => !x.p.done);
+    const st = this.chapterState(ch);
     const session = this.chapter >= 9 ? '세션 2' : '세션 1';
-    if (!remain.length) this.toast('할 일은 모두 끝냈다.');
-    else this.toast(`${session} · ` + remain[0].o.t + `  (${remain[0].p.cur}/${remain[0].p.max})`);
+    if (st.complete) this.toast('할 일은 모두 끝냈다.');
+    else if (st.ready) this.toast(`${session} · 목표 — ${st.goal ? st.goal.o.t : '결착'}`);
+    else {
+      // 아직 준비 중이면 고유 동사 쪽을 먼저 알려 준다 — 그게 이 장의 이야기다
+      const pick = st.basics.find(b => !b.p.done && st.missing.includes(b.o.verb))
+                || st.basics.find(b => !b.p.done);
+      this.toast(`${session} · 준비 ${st.done}/${st.need}` + (pick ? ` · ${pick.o.t} (${pick.p.cur}/${pick.p.max})` : ''));
+    }
     UI.togglePanel('quest');
   },
   /* ---- 경제: 화폐 가치와 품목별 시세가 하루 단위로 변동한다 ---- */
@@ -1567,6 +1580,7 @@ const G = {
     this.lairs = this.lairs || {};
     if (this.lairs[o.ruin]) { this.toast('이미 비어 있다'); return; }
     if (this.boss) { this.toast('이미 무언가가 깨어 있다', 'bad'); return; }
+    if (this.bossGated(o.boss)) return;
     const spec = RUIN_SPEC[o.ruin];
     const name = o.nm || (spec ? spec.n : '둥지');
     UI.openLore(name, [
@@ -1586,10 +1600,22 @@ const G = {
   },
 
   /* ================= 제단 / 보스 ================= */
+  /** 이 장의 결착 보스인데 아직 자격이 없으면 막는다.
+      예전에는 준비를 하나도 안 해도 소환 아이템만 있으면 보스를 깨울 수 있어서,
+      장 목표를 통째로 건너뛸 수 있었다. 다른 장의 보스는 그대로 자유롭게 깨운다. */
+  bossGated(bossId) {
+    const ch = CHAPTERS[this.chapter];
+    if (!ch || !ch.goal || ch.goal.type !== 'boss' || ch.goal.target !== bossId) return false;
+    const st = this.chapterState(ch);
+    if (st.ready) return false;
+    this.toast(this.goalLocked(ch, st), 'bad');
+    return true;
+  },
   altar(o) {
     const p = this.player;
     const need = Object.keys(ITEMS).find(k => ITEMS[k].boss === o.boss);
     if (this.boss) { this.toast('이미 무언가가 깨어 있다', 'bad'); return; }
+    if (this.bossGated(o.boss)) return;
     // 소환 아이템이 아예 없는 보스라면 제단이 아니라 둥지로 다뤄야 한다.
     // 예전에 이 자리에서 ITEMS[undefined]를 읽어 예외가 났었다
     if (!need) { this.wakeLair({ boss: o.boss, ruin: 12, nm: '제단', x: o.x, y: o.y, w: o.w, h: o.h }); return; }
@@ -1602,6 +1628,7 @@ const G = {
     const p = this.player, it = p.bag[slot];
     const bossId = idef(it).boss;
     if (this.boss) { this.toast('이미 무언가가 깨어 있다', 'bad'); return; }
+    if (this.bossGated(bossId)) return;
     const zone = this.world.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
     const req = {
       king_slime: ['surface', 'cave'], bone_lord: ['cave', 'deep'], corrupt_heart: ['corrupt'],
@@ -2104,8 +2131,21 @@ const G = {
   },
 
   /* ================= 진행 ================= */
-  objProgress(ch, i) {
-    const o = ch.obj[i], p = this.player;
+  /* ================= 장 목표 =================
+     v1.1 — 예전에는 한 장의 목표가 넷~여섯 개의 **AND** 였다. 슬라임 10마리에 까마귀
+     8마리에 구리 15번에 장검 제작까지 전부 채워야 보스로 갈 수 있었으니, 이야기가
+     아니라 숙제 목록이었다. 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은
+     목록에 없거나 있어도 순서가 강제됐다.
+
+     이제 셋으로 나뉜다.
+       basics     넷 중 골라서 하는 것 (needBasics 개만 채우면 된다)
+       require    이 장의 고유 동사. 그 verb 를 가진 basic 은 반드시 끝나 있어야 한다
+       goal       결착. 보통 보스다
+     그래서 "무엇을 할지"는 고르되 "이 장이 무엇에 관한 장인지"는 지켜진다.
+     항목 수를 줄인 대신 개별 숫자는 조금만 낮췄다 — 플레이 시간을 깎는 것이
+     목적이 아니라 **숙제처럼 느껴지는 것**을 없애는 것이 목적이다. */
+  objProgress(o) {
+    const p = this.player;
     let cur = 0, max = 1;
     switch (o.type) {
       case 'kill': cur = p.kills[o.target] || 0; max = o.n; break;
@@ -2120,13 +2160,60 @@ const G = {
         } else { cur = Math.min(p.deepest, o.y); max = o.y; }
         break;
       case 'boss': cur = p.bossKilled[o.target] ? 1 : 0; max = 1; break;
+      /* 가 본 곳 — 바이옴 이름표(seenBiomes)와 유적 첫 입장(seenRuins)을 그대로 쓴다.
+         따로 세는 것을 만들지 않았다. 이미 "본 곳"을 기억하고 있었다. */
+      case 'explore':
+        cur = (o.zone ? (this.seenBiomes && this.seenBiomes[o.zone])
+                      : (this.seenRuins && this.seenRuins[o.ruin])) ? 1 : 0;
+        break;
+      /* 세우고 · 물리고 · 끊기. 11장의 결착이다 — 자동화를 켜는 것이 아니라
+         "켠 것을 내 손으로 멈출 수 있다"가 그 장의 이야기라서 세 걸음을 다 본다. */
+      case 'place': cur = this.placeProgress(o); max = o.stop ? 3 : 1; break;
     }
     return { cur: Math.min(cur, max), max, done: cur >= max };
   },
+
+  /** 조립기: 놓았나(1) · 동력이 돈 적 있나(2) · 지금 멈춰 있나(3) */
+  placeProgress(o) {
+    const w = this.world;
+    if (!w || !w.machines) return 0;
+    let m = null;
+    for (const q of w.machines.values()) if (q.t === o.mach) { m = q; break; }
+    if (!m) return 0;
+    if (!o.stop) return 1;
+    if (!this.asmRan) return 1;
+    return (typeof Factory !== 'undefined' && Factory.sat(w, m) > 0) ? 2 : 3;
+  },
+
+  /** 이 장이 지금 어디까지 왔는가 — 화면도 판정도 전부 이걸 본다 */
+  chapterState(ch) {
+    const basics = (ch.basics || []).map(o => ({ o, p: this.objProgress(o) }));
+    const doneList = basics.filter(b => b.p.done);
+    const need = ch.needBasics === undefined ? basics.length : ch.needBasics;
+    const req = ch.require || [];
+    const missing = req.filter(v => !doneList.some(b => b.o.verb === v));
+    const ready = doneList.length >= need && !missing.length;
+    const goal = ch.goal ? { o: ch.goal, p: this.objProgress(ch.goal) } : null;
+    return {
+      basics, done: doneList.length, need, ready, missing, goal,
+      complete: ready && (!goal || goal.p.done)
+    };
+  },
+
+  /** 아직 자격이 없는데 결착에 손대려 할 때 한 줄로 알려 준다 */
+  goalLocked(ch, st) {
+    if (!ch || st.ready) return '';
+    if (st.missing.length) {
+      const b = (ch.basics || []).find(o => o.verb === st.missing[0]);
+      return '아직 자격이 없다 — ' + (b ? b.t : '이 장의 일이 남았다');
+    }
+    return `아직 자격이 없다 — 준비 ${st.done}/${st.need}`;
+  },
+
   checkChapter() {
     const ch = CHAPTERS[this.chapter];
     if (!ch) return;
-    for (let i = 0; i < ch.obj.length; i++) if (!this.objProgress(ch, i).done) { UI.refreshTracker(); return; }
+    if (!this.chapterState(ch).complete) { UI.refreshTracker(); return; }
     // 완료
     const p = this.player;
     p.addXp(ch.rw.xp); p.gold += ch.rw.gold;
@@ -2269,8 +2356,12 @@ const G = {
       out.push({ x: (r.x + 0.5) * TS, y: r.y * TS, k: 'ruin', t: (sp ? sp.n : '유적') + ' — 지도의 자리' });
     }
     if (!ch || !w) return out;
-    ch.obj.forEach((o, i) => {
-      if (this.objProgress(ch, i).done) return;
+    /* 나침반 — 준비 중에는 basics 를, 자격을 갖춘 뒤에는 결착만 가리킨다.
+       예전에는 남은 것을 전부 가리켜서 화면 가장자리가 화살표로 가득했다. */
+    const stt = this.chapterState(ch);
+    const aim = stt.ready ? (stt.goal ? [stt.goal.o] : []) : stt.basics.filter(b => !b.p.done).map(b => b.o);
+    aim.forEach((o) => {
+      if (this.objProgress(o).done) return;
       if (o.type === 'boss') {
         const ob = w.objects.find(q => (q.type === 'altar' || q.type === 'lair') && q.boss === o.target);
         if (ob) out.push({ x: ob.x + ob.w / 2, y: ob.y, k: 'boss', t: o.t });
@@ -2413,7 +2504,7 @@ const G = {
         seenRuins: this.seenRuins, seenBiomes: this.seenBiomes, ruinMarks: this.ruinMarks, ruinEvDone: this.ruinEvDone,
         deathMark: this.deathMark,
         villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
-        lairs: this.lairs,
+        lairs: this.lairs, asmRan: this.asmRan,
         vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties,
         p: {
           x: p.x, y: p.y, level: p.level, xp: p.xp, xpNext: p.xpNext, statPts: p.statPts, skillPts: p.skillPts,
@@ -2485,6 +2576,7 @@ const G = {
       this._bgId = undefined;   // 불러온 자리의 배경을 기준으로 다시 잡는다
       this.ruinMarks = d.ruinMarks || {}; this.ruinEvDone = d.ruinEvDone || {};
       this.deathMark = d.deathMark || null;
+      this.asmRan = d.asmRan || 0;
       this.mode = MODE_OF(d.mode).id;
       this.villageUnlocked = d.villageUnlocked || false; this.goldRate = d.goldRate || 1;
       this.dayCount = d.dayCount || 0; this.market = {}; this.trainedToday = 0;

@@ -2348,11 +2348,14 @@ const CHAPTERS = [
       '무언가로부터 도망치던 중이었다.\n\n' +
       '그것은 다섯 갈래 빛으로 부서져 흩어졌고, 그중 한 조각의 빛이 네 오른손에 박혔다.\n' +
       '눈을 떴을 때 세계는 색을 잃어가고 있었다. 사람들은 그것을 잿빛이라 불렀다.',
-    obj: [
-      { type: 'collect', item: 'wood', n: 12, t: '나무 12개 모으기' },
-      { type: 'craft', item: 'plank', t: '판자 제작하기' },
-      { type: 'talk', npc: 'elara', t: '베이스캠프의 엘라라와 대화' }
+    basics: [
+      { type: 'collect', item: 'wood', n: 10, t: '나무 10개 모으기', verb: 'gather' },
+      { type: 'craft', item: 'plank', t: '판자 만들기', verb: 'craft' },
+      { type: 'kill', target: 'slime', n: 3, t: '잿빛 슬라임 3마리 거두기', verb: 'kill' }
     ],
+    needBasics: 2,
+    require: [],
+    goal: { type: 'talk', npc: 'elara', t: '베이스캠프의 엘라라와 만나기', verb: 'talk' },
     rw: { xp: 60, gold: 40, items: [['potion_hp_small', 3], ['torch', 20]] },
     outro: '엘라라: "살아 있는 사람을 본 게 얼마 만인지…"\n' +
       '"…네 오른손. 빛나고 있는 거, 알고는 있니?"'
@@ -2368,13 +2371,15 @@ const CHAPTERS = [
       '엘라라는 이곳을 베이스캠프라고 부른다. 돌아올 곳이 있어야 나갈 수 있다면서.\n\n' +
       '첫 번째 조각은 캠프 동쪽 늪에 떨어졌다. 그것은 혼자이지 않기를 꿈꿨고,\n' +
       '그래서 끝없이 갈라지기 시작했다.',
-    obj: [
-      { type: 'kill', target: 'slime', n: 10, t: '잿빛 슬라임 10마리 처치' },
-      { type: 'kill', target: 'ashcrow', n: 8, t: '잿빛 까마귀 8마리 처치' },
-      { type: 'mine', tile: T.COPPER, n: 15, t: '구리 광맥 15번 채굴' },
-      { type: 'craft', item: 'sword_copper', t: '구리 장검 제작' },
-      { type: 'boss', target: 'king_slime', t: '슬라임 왕 토벌' }
+    basics: [
+      { type: 'mine', tile: T.COPPER, n: 12, t: '구리 광맥 12번 캐기', verb: 'dig' },
+      { type: 'kill', target: 'slime', n: 8, t: '갈라진 것 8마리 거두기', verb: 'kill' },
+      { type: 'craft', item: 'sword_copper', t: '구리 장검 벼리기', verb: 'craft' },
+      { type: 'explore', ruin: 'mine', t: '캠프 옆 버려진 광산에 들어가 보기', verb: 'explore' }
     ],
+    needBasics: 2,
+    require: ['dig'],
+    goal: { type: 'boss', target: 'king_slime', t: '한 덩어리가 더 갈라지지 않을 때까지', verb: 'boss' },
     rw: { xp: 260, gold: 180, items: [['helm_copper', 1], ['potion_hp_small', 5]] },
     outro: '슬라임 왕이 터지자 안에서 손바닥만 한 심장이 굴러 나왔다. 아직 미지근하다.\n\n' +
       '노인: "그게 무엇을 꿈꿨는지 알겠나. …외롭지 않기를 꿈꿨어."\n' +
@@ -2387,13 +2392,15 @@ const CHAPTERS = [
       '조각은 제 꿈을 꾸지 않았다. 그 아래 잠들어 있던 것들의 꿈을 대신 꿨다.\n' +
       '그래서 그것들이 일어났다.\n\n' +
       '보린이 무기부터 챙기라고 했다. 아래는 깊고, 조각은 가장 아래에 있다.',
-    obj: [
-      { type: 'depth', y: 170, t: '지하 450m까지 내려가기' },
-      { type: 'kill', target: 'skeleton', n: 12, t: '무덤지기 12마리 처치' },
-      { type: 'kill', target: 'spider', n: 10, t: '동굴 거미 10마리 처치' },
-      { type: 'kill', target: 'minerghost', n: 6, t: '광부의 유령 6마리 처치' },
-      { type: 'boss', target: 'bone_lord', t: '뼈의 군주 토벌' }
+    basics: [
+      { type: 'depth', y: 170, t: '지하 450m까지 내려가기', verb: 'depth' },
+      { type: 'kill', target: 'skeleton', n: 10, t: '무덤지기 10마리 처치', verb: 'kill' },
+      { type: 'kill', target: 'spider', n: 8, t: '동굴 거미 8마리 처치', verb: 'kill' },
+      { type: 'kill', target: 'minerghost', n: 5, t: '광부의 유령 5마리 재우기', verb: 'kill' }
     ],
+    needBasics: 2,
+    require: ['depth'],
+    goal: { type: 'boss', target: 'bone_lord', t: '뼈의 군주 토벌', verb: 'boss' },
     rw: { xp: 900, gold: 600, items: [['ring_vigor', 1], ['potion_hp_small', 8]] },
     outro: '뼈의 군주는 무너지기 직전, 조각을 제 갈비뼈 사이에서 꺼내 네 쪽으로 밀어주었다.\n\n' +
       '"…고맙다. 꿈이 너무 길었어."\n' +
@@ -2406,13 +2413,15 @@ const CHAPTERS = [
       '그래서 숲이 먹기 시작했다. 나무가 짐승을 먹고, 짐승이 흙을 먹고,\n' +
       '흙이 다시 나무를 먹는다. 멈추지 않는다. 배가 부르지 않으니까.\n\n' +
       '한가운데에 심장이 하나 뛰고 있다. 그게 조각을 삼킨 자리다.',
-    obj: [
-      { type: 'kill', target: 'shadoweye', n: 10, t: '그림자 눈 10마리 처치' },
-      { type: 'kill', target: 'crawler', n: 10, t: '부패한 사냥꾼 10마리 처치' },
-      { type: 'kill', target: 'corrupttree', n: 6, t: '부패한 나무 6그루 처치' },
-      { type: 'collect', item: 'corrupt_ess', n: 20, t: '부패의 정수 20개 수집' },
-      { type: 'boss', target: 'corrupt_heart', t: '부패의 심장 토벌' }
+    basics: [
+      { type: 'collect', item: 'corrupt_ess', n: 14, t: '부패의 정수 14개 모으기', verb: 'gather' },
+      { type: 'kill', target: 'shadoweye', n: 8, t: '그림자 눈 8마리 처치', verb: 'kill' },
+      { type: 'kill', target: 'crawler', n: 8, t: '부패한 사냥꾼 8마리 처치', verb: 'kill' },
+      { type: 'kill', target: 'corrupttree', n: 5, t: '부패한 나무 5그루 베기', verb: 'kill' }
     ],
+    needBasics: 2,
+    require: ['gather'],
+    goal: { type: 'boss', target: 'corrupt_heart', t: '부패의 심장 토벌', verb: 'boss' },
     rw: { xp: 2400, gold: 1400, items: [['mythril_ore', 20], ['potion_hp', 5]] },
     outro: '심장이 멈추자 숲이 처음으로 숨을 뱉었다. 들이쉬는 게 아니라, 뱉는 것을.\n\n' +
       '미라: "굶주림은 병이 아니야. 그냥, 아무도 먹여주지 않은 거지."'
@@ -2425,12 +2434,15 @@ const CHAPTERS = [
       '그 대가로 그녀가 닿는 모든 것이 얼었다. 설원은 원래 설원이 아니었다.\n\n' +
       '그녀는 실패한 게 아니다. 성공한 유일한 사람이고, 그게 그녀를 죽이고 있다.\n' +
       '미라는 스승을 만나러 가는 길 내내 아무 말도 하지 않았다.',
-    obj: [
-      { type: 'kill', target: 'frostling', n: 12, t: '서리 정령 12마리 처치' },
-      { type: 'kill', target: 'icewolf', n: 10, t: '얼음 늑대 10마리 처치' },
-      { type: 'collect', item: 'frost_core', n: 15, t: '서리 결정 15개 수집' },
-      { type: 'boss', target: 'frost_witch', t: '서리 마녀 실비아와의 결착' }
+    basics: [
+      { type: 'collect', item: 'frost_core', n: 12, t: '서리 결정 12개 모으기 — 열원이 될 것', verb: 'gather' },
+      { type: 'kill', target: 'frostling', n: 10, t: '서리 정령 10마리 처치', verb: 'kill' },
+      { type: 'kill', target: 'icewolf', n: 8, t: '얼음 늑대 8마리 처치', verb: 'kill' },
+      { type: 'explore', zone: 'ice', t: '서리 지대 깊은 곳에 서기', verb: 'explore' }
     ],
+    needBasics: 2,
+    require: ['gather'],
+    goal: { type: 'boss', target: 'frost_witch', t: '서리 마녀 실비아와의 결착', verb: 'boss' },
     rw: { xp: 6000, gold: 3200, items: [['boots_mythril', 1], ['potion_hp', 6]] },
     outro: '실비아: "네 손도 곧 이렇게 돼. 알고 있지?"\n' +
       '그녀는 조각을 내밀며 처음으로 목소리가 떨렸다.\n\n' +
@@ -2443,14 +2455,15 @@ const CHAPTERS = [
       '그 조각은 꿈을 꾸지 않았다. 꿈꿀 필요가 없었으니까.\n' +
       '다른 것이 대신 썼다.\n\n' +
       '실비아의 부탁은 이미 늦었다. 그건 벌써 깨어 있었다.',
-    obj: [
-      { type: 'depth', y: 395, t: '심연(지하 1600m) 도달' },
-      { type: 'kill', target: 'imp', n: 12, t: '화염 임프 12마리 처치' },
-      { type: 'kill', target: 'lavaslug', n: 8, t: '용암 슬러그 8마리 처치' },
-      { type: 'kill', target: 'wraith', n: 10, t: '심연의 망령 10마리 처치' },
-      { type: 'collect', item: 'void_frag', n: 15, t: '공허 조각 15개 수집' },
-      { type: 'boss', target: 'void_king', t: '공허의 왕 토벌' }
+    basics: [
+      { type: 'depth', y: 395, t: '심연(지하 1600m) 도달', verb: 'depth' },
+      { type: 'kill', target: 'imp', n: 10, t: '화염 임프 10마리 처치', verb: 'kill' },
+      { type: 'kill', target: 'wraith', n: 8, t: '심연의 망령 8마리 처치', verb: 'kill' },
+      { type: 'collect', item: 'void_frag', n: 12, t: '공허 조각 12개 모으기', verb: 'gather' }
     ],
+    needBasics: 3,
+    require: ['depth'],
+    goal: { type: 'boss', target: 'void_king', t: '공허의 왕 토벌', verb: 'boss' },
     rw: { xp: 20000, gold: 12000, items: [['charm_star', 1]] },
     outro: '다섯 번째 조각이 손에 들어오자, 손안의 빛이 처음으로 뜨거워졌다.\n' +
       '다섯이 서로를 알아본 것이다.\n\n' +
@@ -2464,14 +2477,15 @@ const CHAPTERS = [
       '동쪽 숲의 거대한 나무가 위로 이어져 있다. 자란 게 아니라 심어진 것이다 —\n' +
       '누군가 올라올 것을 알고, 올라오라고 놓아둔 계단.\n\n' +
       '그 말은, 우리가 처음이 아니라는 뜻이다.',
-    obj: [
-      { type: 'depth', y: 34, up: 1, t: '하늘 섬에 오르기 (고도 160m)' },
-      { type: 'kill', target: 'gale', n: 12, t: '바람 정령 12마리 처치' },
-      { type: 'kill', target: 'sky_sentry', n: 10, t: '하늘 파수꾼 10기 파괴' },
-      { type: 'kill', target: 'cloudjelly', n: 8, t: '구름 해파리 8마리 처치' },
-      { type: 'collect', item: 'aether_shard', n: 20, t: '에테르 파편 20개 수집' },
-      { type: 'boss', target: 'storm_warden', t: '폭풍의 수호자 토벌' }
+    basics: [
+      { type: 'depth', y: 34, up: 1, t: '하늘 섬에 오르기 (고도 160m)', verb: 'depth' },
+      { type: 'kill', target: 'gale', n: 10, t: '바람 정령 10마리 처치', verb: 'kill' },
+      { type: 'kill', target: 'sky_sentry', n: 8, t: '하늘 파수꾼 8기 파괴', verb: 'kill' },
+      { type: 'collect', item: 'aether_shard', n: 15, t: '에테르 파편 15개 모으기', verb: 'gather' }
     ],
+    needBasics: 2,
+    require: ['depth'],
+    goal: { type: 'boss', target: 'storm_warden', t: '폭풍의 수호자 토벌', verb: 'boss' },
     rw: { xp: 30000, gold: 16000, items: [['charm_feather', 1], ['potion_hp_greater', 3]] },
     outro: '수호자는 멈추기 직전, 처음으로 사람처럼 말했다.\n\n' +
       '"벌써 다섯을 모았나. …그럼 아래도 곧 열리겠군."\n' +
@@ -2486,14 +2500,15 @@ const CHAPTERS = [
       '그저 다음 사람에게 넘기는 것이었다.\n\n' +
       '최초의 파수꾼은 적을 막으려고 만들어진 게 아니다.\n' +
       '다음 사람이 같은 방법을 쓰지 못하게 하려고 만들어졌다.',
-    obj: [
-      { type: 'collect', item: 'rune_frag', n: 3, t: '세 유적의 석판에서 룬 조각 3개 수집' },
-      { type: 'kill', target: 'ruin_guard', n: 10, t: '유적 수호병 10기 파괴' },
-      { type: 'kill', target: 'lantern', n: 10, t: '잊힌 등불 10개 처치' },
-      { type: 'kill', target: 'archivist', n: 8, t: '잊힌 사서 8명 처치' },
-      { type: 'craft', item: 'ruin_key', t: '유적의 열쇠 제작' },
-      { type: 'boss', target: 'first_keeper', t: '최초의 파수꾼 토벌' }
+    basics: [
+      { type: 'collect', item: 'rune_frag', n: 3, t: '세 유적의 석판에서 룬 조각 3개', verb: 'gather' },
+      { type: 'craft', item: 'ruin_key', t: '유적의 열쇠 벼리기', verb: 'craft' },
+      { type: 'kill', target: 'ruin_guard', n: 8, t: '유적 수호병 8기 파괴', verb: 'kill' },
+      { type: 'kill', target: 'archivist', n: 6, t: '잊힌 사서 6명 재우기', verb: 'kill' }
     ],
+    needBasics: 3,
+    require: ['gather', 'craft'],
+    goal: { type: 'boss', target: 'first_keeper', t: '최초의 파수꾼 토벌', verb: 'boss' },
     rw: { xp: 90000, gold: 40000, items: [['charm_rune', 1], ['star_heart', 2]] },
     outro: '파수꾼이 멈추자 유적의 불이 하나씩 꺼졌다.\n' +
       '마지막 석판에 없던 한 줄이 새로 새겨졌다.\n\n' +
@@ -2510,12 +2525,14 @@ const CHAPTERS = [
       '숨는 대신 위치를 알려주는 것이다.\n\n' +
       '엘라라가 물었다. "그게 오면 어쩔 건데."\n' +
       '보린이 대신 답했다. "여기서 끝내야지. 다음 사람한테 넘기지 말고."',
-    obj: [
-      { type: 'collect', item: 'star_heart', n: 5, t: '별의 심장 5개 모으기' },
-      { type: 'craft', item: 'star_whole', t: '다섯 조각을 되맞추기' },
-      { type: 'craft', item: 'sum_pursuer', t: '되맞춘 별의 부름 제작' },
-      { type: 'boss', target: 'pursuer', t: '별을 쫓아온 것 토벌' }
+    basics: [
+      { type: 'collect', item: 'star_heart', n: 5, t: '별의 심장 5개 모으기', verb: 'gather' },
+      { type: 'craft', item: 'star_whole', t: '다섯 조각을 되맞추기', verb: 'craft' },
+      { type: 'craft', item: 'sum_pursuer', t: '되맞춘 별의 부름 만들기', verb: 'craft' }
     ],
+    needBasics: 2,
+    require: ['craft'],
+    goal: { type: 'boss', target: 'pursuer', t: '별을 쫓아온 것과의 결착', verb: 'boss' },
     rw: { xp: 260000, gold: 120000, items: [['charm_dawn', 1], ['sword_first', 1]] },
     outro: '그것은 비명을 지르지 않았다. 마지막까지 아무 소리도 내지 않았다.\n' +
       '무너져 내리면서, 처음으로 제 형태를 갖췄을 뿐이다.\n' +
@@ -2533,13 +2550,15 @@ const CHAPTERS = [
       '보린: "이건 쌓아 올린 게 아니야. …찍어낸 거지."\n\n' +
       '그리고 광장 한복판, 분수대를 들어내자 아래로 곧게 뚫린 수직 통로가 나왔다.\n' +
       '바닥이 보이지 않는데, 아주 희미하게 — 아직도 무언가 돌아가는 소리가 올라온다.',
-    obj: [
-      { type: 'talk', npc: 'kade', t: '여명 마을의 케이드와 대화' },
-      { type: 'collect', item: 'steel_plate', n: 30, t: '강철판 30개 확보' },
-      { type: 'collect', item: 'power_core', n: 8, t: '동력석 8개 채굴' },
-      { type: 'kill', target: 'scrapcrawler', n: 12, t: '고철 기어다니개 12기 파괴' },
-      { type: 'kill', target: 'sparkwisp', n: 10, t: '불티 정령 10기 처치' }
+    basics: [
+      { type: 'collect', item: 'steel_plate', n: 24, t: '강철판 24개 확보', verb: 'gather' },
+      { type: 'collect', item: 'power_core', n: 6, t: '동력석 6개 캐기', verb: 'gather' },
+      { type: 'kill', target: 'scrapcrawler', n: 10, t: '고철 기어다니개 10기 파괴', verb: 'kill' },
+      { type: 'kill', target: 'sparkwisp', n: 8, t: '불티 정령 8기 흩기', verb: 'kill' }
     ],
+    needBasics: 2,
+    require: [],
+    goal: { type: 'talk', npc: 'kade', t: '케이드에게 — 여기에 도시를 세울 수 있다', verb: 'talk' },
     rw: { xp: 320000, gold: 90000, items: [['gear_basic', 20], ['potion_hp_greater', 3]] },
     outro: '케이드가 강철판을 손톱으로 긁어 보더니 한참을 말이 없었다.\n\n' +
       '"…이거, 우리 대장간에서 백 년을 두드려도 못 만들어."\n' +
@@ -2555,13 +2574,15 @@ const CHAPTERS = [
       '그래서 아무도 죽지 않았고, 그리고 아무도 남지 않았다.\n\n' +
       '가장 아래층에 「관리자」가 있다. 이 모든 것을 멈출 권한을 넘겨받은 것.\n' +
       '멈출 권한만 있고, 멈출 이유는 배우지 못한 것.',
-    obj: [
-      { type: 'collect', item: 'blueprint_frag', n: 3, t: '단말 셋에서 설계도 조각 3개 수집' },
-      { type: 'kill', target: 'riveter', n: 12, t: '대갈못 사수 12기 파괴' },
-      { type: 'kill', target: 'foreman', n: 8, t: '옛 십장 8기 정지' },
-      { type: 'boss', target: 'overseer', t: '공창의 관리자 정지' },
-      { type: 'craft', item: 'pick_drill', t: '시추 곡괭이 제작' }
+    basics: [
+      { type: 'collect', item: 'blueprint_frag', n: 3, t: '단말 셋에서 설계도 조각 3개 읽어 내기', verb: 'read' },
+      { type: 'kill', target: 'riveter', n: 10, t: '대갈못 사수 10기 파괴', verb: 'kill' },
+      { type: 'kill', target: 'foreman', n: 6, t: '옛 십장 6기 정지', verb: 'kill' },
+      { type: 'craft', item: 'pick_drill', t: '시추 곡괭이 만들기', verb: 'craft' }
     ],
+    needBasics: 2,
+    require: ['read'],
+    goal: { type: 'boss', target: 'overseer', t: '공창의 관리자 정지', verb: 'boss' },
     rw: { xp: 600000, gold: 200000, items: [['blueprint_core', 1], ['power_core', 30]] },
     outro: '관리자는 저항하지 않았다. 마지막에 딱 한 줄을 띄우고 꺼졌다.\n\n' +
       '『정지 명령 수신. …1,140일 만입니다.』\n\n' +
@@ -2580,14 +2601,15 @@ const CHAPTERS = [
       '미라가 처음으로 웃지 않았다. "너무 빠른데."\n' +
       '케이드: "빠른 게 나쁜 거야?"\n' +
       '미라: "빠른 다음에 뭐가 오는지, 우리 방금 보고 왔잖아."',
-    obj: [
-      { type: 'talk', npc: 'kade', t: '케이드와 대화' },
-      { type: 'collect', item: 'gear_basic', n: 40, t: '기어 40개 확보' },
-      { type: 'collect', item: 'steel_plate', n: 40, t: '강철판 40개 확보' },
-      { type: 'craft', item: 'm_assembler', t: '조립기 제작' },
-      { type: 'kill', target: 'riveter', n: 10, t: '대갈못 사수 10기 파괴' },
-      { type: 'kill', target: 'scrapcrawler', n: 10, t: '고철 기어다니개 10기 파괴' }
+    basics: [
+      { type: 'craft', item: 'm_assembler', t: '조립기 만들기', verb: 'craft' },
+      { type: 'collect', item: 'gear_basic', n: 30, t: '기어 30개 확보', verb: 'gather' },
+      { type: 'collect', item: 'steel_plate', n: 30, t: '강철판 30개 확보', verb: 'gather' },
+      { type: 'kill', target: 'riveter', n: 8, t: '대갈못 사수 8기 파괴', verb: 'kill' }
     ],
+    needBasics: 2,
+    require: ['craft'],
+    goal: { type: 'place', mach: 'assembler', stop: 1, t: '조립기를 세우고 · 동력을 물리고 · 손으로 끊기', verb: 'place' },
     rw: { xp: 750000, gold: 250000, items: [['battery_cell', 12], ['motor', 6]] },
     outro: '셋째 날, 조립기 하나가 정해진 몫을 다 채우고도 멈추지 않았다.\n' +
       '아무도 새 명령을 내리지 않았는데, 팔이 계속 움직였다. 판자를, 못을, 이미 다 쓴 재료까지 집어삼키며.\n\n' +
@@ -2607,14 +2629,15 @@ const CHAPTERS = [
       '우리가 멈춘 건 첫 번째 층이었다. 그 아래로 자기가 자기를 복사한 것이\n' +
       '아직 돌아가고 있다. 이름 붙일 사람이 없어서 이름도 없다.\n\n' +
       '케이드가 정지 스위치 도면을 폈다. "이번엔 멈추는 걸 먼저 들고 내려가자."',
-    obj: [
-      { type: 'depth', y: 318, t: '폭주로(지하 1240m)까지 내려가기' },
-      { type: 'craft', item: 'm_switch', t: '정지 스위치 제작' },
-      { type: 'kill', target: 'splitter', n: 14, t: '증식 기계 14기 정지' },
-      { type: 'kill', target: 'weldarm', n: 10, t: '용접 팔 10기 정지' },
-      { type: 'collect', item: 'core_shard', n: 30, t: '노심 파편 30개 수집' },
-      { type: 'boss', target: 'proliferator', t: '증식체 정지' }
+    basics: [
+      { type: 'craft', item: 'm_switch', t: '정지 스위치 만들기', verb: 'craft' },
+      { type: 'depth', y: 318, t: '폭주로(지하 1240m)까지 내려가기', verb: 'depth' },
+      { type: 'kill', target: 'splitter', n: 10, t: '증식 기계 10기 정지', verb: 'kill' },
+      { type: 'collect', item: 'core_shard', n: 22, t: '노심 파편 22개 모으기', verb: 'gather' }
     ],
+    needBasics: 3,
+    require: ['craft'],
+    goal: { type: 'boss', target: 'proliferator', t: '증식체 정지', verb: 'boss' },
     rw: { xp: 900000, gold: 300000, items: [['machine_frame', 8], ['power_core', 40], ['potion_hp_greater', 5]] },
     outro: '증식체는 부서지면서도 계속 자기를 복사하려고 했다. 마지막 조각까지.\n\n' +
       '케이드: "이건 악의가 아니야. 그냥… 멈추라는 말을 아무도 안 해 준 거지."\n' +
@@ -2634,12 +2657,15 @@ const CHAPTERS = [
       '그 뒤로 천 년을, 아무도 없는 곳에서 혼자 돌았다.\n\n' +
       '보린이 망치를 내려놓았다. "…이건 부수는 게 아닌 것 같은데."\n' +
       '케이드: "부수는 거 아니야. 이번엔 우리가 남아 있잖아."',
-    obj: [
-      { type: 'collect', item: 'core_shard', n: 60, t: '노심 파편 60개 확보' },
-      { type: 'craft', item: 'stop_core', t: '정지 핵 제작' },
-      { type: 'kill', target: 'coreling', n: 16, t: '노심 파편체 16기 정지' },
-      { type: 'boss', target: 'hepha', t: '헤파와의 결착' }
+    basics: [
+      { type: 'craft', item: 'stop_core', t: '정지 핵 만들기', verb: 'craft' },
+      { type: 'collect', item: 'core_shard', n: 45, t: '노심 파편 45개 확보', verb: 'gather' },
+      { type: 'kill', target: 'coreling', n: 12, t: '노심 파편체 12기 정지', verb: 'kill' },
+      { type: 'kill', target: 'weldarm', n: 8, t: '용접 팔 8기 정지', verb: 'kill' }
     ],
+    needBasics: 2,
+    require: ['craft'],
+    goal: { type: 'boss', target: 'hepha', t: '헤파와의 결착', verb: 'boss' },
     rw: { xp: 2000000, gold: 800000, items: [['hepha_heart', 1], ['stop_core', 1]] },
     outro: '헤파는 마지막에 저항을 멈췄다. 이길 수 없어서가 아니었다.\n\n' +
       '『정지 명령 수신.』\n' +
@@ -2667,13 +2693,15 @@ const CHAPTERS = [
       '미라: "그럼 저 줄 서 있는 것들은…"\n' +
       '케이드: "만들다 만 사람이지."\n\n' +
       '가장 안쪽 자리 하나만 비어 있다. 완성된 것이 딱 하나 있었다는 뜻이다.',
-    obj: [
-      { type: 'craft', item: 'atelier_key', t: '설계실의 인장 제작' },
-      { type: 'collect', item: 'draft_glass', n: 40, t: '설계 유리 40개 수집' },
-      { type: 'kill', target: 'draft_form', n: 14, t: '미완의 형상 14기 정지' },
-      { type: 'kill', target: 'scribe_hand', n: 12, t: '기록하는 손 12기 정지' },
-      { type: 'boss', target: 'archetype', t: '원형과의 결착' }
+    basics: [
+      { type: 'craft', item: 'atelier_key', t: '설계실의 인장 만들기', verb: 'craft' },
+      { type: 'collect', item: 'draft_glass', n: 30, t: '설계 유리 30개 모으기', verb: 'gather' },
+      { type: 'kill', target: 'draft_form', n: 10, t: '미완의 형상 10기 정지', verb: 'kill' },
+      { type: 'kill', target: 'scribe_hand', n: 8, t: '기록하는 손 8기 정지', verb: 'kill' }
     ],
+    needBasics: 3,
+    require: ['craft'],
+    goal: { type: 'boss', target: 'archetype', t: '원형과의 결착', verb: 'boss' },
     rw: { xp: 4000000, gold: 1600000, items: [['charm_maker', 1], ['blade_arche', 1], ['tome_origin', 1]] },
     outro: '원형은 사람처럼 싸웠다. 기계처럼 지지 않으려 한 게 아니라, 사람처럼 무서워하면서.\n\n' +
       '무너지기 직전에 그것이 처음으로 입을 열었다. 기계 소리가 아니었다.\n\n' +
