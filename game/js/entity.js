@@ -914,6 +914,19 @@ class Enemy extends Ent {
 
   hurt(amount, crit, src, kb) {
     if (this.dead) return;
+    /* 페이즈가 넘어가는 0.8초 동안은 피해가 들어가지 않는다. 연출을 끊고 때려서
+       전환을 못 보고 지나가는 일을 막는다. */
+    if (this.phaseInv > 0) {
+      G.texts.push(new DmgText(this.cx, this.y - 4, '전환 중', '#9fd4ff', 0));
+      return;
+    }
+    /* 굳어 있을 때(guard) — 약점이 드러나기 전에는 거의 통하지 않는다.
+       0으로 두지 않는 이유: 아무 반응이 없으면 버그처럼 보인다. 12%는 "지금은
+       때릴 때가 아니다"를 손으로 알려 주는 값이다. */
+    if (this.guard) {
+      amount *= 0.12;
+      if (Math.random() < 0.5) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, '막혔다', '#8d8874', 0));
+    }
     const red = this.armor / (this.armor + 70);
     // 사냥꾼의 표식 — 출처를 가리지 않는다. 표식이 붙은 동안은 무엇에 맞아도 더 아프다
     if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
@@ -1058,6 +1071,95 @@ class Enemy extends Ent {
     }
   }
 
+  /* ---- 페이즈가 바뀌는 순간 ----
+     예전에는 흔들림과 입자만 있었다. 그래서 "숫자가 줄었다" 말고는 달라진 게 없었고,
+     후반 보스 넷이 같은 AI를 쓰니 결착이 전부 같은 탄막으로 끝났다.
+     이제 전환은 세 가지를 한다 — 0.8초 무적(그동안 피해가 들어가지 않는다) ·
+     한 줄 대사 · **약점 규칙 교체**. 규칙이 바뀌는 것이 페이즈의 본체다. */
+  onPhaseChange(ph, world, p) {
+    this.phaseInv = 0.8;
+    this.guard = 0;
+    G.shake = Math.max(G.shake, 11);
+    for (let i = 0; i < 26; i++) {
+      G.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w,
+                            this.cy + (Math.random() - 0.5) * this.h,
+                            i % 3 ? this.def.c : '#ffe08a', -120, 0.9));
+    }
+    G.ringFx(this.cx, this.cy, Math.max(this.w, this.h) * 1.6, '#ffe08a', .55);
+    G.sfxAt('chapter', this.cx / TS, this.cy / TS);
+
+    const line = (BOSS_LINES[this.type] || {})[ph];
+    if (line) G.bossLine(this.def.n, line);
+
+    // 보스마다 이 순간에 켜지는 규칙
+    switch (this.def.ai) {
+      case 'b_slime':
+        // 2페이즈 — 껍데기가 굳는다. 착지 직후 벌어질 때만 핵이 드러난다
+        if (ph === 2) { this.guard = 1; this.openT = 0; }
+        break;
+      case 'b_witch':
+        /* 2페이즈 — 바닥이 언다. 열원 옆이 아니면 계속 얼어붙는다.
+           싸울 수 있게 하려고 전환하면서 화톳불 셋을 바닥에 세운다. */
+        if (ph === 2) { this.iceFloor = 1; this.layHeat(world, p); }
+        break;
+      case 'b_prolif': if (ph === 2) this.guard = 1; break;      // 핵만 약점
+      case 'b_hepha':  if (ph === 2) this.guard = 1; break;      // 정지 핵을 써야 열린다
+      case 'b_arche':
+        /* 받침대를 깨야 열린다 — 그런데 방에 받침대가 없으면 규칙이 걸리지도 않는다.
+           전환하면서 넷을 세운다(마녀가 화톳불을 놓는 것과 같은 이유다). */
+        if (ph === 2) { this.guard = 1; this.raisePedestals(); }
+        break;
+      case 'b_overseer': if (ph >= 1) this.term = 0; break;
+    }
+  }
+
+  /** 원형 2페이즈 — 받침대 넷. 이것들이 살아 있는 동안 원형은 열리지 않는다 */
+  raisePedestals() {
+    for (let i = 0; i < 4; i++) {
+      const e = new Enemy('draft_form', this.cx + (i - 1.5) * 96, this.cy - 10, 1);
+      e.pedestal = 1; e.maxHp = Math.round(e.maxHp * 0.35); e.hp = e.maxHp;
+      e.spd = 0;                               // 받침대다. 쫓아오지 않는다
+      G.ents.push(e);
+    }
+    G.toast('받침대 넷이 그것을 붙들고 있다', 'bad');
+  }
+
+  /* 서리 마녀 2페이즈 — 발밑에 설 수 있는 자리를 만들어 준다.
+     "열원 칸만 안전"인데 방에 열원이 없으면 그냥 죽는 방이 된다. */
+  layHeat(world, p) {
+    const fy = Math.floor((this.y + this.h + 4) / TS);
+    for (const off of [-9, 0, 9]) {
+      const tx = Math.floor(this.cx / TS) + off;
+      for (let y = fy; y < fy + 4; y++) {
+        if (world.solid(tx, y + 1) && world.get(tx, y) === T.AIR) { world.set(tx, y, T.TORCH); break; }
+      }
+    }
+    G.toast('바닥이 언다 — 불 옆에 서라', 'bad');
+  }
+
+  /** 매 프레임 도는 약점·장판 규칙. 보스별 갈래는 짧게 둔다 */
+  tickWeak(dt, world, p) {
+    // 껍데기가 벌어지는 시간 — 그동안만 피해가 제대로 들어간다
+    if (this.openT > 0) { this.openT -= dt; if (this.openT <= 0) this.guard = 1; }
+    if (!this.iceFloor) return;
+    /* 서리 장판 — 발밑 세 칸 안에 열원(횃불·용암)이 없으면 얼어붙는다.
+       즉사가 아니라 둔화 + 잔피해다. 불 사이를 옮겨 다니는 싸움이 된다. */
+    this.iceCd = (this.iceCd || 0) - dt;
+    if (this.iceCd > 0) return;
+    this.iceCd = 0.5;
+    const tx = Math.floor(p.cx / TS), ty = Math.floor((p.y + p.h - 2) / TS);
+    let warm = false;
+    for (let x = tx - 2; x <= tx + 2 && !warm; x++)
+      for (let y = ty - 2; y <= ty + 2; y++) {
+        const t = world.get(x, y);
+        if (t === T.TORCH || t === T.LAVA) { warm = true; break; }
+      }
+    if (warm) return;
+    p.addBuff('frostbite', 1.2);
+    p.hurt(this.dmg * 0.18);
+    for (let i = 0; i < 4; i++) G.parts.push(new Part(p.cx, p.cy, '#9fe0ff', -30, .5));
+  }
+
   /* ---- 보스 AI ---- */
   bossAI(dt, world, p, dx, dy, dd) {
     const AI = this.def.ai;
@@ -1070,21 +1172,29 @@ class Enemy extends Ent {
     if (this.phase > this.lastPhase) {
       this.lastPhase = this.phase;
       this.phaseT = 0.7;
-      G.shake = Math.max(G.shake, 11);
-      for (let i = 0; i < 26; i++) {
-        G.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w,
-                              this.cy + (Math.random() - 0.5) * this.h,
-                              i % 3 ? this.def.c : '#ffe08a', -120, 0.9));
-      }
-      G.sfxAt('chapter', this.cx / TS, this.cy / TS);
+      this.onPhaseChange(this.phase, world, p);
     }
     this.phaseT = (this.phaseT || 0) - dt;
+    if (this.phaseInv > 0) this.phaseInv -= dt;
+    this.tickWeak(dt, world, p);
 
     if (AI === 'b_slime') {
       if (this.onGround) {
         this.vx *= 0.86;
+        /* 2페이즈 — 껍데기가 굳는다(onPhaseChange 에서 guard=1). 착지해서 몸이
+           출렁이는 1.6초 동안만 핵이 드러나고, 그때 때려야 제대로 들어간다.
+           "핵만 약점"을 별도 개체 없이 시간 창으로 옮긴 것이다 — 창이 열릴 때까지
+           기다렸다 붙는 싸움이 된다. */
+        if (this.phase === 2 && this.landT !== 1) {
+          this.landT = 1; this.guard = 0; this.openT = 0.9;
+          G.ringFx(this.cx, this.cy, this.w * 0.9, '#9fe0ff', .4);
+        }
         if (this.jumpCd <= 0) {
-          this.jumpCd = 1.5 - this.phase * 0.35;
+          this.landT = 0;
+          /* 2페이즈는 일부러 느리게 뛴다. 창이 0.9초인데 주기가 0.8초면 창이 겹쳐서
+             사실상 늘 열려 있게 된다(처음에 그렇게 되어 있었다 — 599/600 프레임이
+             열림). 굳어 있는 시간이 있어야 "기다렸다 친다"가 성립한다. */
+          this.jumpCd = this.phase === 2 ? 2.2 : 1.5 - this.phase * 0.35;
           this.vy = -680 - this.phase * 60;
           this.vx = Math.sign(dx) * (200 + this.phase * 70);
           if (Math.random() < 0.35 + this.phase * 0.2) {
@@ -1322,6 +1432,146 @@ class Enemy extends Ent {
         }
       } else { this.vx *= 0.9; this.vy *= 0.9; }
       this.move(dt, world, { gravMul: 0 });
+    } else if (AI === 'b_prolif') {
+      /* 증식체 — 예전엔 b_slime 이라 커다란 슬라임처럼 뛰어다녔다. 이 장의 이야기는
+         "스스로를 불려 멈추지 않는 것"이지 점프가 아니다. 뛰지 않는다.
+         제자리에서 갈라져 나오고, 갈라진 것들이 다시 갈라진다. 2페이즈부터는 껍데기가
+         닫혀, 갈라져 나온 것을 다 치워야(핵이 드러나야) 본체가 열린다. */
+      this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.35, dt * 2);
+      if (this.stateT <= 0) {
+        this.stateT = 2.4 - this.phase * 0.4;
+        const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'splitter')).length;
+        if (kids < 3 + this.phase) {                    // 쵸크 금지 — 한 번에 셋까지
+          const n = 1 + this.phase;
+          for (let i = 0; i < n; i++) {
+            const e = new Enemy(this.def.minion || 'splitter',
+              this.cx + (i - (n - 1) / 2) * 46, this.cy, G.scale());
+            e.vy = -220; e.vx = (i - (n - 1) / 2) * 90;
+            G.ents.push(e);
+          }
+          G.ringFx(this.cx, this.cy, this.w, '#9a8a76', .4);
+        }
+      }
+      if (this.phase === 2) {
+        // 갈라진 것이 다 없어지면 핵이 드러난다 — 그때만 제대로 들어간다
+        const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'splitter')).length;
+        const open = kids === 0;
+        if (open && this.guard) { this.guard = 0; G.toast('핵이 드러났다', 'good'); }
+        else if (!open && !this.guard) this.guard = 1;
+      }
+      if (this.atkCd <= 0 && dd < 320) {
+        this.atkCd = 1.4;
+        const a = angleTo(this.cx, this.cy, p.cx, p.cy);
+        G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 340, Math.sin(a) * 340, this.dmg * 0.5, 'enemy', 'bolt'));
+      }
+      this.move(dt, world);
+
+    } else if (AI === 'b_overseer') {
+      /* 공창의 관리자 — 파수꾼의 룬 광선이 아니라 **단말로 명령을 내린다**.
+         제가 직접 때리는 일이 거의 없고, 방 안의 기계를 깨워 대신 싸우게 한다.
+         플레이어가 할 일은 관리자를 쫓는 게 아니라 명령이 도는 주기를 읽는 것이다. */
+      this.term = (this.term || 0) + dt;
+      if (this.stateT <= 0) {
+        this.state = (this.state + 1) % 3;
+        this.stateT = 3.0 - this.phase * 0.4;
+        if (this.state === 0) G.toast('관리자가 명령을 내린다', 'bad');
+      }
+      if (this.state === 0) {                    // 명령 — 바닥에서 압착기가 솟는다
+        this.vx *= 0.9;
+        if (this.atkCd <= 0) {
+          this.atkCd = 0.55 - this.phase * 0.08;
+          const fx = p.cx + (Math.random() - 0.5) * 260;
+          G.warnFx(fx, p.cy + 20, 34, 0.6, '#c8843a');
+          G.pending.push({ t: 0.6, fn: () => {
+            G.aoe(fx, p.cy + 20, 40, this.dmg * 0.6, 6, '#c8843a');
+            for (let k = 0; k < 8; k++) G.parts.push(new Part(fx, p.cy + 20, '#c8843a', -160, .6));
+          } });
+        }
+      } else if (this.state === 1) {             // 물러서며 재장전 — 유일하게 붙을 틈
+        this.vx = lerp(this.vx, -Math.sign(dx) * this.spd * 0.9, dt * 3);
+      } else {                                   // 호출
+        this.vx *= 0.92;
+        if (this.atkCd <= 0) {
+          this.atkCd = 1.6;
+          const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'riveter')).length;
+          if (kids < 3) G.ents.push(new Enemy(this.def.minion || 'riveter',
+            this.cx + (Math.random() - 0.5) * 220, this.cy - 20, G.scale()));
+        }
+      }
+      this.move(dt, world);
+
+    } else if (AI === 'b_hepha') {
+      /* 헤파 — 컨베이어 위에 서 있는 것. 제자리에서 팔만 돌리고, 플레이어를 자기
+         쪽으로 끌어당긴다(컨베이어). 2페이즈에는 껍데기가 닫혀서 때리는 것으로는
+         열 수 없다 — **정지 핵**(stop_core)을 손에 들고 붙어야 열린다.
+         13장이 "멈추는 법"에 관한 장이라, 결착도 때리는 게 아니라 멈추는 것이다. */
+      this.vx *= 0.88;
+      // 컨베이어 — 가까이 있으면 계속 끌려온다
+      if (dd < 420) p.vx += Math.sign(this.cx - p.cx) * 150 * dt;
+      if (this.stateT <= 0) {
+        this.state = (this.state + 1) % 3;
+        this.stateT = 2.6 - this.phase * 0.35;
+      }
+      if (this.state === 0) {                    // 팔 휘두르기 — 좌우로 퍼지는 충격
+        if (this.atkCd <= 0) {
+          this.atkCd = 0.9 - this.phase * 0.15;
+          for (const dir of [-1, 1]) for (let k = 0; k < 4; k++) {
+            const x = this.cx + dir * (50 + k * 44);
+            G.pending.push({ t: k * 0.06, fn: () => {
+              G.aoe(x, this.y + this.h - 12, 34, this.dmg * 0.45, 5, '#c8a05a');
+              for (let i = 0; i < 3; i++) G.parts.push(new Part(x, this.y + this.h - 6, '#c8a05a', -140, .5));
+            } });
+          }
+        }
+      } else if (this.state === 1) {             // 불티 — 위로 뿌려 떨어뜨린다
+        if (this.atkCd <= 0) {
+          this.atkCd = 0.4;
+          const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.4;
+          const pr = new Proj(this.cx, this.cy - 20, Math.cos(a) * 320, Math.sin(a) * 420, this.dmg * 0.4, 'enemy', 'fire');
+          pr.grav = 300; G.projs.push(pr);
+        }
+      }
+      if (this.phase === 2 && this.guard) {
+        /* 정지 핵을 들고 붙어 있으면 열린다. 들고만 있으면 되는 게 아니라
+           끌어당기는 컨베이어를 거슬러 붙어야 하므로 그 자체가 한 판이다. */
+        const held = p.held();
+        if (held && held.id === 'stop_core' && dd < 90) {
+          this.stopT = (this.stopT || 0) + dt;
+          for (let i = 0; i < 2; i++) G.parts.push(new Part(this.cx, this.cy, '#9fd4ff', -40, .5));
+          if (this.stopT > 1.2) { this.guard = 0; G.toast('정지 핵이 물렸다 — 지금이다', 'good'); G.shake = 12; }
+        } else this.stopT = 0;
+      }
+      this.move(dt, world);
+
+    } else if (AI === 'b_arche') {
+      /* 원형 — 사람을 본떠 만든 첫 번째 것. 그래서 탄막을 쓰지 않는다.
+         거리를 좁히고 **근접 연격**을 넣는다(md: 탄막 최소화).
+         2페이즈에는 방의 받침대 넷이 그것을 붙들고 있어, 받침대를 깨야 열린다. */
+      if (this.stateT <= 0) {
+        this.state = (this.state + 1) % 3;
+        this.stateT = this.state === 1 ? 1.5 : 2.2;
+        if (this.state === 1) { this.combo = 0; this.atkCd = 0.2; }
+      }
+      if (this.state === 1) {                    // 연격 — 세 번 파고든다
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 2.2, dt * 6);
+        if (this.atkCd <= 0 && this.combo < 3) {
+          this.combo++; this.atkCd = 0.42;
+          G.aoe(this.cx + Math.sign(dx) * 44, this.cy, 52, this.dmg * 0.8, 7, '#e8dcc0');
+          G.shake = Math.max(G.shake, 6);
+        }
+      } else if (this.state === 0) {             // 겨눔 — 천천히 붙는다
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.6, dt * 3);
+        if (this.onGround && dy < -50) this.vy = -580;
+      } else {                                   // 숨 고르기 — 붙을 틈
+        this.vx *= 0.86;
+      }
+      if (this.phase === 2 && this.guard) {
+        // 받침대(제단석)를 다 깨면 열린다. 방에 없으면 그냥 열어 준다(막히지 않게)
+        const ped = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === 'draft_form').length;
+        if (!ped) { this.guard = 0; G.toast('받침대가 무너졌다', 'good'); }
+      }
+      this.move(dt, world);
+
     } else if (AI === 'b_restorer') {
       /* 부유 성채의 환원기 — 지금까지 나온 무엇보다 세다.
          다른 보스와 갈리는 점은 딱 하나, **발판을 없앤다**는 것이다. 기반암과 제단만 남기고

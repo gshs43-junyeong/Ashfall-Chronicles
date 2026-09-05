@@ -1643,7 +1643,10 @@ const G = {
     UI.refreshBag();
   },
   spawnBoss(id, x, y) {
-    const e = new Enemy(id, x, y, this.scale() * 0.9);
+    /* 스토리 보스는 수치를 고정한다. scale() 은 플레이어의 진행도를 따라 커지는
+       값이라, 늦게 온 사람일수록 결착이 더 두꺼워지고 페이즈가 지루해졌다.
+       필드·미니보스는 그대로 scale() 을 탄다(그쪽은 "지나가다 만난 것"이라 맞다). */
+    const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
     this.ents.push(e); this.boss = e;
     this.toast(`${ENEMIES[id].n}이(가) 깨어났다!`, 'bad');
     this.shake = 16;
@@ -1858,6 +1861,12 @@ const G = {
      v1.1에서 스킬이 열둘 늘면서, 입자만으로는 무슨 일이 일어났는지 안 보이는 것들이
      생겼다(번개가 어디로 튀었는지, 별이 어디에 떨어질지). 셋을 더 만들었다 —
      퍼지는 고리 · 튀는 번개 · 떨어질 자리 예고. 전부 그림 없이 선으로만 그린다. */
+  /** 보스가 페이즈를 넘기며 던지는 한 줄. 대화창을 열면 싸움이 끊기므로
+      화면 아래쪽에 잠깐 얹기만 한다(입력을 막지 않는다). */
+  bossLine(who, text) {
+    this.bossSay = { who, text, t: 3.2 };
+  },
+
   /** 퍼져 나가는 고리. aoe 와 달리 피해가 없다 — 순수하게 보이기 위한 것 */
   ringFx(x, y, r, c, life) {
     this.rings = this.rings || [];
@@ -3250,6 +3259,26 @@ const G = {
         c.stroke();
       }
       c.globalAlpha = 1; c.lineWidth = 1; c.lineCap = 'butt';
+    }
+
+    // ---- 보스 대사 (화면 아래) ----
+    if (this.bossSay) {
+      const bs = this.bossSay; bs.t -= 1 / 60;
+      if (bs.t <= 0) this.bossSay = null;
+      else {
+        const a = Math.min(1, bs.t / 0.6);
+        c.save();
+        c.globalAlpha = a;
+        c.font = '600 15px "Pretendard",sans-serif';
+        c.textAlign = 'center';
+        const y = this.H - 96;
+        c.fillStyle = '#000a'; c.fillText(bs.text, this.W / 2 + 1, y + 1);
+        c.fillStyle = '#f0e2b1'; c.fillText(bs.text, this.W / 2, y);
+        c.font = '11px "Pretendard",sans-serif'; c.fillStyle = '#c8a05a';
+        c.fillText(bs.who, this.W / 2, y - 18);
+        c.textAlign = 'left';
+        c.restore();
+      }
     }
 
     // ---- 비전 방벽 — 플레이어를 감싼 육각 결계 ----

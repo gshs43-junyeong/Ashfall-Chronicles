@@ -1587,15 +1587,15 @@ const ENEMIES = {
                  drops: [['void_frag', 1, 60, 90], ['star_heart', 1, 3, 3], ['charm_dawn', 1, 1, 1], ['scythe_void', 1, 1, 1]] },
 
   /* 7단계 보스 */
-  proliferator: { n: '증식체', hp: 46000, dmg: 150, def: 62, spd: 112, ai: 'b_slime', w: 88, h: 72, c: '#9a8a76', boss: 1,
+  proliferator: { n: '증식체', hp: 46000, dmg: 150, def: 62, spd: 112, ai: 'b_prolif', w: 88, h: 72, c: '#9a8a76', boss: 1,
                  xp: 150000, gold: 70000, minion: 'splitter',
                  drops: [['core_shard', 1, 40, 60], ['machine_frame', 1, 6, 10], ['power_core', 1, 25, 40]] },
-  hepha:        { n: '헤파 · 최초의 기계', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_keeper', w: 92, h: 110, c: '#c8a05a', boss: 1,
+  hepha:        { n: '헤파 · 최초의 기계', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_hepha', w: 92, h: 110, c: '#c8a05a', boss: 1,
                  xp: 400000, gold: 180000, minion: 'coreling', aggro: 4000,
                  drops: [['hepha_heart', 1, 1, 1], ['core_shard', 1, 60, 90], ['aether_shard', 1, 30, 45]] },
 
   /* 세션 2 — 지하 공창의 관리자 */
-  overseer:     { n: '공창의 관리자', hp: 30000, dmg: 140, def: 60, spd: 104, ai: 'b_keeper', w: 74, h: 92, c: '#8a8a96', xp: 90000, gold: 44000, boss: 1,
+  overseer:     { n: '공창의 관리자', hp: 30000, dmg: 140, def: 60, spd: 104, ai: 'b_overseer', w: 74, h: 92, c: '#8a8a96', xp: 90000, gold: 44000, boss: 1,
                  minion: 'riveter',
                  drops: [['steel_plate', 1, 60, 90], ['power_core', 1, 20, 30], ['blueprint_core', 1, 1, 1], ['pick_drill', 1, 1, 1]] },
 
@@ -1610,7 +1610,7 @@ const ENEMIES = {
                  drops: [['archestone', 1, 4, 9], ['proto_ash', .6, 2, 4], ['draft_glass', .4, 1, 2]] },
 
   /* 세션 2 최종 — 사람을 본떠 만든 첫 번째 것 */
-  archetype:    { n: '원형 · 첫 번째 설계', hp: 105000, dmg: 215, def: 92, spd: 126, ai: 'b_keeper', w: 96, h: 116, c: '#e8dcc0', boss: 1,
+  archetype:    { n: '원형 · 첫 번째 설계', hp: 105000, dmg: 215, def: 92, spd: 126, ai: 'b_arche', w: 96, h: 116, c: '#e8dcc0', boss: 1,
                  xp: 900000, gold: 400000, minion: 'draft_form', aggro: 4000,
                  drops: [['arche_core', 1, 1, 1], ['draft_glass', 1, 40, 60], ['archestone', 1, 30, 50]] },
 
@@ -1817,6 +1817,32 @@ const PROFS = {
     앉아 있으면 닿는 양이다. 처음에 훨씬 가파르게 잡았다가(1300) 낚시가
     한 시간짜리 노동이 되어 버려서 낮췄다. */
 function profNeed(lv) { return Math.round(5 * Math.pow(lv, 1.45)); }
+
+/* 장의 결착이 되는 보스들. 이 목록에 있으면 scale() 을 타지 않고 표에 적힌 수치를
+   그대로 쓴다(game.js spawnBoss) — 언제 오든 같은 싸움이어야 페이즈 설계가 선다. */
+const STORY_BOSSES = {
+  king_slime: 1, bone_lord: 1, corrupt_heart: 1, frost_witch: 1, void_king: 1,
+  storm_warden: 1, first_keeper: 1, pursuer: 1,
+  overseer: 1, proliferator: 1, hepha: 1, archetype: 1
+};
+
+/* ---------------- 보스 페이즈 대사 ----------------
+   페이즈가 넘어가는 순간 한 줄만 뜬다. 규칙이 바뀌는 이유를 말로 붙여 두면
+   "체력이 줄었다"가 아니라 "저것이 태도를 바꿨다"로 읽힌다. */
+const BOSS_LINES = {
+  king_slime:   { 1: '갈라져도 갈라져도, 아직 혼자다.', 2: '껍데기가 굳는다 — 안쪽이 뛴다.' },
+  bone_lord:    { 1: '뼈가 일어선다.', 2: '기둥이 저를 대신 든다.' },
+  corrupt_heart:{ 1: '뿌리가 바닥을 짚는다.', 2: '제단만이 아직 뛰고 있다.' },
+  frost_witch:  { 1: '실비아: "…아직도 따뜻하구나."', 2: '실비아: "불 옆에 서. 거기 말고는 없어."' },
+  void_king:    { 1: '나선이 되감긴다.', 2: '공허가 방향을 바꾼다.' },
+  storm_warden: { 1: '구름이 낮아진다.', 2: '내리꽂을 때만, 닿는다.' },
+  first_keeper: { 1: '석판 하나가 꺼진다.', 2: '꺼진 쪽이 무르다.' },
+  pursuer:      { 1: '형태가 무너지고 다시 선다.', 2: '한 줄기 길만 비어 있다.' },
+  overseer:     { 1: '관리자: "공정 재개."', 2: '관리자: "…명령이 남아 있다."' },
+  proliferator: { 1: '하나가 둘이 되는 것을 멈추지 못한다.', 2: '껍데기가 닫힌다 — 갈라진 것부터.' },
+  hepha:        { 1: '헤파: "나는 아직 만드는 중이다."', 2: '헤파: "때려서는 안 멈춘다. 알잖아."' },
+  archetype:    { 1: '원형이 자세를 고친다.', 2: '받침대 넷이 그것을 붙들고 있다.' }
+};
 
 /* ---------------- 버프 ---------------- */
 const BUFFS = {
