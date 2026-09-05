@@ -519,7 +519,15 @@ const Art = {
   /** 손그림 아이콘이 로드되면 절차 생성 아틀라스의 해당 칸을 덮어 그린다.
       아틀라스만 갈아 끼우면 itemUrl(DOM)과 drawItem(캔버스)이 둘 다 자동으로 새 그림을 쓴다.
       urls 캐시는 이미 만들어진 data URL이 남아 있을 수 있으므로 같이 지운다. */
+  /* file:// 로 열었을 때는 손그림을 아틀라스에 얹지 않는다.
+     디스크에서 온 그림을 캔버스에 그리면 캔버스가 "오염"되고, 그 뒤로 toDataURL 이
+     통째로 막힌다(url()). 아이콘은 전부 그 URL 로 나가므로, 한 칸을 예쁘게 만들려다
+     가방·툴팁·제작창의 아이콘이 **전부** 사라진다. 그럴 바에는 절차 생성 아이콘을
+     그대로 쓴다 — 손그림은 세계·캐릭터·연출 쪽에서 drawImage 로 계속 쓰이므로
+     (그쪽은 오염과 무관하다) 화면에서 아쉬운 것은 아이콘 한 겹뿐이다. */
+  noTaint: (typeof location !== 'undefined' && location.protocol === 'file:'),
   applySprite(key, img) {
+    if (this.noTaint) return false;
     if (!this.atlas || !img || !img.width) return false;
     const c = this.cells[key];
     if (!c) return false;

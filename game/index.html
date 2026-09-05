@@ -404,9 +404,14 @@
       </div>
 
       <div class="set-foot">
+        <!-- 저장은 브라우저 안에만 있다. 폴더를 옮기거나 브라우저를 바꾸면 안 보이므로
+             파일로 꺼내고 되돌릴 길이 있어야 한다 (zip·웹 공통) -->
+        <button id="set-export" class="set-reset">저장 내보내기</button>
+        <button id="set-import" class="set-reset">가져오기</button>
         <button id="set-reset" class="set-reset">기본값으로</button>
         <button id="btn-settings-close" class="set-close">닫기</button>
       </div>
+      <input type="file" id="set-import-file" accept="application/json,.json" hidden>
     </div>
   </div>
 
@@ -426,6 +431,8 @@
 <script src="js/tileart.js?v=185"></script>
 <script src="js/itemart.js?v=185"></script>
 <script src="js/titlebg.js?v=185"></script>
+<!-- 매니페스트는 sprites.js 보다 먼저. file:// 에서 fetch 가 막히므로 <script> 로 넣는다 -->
+<script src="assets/sprites-manifest.js?v=185"></script>
 <script src="assets/sprites.js?v=185"></script>
 <script src="js/entity.js?v=185"></script>
 <script src="js/factory.js?v=185"></script>

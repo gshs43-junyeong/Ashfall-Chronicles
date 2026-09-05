@@ -11,8 +11,16 @@ const Sprites = {
   _ver: (document.currentScript && document.currentScript.src.split('?')[1]) || '',
 
   async ready() {
-    // no-cache: 매니페스트가 브라우저 캐시에 오래 남아 새로 추가된 애셋이 누락되는 걸 막는다
-    this.meta = await (await fetch(this.base + 'manifest.json', { cache: 'no-cache' })).json();
+    /* 매니페스트는 <script> 로 미리 들어와 있다(assets/sprites-manifest.js).
+       예전에는 여기서 manifest.json 을 fetch 했는데, 크롬은 file:// 에서 fetch 를
+       막는다 — zip 을 풀어 index.html 을 더블클릭하면 그림이 하나도 안 붙었고,
+       그걸 우회하려고 런처가 파이썬 서버를 띄우고 있었다. 게임을 하려고 파이썬을
+       깔게 만드는 셈이었다. 이 한 줄이 그 서버의 유일한 이유였다.
+       fetch 는 <script> 가 없을 때를 위한 뒷문으로만 남긴다. */
+    this.meta = (typeof window !== 'undefined' && window.SPRITE_MANIFEST) || null;
+    if (!this.meta) {
+      this.meta = await (await fetch(this.base + 'manifest.json', { cache: 'no-cache' })).json();
+    }
     const jobs = [];
     const add = (key, file) => jobs.push(new Promise(res => {
       const im = new Image(); im.onload = im.onerror = () => res();
@@ -43,11 +51,19 @@ const Sprites = {
        실제로는 시트마다 그림 아래에 몇 px씩 투명 여백이 남아 있어(들토끼류 실측 2.25px)
        판정 박스가 작은 몹일수록 그 여백이 상대적으로 크게 보여 "공중에 뜬" 것처럼
        보였다. 프레임 0의 알파 채널을 실측해 진짜 여백을 한 번만 재고 캐시해 둔다. */
+    /* ★ file:// 에서는 이 측정이 통째로 막힌다. 디스크에서 온 그림을 캔버스에 그리면
+       캔버스가 "오염"되어 getImageData 가 SecurityError 를 던지기 때문이다. 예전에는
+       그 앞의 fetch 에서 이미 죽어서 여기까지 오지도 않았는데, fetch 를 없애고 나니
+       이 줄이 새 걸림돌이 되었다 — 그림은 다 붙었는데 ready() 가 거부되어
+       spritesOn 이 켜지지 않았다(그림이 있는데도 절차 생성으로 그렸다).
+       여백 보정은 발끝이 몇 px 뜨느냐는 곁다리라, 못 재면 0으로 두고 넘어간다. */
     this.footInset = {};
     for (const k in { ...this.meta.characters.sheets, ...this.meta.bosses.sheets }) {
       const m = this.meta.characters.sheets[k] || this.meta.bosses.sheets[k];
       const im = this.img[k];
-      if (im && im.width) this.footInset[k] = this._measureFootPad(im, m);
+      if (!im || !im.width) continue;
+      try { this.footInset[k] = this._measureFootPad(im, m); }
+      catch (e) { this.footInset[k] = 0; this.tainted = 1; }
     }
     return this;
   },

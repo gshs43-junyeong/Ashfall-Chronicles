@@ -33,6 +33,11 @@ else
   BUILD="$(date -u +%Y%m%d%H%M%S)"   # git 도 환경 변수도 없을 때(손으로 돌릴 때)
 fi
 
+# ---- 매니페스트를 스크립트로 옮겨 적는다 ----------------------------------
+# file:// 에서 fetch 가 막히므로 assets/sprites-manifest.js 가 원본을 대신한다.
+# 손으로 두 벌을 관리하면 반드시 어긋나므로 여기서 다시 만들고, 어긋나면 실패시킨다.
+python3 "$ROOT/tools/sync-manifest.py"
+
 rm -rf "$ROOT/site/play"
 mkdir -p "$ROOT/site/play"
 cp -R "$ROOT/game/." "$ROOT/site/play/"

@@ -142,6 +142,25 @@ const UI = {
       this.buildNotices(); this.buildKeys();
       this.toast('설정을 기본값으로 되돌렸다');
     });
+
+    /* ---- 저장 내보내기 / 가져오기 ----
+       저장은 localStorage 에만 있다. 브라우저를 바꾸거나, zip 폴더를 옮기거나,
+       시크릿 창을 닫으면 그대로 사라진다(file:// 은 경로가 곧 출처라 폴더 이름만
+       바뀌어도 남남이 된다). 파일 한 장으로 꺼내고 되돌릴 길을 둔다 — 웹과 zip
+       양쪽에서 같은 방식이다. */
+    const ex = $('#set-export');
+    if (ex) ex.addEventListener('click', () => G.exportSaves());
+    const im = $('#set-import'), imf = $('#set-import-file');
+    if (im && imf) {
+      im.addEventListener('click', () => { imf.value = ''; imf.click(); });
+      imf.addEventListener('change', () => {
+        const f = imf.files && imf.files[0]; if (!f) return;
+        const rd = new FileReader();
+        rd.onload = () => G.importSaves(rd.result);
+        rd.onerror = () => this.toast('파일을 읽지 못했다', 'bad');
+        rd.readAsText(f);
+      });
+    }
   },
 
   /** 설정 갈래를 고른다 (disp · noti · keys) */
