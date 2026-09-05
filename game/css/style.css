@@ -463,7 +463,13 @@ button{
 #bossbar{position:absolute;left:50%;transform:translateX(-50%);top:22px;width:min(620px,80vw);display:none}
 #bossbar.show{display:block}
 .bb-name{text-align:center;font-size:13px;letter-spacing:.2em;color:#e7d9b0;margin-bottom:6px;text-shadow:0 2px 8px #000}
-.bb-track{height:13px;background:#0c0908;border:1px solid #4a3a22;border-radius:2px;overflow:hidden}
+.bb-track{height:13px;background:#0c0908;border:1px solid #4a3a22;border-radius:2px;overflow:hidden;position:relative}
+/* 페이즈 눈금 둘 — 66% · 33%. 어디서 규칙이 바뀌는지 눈으로 보이게 한다.
+   예전에는 통짜 막대라 갑자기 무적이 되고 대사가 뜨는 이유를 알 수 없었다. */
+.bb-track::before,.bb-track::after{content:'';position:absolute;top:0;bottom:0;width:2px;
+  background:#0c0908;box-shadow:0 0 0 1px #4a3a2288;pointer-events:none;z-index:2}
+.bb-track::before{left:66%}
+.bb-track::after{left:33%}
 .bb-fill{height:100%;background:linear-gradient(#d0564c,#7a1f1c);transition:width .2s}
 
 #toasts{position:absolute;left:50%;transform:translateX(-50%);top:120px;display:flex;flex-direction:column;
