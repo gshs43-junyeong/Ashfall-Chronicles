@@ -41,8 +41,15 @@ cp -R "$ROOT/game/." "$ROOT/site/play/"
 # html 의 <script src="js/x.js?v=185"> 를 전부 ?v=<해시> 로 바꾼다.
 # assets/sprites.js 는 자기 <script> 태그의 물음표 뒤를 그대로 물려받아 그림 URL 에도
 # 붙이므로(sprites.js 의 _ver), 이 한 줄로 스크립트·CSS·그림이 한꺼번에 따라온다.
-find "$ROOT/site/play" -name '*.html' -print0 \
-  | xargs -0 perl -pi -e "s/\\?v=[A-Za-z0-9_.\\-]+/?v=$BUILD/g; s/__AC_BUILD__/$BUILD/g"
+#
+# ★ sed 만 쓴다. 처음에는 perl 로 썼는데, 빌드 이미지에 perl 이 없으면 set -e 가
+#   빌드를 통째로 실패시키고 — 그러면 배포판이 **옛것 그대로 남는다**. 캐시를 고치려다
+#   캐시보다 더 조용한 실패를 만드는 셈이다. sed -i 는 GNU/BSD 문법이 갈리므로
+#   임시 파일로 돌려 어디서나 같게 동작시킨다.
+find "$ROOT/site/play" -name '*.html' -print0 | while IFS= read -r -d '' f; do
+  sed -e "s/?v=[A-Za-z0-9_.-]*/?v=$BUILD/g" -e "s/__AC_BUILD__/$BUILD/g" "$f" > "$f.stamp"
+  mv "$f.stamp" "$f"
+done
 
 # 실제로 도는 판이 어느 것인지 브라우저가 물어볼 자리. vercel.json 에서 no-store 다.
 printf '{"build":"%s"}\n' "$BUILD" > "$ROOT/site/play/version.json"
