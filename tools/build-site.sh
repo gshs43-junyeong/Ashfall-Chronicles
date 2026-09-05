@@ -57,6 +57,15 @@ cp -R "$ROOT/game/." "$ROOT/site/play/" || { echo "game/ 복사 실패" >&2; exi
 # assets/sprites.js 는 자기 <script> 태그의 물음표 뒤를 그대로 물려받아 그림 URL 에도
 # 붙이므로(sprites.js 의 _ver), 이 한 줄로 스크립트·CSS·그림이 한꺼번에 따라온다.
 # sed 만 쓴다(perl 은 없을 수 있다). sed -i 는 GNU/BSD 문법이 갈리므로 임시 파일로 돈다.
+#
+# ★★ 범위는 site/ **전체** 다. 예전에는 site/play 만 찍었다 — 그래서 게임(/play)은
+#   배포마다 주소가 바뀌어 확실히 새로 받는데, 사이트 제 페이지(/home·/download)가
+#   쓰는 hero.js·showcase.js·content.js·style.css 는 **주소가 영원히 그대로**였다.
+#   vercel.json 의 캐시 규칙도 /play 만 덮고 있어서, 한 번 잡힌 사본을 무엇으로도
+#   끊을 수가 없었다. "사이트 상단 사람 잘림"을 세 번 고쳤는데 세 번 다 화면이
+#   그대로였던 것이 이것이다 — 코드가 아니라 배달의 문제였다.
+#   (손으로 돌리면 커밋된 site/*.html 의 ?v=dev 가 해시로 바뀌어 저장소가 더러워진다.
+#    배포 환경은 일회용 체크아웃이라 상관없고, 로컬에서는 git checkout -- site 로 되돌린다.)
 STAMPED=0
 while IFS= read -r -d '' f; do
   if sed -e "s/?v=[A-Za-z0-9_.-]*/?v=$BUILD/g" -e "s/__AC_BUILD__/$BUILD/g" "$f" > "$f.stamp" 2>/dev/null; then
@@ -64,17 +73,22 @@ while IFS= read -r -d '' f; do
   else
     rm -f "$f.stamp"; warn "$f 에 ?v= 를 찍지 못했습니다"
   fi
-done < <(find "$ROOT/site/play" -name '*.html' -print0)
+done < <(find "$ROOT/site" -name '*.html' -print0)
 
 # 실제로 도는 판이 어느 것인지 브라우저가 물어볼 자리. vercel.json 에서 no-store 다.
 printf '{"build":"%s"}\n' "$BUILD" > "$ROOT/site/play/version.json" \
   || warn "version.json 을 쓰지 못했습니다"
 
 # ---- 확인 (경고만 한다. 여기서 죽으면 배포가 통째로 옛것으로 남는다) ----------
-LEFT="$(grep -rhoE '\?v=[A-Za-z0-9_.-]+' "$ROOT/site/play" --include='*.html' 2>/dev/null \
+LEFT="$(grep -rhoE '\?v=[A-Za-z0-9_.-]+' "$ROOT/site" --include='*.html' 2>/dev/null \
         | sort -u | grep -v "^?v=$BUILD$" || true)"
 [ -n "$LEFT" ] && warn "?v= 가 안 찍힌 자리: $LEFT (캐시가 덜 끊길 수 있습니다)"
-grep -rq '__AC_BUILD__' "$ROOT/site/play" --include='*.html' 2>/dev/null \
+grep -rq '__AC_BUILD__' "$ROOT/site" --include='*.html' 2>/dev/null \
   && warn "__AC_BUILD__ 가 남아 있습니다 — 판 번호가 화면에 안 뜹니다"
+# 사이트 제 파일이 정말로 판을 달고 나가는지 — 이게 빠지면 /home 은 또 굳는다
+for want in hero.js showcase.js content.js style.css; do
+  grep -q "$want?v=$BUILD" "$ROOT/site/home/index.html" 2>/dev/null \
+    || warn "site/home/index.html 의 $want 에 판이 안 붙었습니다 — 캐시가 안 끊깁니다"
+done
 
 echo "site/play/ 준비 완료 — $(find "$ROOT/site/play" -type f | wc -l | tr -d ' ')개 파일 · build $BUILD · html $STAMPED장"

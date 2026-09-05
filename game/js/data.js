@@ -431,6 +431,38 @@ const ITEMS = {
   knot_angler:  { n: '낚시꾼의 매듭', i: '🪢', type: 'acc', b: { crit: 10, ms: 6, cdr: 6, hp: 60 },
                   d: '누가 언제 묶었는지 모른다. 풀리지도 않고, 끊기지도 않는다.' , lvReq: 1 },
 
+  /* ---- 물에서만 나오는 무기 여섯 (세션마다 셋) ----
+     재료로 만들 수 없다. 오직 낚아야 나온다 — 그래서 낚시가 "부업"이 아니라
+     한 갈래가 된다. 등급은 그 세션에서 실제로 쓰이는 구간에 맞췄다:
+     세션 1은 3~4(강철~미스릴 사이), 세션 2는 6~7(심연~에테르 사이).
+     셋을 근접·원거리·마법으로 갈라 두어, 어느 갈래를 키우든 하나는 제 것이 된다. */
+  spear_tide:    { n: '물살 작살', i: '🔱', type: 'weapon', wc: 'melee', dmg: 46, spd: 2.8, kb: 4, reach: 62, tier: 3,
+                   d: '물속에서 던지라고 만든 것이라 유난히 길다. 뭍에서도 잘 든다.' },
+  bow_reed:      { n: '갈대 활', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 36, spd: 2.8, kb: 2, tier: 3, proj: 'arrow',
+                   d: '물가에서 자란 갈대는 잘 휘고 잘 돌아온다.' },
+  staff_current: { n: '물길의 홀', i: '🌊', type: 'weapon', wc: 'magic', dmg: 52, spd: 2.1, kb: 3, mana: 8, tier: 4, proj: 'frost',
+                   d: '물이 어디로 가고 싶어 하는지를 알려 준다. 맞은 것도 그쪽으로 간다.' },
+  harpoon_cool:  { n: '냉각 작살', i: '🔱', type: 'weapon', wc: 'melee', dmg: 138, spd: 2.6, kb: 8, reach: 70, tier: 6,
+                   d: '공창이 과열된 것을 찍어 식히던 연장. 사람에게 쓰라고 만든 게 아니다.' },
+  gun_pressure:  { n: '수압 사출기', i: '💦', type: 'weapon', wc: 'ranged', dmg: 126, spd: 2.8, kb: 6, tier: 7, proj: 'bolt',
+                   d: '물을 실처럼 가늘게 뽑아 쏜다. 강철도 그렇게 잘랐다고 한다.' },
+  staff_deluge:  { n: '범람의 홀', i: '🌀', type: 'weapon', wc: 'magic', dmg: 144, spd: 2.2, kb: 5, mana: 14, tier: 7, proj: 'void', multi: 2,
+                   d: '수문을 여는 손잡이였다. 열면 무엇이 오는지는 그때도 알고 있었다.' },
+
+  /* ---- 물에서만 나오는 장신구 여섯 (세션마다 셋) ---- */
+  charm_float:   { n: '찌 부적', i: '🎏', type: 'acc', b: { jump: 1, ms: 8, dex: 3 },
+                   d: '가라앉지 않는다. 차고 있으면 발도 그렇게 된다.' , lvReq: 8 },
+  ring_ripple:   { n: '물결 반지', i: '💍', type: 'acc', b: { cdr: 10, mp: 40, int: 4 },
+                   d: '한 번 던지면 끝까지 퍼진다. 되돌아오지도 않는다.' , lvReq: 8 },
+  amul_scale:    { n: '비늘 목걸이', i: '📿', type: 'acc', b: { def: 12, hp: 50, frost: 1 },
+                   d: '물비늘을 겹쳐 꿰었다. 찬 것이 잘 튕겨 나간다.' , lvReq: 10 },
+  charm_conden:  { n: '응축기', i: '💧', type: 'acc', b: { charge: 140, cdr: 12, int: 8 },
+                   d: '공창의 냉각탑에서 떼어 온 것. 아직도 안쪽에 물이 맺힌다.' , lvReq: 30 },
+  ring_sluice:   { n: '수문 반지', i: '💍', type: 'acc', b: { def: 20, dr: 6, vit: 8 },
+                   d: '닫으라고 만든 것이라, 차고 있으면 무엇이든 잘 닫힌다.' , lvReq: 30 },
+  amul_undertow: { n: '저류 목걸이', i: '📿', type: 'acc', b: { crit: 14, ms: 10, lifesteal: 4 },
+                   d: '겉은 잔잔하다. 아래에서 끌고 가는 것은 따로 있다.' , lvReq: 32 },
+
   /* --- 방어구 --- */
   helm_cloth:  { n: '천 두건', i: '🧢', type: 'armor', slot: 'helm', def: 2, b: { mp: 8 } , lvReq: 1 },
   chest_cloth: { n: '여행자의 상의', i: '👕', type: 'armor', slot: 'chest', def: 3, b: { ms: 3 } , lvReq: 1 },
