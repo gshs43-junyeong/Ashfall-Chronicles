@@ -324,7 +324,17 @@ button{
 .chap .cdesc-hook{color:#a89a6a;font-style:italic;border-left:2px solid #5a4a24;padding-left:8px;margin-top:9px}
 .chap .obj{font-size:12px;color:#bdb7a4;line-height:1.8}
 .chap .obj.ok{color:#6a8a5a}
-.chap.locked .cdesc,.chap.locked .obj{display:none}
+.chap.locked .cdesc,.chap.locked .obj,.chap.locked .obj-head{display:none}
+/* 준비 / 결착 — 목록을 두 덩이로 갈라 놓는다. "넷 중 둘"이라는 게 한눈에 보여야
+   고르는 맛이 생긴다. 예전에는 그냥 다섯 줄이 나란히 있어서 전부 필수로 읽혔다. */
+.chap .obj-head{font-size:10px;letter-spacing:.12em;color:#6f6b5c;margin:9px 0 2px}
+.chap .obj-head b{color:var(--gold);font-weight:600;letter-spacing:0}
+.chap .obj-head em{color:#c08a5a;font-style:normal;letter-spacing:0}
+.chap .obj .objreq{font-size:9.5px;color:#c08a5a;border:1px solid #4a3826;
+  border-radius:2px;padding:0 4px;margin-left:3px;vertical-align:1px}
+.chap .obj.must{color:#d6cfb8}
+.chap .obj.goal{color:var(--gold)}
+.chap .obj.goal.locked{color:#6a6656}
 
 .side-head{font-size:11px;letter-spacing:.14em;color:var(--gold);margin:18px 0 10px;padding-top:16px;border-top:1px solid #262418}
 .side-npc{margin-bottom:12px}
