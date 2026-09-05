@@ -1516,6 +1516,7 @@ const UI = {
     else if (d.type === 'machine') h += `<div class="thint">우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정</div>`;
     else if (d.type === 'seed') h += `<div class="thint">${d.fert ? '자라는 중인 작물에 우클릭' : '갈아 둔 밭 위에 우클릭해 심기'}</div>`;
     else if (d.hoe) h += `<div class="thint">흙이나 풀에 우클릭해 밭 갈기</div>`;
+    else if (d.scythe) h += `<div class="thint">다 여문 작물을 좌클릭해 거두기 — 다른 연장으로 치면 아무것도 안 나온다</div>`;
     t.innerHTML = h; t.style.display = 'block';
     this.tipTarget = true;
     this.placeTip(e.clientX, e.clientY);

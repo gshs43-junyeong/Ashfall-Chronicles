@@ -63,7 +63,15 @@ const T = {
      SPARKCOIL 은 마주 보는 코일끼리 전기 아크를 잇고, GASVENT 는 유독 가스를 뿜고,
      GRINDER 는 벽에 박힌 톱니가 튀어나온다. 세션 2 지역(공창·폭주로)은 전기 문명이라
      코일을 더 많이 세운다. */
-  SPARKCOIL: 125, GASVENT: 126, GRINDER: 127, CIPHERSTONE: 128
+  SPARKCOIL: 125, GASVENT: 126, GRINDER: 127, CIPHERSTONE: 128,
+  /* --- v1.1: 전리품으로만 씨를 얻는 작물 넷 ---
+     밀·별무·잿버섯은 씨앗이 밭에서 돌아오지만, 이 넷은 **몬스터가 떨군 것으로만**
+     씨를 만든다(RECIPES 참고). 그래서 밭이 사냥과 이어진다 — 젤을 모아야 콩을 심고,
+     뼛조각을 모아야 뼈꽃이 핀다. 새 재료를 하나도 늘리지 않고 기존 전리품만 쓴다. */
+  BEAN0: 129, BEAN1: 130, BEAN2: 131, BEAN3: 132,
+  BLOOM0: 133, BLOOM1: 134, BLOOM2: 135, BLOOM3: 136,
+  HERB0: 137, HERB1: 138, HERB2: 139, HERB3: 140,
+  POD0: 141, POD1: 142, POD2: 143, POD3: 144
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -245,11 +253,34 @@ const TILE_DEF = [
        유적 벽돌이라, 암호를 풀 것 없이 옆을 파고 들어가면 그만이었다.
      겉모습은 유적 벽돌(#6a6250)에서 크게 벗어나지 않게 두고, 룬빛만 옅게 얹어
        "여기는 손대지 못하는 자리"로 읽히게 했다 — 구조 안에 어울려야 하므로. */
-  { n: '암호석', c: '#5f5947', solid: 1, hard: 99, light: 3 }
+  { n: '암호석', c: '#5f5947', solid: 1, hard: 99, light: 3 },
+  /* --- v1.1: 전리품 작물 넷 ---
+     기존 셋과 규칙이 완전히 같다(4단계 · crop.next / crop.ripe · drop).
+     다른 것은 씨앗을 밭에서 얻을 수 없다는 것뿐이다 — 잡아야 심는다. */
+  { n: '핏빛 콩 (싹)', c: '#6f8a4a', solid: 0, hard: 0, drop: 'seed_bloodbean', crop: { next: T.BEAN1 } },
+  { n: '핏빛 콩 (자람)', c: '#7f9a4a', solid: 0, hard: 0, drop: 'seed_bloodbean', crop: { next: T.BEAN2 } },
+  { n: '핏빛 콩 (여무는 중)', c: '#a8804a', solid: 0, hard: 0, drop: 'seed_bloodbean', crop: { next: T.BEAN3 } },
+  { n: '핏빛 콩', c: '#c04a44', solid: 0, hard: 0, drop: 'bloodbean', crop: { ripe: 1, seed: 'seed_bloodbean' } },
+  { n: '뼈꽃 (싹)', c: '#8a8a7a', solid: 0, hard: 0, drop: 'seed_bonebloom', crop: { next: T.BLOOM1 } },
+  { n: '뼈꽃 (자람)', c: '#9a9a88', solid: 0, hard: 0, drop: 'seed_bonebloom', crop: { next: T.BLOOM2 } },
+  { n: '뼈꽃 (여무는 중)', c: '#b0b09c', solid: 0, hard: 0, drop: 'seed_bonebloom', crop: { next: T.BLOOM3 } },
+  { n: '뼈꽃', c: '#e8e4d4', solid: 0, hard: 0, drop: 'bonebloom', crop: { ripe: 1, seed: 'seed_bonebloom' }, light: 2 },
+  { n: '서리쑥 (싹)', c: '#6a8a8a', solid: 0, hard: 0, drop: 'seed_frostherb', crop: { next: T.HERB1 } },
+  { n: '서리쑥 (자람)', c: '#6a9a9a', solid: 0, hard: 0, drop: 'seed_frostherb', crop: { next: T.HERB2 } },
+  { n: '서리쑥 (여무는 중)', c: '#7aacb4', solid: 0, hard: 0, drop: 'seed_frostherb', crop: { next: T.HERB3 } },
+  { n: '서리쑥', c: '#a8e0e8', solid: 0, hard: 0, drop: 'frostherb', crop: { ripe: 1, seed: 'seed_frostherb' }, light: 2 },
+  { n: '불씨 꼬투리 (싹)', c: '#7a6a48', solid: 0, hard: 0, drop: 'seed_emberpod', crop: { next: T.POD1 } },
+  { n: '불씨 꼬투리 (자람)', c: '#8a6a44', solid: 0, hard: 0, drop: 'seed_emberpod', crop: { next: T.POD2 } },
+  { n: '불씨 꼬투리 (여무는 중)', c: '#b06a34', solid: 0, hard: 0, drop: 'seed_emberpod', crop: { next: T.POD3 } },
+  { n: '불씨 꼬투리', c: '#e8842a', solid: 0, hard: 0, drop: 'emberpod', crop: { ripe: 1, seed: 'seed_emberpod' }, light: 5 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
-const SEED_TILE = { seed_wheat: T.WHEAT0, seed_starroot: T.ROOT0, seed_ashcap: T.CAP0 };
+const SEED_TILE = {
+  seed_wheat: T.WHEAT0, seed_starroot: T.ROOT0, seed_ashcap: T.CAP0,
+  seed_bloodbean: T.BEAN0, seed_bonebloom: T.BLOOM0,
+  seed_frostherb: T.HERB0, seed_emberpod: T.POD0
+};
 
 /* 타일 ID → 기계 키 (data.js 로드 시 1회 구축) */
 const MACH_OF_TILE = {};
@@ -375,6 +406,31 @@ const ITEMS = {
   ring_angler: { n: '낚시꾼의 반지', i: '💍', type: 'acc', b: { crit: 8, lifesteal: 3, ms: 4 },
                  d: '미끼도 없이 이걸 낚았다는 사람이 있다. 아무도 안 믿는다.' , lvReq: 1 },
 
+  /* ================= v1.1: 물에서만 나오는 것 일곱 =================
+     예전 낚시 결과표는 "이미 어디서나 나오는 물건"이 대부분이었다(젤·뼈·포션·파편).
+     그래서 아무리 좋은 것이 걸려도 손에 남는 게 사냥과 똑같았다.
+     이제 잡템 칸은 세 종류로 줄이고, 나머지 자리를 **물에서만 나오는 일곱**으로
+     바꿨다. 그리고 세션마다 무엇이 올라오는지가 다르다 —
+       세션 1(잿빛 강·호수)   진주 · 주화 · 등불 치어 · 물비늘
+       세션 2(공창 물길·냉각수) 물먹은 전지 · 냉각액 · 삭은 봉돌
+     매듭 하나만 양쪽에 걸쳐 있다. 어느 물에서든 아주 드물게 올라온다. */
+  tide_pearl:   { n: '물때 진주', i: '🫧', type: 'mat', stack: 999, price: 620,
+                  d: '조수가 바뀔 때만 열리는 조개 속에 있다. 재가 내린 뒤로는 더 귀해졌다.' },
+  sunken_coin:  { n: '가라앉은 주화', i: '🪙', type: 'mat', stack: 999, price: 1100,
+                  d: '앞면이 닳아 누구 얼굴인지 알 수 없다. 값은 여전히 나간다.' },
+  lantern_fry:  { n: '등불 치어', i: '🏮', type: 'consum', use: { hp: 70, buff: 'lantern' }, cd: 6, stack: 20,
+                  d: '삼키면 뱃속이 한동안 환하다. 어두운 데서 앞이 보인다.' },
+  river_scale:  { n: '물비늘', i: '🐚', type: 'mat', stack: 999, price: 260,
+                  d: '겹쳐 꿰매면 물에 젖지 않는 갑옷이 된다.' },
+  drowned_cell: { n: '물먹은 전지', i: '🪫', type: 'mat', stack: 999, price: 340,
+                  d: '공창이 물길에 흘려보낸 것. 말리면 아직 쓸 수 있다.' },
+  coolant_vial: { n: '냉각액 병', i: '🧴', type: 'consum', use: { mp: 80, buff: 'coolant' }, cd: 8, stack: 20,
+                  d: '공창의 냉각수를 병에 담았다. 마시면 몸이 식으면서 손이 빨라진다.' },
+  rust_sinker:  { n: '삭은 봉돌', i: '🔩', type: 'mat', stack: 999, price: 180,
+                  d: '납덩이에 대갈못을 박아 만든 것. 녹만 털면 다시 쓴다.' },
+  knot_angler:  { n: '낚시꾼의 매듭', i: '🪢', type: 'acc', b: { crit: 10, ms: 6, cdr: 6, hp: 60 },
+                  d: '누가 언제 묶었는지 모른다. 풀리지도 않고, 끊기지도 않는다.' , lvReq: 1 },
+
   /* --- 방어구 --- */
   helm_cloth:  { n: '천 두건', i: '🧢', type: 'armor', slot: 'helm', def: 2, b: { mp: 8 } , lvReq: 1 },
   chest_cloth: { n: '여행자의 상의', i: '👕', type: 'armor', slot: 'chest', def: 3, b: { ms: 3 } , lvReq: 1 },
@@ -385,6 +441,10 @@ const ITEMS = {
   helm_iron:   { n: '강철 투구', i: '⛑', type: 'armor', slot: 'helm', def: 9, b: { hp: 20, vit: 2 } , lvReq: 12 },
   chest_iron:  { n: '강철 판금', i: '🦺', type: 'armor', slot: 'chest', def: 13, b: { hp: 30, def: 3 } , lvReq: 12 },
   boots_iron:  { n: '강철 정강이받이', i: '🥾', type: 'armor', slot: 'boots', def: 7, b: { ms: 5, vit: 2 } , lvReq: 12 },
+  /* 낚시로만 모을 수 있는 물비늘을 겹쳐 꿰맨 갑옷. 강철 판금과 같은 등급이지만
+     방어를 조금 내주고 발이 훨씬 가볍다 — 낚시를 한 사람만 고를 수 있는 선택지 */
+  chest_scale: { n: '물비늘 갑옷', i: '🐚', type: 'armor', slot: 'chest', def: 11, b: { hp: 24, ms: 12, dex: 4 },
+                 d: '물에 젖지 않는다. 물에서 건진 것으로 지었으니 당연한 일인지도 모른다.' , lvReq: 12 },
   helm_mythril:{ n: '미스릴 투구', i: '👑', type: 'armor', slot: 'helm', def: 16, b: { mp: 30, int: 4, cdr: 6 } , lvReq: 20 },
   chest_mythril:{ n: '미스릴 흉갑', i: '🛡', type: 'armor', slot: 'chest', def: 22, b: { hp: 55, allStat: 3 } , lvReq: 20 },
   boots_mythril:{ n: '미스릴 부츠', i: '🥾', type: 'armor', slot: 'boots', def: 12, b: { ms: 10, dex: 4 } , lvReq: 20 },
@@ -655,11 +715,30 @@ const ITEMS = {
   /* --- 농기구 · 씨앗 · 작물 --- */
   hoe_iron:   { n: '강철 괭이', i: '🛠', type: 'tool', power: 0, dmg: 8, spd: 2.0, hoe: 1,
                 d: '흙이나 풀을 우클릭해 밭을 간다. 씨앗은 밭 위에 심는다.' , lvReq: 3},
+  /* --- 낫 ---
+     ★ 다 여문 작물은 **낫으로만** 거둘 수 있다. 곡괭이나 도끼로 치면 이삭이 으스러져
+       아무것도 남지 않는다(game.js mine 참고). 밭을 시작하려면 괭이·씨앗·낫 셋이
+       한 벌이라, 마을 2단계 씨앗 상자에 셋을 같이 넣어 둔다. */
+  scythe_iron:  { n: '강철 낫', i: '🌾', type: 'tool', power: 0, dmg: 14, spd: 2.4, scythe: 1,
+                  d: '다 여문 작물을 이걸로 베어야 알곡이 성하게 남는다. 다른 연장으로 치면 다 으스러진다.', lvReq: 3 },
+  scythe_star:  { n: '별무늬 낫', i: '🌾', type: 'tool', power: 0, dmg: 34, spd: 2.8, scythe: 1, reap: 1,
+                  d: '날에 별가루를 먹였다. 벤 자리마다 한 번 더 여문 것이 딸려 온다.', lvReq: 16 },
   seed_wheat:    { n: '밀 씨앗', i: '🌱', type: 'seed', stack: 999, d: '밭에 우클릭해 심는다.' },
   seed_starroot: { n: '별무 씨앗', i: '🌱', type: 'seed', stack: 999, d: '떨어진 별 근처에서만 돋던 뿌리채소다.' },
   seed_ashcap:   { n: '잿버섯 홀씨', i: '🌱', type: 'seed', stack: 999, d: '어두운 곳에서도 잘 자란다.' },
+  /* --- v1.1: 전리품으로만 씨를 얻는 작물 넷 ---
+     밭에서 씨가 돌아오기는 하지만(수확 보너스), 처음 한 톨은 반드시 사냥해서 만들어야
+     한다. 재료는 전부 이미 있던 전리품이다 — 새 재료를 늘리지 않는다. */
+  seed_bloodbean: { n: '핏빛 콩 씨앗', i: '🌱', type: 'seed', stack: 999, d: '슬라임 젤을 굳혀 뭉친 씨. 젤 냄새가 난다.' },
+  seed_bonebloom: { n: '뼈꽃 씨앗', i: '🌱', type: 'seed', stack: 999, d: '뼛가루를 뭉쳤더니 싹이 텄다. 왜 그런지는 아무도 모른다.' },
+  seed_frostherb: { n: '서리쑥 씨앗', i: '🌱', type: 'seed', stack: 999, d: '심은 자리 흙이 하얗게 언다.' },
+  seed_emberpod: { n: '불씨 꼬투리 씨앗', i: '🌱', type: 'seed', stack: 999, d: '만지면 미지근하다. 물을 주면 김이 오른다.' },
   wheat:      { n: '밀', i: '🌾', type: 'mat', stack: 999 },
   starroot:   { n: '별무', i: '🥕', type: 'mat', stack: 999, d: '자른 단면이 희미하게 빛난다.' },
+  bloodbean:  { n: '핏빛 콩', i: '🫘', type: 'mat', stack: 999, d: '삶으면 국물이 붉어진다. 맛은 의외로 담백하다.' },
+  bonebloom:  { n: '뼈꽃', i: '🤍', type: 'mat', stack: 999, d: '꽃잎이 뼈처럼 희고 단단하다. 갈면 약이 된다.' },
+  frostherb:  { n: '서리쑥', i: '🌿', type: 'mat', stack: 999, d: '한여름에 뜯어도 손이 시리다.' },
+  emberpod:   { n: '불씨 꼬투리', i: '🔥', type: 'mat', stack: 999, d: '까면 안에서 아직 타고 있는 알갱이가 나온다.' },
   flour:      { n: '밀가루', i: '🥛', type: 'mat', stack: 999 },
   fertilizer: { n: '퇴비', i: '🪵', type: 'seed', fert: 1, stack: 999, d: '작물에 우클릭하면 한 단계 자란다.' },
 
@@ -1055,6 +1134,10 @@ const RECIPES = [
   { out: 'haybale', n: 2, need: { weed: 6 }, station: 'work' },
   { out: 'sandbag', n: 4, need: { sand: 6, spider_silk: 1 }, station: 'work' },
   { out: 'hoe_iron', n: 1, need: { iron_bar: 3, wood: 2 }, station: 'work' },
+  /* 낫 — 다 여문 작물을 성하게 거두는 유일한 연장. 괭이와 같은 값에 두어
+     "밭을 하려면 둘 다"가 부담이 되지 않게 했다 */
+  { out: 'scythe_iron', n: 1, need: { iron_bar: 3, wood: 2 }, station: 'work' },
+  { out: 'scythe_star', n: 1, need: { mythril_bar: 4, aether_shard: 6, wood: 4 }, station: 'forge', lv: 2 },
   { out: 'lamppost', n: 2, need: { iron_bar: 1, torch: 2, crystal: 1 }, station: 'work' },
   { out: 'rooftile', n: 4, need: { brick: 2, stone: 2 }, station: 'forge' },
   { out: 'wallstone', n: 4, need: { stone: 6, brick: 2 }, station: 'forge' },
@@ -1067,9 +1150,32 @@ const RECIPES = [
   { out: 'seed_wheat', n: 4, need: { wheat: 1 } },
   { out: 'seed_starroot', n: 4, need: { starroot: 1 } },
   { out: 'seed_ashcap', n: 4, need: { mushroom: 2 } },
+  /* --- v1.1: 전리품으로만 씨를 얻는 작물 넷 ---
+     ★ 여기 있는 넷은 **잡아 온 것으로만** 만든다. 밭에서 씨가 저절로 돌아오지 않는
+       것은 아니지만(수확 보너스), 첫 한 톨은 반드시 사냥에서 온다. 그래서 밭이
+       "따로 노는 부업"이 아니라 사냥의 뒷마당이 된다.
+       ★ 재료는 **전부 몬스터가 떨군 것**이다. 캐거나 주운 것(잡초·들꽃·석탄 같은
+         것)은 한 톨도 섞지 않았다 — 그래야 "잡아야 심는다"가 규칙으로 읽힌다.
+         새 재료도 하나도 늘리지 않았다: 넷 다 이미 굴러다니던 전리품이다.
+       손에 흔한 순서대로 놓았다 — 젤·거미 실(바로) → 뼈·잿빛 깃(초반) →
+       얼음 송곳니·서리 결정(얼음 바이옴) → 용암 점액·수정 집게(깊은 곳). */
+  { out: 'seed_bloodbean', n: 3, need: { slime_gel: 5, spider_silk: 2 }, station: 'work' },
+  { out: 'seed_bonebloom', n: 3, need: { bone_frag: 5, ash_feather: 2 }, station: 'work' },
+  { out: 'seed_frostherb', n: 3, need: { ice_fang: 3, frost_core: 1 }, station: 'work' },
+  { out: 'seed_emberpod', n: 3, need: { lava_gel: 3, crystal_claw: 2 }, station: 'work' },
+  /* 거둔 것의 쓸모. 넷 다 "이걸 심을 이유"가 손에 잡혀야 한다 */
+  { out: 'potion_hp', n: 3, need: { bonebloom: 2, wildflower: 2 }, station: 'work' },
+  { out: 'potion_hp_greater', n: 1, need: { bonebloom: 8, crystal: 3 }, station: 'work', lv: 2 },
+  { out: 'potion_iron', n: 2, need: { frostherb: 3, ice_shard: 2 }, station: 'work' },
+  { out: 'torch', n: 8, need: { emberpod: 1, wood: 2 } },
+  { out: 'fuel_brick', n: 2, need: { emberpod: 3 }, station: 'work' },
   /* 화덕이 없어도 최소한의 요리는 되게 (밀가루만 있으면 빵) */
   { out: 'flour', n: 1, need: { wheat: 4 }, station: 'work' },
   { out: 'food_bread', n: 1, need: { flour: 3 }, station: 'work' },
+  /* 물에서만 나오는 것의 쓸모 — 낚시가 "팔 것만 나오는 일"로 끝나지 않게 */
+  { out: 'battery_empty', n: 1, need: { drowned_cell: 2, wire: 2 }, station: 'work', lv: 2 },
+  { out: 'rivet', n: 12, need: { rust_sinker: 2 }, station: 'work', lv: 2 },
+  { out: 'chest_scale', n: 1, need: { river_scale: 14, tide_pearl: 4, spider_silk: 10 }, station: 'forge' },
 
   /* ========== 5단계: 새 바이옴 ========== */
   { out: 'potion_glow', n: 2, need: { glowcap: 2, crystal: 1 }, station: 'work' },
@@ -1255,7 +1361,14 @@ const MRECIPES = [
   { m: 'oven', in: { starroot: 3 }, out: { food_soup: 1 }, t: 22 },
   { m: 'oven', in: { wildflower: 4 }, out: { food_tea: 2 }, t: 18 },
   { m: 'oven', in: { cactus_flesh: 3, flour: 1 }, out: { food_jelly: 2 }, t: 20 },
-  { m: 'oven', in: { food_bread: 1, food_pie: 1, food_soup: 1 }, out: { food_feast: 1 }, t: 60 }
+  { m: 'oven', in: { food_bread: 1, food_pie: 1, food_soup: 1 }, out: { food_feast: 1 }, t: 60 },
+  /* v1.1: 전리품 작물 넷. 고기 없이도 파이가 되고, 꽃 없이도 차가 된다 —
+     사냥해서 심은 것이 부엌까지 이어지도록 */
+  { m: 'oven', in: { bloodbean: 3, flour: 1 }, out: { food_pie: 2 }, t: 26 },
+  { m: 'oven', in: { frostherb: 3 }, out: { food_tea: 2 }, t: 18 },
+  { m: 'oven', in: { bloodbean: 2, frostherb: 2, mushroom: 2 }, out: { food_curry: 1 }, t: 30 },
+  { m: 'mill', in: { bonebloom: 3 }, out: { fertilizer: 4 }, t: 14 },
+  { m: 'mill', in: { emberpod: 4 }, out: { fuel_brick: 2 }, t: 16 }
 ];
 
 /* ---------------- 마을 등급 ----------------
@@ -1271,11 +1384,15 @@ const VILLAGE = [
   },
   {
     n: '자리 잡은 마을',
-    d: '지붕을 다시 얹고, 밭을 갈고, 밤에도 길이 보이게 했다.',
+    /* ★ 밭을 "갈아 준다"고 쓰지 않는다 — 마을은 자리를 내주고 연장을 건넬 뿐,
+       가는 것도 심는 것도 플레이어 몫이다(world.js upgradeVillage 2단계 참고).
+       예전에는 마을이 밭을 갈고 씨까지 반쯤 심어 두어서, 처음 온 사람이
+       "농사는 이미 누가 해 놨네" 하고 지나쳤다. */
+    d: '지붕을 다시 얹고, 울타리를 두르고, 밤에도 길이 보이게 했다.',
     need: { plank: 60, brick: 60, steel_plate: 20, gear_basic: 10 },
     gain: [
       '집을 2층으로 올리고 기와를 얹는다',
-      '마을 서쪽에 밭과 울타리가 생긴다 (괭이와 씨앗을 준다)',
+      '마을 서쪽에 울타리 친 빈 땅과 씨앗 상자가 생긴다 (가는 건 네 몫이다)',
       '지붕 위에 풍차가 서고, 밭까지 전주 선로가 깔린다',
       '횃불이 가로등으로, 벽에 창문이 난다',
       '보관고 +12칸 · 여관 숙박비 30% 감소'
@@ -1284,13 +1401,17 @@ const VILLAGE = [
   {
     n: '여명 요새',
     d: '다시는 빼앗기지 않겠다는 뜻으로 벽을 세웠다.',
-    need: { wallstone: 120, steel_plate: 40, circuit: 10, motor: 4 },
+    /* 값을 조금만 덜었다(성벽돌 120→100 · 강철판 40→32 · 회로 10→8 · 전동기 4→3).
+       요새는 마을의 마지막 단계다 — 쉽게 서면 안 된다. 다만 예전 값은 공장을
+       한참 돌린 뒤에야 닿아서 마지막 한 칸이 유난히 길게 늘어졌다. 그 늘어짐만
+       덜어 내고, "벽을 세우려면 제대로 벌어야 한다"는 무게는 그대로 둔다. */
+    need: { wallstone: 100, steel_plate: 32, circuit: 8, motor: 3 },
     gain: [
       '마을 양쪽에 성벽과 흉벽이 올라간다',
       '감시탑 두 기에 자동 포탑이 걸린다 (대갈못을 채워 두면 된다)',
       '상주 경비병 두 명이 마을을 지킨다',
       '재련 비용 25% 감소 · 상점 환율 +10%',
-      '성문 · 깃발 · 모래주머니 방벽'
+      '성문과 깃발이 걸린다'
     ]
   }
 ];
@@ -1877,7 +1998,11 @@ const BUFFS = {
   fed_feast: { n: '잔칫상', i: '🍱', dur: 600, b: { allStat: 8, hpreg: 2, mpreg: 25, def: 10 } },
   fed_curry: { n: '정글 카레', i: '🍛', dur: 300, b: { str: 6, def: 8, hpreg: 1.2 } },
   lit: { n: '발광', i: '🔦', dur: 480, b: {} },
-  lit_greater: { n: '상급 발광', i: '🔦', dur: 900, b: {} }
+  lit_greater: { n: '상급 발광', i: '🔦', dur: 900, b: {} },
+  /* 물에서만 나오는 것 둘이 주는 버프. fed_ 를 안 붙였으므로 음식과 같이 유지된다 —
+     낚시로만 얻는 것이라 음식 한 자리를 빼앗지 않는 편이 낫다. */
+  lantern: { n: '등불', i: '🏮', dur: 420, b: { vit: 5, hpreg: 1.2 } },
+  coolant: { n: '냉각', i: '🧴', dur: 360, b: { cdr: 12, ms: 10, mpreg: 20 } }
 };
 
 /* ---------------- 바이옴 유적 ----------------
@@ -2278,6 +2403,37 @@ const NPCS = {
 };
 /* 여명 마을 주민 — 종장 전에는 아예 등장하지 않으므로 별도 잠금 대사가 필요 없다 */
 const DAWN_NPCS = ['tamer', 'trainer', 'haran', 'seira', 'kade'];
+
+/* ---------------- 마을 단계별 주민 한 마디 ----------------
+   주민 다섯이 각자 고정 대사를 하나씩만 들고 있었다. 그래서 지붕이 올라가고 성벽이
+   서도 마을 사람 입에서는 아무 일도 일어나지 않았다 — 마을을 키운 사람만 알고,
+   마을은 모르는 상태였다.
+   이제 단계마다 한 줄씩 더 붙는다(고정 대사 뒤에 이어 붙는다). 내용은 전부
+   **그 단계에서 실제로 눈에 보이게 바뀐 것**이다 — 2층·울타리 친 빈 땅·가로등,
+   그리고 성벽·포탑·경비병. 사냥 의뢰는 여전히 베이스캠프 게시판 몫이라
+   여기서는 한 마디도 하지 않는다. */
+const VILLAGE_TALK = {
+  tamer: [null,
+    '짐승들이 아직 이 거리를 못 미더워해. 하긴 나도 그래.',
+    '가로등이 서니까 밤에도 알을 돌볼 수 있어. 그전엔 해 지면 그냥 접었거든.',
+    '성문이 닫히는 소리에 애들이 놀라. 며칠이면 익숙해지겠지.'],
+  trainer: [null,
+    '터는 넓은데 사람이 없어. 훈련은 혼자서도 되지만, 재미는 없지.',
+    '2층이 생겨서 위층에서 아래를 내려다보며 자세를 봐 준다. 훨씬 낫더군.',
+    '경비 둘이 문에 섰다고 몸을 놓지 마라. 벽은 사람을 대신하지 않아.'],
+  haran: [null,
+    '방은 얼마든지 있어. 채울 사람이 없을 뿐이지.',
+    '지붕에 기와를 얹었더니 비 오는 밤에 손님이 는다. 소리가 좋아서라나.',
+    '요새라니. 간판을 바꿔야 하나 싶다가도, 여관은 여관이지.'],
+  seira: [null,
+    '풀무가 낡았어. 그래도 도는 게 어디야.',
+    '풍차 덕에 밤에도 불을 살려 둔다. 전주 선로가 여기까지 와 있거든.',
+    '성벽 쌓느라 성벽돌을 그렇게 벼렸는데, 이젠 손이 다 기억해.'],
+  kade: [null,
+    '이 도시, 사람이 지은 게 아니야. 아직 그 얘긴 접어 두자고.',
+    '서쪽에 울타리 친 땅 봤어? 흙은 골라 뒀는데 아무도 안 갈았어. 괭이 든 사람 기다리는 중이지.',
+    '포탑 두 기, 대갈못만 채워 두면 알아서 쏜다. 채우는 건 자네 몫이고.']
+};
 
 /* ---------------- 펫 ---------------- */
 /* b: 장착 시 recalc()에 그대로 병합되는 패시브 보너스 (스탯창의 파생 스탯 키와 동일 체계) */

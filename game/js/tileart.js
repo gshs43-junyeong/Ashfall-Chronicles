@@ -98,6 +98,13 @@ for (let i = 0; i < 4; i++) {
   ART[T.WHEAT0 + i] = { k: 'crop', kind: 'wheat', st: i, c: ['#7fa84a', '#8fb84a', '#c8b04a', '#e0c058'][i], a: 1 };
   ART[T.ROOT0 + i] = { k: 'crop', kind: 'root', st: i, c: ['#7fa84a', '#6f9f5a', '#5f9f6a', '#8fd0a0'][i], a: 1 };
   ART[T.CAP0 + i] = { k: 'crop', kind: 'cap', st: i, c: ['#8a7a6a', '#9a7a68', '#b06a54', '#e0402c'][i], a: 1 };
+  /* v1.1: 전리품 작물 넷. 같은 페인터에 kind 만 넷 더 붙였다 —
+     자라는 세 단계는 셋과 똑같이 읽히고, 다 여문 단계에서만 서로 달라 보이면 된다.
+     (덜 자란 밭에서 종류를 구분할 필요는 없다. 중요한 건 "여물었나"다) */
+  ART[T.BEAN0 + i] = { k: 'crop', kind: 'bean', st: i, c: ['#6f8a4a', '#7f9a4a', '#a8804a', '#c04a44'][i], a: 1 };
+  ART[T.BLOOM0 + i] = { k: 'crop', kind: 'bloom', st: i, c: ['#8a8a7a', '#9a9a88', '#b0b09c', '#e8e4d4'][i], a: 1 };
+  ART[T.HERB0 + i] = { k: 'crop', kind: 'herb', st: i, c: ['#6a8a8a', '#6a9a9a', '#7aacb4', '#a8e0e8'][i], a: 1 };
+  ART[T.POD0 + i] = { k: 'crop', kind: 'pod', st: i, c: ['#7a6a48', '#8a6a44', '#b06a34', '#e8842a'][i], a: 1 };
 }
 /* --- 4단계: 마을 기계 --- */
 ART[T.M_WINDMILL] = { k: 'mk_windmill', c: '#c8bca0', a: 1 };
@@ -1065,6 +1072,34 @@ const TileArt = {
             }
             R(tx - 1.6, TS - 5, 4, 5, lt2);                // 뿌리목
             R(tx - 1.6, TS - 5, 4, 1.4, '#e8ffe8');
+          } else if (kind === 'bean') {                    // 줄기에 매달린 꼬투리 — 아래로 늘어진다
+            for (let k = 0; k < 3; k++) {
+              const yy = ty + 2 + k * 4.2, sw = k % 2 ? -3 : 2.2;
+              R(tx + sw, yy, 2.4, 4, base);
+              R(tx + sw, yy, 1, 4, lt);
+              R(tx + sw + .4, yy + 1.2, 1.4, 1, dk2);       // 콩알이 비치는 자국
+            }
+          } else if (kind === 'bloom') {                   // 뼈처럼 흰 꽃 — 다섯 잎이 벌어져 있다
+            for (let k = 0; k < 5; k++) {
+              const a = -Math.PI / 2 + (k - 2) * 0.62;
+              R(tx + Math.cos(a) * 3.4 - 1.2, ty + 2 + Math.sin(a) * 3.4, 2.6, 2.6, base);
+              R(tx + Math.cos(a) * 4.4 - .8, ty + 2 + Math.sin(a) * 4.4, 1.6, 1.6, lt2);
+            }
+            R(tx - 1, ty + 1.2, 2.2, 2.2, '#c8b060');      // 꽃심
+          } else if (kind === 'herb') {                    // 서리 낀 잎 — 끝마다 얼음 알갱이
+            for (let k = -2; k <= 2; k++) {
+              if (!k) continue;
+              const len = 4 - Math.abs(k) * 0.6;
+              for (let j = 0; j < len; j++)
+                R(tx + k * 1.8 + j * k * .5, ty + 1.4 + j * 1.5 + Math.abs(k), 2, 1.6, j > len - 2 ? '#e8ffff' : base);
+            }
+            R(tx - .8, ty - 1, 2, 2, '#ffffff');
+          } else if (kind === 'pod') {                     // 벌어진 꼬투리 속에서 불씨가 보인다
+            R(tx - 3.4, ty + 1, 7, 6, shade(base, .62));
+            R(tx - 2.6, ty + 1.8, 5.4, 4.4, base);
+            R(tx - 1.4, ty + 2.8, 3, 2.4, '#ffe08a');
+            R(tx - .6, ty + 3.4, 1.6, 1.2, '#fff6d8');
+            R(tx - 3.4, ty + .2, 7, 1.2, lt2);             // 벌어진 자리
           } else {                                         // 버섯 갓
             g.fillStyle = base;
             g.beginPath(); g.ellipse(ox + tx + .9, oy + ty + 3, 5, 4, 0, Math.PI, 2 * Math.PI); g.fill();
