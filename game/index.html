@@ -235,6 +235,30 @@
     // ② 넘겨받았는데 애셋 하나가 영영 안 와도 갇히지 않게
     setTimeout(function () { if (!window.__acBooted) clear(); }, 6000);
   })();
+
+  /* ★ 판 번호 자가 점검 — 캐시가 옛 index.html 을 계속 내주는 경우의 마지막 그물.
+     ?v= 를 아무리 올려도, 그 번호를 들고 있는 파일 자체가 옛것이면 소용이 없다.
+     그래서 서버에 "지금 도는 판이 뭐냐"고 한 번 물어보고, 내가 든 것과 다르면
+     주소 뒤에 붙여 딱 한 번 새로 받는다(주소가 달라지므로 캐시를 확실히 비켜 간다).
+     같은 판으로 두 번 시도하지 않게 세션에 적어 둔다 — 무한 새로고침이 제일 나쁘다.
+     __AC_BUILD__ 는 tools/build-site.sh 가 배포 때 커밋 해시로 바꿔 준다. */
+  window.__acBuild = '__AC_BUILD__';
+  (function () {
+    var mine = window.__acBuild;
+    if (mine === '__AC_' + 'BUILD__') return;                 // 치환 전(개발 중 · zip)
+    if (!/^https?:$/.test(location.protocol)) return;         // file:// 은 물어볼 데가 없다
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.build || d.build === mine) return;
+        try {
+          if (sessionStorage.getItem('ac_reload') === d.build) return;
+          sessionStorage.setItem('ac_reload', d.build);
+        } catch (e) { return; }                               // 저장을 막아 두었으면 그냥 둔다
+        location.replace(location.pathname + '?b=' + d.build);
+      })
+      .catch(function () {});
+  })();
   </script>
 
   <!-- 타이틀 -->

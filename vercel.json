@@ -9,18 +9,40 @@
     { "source": "/index.html", "destination": "/home", "permanent": true },
     { "source": "/download.html", "destination": "/download", "permanent": true }
   ],
+  "//": "규칙들이 서로 겹치지 않게 갈라 두었다 — 겹치면 어느 쪽이 이기는지가 배포 플랫폼 사정에 달리게 되고, 캐시 문제는 그렇게 애매하게 두면 안 된다.",
   "headers": [
     {
-      "source": "/play/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
+      "//": "① html 은 절대 쟁여 두지 않는다. ?v= 번호를 들고 있는 파일이 바로 이것이라, 이게 캐시에 물리면 번호를 올린 사실 자체가 전달되지 않는다 — v1.1 에서 실제로 그렇게 막혔다.",
+      "source": "/play",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     },
     {
+      "source": "/play/(.*).html",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    },
+    {
+      "//": "② 지금 도는 판이 무엇인지 묻는 자리(index.html 의 자가 점검). 쟁여 두면 물어볼 이유가 없어진다.",
+      "source": "/play/version.json",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    },
+    {
+      "//": "③ 매니페스트는 새 애셋이 늘 때마다 바뀌는데 ?v= 가 안 붙는다(sprites.js 가 직접 fetch). 매번 확인시킨다.",
+      "source": "/play/assets/manifest.json",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    },
+    {
+      "//": "④ 스크립트·CSS 는 배포마다 ?v=<커밋해시> 가 붙어 URL 이 통째로 달라진다(tools/build-site.sh). 그래서 오래 잡아 두어도 옛것이 나올 수 없다.",
       "source": "/play/(.*).js",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/play/(.*).css",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "//": "⑤ 그림·소리도 마찬가지다 — sprites.js 가 <script> 태그의 물음표 뒤를 그대로 물려받아 붙인다(_ver). 확장자를 하나하나 적어 ③ 과 겹치지 않게 했다.",
+      "source": "/play/assets/(.*).(png|jpg|jpeg|webp|gif|svg|mp3|ogg|wav|woff|woff2|ttf)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     }
   ]
 }
