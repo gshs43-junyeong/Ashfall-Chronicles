@@ -99,8 +99,12 @@ var PLAYER = { file: 'char/player.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps
     var img = images[PLAYER.file];
     if (!img) return;
     var frame = PLAYER.walk[Math.floor(t * PLAYER.fps) % PLAYER.walk.length];
-    var scale = 0.92;
-    var w = PLAYER.fw * scale, h = PLAYER.fh * scale;
+    /* ★ 원본 크기 그대로 그린다.
+     * 예전에는 0.92 배로 줄여 그렸다. 그러면 88x164 그림이 81x151 로 한 번 깎이고,
+     * 그 결과가 다시 캔버스 변환(예: 2.25배)으로 늘어난다 — 최근접 확대·축소를 두 번
+     * 겹치면 픽셀 열이 들쭉날쭉 겹치거나 빠져서, 팔과 발이 잘려 보인다.
+     * 배경 능선도 원본 크기로 그리므로 사람만 따로 줄일 이유가 없다. */
+    var w = PLAYER.fw, h = PLAYER.fh;
     /* 글 반대쪽. 왼쪽(0.19)에 두었더니 제목·설명 줄과 버튼 상자에 그대로 파묻혔다.
      * 히어로 글은 전부 왼쪽에 붙으므로 오른쪽 트인 자리로 옮긴다. */
     var x = W * PLAYER_X;
