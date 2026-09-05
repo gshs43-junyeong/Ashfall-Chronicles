@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ashfall Chronicles — 별이 잠든 땅</title>
-<link rel="stylesheet" href="css/style.css?v=184">
+<link rel="stylesheet" href="css/style.css?v=185">
 </head>
 <body>
 
@@ -90,10 +90,19 @@
         <div class="pts">스탯 포인트 <b id="stat-pts">0</b> · 특성 포인트 <b id="skill-pts">0</b></div>
         <div id="stat-alloc"></div>
       </div>
-      <div id="tree-wrap"></div>
-      <div class="skill-assign">
-        <div class="equip-title">스킬 슬롯 <small>(트리에서 배운 액티브를 우클릭해 슬롯에 등록)</small></div>
-        <div id="skill-slots"></div>
+      <div class="sk-tabs">
+        <button type="button" class="sk-tab on" data-sktab="tree">특성 트리</button>
+        <button type="button" class="sk-tab" data-sktab="prof">생활 숙련</button>
+      </div>
+      <div class="sk-pane on" id="sk-pane-tree">
+        <div id="tree-wrap"></div>
+        <div class="skill-assign">
+          <div class="equip-title">스킬 슬롯 <small>(트리에서 배운 액티브를 우클릭해 슬롯에 등록)</small></div>
+          <div id="skill-slots"></div>
+        </div>
+      </div>
+      <div class="sk-pane" id="sk-pane-prof">
+        <div id="prof-wrap"></div>
       </div>
     </section>
 
@@ -379,17 +388,17 @@
   </div>
 </div>
 
-<script src="js/util.js?v=184"></script>
-<script src="js/data.js?v=184"></script>
-<script src="js/world.js?v=184"></script>
-<script src="js/tileart.js?v=184"></script>
-<script src="js/itemart.js?v=184"></script>
-<script src="js/titlebg.js?v=184"></script>
-<script src="assets/sprites.js?v=184"></script>
-<script src="js/entity.js?v=184"></script>
-<script src="js/factory.js?v=184"></script>
-<script src="js/ui.js?v=184"></script>
-<script src="js/music.js?v=184"></script>
-<script src="js/game.js?v=184"></script>
+<script src="js/util.js?v=185"></script>
+<script src="js/data.js?v=185"></script>
+<script src="js/world.js?v=185"></script>
+<script src="js/tileart.js?v=185"></script>
+<script src="js/itemart.js?v=185"></script>
+<script src="js/titlebg.js?v=185"></script>
+<script src="assets/sprites.js?v=185"></script>
+<script src="js/entity.js?v=185"></script>
+<script src="js/factory.js?v=185"></script>
+<script src="js/ui.js?v=185"></script>
+<script src="js/music.js?v=185"></script>
+<script src="js/game.js?v=185"></script>
 </body>
 </html>

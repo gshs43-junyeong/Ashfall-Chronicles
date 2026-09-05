@@ -193,6 +193,10 @@ class Player extends Ent {
     this.hurtCd = 0; this.flash = 0;
     this.channel = null;
     this.potionCd = 0;
+    /* v1.1 특성 — 비전 방벽이 남긴 흡수량과, 불굴이 다시 준비되기까지의 시간 */
+    this.shield = 0; this.shieldMax = 0; this.shieldT = 0; this.undyingCd = 0;
+    /* v1.1 생활 숙련 — 포인트로 찍지 않고 하다 보면 오른다 */
+    this.prof = { farm: { lv: 1, xp: 0 }, fish: { lv: 1, xp: 0 } };
     this.charge = 200;             // 동력 장비용 전하. 바닥나면 가방의 배터리를 자동으로 쓴다
     this.kills = {}; this.mined = {}; this.bossKilled = {}; this.gathered = {};
     this.deepest = 0;
@@ -206,7 +210,7 @@ class Player extends Ent {
   /* ---- 파생 스탯 ---- */
   recalc() {
     const s = { str: this.base.str, dex: this.base.dex, int: this.base.int, vit: this.base.vit };
-    const acc = { def: 0, hp: 0, mp: 0, ms: 0, crit: 5, critD: 50, cdr: 0, lifesteal: 0, jump: 0, mpreg: 0, hpreg: 0, dmgP: 0, spdP: 0, magicP: 0, fire: 0, frost: 0, poison: 0, dashCd: 0, dashI: 0, charge: 0 };
+    const acc = { def: 0, hp: 0, mp: 0, ms: 0, crit: 5, critD: 50, cdr: 0, lifesteal: 0, jump: 0, mpreg: 0, hpreg: 0, dmgP: 0, spdP: 0, magicP: 0, fire: 0, frost: 0, poison: 0, dashCd: 0, dashI: 0, charge: 0, dr: 0 };
     const merge = (o) => { for (const k in o) { if (k in s) s[k] += o[k]; else acc[k] = (acc[k] || 0) + o[k]; } };
     for (const k in this.equip) { const it = this.equip[k]; if (!it) continue; const st = itemStats(it); merge(st); acc.def += (idef(it).def || 0) * RARITY_MULT[it.r]; }
     // 특성 패시브
@@ -235,6 +239,10 @@ class Player extends Ent {
       jumps: 1 + (acc.jump || 0), mpreg: 2.2 * (1 + acc.mpreg / 100), hpreg,
       dmgP: acc.dmgP, spdP: acc.spdP, magicP: acc.magicP, fire: acc.fire, frost: acc.frost, poison: acc.poison,
       dashCd: Math.max(0.5, 1.6 - acc.dashCd), dashI: 260 + acc.dashI,
+      /* dr — 방어(def)와 달리 적 수치를 타지 않고 **최종 피해**를 그대로 깎는다.
+         철벽 같은 짧은 버프에만 붙어서, 방어를 아무리 쌓아도 못 버티는 한 방을
+         한 번 넘기게 해 준다. 겹쳐도 80%가 한계다. */
+      dr: Math.min(80, acc.dr || 0),
       glide: acc.glide || 0,
       jet: acc.jet || 0,
       maxCharge: 200 + (acc.charge || 0)
@@ -328,7 +336,9 @@ class Player extends Ent {
     while (this.xp >= this.xpNext) {
       this.xp -= this.xpNext; this.level++;
       this.statPts += 3;
-      if (this.level % 2 === 0) this.skillPts++;
+      /* v1.1 — 두 레벨에 하나였다. 트리에 칸이 열둘 늘어서 그 속도로는 한 분기의
+         밑동도 못 보고 게임이 끝났다. 이제 레벨마다 하나씩 준다. */
+      this.skillPts++;
       this.xpNext = Math.round(40 * Math.pow(this.level, 1.42));
       this.recalc(); this.hp = this.d.maxHp; this.mp = this.d.maxMp;
       G.onLevelUp(this.level);
@@ -347,17 +357,52 @@ class Player extends Ent {
   hurt(amount, srcX) {
     if (this.iframe > 0 || this.dead) return;
     const red = this.d.def / (this.d.def + 60);
-    let dmg = Math.max(1, Math.round(amount * (1 - red)));
+    let dmg = Math.max(1, Math.round(amount * (1 - red) * (1 - (this.d.dr || 0) / 100)));
+    /* 비전 방벽이 남아 있으면 먼저 그쪽이 받는다. 다 깎이면 그 자리에서 깨진다 */
+    if (this.shield > 0) {
+      const take = Math.min(this.shield, dmg);
+      this.shield -= take; dmg -= take;
+      G.texts.push(new DmgText(this.cx, this.y - 12, take, '#8fc8ff', 0));
+      for (let i = 0; i < 5; i++) G.parts.push(new Part(this.cx, this.cy, '#8fc8ff'));
+      if (this.shield <= 0) { this.shield = 0; this.shieldT = 0; G.ringFx(this.cx, this.cy, 44, '#8fc8ff', .35); G.sfx('magic'); }
+      if (dmg <= 0) { this.iframe = 0.4; this.flash = 0.18; return; }
+    }
     this.hp -= dmg;
     this.iframe = 0.5; this.flash = 0.25;
     G.shake = Math.max(G.shake, Math.min(9, dmg * 0.12));
     G.texts.push(new DmgText(this.cx, this.y, dmg, '#ff6b6b', 0));
-    if (srcX !== undefined) { this.vx = Math.sign(this.cx - srcX) * 180; this.vy = -180; }
+    if (srcX !== undefined && !(this.d.dr >= 50)) { this.vx = Math.sign(this.cx - srcX) * 180; this.vy = -180; }
     for (let i = 0; i < 6; i++) G.parts.push(new Part(this.cx, this.cy, '#c8433c'));
     G.sfx('damage');
+    /* 불굴 — 죽는 그 한 번을 넘긴다. 120초에 한 번뿐이라 "아껴 두는" 것이 아니라
+       "여기서 한 번 살아남는다"에 가깝다. */
+    if (this.hp <= 0 && this.skills.s_undying && this.undyingCd <= 0) {
+      this.hp = 1; this.undyingCd = 120;
+      this.heal(this.d.maxHp * 0.25);
+      this.iframe = Math.max(this.iframe, 1.2);
+      G.ringFx(this.cx, this.cy, 90, '#e05a6a', .6);
+      for (let i = 0; i < 30; i++) G.parts.push(new Part(this.cx, this.cy, '#e05a6a', -110, .9));
+      G.shake = 14; G.toast('불굴 — 아직 쓰러지지 않는다', 'good');
+    }
     if (this.hp <= 0) { this.hp = 0; G.onDeath(); }
     this.recalc();
   }
+
+  /* ---- 생활 숙련 ----
+     밭에서 거두면 farm, 물에서 올리면 fish. 레벨은 10에서 멈춘다.
+     한 번에 여러 레벨이 오를 수 있어 while 로 돈다. */
+  addProf(kind, n) {
+    const pr = this.prof && this.prof[kind];
+    if (!pr || pr.lv >= PROF_MAX) return;
+    pr.xp += n;
+    while (pr.lv < PROF_MAX && pr.xp >= profNeed(pr.lv)) {
+      pr.xp -= profNeed(pr.lv); pr.lv++;
+      G.onProfUp(kind, pr.lv);
+    }
+    if (pr.lv >= PROF_MAX) pr.xp = 0;
+  }
+  /** 숙련 레벨 (없던 세이브도 1로 읽힌다) */
+  profLv(kind) { return (this.prof && this.prof[kind] ? this.prof[kind].lv : 1); }
   heal(n) {
     const before = this.hp;
     this.hp = Math.min(this.d.maxHp, this.hp + n);
@@ -389,6 +434,11 @@ class Player extends Ent {
       for (let i = 0; i < n; i++) {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.09 : 0);
         this.fireProj(d.proj || 'arrow', a, base, 'dex', BOW_TIP);
+      }
+      /* 폭풍의 시위 — 가끔 한 발이 더 나간다. 살짝 어긋나게 쏴서 두 발인 게 보이도록 */
+      if (this.skills.s_tempest && Math.random() < 0.3) {
+        this.fireProj(d.proj || 'arrow', ang + (Math.random() - 0.5) * 0.12, base, 'dex', BOW_TIP);
+        for (let k = 0; k < 4; k++) G.parts.push(new Part(this.cx, this.cy - 4, '#8fe0c8', -30, .3));
       }
       G.sfx('bow');
     } else if (d.wc === 'magic') {
@@ -523,6 +573,164 @@ class Player extends Ent {
         for (let k = 0; k < sk.v(r); k++) G.ents.push(new Wolf(this.cx + (k - 1) * 26, this.cy, this));
         break;
       }
+
+      /* ===== v1.1 새 특성 ===== */
+      case 's_guard': {
+        // 철벽 — 짧게 굳는다. 지속 시간만 랭크가 정하고 감쇄율은 버프가 들고 있다
+        this.addBuff('bulwark', sk.v(r));
+        G.ringFx(this.cx, this.cy, 52, '#d8a05a', .45);
+        for (let k = 0; k < 16; k++) {
+          const a = Math.random() * TAU;
+          G.parts.push(new Part(this.cx + Math.cos(a) * 22, this.cy + Math.sin(a) * 26, '#d8a05a', -30, .7));
+        }
+        G.shake = 4; break;
+      }
+      case 's_quake': {
+        // 좌우로 퍼져 나가는 충격파 — 발밑을 따라 두 갈래로 나간다
+        const dmg = this.scaleDmg(wdmg * sk.v(r) / 100, 'str');
+        const foot = this.y + this.h;
+        for (const dir of [-1, 1]) {
+          for (let step = 0; step < 5; step++) {
+            G.pending.push({
+              t: step * 0.05, fn: () => {
+                const x = this.cx + dir * (34 + step * 34);
+                G.aoe(x, foot - 14, 40, dmg / 2, 5, '#c8845a', 'frost');
+                for (let k = 0; k < 4; k++)
+                  G.parts.push(new Part(x + (Math.random() - .5) * 24, foot - 4, '#c8845a', -180, .5));
+              }
+            });
+          }
+        }
+        G.aoe(this.cx, foot - 14, 60, dmg, 7, '#c8845a', 'frost');
+        G.shake = 12; break;
+      }
+      case 's_warcry': {
+        const dur = sk.v(r);
+        this.addBuff('warcry', dur);
+        this.addBuff('iron', dur);
+        // 함성 자체는 피해가 아니라 밀어내기다 — 붙어 있던 것들을 떼어 낸다
+        for (const e of G.ents) {
+          if (!(e instanceof Enemy) || e.dead) continue;
+          if (dist(this.cx, this.cy, e.cx, e.cy) > 190) continue;
+          if (!e.boss) { e.vx += Math.sign(e.cx - this.cx) * 320; e.vy = -180; }
+          e.slow(0.3, 3);
+        }
+        G.ringFx(this.cx, this.cy, 190, '#e8a04a', .5);
+        G.ringFx(this.cx, this.cy, 120, '#ffd88a', .35);
+        G.shake = 9; break;
+      }
+      case 's_pierce': {
+        const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 900, Math.sin(ang) * 900,
+          this.scaleDmg(wdmg * sk.v(r) / 100, 'dex') * (this.rollCrit() ? 1 + this.d.critD / 100 : 1), 'player', 'star');
+        p.pierce = 6; p.grav = 0;
+        G.projs.push(p);
+        for (let k = 0; k < 8; k++) G.parts.push(new Part(this.cx, this.cy - 4, '#9fe07a', -20, .35));
+        break;
+      }
+      case 's_smoke': {
+        this.iframe = Math.max(this.iframe, 0.8 + r * 0.15);
+        this.addBuff('smokescreen', sk.v(r));
+        for (const e of G.ents) {
+          if (!(e instanceof Enemy) || e.dead) continue;
+          if (dist(this.cx, this.cy, e.cx, e.cy) < 150) e.slow(0.4, 4);
+        }
+        for (let k = 0; k < 34; k++) {
+          const a = Math.random() * TAU, d2 = Math.random() * 60;
+          G.parts.push(new Part(this.cx + Math.cos(a) * d2, this.cy + Math.sin(a) * d2, '#b8c8b0', -50, 1.1));
+        }
+        G.ringFx(this.cx, this.cy, 150, '#b8c8b0', .4);
+        break;
+      }
+      case 's_mark': {
+        // 겨눈 자리에서 가장 가까운 적 하나. 표식은 그 적이 받는 모든 피해를 키운다
+        let best = null, bd = 260;
+        for (const e of G.ents) {
+          if (!(e instanceof Enemy) || e.dead) continue;
+          const d2 = dist(mx, my, e.cx, e.cy);
+          if (d2 < bd) { bd = d2; best = e; }
+        }
+        if (!best) { this.cd[id] = 1; this.mp += sk.mana; G.toast('겨눈 곳에 적이 없다', 'bad'); return; }
+        best.markT = 10; best.markAmt = sk.v(r) / 100;
+        G.ringFx(best.cx, best.cy, best.w + 26, '#e8d05a', .5);
+        for (let k = 0; k < 12; k++) G.parts.push(new Part(best.cx, best.y, '#e8d05a', -60, .7));
+        break;
+      }
+      case 's_barrier': {
+        this.shieldMax = this.shield = Math.round(sk.v(r) + this.d.int * 3.2);
+        this.shieldT = 20;
+        G.ringFx(this.cx, this.cy, 48, '#6fb8ff', .5);
+        for (let k = 0; k < 20; k++) {
+          const a = Math.random() * TAU;
+          G.parts.push(new Part(this.cx + Math.cos(a) * 30, this.cy + Math.sin(a) * 34, '#6fb8ff', -40, .8));
+        }
+        G.toast(`방벽 ${this.shield}`, 'good');
+        break;
+      }
+      case 's_chain': {
+        // 첫 표적에서 시작해 가까운 적으로 옮겨 붙는다. 한 번 튈 때마다 25%씩 옅어진다
+        const hops = sk.v(r);
+        const base = this.scaleDmg(60 + this.d.int * 2.4, 'int');
+        const hit = new Set();
+        let fx = this.cx, fy = this.cy - 4, power = base;
+        for (let h = 0; h < hops; h++) {
+          let best = null, bd = h === 0 ? 420 : 200;
+          for (const e of G.ents) {
+            if (!(e instanceof Enemy) || e.dead || hit.has(e)) continue;
+            const d2 = h === 0 ? dist(mx, my, e.cx, e.cy) : dist(fx, fy, e.cx, e.cy);
+            if (d2 < bd) { bd = d2; best = e; }
+          }
+          if (!best) break;
+          hit.add(best);
+          G.boltFx(fx, fy, best.cx, best.cy, '#ffe86a');
+          const crit = this.rollCrit();
+          best.hurt(power * (crit ? 1 + this.d.critD / 100 : 1), crit, this, 2);
+          best.slow(0.25, 1.5);
+          fx = best.cx; fy = best.cy; power *= 0.75;
+        }
+        if (!hit.size) { G.boltFx(this.cx, this.cy - 4, mx, my, '#ffe86a'); }
+        break;
+      }
+      case 's_blink': {
+        // 겨눈 쪽으로 최대 190px. 벽 안으로는 못 간다 — 반 칸씩 훑어 뚫린 데까지만
+        const maxD = 190, cs = Math.cos(ang), sn = Math.sin(ang);
+        let reach = 0;
+        for (let t = TS / 2; t <= maxD; t += TS / 2) {
+          if (G.world.hitSolid(this.x + cs * t, this.y + sn * t, this.w, this.h)) break;
+          reach = t;
+        }
+        if (reach < TS) { this.cd[id] = 1; this.mp += sk.mana; G.toast('그쪽은 막혀 있다', 'bad'); return; }
+        const ox = this.cx, oy = this.cy;
+        this.x += cs * reach; this.y += sn * reach;
+        this.vy = Math.min(this.vy, 0);
+        this.iframe = Math.max(this.iframe, 0.25);
+        G.aoe(ox, oy, 78, this.scaleDmg(sk.v(r) + this.d.int * 1.4, 'int'), 4, '#c08fff');
+        for (let k = 0; k < 18; k++) {
+          G.parts.push(new Part(ox + (Math.random() - .5) * 24, oy + (Math.random() - .5) * 34, '#c08fff', -40, .7));
+          G.parts.push(new Part(this.cx + (Math.random() - .5) * 24, this.cy + (Math.random() - .5) * 34, '#c08fff', -40, .7));
+        }
+        G.boltFx(ox, oy, this.cx, this.cy, '#c08fff');
+        break;
+      }
+      case 's_meteor': {
+        // 겨눈 자리에 예고를 띄우고 0.9초 뒤에 떨어진다 — 피할 시간을 주는 대신 크다
+        const tx = mx, ty = my;
+        G.warnFx(tx, ty, 150, 0.9, '#ffb04a');
+        G.pending.push({
+          t: 0.9, fn: () => {
+            const dmg = this.scaleDmg(340 + this.d.int * 6.5, 'int');
+            G.aoe(tx, ty, 150, dmg, 12, '#ffb04a');
+            for (const e of G.ents) if (e instanceof Enemy && !e.dead && dist(tx, ty, e.cx, e.cy) < 150) e.addDot('fire', dmg * 0.06, 5);
+            G.ringFx(tx, ty, 150, '#ffb04a', .55);
+            G.ringFx(tx, ty, 90, '#fff0c0', .4);
+            for (let k = 0; k < 46; k++) {
+              const a = Math.random() * TAU, d2 = Math.random() * 140;
+              G.parts.push(new Part(tx + Math.cos(a) * d2, ty + Math.sin(a) * d2, k % 3 ? '#ffb04a' : '#fff0c0', -150, 1));
+            }
+            G.shake = 22; G.sfx('bossdie');
+          }
+        });
+        break;
+      }
     }
     G.sfx('skill');
   }
@@ -534,6 +742,8 @@ class Player extends Ent {
     this.atkTimer -= dt; this.swing -= dt; this.dashCd -= dt; this.iframe -= dt;
     this.hurtCd -= dt; this.flash -= dt; this.potionCd -= dt;
     if (this.chargeT > 0) this.chargeT -= dt;
+    if (this.undyingCd > 0) this.undyingCd = Math.max(0, this.undyingCd - dt);
+    if (this.shieldT > 0) { this.shieldT -= dt; if (this.shieldT <= 0) { this.shieldT = 0; this.shield = 0; } }
     for (const k in this.cd) if (this.cd[k] > 0) this.cd[k] = Math.max(0, this.cd[k] - dt);
     for (let i = this.buffs.length - 1; i >= 0; i--) { this.buffs[i].t -= dt; if (this.buffs[i].t <= 0) { this.buffs.splice(i, 1); this.recalc(); } }
 
@@ -695,6 +905,7 @@ class Enemy extends Ent {
     this.phase = 0; this.state = 0; this.stateT = 0;
     this.facing = -1;
     this.hitCd = 0;
+    this.markT = 0; this.markAmt = 0;   // 사냥꾼의 표식
   }
   addDot(kind, dps, dur) { this.dots.push({ kind, dps, t: dur }); }
   slow(f, t) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
@@ -702,6 +913,8 @@ class Enemy extends Ent {
   hurt(amount, crit, src, kb) {
     if (this.dead) return;
     const red = this.armor / (this.armor + 70);
+    // 사냥꾼의 표식 — 출처를 가리지 않는다. 표식이 붙은 동안은 무엇에 맞아도 더 아프다
+    if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
     let dmg = Math.max(1, Math.round(amount * (1 - red)));
     this.hp -= dmg; this.flash = 0.12;
     G.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 14, this.y - 4, dmg, crit ? '#ffd24a' : '#fff', crit ? 1 : 0));
@@ -743,6 +956,11 @@ class Enemy extends Ent {
     this.atkPose -= dt;
     this.flash -= dt; this.atkCd -= dt; this.jumpCd -= dt; this.hitCd -= dt;
     if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slowF = 1; }
+    if (this.markT > 0) {
+      this.markT -= dt;
+      if (this.markT > 0 && Math.random() < dt * 5)
+        G.parts.push(new Part(this.cx + (Math.random() - .5) * this.w, this.y - 6, '#e8d05a', -24, .5));
+    }
     for (let i = this.dots.length - 1; i >= 0; i--) {
       const d = this.dots[i]; d.t -= dt;
       this.hp -= d.dps * dt;
