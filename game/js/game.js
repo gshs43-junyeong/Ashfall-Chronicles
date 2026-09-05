@@ -50,7 +50,13 @@ const G = {
     document.body.classList.add('booting');
     window.__acBooting = 1;                   // 로딩 화면은 이제 이쪽이 맡는다 (index.html 참고)
     this.showLoading('불러오는 중…');
-    if (typeof TitleBG !== 'undefined') TitleBG.init();
+    /* 타이틀 배경은 **여기서 바로 돌리기 시작한다.**
+       예전에는 bootDone() 에서만 켰다. 그런데 애셋이 늦게 오면 index.html 의 안전장치가
+       먼저 로딩을 걷어 버려서, 타이틀은 떴는데 배경 캔버스는 빈 채로 남았다 — 설정이나
+       크레딧을 열었다 닫으면 그제서야 보였다(그 사이에 bootDone 이 끝났을 뿐이다).
+       그림이 아직 없어도 하늘·잔광·재는 그릴 수 있으므로 먼저 켜고,
+       그림이 붙으면 useSprites() 가 능선과 사람을 얹는다. */
+    if (typeof TitleBG !== 'undefined') { TitleBG.init(); TitleBG.start(); }
     // 손그림 애셋은 비동기로 붙인다 — 실패해도 절차 생성 렌더로 계속 동작
     if (window.Sprites) {
       Sprites.ready().then(() => {
@@ -253,7 +259,7 @@ const G = {
     this.deathMark = null;
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
     this.nearStObj = { work: null, forge: null };
-    this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
+    this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
     this.rainT = 0; this.rainDrops = null;
     this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = [];
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
@@ -437,7 +443,6 @@ const G = {
     }
 
     this.checkRuinEntry();
-    this.checkBiomeEntry();
     this.checkRuinEvent();
     /* 유적 고유 이벤트의 여운 — 꺼진 불(화면 어둠)과 홀씨(지속 피해)는 시간이 지나면 걷힌다 */
     if (this.ruinDark > 0) this.ruinDark -= dt;
@@ -2388,6 +2393,7 @@ const G = {
       this.tabletsRead = d.tabletsRead || {}; this.termsRead = d.termsRead || {}; this.loreRead = d.loreRead || {};
       this.seenRuins = d.seenRuins || {};
       this.seenBiomes = d.seenBiomes || {};
+      this._bgId = undefined;   // 불러온 자리의 배경을 기준으로 다시 잡는다
       this.ruinMarks = d.ruinMarks || {}; this.ruinEvDone = d.ruinEvDone || {};
       this.deathMark = d.deathMark || null;
       this.mode = MODE_OF(d.mode).id;
@@ -2885,19 +2891,11 @@ const G = {
        불이 꺼졌을 때(ruinDark)는 타일을 건드리지 않고 화면만 어둡게 한다 — 장식을
        부수면 되돌릴 방법이 없다. 홀씨(ruinSpore)는 초록빛으로 시야를 흐린다.
        둘 다 끝날 때 마지막 2초 동안 서서히 걷힌다. */
+    // 이름표는 원경이 바뀌는 자리에서 — 그리는 김에 같은 카메라 값으로 본다
+    this.checkBiomeEntry(camX, camY);
     /* 그 땅의 공기색 — 아주 옅게. 없으면 일곱 땅이 다 같은 색으로 읽힌다. */
     const air = this.biomeAir(camX, camY);
-    if (air) {
-      c.save();
-      c.globalCompositeOperation = 'soft-light';
-      c.globalAlpha = Math.min(0.18, air.a * 2.2);
-      c.fillStyle = air.c;
-      c.fillRect(0, 0, this.W, this.H);
-      c.globalCompositeOperation = 'source-over';
-      c.globalAlpha = air.a;
-      c.fillRect(0, 0, this.W, this.H);
-      c.restore();
-    }
+    if (air) this.drawAir(c, air);
     if (this.ruinDark > 0) {
       c.save();
       c.globalAlpha = Math.min(1, this.ruinDark / 2) * 0.72;
@@ -3717,19 +3715,41 @@ const G = {
       바뀌는데도 "여기가 어디"라는 말이 한 번도 없었다. 유적과 같은 카드를 쓰되
       **무엇이 사는가가 아니라 그 땅이 어떤 곳인가**를 적는다(BIOMES[].card).
       한 번뿐이라 다시 지나가도 뜨지 않는다(seenBiomes 는 세이브에 남는다). */
-  checkBiomeEntry() {
+  /** 지금 화면 뒤에 깔린 원경이 무엇인가 — drawParallaxArt 의 고르는 규칙과 같다.
+      이름표는 **이 값이 바뀌는 순간**에 띄운다. 눈에 보이는 배경이 바뀌는 그 자리가
+      "다른 땅에 들어섰다"고 느끼는 자리이기 때문이다. 원경이 없는 지하 중간층은 null. */
+  bgId(camX, camY) {
+    const p = this.player, w = this.world;
+    if (!p || !w) return null;
+    if (camY > HELL_Y * TS - 700) return 'hell';
+    const zone = w.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
+    if (zone === 'sky' || zone === 'ruin' || zone === 'village' || zone === 'camp') return zone;
+    if (camY > SURF_BASE * TS + 500) return null;
+    return w.biomeAt(clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1)).id;
+  },
+
+  /** 땅·구역의 이름표. **원경 그림이 바뀔 때** 한 번 띄운다.
+
+      유적에는 카드가 있는데 땅에는 없어서, 걷다 보면 눈이 흙으로 바뀌고 흙이 모래로
+      바뀌는데도 "여기가 어디"라는 말이 한 번도 없었다. 유적과 같은 카드를 쓰되
+      **무엇이 사는가가 아니라 그 땅이 어떤 곳인가**를 적는다(BIOMES[].card · ZONE_CARD).
+      한 번뿐이라 다시 지나가도 뜨지 않는다(seenBiomes 는 세이브에 남는다). */
+  checkBiomeEntry(camX, camY) {
     if (this.time < 3) return;                 // 시작 직후엔 장 카드와 겹친다
-    const p = this.player;
-    const b = this.world.biomeAt(clamp(Math.floor(p.cx / TS), 0, WW - 1));
-    if (!b || !b.card) return;
+    const id = this.bgId(camX, camY);
+    if (!id) return;                           // 원경이 없는 층 — 기준이 없으니 세지 않는다
+    if (id === this._bgId) return;             // 배경이 그대로면 아무 일도 없다
+    const first = this._bgId === undefined;
+    this._bgId = id;
+    if (first) return;                         // 들어온 첫 프레임은 "바뀐 것"이 아니다
     if (!this.seenBiomes) this.seenBiomes = {};
-    if (this.seenBiomes[b.id]) return;
-    /* 경계에서 한 발짝씩 오갈 때 카드가 번갈아 뜨지 않게, 경계 띠 안에서는 알리지
-       않는다 — 그 땅 안쪽으로 확실히 들어섰을 때만 센다. */
-    const tx = Math.floor(p.cx / TS);
-    if (tx - b.x0 < 24 || b.x1 - tx < 24) return;
-    this.seenBiomes[b.id] = 1;
-    UI.chapterCard({ sub: b.card.sub, title: b.n, line: b.card.line });
+    if (this.seenBiomes[id]) return;
+    const z = ZONE_CARD[id];
+    const b = z ? null : BIOMES.find(q => q.id === id);
+    const card = z ? z.card : (b && b.card);
+    if (!card) return;                         // 유적·하늘 섬·지옥은 제 카드가 따로 있다
+    this.seenBiomes[id] = 1;
+    UI.chapterCard({ sub: z ? z.sub : b.card.sub, title: z ? z.n : b.n, line: card.line });
     this.sfx('chapter');
   },
 
@@ -3747,6 +3767,21 @@ const G = {
     const a = (A.a * (1 - k) + B.a * k) * (0.4 + 0.6 * depth);
     if (a < 0.004) return null;
     return { c: k > 0.25 ? B.c : A.c, a };
+  },
+
+  /** 공기색을 화면에 덮는다. soft-light 한 겹으로 색을 물들이고, 아주 옅은 칠 한 겹으로
+      전체 색조를 잡는다. 두 겹을 나눈 이유는 soft-light 만으로는 어두운 곳에서 거의
+      드러나지 않고, 칠만 쓰면 화면이 뿌옇게 뜨기 때문이다. */
+  drawAir(c, air) {
+    c.save();
+    c.globalCompositeOperation = 'soft-light';
+    c.globalAlpha = Math.min(0.55, air.a * 2.2);
+    c.fillStyle = air.c;
+    c.fillRect(0, 0, this.W, this.H);
+    c.globalCompositeOperation = 'source-over';
+    c.globalAlpha = air.a * 0.42;
+    c.fillRect(0, 0, this.W, this.H);
+    c.restore();
   },
 
   /** 다 여문 작물에 얹는 반짝임.

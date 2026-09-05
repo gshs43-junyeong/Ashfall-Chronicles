@@ -120,7 +120,10 @@ const TitleBG = {
     /* ---- 걸어가는 사람 — 메뉴를 피해 오른쪽 트인 자리에 ---- */
     const P = this.player;
     if (P) {
-      const ph = H * 0.19, pw = ph * (P.fw / P.fh);
+      /* 원본의 정수 배로만 키운다. 어중간한 배율로 줄이면 최근접 확대·축소가 두 번
+         겹쳐 픽셀 열이 들쭉날쭉해지고, 팔과 발이 잘려 보인다(홈페이지에서 실제로 그랬다). */
+      const k = Math.max(1, Math.min(3, Math.round(H / 820)));
+      const ph = P.fh * k, pw = P.fw * k;
       const fr = this.WALK[Math.floor(t * this.FPS) % this.WALK.length];
       const bob = Math.sin(t * this.FPS * Math.PI) * (ph * 0.012);
       const x = W * (W < 900 ? 0.8 : 0.76), y = ground - ph + bob;

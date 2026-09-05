@@ -63,7 +63,7 @@ const T = {
      SPARKCOIL 은 마주 보는 코일끼리 전기 아크를 잇고, GASVENT 는 유독 가스를 뿜고,
      GRINDER 는 벽에 박힌 톱니가 튀어나온다. 세션 2 지역(공창·폭주로)은 전기 문명이라
      코일을 더 많이 세운다. */
-  SPARKCOIL: 125, GASVENT: 126, GRINDER: 127
+  SPARKCOIL: 125, GASVENT: 126, GRINDER: 127, CIPHERSTONE: 128
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -239,7 +239,13 @@ const TILE_DEF = [
      tgrind: 벽에서 톱니가 튀어나온다. 붙어 걷지 못하게 만든다 */
   { n: '방전 코일', c: '#5a8aa8', solid: 1, hard: 3, drop: 'copper_ore', tcoil: 1, light: 3 },
   { n: '가스 분출구', c: '#6a7a4a', solid: 1, hard: 2, drop: 'stone', tgas: 1 },
-  { n: '톱니 구멍', c: '#6a6058', solid: 1, hard: 3, drop: 'iron_ore', tgrind: 1 }
+  { n: '톱니 구멍', c: '#6a6058', solid: 1, hard: 3, drop: 'iron_ore', tgrind: 1 },
+  /* 암호석 — 숫자 잠긴 골방을 통째로 두르는 돌.
+     ★ hard 99 라 **어떤 곡괭이로도 캘 수 없다.** 예전에는 문만 봉인석이고 벽은 평범한
+       유적 벽돌이라, 암호를 풀 것 없이 옆을 파고 들어가면 그만이었다.
+     겉모습은 유적 벽돌(#6a6250)에서 크게 벗어나지 않게 두고, 룬빛만 옅게 얹어
+       "여기는 손대지 못하는 자리"로 읽히게 했다 — 구조 안에 어울려야 하므로. */
+  { n: '암호석', c: '#5f5947', solid: 1, hard: 99, light: 3 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -260,7 +266,7 @@ const TILE_SPRITE = {
   junglegrass: T.JUNGLEGRASS, mud: T.MUD, jungleleaf: T.JUNGLELEAF, fern: T.FERN, orchid: T.ORCHID,
   glowmoss: T.GLOWMOSS, sporestone: T.SPORESTONE, glowcap: T.GLOWCAP, glowleaf: T.GLOWLEAF, lily: T.LILY,
   dart_l: T.DART_L, dart_r: T.DART_R, flamevent: T.FLAMEVENT, crumble: T.CRUMBLE,
-  sparkcoil: T.SPARKCOIL, gasvent: T.GASVENT, grinder: T.GRINDER,
+  sparkcoil: T.SPARKCOIL, gasvent: T.GASVENT, grinder: T.GRINDER, cipherstone: T.CIPHERSTONE,
   slagsteel: T.SLAGSTEEL, coreglass: T.COREGLASS,
   water: T.WATER, falls: T.FALLS,
   archestone: T.ARCHESTONE, draftglass: T.DRAFTGLASS, archseal: T.ARCHSEAL,
@@ -1739,14 +1745,17 @@ const BUFFS = {
    들어가든 체감이 똑같고 순서를 고를 이유도 없었다.
 
    rank가 조종하는 것 — 미니보스 수치(ENEMIES에서 개별 지정) · 상자 티어(tier) ·
-   함정 밀도(trapRate) · 가시 밀도(spikeRate) · 상자 빈도(chestRate) · 잡몹 배율(mobMul). */
+   함정 밀도(trapRate) · 가시 밀도(spikeRate) · 상자 빈도(chestRate) · 잡몹 배율(mobMul).
+   ★ chestRate 는 절반 아래로 내렸다(0.30~0.52 -> 0.14~0.24). 방마다 상자가 있으니
+     여는 맛이 없었다 — 유적 하나에 스물몇 개씩 놓이고 있었다. 보물방·보스방의
+     확정 상자는 그대로 두었으므로 "털 만한 것"은 줄지 않는다. */
 const RUIN_SPEC = [
   {
     id: 'ice', n: '얼음 던전', x: 300, y: 150, w: 74, h: 44,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
     traps: ['dart', 'crumble', 'grind'], boss: 'ice_warden',
     mobs: ['frostling', 'icewolf'],
-    rank: 2, tier: 3, trapRate: 0.46, spikeRate: 0.26, chestRate: 0.34, mobMul: 1.0
+    rank: 2, tier: 3, trapRate: 0.46, spikeRate: 0.26, chestRate: 0.16, mobMul: 1.0
   },
   {
     id: 'pyramid', n: '피라미드', x: 2180, y: 96, w: 80, h: 56,
@@ -1755,7 +1764,7 @@ const RUIN_SPEC = [
     mobs: ['scorpion', 'sandmaw', 'skeleton'],
     // 지상으로 튀어나온 데다 얕아서 일찍 눈에 띄지만, 안은 함정이 가장 촘촘하다 —
     // "보이는 것과 실제 난이도가 다른" 유적 하나는 있어야 한다
-    rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.42, mobMul: 1.35
+    rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.20, mobMul: 1.35
   },
   {
     id: 'mine', n: '버려진 광산', x: 820, y: 168, w: 72, h: 38,
@@ -1763,7 +1772,7 @@ const RUIN_SPEC = [
     traps: ['dart', 'crumble', 'gas'], boss: 'mine_horror',
     mobs: ['minerghost', 'spider', 'bat'],
     // 베이스캠프 바로 옆. 처음 들어가 보는 유적이라 가장 순하게 둔다
-    rank: 1, tier: 2, trapRate: 0.32, spikeRate: 0.16, chestRate: 0.30, mobMul: 0.85
+    rank: 1, tier: 2, trapRate: 0.32, spikeRate: 0.16, chestRate: 0.14, mobMul: 0.85
   },
   {
     id: 'blight', n: '부패한 둥지', x: 4020, y: 196, w: 100, h: 60,
@@ -1771,7 +1780,7 @@ const RUIN_SPEC = [
     traps: ['dart', 'vent', 'gas', 'coil'], boss: 'blight_maw',
     mobs: ['crawler', 'shadoweye'],
     // 동쪽 끝 + 가장 깊다. 여섯 중 마지막에 닿는 곳이라 제일 세게
-    rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.52, mobMul: 1.85
+    rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.24, mobMul: 1.85
   },
   {
     id: 'spore', n: '포자 굴', x: 3620, y: 176, w: 68, h: 42,
@@ -1780,7 +1789,7 @@ const RUIN_SPEC = [
     mobs: ['sporeling', 'capbeast'], arch: 'buried', rooms: 14,
     // 입구가 없어 우연히 뚫고 들어가는 곳. 준비 없이 떨어질 수 있으니 함정은 낮추고
     // 대신 잡몹을 세게 — 도망칠 길이 없다는 게 이 유적의 압박이다
-    rank: 5, tier: 5, trapRate: 0.50, spikeRate: 0.30, chestRate: 0.48, mobMul: 1.6
+    rank: 5, tier: 5, trapRate: 0.50, spikeRate: 0.30, chestRate: 0.22, mobMul: 1.6
   }
 ];
 /* 유적 생김새(arch) — 같은 방 생성기를 쓰되 "어떻게 발견되는가"를 갈랐다.
