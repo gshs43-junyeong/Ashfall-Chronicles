@@ -1,0 +1,1105 @@
+/* assets/sprites-manifest.js — 자동 생성물. 손으로 고치지 마세요.
+   원본은 assets/manifest.json 이고, tools/sync-manifest.py 가 옮겨 적습니다.
+
+   file:// 에서는 fetch 가 막혀 매니페스트를 읽을 수 없습니다. 그래서 zip 을 풀어
+   index.html 을 더블클릭했을 때도 그림이 붙도록 같은 내용을 여기에 한 벌 둡니다
+   (그 덕에 런처가 파이썬 서버를 띄울 이유가 없어졌습니다). */
+window.SPRITE_MANIFEST = {
+  "note": "Ashfall Chronicles — 손그림 애셋 (1부 ASSETS-TODO.md B목록 + 2부 ASSETS-TODO-ACT2.md). 모든 PNG는 투명 배경, 4배 확대(scale 4) 픽셀아트. 게임 좌표는 frameW/frameH 기준.",
+  "palette": {
+    "ash": "#5d5d63",
+    "dirt": "#6b4a2f",
+    "gold": "#d8a94b",
+    "corrupt": "#6a4a92",
+    "hell": "#e0561c",
+    "frost": "#9fe0ff",
+    "mythril": "#5fd0c0",
+    "ether": "#8fe0d8",
+    "skystone": "#8fa8c0",
+    "cloud": "#dfe9f5",
+    "ruinBrick": "#7a7160",
+    "runeLight": "#9fe8d8",
+    "sealPurple": "#a06fff"
+  },
+  "characters": {
+    "scale": 4,
+    "frames": [
+      "idle1",
+      "idle2",
+      "move1",
+      "move2",
+      "atk",
+      "death1",
+      "death2"
+    ],
+    "playerFrames": [
+      "idle1",
+      "idle2",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4",
+      "jump",
+      "fall",
+      "dash",
+      "atk1",
+      "atk2",
+      "atk3",
+      "hurt"
+    ],
+    "sheets": {
+      "player": {
+        "file": "char/player.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13
+      },
+      "player_wanderer": {
+        "file": "char/player_wanderer.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13
+      },
+      "player_digger": {
+        "file": "char/player_digger.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13
+      },
+      "player_ranger": {
+        "file": "char/player_ranger.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13
+      },
+      "player_adept": {
+        "file": "char/player_adept.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13
+      },
+      "player_stray": {
+        "file": "char/player_stray.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13
+      },
+      "slime": {
+        "file": "char/slime.png",
+        "frameW": 26,
+        "frameH": 20,
+        "count": 7
+      },
+      "zombie": {
+        "file": "char/zombie.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "bat": {
+        "file": "char/bat.png",
+        "frameW": 22,
+        "frameH": 16,
+        "count": 7
+      },
+      "skeleton": {
+        "file": "char/skeleton.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "archer": {
+        "file": "char/archer.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "crawler": {
+        "file": "char/crawler.png",
+        "frameW": 24,
+        "frameH": 38,
+        "count": 7
+      },
+      "shadoweye": {
+        "file": "char/shadoweye.png",
+        "frameW": 26,
+        "frameH": 26,
+        "count": 7
+      },
+      "frostling": {
+        "file": "char/frostling.png",
+        "frameW": 26,
+        "frameH": 34,
+        "count": 7
+      },
+      "imp": {
+        "file": "char/imp.png",
+        "frameW": 24,
+        "frameH": 28,
+        "count": 7
+      },
+      "golem": {
+        "file": "char/golem.png",
+        "frameW": 34,
+        "frameH": 48,
+        "count": 7
+      },
+      "wraith": {
+        "file": "char/wraith.png",
+        "frameW": 26,
+        "frameH": 38,
+        "count": 7
+      },
+      "sky_sentry": {
+        "file": "char/sky_sentry.png",
+        "frameW": 26,
+        "frameH": 34,
+        "count": 7
+      },
+      "gale": {
+        "file": "char/gale.png",
+        "frameW": 26,
+        "frameH": 26,
+        "count": 7
+      },
+      "ruin_guard": {
+        "file": "char/ruin_guard.png",
+        "frameW": 30,
+        "frameH": 46,
+        "count": 7
+      },
+      "lantern": {
+        "file": "char/lantern.png",
+        "frameW": 22,
+        "frameH": 30,
+        "count": 7
+      },
+      "ashcrow": {
+        "file": "char/ashcrow.png",
+        "frameW": 24,
+        "frameH": 18,
+        "count": 7
+      },
+      "spider": {
+        "file": "char/spider.png",
+        "frameW": 26,
+        "frameH": 18,
+        "count": 7
+      },
+      "minerghost": {
+        "file": "char/minerghost.png",
+        "frameW": 22,
+        "frameH": 34,
+        "count": 7
+      },
+      "scorpion": {
+        "file": "char/scorpion.png",
+        "frameW": 28,
+        "frameH": 20,
+        "count": 7
+      },
+      "sandmaw": {
+        "file": "char/sandmaw.png",
+        "frameW": 34,
+        "frameH": 26,
+        "count": 7
+      },
+      "icewolf": {
+        "file": "char/icewolf.png",
+        "frameW": 32,
+        "frameH": 24,
+        "count": 7
+      },
+      "corrupttree": {
+        "file": "char/corrupttree.png",
+        "frameW": 34,
+        "frameH": 48,
+        "count": 7
+      },
+      "crystalcrab": {
+        "file": "char/crystalcrab.png",
+        "frameW": 34,
+        "frameH": 24,
+        "count": 7
+      },
+      "lavaslug": {
+        "file": "char/lavaslug.png",
+        "frameW": 32,
+        "frameH": 22,
+        "count": 7
+      },
+      "cloudjelly": {
+        "file": "char/cloudjelly.png",
+        "frameW": 28,
+        "frameH": 30,
+        "count": 7
+      },
+      "archivist": {
+        "file": "char/archivist.png",
+        "frameW": 24,
+        "frameH": 36,
+        "count": 7
+      },
+      "scrapcrawler": {
+        "file": "char/scrapcrawler.png",
+        "frameW": 30,
+        "frameH": 22,
+        "count": 7
+      },
+      "sparkwisp": {
+        "file": "char/sparkwisp.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "riveter": {
+        "file": "char/riveter.png",
+        "frameW": 24,
+        "frameH": 40,
+        "count": 7
+      },
+      "foreman": {
+        "file": "char/foreman.png",
+        "frameW": 26,
+        "frameH": 42,
+        "count": 7
+      },
+      "npc_guard": {
+        "file": "char/npc_guard.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "vinelash": {
+        "file": "char/vinelash.png",
+        "frameW": 24,
+        "frameH": 34,
+        "count": 7
+      },
+      "bloomspitter": {
+        "file": "char/bloomspitter.png",
+        "frameW": 26,
+        "frameH": 30,
+        "count": 7
+      },
+      "canopy_ape": {
+        "file": "char/canopy_ape.png",
+        "frameW": 30,
+        "frameH": 26,
+        "count": 7
+      },
+      "sporeling": {
+        "file": "char/sporeling.png",
+        "frameW": 22,
+        "frameH": 22,
+        "count": 7
+      },
+      "capbeast": {
+        "file": "char/capbeast.png",
+        "frameW": 30,
+        "frameH": 24,
+        "count": 7
+      },
+      "crimson_howler": {
+        "file": "char/crimson_howler.png",
+        "frameW": 26,
+        "frameH": 28,
+        "count": 7
+      },
+      "crimson_eye": {
+        "file": "char/crimson_eye.png",
+        "frameW": 24,
+        "frameH": 24,
+        "count": 7
+      },
+      "splitter": {
+        "file": "char/splitter.png",
+        "frameW": 26,
+        "frameH": 24,
+        "count": 7
+      },
+      "weldarm": {
+        "file": "char/weldarm.png",
+        "frameW": 22,
+        "frameH": 30,
+        "count": 7
+      },
+      "coreling": {
+        "file": "char/coreling.png",
+        "frameW": 20,
+        "frameH": 22,
+        "count": 7
+      },
+      "rabbit": {
+        "file": "char/rabbit.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "arctic_hare": {
+        "file": "char/arctic_hare.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "sand_lizard": {
+        "file": "char/sand_lizard.png",
+        "frameW": 22,
+        "frameH": 36,
+        "count": 7
+      },
+      "jungle_frog": {
+        "file": "char/jungle_frog.png",
+        "frameW": 18,
+        "frameH": 18,
+        "count": 7
+      },
+      "glow_snail": {
+        "file": "char/glow_snail.png",
+        "frameW": 22,
+        "frameH": 16,
+        "count": 7
+      },
+      "ash_vole": {
+        "file": "char/ash_vole.png",
+        "frameW": 16,
+        "frameH": 20,
+        "count": 7
+      },
+      "cave_minnow": {
+        "file": "char/cave_minnow.png",
+        "frameW": 16,
+        "frameH": 10,
+        "count": 7
+      },
+      "grotto_eel": {
+        "file": "char/grotto_eel.png",
+        "frameW": 34,
+        "frameH": 14,
+        "count": 7
+      },
+      "drowned_hand": {
+        "file": "char/drowned_hand.png",
+        "frameW": 24,
+        "frameH": 32,
+        "count": 7
+      },
+      "draft_form": {
+        "file": "char/draft_form.png",
+        "frameW": 26,
+        "frameH": 44,
+        "count": 7
+      },
+      "scribe_hand": {
+        "file": "char/scribe_hand.png",
+        "frameW": 24,
+        "frameH": 30,
+        "count": 7
+      },
+      "mold_walker": {
+        "file": "char/mold_walker.png",
+        "frameW": 34,
+        "frameH": 50,
+        "count": 7
+      },
+      "orbit_sentry": {
+        "file": "char/orbit_sentry.png",
+        "frameW": 28,
+        "frameH": 40,
+        "count": 7
+      },
+      "meridian_eye": {
+        "file": "char/meridian_eye.png",
+        "frameW": 26,
+        "frameH": 26,
+        "count": 7
+      },
+      "ballast_form": {
+        "file": "char/ballast_form.png",
+        "frameW": 38,
+        "frameH": 54,
+        "count": 7
+      },
+      "gloom_crawler": {
+        "file": "char/gloom_crawler.png",
+        "frameW": 30,
+        "frameH": 24,
+        "count": 7
+      },
+      "damp_wisp": {
+        "file": "char/damp_wisp.png",
+        "frameW": 22,
+        "frameH": 22,
+        "count": 7
+      },
+      "lost_miner": {
+        "file": "char/lost_miner.png",
+        "frameW": 22,
+        "frameH": 42,
+        "count": 7
+      },
+      "pet_ember_squirrel": {
+        "file": "char/pet_ember_squirrel.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_glass_moth": {
+        "file": "char/pet_glass_moth.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_pebble_kin": {
+        "file": "char/pet_pebble_kin.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_dust_sparrow": {
+        "file": "char/pet_dust_sparrow.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_frost_kit": {
+        "file": "char/pet_frost_kit.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_ash_owl": {
+        "file": "char/pet_ash_owl.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_cinder_toad": {
+        "file": "char/pet_cinder_toad.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_thorn_wisp": {
+        "file": "char/pet_thorn_wisp.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_star_sprite": {
+        "file": "char/pet_star_sprite.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_ember_drake": {
+        "file": "char/pet_ember_drake.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_void_hatchling": {
+        "file": "char/pet_void_hatchling.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "pet_storm_falcon": {
+        "file": "char/pet_storm_falcon.png",
+        "frameW": 20,
+        "frameH": 20,
+        "count": 7
+      },
+      "npcw_elara": {
+        "file": "char/npc_elara.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_borin": {
+        "file": "char/npc_borin.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_mira": {
+        "file": "char/npc_mira.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_elder": {
+        "file": "char/npc_elder.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_haran": {
+        "file": "char/npc_haran.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_rika": {
+        "file": "char/npc_rika.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_seira": {
+        "file": "char/npc_seira.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_garn": {
+        "file": "char/npc_garn.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_kade": {
+        "file": "char/npc_kade.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      }
+    }
+  },
+  "bosses": {
+    "scale": 4,
+    "gap": 4,
+    "frames": [
+      "p1_idle1",
+      "p1_idle2",
+      "p2_idle1",
+      "p2_idle2",
+      "p3_idle1",
+      "p3_idle2"
+    ],
+    "sheets": {
+      "king_slime": {
+        "file": "boss/king_slime.png",
+        "frameW": 82,
+        "frameH": 62,
+        "count": 6
+      },
+      "bone_lord": {
+        "file": "boss/bone_lord.png",
+        "frameW": 56,
+        "frameH": 74,
+        "count": 6
+      },
+      "corrupt_heart": {
+        "file": "boss/corrupt_heart.png",
+        "frameW": 62,
+        "frameH": 62,
+        "count": 6
+      },
+      "frost_witch": {
+        "file": "boss/frost_witch.png",
+        "frameW": 34,
+        "frameH": 56,
+        "count": 6
+      },
+      "void_king": {
+        "file": "boss/void_king.png",
+        "frameW": 74,
+        "frameH": 92,
+        "count": 6
+      },
+      "storm_warden": {
+        "file": "boss/storm_warden.png",
+        "frameW": 66,
+        "frameH": 70,
+        "count": 6
+      },
+      "first_keeper": {
+        "file": "boss/first_keeper.png",
+        "frameW": 70,
+        "frameH": 88,
+        "count": 6
+      },
+      "pursuer": {
+        "file": "boss/pursuer.png",
+        "frameW": 96,
+        "frameH": 104,
+        "count": 7
+      },
+      "overseer": {
+        "file": "boss/overseer.png",
+        "frameW": 74,
+        "frameH": 92,
+        "count": 7
+      },
+      "ice_warden": {
+        "file": "boss/ice_warden.png",
+        "frameW": 54,
+        "frameH": 72,
+        "count": 6,
+        "gap": 0
+      },
+      "sand_guardian": {
+        "file": "boss/sand_guardian.png",
+        "frameW": 60,
+        "frameH": 76,
+        "count": 6,
+        "gap": 0
+      },
+      "mine_horror": {
+        "file": "boss/mine_horror.png",
+        "frameW": 66,
+        "frameH": 58,
+        "count": 6,
+        "gap": 0
+      },
+      "blight_maw": {
+        "file": "boss/blight_maw.png",
+        "frameW": 64,
+        "frameH": 64,
+        "count": 6,
+        "gap": 0
+      },
+      "vine_lord": {
+        "file": "boss/vine_lord.png",
+        "frameW": 62,
+        "frameH": 80,
+        "count": 6,
+        "gap": 0
+      },
+      "spore_queen": {
+        "file": "boss/spore_queen.png",
+        "frameW": 58,
+        "frameH": 78,
+        "count": 6,
+        "gap": 0
+      },
+      "proliferator": {
+        "file": "boss/proliferator.png",
+        "frameW": 72,
+        "frameH": 66,
+        "count": 6,
+        "gap": 0
+      },
+      "hepha": {
+        "file": "boss/hepha.png",
+        "frameW": 88,
+        "frameH": 110,
+        "count": 6,
+        "gap": 0
+      },
+      "archetype": {
+        "file": "boss/archetype.png",
+        "frameW": 96,
+        "frameH": 116,
+        "count": 6,
+        "gap": 0
+      },
+      "restorer": {
+        "file": "boss/restorer.png",
+        "frameW": 118,
+        "frameH": 132,
+        "count": 6,
+        "gap": 0
+      },
+      "shaft_maw": {
+        "file": "boss/shaft_maw.png",
+        "frameW": 92,
+        "frameH": 84,
+        "count": 6,
+        "gap": 0
+      }
+    }
+  },
+  "backgrounds": {
+    "parallax": {
+      "size": [
+        1920,
+        400
+      ],
+      "tiling": "가로 무한 반복(이음매 없음), 위쪽은 투명 — 게임 하늘이 비침",
+      "files": [
+        "bg/parallax_forest.png",
+        "bg/parallax_snow.png",
+        "bg/parallax_corrupt.png",
+        "bg/parallax_hell.png",
+        "bg/parallax_sky.png",
+        "bg/parallax_ruin.png",
+        "bg/parallax_desert.png",
+        "bg/parallax_works.png",
+        "bg/parallax_village.png",
+        "bg/parallax_jungle.png",
+        "bg/parallax_glowfen.png"
+      ]
+    },
+    "title": {
+      "file": "bg/title_key.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "note": "상단 1/4은 타이틀 텍스트용 여백"
+    },
+    "chapters": {
+      "size": [
+        1280,
+        720
+      ],
+      "files": [
+        "bg/chapter_0_fallen_star.png",
+        "bg/chapter_1_ash_village.png",
+        "bg/chapter_2_bone_pit.png",
+        "bg/chapter_3_corrupt_forest.png",
+        "bg/chapter_4_frost_throne.png",
+        "bg/chapter_5_sleeping_star.png",
+        "bg/chapter_6_sky_stair.png",
+        "bg/chapter_7_first_ruin.png",
+        "bg/chapter_8_pursuer.png",
+        "bg/chapter_9_nobody_built.png",
+        "bg/chapter_10_underworks.png",
+        "bg/chapter_12_runaway.png",
+        "bg/chapter_13_hepha.png",
+        "bg/chapter_11_chimneys.png",
+        "bg/chapter_14_beyond_wall.png"
+      ]
+    }
+  },
+  "npc": {
+    "size": [
+      128,
+      128
+    ],
+    "files": {
+      "elara": "npc/portrait_elara.png",
+      "borin": "npc/portrait_borin.png",
+      "mira": "npc/portrait_mira.png",
+      "elder": "npc/portrait_elder.png",
+      "rika": "npc/portrait_rika.png",
+      "garn": "npc/portrait_garn.png",
+      "haran": "npc/portrait_haran.png",
+      "seira": "npc/portrait_seira.png",
+      "kade": "npc/portrait_kade.png"
+    }
+  },
+  "ui": {
+    "cursors": {
+      "aim": "ui/cursor_aim.png",
+      "pick": "ui/cursor_pick.png"
+    },
+    "size": [
+      32,
+      32
+    ],
+    "hotspot": {
+      "aim": [
+        16,
+        16
+      ],
+      "pick": [
+        3,
+        29
+      ]
+    }
+  },
+  "fx": {
+    "projectiles": {
+      "scale": 4,
+      "gap": 4,
+      "frameW": 16,
+      "frameH": 16,
+      "count": 4,
+      "files": {
+        "arrow": "fx/proj_arrow.png",
+        "flame": "fx/proj_flame.png",
+        "frost": "fx/proj_frost.png",
+        "void": "fx/proj_void.png",
+        "wind": "fx/proj_wind.png",
+        "rune": "fx/proj_rune.png",
+        "starfrag": "fx/proj_starfrag.png"
+      }
+    },
+    "bursts": {
+      "scale": 4,
+      "gap": 4,
+      "frameW": 64,
+      "frameH": 64,
+      "count": 6,
+      "files": {
+        "hit": "fx/hit_impact.png",
+        "fire": "fx/explosion_fire.png",
+        "void": "fx/explosion_void.png",
+        "stargain": "fx/star_gain.png",
+        "starmerge": "fx/star_merge.png"
+      }
+    }
+  },
+  "objects": {
+    "scale": 4,
+    "note": "게임 안 오브젝트로 놓이는 한 장짜리 정지 이미지. 규격은 게임 내 크기(px), 파일은 4배.",
+    "files": {
+      "vault": {
+        "file": "obj/vault.png",
+        "w": 40,
+        "h": 36
+      },
+      "board": {
+        "file": "obj/board.png",
+        "w": 34,
+        "h": 44
+      },
+      "reforge": {
+        "file": "obj/reforge.png",
+        "w": 44,
+        "h": 40
+      },
+      "waystone": {
+        "file": "obj/waystone.png",
+        "w": 30,
+        "h": 48,
+        "off": "obj/waystone_off.png"
+      },
+      "fountain": {
+        "file": "obj/fountain.png",
+        "w": 110,
+        "h": 66
+      },
+      "terminal": {
+        "file": "obj/terminal.png",
+        "w": 34,
+        "h": 40,
+        "read": "obj/terminal_read.png"
+      },
+      "door": {
+        "file": "obj/door.png",
+        "w": 22,
+        "h": 44
+      },
+      "inn": {
+        "file": "obj/inn.png",
+        "w": 44,
+        "h": 34
+      },
+      "gate": {
+        "file": "obj/gate.png",
+        "w": 22,
+        "h": 66
+      },
+      "workbench_lv1": {
+        "file": "obj/workbench_lv1.png",
+        "w": 44,
+        "h": 22
+      },
+      "workbench_lv2": {
+        "file": "obj/workbench_lv2.png",
+        "w": 44,
+        "h": 22
+      },
+      "workbench_lv3": {
+        "file": "obj/workbench_lv3.png",
+        "w": 44,
+        "h": 22
+      },
+      "forge_lv1": {
+        "file": "obj/forge_lv1.png",
+        "w": 44,
+        "h": 44
+      },
+      "forge_lv2": {
+        "file": "obj/forge_lv2.png",
+        "w": 44,
+        "h": 44
+      },
+      "forge_lv3": {
+        "file": "obj/forge_lv3.png",
+        "w": 44,
+        "h": 44
+      },
+      "shelf": {
+        "file": "obj/shelf.png",
+        "w": 44,
+        "h": 44
+      }
+    }
+  },
+  "tiles": {
+    "size": 22,
+    "note": "22×22 한 칸, 가로로 이어 붙였을 때 이음매 없음. 기계 타일은 우상단 4×4px와 최하단 가로줄을 비워 둠(코드가 방향 화살표·상태등·진행/연료 막대를 덧그리는 자리).",
+    "files": {
+      "steelplate": "tile/steelplate.png",
+      "conduit": "tile/conduit.png",
+      "coal": "tile/tile_coal.png",
+      "lead": "tile/tile_lead.png",
+      "oilshale": "tile/tile_oilshale.png",
+      "m_belt": "tile/tile_m_belt.png",
+      "m_drill": "tile/tile_m_drill.png",
+      "m_drill_e": "tile/tile_m_drill_e.png",
+      "m_pump": "tile/tile_m_pump.png",
+      "m_smelter": "tile/tile_m_smelter.png",
+      "m_gen": "tile/tile_m_gen.png",
+      "m_press": "tile/tile_m_press.png",
+      "m_refinery": "tile/tile_m_refinery.png",
+      "m_assembler": "tile/tile_m_assembler.png",
+      "m_crate": "tile/tile_m_crate.png",
+      "m_battery": "tile/tile_m_battery.png",
+      "m_pole": "tile/tile_m_pole.png",
+      "m_sorter": "tile/tile_m_sorter.png",
+      "m_turret": "tile/tile_m_turret.png",
+      "m_trap": "tile/tile_m_trap.png",
+      "m_switch": "tile/tile_m_switch.png",
+      "thatch": "tile/tile_thatch.png",
+      "rooftile": "tile/tile_rooftile.png",
+      "timberwall": "tile/tile_timberwall.png",
+      "wallstone": "tile/tile_wallstone.png",
+      "battlement": "tile/tile_battlement.png",
+      "window": "tile/tile_window.png",
+      "fence": "tile/tile_fence.png",
+      "lamppost": "tile/tile_lamppost.png",
+      "banner": "tile/tile_banner.png",
+      "haybale": "tile/tile_haybale.png",
+      "sandbag": "tile/tile_sandbag.png",
+      "farmland": "tile/tile_farmland.png",
+      "m_windmill": "tile/tile_m_windmill.png",
+      "m_mill": "tile/tile_m_mill.png",
+      "m_oven": "tile/tile_m_oven.png",
+      "wheat0": "tile/tile_wheat0.png",
+      "wheat1": "tile/tile_wheat1.png",
+      "wheat2": "tile/tile_wheat2.png",
+      "wheat3": "tile/tile_wheat3.png",
+      "starroot0": "tile/tile_starroot0.png",
+      "starroot1": "tile/tile_starroot1.png",
+      "starroot2": "tile/tile_starroot2.png",
+      "starroot3": "tile/tile_starroot3.png",
+      "ashcap0": "tile/tile_ashcap0.png",
+      "ashcap1": "tile/tile_ashcap1.png",
+      "ashcap2": "tile/tile_ashcap2.png",
+      "ashcap3": "tile/tile_ashcap3.png",
+      "junglegrass": "tile/tile_junglegrass.png",
+      "mud": "tile/tile_mud.png",
+      "jungleleaf": "tile/tile_jungleleaf.png",
+      "fern": "tile/tile_fern.png",
+      "orchid": "tile/tile_orchid.png",
+      "glowmoss": "tile/tile_glowmoss.png",
+      "sporestone": "tile/tile_sporestone.png",
+      "glowcap": "tile/tile_glowcap.png",
+      "icebrick": "tile/tile_icebrick.png",
+      "sandbrick": "tile/tile_sandbrick.png",
+      "minewood": "tile/tile_minewood.png",
+      "dart_l": "tile/tile_dart_l.png",
+      "dart_r": "tile/tile_dart_r.png",
+      "flamevent": "tile/tile_flamevent.png",
+      "crumble": "tile/tile_crumble.png",
+      "m_dart": "tile/tile_m_dart.png",
+      "m_flame": "tile/tile_m_flame.png",
+      "m_frost": "tile/tile_m_frost.png",
+      "slagsteel": "tile/tile_slagsteel.png",
+      "coreglass": "tile/tile_coreglass.png",
+      "archestone": "tile/tile_archestone.png",
+      "draftglass": "tile/tile_draftglass.png",
+      "archseal": "tile/tile_archseal.png",
+      "orbitplate": "tile/tile_orbitplate.png",
+      "orbitcore": "tile/tile_orbitcore.png",
+      "deeprock": "tile/tile_deeprock.png",
+      "blackdamp": "tile/tile_blackdamp.png",
+      "glowleaf": "tile/tile_glowleaf.png"
+    }
+  },
+  "items": {
+    "size": 32,
+    "note": "32×32 아이템 아이콘, 투명 배경. 기계 16종·마을 기계 3종·건축 블록 11종은 tiles의 그림을 그대로 아이콘으로 재사용하므로 별도 파일 없음.",
+    "files": {
+      "coal": "item/coal.png",
+      "lead_ore": "item/lead_ore.png",
+      "lead_bar": "item/lead_bar.png",
+      "crude_oil": "item/crude_oil.png",
+      "refined_oil": "item/refined_oil.png",
+      "polymer": "item/polymer.png",
+      "fuel_brick": "item/fuel_brick.png",
+      "wire": "item/wire.png",
+      "circuit": "item/circuit.png",
+      "motor": "item/motor.png",
+      "machine_frame": "item/machine_frame.png",
+      "battery_empty": "item/battery_empty.png",
+      "battery_cell": "item/battery_cell.png",
+      "rivet": "item/rivet.png",
+      "pick_arc": "item/pick_arc.png",
+      "saw_auto": "item/saw_auto.png",
+      "gun_rail": "item/gun_rail.png",
+      "helm_exo": "item/helm_exo.png",
+      "chest_exo": "item/chest_exo.png",
+      "boots_exo": "item/boots_exo.png",
+      "charm_cap": "item/charm_cap.png",
+      "hoe_iron": "item/hoe_iron.png",
+      "seed_wheat": "item/seed_wheat.png",
+      "seed_starroot": "item/seed_starroot.png",
+      "seed_ashcap": "item/seed_ashcap.png",
+      "wheat": "item/wheat.png",
+      "starroot": "item/starroot.png",
+      "flour": "item/flour.png",
+      "fertilizer": "item/fertilizer.png",
+      "food_bread": "item/food_bread.png",
+      "food_pie": "item/food_pie.png",
+      "food_mstew": "item/food_mstew.png",
+      "food_soup": "item/food_soup.png",
+      "food_tea": "item/food_tea.png",
+      "food_jelly": "item/food_jelly.png",
+      "food_feast": "item/food_feast.png",
+      "mud": "item/mud.png",
+      "fern_frond": "item/fern_frond.png",
+      "orchid": "item/orchid.png",
+      "glowcap": "item/glowcap.png",
+      "vine_coil": "item/vine_coil.png",
+      "spore_sac": "item/spore_sac.png",
+      "food_curry": "item/food_curry.png",
+      "potion_glow": "item/potion_glow.png",
+      "charm_canopy": "item/charm_canopy.png",
+      "charm_spore": "item/charm_spore.png",
+      "icebrick": "item/icebrick.png",
+      "sandbrick": "item/sandbrick.png",
+      "frozen_core": "item/frozen_core.png",
+      "sun_disc": "item/sun_disc.png",
+      "rust_gear": "item/rust_gear.png",
+      "blight_bile": "item/blight_bile.png",
+      "heartwood": "item/heartwood.png",
+      "queen_spore": "item/queen_spore.png",
+      "charm_delver": "item/charm_delver.png",
+      "core_shard": "item/core_shard.png",
+      "sword_arc": "item/sword_arc.png",
+      "stop_core": "item/stop_core.png",
+      "hepha_heart": "item/hepha_heart.png",
+      "charm_govern": "item/charm_govern.png",
+      "hammer_still": "item/hammer_still.png",
+      "rod_basic": "item/rod_basic.png",
+      "rod_adv": "item/rod_adv.png",
+      "fish_common": "item/fish_common.png",
+      "fish_silver": "item/fish_silver.png",
+      "fish_deep": "item/fish_deep.png",
+      "ring_angler": "item/ring_angler.png",
+      "orbit_gear": "item/orbit_gear.png",
+      "void_lens": "item/void_lens.png",
+      "star_ash": "item/star_ash.png",
+      "lance_orbit": "item/lance_orbit.png",
+      "bow_meridian": "item/bow_meridian.png",
+      "charm_orbit": "item/charm_orbit.png",
+      "deep_alloy": "item/deep_alloy.png",
+      "miner_tag": "item/miner_tag.png",
+      "gloom_pearl": "item/gloom_pearl.png",
+      "drill_abyss": "item/drill_abyss.png",
+      "hammer_cave": "item/hammer_cave.png",
+      "charm_lamp2": "item/charm_lamp2.png",
+      "jetpack": "item/jetpack.png",
+      "potion_hp_greater": "item/potion_hp_greater.png"
+    }
+  }
+};

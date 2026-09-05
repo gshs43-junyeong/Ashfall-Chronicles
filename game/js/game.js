@@ -2557,6 +2557,46 @@ const G = {
       this.toast('저장했다', 'good');
     } catch (e) { this.toast('저장 실패: 용량 초과', 'bad'); console.error(e); }
   },
+  /* ================= 저장 내보내기 / 가져오기 =================
+     저장은 localStorage 안에만 있다. 브라우저를 바꾸거나, zip 폴더를 옮기거나,
+     시크릿 창을 닫으면 그대로 사라진다 — file:// 은 경로가 곧 출처라 폴더 이름만
+     바뀌어도 남남이 된다. 그래서 세 칸과 설정을 파일 한 장으로 꺼내고 되돌린다.
+     웹이든 zip 이든 같은 파일이다. */
+  exportSaves() {
+    try {
+      const out = { app: 'ashfall', key: SAVE_KEY, at: new Date().toISOString(), slots: {} };
+      let n = 0;
+      for (let i = 1; i <= 3; i++) {
+        const raw = localStorage.getItem(slotKey(i));
+        if (raw) { out.slots[i] = raw; n++; }
+      }
+      const st = localStorage.getItem(SET_KEY);
+      if (st) out.settings = st;
+      if (!n) { this.toast('내보낼 기록이 없다', 'bad'); return; }
+      const blob = new Blob([JSON.stringify(out)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `ashfall-save-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      this.toast(`${n}칸을 파일로 내보냈다`, 'good');
+    } catch (e) { this.toast('내보내기 실패', 'bad'); console.error(e); }
+  },
+  /** 내보낸 파일을 되돌린다. 같은 세계 폭(SAVE_KEY)만 받는다 */
+  importSaves(text) {
+    try {
+      const d = JSON.parse(text);
+      if (!d || d.app !== 'ashfall' || !d.slots) { this.toast('이 게임의 저장 파일이 아니다', 'bad'); return; }
+      if (d.key && d.key !== SAVE_KEY) { this.toast('이전 판의 저장이라 열 수 없다', 'bad'); return; }
+      let n = 0;
+      for (let i = 1; i <= 3; i++) if (d.slots[i]) { localStorage.setItem(slotKey(i), d.slots[i]); n++; }
+      if (d.settings) { localStorage.setItem(SET_KEY, d.settings); this.loadSettings(); UI.syncSettings(); }
+      if (!n) { this.toast('파일에 기록이 없다', 'bad'); return; }
+      this.toast(`${n}칸을 되돌렸다 — 이어하기에서 고르면 된다`, 'good');
+      this.renderSlotScreen();
+    } catch (e) { this.toast('저장 파일을 읽지 못했다', 'bad'); console.error(e); }
+  },
+
   loadGame(slot) {
     const raw = localStorage.getItem(slotKey(slot));
     if (!raw) { this.toast('저장된 기록이 없다', 'bad'); return; }
