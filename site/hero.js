@@ -161,16 +161,10 @@ var PLAYER = { file: 'char/player.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps
     ctx.fillRect(0, -H, W, H * 2);
   }
 
-  function frame(t, dt) {
-    drawSky();
-    LAYERS.forEach(function (l) { drawLayer(l, t * l.speed); });
-    drawPlayer(t);
-    drawAsh(t, dt);
-    /* 아래쪽을 페이지 배경으로 녹인다.
-     * 캔버스 바닥은 논리 y=H 이므로 그 아래까지 덮어야 한다 — GROUND+60 에서 끊으면
-     * 맨 밑에 하늘 그라데이션 끝색이 띠로 남는다. */
-    /* 녹이는 구간은 **발 딛는 줄 아래**로만 둔다 — 90px 위에서부터 덮으면 걸어가는
-     * 사람의 다리가 절반쯤 먹혀 잘린 것처럼 보인다. 아래는 통째로 바탕색으로 채운다. */
+  /* 아래쪽을 페이지 배경으로 녹인다.
+   * 캔버스 바닥은 논리 y=H 이므로 그 아래까지 덮어야 한다 — GROUND+60 에서 끊으면
+   * 맨 밑에 하늘 그라데이션 끝색이 띠로 남는다. */
+  function drawFade() {
     var fade = ctx.createLinearGradient(0, GROUND - 16, 0, GROUND + 26);
     fade.addColorStop(0, 'rgba(13,11,10,0)');
     fade.addColorStop(1, '#0d0b0a');
@@ -178,6 +172,25 @@ var PLAYER = { file: 'char/player.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps
     ctx.fillRect(0, GROUND - 16, W, H);
     ctx.fillStyle = '#0d0b0a';
     ctx.fillRect(0, GROUND + 26, W, H);
+  }
+
+  function frame(t, dt) {
+    drawSky();
+    LAYERS.forEach(function (l) { drawLayer(l, t * l.speed); });
+    /* ★ 페이드를 **사람보다 먼저** 칠한다.
+     *
+     * 여태 "플레이어가 짤려 보인다"의 진짜 원인이 이 순서였다. 사람은 발끝이
+     * GROUND+4 인데 페이드는 GROUND-16 에서 시작한다. 사람을 먼저 그리고 페이드를
+     * 나중에 덮으면 사람의 아래 20px(신발과 정강이)이 최대 48%까지 어두워진다 —
+     * 화면에서는 다리가 뭉텅 잘려 나간 것처럼 보인다. 164px 중 20px 이라 "조금
+     * 어두운" 게 아니라 발이 없어진 것으로 읽힌다.
+     *
+     * 앞서 두 번은 페이드의 **위치**를 옮겨서 고치려 했는데(-90 -> -16), 위치를
+     * 아무리 내려도 발끝보다 위에 있는 한 같은 일이 난다. 위치가 아니라 순서 문제다.
+     * 땅이 페이지 색으로 녹고, 그 위에 사람이 선다 — 그게 실제 순서이기도 하다. */
+    drawFade();
+    drawPlayer(t);
+    drawAsh(t, dt);
   }
 
   var last = 0;
