@@ -195,6 +195,8 @@ class Player extends Ent {
     this.potionCd = 0;
     /* v1.1 특성 — 비전 방벽이 남긴 흡수량과, 불굴이 다시 준비되기까지의 시간 */
     this.shield = 0; this.shieldMax = 0; this.shieldT = 0; this.undyingCd = 0;
+    /* v1.1 세션 1 진행 표시 — 장을 끝낼 때마다 곁을 도는 조각이 하나씩 는다 */
+    this.starOrbits = 0; this.starLit = 0; this.starFade = 0;
     /* v1.1 생활 숙련 — 포인트로 찍지 않고 하다 보면 오른다 */
     this.prof = { farm: { lv: 1, xp: 0 }, fish: { lv: 1, xp: 0 } };
     this.charge = 200;             // 동력 장비용 전하. 바닥나면 가방의 배터리를 자동으로 쓴다

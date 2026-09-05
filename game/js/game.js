@@ -378,6 +378,7 @@ const G = {
     // 스킬 채널 중 이동 제한 등은 Player 내부에서 처리
     p.update(dt, w, this.input);
     this.updateFishing(dt);
+    if (this.starMerge > 0) this.starMerge = Math.max(0, this.starMerge - dt);
     /* 11장의 결착은 "세우고 · 물리고 · 끊기"다. 가운데 걸음(동력이 돈 적이 있다)은
        지나가면 사라지므로 여기서 한 번 적어 둔다. 그 장에서만 본다. */
     if (this.chapter === 11 && !this.asmRan && this.world && this.world.machines
@@ -2222,6 +2223,7 @@ const G = {
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
     }
     this.toast(`『${ch.title}』 완료 — 경험치 ${fmt(ch.rw.xp)} · 금화 ${fmt(ch.rw.gold)}`, 'good');
+    this.gainStarOrbit(ch.id);
     this.chapter++;
     UI.refreshBag();
 
@@ -2273,6 +2275,26 @@ const G = {
     if (it && idef(it).type !== 'block' && idef(it).type !== 'mat') this.toast(`${itemName(it)} 획득`, 'good');
     UI.refreshBag();
   },
+  /** 세션 1 의 진행 표시. 1~5장은 한 장에 조각 하나, 5장에서 다섯이 모이고,
+      추적자(8장)를 넘기면 희미해진다. 매 장 같은 폭죽을 터뜨리지 않는다 —
+      늘어나는 것은 별 하나와 짧은 한 줄뿐이다. */
+  gainStarOrbit(id) {
+    const p = this.player;
+    if (id >= 1 && id <= 5) {
+      p.starOrbits = Math.min(5, (p.starOrbits || 0) + 1);
+      setTimeout(() => this.toast(`별 조각이 하나 더 곁에 남았다 — ${p.starOrbits}/5`, 'good'), 900);
+      if (id === 5) {
+        // 다섯이 한 점으로 모였다가 다시 퍼진다. 5장 outro 와 같은 사건이다
+        p.starLit = 1; this.starMerge = 2.4;
+        setTimeout(() => this.sfx('learn'), 1200);
+      }
+    } else if (id === 8) {
+      /* 추적자를 넘긴 뒤로는 아주 희미해진다. 여기서부터는 별을 모으는 이야기가
+         아니라서, 같은 것이 계속 돌면 주제가 안 바뀐다. */
+      p.starFade = 1; p.starLit = 0;
+    }
+  },
+
   onLevelUp(lv) {
     this.toast(`레벨 ${lv} 달성! 스탯 +3, 특성 +1`, 'good');
     for (let i = 0; i < 30; i++) this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 0.9));
@@ -2512,6 +2534,7 @@ const G = {
           charId: p.charId,
           skills: p.skills, slots: p.slots, kills: p.kills, mined: p.mined, bossKilled: p.bossKilled,
           prof: p.prof,
+          starOrbits: p.starOrbits, starLit: p.starLit, starFade: p.starFade,
           deepest: p.deepest, highest: p.highest, gathered: p.gathered
         }
       };
@@ -2549,6 +2572,15 @@ const G = {
          특성 포인트는 그 사이 지급 속도가 두 배가 되었으므로, 이미 쓴 몫을 세어
          "이 레벨이면 받았어야 할 만큼"까지 채워 준다. 안 그러면 옛 기록만 손해다. */
       if (d.p.prof) for (const k in p.prof) if (d.p.prof[k]) Object.assign(p.prof[k], d.p.prof[k]);
+      /* 별 조각 궤도 — v1.1 이전 기록에는 없다. 이미 지나온 장 수에서 되짚어 준다
+         (그 장들을 끝냈다는 사실은 chapter 하나로 알 수 있다). */
+      if (d.p.starOrbits === undefined) {
+        p.starOrbits = clamp(d.chapter - 1, 0, 5);
+        p.starLit = d.chapter > 5 ? 1 : 0;
+        p.starFade = d.chapter > 8 ? 1 : 0;
+      } else {
+        p.starOrbits = d.p.starOrbits || 0; p.starLit = d.p.starLit || 0; p.starFade = d.p.starFade || 0;
+      }
       let spent = 0; for (const k in p.skills) spent += p.skills[k] || 0;
       const due = p.level;                     // 1레벨에 1 + 레벨업마다 1
       if (spent + p.skillPts < due) p.skillPts = due - spent;
@@ -3064,6 +3096,7 @@ const G = {
       }
     }
     this.drawRipeCrops(c, camX, camY);
+    this.drawStarOrbit(c, p, camX, camY);
     this.drawPlayer(c, p, p.x - camX, p.y - camY);
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
 
@@ -3690,6 +3723,57 @@ const G = {
   },
 
   /* ---- 캐릭터 렌더 ---- */
+  /* ================= 별 조각 궤도 (세션 1) =================
+     장식이 아니라 **진행 표시**다. 한 장을 끝낼 때마다 조각 하나가 늘어 플레이어
+     둘레를 돈다. 처음부터 다섯이 떠 있으면 아무 뜻이 없으므로 하나씩 붙는다.
+
+     지켜야 할 것 — 전투를 가리지 않는다. 그래서
+       · 플레이어보다 **먼저** 그린다(몸 뒤로 지나간다)
+       · 작고(2.6px) 느리다(한 바퀴 9초)
+       · 판정이 없다. 부딪히지도, 맞지도 않는다
+     세션 2로 넘어가면(추적자 이후) 아주 희미해진다. 계속 돌면 주제가 안 바뀐다.
+
+     ★ 그림은 아직 임시다. assets 에 'star_frag' 가 들어오면 그 자리에서 갈아 끼운다
+       — 아래 im 분기 한 곳만 살아나고 나머지 배치·속도·밝기는 그대로 쓴다. */
+  drawStarOrbit(c, p, camX, camY) {
+    const n = p.starOrbits | 0;
+    if (!n) return;
+    const t = this.time;
+    const cx = p.cx - camX, cy = p.cy - camY - 4;
+    // 5장을 끝내면 다섯이 한 점으로 모였다가 다시 퍼진다 — 5장 outro 와 같은 사건이다
+    const mg = this.starMerge > 0 ? Math.min(1, this.starMerge / 2.4) : 0;
+    const rx = (30 + Math.sin(t * 0.7) * 1.5) * (1 - mg * 0.92);
+    const ry = rx * 0.42;
+    const lit = p.starLit ? 1 : 0;
+    const base = p.starFade ? 0.18 : (0.5 + lit * 0.25);
+    const im = (typeof Sprites !== 'undefined' && Sprites.img) ? Sprites.img.star_frag : null;
+
+    c.save();
+    c.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < n; i++) {
+      const a = t * 0.7 + i * TAU / Math.max(n, 1);
+      const x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry;
+      // 뒤로 돌 때는 옅게 — 그래야 도는 것으로 보인다
+      const back = Math.sin(a) < 0 ? 0.45 : 1;
+      const r = (2.6 + mg * 2.2) * (0.85 + 0.15 * Math.sin(t * 3 + i));
+      c.globalAlpha = base * back * (0.7 + 0.3 * Math.sin(t * 2.4 + i * 1.7)) + mg * 0.35;
+      if (im && im.width) {
+        const w = r * 5;
+        c.drawImage(im, x - w / 2, y - w / 2, w, w);
+      } else {
+        const g = c.createRadialGradient(x, y, 0, x, y, r * 3.2);
+        g.addColorStop(0, lit ? '#fff6d8' : '#e8dcb8');
+        g.addColorStop(0.35, lit ? 'rgba(255,224,138,.55)' : 'rgba(200,190,160,.4)');
+        g.addColorStop(1, 'rgba(255,224,138,0)');
+        c.fillStyle = g;
+        c.beginPath(); c.arc(x, y, r * 3.2, 0, TAU); c.fill();
+        c.fillStyle = '#fff8e0';
+        c.beginPath(); c.arc(x, y, r * 0.55, 0, TAU); c.fill();
+      }
+    }
+    c.restore();
+  },
+
   drawPlayer(c, p, sx, sy) {
     c.save();
     if (p.iframe > 0 && Math.floor(this.time * 24) % 2 === 0) c.globalAlpha = 0.45;
