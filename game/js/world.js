@@ -665,16 +665,18 @@ class World {
   /** 작물 한 단계 성장. 낮에 더 잘 자란다. dayF: 0(밤)~1(한낮) */
   /** 자란 칸을 돌려준다 — 화면에 보이는 밭이면 게임 쪽에서 티를 낸다.
       { grew: [키…], ripe: [키…] }. ripe 는 이번에 다 여문 칸이다. */
-  growCrops(rng, dayF) {
+  /** speed: 농사 숙련이 얹어 주는 성장 배율(1 = 보정 없음) */
+  growCrops(rng, dayF, speed) {
     const out = { grew: [], ripe: [] };
     if (!this.crops.size) return out;
+    const sp = speed === undefined ? 1 : speed;
     for (const k of this.crops) {
       const def = TILE_DEF[this.tiles[k]];
       if (!def.crop) { this.crops.delete(k); continue; }   // 캐갔거나 덮였다
       if (!def.crop.next) continue;                        // 이미 다 여물었다
       const x = k % WW, y = (k / WW) | 0;
       if (!TILE_DEF[this.get(x, y + 1)].farm) { this.crops.delete(k); continue; }   // 밭이 없어졌다
-      if (rng.chance(0.22 * (0.55 + dayF * 0.75))) {
+      if (rng.chance(Math.min(0.9, 0.22 * (0.55 + dayF * 0.75) * sp))) {
         this.tiles[k] = def.crop.next;
         const nd = TILE_DEF[def.crop.next];
         (nd.crop && nd.crop.ripe ? out.ripe : out.grew).push(k);

@@ -1642,60 +1642,181 @@ const ENEMIES = {
                  drops: [['gloom_pearl', 1, 3, 4], ['deep_alloy', 1, 40, 60], ['miner_tag', 1, 2, 3], ['hammer_cave', 1, 1, 1]] }
 };
 
-/* ---------------- 스킬 / 특성 ---------------- */
-// type: active(슬롯 등록) / passive(즉시 적용)
+/* ---------------- 스킬 / 특성 ----------------
+   v1.1 — 표 나열에서 **트리**로 바뀌었다.
+
+   예전에는 분기마다 여섯 줄이 위아래로 놓여 있고, 티어 요구 포인트만 지키면
+   어느 줄이든 마음대로 찍을 수 있었다. 목록이지 트리가 아니었다. 이제 각 칸은
+   자리(tier·col)와 **이어진 윗칸(req)** 을 가진다. 윗칸 중 하나라도 배워야
+   아래가 열리므로, 어느 길로 내려갈지가 실제 선택이 된다.
+
+   칸 뜻
+     tier  0~3 (위에서 아래로). TIER_REQ 만큼 그 분기에 포인트가 쌓여야 열린다
+     col   0~2 (왼쪽에서 오른쪽). .5 는 두 칸 사이 — 트리 모양을 잡는 값이다
+     req   이어진 윗칸들. **하나라도** 배웠으면 열린다(전부가 아니다)
+     max   최대 랭크 · type active(슬롯 등록) / passive(즉시 적용)
+
+   ★ 요구 포인트를 줄였다 — TIER_REQ 3/7/12 -> 2/5/8, 오래 걸리던 몇 칸은
+     최대 랭크도 한 단계 낮췄다. 레벨당 특성 포인트도 2레벨에 1 -> 1레벨에 1로
+     올렸다(entity.js addXp). 칸이 열둘 늘었으니 그만큼 손에 쥐는 것도 늘어야
+     "골라서 찍는" 맛이 산다. */
 const SKILLS = {
-  /* 검투사 */
-  s_cleave:   { n: '광폭 베기', i: '🌀', br: 'blade', tier: 0, max: 3, type: 'active', mana: 12, cd: 6,
+  /* ===== 검투사 — 붙어서 버티고 밀어붙인다 ===== */
+  s_cleave:   { n: '광폭 베기', i: '🌀', br: 'blade', tier: 0, col: 0.5, max: 3, type: 'active', mana: 12, cd: 6,
                 d: '주변을 원형으로 베어 무기 피해의 %d%%를 준다.', v: r => 130 + r * 45 },
-  s_toughen:  { n: '단련된 몸', i: '🛡', br: 'blade', tier: 0, max: 5, type: 'passive',
-                d: '최대 체력 +%d, 방어 +%d.', b: r => ({ hp: r * 18, def: r * 2 }) },
-  s_charge:   { n: '돌진 강타', i: '💥', br: 'blade', tier: 1, max: 3, type: 'active', mana: 18, cd: 9,
+  s_toughen:  { n: '단련된 몸', i: '🛡', br: 'blade', tier: 0, col: 1.5, max: 4, type: 'passive',
+                d: '최대 체력 +%d, 방어 +%d.', b: r => ({ hp: r * 22, def: r * 3 }) },
+
+  s_charge:   { n: '돌진 강타', i: '💥', br: 'blade', tier: 1, col: 0, max: 3, type: 'active', mana: 18, cd: 9,
+                req: ['s_cleave'],
                 d: '앞으로 돌진하며 부딪힌 적에게 무기 피해의 %d%%와 강한 넉백.', v: r => 180 + r * 70 },
-  s_bloodlust:{ n: '피의 갈망', i: '🩸', br: 'blade', tier: 1, max: 4, type: 'passive',
-                d: '흡혈 +%d%%, 힘 +%d.', b: r => ({ lifesteal: r * 2, str: r * 2 }) },
-  s_whirl:    { n: '회오리 검무', i: '🌪', br: 'blade', tier: 2, max: 3, type: 'active', mana: 35, cd: 18,
+  s_bloodlust:{ n: '피의 갈망', i: '🩸', br: 'blade', tier: 1, col: 1, max: 3, type: 'passive',
+                req: ['s_cleave', 's_toughen'],
+                d: '흡혈 +%d%%, 힘 +%d.', b: r => ({ lifesteal: r * 2, str: r * 3 }) },
+  s_guard:    { n: '철벽', i: '🧱', br: 'blade', tier: 1, col: 2, max: 3, type: 'active', mana: 16, cd: 20,
+                req: ['s_toughen'],
+                d: '%d초간 받는 피해를 55%% 줄이고 넉백을 무시한다.', v: r => 2 + r },
+
+  s_whirl:    { n: '회오리 검무', i: '🌪', br: 'blade', tier: 2, col: 0, max: 3, type: 'active', mana: 35, cd: 18,
+                req: ['s_charge'],
                 d: '2.5초간 회전하며 초당 무기 피해의 %d%%를 준다.', v: r => 90 + r * 35 },
-  s_titan:    { n: '거인의 유산', i: '🗿', br: 'blade', tier: 3, max: 1, type: 'passive',
+  s_quake:    { n: '대지 가르기', i: '⛰', br: 'blade', tier: 2, col: 1, max: 3, type: 'active', mana: 28, cd: 13,
+                req: ['s_charge', 's_bloodlust'],
+                d: '땅을 내리쳐 좌우로 충격파를 보낸다. 무기 피해의 %d%%와 2초 둔화.', v: r => 150 + r * 60 },
+  s_warcry:   { n: '전투 함성', i: '📢', br: 'blade', tier: 2, col: 2, max: 3, type: 'active', mana: 22, cd: 26,
+                req: ['s_guard', 's_bloodlust'],
+                d: '%d초간 분노와 무쇠 피부를 얻고 주변 적을 밀쳐 낸다.', v: r => 8 + r * 4 },
+
+  s_titan:    { n: '거인의 유산', i: '🗿', br: 'blade', tier: 3, col: 0.5, max: 1, type: 'passive',
+                req: ['s_whirl', 's_quake'],
                 d: '체력이 50% 이하일 때 피해 +35%, 방어 +15.', b: () => ({}) },
+  s_undying:  { n: '불굴', i: '💗', br: 'blade', tier: 3, col: 1.5, max: 1, type: 'passive',
+                req: ['s_quake', 's_warcry'],
+                d: '치명상을 입어도 체력 1로 버티고 최대 체력의 25%를 되찾는다. 120초에 한 번.', b: () => ({}) },
 
-  /* 유격 */
-  s_dash:     { n: '그림자 걸음', i: '💨', br: 'ranger', tier: 0, max: 3, type: 'passive',
+  /* ===== 유격 — 거리를 두고 급소를 노린다 ===== */
+  s_dash:     { n: '그림자 걸음', i: '💨', br: 'ranger', tier: 0, col: 0.5, max: 3, type: 'passive',
                 d: '대시 재사용 -%d초, 무적 시간 +%dms.', b: r => ({ dashCd: r * 0.25, dashI: r * 40 }) },
-  s_eagle:    { n: '매의 눈', i: '🎯', br: 'ranger', tier: 0, max: 5, type: 'passive',
+  s_eagle:    { n: '매의 눈', i: '🎯', br: 'ranger', tier: 0, col: 1.5, max: 4, type: 'passive',
                 d: '치명타 확률 +%d%%, 민첩 +%d.', b: r => ({ crit: r * 3, dex: r * 2 }) },
-  s_volley:   { n: '화살 세례', i: '🏹', br: 'ranger', tier: 1, max: 3, type: 'active', mana: 20, cd: 10,
-                d: '부채꼴로 %d발을 발사한다. 발당 무기 피해의 70%%.', v: r => 4 + r * 2 },
-  s_swift:    { n: '질풍 보행', i: '🍃', br: 'ranger', tier: 1, max: 4, type: 'passive',
-                d: '이동 속도 +%d%%, 공격 속도 +%d%%.', b: r => ({ ms: r * 5, spdP: r * 0.04 }) },
-  s_rain:     { n: '유성 화살비', i: '☄', br: 'ranger', tier: 2, max: 3, type: 'active', mana: 40, cd: 22,
-                d: '지정 지점에 %d발의 화살을 떨어뜨린다.', v: r => 10 + r * 5 },
-  s_hunter:   { n: '완벽한 사냥꾼', i: '👁', br: 'ranger', tier: 3, max: 1, type: 'passive',
-                d: '치명타 피해 +80%, 처치 시 3초간 이동 속도 +30%.', b: () => ({ critD: 80 }) },
 
-  /* 비전 */
-  s_fireball: { n: '화염구', i: '🔥', br: 'arcane', tier: 0, max: 4, type: 'active', mana: 14, cd: 4,
+  s_volley:   { n: '화살 세례', i: '🏹', br: 'ranger', tier: 1, col: 0, max: 3, type: 'active', mana: 20, cd: 10,
+                req: ['s_dash'],
+                d: '부채꼴로 %d발을 발사한다. 발당 무기 피해의 70%%.', v: r => 4 + r * 2 },
+  s_swift:    { n: '질풍 보행', i: '🍃', br: 'ranger', tier: 1, col: 1, max: 3, type: 'passive',
+                req: ['s_dash', 's_eagle'],
+                d: '이동 속도 +%d%%, 공격 속도 +%d%%.', b: r => ({ ms: r * 6, spdP: r * 0.05 }) },
+  s_pierce:   { n: '꿰뚫는 화살', i: '➶', br: 'ranger', tier: 1, col: 2, max: 3, type: 'active', mana: 16, cd: 7,
+                req: ['s_eagle'],
+                d: '적을 관통하는 화살을 쏜다. 무기 피해의 %d%%.', v: r => 170 + r * 60 },
+
+  s_rain:     { n: '유성 화살비', i: '☄', br: 'ranger', tier: 2, col: 0, max: 3, type: 'active', mana: 40, cd: 22,
+                req: ['s_volley'],
+                d: '지정 지점에 %d발의 화살을 떨어뜨린다.', v: r => 10 + r * 5 },
+  s_smoke:    { n: '연막탄', i: '🌫', br: 'ranger', tier: 2, col: 1, max: 3, type: 'active', mana: 18, cd: 16,
+                req: ['s_volley', 's_swift'],
+                d: '연막을 터뜨려 잠깐 무적이 되고 %d초간 이동이 빨라진다. 주변 적은 둔해진다.', v: r => 3 + r * 2 },
+  s_mark:     { n: '사냥꾼의 표식', i: '🔻', br: 'ranger', tier: 2, col: 2, max: 3, type: 'active', mana: 12, cd: 12,
+                req: ['s_pierce', 's_swift'],
+                d: '겨눈 적에게 표식을 남겨 10초간 그 적이 받는 피해 +%d%%.', v: r => 12 + r * 8 },
+
+  s_hunter:   { n: '완벽한 사냥꾼', i: '👁', br: 'ranger', tier: 3, col: 0.5, max: 1, type: 'passive',
+                req: ['s_rain', 's_smoke'],
+                d: '치명타 피해 +80%, 처치 시 3초간 이동 속도 +30%.', b: () => ({ critD: 80 }) },
+  s_tempest:  { n: '폭풍의 시위', i: '🌬', br: 'ranger', tier: 3, col: 1.5, max: 1, type: 'passive',
+                req: ['s_smoke', 's_mark'],
+                d: '원거리 공격이 30% 확률로 화살을 한 발 더 날린다.', b: () => ({}) },
+
+  /* ===== 비전 — 재고 얼리고 불러낸다 ===== */
+  s_fireball: { n: '화염구', i: '🔥', br: 'arcane', tier: 0, col: 0.5, max: 4, type: 'active', mana: 14, cd: 4,
                 d: '폭발하는 불덩이. 피해 %d + 지능 계수.', v: r => 30 + r * 22 },
-  s_wisdom:   { n: '심연의 지혜', i: '📖', br: 'arcane', tier: 0, max: 5, type: 'passive',
-                d: '최대 마나 +%d, 지능 +%d, 마나 재생 +%d%%.', b: r => ({ mp: r * 14, int: r * 2, mpreg: r * 12 }) },
-  s_heal:     { n: '치유의 빛', i: '✨', br: 'arcane', tier: 1, max: 4, type: 'active', mana: 28, cd: 16,
-                d: '즉시 체력 %d%%를 회복하고 5초간 재생.', v: r => 12 + r * 8 },
-  s_nova:     { n: '서리 결계', i: '❄', br: 'arcane', tier: 1, max: 3, type: 'active', mana: 30, cd: 14,
+  s_wisdom:   { n: '심연의 지혜', i: '📖', br: 'arcane', tier: 0, col: 1.5, max: 4, type: 'passive',
+                d: '최대 마나 +%d, 지능 +%d, 마나 재생 +%d%%.', b: r => ({ mp: r * 18, int: r * 2, mpreg: r * 14 }) },
+
+  s_nova:     { n: '서리 결계', i: '❄', br: 'arcane', tier: 1, col: 0, max: 3, type: 'active', mana: 30, cd: 14,
+                req: ['s_fireball'],
                 d: '주변 적을 얼려 3초간 둔화시키고 %d 피해.', v: r => 40 + r * 30 },
-  s_wolf:     { n: '영혼 늑대 소환', i: '🐺', br: 'arcane', tier: 2, max: 3, type: 'active', mana: 45, cd: 30,
+  s_heal:     { n: '치유의 빛', i: '✨', br: 'arcane', tier: 1, col: 1, max: 3, type: 'active', mana: 28, cd: 16,
+                req: ['s_fireball', 's_wisdom'],
+                d: '즉시 체력 %d%%를 회복하고 5초간 재생.', v: r => 14 + r * 9 },
+  s_barrier:  { n: '비전 방벽', i: '🔷', br: 'arcane', tier: 1, col: 2, max: 3, type: 'active', mana: 22, cd: 18,
+                req: ['s_wisdom'],
+                d: '피해를 %d까지 막아 내는 방벽을 두른다(지능 비례). 20초간.', v: r => 60 + r * 70 },
+
+  s_wolf:     { n: '영혼 늑대 소환', i: '🐺', br: 'arcane', tier: 2, col: 0, max: 3, type: 'active', mana: 45, cd: 30,
+                req: ['s_nova'],
                 d: '30초간 싸우는 늑대 %d마리를 부른다.', v: r => r },
-  s_arch:     { n: '대마법사의 각인', i: '🔯', br: 'arcane', tier: 3, max: 1, type: 'passive',
-                d: '모든 스킬 재사용 대기 -20%, 마법 피해 +30%.', b: () => ({ cdr: 20, magicP: 30 }) }
+  s_chain:    { n: '사슬 번개', i: '⚡', br: 'arcane', tier: 2, col: 1, max: 3, type: 'active', mana: 30, cd: 11,
+                req: ['s_nova', 's_heal'],
+                d: '번개가 적 %d명까지 튀며 갈수록 옅어진다.', v: r => 2 + r },
+  s_blink:    { n: '차원 도약', i: '🌀', br: 'arcane', tier: 2, col: 2, max: 2, type: 'active', mana: 14, cd: 9,
+                req: ['s_barrier', 's_heal'],
+                d: '겨눈 쪽으로 순간 이동하고 떠난 자리에 %d 피해를 남긴다.', v: r => 40 + r * 40 },
+
+  s_arch:     { n: '대마법사의 각인', i: '🔯', br: 'arcane', tier: 3, col: 0.5, max: 1, type: 'passive',
+                req: ['s_wolf', 's_chain'],
+                d: '모든 스킬 재사용 대기 -20%, 마법 피해 +30%.', b: () => ({ cdr: 20, magicP: 30 }) },
+  s_meteor:   { n: '별의 낙하', i: '🌠', br: 'arcane', tier: 3, col: 1.5, max: 1, type: 'active', mana: 60, cd: 45,
+                req: ['s_chain', 's_blink'],
+                d: '겨눈 자리에 별을 떨어뜨린다. 넓은 범위에 큰 피해와 화상.', v: () => 0 }
 };
 
 const BRANCHES = [
-  { id: 'blade', n: '검투사', tag: '근접 · 생존 · 압박', c: '#c8433c', nodes: ['s_cleave', 's_toughen', 's_charge', 's_bloodlust', 's_whirl', 's_titan'] },
-  { id: 'ranger', n: '유격', tag: '원거리 · 기동 · 치명타', c: '#5fc45f', nodes: ['s_dash', 's_eagle', 's_volley', 's_swift', 's_rain', 's_hunter'] },
-  { id: 'arcane', n: '비전', tag: '마법 · 제어 · 소환', c: '#4f9cf0', nodes: ['s_fireball', 's_wisdom', 's_heal', 's_nova', 's_wolf', 's_arch'] }
+  { id: 'blade', n: '검투사', tag: '근접 · 생존 · 압박', c: '#c8433c',
+    nodes: ['s_cleave', 's_toughen', 's_charge', 's_bloodlust', 's_guard', 's_whirl', 's_quake', 's_warcry', 's_titan', 's_undying'] },
+  { id: 'ranger', n: '유격', tag: '원거리 · 기동 · 치명타', c: '#5fc45f',
+    nodes: ['s_dash', 's_eagle', 's_volley', 's_swift', 's_pierce', 's_rain', 's_smoke', 's_mark', 's_hunter', 's_tempest'] },
+  { id: 'arcane', n: '비전', tag: '마법 · 제어 · 소환', c: '#4f9cf0',
+    nodes: ['s_fireball', 's_wisdom', 's_nova', 's_heal', 's_barrier', 's_wolf', 's_chain', 's_blink', 's_arch', 's_meteor'] }
 ];
 
-/* 특성 티어 해금에 필요한 해당 분기 누적 포인트 */
-const TIER_REQ = [0, 3, 7, 12];
+/* 특성 티어 해금에 필요한 해당 분기 누적 포인트 (v1.1: 3/7/12 -> 2/5/8) */
+const TIER_REQ = [0, 2, 5, 8];
+
+/* ---------------- 생활 숙련 ----------------
+   전투 특성과 같은 팝업의 다른 갈래다. 포인트로 찍는 것이 아니라 **하다 보면 는다** —
+   밭에서 거두면 농사가, 물고기를 낚으면 낚시가 오른다. 그래서 요구치를 스스로
+   고를 필요가 없고, 대신 레벨마다 하는 일 자체가 조금씩 수월해진다.
+
+   lin  레벨에 비례해 계속 붙는 몫(레벨 1은 0 — 시작은 예전과 똑같다)
+   perk 특정 레벨에서 한 번 열리는 것. 숫자가 아니라 규칙이 바뀐다 */
+const PROF_MAX = 10;
+const PROFS = {
+  farm: {
+    n: '농사', i: '🌾', c: '#8fc85a',
+    line: '갈고, 심고, 거둔다. 다 여문 칸을 거둘 때마다 는다.',
+    lin: [
+      ['성장 속도', lv => Math.round((lv - 1) * 7) + '%'],
+      ['수확량 증가 확률', lv => Math.round((lv - 1) * 5) + '%'],
+      ['씨앗 회수', lv => Math.round((lv - 1) * 4) + '%']
+    ],
+    perks: [
+      [3, '고른 씨앗', '거둘 때 씨앗을 반드시 하나 이상 돌려받는다.'],
+      [6, '두 손 가득', '25% 확률로 수확물이 두 배가 된다.'],
+      [10, '풍요의 손', '거둔 자리에 씨앗이 저절로 다시 심긴다.']
+    ]
+  },
+  fish: {
+    n: '낚시', i: '🎣', c: '#7fc8e8',
+    line: '물가에 앉아 기다린 시간만큼 는다. 무엇이든 낚아 올리면 오른다.',
+    lin: [
+      ['입질 대기 감소', lv => Math.round((lv - 1) * 4) + '%'],
+      ['상위 어종 확률', lv => '+' + Math.round((lv - 1) * 2) + '%'],
+      ['잡것이 걸릴 확률', lv => '+' + ((lv - 1) * 1.5).toFixed(1) + '%']
+    ],
+    perks: [
+      [3, '가벼운 손목', '입질을 챌 수 있는 시간이 1.6초로 늘어난다.'],
+      [6, '깊은 눈', '심해어가 걸릴 확률이 크게 오른다.'],
+      [10, '물때를 안다', '25% 확률로 한 마리를 더 낚는다.']
+    ]
+  }
+};
+
+/** 숙련 lv -> 다음 레벨까지 필요한 경험치. 10레벨이 끝이다.
+    1->10 을 다 채우는 데 480 남짓 — 밭 한 뙈기를 몇 번 돌리거나, 물가에 한참
+    앉아 있으면 닿는 양이다. 처음에 훨씬 가파르게 잡았다가(1300) 낚시가
+    한 시간짜리 노동이 되어 버려서 낮췄다. */
+function profNeed(lv) { return Math.round(5 * Math.pow(lv, 1.45)); }
 
 /* ---------------- 버프 ---------------- */
 const BUFFS = {
@@ -1707,6 +1828,10 @@ const BUFFS = {
   frostbite: { n: '동상', i: '🥶', dur: 3, debuff: 1 },
   burn: { n: '화상', i: '🔥', dur: 4, debuff: 1 },
   swift_kill: { n: '추격', i: '💨', dur: 3, b: { ms: 30 } },
+  /* 특성으로만 붙는 것들 — 지속 시간은 스킬 랭크가 정하므로 여기 dur 은 기본값일 뿐이다 */
+  bulwark: { n: '철벽', i: '🧱', dur: 3, b: { dr: 55 } },
+  smokescreen: { n: '연막', i: '🌫', dur: 5, b: { ms: 34 } },
+  warcry: { n: '전투 함성', i: '📢', dur: 12, b: { dmgP: 0.18, def: 14, str: 5 } },
   /* 여명 마을 분수대에 금화를 던지면 붙는다. 여관(유료·시간 경과·전체 회복)과 겹치지
      않게 회복은 일부러 넣지 않았다 — 이쪽은 "운을 산다"는 쪽이다. */
   wish: { n: '분수의 축복', i: '🪙', dur: 420, b: { allStat: 3, crit: 5 } },

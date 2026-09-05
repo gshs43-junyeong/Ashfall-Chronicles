@@ -252,6 +252,7 @@ const G = {
     ch.bag.forEach(([id, n], i) => { p.bag[i] = makeItem(id, ITEMS[id].stack > 1 ? n : 1); });
     p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
     this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = [];
+    this.rings = []; this.bolts = []; this.warns = [];   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
     this.talked = {}; this.crafted = {}; this.paused = false;
@@ -425,7 +426,8 @@ const G = {
       /* 밭은 여태 아무 기별 없이 조용히 자랐다 — 4초마다 타일만 바뀌니, 보고 있어도
          뭐가 일어나는지 알 수가 없었다. 자란 칸에서 잎이 튀고, 다 여문 칸에서는
          금빛이 튄다. 화면 밖은 건너뛴다(밭 하나에 수백 칸이 될 수 있다). */
-      const g = w.growCrops(this.rng, this.dayFactor());
+      // 농사 숙련 — 레벨마다 성장이 7%씩 빨라진다
+      const g = w.growCrops(this.rng, this.dayFactor(), 1 + (this.player.profLv('farm') - 1) * 0.07);
       const onScreen = (x, y) => Math.abs(x * TS - this.cam.x - this.W / 2) < this.W / 2 + TS &&
                                  Math.abs(y * TS - this.cam.y - this.H / 2) < this.H / 2 + TS;
       for (const k of g.grew) {
@@ -735,16 +737,42 @@ const G = {
       // 다 여문 작물은 씨앗을 함께 돌려준다 — 한 번 시작하면 밭이 저절로 이어지도록
       if (def.crop) {
         w.crops.delete(ty * WW + tx);
-        if (def.crop.ripe) {
-          const n = 1 + (Math.random() < 0.5 ? 1 : 0);
-          this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, makeItem(def.crop.seed, n)));
-        }
+        if (def.crop.ripe) this.harvestBonus(tx, ty, def);
       }
       for (let i = 0; i < 5; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, def.c));
       if (def.tree) this.fellTree(tx, ty, id === T.WOOD);
       // 다 여문 작물이면 harvest, 그 밖엔 전부 기존 mine
       this.sfx(def.crop && def.crop.ripe ? 'harvest' : 'mine');
     }
+  },
+
+  /* ================= 농사 숙련 =================
+     다 여문 칸을 거둘 때만 불린다. 여기서 씨앗을 돌려주고, 숙련이 붙여 주는 몫을
+     얹고, 숙련 자체를 올린다. 예전 동작(씨앗 1~2개)이 1레벨의 모습 그대로다. */
+  harvestBonus(tx, ty, def) {
+    const p = this.player, lv = p.profLv('farm');
+    const at = (it) => this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it));
+
+    // ① 씨앗 — 3레벨 '고른 씨앗'부터는 반드시 하나 이상 돌아온다
+    let seeds = (lv >= 3 ? 1 : 0) + (Math.random() < 0.5 + (lv - 1) * 0.04 ? 1 : 0);
+    if (seeds > 0) at(makeItem(def.crop.seed, seeds));
+
+    // ② 수확물 한 번 더 — 레벨마다 5%씩. 6레벨 '두 손 가득'은 그 위에 25%로 두 배
+    const yieldId = def.drop;
+    if (yieldId) {
+      let extra = 0;
+      if (Math.random() < (lv - 1) * 0.05) extra++;
+      if (lv >= 6 && Math.random() < 0.25) extra++;
+      if (extra > 0) at(makeItem(yieldId, extra));
+    }
+
+    // ③ 10레벨 '풍요의 손' — 거둔 자리에 저절로 다시 심긴다
+    if (lv >= PROF_MAX && this.world.plantSeed(tx, ty, def.crop.seed)) {
+      for (let i = 0; i < 4; i++)
+        this.parts.push(new Part((tx + .5) * TS, (ty + .6) * TS, '#8fc85a', -30, .5));
+    }
+
+    p.addProf('farm', 1);
   },
 
   /** 타일 하나가 부서질 때 떨어질 것을 굴린다. 잎은 leafDrop 가중치 표를 따로 타서
@@ -987,7 +1015,10 @@ const G = {
       if (pl.rareMul === undefined) continue;
       if (Math.abs(tx - pl.x) < 16 && Math.abs(ty - pl.y) < 10) { rareMul = pl.rareMul; break; }
     }
-    p.fish = { tx, ty, t: rod.fishWait !== undefined ? this.rng.range(1.2, 2.8) * rod.fishWait : this.rng.range(1.2, 2.8), biting: false, bite: 0, rodId: p.held().id, rareMul };
+    // 낚시 숙련 — 레벨마다 입질까지의 대기가 4%씩 짧아진다
+    const wait = this.rng.range(1.2, 2.8) * (rod.fishWait !== undefined ? rod.fishWait : 1)
+      * (1 - (p.profLv('fish') - 1) * 0.04);
+    p.fish = { tx, ty, t: wait, biting: false, bite: 0, rodId: p.held().id, rareMul };
     for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, ty * TS, '#cfe8ff', -20, .5));
     this.sfx('splash');
     this.toast('낚싯줄을 드리웠다');
@@ -1002,7 +1033,8 @@ const G = {
     if (!f.biting) {
       f.t -= dt;
       if (f.t <= 0) {
-        f.biting = true; f.bite = 1.0;
+        // 3레벨 '가벼운 손목' — 챌 수 있는 창이 1.0초에서 1.6초로 늘어난다
+        f.biting = true; f.bite = p.profLv('fish') >= 3 ? 1.6 : 1.0;
         this.toast('손끝이 흔들린다!', 'good');
         for (let i = 0; i < 10; i++) this.parts.push(new Part((f.tx + .5) * TS, f.ty * TS, '#ffe08a', -30, .6));
       }
@@ -1022,9 +1054,13 @@ const G = {
     const rod = ITEMS[p.fish.rodId] || {};
     const rareMul = p.fish.rareMul === undefined ? 1 : p.fish.rareMul;
     const baited = p.removeItem('raw_meat', 1);
-    const fishBonus = (rod.fishBonus || 0) + (baited ? 0.20 : 0) + (quality === 'reel' ? 0.12 : 0);
-    const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === 'reel' ? 0.05 : 0)) * rareMul, 0, 0.85);
+    /* 낚시 숙련 — 상위 어종 확률과 "잡것" 확률을 함께 밀어 올린다.
+       6레벨 '깊은 눈'은 그 위에 심해어 쪽으로 한 번 더 기운다(아래 표에서 쓴다). */
+    const flv = p.profLv('fish');
+    const fishBonus = (rod.fishBonus || 0) + (baited ? 0.20 : 0) + (quality === 'reel' ? 0.12 : 0) + (flv - 1) * 0.02;
+    const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === 'reel' ? 0.05 : 0) + (flv - 1) * 0.015) * rareMul, 0, 0.85);
     p.fish = null;
+    p.addProf('fish', 1);
 
     if (this.rng.chance(itemChance)) {
       // 1단계 통과 — 물고기 말고 다른 것. 흔한 몹 전리품(사실상 잡템)부터 장신구까지
@@ -1039,6 +1075,7 @@ const G = {
       const it = isGear(makeItem(catchId)) ? rollGear(catchId, this.rng, 0) : makeItem(catchId, n);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
       this.toast(`뭔가 걸렸다 — ${itemName(it)}${n > 1 ? ' ×' + n : ''}`, 'good');
+      p.addProf('fish', 1);                    // 빈 바늘보다 건진 쪽이 더 는다
       this.sfx('open'); UI.refreshBag();
       return;
     }
@@ -1047,13 +1084,16 @@ const G = {
       ['none', Math.max(6, 26 - fishBonus * 30)],
       ['fish_common', 44],
       ['fish_silver', 16 + fishBonus * 26],
-      ['fish_deep', 7 + fishBonus * 30]
+      ['fish_deep', (7 + fishBonus * 30) * (flv >= 6 ? 2.2 : 1)]
     ];
     const catchId = this.rng.weighted(table);
     if (catchId === 'none') { this.toast(baited ? '미끼만 사라졌다' : '빈 바늘만 올라왔다', 'bad'); UI.refreshBag(); return; }
-    const it = makeItem(catchId, 1);
+    // 10레벨 '물때를 안다' — 가끔 한 마리가 더 딸려 온다
+    const n = (flv >= PROF_MAX && this.rng.chance(0.25)) ? 2 : 1;
+    const it = makeItem(catchId, n);
     if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-    this.toast(`낚았다 — ${itemName(it)}`, 'good');
+    this.toast(`낚았다 — ${itemName(it)}${n > 1 ? ' ×' + n : ''}`, 'good');
+    p.addProf('fish', 1);                      // 빈 바늘보다 건진 쪽이 더 는다
     this.sfx('open');
     UI.refreshBag();
   },
@@ -1784,6 +1824,32 @@ const G = {
     this.rings.push({ x, y, r, t: 0.3, c: color });
   },
 
+  /* ================= 특성 연출 =================
+     v1.1에서 스킬이 열둘 늘면서, 입자만으로는 무슨 일이 일어났는지 안 보이는 것들이
+     생겼다(번개가 어디로 튀었는지, 별이 어디에 떨어질지). 셋을 더 만들었다 —
+     퍼지는 고리 · 튀는 번개 · 떨어질 자리 예고. 전부 그림 없이 선으로만 그린다. */
+  /** 퍼져 나가는 고리. aoe 와 달리 피해가 없다 — 순수하게 보이기 위한 것 */
+  ringFx(x, y, r, c, life) {
+    this.rings = this.rings || [];
+    this.rings.push({ x, y, r, t: life || 0.3, max: life || 0.3, c });
+  },
+  /** 두 점을 잇는 번개. 마디마다 어긋나게 꺾어 한 번씩 다르게 보이도록 */
+  boltFx(x0, y0, x1, y1, c) {
+    this.bolts = this.bolts || [];
+    const seg = 7, pts = [];
+    for (let i = 0; i <= seg; i++) {
+      const k = i / seg, j = i === 0 || i === seg ? 0 : (Math.random() - 0.5) * 26;
+      const nx = -(y1 - y0), ny = x1 - x0, L = Math.hypot(nx, ny) || 1;
+      pts.push([x0 + (x1 - x0) * k + nx / L * j, y0 + (y1 - y0) * k + ny / L * j]);
+    }
+    this.bolts.push({ pts, t: 0.22, max: 0.22, c });
+  },
+  /** 떨어질 자리 예고 — 차오르는 원. 피할 시간을 눈으로 보여 준다 */
+  warnFx(x, y, r, dur, c) {
+    this.warns = this.warns || [];
+    this.warns.push({ x, y, r, t: dur, max: dur, c });
+  },
+
   /* ================= 스폰 ================= */
   zoneTable(zone, night, tx, ty) {
     // 사막은 지상/동굴 판정 안에 들어가므로 x로 따로 갈라준다
@@ -2121,9 +2187,24 @@ const G = {
     UI.refreshBag();
   },
   onLevelUp(lv) {
-    this.toast(`레벨 ${lv} 달성! 스탯 +3, ${lv % 2 === 0 ? '특성 +1' : ''}`, 'good');
+    this.toast(`레벨 ${lv} 달성! 스탯 +3, 특성 +1`, 'good');
     for (let i = 0; i < 30; i++) this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 0.9));
     UI.refreshStatAlloc(); this.sfx('level');
+  },
+
+  /** 생활 숙련이 한 단계 올랐다. 레벨업만큼 크게 알리지는 않되, 특전이 열리는
+      레벨(3·6·10)에서는 무엇이 열렸는지 이름을 붙여 준다 — 안 그러면 숫자만 오른다 */
+  onProfUp(kind, lv) {
+    const P = PROFS[kind]; if (!P) return;
+    const perk = P.perks.find(([at]) => at === lv);
+    this.toast(`${P.i} ${P.n} 숙련 ${lv}${perk ? ` — ${perk[1]}` : ''}`, 'good');
+    const p = this.player;
+    this.ringFx(p.cx, p.cy, perk ? 74 : 46, P.c, perk ? .55 : .35);
+    for (let i = 0; i < (perk ? 26 : 12); i++)
+      this.parts.push(new Part(p.cx, p.cy, P.c, -70, .8));
+    this.sfx(perk ? 'level' : 'learn');
+    if (perk) UI.chapterCard({ sub: `${P.n} 숙련 ${lv}`, title: perk[1], line: perk[2] });
+    if (UI.open === 'skill') UI.refreshProf();
   },
   onDeath() {
     if (this.state !== 'play') return;
@@ -2339,6 +2420,7 @@ const G = {
           base: p.base, hp: p.hp, mp: p.mp, charge: p.charge, gold: p.gold, bag: p.bag, equip: p.equip, sel: p.sel,
           charId: p.charId,
           skills: p.skills, slots: p.slots, kills: p.kills, mined: p.mined, bossKilled: p.bossKilled,
+          prof: p.prof,
           deepest: p.deepest, highest: p.highest, gathered: p.gathered
         }
       };
@@ -2372,6 +2454,13 @@ const G = {
         bossKilled: d.p.bossKilled, deepest: d.p.deepest, highest: d.p.highest, gathered: d.p.gathered || {}
       });
       p.charId = CHAR_OF(d.p.charId).id;
+      /* v1.1 이전 세이브에는 생활 숙련이 없다 — 1레벨로 시작한다(예전과 똑같은 동작).
+         특성 포인트는 그 사이 지급 속도가 두 배가 되었으므로, 이미 쓴 몫을 세어
+         "이 레벨이면 받았어야 할 만큼"까지 채워 준다. 안 그러면 옛 기록만 손해다. */
+      if (d.p.prof) for (const k in p.prof) if (d.p.prof[k]) Object.assign(p.prof[k], d.p.prof[k]);
+      let spent = 0; for (const k in p.skills) spent += p.skills[k] || 0;
+      const due = p.level;                     // 1레벨에 1 + 레벨업마다 1
+      if (spent + p.skillPts < due) p.skillPts = due - spent;
       // v1.0.1까지의 세이브는 펫이 도감(pets{}/activePet)이었다 — 그때 모은 펫을 잃지 않도록
       // 전부 아이템으로 바꿔 가방에 넣고, 쓰고 있던 펫은 그대로 펫 슬롯에 끼워 준다.
       if (d.p.pets) {
@@ -2407,6 +2496,7 @@ const G = {
       this.bounties = d.bounties || [];
       if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
       this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = []; this.boss = null;
+      this.rings = []; this.bolts = []; this.warns = [];
       this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
       // 카메라를 저장된 위치로 바로 맞춘다 — 안 하면 (0,0) 근처에서 훅 팬 되는 게 첫 프레임에 보인다
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
@@ -2947,9 +3037,60 @@ const G = {
     if (this.rings) for (let i = this.rings.length - 1; i >= 0; i--) {
       const r = this.rings[i]; r.t -= 1 / 60;
       if (r.t <= 0) { this.rings.splice(i, 1); continue; }
-      c.strokeStyle = r.c; c.globalAlpha = r.t / 0.3 * .8; c.lineWidth = 3;
-      c.beginPath(); c.arc(r.x - camX, r.y - camY, r.r * (1.3 - r.t / 0.3 * 0.3), 0, TAU); c.stroke();
+      const mx = r.max || 0.3, k = r.t / mx;
+      c.strokeStyle = r.c; c.globalAlpha = k * .8; c.lineWidth = 3;
+      c.beginPath(); c.arc(r.x - camX, r.y - camY, r.r * (1.3 - k * 0.3), 0, TAU); c.stroke();
       c.globalAlpha = 1; c.lineWidth = 1;
+    }
+
+    // ---- 떨어질 자리 예고 (별의 낙하) ----
+    if (this.warns) for (let i = this.warns.length - 1; i >= 0; i--) {
+      const w = this.warns[i]; w.t -= 1 / 60;
+      if (w.t <= 0) { this.warns.splice(i, 1); continue; }
+      const k = 1 - w.t / w.max;                 // 0 -> 1 로 차오른다
+      const x = w.x - camX, y = w.y - camY;
+      c.globalAlpha = 0.22 + 0.2 * Math.sin(k * 18);
+      c.fillStyle = w.c;
+      c.beginPath(); c.arc(x, y, w.r * k, 0, TAU); c.fill();
+      c.globalAlpha = 0.85; c.strokeStyle = w.c; c.lineWidth = 2.5;
+      c.beginPath(); c.arc(x, y, w.r, 0, TAU); c.stroke();
+      c.globalAlpha = 1; c.lineWidth = 1;
+    }
+
+    // ---- 번개 (사슬 번개 · 차원 도약) ----
+    if (this.bolts) for (let i = this.bolts.length - 1; i >= 0; i--) {
+      const b = this.bolts[i]; b.t -= 1 / 60;
+      if (b.t <= 0) { this.bolts.splice(i, 1); continue; }
+      const k = b.t / b.max;
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      for (const [lw, col, al] of [[6, b.c, 0.22 * k], [2.4, b.c, 0.9 * k], [1, '#ffffff', 0.9 * k]]) {
+        c.globalAlpha = al; c.strokeStyle = col; c.lineWidth = lw;
+        c.beginPath();
+        b.pts.forEach((p, j) => j ? c.lineTo(p[0] - camX, p[1] - camY) : c.moveTo(p[0] - camX, p[1] - camY));
+        c.stroke();
+      }
+      c.globalAlpha = 1; c.lineWidth = 1; c.lineCap = 'butt';
+    }
+
+    // ---- 비전 방벽 — 플레이어를 감싼 육각 결계 ----
+    const pl = this.player;
+    if (pl && pl.shield > 0) {
+      const x = pl.cx - camX, y = pl.cy - camY;
+      const rr = 30 + Math.sin(this.time * 5) * 1.5;
+      const k = pl.shieldMax ? pl.shield / pl.shieldMax : 1;
+      c.save();
+      c.globalAlpha = 0.10 + 0.10 * k;
+      c.fillStyle = '#6fb8ff';
+      c.beginPath(); c.arc(x, y, rr, 0, TAU); c.fill();
+      c.globalAlpha = 0.35 + 0.45 * k; c.strokeStyle = '#9fd4ff'; c.lineWidth = 1.6;
+      c.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = this.time * 0.6 + i * TAU / 6;
+        const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr * 1.15;
+        i ? c.lineTo(px, py) : c.moveTo(px, py);
+      }
+      c.closePath(); c.stroke();
+      c.restore();
     }
 
     // ---- 입자 ----

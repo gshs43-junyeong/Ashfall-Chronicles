@@ -57,6 +57,7 @@ const UI = {
     this.buildStatAlloc();
     this.buildTree();
     this.buildSkillSlots();
+    this.buildProf();
     $$('[data-ui-icon]').forEach(el => this.setIcon(el, Art.uiUrl(el.dataset.uiIcon)));
     this.bindSettings();
 
@@ -236,7 +237,7 @@ const UI = {
     el.classList.add('open'); this.open = id;
     G.uiOpen = true;
     if (id === 'inv') { this.refreshBag(); this.refreshEquip(); this.refreshStatSheet(); }
-    if (id === 'skill') { this.refreshTree(); this.refreshSkillSlots(); }
+    if (id === 'skill') { this.setSkillTab(this.skillTab || 'tree'); this.refreshTree(); this.refreshSkillSlots(); this.refreshProf(); }
     if (id === 'quest') this.refreshQuest();
     if (id === 'craft') this.refreshCraft();
   },
@@ -499,30 +500,101 @@ const UI = {
     $$('#stat-alloc button').forEach(b => b.style.opacity = p.statPts > 0 ? 1 : .35);
   },
 
-  /* ---------------- 특성 트리 ---------------- */
+  /* ---------------- 특성 트리 ----------------
+     v1.1 — 세 분기가 각각 4단×3열의 **판**이 되었다. 예전에는 세로로 늘어놓은
+     목록이라 "무엇 다음에 무엇"이 코드에만 있었는데, 이제 잇는 선이 화면에 있다.
+
+     자리 계산은 SKILLS 의 tier(세로) 와 col(가로, 0~2, .5 는 사이) 하나로 끝난다.
+     선은 SVG <line> 한 겹이고 x 는 백분율이라 판 너비가 바뀌어도 따라온다. */
+  TREE_TOP: 16, TREE_ROW: 94, TREE_BOX: 44,
+  _nodeX(id) { return ((SKILLS[id].col + 0.5) / 3 * 100) + '%'; },
+  _nodeY(id) { return this.TREE_TOP + SKILLS[id].tier * this.TREE_ROW; },
+
   buildTree() {
-    const w = $('#tree-wrap'); w.innerHTML = '';
+    const w = $('#tree-wrap'); if (!w) return;
+    w.innerHTML = '';
+    const NS = 'http://www.w3.org/2000/svg';
     for (const br of BRANCHES) {
       const b = document.createElement('div');
       b.className = 'branch';
+      b.style.setProperty('--bc', br.c);
       b.innerHTML = `<h3 style="color:${br.c}">${br.n}</h3><div class="btag">${br.tag}</div>`;
+
+      const grid = document.createElement('div');
+      grid.className = 'bgrid';
+      const rows = 1 + Math.max(...br.nodes.map(id => SKILLS[id].tier));
+      grid.style.height = (this.TREE_TOP + (rows - 1) * this.TREE_ROW + this.TREE_BOX + 36) + 'px';
+
+      // ① 잇는 선 — 노드보다 먼저 넣어야 뒤로 깔린다
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('class', 'blines');
+      for (const id of br.nodes) for (const rq of (SKILLS[id].req || [])) {
+        const ln = document.createElementNS(NS, 'line');
+        ln.setAttribute('x1', this._nodeX(rq)); ln.setAttribute('y1', this._nodeY(rq) + this.TREE_BOX / 2);
+        ln.setAttribute('x2', this._nodeX(id)); ln.setAttribute('y2', this._nodeY(id) + this.TREE_BOX / 2);
+        ln.setAttribute('class', 'bline');
+        ln.dataset.from = rq; ln.dataset.to = id;
+        svg.appendChild(ln);
+      }
+      grid.appendChild(svg);
+
+      // ② 칸
       for (const id of br.nodes) {
         const sk = SKILLS[id];
         const n = document.createElement('div');
         n.className = 'node'; n.dataset.sk = id;
-        n.innerHTML = `<div class="nic"></div><div><div class="nname">${sk.n} <span class="nrank"></span></div><div class="ndesc"></div></div>`;
+        n.style.left = this._nodeX(id);
+        n.style.top = this._nodeY(id) + 'px';
+        n.innerHTML = `<div class="nbox"><span class="nic"></span><span class="nlock">🔒</span></div>` +
+          `<div class="nname">${sk.n}</div><div class="nrank"></div>`;
         this.setIcon(n.querySelector('.nic'), Art.skillUrl(id));
         n.addEventListener('click', () => this.learn(id));
         n.addEventListener('contextmenu', e => { e.preventDefault(); this.assign(id); });
-        b.appendChild(n);
+        n.addEventListener('mouseenter', e => this.showSkillTip(id, e));
+        n.addEventListener('mousemove', e => this.placeTip(e.clientX, e.clientY));
+        n.addEventListener('mouseleave', () => this.hideTip());
+        grid.appendChild(n);
       }
+      b.appendChild(grid);
       w.appendChild(b);
     }
+    this.bindSkillTabs();
   },
+
+  /** 팝업 위쪽 두 갈래 — 특성 트리 / 생활 숙련 */
+  bindSkillTabs() {
+    const box = $('#panel-skill'); if (!box || box.dataset.tabBound) return;
+    box.dataset.tabBound = '1';
+    $$('#panel-skill .sk-tab').forEach(btn => {
+      btn.addEventListener('click', () => this.setSkillTab(btn.dataset.sktab));
+    });
+  },
+  setSkillTab(id) {
+    $$('#panel-skill .sk-tab').forEach(b => b.classList.toggle('on', b.dataset.sktab === id));
+    $$('#panel-skill .sk-pane').forEach(p => p.classList.toggle('on', p.id === 'sk-pane-' + id));
+    this.skillTab = id;
+    if (id === 'prof') this.refreshProf();
+  },
+
   branchPts(brId) {
     const p = G.player; let n = 0;
     for (const br of BRANCHES) if (br.id === brId) for (const id of br.nodes) n += p.skills[id] || 0;
     return n;
+  },
+  /** 이어진 윗칸 중 하나라도 배웠는가. 윗칸이 없는 첫 단은 늘 열려 있다 */
+  reqMet(id) {
+    const req = SKILLS[id].req;
+    if (!req || !req.length) return true;
+    const p = G.player;
+    return req.some(r => (p.skills[r] || 0) > 0);
+  },
+  /** 이 칸이 왜 잠겨 있는지 — 잠겨 있지 않으면 빈 문자열 */
+  lockReason(id) {
+    const sk = SKILLS[id];
+    const need = TIER_REQ[sk.tier], have = this.branchPts(sk.br);
+    if (have < need) return `이 분기에 ${need}포인트 필요 (지금 ${have})`;
+    if (!this.reqMet(id)) return '윗단계 ' + sk.req.map(r => SKILLS[r].n).join(' 또는 ') + ' 을(를) 먼저';
+    return '';
   },
   skDesc(id, rank) {
     const sk = SKILLS[id];
@@ -532,24 +604,51 @@ const UI = {
     else if (sk.b) { const b = sk.b(r); const vals = Object.values(b); let i = 0; txt = txt.replace(/%d/g, () => vals[i++] ?? 0); }
     return txt.replace(/%%/g, '%');
   },
+  /** 칸 위에 올렸을 때의 설명. 지금 랭크와 다음 랭크를 나란히 보여 준다 */
+  showSkillTip(id, e) {
+    const p = G.player, sk = SKILLS[id], rank = p.skills[id] || 0;
+    const why = this.lockReason(id);
+    const kind = sk.type === 'active' ? '액티브' : '패시브';
+    let h = `<div class="tname c${rank > 0 ? 3 : 0}">${sk.n}</div>`;
+    h += `<div class="tmeta">${kind} · ${rank}/${sk.max} 랭크` +
+      (sk.type === 'active' ? ` · 마나 ${sk.mana} · 재사용 ${sk.cd}초` : '') + `</div>`;
+    h += `<div class="tdesc">${this.skDesc(id, rank)}</div>`;
+    if (rank > 0 && rank < sk.max)
+      h += `<div class="tnext">다음 랭크 — ${this.skDesc(id, rank + 1)}</div>`;
+    if (why) h += `<div class="tbad">${why}</div>`;
+    else if (rank >= sk.max) h += `<div class="tdim">최대 랭크</div>`;
+    else if (p.skillPts <= 0) h += `<div class="tbad">특성 포인트가 없다</div>`;
+    else h += `<div class="tgood">좌클릭으로 습득${sk.type === 'active' ? ' · 우클릭으로 슬롯 등록' : ''}</div>`;
+    const t = $('#tooltip');
+    t.innerHTML = h; t.style.display = 'block'; this.tipTarget = true;
+    this.placeTip(e.clientX, e.clientY);
+  },
+
   refreshTree() {
     const p = G.player;
     $$('#tree-wrap .node').forEach(el => {
       const id = el.dataset.sk, sk = SKILLS[id], rank = p.skills[id] || 0;
-      const need = TIER_REQ[sk.tier], have = this.branchPts(sk.br);
-      const locked = have < need;
+      const locked = !!this.lockReason(id);
       const can = !locked && rank < sk.max && p.skillPts > 0;
-      el.className = 'node' + (rank > 0 ? ' learned' : '') + (locked ? ' locked' : '') + (can ? ' can' : '') + (p.slots.includes(id) ? ' active' : '');
-      el.querySelector('.nrank').textContent = `${rank}/${sk.max}` + (locked ? ` · ${need}p 필요` : '') + (sk.type === 'active' ? ` · 마나 ${sk.mana} · ${sk.cd}초` : '');
-      el.querySelector('.ndesc').textContent = this.skDesc(id, rank);
+      el.className = 'node' + (rank > 0 ? ' learned' : '') + (rank >= sk.max ? ' maxed' : '') +
+        (locked ? ' locked' : '') + (can ? ' can' : '') + (p.slots.includes(id) ? ' active' : '');
+      el.querySelector('.nrank').textContent = `${rank}/${sk.max}`;
+    });
+    // 선 — 윗칸을 배운 순간부터 길이 열린 것으로 본다
+    $$('#tree-wrap .bline').forEach(ln => {
+      const a = (p.skills[ln.dataset.from] || 0) > 0, b = (p.skills[ln.dataset.to] || 0) > 0;
+      ln.classList.toggle('on', a);
+      ln.classList.toggle('full', a && b);
     });
     this.refreshStatAlloc();
   },
+
   learn(id) {
     const p = G.player, sk = SKILLS[id];
     if (p.skillPts <= 0) { this.toast('특성 포인트가 없다', 'bad'); return; }
-    if ((p.skills[id] || 0) >= sk.max) return;
-    if (this.branchPts(sk.br) < TIER_REQ[sk.tier]) { this.toast('이 분기에 포인트가 더 필요하다', 'bad'); return; }
+    if ((p.skills[id] || 0) >= sk.max) { this.toast('이미 최대 랭크다', 'bad'); return; }
+    const why = this.lockReason(id);
+    if (why) { this.toast(why, 'bad'); return; }
     p.skillPts--; p.skills[id] = (p.skills[id] || 0) + 1;
     if (sk.type === 'active' && !p.slots.includes(id)) {
       const empty = p.slots.indexOf(null);
@@ -559,7 +658,36 @@ const UI = {
     this.toast(`${sk.n} 습득 (${p.skills[id]}/${sk.max})`, 'good');
     G.sfx('learn');
     this.refreshTree(); this.refreshSkillSlots(); this.refreshSkillbar(); this.refreshStatSheet();
+    this.flashNode(id);
   },
+
+  /** 습득 연출 — 찍은 칸이 한 번 부풀고, 그 칸에서 뻗어 나가는 선에 빛이 흐른다.
+      CSS 애니메이션이라 클래스를 붙였다가 떼기만 하면 된다(다시 찍으면 다시 돈다). */
+  flashNode(id) {
+    const el = $(`#tree-wrap .node[data-sk="${id}"]`);
+    if (el) {
+      el.classList.remove('just'); void el.offsetWidth; el.classList.add('just');
+      setTimeout(() => el.classList.remove('just'), 900);
+      // 칸 둘레로 튀는 불티 — 요소를 만들어 던지고 끝나면 지운다
+      const box = el.querySelector('.nbox');
+      for (let i = 0; i < 10; i++) {
+        const sp = document.createElement('i');
+        sp.className = 'nspark';
+        const a = Math.random() * Math.PI * 2, d = 26 + Math.random() * 20;
+        sp.style.setProperty('--dx', Math.cos(a) * d + 'px');
+        sp.style.setProperty('--dy', Math.sin(a) * d + 'px');
+        sp.style.animationDelay = (Math.random() * 0.12) + 's';
+        box.appendChild(sp);
+        setTimeout(() => sp.remove(), 900);
+      }
+    }
+    $$('#tree-wrap .bline').forEach(ln => {
+      if (ln.dataset.from !== id && ln.dataset.to !== id) return;
+      ln.classList.remove('flow'); void ln.getBoundingClientRect(); ln.classList.add('flow');
+      setTimeout(() => ln.classList.remove('flow'), 900);
+    });
+  },
+
   assign(id) {
     const p = G.player, sk = SKILLS[id];
     if (sk.type !== 'active' || !(p.skills[id] > 0)) return;
@@ -585,6 +713,50 @@ const UI = {
       el.className = 'ss' + (id ? ' filled' : '');
       this.setIcon(el.querySelector('.ic'), id ? Art.skillUrl(id) : '');
     });
+  },
+
+  /* ---------------- 생활 숙련 ----------------
+     같은 팝업의 다른 갈래다. 포인트가 없다 — 밭에서 거두고 물에서 올린 횟수가
+     그대로 눈금이 된다. 그래서 여기엔 누를 것이 없고, 지금 어디까지 왔는지와
+     다음에 무엇이 열리는지만 보여 준다. */
+  buildProf() {
+    const w = $('#prof-wrap'); if (!w) return;
+    w.innerHTML = '';
+    for (const k in PROFS) {
+      const P = PROFS[k];
+      const d = document.createElement('div');
+      d.className = 'prof'; d.dataset.pf = k;
+      d.style.setProperty('--pc', P.c);
+      d.innerHTML =
+        `<div class="phead"><span class="pic"></span>` +
+        `<span class="pn">${P.n}</span><span class="plv">Lv 1</span></div>` +
+        `<div class="pline">${P.line}</div>` +
+        `<div class="pbar"><i></i></div><div class="pxp"></div>` +
+        `<div class="plin"></div>` +
+        `<div class="pperks"></div>`;
+      d.querySelector('.pic').textContent = P.i;   // 그림 아이콘을 따로 굽지 않는다 — 이 둘뿐이라 글자로 충분하다
+      w.appendChild(d);
+    }
+  },
+  refreshProf() {
+    const w = $('#prof-wrap'); if (!w) return;
+    if (!w.firstChild) this.buildProf();
+    const p = G.player;
+    for (const k in PROFS) {
+      const P = PROFS[k], el = w.querySelector(`.prof[data-pf="${k}"]`);
+      if (!el) continue;
+      const pr = (p.prof && p.prof[k]) || { lv: 1, xp: 0 };
+      const capped = pr.lv >= PROF_MAX;
+      const need = capped ? 1 : profNeed(pr.lv);
+      el.querySelector('.plv').textContent = capped ? `Lv ${PROF_MAX} · 끝` : `Lv ${pr.lv}`;
+      el.querySelector('.pbar i').style.width = (capped ? 100 : Math.min(100, pr.xp / need * 100)) + '%';
+      el.querySelector('.pxp').textContent = capped ? '더 오를 곳이 없다' : `${pr.xp} / ${need}`;
+      el.querySelector('.plin').innerHTML = P.lin
+        .map(([n, f]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join('');
+      el.querySelector('.pperks').innerHTML = P.perks.map(([at, n, dsc]) =>
+        `<div class="perk${pr.lv >= at ? ' on' : ''}"><span class="pk">Lv ${at}</span>` +
+        `<span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>`).join('');
+    }
   },
 
   /* ---------------- 퀘스트 ---------------- */

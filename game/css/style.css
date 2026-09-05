@@ -189,21 +189,94 @@ button:active{transform:translateY(1px)}
 .stat-chip button{padding:1px 8px;font-size:12px;line-height:1.4}
 .stat-chip .sdesc{font-size:10.5px;color:#6f6b5c}
 
-#tree-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px}
-.branch{background:#100f0a;border:1px solid #262418;border-radius:4px;padding:12px}
+/* ===== 특성 트리 (v1.1) =====
+   예전에는 분기마다 여섯 줄을 세로로 쌓은 목록이었다. 이제 4단 × 3열의 판이고,
+   칸과 칸은 SVG 선으로 이어진다. 칸 자리는 js 가 left(%)·top(px)으로 넣는다. */
+.sk-tabs{display:flex;gap:6px;padding:10px 16px 0}
+.sk-tab{background:#13120d;border:1px solid var(--frame);color:#8d8874;font:inherit;font-size:11.5px;
+  letter-spacing:.06em;padding:5px 14px;border-radius:3px 3px 0 0;cursor:pointer}
+.sk-tab:hover{color:#d8d2be;background:#1b1a12}
+.sk-tab.on{color:var(--gold);background:#1c1a10;border-color:#3d3413;border-bottom-color:#1c1a10}
+.sk-pane{display:none}
+.sk-pane.on{display:block}
+
+#tree-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px 16px 4px}
+.branch{background:#100f0a;border:1px solid #262418;border-radius:4px;padding:12px 10px 6px}
 .branch h3{font-size:12.5px;letter-spacing:.08em;margin-bottom:3px}
-.branch .btag{font-size:10px;color:#65614f;margin-bottom:10px}
-.node{display:flex;gap:9px;align-items:flex-start;padding:7px 8px;border:1px solid transparent;border-radius:3px;cursor:pointer;margin-bottom:3px}
-.node:hover{background:#1b1a12;border-color:#332f1e}
-.node .nic{font-size:18px;width:24px;text-align:center;flex:0 0 24px}
-.node .nname{font-size:12px;color:#cfc9b6}
-.node .nrank{font-size:10px;color:var(--dim)}
-.node .ndesc{font-size:10.5px;color:#6f6b5c;line-height:1.5;margin-top:2px}
-.node.learned .nname{color:var(--gold)}
-.node.learned{background:#191707;border-color:#3d3413}
-.node.locked{opacity:.42}
-.node.can{border-color:#4a4327}
-.node.active .nic{filter:drop-shadow(0 0 4px #d8a94b)}
+.branch .btag{font-size:10px;color:#65614f;margin-bottom:6px}
+.bgrid{position:relative}
+.blines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.bline{stroke:#2a2719;stroke-width:2;stroke-linecap:round}
+.bline.on{stroke:var(--bc);opacity:.42}
+.bline.full{opacity:.85;stroke-width:2.6;filter:drop-shadow(0 0 3px var(--bc))}
+/* 습득한 순간 그 칸에 닿는 선으로 빛이 한 번 흐른다 */
+.bline.flow{stroke:#fff6d8;opacity:1;stroke-width:3;stroke-dasharray:10 12;animation:blineflow .9s linear}
+@keyframes blineflow{from{stroke-dashoffset:44;opacity:1}to{stroke-dashoffset:0;opacity:.55}}
+
+.node{position:absolute;width:86px;margin-left:-43px;text-align:center;cursor:pointer;user-select:none}
+.node .nbox{position:relative;width:44px;height:44px;margin:0 auto;border-radius:6px;
+  background:#16150e;border:1px solid #322e1e;display:flex;align-items:center;justify-content:center;
+  transition:transform .12s,box-shadow .18s,border-color .18s}
+.node .nic{width:28px;height:28px;display:block;filter:grayscale(.75) brightness(.62)}
+.node .nlock{position:absolute;right:-3px;bottom:-3px;font-size:9px;opacity:0}
+.node .nname{font-size:9.5px;color:#6f6b5c;margin-top:3px;line-height:1.25;
+  /* 두 줄까지 접힌다 — 한 줄로 잘라 두었더니 '사냥꾼의 표식'이 '사냥꾼의 표'가 되었다 */
+  height:2.5em;overflow:hidden;word-break:keep-all}
+.node .nrank{font-size:9px;color:#514e42;letter-spacing:.04em}
+.node:hover .nbox{transform:translateY(-2px);border-color:var(--bc)}
+.node:hover .nname{color:#cfc9b6}
+.node.can .nbox{border-color:#6a5f33;box-shadow:0 0 0 1px #6a5f3355,0 0 10px #d8a94b26}
+.node.can .nic{filter:grayscale(.35) brightness(.9)}
+.node.learned .nbox{border-color:var(--bc);background:#1b1810;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--bc) 45%,transparent),0 0 12px color-mix(in srgb,var(--bc) 30%,transparent)}
+.node.learned .nic{filter:none}
+.node.learned .nname{color:#d6cfb8}
+.node.learned .nrank{color:var(--gold)}
+.node.maxed .nbox{background:#221d0e;box-shadow:0 0 0 1px var(--bc),0 0 16px color-mix(in srgb,var(--bc) 42%,transparent)}
+.node.locked{opacity:.4}
+.node.locked .nlock{opacity:.9}
+.node.active .nbox::after{content:'';position:absolute;inset:-4px;border-radius:8px;
+  border:1px solid var(--gold);opacity:.75;pointer-events:none}
+
+/* 습득 연출 — 칸이 한 번 부풀고 둘레로 불티가 튄다 */
+.node.just .nbox{animation:nodepop .9s cubic-bezier(.2,1.4,.4,1)}
+@keyframes nodepop{
+  0%{transform:scale(1)}
+  22%{transform:scale(1.32);box-shadow:0 0 0 3px #fff6d8aa,0 0 26px #ffe08a}
+  100%{transform:scale(1)}
+}
+.nspark{position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;
+  background:#ffe9a8;pointer-events:none;animation:nspark .62s ease-out forwards}
+@keyframes nspark{
+  from{transform:translate(-50%,-50%);opacity:1}
+  to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.4);opacity:0}
+}
+
+/* ===== 생활 숙련 ===== */
+#prof-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 16px 16px}
+.prof{background:#100f0a;border:1px solid #262418;border-radius:4px;padding:12px 13px}
+.prof .phead{display:flex;align-items:baseline;gap:7px}
+.prof .pic{font-size:15px}
+.prof .pn{font-size:13px;color:var(--pc);letter-spacing:.06em}
+.prof .plv{margin-left:auto;font-size:11px;color:var(--gold)}
+.prof .pline{font-size:10.5px;color:#65614f;margin:4px 0 9px;line-height:1.6}
+.prof .pbar{height:7px;background:#1a1811;border:1px solid #2a271b;border-radius:4px;overflow:hidden}
+.prof .pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--pc),#fff6d8);
+  transition:width .35s ease}
+.prof .pxp{font-size:9.5px;color:#514e42;text-align:right;margin-top:3px}
+.prof .plin{display:flex;flex-wrap:wrap;gap:4px 8px;margin:8px 0 10px}
+.prof .pl{font-size:10.5px;color:#7b7666;background:#16150e;border:1px solid #2a271b;
+  border-radius:3px;padding:2px 7px}
+.prof .pl b{color:var(--pc);margin-right:5px}
+.prof .perk{display:flex;align-items:baseline;gap:7px;font-size:10.5px;color:#5a5749;
+  padding:4px 0;border-top:1px solid #1e1c14}
+.prof .perk .pk{flex:0 0 34px;color:#4b4839;letter-spacing:.04em}
+.prof .perk .pkn{color:#7b7666;white-space:nowrap}
+.prof .perk .pkd{color:#4b4839;line-height:1.5}
+.prof .perk.on{color:#b9b3a0}
+.prof .perk.on .pk{color:var(--pc)}
+.prof .perk.on .pkn{color:#e6dcc0}
+.prof .perk.on .pkd{color:#8d8874}
 
 .skill-assign{padding:0 16px 16px}
 #skill-slots{display:flex;gap:8px}
@@ -430,6 +503,12 @@ button:active{transform:translateY(1px)}
 #tooltip .tcmp.same{color:#6f6b5c;border-top:1px solid #2a271e}
 #tooltip .tdesc{margin-top:8px;font-size:11px;color:#7b7666;font-style:italic;line-height:1.6}
 #tooltip .thint{margin-top:7px;font-size:10.5px;color:#5c5849}
+/* 특성 칸 툴팁 */
+#tooltip .tmeta{font-size:10.5px;color:#6f6b5c;letter-spacing:.04em;margin-bottom:7px}
+#tooltip .tnext{margin-top:6px;font-size:11px;color:#8fb9e0;line-height:1.6}
+#tooltip .tgood{margin-top:7px;font-size:10.5px;color:#7fd08a}
+#tooltip .tbad{margin-top:7px;font-size:10.5px;color:#d08a7f}
+#tooltip .tdim{margin-top:7px;font-size:10.5px;color:#5c5849}
 .c0{color:var(--r0)}.c1{color:var(--r1)}.c2{color:var(--r2)}.c3{color:var(--r3)}.c4{color:var(--r4)}.c5{color:var(--r5)}
 
 /* ================= 화면 ================= */
@@ -557,7 +636,7 @@ button:active{transform:translateY(1px)}
 .slot .ic{width:36px;height:36px}
 .sk .ic,.ss .ic{width:34px;height:34px}
 .recipe .ric{width:32px;height:32px;flex:0 0 32px}
-.node .nic{width:26px;height:26px;flex:0 0 26px}
+.node .nic{width:28px;height:28px;flex:0 0 28px}
 .buff .bi{width:22px;height:22px}
 .tip-ic{width:26px;height:26px;vertical-align:middle;margin-right:7px;flex:0 0 26px}
 .ui-ic{width:15px;height:15px;vertical-align:-3px;margin-right:3px}
@@ -622,6 +701,7 @@ body.booting #title-screen{visibility:hidden}
   #bag-grid{grid-template-columns:repeat(6,46px)}
   #chest-grid{grid-template-columns:repeat(6,46px)}
   #tree-wrap{grid-template-columns:1fr}
+  #prof-wrap{grid-template-columns:1fr}
   #craft-list{grid-template-columns:1fr}
   #quest-tracker{width:190px;font-size:11px}
   .ts-inner h1{font-size:40px}
