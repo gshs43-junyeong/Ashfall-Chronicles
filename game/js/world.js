@@ -1348,25 +1348,41 @@ class World {
       for (let x = x0 - 6; x < x1 + 6; x++)
         if (this.get(x, gy - 1) === T.TORCH) this.set(x, gy - 1, T.LAMPPOST);
 
-      /* --- 마을 서쪽에 밭 --- */
+      /* --- 마을 서쪽에 밭 자리 ---
+         ★ 마을은 **자리만 내준다.** 흙을 갈지도, 씨를 심지도 않는다.
+           예전에는 여기서 T.FARMLAND 를 깔고 씨앗까지 반쯤 심어 두었다. 그래서
+           처음 온 사람이 "농사는 이미 누가 해 놨네" 하고 지나쳤고, 괭이는 받자마자
+           할 일이 없는 연장이 되었다. 갈고 심는 것이 농사의 전부인데 그걸 마을이
+           대신 해 버린 셈이다.
+           이제 놓아 주는 것은 셋뿐이다 — 평평하게 고른 흙, 두른 울타리, 그리고
+           연장과 씨앗이 든 상자. 밭이 되는 것은 플레이어가 괭이를 대는 순간부터다. */
       const fx0 = x0 - 11, fx1 = x0 - 3;
       d.farm = { x0: fx0, x1: fx1, y: gy };
       for (let x = fx0 - 1; x <= fx1 + 1; x++) {
         for (let y = gy - 5; y < gy; y++) this.set(x, y, T.AIR);
-        this.set(x, gy, x < fx0 || x > fx1 ? T.PLANK : T.FARMLAND);
+        // 밭 자리는 갈지 않은 흙 그대로 둔다 — 괭이를 대면 그때 경작지가 된다
+        this.set(x, gy, x < fx0 || x > fx1 ? T.PLANK : T.DIRT);
       }
       this.set(fx0 - 1, gy - 1, T.FENCE); this.set(fx1 + 1, gy - 1, T.FENCE);
       /* 건초더미는 원래 fx1+2(=x0-1)에 뒀는데, 그 칸이 하필 전주 선로가 내려오는
          기둥 줄이라 전주 밑동에 건초가 박혀 보였다. 밭 왼쪽 울타리 바깥으로 옮긴다
          (경비병 초소 fx0-2와도 안 겹치게 한 칸 더 왼쪽). */
       this.set(fx0 - 3, gy - 1, T.HAYBALE);
-      // 밭을 반쯤 채워 둔다 — 처음 온 사람이 무엇을 하는 자리인지 바로 알게
-      for (let x = fx0; x <= fx1; x++) {
-        if (rng.chance(0.3)) continue;
-        const seed = rng.pick(['seed_wheat', 'seed_wheat', 'seed_starroot']);
-        this.plantSeed(x, gy - 1, seed);
-        for (let k = rng.int(0, 2); k > 0; k--) this.forceGrow(x, gy - 1);
-      }
+      /* 씨앗 상자 — 밭 자리 안쪽 끝, 울타리 바로 옆.
+         괭이·낫·씨앗 세 가지가 한 벌로 들어 있다. 무엇을 하는 자리인지는 이 상자가
+         말해 준다(예전에는 반쯤 자란 작물이 그 역할을 했는데, 그러느라 할 일까지
+         가져가 버렸다). items 를 직접 채워 두므로 상자 전리품 굴림을 타지 않는다. */
+      /* 자리는 밭 자리 안쪽 끝(fx1-1). 한 칸 더 오른쪽(fx1)에 두면 상자 폭(30px)이
+         울타리 칸(fx1+1)까지 물어서 울타리를 뚫고 나온 것처럼 보인다. */
+      this.objects.push({
+        type: 'chest', tier: 1, seedbox: 1,
+        x: (fx1 - 1) * TS + 4, y: (gy - 1.2) * TS, w: 30, h: 26,
+        items: [
+          makeItem('hoe_iron', 1), makeItem('scythe_iron', 1),
+          makeItem('seed_wheat', 12), makeItem('seed_starroot', 8),
+          makeItem('seed_ashcap', 6), makeItem('fertilizer', 6)
+        ]
+      });
 
       /* --- 지붕 위 풍차 + 마을 전주 선로 ---
          풍차만 지붕에 얹어 두면 전력이 지붕에 갇힌다. 지붕에서 큰길로 내려와 밭까지 가는

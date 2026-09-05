@@ -720,11 +720,27 @@ const G = {
       p.mineProg = 0;
       w.set(tx, ty, T.AIR);
       p.mined[id] = (p.mined[id] || 0) + 1;
+      /* ★ 다 여문 작물은 낫으로만 거둔다.
+         곡괭이·도끼로 치면 이삭이 으스러져 **아무것도 남지 않는다** — 떨어지는 것도,
+         씨앗도, 숙련도 없다. 밭 한 칸이 그냥 사라진다.
+         덜 자란 칸은 그대로 둔다(그건 수확이 아니라 갈아엎는 일이고, 원래도
+         나오는 것이 씨앗 한 톨뿐이라 막을 이유가 없다). */
+      const reaping = def.crop && def.crop.ripe;
+      if (reaping && !tool.scythe) {
+        w.crops.delete(ty * WW + tx);
+        for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, def.c, -10, .5));
+        if (!this._scytheWarn || this.time - this._scytheWarn > 2.5) {
+          this._scytheWarn = this.time;
+          this.toast('낫 없이 거두면 다 으스러진다 — 낫이 필요하다', 'bad');
+        }
+        this.sfx('mine');
+        return;
+      }
       this.dropTile(tx, ty, id);
       // 다 여문 작물은 씨앗을 함께 돌려준다 — 한 번 시작하면 밭이 저절로 이어지도록
       if (def.crop) {
         w.crops.delete(ty * WW + tx);
-        if (def.crop.ripe) this.harvestBonus(tx, ty, def);
+        if (def.crop.ripe) this.harvestBonus(tx, ty, def, tool);
       }
       for (let i = 0; i < 5; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, def.c));
       if (def.tree) this.fellTree(tx, ty, id === T.WOOD);
@@ -767,9 +783,11 @@ const G = {
   /* ================= 농사 숙련 =================
      다 여문 칸을 거둘 때만 불린다. 여기서 씨앗을 돌려주고, 숙련이 붙여 주는 몫을
      얹고, 숙련 자체를 올린다. 예전 동작(씨앗 1~2개)이 1레벨의 모습 그대로다. */
-  harvestBonus(tx, ty, def) {
+  harvestBonus(tx, ty, def, tool) {
     const p = this.player, lv = p.profLv('farm');
     const at = (it) => this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it));
+    // 별무늬 낫(reap)은 벤 자리마다 한 번 더 여문 것이 딸려 온다
+    const reap = !!(tool && tool.reap);
 
     // ① 씨앗 — 3레벨 '고른 씨앗'부터는 반드시 하나 이상 돌아온다
     let seeds = (lv >= 3 ? 1 : 0) + (Math.random() < 0.5 + (lv - 1) * 0.04 ? 1 : 0);
@@ -781,6 +799,7 @@ const G = {
       let extra = 0;
       if (Math.random() < (lv - 1) * 0.05) extra++;
       if (lv >= 6 && Math.random() < 0.25) extra++;
+      if (reap) extra++;
       if (extra > 0) at(makeItem(yieldId, extra));
     }
 
@@ -1088,28 +1107,42 @@ const G = {
          얹었다. 낚싯대가 좋을수록, 미끼를 끼울수록, 입질을 직접 챌수록, 그리고
          숙련이 높을수록 이쪽 칸이 굵어진다(아래 lucky).
          숙련 10의 '물때를 안다'까지 가면 심해의 것이 실제로 올라온다. */
+      /* ★ v1.1: 물에서 올라오는 것을 세션마다 다르게 만들었다.
+         예전 표는 절반 이상이 "이미 어디서나 나오는 물건"(젤·뼈·포션·파편)이라,
+         낚싯대를 아무리 좋은 것으로 바꿔도 손에 남는 게 사냥과 똑같았다.
+         이제 원래 있던 아이템은 **세 종류**만 남기고(슬라임 젤·치유 물약·에테르 파편
+         — 초반에 실제로 쓸모가 있는 것들), 나머지 자리를 물에서만 나오는 일곱으로
+         바꿨다. 그리고 그 일곱이 세션마다 다르다:
+           세션 1(잿빛 강·호수)    물때 진주 · 가라앉은 주화 · 등불 치어 · 물비늘
+           세션 2(공창 물길·냉각수) 물먹은 전지 · 냉각액 병 · 삭은 봉돌
+         낚시꾼의 매듭만 양쪽에 걸쳐 있다 — 어느 물에서든 아주 드물게 올라온다.
+         lucky 는 예전과 같다(숙련·낚싯대·미끼·챔질이 특별한 칸을 굵게 만든다). */
       const lucky = (flv - 1) * 0.9 + fishBonus * 6;   // 0 ~ 대략 12
+      const s2 = this.chapter >= 9;                    // 세션 2인가
       const itemTable = [
-        ['slime_gel', 30], ['bone_frag', 30],
-        ['potion_hp', 14], ['potion_hp_greater', 6],
-        ['potion_mp_greater', 6],
-        ['aether_shard', 8], ['ring_angler', 2],
-        // --- 여기부터가 "특별한 것". 평소엔 거의 안 걸린다 ---
-        ['crystal', 2 + lucky * 0.5],
-        ['potion_str_greater', 1.5 + lucky * 0.4],
-        ['potion_iron_greater', 1.5 + lucky * 0.4],
-        ['mythril_bar', 0.8 + lucky * 0.35],
-        ['deep_alloy', 0.6 + lucky * 0.3],
-        ['gloom_pearl', 0.15 + lucky * 0.12],   // 무너진 갱의 것이 물길을 타고 왔다
-        ['void_lens', 0.10 + lucky * 0.08]      // 자오선의 눈이 남긴 것
+        // --- 원래 있던 것 셋. 여전히 대부분은 이쪽이다 ---
+        ['slime_gel', 34], ['potion_hp', 20], ['aether_shard', 12],
+        // --- 물에서만 나오는 일곱. 세션에 따라 무게가 갈린다 ---
+        ['river_scale', s2 ? 3 : 16],
+        ['tide_pearl', s2 ? 4 : 9 + lucky * 0.5],
+        ['lantern_fry', s2 ? 2 : 8 + lucky * 0.4],
+        ['sunken_coin', s2 ? 2.5 : 4 + lucky * 0.5],
+        ['rust_sinker', s2 ? 16 : 1.5],
+        ['drowned_cell', s2 ? 10 + lucky * 0.4 : 0],
+        ['coolant_vial', s2 ? 7 + lucky * 0.4 : 0],
+        // --- 어느 물에서든 드물다 ---
+        ['knot_angler', 0.35 + lucky * 0.15]
       ];
       const catchId = this.rng.weighted(itemTable);
-      const n = catchId === 'aether_shard' ? this.rng.int(1, 2)
-        : catchId === 'slime_gel' || catchId === 'bone_frag' ? this.rng.int(2, 5)
-        : catchId === 'crystal' || catchId === 'deep_alloy' ? this.rng.int(1, 3) : 1;
+      const stackN = {
+        slime_gel: [2, 5], aether_shard: [1, 2],
+        river_scale: [2, 4], tide_pearl: [1, 2], rust_sinker: [1, 3],
+        drowned_cell: [1, 2], sunken_coin: [1, 1]
+      }[catchId];
+      const n = stackN ? this.rng.int(stackN[0], stackN[1]) : 1;
       const it = isGear(makeItem(catchId)) ? rollGear(catchId, this.rng, 0) : makeItem(catchId, n);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-      const rare = ['gloom_pearl', 'void_lens', 'ring_angler', 'mythril_bar'].includes(catchId);
+      const rare = ['knot_angler', 'sunken_coin', 'tide_pearl'].includes(catchId);
       if (rare) {
         // 이런 건 한 번 낚으면 기억에 남아야 한다
         this.toast(`물속에서 무언가 딸려 올라왔다 — ${itemName(it)}`, 'good');
@@ -1125,11 +1158,15 @@ const G = {
       return;
     }
 
+    /* 물고기 자체도 세션마다 다르게 올라온다.
+       세션 2의 물은 공창에서 흘러나온 냉각수라 얕은 물고기가 줄고 깊은 것이 늘었다 —
+       "같은 낚싯대인데 세션 2에서는 심해어가 곧잘 나온다"가 손에 잡히도록. */
+    const s2fish = this.chapter >= 9;
     const table = [
-      ['none', Math.max(6, 26 - fishBonus * 30)],
-      ['fish_common', 44],
-      ['fish_silver', 16 + fishBonus * 26],
-      ['fish_deep', (7 + fishBonus * 30) * (flv >= 6 ? 2.2 : 1)]
+      ['none', Math.max(6, (s2fish ? 22 : 26) - fishBonus * 30)],
+      ['fish_common', s2fish ? 30 : 44],
+      ['fish_silver', (s2fish ? 24 : 16) + fishBonus * 26],
+      ['fish_deep', ((s2fish ? 15 : 7) + fishBonus * 30) * (flv >= 6 ? 2.2 : 1)]
     ];
     const catchId = this.rng.weighted(table);
     if (catchId === 'none') { this.toast(baited ? '미끼만 사라졌다' : '빈 바늘만 올라왔다', 'bad'); UI.refreshBag(); return; }
@@ -1503,7 +1540,12 @@ const G = {
     } else if (id === 'seira') {
       choices.push({ t: '장비를 다시 벼려 달라', fn: () => { UI.closeDialogue(); UI.openReforge(); } });
     }
-    UI.openDialogue(id, [d.line], choices);
+    /* 마을이 어디까지 왔는지 주민이 한 마디씩 한다 — 단계마다 다르다.
+       고정 대사 뒤에 붙이므로 사람의 목소리는 그대로 남는다. */
+    const lines = [d.line];
+    const vt = VILLAGE_TALK[id];
+    if (vt && vt[this.villageLv()]) lines.push(vt[this.villageLv()]);
+    UI.openDialogue(id, lines, choices);
     this.sfx('talk');
   },
 
@@ -1815,13 +1857,11 @@ const G = {
     for (const k in spec.need) p.removeItem(k, spec.need[k]);
     this.world.upgradeVillage(lv + 1);
     while (this.vault.length < this.vaultCap()) this.vault.push(null);
-    if (lv + 1 === 2) {
-      // 밭을 준 김에 씨앗과 괭이도 같이 — 무엇을 하라는 자리인지 손에 쥐여 준다
-      for (const [id, n] of [['seed_wheat', 12], ['seed_starroot', 8], ['hoe_iron', 1]]) {
-        const it = makeItem(id, ITEMS[id].stack > 1 ? n : 1);
-        if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-      }
-    }
+    /* 2단계에서 씨앗·괭이·낫을 가방에 바로 꽂아 주던 것을 없앴다.
+       이제 그 한 벌은 밭 자리 울타리 옆 씨앗 상자에 들어 있다(world.js).
+       가방에 저절로 생기는 것과 걸어가서 여는 것은 다르다 — 후자여야
+       그 자리가 "내가 손댈 곳"으로 읽힌다. */
+    if (lv + 1 === 2) this.toast('마을 서쪽에 땅을 내주었다 — 울타리 옆 상자에 연장과 씨앗이 있다', 'good');
     this.toast(`마을이 『${spec.n}』이 되었다`, 'good');
     for (let i = 0; i < 40; i++) this.parts.push(new Part(p.cx + (Math.random() - .5) * 200, p.cy, '#ffe08a', -70, 1.2));
     UI.chapterCard({ sub: '마을 개선', title: spec.n, line: spec.d });
@@ -2997,7 +3037,10 @@ const G = {
     const dayLight = lerp(3.0, 15, dayF);
     // 발광 물약 — lit/lit_greater 버프가 있으면 미광 반경을 넓힌다. 예전엔 버프만 걸리고
     // 실제로 반경에 반영되는 곳이 없어서(죽은 버프) 상급/일반이 켜져 있으나 마나 똑같았다.
-    const litR = p.buffs.some(b => b.id === 'lit_greater') ? 9.5 : p.buffs.some(b => b.id === 'lit') ? 6.8 : 4.6;
+    // '등불'(등불 치어)도 같은 자리에 얹는다 — 삼키면 뱃속이 환하다는 설명대로 실제로 밝아야 한다
+    const litR = p.buffs.some(b => b.id === 'lit_greater') ? 9.5
+      : p.buffs.some(b => b.id === 'lit') ? 6.8
+      : p.buffs.some(b => b.id === 'lantern') ? 6.0 : 4.6;
     w.computeLight(tx0, ty0, tx1, ty1, dayLight,
       [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]]);   // 플레이어 미광
 

@@ -38,6 +38,15 @@ const ISPEC = {
   fish_silver: { k: 'fishitem', c: '#c8d0dc', glow: '#e8eef5' },
   fish_deep: { k: 'fishitem', c: '#7a5a9c', glow: '#a878e0' },
   ring_angler: { k: 'ring', c: '#8a6a4a', gem: '#4f9cf0' },
+  /* v1.1 — 물에서만 나오는 일곱 */
+  tide_pearl: { k: 'crystal', c: '#dfe9f5', glow: 1 },
+  sunken_coin: { k: 'coin', c: '#c8a850' },
+  lantern_fry: { k: 'fishitem', c: '#e8c86a', glow: '#ffe08a' },
+  river_scale: { k: 'shard', c: '#7fc8b0' },
+  drowned_cell: { k: 'cell', c: '#5a7a8a' },
+  coolant_vial: { k: 'potion', c: '#6fd8e0', glow: '#9fe8ff' },
+  rust_sinker: { k: 'pellet', c: '#8a6a4a' },
+  knot_angler: { k: 'amulet', c: '#c8b08a', gem: '#5fc4c4' },
   pick_copper: { k: 'pick', c: '#c0762f' },
   pick_sharp: { k: 'pick', c: '#d9903f' },      // 날을 세운 구리 — 조금 더 밝다
   pick_iron: { k: 'pick', c: '#b8bcc4' },
@@ -54,6 +63,7 @@ const ISPEC = {
   chest_cloth: { k: 'chest', c: '#9c8a68', soft: 1 },
   chest_copper: { k: 'chest', c: '#c0762f' },
   chest_iron: { k: 'chest', c: '#b8bcc4' },
+  chest_scale: { k: 'chest', c: '#7fc8b0', glow: '#a8e8d0' },
   chest_mythril: { k: 'chest', c: '#5fd0c0', glow: '#5fd0c0' },
   chest_soul: { k: 'chest', c: '#c9a9ff', glow: '#c49fff' },
   boots_cloth: { k: 'boots', c: '#9c8a68', soft: 1 },
@@ -369,11 +379,22 @@ const ISPEC = {
 
   /* --- 4단계: 농업 --- */
   hoe_iron: { k: 'hoe', c: '#b8bcc4' },
+  /* 낫 — 이미 있는 낫 그림(scythe_void가 쓰는 것)에 색만 갈아 끼운다 */
+  scythe_iron: { k: 'scythe', c: '#c8ccd4', shaft: '#6a4a2a' },
+  scythe_star: { k: 'scythe', c: '#a8e0ff', shaft: '#4a4a6a', glow: '#9fe8ff' },
   seed_wheat: { k: 'seed', c: '#c8a850' },
   seed_starroot: { k: 'seed', c: '#8fd0a0' },
   seed_ashcap: { k: 'seed', c: '#c0705a' },
+  seed_bloodbean: { k: 'seed', c: '#c04a44' },
+  seed_bonebloom: { k: 'seed', c: '#e0dcc8' },
+  seed_frostherb: { k: 'seed', c: '#a8e0e8' },
+  seed_emberpod: { k: 'seed', c: '#e8842a', glow: '#ffb85a' },
   wheat: { k: 'wheatitem', c: '#e0c058' },
   starroot: { k: 'rootitem', c: '#8fd0a0', glow: '#bfe8cf' },
+  bloodbean: { k: 'gel', c: '#c04a44' },
+  bonebloom: { k: 'wildflower', c: '#e8e4d4', glow: '#fff8e8' },
+  frostherb: { k: 'weed_icon', c: '#a8e0e8', glow: '#d8f4ff' },
+  emberpod: { k: 'sack', c: '#e8842a', glow: '#ffb85a' },
   flour: { k: 'flouritem', c: '#e8dcc0' },
   fertilizer: { k: 'compost', c: '#5a4632' },
 
