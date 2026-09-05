@@ -71,7 +71,11 @@ const G = {
         }
         if (typeof TitleBG !== 'undefined') TitleBG.useSprites();
       }).catch(e => { console.warn('sprite load failed, using procedural render', e); })
-        .finally(() => this.bootDone());
+        .finally(() => {
+          // 위에서 예외가 났더라도 그림 자체는 다 받아 놓았을 수 있다. 한 번 더 붙여 본다
+          if (typeof TitleBG !== 'undefined') TitleBG.useSprites();
+          this.bootDone();
+        });
     } else {
       this.bootDone();
     }
@@ -4136,8 +4140,12 @@ const G = {
     const r = w.ruinAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
     if (!r || !r.id) return;
     if (!this.seenRuins) this.seenRuins = {};
-    if (this.seenRuins[r.id]) return;
-    this.seenRuins[r.id] = 1;
+    this.seenRuins[r.id] = 1;                  // 기록은 늘 남긴다(탐험 목표·지도가 읽는다)
+    // 카드는 들어올 때마다. 다만 입구를 들락거려도 도배되지 않게 90초 간격을 둔다
+    this._cardAt = this._cardAt || {};
+    const key = 'ruin:' + r.id;
+    if (this.time - (this._cardAt[key] || -1e9) < 90) return;
+    this._cardAt[key] = this.time;
     const card = RUIN_CARD[r.id];
     const spec = RUIN_SPEC.find(s => s.id === r.id);
     // 석판 유적 셋은 RUIN_SPEC 에 없다 — STORY_RUIN 에서 이름을 가져온다
@@ -4153,7 +4161,8 @@ const G = {
       유적에는 카드가 있는데 땅에는 없어서, 걷다 보면 눈이 흙으로 바뀌고 흙이 모래로
       바뀌는데도 "여기가 어디"라는 말이 한 번도 없었다. 유적과 같은 카드를 쓰되
       **무엇이 사는가가 아니라 그 땅이 어떤 곳인가**를 적는다(BIOMES[].card).
-      한 번뿐이라 다시 지나가도 뜨지 않는다(seenBiomes 는 세이브에 남는다). */
+      들어올 때마다 뜬다 — 같은 곳은 90초 안에는 다시 띄우지 않는다(도배 방지).
+      seenBiomes 는 계속 남긴다(탐험 목표와 지도가 그걸 읽는다). */
   /** 지금 화면 뒤에 깔린 원경이 무엇인가 — drawParallaxArt 의 고르는 규칙과 같다.
       이름표는 **이 값이 바뀌는 순간**에 띄운다. 눈에 보이는 배경이 바뀌는 그 자리가
       "다른 땅에 들어섰다"고 느끼는 자리이기 때문이다. 원경이 없는 지하 중간층은 null. */
@@ -4164,7 +4173,10 @@ const G = {
     const zone = w.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
     if (zone === 'sky' || zone === 'ruin' || zone === 'village' || zone === 'camp') return zone;
     if (camY > SURF_BASE * TS + 500) return null;
-    return w.biomeAt(clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1)).id;
+    /* 땅 이름은 **플레이어가 선 자리**로 정한다. 구역(zone)은 이미 플레이어 자리를
+       보는데 땅만 카메라 한가운데를 보고 있었다 — 그러면 가장자리에서 카메라가 먼저
+       넘어가 아직 들어서지도 않은 땅의 이름표가 떴다. 둘의 기준을 맞춘다. */
+    return w.biomeAt(clamp(Math.floor(p.cx / TS), 0, WW - 1)).id;
   },
 
   /** 땅·구역의 이름표. **원경 그림이 바뀔 때** 한 번 띄운다.
@@ -4182,12 +4194,19 @@ const G = {
     this._bgId = id;
     if (first) return;                         // 들어온 첫 프레임은 "바뀐 것"이 아니다
     if (!this.seenBiomes) this.seenBiomes = {};
-    if (this.seenBiomes[id]) return;
     const z = ZONE_CARD[id];
     const b = z ? null : BIOMES.find(q => q.id === id);
     const card = z ? z.card : (b && b.card);
     if (!card) return;                         // 유적·하늘 섬·지옥은 제 카드가 따로 있다
+    /* ★ 예전에는 seenBiomes 에 한 번 적히면 다시는 안 떴다. 그래서 이름표는 사실상
+       "처음 한 번"짜리였고, 한참 뒤에 돌아와도 여기가 어디인지 말해 주지 않았다.
+       기록(seenBiomes)은 그대로 남기되 — 탐험 목표가 그걸 읽는다 — 카드는 들어올
+       때마다 띄운다. 다만 경계에 서서 왔다 갔다 하면 도배가 되므로 같은 곳은
+       한동안(90초) 다시 띄우지 않는다. */
     this.seenBiomes[id] = 1;
+    this._cardAt = this._cardAt || {};
+    if (this.time - (this._cardAt[id] || -1e9) < 90) return;
+    this._cardAt[id] = this.time;
     UI.chapterCard({ sub: z ? z.sub : b.card.sub, title: z ? z.n : b.n, line: card.line });
     this.sfx('chapter');
   },
@@ -4203,7 +4222,9 @@ const G = {
     const ty = (camY + this.H / 2) / TS;
     // 지표 위에서는 그대로, 지옥에 가까울수록 사라진다
     const depth = 1 - clamp((ty - SURF_BASE - 60) / (HELL_Y - SURF_BASE - 60), 0, 1);
-    const a = (A.a * (1 - k) + B.a * k) * (0.4 + 0.6 * depth);
+    /* 땅속에서도 그 땅의 색이 남는다. 예전에는 0.4 까지 씻겨 나가서, 동굴에 들어가면
+       일곱 땅이 다시 다 같은 색이 되었다 — 정작 오래 머무는 곳이 거기다. */
+    const a = (A.a * (1 - k) + B.a * k) * (0.68 + 0.32 * depth);
     if (a < 0.004) return null;
     return { c: k > 0.25 ? B.c : A.c, a };
   },

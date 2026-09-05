@@ -42,17 +42,29 @@ const TitleBG = {
     this.resize();
   },
 
-  /** Sprites 가 다 붙은 뒤 한 번 불러 준다 — 그때 비로소 그림을 쓸 수 있다 */
+  /** 그림이 준비됐으면 능선과 사람을 얹는다. 붙었으면 true.
+
+      ★ 이 함수는 **스스로 다시 시도된다**(frame() 안에서 0.4초마다).
+        예전에는 game.js 가 Sprites.ready().then() 안에서 딱 한 번만 불러 주었다.
+        그래서 스프라이트 단계 어디서든 예외가 나면 — 그림은 멀쩡히 다 받아 놓고도 —
+        이 함수가 영영 안 불렸고, 타이틀 배경은 하늘 그라데이션만 남았다.
+        "초기 접속 때 배경이 안 뜬다"의 진짜 원인이 이것이다. 앞서 두 번은 **부르는
+        시점**을 옮겨서 고치려 했는데(init 으로 당기기), 한 번만 부르는 구조가 그대로면
+        그 한 번이 실패했을 때 되돌릴 길이 없다. 시점이 아니라 구조 문제였다.
+        이제 바깥에서 아무도 안 불러 줘도, 그림이 준비되는 순간 제가 알아서 붙는다. */
   useSprites() {
-    if (typeof Sprites === 'undefined' || !Sprites.img) return;
-    this.layers = this.LAYER_SPEC
+    if (typeof Sprites === 'undefined' || !Sprites.img) return false;
+    const got = this.LAYER_SPEC
       .map(s => Object.assign({}, s, { im: Sprites.img[s.key] }))
       .filter(l => l.im && l.im.width);
+    if (!got.length) return false;              // 아직 안 왔다 — 다음에 다시 본다
+    this.layers = got;
     const im = Sprites.img.player;
-    const m = Sprites.meta && Sprites.meta.characters.sheets.player;
+    const m = Sprites.meta && Sprites.meta.characters && Sprites.meta.characters.sheets.player;
     // 프레임 크기는 매니페스트에서 가져온다 — 시트를 다시 구우면 여기도 저절로 따라온다
     if (im && im.width && m) this.player = { im, fw: m.frameW * Sprites.scale, fh: m.frameH * Sprites.scale };
     if (!this.on) this.frame(0);
+    return true;
   },
 
   resize() {
@@ -87,6 +99,12 @@ const TitleBG = {
 
   frame(dt) {
     const c = this.ctx; if (!c) return;
+    /* 그림이 아직 안 붙었으면 0.4초마다 다시 두드린다. 바깥에서 불러 주기를
+       기다리지 않는다 — 그 한 번을 놓치면 배경이 영영 비기 때문이다. */
+    if (!this.layers.length) {
+      this._try = (this._try || 0) - (dt || 0.016);
+      if (this._try <= 0) { this._try = 0.4; this.useSprites(); }
+    }
     const W = this.w, H = this.h, t = this.t;
     const ground = H * 0.93;                  // 사람이 딛는 줄
     const sc = Math.max(1, (H * 0.62) / 400); // 능선 그림(400px)을 화면 높이에 맞춘 배율
