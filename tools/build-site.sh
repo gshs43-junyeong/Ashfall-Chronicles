@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 # 배포용 사이트를 만든다: game/ 을 site/play/ 로 복사해 브라우저에서 바로 플레이되게 한다.
 #
-# site/play/ 는 git 에 올리지 않는다(.gitignore). game/ 과 똑같은 381개 파일을 저장소에
-# 두 벌 두게 되기 때문이다. 대신 배포할 때마다 이 스크립트가 만든다.
+# site/play/ 는 git 에 올리지 않는다(.gitignore). game/ 과 똑같은 파일을 저장소에 두 벌
+# 두게 되기 때문이다. 대신 배포할 때마다 이 스크립트가 만든다.
 # Vercel(vercel.json 의 buildCommand)과 GitHub Pages 워크플로가 둘 다 이걸 부른다.
 #
-# ★ v1.1 — 여기서 **?v= 를 이 배포의 값으로 갈아 끼운다**.
-#   여태 ?v= 는 손으로 올리는 숫자였다(183 -> 184 -> 185). 두 가지가 어긋났다.
-#     ① 손으로 올리는 것을 잊으면 옛 스크립트가 계속 돌고,
-#     ② 올리더라도 그 번호를 **들고 있는 파일이 index.html 자신**이라, 브라우저가
-#        index.html 을 캐시에 물고 있으면 번호를 올린 사실 자체가 전달되지 않는다.
-#   그래서 배포 때마다 커밋 해시로 자동으로 찍고(①), vercel.json 에서 html 은 매번
-#   확인하도록(no-cache) 못 박았다(②). 이제 손으로 올릴 일이 없다.
-set -euo pipefail
+# ★★ 이 스크립트의 첫째 규칙: **죽지 않는다.**
+#   빌드가 실패하면 Vercel 은 아무 말 없이 **직전 배포판을 그대로 계속 서빙한다**.
+#   화면에서는 "고친 게 반영이 안 된다"로만 보이고 캐시와 구별이 안 된다.
+#   실제로 이 프로젝트에서 두 번 났다 — vercel.json 의 "//" 주석 키, 그리고
+#   빌드 이미지에 없을 수도 있는 도구(perl·python3)에 기댄 것.
+#   그래서 여기서는 꼭 필요한 복사만 실패로 치고, 나머지(매니페스트 동기화·?v= 찍기)는
+#   안 되면 경고만 남기고 넘어간다. 캐시가 좀 덜 끊기는 것이 배포가 통째로 멈추는 것보다
+#   언제나 낫다.
+set -uo pipefail        # -e 는 일부러 빼 두었다. 아래에서 필요한 곳만 직접 검사한다.
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+warn() { echo "  ! $*" >&2; }
 
 if [ ! -f "$ROOT/game/index.html" ]; then
   echo "game/index.html 이 없습니다. 저장소 루트에서 실행했는지 확인하세요." >&2
@@ -35,40 +37,44 @@ fi
 
 # ---- 매니페스트를 스크립트로 옮겨 적는다 ----------------------------------
 # file:// 에서 fetch 가 막히므로 assets/sprites-manifest.js 가 원본을 대신한다.
-# 손으로 두 벌을 관리하면 반드시 어긋나므로 여기서 다시 만들고, 어긋나면 실패시킨다.
-python3 "$ROOT/tools/sync-manifest.py"
+# node 를 먼저 쓴다 — Vercel 은 Node 빌드 이미지라 node 는 반드시 있지만 python3 은
+# 보장되지 않는다. 둘 다 없으면 저장소에 커밋된 파일을 그대로 쓴다(경고만).
+if command -v node >/dev/null 2>&1; then
+  node "$ROOT/tools/sync-manifest.mjs" || warn "매니페스트 동기화 실패 — 커밋된 파일을 그대로 씁니다"
+elif command -v python3 >/dev/null 2>&1; then
+  python3 "$ROOT/tools/sync-manifest.py" || warn "매니페스트 동기화 실패 — 커밋된 파일을 그대로 씁니다"
+else
+  warn "node·python3 이 없습니다 — sprites-manifest.js 는 커밋된 것을 그대로 씁니다"
+fi
 
-rm -rf "$ROOT/site/play"
-mkdir -p "$ROOT/site/play"
-cp -R "$ROOT/game/." "$ROOT/site/play/"
+# ---- 복사 (여기만 실패로 친다) -----------------------------------------------
+rm -rf "$ROOT/site/play" || true
+mkdir -p "$ROOT/site/play" || { echo "site/play 를 만들 수 없습니다" >&2; exit 1; }
+cp -R "$ROOT/game/." "$ROOT/site/play/" || { echo "game/ 복사 실패" >&2; exit 1; }
 
 # ---- ?v= 를 이 배포의 값으로 -------------------------------------------------
 # html 의 <script src="js/x.js?v=185"> 를 전부 ?v=<해시> 로 바꾼다.
 # assets/sprites.js 는 자기 <script> 태그의 물음표 뒤를 그대로 물려받아 그림 URL 에도
 # 붙이므로(sprites.js 의 _ver), 이 한 줄로 스크립트·CSS·그림이 한꺼번에 따라온다.
-#
-# ★ sed 만 쓴다. 처음에는 perl 로 썼는데, 빌드 이미지에 perl 이 없으면 set -e 가
-#   빌드를 통째로 실패시키고 — 그러면 배포판이 **옛것 그대로 남는다**. 캐시를 고치려다
-#   캐시보다 더 조용한 실패를 만드는 셈이다. sed -i 는 GNU/BSD 문법이 갈리므로
-#   임시 파일로 돌려 어디서나 같게 동작시킨다.
-find "$ROOT/site/play" -name '*.html' -print0 | while IFS= read -r -d '' f; do
-  sed -e "s/?v=[A-Za-z0-9_.-]*/?v=$BUILD/g" -e "s/__AC_BUILD__/$BUILD/g" "$f" > "$f.stamp"
-  mv "$f.stamp" "$f"
-done
+# sed 만 쓴다(perl 은 없을 수 있다). sed -i 는 GNU/BSD 문법이 갈리므로 임시 파일로 돈다.
+STAMPED=0
+while IFS= read -r -d '' f; do
+  if sed -e "s/?v=[A-Za-z0-9_.-]*/?v=$BUILD/g" -e "s/__AC_BUILD__/$BUILD/g" "$f" > "$f.stamp" 2>/dev/null; then
+    mv "$f.stamp" "$f" && STAMPED=$((STAMPED + 1))
+  else
+    rm -f "$f.stamp"; warn "$f 에 ?v= 를 찍지 못했습니다"
+  fi
+done < <(find "$ROOT/site/play" -name '*.html' -print0)
 
 # 실제로 도는 판이 어느 것인지 브라우저가 물어볼 자리. vercel.json 에서 no-store 다.
-printf '{"build":"%s"}\n' "$BUILD" > "$ROOT/site/play/version.json"
+printf '{"build":"%s"}\n' "$BUILD" > "$ROOT/site/play/version.json" \
+  || warn "version.json 을 쓰지 못했습니다"
 
-# ---- 확인 --------------------------------------------------------------------
-# 여기서 막지 않으면 "찍힌 줄 알았는데 안 찍힌" 판이 immutable 로 1년 캐시된다.
-LEFT="$(grep -rhoE '\?v=[A-Za-z0-9_.\-]+' "$ROOT/site/play" --include='*.html' | sort -u | grep -v "^?v=$BUILD$" || true)"
-if [ -n "$LEFT" ]; then
-  echo "?v= 가 안 찍힌 자리가 있습니다: $LEFT" >&2
-  exit 1
-fi
-if grep -rq '__AC_BUILD__' "$ROOT/site/play" --include='*.html'; then
-  echo "__AC_BUILD__ 가 남아 있습니다 — 자리 표시자가 안 바뀌었습니다." >&2
-  exit 1
-fi
+# ---- 확인 (경고만 한다. 여기서 죽으면 배포가 통째로 옛것으로 남는다) ----------
+LEFT="$(grep -rhoE '\?v=[A-Za-z0-9_.-]+' "$ROOT/site/play" --include='*.html' 2>/dev/null \
+        | sort -u | grep -v "^?v=$BUILD$" || true)"
+[ -n "$LEFT" ] && warn "?v= 가 안 찍힌 자리: $LEFT (캐시가 덜 끊길 수 있습니다)"
+grep -rq '__AC_BUILD__' "$ROOT/site/play" --include='*.html' 2>/dev/null \
+  && warn "__AC_BUILD__ 가 남아 있습니다 — 판 번호가 화면에 안 뜹니다"
 
-echo "site/play/ 준비 완료 — $(find "$ROOT/site/play" -type f | wc -l | tr -d ' ')개 파일 · build $BUILD"
+echo "site/play/ 준비 완료 — $(find "$ROOT/site/play" -type f | wc -l | tr -d ' ')개 파일 · build $BUILD · html $STAMPED장"
