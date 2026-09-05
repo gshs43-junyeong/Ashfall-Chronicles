@@ -1130,6 +1130,23 @@ const G = {
         ['rust_sinker', s2 ? 16 : 1.5],
         ['drowned_cell', s2 ? 10 + lucky * 0.4 : 0],
         ['coolant_vial', s2 ? 7 + lucky * 0.4 : 0],
+        /* --- 물에서만 나오는 무기 셋 · 장신구 셋 (세션마다 다르다) ---
+           재료로는 만들 수 없다. 낚아야만 나온다 — 그래서 낚싯대를 드는 데
+           "언젠가 저게 올라온다"는 이유가 생긴다. 무기는 근접·원거리·마법으로
+           갈라 두어 어느 갈래를 키우든 하나는 제 것이 된다.
+           무게는 잡템의 100분의 1 수준에서 시작해 숙련·낚싯대·미끼로 자란다. */
+        ['spear_tide', s2 ? 0 : 0.30 + lucky * 0.10],
+        ['bow_reed', s2 ? 0 : 0.30 + lucky * 0.10],
+        ['staff_current', s2 ? 0 : 0.26 + lucky * 0.09],
+        ['charm_float', s2 ? 0 : 0.22 + lucky * 0.08],
+        ['ring_ripple', s2 ? 0 : 0.22 + lucky * 0.08],
+        ['amul_scale', s2 ? 0 : 0.20 + lucky * 0.07],
+        ['harpoon_cool', s2 ? 0.30 + lucky * 0.10 : 0],
+        ['gun_pressure', s2 ? 0.26 + lucky * 0.09 : 0],
+        ['staff_deluge', s2 ? 0.24 + lucky * 0.09 : 0],
+        ['charm_conden', s2 ? 0.22 + lucky * 0.08 : 0],
+        ['ring_sluice', s2 ? 0.22 + lucky * 0.08 : 0],
+        ['amul_undertow', s2 ? 0.20 + lucky * 0.07 : 0],
         // --- 어느 물에서든 드물다 ---
         ['knot_angler', 0.35 + lucky * 0.15]
       ];
@@ -1142,7 +1159,10 @@ const G = {
       const n = stackN ? this.rng.int(stackN[0], stackN[1]) : 1;
       const it = isGear(makeItem(catchId)) ? rollGear(catchId, this.rng, 0) : makeItem(catchId, n);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-      const rare = ['knot_angler', 'sunken_coin', 'tide_pearl'].includes(catchId);
+      /* 한 번 낚으면 기억에 남아야 하는 것 — 물에서만 나오는 무기·장신구 전부와
+         값나가는 셋. 여기 들면 연출이 커지고 숙련도 세 배로 붙는다. */
+      const rare = isGear(makeItem(catchId))
+        || ['knot_angler', 'sunken_coin', 'tide_pearl'].includes(catchId);
       if (rare) {
         // 이런 건 한 번 낚으면 기억에 남아야 한다
         this.toast(`물속에서 무언가 딸려 올라왔다 — ${itemName(it)}`, 'good');

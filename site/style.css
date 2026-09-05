@@ -454,6 +454,9 @@ details.log .log-body ul{margin:0;padding-left:1.1em;display:flex;flex-direction
 /* ================= 푸터 ================= */
 footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--bone-faint);font-size:.82rem;}
 .foot-row{display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;align-items:baseline;}
+/* 지금 도는 판. 눈에 띌 필요는 없고, 물어보면 답할 수 있으면 된다 —
+   "사이트를 고쳤는데 반영이 안 된다"가 캐시인지 배포인지 여기서 갈린다. */
+.site-build{opacity:.42;font-size:.82em;margin-left:6px;}
 .foot-links{display:flex;flex-wrap:wrap;gap:18px;}
 
 /* ================= 스크롤 등장 =================

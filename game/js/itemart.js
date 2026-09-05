@@ -47,6 +47,24 @@ const ISPEC = {
   coolant_vial: { k: 'potion', c: '#6fd8e0', glow: '#9fe8ff' },
   rust_sinker: { k: 'pellet', c: '#8a6a4a' },
   knot_angler: { k: 'amulet', c: '#c8b08a', gem: '#5fc4c4' },
+  /* 물에서만 나오는 무기·장신구 열둘 (세션마다 여섯) — 기존 그림에 색만 갈아 끼운다.
+     작살은 창(spear), 사출기는 활(bow) 자세를 쓴다. */
+  /* ★ 칸 이름을 그림 쪽이 쓰는 것과 맞춰야 한다 —
+     staff 는 head + style('orb'|'crystal'|'claw'), bow 는 c + s(시위 색)다.
+     gem 은 ring·amulet 만 쓴다. 처음에 staff 에 gem 을 줬다가 head 가 undefined 라
+     아이콘 아틀라스를 짓는 도중에 터졌고, 게임이 아예 안 켜졌다. */
+  spear_tide: { k: 'spear', c: '#7fc8d8', glow: '#a8e8f0' },
+  bow_reed: { k: 'bow', c: '#a8b878', s: '#e8e0c0' },
+  staff_current: { k: 'staff', c: '#5a7a6a', head: '#9fe0ff', style: 'crystal', glow: '#9fe0ff' },
+  harpoon_cool: { k: 'spear', c: '#8fd0e0', glow: '#bfeaf5' },
+  gun_pressure: { k: 'bow', c: '#6fb8d8', s: '#d8f4ff', glow: '#9fe0ff' },
+  staff_deluge: { k: 'staff', c: '#2e4458', head: '#7fe0ff', style: 'claw', glow: '#7fe0ff' },
+  charm_float: { k: 'sigil', c: '#e8c86a', glow: '#ffe08a' },
+  ring_ripple: { k: 'ring', c: '#8fb8c8', gem: '#7fd8e8' },
+  amul_scale: { k: 'amulet', c: '#7fc8b0', gem: '#a8e8d0' },
+  charm_conden: { k: 'sigil', c: '#6fd8e0', glow: '#9fe8ff' },
+  ring_sluice: { k: 'ring', c: '#8a8a96', gem: '#5fa8c8' },
+  amul_undertow: { k: 'amulet', c: '#4a6a8a', gem: '#7f9fd8' },
   pick_copper: { k: 'pick', c: '#c0762f' },
   pick_sharp: { k: 'pick', c: '#d9903f' },      // 날을 세운 구리 — 조금 더 밝다
   pick_iron: { k: 'pick', c: '#b8bcc4' },
@@ -521,7 +539,17 @@ const Art = {
       this.cells[key] = [cx, cy];
       g.save();
       g.translate(cx * S32, cy * S32);
-      this.paint(g, spec, rng);
+      /* ★ 한 칸이 터져도 나머지는 그린다.
+         아이콘 규격(ISPEC)에 칸 이름을 하나 잘못 적으면 — staff 에 head 대신 gem 을
+         적는 식 — 그 자리에서 예외가 나고, 그것이 build() 를 통째로 끊고 init() 까지
+         타고 올라가 **게임이 아예 안 켜졌다.** 아이콘 하나 잘못 적은 값이 검은 화면이
+         되는 것은 값이 너무 비싸다. 여기서 끊고 콘솔에 어느 칸인지 남긴다 —
+         그 칸만 빈 자리가 되고 게임은 돈다. */
+      try {
+        this.paint(g, spec, rng);
+      } catch (e) {
+        console.warn('[아이콘] ' + key + ' 를 그리지 못했습니다:', e && e.message);
+      }
       g.restore();
       // 펫은 형태(네발·새·정령…)마다 그림이 칸 안에서 치우쳐 있어서, 슬롯에 나란히 놓으면
       // 저마다 다른 높이로 떠 보인다. 좌표를 형태별로 손보는 대신 실제로 칠해진 영역을

@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
-<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="../style.css?v=dev">
 </head>
 <body>
 
@@ -302,7 +302,12 @@
 
 <footer>
   <div class="wrap foot-row">
-    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.0.5</span></p>
+    <!-- 판 번호를 여기에도 적는다. 게임 쪽(/play)에는 진작부터 있었는데 사이트에는
+         없어서, "사이트를 고쳤는데 반영이 안 된다"가 났을 때 그것이 캐시인지 배포인지
+         코드인지 구별할 방법이 아예 없었다. 이제 이 일곱 자로 확인한다.
+         634fa86e28ad 는 tools/build-site.sh 가 배포 때 커밋 해시로 바꾼다. -->
+    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.0.5</span>
+       <span class="mono site-build" id="siteBuild">__AC_BUILD__</span></p>
     <nav class="foot-links">
       <a href="../download">다운로드</a>
       <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles">저장소</a>
@@ -312,12 +317,20 @@
   </div>
 </footer>
 
-<script src="../hero.js"></script>
-<script src="../showcase.js"></script>
-<script src="../content.js"></script>
+<script src="../hero.js?v=dev"></script>
+<script src="../showcase.js?v=dev"></script>
+<script src="../content.js?v=dev"></script>
 <script>
 (function () {
   'use strict';
+
+  /* ---- 판 번호 ----
+     치환 전(개발 중·파일 직접 열기)에는 '개발판'으로 적는다. 배포판이면 앞 일곱 자만. */
+  var sb = document.getElementById('siteBuild');
+  if (sb) {
+    var raw = sb.textContent.trim();
+    sb.textContent = (raw === '__AC_' + 'BUILD__') ? '개발판' : raw.slice(0, 7);
+  }
 
   /* ---- 게임 시작과 전체 화면 ---- */
   var stage = document.getElementById('stage');
@@ -365,7 +378,7 @@
   if (cover && stage) {
     cover.addEventListener('click', function () {
       frame = document.createElement('iframe');
-      frame.src = '../play/index.html';
+      frame.src = '../play/index.html?v=dev';
       frame.title = 'Ashfall Chronicles — 별이 잠든 땅';
       frame.allow = 'autoplay; fullscreen';
       stage.appendChild(frame);
