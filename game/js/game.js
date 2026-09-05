@@ -1834,10 +1834,12 @@ const G = {
   },
 
   /* ================= 광역 피해 ================= */
-  /** 폭발/타격 이펙트 등록 (kind: hit / fire / void) */
-  burst(x, y, kind, size) {
+  /** 폭발/타격 이펙트 등록 (kind: hit / fire / void / stargain / starmerge)
+      slow: 재생을 늘리는 배수(기본 1 = 여섯 프레임 0.24초).
+      타격은 짧아야 손맛이 나지만, 이야기의 한 순간은 그 속도로는 읽히지도 않는다. */
+  burst(x, y, kind, size, slow) {
     if (!this.spritesOn) return;
-    (this.bursts = this.bursts || []).push({ x, y, kind, s: size || 64, t: 0 });
+    (this.bursts = this.bursts || []).push({ x, y, kind, s: size || 64, t: 0, sp: slow || 1 });
   },
 
   aoe(x, y, r, dmg, kb, color, effect) {
@@ -2282,11 +2284,24 @@ const G = {
     const p = this.player;
     if (id >= 1 && id <= 5) {
       p.starOrbits = Math.min(5, (p.starOrbits || 0) + 1);
-      setTimeout(() => this.toast(`별 조각이 하나 더 곁에 남았다 — ${p.starOrbits}/5`, 'good'), 900);
+      /* 조각이 맺히는 것을 보여 준 다음에 말로 알린다 — 순서가 반대면 글자가 먼저 뜨고
+         그림이 뒤따라서 둘이 따로 논다. 장 완료 토스트와도 겹치지 않게 한 박자 둔다. */
+      setTimeout(() => {
+        /* 몸 가운데가 아니라 **조각이 내려앉는 궤도 자리**에서 터진다.
+           가운데에 크게 띄웠더니 플레이어가 통째로 가려져서, 조각이 하나 붙었다기보다
+           플레이어가 터진 것처럼 보였다. 자리와 크기 둘 다 낮췄다. */
+        const q = this.player;
+        this.burst(q.cx + 30, q.cy - 8, 'stargain', 46, 2.2);
+        this.sfx('learn');
+      }, 700);
+      setTimeout(() => this.toast(`별 조각이 하나 더 곁에 남았다 — ${p.starOrbits}/5`, 'good'), 1100);
       if (id === 5) {
         // 다섯이 한 점으로 모였다가 다시 퍼진다. 5장 outro 와 같은 사건이다
         p.starLit = 1; this.starMerge = 2.4;
-        setTimeout(() => this.sfx('learn'), 1200);
+        setTimeout(() => {
+          this.burst(this.player.cx, this.player.cy - 4, 'starmerge', 176, 3.2);
+          this.shake = 10; this.sfx('level');
+        }, 1500);
       }
     } else if (id === 8) {
       /* 추적자를 넘긴 뒤로는 아주 희미해진다. 여기서부터는 별을 모으는 이야기가
@@ -3130,7 +3145,7 @@ const G = {
     if (this.bursts) for (let i = this.bursts.length - 1; i >= 0; i--) {
       const b = this.bursts[i];
       b.t += 1 / 60;
-      const fr = Math.floor(b.t / 0.04);
+      const fr = Math.floor(b.t / (0.04 * (b.sp || 1)));
       if (fr >= 6) { this.bursts.splice(i, 1); continue; }
       Sprites.drawFx(c, 'burst_' + b.kind, fr, b.x - camX - b.s / 2, b.y - camY - b.s / 2, b.s);
     }
@@ -3746,10 +3761,12 @@ const G = {
     const ry = rx * 0.42;
     const lit = p.starLit ? 1 : 0;
     const base = p.starFade ? 0.18 : (0.5 + lit * 0.25);
-    const im = (typeof Sprites !== 'undefined' && Sprites.img) ? Sprites.img.star_frag : null;
+    const spr = this.spritesOn && typeof Sprites !== 'undefined'
+      && Sprites.img && Sprites.img.proj_starfrag && Sprites.img.proj_starfrag.width;
 
     c.save();
-    c.globalCompositeOperation = 'lighter';
+    // 그림이 있으면 제 색으로(금빛이 하얗게 날아가지 않게), 없으면 빛으로 겹쳐 그린다
+    if (!spr) c.globalCompositeOperation = 'lighter';
     for (let i = 0; i < n; i++) {
       const a = t * 0.7 + i * TAU / Math.max(n, 1);
       const x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry;
@@ -3757,9 +3774,11 @@ const G = {
       const back = Math.sin(a) < 0 ? 0.45 : 1;
       const r = (2.6 + mg * 2.2) * (0.85 + 0.15 * Math.sin(t * 3 + i));
       c.globalAlpha = base * back * (0.7 + 0.3 * Math.sin(t * 2.4 + i * 1.7)) + mg * 0.35;
-      if (im && im.width) {
-        const w = r * 5;
-        c.drawImage(im, x - w / 2, y - w / 2, w, w);
+      if (spr) {
+        // 조각마다 반짝이는 박자를 어긋나게 둔다 — 다섯이 한꺼번에 깜빡이면 기계 같다
+        const fr = Math.floor(t * 6 + i * 1.7) % 4;
+        const w = r * 5.4;
+        Sprites.drawFx(c, 'proj_starfrag', fr, x - w / 2, y - w / 2, w);
       } else {
         const g = c.createRadialGradient(x, y, 0, x, y, r * 3.2);
         g.addColorStop(0, lit ? '#fff6d8' : '#e8dcb8');
