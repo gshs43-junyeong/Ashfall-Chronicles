@@ -676,7 +676,8 @@ class World {
       if (!def.crop.next) continue;                        // 이미 다 여물었다
       const x = k % WW, y = (k / WW) | 0;
       if (!TILE_DEF[this.get(x, y + 1)].farm) { this.crops.delete(k); continue; }   // 밭이 없어졌다
-      if (rng.chance(Math.min(0.9, 0.22 * (0.55 + dayF * 0.75) * sp))) {
+      // sp 를 크게 넘기면(아침 성장) 확률 굴림 없이 반드시 한 단계 자란다
+      if (rng.chance(Math.min(1, 0.22 * (0.55 + dayF * 0.75) * sp))) {
         this.tiles[k] = def.crop.next;
         const nd = TILE_DEF[def.crop.next];
         (nd.crop && nd.crop.ripe ? out.ripe : out.grew).push(k);

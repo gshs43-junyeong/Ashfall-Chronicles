@@ -370,7 +370,7 @@ const G = {
   update(dt) {
     this.time += dt;
     const nextDayT = (this.dayT + dt * 2) % 1440;
-    if (nextDayT < this.dayT) { this.dayCount++; this.updateEconomy(); }
+    if (nextDayT < this.dayT) { this.dayCount++; this.updateEconomy(); this.growCropsDaily(); }
     this.dayT = nextDayT;
     this.readInput();
     const p = this.player, w = this.world;
@@ -426,31 +426,6 @@ const G = {
     // 세계 이벤트 (붉은 달 · 모래폭풍 · 포자 개화 · 비)
     this.updateEvents(dt);
     this.updateWeather(dt);
-
-    // 작물 — 심어 둔 것만 훑으므로 플레이어가 어디 있든 자란다
-    this.cropTimer = (this.cropTimer || 0) - dt;
-    if (this.cropTimer <= 0) {
-      this.cropTimer = 4;
-      /* 밭은 여태 아무 기별 없이 조용히 자랐다 — 4초마다 타일만 바뀌니, 보고 있어도
-         뭐가 일어나는지 알 수가 없었다. 자란 칸에서 잎이 튀고, 다 여문 칸에서는
-         금빛이 튄다. 화면 밖은 건너뛴다(밭 하나에 수백 칸이 될 수 있다). */
-      // 농사 숙련 — 레벨마다 성장이 7%씩 빨라진다
-      const g = w.growCrops(this.rng, this.dayFactor(), 1 + (this.player.profLv('farm') - 1) * 0.07);
-      const onScreen = (x, y) => Math.abs(x * TS - this.cam.x - this.W / 2) < this.W / 2 + TS &&
-                                 Math.abs(y * TS - this.cam.y - this.H / 2) < this.H / 2 + TS;
-      for (const k of g.grew) {
-        const x = k % WW, y = (k / WW) | 0;
-        if (!onScreen(x, y)) continue;
-        for (let i = 0; i < 2; i++)
-          this.parts.push(new Part((x + .5) * TS, (y + .6) * TS, '#8fc85a', -18, .45));
-      }
-      for (const k of g.ripe) {
-        const x = k % WW, y = (k / WW) | 0;
-        if (!onScreen(x, y)) continue;
-        for (let i = 0; i < 5; i++)
-          this.parts.push(new Part((x + .5) * TS, (y + .5) * TS, '#ffe08a', -26, .6));
-      }
-    }
 
     this.checkRuinEntry();
     this.checkRuinEvent();
@@ -754,6 +729,37 @@ const G = {
     }
   },
 
+  /* ================= 밭은 아침에 자란다 =================
+     예전에는 4초마다 칸마다 주사위를 굴렸다. 그래서 밭 앞에 가만히 서 있으면
+     눈앞에서 야금야금 자랐고, 자리를 뜨면 언제 여물지 알 수 없었다. 농사가
+     "기다리는 일"이 아니라 "쳐다보는 일"이 되어 있었다.
+     이제 하루가 바뀔 때 한 단계씩 자란다. 자고 일어나면 밭이 한 뼘 커져 있다 —
+     그게 농사고, 그래야 침대와 여관에도 이유가 생긴다.
+     숙련이 높으면 가끔 하루에 두 단계까지 간다(레벨마다 7%). */
+  growCropsDaily() {
+    const w = this.world; if (!w || !w.crops || !w.crops.size) return;
+    const lv = this.player.profLv('farm');
+    let grew = 0, ripe = 0;
+    const steps = 1 + (this.rng.chance((lv - 1) * 0.07) ? 1 : 0);
+    for (let i = 0; i < steps; i++) {
+      const g = w.growCrops(this.rng, 1, 99);   // 아침에는 반드시 한 단계 (확률 굴림 없음)
+      grew += g.grew.length; ripe += g.ripe.length;
+    }
+    if (grew + ripe > 0 && this.everPlanted) {
+      this.toast(`밤새 밭이 자랐다 — ${grew + ripe}칸${ripe ? ` · ${ripe}칸은 다 여물었다` : ''}`, 'good');
+      // 화면 안에 밭이 있으면 티를 낸다
+      for (const k of w.crops) {
+        const x = k % WW, y = (k / WW) | 0;
+        if (Math.abs(x * TS - this.cam.x - this.W / 2) > this.W / 2 + TS) continue;
+        if (Math.abs(y * TS - this.cam.y - this.H / 2) > this.H / 2 + TS) continue;
+        const d = TILE_DEF[w.get(x, y)];
+        if (!d || !d.crop) continue;
+        for (let i = 0; i < 2; i++)
+          this.parts.push(new Part((x + .5) * TS, (y + .6) * TS, d.crop.ripe ? '#ffe08a' : '#8fc85a', -22, .5));
+      }
+    }
+  },
+
   /* ================= 농사 숙련 =================
      다 여문 칸을 거둘 때만 불린다. 여기서 씨앗을 돌려주고, 숙련이 붙여 주는 몫을
      얹고, 숙련 자체를 올린다. 예전 동작(씨앗 1~2개)이 1레벨의 모습 그대로다. */
@@ -913,6 +919,7 @@ const G = {
           for (let i = 0; i < 8; i++) this.parts.push(new Part((mtx + .5) * TS, (mty + .5) * TS, '#8fd06a', -40));
         } else {
           if (!w.plantSeed(mtx, mty, hi.id)) { this.toast('갈아 둔 밭 위에만 심을 수 있다', 'bad'); return; }
+          this.everPlanted = 1;   // 마을에 원래 있던 장식 밭 때문에 매일 알림이 뜨지 않게
         }
         hi.c--; if (hi.c <= 0) p.bag[p.sel] = null;
         UI.refreshBag(); this.sfx('place');
@@ -1072,19 +1079,45 @@ const G = {
 
     if (this.rng.chance(itemChance)) {
       // 1단계 통과 — 물고기 말고 다른 것. 흔한 몹 전리품(사실상 잡템)부터 장신구까지
+      /* ★ 빼지 않고 **더한다**. 잡템(젤·뼈)은 그대로 두되 — 그게 대부분이라 낚시가
+         "가끔 뭔가 나온다"로 느껴지는 밑바탕이다 — 그 위에 아주 가끔 걸리는 것을
+         얹었다. 낚싯대가 좋을수록, 미끼를 끼울수록, 입질을 직접 챌수록, 그리고
+         숙련이 높을수록 이쪽 칸이 굵어진다(아래 lucky).
+         숙련 10의 '물때를 안다'까지 가면 심해의 것이 실제로 올라온다. */
+      const lucky = (flv - 1) * 0.9 + fishBonus * 6;   // 0 ~ 대략 12
       const itemTable = [
         ['slime_gel', 30], ['bone_frag', 30],
         ['potion_hp', 14], ['potion_hp_greater', 6],
         ['potion_mp_greater', 6],
-        ['aether_shard', 8], ['ring_angler', 2]
+        ['aether_shard', 8], ['ring_angler', 2],
+        // --- 여기부터가 "특별한 것". 평소엔 거의 안 걸린다 ---
+        ['crystal', 2 + lucky * 0.5],
+        ['potion_str_greater', 1.5 + lucky * 0.4],
+        ['potion_iron_greater', 1.5 + lucky * 0.4],
+        ['mythril_bar', 0.8 + lucky * 0.35],
+        ['deep_alloy', 0.6 + lucky * 0.3],
+        ['gloom_pearl', 0.15 + lucky * 0.12],   // 무너진 갱의 것이 물길을 타고 왔다
+        ['void_lens', 0.10 + lucky * 0.08]      // 자오선의 눈이 남긴 것
       ];
       const catchId = this.rng.weighted(itemTable);
-      const n = catchId === 'aether_shard' ? this.rng.int(1, 2) : catchId === 'slime_gel' || catchId === 'bone_frag' ? this.rng.int(2, 5) : 1;
+      const n = catchId === 'aether_shard' ? this.rng.int(1, 2)
+        : catchId === 'slime_gel' || catchId === 'bone_frag' ? this.rng.int(2, 5)
+        : catchId === 'crystal' || catchId === 'deep_alloy' ? this.rng.int(1, 3) : 1;
       const it = isGear(makeItem(catchId)) ? rollGear(catchId, this.rng, 0) : makeItem(catchId, n);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-      this.toast(`뭔가 걸렸다 — ${itemName(it)}${n > 1 ? ' ×' + n : ''}`, 'good');
-      p.addProf('fish', 1);                    // 빈 바늘보다 건진 쪽이 더 는다
-      this.sfx('open'); UI.refreshBag();
+      const rare = ['gloom_pearl', 'void_lens', 'ring_angler', 'mythril_bar'].includes(catchId);
+      if (rare) {
+        // 이런 건 한 번 낚으면 기억에 남아야 한다
+        this.toast(`물속에서 무언가 딸려 올라왔다 — ${itemName(it)}`, 'good');
+        this.burst(p.cx, p.cy - 4, 'stargain', 52, 2.0);
+        this.ringFx(p.cx, p.cy, 60, '#7fc8e8', .5);
+        this.sfx('level');
+      } else {
+        this.toast(`뭔가 걸렸다 — ${itemName(it)}${n > 1 ? ' ×' + n : ''}`, 'good');
+        this.sfx('open');
+      }
+      p.addProf('fish', rare ? 3 : 1);          // 빈 바늘보다 건진 쪽이 더 는다
+      UI.refreshBag();
       return;
     }
 
@@ -2550,7 +2583,7 @@ const G = {
         seenRuins: this.seenRuins, seenBiomes: this.seenBiomes, ruinMarks: this.ruinMarks, ruinEvDone: this.ruinEvDone,
         deathMark: this.deathMark,
         villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
-        lairs: this.lairs, asmRan: this.asmRan,
+        lairs: this.lairs, asmRan: this.asmRan, everPlanted: this.everPlanted,
         vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties,
         p: {
           x: p.x, y: p.y, level: p.level, xp: p.xp, xpNext: p.xpNext, statPts: p.statPts, skillPts: p.skillPts,
@@ -2673,6 +2706,7 @@ const G = {
       this.ruinMarks = d.ruinMarks || {}; this.ruinEvDone = d.ruinEvDone || {};
       this.deathMark = d.deathMark || null;
       this.asmRan = d.asmRan || 0;
+      this.everPlanted = d.everPlanted || 0;
       this.mode = MODE_OF(d.mode).id;
       this.villageUnlocked = d.villageUnlocked || false; this.goldRate = d.goldRate || 1;
       this.dayCount = d.dayCount || 0; this.market = {}; this.trainedToday = 0;
