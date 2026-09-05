@@ -1,5 +1,5 @@
 /* assets/sprites-manifest.js — 자동 생성물. 손으로 고치지 마세요.
-   원본은 assets/manifest.json 이고, tools/sync-manifest.py 가 옮겨 적습니다.
+   원본은 assets/manifest.json 이고, tools/sync-manifest.mjs 가 옮겨 적습니다.
 
    file:// 에서는 fetch 가 막혀 매니페스트를 읽을 수 없습니다. 그래서 zip 을 풀어
    index.html 을 더블클릭했을 때도 그림이 붙도록 같은 내용을 여기에 한 벌 둡니다
