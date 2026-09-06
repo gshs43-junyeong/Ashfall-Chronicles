@@ -315,6 +315,8 @@ const G = {
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
     this.talked = {}; this.crafted = {}; this.paused = false;
+    /* 대화 — 상황 대사의 순번 · 장 이야기를 들은 기록 · 마을 단계를 들은 기록 */
+    this.talkSeq = {}; this.storyHeard = {}; this.villageSeen = {};
     this.sideActive = {}; this.sideDone = {}; this.tabletsRead = {}; this.termsRead = {}; this.loreRead = {};
     this.deathMark = null;
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
@@ -1598,43 +1600,155 @@ const G = {
     UI.refreshBag(); this.sfx('chapter');
   },
 
-  /* ================= NPC ================= */
+  /* ================= NPC =================
+
+     대사는 두 겹이다 (data.js 의 TALK 주석 참고).
+       ① 이야기 — 장별 대사(DIALOGUE) · 마을 단계 대사(VILLAGE_TALK)
+       ② 상황 한 줄 — 지금 눈에 보이는 것(죽은 자리 · 다친 몸 · 날씨 · 밤낮 …)
+
+     ①은 "처음 듣는 것"일 때만 나온다. 예전에는 한 장에 머무는 동안 몇 번을 말
+     걸어도 같은 세 줄을 그대로 다시 읽어야 했다. 이제 그 장의 이야기는 처음 한 번
+     들려주고, 그 뒤로는 ②만 바뀌면서 나온다(다시 듣고 싶으면 선택지가 있다). */
+
+  /** 지금 이 사람이 보고 있는 것 — 상황 판정에 쓰는 값들을 한 번에 모은다 */
+  talkCtx() {
+    const p = this.player, ch = CHAPTERS[this.chapter];
+    let complete = false, ready = false;
+    try {
+      const st = ch ? this.chapterState(ch) : null;
+      complete = !!(st && st.complete);
+      ready = !!(st && st.ready && !st.complete);   // 준비는 끝났고 마지막 하나만 남았다
+    } catch (e) { complete = ready = false; }
+    return {
+      ch: this.chapter,
+      session: this.chapter >= 9 ? 2 : 1,
+      hour: Math.floor(this.dayT / 60),
+      night: this.dayT < 5 * 60 || this.dayT > 19 * 60,
+      /* 날씨는 지금 발밑에서 작동 중이 아니어도 본다 — 사막에서 모래를 뒤집어쓰고
+         돌아오면 기술자가 그 모래를 알아보는 편이 사람답다. */
+      ev: this.event ? this.event.id : null,
+      hpr: p.d.maxHp > 0 ? p.hp / p.d.maxHp : 1,
+      gold: p.gold,
+      grave: !!this.deathMark,
+      complete, ready,
+      villageLv: this.villageLv()
+    };
+  },
+
+  /** 이 사람이 지금 상황에서 들고 있는 칸을 고른다. 없으면 아래 칸으로 내려간다. */
+  talkMood(id, c) {
+    const pool = TALK[id];
+    if (!pool) return null;
+    for (const m of TALK_MOODS) if (m.when(c) && pool[m.id]) return m.id;
+    return null;
+  },
+
+  /** 상황 한 줄과 그에 딸린 대답을 뽑는다.
+      같은 칸을 다시 만나면 다음 말로 넘어간다 — 무작위가 아니라 순번이라 반드시
+      다른 말이 나온다. 순번(talkSeq)은 저장에 남아서 불러와도 이어진다. */
+  talkPick(id) {
+    const mood = this.talkMood(id, this.talkCtx());
+    if (!mood) return null;
+    const b = TALK[id][mood], key = id + '|' + mood;
+    this.talkSeq = this.talkSeq || {};
+    const t = this.talkSeq[key] || 0;
+    this.talkSeq[key] = (t + 1) % 2520;    // 2520 = 1~10의 최소공배수 (칸 길이가 몇이든 균등)
+    return {
+      mood,
+      say: b.say[t % b.say.length],
+      re: (b.re && b.re.length) ? b.re[t % b.re.length] : null
+    };
+  },
+
+  /** 대화창 아래의 선택지 = [상황 대답] + 늘 있는 것들(rest).
+      대답을 고르면 대꾸를 보여 주고 rest 로 돌아온다 — 대답 한 번 했다고
+      가게나 의뢰가 사라지면 안 되니까. */
+  talkMenu(id, pick, rest) {
+    if (!(pick && pick.re)) return rest;
+    const re = pick.re;
+    return [{ t: re.t, say: 1, fn: () => { UI.closeDialogue(); this.talkAnswer(id, re, rest); } }].concat(rest);
+  },
+
+  talkAnswer(id, re, rest) {
+    const lines = Array.isArray(re.s) ? re.s.slice() : [re.s];
+    UI.openDialogue(id, lines, rest);
+    this.sfx('talk');
+  },
+
+  /** 사람마다 다른 기능 선택지 (가게·수련·여관·재련 …)
+      ★ 가게는 이름을 하나씩 적어 두는 게 아니라 NPCS 의 shop 을 그대로 본다.
+        예전에는 리카만 적혀 있어서, 케이드는 shop 목록(마개·도관·전지·회로 넷)을
+        들고 있는데도 열 방법이 없었다 — 그 넷은 어디서도 살 수 없었다. */
+  talkExtra(id) {
+    const cs = [];
+    if (NPCS[id].shop) cs.push({ t: '물건을 보여 달라', fn: () => { UI.closeDialogue(); UI.openShop(id); } });
+    if (id === 'trainer') {
+      cs.push({ t: `스탯 재분배 (🪙 ${fmt(this.respecCost())})`, fn: () => { UI.closeDialogue(); this.respecStats(); } });
+      cs.push({ t: `수련하기 (🪙 ${fmt(this.trainCost())}, 오늘 ${this.trainedToday}/5)`, fn: () => { UI.closeDialogue(); this.trainXp(); } });
+    } else if (id === 'haran') {
+      cs.push({ t: '방을 잡는다', fn: () => { UI.closeDialogue(); this.useInn(); } });
+    } else if (id === 'seira') {
+      cs.push({ t: '장비를 다시 벼려 달라', fn: () => { UI.closeDialogue(); UI.openReforge(); } });
+    }
+    return cs;
+  },
+
   talkTo(id) {
     this.talked = this.talked || {};
+    const first = !this.talked[id];
     this.talked[id] = true;
-    if (DAWN_NPCS.includes(id)) { this.talkVillager(id); return; }
-    const lines = DIALOGUE[id][Math.min(this.chapter, DIALOGUE[id].length - 1)];
-    const choices = [];
-    if (NPCS[id].shop) choices.push({ t: '물건을 보여 달라', fn: () => { UI.closeDialogue(); UI.openShop(id); } });
-    if (SIDE_POOL[id]) {
-      const label = this.sideActive[id] ? '의뢰에 대해 묻는다' : '부탁할 일이 있는지 묻는다';
-      choices.push({ t: label, quest: 1, fn: () => { UI.closeDialogue(); this.sideTalk(id); } });
-    }
-    choices.push({ t: '지금 무엇을 해야 하지?', quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
-    if (id === 'elara' && this.chapter === 0) choices.push({ t: '(여정을 시작한다)', quest: 1, fn: () => { UI.closeDialogue(); } });
-    UI.openDialogue(id, lines, choices);
+    if (DAWN_NPCS.includes(id)) { this.talkVillager(id, first); return; }
+
+    const story = DIALOGUE[id][Math.min(this.chapter, DIALOGUE[id].length - 1)];
+    this.storyHeard = this.storyHeard || {};
+    const fresh = this.storyHeard[id] !== this.chapter;   // 이 장의 이야기를 아직 안 들었다
+    this.storyHeard[id] = this.chapter;
+
+    /* 첫 대면에는 상황 한 줄을 붙이지 않는다 — 인사보다 먼저 날씨 얘기를 꺼내는
+       사람은 없다. 그 뒤로는 이야기 뒤에(또는 이야기 없이) 오늘이 붙는다.
+       (순번도 이때는 돌리지 않는다. 그래야 다음 대화에서 첫 말부터 들린다) */
+    const pick = (first && this.chapter === 0) ? null : this.talkPick(id);
+    const lines = fresh ? story.slice() : [];
+    if (pick) lines.push(pick.say);
+    if (!lines.length) lines.push(story[story.length - 1]);
+
+    const rest = [];
+    /* 이야기를 이미 들은 뒤에는 다시 듣는 길을 남겨 둔다 — 놓친 줄이 있을 수 있으니까 */
+    if (!fresh) rest.push({ t: '(전에 한 이야기를 다시 듣는다)', fn: () => {
+      UI.closeDialogue();
+      UI.openDialogue(id, story.slice(), rest);
+      this.sfx('talk');
+    } });
+    rest.push(...this.talkExtra(id));
+    if (SIDE_POOL[id]) rest.push({
+      t: this.sideActive[id] ? '의뢰에 대해 묻는다' : '부탁할 일이 있는지 묻는다',
+      quest: 1, fn: () => { UI.closeDialogue(); this.sideTalk(id); }
+    });
+    rest.push({ t: '지금 무엇을 해야 하지?', quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
+    if (id === 'elara' && this.chapter === 0) rest.push({ t: '(여정을 시작한다)', quest: 1, fn: () => { UI.closeDialogue(); } });
+    UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
     this.sfx('talk');
   },
 
   /* ---- 여명 마을 주민 (종장 이후에만 세계에 존재한다) ---- */
-  talkVillager(id) {
-    const d = NPCS[id], choices = [];
-    if (id === 'tamer') {
-      choices.push({ t: '물건을 보여 달라', fn: () => { UI.closeDialogue(); UI.openShop(id); } });
-    } else if (id === 'trainer') {
-      choices.push({ t: `스탯 재분배 (🪙 ${fmt(this.respecCost())})`, fn: () => { UI.closeDialogue(); this.respecStats(); } });
-      choices.push({ t: `수련하기 (🪙 ${fmt(this.trainCost())}, 오늘 ${this.trainedToday}/5)`, fn: () => { UI.closeDialogue(); this.trainXp(); } });
-    } else if (id === 'haran') {
-      choices.push({ t: '방을 잡는다', fn: () => { UI.closeDialogue(); this.useInn(); } });
-    } else if (id === 'seira') {
-      choices.push({ t: '장비를 다시 벼려 달라', fn: () => { UI.closeDialogue(); UI.openReforge(); } });
-    }
-    /* 마을이 어디까지 왔는지 주민이 한 마디씩 한다 — 단계마다 다르다.
-       고정 대사 뒤에 붙이므로 사람의 목소리는 그대로 남는다. */
-    const lines = [d.line];
-    const vt = VILLAGE_TALK[id];
-    if (vt && vt[this.villageLv()]) lines.push(vt[this.villageLv()]);
-    UI.openDialogue(id, lines, choices);
+  talkVillager(id, first) {
+    const d = NPCS[id];
+    /* 그 사람을 처음 만나는 자리에서만 서명 같은 한 줄을 듣는다. 예전에는 이 한 줄이
+       매번 맨 앞에 나와서, 열 번을 말 걸면 열 번 다 같은 말이었다. */
+    const pick = first ? null : this.talkPick(id);
+    const lines = [];
+    if (first) lines.push(d.line);
+    if (pick) lines.push(pick.say);
+    /* 마을이 한 단계 자랐으면 그 사실을 한 번 알려 준다 — 매번이 아니라 바뀐 그때. */
+    this.villageSeen = this.villageSeen || {};
+    const lv = this.villageLv(), vt = VILLAGE_TALK[id];
+    if (vt && vt[lv] && this.villageSeen[id] !== lv) { lines.push(vt[lv]); this.villageSeen[id] = lv; }
+    if (!lines.length) lines.push(d.line);
+    const rest = this.talkExtra(id);
+    /* 마을 주민에게도 길을 물을 수 있다. 세션 2는 대부분의 시간을 여기서 보내는데
+       예전에는 이 물음이 베이스캠프 넷에게만 있어서, 답을 들으러 캠프까지 걸어가야 했다. */
+    rest.push({ t: '지금 무엇을 해야 하지?', quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
+    UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
     this.sfx('talk');
   },
 
@@ -2780,6 +2894,7 @@ const G = {
         v: 1, name: p.name, savedAt: Date.now(), mode: this.mode, charId: p.charId,
         world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
         talked: this.talked, crafted: this.crafted,
+        talkSeq: this.talkSeq, storyHeard: this.storyHeard, villageSeen: this.villageSeen,
         sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
         seenRuins: this.seenRuins, seenBiomes: this.seenBiomes, ruinMarks: this.ruinMarks, ruinEvDone: this.ruinEvDone,
         deathMark: this.deathMark,
@@ -2899,6 +3014,7 @@ const G = {
       this.player = p;
       this.chapter = d.chapter; this.dayT = d.dayT;
       this.talked = d.talked || {}; this.crafted = d.crafted || {};
+      this.talkSeq = d.talkSeq || {}; this.storyHeard = d.storyHeard || {}; this.villageSeen = d.villageSeen || {};
       this.sideActive = d.sideActive || {}; this.sideDone = d.sideDone || {};
       this.tabletsRead = d.tabletsRead || {}; this.termsRead = d.termsRead || {}; this.loreRead = d.loreRead || {};
       this.seenRuins = d.seenRuins || {};

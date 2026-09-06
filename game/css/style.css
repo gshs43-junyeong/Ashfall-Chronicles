@@ -472,6 +472,10 @@ button{
 @keyframes dlgNextPulse{0%,100%{opacity:.45;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
 .dchoice{text-align:left;font-size:12.5px;padding:7px 12px;background:#15140e;border:1px solid #2b2818}
 .dchoice.quest{border-left:2px solid var(--gold)}
+/* 내가 하는 말 — 기능 버튼(가게·의뢰)과 한눈에 갈라 보이게 따옴표를 두르고 색을 낮춘다 */
+.dchoice.say{border-left:2px solid #6a6a8a;color:#cfcfe0;font-style:italic}
+.dchoice.say::before{content:'“'}
+.dchoice.say::after{content:'”'}
 
 /* ================= 연출 ================= */
 #chapter-card{position:absolute;left:0;right:0;top:26%;text-align:center;opacity:0;pointer-events:none;transition:opacity .8s}

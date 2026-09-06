@@ -1578,7 +1578,7 @@ const UI = {
     const cs = this.dlg.choices || [];
     for (const c of cs) {
       const b = document.createElement('button');
-      b.className = 'dchoice' + (c.quest ? ' quest' : '');
+      b.className = 'dchoice' + (c.quest ? ' quest' : '') + (c.say ? ' say' : '');
       b.textContent = c.t;
       b.addEventListener('click', ev => { ev.stopPropagation(); c.fn(); });
       box.appendChild(b);
