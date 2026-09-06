@@ -841,12 +841,12 @@ const UI = {
             for (const b of st.basics) {
               const must = (ch.require || []).includes(b.o.verb);
               h += `<div class="obj ${b.p.done ? 'ok' : ''}${must ? ' must' : ''}">` +
-                `${b.p.done ? '✔' : '◆'} ${b.o.t}${must ? ' <span class="objreq">필수</span>' : ''}` +
+                `${b.p.done ? '✔' : '◆'} ${must ? '<span class="objreq">필수</span> ' : ''}${b.o.t}` +
                 `<span class="obj-task">${b.o.task || ''} <b>${b.p.cur}/${b.p.max}</b></span></div>`;
             }
             if (st.goal) {
               const gp = st.goal.p, go = st.goal.o;
-              h += `<div class="obj-head">결착</div>`;
+              h += `<div class="obj-head">목표</div>`;
               h += `<div class="obj goal ${gp.done ? 'ok' : ''}${st.ready ? '' : ' locked'}">` +
                 `${gp.done ? '✔' : (st.ready ? '◆' : '🔒')} ${go.t}` +
                 `<span class="obj-task">${go.task || ''} <b>${gp.cur}/${gp.max}</b></span></div>`;
@@ -920,7 +920,7 @@ const UI = {
       const st = G.chapterState(ch);
       h += `<div style="color:#c9b07a;margin-bottom:4px">${ch.title}</div>`;
       if (st.ready) {
-        h += `<div class="qt-obj">${st.goal ? st.goal.o.t : '결착'}` +
+        h += `<div class="qt-obj">${st.goal ? st.goal.o.t : '목표'}` +
           (st.goal && st.goal.o.task ? `<span class="qt-task">${st.goal.o.task}</span>` : '') + '</div>';
       } else {
         /* ★ "준비 0/2" 한 줄만 두면, 무엇을 해서 채우라는 건지 화면에 없다.
@@ -929,16 +929,16 @@ const UI = {
            "이 중 N개만" 이라고 먼저 못을 박는다. 다 하라는 목록이 아니라
            메뉴판으로 읽히면 압박이 아니라 선택이 된다.
            끝낸 것은 지워서 남기고(고른 흔적), '필수' 표시는 그대로 둔다. */
-        const left = Math.max(0, st.need - st.done);
-        h += `<div class="qt-obj">준비 <b>${st.done}/${st.need}</b>` +
-          `<span class="qt-note"> · 아래에서 ${left}개만 더</span></div>`;
+        h += `<div class="qt-obj">준비 <b>${st.done}/${st.need}</b></div>`;
         h += '<div class="qt-list">';
         for (const b of st.basics) {
           const must = (ch.require || []).includes(b.o.verb);
           // HUD 는 좁으므로 이야기 한 줄만 두고, 과제와 숫자는 작게 뒤에 붙인다
+          /* '필수' 는 제목과 같은 줄에 붙인다 — 제목·필수·과제 셋이 각자 줄을 차지하면
+             한 항목이 세 줄이 되어 목록이 다시 길어진다. */
           h += `<div class="qt-pick${b.p.done ? ' done' : ''}${must ? ' must' : ''}">` +
-            `${b.p.done ? '✔' : '·'} ${b.o.t}` +
-            (must ? '<span class="qt-must">필수</span>' : '') +
+            `<span class="qt-line">${b.p.done ? '✔' : '·'} ` +
+            (must ? '<span class="qt-must">필수</span> ' : '') + `${b.o.t}</span>` +
             `<span class="qt-task">${b.o.task || ''} <b>${b.p.cur}/${b.p.max}</b></span></div>`;
         }
         h += '</div>';

@@ -1697,7 +1697,7 @@ const G = {
     const st = this.chapterState(ch);
     const session = this.chapter >= 9 ? '세션 2' : '세션 1';
     if (st.complete) this.toast('할 일은 모두 끝냈다.');
-    else if (st.ready) this.toast(`${session} · 목표 — ${st.goal ? st.goal.o.t : '결착'}`);
+    else if (st.ready) this.toast(`${session} · 목표 — ${st.goal ? st.goal.o.t : '이 장의 마지막'}`);
     else {
       // 아직 준비 중이면 고유 동사 쪽을 먼저 알려 준다 — 그게 이 장의 이야기다
       const pick = st.basics.find(b => !b.p.done && st.missing.includes(b.o.verb))
