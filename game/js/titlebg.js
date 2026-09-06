@@ -28,6 +28,19 @@ const TitleBG = {
   WALK: [2, 3, 4, 5],          // player.png 의 걷기 프레임 (idle1 idle2 walk1..4 …)
   FPS: 9,
 
+  /* 타이틀 화면이 **실제로 필요로 하는** 그림. game.js 가 이 넷이 다 올 때까지
+     로딩을 안 걷는다(waitForTitleArt). 여기 없는 그림은 타이틀에 안 쓰이므로
+     기다릴 이유가 없다 — 애셋 전부를 기다리면 첫 접속이 하염없이 길어진다. */
+  NEEDED: ['parallax_sky', 'parallax_village', 'parallax_forest', 'player'],
+
+  /** 필요한 그림 중 몇 장이 준비됐나 — 로딩 진행 표시와 대기 판정에 함께 쓴다 */
+  artReady() {
+    if (typeof Sprites === 'undefined' || !Sprites.img) return 0;
+    let n = 0;
+    for (const k of this.NEEDED) { const im = Sprites.img[k]; if (im && im.width) n++; }
+    return n;
+  },
+
   init() {
     this.cv = document.getElementById('title-bg');
     if (!this.cv) return;

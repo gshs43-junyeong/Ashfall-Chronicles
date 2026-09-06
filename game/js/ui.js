@@ -916,10 +916,23 @@ const UI = {
       if (st.ready) {
         h += `<div class="qt-obj">목표 — ${st.goal ? st.goal.o.t : '결착'}</div>`;
       } else {
-        const pick = st.basics.find(b => !b.p.done && st.missing.includes(b.o.verb))
-                  || st.basics.find(b => !b.p.done);
+        /* ★ "준비 0/2" 한 줄만 두면, 무엇을 해서 채우라는 건지 화면에 없다.
+           그렇다고 예전처럼 남은 것을 전부 쌓으면 할 일 목록이 되어 숙제가 된다.
+           갈림길은 **고를 수 있다는 것을 보여 주는 것**이다 — 아래에 후보를 펴되
+           "이 중 N개만" 이라고 먼저 못을 박는다. 다 하라는 목록이 아니라
+           메뉴판으로 읽히면 압박이 아니라 선택이 된다.
+           끝낸 것은 지워서 남기고(고른 흔적), '꼭' 표시는 그대로 둔다. */
+        const left = Math.max(0, st.need - st.done);
         h += `<div class="qt-obj">준비 <b>${st.done}/${st.need}</b>` +
-          (pick ? ` · ${pick.o.t} <b>${pick.p.cur}/${pick.p.max}</b>` : '') + '</div>';
+          `<span class="qt-note"> · 아래에서 ${left}개만 더</span></div>`;
+        h += '<div class="qt-list">';
+        for (const b of st.basics) {
+          const must = (ch.require || []).includes(b.o.verb);
+          h += `<div class="qt-pick${b.p.done ? ' done' : ''}${must ? ' must' : ''}">` +
+            `${b.p.done ? '✔' : '·'} ${b.o.t} <b>${b.p.cur}/${b.p.max}</b>` +
+            (must ? '<span class="qt-must">꼭</span>' : '') + '</div>';
+        }
+        h += '</div>';
       }
     }
     const activeSide = Object.values(G.sideActive).filter(Boolean);

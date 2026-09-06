@@ -448,9 +448,19 @@ class Player extends Ent {
       if (this.mp < cost) { G.toast('마나가 부족하다', 'bad'); this.atkTimer = 0.2; return; }
       this.mp -= cost;
       const n = d.multi || 1;
+      const pt = d.proj || 'bolt';
       for (let i = 0; i < n; i++) {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.07 : 0);
-        this.fireProj(d.proj || 'bolt', a, base, 'int');
+        this.fireProj(pt, a, base, 'int');
+      }
+      /* 지팡이 끝의 발화. 원소색으로 작게 한 번 — 쏘는 순간부터 무엇이 나가는지
+         보이게 한다. 예전에는 소리만 같고 그림은 아무것도 없어서, 지팡이를 바꿔도
+         손끝에서 달라지는 게 없었다. */
+      {
+        const st = PROJ_STYLE[pt] || PROJ_STYLE.bolt;
+        const mx2 = this.cx + Math.cos(ang) * 16, my2 = this.cy - 4 + Math.sin(ang) * 16;
+        G.ringFx(mx2, my2, 13, st.c, 0.18);
+        for (let i = 0; i < 5; i++) G.parts.push(new Part(mx2, my2, st.c, -10, 0.3));
       }
       G.sfx('magic');
     }
@@ -1778,7 +1788,32 @@ const PROJ_FX = {
   fire: 'flame',
   frost: 'frost',
   void: 'void', dark: 'void', soul: 'void',
-  wind: 'wind', rune: 'rune'
+  wind: 'wind', rune: 'rune',
+  /* bolt 는 여태 시트가 없어서 절차 생성 동그라미로만 날아갔다. 마법 지팡이 넷
+     (옹이진 나뭇가지 · 이끼의 홀 · 뇌운의 홀 · 수압 사출기)이 전부 bolt 라,
+     "마법은 다 똑같이 생겼다"의 가장 큰 몫이었다. 룬 시트를 물려 준다. */
+  bolt: 'rune'
+};
+
+/* 원소마다 맞는 순간이 달라야 한다.
+   ★ 예전에는 터지는 투사체가 아니면 **무엇이든** burst('hit') 하나였다. 불도 서리도
+     영혼도 공허도 맞는 순간이 글자 그대로 같은 그림이었다 — 지팡이를 바꿔도 손에
+     남는 것이 같았던 이유다. 시트는 셋(hit·fire·void)뿐이므로, 시트 위에 원소색
+     고리와 입자를 얹어 여섯 갈래로 갈랐다. 새 그림 없이 구분이 선다.
+       burst  어느 시트를 쓸지
+       ring   퍼지는 고리의 색과 크기 (없으면 안 그린다)
+       parts  튀는 입자 수 */
+const IMPACT_FX = {
+  fire:  { burst: 'fire', ring: '#ff8a3a', rr: 34, parts: 10 },
+  frost: { burst: 'hit',  ring: '#9fe0ff', rr: 30, parts: 12 },
+  soul:  { burst: 'void', ring: '#c49fff', rr: 26, parts: 8 },
+  void:  { burst: 'void', ring: '#a06fff', rr: 40, parts: 12 },
+  dark:  { burst: 'void', ring: '#9a5fd8', rr: 30, parts: 8 },
+  bolt:  { burst: 'hit',  ring: '#8fd8ff', rr: 22, parts: 9 },
+  rune:  { burst: 'hit',  ring: '#9fe8d8', rr: 26, parts: 8 },
+  wind:  { burst: 'hit',  ring: '#bcd8f0', rr: 32, parts: 6 },
+  star:  { burst: 'hit',  ring: '#ffe08a', rr: 24, parts: 8 }
+  // arrow · bone 은 물리라 고리를 안 그린다 — 예전 그대로 hit 하나
 };
 const PROJ_STYLE = {
   arrow: { c: '#d8c898', r: 3, len: 14 },
@@ -1826,14 +1861,21 @@ class Proj extends Ent {
   impact() {
     this.dead = true;
     const st = PROJ_STYLE[this.type] || PROJ_STYLE.bolt;
+    const fx = IMPACT_FX[this.type];
     for (let i = 0; i < 6; i++) G.parts.push(new Part(this.cx, this.cy, st.c));
     if (this.explode) {
       G.aoe(this.cx, this.cy, this.explode, this.dmg * 0.8, 4, st.c);
       for (let i = 0; i < 16; i++) G.parts.push(new Part(this.cx, this.cy, st.c, -20, 0.6));
-      G.burst(this.cx, this.cy, this.type === 'void' || this.type === 'dark' ? 'void' : 'fire', this.explode * 2.2);
+      G.burst(this.cx, this.cy, fx ? fx.burst : 'fire', this.explode * 2.2);
+      if (fx && fx.ring) G.ringFx(this.cx, this.cy, this.explode, fx.ring, 0.34);
       G.shake = Math.max(G.shake, 4);
     } else if (this.team === 'player' && this.hitSet.size) {
-      G.burst(this.cx, this.cy, 'hit', 36);
+      /* 원소마다 다른 흔적. 시트가 같아도 고리 색과 입자 수가 달라 손에 남는 것이 다르다 */
+      G.burst(this.cx, this.cy, fx ? fx.burst : 'hit', 36);
+      if (fx) {
+        G.ringFx(this.cx, this.cy, fx.rr, fx.ring, 0.26);
+        for (let i = 0; i < fx.parts; i++) G.parts.push(new Part(this.cx, this.cy, fx.ring, -14, 0.42));
+      }
     }
   }
 }
