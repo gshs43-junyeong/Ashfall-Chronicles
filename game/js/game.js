@@ -74,13 +74,18 @@ const G = {
         .finally(() => {
           // 위에서 예외가 났더라도 그림 자체는 다 받아 놓았을 수 있다. 한 번 더 붙여 본다
           if (typeof TitleBG !== 'undefined') TitleBG.useSprites();
-          this.bootDone();
+          /* ★ 여기서 bootDone() 을 부르지 않는다.
+             Sprites.ready() 는 "약속이 끝났다"일 뿐 "타이틀에 필요한 그림이 다 왔다"가
+             아니다(실패해도 finally 는 돈다). 예전에는 여기서 바로 열어 버려서,
+             배경 그림이 하나도 안 온 상태로 타이틀이 떴다 — 실제로 배경 PNG 를 막고
+             재 보니 2.1초 만에 능선 0겹으로 열렸다.
+             문을 여는 판단은 waitForTitleArt() 한 곳에만 둔다. 그림이 다 왔으면
+             다음 120ms 틱에서 바로 열리므로 늦어지지 않는다. */
         });
     } else {
       this.bootDone();
     }
-    // 애셋 하나가 영영 안 오더라도 로딩에 갇히지 않게 — 8초면 그냥 연다
-    setTimeout(() => this.bootDone(), 8000);
+    this.waitForTitleArt();
     this.bindInput();
     this.loadSettings();
     if (window.Music) Music.armStart(() => this.pickBgm());
@@ -101,6 +106,10 @@ const G = {
     });
     $('#btn-resume').onclick = () => this.setPause(false);
     $('#btn-save').onclick = () => this.saveGame();
+    /* 저장하기의 선택지 — 먼저 저장하고 그 결과를 파일로 내보낸다.
+       순서가 중요하다: exportSaves() 는 localStorage 를 읽으므로, 저장을 먼저 하지
+       않으면 방금 한 것이 빠진 파일이 나간다. */
+    $('#btn-save-export').onclick = () => { this.saveGame(); this.exportSaves(); };
     const openSettings = () => { UI.syncSettings(); $('#settings-screen').classList.add('open'); };
     $('#btn-settings-title').onclick = openSettings;
     $('#btn-settings-pause').onclick = openSettings;
@@ -211,6 +220,52 @@ const G = {
     el.classList.remove('fade'); el.classList.add('open');
   },
   hideLoading() { const el = $('#loading'); el.classList.remove('open', 'fade'); },
+
+  /* ================= 타이틀 그림을 다 받고 나서 연다 =================
+     "초기 접속 때 타이틀 배경이 안 뜬다"의 남은 절반이 여기였다.
+     예전에는 8초가 지나면 무조건 bootDone() 을 불렀고, index.html 의 안전장치는
+     6초에 로딩을 걷어 버렸다. 회선이 느리면 그림이 오기 전에 로딩이 걷히고,
+     타이틀은 하늘 그라데이션만 깔린 채로 뜬다. 시간을 재는 것이 아니라
+     **그림이 왔는지**를 봐야 한다.
+
+     그렇다고 무한정 기다릴 수는 없다(무한 로딩이 가장 나쁘다). 그래서 문을 셋 둔다:
+       ① 다 받았다            → 곧바로 연다
+       ② 6초 동안 한 장도 안 늘었다 → 더 기다려도 소용없다. 있는 것으로 연다
+       ③ 25초가 지났다          → 무슨 일이 있어도 연다
+     ②가 핵심이다. 계속 받아지고 있으면 25초까지 기다려 주고, 멈췄으면 6초 만에
+     포기한다 — 느린 회선은 끝까지 기다리고, 끊긴 회선은 오래 안 붙잡는다.
+     기다리는 동안 몇 장 받았는지를 로딩 글에 적어, 멈춘 것처럼 보이지 않게 한다. */
+  waitForTitleArt() {
+    const NEED = (typeof TitleBG !== 'undefined') ? TitleBG.NEEDED.length : 0;
+    if (!NEED) { setTimeout(() => this.bootDone(), 8000); return; }
+    const t0 = Date.now();
+    let best = -1, seenBest = -1, bestAt = t0;
+    const STALL = 10000, CAP = 25000;
+    const tick = () => {
+      if (this.booted) return;
+      const got = TitleBG.artReady();
+      /* "멈췄다"의 판정은 타이틀 그림 넷만 보면 너무 성급하다 — 느린 회선에서는 큰
+         그림 한 장을 받는 동안 넷 중 하나도 안 늘어난다. 그림이 **아무거나** 하나라도
+         새로 붙으면 회선은 살아 있는 것이므로 그것도 진행으로 친다.
+         (220KB/s 로 재 보니 넷만 보면 1/4 에서 포기했다) */
+      const seen = (typeof Sprites !== 'undefined' && Sprites.img) ? Object.keys(Sprites.img).length : 0;
+      if (got !== best || seen !== seenBest) {
+        best = got; seenBest = seen; bestAt = Date.now();
+        TitleBG.useSprites();
+      }
+      /* 진행 상황을 index.html 안전장치에도 알려 준다 — 받는 중이면 걷지 말라고 */
+      window.__acDeadline = bestAt + STALL;
+      if (got >= NEED) { TitleBG.useSprites(); this.bootDone(); return; }
+      const now = Date.now();
+      if (now - bestAt > STALL || now - t0 > CAP) {
+        console.warn(`[부팅] 타이틀 그림 ${got}/${NEED} 에서 더 안 온다 — 그대로 연다`);
+        this.bootDone(); return;
+      }
+      this.showLoading(`불러오는 중… ${got}/${NEED}`);
+      setTimeout(tick, 120);
+    };
+    tick();
+  },
 
   /** 애셋이 다 붙었다 — 로딩을 걷고 타이틀을 연다 (한 번만) */
   bootDone() {
