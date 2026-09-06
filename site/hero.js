@@ -19,6 +19,25 @@
    * '../' 로 두면 주소가 /home 이든 /home/ 이든 똑같이 사이트 루트로 풀린다. */
   var BASE = '../play/assets/';
 
+  /* ★★ 그림 주소에 판 번호를 붙인다 — 이게 없어서 사이트 사람이 영영 안 바뀌었다.
+   *
+   * 히어로가 쓰는 그림은 전부 /play/assets/ 아래에 있고, vercel.json 은 그 경로를
+   *   public, max-age=31536000, immutable
+   * 로 내보낸다. **1년짜리 immutable** 이다. 게임(/play)은 sprites.js 가 제 script
+   * 태그의 ?v= 를 물려받아 그림 주소마다 붙이기 때문에 배포할 때마다 주소가 바뀌어
+   * 새로 받는다. 그런데 hero.js 에는 그 장치가 없어서 늘 같은 주소를 불렀다.
+   *
+   * 결과: 방문자가 처음 열어 본 순간의 player.png 가 그 브라우저에 1년 동안 박힌다.
+   * 그림을 몇 번을 고쳐 배포해도 사이트 히어로에는 **영원히 닿지 않는다.**
+   * "게임 쪽 수정은 반영되는데 사이트 사람 잘림만 그대로"의 정체가 이것이다 —
+   * 도메인도 캐시 설정도 아니고, 판 번호를 안 붙인 주소 한 줄이었다.
+   *
+   * 고치는 법은 sprites.js 와 똑같다: 제 script 태그(../hero.js?v=<빌드>)의
+   * 물음표 뒤를 그대로 물려받아 그림에도 붙인다. 빌드가 ?v= 를 찍어 주므로
+   * 여기 손댈 것은 앞으로 없다. */
+  var VER = (document.currentScript && document.currentScript.src.split('?')[1]) || '';
+  function assetUrl(src) { return BASE + src + (VER ? '?' + VER : ''); }
+
   /* 뒤에서 앞으로. speed 는 스크롤 배속, y 는 바닥에서 띄울 높이(논리 픽셀). */
   var LAYERS = [
     { file: 'bg/parallax_sky.png',     speed: 10,  y: 6,  alpha: 0.55 },
@@ -51,7 +70,7 @@ var PLAYER = { file: 'char/player.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps
         images[src] = img.naturalWidth ? img : null;
         if (--left === 0) done();
       };
-      img.src = BASE + src;
+      img.src = assetUrl(src);
     });
   }
 
