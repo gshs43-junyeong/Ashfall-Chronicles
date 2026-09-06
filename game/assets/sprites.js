@@ -58,30 +58,46 @@ const Sprites = {
        spritesOn 이 켜지지 않았다(그림이 있는데도 절차 생성으로 그렸다).
        여백 보정은 발끝이 몇 px 뜨느냐는 곁다리라, 못 재면 0으로 두고 넘어간다. */
     this.footInset = {};
+    this.sideInset = {};   // 시트별 그림의 가로 치우침(게임픽셀)
     for (const k in { ...this.meta.characters.sheets, ...this.meta.bosses.sheets }) {
       const m = this.meta.characters.sheets[k] || this.meta.bosses.sheets[k];
       const im = this.img[k];
       if (!im || !im.width) continue;
-      try { this.footInset[k] = this._measureFootPad(im, m); }
-      catch (e) { this.footInset[k] = 0; this.tainted = 1; }
+      try {
+        const pad = this._measurePad(im, m);
+        this.footInset[k] = pad.foot; this.sideInset[k] = pad.side;
+      } catch (e) { this.footInset[k] = 0; this.sideInset[k] = 0; this.tainted = 1; }
     }
     return this;
   },
 
-  /** 시트 프레임 0의 알파 채널을 스캔해, 그림 맨 아래 불투명 줄이 프레임 바닥에서
-      몇 게임픽셀 위에 있는지(여백)를 잰다. */
-  _measureFootPad(im, m) {
+  /** 시트 프레임 0의 알파 채널을 한 번 훑어 두 가지를 잰다.
+      footPad — 그림 맨 아래 불투명 줄이 프레임 바닥에서 몇 게임픽셀 위에 있나(발 여백)
+      sidePad — 그림의 가로 중심이 프레임 가로 중심에서 몇 게임픽셀 치우쳐 있나
+
+      ★ sidePad 를 새로 잰다. 프레임을 판정 박스 가운데에 맞추는 것만으로는 부족하다 —
+        그림 자체가 프레임 안에서 치우쳐 있으면(리벳 사수는 오른쪽으로 2.5px) 프레임을
+        가운데 놓아도 그림은 옆으로 밀린다. 프레임이 아니라 **그림**을 가운데 맞춘다. */
+  _measurePad(im, m) {
     const S = this.scale, fw = m.frameW * S, fh = m.frameH * S;
     const cv = document.createElement('canvas'); cv.width = fw; cv.height = fh;
     const ctx = cv.getContext('2d');
     ctx.drawImage(im, 0, 0, fw, fh, 0, 0, fw, fh);
     const data = ctx.getImageData(0, 0, fw, fh).data;
-    for (let y = fh - 1; y >= 0; y--) {
+    let bottom = -1, left = fw, right = -1;
+    for (let y = 0; y < fh; y++) {
       for (let x = 0; x < fw; x++) {
-        if (data[(y * fw + x) * 4 + 3] > 10) return m.frameH - (y / S) - 1;
+        if (data[(y * fw + x) * 4 + 3] <= 10) continue;
+        if (y > bottom) bottom = y;
+        if (x < left) left = x;
+        if (x > right) right = x;
       }
     }
-    return 0;
+    if (bottom < 0) return { foot: 0, side: 0 };
+    return {
+      foot: m.frameH - (bottom / S) - 1,
+      side: ((left + right + 1) / 2 - fw / 2) / S
+    };
   },
 
   /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다.
