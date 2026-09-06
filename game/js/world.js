@@ -2001,14 +2001,32 @@ class World {
       여섯 면을 다시 암호석으로 채운다. 안쪽(상자가 있는 칸)은 건드리지 않는다. */
   sealCipherVaults() {
     for (const v of this.ruinVaults || []) {
+      if (v[5]) continue;                       // 열린 골방은 다시 안 봉한다
       const [x0, y0, x1, y1, bg] = v;
       for (let y = y0; y <= y1; y++)
         for (let x = x0; x <= x1; x++) {
-          if (y !== y0 && y !== y1 && x !== x0 && x !== x1) continue;
+          // 안쪽 빈칸(상자가 있는 칸)만 빼고 두 겹 껍질을 통째로 다시 세운다
+          if (y > y0 + 1 && y < y1 - 1 && x > x0 + 1 && x < x1 - 1) continue;
           this.set(x, y, T.CIPHERSTONE);
           this.setWall(x, y, bg);
         }
     }
+  }
+
+  /** 이 칸이 **아직 잠긴** 암호 골방 안인가 (블록 설치 금지 판정용).
+      골방 문이 열리면 opened 가 서고, 그때부터는 여느 방과 같아진다. */
+  inLockedVault(x, y) {
+    for (const v of this.ruinVaults || []) {
+      if (v[5]) continue;                       // 이미 열린 골방
+      if (x >= v[0] && x <= v[2] && y >= v[1] && y <= v[3]) return true;
+    }
+    return false;
+  }
+
+  /** 그 자리의 골방을 열린 것으로 표시한다 (문을 연 뒤 다시 봉하지 않게) */
+  openVaultAt(dx, dy) {
+    for (const v of this.ruinVaults || [])
+      if (dx >= v[0] - 1 && dx <= v[2] + 1 && dy >= v[1] && dy <= v[3]) v[5] = 1;
   }
 
   /** 자물쇠가 걸린 돌 — 암호석·봉인석. 어떤 굴착·함정도 이 자리를 갈아엎지 않는다.
@@ -2052,13 +2070,57 @@ class World {
       **실제로 놓았으면 true.** 화살 구멍·톱니 같은 것은 벽이 있어야 박히는데,
       갓 파낸 통로처럼 사방이 빈 자리에서는 아무것도 안 놓고 조용히 지나갔다 —
       그래서 "함정이 하나는 있다"고 믿었던 입구 통로에 함정이 없는 방이 생겼다. */
+  /* ================= 함정을 놓을 "길목" 고르기 =================
+     예전에는 방 안 아무 x 나 골랐다(rng.int(2, r.w-4)). 그래서 함정이 대개 벽 옆
+     구석에 서 있었고, 방을 가로질러 걸어도 한 번도 안 밟히는 일이 흔했다 —
+     개수는 충분한데 **닿지가 않아서** 쉬웠던 것이다.
+
+     자리를 셋으로 나눠 고른다. 셋 다 "지나가려면 반드시 여기를 밟는다"는 자리다.
+       ① 상자 앞 (45%)  이 방에 상자가 있으면 그 앞 ±2칸. 보물은 공짜가 아니어야 한다
+       ② 한가운데 (35%) 방 폭의 가운데 3분의 1. 좌우 어느 문으로 들어와도 건넌다
+       ③ 문턱 (20%)     좌우 끝에서 2~4칸. 들어서자마자 발이 닿는 자리
+     막힌 자리(이미 함정·잠긴 돌)는 피해서 가까운 빈 칸으로 물러선다. */
+  trapSpot(r, fy, rng) {
+    const lo = r.x + 2, hi = r.x + r.w - 3;
+    if (hi <= lo) return lo;
+    let x;
+    const roll = rng.chance(0.45) ? 0 : (rng.chance(0.64) ? 1 : 2);
+    if (roll === 0) {
+      // 이 방 안에 있는 상자를 찾는다 (바닥 줄 근처의 것만)
+      const near = [];
+      for (const o of this.objects) {
+        if (o.type !== 'chest') continue;
+        const ox = Math.floor((o.x + o.w / 2) / TS), oy = Math.floor(o.y / TS);
+        if (ox >= lo && ox <= hi && Math.abs(oy - fy) <= 2) near.push(ox);
+      }
+      x = near.length ? near[rng.int(0, near.length - 1)] + rng.int(-2, 2) : -1;
+    }
+    if (x === undefined || x < 0) {
+      if (roll === 2) {
+        const d = rng.int(2, 4);
+        x = rng.chance(0.5) ? lo + d : hi - d;
+      } else {
+        const third = Math.max(1, Math.floor(r.w / 3));
+        x = r.x + third + rng.int(0, third - 1);
+      }
+    }
+    x = clamp(x, lo, hi);
+    // 이미 뭔가 박혀 있거나 잠긴 자리면 옆으로 물러선다
+    for (let k = 0; k < 6; k++) {
+      const tx = clamp(x + (k % 2 ? k : -k), lo, hi);
+      if (!this.locked(tx, fy) && !this.locked(tx, fy + 1)) return tx;
+    }
+    return x;
+  }
+
   putTileTrap(r, fy, kind, rng) {
     if (kind === 'coil') {
       /* 방전 코일 — 마주 보는 두 개를 같은 줄에 세워야 아크가 흐른다.
          양쪽 벽에 하나씩 박으면 방을 가로지르는 전기 띠가 된다. */
-      const ty = fy - rng.int(0, 1);
+      const ty = fy - rng.int(1, 2);          // 아크가 몸을 지나가는 높이
       const gap = Math.min(r.w - 3, rng.int(4, 9));
-      const sx = r.x + 1 + rng.int(0, Math.max(0, r.w - gap - 3));
+      // 아크 띠의 가운데가 길목에 오도록 — 예전엔 왼쪽 어딘가에 몰려 섰다
+      const sx = clamp(this.trapSpot(r, fy, rng) - (gap >> 1), r.x + 1, r.x + r.w - gap - 2);
       if (this.get(sx, ty) !== T.AIR || this.get(sx + gap, ty) !== T.AIR) {
         this.set(sx, ty, T.SPARKCOIL); this.set(sx + gap, ty, T.SPARKCOIL);
       } else {                                   // 허공이면 바닥에 박아 세운다
@@ -2067,7 +2129,7 @@ class World {
       return true;
     }
     if (kind === 'gas') {
-      const vx = r.x + rng.int(2, Math.max(2, r.w - 4));
+      const vx = this.trapSpot(r, fy, rng);
       if (this.get(vx, fy + 1) === T.AIR) return false;
       this.set(vx, fy + 1, T.GASVENT);
       return true;
@@ -2076,21 +2138,24 @@ class World {
       // 벽에 박는다 — 벽에 붙어 걷는 길을 끊는 함정이라 벽이어야 의미가 있다
       const left = rng.chance(0.5);
       const tx = left ? r.x : r.x + r.w - 1;
-      const ty = fy - rng.int(0, 1);
+      const ty = fy - rng.int(1, 2);          // 벽에 붙어 걷는 높이
       if (this.get(tx, ty) === T.AIR) return false;
       this.set(tx, ty, T.GRINDER);
       return true;
     }
     if (kind === 'dart') {
-      // 벽에 구멍을 뚫는다. 방 안쪽을 향해야 하므로 왼쪽 벽이면 오른쪽으로 쏜다
+      /* 벽에 구멍을 뚫는다. 방 안쪽을 향해야 하므로 왼쪽 벽이면 오른쪽으로 쏜다.
+         ★ 높이를 걷는 몸에 맞춘다 — 예전엔 fy-0~1 을 굴려서 절반이 발목 높이로
+           나갔고, 그건 점프 한 번이면 그냥 지나쳐진다. 이제 fy-1~2(가슴 높이)라
+           서서 걸으면 반드시 맞는다. */
       const left = rng.chance(0.5);
       const tx = left ? r.x : r.x + r.w - 1;
-      const ty = fy - rng.int(0, 1);
+      const ty = fy - rng.int(1, 2);
       if (this.get(tx, ty) === T.AIR) return false;
       this.set(tx, ty, left ? T.DART_R : T.DART_L);
       return true;
     } else if (kind === 'vent') {
-      const vx = r.x + rng.int(2, Math.max(2, r.w - 4));
+      const vx = this.trapSpot(r, fy, rng);
       if (this.get(vx, fy + 1) === T.AIR) return false;
       this.set(vx, fy + 1, T.FLAMEVENT);
       return true;
@@ -2102,8 +2167,8 @@ class World {
          빈 자리가 마땅치 않으면 **두 칸짜리 구덩이를 같이 판다.** 그래야 예전과
          같은 밀도를 유지하면서도 밟으면 실제로 떨어진다. 깊이를 두 칸으로 묶은 것은
          점프(세 칸)로 반드시 다시 올라올 수 있게 하기 위해서다. */
-      const cx0 = r.x + rng.int(2, Math.max(2, r.w - 6));
-      const n = rng.int(2, 4);
+      const cx0 = clamp(this.trapSpot(r, fy, rng) - 1, r.x + 2, Math.max(r.x + 2, r.x + r.w - 6));
+      const n = rng.int(3, 5);   // 예전 2~4 — 두 칸짜리는 걷다가 그냥 건너뛰어졌다
       const hollow = x => TILE_DEF[this.get(x, fy + 2)].solid !== 1 && !this.locked(x, fy + 1);
       // 이미 밑이 빈 자리를 먼저 찾는다 (방 바닥이 갱도나 다른 방 위를 지날 때가 있다)
       let sx = -1;
@@ -2454,17 +2519,24 @@ class World {
            그만이었다. 이제 여섯 면이 다 캘 수 없는 돌이라 문으로만 들어간다.
            암호석은 유적 벽돌과 비슷한 색이라 구조 안에서 겉돌지 않는다. */
       const dx0 = x1 - 6;
-      for (let y = fy - 5; y <= fy + 1; y++)
-        for (let x = dx0; x <= x1 + 1; x++) {
-          const edge = (y === fy - 5 || y === fy + 1 || x === dx0 || x === x1 + 1);
-          this.set(x, y, edge ? T.CIPHERSTONE : T.AIR);
+      /* ★ 껍질을 **두 겹**으로 두른다(위·아래·좌·우 다).
+         한 겹이면 바깥에서 바로 옆까지 파고 들어와 벽에 붙어 설 수 있었고, 그러면
+         상자와의 거리가 상호작용 사거리(7칸) 안에 들어와 **벽 너머로 상자만 열고**
+         갈 수 있었다. 두 겹이면 바깥 면에 붙어도 상자까지 닿지 않는다.
+         (상자 쪽에도 자물쇠를 따로 걸었다 — game.js interact 참고. 둘 다 있어야
+          "문으로만 들어간다"가 성립한다.) */
+      for (let y = fy - 6; y <= fy + 2; y++)
+        for (let x = dx0 - 1; x <= x1 + 2; x++) {
+          const inner = (y > fy - 5 && y < fy + 1 && x > dx0 && x < x1 + 1);
+          this.set(x, y, inner ? T.AIR : T.CIPHERSTONE);
           this.setWall(x, y, spec.bg);
         }
       this.objects.push({ type: 'codedoor', ruin: spec.id, dx: dx0, dy: fy,
         x: dx0 * TS, y: (fy - 3) * TS, w: TS, h: TS * 4 });
       // 껍질 자리를 적어 둔다 — 세계를 다 만든 뒤 한 번 더 세워 확실히 잠근다
-      (this.ruinVaults = this.ruinVaults || []).push([dx0, fy - 5, x1 + 1, fy + 1, spec.bg]);
-      this.objects.push({ type: 'chest', tier: clamp(spec.tier + 2, 1, 6), locked: 1,
+      (this.ruinVaults = this.ruinVaults || []).push([dx0 - 1, fy - 6, x1 + 2, fy + 2, spec.bg]);
+      // codeRuin 이 있으면 그 유적의 암호문이 열리기 전까지 상자가 안 열린다
+      this.objects.push({ type: 'chest', tier: clamp(spec.tier + 2, 1, 6), locked: 1, codeRuin: spec.id,
         x: (x1 - 2) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
     } else if (sig === 'shaft') {
       // 무너진 갱도 — 바닥 절반이 부서지는 바닥이고 아래는 비어 있다
