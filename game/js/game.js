@@ -438,6 +438,7 @@ const G = {
     p.update(dt, w, this.input);
     this.updateFishing(dt);
     if (this.starMerge > 0) this.starMerge = Math.max(0, this.starMerge - dt);
+    if (this.starGain) { this.starGain.t += dt; if (this.starGain.t >= this.starGain.dur) this.starGain = null; }
     this.tickStarRise(dt);
     /* 11장의 결착은 "세우고 · 물리고 · 끊기"다. 가운데 걸음(동력이 돈 적이 있다)은
        지나가면 사라지므로 여기서 한 번 적어 둔다. 그 장에서만 본다. */
@@ -2458,8 +2459,17 @@ const G = {
      두 마디로 나눈다. 먼저 다섯이 머리 위 한 점으로 모이고(GATHER),
      그다음 위로 가속하며 꼬리를 끌고 화면 밖으로 나간다(RISE).
      끝나면 조각은 곁에 없고(starOrbits = 0) 희미한 잔상만 남는다(starFade). */
-  STAR_GATHER: 1.1,
-  STAR_RISE: 2.4,
+  /* ★ 별의 세 사건은 **천천히** 지나가야 한다.
+     예전 값(생성 0.4초 · 합성 2.4초 · 상승 1.1+2.4초)은 눈으로 따라가기 전에 끝났다.
+     세션 1 전체를 통틀어 다섯 번밖에 없는 장면인데 순식간에 스쳐 지나갔다.
+       생성 STAR_GAIN  3초 — 조각 하나가 궤도에 내려앉는다
+       합성 STAR_MERGE 5초 — 다섯이 한 점으로 모였다 다시 퍼진다 (5장)
+       상승 STAR_RISE  5초 — 모여서(1/3) 하늘로 빠져나간다(2/3) (8장) */
+  STAR_GAIN: 3.0,
+  STAR_MERGE: 5.0,
+  STAR_RISE_ALL: 5.0,
+  get STAR_GATHER() { return this.STAR_RISE_ALL / 3; },   // 모이는 마디
+  get STAR_RISE() { return this.STAR_RISE_ALL * 2 / 3; }, // 올라가는 마디
   startStarRise() {
     this.starRise = { t: 0, dur: this.STAR_GATHER + this.STAR_RISE, x: 0, y: 0 };
     this.sfx('learn');
@@ -2498,25 +2508,28 @@ const G = {
       p.starOrbits = Math.min(5, (p.starOrbits || 0) + 1);
       /* 조각이 맺히는 것을 보여 준 다음에 말로 알린다 — 순서가 반대면 글자가 먼저 뜨고
          그림이 뒤따라서 둘이 따로 논다. 장 완료 토스트와도 겹치지 않게 한 박자 둔다. */
+      /* 생성 3초 — 조각이 멀리서 내려와 궤도에 앉기까지. 폭죽 한 번으로 끝내지 않고
+         내려앉는 동안 계속 반짝이도록 starGain 을 켜 둔다(그리는 쪽에서 쓴다). */
+      this.starGain = { t: 0, dur: this.STAR_GAIN };
       setTimeout(() => {
-        /* 몸 가운데가 아니라 **조각이 내려앉는 궤도 자리**에서 터진다.
-           가운데에 크게 띄웠더니 플레이어가 통째로 가려져서, 조각이 하나 붙었다기보다
-           플레이어가 터진 것처럼 보였다. 자리와 크기 둘 다 낮췄다. */
         const q = this.player;
-        this.burst(q.cx + 30, q.cy - 8, 'stargain', 46, 2.2);
+        this.burst(q.cx + 30, q.cy - 8, 'stargain', 46, this.STAR_GAIN * 0.8);
         this.sfx('learn');
       }, 700);
-      setTimeout(() => this.toast(`별 조각이 하나 더 곁에 남았다 — ${p.starOrbits}/5`, 'good'), 1100);
+      setTimeout(() => this.toast(`별 조각이 하나 더 곁에 남았다 — ${p.starOrbits}/5`, 'good'),
+                 this.STAR_GAIN * 1000 - 600);
       if (id === 5) {
         // 다섯이 한 점으로 모였다가 다시 퍼진다. 5장 outro 와 같은 사건이다
-        p.starLit = 1; this.starMerge = 2.4;
+        p.starLit = 1;
         setTimeout(() => {
-          this.burst(this.player.cx, this.player.cy - 4, 'starmerge', 176, 3.2);
+          this.starMerge = this.STAR_MERGE;
+          this.burst(this.player.cx, this.player.cy - 4, 'starmerge', 176, this.STAR_MERGE * 0.9);
           this.shake = 10; this.sfx('level');
-        }, 1500);
-        return 4200;                     // 합쳐지는 것을 다 보고 나서 뒷이야기로
+        }, this.STAR_GAIN * 1000);
+        // 생성이 끝난 뒤 합성이 시작되고, 그것도 다 보고 나서 뒷이야기로
+        return (this.STAR_GAIN + this.STAR_MERGE) * 1000 + 900;
       }
-      return 2200;                       // 조각이 맺히고 한 줄 뜰 때까지
+      return this.STAR_GAIN * 1000 + 500;   // 조각이 맺히고 한 줄 뜰 때까지
     } else if (id === 8) {
       /* 세션 1 의 끝 — 조각이 곁을 떠나 하늘로 돌아간다.
          예전에는 starFade = 1 한 줄뿐이라 조각이 소리 없이 옅어져 있었다. */
@@ -4038,7 +4051,7 @@ const G = {
     const t = this.time;
     const cx = p.cx - camX, cy = p.cy - camY - 4;
     // 5장을 끝내면 다섯이 한 점으로 모였다가 다시 퍼진다 — 5장 outro 와 같은 사건이다
-    const mg = this.starMerge > 0 ? Math.min(1, this.starMerge / 2.4) : 0;
+    const mg = this.starMerge > 0 ? Math.min(1, this.starMerge / this.STAR_MERGE) : 0;
     /* 8장 — 하늘로 돌아간다. 두 마디다:
          모임(0~1.1초)  궤도 반지름이 0 으로 줄고 머리 위 한 점으로 붙는다
          상승(1.1~3.5초) 가속하며 위로 빠져나간다(k²). 올라갈수록 작아지고 옅어진다
@@ -4069,7 +4082,15 @@ const G = {
     if (!spr) c.globalCompositeOperation = 'lighter';
     for (let i = 0; i < n; i++) {
       const a = t * 0.7 + i * TAU / Math.max(n, 1);
-      const x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
+      let x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
+      /* 방금 얻은 조각(마지막 하나)은 3초에 걸쳐 위에서 내려와 궤도에 앉는다.
+         예전에는 폭죽 한 번 터지고 곧바로 제자리에 있었다 — 얻는 장면이 없었다. */
+      if (this.starGain && i === n - 1) {
+        const gk = Math.min(1, this.starGain.t / this.starGain.dur);
+        const ease = 1 - Math.pow(1 - gk, 3);        // 빨리 내려와 천천히 앉는다
+        y -= (1 - ease) * 240;
+        x += (1 - ease) * 40;
+      }
       // 뒤로 돌 때는 옅게 — 그래야 도는 것으로 보인다. 다 모인 뒤에는 앞뒤가 없다
       const back = (riseK > 0.9 || Math.sin(a) >= 0) ? 1 : 0.45;
       const r = (2.6 + mg * 2.2 + riseK * 1.6) * (0.85 + 0.15 * Math.sin(t * 3 + i));

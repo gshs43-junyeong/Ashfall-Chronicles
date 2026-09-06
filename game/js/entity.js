@@ -1804,16 +1804,18 @@ const PROJ_FX = {
        ring   퍼지는 고리의 색과 크기 (없으면 안 그린다)
        parts  튀는 입자 수 */
 const IMPACT_FX = {
-  fire:  { burst: 'fire', ring: '#ff8a3a', rr: 34, parts: 10 },
-  frost: { burst: 'hit',  ring: '#9fe0ff', rr: 30, parts: 12 },
-  soul:  { burst: 'void', ring: '#c49fff', rr: 26, parts: 8 },
-  void:  { burst: 'void', ring: '#a06fff', rr: 40, parts: 12 },
-  dark:  { burst: 'void', ring: '#9a5fd8', rr: 30, parts: 8 },
-  bolt:  { burst: 'hit',  ring: '#8fd8ff', rr: 22, parts: 9 },
-  rune:  { burst: 'hit',  ring: '#9fe8d8', rr: 26, parts: 8 },
-  wind:  { burst: 'hit',  ring: '#bcd8f0', rr: 32, parts: 6 },
-  star:  { burst: 'hit',  ring: '#ffe08a', rr: 24, parts: 8 }
-  // arrow · bone 은 물리라 고리를 안 그린다 — 예전 그대로 hit 하나
+  fire:  { burst: 'fire',   ring: '#ff8a3a', rr: 34, parts: 10 },
+  frost: { burst: 'frost',  ring: '#9fe0ff', rr: 30, parts: 12 },
+  soul:  { burst: 'soul',   ring: '#c49fff', rr: 26, parts: 8 },
+  void:  { burst: 'void',   ring: '#a06fff', rr: 40, parts: 12 },
+  dark:  { burst: 'void',   ring: '#9a5fd8', rr: 30, parts: 8 },
+  bolt:  { burst: 'arcane', ring: '#8fd8ff', rr: 22, parts: 9 },
+  rune:  { burst: 'arcane', ring: '#9fe8d8', rr: 26, parts: 8 },
+  wind:  { burst: 'arcane', ring: '#bcd8f0', rr: 32, parts: 6 },
+  star:  { burst: 'hit',    ring: '#ffe08a', rr: 24, parts: 8 }
+  /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다.
+     마법 셋(arcane · frost · soul)은 tools/mkhitfx.py 로 새로 구웠다 —
+     hit_impact 는 살점이 튀는 유기적인 금빛이라 서리 지팡이에 맞아도 금빛이 튀었다. */
 };
 const PROJ_STYLE = {
   arrow: { c: '#d8c898', r: 3, len: 14 },
