@@ -2654,7 +2654,7 @@ const CHAPTERS = [
       { type: 'kill', target: 'icewolf', n: 8, t: '무리로 온다', task: '얼음 늑대 8마리', verb: 'kill' },
       { type: 'explore', zone: 'ice', t: '왕좌가 있다는 곳까지', task: '서리 지대 심부 도달', verb: 'explore' }
     ],
-    needBasics: 2,
+    needBasics: 3,
     require: ['gather'],
     goal: { type: 'boss', target: 'frost_witch', t: '조각을 재우지 않은 사람과 마주 선다', task: '실비아 토벌', verb: 'boss' },
     rw: { xp: 6000, gold: 3200, items: [['boots_mythril', 1], ['potion_hp', 6]] },
@@ -2697,7 +2697,7 @@ const CHAPTERS = [
       { type: 'kill', target: 'sky_sentry', n: 8, t: '누가 세워 둔 파수꾼인가', task: '하늘 파수꾼 8기', verb: 'kill' },
       { type: 'collect', item: 'aether_shard', n: 15, t: '하늘에서만 굳는 것', task: '에테르 파편 15개', verb: 'gather' }
     ],
-    needBasics: 2,
+    needBasics: 3,
     require: ['depth'],
     goal: { type: 'boss', target: 'storm_warden', t: '폭풍이 지키고 있던 것', task: '폭풍의 수호자 토벌', verb: 'boss' },
     rw: { xp: 30000, gold: 16000, items: [['charm_feather', 1], ['potion_hp_greater', 3]] },
@@ -2821,7 +2821,7 @@ const CHAPTERS = [
       { type: 'collect', item: 'steel_plate', n: 30, t: '골조부터 세운다', task: '강철판 30개', verb: 'gather' },
       { type: 'kill', target: 'riveter', n: 8, t: '늘어난 것이 마을까지 왔다', task: '대갈못 사수 8기', verb: 'kill' }
     ],
-    needBasics: 2,
+    needBasics: 3,
     require: ['craft'],
     goal: { type: 'place', mach: 'assembler', stop: 1, t: '스스로 도는 것을 손으로 끊어 본다', task: '조립기 설치 · 동력 · 정지', verb: 'place' },
     rw: { xp: 750000, gold: 250000, items: [['battery_cell', 12], ['motor', 6]] },
@@ -2877,7 +2877,7 @@ const CHAPTERS = [
       { type: 'kill', target: 'coreling', n: 12, t: '떨어져 나온 것도 멈추지 않는다', task: '노심 파편체 12기', verb: 'kill' },
       { type: 'kill', target: 'weldarm', n: 8, t: '고치던 팔이 붙잡는다', task: '용접 팔 8기', verb: 'kill' }
     ],
-    needBasics: 2,
+    needBasics: 3,
     require: ['craft'],
     goal: { type: 'boss', target: 'hepha', t: '멈추면 아무도 남지 않는다', task: '헤파 토벌', verb: 'boss' },
     rw: { xp: 2000000, gold: 800000, items: [['hepha_heart', 1], ['stop_core', 1]] },
