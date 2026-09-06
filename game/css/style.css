@@ -108,7 +108,7 @@ button{
 .qt-pick.done{color:#5f7a52;text-decoration:line-through}
 .qt-pick.done b{color:#5f7a52}
 .qt-pick.must{color:#c9b07a}
-.qt-must{color:#c06a4a;font-size:9.5px;margin-left:4px}
+.qt-must{color:#c06a4a;font-size:9.5px;margin-left:4px;white-space:nowrap}
 /* 과제는 부제다 — 이야기 한 줄 아래 작게. 눈이 먼저 가는 것은 이야기 쪽이어야 한다 */
 .qt-task{display:block;color:#7f7869;font-size:10px;line-height:1.4;padding-left:10px}
 .qt-task b{color:#a09884;font-weight:600}
@@ -350,7 +350,7 @@ button{
 .chap .obj-head b{color:var(--gold);font-weight:600;letter-spacing:0}
 .chap .obj-head em{color:#c08a5a;font-style:normal;letter-spacing:0}
 .chap .obj .objreq{font-size:9.5px;color:#c08a5a;border:1px solid #4a3826;
-  border-radius:2px;padding:0 4px;margin-left:3px;vertical-align:1px}
+  border-radius:2px;padding:0 4px;margin-left:3px;vertical-align:1px;white-space:nowrap}
 .chap .obj.must{color:#d6cfb8}
 .chap .obj.goal{color:var(--gold)}
 .chap .obj.goal.locked{color:#6a6656}

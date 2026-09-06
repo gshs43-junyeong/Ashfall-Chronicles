@@ -841,7 +841,7 @@ const UI = {
             for (const b of st.basics) {
               const must = (ch.require || []).includes(b.o.verb);
               h += `<div class="obj ${b.p.done ? 'ok' : ''}${must ? ' must' : ''}">` +
-                `${b.p.done ? '✔' : '◆'} ${b.o.t}${must ? ' <span class="objreq">꼭</span>' : ''}` +
+                `${b.p.done ? '✔' : '◆'} ${b.o.t}${must ? ' <span class="objreq">필수</span>' : ''}` +
                 `<span class="obj-task">${b.o.task || ''} <b>${b.p.cur}/${b.p.max}</b></span></div>`;
             }
             if (st.goal) {
@@ -928,7 +928,7 @@ const UI = {
            갈림길은 **고를 수 있다는 것을 보여 주는 것**이다 — 아래에 후보를 펴되
            "이 중 N개만" 이라고 먼저 못을 박는다. 다 하라는 목록이 아니라
            메뉴판으로 읽히면 압박이 아니라 선택이 된다.
-           끝낸 것은 지워서 남기고(고른 흔적), '꼭' 표시는 그대로 둔다. */
+           끝낸 것은 지워서 남기고(고른 흔적), '필수' 표시는 그대로 둔다. */
         const left = Math.max(0, st.need - st.done);
         h += `<div class="qt-obj">준비 <b>${st.done}/${st.need}</b>` +
           `<span class="qt-note"> · 아래에서 ${left}개만 더</span></div>`;
@@ -938,7 +938,7 @@ const UI = {
           // HUD 는 좁으므로 이야기 한 줄만 두고, 과제와 숫자는 작게 뒤에 붙인다
           h += `<div class="qt-pick${b.p.done ? ' done' : ''}${must ? ' must' : ''}">` +
             `${b.p.done ? '✔' : '·'} ${b.o.t}` +
-            (must ? '<span class="qt-must">꼭</span>' : '') +
+            (must ? '<span class="qt-must">필수</span>' : '') +
             `<span class="qt-task">${b.o.task || ''} <b>${b.p.cur}/${b.p.max}</b></span></div>`;
         }
         h += '</div>';
