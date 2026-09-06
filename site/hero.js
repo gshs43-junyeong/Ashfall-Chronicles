@@ -161,33 +161,6 @@ var PLAYER = { file: 'char/player.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps
     ctx.fillRect(0, -H, W, H * 2);
   }
 
-  /* 사람 자리의 안개 주머니.
-   *
-   * 앞쪽 숲(parallax_forest)은 끊임없이 흘러가는 그림이라, 마른 나무 기둥이 주기적으로
-   * 사람의 머리 위를 정확히 지나간다. 기둥의 아랫동아리는 사람에게 가려지고 머리 위
-   * 부분만 남기 때문에, 나무로 안 읽히고 **머리에서 솟은 검은 덩어리**로 보인다.
-   * 나무를 지우면(그 자리만 오려내면) 능선이 뚝 끊겨 더 어색하다.
-   *
-   * 그래서 지우는 대신 **뒤로 물린다.** 사람 자리에만 하늘색 안개를 옅게 깔아,
-   * 그 뒤에 오는 것은 무엇이든 멀어져 보이게 한다. 게임 안에서 바이옴 공기색이 하는
-   * 일과 같은 것이고, 재가 내리는 장면이라 안개가 끼는 편이 오히려 자연스럽다.
-   * 사람은 이 다음에 그리므로 사람 자신은 흐려지지 않는다. */
-  function drawHaze() {
-    var cx = W * PLAYER_X + PLAYER.fw / 2;
-    var cy = GROUND - 118;                 // 머리(GROUND-160)와 허리 사이
-    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 132);
-    /* 그 높이의 하늘색(#24191a~#3a2620 사이)을 그대로 쓴다 — 새 색을 얹으면
-     * 동그란 얼룩으로 보인다. 같은 색이라 "옅어진다"로만 읽힌다. */
-    g.addColorStop(0, 'rgba(46,31,29,.82)');
-    g.addColorStop(0.5, 'rgba(46,31,29,.52)');
-    g.addColorStop(1, 'rgba(46,31,29,0)');
-    ctx.save();
-    ctx.translate(cx, cy); ctx.scale(0.86, 1); ctx.translate(-cx, -cy);
-    ctx.fillStyle = g;
-    ctx.fillRect(cx - 160, cy - 150, 320, 300);
-    ctx.restore();
-  }
-
   /* 아래쪽을 페이지 배경으로 녹인다.
    * 캔버스 바닥은 논리 y=H 이므로 그 아래까지 덮어야 한다 — GROUND+60 에서 끊으면
    * 맨 밑에 하늘 그라데이션 끝색이 띠로 남는다. */
@@ -215,7 +188,6 @@ var PLAYER = { file: 'char/player.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps
      * 앞서 두 번은 페이드의 **위치**를 옮겨서 고치려 했는데(-90 -> -16), 위치를
      * 아무리 내려도 발끝보다 위에 있는 한 같은 일이 난다. 위치가 아니라 순서 문제다.
      * 땅이 페이지 색으로 녹고, 그 위에 사람이 선다 — 그게 실제 순서이기도 하다. */
-    drawHaze();      // 사람 뒤의 나무를 안개로 물린다 (사람보다 먼저)
     drawFade();
     drawPlayer(t);
     drawAsh(t, dt);
