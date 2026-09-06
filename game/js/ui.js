@@ -833,17 +833,23 @@ const UI = {
             const st = g.chapterState(ch);
             h += `<div class="obj-head">준비 <b>${st.done}/${st.need}</b>` +
               (st.missing.length ? ' · <em>이 장의 일이 남았다</em>' : '') + '</div>';
+            /* ★ 제목은 이야기, 부제는 과제.
+               예전에는 "무덤지기 10마리 처치"가 곧 제목이라, 여정의 기록을 펼쳐도
+               읽히는 것이 숙제 목록이었다. 이제 제목은 그 장의 이야기에서 온 한 줄
+               (o.t)이고, 실제로 무엇을 몇 개 해야 하는지는 그 아래 작은 줄(o.task)에
+               둔다. 진행 숫자도 부제 쪽에 붙여 한 덩어리로 읽히게 했다. */
             for (const b of st.basics) {
               const must = (ch.require || []).includes(b.o.verb);
               h += `<div class="obj ${b.p.done ? 'ok' : ''}${must ? ' must' : ''}">` +
-                `${b.p.done ? '✔' : '◆'} ${b.o.t}${must ? ' <span class="objreq">꼭</span>' : ''} ` +
-                `<b>${b.p.cur}/${b.p.max}</b></div>`;
+                `${b.p.done ? '✔' : '◆'} ${b.o.t}${must ? ' <span class="objreq">꼭</span>' : ''}` +
+                `<span class="obj-task">${b.o.task || ''} <b>${b.p.cur}/${b.p.max}</b></span></div>`;
             }
             if (st.goal) {
-              const gp = st.goal.p;
+              const gp = st.goal.p, go = st.goal.o;
               h += `<div class="obj-head">결착</div>`;
               h += `<div class="obj goal ${gp.done ? 'ok' : ''}${st.ready ? '' : ' locked'}">` +
-                `${gp.done ? '✔' : (st.ready ? '◆' : '🔒')} ${st.goal.o.t} <b>${gp.cur}/${gp.max}</b></div>`;
+                `${gp.done ? '✔' : (st.ready ? '◆' : '🔒')} ${go.t}` +
+                `<span class="obj-task">${go.task || ''} <b>${gp.cur}/${gp.max}</b></span></div>`;
             }
           }
         } else h += `<div class="cdesc">???</div>`;
@@ -914,7 +920,8 @@ const UI = {
       const st = G.chapterState(ch);
       h += `<div style="color:#c9b07a;margin-bottom:4px">${ch.title}</div>`;
       if (st.ready) {
-        h += `<div class="qt-obj">목표 — ${st.goal ? st.goal.o.t : '결착'}</div>`;
+        h += `<div class="qt-obj">${st.goal ? st.goal.o.t : '결착'}` +
+          (st.goal && st.goal.o.task ? `<span class="qt-task">${st.goal.o.task}</span>` : '') + '</div>';
       } else {
         /* ★ "준비 0/2" 한 줄만 두면, 무엇을 해서 채우라는 건지 화면에 없다.
            그렇다고 예전처럼 남은 것을 전부 쌓으면 할 일 목록이 되어 숙제가 된다.
@@ -928,9 +935,11 @@ const UI = {
         h += '<div class="qt-list">';
         for (const b of st.basics) {
           const must = (ch.require || []).includes(b.o.verb);
+          // HUD 는 좁으므로 이야기 한 줄만 두고, 과제와 숫자는 작게 뒤에 붙인다
           h += `<div class="qt-pick${b.p.done ? ' done' : ''}${must ? ' must' : ''}">` +
-            `${b.p.done ? '✔' : '·'} ${b.o.t} <b>${b.p.cur}/${b.p.max}</b>` +
-            (must ? '<span class="qt-must">꼭</span>' : '') + '</div>';
+            `${b.p.done ? '✔' : '·'} ${b.o.t}` +
+            (must ? '<span class="qt-must">꼭</span>' : '') +
+            `<span class="qt-task">${b.o.task || ''} <b>${b.p.cur}/${b.p.max}</b></span></div>`;
         }
         h += '</div>';
       }

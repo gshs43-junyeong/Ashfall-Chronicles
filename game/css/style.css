@@ -109,6 +109,15 @@ button{
 .qt-pick.done b{color:#5f7a52}
 .qt-pick.must{color:#c9b07a}
 .qt-must{color:#c06a4a;font-size:9.5px;margin-left:4px}
+/* 과제는 부제다 — 이야기 한 줄 아래 작게. 눈이 먼저 가는 것은 이야기 쪽이어야 한다 */
+.qt-task{display:block;color:#7f7869;font-size:10px;line-height:1.4;padding-left:10px}
+.qt-task b{color:#a09884;font-weight:600}
+/* 여정의 기록 — 목표 한 줄 아래 붙는 과제 줄 */
+.obj-task{display:block;color:#8a8272;font-size:10.5px;line-height:1.5;margin-top:2px;padding-left:14px}
+.obj-task b{color:#c9c2ae;font-weight:600}
+.obj.ok .obj-task{color:#5f7a52}
+.obj.ok .obj-task b{color:#5f7a52}
+.qt-obj .qt-task{padding-left:0}
 
 #hotbar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;display:flex;gap:5px;pointer-events:auto}
 #skillbar{position:absolute;left:50%;transform:translateX(-50%);bottom:82px;display:flex;gap:7px}
