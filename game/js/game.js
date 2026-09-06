@@ -1021,6 +1021,9 @@ const G = {
       if (w.get(tx, ty) !== T.AIR) return;
       const near = w.get(tx - 1, ty) || w.get(tx + 1, ty) || w.get(tx, ty - 1) || w.get(tx, ty + 1) || w.wall(tx, ty);
       if (!near) return;
+      /* 잠긴 골방 안에는 아무것도 못 놓는다 — 안에 발판을 놓아 밖에서 타고 넘거나,
+         문틀 옆에 블록을 끼워 판정을 흔드는 길을 막는다. 암호를 풀면 풀린다. */
+      if (w.inLockedVault(tx, ty)) { this.toast('잠긴 골방 안에는 놓을 수 없다', 'bad'); return; }
       const tileId = idef(held).tile;
       if (TILE_DEF[tileId].solid === 1 && aabb({ x: tx * TS, y: ty * TS, w: TS, h: TS }, p.rect())) return;
       w.set(tx, ty, tileId);
@@ -1265,6 +1268,15 @@ const G = {
   },
   interact(o) {
     if (o.type === 'chest') {
+      /* ★ 암호 골방의 상자는 그 유적의 암호문이 풀린 뒤에만 열린다.
+         상호작용은 사거리(7칸)만 보고 시야는 안 보므로, 골방 바깥 벽에 붙어 서서
+         **벽 너머로 상자만 열고** 갈 수 있었다. 껍질을 두 겹으로 늘려 거리로도
+         막았지만(world.js), 그것만 믿으면 지형이 조금만 달라져도 다시 뚫린다.
+         자물쇠는 상자 자신이 들고 있어야 확실하다. */
+      if (o.codeRuin && !this.ruinCodeDone(o.codeRuin)) {
+        this.toast('상자에 손이 닿지 않는다 — 골방 문을 먼저 열어야 한다', 'bad');
+        return;
+      }
       if (!o.items) {
         const tx = Math.floor(o.x / TS), ty = Math.floor(o.y / TS);
         const source = o.loot || this.world.chestLootProfile(tx, ty);
@@ -4289,6 +4301,13 @@ const G = {
       예전에는 브라우저 prompt() 를 띄웠다. 창 밖에 뜨는 데다 그동안 게임이 통째로
       얼어붙어서, 유적 한복판에서 갑자기 브라우저 대화상자를 마주하는 꼴이었다.
       이제 게임 안 창(#code-screen)으로 받는다. */
+  /** 그 유적의 암호 골방 문이 열렸는가 — 골방 상자의 자물쇠가 이 값을 본다 */
+  ruinCodeDone(ruinId) {
+    for (const o of (this.world.objects || []))
+      if (o.type === 'codedoor' && o.ruin === ruinId) return !!o.opened;
+    return true;          // 문이 아예 없으면 잠글 것도 없다
+  },
+
   openCodeDoor(o) {
     if (o.opened) { this.toast('이미 열려 있다'); return; }
     const el = $('#code-screen'), inp = $('#code-input'), msg = $('#code-msg');
@@ -4336,6 +4355,7 @@ const G = {
     msg.classList.add('ok');
     msg.textContent = '맞물리는 소리가 났다';
     o.opened = true;
+    if (w.openVaultAt) w.openVaultAt(o.dx, o.dy);   // 다시 봉하지 않게 표시
     for (let y = o.dy - 4; y <= o.dy; y++) w.set(o.dx, y, T.AIR);
     for (let i = 0; i < 30; i++)
       this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#ffe08a', -30, 1.1));
