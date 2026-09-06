@@ -438,6 +438,7 @@ const G = {
     p.update(dt, w, this.input);
     this.updateFishing(dt);
     if (this.starMerge > 0) this.starMerge = Math.max(0, this.starMerge - dt);
+    this.tickStarRise(dt);
     /* 11장의 결착은 "세우고 · 물리고 · 끊기"다. 가운데 걸음(동력이 돈 적이 있다)은
        지나가면 사라지므로 여기서 한 번 적어 둔다. 그 장에서만 본다. */
     if (this.chapter === 11 && !this.asmRan && this.world && this.world.machines
@@ -2386,7 +2387,10 @@ const G = {
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
     }
     this.toast(`『${ch.title}』 완료 — 경험치 ${fmt(ch.rw.xp)} · 금화 ${fmt(ch.rw.gold)}`, 'good');
-    this.gainStarOrbit(ch.id);
+    /* 별 연출이 얼마나 걸리는지 되받는다. 아래 delay 를 이 값보다 짧게 두면
+       조각이 맺히거나 하늘로 오르는 것이 **뒷이야기 창 뒤에서** 벌어진다 —
+       실제로 5장에서 그랬다(합쳐지는 연출 1.5초, 창 열림 1.4초). */
+    const starShow = this.gainStarOrbit(ch.id) || 0;
     this.chapter++;
     UI.refreshBag();
 
@@ -2394,17 +2398,22 @@ const G = {
        예전에는 마지막 챕터 조건으로 걸어 두었는데, 세션 2 챕터가 붙으면서 조건이 영영
        참이 되지 않았다 — 마을이 안 열리고, 9장의 「케이드와 대화」가 불가능해져
        거기서 진행이 막혀 있었다. */
-    let delay = 1400;
+    /* 순서는 하나뿐이다 — 별 → 마을 → 뒷이야기 → 다음 장.
+       셋이 겹치면 무엇 하나도 제대로 안 읽힌다. 그래서 뒤엣것의 시작을
+       앞엣것이 끝나는 시각에서 잡는다(고정 숫자를 쓰지 않는다). */
+    let delay = Math.max(1400, starShow);
     if (ch.id === 8 && !this.villageUnlocked) {
       this.villageUnlocked = true;
       this.world.restoreDawnCity();
       this.rollBounties();
+      // 별이 하늘로 다 올라간 다음에 마을이 드러난다
+      const villageAt = starShow + 600;
       setTimeout(() => {
         UI.chapterCard({ sub: '', title: '여명 마을', line: '잿빛이 걷혔다' });
         this.toast('동쪽 숲에 묻혀 있던 도시가 드러났다.', 'good');
         setTimeout(() => this.toast('베이스캠프의 귀환 비석으로 여명 마을에 갈 수 있다.', 'good'), 2400);
-      }, 1400);
-      delay = 6000;                          // 마을 연출이 끝난 뒤에 다음 장 카드
+      }, villageAt);
+      delay = villageAt + 4600;              // 마을 연출이 끝난 뒤에 뒷이야기
     }
     // 다음 장을 지금 붙잡아 둔다 — setTimeout 안에서 this.chapter를 다시 읽으면,
     // 두 장이 잇달아 완료될 때 이미 넘어간 값을 읽어 엉뚱한 카드가 뜨거나 터진다
@@ -2441,6 +2450,48 @@ const G = {
   /** 세션 1 의 진행 표시. 1~5장은 한 장에 조각 하나, 5장에서 다섯이 모이고,
       추적자(8장)를 넘기면 희미해진다. 매 장 같은 폭죽을 터뜨리지 않는다 —
       늘어나는 것은 별 하나와 짧은 한 줄뿐이다. */
+  /* ================= 별이 하늘로 돌아간다 (세션 1 종장) =================
+     8장을 끝내면 다섯 조각이 곁을 떠난다. 예전에는 starFade = 1 한 줄이 전부라,
+     조각이 그냥 **옅어져 있었다** — 언제 왜 사라졌는지 화면에 아무 사건이 없었다.
+     세션 1 이 닫히고 세션 2 가 열리는 자리인데, 그 이음매가 비어 있던 셈이다.
+
+     두 마디로 나눈다. 먼저 다섯이 머리 위 한 점으로 모이고(GATHER),
+     그다음 위로 가속하며 꼬리를 끌고 화면 밖으로 나간다(RISE).
+     끝나면 조각은 곁에 없고(starOrbits = 0) 희미한 잔상만 남는다(starFade). */
+  STAR_GATHER: 1.1,
+  STAR_RISE: 2.4,
+  startStarRise() {
+    this.starRise = { t: 0, dur: this.STAR_GATHER + this.STAR_RISE, x: 0, y: 0 };
+    this.sfx('learn');
+  },
+  /** 남은 시간(초). 연출이 끝나면 상태를 정리한다 */
+  tickStarRise(dt) {
+    const s = this.starRise; if (!s) return;
+    s.t += dt;
+    const p = this.player;
+    if (s.t < this.STAR_GATHER) {
+      // 모이는 동안 반짝임이 조금씩 붙는다
+      if (Math.random() < dt * 14)
+        this.parts.push(new Part(p.cx + (Math.random() - .5) * 70, p.cy - 10 + (Math.random() - .5) * 40, '#ffe08a', -30, .6));
+      return;
+    }
+    if (!s.popped) {                       // 한 점으로 모인 순간
+      s.popped = 1;
+      this.burst(p.cx, p.cy - 14, 'starmerge', 120, 2.6);
+      this.ringFx(p.cx, p.cy - 14, 66, '#ffe8a8', .5);
+      this.sfx('level');
+    }
+    // 올라가는 동안 지나간 자리에 잔불을 남긴다
+    const k = (s.t - this.STAR_GATHER) / this.STAR_RISE;
+    const y = p.cy - 14 - k * k * 900;
+    if (Math.random() < dt * 30)
+      this.parts.push(new Part(p.cx + (Math.random() - .5) * 22, y + Math.random() * 40, '#ffe08a', 40, .7));
+    if (s.t >= s.dur) {
+      this.starRise = null;
+      p.starOrbits = 0; p.starLit = 0; p.starFade = 1;
+    }
+  },
+
   gainStarOrbit(id) {
     const p = this.player;
     if (id >= 1 && id <= 5) {
@@ -2463,12 +2514,18 @@ const G = {
           this.burst(this.player.cx, this.player.cy - 4, 'starmerge', 176, 3.2);
           this.shake = 10; this.sfx('level');
         }, 1500);
+        return 4200;                     // 합쳐지는 것을 다 보고 나서 뒷이야기로
       }
+      return 2200;                       // 조각이 맺히고 한 줄 뜰 때까지
     } else if (id === 8) {
-      /* 추적자를 넘긴 뒤로는 아주 희미해진다. 여기서부터는 별을 모으는 이야기가
-         아니라서, 같은 것이 계속 돌면 주제가 안 바뀐다. */
-      p.starFade = 1; p.starLit = 0;
+      /* 세션 1 의 끝 — 조각이 곁을 떠나 하늘로 돌아간다.
+         예전에는 starFade = 1 한 줄뿐이라 조각이 소리 없이 옅어져 있었다. */
+      setTimeout(() => this.startStarRise(), 700);
+      setTimeout(() => this.toast('다섯 조각이 곁을 떠나 하늘로 돌아갔다', 'good'),
+                 700 + (this.STAR_GATHER + this.STAR_RISE) * 1000 + 200);
+      return 700 + (this.STAR_GATHER + this.STAR_RISE) * 1000 + 1200;
     }
+    return 0;
   },
 
   onLevelUp(lv) {
@@ -3982,7 +4039,25 @@ const G = {
     const cx = p.cx - camX, cy = p.cy - camY - 4;
     // 5장을 끝내면 다섯이 한 점으로 모였다가 다시 퍼진다 — 5장 outro 와 같은 사건이다
     const mg = this.starMerge > 0 ? Math.min(1, this.starMerge / 2.4) : 0;
-    const rx = (30 + Math.sin(t * 0.7) * 1.5) * (1 - mg * 0.92);
+    /* 8장 — 하늘로 돌아간다. 두 마디다:
+         모임(0~1.1초)  궤도 반지름이 0 으로 줄고 머리 위 한 점으로 붙는다
+         상승(1.1~3.5초) 가속하며 위로 빠져나간다(k²). 올라갈수록 작아지고 옅어진다
+       궤도 계산은 아래 for 문 하나뿐이라, 여기서 반지름·중심·크기만 손보면
+       그림이 있든 없든(spr 분기) 양쪽 다 저절로 따라온다. */
+    let riseY = 0, riseK = 0, riseFade = 1;
+    if (this.starRise) {
+      const s = this.starRise;
+      if (s.t < this.STAR_GATHER) {
+        riseK = s.t / this.STAR_GATHER;            // 0 → 1 로 모인다
+      } else {
+        riseK = 1;
+        const k = (s.t - this.STAR_GATHER) / this.STAR_RISE;
+        riseY = -k * k * 900;                      // 가속하며 위로
+        riseFade = Math.max(0, 1 - k * k * 1.15);
+      }
+    }
+    const gather = Math.max(mg * 0.92, riseK);
+    const rx = (30 + Math.sin(t * 0.7) * 1.5) * (1 - gather);
     const ry = rx * 0.42;
     const lit = p.starLit ? 1 : 0;
     const base = p.starFade ? 0.18 : (0.5 + lit * 0.25);
@@ -3994,11 +4069,12 @@ const G = {
     if (!spr) c.globalCompositeOperation = 'lighter';
     for (let i = 0; i < n; i++) {
       const a = t * 0.7 + i * TAU / Math.max(n, 1);
-      const x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry;
-      // 뒤로 돌 때는 옅게 — 그래야 도는 것으로 보인다
-      const back = Math.sin(a) < 0 ? 0.45 : 1;
-      const r = (2.6 + mg * 2.2) * (0.85 + 0.15 * Math.sin(t * 3 + i));
-      c.globalAlpha = base * back * (0.7 + 0.3 * Math.sin(t * 2.4 + i * 1.7)) + mg * 0.35;
+      const x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
+      // 뒤로 돌 때는 옅게 — 그래야 도는 것으로 보인다. 다 모인 뒤에는 앞뒤가 없다
+      const back = (riseK > 0.9 || Math.sin(a) >= 0) ? 1 : 0.45;
+      const r = (2.6 + mg * 2.2 + riseK * 1.6) * (0.85 + 0.15 * Math.sin(t * 3 + i));
+      c.globalAlpha = (base * back * (0.7 + 0.3 * Math.sin(t * 2.4 + i * 1.7))
+                       + mg * 0.35 + riseK * 0.4) * riseFade;
       if (spr) {
         // 조각마다 반짝이는 박자를 어긋나게 둔다 — 다섯이 한꺼번에 깜빡이면 기계 같다
         const fr = Math.floor(t * 6 + i * 1.7) % 4;
