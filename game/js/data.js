@@ -1573,12 +1573,12 @@ const ENEMIES = {
                 drops: [['raw_meat', 1, 1, 1]] },
   jungle_frog: { n: '정글 개구리', hp: 9, dmg: 0, def: 0, spd: 90, ai: 'critter', w: 14, h: 12, c: '#5ab04a', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
-  glow_snail:  { n: '빛달팽이', hp: 12, dmg: 0, def: 0, spd: 24, ai: 'critter', w: 16, h: 12, c: '#7fe0c8', xp: 2, gold: 0, passive: 1,
+  glow_snail:  { n: '빛달팽이', hp: 12, dmg: 0, def: 0, spd: 24, ai: 'critter', w: 22, h: 14, c: '#7fe0c8', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1], ['glowcap', .15, 1, 1]] },
   ash_vole:    { n: '잿들쥐', hp: 9, dmg: 0, def: 0, spd: 85, ai: 'critter', w: 14, h: 10, c: '#8a7a8c', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
 
-  slime:      { n: '잿빛 슬라임', hp: 34, dmg: 8, def: 0, spd: 34, ai: 'jumper', w: 26, h: 20, c: '#6f8ba0', xp: 9, gold: 3, biome: 'surface', aggro: 320,
+  slime:      { n: '잿빛 슬라임', hp: 34, dmg: 8, def: 0, spd: 34, ai: 'jumper', w: 24, h: 18, c: '#6f8ba0', xp: 9, gold: 3, biome: 'surface', aggro: 320,
                 drops: [['slime_gel', .9, 1, 3], ['potion_hp_small', .06, 1, 1]] },
   zombie:     { n: '떠도는 시체', hp: 60, dmg: 14, def: 2, spd: 30, ai: 'walker', w: 20, h: 40, c: '#5b7a52', xp: 16, gold: 6, biome: 'night', aggro: 460,
                 drops: [['bone_frag', .5, 1, 2], ['iron_ore', .12, 1, 2], ['potion_hp_small', .07, 1, 1]] },
@@ -1590,11 +1590,11 @@ const ENEMIES = {
                 drops: [['bone_frag', .7, 2, 3], ['bow_hunt', .05, 1, 1], ['crossbow_bone', .035, 1, 1], ['tome_bone', .025, 1, 1]] },
   crawler:    { n: '부패한 사냥꾼', hp: 130, dmg: 27, def: 8, spd: 62, ai: 'walker', w: 24, h: 38, c: '#6b4a86', xp: 48, gold: 22, biome: 'corrupt', aggro: 520,
                 drops: [['corrupt_ess', .7, 1, 3], ['ebon_chunk', .4, 1, 3], ['mace_thorn', .025, 1, 1]] },
-  shadoweye:  { n: '그림자 눈', hp: 110, dmg: 24, def: 4, spd: 70, ai: 'caster', w: 26, h: 26, c: '#3d2a54', xp: 52, gold: 24, biome: 'corrupt', range: 340, aggro: 520,
+  shadoweye:  { n: '그림자 눈', hp: 110, dmg: 24, def: 4, spd: 70, ai: 'caster', w: 22, h: 22, c: '#3d2a54', xp: 52, gold: 24, biome: 'corrupt', range: 340, aggro: 520,
                 drops: [['corrupt_ess', .8, 2, 4], ['soul_shard', .15, 1, 2]] },
-  frostling:  { n: '서리 정령', hp: 175, dmg: 33, def: 12, spd: 46, ai: 'caster', w: 26, h: 34, c: '#8fd0e8', xp: 70, gold: 32, biome: 'ice', range: 300, aggro: 480,
+  frostling:  { n: '서리 정령', hp: 175, dmg: 33, def: 12, spd: 46, ai: 'caster', w: 24, h: 32, c: '#8fd0e8', xp: 70, gold: 32, biome: 'ice', range: 300, aggro: 480,
                 drops: [['frost_core', .6, 1, 2], ['ice_shard', .8, 2, 5], ['crystal', .2, 1, 2]] },
-  imp:        { n: '화염 임프', hp: 210, dmg: 40, def: 10, spd: 92, ai: 'caster', w: 24, h: 28, c: '#e0662a', xp: 92, gold: 44, biome: 'hell', range: 320, aggro: 560,
+  imp:        { n: '화염 임프', hp: 210, dmg: 40, def: 10, spd: 92, ai: 'caster', w: 22, h: 26, c: '#e0662a', xp: 92, gold: 44, biome: 'hell', range: 320, aggro: 560,
                 drops: [['hell_ore', .5, 1, 3], ['soul_shard', .3, 1, 2], ['bow_ash', .03, 1, 1], ['tome_ash', .025, 1, 1]] },
   golem:      { n: '재의 골렘', hp: 380, dmg: 56, def: 22, spd: 34, ai: 'walker', w: 34, h: 48, c: '#7a5c4a', xp: 130, gold: 66, biome: 'hell', aggro: 380,
                 drops: [['hell_ore', .8, 2, 5], ['obsidian', .4, 1, 3], ['soul_shard', .4, 1, 3], ['mace_lava', .03, 1, 1], ['tome_ash', .02, 1, 1], ['ring_brand', .05, 1, 1]] },
@@ -1616,9 +1616,9 @@ const ENEMIES = {
                 drops: [['ice_fang', .6, 1, 3], ['ice_shard', .7, 2, 4], ['dagger_frost', .03, 1, 1], ['charm_hawk', .06, 1, 1]] },
   corrupttree:{ n: '부패한 나무', hp: 260, dmg: 40, def: 20, spd: 26, ai: 'walker', w: 34, h: 48, c: '#5a3f78', xp: 86, gold: 40, biome: 'corrupt', aggro: 340,
                 drops: [['corrupt_ess', .8, 2, 4], ['moss_core', .45, 1, 2], ['wood', .9, 3, 8], ['mace_thorn', .025, 1, 1]] },
-  crystalcrab:{ n: '수정 게', hp: 300, dmg: 44, def: 28, spd: 44, ai: 'walker', w: 34, h: 24, c: '#7fd8e8', xp: 110, gold: 55, biome: 'deep', aggro: 400,
+  crystalcrab:{ n: '수정 게', hp: 300, dmg: 44, def: 28, spd: 44, ai: 'walker', w: 32, h: 19, c: '#7fd8e8', xp: 110, gold: 55, biome: 'deep', aggro: 400,
                 drops: [['crystal_claw', .6, 1, 2], ['crystal', .7, 2, 5], ['dagger_void', .025, 1, 1], ['tome_void', .02, 1, 1]] },
-  lavaslug:   { n: '용암 슬러그', hp: 340, dmg: 52, def: 18, spd: 40, ai: 'walker', w: 32, h: 22, c: '#e0703a', xp: 120, gold: 58, biome: 'hell', aggro: 360,
+  lavaslug:   { n: '용암 슬러그', hp: 340, dmg: 52, def: 18, spd: 40, ai: 'walker', w: 32, h: 20, c: '#e0703a', xp: 120, gold: 58, biome: 'hell', aggro: 360,
                 drops: [['lava_gel', .7, 1, 3], ['hell_ore', .5, 1, 3], ['mace_lava', .035, 1, 1]] },
   cloudjelly: { n: '구름 해파리', hp: 300, dmg: 48, def: 14, spd: 62, ai: 'flyer', w: 28, h: 30, c: '#e8f0fa', xp: 130, gold: 60, biome: 'sky', aggro: 460,
                 drops: [['cloud_jelly', .7, 1, 3], ['cloud_block', .6, 3, 8]] },
@@ -1628,7 +1628,7 @@ const ENEMIES = {
   /* --- 2부 일반 --- */
   sky_sentry: { n: '하늘 파수꾼', hp: 420, dmg: 62, def: 20, spd: 96, ai: 'caster', w: 26, h: 34, c: '#a8c8e0', xp: 160, gold: 80, biome: 'sky', range: 340, aggro: 560,
                 drops: [['sky_feather', .7, 1, 3], ['aether_shard', .3, 1, 2], ['cloud_block', .5, 2, 6], ['spear_storm', .02, 1, 1]] },
-  gale:       { n: '바람 정령', hp: 340, dmg: 54, def: 12, spd: 130, ai: 'flyer', w: 26, h: 26, c: '#cfe8ff', xp: 140, gold: 66, biome: 'sky', aggro: 480,
+  gale:       { n: '바람 정령', hp: 340, dmg: 54, def: 12, spd: 130, ai: 'flyer', w: 22, h: 22, c: '#cfe8ff', xp: 140, gold: 66, biome: 'sky', aggro: 480,
                 drops: [['sky_feather', .8, 2, 4], ['cloud_block', .6, 3, 8], ['spear_storm', .025, 1, 1], ['charm_zenith', .04, 1, 1]] },
   ruin_guard: { n: '유적 수호병', hp: 620, dmg: 78, def: 40, spd: 40, ai: 'walker', w: 30, h: 46, c: '#8a8270', xp: 240, gold: 130, biome: 'ruin', aggro: 420,
                 drops: [['ruin_brick', .8, 2, 6], ['aether_shard', .4, 1, 3], ['soul_shard', .5, 2, 4], ['mace_ruin', .03, 1, 1]] },
@@ -1636,7 +1636,7 @@ const ENEMIES = {
                 drops: [['aether_shard', .5, 1, 3], ['crystal', .5, 2, 5]] },
 
   /* --- 세션 2: 지하 공창 --- */
-  scrapcrawler: { n: '고철 기어다니개', hp: 900, dmg: 62, def: 30, spd: 92, ai: 'walker', w: 30, h: 22, c: '#6a6a74', xp: 900, gold: 240, aggro: 420,
+  scrapcrawler: { n: '고철 기어다니개', hp: 900, dmg: 62, def: 30, spd: 92, ai: 'walker', w: 30, h: 19, c: '#6a6a74', xp: 900, gold: 240, aggro: 420,
                  drops: [['steel_plate', 1, 3, 7], ['conduit_part', .5, 1, 2], ['gun_scrap', .02, 1, 1]] },
   sparkwisp:    { n: '불티 정령', hp: 620, dmg: 55, def: 18, spd: 168, ai: 'flyer', w: 20, h: 20, c: '#e8a53a', xp: 820, gold: 210, aggro: 500,
                  drops: [['power_core', .6, 1, 2], ['conduit_part', 1, 1, 3]] },
@@ -1689,22 +1689,22 @@ const ENEMIES = {
      거의 평평해서, 어느 유적을 먼저 들어가든 체감이 같고 순서를 고를 이유가 없었다.
      이제 갱도(rank 1)와 부패(rank 6)가 체력 4배 · 공격력 3배 가까이 차이 난다. */
   /* rank 1 — 베이스캠프 옆. 처음 잡아 보는 미니보스 */
-  mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_slime', w: 52, h: 44, c: '#6a5a4a', xp: 1500, gold: 620, boss: 1,
+  mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_slime', w: 60, h: 52, c: '#6a5a4a', xp: 1500, gold: 620, boss: 1,
                  drops: [['rust_gear', 1, 2, 3], ['iron_ore', 1, 20, 30], ['lost_lamp', 1, 1, 2]] },
   /* rank 2 */
   ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_witch', w: 40, h: 54, c: '#9fd8f0', xp: 2300, gold: 950, boss: 1,
                  drops: [['frozen_core', 1, 2, 3], ['frost_core', 1, 8, 14], ['ice_shard', 1, 20, 30]] },
   /* rank 3 */
-  vine_lord:    { n: '덩굴 군주', hp: 4100, dmg: 74, def: 34, spd: 80, ai: 'b_bone', w: 44, h: 58, c: '#3f7a34', xp: 3400, gold: 1500, boss: 1,
+  vine_lord:    { n: '덩굴 군주', hp: 4100, dmg: 74, def: 34, spd: 80, ai: 'b_bone', w: 50, h: 74, c: '#3f7a34', xp: 3400, gold: 1500, boss: 1,
                  drops: [['heartwood', 1, 2, 3], ['vine_coil', 1, 12, 20], ['orchid', 1, 8, 14]] },
   /* rank 4 — 함정이 가장 촘촘한 유적의 주인 */
-  sand_guardian:{ n: '모래 파수꾼', hp: 5600, dmg: 92, def: 46, spd: 66, ai: 'b_bone', w: 46, h: 60, c: '#d8b878', xp: 4800, gold: 2100, boss: 1,
+  sand_guardian:{ n: '모래 파수꾼', hp: 5600, dmg: 92, def: 46, spd: 66, ai: 'b_bone', w: 54, h: 70, c: '#d8b878', xp: 4800, gold: 2100, boss: 1,
                  drops: [['sun_disc', 1, 2, 3], ['gold_ore', 1, 15, 25], ['venom_sting', 1, 6, 10]] },
   /* rank 5 — 입구가 없는 굴. 도망칠 길이 없다 */
-  spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 46, h: 46, c: '#6fe0c0', xp: 6400, gold: 2800, boss: 1,
+  spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 50, h: 72, c: '#6fe0c0', xp: 6400, gold: 2800, boss: 1,
                  drops: [['queen_spore', 1, 2, 3], ['spore_sac', 1, 12, 20], ['glowcap', 1, 15, 25]] },
   /* rank 6 — 동쪽 끝, 가장 깊은 곳 */
-  blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 50, h: 50, c: '#7a3f9c', xp: 9000, gold: 4000, boss: 1,
+  blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 52, h: 58, c: '#7a3f9c', xp: 9000, gold: 4000, boss: 1,
                  drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18]] },
 
   /* --- 7단계: 폭주로 ---
@@ -1713,29 +1713,29 @@ const ENEMIES = {
                 drops: [['core_shard', .8, 1, 3], ['steel_plate', .7, 3, 7], ['gear_basic', .5, 2, 5], ['orb_core', .02, 1, 1]] },
   weldarm:    { n: '용접 팔', hp: 1800, dmg: 92, def: 46, spd: 64, ai: 'archer', w: 26, h: 44, c: '#c8763a', xp: 2900, gold: 600, aggro: 640, proj: 'fire',
                 drops: [['core_shard', .8, 1, 3], ['conduit_part', .6, 2, 4], ['refined_oil', .4, 2, 5]] },
-  coreling:   { n: '노심 파편체', hp: 1200, dmg: 76, def: 26, spd: 176, ai: 'flyer', w: 20, h: 20, c: '#e8b04a', xp: 2400, gold: 480, aggro: 620,
+  coreling:   { n: '노심 파편체', hp: 1200, dmg: 76, def: 26, spd: 176, ai: 'flyer', w: 20, h: 22, c: '#e8b04a', xp: 2400, gold: 480, aggro: 620,
                 drops: [['core_shard', 1, 2, 4], ['power_core', .5, 1, 2], ['orb_core', .025, 1, 1]] },
 
   /* --- 보스 --- */
-  king_slime:  { n: '슬라임 왕', hp: 900, dmg: 24, def: 6, spd: 60, ai: 'b_slime', w: 82, h: 62, c: '#4f7fc0', xp: 420, gold: 200, boss: 1,
+  king_slime:  { n: '슬라임 왕', hp: 900, dmg: 24, def: 6, spd: 60, ai: 'b_slime', w: 76, h: 58, c: '#4f7fc0', xp: 420, gold: 200, boss: 1,
                  drops: [['slime_gel', 1, 25, 40], ['ring_vigor', 1, 1, 1], ['star_heart', 1, 1, 1], ['sword_copper', .5, 1, 1]] },
-  bone_lord:   { n: '뼈의 군주', hp: 2000, dmg: 36, def: 14, spd: 70, ai: 'b_bone', w: 56, h: 74, c: '#ded6bd', xp: 900, gold: 480, boss: 1,
+  bone_lord:   { n: '뼈의 군주', hp: 2000, dmg: 36, def: 14, spd: 70, ai: 'b_bone', w: 52, h: 68, c: '#ded6bd', xp: 900, gold: 480, boss: 1,
                  drops: [['bone_frag', 1, 30, 45], ['sword_bone', 1, 1, 1], ['star_heart', 1, 1, 1], ['pick_iron', .6, 1, 1]] },
-  corrupt_heart:{ n: '부패의 심장', hp: 3600, dmg: 48, def: 18, spd: 105, ai: 'b_heart', w: 62, h: 62, c: '#7a3f9c', xp: 1700, gold: 900, boss: 1,
+  corrupt_heart:{ n: '부패의 심장', hp: 3600, dmg: 48, def: 18, spd: 105, ai: 'b_heart', w: 54, h: 54, c: '#7a3f9c', xp: 1700, gold: 900, boss: 1,
                  drops: [['corrupt_ess', 1, 30, 50], ['charm_leech', 1, 1, 1], ['star_heart', 1, 1, 1], ['mythril_ore', 1, 12, 20]] },
   frost_witch: { n: '서리 마녀 실비아', hp: 5600, dmg: 62, def: 24, spd: 90, ai: 'b_witch', w: 34, h: 56, c: '#a8dcf0', xp: 3000, gold: 1600, boss: 1,
                  drops: [['frost_core', 1, 25, 40], ['staff_frost', 1, 1, 1], ['star_heart', 1, 1, 1], ['amul_swift', 1, 1, 1]] },
-  void_king:   { n: '공허의 왕', hp: 12000, dmg: 82, def: 32, spd: 110, ai: 'b_void', w: 74, h: 92, c: '#5e3fa8', xp: 9000, gold: 5000, boss: 1,
+  void_king:   { n: '공허의 왕', hp: 12000, dmg: 82, def: 32, spd: 110, ai: 'b_void', w: 66, h: 88, c: '#5e3fa8', xp: 9000, gold: 5000, boss: 1,
                  drops: [['void_frag', 1, 30, 50], ['charm_star', 1, 1, 1], ['star_heart', 1, 1, 1]] },
 
   storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 96, def: 38, spd: 150, ai: 'b_storm', w: 66, h: 70, c: '#bcd8f0', xp: 16000, gold: 8000, boss: 1,
                  drops: [['sky_feather', 1, 30, 50], ['aether_shard', 1, 20, 35], ['charm_feather', 1, 1, 1], ['star_heart', 1, 1, 1]] },
-  first_keeper: { n: '최초의 파수꾼', hp: 20000, dmg: 120, def: 52, spd: 96, ai: 'b_keeper', w: 70, h: 88, c: '#c8b98a', xp: 40000, gold: 20000, boss: 1,
+  first_keeper: { n: '최초의 파수꾼', hp: 20000, dmg: 120, def: 52, spd: 96, ai: 'b_keeper', w: 64, h: 86, c: '#c8b98a', xp: 40000, gold: 20000, boss: 1,
                  minion: 'ruin_guard',
                  drops: [['aether_shard', 1, 40, 60], ['ruin_brick', 1, 40, 70], ['charm_rune', 1, 1, 1], ['star_heart', 1, 2, 2]] },
 
   /* 종장 — 별이 도망쳐 온 그것 */
-  pursuer:      { n: '별을 쫓아온 것', hp: 42000, dmg: 165, def: 68, spd: 128, ai: 'b_pursuer', w: 96, h: 104, c: '#2a2036', xp: 120000, gold: 60000, boss: 1,
+  pursuer:      { n: '별을 쫓아온 것', hp: 42000, dmg: 165, def: 68, spd: 128, ai: 'b_pursuer', w: 86, h: 96, c: '#2a2036', xp: 120000, gold: 60000, boss: 1,
                  minion: 'wraith', aggro: 4000,
                  drops: [['void_frag', 1, 60, 90], ['star_heart', 1, 3, 3], ['charm_dawn', 1, 1, 1], ['scythe_void', 1, 1, 1]] },
 
@@ -1743,12 +1743,12 @@ const ENEMIES = {
   proliferator: { n: '증식체', hp: 46000, dmg: 150, def: 62, spd: 112, ai: 'b_prolif', w: 88, h: 72, c: '#9a8a76', boss: 1,
                  xp: 150000, gold: 70000, minion: 'splitter',
                  drops: [['core_shard', 1, 40, 60], ['machine_frame', 1, 6, 10], ['power_core', 1, 25, 40]] },
-  hepha:        { n: '헤파 · 최초의 기계', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_hepha', w: 92, h: 110, c: '#c8a05a', boss: 1,
+  hepha:        { n: '헤파 · 최초의 기계', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_hepha', w: 86, h: 108, c: '#c8a05a', boss: 1,
                  xp: 400000, gold: 180000, minion: 'coreling', aggro: 4000,
                  drops: [['hepha_heart', 1, 1, 1], ['core_shard', 1, 60, 90], ['aether_shard', 1, 30, 45]] },
 
   /* 세션 2 — 지하 공창의 관리자 */
-  overseer:     { n: '공창의 관리자', hp: 30000, dmg: 140, def: 60, spd: 104, ai: 'b_overseer', w: 74, h: 92, c: '#8a8a96', xp: 90000, gold: 44000, boss: 1,
+  overseer:     { n: '공창의 관리자', hp: 30000, dmg: 140, def: 60, spd: 104, ai: 'b_overseer', w: 68, h: 88, c: '#8a8a96', xp: 90000, gold: 44000, boss: 1,
                  minion: 'riveter',
                  drops: [['steel_plate', 1, 60, 90], ['power_core', 1, 20, 30], ['blueprint_core', 1, 1, 1], ['pick_drill', 1, 1, 1]] },
 

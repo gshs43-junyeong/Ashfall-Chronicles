@@ -4598,6 +4598,13 @@ const G = {
     // 남아 있어(들토끼류 실측 2.25px) 판정 박스가 작을수록 그만큼 더 떠 보였다.
     // Sprites.footInset가 실측한 여백이라 그만큼 덜 밀어 올린다.
     const dy = meta ? Math.max(0, meta.frameH - e.h - (Sprites.footInset[e.type] || 0)) : 0;
+    /* ★ 가로도 가운데로 맞춘다.
+       예전에는 시트를 판정 박스의 **왼쪽에 붙여** 그렸다(세로만 footInset 으로 보정).
+       v1.1 애셋 48종은 잘림을 없애려고 프레임을 **좌우 대칭으로 넓혔기 때문에**,
+       왼쪽에 붙이면 넓힌 만큼 그림이 통째로 오른쪽으로 밀린다.
+       가운데 정렬로 바꾸면 앞으로 프레임을 더 넓혀도 여기를 다시 안 건드린다.
+       좌우 반전(flip)은 frameW 를 축으로 도니 그대로 둬도 맞는다. */
+    const dx = meta ? (e.w - meta.frameW) / 2 : 0;
 
     /* 그림이 거의 안 움직이는 개체는(ENEMIES 의 stiff — 프레임 간 픽셀 차를 재서
        골랐다) 렌더러가 대신 흔들어 준다. 걸을 때는 속도에 맞춰 위아래로 튀고 진행
@@ -4619,12 +4626,12 @@ const G = {
         c.save();
         c.translate(0, br);
       }
-      const ok = Sprites.draw(c, e.type, this.enemyFrame(e), sx, sy - dy, e.facing < 0);
+      const ok = Sprites.draw(c, e.type, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0);
       c.restore();
       if (ok) { this.drawEnemyOverlay(c, e, sx, sy, dy, meta); return; }
     }
 
-    if (this.spritesOn && Sprites.draw(c, e.type, this.enemyFrame(e), sx, sy - dy, e.facing < 0)) {
+    if (this.spritesOn && Sprites.draw(c, e.type, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0)) {
       this.drawEnemyOverlay(c, e, sx, sy, dy, meta);
       return;
     }
@@ -4763,7 +4770,8 @@ const G = {
     // 4px 뜬다. drawEnemy와 같은 방식으로 바닥(판정 박스 아래) 기준에 맞춘다.
     const meta = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets['npcw_' + d.art];
     const dy = meta ? meta.frameH - o.h - (Sprites.footInset['npcw_' + d.art] || 0) : 0;
-    if (!(this.spritesOn && Sprites.draw(c, 'npcw_' + d.art, fr, sx, sy - dy, flip))) {
+    const dx = meta ? (o.w - meta.frameW) / 2 : 0;          // 적과 같은 가로 중앙 정렬
+    if (!(this.spritesOn && Sprites.draw(c, 'npcw_' + d.art, fr, sx + dx, sy - dy, flip))) {
       c.fillStyle = shade(d.c, f);
       c.fillRect(sx + 3, sy + 14, 16, 20);
       c.fillRect(sx + 5, sy + 34, 5, 10); c.fillRect(sx + 13, sy + 34, 5, 10);
