@@ -113,7 +113,7 @@ const UI = {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('input', () => G.setOpt(key, +el.value));
     }
-    for (const [key, id] of [['dmgnum', 'set-dmgnum'], ['minimap', 'set-minimap']]) {
+    for (const [key, id] of [['dmgnum', 'set-dmgnum'], ['minimap', 'set-minimap'], ['dlgtype', 'set-dlgtype']]) {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('change', () => G.setOpt(key, el.checked ? 1 : 0));
     }
@@ -227,6 +227,7 @@ const UI = {
     set('set-sfx', s.sfx); txt('set-sfx-v', s.sfx);
     set('set-shake', s.shake); txt('set-shake-v', s.shake);
     chk('set-dmgnum', s.dmgnum); chk('set-minimap', s.minimap);
+    chk('set-dlgtype', s.dlgtype === undefined ? 1 : s.dlgtype);
     set('set-view', s.view); txt('set-view-v', s.view);
   },
 
@@ -1563,15 +1564,66 @@ const UI = {
     G.uiOpen = true;
     this.nextLine(true);
   },
+  /* ---- 한 글자씩 흘러나오는 대사 ----
+     말하는 소리(talk.mp3)가 1.06초다. 글자가 한꺼번에 툭 뜨면 그 소리만 혼자
+     울리고 끝나서, 사람이 말을 한 게 아니라 자막이 바뀐 것처럼 보였다.
+     그래서 소리가 우는 동안 글자가 흘러나오도록 맞춘다.
+
+       글자당 34ms — 대사 452줄의 중앙값이 30자라 중앙값 한 줄이 딱 1.02초다.
+       긴 줄은 늘어지지 않게 전체 1.3초에서 끊고(그만큼 빨라진다),
+       아주 짧은 줄은 0.3초는 채운다(한 글자가 깜빡이고 마는 걸 막는다).
+
+     타자가 도는 중에는 선택지도 "클릭하여 계속"도 내보내지 않는다 — 다 읽기도
+     전에 버튼이 뜨면 눈이 그리로 끌려간다. 화면을 누르면 그 자리에서 끝까지
+     펼친다(넘어가지는 않는다). 설정에서 끄면 예전처럼 한 번에 뜬다. */
+  TYPE_MS: 34, TYPE_MIN: 300, TYPE_MAX: 1300,
+
+  typeLine(text, done) {
+    const el = $('#dlg-text');
+    this.stopType();
+    const n = text.length;
+    if (!n || !(G.settings ? G.settings.dlgtype : 1)) { el.textContent = text; done(); return; }
+    const dur = Math.max(this.TYPE_MIN, Math.min(this.TYPE_MAX, n * this.TYPE_MS));
+    const t0 = performance.now();
+    el.textContent = '';
+    this.typing = { text, done, el };
+    const step = () => {
+      if (!this.typing) return;
+      const k = Math.min(n, Math.ceil((performance.now() - t0) / dur * n));
+      el.textContent = text.slice(0, k);
+      if (k >= n) { this.typing = null; done(); return; }
+      this._typeRaf = requestAnimationFrame(step);
+    };
+    this._typeRaf = requestAnimationFrame(step);
+  },
+  stopType() {
+    if (this._typeRaf) { cancelAnimationFrame(this._typeRaf); this._typeRaf = 0; }
+    this.typing = null;
+  },
+  /** 타자가 도는 중이면 끝까지 펼치고 true. 화면 클릭이 넘김 대신 이걸 먼저 쓴다. */
+  finishType() {
+    if (!this.typing) return false;
+    const t = this.typing;
+    this.stopType();
+    t.el.textContent = t.text;
+    t.done();
+    return true;
+  },
+
   nextLine(first) {
     if (!this.dlg) return;
     const prevI = this.dlg.i;
     if (!first) this.dlg.i++;
-    if (this.dlg.i >= this.dlg.lines.length) { this.showChoices(); return; }
-    $('#dlg-text').textContent = this.dlg.lines[this.dlg.i];
-    $('#dlg-choices').innerHTML = this.dlg.i >= this.dlg.lines.length - 1 ? '' : '<div class="dlg-next"><span class="dlg-next-ic"></span>클릭하여 계속</div>';
+    if (this.dlg.i >= this.dlg.lines.length) { this.stopType(); this.showChoices(); return; }
+    const last = this.dlg.i >= this.dlg.lines.length - 1;
+    $('#dlg-choices').innerHTML = '';
     if (this.dlg.i !== prevI || first) G.sfx('talk');
-    if (this.dlg.i >= this.dlg.lines.length - 1) this.showChoices();
+    const at = this.dlg.i;
+    this.typeLine(this.dlg.lines[at], () => {
+      if (!this.dlg || this.dlg.i !== at) return;      // 그 사이 창이 바뀌었으면 버린다
+      if (last) this.showChoices();
+      else $('#dlg-choices').innerHTML = '<div class="dlg-next"><span class="dlg-next-ic"></span>클릭하여 계속</div>';
+    });
   },
   showChoices() {
     const box = $('#dlg-choices'); box.innerHTML = '';
@@ -1588,7 +1640,7 @@ const UI = {
     b.addEventListener('click', ev => { ev.stopPropagation(); this.closeDialogue(); });
     box.appendChild(b);
   },
-  closeDialogue() { $('#dialogue').classList.remove('open'); this.dlg = null; G.uiOpen = false; },
+  closeDialogue() { this.stopType(); $('#dialogue').classList.remove('open'); this.dlg = null; G.uiOpen = false; },
 
   /** 장 도입·마무리 이야기. 대사창을 쓰되 뒤에 장 삽화를 깔아 "읽는 장면"으로 만든다.
       intro/outro는 원래 여정의 기록 패널에만 있어서, 실제로 플레이하는 동안에는

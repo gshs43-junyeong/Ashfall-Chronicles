@@ -9,6 +9,7 @@ const SET_KEY = 'ashfall_settings';
    view 는 시야 배율(%), keys 는 바꾼 조작키만 담는 표, notice 는 끈 알림만 담는 표 —
    둘 다 null 이면 "손댄 적 없음"이라 KEY_ACTIONS·NOTICE_KINDS 의 기본을 그대로 쓴다. */
 const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1,
+  dlgtype: 1,          // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
   view: 100, keys: null, notice: null };
 // 완전한 암흑(0)은 지도에 남기지 않는다. 1 이상이면 횃불·용암·햇빛 등으로 최소한 보이는 상태다.
 const MAP_REVEAL_LIGHT = 1;
@@ -199,7 +200,9 @@ const G = {
       p.sel = (p.sel + (e.deltaY > 0 ? 1 : -1) + HOTBAR) % HOTBAR;
       UI.refreshHotbar();
     }, { passive: true });
-    $('#dialogue').addEventListener('click', () => { if (UI.dlg) UI.nextLine(false); });
+    /* 타자가 도는 중이면 넘기지 말고 그 자리에서 끝까지 펼친다 — 한 번 누른 것이
+       "다 읽었다"가 아니라 "빨리 보여 달라"인 경우가 훨씬 많다 */
+    $('#dialogue').addEventListener('click', () => { if (UI.dlg && !UI.finishType()) UI.nextLine(false); });
   },
   readInput() {
     const I = this.input;
