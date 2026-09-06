@@ -4597,14 +4597,21 @@ const G = {
     // 프레임 바닥 = 그림 발끝이라고 가정했었는데, 실제로는 시트마다 몇 px 투명 여백이
     // 남아 있어(들토끼류 실측 2.25px) 판정 박스가 작을수록 그만큼 더 떠 보였다.
     // Sprites.footInset가 실측한 여백이라 그만큼 덜 밀어 올린다.
-    const dy = meta ? Math.max(0, meta.frameH - e.h - (Sprites.footInset[e.type] || 0)) : 0;
-    /* ★ 가로도 가운데로 맞춘다.
-       예전에는 시트를 판정 박스의 **왼쪽에 붙여** 그렸다(세로만 footInset 으로 보정).
-       v1.1 애셋 48종은 잘림을 없애려고 프레임을 **좌우 대칭으로 넓혔기 때문에**,
-       왼쪽에 붙이면 넓힌 만큼 그림이 통째로 오른쪽으로 밀린다.
-       가운데 정렬로 바꾸면 앞으로 프레임을 더 넓혀도 여기를 다시 안 건드린다.
-       좌우 반전(flip)은 frameW 를 축으로 도니 그대로 둬도 맞는다. */
-    const dx = meta ? (e.w - meta.frameW) / 2 : 0;
+    /* ★ max(0, …) 를 뺐다.
+       프레임이 판정 박스보다 **짧은** 몹이 스물 남짓 있다(용접 팔 22x30 : 판정 26x44).
+       클램프가 있으면 그 몹들은 dy 가 0 이 되어 그림 위쪽이 판정 박스 위에 붙고,
+       발이 바닥에서 최대 14px 뜬 채로 걸었다 — 허공을 밟고 다니는 것처럼 보인다.
+       음수를 허용하면 그림이 그만큼 내려와 발끝이 판정 바닥에 정확히 닿는다.
+       프레임이 더 큰 몹은 예전과 값이 같으므로 달라지는 것이 없다. */
+    const dy = meta ? meta.frameH - e.h - (Sprites.footInset[e.type] || 0) : 0;
+    /* ★ 가로는 **프레임이 아니라 그림**을 가운데 맞춘다.
+       예전에는 시트를 판정 박스 왼쪽에 붙여 그렸고(세로만 보정), v1.1 애셋이
+       프레임을 좌우로 넓히면서 전부 오른쪽으로 밀렸다. 그래서 프레임 중앙 정렬을
+       넣었는데, 그림 자체가 프레임 안에서 치우친 시트가 또 남는다(리벳 사수 2.5px).
+       sideInset 이 프레임 0 에서 잰 그 치우침이다. 왼쪽을 볼 때는 그림이 뒤집히므로
+       치우침도 같이 뒤집는다. */
+    const side = meta ? (Sprites.sideInset[e.type] || 0) * (e.facing < 0 ? -1 : 1) : 0;
+    const dx = meta ? (e.w - meta.frameW) / 2 - side : 0;
 
     /* 그림이 거의 안 움직이는 개체는(ENEMIES 의 stiff — 프레임 간 픽셀 차를 재서
        골랐다) 렌더러가 대신 흔들어 준다. 걸을 때는 속도에 맞춰 위아래로 튀고 진행
@@ -4770,7 +4777,9 @@ const G = {
     // 4px 뜬다. drawEnemy와 같은 방식으로 바닥(판정 박스 아래) 기준에 맞춘다.
     const meta = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets['npcw_' + d.art];
     const dy = meta ? meta.frameH - o.h - (Sprites.footInset['npcw_' + d.art] || 0) : 0;
-    const dx = meta ? (o.w - meta.frameW) / 2 : 0;          // 적과 같은 가로 중앙 정렬
+    // 적과 같은 정렬 — 그림 중심을 판정 박스 중심에. 뒤집으면 치우침도 뒤집는다
+    const nside = meta ? (Sprites.sideInset['npcw_' + d.art] || 0) * (flip ? -1 : 1) : 0;
+    const dx = meta ? (o.w - meta.frameW) / 2 - nside : 0;
     if (!(this.spritesOn && Sprites.draw(c, 'npcw_' + d.art, fr, sx + dx, sy - dy, flip))) {
       c.fillStyle = shade(d.c, f);
       c.fillRect(sx + 3, sy + 14, 16, 20);
