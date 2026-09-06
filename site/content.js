@@ -5,6 +5,12 @@
   'use strict';
 
   var ART = '../play/assets/';
+  /* 그림 주소에 판 번호를 붙인다 — /play/assets/ 는 vercel.json 에서 1년 immutable 이라,
+     판을 안 붙이면 방문자가 처음 받은 그림이 그 브라우저에 영영 박힌다(hero.js 주석 참고).
+     제 script 태그의 물음표 뒤를 그대로 물려받는다. */
+  var VER = (document.currentScript && document.currentScript.src.split('?')[1]) || '';
+  var Q = VER ? '?' + VER : '';
+
 
   /* 어디까지 펼치고 어디부터 가릴지.
    *
@@ -75,7 +81,7 @@
 
       var art = el('div', 'ch-art');
       /* 잠긴 장도 그림은 깔되 CSS 로 흐린다. 분위기는 남고 내용은 안 읽힌다. */
-      art.style.backgroundImage = "url('" + ART + "bg/" + c[4] + ".png')";
+      art.style.backgroundImage = "url('" + ART + "bg/" + c[4] + ".png" + Q + "')";
 
       var body = el('div', 'ch-body');
       body.append(
@@ -120,7 +126,7 @@
         ctx.globalCompositeOperation = 'source-over';
       }
     };
-    img.src = ART + 'boss/' + file + '.png';
+    img.src = ART + 'boss/' + file + '.png' + Q;
   }
 
   var bossGrid = document.getElementById('bossGrid');

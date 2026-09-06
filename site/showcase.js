@@ -10,6 +10,12 @@
   'use strict';
 
   var BASE = '../play/assets/';
+  /* 그림 주소에 판 번호를 붙인다 — /play/assets/ 는 vercel.json 에서 1년 immutable 이라,
+     판을 안 붙이면 방문자가 처음 받은 그림이 그 브라우저에 영영 박힌다(hero.js 주석 참고).
+     제 script 태그의 물음표 뒤를 그대로 물려받는다. */
+  var VER = (document.currentScript && document.currentScript.src.split('?')[1]) || '';
+  var Q = VER ? '?' + VER : '';
+
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* 좁은 화면에서는 논리 폭을 절반으로 잡는다. 캔버스는 폭에 맞춰 통째로 줄어들기 때문에,
@@ -31,7 +37,7 @@
         out[f] = img.naturalWidth ? img : null;
         if (--left === 0) done(out);
       };
-      img.src = BASE + f;
+      img.src = BASE + f + Q;
     });
   }
 
