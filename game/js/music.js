@@ -2,6 +2,15 @@
    상황 판정은 game.js의 G.pickBgm()이 맡고, 이 파일은 재생/페이드만 담당한다. */
 'use strict';
 
+/* ★ 소리 주소에도 판 번호를 붙인다.
+   vercel.json 은 /play/assets/ 아래의 mp3 를 **1년짜리 immutable** 로 내보낸다.
+   그림 쪽은 sprites.js·hero.js 가 제 script 태그의 ?v= 를 물려받아 붙이는데,
+   소리 쪽에는 그 장치가 없어서 늘 같은 주소를 불렀다 — 방문자가 처음 받은 것이
+   그 브라우저에 1년 박힌다. 한 번 실패하거나 끊긴 채로 받힌 파일도 그대로 남으니
+   "일부 효과음만 안 들린다"가 계속된다. 배포마다 주소가 바뀌면 그 고리가 끊긴다. */
+const AUD_VER = (document.currentScript && document.currentScript.src.split('?')[1]) || '';
+const aud = (src) => src + (AUD_VER ? (src.includes('?') ? '&' : '?') + AUD_VER : '');
+
 const BGM = {
   // mp3 원본은 용량이 커서(5~11MB) AAC(m4a)로 다시 구웠다 — 브라우저 재생엔 문제없다.
   // falling_stars는 조용한 멜로디 구간만 남기고 드롭 직전(1:50)에서 잘랐다 — 루프 시작/끝에
@@ -59,7 +68,7 @@ const Music = {
     // "위기 상황"에서 브금이 안 나온다는 제보의 원인). 성공했을 때만 교체를 확정한다.
     const prevKey = this.curKey;
     this.curKey = key;
-    const a = new Audio(BGM[key]);
+    const a = new Audio(aud(BGM[key]));
     a.loop = true; a.volume = 0;
     const dur = fast ? 0.12 : this.fadeDur;
     // 파일 자체가 없을 때(404) 울리는 신호. 이걸 안 잡으면 아래 catch가 매번 되돌려 놓아
@@ -147,7 +156,7 @@ const Sfx = {
 
   init() {
     for (const k in SFX_FILES) {
-      const src = SFX_DIR + SFX_FILES[k] + '.mp3';
+      const src = aud(SFX_DIR + SFX_FILES[k] + '.mp3');
       const probe = new Audio(src);
       probe.preload = 'auto';
       probe.addEventListener('canplaythrough', () => {
@@ -205,7 +214,7 @@ const Ambient = {
   ensure(key) {
     if (this.pair[key] || this.missing[key]) return;
     const mk = () => {
-      const a = new Audio(SFX_DIR + AMBIENT_FILES[key] + '.mp3');
+      const a = new Audio(aud(SFX_DIR + AMBIENT_FILES[key] + '.mp3'));
       a.loop = false; a.preload = 'auto'; a.volume = 0;   // loop는 직접 관리 — 끝나기 전에 다음 걸 겹쳐 튼다
       return a;
     };
