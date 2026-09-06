@@ -50,8 +50,8 @@ window.SPRITE_MANIFEST = {
     "sheets": {
       "player": {
         "file": "char/player.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 22,
+        "frameH": 41,
         "count": 13
       },
       "slime": {
@@ -224,7 +224,7 @@ window.SPRITE_MANIFEST = {
       },
       "riveter": {
         "file": "char/riveter.png",
-        "frameW": 24,
+        "frameW": 32,
         "frameH": 40,
         "count": 7
       },
@@ -232,12 +232,6 @@ window.SPRITE_MANIFEST = {
         "file": "char/foreman.png",
         "frameW": 26,
         "frameH": 42,
-        "count": 7
-      },
-      "npc_guard": {
-        "file": "char/npc_guard.png",
-        "frameW": 20,
-        "frameH": 40,
         "count": 7
       },
       "vinelash": {
@@ -296,8 +290,8 @@ window.SPRITE_MANIFEST = {
       },
       "coreling": {
         "file": "char/coreling.png",
-        "frameW": 20,
-        "frameH": 22,
+        "frameW": 24,
+        "frameH": 24,
         "count": 7
       },
       "rabbit": {
@@ -308,7 +302,7 @@ window.SPRITE_MANIFEST = {
       },
       "arctic_hare": {
         "file": "char/arctic_hare.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7
       },
@@ -320,19 +314,19 @@ window.SPRITE_MANIFEST = {
       },
       "jungle_frog": {
         "file": "char/jungle_frog.png",
-        "frameW": 18,
-        "frameH": 18,
+        "frameW": 22,
+        "frameH": 20,
         "count": 7
       },
       "glow_snail": {
         "file": "char/glow_snail.png",
-        "frameW": 22,
-        "frameH": 16,
+        "frameW": 26,
+        "frameH": 18,
         "count": 7
       },
       "ash_vole": {
         "file": "char/ash_vole.png",
-        "frameW": 16,
+        "frameW": 20,
         "frameH": 20,
         "count": 7
       },
@@ -344,7 +338,7 @@ window.SPRITE_MANIFEST = {
       },
       "grotto_eel": {
         "file": "char/grotto_eel.png",
-        "frameW": 34,
+        "frameW": 38,
         "frameH": 14,
         "count": 7
       },
@@ -386,8 +380,8 @@ window.SPRITE_MANIFEST = {
       },
       "ballast_form": {
         "file": "char/ballast_form.png",
-        "frameW": 38,
-        "frameH": 54,
+        "frameW": 44,
+        "frameH": 57,
         "count": 7
       },
       "gloom_crawler": {
@@ -404,7 +398,7 @@ window.SPRITE_MANIFEST = {
       },
       "lost_miner": {
         "file": "char/lost_miner.png",
-        "frameW": 22,
+        "frameW": 26,
         "frameH": 42,
         "count": 7
       },
@@ -534,60 +528,6 @@ window.SPRITE_MANIFEST = {
         "frameH": 40,
         "count": 7
       },
-      "npc_elara": {
-        "file": "char/npc_elara.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_borin": {
-        "file": "char/npc_borin.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_mira": {
-        "file": "char/npc_mira.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_elder": {
-        "file": "char/npc_elder.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_haran": {
-        "file": "char/npc_haran.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_rika": {
-        "file": "char/npc_rika.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_seira": {
-        "file": "char/npc_seira.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_garn": {
-        "file": "char/npc_garn.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_kade": {
-        "file": "char/npc_kade.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
       "jungle_koi": {
         "file": "char/jungle_koi.png",
         "frameW": 24,
@@ -636,28 +576,34 @@ window.SPRITE_MANIFEST = {
         "frameH": 32,
         "count": 7
       },
-      "npc_pedlar": {
+      "yunseul": {
+        "file": "char/yunseul.png",
+        "frameW": 26,
+        "frameH": 44,
+        "count": 7
+      },
+      "npcw_guard": {
+        "file": "char/npc_guard.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_pedlar": {
         "file": "char/npc_pedlar.png",
         "frameW": 24,
         "frameH": 40,
         "count": 7
       },
-      "npc_oreman": {
+      "npcw_oreman": {
         "file": "char/npc_oreman.png",
         "frameW": 24,
         "frameH": 40,
         "count": 7
       },
-      "npc_armsman": {
+      "npcw_armsman": {
         "file": "char/npc_armsman.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7
-      },
-      "yunseul": {
-        "file": "char/yunseul.png",
-        "frameW": 26,
-        "frameH": 44,
         "count": 7
       }
     }
@@ -732,67 +678,78 @@ window.SPRITE_MANIFEST = {
         "file": "boss/ice_warden.png",
         "frameW": 54,
         "frameH": 72,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "sand_guardian": {
         "file": "boss/sand_guardian.png",
-        "frameW": 60,
+        "frameW": 64,
         "frameH": 76,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "mine_horror": {
         "file": "boss/mine_horror.png",
-        "frameW": 66,
-        "frameH": 58,
-        "count": 6
+        "frameW": 72,
+        "frameH": 61,
+        "count": 6,
+        "gap": 0
       },
       "blight_maw": {
         "file": "boss/blight_maw.png",
         "frameW": 64,
-        "frameH": 64,
-        "count": 6
+        "frameH": 67,
+        "count": 6,
+        "gap": 0
       },
       "vine_lord": {
         "file": "boss/vine_lord.png",
-        "frameW": 62,
-        "frameH": 80,
-        "count": 6
+        "frameW": 68,
+        "frameH": 83,
+        "count": 6,
+        "gap": 0
       },
       "spore_queen": {
         "file": "boss/spore_queen.png",
-        "frameW": 58,
-        "frameH": 78,
-        "count": 6
+        "frameW": 64,
+        "frameH": 81,
+        "count": 6,
+        "gap": 0
       },
       "proliferator": {
         "file": "boss/proliferator.png",
         "frameW": 72,
         "frameH": 66,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "hepha": {
         "file": "boss/hepha.png",
-        "frameW": 88,
-        "frameH": 110,
-        "count": 6
+        "frameW": 94,
+        "frameH": 113,
+        "count": 6,
+        "gap": 0
       },
       "archetype": {
         "file": "boss/archetype.png",
         "frameW": 96,
         "frameH": 116,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "restorer": {
         "file": "boss/restorer.png",
         "frameW": 118,
         "frameH": 132,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "shaft_maw": {
         "file": "boss/shaft_maw.png",
         "frameW": 92,
         "frameH": 84,
-        "count": 6
+        "count": 6,
+        "gap": 0
       },
       "drowned_keeper": {
         "file": "boss/drowned_keeper.png",
