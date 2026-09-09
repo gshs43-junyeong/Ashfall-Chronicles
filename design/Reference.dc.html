@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+    a { color: #d8a94b; } a:hover { color: #ffe08a; }
+    .r { background: #0d0b0a; color: #e9e2d7; padding: 26px 38px; min-height: 100%; }
+    .hd { display: flex; align-items: baseline; gap: 14px; border-bottom: 1px solid #332d29; padding-bottom: 11px; }
+    .hd h2 { font-size: 16px; font-weight: 600; margin: 0; }
+    .hd .sub { font-size: 11.5px; color: #7a7067; }
+    .set { display: flex; gap: 30px; margin-top: 20px; }
+    .el { display: flex; flex-direction: column; gap: 8px; }
+    .el .nm { font-size: 12px; color: #e9e2d7; display: flex; align-items: center; gap: 7px; }
+    .el .nm i { width: 9px; height: 9px; display: inline-block; }
+    .el .sh { font-size: 10.5px; color: #7a7067; }
+    .st { display: flex; gap: 7px; }
+    .fr { width: 62px; height: 62px; background: #14120f; border: 1px solid #262220; }
+    .fr svg { display: block; width: 100%; height: 100%; }
+    .foot { margin-top: 22px; border-top: 1px solid #332d29; padding-top: 13px;
+            font-size: 11.5px; color: #a89c8e; line-height: 1.6; max-width: 90ch; text-wrap: pretty; }
+  </style>
+</helmet>
+
+<div class="r">
+  <div class="hd">
+    <h2>이미 있는 마법 다섯 — 같은 집안으로 읽히는지 대조용</h2>
+    <span class="sub">arcane · frost · soul · fire · void (tools/mkhitfx.py 로 구운 셋 + 폭발 둘)</span>
+  </div>
+  <div class="set">
+    <div class="el"><div class="nm"><i style="background:#8fd8ff"></i>비전 arcane</div><div class="sh">각진 육각 — 규칙이 깨진다</div>
+      <div class="st">
+        <div class="fr"><svg viewBox="0 0 64 64"><polygon points="32,20 42,26 42,38 32,44 22,38 22,26" fill="none" stroke="#8fd8ff" stroke-width="3"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><polygon points="32,8 53,20 53,44 32,56 11,44 11,20" fill="none" stroke="#8fd8ff" stroke-width="3.5"/><polygon points="32,20 42,26 42,38 32,44 22,38 22,26" fill="none" stroke="#ffffff" stroke-width="2"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><polygon points="32,4 56,18 56,46 32,60 8,46 8,18" fill="none" stroke="#8fd8ff" stroke-width="1.6" opacity=".7"/></svg></div>
+      </div></div>
+    <div class="el"><div class="nm"><i style="background:#9fe0ff"></i>서리 frost</div><div class="sh">바늘 — 돋았다 부서진다</div>
+      <div class="st">
+        <div class="fr"><svg viewBox="0 0 64 64"><path d="M32 32 L32 18 M32 32 L44 25 M32 32 L44 39 M32 32 L32 46 M32 32 L20 39 M32 32 L20 25" stroke="#9fe0ff" stroke-width="3" stroke-linecap="round"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><path d="M32 32 L32 6 M32 32 L54 19 M32 32 L54 45 M32 32 L32 58 M32 32 L10 45 M32 32 L10 19" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/><path d="M32 14 l-4 5 M32 14 l4 5 M46 24 l-6 1" stroke="#9fe0ff" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><path d="M32 8 l-3 4 M52 20 l4 -2 M52 46 l4 3 M32 58 l-3 4 M10 46 l-4 3" stroke="#9fe0ff" stroke-width="2" stroke-linecap="round" opacity=".75"/></svg></div>
+      </div></div>
+    <div class="el"><div class="nm"><i style="background:#c49fff"></i>영혼 soul</div><div class="sh">연기 — 위로 피어오른다</div>
+      <div class="st">
+        <div class="fr"><svg viewBox="0 0 64 64"><path d="M32 44 Q28 36 32 28 Q36 22 32 16" stroke="#c49fff" stroke-width="4" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><path d="M32 50 Q26 38 32 26 Q38 16 32 6" stroke="#ffffff" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M22 46 Q18 34 24 24" stroke="#c49fff" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M42 46 Q46 34 40 24" stroke="#c49fff" stroke-width="3" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><path d="M30 24 Q34 14 30 4" stroke="#c49fff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".7"/><path d="M20 22 Q24 12 20 4" stroke="#c49fff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".5"/></svg></div>
+      </div></div>
+    <div class="el"><div class="nm"><i style="background:#ff8a3a"></i>불 fire</div><div class="sh">부푼 덩어리 — 안에서 밖으로</div>
+      <div class="st">
+        <div class="fr"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="9" fill="#ffd08a"/><circle cx="32" cy="32" r="14" fill="none" stroke="#ff8a3a" stroke-width="2.5"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="16" fill="#ffd08a"/><circle cx="32" cy="32" r="25" fill="none" stroke="#ff8a3a" stroke-width="5"/><circle cx="14" cy="18" r="4" fill="#ff8a3a"/><circle cx="50" cy="20" r="4" fill="#ff8a3a"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="#c2410c" stroke-width="2.4" opacity=".7"/><circle cx="10" cy="12" r="3" fill="#c2410c" opacity=".6"/><circle cx="54" cy="14" r="3" fill="#c2410c" opacity=".6"/></svg></div>
+      </div></div>
+    <div class="el"><div class="nm"><i style="background:#a06fff"></i>공허 void</div><div class="sh">빨려 들어갔다 닫힌다</div>
+      <div class="st">
+        <div class="fr"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="#a06fff" stroke-width="2"/><circle cx="32" cy="32" r="18" fill="none" stroke="#a06fff" stroke-width="3"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="10" fill="#12040f"/><circle cx="32" cy="32" r="10" fill="none" stroke="#a06fff" stroke-width="4"/><path d="M32 32 L52 20 M32 32 L12 22 M32 32 L48 50 M32 32 L14 46" stroke="#a06fff" stroke-width="1.8" opacity=".6"/></svg></div>
+        <div class="fr"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="4" fill="#12040f"/><circle cx="32" cy="32" r="6" fill="none" stroke="#a06fff" stroke-width="2" opacity=".8"/></svg></div>
+      </div></div>
+  </div>
+  <p class="foot">다섯 다 <b>가운데에서 시작해 밖으로 열렸다 사라진다</b>는 한 가지 리듬을 지킨다.
+    새로 그리는 물리 셋도 그 리듬 위에 있고, 다른 것은 <b>모양과 남는 시간</b>뿐이다 — 베기는 사선으로 얇게 가장 빨리,
+    찌르기는 앞으로만 좁게, 둔기는 납작하게 가장 늦게. 색은 물리만 금빛을 쓴다(마법과 안 헷갈리게).</p>
+</div>
+</x-dc>
+</body>
+</html>

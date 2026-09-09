@@ -1,0 +1,228 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+    a { color: #d8a94b; } a:hover { color: #ffe08a; }
+    .sheet { background: #0d0b0a; color: #e9e2d7; padding: 34px 38px; min-height: 100%; }
+    .hd { display: flex; align-items: baseline; gap: 16px; border-bottom: 1px solid #332d29; padding-bottom: 14px; }
+    .hd h1 { font-size: 21px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
+    .hd .spec { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+                font-size: 11.5px; color: #7a7067; letter-spacing: .02em; }
+    .lede { color: #a89c8e; font-size: 12.5px; line-height: 1.65; margin: 12px 0 0; max-width: 74ch; text-wrap: pretty; }
+    .rows { display: flex; flex-direction: column; gap: 26px; margin-top: 26px; }
+    .row { display: flex; gap: 22px; align-items: flex-start; }
+    .key { width: 176px; flex-shrink: 0; padding-top: 4px; }
+    .key .nm { font-size: 15px; font-weight: 600; color: #e9e2d7; }
+    .key .wp { font-size: 11px; color: #7a7067; margin-top: 3px; letter-spacing: .02em; }
+    .key .ch { font-size: 11.5px; color: #a89c8e; margin-top: 9px; line-height: 1.55; }
+    .strip { display: flex; gap: 10px; }
+    .cell { display: flex; flex-direction: column; gap: 5px; align-items: center; }
+    .fr { width: 88px; height: 88px; background: #14120f; border: 1px solid #262220; }
+    .fr svg { display: block; width: 100%; height: 100%; }
+    .no { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: #5e564f; letter-spacing: .06em; }
+    .div { border-top: 1px solid #332d29; margin-top: 30px; padding-top: 24px; }
+    .critnote { display: flex; gap: 22px; align-items: flex-start; }
+    .over { display: flex; flex-direction: column; gap: 6px; }
+    .over .cap { font-size: 11px; color: #7a7067; }
+    .stack { position: relative; width: 108px; height: 108px; background: #14120f; border: 1px solid #3a3128; }
+    .stack svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .tag { display: inline-block; font-size: 10px; letter-spacing: .08em; color: #0d0b0a;
+           background: #d8a94b; padding: 2px 7px; margin-bottom: 8px; }
+  </style>
+</helmet>
+
+<div class="sheet">
+  <div class="hd">
+    <h1>맞는 순간 — 물리 셋과 치명타 한 겹</h1>
+    <span class="spec">64×64 · 6프레임 · 4배 · gap 4 · fx.bursts</span>
+  </div>
+  <p class="lede">지금 근접 타격에는 <b>맞는 그림이 없다</b> — 피해 숫자와 몬스터 색 파편 네 개(치명타면 여덟 개)가 전부다.
+    무기 계열마다 모양을 가르고, 치명타는 계열마다 따로 그리지 않고 <b>한 겹을 얹는다</b>. 소리 쪽 분류(hit_slash · hit_pierce ·
+    hit_blunt · hit_crit)와 같은 갈래라 소리와 그림이 한 벌로 맞물린다.</p>
+
+  <div class="rows">
+
+    <!-- ───────── 베기 ───────── -->
+    <div class="row">
+      <div class="key">
+        <div class="nm">베기</div>
+        <div class="wp">hit_slash · 검 · 단검</div>
+        <div class="ch">엇갈린 두 초승달이 열렸다 얇아진다. 가장 빠르게 사라진다 — 연타가 겹쳐도 화면이 안 막히도록.</div>
+      </div>
+      <div class="strip">
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M26 38 Q32 30 40 26" stroke="#fff6e0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </svg></div><div class="no">1</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M17 45 Q32 28 47 19" stroke="#fff6e0" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M17 45 Q32 28 47 19" stroke="#ffe08a" stroke-width="8" fill="none" stroke-linecap="round" opacity=".45"/>
+          <path d="M24 20 Q30 28 34 38" stroke="#ffe08a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </svg></div><div class="no">2</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M11 50 Q32 27 53 14" stroke="#fff6e0" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M11 50 Q32 27 53 14" stroke="#ffe08a" stroke-width="11" fill="none" stroke-linecap="round" opacity=".38"/>
+          <path d="M20 15 Q30 29 38 45" stroke="#ffe08a" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M20 15 Q30 29 38 45" stroke="#d8a94b" stroke-width="9" fill="none" stroke-linecap="round" opacity=".3"/>
+          <path d="M52 12 l5 -4 M9 53 l-5 4 M40 47 l4 5" stroke="#ffe08a" stroke-width="2" stroke-linecap="round"/>
+        </svg></div><div class="no">3</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M9 52 Q32 27 55 12" stroke="#ffe08a" stroke-width="2" fill="none" stroke-linecap="round" opacity=".9"/>
+          <path d="M18 13 Q30 29 40 47" stroke="#d8a94b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M55 9 l6 -4 M6 55 l-6 4 M42 50 l5 6" stroke="#ffe08a" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>
+        </svg></div><div class="no">4</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M12 49 Q32 28 52 15" stroke="#d8a94b" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".65"/>
+          <path d="M21 17 Q30 29 38 43" stroke="#8a6a2a" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".7"/>
+          <path d="M57 7 l4 -3 M4 57 l-4 3" stroke="#d8a94b" stroke-width="1.4" stroke-linecap="round" opacity=".5"/>
+        </svg></div><div class="no">5</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M18 44 Q32 30 46 21" stroke="#6a625a" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".5"/>
+          <path d="M25 23 Q30 30 35 39" stroke="#6a625a" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".42"/>
+        </svg></div><div class="no">6</div></div>
+      </div>
+    </div>
+
+    <!-- ───────── 찌르기 ───────── -->
+    <div class="row">
+      <div class="key">
+        <div class="nm">찌르기</div>
+        <div class="wp">hit_pierce · 창 · 화살</div>
+        <div class="ch">앞으로만 뻗는 좁은 다발. 뒤로는 작게 튄다 — "뚫고 들어갔다"가 방향으로 읽히게.</div>
+      </div>
+      <div class="strip">
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <circle cx="28" cy="32" r="3" fill="#fff6e0"/>
+        </svg></div><div class="no">1</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M28 32 L46 25 M28 32 L47 32 M28 32 L46 39" stroke="#fff6e0" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M28 32 L20 28 M28 32 L20 36" stroke="#d8a94b" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="28" cy="32" r="3.4" fill="#fff6e0"/>
+        </svg></div><div class="no">2</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M27 32 L58 20 M27 32 L60 32 M27 32 L58 44 M27 32 L50 15 M27 32 L50 49"
+                stroke="#ffe08a" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M27 32 L57 26 M27 32 L57 38" stroke="#fff6e0" stroke-width="3" stroke-linecap="round"/>
+          <path d="M27 32 L12 25 M27 32 L12 39" stroke="#d8a94b" stroke-width="2" stroke-linecap="round"/>
+          <ellipse cx="27" cy="32" rx="5" ry="7" fill="#fff6e0"/>
+        </svg></div><div class="no">3</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M40 24 L56 18 M42 32 L60 32 M40 40 L56 46 M38 20 L48 12 M38 44 L48 52"
+                stroke="#ffe08a" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M16 25 L8 22 M16 39 L8 42" stroke="#d8a94b" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
+          <ellipse cx="28" cy="32" rx="3" ry="5" fill="#ffe08a" opacity=".8"/>
+        </svg></div><div class="no">4</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M50 20 L58 17 M52 32 L62 32 M50 44 L58 47 M46 13 L51 8 M46 51 L51 56"
+                stroke="#d8a94b" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>
+          <path d="M10 21 L5 19 M10 43 L5 45" stroke="#8a6a2a" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
+        </svg></div><div class="no">5</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <path d="M56 19 L60 18 M57 32 L62 32 M56 45 L60 46" stroke="#6a625a" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
+        </svg></div><div class="no">6</div></div>
+      </div>
+    </div>
+
+    <!-- ───────── 둔기 ───────── -->
+    <div class="row">
+      <div class="key">
+        <div class="nm">둔기</div>
+        <div class="wp">hit_blunt · 철퇴 · 망치 · 곡괭이</div>
+        <div class="ch">납작하게 눌린 고리와 덩어리 파편. 셋 중 가장 크고 가장 늦게까지 남는다 — 무게가 시간으로 읽히게.</div>
+      </div>
+      <div class="strip">
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <ellipse cx="32" cy="34" rx="8" ry="4" fill="none" stroke="#fff6e0" stroke-width="3"/>
+        </svg></div><div class="no">1</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <ellipse cx="32" cy="34" rx="18" ry="7" fill="none" stroke="#fff6e0" stroke-width="4"/>
+          <ellipse cx="32" cy="34" rx="9" ry="4" fill="none" stroke="#ffe08a" stroke-width="2"/>
+          <rect x="14" y="24" width="4" height="4" fill="#d8a94b"/><rect x="46" y="26" width="5" height="4" fill="#d8a94b"/>
+        </svg></div><div class="no">2</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <ellipse cx="32" cy="34" rx="27" ry="11" fill="none" stroke="#fff6e0" stroke-width="4.5"/>
+          <ellipse cx="32" cy="34" rx="16" ry="6.5" fill="none" stroke="#ffe08a" stroke-width="2.6"/>
+          <rect x="6" y="18" width="5" height="5" fill="#ffe08a"/><rect x="52" y="20" width="6" height="5" fill="#ffe08a"/>
+          <rect x="18" y="12" width="4" height="4" fill="#d8a94b"/><rect x="42" y="14" width="5" height="4" fill="#d8a94b"/>
+          <rect x="30" y="9" width="4" height="4" fill="#d8a94b"/>
+        </svg></div><div class="no">3</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <ellipse cx="32" cy="34" rx="31" ry="13" fill="none" stroke="#ffe08a" stroke-width="2.4"/>
+          <ellipse cx="32" cy="34" rx="20" ry="8" fill="none" stroke="#d8a94b" stroke-width="1.8" opacity=".8"/>
+          <rect x="2" y="12" width="5" height="5" fill="#ffe08a" opacity=".9"/><rect x="56" y="14" width="5" height="5" fill="#ffe08a" opacity=".9"/>
+          <rect x="16" y="5" width="4" height="4" fill="#d8a94b" opacity=".85"/><rect x="44" y="7" width="4" height="4" fill="#d8a94b" opacity=".85"/>
+        </svg></div><div class="no">4</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <ellipse cx="32" cy="36" rx="30" ry="9" fill="none" stroke="#8a6a2a" stroke-width="1.6" opacity=".8"/>
+          <ellipse cx="32" cy="38" rx="20" ry="6" fill="#6a625a" opacity=".35"/>
+          <rect x="4" y="20" width="4" height="4" fill="#8a6a2a" opacity=".7"/><rect x="56" y="22" width="4" height="4" fill="#8a6a2a" opacity=".7"/>
+        </svg></div><div class="no">5</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <ellipse cx="32" cy="39" rx="24" ry="7" fill="#6a625a" opacity=".28"/>
+          <ellipse cx="32" cy="40" rx="13" ry="4" fill="#6a625a" opacity=".22"/>
+        </svg></div><div class="no">6</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────── 치명타 한 겹 ───────── -->
+  <div class="div">
+    <div class="critnote">
+      <div class="key">
+        <span class="tag">치명타</span>
+        <div class="nm">한 겹 (hit_crit)</div>
+        <div class="wp">5프레임 · 어느 계열 위에나 1.3배로</div>
+        <div class="ch">계열마다 치명타를 따로 그리지 않는다. 그러면 그림이 두 배가 되고, 두 벌이 서로 다른 무기처럼 읽힌다.
+          <b>흰 고리와 네 갈래 금빛 가시</b>를 위에 얹는 쪽이 "같은 무기가 세게 들어갔다"로 읽힌다. 소리도 같은 방식이다.</div>
+      </div>
+      <div class="strip">
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="6" fill="none" stroke="#ffffff" stroke-width="3"/>
+          <path d="M32 22 v-5 M32 42 v5 M22 32 h-5 M42 32 h5" stroke="#ffe08a" stroke-width="2.4" stroke-linecap="round"/>
+        </svg></div><div class="no">1</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="15" fill="none" stroke="#ffffff" stroke-width="4"/>
+          <path d="M32 14 v-9 M32 50 v9 M14 32 h-9 M50 32 h9" stroke="#fff6e0" stroke-width="3.4" stroke-linecap="round"/>
+          <path d="M20 20 l-5 -5 M44 20 l5 -5 M20 44 l-5 5 M44 44 l5 5" stroke="#ffe08a" stroke-width="2.4" stroke-linecap="round"/>
+        </svg></div><div class="no">2</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="24" fill="none" stroke="#ffffff" stroke-width="3"/>
+          <path d="M32 6 v-6 M32 58 v6 M6 32 h-6 M58 32 h6" stroke="#ffe08a" stroke-width="3" stroke-linecap="round"/>
+          <path d="M15 15 l-6 -6 M49 15 l6 -6 M15 49 l-6 6 M49 49 l6 6" stroke="#ffe08a" stroke-width="2.2" stroke-linecap="round"/>
+        </svg></div><div class="no">3</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="29" fill="none" stroke="#d8a94b" stroke-width="1.8"/>
+          <path d="M32 2 v-4 M32 62 v4 M2 32 h-4 M62 32 h4" stroke="#d8a94b" stroke-width="2" stroke-linecap="round" opacity=".85"/>
+        </svg></div><div class="no">4</div></div>
+        <div class="cell"><div class="fr"><svg viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="31" fill="none" stroke="#8a6a2a" stroke-width="1.3" opacity=".6"/>
+        </svg></div><div class="no">5</div></div>
+      </div>
+
+      <div class="over">
+        <div class="cap">겹쳐 보기 — 베기 3 + 치명타 2</div>
+        <div class="stack">
+          <svg viewBox="0 0 64 64">
+            <path d="M11 50 Q32 27 53 14" stroke="#fff6e0" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <path d="M11 50 Q32 27 53 14" stroke="#ffe08a" stroke-width="11" fill="none" stroke-linecap="round" opacity=".38"/>
+            <path d="M20 15 Q30 29 38 45" stroke="#ffe08a" stroke-width="4" fill="none" stroke-linecap="round"/>
+          </svg>
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="15" fill="none" stroke="#ffffff" stroke-width="4"/>
+            <path d="M32 14 v-9 M32 50 v9 M14 32 h-9 M50 32 h9" stroke="#fff6e0" stroke-width="3.4" stroke-linecap="round"/>
+            <path d="M20 20 l-5 -5 M44 20 l5 -5 M20 44 l-5 5 M44 44 l5 5" stroke="#ffe08a" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
