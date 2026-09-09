@@ -589,6 +589,8 @@ button{
 .credits{font-size:12.5px;line-height:1.9;color:#a8a292;margin:4px 0 14px}
 .credits dt{color:var(--gold);font-size:10.5px;letter-spacing:.14em;margin-top:11px}
 .credits dd{color:#fff;font-size:13.5px}
+.credits dd a{color:#e8c87a;text-decoration:underline;text-underline-offset:2px}
+.credits dd a:hover{color:#ffe3a0}
 .modal-box.bye{width:300px;text-align:center;font-size:13px;color:#a8a292;line-height:2}
 /* ---- 유적 암호문 (브라우저 prompt 대신) ---- */
 .modal-box.code-box{width:300px;text-align:center}
