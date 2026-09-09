@@ -4561,8 +4561,10 @@ const G = {
     this._cardAt = this._cardAt || {};
     if (this.time - (this._cardAt[id] || -1e9) < 90) return;
     this._cardAt[id] = this.time;
+    /* 소리는 내지 않는다. 장 카드와 같은 UI를 빌려 쓰다 보니 장 전환 팡파르까지 같이
+       울렸는데, 이름표는 "여기가 어디"라고 조용히 알려 주는 것이지 사건이 아니다.
+       걷다 보면 경계가 여러 번 나오므로 그때마다 팡파르가 울리면 그게 더 크게 들린다. */
     UI.chapterCard({ sub: z ? z.sub : b.card.sub, title: z ? z.n : b.n, line: card.line });
-    this.sfx('chapter');
   },
 
   /** 그 땅의 공기색. 경계에서는 두 색을 섞어 선이 보이지 않게 한다.

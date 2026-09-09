@@ -801,16 +801,38 @@ class Player extends Ent {
     }
     /* 제트팩 — 공중에서 점프를 누르고 있는 동안 계속 떠오른다. 0.25초마다 전하를 한 번씩
        먹고, 바닥나면 useCharge가 가방의 배터리를 자동으로 갈아 끼운다. 배터리까지 없으면
-       그 자리에서 추진이 끊긴다(그래서 높이 오를 때는 여분 배터리가 곧 안전줄이 된다). */
+       그 자리에서 추진이 끊긴다(그래서 높이 오를 때는 여분 배터리가 곧 안전줄이 된다).
+
+       ■ 고친 것 셋 (전부 물리·조작이 실제로 이상하던 자리)
+
+       ① 점프를 깎아 먹던 것 — 예전에는 `vy = max(vy - 추진, -330)` 이라, 막 뛰어오른
+          순간(vy = -620)에 점프를 계속 누르고 있으면 **그 프레임에 곧장 -330으로
+          느려졌다.** 제트팩을 낀 채로 자연스럽게 "점프 + 계속 누르기"를 하면 점프가
+          오히려 나빠졌다는 뜻이다. 추진기에는 최고 속도가 있는 게 맞으므로, 이미 그보다
+          빨리 오르는 중이면 손대지 않고 중력이 -330까지 내려놓기를 기다린다.
+
+       ② 연타하면 공짜였던 것 — 누른 첫 프레임에는 jetT가 0.25에 못 미쳐 전하를 안 먹고
+          `charge > 0` 만 보고 추진했다. 그래서 **0.25초보다 빠르게 눌렀다 떼면 전하를
+          한 톨도 안 쓰고 무한히 날 수 있었다.** 이제 누르는 순간 먼저 한 번 받는다
+          (연타가 오히려 비싸진다 — 꾹 누르는 쪽이 이득이다).
+
+       ③ 이중 점프가 매 프레임 되차던 것 — 추진 중에 jumpsLeft를 계속 채워 줘서, 떼었다
+          다시 누르면 -620 점프가 무한히 나왔다. ①과 겹쳐서 "누르고 있기"보다 "연타"가
+          더 빨리 오르는 뒤집힌 조작이 됐다. 땅과 물에서만 되찬다(위 788줄).
+
+       ■ 전하: 0.25초마다 6 (초당 24). 최대 전하 460(기본 200 + 제트팩 260)이면
+          연속 19.2초 = 288칸. 이 세계에서 제일 긴 오르막인 지옥(390) → 지표(70)가
+          320칸이라, 그 한 번만 배터리를 한 개 갈아 끼우면 된다. */
     this.jetting = false;
     if (d.jet && input.jump && !this.onGround && !inWater) {
-      this.jetT = (this.jetT || 0) + dt;
-      if (this.jetT >= 0.25) { this.jetT -= 0.25; this.jetOk = this.useCharge(4); }
-      else if (this.jetOk === undefined) this.jetOk = this.charge > 0;
+      if (this.jetOk === undefined) { this.jetT = 0; this.jetOk = this.useCharge(6); }
+      else {
+        this.jetT = (this.jetT || 0) + dt;
+        if (this.jetT >= 0.25) { this.jetT -= 0.25; this.jetOk = this.useCharge(6); }
+      }
       if (this.jetOk) {
-        this.vy = Math.max(this.vy - 2400 * dt, -330);
+        if (this.vy > -330) this.vy = Math.max(this.vy - 2400 * dt, -330);
         this.jetting = true;
-        this.jumpsLeft = d.jumps;       // 제트팩을 쓰는 동안은 이중 점프를 아낄 이유가 없다
         if (Math.random() < dt * 30)
           G.parts.push(new Part(this.cx + (Math.random() - .5) * 10, this.y + this.h, '#ffb04a', 60, 0.35));
       }
@@ -836,9 +858,13 @@ class Player extends Ent {
     // 낙하 데미지 판정용 — move() 안에서 착지 순간 vy가 0으로 꺾이기 전에 미리 재둔다
     const wasOnGround = this.onGround, fallVy = this.vy;
     this.move(dt, world, { dropThrough: !!input.down });
-    // 물에 빠지면 안 다친다 — 폭포 아래 웅덩이가 착지 지점이 되어 주는 게 이 지형의 요점이다
-    // 제트팩도 마찬가지 — 추진으로 속도를 죽이며 내려앉는 것이라 낙하 피해가 없다
-    if (!wasOnGround && this.onGround && !d.glide && !d.jet && (this.submerged || 0) <= 0.2) {
+    /* 물에 빠지면 안 다친다 — 폭포 아래 웅덩이가 착지 지점이 되어 주는 게 이 지형의 요점이다.
+       제트팩·깃털도 마찬가지지만, **지금 실제로 추진하거나 활공하는 중일 때만** 그렇다.
+       예전에는 `!d.glide && !d.jet` — 끼고만 있으면 되는 조건이라, 전하가 바닥나 그냥
+       떨어지는 중에도, 점프를 안 누른 채 추락하는 중에도 낙하 피해가 통째로 없었다.
+       장신구 하나가 "영구 낙하 무효"를 겸하고 있었던 셈이다. 추진으로 속도를 죽이며
+       내려앉는 것만 면제된다 — 그게 원래 하려던 말이기도 하다. */
+    if (!wasOnGround && this.onGround && !this.gliding && !this.jetting && (this.submerged || 0) <= 0.2) {
       // 건초더미 위로 떨어지면 안 다친다 — 마을에서 지붕을 타고 다니라고 둔 것
       const bt = world.get(Math.floor(this.cx / TS), Math.floor((this.y + this.h + 2) / TS));
       if (fallVy > SAFE_FALL_VY && this.iframe <= 0 && !TILE_DEF[bt].soft) {

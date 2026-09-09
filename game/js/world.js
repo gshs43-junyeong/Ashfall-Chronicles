@@ -507,6 +507,7 @@ class World {
     this.restoreSealRoom();      // 동굴이 헐고 간 봉인실 바닥·문 앞 복도를 되돌린다
     for (const j of this._walkJobs || []) this._ensureWalkable(j[0], j[1], j[2], j[3], j[4], j[5], j[6], rng);
     this.ensureEntranceTraps(rng);   // 함정 없이 그냥 걸어 들어가는 문을 남기지 않는다
+    this.breakLongRuns(rng);         // 함정 하나 없이 쭉 걸어가는 직선 구간을 끊는다
     this.sealCipherVaults();         // 암호 골방의 껍질을 한 번 더 세운다
 
     this.spawnX = (vx0 + vx1) >> 1;
@@ -1990,6 +1991,70 @@ class World {
           this.set(x, fy + 1, T.CRUMBLE);
           this.set(x, fy + 2, T.AIR);
           put = true;
+        }
+      }
+    }
+  }
+
+  /** 함정 하나 안 밟고 쭉 걸어가는 **직선 구간**을 끊는다.
+
+      ■ 무엇이 문제였나
+
+        방마다 함정을 넣는 규칙(trapRate)은 잘 돌고 있었다. 그런데 유적 본체는 BSP로
+        자른 방이라 방 하나가 최소 15칸이고, 방과 방을 잇는 복도에는 함정 규칙이 아예
+        닿지 않는다. 그래서 **개수는 충분한데 한 줄로 이어 놓고 보면 뻥 뚫려 있었다.**
+
+        실측(시드 여섯 · 유적 48곳) — 함정을 하나도 안 만나고 걸을 수 있는 가장 긴 구간
+
+          중앙 16칸 · 최대 31칸.  얼음 유적은 평균 23칸이었다.
+
+        31칸이면 화면 하나를 가로지르고도 남는다. "입구가 직선이고 함정이 거의 없다"는
+        말이 바로 이 줄이다.
+
+      ■ 무엇을 하는가
+
+        함정을 더 뿌리지 않는다(개수는 이미 충분하다). 대신 **너무 긴 구간의 한가운데**
+        하나씩만 심는다. 한가운데라는 자리가 요점이다 — 벽 옆 구석에 선 함정은 몸을
+        붙여 걸으면 안 닿지만, 구간 한복판은 지나가려면 반드시 밟는다.
+
+        길을 막지 않는 둘(가시 · 부서지는 바닥)만 쓴다(putPathTrap). 화살 구멍·톱니는
+        solid 라서 복도 한복판에 놓으면 유적이 통째로 끊긴다.
+
+        보스방은 건너뛴다. 싸우는 자리 바닥이 무너지면 함정이 아니라 사고다. */
+  breakLongRuns(rng) {
+    const MAX_RUN = 11;                       // 이보다 길게 뚫려 있으면 끊는다
+    const TRAPT = {};
+    for (const t of [T.SPIKE, T.DART_L, T.DART_R, T.FLAMEVENT, T.CRUMBLE,
+                     T.SPARKCOIL, T.GASVENT, T.GRINDER]) TRAPT[t] = 1;
+    const trapNear = (x, y) => TRAPT[this.get(x, y + 1)] || TRAPT[this.get(x, y)] ||
+                               TRAPT[this.get(x, y - 1)] || TRAPT[this.get(x, y - 2)];
+    const walk = (x, y) => this.solid(x, y + 1) &&
+                           this.get(x, y) === T.AIR && this.get(x, y - 1) === T.AIR;
+    for (const site of this.ruinSites || []) {
+      const boss = (site.rooms || [])[0];
+      const inBoss = (x, y) => boss && x >= boss.x - 1 && x <= boss.x + boss.w + 1 &&
+                               y >= boss.y - 1 && y <= boss.y + boss.h + 1;
+      const x0 = site.x - (site.w >> 1), x1 = x0 + site.w;
+      const y0 = site.y - (site.h >> 1), y1 = y0 + site.h;
+      for (let y = y0; y <= y1; y++) {
+        let run = 0;
+        for (let x = x0; x <= x1; x++) {
+          if (!walk(x, y) || trapNear(x, y)) { run = 0; continue; }
+          run++;
+          if (run <= MAX_RUN) continue;
+          /* 구간이 한계를 넘었다 — 지금까지 온 구간의 한가운데에 하나 심는다.
+             심고 나면 그 자리가 새 시작점이 되므로 run 을 0 으로 되돌린다. */
+          const mid = x - (run >> 1);
+          let put = false;
+          for (let d = 0; d <= (run >> 1) && !put; d++) {
+            for (const px of (d ? [mid - d, mid + d] : [mid])) {
+              if (px < x0 || px > x1 || inBoss(px, y)) continue;
+              if (!walk(px, y) || trapNear(px, y)) continue;
+              if (this.putPathTrap(px, y, rng)) { put = true; break; }
+            }
+          }
+          run = 0;
+          if (!put) x += MAX_RUN;             // 못 심는 줄이면 헛돌지 않게 건너뛴다
         }
       }
     }
