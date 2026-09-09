@@ -924,7 +924,8 @@ window.SPRITE_MANIFEST = {
         "frost": "fx/proj_frost.png",
         "void": "fx/proj_void.png",
         "wind": "fx/proj_wind.png",
-        "rune": "fx/proj_rune.png"
+        "rune": "fx/proj_rune.png",
+        "starfrag": "fx/proj_starfrag.png"
       }
     },
     "bursts": {
@@ -936,7 +937,12 @@ window.SPRITE_MANIFEST = {
       "files": {
         "hit": "fx/hit_impact.png",
         "fire": "fx/explosion_fire.png",
-        "void": "fx/explosion_void.png"
+        "void": "fx/explosion_void.png",
+        "stargain": "fx/star_gain.png",
+        "starmerge": "fx/star_merge.png",
+        "arcane": "fx/hit_arcane.png",
+        "frost": "fx/hit_frost.png",
+        "soul": "fx/hit_soul.png"
       }
     }
   },

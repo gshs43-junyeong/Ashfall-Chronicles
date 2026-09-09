@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+    a { color: #d8a94b; } a:hover { color: #ffe08a; }
+    .b { background: #0d0b0a; color: #e9e2d7; padding: 24px 26px; min-height: 100%;
+         display: flex; flex-direction: column; gap: 16px; }
+    .ttl { display: flex; align-items: baseline; gap: 10px; }
+    .ttl .k { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: #0d0b0a;
+              background: #7a7067; padding: 2px 6px; letter-spacing: .08em; }
+    .ttl h2 { font-size: 17px; font-weight: 600; margin: 0; }
+    .why { font-size: 12.5px; color: #a89c8e; line-height: 1.6; margin: 0; text-wrap: pretty; }
+    .pair { display: flex; gap: 14px; }
+    .one { display: flex; flex-direction: column; gap: 6px; }
+    .one .cap { font-size: 10.5px; color: #7a7067; letter-spacing: .04em; }
+    .box { width: 104px; height: 104px; background: #14120f; border: 1px solid #262220; position: relative; }
+    .box svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .facts { display: flex; flex-direction: column; gap: 7px; margin-top: auto;
+             border-top: 1px solid #332d29; padding-top: 13px; }
+    .f { display: flex; gap: 9px; font-size: 11.5px; line-height: 1.5; }
+    .f .lb { color: #5e564f; width: 40px; flex-shrink: 0; letter-spacing: .04em; }
+    .f .vl { color: #a89c8e; }
+    .f.cost .vl { color: #78b0c6; }
+    .f.tr .vl { color: #c98a6a; }
+  </style>
+</helmet>
+
+<div class="b">
+  <div class="ttl"><span class="k">A</span><h2>겹치는 한 겹</h2></div>
+  <p class="why">평타 그림은 그대로 두고, 치명타일 때만 <b>흰 고리 한 겹</b>을 위에 더 크게 얹는다.
+    무기 계열의 모양은 아래에 그대로 남으므로 "같은 무기가 세게 들어갔다"로 읽힌다. 소리 쪽도 같은 방식이다.</p>
+
+  <div class="pair">
+    <div class="one"><span class="cap">평타</span><div class="box">
+      <svg viewBox="0 0 64 64">
+        <path d="M13 48 Q32 28 51 16" stroke="#ffe08a" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M22 17 Q30 29 37 43" stroke="#d8a94b" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg></div></div>
+    <div class="one"><span class="cap">치명타 = 평타 + 한 겹</span><div class="box">
+      <svg viewBox="0 0 64 64">
+        <path d="M13 48 Q32 28 51 16" stroke="#ffe08a" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M22 17 Q30 29 37 43" stroke="#d8a94b" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg>
+      <svg viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="17" fill="none" stroke="#ffffff" stroke-width="3.5"/>
+        <path d="M32 12 v-8 M32 52 v8 M12 32 h-8 M52 32 h8" stroke="#fff6e0" stroke-width="3" stroke-linecap="round"/>
+        <path d="M19 19 l-5 -5 M45 19 l5 -5 M19 45 l-5 5 M45 45 l5 5" stroke="#ffe08a" stroke-width="2" stroke-linecap="round"/>
+      </svg></div></div>
+  </div>
+
+  <div class="facts">
+    <div class="f cost"><span class="lb">그림</span><span class="vl">새 시트 4장 — 베기·찌르기·둔기 + 치명타 한 겹</span></div>
+    <div class="f"><span class="lb">코드</span><span class="vl">Enemy.hurt 에서 계열 하나 고르고, crit 이면 한 번 더 부른다</span></div>
+    <div class="f tr"><span class="lb">약점</span><span class="vl">치명타가 "같은 타격이 커진 것"이라 계열별 개성은 평타에만 남는다</span></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

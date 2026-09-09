@@ -10,3 +10,7 @@ site/play/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# /design 로 구운 캔버스 — 2MB 편집기가 통째로 들어 있는 산출물이라 담지 않는다
+design/*.html
+!design/*.dc.html

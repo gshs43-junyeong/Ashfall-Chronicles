@@ -1,0 +1,16 @@
+{
+  "artboards": [
+    { "file": "DirectionA.dc.html", "x": 0,    "y": 0,    "w": 520,  "h": 400, "title": "A — 겹치는 한 겹" },
+    { "file": "DirectionB.dc.html", "x": 600,  "y": 0,    "w": 520,  "h": 400, "title": "B — 색과 크기만" },
+    { "file": "DirectionC.dc.html", "x": 1200, "y": 0,    "w": 520,  "h": 400, "title": "C — 두 벌" },
+    { "file": "Main.dc.html",       "x": 0,    "y": 520,  "w": 1480, "h": 880, "title": "확정안 — 물리 셋 + 치명타 한 겹" },
+    { "file": "Reference.dc.html",  "x": 0,    "y": 1520, "w": 1480, "h": 360, "title": "대조 — 이미 있는 마법 다섯" }
+  ],
+  "annotations": [
+    { "id": "pick", "x": 1800, "y": 0, "w": 260,
+      "text": "먼저 고를 것\n치명타를 어떻게 읽히게 할지 — A · B · C 중 하나.\n\n아래 확정안은 A 로 그려 두었습니다. B나 C를 고르시면 그 쪽으로 다시 그립니다." },
+    { "id": "why", "x": 1800, "y": 520, "w": 260,
+      "text": "왜 이게 필요한가\n지금 근접 타격에는 맞는 그림이 아예 없습니다.\n\nEnemy.hurt 가 하는 일: 피해 숫자 + 몬스터 색 파편 4개(치명타면 8개). 그게 전부입니다." }
+  ],
+  "launch": { "view": "canvas" }
+}

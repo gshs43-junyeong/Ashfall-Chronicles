@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+    a { color: #d8a94b; } a:hover { color: #ffe08a; }
+    .b { background: #0d0b0a; color: #e9e2d7; padding: 24px 26px; min-height: 100%;
+         display: flex; flex-direction: column; gap: 16px; }
+    .ttl { display: flex; align-items: baseline; gap: 10px; }
+    .ttl .k { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: #0d0b0a;
+              background: #7a7067; padding: 2px 6px; letter-spacing: .08em; }
+    .ttl h2 { font-size: 17px; font-weight: 600; margin: 0; }
+    .why { font-size: 12.5px; color: #a89c8e; line-height: 1.6; margin: 0; text-wrap: pretty; }
+    .pair { display: flex; gap: 14px; }
+    .one { display: flex; flex-direction: column; gap: 6px; }
+    .one .cap { font-size: 10.5px; color: #7a7067; letter-spacing: .04em; }
+    .box { width: 104px; height: 104px; background: #14120f; border: 1px solid #262220; position: relative; }
+    .box svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .facts { display: flex; flex-direction: column; gap: 7px; margin-top: auto;
+             border-top: 1px solid #332d29; padding-top: 13px; }
+    .f { display: flex; gap: 9px; font-size: 11.5px; line-height: 1.5; }
+    .f .lb { color: #5e564f; width: 40px; flex-shrink: 0; letter-spacing: .04em; }
+    .f .vl { color: #a89c8e; }
+    .f.cost .vl { color: #78b0c6; }
+    .f.tr .vl { color: #c98a6a; }
+  </style>
+</helmet>
+
+<div class="b">
+  <div class="ttl"><span class="k">C</span><h2>두 벌</h2></div>
+  <p class="why">계열마다 <b>치명타 전용 프레임</b>을 따로 그린다. 베기의 치명타는 초승달이 셋으로 갈라지고,
+    둔기의 치명타는 고리가 두 겹으로 터진다 — 무기마다 치명타의 얼굴이 다르다.</p>
+
+  <div class="pair">
+    <div class="one"><span class="cap">베기 · 치명타</span><div class="box">
+      <svg viewBox="0 0 64 64">
+        <path d="M8 52 Q32 26 56 12" stroke="#ffffff" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M14 58 Q34 32 58 20" stroke="#ffe08a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M4 44 Q28 20 50 6" stroke="#ffe08a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M18 12 Q30 30 40 50" stroke="#fff6e0" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg></div></div>
+    <div class="one"><span class="cap">둔기 · 치명타</span><div class="box">
+      <svg viewBox="0 0 64 64">
+        <ellipse cx="32" cy="34" rx="29" ry="12" fill="none" stroke="#ffffff" stroke-width="4"/>
+        <ellipse cx="32" cy="34" rx="19" ry="8" fill="none" stroke="#ffe08a" stroke-width="3"/>
+        <ellipse cx="32" cy="34" rx="9" ry="4" fill="none" stroke="#fff6e0" stroke-width="2.4"/>
+        <rect x="3" y="14" width="6" height="6" fill="#ffe08a"/><rect x="55" y="16" width="6" height="6" fill="#ffe08a"/>
+        <rect x="29" y="6" width="5" height="5" fill="#fff6e0"/>
+      </svg></div></div>
+  </div>
+
+  <div class="facts">
+    <div class="f cost"><span class="lb">그림</span><span class="vl">새 시트 6장 — 계열 셋 × 평타·치명타</span></div>
+    <div class="f"><span class="lb">코드</span><span class="vl">계열과 crit 으로 시트 이름을 고르는 것뿐. 가장 단순하다</span></div>
+    <div class="f tr"><span class="lb">약점</span><span class="vl">그림이 두 배. 두 벌이 너무 다르면 같은 무기가 아니라 다른 공격으로 읽힌다</span></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
