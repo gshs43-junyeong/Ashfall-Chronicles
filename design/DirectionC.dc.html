@@ -8,6 +8,8 @@
 <x-dc>
 <helmet>
   <style>
+    /* 틀이 내용보다 크면 남는 자리는 이 바탕으로 칠해진다 — 안 주면 흰 여백이 남는다 */
+    html, body { height: 100%; background: #0d0b0a; }
     body { margin: 0; font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
     a { color: #d8a94b; } a:hover { color: #ffe08a; }
     .b { background: #0d0b0a; color: #e9e2d7; padding: 24px 26px; min-height: 100%;
@@ -62,5 +64,8 @@
   </div>
 </div>
 </x-dc>
+<script data-dc-script data-props='{"$preview":{"width":520,"height":470}}'>
+class Component extends DCLogic {}
+</script>
 </body>
 </html>

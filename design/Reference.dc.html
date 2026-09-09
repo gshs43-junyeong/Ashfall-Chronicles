@@ -8,6 +8,8 @@
 <x-dc>
 <helmet>
   <style>
+    /* 틀이 내용보다 크면 남는 자리는 이 바탕으로 칠해진다 — 안 주면 흰 여백이 남는다 */
+    html, body { height: 100%; background: #0d0b0a; }
     body { margin: 0; font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
     a { color: #d8a94b; } a:hover { color: #ffe08a; }
     .r { background: #0d0b0a; color: #e9e2d7; padding: 26px 38px; min-height: 100%; }
@@ -69,5 +71,8 @@
     찌르기는 앞으로만 좁게, 둔기는 납작하게 가장 늦게. 색은 물리만 금빛을 쓴다(마법과 안 헷갈리게).</p>
 </div>
 </x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1240,"height":400}}'>
+class Component extends DCLogic {}
+</script>
 </body>
 </html>
