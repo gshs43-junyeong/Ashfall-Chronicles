@@ -458,6 +458,10 @@ footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--bone-fai
    "사이트를 고쳤는데 반영이 안 된다"가 캐시인지 배포인지 여기서 갈린다. */
 .site-build{opacity:.42;font-size:.82em;margin-left:6px;}
 .foot-links{display:flex;flex-wrap:wrap;gap:18px;}
+/* 애셋 출처 — 눈에 띌 필요는 없지만 반드시 보이는 자리에 있어야 한다 */
+.foot-credit{flex-basis:100%;order:3;margin:14px 0 0;opacity:.62;font-size:.9em;}
+.foot-credit a{color:inherit;text-decoration:underline;text-underline-offset:2px;}
+.foot-credit a:hover{color:var(--bone);}
 
 /* ================= 스크롤 등장 =================
    기본은 "보이는" 상태다. 스크립트가 관찰자를 실제로 띄웠을 때만 html.anim 이 붙어
