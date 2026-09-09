@@ -1712,6 +1712,17 @@ const UI = {
       $('#pw-fill').style.width = (p.charge / d.maxCharge * 100) + '%';
       $('#pw-text').textContent = `${Math.floor(p.charge)} / ${d.maxCharge}`;
     }
+    /* 추진기 열 — 제트팩을 낀 동안에만. 과열이면 무엇이 막고 있는지 글로 말해 준다
+       (막대만 빨개지면 "왜 안 떠오르지"가 된다). */
+    $('#hp-fill').closest('.orb-row').classList.toggle('has-jet', !!d.jet);
+    if (d.jet) {
+      const jb = $('#jet-bar');
+      // 남은 쪽을 채운다 — 열이 오를수록 줄어든다(체력·마나와 같은 방향으로 읽히게)
+      $('#jet-fill').style.width = Math.round((1 - (p.jetHeat || 0)) * 100) + '%';
+      jb.classList.toggle('over', !!p.jetOver);
+      $('#jet-text').textContent = p.jetOver ? '과열 — 식는 중'
+        : (p.jetGap > 30 ? '한계 높이' : `추진기 ${Math.round((1 - (p.jetHeat || 0)) * 100)}%`);
+    }
     $('#gold-text').innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl('coin')})"></span>${fmt(p.gold)}`;
     // 발밑 지형이 아니라 세계 공통 기준선(SURF_BASE)에서 잰다 — 발밑 지형 기준이면
     // 어디를 걷든 "발밑에서 몇 칸 떠 있나"만 재서 늘 비슷한 값(예: 항상 5m)이 나오고,

@@ -2,6 +2,25 @@
 'use strict';
 
 const GRAV = 2000, MAX_FALL = 1250;
+/* ================= 제트팩의 두 한계 =================
+   연료(전하)만으로는 "언제까지 날 수 있나"만 정해질 뿐, **어디까지 · 얼마나 오래 제자리에**
+   떠 있을 수 있는지는 아무것도 막지 않았다. 배터리를 몇 개 넣고 다니면 보스방 천장에
+   붙어 싸움을 통째로 건너뛸 수 있었다. 두 가지로 막는다.
+
+     ① 높이  — 발밑 지면에서 30칸까지만 오른다. 넘어서면 추진이 **오르는 쪽으로만** 끊긴다.
+               (떨어지는 속도를 죽이는 것은 그 위에서도 된다 — 안 그러면 높은 데서
+                제트팩을 메고도 추락사한다)
+     ② 열    — 4초를 연속으로 밀면 과열되어 꺼진다. 공중에서 3초, 땅을 밟으면 1.2초에
+               식는다. 30칸을 오르는 데 2초면 되므로 오르내리는 데는 넉넉하고,
+               **제자리 부양**만 4초에서 끊긴다.
+
+   둘이 맞물려서 "높은 데로 옮겨 간다"는 되고 "공중에 눌러앉는다"는 안 된다. */
+const JET_MAX_UP = 30;         // 발밑 지면에서 오를 수 있는 한계 (칸)
+const JET_BURN = 4.0;          // 이만큼 연속으로 밀면 과열 (초)
+const JET_COOL_AIR = 3.0;      // 공중에서 다 식는 시간 (초)
+const JET_COOL_GROUND = 1.2;   // 땅을 밟았을 때 (초)
+const JET_RESUME = 0.3;        // 과열 뒤 열이 이만큼 내려와야 다시 걸린다
+const JET_HIGH_FALL = 140;     // 한계 높이 위에서는 이 속도로 내려온다 (안전 낙하선 938보다 한참 아래)
 const SAFE_FALL_TILES = 10;                                  // 이만큼까지는 낙하 데미지 없음
 const SAFE_FALL_VY = Math.sqrt(2 * GRAV * SAFE_FALL_TILES * TS);   // v² = 2·g·d 로 역산한 안전 낙하 속도
 const BASE_BAG_SIZE = 40, MAX_BAG_SIZE = 56, HOTBAR = 10;
@@ -200,6 +219,7 @@ class Player extends Ent {
     /* v1.1 생활 숙련 — 포인트로 찍지 않고 하다 보면 오른다 */
     this.prof = { farm: { lv: 1, xp: 0 }, fish: { lv: 1, xp: 0 } };
     this.charge = 200;             // 동력 장비용 전하. 바닥나면 가방의 배터리를 자동으로 쓴다
+    this.jetHeat = 0; this.jetOver = false; this.jetGap = 0;   // 제트팩의 열·높이 (저장 안 함 — 땅에 닿으면 곧 식는다)
     this.kills = {}; this.mined = {}; this.bossKilled = {}; this.gathered = {};
     this.deepest = 0;
     /* 펫은 v1.0.2부터 장비 아이템(equip.pet1/pet2)이다. pets/activePet은 그전 세이브를
@@ -270,6 +290,29 @@ class Player extends Ent {
     UI.refreshBag();
     this.charge -= n;
     return true;
+  }
+
+  /** 발밑에서 지면까지 몇 칸인가. JET_MAX_UP+1 안에 아무것도 없으면 그 값을 돌려준다
+      (그보다 높이 떠 있다는 뜻). 물도 지면으로 친다 — 물 위에는 내려앉을 수 있으니까.
+      몸이 걸친 칸을 다 보고 그중 가장 가까운 것을 쓴다(난간 끝에 서 있어도 끊기지 않게). */
+  groundGap(world) {
+    if (!world) return 0;
+    const fy = Math.floor((this.y + this.h + 1) / TS);
+    const x0 = Math.floor(this.x / TS), x1 = Math.floor((this.x + this.w - 1) / TS);
+    let best = JET_MAX_UP + 1;
+    for (let x = x0; x <= x1; x++)
+      for (let dy = 0; dy < best; dy++) {
+        const t = TILE_DEF[world.get(x, fy + dy)];
+        if (t.solid === 1 || t.solid === 2 || t.liquid) { best = dy; break; }
+      }
+    return best;
+  }
+
+  /** 제트팩 안내 한 줄 — 같은 말이 초당 몇 번씩 뜨지 않게 3초에 한 번만 */
+  jetNote(msg, kind) {
+    if (G.time - (this._jetNoteAt || -1e9) < 3) return;
+    this._jetNoteAt = G.time;
+    G.toast(msg, kind);
   }
 
   /* ---- 가방 용량 (가방 장신구로 확장) ---- */
@@ -824,19 +867,52 @@ class Player extends Ent {
           연속 19.2초 = 288칸. 이 세계에서 제일 긴 오르막인 지옥(390) → 지표(70)가
           320칸이라, 그 한 번만 배터리를 한 개 갈아 끼우면 된다. */
     this.jetting = false;
-    if (d.jet && input.jump && !this.onGround && !inWater) {
+    /* 발밑 지면에서 얼마나 떠 있나 — 30칸을 넘으면 더 오르지 못한다(위 JET_MAX_UP 주석) */
+    this.jetGap = d.jet ? this.groundGap(world) : 0;
+    /* 한계 높이를 **딱 끊지 않고 서서히 힘이 빠지게** 한다. 30칸에서 칼같이 끊으면
+       거기서 올라갔다 내려왔다를 초당 몇 번씩 반복해 화면이 덜덜 떨린다(실측).
+       마지막 네 칸에 걸쳐 추진력이 빠지면서 30칸 언저리에 스스로 멎는다. */
+    const room = d.jet ? clamp((JET_MAX_UP + 1 - this.jetGap) / 4, 0, 1) : 1;
+    const tooHigh = d.jet && this.jetGap >= JET_MAX_UP;
+    if (d.jet && input.jump && !this.onGround && !inWater && !this.jetOver) {
       if (this.jetOk === undefined) { this.jetT = 0; this.jetOk = this.useCharge(6); }
       else {
         this.jetT = (this.jetT || 0) + dt;
         if (this.jetT >= 0.25) { this.jetT -= 0.25; this.jetOk = this.useCharge(6); }
       }
       if (this.jetOk) {
-        if (this.vy > -330) this.vy = Math.max(this.vy - 2400 * dt, -330);
+        /* 오를 수 있는 속도 — 한계 높이에 가까울수록 -330에서 +140(천천히 내려오는
+           속도)으로 옮겨 간다. 140px/s 는 안전 낙하선(938)보다 한참 아래라 그대로
+           내려앉아도 안 다친다. 두 값이 만나는 자리(추진력 0)가 곧 한계 높이다. */
+        const cap = -330 * room + JET_HIGH_FALL * (1 - room);
+        if (this.vy > cap) this.vy = Math.max(this.vy - 2400 * dt, cap);
         this.jetting = true;
         if (Math.random() < dt * 30)
-          G.parts.push(new Part(this.cx + (Math.random() - .5) * 10, this.y + this.h, '#ffb04a', 60, 0.35));
+          G.parts.push(new Part(this.cx + (Math.random() - .5) * 10, this.y + this.h,
+                                tooHigh ? '#8a7a6a' : '#ffb04a', 60, 0.35));
+        if (tooHigh) this.jetNote('여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다');
       }
     } else { this.jetT = 0; this.jetOk = undefined; }
+    /* 열 — **밀어 올릴 때만** 오른다. 놓으면 식고, 땅을 밟으면 훨씬 빨리 식는다.
+
+       한계 높이 위에서는 추진기가 올리는 게 아니라 내려오는 속도만 죽이고 있으므로
+       열을 세지 않는다. 안 그러면 높은 데서 천천히 내려오는 도중에 과열되어 남은
+       높이를 그대로 떨어진다 — 제트팩을 메고 추락사하는 꼴이 된다(실측 49 피해). */
+    if (d.jet) {
+      if (this.jetting && !tooHigh) {
+        this.jetHeat = Math.min(1, (this.jetHeat || 0) + dt / JET_BURN);
+        if (this.jetHeat >= 1 && !this.jetOver) {
+          this.jetOver = true; this.jetting = false;
+          this.jetNote('추진기가 과열됐다 — 식을 때까지 꺼진다', 'bad');
+          G.sfx('power_off');
+          for (let i = 0; i < 10; i++)
+            G.parts.push(new Part(this.cx + (Math.random() - .5) * 12, this.y + this.h, '#6a6a72', -10, .6));
+        }
+      } else if (this.jetHeat > 0) {
+        this.jetHeat = Math.max(0, this.jetHeat - dt / (this.onGround ? JET_COOL_GROUND : JET_COOL_AIR));
+        if (this.jetOver && this.jetHeat <= JET_RESUME) this.jetOver = false;
+      }
+    } else { this.jetHeat = 0; this.jetOver = false; }
 
     // 활공 — 깃털 부적이 있으면 낙하 중 점프 유지 시 천천히 내려온다
     this.gliding = false;
