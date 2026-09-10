@@ -50,6 +50,16 @@ def shade(c, k):
     return tuple(max(0, min(255, int(v * k))) for v in c[:3])
 
 
+def lift(c, n):
+    """밝기를 n 만큼 **더한다**(곱하지 않는다).
+
+    원본 원경은 거의 검다 — 가까운 언덕이 (18,20,25) 다. 여기에 곱하기로 밝기를
+    주면(×1.2 → (21,24,30)) 언덕과 구분이 안 가는 실루엣이 나오고, 잎을 아무리
+    많이 얹어도 화면에서는 시커먼 덩어리 하나로 보인다. 실제로 그렇게 나왔다.
+    더하기라야 어두운 바탕에서도 잎이 확실히 떠오른다."""
+    return tuple(max(0, min(255, v + n)) for v in c[:3])
+
+
 def find_trees(px, W, H):
     """원본에서 줄기를 찾아 (가운데 x, 꼭대기 y, 폭, 색) 로 돌려준다.
 
@@ -110,10 +120,12 @@ def canopy(im, px, cx, ty, wide, col, rng, scale, clumps, ragged):
 
     # 값 네 단계. 두 단계로만 그렸더니 통짜 덩어리가 되어 나무가 아니라
     # 먹구름으로 보였다 — 잎은 안이 비어 보일 만큼 명암이 갈려야 한다.
-    dark = shade(col, 0.72)        # 갓 안쪽 그늘
-    mid = shade(col, 0.95)
-    leaf = shade(col, 1.20)        # 빛 받는 면
-    lite = shade(col, 1.52)        # 꼭대기 한 겹
+    # 모두 줄기보다 **밝다**. 갓이 줄기·언덕과 같은 값이면 실루엣이라 잎으로
+    # 안 읽히고, 화면에서는 하늘을 가린 시커먼 벽이 된다.
+    dark = lift(col, 9)            # 갓 안쪽 그늘 — 그래도 언덕보다는 밝다
+    mid = lift(col, 18)
+    leaf = lift(col, 28)           # 빛 받는 면
+    lite = lift(col, 41)           # 꼭대기 한 겹
 
     def blob(bx, by, r, c):
         rr = int(r) + 1
@@ -184,11 +196,11 @@ def ridge(im, px, sky, rng, dens, size):
         # 묶여 늘 참이 되고, 그러면 이 띠가 한 점도 안 그려진다
         if ty is None or ty < 2 or rng.random() >= dens:
             continue
-        leaf, lite = shade(col, 1.16), shade(col, 1.42)
-        for _ in range(2):
-            r = rng.uniform(2.5, 5.5) * size
-            bx = x + rng.uniform(-3, 3)
-            by = ty - rng.uniform(-1, 4) * size
+        leaf, lite = lift(col, 22), lift(col, 35)
+        for _ in range(1):
+            r = rng.uniform(1.6, 3.4) * size
+            bx = x + rng.uniform(-2, 2)
+            by = ty - rng.uniform(0, 3) * size
             c = lite if rng.random() < 0.3 else leaf
             rr = int(r) + 1
             for dy in range(-rr, rr + 1):
@@ -202,9 +214,9 @@ def ridge(im, px, sky, rng, dens, size):
 
 STAGES = [
     # 이름,        갓 크기, 덩이 수, 헤짐, 남은 나무, 능선 띠 밀도, 띠 크기
-    ('lush', 1.00, 34, 0.15, 1.00, 0.92, 1.00),
-    ('mid', 0.72, 18, 0.40, 0.88, 0.48, 0.72),
-    ('thin', 0.44, 9, 0.65, 0.55, 0.14, 0.50),
+    ('lush', 0.92, 30, 0.20, 1.00, 0.52, 1.00),
+    ('mid', 0.68, 16, 0.42, 0.88, 0.26, 0.74),
+    ('thin', 0.42, 8, 0.66, 0.55, 0.08, 0.52),
 ]
 
 
