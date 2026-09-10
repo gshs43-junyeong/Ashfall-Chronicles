@@ -852,6 +852,9 @@ window.SPRITE_MANIFEST = {
       "tiling": "가로 무한 반복(이음매 없음), 위쪽은 투명 — 게임 하늘이 비침",
       "files": [
         "bg/parallax_forest.png",
+        "bg/parallax_forest_lush.png",
+        "bg/parallax_forest_mid.png",
+        "bg/parallax_forest_thin.png",
         "bg/parallax_snow.png",
         "bg/parallax_corrupt.png",
         "bg/parallax_hell.png",

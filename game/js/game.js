@@ -3977,17 +3977,50 @@ const G = {
     }
     c.restore();
   },
+  /* ================= 숲 원경 — 잎이 있는 네 단계 =================
+     처음에는 원경을 **색만** 바꿨다. 같은 죽은 나무 그림을 밝기만 남기고 초록으로
+     눕힌 것이라, 1장에서도 8장에서도 서 있는 것은 똑같이 앙상한 장대였다.
+     초록색 앙상한 장대는 살아 있는 숲으로 안 읽힌다 — 색이 아니라 **모양**이
+     바뀌어야 한다. 그래서 잎이 달린 그림 셋을 따로 굽는다(tools/mkforestbg.py).
+
+     네 장은 능선과 줄기가 픽셀 단위로 같다(원본 위에 잎만 얹어 구웠다). 그래서
+     겹쳐 섞어도 지형이 흔들리지 않고 잎만 빠진다.
+
+     섞는 순서가 거꾸로인 것에 주의: **성근 쪽을 먼저 깔고 우거진 쪽을 위에
+     투명하게 얹는다.** 우거진 쪽이 성근 쪽을 포함하므로, 이 순서라야 남는 잎만
+     서서히 사라진다. 반대로 하면 우거진 판의 잎이 끝까지 안 지워진다. */
+  FOREST_STAGE: [
+    [0.10, 'parallax_forest_lush'],   // 1장 — 잎이 가장 우거진 것
+    [0.38, 'parallax_forest_mid'],    // 3~4장 — 성글어진 것
+    [0.66, 'parallax_forest_thin'],   // 5~7장 — 가지 끝에만
+    [0.99, 'parallax_forest']         // 8장 — 죽은 나무만 (원본)
+  ],
+
   /** 숲 원경을 지금 잿빛 깊이에 맞춰 섞어 둔다. 1920×400 을 매 프레임 픽셀 단위로
       섞을 수는 없어서 **장이 바뀔 때만** 다시 만들고 그 사이엔 만들어 둔 것을 쓴다. */
   forestBg(im) {
     const af = this.ashF();
-    if (af > 0.98) return im;                    // 다 빠졌다 — 원본이 곧 그 상태다
-    if (this._fbg && this._fbg.im === im && Math.abs(this._fbg.f - af) < 0.004) return this._fbg.cv;
-    const cv = (this._fbg && this._fbg.im === im) ? this._fbg.cv : document.createElement('canvas');
+    const S = this.FOREST_STAGE;
+    /* 지금 잿빛 깊이가 어느 두 단계 사이인가. 그림이 하나라도 없으면(애셋이 아직
+       안 붙었거나 옛 저장본) 원본 한 장으로 떨어진다 — 색만 바뀌던 예전 동작이다. */
+    let a = 0;
+    while (a < S.length - 2 && af > S[a + 1][0]) a++;
+    const dense = Sprites.img[S[a][1]], sparse = Sprites.img[S[a + 1][1]];
+    const t = clamp((af - S[a][0]) / (S[a + 1][0] - S[a][0]), 0, 1);
+    const ok = dense && dense.width && sparse && sparse.width;
+    const key = ok ? S[a][1] + '|' + t.toFixed(2) : 'plain';
+    if (af > 0.98 && !ok) return im;              // 다 빠졌다 — 원본이 곧 그 상태다
+    if (this._fbg && this._fbg.key === key && Math.abs(this._fbg.f - af) < 0.004) return this._fbg.cv;
+    const cv = this._fbg ? this._fbg.cv : document.createElement('canvas');
     cv.width = im.width; cv.height = im.height;
     const g = cv.getContext('2d');
     g.clearRect(0, 0, cv.width, cv.height);
-    g.drawImage(im, 0, 0);
+    if (ok) {
+      g.drawImage(sparse, 0, 0);
+      g.globalAlpha = 1 - t; g.drawImage(dense, 0, 0); g.globalAlpha = 1;
+    } else {
+      g.drawImage(im, 0, 0);
+    }
     const d = g.getImageData(0, 0, cv.width, cv.height), px = d.data;
     for (let i = 0; i < px.length; i += 4) {
       if (!px[i + 3]) continue;
@@ -3997,7 +4030,7 @@ const G = {
       px[i + 2] = px[i + 2] * af + (l * 0.47 + 3) * (1 - af);
     }
     g.putImageData(d, 0, 0);
-    this._fbg = { im, cv, f: af };
+    this._fbg = { key, cv, f: af };
     return cv;
   },
 
