@@ -641,6 +641,36 @@
         "frameW": 24,
         "frameH": 40,
         "count": 7
+      },
+      "frostbound": {
+        "file": "char/frostbound.png",
+        "frameW": 26,
+        "frameH": 38,
+        "count": 7
+      },
+      "jarhusk": {
+        "file": "char/jarhusk.png",
+        "frameW": 24,
+        "frameH": 26,
+        "count": 7
+      },
+      "cartwraith": {
+        "file": "char/cartwraith.png",
+        "frameW": 30,
+        "frameH": 22,
+        "count": 7
+      },
+      "sacling": {
+        "file": "char/sacling.png",
+        "frameW": 24,
+        "frameH": 30,
+        "count": 7
+      },
+      "ventspitter": {
+        "file": "char/ventspitter.png",
+        "frameW": 26,
+        "frameH": 28,
+        "count": 7
       }
     }
   },
