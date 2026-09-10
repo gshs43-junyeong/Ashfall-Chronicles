@@ -953,7 +953,7 @@ class Player extends Ent {
     if (this.chargeT > 0) {
       for (const e of G.ents) {
         if (!(e instanceof Enemy) || e.dead || this.chargeHit.has(e)) continue;
-        if (aabb(this.rect(), e.rect())) { this.chargeHit.add(e); e.hurt(this.chargeDmg, this.rollCrit(), this, 14); }
+        if (aabb(this.rect(), e.rect())) { this.chargeHit.add(e); e.hurt(this.chargeDmg, this.rollCrit(), this, 14, hitFam(this.weapon())); }
       }
     }
     // 채널링
@@ -979,7 +979,7 @@ class Player extends Ent {
         if (Math.abs(dy) > reach * 0.85) continue;
         this.swingHit.add(e);
         const crit = this.rollCrit();
-        e.hurt(this.scaleDmg(base, 'str'), crit, this, kb);
+        e.hurt(this.scaleDmg(base, 'str'), crit, this, kb, hitFam(w));
         if (this.d.fire) e.addDot('burn', this.scaleDmg(base, 'str') * 0.12 * this.d.fire, 4);
         if (this.d.frost) e.slow(0.45, 2.5);
         if (this.d.poison) e.addDot('poison', this.scaleDmg(base, 'str') * 0.13 * this.d.poison, 5);
@@ -1024,7 +1024,10 @@ class Enemy extends Ent {
   addDot(kind, dps, dur) { this.dots.push({ kind, dps, t: dur }); }
   slow(f, t) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
 
-  hurt(amount, crit, src, kb) {
+  /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). 때린 쪽이 넘긴다 —
+      여기서 무기를 다시 읽지 않는 이유: hurt 는 지속 피해·함정·기계도 함께 지나가는
+      길목이라, 여기서 무기를 보면 독이 한 번 닳을 때마다 칼자국이 뜬다. */
+  hurt(amount, crit, src, kb, fam) {
     if (this.dead) return;
     /* 페이즈가 넘어가는 0.8초 동안은 피해가 들어가지 않는다. 연출을 끊고 때려서
        전환을 못 보고 지나가는 일을 막는다. */
@@ -1046,6 +1049,14 @@ class Enemy extends Ent {
     this.hp -= dmg; this.flash = 0.12;
     G.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 14, this.y - 4, dmg, crit ? '#ffd24a' : '#fff', crit ? 1 : 0));
     for (let i = 0; i < (crit ? 8 : 4); i++) G.parts.push(new Part(this.cx, this.cy, this.def.c));
+    /* 맞는 그림. 치명타는 계열 위에 한 겹 얹는 게 아니라 **계열마다 따로 그려 둔 것**을
+       쓴다(방향 C) — 베기는 초승달이 셋으로 갈라지고, 찌르기는 뚫고 나가 반대편에서
+       터지고, 둔기는 고리가 두 겹으로 터진다. 무기마다 치명타의 얼굴이 다르다. */
+    if (fam && HIT_FX[fam]) {
+      const s = HIT_FX[fam];
+      G.burst(this.cx, this.cy - 2, 'hit_' + fam + (crit ? '_crit' : ''),
+        s.size * (crit ? 1.3 : 1), s.slow);
+    }
     if (src instanceof Player) {
       if (src.d.lifesteal > 0) src.heal(dmg * src.d.lifesteal / 100);
       src.hurtCd = Math.max(src.hurtCd, 0.6);
@@ -1951,7 +1962,8 @@ class Proj extends Ent {
         if (!(e instanceof Enemy) || e.dead || this.hitSet.has(e)) continue;
         if (!aabb(this.rect(), e.rect())) continue;
         this.hitSet.add(e);
-        e.hurt(this.dmg, this.crit, G.player, 3);
+        // 물리 화살·별조각만 금빛 타격을 얹는다. 마법 탄은 원소마다 제 그림이 이미 있다
+        e.hurt(this.dmg, this.crit, G.player, 3, (this.type === 'arrow' || this.type === 'star') ? 'pierce' : null);
         if (this.fire) e.addDot('burn', this.dmg * 0.1, 4);
         if (this.frost) e.slow(0.4, 2.5);
         if (this.poison) e.addDot('poison', this.dmg * 0.11 * this.poison, 5);

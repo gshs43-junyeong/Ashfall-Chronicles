@@ -942,7 +942,13 @@ window.SPRITE_MANIFEST = {
         "starmerge": "fx/star_merge.png",
         "arcane": "fx/hit_arcane.png",
         "frost": "fx/hit_frost.png",
-        "soul": "fx/hit_soul.png"
+        "soul": "fx/hit_soul.png",
+        "hit_slash": "fx/hit_slash.png",
+        "hit_slash_crit": "fx/hit_slash_crit.png",
+        "hit_pierce": "fx/hit_pierce.png",
+        "hit_pierce_crit": "fx/hit_pierce_crit.png",
+        "hit_blunt": "fx/hit_blunt.png",
+        "hit_blunt_crit": "fx/hit_blunt_crit.png"
       }
     },
     "smoke": {

@@ -958,6 +958,42 @@ const ITEMS = {
   sum_void:    { n: '별의 눈물', i: '💧', type: 'summon', boss: 'void_king', stack: 9, d: '심연 앞에서만 열린다.' }
 };
 
+/* ================= 맞는 순간 — 물리 타격 계열 =================
+   근접 타격에는 맞는 그림이 없었다. 128의 낫이든 9의 목검이든 화면에서 똑같이
+   생겼고, 남는 건 숫자와 몬스터 색 파편 넷뿐이었다.
+
+   계열은 무기 **앞머리**로 가른다. 무기마다 필드를 하나씩 다는 대신 이름을
+   읽는 이유: 무기가 예순 자루가 넘고 앞으로도 늘어날 텐데, 새로 만들 때마다
+   잊지 않고 달아야 하는 필드는 결국 어딘가에서 빠진다. 이름 규칙은 이미
+   지켜지고 있으므로 그쪽을 읽는 편이 스스로 유지된다.
+
+   마법(orb·staff·tome)은 여기 없다 — 원소마다 제 그림이 이미 있다
+   (hit_arcane · hit_frost · hit_soul · explosion_fire · explosion_void).
+   그 위에 금빛 물리 타격까지 겹치면 무엇에 맞았는지가 도로 흐려진다. */
+const HIT_FAM = {
+  sword: 'slash', blade: 'slash', dagger: 'slash', scythe: 'slash', axe: 'slash', saw: 'slash',
+  spear: 'pierce', lance: 'pierce', harpoon: 'pierce', bow: 'pierce', crossbow: 'pierce', gun: 'pierce',
+  hammer: 'blunt', mace: 'blunt'
+};
+/* 계열마다 크기와 남는 시간이 다르다. 이게 무게로 읽힌다 —
+   베기는 가장 빨리 사라져야 연타가 겹쳐도 화면이 안 막히고,
+   둔기는 가장 크고 가장 늦게까지 남아야 한 방이 무겁게 읽힌다. */
+const HIT_FX = {
+  slash: { size: 46, slow: 0.80 },
+  pierce: { size: 44, slow: 0.90 },
+  blunt: { size: 60, slow: 1.35 }
+};
+
+/** 이 무기로 때렸을 때 어느 타격 그림을 쓰는가. 없으면(마법·맨손) null */
+function hitFam(it) {
+  if (!it || !it.id) return null;
+  const f = HIT_FAM[it.id.split('_')[0]];
+  if (f) return f;
+  // 규칙에 없는 이름이면 근접은 둔기로 친다 — 안 그리는 것보다 낫다
+  const d = ITEMS[it.id];
+  return d && d.type === 'weapon' && d.wc !== 'magic' ? 'blunt' : null;
+}
+
 /* ---------------- 제작 시설 ----------------
    3단계에서 작업대와 용광로의 기능을 완전히 분리했다. 예전에는 용광로가 작업대 제작법까지
    전부 대신했지만, 이제 각자 자기 계통만 담당하고 대신 각각 3단계까지 승급한다.
