@@ -71,7 +71,18 @@ const T = {
   BEAN0: 129, BEAN1: 130, BEAN2: 131, BEAN3: 132,
   BLOOM0: 133, BLOOM1: 134, BLOOM2: 135, BLOOM3: 136,
   HERB0: 137, HERB1: 138, HERB2: 139, HERB3: 140,
-  POD0: 141, POD1: 142, POD2: 143, POD3: 144
+  POD0: 141, POD1: 142, POD2: 143, POD3: 144,
+  /* --- v1.1: 유적마다 그곳에서만 나오는 장식 둘 ---
+     여태 유적 장식은 전부 **다른 데서 가져다 쓴 타일**이었다 — 얼음 던전은 동굴의
+     얼음, 피라미드는 사막의 사암, 광산은 마을의 널판. 벽 색만 다르고 안에 놓인
+     것은 세계 어디서나 보던 것들이라, 어느 유적인지는 벽돌 색으로만 갈렸다.
+     이제 다섯 유적이 저마다 **여기서만 볼 수 있는 것 둘**을 갖는다.
+     하나는 벽에 있고 하나는 바닥·천장에 있다 — 눈이 두 군데에서 걸리게. */
+  ICEBANNER: 145, FROSTGLYPH: 146,      // 얼음 던전 — 언 깃발 · 서리 글자
+  CANOPIC: 147, HIEROGLYPH: 148,        // 피라미드 — 장기 단지 · 새긴 벽
+  MINELAMP: 149, TOOLPILE: 150,         // 버려진 광산 — 매단 갱등 · 버린 연장
+  BLIGHTSAC: 151, BONEHEAP: 152,        // 부패한 둥지 — 알주머니 · 삭은 뼈
+  SPOREVENT: 153, HYPHAE: 154           // 포자 굴 — 포자 구멍 · 균사 발
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -272,7 +283,25 @@ const TILE_DEF = [
   { n: '불씨 꼬투리 (싹)', c: '#7a6a48', solid: 0, hard: 0, drop: 'seed_emberpod', crop: { next: T.POD1 } },
   { n: '불씨 꼬투리 (자람)', c: '#8a6a44', solid: 0, hard: 0, drop: 'seed_emberpod', crop: { next: T.POD2 } },
   { n: '불씨 꼬투리 (여무는 중)', c: '#b06a34', solid: 0, hard: 0, drop: 'seed_emberpod', crop: { next: T.POD3 } },
-  { n: '불씨 꼬투리', c: '#e8842a', solid: 0, hard: 0, drop: 'emberpod', crop: { ripe: 1, seed: 'seed_emberpod' }, light: 5 }
+  { n: '불씨 꼬투리', c: '#e8842a', solid: 0, hard: 0, drop: 'emberpod', crop: { ripe: 1, seed: 'seed_emberpod' }, light: 5 },
+  /* --- v1.1: 유적 고유 장식 열 ---
+     ★ 통행 규칙(world.js putRuinDecor 참고)이 재질을 정한다.
+       걷는 줄(fy·fy-1)에 놓이는 것은 반드시 solid 0 이어야 한다 — 고체를 놓으면
+       방문을 그대로 봉해서 유적 절반이 못 들어가는 곳이 된다.
+       벽을 갈아끼우는 것(statue 자리)만 solid 1 로 둔다.
+     ★ 캐면 그 유적의 재료가 나온다. 장식이 곧 그 유적을 터는 이유가 된다 —
+       예전 장식은 전부 캐 봐야 원래 타일(얼음·사암·널판)이 나와서, 보고 지나칠
+       뿐 손댈 까닭이 없었다. */
+  { n: '언 깃발', c: '#7fb6cc', solid: 0, hard: 0, drop: 'neverthaw', a: 1 },
+  { n: '서리 글자', c: '#9fd8ea', solid: 1, hard: 2, drop: 'neverthaw', light: 3 },
+  { n: '장기 단지', c: '#c8a86a', solid: 0, hard: 0, drop: 'sealed_ash', a: 1 },
+  { n: '새긴 벽', c: '#b09054', solid: 1, hard: 2, drop: 'sealed_ash' },
+  { n: '매단 갱등', c: '#e8b45a', solid: 0, hard: 0, drop: 'deep_ember', light: 7, a: 1 },
+  { n: '버린 연장', c: '#7a6a56', solid: 0, hard: 0, drop: 'deep_ember', a: 1 },
+  { n: '알주머니', c: '#8a4a80', solid: 0, hard: 0, drop: 'blight_spawn', light: 2, a: 1 },
+  { n: '삭은 뼈', c: '#cfc8b0', solid: 0, hard: 0, drop: 'blight_spawn', a: 1 },
+  { n: '포자 구멍', c: '#5a8a74', solid: 1, hard: 2, drop: 'spore_dust', light: 4 },
+  { n: '균사 발', c: '#8fe0c4', solid: 0, hard: 0, drop: 'spore_dust', light: 2, a: 1 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -955,7 +984,51 @@ const ITEMS = {
   sum_bone:    { n: '저주받은 두개골', i: '💀', type: 'summon', boss: 'bone_lord', stack: 9, d: '깊은 곳에서만 반응한다.' },
   sum_heart:   { n: '고동치는 씨앗', i: '🫀', type: 'summon', boss: 'corrupt_heart', stack: 9, d: '부패한 땅에서 사용하라.' },
   sum_frost:   { n: '얼어붙은 왕관', i: '🔷', type: 'summon', boss: 'frost_witch', stack: 9, d: '서리 지대에서 사용하라.' },
-  sum_void:    { n: '별의 눈물', i: '💧', type: 'summon', boss: 'void_king', stack: 9, d: '심연 앞에서만 열린다.' }
+  sum_void:    { n: '별의 눈물', i: '💧', type: 'summon', boss: 'void_king', stack: 9, d: '심연 앞에서만 열린다.' },
+
+  /* ================= v1.1: 유적마다 그곳에서만 나오는 전리품 둘 =================
+     여태 다섯 유적의 상자에서는 세계 어디서나 나오는 것과 같은 게 나왔다. 벽 색이
+     다르고 몹이 다른데 털어 온 자루 안은 똑같아서, 어느 유적을 갔는지가 가방에
+     남지 않았다.
+
+     둘의 성격을 일부러 갈랐다.
+       재료  그 유적의 **장식을 캐면** 나온다. 흔하고, 값은 낮고, 쓸 데가 있다.
+             장식이 곧 그 유적을 터는 이유가 된다.
+       유물  그 유적의 **상자에서만** 드물게 나온다. 쓸 데는 없고 값이 아주 높다.
+             — 값이 곧 이야기다. 팔아 버릴지 남겨 둘지는 플레이어가 정한다.
+
+     값은 유적 rank 를 따라간다(광산 1 → 부패한 둥지 6). 순한 곳을 털어 부자가
+     되는 지름길이 생기면 안 되므로, 깊이와 값이 어긋나지 않게 계단으로 벌렸다. */
+  neverthaw:    { n: '식지 않는 서리', i: '🧊', type: 'mat', stack: 999, price: 340,
+                  d: '얼음 던전 밖으로 꺼내도 녹지 않는다. 손에 쥐면 손이 먼저 식는다.' },
+  warden_seal:  { n: '파수꾼의 인장', i: '🛡', type: 'mat', stack: 99, price: 5200,
+                  d: '무엇을 지키라고 받은 것인지는 적혀 있지 않다. 지켰다는 것만 적혀 있다.' },
+  sealed_ash:   { n: '봉인된 재', i: '🏺', type: 'mat', stack: 999, price: 520,
+                  d: '단지 안의 재는 아직 따뜻하다. 봉을 뜯은 사람은 여태 없었다.' },
+  caged_sun:    { n: '가둔 해', i: '🥇', type: 'mat', stack: 99, price: 9800,
+                  d: '해를 새긴 게 아니라 해를 가둔 것이라고 벽에 적혀 있었다.' },
+  deep_ember:   { n: '깊은 잉걸', i: '🔥', type: 'mat', stack: 999, price: 180,
+                  d: '갱등에 남아 있던 불씨. 이 불은 갱도가 버려진 뒤에도 꺼지지 않았다.' },
+  foreman_tag:  { n: '십장의 표찰', i: '🏷', type: 'mat', stack: 99, price: 2600,
+                  d: '이름 자리가 긁혀 있다. 마지막까지 남은 사람이 지운 것이다.' },
+  blight_spawn: { n: '부패한 알', i: '🥚', type: 'mat', stack: 999, price: 860,
+                  d: '안에서 아직 무언가 움직인다. 오래 들고 있으면 손이 저리다.' },
+  nest_crown:   { n: '둥지의 관', i: '👑', type: 'mat', stack: 99, price: 16000,
+                  d: '뼈로 엮은 것인데, 사람의 것은 하나도 섞여 있지 않다.' },
+  spore_dust:   { n: '포자 가루', i: '🍄', type: 'mat', stack: 999, price: 700,
+                  d: '숨을 참고 담아야 한다. 숨을 쉬면 그때부터 내 안에서 자란다.' },
+  cap_signet:   { n: '갓의 인장', i: '💍', type: 'mat', stack: 99, price: 12500,
+                  d: '포자 굴에는 문이 없다. 그런데 여는 데 쓰는 물건이 있었다.' }
+};
+
+/* 유적 → 그곳에서만 나오는 전리품 [재료, 유물].
+   RUIN_SPEC 의 id 로 찾는다. 상자·보스 보상이 여기를 읽는다(game.js ruinLoot). */
+const RUIN_LOOT = {
+  ice: ['neverthaw', 'warden_seal'],
+  pyramid: ['sealed_ash', 'caged_sun'],
+  mine: ['deep_ember', 'foreman_tag'],
+  blight: ['blight_spawn', 'nest_crown'],
+  spore: ['spore_dust', 'cap_signet']
 };
 
 /* ================= 맞는 순간 — 물리 타격 계열 =================
@@ -1726,22 +1799,22 @@ const ENEMIES = {
      이제 갱도(rank 1)와 부패(rank 6)가 체력 4배 · 공격력 3배 가까이 차이 난다. */
   /* rank 1 — 베이스캠프 옆. 처음 잡아 보는 미니보스 */
   mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_slime', w: 60, h: 52, c: '#6a5a4a', xp: 1500, gold: 620, boss: 1,
-                 drops: [['rust_gear', 1, 2, 3], ['iron_ore', 1, 20, 30], ['lost_lamp', 1, 1, 2]] },
+                 drops: [['rust_gear', 1, 2, 3], ['iron_ore', 1, 20, 30], ['lost_lamp', 1, 1, 2], ['foreman_tag', 1, 1, 1]] },
   /* rank 2 */
   ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_witch', w: 40, h: 54, c: '#9fd8f0', xp: 2300, gold: 950, boss: 1,
-                 drops: [['frozen_core', 1, 2, 3], ['frost_core', 1, 8, 14], ['ice_shard', 1, 20, 30]] },
+                 drops: [['frozen_core', 1, 2, 3], ['frost_core', 1, 8, 14], ['ice_shard', 1, 20, 30], ['warden_seal', 1, 1, 1]] },
   /* rank 3 */
   vine_lord:    { n: '덩굴 군주', hp: 4100, dmg: 74, def: 34, spd: 80, ai: 'b_bone', w: 50, h: 74, c: '#3f7a34', xp: 3400, gold: 1500, boss: 1,
                  drops: [['heartwood', 1, 2, 3], ['vine_coil', 1, 12, 20], ['orchid', 1, 8, 14]] },
   /* rank 4 — 함정이 가장 촘촘한 유적의 주인 */
   sand_guardian:{ n: '모래 파수꾼', hp: 5600, dmg: 92, def: 46, spd: 66, ai: 'b_bone', w: 54, h: 70, c: '#d8b878', xp: 4800, gold: 2100, boss: 1,
-                 drops: [['sun_disc', 1, 2, 3], ['gold_ore', 1, 15, 25], ['venom_sting', 1, 6, 10]] },
+                 drops: [['sun_disc', 1, 2, 3], ['gold_ore', 1, 15, 25], ['venom_sting', 1, 6, 10], ['caged_sun', 1, 1, 1]] },
   /* rank 5 — 입구가 없는 굴. 도망칠 길이 없다 */
   spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 50, h: 72, c: '#6fe0c0', xp: 6400, gold: 2800, boss: 1,
-                 drops: [['queen_spore', 1, 2, 3], ['spore_sac', 1, 12, 20], ['glowcap', 1, 15, 25]] },
+                 drops: [['queen_spore', 1, 2, 3], ['spore_sac', 1, 12, 20], ['glowcap', 1, 15, 25], ['cap_signet', 1, 1, 1]] },
   /* rank 6 — 동쪽 끝, 가장 깊은 곳 */
   blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 52, h: 58, c: '#7a3f9c', xp: 9000, gold: 4000, boss: 1,
-                 drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18]] },
+                 drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18], ['nest_crown', 1, 1, 1]] },
 
   /* --- 7단계: 폭주로 ---
      공창이 스스로 불려 낸 것들. 사람이 설계한 흔적이 점점 옅어진다 */
@@ -2181,11 +2254,20 @@ RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp 
 /* 겉으로 보이는 재질을 유적마다 갈랐다 — 나무 · 돌 · 구리 · 얼음 · 유기물.
    [배치방식, 타일, 밀도] 를 여럿 줄 수 있고 방마다 전부 돌린다.
    배치방식은 putRuinDecor 참고. 걷는 줄(fy · fy-1)은 어떤 것도 막지 않는다. */
-RUIN_SPEC[0].decor = [['pillar', T.ICE, 0.5], ['stalac', T.ICE, 0.5], ['brazier', T.TORCH, 0.35]];
-RUIN_SPEC[1].decor = [['statue', T.SANDBRICK, 0.5], ['frieze', T.GOLD, 0.35], ['brazier', T.TORCH, 0.3]];
-RUIN_SPEC[2].decor = [['beam', T.MINEWOOD, 0.6], ['rail', T.PLANK, 0.5], ['crate', T.MINEWOOD, 0.4]];
-RUIN_SPEC[3].decor = [['growth', T.CORRUPTLEAF, 0.6], ['stalac', T.EBONSTONE, 0.4], ['web', T.VINE, 0.35]];
-RUIN_SPEC[4].decor = [['growth', T.GLOWCAP, 0.7], ['moss', T.GLOWMOSS, 0.5], ['stalac', T.SPORESTONE, 0.35]];
+/* 앞의 셋은 그 유적의 '재질'이고(다른 데서도 보는 것), 뒤의 둘이 v1.1에서 더한
+   **그곳에서만 보는 것**이다. 둘은 일부러 서로 다른 자리를 쓴다 — 하나는 벽에
+   (statue: 벽을 갈아끼움), 하나는 바닥이나 천장에. 방에 들어섰을 때 눈이 두
+   군데에서 걸려야 "여기가 그 유적"으로 읽힌다. */
+RUIN_SPEC[0].decor = [['pillar', T.ICE, 0.5], ['stalac', T.ICE, 0.5], ['brazier', T.TORCH, 0.35],
+                      ['statue', T.FROSTGLYPH, 0.55], ['growth', T.ICEBANNER, 0.30]];
+RUIN_SPEC[1].decor = [['statue', T.SANDBRICK, 0.5], ['frieze', T.GOLD, 0.35], ['brazier', T.TORCH, 0.3],
+                      ['statue', T.HIEROGLYPH, 0.55], ['floorpile', T.CANOPIC, 0.6]];
+RUIN_SPEC[2].decor = [['beam', T.MINEWOOD, 0.6], ['rail', T.PLANK, 0.5], ['crate', T.MINEWOOD, 0.4],
+                      ['frieze', T.MINELAMP, 0.40], ['floorpile', T.TOOLPILE, 0.75]];
+RUIN_SPEC[3].decor = [['growth', T.CORRUPTLEAF, 0.6], ['stalac', T.EBONSTONE, 0.4], ['web', T.VINE, 0.35],
+                      ['growth', T.BLIGHTSAC, 0.35], ['floorpile', T.BONEHEAP, 0.5]];
+RUIN_SPEC[4].decor = [['growth', T.GLOWCAP, 0.7], ['moss', T.GLOWMOSS, 0.5], ['stalac', T.SPORESTONE, 0.35],
+                      ['wallmark', T.SPOREVENT, 0.5], ['growth', T.HYPHAE, 0.45]];
 
 RUIN_SPEC[0].sig = 'frozen';   RUIN_SPEC[0].event = 'blackout';
 RUIN_SPEC[1].sig = 'sunshaft'; RUIN_SPEC[1].event = 'password';
@@ -2198,6 +2280,16 @@ RUIN_SPEC[1].bonus = 'gold_ore';
 RUIN_SPEC[2].bonus = 'coal';
 RUIN_SPEC[3].bonus = 'corrupt_ess';
 RUIN_SPEC[4].bonus = 'mushroom';
+
+/* bonus 는 그 유적에서 많이 나오는 **흔한 자원**이고(위), bonus2 는 v1.1에서 더한
+   **그 유적에서만 나오는 재료**다. 둘을 합치지 않은 이유: 기존 bonus 를 갈아치우면
+   유적 상자에서 석탄·금광석이 사라져 초반 제작 흐름이 끊긴다. 나란히 넣는다.
+   유물(값이 높고 쓸 데가 없는 쪽)은 상자가 아니라 그 유적의 보스가 떨군다. */
+RUIN_SPEC[0].bonus2 = 'neverthaw';
+RUIN_SPEC[1].bonus2 = 'sealed_ash';
+RUIN_SPEC[2].bonus2 = 'deep_ember';
+RUIN_SPEC[3].bonus2 = 'blight_spawn';
+RUIN_SPEC[4].bonus2 = 'spore_dust';
 
 /* 도면 — 굵은 격자(가로 4칸 x 세로 3칸). `#` 에 방을 둔다.
    방 하나가 최소 11x9라 격자 한 칸에 방 하나둘이 들어간다. 도면이 너무 빡빡해서

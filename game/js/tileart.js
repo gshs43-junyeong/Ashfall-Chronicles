@@ -136,6 +136,19 @@ ART[T.SPARKCOIL] = { k: 'flamevent', c: '#5a8aa8' };
 ART[T.GASVENT] = { k: 'flamevent', c: '#6a7a4a' };
 ART[T.GRINDER] = { k: 'flamevent', c: '#6a6058' };
 ART[T.CRUMBLE] = { k: 'crumble', c: '#6a6050' };
+/* --- v1.1: 유적마다 그곳에서만 나오는 장식 둘 ---
+   벽에 붙는 것(서리 글자·새긴 벽·포자 구멍)은 고체라 배경이 안 비치고,
+   나머지는 전부 a:1 — 뒤의 벽이 비쳐야 "매달려 있다"로 읽힌다. */
+ART[T.ICEBANNER] = { k: 'banner_ice', c: '#7fb6cc', a: 1 };
+ART[T.FROSTGLYPH] = { k: 'glyph', c: '#9fd8ea', glow: 1, warm: 0 };
+ART[T.CANOPIC] = { k: 'canopic', c: '#c8a86a', a: 1 };
+ART[T.HIEROGLYPH] = { k: 'glyph', c: '#b09054', warm: 1 };
+ART[T.MINELAMP] = { k: 'minelamp', c: '#e8b45a', a: 1, glow: 1 };
+ART[T.TOOLPILE] = { k: 'toolpile', c: '#7a6a56', a: 1 };
+ART[T.BLIGHTSAC] = { k: 'sac', c: '#8a4a80', a: 1, glow: 1 };
+ART[T.BONEHEAP] = { k: 'boneheap', c: '#cfc8b0', a: 1 };
+ART[T.SPOREVENT] = { k: 'sporevent', c: '#5a8a74', glow: 1 };
+ART[T.HYPHAE] = { k: 'hyphae', c: '#8fe0c4', a: 1, glow: 1 };
 /* --- 7단계: 폭주로 --- */
 ART[T.SLAGSTEEL] = { k: 'slag', c: '#5a4a44' };
 ART[T.COREGLASS] = { k: 'crystal', c: '#e8b04a', glow: 1 };
@@ -1335,6 +1348,115 @@ const TileArt = {
         g.beginPath(); g.arc(ox + TS / 2, oy + TS / 2, 5.5, 0, TAU); g.fill();
         g.fillStyle = shade(base, 1.5);
         g.beginPath(); g.arc(ox + TS / 2 - 1, oy + TS / 2 - 1, 2.4, 0, TAU); g.fill();
+        break;
+      }
+
+      /* ---------- v1.1: 유적 고유 장식 열 ----------
+         한 칸(22px) 안에서 실루엣만으로 무엇인지 읽혀야 한다. 그래서 열 개가
+         서로 **다른 자리를 쓴다** — 매달린 것은 위에서 내려오고, 놓인 것은 아래에
+         깔리고, 새긴 것은 칸을 꽉 채운다. 색이 아니라 자리로 먼저 갈린다. */
+
+      case 'banner_ice': {          // 언 깃발 — 위에서 내려와 아래가 찢어져 있다
+        R(4, 0, TS - 8, 2, shade(base, .6));                    // 걸린 가로대
+        R(5, 2, TS - 10, TS - 10, base);
+        R(5, 2, 2, TS - 10, lt);                                // 왼쪽에 든 빛
+        R(TS - 7, 2, 2, TS - 10, dk);
+        for (let i = 0; i < 3; i++) R(7 + i * 3, 5 + (i & 1), 1, 7, lt2);   // 언 결
+        /* 아래가 삭아 찢어졌다. 지워서 끊는 게 아니라 **덜 그려서** 끊는다 —
+           투명색으로 fillRect 하면 아무 일도 안 일어난다(source-over). */
+        for (let x = 5; x < TS - 5; x += 2)
+          if ((x >> 1) & 1) R(x, TS - 8, 2, 2, x < TS / 2 ? lt : dk);
+        R(6, TS - 6, 1, 2, lt2); R(TS - 9, TS - 7, 1, 2, lt2);  // 고드름 두 방울
+        break;
+      }
+      case 'glyph': {               // 벽에 돋은 글자 — 서리(찬빛) / 새김(따뜻한 그늘)
+        const warm = s.warm;
+        this._fill(g, ox, oy, dk);
+        this._speck(g, ox, oy, rng, 16, dk2, base);
+        R(2, 2, TS - 4, TS - 4, warm ? shade(base, .86) : dk);  // 파 놓은 판
+        const ink = warm ? dk2 : lt2;
+        // 세 줄짜리 글자 — 줄마다 다른 획이라 무늬가 아니라 글로 읽힌다
+        R(4, 4, 5, 2, ink); R(4, 4, 2, 6, ink); R(11, 4, 2, 6, ink); R(14, 5, 4, 2, ink);
+        R(4, 10, 2, 5, ink); R(8, 10, 6, 2, ink); R(13, 12, 2, 4, ink);
+        R(6, 16, 8, 2, ink); R(16, 10, 2, 6, ink);
+        if (!warm) { R(5, 5, 1, 1, '#ffffff'); R(12, 11, 1, 1, '#ffffff'); }  // 서리는 반짝인다
+        break;
+      }
+      case 'canopic': {             // 장기 단지 — 어깨가 벌어지고 뚜껑이 얹힌 항아리
+        R(8, 1, 6, 2, shade(base, .74));                        // 뚜껑
+        R(9, 3, 4, 2, base);
+        R(6, 5, TS - 12, 3, base);                              // 벌어진 어깨
+        R(5, 8, TS - 10, TS - 10, base);                        // 몸통
+        R(5, 8, 2, TS - 10, lt);
+        R(TS - 7, 8, 2, TS - 10, dk);
+        R(7, 12, TS - 14, 2, dk2);                              // 두른 띠
+        R(9, 15, 1, 3, dk2); R(12, 15, 1, 3, dk2);              // 봉인 자국
+        break;
+      }
+      case 'minelamp': {            // 매단 갱등 — 고리에 걸려 흔들리다 멈춘 것
+        R(TS / 2 - 1, 0, 2, 4, '#4a4038');                      // 매단 줄
+        R(7, 4, TS - 14, 2, '#6a5c4a');                         // 손잡이
+        R(6, 6, TS - 12, 2, '#5a5048');                         // 갓
+        R(7, 8, TS - 14, 7, base);                              // 유리
+        R(8, 9, TS - 16, 5, lt2);                               // 안의 불
+        R(9, 10, 2, 3, '#fff6e0');                              // 심지
+        R(6, 15, TS - 12, 2, '#5a5048');                        // 받침
+        break;
+      }
+      case 'toolpile': {            // 버린 연장 — 곡괭이 자루와 삽날이 겹쳐 있다
+        R(3, TS - 4, TS - 6, 3, shade(base, .58));              // 흙에 반쯤 묻혔다
+        R(4, TS - 9, 12, 2, base);                              // 자루 하나
+        R(3, TS - 11, 4, 3, shade('#8a8478', 1));               // 그 끝의 쇠
+        R(9, TS - 14, 2, 6, shade(base, 1.1));                  // 세워 둔 자루
+        R(7, TS - 16, 6, 2, shade('#8a8478', .9));              // 삽날
+        R(13, TS - 7, 6, 2, dk);                                // 부러진 것
+        R(16, TS - 10, 2, 3, shade('#8a8478', .8));
+        break;
+      }
+      case 'sac': {                 // 알주머니 — 천장에서 늘어져 아래가 무겁다
+        R(TS / 2 - 1, 0, 2, 3, shade(base, .6));                // 매달린 목
+        R(7, 3, TS - 14, 4, shade(base, .86));
+        R(5, 6, TS - 10, 9, base);                              // 불룩한 몸
+        R(6, 15, TS - 12, 3, shade(base, .8));                  // 아래로 처진 끝
+        R(6, 7, 2, 7, lt);
+        // 안에서 비쳐 보이는 알 셋
+        R(8, 8, 3, 3, lt2); R(12, 10, 3, 3, lt2); R(9, 13, 3, 2, lt2);
+        R(9, 9, 1, 1, '#ffd0f0'); R(13, 11, 1, 1, '#ffd0f0');
+        break;
+      }
+      case 'boneheap': {            // 삭은 뼈 — 바닥에 흩어져 겹쳐 있다
+        R(2, TS - 5, TS - 4, 4, shade(base, .5));               // 아래 깔린 것
+        for (const [bx, by, bw] of [[3, TS - 8, 9], [11, TS - 10, 7], [6, TS - 12, 6]]) {
+          R(bx, by, bw, 2, base);                               // 긴 뼈
+          R(bx - 1, by - 1, 2, 4, lt); R(bx + bw - 1, by - 1, 2, 4, lt);   // 양 끝 관절
+        }
+        R(14, TS - 7, 5, 5, base);                              // 굴러 나온 두개골
+        R(15, TS - 5, 2, 2, dk2); R(18, TS - 5, 1, 2, dk2);      // 눈구멍
+        break;
+      }
+      case 'sporevent': {           // 포자 구멍 — 벽에 뚫린 구멍에서 뿜어 나온다
+        this._fill(g, ox, oy, dk);
+        this._speck(g, ox, oy, rng, 18, dk2, base);
+        g.fillStyle = '#1a1f1c';                                // 구멍은 깊고 어둡다
+        g.beginPath(); g.arc(ox + TS / 2, oy + TS / 2 + 1, 6, 0, TAU); g.fill();
+        g.strokeStyle = base; g.lineWidth = 2;
+        g.beginPath(); g.arc(ox + TS / 2, oy + TS / 2 + 1, 5.5, 0, TAU); g.stroke();
+        for (let i = 0; i < 5; i++) {   // 구멍 테두리에 돋은 갓
+          const a = i * TAU / 5 + 0.4;
+          R(TS / 2 + Math.cos(a) * 6.5 - 1, TS / 2 + 1 + Math.sin(a) * 6.5 - 1, 3, 2, lt2);
+        }
+        R(TS / 2 - 2, TS / 2 - 4, 2, 2, lt2); R(TS / 2 + 2, TS / 2 - 6, 1, 1, lt2);   // 새어 나온 가루
+        break;
+      }
+      case 'hyphae': {              // 균사 발 — 천장에서 내린 실이 아래로 갈수록 성글다
+        R(0, 0, TS, 2, shade(base, .62));                       // 붙어 있는 자리
+        for (let x = 1; x < TS; x += 3) {
+          const len = 6 + ((x * 7) % 11);
+          R(x, 2, 1, len, base);
+          R(x, 2, 1, Math.min(3, len), lt2);                    // 위쪽이 굵고 밝다
+          if (len > 12) R(x, 2 + len, 1, 1, lt2);               // 끝에 맺힌 것
+        }
+        for (const [bx, by] of [[4, 7], [13, 10], [8, 14]]) R(bx, by, 2, 2, lt2);   // 실에 걸린 포자
         break;
       }
     }
