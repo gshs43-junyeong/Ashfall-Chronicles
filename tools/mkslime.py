@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""잿빛 슬라임 시트의 **튀어오르는 칸(프레임 2)** 하나만 다시 그린다.
+"""잿빛 슬라임 시트를 고친다 — 튀어오르는 칸(2)은 다시 그리고, 눌린 칸(3)과
+공격 칸(4)은 빠진 테두리를 채운다.
 
 ■ 무엇이 잘못돼 있었나
 
@@ -27,7 +28,28 @@
   바닥은 반드시 y21 에 닿아야 한다. Sprites.footInset 은 **프레임 0 만** 재서
   모든 칸에 같이 쓰므로, 이 칸만 바닥이 뜨면 튀어오를 때 한 칸 솟는다.
 
-사용법:  python3 tools/mkslimejump.py
+■ 프레임 3·4 — 테두리가 아예 없다
+
+  눌린 칸은 y11~18, 공격 칸은 y10~17 이 **양옆에 외곽선 없이** 몸통 색이 그대로
+  프레임 가장자리까지 나간다. 여덟 줄씩이다. 둘 다 몸이 x2~27 로 30칸 프레임에
+  꽉 차 있어서, 선 그을 자리가 없자 선을 뺀 것으로 보인다. 그래서 옆구리가
+  뭉개져 보이고 어두운 데서는 배경에 녹는다.
+
+  여기는 다시 그리지 않는다. 줄마다 **맨 바깥 칸 하나를 외곽선으로 바꾸기만**
+  하면 실루엣은 그대로 두고 선만 닫힌다. 원래 그림을 최대한 살리는 쪽이다.
+
+  죽는 칸(5)도 y15~19 가 같다. 다만 그 칸은 팔레트를 통째로 어둡게 쓰므로
+  (외곽선이 (12,12,17) 이 아니라 (10,10,14)) 선 색을 박아 두면 안 되고
+  칸마다 실제 쓰는 색에서 가장 어두운 것을 골라야 한다.
+  흩어지는 칸(6)은 손대지 않는다 — 낱알로 부서지는 그림이라 '줄의 양 끝'이
+  테두리일 이유가 없다.
+
+■ 프레임 4 — 입이 검은 네모다
+
+  벌린 입이 7x3 짜리 각진 검은 덩이라 입이 아니라 몸에 뚫린 구멍으로 보인다.
+  위아래 줄의 양 끝 한 칸씩을 깎아 렌즈 모양으로 만든다.
+
+사용법:  python3 tools/mkslime.py
 """
 import os
 from PIL import Image
@@ -156,10 +178,60 @@ def build():
     return g
 
 
+def px_get(px, fi, x, y):
+    return px[fi * FW * S + x * S, y * S]
+
+
+def px_put(px, fi, x, y, c):
+    for dy in range(S):
+        for dx in range(S):
+            px[fi * FW * S + x * S + dx, y * S + dy] = c
+
+
+def close_outline(px, fi):
+    """줄마다 맨 바깥 칸을 외곽선으로 바꾼다. 실루엣은 하나도 안 건드린다.
+
+    외곽선 색은 **그 칸에서 실제로 쓰는 것**을 세어 고른다. 죽는 칸처럼
+    팔레트가 통째로 어두운 칸이 있어서, (12,12,17) 하나를 박아 두면 그 칸에서만
+    선이 튄다."""
+    from collections import Counter
+    cnt = Counter()
+    for y in range(FH):
+        for x in range(FW):
+            p = px_get(px, fi, x, y)
+            if p[3] == 255:
+                cnt[p] += 1
+    ink = min((c for c in cnt if cnt[c] >= 12), key=lambda c: c[0] + c[1] + c[2])
+    n = 0
+    for y in range(FH):
+        band = [x for x in range(FW) if px_get(px, fi, x, y)[3] > 0]
+        if not band:
+            continue
+        for x in (band[0], band[-1]):
+            if px_get(px, fi, x, y) != ink:
+                px_put(px, fi, x, y, ink)
+                n += 1
+    return n, ink
+
+
+def round_mouth(px, fi=4, x0=12, x1=18, y0=13, y1=15):
+    """벌린 입의 위아래 줄에서 양 끝 한 칸을 깎아 렌즈 모양으로 만든다.
+       깎은 자리는 바로 바깥 칸 색으로 메운다 — 왼쪽은 몸통, 오른쪽은 배라
+       한 색으로 메우면 한쪽에 자국이 남는다."""
+    n = 0
+    for y in (y0, y1):
+        for x, src in ((x0, x0 - 1), (x1, x1 + 1)):
+            px_put(px, fi, x, y, px_get(px, fi, src, y))
+            n += 1
+    return n
+
+
 def main():
-    g = build()
     im = Image.open(SHEET).convert('RGBA')
     px = im.load()
+
+    # 1. 튀어오르는 칸은 통째로 다시 그린다
+    g = build()
     x0 = FRAME * FW * S
     for y in range(FH):
         for x in range(FW):
@@ -168,9 +240,16 @@ def main():
             for dy in range(S):
                 for dx in range(S):
                     px[x0 + x * S + dx, y * S + dy] = c
+    print('프레임 %d · 다시 그림' % FRAME)
+
+    # 2. 눌린 칸·공격 칸·죽는 칸은 빠진 테두리만 채운다.
+    #    흩어지는 칸(6)은 낱알로 부서지는 그림이라 줄마다 테두리를 두르면 안 된다.
+    for fi in (3, 4, 5):
+        n, ink = close_outline(px, fi)
+        print('프레임 %d · 테두리 %d칸 채움 (선 색 %s)' % (fi, n, ink[:3]))
+    print('프레임 4 · 입 모서리 %d칸 깎음' % round_mouth(px))
+
     im.save(SHEET)
-    print('\n'.join('%2d %s' % (y, ''.join(r)) for y, r in enumerate(g)))
-    print('%s · 프레임 %d 만 다시 그림' % (os.path.basename(SHEET), FRAME))
     return 0
 
 
