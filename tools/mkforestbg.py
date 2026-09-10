@@ -63,7 +63,7 @@ def find_trees(px, W, H):
         p = px[x, y]
         return p[:3] if p[3] == 255 else None
 
-    GAP, LONG = 11, 15
+    GAP, LONG = 11, 10
     tops = {}
     for x in range(GAP, W - GAP):
         for y in range(0, H - LONG):
@@ -104,13 +104,16 @@ def canopy(im, px, cx, ty, wide, col, rng, scale, clumps, ragged):
     """나무 하나의 갓. 매끈한 타원 하나가 아니라 **작은 덩이 여럿**을 겹쳐
        가장자리를 헤지게 만든다 — 매끈하면 나무가 아니라 구름으로 보인다."""
     W, H = im.size
-    rx = (17 + wide * 1.05) * scale
-    ry = rx * 0.72
-    cy = ty - ry * 0.35            # 갓의 가운데는 꼭대기보다 조금 위
+    rx = (20 + wide * 1.15) * scale
+    ry = rx * 0.70
+    cy = ty - ry * 0.30            # 갓의 가운데는 꼭대기보다 조금 위
 
-    leaf = shade(col, 1.18)        # 빛 받는 잎
-    dark = shade(col, 0.82)        # 그늘진 안쪽
-    lite = shade(col, 1.45)        # 위쪽 한 겹
+    # 값 네 단계. 두 단계로만 그렸더니 통짜 덩어리가 되어 나무가 아니라
+    # 먹구름으로 보였다 — 잎은 안이 비어 보일 만큼 명암이 갈려야 한다.
+    dark = shade(col, 0.72)        # 갓 안쪽 그늘
+    mid = shade(col, 0.95)
+    leaf = shade(col, 1.20)        # 빛 받는 면
+    lite = shade(col, 1.52)        # 꼭대기 한 겹
 
     def blob(bx, by, r, c):
         rr = int(r) + 1
@@ -122,16 +125,20 @@ def canopy(im, px, cx, ty, wide, col, rng, scale, clumps, ragged):
                 if 0 <= x < W and 0 <= y < H:
                     px[x, y] = (c[0], c[1], c[2], 255)
 
-    n = max(3, int(clumps * (0.6 + rx / 26)))
+    # 작은 덩이를 아주 많이. 큰 덩이 몇 개로 채우면 가장자리가 매끈해져
+    # 구름이 된다 — 잎은 낱개가 보여야 한다.
+    n = max(8, int(clumps * (1.4 + rx / 9)))
     for i in range(n):
         a = rng.uniform(0, math.tau)
-        d = rng.uniform(0, 1) ** 0.55        # 가운데가 빽빽하고 밖이 성글다
+        d = rng.uniform(0, 1) ** 0.45        # 가운데가 빽빽하고 밖이 성글다
         bx = cx + math.cos(a) * d * rx
         by = cy + math.sin(a) * d * ry
-        r = rng.uniform(0.22, 0.42) * rx * (1 - ragged * rng.uniform(0, 0.5))
-        # 아래쪽 덩이는 그늘, 위쪽은 빛
-        c = dark if by > cy + ry * 0.15 else (lite if by < cy - ry * 0.35 else leaf)
-        blob(bx, by, r, c)
+        # 바깥으로 갈수록 잘게 — 가장자리가 헤진다
+        r = (0.055 + 0.11 * (1 - d)) * rx * (1 - ragged * rng.uniform(0, 0.6))
+        rel = (by - cy) / max(ry, 1)
+        c = (dark if rel > 0.25 else mid if rel > -0.05
+             else lite if rel < -0.55 else leaf)
+        blob(bx, by, max(1.2, r), c)
 
     # 갓이 줄기 위쪽을 덮는다 — 살아 있는 나무는 윗동이 안 보인다
     if scale > 0.7:
@@ -140,11 +147,64 @@ def canopy(im, px, cx, ty, wide, col, rng, scale, clumps, ragged):
             blob(cx + rng.uniform(-1.5, 1.5), cy + ry * 0.5 + k, max(1.5, r), dark)
 
 
+def skyline(px, W, H):
+    """열마다 (맨 위 불투명 픽셀 y, 그 아래 3px 의 색). **원본에서 한 번만** 잰다.
+
+    ridge() 안에서 그때그때 재면 안 된다 — 같은 버퍼를 읽으면서 쓰기 때문에,
+    한 열에 잎을 얹으면 다음 열이 그 잎을 능선으로 읽고 또 그 위에 얹는다.
+    색까지 매번 밝게(×1.42) 뜨므로 밝기가 겹겹이 곱해져, 캔버스 위로 기어오르는
+    **새하얀 계단**이 여러 줄 생겼다. 처음 구웠을 때 실제로 그랬다."""
+    out = []
+    for x in range(W):
+        ty, col = None, None
+        for y in range(H):
+            if px[x, y][3] == 255:
+                ty = y
+                c = px[x, min(H - 1, y + 3)]
+                col = c[:3] if c[3] == 255 else px[x, y][:3]
+                break
+        out.append((ty, col))
+    return out
+
+
+def ridge(im, px, sky, rng, dens, size):
+    """능선을 따라 깔리는 잎 띠.
+
+    나무마다 갓을 하나씩 얹는 것만으로는 숲이 안 된다 — 막대에 사탕을 꽂아 둔
+    것처럼 낱낱이 떨어져 보인다. 진짜 원경 숲은 **능선 자체가 잎으로 덮여**
+    윤곽이 뭉개져 있고, 그 위로 큰 나무 몇 그루만 삐죽 솟는다.
+
+    그래서 열마다 맨 위 불투명 픽셀을 찾아 그 자리에 그 언덕 **자기 색**으로
+    잎덩이를 흩뿌린다. 언덕이 여럿이면 각자 제 색으로 덮이므로 앞뒤 깊이가
+    그대로 유지된다."""
+    W, H = im.size
+    for x in range(0, W, 2):
+        ty, col = sky[x]
+        # 괄호가 필요하다. not rng.random() < dens 는 (not rng.random()) < dens 로
+        # 묶여 늘 참이 되고, 그러면 이 띠가 한 점도 안 그려진다
+        if ty is None or ty < 2 or rng.random() >= dens:
+            continue
+        leaf, lite = shade(col, 1.16), shade(col, 1.42)
+        for _ in range(2):
+            r = rng.uniform(2.5, 5.5) * size
+            bx = x + rng.uniform(-3, 3)
+            by = ty - rng.uniform(-1, 4) * size
+            c = lite if rng.random() < 0.3 else leaf
+            rr = int(r) + 1
+            for dy in range(-rr, rr + 1):
+                for dx in range(-rr, rr + 1):
+                    if dx * dx + dy * dy > r * r:
+                        continue
+                    ix, iy = int(bx + dx), int(by + dy)
+                    if 0 <= ix < W and 0 <= iy < H:
+                        px[ix, iy] = (c[0], c[1], c[2], 255)
+
+
 STAGES = [
-    # 이름,        갓 크기, 덩이 수, 헤짐, 잎이 남은 나무 비율
-    ('lush', 1.00, 26, 0.15, 1.00),
-    ('mid', 0.74, 15, 0.40, 0.92),
-    ('thin', 0.46, 8, 0.65, 0.62),
+    # 이름,        갓 크기, 덩이 수, 헤짐, 남은 나무, 능선 띠 밀도, 띠 크기
+    ('lush', 1.00, 34, 0.15, 1.00, 0.92, 1.00),
+    ('mid', 0.72, 18, 0.40, 0.88, 0.48, 0.72),
+    ('thin', 0.44, 9, 0.65, 0.55, 0.14, 0.50),
 ]
 
 
@@ -152,11 +212,14 @@ def main():
     src = Image.open(SRC).convert('RGBA')
     W, H = src.size
     trees = find_trees(src.load(), W, H)
+    sky = skyline(src.load(), W, H)          # 원본에서 한 번만 — ridge() 설명 참고
     print('원본에서 찾은 나무 %d그루' % len(trees))
-    for name, scale, clumps, ragged, keep in STAGES:
+    for name, scale, clumps, ragged, keep, rdens, rsize in STAGES:
         im = src.copy()
         px = im.load()
-        rng = random.Random(20260910)      # 세 장의 잎이 같은 자리에서 빠지도록 고정
+        # 능선 띠를 먼저 깔고 그 위에 갓을 얹는다 — 큰 나무가 띠 위로 솟아야 한다.
+        # 씨앗을 고정해 세 장의 잎이 같은 자리에서 빠지게 한다(옮겨 다니면 안 된다)
+        ridge(im, px, sky, random.Random(20260910), rdens, rsize)
         for i, (cx, ty, wide, col) in enumerate(trees):
             # 어느 나무가 먼저 잎을 잃는지는 나무마다 정해져 있다 —
             # 단계마다 다른 나무가 벗겨지면 잎이 옮겨 다니는 것처럼 보인다
