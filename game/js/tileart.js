@@ -194,7 +194,7 @@ const TileArt = {
     for (let id = 0; id < N; id++) {
       const s = ART[id];
       if (!s) continue;
-      for (let v = 0; v < this.V; v++) this.paint(g, v * TS, id * TS, s, rng, v);
+      for (let v = 0; v < this.V; v++) this.paint(g, v * TS, id * TS, s, rng, v, id + '-' + v);
     }
     this.atlas = cv;
 
@@ -254,6 +254,7 @@ const TileArt = {
     this.ashAtlas = cv;
     this.buildBare();
     this.buildBurnt();
+    this.buildThin();
   },
 
   /* ---------- 잔디 벗긴 흙 판 (2행: 0 성한 것 · 1 잿빛) ----------
@@ -297,6 +298,82 @@ const TileArt = {
     const i = this.BARE_TILE.indexOf(id);
     if (this.bareAtlas && i >= 0)
       c.drawImage(this.bareAtlas, v * TS, (i * 2 + (ash ? 1 : 0)) * TS, TS, TS, sx, sy, TS, TS);
+  },
+
+  /* ---------- 성근 잎 판 (잎 한 종마다 두 줄: 성한 색 · 잿빛) ----------
+     잎이 **칸째로** 지는 것만으로는 수관이 성글어지는 게 잘 안 보인다 — 남은
+     칸은 끝까지 처음처럼 빽빽하기 때문이다. 그래서 칸 **안쪽 밀도**도 같이
+     떨어뜨린다. 잎덩이를 15개에서 6개로 줄여 한 벌 더 굽고, 장이 깊어질수록
+     성한 판을 그 위에서 걷어 낸다.
+
+     성근 판은 **본 아틀라스에서 잎 픽셀을 지워** 만든다. 다시 그리지 않는다 —
+     정글 잎·고사리처럼 손그림 텍스처로 갈아 끼워진 타일이 있어서(TILE_SPRITE),
+     다시 그리면 성한 판은 손그림인데 성근 판만 절차 생성이라 아예 다른 그림이
+     된다(실측: 정글 잎 성한 97% : 성근 35% 로 어긋났다). 지우는 쪽은 손그림이든
+     절차 생성이든 늘 부분집합이라, 겹쳐 놓고 위엣것을 걷으면 남은 잎만 사라진다.
+
+     가지 색과 가까운 픽셀은 남긴다 — 잎만 성글어져야 "가지에 잎이 몇 장 남았다"로
+     읽힌다. 가지까지 같이 지우면 도로 허공에 뜬 잎이 된다. */
+  buildThin() {
+    if (!this.atlas) return;
+    const ids = Object.keys(LEAF_TWIG).map(Number);
+    this.THIN_TILE = ids;
+    if (!ids.length) { this.thinAtlas = null; return; }
+    const W = this.V * TS;
+    const cv = this.thinAtlas || document.createElement('canvas');
+    cv.width = W; cv.height = TS * 2 * ids.length;
+    const g = cv.getContext('2d');
+    g.clearRect(0, 0, W, cv.height);
+    for (let i = 0; i < ids.length; i++)
+      g.drawImage(this.atlas, 0, ids[i] * TS, W, TS, 0, (i * 2) * TS, W, TS);
+
+    const d = g.getImageData(0, 0, W, cv.height), px = d.data;
+    const at = (x, y) => (y * W + x) * 4;
+    const rng = new RNG('ashfall-leaf-thin');
+    for (let i = 0; i < ids.length; i++) {
+      const row = (i * 2) * TS;
+      const t = ART[ids[i]].tw || '#000000';
+      const tr = parseInt(t.slice(1, 3), 16), tg = parseInt(t.slice(3, 5), 16), tb = parseInt(t.slice(5, 7), 16);
+      // 작은 덩이 단위로 지운다 — 픽셀 하나씩 지우면 잎이 성근 게 아니라 좀먹어 보인다
+      for (let k = 0; k < 46 * this.V; k++) {
+        const bx = rng.range(0, W), by = rng.range(0, TS), r = rng.range(1.1, 2.5);
+        for (let dy = -3; dy <= 3; dy++)
+          for (let dx = -3; dx <= 3; dx++) {
+            if (dx * dx + dy * dy > r * r) continue;
+            const x = Math.round(bx + dx), y = Math.round(by + dy);
+            if (x < 0 || x >= W || y < 0 || y >= TS) continue;
+            const p = at(x, row + y);
+            if (!px[p + 3]) continue;
+            /* 가지 색과 '거의 같은' 픽셀만 남긴다. 처음에 문턱을 96 으로 뒀더니
+               잎 초록(#3f6e2e)과 가지 갈색(#4a3018)의 거리가 95 라 잎이 통째로
+               가지로 취급돼 83%가 살아남았다 — 성글어지지 않았다. */
+            if (Math.abs(px[p] - tr) + Math.abs(px[p + 1] - tg) + Math.abs(px[p + 2] - tb) < 34) continue;
+            px[p + 3] = 0;
+          }
+      }
+    }
+    g.putImageData(d, 0, 0);
+    // 잿빛 줄 — buildAsh 와 같은 식으로 채도만 뺀다
+    for (let i = 0; i < ids.length; i++) {
+      const row = (i * 2 + 1) * TS;
+      g.clearRect(0, row, W, TS);
+      g.drawImage(cv, 0, (i * 2) * TS, W, TS, 0, row, W, TS);
+      const d = g.getImageData(0, row, W, TS), px = d.data;
+      for (let k = 0; k < px.length; k += 4) {
+        if (!px[k + 3]) continue;
+        const l = px[k] * 0.30 + px[k + 1] * 0.59 + px[k + 2] * 0.11;
+        px[k] = Math.min(255, l * 0.62 + 27);
+        px[k + 1] = Math.min(255, l * 0.60 + 25);
+        px[k + 2] = Math.min(255, l * 0.57 + 22);
+      }
+      g.putImageData(d, 0, row);
+    }
+    this.thinAtlas = cv;
+  },
+  drawThin(c, id, v, sx, sy, ash) {
+    const i = this.THIN_TILE ? this.THIN_TILE.indexOf(id) : -1;
+    if (this.thinAtlas && i >= 0)
+      c.drawImage(this.thinAtlas, v * TS, (i * 2 + (ash ? 1 : 0)) * TS, TS, TS, sx, sy, TS, TS);
   },
 
   /* ---------- 탄 잎 판 (1행) ----------
@@ -346,7 +423,7 @@ const TileArt = {
   },
 
   /* ---------- 개별 질감 ---------- */
-  paint(g, ox, oy, s, rng, v) {
+  paint(g, ox, oy, s, rng, v, seed) {
     const R = (x, y, w, h, c) => this._r(g, ox, oy, x, y, w, h, c);
     const base = s.c;
     const dk = shade(base, .74), dk2 = shade(base, .54), lt = shade(base, 1.18), lt2 = shade(base, 1.4);
@@ -455,31 +532,46 @@ const TileArt = {
         const c1 = base, c2 = shade(base, 1.32), c3 = shade(base, .66);
         const tw = s.tw || shade(base, .40), tw2 = shade(tw, 1.4);
         const M = TS / 2 - 1;
-        // 버섯나무 갓(GLOWLEAF)만 가지가 없다 — 갓은 줄기에서 바로 피는 것이라
-        // 잔가지를 그리면 나무가 되어 버린다
-        const twig = s.noTwig ? () => {} : (x0, y0, x1, y1, th) => {
-          const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
-          for (let i = 0; i <= n; i++) {
-            const t = i / n;
-            R(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, th, th, tw);
-          }
-        };
-        if (v === 0) { twig(-1, M + 2, M + 2, M, 2); twig(M - 2, M + 1, M + 3, M - 4, 1); }
-        if (v === 1) { twig(TS, M - 1, M - 3, M + 1, 2); twig(M + 1, M, M - 4, M - 4, 1); }
-        if (v === 2) { twig(M, TS, M, M - 2, 2); twig(M, M + 1, M - 5, M - 3, 1); }
-        // 잎덩이 — 가지 위에 얹혀 가지가 군데군데 비쳐 보인다
+        // 잎덩이는 칸·변형마다 고정된 씨앗으로 뽑는다 — 판을 다시 구워도 같은 그림이 나온다
+        const lr = new RNG('leaf-' + seed);
         for (let i = 0; i < 15; i++) {
-          const x = rng.range(-2, TS - 3), y = rng.range(-2, TS - 3);
-          const w = rng.range(3, 7), h = rng.range(3, 6);
-          const col = [c1, c1, c2, c3][rng.int(0, 3)];
+          const x = lr.range(-2, TS - 3), y = lr.range(-2, TS - 3);
+          const w = lr.range(3, 7), h = lr.range(3, 6);
+          const col = [c1, c1, c2, c3][lr.int(0, 3)];
           R(x + 1, y, w - 2, h, col); R(x, y + 1, w, h - 2, col);
         }
-        for (let i = 0; i < 6; i++) R(rng.range(1, TS - 2), rng.range(1, TS - 2), 1, 1, c2);
-        // 가지가 잎에 다 묻히지 않게 몇 칸을 다시 드러낸다 — 붙어 있는 것이 보여야 한다
-        if (!s.noTwig) {
-          if (v === 0) { R(0, M + 2, 4, 2, tw); R(4, M + 1, 4, 2, tw2); }
-          if (v === 1) { R(TS - 4, M - 1, 4, 2, tw); R(TS - 8, M, 4, 2, tw2); }
-          if (v === 2) { R(M, TS - 3, 2, 3, tw); R(M, TS - 6, 2, 3, tw2); }
+        for (let i = 0; i < 6; i++) R(lr.range(1, TS - 2), lr.range(1, TS - 2), 1, 1, c2);
+
+        /* ---------- 가지는 잎 **위에** 그린다 ----------
+           처음에는 가지를 먼저 깔고 잎으로 덮었다. 그랬더니 잎에 다 묻혀 화면에서
+           가지가 한 획도 안 보였고, 수관은 여전히 줄기 옆에 뜬 초록 덩어리였다.
+           위에 그려야 "이 잎이 저 줄기에 달려 있다"가 눈으로 읽힌다.
+           버섯나무 갓(noTwig)만 가지가 없다 — 갓은 줄기에서 바로 피는 것이라
+           잔가지를 그리면 나무가 되어 버린다. */
+        const twig = s.noTwig ? () => {} : (x0, y0, x1, y1, th, col) => {
+          const k = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+          for (let i = 0; i <= k; i++) {
+            const t = i / k;
+            R(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, th, th, col || tw);
+          }
+        };
+        if (v === 0) {
+          twig(-1, M + 2, M + 3, M, 3); twig(0, M + 2, M + 2, M, 1, tw2);
+          twig(M - 3, M + 1, M + 4, M - 5, 2);          // 위로 갈라진 잔가지
+        }
+        if (v === 1) {
+          twig(TS, M - 1, M - 4, M + 1, 3); twig(TS - 1, M - 1, M - 3, M + 1, 1, tw2);
+          twig(M + 2, M, M - 5, M - 5, 2);
+        }
+        if (v === 2) {
+          twig(M, TS, M, M - 3, 3); twig(M, TS - 1, M, M - 2, 1, tw2);
+          twig(M, M + 1, M - 6, M - 4, 2); twig(M + 1, M + 3, M + 6, M - 1, 2);
+        }
+        // 가지 끝에 잎 두 덩이를 다시 얹어 막대기처럼 안 보이게 한다
+        if (!s.noTwig && v !== 3) {
+          const ex = v === 0 ? M + 3 : v === 1 ? M - 4 : M;
+          const ey = v === 2 ? M - 3 : M;
+          R(ex - 2, ey - 3, 5, 4, c1); R(ex - 1, ey - 4, 3, 6, c2);
         }
         // 발광 잎(버섯나무 갓 조각) — 은은한 빛무리를 얹는다. 타일 하나짜리 뚜렷한
         // 버섯 모양 대신 "빛나는 캐노피 표면"으로 읽히게 하는 게 목적이다
