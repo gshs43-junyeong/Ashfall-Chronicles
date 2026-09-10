@@ -102,6 +102,68 @@ const Sprites = {
     };
   },
 
+  /* ================= 개조 시트 =================
+     세션 2 의 개조된 몹은 **원래 시트를 강철로 눕힌 사본**으로 그린다.
+     스물다섯 마리를 손으로 다시 그리는 대신 이렇게 한 이유는 그림 품이 아니라
+     읽힘 때문이다 — 플레이어가 아는 실루엣이 그대로 서 있어야 "여기 살던 것이
+     손을 탔다"로 읽히지, 새로 그리면 그냥 다른 몹이 된다.
+
+     ★ getImageData 를 쓰지 않는다. file:// 로 열면 디스크에서 온 그림이 캔버스를
+       오염시켜 픽셀을 못 읽는다(ready() 의 tainted 참고 — 여백 측정은 그래서 0으로
+       떨어진다). 합성 연산만 쓰면 픽셀을 한 번도 안 읽고도 같은 일을 할 수 있다:
+       source-atop 은 **이미 그려진 알파 안쪽에만** 칠하므로 실루엣 밖으로 안 샌다.
+
+     여기서 굽는 것은 두 겹뿐이다 — 강철과 리벳. 세 번째 겹인 화로 불빛은
+     G.drawEnemyOverlay 가 게임 중에 얹는다(아래 이유를 적어 두었다). */
+  mechSheet(key) {
+    const have = this.img['mech_' + key];
+    if (have !== undefined) return have;
+    const im = this.img[key];
+    const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
+    if (!im || !im.width || !m) return (this.img['mech_' + key] = null);
+
+    const cv = document.createElement('canvas');
+    cv.width = im.naturalWidth || im.width; cv.height = im.naturalHeight || im.height;
+    const g = cv.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    g.drawImage(im, 0, 0);
+
+    const S = this.scale, W = cv.width, H = cv.height;
+    g.globalCompositeOperation = 'source-atop';
+
+    // 1. 강철. 세계가 어두워서 밝은 회색으로 눕히면 몹만 화면에서 떠오른다 —
+    //    바탕보다 조금 밝은 정도의 찬 쇠빛으로 잡는다.
+    const grad = g.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, '#7d8896');
+    grad.addColorStop(0.5, '#4d555f');
+    grad.addColorStop(1, '#333a43');
+    g.globalAlpha = 0.66;
+    g.fillStyle = grad; g.fillRect(0, 0, W, H);
+
+    /* 2. 판 이음매와 대갈못.
+       처음에 가로 6px · 세로 9px 로 박았더니 20~40px 짜리 몸에 못이 수십 개가 박혀
+       리벳이 아니라 물방울무늬 옷이 되었다. 몸 하나에 한두 줄만 지나가게 벌린다.
+       자리를 난수로 흩뿌리지 않는 이유: 프레임마다 못이 옮겨 다녀 그림이 떤다.
+       시트 좌표로 정해 두면 걸어도 못은 제자리에 붙어 있다. */
+    g.globalAlpha = 0.22; g.fillStyle = '#171c23';
+    for (let y = 7 * S; y < H; y += 13 * S) g.fillRect(0, y, W, S);
+    g.globalAlpha = 0.55; g.fillStyle = '#cfd8e2';
+    for (let y = 5 * S; y < H; y += 13 * S)
+      for (let x = 3 * S; x < W; x += 9 * S) g.fillRect(x, y, S, S);
+
+    /* 화로 불빛은 여기서 굽지 않는다. 시트 아래 절반에 깔았더니 다리가 통째로
+       녹슨 주황이 되어 진창을 밟고 선 것처럼 보였다 — 시트에는 프레임의 어디가
+       몸통이고 어디가 다리인지가 없다. 불빛은 판정 박스를 아는 쪽에서,
+       뛰게 해서 얹는다(G.drawEnemyOverlay). */
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+    /* 매니페스트에도 같은 규격으로 등록해 둔다 — draw() 는 여기서 프레임 칸을 읽는다.
+       naturalWidth 보정(옛 캐시 그림)이 통하도록 count·gap 까지 그대로 물려준다. */
+    this.meta.characters.sheets['mech_' + key] = m;
+    this.footInset['mech_' + key] = this.footInset[key] || 0;
+    this.sideInset['mech_' + key] = this.sideInset[key] || 0;
+    return (this.img['mech_' + key] = cv);
+  },
+
   /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다.
      flip=true면 좌우 반전(왼쪽을 볼 때). */
   draw(c, key, frame, x, y, flip) {

@@ -1931,6 +1931,60 @@ const ENEMIES = {
                  drops: [['gloom_pearl', 1, 3, 4], ['deep_alloy', 1, 40, 60], ['miner_tag', 1, 2, 3], ['hammer_cave', 1, 1, 1]] }
 };
 
+/* ================= v1.1: 개조 — 세션 2에서 옛 몹이 기계가 되어 돌아온다 =================
+
+   세션 2 는 세션 1 과 같은 땅을 다시 걷는다. 그런데 지금까지는 그 땅에 사는 것이
+   1장 때와 똑같았다 — 슬라임은 여전히 슬라임이고, 달라진 것은 플레이어의 숫자뿐이라
+   "돌아왔다"가 아니라 "옛 구역을 다시 지나간다"로 읽혔다.
+
+   그래서 **세션 1 바이옴의 몹**을 세션 2 에서 개조된 것으로 바꾼다. 새 몹을 만들지
+   않는 이유는 정예(elite)와 같다 — 여기 원래 살던 것이 손을 탔다는 인상이라야
+   하고, 그러려면 플레이어가 아는 실루엣이 그대로 서 있어야 한다.
+
+   ■ 한꺼번에 바꾸지 않는다
+     9장에 전부 기계가 되면 그것은 그냥 다른 지역이다. 장이 넘어갈 때마다 **종류가
+     늘어난다**. 9장에는 흔한 것 넷만, 14장에는 스물다섯 전부. 같은 숲을 두 번
+     지나면 그 사이에 무엇이 더 넘어갔는지 눈에 보인다.
+
+     차례는 세다가 아니라 **기계에 가까운 순서**다. 흔하고 작은 것(슬라임·까마귀·박쥐)
+     부터 넘어가고, 스스로 하나의 생태인 것(재의 골렘·부패한 나무·갓짐승)이 마지막이다.
+
+   ■ 유적과 하늘은 빼 둔다
+     유적 몹은 그 유적의 장식에서 나온 것이라 제 이야기가 따로 있고(RUIN_SPEC),
+     하늘·지하 공창 계열은 애초에 세션 2 것이다. 개조는 **바이옴**에만 건다.
+     순한 동물(passive)도 뺐다 — 싸우지 않는 것을 개조해 봐야 1.5배가 걸릴 데가 없다. */
+const MECH_MUL = 1.5;                 // 체력·공격력·방어·보상 모두 원래의 1.5배
+const MECH_CH0 = 9;                   // 세션 2 서장
+const MECH_CH1 = 14;                  // 세션 2 종장 — 이때 전부 넘어간다
+const MECH_ORDER = [
+  /* 9장 */  'slime', 'ashcrow', 'bat', 'zombie',
+  /* 10장 */ 'spider', 'skeleton', 'archer', 'sporeling',
+  /* 11장 */ 'scorpion', 'sandmaw', 'minerghost', 'vinelash',
+  /* 12장 */ 'icewolf', 'frostling', 'bloomspitter', 'canopy_ape', 'imp',
+  /* 13장 */ 'crawler', 'shadoweye', 'wraith', 'crystalcrab',
+  /* 14장 */ 'lavaslug', 'capbeast', 'corrupttree', 'golem'
+];
+
+/** 그 장까지 개조가 끝난 몹의 수. 9장에 넷, 14장에 전부. */
+function mechCount(chapter) {
+  if (chapter < MECH_CH0) return 0;
+  const t = clamp((chapter - MECH_CH0) / (MECH_CH1 - MECH_CH0), 0, 1);
+  return Math.round(4 + t * (MECH_ORDER.length - 4));
+}
+/** 이 장에서 이 몹이 개조되어 나오는가. */
+function isMech(type, chapter) {
+  const n = mechCount(chapter);
+  if (!n) return false;
+  const i = MECH_ORDER.indexOf(type);
+  return i >= 0 && i < n;
+}
+/** 살아 있는 개체의 이름. 개조된 것은 앞에 '개조된'이 붙는다 —
+    퀘스트·통계는 원래 type 을 그대로 세므로 이름만 갈린다. */
+function mobName(type, mech) {
+  const n = (ENEMIES[type] || {}).n || type;
+  return mech ? '개조된 ' + n : n;
+}
+
 /* ---------------- 스킬 / 특성 ----------------
    v1.1 — 표 나열에서 **트리**로 바뀌었다.
 
