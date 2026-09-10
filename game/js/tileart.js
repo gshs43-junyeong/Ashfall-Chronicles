@@ -232,6 +232,65 @@ const TileArt = {
       g.putImageData(d, 0, row);
     }
     this.ashAtlas = cv;
+    this.buildBare();
+    this.buildBurnt();
+  },
+
+  /* ---------- 잔디 벗긴 흙 판 (2행: 0 성한 것 · 1 잿빛) ----------
+     풀 칸(GRASS)은 고체라 통째로 지울 수 없다 — 사라지면 발밑에 구멍이 뚫린 것처럼
+     보인다. 대신 **초록 갓만 벗긴다.** 갓이 있는 자리를 원본 아틀라스에서 찾아
+     (잿빛 판은 채도가 빠져 초록을 못 찾는다) 바로 아래 흙을 위로 이어 붙인다. */
+  buildBare() {
+    if (!this.atlas || !this.ashAtlas) return;
+    const W = this.V * TS;
+    const cv = this.bareAtlas || document.createElement('canvas');
+    cv.width = W; cv.height = TS * 2;
+    const g = cv.getContext('2d');
+    g.clearRect(0, 0, W, TS * 2);
+    g.drawImage(this.atlas, 0, T.GRASS * TS, W, TS, 0, 0, W, TS);
+    g.drawImage(this.ashAtlas, 0, T.GRASS * TS, W, TS, 0, TS, W, TS);
+    const src = this.atlas.getContext('2d').getImageData(0, T.GRASS * TS, W, TS).data;
+    const d = g.getImageData(0, 0, W, TS * 2), px = d.data;
+    const at = (x, y) => (y * W + x) * 4;
+    for (let x = 0; x < W; x++) {
+      let cap = 0;                                  // 초록이 붉은색보다 진한 동안이 갓이다
+      while (cap < TS - 2 && src[at(x, cap) + 1] > src[at(x, cap)] + 4) cap++;
+      if (!cap) continue;
+      for (let row = 0; row < 2; row++)
+        for (let y = 0; y < cap; y++) {
+          const f = at(x, row * TS + cap + (y % (TS - cap))), t = at(x, row * TS + y);
+          px[t] = px[f]; px[t + 1] = px[f + 1]; px[t + 2] = px[f + 2]; px[t + 3] = px[f + 3];
+        }
+    }
+    g.putImageData(d, 0, 0);
+    this.bareAtlas = cv;
+  },
+  drawBare(c, v, sx, sy, ash) {
+    if (this.bareAtlas) c.drawImage(this.bareAtlas, v * TS, ash ? TS : 0, TS, TS, sx, sy, TS, TS);
+  },
+
+  /* ---------- 탄 잎 판 (1행) ----------
+     진 잎이 전부 흔적 없이 사라지면 나무가 그냥 앙상해지기만 한다. 일부 자리에는
+     타다 만 잎이 붙어 있어야 "타서 진 것"으로 읽힌다. 밝기만 남기고 눌러 탄 갈색으로. */
+  buildBurnt() {
+    if (!this.atlas) return;
+    const W = this.V * TS;
+    const cv = this.burntAtlas || document.createElement('canvas');
+    cv.width = W; cv.height = TS;
+    const g = cv.getContext('2d');
+    g.clearRect(0, 0, W, TS);
+    g.drawImage(this.atlas, 0, T.LEAF * TS, W, TS, 0, 0, W, TS);
+    const d = g.getImageData(0, 0, W, TS), px = d.data;
+    for (let i = 0; i < px.length; i += 4) {
+      if (!px[i + 3]) continue;
+      const l = px[i] * 0.30 + px[i + 1] * 0.59 + px[i + 2] * 0.11;
+      px[i] = l * 0.38 + 9; px[i + 1] = l * 0.29 + 7; px[i + 2] = l * 0.23 + 6;
+    }
+    g.putImageData(d, 0, 0);
+    this.burntAtlas = cv;
+  },
+  drawBurnt(c, v, sx, sy) {
+    if (this.burntAtlas) c.drawImage(this.burntAtlas, v * TS, 0, TS, TS, sx, sy, TS, TS);
   },
 
   /** 타일 블릿. h를 주면 위에서 h픽셀만 (발판용) */

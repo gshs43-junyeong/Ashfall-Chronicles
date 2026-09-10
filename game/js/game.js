@@ -2289,6 +2289,38 @@ const G = {
        '잿빛이 걷혔다'는 장면이 그 자리에 있다(2635줄 여명 마을 카드). 서서히
        걷히는 게 아니라 그 한 컷에서 걷히는 이야기라, 여기서도 한 번에 되돌린다. */
   ASH_SHED: { [T.LEAF]: 0.82, [T.FLOWER]: 0.95, [T.WEED]: 0.7, [T.GRASS]: 0 },
+  ASH_BURNT: 0.30,          // 진 잎자리 중 타다 만 잎이 남는 비율
+
+  /** 잿빛에 먹히는 칸 한 장. 성한 판과 잿빛 판을 서로 반대 투명도로 겹쳐 색이 빠지는
+      과정을 잇고, 자리마다 정해진 몫(r)을 잿빛이 넘어서면 0.2 구간에 걸쳐 진다 —
+      한 장에서 우수수 사라지지 않고 하나씩 빠진다. */
+  drawAshTile(c, id, v, sx, sy, tx, ty, ashF) {
+    const solid = ashF > 0.98;
+    const pair = (a) => {     // 같은 그림의 성한 판·잿빛 판을 a 만큼 겹쳐 그린다
+      if (!solid) { c.globalAlpha = (1 - ashF) * a; TileArt.draw(c, id, v, sx, sy); }
+      c.globalAlpha = ashF * a; TileArt.drawAsh(c, id, v, sx, sy);
+    };
+
+    if (id === T.GRASS) {
+      /* 풀은 칸째로 지울 수 없다(고체다). 흙은 남기고 **초록 갓만** 칸마다 벗긴다. */
+      const capGone = clamp((ashF * 1.05 - tileHash(tx + 31337, ty + 6151)) / 0.22, 0, 1);
+      if (!solid) { c.globalAlpha = 1 - ashF; TileArt.drawBare(c, v, sx, sy, 0); }
+      c.globalAlpha = ashF; TileArt.drawBare(c, v, sx, sy, 1);
+      if (capGone < 1) pair(1 - capGone);
+      c.globalAlpha = 1;
+      return;
+    }
+
+    const gone = clamp((ashF * this.ASH_SHED[id] - tileHash(tx + 7919, ty + 104729)) / 0.2, 0, 1);
+    if (gone < 1) pair(1 - gone);
+    /* 진 잎자리의 30%에는 타다 만 잎이 남는다. 전부 흔적 없이 사라지면 나무가 그냥
+       앙상해지기만 하는데, 잿빛은 잎을 태워 없앤 것이므로 탄 자리가 보여야 한다.
+       지는 것과 반대 투명도로 얹어, 잎이 빠지는 그 자리에서 그대로 검게 눌어붙는다. */
+    if (gone > 0 && id === T.LEAF && tileHash(tx + 104729, ty + 7919) < this.ASH_BURNT) {
+      c.globalAlpha = gone; TileArt.drawBurnt(c, v, sx, sy);
+    }
+    c.globalAlpha = 1;
+  },
 
   /** 지금 잿빛이 얼마나 깊은가 (0 = 아직 색이 있다, 1 = 다 빠졌다) */
   ashF() {
@@ -3468,20 +3500,8 @@ const G = {
         const v = (tileHash(tx, ty) * VA) | 0;
         if (id === T.AIR) { if (wl) TileArt.drawWall(c, wl, v, sx, sy); continue; }
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
-        const shedCap = ashOn ? this.ASH_SHED[id] : undefined;
-        if (shedCap !== undefined) {
-          /* 잿빛에 먹히는 칸. 자리마다 제 몫(r)이 있고, 잿빛이 그 몫을 넘어서면
-             그때부터 0.2 구간에 걸쳐 진다 — 한 장에서 우수수 사라지지 않고 하나씩 빠진다.
-             성한 판과 잿빛 판을 서로 반대 투명도로 겹쳐 색이 빠지는 과정을 잇는다. */
-          const r = tileHash(tx + 7919, ty + 104729);
-          const gone = shedCap ? clamp((ashF * shedCap - r) / 0.2, 0, 1) : 0;
-          if (gone < 1) {
-            if (ashF < 0.98) { c.globalAlpha = (1 - ashF) * (1 - gone); TileArt.draw(c, id, v, sx, sy); }
-            c.globalAlpha = ashF * (1 - gone); TileArt.drawAsh(c, id, v, sx, sy);
-            c.globalAlpha = 1;
-          } else continue;                       // 다 졌다 — 윗면 하이라이트도 얹지 않는다
-        }
-        else if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
+        if (ashOn && this.ASH_SHED[id] !== undefined) { this.drawAshTile(c, id, v, sx, sy, tx, ty, ashF); continue; }
+        if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
         else TileArt.draw(c, id, v, sx, sy);
         if (!TOP_SKIP[id] && !w.solid(tx, ty - 1)) {
           c.fillStyle = 'rgba(255,255,255,.10)'; c.fillRect(sx, sy, TS, 2);
@@ -3955,6 +3975,30 @@ const G = {
     }
     c.restore();
   },
+  /** 숲 원경을 지금 잿빛 깊이에 맞춰 섞어 둔다. 1920×400 을 매 프레임 픽셀 단위로
+      섞을 수는 없어서 **장이 바뀔 때만** 다시 만들고 그 사이엔 만들어 둔 것을 쓴다. */
+  forestBg(im) {
+    const af = this.ashF();
+    if (af > 0.98) return im;                    // 다 빠졌다 — 원본이 곧 그 상태다
+    if (this._fbg && this._fbg.im === im && Math.abs(this._fbg.f - af) < 0.004) return this._fbg.cv;
+    const cv = (this._fbg && this._fbg.im === im) ? this._fbg.cv : document.createElement('canvas');
+    cv.width = im.width; cv.height = im.height;
+    const g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, cv.width, cv.height), px = d.data;
+    for (let i = 0; i < px.length; i += 4) {
+      if (!px[i + 3]) continue;
+      const l = px[i] * 0.30 + px[i + 1] * 0.59 + px[i + 2] * 0.11;   // 밝기는 그대로 두고
+      px[i] = px[i] * af + (l * 0.52 + 2) * (1 - af);                 // 색만 숲으로 되돌린다
+      px[i + 1] = px[i + 1] * af + (l * 1.14 + 6) * (1 - af);
+      px[i + 2] = px[i + 2] * af + (l * 0.47 + 3) * (1 - af);
+    }
+    g.putImageData(d, 0, 0);
+    this._fbg = { im, cv, f: af };
+    return cv;
+  },
+
   /** 손그림 원경 — 두 겹으로 무한 스크롤. 그릴 수 없으면 false */
   drawParallaxArt(c, camX, camY, f) {
     const deep = camY > HELL_Y * TS - 700;
@@ -3983,6 +4027,10 @@ const G = {
     }
     const im = Sprites.img[key];
     if (!im || !im.width) return false;
+    /* 잿빛 숲 원경만 장에 따라 색이 빠진다. 그림은 이미 다 죽은 회색으로 그려져 있어서
+       — 그게 8장의 모습이다 — 여기서 같은 밝기의 숲색을 만들어 두고 잿빛만큼
+       원본 쪽으로 되돌린다. 지형의 잎·풀과 같은 곡선을 타야 능선만 따로 노는 일이 없다. */
+    const src = key === 'parallax_forest' ? this.forestBg(im) : im;
 
     const IW = im.width, IH = im.height;
     // 배경의 세로 위치는 camY(카메라의 실제 세계 y좌표) 하나로만 정한다. camY는 플레이어가
@@ -4006,7 +4054,7 @@ const G = {
       c.globalAlpha = alpha * (0.42 + f * 0.58);
       let ox = -((camX * spd) % w);
       if (ox > 0) ox -= w;
-      for (let x = ox; x < this.W; x += w) c.drawImage(im, x, baseY - h + dy, w, h);
+      for (let x = ox; x < this.W; x += w) c.drawImage(src, x, baseY - h + dy, w, h);
       if (spd === 0.34) { nearBaseY = baseY + dy; nearW = w; nearOx = ox; }
     }
     // 사막 분지 같은 저지대에서는 카메라가 내려가면서 근경 이미지의 바닥이 화면 바닥보다
@@ -4017,7 +4065,7 @@ const G = {
     if (nearBaseY < this.H) {
       c.globalAlpha = 1 * (0.42 + f * 0.58);
       for (let x = nearOx; x < this.W; x += nearW) {
-        c.drawImage(im, 0, IH - 1, IW, 1, x, nearBaseY, nearW, this.H - nearBaseY);
+        c.drawImage(src, 0, IH - 1, IW, 1, x, nearBaseY, nearW, this.H - nearBaseY);
       }
     }
     c.restore();
