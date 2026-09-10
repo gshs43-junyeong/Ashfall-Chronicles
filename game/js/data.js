@@ -1744,6 +1744,33 @@ const ENEMIES = {
   lantern:    { n: '잊힌 등불', hp: 380, dmg: 66, def: 16, spd: 74, ai: 'caster', w: 22, h: 30, c: '#e0c86a', xp: 200, gold: 110, biome: 'ruin', range: 330, aggro: 520,
                 drops: [['aether_shard', .5, 1, 3], ['crystal', .5, 2, 5]] },
 
+  /* ================= v1.1: 유적마다 그곳에서만 나오는 것 하나 =================
+     유적 다섯 곳의 잡몹이 전부 세계 어디서나 나오는 것들이었다 — 얼음 던전엔
+     얼음 지대의 서리 정령, 광산엔 동굴의 광부 유령. 유적에 들어와야만 볼 수 있는
+     것은 유적 수호병 하나뿐이고, 그건 다섯 곳에 다 나온다.
+
+     다섯 다 **그 유적의 장식에서 나온 것**이다. 몬스터와 장식이 같은 이야기를
+     해야 나중에 붙여 넣은 것처럼 안 보인다.
+     ai 도 겹치지 않게 갈랐다 — walker / jumper / walker(빠름) / flyer / caster.
+     실루엣도 마찬가지다(서 있는 것 · 웅크린 것 · 낮고 넓은 것 · 매달린 것 ·
+     세로로 긴 것). 어두운 방에서 형체만 보고도 무엇인지 갈려야 한다.
+     세기는 그 유적의 rank 를 따라간다 — 광산(1)이 가장 순하고 부패한 둥지(6)가 가장 세다. */
+  cartwraith: { n: '빈 광차', hp: 140, dmg: 30, def: 8, spd: 124, ai: 'walker', w: 30, h: 22, c: '#7a5a38', xp: 44, gold: 24, biome: 'ruin', aggro: 400,
+                d: '아무도 밀지 않는데 굴러온다. 안에서 잉걸이 아직 타고 있다.',
+                drops: [['deep_ember', .7, 1, 3], ['iron_ore', .5, 1, 3], ['rust_gear', .2, 1, 1]] },
+  frostbound: { n: '언 순례자', hp: 260, dmg: 40, def: 20, spd: 34, ai: 'walker', w: 26, h: 38, c: '#9fd8ea', xp: 84, gold: 40, biome: 'ruin', aggro: 380,
+                d: '얼음 안에 언 채로 걸어온다. 무엇을 하러 왔는지는 얼음이 안 말해 준다.',
+                drops: [['neverthaw', .7, 1, 2], ['ice_shard', .8, 2, 5], ['frost_core', .3, 1, 2]] },
+  jarhusk:    { n: '단지 껍데기', hp: 230, dmg: 46, def: 12, spd: 74, ai: 'jumper', w: 24, h: 26, c: '#c8a86a', xp: 92, gold: 46, biome: 'ruin', aggro: 420,
+                d: '단지 안에 있던 것. 봉을 뜯은 사람이 없다는 말은, 스스로 나왔다는 뜻이다.',
+                drops: [['sealed_ash', .7, 1, 3], ['gold_ore', .4, 1, 3], ['bone', .6, 2, 4]] },
+  ventspitter:{ n: '구멍벌레', hp: 240, dmg: 42, def: 14, spd: 30, ai: 'caster', w: 26, h: 28, c: '#5a8a74', xp: 110, gold: 52, biome: 'ruin', range: 320, aggro: 460, proj: 'rune',
+                d: '포자 구멍에 살던 것. 구멍이 벌레의 집인지 벌레가 구멍인지는 모른다.',
+                drops: [['spore_dust', .7, 1, 3], ['spore_sac', .5, 1, 3], ['glowcap', .4, 2, 4]] },
+  sacling:    { n: '주머니의 것', hp: 300, dmg: 54, def: 16, spd: 88, ai: 'flyer', w: 24, h: 30, c: '#8a4a80', xp: 150, gold: 70, biome: 'ruin', aggro: 500,
+                d: '알주머니에서 나온 것. 아직 다 자라지 않았다.',
+                drops: [['blight_spawn', .7, 1, 3], ['corrupt_ess', .5, 1, 3], ['soul_shard', .3, 1, 2]] },
+
   /* --- 세션 2: 지하 공창 --- */
   scrapcrawler: { n: '고철 기어다니개', hp: 900, dmg: 62, def: 30, spd: 92, ai: 'walker', w: 30, h: 19, c: '#6a6a74', xp: 900, gold: 240, aggro: 420,
                  drops: [['steel_plate', 1, 3, 7], ['conduit_part', .5, 1, 2], ['gun_scrap', .02, 1, 1]] },
@@ -2171,14 +2198,14 @@ const RUIN_SPEC = [
     id: 'ice', n: '얼음 던전', x: 300, y: 150, w: 74, h: 44,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
     traps: ['dart', 'crumble', 'grind'], boss: 'ice_warden',
-    mobs: ['frostling', 'icewolf'],
+    mobs: ['frostling', 'icewolf', 'frostbound'],
     rank: 2, tier: 3, trapRate: 0.46, spikeRate: 0.26, chestRate: 0.16, mobMul: 1.0
   },
   {
     id: 'pyramid', n: '피라미드', x: 2180, y: 96, w: 80, h: 56,
     wall: T.SANDBRICK, floor: T.SANDSTONE, bg: 8, torch: T.TORCH,
     traps: ['dart', 'vent', 'crumble', 'gas'], boss: 'sand_guardian',
-    mobs: ['scorpion', 'sandmaw', 'skeleton'],
+    mobs: ['scorpion', 'sandmaw', 'skeleton', 'jarhusk'],
     // 지상으로 튀어나온 데다 얕아서 일찍 눈에 띄지만, 안은 함정이 가장 촘촘하다 —
     // "보이는 것과 실제 난이도가 다른" 유적 하나는 있어야 한다
     rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.20, mobMul: 1.35
@@ -2187,7 +2214,7 @@ const RUIN_SPEC = [
     id: 'mine', n: '버려진 광산', x: 820, y: 168, w: 72, h: 38,
     wall: T.MINEWOOD, floor: T.PLANK, bg: 4, torch: T.TORCH,
     traps: ['dart', 'crumble', 'gas'], boss: 'mine_horror',
-    mobs: ['minerghost', 'spider', 'bat'],
+    mobs: ['minerghost', 'spider', 'bat', 'cartwraith'],
     // 베이스캠프 바로 옆. 처음 들어가 보는 유적이라 가장 순하게 둔다
     rank: 1, tier: 2, trapRate: 0.32, spikeRate: 0.16, chestRate: 0.14, mobMul: 0.85
   },
@@ -2195,7 +2222,7 @@ const RUIN_SPEC = [
     id: 'blight', n: '부패한 둥지', x: 4020, y: 196, w: 100, h: 60,
     wall: T.EBONSTONE, floor: T.EBONSTONE, bg: 3, torch: T.TORCH,
     traps: ['dart', 'vent', 'gas', 'coil'], boss: 'blight_maw',
-    mobs: ['crawler', 'shadoweye'],
+    mobs: ['crawler', 'shadoweye', 'sacling'],
     // 동쪽 끝 + 가장 깊다. 여섯 중 마지막에 닿는 곳이라 제일 세게
     rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.24, mobMul: 1.85
   },
@@ -2203,7 +2230,7 @@ const RUIN_SPEC = [
     id: 'spore', n: '포자 굴', x: 3620, y: 176, w: 68, h: 42,
     wall: T.SPORESTONE, floor: T.GLOWMOSS, bg: 12, torch: T.GLOWCAP,
     traps: ['vent', 'dart', 'gas', 'coil'], boss: 'spore_queen',
-    mobs: ['sporeling', 'capbeast'], arch: 'buried', rooms: 14,
+    mobs: ['sporeling', 'capbeast', 'ventspitter'], arch: 'buried', rooms: 14,
     // 입구가 없어 우연히 뚫고 들어가는 곳. 준비 없이 떨어질 수 있으니 함정은 낮추고
     // 대신 잡몹을 세게 — 도망칠 길이 없다는 게 이 유적의 압박이다
     rank: 5, tier: 5, trapRate: 0.50, spikeRate: 0.30, chestRate: 0.22, mobMul: 1.6
