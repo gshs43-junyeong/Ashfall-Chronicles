@@ -325,7 +325,7 @@ const G = {
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
     this.nearStObj = { work: null, forge: null };
     this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
-    this.rainT = 0; this.rainDrops = null;
+    this.rainT = 0; this.rainDrops = null; this.smokes = []; this.smokeT = 0;
     this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = [];
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
     this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
@@ -492,6 +492,7 @@ const G = {
     // 세계 이벤트 (붉은 달 · 모래폭풍 · 포자 개화 · 비)
     this.updateEvents(dt);
     this.updateWeather(dt);
+    this.updateSmoke(dt);        // 용광로 굴뚝 연기
 
     this.checkRuinEntry();
     this.checkRuinEvent();
@@ -2263,6 +2264,98 @@ const G = {
       break;
     }
   },
+  /* ================= 용광로 굴뚝 연기 =================
+     용광로는 불구멍이 깜빡이는 것 말고는 아무 일도 안 하고 있었다. 쇠를 녹이는
+     물건인데 굴뚝이 조용했다.
+
+     · 한 덩이가 사는 동안 시트 여섯 장을 차례로 지난다 — 올라가는 내내 **모양이 바뀐다**
+       (같은 그림이 커지기만 하는 게 아니다. tools/mksmoke.py 참고)
+     · 매 프레임 조금씩 오르고 좌우로 흔들린다. 튀지 않는다
+     · 위 칸이 막혀 있으면 **그 아래에 멎어 옆으로 번진다.** 천장이 없으면 수명이 다할
+       때까지 계속 오른다 — 오를 수 있는 높이를 따로 정해 두지 않았다
+     · 화면 근처 용광로만 뱉는다. 마을·베이스캠프·플레이어가 설치한 것이 다 합쳐지면
+       세계에 용광로가 여럿이라, 거리로 먼저 거르지 않으면 안 보이는 곳에서 계속 쌓인다 */
+  SMOKE_EVERY: 0.42,        // 굴뚝 하나가 한 덩이를 뱉는 간격(초)
+  SMOKE_MAX: 80,            // 동시에 살아 있는 덩이 수 상한
+  SMOKE_RISE: 30,           // 오르는 속도(px/초)
+  SMOKE_VENT_X: 15,         // 굴뚝 가운데 — 용광로 그림(44×44) 안의 자리
+  SMOKE_VENT_Y: 6,          // 굴뚝 꼭대기
+
+  /** 이 자리 위로 막힌 칸까지 몇 px인가. 열 칸 안에 없으면 null(하늘로 친다). */
+  smokeCeil(x, y) {
+    const w = this.world;
+    const tx = clamp(Math.floor(x / TS), 0, WW - 1);
+    const y0 = Math.floor(y / TS);
+    for (let d = 1; d <= 10; d++) {
+      const ty = y0 - d;
+      if (ty < 0) return null;
+      if (w.solid(tx, ty)) return y - (ty + 1) * TS;
+    }
+    return null;
+  },
+
+  updateSmoke(dt) {
+    const w = this.world, p = this.player;
+    if (!w || !p) return;
+    if (!this.smokes) this.smokes = [];
+    this.smokeT = (this.smokeT || 0) + dt;
+    if (this.smokeT >= this.SMOKE_EVERY) {
+      this.smokeT = 0;
+      const rx = this.W * 0.7 + 90, ry = this.H * 0.7 + 90;
+      for (const o of w.objects) {
+        if (o.type !== 'forge') continue;
+        if (Math.abs(o.x - p.cx) > rx || Math.abs(o.y - p.cy) > ry) continue;
+        if (this.smokes.length >= this.SMOKE_MAX) break;
+        const vx = o.x + this.SMOKE_VENT_X, vy = o.y + this.SMOKE_VENT_Y;
+        /* 위에 천장이 있으면 **닿을 만큼은 살게** 한다. 수명을 고정해 두면 방 높이가
+           조금만 높아도 천장을 못 보고 도중에 흩어진다 — 굴뚝 연기가 천장에 고이는
+           그림이 이 연출의 요점이라 거기까지는 가야 한다. 천장이 없으면(하늘) 평소
+           수명대로 오르다 사그라든다. */
+        const gap = this.smokeCeil(vx, vy);
+        const dur = gap === null ? 3.6 + Math.random() * 1.4
+                                 : Math.min(9, gap / this.SMOKE_RISE + 1.4 + Math.random() * 0.5);
+        this.smokes.push({
+          x: vx + (Math.random() - 0.5) * 3, y: vy,
+          t: 0, dur,
+          sway: Math.random() * TAU, sz: 10 + Math.random() * 3, stuck: 0
+        });
+      }
+    }
+    for (let i = this.smokes.length - 1; i >= 0; i--) {
+      const s = this.smokes[i];
+      s.t += dt;
+      if (s.t >= s.dur) { this.smokes.splice(i, 1); continue; }
+      if (s.stuck) {
+        // 천장에 닿았다 — 옆으로 번지며 사그라든다
+        s.x += (s.sway < Math.PI ? 1 : -1) * 13 * dt;
+      } else {
+        const ny = s.y - this.SMOKE_RISE * dt;
+        const tx = clamp(Math.floor(s.x / TS), 0, WW - 1);
+        const ty = Math.floor((ny - s.sz * 0.4) / TS);
+        if (ty >= 0 && w.solid(tx, ty)) { s.stuck = 1; s.y = (ty + 1) * TS + s.sz * 0.4; }
+        else { s.y = ny; s.x += Math.sin(s.sway + s.t * 1.6) * 8 * dt; }
+      }
+    }
+  },
+
+  drawSmoke(c, camX, camY) {
+    if (!this.smokes || !this.smokes.length) return;
+    for (const s of this.smokes) {
+      const k = clamp(s.t / s.dur, 0, 1);
+      const fr = Math.min(5, Math.floor(k * 6));
+      const sz = s.sz * (1 + k * 1.6) * (s.stuck ? 1.3 : 1);
+      const x = s.x - camX - sz / 2, y = s.y - camY - sz / 2;
+      if (x < -sz || y < -sz || x > this.W || y > this.H) continue;
+      c.globalAlpha = Math.min(1, (1 - k) * 1.7) * 0.86;
+      if (!(this.spritesOn && Sprites.drawFx(c, 'smoke_forge', fr, x, y, sz))) {
+        // 그림이 없으면 — 네모 한 장으로라도 연기가 오르는 것은 보이게 한다
+        c.fillStyle = '#2c2722';
+        c.fillRect(Math.round(x + sz * 0.2), Math.round(y + sz * 0.2), Math.round(sz * 0.6), Math.round(sz * 0.6));
+      }
+    }
+    c.globalAlpha = 1;
+  },
+
   /** 빗줄기 페이드 인/아웃 + 화면 좌표계 낙하 갱신. rainT는 구름 농도에도 같이 쓴다 —
       비가 그친 뒤에도 구름이 서서히 걷히도록 즉시 0으로 끊지 않는다. */
   updateWeather(dt) {
@@ -3032,7 +3125,7 @@ const G = {
       this.dayCount = d.dayCount || 0; this.market = {}; this.trainedToday = 0;
       this.nearStObj = { work: null, forge: null };
       this.event = null; this.eventRolled = -1; this.lairs = d.lairs || {};
-      this.rainT = 0; this.rainDrops = null;
+      this.rainT = 0; this.rainDrops = null; this.smokes = []; this.smokeT = 0;
       this.vault = d.vault || new Array(VAULT_SIZE).fill(null); this.vaultGold = d.vaultGold || 0;
       while (this.vault.length < this.vaultCap()) this.vault.push(null);
       this.bounties = d.bounties || [];
@@ -3658,6 +3751,9 @@ const G = {
       c.closePath(); c.stroke();
       c.restore();
     }
+
+    // ---- 용광로 굴뚝 연기 ---- (입자보다 먼저 — 불티가 연기 앞에 보이도록)
+    this.drawSmoke(c, camX, camY);
 
     // ---- 입자 ----
     for (const pt of this.parts) {
