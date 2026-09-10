@@ -1219,6 +1219,10 @@ const RECIPES = [
   { out: 'sum_pursuer', n: 1, need: { star_whole: 1, void_frag: 25, ruin_brick: 40 }, station: 'forge' },
   /* 세션 2 — 공창에서 배워 온 것들. 3단계(작업대·용광로 분리, 공장)의 재료가 된다 */
   { out: 'gear_basic', n: 4, need: { steel_plate: 3, iron_bar: 2 }, station: 'forge' },
+  /* 개조된 것에서 나온 녹슨 톱니를 쓸 데. 강철판 3 + 주괴 2 → 4개 쪽이
+     여전히 싸므로 지름길은 아니고, 세션 2 지상에서 모은 것이 버려지지만
+     않게 하는 정도다(11장 목표가 기본 톱니다). */
+  { out: 'gear_basic', n: 1, need: { rust_gear: 4 }, station: 'forge' },
   { out: 'pick_drill', n: 1, need: { blueprint_core: 1, power_core: 12, gear_basic: 20, mythril_bar: 10 }, station: 'forge' },
 
   /* ========== 3단계: 용광로 ========== */
@@ -1954,6 +1958,16 @@ const ENEMIES = {
      하늘·지하 공창 계열은 애초에 세션 2 것이다. 개조는 **바이옴**에만 건다.
      순한 동물(passive)도 뺐다 — 싸우지 않는 것을 개조해 봐야 1.5배가 걸릴 데가 없다. */
 const MECH_MUL = 1.5;                 // 체력·공격력·방어·보상 모두 원래의 1.5배
+/* 개조된 것에서는 **부품만** 나온다. 원래 떨구던 것에 부품을 얹지 않고 통째로
+   바꾼다 — 얹으면 개조된 몹이 그냥 더 좋은 사냥감이 되어, 세기가 1.5배인
+   만큼의 값을 치르고도 이득이라 세션 2 내내 개조된 쪽만 잡게 된다.
+   바꿔치기라야 "가죽 대신 고철이 나온다"가 되고 보상 총량이 그대로다.
+
+   녹슨 톱니 하나로 통일한다. 강철판·동력석은 지하 공창의 몫이라, 지상에서
+   같은 것이 나오면 공창에 내려갈 이유가 없어진다. 대신 톱니를 기본 톱니로
+   불릴 수 있게 조리법을 하나 열어 뒀다(RECIPES) — 11장 목표가 마침
+   기본 톱니라 모은 것이 그리로 이어진다. */
+const MECH_PART = 'rust_gear';
 const MECH_CH0 = 9;                   // 세션 2 서장
 const MECH_CH1 = 14;                  // 세션 2 종장 — 이때 전부 넘어간다
 const MECH_ORDER = [
@@ -4046,8 +4060,15 @@ const SIDE_POOL = {
   ],
   mira: [
     (ch, rng) => {
-      const items = ['crystal', 'frost_core', 'corrupt_ess', 'soul_shard', 'void_frag'];
-      const item = items[clamp(ch - 1, 0, items.length - 1)];
+      /* 세션마다 다른 표를 쓴다. 예전에는 다섯짜리 하나뿐이라 9장 이후로는 늘
+         공허 조각을 요구했는데, 그건 심연의 망령이 떨구는 것이고 망령은 13장에
+         개조되어 부품만 내놓는다 — 받을 수 없는 의뢰가 걸렸다.
+         한 표에 이어 붙이면 안 된다. 그러면 7·8장(아직 세션 1)이 동력관·동력석을
+         요구하는데, 그건 지하 공창에 내려가기 전이라 구할 데가 없다. */
+      const s1 = ['crystal', 'frost_core', 'corrupt_ess', 'soul_shard', 'void_frag'];
+      const s2 = ['aether_shard', 'conduit_part', 'power_core', 'core_shard', 'draft_glass'];
+      const item = ch >= 9 ? s2[clamp(ch - 10, 0, s2.length - 1)]
+                           : s1[clamp(ch - 1, 0, s1.length - 1)];
       const n = rng.int(5, 10);
       return {
         title: '마력 재료',
