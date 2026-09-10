@@ -944,6 +944,16 @@ window.SPRITE_MANIFEST = {
         "frost": "fx/hit_frost.png",
         "soul": "fx/hit_soul.png"
       }
+    },
+    "smoke": {
+      "scale": 4,
+      "gap": 4,
+      "frameW": 16,
+      "frameH": 16,
+      "count": 6,
+      "files": {
+        "forge": "fx/smoke_forge.png"
+      }
     }
   },
   "objects": {

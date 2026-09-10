@@ -31,6 +31,8 @@ const Sprites = {
     for (const k in B) add(k, B[k].file);
     for (const k in this.meta.fx.projectiles.files) add('proj_' + k, this.meta.fx.projectiles.files[k]);
     for (const k in this.meta.fx.bursts.files) add('burst_' + k, this.meta.fx.bursts.files[k]);
+    // 연기(용광로 굴뚝) — 투사체·폭발과 규격만 다른 세 번째 이펙트 무리
+    if (this.meta.fx.smoke) for (const k in this.meta.fx.smoke.files) add('smoke_' + k, this.meta.fx.smoke.files[k]);
     for (const k in this.meta.npc.files) add('npc_' + k, this.meta.npc.files[k]);
     this.meta.backgrounds.parallax.files.forEach(f => add(f.split('/')[1].replace('.png',''), f));
     add('title', this.meta.backgrounds.title.file);
@@ -139,8 +141,10 @@ const Sprites = {
      현재 변환(회전 등)이 걸린 상태에서 호출해도 되도록 x,y는 그대로 쓴다. */
   drawFx(c, key, frame, x, y, size) {
     const im = this.img[key]; if (!im || !im.width || !this.meta) return false;
-    const isProj = key.startsWith('proj_');
-    const m = isProj ? this.meta.fx.projectiles : this.meta.fx.bursts;
+    const m = key.startsWith('proj_') ? this.meta.fx.projectiles
+            : key.startsWith('smoke_') ? this.meta.fx.smoke
+            : this.meta.fx.bursts;
+    if (!m) return false;
     if (frame < 0 || frame >= m.count) return false;
     const S = m.scale, sw = m.frameW * S, sh = m.frameH * S;
     const sx = frame * (sw + m.gap);
