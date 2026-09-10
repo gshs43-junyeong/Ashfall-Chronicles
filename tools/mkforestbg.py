@@ -60,71 +60,145 @@ def lift(c, n):
     return tuple(max(0, min(255, v + n)) for v in c[:3])
 
 
-def find_trees(px, W, H):
-    """원본에서 줄기를 찾아 (가운데 x, 꼭대기 y, 폭, 색) 로 돌려준다.
+def trunk_colors(px, W, H):
+    """줄기 색을 골라낸다 — **가로 런 길이**로 가른다.
 
-    **좁고 긴 세로 획**을 찾는다. 하늘선을 기준으로 삼으면 가까운 층의 나무를
-    통째로 놓친다 — 그 나무들은 뒤의 언덕을 배경으로 서 있어서 하늘선을 안
-    건드리기 때문이다(처음에 그렇게 했다가 먼 나무에만 잎이 달렸다).
-
-    판정: 그 칸이 불투명하고, 15px 아래도 같은 색이며(길다), 좌우 11px 은
-    다른 색이다(좁다). 이 셋을 만족하는 가장 위 칸이 그 줄기의 꼭대기다."""
-    def rgb(x, y):
-        p = px[x, y]
-        return p[:3] if p[3] == 255 else None
-
-    GAP, LONG = 11, 10
-    tops = {}
-    for x in range(GAP, W - GAP):
-        for y in range(0, H - LONG):
-            c = rgb(x, y)
-            if c is None:
+    원경은 층마다 제 회색을 쓴다. 언덕은 가로로 길게 칠해져 있고(런 중앙값
+    24~40px) 줄기는 좁다(4~16px). 이 하나로 둘이 깨끗이 갈린다."""
+    from collections import defaultdict
+    runs, cnt = defaultdict(list), defaultdict(int)
+    for y in range(H):
+        x = 0
+        while x < W:
+            p = px[x, y]
+            if p[3] != 255:
+                x += 1
                 continue
-            if rgb(x, y + LONG) != c:            # 길지 않다 — 잔가지나 언덕
-                continue
-            if rgb(x - GAP, y) == c or rgb(x + GAP, y) == c:
-                continue                          # 넓다 — 언덕이다
-            tops[x] = (y, c)
-            break
-
-    runs = []
-    for x in sorted(tops):
-        if runs and x - runs[-1][-1] <= 4:
-            runs[-1].append(x)
-        else:
-            runs.append([x])
-    def ink_top(x):
-        """그 열에서 **눈에 보일 만큼 칠해진 가장 위 칸.**
-
-        갓을 얹을 자리는 여기다. 위의 판정이 내놓는 y 를 그대로 쓰면 안 된다 —
-        실측하니 53그루 중 42그루가 줄기 중턱(16~76px 아래)에 걸렸고, 거기에
-        갓을 얹으니 **갓 위로 맨 줄기가 삐죽 솟아** 있었다.
-
-        색으로 줄기를 따라 올라가는 것도 안 된다. 원본은 먼 줄기를 **세로
-        그라데이션**으로 그려서(위로 갈수록 밝다: 36,40,48 → 38,42,50 → …)
-        같은 색이 4~8px 밖에 안 이어지고, 게다가 꼭대기 20~50px 은 알파가
-        1~24 로 깔려 있다. 색을 맞추는 어떤 방법도 몇 칸 못 가서 끊긴다.
-        '칠해졌나'만 보는 쪽이 그림이 어떻게 그려졌든 흔들리지 않는다."""
-        for y in range(H):
-            if px[x, y][3] >= 60:
-                return y
-        return H
-
-    trees = []
-    for r in runs:
-        if len(r) > 26:                           # 이만큼 넓으면 나무가 아니다
+            c, x0 = p[:3], x
+            while x < W and px[x, y][3] == 255 and px[x, y][:3] == c:
+                x += 1
+            runs[c].append(x - x0)
+            cnt[c] += x - x0
+    out = []
+    for c, n in cnt.items():
+        if n < 1500:
             continue
-        ty = min(ink_top(x) for x in r)
-        cx = sum(r) // len(r)
-        # 색은 줄기에서 가장 흔한 것으로. 한 점만 찍으면 반투명 가장자리
-        # (RGB 에 아무 값이나 들어 있다)를 집어 갓이 흰색으로 튄다
-        seen = {}
-        for x in r:
-            c = tops[x][1]
-            seen[c] = seen.get(c, 0) + 1
-        col = max(seen, key=seen.get)
-        trees.append((cx, ty, len(r), col))
-    return trees
+        r = sorted(runs[c])
+        if r[len(r) // 2] <= 18:
+            out.append(c)
+    return set(out)
+
+
+def vrun_max(px, W, H, c):
+    """그 색이 세로로 가장 길게 이어지는 길이. 층을 가르는 두 번째 잣대다.
+
+    가로 런으로 언덕을 걸러도 언덕의 **그라데이션 띠** 색들이 남는다(가로로도
+    짧게 끊겨 칠해져 있다). 그것들은 세로로 4~12px 밖에 안 가고, 굵은 줄기는
+    52~116px 를 간다 — 사이가 텅 비어 있어 20 이면 깨끗이 갈린다."""
+    best = 0
+    for x in range(W):
+        y = 0
+        while y < H:
+            if px[x, y][3] == 255 and px[x, y][:3] == c:
+                n = 0
+                while y + n < H and px[x, y + n][3] == 255 and px[x, y + n][:3] == c:
+                    n += 1
+                if n > best:
+                    best = n
+                y += n
+            else:
+                y += 1
+    return best
+
+
+def find_trees(px, W, H):
+    """줄기를 찾아 (가운데 x, 꼭대기 y, 폭, 색) 로 돌려준다.
+
+    판정은 하나뿐이다 — **그 색이 그 열에서 처음 나타나는 칸.**
+    줄기 색은 제 층만 쓰므로, 뒤에 무엇이 그려져 있든 헷갈릴 수 없다.
+    그래서 색마다 따로 훑는다. 한 열에서 '줄기 색 아무거나 첫 칸' 을 집으면
+    안 된다 — 앞 층 줄기 위로 뒤 층 잔가지가 걸친 자리에서 뒤 것을 집어,
+    앞 층 큰 나무 전체가 통째로 빠진다(아래 5번).
+
+    ─ 여기까지 오는 데 다섯 번 틀렸다. 남겨 둔다, 같은 데 또 빠지지 않게:
+      1. 넓은 창의 **최댓값**을 언덕선으로 삼음 → 언덕 봉우리 전체가 '솟은 것'
+         으로 걸려 폭 80px 짜리 갓이 능선에 얹혔다.
+      2. **중앙값**으로 고침 → 하늘선을 안 건드리는 가까운 층 나무를 통째로
+         놓쳤다(그 나무들은 뒤 언덕을 배경으로 서 있다).
+      3. **좁고 긴 세로 획** 판정 → 언덕 가장자리를 줄기로 오인해서 ty 가 거의
+         전부 244 로 같았고, 갓이 줄기 중턱에 얹혀 맨 줄기가 위로 솟았다.
+      4. 그 열의 **알파 60 이상 첫 칸** → 가까운 줄기 앞을 먼 언덕이 가리는
+         자리에서 먼 언덕의 꼭대기를 집어, 갓이 줄기에서 떨어져 공중에 떴다.
+      5. 열마다 **줄기 색 아무거나 첫 칸** → 색은 맞게 봤지만 열마다 한 번만
+         봐서, 앞 층 어두운 줄기(14,16,20)가 한 그루도 안 잡혔다. 화면 아래
+         절반이 통째로 맨 장대였다.
+      1~4 는 '평평하게 합쳐진 그림에서 어느 것이 어느 층인지'를 짐작하려 한
+      탓이고, 5 는 색으로 물어 놓고 층마다 묻지 않은 탓이다."""
+    cols = trunk_colors(px, W, H)
+    trees = []
+
+    def group(hits, col):
+        """꼭대기가 붙어 가는 열끼리 한 그루로 묶는다. x 가 붙어 있다는 것만
+           보면 1900열이 한 덩어리가 되어 폭 제한에 다 걸린다(0그루가 나왔다)."""
+        runs = []
+        for x in sorted(hits):
+            if runs and x - runs[-1][-1] <= 4 and abs(hits[x][0] - hits[runs[-1][-1]][0]) <= 8:
+                runs[-1].append(x)
+            else:
+                runs.append([x])
+        for r in runs:
+            if len(r) > 26:                      # 이만큼 넓으면 나무가 아니다
+                continue
+            ty = min(hits[x][0] for x in r)
+            c = col or max(set(hits[x][1] for x in r),
+                           key=lambda k: sum(1 for x in r if hits[x][1] == k))
+            trees.append((sum(r) // len(r), ty, len(r), c))
+
+    # ── 앞 층: 한 색이 세로로 길게 이어지는 굵은 줄기.
+    # 색마다 따로 훑는다. '줄기 색 아무거나 첫 칸' 으로 한 열을 한 번만 보면,
+    # 앞 줄기 위로 뒤 언덕의 그라데이션 색이 걸친 자리에서 뒤 것을 집어
+    # 가장 어두운 앞 층(14,16,20)이 한 그루도 안 잡힌다.
+    for c in cols:
+        if vrun_max(px, W, H, c) < 20:
+            continue
+        hits = {}
+        for x in range(W):
+            for y in range(H):
+                p = px[x, y]
+                if p[3] != 255 or p[:3] != c:
+                    continue
+                n = 0
+                while y + n < H and px[x, y + n][3] == 255 and px[x, y + n][:3] == c:
+                    n += 1
+                if n >= 16:                      # 언덕에 박힌 점 하나를 거른다
+                    hits[x] = (y, c)
+                break
+        group(hits, c)
+
+    # ── 먼 층: 줄기가 세로 그라데이션으로 칠해져 있어 한 색이 4~8px 밖에
+    # 안 이어진다. 여기서는 층을 색 하나로 못 가르므로, 열마다 줄기 색이
+    # 처음 나오는 칸을 쓴다(먼 층 앞에는 가릴 것이 없어 이걸로 맞는다).
+    hits = {}
+    for x in range(W):
+        for y in range(H):
+            p = px[x, y]
+            if p[3] == 255 and p[:3] in cols:
+                hits[x] = (y, p[:3])
+                break
+    group(hits, None)
+
+    # 그라데이션으로 그려진 먼 줄기는 색이 여러 개라 여러 그루로 잡힌다.
+    # 가까이 붙고 **높이도 비슷한** 것만 묶는다 — 높이를 안 보면 앞 줄기가
+    # 그 뒤 먼 줄기에 흡수되어 갓이 저 위 먼 층에 얹힌다.
+    trees.sort()
+    merged = []
+    for t in trees:
+        if merged and t[0] - merged[-1][0] <= 10 and abs(t[1] - merged[-1][1]) <= 12:
+            a = merged[-1]
+            merged[-1] = (a[0], min(a[1], t[1]), max(a[2], t[2]), a[3] if a[1] <= t[1] else t[3])
+        else:
+            merged.append(t)
+    return merged
 
 
 def canopy(im, px, cx, ty, wide, col, rng, scale, clumps, ragged):
