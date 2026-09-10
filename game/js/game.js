@@ -2177,6 +2177,11 @@ const G = {
   },
 
   /* ================= 스폰 ================= */
+  /* 개조가 걸리는 구역 — 세션 1 바이옴의 지층들. 유적(ruin)은 그 유적의 장식에서
+     나온 몹이 따로 있고, 하늘·공창 계열(sky·works·runaway·atelier·citadel·
+     deepshaft)은 애초에 세션 2 것이라 뺀다. */
+  MECH_ZONE: { surface: 1, cave: 1, deep: 1, corrupt: 1, ice: 1, hell: 1, jungle: 1, glowfen: 1 },
+
   zoneTable(zone, night, tx, ty) {
     // 사막은 지상/동굴 판정 안에 들어가므로 x로 따로 갈라준다
     const desert = tx !== undefined && this.world.biomeAt(clamp(tx, 0, WW - 1)).id === 'desert';
@@ -2611,6 +2616,10 @@ const G = {
       // 부패한 둥지의 사냥꾼은 세기가 달라야 유적을 고르는 의미가 생긴다
       const ruinMul = zone === 'ruin' ? w.ruinMobMul(tx, sy2) : 1;
       const e = new Enemy(type, tx * TS, (sy2 - 1) * TS, this.scale() * ruinMul);
+      /* 개조 — 세션 2 에서는 옛 바이옴의 몹이 기계가 되어 서 있다. 장이 넘어갈수록
+         넘어간 종류가 늘어난다(MECH_ORDER). 유적·하늘·공창 계열은 제 이야기가
+         따로 있으므로 바이옴 구역에서만 건다. */
+      if (this.MECH_ZONE[zone] && isMech(type, this.chapter)) e.makeMech(MECH_MUL);
       // buff형 이벤트(비 등) — 몹 종류는 평소 그대로, 체력·공격력만 따로 올린다
       if (evHere && evHere.buff) {
         if (evHere.buff.hp) { e.maxHp = Math.round(e.maxHp * evHere.buff.hp); e.hp = e.maxHp; }
@@ -2624,7 +2633,7 @@ const G = {
         e.maxHp = Math.round(e.maxHp * 2.6); e.hp = e.maxHp;
         e.dmg *= 1.8; e.armor += 14; e.xp = Math.round(e.xp * 4); e.gold = Math.round(e.gold * 4);
         e.elite = true;
-        this.toast(`어디선가 유난히 사나운 ${ENEMIES[type].n}의 기척이 느껴진다`, 'bad');
+        this.toast(`어디선가 유난히 사나운 ${mobName(type, e.mech)}의 기척이 느껴진다`, 'bad');
       }
       this.ents.push(e);
       return;
@@ -4968,6 +4977,25 @@ const G = {
       절차 흔들림 경로와 일반 경로가 같은 것을 그려야 해서 따로 뺐다. */
   drawEnemyOverlay(c, e, sx, sy, dy, meta) {
     const w = meta ? meta.frameW : e.w;
+    /* 개조된 것의 화로 — 구워 둔 시트에는 고정된 불빛만 들어 있다. 여기서 한 겹
+       더 얹어 **뛰게** 만든다. 멈춰 있는 불빛은 칠해 놓은 무늬로 보이고, 뛰는
+       불빛이라야 안에서 무언가 돌아가는 것으로 읽힌다.
+       박자는 개체마다 어긋나게 둔다 — 스물다섯 마리가 한 박자로 뛰면 화면 전체가
+       같이 깜빡여서 기계가 아니라 화면 오류처럼 보인다. */
+    if (e.mech) {
+      const ph = this.time * 3.4 + (e.cx % 97) * 0.31;
+      const a = 0.30 + Math.sin(ph) * 0.22;
+      const r = 3.4 + Math.sin(ph) * 0.9;
+      c.save();
+      c.globalCompositeOperation = 'lighter';
+      c.globalAlpha = Math.max(0, a);
+      const gx = sx + e.w / 2, gy = sy + e.h * 0.42;
+      const gr = c.createRadialGradient(gx, gy, 0, gx, gy, r * 2.6);
+      gr.addColorStop(0, '#ffb45a'); gr.addColorStop(0.45, '#d85a1e'); gr.addColorStop(1, '#d85a1e00');
+      c.fillStyle = gr;
+      c.beginPath(); c.arc(gx, gy, r * 2.6, 0, TAU); c.fill();
+      c.restore();
+    }
     if (e.flash > 0) {   // 피격 섬광 — 판정 박스가 아니라 실제로 그려진 그림을 덮는다
       c.save(); c.globalAlpha = Math.min(.75, e.flash * 6); c.fillStyle = '#fff';
       c.fillRect(sx, sy - dy, w, e.h + dy); c.restore();
@@ -4991,8 +5019,14 @@ const G = {
        프레임 맨 아래에 있다. 위쪽을 맞춰 그리던 예전 방식에서는 그림이 28px(=1.27칸)
        아래로 처져서 "토끼가 한 블록 아래에서 움직이는" 것처럼 보였다.
        프레임과 판정 박스가 같은 몹(대부분)은 dy가 0이라 달라지는 게 없다. */
+    /* 개조된 개체는 원래 시트를 강철로 눕힌 사본으로 그린다(Sprites.mechSheet).
+       한 번 구워 두고 재사용하므로 매 프레임 하는 일은 시트를 하나 더 고르는 것뿐이다.
+       사본이 없으면(그림이 안 붙은 경우) 원래 시트로 떨어진다 — 세기는 이미 올라
+       있으니 그림만 평소 것으로 나온다. */
+    const key = (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type))
+      ? 'mech_' + e.type : e.type;
     const meta = this.spritesOn && Sprites.meta &&
-      (Sprites.meta.characters.sheets[e.type] || Sprites.meta.bosses.sheets[e.type]);
+      (Sprites.meta.characters.sheets[key] || Sprites.meta.bosses.sheets[key]);
     // 프레임 바닥 = 그림 발끝이라고 가정했었는데, 실제로는 시트마다 몇 px 투명 여백이
     // 남아 있어(들토끼류 실측 2.25px) 판정 박스가 작을수록 그만큼 더 떠 보였다.
     // Sprites.footInset가 실측한 여백이라 그만큼 덜 밀어 올린다.
@@ -5002,14 +5036,14 @@ const G = {
        발이 바닥에서 최대 14px 뜬 채로 걸었다 — 허공을 밟고 다니는 것처럼 보인다.
        음수를 허용하면 그림이 그만큼 내려와 발끝이 판정 바닥에 정확히 닿는다.
        프레임이 더 큰 몹은 예전과 값이 같으므로 달라지는 것이 없다. */
-    const dy = meta ? meta.frameH - e.h - (Sprites.footInset[e.type] || 0) : 0;
+    const dy = meta ? meta.frameH - e.h - (Sprites.footInset[key] || 0) : 0;
     /* ★ 가로는 **프레임이 아니라 그림**을 가운데 맞춘다.
        예전에는 시트를 판정 박스 왼쪽에 붙여 그렸고(세로만 보정), v1.1 애셋이
        프레임을 좌우로 넓히면서 전부 오른쪽으로 밀렸다. 그래서 프레임 중앙 정렬을
        넣었는데, 그림 자체가 프레임 안에서 치우친 시트가 또 남는다(리벳 사수 2.5px).
        sideInset 이 프레임 0 에서 잰 그 치우침이다. 왼쪽을 볼 때는 그림이 뒤집히므로
        치우침도 같이 뒤집는다. */
-    const side = meta ? (Sprites.sideInset[e.type] || 0) * (e.facing < 0 ? -1 : 1) : 0;
+    const side = meta ? (Sprites.sideInset[key] || 0) * (e.facing < 0 ? -1 : 1) : 0;
     const dx = meta ? (e.w - meta.frameW) / 2 - side : 0;
 
     /* 그림이 거의 안 움직이는 개체는(ENEMIES 의 stiff — 프레임 간 픽셀 차를 재서
@@ -5032,17 +5066,19 @@ const G = {
         c.save();
         c.translate(0, br);
       }
-      const ok = Sprites.draw(c, e.type, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0);
+      const ok = Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0);
       c.restore();
       if (ok) { this.drawEnemyOverlay(c, e, sx, sy, dy, meta); return; }
     }
 
-    if (this.spritesOn && Sprites.draw(c, e.type, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0)) {
+    if (this.spritesOn && Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0)) {
       this.drawEnemyOverlay(c, e, sx, sy, dy, meta);
       return;
     }
     const f = 1;
-    let col = e.def.c;
+    // 그림이 없어 절차 생성으로 떨어지는 경로 — 개조된 것은 여기서도 강철색이라야
+    // 세기만 다르고 생김새는 같은 몹이 되는 일이 없다
+    let col = e.mech ? '#79838f' : e.def.c;
     if (e.flash > 0) col = '#ffffff';
     c.save();
     const t = e.type;

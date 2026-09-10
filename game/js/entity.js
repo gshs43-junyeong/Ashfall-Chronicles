@@ -1020,6 +1020,20 @@ class Enemy extends Ent {
     this.facing = -1;
     this.hitCd = 0;
     this.markT = 0; this.markAmt = 0;   // 사냥꾼의 표식
+    this.mech = 0;                      // 개조된 개체(세션 2) — makeMech() 가 켠다
+  }
+
+  /** 개조 — 세션 2 에서 이 몹이 기계가 되어 나온다.
+      새 종류를 만들지 않고 이미 뽑힌 개체를 부풀리는 것은 정예와 같은 방식이다.
+      보상까지 같이 1.5배로 올린다. 세기만 오르면 개조된 지역은 그냥 손해라
+      플레이어가 피해 다니게 되고, 그러면 "돌아온 땅"을 안 보게 된다. */
+  makeMech(mul) {
+    this.mech = 1;
+    this.maxHp = Math.round(this.maxHp * mul); this.hp = this.maxHp;
+    this.dmg *= mul; this.armor *= mul;
+    this.xp = Math.round(this.xp * mul); this.gold = Math.round(this.gold * mul);
+    this.sparkT = 0;
+    return this;
   }
   addDot(kind, dps, dur) { this.dots.push({ kind, dps, t: dur }); }
   slow(f, t) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
