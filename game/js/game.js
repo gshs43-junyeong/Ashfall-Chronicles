@@ -1299,6 +1299,8 @@ const G = {
         if (o.ruinmap && ITEMS[o.ruinmap]) o.items.unshift(makeItem(o.ruinmap, 1));
         // 그 유적 상자에만 섞이는 전리품
         if (o.bonus && ITEMS[o.bonus]) o.items.push(makeItem(o.bonus, this.rng.int(2, 5)));
+        // 그 유적에서만 나오는 재료 — 흔한 자원(bonus)과 나란히 넣는다
+        if (o.bonus2 && ITEMS[o.bonus2]) o.items.push(makeItem(o.bonus2, this.rng.int(2, 4)));
       }
       UI.openChest(o); this.sfx('open');
       // 지킴이가 붙은 상자 — 열면 그 자리에서 깨어난다. 상자만 훔치고 달아나지 못하게.

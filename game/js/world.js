@@ -2547,6 +2547,22 @@ class World {
         if (rng.chance(dens * 0.4) && air(x, r.y + 2)) this.set(x, r.y + 2, tile);
         if (rng.chance(dens * 0.3) && air(x, fy)) this.set(x, fy, tile);
       }
+    } else if (kind === 'floorpile') {
+      /* 바닥에 흩어 놓은 것. 'crate' 와 자리가 겹치지 않게 **홀수 칸**을 쓴다 —
+         광산은 이미 crate 로 갱목 상자를 깔아서, 같은 칸을 노리던 연장 더미가
+         한 칸도 못 놓이고 있었다(실측 0칸). 통과되는 타일만 온다. */
+      for (let x = r.x + 4; x < x1 - 1; x += 4)
+        if (rng.chance(dens) && air(x, fy) && this.solid(x, fy + 1)) this.set(x, fy, tile);
+    } else if (kind === 'wallmark') {
+      /* 벽에 새긴 것. 'statue' 와 달리 **아무 고체 벽이나** 갈아끼운다.
+         statue 는 spec.wall 만 보는데, 파묻힌 유적(포자 굴)은 방 옆벽이 유적 벽돌이
+         아니라 그냥 암반이라 한 칸도 안 걸렸다(실측 0칸 · 돌 1288 : 포자암 301).
+         바깥으로 새지 않게 방 안쪽을 향한 면만 — 반대편이 공기인 칸만 고른다. */
+      for (const [bx, in1] of [[r.x, 1], [r.x + r.w - 1, -1]]) {
+        if (!rng.chance(dens)) continue;
+        for (let y = fy; y >= fy - 3; y--)
+          if (this.solid(bx, y) && this.get(bx + in1, y) === T.AIR) this.set(bx, y, tile);
+      }
     } else if (kind === 'brazier') {
       // 바닥에 세운 화로 — 통과되는 불이라 길을 막지 않는다
       for (let x = r.x + 4; x < x1 - 2; x += 7)
@@ -2740,7 +2756,7 @@ class World {
           x: cx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null,
           relic: relic || undefined,
           ruinmap: mapFor ? 'ruinmap_' + mapFor : undefined,
-          bonus: spec.bonus,
+          bonus: spec.bonus, bonus2: spec.bonus2,
           guard: { t: rng.pick(spec.mobs), n: clamp(1 + Math.round(rank * 0.6), 2, 5) }
         });
         continue;
