@@ -65,6 +65,7 @@ const G = {
         UI.applySpriteOverrides();
         // 손그림 타일 텍스처가 있으면 절차 생성 아틀라스의 해당 칸을 덮어 그린다
         for (const name in TILE_SPRITE) TileArt.applySprite(TILE_SPRITE[name], Sprites.img['tile_' + name]);
+        TileArt.buildAsh();       // 잿빛 판은 아틀라스에서 뜬다 — 갈아 끼운 다음 다시 떠야 한다
         // 아이템 아이콘도 같은 방식으로 — 아틀라스를 갈아 끼우면 UI와 캔버스가 함께 바뀐다
         if (Sprites.meta && Sprites.meta.items) {
           for (const id in Sprites.meta.items.files) Art.applyItemSprite(id, Sprites.img['item_' + id]);
@@ -2264,6 +2265,38 @@ const G = {
       break;
     }
   },
+  /* ================= 잿빛이 숲을 먹는다 =================
+     "눈을 떴을 때 세계는 색을 잃어가고 있었다. 사람들은 그것을 잿빛이라 불렀다."
+     — 서장. 그런데 그 말이 글에만 있었다. 1장의 숲과 8장의 숲이 똑같이 푸르렀다.
+
+     그래서 **장이 넘어갈수록 잎과 풀에서 색이 빠지고, 잎이 한 칸씩 진다.**
+     플레이어가 오래 붙잡고 있는 유일한 지형이 잿빛 숲이라, 여기가 변하지 않으면
+     이야기가 어디로 가든 세계는 가만히 있는 것처럼 보인다.
+
+     ■ 어떻게
+
+       타일을 **부수지 않는다.** 그릴 때만 잿빛 판을 겹친다(TileArt.buildAsh).
+       칸을 실제로 지워 버리면 저장 파일이 장마다 달라지고, 9장에서 잿빛이 걷힐 때
+       숲을 되돌릴 방법이 없다. 그림만 바꾸면 chapter 하나로 오갈 수 있다.
+
+       어느 잎이 먼저 지는가는 **자리로 정해져 있다**(tileHash). 매 프레임 새로
+       뽑으면 화면이 지글거리고, 카메라를 움직일 때마다 다른 잎이 사라진다.
+
+       풀(GRASS)은 지지 않는다 — 고체 타일이라 사라지면 발밑에 구멍이 뚫린 것처럼
+       보인다. 색만 빠진다.
+
+     ■ 9장에서 0으로 돌아간다
+       '잿빛이 걷혔다'는 장면이 그 자리에 있다(2635줄 여명 마을 카드). 서서히
+       걷히는 게 아니라 그 한 컷에서 걷히는 이야기라, 여기서도 한 번에 되돌린다. */
+  ASH_SHED: { [T.LEAF]: 0.82, [T.FLOWER]: 0.95, [T.WEED]: 0.7, [T.GRASS]: 0 },
+
+  /** 지금 잿빛이 얼마나 깊은가 (0 = 아직 색이 있다, 1 = 다 빠졌다) */
+  ashF() {
+    const ch = this.chapter || 0;
+    if (ch >= 9) return 0;                       // 잿빛이 걷혔다
+    return 0.10 + clamp((ch - 1) / 7, 0, 1) * 0.86;
+  },
+
   /* ================= 용광로 굴뚝 연기 =================
      용광로는 불구멍이 깜빡이는 것 말고는 아무 일도 안 하고 있었다. 쇠를 녹이는
      물건인데 굴뚝이 조용했다.
@@ -3418,6 +3451,7 @@ const G = {
 
     // ---- 타일 (절차적 텍스처 아틀라스) ----
     const VA = TileArt.V;
+    const ashF = this.ashF(), ashOn = ashF > 0.02 && TileArt.ashAtlas;
     for (let ty = ty0; ty <= ty1; ty++) {
       for (let tx = tx0; tx <= tx1; tx++) {
         if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) continue;
@@ -3434,7 +3468,20 @@ const G = {
         const v = (tileHash(tx, ty) * VA) | 0;
         if (id === T.AIR) { if (wl) TileArt.drawWall(c, wl, v, sx, sy); continue; }
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
-        if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
+        const shedCap = ashOn ? this.ASH_SHED[id] : undefined;
+        if (shedCap !== undefined) {
+          /* 잿빛에 먹히는 칸. 자리마다 제 몫(r)이 있고, 잿빛이 그 몫을 넘어서면
+             그때부터 0.2 구간에 걸쳐 진다 — 한 장에서 우수수 사라지지 않고 하나씩 빠진다.
+             성한 판과 잿빛 판을 서로 반대 투명도로 겹쳐 색이 빠지는 과정을 잇는다. */
+          const r = tileHash(tx + 7919, ty + 104729);
+          const gone = shedCap ? clamp((ashF * shedCap - r) / 0.2, 0, 1) : 0;
+          if (gone < 1) {
+            if (ashF < 0.98) { c.globalAlpha = (1 - ashF) * (1 - gone); TileArt.draw(c, id, v, sx, sy); }
+            c.globalAlpha = ashF * (1 - gone); TileArt.drawAsh(c, id, v, sx, sy);
+            c.globalAlpha = 1;
+          } else continue;                       // 다 졌다 — 윗면 하이라이트도 얹지 않는다
+        }
+        else if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
         else TileArt.draw(c, id, v, sx, sy);
         if (!TOP_SKIP[id] && !w.solid(tx, ty - 1)) {
           c.fillStyle = 'rgba(255,255,255,.10)'; c.fillRect(sx, sy, TS, 2);

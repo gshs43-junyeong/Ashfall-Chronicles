@@ -187,6 +187,7 @@ const TileArt = {
       for (let v = 0; v < this.V; v++) this.paintWall(wg, v * TS, i * TS, WALL_COLOR[i], rng);
     this.wallAtlas = wc;
 
+    this.buildAsh();
     this.ready = true;
   },
 
@@ -200,9 +201,46 @@ const TileArt = {
     for (let v = 0; v < this.V; v++) g.drawImage(img, v * TS, id * TS, TS, TS);
   },
 
+  /* ---------- 잿빛 판 ----------
+     잿빛은 색이 빠지는 것이다 — 재가 덮이는 게 아니라 세계가 제 색을 잊는다(1장 설정).
+     그래서 새 그림을 그리지 않고 **같은 아틀라스에서 채도만 뽑아** 따로 한 장 만든다.
+     칠하는 판이 하나 더 있을 뿐이라, 손그림 타일로 갈아 끼워도 그대로 따라온다
+     (Sprites 가 붙은 뒤 buildAsh 를 한 번 더 부르면 된다).
+
+     푸른 회색이 아니라 살짝 따뜻한 회색을 쓴다. 순회색으로 눕히면 하늘색과 붙어
+     잎이 통째로 배경에 먹힌다. */
+  ASH_TILE: [T.LEAF, T.GRASS, T.FLOWER, T.WEED],
+
+  buildAsh() {
+    if (!this.atlas) return;
+    const cv = this.ashAtlas && this.ashAtlas.width === this.atlas.width
+      ? this.ashAtlas : document.createElement('canvas');
+    cv.width = this.atlas.width; cv.height = this.atlas.height;
+    const g = cv.getContext('2d');
+    for (const id of this.ASH_TILE) {
+      const row = id * TS;
+      g.clearRect(0, row, cv.width, TS);
+      g.drawImage(this.atlas, 0, row, cv.width, TS, 0, row, cv.width, TS);
+      const d = g.getImageData(0, row, cv.width, TS), px = d.data;
+      for (let i = 0; i < px.length; i += 4) {
+        if (!px[i + 3]) continue;
+        const l = px[i] * 0.30 + px[i + 1] * 0.59 + px[i + 2] * 0.11;
+        px[i] = Math.min(255, l * 0.62 + 27);
+        px[i + 1] = Math.min(255, l * 0.60 + 25);
+        px[i + 2] = Math.min(255, l * 0.57 + 22);
+      }
+      g.putImageData(d, 0, row);
+    }
+    this.ashAtlas = cv;
+  },
+
   /** 타일 블릿. h를 주면 위에서 h픽셀만 (발판용) */
   draw(c, id, v, sx, sy, h) {
     c.drawImage(this.atlas, v * TS, id * TS, TS, h || TS, sx, sy, TS, h || TS);
+  },
+  /** 잿빛 판 블릿 — 같은 자리, 색만 빠진 것 */
+  drawAsh(c, id, v, sx, sy) {
+    if (this.ashAtlas) c.drawImage(this.ashAtlas, v * TS, id * TS, TS, TS, sx, sy, TS, TS);
   },
   drawWall(c, wl, v, sx, sy) {
     c.drawImage(this.wallAtlas, v * TS, wl * TS, TS, TS, sx, sy, TS, TS);
