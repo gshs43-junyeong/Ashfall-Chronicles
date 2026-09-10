@@ -7,6 +7,10 @@
 const ALPHA_TILE = {};
 /* 상단 하이라이트를 생략할 타일 (이미 텍스처에 윗면이 있거나 반투명) */
 const TOP_SKIP = {};
+/* 변형 넷이 '무작위 노이즈'가 아니라 '가지 방향'인 타일.
+   렌더러가 옆 칸의 줄기를 보고 고른다 (game.js pickLeafV) — 무작위로 뽑으면
+   가지가 아무 데도 안 이어져 잎이 도로 허공에 뜬다. */
+const LEAF_TWIG = {};
 
 const ART = {};
 ART[T.DIRT] = { k: 'soil', c: '#6b4a2f' };
@@ -17,7 +21,7 @@ ART[T.SANDSTONE] = { k: 'strata', c: '#9c8047' };
 ART[T.SNOW] = { k: 'snow', c: '#d5e2ee' };
 ART[T.ICE] = { k: 'ice', c: '#8fc0dd' };
 ART[T.WOOD] = { k: 'trunk', c: '#5a3c22', a: 1 };
-ART[T.LEAF] = { k: 'leaf', c: '#3f6e2e', a: 1 };
+ART[T.LEAF] = { k: 'leaf', c: '#3f6e2e', a: 1, tw: '#4a3018' };
 ART[T.EBONSTONE] = { k: 'ebon', c: '#3a2b46' };
 ART[T.CORRUPTGRASS] = { k: 'grass', c: '#4b3a5c', g: '#6d4a92' };
 ART[T.ASH] = { k: 'soil', c: '#4a4038' };
@@ -37,12 +41,12 @@ ART[T.VINE] = { k: 'vine', c: '#3d6b2c', a: 1 };
 ART[T.CRYSTAL] = { k: 'crystal', c: '#7fd8e8', glow: 1 };
 ART[T.LAVA] = { k: 'lava', c: '#e0561c' };
 ART[T.ALTARSTONE] = { k: 'rock', c: '#2e2438' };
-ART[T.CORRUPTLEAF] = { k: 'leaf', c: '#4a3060', a: 1 };
+ART[T.CORRUPTLEAF] = { k: 'leaf', c: '#4a3060', a: 1, tw: '#2e1f3c' };
 /* --- 2부 --- */
 ART[T.CLOUD] = { k: 'cloud', c: '#dfe9f5' };
 ART[T.SKYSTONE] = { k: 'rock', c: '#8fa8c0' };
 ART[T.SKYGRASS] = { k: 'grass', c: '#dfe9f5', g: '#6ec49a' };
-ART[T.SKYLEAF] = { k: 'leaf', c: '#6ec49a', a: 1 };
+ART[T.SKYLEAF] = { k: 'leaf', c: '#6ec49a', a: 1, tw: '#4a3018' };
 ART[T.RUINBRICK] = { k: 'brick', c: '#7a7160' };
 ART[T.RUINTILE] = { k: 'ruintile', c: '#57503f' };
 ART[T.RUNESTONE] = { k: 'runestone', c: '#4a5f7a' };
@@ -113,13 +117,13 @@ ART[T.M_OVEN] = { k: 'mk_oven', c: '#9a6a4a', a: 1 };
 /* --- 5단계: 울림 정글 / 버섯 골짜기 --- */
 ART[T.JUNGLEGRASS] = { k: 'grass', c: '#4a3a26', g: '#3f7a34' };
 ART[T.MUD] = { k: 'mud', c: '#4a3a26' };
-ART[T.JUNGLELEAF] = { k: 'leaf', c: '#2f6a28', a: 1 };
+ART[T.JUNGLELEAF] = { k: 'leaf', c: '#2f6a28', a: 1, tw: '#3e2a14' };
 ART[T.FERN] = { k: 'fern', c: '#4a8a3a', a: 1 };
 ART[T.ORCHID] = { k: 'orchid', c: '#c85a9a', a: 1 };
 ART[T.GLOWMOSS] = { k: 'grass', c: '#3a4a44', g: '#4a9a7a' };
 ART[T.SPORESTONE] = { k: 'sporestone', c: '#4a5a5a' };
 ART[T.GLOWCAP] = { k: 'glowcap', c: '#6fe0c0', a: 1 };
-ART[T.GLOWLEAF] = { k: 'leaf', c: '#6fe0c0', a: 1, glow: 1 };   // 버섯나무 갓 조각
+ART[T.GLOWLEAF] = { k: 'leaf', c: '#6fe0c0', a: 1, glow: 1, noTwig: 1 };   // 버섯나무 갓 조각
 ART[T.LILY] = { k: 'lily', c: '#3a9a6a', a: 1 };   // 정글 폭포호 수련 — 발판 겸용
 /* --- 6단계: 유적 --- */
 ART[T.ICEBRICK] = { k: 'ashlar', c: '#7fb0d8' };
@@ -171,6 +175,7 @@ const TileArt = {
 
   build() {
     for (const id in ART) if (ART[id].a) ALPHA_TILE[id] = 1;
+    for (const id in ART) if (ART[id].k === 'leaf' && !ART[id].noTwig) LEAF_TWIG[id] = 1;
     for (const id of [T.GRASS, T.CORRUPTGRASS, T.SNOW, T.ICE, T.LAVA, T.CRYSTAL,
                       T.WOOD, T.LEAF, T.CORRUPTLEAF, T.TORCH, T.VINE, T.PLATFORM, T.SPIKE,
                       T.FLOWER, T.WEED, T.CACTUS, T.MUSHROOM,
@@ -189,7 +194,7 @@ const TileArt = {
     for (let id = 0; id < N; id++) {
       const s = ART[id];
       if (!s) continue;
-      for (let v = 0; v < this.V; v++) this.paint(g, v * TS, id * TS, s, rng);
+      for (let v = 0; v < this.V; v++) this.paint(g, v * TS, id * TS, s, rng, v);
     }
     this.atlas = cv;
 
@@ -222,7 +227,9 @@ const TileArt = {
 
      푸른 회색이 아니라 살짝 따뜻한 회색을 쓴다. 순회색으로 눕히면 하늘색과 붙어
      잎이 통째로 배경에 먹힌다. */
-  ASH_TILE: [T.LEAF, T.GRASS, T.FLOWER, T.WEED],
+  ASH_TILE: [T.LEAF, T.GRASS, T.FLOWER, T.WEED,
+             T.JUNGLELEAF, T.JUNGLEGRASS, T.FERN, T.ORCHID],
+  BARE_TILE: [T.GRASS, T.JUNGLEGRASS],     // 갓만 벗겨 흙을 남길 고체 타일
 
   buildAsh() {
     if (!this.atlas) return;
@@ -255,31 +262,41 @@ const TileArt = {
      (잿빛 판은 채도가 빠져 초록을 못 찾는다) 바로 아래 흙을 위로 이어 붙인다. */
   buildBare() {
     if (!this.atlas || !this.ashAtlas) return;
-    const W = this.V * TS;
+    const W = this.V * TS, N = this.BARE_TILE.length;
     const cv = this.bareAtlas || document.createElement('canvas');
-    cv.width = W; cv.height = TS * 2;
+    cv.width = W; cv.height = TS * 2 * N;          // 타일마다 두 줄 (성한 것 · 잿빛)
     const g = cv.getContext('2d');
-    g.clearRect(0, 0, W, TS * 2);
-    g.drawImage(this.atlas, 0, T.GRASS * TS, W, TS, 0, 0, W, TS);
-    g.drawImage(this.ashAtlas, 0, T.GRASS * TS, W, TS, 0, TS, W, TS);
-    const src = this.atlas.getContext('2d').getImageData(0, T.GRASS * TS, W, TS).data;
-    const d = g.getImageData(0, 0, W, TS * 2), px = d.data;
+    g.clearRect(0, 0, W, cv.height);
+    for (let i = 0; i < N; i++) {
+      const id = this.BARE_TILE[i];
+      g.drawImage(this.atlas, 0, id * TS, W, TS, 0, (i * 2) * TS, W, TS);
+      g.drawImage(this.ashAtlas, 0, id * TS, W, TS, 0, (i * 2 + 1) * TS, W, TS);
+    }
+    const d = g.getImageData(0, 0, W, cv.height), px = d.data;
     const at = (x, y) => (y * W + x) * 4;
-    for (let x = 0; x < W; x++) {
-      let cap = 0;                                  // 초록이 붉은색보다 진한 동안이 갓이다
-      while (cap < TS - 2 && src[at(x, cap) + 1] > src[at(x, cap)] + 4) cap++;
-      if (!cap) continue;
-      for (let row = 0; row < 2; row++)
-        for (let y = 0; y < cap; y++) {
-          const f = at(x, row * TS + cap + (y % (TS - cap))), t = at(x, row * TS + y);
-          px[t] = px[f]; px[t + 1] = px[f + 1]; px[t + 2] = px[f + 2]; px[t + 3] = px[f + 3];
+    for (let i = 0; i < N; i++) {
+      const src = this.atlas.getContext('2d').getImageData(0, this.BARE_TILE[i] * TS, W, TS).data;
+      const sat = (x, y) => (y * W + x) * 4;
+      for (let x = 0; x < W; x++) {
+        let cap = 0;                                // 초록이 붉은색보다 진한 동안이 갓이다
+        while (cap < TS - 2 && src[sat(x, cap) + 1] > src[sat(x, cap)] + 4) cap++;
+        if (!cap) continue;
+        for (let row = 0; row < 2; row++) {
+          const base = (i * 2 + row) * TS;
+          for (let y = 0; y < cap; y++) {
+            const f = at(x, base + cap + (y % (TS - cap))), t = at(x, base + y);
+            px[t] = px[f]; px[t + 1] = px[f + 1]; px[t + 2] = px[f + 2]; px[t + 3] = px[f + 3];
+          }
         }
+      }
     }
     g.putImageData(d, 0, 0);
     this.bareAtlas = cv;
   },
-  drawBare(c, v, sx, sy, ash) {
-    if (this.bareAtlas) c.drawImage(this.bareAtlas, v * TS, ash ? TS : 0, TS, TS, sx, sy, TS, TS);
+  drawBare(c, id, v, sx, sy, ash) {
+    const i = this.BARE_TILE.indexOf(id);
+    if (this.bareAtlas && i >= 0)
+      c.drawImage(this.bareAtlas, v * TS, (i * 2 + (ash ? 1 : 0)) * TS, TS, TS, sx, sy, TS, TS);
   },
 
   /* ---------- 탄 잎 판 (1행) ----------
@@ -329,7 +346,7 @@ const TileArt = {
   },
 
   /* ---------- 개별 질감 ---------- */
-  paint(g, ox, oy, s, rng) {
+  paint(g, ox, oy, s, rng, v) {
     const R = (x, y, w, h, c) => this._r(g, ox, oy, x, y, w, h, c);
     const base = s.c;
     const dk = shade(base, .74), dk2 = shade(base, .54), lt = shade(base, 1.18), lt2 = shade(base, 1.4);
@@ -421,7 +438,36 @@ const TileArt = {
       }
 
       case 'leaf': {
+        /* ---------- 잎은 **가지에 붙어 있어야 한다** ----------
+           예전에는 칸마다 잎덩이만 흩뿌렸다. 그래서 수관이 줄기 옆에 떠 있는
+           초록 구름으로 보였고, 잎을 떨구기 시작하자(잿빛) 남은 잎이 허공에
+           박힌 것처럼 더 어색해졌다.
+
+           이제 **변형 넷이 곧 가지 방향**이다. 렌더러가 옆 칸의 줄기를 보고
+           고른다(game.js pickLeafV):
+             0 왼쪽에서 들어온 가지   1 오른쪽에서
+             2 아래에서 올라온 가지   3 가지 없음 (수관 속 — 잎만 빽빽하다)
+
+           처음엔 3번도 가로로 관통시켰다. 그랬더니 모든 칸의 가지가 같은 높이라
+           수관을 가로지르는 **곧은 줄이 여러 겹** 생겨, 잎이 아니라 살창처럼
+           보였다. 가지는 줄기에 닿은 칸에만 둔다 — "붙어 있다"가 보여야 하는
+           곳은 거기다. */
         const c1 = base, c2 = shade(base, 1.32), c3 = shade(base, .66);
+        const tw = s.tw || shade(base, .40), tw2 = shade(tw, 1.4);
+        const M = TS / 2 - 1;
+        // 버섯나무 갓(GLOWLEAF)만 가지가 없다 — 갓은 줄기에서 바로 피는 것이라
+        // 잔가지를 그리면 나무가 되어 버린다
+        const twig = s.noTwig ? () => {} : (x0, y0, x1, y1, th) => {
+          const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+          for (let i = 0; i <= n; i++) {
+            const t = i / n;
+            R(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, th, th, tw);
+          }
+        };
+        if (v === 0) { twig(-1, M + 2, M + 2, M, 2); twig(M - 2, M + 1, M + 3, M - 4, 1); }
+        if (v === 1) { twig(TS, M - 1, M - 3, M + 1, 2); twig(M + 1, M, M - 4, M - 4, 1); }
+        if (v === 2) { twig(M, TS, M, M - 2, 2); twig(M, M + 1, M - 5, M - 3, 1); }
+        // 잎덩이 — 가지 위에 얹혀 가지가 군데군데 비쳐 보인다
         for (let i = 0; i < 15; i++) {
           const x = rng.range(-2, TS - 3), y = rng.range(-2, TS - 3);
           const w = rng.range(3, 7), h = rng.range(3, 6);
@@ -429,6 +475,12 @@ const TileArt = {
           R(x + 1, y, w - 2, h, col); R(x, y + 1, w, h - 2, col);
         }
         for (let i = 0; i < 6; i++) R(rng.range(1, TS - 2), rng.range(1, TS - 2), 1, 1, c2);
+        // 가지가 잎에 다 묻히지 않게 몇 칸을 다시 드러낸다 — 붙어 있는 것이 보여야 한다
+        if (!s.noTwig) {
+          if (v === 0) { R(0, M + 2, 4, 2, tw); R(4, M + 1, 4, 2, tw2); }
+          if (v === 1) { R(TS - 4, M - 1, 4, 2, tw); R(TS - 8, M, 4, 2, tw2); }
+          if (v === 2) { R(M, TS - 3, 2, 3, tw); R(M, TS - 6, 2, 3, tw2); }
+        }
         // 발광 잎(버섯나무 갓 조각) — 은은한 빛무리를 얹는다. 타일 하나짜리 뚜렷한
         // 버섯 모양 대신 "빛나는 캐노피 표면"으로 읽히게 하는 게 목적이다
         if (s.glow) {

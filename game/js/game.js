@@ -2290,30 +2290,64 @@ const G = {
      ■ 9장에서 0으로 돌아간다
        '잿빛이 걷혔다'는 장면이 그 자리에 있다(2635줄 여명 마을 카드). 서서히
        걷히는 게 아니라 그 한 컷에서 걷히는 이야기라, 여기서도 한 번에 되돌린다. */
-  ASH_SHED: { [T.LEAF]: 0.82, [T.FLOWER]: 0.95, [T.WEED]: 0.7, [T.GRASS]: 0 },
+  /* 잿빛에 먹히는 칸과 그 세기.
+       shed  잿빛이 깊어질 때 **칸째로 지는** 비율의 상한 (0 이면 색만 빠진다)
+       fade  이 칸에 잿빛이 얼마나 세게 드는가. 1 이 잿빛 숲이다.
+
+     정글은 0.5 다. 잿빛은 세계 전체로 번지는 것이라 정글만 말짱하면 그쪽이
+     이야기 밖에 있는 것처럼 보이는데, 잿빛 숲과 같은 세기로 죽이면 두 지형이
+     구분이 안 된다 — 정글은 **눈에 띄게 상하되 끝까지 초록이 남는다.**
+     눈 지대는 따로 두지 않는다. 그쪽 나무도 같은 T.LEAF 라 저절로 같이 진다 —
+     세계가 색을 잃는 것이지 숲만 잃는 게 아니다. */
+  ASH_TILE: {
+    [T.LEAF]: { shed: 0.82, fade: 1 },
+    [T.FLOWER]: { shed: 0.95, fade: 1 },
+    [T.WEED]: { shed: 0.70, fade: 1 },
+    [T.GRASS]: { shed: 0, fade: 1 },
+    [T.JUNGLELEAF]: { shed: 0.62, fade: 0.62 },
+    [T.FERN]: { shed: 0.66, fade: 0.62 },
+    [T.ORCHID]: { shed: 0.75, fade: 0.62 },
+    [T.JUNGLEGRASS]: { shed: 0, fade: 0.62 }
+  },
   ASH_BURNT: 0.30,          // 진 잎자리 중 타다 만 잎이 남는 비율
+
+  /** 잎 칸의 변형(=가지 방향)을 줄기 쪽을 보고 고른다.
+      0 왼쪽에서 · 1 오른쪽에서 · 2 아래에서 · 3 좌우로 지나감(수관 속).
+      줄기에 안 닿은 칸은 3번이라 가로 가지가 옆 칸끼리 이어지고, 수관 전체에
+      가지 뼈대가 생긴다 — 예전에는 잎덩이만 떠 있어 초록 구름으로 보였다. */
+  pickLeafV(w, tx, ty) {
+    /* **바로 옆 칸만** 본다. 두 칸까지 넓혔더니 수관 한 줄에 서너 칸이 다 가지를
+       달아서, 같은 높이의 가로 막대가 줄줄이 생겼다(살창처럼 보였다).
+       가지는 줄기에 실제로 닿은 칸에만 있어야 "붙어 있다"로 읽힌다. */
+    if (w.get(tx - 1, ty) === T.WOOD) return 0;
+    if (w.get(tx + 1, ty) === T.WOOD) return 1;
+    if (w.get(tx, ty + 1) === T.WOOD) return 2;
+    return 3;
+  },
 
   /** 잿빛에 먹히는 칸 한 장. 성한 판과 잿빛 판을 서로 반대 투명도로 겹쳐 색이 빠지는
       과정을 잇고, 자리마다 정해진 몫(r)을 잿빛이 넘어서면 0.2 구간에 걸쳐 진다 —
       한 장에서 우수수 사라지지 않고 하나씩 빠진다. */
-  drawAshTile(c, id, v, sx, sy, tx, ty, ashF) {
+  drawAshTile(c, id, v, sx, sy, tx, ty, ashF0) {
+    const spec = this.ASH_TILE[id];
+    const ashF = ashF0 * spec.fade;      // 지형마다 드는 세기가 다르다 (정글은 절반)
     const solid = ashF > 0.98;
     const pair = (a) => {     // 같은 그림의 성한 판·잿빛 판을 a 만큼 겹쳐 그린다
       if (!solid) { c.globalAlpha = (1 - ashF) * a; TileArt.draw(c, id, v, sx, sy); }
       c.globalAlpha = ashF * a; TileArt.drawAsh(c, id, v, sx, sy);
     };
 
-    if (id === T.GRASS) {
+    if (!spec.shed) {
       /* 풀은 칸째로 지울 수 없다(고체다). 흙은 남기고 **초록 갓만** 칸마다 벗긴다. */
       const capGone = clamp((ashF * 1.05 - tileHash(tx + 31337, ty + 6151)) / 0.22, 0, 1);
-      if (!solid) { c.globalAlpha = 1 - ashF; TileArt.drawBare(c, v, sx, sy, 0); }
-      c.globalAlpha = ashF; TileArt.drawBare(c, v, sx, sy, 1);
+      if (!solid) { c.globalAlpha = 1 - ashF; TileArt.drawBare(c, id, v, sx, sy, 0); }
+      c.globalAlpha = ashF; TileArt.drawBare(c, id, v, sx, sy, 1);
       if (capGone < 1) pair(1 - capGone);
       c.globalAlpha = 1;
       return;
     }
 
-    const gone = clamp((ashF * this.ASH_SHED[id] - tileHash(tx + 7919, ty + 104729)) / 0.2, 0, 1);
+    const gone = clamp((ashF * spec.shed - tileHash(tx + 7919, ty + 104729)) / 0.2, 0, 1);
     if (gone < 1) pair(1 - gone);
     /* 진 잎자리의 30%에는 타다 만 잎이 남는다. 전부 흔적 없이 사라지면 나무가 그냥
        앙상해지기만 하는데, 잿빛은 잎을 태워 없앤 것이므로 탄 자리가 보여야 한다.
@@ -3499,10 +3533,11 @@ const G = {
           this.mapAtlasX.fillRect(tx, ty, 1, 1);
         }
         const sx = tx * TS - camX, sy = ty * TS - camY;
-        const v = (tileHash(tx, ty) * VA) | 0;
+        // 잎은 변형이 곧 가지 방향이라 무작위로 뽑지 않는다 — 줄기 쪽을 보고 고른다
+        const v = LEAF_TWIG[id] ? this.pickLeafV(w, tx, ty) : (tileHash(tx, ty) * VA) | 0;
         if (id === T.AIR) { if (wl) TileArt.drawWall(c, wl, v, sx, sy); continue; }
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
-        if (ashOn && this.ASH_SHED[id] !== undefined) { this.drawAshTile(c, id, v, sx, sy, tx, ty, ashF); continue; }
+        if (ashOn && this.ASH_TILE[id]) { this.drawAshTile(c, id, v, sx, sy, tx, ty, ashF); continue; }
         if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
         else TileArt.draw(c, id, v, sx, sy);
         if (!TOP_SKIP[id] && !w.solid(tx, ty - 1)) {
