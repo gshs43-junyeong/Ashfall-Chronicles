@@ -2348,7 +2348,19 @@ const G = {
     }
 
     const gone = clamp((ashF * spec.shed - tileHash(tx + 7919, ty + 104729)) / 0.2, 0, 1);
-    if (gone < 1) pair(1 - gone);
+    if (gone < 1) {
+      /* 칸째로 지는 것만으로는 수관이 성글어지는 게 잘 안 보인다 — 남은 칸은
+         끝까지 처음처럼 빽빽하기 때문이다. 그래서 **칸 안쪽 밀도**도 같이
+         떨군다. 성근 판(잎덩이 15개 → 6개)을 깔고 그 위에서 성한 판을 걷는다.
+         성근 판이 성한 판의 부분집합이라(같은 씨앗) 남은 잎만 정확히 사라진다. */
+      const keep = 1 - gone;
+      const thin = TileArt.thinAtlas && LEAF_TWIG[id] ? clamp(ashF * 0.9, 0, 1) : 0;
+      if (thin > 0) {
+        if (!solid) { c.globalAlpha = (1 - ashF) * keep; TileArt.drawThin(c, id, v, sx, sy, 0); }
+        c.globalAlpha = ashF * keep; TileArt.drawThin(c, id, v, sx, sy, 1);
+        if (thin < 1) pair(keep * (1 - thin));
+      } else pair(keep);
+    }
     /* 진 잎자리의 30%에는 타다 만 잎이 남는다. 전부 흔적 없이 사라지면 나무가 그냥
        앙상해지기만 하는데, 잿빛은 잎을 태워 없앤 것이므로 탄 자리가 보여야 한다.
        지는 것과 반대 투명도로 얹어, 잎이 빠지는 그 자리에서 그대로 검게 눌어붙는다. */
