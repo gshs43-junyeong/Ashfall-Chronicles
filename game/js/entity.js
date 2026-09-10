@@ -1091,8 +1091,12 @@ class Enemy extends Ent {
     p.kills[this.type] = (p.kills[this.type] || 0) + 1;
     if (this.boss) p.bossKilled[this.type] = true;
     const rng = G.rng;
-    for (const [id, ch, a, b] of (this.def.drops || [])) {
+    for (const [id0, ch, a, b] of (this.def.drops || [])) {
       if (!rng.chance(ch)) continue;
+      /* 개조된 것에서는 부품만 나온다 — 원래 표에 얹지 않고 **바꿔친다**.
+         얹으면 개조된 쪽이 그냥 더 좋은 사냥감이 되어 세기 1.5배를 치르고도
+         이득이 남는다. 확률과 개수는 원래 그대로 두므로 총량이 안 변한다. */
+      const id = (this.mech && typeof MECH_PART !== 'undefined') ? MECH_PART : id0;
       const n = rng.int(a, b);
       if (ITEMS[id] && (ITEMS[id].stack || 1) > 1) G.drops.push(new Drop(this.cx, this.cy, makeItem(id, n)));
       else for (let k = 0; k < n; k++) G.drops.push(new Drop(this.cx, this.cy, rollGear(id, rng, this.boss ? 3 : 0)));
