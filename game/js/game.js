@@ -4377,9 +4377,19 @@ const G = {
   },
   enemyFrame(e) {
     if (e.boss) {
-      const r = e.hp / e.maxHp;
-      const ph = r > .66 ? 0 : r > .33 ? 1 : 2;
-      return ph * 2 + (Math.floor(this.time * 2.5) % 2);
+      /* ★ 예전에는 여기서 체력 문턱(66%/33%)을 **다시 계산**했다. 보스가 전부
+         3페이즈일 때는 우연히 맞았지만, 페이즈 수가 보스마다 달라지면서
+         그림과 실제 마디가 어긋났다 — 미니보스는 마디가 둘인데 그림이 세 번
+         바뀌고, 5페이즈는 마디 다섯에 그림이 세 벌이었다.
+         이제 e.phase 를 그대로 쓰고, 시트가 가진 벌 수에 비례해 나눈다. */
+      const m = Sprites.meta && Sprites.meta.bosses.sheets[e.type];
+      const pairs = m ? Math.max(1, Math.floor(m.count / 2)) : 3;   // 시트에 든 페이즈 그림 벌 수
+      /* 비율로 나누므로 2페이즈는 **첫 벌과 마지막 벌**을 쓴다(가운데를 쓰면
+         두 마디 차이가 가장 작은 두 그림이 된다). 3페이즈는 0·1·2 그대로라
+         예전과 한 톨도 안 바뀐다. 5페이즈는 세 벌을 다섯 마디에 편다 —
+         시트를 10장으로 다시 구울 때까지의 가림막이다. */
+      const sp = Math.min(pairs - 1, Math.round((e.pf || 0) * (pairs - 1)));
+      return sp * 2 + (Math.floor(this.time * 2.5) % 2);
     }
     /* 예전에는 `atkCd > 1.4` 로 공격 직후를 판정했다. 그런데 atkCd 는 화살·마법을
        쏘는 놈만 쓰는 값이라, 접촉으로 때리는 근접 몹은 늘 0 이었다 — 프레임 4(공격
