@@ -68,7 +68,16 @@ const Sprites = {
       try {
         const pad = this._measurePad(im, m);
         this.footInset[k] = pad.foot; this.sideInset[k] = pad.side;
-      } catch (e) { this.footInset[k] = 0; this.sideInset[k] = 0; this.tainted = 1; }
+      } catch (e) {
+        /* ★ 못 잴 때는 0 이 아니라 **매니페스트에 적어 둔 값**을 쓴다.
+           칸에 부딪혀 잘린 시트들에 여백을 주면서(tools/unclipmob.py) 그림이
+           칸 안쪽으로 들어갔다. 여기서 0 으로 떨어지면 그 여백만큼 그림이
+           떠 보인다 — 여백을 준 서른네 장이 전부 발이 땅에서 뜬다.
+           foot/side 는 같은 도구가 프레임 0 을 실측해 적어 둔 값이라
+           재는 것과 결과가 같다. */
+        this.footInset[k] = m.foot || 0; this.sideInset[k] = m.side || 0;
+        this.tainted = 1;
+      }
     }
     return this;
   },
