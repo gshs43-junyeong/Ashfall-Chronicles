@@ -1755,14 +1755,17 @@ const G = {
     const cs = [];
     if (NPCS[id].shop) cs.push({ t: '물건을 보여 달라', fn: () => { UI.closeDialogue(); UI.openShop(id); } });
     if (id === 'trainer') {
-      cs.push({ t: `스탯 재분배 (🪙 ${fmt(this.respecCost())})`, fn: () => { UI.closeDialogue(); this.respecStats(); } });
-      cs.push({ t: `수련하기 (🪙 ${fmt(this.trainCost())}, 오늘 ${this.trainedToday}/5)`, fn: () => { UI.closeDialogue(); this.trainXp(); } });
+      cs.push({ t: `스탯 재분배 · 🪙 ${fmt(this.respecCost())}`, fn: () => { UI.closeDialogue(); this.respecStats(); } });
+      cs.push({ t: `수련 · 🪙 ${fmt(this.trainCost())} · 오늘 ${this.trainedToday}/5`, fn: () => { UI.closeDialogue(); this.trainXp(); } });
     } else if (id === 'haran') {
       cs.push({ t: '방을 잡는다', fn: () => { UI.closeDialogue(); this.useInn(); } });
     } else if (id === 'seira') {
       cs.push({ t: '장비를 다시 벼려 달라', fn: () => { UI.closeDialogue(); UI.openReforge(); } });
     }
-    return cs;
+    /* 볼일이 둘 이상이면 한 줄로 묶는다. 교관은 가게·재분배·수련에 부탁·길 묻기까지
+       일곱 줄이 깔려서, 정작 무슨 말을 할지가 안 보였다. 하나뿐이면 묶지 않는다 —
+       한 줄을 누르러 두 번 누르게 만드는 꼴이 된다. */
+    return cs.length > 1 ? [{ t: '볼일이 있다', sub: cs }] : cs;
   },
 
   talkTo(id) {
@@ -1786,7 +1789,7 @@ const G = {
 
     const rest = [];
     /* 이야기를 이미 들은 뒤에는 다시 듣는 길을 남겨 둔다 — 놓친 줄이 있을 수 있으니까 */
-    if (!fresh) rest.push({ t: '(전에 한 이야기를 다시 듣는다)', fn: () => {
+    if (!fresh) rest.push({ t: '다시 듣기', replay: 1, fn: () => {
       UI.closeDialogue();
       UI.openDialogue(id, story.slice(), rest);
       this.sfx('talk');

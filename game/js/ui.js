@@ -1572,9 +1572,22 @@ const UI = {
   hideTip() { $('#tooltip').style.display = 'none'; this.tipTarget = false; },
 
   /* ---------------- 대화 ---------------- */
+  /** '다시 듣기'는 이름 옆 작은 단추로 뺀다 (없으면 감춘다) */
+  setReplay(c) {
+    const b = $('#dlg-replay');
+    if (!b) return;
+    b.style.display = c ? '' : 'none';
+    b.onclick = ev => { ev.stopPropagation(); if (c) c.fn(); };
+  },
+
   openDialogue(npcId, lines, choices) {
     const d = NPCS[npcId];
-    this.dlg = { npcId, lines: lines.slice(), i: 0, choices };
+    /* 다시 듣기는 고르는 말이 아니라 창의 기능이라 선택지 줄에서 빼낸다 —
+       선택지가 여섯 줄까지 늘어나 정작 할 말이 어느 것인지 안 보였다. */
+    const cs = (choices || []).slice();
+    const ri = cs.findIndex(c => c.replay);
+    this.setReplay(ri >= 0 ? cs.splice(ri, 1)[0] : null);
+    this.dlg = { npcId, lines: lines.slice(), i: 0, choices: cs };
     $('#dlg-portrait').textContent = '';
     this.setIcon($('#dlg-portrait'), this.npcPortrait(npcId));
     $('#dlg-name').textContent = `${d.n} · ${d.role}`;
@@ -1588,13 +1601,17 @@ const UI = {
      그래서 소리가 우는 동안 글자가 흘러나오도록 맞춘다.
 
        글자당 34ms — 대사 452줄의 중앙값이 30자라 중앙값 한 줄이 딱 1.02초다.
-       긴 줄은 늘어지지 않게 전체 1.3초에서 끊고(그만큼 빨라진다),
+       긴 줄은 늘어지지 않게 **전체 1.1초에서 끊고**(그만큼 빨라진다),
        아주 짧은 줄은 0.3초는 채운다(한 글자가 깜빡이고 마는 걸 막는다).
+
+       1.3초였다. 긴 줄 한 장이 1.3초, 세 장이면 4초. 말을 걸고 기다리는 것이
+       대화가 아니라 **대기**가 됐다. 소리(1.06초)보다 글자가 더 오래 흐르는
+       것도 앞뒤가 바뀐 것이라, 소리가 끝나기 전에 글자도 끝나게 맞춘다.
 
      타자가 도는 중에는 선택지도 "클릭하여 계속"도 내보내지 않는다 — 다 읽기도
      전에 버튼이 뜨면 눈이 그리로 끌려간다. 화면을 누르면 그 자리에서 끝까지
      펼친다(넘어가지는 않는다). 설정에서 끄면 예전처럼 한 번에 뜬다. */
-  TYPE_MS: 34, TYPE_MIN: 300, TYPE_MAX: 1300,
+  TYPE_MS: 34, TYPE_MIN: 300, TYPE_MAX: 1100,
 
   typeLine(text, done) {
     const el = $('#dlg-text');
@@ -1643,18 +1660,28 @@ const UI = {
       else $('#dlg-choices').innerHTML = '<div class="dlg-next"><span class="dlg-next-ic"></span>클릭하여 계속</div>';
     });
   },
-  showChoices() {
+  /* 한 겹 더 들어가는 선택지(sub)를 받는다. 가게·수련·여관처럼 **말이 아니라
+     볼일**인 것은 한 줄로 묶어 두고, 누르면 그 자리에서 갈린다 — 대사를 다시
+     타자로 치지 않으므로 끊기는 느낌이 없다. */
+  showChoices(list) {
     const box = $('#dlg-choices'); box.innerHTML = '';
-    const cs = this.dlg.choices || [];
+    const cs = list || (this.dlg && this.dlg.choices) || [];
     for (const c of cs) {
       const b = document.createElement('button');
-      b.className = 'dchoice' + (c.quest ? ' quest' : '') + (c.say ? ' say' : '');
+      b.className = 'dchoice' + (c.quest ? ' quest' : '') + (c.say ? ' say' : '')
+        + (c.back ? ' meta' : '');
       b.textContent = c.t;
-      b.addEventListener('click', ev => { ev.stopPropagation(); c.fn(); });
+      b.addEventListener('click', ev => {
+        ev.stopPropagation();
+        if (c.back) { this.showChoices(); return; }
+        if (c.sub) { this.showChoices(c.sub.concat([{ t: '(돌아간다)', back: 1 }])); return; }
+        c.fn();
+      });
       box.appendChild(b);
     }
+    if (list) return;                       // 마치는 단추는 맨 윗겹에만
     const b = document.createElement('button');
-    b.className = 'dchoice'; b.textContent = '(대화를 마친다)';
+    b.className = 'dchoice meta'; b.textContent = '(대화를 마친다)';
     b.addEventListener('click', ev => { ev.stopPropagation(); this.closeDialogue(); });
     box.appendChild(b);
   },
@@ -1681,6 +1708,7 @@ const UI = {
 
   /** NPC가 아닌 화자(석판·문 등)의 대사창 */
   openLore(name, lines, choices) {
+    this.setReplay(null);
     this.dlg = { npcId: null, lines: lines.slice(), i: 0, choices };
     $('#dlg-portrait').textContent = '';
     this.setIcon($('#dlg-portrait'), Art.itemUrl('rune_frag'));
