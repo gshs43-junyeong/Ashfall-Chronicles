@@ -76,11 +76,17 @@ PHASES = 5
 FRAMES = PHASES * 2
 SRC_PH = [0, 0, 1, 1, 2]                 # 마디 → 원본의 어느 벌
 
-# 원본 프레임 크기 (판정 상자는 여기서 계산한다)
+# 원본 프레임 크기
 SRC_SIZE = {
     'pursuer': (102, 107), 'shaft_maw': (92, 84), 'hepha': (94, 113),
     'archetype': (96, 116), 'restorer': (118, 132),
 }
+# ★ 원본 시트의 칸 **간격**(장치 픽셀). 다섯이 다 같지 않다 —
+#   별을 쫓아온 것만 7칸에 간격 4 이고 나머지 넷은 6칸에 간격 0 이다.
+#   (파일 폭으로 검산: 2880 = 7*102*4 + 6*4 · 2256 = 6*94*4)
+#   전부 간격 0 으로 자르면 두 번째 칸부터 4px 씩 밀려 옆 칸을 물고 잘린다.
+#   실제로 그렇게 굽혀서 별을 쫓아온 것 하나만 그림이 어긋나 있었다.
+SRC_GAP = {'pursuer': 4}                 # 적지 않은 것은 0
 # 판정 상자는 원본 ENEMIES 값을 그대로 2배 한다 — 크기만 바꾸는 것이므로
 # 그림과 판정의 비율이 달라지면 안 된다
 SRC_HIT = {
@@ -99,7 +105,9 @@ def main():
             # 구워진 4배 시트에서 **논리 픽셀로 되돌린 뒤** Scale2x 로 늘린다.
             # 4배 그림에 바로 걸면 이미 2x2 로 뭉쳐 있어 이웃 검사가 늘 같다고
             # 나와서 아무것도 안 깎인다 — 최근접과 똑같은 결과가 된다.
-            logi = src.crop((si * ow * S, 0, (si + 1) * ow * S, oh * S)) \
+            g = SRC_GAP.get(name, 0)
+            x0 = si * (ow * S + g)
+            logi = src.crop((x0, 0, x0 + ow * S, oh * S)) \
                       .resize((ow, oh), Image.NEAREST)
             sheet.paste(scale2x(logi).resize((fw * S, fh * S), Image.NEAREST),
                         (i * fw * S, 0))
