@@ -32,11 +32,22 @@
       원형            96x116 → 192x232
       환원기         118x132 → 236x264
 
-■ 마디 다섯에 그림 세 벌
+■ 마디 다섯에 그림 세 벌 — 그리고 환원기
 
-  원본이 3페이즈 × idle 2 = 여섯 칸이므로 벌은 셋뿐이다. 덧붙이지 않기로 한
-  이상 다섯 마디를 세 벌에 편다(0 0 1 1 2). ph0·ph1 이 같고 ph2·ph3 이 같다.
-  이걸 가르려면 원본에 무엇이든 더해야 하는데, 그게 방금 물린 길이다.
+  원본이 3페이즈 × idle 2 = 여섯 칸이므로 벌은 셋뿐이다. 다섯 마디를 세 벌에
+  편다(0 0 1 1 2).
+
+  그런데 환원기는 그 세 벌조차 거의 같다. 재 보면 구조가 한 번도 안 바뀐다 —
+  고리 셋(r≈25·35·44)도 세로 축도 그대로고, 바뀌는 것은 가운데 핵과 작은
+  마디 점이 몇 픽셀 도는 것뿐이다. 픽셀 차이는 13~20%로 잡히지만 그 전부가
+  흩어진 점이라 눈에는 안 잡힌다.
+
+  그래서 환원기만 **고리를 끊는다**(CUT). 새 픽셀은 한 점도 안 그리고 각도
+  구간의 알파를 0 으로 지우기만 한다 — 덧댄 티가 날 여지가 없다. 마디가
+  오를수록 바깥 고리부터 조각나고, 마지막에는 핵과 축만 온전하다.
+
+  끊는 자리는 대각선(45·135·225·315도)이다. 세로 축과 좌우 마디는 이 그림의
+  뼈대라 건드리면 다른 물건이 된다.
 
 사용법:  python3 tools/mkbossbig.py && node tools/sync-manifest.mjs
 """
@@ -94,6 +105,44 @@ SRC_HIT = {
     'archetype': (96, 116), 'restorer': (118, 132),
 }
 
+# 환원기만 — 마디마다 끊어 내는 고리. (가운데 x,y) 와 마디별 [(안반지름, 바깥반지름,
+# 끊는 폭(도)), ...]. 끊는 자리는 늘 대각선 넷이다.
+CUT_CENTER = {'restorer': (59, 66)}
+CUT = {
+    'restorer': [
+        [],                                   # ph0 온전하다
+        [(41, 53, 26)],                       # ph1 바깥 고리가 벌어진다
+        [(41, 53, 40), (32, 40, 24)],         # ph2 가운데 고리도
+        [(41, 53, 58), (32, 40, 40)],         # ph3 조각으로 돈다
+        [(41, 53, 74), (32, 40, 58), (22, 31, 34)],   # ph4 핵과 축만 온전하다
+    ],
+}
+CUT_AT = (45, 135, 225, 315)                  # 세로 축·좌우 마디는 안 건드린다
+
+
+def cut_rings(im, cx, cy, bands):
+    """각도 구간의 알파를 0 으로 지운다. **새 픽셀을 한 점도 안 그린다** —
+       원본에 무엇이든 더하면 덧댄 티가 나는데, 지우기만 하면 그럴 여지가 없다."""
+    if not bands:
+        return im
+    import math as _m
+    px = im.load()
+    w, h = im.size
+    for y in range(h):
+        for x in range(w):
+            if px[x, y][3] == 0:
+                continue
+            dx, dy = x - cx, y - cy
+            r = _m.hypot(dx, dy)
+            a = _m.degrees(_m.atan2(dy, dx)) % 360
+            for r0, r1, wid in bands:
+                if not (r0 <= r <= r1):
+                    continue
+                if any(min(abs(a - c), 360 - abs(a - c)) <= wid / 2 for c in CUT_AT):
+                    px[x, y] = (0, 0, 0, 0)
+                    break
+    return im
+
 
 def main():
     for name, (ow, oh) in SRC_SIZE.items():
@@ -109,6 +158,9 @@ def main():
             x0 = si * (ow * S + g)
             logi = src.crop((x0, 0, x0 + ow * S, oh * S)) \
                       .resize((ow, oh), Image.NEAREST)
+            if name in CUT:
+                cx, cy = CUT_CENTER[name]
+                logi = cut_rings(logi.copy(), cx, cy, CUT[name][i // 2])
             sheet.paste(scale2x(logi).resize((fw * S, fh * S), Image.NEAREST),
                         (i * fw * S, 0))
         pth = os.path.join(OUT, name + '.png')
