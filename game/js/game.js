@@ -301,6 +301,7 @@ const G = {
   _newGame(seed, name, charId, mode) {
     this.rng = new RNG(seed + '_g');
     this.world = new World(seed).generate();
+    this._rigs = null; this._fbg = null;   // 세계가 바뀌었으니 자리·원경 캐시를 버린다
     this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
     const p = this.player;
     p.name = (name || '').trim().slice(0, 12) || '이름 없는 모험가';
@@ -480,6 +481,7 @@ const G = {
     // 스폰
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0) { this.spawnTimer = 1.1; this.trySpawn(); }
+    this.updateRigs(dt);
 
     // 공장 — 프레임률과 무관하게 고정 8틱/초로 돌린다
     this.facTimer = (this.facTimer || 0) - dt;
@@ -2393,6 +2395,78 @@ const G = {
        때까지 계속 오른다 — 오를 수 있는 높이를 따로 정해 두지 않았다
      · 화면 근처 용광로만 뱉는다. 마을·베이스캠프·플레이어가 설치한 것이 다 합쳐지면
        세계에 용광로가 여럿이라, 거리로 먼저 거르지 않으면 안 보이는 곳에서 계속 쌓인다 */
+  /* ================= 채취탑 — 세션 2 에 다시 도는 대형 기계 =================
+
+     세션 2 는 세션 1 과 같은 숲을 다시 걷는다. 몹은 개조되어 돌아왔지만(MECH_ORDER)
+     **땅은 그대로**라 "여기가 넘어갔다"가 몹 한 종류의 문제로 보였다. 숲 자체가
+     달라져야 한다.
+
+     그래서 숲에 **죽은 기계**를 세워 둔다. 세션 1 내내 그냥 서 있는 고철덩이다 —
+     아무 일도 안 하고 아무것도 안 준다. 그러다 세션 2 에 장이 넘어갈 때마다 한 대씩
+     **돈다**. 바퀴가 돌고 굴뚝에서 연기가 오르고 등이 켜지고, 가까이 가면 땅이
+     쿵 한다.
+
+     ■ 왜 적으로 만들지 않았나
+       "긴장감을 조성하되 과하지 않게" 가 조건이었다. 때릴 수 있게 만드는 순간
+       그것은 긴장이 아니라 할 일이 된다. 아무것도 안 하고 그냥 **켜져 있는 것**이
+       제일 불편하다 — 누가 켰는지 모르니까.
+
+     ■ 과하지 않게
+       다섯 대뿐이고(잿빛 숲 셋 · 동쪽 숲 둘) 한 장에 한 대씩만 깨어난다.
+       부딪히지 않고(판정 없음) 피해도 안 준다. 쿵 소리는 8칸 안에서만,
+       3초에 한 번, 화면은 2px 만 흔들린다.
+       야영지·마을 근처에는 안 선다 — 쉬는 자리까지 불편하면 그냥 피곤하다. */
+  RIG_BAND: [[660, 1360, 3], [2720, 3260, 2]],   // [숲 왼끝, 오른끝, 몇 대]
+  RIG_THUD: 3.1,            // 쿵 간격(초)
+  RIG_NEAR: 8 * 22,         // 쿵이 들리는 거리(px)
+
+  /** 채취탑 자리. 세계가 정해지면 한 번만 고르고 캐시한다. */
+  rigs() {
+    if (this._rigs) return this._rigs;
+    const w = this.world;
+    if (!w) return [];
+    const out = [];
+    for (const [x0, x1, n] of this.RIG_BAND) {
+      for (let i = 0; i < n; i++) {
+        // 띠를 n 등분한 가운데를 노리고, 거기서 바깥으로 훑어 평평한 자리를 찾는다
+        const aim = Math.round(x0 + (x1 - x0) * (i + 0.5) / n);
+        let at = null;
+        for (let d = 0; d <= 60 && at === null; d++) {
+          for (const tx of (d ? [aim - d, aim + d] : [aim])) {
+            if (tx < 8 || tx >= WW - 8) continue;
+            const s = w.surface[tx];
+            const z = w.zoneAt(tx, s);
+            if (z === 'camp' || z === 'village') continue;   // 쉬는 자리는 비워 둔다
+            let flat = true;
+            for (let k = -3; k <= 3; k++) if (Math.abs(w.surface[tx + k] - s) > 1) { flat = false; break; }
+            if (flat) { at = tx; break; }
+          }
+        }
+        if (at !== null) out.push({ tx: at, ty: w.surface[at], wake: 9 + out.length, thud: 0 });
+      }
+    }
+    return (this._rigs = out);
+  },
+
+  /** 이 탑이 지금 도는가. 장마다 한 대씩 깨어난다(9장 첫 대 … 13장 다섯째). */
+  rigOn(r) { return this.chapter >= r.wake; },
+
+  updateRigs(dt) {
+    const p = this.player;
+    if (!p || this.chapter < 9) return;
+    for (const r of this.rigs()) {
+      if (!this.rigOn(r)) continue;
+      const dx = r.tx * TS + TS / 2 - p.cx, dy = r.ty * TS - p.cy;
+      if (Math.abs(dx) > this.RIG_NEAR || Math.abs(dy) > this.RIG_NEAR * 1.4) { r.thud = 0; continue; }
+      r.thud += dt;
+      if (r.thud >= this.RIG_THUD) {
+        r.thud = 0;
+        this.shake = Math.max(this.shake, 2);     // 전투 타격(18)의 1/9 — 있는 줄만 알 정도
+        this.sfxAt('drill', r.tx, r.ty);
+      }
+    }
+  },
+
   SMOKE_EVERY: 0.42,        // 굴뚝 하나가 한 덩이를 뱉는 간격(초)
   SMOKE_MAX: 80,            // 동시에 살아 있는 덩이 수 상한
   SMOKE_RISE: 30,           // 오르는 속도(px/초)
@@ -2420,11 +2494,16 @@ const G = {
     if (this.smokeT >= this.SMOKE_EVERY) {
       this.smokeT = 0;
       const rx = this.W * 0.7 + 90, ry = this.H * 0.7 + 90;
-      for (const o of w.objects) {
-        if (o.type !== 'forge') continue;
-        if (Math.abs(o.x - p.cx) > rx || Math.abs(o.y - p.cy) > ry) continue;
+      /* 연기를 뿜는 것 = 용광로 + 도는 채취탑. 굴뚝 자리만 다르고 나머지 규칙
+         (천장에 고이는 것 · 수명 · 크기)은 똑같으므로 한 표로 합쳐 돌린다. */
+      const vents = [];
+      for (const o of w.objects)
+        if (o.type === 'forge') vents.push([o.x + this.SMOKE_VENT_X, o.y + this.SMOKE_VENT_Y]);
+      for (const r of this.rigs())
+        if (this.rigOn(r)) vents.push([r.tx * TS + TS / 2 + 17, r.ty * TS - 256]);
+      for (const [vx, vy] of vents) {
+        if (Math.abs(vx - p.cx) > rx || Math.abs(vy - p.cy) > ry) continue;
         if (this.smokes.length >= this.SMOKE_MAX) break;
-        const vx = o.x + this.SMOKE_VENT_X, vy = o.y + this.SMOKE_VENT_Y;
         /* 위에 천장이 있으면 **닿을 만큼은 살게** 한다. 수명을 고정해 두면 방 높이가
            조금만 높아도 천장을 못 보고 도중에 흩어진다 — 굴뚝 연기가 천장에 고이는
            그림이 이 연출의 요점이라 거기까지는 가야 한다. 천장이 없으면(하늘) 평소
@@ -2453,6 +2532,89 @@ const G = {
         if (ty >= 0 && w.solid(tx, ty)) { s.stuck = 1; s.y = (ty + 1) * TS + s.sz * 0.4; }
         else { s.y = ny; s.x += Math.sin(s.sway + s.t * 1.6) * 8 * dt; }
       }
+    }
+  },
+
+  /** 채취탑 한 대. 원점은 **바닥 가운데**다. 도는 것과 죽은 것은 같은 그림이고
+      색과 움직임만 다르다 — 세션 1 에 본 그 고철이 도는 것이라야 의미가 있으므로
+      모양이 달라지면 안 된다. */
+  drawRig(c, x, y, on, ph) {
+    const dim = (hex, k) => {
+      const n = parseInt(hex.slice(1), 16);
+      const f = (v) => Math.round(v * k);
+      return `rgb(${f(n >> 16 & 255)},${f(n >> 8 & 255)},${f(n & 255)})`;
+    };
+    const k = on ? 1 : 0.52;          // 죽은 것은 같은 색을 어둡게 — 검게 칠하면 실루엣이 된다
+    const DARK = dim('#39414a', k), MID = dim('#5a6470', k), LITE = dim('#7c8794', k);
+    const RIVET = dim('#b9c4d0', k), RUST = dim('#7a5a38', k);
+
+    c.save();
+    c.translate(Math.round(x), Math.round(y));
+
+    // 다리 넷 — 바깥 둘은 굵게, 안쪽 둘은 가늘게. 땅에 박혀 있다
+    c.strokeStyle = DARK; c.lineCap = 'butt';
+    for (const [bx, tx2, wdt] of [[-42, -15, 8], [42, 15, 8], [-22, -9, 4], [22, 9, 4]]) {
+      c.lineWidth = wdt;
+      c.beginPath(); c.moveTo(bx, 4); c.lineTo(tx2, -118); c.stroke();
+    }
+    c.lineWidth = 3;                  // 가새 — 다리 사이 X 자
+    for (const yy of [-34, -76]) {
+      const s = 1 - (yy + 118) / 118 * 0.0;
+      c.beginPath();
+      c.moveTo(-40 * s * 0.72, yy - 16); c.lineTo(40 * s * 0.72, yy + 16);
+      c.moveTo(40 * s * 0.72, yy - 16); c.lineTo(-40 * s * 0.72, yy + 16);
+      c.stroke();
+    }
+
+    // 몸통 — 리벳 박은 통
+    c.fillStyle = MID; c.fillRect(-30, -190, 60, 72);
+    c.fillStyle = LITE; c.fillRect(-30, -190, 60, 10);
+    c.fillStyle = DARK; c.fillRect(-30, -130, 60, 12);
+    c.fillStyle = RIVET;
+    for (let ry = -184; ry < -124; ry += 14)
+      for (let rx = -25; rx <= 25; rx += 10) c.fillRect(rx, ry, 2, 2);
+
+    // 바퀴 — 돌 때만 돈다. 죽은 것은 늘 같은 자리에 멈춰 있다
+    const wr = 24, wx = -40, wy = -156;
+    c.strokeStyle = LITE; c.lineWidth = 4;
+    c.beginPath(); c.arc(wx, wy, wr, 0, TAU); c.stroke();
+    c.lineWidth = 3; c.strokeStyle = MID;
+    for (let i = 0; i < 6; i++) {
+      const a = (on ? ph * 0.9 : 0.4) + i * TAU / 6;
+      c.beginPath(); c.moveTo(wx, wy);
+      c.lineTo(wx + Math.cos(a) * wr, wy + Math.sin(a) * wr); c.stroke();
+    }
+    c.fillStyle = RUST; c.beginPath(); c.arc(wx, wy, 5, 0, TAU); c.fill();
+
+    // 굴뚝
+    c.fillStyle = DARK; c.fillRect(8, -252, 18, 64);
+    c.fillStyle = MID; c.fillRect(6, -256, 22, 7);
+
+    // 등 — 꺼져 있으면 그냥 렌즈, 켜지면 맥이 뛴다
+    const lx = 20, ly = -150;
+    c.fillStyle = DARK; c.fillRect(lx - 7, ly - 7, 14, 14);
+    if (on) {
+      const a = 0.55 + Math.sin(ph * 1.7) * 0.3;
+      c.save();
+      c.globalCompositeOperation = 'lighter'; c.globalAlpha = a;
+      const g = c.createRadialGradient(lx, ly, 0, lx, ly, 26);
+      g.addColorStop(0, '#ffc878'); g.addColorStop(0.4, '#e07a1e'); g.addColorStop(1, '#e07a1e00');
+      c.fillStyle = g; c.beginPath(); c.arc(lx, ly, 26, 0, TAU); c.fill();
+      c.restore();
+      c.fillStyle = '#ffd9a0'; c.fillRect(lx - 3, ly - 3, 6, 6);
+    } else {
+      c.fillStyle = dim('#6a5a48', k); c.fillRect(lx - 3, ly - 3, 6, 6);
+    }
+    c.restore();
+  },
+
+  drawRigs(c, camX, camY) {
+    const rs = this.rigs();
+    if (!rs.length) return;
+    for (const r of rs) {
+      const x = r.tx * TS + TS / 2 - camX, y = r.ty * TS - camY;
+      if (x < -140 || x > this.W + 140 || y < -60 || y > this.H + 300) continue;
+      this.drawRig(c, x, y, this.rigOn(r), this.time + r.tx * 0.37);
     }
   },
 
@@ -3189,6 +3351,7 @@ const G = {
         return;
       }
       this.world = World.deserialize(d.world);
+      this._rigs = null; this._fbg = null;   // 다른 세계를 불러왔다 — 자리·원경 캐시를 버린다
       this.rng = new RNG(d.world.seed + '_g');
       const p = new Player(d.p.x, d.p.y);
       p.name = d.name || '이름 없는 모험가';
@@ -3690,6 +3853,9 @@ const G = {
       }
       c.restore();
     }
+
+    // ---- 채취탑 ---- (타일 뒤·드롭 앞: 배경에 선 것이지 주울 물건이 아니다)
+    this.drawRigs(c, camX, camY);
 
     // ---- 드롭 ----
     c.textAlign = 'center'; c.textBaseline = 'middle';
