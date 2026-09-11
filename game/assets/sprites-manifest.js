@@ -902,197 +902,220 @@ window.SPRITE_MANIFEST = {
         "file": "boss/king_slime.png",
         "frameW": 86,
         "frameH": 64,
-        "count": 6,
+        "count": 8,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "bone_lord": {
         "file": "boss/bone_lord.png",
         "frameW": 60,
         "frameH": 76,
-        "count": 6,
+        "count": 8,
         "foot": 5.25,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "corrupt_heart": {
         "file": "boss/corrupt_heart.png",
         "frameW": 68,
         "frameH": 65,
-        "count": 6,
+        "count": 8,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "frost_witch": {
         "file": "boss/frost_witch.png",
         "frameW": 38,
         "frameH": 58,
-        "count": 6,
+        "count": 8,
         "foot": -0.75,
-        "side": 1
+        "side": 1,
+        "death": 2
       },
       "void_king": {
         "file": "boss/void_king.png",
         "frameW": 78,
         "frameH": 95,
-        "count": 6,
+        "count": 8,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "storm_warden": {
         "file": "boss/storm_warden.png",
         "frameW": 66,
         "frameH": 70,
-        "count": 6,
+        "count": 8,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "first_keeper": {
         "file": "boss/first_keeper.png",
         "frameW": 74,
         "frameH": 91,
-        "count": 6,
+        "count": 8,
         "foot": 0.25,
-        "side": -1.5
+        "side": -1.5,
+        "death": 2
       },
       "pursuer": {
         "file": "boss/pursuer.png",
         "frameW": 204,
         "frameH": 214,
-        "count": 10,
+        "count": 12,
         "gap": 0,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "overseer": {
         "file": "boss/overseer.png",
         "frameW": 80,
         "frameH": 95,
-        "count": 7,
+        "count": 9,
         "foot": 1.25,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "ice_warden": {
         "file": "boss/ice_warden.png",
         "frameW": 58,
         "frameH": 72,
-        "count": 4,
+        "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 0.5
+        "side": 0.5,
+        "death": 2
       },
       "sand_guardian": {
         "file": "boss/sand_guardian.png",
         "frameW": 64,
         "frameH": 76,
-        "count": 4,
+        "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "mine_horror": {
         "file": "boss/mine_horror.png",
         "frameW": 72,
         "frameH": 61,
-        "count": 4,
+        "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "blight_maw": {
         "file": "boss/blight_maw.png",
         "frameW": 80,
         "frameH": 67,
-        "count": 4,
+        "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 0.5
+        "side": 0.5,
+        "death": 2
       },
       "vine_lord": {
         "file": "boss/vine_lord.png",
         "frameW": 68,
         "frameH": 83,
-        "count": 4,
+        "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 1
+        "side": 1,
+        "death": 2
       },
       "spore_queen": {
         "file": "boss/spore_queen.png",
         "frameW": 64,
         "frameH": 81,
-        "count": 4,
+        "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "proliferator": {
         "file": "boss/proliferator.png",
         "frameW": 76,
         "frameH": 66,
-        "count": 6,
+        "count": 8,
         "gap": 0,
         "foot": 0.25,
-        "side": 0.5
+        "side": 0.5,
+        "death": 2
       },
       "hepha": {
         "file": "boss/hepha.png",
         "frameW": 188,
         "frameH": 226,
-        "count": 10,
+        "count": 12,
         "gap": 0,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "archetype": {
         "file": "boss/archetype.png",
         "frameW": 192,
         "frameH": 232,
-        "count": 10,
+        "count": 12,
         "gap": 0,
         "foot": -0.75,
-        "side": 1.5
+        "side": 1.5,
+        "death": 2
       },
       "restorer": {
         "file": "boss/restorer.png",
         "frameW": 236,
         "frameH": 264,
-        "count": 10,
+        "count": 12,
         "gap": 0,
         "foot": 11.25,
-        "side": 1
+        "side": 1,
+        "death": 2
       },
       "shaft_maw": {
         "file": "boss/shaft_maw.png",
         "frameW": 184,
         "frameH": 168,
-        "count": 10,
+        "count": 12,
         "gap": 0,
         "foot": -0.75,
-        "side": 3
+        "side": 3,
+        "death": 2
       },
       "drowned_keeper": {
         "file": "boss/drowned_keeper.png",
         "frameW": 60,
         "frameH": 62,
-        "count": 6,
+        "count": 8,
         "foot": -0.75,
-        "side": 2.5
+        "side": 2.5,
+        "death": 2
       },
       "tide_warden": {
         "file": "boss/tide_warden.png",
         "frameW": 104,
         "frameH": 120,
-        "count": 6,
+        "count": 8,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       },
       "isle_keeper": {
         "file": "boss/isle_keeper.png",
         "frameW": 88,
         "frameH": 99,
-        "count": 6,
+        "count": 8,
         "foot": -0.75,
-        "side": 0
+        "side": 0,
+        "death": 2
       }
     },
     "frames5": [

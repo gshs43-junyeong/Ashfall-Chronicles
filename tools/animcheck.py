@@ -125,8 +125,11 @@ def sheets(man, pick):
             if sec == 'characters':
                 ps = [(t, i, j) for t, i, j in char_pairs(name, cnt) if j < cnt]
             else:
+                # 시트 끝의 쓰러지는 칸은 숨쉬기 쌍이 아니다 — 게임도 마디로
+                # 안 센다(enemyFrame 이 count - death 로 나눈다).
+                idle = cnt - m.get('death', 0)
                 ps = [('%d마디' % (k + 1), k * 2, k * 2 + 1)
-                      for k in range(cnt // 2)]
+                      for k in range(idle // 2)]
             yield sec, name, m['file'], (m['frameW'], m['frameH']), cnt, \
                 m.get('gap', 4 if sec == 'bosses' else 0), ps
 
