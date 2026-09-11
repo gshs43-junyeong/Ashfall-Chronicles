@@ -314,6 +314,15 @@ const TileArt = {
 
      가지 색과 가까운 픽셀은 남긴다 — 잎만 성글어져야 "가지에 잎이 몇 장 남았다"로
      읽힌다. 가지까지 같이 지우면 도로 허공에 뜬 잎이 된다. */
+  /* ★ 성근 판이 **두 단계**다.
+       예전에는 한 장뿐이라 밀도가 0.09(1장) ~ 0.86(8장) 사이에서만 움직였다.
+       1장 숲도 이미 조금 성글고 8장 숲도 아직 잎이 남아서, 잿빛이 깊어지는
+       것이 수관에서 잘 안 보였다. 이제
+           빽빽(본 아틀라스) → 성근1 → 성근2(거의 앙상)
+       세 단계를 잿빛 깊이에 걸쳐 편다. 1장은 온전히 빽빽하고 8장은 거의 가지만
+       남는다. 두 단계 모두 본 아틀라스에서 **지워서** 만들므로 늘 부분집합이고,
+       겹쳐 놓고 위엣것을 걷으면 남은 잎만 정확히 사라진다.
+     잎 한 종마다 네 줄: 성근1 성한 · 성근1 잿빛 · 성근2 성한 · 성근2 잿빛 */
   buildThin() {
     if (!this.atlas) return;
     const ids = Object.keys(LEAF_TWIG).map(Number);
@@ -321,21 +330,17 @@ const TileArt = {
     if (!ids.length) { this.thinAtlas = null; return; }
     const W = this.V * TS;
     const cv = this.thinAtlas || document.createElement('canvas');
-    cv.width = W; cv.height = TS * 2 * ids.length;
+    cv.width = W; cv.height = TS * 4 * ids.length;
     const g = cv.getContext('2d');
     g.clearRect(0, 0, W, cv.height);
     for (let i = 0; i < ids.length; i++)
-      g.drawImage(this.atlas, 0, ids[i] * TS, W, TS, 0, (i * 2) * TS, W, TS);
+      g.drawImage(this.atlas, 0, ids[i] * TS, W, TS, 0, (i * 4) * TS, W, TS);
 
-    const d = g.getImageData(0, 0, W, cv.height), px = d.data;
     const at = (x, y) => (y * W + x) * 4;
     const rng = new RNG('ashfall-leaf-thin');
-    for (let i = 0; i < ids.length; i++) {
-      const row = (i * 2) * TS;
-      const t = ART[ids[i]].tw || '#000000';
-      const tr = parseInt(t.slice(1, 3), 16), tg = parseInt(t.slice(3, 5), 16), tb = parseInt(t.slice(5, 7), 16);
+    const eraser = (px) => (row, n, tr, tg, tb) => {
       // 작은 덩이 단위로 지운다 — 픽셀 하나씩 지우면 잎이 성근 게 아니라 좀먹어 보인다
-      for (let k = 0; k < 46 * this.V; k++) {
+      for (let k = 0; k < n * this.V; k++) {
         const bx = rng.range(0, W), by = rng.range(0, TS), r = rng.range(1.1, 2.5);
         for (let dy = -3; dy <= 3; dy++)
           for (let dx = -3; dx <= 3; dx++) {
@@ -351,29 +356,51 @@ const TileArt = {
             px[p + 3] = 0;
           }
       }
-    }
+    };
+    const twig = (id) => {
+      const t = ART[id].tw || '#000000';
+      return [parseInt(t.slice(1, 3), 16), parseInt(t.slice(3, 5), 16), parseInt(t.slice(5, 7), 16)];
+    };
+    // ① 성근1 — 본판에서 지운다
+    let d = g.getImageData(0, 0, W, cv.height);
+    let er = eraser(d.data);
+    for (let i = 0; i < ids.length; i++) er((i * 4) * TS, 46, ...twig(ids[i]));
+    g.putImageData(d, 0, 0);
+    /* ② 성근2 — **성근1 을 베껴서** 더 지운다.
+       본판에서 따로 지우면 두 판이 서로 부분집합이 아니게 되어, 성근1 에는
+       없는 잎이 성근2 에 남는다. 그러면 잿빛이 깊어질 때 잎이 사라지는 게
+       아니라 **없던 잎이 나타나며 반짝인다.** 반드시 이어서 지워야 한다. */
+    for (let i = 0; i < ids.length; i++)
+      g.drawImage(cv, 0, (i * 4) * TS, W, TS, 0, (i * 4 + 2) * TS, W, TS);
+    d = g.getImageData(0, 0, W, cv.height);
+    er = eraser(d.data);
+    for (let i = 0; i < ids.length; i++) er((i * 4 + 2) * TS, 100, ...twig(ids[i]));
     g.putImageData(d, 0, 0);
     // 잿빛 줄 — buildAsh 와 같은 식으로 채도만 뺀다
     for (let i = 0; i < ids.length; i++) {
-      const row = (i * 2 + 1) * TS;
-      g.clearRect(0, row, W, TS);
-      g.drawImage(cv, 0, (i * 2) * TS, W, TS, 0, row, W, TS);
-      const d = g.getImageData(0, row, W, TS), px = d.data;
-      for (let k = 0; k < px.length; k += 4) {
-        if (!px[k + 3]) continue;
-        const l = px[k] * 0.30 + px[k + 1] * 0.59 + px[k + 2] * 0.11;
-        px[k] = Math.min(255, l * 0.62 + 27);
-        px[k + 1] = Math.min(255, l * 0.60 + 25);
-        px[k + 2] = Math.min(255, l * 0.57 + 22);
+      for (const lv of [0, 1]) {
+        const src = (i * 4 + lv * 2) * TS, row = src + TS;
+        g.clearRect(0, row, W, TS);
+        g.drawImage(cv, 0, src, W, TS, 0, row, W, TS);
+        const d2 = g.getImageData(0, row, W, TS), p2 = d2.data;
+        for (let k = 0; k < p2.length; k += 4) {
+          if (!p2[k + 3]) continue;
+          const l = p2[k] * 0.30 + p2[k + 1] * 0.59 + p2[k + 2] * 0.11;
+          p2[k] = Math.min(255, l * 0.62 + 27);
+          p2[k + 1] = Math.min(255, l * 0.60 + 25);
+          p2[k + 2] = Math.min(255, l * 0.57 + 22);
+        }
+        g.putImageData(d2, 0, row);
       }
-      g.putImageData(d, 0, row);
     }
     this.thinAtlas = cv;
   },
-  drawThin(c, id, v, sx, sy, ash) {
+  /** lv 0 = 성근1, 1 = 성근2(거의 앙상) */
+  drawThin(c, id, v, sx, sy, ash, lv) {
     const i = this.THIN_TILE ? this.THIN_TILE.indexOf(id) : -1;
     if (this.thinAtlas && i >= 0)
-      c.drawImage(this.thinAtlas, v * TS, (i * 2 + (ash ? 1 : 0)) * TS, TS, TS, sx, sy, TS, TS);
+      c.drawImage(this.thinAtlas, v * TS, (i * 4 + (lv ? 2 : 0) + (ash ? 1 : 0)) * TS,
+        TS, TS, sx, sy, TS, TS);
   },
 
   /* ---------- 탄 잎 판 (1행) ----------

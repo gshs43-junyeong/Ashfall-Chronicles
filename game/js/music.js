@@ -212,6 +212,7 @@ const Sfx = {
 };
 Sfx.init();
 window.Sfx = Sfx;
+window.SFX_GAP = SFX_GAP;   // 합성음 폴백도 같은 간격을 지키게 (game.js sfx())
 
 /* ===== Ambient: 위치 기반 환경음 (폭포·호수) =====
    Music(브금)·Sfx(단발)와는 성격이 달라서 따로 뒀다 — 플레이어와 소리 나는 지형 사이

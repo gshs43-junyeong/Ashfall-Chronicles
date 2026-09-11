@@ -773,10 +773,18 @@ const G = {
       if (!this._pickWarn || this.time - this._pickWarn > 1.5) { this._pickWarn = this.time; this.toast('더 좋은 곡괭이가 필요하다', 'bad'); }
       return;
     }
-    if (p.mineTx !== tx || p.mineTy !== ty) { p.mineTx = tx; p.mineTy = ty; p.mineProg = 0; }
+    if (p.mineTx !== tx || p.mineTy !== ty) { p.mineTx = tx; p.mineTy = ty; p.mineProg = 0; p.mineBeat = 0; }
     const rate = (0.6 + (tool.power || 1) * 0.55 + (tool.chop && def.tree ? 2 : 0)) / (0.45 + def.hard * 0.5);
     p.mineProg += rate * dt;
-    if (Math.random() < dt * 9) this.mineTickFx(tx, ty, id);   // 재질 파편 한 톨 + 재질 타격음
+    /* ★ 캐는 소리는 **박자**로 친다. 주사위로 굴리면 초당 아홉 번까지 울려서
+       곡괭이 한 획이 아니라 연속 소음이 되고, 간격도 들쭉날쭉해 손이 안 맞는다.
+       좋은 곡괭이일수록 조금 빨리 친다(0.34초 → 0.18초). 파편도 같은 박자에
+       튀어야 '한 획'으로 읽힌다. */
+    p.mineBeat = (p.mineBeat || 0) - dt;
+    if (p.mineBeat <= 0) {
+      p.mineBeat = clamp(0.34 - (tool.power || 1) * 0.025, 0.18, 0.34);
+      this.mineTickFx(tx, ty, id);
+    }
     if (p.mineProg >= 1) {
       // 동력 곡괭이는 한 칸 캘 때마다 전하를 먹는다
       if (tool.pw && !p.useCharge(tool.pw)) {
@@ -2366,11 +2374,27 @@ const G = {
          떨군다. 성근 판(잎덩이 15개 → 6개)을 깔고 그 위에서 성한 판을 걷는다.
          성근 판이 성한 판의 부분집합이라(같은 씨앗) 남은 잎만 정확히 사라진다. */
       const keep = 1 - gone;
-      const thin = TileArt.thinAtlas && LEAF_TWIG[id] ? clamp(ashF * 0.9, 0, 1) : 0;
-      if (thin > 0) {
-        if (!solid) { c.globalAlpha = (1 - ashF) * keep; TileArt.drawThin(c, id, v, sx, sy, 0); }
-        c.globalAlpha = ashF * keep; TileArt.drawThin(c, id, v, sx, sy, 1);
-        if (thin < 1) pair(keep * (1 - thin));
+      /* ★ 밀도 세 단계 — 빽빽 → 성근1 → 성근2(거의 앙상).
+         예전에는 성근 판이 한 장뿐이고 blend 가 ashF*0.9 라, 1장 숲이 이미
+         9% 성글고 8장 숲도 14% 잎이 남았다. 잿빛이 깊어지는 것이 수관에서
+         잘 안 보였다. 이제 **1장은 온전히 빽빽하고 8장은 거의 가지만** 남는다.
+             d  = 잿빛의 깊이를 0~1 로 편 것 (1장 0, 8장 1)
+             t1 = 빽빽 → 성근1   (전반부에 다 넘어간다)
+             t2 = 성근1 → 성근2 (후반부)
+         세 판이 서로 부분집합이라(같은 씨앗으로 지워서 만든다) 겹쳐 놓고
+         위엣것을 걷으면 남은 잎만 정확히 사라진다. */
+      const canThin = TileArt.thinAtlas && LEAF_TWIG[id];
+      if (canThin) {
+        const d = clamp((ashF - 0.10) / 0.80, 0, 1);
+        const t1 = clamp(d * 2, 0, 1), t2 = clamp(d * 2 - 1, 0, 1);
+        const plate = (lv, a) => {
+          if (a <= 0) return;
+          if (!solid) { c.globalAlpha = (1 - ashF) * a; TileArt.drawThin(c, id, v, sx, sy, 0, lv); }
+          c.globalAlpha = ashF * a; TileArt.drawThin(c, id, v, sx, sy, 1, lv);
+        };
+        plate(1, keep);                       // 바탕 — 가장 성근 판
+        plate(0, keep * (1 - t2));            // 그 위에 성근1
+        if (t1 < 1) pair(keep * (1 - t1));    // 그 위에 빽빽한 본판
       } else pair(keep);
     }
     /* 진 잎자리의 30%에는 타다 만 잎이 남는다. 전부 흔적 없이 사라지면 나무가 그냥
@@ -2421,9 +2445,16 @@ const G = {
        부딪히지 않고(판정 없음) 피해도 안 준다. 쿵 소리는 8칸 안에서만,
        3초에 한 번, 화면은 2px 만 흔들린다.
        야영지·마을 근처에는 안 선다 — 쉬는 자리까지 불편하면 그냥 피곤하다. */
-  RIG_BAND: [[660, 1360, 3], [2720, 3260, 2]],   // [숲 왼끝, 오른끝, 몇 대]
-  RIG_THUD: 3.1,            // 쿵 간격(초)
-  RIG_NEAR: 8 * 22,         // 쿵이 들리는 거리(px)
+  /* ★ 다섯 대에서 **세 대**로 줄였다.
+     채취탑은 배경 장치인데, 8칸 안에 들어서면 3.1초마다 화면을 흔들고 드릴
+     소리를 냈다. 세션 2 숲을 지나는 동안 늘 어느 한 대의 사정권 안이라 —
+     조준이 흔들리고 소리가 겹쳐 **전투와 채굴에 직접 끼어들었다.**
+     배경은 배경이어야 한다. 수를 줄이고, 사정권을 5칸으로 좁히고, 간격도
+     늦춰서 탑 바로 밑에 섰을 때만 쿵 소리가 들리게 했다.
+     (흔들림 세기 2 는 그대로 둔다 — 전투 타격 18 의 1/9 이라 그 자체는 약하다) */
+  RIG_BAND: [[660, 1360, 2], [2720, 3260, 1]],   // [숲 왼끝, 오른끝, 몇 대]
+  RIG_THUD: 4.6,            // 쿵 간격(초)
+  RIG_NEAR: 5 * 22,         // 쿵이 들리는 거리(px) — 탑 바로 밑
 
   /** 채취탑 자리. 세계가 정해지면 한 번만 고르고 캐시한다. */
   rigs() {
@@ -3780,6 +3811,16 @@ const G = {
       break_void: [90, 45, 'sine', .06, .6], break_machine: [520, 140, 'sawtooth', .07, .55]
     }[kind];
     if (!spec) return;
+    /* ★ 파일이 없어 합성음으로 떨어질 때도 SFX_GAP 을 지킨다.
+       Sfx.play 는 **파일이 있을 때만** 간격을 봤다. 그래서 아직 파일이 없는
+       재질음이 어디선가 초당 열 번씩 불리면 그대로 다 울렸다. */
+    const gap = window.SFX_GAP && SFX_GAP[kind];
+    if (gap !== undefined) {
+      this._synLast = this._synLast || {};
+      const now = t;
+      if (now - (this._synLast[kind] || -9) < gap) return;
+      this._synLast[kind] = now;
+    }
     const r = rate || 1;
     const [f0, f1, type, vol, nz] = spec;
     const o = ac.createOscillator(), g = ac.createGain();
