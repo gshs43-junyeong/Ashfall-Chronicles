@@ -25,8 +25,10 @@ SRC = os.path.join(OUT, '_src')
 MANI = os.path.join(ROOT, 'game', 'assets', 'manifest.json')
 S = 4
 KEEP = (0, 1, 4, 5)                      # 첫 벌과 마지막 벌만 남긴다
+# ★ 역병 아귀는 여기서 빠졌다. 그 놈은 머리를 좌우로 부풀려야 해서
+#   tools/mkblightmaw.py 가 따로 굽는다. 여기 두면 좁은 시트로 되돌린다.
 MINI = ('mine_horror', 'ice_warden', 'vine_lord',
-        'sand_guardian', 'spore_queen', 'blight_maw')
+        'sand_guardian', 'spore_queen')
 
 
 def main():
