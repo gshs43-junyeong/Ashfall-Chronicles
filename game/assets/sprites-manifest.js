@@ -736,9 +736,10 @@ window.SPRITE_MANIFEST = {
       },
       "pursuer": {
         "file": "boss/pursuer.png",
-        "frameW": 102,
-        "frameH": 107,
-        "count": 7
+        "frameW": 140,
+        "frameH": 150,
+        "count": 10,
+        "gap": 0
       },
       "overseer": {
         "file": "boss/overseer.png",
@@ -797,30 +798,30 @@ window.SPRITE_MANIFEST = {
       },
       "hepha": {
         "file": "boss/hepha.png",
-        "frameW": 94,
-        "frameH": 113,
-        "count": 6,
+        "frameW": 136,
+        "frameH": 164,
+        "count": 10,
         "gap": 0
       },
       "archetype": {
         "file": "boss/archetype.png",
-        "frameW": 96,
-        "frameH": 116,
-        "count": 6,
+        "frameW": 144,
+        "frameH": 176,
+        "count": 10,
         "gap": 0
       },
       "restorer": {
         "file": "boss/restorer.png",
-        "frameW": 118,
-        "frameH": 132,
-        "count": 6,
+        "frameW": 168,
+        "frameH": 200,
+        "count": 10,
         "gap": 0
       },
       "shaft_maw": {
         "file": "boss/shaft_maw.png",
-        "frameW": 92,
-        "frameH": 84,
-        "count": 6,
+        "frameW": 132,
+        "frameH": 120,
+        "count": 10,
         "gap": 0
       },
       "drowned_keeper": {
@@ -841,7 +842,19 @@ window.SPRITE_MANIFEST = {
         "frameH": 99,
         "count": 6
       }
-    }
+    },
+    "frames5": [
+      "p1_idle1",
+      "p1_idle2",
+      "p2_idle1",
+      "p2_idle2",
+      "p3_idle1",
+      "p3_idle2",
+      "p4_idle1",
+      "p4_idle2",
+      "p5_idle1",
+      "p5_idle2"
+    ]
   },
   "backgrounds": {
     "parallax": {
