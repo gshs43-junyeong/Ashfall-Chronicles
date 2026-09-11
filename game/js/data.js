@@ -1875,7 +1875,7 @@ const ENEMIES = {
                  drops: [['aether_shard', 1, 40, 60], ['ruin_brick', 1, 40, 70], ['charm_rune', 1, 1, 1], ['star_heart', 1, 2, 2]] },
 
   /* 종장 — 별이 도망쳐 온 그것 */
-  pursuer:      { n: '별을 쫓아온 것', hp: 42000, dmg: 165, def: 68, spd: 128, ai: 'b_pursuer', w: 120, h: 136, c: '#2a2036', xp: 120000, gold: 60000, ph: 5, boss: 1,
+  pursuer:      { n: '별을 쫓아온 것', hp: 42000, dmg: 165, def: 68, spd: 128, ai: 'b_pursuer', w: 120, h: 130, c: '#2a2036', xp: 120000, gold: 60000, ph: 5, boss: 1,
                  minion: 'wraith', aggro: 4000,
                  drops: [['void_frag', 1, 60, 90], ['star_heart', 1, 3, 3], ['charm_dawn', 1, 1, 1], ['scythe_void', 1, 1, 1]] },
 
@@ -1883,7 +1883,7 @@ const ENEMIES = {
   proliferator: { n: '증식체', hp: 46000, dmg: 150, def: 62, spd: 112, ai: 'b_prolif', w: 88, h: 72, c: '#9a8a76', boss: 1,
                  xp: 150000, gold: 70000, minion: 'splitter',
                  drops: [['core_shard', 1, 40, 60], ['machine_frame', 1, 6, 10], ['power_core', 1, 25, 40]] },
-  hepha:        { n: '헤파 · 최초의 기계', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_hepha', w: 116, h: 150, c: '#c8a05a', ph: 5, boss: 1,
+  hepha:        { n: '헤파 · 최초의 기계', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_hepha', w: 112, h: 140, c: '#c8a05a', ph: 5, boss: 1,
                  xp: 400000, gold: 180000, minion: 'coreling', aggro: 4000,
                  drops: [['hepha_heart', 1, 1, 1], ['core_shard', 1, 60, 90], ['aether_shard', 1, 30, 45]] },
 
@@ -1903,7 +1903,7 @@ const ENEMIES = {
                  drops: [['archestone', 1, 4, 9], ['proto_ash', .6, 2, 4], ['draft_glass', .4, 1, 2]] },
 
   /* 세션 2 최종 — 사람을 본떠 만든 첫 번째 것 */
-  archetype:    { n: '원형 · 첫 번째 설계', hp: 105000, dmg: 215, def: 92, spd: 126, ai: 'b_arche', w: 124, h: 160, c: '#e8dcc0', ph: 5, boss: 1,
+  archetype:    { n: '원형 · 첫 번째 설계', hp: 105000, dmg: 215, def: 92, spd: 126, ai: 'b_arche', w: 114, h: 144, c: '#e8dcc0', ph: 5, boss: 1,
                  xp: 900000, gold: 400000, minion: 'draft_form', aggro: 4000,
                  drops: [['arche_core', 1, 1, 1], ['draft_glass', 1, 40, 60], ['archestone', 1, 30, 50]] },
 
@@ -1917,7 +1917,7 @@ const ENEMIES = {
 
   /* 부유 성채의 주인 — 지금까지 나온 무엇보다 세다.
      기반암과 제단만 빼고 발밑을 계속 부순다(b_restorer). 하늘 위라 떨어지면 그대로 끝이다. */
-  restorer:     { n: '환원기 · 되돌리려는 것', hp: 320000, dmg: 340, def: 130, spd: 132, ai: 'b_restorer', w: 146, h: 182, c: '#a8c8e8', ph: 5, boss: 1,
+  restorer:     { n: '환원기 · 되돌리려는 것', hp: 320000, dmg: 340, def: 130, spd: 132, ai: 'b_restorer', w: 138, h: 162, c: '#a8c8e8', ph: 5, boss: 1,
                  xp: 2600000, gold: 1200000, minion: 'orbit_sentry', aggro: 5000,
                  drops: [['star_ash', 1, 4, 6], ['orbit_gear', 1, 40, 60], ['void_lens', 1, 2, 3], ['lance_orbit', 1, 1, 1]] },
 
@@ -1930,7 +1930,7 @@ const ENEMIES = {
                  drops: [['miner_tag', .5, 1, 1], ['deep_alloy', 1, 3, 7], ['lost_lamp', .35, 1, 2]] },
 
   /* 무너진 갱의 주인 — 스토리와 무관한 순수 탐험 보상 */
-  shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_heart', w: 116, h: 106, c: '#3a342c', ph: 5, boss: 1,
+  shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_heart', w: 112, h: 102, c: '#3a342c', ph: 5, boss: 1,
                  xp: 620000, gold: 300000, minion: 'gloom_crawler', aggro: 3600,
                  drops: [['gloom_pearl', 1, 3, 4], ['deep_alloy', 1, 40, 60], ['miner_tag', 1, 2, 3], ['hammer_cave', 1, 1, 1]] }
 };

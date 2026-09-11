@@ -731,7 +731,7 @@
       "pursuer": {
         "file": "boss/pursuer.png",
         "frameW": 140,
-        "frameH": 150,
+        "frameH": 146,
         "count": 10,
         "gap": 0
       },
@@ -792,29 +792,29 @@
       },
       "hepha": {
         "file": "boss/hepha.png",
-        "frameW": 136,
-        "frameH": 164,
+        "frameW": 130,
+        "frameH": 152,
         "count": 10,
         "gap": 0
       },
       "archetype": {
         "file": "boss/archetype.png",
-        "frameW": 144,
-        "frameH": 176,
+        "frameW": 132,
+        "frameH": 156,
         "count": 10,
         "gap": 0
       },
       "restorer": {
         "file": "boss/restorer.png",
-        "frameW": 168,
-        "frameH": 200,
+        "frameW": 158,
+        "frameH": 178,
         "count": 10,
         "gap": 0
       },
       "shaft_maw": {
         "file": "boss/shaft_maw.png",
-        "frameW": 132,
-        "frameH": 120,
+        "frameW": 128,
+        "frameH": 116,
         "count": 10,
         "gap": 0
       },
