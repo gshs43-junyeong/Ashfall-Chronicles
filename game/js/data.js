@@ -1829,22 +1829,22 @@ const ENEMIES = {
      거의 평평해서, 어느 유적을 먼저 들어가든 체감이 같고 순서를 고를 이유가 없었다.
      이제 갱도(rank 1)와 부패(rank 6)가 체력 4배 · 공격력 3배 가까이 차이 난다. */
   /* rank 1 — 베이스캠프 옆. 처음 잡아 보는 미니보스 */
-  mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_slime', w: 60, h: 52, c: '#6a5a4a', xp: 1500, gold: 620, boss: 1,
+  mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_slime', w: 60, h: 52, c: '#6a5a4a', xp: 1500, gold: 620, ph: 2, boss: 1,
                  drops: [['rust_gear', 1, 2, 3], ['iron_ore', 1, 20, 30], ['lost_lamp', 1, 1, 2], ['foreman_tag', 1, 1, 1]] },
   /* rank 2 */
-  ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_witch', w: 40, h: 54, c: '#9fd8f0', xp: 2300, gold: 950, boss: 1,
+  ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_witch', w: 40, h: 54, c: '#9fd8f0', xp: 2300, gold: 950, ph: 2, boss: 1,
                  drops: [['frozen_core', 1, 2, 3], ['frost_core', 1, 8, 14], ['ice_shard', 1, 20, 30], ['warden_seal', 1, 1, 1]] },
   /* rank 3 */
-  vine_lord:    { n: '덩굴 군주', hp: 4100, dmg: 74, def: 34, spd: 80, ai: 'b_bone', w: 50, h: 74, c: '#3f7a34', xp: 3400, gold: 1500, boss: 1,
+  vine_lord:    { n: '덩굴 군주', hp: 4100, dmg: 74, def: 34, spd: 80, ai: 'b_bone', w: 50, h: 74, c: '#3f7a34', xp: 3400, gold: 1500, ph: 2, boss: 1,
                  drops: [['heartwood', 1, 2, 3], ['vine_coil', 1, 12, 20], ['orchid', 1, 8, 14]] },
   /* rank 4 — 함정이 가장 촘촘한 유적의 주인 */
-  sand_guardian:{ n: '모래 파수꾼', hp: 5600, dmg: 92, def: 46, spd: 66, ai: 'b_bone', w: 54, h: 70, c: '#d8b878', xp: 4800, gold: 2100, boss: 1,
+  sand_guardian:{ n: '모래 파수꾼', hp: 5600, dmg: 92, def: 46, spd: 66, ai: 'b_bone', w: 54, h: 70, c: '#d8b878', xp: 4800, gold: 2100, ph: 2, boss: 1,
                  drops: [['sun_disc', 1, 2, 3], ['gold_ore', 1, 15, 25], ['venom_sting', 1, 6, 10], ['caged_sun', 1, 1, 1]] },
   /* rank 5 — 입구가 없는 굴. 도망칠 길이 없다 */
-  spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 50, h: 72, c: '#6fe0c0', xp: 6400, gold: 2800, boss: 1,
+  spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 50, h: 72, c: '#6fe0c0', xp: 6400, gold: 2800, ph: 2, boss: 1,
                  drops: [['queen_spore', 1, 2, 3], ['spore_sac', 1, 12, 20], ['glowcap', 1, 15, 25], ['cap_signet', 1, 1, 1]] },
   /* rank 6 — 동쪽 끝, 가장 깊은 곳 */
-  blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 52, h: 58, c: '#7a3f9c', xp: 9000, gold: 4000, boss: 1,
+  blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 52, h: 58, c: '#7a3f9c', xp: 9000, gold: 4000, ph: 2, boss: 1,
                  drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18], ['nest_crown', 1, 1, 1]] },
 
   /* --- 7단계: 폭주로 ---
@@ -1875,7 +1875,7 @@ const ENEMIES = {
                  drops: [['aether_shard', 1, 40, 60], ['ruin_brick', 1, 40, 70], ['charm_rune', 1, 1, 1], ['star_heart', 1, 2, 2]] },
 
   /* 종장 — 별이 도망쳐 온 그것 */
-  pursuer:      { n: '별을 쫓아온 것', hp: 42000, dmg: 165, def: 68, spd: 128, ai: 'b_pursuer', w: 86, h: 96, c: '#2a2036', xp: 120000, gold: 60000, boss: 1,
+  pursuer:      { n: '별을 쫓아온 것', hp: 42000, dmg: 165, def: 68, spd: 128, ai: 'b_pursuer', w: 86, h: 96, c: '#2a2036', xp: 120000, gold: 60000, ph: 5, boss: 1,
                  minion: 'wraith', aggro: 4000,
                  drops: [['void_frag', 1, 60, 90], ['star_heart', 1, 3, 3], ['charm_dawn', 1, 1, 1], ['scythe_void', 1, 1, 1]] },
 
@@ -1883,7 +1883,7 @@ const ENEMIES = {
   proliferator: { n: '증식체', hp: 46000, dmg: 150, def: 62, spd: 112, ai: 'b_prolif', w: 88, h: 72, c: '#9a8a76', boss: 1,
                  xp: 150000, gold: 70000, minion: 'splitter',
                  drops: [['core_shard', 1, 40, 60], ['machine_frame', 1, 6, 10], ['power_core', 1, 25, 40]] },
-  hepha:        { n: '헤파 · 최초의 기계', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_hepha', w: 86, h: 108, c: '#c8a05a', boss: 1,
+  hepha:        { n: '헤파 · 최초의 기계', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_hepha', w: 86, h: 108, c: '#c8a05a', ph: 5, boss: 1,
                  xp: 400000, gold: 180000, minion: 'coreling', aggro: 4000,
                  drops: [['hepha_heart', 1, 1, 1], ['core_shard', 1, 60, 90], ['aether_shard', 1, 30, 45]] },
 
@@ -1903,7 +1903,7 @@ const ENEMIES = {
                  drops: [['archestone', 1, 4, 9], ['proto_ash', .6, 2, 4], ['draft_glass', .4, 1, 2]] },
 
   /* 세션 2 최종 — 사람을 본떠 만든 첫 번째 것 */
-  archetype:    { n: '원형 · 첫 번째 설계', hp: 105000, dmg: 215, def: 92, spd: 126, ai: 'b_arche', w: 96, h: 116, c: '#e8dcc0', boss: 1,
+  archetype:    { n: '원형 · 첫 번째 설계', hp: 105000, dmg: 215, def: 92, spd: 126, ai: 'b_arche', w: 96, h: 116, c: '#e8dcc0', ph: 5, boss: 1,
                  xp: 900000, gold: 400000, minion: 'draft_form', aggro: 4000,
                  drops: [['arche_core', 1, 1, 1], ['draft_glass', 1, 40, 60], ['archestone', 1, 30, 50]] },
 
@@ -1917,7 +1917,7 @@ const ENEMIES = {
 
   /* 부유 성채의 주인 — 지금까지 나온 무엇보다 세다.
      기반암과 제단만 빼고 발밑을 계속 부순다(b_restorer). 하늘 위라 떨어지면 그대로 끝이다. */
-  restorer:     { n: '환원기 · 되돌리려는 것', hp: 320000, dmg: 340, def: 130, spd: 132, ai: 'b_restorer', w: 118, h: 132, c: '#a8c8e8', boss: 1,
+  restorer:     { n: '환원기 · 되돌리려는 것', hp: 320000, dmg: 340, def: 130, spd: 132, ai: 'b_restorer', w: 118, h: 132, c: '#a8c8e8', ph: 5, boss: 1,
                  xp: 2600000, gold: 1200000, minion: 'orbit_sentry', aggro: 5000,
                  drops: [['star_ash', 1, 4, 6], ['orbit_gear', 1, 40, 60], ['void_lens', 1, 2, 3], ['lance_orbit', 1, 1, 1]] },
 
@@ -1930,7 +1930,7 @@ const ENEMIES = {
                  drops: [['miner_tag', .5, 1, 1], ['deep_alloy', 1, 3, 7], ['lost_lamp', .35, 1, 2]] },
 
   /* 무너진 갱의 주인 — 스토리와 무관한 순수 탐험 보상 */
-  shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_heart', w: 92, h: 84, c: '#3a342c', boss: 1,
+  shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_heart', w: 92, h: 84, c: '#3a342c', ph: 5, boss: 1,
                  xp: 620000, gold: 300000, minion: 'gloom_crawler', aggro: 3600,
                  drops: [['gloom_pearl', 1, 3, 4], ['deep_alloy', 1, 40, 60], ['miner_tag', 1, 2, 3], ['hammer_cave', 1, 1, 1]] }
 };
@@ -2186,6 +2186,10 @@ const STORY_BOSSES = {
 /* ---------------- 보스 페이즈 대사 ----------------
    페이즈가 넘어가는 순간 한 줄만 뜬다. 규칙이 바뀌는 이유를 말로 붙여 두면
    "체력이 줄었다"가 아니라 "저것이 태도를 바꿨다"로 읽힌다. */
+/* 페이즈가 넘어갈 때 뜨는 한 줄. 키는 **넘어간 페이즈 번호**다.
+   3페이즈 보스는 1·2 만 쓰고, 5페이즈 보스(세션 종장·특별 유적의 주인)는 1~4 를
+   다 쓴다 — 마디가 넷인데 할 말이 둘뿐이면 뒤 두 마디가 조용히 지나간다.
+   2페이즈 미니보스는 1 만 쓴다(원래 대사가 없던 것들이라 비어 있다). */
 const BOSS_LINES = {
   king_slime:   { 1: '갈라져도 갈라져도, 아직 혼자다.', 2: '껍데기가 굳는다 — 안쪽이 뛴다.' },
   bone_lord:    { 1: '뼈가 일어선다.', 2: '기둥이 저를 대신 든다.' },
@@ -2194,11 +2198,20 @@ const BOSS_LINES = {
   void_king:    { 1: '나선이 되감긴다.', 2: '공허가 방향을 바꾼다.' },
   storm_warden: { 1: '구름이 낮아진다.', 2: '내리꽂을 때만, 닿는다.' },
   first_keeper: { 1: '석판 하나가 꺼진다.', 2: '꺼진 쪽이 무르다.' },
-  pursuer:      { 1: '형태가 무너지고 다시 선다.', 2: '한 줄기 길만 비어 있다.' },
+  pursuer:      { 1: '형태가 무너지고 다시 선다.', 2: '한 줄기 길만 비어 있다.',
+                  3: '쫓던 것을 잊은 얼굴이다.', 4: '별을 놓친 자리가 비어 있다.' },
   overseer:     { 1: '관리자: "공정 재개."', 2: '관리자: "…명령이 남아 있다."' },
   proliferator: { 1: '하나가 둘이 되는 것을 멈추지 못한다.', 2: '껍데기가 닫힌다 — 갈라진 것부터.' },
-  hepha:        { 1: '헤파: "나는 아직 만드는 중이다."', 2: '헤파: "때려서는 안 멈춘다. 알잖아."' },
-  archetype:    { 1: '원형이 자세를 고친다.', 2: '받침대 넷이 그것을 붙들고 있다.' }
+  hepha:        { 1: '헤파: "나는 아직 만드는 중이다."', 2: '헤파: "때려서는 안 멈춘다. 알잖아."',
+                  3: '헤파: "고치는 것과 부수는 것을 너희는 같은 손으로 한다."',
+                  4: '헤파: "…그래. 나도 그랬다." ' },
+  archetype:    { 1: '원형이 자세를 고친다.', 2: '받침대 넷이 그것을 붙들고 있다.',
+                  3: '사람의 걸음을 흉내 내기 시작한다.',
+                  4: '마지막 받침대가 저를 놓는다.' },
+  restorer:     { 1: '발밑이 한 겹 사라진다.', 2: '되돌릴 자리를 고르고 있다.',
+                  3: '성채가 제 무게를 버리기 시작한다.', 4: '남은 것은 제단뿐이다.' },
+  shaft_maw:    { 1: '갱이 숨을 들이켠다.', 2: '무너진 것들이 자리를 바꾼다.',
+                  3: '천장이 내려앉는 소리가 아래에서 난다.', 4: '메운 것이 도로 뱉어진다.' }
 };
 
 /* ---------------- 버프 ---------------- */

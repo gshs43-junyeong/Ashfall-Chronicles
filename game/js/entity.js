@@ -1016,7 +1016,11 @@ class Enemy extends Ent {
     this.atkPose = 0;
     this.lastPhase = 0;
     this.slowT = 0; this.slowF = 1; this.dots = [];
-    this.phase = 0; this.state = 0; this.stateT = 0;
+    /* 페이즈 수는 보스마다 다르다(ENEMIES 의 ph). 유적 미니보스는 2, 세션 종장과
+       특별 유적의 주인은 5, 나머지 스토리 보스는 3. 예전에는 전부 3 이었다 —
+       처음 잡는 슬라임 왕과 마지막 환원기가 같은 마디로 나뉘었다는 뜻이다. */
+    this.phases = d.ph || 3;
+    this.phase = 0; this.pf = 0; this.state = 0; this.stateT = 0;
     this.facing = -1;
     this.hitCd = 0;
     this.markT = 0; this.markAmt = 0;   // 사냥꾼의 표식
@@ -1035,6 +1039,8 @@ class Enemy extends Ent {
     this.sparkT = 0;
     return this;
   }
+  /** 지금이 마지막 페이즈인가. 예전 코드의 `phase === 2` 가 뜻하던 것이다. */
+  lastPh() { return this.phase >= this.phases - 1; }
   addDot(kind, dps, dur) { this.dots.push({ kind, dps, t: dur }); }
   slow(f, t) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
 
@@ -1232,23 +1238,28 @@ class Enemy extends Ent {
     const line = (BOSS_LINES[this.type] || {})[ph];
     if (line) G.bossLine(this.def.n, line);
 
-    // 보스마다 이 순간에 켜지는 규칙
+    /* 보스마다 이 순간에 켜지는 규칙.
+       lock 은 '약점만 통하는 굳은 상태'가 시작되는 페이즈다. 3페이즈까지는 마지막
+       한 마디였는데, 5페이즈에서 그대로 마지막 한 마디에만 두면 그 보스의 간판
+       규칙(받침대를 깨야 열린다 · 정지 핵을 써야 열린다)을 1/5 동안만 보게 된다.
+       다섯이면 **뒤 두 마디**를 준다. */
+    const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
     switch (this.def.ai) {
       case 'b_slime':
         // 2페이즈 — 껍데기가 굳는다. 착지 직후 벌어질 때만 핵이 드러난다
-        if (ph === 2) { this.guard = 1; this.openT = 0; }
+        if (ph >= lock) { this.guard = 1; this.openT = 0; }
         break;
       case 'b_witch':
         /* 2페이즈 — 바닥이 언다. 열원 옆이 아니면 계속 얼어붙는다.
            싸울 수 있게 하려고 전환하면서 화톳불 셋을 바닥에 세운다. */
-        if (ph === 2) { this.iceFloor = 1; this.layHeat(world, p); }
+        if (ph >= lock) { this.iceFloor = 1; this.layHeat(world, p); }
         break;
-      case 'b_prolif': if (ph === 2) this.guard = 1; break;      // 핵만 약점
-      case 'b_hepha':  if (ph === 2) this.guard = 1; break;      // 정지 핵을 써야 열린다
+      case 'b_prolif': if (ph >= lock) this.guard = 1; break;      // 핵만 약점
+      case 'b_hepha':  if (ph >= lock) this.guard = 1; break;      // 정지 핵을 써야 열린다
       case 'b_arche':
         /* 받침대를 깨야 열린다 — 그런데 방에 받침대가 없으면 규칙이 걸리지도 않는다.
            전환하면서 넷을 세운다(마녀가 화톳불을 놓는 것과 같은 이유다). */
-        if (ph === 2) { this.guard = 1; this.raisePedestals(); }
+        if (ph >= lock) { this.guard = 1; this.raisePedestals(); }
         break;
       case 'b_overseer': if (ph >= 1) this.term = 0; break;
     }
@@ -1256,6 +1267,10 @@ class Enemy extends Ent {
 
   /** 원형 2페이즈 — 받침대 넷. 이것들이 살아 있는 동안 원형은 열리지 않는다 */
   raisePedestals() {
+    /* 살아남은 받침대를 먼저 치운다. 5페이즈가 되면서 이게 ph3·ph4 두 번 불리는데,
+       앞 마디 것을 안 치우면 안 깬 받침대 위에 넷이 더 서서 최대 여덟이 된다.
+       "넷을 깨야 열린다"가 규칙이므로 언제나 정확히 넷이어야 한다. */
+    for (const e of G.ents) if (e.pedestal && !e.dead) { e.dead = true; e.hp = 0; }
     for (let i = 0; i < 4; i++) {
       const e = new Enemy('draft_form', this.cx + (i - 1.5) * 96, this.cy - 10, 1);
       e.pedestal = 1; e.maxHp = Math.round(e.maxHp * 0.35); e.hp = e.maxHp;
@@ -1306,7 +1321,14 @@ class Enemy extends Ent {
     const AI = this.def.ai;
     this.stateT -= dt;
     const hpr = this.hp / this.maxHp;
-    this.phase = hpr < 0.33 ? 2 : hpr < 0.66 ? 1 : 0;
+    /* 체력을 페이즈 수만큼 균등하게 자른다. 3페이즈면 66%/33% 로 예전과 같다.
+       ★ pf 를 같이 둔다 — 0(첫 페이즈)에서 1(마지막)까지의 **비율**이다.
+       AI 의 세기 식은 전부 이 비율로 쓴다. 예전처럼 phase 를 그대로 곱하면
+       5페이즈 보스에서 `1.5 - phase*0.35` 가 0.1 이 되어(원래 최저 0.8)
+       사람이 반응할 수 없는 속도가 나온다. 실제로 그렇게 될 뻔했다. */
+    const nph = this.phases;
+    this.phase = Math.min(nph - 1, Math.floor((1 - hpr) * nph));
+    this.pf = nph > 1 ? this.phase / (nph - 1) : 0;
     /* 페이즈가 올라가는 순간을 연출로 알린다. 보스 시트는 페이즈마다 idle 두 장뿐이고
        그림 차이가 작은 보스가 여럿이라(void_king 1.5% · bone_lord 3.3% · shaft_maw 6.6%)
        그림만으로는 바뀐 걸 알아챌 수 없었다. 그림을 다시 그리기 전까지 이걸로 메운다. */
@@ -1326,7 +1348,7 @@ class Enemy extends Ent {
            출렁이는 1.6초 동안만 핵이 드러나고, 그때 때려야 제대로 들어간다.
            "핵만 약점"을 별도 개체 없이 시간 창으로 옮긴 것이다 — 창이 열릴 때까지
            기다렸다 붙는 싸움이 된다. */
-        if (this.phase === 2 && this.landT !== 1) {
+        if (this.lastPh() && this.landT !== 1) {
           this.landT = 1; this.guard = 0; this.openT = 0.9;
           G.ringFx(this.cx, this.cy, this.w * 0.9, '#9fe0ff', .4);
         }
@@ -1335,11 +1357,11 @@ class Enemy extends Ent {
           /* 2페이즈는 일부러 느리게 뛴다. 창이 0.9초인데 주기가 0.8초면 창이 겹쳐서
              사실상 늘 열려 있게 된다(처음에 그렇게 되어 있었다 — 599/600 프레임이
              열림). 굳어 있는 시간이 있어야 "기다렸다 친다"가 성립한다. */
-          this.jumpCd = this.phase === 2 ? 2.2 : 1.5 - this.phase * 0.35;
-          this.vy = -680 - this.phase * 60;
-          this.vx = Math.sign(dx) * (200 + this.phase * 70);
-          if (Math.random() < 0.35 + this.phase * 0.2) {
-            for (let i = 0; i < 2 + this.phase; i++) {
+          this.jumpCd = this.lastPh() ? 2.2 : 1.5 - this.pf * 0.7;
+          this.vy = -680 - this.pf * 120;
+          this.vx = Math.sign(dx) * (200 + this.pf * 140);
+          if (Math.random() < 0.35 + this.pf * 0.4) {
+            for (let i = 0; i < 2 + this.pf * 2; i++) {
               const e = new Enemy('slime', this.cx + (Math.random() - 0.5) * 60, this.y, G.scale());
               e.vy = -300; G.ents.push(e);
             }
@@ -1350,7 +1372,7 @@ class Enemy extends Ent {
     } else if (AI === 'b_bone') {
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 3; this.stateT = this.state === 1 ? 2.2 : 2.6;
-        if (this.state === 2) for (let i = 0; i < 2 + this.phase; i++) G.ents.push(new Enemy(Math.random() < .5 ? 'skeleton' : 'archer', this.cx + (Math.random() - 0.5) * 200, this.cy - 30, G.scale()));
+        if (this.state === 2) for (let i = 0; i < 2 + this.pf * 2; i++) G.ents.push(new Enemy(Math.random() < .5 ? 'skeleton' : 'archer', this.cx + (Math.random() - 0.5) * 200, this.cy - 30, G.scale()));
       }
       if (this.state === 0) {           // 추격
         this.vx = lerp(this.vx, Math.sign(dx) * this.spd, dt * 3);
@@ -1358,7 +1380,7 @@ class Enemy extends Ent {
       } else if (this.state === 1) {    // 뼈 투척
         this.vx *= 0.94; this.vy = lerp(this.vy, -20, dt * 2);
         if (this.atkCd <= 0) {
-          this.atkCd = 0.35 - this.phase * 0.06;
+          this.atkCd = 0.35 - this.pf * 0.12;
           const a = angleTo(this.cx, this.cy, p.cx, p.cy) + (Math.random() - 0.5) * 0.4;
           G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 470, Math.sin(a) * 470, this.dmg * 0.7, 'enemy', 'bone'));
         }
@@ -1369,14 +1391,14 @@ class Enemy extends Ent {
         this.state = (this.state + 1) % 3;
         this.stateT = this.state === 0 ? 3.2 : this.state === 1 ? 1.6 : 2.4;
         if (this.state === 1) { this.dashA = angleTo(this.cx, this.cy, p.cx, p.cy); }
-        if (this.state === 2) for (let i = 0; i < 1 + this.phase; i++) G.ents.push(new Enemy('shadoweye', this.cx + (Math.random() - 0.5) * 220, this.cy, G.scale()));
+        if (this.state === 2) for (let i = 0; i < 1 + this.pf * 2; i++) G.ents.push(new Enemy('shadoweye', this.cx + (Math.random() - 0.5) * 220, this.cy, G.scale()));
       }
       if (this.state === 0) {
         this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd * 0.7, dt * 2);
         this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd * 0.7, dt * 2);
         if (this.atkCd <= 0) {
-          this.atkCd = 1.1 - this.phase * 0.25;
-          const n = 8 + this.phase * 4;
+          this.atkCd = 1.1 - this.pf * 0.5;
+          const n = 8 + this.pf * 8;
           for (let i = 0; i < n; i++) {
             const a = (i / n) * TAU + G.time;
             G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 280, Math.sin(a) * 280, this.dmg * 0.55, 'enemy', 'dark'));
@@ -1396,13 +1418,13 @@ class Enemy extends Ent {
           for (let i = 0; i < 24; i++) G.parts.push(new Part(this.cx, this.cy, '#a8dcf0'));
         }
         if (this.state === 2) {
-          for (let i = 0; i < 1 + this.phase; i++) G.ents.push(new Enemy('frostling', this.cx + (Math.random() - 0.5) * 240, this.cy, G.scale()));
+          for (let i = 0; i < 1 + this.pf * 2; i++) G.ents.push(new Enemy('frostling', this.cx + (Math.random() - 0.5) * 240, this.cy, G.scale()));
         }
       }
       if (this.state === 1) {      // 얼음창 세례
         if (this.atkCd <= 0) {
-          this.atkCd = 0.45 - this.phase * 0.1;
-          const n = 3 + this.phase;
+          this.atkCd = 0.45 - this.pf * 0.2;
+          const n = 3 + this.pf * 2;
           const base = angleTo(this.cx, this.cy, p.cx, p.cy);
           for (let i = 0; i < n; i++) {
             const a = base + (i - (n - 1) / 2) * 0.22;
@@ -1423,8 +1445,8 @@ class Enemy extends Ent {
       this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'b_void') {
       if (this.stateT <= 0) {
-        this.state = (this.state + 1) % 4; this.stateT = 2.6 - this.phase * 0.3;
-        if (this.state === 3) for (let i = 0; i < 2 + this.phase; i++) G.ents.push(new Enemy('wraith', this.cx + (Math.random() - 0.5) * 320, this.cy, G.scale()));
+        this.state = (this.state + 1) % 4; this.stateT = 2.6 - this.pf * 0.6;
+        if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++) G.ents.push(new Enemy('wraith', this.cx + (Math.random() - 0.5) * 320, this.cy, G.scale()));
       }
       if (this.state === 0) {          // 나선탄
         this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd * 0.6, dt * 2);
@@ -1454,9 +1476,9 @@ class Enemy extends Ent {
       /* 폭풍의 수호자 — 상하 급강하 + 회전 돌풍 + 바람 정령 소환 */
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 4;
-        this.stateT = this.state === 1 ? 1.5 : 2.4 - this.phase * 0.25;
+        this.stateT = this.state === 1 ? 1.5 : 2.4 - this.pf * 0.5;
         if (this.state === 1) this.dashA = angleTo(this.cx, this.cy, p.cx, p.cy);
-        if (this.state === 3) for (let i = 0; i < 2 + this.phase; i++)
+        if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
           G.ents.push(new Enemy(Math.random() < .5 ? 'gale' : 'sky_sentry', this.cx + (Math.random() - 0.5) * 300, this.cy, G.scale()));
       }
       if (this.state === 0) {            // 회전 돌풍
@@ -1464,7 +1486,7 @@ class Enemy extends Ent {
         this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd * .7, dt * 2);
         if (this.atkCd <= 0) {
           this.atkCd = 0.22;
-          const n = 5 + this.phase * 2, base = G.time * 4;
+          const n = 5 + this.pf * 4, base = G.time * 4;
           for (let i = 0; i < n; i++) {
             const a = base + (i / n) * TAU;
             G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 330, Math.sin(a) * 330, this.dmg * 0.42, 'enemy', 'wind'));
@@ -1476,8 +1498,8 @@ class Enemy extends Ent {
       } else if (this.state === 2) {     // 벼락 세례
         this.vx *= 0.9; this.vy = lerp(this.vy, -30, dt * 2);
         if (this.atkCd <= 0) {
-          this.atkCd = 0.5 - this.phase * 0.1;
-          for (let i = 0; i < 3 + this.phase; i++) {
+          this.atkCd = 0.5 - this.pf * 0.2;
+          for (let i = 0; i < 3 + this.pf * 2; i++) {
             const px2 = p.cx + (Math.random() - 0.5) * 340;
             G.pending.push({
               t: i * 0.06, fn: () => {
@@ -1493,16 +1515,16 @@ class Enemy extends Ent {
       /* 최초의 파수꾼 — 지상 보스. 방벽 → 룬 광선 → 돌진 → 소환 */
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 4;
-        this.stateT = 2.8 - this.phase * 0.3;
-        if (this.state === 3) for (let i = 0; i < 1 + this.phase; i++)
+        this.stateT = 2.8 - this.pf * 0.6;
+        if (this.state === 3) for (let i = 0; i < 1 + this.pf * 2; i++)
           G.ents.push(new Enemy(this.def.minion || 'ruin_guard', this.cx + (Math.random() - 0.5) * 260, this.cy - 20, G.scale()));
       }
       if (this.state === 0) {            // 룬 광선 (부채꼴)
         this.vx *= 0.86;
         if (this.atkCd <= 0) {
-          this.atkCd = 0.9 - this.phase * 0.18;
+          this.atkCd = 0.9 - this.pf * 0.36;
           const base = angleTo(this.cx, this.cy, p.cx, p.cy);
-          const n = 5 + this.phase * 2;
+          const n = 5 + this.pf * 4;
           for (let i = 0; i < n; i++) {
             const a = base + (i - (n - 1) / 2) * 0.17;
             const pr = new Proj(this.cx, this.cy, Math.cos(a) * 460, Math.sin(a) * 460, this.dmg * 0.5, 'enemy', 'rune');
@@ -1529,23 +1551,23 @@ class Enemy extends Ent {
          지상에 발을 딛지 않는다(gravMul 0). 상태가 1로 바뀌는 순간 플레이어 옆으로 도약한다. */
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 4;
-        this.stateT = 3.0 - this.phase * 0.4;
+        this.stateT = 3.0 - this.pf * 0.8;
         if (this.state === 1) {
           this.x = clamp(p.cx + (Math.random() < .5 ? -170 : 170), TS * 3, WW * TS - TS * 3) - this.w / 2;
           this.y = p.cy - this.h;
           G.shake = Math.max(G.shake, 12);
           for (let i = 0; i < 26; i++) G.parts.push(new Part(this.cx, this.cy, '#a06fff', -40, 1.1));
         }
-        if (this.state === 3) for (let i = 0; i < 2 + this.phase; i++)
+        if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
           G.ents.push(new Enemy(this.def.minion || 'wraith', this.cx + (Math.random() - 0.5) * 300, this.cy - 30, G.scale()));
       }
       if (this.state === 0) {            // 공허 탄막 — 천천히 돌아가는 나선
         this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.5, dt * 2);
         this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.4, dt * 2);
         if (this.atkCd <= 0) {
-          this.atkCd = 0.28 - this.phase * 0.05;
+          this.atkCd = 0.28 - this.pf * 0.1;
           this.spin = (this.spin || 0) + 0.55;
-          const n = 3 + this.phase;
+          const n = 3 + this.pf * 2;
           for (let i = 0; i < n; i++) {
             const a = this.spin + i * TAU / n;
             G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 330, Math.sin(a) * 330, this.dmg * 0.42, 'enemy', 'void'));
@@ -1557,7 +1579,7 @@ class Enemy extends Ent {
         this.vy = lerp(this.vy, Math.sin(a) * this.spd * 2.4, dt * 5);
         if (this.atkCd <= 0) {
           this.atkCd = 1.1;
-          const n = 10 + this.phase * 4;
+          const n = 10 + this.pf * 8;
           for (let k = 0; k < n; k++) {
             const ang = k * TAU / n;
             G.projs.push(new Proj(this.cx, this.cy, Math.cos(ang) * 250, Math.sin(ang) * 250, this.dmg * 0.38, 'enemy', 'dark'));
@@ -1567,7 +1589,7 @@ class Enemy extends Ent {
         this.vx = lerp(this.vx, 0, dt * 3);
         this.vy = lerp(this.vy, -30, dt * 3);
         if (this.atkCd <= 0) {
-          this.atkCd = 0.16 - this.phase * 0.03;
+          this.atkCd = 0.16 - this.pf * 0.06;
           const px = p.cx + (Math.random() - 0.5) * 620;
           G.projs.push(new Proj(px, this.cy - 260, (Math.random() - 0.5) * 40, 420, this.dmg * 0.34, 'enemy', 'bone'));
         }
@@ -1580,10 +1602,10 @@ class Enemy extends Ent {
          닫혀, 갈라져 나온 것을 다 치워야(핵이 드러나야) 본체가 열린다. */
       this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.35, dt * 2);
       if (this.stateT <= 0) {
-        this.stateT = 2.4 - this.phase * 0.4;
+        this.stateT = 2.4 - this.pf * 0.8;
         const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'splitter')).length;
-        if (kids < 3 + this.phase) {                    // 쵸크 금지 — 한 번에 셋까지
-          const n = 1 + this.phase;
+        if (kids < 3 + this.pf * 2) {                    // 쵸크 금지 — 한 번에 셋까지
+          const n = 1 + this.pf * 2;
           for (let i = 0; i < n; i++) {
             const e = new Enemy(this.def.minion || 'splitter',
               this.cx + (i - (n - 1) / 2) * 46, this.cy, G.scale());
@@ -1593,7 +1615,7 @@ class Enemy extends Ent {
           G.ringFx(this.cx, this.cy, this.w, '#9a8a76', .4);
         }
       }
-      if (this.phase === 2) {
+      if (this.lastPh()) {
         // 갈라진 것이 다 없어지면 핵이 드러난다 — 그때만 제대로 들어간다
         const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'splitter')).length;
         const open = kids === 0;
@@ -1614,13 +1636,13 @@ class Enemy extends Ent {
       this.term = (this.term || 0) + dt;
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 3;
-        this.stateT = 3.0 - this.phase * 0.4;
+        this.stateT = 3.0 - this.pf * 0.8;
         if (this.state === 0) G.toast('관리자가 명령을 내린다', 'bad');
       }
       if (this.state === 0) {                    // 명령 — 바닥에서 압착기가 솟는다
         this.vx *= 0.9;
         if (this.atkCd <= 0) {
-          this.atkCd = 0.55 - this.phase * 0.08;
+          this.atkCd = 0.55 - this.pf * 0.16;
           const fx = p.cx + (Math.random() - 0.5) * 260;
           G.warnFx(fx, p.cy + 20, 34, 0.6, '#c8843a');
           G.pending.push({ t: 0.6, fn: () => {
@@ -1651,11 +1673,11 @@ class Enemy extends Ent {
       if (dd < 420) p.vx += Math.sign(this.cx - p.cx) * 150 * dt;
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 3;
-        this.stateT = 2.6 - this.phase * 0.35;
+        this.stateT = 2.6 - this.pf * 0.7;
       }
       if (this.state === 0) {                    // 팔 휘두르기 — 좌우로 퍼지는 충격
         if (this.atkCd <= 0) {
-          this.atkCd = 0.9 - this.phase * 0.15;
+          this.atkCd = 0.9 - this.pf * 0.3;
           for (const dir of [-1, 1]) for (let k = 0; k < 4; k++) {
             const x = this.cx + dir * (50 + k * 44);
             G.pending.push({ t: k * 0.06, fn: () => {
@@ -1672,7 +1694,7 @@ class Enemy extends Ent {
           pr.grav = 300; G.projs.push(pr);
         }
       }
-      if (this.phase === 2 && this.guard) {
+      if (this.lastPh() && this.guard) {
         /* 정지 핵을 들고 붙어 있으면 열린다. 들고만 있으면 되는 게 아니라
            끌어당기는 컨베이어를 거슬러 붙어야 하므로 그 자체가 한 판이다. */
         const held = p.held();
@@ -1706,7 +1728,7 @@ class Enemy extends Ent {
       } else {                                   // 숨 고르기 — 붙을 틈
         this.vx *= 0.86;
       }
-      if (this.phase === 2 && this.guard) {
+      if (this.lastPh() && this.guard) {
         // 받침대(제단석)를 다 깨면 열린다. 방에 없으면 그냥 열어 준다(막히지 않게)
         const ped = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === 'draft_form').length;
         if (!ped) { this.guard = 0; G.toast('받침대가 무너졌다', 'good'); }
@@ -1720,17 +1742,17 @@ class Enemy extends Ent {
          그래서 이 싸움은 "때리는 것"보다 "설 자리를 남기는 것"이 먼저다. */
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 4;
-        this.stateT = 2.6 - this.phase * 0.35;
-        if (this.state === 3) for (let i = 0; i < 2 + this.phase; i++)
+        this.stateT = 2.6 - this.pf * 0.7;
+        if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
           G.ents.push(new Enemy(this.def.minion || 'orbit_sentry', this.cx + (Math.random() - 0.5) * 320, this.cy - 20, G.scale()));
       }
       // --- 해체: 상태와 무관하게 늘 돈다. 위상이 오를수록 반경과 속도가 커진다 ---
       this.unmakeCd = (this.unmakeCd || 0) - dt;
       if (this.unmakeCd <= 0) {
-        this.unmakeCd = 0.30 - this.phase * 0.07;
-        const R = 6 + this.phase * 3;
+        this.unmakeCd = 0.30 - this.pf * 0.14;
+        const R = 6 + this.pf * 6;
         const bx = Math.floor(this.cx / TS), by = Math.floor(this.cy / TS);
-        for (let k = 0; k < 5 + this.phase * 3; k++) {
+        for (let k = 0; k < 5 + this.pf * 6; k++) {
           const a = Math.random() * TAU, r = Math.random() * R;
           const tx = bx + Math.round(Math.cos(a) * r), ty = by + Math.round(Math.sin(a) * r);
           if (tx < 2 || ty < 2 || tx >= WW - 2 || ty >= WH - 2) continue;
@@ -1745,9 +1767,9 @@ class Enemy extends Ent {
         this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.5, dt * 2);
         this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.4, dt * 2);
         if (this.atkCd <= 0) {
-          this.atkCd = 0.24 - this.phase * 0.04;
+          this.atkCd = 0.24 - this.pf * 0.08;
           this.spin = (this.spin || 0) + 0.42;
-          const n = 4 + this.phase * 2;
+          const n = 4 + this.pf * 4;
           for (let i = 0; i < n; i++) {
             const a = this.spin + i * TAU / n;
             G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 360, Math.sin(a) * 360, this.dmg * 0.36, 'enemy', 'star'));
@@ -1766,7 +1788,7 @@ class Enemy extends Ent {
         this.vx = lerp(this.vx, 0, dt * 3);
         this.vy = lerp(this.vy, -40, dt * 3);
         if (this.atkCd <= 0) {
-          this.atkCd = 0.14 - this.phase * 0.03;
+          this.atkCd = 0.14 - this.pf * 0.06;
           const px = p.cx + (Math.random() - 0.5) * 700;
           G.projs.push(new Proj(px, this.cy - 280, (Math.random() - 0.5) * 50, 460, this.dmg * 0.30, 'enemy', 'star'));
         }
