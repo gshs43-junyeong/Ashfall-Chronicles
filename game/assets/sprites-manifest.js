@@ -736,8 +736,8 @@ window.SPRITE_MANIFEST = {
       },
       "pursuer": {
         "file": "boss/pursuer.png",
-        "frameW": 140,
-        "frameH": 146,
+        "frameW": 204,
+        "frameH": 214,
         "count": 10,
         "gap": 0
       },
@@ -798,29 +798,29 @@ window.SPRITE_MANIFEST = {
       },
       "hepha": {
         "file": "boss/hepha.png",
-        "frameW": 130,
-        "frameH": 152,
+        "frameW": 188,
+        "frameH": 226,
         "count": 10,
         "gap": 0
       },
       "archetype": {
         "file": "boss/archetype.png",
-        "frameW": 132,
-        "frameH": 156,
+        "frameW": 192,
+        "frameH": 232,
         "count": 10,
         "gap": 0
       },
       "restorer": {
         "file": "boss/restorer.png",
-        "frameW": 158,
-        "frameH": 178,
+        "frameW": 236,
+        "frameH": 264,
         "count": 10,
         "gap": 0
       },
       "shaft_maw": {
         "file": "boss/shaft_maw.png",
-        "frameW": 128,
-        "frameH": 116,
+        "frameW": 184,
+        "frameH": 168,
         "count": 10,
         "gap": 0
       },
