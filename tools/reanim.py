@@ -9,12 +9,18 @@
 시트는 논리 픽셀(frameW × frameH)을 4배로 구운 것이고, 4×4 블록이 전부 균일하다
 (도구가 시작할 때 확인한다). 그래서 논리 해상도로 내려서 다루고 다시 4배로 굽는다.
 
-    python3 tools/reanim.py            # 전부 다시 굽는다
-    python3 tools/reanim.py glow_snail # 하나만
+    python3 tools/reanim.py            # 손그림 작업 + 갈래별 일괄
+    python3 tools/reanim.py --auto     # 갈래별 일괄만
+    python3 tools/reanim.py glow_snail # 손그림 작업 하나만
+
+★ 보스 시트를 굽는 순서: tools/mkbossbig.py → tools/mkarchetype.py →
+  **tools/reanim.py**. 앞의 둘이 마디별 그림을 만들고, 여기서 숨을 넣는다.
+  (원형 archetype 은 열 칸을 손으로 그렸으므로 여기서 안 건드린다)
 
 되돌리려면 git 으로 되돌리면 된다 — 원본을 따로 두지 않는다.
-다 굽고 나면 `python3 tools/framediff.py` 로 수치를 확인하고,
-10% 를 넘긴 개체는 `js/data.js` 에서 `stiff` 를 떼면 된다.
+다 굽고 나면 **`python3 tools/animcheck.py`** 로 확인한다. framediff.py 는
+제자리에서 뺀 값이라 그림이 통째로 미끄러지기만 해도 높게 나온다 — 그 함정에
+129 칸쌍이 걸려 있었다.
 """
 import json
 import math
@@ -433,26 +439,11 @@ def boss_bone_lord(f):
     return f
 
 
-def boss_shaft_maw(f):
-    """메워진 막장 — 1→2(6.6%) · 2→3(8.3%) 이 둘 다 약했다.
-    페이즈마다 바위가 더 무너져 내리고 안쪽이 더 타오른다."""
-    p2 = _damage_plan(f[2], 14, 9, 53, (255, 160, 80, 255))
-    f[2] = damage(f[2], p2, 0.84, 1.2, 'amber')
-    f[3] = damage(f[3], p2, 0.84, 1.2, 'amber')
-    p3 = _damage_plan(f[4], 22, 13, 67, (255, 110, 50, 255))
-    f[4] = damage(f[4], p3, 0.70, 1.35, 'amber')
-    f[5] = damage(f[5], p3, 0.70, 1.35, 'amber')
-    return f
 
 
-def boss_pursuer(f):
-    """추격자 — 1→2 가시 배치가 거의 같았다(8.1%)."""
-    plan = _damage_plan(f[2], 16, 10, 71, (255, 130, 130, 255))
-    f[2] = damage(f[2], plan, 1.22, 1.2, 'amber')
-    f[3] = damage(f[3], plan, 1.22, 1.2, 'amber')
-    return f
-
-
+# ★ 메워진 막장 · 별을 쫓아온 것의 낡은 작업은 뺐다. 그 둘은 이제 10칸 규격으로
+#   tools/mkbossbig.py 가 굽고, 마디 구분도 거기서 낸다. 여기 남겨 두면 6칸
+#   시절 좌표로 엉뚱한 칸에 파손을 얹는다.
 JOBS = [
     ('characters', 'ballast_form', mob_ballast_form),
     ('characters', 'lost_miner', mob_lost_miner),
@@ -468,15 +459,314 @@ JOBS = [
     ('bosses', 'first_keeper', boss_first_keeper),
     ('bosses', 'void_king', boss_void_king),
     ('bosses', 'bone_lord', boss_bone_lord),
-    ('bosses', 'shaft_maw', boss_shaft_maw),
-    ('bosses', 'pursuer', boss_pursuer),
 ]
+# ================================================ 숨·걸음 되살리기 (일괄)
+#
+# ■ 왜 한꺼번에 하나
+#
+#   tools/animcheck.py 로 게임이 **실제로 그리는** 칸쌍 260 개를 전부 재 보니
+#   129 개가 "실움직임 8% 미만" 이었다. 대부분은 픽셀 차이만 보면 30~50% 라
+#   멀쩡해 보이는데, 가장 잘 맞는 자리로 겹쳐 보면 0~5% 로 주저앉는다 —
+#   그림이 통째로 한 칸 미끄러지기만 하고 관절은 하나도 안 움직인 것이다.
+#   눈에는 애니메이션이 아니라 슬라이드로 보인다.
+#
+#   한 마리씩 다른 이야기를 붙일 일이 아니다. **생김새가 같으면 숨 쉬는 법도
+#   같다.** 그래서 여섯 갈래로 나누고 갈래마다 한 가지 변형을 쓴다. 원본
+#   픽셀을 옮길 뿐 새 픽셀은 한 점도 안 그린다 — 덧댄 티가 날 여지가 없다.
+#
+#       biped  두 발로 선 것    숨으로 눌리고 두 팔이 **엇갈려** 흔들린다
+#       quad   네 발 · 낮은 것  몸이 눌리고 앞뒤 다리가 엇갈린다
+#       hover  떠 있는 것       늘었다 줄고 아랫자락이 물결친다
+#       orb    구슬 · 눈        늘었다 줄고 빛이 세진다
+#       fish   헤엄치는 것      꼬리가 휜다
+#       blob   덩어리           눌렸다 펴진다
+#
+#   ★ 두 팔을 **같이** 올리면 안 된다. 그러면 몸통 눌림과 합쳐져 결국 그림이
+#     통째로 움직인 것과 구별이 안 된다. 엇갈려야 관절이 보인다 — 원형 보스에서
+#     이걸로 실움직임이 7% 에서 66% 로 올라갔다.
+
+
+def _colspan(f):
+    """열마다 (맨 위 y, 맨 아래 y). 칸 밖으로 밀지 않으려면 이게 필요하다."""
+    sp = {}
+    for (x, y) in f.p:
+        a, b = sp.get(x, (y, y))
+        sp[x] = (min(a, y), max(b, y))
+    return sp
+
+
+def _rowspan(f):
+    sp = {}
+    for (x, y) in f.p:
+        a, b = sp.get(y, (x, x))
+        sp[y] = (min(a, x), max(b, x))
+    return sp
+
+
+def limbs(f, dyl, dyr, frac=0.30, y0=None, y1=None):
+    """바깥쪽 세로 띠(팔·날개·집게)를 좌우 **반대로** 올렸다 내린다.
+
+    두 가지를 챙긴다.
+      ① 그냥 옮기면 띠가 몸에 닿던 자리에 한 칸 구멍이 난다 — 작은 몹에서는
+         팔이 끊어진 것으로 보인다. 옮기면서 **끝 칸을 늘여** 빈자리를 메운다.
+      ② 칸 밖으로 나가면 저장할 때 잘려 나간다. 거미가 다리 18칸을 그렇게
+         잃었다. 그래서 **열마다 여유를 재서** 그만큼만 민다."""
+    bx0, by0, bx1, by1 = f.box()
+    w = bx1 - bx0 + 1
+    lc, rc = bx0 + w * frac, bx1 - w * frac
+    y0 = by0 if y0 is None else y0
+    y1 = by1 if y1 is None else y1
+    span = _colspan(f)
+    cols = {}
+    g = Frame(f.w, f.h)
+    for (x, y), c in f.p.items():
+        d = 0
+        if y0 <= y <= y1:
+            if x < lc:
+                d = dyl
+            elif x > rc:
+                d = dyr
+        if d:
+            a, b = span[x]
+            d = max(-a, min(f.h - 1 - b, d))
+        if d:
+            cols.setdefault((x, d), []).append((y, c))
+        g.put(x, y + d, c)
+    for (x, d), ys in cols.items():
+        ys.sort()
+        if d > 0:                      # 내려갔으니 위쪽이 빈다
+            yy, c = ys[0]
+            for k in range(d):
+                g.put(x, yy + k, c)
+        else:                          # 올라갔으니 아래쪽이 빈다
+            yy, c = ys[-1]
+            for k in range(-d):
+                g.put(x, yy - k, c)
+    return g
+
+
+def wave(f, amp=1.5, k=0.7, phase=0.0, y0=None, y1=None):
+    """줄마다 가로로 민다 — 옷자락 · 촉수 · 유령의 아랫단이 물결친다.
+       아래로 갈수록 크게 민다(위는 몸에 붙어 있어야 하므로). 한 줄이 통째로
+       움직이므로 구멍이 안 생긴다."""
+    bx0, by0, bx1, by1 = f.box()
+    y0 = by0 if y0 is None else y0
+    y1 = by1 if y1 is None else y1
+    span = _rowspan(f)
+    g = Frame(f.w, f.h)
+    for (x, y), c in f.p.items():
+        dx = 0
+        if y0 <= y <= y1:
+            t = (y - y0) / max(y1 - y0, 1)
+            dx = int(round(math.sin(y * k + phase) * amp * t))
+            a, b = span[y]                       # 줄마다 여유만큼만 민다
+            dx = max(-a, min(f.w - 1 - b, dx))
+        g.put(x + dx, y, c)
+    return g
+
+
+def tailwag(f, dy, frac=0.45, side=1):
+    """한쪽 끝(꼬리)이 휜다. 끝으로 갈수록 크게 — 열마다 세로로 미는 전단이라
+       기울임과 같은 원리로 구멍이 안 생긴다."""
+    bx0, by0, bx1, by1 = f.box()
+    w = bx1 - bx0 + 1
+    reach = max(w * frac, 1)
+    span = _colspan(f)
+    g = Frame(f.w, f.h)
+    for (x, y), c in f.p.items():
+        t = (x - (bx1 - reach)) / reach if side > 0 else ((bx0 + reach) - x) / reach
+        d = int(round(dy * min(max(t, 0.0), 1.0)))
+        a, b = span[x]                           # 열마다 여유만큼만 민다
+        g.put(x, y + max(-a, min(f.h - 1 - b, d)), c)
+    return g
+
+
+# ------------------------------------------------------------ 갈래별 변형
+def squash(b, k=1.07):
+    """부피를 지키며 눌렀다 폈다. **세로는 늘 누른다** — 늘이면 발끝을 축으로
+       위로 자라서 머리가 칸 밖으로 잘린다(작은 펫에서 16%를 그렇게 잃었다).
+       가로는 좌우 여유만큼만 늘리고, 여유가 없으면 같이 누른다."""
+    x0, y0, x1, y1 = b.box()
+    w, h = x1 - x0 + 1, y1 - y0 + 1
+    # 작은 그림에서는 4% 를 눌러도 반올림하면 한 줄도 안 줄어든다 — 20x20 짜리
+    # 펫 둘이 그래서 두 칸이 똑같이 나왔다. 적어도 한 줄은 줄도록 키운다.
+    while h - round(h / k) < 1 and k < 1.5:
+        k += 0.01
+    grow = w * (k - 1) / 2
+    # 가로로 늘릴 자리가 없으면 **그냥 둔다**. 같이 누르면 그림이 통째로
+    # 작아져서 숨이 아니라 쪼그라든 것으로 보인다(별을 쫓아온 것이 13% 를
+    # 그렇게 잃었다).
+    kx = k if grow <= min(x0, b.w - 1 - x1) else 1.0
+    return scale_x(scale_y(b, 1.0 / k), kx)
+
+
+def _band(b, a, z):
+    bx0, by0, bx1, by1 = b.box()
+    h = by1 - by0 + 1
+    return by0 + int(h * a), by0 + int(h * z)
+
+
+def idle_biped(b):
+    y0, y1 = _band(b, 0.26, 0.88)
+    return limbs(scale_y(b, 0.96), 1, -1, frac=0.28, y0=y0, y1=y1)
+
+
+def idle_quad(b):
+    y0, y1 = _band(b, 0.50, 1.0)
+    return limbs(scale_y(b, 0.94), 1, -1, frac=0.26, y0=y0, y1=y1)
+
+
+def idle_hover(b):
+    y0, y1 = _band(b, 0.42, 1.0)
+    return wave(squash(b, 1.03), 1.8, 0.7, y0=y0, y1=y1)
+
+
+def idle_orb(b):
+    return glow(squash(b, 1.04), 1.24)
+
+
+def idle_fish(b):
+    return tailwag(b, 2, 0.5, side=-1)
+
+
+def idle_blob(b):
+    return squash(b, 1.04)
+
+
+def idle_ice(b):
+    """얼음에 갇힌 것 — 팔이 얼음 속이라 사람꼴 변형이 안 먹고(7.5%), 살짝
+       누르는 것만으로도 모자랐다(5.1%). 얼음덩이째 크게 눌리고 푸른빛이
+       함께 일렁인다."""
+    return glow(squash(b, 1.10), 1.20, sat=14, minl=70)
+
+
+def walk_biped(b):
+    y0, y1 = _band(b, 0.60, 1.0)
+    return limbs(legs(b, y0, -1, 0, 1, -1), -2, 2, frac=0.28,
+                 y0=_band(b, 0.26, 0.88)[0], y1=_band(b, 0.26, 0.88)[1])
+
+
+def walk_quad(b):
+    y0, _ = _band(b, 0.52, 1.0)
+    return legs(b, y0, -1, 0, 1, -1)
+
+
+def walk_hover(b):
+    y0, y1 = _band(b, 0.38, 1.0)
+    return wave(squash(b, 1.05), 2.6, 0.8, phase=1.1, y0=y0, y1=y1)
+
+
+def walk_orb(b):
+    return glow(squash(b, 1.06), 1.38)
+
+
+def walk_fish(b):
+    return tailwag(b, 3, 0.55, side=-1)
+
+
+def walk_blob(b):
+    return squash(b, 1.06)
+
+
+SHAPE = {
+    'biped': (idle_biped, walk_biped), 'quad': (idle_quad, walk_quad),
+    'hover': (idle_hover, walk_hover), 'orb': (idle_orb, walk_orb),
+    'fish': (idle_fish, walk_fish), 'blob': (idle_blob, walk_blob),
+    'ice': (idle_ice, idle_ice),
+}
+
+# 생김새는 눈으로 보고 붙였다(tools/animcheck.py 가 짚어 준 것만 여기 있다).
+AUTO_CHARS = {
+    # --- 사람꼴 ---
+    'zombie': 'biped', 'skeleton': 'biped', 'archer': 'biped', 'crawler': 'biped',
+    'ruin_guard': 'biped', 'canopy_ape': 'biped', 'weldarm': 'biped',
+    'mold_walker': 'biped', 'draft_form': 'biped', 'lost_miner': 'biped',
+    'vinelash': 'biped', 'sky_sentry': 'biped',
+    'orbit_sentry': 'biped',
+    'yunseul': 'biped', 'npcw_guard': 'biped', 'npcw_pedlar': 'biped',
+    'npcw_oreman': 'biped', 'npcw_armsman': 'biped',
+    # --- 네 발 · 낮은 것 ---
+    'spider': 'quad', 'icewolf': 'quad', 'scrapcrawler': 'quad',
+    'crimson_howler': 'quad', 'capbeast': 'quad', 'rabbit': 'quad',
+    'arctic_hare': 'quad', 'sand_lizard': 'quad', 'jungle_frog': 'quad',
+    'ash_vole': 'quad', 'scorpion': 'quad', 'crystalcrab': 'quad', 'drowned_hand': 'quad',
+    'reef_crab': 'quad', 'glacier_stalker': 'quad',
+    'pet_ember_squirrel': 'quad', 'pet_frost_kit': 'quad',
+    # 바위꼴·두꺼비는 몸이 10칸밖에 안 돼 눌러도 한 줄이 겨우 줄었다(4.7%·2.3%).
+    # 다리를 엇갈리게 옮기는 쪽이 작은 몸에서는 훨씬 크게 읽힌다.
+    'pet_pebble_kin': 'quad', 'pet_cinder_toad': 'quad',
+    # --- 떠 있는 것 ---
+    # ★ 물결은 **헐렁한 것**에만 쓴다. 옷자락 · 촉수 · 유령. 단단한 것에 걸면
+    #   몸이 출렁여서 그림이 뭉개진다 — 얼음에 갇힌 순례자는 얼음덩이 밑단이
+    #   톱니처럼 일그러졌고, 쇠로 만든 파수병은 받침 고리가 휘었다. 그 넷은
+    #   사람꼴·구슬로 옮겼다.
+    'wraith': 'hover', 'archivist': 'hover', 'gloom_crawler': 'hover',
+    'minerghost': 'hover', 'deep_octopus': 'hover', 'scribe_hand': 'hover',
+    'pet_glass_moth': 'hover', 'pet_dust_sparrow': 'hover', 'pet_ash_owl': 'hover',
+    'pet_ember_drake': 'hover', 'pet_storm_falcon': 'hover',
+    # --- 구슬 · 눈 ---
+    'shadoweye': 'orb', 'crimson_eye': 'orb', 'coreling': 'orb',
+    'meridian_eye': 'orb', 'damp_wisp': 'orb', 'frostling': 'orb',
+    'pet_thorn_wisp': 'orb', 'pet_star_sprite': 'orb', 'pet_void_hatchling': 'orb',
+    # --- 헤엄치는 것 ---
+    'grotto_eel': 'fish', 'jungle_koi': 'fish', 'reef_shark': 'fish',
+    'abyss_angler': 'fish',
+    # --- 덩어리 ---
+    'bloomspitter': 'blob', 'sporeling': 'blob', 
+    'ballast_form': 'blob', 'ventspitter': 'blob',
+    # 얼음에 갇힌 순례자 — 팔이 얼음 속이라 사람꼴로는 7.5% 밖에 안 움직였다.
+    # 얼음덩이째 눌렸다 펴지는 쪽이 이야기와도 맞는다.
+    'frostbound': 'ice',
+}
+
+# 걷기 칸(2·3)까지 멈춰 있던 것들. 나머지는 가만히 칸만 손본다.
+WALK_FIX = {'minerghost', 'scorpion', 'crystalcrab', 'archivist', 'sporeling',
+            'coreling', 'rabbit', 'jungle_frog', 'drowned_hand', 'scribe_hand',
+            'damp_wisp', 'reef_crab', 'reef_shark', 'yunseul'}
+
+AUTO_BOSSES = {
+    'frost_witch': 'hover', 'void_king': 'hover', 'storm_warden': 'biped',
+    'first_keeper': 'biped', 'overseer': 'biped', 'ice_warden': 'biped',
+    'sand_guardian': 'biped', 'mine_horror': 'blob', 'blight_maw': 'blob',
+    'vine_lord': 'hover', 'spore_queen': 'hover', 'proliferator': 'biped',
+    'drowned_keeper': 'biped', 'isle_keeper': 'biped',
+    'hepha': 'biped', 'restorer': 'orb', 'shaft_maw': 'blob', 'pursuer': 'orb',
+}
+
+
+def run_auto():
+    """가만히 칸(1)은 0 에서, 걷기 칸(3)은 2 에서 만든다. 보스는 마디마다
+       홀수 칸을 짝수 칸에서 만든다. 늘 원본 칸에서 만들므로 몇 번을 돌려도
+       결과가 같다(겹쳐 걸리지 않는다)."""
+    n = 0
+    for name, shape in sorted(AUTO_CHARS.items()):
+        fs, spec, gap = load('characters', name)
+        idle, walk = SHAPE[shape]
+        fs[1] = idle(fs[0])
+        if name in WALK_FIX and len(fs) > 3:
+            fs[3] = walk(fs[2])
+        save('characters', name, fs, spec, gap)
+        n += 1
+    for name, shape in sorted(AUTO_BOSSES.items()):
+        fs, spec, gap = load('bosses', name)
+        idle, _ = SHAPE[shape]
+        for k in range(len(fs) // 2):
+            fs[k * 2 + 1] = idle(fs[k * 2])
+        save('bosses', name, fs, spec, gap)
+        n += 1
+    return n
+
 
 if __name__ == '__main__':
     only = sys.argv[1:]
+    if only == ['--auto']:
+        print('생김새 갈래로 다시 구움:', run_auto(), '장')
+        raise SystemExit(0)
     for kind, name, fn in JOBS:
         if only and name not in only:
             continue
         fs, spec, gap = load(kind, name)
         save(kind, name, fn(fs), spec, gap)
         print('구움:', name, spec['file'])
+    if not only:
+        print('생김새 갈래로 다시 구움:', run_auto(), '장')
