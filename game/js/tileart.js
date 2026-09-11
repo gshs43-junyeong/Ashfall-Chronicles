@@ -561,13 +561,38 @@ const TileArt = {
         const M = TS / 2 - 1;
         // 잎덩이는 칸·변형마다 고정된 씨앗으로 뽑는다 — 판을 다시 구워도 같은 그림이 나온다
         const lr = new RNG('leaf-' + seed);
-        for (let i = 0; i < 15; i++) {
+
+        /* ---------- 빽빽할 때는 **정말 빽빽해야 한다** ----------
+           예전에는 잎덩이 열다섯 개를 흩뿌리는 것으로 끝냈다. 겹치는 자리가
+           운에 맡겨져 있어서 칸의 **절반만 찼다**(실측: 잎 999칸 / 1936칸 =
+           52%). 손그림으로 갈아 끼운 정글 잎이 97% 라 나란히 두면 한쪽만
+           숭숭 뚫려 보였고, 장이 1이라 아직 잎이 하나도 안 진 숲에서도
+           수관이 이미 성글었다. 잿빛 단계를 세 겹으로 펴 봐야 제일 빽빽한
+           칸이 성글면 "잎이 진다"가 처음부터 안 읽힌다.
+
+           그래서 밀도를 **운이 아니라 격자로** 깐다. 네 칸 간격 격자마다
+           한 덩이씩, 자리를 흔들어 격자 티가 안 나게. 그러고 나서 일부
+           격자를 **일부러 비운다** — 그 구멍이 잎 사이로 새는 빛이 된다.
+           전부 채우면 초록 네모가 되고, 안 비우면 수관 실루엣이 칸 모양
+           그대로 각지게 드러난다. */
+        const STEP = 4;
+        for (let gy = -2; gy < TS + 2; gy += STEP) {
+          for (let gx = -2; gx < TS + 2; gx += STEP) {
+            if (lr.chance(.13)) continue;          // 빛이 새는 구멍
+            const x = gx + lr.int(-1, 1), y = gy + lr.int(-1, 1);
+            const w = lr.range(4, 7), h = lr.range(4, 6);
+            const col = [c1, c1, c2, c3][lr.int(0, 3)];
+            R(x + 1, y, w - 2, h, col); R(x, y + 1, w, h - 2, col);
+          }
+        }
+        // 큰 덩이를 위에 얹어 명암 결을 만든다 — 격자만으로는 고르게 칠한 벽이 된다
+        for (let i = 0; i < 9; i++) {
           const x = lr.range(-2, TS - 3), y = lr.range(-2, TS - 3);
-          const w = lr.range(3, 7), h = lr.range(3, 6);
-          const col = [c1, c1, c2, c3][lr.int(0, 3)];
+          const w = lr.range(5, 9), h = lr.range(4, 8);
+          const col = [c1, c2, c2, c3][lr.int(0, 3)];
           R(x + 1, y, w - 2, h, col); R(x, y + 1, w, h - 2, col);
         }
-        for (let i = 0; i < 6; i++) R(lr.range(1, TS - 2), lr.range(1, TS - 2), 1, 1, c2);
+        for (let i = 0; i < 10; i++) R(lr.range(1, TS - 2), lr.range(1, TS - 2), 1, 1, c2);
 
         /* ---------- 가지는 잎 **위에** 그린다 ----------
            처음에는 가지를 먼저 깔고 잎으로 덮었다. 그랬더니 잎에 다 묻혀 화면에서
