@@ -721,7 +721,7 @@ const G = {
         if (aabb(r, p.rect()) && p.iframe <= 0) p.hurt(24 + this.player.level * 1.0);
         for (const e of this.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) e.hurt(30, false, null, 0);
       }
-      if (Math.random() < 0.2) this.sfxAt('mine', x, y);
+      if (Math.random() < 0.2) this.sfxAt('hit_metal', x, y, this.strokeRate());   // 톱니는 쇠다
     }
   },
 
@@ -765,8 +765,7 @@ const G = {
       this._machRm = this.time;
       const back = Factory.remove(w, tx, ty);
       if (back) for (const it of back) this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it));
-      for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, def.c));
-      this.sfx('mine');
+      this.breakFx(tx, ty, id, 1);           // 쇠 파편 + 불티 + 기계가 꺼지는 소리
       return;
     }
     if (def.hard > (tool.power || 1) + (def.tree ? 2 : 0)) {
@@ -777,7 +776,7 @@ const G = {
     if (p.mineTx !== tx || p.mineTy !== ty) { p.mineTx = tx; p.mineTy = ty; p.mineProg = 0; }
     const rate = (0.6 + (tool.power || 1) * 0.55 + (tool.chop && def.tree ? 2 : 0)) / (0.45 + def.hard * 0.5);
     p.mineProg += rate * dt;
-    if (Math.random() < dt * 12) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, def.c));
+    if (Math.random() < dt * 9) this.mineTickFx(tx, ty, id);   // 재질 파편 한 톨 + 재질 타격음
     if (p.mineProg >= 1) {
       // 동력 곡괭이는 한 칸 캘 때마다 전하를 먹는다
       if (tool.pw && !p.useCharge(tool.pw)) {
@@ -796,12 +795,12 @@ const G = {
       const reaping = def.crop && def.crop.ripe;
       if (reaping && !tool.scythe) {
         w.crops.delete(ty * WW + tx);
-        for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, def.c, -10, .5));
+        this.matBurst('plant', (tx + .5) * TS, (ty + .5) * TS, 12, { spd: 1.1, vy: -40 });
         if (!this._scytheWarn || this.time - this._scytheWarn > 2.5) {
           this._scytheWarn = this.time;
           this.toast('낫 없이 거두면 다 으스러진다 — 낫이 필요하다', 'bad');
         }
-        this.sfx('mine');
+        this.sfx('break_plant', this.strokeRate());
         return;
       }
       this.dropTile(tx, ty, id);
@@ -810,10 +809,12 @@ const G = {
         w.crops.delete(ty * WW + tx);
         if (def.crop.ripe) this.harvestBonus(tx, ty, def, tool);
       }
-      for (let i = 0; i < 5; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, def.c));
+      if (def.crop && def.crop.ripe) {
+        // 다 여문 것을 거두는 소리는 부수는 소리가 아니다 — 그대로 둔다
+        this.matBurst('plant', (tx + .5) * TS, (ty + .5) * TS, 10, { spd: .9, vy: -40 });
+        this.sfx('harvest');
+      } else this.breakFx(tx, ty, id);         // 재질 파편 + 재질 파괴음
       if (def.tree) this.fellTree(tx, ty, id === T.WOOD);
-      // 다 여문 작물이면 harvest, 그 밖엔 전부 기존 mine
-      this.sfx(def.crop && def.crop.ripe ? 'harvest' : 'mine');
     }
   },
 
@@ -1095,8 +1096,10 @@ const G = {
     for (const it of back) if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y + o.h / 2, it));
     const i = w.objects.indexOf(o);
     if (i >= 0) w.objects.splice(i, 1);
-    for (let k = 0; k < 8; k++) this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#c8a04a'));
-    UI.refreshBag(); this.sfx('mine');
+    // 작업대·화로는 나무와 돌로 짜인 것이다 — 쇠 기계와 다른 소리가 나야 한다
+    this.matBurst('wood', o.x + o.w / 2, o.y + o.h / 2, 10, { spd: 1.1 });
+    this.matBurst('stone', o.x + o.w / 2, o.y + o.h / 2, 5, { spd: .9 });
+    UI.refreshBag(); this.sfx('break_wood', this.strokeRate());
     return true;
   },
 
@@ -3643,14 +3646,108 @@ const G = {
   /** 타일 좌표에서 나는 소리 — 화면 근처가 아니면 아예 재생하지 않는다.
       공장이 커지면 화면 밖 기계들이 초당 수십 번씩 완료 이벤트를 내기 때문에,
       거리로 먼저 거르지 않으면 드릴·벨트 소리가 끊임없이 겹쳐 운다. */
-  sfxAt(kind, tx, ty) {
+  sfxAt(kind, tx, ty, rate) {
     const p = this.player; if (!p) return;
     const dx = Math.abs(tx * TS - p.cx), dy = Math.abs(ty * TS - p.cy);
     if (dx > this.W * 0.6 + 120 || dy > this.H * 0.6 + 120) return;
-    this.sfx(kind);
+    this.sfx(kind, rate);
   },
-  sfx(kind) {
-    if (window.Sfx && Sfx.play(kind)) return;   // 손그림 파일이 로드돼 있으면 그걸로 대신한다
+
+  /* ================= 재질 파편 =================
+     한 가지 표(MAT)에서 색·개수·중력·모양을 가져온다. 예전에는 무엇을 때리든
+     그 개체의 대표색 네모 몇 개가 똑같이 튀었다 — 돌을 캐나 살을 베나 그림이
+     같았다. 이제 돌은 네모난 조각이 돌면서 떨어지고, 젤은 동그랗게 번지고,
+     불티와 영혼은 빛나며 위로 뜬다.
+
+       n     개수(안 주면 재질 기본값)
+       spd   튀는 속도 배수
+       ring  이 반지름의 고리에서 시작한다(0 이면 한 점에서)
+       in    1이면 안쪽으로 빨려 든다(공허가 무너질 때) */
+  /* ★ 이름은 반드시 matBurst 다. burst() 는 이미 타격 이펙트 시트를 터뜨리는
+     메서드다(위쪽 2137줄) — 같은 이름으로 두면 객체 리터럴에서 **뒤엣것이
+     이겨서** 타격 이펙트가 통째로 사라진다. 실제로 한 번 그렇게 덮어썼다. */
+  matBurst(mat, x, y, n, o) {
+    const m = MAT[mat] || MAT[MAT_DEF];
+    o = o || {};
+    const k = n === undefined || n === null ? m.n : n;
+    const spd = o.spd === undefined ? 1 : o.spd;
+    for (let i = 0; i < k; i++) {
+      const a = Math.random() * TAU, rr = o.ring ? o.ring * (0.7 + Math.random() * 0.3) : 0;
+      const pt = new Part(x + Math.cos(a) * rr, y + Math.sin(a) * rr,
+        m.c[(Math.random() * m.c.length) | 0], o.vy === undefined ? -20 : o.vy,
+        m.life * (o.life || 1),
+        { g: m.g, sq: m.sq, glow: m.glow, spd, r: o.r || 1, drag: m.glow ? 0.90 : 0.96 });
+      if (rr) {                       // 고리에서 시작하면 방향을 반지름 축으로 다시 잡는다
+        const v = Math.hypot(pt.vx, pt.vy) * (o.in ? -1 : 1);
+        pt.vx = Math.cos(a) * v; pt.vy = Math.sin(a) * v;
+      }
+      this.parts.push(pt);
+    }
+  },
+  /** 한 획마다 다른 음높이. ±6% — 음이 바뀐 것으로는 안 들리고 다른 타격으로만 들린다 */
+  strokeRate() { return 0.94 + Math.random() * 0.12; },
+
+  /** 무기가 닿는 순간 — 맞은 것의 재질로 소리와 파편을 낸다 */
+  hitFx(e, x, y, crit) {
+    const mat = mobMat(e.type, e.mech);
+    this.matBurst(mat, x, y, crit ? 8 : 4, { spd: crit ? 1.15 : 0.85, life: 0.75 });
+    this.sfxAt(MAT[mat].hit, x / TS, y / TS, this.strokeRate());
+  },
+  /** 한 칸이 떨어져 나가는 순간 */
+  breakFx(tx, ty, id, mach) {
+    const mat = tileMat(id);
+    const x = (tx + .5) * TS, y = (ty + .5) * TS;
+    this.matBurst(mat, x, y, mach ? 14 : undefined, { spd: mach ? 1.2 : 1 });
+    if (mach) this.matBurst('ember', x, y, 6, { spd: 1.4, life: 0.6 });   // 기계는 불티가 튄다
+    this.sfx(mach ? 'break_machine' : MAT[mat].brk, this.strokeRate());
+  },
+  /* 죽을 때 — 보스는 **무엇으로 만들어졌는지**에 따라 다르게 무너진다(BOSS_DIE).
+     한 박자 늦게 두 번째 터짐이 온다: 껍데기가 먼저 날고 안에 있던 것이 뒤따른다.
+     그 한 박자가 "터졌다"를 "무너졌다"로 바꾼다. */
+  deathBurst(e) {
+    const mat = mobMat(e.type, e.mech);
+    if (!e.boss) {
+      this.matBurst(mat, e.cx, e.cy, MAT[mat].n + 3, { spd: 1.15, life: 1.2 });
+      return;
+    }
+    const d = BOSS_DIE[e.type] || { mat, n: 56, spd: 1.2, life: 1.3, shake: 20 };
+    this.matBurst(d.mat || mat, e.cx, e.cy, d.n, {
+      spd: d.spd, vy: d.vy, life: d.life, ring: d.ring, in: d.in, r: 1.35,
+    });
+    this.shake = Math.max(this.shake, d.shake || 20);
+    if (!d.mat2) return;
+    const x = e.cx, y = e.cy;
+    this.pending.push({
+      t: d.at || 0.2,
+      fn: () => {
+        this.matBurst(d.mat2, x, y, d.n2, {
+          spd: (d.spd || 1) * 1.25, life: (d.life || 1) * 1.1, r: 1.2,
+        });
+        this.sfx(MAT[d.mat2].brk, 0.78 + Math.random() * 0.18);
+        this.shake = Math.max(this.shake, (d.shake || 20) * 0.5);
+      },
+    });
+  },
+
+  /** 캐는 동안 한 획마다 — 파편 한 톨과 재질 타격음 */
+  mineTickFx(tx, ty, id) {
+    const mat = tileMat(id);
+    const x = (tx + .5) * TS, y = (ty + .5) * TS;
+    this.matBurst(mat, x, y, 1, { spd: 0.7, life: 0.6 });
+    this.sfxAt(MAT[mat].hit, tx, ty, this.strokeRate());
+  },
+
+  /* ================= 효과음 =================
+     ★ rate — 한 획마다 음높이를 흔드는 배속. 같은 소리가 두 번 안 나게 한다.
+       파일이 있으면 playbackRate 로, 없으면 합성음의 주파수로 그대로 먹는다.
+
+     ★ nz — 합성음에 섞는 잡음의 양(0~1).
+       돌이 깨지고 흙이 무너지는 소리는 **음정이 아니라 잡음**이다. 오실레이터
+       하나로는 아무리 낮게 깔아도 "삐" 소리라 돌로 안 들린다. 그래서 짧은
+       백색잡음을 대역통과로 깎아 함께 낸다. 파일이 오기 전까지의 대역이지만,
+       이것만으로도 돌 · 흙 · 유리 · 쇠가 갈려 들린다. */
+  sfx(kind, rate) {
+    if (window.Sfx && Sfx.play(kind, rate)) return;   // 손그림 파일이 로드돼 있으면 그걸로 대신한다
     const ac = this.ac; if (!ac) return;
     if (ac.state === 'suspended') ac.resume();
     const t = ac.currentTime;
@@ -3666,16 +3763,53 @@ const G = {
       hoe: [180, 110, 'square', .04], harvest: [500, 700, 'triangle', .05],
       power_on: [200, 500, 'square', .05], power_off: [500, 150, 'square', .05],
       splash: [560, 140, 'sine', .045],    // 낚싯줄이 물에 떨어지는 짧은 퐁당 소리
-      hatch: [300, 900, 'triangle', .06]   // 껍질이 깨지고 뭔가 튀어나오는 느낌으로 올라가는 톤
+      hatch: [300, 900, 'triangle', .06],  // 껍질이 깨지고 뭔가 튀어나오는 느낌으로 올라가는 톤
+      /* --- 재질별 타격 (무기가 닿는 순간) --- */
+      hit_flesh: [180, 90, 'sine', .05, .55], hit_bone: [430, 200, 'square', .045, .5],
+      hit_stone: [200, 120, 'square', .05, .7], hit_dirt: [140, 80, 'triangle', .045, .85],
+      hit_wood: [300, 160, 'triangle', .045, .45], hit_metal: [900, 520, 'square', .045, .3],
+      hit_glass: [1500, 900, 'sine', .04, .5], hit_gel: [260, 120, 'sine', .05, .3],
+      hit_plant: [520, 300, 'triangle', .04, .7], hit_ember: [700, 200, 'sawtooth', .045, .8],
+      hit_void: [120, 60, 'sine', .05, .45],
+      /* --- 재질별 파괴 (한 칸이 떨어져 나가는 순간) --- */
+      break_stone: [150, 70, 'square', .06, .9], break_dirt: [110, 60, 'triangle', .055, .95],
+      break_wood: [240, 110, 'triangle', .06, .6], break_plant: [440, 200, 'triangle', .05, .85],
+      break_metal: [760, 300, 'square', .06, .5], break_glass: [1800, 700, 'sine', .055, .75],
+      break_ice: [1300, 500, 'sine', .055, .7], break_ember: [420, 120, 'sawtooth', .06, .9],
+      break_bone: [520, 200, 'square', .055, .6], break_flesh: [200, 90, 'sine', .06, .5],
+      break_void: [90, 45, 'sine', .06, .6], break_machine: [520, 140, 'sawtooth', .07, .55]
     }[kind];
     if (!spec) return;
-    const [f0, f1, type, vol] = spec;
+    const r = rate || 1;
+    const [f0, f1, type, vol, nz] = spec;
     const o = ac.createOscillator(), g = ac.createGain();
-    o.type = type; o.frequency.setValueAtTime(f0, t);
-    o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + 0.16);
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0008, t + 0.22);
+    o.type = type; o.frequency.setValueAtTime(f0 * r, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(30, f1 * r), t + 0.16);
+    g.gain.setValueAtTime(vol * (nz ? 0.55 : 1), t);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + 0.22);
     o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.24);
+    if (!nz) return;
+    /* 잡음 한 줌 — 대역통과로 재질의 '거칠기'를 만든다.
+       버퍼는 한 번만 만들어 두고 돌려 쓴다(타격마다 새로 만들면 연타에서 튄다). */
+    if (!this._nzBuf) {
+      const n = Math.floor(ac.sampleRate * 0.25);
+      const b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      this._nzBuf = b;
+    }
+    const src = ac.createBufferSource(); src.buffer = this._nzBuf;
+    src.playbackRate.value = 0.7 + Math.random() * 0.6;
+    const bp = ac.createBiquadFilter();
+    bp.type = 'bandpass'; bp.Q.value = 0.9;
+    bp.frequency.setValueAtTime(f0 * r * 1.6, t);
+    bp.frequency.exponentialRampToValueAtTime(Math.max(60, f1 * r), t + 0.14);
+    const ng = ac.createGain();
+    ng.gain.setValueAtTime(vol * nz * 1.5, t);
+    ng.gain.exponentialRampToValueAtTime(0.0008, t + 0.16 + nz * 0.1);
+    src.connect(bp); bp.connect(ng); ng.connect(ac.destination);
+    src.start(t); src.stop(t + 0.3);
   },
+
 
   /* ================= 렌더 ================= */
   render() {
@@ -4054,11 +4188,23 @@ const G = {
     this.drawSmoke(c, camX, camY);
 
     // ---- 입자 ----
+    /* 파편 — 재질에 따라 모양이 다르다. 돌·쇠·유리는 네모 조각이 돌며 날고,
+       살·젤·연기는 동그랗게 번지고, 불티와 영혼은 빛난다(lighter 합성).
+       sq 가 없는 옛 파편은 예전 그대로 네모로 나온다. */
+    let lit = false;
     for (const pt of this.parts) {
+      const want = !!pt.glow;
+      if (want !== lit) { c.globalCompositeOperation = want ? 'lighter' : 'source-over'; lit = want; }
       c.globalAlpha = clamp(pt.life / pt.max, 0, 1);
       c.fillStyle = pt.c;
-      c.fillRect(pt.x - camX - pt.r / 2, pt.y - camY - pt.r / 2, pt.r, pt.r);
+      const x = pt.x - camX, y = pt.y - camY, r = pt.r;
+      if (pt.sq === 0) { c.beginPath(); c.arc(x, y, r * 0.6, 0, TAU); c.fill(); }
+      else if (pt.spin && Math.abs(pt.rot) > 0.001 && r > 2.2) {
+        c.save(); c.translate(x, y); c.rotate(pt.rot);
+        c.fillRect(-r / 2, -r / 2, r, r); c.restore();
+      } else c.fillRect(x - r / 2, y - r / 2, r, r);
     }
+    if (lit) c.globalCompositeOperation = 'source-over';
     c.globalAlpha = 1;
 
     // ---- 피해 숫자 ----

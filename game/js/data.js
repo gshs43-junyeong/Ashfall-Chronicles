@@ -1999,6 +1999,138 @@ function mobName(type, mech) {
   return mech ? '개조된 ' + n : n;
 }
 
+
+/* ================= 재질 =================
+   부술 때 튀는 것과 들리는 소리를 가르는 **한 가지 기준**. 타일·기계·몹이
+   같은 표를 쓴다 — 돌은 어디서 깨지든 돌 소리가 나고 돌조각이 튀어야 한다.
+
+   예전에는 전부 같았다. 무엇을 때리든 `damage` 한 소리, 무엇을 캐든 `mine`
+   한 소리, 튀는 것은 그 개체의 대표색 동그라미뿐이었다. 손에 닿는 것이
+   흙인지 쇠인지 뼈인지가 **소리와 파편으로 전혀 안 갈렸다.**
+
+     c     파편 색 세 가지 (밝은 쪽 → 어두운 쪽)
+     n     기본 파편 개수
+     g     중력 배수. 음수면 위로 뜬다(불티 · 영혼)
+     life  파편이 사는 시간(초)
+     sq    파편 모양. 1이면 네모(돌·쇠·유리), 0이면 동그라미(살·젤·연기)
+     glow  1이면 빛난다(불·공허)
+     hit   때렸을 때 나는 소리 키
+     brk   부쉈을 때 나는 소리 키 */
+const MAT = {
+  stone: { c: ['#9a9aa0', '#6a6a70', '#4a4a50'], n: 9, g: 1.0, life: .50, sq: 1, hit: 'hit_stone', brk: 'break_stone' },
+  dirt:  { c: ['#8a6a44', '#5d4429', '#40301d'], n: 8, g: 1.25, life: .36, sq: 1, hit: 'hit_stone', brk: 'break_dirt' },
+  wood:  { c: ['#a67a44', '#77542d', '#523a1e'], n: 8, g: .95, life: .55, sq: 1, hit: 'hit_wood', brk: 'break_wood' },
+  plant: { c: ['#94c46a', '#5a9a3a', '#376d24'], n: 10, g: .55, life: .70, sq: 0, hit: 'hit_plant', brk: 'break_plant' },
+  metal: { c: ['#c8d2de', '#8792a0', '#57616d'], n: 7, g: 1.15, life: .45, sq: 1, hit: 'hit_metal', brk: 'break_metal' },
+  glass: { c: ['#e8f8ff', '#9fd8ec', '#6aa8c0'], n: 12, g: 1.0, life: .50, sq: 1, hit: 'hit_glass', brk: 'break_glass' },
+  ice:   { c: ['#eaf6ff', '#a8d8ff', '#6fa8d8'], n: 11, g: 1.0, life: .48, sq: 1, hit: 'hit_glass', brk: 'break_ice' },
+  ember: { c: ['#ffe6a0', '#ff9a3c', '#e0561c'], n: 12, g: -.30, life: .60, sq: 0, glow: 1, hit: 'hit_ember', brk: 'break_ember' },
+  bone:  { c: ['#f2ecd8', '#c6bda6', '#8e8574'], n: 10, g: 1.0, life: .55, sq: 1, hit: 'hit_bone', brk: 'break_bone' },
+  gel:   { c: ['#d8f0dc', '#8ac49a', '#4f8a5e'], n: 12, g: .85, life: .42, sq: 0, hit: 'hit_gel', brk: 'break_flesh' },
+  flesh: { c: ['#e07a6a', '#b8484a', '#7a2c2e'], n: 10, g: 1.10, life: .42, sq: 0, hit: 'hit_flesh', brk: 'break_flesh' },
+  void:  { c: ['#d8c0ff', '#a06fff', '#5a3a86'], n: 12, g: -.20, life: .78, sq: 0, glow: 1, hit: 'hit_void', brk: 'break_void' },
+};
+const MAT_DEF = 'stone';
+
+/* 타일·기계의 재질. 적지 않은 것은 전부 stone 이다 — 이 게임 지형의 기본이 돌이라
+   기본값이 가장 많이 맞는다. 물·가스처럼 못 부수는 것은 아예 안 적는다. */
+const TILE_MAT = (() => {
+  const m = {};
+  const put = (mat, keys) => keys.split(' ').forEach(k => {
+    if (T[k] === undefined) return;      // 오타는 조용히 넘긴다(표가 시트보다 앞설 수 있다)
+    m[T[k]] = mat;
+  });
+  put('dirt', 'DIRT GRASS SAND MUD ASH FARMLAND SANDBAG CLOUD SKYGRASS');
+  put('ice', 'SNOW ICE ICEBRICK FROSTGLYPH ICEBANNER');
+  put('wood', 'WOOD PLANK PLATFORM TIMBERWALL FENCE THATCH HAYBALE MINEWOOD BANNER TORCH');
+  put('plant', 'LEAF CORRUPTLEAF SKYLEAF JUNGLELEAF GLOWLEAF VINE WEED FLOWER ORCHID FERN '
+    + 'LILY MUSHROOM GLOWCAP GLOWMOSS CACTUS CACTUS_BLOCK JUNGLEGRASS SPOREVENT HYPHAE '
+    + 'WHEAT0 WHEAT1 WHEAT2 WHEAT3 ROOT0 ROOT1 ROOT2 ROOT3 CAP0 CAP1 CAP2 CAP3 '
+    + 'BEAN0 BEAN1 BEAN2 BEAN3 BLOOM0 BLOOM1 BLOOM2 BLOOM3 HERB0 HERB1 HERB2 HERB3 '
+    + 'POD0 POD1 POD2 POD3');
+  put('metal', 'COPPER IRON GOLD MYTHRIL LEAD STEELPLATE CONDUIT SLAGSTEEL ORBITPLATE '
+    + 'SPIKE SPARKCOIL GRINDER DART_L DART_R LAMPPOST MINELAMP TOOLPILE '
+    + 'M_BELT M_DRILL M_DRILL_E M_PUMP M_SMELTER M_PRESS M_REFINERY M_ASSEMBLER M_CRATE '
+    + 'M_GEN M_BATTERY M_POLE M_SORTER M_TURRET M_TRAP M_SWITCH M_WINDMILL M_MILL M_OVEN '
+    + 'M_DART M_FLAME M_FROST');
+  put('glass', 'CRYSTAL AETHER POWERSTONE SOULSTONE COREGLASS DRAFTGLASS ORBITCORE WINDOW');
+  put('ember', 'LAVA HELLSTONE FLAMEVENT');
+  put('bone', 'BONEHEAP');
+  put('flesh', 'BLIGHTSAC');
+  put('void', 'CORRUPTGRASS');
+  return m;
+})();
+function tileMat(id) { return TILE_MAT[id] || MAT_DEF; }
+
+/* 몹의 재질. 이름이 아니라 **무엇으로 만들어졌는가**로 갈랐다 —
+   '무덤지기'는 뼈고 '언 순례자'는 얼음이다. 적지 않은 것은 살(flesh). */
+const MOB_MAT = (() => {
+  const m = {};
+  const put = (mat, keys) => keys.split(' ').forEach(k => { m[k] = mat; });
+  put('bone', 'skeleton archer bone_lord');
+  put('gel', 'slime king_slime');
+  put('stone', 'golem sandmaw mine_horror sand_guardian storm_warden shaft_maw '
+    + 'jarhusk draft_form scribe_hand mold_walker archetype');
+  put('metal', 'sky_sentry ruin_guard scrapcrawler splitter weldarm coreling riveter '
+    + 'cartwraith first_keeper proliferator hepha orbit_sentry ballast_form restorer '
+    + 'overseer meridian_eye');
+  put('ice', 'frostling icewolf ice_warden frost_witch frostbound');
+  put('ember', 'imp lavaslug sparkwisp lantern');
+  put('void', 'wraith minerghost void_king gloom_crawler shadoweye gale foreman '
+    + 'lost_miner damp_wisp');
+  put('plant', 'vinelash bloomspitter sporeling capbeast vine_lord spore_queen '
+    + 'corrupttree sacling');
+  put('glass', 'crystalcrab pursuer');
+  return m;
+})();
+function mobMat(type, mech) {
+  /* 개조된 것은 무엇이었든 강철이다 — 보이는 것도 강철이니 소리도 강철이라야 한다 */
+  if (mech) return 'metal';
+  return MOB_MAT[type] || 'flesh';
+}
+
+
+/* ================= 보스가 무너지는 방식 =================
+   보스는 챕터의 끝이다. 스물세 마리가 전부 같은 입자 예순 개로 사라지면
+   "이 놈을 이겼다"가 아니라 "죽는 연출이 하나 있다"가 된다. 무엇으로 만들어진
+   놈인지에 따라 **무너지는 방식이 다르다.**
+
+     mat/n/spd/vy/life  첫 번째 터짐 (재질 · 개수 · 속도 · 초기 상승 · 수명 배수)
+     ring/in            고리에서 시작 / 안쪽으로 빨려 든다
+     mat2/n2/at         한 박자 늦게 오는 두 번째 터짐 (초)
+     shake              화면 흔들림
+     sfx2               두 번째 터짐에 얹는 소리(없으면 재질 파괴음) */
+const BOSS_DIE = {
+  /* --- 세션 1 --- */
+  king_slime:    { mat: 'gel', n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: 'gel', n2: 34, at: .22, shake: 20 },
+  bone_lord:     { mat: 'bone', n: 60, spd: 1.7, life: 1.6, mat2: 'void', n2: 20, at: .26, shake: 20 },
+  corrupt_heart: { mat: 'flesh', n: 54, spd: 1.1, life: 1.3, mat2: 'void', n2: 40, at: .20, shake: 22 },
+  frost_witch:   { mat: 'ice', n: 76, spd: 1.6, life: 1.4, mat2: 'glass', n2: 26, at: .18, shake: 20 },
+  void_king:     { mat: 'void', n: 56, spd: 1.0, ring: 66, in: 1, life: 1.6,
+                   mat2: 'void', n2: 60, at: .34, shake: 26 },
+  storm_warden:  { mat: 'stone', n: 58, spd: 1.2, life: 1.3, mat2: 'dirt', n2: 30, at: .16, shake: 24 },
+  first_keeper:  { mat: 'metal', n: 56, spd: 1.4, life: 1.2, mat2: 'ember', n2: 24, at: .20, shake: 22 },
+  pursuer:       { mat: 'glass', n: 64, spd: 1.2, ring: 40, life: 1.7, mat2: 'void', n2: 34, at: .28, shake: 22 },
+  /* --- 유적 미니보스 --- */
+  mine_horror:   { mat: 'flesh', n: 46, spd: 1.1, life: 1.2, mat2: 'stone', n2: 26, at: .18, shake: 18 },
+  ice_warden:    { mat: 'ice', n: 60, spd: 1.5, life: 1.3, mat2: 'metal', n2: 20, at: .18, shake: 18 },
+  vine_lord:     { mat: 'plant', n: 64, spd: .8, vy: -70, life: 2.0, mat2: 'plant', n2: 30, at: .30, shake: 16 },
+  sand_guardian: { mat: 'dirt', n: 70, spd: 1.0, life: 1.1, mat2: 'stone', n2: 22, at: .14, shake: 20 },
+  spore_queen:   { mat: 'plant', n: 72, spd: .7, vy: -90, life: 2.2, mat2: 'plant', n2: 40, at: .34, shake: 16 },
+  blight_maw:    { mat: 'flesh', n: 58, spd: 1.2, life: 1.2, mat2: 'void', n2: 24, at: .20, shake: 20 },
+  /* --- 세션 2 --- */
+  proliferator:  { mat: 'metal', n: 54, spd: 1.4, life: 1.1, mat2: 'ember', n2: 28, at: .18, shake: 20 },
+  overseer:      { mat: 'metal', n: 60, spd: 1.5, life: 1.2, mat2: 'ember', n2: 32, at: .22, shake: 22 },
+  hepha:         { mat: 'ember', n: 70, spd: 1.0, vy: -60, life: 1.8, mat2: 'metal', n2: 40, at: .26, shake: 26 },
+  archetype:     { mat: 'stone', n: 66, spd: 1.3, life: 1.4, mat2: 'glass', n2: 34, at: .24, shake: 24 },
+  restorer:      { mat: 'glass', n: 60, spd: 1.1, ring: 54, life: 1.9, mat2: 'metal', n2: 36, at: .30, shake: 26 },
+  shaft_maw:     { mat: 'stone', n: 78, spd: 1.0, vy: 10, life: 1.2, mat2: 'dirt', n2: 44, at: .16, shake: 28 },
+  /* --- 특별 유적 --- */
+  drowned_keeper: { mat: 'metal', n: 50, spd: 1.2, life: 1.2, mat2: 'plant', n2: 22, at: .18, shake: 18 },
+  tide_warden:    { mat: 'gel', n: 62, spd: 1.1, life: 1.4, mat2: 'glass', n2: 28, at: .22, shake: 20 },
+  isle_keeper:    { mat: 'stone', n: 62, spd: 1.1, life: 1.3, mat2: 'plant', n2: 26, at: .18, shake: 22 },
+};
+
 /* ---------------- 스킬 / 특성 ----------------
    v1.1 — 표 나열에서 **트리**로 바뀌었다.
 
