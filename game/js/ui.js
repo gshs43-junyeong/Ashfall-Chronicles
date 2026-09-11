@@ -859,8 +859,8 @@ const UI = {
       h += '</div>';
     }
 
-    // 의뢰(사이드 퀘스트)
-    let sh = '<div class="side-head">의뢰</div>';
+    // 부탁(사이드 퀘스트)
+    let sh = '<div class="side-head">사람들의 부탁</div>';
     const sideNpcIds = Object.keys(NPCS).filter(k => SIDE_POOL[k]);
     let hasActive = false;
     for (const id of sideNpcIds) {
@@ -873,7 +873,18 @@ const UI = {
       sh += `<div class="side-q ${p.done ? 'ok' : ''}">${active.title} — ${active.desc} <b>${p.cur}/${p.max}</b></div>`;
       sh += '</div>';
     }
-    if (!hasActive) sh += '<div class="side-q empty">현재 진행 중인 의뢰가 없다.</div>';
+    if (!hasActive) sh += '<div class="side-q empty">지금 맡아 둔 부탁이 없다.</div>';
+    /* 게시판에 붙은 종이도 일지에서 보인다. 예전에는 게시판 앞에 서야만 남은
+       수를 알 수 있어서, 밖에서 몇 마리를 더 잡아야 하는지 알 방법이 없었다. */
+    if ((G.bounties || []).length) {
+      sh += '<div class="side-head">의뢰 게시판</div>';
+      for (const q of G.bounties) {
+        const p = G.bountyProgress(q);
+        sh += `<div class="side-npc"><b>${q.title || ''}</b><span class="side-done">${q.from || ''}</span>`;
+        sh += `<div class="side-q ${q.done ? '' : p.done ? 'ok' : ''}">${G.objLabel(q.obj)} ` +
+          `${q.done ? '<b>떼어 감</b>' : `<b>${p.cur}/${p.max}</b>`}</div></div>`;
+      }
+    }
     const questBody = $('#quest-body');
     if (questBody) {
       questBody.innerHTML = h + sh;
@@ -946,7 +957,7 @@ const UI = {
       }
     }
     const activeSide = Object.values(G.sideActive).filter(Boolean);
-    if (activeSide.length) h += `<div class="qt-side">의뢰 ${activeSide.length}건 진행 중 (J로 확인)</div>`;
+    if (activeSide.length) h += `<div class="qt-side">부탁 ${activeSide.length}건 진행 중 (J로 확인)</div>`;
     if (!ch && !activeSide.length) { $('#quest-tracker').style.display = 'none'; return; }
     $('#quest-tracker').style.display = '';
     $('#qt-body').innerHTML = h;
@@ -1388,18 +1399,25 @@ const UI = {
     const note = document.createElement('div');
     note.className = 'qt-title';
     note.style.cssText = 'margin-bottom:8px;opacity:.75';
-    note.textContent = '의뢰는 하루가 지나거나 여관에서 자고 나면 새로 붙는다.';
+    note.textContent = '하루가 지나거나 여관에서 자고 나면 새 종이가 붙는다.';
     b.appendChild(note);
     (G.bounties || []).forEach((q, i) => {
       const pr = G.bountyProgress(q);
       const el = document.createElement('div');
       el.className = 'quest-card' + (q.done ? ' done' : pr.done ? ' ready' : '');
-      el.innerHTML = `<div class="qc-title">${ENEMIES[q.target].n} ${q.n}마리</div>` +
-        `<div class="qc-obj">${q.done ? '완료됨' : `${pr.cur} / ${pr.max}`}</div>` +
-        `<div class="qc-rw">보상 🪙 ${fmt(q.gold)} · 경험치 ${fmt(q.xp)}</div>`;
+      /* 종이 한 장을 그대로 옮긴다 — 제목 · 본문 · 붙인 사람 · 목표 · 값.
+         떼어 간 뒤에는 그 사람이 남긴 한 줄로 바뀐다. */
+      const body = (q.done && q.doneLine) ? `<div class="qc-say">${q.doneLine}</div>`
+        : (q.body || []).map(l => `<div class="qc-line">${l}</div>`).join('');
+      el.innerHTML = `<div class="qc-title">${q.title || ''}</div>` + body +
+        `<div class="qc-from">— ${q.from || ''}</div>` +
+        `<div class="qc-obj">${G.objLabel(q.obj)}` +
+        `${q.done ? ' · 완료됨' : ` <b>${pr.cur} / ${pr.max}</b>`}</div>` +
+        `<div class="qc-rw">보상 🪙 ${fmt(q.gold)} · 경험치 ${fmt(q.xp)}` +
+        `${(q.items || []).map(([id, n]) => ` · ${ITEMS[id].n}×${n}`).join('')}</div>`;
       if (!q.done && pr.done) {
         const btn = document.createElement('button');
-        btn.textContent = '보상 받기';
+        btn.textContent = '떼어 간다';
         btn.addEventListener('click', () => G.claimBounty(i));
         el.appendChild(btn);
       }
