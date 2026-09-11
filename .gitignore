@@ -14,3 +14,6 @@ desktop.ini
 # /design 로 구운 캔버스 — 2MB 편집기가 통째로 들어 있는 산출물이라 담지 않는다
 design/*.html
 !design/*.dc.html
+
+# 파이썬 도구가 만드는 캐시 — 저장소에 들어갈 것이 아니다
+tools/__pycache__/
