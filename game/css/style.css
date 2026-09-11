@@ -472,15 +472,22 @@ button{
   border-top:2px solid var(--gold);border-radius:4px;padding:18px 20px;display:flex;gap:16px;box-shadow:0 16px 50px #000c}
 .dlg-portrait{width:62px;height:62px;flex:0 0 62px;border:1px solid var(--frame);border-radius:4px;
   display:flex;align-items:center;justify-content:center;font-size:30px;background:#0a0906}
-.dlg-name{font-size:13px;color:var(--gold);letter-spacing:.06em;margin-bottom:6px}
+.dlg-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.dlg-name{font-size:13px;color:var(--gold);letter-spacing:.06em}
+/* 다시 듣기는 대화가 아니라 창의 기능이다 — 선택지 줄에서 빼내 이름 옆에 둔다 */
+.dlg-replay{margin-left:auto;font-size:10.5px;padding:3px 8px;color:#77725f;
+  background:#13120d;border:1px solid #262418;border-radius:3px;line-height:1.3}
+.dlg-replay:hover{color:#c8c2ac;border-color:#3a3626}
 .dlg-text{font-size:14px;line-height:1.85;color:#ddd7c4;min-height:52px;white-space:pre-line}
-.dlg-choices{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.dlg-choices{margin-top:11px;display:flex;flex-direction:column;gap:4px}
 /* 대화 진행 화살표 — 이모지 대신 CSS로 직접 그린 삼각형 아이콘(시스템 폰트 의존 없음) */
 .dlg-next{font-size:11px;color:#5f5b4d;display:flex;align-items:center;gap:6px}
 .dlg-next-ic{width:0;height:0;flex:0 0 auto;border-top:5px solid transparent;border-bottom:5px solid transparent;
   border-left:7px solid #8a8468;animation:dlgNextPulse 1.1s ease-in-out infinite}
 @keyframes dlgNextPulse{0%,100%{opacity:.45;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
-.dchoice{text-align:left;font-size:12.5px;padding:7px 12px;background:#15140e;border:1px solid #2b2818}
+.dchoice{text-align:left;font-size:12.5px;padding:6px 12px;background:#15140e;border:1px solid #2b2818}
+/* 대화를 마치는 것과 되돌아가는 것은 고르는 말이 아니다 — 눈이 안 가게 낮춘다 */
+.dchoice.meta{font-size:11.5px;padding:5px 12px;color:#77725f;background:#110f0b}
 .dchoice.quest{border-left:2px solid var(--gold)}
 /* 내가 하는 말 — 기능 버튼(가게·의뢰)과 한눈에 갈라 보이게 따옴표를 두르고 색을 낮춘다 */
 .dchoice.say{border-left:2px solid #6a6a8a;color:#cfcfe0;font-style:italic}
