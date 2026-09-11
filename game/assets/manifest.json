@@ -745,42 +745,42 @@
         "file": "boss/ice_warden.png",
         "frameW": 54,
         "frameH": 72,
-        "count": 6,
+        "count": 4,
         "gap": 0
       },
       "sand_guardian": {
         "file": "boss/sand_guardian.png",
         "frameW": 64,
         "frameH": 76,
-        "count": 6,
+        "count": 4,
         "gap": 0
       },
       "mine_horror": {
         "file": "boss/mine_horror.png",
         "frameW": 72,
         "frameH": 61,
-        "count": 6,
+        "count": 4,
         "gap": 0
       },
       "blight_maw": {
         "file": "boss/blight_maw.png",
         "frameW": 64,
         "frameH": 67,
-        "count": 6,
+        "count": 4,
         "gap": 0
       },
       "vine_lord": {
         "file": "boss/vine_lord.png",
         "frameW": 68,
         "frameH": 83,
-        "count": 6,
+        "count": 4,
         "gap": 0
       },
       "spore_queen": {
         "file": "boss/spore_queen.png",
         "frameW": 64,
         "frameH": 81,
-        "count": 6,
+        "count": 4,
         "gap": 0
       },
       "proliferator": {
