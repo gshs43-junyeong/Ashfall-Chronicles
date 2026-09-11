@@ -1068,7 +1068,7 @@ class Enemy extends Ent {
     let dmg = Math.max(1, Math.round(amount * (1 - red)));
     this.hp -= dmg; this.flash = 0.12;
     G.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 14, this.y - 4, dmg, crit ? '#ffd24a' : '#fff', crit ? 1 : 0));
-    for (let i = 0; i < (crit ? 8 : 4); i++) G.parts.push(new Part(this.cx, this.cy, this.def.c));
+    G.hitFx(this, this.cx, this.cy, crit);   // 재질 파편 + 재질 타격음(한 획마다 음높이가 다르다)
     /* 맞는 그림. 치명타는 계열 위에 한 겹 얹는 게 아니라 **계열마다 따로 그려 둔 것**을
        쓴다(방향 C) — 베기는 초승달이 셋으로 갈라지고, 찌르기는 뚫고 나가 반대편에서
        터지고, 둔기는 고리가 두 겹으로 터진다. 무기마다 치명타의 얼굴이 다르다. */
@@ -1084,7 +1084,8 @@ class Enemy extends Ent {
     if (kb && !this.boss) { this.vx += Math.sign(this.cx - (src ? src.cx : this.cx)) * kb * 26; this.vy = -kb * 12; }
     else if (kb && this.boss) this.vx += Math.sign(this.cx - (src ? src.cx : this.cx)) * kb * 3;
     if (this.def.passive) this.fleeT = 2.2;
-    G.sfxAt('damage', this.cx / TS, this.cy / TS);
+    /* 맞는 소리는 hitFx 가 재질에 맞춰 낸다 — 여기서 'damage' 를 또 울리면
+       무엇을 때리든 같은 소리가 한 겹 덮여 재질이 안 갈린다. */
     if (this.hp <= 0) this.die(src);
   }
   die(src) {
@@ -1111,7 +1112,7 @@ class Enemy extends Ent {
        빠지고(dead = true), 남는 것은 G.corpses 의 그리기 전용 기록뿐이다.
        판정·조준·스폰 수 어디에도 안 잡히므로 손맛이 안 바뀐다. */
     G.addCorpse(this);
-    for (let i = 0; i < (this.boss ? 60 : 12); i++) G.parts.push(new Part(this.cx, this.cy, this.def.c, -40));
+    G.deathBurst(this);
     if (this.boss) { G.shake = 18; G.onBossDown(this.type); }
     if (p.skills.s_hunter) p.addBuff('swift_kill', 3);
     G.onKill(this.type);
@@ -2042,13 +2043,33 @@ class Proj extends Ent {
 
 /* ================= 이펙트 ================= */
 class Part {
-  constructor(x, y, c, vy0 = 0, life = 0.5) {
+  /* o(선택) — 재질 파편을 위해 뒤에 붙였다. 안 주면 예전과 한 톨도 안 다르다.
+       g     중력 배수. 음수면 위로 뜬다(불티 · 영혼)
+       sq    1이면 네모(돌 · 쇠 · 유리), 0이면 동그라미(살 · 젤 · 연기)
+       glow  1이면 빛난다 — 그리는 쪽에서 합성 모드를 바꾼다
+       spd   튀어 나가는 속도 배수
+       r     파편 크기 배수
+       drag  공기 저항. 연기는 금방 서고 돌조각은 멀리 간다 */
+  constructor(x, y, c, vy0 = 0, life = 0.5, o = null) {
     this.x = x; this.y = y; this.c = c;
-    const a = Math.random() * TAU, s = 40 + Math.random() * 140;
+    const sp = o && o.spd !== undefined ? o.spd : 1;
+    const a = Math.random() * TAU, s = (40 + Math.random() * 140) * sp;
     this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s + vy0;
-    this.life = life + Math.random() * 0.3; this.max = this.life; this.r = 1.5 + Math.random() * 2;
+    this.life = life + Math.random() * 0.3; this.max = this.life;
+    this.r = (1.5 + Math.random() * 2) * (o && o.r !== undefined ? o.r : 1);
+    this.g = o && o.g !== undefined ? o.g : 1;
+    this.sq = o && o.sq !== undefined ? o.sq : 1;
+    this.glow = o && o.glow ? 1 : 0;
+    this.drag = o && o.drag !== undefined ? o.drag : 0.96;
+    this.spin = (Math.random() - 0.5) * 12;
+    this.rot = Math.random() * TAU;
   }
-  update(dt) { this.life -= dt; this.vy += 340 * dt; this.x += this.vx * dt; this.y += this.vy * dt; this.vx *= 0.96; return this.life > 0; }
+  update(dt) {
+    this.life -= dt; this.vy += 340 * this.g * dt;
+    this.x += this.vx * dt; this.y += this.vy * dt;
+    this.vx *= this.drag; this.rot += this.spin * dt;
+    return this.life > 0;
+  }
 }
 class DmgText {
   constructor(x, y, v, c, crit) { this.x = x + (Math.random() - 0.5) * 8; this.y = y; this.v = v; this.c = c; this.crit = crit; this.life = 0.85; this.vy = -70; }

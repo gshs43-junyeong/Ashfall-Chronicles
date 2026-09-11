@@ -133,12 +133,31 @@ const SFX_FILES = {
   splash: 'splash',             // 낚싯줄 던질 때 — 파일 없으면 sfx()의 절차생성 톤으로 대신함
   hatch: 'hatch'                // 알에서 펫이 나올 때 (예전엔 챕터 전환 팡파르를 빌려 썼다)
   /* boss(보스 등장)는 일부러 없다 — 대신 보스 브금이 곧장 치고 들어온다 */
+
+  /* ===== 재질별 타격·파괴음 — 파일이 오면 여기 한 줄씩 푼다 =====
+     프롬프트는 docs/v1.1-sfx-prompts.md 의 "재질" 절에 있다.
+     파일이 없는 동안에는 game.js 의 sfx() 가 재질마다 다른 합성음으로
+     대신 울린다 — 그래서 **한 개도 안 넣은 지금도 소리가 갈린다.**
+
+  , hit_flesh: 'hit_flesh', hit_bone: 'hit_bone', hit_stone: 'hit_stone'
+  , hit_dirt: 'hit_dirt', hit_wood: 'hit_wood', hit_metal: 'hit_metal'
+  , hit_glass: 'hit_glass', hit_gel: 'hit_gel', hit_plant: 'hit_plant'
+  , hit_ember: 'hit_ember', hit_void: 'hit_void'
+  , break_stone: 'break_stone', break_dirt: 'break_dirt', break_wood: 'break_wood'
+  , break_plant: 'break_plant', break_metal: 'break_metal', break_glass: 'break_glass'
+  , break_ice: 'break_ice', break_ember: 'break_ember', break_bone: 'break_bone'
+  , break_flesh: 'break_flesh', break_void: 'break_void', break_machine: 'break_machine'
+  */
 };
 
 /* 키별 최소 간격(초). 없으면 제한 없음 */
 const SFX_GAP = {
   damage: 0.07, swing: 0.04, mine: 0.05, turret: 0.09, zap: 0.18,
-  belt: 0.34, drill: 0.28, smelt: 0.24, cook: 0.3
+  belt: 0.34, drill: 0.28, smelt: 0.24, cook: 0.3,
+  // 재질 타격음은 damage 와 같은 박자로 울린다. 파괴음은 한 칸에 한 번뿐이라 안 막는다
+  hit_flesh: 0.06, hit_bone: 0.06, hit_stone: 0.06, hit_dirt: 0.06, hit_wood: 0.06,
+  hit_metal: 0.06, hit_glass: 0.06, hit_gel: 0.06, hit_plant: 0.06, hit_ember: 0.06,
+  hit_void: 0.06
 };
 /* 키별 음량 배수 — 공장 상시음은 전투음보다 한참 작게 깔린다 */
 const SFX_VOL = { belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7 };
@@ -172,7 +191,7 @@ const Sfx = {
   },
 
   /** 재생을 시도한다. 파일이 있으면 틀고 true, 없으면 false (호출자가 합성음으로 대신) */
-  play(kind) {
+  play(kind, rate) {
     const pool = this.voices[kind];
     if (!pool) return false;
     const now = performance.now() / 1000;
@@ -182,6 +201,10 @@ const Sfx = {
     const i = this.turn[kind] = (this.turn[kind] + 1) % pool.length;
     const a = pool[i];
     a.volume = this.vol * (SFX_VOL[kind] === undefined ? 1 : SFX_VOL[kind]);
+    /* ★ 한 획마다 음높이를 흔든다. 같은 파일을 그대로 되풀이하면 세 번째
+       휘두를 때부터 "같은 소리"로 들리고 손맛이 밋밋해진다. ±6% 면 음이
+       바뀐 것으로는 안 들리고 '다른 타격'으로만 들린다. */
+    a.playbackRate = rate || 1;
     try { a.currentTime = SFX_START[kind] || 0; } catch (e) { }
     a.play().catch(() => { });
     return true;
