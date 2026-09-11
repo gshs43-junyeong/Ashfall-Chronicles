@@ -19,7 +19,7 @@ const G = {
   W: 0, H: 0, cam: { x: 0, y: 0 },
   state: 'title',
   world: null, player: null, rng: new RNG(1),
-  ents: [], projs: [], parts: [], texts: [], drops: [], pending: [],
+  ents: [], projs: [], parts: [], texts: [], drops: [], pending: [], corpses: [],
   time: 0, dayT: 6 * 60, shake: 0, uiOpen: false,
   mode: 'normal',        // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
   chapter: 0, boss: null,
@@ -316,6 +316,7 @@ const G = {
     ch.bag.forEach(([id, n], i) => { p.bag[i] = makeItem(id, ITEMS[id].stack > 1 ? n : 1); });
     p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
     this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = [];
+    this.corpses = [];
     this.rings = []; this.bolts = []; this.warns = [];   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
@@ -475,6 +476,7 @@ const G = {
     for (let i = this.projs.length - 1; i >= 0; i--) { this.projs[i].update(dt, w, p); if (this.projs[i].dead) this.projs.splice(i, 1); }
     for (let i = this.drops.length - 1; i >= 0; i--) { this.drops[i].update(dt, w, p); if (this.drops[i].dead) this.drops.splice(i, 1); }
     for (let i = this.parts.length - 1; i >= 0; i--) if (!this.parts[i].update(dt)) this.parts.splice(i, 1);
+    for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
     for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
     for (let i = this.pending.length - 1; i >= 0; i--) { this.pending[i].t -= dt; if (this.pending[i].t <= 0) { this.pending[i].fn(); this.pending.splice(i, 1); } }
 
@@ -3246,7 +3248,7 @@ const G = {
     else { p.x = w.spawnX * TS; p.y = (w.spawnY - 3) * TS; }
     p.vx = p.vy = 0;
     p.hp = p.d.maxHp; p.mp = p.d.maxMp; p.iframe = 2; p.buffs = [];
-    this.ents = []; this.boss = null; this.projs = [];
+    this.ents = []; this.corpses = []; this.boss = null; this.projs = [];
     $('#death-screen').classList.remove('open');
     this.paused = false;
   },
@@ -3415,7 +3417,7 @@ const G = {
       while (this.vault.length < this.vaultCap()) this.vault.push(null);
       this.bounties = d.bounties || [];
       if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
-      this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = []; this.boss = null;
+      this.ents = []; this.corpses = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = []; this.boss = null;
       this.rings = []; this.bolts = []; this.warns = [];
       this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
       // 카메라를 저장된 위치로 바로 맞춘다 — 안 하면 (0,0) 근처에서 훅 팬 되는 게 첫 프레임에 보인다
@@ -3859,6 +3861,11 @@ const G = {
 
     // ---- 드롭 ----
     c.textAlign = 'center'; c.textBaseline = 'middle';
+    /* ---- 시체 ----
+       **드롭보다 먼저** 깐다. 보스가 쏟아 낸 전리품을 1초 넘게 덮으면
+       그것부터 손해다 — 떨어진 것이 바로 보여야 한다. */
+    this.drawCorpses(c, camX, camY);
+
     for (const d of this.drops) {
       const sx = d.x - camX + 8, sy = d.y - camY + 8 + Math.sin(this.time * 3 + d.t) * 3;
       if (sx < -30 || sx > this.W + 30) continue;
@@ -4383,7 +4390,11 @@ const G = {
          바뀌고, 5페이즈는 마디 다섯에 그림이 세 벌이었다.
          이제 e.phase 를 그대로 쓰고, 시트가 가진 벌 수에 비례해 나눈다. */
       const m = Sprites.meta && Sprites.meta.bosses.sheets[e.type];
-      const pairs = m ? Math.max(1, Math.floor(m.count / 2)) : 3;   // 시트에 든 페이즈 그림 벌 수
+      /* ★ 시트 끝의 **쓰러지는 칸**(death)은 마디가 아니다. 안 빼면 칸이 둘
+         늘어난 만큼 마디가 하나 더 있는 줄 알고, 마지막 마디에서 살아 있는
+         보스가 무너진 그림으로 서 있게 된다. */
+      const idle = m ? m.count - (m.death || 0) : 6;
+      const pairs = m ? Math.max(1, Math.floor(idle / 2)) : 3;   // 시트에 든 페이즈 그림 벌 수
       /* 비율로 나누므로 2페이즈는 **첫 벌과 마지막 벌**을 쓴다(가운데를 쓰면
          두 마디 차이가 가장 작은 두 그림이 된다). 3페이즈는 0·1·2 그대로라
          예전과 한 톨도 안 바뀐다. 5페이즈는 세 벌을 다섯 마디에 편다 —
@@ -5186,6 +5197,51 @@ const G = {
       const bw = Math.max(22, e.w);
       c.fillStyle = '#000a'; c.fillRect(sx + (e.w - bw) / 2, sy - dy - 8, bw, 4);
       c.fillStyle = '#d0564c'; c.fillRect(sx + (e.w - bw) / 2, sy - dy - 8, bw * (e.hp / e.maxHp), 4);
+    }
+  },
+
+  /* ================= 시체 =================
+     ★ 죽은 놈은 **ents 에 한 프레임도 남기지 않는다.**
+       ents 를 도는 곳이 스무 군데가 넘고 저마다 dead 를 다르게 검사한다 —
+       거기 남겨 두면 맞고, 밀치고, 조준되고, 스폰 수에 세어지는 일이 어디선가
+       벌어진다. 그래서 die() 는 예전과 똑같이 dead 를 세우고 같은 프레임에
+       빠지고, **그리기 전용 기록**만 여기 남는다. 보상·드롭·입자·흔들림·
+       효과음·보스바는 전부 죽는 그 순간 그대로다. 손맛은 한 톨도 안 바뀐다.
+
+     시트의 마지막 두 칸이 쓰러지는 그림이다(몹은 death1·death2 = 5·6,
+     보스는 tools/mkbossdie.py 가 붙인 끝의 두 칸). */
+  CORPSE_MAX: 24,
+  addCorpse(e) {
+    if (!this.spritesOn || !Sprites.meta) return;
+    const key = (e.mech && Sprites.mechSheet && Sprites.mechSheet(e.type))
+      ? 'mech_' + e.type : e.type;
+    const bm = Sprites.meta.bosses.sheets[key];
+    const m = bm || Sprites.meta.characters.sheets[key];
+    if (!m) return;
+    const last = bm ? m.count - 1 : 6;                 // 보스는 끝의 두 칸
+    if (last < 1 || m.count <= last) return;
+    this.corpses.push({
+      key, x: e.x, y: e.y, w: e.w, h: e.h, facing: e.facing,
+      f0: last - 1, f1: last, t: 0, dur: e.boss ? 1.15 : 0.42,
+    });
+    if (this.corpses.length > this.CORPSE_MAX) this.corpses.shift();
+  },
+  drawCorpses(c, camX, camY) {
+    if (!this.corpses.length || !Sprites.meta) return;   // 그림을 끈 뒤에도 안전하게
+    for (const q of this.corpses) {
+      const sx = q.x - camX, sy = q.y - camY;
+      if (sx < -200 || sx > this.W + 200 || sy < -200 || sy > this.H + 200) continue;
+      const m = Sprites.meta.bosses.sheets[q.key] || Sprites.meta.characters.sheets[q.key];
+      if (!m) continue;
+      const r = q.t / q.dur;
+      // 살아 있는 그림과 **같은 자리 계산**을 쓴다 — 죽는 순간 그림이 튀면 안 된다
+      const dy = m.frameH - q.h - (Sprites.footInset[q.key] || 0);
+      const side = (Sprites.sideInset[q.key] || 0) * (q.facing < 0 ? -1 : 1);
+      const dx = (q.w - m.frameW) / 2 - side;
+      c.save();
+      c.globalAlpha = r > 0.7 ? 1 - (r - 0.7) / 0.3 : 1;
+      Sprites.draw(c, q.key, r < 0.35 ? q.f0 : q.f1, sx + dx, sy - dy, q.facing < 0);
+      c.restore();
     }
   },
 

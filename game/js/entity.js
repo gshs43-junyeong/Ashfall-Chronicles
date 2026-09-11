@@ -1107,6 +1107,10 @@ class Enemy extends Ent {
       if (ITEMS[id] && (ITEMS[id].stack || 1) > 1) G.drops.push(new Drop(this.cx, this.cy, makeItem(id, n)));
       else for (let k = 0; k < n; k++) G.drops.push(new Drop(this.cx, this.cy, rollGear(id, rng, this.boss ? 3 : 0)));
     }
+    /* 쓰러지는 그림을 남긴다. 이 개체는 **예전과 똑같이** 이 프레임에 ents 에서
+       빠지고(dead = true), 남는 것은 G.corpses 의 그리기 전용 기록뿐이다.
+       판정·조준·스폰 수 어디에도 안 잡히므로 손맛이 안 바뀐다. */
+    G.addCorpse(this);
     for (let i = 0; i < (this.boss ? 60 : 12); i++) G.parts.push(new Part(this.cx, this.cy, this.def.c, -40));
     if (this.boss) { G.shake = 18; G.onBossDown(this.type); }
     if (p.skills.s_hunter) p.addBuff('swift_kill', 3);
