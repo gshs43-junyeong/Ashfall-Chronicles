@@ -216,33 +216,40 @@ class Canvas:
 # ---------------------------------------------------------------- 자세
 # 마디마다 달라지는 값만 모았다. 나머지 뼈대는 다섯 장이 공유한다.
 def pose(ph, tick):
-    bob = -1 if tick else 0                       # 숨쉬기 — 한 칸 들린다
+    # 숨쉬기. 몸통은 두 칸 들리고 머리는 한 칸만 따라온다(늦게 따라붙는다).
+    #   ★ 전에는 한 칸 평행이동이 전부였다. 그러면 관절이 하나도 안 움직여서
+    #     '그림이 미끄러지는' 것으로만 보인다 — 실제로 두 칸을 1칸 맞춰 겹치면
+    #     95%가 같았다. 팔은 좌우가 **엇갈려** 흔들려야 움직이는 것으로 읽힌다.
+    bob = -2 if tick else 0
     P = {
         'bob': bob,
         'head_dy': 0, 'head_dx': 0, 'lean': 0,
         'arm_out': 0,                              # 팔꿈치가 바깥으로 벌어지는 정도
         'split': 0,                                # 다리가 갈렸나 (0 통짜 / 1 갈림)
         'stride': 0,                               # 앞으로 내민 정도
-        'fingers': 0, 'core': 0.0, 'chains': 4, 'caps': 2, 'slump': 0,
+        'fingers': 0, 'core': 0.0, 'chains': 4, 'caps': 2, 'slump': 0, 'sw': 2,
+        'planted': 0,
         'hot': 0.0, 'cracks': 0, 'spill': 0.0,
     }
     if ph == 0:      # 매달려 있다
         P.update(head_dy=7, head_dx=2, lean=1, arm_out=-1,
-                 core=0.18, chains=4, slump=5)
+                 core=0.18, chains=4, slump=5, sw=2)
     elif ph == 1:    # 자세를 고친다
-        P.update(head_dy=0, arm_out=0, core=0.38, chains=4)
+        P.update(head_dy=0, arm_out=0, core=0.38, chains=4, sw=2)
     elif ph == 2:    # 받침대가 붙든다
-        P.update(head_dy=-1, lean=2, arm_out=3, core=0.58, chains=4,
+        P.update(head_dy=-1, lean=2, arm_out=3, core=0.58, chains=4, sw=3,
                  hot=1.0, cracks=1)
     elif ph == 3:    # 걸음을 흉내 낸다
         P.update(head_dy=-1, lean=2, arm_out=2, split=1, stride=7,
-                 fingers=1, core=0.78, chains=2, caps=1, hot=0.5, cracks=2, spill=0.35)
+                 fingers=1, core=0.78, chains=2, caps=1, hot=0.5, cracks=2,
+                 spill=0.35, sw=3, planted=1)
     else:            # 놓인다
         P.update(head_dy=-2, lean=3, arm_out=1, split=1, stride=18,
-                 fingers=1, core=1.0, chains=0, caps=0, cracks=3, spill=1.0)
+                 fingers=1, core=1.0, chains=0, caps=0, cracks=3, spill=1.0,
+                 sw=4, planted=1)
+    P['dir'] = 1 if tick else -1                  # 스윙 방향(칸마다 뒤집힌다)
     if tick:
         P['core'] = min(1.0, P['core'] + 0.10)
-        P['arm_out'] += 1 if ph >= 2 else 0
     return P
 
 
@@ -339,6 +346,7 @@ def cutaway(c, x0, y0, x1, y1, lit):
 
 
 def cuff(c, cx, y, halfw, hot, broken):
+    y = int(round(y))
     """팔다리에 물린 쇠 족쇄. 고리를 원근으로 그리면 U자 쪼가리로 보인다 —
        팔을 가로지르는 **띠**로 그려야 문 것으로 읽힌다."""
     hw = halfw + 2
@@ -385,15 +393,21 @@ def draw_frame(ph, tick):
 
     SH_Y = 70 + B + P['slump']
     HIP_Y = 158 + B
-    head_c = (cx0 + P['head_dx'], 28 + P['head_dy'] + B)
+    head_c = (cx0 + P['head_dx'], 28 + P['head_dy'] + B - B // 2)
     ao = P['arm_out']
 
+    # 좌우가 엇갈려 흔들린다 — 한 팔이 올라갈 때 다른 팔은 내려간다.
+    # 두 팔이 같이 움직이면 몸통 바브에 묻혀 안 보인다.
+    sw, dr = P['sw'], P['dir']
     arms = {}
     for sgn in (-1, 1):
+        d = sgn * dr                                # 이 팔의 이번 칸 방향
         sx = cx0 + sgn * 40
-        ex = sx + sgn * (ao - 2)
-        wx = ex + sgn * (ao // 2 - 1)
-        arms[sgn] = (sx, ex, wx)
+        ex = sx + sgn * (ao - 2) + d * (sw // 2)
+        ey = 118 + B + d * sw
+        wx = ex + sgn * (ao // 2 - 1) + d * sw
+        wy = 154 + B + int(d * sw * 1.6)
+        arms[sgn] = (sx, ex, wx, ey, wy)
     st = P['stride']
     legs = {}
     for sgn in (-1, 1):
@@ -417,12 +431,14 @@ def draw_frame(ph, tick):
             ramp = PLASTER if sgn > 0 else dark
             hx, kx, fx = legs[sgn]
             lift = 2 if (sgn < 0 and st > 8) else 0    # 뒤꿈치가 든다
-            c.limb(hx, HIP_Y + 2, kx, 190 + B, 14, ramp, bias=-0.02)
-            c.sphere(kx, 192 + B, 12, 12, ramp, bias=-0.04)
-            c.limb(kx, 196 + B, fx, 222 + B - lift, 10, ramp, bias=-0.02)
-            c.trunk(fx, 222 + B - lift, prof([(0, 15), (5, 16), (8, 14)], 0, 8),
+            FB = 0 if P['planted'] else B        # 발은 땅에 붙어 있다
+            KB = B // 2 - (sgn * dr)              # 무릎이 접힌다(좌우 엇갈려)
+            c.limb(hx, HIP_Y + 2, kx, 190 + KB, 14, ramp, bias=-0.02)
+            c.sphere(kx, 192 + KB, 12, 12, ramp, bias=-0.04)
+            c.limb(kx, 196 + KB, fx, 222 + FB - lift, 10, ramp, bias=-0.02)
+            c.trunk(fx, 222 + FB - lift, prof([(0, 15), (5, 16), (8, 14)], 0, 8),
                     ramp, bias=-0.14)
-            c.ring(kx, 192 + B, 12, PLASTER[4], 110)
+            c.ring(kx, 192 + KB, 12, PLASTER[4], 110)
 
     # ---- 몸통 ----------------------------------------------------------
     body = prof([(58 + B, 25), (64 + B, 30), (76 + B, 32), (92 + B, 31),
@@ -442,37 +458,39 @@ def draw_frame(ph, tick):
     # ---- 팔 ------------------------------------------------------------
     for sgn in (-1, 1):
         ramp = PLASTER
-        sx, ex, wx = arms[sgn]
-        c.sphere(sx, SH_Y, 13, 13, ramp, bias=-0.02)
-        c.limb(sx, SH_Y + 6, ex, 116 + B, 10, ramp, bias=-0.02)
-        c.sphere(ex, 118 + B, 11, 11, ramp, bias=-0.04)
-        c.limb(ex, 122 + B, wx, 154 + B, 9, ramp, bias=-0.02)
+        sx, ex, wx, ey, wy = arms[sgn]
+        d = sgn * dr
+        sy = SH_Y + d                                # 어깨도 한 칸 따라간다
+        c.sphere(sx, sy, 13, 13, ramp, bias=-0.02)
+        c.limb(sx, sy + 6, ex, ey - 2, 10, ramp, bias=-0.02)
+        c.sphere(ex, ey, 11, 11, ramp, bias=-0.04)
+        c.limb(ex, ey + 4, wx, wy, 9, ramp, bias=-0.02)
         if P['fingers']:
-            c.limb(wx, 156 + B, wx + sgn * 2, 166 + B, 7, ramp, bias=-0.04)
+            c.limb(wx, wy + 2, wx + sgn * 2, wy + 12, 7, ramp, bias=-0.04)
             for k in range(3):
                 fxx = wx + (k - 1) * 4 + sgn * 2
-                c.limb(fxx, 165 + B, fxx + sgn, 175 + B, 1.6, ramp, bias=-0.07)
-            c.limb(wx - sgn * 5, 163 + B, wx - sgn * 7, 170 + B, 1.6, ramp, bias=-0.07)
+                c.limb(fxx, wy + 11, fxx + sgn, wy + 21, 1.6, ramp, bias=-0.07)
+            c.limb(wx - sgn * 5, wy + 9, wx - sgn * 7, wy + 16, 1.6, ramp, bias=-0.07)
         else:
             # 아직 모양이 안 난 덩어리 — 손이 되다 만 것
-            c.trunk(wx, 154 + B, prof([(0, 8), (4, 10), (12, 9), (18, 6)], 0, 18),
+            c.trunk(wx, wy, prof([(0, 8), (4, 10), (12, 9), (18, 6)], 0, 18),
                     ramp, bias=-0.05)
-        c.ring(sx, SH_Y, 13, PLASTER[4], 100)
-        c.ring(ex, 118 + B, 11, PLASTER[4], 100)
+        c.ring(sx, sy, 13, PLASTER[4], 100)
+        c.ring(ex, ey, 11, PLASTER[4], 100)
         # 어깨 덮개 — 각진 석고 판. 둥글기만 하면 인형으로 보인다.
         keep = P['caps'] == 2 or (P['caps'] == 1 and sgn < 0)
         capx = sx + sgn * 1
         if keep:
             capw = prof([(0, 9), (2, 13), (9, 16), (11, 15)], 0, 11)
             for k, w in enumerate(capw):             # 모서리를 깎은 판
-                c.trunk(capx, SH_Y - 12 + k, [w], ramp, bias=0.10 - k * 0.010)
-            c.line(capx - 8, SH_Y - 12, capx + 8, SH_Y - 12, PLASTER[0], 170)
-            c.line(capx - 14, SH_Y - 1, capx + 14, SH_Y - 1, PLASTER[4], 180)
-            c.line(capx + sgn * 10, SH_Y - 6, capx + sgn * 13, SH_Y - 2, PLASTER[3], 120)
+                c.trunk(capx, sy - 12 + k, [w], ramp, bias=0.10 - k * 0.010)
+            c.line(capx - 8, sy - 12, capx + 8, sy - 12, PLASTER[0], 170)
+            c.line(capx - 14, sy - 1, capx + 14, sy - 1, PLASTER[4], 180)
+            c.line(capx + sgn * 10, sy - 6, capx + sgn * 13, sy - 2, PLASTER[3], 120)
         elif P['caps'] == 1:
             for k in range(-9, 10):                  # 부러진 밑동만 남는다
-                c.dot(capx + k, SH_Y - 10 + (k % 2), PLASTER[4])
-                c.dot(capx + k, SH_Y - 9 + (k % 2), PLASTER[3])
+                c.dot(capx + k, sy - 10 + (k % 2), PLASTER[4])
+                c.dot(capx + k, sy - 9 + (k % 2), PLASTER[3])
 
     # ---- 족쇄 넷 --------------------------------------------------------
     #   받침대 자체는 방에 선 딴 놈(draft_form)이다. 이 몸에 남는 것은 물린
@@ -480,16 +498,19 @@ def draw_frame(ph, tick):
     ch = P['chains']
     cuffs = []
     for sgn in (-1, 1):
-        sx, ex, _ = arms[sgn]
+        sx, ex, _, ey, _ = arms[sgn]
         ax = sx + (ex - sx) * 0.6
-        cuffs.append((ax, 98 + B, 10, ch >= (4 if sgn > 0 else 3), sgn))
+        sy = SH_Y + sgn * dr
+        ay = (sy + 6) + (ey - 2 - sy - 6) * 0.6 - 4
+        cuffs.append((ax, ay, 10, ch >= (4 if sgn > 0 else 3), sgn))
     for sgn in (-1, 1):
         if not P['split']:
             lx, lw = cx0 + sgn * 15, 12
         else:
             hx, kx, _ = legs[sgn]
             lx, lw = hx + (kx - hx) * 0.5, 13
-        cuffs.append((lx, 174 + B, lw, ch >= (2 if sgn > 0 else 1), sgn))
+        ly = 174 + (B if not P['planted'] else B // 2)
+        cuffs.append((lx, ly, lw, ch >= (2 if sgn > 0 else 1), sgn))
     for (xx, yy, hw, live, sgn) in cuffs:
         cuff(c, xx, yy, hw, P['hot'], not live)
         n = (4 if yy < 140 else 3) if live else 1
