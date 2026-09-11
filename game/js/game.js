@@ -329,7 +329,7 @@ const G = {
     this.nearStObj = { work: null, forge: null };
     this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
     this.rainT = 0; this.rainDrops = null; this.smokes = []; this.smokeT = 0;
-    this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = [];
+    this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = []; this.bountyNext = [];
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
     this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
     $('#title-screen').style.display = 'none';
@@ -1470,41 +1470,91 @@ const G = {
     ]);
   },
 
-  /* ---- 의뢰 게시판: 하루마다 갱신되는 반복 의뢰 3건 ---- */
+  /* ================= 의뢰의 목표 =================
+     의뢰(게시판)와 부탁(사람)이 같은 세 가지 목표를 쓴다 — 잡기·모으기·캐기.
+     둘 다 **받은 순간부터 센다**(그전에 잡아 둔 것으로 끝나면 의뢰가 아니라
+     정산이다). 그래서 받을 때 그때까지의 수를 start 로 적어 두고 그 뒤의 몫만
+     본다. 세 군데(부탁 수락·부탁 확인·게시판)가 같은 계산을 따로 쓰고 있었다. */
+  objStart(o) {
+    const p = this.player;
+    if (o.type === 'kill') return p.kills[o.target] || 0;
+    if (o.type === 'collect') return p.gathered[o.item] || 0;
+    if (o.type === 'mine') return p.mined[o.tile] || 0;
+    return 0;
+  },
+  objSince(o, start) {
+    const cur = clamp(this.objStart(o) - start, 0, o.n);
+    return { cur, max: o.n, done: cur >= o.n };
+  },
+  /** 목표를 한 줄로 — "무덤지기 12마리" */
+  objLabel(o) {
+    if (o.type === 'kill') return `${ENEMIES[o.target].n} ${o.n}${mobCw(o.target)}`;
+    if (o.type === 'collect') return `${ITEMS[o.item].n} ${o.n}개`;
+    if (o.type === 'mine') return `${TILE_DEF[o.tile].n} ${o.n}번`;
+    return '';
+  },
+
+  /* ---- 의뢰 게시판 ----
+     하루마다 석 장이 새로 붙는다. 예전에는 스물세 마리짜리 표에서 셋을 뽑아
+     숫자만 갈아 끼웠다 — 붙인 사람도 이유도 없는 종이라 읽을 것이 없었다.
+     이제 BOUNTY_POOL 에 사람이 쓴 종이가 있고, 그중 **지금 장에서 받을 수 있는
+     것**만 붙는다. 끝낸 종이에 뒷이야기(next)가 있으면 다음 날 그것이 붙는다. */
+  bountyFits(t, ch) {
+    return t && (!t.s || t.s === (ch >= 9 ? 2 : 1)) && ch >= t.ch[0] && ch <= t.ch[1];
+  },
+  makeBounty(t, r) {
+    const obj = t.obj(r, this.chapter);
+    const lv = Math.max(1, this.player.level);
+    const k = (t.rw || 1) * obj.n / (BOUNTY_UNIT[obj.type] || 12);
+    return {
+      id: t.id, title: t.title, from: t.from, body: t.body,
+      obj, start: this.objStart(obj), done: 0,
+      doneLine: t.done, next: t.next || '', items: t.items || null,
+      gold: Math.round((160 + lv * 55) * k), xp: Math.round((90 + lv * 40) * k)
+    };
+  },
   rollBounties() {
     const r = new RNG(this.world.seed + '_b' + this.dayCount);
-    const pool = ['slime', 'zombie', 'skeleton', 'archer', 'bat', 'spider', 'crawler', 'shadoweye',
-      'frostling', 'icewolf', 'imp', 'wraith', 'ashcrow', 'scorpion', 'sandmaw', 'crystalcrab',
-      'lavaslug', 'gale', 'sky_sentry', 'cloudjelly', 'ruin_guard', 'lantern', 'archivist'];
-    const picked = [];
-    while (picked.length < 3) {
-      const t = pool[r.int(0, pool.length - 1)];
-      if (!picked.includes(t)) picked.push(t);
+    const ch = this.chapter || 0;
+    const out = [];
+    const take = t => {
+      if (!t || out.length >= 3 || out.some(b => b.id === t.id)) return;
+      out.push(this.makeBounty(t, r));
+    };
+    /* ① 어제 끝낸 것의 뒷이야기부터. 아직 못 받는 장이면 붙을 때까지 들고 있는다 */
+    const keep = [];
+    for (const id of (this.bountyNext || [])) {
+      const t = BOUNTY_BY_ID[id];
+      if (this.bountyFits(t, ch) && out.length < 3) take(t); else if (t) keep.push(id);
     }
-    const p = this.player;
-    this.bounties = picked.map(target => {
-      const n = r.int(8, 20);
-      const lv = Math.max(1, p.level);
-      return {
-        target, n, start: p.kills[target] || 0,
-        gold: Math.round((160 + lv * 55) * n / 10),
-        xp: Math.round((90 + lv * 40) * n / 10),
-        done: 0
-      };
-    });
+    this.bountyNext = keep;
+    // ② 나머지는 오늘 붙을 수 있는 것 중에서
+    const pool = BOUNTY_POOL.filter(t => !t.pin && this.bountyFits(t, ch));
+    while (out.length < 3 && pool.length) take(pool.splice(r.int(0, pool.length - 1), 1)[0]);
+    this.bounties = out;
   },
   bountyProgress(b) {
-    const cur = clamp((this.player.kills[b.target] || 0) - b.start, 0, b.n);
-    return { cur, max: b.n, done: cur >= b.n };
+    /* 옛 저장(잡을 것 하나만 적혀 있던 시절)도 읽을 수 있게 둔다 */
+    if (!b.obj) return { cur: 0, max: b.n || 1, done: false };
+    return this.objSince(b.obj, b.start);
   },
   claimBounty(i) {
     const b = this.bounties[i]; if (!b || b.done) return;
-    if (!this.bountyProgress(b).done) { this.toast('아직 다 잡지 못했다', 'bad'); return; }
+    if (!this.bountyProgress(b).done) { this.toast('아직 다 하지 못했다', 'bad'); return; }
     const p = this.player;
     b.done = 1;
     p.addXp(b.xp); p.gold += b.gold;
-    this.toast(`의뢰 완료 — 경험치 ${fmt(b.xp)} · 금화 ${fmt(b.gold)}`, 'good');
-    UI.refreshBoard(); this.sfx('manycoins');
+    for (const [id, n] of (b.items || [])) {
+      const it = ITEMS[id].stack > 1 ? makeItem(id, n) : rollGear(id, this.rng, 1);
+      if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+    }
+    /* 뒷이야기는 오늘 바로 붙지 않는다 — 다음에 게시판이 갈릴 때 붙는다.
+       그래야 "끝냈더니 다음 날 답장이 와 있었다"로 읽힌다. */
+    if (b.next && !(this.bountyNext || []).includes(b.next)) {
+      this.bountyNext = (this.bountyNext || []).concat(b.next);
+    }
+    this.toast(`의뢰 완료: ${b.title} — 경험치 ${fmt(b.xp)} · 금화 ${fmt(b.gold)}`, 'good');
+    UI.refreshBoard(); UI.refreshBag(); this.sfx('manycoins');
   },
 
   /* ---- 재련: 금화를 내고 장비의 접사를 다시 굴린다 ---- */
@@ -1767,6 +1817,13 @@ const G = {
     if (vt && vt[lv] && this.villageSeen[id] !== lv) { lines.push(vt[lv]); this.villageSeen[id] = lv; }
     if (!lines.length) lines.push(d.line);
     const rest = this.talkExtra(id);
+    /* 마을 주민에게도 부탁을 받는다. 예전에는 이 다섯에게만 부탁이 없어서,
+       세션 2 내내 말은 걸 수 있고 물건은 살 수 있는데 해 줄 일만 없었다 —
+       도시가 사람이 사는 곳이 아니라 상점가로 보였다. */
+    if (SIDE_POOL[id]) rest.push({
+      t: this.sideActive[id] ? '맡은 일에 대해 묻는다' : '도울 일이 있는지 묻는다',
+      quest: 1, fn: () => { UI.closeDialogue(); this.sideTalk(id); }
+    });
     /* 마을 주민에게도 길을 물을 수 있다. 세션 2는 대부분의 시간을 여기서 보내는데
        예전에는 이 물음이 베이스캠프 넷에게만 있어서, 답을 들으러 캠프까지 걸어가야 했다. */
     rest.push({ t: '지금 무엇을 해야 하지?', quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
@@ -1775,15 +1832,7 @@ const G = {
   },
 
   /* ---- 사이드 퀘스트 ---- */
-  sideProgress(sq) {
-    const p = this.player;
-    let cur = 0;
-    if (sq.obj.type === 'kill') cur = (p.kills[sq.obj.target] || 0) - sq.start;
-    else if (sq.obj.type === 'collect') cur = (p.gathered[sq.obj.item] || 0) - sq.start;
-    else if (sq.obj.type === 'mine') cur = (p.mined[sq.obj.tile] || 0) - sq.start;
-    cur = clamp(cur, 0, sq.obj.n);
-    return { cur, max: sq.obj.n, done: cur >= sq.obj.n };
-  },
+  sideProgress(sq) { return this.objSince(sq.obj, sq.start); },
   sideTalk(npcId) {
     const active = this.sideActive[npcId];
     if (active) {
@@ -1804,13 +1853,8 @@ const G = {
     ]);
   },
   acceptSideQuest(npcId, tpl) {
-    const p = this.player;
-    let start = 0;
-    if (tpl.obj.type === 'kill') start = p.kills[tpl.obj.target] || 0;
-    else if (tpl.obj.type === 'collect') start = p.gathered[tpl.obj.item] || 0;
-    else if (tpl.obj.type === 'mine') start = p.mined[tpl.obj.tile] || 0;
-    this.sideActive[npcId] = Object.assign({}, tpl, { start });
-    this.toast(`의뢰 수락: ${tpl.title}`, 'good');
+    this.sideActive[npcId] = Object.assign({}, tpl, { start: this.objStart(tpl.obj) });
+    this.toast(`부탁을 맡았다: ${tpl.title}`, 'good');
     UI.refreshQuest(); UI.refreshTracker();
   },
   completeSideQuest(npcId) {
@@ -1823,7 +1867,7 @@ const G = {
     }
     this.sideDone[npcId] = (this.sideDone[npcId] || 0) + 1;
     delete this.sideActive[npcId];
-    this.toast(`의뢰 완료: ${sq.title} — 경험치 ${fmt(sq.rw.xp)} · 금화 ${fmt(sq.rw.gold)}`, 'good');
+    this.toast(`부탁 완료: ${sq.title} — 경험치 ${fmt(sq.rw.xp)} · 금화 ${fmt(sq.rw.gold)}`, 'good');
     UI.refreshQuest(); UI.refreshTracker(); UI.refreshBag();
     this.sfx('manycoins');
   },
@@ -3316,7 +3360,7 @@ const G = {
         deathMark: this.deathMark,
         villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
         lairs: this.lairs, asmRan: this.asmRan, everPlanted: this.everPlanted,
-        vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties,
+        vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties, bountyNext: this.bountyNext,
         p: {
           x: p.x, y: p.y, level: p.level, xp: p.xp, xpNext: p.xpNext, statPts: p.statPts, skillPts: p.skillPts,
           base: p.base, hp: p.hp, mp: p.mp, charge: p.charge, gold: p.gold, bag: p.bag, equip: p.equip, sel: p.sel,
@@ -3450,6 +3494,10 @@ const G = {
       this.vault = d.vault || new Array(VAULT_SIZE).fill(null); this.vaultGold = d.vaultGold || 0;
       while (this.vault.length < this.vaultCap()) this.vault.push(null);
       this.bounties = d.bounties || [];
+      this.bountyNext = d.bountyNext || [];
+      /* 옛 저장에는 "○○ 14마리"만 적힌 종이가 붙어 있다. 새 게시판은 목표를
+         obj 로 읽으므로 그런 종이는 읽을 수 없다 — 하루치를 새로 붙인다. */
+      if (this.bounties.some(b => !b.obj)) this.bounties = [];
       if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
       this.ents = []; this.corpses = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = []; this.boss = null;
       this.rings = []; this.bolts = []; this.warns = [];
