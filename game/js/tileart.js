@@ -253,8 +253,8 @@ const TileArt = {
     }
     this.ashAtlas = cv;
     this.buildBare();
-    this.buildBurnt();
     this.buildThin();
+    this.buildBurnt();     // 성근 판에서 뜨므로 buildThin 뒤라야 한다
   },
 
   /* ---------- 잔디 벗긴 흙 판 (2행: 0 성한 것 · 1 잿빛) ----------
@@ -405,7 +405,14 @@ const TileArt = {
 
   /* ---------- 탄 잎 판 (1행) ----------
      진 잎이 전부 흔적 없이 사라지면 나무가 그냥 앙상해지기만 한다. 일부 자리에는
-     타다 만 잎이 붙어 있어야 "타서 진 것"으로 읽힌다. 밝기만 남기고 눌러 탄 갈색으로. */
+     타다 만 잎이 붙어 있어야 "타서 진 것"으로 읽힌다. 밝기만 남기고 눌러 탄 갈색으로.
+
+     ★ **성근1 판**에서 뜬다. 본판에서 뜨면 안 된다.
+       본판 밀도를 52% 에서 95% 로 올리고 나니, 다 진 자리에 남은 탄 잎이
+       꽉 찬 **검은 네모**가 되어 앙상한 가지 사이에 흙덩이처럼 떠 있었다
+       (8장 숲에서 눈에 바로 걸렸다). 타다 만 것이 성한 잎보다 빽빽할 수는
+       없다. 잎이 반쯤 타 없어진 성근1(43%)이 "타다 만 잎"의 밀도다.
+       가지 픽셀은 성근 판에서도 남겨 두므로 탄 잎도 가지에 붙어 있다. */
   buildBurnt() {
     if (!this.atlas) return;
     const W = this.V * TS;
@@ -413,7 +420,11 @@ const TileArt = {
     cv.width = W; cv.height = TS;
     const g = cv.getContext('2d');
     g.clearRect(0, 0, W, TS);
-    g.drawImage(this.atlas, 0, T.LEAF * TS, W, TS, 0, 0, W, TS);
+    const ti = this.THIN_TILE ? this.THIN_TILE.indexOf(T.LEAF) : -1;
+    if (this.thinAtlas && ti >= 0)
+      g.drawImage(this.thinAtlas, 0, (ti * 4) * TS, W, TS, 0, 0, W, TS);
+    else
+      g.drawImage(this.atlas, 0, T.LEAF * TS, W, TS, 0, 0, W, TS);
     const d = g.getImageData(0, 0, W, TS), px = d.data;
     for (let i = 0; i < px.length; i += 4) {
       if (!px[i + 3]) continue;
