@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""5페이즈 보스 다섯의 시트를 다시 짠다 — **규격과 뼈대까지**. 마무리는 다음 판.
+"""5페이즈 보스 다섯의 시트를 다시 짠다 — 규격 · 실루엣 · 마감까지.
 
 ■ 왜 다시 짜나
 
@@ -47,11 +47,11 @@
      2 안쪽 축이 드러난다           3 고리가 거꾸로 돈다
      4 축만 남고 고리는 궤도로 흩어진다
 
-■ 이번 판에서 어디까지
+■ 마감은 기존 손그림 보스에서 가져왔다
 
-  규격(프레임 크기 · 10칸) · 매니페스트 · 판정 상자 · 그리고 마디마다 갈리는
-  **실루엣**까지다. 낱낱의 질감과 손질은 다음 판이다. 지금 구운 것도 게임에
-  붙어서 돌아가므로, 붙여 놓고 다듬으면 된다.
+  최초의 파수꾼 · 공창의 관리자 · 증식체를 늘어놓고 보면 마감이 셋뿐이다:
+  평평한 덩어리에 **얼룩 점묘**, 덩어리마다 **위쪽 한 줄이 밝고**, 금·청록
+  **작은 장식**. 두껍게 렌더링하지 않는다. 그 셋만 따라 해서 화풍을 맞췄다.
 
 사용법:  python3 tools/mkbossbig.py && node tools/sync-manifest.mjs
 """
@@ -105,6 +105,64 @@ class Canvas:
             u = i / n
             for k in range(t):
                 self.dot(x0 + (x1 - x0) * u, y0 + (y1 - y0) * u + k, col)
+
+    def stroke(self, x0, y0, x1, y1, r, col):
+        """경로를 따라 원을 찍는 굵은 획.
+
+        ★ line(..., t) 로는 안 된다. 그 굵기는 **아래로만** 번져서 세로획은
+          두꺼워지지만 대각선은 1픽셀로 남는다 — 팔다리가 전부 성냥개비가
+          되어 나왔다. 굵은 팔다리는 이쪽으로 긋는다."""
+        n = int(max(abs(x1 - x0), abs(y1 - y0))) + 1
+        for i in range(n + 1):
+            u = i / n
+            self.ell(x0 + (x1 - x0) * u, y0 + (y1 - y0) * u, r, r, col)
+
+    # ---------------- 마감 붓 — 다 그린 다음 한 번씩 지나간다 ----------------
+    # 기존 손그림 보스(최초의 파수꾼 · 관리자 · 증식체)를 보면 마감이 셋뿐이다:
+    # 평평한 덩어리에 **얼룩 점묘**, 덩어리마다 **위쪽 한 줄이 밝고**, 금·청록
+    # **작은 장식**. 두껍게 렌더링하지 않는다. 그 셋만 따라 한다.
+
+    def speck(self, seed, dens=0.12, dark=0.80, lite=1.16):
+        """칠해진 칸에만 얼룩을 뿌린다. 칸마다 정해진 값이라 프레임이 넘어가도
+           얼룩이 옮겨 다니지 않는다 — 난수로 뿌리면 그림이 지글거린다."""
+        for y in range(self.h):
+            for x in range(self.w):
+                a = self.px[x, y]
+                if a[3] == 0:
+                    continue
+                # ★ 단순 곱·xor 로는 안 된다. x·y 에 규칙이 남아 **골덴 같은
+                #   사선 줄무늬**가 나왔다(얼룩이 아니라 무늬가 된다).
+                #   정수 해시의 마무리 섞음(shift·곱·shift)까지 돌려야 흩어진다.
+                v = (x * 374761393 + y * 668265263 + seed * 1442695041) & 0xFFFFFFFF
+                v ^= v >> 13
+                v = (v * 1274126177) & 0xFFFFFFFF
+                v ^= v >> 16
+                v &= 1023
+                if v < dens * 1024:
+                    self.dot(x, y, shade(a, dark))
+                elif v > 1023 - dens * 512:
+                    self.dot(x, y, shade(a, lite))
+
+    def toplight(self, k=1.22, n=2):
+        """열마다 맨 위 n 칸을 밝힌다. 덩어리가 위에서 빛을 받는 것처럼 보인다."""
+        for x in range(self.w):
+            hit = 0
+            prev = False
+            for y in range(self.h):
+                on = self.px[x, y][3] > 0
+                if on and not prev:
+                    hit += 1
+                    if hit <= 2:                 # 몸통과 그 위 덩어리까지만
+                        for k2 in range(n):
+                            if y + k2 < self.h and self.px[x, y + k2][3] > 0:
+                                self.dot(x, y + k2, shade(self.px[x, y + k2], k))
+                prev = on
+
+    def trim(self, x, y, w, col, gap=3):
+        """금속 띠에 박은 작은 장식 — 참고한 보스들이 다 갖고 있다."""
+        self.rect(x, y, w, 3, shade(col, 0.55))
+        for i in range(0, int(w), gap):
+            self.dot(x + i + 1, y + 1, col)
 
     def outline(self, col=(10, 10, 14)):
         """몸에 닿은 빈 칸을 한 겹 두른다. 전부 그린 다음 마지막에 한 번."""
@@ -171,7 +229,7 @@ def draw_pursuer(c, ph, fr, W, H, base, glow):
     for i in range(arms):
         a = -2.5 + i * (1.7 / max(arms - 1, 1))
         ex, ey = cx + math.cos(a) * 58, cy + math.sin(a) * 46
-        c.line(cx, cy, ex, ey, body if ph < 4 else glow, 4 if ph < 3 else 2)
+        c.stroke(cx, cy, ex, ey, 6 if ph < 3 else 3, body if ph < 4 else glow)
         c.ell(ex, ey, 5, 5, dark if ph < 4 else glow)
     # 눈 — 마디마다 늘어난다
     for i in range(ph + 1):
@@ -229,6 +287,8 @@ def draw_hepha(c, ph, fr, W, H, base, glow):
     # 몸통
     c.rect(cx - 30, cy - 30, 60, 66, body)
     c.rect(cx - 30, cy - 30, 60, 10, shade(base, 1.18))
+    c.trim(cx - 26, cy - 18, 52, (60, 44, 24), 4)     # 어깨띠
+    c.trim(cx - 26, cy + 24, 52, (60, 44, 24), 4)     # 허리띠
     # 등의 화로 — 2페이즈에 열린다
     if ph >= 2:
         c.rect(cx - 14, cy - 12, 28, 30, (24, 18, 12))
@@ -242,7 +302,7 @@ def draw_hepha(c, ph, fr, W, H, base, glow):
         a = -0.5 - k * 0.34
         ex = cx + side * (34 + math.cos(a) * 40)
         ey = cy - 10 + math.sin(a) * 34
-        c.line(cx + side * 26, cy - 8, ex, ey, body, 5 if arms == 4 else 3)
+        c.stroke(cx + side * 26, cy - 8, ex, ey, 5 if arms == 4 else 3, body)
         c.ell(ex, ey, 5, 5, dark)
     # 머리
     c.rect(cx - 13, cy - 48, 26, 20, body)
@@ -277,20 +337,25 @@ def draw_archetype(c, ph, fr, W, H, base, glow):
     # 다리 — 2페이즈에 땅을 짚는다
     if ph >= 2:
         for sx in (-1, 1):
-            c.line(cx + sx * 12, cy + 30, cx + sx * 18 + tilt, floor, body, 9)
+            c.stroke(cx + sx * 12, cy + 30, cx + sx * 18 + tilt, floor, 7, body)
     else:
         for sx in (-1, 1):
-            c.line(cx + sx * 12, cy + 30, cx + sx * 16, cy + 56, dark, 7)
-    # 몸통
+            c.stroke(cx + sx * 12, cy + 30, cx + sx * 16, cy + 56, 6, dark)
+    # 몸통 — 참고한 보스들처럼 가슴에 띠 하나와 어깨판을 둔다.
+    # 이게 없으면 그냥 네모라 크기만 커지고 '만들다 만 사람'으로 안 읽힌다.
     c.rect(cx - 22 + tilt, cy - 24, 44, 56, body)
     c.rect(cx - 22 + tilt, cy - 24, 44, 8, shade(base, 1.1))
+    for sx in (-1, 1):                           # 어깨판
+        c.rect(cx + sx * 22 - 9 + tilt, cy - 22, 18, 12, shade(base, 0.82))
+    c.trim(cx - 17 + tilt, cy - 4, 34, glow)     # 가슴 띠
+    c.line(cx + tilt, cy + 6, cx + tilt, cy + 30, shade(base, 0.72))   # 이음매
     # 팔 — 1페이즈에 한 쪽이 풀린다
     free = [0, 1, 1, 2, 2][ph]
     for i, sx in enumerate((-1, 1)):
         if i < free:
-            c.line(cx + sx * 20 + tilt, cy - 14, cx + sx * 44, cy + 22, body, 8)
+            c.stroke(cx + sx * 20 + tilt, cy - 14, cx + sx * 44, cy + 22, 6, body)
         else:
-            c.line(cx + sx * 20 + tilt, cy - 14, cx + sx * 34, cy - 44, dark, 8)
+            c.stroke(cx + sx * 20 + tilt, cy - 14, cx + sx * 34, cy - 44, 6, dark)
     # 머리
     c.ell(cx + tilt, cy - 36, 14, 16, body)
     for sx in (-1, 1):
@@ -321,6 +386,8 @@ def draw_restorer(c, ph, fr, W, H, base, glow):
     if ph >= 2:
         c.rect(cx - 9, cy - 44, 18, 88, body)
         c.rect(cx - 9, cy - 44, 18, 8, shade(base, 1.15))
+        for yy in range(-30, 44, 18):                # 축의 마디
+            c.rect(cx - 11, cy + yy, 22, 3, shade(base, 0.62))
     core = [10, 13, 17, 21, 26][ph]
     c.ell(cx, cy, core, core, glow if ph >= 2 else shade(glow, 0.55))
     c.ell(cx, cy, core * 0.45, core * 0.45, (255, 252, 240))
@@ -349,6 +416,8 @@ def main():
             ph, fr = i // 2, i % 2
             c = Canvas(fw, fh)
             PAINT[name](c, ph, fr, fw, fh, base, glow)
+            c.toplight()
+            c.speck(seed=i * 7 + len(name))
             c.outline()
             sheet.paste(c.im.resize((fw * S, fh * S), Image.NEAREST), (i * fw * S, 0))
         p = os.path.join(OUT, name + '.png')
