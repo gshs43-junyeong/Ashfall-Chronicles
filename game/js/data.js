@@ -2428,7 +2428,7 @@ const BUFFS = {
      확정 상자는 그대로 두었으므로 "털 만한 것"은 줄지 않는다. */
 const RUIN_SPEC = [
   {
-    id: 'ice', n: '얼음 던전', x: 300, y: 150, w: 74, h: 44,
+    id: 'ice', n: '얼음 던전', x: 300, y: 150, w: 88, h: 50,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
     traps: ['dart', 'crumble', 'grind'], boss: 'ice_warden',
     mobs: ['frostling', 'icewolf', 'frostbound'],
@@ -2444,7 +2444,7 @@ const RUIN_SPEC = [
     rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.20, mobMul: 1.35
   },
   {
-    id: 'mine', n: '버려진 광산', x: 820, y: 168, w: 72, h: 38,
+    id: 'mine', n: '버려진 광산', x: 820, y: 168, w: 84, h: 44,
     wall: T.MINEWOOD, floor: T.PLANK, bg: 4, torch: T.TORCH,
     traps: ['dart', 'crumble', 'gas'], boss: 'mine_horror',
     mobs: ['minerghost', 'spider', 'bat', 'cartwraith'],
@@ -2460,10 +2460,10 @@ const RUIN_SPEC = [
     rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.24, mobMul: 1.85
   },
   {
-    id: 'spore', n: '포자 굴', x: 3620, y: 176, w: 68, h: 42,
+    id: 'spore', n: '포자 굴', x: 3620, y: 176, w: 100, h: 52,
     wall: T.SPORESTONE, floor: T.GLOWMOSS, bg: 12, torch: T.GLOWCAP,
     traps: ['vent', 'dart', 'gas', 'coil'], boss: 'spore_queen',
-    mobs: ['sporeling', 'capbeast', 'ventspitter'], arch: 'buried', rooms: 14,
+    mobs: ['sporeling', 'capbeast', 'ventspitter'], arch: 'buried',
     // 입구가 없어 우연히 뚫고 들어가는 곳. 준비 없이 떨어질 수 있으니 함정은 낮추고
     // 대신 잡몹을 세게 — 도망칠 길이 없다는 게 이 유적의 압박이다
     rank: 5, tier: 5, trapRate: 0.50, spikeRate: 0.30, chestRate: 0.22, mobMul: 1.6
@@ -2481,7 +2481,17 @@ const RUIN_SPEC = [
    심어서 운이 나쁘면 함정 없이 직행 입장하는 경우가 있었다 — 이제 자리를 고정해 최소
    개수를 보장한다(carveRuinEntrance/_carveEntranceShaft, world.js). */
 /* 방 개수도 rank를 따라간다 — 예전에는 가장 순한 갱도(rank 1)가 방 15개로 제일 크고,
-   가장 사나운 부패한 둥지(rank 6)가 12개로 제일 작아서 체감이 거꾸로였다. */
+   가장 사나운 부패한 둥지(rank 6)가 12개로 제일 작아서 체감이 거꾸로였다.
+
+   ★ 그런데 "따라간다"가 자르는 깊이(bsp)와 방 최소 크기로만 되어 있어서, 실제로는
+     시드 운이었다. 세 시드에서 재 보니 버려진 광산이 5 · 8 · 11 이었고, rank 5 인
+     포자 굴(평균 9.0)이 rank 2 인 얼음 던전(9.7)보다 작았다. BSP 는 "자를 수 있으면
+     자르고 없으면 그만"이라 그렇다.
+
+     이제 `rooms` 가 **목표 방 수**다(carveDungeon 의 target). 도면으로 걸러 낸 뒤
+     모자라면 가장 넓은 방부터 한 번 더 자른다 — 겉모양은 그대로 두고 속만 나뉜다.
+     못 자를 만큼 좁아지면 거기서 멈추므로 방이 통로처럼 좁아지지는 않는다.
+     최소 크기(bsp[1], bsp[2])는 그 목표가 들어갈 만큼 낮춰 잡았다. */
 /* ---------------- 유적 도면 · 입구 · 고유 요소 ----------------
    ★ 예전에는 유적이 전부 "직사각형 하나를 벽으로 채우고 BSP로 자른 것"이었다.
      겉모양이 열 곳 다 같은 상자였고, 지상에서 내려가는 입구가 여섯 곳이나 있어
@@ -2505,11 +2515,12 @@ const RUIN_SPEC = [
    가로 스크롤 게임이라 방은 **가로로 넓어야** 한다 — 세로로 길면 걸어 다닐 데가 없고
    사다리 통로처럼 보인다. 그래서 최소 가로를 최소 세로의 두 배 가까이 잡는다.
    피라미드와 부패한 둥지는 깊이를 6까지 줘서 **방 스무 개가 넘는 큰 유적**으로 만든다. */
-RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].bsp = [5, 17, 9];   // 얼음
-RUIN_SPEC[1].plan = 'pyramid'; RUIN_SPEC[1].arch = 'surface'; RUIN_SPEC[1].bsp = [6, 10, 6];  // 피라미드 (방 20+)
-RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].bsp = [5, 14, 7];   // 광산
-RUIN_SPEC[3].plan = 'warren'; RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].bsp = [6, 13, 7];   // 부패한 둥지 (방 20+)
-RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp = [5, 16, 8]; // 포자 굴
+//                  도면          바깥 생김새        [깊이, 방 최소 가로, 최소 세로]   목표 방 수(rank 순)
+RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].bsp = [5, 14, 8]; RUIN_SPEC[0].rooms = 14;  // 얼음 (rank 2)
+RUIN_SPEC[1].plan = 'pyramid'; RUIN_SPEC[1].arch = 'surface'; RUIN_SPEC[1].bsp = [6, 11, 6]; RUIN_SPEC[1].rooms = 21;  // 피라미드 (rank 4)
+RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].bsp = [5, 12, 7]; RUIN_SPEC[2].rooms = 11;  // 광산 (rank 1 — 가장 작다)
+RUIN_SPEC[3].plan = 'warren'; RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].bsp = [6, 12, 7]; RUIN_SPEC[3].rooms = 30;  // 부패한 둥지 (rank 6 — 가장 크다)
+RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp = [5, 12, 7]; RUIN_SPEC[4].rooms = 26; // 포자 굴 (rank 5)
 
 /* 겉으로 보이는 재질을 유적마다 갈랐다 — 나무 · 돌 · 구리 · 얼음 · 유기물.
    [배치방식, 타일, 밀도] 를 여럿 줄 수 있고 방마다 전부 돌린다.
@@ -2571,10 +2582,12 @@ const RUIN_PLANS = {
 /* 스토리 유적 셋(석판)의 도면·입구·고유 요소. buildRuins 가 참조한다.
    셋은 제7장에 한 번에 열리는 본편 경로라 입구를 아주 없애지는 않았다 —
    대신 지표 아래에 묻어(sunken) 부러진 기둥 하나만 지상에 남긴다. */
+/* 석판 유적 셋도 같은 규칙이다 — rooms 가 목표 방 수, bsp 가 [깊이, 최소 가로, 최소 세로].
+   석판 번호가 곧 난이도 계단이라 방 수도 그 순서로 늘어난다(9 · 11 · 14). */
 const STORY_RUIN = [
-  { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
-  { n: '겹친 길', plan: 'tee',  arch: 'sunken', decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
-  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
+  { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', rooms: 9, bsp: [5, 12, 7], decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
+  { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 11, bsp: [5, 12, 7], decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
+  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 14, bsp: [5, 12, 7], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
 ];
 
 /* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다.
@@ -2619,6 +2632,55 @@ const RUIN_RELIC = {
   ice: 'relic_frostpane', pyramid: 'relic_sundial', mine: 'relic_lastlamp',
   blight: 'relic_rotcore', spore: 'relic_sporebell',
   story0: 'relic_frostmark', story1: 'relic_mazeeye', story2: 'relic_hollowseed'
+};
+
+/* ---------------- 암호문 (잠긴 골방의 자물쇠) ----------------
+
+   예전에는 **세 자리 숫자 하나뿐**이었다. 유적이 둘이든 다섯이든 플레이어가 하는 일은
+   늘 같았다 — 돌아다니며 흔적 셋에서 숫자를 한 자리씩 주워 적는다. 자물쇠가 아니라
+   수집이었고, 두 번째 유적부터는 "또 그거"가 됐다.
+
+   세 갈래로 가른다. 가르는 기준은 **플레이어가 무엇을 하는가**다.
+
+     digits  모은다 — 세 자리 숫자. 쪽지 셋에 한 자리씩. (예전의 그것)
+     word    읽는다 — 세 글자 낱말. 쪽지 셋에 한 글자씩. 문이 글자를 받는다.
+     decode  푼다   — 문설주에 수가 새겨져 있는데 그게 답이 아니다. 쪽지 셋이
+                      그 수를 어떻게 고쳐 읽는지 말한다. 주워 적는 것만으로는 안 되고
+                      한 번 셈을 해야 열린다.
+
+   ★ 쪽지(ciphernote)는 유적의 비문 흔적(RUIN_HINTS)과 **따로 둔다.** 예전에는 암호
+     단서를 흔적에 얹었는데, 흔적표가 없는 유적(석판 유적 셋)에 암호 골방을 세우면
+     단서가 아예 안 나왔다 — 실제로 '겹친 길'의 암호는 **풀 방법이 없었다.**
+     이제 골방을 세우는 쪽이 쪽지도 같이 흩뿌리므로 어느 유적에 달아도 성립한다. */
+const CIPHER_KIND = {
+  digits: {
+    n: '숫자 자물쇠', len: 3, numeric: 1,
+    door: '홈이 셋. 숫자를 하나씩 맞춰 넣는 자리다.',
+    ask: '세 자리 숫자'
+  },
+  word: {
+    n: '글자 자물쇠', len: 3, numeric: 0,
+    door: '홈이 셋. 숫자가 아니라 글자를 새겨 넣는 자리다.',
+    ask: '세 글자'
+  },
+  decode: {
+    n: '풀어 읽는 자물쇠', len: 3, numeric: 1,
+    door: '문설주에 수가 새겨져 있다. 그런데 홈은 그 수를 받지 않는다.',
+    ask: '세 자리 숫자'
+  }
+};
+
+/* 글자 자물쇠가 쓰는 세 글자 낱말. 전부 이 세계의 말이라, 답을 보면 "아 그거"가 된다.
+   받침 없는 쉬운 글자로만 골랐다 — 자판이 어려우면 자물쇠가 아니라 시험이 된다. */
+const CIPHER_WORDS = ['재의문', '별무덤', '잠긴돌', '마른뼈', '언바람', '검은눈',
+                      '첫파수', '깊은잠', '흰재별', '무너짐', '돌의뼈', '마지막'];
+
+/* 어느 유적에 어떤 자물쇠가 걸리는가. 하나씩만 맡는다 — 같은 자물쇠를 두 곳에
+   달면 두 번째는 이미 아는 놀이가 된다. 쪽지는 그 유적 안에 흩어진다. */
+const RUIN_CIPHER = {
+  pyramid: 'digits',   // 하늘을 재던 곳 — 수로 잠갔다
+  story1: 'word',      // 겹친 길 — 두 사람이 말을 나눠 적었다
+  blight: 'decode'     // 가장 깊고 사나운 곳 — 주워 적는 것만으로는 안 열린다
 };
 
 /* 유적에 처음 발을 들일 때 뜨는 카드. 들어가기 전에 무엇을 기대할지 한 줄 준다 —
