@@ -563,8 +563,11 @@ class Player extends Ent {
     const id = this.slots[i]; if (!id) return;
     const sk = SKILLS[id], r = this.skills[id] || 0;
     if (!r || sk.type !== 'active') return;
-    if ((this.cd[id] || 0) > 0) return;
-    if (this.mp < sk.mana) { G.toast('마나가 부족하다', 'bad'); return; }
+    /* 못 쓰는 것을 눌렀을 때도 **대답은 한다.** 예전에는 재사용 대기 중이면
+       조용히 return 이라, 눌렀는데 안 나간 건지 키가 안 먹은 건지 몰랐다.
+       식는 중은 칸에 숫자가 도니 소리와 흔들림만, 마나는 한 줄 더 띄운다. */
+    if ((this.cd[id] || 0) > 0) { G.skillDeny(i); return; }
+    if (this.mp < sk.mana) { G.skillDeny(i, '마나가 부족하다'); return; }
     this.mp -= sk.mana;
     this.cd[id] = sk.cd * (1 - this.d.cdr / 100);
     const w = this.weapon();
@@ -575,7 +578,7 @@ class Player extends Ent {
       case 's_cleave': {
         const dmg = this.scaleDmg(wdmg * sk.v(r) / 100, 'str');
         G.aoe(this.cx, this.cy, 108, dmg, 6, '#ffb24a');
-        G.shake = 6; break;
+        break;
       }
       case 's_charge': {
         this.vx = Math.cos(ang) * 900; this.vy = -180;
@@ -638,7 +641,7 @@ class Player extends Ent {
           const a = Math.random() * TAU;
           G.parts.push(new Part(this.cx + Math.cos(a) * 22, this.cy + Math.sin(a) * 26, '#d8a05a', -30, .7));
         }
-        G.shake = 4; break;
+        break;
       }
       case 's_quake': {
         // 좌우로 퍼져 나가는 충격파 — 발밑을 따라 두 갈래로 나간다
@@ -657,7 +660,7 @@ class Player extends Ent {
           }
         }
         G.aoe(this.cx, foot - 14, 60, dmg, 7, '#c8845a', 'frost');
-        G.shake = 12; break;
+        break;
       }
       case 's_warcry': {
         const dur = sk.v(r);
@@ -672,7 +675,7 @@ class Player extends Ent {
         }
         G.ringFx(this.cx, this.cy, 190, '#e8a04a', .5);
         G.ringFx(this.cx, this.cy, 120, '#ffd88a', .35);
-        G.shake = 9; break;
+        break;
       }
       case 's_pierce': {
         const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 900, Math.sin(ang) * 900,
@@ -781,13 +784,22 @@ class Player extends Ent {
               const a = Math.random() * TAU, d2 = Math.random() * 140;
               G.parts.push(new Part(tx + Math.cos(a) * d2, ty + Math.sin(a) * d2, k % 3 ? '#ffb04a' : '#fff0c0', -150, 1));
             }
-            G.shake = 22; G.sfx('bossdie');
+            const h = SKILL_HIT.meteor;
+            G.shake = Math.max(G.shake, h.k); G.hitStop(h.st); G.sfx(h.s);
           }
         });
         break;
       }
     }
-    G.sfx('skill');
+    /* 시전의 끝맺음 — 소리·흔들림·멈춤·고리를 SKILL_FX 한 표에서 가져온다.
+       예전에는 열아홉 가지가 전부 G.sfx('skill') 한 소리였고, 흔들림은 다섯
+       곳에만 손으로 적혀 있었다. 고리는 **제자리에 아무것도 안 남는** 스킬
+       (화살 세례·비·화염구·늑대·표식)에 특히 크다 — 눌린 것이 보인다. */
+    const fx = SKILL_FX[id] || {};
+    if (fx.c) G.ringFx(this.cx, this.cy, fx.r || 44, fx.c, .26);
+    if (fx.k) G.shake = Math.max(G.shake, fx.k);
+    if (fx.st) G.hitStop(fx.st);
+    G.sfx(fx.s || 'skill');
   }
 
   /* ---- 업데이트 ---- */
@@ -962,6 +974,11 @@ class Player extends Ent {
       if (this.channel.tick <= 0) {
         this.channel.tick = 0.28;
         G.aoe(this.cx, this.cy, 96, this.channel.dmg * 0.28, 3, '#ffcf6a');
+        /* 도는 동안 박자마다 운다. 소리 없이 도는 2.5초는 채널이 아니라
+           멈춘 화면으로 보였다. 박자마다 음을 조금씩 달리해 같은 소리가
+           아홉 번 나는 것을 피한다. */
+        G.sfx('sk_whirl', G.strokeRate());
+        G.shake = Math.max(G.shake, 3);
       }
       if (this.channel.t <= 0) this.channel = null;
     }

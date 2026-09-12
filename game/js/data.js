@@ -4858,3 +4858,53 @@ const ITEM_VAL = (() => {
   for (const id in V) V[id] = Math.max((ITEMS[id] || {}).type === 'mat' ? VAL_MIN : 1, Math.round(V[id]));
   return V;
 })();
+
+/* ================= 스킬 손맛 =================
+
+   ■ 열아홉 가지가 전부 같은 소리였다
+
+     useSkill() 은 마지막에 G.sfx('skill') 한 줄로 끝났다. 화염구도, 치유도,
+     순간이동도, 전투 함성도, 사슬 번개도 **똑같은 삑 소리 하나**였다. 손에
+     닿는 것이 갈리지 않으니 무엇을 썼는지가 소리로는 전혀 안 들렸다.
+
+     화면 흔들림도 제각각이었다 — 광폭 베기 6, 철벽 4, 대지 가르기 12, 함성 9,
+     운석 22. 나머지 **열넷은 아예 0**이라, 화살 세례나 순간이동은 눌러도 화면이
+     한 점도 안 움직였다. 세기 순서와도 안 맞았다(철벽이 베기보다 조용한 건
+     맞지만, 운석이 대지 가르기의 두 배여야 할 까닭은 없다).
+
+   ■ 한 표로 모은다
+
+     s   소리 키. 열아홉을 열다섯 갈래로 묶었다 — 베기와 검무는 같은 칼바람이고,
+         화염구와 운석은 같은 불이 붙는 소리다. 갈래마다 파일 하나면 된다.
+     k   화면 흔들림. 세기 순서대로 매긴다(0 · 4 · 7 · 10 · 14 · 20).
+     st  **손이 멈추는 한 박자**(초). 큰 것이 닿는 순간 세계가 잠깐 선다.
+         손맛에서 가장 크게 먹히는 한 가지인데 이 게임에는 아예 없었다.
+     c   시전 고리 색. 예전에는 화살 세례·비·화염구·늑대·표식처럼 **제자리에
+         아무 표시도 안 남는** 스킬이 많아서, 눌렀는지 안 눌렸는지도 몰랐다.
+     r   고리 크기. 스킬이 실제로 닿는 범위와 맞춘다 — 고리가 곧 사거리다. */
+const SKILL_FX = {
+  /* 검투사 */
+  s_cleave:   { s: 'sk_slash',  k: 7,  st: .04, c: '#ffb24a', r: 108 },
+  s_charge:   { s: 'sk_charge', k: 10, st: .05, c: '#ffd07a', r: 46 },
+  s_whirl:    { s: 'sk_slash',  k: 6,  st: 0,   c: '#ffcf6a', r: 96 },
+  s_quake:    { s: 'sk_quake',  k: 14, st: .07, c: '#c8845a', r: 60 },
+  s_guard:    { s: 'sk_guard',  k: 4,  st: 0,   c: '#d8a05a', r: 52 },
+  s_warcry:   { s: 'sk_shout',  k: 10, st: .05, c: '#e8a04a', r: 190 },
+  /* 유격 */
+  s_volley:   { s: 'sk_volley', k: 4,  st: 0,   c: '#9fe07a', r: 54 },
+  s_rain:     { s: 'sk_volley', k: 6,  st: 0,   c: '#9fe07a', r: 70 },
+  s_pierce:   { s: 'sk_pierce', k: 5,  st: .03, c: '#9fe07a', r: 46 },
+  s_smoke:    { s: 'sk_smoke',  k: 0,  st: 0,   c: '#b8c8b0', r: 150 },
+  s_mark:     { s: 'sk_mark',   k: 0,  st: 0,   c: '#e8d05a', r: 40 },
+  /* 술사 */
+  s_fireball: { s: 'sk_fire',   k: 4,  st: 0,   c: '#ff9a4a', r: 44 },
+  s_nova:     { s: 'sk_frost',  k: 7,  st: .04, c: '#9fe0ff', r: 160 },
+  s_meteor:   { s: 'sk_fire',   k: 4,  st: 0,   c: '#ffb04a', r: 60 },   // 떨어질 때가 진짜다
+  s_heal:     { s: 'sk_heal',   k: 0,  st: 0,   c: '#9ff09f', r: 42 },
+  s_barrier:  { s: 'sk_shield', k: 0,  st: 0,   c: '#6fb8ff', r: 48 },
+  s_chain:    { s: 'sk_bolt',   k: 5,  st: .03, c: '#ffe86a', r: 44 },
+  s_blink:    { s: 'sk_blink',  k: 4,  st: 0,   c: '#c08fff', r: 48 },
+  s_wolf:     { s: 'sk_summon', k: 4,  st: 0,   c: '#c8b88a', r: 56 }
+};
+/* 운석이 실제로 닿는 순간 — 이 게임에서 가장 큰 한 방이라 멈춤도 가장 길다 */
+const SKILL_HIT = { meteor: { s: 'sk_meteor', k: 20, st: .10 } };

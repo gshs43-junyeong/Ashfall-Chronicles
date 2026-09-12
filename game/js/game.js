@@ -435,6 +435,17 @@ const G = {
   },
 
   update(dt) {
+    /* ---- 손이 멈추는 한 박자 ----
+       큰 것이 닿는 순간 세계를 아주 잠깐 세운다. 때린 쪽과 맞은 쪽이 **그 한
+       프레임 동안 붙어 있는 것**이 무게로 읽힌다 — 격투 게임이 히트스톱이라
+       부르는 것이고, 이 게임에는 아예 없었다. 화면 흔들림만으로는 "크다"가
+       아니라 "카메라가 떨린다"로만 보인다.
+
+       멈춤 시간은 **실제 시간으로** 줄이고 세계만 느리게 흘린다. dt 를 0 으로
+       두면 물리가 한 프레임 통째로 건너뛰어 관통이 생긴다. 0.12 배면 거의 선
+       것으로 보이면서 충돌은 계속 풀린다. 흔들림도 같이 느려져 그 사이 더
+       오래 떨린다 — 그게 맞다. */
+    if (this.stopT > 0) { this.stopT -= dt; dt *= 0.12; }
     this.time += dt;
     const nextDayT = (this.dayT + dt * 2) % 1440;
     if (nextDayT < this.dayT) { this.dayCount++; this.updateEconomy(); this.growCropsDaily(); }
@@ -2294,6 +2305,20 @@ const G = {
   },
 
   /** 퍼져 나가는 고리. aoe 와 달리 피해가 없다 — 순수하게 보이기 위한 것 */
+  /** 세계를 s초만큼 멈춘다(겹치면 긴 쪽). 0.12초를 넘기면 끊긴 것으로 보인다 */
+  hitStop(s) { this.stopT = Math.min(0.12, Math.max(this.stopT || 0, s || 0)); },
+
+  /* 못 쓰는 스킬을 눌렀을 때 — 예전에는 **아무 일도 안 일어났다.** 재사용
+     대기 중이면 조용히 return 했으니, 눌렀는데 안 나간 것인지 키가 안 먹은
+     것인지 구별할 수가 없었다. 입력을 삼키면 안 된다. 짧은 막힌 소리와 칸이
+     한 번 흔들리는 것으로 "받았고, 안 된다"를 돌려준다. */
+  skillDeny(slot, msg) {
+    this.sfx('sk_deny');
+    const el = document.querySelectorAll('#skillbar .sk')[slot];
+    if (el) { el.classList.remove('deny'); void el.offsetWidth; el.classList.add('deny'); }
+    if (msg) this.toast(msg, 'bad');
+  },
+
   ringFx(x, y, r, c, life) {
     this.rings = this.rings || [];
     this.rings.push({ x, y, r, t: life || 0.3, max: life || 0.3, c });
@@ -3936,7 +3961,29 @@ const G = {
       break_metal: [760, 300, 'square', .06, .5], break_glass: [1800, 700, 'sine', .055, .75],
       break_ice: [1300, 500, 'sine', .055, .7], break_ember: [420, 120, 'sawtooth', .06, .9],
       break_bone: [520, 200, 'square', .055, .6], break_flesh: [200, 90, 'sine', .06, .5],
-      break_void: [90, 45, 'sine', .06, .6], break_machine: [520, 140, 'sawtooth', .07, .55]
+      break_void: [90, 45, 'sine', .06, .6], break_machine: [520, 140, 'sawtooth', .07, .55],
+      /* --- 스킬 (열아홉 가지를 열다섯 갈래로) ---
+         파일이 오기 전에도 갈래마다 다르게 들린다. 재질음과 같은 방식이다 —
+         [시작 주파수, 끝 주파수, 파형, 크기, 잡음 섞는 정도]. */
+      sk_slash: [620, 200, 'sawtooth', .05, .55],   // 칼바람 — 빠르게 내려긋는다
+      sk_whirl: [520, 260, 'sawtooth', .036, .5],   // 도는 동안 박자마다
+      sk_charge: [260, 90, 'square', .06, .7],      // 부딪히며 밀고 들어간다
+      sk_quake: [110, 45, 'sawtooth', .075, .95],   // 땅이 갈라진다
+      sk_guard: [180, 300, 'square', .05, .35],     // 쇠가 맞물려 굳는다
+      sk_shout: [300, 520, 'sawtooth', .07, .6],    // 사람 목소리처럼 올라간다
+      sk_volley: [700, 400, 'square', .045, .45],   // 시위가 여러 번
+      sk_pierce: [1200, 520, 'sine', .045, .3],     // 한 발이 꿰뚫는다
+      sk_smoke: [420, 150, 'sine', .04, .9],        // 퍼지는 연기
+      sk_mark: [900, 1350, 'sine', .04],            // 겨눈 곳에 찍히는 신호음
+      sk_fire: [180, 520, 'sawtooth', .055, .75],   // 불이 붙는다
+      sk_meteor: [90, 38, 'sawtooth', .1, .95],     // 떨어져 박힌다
+      sk_frost: [1400, 600, 'sine', .05, .5],       // 얼음이 갈라진다
+      sk_heal: [520, 880, 'sine', .05],             // 따뜻하게 올라가는 종
+      sk_shield: [400, 760, 'triangle', .05, .25],  // 유리 돔이 씌워진다
+      sk_bolt: [1600, 700, 'square', .05, .6],      // 전기가 튄다
+      sk_blink: [900, 180, 'sine', .045, .35],      // 사라졌다 나타난다
+      sk_summon: [260, 430, 'sawtooth', .055, .4],  // 부르는 소리
+      sk_deny: [200, 150, 'square', .028, .25]      // 막힌 소리 — 짧고 낮게
     }[kind];
     if (!spec) return;
     /* ★ 파일이 없어 합성음으로 떨어질 때도 SFX_GAP 을 지킨다.
