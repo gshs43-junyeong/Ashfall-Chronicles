@@ -466,6 +466,17 @@ const G = {
       for (const m of this.world.machines.values())
         if (m.t === 'assembler' && Factory.sat(this.world, m) > 0) { this.asmRan = 1; break; }
     }
+    /* 문짝이 여닫히는 동안만 움직인다. 판정(closed)은 누른 순간 바로 바뀌고 그림만
+       따라붙는다 — 그림이 다 열릴 때까지 못 지나가면 조작이 그림을 기다리게 된다.
+       열 때가 닫을 때보다 빠르다(밀면 열리고, 닫힐 때는 제 무게로 돌아온다). */
+    if (w && w.doors) for (const d of w.doors) {
+      const tgt = d.closed ? 0 : 1;
+      if (d.sw === undefined) d.sw = tgt;
+      else if (d.sw !== tgt) {
+        const step = dt * (tgt > d.sw ? 7 : 5);
+        d.sw = tgt > d.sw ? Math.min(tgt, d.sw + step) : Math.max(tgt, d.sw - step);
+      }
+    }
     // 펫 — 장비창 상태와 맞춘 뒤 각자 알아서 따라오고 알아서 문다
     this.syncPets();
     for (const pet of this.petEnts) if (pet) pet.update(dt, p);
@@ -757,11 +768,11 @@ const G = {
        한 번 누르면 끝나므로 연타로 중복 회수되지 않게 짧은 간격을 둔다. */
     {
       const o = this.findObjAt(this.input.wx, this.input.wy);
-      if (o && o.placed && OBJ_SIZE[o.type]) {
+      if (o && o.placed && (OBJ_SIZE[o.type] || o.type === 'door')) {
         p.mineTx = -1; p.mineProg = 0;
         if (this.time - (this._stRm || -9) < 0.3) return;
         this._stRm = this.time;
-        this.removeStation(o);
+        if (o.type === 'door') this.removeDoor(o); else this.removeStation(o);
         return;
       }
     }
@@ -1042,6 +1053,7 @@ const G = {
     {
       const hi = p.held();
       if (hi && idef(hi).type === 'station') { this.placeStation(mtx, mty); return; }
+      if (hi && idef(hi).type === 'door') { this.placeDoor(mtx, mty); return; }
     }
 
     // 4) 블록 설치
@@ -1100,6 +1112,52 @@ const G = {
     for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, '#d8b06a', -30, .5));
     UI.refreshBag(); this.sfx('place');
   },
+  /* ================= 문 =================
+     문은 설치물(OBJ_SIZE 한 칸 규격)과 규격이 달라 경로를 따로 둔다 — 세로 두 칸이고,
+     바닥에 서고, 닫힌 동안만 길을 막는다(World.hitSolid 가 doors 를 따로 본다).
+     성문은 세로 세 칸이라 한 칸 규격에 넣으면 눌린다.
+
+     ★ 여닫는 방향은 **놓을 때 바라본 쪽**이다. 벽을 쌓다가 문 자리에 서서 밖을 보고
+     달면 밖으로 열리고, 안을 보고 달면 안으로 열린다 — 다 짓고 나서 고칠 것이 아니라
+     짓는 자세가 그대로 결과가 되게. */
+  placeDoor(tx, ty) {
+    const p = this.player, w = this.world;
+    const it = p.held();
+    if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast('너무 멀다', 'bad'); return; }
+    const y0 = ty - 1;                       // 겨눈 칸이 문의 **아랫칸** — 위로 한 칸 더 선다
+    for (let yy = y0; yy <= ty; yy++) {
+      if (w.get(tx, yy) !== T.AIR) { this.toast('빈 자리에만 달 수 있다', 'bad'); return; }
+      if (Factory.at(w, tx, yy)) { this.toast('이미 기계가 있다', 'bad'); return; }
+    }
+    if (!w.solid(tx, ty + 1)) { this.toast('바닥이 있어야 문을 단다', 'bad'); return; }
+    if (w.inLockedVault(tx, ty)) { this.toast('잠긴 골방 안에는 놓을 수 없다', 'bad'); return; }
+    const box = { x: tx * TS, y: y0 * TS, w: TS, h: TS * 2 };
+    for (const o of w.objects) {
+      if (!OBJ_SIZE[o.type] && o.type !== 'npc' && o.type !== 'door') continue;
+      if (aabb(box, { x: o.x, y: o.y, w: o.w, h: o.h })) { this.toast('그 자리에는 놓을 수 없다', 'bad'); return; }
+    }
+    /* 문틀 안에 서 있는 채로 달면 닫힌 문에 갇힌다 — 그때만 열어 둔 채로 세운다.
+       "놓을 수 없다"고 막는 것보다 낫다. 어차피 한 번 누르면 닫힌다. */
+    const inside = aabb(box, p.rect());
+    w.pushDoor(tx * TS, y0 * TS, TS, TS * 2, p.facing >= 0 ? 1 : -1,
+               { placed: 1, closed: !inside, sw: inside ? 1 : 0 });
+    it.c--; if (it.c <= 0) p.bag[p.sel] = null;
+    for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, '#8a6a42', -30, .5));
+    UI.refreshBag(); this.sfx('place');
+  },
+  /** 문 회수 — 내가 단 것만. 마을·캠프에 원래 서 있던 문과 성문은 손대지 않는다. */
+  removeDoor(o) {
+    const p = this.player, w = this.world;
+    if (!o.placed) return false;
+    const it = makeItem('door_wood', 1);
+    if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y + o.h / 2, it));
+    let i = w.objects.indexOf(o); if (i >= 0) w.objects.splice(i, 1);
+    i = w.doors.indexOf(o); if (i >= 0) w.doors.splice(i, 1);
+    this.matBurst('wood', o.x + o.w / 2, o.y + o.h / 2, 12, { spd: 1.1 });
+    UI.refreshBag(); this.sfx('break_wood', this.strokeRate());
+    return true;
+  },
+
   /** 설치물 회수 — 곡괭이 등급과 무관하게 한 번에 걷어낸다(기계와 같은 감각).
       상자 안에 든 것도 같이 돌려주므로 잃어버릴 걱정 없이 옮겨 놓을 수 있다.
       단, 세계가 처음부터 놓아 둔 것(placed 플래그가 없는 것)은 손대지 않는다 —
@@ -1381,8 +1439,13 @@ const G = {
     } else if (o.type === 'terminal') {
       this.readTerminal(o);
     } else if (o.type === 'door') {
+      /* 닫을 때 문틀 안에 누가 서 있으면 닫히지 않는다 — 닫힌 문은 길을 막으므로
+         제자리에서 닫으면 제 몸이 벽에 낀다(빠져나갈 길이 없다). */
+      if (!o.closed && aabb({ x: o.x, y: o.y, w: o.w, h: o.h }, this.player.rect())) {
+        this.toast('문틀에서 비켜야 닫힌다', 'bad'); return;
+      }
       o.closed = !o.closed;
-      this.sfx('place');
+      this.sfx(o.closed ? 'door_shut' : 'door_open');
     }
   },
 
@@ -3969,6 +4032,8 @@ const G = {
       dash: [600, 260, 'sine', .04], skill: [420, 760, 'triangle', .06], boss: [70, 40, 'sawtooth', .16],
       chapter: [400, 720, 'sine', .09], death: [200, 60, 'sawtooth', .12], talk: [420, 460, 'sine', .03],
       open: [260, 380, 'square', .035], learn: [600, 900, 'triangle', .06],
+      // 문 — 여는 쪽은 경첩이 풀리며 올라가고, 닫는 쪽은 문설주에 부딪혀 떨어진다
+      door_open: [180, 300, 'triangle', .05, .35], door_shut: [320, 120, 'square', .055, .5],
       // --- 4단계: 농사 · 정지 스위치 ---
       hoe: [180, 110, 'square', .04], harvest: [500, 700, 'triangle', .05],
       power_on: [200, 500, 'square', .05], power_off: [500, 150, 'square', .05],
@@ -4876,50 +4941,95 @@ const G = {
     return Math.floor(this.time * 2.4) % 2;
   },
 
+  /* ================= 문 그리기 =================
+
+     ■ 뒤집혀 있던 것
+
+       예전에는 **닫힌** 문이 가운데 얇은 막대 하나였고 **열린** 문이 문틀을 꽉 채웠다.
+       실제와 정반대다 — 닫혀서 길을 막고 있는데 화면에는 틈이 훤히 보이고, 열어서
+       지나갈 수 있는데 화면에는 널판 한 장이 가로막고 서 있었다. 판정과 그림이
+       서로 반대인 것을 배우고 나면 문을 보고 열렸는지 닫혔는지 판단하기를 그만두게 된다.
+
+     ■ 두 짝이 가운데에서 갈라진다
+
+       닫히면 두 짝이 이음매에서 만나 문틀을 꽉 채우고, 열리면 **놓인 자리의 한가운데를
+       기준으로 양쪽으로** 접힌다. 한 짝이 옆 칸으로 젖혀지는 방식이 아니라서 옆에 빈
+       칸이 없어도 열린다 — 벽 한가운데에 낸 구멍에도 문을 달 수 있다.
+
+     ■ 여닫는 방향
+
+       o.dir(놓을 때 바라본 쪽) 쪽 짝이 **먼저, 더 크게, 문틀 밖으로** 젖혀진다.
+       반대쪽 짝은 안쪽에 얌전히 접힌다. 두 짝이 똑같이 갈라지면 방향이 안 읽히므로,
+       한쪽이 앞으로 나오는 것으로 "이 문은 이쪽으로 열린다"를 보인다.
+
+     ■ 손잡이
+
+       obj/door.png 의 것을 따른다 — 놋쇠 판에 어두운 열쇠구멍. 다만 외짝 문의
+       오른쪽 한 개가 아니라 **이음매를 사이에 둔 한 쌍**이다. 짝을 따라 같이 움직여서,
+       손잡이가 벌어지는 것만 봐도 열리는 중임을 안다. */
+  drawDoor(c, o, sx, sy, f) {
+    // 성문(gate)은 세로 3칸이라 집 문 그림을 쓰면 늘어난다 — 각자 제 그림이 있다
+    const im = this.spritesOn && Sprites.img[o.gate ? 'obj_gate' : 'obj_door'];
+    const sw = o.sw === undefined ? (o.closed ? 0 : 1) : o.sw;   // 0 닫힘 → 1 열림
+    const half = o.w / 2, dir = o.dir === -1 ? -1 : 1;
+    c.save();
+    c.imageSmoothingEnabled = false;
+    // 열린 만큼 드러나는 문틀 안쪽 — 짝 뒤로 먼저 깔아야 틈이 검게 읽힌다
+    if (sw > 0.02) {
+      c.globalAlpha = sw * 0.5;
+      c.fillStyle = '#140e08'; c.fillRect(sx, sy, o.w, o.h);
+      c.globalAlpha = 1;
+    }
+    for (const s of [-1, 1]) {
+      const lead = s === dir;                       // 놓을 때 바라본 쪽 — 이쪽이 앞으로 나온다
+      const flat = half * (lead ? 0.34 : 0.18);     // 다 열렸을 때 남는 두께(옆에서 본 문짝)
+      const wN = half + (flat - half) * sw;
+      const out = lead ? o.w * 0.16 * sw : 0;       // 문틀 밖으로 젖혀 나가는 만큼
+      const x = s < 0 ? sx - out : sx + o.w - wN + out;
+      if (im && im.width) {
+        /* 두 짝 모두 그림의 **경첩 쪽 절반**에서 뜬다(오른쪽 짝은 좌우 반전).
+           외짝 그림을 가운데에서 그냥 잘라 쓰면 한쪽에만 손잡이가 남아 쌍문으로
+           안 읽힌다 — 바깥쪽에 경첩, 안쪽(이음매)이 민민한 것이 쌍문의 얼굴이다. */
+        c.save();
+        if (s > 0) { c.translate(x + wN, sy); c.scale(-1, 1); } else c.translate(x, sy);
+        c.drawImage(im, 0, 0, im.width / 2, im.height, 0, 0, wN, o.h);
+        c.restore();
+      } else {
+        c.fillStyle = shade('#3a2610', f); c.fillRect(x, sy, wN, o.h);
+        c.fillStyle = shade(s < 0 ? '#6f4c2c' : '#5a3c22', f);
+        c.fillRect(x + 1, sy + 1, Math.max(1, wN - 2), o.h - 2);
+        c.fillStyle = shade('#4a3018', f);
+        for (let i = 1; i < 4; i++) c.fillRect(x + 1, sy + i * o.h / 4, Math.max(1, wN - 2), 1.5);
+      }
+      // 젖혀진 짝의 앞모서리 — 두께가 보이는 곳이라 한 줄 어둡게 닫는다
+      if (sw > 0.05) {
+        c.fillStyle = 'rgba(20,14,8,.55)';
+        c.fillRect(s < 0 ? x + wN - 1 : x, sy, 1.5, o.h);
+      }
+      /* 손잡이 — 이음매 쪽 모서리에 붙어 짝을 따라 움직인다.
+         ★ 굵기를 짝 안으로 묶어 둔다. 고정 폭으로 두면 다 젖혀진 짝(1~2px)보다
+         손잡이가 넓어져, 나무는 없고 놋쇠 조각만 허공에 뜬 것처럼 보였다.
+         옆에서 보면 손잡이도 얇아지는 게 맞다. */
+      const hw = Math.min(2.6, Math.max(0, wN - 1.2));
+      if (hw > 0.4) {
+        const hx = s < 0 ? x + wN - 0.8 - hw : x + 0.8;
+        const hy = sy + o.h * (o.gate ? 0.56 : 0.5) - 2.2;
+        c.globalAlpha = Math.min(1, hw / 1.6);
+        c.fillStyle = shade('#d8a94b', f); c.fillRect(hx, hy, hw, 4.4);
+        if (hw > 1.8) {
+          c.fillStyle = shade('#3a2610', f);
+          c.fillRect(hx + hw * .27, hy + 1.3, hw * .46, 1.8);
+        }
+        c.globalAlpha = 1;
+      }
+    }
+    c.restore();
+  },
+
   /** 여명 마을 시설물 — 손그림 애셋이 있으면 그것으로, 없으면 절차 렌더로 폴백 */
   drawFacility(c, o, sx, sy, f) {
     const t = this.time;
-    if (o.type === 'door') {
-      if (o.closed) {
-        // 닫히면 문틀에 파묻혀 가운데 얇은 막대(문설주)만 보인다 — 원래 모습대로
-        const thinW = Math.max(6, o.w * 0.4);
-        const dx0 = sx + (o.w - thinW) / 2;
-        // 성문(gate)은 세로 3칸이라 집 문(22×44) 그림을 쓰면 1.5배로 늘어나 찌그러진다.
-      // 전용 그림이 없으면 아래 절차 생성으로 떨어뜨린다(늘리지는 않는다).
-      const im = this.spritesOn && Sprites.img[o.gate ? 'obj_gate' : 'obj_door'];
-        if (im && im.width) {
-          c.save(); c.imageSmoothingEnabled = false;
-          c.drawImage(im, im.width * 0.3, 0, im.width * 0.4, im.height, dx0, sy, thinW, o.h);
-          c.restore();
-          return;
-        }
-        c.fillStyle = shade('#3a2610', f); c.fillRect(dx0, sy, thinW, o.h);
-        c.fillStyle = shade('#5a3c22', f); c.fillRect(dx0 + 1, sy + 1, thinW - 2, o.h - 2);
-        c.fillStyle = shade('#d8a94b', f);
-        c.beginPath(); c.arc(sx + o.w / 2, sy + o.h / 2, 1.3, 0, TAU); c.fill();
-        return;
-      }
-      // 열리면 문틀 자리를 꽉 채운다. 왼쪽으로 여닫히는 문(dir=-1)만 좌우반전해
-      // 경첩이 반대쪽에 있는 것처럼 보이게 한다.
-      const flip = o.dir === -1;
-      // 성문(gate)은 세로 3칸이라 집 문(22×44) 그림을 쓰면 1.5배로 늘어나 찌그러진다.
-      // 전용 그림이 없으면 아래 절차 생성으로 떨어뜨린다(늘리지는 않는다).
-      const im = this.spritesOn && Sprites.img[o.gate ? 'obj_gate' : 'obj_door'];
-      c.save(); c.imageSmoothingEnabled = false;
-      if (flip) { c.translate(sx + o.w, sy); c.scale(-1, 1); } else { c.translate(sx, sy); }
-      if (im && im.width) {
-        c.drawImage(im, 0, 0, im.width, im.height, 0, 0, o.w, o.h);
-      } else {
-        c.fillStyle = shade('#3a2610', f); c.fillRect(0, 0, o.w, o.h);
-        c.fillStyle = shade('#5a3c22', f); c.fillRect(2, 2, o.w - 4, o.h - 4);
-        c.fillStyle = shade('#6f4c2c', f);
-        for (let i = 1; i < 4; i++) c.fillRect(2, i * (o.h - 4) / 4 + 2, o.w - 4, 2);
-        c.fillStyle = shade('#d8a94b', f);
-        c.beginPath(); c.arc(o.w - 6, o.h / 2, 1.6, 0, TAU); c.fill();
-      }
-      c.restore();
-      return;
-    }
+    if (o.type === 'door') { this.drawDoor(c, o, sx, sy, f); return; }
     if (o.type === 'furniture') {
       // 집이 실제로 들어갈 수 있는 방이 아니라 벽지(setWall) 위에 얹힌 얇은 장식이다 —
       // 그래도 아무것도 없으면 벽지만 밋밋하게 보여서, 문·창 옆에 살림살이 실루엣을 둔다.

@@ -744,6 +744,14 @@ const ITEMS = {
   crate_gold:    { n: '황금 저장 상자', i: '🧰', type: 'station', obj: 'crate', slots: 48, gold: 1, stack: 20,
                    d: '48칸. 금테를 두른 만큼 두 배로 들어간다.' },
 
+  /* --- 문 (type:'door') ---
+     마을과 캠프에는 문이 서 있는데 플레이어는 만들 수가 없었다. 벽은 블록으로 쌓을 수
+     있어도 드나들 구멍을 막을 방법이 없어서, 지어 놓은 집이 전부 뚫린 채였다.
+     설치물(station)과 경로를 나누는 까닭은 규격이 다르기 때문이다 — 문은 세로 두 칸에
+     바닥에 서고, 닫힌 동안만 길을 막는다(OBJ_SIZE 한 칸 규격에 넣으면 성문이 눌린다). */
+  door_wood:     { n: '나무 문', i: '🚪', type: 'door', stack: 20,
+                   d: '두 짝이 가운데에서 갈라진다. 다는 순간 바라본 쪽으로 열린다.' },
+
   /* --- 동력 장비: 전하를 쓴다. 바닥나면 가방의 충전된 배터리를 한 개씩 자동으로 소모 --- */
   pick_arc:    { n: '아크 착암기', i: '🔌', type: 'tool', power: 5, dmg: 60, spd: 4.2, pw: 2.5,
                  d: '기반암 말고는 전부 뚫는다. 전하를 먹는다.' , lvReq: 20},
@@ -1131,6 +1139,8 @@ const RECIPES = [
   { out: 'station_forge', n: 1, need: { stone: 30, wood: 10 }, station: 'work' },
   { out: 'crate_wood', n: 1, need: { plank: 14, iron_bar: 2 }, station: 'work' },
   { out: 'crate_gold', n: 1, need: { gold_bar: 10, plank: 20 }, station: 'forge' },
+  // 문 — 널판 여덟에 경첩 한 벌. 벽만 쌓을 수 있고 드나들 구멍은 못 막던 것을 푼다
+  { out: 'door_wood', n: 1, need: { plank: 8, iron_bar: 1 }, station: 'work' },
 
   { out: 'rod_basic', n: 1, need: { wood: 10, spider_silk: 4 }, station: 'work' },
   { out: 'rod_adv', n: 1, need: { machine_frame: 1, motor: 2, mythril_bar: 4, spider_silk: 14, crystal: 6 }, station: 'work', lv: 3 },
