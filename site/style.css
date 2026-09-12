@@ -450,6 +450,16 @@ details.log summary::before{content:"+";font-family:"IBM Plex Mono",monospace;co
 details.log[open] summary::before{content:"\2212";}
 details.log .log-body{padding:0 18px 18px 44px;color:var(--bone-dim);font-size:.89rem;}
 details.log .log-body ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:7px;}
+/* 아직 안 나온 판 — 내려받는 것과 웹에서 도는 것이 다르다는 걸 한눈에.
+   테두리만 잉걸빛으로 세우고 나머지는 다른 항목과 같게 둔다. */
+details.log.log-wip{border-color:color-mix(in srgb,var(--ember) 45%,var(--line));}
+details.log.log-wip summary::before{content:"\25CF";font-size:.7rem;}
+details.log .wip{
+  font-family:"IBM Plex Mono",monospace;font-size:.7rem;font-weight:400;letter-spacing:.06em;
+  border:1px solid color-mix(in srgb,var(--ember) 55%,var(--line));border-radius:3px;
+  padding:1px 7px;color:var(--ember);
+}
+details.log .log-note{margin:0 0 12px;padding-bottom:12px;border-bottom:1px solid var(--line);}
 
 /* ================= 푸터 ================= */
 footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--bone-faint);font-size:.82rem;}
@@ -457,6 +467,8 @@ footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--bone-fai
 /* 지금 도는 판. 눈에 띌 필요는 없고, 물어보면 답할 수 있으면 된다 —
    "사이트를 고쳤는데 반영이 안 된다"가 캐시인지 배포인지 여기서 갈린다. */
 .site-build{opacity:.42;font-size:.82em;margin-left:6px;}
+.eyebrow-sub{opacity:.55;letter-spacing:.04em;font-weight:400;}
+.lede-note{display:block;margin-top:6px;font-size:.9em;opacity:.72;}
 .foot-links{display:flex;flex-wrap:wrap;gap:18px;}
 /* 애셋 출처 — 눈에 띌 필요는 없지만 반드시 보이는 자리에 있어야 한다 */
 .foot-credit{flex-basis:100%;order:3;margin:14px 0 0;opacity:.62;font-size:.9em;}

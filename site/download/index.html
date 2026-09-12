@@ -30,7 +30,7 @@
 </nav>
 
 <header class="wrap page-head">
-  <p class="eyebrow">v1.0.5 · Windows · macOS</p>
+  <p class="eyebrow">v1.0.5 · Windows · macOS <span class="eyebrow-sub">웹에서는 v1.1 개발판이 돕니다</span></p>
   <h1>내려받기</h1>
   <p class="sec-lede">인터넷 없이 돌아가고, 압축을 푼 폴더 밖 어디에도 파일을 설치하지 않습니다. 지우고 싶으면 폴더째 버리면 됩니다.</p>
 </header>
@@ -229,8 +229,36 @@ bash launch.sh</code></pre>
   <div class="wrap">
     <div class="sec-head"><p class="eyebrow">변경 이력</p></div>
     <h2>이번에 달라진 것</h2>
+    <p class="sec-lede">내려받는 판은 <span class="mono">v1.0.5</span> 입니다. 그 위에 만들고 있는 것은 웹에서 먼저 해 볼 수 있습니다.</p>
 
-    <details class="log" open>
+    <!-- v1.1 은 아직 안 나왔다. 내려받는 판은 1.0.5 이고, 아래 내용은 웹(/play)에서
+         지금 돌고 있는 개발판의 것이다. 딱지를 분명히 달아 두지 않으면 "받았는데
+         이 기능이 없다"가 난다. 전체 목록은 docs/v1.1-changelog.md. -->
+    <details class="log log-wip" open>
+      <summary>v1.1 — 개발 중 <span class="wip">웹에서만</span></summary>
+      <div class="log-body">
+        <p class="log-note">아직 만드는 중입니다. <strong>내려받는 판에는 아직 없고</strong>,
+          <a href="../home#play">웹에서 플레이</a>하면 지금까지 들어간 것을 해 볼 수 있습니다.
+          가장 큰 남은 덩어리는 <strong>세션 2의 메인 스토리</strong>입니다.</p>
+        <ul>
+          <li><strong>시작 캐릭터 다섯과 난이도 셋.</strong> 각자 제 얼굴과 제 이야기, 다른 시작 장비를 갖습니다. 어려움은 잡몹이 2배에 죽으면 가방 절반, 불가능은 5배에 슬롯이 지워집니다.</li>
+          <li><strong>장 목표가 숙제 목록에서 고르는 것으로.</strong> 넷~여섯 개를 전부 채워야 다음으로 가던 것을, 골라서 하는 것·그 장의 고유 동사·결착 셋으로 나눴습니다.</li>
+          <li><strong>잿빛이 숲을 먹습니다.</strong> 장이 넘어갈수록 잎과 풀에서 색이 빠지고 잎이 한 칸씩 집니다. 1장의 숲과 8장의 숲이 다릅니다.</li>
+          <li><strong>유적 전면 개편.</strong> 겉모양·입구·지도·고유 방과 이벤트. 유적마다 그곳에서만 보는 장식 둘, 전리품 둘, <strong>고유 몬스터 하나</strong>가 있습니다.</li>
+          <li><strong>세션 2 개조.</strong> 옛 지역의 몹이 기계가 되어 돌아오고, 개조된 것에서는 부품만 나옵니다.</li>
+          <li><strong>사람들이 오늘을 보고 말합니다.</strong> 죽은 자리를 두고 왔는지, 다쳤는지, 비가 오는지, 주머니가 비었는지에 따라 대사가 달라지고 대답을 고를 수 있습니다.</li>
+          <li><strong>의뢰 게시판이 사람이 쓴 종이로.</strong> 제목·본문·붙인 사람이 있는 의뢰 스물아홉 장. 그중 넷은 끝내면 다음 날 뒷이야기가 붙습니다. 여명 마을 다섯에게도 부탁이 생겼습니다.</li>
+          <li><strong>특성이 트리로.</strong> 칸 열둘을 더하고 레벨마다 점수를 하나씩 줍니다. 농사·낚시 숙련도 생겼습니다.</li>
+          <li><strong>보스 페이즈 재구성</strong> — 미니보스 둘, 최종 다섯. 후반 결착에는 전용 AI 와 약점 규칙이 붙습니다.</li>
+          <li><strong>손맛.</strong> 무엇을 때리고 부수는지가 소리와 파편으로 갈리고, 스킬 열아홉 가지가 저마다 다른 소리를 내고, 큰 것이 닿는 순간 화면이 짧게 멈춥니다. 보스와 몹이 쓰러지는 그림도 생겼습니다.</li>
+          <li><strong>농사와 낚시.</strong> 밭은 아침에 자라고 낫으로 거둡니다. 물에서만 나오는 것 일곱과, 낚시로만 나오는 무기·장신구 열둘.</li>
+          <li>그림: 애셋 48종 교체, 몹·보스 79종을 판정 박스에 맞춤, 미끄러지기만 하던 숨과 걸음 129칸을 되살림.</li>
+          <li>고침: 해와 달이 뒷배경 나무를 뚫고 나오던 것, 사막에 비가 내리던 것, 물건값이 재료마다 전부 같던 것.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="log">
       <summary>v1.0.5 — 저장 슬롯과 금고</summary>
       <div class="log-body">
         <ul>
