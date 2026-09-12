@@ -1486,6 +1486,77 @@ const G = {
     const cur = clamp(this.objStart(o) - start, 0, o.n);
     return { cur, max: o.n, done: cur >= o.n };
   },
+  /* ================= 의뢰 · 부탁의 값 =================
+
+     예전에는 둘이 따로 셈했고 둘 다 어긋나 있었다.
+
+       게시판  금화 160+55·레벨, 경험치 90+40·레벨. 레벨에 1차로만 붙였는데
+               필요 경험치는 40·레벨^1.42 로 훨씬 가파르게 오른다. 그래서
+               10레벨에 한 장이 한 레벨의 절반이던 것이 50레벨에는 4분의 1이
+               됐다 — 갈수록 떼어 갈 이유가 없어졌다.
+       부탁    아예 레벨을 안 봤다. 장에만 붙어서 14장 665금화. 같은 장이면
+               1레벨이든 50레벨이든 같은 값이고, 후반에는 몹 한 마리 값이었다.
+
+     이제 한 셈으로 매긴다.
+
+       ① 경험치는 **그 레벨의 필요 경험치를 기준으로** 매긴다.
+          레벨업에 드는 것이 40·lv^1.42 이므로, 그 45%를 한 건값으로 잡으면
+          한 장이 어느 레벨에서나 "레벨의 절반쯤"으로 읽힌다. 레벨에 1차로
+          붙이던 예전 식은 이 곡선을 따라가지 못해 후반에 뒤처졌다.
+       ② 일의 무게로 0.8~1.25 배 손본다. 같은 열 마리라도 무덤지기와 증식
+          기계가 같을 수는 없다. 무게는 **그 일로 그냥 얻는 경험치가 한 레벨의
+          몇 배인가**로 잰다. 상대가 내놓는 것을 그대로 더하면(처음에 그렇게
+          했다) 후반 한 장이 세 레벨어치가 되어 게시판이 사냥을 대신해 버린다.
+          보정에 그쳐야 한다.
+       ③ 금화는 레벨에 1차로 붙이고, 잡는 의뢰는 상대가 떨구는 것의 4분의 1을
+          얹는다. 모으기·캐기는 물건 값의 절반.
+       ④ 어떤 의뢰도 **예전보다 낮아지지 않는다.** 옛 값의 1.25배를 바닥으로
+          깐다 — 레벨 곡선이 헐한 초반에는 이 바닥이 이긴다.
+
+     값은 **저장하지 않고 그때그때 센다.** 붙을 때의 레벨로 굳혀 두면 하루 사이에
+     레벨이 올라도 옛 값을 받는다. 종이에 적힌 값과 받는 값이 늘 같으려면 둘 다
+     같은 셈을 그 자리에서 해야 한다. */
+  QUEST_PAY: {
+    need: 0.45,               // 경험치 = 그 레벨 필요치의 몇 할
+    tMin: 0.8, tMax: 1.25,    // 일의 무게 보정 폭
+    g0: 300, gL: 110,         // 금화 레벨 몫
+    killG: 0.25,              // 잡은 것이 떨구는 금화 중 얹는 몫
+    matG: 0.5,                // 모으고 캔 것의 값 중 얹는 몫
+    floor: 1.25,              // 옛 값의 이 배수 아래로는 안 내려간다
+    side: 0.75                // 부탁 한 건은 게시판 한 장의 4분의 3 (게시판은 하루 석 장뿐이다)
+  },
+  MAT_VAL: 12,                // 재료 기본값 — price() 는 시세를 타서 값이 흔들린다
+  xpNeed(lv) { return 40 * Math.pow(lv, 1.42); },
+  questPay(obj, mul) {
+    const Q = this.QUEST_PAY, lv = Math.max(1, this.player.level), m = mul || 1;
+    const k = m * obj.n / (BOUNTY_UNIT[obj.type] || 12);
+    const need = this.xpNeed(lv);
+    const e = obj.type === 'kill' ? (ENEMIES[obj.target] || { gold: 0, xp: 0 }) : null;
+    const t = e ? clamp(e.xp * obj.n / need, Q.tMin, Q.tMax) : 1;
+    let gold = (Q.g0 + Q.gL * lv) * k;
+    if (e) gold += e.gold * obj.n * Q.killG * m;
+    else {
+      const id = obj.type === 'collect' ? obj.item : (TILE_DEF[obj.tile] || {}).drop;
+      gold += (id && ITEMS[id] ? (ITEMS[id].price || this.MAT_VAL) : 0) * obj.n * Q.matG * m;
+    }
+    return {
+      gold: Math.round(Math.max(gold, (160 + 55 * lv) * k * Q.floor)),
+      xp: Math.round(Math.max(Q.need * need * k * t, (90 + 40 * lv) * k * Q.floor))
+    };
+  },
+  /** 게시판 한 장의 값. 이미 떼어 간 종이는 그때 받은 값을 그대로 보여 준다. */
+  bountyPay(b) {
+    if (!b) return { gold: 0, xp: 0 };
+    if (b.paid) return b.paid;
+    if (!b.obj) return { gold: b.gold || 0, xp: b.xp || 0 };   // 아주 옛 저장
+    return this.questPay(b.obj, b.mul === undefined ? 1 : b.mul);
+  },
+  /** 부탁 하나의 값. 표에 적힌 값보다 낮아지지는 않는다. */
+  sidePay(sq) {
+    const p = this.questPay(sq.obj, this.QUEST_PAY.side), r = sq.rw || {};
+    return { gold: Math.max(p.gold, r.gold || 0), xp: Math.max(p.xp, r.xp || 0) };
+  },
+
   /** 목표를 한 줄로 — "무덤지기 12마리" */
   objLabel(o) {
     if (o.type === 'kill') return `${ENEMIES[o.target].n} ${o.n}${mobCw(o.target)}`;
@@ -1504,13 +1575,10 @@ const G = {
   },
   makeBounty(t, r) {
     const obj = t.obj(r, this.chapter);
-    const lv = Math.max(1, this.player.level);
-    const k = (t.rw || 1) * obj.n / (BOUNTY_UNIT[obj.type] || 12);
     return {
       id: t.id, title: t.title, from: t.from, body: t.body,
-      obj, start: this.objStart(obj), done: 0,
-      doneLine: t.done, next: t.next || '', items: t.items || null,
-      gold: Math.round((160 + lv * 55) * k), xp: Math.round((90 + lv * 40) * k)
+      obj, start: this.objStart(obj), done: 0, mul: t.rw || 1,
+      doneLine: t.done, next: t.next || '', items: t.items || null
     };
   },
   rollBounties() {
@@ -1541,9 +1609,9 @@ const G = {
   claimBounty(i) {
     const b = this.bounties[i]; if (!b || b.done) return;
     if (!this.bountyProgress(b).done) { this.toast('아직 다 하지 못했다', 'bad'); return; }
-    const p = this.player;
-    b.done = 1;
-    p.addXp(b.xp); p.gold += b.gold;
+    const p = this.player, pay = this.bountyPay(b);
+    b.done = 1; b.paid = pay;          // 떼어 간 뒤에도 종이에 받은 값이 남는다
+    p.addXp(pay.xp); p.gold += pay.gold;
     for (const [id, n] of (b.items || [])) {
       const it = ITEMS[id].stack > 1 ? makeItem(id, n) : rollGear(id, this.rng, 1);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
@@ -1553,7 +1621,7 @@ const G = {
     if (b.next && !(this.bountyNext || []).includes(b.next)) {
       this.bountyNext = (this.bountyNext || []).concat(b.next);
     }
-    this.toast(`의뢰 완료: ${b.title} — 경험치 ${fmt(b.xp)} · 금화 ${fmt(b.gold)}`, 'good');
+    this.toast(`의뢰 완료: ${b.title} — 경험치 ${fmt(pay.xp)} · 금화 ${fmt(pay.gold)}`, 'good');
     UI.refreshBoard(); UI.refreshBag(); this.sfx('manycoins');
   },
 
@@ -1850,7 +1918,10 @@ const G = {
     const pool = SIDE_POOL[npcId];
     if (!pool) return;
     const tpl = pool[this.rng.int(0, pool.length - 1)](this.chapter, this.rng);
-    UI.openDialogue(npcId, [tpl.desc], [
+    /* 값을 먼저 알려 준다. 예전에는 받고 끝낼 때까지 얼마인지 몰랐다 —
+       고를 수 있는 것이 "한다·안 한다"뿐인데 재료가 없으면 고를 수가 없다. */
+    const pay = this.sidePay(tpl);
+    UI.openDialogue(npcId, [`${tpl.desc}\n(보상은 🪙 ${fmt(pay.gold)} · 경험치 ${fmt(pay.xp)})`], [
       { t: '(수락한다)', quest: 1, fn: () => { this.acceptSideQuest(npcId, tpl); UI.closeDialogue(); } },
       { t: '(다음에 하겠다)', fn: () => UI.closeDialogue() }
     ]);
@@ -1862,15 +1933,15 @@ const G = {
   },
   completeSideQuest(npcId) {
     const sq = this.sideActive[npcId]; if (!sq) return;
-    const p = this.player;
-    p.addXp(sq.rw.xp); p.gold += sq.rw.gold;
+    const p = this.player, pay = this.sidePay(sq);
+    p.addXp(pay.xp); p.gold += pay.gold;
     for (const [id, n] of (sq.rw.items || [])) {
       const it = ITEMS[id].stack > 1 ? makeItem(id, n) : rollGear(id, this.rng, 1);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
     }
     this.sideDone[npcId] = (this.sideDone[npcId] || 0) + 1;
     delete this.sideActive[npcId];
-    this.toast(`부탁 완료: ${sq.title} — 경험치 ${fmt(sq.rw.xp)} · 금화 ${fmt(sq.rw.gold)}`, 'good');
+    this.toast(`부탁 완료: ${sq.title} — 경험치 ${fmt(pay.xp)} · 금화 ${fmt(pay.gold)}`, 'good');
     UI.refreshQuest(); UI.refreshTracker(); UI.refreshBag();
     this.sfx('manycoins');
   },
