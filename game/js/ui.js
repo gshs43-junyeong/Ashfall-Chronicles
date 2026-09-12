@@ -1504,6 +1504,7 @@ const UI = {
     const typeName = d.type === 'weapon' ? ({ melee: '근접 무기', ranged: '원거리 무기', magic: '마법 무기' })[d.wc]
       : d.type === 'armor' ? '방어구' : d.type === 'acc' ? '장신구' : d.type === 'tool' ? '도구'
         : d.type === 'rod' ? '낚싯대' : d.type === 'pet' ? '펫' : d.type === 'station' ? '설치물'
+          : d.type === 'door' ? '문'
           : d.type === 'bag' ? '가방' : d.type === 'consum' ? '소비품' : d.type === 'block' ? '설치물'
             : d.type === 'machine' ? '기계' : d.type === 'seed' ? (d.fert ? '비료' : '씨앗')
               : d.type === 'summon' ? '소환' : '재료';
@@ -1556,6 +1557,7 @@ const UI = {
     else if (d.type === 'rod') h += `<div class="thint">핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)</div>`;
     else if (d.type === 'pet') h += `<div class="thint">우클릭으로 펫 칸에 장착 — 두 마리까지 데리고 다닐 수 있다</div>`;
     else if (d.type === 'station') h += `<div class="thint">핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)</div>`;
+    else if (d.type === 'door') h += `<div class="thint">바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수</div>`;
     else if (isGear(it)) h += `<div class="thint">우클릭으로 장착</div>`;
     else if (d.type === 'consum' || d.type === 'summon') h += `<div class="thint">우클릭으로 사용</div>`;
     else if (d.type === 'machine') h += `<div class="thint">우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정</div>`;

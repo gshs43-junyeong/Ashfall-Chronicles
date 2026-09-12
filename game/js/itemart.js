@@ -270,6 +270,7 @@ const ISPEC = {
   station_forge: { k: 'stationic', m: 'forge' },
   crate_wood: { k: 'stationic', m: 'crate' },
   crate_gold: { k: 'stationic', m: 'crate', gold: 1 },
+  door_wood: { k: 'doorit' },
   m_gen: { k: 'machine', tile: T.M_GEN, glow: '#e8842a' },
   m_battery: { k: 'machine', tile: T.M_BATTERY, glow: '#6fe0c0' },
   m_pole: { k: 'machine', tile: T.M_POLE },
@@ -2116,6 +2117,24 @@ const Art = {
           P(13, 10, 6, 7, gold ? '#ffd85a' : '#c8a04a');
           P(14.5, 13, 3, 3, '#3a2610');
         }
+        break;
+      }
+
+      /* ---------- 문 ----------
+         세계에 서 있는 모습 그대로 — 두 짝이 가운데에서 만나고, 그 이음매에
+         손잡이 한 쌍이 붙는다. 손잡이 색과 모양은 obj/door.png 의 것을 따른다
+         (놋쇠 판에 어두운 열쇠구멍). 아이콘만 보고 그 문임을 알아볼 수 있게. */
+      case 'doorit': {
+        P(4, 2, 24, 28, '#3a2610');                     // 문틀
+        P(5, 3, 11, 26, '#6f4c2c'); P(16, 3, 11, 26, '#5a3c22');   // 두 짝 — 오른쪽이 그늘
+        for (let i = 0; i < 3; i++) {                   // 널 이음매
+          P(8 + i * 3.4, 3, 1, 26, '#4a3018');
+          P(18 + i * 3.4, 3, 1, 26, '#452c16');
+        }
+        P(5, 9, 22, 1.6, '#4a3018'); P(5, 21, 22, 1.6, '#4a3018');  // 가로 띠 둘
+        P(15.4, 3, 1.2, 26, '#2e1d0e');                 // 가운데 이음매
+        P(12.4, 14, 3, 4.5, '#d8a94b'); P(16.6, 14, 3, 4.5, '#d8a94b');  // 손잡이 한 쌍
+        P(13.4, 15.4, 1.2, 1.8, '#3a2610'); P(17.4, 15.4, 1.2, 1.8, '#3a2610');
         break;
       }
 
