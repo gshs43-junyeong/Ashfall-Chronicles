@@ -229,16 +229,23 @@ async def main():
                  맞는 숫자를 넣고, 확인을 누르는 것까지 그대로 흉내 낸다. */
               const cd = w.objects.filter(o => o.type === 'codedoor');
               let codeOK = true;
+              const kinds = [], notes = {};
+              for (const o of w.objects) if (o.type === 'ciphernote')
+                (notes[o.ruin] = notes[o.ruin] || new Set()).add(o.idx);
               for (const o of cd) {
+                const c = G.ruinCipher(o.ruin);
+                kinds.push(o.ruin + ':' + (c ? c.kind : 'X'));
+                /* 쪽지 셋이 다 놓여야 풀 수 있다 — 하나라도 없으면 답을 알 길이 없다 */
+                if (!c || !notes[o.ruin] || notes[o.ruin].size < 3) { codeOK = false; continue; }
                 G.openCodeDoor(o);
                 if (!document.querySelector('#code-screen').classList.contains('open')) { codeOK = false; continue; }
-                document.querySelector('#code-input').value = G.ruinCode(o.ruin);
+                document.querySelector('#code-input').value = c.ans;
                 G.tryCodeDoor();
                 G.closeCodeDoor();
                 if (!o.opened) codeOK = false;
               }
               const my = w.objects.filter(o => o.type === 'mystic');
-              return { 암호문: cd.length, 암호열림: codeOK,
+              return { 암호문: kinds, 암호열림: codeOK,
                        신비한방: my.map(o => o.mk), 유물: w.objects.filter(o => o.relic).length,
                        지도: w.objects.filter(o => o.ruinmap).length }; }""")
             print('  그 밖:', extra)

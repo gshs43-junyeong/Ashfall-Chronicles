@@ -1419,6 +1419,8 @@ const G = {
       this.openSeal(o);
     } else if (o.type === 'codedoor') {
       this.openCodeDoor(o);
+    } else if (o.type === 'ciphernote') {
+      this.readCipherNote(o);
     } else if (o.type === 'mystic') {
       this.useMystic(o);
     } else if (o.type === 'vault') {
@@ -1741,18 +1743,12 @@ const G = {
       const hs = RUIN_HINTS[o.lore];
       const h = hs && hs[o.hint];
       if (!h) return;
-      /* 숫자 잠긴 문이 있는 유적이면, 흔적 세 개에 세 자리를 한 자리씩 흩어 둔다.
-         돌아다니며 셋을 다 읽어야 문이 열린다 — 흔적을 읽을 이유가 그제야 생긴다. */
-      let lines = h[1];
-      const sp = RUIN_SPEC.find(q => q.id === o.lore);
-      if (sp && sp.event === 'password' && o.hint < 3) {
-        const digit = this.ruinCode(o.lore)[o.hint];
-        lines = lines.concat([
-          '',
-          `— 구석에 다른 손으로 새긴 것이 있다. 『${['첫', '둘째', '셋째'][o.hint]} 자리는 ${digit}』`
-        ]);
-      }
-      UI.openLore(h[0], lines, []);
+      /* ★ 암호 단서는 이제 흔적에 얹지 않는다. 흔적표(RUIN_HINTS)가 없는 유적에
+         골방을 세우면 단서가 아예 안 나왔기 때문이다 — 실제로 '겹친 길'의 암호는
+         풀 방법이 없었다. 단서는 골방을 세우는 쪽이 같이 흩뿌리는 쪽지(ciphernote)가
+         들고 있다(world.buildCipherVault · game.readCipherNote). 흔적은 다시
+         "읽기만 하는 이야기 조각"으로 돌아간다. */
+      UI.openLore(h[0], h[1], []);
       this.sfx('open');
       return;
     }
@@ -3552,6 +3548,7 @@ const G = {
         talkSeq: this.talkSeq, storyHeard: this.storyHeard, villageSeen: this.villageSeen,
         sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
         seenRuins: this.seenRuins, seenBiomes: this.seenBiomes, ruinMarks: this.ruinMarks, ruinEvDone: this.ruinEvDone,
+        cipherSeen: this.cipherSeen,        // 어느 유적의 쪽지를 몇 장 읽었나
         deathMark: this.deathMark,
         villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
         lairs: this.lairs, asmRan: this.asmRan, everPlanted: this.everPlanted,
@@ -3677,6 +3674,7 @@ const G = {
       this.seenBiomes = d.seenBiomes || {};
       this._bgId = undefined;   // 불러온 자리의 배경을 기준으로 다시 잡는다
       this.ruinMarks = d.ruinMarks || {}; this.ruinEvDone = d.ruinEvDone || {};
+      this.cipherSeen = d.cipherSeen || {};
       this.deathMark = d.deathMark || null;
       this.asmRan = d.asmRan || 0;
       this.everPlanted = d.everPlanted || 0;
@@ -4289,6 +4287,20 @@ const G = {
             c.fillRect(sx + o.w * 0.3, gy + 1.5, o.w * 0.4, 2);
             c.globalAlpha = 1;
           }
+        }
+      } else if (o.type === 'ciphernote') {
+        /* 암호 쪽지 — 벽에 못으로 박아 둔 종이 한 장. 비문(돌)과 다른 실루엣이라야
+           "저건 읽을 게 또 있다"로 보인다. 아직 안 읽었으면 모서리가 깜빡인다. */
+        const read = (this.cipherSeen || {})[o.ruin] && (this.cipherSeen[o.ruin] || {})[o.idx];
+        c.fillStyle = shade('#3a3226', f); c.fillRect(sx - 1, sy - 1, o.w + 2, o.h + 2);
+        c.fillStyle = shade(read ? '#9a9078' : '#cfc6a8', f); c.fillRect(sx, sy, o.w, o.h);
+        c.fillStyle = shade('#7a6f56', f);
+        for (let i = 1; i < 5; i++) c.fillRect(sx + 3, sy + 3 + i * 4, o.w - 6, 1);
+        c.fillStyle = shade('#5a5142', f); c.fillRect(sx + o.w / 2 - 1, sy + 1, 2, 2);   // 못
+        if (!read) {
+          c.globalAlpha = .35 + Math.sin(this.time * 2.6 + o.idx) * .3;
+          c.fillStyle = '#ffe9a8'; c.fillRect(sx - 2, sy - 2, o.w + 4, o.h + 4);
+          c.globalAlpha = 1;
         }
       } else if (o.type === 'npc') {
         this.drawNpc(c, o, sx, sy, f);
@@ -4964,9 +4976,12 @@ const G = {
      ■ 한 짝이 옆으로 열린다
 
        문은 널판 **한 장**이다. 닫히면 문틀을 채우고, 열리면 경첩을 축으로 옆으로
-       젖혀진다 — 화면은 옆에서 보는 자리라 젖혀질수록 좁아지고, 다 열리면 경첩 쪽
-       가장자리에 선 얇은 띠(옆에서 본 문짝의 두께)만 남는다. 좁아지는 쪽이 곧
+       젖혀진다 — 화면은 옆에서 보는 자리라 젖혀질수록 좁아진다. 좁아지는 쪽이 곧
        경첩 쪽이고, 그래서 어느 쪽으로 열렸는지가 한눈에 보인다.
+
+       다만 **끝까지 좁히지는 않는다.** 읽을 수 있는 폭에서 멈추고 남은 구간은
+       흐려지는 데 써서, 다 열린 문은 아무것도 안 그린다 — 실오라기 한 줄은
+       보이지도 않으면서 문틀 옆에 뭔가 낀 것처럼만 보인다.
 
      ■ 여닫는 방향 — 설치된 곳을 중심으로 양쪽
 
@@ -4985,14 +5000,6 @@ const G = {
     const im = this.spritesOn && Sprites.img[o.gate ? 'obj_gate' : 'obj_door'];
     const sw = o.sw === undefined ? (o.closed ? 0 : 1) : o.sw;   // 0 닫힘 → 1 열림
     const hinge = o.dir === -1 ? -1 : 1;          // 경첩이 선 가장자리 (-1 왼쪽 / +1 오른쪽)
-    /* 다 열렸을 때 남는 폭 = 옆에서 본 문짝의 두께. 0 으로 두면 문이 사라져
-       "부쉈나" 싶어지므로 판자 한 겹만큼은 남긴다. */
-    const flat = Math.max(2.5, o.w * 0.14);
-    const wN = o.w + (flat - o.w) * sw;
-    // 문틀 밖으로 젖혀 나가는 만큼 — 다 열린 문짝이 문틀 경계에 **걸쳐** 서는 정도로만.
-    // 더 밀면 옆 칸 한가운데에 가서 서서, 옆 칸을 차지한 것처럼 보인다.
-    const out = o.w * 0.12 * sw;
-    const x = hinge < 0 ? sx - out : sx + o.w - wN + out;
     c.save();
     c.imageSmoothingEnabled = false;
     // 열린 만큼 드러나는 문틀 안쪽 — 문짝 뒤로 먼저 깔아야 틈이 어둡게 읽힌다
@@ -5001,6 +5008,21 @@ const G = {
       c.fillStyle = '#140e08'; c.fillRect(sx, sy, o.w, o.h);
       c.globalAlpha = 1;
     }
+    /* ★ 끝까지 좁히지 않는다. 예전에는 2.5px 짜리 마지막 한 장이 남았는데,
+       그 폭이면 널도 경첩도 손잡이도 한 픽셀씩이라 **아무것도 안 보이는 실오라기**
+       한 줄이 문틀 옆에 서 있는 것으로만 읽혔다. 안 보이는 것을 그리느니 없는
+       편이 낫다 — 좁아지는 것은 읽을 수 있는 폭(6px)에서 멈추고, 남은 구간은
+       사라지는 데 쓴다. 다 열린 문은 **아무것도 그리지 않는다.** */
+    const flat = Math.max(6, o.w * 0.28);         // 더는 안 좁아지는 폭
+    const FADE = 0.82;                            // 여기까지 좁히고, 남은 구간은 흐려진다
+    const alpha = 1 - clamp((sw - FADE) / (1 - FADE), 0, 1);
+    if (alpha <= 0.02) { c.restore(); return; }   // 다 열림 — 마지막 한 장은 그리지 않는다
+    const wN = o.w + (flat - o.w) * Math.min(1, sw / FADE);
+    // 문틀 밖으로 젖혀 나가는 만큼 — 다 열린 문짝이 문틀 경계에 **걸쳐** 서는 정도로만.
+    // 더 밀면 옆 칸 한가운데에 가서 서서, 옆 칸을 차지한 것처럼 보인다.
+    const out = o.w * 0.12 * sw;
+    const x = hinge < 0 ? sx - out : sx + o.w - wN + out;
+    c.globalAlpha = alpha;
     if (im && im.width) {
       /* 그림은 경첩이 **왼쪽**에 있는 문이다(손잡이가 오른쪽). 오른쪽 경첩이면
          좌우를 뒤집어 경첩이 젖혀지는 쪽으로 오게 한다 — 원래 코드도 이 한 줄로
@@ -5021,18 +5043,19 @@ const G = {
       if (hw > 0.4) {
         const hx = hinge < 0 ? x + wN - 1.4 - hw : x + 1.4;
         const hy = sy + o.h * (o.gate ? 0.56 : 0.5) - 2.2;
-        c.globalAlpha = Math.min(1, hw / 1.6);
+        c.globalAlpha = alpha * Math.min(1, hw / 1.6);
         c.fillStyle = shade('#d8a94b', f); c.fillRect(hx, hy, hw, 4.4);
         if (hw > 1.8) {
           c.fillStyle = shade('#3a2610', f);
           c.fillRect(hx + hw * .27, hy + 1.3, hw * .46, 1.8);
         }
-        c.globalAlpha = 1;
+        c.globalAlpha = alpha;
       }
     }
     // 젖혀진 문짝의 앞모서리 — 두께가 보이는 자리라 한 줄 어둡게 닫는다
     if (sw > 0.05) {
-      c.fillStyle = 'rgba(20,14,8,.55)';
+      c.globalAlpha = alpha * 0.55;
+      c.fillStyle = '#140e08';
       c.fillRect(hinge < 0 ? x + wN - 1.2 : x, sy, 1.2, o.h);
     }
     c.restore();
@@ -5437,7 +5460,9 @@ const G = {
       this.toast('홀씨가 한꺼번에 터졌다', 'bad');
       this._ruinSpawn(e.ruin, 5, 150);
     } else if (e.ev === 'password') {
-      this.toast('벽 너머에 빈 곳이 있다 — 숫자를 맞춰야 열린다');
+      // 무엇을 맞춰야 하는지는 그 유적의 자물쇠 갈래를 따라간다(숫자 · 글자 · 풀어 읽기)
+      const c = this.ruinCipher(e.ruin), K = c && CIPHER_KIND[c.kind];
+      this.toast(K ? `벽 너머에 빈 곳이 있다 — ${K.n}이다` : '벽 너머에 빈 곳이 있다');
       this.sfx('open');
     }
   },
@@ -5471,11 +5496,68 @@ const G = {
     this.sfx('open');
   },
 
-  /** 유적마다 다른 세 자리 숫자. 세계 씨앗에서 뽑으므로 세계마다 다르다.
-      비문 흔적에 한 자리씩 흩어져 있다(readLorestone 이 덧붙인다). */
-  ruinCode(id) {
-    const h = hashStr(this.world.seed + ':' + id);
-    return String(100 + (h % 900));
+  /** 그 유적의 자물쇠 — 갈래 · 답 · 문에 새겨진 것 · 쪽지 셋.
+      세계 씨앗에서 뽑으므로 세계마다 다르고, 같은 세계에서는 늘 같다
+      (저장하지 않는다 — 굳혀 두면 옛 세이브에서 답이 갈린다).
+
+      kind   digits 모으기 · word 글자 · decode 풀어 읽기
+      ans    문이 받는 답 (대소문자·공백은 넣을 때 지운다)
+      shown  문설주에 새겨져 보이는 것. 없으면 빈 글자
+      notes  쪽지 셋의 글. 셋을 다 읽어야 답이 나오게 짰다 */
+  ruinCipher(id) {
+    const kind = RUIN_CIPHER[id];
+    if (!kind) return null;
+    this._cipherCache = this._cipherCache || {};
+    const ck = this.world.seed + ':' + id;
+    if (this._cipherCache[ck]) return this._cipherCache[ck];
+    const h = hashStr(ck);
+    const K = CIPHER_KIND[kind];
+    let ans = '', shown = '', notes = [];
+    const ord = ['첫', '둘째', '셋째'];
+    if (kind === 'digits') {
+      ans = String(100 + (h % 900));
+      notes = ord.map((o, i) =>
+        [`${o} 홈`, ['여기 새긴 것은 문을 여는 수의 한 자리다.',
+                     '나머지는 다른 방에 나누어 적었다 — 한 사람이 다 알면 안 되었으므로.',
+                     '', `『${o} 자리는 ${ans[i]}』`]]);
+    } else if (kind === 'word') {
+      ans = CIPHER_WORDS[h % CIPHER_WORDS.length];
+      notes = ord.map((o, i) =>
+        [`${o} 글자`, ['문을 여는 것은 수가 아니라 말이다. 세 글자짜리 말.',
+                      '우리는 그 말을 셋으로 끊어 서로 다른 방에 두었다.',
+                      '', `『${o} 글자는 ${ans[i]}』`]]);
+    } else {
+      /* 풀어 읽기 — 문에 새긴 수를 뒤에서부터 읽고 거기에 한 자리 수를 더한다.
+         뒤집어도 세 자리이고 더해도 999 를 안 넘게 범위를 잡는다. */
+      const base = 141 + (h % 850);              // 141~990
+      const k = 1 + ((h >> 7) % 9);              // 1~9
+      ans = String(base + k);                    // 142~999 — 반드시 세 자리
+      shown = String(base).split('').reverse().join('');
+      notes = [
+        ['거짓으로 새긴 것', ['문설주의 수를 곧이곧대로 넣지 마라.',
+                             '여기 사람들은 무엇이든 거꾸로 적는 버릇이 있었다.']],
+        ['읽는 법', ['새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다.',
+                    '그러면 우리가 원래 적으려 한 수가 나온다.']],
+        ['마지막 한 걸음', ['거꾸로 읽어 낸 수가 아직 답은 아니다.',
+                          `거기에 ${k}을(를) 더해야 홈이 물린다.`,
+                          '문지기가 하루에 한 번씩 더하던 수다.']]
+      ];
+    }
+    return (this._cipherCache[ck] = { id, kind, ans, shown, notes, len: K.len, numeric: K.numeric });
+  },
+
+  /** 암호 쪽지 하나를 읽는다 — 그 유적 자물쇠의 세 조각 중 하나 */
+  readCipherNote(o) {
+    const c = this.ruinCipher(o.ruin);
+    if (!c) return;
+    const nt = c.notes[o.idx] || c.notes[0];
+    this.cipherSeen = this.cipherSeen || {};
+    (this.cipherSeen[o.ruin] = this.cipherSeen[o.ruin] || {})[o.idx] = 1;
+    const seen = Object.keys(this.cipherSeen[o.ruin]).length;
+    const lines = nt[1].slice();
+    lines.push('', `— 이 유적에서 찾은 쪽지 ${seen}/3`);
+    UI.openLore(nt[0], lines, []);
+    this.sfx('open');
   },
 
   /** 숫자 잠긴 문 — 세 자리를 맞추면 열린다.
@@ -5492,7 +5574,22 @@ const G = {
   openCodeDoor(o) {
     if (o.opened) { this.toast('이미 열려 있다'); return; }
     const el = $('#code-screen'), inp = $('#code-input'), msg = $('#code-msg');
+    const c = this.ruinCipher(o.ruin);
+    const K = c ? CIPHER_KIND[c.kind] : null;
     inp.value = ''; msg.textContent = ''; msg.classList.remove('ok');
+    /* 자물쇠 갈래마다 문에 적힌 것이 다르다 — 숫자 홈인지 글자 홈인지, 문설주에
+       새겨진 수가 있는지. 예전에는 세 갈래가 다 "숫자 세 자리"라고만 적혀 있었다. */
+    $('#code-title').textContent = K ? K.n : '돌판의 홈';
+    $('#code-door').textContent = K ? K.door : '홈이 셋.';
+    const seen = ((this.cipherSeen || {})[o.ruin]) || {};
+    $('#code-hint').textContent =
+      `유적 안에 흩어진 쪽지 셋이 답을 나눠 들고 있다 (찾은 것 ${Object.keys(seen).length}/3)`;
+    const carved = $('#code-carved');
+    if (c && c.shown) { carved.hidden = false; carved.textContent = `문설주에 새긴 것 — ${c.shown}`; }
+    else carved.hidden = true;
+    inp.maxLength = c ? c.len : 3;
+    inp.placeholder = c && !c.numeric ? '○○○' : '000';
+    inp.setAttribute('inputmode', c && !c.numeric ? 'text' : 'numeric');
     this.codeDoor = o;
     this.openModal('#code-screen');
     this.uiOpen = true;
@@ -5500,10 +5597,16 @@ const G = {
     this.sfx('open');
     if (el.dataset.bound) return;              // 배선은 한 번만
     el.dataset.bound = '1';
-    // 숫자만 받는다 — 세 자리를 채우면 바로 넣어 본다
+    /* 받는 글자는 자물쇠에 따라 다르다 — 숫자 자물쇠는 숫자만, 글자 자물쇠는 글자만.
+       (한글은 조합 중에도 input 이 뜨므로 조합이 끝난 글자 수로만 센다) */
     inp.addEventListener('input', () => {
-      inp.value = inp.value.replace(/\D/g, '').slice(0, 3);
-      if (inp.value.length === 3) this.tryCodeDoor();
+      const cc = this.codeDoor ? this.ruinCipher(this.codeDoor.ruin) : null;
+      const numeric = !cc || cc.numeric;
+      const len = cc ? cc.len : 3;
+      if (numeric) inp.value = inp.value.replace(/\D/g, '');
+      else inp.value = inp.value.replace(/[\s0-9]/g, '');
+      inp.value = inp.value.slice(0, len);
+      if (inp.value.length === len && numeric) this.tryCodeDoor();
     });
     inp.addEventListener('keydown', e => {
       e.stopPropagation();                     // 게임 조작키로 새지 않게
@@ -5521,12 +5624,20 @@ const G = {
     this.uiOpen = false;
   },
 
-  /** 넣은 세 자리를 맞춰 본다 */
+  /** 넣은 것을 맞춰 본다 — 자물쇠 갈래와 상관없이 여기 한 군데서 본다 */
   tryCodeDoor() {
     const o = this.codeDoor; if (!o) return;
     const w = this.world, inp = $('#code-input'), msg = $('#code-msg');
-    if (inp.value.length < 3) { msg.classList.remove('ok'); msg.textContent = '세 자리를 다 넣어야 한다'; return; }
-    if (inp.value !== this.ruinCode(o.ruin)) {
+    const c = this.ruinCipher(o.ruin);
+    const K = c ? CIPHER_KIND[c.kind] : null;
+    const got = inp.value.replace(/\s/g, '');
+    if (!c) { msg.textContent = '이 문은 여기서 열 수 없다'; return; }
+    if (got.length < c.len) {
+      msg.classList.remove('ok');
+      msg.textContent = `${K.ask}를 다 넣어야 한다`;
+      return;
+    }
+    if (got !== c.ans) {
       msg.classList.remove('ok');
       msg.textContent = '맞지 않는다 — 홈이 그대로다';
       inp.value = ''; inp.focus();
@@ -6082,7 +6193,8 @@ const G = {
         const label = o.type === 'door' ? (o.closed ? '문 열기' : '문 닫기') : {
           chest: '상자 열기', workbench: '작업대', forge: '용광로', npc: '대화', altar: '제단',
           vault: '보관고', board: '의뢰 게시판', reforge: '재련대', waystone: '귀환 비석', inn: '여관',
-          terminal: '단말 읽기', lorestone: '비문 읽기', tablet: '석판 읽기', lair: '둥지', seal: '봉인문'
+          terminal: '단말 읽기', lorestone: '비문 읽기', tablet: '석판 읽기', lair: '둥지', seal: '봉인문',
+          ciphernote: '쪽지 읽기', codedoor: '잠긴 홈'
         }[o.type];
         if (label) {
           c.fillStyle = '#e8dcc0'; c.font = '11px "Pretendard",sans-serif'; c.textAlign = 'center';
