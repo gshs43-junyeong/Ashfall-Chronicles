@@ -1117,9 +1117,10 @@ const G = {
      바닥에 서고, 닫힌 동안만 길을 막는다(World.hitSolid 가 doors 를 따로 본다).
      성문은 세로 세 칸이라 한 칸 규격에 넣으면 눌린다.
 
-     ★ 여닫는 방향은 **놓을 때 바라본 쪽**이다. 벽을 쌓다가 문 자리에 서서 밖을 보고
-     달면 밖으로 열리고, 안을 보고 달면 안으로 열린다 — 다 짓고 나서 고칠 것이 아니라
-     짓는 자세가 그대로 결과가 되게. */
+     ★ 경첩이 서는 쪽 — 곧 열리는 쪽 — 은 **놓을 때 바라본 쪽**이다. 한 자리에 달아도
+     바라본 방향에 따라 양쪽 중 어느 쪽으로든 열린다. 벽을 쌓다가 문 자리에 서서 밖을
+     보고 달면 밖으로 젖혀지고, 안을 보고 달면 안으로 젖혀진다 — 다 짓고 나서 고칠
+     것이 아니라 짓는 자세가 그대로 결과가 되게. */
   placeDoor(tx, ty) {
     const p = this.player, w = this.world;
     const it = p.held();
@@ -4790,27 +4791,36 @@ const G = {
   },
 
   drawParallaxArt(c, camX, camY, f) {
-    const deep = camY > HELL_Y * TS - 700;
     const p = this.player;
     const zone = this.world.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
     let key;
-    if (deep) key = 'parallax_hell';
-    // 하늘 섬 / 유적 구역은 지하 깊이와 무관하게 전용 배경을 쓴다 — 매니페스트에는 이미
-    // parallax_sky·parallax_ruin이 들어와 있었는데 여기서 참조하지 않아 그동안 안 쓰이고 있었다
-    else if (zone === 'sky') key = 'parallax_sky';
-    else if (zone === 'ruin') key = 'parallax_ruin';
-    /* ★ parallax_works 도 같은 신세였다 — 매니페스트에 실려 있고 파일도 멀쩡한데
-       (1920×400) 이 함수가 그 키를 한 번도 안 불렀다. 그래서 지하 공창과 폭주로는
-       **원경이 아예 없었다**(아래 '지하 중간층은 원경 없음' 으로 빠져나간다).
-       세션 2 의 절반을 보내는 곳인데 뒤가 빈 캔버스였다.
-       설계실(atelier)은 일부러 뺀다 — 거기는 "강철이 한 조각도 없는 흰 돌방"이라
-       공창 배경을 깔면 글과 그림이 어긋난다. */
-    else if (zone === 'works' || zone === 'runaway') key = 'parallax_works';
+    // 하늘 섬은 지하 깊이와 무관하게 전용 배경을 쓴다
+    if (zone === 'sky') key = 'parallax_sky';
+    /* ★ 땅속에서는 원경이 **한 픽셀도** 안 보인다 — 재서 확인한 것이다.
+
+       원경은 타일과 벽지(walls)보다 먼저 깔린다. 그래서 그 자리에 벽지가 있으면
+       그대로 덮인다. 세 시드에서 지하 구역의 빈 칸(AIR)을 전부 세어 보니,
+       **벽지 없는 빈 칸이 하나도 없었다**:
+
+         지옥 8만 2455칸 중 0 · 폭주로 3190칸 중 0 · 공창 2404칸 중 0 ·
+         설계실 1753칸 중 0 · 유적 1만 403칸 중 0
+
+       (비교: 하늘 섬은 3605칸 전부가 벽지 없는 빈 칸 — 그래서 parallax_sky 만
+       실제로 보인다. 여명 마을도 78% 라 보인다.)
+
+       그러니 parallax_hell · parallax_works · parallax_ruin 은 매 프레임 두 층을
+       깔고 색을 굽고 나서 통째로 덮이고 있었다. 보이게 하려면 벽지에 구멍을 내야
+       하는데, 땅속은 **갇혀 있다는 것 자체가 분위기**라 바위 너머로 먼 하늘이나
+       공장 능선이 비치면 바깥으로 뚫린 구멍으로 읽힌다. 고치는 쪽이 더 나쁘다.
+
+       그래서 **그림 파일은 남기고 부르지 않는다.** 땅속이면 여기서 끝낸다.
+       (다시 붙이고 싶어지면 먼저 위의 숫자를 다시 재 볼 것 — 벽지를 뚫는 지형이
+       생기면 그때는 0 이 아니게 된다.) */
+    else if (camY > SURF_BASE * TS + 500) return true;
     // 여명 마을은 전용 그림. 베이스캠프는 숲 배경 그대로 (마을 배경 쓰면 안 됨)
     else if (zone === 'village') key = 'parallax_village';
     else if (zone === 'camp') key = 'parallax_forest';
     else {
-      if (camY > SURF_BASE * TS + 500) return true;   // 지하 중간층은 원경 없음
       const b = this.world.biomeAt(clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1)).id;
       key = b === 'ice' ? 'parallax_snow' : b === 'corrupt' ? 'parallax_corrupt' : b === 'desert' ? 'parallax_desert'
         // jungle·glowfen 전용 배경(parallax_jungle·parallax_glowfen)은 아직 그림이 없다.
@@ -4835,7 +4845,8 @@ const G = {
     // camY가 줄고, 그만큼 baseY가 커져(=화면에서 더 아래로) 배경이 내려간다. 반대로 지형이
     // 꺼지면 camY가 늘고 baseY가 작아져 배경이 올라간다. X축과 같은 spd 비율로만 반영해
     // 갑자기 움직이지 않고 서서히 따라가게 한다.
-    const ref = (deep ? HELL_Y : SURF_BASE) * TS;
+    // 여기까지 오는 것은 전부 지상(또는 하늘 섬)이다 — 지하는 위에서 끝난다
+    const ref = SURF_BASE * TS;
     const restY = TS * 7 + this.H / 2;    // camY가 기준 고도와 같을 때 배경이 놓일 화면 위치
     const refCamY = ref - this.H / 2;
     c.save();
@@ -4950,69 +4961,65 @@ const G = {
        지나갈 수 있는데 화면에는 널판 한 장이 가로막고 서 있었다. 판정과 그림이
        서로 반대인 것을 배우고 나면 문을 보고 열렸는지 닫혔는지 판단하기를 그만두게 된다.
 
-     ■ 두 짝이 가운데에서 갈라진다
+     ■ 한 짝이 옆으로 열린다
 
-       닫히면 두 짝이 이음매에서 만나 문틀을 꽉 채우고, 열리면 **놓인 자리의 한가운데를
-       기준으로 양쪽으로** 접힌다. 한 짝이 옆 칸으로 젖혀지는 방식이 아니라서 옆에 빈
-       칸이 없어도 열린다 — 벽 한가운데에 낸 구멍에도 문을 달 수 있다.
+       문은 널판 **한 장**이다. 닫히면 문틀을 채우고, 열리면 경첩을 축으로 옆으로
+       젖혀진다 — 화면은 옆에서 보는 자리라 젖혀질수록 좁아지고, 다 열리면 경첩 쪽
+       가장자리에 선 얇은 띠(옆에서 본 문짝의 두께)만 남는다. 좁아지는 쪽이 곧
+       경첩 쪽이고, 그래서 어느 쪽으로 열렸는지가 한눈에 보인다.
 
-     ■ 여닫는 방향
+     ■ 여닫는 방향 — 설치된 곳을 중심으로 양쪽
 
-       o.dir(놓을 때 바라본 쪽) 쪽 짝이 **먼저, 더 크게, 문틀 밖으로** 젖혀진다.
-       반대쪽 짝은 안쪽에 얌전히 접힌다. 두 짝이 똑같이 갈라지면 방향이 안 읽히므로,
-       한쪽이 앞으로 나오는 것으로 "이 문은 이쪽으로 열린다"를 보인다.
+       경첩은 **o.dir 쪽 가장자리**에 선다(놓을 때 바라본 쪽). 오른쪽을 보고 달면
+       오른쪽으로, 왼쪽을 보고 달면 왼쪽으로 젖혀진다 — 한 자리에 달아도 양쪽 중
+       어느 쪽으로든 열 수 있다. 다 열린 문짝은 문틀 밖으로 조금 나가 옆 칸을 살짝
+       물고 서는데, 옆 칸을 실제로 차지하지는 않는다(막히지도, 필요하지도 않다).
 
      ■ 손잡이
 
-       obj/door.png 의 것을 따른다 — 놋쇠 판에 어두운 열쇠구멍. 다만 외짝 문의
-       오른쪽 한 개가 아니라 **이음매를 사이에 둔 한 쌍**이다. 짝을 따라 같이 움직여서,
-       손잡이가 벌어지는 것만 봐도 열리는 중임을 안다. */
+       obj/door.png 것을 그대로 쓴다 — 놋쇠 판에 어두운 열쇠구멍. 손잡이는 경첩의
+       반대쪽 가장자리에 있으므로 젖혀질수록 먼저 말려 들어간다. 그림이 없을 때의
+       절차 렌더도 같은 자리에 같은 색으로 둔다. */
   drawDoor(c, o, sx, sy, f) {
     // 성문(gate)은 세로 3칸이라 집 문 그림을 쓰면 늘어난다 — 각자 제 그림이 있다
     const im = this.spritesOn && Sprites.img[o.gate ? 'obj_gate' : 'obj_door'];
     const sw = o.sw === undefined ? (o.closed ? 0 : 1) : o.sw;   // 0 닫힘 → 1 열림
-    const half = o.w / 2, dir = o.dir === -1 ? -1 : 1;
+    const hinge = o.dir === -1 ? -1 : 1;          // 경첩이 선 가장자리 (-1 왼쪽 / +1 오른쪽)
+    /* 다 열렸을 때 남는 폭 = 옆에서 본 문짝의 두께. 0 으로 두면 문이 사라져
+       "부쉈나" 싶어지므로 판자 한 겹만큼은 남긴다. */
+    const flat = Math.max(2.5, o.w * 0.14);
+    const wN = o.w + (flat - o.w) * sw;
+    // 문틀 밖으로 젖혀 나가는 만큼 — 다 열린 문짝이 문틀 경계에 **걸쳐** 서는 정도로만.
+    // 더 밀면 옆 칸 한가운데에 가서 서서, 옆 칸을 차지한 것처럼 보인다.
+    const out = o.w * 0.12 * sw;
+    const x = hinge < 0 ? sx - out : sx + o.w - wN + out;
     c.save();
     c.imageSmoothingEnabled = false;
-    // 열린 만큼 드러나는 문틀 안쪽 — 짝 뒤로 먼저 깔아야 틈이 검게 읽힌다
+    // 열린 만큼 드러나는 문틀 안쪽 — 문짝 뒤로 먼저 깔아야 틈이 어둡게 읽힌다
     if (sw > 0.02) {
       c.globalAlpha = sw * 0.5;
       c.fillStyle = '#140e08'; c.fillRect(sx, sy, o.w, o.h);
       c.globalAlpha = 1;
     }
-    for (const s of [-1, 1]) {
-      const lead = s === dir;                       // 놓을 때 바라본 쪽 — 이쪽이 앞으로 나온다
-      const flat = half * (lead ? 0.34 : 0.18);     // 다 열렸을 때 남는 두께(옆에서 본 문짝)
-      const wN = half + (flat - half) * sw;
-      const out = lead ? o.w * 0.16 * sw : 0;       // 문틀 밖으로 젖혀 나가는 만큼
-      const x = s < 0 ? sx - out : sx + o.w - wN + out;
-      if (im && im.width) {
-        /* 두 짝 모두 그림의 **경첩 쪽 절반**에서 뜬다(오른쪽 짝은 좌우 반전).
-           외짝 그림을 가운데에서 그냥 잘라 쓰면 한쪽에만 손잡이가 남아 쌍문으로
-           안 읽힌다 — 바깥쪽에 경첩, 안쪽(이음매)이 민민한 것이 쌍문의 얼굴이다. */
-        c.save();
-        if (s > 0) { c.translate(x + wN, sy); c.scale(-1, 1); } else c.translate(x, sy);
-        c.drawImage(im, 0, 0, im.width / 2, im.height, 0, 0, wN, o.h);
-        c.restore();
-      } else {
-        c.fillStyle = shade('#3a2610', f); c.fillRect(x, sy, wN, o.h);
-        c.fillStyle = shade(s < 0 ? '#6f4c2c' : '#5a3c22', f);
-        c.fillRect(x + 1, sy + 1, Math.max(1, wN - 2), o.h - 2);
-        c.fillStyle = shade('#4a3018', f);
-        for (let i = 1; i < 4; i++) c.fillRect(x + 1, sy + i * o.h / 4, Math.max(1, wN - 2), 1.5);
-      }
-      // 젖혀진 짝의 앞모서리 — 두께가 보이는 곳이라 한 줄 어둡게 닫는다
-      if (sw > 0.05) {
-        c.fillStyle = 'rgba(20,14,8,.55)';
-        c.fillRect(s < 0 ? x + wN - 1 : x, sy, 1.5, o.h);
-      }
-      /* 손잡이 — 이음매 쪽 모서리에 붙어 짝을 따라 움직인다.
-         ★ 굵기를 짝 안으로 묶어 둔다. 고정 폭으로 두면 다 젖혀진 짝(1~2px)보다
-         손잡이가 넓어져, 나무는 없고 놋쇠 조각만 허공에 뜬 것처럼 보였다.
-         옆에서 보면 손잡이도 얇아지는 게 맞다. */
-      const hw = Math.min(2.6, Math.max(0, wN - 1.2));
+    if (im && im.width) {
+      /* 그림은 경첩이 **왼쪽**에 있는 문이다(손잡이가 오른쪽). 오른쪽 경첩이면
+         좌우를 뒤집어 경첩이 젖혀지는 쪽으로 오게 한다 — 원래 코드도 이 한 줄로
+         경첩 쪽을 갈랐다. 젖혀질수록 가로로만 눌리므로 손잡이가 먼저 말려 든다. */
+      c.save();
+      if (hinge > 0) { c.translate(x + wN, sy); c.scale(-1, 1); } else c.translate(x, sy);
+      c.drawImage(im, 0, 0, im.width, im.height, 0, 0, wN, o.h);
+      c.restore();
+    } else {
+      c.fillStyle = shade('#3a2610', f); c.fillRect(x, sy, wN, o.h);
+      c.fillStyle = shade('#5a3c22', f);
+      c.fillRect(x + 1, sy + 1, Math.max(1, wN - 2), o.h - 2);
+      c.fillStyle = shade('#6f4c2c', f);
+      for (let i = 1; i < 4; i++) c.fillRect(x + 1, sy + i * o.h / 4, Math.max(1, wN - 2), 1.6);
+      /* 손잡이 — 경첩 반대쪽. 굵기를 문짝 안으로 묶어 둔다(고정 폭으로 두면 다
+         젖혀진 문짝보다 손잡이가 넓어져 놋쇠만 허공에 뜬다). */
+      const hw = Math.min(2.6, Math.max(0, wN - 3));
       if (hw > 0.4) {
-        const hx = s < 0 ? x + wN - 0.8 - hw : x + 0.8;
+        const hx = hinge < 0 ? x + wN - 1.4 - hw : x + 1.4;
         const hy = sy + o.h * (o.gate ? 0.56 : 0.5) - 2.2;
         c.globalAlpha = Math.min(1, hw / 1.6);
         c.fillStyle = shade('#d8a94b', f); c.fillRect(hx, hy, hw, 4.4);
@@ -5022,6 +5029,11 @@ const G = {
         }
         c.globalAlpha = 1;
       }
+    }
+    // 젖혀진 문짝의 앞모서리 — 두께가 보이는 자리라 한 줄 어둡게 닫는다
+    if (sw > 0.05) {
+      c.fillStyle = 'rgba(20,14,8,.55)';
+      c.fillRect(hinge < 0 ? x + wN - 1.2 : x, sy, 1.2, o.h);
     }
     c.restore();
   },
