@@ -302,7 +302,7 @@ const G = {
     p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
     this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = [];
     this.corpses = [];
-    this.rings = []; this.bolts = []; this.warns = [];   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
+    this.rings = []; this.bolts = []; this.warns = []; this.sigs = []; this.edge = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
     this.talked = {}; this.crafted = {}; this.paused = false;
@@ -479,6 +479,9 @@ const G = {
     for (let i = this.projs.length - 1; i >= 0; i--) { this.projs[i].update(dt, w, p); if (this.projs[i].dead) this.projs.splice(i, 1); }
     for (let i = this.drops.length - 1; i >= 0; i--) { this.drops[i].update(dt, w, p); if (this.drops[i].dead) this.drops.splice(i, 1); }
     for (let i = this.parts.length - 1; i >= 0; i--) if (!this.parts[i].update(dt)) this.parts.splice(i, 1);
+    /* ★ 입자에 상한이 없었다. 잰 최고치는 257개라 PART_CAP(900)에 정상 전투로는 닿지
+       않지만, 난간이 없으면 언젠가 프레임으로 값을 치른다. 오래된 것부터 버린다. */
+    if (this.parts.length > PART_CAP) this.parts.splice(0, this.parts.length - PART_CAP);
     for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
     for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
     for (let i = this.pending.length - 1; i >= 0; i--) { this.pending[i].t -= dt; if (this.pending[i].t <= 0) { this.pending[i].fn(); this.pending.splice(i, 1); } }
@@ -2342,6 +2345,27 @@ const G = {
     this.warns.push({ x, y, r, t: dur, max: dur, c });
   },
 
+  /* ---- 특별한 스킬의 고유 연출 (SIG_FX) ----
+     ★ 한 배열에 모아 두고 **두 번** 그린다. band·sigil·flash 는 적보다 먼저(아래에
+       깔려 아무것도 안 가린다), fall 은 적보다 나중에(하늘에 있으니 위가 맞다).
+       수명을 깎는 것은 앞쪽 한 곳뿐이다 — 두 곳에서 깎으면 두 배로 빨리 사라진다. */
+  sigFx(o) { (this.sigs = this.sigs || []).push(o); },
+  /** 유성 화살비가 떨어질 띠. 실제 퍼지는 폭(±130)을 그대로 보여 준다 */
+  bandFx(x, y, hw, dur, c) { this.sigFx({ k: 'band', x, y, hw, t: dur, max: dur, c }); },
+  /** 소환 문양 — 안으로 조여드는 고리. 이 게임의 다른 고리는 모두 퍼진다(반대라 바로 읽힌다) */
+  sigilFx(x, y, r, c) { this.sigFx({ k: 'sigil', x, y, r, t: SIG_FX.wolf.t, max: SIG_FX.wolf.t, c }); },
+  /** 하늘에서 떨어지는 별. 예고만 있고 정작 떨어지는 것이 안 보였다 */
+  fallFx(x, y, dur, c) { this.sigFx({ k: 'fall', x, y, t: dur, max: dur, c }); },
+  /** 착탄 섬광. 알파를 SIG_FX.flash.a 로 묶어 두어 적이 흰 바닥에 묻히지 않는다 */
+  flashFx(x, y, r, c) { this.sigFx({ k: 'flash', x, y, r, t: SIG_FX.flash.t, max: SIG_FX.flash.t, c }); },
+  /** 화면 테두리가 한 번 물든다. 전체를 덮으므로 짧게, 그리고 '화면 효과' 설정을 따른다.
+      ★ 색은 'r,g,b' 로 받는다 — 'transparent' 에서 색으로 잇는 그라디언트는 가운데가
+        **검게** 지나가서(투명의 속살이 검정이다) 붉은 대신 그을음이 낀 것으로 보였다. */
+  edgeFx(rgb, dur) { this.edge = { rgb, t: dur, max: dur }; },
+
+  /** '화면 효과' 설정(0~150%)을 1을 넘지 않게 돌려준다 — 0%면 화면을 덮는 연출이 없다 */
+  fxScale() { return Math.min(1, (this.settings ? this.settings.shake : 100) / 100); },
+
   /* ================= 스폰 ================= */
   /* 개조가 걸리는 구역 — 세션 1 바이옴의 지층들. 유적(ruin)은 그 유적의 장식에서
      나온 몹이 따로 있고, 하늘·공창 계열(sky·works·runaway·atelier·citadel·
@@ -3551,7 +3575,7 @@ const G = {
       if (this.bounties.some(b => !b.obj)) this.bounties = [];
       if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
       this.ents = []; this.corpses = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = []; this.boss = null;
-      this.rings = []; this.bolts = []; this.warns = [];
+      this.rings = []; this.bolts = []; this.warns = []; this.sigs = []; this.edge = null;
       this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
       // 카메라를 저장된 위치로 바로 맞춘다 — 안 하면 (0,0) 근처에서 훅 팬 되는 게 첫 프레임에 보인다
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
@@ -4171,6 +4195,9 @@ const G = {
     // ---- 채취탑 ---- (타일 뒤·드롭 앞: 배경에 선 것이지 주울 물건이 아니다)
     this.drawRigs(c, camX, camY);
 
+    // ---- 특별한 스킬의 바닥 연출 ---- (적·플레이어보다 **먼저** — 아래에 깔려 안 가린다)
+    this.drawSigGround(c, camX, camY);
+
     // ---- 드롭 ----
     c.textAlign = 'center'; c.textBaseline = 'middle';
     /* ---- 시체 ----
@@ -4223,6 +4250,11 @@ const G = {
     this.drawStarOrbit(c, p, camX, camY);
     this.drawPlayer(c, p, p.x - camX, p.y - camY);
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
+    /* 회오리 검무의 칼선 — 플레이어 바로 위에, 선으로만. 도는 것이 2.5초 내내
+       보여야 하는데 채널 중에는 아무 표시도 없었다(잰 입자 0개). */
+    this.drawWhirlArc(c, p, camX, camY);
+    // ---- 떨어지는 별 ---- (적보다 나중 — 하늘에 있으니 위가 맞다)
+    this.drawSigSky(c, camX, camY);
 
     // ---- 조명 (부드러운 그라디언트 오버레이) ----
     this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
@@ -4405,6 +4437,23 @@ const G = {
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.55)');
     c.fillStyle = vg; c.fillRect(0, 0, this.W, this.H);
     if (p.flash > 0) { c.fillStyle = `rgba(180,30,30,${p.flash * .5})`; c.fillRect(0, 0, this.W, this.H); }
+    /* 불굴 — 테두리만 한 번 물든다. 120초에 한 번뿐인 순간이라 화면이 대답해야 하지만,
+       가운데를 덮으면 정작 살아남은 직후의 싸움이 안 보인다. 그래서 **테두리만**,
+       0.55초, 그리고 '화면 효과' 설정을 따른다. */
+    if (this.edge) {
+      this.edge.t -= 1 / 60;
+      if (this.edge.t <= 0) this.edge = null;
+      else {
+        const k = this.edge.t / this.edge.max, a = SIG_FX.undying.a * k * this.fxScale();
+        if (a > 0.004) {
+          const eg = c.createRadialGradient(this.W / 2, this.H / 2, Math.min(this.W, this.H) * .30,
+            this.W / 2, this.H / 2, Math.max(this.W, this.H) * .62);
+          eg.addColorStop(0, `rgba(${this.edge.rgb},0)`); eg.addColorStop(1, `rgba(${this.edge.rgb},1)`);
+          c.globalAlpha = a; c.fillStyle = eg; c.fillRect(0, 0, this.W, this.H);
+          c.globalAlpha = 1;
+        }
+      }
+    }
 
     // ---- 길잡이 (비네트 위에 얹어야 어두운 곳에서도 읽힌다) ----
     if (this.settings === undefined || this.settings.compass !== false) this.drawCompass(c, camX, camY);
@@ -5067,6 +5116,115 @@ const G = {
     if (pet.facing < 0) { c.translate(sx * 2, 0); c.scale(-1, 1); }
     Art.draw(c, 'p:' + pet.id, sx - S / 2, sy - S / 2, S);
     c.restore();
+  },
+
+  /* ================= 특별한 스킬의 고유 연출 =================
+     비싼 스킬 다섯만 제 그림을 갖는다. 한도는 data.js 의 SIG_FX 한 표에 있다.
+     ★ 수명은 **바닥 쪽에서만** 깎는다. 하늘 쪽(fall)에서 또 깎으면 두 배로 빨리 사라진다. */
+  drawSigGround(c, camX, camY) {
+    if (!this.sigs || !this.sigs.length) return;
+    const fs = this.fxScale();
+    for (let i = this.sigs.length - 1; i >= 0; i--) {
+      const s = this.sigs[i];
+      s.t -= 1 / 60;
+      if (s.t <= 0) { this.sigs.splice(i, 1); continue; }
+      const k = s.t / s.max, x = s.x - camX, y = s.y - camY;
+      if (s.k === 'band') {
+        /* 유성 화살비가 떨어질 띠. 실제 퍼짐(±130)과 같은 폭이라 보이는 대로 떨어진다.
+           채우지 않고 바닥선 + 눈금만 — 이 아래 서 있는 적이 다 보여야 한다. */
+        /* 처음에 가장 진하고 화살이 다 떨어질 때까지 옅어진다.
+           ★ 유격의 초록(#9fe07a)을 **풀밭 위**에 그으면 픽셀로는 그려져 있는데(재 보니
+             294픽셀) 눈에는 안 띈다. 어두운 밑줄을 먼저 깔아야 풀·돌·눈 어디에서나
+             읽힌다 — 색만 바꾸면 다른 지형에서 같은 문제가 난다. */
+        const a = SIG_FX.rain.a * Math.min(1, 0.35 + k);
+        const line = () => {
+          c.beginPath(); c.moveTo(x - s.hw, y); c.lineTo(x + s.hw, y); c.stroke();
+          for (let j = -3; j <= 3; j++) {
+            const tx = x + (s.hw / 3) * j;
+            c.beginPath(); c.moveTo(tx, y - 16); c.lineTo(tx, y - 4); c.stroke();   // 내려오는 방향
+            c.beginPath(); c.moveTo(tx - 3.5, y - 8); c.lineTo(tx, y - 4); c.lineTo(tx + 3.5, y - 8); c.stroke();
+          }
+        };
+        c.lineJoin = 'round'; c.lineCap = 'round';
+        c.globalAlpha = a * 0.8; c.strokeStyle = '#12100c'; c.lineWidth = 4.5; line();
+        c.globalAlpha = a; c.strokeStyle = s.c; c.lineWidth = 2; line();
+        c.lineCap = 'butt';
+      } else if (s.k === 'sigil') {
+        /* 소환 문양 — 안으로 **조여드는** 고리. 이 게임의 다른 고리는 전부 퍼지므로
+           방향이 반대인 것만으로 "나가는 것이 아니라 오는 것"으로 읽힌다. */
+        const a = SIG_FX.wolf.a * Math.min(1, k * 1.6);
+        const rune = () => {
+          c.beginPath(); c.arc(x, y, s.r * (0.25 + k * 0.75), 0, TAU); c.stroke();
+          c.beginPath(); c.arc(x, y, s.r * 0.34, 0, TAU); c.stroke();
+          c.beginPath();
+          for (let j = 0; j < 6; j++) {                                      // 육각 룬
+            const ang = -Math.PI / 2 + j * TAU / 6, rr = s.r * 0.34;
+            j ? c.lineTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr)
+              : c.moveTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr);
+          }
+          c.closePath(); c.stroke();
+        };
+        c.lineJoin = 'round';
+        c.globalAlpha = a * 0.75; c.strokeStyle = '#12100c'; c.lineWidth = 4; rune();   // 밑줄 — 밝은 바닥에서도 읽힌다
+        c.globalAlpha = a; c.strokeStyle = s.c; c.lineWidth = 2; rune();
+      } else if (s.k === 'flash') {
+        /* 착탄 섬광. 화면을 덮는 쪽이라 알파를 SIG_FX.flash.a(0.2)로 묶고 '화면 효과'
+           설정에 함께 걸어 둔다 — 0%면 아예 안 나온다. */
+        const a = SIG_FX.flash.a * fs * k;
+        if (a > 0.004) {
+          const g = c.createRadialGradient(x, y, 0, x, y, s.r);
+          g.addColorStop(0, s.c); g.addColorStop(1, 'transparent');
+          c.globalAlpha = a; c.fillStyle = g;
+          c.beginPath(); c.arc(x, y, s.r, 0, TAU); c.fill();
+        }
+      }
+      c.globalAlpha = 1; c.lineWidth = 1;
+    }
+  },
+
+  /** 떨어지는 별. 겨눈 자리 위 700px 에서 0.9초 동안 내려온다 — 예고와 착탄 사이가 비어 있었다 */
+  drawSigSky(c, camX, camY) {
+    if (!this.sigs) return;
+    for (const s of this.sigs) {
+      if (s.k !== 'fall') continue;
+      const k = 1 - s.t / s.max;                       // 0 -> 1 로 내려온다
+      /* ★ 높이 700 · 가속 k² 로 두었더니 0.9초 중 **0.6초를 화면 위 밖**에서 보냈다 —
+         재 보니 0.5초 시점에 목표보다 483px 위, 화면(720px) 밖이었다. 420 · k^1.5 면
+         0.25초쯤 화면에 들어와 나머지를 내려오는 것이 다 보인다. */
+      const e = Math.pow(k, 1.5);
+      const x = s.x - 150 * (1 - e) - camX, y = s.y - 420 * (1 - e) - camY;
+      const a = SIG_FX.fall.a;
+      c.save();
+      c.globalAlpha = a * 0.5; c.strokeStyle = s.c; c.lineWidth = 5; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(x + 54, y - 150); c.lineTo(x, y); c.stroke();   // 꼬리 — 내려오는 각과 같게
+      c.globalAlpha = a; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(x + 22, y - 62); c.lineTo(x, y); c.stroke();    // 꼬리 심
+      c.fillStyle = '#fff6dc'; c.globalAlpha = a;
+      c.beginPath(); c.arc(x, y, 5 + k * 3, 0, TAU); c.fill();                // 머리 — 가까워지며 커진다
+      c.restore();
+      c.globalAlpha = 1; c.lineWidth = 1;
+    }
+  },
+
+  /** 회오리 검무 — 도는 동안 칼선 둘. 선만 쓰므로 붙어 있는 적이 그대로 보인다 */
+  drawWhirlArc(c, p, camX, camY) {
+    const ch = p.channel;
+    if (!ch || ch.id !== 's_whirl') return;
+    const x = p.cx - camX, y = p.cy - camY, a = this.time * 13;
+    const fade = Math.min(1, ch.t / 0.25);             // 끝맺을 때 사라진다
+    c.save();
+    c.lineCap = 'round';
+    for (let j = 0; j < 2; j++) {
+      const ang = a + j * Math.PI;
+      c.globalAlpha = SIG_FX.whirl.a * fade;
+      c.strokeStyle = '#ffcf6a'; c.lineWidth = 3;
+      c.beginPath(); c.arc(x, y, 96, ang, ang + 1.1); c.stroke();             // 96 = 실제 피해 반경
+      c.globalAlpha = SIG_FX.whirl.a * fade * 0.45;
+      c.lineWidth = 8;
+      c.beginPath(); c.arc(x, y, 96, ang - 0.5, ang); c.stroke();             // 지나간 자취
+    }
+    c.restore();
+    c.globalAlpha = 1; c.lineWidth = 1;
   },
 
   /* ---- 캐릭터 렌더 ---- */
