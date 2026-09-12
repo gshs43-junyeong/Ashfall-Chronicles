@@ -421,6 +421,8 @@ class Player extends Ent {
       this.iframe = Math.max(this.iframe, 1.2);
       G.ringFx(this.cx, this.cy, 90, '#e05a6a', .6);
       for (let i = 0; i < 30; i++) G.parts.push(new Part(this.cx, this.cy, '#e05a6a', -110, .9));
+      // 테두리만 한 번 물든다 — 가운데는 비워 둔다. 살아남은 직후가 가장 위험한 때다
+      G.edgeFx('200,46,58', SIG_FX.undying.t);
       G.shake = 14; G.toast('불굴 — 아직 쓰러지지 않는다', 'good');
     }
     if (this.hp <= 0) { this.hp = 0; G.onDeath(); }
@@ -583,6 +585,7 @@ class Player extends Ent {
       }
       case 's_whirl': {
         this.channel = { id, t: 2.5, tick: 0, dmg: this.scaleDmg(wdmg * sk.v(r) / 100, 'str') };
+        // 도는 칼선은 채널이 살아 있는 동안 G.drawWhirlArc 가 그린다(여기서 쌓지 않는다)
         break;
       }
       case 's_volley': {
@@ -595,6 +598,10 @@ class Player extends Ent {
       }
       case 's_rain': {
         const n = sk.v(r);
+        /* ★ 겨눈 자리 표시가 없었다 — 별의 낙하에는 예고 원이 있는데 이쪽은 아무것도
+           없어서, 마나 40을 붓고 나서야 어디에 떨어졌는지 알았다. 실제 퍼지는 폭
+           (±130)과 같은 띠를 깔아 둔다. 연출이 아니라 정보라 입자는 안 쓴다. */
+        G.bandFx(mx, my, 130, n * 0.07 + 0.45, '#9fe07a');
         for (let i2 = 0; i2 < n; i2++) {
           G.pending.push({
             t: i2 * 0.07, fn: () => {
@@ -622,7 +629,16 @@ class Player extends Ent {
         break;
       }
       case 's_wolf': {
-        for (let k = 0; k < sk.v(r); k++) G.ents.push(new Wolf(this.cx + (k - 1) * 26, this.cy, this));
+        /* 마나 45에 재사용 30초인데 늑대가 소리 없이 **그냥 나타났다**(잰 입자 3개).
+           나올 자리마다 문양이 조여들고 영혼이 올라온다. 늑대마다 따로 — 셋을 부르면
+           셋이 각자 선다. */
+        for (let k = 0; k < sk.v(r); k++) {
+          const wx = this.cx + (k - 1) * 26;
+          G.ents.push(new Wolf(wx, this.cy, this));
+          G.sigilFx(wx, this.y + this.h - 6, 22, '#c8b88a');   // 22 — 늑대 간격이 26이라 30은 셋이 한 덩이로 뭉쳤다
+          for (let j = 0; j < SIG_FX.wolf.n; j++)
+            G.parts.push(new Part(wx + (Math.random() - .5) * 26, this.y + this.h - 8, '#c8b88a', -70, .8));
+        }
         break;
       }
 
@@ -767,6 +783,10 @@ class Player extends Ent {
         // 겨눈 자리에 예고를 띄우고 0.9초 뒤에 떨어진다 — 피할 시간을 주는 대신 크다
         const tx = mx, ty = my;
         G.warnFx(tx, ty, 150, 0.9, '#ffb04a');
+        /* ★ 예고와 착탄 사이 0.9초가 **비어 있었다.** 하나뿐인 궁극인데 별이 정작
+           떨어지는 것은 안 보이고 바닥에서 갑자기 터졌다. 하늘에 있는 동안은 아무것도
+           가리지 않으므로 여기만은 진하게 둔다. */
+        G.fallFx(tx, ty, 0.9, '#ffd07a');
         G.pending.push({
           t: 0.9, fn: () => {
             const dmg = this.scaleDmg(340 + this.d.int * 6.5, 'int');
@@ -778,6 +798,8 @@ class Player extends Ent {
               const a = Math.random() * TAU, d2 = Math.random() * 140;
               G.parts.push(new Part(tx + Math.cos(a) * d2, ty + Math.sin(a) * d2, k % 3 ? '#ffb04a' : '#fff0c0', -150, 1));
             }
+            /* 착탄 섬광 — 바닥에 깔리므로 적을 지우지 않는다. 알파 상한은 SIG_FX.flash */
+            G.flashFx(tx, ty, 230, '#fff0c0');
             const h = SKILL_HIT.meteor;
             G.shake = Math.max(G.shake, h.k); G.hitStop(h.st); G.sfx(h.s);
           }
@@ -959,6 +981,11 @@ class Player extends Ent {
            아홉 번 나는 것을 피한다. */
         G.sfx('sk_whirl', G.strokeRate());
         G.shake = Math.max(G.shake, 3);
+        /* 발밑 먼지 — 박자에만 세 개다. 매 프레임 뿌리면 2.5초에 450개가 되어
+           입자 한도(900)의 절반을 이 하나가 먹는다. 잰 것이 그렇게 나왔다. */
+        const foot = this.y + this.h;
+        for (let k = 0; k < SIG_FX.whirl.n; k++)
+          G.parts.push(new Part(this.cx + (Math.random() - .5) * 70, foot - 4, '#c8a878', -40, .5));
       }
       if (this.channel.t <= 0) this.channel = null;
     }
