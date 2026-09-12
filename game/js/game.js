@@ -1853,7 +1853,7 @@ const G = {
     this.talked[id] = true;
     if (DAWN_NPCS.includes(id)) { this.talkVillager(id, first); return; }
 
-    const story = DIALOGUE[id][Math.min(this.chapter, DIALOGUE[id].length - 1)];
+    const story = this.storyOf(id, this.chapter) || [''];
     this.storyHeard = this.storyHeard || {};
     const fresh = this.storyHeard[id] !== this.chapter;   // 이 장의 이야기를 아직 안 들었다
     this.storyHeard[id] = this.chapter;
@@ -1884,21 +1884,42 @@ const G = {
     this.sfx('talk');
   },
 
+  /** 그 사람이 이 장에 할 이야기. 표가 짧으면 마지막 칸을, 빈 칸이면 없음 */
+  storyOf(id, ch) {
+    const a = DIALOGUE[id];
+    if (!a || !a.length) return null;
+    return a[Math.min(ch, a.length - 1)] || null;
+  },
+
   /* ---- 여명 마을 주민 (종장 이후에만 세계에 존재한다) ---- */
   talkVillager(id, first) {
     const d = NPCS[id];
+    /* ★ 이 다섯은 **장별 이야기를 아예 안 읽고 있었다.** 서명 한 줄과 마을 단계
+       대사만 들고 있어서, 세션 2 의 여섯 장을 지나는 동안 케이드가 — 장 카드에서
+       가장 많이 말하는 사람이 — 만나면 늘 같은 한 줄만 했다. 캠프 넷과 같은 식으로
+       장마다 한 번씩 이야기를 하고, 이미 들었으면 다시 듣는 길을 남긴다. */
+    const story = this.storyOf(id, this.chapter);
+    this.storyHeard = this.storyHeard || {};
+    const fresh = !!story && this.storyHeard[id] !== this.chapter;
+    if (story) this.storyHeard[id] = this.chapter;
     /* 그 사람을 처음 만나는 자리에서만 서명 같은 한 줄을 듣는다. 예전에는 이 한 줄이
        매번 맨 앞에 나와서, 열 번을 말 걸면 열 번 다 같은 말이었다. */
-    const pick = first ? null : this.talkPick(id);
+    const pick = (first || fresh) ? null : this.talkPick(id);
     const lines = [];
     if (first) lines.push(d.line);
+    if (fresh) lines.push(...story);
     if (pick) lines.push(pick.say);
     /* 마을이 한 단계 자랐으면 그 사실을 한 번 알려 준다 — 매번이 아니라 바뀐 그때. */
     this.villageSeen = this.villageSeen || {};
     const lv = this.villageLv(), vt = VILLAGE_TALK[id];
     if (vt && vt[lv] && this.villageSeen[id] !== lv) { lines.push(vt[lv]); this.villageSeen[id] = lv; }
-    if (!lines.length) lines.push(d.line);
+    if (!lines.length) lines.push(story ? story[story.length - 1] : d.line);
     const rest = this.talkExtra(id);
+    if (story && !fresh) rest.push({ t: '다시 듣기', replay: 1, fn: () => {
+      UI.closeDialogue();
+      UI.openDialogue(id, story.slice(), rest);
+      this.sfx('talk');
+    } });
     /* 마을 주민에게도 부탁을 받는다. 예전에는 이 다섯에게만 부탁이 없어서,
        세션 2 내내 말은 걸 수 있고 물건은 살 수 있는데 해 줄 일만 없었다 —
        도시가 사람이 사는 곳이 아니라 상점가로 보였다. */
