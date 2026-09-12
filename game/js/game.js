@@ -1537,7 +1537,7 @@ const G = {
     if (e) gold += e.gold * obj.n * Q.killG * m;
     else {
       const id = obj.type === 'collect' ? obj.item : (TILE_DEF[obj.tile] || {}).drop;
-      gold += (id && ITEMS[id] ? (ITEMS[id].price || this.MAT_VAL) : 0) * obj.n * Q.matG * m;
+      gold += (id ? (ITEM_VAL[id] || this.MAT_VAL) : 0) * obj.n * Q.matG * m;
     }
     return {
       gold: Math.round(Math.max(gold, (160 + 55 * lv) * k * Q.floor)),
@@ -1974,14 +1974,20 @@ const G = {
   },
   price(it) {
     const d = idef(it);
-    let base = 12;
-    if (d.price) base = d.price;
+    /* 값은 data.js 의 ITEM_VAL 이 한 벌로 매긴다 — 재료는 어디서 나오는지로,
+       만드는 것은 재료값으로, 못 만드는 장비는 필요 레벨로. 예전에는 여기서
+       종류마다 따로 어림했고 재료는 통째로 12였다(아래 옛 어림은 표에 없는
+       물건을 위한 그물로만 남겨 둔다). */
+    let base = ITEM_VAL[it.id];
+    if (base !== undefined) { /* 표가 정한다 */ }
+    else if (d.price) base = d.price;
     else if (d.type === 'weapon') base = 60 + (d.tier || 0) * 90;
     else if (d.type === 'armor') base = 40 + (d.def || 0) * 12;
     else if (d.type === 'acc') base = 220;
     else if (d.type === 'tool') base = 80 + (d.power || 1) * 70;
     else if (d.type === 'consum') base = 22;
     else if (d.type === 'block') base = 2;
+    else base = 12;
     const raw = base * (it.c > 1 ? it.c : 1) * RARITY_MULT[it.r] * this.marketRate(it.id);
     return Math.max(1, Math.round(raw));
   },
