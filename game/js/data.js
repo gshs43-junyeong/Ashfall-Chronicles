@@ -3990,6 +3990,42 @@ const CHAPTERS = [
    장을 끝냈을 때 뒷이야기(outro) 다음에 한 박자 쉬고 따로 뜬다. 지금 당장은 답이 없는,
    그러나 뒤에 반드시 답이 나오는 질문만 골라 적었다 — 세계가 넓기만 하고 할 말이 없다는
    인상을 없애기 위한 장치다. */
+/* ================= 세션 =================
+
+   ■ 경계가 아홉 군데에 박혀 있었다
+
+     "세션 2인가"를 묻는 자리가 `chapter >= 9` 로 **아홉 군데에 손으로** 적혀
+     있었다 — 낚시표 둘, 의뢰 판정, 상황 대사, 목표 안내, 잿빛 깊이, 일지의 세션
+     탭(두 줄짜리 배열까지). 세션 3 을 붙이려면 그 아홉을 전부 찾아 고쳐야 했고,
+     하나라도 빠뜨리면 3세션에서 2세션 규칙이 조용히 돌아간다(잿빛이 다시 끼거나
+     의뢰가 안 붙는 식으로 — 티가 안 나는 쪽으로 어긋난다).
+
+     이제 표 한 줄이다. **세션을 늘릴 때는 여기에 한 줄만 더한다.**
+
+       id    세션 번호
+       n t   일지 탭에 적히는 이름과 부제
+       ch0   이 세션이 시작하는 장
+
+     ★ 장을 늘릴 때 같이 봐야 하는 자리들은 docs/story-and-sessions.md 에 표로
+       모아 두었다. 이 표만 고치고 끝나는 게 아니다. */
+const SESSIONS = [
+  { id: 1, n: '세션 1', t: '잿빛의 여정', ch0: 0 },
+  { id: 2, n: '세션 2', t: '벽 너머', ch0: 9 }
+];
+/** 그 장이 속한 세션. 표보다 큰 장은 마지막 세션으로 본다 */
+const sessionOf = (ch) => {
+  let s = SESSIONS[0];
+  for (const x of SESSIONS) if ((ch || 0) >= x.ch0) s = x;
+  return s;
+};
+/** 그 세션의 장 목록 (CHAPTERS 를 훑어 만든다 — 장에 세션을 따로 적지 않는다) */
+const chaptersOf = (sid) => {
+  const i = SESSIONS.findIndex(x => x.id === sid);
+  if (i < 0) return [];
+  const lo = SESSIONS[i].ch0, hi = SESSIONS[i + 1] ? SESSIONS[i + 1].ch0 : Infinity;
+  return CHAPTERS.filter(c => c.id >= lo && c.id < hi);
+};
+
 const CHAPTER_HOOK = {
   0: '별은 무언가로부터 도망치고 있었다. 그렇다면 쫓아온 것은 어디까지 왔을까.',
   1: '엘라라는 잿빛이 "번지고 있다"고 했다. 번진다는 건, 시작점이 있다는 뜻이다.',
@@ -4401,7 +4437,7 @@ const SIDE_POOL = {
          요구하는데, 그건 지하 공창에 내려가기 전이라 구할 데가 없다. */
       const s1 = ['crystal', 'frost_core', 'corrupt_ess', 'soul_shard', 'void_frag'];
       const s2 = ['aether_shard', 'conduit_part', 'power_core', 'core_shard', 'draft_glass'];
-      const item = ch >= 9 ? s2[clamp(ch - 10, 0, s2.length - 1)]
+      const item = sessionOf(ch).id >= 2 ? s2[clamp(ch - 10, 0, s2.length - 1)]
                            : s1[clamp(ch - 1, 0, s1.length - 1)];
       const n = rng.int(5, 10);
       return {

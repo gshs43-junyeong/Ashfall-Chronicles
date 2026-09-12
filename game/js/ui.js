@@ -782,13 +782,12 @@ const UI = {
   /* ---------------- 퀘스트 ---------------- */
   refreshQuest() {
     const g = G;
-    const currentSession = g.chapter >= 9 ? 's2' : 's1';
+    /* 탭은 SESSIONS 표에서 만든다. 예전에는 여기 두 줄이 손으로 적혀 있어서,
+       세션을 늘리면 일지에만 안 나타나는 식으로 어긋났다. */
+    const currentSession = 's' + sessionOf(g.chapter).id;
     const selectedSession = this.questSession || currentSession;
-    const sessions = [
-      { key: 's1', label: '세션 1', title: '잿빛의 여정', chapters: CHAPTERS.filter(ch => ch.id < 9) },
-      // 세션 2도 종장(제 13 장 「벽 너머」)까지 쓰여 끝을 맺었다 — 이제 완료 딱지가 붙는다
-      { key: 's2', label: '세션 2', title: '벽 너머', chapters: CHAPTERS.filter(ch => ch.id >= 9) }
-    ];
+    const sessions = SESSIONS.map(x =>
+      ({ key: 's' + x.id, label: x.n, title: x.t, chapters: chaptersOf(x.id) }));
     let h = '<div class="session-tabs">' + sessions.map(s => {
       const isCurrent = s.key === currentSession;
       const isSelected = s.key === selectedSession;
