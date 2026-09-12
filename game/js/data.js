@@ -4759,21 +4759,30 @@ const ITEM_VAL = (() => {
   for (const d of TILE_DEF)
     if (d.drop && V[d.drop] === undefined && !made[d.drop]) V[d.drop] = step(0) * 0.35;
 
-  const lo = {}, hi = {};
-  for (const k in ENEMIES) {
-    const e = ENEMIES[k], ds = e.boss ? [] : (e.drops || []);
-    let tot = 0;
-    for (const [id, c, a, b] of ds) if ((ITEMS[id] || {}).type === 'mat') tot += c * (a + b) / 2;
-    if (!tot) continue;
-    const per = Math.min((e.gold || 1) * VAL_SHARE / tot, (e.gold || 1) * VAL_CAP);
-    for (const [id] of ds) {
-      const d = ITEMS[id] || {};
-      if (d.type !== 'mat' || d.price || made[id] || V[id] !== undefined) continue;
-      lo[id] = lo[id] === undefined ? per : Math.min(lo[id], per);
-      hi[id] = hi[id] === undefined ? per : Math.max(hi[id], per);
+  /* 보스는 **나중에 따로 본다.** 같이 보면 보스도 떨구는 흔한 재료(공허 조각·
+     에테르 파편)가 보스 금화로 값이 매겨져 뛴다. 반대로 아예 안 보면 보스만
+     떨구는 것 — 별의 심장·헤파의 심장·원형의 핵 — 이 근거를 못 찾아 바닥값 3에
+     내려앉는다(다섯 조각을 모으는 이야기인데 조각 하나가 나무 한 개 값이었다).
+     그래서 잡몹으로 먼저 매기고, 그때까지 값이 없는 것만 보스로 매긴다. */
+  for (const bossPass of [0, 1]) {
+    const lo = {}, hi = {};
+    for (const k in ENEMIES) {
+      const e = ENEMIES[k];
+      if (!e.boss !== !bossPass) continue;          // 이 차례의 것만
+      const ds = e.drops || [];
+      let tot = 0;
+      for (const [id, c, a, b] of ds) if ((ITEMS[id] || {}).type === 'mat') tot += c * (a + b) / 2;
+      if (!tot) continue;
+      const per = Math.min((e.gold || 1) * VAL_SHARE / tot, (e.gold || 1) * VAL_CAP);
+      for (const [id] of ds) {
+        const d = ITEMS[id] || {};
+        if (d.type !== 'mat' || d.price || made[id] || V[id] !== undefined) continue;
+        lo[id] = lo[id] === undefined ? per : Math.min(lo[id], per);
+        hi[id] = hi[id] === undefined ? per : Math.max(hi[id], per);
+      }
     }
+    for (const id in lo) V[id] = Math.sqrt(lo[id] * hi[id]);
   }
-  for (const id in lo) V[id] = Math.sqrt(lo[id] * hi[id]);
 
   const busy = {}, GEARY = { weapon: 1, armor: 1, tool: 1, acc: 1 };
   const cost = (id, dep) => {
