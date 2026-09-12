@@ -42,6 +42,7 @@
 
 | 문서 | 내용 |
 |---|---|
+| [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 작업은 여기서 시작합니다 |
 | [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1 에 무엇이 들어갔고 무엇이 남았는가** (개발 중) |
 | [`docs/v1.1-sfx-prompts.md`](docs/v1.1-sfx-prompts.md) | 필요한 효과음 36개와 생성 프롬프트 |
 | [`docs/v1.1-plan-prompt.md`](docs/v1.1-plan-prompt.md) | v1.1 최초 작업 지시서 (실제 진행은 이 길과 달라졌습니다 — 현황은 changelog 쪽) |

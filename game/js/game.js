@@ -1211,7 +1211,7 @@ const G = {
          낚시꾼의 매듭만 양쪽에 걸쳐 있다 — 어느 물에서든 아주 드물게 올라온다.
          lucky 는 예전과 같다(숙련·낚싯대·미끼·챔질이 특별한 칸을 굵게 만든다). */
       const lucky = (flv - 1) * 0.9 + fishBonus * 6;   // 0 ~ 대략 12
-      const s2 = this.chapter >= 9;                    // 세션 2인가
+      const s2 = sessionOf(this.chapter).id >= 2;      // 세션 2 이후인가
       const itemTable = [
         // --- 원래 있던 것 셋. 여전히 대부분은 이쪽이다 ---
         ['slime_gel', 34], ['potion_hp', 20], ['aether_shard', 12],
@@ -1274,7 +1274,7 @@ const G = {
     /* 물고기 자체도 세션마다 다르게 올라온다.
        세션 2의 물은 공창에서 흘러나온 냉각수라 얕은 물고기가 줄고 깊은 것이 늘었다 —
        "같은 낚싯대인데 세션 2에서는 심해어가 곧잘 나온다"가 손에 잡히도록. */
-    const s2fish = this.chapter >= 9;
+    const s2fish = sessionOf(this.chapter).id >= 2;
     const table = [
       ['none', Math.max(6, (s2fish ? 22 : 26) - fishBonus * 30)],
       ['fish_common', s2fish ? 30 : 44],
@@ -1582,7 +1582,7 @@ const G = {
      이제 BOUNTY_POOL 에 사람이 쓴 종이가 있고, 그중 **지금 장에서 받을 수 있는
      것**만 붙는다. 끝낸 종이에 뒷이야기(next)가 있으면 다음 날 그것이 붙는다. */
   bountyFits(t, ch) {
-    return t && (!t.s || t.s === (ch >= 9 ? 2 : 1)) && ch >= t.ch[0] && ch <= t.ch[1];
+    return t && (!t.s || t.s === sessionOf(ch).id) && ch >= t.ch[0] && ch <= t.ch[1];
   },
   makeBounty(t, r) {
     const obj = t.obj(r, this.chapter);
@@ -1772,7 +1772,7 @@ const G = {
     } catch (e) { complete = ready = false; }
     return {
       ch: this.chapter,
-      session: this.chapter >= 9 ? 2 : 1,
+      session: sessionOf(this.chapter).id,
       hour: Math.floor(this.dayT / 60),
       night: this.dayT < 5 * 60 || this.dayT > 19 * 60,
       /* 날씨는 지금 발밑에서 작동 중이 아니어도 본다 — 사막에서 모래를 뒤집어쓰고
@@ -1981,7 +1981,7 @@ const G = {
     const ch = CHAPTERS[this.chapter];
     if (!ch) { this.toast('모든 여정이 끝났다.'); return; }
     const st = this.chapterState(ch);
-    const session = this.chapter >= 9 ? '세션 2' : '세션 1';
+    const session = sessionOf(this.chapter).n;
     if (st.complete) this.toast('할 일은 모두 끝냈다.');
     else if (st.ready) this.toast(`${session} · 목표 — ${st.goal ? st.goal.o.t : '이 장의 마지막'}`);
     else {
@@ -2584,7 +2584,7 @@ const G = {
   /** 지금 잿빛이 얼마나 깊은가 (0 = 아직 색이 있다, 1 = 다 빠졌다) */
   ashF() {
     const ch = this.chapter || 0;
-    if (ch >= 9) return 0;                       // 잿빛이 걷혔다
+    if (sessionOf(ch).id >= 2) return 0;         // 잿빛이 걷혔다
     return 0.10 + clamp((ch - 1) / 7, 0, 1) * 0.86;
   },
 
