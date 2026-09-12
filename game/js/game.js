@@ -2401,7 +2401,11 @@ const G = {
     if (!e) return false;
     const w = this.world, p = this.player;
     const tx = clamp(Math.floor(p.cx / TS), 0, WW - 1);
-    if (e.biome && w.biomeAt(tx).id !== e.biome) return false;
+    const bio = w.biomeAt(tx).id;
+    if (e.biome && bio !== e.biome) return false;
+    /* 그 바이옴에서만 안 오는 날씨 — 비는 지상 어디에나 오지만 사막에는 안 온다.
+       zones 의 'surface' 에 사막도 들어 있어서 사구에 빗줄기가 내렸다. */
+    if (e.notBiome && e.notBiome.indexOf(bio) >= 0) return false;
     const z = w.zoneAt(tx, Math.floor(p.cy / TS));
     return e.zones.indexOf(z) >= 0;
   },
@@ -2429,6 +2433,7 @@ const G = {
       if (e.night && !night) continue;
       if (e.day && night) continue;
       if (e.biome && e.biome !== biome) continue;
+      if (e.notBiome && e.notBiome.indexOf(biome) >= 0) continue;
       if (!r.chance(e.chance)) continue;
       this.event = { id, t: 0 };
       this.toast(`${e.i} ${e.n} — ${e.d}`, 'bad');
@@ -4485,14 +4490,33 @@ const G = {
         }
         c.globalAlpha = 1;
       }
-      // 해/달
+      /* ---- 해와 달 ----
+         호가 뒤집혀 있었다. sunY 가 sin(각)에 **더해지고** 있어서 한낮에 가장
+         낮고 새벽·저녁에 가장 높았다 — 정오에는 화면 아래로 완전히 내려가고,
+         아침 아홉 시에는 나무 높이에 해가 걸렸다. 뒷배경보다 먼저 그리는데도
+         원경 나무 사이로 빛덩이가 새어 나와 "지형을 뚫고 나온" 것으로 보였다.
+
+         이제 sin 을 빼서 **정오에 가장 높다.** 그리고 해와 달을 따로 두지 않고
+         반 바퀴 어긋난 같은 호 위에 올린다 — 해가 지면 달이 뜬다. 예전에는
+         밝기(f)로 둘을 갈라 한 점에 그렸던 탓에, 낮밤이 바뀌는 순간 하늘의
+         물체가 반대편으로 순간이동했다.
+
+         지평선에 가까워지면 **흐려져 사라진다.** 지형에 닿기 전에 없어지므로
+         무엇을 어떻게 그리든 다시는 땅을 뚫지 않는다. */
       const ang = (this.dayT / 1440) * TAU - Math.PI / 2;
-      const sunX = this.W / 2 + Math.cos(ang) * this.W * .42;
-      const sunY = this.H * .52 + Math.sin(ang) * this.H * .66 - camY * .05;
-      c.globalAlpha = .9;
-      c.fillStyle = f > .4 ? '#ffe9a8' : '#dfe8f5';
-      c.beginPath(); c.arc(sunX, sunY, f > .4 ? 26 : 20, 0, TAU); c.fill();
-      c.globalAlpha = .12; c.beginPath(); c.arc(sunX, sunY, 60, 0, TAU); c.fill();
+      for (const sun of [1, 0]) {
+        const a = sun ? ang : ang + Math.PI;
+        const up = Math.sin(a);
+        const al = clamp((up - 0.02) / 0.16, 0, 1);       // 지평선 언저리에서 흐려진다
+        if (al <= 0) continue;
+        const bx = this.W / 2 + Math.cos(a) * this.W * .42;
+        const by = this.H * .80 - up * this.H * .62 - camY * .05;
+        c.fillStyle = sun ? '#ffe9a8' : '#dfe8f5';
+        c.globalAlpha = .9 * al;
+        c.beginPath(); c.arc(bx, by, sun ? 26 : 20, 0, TAU); c.fill();
+        c.globalAlpha = .12 * al;
+        c.beginPath(); c.arc(bx, by, 60, 0, TAU); c.fill();
+      }
       c.globalAlpha = 1;
       // 구름 — 비가 오는 동안은 짙고 빽빽하게, 평소엔 옅게 흘러간다
       this.drawClouds(c, camX, camY, this.rainT || 0);
