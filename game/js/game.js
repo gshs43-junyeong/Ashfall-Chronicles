@@ -4475,6 +4475,9 @@ const G = {
       if (zone === 'village' || zone === 'camp') ev = this.eventSpec();
     }
     if (ev) { top = mixHex(top, ev.tint, ev.tintAmt); bot = mixHex(bot, ev.tint, ev.tintAmt * 0.7); }
+    /* 원경이 "멀어 보이는" 색으로 쓸 지금의 하늘색. 원경을 투명하게 만드는 대신
+       이 색으로 물들이므로, 하늘이 물들면 원경도 같이 물든다(drawParallaxArt). */
+    this.skyHaze = bot;
     if (camY < surfPx + 400) {
       const g = c.createLinearGradient(0, 0, 0, this.H);
       g.addColorStop(0, top); g.addColorStop(1, bot);
@@ -4526,6 +4529,9 @@ const G = {
       g.addColorStop(0, deep ? '#2a0d08' : '#0a0a10');
       g.addColorStop(1, deep ? '#4a1408' : '#06060a');
       c.fillStyle = g; c.fillRect(0, 0, this.W, this.H);
+      /* 땅속에서는 원경이 씻길 색도 땅속 색이다 — 하늘색을 그대로 두면 지옥의
+         먼 바위가 파랗게 물든다 */
+      this.skyHaze = deep ? '#4a1408' : '#06060a';
     }
   },
   /** 하늘에 늘 몇 점씩 흘러가는 구름. rainT(0~1)가 오르면 색이 짙어지고 빽빽해진다 —
@@ -4655,6 +4661,48 @@ const G = {
   },
 
   /** 손그림 원경 — 두 겹으로 무한 스크롤. 그릴 수 없으면 false */
+  /* ================= 원경을 불투명하게 =================
+
+     원경은 **알파로** 멀리와 밤을 표현하고 있었다 — 먼 층은 늘 0.45, 그리고 두 층
+     모두 밤이 될수록 0.42배까지 옅어졌다. 투명해진다는 것은 **뒤가 비친다**는
+     뜻이다. 그래서 하늘에 떠 있는 해와 달이, 그리고 밤에는 별까지, 원경의 나무와
+     능선을 그대로 뚫고 나왔다.
+
+     멀리 있는 것이 흐려 보이는 까닭은 뒤가 비쳐서가 아니라 **사이에 낀 공기 색에
+     씻겨서**다. 그러니 알파를 쓸 일이 아니라 그림을 하늘색 쪽으로 물들일 일이다.
+     밤도 마찬가지 — 어두워지는 것이지 비치는 것이 아니다.
+
+     물들인 판은 색이 바뀔 때만 다시 굽는다(하루에 몇 번). 층마다 칸을 따로 둔다 —
+     한 칸으로 돌려 쓰면 먼 층과 가까운 층이 한 프레임에 번갈아 구워진다. */
+  tintBg(src, slot, ck, haze, hazeAmt, darkAmt) {
+    if (hazeAmt <= 0 && darkAmt <= 0) return src;
+    const q = v => Math.round(v * 12) / 12;
+    /* 색도 **뭉뚱그려서** 열쇠에 넣는다. 하늘색은 매 프레임 조금씩 바뀌므로 그대로
+       쓰면 열쇠가 매번 달라져 1920×400 판을 프레임마다 다시 굽는다. 채널을 16단계로
+       끊으면 하루에 몇 번만 굽는다(눈으로는 차이가 안 보인다). */
+    const n = parseInt(haze.slice(1), 16);
+    haze = '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+      .map(v => (Math.round(v / 16) * 16 & 255).toString(16).padStart(2, '0')).join('');
+    const key = ck + '|' + haze + '|' + q(hazeAmt) + '|' + q(darkAmt);
+    this._bgT = this._bgT || [];
+    const slotT = this._bgT[slot] = this._bgT[slot] || {};
+    if (slotT.key === key && slotT.cv) return slotT.cv;
+    const cv = slotT.cv || document.createElement('canvas');
+    cv.width = src.width; cv.height = src.height;
+    const g = cv.getContext('2d');
+    g.globalCompositeOperation = 'source-over';
+    g.clearRect(0, 0, cv.width, cv.height);
+    g.drawImage(src, 0, 0);
+    /* source-atop — 그림이 있는 자리에만 색을 얹는다. 하늘이 보여야 할 빈 자리는
+       그대로 비워 두어야 한다(여기까지 칠하면 하늘이 네모로 덮인다). */
+    g.globalCompositeOperation = 'source-atop';
+    if (hazeAmt > 0) { g.globalAlpha = q(hazeAmt); g.fillStyle = haze; g.fillRect(0, 0, cv.width, cv.height); }
+    if (darkAmt > 0) { g.globalAlpha = q(darkAmt); g.fillStyle = '#0a0c14'; g.fillRect(0, 0, cv.width, cv.height); }
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    slotT.key = key; slotT.cv = cv;
+    return cv;
+  },
+
   drawParallaxArt(c, camX, camY, f) {
     const deep = camY > HELL_Y * TS - 700;
     const p = this.player;
@@ -4686,6 +4734,7 @@ const G = {
        — 그게 8장의 모습이다 — 여기서 같은 밝기의 숲색을 만들어 두고 잿빛만큼
        원본 쪽으로 되돌린다. 지형의 잎·풀과 같은 곡선을 타야 능선만 따로 노는 일이 없다. */
     const src = key === 'parallax_forest' ? this.forestBg(im) : im;
+    const af = '|' + Math.round(this.ashF() * 20);   // 숲 원경은 장마다 그림이 달라진다
 
     const IW = im.width, IH = im.height;
     // 배경의 세로 위치는 camY(카메라의 실제 세계 y좌표) 하나로만 정한다. camY는 플레이어가
@@ -4698,19 +4747,22 @@ const G = {
     const refCamY = ref - this.H / 2;
     c.save();
     c.imageSmoothingEnabled = false;
-    let nearBaseY = 0, nearW = IW, nearOx = 0;
+    let nearBaseY = 0, nearW = IW, nearOx = 0, nearSrc = src;
+    const haze = this.skyHaze || '#a8c8e0';
+    const dark = (1 - f) * 0.58;          // 밤에는 어두워진다 — 옅어지는 게 아니라
     // parallax_village는 그림 속 건물이 이미지 아래쪽에 낮게 그려져 있어, 다른 배경과
     // 같은 기준으로 앉히면 실제 지형선 아래로 절반 넘게 파묻힌다. 이 키만 통째로 끌어올린다.
     const lift = key === 'parallax_village' ? 90 : 0;
     // 먼 층은 느리고 흐리게, 가까운 층은 빠르고 진하게
-    for (const [spd, alpha, dy, sc] of [[0.16, .45, -54 - lift, 1.15], [0.34, 1, -lift, 1]]) {
+    c.globalAlpha = 1;
+    for (const [slot, spd, hz, dy, sc] of [[0, 0.16, .55, -54 - lift, 1.15], [1, 0.34, 0, -lift, 1]]) {
       const w = IW * sc, h = IH * sc;
       const baseY = restY + (refCamY - camY) * spd;
-      c.globalAlpha = alpha * (0.42 + f * 0.58);
+      const img = this.tintBg(src, slot, key + af, haze, hz, dark);
       let ox = -((camX * spd) % w);
       if (ox > 0) ox -= w;
-      for (let x = ox; x < this.W; x += w) c.drawImage(src, x, baseY - h + dy, w, h);
-      if (spd === 0.34) { nearBaseY = baseY + dy; nearW = w; nearOx = ox; }
+      for (let x = ox; x < this.W; x += w) c.drawImage(img, x, baseY - h + dy, w, h);
+      if (spd === 0.34) { nearBaseY = baseY + dy; nearW = w; nearOx = ox; nearSrc = img; }
     }
     // 사막 분지 같은 저지대에서는 카메라가 내려가면서 근경 이미지의 바닥이 화면 바닥보다
     // 위로 올라와, 그 아래로 빈 캔버스가 그대로 드러나는 틈이 생긴다. 이미지 맨 아래 한 줄
@@ -4718,9 +4770,9 @@ const G = {
     // (여러 줄을 통째로 늘리면 그 띠의 위쪽 끝이 경계에 오게 되어, 정작 경계와 맞닿는 색은
     //  이미지의 몇 픽셀 안쪽 색이 되어버려 오히려 거기서 다시 끊겨 보인다.)
     if (nearBaseY < this.H) {
-      c.globalAlpha = 1 * (0.42 + f * 0.58);
+      c.globalAlpha = 1;
       for (let x = nearOx; x < this.W; x += nearW) {
-        c.drawImage(src, 0, IH - 1, IW, 1, x, nearBaseY, nearW, this.H - nearBaseY);
+        c.drawImage(nearSrc, 0, IH - 1, IW, 1, x, nearBaseY, nearW, this.H - nearBaseY);
       }
     }
     c.restore();
