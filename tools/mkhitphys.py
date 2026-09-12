@@ -30,6 +30,24 @@
   manifest.json 의 fx.bursts 가 그 규격으로 잘라 쓴다(scale 4 · gap 4 ·
   frameW/H 64 · count 6).
 
+■ 틀 맞춤 — 두 번 굽는다
+
+  처음에는 스케치를 좌표 그대로 옮겼고, 그래서 큰 프레임이 틀을 넘었다.
+  둔기 치명타의 바깥 고리는 rx 33(틀은 반지름 32)이고, 파편 하나는 x=0 에
+  붙어 있었다. 넘은 자리는 **없어지는 것이 아니라 잘린 단면으로 남는다** —
+  고리가 좌우에서 칼로 자른 듯 끊기고, 파편은 반쪽만 보인다.
+
+  그래서 두 번 굽는다. 첫 번째는 **두 배 넓은 버퍼**에 잘리지 않게 그려
+  시트가 실제로 얼마나 넓은지 재고, 그 시트에서 가장 넓은 프레임이 틀 안에
+  여백 2px 을 남기고 들어가는 배율 하나를 구한다. 두 번째에 그 배율로 다시
+  그린다 — 프레임마다 따로 맞추면 애니메이션이 프레임 단위로 커졌다 작아지므로
+  **배율은 시트 하나에 하나**, 계열의 평타·치명타가 서로 커 보이지 않도록
+  **계열 안에서는 둘 중 더 작은 쪽**으로 맞춘다.
+
+  그림이 줄어든 만큼 화면에서 그리는 크기(data.js 의 HIT_FX size)를 나눠서
+  올린다 — 틀에 맞추느라 타격이 작아지면 고친 것이 아니라 바꾼 것이 된다.
+  이 스크립트가 그 숫자를 찍어 준다.
+
 ■ 색
 
   물리만 금빛을 쓴다 — 이미 있는 마법 다섯(비전·서리·영혼·불·공허)이 전부
@@ -43,6 +61,10 @@ from PIL import Image
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'game', 'assets', 'fx')
 N, S, GAP, FRAMES = 64, 4, 4, 6
+MARGIN = 2              # 틀 안쪽에 반드시 남는 여백(원본 px) — 단면이 안 생기는 최소치
+
+# 굽는 동안 바뀌는 것: 재는 판(CANV=128)과 내는 판(CANV=64), 그리고 틀 맞춤 배율.
+CANV, CEN, FIT = N, N / 2, 1.0
 
 W = (255, 246, 224)     # 심지 — 따뜻한 흰빛
 G = (255, 224, 138)     # 금빛 몸통
@@ -54,10 +76,21 @@ P = (255, 255, 255)     # 순백 — 치명타에만
 
 # ---------------------------------------------------------------- 붓
 
+def tp(v):
+    """스케치 좌표(가운데 32) → 지금 굽는 판의 좌표. FIT<1 이면 가운데로 당겨진다."""
+    return CEN + (v - N / 2) * FIT
+
+
+def tw(v):
+    """굵기·반지름도 같은 배율로 — 위치만 줄이면 획이 굵어져 고리가 도로 틀을 넘는다."""
+    return max(v * FIT, 0.5)
+
+
 def put(px, x, y, rgb, a):
-    """더 밝은(더 진한) 쪽을 남긴다. 겹칠 때 앞의 획이 뒤에 먹히지 않게."""
+    """더 밝은(더 진한) 쪽을 남긴다. 겹칠 때 앞의 획이 뒤에 먹히지 않게.
+       ★ 판의 좌표를 받는다(tp 를 이미 지난 값). 여기서 또 변환하면 두 번 줄어든다."""
     x, y = int(x), int(y)
-    if not (0 <= x < N and 0 <= y < N) or a <= 0:
+    if not (0 <= x < CANV and 0 <= y < CANV) or a <= 0:
         return
     a = min(1.0, a)
     if a * 255 >= px[x, y][3]:
@@ -65,7 +98,9 @@ def put(px, x, y, rgb, a):
 
 
 def dot(px, x, y, r, rgb, a):
-    """둥근 점 하나 — 모든 획의 단위."""
+    """둥근 점 하나 — 모든 획의 단위. 틀 맞춤이 걸리는 곳은 여기 한 군데다
+       (bez·line·ell 이 전부 dot 을 거치므로 스케치 좌표를 그대로 넘겨도 된다)."""
+    x, y, r = tp(x), tp(y), tw(r)
     rr = int(r) + 2
     for dy in range(-rr, rr + 1):
         for dx in range(-rr, rr + 1):
@@ -105,6 +140,7 @@ def ell(px, cx, cy, rx, ry, sw, rgb, a):
 
 
 def ellfill(px, cx, cy, rx, ry, rgb, a):
+    cx, cy, rx, ry = tp(cx), tp(cy), tw(rx), tw(ry)
     for y in range(int(-ry) - 1, int(ry) + 2):
         for x in range(int(-rx) - 1, int(rx) + 2):
             if (x / max(rx, .1)) ** 2 + (y / max(ry, .1)) ** 2 <= 1:
@@ -113,13 +149,14 @@ def ellfill(px, cx, cy, rx, ry, rgb, a):
 
 def box(px, x, y, w, h, rgb, a):
     """네모 파편 — 둔기가 튀겨 낸 덩어리."""
+    x, y, w, h = tp(x), tp(y), max(round(w * FIT), 2), max(round(h * FIT), 2)
     for dy in range(int(h)):
         for dx in range(int(w)):
             put(px, x + dx, y + dy, rgb, a)
 
 
 def new():
-    im = Image.new('RGBA', (N, N), (0, 0, 0, 0))
+    im = Image.new('RGBA', (CANV, CANV), (0, 0, 0, 0))
     return im, im.load()
 
 
@@ -370,24 +407,57 @@ def f_blunt_crit(f):
     return im
 
 
-SHEETS = [
-    ('hit_slash', f_slash), ('hit_slash_crit', f_slash_crit),
-    ('hit_pierce', f_pierce), ('hit_pierce_crit', f_pierce_crit),
-    ('hit_blunt', f_blunt), ('hit_blunt_crit', f_blunt_crit),
+# 계열 = 평타·치명타 한 쌍. 화면에서 그리는 크기(HIT_FX size)를 한 쌍이 같이 쓰므로
+# 틀 맞춤 배율도 쌍으로 하나여야 한다 — 따로 맞추면 치명타가 평타보다 작아진다.
+FAMS = [
+    ('slash', 46, [('hit_slash', f_slash), ('hit_slash_crit', f_slash_crit)]),
+    ('pierce', 44, [('hit_pierce', f_pierce), ('hit_pierce_crit', f_pierce_crit)]),
+    ('blunt', 60, [('hit_blunt', f_blunt), ('hit_blunt_crit', f_blunt_crit)]),
 ]
+
+
+def measure(fn):
+    """첫 번째 굽기 — 두 배 판에 잘리지 않게 그려, 가운데에서 가장 먼 픽셀을 잰다."""
+    global CANV, CEN, FIT
+    CANV, CEN, FIT = N * 2, N, 1.0
+    far = 0.0
+    for f in range(FRAMES):
+        bb = fn(f).getbbox()
+        if not bb:
+            continue
+        l, t, r, b = bb
+        far = max(far, CEN - l, (r - 1) - CEN, CEN - t, (b - 1) - CEN)
+    return far
 
 
 def main():
     os.makedirs(OUT, exist_ok=True)
+    global CANV, CEN, FIT
     fw = N * S
     sw = FRAMES * fw + (FRAMES - 1) * GAP
-    for name, fn in SHEETS:
-        sheet = Image.new('RGBA', (sw, N * S), (0, 0, 0, 0))
-        for f in range(FRAMES):
-            sheet.paste(fn(f).resize((fw, N * S), Image.NEAREST), (f * (fw + GAP), 0))
-        p = os.path.join(OUT, name + '.png')
-        sheet.save(p)
-        print('  %-18s %dx%d  %dB' % (name + '.png', sheet.size[0], sheet.size[1], os.path.getsize(p)))
+    # 가운데 픽셀은 32번 칸이므로 오른쪽·아래로 남는 칸은 31개다 —
+    # 여백 MARGIN 을 양쪽에 두려면 가운데에서 31-MARGIN 까지만 써야 한다.
+    lim = N / 2 - 1 - MARGIN
+    for fam, size, sheets in FAMS:
+        far = max(measure(fn) for _, fn in sheets)
+        k = min(1.0, lim / far) if far > 0 else 1.0
+        print('  %-7s 가장 먼 픽셀 %.1f / 틀 %.0f → 배율 %.3f · HIT_FX size %d → %d'
+              % (fam, far, lim, k, size, round(size / k)))
+        for name, fn in sheets:
+            CANV, CEN, FIT = N, N / 2, k
+            sheet = Image.new('RGBA', (sw, N * S), (0, 0, 0, 0))
+            gap = N                      # 여섯 프레임 중 여백이 가장 좁은 곳
+            for f in range(FRAMES):
+                im = fn(f)
+                bb = im.getbbox()
+                if bb:
+                    gap = min(gap, bb[0], bb[1], N - bb[2], N - bb[3])
+                sheet.paste(im.resize((fw, N * S), Image.NEAREST), (f * (fw + GAP), 0))
+            p = os.path.join(OUT, name + '.png')
+            sheet.save(p)
+            print('    %-18s %dx%d  %6dB  가장 좁은 여백 %dpx%s'
+                  % (name + '.png', sheet.size[0], sheet.size[1], os.path.getsize(p),
+                     gap, '' if gap >= MARGIN else '  ← 아직 붙는다'))
     return 0
 
 

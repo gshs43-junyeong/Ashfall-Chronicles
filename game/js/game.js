@@ -4734,6 +4734,13 @@ const G = {
     // parallax_sky·parallax_ruin이 들어와 있었는데 여기서 참조하지 않아 그동안 안 쓰이고 있었다
     else if (zone === 'sky') key = 'parallax_sky';
     else if (zone === 'ruin') key = 'parallax_ruin';
+    /* ★ parallax_works 도 같은 신세였다 — 매니페스트에 실려 있고 파일도 멀쩡한데
+       (1920×400) 이 함수가 그 키를 한 번도 안 불렀다. 그래서 지하 공창과 폭주로는
+       **원경이 아예 없었다**(아래 '지하 중간층은 원경 없음' 으로 빠져나간다).
+       세션 2 의 절반을 보내는 곳인데 뒤가 빈 캔버스였다.
+       설계실(atelier)은 일부러 뺀다 — 거기는 "강철이 한 조각도 없는 흰 돌방"이라
+       공창 배경을 깔면 글과 그림이 어긋난다. */
+    else if (zone === 'works' || zone === 'runaway') key = 'parallax_works';
     // 여명 마을은 전용 그림. 베이스캠프는 숲 배경 그대로 (마을 배경 쓰면 안 됨)
     else if (zone === 'village') key = 'parallax_village';
     else if (zone === 'camp') key = 'parallax_forest';
