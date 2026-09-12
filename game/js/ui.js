@@ -870,7 +870,9 @@ const UI = {
       const done = G.sideDone[id] || 0;
       const p = G.sideProgress(active);
       sh += `<div class="side-npc"><b>${NPCS[id].n}</b><span class="side-done">완료 ${done}건</span>`;
-      sh += `<div class="side-q ${p.done ? 'ok' : ''}">${active.title} — ${active.desc} <b>${p.cur}/${p.max}</b></div>`;
+      const sp = G.sidePay(active);
+      sh += `<div class="side-q ${p.done ? 'ok' : ''}">${active.title} — ${active.desc} <b>${p.cur}/${p.max}</b>` +
+        `<span class="side-rw">🪙 ${fmt(sp.gold)} · 경험치 ${fmt(sp.xp)}</span></div>`;
       sh += '</div>';
     }
     if (!hasActive) sh += '<div class="side-q empty">지금 맡아 둔 부탁이 없다.</div>';
@@ -1409,11 +1411,14 @@ const UI = {
          떼어 간 뒤에는 그 사람이 남긴 한 줄로 바뀐다. */
       const body = (q.done && q.doneLine) ? `<div class="qc-say">${q.doneLine}</div>`
         : (q.body || []).map(l => `<div class="qc-line">${l}</div>`).join('');
+      /* 값은 그때그때 센다 — 레벨이 오르면 종이에 적힌 값도 같이 오른다.
+         떼어 간 종이만은 그때 받은 값을 그대로 보여 준다. */
+      const pay = G.bountyPay(q);
       el.innerHTML = `<div class="qc-title">${q.title || ''}</div>` + body +
         `<div class="qc-from">— ${q.from || ''}</div>` +
         `<div class="qc-obj">${G.objLabel(q.obj)}` +
         `${q.done ? ' · 완료됨' : ` <b>${pr.cur} / ${pr.max}</b>`}</div>` +
-        `<div class="qc-rw">보상 🪙 ${fmt(q.gold)} · 경험치 ${fmt(q.xp)}` +
+        `<div class="qc-rw">보상 🪙 ${fmt(pay.gold)} · 경험치 ${fmt(pay.xp)}` +
         `${(q.items || []).map(([id, n]) => ` · ${ITEMS[id].n}×${n}`).join('')}</div>`;
       if (!q.done && pr.done) {
         const btn = document.createElement('button');
