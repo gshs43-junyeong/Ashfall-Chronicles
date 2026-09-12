@@ -134,19 +134,18 @@ const SFX_FILES = {
   hatch: 'hatch'                // 알에서 펫이 나올 때 (예전엔 챕터 전환 팡파르를 빌려 썼다)
   /* boss(보스 등장)는 일부러 없다 — 대신 보스 브금이 곧장 치고 들어온다 */
 
-  /* ===== 재질별 타격·파괴음 — 파일이 오면 여기 한 줄씩 푼다 =====
+  /* ===== 재질음 — 열 개면 된다 =====
      프롬프트는 docs/v1.1-sfx-prompts.md 의 "재질" 절에 있다.
-     파일이 없는 동안에는 game.js 의 sfx() 가 재질마다 다른 합성음으로
-     대신 울린다 — 그래서 **한 개도 안 넣은 지금도 소리가 갈린다.**
+     스물세 가지 키(hit_* 열하나 · break_* 열둘)를 **파일 열 개**로 덮는다 —
+     아래 SFX_FAM 이 어느 키가 어느 파일을 쓰는지, 그리고 같은 파일을 어떤
+     음높이·음량으로 틀어 서로 다르게 들리게 할지를 들고 있다.
+     파일이 없는 동안에는 game.js 의 sfx() 가 스물세 가지 합성음으로 대신
+     울린다 — 합성음은 코드라 공짜라서 굳이 줄이지 않았다.
 
-  , hit_flesh: 'hit_flesh', hit_bone: 'hit_bone', hit_stone: 'hit_stone'
-  , hit_dirt: 'hit_dirt', hit_wood: 'hit_wood', hit_metal: 'hit_metal'
-  , hit_glass: 'hit_glass', hit_gel: 'hit_gel', hit_plant: 'hit_plant'
-  , hit_ember: 'hit_ember', hit_void: 'hit_void'
-  , break_stone: 'break_stone', break_dirt: 'break_dirt', break_wood: 'break_wood'
-  , break_plant: 'break_plant', break_metal: 'break_metal', break_glass: 'break_glass'
-  , break_ice: 'break_ice', break_ember: 'break_ember', break_bone: 'break_bone'
-  , break_flesh: 'break_flesh', break_void: 'break_void', break_machine: 'break_machine'
+  , mat_flesh: 'mat_flesh', mat_bone: 'mat_bone', mat_stone: 'mat_stone'
+  , mat_dirt: 'mat_dirt', mat_wood: 'mat_wood', mat_metal: 'mat_metal'
+  , mat_glass: 'mat_glass', mat_plant: 'mat_plant', mat_ember: 'mat_ember'
+  , mat_void: 'mat_void'
   */
 
   /* ===== 스킬음 — 파일이 오면 여기 한 줄씩 푼다 =====
@@ -163,6 +162,41 @@ const SFX_FILES = {
   , sk_bolt: 'sk_bolt', sk_blink: 'sk_blink', sk_summon: 'sk_summon'
   , sk_deny: 'sk_deny'
   */
+};
+
+/* ================= 재질음 한 벌 =================
+
+   ■ 스물세 개는 과했다
+
+     재질마다 닿는 소리와 부서지는 소리를 따로 두면 hit_* 열하나에 break_*
+     열둘, 파일 스물세 개다. 그런데 **부서지는 소리는 대개 닿는 소리의 큰
+     판**이다 — 돌을 때리는 톡 소리와 돌이 떨어져 나가는 와르르 소리는 결이
+     같고 크기와 길이만 다르다. 젤과 살, 얼음과 유리도 마찬가지로 결이 같다.
+
+   ■ 파일 열 개로 덮는다
+
+     재질 열둘을 **결이 같은 것끼리** 열 갈래로 묶고(젤→살, 얼음→유리),
+     닿는 소리와 부서지는 소리는 **같은 파일을 다르게 틀어서** 가른다.
+     부수는 쪽은 음을 낮추고 크게 — 그러면 "같은 것이 더 크게 일어났다"로
+     들린다. 같은 파일을 쓰는 젤과 살도 음높이를 갈라 두어 붙어 있지 않다.
+
+       [파일, 음높이 배수, 음량 배수]
+
+     파일이 하나도 없으면 합성음 스물세 가지가 그대로 울린다(그쪽은 코드라
+     공짜다). 파일을 열 개 넣으면 그 열 개가 스물세 자리를 전부 채운다. */
+const SFX_FAM = {
+  hit_flesh: ['mat_flesh', 1, 1], hit_gel: ['mat_flesh', 1.22, .9],
+  hit_bone: ['mat_bone', 1, 1], hit_stone: ['mat_stone', 1, 1],
+  hit_dirt: ['mat_dirt', 1, 1], hit_wood: ['mat_wood', 1, 1],
+  hit_metal: ['mat_metal', 1, 1], hit_glass: ['mat_glass', 1, 1],
+  hit_plant: ['mat_plant', 1, 1], hit_ember: ['mat_ember', 1, 1],
+  hit_void: ['mat_void', 1, 1],
+  break_flesh: ['mat_flesh', .74, 1.4], break_bone: ['mat_bone', .78, 1.4],
+  break_stone: ['mat_stone', .74, 1.45], break_dirt: ['mat_dirt', .8, 1.35],
+  break_wood: ['mat_wood', .78, 1.4], break_metal: ['mat_metal', .78, 1.4],
+  break_glass: ['mat_glass', .84, 1.45], break_ice: ['mat_glass', .7, 1.4],
+  break_plant: ['mat_plant', .82, 1.35], break_ember: ['mat_ember', .78, 1.4],
+  break_void: ['mat_void', .72, 1.4], break_machine: ['mat_metal', .66, 1.5]
 };
 
 /* 키별 최소 간격(초). 없으면 제한 없음 */
@@ -209,19 +243,31 @@ const Sfx = {
 
   /** 재생을 시도한다. 파일이 있으면 틀고 true, 없으면 false (호출자가 합성음으로 대신) */
   play(kind, rate) {
-    const pool = this.voices[kind];
+    /* 제 이름의 파일이 없으면 **같은 결의 한 벌**을 대신 튼다(SFX_FAM).
+       재질음 스물세 자리를 파일 열 개로 채우는 장치다 — 부수는 쪽은 음을
+       낮추고 크게 틀어 "같은 것이 더 크게 일어났다"로 들리게 한다.
+       간격과 순번은 **원래 키로** 센다. 안 그러면 돌을 때리는 소리가 돌이
+       부서지는 소리를 막는다(같은 파일을 쓴다는 이유로). */
+    let pool = this.voices[kind], fr = 1, fg = 1;
+    if (!pool) {
+      const f = SFX_FAM[kind];
+      if (f && this.voices[f[0]]) { pool = this.voices[f[0]]; fr = f[1]; fg = f[2]; }
+    }
     if (!pool) return false;
     const now = performance.now() / 1000;
     const gap = SFX_GAP[kind];
     if (gap !== undefined && now - (this.last[kind] || -9) < gap) return true;   // 너무 잦다 — 조용히 건너뛴다
     this.last[kind] = now;
-    const i = this.turn[kind] = (this.turn[kind] + 1) % pool.length;
+    /* 순번은 ||0 으로 받는다 — 한 벌을 빌려 쓰는 키(hit_stone → mat_stone)는
+       제 이름으로 로드된 적이 없어 turn 에 자리가 없다. undefined + 1 은 NaN 이고
+       pool[NaN] 은 없는 목소리라, 파일을 넣는 순간 재질음이 통째로 터진다. */
+    const i = this.turn[kind] = ((this.turn[kind] || 0) + 1) % pool.length;
     const a = pool[i];
-    a.volume = this.vol * (SFX_VOL[kind] === undefined ? 1 : SFX_VOL[kind]);
+    a.volume = Math.min(1, this.vol * (SFX_VOL[kind] === undefined ? 1 : SFX_VOL[kind]) * fg);
     /* ★ 한 획마다 음높이를 흔든다. 같은 파일을 그대로 되풀이하면 세 번째
        휘두를 때부터 "같은 소리"로 들리고 손맛이 밋밋해진다. ±6% 면 음이
        바뀐 것으로는 안 들리고 '다른 타격'으로만 들린다. */
-    a.playbackRate = rate || 1;
+    a.playbackRate = (rate || 1) * fr;
     try { a.currentTime = SFX_START[kind] || 0; } catch (e) { }
     a.play().catch(() => { });
     return true;
