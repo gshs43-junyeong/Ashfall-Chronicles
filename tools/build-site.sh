@@ -92,3 +92,16 @@ for want in hero.js showcase.js content.js style.css; do
 done
 
 echo "site/play/ 준비 완료 — $(find "$ROOT/site/play" -type f | wc -l | tr -d ' ')개 파일 · build $BUILD · html $STAMPED장"
+
+# ---- 로컬에서 돌렸다면 되돌릴 것 -----------------------------------------------
+# 이 스크립트는 site/home/index.html 과 site/download/index.html 을 **제자리에서**
+# 고친다(?v=dev → 커밋 해시, __AC_BUILD__ → 커밋 해시). 두 파일은 커밋되는 원본이라,
+# 로컬에서 돌린 뒤 그대로 커밋하면 판 번호가 소스에 박힌 채 올라간다. 배포 환경은
+# 일회용 체크아웃이라 상관없지만 로컬에서는 아니다 — 실제로 한 번 그렇게 섞였다.
+if [ -z "${VERCEL:-}${CI:-}" ] && git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  if ! git -C "$ROOT" diff --quiet -- site/home/index.html site/download/index.html 2>/dev/null; then
+    echo "  ※ 로컬 실행입니다. 커밋 전에 되돌리세요:"
+    echo "     git checkout -- site/home/index.html site/download/index.html"
+    echo "     (그 파일도 함께 고쳤다면 ?v=dev 와 __AC_BUILD__ 만 되돌릴 것)"
+  fi
+fi

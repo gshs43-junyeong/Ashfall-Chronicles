@@ -41,7 +41,9 @@
     <canvas id="heroCanvas"></canvas>
   </div>
   <div class="wrap-wide hero-inner">
-    <p class="eyebrow">v1.0.5</p>
+    <!-- 웹(/play)은 늘 개발 중인 판이 돈다. 내려받는 판(1.0.5)과 다르다는 것을
+         여기서 한 번 말해 두지 않으면, 받은 사람이 "웹에 있던 게 없다"로 만난다. -->
+    <p class="eyebrow">v1.1 <span class="eyebrow-sub">개발 중 · 내려받는 판은 v1.0.5</span></p>
     <h1>Ashfall Chronicles</h1>
     <p class="subtitle">별이 잠든 땅</p>
     <p class="tagline">별 조각은 홀로 남으면 잠들고, 잠들면 꿈을 꾼다.<br>그 꿈이 세계에게 자기가 무엇이었는지를 잊게 만든다.</p>
@@ -61,7 +63,10 @@
   <div class="wrap-wide">
     <div class="sec-head"><p class="eyebrow">읽기 전에, 해 보세요</p></div>
     <h2>지금 이 페이지에서</h2>
-    <p class="sec-lede">아래 화면이 게임 전체입니다. 내려받은 것과 같은 판이고, 설치도 계정도 없습니다.</p>
+    <!-- "내려받은 것과 같은 판"이었는데, v1.1 을 만들기 시작하면서 웹이 앞서 나갔다.
+         같다고 적어 두면 받은 사람이 "웹에 있던 게 없다"로 만난다. -->
+    <p class="sec-lede">아래 화면이 게임 전체입니다. 설치도 계정도 없습니다.
+      <span class="lede-note">지금 웹에서 도는 것은 <strong>v1.1 개발판</strong>이라, 내려받는 v1.0.5 보다 앞서 있습니다.</span></p>
 
     <div class="stage" id="stage">
       <button class="stage-cover pixel" id="stageCover" type="button"
@@ -241,8 +246,8 @@
 
     <p class="fig-lede">세어 보면 이만큼입니다. 위 화면과 아래 목록이 이 숫자의 실물입니다.</p>
 <div class="figures figures-inline">
-  <div class="fig"><span class="n">327</span><span class="l">종의 아이템</span></div>
-  <div class="fig"><span class="n">79</span><span class="l">종의 몬스터</span></div>
+  <div class="fig"><span class="n">372</span><span class="l">종의 아이템</span></div>
+  <div class="fig"><span class="n">84</span><span class="l">종의 몬스터</span></div>
   <div class="fig"><span class="n">22</span><span class="l">종의 기계</span></div>
   <div class="fig"><span class="n">11</span><span class="l">개 지역</span></div>
   <div class="fig"><span class="n">15</span><span class="l">개의 장</span></div>
@@ -306,7 +311,7 @@
          없어서, "사이트를 고쳤는데 반영이 안 된다"가 났을 때 그것이 캐시인지 배포인지
          코드인지 구별할 방법이 아예 없었다. 이제 이 일곱 자로 확인한다.
          634fa86e28ad 는 tools/build-site.sh 가 배포 때 커밋 해시로 바꾼다. -->
-    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.0.5</span>
+    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.1 개발 중</span>
        <span class="mono site-build" id="siteBuild">__AC_BUILD__</span></p>
     <p class="foot-credit">음악 <a href="https://suno.com" target="_blank" rel="noopener">Suno</a>
        · 효과음 <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a>
