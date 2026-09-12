@@ -148,12 +148,29 @@ const SFX_FILES = {
   , break_ice: 'break_ice', break_ember: 'break_ember', break_bone: 'break_bone'
   , break_flesh: 'break_flesh', break_void: 'break_void', break_machine: 'break_machine'
   */
+
+  /* ===== 스킬음 — 파일이 오면 여기 한 줄씩 푼다 =====
+     프롬프트는 docs/v1.1-sfx-prompts.md 의 "스킬" 절에 있다. 열아홉 가지 스킬을
+     열다섯 갈래로 묶어 두었으므로 파일도 열다섯 개면 된다(어느 스킬이 어느
+     갈래인지는 data.js 의 SKILL_FX). 없는 동안에는 game.js 의 sfx() 가 갈래마다
+     다른 합성음으로 대신 울린다.
+
+  , sk_slash: 'sk_slash', sk_whirl: 'sk_whirl', sk_charge: 'sk_charge'
+  , sk_quake: 'sk_quake', sk_guard: 'sk_guard', sk_shout: 'sk_shout'
+  , sk_volley: 'sk_volley', sk_pierce: 'sk_pierce', sk_smoke: 'sk_smoke'
+  , sk_mark: 'sk_mark', sk_fire: 'sk_fire', sk_meteor: 'sk_meteor'
+  , sk_frost: 'sk_frost', sk_heal: 'sk_heal', sk_shield: 'sk_shield'
+  , sk_bolt: 'sk_bolt', sk_blink: 'sk_blink', sk_summon: 'sk_summon'
+  , sk_deny: 'sk_deny'
+  */
 };
 
 /* 키별 최소 간격(초). 없으면 제한 없음 */
 const SFX_GAP = {
   damage: 0.07, swing: 0.04, mine: 0.05, turret: 0.09, zap: 0.18,
   belt: 0.34, drill: 0.28, smelt: 0.24, cook: 0.3,
+  // 스킬 — 막힌 소리는 키를 누르고 있으면 연달아 울린다. 회오리는 박자가 0.28초다
+  sk_deny: 0.14, sk_whirl: 0.22,
   // 재질 타격음은 damage 와 같은 박자로 울린다. 파괴음은 한 칸에 한 번뿐이라 안 막는다
   hit_flesh: 0.06, hit_bone: 0.06, hit_stone: 0.06, hit_dirt: 0.06, hit_wood: 0.06,
   hit_metal: 0.06, hit_glass: 0.06, hit_gel: 0.06, hit_plant: 0.06, hit_ember: 0.06,
