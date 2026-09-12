@@ -4681,3 +4681,171 @@ const BOUNTY_BY_ID = (() => {
 /* 목표 종류마다 "한 건"의 크기가 다르다 — 스물여섯 개를 모으는 것과 열두 마리를
    잡는 것이 같은 보상일 수는 없다. 이 수로 나눠 배수를 잡는다. */
 const BOUNTY_UNIT = { kill: 10, collect: 22, mine: 18 };
+
+/* ================= 물건값 =================
+
+   ■ 전부 12금화였다
+
+     price() 는 무기·방어구·도구·소모품에만 값을 매기고, **재료는 전부 12**였다.
+     나무도 12, 미스릴 원석도 12, 궤도 톱니도 12. 그래서
+
+       · 무엇을 주우러 갈지가 값으로는 전혀 안 갈렸다. 깊이 내려가 캔 것이
+         발밑의 나무와 같은 값이었다.
+       · 만드는 것이 늘 손해였다. 조리법 183개 중 **121개**가 재료값이 완제품값
+         보다 비쌌다(중앙 배율 0.57). 벼릴수록 가난해지는 셈이다.
+       · 후반이 더 심했다. 9등급 무기가 870금화인데 보스 재료 하나가 16,000이다.
+         잡는 몹이 700금화를 떨구니, 최종 무기 한 자루가 몹 한 마리 값이었다.
+
+   ■ 한 벌의 셈으로 전부 매긴다 — 손으로 적은 숫자를 늘리지 않는다
+
+     ① 값이 적혀 있는 것(보스·낚시 노획물)은 그대로 둔다.
+     ② **캘 수 있으면 캐는 쪽이 값을 정한다.** 만들 수도 있는 것이라도 그렇다.
+        도시가 통째로 강철판인데 강철판을 벼려서 값을 매기면 벽을 뜯는 것이
+        무한한 금화가 된다(한 장에 142금화, 벽 하나에 백 장).
+        광맥은 등급 사다리(VAL0·VAL_R^등급)에 올린다.
+     ③ 몹이 떨구는 것은 **그 몹이 내놓는 금화를 재료가 나눠 갖는다.**
+        여러 몹이 떨구면 가장 만만한 데와 가장 센 데의 기하평균 — 최솟값만
+        쓰면 보스도 떨구는 재료가 잡값이 되고, 최댓값만 쓰면 흔한 뼛조각이
+        보스 값이 된다. 보스는 아예 안 본다(그쪽은 값이 적혀 있다).
+     ④ 만드는 것은 **재료값 합의 CRAFT배**(장비는 GEAR배). 만들면 값이 붙는다.
+     ⑤ 만들 수 없는 장비는 **필요 레벨**로 등급을 잡아 사다리에 올린다.
+        종류마다 무기 대비 몇 할인지는 만들 수 있는 것들에서 재서 쓴다.
+     ⑥ 먹고 마시는 것은 재료가 아니라 효과로 팔린다 — 약초 두 뿌리로 만들어도
+        물약은 물약값을 한다(바닥 22).
+     ⑦ 어디서도 안 나오고 쓰이기만 하는 재료(충전된 배터리처럼 기계가 내놓는
+        것)는 **같은 조리법에 함께 적힌 재료들**의 값으로 자리를 잡는다.
+
+   ■ 결과 (실측)
+
+     조리법 배율 중앙 0.57 → 1.32, 뒤집힌 것 121개 → 19개. 남은 열아홉은
+     까닭이 있다 — 캘 수 있는 것을 굳이 벼리는 조리법, 작업대처럼 팔려고
+     만드는 물건이 아닌 것, 낚시 진귀품이 들어가는 것.
+
+     나무 3 · 돌 3 · 구리 원석 5 · 철 원석 8 · 미스릴 원석 24 · 에테르 파편 37
+     · 궤도 톱니 57 · 강철 주괴 31 · 미스릴 주괴 124 · 회로 기판 122
+     무기 등급값 0:117 1:189 3:493 5:1283 7:3340 9:8696
+
+     가게에 걸리는 것은 거의 안 움직인다 — 강철 곡괭이 220→229, 낡은 손목대
+     220→147, 집중의 반지 220→237, 물약 22→22. 크게 오르는 것은 벼려서 만드는
+     중·후반 장비뿐이고(강철 브로드소드 240→512), 그건 원래 재료값보다 싸게
+     팔리고 있던 것이다. */
+const VAL_R = 1.55;     // 등급 한 칸에 값이 몇 배
+const VAL_0 = 3.3;      // 0등급 재료 한 개
+const VAL_SHARE = 0.5;  // 몹이 내놓는 금화 중 재료 몫
+const VAL_CAP = 0.45;   // 한 가지 재료가 가져갈 수 있는 최대 몫
+const VAL_MIN = 3;      // 재료 바닥값
+const VAL_CRAFT = 1.30; // 만들면 붙는 값
+const VAL_GEAR = 1.45;  // 장비는 조금 더
+/* 광맥의 등급. hard(필요 곡괭이)만으로는 구리와 철이, 금과 미스릴이 같은 칸에
+   묶여 버린다 — 실제로 나오는 깊이와 장으로 갈라 적는다. */
+const ORE_TIER = {
+  copper_ore: 1, lead_ore: 1, coal: 1, iron_ore: 2, crude_oil: 2, steel_plate: 3,
+  crystal: 3, gold_ore: 3, mythril_ore: 4, soul_shard: 4, hell_ore: 4,
+  aether_shard: 5, power_core: 5, draft_glass: 6, orbit_gear: 6
+};
+
+const ITEM_VAL = (() => {
+  const V = {}, step = t => VAL_0 * Math.pow(VAL_R, t);
+  const made = {};
+  for (const r of RECIPES) if (!made[r.out]) made[r.out] = r;
+
+  for (const id in ITEMS) if (ITEMS[id].price) V[id] = ITEMS[id].price;
+
+  for (const d of TILE_DEF) {
+    if (!d.drop || V[d.drop] !== undefined) continue;
+    if (ORE_TIER[d.drop] !== undefined) V[d.drop] = step(ORE_TIER[d.drop]);
+    else if (d.ore) V[d.drop] = step((d.hard || 0) + 1);
+  }
+  for (const d of TILE_DEF)
+    if (d.drop && V[d.drop] === undefined && !made[d.drop]) V[d.drop] = step(0) * 0.35;
+
+  const lo = {}, hi = {};
+  for (const k in ENEMIES) {
+    const e = ENEMIES[k], ds = e.boss ? [] : (e.drops || []);
+    let tot = 0;
+    for (const [id, c, a, b] of ds) if ((ITEMS[id] || {}).type === 'mat') tot += c * (a + b) / 2;
+    if (!tot) continue;
+    const per = Math.min((e.gold || 1) * VAL_SHARE / tot, (e.gold || 1) * VAL_CAP);
+    for (const [id] of ds) {
+      const d = ITEMS[id] || {};
+      if (d.type !== 'mat' || d.price || made[id] || V[id] !== undefined) continue;
+      lo[id] = lo[id] === undefined ? per : Math.min(lo[id], per);
+      hi[id] = hi[id] === undefined ? per : Math.max(hi[id], per);
+    }
+  }
+  for (const id in lo) V[id] = Math.sqrt(lo[id] * hi[id]);
+
+  const busy = {}, GEARY = { weapon: 1, armor: 1, tool: 1, acc: 1 };
+  const cost = (id, dep) => {
+    if (V[id] !== undefined) return V[id];
+    const r = made[id];
+    if (!r || dep > 14 || busy[id]) return (V[id] = step(0));
+    busy[id] = 1;
+    let c = 0;
+    for (const k in r.need) c += cost(k, dep + 1) * r.need[k];
+    return (V[id] = c * (GEARY[(ITEMS[id] || {}).type] ? VAL_GEAR : VAL_CRAFT) / (r.n || 1));
+  };
+  for (const r of RECIPES) cost(r.out, 0);
+
+  // 쓰이기만 하는 재료 — 나란히 적힌 것들의 값으로 자리를 잡는다
+  const sourced = {};
+  for (const id in ITEMS) if (ITEMS[id].price || made[id]) sourced[id] = 1;
+  for (const d of TILE_DEF) if (d.drop) sourced[d.drop] = 1;
+  for (const k in ENEMIES) for (const [id] of (ENEMIES[k].drops || [])) sourced[id] = 1;
+  for (let pass = 0; pass < 2; pass++) {
+    for (const id in ITEMS) {
+      if (sourced[id] || ITEMS[id].type !== 'mat') continue;
+      const peers = [];
+      for (const r of RECIPES) {
+        if (!r.need[id]) continue;
+        for (const k in r.need) if (k !== id && V[k]) peers.push(V[k]);
+      }
+      if (!peers.length) continue;
+      peers.sort((a, b) => a - b);
+      V[id] = peers[Math.floor(peers.length / 2)];
+    }
+  }
+
+  // 등급 사다리 — 만들 수 있는 무기들을 로그 자리에서 직선으로 맞춘다.
+  // 등급별 평균을 그냥 쓰면 6등급이 5등급보다 싸지는 식으로 들쭉날쭉하다.
+  const pts = [];
+  for (const r of RECIPES) {
+    const d = ITEMS[r.out];
+    if (d && d.type === 'weapon' && d.tier !== undefined && V[r.out] > 0)
+      pts.push([d.tier, Math.log(V[r.out])]);
+  }
+  let a = 0.48, b0 = Math.log(120);
+  if (pts.length > 1) {
+    const n = pts.length, sx = pts.reduce((s, p) => s + p[0], 0), sy = pts.reduce((s, p) => s + p[1], 0);
+    const sxx = pts.reduce((s, p) => s + p[0] * p[0], 0), sxy = pts.reduce((s, p) => s + p[0] * p[1], 0);
+    a = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+    b0 = (sy - a * sx) / n;
+  }
+  const ladder = t => Math.exp(b0 + a * clamp(t, 0, WEAPON_TIER_LV.length - 1));
+  const lvTier = lv => {
+    let t = 0;
+    for (let i = 0; i < WEAPON_TIER_LV.length; i++) if ((lv || 1) >= WEAPON_TIER_LV[i]) t = i;
+    return t;
+  };
+  const fac = {};
+  for (const ty in GEARY) {
+    const xs = RECIPES.map(r => r.out).filter(id => (ITEMS[id] || {}).type === ty)
+      .map(id => V[id] / ladder(ITEMS[id].tier !== undefined ? ITEMS[id].tier : lvTier(ITEMS[id].lvReq)))
+      .filter(x => x > 0 && isFinite(x));
+    fac[ty] = xs.length ? xs.reduce((x, y) => x + y, 0) / xs.length : 1;
+  }
+  for (const id in ITEMS) {
+    if (V[id] !== undefined) continue;
+    const d = ITEMS[id];
+    if (fac[d.type] !== undefined)
+      V[id] = ladder(d.tier !== undefined ? d.tier : lvTier(d.lvReq)) * fac[d.type];
+    else if (d.type === 'consum') V[id] = 22;
+    else if (d.type === 'block') V[id] = 2;
+    else V[id] = step(0);
+  }
+  for (const id in ITEMS)
+    if (ITEMS[id].type === 'consum' && !ITEMS[id].price) V[id] = Math.max(V[id] || 0, 22);
+
+  for (const id in V) V[id] = Math.max((ITEMS[id] || {}).type === 'mat' ? VAL_MIN : 1, Math.round(V[id]));
+  return V;
+})();
