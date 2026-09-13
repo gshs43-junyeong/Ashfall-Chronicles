@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ashfall Chronicles — 별이 잠든 땅</title>
-<link rel="stylesheet" href="css/style.css?v=245">
+<link rel="stylesheet" href="css/style.css?v=246">
 </head>
 <body>
 
@@ -205,16 +205,20 @@
 
   <!-- 보스 체력 -->
   <!-- 보스 막대. 등급(mini·normal·grand)은 #bossbar 의 t-* 클래스로만 갈린다 —
-       틀과 순서는 셋이 같고 장식만 늘어난다. 체력 숫자는 셋 다 있다. -->
+       틀과 순서는 셋이 같고 장식만 늘어난다.
+       ★ 장식은 전부 **막대 바깥**(.bb-rail 에 붙는 것)에 둔다. 막대 안에 얹으면
+         정작 읽어야 할 체력을 덮는다. 체력 숫자도 같은 이유로 막대 아래에 따로 둔다 —
+         트랙 안에 넣었더니 미니보스(높이 9px)에서 글자가 잘렸다. -->
   <div id="bossbar">
     <div class="bb-name" id="bb-name"></div>
-    <div class="bb-track">
-      <div class="bb-ghost" id="bb-ghost"></div>
-      <div class="bb-fill" id="bb-fill"></div>
-      <div class="bb-sheen"></div>
-      <div class="bb-ticks" id="bb-ticks"></div>
-      <div class="bb-hp" id="bb-hp"></div>
+    <div class="bb-rail">
+      <div class="bb-glow"></div>
+      <div class="bb-track">
+        <div class="bb-ghost" id="bb-ghost"></div>
+        <div class="bb-fill" id="bb-fill"></div>
+      </div>
     </div>
+    <div class="bb-hp" id="bb-hp"></div>
   </div>
 
   <!-- 토스트 -->
@@ -464,19 +468,19 @@
   </div>
 </div>
 
-<script src="js/util.js?v=245"></script>
-<script src="js/data.js?v=245"></script>
-<script src="js/world.js?v=245"></script>
-<script src="js/tileart.js?v=245"></script>
-<script src="js/itemart.js?v=245"></script>
-<script src="js/titlebg.js?v=245"></script>
+<script src="js/util.js?v=246"></script>
+<script src="js/data.js?v=246"></script>
+<script src="js/world.js?v=246"></script>
+<script src="js/tileart.js?v=246"></script>
+<script src="js/itemart.js?v=246"></script>
+<script src="js/titlebg.js?v=246"></script>
 <!-- 매니페스트는 sprites.js 보다 먼저. file:// 에서 fetch 가 막히므로 <script> 로 넣는다 -->
-<script src="assets/sprites-manifest.js?v=245"></script>
-<script src="assets/sprites.js?v=245"></script>
-<script src="js/entity.js?v=245"></script>
-<script src="js/factory.js?v=245"></script>
-<script src="js/ui.js?v=245"></script>
-<script src="js/music.js?v=245"></script>
-<script src="js/game.js?v=245"></script>
+<script src="assets/sprites-manifest.js?v=246"></script>
+<script src="assets/sprites.js?v=246"></script>
+<script src="js/entity.js?v=246"></script>
+<script src="js/factory.js?v=246"></script>
+<script src="js/ui.js?v=246"></script>
+<script src="js/music.js?v=246"></script>
+<script src="js/game.js?v=246"></script>
 </body>
 </html>
