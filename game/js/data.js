@@ -2067,6 +2067,54 @@ const BOSS_DIE = {
   isle_keeper:    { mat: 'stone', n: 62, spd: 1.1, life: 1.3, mat2: 'plant', n2: 26, at: .18, shake: 22 },
 };
 
+/* ---------------- 보스 등급 ----------------
+   체력 막대의 **틀은 셋이 같고 화려함만 다르다.** 처음 잡는 갱도의 것과 마지막 환원기가
+   똑같은 막대를 달고 나오면, 화면만 봐서는 지금이 어느 싸움인지 알 수가 없다.
+
+     mini   유적 미니보스 여섯. 얇은 막대, 장식 없음
+     normal 스토리 보스 아홉. 모서리 꺾쇠와 그라디언트
+     grand  세션 종장과 특별 유적의 주인 다섯. 두 겹 테두리 · 쓸고 지나가는 빛 · 번짐
+
+   ★ 페이즈 수(ph)로 **대신하지 않는다.** 지금은 ph 2/3/5 가 등급과 딱 맞지만, 그건
+     우연이다 — 2페이즈짜리 스토리 보스를 하나 넣는 순간 그것이 미니보스 막대를 달고
+     나온다. 등급은 "얼마나 큰 싸움인가"고 ph 는 "몇 번 바뀌는가"라 서로 다른 것이다.
+   여기 없는 보스는 normal 로 나간다 — 빠뜨려도 막대는 뜬다. */
+const BOSS_TIER = {
+  mine_horror: 'mini', ice_warden: 'mini', vine_lord: 'mini',
+  sand_guardian: 'mini', spore_queen: 'mini', blight_maw: 'mini',
+  drowned_keeper: 'mini', tide_warden: 'mini', isle_keeper: 'mini',
+
+  pursuer: 'grand', hepha: 'grand', archetype: 'grand',
+  restorer: 'grand', shaft_maw: 'grand'
+};
+
+/* ---------------- 보스의 힘 축적 ----------------
+   여섯 보스만 **모았다가 터뜨린다.** 상태 순환(state)만 도는 보스는 오래 붙어 있으면
+   순서가 외워져서, 뒤로 갈수록 싸움이 아니라 암기가 된다. 모으는 동안은 멈춰 서 있고
+   그 시간이 그대로 **되받아칠 틈**이다.
+
+   ★ 모으는 동안에는 원래 AI 가 아예 안 돈다(bossAI 가 앞에서 돌아선다). 두 쪽이 같이
+     vx/vy 를 잡으면 보스가 떨거나 제자리에서 미끄러진다 — 한 번에 한 쪽만 움직인다.
+   ★ 첫 페이즈에는 안 나온다. 처음부터 나오면 새 규칙이 아니라 그냥 기본기다.
+   ★ 모으는 중에 brk(최대 체력 비율)만큼 때리면 **끊긴다.** 끊으면 1.4초 비틀거린다 —
+     이것이 없으면 "무적이 됐다가 핵을 쏜다"라 피하는 것 말고 할 것이 없다.
+
+     k    종류. ward 갑옷 · nova 사방으로 터뜨림 · rage 달아오름 · mend 되돌림
+     t    모으는 시간(초)   cd 끝나고 다음까지(초)   dur 버프 지속(초)
+     v    세기. ward=방어 증가 · nova=탄 수 · rage=피해 배수 · mend=최대 체력 비율
+     brk  끊는 데 필요한 피해(최대 체력 비율)   pj 탄 종류   c 색   s 터질 때 소리
+     n    모으기 시작할 때 띄우는 말   m 버프 이름 */
+const BOSS_SURGE = {
+  bone_lord:   { k: 'ward', t: 1.5, cd: 15, dur: 7, v: 60,  brk: .060, c: '#ded6bd', s: 'sk_guard', n: '뼈를 그러모은다', m: '뼈 갑옷' },
+  frost_witch: { k: 'nova', t: 1.4, cd: 13,         v: 16,  brk: .050, c: '#a8dcf0', pj: 'frost', s: 'sk_frost', n: '서리를 모은다' },
+  void_king:   { k: 'nova', t: 1.6, cd: 14,         v: 20,  brk: .050, c: '#a06fff', pj: 'void',  s: 'sk_bolt',  n: '공허를 삼킨다' },
+  blight_maw:  { k: 'nova', t: 1.3, cd: 12,         v: 12,  brk: .070, c: '#9a5fd8', pj: 'dark',  s: 'sk_quake', n: '썩은 숨을 모은다' },
+  hepha:       { k: 'rage', t: 1.8, cd: 20, dur: 9, v: .35, brk: .040, c: '#ff9a4a', s: 'sk_fire',  n: '화로를 올린다', m: '달아오름' },
+  restorer:    { k: 'mend', t: 2.0, cd: 22,         v: .03, brk: .035, c: '#a8c8e8', s: 'sk_heal',  n: '되돌리려 한다' }
+};
+/* 뜨는 보스 — 모으는 동안에도 원래대로 떠 있어야 한다. 여기 없으면 바닥으로 떨어진다 */
+const SURGE_FLY = { b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
+
 /* ---------------- 스킬 / 특성 ----------------
    표 나열에서 **트리**로. 각 칸은 자리(tier·col)와 이어진 윗칸(req)을 가진다 —
    윗칸 중 하나라도 배워야 아래가 열리므로, 어느 길로 내려갈지가 실제 선택이 된다.

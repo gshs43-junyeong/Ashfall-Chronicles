@@ -1049,6 +1049,8 @@ class Enemy extends Ent {
     this.hitCd = 0;
     this.markT = 0; this.markAmt = 0;   // 사냥꾼의 표식
     this.mech = 0;                      // 개조된 개체(세션 2) — makeMech() 가 켠다
+    /* 힘 축적(BOSS_SURGE). sgT>0 이면 모으는 중이라 원래 AI 가 멈춘다 */
+    this.sgT = 0; this.sgCd = 6; this.sgTook = 0; this.sgBuf = 0; this.sgRing = 0; this.sgStun = 0;
   }
 
   /** 개조 — 세션 2 에서 이 몹이 기계가 되어 나온다.
@@ -1065,6 +1067,123 @@ class Enemy extends Ent {
   }
   /** 지금이 마지막 페이즈인가. 예전 코드의 `phase === 2` 가 뜻하던 것이다. */
   lastPh() { return this.phase >= this.phases - 1; }
+
+  /* ================= 힘 축적 (BOSS_SURGE) =================
+     돌아오는 값이 true 면 **이번 프레임은 원래 AI 를 돌리지 않는다.** 모으는 동안과
+     끊겨서 비틀거리는 동안이 그렇다 — 두 쪽이 같이 움직이면 보스가 떤다. */
+  tickSurge(dt, world, p) {
+    const S = BOSS_SURGE[this.type];
+    if (!S) return false;
+    const fly = SURGE_FLY[this.def.ai] ? { gravMul: 0 } : undefined;
+
+    // 버프가 걸려 있는 동안 — 시간이 다 되면 올려 둔 수치를 **정확히 되돌린다**
+    if (this.sgBuf > 0) {
+      this.sgBuf -= dt;
+      if (this.sgBuf <= 0) this.endBuff();
+      else if (Math.random() < dt * 14)
+        G.parts.push(new Part(this.cx + (Math.random() - .5) * this.w, this.y + this.h, S.c, -40, .6, { g: -.3, glow: 1 }));
+    }
+
+    // 끊겨서 비틀거리는 중 — 아무것도 못 한다. 여기가 되받아치는 시간이다
+    if (this.sgStun > 0) {
+      this.sgStun -= dt;
+      this.vx *= 0.86;
+      if (Math.random() < dt * 10)
+        G.parts.push(new Part(this.cx + (Math.random() - .5) * this.w, this.cy, '#c8c0a8', -30, .5));
+      this.move(dt, world, fly);
+      return true;
+    }
+
+    // 모으는 중
+    if (this.sgT > 0) {
+      this.sgT -= dt;
+      const k = 1 - this.sgT / S.t;                 // 0 -> 1 로 차오른다
+      /* 제자리에 선다. 뜨는 보스는 뜬 채로 — gravMul 을 원래대로 넘기지 않으면
+         모으는 동안만 바닥으로 가라앉았다가 끝나고 다시 떠오른다. */
+      this.vx *= 0.82; if (fly) this.vy *= 0.82;
+      /* 조여드는 고리. 이 게임에서 퍼지는 고리는 "나간 것", 조여드는 고리는 "오는 것"이라
+         (영혼 늑대와 같은 어법) 모으는 중이라는 것이 글 없이도 읽힌다. 차오를수록 잦다. */
+      this.sgRing -= dt;
+      if (this.sgRing <= 0) {
+        this.sgRing = 0.34 - k * 0.16;
+        G.sigilFx(this.cx, this.cy, this.w * 0.9 + 26 - k * 22, S.c);
+      }
+      // 안으로 빨려 들어가는 티끌 — 바깥에서 나서 보스 쪽으로 간다
+      if (Math.random() < dt * (26 + k * 34)) {
+        const a = Math.random() * TAU, r = this.w * 1.5 + 30 + Math.random() * 40;
+        const pt = new Part(this.cx + Math.cos(a) * r, this.cy + Math.sin(a) * r, S.c, 0, .42, { g: 0, glow: 1, drag: 1 });
+        pt.vx = -Math.cos(a) * r * 2.1; pt.vy = -Math.sin(a) * r * 2.1;
+        G.parts.push(pt);
+      }
+      this.move(dt, world, fly);
+      if (this.sgT <= 0) this.releaseSurge(S, p);
+      return true;
+    }
+
+    // 쉬는 중 — 첫 페이즈에는 안 나온다(새 규칙은 형태가 한 번 바뀐 뒤에 온다)
+    this.sgCd -= dt;
+    /* ★ phaseInv 는 0 에서 멈추지 않고 **살짝 음수로 남는다**(-0.01 로 관측). `!phaseInv`
+       로 적으면 음수는 참이라 조건이 영영 거짓이 되어 축적이 한 번도 안 나갔다. */
+    if (this.sgCd <= 0 && this.phase >= 1 && this.phaseInv <= 0 && dist(this.cx, this.cy, p.cx, p.cy) < 760) {
+      this.sgT = S.t; this.sgTook = 0; this.sgRing = 0;
+      G.bossLine(this.def.n, S.n);
+      G.sfx('sk_charge');
+      G.ringFx(this.cx, this.cy, this.w * 2.2, S.c, .5);
+      return true;
+    }
+    return false;
+  }
+
+  /** 다 모았다 — 종류대로 터뜨린다 */
+  releaseSurge(S, p) {
+    this.sgCd = S.cd;
+    /* ★ 앞의 버프가 아직 살아 있으면 먼저 내린다. 지금 값(cd 15 · dur 7)으로는 겹칠 일이
+       없지만, 표를 손대다 겹치는 순간 방어가 두 번 올라가고 한 번만 내려가서 영영
+       단단한 보스가 된다 — 되돌릴 수 없는 쪽이라 미리 막아 둔다. */
+    if (this.sgBuf > 0) this.endBuff();
+    G.ringFx(this.cx, this.cy, this.w * 2.6, S.c, .55);
+    G.shake = Math.max(G.shake, 12);
+    for (let i = 0; i < 24; i++)
+      G.parts.push(new Part(this.cx, this.cy, S.c, -50, .8, { glow: 1, spd: 1.6 }));
+    if (S.k === 'nova') {
+      // 사방으로. 촘촘하지만 **틈이 있다** — 다 막으면 피할 데가 없어 서서 맞는 수밖에 없다
+      const n = S.v, base = Math.random() * TAU;
+      for (let i = 0; i < n; i++) {
+        const a = base + (i / n) * TAU;
+        G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 300, Math.sin(a) * 300, this.dmg * 0.7, 'enemy', S.pj));
+      }
+      G.sfx(S.s || 'sk_frost');
+    } else if (S.k === 'ward') {
+      this.armor += S.v; this.sgBuf = S.dur; this.sgKind = 'ward'; this.sgAmt = S.v;
+      G.toast(`${this.def.n} — ${S.m}`, 'bad');
+    } else if (S.k === 'rage') {
+      this.sgKind = 'rage'; this.sgAmt = S.v; this.sgBuf = S.dur;
+      this.dmg *= 1 + S.v; this.spd *= 1 + S.v * 0.5;
+      G.toast(`${this.def.n} — ${S.m}`, 'bad');
+    } else if (S.k === 'mend') {
+      const heal = Math.round(this.maxHp * S.v);
+      this.hp = Math.min(this.maxHp, this.hp + heal);
+      G.texts.push(new DmgText(this.cx, this.y - 10, '+' + fmt(heal), '#9ff09f', 0));
+    }
+  }
+
+  /** 끊겼다 — 모으던 것이 흩어지고 비틀거린다 */
+  breakSurge() {
+    this.sgT = 0; this.sgCd = (BOSS_SURGE[this.type] || {}).cd || 14;
+    this.sgStun = 1.4;
+    G.toast('모으던 것이 흩어졌다', 'good');
+    G.sfx('sk_deny'); G.shake = Math.max(G.shake, 10);
+    for (let i = 0; i < 20; i++)
+      G.parts.push(new Part(this.cx, this.cy, '#c8c0a8', -40, .7, { spd: 1.4 }));
+  }
+
+  /** 버프가 끝났다 — 올려 둔 수치를 **정확히** 되돌린다(배수를 두 번 곱하지 않게) */
+  endBuff() {
+    this.sgBuf = 0;
+    if (this.sgKind === 'ward') this.armor -= this.sgAmt;
+    else if (this.sgKind === 'rage') { this.dmg /= 1 + this.sgAmt; this.spd /= 1 + this.sgAmt * 0.5; }
+    this.sgKind = null; this.sgAmt = 0;
+  }
   addDot(kind, dps, dur) { this.dots.push({ kind, dps, t: dur }); }
   slow(f, t) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
 
@@ -1091,6 +1210,13 @@ class Enemy extends Ent {
     if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
     let dmg = Math.max(1, Math.round(amount * (1 - red)));
     this.hp -= dmg; this.flash = 0.12;
+    /* 모으는 중에 맞은 것을 쌓는다 — brk 를 넘기면 끊긴다. ★ 방어를 **뚫고 들어간
+       뒤의** 값으로 센다. 때린 쪽 숫자로 세면 갑옷 높은 보스가 실제보다 쉽게 끊긴다. */
+    if (this.sgT > 0) {
+      const S = BOSS_SURGE[this.type];
+      this.sgTook += dmg;
+      if (S && this.sgTook >= this.maxHp * S.brk) this.breakSurge();
+    }
     G.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 14, this.y - 4, dmg, crit ? '#ffd24a' : '#fff', crit ? 1 : 0));
     G.hitFx(this, this.cx, this.cy, crit);   // 재질 파편 + 재질 타격음(한 획마다 음높이가 다르다)
     /* 맞는 그림. 치명타는 계열 위에 한 겹 얹는 게 아니라 **계열마다 따로 그려 둔 것**을
@@ -1367,6 +1493,11 @@ class Enemy extends Ent {
     this.phaseT = (this.phaseT || 0) - dt;
     if (this.phaseInv > 0) this.phaseInv -= dt;
     this.tickWeak(dt, world, p);
+
+    /* 힘 축적 — 모으는 중이면 여기서 돌아선다. ★ stateT 를 도로 얹어 준다: 위에서 이미
+       한 번 빼 놓았으므로, 그냥 돌아서면 모으는 동안에도 상태 시계가 흘러 끝나자마자
+       다음 상태로 건너뛴다(하던 동작이 잘린다). */
+    if (this.tickSurge(dt, world, p)) { this.stateT += dt; return; }
 
     if (AI === 'b_slime') {
       if (this.onGround) {

@@ -223,22 +223,26 @@
    * 프레임 7개(idle1 idle2 move1 move2 atk death1 death2)가 간격 없이 붙어 있어
    * move1 = 2번, move2 = 3번 프레임이다. */
   var SCALE = 4;
+  /* ★ 한 칸의 크기를 **그림에서 잰다.** 예전에는 여기에 손으로 적어 두었는데, 스물둘 중
+     **열다섯**이 실제 시트와 달라서 잘려 나왔다 — 슬라임은 26x20 으로 적혀 있었지만
+     실제로는 30x22 라, 세로로 발이 잘리고(2px) 가로로는 한 칸이 밀려 다음 칸의 몸이
+     섞여 들어왔다(840/104 = 8.08칸). 애셋 크기가 바뀔 때마다 여기를 같이 고쳐야 하는
+     구조였으니 어긋나는 것이 당연하다.
+     시트는 전부 가로로 일곱 칸이므로(manifest 의 count 가 스물둘 모두 7) 한 칸은
+     naturalWidth/7 · naturalHeight 다. 이제 애셋이 바뀌면 따라간다. */
+  var FRAMES = 7;
   var BEASTS = [
-    ['slime',        26, 20], ['skeleton',     20, 40], ['bat',          22, 16],
-    ['spider',       26, 18], ['zombie',       20, 40], ['imp',          24, 28],
-    ['frostling',    26, 34], ['sporeling',    22, 22], ['scorpion',     28, 20],
-    ['crawler',      24, 38], ['wraith',       26, 38], ['golem',        34, 48],
-    ['sandmaw',      34, 26], ['vinelash',     24, 34], ['lavaslug',     32, 22],
-    ['ashcrow',      24, 18], ['riveter',      24, 40], ['weldarm',      22, 30],
-    ['scrapcrawler', 30, 22], ['gale',         26, 26], ['capbeast',     30, 24],
-    ['archer',       20, 40]
+    'slime', 'skeleton', 'bat', 'spider', 'zombie', 'imp',
+    'frostling', 'sporeling', 'scorpion', 'crawler', 'wraith', 'golem',
+    'sandmaw', 'vinelash', 'lavaslug', 'ashcrow', 'riveter', 'weldarm',
+    'scrapcrawler', 'gale', 'capbeast', 'archer'
   ];
 
   function initBeastBand() {
     var canvas = document.getElementById('beastBand');
     if (!canvas) return;
 
-    var files = BEASTS.map(function (b) { return 'char/' + b[0] + '.png'; });
+    var files = BEASTS.map(function (b) { return 'char/' + b + '.png'; });
 
     loadImages(files, function (imgs) {
       var H = narrow ? 180 : 170, W = narrow ? 640 : 1280;
@@ -250,11 +254,14 @@
       /* 걸어가는 줄을 미리 배치한다. total 만큼 흐르면 처음으로 되돌아온다. */
       var line = [], cursor = 0;
       BEASTS.forEach(function (b) {
-        var img = imgs['char/' + b[0] + '.png'];
+        var img = imgs['char/' + b + '.png'];
         if (!img) return;
-        var ratio = Math.min(MAX_H / (b[2] * SCALE), 1);
-        var w = b[1] * SCALE * ratio, h = b[2] * SCALE * ratio;
-        line.push({ img: img, fw: b[1] * SCALE, fh: b[2] * SCALE, w: w, h: h, x: cursor });
+        /* 한 칸을 그림에서 잰다. 시트가 이미 4배로 구워져 있으므로 여기에 SCALE 을
+           다시 곱하지 않는다 — 곱하면 넉 배로 커져 한 칸이 시트를 넘어간다. */
+        var fw = img.naturalWidth / FRAMES, fh = img.naturalHeight;
+        var ratio = Math.min(MAX_H / fh, 1);
+        var w = fw * ratio, h = fh * ratio;
+        line.push({ img: img, fw: fw, fh: fh, w: w, h: h, x: cursor });
         cursor += w + GAP;
       });
       var total = cursor;
