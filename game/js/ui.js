@@ -1726,8 +1726,8 @@ const UI = {
     setTimeout(() => { el.classList.remove('show'); art.classList.remove('show'); }, 3800);
   },
   /* 보스 막대. 등급은 BOSS_TIER 가 정하고, 틀과 읽는 법은 셋이 같다.
-     ★ 이름·눈금·등급은 **보스가 바뀔 때만** 다시 쓴다. 매 프레임 innerHTML 을 갈면
-       눈금이 매번 새로 붙어 깜빡이고, textContent 를 계속 넣으면 글자가 떤다. */
+     ★ 이름과 등급은 **보스가 바뀔 때만** 다시 쓴다 — textContent 를 매 프레임 넣으면
+       글자가 떤다. 마지막 페이즈 표시(.last)는 싸우는 중에 바뀌므로 매번 본다. */
   bossBar(e) {
     const el = $('#bossbar');
     if (!e || e.dead) { el.classList.remove('show'); this.bbFor = null; return; }
@@ -1738,13 +1738,9 @@ const UI = {
       el.classList.remove('t-mini', 't-normal', 't-grand');
       el.classList.add('t-' + tier);
       $('#bb-name').textContent = e.def.n;
-      /* 눈금을 실제 페이즈 수대로. 3페이즈면 66%·33%(예전과 같다), 2페이즈면 50%,
-         5페이즈면 80·60·40·20 이다. 오른쪽이 체력이 많은 쪽이라 k 를 뒤집어 건다. */
-      const n = e.phases || 3;
-      let h = '';
-      for (let k = 1; k < n; k++) h += `<i style="left:${(k / n * 100).toFixed(2)}%"></i>`;
-      $('#bb-ticks').innerHTML = h;
     }
+    // 마지막 페이즈면 막대가 보라색으로 넘어간다(색은 CSS 의 .last 가 들고 있다)
+    el.classList.toggle('last', e.lastPh());
     const r = Math.max(0, e.hp / e.maxHp);
     $('#bb-fill').style.width = r * 100 + '%';
     /* 잔상은 같은 값을 넣고 **느리게 따라오게만** 한다(CSS: 0.18초 늦게 0.5초에 걸쳐).
