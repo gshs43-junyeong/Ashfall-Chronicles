@@ -5102,13 +5102,15 @@ const G = {
     c.imageSmoothingEnabled = false;
     // 공격 직후 잠깐 밝게 — 뭘 하고 있는지 눈에 보이게
     if (pet.flash > 0) { c.shadowColor = pet.def.c; c.shadowBlur = 10; }
-    /* 손그림 시트가 있으면 그쪽을 쓴다. 다른 생물과 같은 7프레임 규격을 그대로 따르므로
-       (idle1·idle2·move1·move2·atk·death1·death2) 새로 외울 규칙이 없다 —
-       평소엔 idle 두 장을 번갈아 쓰고, 방금 문 직후에는 atk 프레임을 보여 준다.
+    /* 손그림 시트가 있으면 그쪽을 쓴다.
+       ★ 펫 시트는 **세 칸뿐이다**(idle1 · idle2 · atk). 펫은 죽지 않고(Pet 에 체력도
+         die() 도 없다) 걷는 그림도 안 쓰므로, 다른 생물의 일곱 칸 규격에서 걷는 칸과
+         죽는 칸을 떼어 냈다(tools/trimpets.py). 아무도 안 보는 칸이라 깨진 채로
+         남아 있었다 — 안 그리는 그림은 아예 두지 않는다.
        칸 크기는 시트에 적힌 값으로 재서 가운데를 맞춘다(펫마다 크기가 달라도 안 흔들리게). */
     const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets['pet_' + pet.id];
     if (sheet) {
-      const fr = pet.flash > 0 ? 4 : (Math.floor(this.time * 3 + pet.slot) % 2);
+      const fr = pet.flash > 0 ? 2 : (Math.floor(this.time * 3 + pet.slot) % 2);
       if (Sprites.draw(c, 'pet_' + pet.id, fr, sx - sheet.frameW / 2, sy - sheet.frameH / 2, pet.facing < 0)) {
         c.restore(); return;
       }
