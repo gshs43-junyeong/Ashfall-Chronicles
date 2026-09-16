@@ -576,7 +576,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_ember_squirrel.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 2.25,
         "side": 1.5
       },
@@ -584,7 +584,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_glass_moth.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 4.25,
         "side": 0.5
       },
@@ -592,7 +592,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_pebble_kin.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 4.25,
         "side": 1
       },
@@ -600,7 +600,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_dust_sparrow.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 3.25,
         "side": 1.5
       },
@@ -608,7 +608,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_frost_kit.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 2.25,
         "side": 0.5
       },
@@ -616,7 +616,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_ash_owl.png",
         "frameW": 20,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 2.25,
         "side": 0
       },
@@ -624,7 +624,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_cinder_toad.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 3.25,
         "side": 0
       },
@@ -632,7 +632,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_thorn_wisp.png",
         "frameW": 20,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 6.25,
         "side": -0.5
       },
@@ -640,7 +640,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_star_sprite.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 5.25,
         "side": -0.5
       },
@@ -648,7 +648,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_ember_drake.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 4.25,
         "side": 1.5
       },
@@ -656,7 +656,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_void_hatchling.png",
         "frameW": 20,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 5.25,
         "side": 0
       },
@@ -664,7 +664,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_storm_falcon.png",
         "frameW": 20,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 4.25,
         "side": 0.5
       },
