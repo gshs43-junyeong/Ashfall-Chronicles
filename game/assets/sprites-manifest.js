@@ -118,7 +118,7 @@ window.SPRITE_MANIFEST = {
       },
       "zombie": {
         "file": "char/zombie.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -126,7 +126,7 @@ window.SPRITE_MANIFEST = {
       },
       "bat": {
         "file": "char/bat.png",
-        "frameW": 22,
+        "frameW": 26,
         "frameH": 16,
         "count": 7,
         "foot": 0.25,
@@ -134,7 +134,7 @@ window.SPRITE_MANIFEST = {
       },
       "skeleton": {
         "file": "char/skeleton.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -142,7 +142,7 @@ window.SPRITE_MANIFEST = {
       },
       "archer": {
         "file": "char/archer.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -150,7 +150,7 @@ window.SPRITE_MANIFEST = {
       },
       "crawler": {
         "file": "char/crawler.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -190,7 +190,7 @@ window.SPRITE_MANIFEST = {
       },
       "wraith": {
         "file": "char/wraith.png",
-        "frameW": 26,
+        "frameW": 28,
         "frameH": 38,
         "count": 7,
         "foot": 1.25,
@@ -198,7 +198,7 @@ window.SPRITE_MANIFEST = {
       },
       "sky_sentry": {
         "file": "char/sky_sentry.png",
-        "frameW": 30,
+        "frameW": 34,
         "frameH": 36,
         "count": 7,
         "foot": -0.75,
@@ -222,7 +222,7 @@ window.SPRITE_MANIFEST = {
       },
       "lantern": {
         "file": "char/lantern.png",
-        "frameW": 22,
+        "frameW": 26,
         "frameH": 32,
         "count": 7,
         "foot": -0.75,
@@ -230,7 +230,7 @@ window.SPRITE_MANIFEST = {
       },
       "ashcrow": {
         "file": "char/ashcrow.png",
-        "frameW": 28,
+        "frameW": 32,
         "frameH": 18,
         "count": 7,
         "foot": -0.75,
@@ -238,7 +238,7 @@ window.SPRITE_MANIFEST = {
       },
       "spider": {
         "file": "char/spider.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 18,
         "count": 7,
         "foot": 0.25,
@@ -246,7 +246,7 @@ window.SPRITE_MANIFEST = {
       },
       "minerghost": {
         "file": "char/minerghost.png",
-        "frameW": 22,
+        "frameW": 26,
         "frameH": 34,
         "count": 7,
         "foot": 7.25,
@@ -254,7 +254,7 @@ window.SPRITE_MANIFEST = {
       },
       "scorpion": {
         "file": "char/scorpion.png",
-        "frameW": 32,
+        "frameW": 36,
         "frameH": 22,
         "count": 7,
         "foot": -0.75,
@@ -262,7 +262,7 @@ window.SPRITE_MANIFEST = {
       },
       "sandmaw": {
         "file": "char/sandmaw.png",
-        "frameW": 34,
+        "frameW": 38,
         "frameH": 26,
         "count": 7,
         "foot": -0.75,
@@ -270,7 +270,7 @@ window.SPRITE_MANIFEST = {
       },
       "icewolf": {
         "file": "char/icewolf.png",
-        "frameW": 32,
+        "frameW": 36,
         "frameH": 24,
         "count": 7,
         "foot": -0.75,
@@ -278,7 +278,7 @@ window.SPRITE_MANIFEST = {
       },
       "corrupttree": {
         "file": "char/corrupttree.png",
-        "frameW": 34,
+        "frameW": 38,
         "frameH": 48,
         "count": 7,
         "foot": -0.75,
@@ -286,7 +286,7 @@ window.SPRITE_MANIFEST = {
       },
       "crystalcrab": {
         "file": "char/crystalcrab.png",
-        "frameW": 38,
+        "frameW": 40,
         "frameH": 26,
         "count": 7,
         "foot": -0.75,
@@ -294,7 +294,7 @@ window.SPRITE_MANIFEST = {
       },
       "lavaslug": {
         "file": "char/lavaslug.png",
-        "frameW": 36,
+        "frameW": 38,
         "frameH": 24,
         "count": 7,
         "foot": -0.75,
@@ -302,7 +302,7 @@ window.SPRITE_MANIFEST = {
       },
       "cloudjelly": {
         "file": "char/cloudjelly.png",
-        "frameW": 28,
+        "frameW": 32,
         "frameH": 30,
         "count": 7,
         "foot": -0.75,
@@ -310,7 +310,7 @@ window.SPRITE_MANIFEST = {
       },
       "archivist": {
         "file": "char/archivist.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 38,
         "count": 7,
         "foot": 4.25,
@@ -326,7 +326,7 @@ window.SPRITE_MANIFEST = {
       },
       "sparkwisp": {
         "file": "char/sparkwisp.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 20,
         "count": 7,
         "foot": 5.25,
@@ -334,7 +334,7 @@ window.SPRITE_MANIFEST = {
       },
       "riveter": {
         "file": "char/riveter.png",
-        "frameW": 32,
+        "frameW": 36,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -342,7 +342,7 @@ window.SPRITE_MANIFEST = {
       },
       "foreman": {
         "file": "char/foreman.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 42,
         "count": 7,
         "foot": 0.25,
@@ -350,7 +350,7 @@ window.SPRITE_MANIFEST = {
       },
       "vinelash": {
         "file": "char/vinelash.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 34,
         "count": 7,
         "foot": -0.75,
@@ -358,7 +358,7 @@ window.SPRITE_MANIFEST = {
       },
       "bloomspitter": {
         "file": "char/bloomspitter.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 32,
         "count": 7,
         "foot": 0.25,
@@ -366,7 +366,7 @@ window.SPRITE_MANIFEST = {
       },
       "canopy_ape": {
         "file": "char/canopy_ape.png",
-        "frameW": 34,
+        "frameW": 38,
         "frameH": 26,
         "count": 7,
         "foot": -0.75,
@@ -374,7 +374,7 @@ window.SPRITE_MANIFEST = {
       },
       "sporeling": {
         "file": "char/sporeling.png",
-        "frameW": 22,
+        "frameW": 26,
         "frameH": 22,
         "count": 7,
         "foot": 0.25,
@@ -382,7 +382,7 @@ window.SPRITE_MANIFEST = {
       },
       "capbeast": {
         "file": "char/capbeast.png",
-        "frameW": 34,
+        "frameW": 38,
         "frameH": 24,
         "count": 7,
         "foot": -0.75,
@@ -390,7 +390,7 @@ window.SPRITE_MANIFEST = {
       },
       "crimson_howler": {
         "file": "char/crimson_howler.png",
-        "frameW": 30,
+        "frameW": 34,
         "frameH": 28,
         "count": 7,
         "foot": -0.75,
@@ -398,7 +398,7 @@ window.SPRITE_MANIFEST = {
       },
       "crimson_eye": {
         "file": "char/crimson_eye.png",
-        "frameW": 28,
+        "frameW": 32,
         "frameH": 26,
         "count": 7,
         "foot": -0.75,
@@ -406,7 +406,7 @@ window.SPRITE_MANIFEST = {
       },
       "splitter": {
         "file": "char/splitter.png",
-        "frameW": 30,
+        "frameW": 34,
         "frameH": 24,
         "count": 7,
         "foot": -0.75,
@@ -414,7 +414,7 @@ window.SPRITE_MANIFEST = {
       },
       "weldarm": {
         "file": "char/weldarm.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 30,
         "count": 7,
         "foot": -0.75,
@@ -422,7 +422,7 @@ window.SPRITE_MANIFEST = {
       },
       "coreling": {
         "file": "char/coreling.png",
-        "frameW": 24,
+        "frameW": 26,
         "frameH": 24,
         "count": 7,
         "foot": 0.25,
@@ -430,7 +430,7 @@ window.SPRITE_MANIFEST = {
       },
       "rabbit": {
         "file": "char/rabbit.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": 2.25,
@@ -446,7 +446,7 @@ window.SPRITE_MANIFEST = {
       },
       "sand_lizard": {
         "file": "char/sand_lizard.png",
-        "frameW": 22,
+        "frameW": 26,
         "frameH": 36,
         "count": 7,
         "foot": 3.25,
@@ -454,7 +454,7 @@ window.SPRITE_MANIFEST = {
       },
       "jungle_frog": {
         "file": "char/jungle_frog.png",
-        "frameW": 22,
+        "frameW": 24,
         "frameH": 20,
         "count": 7,
         "foot": 0.25,
@@ -462,7 +462,7 @@ window.SPRITE_MANIFEST = {
       },
       "glow_snail": {
         "file": "char/glow_snail.png",
-        "frameW": 30,
+        "frameW": 32,
         "frameH": 20,
         "count": 7,
         "foot": -0.75,
@@ -494,7 +494,7 @@ window.SPRITE_MANIFEST = {
       },
       "drowned_hand": {
         "file": "char/drowned_hand.png",
-        "frameW": 28,
+        "frameW": 32,
         "frameH": 32,
         "count": 7,
         "foot": 0.25,
@@ -502,7 +502,7 @@ window.SPRITE_MANIFEST = {
       },
       "draft_form": {
         "file": "char/draft_form.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 44,
         "count": 7,
         "foot": 0.25,
@@ -510,7 +510,7 @@ window.SPRITE_MANIFEST = {
       },
       "scribe_hand": {
         "file": "char/scribe_hand.png",
-        "frameW": 24,
+        "frameW": 26,
         "frameH": 30,
         "count": 7,
         "foot": 3.25,
@@ -518,7 +518,7 @@ window.SPRITE_MANIFEST = {
       },
       "mold_walker": {
         "file": "char/mold_walker.png",
-        "frameW": 34,
+        "frameW": 38,
         "frameH": 50,
         "count": 7,
         "foot": 0.25,
@@ -526,7 +526,7 @@ window.SPRITE_MANIFEST = {
       },
       "orbit_sentry": {
         "file": "char/orbit_sentry.png",
-        "frameW": 32,
+        "frameW": 36,
         "frameH": 40,
         "count": 7,
         "foot": 2.25,
@@ -534,7 +534,7 @@ window.SPRITE_MANIFEST = {
       },
       "meridian_eye": {
         "file": "char/meridian_eye.png",
-        "frameW": 26,
+        "frameW": 28,
         "frameH": 26,
         "count": 7,
         "foot": 3.25,
@@ -550,7 +550,7 @@ window.SPRITE_MANIFEST = {
       },
       "gloom_crawler": {
         "file": "char/gloom_crawler.png",
-        "frameW": 30,
+        "frameW": 34,
         "frameH": 24,
         "count": 7,
         "foot": -0.75,
@@ -558,7 +558,7 @@ window.SPRITE_MANIFEST = {
       },
       "damp_wisp": {
         "file": "char/damp_wisp.png",
-        "frameW": 22,
+        "frameW": 24,
         "frameH": 22,
         "count": 7,
         "foot": 1.25,
@@ -574,7 +574,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_ember_squirrel": {
         "file": "char/pet_ember_squirrel.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
         "count": 3,
         "foot": 2.25,
@@ -582,7 +582,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_glass_moth": {
         "file": "char/pet_glass_moth.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
         "count": 3,
         "foot": 4.25,
@@ -590,7 +590,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_pebble_kin": {
         "file": "char/pet_pebble_kin.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
         "count": 3,
         "foot": 4.25,
@@ -598,7 +598,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_dust_sparrow": {
         "file": "char/pet_dust_sparrow.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
         "count": 3,
         "foot": 3.25,
@@ -606,7 +606,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_frost_kit": {
         "file": "char/pet_frost_kit.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
         "count": 3,
         "foot": 2.25,
@@ -614,7 +614,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_ash_owl": {
         "file": "char/pet_ash_owl.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 20,
         "count": 3,
         "foot": 2.25,
@@ -622,7 +622,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_cinder_toad": {
         "file": "char/pet_cinder_toad.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
         "count": 3,
         "foot": 3.25,
@@ -630,7 +630,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_thorn_wisp": {
         "file": "char/pet_thorn_wisp.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 20,
         "count": 3,
         "foot": 6.25,
@@ -638,7 +638,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_star_sprite": {
         "file": "char/pet_star_sprite.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
         "count": 3,
         "foot": 5.25,
@@ -646,7 +646,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_ember_drake": {
         "file": "char/pet_ember_drake.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
         "count": 3,
         "foot": 4.25,
@@ -654,7 +654,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_void_hatchling": {
         "file": "char/pet_void_hatchling.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 20,
         "count": 3,
         "foot": 5.25,
@@ -662,7 +662,7 @@ window.SPRITE_MANIFEST = {
       },
       "pet_storm_falcon": {
         "file": "char/pet_storm_falcon.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 20,
         "count": 3,
         "foot": 4.25,
@@ -670,7 +670,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_elara": {
         "file": "char/npc_elara.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -678,7 +678,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_borin": {
         "file": "char/npc_borin.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -686,7 +686,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_mira": {
         "file": "char/npc_mira.png",
-        "frameW": 20,
+        "frameW": 22,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -694,7 +694,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_elder": {
         "file": "char/npc_elder.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -702,7 +702,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_haran": {
         "file": "char/npc_haran.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -710,7 +710,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_rika": {
         "file": "char/npc_rika.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -718,7 +718,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_seira": {
         "file": "char/npc_seira.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -726,7 +726,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_garn": {
         "file": "char/npc_garn.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -734,7 +734,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_kade": {
         "file": "char/npc_kade.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -774,7 +774,7 @@ window.SPRITE_MANIFEST = {
       },
       "lantern_jelly": {
         "file": "char/lantern_jelly.png",
-        "frameW": 20,
+        "frameW": 22,
         "frameH": 28,
         "count": 7,
         "foot": -0.75,
@@ -790,7 +790,7 @@ window.SPRITE_MANIFEST = {
       },
       "deep_octopus": {
         "file": "char/deep_octopus.png",
-        "frameW": 44,
+        "frameW": 46,
         "frameH": 34,
         "count": 7,
         "foot": 0.25,
@@ -814,7 +814,7 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_guard": {
         "file": "char/npc_guard.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -846,7 +846,7 @@ window.SPRITE_MANIFEST = {
       },
       "frostbound": {
         "file": "char/frostbound.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 38,
         "count": 7,
         "foot": -0.75,
@@ -854,7 +854,7 @@ window.SPRITE_MANIFEST = {
       },
       "jarhusk": {
         "file": "char/jarhusk.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 26,
         "count": 7,
         "foot": -0.75,
@@ -862,7 +862,7 @@ window.SPRITE_MANIFEST = {
       },
       "cartwraith": {
         "file": "char/cartwraith.png",
-        "frameW": 30,
+        "frameW": 34,
         "frameH": 22,
         "count": 7,
         "foot": -0.75,
@@ -870,7 +870,7 @@ window.SPRITE_MANIFEST = {
       },
       "sacling": {
         "file": "char/sacling.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 30,
         "count": 7,
         "foot": -0.75,
@@ -878,7 +878,7 @@ window.SPRITE_MANIFEST = {
       },
       "ventspitter": {
         "file": "char/ventspitter.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 28,
         "count": 7,
         "foot": 0.25,
