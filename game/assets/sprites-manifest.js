@@ -672,7 +672,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_elara.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 1
       },
@@ -680,7 +680,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_borin.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 1
       },
@@ -688,7 +688,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_mira.png",
         "frameW": 22,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": -0.5
       },
@@ -696,7 +696,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_elder.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 1
       },
@@ -704,7 +704,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_haran.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 1
       },
@@ -712,7 +712,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_rika.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 1
       },
@@ -720,7 +720,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_seira.png",
         "frameW": 24,
         "frameH": 41,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 1
       },
@@ -728,7 +728,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_garn.png",
         "frameW": 24,
         "frameH": 41,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 1
       },
@@ -736,7 +736,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_kade.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 1
       },
@@ -824,7 +824,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_pedlar.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": -0.5
       },
@@ -832,7 +832,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_oreman.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 0.5
       },
@@ -840,7 +840,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_armsman.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": -0.5
       },
