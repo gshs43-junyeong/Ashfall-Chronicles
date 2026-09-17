@@ -5833,7 +5833,7 @@ const G = {
 
   /** 손그림 몹 위에 얹는 것들 — 피격 섬광 · 체력 막대 · 페이즈 전환 섬광.
       절차 흔들림 경로와 일반 경로가 같은 것을 그려야 해서 따로 뺐다. */
-  drawEnemyOverlay(c, e, sx, sy, dy, meta) {
+  drawEnemyOverlay(c, e, sx, sy, dy, meta, dx) {
     const w = meta ? meta.frameW : e.w;
     /* 개조된 것의 화로 — 구워 둔 시트에는 고정된 불빛만 들어 있다. 여기서 한 겹
        더 얹어 **뛰게** 만든다. 멈춰 있는 불빛은 칠해 놓은 무늬로 보이고, 뛰는
@@ -5854,9 +5854,13 @@ const G = {
       c.beginPath(); c.arc(gx, gy, r * 2.6, 0, TAU); c.fill();
       c.restore();
     }
-    if (e.flash > 0) {   // 피격 섬광 — 판정 박스가 아니라 실제로 그려진 그림을 덮는다
+    if (e.flash > 0) {
+      /* 피격 섬광 — 판정 박스가 아니라 **실제로 그려진 그림**을 덮는다.
+         ★ 가로 자리는 dx 를 받아서 쓴다. 예전에는 sx 에서 frameW 만큼 칠했는데,
+           그림은 sx + dx 에 그려지므로 그만큼 어긋나 있었다. 칸에 좌우 여백을
+           주면서(tools/padframe.py) frameW 가 늘어 어긋남이 더 눈에 띄었다. */
       c.save(); c.globalAlpha = Math.min(.75, e.flash * 6); c.fillStyle = '#fff';
-      c.fillRect(sx, sy - dy, w, e.h + dy); c.restore();
+      c.fillRect(sx + (dx || 0), sy - dy, w, e.h + dy); c.restore();
     }
     /* 페이즈가 막 넘어간 보스를 금빛으로 덮는다. 시트가 페이즈마다 idle 두 장뿐이고
        그림 차이가 3% 안팎인 보스가 있어, 이게 없으면 바뀐 걸 알 수가 없다. */
@@ -5963,11 +5967,11 @@ const G = {
       }
       const ok = Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0);
       c.restore();
-      if (ok) { this.drawEnemyOverlay(c, e, sx, sy, dy, meta); return; }
+      if (ok) { this.drawEnemyOverlay(c, e, sx, sy, dy, meta, dx); return; }
     }
 
     if (this.spritesOn && Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0)) {
-      this.drawEnemyOverlay(c, e, sx, sy, dy, meta);
+      this.drawEnemyOverlay(c, e, sx, sy, dy, meta, dx);
       return;
     }
     const f = 1;
