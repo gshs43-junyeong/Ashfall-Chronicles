@@ -111,7 +111,7 @@ window.SPRITE_MANIFEST = {
       "slime": {
         "file": "char/slime.png",
         "frameW": 30,
-        "frameH": 22,
+        "frameH": 23,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
@@ -119,7 +119,7 @@ window.SPRITE_MANIFEST = {
       "zombie": {
         "file": "char/zombie.png",
         "frameW": 28,
-        "frameH": 40,
+        "frameH": 41,
         "count": 7,
         "foot": -0.75,
         "side": -3
@@ -127,7 +127,7 @@ window.SPRITE_MANIFEST = {
       "bat": {
         "file": "char/bat.png",
         "frameW": 26,
-        "frameH": 16,
+        "frameH": 18,
         "count": 7,
         "foot": 0.25,
         "side": 0
@@ -135,7 +135,7 @@ window.SPRITE_MANIFEST = {
       "skeleton": {
         "file": "char/skeleton.png",
         "frameW": 28,
-        "frameH": 40,
+        "frameH": 41,
         "count": 7,
         "foot": -0.75,
         "side": -1
@@ -143,7 +143,7 @@ window.SPRITE_MANIFEST = {
       "archer": {
         "file": "char/archer.png",
         "frameW": 24,
-        "frameH": 40,
+        "frameH": 42,
         "count": 7,
         "foot": -0.75,
         "side": 0
@@ -151,7 +151,7 @@ window.SPRITE_MANIFEST = {
       "crawler": {
         "file": "char/crawler.png",
         "frameW": 28,
-        "frameH": 40,
+        "frameH": 42,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
@@ -191,7 +191,7 @@ window.SPRITE_MANIFEST = {
       "wraith": {
         "file": "char/wraith.png",
         "frameW": 28,
-        "frameH": 38,
+        "frameH": 40,
         "count": 7,
         "foot": 1.25,
         "side": 0.5
@@ -199,7 +199,7 @@ window.SPRITE_MANIFEST = {
       "sky_sentry": {
         "file": "char/sky_sentry.png",
         "frameW": 34,
-        "frameH": 36,
+        "frameH": 38,
         "count": 7,
         "foot": -0.75,
         "side": 0
@@ -223,7 +223,7 @@ window.SPRITE_MANIFEST = {
       "lantern": {
         "file": "char/lantern.png",
         "frameW": 26,
-        "frameH": 32,
+        "frameH": 34,
         "count": 7,
         "foot": -0.75,
         "side": -0.5
@@ -231,7 +231,7 @@ window.SPRITE_MANIFEST = {
       "ashcrow": {
         "file": "char/ashcrow.png",
         "frameW": 32,
-        "frameH": 18,
+        "frameH": 20,
         "count": 7,
         "foot": -0.75,
         "side": -0.5
@@ -247,7 +247,7 @@ window.SPRITE_MANIFEST = {
       "minerghost": {
         "file": "char/minerghost.png",
         "frameW": 26,
-        "frameH": 34,
+        "frameH": 36,
         "count": 7,
         "foot": 7.25,
         "side": -1.5
@@ -255,7 +255,7 @@ window.SPRITE_MANIFEST = {
       "scorpion": {
         "file": "char/scorpion.png",
         "frameW": 36,
-        "frameH": 22,
+        "frameH": 24,
         "count": 7,
         "foot": -0.75,
         "side": 1
@@ -263,7 +263,7 @@ window.SPRITE_MANIFEST = {
       "sandmaw": {
         "file": "char/sandmaw.png",
         "frameW": 38,
-        "frameH": 26,
+        "frameH": 27,
         "count": 7,
         "foot": -0.75,
         "side": 0
@@ -279,7 +279,7 @@ window.SPRITE_MANIFEST = {
       "corrupttree": {
         "file": "char/corrupttree.png",
         "frameW": 38,
-        "frameH": 48,
+        "frameH": 49,
         "count": 7,
         "foot": -0.75,
         "side": -1.5
@@ -303,7 +303,7 @@ window.SPRITE_MANIFEST = {
       "cloudjelly": {
         "file": "char/cloudjelly.png",
         "frameW": 32,
-        "frameH": 30,
+        "frameH": 32,
         "count": 7,
         "foot": -0.75,
         "side": 1
@@ -311,7 +311,7 @@ window.SPRITE_MANIFEST = {
       "archivist": {
         "file": "char/archivist.png",
         "frameW": 28,
-        "frameH": 38,
+        "frameH": 40,
         "count": 7,
         "foot": 4.25,
         "side": 1
@@ -327,7 +327,7 @@ window.SPRITE_MANIFEST = {
       "sparkwisp": {
         "file": "char/sparkwisp.png",
         "frameW": 24,
-        "frameH": 20,
+        "frameH": 22,
         "count": 7,
         "foot": 5.25,
         "side": 0
@@ -343,7 +343,7 @@ window.SPRITE_MANIFEST = {
       "foreman": {
         "file": "char/foreman.png",
         "frameW": 30,
-        "frameH": 42,
+        "frameH": 44,
         "count": 7,
         "foot": 0.25,
         "side": 0
@@ -359,7 +359,7 @@ window.SPRITE_MANIFEST = {
       "bloomspitter": {
         "file": "char/bloomspitter.png",
         "frameW": 30,
-        "frameH": 32,
+        "frameH": 34,
         "count": 7,
         "foot": 0.25,
         "side": 0
@@ -375,7 +375,7 @@ window.SPRITE_MANIFEST = {
       "sporeling": {
         "file": "char/sporeling.png",
         "frameW": 26,
-        "frameH": 22,
+        "frameH": 24,
         "count": 7,
         "foot": 0.25,
         "side": 0.5
@@ -383,7 +383,7 @@ window.SPRITE_MANIFEST = {
       "capbeast": {
         "file": "char/capbeast.png",
         "frameW": 38,
-        "frameH": 24,
+        "frameH": 26,
         "count": 7,
         "foot": -0.75,
         "side": 3
@@ -399,7 +399,7 @@ window.SPRITE_MANIFEST = {
       "crimson_eye": {
         "file": "char/crimson_eye.png",
         "frameW": 32,
-        "frameH": 26,
+        "frameH": 28,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
@@ -407,7 +407,7 @@ window.SPRITE_MANIFEST = {
       "splitter": {
         "file": "char/splitter.png",
         "frameW": 34,
-        "frameH": 24,
+        "frameH": 26,
         "count": 7,
         "foot": -0.75,
         "side": 0
@@ -463,7 +463,7 @@ window.SPRITE_MANIFEST = {
       "glow_snail": {
         "file": "char/glow_snail.png",
         "frameW": 32,
-        "frameH": 20,
+        "frameH": 21,
         "count": 7,
         "foot": -0.75,
         "side": 0
@@ -542,7 +542,7 @@ window.SPRITE_MANIFEST = {
       },
       "ballast_form": {
         "file": "char/ballast_form.png",
-        "frameW": 44,
+        "frameW": 46,
         "frameH": 57,
         "count": 7,
         "foot": 1.25,
@@ -559,7 +559,7 @@ window.SPRITE_MANIFEST = {
       "damp_wisp": {
         "file": "char/damp_wisp.png",
         "frameW": 24,
-        "frameH": 22,
+        "frameH": 23,
         "count": 7,
         "foot": 1.25,
         "side": 0.5
@@ -575,7 +575,7 @@ window.SPRITE_MANIFEST = {
       "pet_ember_squirrel": {
         "file": "char/pet_ember_squirrel.png",
         "frameW": 28,
-        "frameH": 20,
+        "frameH": 21,
         "count": 3,
         "foot": 2.25,
         "side": 1.5
@@ -583,7 +583,7 @@ window.SPRITE_MANIFEST = {
       "pet_glass_moth": {
         "file": "char/pet_glass_moth.png",
         "frameW": 28,
-        "frameH": 20,
+        "frameH": 21,
         "count": 3,
         "foot": 4.25,
         "side": 0.5
@@ -607,7 +607,7 @@ window.SPRITE_MANIFEST = {
       "pet_frost_kit": {
         "file": "char/pet_frost_kit.png",
         "frameW": 28,
-        "frameH": 20,
+        "frameH": 21,
         "count": 3,
         "foot": 2.25,
         "side": 0.5
@@ -631,7 +631,7 @@ window.SPRITE_MANIFEST = {
       "pet_thorn_wisp": {
         "file": "char/pet_thorn_wisp.png",
         "frameW": 24,
-        "frameH": 20,
+        "frameH": 21,
         "count": 3,
         "foot": 6.25,
         "side": -0.5
@@ -639,7 +639,7 @@ window.SPRITE_MANIFEST = {
       "pet_star_sprite": {
         "file": "char/pet_star_sprite.png",
         "frameW": 28,
-        "frameH": 20,
+        "frameH": 21,
         "count": 3,
         "foot": 5.25,
         "side": -0.5
@@ -647,7 +647,7 @@ window.SPRITE_MANIFEST = {
       "pet_ember_drake": {
         "file": "char/pet_ember_drake.png",
         "frameW": 28,
-        "frameH": 20,
+        "frameH": 21,
         "count": 3,
         "foot": 4.25,
         "side": 1.5
@@ -719,7 +719,7 @@ window.SPRITE_MANIFEST = {
       "npcw_seira": {
         "file": "char/npc_seira.png",
         "frameW": 24,
-        "frameH": 40,
+        "frameH": 41,
         "count": 7,
         "foot": -0.75,
         "side": 1
@@ -727,7 +727,7 @@ window.SPRITE_MANIFEST = {
       "npcw_garn": {
         "file": "char/npc_garn.png",
         "frameW": 24,
-        "frameH": 40,
+        "frameH": 41,
         "count": 7,
         "foot": -0.75,
         "side": 1
@@ -743,7 +743,7 @@ window.SPRITE_MANIFEST = {
       "jungle_koi": {
         "file": "char/jungle_koi.png",
         "frameW": 24,
-        "frameH": 14,
+        "frameH": 15,
         "count": 7,
         "foot": 1.25,
         "side": -0.5
@@ -767,7 +767,7 @@ window.SPRITE_MANIFEST = {
       "reef_crab": {
         "file": "char/reef_crab.png",
         "frameW": 34,
-        "frameH": 20,
+        "frameH": 21,
         "count": 7,
         "foot": -0.75,
         "side": 0
@@ -815,7 +815,7 @@ window.SPRITE_MANIFEST = {
       "npcw_guard": {
         "file": "char/npc_guard.png",
         "frameW": 24,
-        "frameH": 40,
+        "frameH": 42,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
@@ -847,7 +847,7 @@ window.SPRITE_MANIFEST = {
       "frostbound": {
         "file": "char/frostbound.png",
         "frameW": 30,
-        "frameH": 38,
+        "frameH": 39,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
@@ -855,7 +855,7 @@ window.SPRITE_MANIFEST = {
       "jarhusk": {
         "file": "char/jarhusk.png",
         "frameW": 28,
-        "frameH": 26,
+        "frameH": 28,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
@@ -863,7 +863,7 @@ window.SPRITE_MANIFEST = {
       "cartwraith": {
         "file": "char/cartwraith.png",
         "frameW": 34,
-        "frameH": 22,
+        "frameH": 24,
         "count": 7,
         "foot": -0.75,
         "side": 0
@@ -879,7 +879,7 @@ window.SPRITE_MANIFEST = {
       "ventspitter": {
         "file": "char/ventspitter.png",
         "frameW": 30,
-        "frameH": 28,
+        "frameH": 29,
         "count": 7,
         "foot": 0.25,
         "side": 0
