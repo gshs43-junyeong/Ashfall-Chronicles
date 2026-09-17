@@ -391,6 +391,20 @@ def mob_ash_vole(f):
     return f
 
 
+def mob_cave_minnow(f):
+    """굴 피라미 — 무는 칸이 서 있는 칸과 **똑같았다**(칸0 = 칸4).
+    다섯 칸짜리 몸이라 자세를 만들 마디가 없다. 앞으로 늘여 달려드는 것으로 읽게 한다."""
+    f[4] = scale_x(f[0], 1.18)
+    return f
+
+
+def mob_sandmaw(f):
+    """모래 아가리 — 걷는 첫 칸이 서 있는 둘째 칸과 **똑같았다**(칸1 = 칸2).
+    모래에 묻힌 것이라 다리가 없다. 나아갈 때 모래 위로 한 칸 솟는 것으로 가른다."""
+    f[2] = shift(f[1], 0, -1)
+    return f
+
+
 def mob_jungle_frog(f):
     """정글 개구리 — 도약은 살아 있다. 앉아 있을 때 숨만 쉬게."""
     base = f[0]
@@ -460,6 +474,8 @@ JOBS = [
     ('characters', 'glow_snail', mob_glow_snail),
     ('characters', 'arctic_hare', mob_arctic_hare),
     ('characters', 'ash_vole', mob_ash_vole),
+    ('characters', 'cave_minnow', mob_cave_minnow),
+    ('characters', 'sandmaw', mob_sandmaw),
     ('characters', 'jungle_frog', mob_jungle_frog),
     ('characters', 'corrupttree', mob_corrupttree),
     ('bosses', 'first_keeper', boss_first_keeper),

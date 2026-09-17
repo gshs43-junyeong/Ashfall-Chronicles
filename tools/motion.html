@@ -8,6 +8,7 @@
 <meta charset="utf-8">
 <title>애셋 모션 점검판</title>
 <script src="../game/assets/sprites-manifest.js"></script>
+<script>FIXED_URL = "fixed.json";</script>
 <style>
 :root{
   --bg:#141210; --panel:#1c1917; --line:#3a332b; --ink:#e8e0cf; --dim:#9a9083;
@@ -35,6 +36,12 @@ main{padding:14px 16px 60px;display:grid;gap:12px;
 .hd{display:flex;align-items:baseline;gap:8px;padding:7px 11px;border-bottom:1px solid var(--line)}
 .nm{font-weight:600;letter-spacing:.02em}
 .meta{color:var(--dim);font-size:11.5px;margin-left:auto;font-variant-numeric:tabular-nums}
+.tag{font-size:10px;letter-spacing:.04em;border-radius:3px;padding:1px 6px;font-weight:600;white-space:nowrap}
+.tag.fix{background:#1e3a24;color:#7fd08a;border:1px solid #2f5d39}
+.tag.pad{background:#2a2622;color:#a3957c;border:1px solid #423a30}
+.card.fixed{border-color:#2f5d39}
+.did{padding:0 11px 10px;font-size:11.5px;color:#7fd08a}
+.did span{color:#5f7f66}
 /* ★ 줄바꿈을 빼면 안 된다 — 칸이 넓은 시트(abyss_angler 42x32)는 세 미리보기가
    카드보다 넓어지는데, .card 가 overflow:hidden 이라 죽음 미리보기가 잘려 나간다. */
 .body{display:flex;flex-wrap:wrap;gap:10px;padding:10px 11px}
@@ -82,6 +89,13 @@ canvas{image-rendering:pixelated;display:block;border-radius:2px}
       </select>
     </label>
     <button id="border" class="on">칸 테두리</button>
+    <label>수정
+      <select id="fixsel">
+        <option value="all">전부</option>
+        <option value="fix">고친 것만</option>
+        <option value="nofix">안 고친 것만</option>
+      </select>
+    </label>
     <button id="onlyflag">문제 있는 것만</button>
     <button id="play" class="on">재생</button>
   </div>
@@ -89,7 +103,9 @@ canvas{image-rendering:pixelated;display:block;border-radius:2px}
 <div class="legend">
   <b>칸 번호</b> idle1 · idle2 · move1 · move2 · atk · death1 · death2 &nbsp;|&nbsp;
   <b>자동 검사</b> 칸 가장자리에 닿음 · 반투명 픽셀(배경이 구워진 자국) · 떨어져 나온 덩어리 ·
-  다른 칸과 똑같음(움직임 없음)
+  다른 칸과 똑같음(움직임 없음) &nbsp;|&nbsp;
+  <b>표시</b> <span class="tag fix">수정됨</span> 결함을 고친 것(무엇을 고쳤는지 카드 아래에 적혀 있습니다) ·
+  <span class="tag pad">여백</span> 칸 가장자리 여백만 준 것
 </div>
 <main id="out"></main>
 
@@ -177,7 +193,7 @@ function analyse(img, m){
 
 /* ---- 카드 ------------------------------------------------------------- */
 const out = document.getElementById('out');
-const state = { zoom:5, speed:5, bg:'check', border:true, playing:true, only:false, q:'', g:'mob' };
+const state = { zoom:5, speed:5, bg:'check', border:true, playing:true, only:false, q:'', g:'mob', fix:'all' };
 const cards = [];
 
 function paintBg(c, w, h){
@@ -211,13 +227,20 @@ function makeCard(sheet, img, info){
     if (f.sides.length) notes.push(`${nm}: ${f.sides.join('·')} 변`);
   });
 
+  const done = (window.FIXED && window.FIXED.fix && window.FIXED.fix[name]) || null;
+  const padded = !!(window.FIXED && window.FIXED.pad && window.FIXED.pad.includes(name));
+
   const el = document.createElement('div');
-  el.className = 'card' + (problems.length ? ' flag' : '');
+  el.className = 'card' + (problems.length ? ' flag' : '') + (done ? ' fixed' : '');
   el.dataset.name = name; el.dataset.g = g; el.dataset.flag = problems.length ? '1':'0';
   el.innerHTML =
     `<div class="hd"><span class="nm">${name}</span>` +
+    (done ? `<span class="tag fix">수정됨</span>` : '') +
+    (padded ? `<span class="tag pad">여백</span>` : '') +
     `<span class="meta">${fw}×${fh} · ${cnt}칸</span></div>` +
     `<div class="body"></div><div class="strip"></div>` +
+    (done ? `<div class="did">` + done.map(d =>
+        `${d.why} <span>(${d.c})</span>`).join('<br>') + `</div>` : '') +
     (problems.length ? `<div class="notes">${problems.join(' &nbsp;· ')}</div>` : '') +
     (notes.length ? `<div class="notes dimmed">${notes.join(' &nbsp;· ')}</div>` : '');
 
@@ -277,11 +300,14 @@ function makeCard(sheet, img, info){
       if (state.border){ c.strokeStyle='#e0605a77'; c.lineWidth=1; c.strokeRect(.5,.5,ww-1,hh-1); }
     }
   }
-  cards.push({ el, draw, name, g, flag: problems.length>0 });
+  cards.push({ el, draw, name, g, flag: problems.length>0, done: !!done });
   out.appendChild(el);
 }
 
 /* ---- 불러오기 --------------------------------------------------------- */
+/* 무엇을 이미 고쳤는지는 tools/fixed.json 에 적혀 있다. 못 읽어도(파일 접근이 막힌
+   곳에서 열면 그렇다) 표시만 안 붙고 나머지는 그대로 돈다. */
+function boot(){
 let pending = SHEETS.length;
 for (const sheet of SHEETS){
   const img = new Image();
@@ -293,6 +319,10 @@ for (const sheet of SHEETS){
   img.onerror = () => { if (--pending === 0) applyFilter(); };
   img.src = '../game/assets/' + sheet.m.file;
 }
+}
+if (window.FIXED) boot();
+else fetch(FIXED_URL).then(r => r.json()).then(j => { window.FIXED = j; })
+       .catch(() => {}).finally(boot);
 
 /* ---- 조작 ------------------------------------------------------------- */
 function applyFilter(){
@@ -302,7 +332,8 @@ function applyFilter(){
     const okG = state.g === 'all' || c.g === state.g;
     const okQ = !q || c.name.toLowerCase().includes(q);
     const okF = !state.only || c.flag;
-    const vis = okG && okQ && okF;
+    const okD = state.fix === 'all' || (state.fix === 'fix' ? c.done : !c.done);
+    const vis = okG && okQ && okF && okD;
     c.el.hidden = !vis;
     if (vis) shown++;
   }
@@ -321,6 +352,7 @@ $('#zoom').addEventListener('input', e => { state.zoom = +e.target.value; $('#zv
 $('#spd').addEventListener('input', e => { state.speed = +e.target.value; $('#sv').textContent = state.speed; });
 $('#bg').addEventListener('change', e => { state.bg = e.target.value; });
 $('#border').addEventListener('click', e => { state.border = !state.border; e.target.classList.toggle('on', state.border); });
+$('#fixsel').addEventListener('change', e => { state.fix = e.target.value; applyFilter(); });
 $('#onlyflag').addEventListener('click', e => { state.only = !state.only; e.target.classList.toggle('on', state.only); applyFilter(); });
 $('#play').addEventListener('click', e => { state.playing = !state.playing; e.target.classList.toggle('on', state.playing);
   e.target.textContent = state.playing ? '재생' : '멈춤'; });
