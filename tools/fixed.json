@@ -1,0 +1,517 @@
+{
+ "fix": {
+  "abyss_angler": [
+   {
+    "c": "b908105",
+    "why": "죽는 칸에 깔린 회색 판·틀을 걷어냄"
+   }
+  ],
+  "archivist": [
+   {
+    "c": "229cd22",
+    "why": "공격 칸에서 망치와 눈 사이에 어둠 한 칸을 넣어 가름"
+   }
+  ],
+  "arctic_hare": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   },
+   {
+    "c": "229cd22",
+    "why": "도약 칸에서 한 칸으로 뭉개졌던 뒷발을 되살림"
+   }
+  ],
+  "ash_vole": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   },
+   {
+    "c": "3ec2c9f",
+    "why": "종종걸음 칸에서 두 칸으로 뭉개졌던 오른발을 되살림"
+   }
+  ],
+  "ballast_form": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   },
+   {
+    "c": "229cd22",
+    "why": "죽는 첫 칸이 안 무너지던 것 — 선 키의 96% → 56%"
+   }
+  ],
+  "bloomspitter": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "canopy_ape": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "capbeast": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "cartwraith": [
+   {
+    "c": "de5c232",
+    "why": "굴러도 안 돌던 바퀴 — 걷는 두 칸에서 살을 ×자로 돌리고 수레를 덜컹이게"
+   }
+  ],
+  "cave_minnow": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   },
+   {
+    "c": "de5c232",
+    "why": "무는 칸이 서 있는 칸과 똑같던 것 — 앞으로 늘여 달려들게"
+   }
+  ],
+  "crevasse_maw": [
+   {
+    "c": "b908105",
+    "why": "죽는 칸에 깔린 회색 판·틀을 걷어냄"
+   }
+  ],
+  "crimson_howler": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   },
+   {
+    "c": "f51ee05",
+    "why": "허공에 떠 있던 줄무늬 조각을 걷고 뒷다리를 몸에 이음"
+   }
+  ],
+  "crystalcrab": [
+   {
+    "c": "23c56b0",
+    "why": "걷는 칸 몸을 가르던 2px 금을 메움"
+   }
+  ],
+  "damp_wisp": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "deep_octopus": [
+   {
+    "c": "b908105",
+    "why": "죽는 칸에 깔린 회색 판·틀을 걷어냄"
+   }
+  ],
+  "draft_form": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "drowned_hand": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   },
+   {
+    "c": "23c56b0",
+    "why": "걷는 칸 몸을 가르던 2px 금을 메움"
+   }
+  ],
+  "glacier_stalker": [
+   {
+    "c": "b908105",
+    "why": "죽는 칸에 깔린 회색 판·틀을 걷어냄"
+   }
+  ],
+  "gloom_crawler": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "grotto_eel": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "jungle_frog": [
+   {
+    "c": "23c56b0",
+    "why": "걷는 칸 몸을 가르던 2px 금을 메움"
+   }
+  ],
+  "jungle_koi": [
+   {
+    "c": "b908105",
+    "why": "죽는 칸에 깔린 회색 판·틀을 걷어냄"
+   }
+  ],
+  "lantern": [
+   {
+    "c": "ddc9e42",
+    "why": "걸을 때 몸에서 떨어지던 조각을 붙임"
+   }
+  ],
+  "lantern_jelly": [
+   {
+    "c": "b908105",
+    "why": "죽는 칸에 깔린 회색 판·틀을 걷어냄"
+   },
+   {
+    "c": "f51ee05",
+    "why": "갓에서 떨어져 있던 촉수를 이음"
+   }
+  ],
+  "lost_miner": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "meridian_eye": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "mold_walker": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "npcw_armsman": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_borin": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_elara": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_elder": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_garn": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_guard": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "npcw_haran": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_kade": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_mira": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_oreman": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_pedlar": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_rika": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "npcw_seira": [
+   {
+    "c": "3ec2c9f",
+    "why": "화면에 안 나오는 다섯 칸(칸0 복사본)을 떼어 냄 (일곱 칸 → 두 칸)"
+   }
+  ],
+  "orbit_sentry": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "pet_ash_owl": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_cinder_toad": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_dust_sparrow": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_ember_drake": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_ember_squirrel": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_frost_kit": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_glass_moth": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_pebble_kin": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_star_sprite": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_storm_falcon": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_thorn_wisp": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "pet_void_hatchling": [
+   {
+    "c": "23c56b0",
+    "why": "화면에 안 나오는 걷기·죽음 칸을 떼어 냄 (일곱 칸 → 세 칸)"
+   }
+  ],
+  "rabbit": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   },
+   {
+    "c": "23c56b0",
+    "why": "걷는 칸 몸을 가르던 2px 금을 메움"
+   }
+  ],
+  "reef_crab": [
+   {
+    "c": "b908105",
+    "why": "죽는 칸에 깔린 회색 판·틀을 걷어냄"
+   }
+  ],
+  "reef_shark": [
+   {
+    "c": "b908105",
+    "why": "죽는 칸에 깔린 회색 판·틀을 걷어냄"
+   }
+  ],
+  "riveter": [
+   {
+    "c": "ddc9e42",
+    "why": "걸을 때 몸에서 떨어지던 조각을 붙임"
+   },
+   {
+    "c": "b908105",
+    "why": "죽는 칸에 깔린 회색 판·틀을 걷어냄"
+   }
+  ],
+  "sand_lizard": [
+   {
+    "c": "ddc9e42",
+    "why": "걸을 때 몸에서 떨어지던 조각을 붙임"
+   },
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "sandmaw": [
+   {
+    "c": "de5c232",
+    "why": "걷는 첫 칸이 서 있는 둘째 칸과 똑같던 것 — 모래 위로 솟게"
+   }
+  ],
+  "scorpion": [
+   {
+    "c": "26b2f8c",
+    "why": "걷는 칸 몸을 세로로 가르던 금을 메움"
+   }
+  ],
+  "scribe_hand": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "splitter": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "sporeling": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ],
+  "vinelash": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   },
+   {
+    "c": "f51ee05",
+    "why": "공격 칸에서 떨어져 있던 왼팔을 이음"
+   }
+  ],
+  "weldarm": [
+   {
+    "c": "23c56b0",
+    "why": "죽는 칸에 깔린 회색 네모를 걷어냄"
+   }
+  ]
+ },
+ "pad": [
+  "archer",
+  "archivist",
+  "ashcrow",
+  "ballast_form",
+  "bat",
+  "bloomspitter",
+  "canopy_ape",
+  "capbeast",
+  "cartwraith",
+  "cloudjelly",
+  "coreling",
+  "corrupttree",
+  "crawler",
+  "crimson_eye",
+  "crimson_howler",
+  "crystalcrab",
+  "damp_wisp",
+  "deep_octopus",
+  "draft_form",
+  "drowned_hand",
+  "foreman",
+  "frostbound",
+  "gloom_crawler",
+  "glow_snail",
+  "icewolf",
+  "jarhusk",
+  "jungle_frog",
+  "jungle_koi",
+  "lantern",
+  "lantern_jelly",
+  "lavaslug",
+  "meridian_eye",
+  "minerghost",
+  "mold_walker",
+  "npcw_borin",
+  "npcw_elara",
+  "npcw_elder",
+  "npcw_garn",
+  "npcw_guard",
+  "npcw_haran",
+  "npcw_kade",
+  "npcw_mira",
+  "npcw_rika",
+  "npcw_seira",
+  "orbit_sentry",
+  "pet_ash_owl",
+  "pet_cinder_toad",
+  "pet_dust_sparrow",
+  "pet_ember_drake",
+  "pet_ember_squirrel",
+  "pet_frost_kit",
+  "pet_glass_moth",
+  "pet_pebble_kin",
+  "pet_star_sprite",
+  "pet_storm_falcon",
+  "pet_thorn_wisp",
+  "pet_void_hatchling",
+  "rabbit",
+  "reef_crab",
+  "riveter",
+  "sacling",
+  "sand_lizard",
+  "sandmaw",
+  "scorpion",
+  "scribe_hand",
+  "skeleton",
+  "sky_sentry",
+  "slime",
+  "sparkwisp",
+  "spider",
+  "splitter",
+  "sporeling",
+  "ventspitter",
+  "vinelash",
+  "weldarm",
+  "wraith",
+  "zombie"
+ ]
+}
