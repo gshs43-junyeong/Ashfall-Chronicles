@@ -1081,7 +1081,8 @@ const UI = {
     const p = G.player, lv = G.villageLv();
     $('#town-title').textContent = `여명 마을 — ${VILLAGE[lv] ? VILLAGE[lv].n : '—'}`;
     let h = '';
-    for (let i = 1; i <= 3; i++) {
+    // 단계 수는 VILLAGE 표가 정한다 — 3으로 박아 두면 표에 단계를 더해도 창에 안 뜬다
+    for (let i = 1; i <= VILLAGE.length - 1; i++) {
       const v = VILLAGE[i];
       const state = i <= lv ? 'done' : i === lv + 1 ? 'next' : 'far';
       h += `<div class="tv ${state}">` +

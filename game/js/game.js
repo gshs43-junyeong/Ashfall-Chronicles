@@ -4,6 +4,42 @@
 const SAVE_KEY = 'ashfall_save_v3';   // v1: 640×232 · v2: 2800×480 — 세계 폭이 바뀌면 호환 불가
 const SAVE_SLOTS = 3;
 const slotKey = (i) => `${SAVE_KEY}_slot${i}`;
+const sigKey = (i) => `${SAVE_KEY}_slot${i}_s`;
+
+/* ================= 세이브 무결성 =================
+   브라우저 게임에서 저장을 "고칠 수 없게" 만드는 것은 불가능하다 — 검사하는 코드가
+   같은 기계 안에 있으므로 마음먹으면 서명을 다시 계산해 넣으면 된다. 여기서 하는 일은
+   **문턱을 올리는 것**이다: 개발자 도구로 숫자만 고쳐 쓰는 가장 흔한 방식은 막힌다.
+
+   서명은 세이브 **바깥 칸**에 적는다. 안에 넣으면 ① 키 순서에 따라 다시 만든 글자열이
+   달라져 멀쩡한 기록이 헛되이 어긋나고 ② 문자열을 감싸며 이스케이프가 겹쳐 용량이
+   분다(이미 용량 한계가 빠듯하다). 같은 이유로 암호화·base64도 쓰지 않는다 — 세이브가
+   수 MB라 base64는 1/3을 더 불린다. 읽히는 것은 막지 않고, 고친 것을 잡아내기만 한다. */
+const SAVE_SALT = 'ashfall-seal-1';
+/** FNV-1a 32비트 두 벌. 한 벌이면 충돌이 잦아 다른 오프셋으로 한 번 더 돌린다. */
+function saveSign(text) {
+  let a = 0x811c9dc5, b = 0x01000193;
+  const t = text + SAVE_SALT;
+  for (let i = 0; i < t.length; i++) {
+    const c = t.charCodeAt(i);
+    a ^= c; a = (a + ((a << 1) + (a << 4) + (a << 7) + (a << 8) + (a << 24))) >>> 0;
+    b = ((b ^ c) * 16777619) >>> 0;
+  }
+  return a.toString(36) + '.' + b.toString(36) + '.' + (t.length % 1e6).toString(36);
+}
+/** 슬롯에 글자열을 넣으면서 서명도 같이 적는다 (저장·이관·되돌리기가 모두 이 문을 쓴다) */
+function saveSealed(slot, text) {
+  localStorage.setItem(slotKey(slot), text);
+  try { localStorage.setItem(sigKey(slot), saveSign(text)); } catch (e) { }
+}
+/** 열어도 되는 기록인가. 봉인 표시가 없는 옛 기록은 그냥 통과시킨다 —
+    판을 올렸다고 남의 진행을 못 열게 만들 수는 없다. 다음 저장 때 저절로 봉인된다. */
+function saveSealOk(slot, raw, d) {
+  if (!d || !d.sealed) return true;
+  let sig = null;
+  try { sig = localStorage.getItem(sigKey(slot)); } catch (e) { return true; }
+  return !!sig && sig === saveSign(raw);
+}
 const SET_KEY = 'ashfall_settings';
 /* 설정 기본값. 세이브와 별개로 저장되므로 새 게임을 시작해도 유지된다.
    view 는 시야 배율(%), keys 는 바꾼 조작키만 담는 표, notice 는 끈 알림만 담는 표 —
@@ -1313,6 +1349,20 @@ const G = {
     UI.refreshBag();
   },
   findObjAt(wx, wy) {
+    /* 내가 놓은 설치물부터 본다. 두 가지 이유가 있다.
+       1) 이 함수는 objects 배열 **순서대로 첫 번째**를 집는데, 세계가 처음부터 놓아 둔
+          물건(게시판·문 등)이 먼저 들어 있다. 그 앞에 상자를 놓으면 상자는 영영 안
+          잡혀서 열 수도, 곡괭이로 걷어낼 수도 없었다.
+       2) 상자 그림(18×16)은 한 칸(22)보다 작아 칸 위쪽을 찍으면 빗나간다 — 그림이
+          아니라 **차지한 칸**으로 잡아야 "보이는 대로" 집힌다. */
+    const tx = Math.floor(wx / TS), ty = Math.floor(wy / TS);
+    for (const o of this.world.objects) {
+      if (!o.placed || !OBJ_SIZE[o.type]) continue;
+      const x0 = Math.floor(o.x / TS), x1 = Math.floor((o.x + o.w - 1) / TS);
+      const y1 = Math.floor((o.y + o.h - 1) / TS);
+      const y0 = y1 - ((OBJ_SIZE[o.type].th || 1) - 1);
+      if (tx >= x0 && tx <= x1 && ty >= y0 && ty <= y1) return o;
+    }
     for (const o of this.world.objects) {
       if (o.type === 'furniture') continue;   // 순수 장식물 — 상호작용 대상이 아니다
       if (wx >= o.x && wx <= o.x + o.w && wy >= o.y && wy <= o.y + o.h) return o;
@@ -3250,7 +3300,10 @@ const G = {
     if (md.death === 'wipe') {
       // 불가능 모드 — 이 슬롯의 기록을 지운다. 비석도 남지 않는다.
       this.deathMark = null;
-      if (this.currentSlot !== null) localStorage.removeItem(slotKey(this.currentSlot));
+      if (this.currentSlot !== null) {
+        localStorage.removeItem(slotKey(this.currentSlot));
+        localStorage.removeItem(sigKey(this.currentSlot));
+      }
       $('#death-line').textContent = '불가능 모드였다. 이 슬롯의 기록이 지워졌다.';
       $('#death-screen').classList.add('open');
       $('#death-screen').classList.add('wipe');
@@ -3446,7 +3499,8 @@ const G = {
           deepest: p.deepest, highest: p.highest, gathered: p.gathered
         }
       };
-      localStorage.setItem(slotKey(this.currentSlot), JSON.stringify(data));
+      data.sealed = 1;                                 // 서명이 있는 기록이라는 표시
+      saveSealed(this.currentSlot, JSON.stringify(data));
       this.toast('저장했다', 'good');
     } catch (e) { this.toast('저장 실패: 용량 초과', 'bad'); console.error(e); }
   },
@@ -3482,7 +3536,8 @@ const G = {
       if (!d || d.app !== 'ashfall' || !d.slots) { this.toast('이 게임의 저장 파일이 아니다', 'bad'); return; }
       if (d.key && d.key !== SAVE_KEY) { this.toast('이전 판의 저장이라 열 수 없다', 'bad'); return; }
       let n = 0;
-      for (let i = 1; i <= 3; i++) if (d.slots[i]) { localStorage.setItem(slotKey(i), d.slots[i]); n++; }
+      // 되돌린 기록도 이 기계에서 다시 봉인한다 — 안 그러면 봉인된 파일이 안 열린다
+      for (let i = 1; i <= 3; i++) if (d.slots[i]) { saveSealed(i, d.slots[i]); n++; }
       if (d.settings) { localStorage.setItem(SET_KEY, d.settings); this.loadSettings(); UI.syncSettings(); }
       if (!n) { this.toast('파일에 기록이 없다', 'bad'); return; }
       this.toast(`${n}칸을 되돌렸다 — 이어하기에서 고르면 된다`, 'good');
@@ -3493,6 +3548,14 @@ const G = {
   loadGame(slot) {
     const raw = localStorage.getItem(slotKey(slot));
     if (!raw) { this.toast('저장된 기록이 없다', 'bad'); return; }
+    /* 손댄 기록은 열지 않는다. **막을 뿐 지우지는 않는다** — 서명 쪽에 문제가 있어
+       멀쩡한 기록을 잠갔더라도 파일은 그대로 남아 있어야 한다. */
+    let head = null;
+    try { head = JSON.parse(raw); } catch (e) { }
+    if (!saveSealOk(slot, raw, head)) {
+      this.toast('이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다', 'bad');
+      return;
+    }
     this.currentSlot = slot;
     this.showLoading('기록을 불러오는 중…');
     setTimeout(() => { try { this._loadGame(raw); } finally { this.hideLoading(); } }, 40);
@@ -3602,7 +3665,8 @@ const G = {
       const d = JSON.parse(legacy);
       d.name = d.name || '이름 없는 모험가';
       d.savedAt = d.savedAt || Date.now();
-      localStorage.setItem(slotKey(0), JSON.stringify(d));
+      d.sealed = 1;
+      saveSealed(0, JSON.stringify(d));
       localStorage.removeItem(SAVE_KEY);
     } catch (e) { console.error(e); }
   },
@@ -3614,7 +3678,8 @@ const G = {
       if (!raw) { out.push(null); continue; }
       try {
         const d = JSON.parse(raw);
-        out.push({ name: d.name || '이름 없는 모험가', level: d.p.level, chapter: d.chapter, savedAt: d.savedAt });
+        out.push({ name: d.name || '이름 없는 모험가', level: d.p.level, chapter: d.chapter,
+          savedAt: d.savedAt, bad: !saveSealOk(i, raw, d) });
       } catch (e) { out.push(null); }
     }
     return out;
@@ -3622,6 +3687,7 @@ const G = {
   deleteSlot(i) {
     if (!confirm('이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.')) return;
     localStorage.removeItem(slotKey(i));
+    localStorage.removeItem(sigKey(i));   // 서명만 남으면 다음 기록이 헛되이 잠긴다
     this.renderSlotScreen();
   },
   /** 타이틀 화면의 슬롯 목록을 새로 그린다. 빈 칸은 "새로운 여정" 버튼 하나만,
@@ -3637,10 +3703,11 @@ const G = {
         </div>`;
       }
       const when = s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-      return `<div class="slot-card filled" data-slot="${i}">
+      // 손댄 기록은 목록에서부터 알려 준다 — 눌러 보고 나서야 알면 답답하다
+      return `<div class="slot-card filled${s.bad ? ' tampered' : ''}" data-slot="${i}">
         <div class="slot-info">
           <div class="slot-name">${escHtml(s.name)}</div>
-          <div class="slot-meta">Lv.${s.level} · ${when}</div>
+          <div class="slot-meta">${s.bad ? '저장한 뒤에 바뀐 기록 — 열 수 없다' : `Lv.${s.level} · ${when}`}</div>
         </div>
         <div class="slot-actions">
           <button class="slot-load-btn" data-slot="${i}">이어하기</button>
@@ -4048,7 +4115,10 @@ const G = {
         if (ashOn && this.ASH_TILE[id]) { this.drawAshTile(c, id, v, sx, sy, tx, ty, ashF); continue; }
         if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
         else TileArt.draw(c, id, v, sx, sy);
-        if (!TOP_SKIP[id] && !w.solid(tx, ty - 1)) {
+        /* 상단 하이라이트는 **하늘에 드러난 윗면**을 흉내 내는 선이다. "윗칸이 고체가
+           아니면"으로 두면 물에 잠긴 바닥이나 잡초·조개가 얹힌 칸에도 줄이 그어진다 —
+           빛이 닿지 않는 자리에 빛 자국이 남는 셈이다. 윗칸이 **정확히 공기일 때만** 긋는다. */
+        if (!TOP_SKIP[id] && w.tiles[k - WW] === T.AIR) {
           c.fillStyle = 'rgba(255,255,255,.10)'; c.fillRect(sx, sy, TS, 2);
         }
       }
