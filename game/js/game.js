@@ -527,6 +527,15 @@ const G = {
     // 프레임당 33ms씩만 흘러 사실상 멈춘 것처럼 들린다("긴장 상태 브금 전환이 안 된다"는
     // 제보의 원인) — 페이드에는 실제로 흐른 시간(rawDt)을 그대로 준다.
     if (window.Music) { Music.update(Math.min(rawDt, 3)); Music.play(this.pickBgm()); }
+    /* 이어지는 효과음 — 매 프레임 "지금 나야 하는가"만 넘긴다. 켜고 끄는 것과
+       이음매 겹치기는 SfxLoop가 알아서 한다(1.0초 파일을 0.9초로 잘라 이어 붙인다). */
+    if (window.SfxLoop) {
+      const pl = this.player, playing = this.state === 'play' && !this.paused;
+      const swim = playing && pl && (pl.swimming || pl.submerged > 0.5);
+      const fuse = playing && this.projs.some(q => q instanceof Bomb);
+      SfxLoop.set('swim', swim);
+      SfxLoop.set('fuse', fuse);
+    }
     // 환경음(폭포·호수)은 실제 플레이 중이고 안 멈춰 있을 때만 — 아니면 페이드아웃되게 dt만 흘려보낸다
     if (window.Ambient) {
       const active = this.state === 'play' && !this.paused && !!this.world && !!this.player;
@@ -881,6 +890,8 @@ const G = {
       p.mineProg = 0;
       w.set(tx, ty, T.AIR);
       p.mined[id] = (p.mined[id] || 0) + 1;
+      // 등급 5 광물은 다른 돌과 소리가 다르다 — 캐는 순간 "이건 다른 돌"이 들려야 한다
+      if (TILE_DEF[id] && TILE_DEF[id].hard >= 5) this.sfx('ore_hit');
       this.checkAch();
       this.dropTile(tx, ty, id);
       // 다 여문 작물은 씨앗을 함께 돌려준다 — 한 번 시작하면 밭이 저절로 이어지도록
@@ -3327,6 +3338,14 @@ const G = {
       const sc = 0.65 + (i % 5) * 0.24;
       const alpha = (0.14 + rainT * 0.62) * (0.65 + (i % 3) * 0.18);
       c.globalAlpha = Math.min(1, alpha);
+      /* 손그림 구름이 있으면 그걸 쓴다. 1~3은 맑은 날, 4~5는 먹구름 — 비가 짙어질수록
+         먹구름 쪽이 자주 뽑히게 섞는다. 파일이 없으면 아래 원 다섯 개로 돌아간다. */
+      const im = this.spritesOn && Sprites.img['cloud_' + (1 + ((rainT > 0.35 && i % 3 === 0) ? 3 + (i % 2) : i % 3))];
+      if (im && im.width) {
+        const w2 = 128 * sc, h2 = 64 * sc;
+        c.drawImage(im, cx - w2 / 2, cy - h2 / 2, w2, h2);
+        continue;
+      }
       c.fillStyle = mixHex('#ffffff', '#2e343c', rainT);
       for (const [dx, dy, r] of [[0, 0, 22], [18, -4, 17], [-16, -2, 16], [8, 6, 15], [-8, 7, 14]]) {
         c.beginPath(); c.arc(cx + dx * sc, cy + dy * sc, r * sc, 0, TAU); c.fill();
@@ -4023,7 +4042,12 @@ const G = {
     // 프레임 바닥 = 그림 발끝이라고 가정했었는데, 실제로는 시트마다 몇 px 투명 여백이
     // 남아 있어(들토끼류 실측 2.25px) 판정 박스가 작을수록 그만큼 더 떠 보였다.
     // Sprites.footInset가 실측한 여백이라 그만큼 덜 밀어 올린다.
-    const dy = meta ? Math.max(0, meta.frameH - e.h - (Sprites.footInset[e.type] || 0)) : 0;
+    /* **0에서 자르지 않는다.** 예전에는 Math.max(0, …)로 묶어 두었는데, 그러면 프레임이
+       판정 박스보다 **짧은** 몹(크레바스 아가리 28 < 40, 심연 초롱아귀 30 < 30+여백)에서
+       dy가 0에 걸려 그림이 위로 붙고 발이 최대 11px까지 떴다(실측).
+       음수를 허용하면 그림을 그만큼 아래로 밀어 발끝이 판정 박스 바닥에 정확히 닿는다 —
+       NPC 쪽(drawNpc)은 원래 자르지 않았고, 이제 둘이 같은 규칙을 쓴다. */
+    const dy = meta ? meta.frameH - e.h - (Sprites.footInset[e.type] || 0) : 0;
     /* 물속 몹은 어둡게 깔린 물 위에 제 색이 묻혀 안 보인다 — 웅덩이 뱀장어(#3a6a5a)는
        어두운 물과 거의 같은 색이라 "보이지 않는 몬스터"가 됐다. 물에 잠긴 몹만
        제 그림을 한 번 더 'lighter'로 겹쳐 **그림 모양 그대로** 밝힌다.
@@ -4338,6 +4362,13 @@ const G = {
   },
 
   /* ---- 미니맵 ---- */
+  /* 탐지기 소리 — 잡힌 것이 **없다가 생겼을 때만** 한 번 운다. 반경 안에 계속
+     들어 있는 동안 매번 울면 미니맵이 갱신될 때마다(초당 4회) 삑삑거린다. */
+  _detPrev: 0,
+  detBeep(n) {
+    if (n > 0 && this._detPrev === 0) this.sfx('detector');
+    this._detPrev = n;
+  },
   /** 유틸리티 칸에 낀 탐지기 종류 — 'ore' | 'mob'. 없으면 false */
   hasDetector(kind) {
     const eq = this.player && this.player.equip;
@@ -4352,6 +4383,7 @@ const G = {
        탐지기가 아니라 색칠 도구다. 반경 안이면 아직 본 적 없는 칸도 비친다. */
     const detOre = this.hasDetector('ore'), detMob = this.hasDetector('mob');
     const DR = this.DET_R, DR2 = DR * DR;
+    let detHit = 0;                                  // 이번 갱신에 잡힌 것 수 (소리용)
     c.fillStyle = '#07080c'; c.fillRect(0, 0, MW, MH);
     const px = Math.floor(p.cx / TS), py = Math.floor(p.cy / TS);
     const halfW = Math.floor(MW / S / 2), halfH = Math.floor(MH / S / 2);
@@ -4368,6 +4400,7 @@ const G = {
           if (ddx * ddx + ddy * ddy > DR2) continue;
           c.fillStyle = TILE_DEF[id].c;
           c.fillRect(x * S, y * S, S, S);
+          detHit++;
           continue;
         }
         if (id === T.AIR) {
@@ -4396,12 +4429,14 @@ const G = {
       const etx = clamp(Math.floor(e.cx / TS), 0, WW - 1), ety = clamp(Math.floor(e.cy / TS), 0, WH - 1);
       // 몬스터 탐지기가 있으면 반경 안은 안개 속이라도 잡아낸다
       const near = detMob && (etx - px) * (etx - px) + (ety - py) * (ety - py) <= DR2;
+      if (near) detHit++;
       if (!near && !w.explored[ety * WW + etx]) continue;
       const ox = etx - (px - halfW), oy = ety - (py - halfH);
       if (ox < 0 || oy < 0 || ox * S >= MW || oy * S >= MH) continue;
       c.fillStyle = e.boss ? '#ff4a4a' : '#e07070';
       c.fillRect(ox * S - 1, oy * S - 1, S + 2, S + 2);
     }
+    this.detBeep(detHit);
     // 쓰러진 자리 — 안개와 무관하게 늘 보인다(내가 죽은 자리는 내가 안다)
     if (this.deathMark) {
       const dx = Math.floor(this.deathMark.x / TS) - (px - halfW);

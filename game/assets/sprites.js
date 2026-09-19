@@ -27,6 +27,9 @@ const Sprites = {
     this.meta.backgrounds.parallax.files.forEach(f => add(f.split('/')[1].replace('.png',''), f));
     add('title', this.meta.backgrounds.title.file);
     this.meta.backgrounds.chapters.files.forEach(f => add(f.split('/')[1].replace('.png',''), f));
+    // 구름 — 절이 있을 때만 읽는다(옛 매니페스트에는 없다)
+    if (this.meta.backgrounds.clouds)
+      this.meta.backgrounds.clouds.files.forEach(f => add(f.split('/')[1].replace('.png', ''), f));
     // 여명 마을 시설물 (한 장짜리 정지 이미지, 상태별 변형 파일이 있을 수 있다)
     if (this.meta.objects) for (const k in this.meta.objects.files) {
       const o = this.meta.objects.files[k];
