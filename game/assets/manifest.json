@@ -1236,7 +1236,9 @@
         "bg/parallax_works.png",
         "bg/parallax_village.png",
         "bg/parallax_jungle.png",
-        "bg/parallax_glowfen.png"
+        "bg/parallax_glowfen.png",
+        "bg/parallax_sea.png",
+        "bg/parallax_glacier.png"
       ]
     },
     "title": {
@@ -1267,7 +1269,10 @@
         "bg/chapter_12_runaway.png",
         "bg/chapter_13_hepha.png",
         "bg/chapter_11_chimneys.png",
-        "bg/chapter_14_beyond_wall.png"
+        "bg/chapter_14_beyond_wall.png",
+        "bg/chapter_15_drowned.png",
+        "bg/chapter_16_lanterns.png",
+        "bg/chapter_17_bell.png"
       ]
     },
     "clouds": {
@@ -1276,7 +1281,13 @@
         128
       ],
       "note": "맑은 날 구름 1~3(옅음) · 먹구름 4~5(짙음). 비 세기에 따라 코드가 섞어 쓰며 화면 위쪽 띠 안에서만 흐름. 가장자리 여백 8~16px.",
-      "files": []
+      "files": [
+        "bg/cloud_1.png",
+        "bg/cloud_2.png",
+        "bg/cloud_3.png",
+        "bg/cloud_4.png",
+        "bg/cloud_5.png"
+      ]
     }
   },
   "npc": {
