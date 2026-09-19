@@ -2660,7 +2660,14 @@ const G = {
     this.toast(`${ENEMIES[id].n} 토벌!`, 'good');
     UI.bossBar(null);
   },
-  scale() { return 1 + this.chapter * 0.22 + this.player.level * 0.03; },
+  /* 몹의 세기는 **스토리 진행(장)만** 따라간다.
+     ★ 플레이어 레벨을 더하던 항(+lv×0.03)을 뺐다 — 레벨을 올릴수록 세상이 같이 세져서
+       "강해진 느낌"이 사라진다. 레벨은 이제 순수하게 내 쪽만 세게 만든다.
+     ★ 장별 상승폭도 0.22 → 0.09 다(v1.1 세션 3 확정). 장이 15개이던 시절의 0.22로는
+       18장짜리 세계에서 마지막 장이 4.74배가 되어 "스토리를 미는 것이 곧 벌"이 된다.
+       지금은 9장 1.81배 · 마지막 장(17) 2.53배로 완만하다.
+     경험치·금화도 같은 배수를 쓰므로, 레벨을 올려도 몹의 보상이 부풀지 않는다. */
+  scale() { return 1 + this.chapter * 0.09; },
   /** 난이도가 몹의 체력·공격력에만 곱하는 값. 경험치·금화는 건드리지 않는다. */
   modeMul() { return MODE_OF(this.mode).mul; },
 
@@ -3145,10 +3152,16 @@ const G = {
   },
 
   /** 지금 잿빛이 얼마나 깊은가 (0 = 아직 색이 있다, 1 = 다 빠졌다) */
+  /** 숲 원경의 잿빛 깊이(0=푸른 숲 · 1=죽은 나무만). 장이 지날수록 짙어진다.
+      ★ 예전에는 세션 2에 들어서는 순간 0으로 되돌려 "잿빛이 걷혔다"를 그렸는데,
+        그러면 세션 2·3 내내 원경이 8장 이전보다 오히려 푸르러서, 열 장을 더 지나도
+        뒤 배경이 한 번도 안 변한다. 이제 서장부터 마지막 장까지 **한 방향으로** 짙어진다.
+      ★ 상한 0.88 — 1.0(원본, 죽은 나무만)까지 보내지 않는다. 끝까지 밀면 원경이
+        잿빛 벽 한 장이 되어 능선도 나무도 안 읽힌다. 짙어지되 어두워지지는 않게. */
   ashF() {
-    const ch = this.chapter || 0;
-    if (sessionOf(ch).id >= 2) return 0;         // 잿빛이 걷혔다
-    return 0.10 + clamp((ch - 1) / 7, 0, 1) * 0.86;
+    const last = Math.max(1, CHAPTERS.length - 1);
+    const ch = clamp(this.chapter || 0, 0, last);
+    return clamp(0.10 + (ch / last) * 0.78, 0.10, 0.88);
   },
 
   /* ================= 용광로 굴뚝 연기 =================
@@ -5338,9 +5351,14 @@ const G = {
          하늘과 대비가 확 올라갔고, 멀리 있던 언덕이 눈앞의 시커먼 초록 벽이
          됐다. 파랑을 남겨야 멀리 있는 것이 멀리 있어 보인다. */
       const l = px[i] * 0.30 + px[i + 1] * 0.59 + px[i + 2] * 0.11;
-      px[i] = px[i] * af + (l * 0.60 + 4) * (1 - af);
-      px[i + 1] = px[i + 1] * af + (l * 1.10 + 8) * (1 - af);
-      px[i + 2] = px[i + 2] * af + (l * 0.78 + 9) * (1 - af);
+      /* 잿빛이 짙을수록 아주 조금 **들어 올린다.** 색만 빼면 뒤 배경이 장이 갈수록
+         시커먼 잿덩이 한 장으로 가라앉는데, 실제로 재가 낀 하늘은 어두워지는 게
+         아니라 뿌예진다. 세 채널에 같은 값을 더하므로 밝아지면서 동시에 채도가
+         빠진다 — 그게 안개다. 14는 눈에 띄게 뿌예지되 그림이 뜨지는 않는 선이다. */
+      const haze = af * 14;
+      px[i] = Math.min(255, px[i] * af + (l * 0.60 + 4) * (1 - af) + haze);
+      px[i + 1] = Math.min(255, px[i + 1] * af + (l * 1.10 + 8) * (1 - af) + haze);
+      px[i + 2] = Math.min(255, px[i + 2] * af + (l * 0.78 + 9) * (1 - af) + haze);
     }
     g.putImageData(d, 0, 0);
     this._fbg = { key, cv, f: af };
@@ -5407,9 +5425,13 @@ const G = {
        그래서 **그림 파일은 남기고 부르지 않는다.** 다시 붙이고 싶어지면 위 숫자를
        먼저 다시 잴 것. */
     else if (camY > SURF_BASE * TS + 500) return true;
-    // 여명 마을은 전용 그림. 베이스캠프는 숲 배경 그대로 (마을 배경 쓰면 안 됨)
-    else if (zone === 'village') key = 'parallax_village';
-    else if (zone === 'camp') key = 'parallax_forest';
+    /* 여명 마을·베이스캠프 둘 다 **숲 원경**을 쓴다.
+       ★ 마을에는 전용 그림(parallax_village)이 있었는데 걷어냈다 — 그림 속 건물이
+         실제 마을 건물과 겹쳐 두 겹으로 서 있었고, 마을에 들어서는 순간 뒤 배경이
+         통째로 갈려서 "같은 땅"이라는 느낌이 끊겼다. 마을도 동쪽 숲 한복판이므로
+         뒤에 서 있어야 하는 것은 그 숲이다(장이 지날수록 같이 잿빛이 된다).
+         그림 파일은 지우지 않고 남겨 둔다 — 다시 쓰고 싶어지면 이 줄만 되살리면 된다. */
+    else if (zone === 'village' || zone === 'camp') key = 'parallax_forest';
     else {
       const b = this.world.biomeAt(clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1)).id;
       key = b === 'ice' ? 'parallax_snow' : b === 'corrupt' ? 'parallax_corrupt' : b === 'desert' ? 'parallax_desert'
@@ -5450,12 +5472,9 @@ const G = {
     let nearBaseY = 0, nearW = IW, nearOx = 0, nearSrc = src;
     const haze = this.skyHaze || '#a8c8e0';
     const dark = (1 - f) * 0.58;          // 밤에는 어두워진다 — 옅어지는 게 아니라
-    // parallax_village는 그림 속 건물이 이미지 아래쪽에 낮게 그려져 있어, 다른 배경과
-    // 같은 기준으로 앉히면 실제 지형선 아래로 절반 넘게 파묻힌다. 이 키만 통째로 끌어올린다.
-    const lift = key === 'parallax_village' ? 90 : 0;
     // 먼 층은 느리고 흐리게, 가까운 층은 빠르고 진하게
     c.globalAlpha = 1;
-    for (const [slot, spd, hz, dy, sc] of [[0, 0.16, .55, -54 - lift, 1.15], [1, 0.34, 0, -lift, 1]]) {
+    for (const [slot, spd, hz, dy, sc] of [[0, 0.16, .55, -54, 1.15], [1, 0.34, 0, 0, 1]]) {
       const w = IW * sc, h = IH * sc;
       const baseY = restY + (refCamY - camY) * spd;
       const img = this.tintBg(src, slot, key + af, haze, hz, dark);

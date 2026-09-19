@@ -3660,23 +3660,40 @@ class World {
       this.yunseul = { x: rx, y: fy };
     }
 
-    /* --- 떠 있는 섬 (비밀) ---
-       바다 한복판 상공에 조각 지형 하나. 스토리와 아무 상관이 없고, 원경 그림에서도
-       "저 먼 곳의 작은 섬"으로만 보인다 — 실제로 갈 수 있다는 걸 알려면 헤엄쳐 나와
-       올려다봐야 한다.
-       섬 위에 황금 상자가 있고, **그 상자가 미끼다** — 열면 섬을 붙들고 있던 것이
-       깨어난다(game.js의 상자 열기 분기, o.boss). 상자만 훔치고 달아나지 못한다. */
+    /* --- 바다 한복판의 섬 (비밀) ---
+       스토리와 아무 상관이 없다. 원경 그림에서도 "저 먼 곳의 작은 섬"으로만 보이고,
+       실제로 갈 수 있다는 걸 알려면 헤엄쳐 나와 봐야 한다.
+       ★ 예전에는 수면에서 34칸 **위 공중**에 띄웠는데, 그러면 원경의 섬과 실제 섬이
+         따로 놀고(그림엔 물 위에 있다) 제트팩 없이는 닿을 길이 아예 없었다.
+         이제 물 위에 떠 있는 진짜 섬이다 — 헤엄쳐 가서 기어오른다.
+       섬 위에 황금 상자가 있고, **그 상자가 미끼다** — 열면 섬 밑에 있던 것이
+       올라온다(game.js의 상자 열기 분기, o.boss). 상자만 훔치고 달아나지 못한다. */
     {
       const ix = 200, iw = 26;
-      const iy = Math.max(SKY_Y + 6, this.seaLevel - 34);   // 수면에서 34칸 위, 하늘 구역은 피한다
+      /* 흙 윗면을 수면 세 칸 위에 둔다. 밑동은 그만큼 물에 잠겨(아래 THICK) 물에
+         박힌 것처럼 보인다 — 수면에 딱 맞추면 떠 있는 판자처럼 읽힌다. */
+      const RISE = 3, THICK = 9;
+      const iy = this.seaLevel - RISE;
       const half = iw >> 1;
       for (let dx = -half; dx <= half; dx++) {
         const x = ix + dx;
         if (!this.inB(x, iy)) continue;
-        // 가운데가 두껍고 끝으로 갈수록 얇아지는 조각 — 밑면이 둥글게 깎여 떠 보인다
-        const th = Math.max(1, Math.round(5 * Math.cos((dx / half) * Math.PI / 2)));
-        for (let d = 0; d < th; d++) this.set(x, iy + d, d === 0 ? T.SAND : T.SANDSTONE);
+        /* 가운데가 두껍고 끝으로 갈수록 얇아진다 — 물에 잠기는 밑동이 둥글게 깎인다.
+           하한이 RISE+1 인 것은 **가장자리도 반드시 물에 닿게** 하려는 것이다. 그보다
+           얇으면 섬 테두리 밑에 공기 한 줄이 남아 물 위에 살짝 뜬 것처럼 보인다. */
+        const th = Math.max(RISE + 1, Math.round(THICK * Math.cos((dx / half) * Math.PI / 2)));
+        for (let d = 0; d < th; d++) {
+          const y = iy + d;
+          if (!this.inB(x, y)) break;
+          this.set(x, y, d === 0 ? T.SAND : T.SANDSTONE);
+          // 물에 잠긴 몸통 뒤에는 벽을 둔다 — 안 그러면 그 칸이 '바깥'이라 물빛이 샌다
+          this.walls[this.i(x, y)] = 8;
+        }
       }
+      // 물가에 닿는 가장자리 한 줄은 모래로 — 육지와 바다가 모래에서 만나야 해변으로 읽힌다
+      for (const ex of [ix - half, ix + half])
+        for (let y = iy; y < this.seaLevel + 2 && this.inB(ex, y); y++)
+          if (this.get(ex, y) === T.SANDSTONE) this.set(ex, y, T.SAND);
       /* 야자수 — 줄기가 기울어 자란다. 곧게 세우면 잿빛 숲 나무와 실루엣이 같아진다.
          **휘는 칸에서는 두 칸을 다 채운다.** 처음엔 x만 옮겼더니 줄기가 대각선으로
          끊겨 조각조각 떠 보였다(실제로 그랬다) — 대각선은 타일로 이을 수 없다. */
@@ -3776,10 +3793,16 @@ class World {
       if (rng.chance(0.12)) this.set(x, sy - 1, T.SEASHELL);
     }
 
-    // 물 위로 삐져나온 바위는 도로 깎는다 — 수면은 한 줄이어야 한다
-    for (let x = 0; x < shore; x++)
+    /* 물 위로 삐져나온 바위는 도로 깎는다 — 수면은 한 줄이어야 한다.
+       ★ 섬은 뺀다. 섬은 수면에 걸쳐 서 있는 것이 제 모습인데, 이 손질이 그 밑동을
+         물로 갈아 끼워 버려서 흙 세 줄만 남고 **밑이 잘린 판자**처럼 떠 보였다. */
+    const isleL = this.isle ? this.isle.x - (this.isle.w >> 1) - 1 : -1;
+    const isleR = this.isle ? this.isle.x + (this.isle.w >> 1) + 1 : -2;
+    for (let x = 0; x < shore; x++) {
+      if (x >= isleL && x <= isleR) continue;
       for (let y = this.seaLevel; y < this.seaLevel + 3; y++)
         if (this.get(x, y) !== T.SEAWATER && this.get(x, y) !== T.AIR) this.set(x, y, T.SEAWATER);
+    }
   }
 
   /** 세계 전체 마무리 검사 — 웅덩이 하나하나를 다듬는 _levelLiquid로는 못 잡는 것이 있다.
