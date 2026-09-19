@@ -12,6 +12,13 @@
 
 const FAC_TICK = 0.125;                                   // 공장 1틱 = 0.125초
 const DIR4 = [[1, 0], [0, 1], [-1, 0], [0, -1]];          // 0=우 1=하 2=좌 3=상
+/* 벨트만 쓰는 여섯 방향. 앞 넷은 DIR4와 같은 순서라 옛 세이브의 dir(0~3)이 그대로
+   맞는다 — 여기 순서를 바꾸면 깔아 둔 벨트가 전부 엉뚱한 데로 민다.
+   내리막(우하·좌하)을 안 넣은 것은 일부러다: 물건은 아래로는 그냥 떨어뜨리면 되고,
+   벨트가 필요한 건 **올려 보낼 때**다. 방향이 여덟이면 돌려 맞추기도 번거롭다. */
+const DIR6 = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, -1], [-1, -1]];   // 4=우상 5=좌상
+/** 이 기계가 쓰는 방향표. 벨트만 대각선을 안다 */
+function dirTable(t) { return (t === 'belt' || t === 'belt_fast') ? DIR6 : DIR4; }
 const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위'];
 
 const Factory = {
@@ -32,8 +39,8 @@ const Factory = {
   place(w, tx, ty, key, dir) {
     const s = MACHINE[key];
     if (!s || !this.canPlace(w, tx, ty)) return null;
-    const m = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) & 3 : 0, on: 1, net: -1, act: 1, st: '' };
-    if (key === 'belt' || key === 'sorter') m.it = null;    // 물고 있는 아이템 1개
+    const m = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: '' };
+    if (key === 'belt' || key === 'belt_fast' || key === 'sorter') m.it = null;    // 물고 있는 아이템 1개
     if (key === 'sorter') m.f = null;                       // 통과시킬 아이템 id
     if (s.slots) { m.items = new Array(s.slots).fill(null); m.feed = 0; }
     if (s.fuelIn) { m.fuel = 0; m.fmax = 1; }
@@ -67,7 +74,7 @@ const Factory = {
 
   rotate(m) {
     if (!MACHINE[m.t].rot) return false;
-    m.dir = (m.dir + 1) & 3;
+    m.dir = (m.dir + 1) % dirTable(m.t).length;   // 벨트는 여섯, 나머지는 넷
     return true;
   },
 
@@ -157,7 +164,7 @@ const Factory = {
   insert(w, m, id, n) {
     if (!m || !m.on || n <= 0) return 0;
     const s = MACHINE[m.t];
-    if (m.t === 'belt' || m.t === 'sorter') {
+    if (m.t === 'belt' || m.t === 'belt_fast' || m.t === 'sorter') {
       if (m.it || m.just) return 0;
       m.it = { id, c: 1 }; m.just = 1;
       return 1;
@@ -190,7 +197,7 @@ const Factory = {
 
   /** 앞칸(또는 지정 방향)의 기계에 아이템 하나를 밀어 넣는다 */
   pushTo(w, m, dir, id) {
-    const [dx, dy] = DIR4[dir];
+    const [dx, dy] = dirTable(m.t)[dir] || DIR4[dir & 3];
     const t = this.at(w, m.x + dx, m.y + dy);
     if (!t) return false;
     return this.insert(w, t, id, 1) > 0;
@@ -265,7 +272,7 @@ const Factory = {
         case 'trap': this.runTrap(w, m, s, G); break;
         case 'dart': case 'flamejet': case 'frostjet': this.runShooter(w, m, s, G); break;
         case 'switch': m.st = m.on ? '가동 중' : '전면 정지'; m.act = 0; break;
-        case 'belt': m.st = m.it ? '이송' : '대기'; m.act = 0; break;
+        case 'belt': case 'belt_fast': m.st = m.it ? '이송' : '대기'; m.act = 0; break;
         case 'sorter': m.act = m.it ? 1 : 0; break;
         case 'pole': m.st = m.net >= 0 ? '망 #' + (m.net + 1) : '—'; m.act = 0; break;
         case 'crate': m.st = m.feed ? '배출 중' : '보관'; m.act = 0; break;
@@ -275,8 +282,15 @@ const Factory = {
     }
 
     /* ---- 3. 물류 ---- */
+    /* 고속 벨트는 한 틱에 **두 칸**을 간다 — 물류 패스를 한 번 더 돌리되, 두 번째
+       패스에서는 고속 벨트만 본다. `just`(이번 틱에 받았다는 표시)를 지워 줘야 방금
+       받은 물건이 이어서 한 칸 더 나간다. 일반 벨트를 섞어 깔면 거기서 다시 한 칸씩
+       가므로, 병목 구간만 갈아 끼우는 식으로 쓸 수 있다. */
+    for (let pass = 0; pass < 2; pass++) {
+    if (pass) for (const m of ms.values()) if (m.t === 'belt_fast') m.just = 0;
     for (const m of ms.values()) {                       // 벨트 · 분류기 먼저
-      if (m.t === 'belt') {
+      if (pass && m.t !== 'belt_fast') continue;
+      if (m.t === 'belt' || m.t === 'belt_fast') {
         if (!m.it || m.just) continue;
         if (this.pushTo(w, m, m.dir, m.it.id)) { m.it = null; G.sfxAt('belt', m.x, m.y); }
       } else if (m.t === 'sorter') {
@@ -286,6 +300,7 @@ const Factory = {
         m.st = match ? '통과' : '분기';
         if (this.pushTo(w, m, match ? m.dir : (m.dir + 1) & 3, m.it.id)) m.it = null;
       }
+    }
     }
     for (const m of ms.values()) {                       // 기계 출력 배출
       if (m.out) {
@@ -540,11 +555,87 @@ const Factory = {
         const sx = tx * TS - camX, sy = ty * TS - camY;
         const s = MACHINE[m.t];
 
+        /* 전주 몸통 — 타일이 아니라 **그림**이다.
+           전주 타일은 꼭대기 한 칸뿐이라 예전엔 공중에 뜬 가로대처럼 보였다. 아래를
+           통과 가능한 전용 타일로 메워 봤지만, 밭 위 한 칸을 비워야 해서 기둥이 끊기고
+           그 칸만 채굴 판정이 달라졌다. 그래서 몸통은 지면(첫 고체 칸)까지 그림으로만
+           잇는다 — 충돌·채굴·심기 어디에도 걸리지 않는다.
+           mk_pole 타일 그림과 기둥 폭(4px)·하이라이트를 맞춘다. */
+        if (m.t === 'pole') {
+          let by = ty + 1;
+          while (by < WH && !w.solid(tx, by) && by - ty < 40) by++;
+          /* 기둥 밑끝은 **바닥 칸의 윗면**에 딱 맞춰야 한다. 예전 계산은 -3 이라
+             바닥 안으로 18px 파고들어 땅을 뚫고 나온 것처럼 보였다. */
+          const h = (by - ty) * TS - (TS - 1);
+          if (h > 0) {
+            const px = sx + TS / 2 - 2, py = sy + TS - 1;
+            c.fillStyle = '#7a6a4a'; c.fillRect(px, py, 4, h);
+            c.fillStyle = shade('#7a6a4a', 1.35); c.fillRect(px, py, 1.5, h);
+            c.fillStyle = shade('#7a6a4a', .62);
+            for (let k = 1; k * TS * 2 < h; k++) c.fillRect(px - 1, py + k * TS * 2, 6, 1.5);   // 이음매
+          }
+          /* 가로대에서 지지직 — 3프레임으로 끊어 튄다. 매끄럽게 흔들면 전기가 아니라
+             빛나는 점이 미끄러지는 것처럼 보인다. */
+          const fr = ((time * 9) + tx * 2 + ty) | 0;
+          if (fr % 4 !== 3) {                                  // 4틱 중 3틱만 — 끊겨야 지지직거린다
+            const q = fr % 3, ax = sx + 3 + q * 6, ay = sy + 3;
+            c.strokeStyle = '#bfe8ff'; c.lineWidth = 1;
+            c.globalAlpha = .55 + (q & 1) * .35;
+            c.beginPath();
+            c.moveTo(ax, ay);
+            c.lineTo(ax + 3, ay + 2 - (q & 1) * 3);
+            c.lineTo(ax + 6, ay + 1 + (q & 1) * 2);
+            c.stroke();
+            c.fillStyle = '#8fd8ff';
+            c.fillRect(sx + TS / 2 - 4 + (q - 1), sy + 9, 2, 2);
+            c.globalAlpha = 1;
+          }
+        }
+
+        /* 풍차는 한 칸짜리 타일로 그리기엔 너무 작아 지붕 위에서 잘 안 보였다.
+           타일은 그대로 두고(설치·전력 판정은 1칸) **그림만 제 칸 위로 키워** 얹는다.
+           날개는 시간으로 돌린다 — C단계에서 넣은 프레임 개념과 같은 자리. */
+        if (m.t === 'windmill') {
+          const R = 26;                                   // 날개 반지름 (타일의 약 2.4배)
+          const hx = sx + TS / 2, hy = sy - 10;           // 회전축 — 날개 아래끝이 지붕에 닿지 않을 만큼 올린다
+          c.save();
+          c.strokeStyle = '#3a3026'; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx, sy + TS); c.stroke();   // 기둥
+          c.translate(hx, hy);
+          c.rotate((time * 0.9) % TAU);
+          for (let k = 0; k < 4; k++) {
+            c.rotate(TAU / 4);
+            c.fillStyle = '#e8dcc0'; c.fillRect(-1.5, -R, 3, R);
+            c.fillStyle = '#cfc2a4'; c.fillRect(-5, -R, 5, R * 0.62);
+          }
+          c.restore();
+          c.fillStyle = '#5a4a3a';
+          c.beginPath(); c.arc(hx, hy, 3, 0, TAU); c.fill();
+        }
+
+        /* 벨트 몸통은 타일 그림이 **가로 한 방향**뿐이다(mk_belt). 세우거나 비스듬히
+           놓으면 몸은 가로인데 화살표만 위로 흘러 어긋나 보인다 — 가로가 아닌 벨트는
+           방향에 맞춰 돌린 띠를 한 겹 덮어 그린다. 타일 아틀라스를 방향마다 만들지
+           않은 이유는, 아틀라스는 타일 번호 하나에 그림 하나라 방향을 모르기 때문이다. */
+        if ((m.t === 'belt' || m.t === 'belt_fast') && m.dir !== 0 && m.dir !== 2) {
+          const ang = m.dir === 1 ? Math.PI / 2 : m.dir === 3 ? -Math.PI / 2
+            : m.dir === 4 ? -Math.PI / 4 : -Math.PI * 3 / 4;
+          c.save();
+          c.translate(sx + TS / 2, sy + TS / 2);
+          c.rotate(ang);
+          c.fillStyle = '#2e3238'; c.fillRect(-TS / 2, -5, TS, 10);        // 띠
+          c.fillStyle = '#4a5058'; c.fillRect(-TS / 2, -5, TS, 2);
+          c.fillStyle = '#20242a'; c.fillRect(-TS / 2, 3, TS, 2);
+          for (let k = -TS / 2 + 1; k < TS / 2; k += 4)                    // 마디
+            { c.fillStyle = '#3c424a'; c.fillRect(k, -3, 2, 6); }
+          c.restore();
+        }
         // 방향 표시 — 벨트는 흐르는 화살표, 나머지는 배출구 삼각형
         if (s.rot) {
-          const [dx, dy] = DIR4[m.dir];
-          if (m.t === 'belt') {
-            const ph = (time * 3.2) % 1;
+          const [dx, dy] = dirTable(m.t)[m.dir] || DIR4[m.dir & 3];
+          if (m.t === 'belt' || m.t === 'belt_fast') {
+            // 고속 벨트는 화살표가 두 배로 빨리 흐른다 — 보기만 해도 구분된다
+            const ph = (time * (m.t === 'belt_fast' ? 6.4 : 3.2)) % 1;
             c.fillStyle = 'rgba(226,238,255,.55)';
             for (let k = 0; k < 2; k++) {
               const t2 = (ph + k * 0.5) % 1;

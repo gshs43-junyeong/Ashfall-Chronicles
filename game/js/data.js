@@ -2,6 +2,12 @@
 'use strict';
 
 /* ---------------- 타일 ---------------- */
+/* 세계를 4200 → 5000칸으로 넓히면서 늘린 800칸을 전부 **왼쪽**에 붙였다(세션 3의
+   가라앉은 바다 · 빙하 지대). 그래서 기존 세계는 통째로 오른쪽으로 800칸 밀린다.
+   좌표를 하나씩 고쳐 적으면 어디를 빠뜨렸는지 알 수 없어서, 원래 값 + SHIFT로 적는다.
+   world.js보다 먼저 읽히는 파일에 두는 이유: RUIN_SPEC의 x도 같은 값으로 밀어야 한다. */
+const SHIFT = 800;
+
 const T = {
   AIR: 0, DIRT: 1, GRASS: 2, STONE: 3, SAND: 4, SANDSTONE: 5, SNOW: 6, ICE: 7,
   WOOD: 8, LEAF: 9, EBONSTONE: 10, CORRUPTGRASS: 11, ASH: 12, OBSIDIAN: 13,
@@ -80,7 +86,24 @@ const T = {
   CANOPIC: 147, HIEROGLYPH: 148,        // 피라미드 — 장기 단지 · 새긴 벽
   MINELAMP: 149, TOOLPILE: 150,         // 버려진 광산 — 매단 갱등 · 버린 연장
   BLIGHTSAC: 151, BONEHEAP: 152,        // 부패한 둥지 — 알주머니 · 삭은 뼈
-  SPOREVENT: 153, HYPHAE: 154           // 포자 굴 — 포자 구멍 · 균사 발
+  SPOREVENT: 153, HYPHAE: 154,          // 포자 굴 — 포자 구멍 · 균사 발
+  /* ★ 아래 155번부터는 세션 3(바다·빙하) 타일이다. 원래 125번부터 붙였는데, 그 사이
+     원격 쪽에서 125~154를 유적 함정·작물·장식으로 먼저 써 버렸다. 타일 번호는
+     세이브에 그대로 들어가므로 **가운데를 비집고 넣을 수 없다** — 뒤로 밀어 붙인다. */
+  /* --- v1.1: 물속 공기 주머니. 액체가 아니라서 그 안에서는 숨을 쉰다 --- */
+  AIRPOCKET: 155,
+  /* --- v1.1 세션 3: 바닷물. 호수 물과 **색이 다르다**(더 짙고 푸르다) --- */
+  SEAWATER: 156,
+  /* --- v1.1 세션 3: 4단계 설비 (기계 타일도 맨 끝에 붙인다) --- */
+  M_PRESSOR: 157, M_DESAL: 158, M_BELT_F: 159, M_BATTERY_HI: 160,
+  /* --- v1.1 세션 3: 새 함정. 피해보다 **숨**을 빼앗는다 --- */
+  BRINEVENT: 161,
+  /* --- v1.1: 촉발 지뢰. 밟으면 터진다 --- */
+  TRIPMINE: 162,
+  /* --- v1.1 세션 3: 바다·해변 장식 --- */
+  KELPPLANT: 163, SEASHELL: 164,
+  /* --- v1.1 H: 화약 원료. 세션 3(빙하·해저)에서만 나온다 --- */
+  SULFUR: 165, ROOMAIR: 166, PALMWOOD: 167, PALMLEAF: 168, COCONUT: 169, GLACIUM: 170, TIDESTONE: 171
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -249,7 +272,10 @@ const TILE_DEF = [
   { n: '유독 가스', c: '#6a7a4a', solid: 0, hard: 99, hurt: 14, light: 2 },
   { n: '갓 조각', c: '#6fe0c0', solid: 0, hard: 0, drop: 'glowcap', tree: 1, leaf: 1, light: 4,
     leafDrop: [['none', 55], ['glowcap', 30], ['spore_sac', 15]] },
-  { n: '수련', c: '#3a9a6a', solid: 2, hard: 0, drop: 'lily_pad' },
+  /* 수련 — 물 위에 뜬 잎이므로 **그 칸도 물이다**(liquid 1). 예전에는 수면 물칸을
+     수련으로 갈아 끼워서 그 열만 물이 없었다(낚시·헤엄이 그 칸에서 끊겼다).
+     그림도 판 밑에 물을 함께 칠한다. 발판(solid 2)은 그대로라 위에 올라설 수 있다. */
+  { n: '수련', c: '#3a9a6a', solid: 2, hard: 0, drop: 'lily_pad', liquid: 1 },
   /* --- v1.1: 새 유적 함정 ---
      tcoil: 마주 보는 코일을 찾아 그 사이에 전기 아크를 놓는다 (세션 2 전기 문명)
      tgas:  유독 가스를 위로 뿜는다. 예고가 길고 범위가 넓다 — 지나갈 틈을 재는 함정
@@ -296,7 +322,47 @@ const TILE_DEF = [
   { n: '알주머니', c: '#8a4a80', solid: 0, hard: 0, drop: 'blight_spawn', light: 2, a: 1 },
   { n: '삭은 뼈', c: '#cfc8b0', solid: 0, hard: 0, drop: 'blight_spawn', a: 1 },
   { n: '포자 구멍', c: '#5a8a74', solid: 1, hard: 2, drop: 'spore_dust', light: 4 },
-  { n: '균사 발', c: '#8fe0c4', solid: 0, hard: 0, drop: 'spore_dust', light: 2, a: 1 }
+  { n: '균사 발', c: '#8fe0c4', solid: 0, hard: 0, drop: 'spore_dust', light: 2, a: 1 },
+  // 공기 주머니 — 물속에 갇힌 공기. 통과 가능하고 액체가 아니라 부력·산소가 모두 끊긴다
+  { n: '공기 주머니', c: '#cfeeff', solid: 0, hard: 99, air: 1 },
+  // 바닷물 — 호수 물(#2f6f9f)보다 짙고 푸르다. 물성은 같다(헤엄·산소 전부 동일)
+  { n: '바닷물', c: '#12496e', solid: 0, hard: 99, liquid: 1, sea: 1 },
+  // 4단계 설비 — 다른 기계 타일과 같은 규격(단단함 1, 곡괭이 등급 무관하게 회수)
+  { n: '가압기', c: '#4a5a6a', solid: 1, hard: 1, drop: 'm_pressor' },
+  { n: '염수 증류기', c: '#3a6a7a', solid: 1, hard: 1, drop: 'm_desal' },
+  { n: '고속 컨베이어 벨트', c: '#8a9aa8', solid: 0, hard: 1, drop: 'm_belt_f' },
+  { n: '강화 축전지', c: '#4a9a8a', solid: 1, hard: 1, drop: 'm_battery_hi' },
+  /* 염수 분출구 — 위로 짠물을 뿜는다. 피해는 작지만 **숨을 통째로 빼앗는다**.
+     이미 숨을 참고 내려온 자리에서는 화염 분출구보다 훨씬 무섭다. */
+  { n: '염수 분출구', c: '#2a6a7a', solid: 1, hard: 2, drop: 'stone', tbrine: 1 },
+  /* 촉발 지뢰 — 밟으면 터진다. 밟기 전에는 바닥에 박힌 원반으로만 보이므로,
+     들어가는 길을 "보고 걷게" 만든다. 곡괭이로 캐면 안 터지고 화약이 나온다. */
+  { n: '촉발 지뢰', c: '#8a5a3a', solid: 1, hard: 1, drop: 'gunpowder', tmine: 1 },
+  /* 해초 — 얕은 해저에서 자란다. 이게 없으면 해초를 얻을 길이 표류물 더미 드롭뿐이라
+     15장의 "해초 30개" 목표가 몹 사냥에만 매달리게 된다. 물칸이라 헤엄에 안 걸린다. */
+  { n: '해초', c: '#3f7a5a', solid: 0, hard: 0, drop: 'kelp', liquid: 1, plant: 1 },
+  /* 조개 — 해변 장식. 지상의 잡초·꽃과 같은 자리다. 캐면 게딱지가 나온다 */
+  { n: '조개', c: '#e0cdb8', solid: 0, hard: 0, drop: 'crab_shell', plant: 1 },
+  /* 유황 — 화약의 원료. 빙하 얼음층과 해저 바위에만 박혀 있다.
+     세션 3에 가야 폭탄을 만들 수 있게 하려고 산지를 그쪽으로 몰았다. */
+  { n: '유황', c: '#d8c04a', solid: 1, hard: 2, drop: 'sulfur', light: 1 },
+  /* 방 공기 — 공기 주머니와 물리는 똑같다(air:1이라 숨이 안 줄고, 칸을 차지하니
+     물이 못 들어온다). 다른 점은 **보이는 것뿐**: 공기 주머니는 바닷속에서 안 튀도록
+     물을 그대로 깔고 그리는데, 사람이 사는 방 안에서까지 그러면 방이 물에 잠긴
+     것처럼 보인다. 이쪽은 아무것도 안 그려서 뒤에 바른 벽지가 그대로 드러난다. */
+  { n: '방 공기', c: '#3b2c1c', solid: 0, hard: 99, air: 1 },
+  /* --- 야자수 (떠 있는 섬) ---
+     보통 나무와 따로 둔 이유: 줄기가 곧지 않고 기울어 자라며, 잎이 사방으로 처지고,
+     열매가 따로 달린다. 기존 tree/leaf 타일에 얹으면 잿빛 숲 나무까지 같이 변한다. */
+  { n: '야자 줄기', c: '#7a5a38', solid: 0, hard: 0, drop: 'wood', tree: 1 },
+  { n: '야자 잎', c: '#4f8a3a', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1 },
+  { n: '코코넛', c: '#6a4a2a', solid: 0, hard: 0, drop: 'coconut', tree: 1 },
+  /* --- 세션 3 광물 둘 (채굴 등급 5) ---
+     등급 5는 지금까지 아크 착암기(하늘 성채) 하나로만 닿던 자리다. 세션 3에도
+     그 등급의 산지를 두어, 가압 곡괭이를 만들 이유를 준다.
+     산지를 빙하·해저로 나눈 것은 일부러다 — 하나는 걸어서, 하나는 헤엄쳐서 캔다. */
+  { n: '빙정석', c: '#9fd8e8', solid: 1, hard: 5, drop: 'glacium_ore', ore: 1, light: 2 },
+  { n: '조수석', c: '#3f9a8a', solid: 1, hard: 5, drop: 'tide_ore', ore: 1, light: 2 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -318,10 +384,15 @@ const TILE_SPRITE = {
   coal: T.COAL, lead: T.LEAD, oilshale: T.OILSHALE,
   icebrick: T.ICEBRICK, sandbrick: T.SANDBRICK, minewood: T.MINEWOOD,
   m_dart: T.M_DART, m_flame: T.M_FLAME, m_frost: T.M_FROST,
+  m_pressor: T.M_PRESSOR, m_desal: T.M_DESAL, m_belt_f: T.M_BELT_F, m_battery_hi: T.M_BATTERY_HI,
   junglegrass: T.JUNGLEGRASS, mud: T.MUD, jungleleaf: T.JUNGLELEAF, fern: T.FERN, orchid: T.ORCHID,
-  glowmoss: T.GLOWMOSS, sporestone: T.SPORESTONE, glowcap: T.GLOWCAP, glowleaf: T.GLOWLEAF, lily: T.LILY,
+  glowmoss: T.GLOWMOSS, sporestone: T.SPORESTONE, glowcap: T.GLOWCAP, glowleaf: T.GLOWLEAF, lily: T.LILY, airpocket: T.AIRPOCKET, roomair: T.ROOMAIR,
+  palmwood: T.PALMWOOD, palmleaf: T.PALMLEAF, coconut: T.COCONUT, seawater: T.SEAWATER,
   dart_l: T.DART_L, dart_r: T.DART_R, flamevent: T.FLAMEVENT, crumble: T.CRUMBLE,
   sparkcoil: T.SPARKCOIL, gasvent: T.GASVENT, grinder: T.GRINDER, cipherstone: T.CIPHERSTONE,
+  brinevent: T.BRINEVENT, tripmine: T.TRIPMINE,
+  kelpplant: T.KELPPLANT, seashell: T.SEASHELL, sulfur: T.SULFUR,
+  glacium: T.GLACIUM, tidestone: T.TIDESTONE,
   slagsteel: T.SLAGSTEEL, coreglass: T.COREGLASS,
   water: T.WATER, falls: T.FALLS,
   archestone: T.ARCHESTONE, draftglass: T.DRAFTGLASS, archseal: T.ARCHSEAL,
@@ -340,9 +411,10 @@ for (let i = 0; i < 4; i++) {
 for (const id in MACH_OF_TILE) TILE_SPRITE['m_' + MACH_OF_TILE[id]] = +id;
 
 const WALL_COLOR = [null, '#3a2a1a', '#33333a', '#241c2e', '#402d1a', '#4a5f6e', '#32323c', '#2a2018', '#6b5a34',
-  '#3f5266', '#332f26', '#23301f', '#22322e', '#3c3a34', '#4a3520'];
+  '#3f5266', '#332f26', '#23301f', '#22322e', '#3c3a34', '#4a3520', '#5a4128'];
 // 9: 하늘돌, 10: 유적, 11: 정글, 12: 버섯 골짜기,
-// 13: 성벽(WALLSTONE을 어둡게 — 성문 안쪽 배경), 14: 전주 기둥(통행·경작을 막지 않는 배경 기둥)
+// 13: 성벽(WALLSTONE을 어둡게 — 성문 안쪽 배경)
+// 15: 나무 판자 벽지 — 벽돌결이 아니라 세로 판자결로 그린다(paintWoodWall)
 
 /* ---------------- 희귀도 ---------------- */
 const RARITY = ['일반', '고급', '희귀', '영웅', '전설', '신화'];
@@ -423,6 +495,17 @@ const ITEMS = {
                  d: '비늘이 동전처럼 반짝인다.' },
   fish_deep:   { n: '심해어', i: '🐡', type: 'consum', use: { hp: 90, buff: 'fed_stew' }, cd: 6, stack: 12,
                  d: '이런 깊이에 살 리 없는 눈을 하고 있다.' },
+  /* 산소통 — 잠수 시간을 늘린다. oxyMax는 recalc()의 merge가 모르는 키를 그대로
+     acc에 얹어 주므로 별도 배선이 필요 없다(펫 패시브 b와 같은 방식). */
+  /* 산소통 — **유틸리티 칸(util)** 에 낀다. 장신구·갑옷 칸을 안 먹으므로 숨을 늘리려고
+     전투 성능을 깎을 일이 없다. 셋은 위로 갈아 끼우는 계단이고, 아래 통을 재료로 쓴다 —
+     세션 3 깊이가 늘어날 때마다 통만 갈아 끼우면 된다. */
+  tank_air:    { n: '휴대용 산소통', i: '🫧', type: 'util', b: { oxyMax: 14, ms: -2 },
+                 d: '등에 메는 낡은 통. 숨을 오래 참게 해 주지만 물살을 조금 더 탄다.', lvReq: 8 },
+  tank_deep:   { n: '심해용 산소통', i: '🫧', type: 'util', b: { oxyMax: 32, def: 6 },
+                 d: '깊은 곳에서도 견디도록 겹으로 두른 통. 휴대용 통을 뜯어 다시 감았다.', lvReq: 20 },
+  tank_abyss:  { n: '심연용 산소통', i: '🫧', type: 'util', b: { oxyMax: 64, def: 12, oxyReg: 1 },
+                 d: '노심으로 공기를 다시 짜낸다. 물 밖에서 숨이 차는 속도까지 달라진다.', lvReq: 32 },
   ring_angler: { n: '낚시꾼의 반지', i: '💍', type: 'acc', b: { crit: 8, lifesteal: 3, ms: 4 },
                  d: '미끼도 없이 이걸 낚았다는 사람이 있다. 아무도 안 믿는다.' , lvReq: 1 },
 
@@ -541,9 +624,31 @@ const ITEMS = {
   /* --- 펫 알 (우클릭으로 깨서 펫을 얻는다) --- */
   /* 알값 — 파는 사람(조련사 리카)이 여명 마을 주민이라 세션 2에나 만난다. 그 무렵
      장 보상만으로 금화가 9만~30만씩 들어와서, 예전 300~4000은 그냥 집어 오는 값이었다. */
-  egg_common:  { n: '평범한 알', i: '🥚', type: 'consum', use: { egg: 'common' }, price: 6000, stack: 20, d: '깨보기 전까진 무엇이 나올지 모른다.' },
-  egg_rare:    { n: '푸른 알', i: '🥚', type: 'consum', use: { egg: 'rare' }, price: 26000, stack: 20, d: '희귀한 짐승의 기운이 느껴진다.' },
-  egg_epic:    { n: '보랏빛 알', i: '🥚', type: 'consum', use: { egg: 'epic' }, price: 85000, stack: 20, d: '알 속에서 무언가 조용히 뛰고 있다.' },
+  /* 알은 값이 흔들리면 안 된다. fixed를 달면 price()가 등급·시세·배수를 전부 건너뛰고
+     이 값을 개수만 곱해 쓴다 — 언제 사도 팔아도 10,000 / 30,000 / 100,000 이다. */
+  egg_common:  { n: '평범한 알', i: '🥚', type: 'consum', use: { egg: 'common' }, price: 10000, fixed: 1, stack: 20, d: '깨보기 전까진 무엇이 나올지 모른다.' },
+  egg_rare:    { n: '푸른 알', i: '🥚', type: 'consum', use: { egg: 'rare' }, price: 30000, fixed: 1, stack: 20, d: '희귀한 짐승의 기운이 느껴진다.' },
+  egg_epic:    { n: '보랏빛 알', i: '🥚', type: 'consum', use: { egg: 'epic' }, price: 100000, fixed: 1, stack: 20, d: '알 속에서 무언가 조용히 뛰고 있다.' },
+  /* 펫 사탕 — 낀 펫 둘 다에게 경험치를 준다. 알과 같은 자리(리카)에서 판다.
+     값이 고정(fixed)인 이유는 알과 같다: 되팔이로 금화를 만드는 길을 막는다. */
+  glacium_ore: { n: '빙정 원석', i: '🔷', type: 'mat', stack: 999, price: 140,
+    d: '빙하 깊은 곳에서만 나온다. 손에 쥐면 손끝이 아리다.' },
+  tide_ore:    { n: '조수 원석', i: '🔶', type: 'mat', stack: 999, price: 140,
+    d: '해저 바위에 박혀 있다. 물기가 마르지 않는다.' },
+  glacium_bar: { n: '빙정 주괴', i: '🧊', type: 'mat', stack: 999, price: 460,
+    d: '녹이면 오히려 더 차가워진다.' },
+  tide_bar:    { n: '조수 주괴', i: '🌀', type: 'mat', stack: 999, price: 460,
+    d: '두드릴 때마다 물결 무늬가 남는다.' },
+  /* --- 유틸리티 탐지기 둘 ---
+     장신구가 아니라 유틸리티 칸에 낀다. 산소통과 자리를 다투게 해서, 무엇을 하러
+     가는지에 따라 갈아 끼우게 하려는 것이다 — 깊이 갈 때는 산소통, 캐러 갈 때는 탐지기. */
+  det_metal:   { n: '금속 탐지기', i: '📡', type: 'util', det: 'ore', b: { ms: -3 },
+    d: '가까운 광맥이 지도에 비친다. 반경 30칸. 들고 다니면 조금 무겁다.' },
+  det_mob:     { n: '몬스터 탐지기', i: '📡', type: 'util', det: 'mob', b: { ms: -3 },
+    d: '가까운 것들이 지도에 비친다. 반경 30칸. 보고 싶지 않은 것까지 보인다.' },
+  coconut:     { n: '코코넛', i: '🥥', type: 'consum', use: { hp: 90, buff: 'fed_coconut' }, cd: 8, price: 90, stack: 99,
+    d: '단단한 껍질 안에 물이 차 있다. 섬에서만 난다.' },
+  pet_candy:   { n: '펫 사탕', i: '🍬', type: 'consum', use: { petXp: 1200 }, price: 6000, fixed: 1, stack: 99, instant: 1, d: '주머니에 넣어 두면 녀석들이 먼저 안다.' },
 
   /* --- 채집물: 들판에 흩어진 장식이 주는 재료. 아직 이걸 쓰는 제작법은 없다 --- */
   wildflower:   { n: '들꽃', i: '🌸', type: 'mat', stack: 999, d: '숲과 초원 어디에나 핀다.' },
@@ -811,6 +916,11 @@ const ITEMS = {
   m_dart:     { n: '화살 발사기', i: '🎯', type: 'machine', mach: 'dart', stack: 99 },
   m_flame:    { n: '화염 분사구', i: '🔥', type: 'machine', mach: 'flamejet', stack: 99 },
   m_frost:    { n: '서리 분사구', i: '❄', type: 'machine', mach: 'frostjet', stack: 99 },
+  /* --- 세션 3: 4단계 설비 --- */
+  m_pressor:  { n: '가압기', i: '🗜', type: 'machine', mach: 'pressor', stack: 99 },
+  m_desal:    { n: '염수 증류기', i: '💧', type: 'machine', mach: 'desal', stack: 99 },
+  m_belt_f:   { n: '고속 컨베이어 벨트', i: '⏩', type: 'machine', mach: 'belt_fast', stack: 999 },
+  m_battery_hi:{ n: '강화 축전지', i: '🔋', type: 'machine', mach: 'battery_hi', stack: 99 },
   /* 미니보스 전리품 */
   frozen_core:{ n: '얼어붙은 핵', i: '🔷', type: 'mat', stack: 99 },
   sun_disc:   { n: '태양 원반', i: '🌞', type: 'mat', stack: 99 },
@@ -951,11 +1061,95 @@ const ITEMS = {
   tome_first:    { n: '최초의 경전', i: '📖', type: 'weapon', wc: 'magic', dmg: 205, spd: 2.0, kb: 5, mana: 16, tier: 8, proj: 'void', multi: 3,
                    d: '처음 별이 떨어지던 밤을 기록한 유일한 책.'  },
 
+  /* --- 세션 3: 바다 장비 ---
+     물속에서 쓸 것을 전제로 짠다 — 휘두르는 무기는 사거리를 길게(물살에 밀려도 닿게),
+     마법은 마나를 조금 더 먹되 관통을 준다. 값은 세션 3 재료(심연 진주·내압판)를 요구해
+     바다에 들어가 본 사람만 만들 수 있게 한다. */
+  spear_tide:    { n: '조수의 삼지창', i: '🔱', type: 'weapon', wc: 'melee', dmg: 168, spd: 1.7, kb: 12, reach: 92, tier: 7,
+                   d: '물살을 가르는 데 익숙한 모양이다. 뭍에서는 조금 무겁다.' },
+  blade_shark:   { n: '상어이빨 검', i: '🗡', type: 'weapon', wc: 'melee', dmg: 152, spd: 1.15, kb: 8, reach: 62, tier: 7,
+                   d: '이빨을 줄줄이 박아 넣었다. 빠지면 또 박으면 된다.' },
+  bow_harpoon:   { n: '작살 사수', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 146, spd: 1.5, kb: 10, tier: 7, proj: 'arrow', pierce: 2,
+                   d: '줄이 달려 있었지만 아무도 되감지 않는다.' },
+  orb_abyss:     { n: '심연의 구슬', i: '🔮', type: 'weapon', wc: 'magic', dmg: 158, spd: 2.1, kb: 4, mana: 17, tier: 7, proj: 'frost', multi: 2,
+                   d: '빛이 닿은 적 없는 곳의 물을 담았다.' },
+
+  helm_diver:  { n: '잠수 투구', i: '🪖', type: 'armor', slot: 'helm', def: 22, b: { oxyMax: 20, vit: 4 }, lvReq: 26,
+                 d: '숨을 오래 붙잡아 준다. 소리는 잘 안 들린다.' },
+  chest_scale: { n: '비늘 갑옷', i: '🎽', type: 'armor', slot: 'chest', def: 34, b: { hp: 60, def: 6, oxyMax: 8 }, lvReq: 26 },
+  boots_fin:   { n: '지느러미 각반', i: '🦶', type: 'armor', slot: 'boots', def: 18, b: { ms: 14, dex: 5, oxyMax: 6 }, lvReq: 26,
+                 d: '물속에서는 걷는 것보다 미끄러지는 편이 빠르다.' },
+  ring_pearl:  { n: '심연 진주 반지', i: '💍', type: 'acc', b: { oxyMax: 26, int: 6, mpreg: 15 }, lvReq: 28,
+                 d: '숨이 짧아질수록 더 밝게 빛난다.' },
+  charm_ink:   { n: '먹물 부적', i: '🖤', type: 'acc', b: { dashCd: 0.4, dashI: 90, crit: 6 }, lvReq: 28,
+                 d: '한 번 사라졌다 나타나는 법을 문어에게 배웠다.' },
+
+  /* --- 「윤슬」의 좌판에서만 나오는 것들 ---
+     가라앉은 도시의 마지막 사람이 제 손으로 만들어 쓰던 물건들이다. **제작법이 없다.**
+     재고는 하루 단위로 무작위라, 원하는 것이 뜰 때까지 날을 넘겨야 한다 —
+     그게 바다에 계속 들어갈 이유가 된다. */
+  amul_scale:  { n: '물비늘 목걸이', i: '📿', type: 'acc', b: { oxyMax: 18, ms: 8, def: 4 }, lvReq: 30,
+                 d: '비늘을 한 장씩 꿰어 만들었다. 물속에서 숨이 조금 덜 급해진다.' },
+  charm_bell:  { n: '가라앉은 종의 조각', i: '🔔', type: 'acc', b: { cdr: 10, mpreg: 20, int: 6 }, lvReq: 30,
+                 d: '종에서 떨어져 나온 조각. 아직도 아주 작게 울린다.' },
+  ring_deep:   { n: '깊은 잠의 반지', i: '💍', type: 'acc', b: { hp: 80, hpreg: 25, def: 8 }, lvReq: 30,
+                 d: '깊은 데서는 잠들면 안 된다고들 한다. 이건 그 반대를 견디게 해 준다.' },
+  sigil_current:{ n: '해류의 표식', i: '🌀', type: 'acc', b: { dashCd: 0.5, dashI: 110, dex: 7 }, lvReq: 30,
+                 d: '물살이 어디로 가는지 아는 사람이 새긴 것.' },
+  mace_bell:   { n: '가라앉은 종채', i: '🔨', type: 'weapon', wc: 'melee', dmg: 232, spd: 2.1, kb: 22, reach: 70, tier: 8,
+                 d: '종을 치던 것. 한 번 휘두를 때마다 물이 먼저 울린다.' },
+  harpoon_lamp:{ n: '등불 작살', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 168, spd: 1.05, kb: 9, tier: 8, proj: 'star', pierce: 2, multi: 2,
+                 d: '초롱을 매단 작살. 어두운 데서 쏘면 날아가는 길이 보인다.' },
+
+  /* --- 시설 4단계 전용 ---
+     "물속에서 쓸 것을 물 밖에서 만든다"는 4단계의 성격을 그대로 딴 물건들이다.
+     전부 심해 노심을 요구하므로, 바다에 들어가 본 적 없으면 이 줄은 통째로 잠겨 있다. */
+  bag_abyss:   { n: '심해 짐가방', i: '🧳', type: 'bag', slots: 22, lvReq: 30,
+                 d: '물이 안 새게 겹으로 여몄다. 안쪽이 바깥보다 넓은 건 유적 보관함에서 배웠다.' },
+  pick_abyss:  { n: '가압 곡괭이', i: '⛏', type: 'tool', power: 5, dmg: 26, spd: 2.1, pw: 3,
+                 d: '누르는 힘으로 캔다. 기반암 말고는 전부 부순다.', lvReq: 30 },
+  hammer_tide: { n: '해일 망치', i: '🔨', type: 'weapon', wc: 'melee', dmg: 214, spd: 1.9, kb: 18, reach: 76, tier: 8,
+                 d: '휘두르면 물이 먼저 간다. 뭍에서도 그렇다.' },
+  gun_harpoon: { n: '연발 작살포', i: '🔫', type: 'weapon', wc: 'ranged', dmg: 178, spd: 0.9, kb: 8, tier: 8, proj: 'arrow', pierce: 3, pw: 5,
+                 d: '되감을 줄을 아예 없앴다. 그만큼 빨리 나간다.' },
+  tome_abyss:  { n: '심연의 서', i: '📘', type: 'weapon', wc: 'magic', dmg: 188, spd: 2.0, kb: 5, mana: 18, tier: 8, proj: 'void', multi: 3,
+                 d: '빛이 닿은 적 없는 곳에도 글자가 있었다.' },
+  chest_abyss: { n: '가압 갑주', i: '🛡', type: 'armor', slot: 'chest', def: 46, b: { hp: 90, def: 10, oxyMax: 16 }, lvReq: 32,
+                 d: '깊은 물의 압력을 견디게 만든 것이라, 뭍에서 맞는 것쯤은 아무것도 아니다.' },
+  charm_core:  { n: '노심 부적', i: '💠', type: 'acc', b: { charge: 320, cdr: 12, oxyMax: 12, int: 8 }, lvReq: 32,
+                 d: '심해 노심 조각 하나를 그대로 달았다. 계속 미지근하다.' },
+
   /* ================= 5단계: 새 바이옴 채집물 ================= */
   mud:         { n: '진흙', i: '🟫', type: 'block', tile: T.MUD, stack: 999 },
   fern_frond:  { n: '고사리 잎', i: '🌿', type: 'mat', stack: 999, d: '정글 바닥을 뒤덮고 있다. 짓이기면 진한 냄새가 난다.' },
   orchid:      { n: '밀림꽃', i: '🌺', type: 'mat', stack: 999, d: '어두울수록 더 선명하게 핀다.' },
   lily_pad:    { n: '수련잎', i: '🪷', type: 'mat', stack: 999, d: '폭포호 수면에 떠 있다.' },
+  /* --- 세션 3: 바다 재료 --- */
+  crab_shell:  { n: '게딱지', i: '🦀', type: 'mat', stack: 999, d: '두껍고 가볍다. 갑옷 속대로 쓴다.' },
+  shark_tooth: { n: '상어 이빨', i: '🦈', type: 'mat', stack: 999, d: '빠지고 또 나는 이빨. 아무리 갈아도 무뎌지지 않는다.' },
+  ink_sac:     { n: '먹물주머니', i: '🖤', type: 'mat', stack: 999, d: '터뜨리면 물이 밤이 된다.' },
+  jelly_lamp:  { n: '초롱 주머니', i: '🏮', type: 'mat', stack: 999, d: '물속에서 저 혼자 빛난다.' },
+  abyss_pearl: { n: '심연 진주', i: '🔮', type: 'mat', stack: 999, d: '햇빛이 닿은 적 없는 것치고는 너무 밝다.' },
+  kelp:        { n: '해초', i: '🌿', type: 'mat', stack: 999, d: '질기다. 엮으면 밧줄이 된다.' },
+  rope_kelp:   { n: '해초 밧줄', i: '🪢', type: 'mat', stack: 999, d: '물에 젖어도 늘어지지 않는다.' },
+  sea_salt:    { n: '바다 소금', i: '🧂', type: 'mat', stack: 999, d: '해저 모래를 졸이면 남는다.' },
+  sulfur:      { n: '유황', i: '🟡', type: 'mat', stack: 999, d: '빙하와 해저 바위에 박혀 있다. 성냥을 그으면 안 된다.' },
+  gunpowder:   { n: '화약', i: '💥', type: 'mat', stack: 999, d: '유황과 소금을 숯에 섞어 빻았다. 다루기 나름이다.' },
+  /* --- 폭탄 ---
+     소비품처럼 우클릭해서 **커서 쪽으로 던진다.** 던진 뒤에는 손을 떠나므로 조준이
+     전부다. r은 타일을 부수는 반경(칸), dmg는 폭발 피해, mine은 부술 수 있는 타일
+     단단함의 상한이다(그 위 등급은 안 부서진다 — 미스릴·기반암을 폭탄으로 뚫지 못하게). */
+  bomb_small:  { n: '폭탄', i: '💣', type: 'bomb', r: 3, dmg: 150, mine: 2, fuse: 1.6, look: 'iron', stack: 99,
+                 d: '심지에 불을 붙여 던진다. 붙이고 나면 되돌릴 수 없다.' },
+  bomb_big:    { n: '강력 폭탄', i: '🧨', type: 'bomb', r: 5, dmg: 340, mine: 3, fuse: 1.9, look: 'keg', stack: 99,
+                 d: '화약을 두 배로 넣었다. 던지고 나서 뒤로 물러설 것.' },
+  bomb_dig:    { n: '굴착 폭탄', i: '⛏', type: 'bomb', r: 7, dmg: 60, mine: 4, fuse: 1.4, look: 'stick', stack: 99,
+                 d: '사람을 상하게 하려고 만든 게 아니다. 벽을 없애려고 만든 것이다.' },
+  pressure_plate_m: { n: '내압판', i: '🛡', type: 'mat', stack: 999, d: '깊은 물의 압력을 견디도록 겹쳐 두른 판.' },
+  abyss_core:  { n: '심해 노심', i: '💠', type: 'mat', stack: 99, d: '진주와 내압판을 함께 눌러 굳힌 것. 4단계 설비의 심장이다.' },
+  tide_heart:  { n: '파수꾼의 심장', i: '🫀', type: 'mat', stack: 9, d: '물속에서도 식지 않았다.' },
+  keeper_seal: { n: '지킴이의 봉인', i: '🔱', type: 'mat', stack: 9, d: '누가 무엇을 가두려던 것인지는 적혀 있지 않다.' },
+  sum_tide:    { n: '가라앉은 종', i: '🔔', type: 'summon', boss: 'tide_warden', stack: 9, d: '해저에서 울려라. 물이 대신 대답한다.' },
   glowcap:     { n: '발광 버섯', i: '🍄', type: 'mat', stack: 999, d: '떼어내도 한동안 빛이 남아 있다.' },
   /* 새 바이옴 전리품 */
   vine_coil:   { n: '덩굴 타래', i: '🪢', type: 'mat', stack: 999 },
@@ -1068,22 +1262,28 @@ const OBJ_SIZE = {
   crate: { w: 18, h: 16 }      // 플레이어가 놓는 저장 상자(아래 CRATE_KIND)
 };
 
+/* v1.1: 4단계 추가 — 세션 3(바다) 재료로만 올릴 수 있다. */
 const STATION_NAME = {
-  work: ['—', '작업대', '정밀 작업대', '자동 조립대'],
-  forge: ['—', '용광로', '고로', '아크 용광로']
+  work: ['—', '작업대', '정밀 작업대', '자동 조립대', '심해 공작대'],
+  forge: ['—', '용광로', '고로', '아크 용광로', '가압 제련로']
 };
 const STATION_DESC = {
-  work: ['', '판자와 못으로 되는 것들.', '치수를 재고 깎는다. 부품이 나오기 시작한다.', '설계 핵을 얹었다. 이제 기계를 만드는 기계를 만든다.'],
-  forge: ['', '광석을 녹여 주괴로.', '풀무를 걸었다. 강철판이 나온다.', '전기로 녹인다. 공창이 하던 걸 우리가 한다.']
+  work: ['', '판자와 못으로 되는 것들.', '치수를 재고 깎는다. 부품이 나오기 시작한다.', '설계 핵을 얹었다. 이제 기계를 만드는 기계를 만든다.',
+         '심해 노심을 물려 압력으로 눌러 붙인다. 물속에서 쓸 것을 물 밖에서 만드는 자리다.'],
+  forge: ['', '광석을 녹여 주괴로.', '풀무를 걸었다. 강철판이 나온다.', '전기로 녹인다. 공창이 하던 걸 우리가 한다.',
+          '노를 통째로 가압해 녹인다. 소금과 진주까지 재료가 된다.']
 };
-/* STATION_UP[종류][현재레벨] = 다음 레벨로 올리는 비용 (레벨 3이 상한) */
+/* STATION_UP[종류][현재레벨] = 다음 레벨로 올리는 비용 (v1.1에서 상한이 4로 올랐다)
+   4단계는 **세션 3 재료(심해 노심)를 요구한다** — 바다에 들어가 보지 않으면 못 올린다. */
 const STATION_UP = {
   work: [null,
     { need: { plank: 40, iron_bar: 14, gear_basic: 8 } },
-    { need: { steel_plate: 30, circuit: 12, motor: 6 } }],
+    { need: { steel_plate: 30, circuit: 12, motor: 6 } },
+    { need: { machine_frame: 6, abyss_core: 4, pressure_plate_m: 20, abyss_pearl: 6 } }],
   forge: [null,
     { need: { brick: 60, iron_bar: 20, coal: 40 } },
-    { need: { steel_plate: 40, circuit: 14, power_core: 8 } }]
+    { need: { steel_plate: 40, circuit: 14, power_core: 8 } },
+    { need: { machine_frame: 8, abyss_core: 5, sea_salt: 40, mythril_bar: 12 } }]
 };
 
 /* ---------------- 제작법 ---------------- */
@@ -1109,6 +1309,51 @@ const RECIPES = [
 
   { out: 'rod_basic', n: 1, need: { wood: 10, spider_silk: 4 }, station: 'work' },
   { out: 'rod_adv', n: 1, need: { machine_frame: 1, motor: 2, mythril_bar: 4, spider_silk: 14, crystal: 6 }, station: 'work', lv: 3 },
+
+  /* --- 세션 3: 바다 계통 (시설 4단계) ---
+     내압판·심해 노심이 관문이다. 노심 하나에 진주 두 개가 들어가므로, 4단계 설비를
+     세우려면 심해까지 내려가 문어·아귀를 상대해야 한다. */
+  { out: 'pressure_plate_m', n: 2, need: { steel_plate: 3, crab_shell: 4, sea_salt: 2 }, station: 'forge', lv: 3 },
+  { out: 'sea_salt', n: 3, need: { sand: 8 }, station: 'forge', lv: 2 },
+  { out: 'abyss_core', n: 1, need: { abyss_pearl: 2, pressure_plate_m: 6, circuit: 4 }, station: 'work', lv: 3 },
+  { out: 'rope_kelp', n: 4, need: { kelp: 6 }, station: null },
+  /* 화약 계통 — 유황이 세션 3에서만 나오므로 폭탄도 자연히 그때 열린다 */
+  { out: 'gunpowder', n: 4, need: { sulfur: 3, sea_salt: 2, coal: 2 }, station: 'work', lv: 2 },
+  { out: 'bomb_small', n: 3, need: { gunpowder: 4, iron_bar: 1, rope_kelp: 1 }, station: 'work', lv: 2 },
+  { out: 'bomb_big', n: 2, need: { gunpowder: 10, steel_plate: 2, rope_kelp: 1 }, station: 'work', lv: 3 },
+  { out: 'bomb_dig', n: 3, need: { gunpowder: 8, pressure_plate_m: 1, rope_kelp: 2 }, station: 'work', lv: 3 },
+  { out: 'tank_air', n: 1, need: { steel_plate: 8, pressure_plate_m: 4, kelp: 10 }, station: 'work', lv: 3 },
+  { out: 'tank_deep', n: 1, need: { tank_air: 1, abyss_core: 1, pressure_plate_m: 12, jelly_lamp: 6 }, station: 'work', lv: 4 },
+  { out: 'tank_abyss', n: 1, need: { tank_deep: 1, abyss_core: 3, keeper_seal: 1, abyss_pearl: 8 , glacium_bar: 6}, station: 'work', lv: 4 },
+  { out: 'helm_diver', n: 1, need: { pressure_plate_m: 8, crab_shell: 10, jelly_lamp: 4 , glacium_bar: 2}, station: 'forge', lv: 4 },
+  { out: 'chest_scale', n: 1, need: { pressure_plate_m: 14, crab_shell: 16, shark_tooth: 8 , glacium_bar: 4}, station: 'forge', lv: 4 },
+  { out: 'boots_fin', n: 1, need: { pressure_plate_m: 6, kelp: 14, shark_tooth: 4 , tide_bar: 2}, station: 'forge', lv: 4 },
+  { out: 'spear_tide', n: 1, need: { abyss_core: 1, mythril_bar: 8, shark_tooth: 10 , tide_bar: 3}, station: 'forge', lv: 4 },
+  { out: 'blade_shark', n: 1, need: { shark_tooth: 18, steel_plate: 10, crab_shell: 6 , tide_bar: 3}, station: 'forge', lv: 4 },
+  { out: 'bow_harpoon', n: 1, need: { abyss_core: 1, rope_kelp: 6, shark_tooth: 8 , tide_bar: 2}, station: 'work', lv: 4 },
+  { out: 'orb_abyss', n: 1, need: { abyss_pearl: 3, jelly_lamp: 8, crystal: 12 , glacium_bar: 3}, station: 'work', lv: 4 },
+  { out: 'ring_pearl', n: 1, need: { abyss_pearl: 2, gold_bar: 6, jelly_lamp: 4 , glacium_bar: 2}, station: 'work', lv: 4 },
+  { out: 'charm_ink', n: 1, need: { ink_sac: 10, abyss_pearl: 1, spider_silk: 12 , tide_bar: 2}, station: 'work', lv: 4 },
+  { out: 'm_pressor', n: 1, need: { abyss_core: 2, machine_frame: 2, motor: 4 , tide_bar: 4}, station: 'work', lv: 4 },
+  { out: 'm_desal', n: 1, need: { abyss_core: 1, machine_frame: 1, pressure_plate_m: 10 , tide_bar: 3}, station: 'work', lv: 4 },
+  { out: 'm_belt_f', n: 8, need: { steel_plate: 4, motor: 1, rope_kelp: 2 }, station: 'work', lv: 4 },
+  { out: 'm_battery_hi', n: 1, need: { abyss_core: 1, battery_cell: 6, circuit: 8, steel_plate: 12 , glacium_bar: 4}, station: 'work', lv: 4 },
+  /* 4단계 전용 특별 장비 — 전부 심해 노심이 든다 */
+  { out: 'bag_abyss', n: 1, need: { rope_kelp: 12, pressure_plate_m: 8, abyss_pearl: 2, spider_silk: 20 }, station: 'work', lv: 4 },
+  /* 세션 3 광물 — 제련은 4단계 노(가압 제련로)라야 된다. 등급 5 광물을 3단계
+     아크 용광로에서 녹일 수 있으면 4단계를 올릴 이유가 하나 줄어든다. */
+  { out: 'glacium_bar', n: 1, need: { glacium_ore: 3, coal: 2 }, station: 'forge', lv: 4 },
+  { out: 'tide_bar', n: 1, need: { tide_ore: 3, sea_salt: 2 }, station: 'forge', lv: 4 },
+  /* 탐지기 — 광물 하나씩 갈라 쓴다. 광맥을 찾는 쪽은 빙정, 움직이는 것을 잡아내는
+     쪽은 조수. 둘 다 만들려면 빙하와 해저를 모두 파야 한다. */
+  { out: 'det_metal', n: 1, need: { glacium_bar: 4, circuit: 8, battery_cell: 2 }, station: 'work', lv: 4 },
+  { out: 'det_mob', n: 1, need: { tide_bar: 4, circuit: 8, jelly_lamp: 6 }, station: 'work', lv: 4 },
+  { out: 'pick_abyss', n: 1, need: { abyss_core: 1, mythril_bar: 10, battery_cell: 3 , glacium_bar: 5}, station: 'forge', lv: 4 },
+  { out: 'hammer_tide', n: 1, need: { abyss_core: 2, mythril_bar: 14, shark_tooth: 12, pressure_plate_m: 8 , tide_bar: 5}, station: 'forge', lv: 4 },
+  { out: 'gun_harpoon', n: 1, need: { abyss_core: 2, circuit: 14, mythril_bar: 10, battery_cell: 4 , glacium_bar: 4}, station: 'forge', lv: 4 },
+  { out: 'tome_abyss', n: 1, need: { abyss_core: 1, abyss_pearl: 4, jelly_lamp: 10, crystal: 18 , glacium_bar: 3}, station: 'work', lv: 4 },
+  { out: 'chest_abyss', n: 1, need: { abyss_core: 2, pressure_plate_m: 20, crab_shell: 20, mythril_bar: 8 }, station: 'forge', lv: 4 },
+  { out: 'charm_core', n: 1, need: { abyss_core: 1, circuit: 12, gold_bar: 10, jelly_lamp: 6 }, station: 'work', lv: 4 },
   { out: 'sword_copper', n: 1, need: { copper_bar: 6, wood: 3 }, station: 'work' },
   { out: 'bow_copper', n: 1, need: { copper_bar: 4, wood: 8 }, station: 'work' },
   { out: 'pick_iron', n: 1, need: { iron_bar: 5, wood: 3 }, station: 'work' },
@@ -1163,6 +1408,7 @@ const RECIPES = [
   { out: 'sum_bone', n: 1, need: { bone_frag: 30, iron_bar: 5 }, station: 'forge' },
   { out: 'sum_heart', n: 1, need: { corrupt_ess: 20, ebon_chunk: 15 }, station: 'forge' },
   { out: 'sum_frost', n: 1, need: { frost_core: 20, ice_shard: 40, mythril_bar: 4 }, station: 'forge' },
+  { out: 'sum_tide', n: 1, need: { abyss_pearl: 6, abyss_core: 1, jelly_lamp: 12, sea_salt: 20 }, station: 'forge', lv: 4 },
   { out: 'sum_void', n: 1, need: { void_frag: 15, star_heart: 4, soul_shard: 30 }, station: 'forge' },
 
   /* --- 전리품 무기 --- */
@@ -1429,6 +1675,25 @@ const MACHINE = {
     n: '서리 분사구', tile: T.M_FROST, item: 'm_frost', rot: 1, cycle: 19, range: 8, dmg: 20, proj: 'frost', slow: 1,
     d: '맞은 것은 한동안 느려진다. 좁은 통로에 걸어 두면 무섭다.'
   },
+  /* --- 세션 3: 4단계 설비 ---
+     가압기는 압축기(press)의 윗줄이다. 압축기가 못 누르는 것(내압판·노심)을 누른다.
+     증류기는 해저 모래·해초를 소금과 물자로 되돌린다 — 바다에서 퍼 온 것을 뭍에서 쓴다. */
+  pressor: {
+    n: '가압기', tile: T.M_PRESSOR, item: 'm_pressor', power: 34, rot: 1, proc: 'pressor', cap: 40,
+    d: '압축기보다 한참 센 힘으로 누른다. 내압판과 심해 노심은 여기서만 나온다.'
+  },
+  desal: {
+    n: '염수 증류기', tile: T.M_DESAL, item: 'm_desal', power: 20, rot: 1, proc: 'desal', cap: 60,
+    d: '해저 모래와 해초를 졸여 소금·밧줄을 뽑는다.'
+  },
+  belt_fast: {
+    n: '고속 컨베이어 벨트', tile: T.M_BELT_F, item: 'm_belt_f', rot: 1, fast: 1,
+    d: '한 틱에 **두 칸**을 민다. 일반 벨트와 섞어 깔아도 되고, 병목이 생기는 구간만 갈아 끼워도 된다.'
+  },
+  battery_hi: {
+    n: '강화 축전지', tile: T.M_BATTERY_HI, item: 'm_battery_hi', store: 14000, proc: 'battery', power: 6, cap: 60,
+    d: '축전지 네 대 몫을 한 칸에 담는다. 해가 지고 바람이 멎어도 공장이 안 선다.'
+  },
 
   /* --- 4단계: 마을 --- */
   windmill: {
@@ -1467,6 +1732,14 @@ const MRECIPES = [
   { m: 'assembler', in: { iron_bar: 1, steel_plate: 1 }, out: { gear_basic: 2 }, t: 16 },
   { m: 'assembler', in: { circuit: 1, gear_basic: 2, steel_plate: 1 }, out: { motor: 1 }, t: 26 },
   { m: 'assembler', in: { motor: 1, circuit: 2, steel_plate: 4 }, out: { machine_frame: 1 }, t: 34 },
+  /* 가압기 — 4단계. 압축기가 못 누르는 것을 누른다 */
+  { m: 'pressor', in: { steel_plate: 3, crab_shell: 4, sea_salt: 2 }, out: { pressure_plate_m: 2 }, t: 30 },
+  { m: 'pressor', in: { abyss_pearl: 2, pressure_plate_m: 6, circuit: 4 }, out: { abyss_core: 1 }, t: 52 },
+  { m: 'pressor', in: { mythril_ore: 4 }, out: { mythril_bar: 2 }, t: 36 },
+  /* 염수 증류기 — 바다에서 퍼 온 것을 뭍에서 쓸 수 있게 되돌린다 */
+  { m: 'desal', in: { sand: 8 }, out: { sea_salt: 3 }, t: 16 },
+  { m: 'desal', in: { kelp: 6 }, out: { rope_kelp: 4 }, t: 14 },
+  { m: 'desal', in: { ink_sac: 2 }, out: { crude_oil: 3 }, t: 20 },
   { m: 'assembler', in: { lead_bar: 2, polymer: 1, refined_oil: 1 }, out: { battery_empty: 1 }, t: 24 },
   { m: 'assembler', in: { steel_plate: 1 }, out: { rivet: 12 }, t: 12 },
   /* 축전지 — 전력. 방전된 배터리를 다시 채운다 */
@@ -1492,6 +1765,60 @@ const MRECIPES = [
   { m: 'mill', in: { bonebloom: 3 }, out: { fertilizer: 4 }, t: 14 },
   { m: 'mill', in: { emberpod: 4 }, out: { fuel_brick: 2 }, t: 16 }
 ];
+
+/* 공장 재화 — 전력 설비(압축기·정제기·조립기)에서만 나오는 물건들.
+   제련로/화덕/밀링기 산출물(주괴·음식)은 손으로도 만들 수 있는 평범한 재료라 뺀다.
+   MRECIPES에서 자동으로 뽑는다 — 조리법을 늘려도 값 표를 따로 손볼 필요가 없다. */
+const FACTORY_LINES = new Set(['press', 'refinery', 'assembler', 'pressor', 'desal']);
+const FACTORY_GOODS = new Set();
+for (const r of MRECIPES) if (FACTORY_LINES.has(r.m)) for (const k in r.out) FACTORY_GOODS.add(k);
+
+/* 값 배수 — price()가 종류별 기본값을 낸 뒤 여기서 한 번 곱한다.
+   v1.1: 공장 물건(기계·설치물·공장 재화)이 들인 품에 비해 너무 헐값이었다. 무기는
+   이미 tier로 값이 크게 벌어져 있어 그대로 두고, 나머지 일반 물건만 조금 올린다.
+   판매가는 price() 그대로, 구매가는 buyPrice()가 여기에 다시 SHOP_BUY_MUL을 곱한다 —
+   한 군데만 고쳐도 사고파는 값이 같이 움직인다. */
+const PRICE_MUL = { machine: 4.5, station: 4.5, weapon: 1 };
+const PRICE_MUL_DEFAULT = 1.75;
+const FACTORY_PRICE_MUL = 4.5;
+
+/* ---------------- 값의 티어 가중 (v1.1) ----------------
+   "물건 값을 몇 배 올리되, 티어가 오를수록 더 얹어 달라"는 요청.
+   한 배수를 전부에 곱하면 후반 물건과 초반 물건의 **간격**은 그대로라, 진행해도
+   돈의 무게가 안 달라진다. 티어를 지수로 태워 뒤로 갈수록 벌어지게 한다.
+     티어 0 → 2.2배 · 3 → 4.8 · 6 → 10.6 · 9 → 23.3
+
+   티어를 어떻게 아는가: tier가 박힌 물건(무기·도구)은 그대로 쓰고, 착용 레벨이
+   있으면 4레벨을 한 티어로 세고, 둘 다 없는 재료·소비품은 **제 값으로 가늠한다**
+   (값이 두 배가 될 때마다 한 티어). 재료에 티어 필드를 새로 박으면 수백 줄을
+   손대야 하는데, 재료의 값은 이미 진행 순서를 따라 매겨져 있어서 그럴 필요가 없다.
+
+   알처럼 fixed가 붙은 물건은 price()가 먼저 빠져나가므로 여기까지 오지 않는다. */
+const PRICE_BASE_MUL = 2.2;
+const PRICE_TIER_STEP = 1.30;
+/* 재료의 티어 — 재료에는 tier도 lvReq도 없다. 값으로 가늠해 봤더니 대부분 기본값(12)에
+   걸려 **심해 노심이 나무와 같은 티어 0**이 됐다(실측). 진행 순서를 아는 것은 사람뿐이라
+   여기에 손으로 적는다. 적지 않은 재료는 0으로 떨어지며, 그건 초반 재료라는 뜻이다. */
+const MAT_TIER = {
+  coal: 0, copper_bar: 1, gear_basic: 1, bone_frag: 1, spider_silk: 2,
+  iron_bar: 2, crystal: 3, gold_bar: 3, circuit: 3, motor: 3, steel_plate: 3,
+  soul_shard: 4, hell_ore: 4, power_core: 4, battery_cell: 4,
+  kelp: 4, rope_kelp: 4, sea_salt: 4, sulfur: 4,
+  mythril_bar: 5, machine_frame: 5, gunpowder: 5, crab_shell: 5, jelly_lamp: 5, ink_sac: 5,
+  aether_shard: 6, deep_alloy: 6, pressure_plate_m: 6, shark_tooth: 6,
+  miner_tag: 6, lost_lamp: 6,
+  orbit_gear: 7, orbit_plate: 7, gloom_pearl: 7, abyss_pearl: 7,
+  star_ash: 8, void_lens: 8, abyss_core: 8, keeper_seal: 8,
+  glacium_ore: 7, tide_ore: 7, glacium_bar: 8, tide_bar: 8
+};
+function priceTier(d, id) {
+  if (d.tier !== undefined) return clamp(d.tier, 0, 12);
+  if (d.lvReq) return clamp(Math.round(d.lvReq / 4), 0, 12);
+  if (id && MAT_TIER[id] !== undefined) return MAT_TIER[id];
+  return clamp(Math.round(Math.log2(Math.max(1, d.price || 12) / 10)), 0, 12);
+}
+function priceTierMulOf(d, id) { return PRICE_BASE_MUL * Math.pow(PRICE_TIER_STEP, priceTier(d, id)); }
+
 
 /* ---------------- 마을 등급 ----------------
    여명 마을에만 적용된다. 베이스캠프는 이 체계 바깥이다 — 캠프는 "돌아올 곳"이지
@@ -1532,8 +1859,21 @@ const VILLAGE = [
       '마을 양쪽에 성벽과 흉벽이 올라간다',
       '감시탑 두 기에 자동 포탑이 걸린다 (대갈못을 채워 두면 된다)',
       '상주 경비병 두 명이 마을을 지킨다',
+      '재료상 도경이 들어온다 — 상주 상인 1명 → 2명',
       '재련 비용 25% 감소 · 상점 환율 +10%',
       '성문과 깃발이 걸린다'
+    ]
+  },
+  {
+    n: '여명 교역지',
+    d: '벽이 서자 장사꾼이 붙었다. 이제 여기서 살 수 있는 것이 늘어난다.',
+    need: { steel_plate: 60, circuit: 24, motor: 10, gold_bar: 20 },
+    gain: [
+      '장비상 벽산이 들어온다 — 상주 상인 2명 → 3명. 무기·갑옷·장신구를 날마다 다르게 내놓는다',
+      '상주 상인 셋의 재고가 한 칸씩 늘고, 4단계에서만 도는 물건이 풀린다',
+      '재련대 옆에 강화 모루가 선다 — 장비 수치를 한 단계씩 올린다 (최대 +10)',
+      '밭이 양쪽으로 넓어진다 (서쪽은 성벽 안까지, 동쪽은 첫 집 앞까지)',
+      '보관고 12칸 추가'
     ]
   }
 ];
@@ -1661,7 +2001,10 @@ const ENEMIES = {
 
   slime:      { n: '잿빛 슬라임', hp: 34, dmg: 8, def: 0, spd: 34, ai: 'jumper', w: 24, h: 18, c: '#6f8ba0', xp: 9, gold: 3, biome: 'surface', aggro: 320,
                 drops: [['slime_gel', .9, 1, 3], ['potion_hp_small', .06, 1, 1]] },
-  zombie:     { n: '떠도는 시체', hp: 60, dmg: 14, def: 2, spd: 30, ai: 'walker', w: 20, h: 40, c: '#5b7a52', xp: 16, gold: 6, biome: 'night', aggro: 460,
+  /* 좀비만 잡몹 중에 **플레이어 레벨을 탄다**(lvScale). 붉은 달과 같은 꼴이되 지수가
+     절반이라 훨씬 완만하다 — 50레벨 1.58배 · 100레벨 2.5배(붉은 달은 2.5배 · 6.25배).
+     밤마다 나오는 놈이라 붉은 달만큼 세지면 밤이 통째로 못 나가는 시간이 된다. */
+  zombie:     { n: '떠도는 시체', hp: 60, dmg: 14, def: 2, spd: 30, ai: 'walker', w: 20, h: 40, c: '#5b7a52', xp: 16, gold: 6, biome: 'night', aggro: 460, lvScale: 0.5,
                 drops: [['bone_frag', .5, 1, 2], ['iron_ore', .12, 1, 2], ['potion_hp_small', .07, 1, 1]] },
   bat:        { n: '동굴 박쥐', hp: 26, dmg: 11, def: 0, spd: 84, ai: 'flyer', w: 22, h: 16, c: '#6b4a6b', xp: 12, gold: 4, biome: 'cave', aggro: 420,
                 drops: [['bone_frag', .3, 1, 1]] },
@@ -1773,6 +2116,40 @@ const ENEMIES = {
                 drops: [['raw_meat', .5, 1, 1]] },
   grotto_eel: { n: '웅덩이 뱀장어', hp: 150, dmg: 32, def: 8, spd: 128, ai: 'swimmer', w: 34, h: 14, c: '#3a6a5a', xp: 64, gold: 30, aggro: 300,
                 drops: [['raw_meat', .6, 1, 2], ['crystal', .25, 1, 2]] },
+  /* === 세션 3 몹 세기 기준 ===
+     세션 2 마지막 구간(설계실)이 hp 1300~2400 · dmg 88~110 · def 34~66 이다.
+     세션 3은 **그보다 조금 위**로 잡는다 — 얕은 물(해파리 1100)은 세션 2 중간과 겹치고,
+     가장 깊은 것(초롱아귀 3600/168/96)이 세션 2 최고보다 1.5배쯤 세다.
+     깊이가 곧 난이도라, 수면에서 멀어질수록 이 계단을 타고 올라간다. */
+
+  /* --- 세션 3: 해변 (지상, 물가) ---
+     바다도 빙하도 아닌 그 사이의 자리다. 물 밖으로 밀려 나온 것들이 모래에 반쯤 묻혀
+     있다가 사람이 지나가면 일어선다. 물속 몹과 달리 뭍에서 싸우므로 도망칠 수는 있다. */
+  driftling:  { n: '표류물 더미', hp: 1400, dmg: 96, def: 48, spd: 62, ai: 'walker', w: 32, h: 30, c: '#9a8a6a', biome: 'beach', xp: 620, gold: 260, aggro: 340,
+                drops: [['kelp', .7, 2, 5], ['rope_kelp', .3, 1, 2], ['crab_shell', .35, 1, 3], ['lost_lamp', .12, 1, 1]] },
+
+  /* --- 세션 3: 빙하 지대 (지상) ---
+     서리 지대 몹보다 세고, 바다 몹보다는 순하다. 얼음이 흙 없이 그대로 쌓인 곳이라
+     "미끄러지는 것"과 "덩어리째 굴러오는 것" 둘로 성격을 갈랐다. */
+  glacier_stalker:{ n: '빙하 추적자', hp: 1250, dmg: 92, def: 36, spd: 152, ai: 'jumper', w: 30, h: 28, c: '#bfe8ff', xp: 560, gold: 240, biome: 'glacier', aggro: 620,
+                drops: [['ice_shard', .7, 3, 6], ['frost_core', .35, 1, 2], ['raw_meat', .4, 1, 2]] },
+  crevasse_maw: { n: '크레바스 아가리', hp: 2100, dmg: 116, def: 74, spd: 44, ai: 'walker', w: 42, h: 40, c: '#6a9ac0', xp: 900, gold: 400, biome: 'glacier', aggro: 380,
+                drops: [['ice_shard', .8, 6, 12], ['frost_core', .5, 2, 4], ['crystal', .3, 1, 3]] },
+
+  /* --- 세션 3: 가라앉은 바다 ---
+     전부 ai 'swimmer'라 물 밖으로 못 나온다. 바다는 "들어갈지 말지"를 고르는 곳이고,
+     들어가면 숨(산소)이 먼저 줄기 때문에 **오래 버티는 것 자체가 위험**이다.
+     그래서 개별 몹은 느리되 아프게, 깊이 내려갈수록 사나워지도록 계단을 뒀다. */
+  reef_crab:  { n: '암초 게', hp: 1600, dmg: 100, def: 78, spd: 54, ai: 'swimmer', w: 26, h: 18, c: '#c86a4a', xp: 760, gold: 330, biome: 'sea', aggro: 260,
+                drops: [['crab_shell', .65, 1, 3], ['raw_meat', .4, 1, 2]] },
+  lantern_jelly:{ n: '초롱해파리', hp: 1100, dmg: 112, def: 20, spd: 46, ai: 'swimmer', passive: 1, w: 20, h: 26, c: '#8fd0e8', xp: 820, gold: 300, biome: 'sea', aggro: 200,
+                drops: [['jelly_lamp', .5, 1, 2], ['aether_shard', .3, 1, 2]] },
+  reef_shark: { n: '암초 상어', hp: 2200, dmg: 128, def: 52, spd: 168, ai: 'swimmer', w: 44, h: 20, c: '#5a6a78', xp: 1150, gold: 520, biome: 'sea', aggro: 520,
+                drops: [['shark_tooth', .7, 1, 3], ['raw_meat', .6, 1, 3]] },
+  deep_octopus:{ n: '심해 문어', hp: 2900, dmg: 146, def: 84, spd: 96, ai: 'swimmer', w: 40, h: 34, c: '#7a4a7a', xp: 1500, gold: 700, biome: 'sea', aggro: 480,
+                drops: [['ink_sac', .7, 1, 3], ['abyss_pearl', .22, 1, 1]] },
+  abyss_angler:{ n: '심연 초롱아귀', hp: 3600, dmg: 168, def: 96, spd: 78, ai: 'swimmer', w: 38, h: 30, c: '#3a5a6a', xp: 1950, gold: 940, biome: 'sea', aggro: 560,
+                drops: [['jelly_lamp', .6, 1, 3], ['abyss_pearl', .35, 1, 2], ['soul_shard', .3, 1, 2]] },
   drowned_hand:{ n: '가라앉은 손', hp: 260, dmg: 46, def: 18, spd: 88, ai: 'swimmer', w: 24, h: 32, c: '#6a7a86', xp: 120, gold: 62, aggro: 340,
                 drops: [['bone_frag', .7, 2, 4], ['lost_lamp', .3, 1, 1], ['soul_shard', .25, 1, 2]] },
   /* --- 5단계: 붉은 달 전용 (이벤트 중에만 나온다) ---
@@ -1808,6 +2185,11 @@ const ENEMIES = {
   blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 66, h: 58, c: '#7a3f9c', xp: 9000, gold: 4000, ph: 2, boss: 1,
                  drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18], ['nest_crown', 1, 1, 1]] },
 
+  /* rank 7 — 세션 3 · 가라앉은 유적. 세션 2 미니보스(부패한 아가리)와 세션 3 보스
+     (조수의 파수꾼) 사이에 끼워 넣은 자리다. 물 밑에 봉해져 있어 아무도 안 건드렸다. */
+  drowned_keeper:{ n: '가라앉은 지킴이', hp: 18000, dmg: 486, def: 110, spd: 84, ai: 'b_keeper', w: 54, h: 62, c: '#3f6a7a', xp: 17000, gold: 7400, boss: 1,
+                 drops: [['keeper_seal', 1, 1, 1], ['abyss_pearl', 1, 6, 10], ['pressure_plate_m', 1, 8, 14]] },
+
   /* --- 7단계: 폭주로 ---
      공창이 스스로 불려 낸 것들. 사람이 설계한 흔적이 점점 옅어진다 */
   splitter:   { n: '증식 기계', cw: '기', hp: 1500, dmg: 84, def: 40, spd: 84, ai: 'walker', w: 28, h: 34, c: '#8a7a6a', xp: 2600, gold: 520, aggro: 520,
@@ -1824,12 +2206,12 @@ const ENEMIES = {
                  drops: [['bone_frag', 1, 30, 45], ['sword_bone', 1, 1, 1], ['star_heart', 1, 1, 1], ['pick_iron', .6, 1, 1]] },
   corrupt_heart:{ n: '부패의 심장', hp: 3600, dmg: 48, def: 18, spd: 105, ai: 'b_heart', w: 54, h: 54, c: '#7a3f9c', xp: 1700, gold: 900, boss: 1,
                  drops: [['corrupt_ess', 1, 30, 50], ['charm_leech', 1, 1, 1], ['star_heart', 1, 1, 1], ['mythril_ore', 1, 12, 20]] },
-  frost_witch: { n: '서리 마녀 실비아', hp: 5600, dmg: 62, def: 24, spd: 90, ai: 'b_witch', w: 34, h: 56, c: '#a8dcf0', xp: 3000, gold: 1600, boss: 1,
+  frost_witch: { n: '서리 마녀 실비아', hp: 5600, dmg: 67, def: 24, spd: 90, ai: 'b_witch', w: 34, h: 56, c: '#a8dcf0', xp: 3000, gold: 1600, boss: 1,
                  drops: [['frost_core', 1, 25, 40], ['staff_frost', 1, 1, 1], ['star_heart', 1, 1, 1], ['amul_swift', 1, 1, 1]] },
   void_king:   { n: '공허의 왕', hp: 12000, dmg: 82, def: 32, spd: 110, ai: 'b_void', w: 66, h: 88, c: '#5e3fa8', xp: 9000, gold: 5000, boss: 1,
                  drops: [['void_frag', 1, 30, 50], ['charm_star', 1, 1, 1], ['star_heart', 1, 1, 1]] },
 
-  storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 96, def: 38, spd: 150, ai: 'b_storm', w: 66, h: 70, c: '#bcd8f0', xp: 16000, gold: 8000, boss: 1,
+  storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 117, def: 38, spd: 150, ai: 'b_storm', w: 66, h: 70, c: '#bcd8f0', xp: 16000, gold: 8000, boss: 1,
                  drops: [['sky_feather', 1, 30, 50], ['aether_shard', 1, 20, 35], ['charm_feather', 1, 1, 1], ['star_heart', 1, 1, 1]] },
   first_keeper: { n: '최초의 파수꾼', cw: '기', hp: 20000, dmg: 120, def: 52, spd: 96, ai: 'b_keeper', w: 64, h: 86, c: '#c8b98a', xp: 40000, gold: 20000, boss: 1,
                  minion: 'ruin_guard',
@@ -1868,6 +2250,11 @@ const ENEMIES = {
                  xp: 900000, gold: 400000, minion: 'draft_form', aggro: 4000,
                  drops: [['arche_core', 1, 1, 1], ['draft_glass', 1, 40, 60], ['archestone', 1, 30, 50]] },
 
+  /* --- 세션 3 보스 --- */
+  tide_warden:  { n: '조수의 파수꾼 · 물이 지운 것', hp: 148000, dmg: 525, def: 104, spd: 96, ai: 'b_keeper', w: 104, h: 120, c: '#3f7fa8', boss: 1,
+                 xp: 1200000, gold: 520000, minion: 'deep_octopus', aggro: 4200,
+                 drops: [['abyss_pearl', 1, 20, 30], ['abyss_core', 1, 4, 6], ['tide_heart', 1, 1, 1]] },
+
   /* --- 특별 유적 ① 부유 성채 (하늘) --- */
   orbit_sentry: { n: '궤도 파수병', cw: '기', hp: 3200, dmg: 128, def: 74, spd: 112, ai: 'caster', w: 28, h: 40, c: '#8fa8c8', xp: 5200, gold: 1200, range: 380, proj: 'star', aggro: 640,
                  drops: [['orbit_plate', 1, 3, 8], ['orbit_gear', .5, 1, 2], ['aether_shard', .4, 2, 5]] },
@@ -1891,6 +2278,12 @@ const ENEMIES = {
                  drops: [['miner_tag', .5, 1, 1], ['deep_alloy', 1, 3, 7], ['lost_lamp', .35, 1, 2]] },
 
   /* 무너진 갱의 주인 — 스토리와 무관한 순수 탐험 보상 */
+  /* 떠 있는 섬을 붙들고 있는 것 — 스토리와 무관하다. 황금 상자가 미끼이고,
+     상자를 여는 순간 섬 아래에서 올라온다. 세기는 **세션 3 중반보다 한 뼘 위**:
+     가라앉은 지킴이(18,000/486)와 조수의 파수꾼(148,000/525) 사이에 둔다. */
+  isle_keeper:  { n: '섬을 든 것', hp: 34000, dmg: 505, def: 118, spd: 92, ai: 'b_keeper', w: 88, h: 96, c: '#4a7a86', boss: 1,
+                 xp: 480000, gold: 240000, minion: 'reef_shark', aggro: 3200,
+                 drops: [['abyss_pearl', 1, 6, 10], ['abyss_core', 1, 2, 3], ['coconut', 1, 8, 14]] },
   shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_heart', w: 184, h: 168, c: '#3a342c', ph: 5, boss: 1,
                  xp: 620000, gold: 300000, minion: 'gloom_crawler', aggro: 3600,
                  drops: [['gloom_pearl', 1, 3, 4], ['deep_alloy', 1, 40, 60], ['miner_tag', 1, 2, 3], ['hammer_cave', 1, 1, 1]] }
@@ -2349,6 +2742,8 @@ const BUFFS = {
   fed_pie: { n: '고기 파이', i: '🥧', dur: 300, b: { str: 7, dmgP: 0.10 } },
   fed_stew: { n: '버섯 스튜', i: '🍲', dur: 300, b: { mpreg: 40, int: 6 } },
   fed_soup: { n: '별무 수프', i: '🥣', dur: 300, b: { def: 16, hp: 45 } },
+  /* 코코넛 — 섬에서만 난다. 물이 든 열매라 숨과 이동 쪽으로 붙인다 */
+  fed_coconut: { n: '코코넛', i: '🥥', dur: 300, b: { oxyMax: 4, ms: 12 } },
   fed_tea: { n: '들꽃차', i: '🍵', dur: 300, b: { cdr: 10, mp: 35 } },
   fed_jelly: { n: '선인장 젤리', i: '🍮', dur: 300, b: { ms: 16, dex: 6 } },
   fed_feast: { n: '잔칫상', i: '🍱', dur: 600, b: { allStat: 8, hpreg: 2, mpreg: 25, def: 10 } },
@@ -2378,14 +2773,14 @@ const BUFFS = {
      맛이 없다(유적 하나에 스물몇 개). 보물방·보스방의 확정 상자는 그대로다. */
 const RUIN_SPEC = [
   {
-    id: 'ice', n: '얼음 던전', x: 300, y: 150, w: 88, h: 50,
+    id: 'ice', n: '얼음 던전', x: 300 + SHIFT, y: 150, w: 88, h: 50,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
     traps: ['dart', 'crumble', 'grind'], boss: 'ice_warden',
     mobs: ['frostling', 'icewolf', 'frostbound'],
     rank: 2, tier: 3, trapRate: 0.46, spikeRate: 0.26, chestRate: 0.16, mobMul: 1.0
   },
   {
-    id: 'pyramid', n: '피라미드', x: 2180, y: 96, w: 80, h: 56,
+    id: 'pyramid', n: '피라미드', x: 2180 + SHIFT, y: 96, w: 80, h: 56,
     wall: T.SANDBRICK, floor: T.SANDSTONE, bg: 8, torch: T.TORCH,
     traps: ['dart', 'vent', 'crumble', 'gas'], boss: 'sand_guardian',
     mobs: ['scorpion', 'sandmaw', 'skeleton', 'jarhusk'],
@@ -2394,7 +2789,7 @@ const RUIN_SPEC = [
     rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.20, mobMul: 1.35
   },
   {
-    id: 'mine', n: '버려진 광산', x: 820, y: 168, w: 84, h: 44,
+    id: 'mine', n: '버려진 광산', x: 820 + SHIFT, y: 168, w: 84, h: 44,
     wall: T.MINEWOOD, floor: T.PLANK, bg: 4, torch: T.TORCH,
     traps: ['dart', 'crumble', 'gas'], boss: 'mine_horror',
     mobs: ['minerghost', 'spider', 'bat', 'cartwraith'],
@@ -2402,7 +2797,7 @@ const RUIN_SPEC = [
     rank: 1, tier: 2, trapRate: 0.32, spikeRate: 0.16, chestRate: 0.14, mobMul: 0.85
   },
   {
-    id: 'blight', n: '부패한 둥지', x: 4020, y: 196, w: 100, h: 60,
+    id: 'blight', n: '부패한 둥지', x: 4020 + SHIFT, y: 196, w: 100, h: 60,
     wall: T.EBONSTONE, floor: T.EBONSTONE, bg: 3, torch: T.TORCH,
     traps: ['dart', 'vent', 'gas', 'coil'], boss: 'blight_maw',
     mobs: ['crawler', 'shadoweye', 'sacling'],
@@ -2410,7 +2805,7 @@ const RUIN_SPEC = [
     rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.24, mobMul: 1.85
   },
   {
-    id: 'spore', n: '포자 굴', x: 3620, y: 176, w: 100, h: 52,
+    id: 'spore', n: '포자 굴', x: 3620 + SHIFT, y: 176, w: 100, h: 52,
     wall: T.SPORESTONE, floor: T.GLOWMOSS, bg: 12, torch: T.GLOWCAP,
     traps: ['vent', 'dart', 'gas', 'coil'], boss: 'spore_queen',
     mobs: ['sporeling', 'capbeast', 'ventspitter'], arch: 'buried',
@@ -2479,6 +2874,25 @@ RUIN_SPEC[1].bonus2 = 'sealed_ash';
 RUIN_SPEC[2].bonus2 = 'deep_ember';
 RUIN_SPEC[3].bonus2 = 'blight_spawn';
 RUIN_SPEC[4].bonus2 = 'spore_dust';
+
+/* --- 세션 3: 가라앉은 유적 (비밀) ---
+   스토리와 아무 상관이 없다. 바다 밑 **가장 깊은 바위층**(y 600~660)에 봉해져 있고,
+   해저 바닥에 갈라진 틈 하나로만 들어간다(arch 'seabed' — 지표 아래에 묻는 'sunken'과
+   이름이 겹쳐 헷갈렸던 자리다). 틈 입구는 바닷물에 잠겨 있어 헤엄쳐 들어가야 하고,
+   거기서 400칸을 더 내려간다 — 산소가 곧 입장료다.
+   난이도는 세션 2 마지막 유적(rank 6)과 세션 3 보스 사이 — rank 7.
+   방을 잘게 쪼개(maze) 다른 유적보다 훨씬 미로 같다.
+   ★ 다섯 유적 뒤에 붙인다 — 위의 RUIN_SPEC[0..4] 배정이 먼저 끝나야 한다. */
+RUIN_SPEC.push({
+  id: 'abyss', n: '가라앉은 유적', x: 210, y: 600, w: 92, h: 60,
+  wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10, torch: T.GLOWCAP,
+  traps: ['brine', 'dart', 'crumble', 'mine'], boss: 'drowned_keeper',
+  mobs: ['ruin_guard', 'archivist', 'lantern'],
+  rank: 7, tier: 5, trapRate: 1.0, spikeRate: 0.5, chestRate: 0.24, mobMul: 1.25,
+  arch: 'seabed', plan: 'warren', rooms: 26, maze: 1, entryKind: 'maze',
+  decor: [['growth', T.KELPPLANT, 0.5], ['stalac', T.RUINBRICK, 0.35], ['brazier', T.GLOWCAP, 0.4]],
+  bonus: 'sunken_coin', bonus2: 'abyss_pearl'
+});
 
 /* 도면 — 굵은 격자(가로 4칸 x 세로 3칸). `#` 에 방을 둔다.
    방 하나가 최소 11x9라 격자 한 칸에 방 하나둘이 들어간다. 도면이 너무 빡빡해서
@@ -2750,7 +3164,11 @@ const EVENTS = {
     d: '달이 붉다. 오늘 밤은 밖에 있으면 안 된다.',
     night: 1, chance: 0.08, zones: ['surface', 'ice', 'corrupt', 'jungle', 'glowfen'],
     table: ['crimson_howler', 'crimson_eye', 'crimson_howler', 'zombie', 'crimson_eye'],
-    cap: 34, tint: '#6a1414', tintAmt: 0.5, rw: 2.2
+    cap: 34, tint: '#6a1414', tintAmt: 0.5, rw: 2.2,
+    /* 붉은 달만 **플레이어 레벨을 탄다.** 세계의 다른 모든 몹은 레벨을 안 따라간다
+       (그래야 레벨을 올릴수록 강해진 느낌이 남는다). 이 밤 하나만 예외로 두어,
+       "오늘은 나가면 안 된다"가 후반에도 그대로 성립하게 한다. */
+    lvScale: 1
   },
   sandstorm: {
     n: '모래폭풍', i: '🌪',
@@ -2781,14 +3199,220 @@ const EVENTS = {
   }
 };
 
+/* ---------------- 업적 ----------------
+   **새 카운터를 만들지 않는다.** 세이브에 이미 들어 있는 것만 읽는다 —
+   p.kills · p.mined · p.bossKilled · p.gathered · p.deepest · p.highest ·
+   G.talked · G.crafted · G.sideDone · G.dayCount · G.lairs · G.tabletsRead.
+   업적 하나 때문에 세는 값을 새로 만들면 세이브가 계속 불어나고, 옛 세이브에서는
+   그 값이 0부터 시작해 "이미 한 일"이 사라진다.
+
+   check(G)는 **순수 함수**다. 부수 효과를 넣지 말 것 — 달성 여부를 다시 계산해도
+   같은 답이 나와야 하고, 아래 checkAch()가 여러 시점에서 반복 호출한다.
+
+   판정 시점은 game.js의 checkAch()가 정한다(처치·제작·채굴·장 넘김·깊이 갱신 등).
+   프레임마다 전부 순회하지 않는다. */
+const ACH_CAT = { story: '여정', farm: '농사', auto: '자동화', gather: '손재주',
+  explore: '탐험', hunt: '토벌', life: '살림', odd: '별난 것' };
+/* 난이도 — UI가 색으로 가른다. 쉬움 초록 · 중간 노랑 · 어려움 빨강.
+   기준은 "언제쯤 저절로 되는가"다. easy는 평범히 놀다 보면 닿고, mid는 마음먹고
+   한동안 해야 하며, hard는 작정하고 파야 한다. */
+const ACH_TIER = { easy: ['쉬움', '#6fbf5a'], mid: ['중간', '#d8b048'], hard: ['어려움', '#d05a4a'] };
+const ACH_ORDER = { easy: 0, mid: 1, hard: 2 };
+/** 숨은 업적인가 — **어려움은 전부 숨긴다.** 어려운 것은 하나같이 "누가 시켜서 하는
+    일이 아닌 것"이라, 조건을 미리 읽어 버리면 찾아내는 재미가 그 자리에서 사라진다.
+    쉬움·중간은 그대로 보여 준다 — 그쪽은 "다음에 뭘 할까"를 고르는 목록이어야 한다.
+    h: 1은 등급과 무관하게 숨기고 싶을 때 쓰는 딱지다(지금은 어려움과 겹친다).
+    규칙을 여기 한 곳에 둔 이유는, 되돌리거나 등급을 바꾸는 게 한 줄이면 되게 하려는 것. */
+function achHidden(a) { return !!a.h || a.t === 'hard'; }
+/* h: 1 — **숨은 업적.** 달성하기 전에는 이름도 조건도 안 보이고 '???'로만 뜬다.
+   전부 어려움 등급이고, 하나같이 "누가 시켜서 하는 일이 아닌 것"들이다 —
+   조건을 미리 읽어 버리면 찾아내는 재미가 그 자리에서 사라진다.
+   난이도 배지는 그대로 보여 준다. 무엇인지는 몰라도 **얼마나 어려운지는** 알아야
+   목록이 그냥 빈칸으로 읽히지 않는다. */
+
+/* 업적 50개. 갈래 여덟, 난이도 셋.
+   기준은 되도록 **이미 세이브에 있는 값**으로 물었다 — p.gathered · p.kills ·
+   p.mined · p.bossKilled · p.deepest · p.highest · G.crafted · G.talked ·
+   G.sideDone · G.dayCount · G.tabletsRead · world.machines.
+   그것만으로 못 재는 것(플레이 시간·거래 횟수·익사)만 G.tally에 따로 센다. */
+const ACHIEVEMENTS = [
+  // ---------------- 여정 (스토리) ----------------
+  { id: 'a_ch1', cat: 'story', t: 'easy', i: '✦', n: '첫 조각', d: '제 1 장을 넘긴다.',
+    check: g => g.chapter >= 2 },
+  { id: 'a_village', cat: 'story', t: 'easy', i: '🏚', n: '되살아난 마을', d: '여명 마을을 되찾는다.',
+    check: g => !!g.villageUnlocked },
+  { id: 'a_session2', cat: 'story', t: 'mid', i: '🧱', n: '벽 너머', d: '세션 2에 들어선다.',
+    check: g => g.chapter >= SESSIONS[1].ch0 },
+  { id: 'a_session3', cat: 'story', t: 'mid', i: '🌊', n: '가라앉은 쪽', d: '세션 3에 들어선다.',
+    check: g => g.chapter >= SESSIONS[2].ch0 },
+  { id: 'a_first_boss', cat: 'story', t: 'easy', i: '👑', n: '처음 넘어뜨린 것', d: '보스를 하나 잡는다.',
+    check: g => Object.keys(g.player.bossKilled || {}).length >= 1 },
+  { id: 'a_five_hearts', cat: 'story', t: 'mid', i: '💠', n: '다섯 심장', d: '별을 쫓아온 것까지 잡는다.',
+    check: g => !!g.player.bossKilled.pursuer },
+  { id: 'a_story_bosses', cat: 'story', t: 'hard', i: '⚔', n: '이야기를 끝까지', d: '스토리 보스를 모두 잡는다.',
+    check: g => ['king_slime', 'bone_lord', 'corrupt_heart', 'frost_witch', 'void_king',
+      'storm_warden', 'first_keeper', 'pursuer', 'overseer', 'proliferator', 'hepha',
+      'archetype', 'tide_warden'].every(k => g.player.bossKilled[k]) },
+  { id: 'a_all_bosses', h: 1, cat: 'story', t: 'hard', i: '🏆', n: '남김없이', d: '스토리·유적·비밀 보스를 전부 잡는다.',
+    check: g => ['king_slime', 'bone_lord', 'corrupt_heart', 'frost_witch', 'void_king',
+      'storm_warden', 'first_keeper', 'pursuer', 'overseer', 'proliferator', 'hepha',
+      'archetype', 'tide_warden', 'mine_horror', 'ice_warden', 'sand_guardian',
+      'spore_queen', 'blight_maw', 'drowned_keeper', 'restorer', 'shaft_maw']
+      .every(k => g.player.bossKilled[k]) },
+
+  // ---------------- 농사 ----------------
+  { id: 'a_first_crop', cat: 'farm', t: 'easy', i: '🌱', n: '첫 이랑', d: '작물을 처음 거둔다.',
+    check: g => ['wheat', 'starroot', 'ashcap'].some(k => (g.player.gathered[k] || 0) >= 1) },
+  { id: 'a_first_cook', cat: 'farm', t: 'easy', i: '🍞', n: '첫 끼니', d: '요리를 하나 만든다.',
+    check: g => achCount(ACH_FOODS, k => (g.crafted || {})[k]) >= 1 },
+  { id: 'a_harvest', cat: 'farm', t: 'mid', i: '🌾', n: '첫 곳간', d: '밀을 100개 거둔다.',
+    check: g => (g.player.gathered.wheat || 0) >= 100 },
+  { id: 'a_three_crops', cat: 'farm', t: 'mid', i: '🧺', n: '세 이랑', d: '밀·별무·잿버섯을 50개씩 거둔다.',
+    check: g => ['wheat', 'starroot', 'ashcap'].every(k => (g.player.gathered[k] || 0) >= 50) },
+  { id: 'a_cook', cat: 'farm', t: 'mid', i: '🍲', n: '부엌을 아는 사람', d: '요리를 여섯 가지 만든다.',
+    check: g => achCount(ACH_FOODS, k => (g.crafted || {})[k]) >= 6 },
+  { id: 'a_feast', cat: 'farm', t: 'hard', i: '🥘', n: '잔칫상', d: '가장 손이 많이 가는 요리를 만든다.',
+    check: g => !!(g.crafted || {}).food_feast },
+  { id: 'a_farm_1000', cat: 'farm', t: 'hard', i: '🚜', n: '들판을 통째로', d: '작물을 모두 합쳐 1,000개 거둔다.',
+    check: g => ['wheat', 'starroot', 'ashcap'].reduce((a, k) => a + (g.player.gathered[k] || 0), 0) >= 1000 },
+
+  // ---------------- 자동화 ----------------
+  { id: 'a_first_mach', cat: 'auto', t: 'easy', i: '🔧', n: '처음 놓은 기계', d: '기계를 하나 놓는다.',
+    check: g => achMach(g) >= 1 },
+  { id: 'a_power', cat: 'auto', t: 'easy', i: '🔌', n: '전기를 끌어오다', d: '발전기·축전지·전주를 모두 만든다.',
+    check: g => ['m_gen', 'm_battery', 'm_pole'].every(k => (g.crafted || {})[k]) },
+  { id: 'a_first_line', cat: 'auto', t: 'mid', i: '⚙', n: '스스로 도는 것', d: '기계를 20대 놓는다.',
+    check: g => achMach(g) >= 20 },
+  { id: 'a_smart', cat: 'auto', t: 'mid', i: '🤖', n: '기계를 만드는 기계', d: '조립기·제련기·압착기·정제기를 모두 만든다.',
+    check: g => ['m_assembler', 'm_smelter', 'm_press', 'm_refinery'].every(k => (g.crafted || {})[k]) },
+  { id: 'a_lv4_mach', cat: 'auto', t: 'mid', i: '🔩', n: '가압 설비', d: '4단계 전용 기계 넷을 모두 만든다.',
+    check: g => ['m_pressor', 'm_desal', 'm_belt_f', 'm_battery_hi'].every(k => (g.crafted || {})[k]) },
+  { id: 'a_factory', cat: 'auto', t: 'hard', i: '🏭', n: '공장', d: '기계를 80대 놓는다.',
+    check: g => achMach(g) >= 80 },
+  /* crafted는 **제작 횟수**를 센다(한 번에 8개가 나와도 1). 개수를 재려면 gathered를
+     봐야 한다 — 만든 물건도 addItem을 거치므로 거기 쌓인다. */
+  { id: 'a_belt', cat: 'auto', t: 'hard', i: '➡', n: '길게 잇다', d: '컨베이어 벨트를 200개 만든다.',
+    check: g => (g.player.gathered.m_belt || 0) + (g.player.gathered.m_belt_f || 0) >= 200 },
+
+  // ---------------- 손재주 ----------------
+  { id: 'a_first_pick', cat: 'gather', t: 'easy', i: '⛏', n: '연장부터', d: '곡괭이를 만든다.',
+    check: g => ['pick_copper', 'pick_iron', 'pick_steel', 'pick_mythril', 'pick_abyss']
+      .some(k => (g.crafted || {})[k]) },
+  { id: 'a_wood_200', cat: 'gather', t: 'easy', i: '🪵', n: '나무꾼', d: '나무를 200개 모은다.',
+    check: g => (g.player.gathered.wood || 0) >= 200 },
+  { id: 'a_first_fish', cat: 'gather', t: 'easy', i: '🐟', n: '첫 손맛', d: '물고기를 하나 낚는다.',
+    check: g => ['fish_common', 'fish_silver', 'fish_deep'].some(k => (g.player.gathered[k] || 0) >= 1) },
+  { id: 'a_gunpowder', cat: 'gather', t: 'mid', i: '💥', n: '터지는 것', d: '화약을 만든다.',
+    check: g => !!(g.crafted || {}).gunpowder },
+  { id: 'a_fish', cat: 'gather', t: 'mid', i: '🎣', n: '물가에 오래 앉아', d: '물고기 세 종류를 30마리씩 낚는다.',
+    check: g => ['fish_common', 'fish_silver', 'fish_deep'].every(k => (g.player.gathered[k] || 0) >= 30) },
+  { id: 'a_abyss_gear', cat: 'gather', t: 'mid', i: '🔱', n: '심해에서 온 것', d: '4단계 시설로 심해 장비를 만든다.',
+    check: g => ['spear_tide', 'blade_shark', 'bow_harpoon', 'orb_abyss', 'hammer_tide',
+      'gun_harpoon', 'tome_abyss', 'pick_abyss'].some(k => (g.crafted || {})[k]) },
+  { id: 'a_mine_2000', cat: 'gather', t: 'mid', i: '🪓', n: '파고 또 파고', d: '타일을 2,000번 캔다.',
+    check: g => achSum(g.player.mined) >= 2000 },
+  { id: 'a_enh10', cat: 'gather', t: 'hard', i: '🔨', n: '열 겹', d: '장비를 +10까지 두들긴다.',
+    check: g => achAnyItem(g, it => (it.e || 0) >= 10) },
+  { id: 'a_mine_20000', h: 1, cat: 'gather', t: 'hard', i: '🕳', n: '땅을 뒤집다', d: '타일을 20,000번 캔다.',
+    check: g => achSum(g.player.mined) >= 20000 },
+
+  // ---------------- 탐험 ----------------
+  { id: 'a_cave', cat: 'explore', t: 'easy', i: '🕯', n: '첫 동굴', d: '지하 60칸까지 내려간다.',
+    check: g => g.player.deepest >= 120 },
+  { id: 'a_deep', cat: 'explore', t: 'mid', i: '⬇', n: '심층', d: '지하 깊은 층까지 내려간다.',
+    check: g => g.player.deepest >= DEEP_Y },
+  { id: 'a_hell', cat: 'explore', t: 'mid', i: '🔥', n: '가장 아래', d: '지옥에 발을 딛는다.',
+    check: g => g.player.deepest >= HELL_Y },
+  { id: 'a_sky', cat: 'explore', t: 'mid', i: '☁', n: '구름 위', d: '하늘 섬에 오른다.',
+    check: g => g.player.highest !== undefined && g.player.highest <= SKY_Y },
+  { id: 'a_lore', cat: 'explore', t: 'mid', i: '🪨', n: '읽은 사람', d: '유적 석판 셋을 모두 읽는다.',
+    check: g => Object.keys(g.tabletsRead || {}).length >= 3 },
+  { id: 'a_seafloor', cat: 'explore', t: 'hard', i: '🐙', n: '숨이 닿지 않는 곳', d: '심해 평원 바닥까지 내려간다.',
+    check: g => g.player.deepest >= 690 },
+  { id: 'a_yunseul', h: 1, cat: 'explore', t: 'hard', i: '🫧', n: '물속의 집', d: '아무도 말해 주지 않은 사람을 찾아낸다.',
+    check: g => !!(g.talked || {}).yunseul },
+
+  // ---------------- 토벌 ----------------
+  { id: 'a_kill_50', cat: 'hunt', t: 'easy', i: '🗡', n: '쉰 번', d: '몬스터를 50마리 잡는다.',
+    check: g => achSum(g.player.kills) >= 50 },
+  { id: 'a_kill_300', cat: 'hunt', t: 'mid', i: '💀', n: '삼백 번', d: '몬스터를 300마리 잡는다.',
+    check: g => achSum(g.player.kills) >= 300 },
+  { id: 'a_bloodmoon', cat: 'hunt', t: 'mid', i: '🌑', n: '붉은 밤을 견딘 자', d: '붉은 달에 나오는 것을 50마리 잡는다.',
+    check: g => (g.player.kills.crimson_howler || 0) + (g.player.kills.crimson_eye || 0) >= 50 },
+  { id: 'a_ruin_bosses', cat: 'hunt', t: 'hard', i: '🗝', n: '유적을 비운 자', d: '유적 미니보스 다섯을 모두 잡는다.',
+    check: g => ['mine_horror', 'ice_warden', 'sand_guardian', 'spore_queen', 'blight_maw']
+      .every(k => g.player.bossKilled[k]) },
+  /* 상자를 여는 것만으로는 안 준다 — **잡아야** 준다. 상자는 미끼일 뿐이고,
+     이 업적이 가리키는 건 그 뒤에 벌어지는 일이다. 어려움이라 자동으로 숨는다. */
+  { id: 'a_isle', cat: 'hunt', t: 'hard', i: '🏝', n: '섬을 내려놓게 하다', d: '떠 있는 섬을 붙들고 있던 것을 잡는다.',
+    check: g => !!g.player.bossKilled.isle_keeper },
+  { id: 'a_secret_bosses', h: 1, cat: 'hunt', t: 'hard', i: '🕳', n: '아무도 시키지 않은 일', d: '환원기와 갱을 메운 것을 잡는다.',
+    check: g => !!(g.player.bossKilled.restorer && g.player.bossKilled.shaft_maw) },
+  { id: 'a_kill_3000', cat: 'hunt', t: 'hard', i: '☠', n: '삼천 번', d: '몬스터를 3,000마리 잡는다.',
+    check: g => achSum(g.player.kills) >= 3000 },
+
+  // ---------------- 살림 ----------------
+  { id: 'a_inn', cat: 'life', t: 'easy', i: '🛏', n: '하룻밤', d: '여관에서 한 번 잔다.',
+    check: g => ((g.tally || {}).inn || 0) >= 1 },
+  { id: 'a_village4', cat: 'life', t: 'mid', i: '🏘', n: '여명 교역지', d: '마을을 4단계까지 올린다.',
+    check: g => g.villageLv() >= 4 },
+  { id: 'a_side10', cat: 'life', t: 'mid', i: '📜', n: '부탁받는 사람', d: '의뢰를 10건 끝낸다.',
+    check: g => achSum(g.sideDone) >= 10 },
+  { id: 'a_day50', cat: 'life', t: 'mid', i: '🌅', n: '오십 일', d: '50일을 넘긴다.',
+    check: g => g.dayCount >= 50 },
+  { id: 'a_gold', cat: 'life', t: 'mid', i: '🪙', n: '금고가 무겁다', d: '금화를 100만 모은다.',
+    check: g => g.player.gold >= 1000000 },
+  { id: 'a_pet_max', cat: 'life', t: 'hard', i: '🐾', n: '끝까지 키운 것', d: '펫을 10레벨까지 키운다.',
+    check: g => achAnyItem(g, it => idef(it).type === 'pet' && (it.lv || 1) >= PET_LV_MAX) },
+  { id: 'a_gold10m', h: 1, cat: 'life', t: 'hard', i: '💰', n: '쓸 데가 없다', d: '금화를 1,000만 모은다.',
+    check: g => g.player.gold >= 10000000 },
+
+  // ---------------- 별난 것 ----------------
+  { id: 'a_trade1', cat: 'odd', t: 'easy', i: '🤝', n: '첫 거래', d: '상인과 처음 거래한다.',
+    check: g => ((g.tally || {}).trade || 0) >= 1 },
+  { id: 'a_play1h', cat: 'odd', t: 'easy', i: '⏳', n: '한 시간', d: '한 시간을 논다.',
+    check: g => ((g.tally || {}).play || 0) >= 3600 },
+  { id: 'a_drown', cat: 'odd', t: 'easy', i: '🫁', n: '숨이 먼저 다했다', d: '물속에서 숨이 다해 죽는다.',
+    check: g => ((g.tally || {}).drown || 0) >= 1 },
+  { id: 'a_trade100', cat: 'odd', t: 'mid', i: '🧾', n: '단골', d: '거래를 100건 한다.',
+    check: g => ((g.tally || {}).trade || 0) >= 100 },
+  { id: 'a_play10h', cat: 'odd', t: 'mid', i: '🕰', n: '열 시간', d: '열 시간을 논다.',
+    check: g => ((g.tally || {}).play || 0) >= 36000 },
+  { id: 'a_die20', cat: 'odd', t: 'mid', i: '⚰', n: '그래도 다시', d: '스무 번 쓰러졌다 일어난다.',
+    check: g => ((g.tally || {}).deaths || 0) >= 20 },
+  { id: 'a_play100h', h: 1, cat: 'odd', t: 'hard', i: '🌌', n: '백 시간', d: '백 시간을 논다.',
+    check: g => ((g.tally || {}).play || 0) >= 360000 },
+  { id: 'a_level100', cat: 'odd', t: 'hard', i: '⭐', n: '백 번째 아침', d: '레벨 100에 닿는다.',
+    check: g => g.player.level >= 100 }
+];
+const ACH_FOODS = ['food_bread', 'food_stew', 'food_soup', 'food_pie', 'food_curry',
+  'food_jelly', 'food_mstew', 'food_tea', 'food_feast'];
+/* 업적 판정에 쓰는 잔 도구들. check가 순수하도록 여기 모아 둔다. */
+function achSum(o) { let n = 0; for (const k in (o || {})) n += o[k] | 0; return n; }
+function achCount(list, fn) { let n = 0; for (const k of list) if (fn(k)) n++; return n; }
+function achMach(g) { return (g.world && g.world.machines) ? g.world.machines.size : 0; }
+function achEquip(g, fn) {
+  const eq = g.player.equip;
+  for (const k in eq) if (eq[k] && fn(eq[k])) return true;
+  return false;
+}
+function achAnyItem(g, fn) {
+  if (achEquip(g, fn)) return true;
+  for (const it of g.player.bag) if (it && fn(it)) return true;
+  for (const it of (g.vault || [])) if (it && fn(it)) return true;
+  return false;
+}
+
 /* ---------------- NPC ---------------- */
 const NPCS = {
   elara:  { n: '엘라라', i: '🧝‍♀️', c: '#c8a06a', role: '캠프 관리인', art: 'elara' },
-  borin:  { n: '보린', i: '🧔', c: '#8a6a4a', role: '대장장이', shop: ['pick_iron', 'sword_iron', 'helm_iron', 'potion_hp_small', 'potion_iron', 'torch', 'band_worn'], art: 'borin' },
+  /* disc — 이 사람에게 살 때 붙는 할인. 베이스캠프는 "돌아올 곳"이지 장사하는
+     자리가 아니라, 여기서 파는 초반 물건까지 값이 오르면 시작이 답답해진다. */
+  borin:  { n: '보린', i: '🧔', c: '#8a6a4a', role: '대장장이', disc: 0.4, shop: ['pick_iron', 'sword_iron', 'helm_iron', 'potion_hp_small', 'potion_iron', 'torch', 'band_worn'], art: 'borin' },
   mira:   { n: '미라', i: '🧙‍♀️', c: '#8f6fd8', role: '마녀', shop: ['staff_branch', 'potion_mp_small', 'ring_focus', 'potion_str'], art: 'mira' },
   old:    { n: '이름 없는 노인', i: '👴', c: '#9a9a9a', role: '???', art: 'elder' },
   /* --- 여명 마을 주민 (세션 1 종장 이후) --- */
-  tamer:  { n: '리카', i: '🦝', c: '#b8804a', role: '조련사', art: 'rika', shop: ['egg_common', 'egg_rare', 'egg_epic'], pets: true,
+  tamer:  { n: '리카', i: '🦝', c: '#b8804a', role: '조련사', art: 'rika', shop: ['egg_common', 'egg_rare', 'egg_epic', 'pet_candy'], pets: true,
             line: '짐승들이 낯을 좀 가리긴 해도, 알만 있으면 금방 정든다.' },
   trainer:{ n: '가른', i: '🐺', c: '#5a6a5a', role: '훈련소 교관', art: 'garn',
             line: '잿빛이 걷혔다고 몸이 저절로 강해지진 않아. 굴러야지.' },
@@ -2797,10 +3421,135 @@ const NPCS = {
   seira:  { n: '세이라', i: '🔨', c: '#7a8fb8', role: '재련사', art: 'seira',
             line: '물건은 그대로 두고 이름만 바꿔 주는 거야. 운이 나쁘면 더 나빠지고.' },
   kade:   { n: '케이드', i: '⚙', c: '#8a8a96', role: '기술자', art: 'kade', shop: ['charm_cap', 'charm_conduit', 'battery_cell', 'circuit'],
-            line: '이 도시, 사람이 지은 게 아니야. 그럼 누가 지었냐고? 그걸 알아내는 게 내 일이고.' }
+            line: '이 도시, 사람이 지은 게 아니야. 그럼 누가 지었냐고? 그걸 알아내는 게 내 일이고.' },
+  /* 떠돌이 상인 셋 — 마을이 커질수록 하나씩 늘어난다(1·3·4단계).
+     shop 배열이 아니라 dynamicShop 표시를 쓴다: 재고가 날마다 다시 굴려지므로
+     정적 표에 박아 둘 수 없고, G.shopStock(세이브에 남는다)에서 읽어 온다.
+     셋은 파는 갈래가 갈린다 — 겹치면 굳이 셋을 둘 이유가 없다. */
+  pedlar:  { n: '허윤', i: '🎒', c: '#c8925a', role: '잡화상', art: 'pedlar', dynamicShop: true,
+             line: '오늘 실은 건 이게 전부요. 내일 오면 또 다른 게 있을 거고.' },
+  /* 가라앉은 도시의 마지막 주민. 심해 평원의 굴 속 공기 주머니에 산다.
+     세션 2의 원형이 "나는 첫 번째였고 마지막까지 혼자였다"고 한 것의 반대편 —
+     만들어진 것이 아니라 남겨진 사람이다. */
+  yunseul: { n: '윤슬', i: '🫧', c: '#7fb8d8', role: '가라앉은 도시의 마지막 사람', art: 'yunseul', dynamicShop: true,
+             from: 15,          // 대사 묶음이 15장(세션 3 서장)부터 시작한다
+             line: '위로 올라간 사람은 아무도 안 돌아왔어. 그래서 나는 안 올라가기로 했지.' },
+  oreman:  { n: '도경', i: '⛏', c: '#8a7a5a', role: '재료상', art: 'oreman', dynamicShop: true,
+             line: '캐 오는 건 자네 몫이지만, 급하면 내 것을 사 가게. 값은 좀 치러야지.' },
+  armsman: { n: '벽산', i: '🛡', c: '#7a6a8a', role: '장비상', art: 'armsman', dynamicShop: true,
+             line: '자네 손에 맞는 것만 내놓네. 들지도 못할 걸 팔아 봐야 서로 손해니까.' }
 };
 /* 여명 마을 주민 — 종장 전에는 아예 등장하지 않으므로 별도 잠금 대사가 필요 없다 */
-const DAWN_NPCS = ['tamer', 'trainer', 'haran', 'seira', 'kade'];
+const DAWN_NPCS = ['tamer', 'trainer', 'haran', 'seira', 'kade', 'pedlar', 'oreman', 'armsman'];
+
+/* ---------------- 떠돌이 상인 ----------------
+   마을이 커질수록 상인이 하나씩 는다(1·3·4단계). 셋이 파는 갈래가 갈리는 게 핵심 —
+   겹치면 굳이 셋일 이유가 없다. 마을 고정 상점 넷(보린·미라·리카·케이드)은 재고가
+   고정이라, 이쪽 셋은 "그날 운"이 역할이다.
+
+   pool 항목: { id, w(뽑기 가중치), max(한 칸 최대 개수) }
+   equip: true 면 개별 목록 대신 ITEMS를 훑어 **플레이어 레벨에 맞는 장비**를 후보로
+   삼는다(고정 목록으로 두면 레벨이 오를수록 쓸모없어지고, 다 적어 두면 초반에
+   못 드는 물건만 잔뜩 뜬다). */
+
+/* 장비상이 절대 취급하지 않는 것 — 보스·스토리 산출물. 사서 넘길 수 있으면
+   그 보스를 잡을 이유가 사라진다. */
+const SHOP_DENY = new Set([
+  'sword_first', 'hammer_still', 'crossbow_first', 'tome_first', 'blade_arche', 'tome_origin',
+  'lance_orbit', 'bow_meridian', 'hammer_cave', 'sword_arc', 'gun_rail', 'saw_auto', 'drill_abyss',
+  'charm_govern', 'charm_orbit', 'charm_maker', 'charm_zenith', 'jetpack', 'charm_lamp2',
+  'helm_exo', 'chest_exo', 'boots_exo', 'helm_aether', 'chest_aether', 'boots_aether',
+  'pick_arc', 'pick_soul',
+  /* 윤슬 전용 — 다른 상인의 equipPool이 ITEMS를 훑어 뽑으므로, 막지 않으면
+     벽산(장비상) 재고에 그대로 섞여 "유일한 경로"가 아니게 된다 */
+  'amul_scale', 'charm_bell', 'ring_deep', 'sigil_current', 'mace_bell', 'harpoon_lamp'
+]);
+
+const MERCHANTS = [
+  /* --- 윤슬 (비밀 상점) ---
+     마을이 아니라 심해 평원의 굴에 있다. spot이 없으므로 placeMerchants가 건너뛰고,
+     buildSea가 직접 놓는다. 재고 갱신은 마을 상인과 똑같이 stockOf()가 dayCount로 굴린다. */
+  {
+    npc: 'yunseul', lv: 1, slots: 5, markup: 1.6, spot: null,
+    pool: [
+      // 고유 장신구 — 여기서만 나온다. 비중을 낮춰 "오늘 떴다"가 사건이 되게 한다
+      { id: 'amul_scale', w: 3 }, { id: 'charm_bell', w: 3 },
+      { id: 'ring_deep', w: 3 }, { id: 'sigil_current', w: 3 },
+      // 고유 무기 2종 — 더 귀하다
+      { id: 'mace_bell', w: 2 }, { id: 'harpoon_lamp', w: 2 },
+      // 바다 계열 무기 — 4단계 시설이 없어도 손에 넣을 수 있는 우회로
+      { id: 'spear_tide', w: 4 }, { id: 'blade_shark', w: 4 },
+      { id: 'bow_harpoon', w: 4 }, { id: 'orb_abyss', w: 4 },
+      // 포션 — 물속에서 쓸 것 위주. 제일 흔하다
+      { id: 'potion_hp_greater', w: 12, max: 4 }, { id: 'potion_mp_greater', w: 10, max: 4 },
+      { id: 'potion_glow_greater', w: 10, max: 3 }, { id: 'potion_iron', w: 8, max: 3 },
+      { id: 'potion_str', w: 7, max: 3 },
+      // 잠수 소모품 — 숨이 곧 자원인 곳이라 이게 값을 한다
+      { id: 'jelly_lamp', w: 8, max: 6 }, { id: 'abyss_pearl', w: 5, max: 3 },
+      { id: 'pressure_plate_m', w: 6, max: 6 }, { id: 'rope_kelp', w: 6, max: 8 }
+    ]
+  },
+  {
+    npc: 'pedlar', lv: 1, slots: 6, markup: 1.22,
+    // 광장 좌판 — 2층이 아직 없는 단계라 길에 선다
+    spot: { kind: 'plaza', off: -13 },
+    pool: [
+      // --- 세션 2(마을이 열리는 시점)의 기본 살림 ---
+      { id: 'potion_hp', w: 10, max: 5 }, { id: 'potion_mp', w: 10, max: 5 },
+      { id: 'potion_hp_greater', w: 6, max: 3 }, { id: 'potion_mp_greater', w: 6, max: 3 },
+      { id: 'torch', w: 7, max: 20 }, { id: 'food_pie', w: 6, max: 4 },
+      { id: 'food_soup', w: 6, max: 4 }, { id: 'food_mstew', w: 5, max: 3 },
+      { id: 'food_tea', w: 5, max: 3 }, { id: 'food_jelly', w: 4, max: 3 },
+      { id: 'potion_glow', w: 5, max: 3 }, { id: 'potion_str', w: 4, max: 2 },
+      { id: 'potion_iron', w: 4, max: 2 }, { id: 'seed_wheat', w: 5, max: 8 },
+      { id: 'seed_starroot', w: 4, max: 6 }, { id: 'seed_ashcap', w: 3, max: 6 },
+      { id: 'fertilizer', w: 4, max: 6 }, { id: 'platform', w: 4, max: 30 },
+      { id: 'plank', w: 4, max: 30 }, { id: 'brick', w: 3, max: 30 },
+      // --- 4단계(교역지)부터 좋은 것이 섞인다 ---
+      { id: 'potion_glow_greater', w: 4, max: 2, vlv: 4 },
+      { id: 'potion_str_greater', w: 3, max: 2, vlv: 4 },
+      { id: 'potion_iron_greater', w: 3, max: 2, vlv: 4 },
+      { id: 'food_feast', w: 3, max: 2, vlv: 4 },
+      { id: 'food_curry', w: 3, max: 2, vlv: 4 },
+      { id: 'rod_adv', w: 2, max: 1, vlv: 4 }
+      // 세션 3 물건은 그 지역이 생기면 sess: 3 으로 여기 붙인다
+    ]
+  },
+  {
+    npc: 'oreman', lv: 3, slots: 7, markup: 1.3,
+    spot: { kind: 'floor2', block: 2, off: 3 },   // 재련집 2층
+    pool: [
+      /* 마을은 세션 2에 열린다 — 그 시점 제작이 강철·회로 쪽이라 그쪽을 주로 판다.
+         나무·돌 같은 기초 재료도 계속 쓰이므로 남기되 가중치를 낮췄다. */
+      { id: 'iron_ore', w: 7, max: 14 }, { id: 'iron_bar', w: 7, max: 10 },
+      { id: 'coal', w: 7, max: 14 }, { id: 'steel_plate', w: 7, max: 10, sess: 2 },
+      { id: 'gear_basic', w: 6, max: 8, sess: 2 }, { id: 'wire', w: 6, max: 10, sess: 2 },
+      { id: 'circuit', w: 5, max: 6, sess: 2 }, { id: 'rivet', w: 6, max: 12, sess: 2 },
+      { id: 'lead_ore', w: 5, max: 12 }, { id: 'lead_bar', w: 5, max: 8 },
+      { id: 'polymer', w: 4, max: 6, sess: 2 }, { id: 'refined_oil', w: 4, max: 6, sess: 2 },
+      { id: 'crude_oil', w: 4, max: 8, sess: 2 }, { id: 'motor', w: 3, max: 4, sess: 2 },
+      { id: 'battery_cell', w: 3, max: 3, sess: 2 }, { id: 'machine_frame', w: 2, max: 3, sess: 2 },
+      { id: 'gold_ore', w: 4, max: 8 }, { id: 'gold_bar', w: 3, max: 5 },
+      { id: 'mythril_ore', w: 3, max: 6 }, { id: 'mythril_bar', w: 2, max: 4 },
+      { id: 'crystal', w: 4, max: 6 }, { id: 'spider_silk', w: 4, max: 8 },
+      { id: 'wood', w: 3, max: 20 }, { id: 'stone', w: 3, max: 20 },
+      { id: 'fern_frond', w: 3, max: 10 }, { id: 'vine_coil', w: 3, max: 8 },
+      // --- 4단계: 교역로가 열려 귀한 것도 들어온다 ---
+      { id: 'aether_shard', w: 2, max: 4, vlv: 4 },
+      { id: 'core_shard', w: 2, max: 4, vlv: 4 },
+      { id: 'power_core', w: 2, max: 3, vlv: 4, sess: 2 },
+      { id: 'conduit_part', w: 3, max: 5, vlv: 4, sess: 2 }
+      // 세션 3 재료(화약 원료 등)는 그 지역이 생기면 sess: 3 으로 붙인다
+    ]
+  },
+  {
+    npc: 'armsman', lv: 4, slots: 6, markup: 1.45,
+    spot: { kind: 'floor2', block: 1, off: 3 },   // 조련사집 2층
+    // 무기·갑옷·장신구를 레벨에 맞춰 그때그때 뽑는다
+    equip: { types: ['weapon', 'armor', 'acc'], lvSlack: 3 }
+  }
+];
+
 
 /* ---------------- 마을 단계별 주민 한 마디 ----------------
    주민 다섯이 고정 대사 하나씩만 들고 있으면, 지붕이 올라가고 성벽이 서도 마을 사람
@@ -3542,7 +4291,36 @@ const PETS = {
 /* 펫 피해 배율 — 위 기준 피해는 "펫을 처음 손에 넣는 레벨 80 언저리"에서의 값이다.
    레벨에 정비례로 곱하면 후반(레벨 200)에 터무니없이 커지므로 완만하게만 키운다.
    레벨 80에서 약 1.0배, 200에서 약 2.4배. */
+/* 레벨 배수 — 세계의 기본 규칙(몹은 레벨을 안 탄다)에서 **일부러 뺀 것들**만 쓴다.
+   pow가 클수록 가파르다: 붉은 달 1.0, 좀비 0.5(절반).
+     붉은 달  25레벨 1.58 · 50레벨 2.50 · 75레벨 3.95 · 100레벨 6.25
+     좀비     25레벨 1.26 · 50레벨 1.58 · 75레벨 1.99 · 100레벨 2.50
+   체력·공격력에만 걸고 방어력은 그대로 둔다 — 방어까지 배로 오르면 피해가 낮은
+   무기로는 아예 흠집도 안 난다.
+   v1.1: 처음엔 밑이 3이라 100레벨에 9배였는데 "생각보다 너무 강력하다"는 지적을 받고
+   2.5로 낮췄다(9배 → 6.25배). 50레벨마다 곱해지는 모양은 그대로다. */
+const LV_SCALE_BASE = 2.5;
+function levelMult(level, pow) { return Math.pow(LV_SCALE_BASE, Math.max(0, level) / 50 * (pow || 1)); }
+function bloodMult(level) { return levelMult(level, 1); }
+
 function petDmgScale(level) { return Math.max(0.45, 0.07 + level * 0.0116); }
+
+/* ---------------- 펫 레벨 ----------------
+   펫 아이템 인스턴스에 lv·xp를 붙인다(it.lv, it.xp). 인스턴스는 세이브의 bag/equip에
+   그대로 직렬화되므로 필드를 더하면 저장은 저절로 된다. 옛 세이브의 펫은 lv가 없어
+   `it.lv || 1` 로 읽는다 — 마이그레이션이 필요 없는 대신 읽는 쪽이 늘 이 꼴이어야 한다.
+
+   ★ 배수를 둘로 나눈 이유. 펫 피해는 **이미 플레이어 레벨을 타고 있다**
+   (petDmgScale, entity.js). 여기에 펫 레벨까지 같은 폭으로 곱하면 성장이 두 겹이 되어
+   후반에 펫이 본체를 앞지른다. 그래서 레벨이 주로 키우는 것은 **패시브(b)** 쪽이고
+   (10레벨 2.08배), 공격력 쪽은 완만하게만 따라온다(10레벨 1.54배). */
+const PET_LV_MAX = 10;
+function petLvMul(lv) { return 1 + 0.12 * ((lv || 1) - 1); }   // 패시브 b 배수
+function petAtkMul(lv) { return 1 + 0.06 * ((lv || 1) - 1); }  // 자동 공격 배수
+function petXpNext(lv) { return Math.round(600 * Math.pow(1.6, (lv || 1) - 1)); }
+/* 처치 경험치의 이 비율만큼 낀 펫에게 들어간다. 두 칸에 각각 온전히 들어간다 —
+   나눠 주면 펫을 둘 끼울수록 둘 다 안 크는 이상한 벌이 된다. */
+const PET_XP_SHARE = 0.08;
 /* 펫 아이템 — PETS를 단일 출처로 삼아 ITEMS 항목을 자동으로 만든다.
    이름·수치를 두 군데 적어 두면 반드시 어긋나므로 여기서 파생시킨다. */
 for (const id in PETS) {
@@ -3951,6 +4729,89 @@ const CHAPTERS = [
       '"이제 아래엔 아무것도 안 남았지?"\n' +
       '케이드가 웃었다. "응. 처음으로, 아래보다 위가 더 시끄러워."\n\n' +
       '— 세 션 2 · 끝 —'
+  },
+  /* ================= 세 션 3 =================
+     서장 · 제1장 · 제2장까지만이다. **종장은 아직 없다** — 계속 이어 갈 이야기라
+     여기서 매듭지으면 안 된다. 세션 경계는 data.js의 SESSIONS 표가 잡는다. */
+  {
+    id: 15, title: '물이 지운 쪽', sub: '세션 3 · 서 장', art: 'chapter_15_drowned',
+    line: '서쪽 끝, 지도가 끊기는 자리',
+    intro: '설계실이 꺼지고 나흘째, 서쪽에서 바람이 달라졌다.\n\n' +
+      '소금 냄새다. 이 대륙에는 바다가 없다고 배웠는데.\n\n' +
+      '보린이 오래된 측량도를 펼쳤다. 서리 지대 왼쪽은 그냥 여백이다.\n' +
+      '"여긴 아무것도 안 그려져 있어. 못 가 본 게 아니라, 그릴 게 없었다는 뜻이야."\n\n' +
+      '엘라라: "…아니면 그리고 나서 지운 거겠지."\n\n' +
+      '서리 지대를 지나자 눈이 얼음으로 바뀌었다. 흙이 한 겹도 없다.\n' +
+      '그리고 얼음이 끝나는 곳에서, 물이 시작됐다.\n\n' +
+      '수면 아래로 무언가 줄지어 서 있는 것이 비친다. 굴뚝 같기도 하고, 탑 같기도 하다.\n' +
+      '케이드가 오래 들여다보다 말했다. "저거 도시야."',
+    obj: [
+      { type: 'depth', y: 120, t: '수면 아래로 내려가 보기' },
+      { type: 'collect', item: 'kelp', n: 30, t: '해초 30개 수집' },
+      { type: 'kill', target: 'reef_crab', n: 12, t: '암초 게 12기 처치' },
+      { type: 'craft', item: 'tank_air', t: '휴대용 산소통 제작' }
+    ],
+    rw: { xp: 5200000, gold: 2000000, items: [['tank_air', 1], ['jelly_lamp', 20]] },
+    outro: '숨이 먼저 떨어진다. 물은 사람을 밀어내지 않고, 그냥 기다린다.\n\n' +
+      '통 하나를 등에 메고서야 겨우 지붕 하나를 만져 봤다. 기와가 아니라 판이었다.\n' +
+      '공창에서 본 것과 같은 판.\n\n' +
+      '미라: "여기도 저 사람들이 만든 거야?"\n' +
+      '케이드: "…아니. 여긴 저 사람들이 **버린** 거야."'
+  },
+  {
+    id: 16, title: '내려갈수록 밝은 것', sub: '세션 3 · 제 1 장', art: 'chapter_16_lanterns',
+    line: '빛이 닿은 적 없는 곳에서 빛나는 것들',
+    intro: '수면에서 열 칸만 내려가도 캄캄하다. 그런데 더 내려가면 다시 밝아진다.\n\n' +
+      '초롱을 단 것들이 산다. 해파리도, 아귀도, 저 혼자 빛을 만든다.\n' +
+      '보린이 그 주머니를 하나 건져 올려 손바닥에 놓고 한참을 봤다.\n' +
+      '"…이거, 우리 용광로보다 오래 켜져 있겠는데."\n\n' +
+      '가라앉은 거리에는 문패가 그대로 붙어 있다. 글자는 우리가 쓰는 것과 같다.\n' +
+      '누가 살던 곳이다. 도망친 흔적이 아니라, 하루가 그대로 멈춘 흔적이다.\n\n' +
+      '엘라라: "왜 아무도 안 나갔지?"\n' +
+      '케이드: "나갈 데가 없었겠지. 위가 이미 잿더미였으면."',
+    obj: [
+      { type: 'kill', target: 'reef_shark', n: 16, t: '암초 상어 16기 처치' },
+      { type: 'kill', target: 'deep_octopus', n: 10, t: '심해 문어 10기 처치' },
+      { type: 'collect', item: 'abyss_pearl', n: 8, t: '심연 진주 8개 수집' },
+      { type: 'craft', item: 'abyss_core', t: '심해 노심 제작' }
+    ],
+    rw: { xp: 8000000, gold: 3200000, items: [['abyss_core', 2], ['ring_pearl', 1]] },
+    outro: '노심을 눌러 굳히는 데 진주 두 개가 들어갔다. 값이 비싸다는 뜻이 아니라,\n' +
+      '그만큼 깊이 내려갔다 왔다는 뜻이다.\n\n' +
+      '보린이 그걸 작업대에 물리자 나무 상판이 삐걱거리며 내려앉았다.\n' +
+      '"…받침을 다시 짜야겠는데. 이건 우리 대장간이 감당할 물건이 아니야."\n\n' +
+      '그날 밤 여명 마을 공방에 불이 늦게까지 켜져 있었다.\n' +
+      '물속에서 쓸 것을 물 밖에서 만드는 자리가 하나 더 생겼다.'
+  },
+  {
+    id: 17, title: '가라앉은 종', sub: '세션 3 · 제 2 장', art: 'chapter_17_bell',
+    line: '물이 대신 대답한다',
+    intro: '가장 깊은 골에 종탑이 서 있다. 물속인데 종이 녹슬지 않았다.\n\n' +
+      '케이드가 손을 대자 물이 먼저 울렸다.\n' +
+      '"…이거 우리가 치는 게 아니라, 이미 치고 있었던 거야. 아무도 못 들었을 뿐이지."\n\n' +
+      '종이 울릴 때마다 해저 모래가 들린다. 그 아래에 무언가 웅크리고 있다.\n' +
+      '사람 모양은 아니다. 그렇다고 짐승도 아니다.\n\n' +
+      '미라가 뒤로 물러서며 말했다. "…파수꾼이야. 또."\n' +
+      '엘라라: "이번엔 뭘 지키는데."\n\n' +
+      '보린이 조용히 대답했다. "지키는 게 아닐지도 몰라. 여기 남은 게 저것뿐인 걸 수도 있지."',
+    obj: [
+      { type: 'kill', target: 'abyss_angler', n: 14, t: '심연 초롱아귀 14기 처치' },
+      { type: 'craft', item: 'sum_tide', t: '가라앉은 종 제작' },
+      { type: 'boss', target: 'tide_warden', t: '조수의 파수꾼과의 결착' }
+    ],
+    rw: { xp: 14000000, gold: 5600000, items: [['tide_heart', 1], ['hammer_tide', 1], ['chest_abyss', 1]] },
+    outro: '파수꾼은 싸우는 내내 한 번도 물 밖으로 나오려 하지 않았다.\n' +
+      '나올 수 없어서가 아니라, 나갈 생각이 아예 없어서.\n\n' +
+      '무너지면서 그것이 남긴 소리는 말이 아니라 종소리였다. 한 번, 길게.\n\n' +
+      '물이 잠깐 맑아졌다. 저 아래 거리 끝까지 보인다 — 문이 열린 집, 널린 그릇, 세워 둔 수레.\n' +
+      '다들 다시 돌아올 생각이었던 자리다.\n\n' +
+      '보린이 종을 한 번 더 쳤다. 이번에는 아무 일도 일어나지 않았다.\n' +
+      '"…이제 그냥 종이네."\n\n' +
+      '올라오는 길, 서쪽 수면 너머로 무언가가 솟아 있는 것이 보였다.\n' +
+      '산맥이다. 어제까지 없던.\n\n' +
+      '케이드가 그걸 오래 보다가 말했다.\n' +
+      '"…아직 안 끝났구나."\n\n' +
+      '— 이야기는 계속됩니다 —'
   }
 ];
 
@@ -3970,7 +4831,8 @@ const CHAPTERS = [
      docs/story-and-sessions.md 에 표로 모아 두었다. */
 const SESSIONS = [
   { id: 1, n: '세션 1', t: '잿빛의 여정', ch0: 0 },
-  { id: 2, n: '세션 2', t: '벽 너머', ch0: 9 }
+  { id: 2, n: '세션 2', t: '벽 너머', ch0: 9 },
+  { id: 3, n: '세션 3', t: '물이 지운 쪽', ch0: 15 }
 ];
 /** 그 장이 속한 세션. 표보다 큰 장은 마지막 세션으로 본다 */
 const sessionOf = (ch) => {
@@ -4101,6 +4963,20 @@ const TABLETS = [
    장 카드가 "무슨 일이 일어났는가"라면 이쪽은 "그 일을 사람들이 어떻게 받아들였는가"다 —
    보린은 손으로, 미라는 꿈으로, 가른은 몸으로, 하란은 방 수로 센다. */
 const DIALOGUE = {
+  /* 윤슬 — 15·16·17장. DIALOGUE는 챕터 인덱스로 고르고 넘치면 마지막 것이 잘려 쓰이므로,
+     세션 3 이전에 어쩌다 만나도 첫 묶음이 나온다(만날 수 있는 곳이 심해뿐이라 사실상 없다). */
+  yunseul: [
+    ['…사람이네. 진짜 사람.',
+     '놀라진 마. 나도 그쪽이 더 놀라워.',
+     '위가 잿더미가 됐다는 소식까지는 들었어. 그 뒤로 아무도 안 내려왔고, 아무도 안 올라갔지.',
+     '나는 여기 공기가 남아 있는 걸 먼저 알아챘을 뿐이야. 그게 다야.'],
+    ['초롱 든 것들 봤지? 저것들은 빛이 닿은 적이 없는데도 스스로 빛을 만들어.',
+     '나는 그걸 삼십 년 봤어. 그러다 알았지 — 빛은 위에서 오는 게 아니라는 걸.',
+     '…필요한 게 있으면 골라. 오늘 꺼낸 건 이게 전부고, 내일은 다른 게 나올 거야.'],
+    ['종이 울렸구나. 소리가 여기까지 왔어.',
+     '그 아래 있는 건 지키는 게 아니야. 남은 거지. 나처럼.',
+     '가서 끝내 주면 고맙겠어. 아니면… 그냥 돌아와도 돼. 여긴 그대로 있을 테니까.']
+  ],
   elara: [
     ['살아 있는 사람이구나. …앉아. 아니, 앉을 시간도 없겠지.',
      '별이 떨어진 뒤로 땅이 색을 잃고 있어. 어제 있던 담장이 오늘은 회색 덩어리가 돼.',

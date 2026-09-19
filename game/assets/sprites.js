@@ -37,6 +37,9 @@ const Sprites = {
     this.meta.backgrounds.parallax.files.forEach(f => add(f.split('/')[1].replace('.png',''), f));
     add('title', this.meta.backgrounds.title.file);
     this.meta.backgrounds.chapters.files.forEach(f => add(f.split('/')[1].replace('.png',''), f));
+    // 구름 — 절이 있을 때만 읽는다(옛 매니페스트에는 없다)
+    if (this.meta.backgrounds.clouds)
+      this.meta.backgrounds.clouds.files.forEach(f => add(f.split('/')[1].replace('.png', ''), f));
     // 여명 마을 시설물 (한 장짜리 정지 이미지, 상태별 변형 파일이 있을 수 있다)
     if (this.meta.objects) for (const k in this.meta.objects.files) {
       const o = this.meta.objects.files[k];
@@ -226,12 +229,21 @@ const Sprites = {
     return true;
   },
 
-  /* 시설물(한 장짜리 정지 이미지)을 게임 좌표(x,y)에 w×h 크기로 그린다. */
+  /* 시설물을 게임 좌표(x,y)에 w×h 크기로 그린다.
+     정지 그림 한 장이 기본이고, **가로가 규격 비율의 꼭 두 배면 2프레임 시트**로 읽어
+     번갈아 그린다(분수대와 같은 규칙). 프레임 수를 매니페스트에 따로 적지 않는 이유는,
+     그림을 새로 넣는 날 매니페스트 고치는 걸 잊어도 저절로 맞게 하려는 것이다. */
   drawObj(c, key, x, y, w, h) {
     const im = this.img[key]; if (!im || !im.width) return false;
+    const want = w / h;
+    const frames = Math.abs(im.width / im.height - want) < 0.03 ? 1
+      : Math.abs(im.width / 2 / im.height - want) < 0.03 ? 2 : 1;
+    const fw = im.width / frames;
+    const t = (window.G && G.time) || 0;
+    const fr = frames > 1 ? (((t * 3.5) | 0) % frames) : 0;
     c.save();
     c.imageSmoothingEnabled = false;
-    c.drawImage(im, Math.round(x), Math.round(y), w, h);
+    c.drawImage(im, fr * fw, 0, fw, im.height, Math.round(x), Math.round(y), w, h);
     c.restore();
     return true;
   },
