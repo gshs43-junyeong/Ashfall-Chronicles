@@ -996,3 +996,9 @@ body.booting #title-screen{visibility:hidden}
 
 /* 불가능 모드로 기록이 지워진 사망 화면 — 부활 버튼이 의미 없으므로 감춘다 */
 #death-screen.wipe #btn-respawn{display:none}
+
+/* 손댄 세이브 — 목록에서 바로 보이게 */
+.slot-card.tampered{border-color:#7a3428}
+.slot-card.tampered .slot-name{color:#a8968c}
+.slot-card.tampered .slot-meta{color:#d05a4a}
+.slot-card.tampered .slot-load-btn{opacity:.45;cursor:not-allowed}
