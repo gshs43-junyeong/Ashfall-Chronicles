@@ -98,6 +98,10 @@ const SHIFT = 800;   // data.js — world.js보다 먼저 읽혀야 해서 여�
 | `tools/` | zip 빌드·애셋을 굽고 재는 파이썬 도구들 |
 | `docs/` | 작업 기록 — 변경 사항·효과음 프롬프트·배포 캐시 메모 |
 
+> `tools/sync-from-flat.sh` 은 **잠가 두었다.** v1.1까지는 평면 작업본(저장소 밖)에서
+> 고치고 이 스크립트로 `game/`에 옮겼지만, 2026-09-20부터 **리포가 원본**이다.
+> 그 스크립트를 되살려 돌리면 통합 이후의 작업이 옛 코드로 덮인다.
+
 읽는 순서(`game/index.html` 기준):
 `util → data → world → tileart → itemart → titlebg → sprites-manifest →
 sprites → entity → factory → ui → music → game`
