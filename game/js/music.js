@@ -13,13 +13,20 @@ const BGM = {
   village: 'assets/audio/victorys_chiptune.m4a',    // 베이스캠프 · 여명 마을
   east:     'assets/audio/broken_quest.m4a',        // 버섯 골짜기 · 부패한 땅 (마을 동쪽)
   catacomb: 'assets/audio/catacomb_atlas.m4a',      // 심층 · 모든 던전과 유적
-  sky:      'assets/audio/skyward_overture.m4a'     // 하늘 섬
+  sky:      'assets/audio/skyward_overture.m4a',    // 하늘 섬
+  // 세션 3 — 물 위와 물 아래. 같은 결의 두 곡이라 오갈 때 튀지 않는다
+  sea:      'assets/audio/patient_emptiness.m4a',   // 바다 수면 · 해변 · 빙하 지대 (2:30)
+  seadeep:  'assets/audio/deep_pressure.m4a'        // 물에 잠겨 있는 동안 (2:45)
 };
 
 /* 파일이 아직 없는 곡은 여기 적힌 곡으로 대신한다. 스프라이트·효과음과 같은 규칙 —
    "있으면 쓰고, 없으면 원래 있던 것으로 돌아간다". 없는 파일을 매 프레임 다시 열려고
    드는 것을 막는 역할도 겸한다(그러면 초당 수십 개의 Audio가 새로 만들어진다). */
-const BGM_FALLBACK = { east: 'normal', catacomb: 'tense', sky: 'normal' };
+const BGM_FALLBACK = { east: 'normal', catacomb: 'tense', sky: 'normal',
+  /* 바다 곡이 없으면 평상시 곡, 심해 곡이 없으면 바다 곡 → 결국 평상시 곡으로
+     내려간다. 심해가 바다를 거쳐 가게 둔 이유는, 바다 곡만 먼저 들어와도
+     물속에서 그 곡이 나오게 하려는 것이다. */
+  sea: 'normal', seadeep: 'sea' };
 
 const Music = {
   vol: 0.42, fadeDur: 0.9,

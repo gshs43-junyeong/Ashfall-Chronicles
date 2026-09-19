@@ -2,23 +2,45 @@
 'use strict';
 
 const TS = 22;              // 타일 픽셀 크기
-const WW = 4200;            // 세계 가로(타일) — 5단계에서 1.5배로 넓히고 바이옴 둘을 더 넣었다
-const WH = 480;             // 세계 세로(타일) — 지하 깊이 2배
+const WW = 5000;            // 세계 가로(타일) — v1.1에서 세션 3 지역을 왼쪽에 넣으며 4200에서 늘렸다
+// SHIFT(=800)는 data.js에 있다 — RUIN_SPEC 좌표도 같은 값으로 밀어야 해서 거기서 먼저 정의한다.
+const WH = 720;             // 세계 세로(타일) — 세션 3 심해를 담으려고 480에서 늘렸다
+/* 보통 세계의 바닥. 예전 WH 값이다 — 심해(세션 3) 말고는 이 아래로 지형을 만들지
+   않고 기반암으로 채운다. 배열만 720칸이고, 지옥·심층 깊이는 예전 그대로다. */
+const WORLD_BOT = 480;
 const SURF_BASE = 70;       // 기준 지표 높이
 const HELL_Y = 390;         // 지옥 시작 깊이
 const DEEP_Y = 280;         // 심층 시작
 const SKY_Y = 40;           // 하늘 섬 구역 (이보다 위)
 const MIN_CAVE = 30;        // 이보다 작고 고립된 공동은 동굴로 치지 않고 메운다(타일 수)
-const CAMP_X0 = 1000, CAMP_X1 = 1100;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
+const CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1100 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
 
+/* 세션 3 — 왼쪽으로 갈수록 가라앉은 바다 · 빙하 지대 · 서리 지대 순으로 나온다.
+   처음에는 WW를 못 늘린다는 전제로 서리 지대(0~620)를 셋으로 쪼갰는데, 그러면 서리
+   지대가 190칸으로 줄고 세션 2 제단 하나가 새 지역에 파묻혔다. WW를 5000으로 늘려
+   **왼쪽에 800칸을 새로 붙이는** 쪽으로 바꿨다 — 기존 세계는 좌표만 통째로 밀릴 뿐
+   구성이 그대로고(서리 지대도 620칸 그대로), 새 지역은 바다 430 + 빙하 370을 온전히 쓴다. */
+const SEA_X1 = 430;          // 가라앉은 바다 — 여기부터 왼쪽이 물
+/* 바다 구역에는 지상 물건을 놓지 않는다 — 나무·하늘 섬·상자·동굴·지상 몹 전부.
+   물가에서 8칸 여유를 둬 물가에 걸친 것도 걸러 낸다. */
+/* 해변 폭. 46칸이던 것을 90칸으로 넓혔다 — 몹 생성은 플레이어에서 24~45칸 떨어진
+   **화면 밖** 지점을 고르는데, 해변이 46칸이면 그 반경이 통째로 해변 밖으로 나가서
+   해변 전용 몹(표류물 더미)이 사실상 안 나왔다. */
+const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 모래 해변이다
+/* 바다 + 해변 — 나무·풀·꽃 같은 지상 초목을 놓지 않는다. 예전에는 바다만 막아서
+   (SEA_X1+8=438) 해변 뒷부분(438~476)에 나무가 자랐다. */
+const inSeaZone = x => x < SEA_X1 + BEACH_W + 4;
+const GLACIER_X1 = SHIFT;    // 빙하 지대 오른쪽 끝 = 원래 세계가 시작하는 자리
 const BIOMES = [
-  { id: 'ice', x0: 0, x1: 620, n: '서리 지대' },
-  { id: 'forest', x0: 620, x1: 1400, n: '잿빛 숲' },
-  { id: 'jungle', x0: 1400, x1: 2000, n: '울림 정글' },
-  { id: 'desert', x0: 2000, x1: 2680, n: '메마른 사구' },
-  { id: 'forest2', x0: 2680, x1: 3300, n: '동쪽 숲' },
-  { id: 'glowfen', x0: 3300, x1: 3760, n: '버섯 골짜기' },
-  { id: 'corrupt', x0: 3760, x1: WW, n: '부패한 땅' }
+  { id: 'sea', x0: 0, x1: SEA_X1, n: '가라앉은 바다' },
+  { id: 'glacier', x0: SEA_X1, x1: GLACIER_X1, n: '빙하 지대' },
+  { id: 'ice', x0: GLACIER_X1, x1: 620 + SHIFT, n: '서리 지대' },
+  { id: 'forest', x0: 620 + SHIFT, x1: 1400 + SHIFT, n: '잿빛 숲' },
+  { id: 'jungle', x0: 1400 + SHIFT, x1: 2000 + SHIFT, n: '울림 정글' },
+  { id: 'desert', x0: 2000 + SHIFT, x1: 2680 + SHIFT, n: '메마른 사구' },
+  { id: 'forest2', x0: 2680 + SHIFT, x1: 3300 + SHIFT, n: '동쪽 숲' },
+  { id: 'glowfen', x0: 3300 + SHIFT, x1: 3760 + SHIFT, n: '버섯 골짜기' },
+  { id: 'corrupt', x0: 3760 + SHIFT, x1: WW, n: '부패한 땅' }
 ];
 const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
 
@@ -30,9 +52,14 @@ const MAT_LAYER = [
   { top: T.SAND, soil: T.SAND, sub: T.SANDSTONE, deep: T.STONE, wall: 8, subWall: 2 },
   { top: T.CORRUPTGRASS, soil: T.CORRUPTGRASS, sub: T.EBONSTONE, deep: T.EBONSTONE, wall: 3, subWall: 3 },
   { top: T.JUNGLEGRASS, soil: T.MUD, sub: T.MUD, deep: T.STONE, wall: 11, subWall: 11 },
-  { top: T.GLOWMOSS, soil: T.DIRT, sub: T.SPORESTONE, deep: T.STONE, wall: 12, subWall: 12 }
+  { top: T.GLOWMOSS, soil: T.DIRT, sub: T.SPORESTONE, deep: T.STONE, wall: 12, subWall: 12 },
+  // 6 빙하 — 흙 한 겹 없이 얼음이 그대로 두껍게 쌓여 있다
+  { top: T.SNOW, soil: T.ICE, sub: T.ICE, deep: T.ICE, wall: 5, subWall: 5 },
+  // 7 바다 — 지면은 해저 모래다
+  { top: T.SAND, soil: T.SAND, sub: T.SANDSTONE, deep: T.STONE, wall: 8, subWall: 2 }
 ];
-const MAT_OF = { ice: 0, forest: 1, forest2: 1, desert: 2, corrupt: 3, jungle: 4, glowfen: 5 };
+const MAT_OF = { ice: 0, forest: 1, forest2: 1, desert: 2, corrupt: 3, jungle: 4, glowfen: 5,
+                 glacier: 6, sea: 7 };
 
 /* ================= 여명 마을 배치표 =================
    마을 지면(gy-3 ~ gy-1)을 쓰는 것은 **전부 여기서** 정한다.
@@ -65,7 +92,12 @@ const DAWN_BUILDINGS = [
    굴려서 하루 단위로 갱신하는 방향. */
 /* 건물 안 배치 — 건물 시작점 기준. 네 건물 중 가장 좁은 것이 폭 17이고 벽이 off+16이라,
    마지막 탁자(off+14)까지 전부 들어간다. 문은 벽(off+0 · off+w-1)에 뚫으므로 여기 없다. */
-const DAWN_INSIDE = { shelf: 2, npc: 6, fac: 10, table: 14 };
+/* 시설(fac)은 9~10칸, 강화 모루는 11~12칸, 탁자는 14~15칸.
+   v1.1: 재련대와 모루를 한 칸씩 왼쪽으로 당겼다(10→9 · 12→11). 오른쪽으로 치우쳐
+   탁자와 붙어 보이던 것을 떼어 놓은 것이고, 13칸이 사이 여백으로 남는다.
+   fac은 네 건물이 함께 쓰는 칸이라 여관·작업대·보관고도 같이 한 칸씩 옮겨진다 —
+   건물마다 따로 두면 같은 층에 선 물건들의 높이·간격이 어긋난다. */
+const DAWN_INSIDE = { shelf: 2, npc: 6, fac: 9, anvil: 11, table: 14 };
 
 /* 광장 — 건물1과 건물2 사이. 왼쪽부터 순서대로 늘어놓는다.
    off는 cx 기준 시작 칸, w는 잡아 두는 칸 수(그림이 더 좁으면 그 안에서 가운데 정렬).
@@ -98,6 +130,8 @@ const DAWN_OBJ = {
   // 키우고, 그리는 쪽(game.js drawFacility)도 발판이 o.h 바닥에 딱 붙게 다시 그림
   inn:       { type: 'inn', w: 44, h: 34 },
   reforge:   { type: 'reforge', w: 44, h: 40 },
+  anvil:     { type: 'anvil', w: 44, h: 44 },      // 강화 모루 — 2×2칸. 4단계에서 재련대 옆에 선다
+
   vault:     { type: 'vault', w: 40, h: 36 },
   // v1.0.4: 가구가 너무 작게 배정돼 있었다(다른 물건 대비 왜소해 보임) — 책장은
   // 슬롯(1칸=22px) 안에서 키울 수 있는 만큼, 탁자는 슬롯 자체를 2칸으로 늘려서 키움
@@ -201,6 +235,11 @@ class World {
     let h = SURF_BASE + (n1(x, 0.011) - 0.5) * 32 + (n1(x + 900, 0.042) - 0.5) * 10;
     if (bid === 'desert') h += 8 + (n1(x + 400, 0.025) - 0.5) * 12;
     else if (bid === 'ice') h -= 8 + (n1(x + 1500, 0.06) - 0.5) * 6;
+    /* 빙하는 서리 지대보다 더 높이 솟고 능선이 거칠다. 바다는 물가로 내려가는
+       완만한 모래톱이고, 진짜 깊이는 buildSea가 따로 파낸다 — 여기서 깊게 잡아도
+       rawH가 108에서 잘려 소용이 없다. */
+    else if (bid === 'glacier') h -= 16 + (n1(x + 2600, 0.09) - 0.5) * 22;
+    else if (bid === 'sea') h -= 2 + (n1(x + 5300, 0.05) - 0.5) * 6;
     else if (bid === 'corrupt') h += 2 + (n1(x + 2200, 0.075) - 0.5) * 24;
     // 정글은 골짜기가 깊게 파이고, 버섯 골짜기는 이름대로 통째로 내려앉아 있다
     else if (bid === 'jungle') h += 6 + (n1(x + 3300, 0.05) - 0.5) * 18;
@@ -235,15 +274,19 @@ class World {
     if (ty > this.surface[clamp(tx, 0, WW - 1)] + 6) {
       if (ty > DEEP_Y) return 'deep';
       if (b === 'corrupt') return 'corrupt';
-      if (b === 'ice') return 'ice';
+      // 빙하 지대도 얼음 구역으로 친다 — 몹 표는 zoneTable이 바이옴으로 한 번 더 가른다
+      if (b === 'ice' || b === 'glacier') return 'ice';
       if (b === 'jungle') return 'jungle';       // 정글은 지하도 정글이다 (뿌리와 진흙층)
       if (b === 'glowfen') return 'glowfen';
       return 'cave';
     }
     if (b === 'corrupt') return 'corrupt';
-    if (b === 'ice') return 'ice';
+    // 해변 — 물가 안쪽 모래밭. 빙하 구역보다 먼저 본다(같은 x대에 걸쳐 있다)
+    if (this.beach && tx >= this.beach.x0 && tx <= this.beach.x1) return 'beach';
+    if (b === 'ice' || b === 'glacier') return 'ice';
     if (b === 'jungle') return 'jungle';
     if (b === 'glowfen') return 'glowfen';
+    if (b === 'sea') return 'sea';              // 바다 — 지상 몹 표를 안 태운다
     return 'surface';
   }
   /** 상자 보상은 지형 이름이 아니라 실제 위치 프로필로 고른다.
@@ -286,7 +329,7 @@ class World {
     this.villageY = vh;
 
     // 여명 마을 부지 (동쪽 숲) — 잿빛에 묻힌 폐허로 미리 세워 두고, 종장 이후 되살린다
-    const dx0 = 2850, dx1 = 2960;          // 여명 마을 — 동쪽 숲
+    const dx0 = 2850 + SHIFT, dx1 = 2960 + SHIFT;    // 여명 마을 — 동쪽 숲
     const dh = this.surface[(dx0 + dx1) >> 1];
     /* 평탄화는 **3단계 성벽 자리 바깥까지** 완전히 평평해야 한다.
        예전에는 dx0-16에서 dx0까지 서서히 기울여서, 하필 성벽이 서는 그 칸(dx0-16,
@@ -312,10 +355,10 @@ class World {
       const soilD = 4 + Math.round(n1(x + 3100, 0.09) * 3);
       const subD = 15 + Math.round(n1(x + 5200, 0.07) * 8);
       const L = MAT_LAYER[m];
-      for (let y = s; y < WH; y++) {
+      for (let y = s; y < WORLD_BOT; y++) {
         let t;
         const depth = y - s;
-        if (y >= WH - 4) t = T.BEDROCK;
+        if (y >= WORLD_BOT - 4) t = T.BEDROCK;
         else if (y >= HELL_Y) t = T.ASH;
         else if (depth === 0) t = L.top;
         else if (depth < soilD) t = L.soil;
@@ -330,7 +373,7 @@ class World {
     // --- 3. 동굴 ---
     for (let x = 1; x < WW - 1; x++) {
       const s = this.surface[x];
-      for (let y = s + 4; y < WH - 5; y++) {
+      for (let y = s + 4; y < WORLD_BOT - 5; y++) {
         const scale = y > DEEP_Y - 36 ? 0.055 : 0.075;
         let v = n2(x, y, scale, 3);
         // 깊을수록 큰 공동
@@ -372,7 +415,7 @@ class World {
       [T.MYTHRIL, 240, 400, 360, 4],
       [T.CRYSTAL, 190, 390, 280, 3],
       [T.SOULSTONE, 300, 420, 200, 3],
-      [T.HELLSTONE, HELL_Y, WH - 6, 600, 5],
+      [T.HELLSTONE, HELL_Y, WORLD_BOT - 6, 600, 5],
       /* --- 3단계 동력 자원 ---
          석탄은 얕은 곳부터 지옥 직전까지 어느 바이옴에나 흔하게 깔아 두어, 공장 1세대를
          시작하는 문턱을 낮췄다. 납은 중간 깊이, 석유(유혈암)는 사막 지하에만 — 사막까지
@@ -399,20 +442,14 @@ class World {
       }
     }
 
-    // --- 6. 지옥 용암 ---
-    for (let x = 0; x < WW; x++) {
-      for (let y = HELL_Y + 6; y < WH - 6; y++) {
-        if (n2(x + 5000, y, 0.05, 2) > 0.66 && this.get(x, y) === T.AIR) {
-          let below = false;
-          for (let d = 1; d < 4; d++) if (this.solid(x, y + d)) below = true;
-          if (below) this.set(x, y, T.LAVA);
-        }
-      }
-    }
+    /* --- 6. 지옥 용암은 여기서 만들지 않는다 ---
+       동굴·유적이 다 파인 뒤라야 "고일 자리"를 제대로 고를 수 있어서, 물 호수와 같은
+       순서(floodCaves 다음)로 floodHell에서 만든다. */
 
     // --- 7. 나무 / 덩굴 ---
     for (let x = 4; x < WW - 4; x++) {
       const s = this.surface[x];
+      if (inSeaZone(x)) continue;                 // 바다에는 나무가 안 선다
       if (x > vx0 - 6 && x < vx1 + 6) continue;
       if (x > dx0 - 10 && x < dx1 + 10) continue;
       const g = this.get(x, s);
@@ -456,6 +493,7 @@ class World {
     // --- 8. 구조물 ---
     this.buildVillage(vx0, vx1, vh, rng);
     this.buildDawnCity(dx0, dx1, dh, rng);
+    this.buildSea(rng, n1);        // 세션 3 심해 — 구조물보다 먼저(그 자리를 피해 놓게)
     this.buildWorks(dx0, dx1, rng);
     this.buildRunaway(dx0, dx1, rng);
     this.buildAtelier(rng);
@@ -466,9 +504,15 @@ class World {
     this.buildDeepShaft(rng);
     this.buildCaverns(rng);
     this.floodCaves(rng);
+    this.floodHell(rng);
     this.buildJungleFalls(rng);
     this.scatterChests(rng);
     this.buildAltars(rng);
+    /* 액체 마무리는 **지형을 건드리는 마지막 단계 뒤**에 와야 한다. 제단은 방을
+       clearBox로 파내는데, 그 방이 이미 고여 있던 용암 밑바닥을 걷어내면 용암이
+       공중에 뜬 띠로 남았다(실제로 13곳 나왔다). */
+    this.sealLiquids();
+    this.decorateWater(rng);     // 물 위 초목 정리 + 수련 — 수면 높이가 확정된 뒤라야 한다
 
     this.spawnX = (vx0 + vx1) >> 1;
     this.spawnY = vh - 3;
@@ -567,7 +611,7 @@ class World {
 
   /** 그 자리에 원래 있어야 할 지층 타일 (메울 때 쓴다) */
   _bedAt(x, y) {
-    if (y >= WH - 4) return T.BEDROCK;
+    if (y >= WORLD_BOT - 4) return T.BEDROCK;
     if (y >= HELL_Y) return T.ASH;
     const L = MAT_LAYER[this.matId[x]], depth = y - this.surface[x];
     if (depth < 20) return L.sub;
@@ -585,7 +629,7 @@ class World {
     let pockets = 0;
     for (let sx = 1; sx < WW - 1; sx++) {
       const top = this.surface[sx] + 3;
-      for (let sy = top; sy < WH - 5; sy++) {
+      for (let sy = top; sy < WORLD_BOT - 5; sy++) {
         const k0 = sy * WW + sx;
         if (seen[k0] || this.tiles[k0] !== T.AIR) continue;
         let sp = 0, n = 0, open = false;
@@ -632,7 +676,11 @@ class World {
       if (!def.crop.next) continue;                        // 이미 다 여물었다
       const x = k % WW, y = (k / WW) | 0;
       if (!TILE_DEF[this.get(x, y + 1)].farm) { this.crops.delete(k); continue; }   // 밭이 없어졌다
-      if (rng.chance(0.22 * (0.55 + dayF * 0.75))) this.tiles[k] = def.crop.next;
+      /* v1.1: 너무 빨리 여물었다 — 심자마자(중앙값 44초, 게임 시간 0.06일) 수확이 돼서
+         밭을 돌볼 이유가 없었다. "한 번 심으면 하루쯤"이 되도록 확률을 1/10로 낮춘다.
+         (지적은 "4배"였지만 4배로는 0.34일밖에 안 된다 — 실측으로 맞춘 값이 1/10이다.
+          하루 = 실시간 720초, 이 값에서 중앙값 716초.) */
+      if (rng.chance(0.022 * (0.55 + dayF * 0.75))) this.tiles[k] = def.crop.next;
     }
   }
 
@@ -755,7 +803,7 @@ class World {
       this.set(rx, gy - 1, T.AIR); this.set(rx, gy - 2, T.AIR);
       this.pushDoor(bx * TS, (gy - 2) * TS, TS, TS * 2, -1);
       this.pushDoor(rx * TS, (gy - 2) * TS, TS, TS * 2, 1);
-      this.objects.push({ type: 'npc', npc: h.npc, x: (bx + h.w / 2) * TS, y: (gy - 2.2) * TS, w: 22, h: 44 });
+      this.objects.push({ type: 'npc', npc: h.npc, x: (bx + h.w / 2) * TS, y: gy * TS - 44, w: 22, h: 44 });
     }
     // 광장 — 작업대/용광로는 플레이어가 직접 만들어 놓는 것과 **같은 크기**(OBJ_SIZE)를
     // 쓴다. 예전엔 여기·여명 마을만 44×34/44×40으로 따로 커서, 손수 지은 것과 나란히
@@ -768,9 +816,9 @@ class World {
     for (let x = cx - 8; x < cx + 9; x++) { this.set(x, gy, T.BRICK); this.set(x, gy - 1, T.AIR); this.set(x, gy - 2, T.AIR); }
     this.set(cx - 9, gy - 1, T.TORCH); this.set(cx + 9, gy - 1, T.TORCH);
     // 귀환 비석 — 여명 마을이 되살아나기 전까지는 아무 반응이 없다
-    this.objects.push({ type: 'waystone', x: (cx - 12) * TS, y: (gy - 2.2) * TS, w: 30, h: 48 });
+    this.objects.push({ type: 'waystone', x: (cx - 12) * TS, y: gy * TS - 48, w: 30, h: 48 });
     // 노인
-    this.objects.push({ type: 'npc', npc: 'old', x: (x1 + 6) * TS, y: (this.surface[x1 + 6] - 2.2) * TS, w: 22, h: 44 });
+    this.objects.push({ type: 'npc', npc: 'old', x: (x1 + 6) * TS, y: this.surface[x1 + 6] * TS - 44, w: 22, h: 44 });
   }
 
   /* ---- 여명 마을 ----
@@ -1016,7 +1064,7 @@ class World {
      하늘 섬 구역이라 발밑이 곧 낭떠러지다 — 그게 이 유적의 전제이자 보스 설계의 근거다. */
   buildCitadel(rng) {
     const w = 74, h = 30;
-    const x0 = 3300, y0 = 4;                     // 버섯 골짜기 위 하늘 (세션 2 바이옴 상공)
+    const x0 = 3300 + SHIFT, y0 = 4;             // 버섯 골짜기 위 하늘 (세션 2 바이옴 상공)
     this.citadel = { x0, y0, w, h, cx: x0 + (w >> 1) };
 
     // 성채 바닥판 — 통째로 떠 있는 판이라 아래가 완전히 뚫려 있다
@@ -1087,7 +1135,7 @@ class World {
      지옥보다 아래(HELL_Y 밑)라 순수하게 "여기까지 올 수 있는가"만 묻는 구역이다. */
   buildDeepShaft(rng) {
     const w = 70, h = 34;
-    const x0 = 640, y0 = WH - 46;                 // 잿빛 숲 최하부 — 지옥 바닥 아래
+    const x0 = 640 + SHIFT, y0 = WORLD_BOT - 46;         // 잿빛 숲 최하부 — 지옥 바닥 아래
     this.deepShaft = { x0, y0, w, h, cx: x0 + (w >> 1) };
 
     const rooms = this.carveDungeon({
@@ -1222,15 +1270,19 @@ class World {
     this.checkDawnLayout(items, gy, plaza);
     for (const o of items) this.objects.push(o);
 
-    // 대로 가로등 — 물건이 선 칸은 건너뛰고 빈자리에만 세운다
+    /* 대로 가로등 — 물건이 선 칸은 건너뛰고 빈자리에만 세운다.
+       문간도 반드시 피한다: 문은 벽을 AIR로 뚫어 만들고 오브젝트로만 존재해서,
+       "빈 칸"으로 보여 등을 세워 버렸다(집3 오른쪽 문 안에 가로등이 박혀 있었다). */
     const taken = new Set();
     for (const o of items) for (let x = o.tx0; x <= o.tx1; x++) taken.add(x);
+    for (const b of blocks) { taken.add(b.x); taken.add(b.x + b.w - 1); }
     for (let x = x0 - 4; x < x1 + 4; x += 9) {
       let t = x;
       while (t < x + 5 && (taken.has(t) || this.solid(t, gy - 1))) t++;
       if (!taken.has(t) && !this.solid(t, gy - 1)) this.set(t, gy - 1, T.TORCH);
     }
     d.lv = 1;
+    this.placeMerchants(1);
     return true;
   }
 
@@ -1240,6 +1292,28 @@ class World {
 
      타일을 실제로 갈아 끼우기 때문에, 한 번 올리면 되돌릴 수 없다.
      대신 플레이어가 직접 지은 것 위에 덮어쓰지 않도록 건드리는 범위를 좁게 잡았다. */
+  /* 떠돌이 상인 배치 — MERCHANTS 표가 자리를 들고 있다(1·3·4단계에 하나씩).
+     같은 사람을 두 번 세우지 않도록 이미 있으면 건너뛴다 — 마을을 3→4로 올릴 때
+     1·3단계 상인을 다시 놓으면 안 되기 때문. */
+  placeMerchants(lv) {
+    const d = this.dawnCity; if (!d) return;
+    const { gy, blocks } = d, cx = (d.x0 + d.x1) >> 1;
+    const ns = DAWN_OBJ.npcBase;
+    for (const m of MERCHANTS) {
+      if (!m.spot) continue;              // 마을 밖 상인(윤슬)은 제 자리에서 따로 놓인다
+      if (m.lv > lv) continue;
+      if (this.objects.some(o => o.type === 'npc' && o.npc === m.npc)) continue;
+      let tx, fy;
+      if (m.spot.kind === 'plaza') {
+        tx = cx + m.spot.off; fy = gy;              // 광장 좌판 — 길바닥에 선다
+      } else {
+        const b = blocks[m.spot.block]; if (!b) continue;
+        tx = b.x + m.spot.off; fy = gy - b.h;       // 2층 바닥 줄
+      }
+      this.objects.push({ type: 'npc', npc: m.npc, x: tx * TS, y: fy * TS - ns.h, w: ns.w, h: ns.h });
+    }
+  }
+
   upgradeVillage(lv) {
     const d = this.dawnCity;
     if (!d || !d.restored || (d.lv || 1) >= lv) return false;
@@ -1275,9 +1349,13 @@ class World {
         this.set(b.x, by, T.TIMBERWALL);
         this.set(b.x + b.w - 1, by, T.TIMBERWALL);
         for (let x = b.x - 1; x <= b.x + b.w; x++) this.set(x, ny, T.ROOFTILE);
-        // 창문 — 1층·2층 양쪽 벽에
+        /* 창문 — 1층·2층 양쪽 벽에.
+           v1.1: 1층 창이 한 칸짜리라 벽 높이(9~12칸)에 비해 너무 작아 보였다.
+           **위로 한 칸씩만** 더해 세로 2칸으로 키운다(gy-4 · gy-5). 2층은 그대로 한 칸 —
+           2층은 층고가 낮아(5칸) 두 칸을 내면 벽이 거의 창이 된다. */
         for (const wx of [b.x, b.x + b.w - 1]) {
           this.set(wx, gy - 4, T.WINDOW);
+          this.set(wx, gy - 5, T.WINDOW);
           this.set(wx, ny + 3, T.WINDOW);
         }
         this.set(b.x + 3, ny + 2, T.TORCH);
@@ -1303,7 +1381,9 @@ class World {
       d.farm = { x0: fx0, x1: fx1, y: gy };
       for (let x = fx0 - 1; x <= fx1 + 1; x++) {
         for (let y = gy - 5; y < gy; y++) this.set(x, y, T.AIR);
-        this.set(x, gy, x < fx0 || x > fx1 ? T.PLANK : T.FARMLAND);
+        const edge = x < fx0 || x > fx1;
+        // 전주가 지나가는 열은 갈지 않고 흙으로 둔다 (기둥 그림과 작물이 겹치지 않게)
+        this.set(x, gy, edge ? T.PLANK : this.poleColumn(x, gy) ? T.DIRT : T.FARMLAND);
       }
       this.set(fx0 - 1, gy - 1, T.FENCE); this.set(fx1 + 1, gy - 1, T.FENCE);
       /* 건초더미는 원래 fx1+2(=x0-1)에 뒀는데, 그 칸이 하필 전주 선로가 내려오는
@@ -1336,13 +1416,10 @@ class World {
       ];
       // 기계를 먼저 다 놓는다 — 기둥을 세우고 나면 그 칸이 막혀 canPlace가 실패한다
       for (const [px, py] of poles) mach(px, py, 'pole');
-      // 기둥은 그 뒤에. 같은 줄에 놓인 다른 전주 칸은 건너뛰고, 지붕·지면에 닿으면 멈춘다
-      for (const [px, py] of poles)
-        for (let y = py + 1; y < gy + 2; y++) {
-          if (this.machines.has(this.i(px, y))) continue;
-          if (this.solid(px, y)) break;
-          this.setWall(px, y, 14);
-        }
+      /* 기둥(전주 아래 몸통)은 타일로 깔지 않는다. 예전엔 통과 가능한 전용 타일을
+         세워 뒀는데, 밭 위 한 칸을 비워야 해서 기둥이 중간에 끊겨 보였고 그 칸만
+         상호작용이 달라지는 문제도 있었다. 이제 기둥은 **그림으로만** 지면까지
+         이어 그린다(factory.js render) — 어떤 상호작용에도 걸리지 않는다. */
       return true;
     }
 
@@ -1393,6 +1470,59 @@ class World {
       }
       // 광장에 깃발 — 배치표에서 비어 있는 칸에만 세운다(게시판·비석 위에 겹치지 않게)
       for (const bx of [cx - 4, cx + 6]) this.set(bx, gy - 3, T.BANNER);
+      this.placeMerchants(3);
+      return true;
+    }
+
+    if (lv === 4) {
+      /* --- 교역지 --- 벽이 서고 나서야 장사꾼이 들어온다.
+         구조를 크게 건드리지 않는다: 장비상 한 사람과 밭 확장뿐이다. 마을 폭(dx0~dx1)을
+         늘리면 평탄화·성벽 위치가 전부 따라가야 해서(v1.0.3 성문 파묻힘 사고) 폭은 그대로
+         두고, 이미 평탄화된 성벽 안쪽 서편으로만 밭을 넓힌다. */
+      /* 밭 확장 — 서쪽만 늘리면 성벽(x0-16)이 코앞이라 3칸밖에 못 늘어난다(실측).
+         양쪽으로 넓힌다: 서쪽은 성벽 안쪽까지, 동쪽은 첫 집 앞까지. 마을 폭(dx0~dx1)은
+         건드리지 않는다 — 늘리면 평탄화·성벽이 전부 따라가야 하고, v1.0.3에서 그러다
+         성문이 지형에 파묻힌 적이 있다. */
+      const f = d.farm;
+      if (f) {
+        const wLimit = x0 + DAWN_WALL.leftOff + 3;      // 울타리(nx0-1) 자리까지 세어 3칸
+        const eLimit = blocks[0].x - 2;                 // 첫 집 앞 한 칸은 비워 둔다
+        const nx0 = Math.max(f.x0 - 6, wLimit);
+        const nx1 = Math.min(f.x1 + 6, eLimit);
+        const till = (x) => {
+          for (let y = gy - 5; y < gy; y++) this.set(x, y, T.AIR);
+          this.set(x, gy, this.poleColumn(x, gy) ? T.DIRT : T.FARMLAND);
+        };
+        // 이미 갈려 있던 원래 밭에도 전주가 지나가면 되돌린다(2단계에서 전주가 선다)
+        for (let x = f.x0; x <= f.x1; x++)
+          if (this.get(x, gy) === T.FARMLAND && this.poleColumn(x, gy)) {
+            this.set(x, gy, T.DIRT);
+            this.crops.delete(this.i(x, gy - 1));
+            if (TILE_DEF[this.get(x, gy - 1)].crop) this.set(x, gy - 1, T.AIR);
+          }
+        for (let x = nx0; x < f.x0; x++) till(x);
+        for (let x = f.x1 + 1; x <= nx1; x++) till(x);
+        this.set(nx0 - 1, gy - 1, T.FENCE);
+        this.set(nx1 + 1, gy - 1, T.FENCE);
+        f.x0 = nx0; f.x1 = nx1;
+      }
+      /* 강화 모루 — **재련대 바로 옆.** 벼리는 일은 한자리에 모여 있어야 오가지 않는다.
+         재련대가 있는 집(DAWN_BUILDINGS에서 fac==='reforge')을 찾아 그 시설칸(10~11)
+         다음 칸(12~13)에 놓는다. 탁자는 14칸부터라 겹칠 자리가 없다.
+         세로는 dawnPlace가 바닥선(gy)에 발을 붙여 주므로 손으로 맞추지 않는다 —
+         예전에 (gy+1)로 잡았다가 한 칸 파묻혔다. */
+      if (!this.objects.some(o => o.type === 'anvil')) {
+        const bi = DAWN_BUILDINGS.findIndex(sp => sp.fac === 'reforge');
+        const rb = bi >= 0 ? blocks[bi] : null;
+        if (rb) {
+          const av = this.dawnPlace(rb.x + DAWN_INSIDE.anvil, 2, DAWN_OBJ.anvil, gy, 'anvil');
+          // 겹침 검사 — 그 집 안에 이미 있는 것들과 실제로 부딪히는지 본다
+          const hit = this.objects.find(o => o.w && aabb(av, o));
+          if (hit) console.warn('강화 모루 자리 겹침:', hit.type);
+          else P(av);
+        }
+      }
+      this.placeMerchants(4);
       return true;
     }
     return false;
@@ -1401,7 +1531,7 @@ class World {
   /* ---- 지하 묘실 ---- */
   buildDungeon(rng, n2) {
     // 묘실도 방 묶음으로. 보스 제단은 가장 넓은 방에 두고, 나머지 방에 함정과 상자를 흩뿌린다
-    const cx = 2300, cy = 240, w = 68, h = 38;   // 사막 지하
+    const cx = 2300 + SHIFT, cy = 240, w = 68, h = 38;   // 사막 지하
     const x0 = cx - (w >> 1), y0 = cy - (h >> 1);
     const rooms = this.carveDungeon({
       x0, y0, w, h, wall: T.BRICK, floor: T.BRICK, bg: 6, rng, depth: 4, minW: 12, minH: 9
@@ -1435,6 +1565,7 @@ class World {
     const N = 32;
     for (let i = 0; i < N; i++) {
       const cx = Math.round(((i + 0.5) / N) * WW + rng.range(-32, 32));
+      if (inSeaZone(cx)) continue;                // 바다 위에는 하늘 섬을 띄우지 않는다
       const cy = rng.int(12, SKY_Y - 8);
       const rw = rng.int(13, 26), rh = rng.int(4, 8);
       this.carveIsland(cx, cy, rw, rh, rng);
@@ -1445,7 +1576,7 @@ class World {
     }
 
     // 관문 섬 — 거대 나무 꼭대기와 이어지며 폭풍 제단이 있다
-    const gx = 1300, gy = 18;              // 하늘 관문 — 잿빛 숲 위
+    const gx = 1300 + SHIFT, gy = 18;      // 하늘 관문 — 잿빛 숲 위
     this.carveIsland(gx, gy, 34, 9, rng);
     this.skyIslands.push({ x: gx, y: gy, w: 34 });
     // 하늘 신전
@@ -1653,6 +1784,10 @@ class World {
       const tx = left ? r.x : r.x + r.w - 1;
       const ty = fy - rng.int(0, 1);
       if (this.get(tx, ty) !== T.AIR) this.set(tx, ty, left ? T.DART_R : T.DART_L);
+    } else if (kind === 'brine') {
+      // 염수 분출구 — 바닥에 박는다. 화염과 달리 피해가 아니라 숨을 앗아간다
+      const bx = r.x + rng.int(2, Math.max(2, r.w - 4));
+      if (this.get(bx, fy + 1) !== T.AIR) this.set(bx, fy + 1, T.BRINEVENT);
     } else if (kind === 'vent') {
       const vx = r.x + rng.int(2, Math.max(2, r.w - 4));
       if (this.get(vx, fy + 1) !== T.AIR) this.set(vx, fy + 1, T.FLAMEVENT);
@@ -1670,6 +1805,21 @@ class World {
   carveRuinEntrance(spec, x0, y0, rng) {
     const ex = clamp(spec.x + rng.int(-(spec.w >> 2), spec.w >> 2), x0 + 3, x0 + spec.w - 4);
     const surf = this.surface[ex];
+
+    /* sunken — 바다 밑 유적 전용. 지표에서 내려가는 입구가 아니라, **해저 바닥에
+       갈라진 틈**에서 시작한다. 유적이 해저에서도 400칸쯤 더 아래라, 틈이 없으면
+       파다가 우연히 닿기를 바라는 수밖에 없다(그건 "비밀"이 아니라 "없는 것"이다).
+       틈 자체는 미로형 통로라 내려가는 동안 이미 함정을 밟는다. */
+    if (spec.arch === 'sunken') {
+      const bed = this.seaBed && ex < this.seaBed.length ? this.seaBed[ex] : this.surface[ex];
+      // 해저 바로 아래에서 시작 — 위쪽은 바닷물이라 헤엄쳐 들어오게 된다
+      for (let x = ex - 1; x <= ex + 1; x++)
+        for (let y = bed - 2; y <= bed + 2; y++)
+          if (this.inB(x, y)) { this.set(x, y, T.SEAWATER); this.setWall(x, y, 8); }
+      this._entranceLandX = null;
+      this._carveEntranceShaft(ex, bed + 3, y0 + 1, spec, rng);
+      return this._entranceLandX === null ? ex : this._entranceLandX;
+    }
 
     if (spec.arch === 'buried') {
       // 입구가 없다. 대신 유적 둘레에 빈 공동을 둘러 두어, 동굴을 파고 다니다
@@ -1733,29 +1883,161 @@ class World {
         가시가 있어 착지 지점을 스스로 골라야 한다
       - maze(미로형): 곧게 뚫는 대신 좌우로 꺾어 내려간다. 굽이마다 사각이 생기므로
         그 자리마다 함정을 심는다 */
+  /** 통로 한 자리에 함정을 하나 심는다. 종류는 유적의 traps 목록에서 고른다.
+      예전에는 어느 통로든 **화살 구멍만** 박혀서, 어느 유적을 들어가든 들어가는 느낌이
+      똑같았다(그래서 재미가 없었다). 이제 같은 자리라도 발판이 꺼지거나, 지뢰가 터지거나,
+      분출구가 뿜는다. `side`는 벽 쪽 함정을 놓을 때 쓸 방향이다. */
+  _shaftTrap(cx, y, spec, rng, side) {
+    const pool = spec.traps && spec.traps.length ? spec.traps : ['dart', 'crumble'];
+    const kind = rng.pick(pool);
+    const dir = side || (rng.chance(0.5) ? -1 : 1);
+    switch (kind) {
+      case 'mine':                                       // 밟으면 터진다 — 바닥에 박는다
+        this.set(cx, y, T.TRIPMINE); break;
+      case 'crumble':                                    // 발판이 꺼진다
+        for (let k = -1; k <= 1; k++) this.set(cx + k, y, T.CRUMBLE); break;
+      case 'vent':
+        this.set(cx + dir, y, T.FLAMEVENT); break;
+      case 'brine':
+        this.set(cx + dir, y, T.BRINEVENT); break;
+      case 'spike':
+        this.set(cx + dir, y, T.SPIKE); break;
+      default:                                           // dart — 벽에 구멍
+        this.set(cx + dir * 2, y, dir > 0 ? T.DART_L : T.DART_R); break;
+    }
+  }
+
   _carveEntranceShaft(ex, yTop, yBot, spec, rng) {
     const kind = spec.entryKind || 'foothold';
     if (kind === 'maze') { this._carveMazeShaft(ex, yTop, yBot, spec, rng); return; }
+    if (kind === 'slopeR') { this._carveSlopeShaft(ex, yTop, yBot, spec, rng, 1); return; }
+    if (kind === 'slopeL') { this._carveSlopeShaft(ex, yTop, yBot, spec, rng, -1); return; }
+    if (kind === 'wild') { this._carveWildShaft(ex, yTop, yBot, spec, rng); return; }
 
+    const wide = kind === 'sinkhole' ? 3 : 1;             // 함몰형은 통로가 넓다
     for (let y = yTop; y <= yBot; y++) {
-      for (let dx = -1; dx <= 1; dx++) this.set(ex + dx, y, T.AIR);
+      for (let dx = -wide; dx <= wide; dx++) this.set(ex + dx, y, T.AIR);
       this.setWall(ex, y, spec.bg);
     }
     const rows = yBot - yTop;
+
     if (kind === 'foothold') {
       for (let y = yTop; y <= yBot; y++) if ((y - yTop) % 3 === 0) this.set(ex, y, T.PLATFORM);
-      // 4칸마다 좌우 번갈아 — 확률이 아니라 자리 자체를 고정해 최소 개수를 보장한다
-      for (let y = yTop + 2; y < yBot; y += 4) {
-        const leftSide = Math.floor((y - yTop) / 4) % 2 === 0;
-        this.set(ex + (leftSide ? -1 : 1), y, leftSide ? T.DART_R : T.DART_L);
+      for (let y = yTop + 2; y < yBot; y += 4)
+        this._shaftTrap(ex, y, spec, rng, Math.floor((y - yTop) / 4) % 2 === 0 ? -1 : 1);
+
+    } else if (kind === 'collapse') {
+      /* 무너지는 길 — 발판이 전부 부서지는 바닥이다. 밟는 순간 꺼지므로 멈춰 설 수가 없고,
+         떨어지는 동안 옆에서 함정이 걸린다. 서너 칸에 한 번은 성한 발판을 남겨 둔다 —
+         전부 꺼지면 그냥 낙하일 뿐이라 "무너진다"는 느낌이 안 남는다. */
+      for (let y = yTop + 2; y <= yBot; y += 2) {
+        const solid = ((y - yTop) / 2) % 4 === 3;
+        for (let k = -1; k <= 1; k++) this.set(ex + k, y, solid ? T.PLATFORM : T.CRUMBLE);
+        if (!solid && rng.chance(0.5)) this._shaftTrap(ex, y - 1, spec, rng);
       }
+
+    } else if (kind === 'sinkhole') {
+      /* 함몰형 — 넓은 깔때기. 벽을 타고 내려갈 수 있게 좌우에 발판을 어긋나게 박고,
+         가운데는 비워 둔다. 어디로 내려갈지 고르는 재미가 있는 대신 함정이 촘촘하다. */
+      for (let y = yTop + 3; y < yBot; y += 3) {
+        const left = ((y - yTop) / 3) % 2 === 0;
+        const bx = ex + (left ? -wide : wide - 1);
+        for (let k = 0; k < 2; k++) this.set(bx + (left ? k : -k), y, T.PLATFORM);
+        this._shaftTrap(ex, y - 1, spec, rng, left ? 1 : -1);
+      }
+      if (rows >= 4) for (let k = -wide; k <= wide; k++) if (rng.chance(0.5)) this.set(ex + k, yBot, T.SPIKE);
+
     } else {                                             // nofoothold — 발판 없이 그대로 낙하
       for (let y = yTop + 3; y < yBot - 2; y += 3) {
-        this.set(ex - 1, y, T.DART_R); this.set(ex + 1, y, T.DART_L);
+        this._shaftTrap(ex, y, spec, rng, -1);
+        if (rng.chance(0.6)) this._shaftTrap(ex, y, spec, rng, 1);
       }
-      // 바닥 착지 지점 — 가운데 한 칸만 비우고 좌우에 가시를 박아 조준을 요구한다
       if (rows >= 4) { this.set(ex - 1, yBot, T.SPIKE); this.set(ex + 1, yBot, T.SPIKE); }
     }
+  }
+
+  /** 통로가 갈 수 있는 좌우 한계. 유적 폭 안쪽으로 묶어 두지 않으면 통로가 유적을
+      벗어나 엉뚱한 지형으로 새어 나간다(미로형이 쓰던 것과 같은 기준). */
+  _shaftBounds(ex, spec) {
+    /* 유적 제 발자국 안쪽으로 묶는다. 예전에 `ex ± 폭/4`로 잡았더니 비탈이 열몇 칸 만에
+       한계에 닿아, 남은 스무 줄 넘게가 통째로 수직이 됐다 — 비탈형인데 절반이 수직이면
+       비탈로 안 읽힌다. ex를 기준으로 재면 ex가 이미 한쪽에 치우쳐 있을 때 유적 밖으로
+       새어 나가므로, **유적 중심**에서 재고 ex는 반드시 포함시킨다. */
+    const cx = spec.x === undefined ? ex : spec.x;
+    return [Math.min(ex, cx - (spec.w >> 1) + 4), Math.max(ex, cx + (spec.w >> 1) - 4)];
+  }
+  /** 통로 한 칸을 판다 — 사람 키(3칸)만큼 세로로 비우고 뒷벽을 바른다.
+      가로로 이동할 때도 이 폭이라야 걸어서 지나갈 수 있다. */
+  _shaftCell(x, y, spec) {
+    for (let dy = 0; dy < 3; dy++) this.set(x, y - dy, T.AIR);
+    this.setWall(x, y, spec.bg); this.setWall(x, y - 1, spec.bg); this.setWall(x, y - 2, spec.bg);
+  }
+
+  /** 비스듬한 입구 — dir 쪽으로 계속 밀리면서 내려간다.
+      가로 다리 → 세로 낙차를 한 방향으로만 반복해서, 들어가는 사람이 "오른쪽(왼쪽)
+      아래로 파고든다"고 느끼게 한다. 미로형과 다른 점이 바로 이것이다 — 미로는
+      좌우로 번갈아 꺾여 제자리 근처를 맴돌지만, 이쪽은 한쪽으로만 간다.
+      좌우 한계에 닿으면 남은 깊이는 곧게 내려간다. 한계 없이 밀면 통로가 유적을
+      벗어나 버리기 때문이고, 그때부터는 "이미 충분히 비스듬했다". */
+  _carveSlopeShaft(ex, yTop, yBot, spec, rng, dir) {
+    const [lo, hi] = this._shaftBounds(ex, spec);
+    let cx = ex, cy = yTop, bends = 0;
+    while (cy < yBot) {
+      // 세로 낙차 — 3~5칸 떨어진다
+      const drop = Math.min(rng.int(4, 7), yBot - cy);
+      for (let y = cy; y <= cy + drop; y++) this._shaftCell(cx, y, spec);
+      cy += drop;
+      if (cy >= yBot) break;
+      // 가로 다리 — dir 쪽으로 3~5칸. 한계에 닿으면 여기서부터 곧게 내려간다
+      const want = clamp(cx + dir * rng.int(3, 5), lo, hi);
+      if (want === cx) { for (let y = cy; y <= yBot; y++) this._shaftCell(cx, y, spec); cx = cx; break; }
+      for (let x = Math.min(cx, want); x <= Math.max(cx, want); x++) {
+        this._shaftCell(x, cy, spec);
+        this.set(x, cy + 1, T.PLATFORM);              // 걸어 내려갈 발판
+      }
+      // 굽이마다 함정 하나 — 다음 칸이 안 보이는 사각이다
+      this._shaftTrap(want, cy, spec, rng, -dir);
+      // 가끔 발판 한 칸을 부서지는 바닥으로. 비탈을 뛰어 내려오다 헛디디게
+      if (rng.chance(0.45)) this.set(clamp(want - dir, Math.min(cx, want), Math.max(cx, want)), cy + 1, T.CRUMBLE);
+      cx = want; cy += 1; bends++;
+    }
+    for (let y = cy; y <= yBot; y++) this._shaftCell(cx, y, spec);
+    this._entranceLandX = cx;
+  }
+
+  /** 불규칙한 입구 — 다리 길이도, 방향도, 세로냐 가로냐도 전부 굴린다.
+      가끔 옆으로 빈 굴(막다른 곳)을 파서 어디가 길인지 헷갈리게 만든다.
+      비탈형이 "한쪽으로 파고든다"면 이쪽은 **어디로 갈지 알 수 없다**가 성격이다. */
+  _carveWildShaft(ex, yTop, yBot, spec, rng) {
+    const [lo, hi] = this._shaftBounds(ex, spec);
+    let cx = ex, cy = yTop, guard = 0;
+    while (cy < yBot && guard++ < 200) {
+      if (rng.chance(0.5)) {
+        // 세로 다리 — 길이가 들쭉날쭉하다(2~9칸)
+        const drop = Math.min(rng.int(2, 6), yBot - cy);
+        for (let y = cy; y <= cy + drop; y++) this._shaftCell(cx, y, spec);
+        if (drop >= 5 && rng.chance(0.5)) this._shaftTrap(cx, cy + (drop >> 1), spec, rng);
+        cy += drop;
+      } else {
+        // 가로 다리 — 방향도 길이도 그때그때. 내려가지 않으므로 통로가 길어진다
+        const dir = rng.chance(0.5) ? 1 : -1;
+        const want = clamp(cx + dir * rng.int(3, 9), lo, hi);
+        for (let x = Math.min(cx, want); x <= Math.max(cx, want); x++) {
+          this._shaftCell(x, cy, spec);
+          this.set(x, cy + 1, T.PLATFORM);
+        }
+        if (want !== cx) this._shaftTrap(want, cy, spec, rng, -dir);
+        cx = want;
+        // 막다른 굴 — 길이 아닌 쪽으로 두어 칸 파 둔다. 어디가 길인지 헷갈리게
+        if (rng.chance(0.35)) {
+          const bx = clamp(cx - dir * rng.int(3, 6), lo, hi);
+          for (let x = Math.min(cx, bx); x <= Math.max(cx, bx); x++) this._shaftCell(x, cy, spec);
+        }
+        cy += 1;
+      }
+    }
+    for (let y = cy; y <= yBot; y++) this._shaftCell(cx, y, spec);
+    this._entranceLandX = cx;
   }
 
   /** 미로형 입구 — 곧은 수직 통로 대신 좌우로 꺾이는 짧은 계단식 통로를 판다.
@@ -1773,8 +2055,10 @@ class World {
         this.set(x, legEnd, T.PLATFORM);
         this.set(x, legEnd - 1, T.AIR); this.set(x, legEnd - 2, T.AIR);
       }
-      // 굽이 자체가 사각이므로 여기 함정을 반드시 하나 심는다 — 꺾이는 방향 반대쪽 벽에서 쏜다
-      this.set(nx - dir, legEnd - 1, dir > 0 ? T.DART_R : T.DART_L);
+      // 굽이 자체가 사각이므로 여기 함정을 반드시 하나 심는다(종류는 유적마다 다르다)
+      this._shaftTrap(nx, legEnd - 1, spec, rng, -dir);
+      // 가로 발판 중 한 칸을 부서지는 바닥으로 — 굽이에서 멈춰 서지 못하게
+      if (rng.chance(0.5)) this.set(clamp(nx - dir, Math.min(cx, nx), Math.max(cx, nx)), legEnd, T.CRUMBLE);
       this.setWall(cx, legEnd, spec.bg);
       cx = nx; cy = legEnd + 1; dir = -dir;
     }
@@ -1789,9 +2073,13 @@ class World {
     const y0 = spec.y, x0 = spec.x - (spec.w >> 1);
     // 유적마다 방 크기 하한을 흔들어 준다 — 어떤 유적은 큰 방 몇 개, 어떤 유적은 잔방 투성이
     const tight = (spec.rooms || 12) >= 15;
+    /* maze 표시가 붙은 유적은 한 단계 더 쪼갠다 — 방이 잘고 많아져 길이 헷갈린다.
+       가라앉은 유적(세션 3 비밀 유적)만 이 값을 쓴다. */
     const rooms = this.carveDungeon({
       x0, y0, w: spec.w, h: spec.h, wall: spec.wall, floor: spec.floor, bg: spec.bg,
-      rng, depth: tight ? 5 : 4, minW: tight ? 8 : 11, minH: tight ? 7 : 9
+      rng, depth: spec.maze ? 7 : tight ? 5 : 4,
+      minW: spec.maze ? 6 : tight ? 8 : 11,
+      minH: spec.maze ? 6 : tight ? 7 : 9
     });
     rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
     const boss = rooms[0];                                   // 가장 넓은 방이 보스방
@@ -1809,6 +2097,23 @@ class World {
     if (rest[1]) roles.set(rest[1], 'vault');
     if (rest[Math.floor(rest.length / 2)]) roles.set(rest[Math.floor(rest.length / 2)], 'lore');
     for (const r of rest) if (!roles.has(r) && rng.chance(0.3)) roles.set(r, 'gauntlet');
+
+    /* 미로 유적만 — 방과 방 사이 통로 몇 개를 도로 막아 **막다른 길**을 만든다.
+       방을 잘게 쪼개는 것만으로는 "작은 방이 많다"에 그치고 헤매지는 않는다.
+       길을 실제로 끊어야 되돌아 나오게 된다. 다 막으면 못 지나가니, 방마다
+       최대 한 군데만 막고 위아래 통로는 남긴다. */
+    if (spec.maze) {
+      for (const r of rooms) {
+        if (r === boss || !rng.chance(0.55)) continue;
+        const side = rng.chance(0.5) ? r.x : r.x + r.w - 1;
+        for (let y = r.y + 1; y < r.y + r.h - 1; y++)
+          if (this.get(side, y) === T.AIR) this.set(side, y, spec.wall);
+      }
+      // 가짜 문 — 벽 한 칸만 유적 타일로 바꿔 두면 통로처럼 보이다 막힌다
+      for (const r of rooms) {
+        if (rng.chance(0.4)) this.setWall(r.x + (r.w >> 1), r.y + r.h - 2, spec.bg);
+      }
+    }
 
     let hintSlot = 0;                                        // 흔적을 방마다 하나씩 순서대로
     // 유적마다 개별로 매긴 난이도 — 없으면 예전 기본값으로 떨어진다
@@ -1876,8 +2181,12 @@ class World {
         hintSlot++;
       }
       for (let x = r.x + 3; x < r.x + r.w - 2; x += 6) this.set(x, r.y + 2, spec.torch);
+      /* 함정은 **세 번** 굴린다. 두 번이던 것을 늘렸다 — 방 하나에 함정이 한 개
+         걸리면 지나가다 우연히 밟는 것에 그치고, 방을 "지나가는 법"을 궁리하게
+         되지는 않는다. 뒤 굴림일수록 확률이 낮아 방마다 개수가 들쭉날쭉하다. */
       if (rng.chance(TRAP)) this.putTileTrap(r, fy, rng.pick(spec.traps), rng);
-      if (rng.chance(TRAP * 0.56)) this.putTileTrap(r, fy, rng.pick(spec.traps), rng);
+      if (rng.chance(TRAP * 0.8)) this.putTileTrap(r, fy, rng.pick(spec.traps), rng);
+      if (rng.chance(TRAP * 0.5)) this.putTileTrap(r, fy, rng.pick(spec.traps), rng);
       if (rng.chance(SPIKE)) {
         const sx = r.x + rng.int(2, Math.max(2, r.w - 5));
         for (let k = 0; k < rng.int(2, 2 + Math.round(rank * 0.5)); k++) this.set(sx + k, fy, T.SPIKE);
@@ -1903,13 +2212,16 @@ class World {
        그 순서를 그대로 난이도 계단으로 삼았다. 서리(0)가 가장 순하고 부패지대(2)가 가장 사납다.
        [x, y, 함정률, 가시률, 상자률, 방크기, 상자티어, 함정종류] */
     /* 입구 성격(entryKind)도 난이도 계단을 따라간다 — 서리(가장 순함)는 발판형,
-       가운데는 미로형, 부패지대(가장 사나움)는 무발판형. 예전에는 이 통로에 함정을
+       가운데는 왼쪽 아래로 파고드는 비탈형, 부패지대(가장 사나움)는 무발판형.
+       v1.1: 예전에는 **내려가는 길이 전부 수직**이었다(미로형도 제자리 근처를 맴돌 뿐이다).
+       비탈형(slopeR/slopeL)과 불규칙형(wild)을 더해 갈랐고, 수직 둘(발판형·무발판형)은
+       그대로 남겨 두었다 — 전부 바꾸면 "수직 입구"라는 종류가 사라진다. 예전에는 이 통로에 함정을
        하나도 안 심어서 함정 없이 직행 입장이 가능했다(직행 입장 버그) — 이제
        _carveEntranceShaft로 통일해 최소 개수를 보장한다. */
     const spots = [
-      { x: 420,  y: 220, trap: 0.52, spike: 0.24, chest: 0.56, w: 58, h: 34, tier: 2, traps: ['dart', 'crumble'], entryKind: 'foothold' },
-      { x: 1700, y: 252, trap: 0.72, spike: 0.38, chest: 0.60, w: 62, h: 36, tier: 3, traps: ['dart', 'crumble', 'vent'], entryKind: 'maze' },
-      { x: 3950, y: 236, trap: 0.90, spike: 0.52, chest: 0.64, w: 68, h: 40, tier: 4, traps: ['dart', 'vent', 'crumble'], entryKind: 'nofoothold' }
+      { x: 420 + SHIFT,  y: 220, trap: 0.72, spike: 0.30, chest: 0.56, w: 58, h: 34, tier: 2, traps: ['dart', 'crumble'], entryKind: 'foothold' },
+      { x: 1700 + SHIFT, y: 252, trap: 0.92, spike: 0.44, chest: 0.60, w: 62, h: 36, tier: 3, traps: ['dart', 'crumble', 'vent'], entryKind: 'slopeL' },
+      { x: 3950 + SHIFT, y: 236, trap: 1.0, spike: 0.58, chest: 0.64, w: 68, h: 40, tier: 4, traps: ['dart', 'vent', 'crumble'], entryKind: 'nofoothold' }
     ];
     spots.forEach((sp, i) => {
       const cx = sp.x, cy = sp.y, w = sp.w, h = sp.h;
@@ -1925,7 +2237,9 @@ class World {
       // 지상에서 내려오는 통로 — carveRuinEntrance와 같은 통로 생성기를 쓴다
       const ex = clamp(cx, x0 + 3, x0 + w - 4);
       this._entranceLandX = null;
-      this._carveEntranceShaft(ex, this.surface[ex] + 1, y0 + 1, { entryKind: sp.entryKind, bg: 10, w }, rng);
+      // traps를 함께 넘긴다 — 안 넘기면 통로 함정이 기본값(화살·붕괴)으로만 깔려
+      // 유적마다 다른 함정 목록이 통로에는 안 나타난다
+      this._carveEntranceShaft(ex, this.surface[ex] + 1, y0 + 1, { entryKind: sp.entryKind, bg: 10, w, x: cx, traps: sp.traps }, rng);
       for (const r of rooms) {
         const fy = r.y + r.h - 3, rcx = r.x + (r.w >> 1);
         for (let x = r.x + 3; x < r.x + r.w - 2; x += 6) this.set(x, r.y + 2, T.TORCH);
@@ -1933,6 +2247,8 @@ class World {
         if (r.h > 6) { this.set(r.x + 1, r.y + 4, T.BANNER); this.set(r.x + r.w - 2, r.y + 4, T.BANNER); }
         if (r === main) continue;
         if (rng.chance(sp.trap)) this.putTileTrap(r, fy, rng.pick(sp.traps), rng);
+        if (rng.chance(sp.trap * 0.75)) this.putTileTrap(r, fy, rng.pick(sp.traps), rng);
+        if (rng.chance(sp.trap * 0.45)) this.putTileTrap(r, fy, rng.pick(sp.traps), rng);
         if (i >= 1 && rng.chance(sp.trap * 0.5)) this.putTileTrap(r, fy, rng.pick(sp.traps), rng);
         if (rng.chance(sp.spike)) for (let k = 0; k < rng.int(2, 3 + i); k++) this.set(r.x + 3 + k, fy, T.SPIKE);
         if (rng.chance(sp.chest))
@@ -1956,7 +2272,7 @@ class World {
     // 중심) 심층은 이미 지하 공창(y 210~250)·폭주로(y 306~360)·설계실(폭주로 동쪽)이
     // 거의 다 채우고 있어서, 그 구조물들과 안 겹치도록 마을 지하 서쪽 가장자리(x 2800)로
     // 뒀다 — 같은 마을 지하 권역이되 세션 2 던전들과는 충분히 떨어진 자리다.
-    const kx = 2800, ky = 350, kw = 56, kh = 26;   // 심층 봉인실 — 여명 마을 지하(서쪽)
+    const kx = 2800 + SHIFT, ky = 350, kw = 56, kh = 26;   // 심층 봉인실 — 여명 마을 지하(서쪽)
     for (let x = kx - kw / 2; x <= kx + kw / 2; x++)
       for (let y = ky - kh / 2; y <= ky + kh / 2; y++) {
         const edge = (x <= kx - kw / 2 + 2 || x >= kx + kw / 2 - 2 || y <= ky - kh / 2 + 2 || y >= ky + kh / 2 - 2);
@@ -1997,23 +2313,23 @@ class World {
   buildAltars(rng) {
     // 제단 밑면이 바닥 타일 윗면에 정확히 닿도록: y = 바닥행*TS - h
     // 부패 제단
-    const cx1 = 2500, sy1 = this.surface[cx1];
+    const cx1 = 2500 + SHIFT, sy1 = this.surface[cx1];
     this.clearBox(cx1 - 14, sy1 - 14, 28, 14);
     for (let x = cx1 - 14; x < cx1 + 14; x++) { this.set(x, sy1, T.EBONSTONE); this.set(x, sy1 + 1, T.EBONSTONE); }
     this.objects.push({ type: 'altar', boss: 'corrupt_heart', x: cx1 * TS, y: sy1 * TS - 44, w: 40, h: 44 });
     // 서리 왕좌
-    const cx2 = 210, sy2 = this.surface[cx2];
+    const cx2 = 210 + SHIFT, sy2 = this.surface[cx2];   // 원래 자리 그대로 (밀린 만큼만 옮겨 간다)
     this.clearBox(cx2 - 16, sy2 - 15, 32, 15);
     for (let x = cx2 - 16; x < cx2 + 16; x++) { this.set(x, sy2, T.BRICK); this.set(x, sy2 + 1, T.BRICK); }
     this.objects.push({ type: 'altar', boss: 'frost_witch', x: cx2 * TS, y: sy2 * TS - 44, w: 40, h: 44 });
     // 슬라임 제단 (마을 근처 언덕) — 베이스캠프(vx0..vx1 = 1000..1100, 여유폭 포함 984..1115)와
     // 겹치지 않도록 서쪽으로 충분히 떨어뜨려 둔다
-    const cx3 = 800, sy3 = this.surface[cx3];
+    const cx3 = 800 + SHIFT, sy3 = this.surface[cx3];
     this.clearBox(cx3 - 14, sy3 - 13, 28, 13);
     for (let x = cx3 - 14; x < cx3 + 14; x++) { this.set(x, sy3, T.STONE); this.set(x, sy3 + 1, T.STONE); }
     this.objects.push({ type: 'altar', boss: 'king_slime', x: cx3 * TS, y: sy3 * TS - 44, w: 40, h: 44 });
     // 심연 투기장
-    const cx4 = 1400, cy4 = WH - 17;
+    const cx4 = 1400 + SHIFT, cy4 = WORLD_BOT - 17;
     this.clearBox(cx4 - 36, cy4 - 22, 72, 22);
     for (let x = cx4 - 36; x < cx4 + 36; x++) { this.set(x, cy4, T.OBSIDIAN); this.set(x, cy4 + 1, T.OBSIDIAN); }
     for (let x = cx4 - 36; x < cx4 + 36; x++) for (let y = cy4 - 22; y < cy4; y++) this.setWall(x, y, 3);
@@ -2031,15 +2347,17 @@ class World {
   /** 큰 동굴을 여러 개 드렁커드 워크로 파낸다. 절반 정도는 안쪽에 황금 상자를 두고,
       그 옆에 가시 함정을 심어 둔다 — 욕심내면 다친다. */
   buildCaverns(rng) {
-    const reserved = x => (x > 685 && x < 845) || (x > 1865 && x < 2055) || (x > 1365 && x < 1445);
+    const reserved = x => (x > 685 + SHIFT && x < 845 + SHIFT) || (x > 1865 + SHIFT && x < 2055 + SHIFT) || (x > 1365 + SHIFT && x < 1445 + SHIFT);
     this.caverns = [];
     let placed = 0, tries = 0;
     while (placed < 11 && tries < 3000) {
       tries++;
       const cx = rng.int(20, WW - 20);
-      if (reserved(cx)) continue;
-      const cy = rng.int(this.surface[cx] + 22, Math.min(WH - 20, HELL_Y - 8));
-      if (cy < 90) continue;
+      if (reserved(cx) || inSeaZone(cx)) continue;
+      /* v1.1: 큰 동굴이 지표에서 22칸(약 480px)만 내려가도 생겨서, 황금 상자를 초반에
+         너무 쉽게 주웠다. DEEP_Y 언저리까지 내려야 파이게 한다. */
+      const cy = rng.int(Math.max(this.surface[cx] + 60, DEEP_Y - 30), Math.min(WORLD_BOT - 20, HELL_Y - 8));
+      if (cy < DEEP_Y - 30) continue;
       let x = cx, y = cy;
       const cells = [];
       const steps = rng.int(90, 150);
@@ -2048,7 +2366,7 @@ class World {
         for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) {
           if (dx * dx + dy * dy > r * r) continue;
           const xx = x + dx, yy = y + dy;
-          if (xx < 3 || xx >= WW - 3 || yy < 6 || yy >= WH - 8) continue;
+          if (xx < 3 || xx >= WW - 3 || yy < 6 || yy >= WORLD_BOT - 8) continue;
           if (this.solid(xx, yy)) { this.set(xx, yy, T.AIR); cells.push([xx, yy]); }
         }
         x = clamp(x + rng.int(-1, 1), cx - 26, cx + 26);
@@ -2061,21 +2379,39 @@ class World {
         if (this.get(px, py + 1) !== T.AIR) continue;
         this.set(px, py, rng.chance(.5) ? T.TORCH : T.CRYSTAL);
       }
-      // 45% 확률로 황금 상자 + 함정
-      if (rng.chance(0.45)) {
+      /* 큰 동굴 상자 — 예전엔 45% 확률로 무조건 6등급(황금)이었다. 얕은 곳에서도
+         최고 등급이 나와 제작·채굴 단계를 통째로 건너뛰게 만들었다.
+         이제 **깊이로 등급을 매기고**(DEEP_Y 위는 4, 그 아래는 5, 지옥 근처만 6),
+         확률도 30%로 낮췄다. 등급은 caverns에 함께 남겨 세이브에서도 보이게 한다. */
+      let chestTier = 0;
+      if (rng.chance(0.30)) {
         const [gx, gy0] = cells[rng.int(0, cells.length - 1)];
         let fy = gy0;
-        while (fy < WH - 8 && !this.solid(gx, fy + 1)) fy++;
-        if (fy < WH - 8) {
-          this.objects.push({ type: 'chest', tier: 6, x: gx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
+        while (fy < WORLD_BOT - 8 && !this.solid(gx, fy + 1)) fy++;
+        if (fy < WORLD_BOT - 8) {
+          chestTier = fy < DEEP_Y ? 4 : fy < (DEEP_Y + HELL_Y) / 2 ? 5 : 6;
+          this.objects.push({ type: 'chest', tier: chestTier, x: gx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
           this.set(gx - 1, fy, T.TORCH);
-          // 상자 근처 바닥이 있는 자리를 몇 군데 찾아보고, 되는 곳에 함정을 심는다
-          for (const tdx of [2, -2, 3, -3, 4, -4]) {
+          // 함정 — 등급이 높을수록 촘촘하게(예전엔 어디든 1개뿐이라 그냥 걸어가 열었다)
+          let laid = 0;
+          const want = chestTier >= 6 ? 4 : chestTier >= 5 ? 3 : 2;
+          for (const tdx of [2, -2, 3, -3, 4, -4, 5, -5, 6, -6]) {
+            if (laid >= want) break;
             const tx = clamp(gx + tdx, 3, WW - 3);
             let ty = fy;
-            while (ty < WH - 8 && !this.solid(tx, ty + 1)) ty++;
-            if (this.get(tx, ty) === T.AIR && this.solid(tx, ty + 1)) { this.set(tx, ty, T.SPIKE); break; }
+            while (ty < WORLD_BOT - 8 && !this.solid(tx, ty + 1)) ty++;
+            if (this.get(tx, ty) === T.AIR && this.solid(tx, ty + 1)) { this.set(tx, ty, T.SPIKE); laid++; }
           }
+          /* 6등급만은 곡괭이 등급을 요구한다 — 상자를 미스릴 광맥 한 겹으로 덮어,
+             그걸 캘 수 있는 곡괭이가 없으면 보고도 못 가져가게 한다.
+             (BEDROCK으로 막으면 영영 못 여니 캘 수 있는 것으로 두른다) */
+          if (chestTier >= 6)
+            for (let dx = -2; dx <= 2; dx++)
+              for (let dy = -3; dy <= 0; dy++) {
+                const wx = gx + dx, wy = fy - 3 + (dy + 3);
+                if (Math.abs(dx) !== 2 && dy !== -3) continue;   // 테두리만
+                if (this.get(wx, wy) === T.AIR) this.set(wx, wy, T.MYTHRIL);
+              }
         }
       }
       // 물을 채울 때 다시 찾아올 수 있도록 이 큰 동굴이 실제로 파인 범위를 남긴다
@@ -2084,7 +2420,7 @@ class World {
         if (px < bx0) bx0 = px; if (px > bx1) bx1 = px;
         if (py < by0) by0 = py; if (py > by1) by1 = py;
       }
-      this.caverns.push({ cx, cy, x0: bx0, x1: bx1, y0: by0, y1: by1 });
+      this.caverns.push({ cx, cy, x0: bx0, x1: bx1, y0: by0, y1: by1, tier: chestTier });
       placed++;
     }
   }
@@ -2095,10 +2431,13 @@ class World {
      자리를 만든다. 유적·묘실·공창·마을 근처는 건드리지 않는다 — 설계된 공간이라서. */
 
   /** 물을 채우면 안 되는 자리인가 */
-  _noWater(tx, ty) {
+  _noWater(tx, ty, forLava) {
     if (tx < 4 || tx >= WW - 4 || ty < 4 || ty >= WH - 6) return true;
+    if (this.sea && tx < this.sea.x1 + 4) return true;      // 바다는 buildSea가 따로 만든다
     if (ty < this.surface[clamp(tx, 0, WW - 1)] + 8) return true;   // 지표 근처는 제외
-    if (ty >= HELL_Y - 6) return true;                              // 지옥은 용암의 자리다
+    // 지옥은 용암의 자리다 — 물은 거기 못 고이고, 용암은 **거기서만** 고인다
+    if (forLava) { if (ty < HELL_Y + 4) return true; }
+    else if (ty >= HELL_Y - 6) return true;
     if (this.inRuin && this.inRuin(tx, ty)) return true;            // 봉인실도 ruins에 들어 있다
     if (this.inWorks && this.inWorks(tx, ty)) return true;
     if (this.inRunaway && this.inRunaway(tx, ty)) return true;
@@ -2110,10 +2449,446 @@ class World {
     return false;
   }
 
+  /* ================= 가라앉은 바다 (세션 3) =================
+     세계 왼쪽 끝. 물가에서 왼쪽으로 갈수록 바닥이 깊어져 WH(720) 가까이까지 내려간다 —
+     WH를 480에서 늘린 것이 오로지 이 구간 때문이다(다른 곳은 WORLD_BOT 아래가 기반암).
+
+     따로 파는 이유: 지형 높이(_hFor)는 rawH에서 58~108로 잘려 나가서, 거기에 깊이를
+     넣어 봐야 물가 높이밖에 안 나온다. 그래서 높이는 얕은 모래톱으로 두고, 진짜
+     깊이는 여기서 판다.
+
+     E 단계의 헤엄·산소가 전제다 — 깊이 내려갈수록 숨이 빨리 닳는다(entity.js). */
+  buildSea(rng, n1) {
+    this.pools = this.pools || [];      // floodCaves보다 먼저 돌 수 있으므로 없으면 만든다
+    const shore = SEA_X1;
+    this.seaLevel = this.surface[shore] + 1;              // 수면 = 물가 지면 한 칸 아래
+    const FLOOR = WH - 26;                               // 가장 깊은 바닥
+    this.sea = { x1: shore, level: this.seaLevel, floor: FLOOR };
+
+    /* --- 해저 단면 ---
+       예전에는 물가에서 끝까지 하나의 곡선(t²)으로 떨어뜨렸다. 그러면 430칸 내내
+       비스듬한 비탈이라 "바닥"이라고 부를 자리가 없다 — 어디서 멈춰도 발밑이 기울어 있다.
+       실제 바다처럼 셋으로 나눈다.
+         대륙붕(물가~90칸)  : 얕고 거의 평평 — 헤엄쳐 들어가는 구간
+         비탈(90~170칸)     : 여기서만 급하게 떨어진다
+         심해 평원(170칸~)  : **평평하다.** 여기가 진짜 바닥이고, 굴도 여기에만 판다 */
+    const WADE = 50;                                      // 걸어 들어가는 여울
+    const RUN = Math.max(60, Math.min(300, shore - WADE - 60));   // 여울 끝에서 평원까지
+    /* 물가 50칸은 **한 칸씩만, 그것도 절반 확률로만** 내려간다. 걸어 들어가는
+       구간이라 한 걸음에 두 칸씩 꺼지면 그 자리에서 바로 헤엄이 되어 버린다.
+       세계 시드에 묶어 두므로 같은 세계에서는 늘 같은 모양이다. */
+    this.shoreY = this.seaLevel + 2;                       // 물가 깊이 — 바다·해변이 함께 쓴다
+    const wadeRng = new RNG(this.seed + '_wade');
+    const wadeBed = new Int16Array(WADE + 1);
+    /* 물가 깊이는 **한 값으로 정해 두고 바다·해변 양쪽이 함께 쓴다.** 예전에는 바다가
+       surface[shore]+1(=수면-? )에서 시작하고 해변은 수면+2에서 시작해, 정확히 x=shore
+       자리에 두 칸짜리 구덩이가 생겼다("해변 근처에서 갑자기 깊어진다"는 게 이것). */
+    wadeBed[0] = this.shoreY;
+    for (let k = 1; k <= WADE; k++) wadeBed[k] = wadeBed[k - 1] + (wadeRng.chance(0.5) ? 1 : 0);
+    for (let x = 0; x < shore; x++) {
+      const fromShore = shore - x;
+      let base;
+      if (fromShore <= WADE) base = wadeBed[fromShore];
+      else {
+        /* 여울 뒤로는 **기울기가 서서히 커졌다가 다시 작아진다**(smoothstep).
+           예전에는 대륙붕 → 비탈 두 토막을 직선으로 이어서, 90칸 지점에서 갑자기
+           칸당 7칸씩 꺼졌다 — 헤엄쳐 가다 절벽을 만나는 꼴이었다.
+           t²(3-2t)는 시작과 끝의 기울기가 0이라 여울에서도, 평원에서도 매끄럽게 붙는다. */
+        const t = clamp((fromShore - WADE) / RUN, 0, 1);
+        base = lerp(wadeBed[WADE], FLOOR, t * t * (3 - 2 * t));
+      }
+      /* 흔들림은 아주 조금만 — 요철이 있으면 헤엄쳐 다닐 때 바닥이 계속 걸린다.
+         물가 50칸은 위에서 한 칸씩 정해 뒀으므로 아예 흔들지 않는다. */
+      const jitter = fromShore <= WADE ? 0 : (n1(x + 7700, 0.02) - 0.5) * 4;
+      /* 하한을 seaLevel+6으로 두면 물가 여울(수면+2에서 시작)이 통째로 6까지 눌려 내려가,
+         정확히 물가에서 네 칸짜리 턱이 생겼다. 하한은 **물가 깊이**여야 한다. */
+      const bed = Math.round(clamp(base + jitter, this.shoreY, FLOOR));
+      /* 지표선은 수면 바로 위로 잡는다. 원래 지형 높이(60쯤)를 그대로 두면 그 아래
+         60~69칸이 "지표 아래"로 취급돼 햇빛 씨앗이 안 심긴다(computeLight는 y <= surface
+         인 빈칸에만 햇빛을 준다) — 바다 위가 통째로 어두워진다. */
+      this.surface[x] = this.seaLevel - 1;
+      // 해저 위쪽을 전부 물로 — 수면부터 해저까지
+      for (let y = this.seaLevel; y < bed; y++) this.set(x, y, T.SEAWATER);
+      // 해저 지층
+      for (let y = bed; y < WH; y++) {
+        let t2;
+        if (y >= WH - 4) t2 = T.BEDROCK;
+        else if (y - bed < 4) t2 = T.SAND;
+        else if (y - bed < 16) t2 = T.SANDSTONE;
+        else t2 = T.STONE;
+        this.set(x, y, t2);
+        this.walls[this.i(x, y)] = 8;
+      }
+      /* 수면 위는 하늘 — 타일뿐 아니라 **배경 벽도 지운다**. 벽이 남아 있으면 그 칸은
+         '실내'로 쳐서 햇빛 씨앗이 안 심기고(walls === 0 조건), 바다 위가 어두운 띠로
+         남는다. 실제로 그렇게 보였다. */
+      for (let y = 4; y < this.seaLevel; y++) {
+        if (this.get(x, y) !== T.AIR) this.set(x, y, T.AIR);
+        this.walls[this.i(x, y)] = 0;
+      }
+      for (let y = this.seaLevel; y < bed; y++) this.walls[this.i(x, y)] = 8;
+      this.seaBed = this.seaBed || new Int16Array(shore);
+      this.seaBed[x] = bed;
+    }
+
+    /* 얕은 해저의 해초 — 캐면 kelp가 나온다. 이게 없으면 해초를 얻을 길이
+       표류물 더미 드롭뿐이라 15장의 "해초 30개"가 몹 사냥에만 매달리게 된다. */
+    for (let x = Math.max(2, shore - 170); x < shore; x++) {
+      const bed = this.seaBed[x];
+      if (bed === undefined || bed <= this.seaLevel + 2) continue;
+      if (this.get(x, bed) !== T.SAND || this.get(x, bed - 1) !== T.SEAWATER) continue;
+      // 얕을수록 빽빽하게 — 빛이 닿는 데서만 자란다
+      const depth = bed - this.seaLevel;
+      if (rng.chance(clamp(0.55 - depth * 0.004, 0.08, 0.55))) this.set(x, bed - 1, T.KELPPLANT);
+    }
+
+    /* 해저 굴 — **심해 평원에만** 판다. 비탈에 파면 비탈이 더 울퉁불퉁해져서 평탄하게
+       만든 뜻이 없어진다. 바닥 아래로만 파 내려가는 구덩이라, 위에서 보면 "평평한
+       바닥에 뚫린 구멍"으로 읽힌다. 언덕은 아주 가끔만 — 평원이 주인공이다. */
+    const plainR = Math.max(20, shore - (WADE + RUN));     // 평원 오른쪽 끝
+    /* 굴은 평원이 주인데, 비탈에도 몇 개는 뚫어 둔다 — 비탈이 통짜 모래벽이면
+       내려가는 길에 볼 것이 없다. 다만 **적당히**(평원 26 : 비탈 6). */
+    for (let k = 0; k < 6; k++) {
+      const cx = rng.int(plainR + 10, Math.max(plainR + 11, shore - WADE - 10));
+      const bed = this.seaBed[clamp(cx, 0, shore - 1)];
+      const r = rng.int(3, 5);
+      for (let dx = -r; dx <= r; dx++)
+        for (let dy = 0; dy <= r; dy++) {
+          const x = cx + dx, y = bed + dy;
+          if (x < 1 || x >= shore || y >= WH - 8) continue;
+          if (dx * dx + dy * dy > r * r) continue;
+          this.set(x, y, T.SEAWATER);
+        }
+    }
+    for (let k = 0; k < 26 && plainR > 20; k++) {
+      const cx = rng.int(6, plainR - 6);
+      const bed = this.seaBed[cx];
+      const r = rng.int(3, 7);
+      const hill = rng.chance(0.15);
+      for (let dx = -r; dx <= r; dx++)
+        for (let dy = -r; dy <= r; dy++) {
+          const x = cx + dx, y = bed + dy;
+          if (x < 1 || x >= plainR || y < this.seaLevel + 2 || y >= WH - 8) continue;
+          if (dx * dx + dy * dy > r * r) continue;
+          if (hill) { if (dy >= 0) this.set(x, y, dy < 2 ? T.SAND : T.SANDSTONE); }
+          // dy>=0 이라야 바닥 줄까지 뚫려 **입구가 열린 구덩이**가 된다.
+          // dy>0로 두면 모래 한 겹이 지붕처럼 남아, 파 보기 전에는 있는 줄도 모른다.
+          else if (dy >= 0) this.set(x, y, T.SEAWATER);
+        }
+    }
+    /* 바다도 웅덩이 목록에 올린다 — 수중 몹 생성(trySpawnWater)·낚시 보정이 이 표를
+       본다. 넓어서 한 점으로는 못 덮으므로 구간을 나눠 여러 개 올린다. */
+    for (let cx = 20; cx < shore; cx += 60) {
+      const bed = this.seaBed[Math.min(cx, shore - 1)];
+      const mid = Math.round((this.seaLevel + bed) / 2);
+      // 깊은 쪽 한 점, 수면 쪽 한 점 — 스폰표가 깊이로 종류를 가르므로 둘 다 있어야
+      // 얕은 물에서 게·해파리를, 깊은 곳에서 문어·아귀를 만난다
+      this.pools.push({ x: cx, y: mid, n: (bed - this.seaLevel) * 60, big: 1,
+                        biome: 'sea', spawnMul: 0.9, rareMul: 1.4 });
+      this.pools.push({ x: cx, y: this.seaLevel + 6, n: 400, big: 1,
+                        biome: 'sea', spawnMul: 0.7, rareMul: 1.0 });
+    }
+    /* --- 해변 ---
+       물가에서 안쪽으로 BEACH_W칸을 모래밭으로 깐다. 바다와 빙하가 절벽 하나로
+       맞붙어 있으면 "물가"라는 자리가 없어서, 배를 대거나 쉬어 갈 데가 없다.
+       높이도 수면 쪽으로 완만하게 낮춰 실제로 걸어 들어갈 수 있게 만든다. */
+    this.beach = { x0: shore, x1: shore + BEACH_W };
+    for (let k = 0; k <= BEACH_W; k++) {
+      const x = shore + k;
+      if (x >= WW - 2) break;
+      /* 해변 높이 — 세 토막.
+           k 0~5   : 물가 깊이(shoreY) → 수면 — 걸어 들어가는 여울
+           k 6~10  : 수면 바로 위 — 마른 모래밭이 시작되는 자리
+           k 11~   : 안쪽 지형 높이로 이어 붙인다
+         **안쪽 목표는 절대 수면보다 낮아지지 않는다.** 빙하 쪽 지형이 우연히 낮게
+         잡힌 시드에서는 lerp이 그대로 내려가서, 해변이 오른쪽으로 갈수록 깊어졌다. */
+      const inlandRaw = this.surface[clamp(shore + BEACH_W, 0, WW - 1)];
+      const target = Math.min(inlandRaw, this.seaLevel - 1);
+      const SHOAL = 6, FLAT = 11;
+      let want;
+      if (k < SHOAL) want = Math.round(lerp(this.shoreY, this.seaLevel - 1, k / SHOAL));
+      else if (k < FLAT) want = this.seaLevel - 1;
+      else want = Math.round(lerp(this.seaLevel - 1, target, (k - FLAT) / (BEACH_W - FLAT)));
+      const cur = this.surface[x];
+      /* 위쪽은 **want보다 위를 전부** 비운다. 예전에는 min(cur, want)에서 시작해서,
+         원래 지형이 해변보다 낮았던 열은 모래 위에 얼음이 그대로 얹혀 있었다
+         (그 자리에는 조개도 못 놓였다 — 지면이 모래가 아니어서). */
+      for (let y = Math.min(cur, want) - 10; y < Math.max(cur, want) + 8; y++) {
+        if (y < 4) continue;
+        if (y < want) { this.set(x, y, T.AIR); this.walls[this.i(x, y)] = 0; }
+        else if (y < want + 6) { this.set(x, y, T.SAND); this.walls[this.i(x, y)] = 8; }
+        else if (this.get(x, y) === T.AIR) { this.set(x, y, T.SANDSTONE); this.walls[this.i(x, y)] = 8; }
+      }
+      this.surface[x] = want;
+      // 수면보다 낮은 모래 위에는 얕은 물을 채운다 — 모래와 바다가 끊기지 않는다
+      for (let y = this.seaLevel; y < want; y++) { this.set(x, y, T.SEAWATER); this.walls[this.i(x, y)] = 8; }
+    }
+
+    /* --- 윤슬의 방 (비밀 상점) ---
+       심해 평원의 **가장 왼쪽·가장 깊은 자리**에 공기 주머니로 채운 방을 하나 판다.
+       수면에서 600칸 넘게 아래라 깊이 압박이 최대인 구간 — 심해용 산소통 없이는
+       사실상 못 온다. 도착하면 공기라 숨이 차오르므로 방 자체가 첫 보상이다.
+
+       발광 버섯을 달았더니 "동굴에 사람이 하나 있다"로만 읽혔다. 여긴 사람이 삼십 년
+       **살아온 집**이라, 낡은 판자를 덧대고 횃불을 걸어 사람 손이 닿은 자리로 만든다. */
+    {
+      const rx = clamp(18, 8, Math.max(9, plainR - 20));
+      const bed = this.seaBed[rx];
+      const RW = 11, RH = 7;
+      const y0 = Math.min(WH - 12, bed + 3);
+      const fy = y0 + RH - 1;                              // 바닥 줄
+      for (let dx = -RW; dx <= RW; dx++)
+        for (let dy = 0; dy <= RH; dy++) {
+          const x = rx + dx, y = y0 + dy;
+          if (x < 2 || x >= shore || y >= WH - 5) continue;
+          const edge = Math.abs(dx) >= RW - 1 || dy >= RH - 1;
+          if (edge) { this.set(x, y, T.SANDSTONE); this.walls[this.i(x, y)] = 8; }
+          else { this.set(x, y, T.ROOMAIR); this.walls[this.i(x, y)] = 15; }   // 나무 판자 벽지
+        }
+      // 천장에 입구 — 평원 바닥에서 방으로 떨어져 들어온다
+      for (let y = bed; y < y0 + 1; y++)
+        for (let dx = -1; dx <= 1; dx++) this.set(rx + dx, y, T.SEAWATER);
+
+      /* 바닥·천장에 낡은 판자를 덧댄다. 갱목(MINEWOOD)은 이미 "버려진 광산"에서 쓰는
+         썩은 나무라, 물에 삼십 년 잠겨 있던 집의 판자로 그대로 맞는다. */
+      for (let dx = -RW + 1; dx <= RW - 1; dx++) {
+        this.set(rx + dx, fy, T.MINEWOOD);                 // 판자 바닥
+        // 천장 서까래 — 드문드문 걸되, 가운데 세 칸은 들어오는 구멍이라 비운다
+        if (dx % 3 !== 0 && Math.abs(dx) > 1) this.set(rx + dx, y0 + 1, T.MINEWOOD);
+      }
+      // 양쪽 벽에 기둥 한 줄씩 — 방이 통짜 상자로 안 보이게
+      for (let dy = 2; dy < RH - 1; dy++) {
+        this.set(rx - RW + 2, y0 + dy, T.MINEWOOD);
+        this.set(rx + RW - 2, y0 + dy, T.MINEWOOD);
+      }
+      // 횃불 넷 — 벽 기둥 안쪽에 걸어 방 전체가 은은하게 밝다
+      for (const dx of [-RW + 3, -3, 3, RW - 3]) this.set(rx + dx, y0 + 2, T.TORCH);
+      // 살림 — 선반과 탁자. 사람이 사는 자리로 읽히게 하는 건 결국 이 둘이다
+      const shS = DAWN_OBJ.shelf, tbS = DAWN_OBJ.table;
+      this.objects.push({ type: 'furniture', kind: 'shelf',
+        x: (rx - RW + 4) * TS, y: fy * TS - shS.h, w: shS.w, h: shS.h });
+      this.objects.push({ type: 'furniture', kind: 'table',
+        x: (rx + 4) * TS, y: fy * TS - tbS.h, w: tbS.w, h: tbS.h });
+      this.objects.push({ type: 'npc', npc: 'yunseul',
+        x: rx * TS, y: fy * TS - 44, w: 22, h: 44 });
+      this.yunseul = { x: rx, y: fy };
+    }
+
+    /* --- 떠 있는 섬 (비밀) ---
+       바다 한복판 상공에 조각 지형 하나. 스토리와 아무 상관이 없고, 원경 그림에서도
+       "저 먼 곳의 작은 섬"으로만 보인다 — 실제로 갈 수 있다는 걸 알려면 헤엄쳐 나와
+       올려다봐야 한다.
+       섬 위에 황금 상자가 있고, **그 상자가 미끼다** — 열면 섬을 붙들고 있던 것이
+       깨어난다(game.js의 상자 열기 분기, o.boss). 상자만 훔치고 달아나지 못한다. */
+    {
+      const ix = 200, iw = 26;
+      const iy = Math.max(SKY_Y + 6, this.seaLevel - 34);   // 수면에서 34칸 위, 하늘 구역은 피한다
+      const half = iw >> 1;
+      for (let dx = -half; dx <= half; dx++) {
+        const x = ix + dx;
+        if (!this.inB(x, iy)) continue;
+        // 가운데가 두껍고 끝으로 갈수록 얇아지는 조각 — 밑면이 둥글게 깎여 떠 보인다
+        const th = Math.max(1, Math.round(5 * Math.cos((dx / half) * Math.PI / 2)));
+        for (let d = 0; d < th; d++) this.set(x, iy + d, d === 0 ? T.SAND : T.SANDSTONE);
+      }
+      /* 야자수 — 줄기가 기울어 자란다. 곧게 세우면 잿빛 숲 나무와 실루엣이 같아진다.
+         **휘는 칸에서는 두 칸을 다 채운다.** 처음엔 x만 옮겼더니 줄기가 대각선으로
+         끊겨 조각조각 떠 보였다(실제로 그랬다) — 대각선은 타일로 이을 수 없다. */
+      for (const [px, lean, hgt] of [[ix - 9, -1, 7], [ix + 5, 1, 8], [ix + 11, 1, 6]]) {
+        let cx = px;
+        for (let k = 0; k < hgt; k++) {
+          const y = iy - 1 - k;
+          this.set(cx, y, T.PALMWOOD);
+          if (k > 1 && k % 3 === 0) { cx += lean; this.set(cx, y, T.PALMWOOD); }   // 이음칸
+        }
+        /* 잎갓 — 줄기 끝에 **가로로 넓게** 얹는다. 예전엔 마름모로 흩뿌려서 잎이
+           낱개로 떨어져 보였다. 가운데 줄을 길게, 위 줄을 짧게 두어 갓처럼 보이게. */
+        const ty = iy - 1 - hgt;
+        for (let dx = -3; dx <= 3; dx++) this.set(cx + dx, ty, T.PALMLEAF);
+        for (let dx = -2; dx <= 2; dx++) this.set(cx + dx, ty - 1, T.PALMLEAF);
+        this.set(cx, ty - 2, T.PALMLEAF);
+        // 열매는 잎갓 **바로 아래**, 줄기 옆에 붙인다 — 떨어뜨리면 허공에 뜬다
+        this.set(cx + lean, ty + 1, T.COCONUT);
+      }
+      /* 황금 상자 — 등급은 심해 유적(5)보다 위인 7. 여기 오는 값이 곧 이 섬의 이유다.
+         boss를 달아 두면 여는 순간 그것이 깨어난다. */
+      this.objects.push({ type: 'chest', tier: 7, gold: 1, loot: 'session2',
+        boss: 'isle_keeper', x: ix * TS, y: (iy - 1) * TS + 6, w: 26, h: 16 });
+      this.isle = { x: ix, y: iy, w: iw };
+    }
+
+    /* 해변 끝과 안쪽 지형 사이 이음매 — 해변이 수면 위로 고정돼 있으므로, 안쪽 지형이
+       더 낮으면 그 경계에 계단이 생긴다. 14칸에 걸쳐 부드럽게 이어 붙인다. */
+    {
+      const bx = shore + BEACH_W, JOIN = 14;
+      const from = this.surface[clamp(bx, 0, WW - 1)];
+      for (let k = 1; k <= JOIN; k++) {
+        const x = bx + k;
+        if (x >= WW - 2) break;
+        const to = this.surface[clamp(bx + JOIN, 0, WW - 1)];
+        const want = Math.round(lerp(from, to, k / JOIN));
+        const cur = this.surface[x];
+        for (let y = Math.min(cur, want); y < Math.max(cur, want) + 6; y++) {
+          if (y < want) { this.set(x, y, T.AIR); this.walls[this.i(x, y)] = 0; }
+          else if (y < want + 5) { this.set(x, y, y === want ? T.SNOW : T.ICE); this.walls[this.i(x, y)] = 5; }
+        }
+        this.surface[x] = want;
+      }
+    }
+
+    /* --- 유황 (화약 원료) ---
+       빙하 얼음층과 해저 바위에만 박아 둔다. 폭탄을 세션 3에 묶어 두는 장치라,
+       산지를 이 두 곳 밖으로 내보내면 안 된다. */
+    for (let k = 0; k < 260; k++) {
+      const inGlacier = rng.chance(0.45);
+      const x = inGlacier ? rng.int(shore + BEACH_W + 4, GLACIER_X1 - 4) : rng.int(4, shore - 4);
+      if (x < 2 || x >= WW - 2) continue;
+      const top = inGlacier ? this.surface[x] + 6 : (this.seaBed[x] || 0) + 2;
+      const y = rng.int(top, Math.min(WH - 8, top + (inGlacier ? 120 : 20)));
+      if (!this.solid(x, y)) continue;
+      const id = this.get(x, y);
+      if (id === T.BEDROCK) continue;
+      const n = rng.int(2, 5);                          // 작은 덩이로 뭉쳐 난다
+      for (let i = 0; i < n; i++) {
+        const ax = x + rng.int(-1, 1), ay = y + rng.int(-1, 1);
+        if (this.inB(ax, ay) && this.solid(ax, ay) && this.get(ax, ay) !== T.BEDROCK)
+          this.set(ax, ay, T.SULFUR);
+      }
+    }
+
+    /* --- 세션 3 광물 둘 (채굴 등급 5) ---
+       유황과 같은 두 산지를 쓰되 **더 깊고 더 드물게** 둔다. 등급 5는 가압 곡괭이가
+       있어야 캐지므로, 얕은 데 널려 있으면 캐지도 못하는 광맥만 눈에 밟힌다.
+       빙정석은 빙하 얼음층 깊은 쪽, 조수석은 해저 바위 — 하나는 걸어서, 하나는
+       헤엄쳐서 캐게 갈라 놓았다. */
+    for (const [tile, inGlacierOnly, tries] of [[T.GLACIUM, 1, 120], [T.TIDESTONE, 0, 120]]) {
+      for (let k = 0; k < tries; k++) {
+        const x = inGlacierOnly ? rng.int(shore + BEACH_W + 4, GLACIER_X1 - 4) : rng.int(4, shore - 4);
+        if (x < 2 || x >= WW - 2) continue;
+        const top = inGlacierOnly ? this.surface[x] + 40 : (this.seaBed[x] || 0) + 6;
+        const lo = Math.min(WH - 8, top), hi = Math.min(WH - 8, top + (inGlacierOnly ? 140 : 26));
+        if (hi <= lo) continue;
+        const y = rng.int(lo, hi);
+        if (!this.solid(x, y) || this.get(x, y) === T.BEDROCK) continue;
+        const n = rng.int(2, 4);                          // 유황보다 작은 덩이
+        for (let i = 0; i < n; i++) {
+          const ax = x + rng.int(-1, 1), ay = y + rng.int(-1, 1);
+          if (this.inB(ax, ay) && this.solid(ax, ay) && this.get(ax, ay) !== T.BEDROCK)
+            this.set(ax, ay, tile);
+        }
+      }
+    }
+
+    /* --- 해변·해저 장식 ---
+       지상에 잡초·꽃이 있듯 해변에는 조개를, 얕은 해저에는 해초를 둔다.
+       해초는 캐면 kelp가 나오므로 15장의 "해초 30개"를 몹 사냥 말고도 채울 수 있다. */
+    for (let k = 2; k <= BEACH_W; k++) {
+      const x = shore + k, sy = this.surface[clamp(x, 0, WW - 1)];
+      if (x >= WW - 2) break;
+      if (this.get(x, sy) !== T.SAND || this.get(x, sy - 1) !== T.AIR) continue;
+      // 지상의 잡초 정도 밀도로. 0.26은 모래밭이 조개밭이 될 만큼 빽빽했다
+      if (rng.chance(0.12)) this.set(x, sy - 1, T.SEASHELL);
+    }
+
+    // 물 위로 삐져나온 바위는 도로 깎는다 — 수면은 한 줄이어야 한다
+    for (let x = 0; x < shore; x++)
+      for (let y = this.seaLevel; y < this.seaLevel + 3; y++)
+        if (this.get(x, y) !== T.SEAWATER && this.get(x, y) !== T.AIR) this.set(x, y, T.SEAWATER);
+  }
+
+  /** 세계 전체 마무리 검사 — 웅덩이 하나하나를 다듬는 _levelLiquid로는 못 잡는 것이 있다.
+      따로 만들어진 두 웅덩이가 서로 맞닿으면, 각자는 멀쩡한데 **합쳐 놓고 보면**
+      한쪽 수면 옆에 구멍이 생긴다(각 웅덩이는 제 칸 목록만 보기 때문이다).
+      그래서 모든 물·용암 칸을 한 번 훑어 아래 두 가지를 없앤다.
+        · 옆이 빈칸이고 그 **아래가 액체** → 수면에 뚫린 구멍
+        · 옆이 빈칸이고 그 **아래도 빈칸** → 벼랑에 걸친 가장자리(쏟아진다)
+      한 칸을 덜면 옆 칸이 새 가장자리가 되므로, 바뀐 칸의 이웃만 다시 큐에 넣어
+      더 덜 것이 없을 때까지 번진다. 폭포(FALLS)는 세로로 흐르는 물이라 건드리지 않는다. */
+  sealLiquids() {
+    const isQ = t => t === T.WATER || t === T.LAVA;
+    let queue = [];
+    // 바다는 통째로 물이라 이 검사를 태우면 가장자리부터 통째로 말라 버린다 — 건너뛴다
+    const sx0 = this.sea ? this.sea.x1 + 2 : 3;
+    for (let y = 5; y < WH - 4; y++)
+      for (let x = sx0; x < WW - 3; x++)
+        if (isQ(this.get(x, y))) queue.push(y * WW + x);
+    let guard = 0;
+    while (queue.length && guard++ < 60) {
+      const next = [];
+      for (const k of queue) {
+        const x = k % WW, y = (k / WW) | 0;
+        if (!isQ(this.get(x, y))) continue;
+        let bad = false;
+        for (const dx of [-1, 1]) {
+          if (this.get(x + dx, y) !== T.AIR) continue;
+          const b = this.get(x + dx, y + 1);
+          if (b === T.AIR || isQ(b)) { bad = true; break; }
+        }
+        if (!bad) continue;
+        this.set(x, y, T.AIR);
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]])
+          if (isQ(this.get(x + dx, y + dy))) next.push((y + dy) * WW + (x + dx));
+      }
+      if (!next.length) break;
+      queue = next;
+    }
+  }
+
+  /** 액체 덩어리를 "말이 되는 모양"으로 다듬는다. 두 가지를 없앤다.
+
+      1) **수면의 구멍** — 같은 줄에 액체와 빈칸이 섞이고 그 빈칸 아래가 액체인 자리.
+         웅덩이를 팔 때 칸마다 판 깊이가 달라(가장자리는 얕다) 맨 윗줄이 군데군데
+         비었다. 액체가 공중에 뜬 채 옆에 구멍이 뚫린 꼴로 보인다.
+      2) **벼랑에 걸친 가장자리** — 옆이 빈칸이고 그 아래도 빈칸인 자리. 실제라면
+         그리로 쏟아진다.
+
+      고치는 방향은 언제나 **덜어내는 쪽**이다. 빈칸을 채워 수위를 올리면 그 칸이
+      웅덩이 바깥과 이어져 있을 때 오히려 더 새어 나간다.
+      한쪽을 고치면 다른 쪽이 다시 생길 수 있어(가장자리를 덜면 윗줄이 또 비뚤어진다)
+      더 고칠 게 없을 때까지 번갈아 돌린다. */
+  _levelLiquid(cells, liquid) {
+    const q = liquid || T.WATER;
+    let live = cells.filter(([x, y]) => this.get(x, y) === q);
+    for (let pass = 0; pass < 8 && live.length; pass++) {
+      let changed = false;
+
+      // (2) 옆으로 쏟아지는 가장자리부터 덜어낸다
+      for (let k = 0; k < 6; k++) {
+        const leak = [];
+        for (const [x, y] of live) {
+          if (this.get(x, y) !== q) continue;
+          for (const dx of [-1, 1]) {
+            if (this.get(x + dx, y) === T.AIR && this.get(x + dx, y + 1) === T.AIR) { leak.push([x, y]); break; }
+          }
+        }
+        if (!leak.length) break;
+        for (const [x, y] of leak) this.set(x, y, T.AIR);
+        live = live.filter(([x, y]) => this.get(x, y) === q);
+        changed = true;
+      }
+
+      // (1) 수면을 한 줄로
+      const rows = new Map();
+      for (const [x, y] of live) { if (!rows.has(y)) rows.set(y, []); rows.get(y).push(x); }
+      for (const y of [...rows.keys()].sort((a, b) => a - b)) {
+        const below = rows.get(y + 1);
+        if (!below) break;
+        const here = new Set(rows.get(y));
+        if (!below.some(x => !here.has(x) && this.get(x, y) === T.AIR)) break;
+        for (const x of rows.get(y)) this.set(x, y, T.AIR);
+        rows.delete(y);
+        changed = true;
+      }
+      live = live.filter(([x, y]) => this.get(x, y) === q);
+      if (!changed) break;
+    }
+    return live;
+  }
+
   /** 웅덩이 채우기 — (x, y0)를 바닥으로 삼아 물이 새지 않는 만큼만 위로 쌓는다.
       한 줄을 채울 때 그 줄의 모든 칸이 "밑이 고체이거나 이미 물"이어야 한다. 한 칸이라도
       밑이 뚫려 있으면 그리로 다 빠져나가므로 그 줄에서 멈춘다. commit=false면 재보기만 한다. */
-  _fillBasin(x, y0, maxDepth, maxWidth, commit) {
+  _fillBasin(x, y0, maxDepth, maxWidth, commit, liquid) {
     const filled = [];
     const mark = new Set();
     for (let d = 0; d < maxDepth; d++) {
@@ -2129,7 +2904,7 @@ class World {
         for (let step = 0; step < maxWidth; step++) {
           if (cx < 4 || cx >= WW - 4) { leak = true; break; }
           if (this.get(cx, row) !== T.AIR) break;               // 벽 — 여기서 막힌다
-          if (this._noWater(cx, row)) { leak = true; break; }
+          if (this._noWater(cx, row, liquid === T.LAVA)) { leak = true; break; }
           const below = this.get(cx, row + 1);
           if (!TILE_DEF[below].solid && !mark.has(cx + ',' + (row + 1))) { leak = true; break; }
           rowCells.push([cx, row]);
@@ -2142,8 +2917,9 @@ class World {
       for (const [cx, cy] of rowCells) mark.add(cx + ',' + cy);
       filled.push(...rowCells);
     }
-    if (commit) for (const [cx, cy] of filled) this.set(cx, cy, T.WATER);
-    return filled;
+    if (!commit) return filled;
+    for (const [cx, cy] of filled) this.set(cx, cy, liquid || T.WATER);
+    return this._levelLiquid(filled, liquid || T.WATER);
   }
 
   /** 이 x열에서 (x, yFrom) 아래로 처음 만나는 "고체 위의 빈칸"을 찾는다 */
@@ -2165,7 +2941,7 @@ class World {
   _floorNear(x, y) {
     for (let d = -2; d <= 3; d++) {
       const yy = y + d;
-      if (yy < 6 || yy >= WH - 6) continue;
+      if (yy < 6 || yy >= WORLD_BOT - 6) continue;
       if (this.get(x, yy) === T.AIR && TILE_DEF[this.get(x, yy + 1)].solid) return yy;
     }
     return -1;
@@ -2175,14 +2951,14 @@ class World {
       큰 동굴은 노이즈로 뚫은 큰 덩어리라 물이 고일 만한 오목한 자리가 거의 없다. 그래서
       찾는 대신 판다 — 가장자리는 원래 바닥 높이 그대로 두고 가운데로 갈수록 깊게 파서,
       테두리가 저절로 둑이 된다. 밑이 뚫린 열은 그만큼 얕게 파 물이 아래로 새지 않게 한다. */
-  _carveBasin(cx, floorY, halfW, depth) {
+  _carveBasin(cx, floorY, halfW, depth, liquid) {
     const cells = [];
     for (let dx = -halfW; dx <= halfW; dx++) {
       const x = cx + dx;
       if (x < 6 || x >= WW - 6) continue;
       const fy = this._floorNear(x, floorY);
       if (fy < 0 || Math.abs(fy - floorY) > 1) continue;      // 여기서부터는 바닥이 아니다
-      if (this._noWater(x, fy)) continue;
+      if (this._noWater(x, fy, liquid === T.LAVA)) continue;
       const t = 1 - (dx / (halfW + 0.5)) ** 2;
       let d = Math.round(depth * Math.sqrt(Math.max(0, t)));
       while (d > 0) {                                        // 밑이 비어 있으면 얕게
@@ -2194,12 +2970,14 @@ class World {
       for (let k = 1; k <= d; k++) this.set(x, fy + k, T.AIR);
       for (let k = 0; k <= d; k++) cells.push([x, fy + k]);
     }
-    for (const [x, y] of cells) this.set(x, y, T.WATER);
-    return cells;
+    for (const [x, y] of cells) this.set(x, y, liquid || T.WATER);
+    return this._levelLiquid(cells, liquid || T.WATER);
   }
 
   floodCaves(rng) {
-    this.pools = [];
+    // 바다(buildSea)가 먼저 등록해 둔 웅덩이는 살린다 — 여기서 통째로 비우면 수중 몹이
+    // 바다에 안 나온다
+    this.pools = (this.pools || []).filter(q => q.biome === 'sea');
     const bigX = new Set();
     for (const c of this.caverns || []) for (let x = c.x0; x <= c.x1; x++) bigX.add(x);
 
@@ -2229,6 +3007,7 @@ class World {
       for (const [, cy] of cells) if (cy < top) top = cy;
       this.pools.push({ x: best.x, y: top, n: cells.length, big: 1 });
       lakes.push({ c, x: best.x, top });
+      this._airPocket(best.x, top, cells, rng);
     }
 
     // --- 폭포: 호수 위쪽 천장에서 물줄기를 떨어뜨린다 ---
@@ -2265,7 +3044,7 @@ class World {
       tries++;
       const px = rng.int(6, WW - 6);
       if (bigX.has(px)) continue;
-      const py = rng.int(this.surface[px] + 14, Math.min(WH - 12, HELL_Y - 10));
+      const py = rng.int(this.surface[px] + 14, Math.min(WORLD_BOT - 12, HELL_Y - 10));
       if (this.get(px, py) !== T.AIR) continue;
       const fy = this._floorBelow(px, py, 10);
       if (fy < 0 || this._noWater(px, fy)) continue;
@@ -2279,12 +3058,86 @@ class World {
     }
   }
 
+  /** 물속 공기 주머니 — 큰 호수의 천장 아래 물칸 몇 개를 공기로 바꾼다.
+      깊이 잠수하는 구간에서 "숨 돌릴 자리"가 되고, E 단계의 산소 시스템과 짝이다.
+      호수의 **가장 위 줄은 건드리지 않는다** — 수면에 구멍이 뚫린 것처럼 보인다. */
+  _airPocket(cx, top, cells, rng) {
+    if (cells.length < 18 || !rng.chance(0.8)) return;
+    // 지하 물에만 — 지상 호수는 수면이 바로 위라 숨 돌릴 자리가 필요 없고, 물에 뚫린
+    // 구멍으로만 보인다
+    if (top < this.surface[clamp(cx, 0, WW - 1)] + 8) return;
+    // 수면 아래로 두 칸 이상 남는 호수에만 — 얕은 웅덩이에 두면 수면에 뜬 거품처럼 보인다
+    const inner = cells.filter(([, cy]) => cy >= top + 2);
+    if (!inner.length) return;
+    const [px, py] = inner[rng.int(0, inner.length - 1)];
+    const w = rng.int(2, 3), h = rng.int(1, 2);
+    for (let dx = 0; dx < w; dx++)
+      for (let dy = 0; dy < h; dy++) {
+        const x = px + dx, y = py + dy;
+        if (this.get(x, y) !== T.WATER) continue;
+        if (y <= top) continue;                       // 수면 줄은 그대로 둔다
+        this.set(x, y, T.AIRPOCKET);
+      }
+  }
+
+  /* ================= 지옥 용암 =================
+     예전에는 2D 노이즈로 **낱개 타일**을 흩뿌려서, 용암 호수가 아니라 '용암 점박이'가
+     됐다. 그다음엔 _fillBasin만 썼는데, 그건 "이미 웅덩이 모양인 자리"에만 고이므로
+     지옥처럼 바닥이 완만한 곳에서는 얕은 자국만 남았다.
+     이제 동굴 호수·정글 호수와 **같은 방식**이다:
+       1) 바닥이 평평한 자리를 골라 (동굴 호수와 같은 평탄도 기준)
+       2) _carveBasin으로 웅덩이를 **파낸 뒤** 용암을 붓고
+       3) 그 밖의 자잘한 자리는 _fillBasin으로 고이는 만큼만 채운다(작은 동굴 물과 같음).
+     _noWater(…, true)가 지옥 밖을 막아 주므로 용암이 위로 새어 나가지 않는다. */
+  floodHell(rng) {
+    this.lavaPools = [];
+
+    // --- 1. 큰 용암 호수 — 파낸다 ---
+    let made = 0, tries = 0;
+    while (made < 26 && tries < 9000) {
+      tries++;
+      const px = rng.int(8, WW - 8);
+      const fy = this._deepFloor(px, HELL_Y + 6, WORLD_BOT - 8);       // 지옥 바닥까지 훑는다
+      if (fy < 0 || this._noWater(px, fy, true)) continue;
+      let flat = 0;
+      for (let dx = -7; dx <= 7; dx++) {
+        const g = this._floorNear(px + dx, fy);
+        if (g >= 0 && Math.abs(g - fy) <= 1) flat++;
+      }
+      if (flat < 9) continue;                                   // 동굴 호수와 같은 평탄도 기준
+      const cells = this._carveBasin(px, fy, rng.int(5, 9), rng.int(2, 4), T.LAVA);
+      if (cells.length < 12) continue;
+      let top = WH;
+      for (const [, cy] of cells) if (cy < top) top = cy;
+      this.lavaPools.push({ x: px, y: top, n: cells.length, big: 1 });
+      made++;
+    }
+
+    // --- 2. 작은 웅덩이 — 고이는 만큼만 ---
+    let small = 0; tries = 0;
+    while (small < 40 && tries < 9000) {
+      tries++;
+      const px = rng.int(6, WW - 6);
+      const py = rng.int(HELL_Y + 6, WORLD_BOT - 12);
+      if (this.get(px, py) !== T.AIR) continue;
+      const fy = this._floorBelow(px, py, 10);
+      if (fy < 0 || this._noWater(px, fy, true)) continue;
+      const cells = this._fillBasin(px, fy, 4, 14, false, T.LAVA);
+      if (cells.length < 5) continue;
+      this._fillBasin(px, fy, 4, 14, true, T.LAVA);
+      let top = WH;
+      for (const [, cy] of cells) if (cy < top) top = cy;
+      this.lavaPools.push({ x: px, y: top, n: cells.length, big: 0 });
+      small++;
+    }
+  }
+
   /** 정글 중간의 지상 폭포 + 호수. 노이즈만으로는 뚜렷한 절벽이 잘 안 나와서
       직접 깎는다 — 왼쪽은 자연 지형을 그대로 기준선으로 쓰고, 오른쪽을 12칸 넘게
       끌어올려 절벽을 만든 뒤 그 틈으로 폭포를 떨어뜨린다. 정글 스토리 유적(x≈1700)과
       뿌리 신전(x≈1560)에서 충분히 떨어진 x=1850을 중심으로 잡았다. */
   buildJungleFalls(rng) {
-    const cx = 1850;
+    const cx = 1850 + SHIFT;
     if (this.biomeAt(cx).id !== 'jungle') return;   // 바이옴 경계가 시드에 따라 흔들릴 수 있다
     let leftY = 0;
     for (const sx of [cx - 30, cx - 25, cx - 20]) leftY += this.surface[clamp(sx, 0, WW - 1)];
@@ -2352,6 +3205,10 @@ class World {
       for (let k = 0; k <= d; k++) { cells.push([x, leftY + k]); this.setWall(x, leftY + k, 11); }
     }
     for (const [x, y] of cells) this.set(x, y, T.WATER);
+    this._levelLiquid(cells, T.WATER);
+    /* 공기 주머니는 여기 두지 않는다 — 지상 호수는 5칸 깊이라 수면까지 바로 올라오면
+       그만이고, 물 한가운데 뚫린 구멍처럼 보인다(실제로 그렇게 보였다).
+       제 쓰임새는 F 단계의 심해다. */
     // 동굴 호수 두 곳의 pools.push와 같은 최소 크기 기준(12칸) — 웅덩이 판정을 받으려면
     // 이 정도는 돼야 한다. 타일은 이미 물로 채워졌으니 아래는 스폰·낚시 등록만 가른다.
     if (cells.length >= 12) {
@@ -2371,10 +3228,48 @@ class World {
       const fy = this.surface[clamp(x, 0, WW - 1)];
       if (this.get(x, fy) === T.AIR && this.solid(x, fy + 1)) this.set(x, fy, T.ORCHID);
     }
-    // 수면 장식 — 호수 표면(leftY) 바로 위 칸에 수련을 듬성듬성 띄운다.
-    // leftY 자체가 이미 물(k=0)이라, 그 위 칸(leftY-1)이 비어 있으면 수면에 뜬 것처럼 보인다.
-    for (let x = lakeL; x <= lakeR; x++) {
-      if (rng.chance(0.3) && this.get(x, leftY - 1) === T.AIR) this.set(x, leftY - 1, T.LILY);
+    /* 수련은 여기서 놓지 않는다 — 수면 높이가 뒤에서 한 번 더 바뀐다(sealLiquids).
+       예전에는 여기서 leftY-1(수면 **위** 칸)에 놓아 한 칸 떠 있었다. 물 위 장식과
+       초목 정리는 지형이 다 끝난 뒤 decorateWater가 한 번에 한다. */
+    this.jungleLake = { x0: lakeL, x1: cliffR, y: leftY };
+  }
+
+  /** 이 열 위로 전주가 서 있는가 — 전주 기둥은 타일이 아니라 그림이라(factory.js),
+      그 아래를 밭으로 갈면 작물이 기둥과 겹쳐 그려진다. 밭을 가는 쪽에서 이 열을
+      건너뛴다. game.js의 _poleAbove와 같은 판정이다. */
+  poleColumn(x, y) {
+    for (let ty = y - 1; ty >= y - 40 && ty > 2; ty--) {
+      const m = this.machines.get(ty * WW + x);
+      if (m) return m.t === 'pole';
+      if (this.solid(x, ty)) return false;
+    }
+    return false;
+  }
+
+  /** 물 위 마무리 — 지형·액체가 다 정해진 **뒤에** 한 번만 돈다.
+      1) 물 위에 서 있는 초목을 걷어낸다. 나무·풀·꽃은 호수를 파기 전에 이미 심어져
+         있어서(지형 생성 7단계), 나중에 그 밑을 물로 채우면 나무가 물 위에 선다.
+      2) 수련을 **실제 수면 칸**에 놓는다. 수면 위 칸에 놓으면 한 칸 떠 보인다. */
+  decorateWater(rng) {
+    const lake = this.jungleLake;
+    if (!lake) return;
+    for (let x = lake.x0; x <= lake.x1; x++) {
+      // 이 열의 진짜 수면 = 위에서 처음 만나는 물칸
+      let top = -1;
+      for (let y = lake.y - 8; y <= lake.y + 10; y++)
+        if (this.get(x, y) === T.WATER) { top = y; break; }
+      if (top < 0) continue;
+      /* (1) 수면 위로 뻗은 초목을 걷어낸다. 나무 기둥·잎·덩굴·고사리·꽃은 전부
+         solid 0 이라 "물 위의 고체가 아닌 칸"을 지우면 한 번에 정리된다. 폭포(FALLS)와
+         수련은 남기고, 고체(바위 선반·지형)를 만나면 거기서 멈춘다 — 그 위는 다른 층이다. */
+      for (let y = top - 1; y >= top - 26 && y > 4; y--) {
+        const t = this.get(x, y);
+        if (t === T.AIR || t === T.FALLS || t === T.LILY) continue;
+        if (TILE_DEF[t].solid) break;
+        this.set(x, y, T.AIR);
+      }
+      // (2) 수련 — 수면 칸 자체에 띄운다
+      if (rng.chance(0.3)) this.set(x, top, T.LILY);
     }
   }
 
@@ -2382,7 +3277,8 @@ class World {
     let placed = 0, tries = 0;
     while (placed < 165 && tries < 140000) {
       tries++;
-      const x = rng.int(4, WW - 5), y = rng.int(this.surface[x] + 12, WH - 8);
+      const x = rng.int(4, WW - 5), y = rng.int(this.surface[x] + 12, WORLD_BOT - 8);
+      if (inSeaZone(x)) continue;                 // 해저에는 지상식 상자를 흩뿌리지 않는다
       if (this.get(x, y) !== T.AIR || this.get(x, y - 1) !== T.AIR) continue;
       if (!this.solid(x, y + 1) || !this.solid(x + 1, y + 1)) continue;
       let tier = y > HELL_Y ? 5 : y > 326 ? 4 : y > 214 ? 3 : y > 142 ? 2 : 1;
@@ -2495,7 +3391,7 @@ class World {
       atelier: this.atelier, citadel: this.citadel, deepShaft: this.deepShaft,
       dungeon: this.dungeon, ruins: this.ruins, sealRoom: this.sealRoom,
       skyIslands: this.skyIslands, skyGate: this.skyGate, giantTree: this.giantTree,
-      caverns: this.caverns, pools: this.pools, falls: this.falls,
+      caverns: this.caverns, pools: this.pools, lavaPools: this.lavaPools, falls: this.falls,
       explored: rleEncode(this.explored)
     };
   }
@@ -2519,7 +3415,7 @@ class World {
     w.dungeon = d.dungeon; w.ruins = d.ruins; w.sealRoom = d.sealRoom; w.ruinSites = d.ruinSites || [];
     w.skyIslands = d.skyIslands; w.skyGate = d.skyGate; w.giantTree = d.giantTree;
     // 물이 생기기 전의 세이브에는 이 둘이 없다 — 타일에는 이미 물이 없으니 빈 배열이 맞다
-    w.caverns = d.caverns || []; w.pools = d.pools || [];
+    w.caverns = d.caverns || []; w.pools = d.pools || []; w.lavaPools = d.lavaPools || [];
     w.falls = d.falls || [];   // 폭포 앰비언트 도입 전 세이브 — 빈 배열이면 그냥 조용할 뿐, 안전하다
     return w;
   }

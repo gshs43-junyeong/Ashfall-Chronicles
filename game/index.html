@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ashfall Chronicles — 별이 잠든 땅</title>
-<link rel="stylesheet" href="css/style.css?v=183">
+<link rel="stylesheet" href="css/style.css?v=315">
 </head>
 <body>
 
@@ -30,6 +30,10 @@
         <div class="bar pw" id="pw-bar">
           <div class="fill" id="pw-fill"></div>
           <span class="bar-label" id="pw-text">200 / 200</span>
+        </div>
+        <div class="bar air" id="air-bar">
+          <div class="fill" id="air-fill"></div>
+          <span class="bar-label" id="air-text">14 / 14</span>
         </div>
       </div>
       <div id="buffs"></div>
@@ -68,17 +72,28 @@
             <div class="slot equip" data-eq="boots"><span class="eqtag">신발</span></div>
             <div class="slot equip" data-eq="acc1"><span class="eqtag">장신구</span></div>
             <div class="slot equip" data-eq="acc2"><span class="eqtag">장신구</span></div>
+            <div class="slot equip" data-eq="util1"><span class="eqtag">유틸리티</span></div>
+            <div class="slot equip" data-eq="util2"><span class="eqtag">유틸리티</span></div>
             <div class="slot equip" data-eq="pet1"><span class="eqtag">펫</span></div>
             <div class="slot equip" data-eq="pet2"><span class="eqtag">펫</span></div>
             <div class="slot equip" data-eq="bag"><span class="eqtag">가방</span></div>
             <div class="slot trash-zone" id="trash-zone"><span class="trash-ic" data-ui-icon="trash" aria-hidden="true"></span><span class="eqtag">버리기</span></div>
           </div>
-          <div id="stat-sheet"></div>
         </div>
         <div class="bag-col">
-          <div class="equip-title">소지품 <small>(좌클릭 집기 · 우클릭 사용/장착 · Shift+좌클릭 버리기 · Ctrl+좌클릭 잠금)</small>
-            <button type="button" id="btn-sort-bag" class="mini-btn">정리</button></div>
+          <div class="equip-title"><span class="section-ic" data-ui-icon="bagui" aria-hidden="true"></span>소지품 <small>(좌클릭 집기 · 우클릭 사용/장착 · Shift+좌클릭 버리기 · Ctrl+좌클릭 잠금)</small></div>
           <div id="bag-grid"></div>
+          <!-- 정리 버튼은 소지품 **아래**에 둔다. 제목 줄에 붙여 두면 설명 문구에 밀려
+               오른쪽 끝에 걸치고, 정작 누를 일은 칸을 다 본 뒤라 시선이 아래에 있다. -->
+          <div class="bag-foot"><button type="button" id="btn-sort-bag" class="mini-btn">정리</button></div>
+        </div>
+        <!-- 능력치는 장비 칸 아래가 아니라 가방 **오른쪽**에 둔다. 장비 칸이 유틸리티
+             두 칸만큼 길어지면서 아래로 밀려 스크롤해야 보였다. -->
+        <div class="stat-col">
+          <!-- 'stat' UI 아이콘은 없다(UISPEC에 sun·equip·slot_*뿐). 없는 키를 넣으면
+               빈 칸만 자리를 먹어 다른 제목과 줄이 어긋난다 — 글자만 둔다. -->
+          <div class="equip-title"><span class="section-ic" data-ui-icon="statui" aria-hidden="true"></span>능력치</div>
+          <div id="stat-sheet"></div>
         </div>
       </div>
     </section>
@@ -159,6 +174,12 @@
       <header><h2 id="reforge-title">재련대</h2><button class="x" data-close>✕</button></header>
       <div id="reforge-note"></div>
       <div id="reforge-grid"></div>
+    </section>
+
+    <section class="panel" id="panel-anvil">
+      <header><h2 id="anvil-title">강화 모루</h2><button class="x" data-close>✕</button></header>
+      <div id="anvil-note"></div>
+      <div id="anvil-grid"></div>
     </section>
 
     <!-- 전체 지도 -->
@@ -269,16 +290,16 @@
   </div>
 </div>
 
-<script src="js/util.js?v=183"></script>
-<script src="js/data.js?v=183"></script>
-<script src="js/world.js?v=183"></script>
-<script src="js/tileart.js?v=183"></script>
-<script src="js/itemart.js?v=183"></script>
-<script src="assets/sprites.js?v=183"></script>
-<script src="js/entity.js?v=183"></script>
-<script src="js/factory.js?v=183"></script>
-<script src="js/ui.js?v=183"></script>
-<script src="js/music.js?v=183"></script>
-<script src="js/game.js?v=183"></script>
+<script src="js/util.js?v=315"></script>
+<script src="js/data.js?v=315"></script>
+<script src="js/world.js?v=315"></script>
+<script src="js/tileart.js?v=315"></script>
+<script src="js/itemart.js?v=315"></script>
+<script src="assets/sprites.js?v=315"></script>
+<script src="js/entity.js?v=315"></script>
+<script src="js/factory.js?v=315"></script>
+<script src="js/ui.js?v=315"></script>
+<script src="js/music.js?v=315"></script>
+<script src="js/game.js?v=315"></script>
 </body>
 </html>
