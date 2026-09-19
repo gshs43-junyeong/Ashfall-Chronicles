@@ -3,6 +3,49 @@
 
 const SAVE_KEY = 'ashfall_save_v3';   // v1: 640×232 · v2: 2800×480 — 세계 폭이 바뀌면 호환 불가
 const SAVE_SLOTS = 3;
+
+/* ---------------- 세이브 판올림 ----------------
+   세이브 모양이 바뀔 때마다 여기에 함수를 하나씩 **덧붙인다**. 이미 나간 판으로 만든
+   기록도 계속 열려야 하므로, 옛 함수는 절대 고치거나 지우지 않는다 — 순서대로 통과시켜
+   지금 판까지 끌어올리는 사다리다.
+
+   규칙: 각 함수는 "그 판에서 새로 생긴 필드에 기본값을 채우는" 일만 한다. 이미 값이
+   있으면 건드리지 않는다(두 번 돌아도 안전해야 한다). */
+const SAVE_UPGRADES = [
+  // v1 → v2 (v1.1)
+  (d) => {
+    // 상인 재고 — 하루 단위로 갈리는 무작위 재고를 세이브에 담는다
+    if (!d.shopStock) d.shopStock = {};
+    if (d.shopStockDay === undefined) d.shopStockDay = -1;
+  },
+  // v2 → v3 (v1.1) — 유틸리티 장비 칸 두 개가 생겼다
+  (d) => {
+    const eq = d.player && d.player.equip;
+    if (!eq) return;
+    if (eq.util1 === undefined) eq.util1 = null;
+    if (eq.util2 === undefined) eq.util2 = null;
+  },
+  /* v3 → v4 (v1.1) — 업적.
+     빈 칸으로만 열어 둔다. 옛 세이브에서 "이미 한 일"은 checkAch()가 처음 돌 때
+     조건을 다시 재서 채운다 — 업적 조건이 전부 **이미 있는 카운터**를 읽기 때문에
+     가능한 일이다(그래서 새 카운터를 안 만들었다). */
+  (d) => { if (!d.achievements) d.achievements = {}; },
+  /* v4 → v5 (v1.1) — 업적 중에 세이브에 없는 값을 묻는 것들이 생겼다
+     (플레이 시간·거래 횟수·익사 같은 것). 하나하나 필드를 늘리는 대신 tally 한 칸에
+     모아 둔다 — 나중에 세는 것이 더 생겨도 세이브 모양이 안 바뀐다.
+     옛 세이브는 0부터 시작한다. 그건 어쩔 수 없다 — 지난 플레이 시간을 되살릴 방법이
+     없기 때문이고, 그래서 **셀 수 있는 것은 최대한 기존 카운터로 물었다.** */
+  (d) => { if (!d.tally) d.tally = {}; }
+];
+const SAVE_VERSION = SAVE_UPGRADES.length + 1;
+
+/** 옛 세이브를 지금 판까지 끌어올린다. d를 그 자리에서 고친다. */
+function upgradeSave(d) {
+  let v = d.v || 1;
+  while (v < SAVE_VERSION) { SAVE_UPGRADES[v - 1](d); v++; }
+  d.v = SAVE_VERSION;
+  return d;
+}
 const slotKey = (i) => `${SAVE_KEY}_slot${i}`;
 const sigKey = (i) => `${SAVE_KEY}_slot${i}_s`;
 
@@ -347,10 +390,12 @@ const G = {
     this.sideActive = {}; this.sideDone = {}; this.tabletsRead = {}; this.termsRead = {}; this.loreRead = {};
     this.deathMark = null;
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
+    this.achievements = {}; this.tally = {};
     this.nearStObj = { work: null, forge: null };
     this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
     this.rainT = 0; this.rainDrops = null; this.smokes = []; this.smokeT = 0;
     this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = []; this.bountyNext = [];
+    this.shopStock = {}; this.shopStockDay = -1;
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
     this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
     $('#title-screen').style.display = 'none';
@@ -372,9 +417,21 @@ const G = {
     if (qs.get('debug') === 'village') {
       this.villageUnlocked = true;
       this.world.restoreDawnCity();
-      const lv = +qs.get('lv') || 1;
-      if (lv >= 2) this.world.upgradeVillage(2);
-      if (lv >= 3) this.world.upgradeVillage(3);
+      // 단계 수가 늘어도 따라오게 VILLAGE 표를 기준으로 돌린다(예전엔 2·3만 하드코딩)
+      const lv = clamp(+qs.get('lv') || 1, 1, VILLAGE.length - 1);
+      for (let k = 2; k <= lv; k++) this.world.upgradeVillage(k);
+      this.world.dawnCity.lv = lv;
+      /* 스토리 진행도 함께 맞춘다 — 여명 마을은 종장(세션 2)을 지나야 열리는 곳이라,
+         챕터를 0(세션 1)에 둔 채 마을만 열면 세계가 앞뒤가 안 맞는다. 그 상태에서는
+         세션 2 물건이 상인 재고에서 걸러지고(sess 게이트) 마을 서비스 값도 세션 1
+         배수로 계산돼, "고친 게 반영이 안 된" 것처럼 보인다(실제로 그렇게 보였다).
+         sess= 로 세션을, ch= 로 챕터를, plv= 로 레벨을 직접 줄 수도 있다. */
+      const sess = clamp(+qs.get('sess') || 2, 1, SESSIONS.length);
+      this.chapter = qs.get('ch') !== null ? +qs.get('ch') : SESSIONS[sess - 1].ch0;
+      const plv = +qs.get('plv') || (sess >= 3 ? 40 : sess >= 2 ? 25 : 1);
+      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
+      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+      p.gold = +qs.get('gold') || 20000;
       const d = this.world.dawnCity;
       // 3단계면 서쪽 성문 앞에 세운다 — 마을에 들어서는 순간 성벽이 바로 보인다
       if (lv >= 3) { p.x = (d.x0 + DAWN_WALL.leftOff + 4) * TS; p.y = (d.gy - 3) * TS; }
@@ -382,6 +439,222 @@ const G = {
       p.vx = p.vy = 0;
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
       this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+    }
+
+    /* ?debug=price — 값 확인용. 여명 마을 4단계 광장에 상인 셋·조련사·대장장이가
+       다 있는 상태로, 기본 100레벨·금화 1,000만으로 시작한다. 파는 값은 상인을 열어
+       보고, 되파는 값은 아무 물건이나 상점 창에 넣어 보면 된다.
+       &plv= 로 레벨, &gold= 로 금화, &sess= 로 세션을 바꿀 수 있다. */
+    if (qs.get('debug') === 'price') {
+      this.villageUnlocked = true;
+      this.world.restoreDawnCity();
+      for (let k = 2; k <= VILLAGE.length - 1; k++) this.world.upgradeVillage(k);
+      this.world.dawnCity.lv = VILLAGE.length - 1;
+      const sess = clamp(+qs.get('sess') || 2, 1, SESSIONS.length);
+      this.chapter = qs.get('ch') !== null ? +qs.get('ch') : SESSIONS[sess - 1].ch0;
+      const plv = +qs.get('plv') || 100;
+      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
+      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+      p.gold = +qs.get('gold') || 10000000;
+      // 되팔 거리 — 알 세 종류와 공장 물건·재료를 한 벌씩 쥐여 준다
+      const give = (id, n) => {
+        const max = ITEMS[id].stack || 1;
+        for (let left = n; left > 0; left -= max) {
+          const it = makeItem(id, Math.min(max, left), 0);
+          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+        }
+      };
+      for (const id of ['egg_common', 'egg_rare', 'egg_epic']) give(id, 3);
+      for (const id of ['m_belt', 'm_assembler', 'm_gen', 'steel_plate', 'circuit', 'motor',
+                        'iron_bar', 'wood', 'potion_hp', 'station_work', 'crate_wood']) give(id, 5);
+      const d = this.world.dawnCity;
+      p.x = (((d.x0 + d.x1) >> 1) - 5) * TS; p.y = (d.gy - 3) * TS; p.vx = p.vy = 0;
+      this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
+      this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+      UI.refreshBag(); UI.refreshEquip();
+      this.toast(`값 확인 자리 — ${plv}레벨 · 마을 ${VILLAGE.length - 1}단계 · 세션 ${sess}`, 'good');
+    }
+
+    /* ?debug=sea — 세션 3 확인 자리. 빙하 지대 물가에 서서 시작한다.
+       왼쪽이 바다, 오른쪽이 빙하다. 산소통 세 종류와 심해 장비를 다 쥐여 주므로
+       숨 계단(14 → 46 → 78초)을 그 자리에서 바꿔 가며 확인할 수 있다.
+       &plv= 레벨 · &gold= 금화 · &ch= 장(기본 15 = 세션 3 서장). */
+    if (qs.get('debug') === 'sea') {
+      const give = (id, n) => {
+        const max = ITEMS[id].stack || 1;
+        for (let left = n; left > 0; left -= max) {
+          const it = makeItem(id, Math.min(max, left), 0);
+          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+        }
+      };
+      this.chapter = qs.get('ch') !== null ? +qs.get('ch') : SESSIONS[2].ch0;
+      const plv = +qs.get('plv') || 40;
+      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
+      p.gold = +qs.get('gold') || 300000;
+      // 숨 계단 · 심해 장비 · 불빛 · 채굴
+      for (const id of ['tank_air', 'tank_deep', 'tank_abyss']) give(id, 1);
+      for (const id of ['helm_diver', 'chest_scale', 'boots_fin', 'ring_pearl', 'charm_ink',
+                        'spear_tide', 'bow_harpoon', 'orb_abyss', 'pick_abyss']) give(id, 1);
+      give('torch', 200); give('potion_hp_greater', 20); give('rod_adv', 1); give('raw_meat', 20);
+      // 4단계 설비를 바로 세워 볼 수 있게 재료도 준다
+      for (const id of ['abyss_core', 'pressure_plate_m', 'abyss_pearl', 'jelly_lamp',
+                        'crab_shell', 'shark_tooth', 'ink_sac', 'kelp', 'sea_salt']) give(id, 40);
+      for (const id of ['m_pressor', 'm_desal', 'm_belt_f', 'm_battery_hi', 'm_gen', 'm_pole']) give(id, 8);
+      p.equip.util1 = makeItem('tank_deep', 1, 0);
+      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+      const w = this.world;
+      const sx = SEA_X1 + 6;                                  // 물가 바로 오른쪽(빙하 쪽)
+      p.x = sx * TS; p.y = (w.surface[sx] - 3) * TS; p.vx = p.vy = 0;
+      this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
+      this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+      UI.refreshBag(); UI.refreshEquip();
+      this.toast('세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급', 'good');
+    }
+
+    /* ?debug=fishfarm — 낚시·농사만 확인하는 자리.
+       울림 정글의 폭포 호수 기슭에 세운다. 그 한 자리에서 낚시(호수)와 농사(기슭의
+       흙)를 둘 다 할 수 있어서, 확인하러 걸어다닐 일이 없다.
+       &plv= 로 레벨, &gold= 로 금화를 줄 수 있다(기본 15레벨·5000). */
+    if (qs.get('debug') === 'fishfarm') {
+      // 한 칸 최대치(stack)를 넘겨 주면 한 슬롯에 몰아 담겨 버린다 — 나눠서 넣는다
+      const give = (id, n) => {
+        const max = ITEMS[id].stack || 1;
+        for (let left = n; left > 0; left -= max) {
+          const it = makeItem(id, Math.min(max, left), 0);
+          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+        }
+      };
+      give('rod_basic', 1); give('rod_adv', 1);
+      give('raw_meat', 40);                                   // 미끼 — 생고기가 있으면 자동으로 걸린다
+      give('hoe_iron', 1);
+      give('seed_wheat', 60); give('seed_starroot', 40); give('seed_ashcap', 40);
+      give('fertilizer', 40);
+      give('pick_iron', 1); give('torch', 40);
+      const plv = +qs.get('plv') || 15;
+      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
+      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+      p.gold = +qs.get('gold') || 5000;
+      /* 정글 호수 기슭 — 물가 바로 옆의 마른 땅에 세운다. 호수 자리는 세계마다
+         달라서 좌표를 박지 않고 pools에서 정글 호수를 찾아 그 왼쪽 기슭을 잡는다. */
+      const w = this.world;
+      const lake = (w.pools || []).find(q => q.biome === 'jungle') || (w.pools || []).find(q => q.big);
+      if (lake) {
+        let sx = lake.x;
+        // 호수 왼쪽으로 걸어 나가 물이 끝나는 첫 마른 바닥을 찾는다
+        for (let k = 0; k < 40; k++) {
+          const tx = lake.x - k;
+          const ty = w.surface[clamp(tx, 0, WW - 1)];
+          if (!TILE_DEF[w.get(tx, ty)].liquid && w.solid(tx, ty + 1)) { sx = tx; break; }
+        }
+        /* 밭 감을 자리를 깔아 둔다. 이 기슭은 정글 풀·진흙이라 괭이가 안 먹는다
+           (괭이는 흙·풀·눈·부패한 풀만 간다 — game.js의 농사 블록). 확인용 자리이므로
+           호수 왼쪽으로 12칸을 흙/풀로 바꿔 둔다. 정상 플레이 지형은 안 건드린다. */
+        for (let k = 1; k <= 12; k++) {
+          const x = sx - k, sy = w.surface[clamp(x, 0, WW - 1)];
+          if (TILE_DEF[w.get(x, sy)].liquid) continue;
+          if (w.solid(x, sy - 1)) continue;                      // 나무 밑동은 건너뛴다
+          /* 정글은 지면 바로 위가 덩굴·풀포기라 그 칸이 AIR가 아니다. 괭이는 "위가
+             비어 있는" 칸만 갈아서(농사 블록), 치워 주지 않으면 12칸 중 두어 칸만
+             갈린다(실제로 그랬다). 통과 가능한 장식만 걷어낸다. */
+          if (w.get(x, sy - 1) !== T.AIR) w.set(x, sy - 1, T.AIR);
+          w.set(x, sy, T.GRASS);
+          if (!w.solid(x, sy + 1)) w.set(x, sy + 1, T.DIRT);
+        }
+        p.x = sx * TS;
+        p.y = (w.surface[clamp(sx, 0, WW - 1)] - 2) * TS;
+        p.vx = p.vy = 0;
+        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
+        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+        this.toast('낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭', 'good');
+      }
+      UI.refreshBag(); UI.refreshEquip();
+    }
+
+    /* ?debug=bomb — 폭탄만 확인하는 자리.
+       베이스캠프 오른쪽 지하에 시험장을 판다. 한가운데 기반암 기둥이 **안전 지대
+       경계선(CAMP_X1+16)에 정확히** 서 있어서, 같은 폭탄을 왼쪽에 던지면 아무것도
+       안 부서지고 오른쪽에 던지면 구덩이가 생긴다 — 보호 규칙을 한 화면에서 나란히
+       볼 수 있다. 오른쪽에는 단단하기 1·2·3·4·5와 기반암 기둥을 세워 두었으니
+       폭탄(2)·강력(3)·굴착(4) 등급이 각각 어디서 멈추는지 그대로 드러난다.
+       물·용암 웅덩이와 기계 한 줄은 "안 건드린다"를 확인하는 자리다.
+       &plv= 레벨 · &gold= 금화. */
+    if (qs.get('debug') === 'bomb') {
+      const give = (id, n) => {
+        const max = ITEMS[id].stack || 1;
+        for (let left = n; left > 0; left -= max) {
+          const it = makeItem(id, Math.min(max, left), 0);
+          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+        }
+      };
+      for (const id of ['bomb_small', 'bomb_big', 'bomb_dig']) give(id, 99);
+      // 제작도 그 자리에서 해 볼 수 있게 재료를 함께 준다 (화약 = 유황3+바다소금2+석탄2)
+      give('sulfur', 99); give('sea_salt', 99); give('coal', 99); give('gunpowder', 99);
+      give('iron_bar', 40); give('steel_plate', 30); give('rope_kelp', 40); give('pressure_plate_m', 20);
+      give('station_work', 3); give('pick_iron', 1); give('torch', 60); give('potion_hp', 20);
+      const plv = +qs.get('plv') || 40;
+      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
+      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+      p.gold = +qs.get('gold') || 200000;
+
+      const w = this.world;
+      const gx = CAMP_X1 + 16;                               // 안전 지대의 오른쪽 경계
+      /* 깊이는 **안전 지대 판정이 정한다.** zoneAt은 캠프를 "지면에서 20칸 아래까지"로
+         보므로(world.js), 바닥이 그보다 깊으면 왼쪽 방이 캠프가 아니게 되어 비교
+         자체가 성립하지 않는다. 캠프 쪽 지면 중 가장 높은 곳에서 18칸 아래로 잡는다. */
+      let smin = 1e9;
+      for (let x = gx - 26; x <= gx; x++) smin = Math.min(smin, w.surface[clamp(x, 0, WW - 1)]);
+      const gy = clamp(smin + 18, 60, WH - 40);
+      const x0 = gx - 26, x1 = gx + 78, top = gy - 13;
+      // 굴을 파고 바닥 여섯 줄을 돌로 깐다
+      for (let x = x0; x <= x1; x++)
+        for (let y = top; y <= gy + 6; y++) {
+          if (!w.inB(x, y)) continue;
+          w.set(x, y, y > gy ? T.STONE : T.AIR);
+          /* 뒷벽을 반드시 발라 준다. 지면 가까이를 파면 뒤에 벽이 없어서 **하늘이
+             그대로 비쳐 보인다** — 처음엔 별과 언덕이 보이는 노천장이 됐다.
+             굴을 판다는 건 타일만 지우는 게 아니라 뒤에 벽을 남기는 일이다. */
+          w.walls[w.i(x, y)] = 2;
+        }
+      /* 천장 메우기. 캠프 오른쪽은 지면이 낮아서(실측 78) 이대로 파면 굴 천장이 그대로
+         하늘로 뚫린다 — 실제로 처음엔 별이 보이는 노천 구덩이가 됐다. 천장 위 여덟 줄의
+         빈칸을 돌로 채워 굴을 닫는다. 확인용 지형이라 지상이 조금 뭉개지는 건 감수한다. */
+      for (let x = x0; x <= x1; x++)
+        for (let y = Math.max(0, top - 8); y < top; y++)
+          if (w.inB(x, y) && w.get(x, y) === T.AIR) w.set(x, y, T.STONE);
+      // 경계 기둥 — 기반암이라 어떤 폭탄으로도 안 없어진다. 가운데 세 칸은 드나드는 문
+      for (let y = top; y <= gy; y++) if (y < gy - 3 || y > gy - 1) w.set(gx, y, T.BEDROCK);
+      // 천장 횃불
+      /* 단단하기 시험 기둥 — 폭탄이 어디서 멈추는지가 이 줄에 다 나온다.
+         폭탄 mine 2 / 강력 3 / 굴착 4 이므로 기대값은
+         돌·금 → 셋 다 / 흑요암 → 강력·굴착 / 흑암석 → 굴착만 / 심층암·기반암 → 없음. */
+      const PILLARS = [T.STONE, T.GOLD, T.EBONSTONE, T.OBSIDIAN, T.DEEPROCK, T.BEDROCK];
+      PILLARS.forEach((tile, i) => {
+        const px = gx + 6 + i * 8;
+        for (let dx = 0; dx < 5; dx++) for (let y = gy - 7; y <= gy; y++) w.set(px + dx, y, tile);
+      });
+      // 왼쪽(안전 지대)에도 같은 돌기둥 하나 — 같은 폭탄을 두 쪽에 던져 비교하라고
+      for (let dx = 0; dx < 5; dx++) for (let y = gy - 7; y <= gy; y++) w.set(gx - 12 + dx, y, T.STONE);
+      // 물·용암 웅덩이 — 액체는 건너뛴다
+      for (let x = gx + 56; x <= gx + 68; x++)
+        for (let y = gy - 2; y <= gy; y++) w.set(x, y, x < gx + 63 ? T.WATER : T.LAVA);
+      // 기계 한 줄 — 남의 기계는 안 날린다
+      ['belt', 'belt', 'gen', 'battery'].forEach((k, i) => Factory.place(w, gx + 72 + i, gy, k, 0));
+      // 방어력이 폭탄 피해를 얼마나 깎는지 볼 표적. 게(방어 78)와 슬라임을 같이 둔다
+      for (let i = 0; i < 3; i++)
+        this.ents.push(new Enemy(i === 0 ? 'reef_crab' : 'slime', (gx + 30 + i * 4) * TS, (gy - 3) * TS, this.scale()));
+
+      /* 불빛은 **마지막에** 건다. 기둥·웅덩이·기계를 다 세운 뒤라야 빈 칸만 골라
+         걸 수 있다. 천장 하나만으로는 바닥이 캄캄해서(실제로 기둥이 안 보였다)
+         천장·중간·바닥 세 줄로 건다. */
+      for (const row of [top + 1, gy - 9, gy])
+        for (let x = x0 + 2; x < x1; x += 3)
+          if (w.get(x, row) === T.AIR) w.set(x, row, T.TORCH);
+
+      p.x = (gx - 6) * TS; p.y = (gy - 2) * TS; p.vx = p.vy = 0;
+      this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
+      this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+      UI.refreshBag(); UI.refreshEquip();
+      this.toast('폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳', 'good');
     }
   },
 
@@ -400,6 +673,15 @@ const G = {
     // 프레임당 33ms씩만 흘러 사실상 멈춘 것처럼 들린다("긴장 상태 브금 전환이 안 된다"는
     // 제보의 원인) — 페이드에는 실제로 흐른 시간(rawDt)을 그대로 준다.
     if (window.Music) { Music.update(Math.min(rawDt, 3)); Music.play(this.pickBgm()); }
+    /* 이어지는 효과음 — 매 프레임 "지금 나야 하는가"만 넘긴다. 켜고 끄는 것과
+       이음매 겹치기는 SfxLoop가 알아서 한다(1.0초 파일을 0.9초로 잘라 이어 붙인다). */
+    if (window.SfxLoop) {
+      const pl = this.player, playing = this.state === 'play' && !this.paused;
+      const swim = playing && pl && (pl.swimming || pl.submerged > 0.5);
+      const fuse = playing && this.projs.some(q => q instanceof Bomb);
+      SfxLoop.set('swim', swim);
+      SfxLoop.set('fuse', fuse);
+    }
     // 환경음(폭포·호수)은 실제 플레이 중이고 안 멈춰 있을 때만 — 아니면 페이드아웃되게 dt만 흘려보낸다
     if (window.Ambient) {
       const active = this.state === 'play' && !this.paused && !!this.world && !!this.player;
@@ -428,6 +710,12 @@ const G = {
     // 하늘 섬 — 고도로만 갈리는 구역이라 지상 판정보다 먼저 본다
     if (zone === 'sky' || ty < SKY_Y) return 'sky';
 
+    /* 물에 잠겨 있으면 무조건 심해 곡. **어둠·심층 판정보다 먼저** 봐야 한다 —
+       물속은 늘 어둡고 해저 평원은 y 600이 넘어 심층으로도 잡히므로, 뒤에 두면
+       심해 곡이 영영 안 나온다(처음에 뒤에 뒀다가 실제로 그랬다).
+       비도 이 아래다 — 물속에서는 비가 닿지 않는다. */
+    if (p.swimming || p.submerged > 0.5) return 'seadeep';
+
     // 던전·유적·심층은 전부 카타콤 한 곡으로 통일한다. 다만 실제로 위험한 상황
     // (저체력·폭우)에서는 긴장 곡이 이긴다. 밤과 어둠은 뺐다 — 지하에서는 늘 참이라
     // 그대로 두면 이 곡이 영영 나오지 않는다.
@@ -442,6 +730,8 @@ const G = {
 
     // 여명 마을 동쪽 — 버섯 골짜기와 부패한 땅
     if (zone === 'glowfen' || zone === 'corrupt') return 'east';
+    // 바다·해변·빙하 — 밤과 어둠은 다른 바이옴처럼 긴장 곡이 이긴다(위에서 이미 걸러졌다)
+    if (zone === 'sea' || zone === 'beach' || w.biomeAt(tx).id === 'glacier') return 'sea';
     return 'normal';
   },
   /** 카타콤 곡을 쓰는 자리인가 — 심층 전부와, 깊이와 무관한 모든 던전·유적 */
@@ -464,6 +754,15 @@ const G = {
          거의 선 것으로 보이면서 충돌은 계속 풀린다. 멈춤 시간은 실제 시간으로 줄인다. */
     if (this.stopT > 0) { this.stopT -= dt; dt *= 0.12; }
     this.time += dt;
+    /* 플레이 시간(초). time은 연출용 시계라 일시정지·죽음 화면에서도 흐르지만,
+       이쪽은 **실제로 노는 동안만** 쌓는다. 1분마다 업적을 본다 — 시간 업적은
+       1·10·100시간이라 그보다 잦게 볼 이유가 없다. */
+    if (this.state === 'play' && !this.paused) {
+      this.tally = this.tally || {};
+      const before = this.tally.play || 0;
+      this.tally.play = before + dt;
+      if ((before / 60 | 0) !== (this.tally.play / 60 | 0)) this.checkAch();
+    }
     const nextDayT = (this.dayT + dt * 2) % 1440;
     if (nextDayT < this.dayT) { this.dayCount++; this.updateEconomy(); this.growCropsDaily(); }
     this.dayT = nextDayT;
@@ -662,7 +961,7 @@ const G = {
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
         const def = TILE_DEF[w.get(x, y)];
-        if (!def.tdart && !def.tvent && !def.tcoil && !def.tgas && !def.tgrind) continue;
+        if (!def.tdart && !def.tvent && !def.tcoil && !def.tgas && !def.tgrind && !def.tbrine && !def.tmine) continue;
         // 좌표마다 다른 위상 — 한꺼번에 터지지 않게
         const ph = tileHash(x, y);
         if (def.tcoil || def.tgas || def.tgrind) { this.tickTileTrap2(def, x, y); continue; }
@@ -680,6 +979,46 @@ const G = {
             this.sfxAt('turret', x, y);
             break;
           }
+        } else if (def.tmine) {
+          /* 촉발 지뢰 — 시간이 아니라 **밟는 순간** 터진다. 위 한 칸을 밟거나 몸이 닿으면
+             그 자리에서 폭발하고 타일이 사라진다(한 번 쓰면 끝). 예고가 없는 대신 밟기
+             전에는 바닥 원반으로 눈에 보인다 — 보고 걸으면 피할 수 있다. */
+          const box = { x: x * TS - 4, y: (y - 1) * TS, w: TS + 8, h: TS * 2 };
+          if (!aabb(box, p.rect())) continue;
+          w.set(x, y, T.AIR);
+          this.aoe(x * TS + TS / 2, y * TS, 74, 46 + this.player.level * 1.6, 0, '#ff9a3a');
+          if (p.iframe <= 0) {
+            p.hurt(46 + this.player.level * 1.6, x * TS + TS / 2);
+            p.vy = -420;                                   // 위로 띄운다 — 발밑이 터진 느낌
+          }
+          for (let k = 0; k < 22; k++)
+            this.parts.push(new Part(x * TS + TS / 2 + (Math.random() - .5) * 20, y * TS + 8,
+              Math.random() < .5 ? '#ff9a3a' : '#e8dcc0', -160, .7));
+          this.shake = Math.max(this.shake, 8);
+          this.sfxAt('zap', x, y);
+        } else if (def.tbrine) {
+          /* 염수 분출구 — 위로 4칸 짠물을 뿜는다. 피해는 화염의 절반쯤이지만
+             **숨을 5초 앗아간다.** 이미 숨을 참고 내려온 자리에서는 이쪽이 훨씬 무섭다.
+             화염과 같은 방식으로 먼저 예고(물방울)를 보여 준다. */
+          const t = (this.time / 3.6 + ph) % 1;
+          if (t > 0.24) continue;
+          if (t < 0.12) {
+            if (Math.random() < 0.4) this.parts.push(new Part(x * TS + TS / 2, y * TS, '#8fd4ef', -40, .35));
+            continue;
+          }
+          for (let k = 1; k <= 4; k++) {
+            const ty = y - k;
+            if (w.solid(x, ty)) break;
+            if (Math.random() < 0.7) this.parts.push(new Part(x * TS + TS / 2 + (Math.random() - .5) * 14, ty * TS + 10, '#bfe8ff', -150, .5));
+            const r = { x: x * TS, y: ty * TS, w: TS, h: TS };
+            if (aabb(r, p.rect()) && p.iframe <= 0) {
+              p.hurt(16 + this.player.level * 0.6);
+              p.oxygen = Math.max(0, (p.oxygen === undefined ? p.d.oxyMax : p.oxygen) - 5);
+              this.toast('짠물이 폐를 채운다 — 숨이 줄었다', 'bad');
+            }
+            for (const e of this.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) e.hurt(24, false, null, 0);
+          }
+          if (Math.random() < 0.3) this.sfxAt('splash', x, y);
         } else {
           // 분출구는 위로 3칸을 태운다. 예고 없이 터지지 않도록 앞부분에 불씨가 보인다
           const t = (this.time / 3.2 + ph) % 1;
@@ -836,6 +1175,9 @@ const G = {
       p.mineProg = 0;
       w.set(tx, ty, T.AIR);
       p.mined[id] = (p.mined[id] || 0) + 1;
+      // 등급 5 광물은 다른 돌과 소리가 다르다 — 캐는 순간 "이건 다른 돌"이 들려야 한다
+      if (TILE_DEF[id] && TILE_DEF[id].hard >= 5) this.sfx('ore_hit');
+      this.checkAch();
       /* ★ 다 여문 작물은 낫으로만 거둔다.
          곡괭이·도끼로 치면 이삭이 으스러져 **아무것도 남지 않는다** — 떨어지는 것도,
          씨앗도, 숙련도 없다. 밭 한 칸이 그냥 사라진다.
@@ -998,6 +1340,31 @@ const G = {
     }
   },
 
+  /** 폭탄 던지기 — 커서 쪽으로. 조준이 전부라 던지고 나면 손을 떠난다. */
+  throwBomb(slot) {
+    const p = this.player, it = p.bag[slot], d = idef(it);
+    if (!it) return;
+    const dx = this.input.wx - p.cx, dy = this.input.wy - p.cy;
+    const len = Math.max(1, Math.hypot(dx, dy));
+    const pow = clamp(len * 1.7, 240, 620);               // 멀리 찍을수록 세게, 상한 있음
+    const b = new Bomb(p.cx, p.cy - 6, (dx / len) * pow, (dy / len) * pow - 140, d);
+    this.projs.push(b);
+    it.c--; if (it.c <= 0) p.bag[slot] = null;
+    UI.refreshBag(); this.sfx('place');
+  },
+
+  /** (tx, ty) 바로 위로 전주 기둥이 내려오는가 — factory.js가 기둥을 그리는 규칙
+      (전주 칸 아래로 첫 고체를 만날 때까지)과 같은 판정이다. */
+  _poleAbove(tx, ty) {
+    const w = this.world;
+    for (let y = ty - 1; y >= ty - 40 && y > 2; y--) {
+      const m = Factory.at(w, tx, y);
+      if (m) return m.t === 'pole';
+      if (w.solid(tx, y)) return false;        // 지붕·바위가 가로막으면 기둥은 여기까지 안 온다
+    }
+    return false;
+  },
+
   /* ================= 우클릭 ================= */
   rightClick() {
     if (this.state !== 'play' || this.uiOpen) return;
@@ -1010,6 +1377,16 @@ const G = {
       const heldR = p.held();
       if (heldR && idef(heldR).type === 'rod') { this.tryFish(); return; }
     }
+    /* 1.55) 폭탄 — 커서 쪽으로 던진다. 소비품 판정보다 먼저 봐야 한다(둘 다 우클릭).
+       던지는 세기는 거리에 비례하되 상한을 둔다 — 화면 끝을 찍어도 화면 밖으로는 안 간다. */
+    {
+      const hb = p.held();
+      if (hb && idef(hb).type === 'bomb') { this.throwBomb(p.sel); return; }
+    }
+
+    /* 1.6) 소비품 — 핫바에 든 채로 바로 먹는다. 예전에는 물약 한 모금 마시려고 매번
+       가방을 열었다 닫아야 했는데, 정작 급한 건 싸우는 도중이라 그 사이에 죽는다.
+       상호작용 대상(위 1번)이 먼저라 상자 앞에서 물약을 들고 있어도 상자가 열린다. */
     /* 1.6) 소비품 — 핫바에 든 채로 바로 먹는다(급한 건 싸우는 도중인데 가방을 열었다
        닫는 사이에 죽는다). 상호작용 대상이 먼저라 상자 앞에서는 상자가 열린다. */
     {
@@ -1042,6 +1419,10 @@ const G = {
       const hd = hi && idef(hi);
       if (hd && hd.hoe) {
         const t = w.get(mtx, mty);
+        /* 전주 기둥이 내려오는 열은 갈 수 없다. 기둥은 타일이 아니라 그림이라
+           밭을 갈고 씨앗을 심으면 작물이 기둥과 같은 자리에 겹쳐 그려진다.
+           같은 열 위쪽에 전주가 있고 사이가 뻥 뚫려 있으면 그 기둥이 여기까지 내려온다. */
+        if (this._poleAbove(mtx, mty)) { this.toast('전신주 기둥이 지나가는 자리다', 'bad'); return; }
         if ((t === T.DIRT || t === T.GRASS || t === T.SNOW || t === T.CORRUPTGRASS) && w.get(mtx, mty - 1) === T.AIR) {
           w.set(mtx, mty, T.FARMLAND);
           for (let i = 0; i < 5; i++) this.parts.push(new Part((mtx + .5) * TS, mty * TS, '#6b4a2f'));
@@ -1054,6 +1435,8 @@ const G = {
           if (!w.forceGrow(mtx, mty)) { this.toast('다 자란 작물에는 쓸 수 없다', 'bad'); return; }
           for (let i = 0; i < 8; i++) this.parts.push(new Part((mtx + .5) * TS, (mty + .5) * TS, '#8fd06a', -40));
         } else {
+          // 전주 기둥이 지나가는 열에는 심지 않는다 — 괭이와 같은 이유(그림이 겹친다)
+          if (this._poleAbove(mtx, mty + 1)) { this.toast('전신주 기둥이 지나가는 자리다', 'bad'); return; }
           if (!w.plantSeed(mtx, mty, hi.id)) { this.toast('갈아 둔 밭 위에만 심을 수 있다', 'bad'); return; }
           this.everPlanted = 1;   // 마을에 원래 있던 장식 밭 때문에 매일 알림이 뜨지 않게
         }
@@ -1204,7 +1587,8 @@ const G = {
     const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
     if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast('너무 멀다', 'bad'); return; }
     const t = w.get(tx, ty);
-    if (t !== T.WATER && t !== T.FALLS) { this.toast('물 위에 던져야 한다', 'bad'); return; }
+    // 타일 번호를 하나씩 세지 않고 liquid 표시로 본다 — 바닷물·수련칸이 늘 때마다 빠뜨렸다
+    if (!TILE_DEF[t].liquid) { this.toast('물 위에 던져야 한다', 'bad'); return; }
     // 이 물이 특별히 매긴 웅덩이(정글 폭포호 등)에 속하면 rareMul을 물려받는다 —
     // 없으면 1(보정 없음). w.pools 좌표는 웅덩이의 대략적인 중심이라 넉넉한 상자로 판정한다.
     let rareMul = 1;
@@ -1240,6 +1624,18 @@ const G = {
       if (f.bite <= 0) this.resolveFish('auto');
     }
   },
+  /** 놓쳤을 때의 뒤처리 — 미끼는 이미 먹혔다(resolveFish에서 뺀다) */
+  _fishLost(msg) {
+    this.player.fish = null;
+    this.toast(msg, 'bad');
+    this.sfx('splash');
+    UI.refreshBag();
+  },
+  /** 낚시 판정 — quality: 'auto'(시간 초과, 기본 확률) | 'reel'(입질 중 즉시 챔질, 보너스)
+      2단계로 굴린다 — 1단계는 "물고기가 아니라 다른 것"이 걸릴지(itemChance, 낚싯대별로
+      크게 갈린다: 일반 낚싯대는 거의 안 걸리고 숙련된 낚싯대는 꽤 잦다), 걸리면 2단계로
+      잡템·포션·장신구 표를 굴린다. 정글 폭포호처럼 rareMul이 낮게 매겨진 물에서는
+      1단계 확률 자체가 그만큼 줄어든다. */
   /** 낚시 판정 — quality: 'auto'(시간 초과) | 'reel'(입질 중 즉시 챔질, 보너스).
       2단계다 — ① 물고기가 아니라 다른 것이 걸릴지(itemChance, 낚싯대별로 크게 갈린다)
       ② 걸렸으면 잡템·포션·장신구 표. rareMul 이 낮은 물에서는 ①부터 줄어든다. */
@@ -1256,6 +1652,18 @@ const G = {
     const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === 'reel' ? 0.05 : 0) + (flv - 1) * 0.015) * rareMul, 0, 0.85);
     p.fish = null;
     p.addProf('fish', 1);
+
+    /* 실패 — 오래 기다린 만큼 놓칠 수도 있어야 긴장이 생긴다.
+       입질을 흘려보내면(auto) 대부분 놓치고, 제때 챔질하면(reel) 어쩌다 놓친다.
+       좋은 낚싯대는 놓치는 일이 덜하다(fishBonus를 그대로 쓴다). */
+    const missBase = quality === 'reel' ? 0.12 : 0.55;
+    const miss = clamp(missBase - (rod.fishBonus || 0) * 0.5 - (baited ? 0.05 : 0), 0.04, 0.75);
+    if (this.rng.chance(miss)) {
+      this._fishLost(quality === 'reel'
+        ? this.rng.chance(0.5) ? '챘지만 바늘이 빠졌다' : '줄이 끊겼다'
+        : '입질을 흘렸다 — 미끼만 털렸다');
+      return;
+    }
 
     if (this.rng.chance(itemChance)) {
       // 1단계 통과 — 물고기 말고 다른 것. 흔한 몹 전리품(사실상 잡템)부터 장신구까지
@@ -1409,6 +1817,14 @@ const G = {
         this.toast('상자를 열자 무언가 깨어났다', 'bad');
         this.shake = 10;
       }
+      /* 보스가 달린 상자 — 잡몹 지킴이(o.guard)와 달리 하나가 제대로 깨어난다.
+         떠 있는 섬의 황금 상자가 이것이다. 한 번 깨우면 다시 깨지 않는다(o.woke). */
+      if (o.boss && !o.woke) {
+        o.woke = 1;
+        this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 80);
+        this.toast('상자를 열자 섬이 흔들렸다', 'bad');
+        this.shake = 20;
+      }
     } else if (o.type === 'crate') {
       if (!o.items) o.items = new Array(o.slots || 24).fill(null);
       UI.openStore(o); this.sfx('open');
@@ -1439,6 +1855,8 @@ const G = {
       UI.openBoard(); this.sfx('open');
     } else if (o.type === 'reforge') {
       UI.openReforge(); this.sfx('open');
+    } else if (o.type === 'anvil') {
+      UI.openAnvil(); this.sfx('open');
     } else if (o.type === 'waystone') {
       this.useWaystone();
     } else if (o.type === 'fountain') {
@@ -1536,7 +1954,7 @@ const G = {
   },
 
   /** 여관 — 금화를 내고 아침까지 잔다. 체력·마나 회복 + 「잘 쉼」 */
-  innCost() { return Math.round((40 + this.player.level * 12) * (this.villageLv() >= 2 ? 0.7 : 1)); },
+  innCost() { return Math.round((40 + this.player.level * 12) * this.costMul() * (this.villageLv() >= 2 ? 0.7 : 1)); },
   useInn() {
     const p = this.player;
     const cost = this.innCost();
@@ -1552,6 +1970,9 @@ const G = {
           p.addBuff('rested');
           this.toast('푹 잤다 — 아침이다', 'good');
           this.sfx('level');
+          this.tally = this.tally || {};
+          this.tally.inn = (this.tally.inn || 0) + 1;
+          this.checkAch();
         }
       }
     ]);
@@ -1690,8 +2111,57 @@ const G = {
     UI.refreshBoard(); UI.refreshBag(); this.sfx('manycoins');
   },
 
+  /* ---- 강화: 장비 수치를 한 단계씩 올린다 (여명 교역지 4단계, 강화 모루) ----
+     재련과 **역할이 겹치지 않게** 짰다. 재련은 접사를 다시 굴리는 도박이고,
+     강화는 실패가 없는 대신 값이 가파르게 오르는 축적이다. 둘 다 도박이면
+     같은 감정이 두 번 나오고, 재련이 설 자리가 없어진다.
+     그래서 강화는 **공격력·방어력만** 올린다 — 부가 스탯까지 건드리면 접사와
+     구분이 흐려져 결국 재련과 같은 물건이 된다. */
+  ENH_MAX: 10,
+  /* 실패 확률 — 낮은 단계는 **반드시 성공한다.** 처음부터 실패가 뜨면 "값이 가파른
+     대신 확실한 길"이라는 강화의 성격이 흐려지고, 재련(도박)과 구분이 안 된다.
+     4단계부터 붙고 단계마다 5%p씩 올라 10단계 직전이 30%다.
+     실패해도 **단계가 내려가지는 않는다** — 값을 잃는 것으로 충분하고, 쌓은 것까지
+     깎으면 상한을 노릴 이유가 사라진다. */
+  enhFail(e) { return e < 3 ? 0 : Math.min(0.30, (e - 2) * 0.05); },
+  /** 단계마다 갈아타는 재료 — 무엇을 캐러 갈 때인지가 재료로 드러난다 */
+  enhMat(e) {
+    return e < 3 ? { id: 'iron_bar', n: 2 + e }
+      : e < 6 ? { id: 'steel_plate', n: 2 + e }
+        : e < 9 ? { id: 'mythril_bar', n: 2 + e }
+          : { id: 'abyss_core', n: e - 6 };
+  },
+  enhCost(it) {
+    const e = it.e || 0;
+    return Math.round((this.price(it) * 0.5 + 300 * this.costMul()) * (1 + e * 0.6));
+  },
+  enhanceSlot(i) {
+    const p = this.player, it = p.bag[i];
+    if (!it || !isGear(it)) { this.toast('장비만 강화할 수 있다', 'bad'); return; }
+    const d = idef(it);
+    if (!d.dmg && !d.def) { this.toast('공격력도 방어력도 없는 것은 벼릴 데가 없다', 'bad'); return; }
+    const e = it.e || 0;
+    if (e >= this.ENH_MAX) { this.toast('더 두들길 데가 없다', 'bad'); return; }
+    const cost = this.enhCost(it), mat = this.enhMat(e);
+    if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
+    if (!p.hasAll({ [mat.id]: mat.n })) { this.toast(`${ITEMS[mat.id].n} ${mat.n}개가 필요하다`, 'bad'); return; }
+    p.gold -= cost; p.removeItem(mat.id, mat.n);
+    if (Math.random() < this.enhFail(e)) {
+      this.toast(`${itemName(it)} — 결이 어긋났다. 단계는 그대로다`, 'bad');
+      for (let k = 0; k < 12; k++) this.parts.push(new Part(p.cx, p.cy, '#8a8a96', -30, 0.6));
+      this.shake = Math.max(this.shake, 3);
+      UI.refreshAnvil(); UI.refreshBag(); this.sfx('damage');
+      return;
+    }
+    it.e = e + 1;
+    this.toast(`${itemName(it)} — 한 겹 더 두들겼다`, 'good');
+    for (let k = 0; k < 18; k++) this.parts.push(new Part(p.cx, p.cy, '#ff9a3a', -50, 0.7));
+    p.recalc();
+    UI.refreshAnvil(); UI.refreshBag(); UI.refreshEquip(); this.sfx('craft');
+  },
+
   /* ---- 재련: 금화를 내고 장비의 접사를 다시 굴린다 ---- */
-  reforgeCost(it) { return Math.round((this.price(it) * 0.8 + 120) * (this.villageLv() >= 3 ? 0.75 : 1)); },
+  reforgeCost(it) { return Math.round((this.price(it) * 0.8 + 120 * this.costMul()) * (this.villageLv() >= 3 ? 0.75 : 1)); },
   reforgeSlot(i) {
     const p = this.player, it = p.bag[i];
     if (!it || !isGear(it)) { this.toast('장비만 재련할 수 있다', 'bad'); return; }
@@ -1797,75 +2267,7 @@ const G = {
     UI.refreshBag(); this.sfx('chapter');
   },
 
-  /* ================= NPC =================
-     대사는 두 겹이다(data.js TALK 주석) — ① 이야기(DIALOGUE·VILLAGE_TALK)
-     ② 상황 한 줄(죽은 자리·다친 몸·날씨·밤낮…).
-     ★ ①은 "처음 듣는 것"일 때만 나온다. 한 장에 머무는 동안 몇 번을 말 걸어도 같은
-       세 줄을 다시 읽게 하지 않는다(다시 듣고 싶으면 선택지가 있다). */
-
-  /** 지금 이 사람이 보고 있는 것 — 상황 판정에 쓰는 값들을 한 번에 모은다 */
-  talkCtx() {
-    const p = this.player, ch = CHAPTERS[this.chapter];
-    let complete = false, ready = false;
-    try {
-      const st = ch ? this.chapterState(ch) : null;
-      complete = !!(st && st.complete);
-      ready = !!(st && st.ready && !st.complete);   // 준비는 끝났고 마지막 하나만 남았다
-    } catch (e) { complete = ready = false; }
-    return {
-      ch: this.chapter,
-      session: sessionOf(this.chapter).id,
-      hour: Math.floor(this.dayT / 60),
-      night: this.dayT < 5 * 60 || this.dayT > 19 * 60,
-      /* 날씨는 지금 발밑에서 작동 중이 아니어도 본다 — 사막에서 모래를 뒤집어쓰고
-         돌아오면 기술자가 그 모래를 알아보는 편이 사람답다. */
-      ev: this.event ? this.event.id : null,
-      hpr: p.d.maxHp > 0 ? p.hp / p.d.maxHp : 1,
-      gold: p.gold,
-      grave: !!this.deathMark,
-      complete, ready,
-      villageLv: this.villageLv()
-    };
-  },
-
-  /** 이 사람이 지금 상황에서 들고 있는 칸을 고른다. 없으면 아래 칸으로 내려간다. */
-  talkMood(id, c) {
-    const pool = TALK[id];
-    if (!pool) return null;
-    for (const m of TALK_MOODS) if (m.when(c) && pool[m.id]) return m.id;
-    return null;
-  },
-
-  /** 상황 한 줄과 그에 딸린 대답을 뽑는다.
-      같은 칸을 다시 만나면 다음 말로 넘어간다 — 무작위가 아니라 순번이라 반드시
-      다른 말이 나온다. 순번(talkSeq)은 저장에 남아서 불러와도 이어진다. */
-  talkPick(id) {
-    const mood = this.talkMood(id, this.talkCtx());
-    if (!mood) return null;
-    const b = TALK[id][mood], key = id + '|' + mood;
-    this.talkSeq = this.talkSeq || {};
-    const t = this.talkSeq[key] || 0;
-    this.talkSeq[key] = (t + 1) % 2520;    // 2520 = 1~10의 최소공배수 (칸 길이가 몇이든 균등)
-    return {
-      mood,
-      say: b.say[t % b.say.length],
-      re: (b.re && b.re.length) ? b.re[t % b.re.length] : null
-    };
-  },
-
-  /** 대화창 아래의 선택지 = [상황 대답] + 늘 있는 것들(rest).
-      대답을 고르면 대꾸를 보여 주고 rest 로 돌아온다 — 대답 한 번 했다고
-      가게나 의뢰가 사라지면 안 되니까. */
-  talkMenu(id, pick, rest) {
-    if (!(pick && pick.re)) return rest;
-    const re = pick.re;
-    return [{ t: re.t, say: 1, fn: () => { UI.closeDialogue(); this.talkAnswer(id, re, rest); } }].concat(rest);
-  },
-
-  talkAnswer(id, re, rest) {
-    const lines = Array.isArray(re.s) ? re.s.slice() : [re.s];
-    UI.openDialogue(id, lines, rest);
-    this.sfx('talk');
+  /* ================= NPC ==========    this.sfx('talk');
   },
 
   /** 사람마다 다른 기능 선택지 (가게·수련·여관·재련 …)
@@ -1881,6 +2283,8 @@ const G = {
       cs.push({ t: '방을 잡는다', fn: () => { UI.closeDialogue(); this.useInn(); } });
     } else if (id === 'seira') {
       cs.push({ t: '장비를 다시 벼려 달라', fn: () => { UI.closeDialogue(); UI.openReforge(); } });
+    } else if (NPCS[id].dynamicShop) {
+      cs.push({ t: '오늘 실은 것을 보자', fn: () => { UI.closeDialogue(); UI.openShop(id); } });
     }
     /* 볼일이 둘 이상이면 한 줄로 묶는다 — 교관은 일곱 줄이 깔려 정작 무슨 말을 할지가
        안 보였다. 하나뿐이면 묶지 않는다(한 줄을 두 번 누르게 만드는 꼴이다). */
@@ -1928,7 +2332,11 @@ const G = {
   storyOf(id, ch) {
     const a = DIALOGUE[id];
     if (!a || !a.length) return null;
-    return a[Math.min(ch, a.length - 1)] || null;
+    /* 세션 3에서 처음 만나는 사람은 대사 묶음이 15장부터 시작한다 — 앞에 빈 칸
+       열다섯 개를 채워 넣을 수는 없으니, NPCS[id].from(첫 등장 장)만큼 빼서 센다.
+       from 이 없으면 예전과 똑같이 0장 기준이다. */
+    const from = (NPCS[id] && NPCS[id].from) || 0;
+    return a[clamp(ch - from, 0, a.length - 1)] || null;
   },
 
   /* ---- 여명 마을 주민 (종장 이후에만 세계에 존재한다) ---- */
@@ -2035,12 +2443,100 @@ const G = {
     this.goldRate = clamp((this.goldRate || 1) + (this.rng.next() - 0.5) * 0.14, 0.7, 1.4);
     this.market = {};   // 품목별 시세는 필요할 때(marketRate) 그날 시드로 다시 뽑는다
   },
+  /* ---- 떠돌이 상인 재고 ----
+     날마다 한 번 굴린다. 난수는 marketRate와 같은 방식으로 **그날 시드**에서 뽑는다 —
+     같은 날 다시 불러와도 재고가 달라지지 않게 하려는 것. 다만 굴린 뒤에는 세이브에
+     남긴다(산 물건이 빠진 상태를 기억해야 하므로 파생값으로 둘 수 없다). */
+  merchantOf(npc) { return MERCHANTS.find(m => m.npc === npc); },
+
+  /** 장비상 후보 — 지금 플레이어가 들 수 있는 것만 고른다. 고정 목록으로 두면
+      레벨이 오를수록 죽은 재고가 되고, 전부 적어 두면 초반에 못 드는 것만 뜬다. */
+  equipPool(spec) {
+    const lim = this.player.level + (spec.lvSlack || 0);
+    const out = [];
+    for (const id in ITEMS) {
+      const d = ITEMS[id];
+      if (!spec.types.includes(d.type)) continue;
+      if (SHOP_DENY.has(id)) continue;
+      const req = equipReqLv(id);
+      if (req > lim) continue;
+      // 너무 낮은 것만 잔뜩 뜨지 않게, 레벨이 가까울수록 가중치를 준다
+      const gap = lim - req;
+      out.push({ id, w: gap <= 4 ? 6 : gap <= 10 ? 3 : 1, max: 1 });
+    }
+    return out;
+  },
+
+  /** 한 상인의 오늘 재고. 없으면 그 자리에서 굴린다. */
+  stockOf(npc) {
+    const m = this.merchantOf(npc); if (!m) return [];
+    if (this.shopStockDay !== this.dayCount) { this.shopStock = {}; this.shopStockDay = this.dayCount; }
+    if (!this.shopStock[npc]) {
+      const r = new RNG(this.world.seed + '_shop_' + npc + '_' + this.dayCount);
+      /* 재고 후보 거르기 — 세션(스토리 진행)과 마을 단계 둘 다 본다.
+         sess: 그 세션에 들어서야 유통되는 물건(세션 3 지역 산물 등)
+         vlv:  마을이 그 단계가 되어야 들어오는 물건(4단계 교역지에서 물건이 좋아진다) */
+      const sess = sessionOf(this.chapter);
+      /* 마을 단계(vlv) 조건은 **마을 상인에게만** 건다. 윤슬처럼 마을 밖에 있는 상인은
+         마을을 안 열어도 만나므로, 그 조건을 그대로 태우면 재고가 통째로 비어 버린다
+         (실제로 그랬다 — 마을이 0단계인 세계에서 좌판이 텅 비었다). */
+      const vlv = m.spot ? this.villageLv() : 99;
+      const bag = (m.pool ? m.pool.filter(e => (e.sess || 1) <= sess && (e.vlv || 1) <= vlv)
+                          : this.equipPool(m.equip));
+      // 4단계(교역지)가 되면 마을 상인 셋만 재고 칸이 한 칸씩 늘어난다
+      const slots = m.slots + (m.spot && this.villageLv() >= 4 ? 1 : 0);
+      const picked = [];
+      // 가중치 뽑기 — 뽑은 것은 후보에서 빼서 같은 물건이 두 칸 차지하지 않게 한다
+      for (let k = 0; k < slots && bag.length; k++) {
+        let total = 0;
+        for (const e of bag) total += e.w;
+        let t = r.next() * total, idx = 0;
+        for (; idx < bag.length; idx++) { t -= bag[idx].w; if (t <= 0) break; }
+        const e = bag.splice(Math.min(idx, bag.length - 1), 1)[0];
+        const max = e.max || 1;
+        /* 반드시 makeItem으로 만든다. 예전엔 {id, c}만 담았는데, price()가 보는
+           등급(it.r)이 없어서 RARITY_MULT[undefined] → 값이 통째로 NaN이 됐다. */
+        picked.push(makeItem(e.id, max > 1 ? 1 + Math.floor(r.next() * max) : 1, 0));
+      }
+      this.shopStock[npc] = picked;
+    }
+    // 예전 저장본에 등급 없는 재고가 남아 있으면 여기서 메운다 (값이 NaN이 되지 않게)
+    for (const it of this.shopStock[npc]) if (it && it.r === undefined) it.r = 0;
+    return this.shopStock[npc];
+  },
+  /** 떠돌이 상인에게서 산다 — 재고에서 실제로 덜어 낸다(고정 상점의 buy와 다른 점) */
+  buyStock(npc, slotIdx) {
+    const p = this.player, m = this.merchantOf(npc), stock = this.stockOf(npc);
+    const row = stock[slotIdx]; if (!row || !m) return;
+    const it = makeItem(row.id, row.c, 0);
+    const cost = this.buyPrice(it, m.markup);
+    if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
+    if (!p.addItem(it)) { this.toast('가방이 가득 찼다', 'bad'); return; }
+    p.gold -= cost;
+    stock.splice(slotIdx, 1);            // 하나뿐인 재고다 — 사면 그날은 끝
+    this.toast(`${ITEMS[row.id].n} 구매`, 'good');
+    UI.refreshChest(); UI.refreshBag(); this.sfx('coin');
+    this.tradeDone();
+  },
   marketRate(id) {
     if (!(id in this.market)) {
       const r = new RNG(this.world.seed + '_m' + this.dayCount + '_' + id);
       this.market[id] = 0.85 + r.next() * 0.3;   // 품목별 0.85~1.15
     }
     return this.market[id] * (this.goldRate || 1);
+  },
+  /* 상점에서 **사는** 값. price()는 물건의 값어치(팔 때 기준이기도 하다)라서,
+     여기에 배수를 얹지 않으면 되팔기로 금화를 찍어 낼 수 있다. 그래서 사는 쪽에만
+     붙인다 — 재련비(reforgeCost)도 price()를 그대로 써야 하므로 여기서 갈라 둔다.
+     v1.1: 상점 물건이 너무 싸다는 지적을 받고 6배로 올렸다. */
+  SHOP_BUY_MUL: 6,
+  buyPrice(it, markup, npc) {
+    /* 값이 고정된 물건은 가게 배수도 상인 웃돈도 안 붙인다 — 조련사에게 사는 알이
+       늘 10,000 / 30,000 / 100,000 이어야 한다. */
+    if (idef(it).fixed) return this.price(it);
+    // disc — 그 상인만의 할인(베이스캠프 보린). 캠프는 장사하는 자리가 아니다
+    const disc = (npc && NPCS[npc] && NPCS[npc].disc) || 1;
+    return Math.max(1, Math.round(this.price(it) * this.SHOP_BUY_MUL * (markup || 1) * disc));
   },
   price(it) {
     const d = idef(it);
@@ -2060,15 +2556,19 @@ const G = {
     const raw = base * (it.c > 1 ? it.c : 1) * RARITY_MULT[it.r] * this.marketRate(it.id);
     return Math.max(1, Math.round(raw));
   },
-  buy(id) {
+  /** 가게가 한 번에 파는 묶음 크기. 쌓이는 물건은 5개씩 묶어 팔지만, 값이 고정된
+      물건(알)은 **낱개**로 판다 — 안 그러면 창에 10,000이 아니라 50,000이 뜬다. */
+  shopBundle(id) { return ITEMS[id].fixed ? 1 : (ITEMS[id].stack > 1 ? 5 : 1); },
+  buy(id, npc) {
     const p = this.player;
-    const it = makeItem(id, ITEMS[id].stack > 1 ? 5 : 1, 0);
-    const cost = this.price(it);
+    const it = makeItem(id, this.shopBundle(id), 0);
+    const cost = this.buyPrice(it, 1, npc);
     if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
     if (!p.addItem(it)) { this.toast('가방이 가득 찼다', 'bad'); return; }
     p.gold -= cost;
     this.toast(`${ITEMS[id].n} 구매`, 'good');
     UI.refreshChest(); UI.refreshBag(); this.sfx('coin');
+    this.tradeDone();
   },
 
   /* ---- 미니보스 둥지 ----
@@ -2168,6 +2668,13 @@ const G = {
   useConsumable(slot) {
     const p = this.player, it = p.bag[slot], d = idef(it);
     if (d.use.egg) { this.hatchEgg(d.use.egg); it.c--; if (it.c <= 0) p.bag[slot] = null; UI.refreshBag(); this.sfx('hatch'); return; }
+    /* 펫 사탕 — 낀 펫이 없으면 그냥 사라지므로, 쓰기 전에 막아 준다 */
+    if (d.use.petXp) {
+      if (!p.equip.pet1 && !p.equip.pet2) { this.toast('펫을 끼고 있어야 준다', 'bad'); return; }
+      p.addPetXp(d.use.petXp);
+      it.c--; if (it.c <= 0) p.bag[slot] = null;
+      UI.refreshBag(); this.sfx('drink'); return;
+    }
     // instant(치유·마나 물약)는 공유 재사용 대기시간을 아예 안 걸고 안 본다 —
     // 음식·물고기 등 나머지 회복 소비품끼리는 여전히 potionCd를 공유한다
     if (!d.instant && p.potionCd > 0 && d.use.hp) { this.toast('아직 회복할 수 없다', 'bad'); return; }
@@ -2183,6 +2690,12 @@ const G = {
   },
 
   /* ================= 판매 ================= */
+  /** 거래 한 건 — 사든 팔든 한 번. 업적 「첫 거래」·「단골」이 이 값을 본다. */
+  tradeDone() {
+    this.tally = this.tally || {};
+    this.tally.trade = (this.tally.trade || 0) + 1;
+    this.checkAch();
+  },
   sellItem(slot) {
     const p = this.player, it = p.bag[slot];
     if (!it) return;
@@ -2192,6 +2705,7 @@ const G = {
     this.toast(`${itemName(it)} 판매 — 🪙 ${fmt(price)}`, 'good');
     p.bag[slot] = null;
     UI.refreshBag(); UI.refreshChest(); this.sfx('coin');
+    this.tradeDone();
   },
 
   /* ================= 펫 =================
@@ -2225,7 +2739,12 @@ const G = {
   },
 
   /* ================= 훈련소 ================= */
-  respecCost() { return 60 + this.player.level * 25; },
+  /* 세션이 넘어가면 금화가 도는 규모 자체가 달라진다(세션 2에서 상자·판매 수입이
+     크게 뛴다). 마을 서비스 값이 그대로면 후반에 사실상 공짜가 되므로, 비용을 한
+     배수로 묶어 두고 세션마다 올린다. 세션 3 값은 그 지역 수입이 잡히면 조정할 것 —
+     지금은 세션 2의 두 배로 잡아 두었다. */
+  costMul() { return [1, 1, 3.2, 7][sessionOf(this.chapter)] || 1; },
+  respecCost() { return Math.round((60 + this.player.level * 25) * this.costMul()); },
   respecStats() {
     const p = this.player;
     const cost = this.respecCost();
@@ -2238,7 +2757,7 @@ const G = {
     this.toast('스탯을 초기화했다. 능력 창에서 다시 분배하라', 'good');
     UI.refreshStatAlloc(); UI.refreshStatSheet();
   },
-  trainCost() { return 40 + this.trainedToday * 60; },
+  trainCost() { return Math.round((40 + this.trainedToday * 60) * this.costMul()); },
   trainXp() {
     const p = this.player;
     if (this.trainedToday >= 5) { this.toast('오늘은 더 가르칠 게 없다고 한다', 'bad'); return; }
@@ -2267,7 +2786,7 @@ const G = {
   upgradeVillage() {
     const lv = this.villageLv();
     if (!lv) { this.toast('아직 마을이 없다', 'bad'); return; }
-    if (lv >= 3) { this.toast('더 올릴 단계가 없다', 'bad'); return; }
+    if (lv >= VILLAGE.length - 1) { this.toast('더 올릴 단계가 없다', 'bad'); return; }
     const spec = VILLAGE[lv + 1], p = this.player;
     if (!p.hasAll(spec.need)) { this.toast('재료가 부족하다', 'bad'); return; }
     for (const k in spec.need) p.removeItem(k, spec.need[k]);
@@ -2284,7 +2803,7 @@ const G = {
     UI.refreshBag(); this.sfx('chapter');
   },
   /* 마을 단계가 주는 혜택 — 여러 곳에서 쓰이므로 한군데 모아 둔다 */
-  vaultCap() { return VAULT_SIZE + (this.villageLv() >= 2 ? 12 : 0); },
+  vaultCap() { const lv = this.villageLv(); return VAULT_SIZE + (lv >= 2 ? 12 : 0) + (lv >= 4 ? 12 : 0); },
   villageTrade() { return this.villageLv() >= 3 ? 1.1 : 1; },
 
   /** 이 제작법을 지금 쓸 수 있는가 — 시설 종류와 그 개체의 개조 단계를 함께 본다 */
@@ -2298,7 +2817,7 @@ const G = {
     const o = this.nearStObj[kind];
     if (!o) { this.toast(`${STATION_NAME[kind][1]} 앞에서만 개조할 수 있다`, 'bad'); return; }
     const lv = o.lv || 1;
-    if (lv >= 3) { this.toast('더 손볼 데가 없다', 'bad'); return; }
+    if (lv >= STATION_UP[kind].length) { this.toast('더 손볼 데가 없다', 'bad'); return; }
     const up = STATION_UP[kind][lv], p = this.player;
     if (!p.hasAll(up.need)) { this.toast('재료가 부족하다', 'bad'); return; }
     for (const k in up.need) p.removeItem(k, up.need[k]);
@@ -2325,6 +2844,7 @@ const G = {
     if (!p.addItem(out)) { this.drops.push(new Drop(p.cx, p.cy, out)); }
     this.crafted = this.crafted || {};
     this.crafted[r.out] = (this.crafted[r.out] || 0) + 1;
+    this.checkAch();
     this.toast(`${ITEMS[r.out].n} 제작 완료`, 'good');
     UI.refreshCraft(); UI.refreshBag(); this.sfx('craft');
   },
@@ -2438,7 +2958,18 @@ const G = {
       case 'deep': return ['skeleton', 'archer', 'wraith', 'crystalcrab', 'minerghost'];
       case 'corrupt': return night ? ['crawler', 'shadoweye', 'corrupttree']
         : ['crawler', 'shadoweye', 'corrupttree', 'ash_vole'];
-      case 'ice': return night ? ['frostling', 'icewolf', 'zombie'] : ['frostling', 'icewolf', 'slime', 'arctic_hare', 'arctic_hare'];
+      case 'sea': return [];                 // 바다는 trySpawnWater만 채운다
+      // 해변 — 물 밖으로 밀려 나온 것들. 밤에는 서리 쪽에서 내려온 것도 섞인다
+      case 'beach': return night ? ['driftling', 'driftling', 'glacier_stalker', 'zombie']
+        : ['driftling', 'driftling', 'ashcrow', 'arctic_hare'];
+      case 'ice': {
+        /* 빙하 지대(세션 3)는 서리 지대와 같은 'ice' 구역 태그를 쓰지만 몹이 다르다.
+           흙 한 겹 없이 얼음만 쌓인 곳이라 미끄러져 달려드는 것과 덩어리째 굴러오는 것뿐이다. */
+        const glacier = tx !== undefined && this.world.biomeAt(clamp(tx, 0, WW - 1)).id === 'glacier';
+        if (glacier) return night ? ['glacier_stalker', 'crevasse_maw', 'glacier_stalker', 'icewolf']
+          : ['glacier_stalker', 'crevasse_maw', 'frostling', 'arctic_hare'];
+        return night ? ['frostling', 'icewolf', 'zombie'] : ['frostling', 'icewolf', 'slime', 'arctic_hare', 'arctic_hare'];
+      }
       case 'hell': return ['imp', 'golem', 'lavaslug', 'imp'];
       case 'sky': return ['gale', 'sky_sentry', 'cloudjelly', 'gale'];
       case 'ruin': {
@@ -2922,7 +3453,14 @@ const G = {
       if (sx > -60 && sx < this.W + 60 && sy > -60 && sy < this.H + 60) continue;
       // 정글 폭포호는 위험한 웅덩이 뱀장어보다 눈에 잘 띄는 비단잉어가 대부분이어야
       // "물고기가 사는 호수"로 보인다 — 그래도 가끔은 긴장감이 있게 한 마리는 남겨 둔다
-      const table = pool.biome === 'jungle'
+      const table = pool.biome === 'sea'
+        /* 바다는 깊이가 곧 난이도다 — 수면 가까이는 게·해파리, 내려갈수록 상어·문어,
+           바닥 근처에서 초롱아귀. 산소가 먼저 닳으므로 "더 내려갈까"를 계속 묻게 된다. */
+        ? (ty > (w.sea.level + 220) ? ['abyss_angler', 'deep_octopus', 'abyss_angler']
+         : ty > (w.sea.level + 90) ? ['deep_octopus', 'reef_shark', 'abyss_angler']
+         : ty > (w.sea.level + 30) ? ['reef_shark', 'reef_crab', 'lantern_jelly', 'reef_shark']
+         : ['reef_crab', 'lantern_jelly', 'reef_crab'])
+        : pool.biome === 'jungle'
         ? ['jungle_koi', 'jungle_koi', 'jungle_koi', 'grotto_eel']
         : pool.big
         ? ['grotto_eel', 'cave_minnow', 'drowned_hand', 'grotto_eel']
@@ -2953,6 +3491,8 @@ const G = {
       const tx = Math.floor((p.cx + Math.cos(ang) * rad) / TS);
       const ty = Math.floor((p.cy + Math.sin(ang) * rad) / TS);
       if (tx < 3 || ty < 3 || tx >= WW - 3 || ty >= WH - 6) continue;
+      // 바다에는 지상 몹이 나오지 않는다 — 물속 몹은 trySpawnWater가 따로 낸다
+      if (tx < SEA_X1 + 8) continue;
       // 화면 밖이어야 함
       const sx = tx * TS - this.cam.x, sy = ty * TS - this.cam.y;
       if (sx > -80 && sx < this.W + 80 && sy > -80 && sy < this.H + 80) continue;
@@ -2969,6 +3509,7 @@ const G = {
       // 이벤트는 몹 종류는 그대로 두고 세기만(buff) 바꾼다
       const evHere = ev && ev.zones.indexOf(zone) >= 0 ? ev : null;
       const table = (evHere && evHere.table) ? evHere.table : this.zoneTable(zone, night, tx, ty);
+      if (!table.length) continue;            // 그 구역에 지상 몹이 없다(바다)
       const type = table[Math.floor(Math.random() * table.length)];
       const flying = ENEMIES[type].ai === 'flyer' || ENEMIES[type].ai === 'caster';
       let sy2 = ty;
@@ -2998,6 +3539,21 @@ const G = {
       if (evHere && evHere.buff) {
         if (evHere.buff.hp) { e.maxHp = Math.round(e.maxHp * evHere.buff.hp); e.hp = e.maxHp; }
         if (evHere.buff.dmg) e.dmg *= evHere.buff.dmg;
+        e.weatherBuffed = true;
+      }
+      /* 붉은 달만 **플레이어 레벨을 탄다**(lvScale). 세계의 나머지는 레벨을 안 따라가는데,
+         이 밤 하나만 예외로 둬서 후반에도 "오늘은 나가면 안 된다"가 성립하게 한다.
+         50레벨 3배 · 100레벨 9배. 방어력은 안 건드린다 — 거기까지 9배가 되면
+         피해가 낮은 무기로는 흠집도 안 난다. */
+      if (evHere && evHere.lvScale) {
+        // 몹이 제 lvScale을 이미 물고 있으면(좀비) 그것을 나눠 내고 이벤트 배수로
+        // 갈아 끼운다 — 안 그러면 둘이 곱해져 좀비만 터무니없이 세진다
+        const bm = bloodMult(p.level) / (e.lvFactor || 1);
+        e.maxHp = Math.round(e.maxHp * bm); e.hp = e.maxHp;
+        e.dmg *= bm;
+        // 보상도 같은 배수를 탄다. 9배로 단단해진 것을 2.2배 값에 잡으라고 하면
+        // 그냥 안 나가는 게 이득이 되어, 이벤트가 "피하는 것"이 되어 버린다
+        e.xp = Math.round(e.xp * bm); e.gold = Math.round(e.gold * bm);
         e.weatherBuffed = true;
       }
       // 정예 — 어느 바이옴에서나 낮은 확률로, 그 자리에 있는 몹이 통째로 강해져 나온다.
@@ -3111,6 +3667,7 @@ const G = {
        실제로 5장에서 그랬다(합쳐지는 연출 1.5초, 창 열림 1.4초). */
     const starShow = this.gainStarOrbit(ch.id) || 0;
     this.chapter++;
+    this.checkAch();
     UI.refreshBag();
 
     /* ★ 여명 마을 해금은 "다음 챕터가 없을 때"가 아니라 **8장(세션 1 종장)을 끝냈을 때**다.
@@ -3155,7 +3712,30 @@ const G = {
     this.sfx('chapter');
     if (ch.rw.gold) this.pending.push({ t: 0.45, fn: () => this.sfx('manycoins') });
   },
-  onKill() { },
+  onKill() { this.checkAch(); },
+  /* 업적 판정. **프레임마다 돌리지 않는다** — 처치·제작·채굴·장 넘김·깊이 갱신처럼
+     "무언가 달라진 순간"에만 부른다. 스물다섯 개를 훑는 것 자체는 싸지만, 매 프레임
+     스물다섯 번의 객체 순회는 싸지 않다.
+     처음 부를 때 옛 세이브의 "이미 한 일"도 함께 채워진다 — 조건이 전부 이미 있는
+     카운터를 읽기 때문이다. 그래서 판을 올린 사람이 업적을 처음부터 다시 하지 않는다. */
+  checkAch() {
+    if (!this.player || !this.achievements) return;
+    for (const a of ACHIEVEMENTS) {
+      if (this.achievements[a.id]) continue;
+      let ok = false;
+      try { ok = !!a.check(this); } catch (e) { ok = false; }   // 아직 없는 값을 읽어도 죽지 않게
+      if (!ok) continue;
+      this.achievements[a.id] = Date.now();
+      this.onAchieved(a);
+    }
+  },
+  onAchieved(a) {
+    this.toast(`업적 달성 — ${a.n}`, 'good');
+    for (let i = 0; i < 24; i++)
+      this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 1.0));
+    this.sfx('chapter');
+    if (UI.open === 'quest') UI.refreshQuest();
+  },
   /** 이벤트 중 처치 보상 배수 (경험치·금화) */
   killMult() {
     const ev = this.eventActive() ? this.eventSpec() : null;
@@ -3272,8 +3852,12 @@ const G = {
     if (perk) UI.chapterCard({ sub: `${P.n} 숙련 ${lv}`, title: perk[1], line: perk[2] });
     if (UI.open === 'skill') UI.refreshProf();
   },
-  onDeath() {
+  onDeath(cause) {
     if (this.state !== 'play') return;
+    this.tally = this.tally || {};
+    this.tally.deaths = (this.tally.deaths || 0) + 1;
+    if (cause) this.tally[cause] = (this.tally[cause] || 0) + 1;
+    this.checkAch();
     const p = this.player;
     const lostXp = Math.floor(p.xp * 0.15), lostG = Math.floor(p.gold * 0.4);
     p.xp -= lostXp; p.gold -= lostG;
@@ -3478,7 +4062,7 @@ const G = {
     try {
       const p = this.player;
       const data = {
-        v: 1, name: p.name, savedAt: Date.now(), mode: this.mode, charId: p.charId,
+        v: SAVE_VERSION, name: p.name, savedAt: Date.now(),
         world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
         talked: this.talked, crafted: this.crafted,
         talkSeq: this.talkSeq, storyHeard: this.storyHeard, villageSeen: this.villageSeen,
@@ -3489,6 +4073,8 @@ const G = {
         villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
         lairs: this.lairs, asmRan: this.asmRan, everPlanted: this.everPlanted,
         vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties, bountyNext: this.bountyNext,
+        shopStock: this.shopStock, shopStockDay: this.shopStockDay,
+        achievements: this.achievements, tally: this.tally,
         p: {
           x: p.x, y: p.y, level: p.level, xp: p.xp, xpNext: p.xpNext, statPts: p.statPts, skillPts: p.skillPts,
           base: p.base, hp: p.hp, mp: p.mp, charge: p.charge, gold: p.gold, bag: p.bag, equip: p.equip, sel: p.sel,
@@ -3563,9 +4149,13 @@ const G = {
   _loadGame(raw) {
     try {
       const d = JSON.parse(raw);
+      upgradeSave(d);   // 옛 판으로 만든 기록을 지금 판 모양으로 올린다
       // 세계 폭이 바뀐 버전의 기록은 그대로 풀면 지형이 어긋난 채로 열린다 — 아예 막는다
-      if (d.world && d.world.ww && d.world.ww !== WW) {
-        this.toast(`이전 크기(${d.world.ww})의 세계라 열 수 없다 — 새로 시작해야 한다`, 'bad');
+      /* 세계 크기가 다른 판의 기록은 열지 않는다. 타일이 RLE 배열이라 폭·높이가 어긋나면
+         지형이 통째로 밀려 버린다. 예전엔 ww만 봤는데, 세션 3에서 심해를 넣으려고 WH를
+         늘리면 옛 세이브가 이 검사를 그냥 통과해 조용히 깨진다 — wh도 함께 본다. */
+      if (d.world && ((d.world.ww && d.world.ww !== WW) || (d.world.wh && d.world.wh !== WH))) {
+        this.toast(`이전 크기(${d.world.ww}×${d.world.wh || '?'})의 세계라 열 수 없다 — 새로 시작해야 한다`, 'bad');
         return;
       }
       this.world = World.deserialize(d.world);
@@ -3636,6 +4226,9 @@ const G = {
       /* 옛 저장에는 "○○ 14마리"만 적힌 종이가 붙어 있다. 새 게시판은 목표를
          obj 로 읽으므로 그런 종이는 읽을 수 없다 — 하루치를 새로 붙인다. */
       if (this.bounties.some(b => !b.obj)) this.bounties = [];
+      this.shopStock = d.shopStock || {}; this.shopStockDay = d.shopStockDay === undefined ? -1 : d.shopStockDay;
+      this.achievements = d.achievements || {};
+      this.tally = d.tally || {};
       if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
       this.ents = []; this.corpses = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = []; this.boss = null;
       this.rings = []; this.bolts = []; this.warns = []; this.sigs = []; this.edge = null;
@@ -4108,9 +4701,19 @@ const G = {
           this.mapAtlasX.fillRect(tx, ty, 1, 1);
         }
         const sx = tx * TS - camX, sy = ty * TS - camY;
-        // 잎은 변형이 곧 가지 방향이라 무작위로 뽑지 않는다 — 줄기 쪽을 보고 고른다
-        const v = LEAF_TWIG[id] ? this.pickLeafV(w, tx, ty) : (tileHash(tx, ty) * VA) | 0;
+        /* 움직이는 타일(물·폭포·용암)은 아틀라스 칸을 **시간**으로 고른다. 위치(tx+ty)를
+           위상으로 섞지 않으면 화면의 물이 전부 같은 순간에 같은 모양이 되어, 흐르는 게
+           아니라 화면 전체가 깜빡이는 것처럼 보인다.
+           잎은 변형이 곧 가지 방향이라 무작위로 뽑지 않는다 — 줄기 쪽을 보고 고른다. */
+        const an = TileArt.ANIM[id];
+        const v = an ? ((((this.time * an.fps) + tx * 0.7 + ty * 0.4) | 0) % an.fr)
+                : LEAF_TWIG[id] ? this.pickLeafV(w, tx, ty) : (tileHash(tx, ty) * VA) | 0;
         if (id === T.AIR) { if (wl) TileArt.drawWall(c, wl, v, sx, sy); continue; }
+        /* 바다 수면 — 타일을 통째로 칠하지 않고 **파도 높이만큼만** 채운다.
+           평균 2/3칸, 마루가 1칸을 안 넘게 잡았다(1칸을 넘으면 위 칸이 공기라 물이
+           허공에 뜬 것처럼 보인다). 주기가 다른 물결 둘에 칸마다 다른 위상을 섞어
+           규칙적인 톱니가 되지 않게 한다. */
+        if (id === T.SEAWATER && w.tiles[k - WW] === T.AIR) { this.drawWave(c, tx, ty, sx, sy, wl); continue; }
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
         if (ashOn && this.ASH_TILE[id]) { this.drawAshTile(c, id, v, sx, sy, tx, ty, ashF); continue; }
         if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
@@ -4373,6 +4976,7 @@ const G = {
         c.restore();
         continue;
       }
+      if (pr instanceof Bomb) { this.drawBomb(c, pr, sx, sy); continue; }
       c.fillStyle = st.c;
       if (st.glow) { c.globalAlpha = .28; c.beginPath(); c.arc(sx, sy, st.r * 2.4, 0, TAU); c.fill(); c.globalAlpha = 1; }
       if (st.len) {
@@ -4627,6 +5231,14 @@ const G = {
       const sc = 0.65 + (i % 5) * 0.24;
       const alpha = (0.14 + rainT * 0.62) * (0.65 + (i % 3) * 0.18);
       c.globalAlpha = Math.min(1, alpha);
+      /* 손그림 구름이 있으면 그걸 쓴다. 1~3은 맑은 날, 4~5는 먹구름 — 비가 짙어질수록
+         먹구름 쪽이 자주 뽑히게 섞는다. 파일이 없으면 아래 원 다섯 개로 돌아간다. */
+      const im = this.spritesOn && Sprites.img['cloud_' + (1 + ((rainT > 0.35 && i % 3 === 0) ? 3 + (i % 2) : i % 3))];
+      if (im && im.width) {
+        const w2 = 128 * sc, h2 = 64 * sc;
+        c.drawImage(im, cx - w2 / 2, cy - h2 / 2, w2, h2);
+        continue;
+      }
       c.fillStyle = mixHex('#ffffff', '#2e343c', rainT);
       for (const [dx, dy, r] of [[0, 0, 22], [18, -4, 17], [-16, -2, 16], [8, 6, 15], [-8, 7, 14]]) {
         c.beginPath(); c.arc(cx + dx * sc, cy + dy * sc, r * sc, 0, TAU); c.fill();
@@ -4807,6 +5419,12 @@ const G = {
         // 전까지 절차 생성 배경으로 떨어져 오히려 지금보다 못해 보이므로 이렇게 갈랐다.
         : (b === 'jungle' && Sprites.img.parallax_jungle && Sprites.img.parallax_jungle.width) ? 'parallax_jungle'
         : (b === 'glowfen' && Sprites.img.parallax_glowfen && Sprites.img.parallax_glowfen.width) ? 'parallax_glowfen'
+        /* 세션 3(바다·빙하)이 이 사슬에 빠져 있어서 **바다 위에 잿빛 숲 원경**이 떴다.
+           전용 그림이 오면 저절로 바뀌게 먼저 시도하고, 없는 동안은 숲 대신 설원으로
+           떨어뜨린다 — 바다·빙하 옆에 숲 지평선이 서는 것보다 훨씬 덜 어긋난다. */
+        : (b === 'sea' && Sprites.img.parallax_sea && Sprites.img.parallax_sea.width) ? 'parallax_sea'
+        : (b === 'glacier' && Sprites.img.parallax_glacier && Sprites.img.parallax_glacier.width) ? 'parallax_glacier'
+        : (b === 'sea' || b === 'glacier') ? 'parallax_snow'
         : 'parallax_forest';
     }
     const im = Sprites.img[key];
@@ -4862,6 +5480,95 @@ const G = {
   },
 
   /** 타일 광원값을 저해상도 알파맵으로 만들어 확대 — 계단 없는 부드러운 명암 */
+  /** 바다 수면 한 칸.
+      파도는 **지나가는 물결**이어야 한다. 예전에는 주기가 다른 사인 둘에 칸마다 다른
+      난수 위상까지 섞어서, 옆 칸과 아무 상관이 없는 톱니가 됐다(규칙이 없으니 파도가
+      아니라 잡음이었다). 이제 큰 물결 하나가 실제로 옆으로 흘러가고, 그 위에 작은
+      물결과 아주 약한 칸별 흔들림만 얹는다.
+      색은 **물 타일 그림을 그대로 잘라서** 쓴다 — 단색으로 칠했더니 아래 물과 색이
+      달라 수면 한 줄만 다른 물처럼 보였다. */
+  /* 날아가는 폭탄 그림. 셋을 한 가지 회색 공으로 그렸더니 무엇을 던졌는지
+     화면만 보고는 알 수 없었다 — 반경도 부술 등급도 다른데 생김새가 같으면
+     조준할 근거가 없다. 생김새(look)로 셋을 가른다.
+       iron  폭탄      — 작은 무쇠 공, 짧은 심지
+       keg   강력 폭탄 — 큰 통에 붉은 쇠테 두 줄, 긴 심지
+       stick 굴착 폭탄 — 공이 아니라 황토색 막대 세 개를 묶은 다발
+     심지 불티는 **남은 시간에 따라 빨라진다** — 곧 터진다는 걸 색이 아니라
+     깜빡임 속도로 알린다. 구르는 동안 spin만큼 돌린다.
+     불티는 처음에 회전 밖에서 그렸는데, 심지 끝은 돌고 불티는 안 돌아서 **불이 공
+     위에 따로 떠 있는** 그림이 됐다. 심지와 같은 회전 안에서 끝점에 붙여 그린다. */
+  drawBomb(c, b, sx, sy) {
+    const sp = b.spec, look = sp.look || 'iron';
+    const t = clamp(b.life / (sp.fuse || 1.6), 0, 1);        // 1 → 0 으로 탄다
+    const lit = Math.sin(this.time * (10 + (1 - t) * 44)) > -0.2;
+    const top = look === 'keg' ? 8 : look === 'stick' ? 8 : 6;   // 몸통 윗면
+    const fl = look === 'keg' ? 9 : 7;                           // 심지 길이
+    c.save();
+    c.translate(sx, sy);
+    c.rotate(b.spin);
+    if (look === 'stick') {
+      // 막대 다발 — 세 개를 나란히, 가운데를 띠로 묶었다
+      for (let i = -1; i <= 1; i++) {
+        c.fillStyle = i === 0 ? '#c8a058' : '#a8843f';
+        c.fillRect(i * 5 - 2, -8, 4, 16);
+        c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(i * 5 + 1, -8, 1, 16);
+      }
+      c.fillStyle = '#5a4a2a'; c.fillRect(-8, -2, 16, 3);
+    } else {
+      const r = look === 'keg' ? 8 : 6;
+      c.fillStyle = look === 'keg' ? '#4a3a30' : '#2e2c28';
+      c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
+      // 어두운 굴 벽 앞에서 검은 공은 그냥 사라진다 — 얇은 테두리로 윤곽을 남긴다
+      c.strokeStyle = 'rgba(220,210,190,.45)'; c.lineWidth = 1;
+      c.beginPath(); c.arc(0, 0, r - 0.5, 0, TAU); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.20)';                 // 윗쪽 반사 — 돌면 같이 돈다
+      c.beginPath(); c.arc(-r * .32, -r * .34, r * .30, 0, TAU); c.fill();
+      if (look === 'keg') {                                  // 붉은 쇠테 두 줄
+        c.fillStyle = '#a83a2a';
+        c.fillRect(-r, -r * .55, r * 2, 2); c.fillRect(-r, r * .18, r * 2, 2);
+      }
+    }
+    // 심지와 불티 — 같은 회전 안에서 그려야 불이 심지 끝에 붙어 있다
+    c.strokeStyle = '#8a7a5a'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(0, -top); c.lineTo(2, -top - fl); c.stroke();
+    c.lineWidth = 1;
+    if (lit) {
+      const r = look === 'keg' ? 2.6 : 2.0;
+      c.fillStyle = '#ffd24a';
+      c.globalAlpha = .28; c.beginPath(); c.arc(2, -top - fl, r * 2.2, 0, TAU); c.fill();
+      c.globalAlpha = 1;  c.beginPath(); c.arc(2, -top - fl, r, 0, TAU); c.fill();
+    }
+    c.restore();
+  },
+
+  drawWave(c, tx, ty, sx, sy, wl) {
+    const t = this.time;
+    const K = 0.34, W = 1.15;                             // 물결의 공간 주파수 · 진행 속도
+    const main = Math.sin(tx * K - t * W);                // 지나가는 큰 물결
+    const sub = Math.sin(tx * K * 2.7 - t * W * 1.6) * 0.32;   // 잔물결
+    const jit = (tileHash(tx, 0) - 0.5) * 0.12;           // 칸마다 아주 약한 흔들림
+    const hFrac = clamp(0.66 + (main * 0.68 + sub + jit) * 0.32, 0.34, 1);
+    const h = Math.max(3, Math.round(hFrac * TS));
+    const top = sy + TS - h;
+    // 물 타일 그림을 파도 높이만큼만 잘라 그린다 (색·결이 아래 물과 같아진다)
+    const an = TileArt.ANIM[T.SEAWATER];
+    const v = an ? ((((t * an.fps) + tx * 0.7 + ty * 0.4) | 0) % an.fr) : 0;
+    c.save();
+    c.beginPath(); c.rect(sx, top, TS, h); c.clip();
+    /* 물 타일은 반투명(a:1)이라 **뒤에 벽을 먼저 깔아야** 아래 물칸과 같은 색이 된다.
+       이 한 줄을 빠뜨려서 수면 줄만 벽 없이 그려졌고, 그래서 아무리 같은 타일을 잘라
+       써도 색이 계속 달랐다(렌더 루프는 continue 앞에서 벽을 깔지 못한다). */
+    if (wl) { TileArt.drawWall(c, wl, v, sx, sy); TileArt.drawWall(c, wl, v, sx, sy + TS); }
+    TileArt.draw(c, T.SEAWATER, v, sx, sy);
+    // 타일 한 칸보다 파도가 낮으면 아래가 비므로, 잘라낸 만큼 한 칸 더 아래에서 끌어온다
+    TileArt.draw(c, T.SEAWATER, v, sx, sy + TS);
+    c.restore();
+    // 마루 — 밝은 선 한 줄. 세게 넣으면 수면만 다른 물처럼 보여서 아주 옅게만
+    c.globalAlpha = 0.26; c.fillStyle = shade(ART[T.SEAWATER].c, 1.8);
+    c.fillRect(sx, top, TS, 1.5);
+    c.globalAlpha = 1;
+  },
+
   drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1) {
     const w = this.world;
     const x0 = tx0 - 1, y0 = ty0 - 1, x1 = tx1 + 1, y1 = ty1 + 1;
@@ -5034,12 +5741,26 @@ const G = {
          두므로 그림과 구조물이 1:1로 맞는다.
          손그림은 새 규격(110×66, 비율 1.667)으로 온 것만 쓴다. 옛 88×44 그림은 비율이
          2.0이라 늘려 붙이면 찌그러지므로, 그때는 아래 절차 생성으로 그린다. */
+      /* 손그림은 1프레임(정지)과 2프레임(움직임) 둘 다 받는다.
+         **프레임 수는 매니페스트가 아니라 비율로 알아낸다** — 가로가 규격 비율의
+         꼭 두 배면 두 칸짜리 시트다. 이렇게 해야 새 그림을 넣는 날 매니페스트를
+         같이 고치는 걸 잊어도 저절로 맞고, 옛 1프레임 그림도 그대로 돈다.
+         2프레임이면 물도 그림이 맡으므로 절차 생성 물기둥을 덧그리지 않는다 —
+         겹쳐 그리면 물이 두 겹으로 흐른다. */
       const im = this.spritesOn && Sprites.img.obj_fountain;
-      if (im && im.width && Math.abs(im.width / im.height - o.w / o.h) < 0.03) {
-        c.save(); c.imageSmoothingEnabled = false;
-        c.drawImage(im, Math.round(sx), Math.round(sy), o.w, o.h);
-        c.restore();
-        return;
+      if (im && im.width) {
+        const want = o.w / o.h;
+        const frames = Math.abs(im.width / im.height - want) < 0.03 ? 1
+          : Math.abs(im.width / 2 / im.height - want) < 0.03 ? 2 : 0;
+        if (frames) {
+          const fw = im.width / frames;
+          const fr = frames > 1 ? (((this.time * 3.5) | 0) % frames) : 0;
+          c.save(); c.imageSmoothingEnabled = false;
+          c.drawImage(im, fr * fw, 0, fw, im.height, Math.round(sx), Math.round(sy), o.w, o.h);
+          c.restore();
+          if (frames === 1) this.drawFountainWater(c, o, sx, sy);
+          return;
+        }
       }
       // 좌우 대칭은 중심(mx)에서 재서 그린다 — 예전처럼 그림 절반을 뒤집어 덮는
       // 임시방편이 아니라, 애초에 대칭으로 그린다
@@ -5053,13 +5774,7 @@ const G = {
       c.fillStyle = shade('#7a7a88', f); c.fillRect(mx - 6, sy + 12, 12, base - sy - 12);
       c.fillStyle = shade('#9a9aa8', f); c.fillRect(mx - 6, sy + 12, 3, base - sy - 12);
       c.fillStyle = shade('#8a8a98', f); c.fillRect(mx - 11, sy + 7, 22, 6);     // 물동이
-      const wob = Math.sin(this.time * 2.6) * 1.5;
-      c.globalAlpha = .75; c.fillStyle = '#7fc8e8';
-      for (const dir of [-1, 1])                                                 // 물줄기 — 좌우 같은 식으로
-        for (let k = 0; k < 5; k++)
-          c.fillRect(mx + dir * (5 + k * 4) - 1.5, sy + 14 + k * k * 1.5 + wob, 3, 3);
-      c.fillRect(mx - 2, sy + 3 + wob, 4, 9);                                    // 솟는 물
-      c.globalAlpha = 1;
+      this.drawFountainWater(c, o, sx, sy);
       return;
     }
     if (this.spritesOn) {
@@ -5089,6 +5804,42 @@ const G = {
       c.fillRect(sx + 8, sy + 14, o.w - 16, 7);
       c.globalAlpha = 1;
       c.fillStyle = shade('#8a8a96', f); c.fillRect(sx + o.w / 2 - 3, sy, 6, 12);
+    } else if (o.type === 'anvil') {
+      /* 강화 모루 — 재련대(붉게 달아오른 화덕)와 한눈에 구분되어야 한다. 같은 방에
+         나란히 서기 때문이다. 이쪽은 불이 아니라 **쇠와 망치**다.
+         자리는 2×2칸(44×44)을 잡지만 **그림은 그 칸을 다 쓰지 않는다** — 모루는
+         낮고 넓은 물건이라 2×1에서 위로 조금 올라온 정도(칸 높이의 60%쯤)까지만
+         차고, 나머지 위쪽은 비운다. 망치도 그 안에서 오르내린다. 예전에 망치를
+         칸 꼭대기에 두었더니 몸통과 떨어져 허공에 뜬 것처럼 보였다. */
+      if (Sprites.drawObj(c, 'obj_anvil', sx, sy, o.w, o.h)) return;
+      const W = o.w, H = o.h;
+      const hb = Math.abs(Math.sin(t * 3.4));                     // 망치질 — 위아래로
+      c.fillStyle = shade('#4a3a26', f);                          // 나무 그루터기
+      c.fillRect(sx + W * 0.16, sy + H * 0.78, W * 0.68, H * 0.22);
+      c.fillStyle = shade('#3a2c1c', f);
+      c.fillRect(sx + W * 0.16, sy + H * 0.78, W * 0.68, 2);
+      c.fillStyle = shade('#2e2e36', f);                          // 모루 허리
+      c.fillRect(sx + W * 0.32, sy + H * 0.66, W * 0.36, H * 0.13);
+      c.fillStyle = shade('#5d5d68', f);                          // 모루 상판
+      c.fillRect(sx + W * 0.16, sy + H * 0.55, W * 0.68, H * 0.12);
+      c.beginPath();                                              // 한쪽 뿔
+      c.moveTo(sx + W * 0.16, sy + H * 0.55);
+      c.lineTo(sx + W * 0.02, sy + H * 0.605);
+      c.lineTo(sx + W * 0.16, sy + H * 0.67); c.fill();
+      c.fillStyle = shade('#7a7a88', f);                          // 상판 윗면 빛
+      c.fillRect(sx + W * 0.16, sy + H * 0.55, W * 0.68, 2);
+      // 망치 — 상판 **바로 위**에서 오르내린다. 위쪽 빈 칸으로 올라가지 않는다
+      const hy = sy + H * 0.24 + hb * H * 0.14;
+      c.fillStyle = shade('#8a7a5a', f);
+      c.fillRect(sx + W * 0.50 - 1, hy + H * 0.08, 3, H * 0.17);  // 자루
+      c.fillStyle = shade('#9a9aa6', f);
+      c.fillRect(sx + W * 0.38, hy, W * 0.26, H * 0.08);          // 머리
+      if (hb > 0.9) {                                             // 내리친 순간에만 불똥
+        c.globalAlpha = 0.85; c.fillStyle = '#ffd24a';
+        c.fillRect(sx + W * 0.30, sy + H * 0.52, 2, 2);
+        c.fillRect(sx + W * 0.64, sy + H * 0.50, 2, 2);
+        c.globalAlpha = 1;
+      }
     } else if (o.type === 'waystone') {
       const gl = 0.45 + Math.sin(t * 1.8) * 0.25;
       c.fillStyle = shade('#6b5a34', f);
@@ -5867,22 +6618,53 @@ const G = {
       const d = idef(wep);
       c.save();
       c.translate(sx + 10, sy + 20 + bob);
-      /* 활·쇠뇌·총은 겨눈 쪽을 향해야 한다. 아이콘이 이미 오른쪽(+x)을 쏘는 그림이라
-         (활: 메긴 화살이 오른쪽, 레일건: 총구가 오른쪽) 겨눔 각도만큼 돌리면 그대로
-         발사 방향이 된다. 자루 무기용 90° 보정을 여기서 걸면 아래를 겨누게 된다. */
-      if (!tool && d.wc === 'ranged') {
+      if (hd && hd.type === 'rod') {
+        /* 낚싯대는 아이템 그림(릴·줄·고리까지 그려진 32칸 도안)을 그대로 들면 손 옆에서
+           뭉개져 무엇인지 안 읽힌다. 화면에서는 **막대기 하나로만** 그린다 — 줄은
+           drawFishLine이 따로 긋고, 대 길이·굵기·끝 색으로 어떤 대인지 구분한다. */
+        const L = this.rodLook(wep.id);
+        c.scale(p.facing > 0 ? 1 : -1, 1);
+        c.rotate(-0.4);
+        c.lineCap = 'round';
+        const line = (col, w) => {
+          c.strokeStyle = col; c.lineWidth = w;
+          c.beginPath(); c.moveTo(-3, 0); c.lineTo(L.len, 0); c.stroke();
+        };
+        line('#241c14', L.w + 1.6);                                 // 어두운 심 — 배경과 안 붙게
+        line(L.c, L.w);
+        c.strokeStyle = L.grip; c.lineWidth = L.w + 1.2;            // 손잡이
+        c.beginPath(); c.moveTo(-3, 0); c.lineTo(4, 0); c.stroke();
+        c.fillStyle = L.tip;                                        // 대 끝 — 등급 표시
+        c.fillRect(L.len - 4, -L.w / 2 - 1, 4, L.w + 2);
+        c.lineWidth = 1; c.lineCap = 'butt';
+        c.restore();
+      } else if (!tool && d.wc === 'ranged') {
+        /* 활·쇠뇌·총은 겨눈 쪽을 향해야 한다. 아이콘이 이미 오른쪽(+x)을 쏘는 그림이라
+           (활: 메긴 화살이 오른쪽, 레일건: 총구가 오른쪽) 겨눔 각도만큼 돌리면 그대로
+           발사 방향이 된다. 자루 무기용 90° 보정을 여기서 걸면 아래를 겨누게 된다. */
         c.rotate(this.aimAngle(p));
         c.translate(BOW_HAND, 0);          // 팔을 뻗은 만큼 앞으로 — 몸에 겹치지 않게
+        Art.drawItem(c, wep.id, -13, -13, 26);
+        c.restore();
       } else {
-        const ang = p.swing > 0
-          ? (p.swingAng + (p.swingDir > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2.0)
-          : (p.facing > 0 ? -0.4 : Math.PI + 0.4);
-        c.rotate(ang);
+        if (tool && p.swing <= 0) {
+          /* 도구는 **거울로 뒤집어** 그린다.
+             예전에는 왼쪽을 볼 때 각도에 π를 더했는데, 그림을 180° 돌리는 것은 좌우를
+             뒤집는 것과 다르다 — 괭이 날이 위로 가서 같은 도구인데 방향에 따라 다른
+             물건처럼 보였다. */
+          c.scale(p.facing > 0 ? 1 : -1, 1);
+          c.rotate(-0.4);
+        } else {
+          const ang = p.swing > 0
+            ? (p.swingAng + (p.swingDir > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2.0)
+            : (p.facing > 0 ? -0.4 : Math.PI + 0.4);
+          c.rotate(ang);
+        }
         // 스프라이트는 위를 향하므로 90° 돌려 자루가 손에 오게 한다
         c.translate(15, 0); c.rotate(Math.PI / 2);
+        Art.drawItem(c, wep.id, -13, -13, 26);
+        c.restore();
       }
-      Art.drawItem(c, wep.id, -13, -13, 26);
-      c.restore();
       // 스윙 궤적 — 무기를 실제로 휘두를 때만(도구를 들고 있으면 베는 게 아니다)
       if (!tool && p.swing > 0 && d.wc === 'melee') {
         c.globalAlpha = p.swing / 0.24 * 0.32;
@@ -5892,6 +6674,7 @@ const G = {
         c.stroke(); c.lineWidth = 1; c.globalAlpha = 1;
       }
     }
+    if (p.fish) this.drawFishLine(c, p, sx, sy, bob);
     if (p.channel) {
       c.globalAlpha = .5; c.strokeStyle = '#ffcf6a'; c.lineWidth = 3;
       c.beginPath(); c.arc(sx + 10, sy + 20, 60 + Math.sin(this.time * 20) * 8, 0, TAU); c.stroke();
@@ -5939,7 +6722,9 @@ const G = {
     }
   },
 
-  /* ================= 시체 =================
+  /* ================= 시체 ==========
+  },
+
      ★ 죽은 놈은 **ents 에 한 프레임도 남기지 않는다.**
        ents 를 도는 곳이 스무 군데가 넘고 저마다 dead 를 다르게 검사한다 —
        거기 남겨 두면 맞고, 밀치고, 조준되고, 스폰 수에 세어지는 일이 어디선가
@@ -5984,6 +6769,60 @@ const G = {
     }
   },
 
+  /** 손에 그려지는 낚싯대의 생김새. 길이·굵기·끝 색으로 등급을 구분한다. */
+  rodLook(id) {
+    return ({
+      rod_basic: { len: 25, w: 2.2, c: '#a9855a', grip: '#5a4632', tip: '#d8c49a' },
+      rod_adv:   { len: 32, w: 2.8, c: '#6d5a42', grip: '#3a3a44', tip: '#8fd0e8' }
+    })[id] || { len: 28, w: 2.4, c: '#9a7a4a', grip: '#5a4632', tip: '#cfc2a4' };
+  },
+  /** 낚싯대 끝의 화면 좌표 — 막대기를 우리가 직접 그리므로 길이만 알면 된다.
+      drawHeldWeapon과 같은 손 위치(sx+10, sy+20)·같은 각도(-0.4)를 쓴다. */
+  rodTip(id, face, sx, sy) {
+    const L = this.rodLook(id), A = -0.4;
+    return [sx + 10 + face * Math.cos(A) * L.len, sy + 20 + Math.sin(A) * L.len];
+  },
+
+  /* 낚싯줄과 찌 — 예전에는 던져 놓고도 화면에 아무것도 안 그려서, 줄이 어디에
+     드리워졌는지 토스트 글로만 알 수 있었다. 낚싯대 끝에서 물까지 줄을 잇고 찌를
+     띄운다. 입질하면 찌가 물속으로 쑥 들어갔다 나오고 물결이 퍼진다. */
+  drawFishLine(c, p, sx, sy, bob) {
+    const f = p.fish;
+    const face = p.facing > 0 ? 1 : -1;
+    const tip = this.rodTip(f.rodId, face, sx, sy + bob);
+    const rx = tip[0], ry = tip[1];
+    const fx = (f.tx + 0.5) * TS - this.cam.x;
+    const wy = f.ty * TS - this.cam.y;                       // 수면
+    // 입질 중이면 찌가 잠겼다 떴다 한다 — 3프레임으로 끊어(타일 애니메이션과 같은 방식)
+    const fr = ((this.time * 9) | 0) % 3;
+    const dip = f.biting ? [0, 5, 2][fr] : Math.sin(this.time * 2) * 1.2;
+    const by = wy + 3 + dip;
+
+    c.save();
+    // 줄 — 어두운 배경에서도 보이게 검은 심 위에 밝은 줄을 겹쳐 긋는다
+    for (const [col, wdt] of [['rgba(0,0,0,.55)', 3], ['#eef6ff', 1.4]]) {
+      c.strokeStyle = col; c.lineWidth = wdt;
+      c.beginPath();
+      c.moveTo(rx, ry);
+      c.quadraticCurveTo((rx + fx) / 2, Math.max(ry, by) + 14, fx, by);   // 살짝 늘어지게
+      c.stroke();
+    }
+    // 물결 — 찌가 앉은 자리
+    c.strokeStyle = 'rgba(200,238,255,.7)'; c.lineWidth = 1;
+    const rr = f.biting ? 5 + fr * 3 : 4;
+    c.beginPath(); c.ellipse(fx, wy + 4, rr, rr * 0.35, 0, 0, TAU); c.stroke();
+    // 찌 — 빨강/흰색 두 토막이라 물 위에서 눈에 띈다
+    c.fillStyle = '#101018'; c.fillRect(fx - 4, by - 9, 8, 12);           // 테두리
+    c.fillStyle = '#e8523c'; c.fillRect(fx - 3, by - 8, 6, 5);
+    c.fillStyle = '#f2f2ee'; c.fillRect(fx - 3, by - 3, 6, 5);
+    c.fillStyle = '#101018'; c.fillRect(fx - 1, by - 12, 2, 4);           // 고리
+    if (f.biting) {                                                       // 입질 표시
+      c.fillStyle = '#ffe08a';
+      c.fillRect(fx - 1.5, by - 24, 3, 8); c.fillRect(fx - 1.5, by - 14, 3, 3);
+    }
+    c.restore();
+  },
+
   drawEnemy(c, e, sx, sy) {
     /* 손그림 스프라이트 우선. ★ 프레임이 판정 박스보다 크면 **바닥을 맞춰** 그린다 —
        들토끼는 판정 12px 에 프레임 40px 이고 그림 속 발이 프레임 맨 아래에 있어서,
@@ -6008,6 +6847,23 @@ const G = {
        프레임 0 에서 잰 그 치우침이다 — 왼쪽을 볼 때는 치우침도 같이 뒤집는다. */
     const side = meta ? (Sprites.sideInset[key] || 0) * (e.facing < 0 ? -1 : 1) : 0;
     const dx = meta ? (e.w - meta.frameW) / 2 - side : 0;
+
+    /* 물속 몹은 어둡게 깔린 물 위에 제 색이 묻혀 안 보인다 — 웅덩이 뱀장어(#3a6a5a)는
+       어두운 물과 거의 같은 색이라 "보이지 않는 몬스터"가 됐다. 제 그림을 흰 실루엣으로
+       만들어 사방 2px 밀어 깔면 **그림 모양 그대로** 밝은 테두리가 생긴다(판정 박스에
+       네모를 두르면 실제 모양과 안 맞는다). 잠겼는지는 타일로 본다 — 수중 몹은
+       move()에 aquatic으로 들어가 e.submerged가 늘 0이라 그 값은 못 믿는다.
+       물에 잠긴 몹 전부를 밝히면 물속이 온통 번쩍이므로, 실제로 안 보였던 그 하나만. */
+    const wet = e.type === 'grotto_eel' && this.world.liquid(Math.floor(e.cx / TS), Math.floor(e.cy / TS));
+    if (this.spritesOn && wet && meta) {
+      c.save();
+      c.filter = 'brightness(0) invert(1)';
+      c.globalAlpha = 0.5;
+      for (const [ox, oy] of [[-2, 0], [2, 0], [0, -2], [0, 2]])
+        Sprites.draw(c, key, this.enemyFrame(e), sx + dx + ox, sy - dy + oy, e.facing < 0);
+      c.restore();
+      c.filter = 'none';
+    }
 
     /* 그림이 거의 안 움직이는 개체는(ENEMIES 의 stiff — 프레임 간 픽셀 차를 재서
        골랐다) 렌더러가 대신 흔들어 준다. 걸을 때는 속도에 맞춰 위아래로 튀고 진행
@@ -6201,6 +7057,67 @@ const G = {
       c.globalAlpha = 1;
     }
   },
+  /* 분수 물 — 손그림(정지)이든 절차 생성이든 그 위에 이것만 얹어 움직인다.
+     C단계 타일 애니메이션과 같은 방식으로 **시간을 프레임으로 끊어** 쓴다. 연속
+     sin으로 흔들면 도트 그림 위에서 혼자 매끄럽게 미끄러져 겉돈다.
+     외형 틀(110×66 · 광장 5칸 중심)은 건드리지 않는다 — 바로 아래가 지하 공창으로
+     내려가는 수직 통로이고 9장 대사와 짝이라 폭·위치를 바꾸면 안 된다. */
+  /* 분수 물 — 손그림(정지)이든 절차 생성이든 그 위에 이것만 얹어 움직인다.
+     핵심은 **위에서 아래로 떨어지는** 물이다: 꼭대기 물동이에서 솟은 물이 좌우로
+     퍼져 포물선을 그리며 물받이로 떨어지고, 물동이 테두리에서도 물이 흘러내린다.
+     C단계 타일 애니메이션과 같이 시간을 3프레임으로 끊어 쓴다 — 연속 sin으로
+     흔들면 도트 그림 위에서 혼자 매끄럽게 미끄러져 겉돈다.
+     외형 틀(110×66 · 광장 5칸 중심)은 건드리지 않는다 — 바로 아래가 지하 공창으로
+     내려가는 수직 통로이고 9장 대사와 짝이라 폭·위치를 바꾸면 안 된다. */
+  drawFountainWater(c, o, sx, sy) {
+    const FR = 3, fr = ((this.time * 6) | 0) % FR;
+    const mx = sx + o.w / 2;
+    const topY = sy + 8;                       // 물동이 수면
+    const surf = sy + o.h - TS + 5;            // 물받이 수면
+    const fall = surf - topY;                  // 떨어지는 높이
+    c.save();
+
+    // 1) 물동이에서 솟았다가 곧바로 떨어지는 물기둥
+    c.globalAlpha = .8; c.fillStyle = '#8fd4ef';
+    c.fillRect(mx - 2, topY - 7 + [0, -2, -1][fr], 4, 9 + [0, 2, 1][fr]);
+
+    // 2) 좌우 포물선 — 물방울이 프레임마다 궤적을 따라 나아가 물받이로 떨어진다.
+    //    u는 0(솟는 지점)에서 1(수면)까지. x는 고르게, y는 제곱으로 — 그래야 위는
+    //    천천히 퍼지고 아래로 갈수록 빨라지는 낙하로 보인다.
+    const N = 6, RX = 26;
+    c.fillStyle = '#7fc8e8';
+    for (const dir of [-1, 1])
+      for (let k = 0; k < N; k++) {
+        const u = (k + fr / FR) / N;
+        const px = mx + dir * (4 + RX * u);
+        const py = topY - 4 + fall * (u * u);
+        if (py > surf) continue;
+        c.globalAlpha = .8 - u * 0.25;
+        c.fillRect(px - 1.5, py, 3, 3 + u * 3);            // 아래로 갈수록 길어진다 = 빨라 보인다
+      }
+
+    // 3) 물동이 테두리에서 흘러내리는 물 — 끊긴 세로줄이 프레임마다 내려간다
+    c.globalAlpha = .45; c.fillStyle = '#bfe8ff';
+    for (const dir of [-1, 1])
+      for (let k = 0; k < 3; k++) {
+        const py = topY + 4 + ((k * 9 + fr * 3) % (fall - 6));
+        c.fillRect(mx + dir * 8 - 1, py, 2, 5);
+      }
+
+    // 4) 떨어진 자리의 물보라 + 수면 잔물결
+    c.globalAlpha = .5; c.fillStyle = '#dff2ff';
+    for (const dir of [-1, 1]) {
+      const lx = mx + dir * (4 + RX);
+      c.fillRect(lx - 4, surf - 1 - (fr === 1 ? 1 : 0), 8, 2);
+      c.fillRect(lx - 6 - fr, surf - 3, 2, 2); c.fillRect(lx + 4 + fr, surf - 3, 2, 2);
+    }
+    c.globalAlpha = .38;
+    for (let k = 0; k < 3; k++) {
+      const rx = sx + 8 + ((k * 17 + fr * 6) % (o.w - 20));
+      c.fillRect(rx, surf + 3, 6, 1);
+    }
+    c.restore();
+  },
   drawCursor(c, camX, camY) {
     const p = this.player;
     const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
@@ -6264,9 +7181,28 @@ const G = {
   },
 
   /* ---- 미니맵 ---- */
+  /* 탐지기 소리 — 잡힌 것이 **없다가 생겼을 때만** 한 번 운다. 반경 안에 계속
+     들어 있는 동안 매번 울면 미니맵이 갱신될 때마다(초당 4회) 삑삑거린다. */
+  _detPrev: 0,
+  detBeep(n) {
+    if (n > 0 && this._detPrev === 0) this.sfx('detector');
+    this._detPrev = n;
+  },
+  /** 유틸리티 칸에 낀 탐지기 종류 — 'ore' | 'mob'. 없으면 false */
+  hasDetector(kind) {
+    const eq = this.player && this.player.equip;
+    if (!eq) return false;
+    return (eq.util1 && idef(eq.util1).det === kind) || (eq.util2 && idef(eq.util2).det === kind);
+  },
+  DET_R: 30,                                   // 탐지 반경(칸)
   drawMinimap() {
     const c = this.mmx, w = this.world, p = this.player;
     const MW = this.mm.width, MH = this.mm.height, S = 2;
+    /* 탐지기 — **안개를 뚫고** 보여 준다. 이미 explored인 칸만 밝히는 것이라면
+       탐지기가 아니라 색칠 도구다. 반경 안이면 아직 본 적 없는 칸도 비친다. */
+    const detOre = this.hasDetector('ore'), detMob = this.hasDetector('mob');
+    const DR = this.DET_R, DR2 = DR * DR;
+    let detHit = 0;                                  // 이번 갱신에 잡힌 것 수 (소리용)
     c.fillStyle = '#07080c'; c.fillRect(0, 0, MW, MH);
     const px = Math.floor(p.cx / TS), py = Math.floor(p.cy / TS);
     const halfW = Math.floor(MW / S / 2), halfH = Math.floor(MH / S / 2);
@@ -6275,8 +7211,17 @@ const G = {
         const tx = px - halfW + x, ty = py - halfH + y;
         if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) continue;
         const k = ty * WW + tx;
-        if (!w.explored[k]) continue;   // 안개 — 눈으로 본 적 없는 칸은 그리지 않는다
         const id = w.tiles[k];
+        if (!w.explored[k]) {
+          // 안개 — 눈으로 본 적 없는 칸은 그리지 않는다. 단, 금속 탐지기가 잡은 광맥은 예외
+          if (!detOre || !TILE_DEF[id] || !TILE_DEF[id].ore) continue;
+          const ddx = tx - px, ddy = ty - py;
+          if (ddx * ddx + ddy * ddy > DR2) continue;
+          c.fillStyle = TILE_DEF[id].c;
+          c.fillRect(x * S, y * S, S, S);
+          detHit++;
+          continue;
+        }
         if (id === T.AIR) {
           const wl = w.walls[k];
           if (wl) { c.fillStyle = '#181820'; c.fillRect(x * S, y * S, S, S); }
@@ -6301,12 +7246,16 @@ const G = {
     for (const e of this.ents) {
       if (!(e instanceof Enemy)) continue;
       const etx = clamp(Math.floor(e.cx / TS), 0, WW - 1), ety = clamp(Math.floor(e.cy / TS), 0, WH - 1);
-      if (!w.explored[ety * WW + etx]) continue;
+      // 몬스터 탐지기가 있으면 반경 안은 안개 속이라도 잡아낸다
+      const near = detMob && (etx - px) * (etx - px) + (ety - py) * (ety - py) <= DR2;
+      if (near) detHit++;
+      if (!near && !w.explored[ety * WW + etx]) continue;
       const ox = etx - (px - halfW), oy = ety - (py - halfH);
       if (ox < 0 || oy < 0 || ox * S >= MW || oy * S >= MH) continue;
       c.fillStyle = e.boss ? '#ff4a4a' : '#e07070';
       c.fillRect(ox * S - 1, oy * S - 1, S + 2, S + 2);
     }
+    this.detBeep(detHit);
     // 쓰러진 자리 — 안개와 무관하게 늘 보인다(내가 죽은 자리는 내가 안다)
     if (this.deathMark) {
       const dx = Math.floor(this.deathMark.x / TS) - (px - halfW);

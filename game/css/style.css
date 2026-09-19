@@ -77,6 +77,11 @@ button{
 .bar.jet .fill{background:linear-gradient(#ffd08a,#e0662a)}
 .bar.jet.over .fill{background:linear-gradient(#8a8a92,#4a4a52)}
 .bar.jet:before{content:'🚀';color:#ffb04a;font-size:9px}
+.bar.air{display:none}
+.orb-row.has-air .bar.air{display:block}
+.bar.air .fill{background:linear-gradient(#9fe8ff,#2f7fb8)}
+.bar.air:before{content:'🫧';color:#bfe8ff}
+.bar.air.low{animation:hpWarn 1.1s ease-in-out infinite}
 .bar.hp.low{animation:hpWarn 1.1s ease-in-out infinite}
 @keyframes hpWarn{0%,100%{box-shadow:inset 0 1px 4px #000d,0 0 0 rgba(224,96,90,0)}
   50%{box-shadow:inset 0 1px 4px #000d,0 0 13px 2px rgba(224,96,90,.8)}}
@@ -171,16 +176,38 @@ button{
 .panel .x{padding:2px 9px;font-size:13px;background:none;border-color:transparent}
 .panel::-webkit-scrollbar{width:8px}.panel::-webkit-scrollbar-thumb{background:#33301f;border-radius:4px}
 
-.inv-wrap{display:flex;gap:18px;padding:16px;align-items:flex-start}
-.equip-col{flex:0 0 116px;width:116px}
-.bag-col{flex:1 1 auto;min-width:0}
+.inv-wrap{display:flex;gap:36px;padding:16px;align-items:flex-start}
+/* 장비 열은 칸 폭(2×46 + 틈 6 = 98)에 딱 맞춘다.
+   116px으로 고정해 뒀더니 열 오른쪽에 18px이 남아, 열 사이 틈(18)과 합쳐져
+   왼쪽만 36px로 벌어졌다 — 눈에는 그게 "간격이 다르다"로 보인다. */
+.equip-col{flex:0 0 98px;width:98px}
+.bag-col{min-width:0}
+.stat-col{flex:0 0 128px;width:128px}
+/* 정리 버튼 — 소지품 칸 **정중앙** 아래 */
+.bag-foot{margin-top:10px;display:flex;justify-content:center}
+/* 세 열의 위쪽 선을 맞춘다 — 제목 높이가 달라 능력치만 내려앉아 보였다 */
+.inv-wrap>div{align-self:stretch}
+/* 소지품 열은 칸 폭(10칸 505px)에 딱 맞춘다.
+   flex:1 1 auto로 두면 열 상자만 남는 폭을 다 먹어서, 마지막 칸과 능력치 사이가
+   왼쪽 틈(18px)보다 훨씬 벌어졌다 — 눈에는 그게 "간격이 다르다"로 보인다. */
+.bag-col{flex:0 0 auto}
+#bag-grid{width:max-content}
+/* 가방 창만 넓힌다 — 장비(116) + 소지품(10칸 505) + 능력치(128) + 여백/틈이 817px라
+   기본 패널 폭 720px에서는 능력치 열이 삐져나와 소지품 칸 위에 겹쳐 찍혔다. */
+/* 32(양쪽 여백) + 98(장비) + 36 + 505(소지품 10칸) + 36 + 128(능력치) = 835 */
+#panel-inv{width:835px}
 #hotbar{max-width:100vw;flex-wrap:nowrap}
-.equip-title{font-size:11px;letter-spacing:.12em;color:var(--dim);margin-bottom:8px;display:flex;align-items:center;gap:4px}
+/* 아이콘과 글자의 **가운데 선**을 맞춘다. baseline로 두면 아이콘이 글자 위로 떠 보인다. */
+.equip-title{font-size:11px;letter-spacing:.12em;color:var(--dim);margin-bottom:8px;
+  display:flex;align-items:center;gap:5px;line-height:15px;min-height:15px}
 .equip-title small{letter-spacing:0;color:#5f5b4d}
-.section-ic{width:15px;height:15px;display:inline-block;background:center/contain no-repeat;image-rendering:pixelated;flex:0 0 15px}
+.section-ic{width:15px;height:15px;display:block;background:center/contain no-repeat;
+  image-rendering:pixelated;flex:0 0 15px;align-self:center}
 .equip-grid{display:grid;grid-template-columns:repeat(2,46px);gap:6px}
 .slot.equip .eqtag,.slot.trash-zone .eqtag{position:absolute;bottom:1px;left:0;right:0;text-align:center;
-  font-size:8.5px;color:#57533f;pointer-events:none;z-index:3;text-shadow:0 1px 2px #000}
+  font-size:8.5px;color:#57533f;pointer-events:none;z-index:3;text-shadow:0 1px 2px #000;
+  /* '유틸리티'처럼 네 글자가 넘어가면 칸(46px) 밖으로 삐져나가 잘려 보였다 */
+  white-space:nowrap;letter-spacing:-.04em;transform:scale(.94);transform-origin:bottom center}
 .slot.equip.filled .eqtag{display:none}
 /* 빈 장비 칸의 실루엣 — 아이템이 들어오면 가려진다 */
 /* 버리기(휴지통) 아이콘과 같은 밀도로: 위쪽에 작게, 아래는 eqtag 라벨을 위해 비워 둔다 */
@@ -198,7 +225,7 @@ button{
 #bag-grid{display:grid;grid-template-columns:repeat(10,46px);gap:5px}
 #bag-grid .slot.hb-slot{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 0 6px #d8a94b33}
 #bag-grid .slot.locked{opacity:.18;pointer-events:none;background:repeating-linear-gradient(45deg,#0e0d0a,#0e0d0a 4px,#151310 4px,#151310 8px)}
-#stat-sheet{margin-top:16px;font-size:12px;line-height:1.9;color:#b9b3a0;width:110px}
+#stat-sheet{font-size:12px;line-height:1.9;color:#b9b3a0;width:124px}
 #stat-sheet .sv{color:#fff;float:right}
 #stat-sheet h4{font-size:10px;letter-spacing:.12em;color:var(--dim);margin:10px 0 4px;font-weight:500}
 
@@ -307,7 +334,14 @@ button{
 .ss.filled{border-style:solid;border-color:#5a5133}
 
 #quest-body{padding:16px}
-.session-tabs{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+/* 세션 탭 — 셋 이상이면 줄바꿈 대신 **가로 스크롤**. 줄바꿈하면 탭이 두 줄이 되어
+   아래 장 목록이 통째로 밀린다. 스크롤바는 얇게 그려 창 분위기를 안 깨뜨린다. */
+.session-tabs{display:flex;gap:10px;margin-bottom:12px;flex-wrap:nowrap;
+  overflow-x:auto;overflow-y:hidden;padding-bottom:6px;scrollbar-width:thin}
+.session-tabs>*{flex:0 0 auto}
+.session-tabs::-webkit-scrollbar{height:6px}
+.session-tabs::-webkit-scrollbar-thumb{background:#33301f;border-radius:3px}
+.session-tabs::-webkit-scrollbar-track{background:transparent}
 .session-note{font-size:11px;color:#8a8470;background:#161309;border:1px solid #2f2a1e;border-radius:4px;
   padding:7px 10px;margin-bottom:12px}
 .session-note b{color:var(--gold)}
@@ -333,6 +367,19 @@ button{
   color:var(--gold);
   font-weight:700;
   text-transform:uppercase;
+  pointer-events:none
+}
+/* 다 지난 세션은 같은 자리에 초록 '완료'. '진행 중'과 자리를 나눠 쓰지만 겹칠 일은
+   없다 — 진행 중인 세션은 정의상 아직 done이 아니기 때문이다(done ? 'done' : ...). */
+.session-tab.done::after{
+  content:"완료";
+  position:absolute;
+  top:6px;
+  right:8px;
+  font-size:9px;
+  letter-spacing:.12em;
+  color:#6fbf5a;
+  font-weight:700;
   pointer-events:none
 }
 .chap{border-left:2px solid #2b2818;padding:0 0 16px 14px;margin-left:6px;position:relative}
@@ -468,8 +515,8 @@ button{
 #skillbar .sk.deny{animation:sk-deny .17s ease-out}
 #skillbar .sk.deny .ic{filter:grayscale(1) brightness(.5)}
 .quest-card button{margin-top:8px;padding:4px 12px;font-size:11px}
-#reforge-note{padding:12px 16px;font-size:11.5px;color:#6f6b5c;border-bottom:1px solid var(--frame)}
-#reforge-grid{padding:16px;display:grid;grid-template-columns:repeat(8,46px);gap:5px}
+#reforge-note,#anvil-note{padding:12px 16px;font-size:11.5px;color:#6f6b5c;border-bottom:1px solid var(--frame)}
+#reforge-grid,#anvil-grid{padding:16px;display:grid;grid-template-columns:repeat(8,46px);gap:5px}
 
 /* ================= 대화 ================= */
 #dialogue{position:absolute;left:0;right:0;bottom:0;display:none;justify-content:center;padding:0 0 26px;pointer-events:auto}
@@ -928,7 +975,7 @@ body.booting #title-screen{visibility:hidden}
 }
 @media (max-width:560px){
   #bag-grid,#chest-grid{grid-template-columns:repeat(5,42px)}
-  #vault-grid,#vault-bag,#reforge-grid{grid-template-columns:repeat(5,42px)}
+  #vault-grid,#vault-bag,#reforge-grid,#anvil-grid{grid-template-columns:repeat(5,42px)}
   .inv-wrap,.vault-wrap{flex-wrap:wrap}
   #hotbar{gap:3px}
   #hotbar .slot,.sk{width:36px;height:36px;font-size:16px}
@@ -996,6 +1043,64 @@ body.booting #title-screen{visibility:hidden}
 
 /* 불가능 모드로 기록이 지워진 사망 화면 — 부활 버튼이 의미 없으므로 감춘다 */
 #death-screen.wipe #btn-respawn{display:none}
+/* 강화 모루 — 재련대와 같은 짜임. MAX에 닿은 칸은 눌러도 소용없으니 눌러 보이지 않게 */
+#anvil-grid .slot.dim{opacity:.42;cursor:default}
+#anvil-grid .slot .cnt{color:#ffd24a}
+
+/* 펫 경험치 막대 — 툴팁 안에 얇게 */
+.petxp{height:4px;margin:3px 0 1px;background:#241f18;border:1px solid var(--frame);border-radius:2px;overflow:hidden}
+.petxp i{display:block;height:100%;background:linear-gradient(90deg,#c8a058,#ffd24a)}
+
+/* 여정의 기록 — 상단 탭(여정 / 업적) */
+/* 탭 줄은 #quest-body의 padding(16px)에 그대로 맞춘다. 예전에 제 padding을 14px
+   더 준 탓에 탭 버튼만 87px에서 시작하고, 아래 세션 탭·장 목록·의뢰는 73px에서
+   시작해 **탭만 안쪽으로 밀려 보였다**(실측).
+   좌우 margin을 음수로 빼서 sticky 막대가 창 폭을 꽉 채우게 하고, 그만큼 padding으로
+   되돌려 글자 시작점은 73px에 맞춘다. */
+.qtabs{display:flex;gap:6px;margin:-16px -16px 12px;padding:14px 16px 10px;
+  position:sticky;top:-16px;background:var(--panel);z-index:2;
+  border-bottom:1px solid var(--frame)}
+.qtab{background:#1f1b15;border:1px solid var(--frame);color:#8a8271;font:inherit;font-size:12.5px;
+  padding:6px 14px;border-radius:4px;cursor:pointer}
+.qtab:hover{color:#c8bda4}
+.qtab.on{background:#332b1e;border-color:#7a6a44;color:#e8dcc0}
+.qtab b{color:#c8a058;font-weight:600}
+
+/* 업적 */
+.ach-head{display:flex;justify-content:space-between;align-items:baseline;
+  margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--frame);
+  color:#c8bda4;font-size:12.5px}
+.ach-head span{color:#7a7263;font-size:11px}
+/* 한 줄의 칸 폭을 **고정**한다. 예전엔 난이도 배지와 날짜가 auto 폭이라
+   글자 수("쉬움" 2자 / "어려움" 3자)와 날짜 유무에 따라 줄마다 좌우로 흔들렸다 —
+   목록이 들쭉날쭉해 보이던 이유가 이것이다. */
+.ach{display:flex;align-items:center;gap:10px;margin:0 0 4px;padding:7px 10px;
+  background:#1a1712;border:1px solid var(--frame);border-radius:4px}
+.ach.on{background:#221d13;border-color:#5a4a2a}
+.ach.off{opacity:.55}
+.ach-ic{width:24px;height:24px;flex:0 0 24px;background-size:contain;
+  background-repeat:no-repeat;background-position:center;image-rendering:pixelated}
+.ach.off .ach-ic{filter:grayscale(.85) brightness(.72)}
+.ach-txt{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.ach-txt b{font-size:12.5px;color:#e8dcc0;font-weight:600}
+.ach.off .ach-txt b{color:#8a8271}
+.ach-txt b,.ach-txt i{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ach-txt i{font-style:normal;font-size:11px;color:#8a8271;line-height:1.4}
+.ach-when{font-size:10.5px;color:#6a6250;flex:0 0 72px;text-align:right}
+
+/* 업적 — 난이도 표시 */
+.ach-sum{display:flex;gap:14px;padding:0 0 10px;font-size:11.5px;color:#8a8271}
+.ach-sum b{font-weight:600}
+.ach-tier{flex:0 0 52px;box-sizing:border-box;text-align:center;font-size:10px;padding:2px 0;
+  border:1px solid;border-radius:9px;letter-spacing:.02em}
+.ach.off .ach-tier{opacity:.7}
+.ach.on.t-easy{border-color:#3f6a34}
+.ach.on.t-mid{border-color:#7a6428}
+.ach.on.t-hard{border-color:#7a3428}
+
+/* 숨은 업적 — 아직 못 한 것. 이름 자리를 물음표로 채운다 */
+.ach.hid .ach-txt b{color:#6f6858;letter-spacing:.12em}
+.ach.hid .ach-txt i{color:#645d4e;font-style:italic}
 
 /* 손댄 세이브 — 목록에서 바로 보이게 */
 .slot-card.tampered{border-color:#7a3428}

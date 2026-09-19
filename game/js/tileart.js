@@ -5,6 +5,7 @@
 
 /* 배경이 비쳐야 하는 타일 (나무·잎·횃불·발판·덩굴) */
 const ALPHA_TILE = {};
+const WOOD_WALL = 15;             // WALL_COLOR 색인 — 나무 판자 벽지
 /* 상단 하이라이트를 생략할 타일 (이미 텍스처에 윗면이 있거나 반투명) */
 const TOP_SKIP = {};
 /* 변형 넷이 '무작위 노이즈'가 아니라 '가지 방향'인 타일.
@@ -39,7 +40,7 @@ ART[T.PLATFORM] = { k: 'platform', c: '#8a6640', a: 1 };
 ART[T.BEDROCK] = { k: 'rock', c: '#191922' };
 ART[T.VINE] = { k: 'vine', c: '#3d6b2c', a: 1 };
 ART[T.CRYSTAL] = { k: 'crystal', c: '#7fd8e8', glow: 1 };
-ART[T.LAVA] = { k: 'lava', c: '#e0561c' };
+ART[T.LAVA] = { k: 'lava', c: '#e0561c', fr: 3, fps: 2.5 };
 ART[T.ALTARSTONE] = { k: 'rock', c: '#2e2438' };
 ART[T.CORRUPTLEAF] = { k: 'leaf', c: '#4a3060', a: 1, tw: '#2e1f3c' };
 /* --- 2부 --- */
@@ -124,7 +125,34 @@ ART[T.GLOWMOSS] = { k: 'grass', c: '#3a4a44', g: '#4a9a7a' };
 ART[T.SPORESTONE] = { k: 'sporestone', c: '#4a5a5a' };
 ART[T.GLOWCAP] = { k: 'glowcap', c: '#6fe0c0', a: 1 };
 ART[T.GLOWLEAF] = { k: 'leaf', c: '#6fe0c0', a: 1, glow: 1, noTwig: 1 };   // 버섯나무 갓 조각
-ART[T.LILY] = { k: 'lily', c: '#3a9a6a', a: 1 };   // 정글 폭포호 수련 — 발판 겸용
+ART[T.LILY] = { k: 'lily', c: '#3a9a6a', a: 1, fr: 3, fps: 4 };
+ART[T.AIRPOCKET] = { k: 'airpocket', c: '#cfeeff', a: 1, fr: 3, fps: 4 };
+ART[T.ROOMAIR]   = { k: 'roomair', c: '#3b2c1c', a: 1 };
+/* 등급 5 광물 둘 — 바탕돌 색을 산지에 맞춘다(빙하는 얼음, 해저는 젖은 바위).
+   광맥 알갱이만 다르고 바탕이 같으면 어디서 캔 것인지 그림으로 구분이 안 된다. */
+ART[T.GLACIUM]   = { k: 'ore', c: '#7c96a8', o: '#bfeaf7', glow: 1 };
+ART[T.TIDESTONE] = { k: 'ore', c: '#4a5f60', o: '#54d0b4', glow: 1 };
+ART[T.PALMWOOD]  = { k: 'palmwood', c: '#7a5a38' };
+ART[T.PALMLEAF]  = { k: 'palmleaf', c: '#4f8a3a' };
+ART[T.COCONUT]   = { k: 'coconut', c: '#6a4a2a' };
+// 바닷물 — 물과 같은 그림틀에 색만 짙게. 프레임도 같이 준다(C단계 타일 애니메이션)
+ART[T.SEAWATER] = { k: 'water', c: '#12496e', a: 1, fr: 3, fps: 3 };
+/* 4단계 설비 — 기존 기계 그림틀(mk_*)을 그대로 쓴다. 가압기는 압축기의 윗줄이라
+   같은 실루엣에 색만 무겁게, 증류기는 물을 다루므로 푸른 관을 얹는다. */
+ART[T.M_PRESSOR] = { k: 'mk_press', c: '#4a5a6a', a: 1 };
+/* 페인터 키를 'mk_refinery'로 적었는데 그런 case가 없어서 **한 픽셀도 안 그려졌다**
+   (실측 0px — 화면에서 증류기가 통째로 안 보였다). 정제기가 쓰는 진짜 키는 mk_tank다.
+   4단계 짝인 정제기(M_REFINERY)와 같이 a:1도 맞춘다 — 벽 앞에 놓았을 때 뒷벽이 비친다. */
+ART[T.M_DESAL] = { k: 'mk_tank', c: '#3a6a7a', a: 1 };
+ART[T.M_BELT_F] = { k: 'mk_belt', c: '#8a9aa8', a: 1 };      // 고속 벨트 — 일반 벨트보다 밝은 금속
+ART[T.M_BATTERY_HI] = { k: 'mk_battery', c: '#4a9a8a', a: 1 };
+ART[T.BRINEVENT] = { k: 'flamevent', c: '#2a6a7a' };   // 염수 분출구 — 화염과 같은 틀에 색만 물빛
+ART[T.TRIPMINE] = { k: 'tripmine', c: '#8a5a3a' };
+ART[T.KELPPLANT] = { k: 'kelpplant', c: '#3f7a5a', a: 1, fr: 3, fps: 2 };
+ART[T.SEASHELL] = { k: 'seashell', c: '#e0cdb8', a: 1 };
+ART[T.SULFUR] = { k: 'ore', c: '#7a7268', o: '#d8c04a', glow: 1 };
+/* 마을 전신주 기둥 — 공장 전주(M_POLE)와 나란히 서도 이질감이 없어야 해서 같은 나뭇결·
+   같은 폭으로 그린다. 다만 가로대와 애자는 꼭대기 칸(M_POLE)에만 있고 여기는 기둥만이다. */
 /* --- 6단계: 유적 --- */
 ART[T.ICEBRICK] = { k: 'ashlar', c: '#7fb0d8' };
 ART[T.SANDBRICK] = { k: 'ashlar', c: '#c8a468' };
@@ -157,8 +185,8 @@ ART[T.HYPHAE] = { k: 'hyphae', c: '#8fe0c4', a: 1, glow: 1 };
 ART[T.SLAGSTEEL] = { k: 'slag', c: '#5a4a44' };
 ART[T.COREGLASS] = { k: 'crystal', c: '#e8b04a', glow: 1 };
 /* --- 동굴 물 — 둘 다 반투명(a:1)이라 뒤의 벽이 비쳐 보인다 --- */
-ART[T.WATER] = { k: 'water', c: '#2f6f9f', a: 1 };
-ART[T.FALLS] = { k: 'water', c: '#4a8fc0', a: 1, fall: 1 };
+ART[T.WATER] = { k: 'water', c: '#2f6f9f', a: 1, fr: 3, fps: 4 };
+ART[T.FALLS] = { k: 'water', c: '#4a8fc0', a: 1, fall: 1, fr: 3, fps: 10 };
 /* --- 세션 2 종장: 설계실. 공창의 강철과 대비되도록 이음매 없는 흰 돌로 간다 --- */
 ART[T.ARCHESTONE] = { k: 'ashlar', c: '#cfc7b8' };
 ART[T.DRAFTGLASS] = { k: 'draftglass', c: '#8fd8e8', glow: 1 };
@@ -170,20 +198,34 @@ ART[T.DEEPROCK] = { k: 'rock', c: '#3a3630' };
 ART[T.BLACKDAMP] = { k: 'water', c: '#6a7a4a', a: 1, fall: 0 };
 
 const TileArt = {
-  V: 4,
+  /* 타일마다 아틀라스에 미리 그려 두는 칸 수. 원래는 "같은 타일이 다 똑같아 보이지
+     않게" 흩뿌리는 변형용이었는데, 움직이는 타일(물·폭포·용암)은 이 칸을 **프레임**으로
+     쓴다. 그래서 프레임 수만큼은 있어야 해서 4 → 6으로 올렸다(아틀라스 가로만 늘어난다). */
+  V: 6,
   atlas: null, wallAtlas: null, ready: false,
+  /* 움직이는 타일: id → { fr, fps }. build()에서 ART의 fr을 보고 채운다.
+     렌더러가 이 표에 있는 타일만 시간으로 칸을 고르고, 나머지는 예전처럼 위치 해시로 고른다. */
+  ANIM: {},
 
   build() {
     for (const id in ART) if (ART[id].a) ALPHA_TILE[id] = 1;
     for (const id in ART) if (ART[id].k === 'leaf' && !ART[id].noTwig) LEAF_TWIG[id] = 1;
-    for (const id of [T.GRASS, T.CORRUPTGRASS, T.SNOW, T.ICE, T.LAVA, T.CRYSTAL,
-                      T.WOOD, T.LEAF, T.CORRUPTLEAF, T.TORCH, T.VINE, T.PLATFORM, T.SPIKE,
-                      T.FLOWER, T.WEED, T.CACTUS, T.MUSHROOM,
-                      T.FENCE, T.LAMPPOST, T.BANNER, T.THATCH, T.BATTLEMENT, T.HAYBALE,
-                      T.JUNGLEGRASS, T.GLOWMOSS, T.JUNGLELEAF, T.FERN, T.ORCHID, T.GLOWCAP, T.GLOWLEAF,
-                      T.WATER, T.FALLS, T.BLACKDAMP]) TOP_SKIP[id] = 1;
-    for (let i = 0; i < 4; i++) { TOP_SKIP[T.WHEAT0 + i] = 1; TOP_SKIP[T.ROOT0 + i] = 1; TOP_SKIP[T.CAP0 + i] = 1; }
-    // 기계는 이미 자기 윗면을 그려 두었으므로 상단 하이라이트를 얹지 않는다
+    /* 상단 하이라이트를 **얹지 않을** 타일.
+       규칙 자체는 그리는 쪽(game.js)에 있다 — "윗칸이 공기면 긋고, 뭐라도 있으면 안 긋는다".
+       여기 목록은 그 규칙에 앞서, **애초에 윗면을 덧그리면 안 되는 타일**만 걸러 낸다.
+       걸러야 하는 이유는 둘뿐이고, 둘 다 그림을 열어 보고 확인한 것이다.
+
+       ① 칸을 안 채우는 타일 — 잡초·조개·횃불·액체·발판처럼 그림이 칸 아래쪽에만 있다.
+          칸 맨 위에 줄을 그으면 그림과 떨어진 허공에 밝은 선이 뜬다(잡초 위 1px 선).
+       ② 제 윗면을 스스로 그리는 타일 — 풀·눈·얼음·초가지붕·흉벽·건초는 그림 안에
+          이미 `R(0, 0, TS, ...)` 로 밝은 윗줄이 박혀 있다(tileart 각 painter). 겹쳐 그으면
+          두 겹이 된다. 기계도 제 윗면을 그린다.
+       ①은 solid로 자동 판별한다 — 이름을 하나씩 적다 보니 새 타일마다 빠뜨렸다.
+       ②만 손으로 적는다. **수정(CRYSTAL)은 뺐다** — 칸을 꽉 채우고 윗줄을 안 그리므로
+       공기에 드러났으면 다른 돌처럼 윗면이 밝아야 맞다. */
+    for (let id = 0; id < TILE_DEF.length; id++) if (TILE_DEF[id].solid !== 1) TOP_SKIP[id] = 1;
+    for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS,
+                      T.SNOW, T.ICE, T.THATCH, T.BATTLEMENT, T.HAYBALE]) TOP_SKIP[id] = 1;
     for (const id in MACH_OF_TILE) TOP_SKIP[id] = 1;
 
     const N = TILE_DEF.length;
@@ -191,9 +233,21 @@ const TileArt = {
     cv.width = this.V * TS; cv.height = N * TS;
     const g = cv.getContext('2d');
     const rng = new RNG('ashfall-tileart-1');
+    this.ANIM = {};
     for (let id = 0; id < N; id++) {
       const s = ART[id];
       if (!s) continue;
+      if (s.fr) {
+        /* 움직이는 타일 — 칸을 변형이 아니라 프레임으로 쓴다. 프레임마다 난수 씨앗을
+           바꿔 물결·불길이 실제로 달라지게 하고, 남는 칸은 프레임을 되풀이해 채운다
+           (렌더러가 % fr 로 고르므로 안 쓰이지만, 비워 두면 빈 칸이 보일 수 있다). */
+        this.ANIM[id] = { fr: Math.min(s.fr, this.V), fps: s.fps || 4 };
+        for (let v = 0; v < this.V; v++) {
+          const fr = v % this.ANIM[id].fr;
+          this.paint(g, v * TS, id * TS, s, new RNG('ashfall-anim-' + id + '-' + fr), v, id + '-' + fr);
+        }
+        continue;
+      }
       for (let v = 0; v < this.V; v++) this.paint(g, v * TS, id * TS, s, rng, v, id + '-' + v);
     }
     this.atlas = cv;
@@ -202,7 +256,8 @@ const TileArt = {
     wc.width = this.V * TS; wc.height = WALL_COLOR.length * TS;
     const wg = wc.getContext('2d');
     for (let i = 1; i < WALL_COLOR.length; i++)
-      for (let v = 0; v < this.V; v++) this.paintWall(wg, v * TS, i * TS, WALL_COLOR[i], rng);
+      for (let v = 0; v < this.V; v++)
+        (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, wg, v * TS, i * TS, WALL_COLOR[i], rng);
     this.wallAtlas = wc;
 
     this.buildAsh();
@@ -1116,6 +1171,122 @@ const TileArt = {
         break;
       }
 
+      case 'kelpplant': {
+        /* 해초 — 물속이므로 **물을 먼저 깔고** 그 위에 잎을 세운다(수련·공기 주머니와
+           같은 방식). 프레임마다 휘는 방향을 바꿔 물살에 흔들리는 것처럼 보이게 한다. */
+        this.paint(g, ox, oy, ART[T.SEAWATER], rng);
+        const sway = rng.range(-2.5, 2.5);
+        for (let k = 0; k < 3; k++) {
+          const bx = 5 + k * 6 + rng.range(-1, 1);
+          const h = TS - rng.range(3, 9);
+          g.strokeStyle = k === 1 ? lt : base;
+          g.lineWidth = 2.2; g.lineCap = 'round';
+          g.beginPath();
+          g.moveTo(ox + bx, oy + TS);
+          g.quadraticCurveTo(ox + bx + sway, oy + TS - h * 0.55, ox + bx + sway * 1.8, oy + TS - h);
+          g.stroke();
+        }
+        g.lineWidth = 1; g.lineCap = 'butt';
+        break;
+      }
+      case 'seashell': {
+        /* 조개 — 모래 위에 놓인 부채꼴. **좌표에 ox/oy를 반드시 더한다** — 안 더하면
+           아틀라스의 제 칸이 아니라 0번 칸에 그려져서, 정작 조개 칸은 텅 빈다
+           (실제로 그래서 조개가 화면에 하나도 안 보였다). */
+        const cx = ox + TS / 2 + rng.range(-4, 4), by = oy + TS - 1;
+        const r = rng.range(4.5, 6.5);
+        g.fillStyle = '#2b2419';                                   // 어두운 테두리 — 모래와 붙지 않게
+        g.beginPath(); g.moveTo(cx - r - 1, by); g.arc(cx, by, r + 1, Math.PI, 0); g.closePath(); g.fill();
+        g.fillStyle = base;
+        g.beginPath(); g.moveTo(cx - r, by); g.arc(cx, by, r, Math.PI, 0); g.closePath(); g.fill();
+        g.strokeStyle = shade(base, .62); g.lineWidth = .8;         // 부챗살
+        for (let k = -2; k <= 2; k++) {
+          g.beginPath(); g.moveTo(cx, by);
+          g.lineTo(cx + k * r * 0.42, by - r * 0.92); g.stroke();
+        }
+        g.fillStyle = shade(base, 1.3);                            // 윗면 반짝임
+        g.fillRect(cx - r * 0.45, by - r * 0.75, r * 0.9, 1.2);
+        break;
+      }
+      case 'tripmine': {
+        // 바닥에 박힌 원반 — 밟기 전에는 조용하다. 가운데 붉은 점이 유일한 경고다
+        R(0, TS - 8, TS, 8, shade(base, .7));
+        R(2, TS - 9, TS - 4, 3, base);
+        R(TS / 2 - 4, TS - 11, 8, 3, shade(base, 1.3));
+        R(TS / 2 - 1, TS - 12, 2, 2, '#e0563c');
+        for (let k = 0; k < 3; k++) R(3 + k * 6, TS - 4, 2, 2, shade(base, .5));
+        break;
+      }
+      case 'airpocket': {
+        /* 물속에 갇힌 공기. 예전에는 흰 거품 덩어리로 그려서 물 한가운데 흰 구멍이
+           뚫린 것처럼 튀었다 — **물을 그대로 깔고** 그 위를 아주 옅게만 밝힌다.
+           눈에 띄어야 하는 것은 색이 아니라 "잔거품이 모여 있다"는 결이다. */
+        this.paint(g, ox, oy, ART[T.WATER], rng);
+        /* 덧칠은 **아주 얇게**. 0.10만 얹어도 평균 색이 물보다 27만큼 밝아져 물 한가운데
+           흰 자국처럼 보였다(실측). 알아보게 하는 것은 밝기가 아니라 잔거품의 결이다. */
+        R(0, 0, TS, TS, 'rgba(200,232,255,.045)');
+        R(0, 0, TS, 2, 'rgba(216,242,255,.09)');             // 위쪽에 눌린 공기층
+        for (let k = 0; k < 4; k++) {                        // 잔거품
+          const bx = rng.int(2, TS - 4), by = rng.int(3, TS - 4);
+          R(bx, by, 2, 2, 'rgba(226,244,255,.20)');
+        }
+        break;
+      }
+      case 'palmwood': {
+        /* 야자 줄기 — 잿빛 숲 나무(trunk)와 달리 **가늘고 마디가 굵다.** 통짜 기둥으로
+           그리면 옆에 선 참나무와 구분이 안 된다. 폭을 절반쯤으로 줄이고 가로 마디를
+           넣어, 멀리서 실루엣만 봐도 야자로 읽히게 한다. */
+        const w = 9, x0 = Math.round((TS - w) / 2);
+        R(x0, 0, w, TS, base);
+        R(x0, 0, 2, TS, lt); R(x0 + w - 2, 0, 2, TS, dk);
+        for (let y = rng.range(0, 3); y < TS; y += rng.int(4, 6))   // 마디
+          R(x0, y, w, 1.5, dk2);
+        break;
+      }
+      case 'palmleaf': {
+        /* 야자 잎갓 — 여러 칸이 가로로 이어져 하나의 갓이 된다. 그래서 **칸을 꽉 채우고**
+           결만 야자답게 낸다. 처음엔 칸마다 사방으로 뻗는 잎줄기를 그렸는데, 타일이
+           이어지자 갓이 아니라 초록 점이 흩뿌려진 것처럼 보였다(실제로 그랬다).
+           잎맥은 아래로 처지게 — 야자는 잎이 늘어진다. */
+        const lt2 = shade(base, 1.32), dk3 = shade(base, .58);
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 5; i++) {                       // 잎맥 — 위에서 아래로 처진다
+          const x0 = rng.range(0, TS), sag = rng.range(3, 7);
+          g.strokeStyle = i % 2 ? dk3 : lt2; g.lineWidth = 1.4;
+          g.beginPath();
+          g.moveTo(ox + x0, oy + rng.range(0, 4));
+          g.quadraticCurveTo(ox + x0 + rng.range(-5, 5), oy + TS / 2, ox + x0 + rng.range(-7, 7), oy + TS - 1 - rng.range(0, sag));
+          g.stroke();
+        }
+        this._speck(g, ox, oy, rng, 16, dk3, lt2);
+        /* 아래·위 가장자리를 톱니처럼 **지운다.** 처음엔 투명색으로 fillRect를 했는데
+           투명을 칠하는 건 아무 일도 안 한다 — 실제로 화면에서는 네모난 초록 덩어리가
+           그대로 남았다. 픽셀을 없애려면 clearRect라야 한다. */
+        for (let x = 0; x < TS; x += 2) {
+          if (rng.chance(.55)) g.clearRect(ox + x, oy + TS - rng.int(2, 4), 2, 4);
+          if (rng.chance(.35)) g.clearRect(ox + x, oy, 2, rng.int(1, 3));
+        }
+        g.clearRect(ox, oy, 2, 2); g.clearRect(ox + TS - 2, oy, 2, 2);   // 위 모서리
+        break;
+      }
+      case 'coconut': {
+        // 열매 셋이 줄기 아래 매달린다. 하나면 돌멩이처럼 보인다
+        for (const [dx, dy, r] of [[-3.5, 1, 3.4], [3.5, 0, 3.4], [0, 4, 3]]) {
+          const cx = TS / 2 + dx, cy = TS / 2 + dy;
+          g.fillStyle = base; g.beginPath(); g.arc(ox + cx, oy + cy, r, 0, TAU); g.fill();
+          g.fillStyle = shade(base, 1.35);
+          g.beginPath(); g.arc(ox + cx - r * .3, oy + cy - r * .3, r * .32, 0, TAU); g.fill();
+          g.fillStyle = shade(base, .58); R(cx - 1, cy - r, 2, 1.5, shade(base, .58));
+        }
+        break;
+      }
+      case 'roomair': {
+        /* 방 안의 공기. a:1이라 벽지를 먼저 깔고 그 위에 오는데, 여기서 무엇이든
+           칠하면 벽지가 가려진다 — 그래서 **거의 아무것도 안 그린다**. 횃불빛에
+           떠다니는 먼지 두어 점만 얹어 빈칸이 아니라 방 안이라는 결을 남긴다. */
+        if (rng.chance(.35)) R(rng.int(3, TS - 4), rng.int(3, TS - 4), 1, 1, 'rgba(255,226,170,.13)');
+        break;
+      }
       case 'lily': {
         /* 수면에 뜬 얇은 초록 판. 발판(PLATFORM)과 같은 판정이라 그림도 같은 자리
            — 타일 맨 위 몇 px에 납작하게 눕힌다. 두꺼운 원으로 그리면 "물풀 덩어리"로
@@ -1123,6 +1294,10 @@ const TileArt = {
            한쪽 V자 노치 · 가운데에서 퍼지는 잎맥 · 판 위에 얹힌 작은 연꽃. */
         const cx = TS / 2, cy = 3.5;                   // 판의 중심선 (타일 위쪽)
         const rx = TS / 2 - 0.5, ry = 3;
+        /* 판 밑은 물이다 — 이 칸도 물칸(liquid)이다. 예전에는 물빛을 단색으로 칠했더니
+           옆 물 타일(물결·반짝임이 있는 그림)과 전혀 딴판으로 보였다. 이제 **물 타일
+           그림을 그대로 한 번 그리고** 그 위에 잎을 얹는다 — 색도 결도 옆 칸과 같다. */
+        this.paint(g, ox, oy, ART[T.WATER], rng);
         g.fillStyle = base;
         g.beginPath(); g.ellipse(ox + cx, oy + cy, rx, ry, 0, 0, TAU); g.fill();
         // V자 노치 — 오른쪽을 물빛으로 도려내 연잎 특유의 갈라진 실루엣을 만든다
@@ -1652,6 +1827,26 @@ const TileArt = {
     R(1, 2, 2, TS - 3, shade(base, 1.12));
     R(TS - 3, 2, 2, TS - 3, dk);
     for (const [bx, by] of [[3, 4], [TS - 6, 4], [3, TS - 7], [TS - 6, TS - 7]]) R(bx, by, 2, 2, shade(base, .45));
+  },
+
+  /* 나무 판자 벽지. 벽돌결로 그리면 방 안이 지하실처럼 읽혀서, 세로 판자와
+     이음매·못자국으로 결을 바꾼다. 사람이 손수 덧댄 벽이라는 인상이 목적이다. */
+  paintWoodWall(g, ox, oy, col, rng) {
+    const base = shade(col, .62), dk = shade(col, .40), lt = shade(col, .82);
+    this._fill(g, ox, oy, base);
+    let x = rng.int(0, 3);
+    while (x < TS) {                                   // 세로 판자 — 폭을 조금씩 다르게
+      const w = rng.int(4, 7);
+      this._r(g, ox, oy, x, 0, w, TS, rng.chance(.5) ? shade(col, .68) : shade(col, .56));
+      this._r(g, ox, oy, x + w - 1, 0, 1, TS, dk);     // 판자 사이 이음매
+      for (let k = 0; k < 2; k++)                      // 나뭇결
+        this._r(g, ox, oy, x + rng.int(1, Math.max(1, w - 2)), rng.int(1, TS - 3), 1, rng.int(2, 5), dk);
+      if (rng.chance(.30)) this._r(g, ox, oy, x + 1, rng.int(2, TS - 3), 1, 1, lt);   // 못자국
+      x += w;
+    }
+    g.globalAlpha = .16;
+    this._r(g, ox, oy, 0, 0, TS, 2, '#000');
+    g.globalAlpha = 1;
   },
 
   paintWall(g, ox, oy, col, rng) {
