@@ -602,14 +602,16 @@ class Player extends Ent {
           this.hp -= dmg; this.flash = 0.25;
           // 피해 숫자는 다른 피해와 같은 빨강이어야 한다 — 물빛으로 띄우면 회복처럼 읽힌다
           G.texts.push(new DmgText(this.cx, this.y, dmg, '#ff6b6b', 0));
-          G.sfx('damage');
+          G.sfx('drown');   // 익사는 다른 피해음과 갈라야 한다 — 막힌 소리
           for (let i = 0; i < 8; i++) G.parts.push(new Part(this.cx, this.y + 6, '#bfe4ff', -50, .6));
           if (this.hp <= 0) { this.hp = 0; G.onDeath('drown'); }   // 익사 — 업적이 원인을 묻는다
         }
       }
       // 숨 방울 — 남은 숨이 적을수록 자주 샌다
-      if (Math.random() < dt * (1.5 + (1 - this.oxygen / max) * 5))
+      if (Math.random() < dt * (1.5 + (1 - this.oxygen / max) * 5)) {
         G.parts.push(new Part(this.cx + (Math.random() - .5) * 10, this.y + 4, '#dff2ff', -60, .8));
+        G.sfx('bubble');   // SFX_GAP이 0.45초로 묶어 두어 방울마다 울리지는 않는다
+      }
     } else {
       this.drownT = 0;
       this.oxygen = Math.min(max, this.oxygen + dt * 6 * (this.d.oxyReg || 1));   // 물 밖에서는 빠르게 찬다
@@ -635,7 +637,11 @@ class Player extends Ent {
        임계값을 계속 넘나들어 한 프레임씩 물속/물 밖이 뒤바뀌고, 점프 횟수와 중력이 같이
        떨렸다. 들어가는 값과 나오는 값을 갈라 둔다(히스테리시스). */
     const sub = this.submerged || 0;
+    /* 물에 들고 나는 순간에만 첨벙. 히스테리시스(0.35 진입 / 0.25 이탈) 덕에
+       수면에서 값이 떨릴 때 소리가 연달아 나지 않는다. */
+    const wasSwim = this.swimming;
     this.swimming = this.swimming ? sub > 0.25 : sub > 0.35;
+    if (this.swimming !== wasSwim && G.sfx) G.sfx('splash');
     this.updateOxygen(dt, world);
 
     // 이동 — 물속에서는 느리게 밀리고 느리게 선다
@@ -1522,7 +1528,7 @@ class Bomb extends Proj {
     G.aoe(this.cx, this.cy, R * TS * 0.9, sp.dmg, 8, '#ff9a3a');
     G.burst(this.cx, this.cy, 'fire', R * TS);
     G.shake = Math.max(G.shake, 6 + R);
-    G.sfxAt('zap', Math.floor(this.cx / TS), Math.floor(this.cy / TS));
+    G.sfxAt(R >= 5 ? 'boom_big' : 'boom_small', Math.floor(this.cx / TS), Math.floor(this.cy / TS));
     for (let i = 0; i < 10 + R * 4; i++)
       G.parts.push(new Part(this.cx + (Math.random() - .5) * R * 8, this.cy + (Math.random() - .5) * R * 8,
         Math.random() < .5 ? '#ff9a3a' : '#e8dcc0', -120, 0.8));

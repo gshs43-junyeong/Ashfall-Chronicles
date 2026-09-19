@@ -129,17 +129,24 @@ const SFX_FILES = {
   power_on: 'power_on', power_off: 'power_off',
   hoe: 'hoe', harvest: 'harvest',
   splash: 'splash',             // 낚싯줄 던질 때 — 파일 없으면 sfx()의 절차생성 톤으로 대신함
-  hatch: 'hatch'                // 알에서 펫이 나올 때 (예전엔 챕터 전환 팡파르를 빌려 썼다)
+  hatch: 'hatch',               // 알에서 펫이 나올 때 (예전엔 챕터 전환 팡파르를 빌려 썼다)
+  /* v1.1 세션 3 — 전부 1.0초짜리로 들어왔다. 단발은 그대로 쓰고, 계속 울려야 하는
+     둘(swim·fuse)만 아래 SFX_LOOP가 0.9초로 잘라 겹쳐 이어 붙인다. */
+  swim: 'swim', bubble: 'bubble', drown: 'drown', fuse: 'fuse',
+  boom_small: 'boom_small', boom_big: 'boom_big',
+  ore_hit: 'ore_hit', detector: 'detector'
   /* boss(보스 등장)는 일부러 없다 — 대신 보스 브금이 곧장 치고 들어온다 */
 };
 
 /* 키별 최소 간격(초). 없으면 제한 없음 */
 const SFX_GAP = {
   damage: 0.07, swing: 0.04, mine: 0.05, turret: 0.09, zap: 0.18,
-  belt: 0.34, drill: 0.28, smelt: 0.24, cook: 0.3
+  belt: 0.34, drill: 0.28, smelt: 0.24, cook: 0.3,
+  bubble: 0.45, ore_hit: 0.12, detector: 0.6, splash: 0.25
 };
 /* 키별 음량 배수 — 공장 상시음은 전투음보다 한참 작게 깔린다 */
-const SFX_VOL = { belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7 };
+const SFX_VOL = { belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7,
+  bubble: 0.5, detector: 0.45, ore_hit: 0.7, drown: 0.85, boom_small: 0.9, boom_big: 1 };
 /* 키별 재생 시작 지점(초). 앞에 쓸데없는 공백이 붙어 온 파일을 자르지 않고 건너뛴다.
    hatch는 생성 AI가 2초짜리로 뽑아 줬는데 정작 "빵!" 하는 순간이 1.70초에 있어서,
    0초부터 틀면 죽은 공기 1.7초를 듣고 나서야 소리가 난다. 파형을 재서 상승 직전
@@ -188,6 +195,67 @@ const Sfx = {
 Sfx.init();
 window.Sfx = Sfx;
 
+/* ===== SfxLoop: 계속 울려야 하는 효과음 =====
+   헤엄(swim)·심지(fuse)는 상태가 이어지는 동안 끊기지 않아야 한다. 그런데 받은 파일이
+   1.0초짜리라 그대로 `loop = true`를 걸면 끝과 처음 사이에서 **한 프레임짜리 정적**이
+   생긴다(브라우저가 되감는 동안 소리가 끊긴다).
+
+   그래서 **0.9초까지만 쓰고 나머지 0.1초는 버린 뒤**, 같은 파일 두 벌을 엇갈려 틀어
+   이음매를 서로 가린다 — 앰비언트가 쓰는 것과 같은 방식이다. 겹치는 구간에서는
+   sqrt 곡선으로 볼륨을 나눠 체감 음량이 꺼지지 않게 한다. */
+const SFX_LOOP_LEN = 0.90;      // 실제로 쓰는 길이 — 파일 끝 0.1초는 버린다
+const SFX_LOOP_OV = 0.12;       // 겹치는 구간
+const SFX_LOOP_KEYS = { swim: 0.55, fuse: 0.5 };   // 키 → 음량 배수
+
+const SfxLoop = {
+  pair: {}, active: {}, on: {}, cur: {}, missing: {},
+  ensure(key) {
+    if (this.pair[key] || this.missing[key]) return;
+    const src = SFX_DIR + (SFX_FILES[key] || key) + '.mp3';
+    const mk = () => { const a = new Audio(src); a.loop = false; a.preload = 'auto'; a.volume = 0; return a; };
+    const a0 = mk(), a1 = mk();
+    a0.addEventListener('error', () => { this.missing[key] = true; }, { once: true });
+    this.pair[key] = [a0, a1]; this.active[key] = 0; this.on[key] = false;
+  },
+  /** 이 프레임에 이 소리가 나야 하는가. vol 0~1 (거리·상황에 따라 줄여 부를 수 있다) */
+  set(key, want, vol) {
+    this.ensure(key);
+    if (this.missing[key]) return;
+    const target = want ? (SFX_LOOP_KEYS[key] || 1) * (vol === undefined ? 1 : vol) * Sfx.vol : 0;
+    const c = this.cur[key] || 0;
+    this.cur[key] = c + (target - c) * 0.25;             // 켜고 끌 때 툭 끊기지 않게
+    const v = this.cur[key];
+    const [a, b] = this.pair[key];
+    if (v < 0.004) {                                     // 다 잦아들었으면 멈춘다
+      if (!a.paused) a.pause(); if (!b.paused) b.pause();
+      a.currentTime = 0; b.currentTime = 0; this.on[key] = false; this.cur[key] = 0;
+      return;
+    }
+    const ai = this.active[key];
+    const cur = ai === 0 ? a : b, other = ai === 0 ? b : a;
+    if (!this.on[key]) {
+      cur.currentTime = 0; cur.volume = v; cur.play().catch(() => { });
+      this.on[key] = true; return;
+    }
+    const remain = SFX_LOOP_LEN - cur.currentTime;
+    if (remain <= SFX_LOOP_OV) {
+      if (other.paused) { other.currentTime = 0; other.play().catch(() => { }); }
+      const t = Math.max(0, Math.min(1, 1 - remain / SFX_LOOP_OV));
+      cur.volume = v * Math.sqrt(1 - t);
+      other.volume = v * Math.sqrt(t);
+      if (remain <= 0) { cur.pause(); cur.currentTime = 0; this.active[key] = ai === 0 ? 1 : 0; }
+    } else {
+      cur.volume = v;
+      if (!other.paused && other.currentTime > SFX_LOOP_OV) { other.pause(); other.currentTime = 0; }
+    }
+  },
+  /** 이번 프레임에 아무도 안 켠 소리는 꺼 준다 */
+  idle(except) {
+    for (const k in SFX_LOOP_KEYS) if (!except || !except[k]) this.set(k, false);
+  }
+};
+window.SfxLoop = SfxLoop;
+
 /* ===== Ambient: 위치 기반 환경음 (폭포·호수) =====
    Music(브금)·Sfx(단발)와는 성격이 달라서 따로 뒀다 — 플레이어와 소리 나는 지형 사이
    거리로 볼륨을 계속 매기고, 파일이 없으면(아직 안 넣었으면) 그냥 조용할 뿐 아무 것도
@@ -196,7 +264,11 @@ window.Sfx = Sfx;
    지금 받은 waterfall_loop·water_ambient_loop 원본이 2초 남짓으로 짧고 루프 지점도
    매끄럽지 않아서(다시 만들기 어렵다고 확인됨), 같은 파일 두 벌을 엇갈려 틀어 이음매를
    서로 가리는 크로스페이드 루프로 대신한다 — "짧은 루프 소스를 이어 붙이는" 흔한 트릭. */
-const AMBIENT_FILES = { waterfall: 'waterfall_loop', water: 'water_ambient_loop' };
+/* sea·glacier는 '가까운 지형까지의 거리'가 아니라 **어느 구역에 있는가**로 켜진다.
+   그래서 updateFromWorld가 키마다 다르게 목표 음량을 잡는다. 30초짜리라 이음매가
+   드물지만, 같은 크로스페이드 장치를 그대로 쓴다. */
+const AMBIENT_FILES = { waterfall: 'waterfall_loop', water: 'water_ambient_loop',
+  sea: 'amb_sea', glacier: 'amb_glacier' };
 const AMBIENT_RADIUS = { waterfall: 13 * TS, water: 9 * TS };   // 이 거리 안이면 소리가 들리기 시작한다
 const AMBIENT_OVERLAP = 0.3;   // 겹쳐 트는 구간(초)
 
@@ -268,7 +340,13 @@ const Ambient = {
   updateFromWorld(w, p, dt, active) {
     for (const key in AMBIENT_FILES) {
       let target = 0;
-      if (active && w && p) {
+      if (active && w && p && (key === 'sea' || key === 'glacier')) {
+        // 구역으로 켠다 — 물속이면 바다, 빙하 지상이면 빙하
+        const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
+        if (key === 'sea') target = (p.swimming || p.submerged > 0.5) ? 1 : 0;
+        else target = (w.biomeAt(clamp(tx, 0, WW - 1)).id === 'glacier'
+          && !(p.swimming || p.submerged > 0.5)) ? 0.8 : 0;
+      } else if (active && w && p) {
         const R = AMBIENT_RADIUS[key];
         const list = key === 'waterfall' ? (w.falls || []) : (w.pools || []).filter(pl => pl.big);
         let best = Infinity;
