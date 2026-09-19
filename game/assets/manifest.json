@@ -877,6 +877,96 @@
         "count": 7,
         "foot": 0.25,
         "side": 0.0
+      },
+      "npc_guard": {
+        "file": "char/npc_guard.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_elara": {
+        "file": "char/npc_elara.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_borin": {
+        "file": "char/npc_borin.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_mira": {
+        "file": "char/npc_mira.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_elder": {
+        "file": "char/npc_elder.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_haran": {
+        "file": "char/npc_haran.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_rika": {
+        "file": "char/npc_rika.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_seira": {
+        "file": "char/npc_seira.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_garn": {
+        "file": "char/npc_garn.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_kade": {
+        "file": "char/npc_kade.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "driftling": {
+        "file": "char/driftling.png",
+        "frameW": 24,
+        "frameH": 26,
+        "count": 7
+      },
+      "npc_pedlar": {
+        "file": "char/npc_pedlar.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_oreman": {
+        "file": "char/npc_oreman.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npc_armsman": {
+        "file": "char/npc_armsman.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_yunseul": {
+        "file": "char/yunseul.png",
+        "frameW": 22,
+        "frameH": 44,
+        "count": 7
       }
     }
   },
@@ -1203,8 +1293,13 @@
       "garn": "npc/portrait_garn.png",
       "haran": "npc/portrait_haran.png",
       "seira": "npc/portrait_seira.png",
-      "kade": "npc/portrait_kade.png"
-    }
+      "kade": "npc/portrait_kade.png",
+      "pedlar": "npc/portrait_pedlar.png",
+      "oreman": "npc/portrait_oreman.png",
+      "armsman": "npc/portrait_armsman.png",
+      "yunseul": "npc/portrait_yunseul.png"
+    },
+    "note": "portrait_elara~kade 9종은 128×128, v1.1의 pedlar·oreman·armsman·yunseul 4종은 요청대로 96×96."
   },
   "ui": {
     "cursors": {
@@ -1305,7 +1400,8 @@
       "fountain": {
         "file": "obj/fountain.png",
         "w": 110,
-        "h": 66
+        "h": 66,
+        "frames": 2
       },
       "terminal": {
         "file": "obj/terminal.png",
@@ -1360,6 +1456,21 @@
       },
       "shelf": {
         "file": "obj/shelf.png",
+        "w": 44,
+        "h": 44
+      },
+      "workbench_lv4": {
+        "file": "obj/workbench_lv4.png",
+        "w": 44,
+        "h": 22
+      },
+      "forge_lv4": {
+        "file": "obj/forge_lv4.png",
+        "w": 44,
+        "h": 44
+      },
+      "anvil": {
+        "file": "obj/anvil.png",
         "w": 44,
         "h": 44
       }
@@ -1444,7 +1555,12 @@
       "orbitcore": "tile/tile_orbitcore.png",
       "deeprock": "tile/tile_deeprock.png",
       "blackdamp": "tile/tile_blackdamp.png",
-      "glowleaf": "tile/tile_glowleaf.png"
+      "glowleaf": "tile/tile_glowleaf.png",
+      "palmwood": "tile/tile_palmwood.png",
+      "palmleaf": "tile/tile_palmleaf.png",
+      "coconut": "tile/tile_coconut.png",
+      "glacium": "tile/tile_glacium.png",
+      "tidestone": "tile/tile_tidestone.png"
     }
   },
   "items": {
@@ -1531,7 +1647,12 @@
       "hammer_cave": "item/hammer_cave.png",
       "charm_lamp2": "item/charm_lamp2.png",
       "jetpack": "item/jetpack.png",
-      "potion_hp_greater": "item/potion_hp_greater.png"
+      "potion_hp_greater": "item/potion_hp_greater.png",
+      "coconut": "item/coconut.png",
+      "glacium_ore": "item/glacium_ore.png",
+      "tide_ore": "item/tide_ore.png",
+      "glacium_bar": "item/glacium_bar.png",
+      "tide_bar": "item/tide_bar.png"
     }
   }
 }

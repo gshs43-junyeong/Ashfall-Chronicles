@@ -136,6 +136,14 @@ const ISPEC = {
   egg_common: { k: 'egg', c: '#a8967a' },
   egg_rare: { k: 'egg', c: '#6fa8d8', glow: '#6fa8d8' },
   egg_epic: { k: 'egg', c: '#b17fe0', glow: '#b17fe0' },
+  pet_candy: { k: 'candy', c: '#e05a8a' },
+  coconut: { k: 'coconut_i', c: '#6a4a2a' },
+  glacium_ore: { k: 'ore', c: '#bfeaf7', glow: '#bfeaf7' },
+  tide_ore: { k: 'ore', c: '#54d0b4', glow: '#54d0b4' },
+  glacium_bar: { k: 'bar', c: '#bfeaf7', glow: '#8fd8ee' },
+  tide_bar: { k: 'bar', c: '#54d0b4', glow: '#3fb89c' },
+  det_metal: { k: 'detector', c: '#9fd8e8' },
+  det_mob: { k: 'detector', c: '#e08a6a' },
 
   /* 채집물 */
   wildflower: { k: 'wildflower', c: '#d87ab0' },
@@ -430,7 +438,65 @@ const ISPEC = {
   bag_pouch: { k: 'sack', c: '#cfc8dc', strap: '#7a7160' },
   bag_satchel: { k: 'sack', c: '#8a6a4a', strap: '#4a3a28' },
   bag_pack: { k: 'sack', c: '#cfe8ff', strap: '#8fb8d8', glow: '#dfe9f5' },
-  bag_vault: { k: 'sack', c: '#7a7160', strap: '#3a3550', glow: '#a06fff' }
+  bag_vault: { k: 'sack', c: '#7a7160', strap: '#3a3550', glow: '#a06fff' },
+
+  /* ================= v1.1 세션 3 =================
+     새로 넣은 물건에 그림을 안 붙여 두면 가방·상점·장비 칸이 통째로 빈칸으로 뜬다
+     (유틸리티 칸에 산소통을 끼웠는데 아무것도 안 보이던 것이 이 때문이다).
+     전부 기존 painter(k)를 재사용하고 색만 바다 쪽으로 잡았다. */
+  /* 산소통 — 셋이 한눈에 구분되게 색과 발광을 계단으로 준다 */
+  tank_air: { k: 'cell', c: '#8fb8c8', fill: 1 },
+  tank_deep: { k: 'cell', c: '#4f9cc0', fill: 1, glow: '#8fd0e8' },
+  tank_abyss: { k: 'cell', c: '#7f8fe0', fill: 1, glow: '#bfd4ff' },
+  /* 4단계 설비 */
+  m_pressor: { k: 'machine', tile: T.M_PRESSOR, glow: '#8fd0e8' },
+  m_desal: { k: 'machine', tile: T.M_DESAL, glow: '#8fd4ef' },
+  m_belt_f: { k: 'machine', tile: T.M_BELT_F, glow: '#bfe8ff' },
+  m_battery_hi: { k: 'machine', tile: T.M_BATTERY_HI, glow: '#6fe0c0' },
+  /* 바다 무기 */
+  spear_tide: { k: 'spear', c: '#7fc8e8', shaft: '#4a5a62', glow: '#8fd4ef' },
+  blade_shark: { k: 'sword', c: '#d8d0bd', g: '#8a8270', grip: '#3a4a52', w: 4, jag: 1 },
+  bow_harpoon: { k: 'bow', c: '#5a6a72', s: '#cfe0e8' },
+  orb_abyss: { k: 'staff', c: '#3a4a5a', head: '#7fb8e8', style: 'orb', glow: '#7fb8e8' },
+  hammer_tide: { k: 'hammer', c: '#5f9cc0', glow: '#8fd4ef' },
+  gun_harpoon: { k: 'railgun', c: '#5a6a72', glow: '#8fd0e8' },
+  tome_abyss: { k: 'staff', c: '#2e3a4a', head: '#8fb8e8', style: 'crystal', glow: '#7fb8e8' },
+  pick_abyss: { k: 'pick', c: '#5f9cc0', glow: '#8fd4ef' },
+  /* 바다 방어구·장신구 */
+  helm_diver: { k: 'helm', c: '#7fa8c0' },
+  chest_scale: { k: 'chest', c: '#6a9ab0' },
+  chest_abyss: { k: 'chest', c: '#4a6a8a' },
+  boots_fin: { k: 'boots', c: '#5f9cc0' },
+  ring_pearl: { k: 'ring', c: '#c8c0a8', gem: '#dff2ff' },
+  charm_ink: { k: 'sigil', c: '#3a2e44', glow: '#7a4a7a' },
+  charm_core: { k: 'cell', c: '#8fd0e8', fill: 1, glow: '#bfe8ff' },
+  bag_abyss: { k: 'sack', c: '#4a6a7a', strap: '#8fb8c8', glow: '#8fd0e8' },
+  /* 바다 재료 */
+  crab_shell: { k: 'shield', c: '#c86a4a' },
+  shark_tooth: { k: 'shard', c: '#e8e0c8' },
+  ink_sac: { k: 'gel', c: '#3a2e44' },
+  jelly_lamp: { k: 'jelly', c: '#8fd0e8', glow: '#bfe8ff' },
+  abyss_pearl: { k: 'crystal', c: '#dfe9ff', glow: 1 },
+  kelp: { k: 'weed_icon', c: '#3f7a5a' },
+  rope_kelp: { k: 'wire', c: '#5a7a4a' },
+  sea_salt: { k: 'pellet', c: '#eef4f8' },
+  gunpowder: { k: 'pellet', c: '#4a4238' },
+  sulfur: { k: 'ore', c: '#7a7268', o: '#d8c04a', glow: '#e8d86a' },
+  bomb_small: { k: 'bomb', c: '#3a3630', fuse: '#c8a04a' },
+  bomb_big: { k: 'bomb', c: '#5a2e2a', fuse: '#e8842a', glow: '#ff9a3a' },
+  bomb_dig: { k: 'bomb', c: '#4a4a52', fuse: '#8fd0e8', glow: '#8fd0e8' },
+  pressure_plate_m: { k: 'block', tile: T.STEELPLATE },
+  abyss_core: { k: 'crystal', c: '#8fd0e8', glow: 1 },
+  tide_heart: { k: 'heart', c: '#4f9cc0', glow: '#8fd4ef' },
+  keeper_seal: { k: 'sigil', c: '#5f9cc0', glow: '#8fd0e8' },
+  sum_tide: { k: 'crown', c: '#7fc8e8', gem: '#dff2ff', glow: '#8fd4ef' },
+  /* 윤슬의 좌판 전용 — 그림이 없으면 상점 칸이 통째로 빈칸으로 뜬다 */
+  amul_scale: { k: 'amulet', c: '#7fb8d8', gem: '#dff2ff', glow: '#8fd0e8' },
+  charm_bell: { k: 'sigil', c: '#c8b06a', glow: '#ffe08a' },
+  ring_deep: { k: 'ring', c: '#4a6a8a', gem: '#8fd4ef' },
+  sigil_current: { k: 'whirl', c: '#5f9cc0', glow: '#8fd4ef' },
+  mace_bell: { k: 'hammer', c: '#c8b06a', glow: '#ffe08a' },
+  harpoon_lamp: { k: 'bow', c: '#5a6a72', s: '#ffe08a', glow: '#ffe08a' },
 };
 
 /* ---------------- 스킬 아이콘 명세 ---------------- */
@@ -489,7 +555,10 @@ const UISPEC = {
   slot_boots: { k: 'slotic', m: 'boots' },
   slot_acc: { k: 'slotic', m: 'acc' },
   slot_bag: { k: 'slotic', m: 'bag' },
-  slot_pet: { k: 'slotic', m: 'pet' }
+  slot_pet: { k: 'slotic', m: 'pet' },
+  slot_util: { k: 'slotic', m: 'util' },
+  /* 패널 제목 앞 아이콘 — '장비'(equip)만 있었고 나머지 두 제목은 글자뿐이라 줄이 안 맞았다 */
+  bagui: { k: 'bagui' }, statui: { k: 'statui' }
 };
 /* 펫 생김새 — 색은 PETS의 c를 그대로 쓰고, 여기서는 실루엣만 고른다.
    beast(네발) · moth(날개벌레) · bird(새) · rock(둥근 돌) · wisp(불꽃) · drake(뿔 달린 새끼용) */
@@ -510,6 +579,52 @@ const NPCSPEC = {
   kade: { hair: '#5a5a62', skin: '#d0a880', cloth: '#8a8a96' }
 };
 
+/* ================= 업적 아이콘 =================
+   **이모지를 쓰지 않는다.** 창 안의 다른 그림은 전부 여기서 그린 것인데 업적만
+   이모지면 글꼴이 다른 글자가 섞인 것처럼 튄다(운영체제마다 모양도 다르다).
+
+   두 갈래로 댄다.
+   ① 그 업적이 가리키는 물건이 이미 있으면 **그 아이템 그림을 그대로 쓴다**
+      (밀·곡괭이·물고기…). 새로 그릴 이유가 없고, 창 안에서 같은 물건이 같게 보인다.
+   ② 물건으로 가리킬 수 없는 것(시간·죽음·거래·장 진행)만 여기서 새로 그린다. */
+const GLSPEC = {};
+for (const g of ['shard', 'house', 'wall', 'wave', 'crown', 'sword', 'trophy', 'field',
+  'factory', 'anvil', 'pit', 'down', 'cloud', 'tablet', 'bubble', 'skull', 'redmoon',
+  'key', 'candle', 'bed', 'scroll', 'sun', 'coin', 'coins', 'paw', 'hands', 'receipt',
+  'clock', 'clock2', 'clock3', 'lung', 'grave', 'star', 'hidden'])
+  GLSPEC[g] = { k: 'gl', g };
+
+/* 업적 → 그림. 'i:' 는 아이템 그림 재사용, 'g:' 는 위에서 새로 그린 것. */
+const ACH_ART = {
+  a_ch1: 'g:shard', a_village: 'g:house', a_session2: 'g:wall', a_session3: 'g:wave',
+  a_first_boss: 'g:crown', a_five_hearts: 'g:shard', a_story_bosses: 'g:sword',
+  a_all_bosses: 'g:trophy',
+
+  a_first_crop: 'i:seed_wheat', a_first_cook: 'i:food_bread', a_harvest: 'i:wheat',
+  a_three_crops: 'i:starroot', a_cook: 'i:food_stew', a_feast: 'i:food_feast',
+  a_farm_1000: 'g:field',
+
+  a_first_mach: 'i:m_belt', a_power: 'i:m_gen', a_first_line: 'i:m_assembler',
+  a_smart: 'i:m_press', a_lv4_mach: 'i:m_battery_hi', a_factory: 'g:factory',
+  a_belt: 'i:m_belt_f',
+
+  a_first_pick: 'i:pick_copper', a_wood_200: 'i:wood', a_first_fish: 'i:fish_common',
+  a_gunpowder: 'i:gunpowder', a_fish: 'i:fish_deep', a_abyss_gear: 'i:spear_tide',
+  a_mine_2000: 'i:pick_iron', a_enh10: 'g:anvil', a_mine_20000: 'g:pit',
+
+  a_cave: 'i:torch', a_deep: 'g:down', a_hell: 'i:hell_ore', a_sky: 'g:cloud',
+  a_lore: 'g:tablet', a_seafloor: 'i:abyss_pearl', a_yunseul: 'g:bubble',
+
+  a_isle: 'g:trophy', a_kill_50: 'i:sword_copper', a_kill_300: 'g:skull', a_bloodmoon: 'g:redmoon',
+  a_ruin_bosses: 'g:key', a_secret_bosses: 'g:candle', a_kill_3000: 'g:skull',
+
+  a_inn: 'g:bed', a_village4: 'g:house', a_side10: 'g:scroll', a_day50: 'g:sun',
+  a_gold: 'g:coin', a_pet_max: 'g:paw', a_gold10m: 'g:coins',
+
+  a_trade1: 'g:hands', a_play1h: 'g:clock', a_drown: 'g:lung', a_trade100: 'g:receipt',
+  a_play10h: 'g:clock2', a_die20: 'g:grave', a_play100h: 'g:clock3', a_level100: 'g:star'
+};
+
 /* ================= 아틀라스 ================= */
 const Art = {
   atlas: null, cells: {}, urls: {}, ready: false, COLS: 16,
@@ -520,6 +635,7 @@ const Art = {
     for (const id in SKSPEC) keys.push(['s:' + id, SKSPEC[id]]);
     for (const id in BFSPEC) keys.push(['b:' + id, BFSPEC[id]]);
     for (const id in UISPEC) keys.push(['u:' + id, UISPEC[id]]);
+    for (const id in GLSPEC) keys.push(['g:' + id, GLSPEC[id]]);
     for (const id in NPCSPEC) keys.push(['n:' + id, { k: 'npc', p: NPCSPEC[id] }]);
     /* 펫 — PETS를 그대로 훑어 그린다. 'p:'는 세계에 떠다니는 그림, 'i:pet_xxx'는
        가방/장비창 아이콘이고 둘 다 같은 페인터를 쓴다(같은 생김새라야 알아본다). */
@@ -639,6 +755,9 @@ const Art = {
   skillUrl(id) { return this.url('s:' + id); },
   buffUrl(id) { return this.url('b:' + id); },
   uiUrl(id) { return this.url('u:' + id); },
+  /** 업적 아이콘 — 아이템 그림이든 새로 그린 것이든 키 하나로 받는다 */
+  achUrl(id) { return this.url(ACH_ART[id] || 'g:star'); },
+  achHiddenUrl() { return this.url('g:hidden'); },
   npcUrl(id) { return this.url('n:' + id); },
   /** 캔버스에 직접 그리기 */
   draw(ctx, key, x, y, size) {
@@ -672,6 +791,199 @@ const Art = {
     };
 
     switch (s.k) {
+
+      /* ---------- 업적 글리프 ----------
+         물건으로 가리킬 수 없는 것들. 32×32 칸 안에서 굵고 단순하게 — 목록에서는
+         18px로 줄어들어 보이므로, 잔무늬를 넣으면 뭉개져서 얼룩으로만 남는다. */
+      case 'gl': {
+        const G1 = '#e8dcc0', G2 = '#c8a058', DK = '#4a4238', RD = '#d05a4a', GR = '#6fbf5a';
+        const BL = '#6fa8d8', PL = '#b17fe0';
+        switch (s.g) {
+          case 'shard':                                    // 별 조각 — 뾰족한 마름모
+            glow(16, 16, 12, G2, .3);
+            poly([[16, 3], [23, 16], [16, 29], [9, 16]], G1);
+            poly([[16, 3], [23, 16], [16, 16]], G2);
+            break;
+          case 'house':                                    // 집 — 지붕 + 몸통 + 문
+            poly([[16, 5], [28, 15], [4, 15]], RD);
+            g.fillStyle = G1; g.fillRect(7, 15, 18, 12);
+            g.fillStyle = DK; g.fillRect(14, 19, 5, 8);
+            break;
+          case 'wall':                                     // 성벽 — 흉벽 이가 빠진 윗면
+            g.fillStyle = G1; g.fillRect(5, 12, 22, 15);
+            for (let i = 0; i < 3; i++) g.fillRect(5 + i * 8, 7, 5, 5);
+            g.fillStyle = DK; g.fillRect(5, 18, 22, 1.5); g.fillRect(15, 12, 1.5, 15);
+            break;
+          case 'wave':                                     // 물결 셋
+            for (let i = 0; i < 3; i++)
+              stroke(i === 1 ? BL : sh2(BL, .78), 3, () => {
+                g.moveTo(4, 11 + i * 6);
+                g.quadraticCurveTo(10, 6 + i * 6, 16, 11 + i * 6);
+                g.quadraticCurveTo(22, 16 + i * 6, 28, 11 + i * 6);
+              });
+            break;
+          case 'crown':                                    // 왕관
+            poly([[5, 24], [5, 10], [11, 16], [16, 7], [21, 16], [27, 10], [27, 24]], G2);
+            g.fillStyle = sh2(G2, .68); g.fillRect(5, 22, 22, 3);
+            circ(16, 7, 2, G1);
+            break;
+          case 'sword':                                    // 검 — 세로로 선 날
+            poly([[16, 3], [19, 8], [19, 20], [13, 20], [13, 8]], G1);
+            g.fillStyle = DK; g.fillRect(9, 20, 14, 3);
+            g.fillStyle = sh2(G2, .8); g.fillRect(15, 23, 3, 6);
+            break;
+          case 'trophy':                                   // 우승컵
+            poly([[9, 5], [23, 5], [21, 17], [11, 17]], G2);
+            stroke(G2, 2, () => { g.moveTo(9, 8); g.quadraticCurveTo(4, 12, 10, 15); });
+            stroke(G2, 2, () => { g.moveTo(23, 8); g.quadraticCurveTo(28, 12, 22, 15); });
+            g.fillStyle = sh2(G2, .7); g.fillRect(14, 17, 4, 6); g.fillRect(9, 23, 14, 4);
+            break;
+          case 'field':                                    // 밭 이랑
+            g.fillStyle = sh2('#7a5a34', 1); g.fillRect(3, 16, 26, 12);
+            for (let i = 0; i < 4; i++) {
+              g.fillStyle = sh2('#7a5a34', .72); g.fillRect(4 + i * 7, 16, 2, 12);
+              stroke(GR, 2, () => { g.moveTo(7 + i * 7, 16); g.lineTo(7 + i * 7, 8); });
+            }
+            break;
+          case 'factory':                                  // 공장 — 굴뚝 셋과 연기
+            g.fillStyle = DK; g.fillRect(4, 16, 24, 12);
+            for (let i = 0; i < 3; i++) g.fillStyle = sh2(G1, .74), g.fillRect(6 + i * 8, 9 + i * 2, 5, 8);
+            circ(9, 6, 2.4, 'rgba(200,190,170,.5)'); circ(14, 4, 1.8, 'rgba(200,190,170,.35)');
+            break;
+          case 'anvil':                                    // 모루 — 한쪽 뿔
+            g.fillStyle = '#5d5d68'; g.fillRect(6, 12, 20, 5);
+            poly([[6, 12], [1, 14.5], [6, 17]], '#5d5d68');
+            g.fillStyle = '#3a3a44'; g.fillRect(12, 17, 8, 5);
+            g.fillStyle = '#4a3a26'; g.fillRect(8, 22, 16, 6);
+            g.fillStyle = '#7a7a88'; g.fillRect(6, 12, 20, 1.5);
+            break;
+          case 'pit':                                      // 파 내려간 구덩이
+            g.fillStyle = sh2('#7a5a34', .9); g.fillRect(3, 8, 26, 20);
+            g.fillStyle = '#141210';
+            poly([[8, 8], [24, 8], [20, 20], [16, 27], [12, 20]], '#141210');
+            break;
+          case 'down':                                     // 아래 화살표
+            stroke(G1, 3, () => { g.moveTo(16, 5); g.lineTo(16, 21); });
+            poly([[16, 28], [8, 17], [24, 17]], G1);
+            break;
+          case 'cloud':
+            circ(11, 18, 6, G1); circ(19, 17, 7, G1); circ(24, 20, 5, G1);
+            g.fillStyle = G1; g.fillRect(11, 18, 14, 6);
+            break;
+          case 'tablet':                                   // 석판 + 글줄
+            g.fillStyle = '#7a7268'; g.fillRect(7, 4, 18, 24);
+            g.fillStyle = '#5a5248'; g.fillRect(7, 4, 18, 2);
+            for (let i = 0; i < 4; i++) g.fillStyle = '#a8a094', g.fillRect(10, 10 + i * 4, 12 - (i % 2) * 4, 1.5);
+            break;
+          case 'bubble':                                   // 물방울 셋
+            circ(12, 20, 5.5, 'rgba(160,215,240,.85)'); circ(10.3, 18.3, 1.8, '#fff');
+            circ(21, 13, 3.6, 'rgba(160,215,240,.7)');
+            circ(17, 7, 2.2, 'rgba(160,215,240,.55)');
+            break;
+          case 'skull':
+            circ(16, 14, 9, G1);
+            g.fillStyle = G1; g.fillRect(11, 20, 10, 5);
+            circ(12.5, 13, 2.6, DK); circ(19.5, 13, 2.6, DK);
+            g.fillStyle = DK; g.fillRect(15, 17, 2, 3);
+            for (let i = 0; i < 3; i++) g.fillStyle = DK, g.fillRect(12 + i * 3, 22, 1.5, 3);
+            break;
+          case 'redmoon':
+            glow(16, 16, 13, RD, .38);
+            circ(16, 16, 9, RD);
+            circ(13, 13, 1.8, sh2(RD, .7)); circ(20, 18, 2.4, sh2(RD, .7));
+            break;
+          case 'key':
+            circ(10, 11, 5.5, G2); circ(10, 11, 2.2, '#171410');
+            stroke(G2, 3, () => { g.moveTo(13, 14); g.lineTo(24, 25); });
+            stroke(G2, 3, () => { g.moveTo(20, 21); g.lineTo(24, 17); });
+            break;
+          case 'candle':
+            g.fillStyle = G1; g.fillRect(13, 13, 6, 14);
+            g.fillStyle = sh2(G1, .8); g.fillRect(11, 25, 10, 3);
+            glow(16, 8, 7, '#ffd24a', .5);
+            poly([[16, 3], [19, 9], [16, 12], [13, 9]], '#ffd24a');
+            break;
+          case 'bed':
+            g.fillStyle = '#5a3c22'; g.fillRect(4, 14, 24, 4); g.fillRect(4, 10, 3, 14);
+            g.fillStyle = '#e8dcc0'; g.fillRect(7, 11, 8, 4);
+            g.fillStyle = '#7a5734'; g.fillRect(7, 18, 21, 5);
+            g.fillStyle = '#3a2610'; g.fillRect(5, 23, 3, 5); g.fillRect(24, 23, 3, 5);
+            break;
+          case 'scroll':
+            g.fillStyle = '#e0d4b0'; g.fillRect(8, 5, 16, 22);
+            g.fillStyle = '#c0b28c'; g.fillRect(8, 5, 16, 2); g.fillRect(8, 25, 16, 2);
+            for (let i = 0; i < 4; i++) g.fillStyle = '#8a7a58', g.fillRect(11, 10 + i * 4, 10 - (i % 2) * 3, 1.4);
+            break;
+          case 'sun':
+            glow(16, 16, 13, '#ffd24a', .4);
+            circ(16, 16, 6.5, '#ffd24a');
+            for (let i = 0; i < 8; i++) {
+              const a = i * TAU / 8;
+              stroke('#ffd24a', 2, () => {
+                g.moveTo(16 + Math.cos(a) * 9, 16 + Math.sin(a) * 9);
+                g.lineTo(16 + Math.cos(a) * 13, 16 + Math.sin(a) * 13);
+              });
+            }
+            break;
+          case 'coin':
+            circ(16, 16, 9, G2); circ(16, 16, 6.5, sh2(G2, 1.25));
+            g.fillStyle = sh2(G2, .6); g.fillRect(15, 11, 2, 10);
+            break;
+          case 'coins':
+            circ(11, 21, 7, sh2(G2, .82)); circ(21, 19, 7, sh2(G2, .9));
+            circ(16, 12, 7.5, G2); circ(16, 12, 5, sh2(G2, 1.3));
+            break;
+          case 'paw':
+            ell(16, 21, 6.5, 5.5, G1);
+            circ(9.5, 13, 3, G1); circ(14, 10, 3, G1); circ(19, 10, 3, G1); circ(23, 14, 3, G1);
+            break;
+          case 'hands':                                    // 악수
+            stroke(G1, 4, () => { g.moveTo(4, 12); g.lineTo(15, 17); });
+            stroke(G2, 4, () => { g.moveTo(28, 12); g.lineTo(17, 17); });
+            circ(16, 18, 4.5, G1);
+            break;
+          case 'receipt':
+            g.fillStyle = '#e0d4b0'; g.fillRect(8, 4, 16, 22);
+            poly([[8, 26], [12, 23], [16, 26], [20, 23], [24, 26], [24, 28], [8, 28]], '#171410');
+            for (let i = 0; i < 4; i++) g.fillStyle = '#8a7a58', g.fillRect(11, 9 + i * 4, 10 - (i % 2) * 4, 1.4);
+            break;
+          case 'clock': case 'clock2': case 'clock3': {
+            const rings = s.g === 'clock' ? 1 : s.g === 'clock2' ? 2 : 3;
+            circ(16, 16, 11, G1); circ(16, 16, 9, '#171410');
+            // 시침 각도로 1·10·100시간을 가른다 — 같은 시계가 셋이면 구분이 안 된다
+            const ang = [-Math.PI / 2 + 0.5, -Math.PI / 2 + 2.6, -Math.PI / 2 + 4.7][rings - 1];
+            stroke(G2, 2.4, () => { g.moveTo(16, 16); g.lineTo(16 + Math.cos(ang) * 6, 16 + Math.sin(ang) * 6); });
+            stroke(G1, 2, () => { g.moveTo(16, 16); g.lineTo(16, 9); });
+            for (let i = 0; i < rings; i++) circ(16, 29 - i * 0, 0, G2);
+            g.fillStyle = G2;
+            for (let i = 0; i < rings; i++) g.fillRect(11 + i * 5, 28, 3, 3);   // 아래 점으로 등급 표시
+            break;
+          }
+          case 'lung':                                     // 숨 — 허파 둘과 새는 방울
+            ell(11, 19, 5, 7, sh2(RD, .95)); ell(21, 19, 5, 7, sh2(RD, .95));
+            g.fillStyle = sh2(RD, .7); g.fillRect(15, 8, 2, 9);
+            circ(24, 8, 2.4, 'rgba(160,215,240,.8)'); circ(27, 4, 1.5, 'rgba(160,215,240,.6)');
+            break;
+          case 'grave':
+            g.fillStyle = '#7a7268';
+            poly([[8, 27], [8, 12], [16, 5], [24, 12], [24, 27]], '#7a7268');
+            g.fillStyle = '#4a443c'; g.fillRect(14, 12, 4, 11); g.fillRect(11, 15, 10, 4);
+            g.fillStyle = '#3a4a2a'; g.fillRect(4, 27, 24, 3);
+            break;
+          case 'hidden':                                   // 숨은 업적 — 물음표
+            circ(16, 16, 11, 'rgba(120,112,96,.22)');
+            g.fillStyle = '#8a8271'; g.font = 'bold 19px sans-serif';
+            g.textAlign = 'center'; g.textBaseline = 'middle';
+            g.fillText('?', 16, 16.5);
+            g.textAlign = 'start'; g.textBaseline = 'alphabetic';
+            break;
+          default:                                         // star
+            glow(16, 16, 12, G2, .32);
+            poly([[16, 3], [19.5, 12.5], [29, 12.5], [21.5, 18.5], [24.5, 28],
+                  [16, 22], [7.5, 28], [10.5, 18.5], [3, 12.5], [12.5, 12.5]], G2);
+        }
+        break;
+      }
 
       /* ---------- 무기 ---------- */
       case 'sword': {
@@ -1035,6 +1347,19 @@ const Art = {
         break;
       }
 
+      case 'bomb': {
+        /* 폭탄 — 둥근 몸통 + 심지. 세 종류를 몸통 색과 심지 색으로 구분한다.
+           칸 안에서 아래쪽에 앉혀야 손에 들었을 때 굴러떨어질 것처럼 보인다. */
+        const c = s.c;
+        circ(15, 20, 9, sh2(c, .7));
+        circ(15, 20, 8, c);
+        circ(12, 17, 3, sh2(c, 1.6));                       // 광택
+        P(13.5, 9, 3.5, 4, sh2(c, .55));                    // 마개
+        stroke(s.fuse, 2, () => { g.moveTo(15.5, 9); g.bezierCurveTo(19, 5, 23, 7, 24, 3); });
+        circ(24, 3, 2, '#ffd24a');                          // 불씨
+        if (s.glow) glow(24, 3, 7, s.glow, .3);
+        break;
+      }
       case 'pellet': {
         const c = s.c;
         for (const [x, y, r] of [[12, 14, 4.4], [21, 12, 3.8], [17, 21, 4.6], [10, 22, 3.4], [23, 20, 3.2]]) {
@@ -1438,6 +1763,56 @@ const Art = {
         ell(13.4, 13.5, 3, 4, sh2(c, 1.4));
         circ(13, 17, 1.3, sh2(c, .6)); circ(19, 15, 1.1, sh2(c, .6));
         circ(18, 23, 1.3, sh2(c, .6)); circ(12.5, 24, 1, sh2(c, .6));
+        break;
+      }
+
+      case 'detector': {
+        /* 탐지기 — 접시 안테나 달린 손잡이 상자. 산소통(둥근 통)과 한 칸에 나란히
+           놓이므로 실루엣이 확실히 달라야 한다: 이쪽은 각지고 위로 뻗는다. */
+        const c = s.c, dk = sh2(c, .5), lt = sh2(c, 1.3);
+        g.fillStyle = dk; g.fillRect(10, 17, 12, 12);          // 몸통
+        g.fillStyle = c; g.fillRect(11, 18, 10, 4);            // 화면
+        g.fillStyle = lt; g.fillRect(12, 19, 3, 2);
+        g.fillStyle = sh2(c, .34); g.fillRect(12, 24, 8, 3);   // 손잡이 홈
+        stroke(dk, 2, () => { g.moveTo(16, 17); g.lineTo(16, 10); });   // 대
+        // 접시 — 위로 열린 반원
+        g.fillStyle = c; g.beginPath(); g.arc(16, 10, 7, Math.PI, 0); g.closePath(); g.fill();
+        g.fillStyle = sh2(c, .62); g.beginPath(); g.arc(16, 10, 4.4, Math.PI, 0); g.closePath(); g.fill();
+        circ(16, 6.5, 1.6, lt);                                 // 신호점
+        glow(16, 6.5, 8, c, .3);
+        break;
+      }
+
+      case 'coconut_i': {
+        /* 코코넛 — 반으로 쪼갠 모양. 통짜 갈색 공으로 그리면 목록에서 돌멩이·알과
+           구분이 안 된다. 흰 속살과 씨눈 셋이 코코넛의 표식이다. */
+        const c = s.c, husk = sh2(c, .72), meat = '#f0e8d8';
+        circ(16, 17, 11, husk);
+        for (let i = 0; i < 26; i++) {                      // 겉껍질 섬유결
+          const a = rng.range(0, TAU), r = rng.range(6, 10.5);
+          g.fillStyle = sh2(c, rng.chance(.5) ? 1.25 : .55);
+          g.fillRect(16 + Math.cos(a) * r, 17 + Math.sin(a) * r, 1.4, 1.4);
+        }
+        circ(16, 17, 7.6, meat);                            // 속살
+        circ(16, 17, 5.4, sh2('#cfc4ae', 1));               // 안쪽 그늘(물이 찬 자리)
+        for (const [dx, dy] of [[-2.6, -1.6], [2.6, -1.6], [0, 2.6]])
+          circ(16 + dx, 17 + dy, 1.15, sh2(c, .5));         // 씨눈 셋
+        break;
+      }
+
+      case 'candy': {
+        /* 사탕 — 가운데 알맹이에 양쪽 포장지를 꼬아 묶은 모양.
+           알(egg)과 한 줄에 놓이는 물건이라, 둥근 것끼리 헷갈리지 않게
+           **양옆으로 뻗은 포장지**를 실루엣의 특징으로 삼는다. */
+        const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .62);
+        g.fillStyle = dk;                                   // 포장지 (좌우 삼각)
+        g.beginPath(); g.moveTo(4, 11); g.lineTo(11, 16); g.lineTo(4, 21); g.closePath(); g.fill();
+        g.beginPath(); g.moveTo(28, 11); g.lineTo(21, 16); g.lineTo(28, 21); g.closePath(); g.fill();
+        circ(16, 16, 6.5, c);                               // 알맹이
+        g.strokeStyle = lt; g.lineWidth = 2;                // 나선 무늬
+        g.beginPath(); g.moveTo(12, 19); g.quadraticCurveTo(16, 12, 20, 15); g.stroke();
+        g.lineWidth = 1;
+        circ(13.6, 13.4, 1.8, sh2(c, 1.6));                 // 광택
         break;
       }
 
@@ -2015,6 +2390,24 @@ const Art = {
         circ(11, 13.5, 1.8, '#4a4438'); circ(16, 13.5, 1.8, '#4a4438'); circ(21, 13.5, 1.8, '#4a4438');
         break;
       }
+      case 'bagui': {
+        // 소지품 — 열린 자루. 장비 칸의 배낭(slot_bag)과 달리 뚜껑이 열려 있다
+        glow(16, 17, 12, '#d8a94b', .13);
+        poly([[8, 12], [24, 12], [26, 27], [6, 27]], '#8c7651');
+        poly([[8, 12], [16, 12], [16, 27], [6, 27]], '#c8aa70');
+        poly([[6, 12], [10, 6], [22, 6], [26, 12]], '#5c4930');   // 젖혀진 덮개
+        P(13, 17, 6, 5, '#5c4930');                                // 잠금쇠
+        break;
+      }
+      case 'statui': {
+        // 능력치 — 올라가는 막대 셋. 숫자를 다루는 자리라는 뜻
+        glow(16, 17, 12, '#d8a94b', .13);
+        P(7, 19, 5, 9, '#8c7651');
+        P(13.5, 13, 5, 15, '#c8aa70');
+        P(20, 8, 5, 20, '#8c7651');
+        P(6, 27.5, 20, 1.6, '#5c4930');                            // 밑줄
+        break;
+      }
       case 'equipui': {
         // 장비 칸의 빈 상태에서도 역할이 읽히도록, 갑옷과 방패를 겹친 작은 문장으로 그린다.
         glow(16, 16, 13, '#d8a94b', .15);
@@ -2079,6 +2472,23 @@ const Art = {
             poly([[8, 11], [16, 11], [16, 27], [6, 27]], l);
             stroke(c, 2.2, () => { g.moveTo(11, 11); g.bezierCurveTo(11, 4, 21, 4, 21, 11); });   // 손잡이
             P(13, 17, 6, 5, '#3d382d');                    // 잠금쇠
+            break;
+          case 'util':                                     // 렌치 — '유틸리티' 칸 그 자체
+            /* 여기는 앞으로 산소통 말고도 여러 도구가 들어올 자리라, 특정 물건이 아니라
+               **도구**를 뜻하는 그림이어야 한다. 무기(검)·장신구(반지)·가방(배낭)·
+               펫(발자국) 어느 것과도 안 겹친다.
+               세로로 곧게 세우고 물림쇠를 'ㄷ'자로 각지게 그린다 — 비스듬한 자루에
+               둥근 호를 얹었더니 렌치가 아니라 구부러진 막대로 보였다. */
+            P(13.5, 12, 5, 13, c);                         // 자루
+            P(14.5, 13, 1.6, 11, l);                       // 빛 받는 면
+            // 물림쇠 — 'ㄷ'을 옆으로 눕힌 모양. 가운데가 비어야 렌치로 읽힌다
+            P(10.5, 4, 11, 3.2, c);                        // 위 턱
+            P(10.5, 9.5, 11, 3.2, c);                      // 아래 턱
+            P(18.5, 4, 3, 8.7, c);                         // 등
+            P(19.2, 5, 1.2, 6.5, l);
+            P(11.5, 5, 6, 1.2, l);                         // 위 턱 하이라이트
+            circ(16, 26.5, 3.6, c);                        // 손잡이 끝
+            circ(16, 26.5, 1.5, '#3d382d');                // 구멍
             break;
           case 'pet':                                      // 발자국 — 어느 칸이 펫인지
             ell(12, 20, 5.5, 6.5, c);                      // 발바닥

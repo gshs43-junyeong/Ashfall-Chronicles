@@ -416,7 +416,7 @@ const UI = {
   /* ---------------- 장비 ---------------- */
   buildEquipSlots() {
     // 칸마다 비었을 때 깔릴 실루엣. acc1/acc2는 같은 그림을 쓴다
-    const SLOT_IC = { weapon: 'weapon', helm: 'helm', chest: 'chest', boots: 'boots', acc1: 'acc', acc2: 'acc', bag: 'bag', pet1: 'pet', pet2: 'pet' };
+    const SLOT_IC = { weapon: 'weapon', helm: 'helm', chest: 'chest', boots: 'boots', acc1: 'acc', acc2: 'acc', util1: 'util', util2: 'util', bag: 'bag', pet1: 'pet', pet2: 'pet' };
     $$('.slot.equip').forEach(el => {
       const key = el.dataset.eq;
       el.insertAdjacentHTML('beforeend', '<span class="eqic"></span><span class="ic"></span>');
@@ -429,6 +429,7 @@ const UI = {
           const d = idef(this.cursor);
           const ok = (key === 'weapon' && d.type === 'weapon') ||
             (d.type === 'armor' && d.slot === key) || (d.type === 'acc' && key.startsWith('acc')) ||
+            (d.type === 'util' && key.startsWith('util')) ||
             (d.type === 'bag' && key === 'bag');
           if (!ok) return;
           if (p.level < equipReqLv(this.cursor.id)) { G.toast(`레벨 ${equipReqLv(this.cursor.id)} 필요`, 'bad'); return; }
@@ -468,7 +469,10 @@ const UI = {
       치명피해<span class="sv">${Math.round(d.critD)}%</span><br>
       흡혈<span class="sv">${d.lifesteal.toFixed(0)}%</span><br>
       쿨감<span class="sv">${Math.round(d.cdr)}%</span><br>
-      이동<span class="sv">${Math.round(d.ms)}</span>`;
+      이동<span class="sv">${Math.round(d.ms)}</span>
+      <h4>잠수</h4>
+      숨<span class="sv">${d.oxyMax}초</span><br>
+      숨 회복<span class="sv">${(d.oxyReg || 1).toFixed(1)}배</span>`;
   },
 
   /* ---------------- 스킬바 ---------------- */
@@ -778,18 +782,30 @@ const UI = {
   },
 
   /* ---------------- 퀘스트 ---------------- */
+  questTab: 'journey',      // 'journey' | 'ach'
   refreshQuest() {
     const g = G;
+    /* 창 하나에 탭 둘. 업적은 새 패널을 만들지 않고 여기 얹는다 — 패널을 새로 내면
+       여는 키를 하나 더 배정해야 하고, "여정의 기록"이 이미 업적을 담기에 맞는 자리다. */
+    const done = Object.keys(g.achievements || {}).length;
+    const topTabs = `<div class="qtabs">` +
+      `<button class="qtab${this.questTab === 'journey' ? ' on' : ''}" data-qtab="journey">여정</button>` +
+      `<button class="qtab${this.questTab === 'ach' ? ' on' : ''}" data-qtab="ach">업적 <b>${done}/${ACHIEVEMENTS.length}</b></button>` +
+      `</div>`;
+    if (this.questTab === 'ach') { this.renderAch(topTabs); return; }
     /* 탭은 SESSIONS 표에서 만든다. 예전에는 여기 두 줄이 손으로 적혀 있어서,
        세션을 늘리면 일지에만 안 나타나는 식으로 어긋났다. */
     const currentSession = 's' + sessionOf(g.chapter).id;
     const selectedSession = this.questSession || currentSession;
     const sessions = SESSIONS.map(x =>
       ({ key: 's' + x.id, label: x.n, title: x.t, chapters: chaptersOf(x.id) }));
+    /* 버튼이 셋 이상이면 창 폭을 넘긴다 — 줄바꿈하면 탭 줄이 두 줄이 되어 아래
+       내용이 밀리므로, 가로로 스크롤하게 둔다(스크롤바는 CSS에서 얇게 그린다). */
     let h = '<div class="session-tabs">' + sessions.map(s => {
       const isCurrent = s.key === currentSession;
       const isSelected = s.key === selectedSession;
-      const done = s.chapters.every(ch => g.chapter > ch.id);
+      // 세션 3은 종장이 없다(계속 이어질 이야기) — 다 지나도 '완료'로 닫지 않는다
+      const done = s.key !== 's3' && s.chapters.length > 0 && s.chapters.every(ch => g.chapter > ch.id);
       const state = done ? 'done' : isCurrent ? 'cur' : 'locked';
       const classes = ['session-tab', state];
       if (isSelected) classes.push('is-selected');
@@ -812,7 +828,11 @@ const UI = {
         // 줄마다 반복돼 군더더기다. 그 접두어만 떼고 장 번호는 살린다 —
         // 예전에는 아예 제목만 남겨서 몇 장인지 알 수 없었다.
         const sub = ch.sub.replace(/^세션\s*\d+\s*·\s*/, '');
-        const titleText = `${sub} · ${ch.title}`;
+        /* 아직 안 열린 장은 **제목도 가린다.** 예전에는 본문만 ???로 덮고 제목은
+           그대로 뒀는데, 장 제목이 곧 그 장의 사건이라(「가라앉은 지킴이」처럼)
+           목록만 훑어도 앞으로 무슨 일이 나는지 다 읽혔다. 몇 장인지는 남긴다 —
+           그건 순서일 뿐이고, 가리면 어디까지 왔는지도 안 보인다. */
+        const titleText = state === 'locked' ? `${sub} · ???` : `${sub} · ${ch.title}`;
         h += `<div class="chap ${state}"><div class="chap-badge ${state}">${state === 'done' ? '완료' : state === 'cur' ? '진행 중' : '대기'}</div><h3>${titleText}</h3>`;
         if (state !== 'locked') {
           /* 끝낸 장은 도입부와 뒷이야기를 **둘 다** 남긴다. 예전에는 완료 순간 도입부가
@@ -884,9 +904,11 @@ const UI = {
     }
     const questBody = $('#quest-body');
     if (questBody) {
-      questBody.innerHTML = h + sh;
+      questBody.innerHTML = topTabs + h + sh;
       this.syncSessionBorder(this.questSession || currentSession, null, currentSession);
       questBody.onclick = ev => {
+        const tab = ev.target.closest('.qtab');
+        if (tab) { this.questTab = tab.dataset.qtab; this.refreshQuest(); return; }
         const btn = ev.target.closest('.session-tab');
         if (!btn) return;
         this.questSession = btn.dataset.session;
@@ -906,6 +928,50 @@ const UI = {
         this.syncSessionBorder(this.questSession || currentSession, null, currentSession);
       };
     }
+  },
+  /** 업적 목록 — 갈래(cat)별로 묶어 보여 준다. 잠긴 것도 조건은 보여 준다:
+      무엇을 하면 되는지 안 보이면 목록이 그냥 '못 한 것 표'가 된다. */
+  renderAch(topTabs) {
+    const g = G, got = g.achievements || {};
+    // 난이도별 진행도를 맨 위에 — 쉬운 것부터 얼마나 남았는지가 한눈에 보인다
+    let sum = '<div class="ach-sum">';
+    for (const t in ACH_TIER) {
+      const list = ACHIEVEMENTS.filter(a => a.t === t);
+      const n = list.filter(a => got[a.id]).length;
+      sum += `<span style="color:${ACH_TIER[t][1]}">${ACH_TIER[t][0]} <b>${n}/${list.length}</b></span>`;
+    }
+    sum += '</div>';
+    let h = topTabs + sum;
+    const fmtDate = t => { const d = new Date(t); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
+    for (const cat in ACH_CAT) {
+      const list = ACHIEVEMENTS.filter(a => a.cat === cat);
+      if (!list.length) continue;
+      const n = list.filter(a => got[a.id]).length;
+      h += `<div class="ach-head">${ACH_CAT[cat]} <span>${n}/${list.length}</span></div>`;
+      // 난이도 순으로 — 쉬운 것부터 보여야 다음에 뭘 할지 고르기 쉽다
+      list.sort((x, y) => ACH_ORDER[x.t] - ACH_ORDER[y.t]);
+      for (const a of list) {
+        const on = !!got[a.id];
+        const [tn, tc] = ACH_TIER[a.t] || ACH_TIER.mid;
+        // 숨은 업적은 달성 전까지 이름도 조건도 안 보인다. 난이도만 보여 준다
+        const hide = achHidden(a) && !on;
+        const nm = hide ? '???' : a.n;
+        const ds = hide ? '숨겨진 업적 — 해내면 그때 드러난다.' : a.d;
+        h += `<div class="ach ${on ? 'on' : 'off'}${hide ? ' hid' : ''} t-${a.t}">` +
+          `<span class="ach-ic" style="background-image:url(${hide ? Art.achHiddenUrl() : Art.achUrl(a.id)})"></span>` +
+          `<span class="ach-txt"><b>${nm}</b><i>${ds}</i></span>` +
+          `<span class="ach-tier" style="color:${tc};border-color:${tc}66">${tn}</span>` +
+          `<span class="ach-when">${on ? fmtDate(got[a.id]) : ''}</span></div>`;
+      }
+    }
+    const body = $('#quest-body');
+    if (!body) return;
+    body.innerHTML = h;
+    body.onmouseover = null; body.onmouseout = null;
+    body.onclick = ev => {
+      const tab = ev.target.closest('.qtab');
+      if (tab) { this.questTab = tab.dataset.qtab; this.refreshQuest(); }
+    };
   },
   syncSessionBorder(activeKey, hoverKey, currentSession) {
     $$('#quest-body .session-tab').forEach(b => {
@@ -962,7 +1028,9 @@ const UI = {
      현재 단계와 다음 단계 개조 비용이 함께 붙어, 무엇을 열려면 무엇을 모아야 하는지가
      한 화면에서 읽힌다. */
   craftTab: 'work',
-  questSession: 's1',
+  /* null이면 **지금 진행 중인 세션**을 연다. 예전엔 's1'로 박아 둬서, 세션 2·3을
+     하고 있어도 기록을 열면 늘 세션 1이 펼쳐져 있었다. 탭을 누르면 그때부터 그 값이 남는다. */
+  questSession: null,
   craftGroup: 'all',
   craftShowLocked: false,
   craftQuery: '',
@@ -1005,7 +1073,7 @@ const UI = {
       const L = lv[tab];
       head += `<div class="st-info"><b>${STATION_NAME[tab][L]}</b> — ${STATION_DESC[tab][L]}` +
         (near[tab] ? '' : ' <span class="lack">· 시설 앞으로 가야 쓸 수 있다</span>') + '</div>';
-      if (L < 3) {
+      if (L < STATION_UP[tab].length) {
         const up = STATION_UP[tab][L], can = near[tab] && p.hasAll(up.need);
         head += `<div class="st-up${can ? '' : ' no'}" data-up="${tab}">` +
           `<div class="rname">▲ ${STATION_NAME[tab][L + 1]}${josaRo(STATION_NAME[tab][L + 1])} 개조</div>` +
@@ -1288,15 +1356,41 @@ const UI = {
         $('#chest-title').textContent = this.shopTitle();
         return;
       }
+      /* 재고가 날마다 바뀌는 상인(dynamicShop)은 정적 shop 배열 대신 G가 굴려 둔
+         재고를 읽는다. 사면 그 자리에서 없어지므로 칸마다 개수도 함께 보여 준다. */
+      if (NPCS[this.shopRef].dynamicShop) {
+        const npc = this.shopRef, m = G.merchantOf(npc);
+        const stock = G.stockOf(npc);
+        if (!stock.length) {
+          g.innerHTML = '<div class="st-info">오늘은 다 팔렸다. 내일 다시 오라는군.</div>';
+          $('#chest-title').textContent = this.shopTitle();
+          return;
+        }
+        stock.forEach((row, i) => {
+          const it = makeItem(row.id, row.c, 0);
+          const price = G.buyPrice(it, m.markup);
+          const d = document.createElement('div');
+          d.className = 'slot';
+          d.innerHTML = `<span class="ic"></span><span class="cnt">${price}</span>` +
+            (row.c > 1 ? `<span class="num">×${row.c}</span>` : '');
+          this.setIcon(d.querySelector('.ic'), Art.itemUrl(row.id));
+          d.addEventListener('click', () => G.buyStock(npc, i));
+          d.addEventListener('mouseenter', e => this.showTip(it, e, `가격 🪙 ${price} · 오늘 재고 ${row.c}개`));
+          d.addEventListener('mouseleave', () => this.hideTip());
+          g.appendChild(d);
+        });
+        $('#chest-title').textContent = this.shopTitle();
+        return;
+      }
       const list = NPCS[this.shopRef].shop || [];
       list.forEach(id => {
-        const it = makeItem(id, ITEMS[id].stack > 1 ? 5 : 1, 0);
-        const price = G.price(it);
+        const it = makeItem(id, G.shopBundle(id), 0);
+        const price = G.buyPrice(it, 1, this.shopRef);
         const d = document.createElement('div');
         d.className = 'slot';
         d.innerHTML = `<span class="ic"></span><span class="cnt">${price}</span>`;
         this.setIcon(d.querySelector('.ic'), Art.itemUrl(id));
-        d.addEventListener('click', () => G.buy(id));
+        d.addEventListener('click', () => G.buy(id, this.shopRef));
         d.addEventListener('mouseenter', e => this.showTip(it, e, `가격 🪙 ${price}`));
         d.addEventListener('mouseleave', () => this.hideTip());
         g.appendChild(d);
@@ -1448,6 +1542,37 @@ const UI = {
     if (!g.children.length) $('#reforge-note').textContent = '가방에 다시 벼릴 만한 장비가 없다.';
   },
 
+  /** 강화 모루 — 금화와 재료를 내고 장비 수치를 한 단계 올린다 */
+  openAnvil() {
+    this.closePanel();
+    $('#panel-anvil').classList.add('open'); this.open = 'anvil'; G.uiOpen = true;
+    this.refreshAnvil();
+  },
+  refreshAnvil() {
+    $('#anvil-title').textContent = `강화 모루 — 🪙 ${fmt(G.player.gold)}`;
+    $('#anvil-note').textContent =
+      `한 단계마다 공격력·방어력이 오른다 (최대 +${G.ENH_MAX}). 실패는 없지만 값이 가파르게 오른다.`;
+    const g = $('#anvil-grid'); g.innerHTML = '';
+    G.player.bag.forEach((it, i) => {
+      if (!it || !isGear(it)) return;
+      const d = idef(it);
+      if (!d.dmg && !d.def) return;                     // 벼릴 수치가 없는 장신구는 뺀다
+      const e = it.e || 0, max = e >= G.ENH_MAX;
+      const cost = G.enhCost(it), mat = G.enhMat(e);
+      const el = document.createElement('div');
+      el.className = 'slot r' + it.r + (max ? ' dim' : '');
+      el.innerHTML = `<span class="ic"></span><span class="cnt">${max ? 'MAX' : '+' + (e + 1)}</span>`;
+      this.setIcon(el.querySelector('.ic'), Art.itemUrl(it.id));
+      if (!max) el.addEventListener('click', () => G.enhanceSlot(i));
+      el.addEventListener('mouseenter', ev => this.showTip(it, ev, max
+        ? '더 두들길 데가 없다'
+        : `+${e} → +${e + 1} · 🪙 ${fmt(cost)} · ${ITEMS[mat.id].n} ${mat.n}개`));
+      el.addEventListener('mouseleave', () => this.hideTip());
+      g.appendChild(el);
+    });
+    if (!g.children.length) $('#anvil-note').textContent = '가방에 두들길 만한 장비가 없다.';
+  },
+
   /* 펫 목록 패널은 없앴다 — v1.0.2부터 펫이 인벤토리 아이템이라, 가방에서 바로
      장비창의 펫 칸으로 끼우면 된다(다른 장비와 똑같은 조작). */
 
@@ -1478,9 +1603,11 @@ const UI = {
     };
     if (d.dmg || idef(cur).dmg) push('공격력', Math.round(itemDamage(it)), Math.round(itemDamage(cur)));
     if (d.def || idef(cur).def) push('방어', Math.round((d.def || 0) * RARITY_MULT[it.r]), Math.round((idef(cur).def || 0) * RARITY_MULT[cur.r]));
-    if (d.slots || idef(cur).slots) push('가방 칸', d.slots || 0, idef(cur).slots || 0);
+    if (d.type === 'bag' && (d.slots || idef(cur).slots)) push('가방 칸', d.slots || 0, idef(cur).slots || 0);
     const sa = itemStats(it), sb = itemStats(cur);
-    const NM = { hp: '생명', mp: '마나', def: '방어', ms: '이속', crit: '치명', critD: '치명피해', cdr: '쿨감', lifesteal: '흡혈', str: '힘', dex: '민첩', int: '지능', vit: '체력', jump: '점프', mpreg: '마나재생', hpreg: '생명재생' };
+    const NM = { hp: '생명', mp: '마나', def: '방어', ms: '이속', crit: '치명', critD: '치명피해', cdr: '쿨감', lifesteal: '흡혈', str: '힘', dex: '민첩', int: '지능', vit: '체력', jump: '점프', mpreg: '마나재생', hpreg: '생명재생',
+      // v1.1 — 산소통·잠수 장비. 이름이 없으면 툴팁에 키(oxyMax)가 그대로 찍힌다
+      oxyMax: '숨(초)', oxyReg: '숨 회복', charge: '전하' };
     for (const k in NM) {
       const a = sa[k] || 0, b = sb[k] || 0;
       if (a || b) push(NM[k], a, b);
@@ -1504,7 +1631,21 @@ const UI = {
               : d.type === 'summon' ? '소환' : '재료';
     h += `<div class="ttype">${RARITY[it.r]} · ${typeName}</div>`;
     if (d.dmg) h += `<div class="tstat">공격력 <b>${Math.round(itemDamage(it))}</b> · 속도 <b>${itemSpeed(it).toFixed(2)}/초</b></div>`;
-    if (d.def) h += `<div class="tstat">방어 <b>${Math.round(d.def * RARITY_MULT[it.r])}</b></div>`;
+    if (d.def) h += `<div class="tstat">방어 <b>${Math.round(d.def * enhMul(it))}</b></div>`;
+    if (it.e) h += `<div class="tstat">강화 <b>+${it.e}</b> <span class="thint">(공격·방어 +${(it.e * 5)}%p)</span></div>`;
+    /* 펫은 레벨이 곧 값어치다 — 패시브가 통째로 커지므로 지금 몇 레벨이고
+       다음까지 얼마나 남았는지가 한눈에 보여야 한다. */
+    if (d.type === 'pet') {
+      const lv = it.lv || 1, max = lv >= PET_LV_MAX;
+      h += `<div class="tstat">레벨 <b>${lv}</b> / ${PET_LV_MAX}` +
+        (max ? ' <span class="thint">(끝까지 키웠다)</span>' : ` <span class="thint">패시브 ×${petLvMul(lv).toFixed(2)} · 공격 ×${petAtkMul(lv).toFixed(2)}</span>`) +
+        `</div>`;
+      if (!max) {
+        const need = petXpNext(lv), cur = it.xp || 0;
+        h += `<div class="petxp"><i style="width:${Math.round(clamp(cur / need, 0, 1) * 100)}%"></i></div>` +
+          `<div class="thint">다음 레벨까지 ${fmt(need - cur)}</div>`;
+      }
+    }
     if (d.power) h += `<div class="tstat">채굴 등급 <b>${d.power}</b></div>`;
     if (d.type === 'tool') h += `<div class="tstat">필요 레벨 <b>Lv.${equipReqLv(it.id)}</b></div>`;
     if (d.pw) h += `<div class="tstat">전하 소모 <b>${d.pw}</b> / 사용</div>`;
@@ -1527,13 +1668,22 @@ const UI = {
     }
     if (d.mana) h += `<div class="tstat">소모 마나 <b>${d.mana}</b></div>`;
     if (d.multi) h += `<div class="tstat">투사체 <b>${d.multi}발</b></div>`;
-    if (d.slots) h += `<div class="taff">+${d.slots} 가방 칸</div>`;
-    const NAME = { hp: '최대 생명', mp: '최대 마나', def: '방어', ms: '이동 속도', crit: '치명타', critD: '치명 피해', cdr: '재사용 감소', lifesteal: '흡혈', jump: '추가 점프', str: '힘', dex: '민첩', int: '지능', vit: '체력', dmgP: '피해', spdP: '공격 속도', fire: '화염 부여', frost: '냉기 부여', mpreg: '마나 재생', hpreg: '생명 재생', magicP: '마법 피해' };
+    /* 칸 수 표기 — 가방은 "가방이 몇 칸 늘어난다", 저장 상자는 "상자에 몇 칸이 있다"로
+       뜻이 다르다. 예전엔 둘 다 "+24 가방 칸"이라 상자가 가방을 늘려 주는 것처럼 읽혔다. */
+    // 심연용 산소통만 가진 값 — 배수라 위 표(+n)로는 뜻이 안 통한다
+    if (st.oxyReg) h += `<div class="taff">물 밖 숨 회복 ${1 + st.oxyReg}배</div>`;
+    if (d.slots) h += d.type === 'bag'
+      ? `<div class="taff">+${d.slots} 가방 칸</div>`
+      : `<div class="taff">${d.slots}개 칸</div>`;
+    const NAME = { hp: '최대 생명', mp: '최대 마나', def: '방어', ms: '이동 속도', crit: '치명타', critD: '치명 피해', cdr: '재사용 감소', lifesteal: '흡혈', jump: '추가 점프', str: '힘', dex: '민첩', int: '지능', vit: '체력', dmgP: '피해', spdP: '공격 속도', fire: '화염 부여', frost: '냉기 부여', mpreg: '마나 재생', hpreg: '생명 재생', magicP: '마법 피해',
+      // v1.1 — 산소통·잠수 장비가 늘려 주는 값. 이름이 없으면 툴팁에 아예 안 뜬다
+      oxyMax: '숨 참는 시간', charge: '전하' };
     for (const k in st) {
       if (!NAME[k] || !st[k]) continue;
       const pct = (k === 'ms' || k === 'crit' || k === 'critD' || k === 'cdr' || k === 'lifesteal' || k === 'mpreg' || k === 'magicP');
-      const v = (k === 'dmgP' || k === 'spdP') ? Math.round(st[k] * 100) + '%' : st[k] + (pct ? '%' : '');
-      h += `<div class="taff">+${v} ${NAME[k]}</div>`;
+      const v = (k === 'dmgP' || k === 'spdP') ? Math.round(st[k] * 100) + '%'
+        : k === 'oxyMax' ? st[k] + '초' : st[k] + (pct ? '%' : '');
+      h += `<div class="taff">${st[k] < 0 ? '' : '+'}${v} ${NAME[k]}</div>`;
     }
     if (d.use) {
       if (d.use.hp) h += `<div class="taff">생명 ${d.use.hp} 회복</div>`;
@@ -1778,6 +1928,17 @@ const UI = {
       jb.classList.toggle('over', !!p.jetOver);
       $('#jet-text').textContent = p.jetOver ? '과열 — 식는 중'
         : (p.jetGap > 30 ? '한계 높이' : `추진기 ${Math.round((1 - (p.jetHeat || 0)) * 100)}%`);
+    }
+    /* 산소 막대 — 물속이거나 아직 덜 찼을 때만 나온다(전하 막대와 같은 방식).
+       평소에는 숨겨 두어야 HUD가 늘 네 줄로 붐비지 않는다. */
+    const oxy = p.oxygen === undefined ? d.oxyMax : p.oxygen;
+    const showAir = p.headUnder || oxy < d.oxyMax - 0.05;
+    $('#hp-fill').closest('.orb-row').classList.toggle('has-air', !!showAir);
+    if (showAir) {
+      const r = oxy / d.oxyMax;
+      $('#air-fill').style.width = (r * 100) + '%';
+      $('#air-text').textContent = `${Math.ceil(oxy)} / ${d.oxyMax}`;
+      $('#air-fill').parentElement.classList.toggle('low', r < 0.3);
     }
     $('#gold-text').innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl('coin')})"></span>${fmt(p.gold)}`;
     // 발밑 지형이 아니라 세계 공통 기준선(SURF_BASE)에서 잰다 — 발밑 지형 기준이면
