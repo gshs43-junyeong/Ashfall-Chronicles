@@ -40,6 +40,8 @@ function itemStats(it) {
   if (d.frost) add({ frost: d.frost });
   if (d.poison) add({ poison: d.poison });
   if (it.a) for (const a of it.a) add(a.s);
+  // 펫 레벨은 패시브를 통째로 키운다 — 펫이 자라는 감각이 여기서 나온다
+  if (d.type === 'pet' && (it.lv || 1) > 1) { const m = petLvMul(it.lv); for (const k in s) s[k] *= m; }
   // 희귀도는 방어구/장신구 부가 스탯도 함께 올린다
   const m = RARITY_MULT[it.r];
   if (m !== 1) for (const k in s) if (k !== 'jump' && k !== 'fire' && k !== 'frost') s[k] = Math.round(s[k] * m * 10) / 10;
@@ -54,13 +56,18 @@ function itemName(it) {
     if (pre.length) n = pre[0].n + ' ' + n;
     if (suf.length) n = n + suf[0].n;
   }
+  if (it.e) n += ' +' + it.e;
   return n;
 }
+/* 강화 배수. **곱이 아니라 합이다** — 희귀도에 곱하면 전설(2.2배)만 3.3배로 뛰어
+   등급 격차가 더 벌어진다. 더해 두면 낮은 등급 무기도 같은 절대량을 얻어서,
+   손에 익은 무기를 계속 쓰는 길이 생긴다. 단계당 +0.05, 상한 10단계(=+0.5). */
+function enhMul(it) { return RARITY_MULT[it.r] + 0.05 * (it.e || 0); }
 function itemDamage(it) {
   const d = idef(it);
   if (!d.dmg) return 0;
   const s = itemStats(it);
-  return d.dmg * RARITY_MULT[it.r] * (1 + (s.dmgP || 0));
+  return d.dmg * enhMul(it) * (1 + (s.dmgP || 0));
 }
 function itemSpeed(it) {
   const d = idef(it), s = itemStats(it);
@@ -98,14 +105,19 @@ function rollChest(tier, rng, source) {
   const gold = !ruin && tier >= 6;   // 큰 동굴의 황금 상자만 기존의 고보상을 유지한다
   const spec = CHEST_LOOT[clamp(lootTier, 1, 5)];
   const out = [];
+  /* v1.1: 황금 상자(gold) 특혜가 지나쳤다 — 최고 등급이 5배 이상 잘 뜨는 luckTier 9에
+     재료는 100% 확정으로 최대 수량까지 나와서, 하나만 열면 한 단계를 통째로 건너뛰었다.
+     특혜는 남기되 폭을 줄인다: luckTier 9→6, 재료 확정 → 85%, 금 원석 10~18 → 6~11.
+     (처음엔 4로 낮췄다가, 깊이 제약·함정·광맥 벽으로 접근이 이미 어려워졌으니 보상 쪽은
+      6까지 돌려 달라는 요청을 받고 올렸다.) */
   const nGear = ruin ? 1 : gold ? rng.int(2, 3) : rng.int(1, 2);
-  for (let i = 0; i < nGear; i++) out.push(rollGear(rng.pick(spec.gear), rng, ruin ? 0 : gold ? 9 : tier));
+  for (let i = 0; i < nGear; i++) out.push(rollGear(rng.pick(spec.gear), rng, ruin ? 0 : gold ? 6 : tier));
   for (const [id, a, b] of spec.mats) {
-    if (!(gold || rng.chance(ruin ? 0.48 : 0.72))) continue;
+    if (!rng.chance(ruin ? 0.48 : gold ? 0.85 : 0.72)) continue;
     const count = rng.int(a, b);
     out.push(makeItem(id, ruin ? Math.max(1, Math.floor(count * 0.6)) : count));
   }
-  out.push(makeItem('gold_ore', ruin ? rng.int(1, 2) : rng.int(gold ? 10 : 1, gold ? 18 : 4)));
+  out.push(makeItem('gold_ore', ruin ? rng.int(1, 2) : rng.int(gold ? 6 : 1, gold ? 11 : 4)));
   return out.filter(Boolean);
 }
 
@@ -179,7 +191,11 @@ class Player extends Ent {
     this.hp = 100; this.mp = 50;
     this.gold = 0;
     this.bag = new Array(BASE_BAG_SIZE).fill(null);
-    this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, bag: null, pet1: null, pet2: null };
+    /* util(유틸리티) 칸 — v1.1. 산소통처럼 "싸우는 데 쓰는 물건이 아닌데 몸에 지녀야
+       하는 것"의 자리다. 예전에는 장신구 칸을 먹어서, 숨을 늘리려면 전투 장신구 하나를
+       빼야 했다(갑옷 칸을 먹였으면 방어가 깎였을 것이고). 그 맞바꿈은 재미가 아니라
+       그냥 벌이라서 칸을 따로 냈다. */
+    this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
     this.sel = 0;
     this.skills = {};              // id -> rank
     this.slots = [null, null, null, null];
@@ -208,7 +224,7 @@ class Player extends Ent {
     const s = { str: this.base.str, dex: this.base.dex, int: this.base.int, vit: this.base.vit };
     const acc = { def: 0, hp: 0, mp: 0, ms: 0, crit: 5, critD: 50, cdr: 0, lifesteal: 0, jump: 0, mpreg: 0, hpreg: 0, dmgP: 0, spdP: 0, magicP: 0, fire: 0, frost: 0, poison: 0, dashCd: 0, dashI: 0, charge: 0 };
     const merge = (o) => { for (const k in o) { if (k in s) s[k] += o[k]; else acc[k] = (acc[k] || 0) + o[k]; } };
-    for (const k in this.equip) { const it = this.equip[k]; if (!it) continue; const st = itemStats(it); merge(st); acc.def += (idef(it).def || 0) * RARITY_MULT[it.r]; }
+    for (const k in this.equip) { const it = this.equip[k]; if (!it) continue; const st = itemStats(it); merge(st); acc.def += (idef(it).def || 0) * enhMul(it); }
     // 특성 패시브
     for (const id in this.skills) {
       const sk = SKILLS[id], r = this.skills[id];
@@ -237,7 +253,11 @@ class Player extends Ent {
       dashCd: Math.max(0.5, 1.6 - acc.dashCd), dashI: 260 + acc.dashI,
       glide: acc.glide || 0,
       jet: acc.jet || 0,
-      maxCharge: 200 + (acc.charge || 0)
+      maxCharge: 200 + (acc.charge || 0),
+      // 숨 참는 시간(초). 장비의 oxyMax가 그대로 더해진다
+      oxyMax: 14 + (acc.oxyMax || 0),
+      // 물 밖에서 숨이 차는 속도 배수 — 심연용 산소통(oxyReg)만 올려 준다
+      oxyReg: 1 + (acc.oxyReg || 0)
     };
     if (this.skills.s_titan && this.hp < this.d.maxHp * 0.5) { this.d.dmgP += 0.35; this.d.def += 15; }
     this.hp = Math.min(this.hp, this.d.maxHp); this.mp = Math.min(this.mp, this.d.maxMp);
@@ -310,6 +330,7 @@ class Player extends Ent {
     else if (d.type === 'armor') key = d.slot;
     else if (d.type === 'bag') key = 'bag';
     else if (d.type === 'acc') key = this.equip.acc1 ? (this.equip.acc2 ? 'acc1' : 'acc2') : 'acc1';
+    else if (d.type === 'util') key = this.equip.util1 ? (this.equip.util2 ? 'util1' : 'util2') : 'util1';
     else if (d.type === 'pet') key = this.equip.pet1 ? (this.equip.pet2 ? 'pet1' : 'pet2') : 'pet1';
     if (!key) return false;
     const old = this.equip[key];
@@ -323,6 +344,24 @@ class Player extends Ent {
   }
 
   /* ---- 성장 ---- */
+  /** 낀 펫에게 경험치. 두 칸에 각각 온전히 들어간다 — 나눠 주면 둘을 끼울수록
+      둘 다 안 크는 이상한 벌이 된다. 레벨이 오르면 패시브가 커지므로 recalc까지 한다. */
+  addPetXp(n) {
+    if (n <= 0) return;
+    let up = false;
+    for (const k of ['pet1', 'pet2']) {
+      const it = this.equip[k];
+      if (!it || idef(it).type !== 'pet') continue;
+      it.lv = it.lv || 1; it.xp = (it.xp || 0) + n;
+      while (it.lv < PET_LV_MAX && it.xp >= petXpNext(it.lv)) {
+        it.xp -= petXpNext(it.lv); it.lv++; up = true;
+        G.toast(`${idef(it).n} — ${it.lv}레벨이 되었다`, 'good');
+      }
+      if (it.lv >= PET_LV_MAX) it.xp = 0;
+    }
+    if (up) { this.recalc(); UI.refreshEquip(); G.sfx('level'); }
+  }
+
   addXp(n) {
     this.xp += n;
     while (this.xp >= this.xpNext) {
@@ -513,6 +552,70 @@ class Player extends Ent {
     G.sfx('skill');
   }
 
+  /* ---- 물가로 기어오르기 ----
+     수면에 떠 있을 때 점프를 누르면, 옆에 있는 "올라설 수 있는 턱"으로 몸을 올려 준다.
+     헤엄 발차기만으로는 수면보다 높은 땅을 넘지 못해 좁은 웅덩이에 갇히는 일이 있었다.
+     턱은 발밑 기준 위아래 2칸까지만 본다 — 더 넓게 잡으면 벽을 타고 오르는 꼴이 된다. */
+  climbOut(world, dir) {
+    if (!world || !dir) return false;
+    const step = Math.sign(dir) * (this.w * 0.75 + 2);
+    for (let up = 0; up <= 2; up++) {
+      const nx = this.x + step, ny = this.y - up * TS;
+      if (world.hitSolid(nx, ny, this.w, this.h)) continue;      // 그 자리가 막혀 있다
+      if (!world.hitSolid(nx, ny + 3, this.w, this.h)) continue; // 발 디딜 것이 없다
+      this.x = nx; this.y = ny;
+      this.vy = -190; this.vx = Math.sign(dir) * 90;             // 올라서면서 앞으로 살짝
+      this.submerged = 0; this.swimming = false;
+      for (let i = 0; i < 6; i++) G.parts.push(new Part(this.cx, this.y + this.h, '#bfe4ff', -40, .5));
+      return true;
+    }
+    return false;
+  }
+
+  /* ---- 산소 ----
+     완전히 잠겼을 때만 준다. 수면에 머리를 내밀고 있거나 공기 주머니 안이면 회복한다.
+     바닥나면 초당 최대 체력의 일정 비율을 깎는다 — 고정 피해로 두면 후반 장비에서
+     익사가 아무 일도 아니게 된다. */
+  updateOxygen(dt, world) {
+    const max = this.d.oxyMax;
+    if (this.oxygen === undefined || this.oxygen > max) this.oxygen = max;
+    // 머리 칸이 액체인가 — 몸 전체 비율(submerged)로 보면 목까지 잠겨도 익사한다
+    const hx = Math.floor(this.cx / TS), hy = Math.floor((this.y + 4) / TS);
+    const ht = world.get(hx, hy);
+    const under = !!TILE_DEF[ht].liquid;
+    this.headUnder = under;
+    if (under) {
+      /* 깊이 압박 — 심해(세션 3)로 내려갈수록 숨이 빨리 닳는다. 수면에서 90칸
+         내려갈 때마다 소모가 한 배씩 늘고, 네 배에서 멈춘다. 바다가 없는 세계
+         (세션 1·2 저장본)에서는 seaLevel이 없어 배수가 늘 1이다. */
+      const lv = world.sea ? world.sea.level : null;
+      const deep = lv === null ? 1 : clamp(1 + Math.max(0, (this.cy / TS) - lv) / 90, 1, 4);
+      this.oxygen = Math.max(0, this.oxygen - dt * deep);
+      this.oxyPressure = deep;
+      if (this.oxygen <= 0) {
+        this.drownT = (this.drownT || 0) + dt;
+        if (this.drownT >= 1) {                                  // 초당 한 번
+          this.drownT -= 1;
+          /* 익사는 hurt()를 타지 않는다 — 방어력으로 깎이면 안 되고(숨은 갑옷으로 못
+             막는다), hurt()의 무적 0.5초가 붙으면 물속에서 오히려 무적이 된다. */
+          const dmg = Math.max(4, Math.round(this.d.maxHp * 0.06));
+          this.hp -= dmg; this.flash = 0.25;
+          // 피해 숫자는 다른 피해와 같은 빨강이어야 한다 — 물빛으로 띄우면 회복처럼 읽힌다
+          G.texts.push(new DmgText(this.cx, this.y, dmg, '#ff6b6b', 0));
+          G.sfx('damage');
+          for (let i = 0; i < 8; i++) G.parts.push(new Part(this.cx, this.y + 6, '#bfe4ff', -50, .6));
+          if (this.hp <= 0) { this.hp = 0; G.onDeath('drown'); }   // 익사 — 업적이 원인을 묻는다
+        }
+      }
+      // 숨 방울 — 남은 숨이 적을수록 자주 샌다
+      if (Math.random() < dt * (1.5 + (1 - this.oxygen / max) * 5))
+        G.parts.push(new Part(this.cx + (Math.random() - .5) * 10, this.y + 4, '#dff2ff', -60, .8));
+    } else {
+      this.drownT = 0;
+      this.oxygen = Math.min(max, this.oxygen + dt * 6 * (this.d.oxyReg || 1));   // 물 밖에서는 빠르게 찬다
+    }
+  }
+
   /* ---- 업데이트 ---- */
   update(dt, world, input) {
     const d = this.d;
@@ -527,14 +630,23 @@ class Player extends Ent {
     this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
     if (this.hurtCd <= 0) this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
 
-    // 이동
-    const acc = this.onGround ? 2400 : 1500;
+    /* --- 헤엄 상태 ---
+       예전에는 그때그때 `submerged > 0.3` 을 봤다. 수면에서 몸이 오르내리면 그 값이
+       임계값을 계속 넘나들어 한 프레임씩 물속/물 밖이 뒤바뀌고, 점프 횟수와 중력이 같이
+       떨렸다. 들어가는 값과 나오는 값을 갈라 둔다(히스테리시스). */
+    const sub = this.submerged || 0;
+    this.swimming = this.swimming ? sub > 0.25 : sub > 0.35;
+    this.updateOxygen(dt, world);
+
+    // 이동 — 물속에서는 느리게 밀리고 느리게 선다
+    const acc = this.swimming ? 950 : this.onGround ? 2400 : 1500;
     let want = 0;
     if (input.left) want -= 1; if (input.right) want += 1;
     if (this.channel) want *= 0.4;
     if (want !== 0) {
       this.vx += want * acc * dt;
-      this.vx = clamp(this.vx, -d.ms * (this.dashV > 0 ? 3 : 1), d.ms * (this.dashV > 0 ? 3 : 1));
+      const swimMul = this.swimming ? 0.62 : 1;
+      this.vx = clamp(this.vx, -d.ms * swimMul * (this.dashV > 0 ? 3 : 1), d.ms * swimMul * (this.dashV > 0 ? 3 : 1));
       if (!this.swing || !this.channel) this.facing = want;
     } else {
       const fr = this.onGround ? 2600 : 700;
@@ -545,12 +657,14 @@ class Player extends Ent {
     // 점프 / 헤엄 — 물에 잠겨 있으면 점프가 발차기가 된다. 누르고 있는 동안 계속 떠오르고,
     // 횟수도 세지 않는다(물속에서 이중 점프를 아껴야 할 이유가 없다).
     // submerged는 직전 프레임 move()가 남긴 값이라 한 프레임 늦지만 체감되지 않는다.
-    const inWater = (this.submerged || 0) > 0.3;
+    const inWater = this.swimming;
     // 입수 엣지 — 잠기기 시작하는 그 프레임에 한 번만 첨벙 소리(계속 잠겨 있는 동안은 안 울림)
     if (inWater && !this.wasInWater) G.sfx('splash');
     this.wasInWater = inWater;
     if (this.onGround || inWater) this.jumpsLeft = d.jumps;
     if (inWater) {
+      // 물가로 기어오르기 — 이게 없으면 좁은 웅덩이에서 영영 못 나온다
+      if (input.jump && !this.jumpHeld) this.climbOut(world, want || this.facing);
       if (input.jump) this.vy = Math.max(this.vy - 1150 * dt, -215);
       this.jumpHeld = !!input.jump;
       if (input.jump && Math.random() < dt * 10)
@@ -652,8 +766,12 @@ class Player extends Ent {
     const tx = Math.floor(this.cx / TS), ty = Math.floor(this.cy / TS);
     const hurt = world.hurtInRect(this.x, this.y, this.w, this.h);
     if (hurt && this.iframe <= 0) { this.hurt(hurt); this.hurtCd = 3; }
+    /* 깊이·고도 기록이 **실제로 갱신될 때만** 업적을 본다. 매 프레임 돌리면
+       스물다섯 개를 초당 예순 번 훑게 된다. */
+    const d0 = this.deepest, h0 = this.highest;
     this.deepest = Math.max(this.deepest, ty);
     this.highest = Math.min(this.highest === undefined ? ty : this.highest, ty);
+    if (G.checkAch && (this.deepest !== d0 || this.highest !== h0)) G.checkAch();
   }
 }
 
@@ -663,9 +781,25 @@ class Enemy extends Ent {
     const d = ENEMIES[type];
     super(x, y, d.w, d.h);
     this.type = type; this.def = d;
-    this.maxHp = Math.round(d.hp * scale); this.hp = this.maxHp;
-    this.dmg = d.dmg * scale; this.armor = d.def * scale;
-    this.spd = d.spd; this.xp = Math.round(d.xp * scale); this.gold = Math.round(d.gold * scale);
+    /* **보스만 장(章) 배수를 타지 않는다.** 잡몹은 스토리를 밀수록 세지지만, 보스는
+       어느 장에서 붙어도 표에 적힌 그 수치 그대로다 — 보스는 "지금 내가 얼마나
+       세졌는가"를 재는 자라서, 자가 같이 늘어나면 잴 수가 없다. 소환석으로 옛 보스를
+       다시 부르는 것도 이래야 뜻이 있다.
+       그 대신 공격력 기본값은 예전에 **제 장에서 실제로 맞던 값**으로 올려 두었다
+       (ENEMIES 표) — 붙는 감각은 그대로 두고 들쭉날쭉한 것만 없앤 것이다.
+       보상(xp·금화)도 같이 고정한다. 안 그러면 17장에서 슬라임 왕을 다시 불러
+       2.3배를 받는 자리가 생긴다. */
+    const sc = d.boss ? 1 : scale;
+    /* d.lvScale이 붙은 놈(지금은 좀비뿐)만 **플레이어 레벨을 탄다.** 세계의 규칙은
+       "몹은 레벨을 안 탄다"이고 이건 일부러 낸 예외다. lvFactor로 남겨 두는 이유는
+       붉은 달 때문이다 — 붉은 달 표에도 좀비가 들어 있어서, 그냥 곱하면 제 배수와
+       붉은 달 배수가 겹쳐 곱해진다(2.5 × 6.25 = 15.6배). 스폰 쪽에서 이 값을
+       나눠 낸 뒤 붉은 달 배수를 걸어, 최종이 정확히 붉은 달 배수가 되게 한다. */
+    this.lvFactor = (!d.boss && d.lvScale && G.player) ? levelMult(G.player.level, d.lvScale) : 1;
+    const lf = this.lvFactor;
+    this.maxHp = Math.round(d.hp * sc * lf); this.hp = this.maxHp;
+    this.dmg = d.dmg * sc * lf; this.armor = d.def * sc;
+    this.spd = d.spd; this.xp = Math.round(d.xp * sc * lf); this.gold = Math.round(d.gold * sc * lf);
     this.boss = !!d.boss;
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
     this.flash = 0; this.atkCd = 0; this.jumpCd = 0; this.think = 0;
@@ -701,6 +835,7 @@ class Enemy extends Ent {
     // 붉은 달 같은 이벤트 중에는 위험한 만큼 보상도 오른다
     const mult = G.killMult ? G.killMult() : 1;
     p.addXp(Math.round(this.xp * mult)); p.gold += Math.round(this.gold * mult);
+    p.addPetXp(Math.round(this.xp * mult * PET_XP_SHARE));
     p.kills[this.type] = (p.kills[this.type] || 0) + 1;
     if (this.boss) p.bossKilled[this.type] = true;
     const rng = G.rng;
@@ -1220,6 +1355,9 @@ class Pet {
     this.facing = 1;
     this.flash = 0;
   }
+  /** 지금 이 칸에 낀 펫 아이템의 레벨. Pet은 아이템을 들고 있지 않고 칸 번호만
+      알고 있다 — 아이템을 붙잡아 두면 갈아 끼웠을 때 옛 레벨이 남는다. */
+  lvOf(p) { const it = p.equip['pet' + (this.slot + 1)]; return it ? (it.lv || 1) : 1; }
   /** 플레이어 기준 떠 있을 자리 — 슬롯마다 반대쪽 어깨 뒤에 선다 */
   anchor(p) {
     const side = this.slot === 0 ? -1 : 1;
@@ -1249,7 +1387,9 @@ class Pet {
     this.cd = a.cd;
     this.flash = 0.18;
     // 레벨과 플레이어의 피해 증가를 함께 탄다 — 안 그러면 후반에 장식이 된다
-    const dmg = a.dmg * petDmgScale(p.level) * (1 + (p.d.dmgP || 0));
+    // 펫 레벨 배수는 여기서만 완만하게 — 플레이어 레벨(petDmgScale)과 이중으로
+    // 곱해지는 자리라, 패시브만큼 키우면 후반에 펫이 본체를 앞지른다
+    const dmg = a.dmg * petDmgScale(p.level) * petAtkMul(this.lvOf(p)) * (1 + (p.d.dmgP || 0));
     if (a.k === 'melee') {
       target.hurt(dmg, false, null, 2);
       for (let i = 0; i < 5; i++) G.parts.push(new Part(target.cx, target.cy, this.def.c));
@@ -1271,6 +1411,7 @@ const PROJ_FX = {
 };
 const PROJ_STYLE = {
   arrow: { c: '#d8c898', r: 3, len: 14 },
+  bomb: { c: '#3a3630', r: 6 },          // 폭탄 — 심지 불티는 Bomb.update가 따로 뿌린다
   star: { c: '#ffe08a', r: 5, glow: 1 },
   bolt: { c: '#8fd8ff', r: 5, glow: 1 },
   fire: { c: '#ff8a3a', r: 6, glow: 1 },
@@ -1341,6 +1482,79 @@ class DmgText {
   constructor(x, y, v, c, crit) { this.x = x + (Math.random() - 0.5) * 8; this.y = y; this.v = v; this.c = c; this.crit = crit; this.life = 0.85; this.vy = -70; }
   update(dt) { this.life -= dt; this.y += this.vy * dt; this.vy += 110 * dt; return this.life > 0; }
 }
+/* ===== 폭탄 =====
+   던진 뒤 심지가 타는 동안 굴러다니다 터진다. Proj를 상속하되 충돌 처리를 통째로
+   갈아 끼웠다 — Proj는 벽에 닿으면 그 자리에서 사라지지만, 폭탄은 **튕기고 굴러야**
+   던진 자리에서 조금 더 굴러가 터지는 맛이 난다.
+   터질 때 타일을 부수는데, 규칙 셋을 반드시 지킨다.
+     1) 타일은 **world.set()** 으로만 바꾼다 (조명·미니맵·탐험 기록이 같이 갱신된다)
+     2) 기반암(BEDROCK)은 절대 안 부순다 — 세계 경계다
+     3) 마을·캠프 안에서는 타일을 아예 안 부순다 — 구조물이 뚫리면 진행이 막힌다 */
+class Bomb extends Proj {
+  constructor(x, y, vx, vy, spec) {
+    super(x, y, vx, vy, spec.dmg, 'player', 'bomb');
+    this.spec = spec;
+    this.grav = 900;
+    this.life = spec.fuse || 1.6;
+    this.spin = 0;
+  }
+  update(dt, world) {
+    this.life -= dt;
+    this.spin += (this.vx > 0 ? 1 : -1) * dt * 9;
+    if (Math.random() < dt * 24)                                   // 심지 불티
+      G.parts.push(new Part(this.cx, this.cy - 6, '#ffd24a', -40, 0.3));
+    if (this.life <= 0) { this.boom(world); return; }
+    this.vy += this.grav * dt;
+    // 축마다 따로 밀어 본다 — 벽에 닿은 축만 튕겨야 바닥에서 구른다
+    const nx = this.x + this.vx * dt;
+    if (world.hitSolid(nx, this.y, this.w, this.h)) { this.vx *= -0.42; }
+    else this.x = nx;
+    const ny = this.y + this.vy * dt;
+    if (world.hitSolid(this.x, ny, this.w, this.h)) {
+      if (this.vy > 0) { this.vy *= -0.32; this.vx *= 0.72; if (Math.abs(this.vy) < 40) this.vy = 0; }
+      else this.vy = 0;
+    } else this.y = ny;
+    if (this.y > WH * TS) this.dead = true;
+  }
+  boom(world) {
+    this.dead = true;
+    const sp = this.spec, R = sp.r;
+    G.aoe(this.cx, this.cy, R * TS * 0.9, sp.dmg, 8, '#ff9a3a');
+    G.burst(this.cx, this.cy, 'fire', R * TS);
+    G.shake = Math.max(G.shake, 6 + R);
+    G.sfxAt('zap', Math.floor(this.cx / TS), Math.floor(this.cy / TS));
+    for (let i = 0; i < 10 + R * 4; i++)
+      G.parts.push(new Part(this.cx + (Math.random() - .5) * R * 8, this.cy + (Math.random() - .5) * R * 8,
+        Math.random() < .5 ? '#ff9a3a' : '#e8dcc0', -120, 0.8));
+    /* 던진 사람도 맞는다 — 자기 발밑에 던지면 아프다. 그래야 조준할 이유가 생긴다.
+       다만 굴착 폭탄은 피해가 작아 실수로 죽지는 않는다. */
+    const p = G.player;
+    if (dist(p.cx, p.cy, this.cx, this.cy) < R * TS && p.iframe <= 0) p.hurt(sp.dmg * 0.5, this.cx);
+
+    const tx = Math.floor(this.cx / TS), ty = Math.floor(this.cy / TS);
+    const zone = world.zoneAt(tx, ty);
+    if (zone === 'village' || zone === 'camp') {           // 안전 지대는 안 부순다
+      G.toast('여기서는 터뜨려도 아무것도 부서지지 않는다', 'bad');
+      return;
+    }
+    for (let dy = -R; dy <= R; dy++)
+      for (let dx = -R; dx <= R; dx++) {
+        if (dx * dx + dy * dy > R * R) continue;
+        const x = tx + dx, y = ty + dy;
+        if (!world.inB(x, y)) continue;
+        const id = world.get(x, y);
+        if (id === T.AIR || id === T.BEDROCK) continue;    // 기반암은 세계 경계다
+        const d = TILE_DEF[id];
+        if (d.liquid || d.hard === undefined) continue;
+        if (d.hard > sp.mine) continue;                    // 등급 넘는 것은 못 부순다
+        if (MACH_OF_TILE[id]) continue;                    // 남의 기계를 날리지 않는다
+        world.set(x, y, T.AIR);
+        if (d.drop && Math.random() < 0.45)                // 절반쯤만 건진다 — 곡괭이가 손해는 아니게
+          G.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(d.drop, 1)));
+      }
+  }
+}
+
 class Drop {
   constructor(x, y, item) {
     this.x = x - 8; this.y = y - 8; this.w = 16; this.h = 16; this.item = item;

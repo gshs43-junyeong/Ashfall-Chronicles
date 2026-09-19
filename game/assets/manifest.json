@@ -527,6 +527,24 @@
         "frameW": 20,
         "frameH": 40,
         "count": 7
+      },
+      "npcw_pedlar": {
+        "file": "char/npc_pedlar.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_oreman": {
+        "file": "char/npc_oreman.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
+      },
+      "npcw_armsman": {
+        "file": "char/npc_armsman.png",
+        "frameW": 20,
+        "frameH": 40,
+        "count": 7
       }
     }
   },
@@ -731,7 +749,10 @@
       "garn": "npc/portrait_garn.png",
       "haran": "npc/portrait_haran.png",
       "seira": "npc/portrait_seira.png",
-      "kade": "npc/portrait_kade.png"
+      "kade": "npc/portrait_kade.png",
+      "pedlar": "npc/portrait_pedlar.png",
+      "oreman": "npc/portrait_oreman.png",
+      "armsman": "npc/portrait_armsman.png"
     }
   },
   "ui": {
