@@ -2298,11 +2298,24 @@ const PROJ_STYLE = {
   dark: { c: '#9a5fd8', r: 6, glow: 1 },
   bone: { c: '#e8e0c8', r: 5 }
 };
+/* 몹이 쏘는 것 중 **물리**인 것. 나머지는 전부 마법으로 친다.
+   IMPACT_FX 로 가르지 않는 이유: 거기에는 별 조각(star)도 들어 있는데 그건 물리다
+   ("arrow · bone · star 는 물리라 예전 금빛 hit 그대로다"). 셋뿐이라 그냥 적는다. */
+const PHYS_PROJ = { arrow: 1, bone: 1, star: 1 };
+
 class Proj extends Ent {
   constructor(x, y, vx, vy, dmg, team, type) {
     super(x - 6, y - 6, 12, 12);
     this.vx = vx; this.vy = vy; this.dmg = dmg; this.team = team; this.type = type;
     this.life = 3.2; this.grav = 0; this.pierce = 0; this.hitSet = new Set(); this.crit = false;
+    /* ★ 발사음은 **여기 한 군데**에서 낸다. 몹·보스가 쏘는 자리가 스무 군데라
+       하나씩 붙이면 반드시 어딘가 빠지고, 새 보스를 넣을 때마다 또 빠진다.
+       생성자를 지나지 않고 날아가는 탄은 없으므로 여기가 유일한 길목이다.
+       sfxAt 은 화면 밖(가로 0.6폭 · 세로 0.6높이 + 120px)을 잘라 낸다 — 먼 데서
+       쏘는 것까지 들리면 어디서 오는지가 아니라 소음이 된다.
+       내가 쏘는 것은 제 소리(bow · magic)가 이미 있으므로 건드리지 않는다. */
+    if (team === 'enemy' && typeof G !== 'undefined' && G.sfxAt)
+      G.sfxAt(PHYS_PROJ[type] ? 'efire_phys' : 'efire_magic', x / TS, y / TS);
   }
   update(dt, world, player) {
     this.life -= dt;
