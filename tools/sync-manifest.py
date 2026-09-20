@@ -29,10 +29,30 @@ HEAD = """/* assets/sprites-manifest.js — 자동 생성물. 손으로 고치�
 window.SPRITE_MANIFEST = """
 
 
+def jsnum(o):
+    """★ 자바스크립트와 **똑같은 글자**가 나오게 정수인 실수를 정수로 만든다.
+
+    이 파일과 sync-manifest.mjs 는 같은 것을 옮겨 적는데, manifest.json 의 `-1.0`
+    을 파이썬은 `-1.0` 으로, 자바스크립트는 `-1` 로 적는다(JS 에는 정수와 실수의
+    구분이 없다). 그래서 두 도구가 **같은 입력에서 다른 바이트**를 냈고, 나중에
+    돌린 쪽이 이기면 다른 쪽의 --check 가 깨졌다. tools/build-site.sh 는 mjs 를
+    먼저 쓰는데 CLAUDE.md 는 py 의 --check 가 배포를 막는다고 적어 둔 자리라,
+    사이트를 한 번 빌드하면 그다음 배포가 막히는 덫이었다(실측 78군데).
+    고치는 쪽을 파이썬으로 잡은 것은, 산출물이 **JS 파일**이라 JS 표기가 기준이기
+    때문이다. manifest.json 에 `2.0` 을 새로 적어도 저절로 맞는다."""
+    if isinstance(o, dict):
+        return {k: jsnum(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [jsnum(v) for v in o]
+    if isinstance(o, float) and o.is_integer():
+        return int(o)
+    return o
+
+
 def build():
     with open(SRC, encoding='utf-8') as f:
         data = json.load(f)
-    return HEAD + json.dumps(data, ensure_ascii=False, indent=2) + ';\n'
+    return HEAD + json.dumps(jsnum(data), ensure_ascii=False, indent=2) + ';\n'
 
 
 if __name__ == '__main__':

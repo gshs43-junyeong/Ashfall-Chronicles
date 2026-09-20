@@ -1351,6 +1351,9 @@ const G = {
     const b = new Bomb(p.cx, p.cy - 6, (dx / len) * pow, (dy / len) * pow - 140, d);
     this.projs.push(b);
     it.c--; if (it.c <= 0) p.bag[slot] = null;
+    // 터뜨린 횟수는 세이브에 없던 값이다 — 업적('터뜨려 본 사람')이 여기를 읽는다.
+    // 만든 수(gathered)로는 못 센다. 쟁여 두기만 해도 오르기 때문이다.
+    this.tally.bomb = (this.tally.bomb || 0) + 1;
     UI.refreshBag(); this.sfx('place');
   },
 
