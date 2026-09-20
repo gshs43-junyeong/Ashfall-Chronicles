@@ -1,18 +1,32 @@
 #!/usr/bin/env python3
-"""광차 유령 — 굴러가는데 바퀴가 안 돈다.
+"""광차 유령 — 굴러가는데 걷는 칸이 서 있는 칸의 복사본이었다.
 
-재 보면 칸0=칸2, 칸1=칸3 이다. 즉 **걷는 두 칸이 서 있는 두 칸의 복사본**이라,
-지나가는 광차를 보면 바퀴가 멈춘 채 미끄러진다.
+재 보면 칸0=칸2, 칸1=칸3 이라 지나가는 광차가 멈춘 그림으로 미끄러졌다.
 
-바퀴는 테(106,98,88) 안에 살(64,58,52)이 **십자(+)** 로 박혀 있다. 걷는 칸에서
-그 십자를 45° 돌려 **×자**로 바꾸면 한 칸 굴렀다는 것이 읽힌다 — 바퀴 그림을
-다시 그리는 게 아니라, 이미 있는 살을 옮기는 것이다.
+■ 바퀴 살을 돌리려다 물러섰다 — 9픽셀 바퀴에서는 대각선이 안 읽힌다
 
-    칸2(move1) — 살을 ×자로
-    칸3(move2) — 살을 ×자로 두고 수레를 한 칸 튀어 오르게 (덜컹임)
+  바퀴에는 살이 **십자(+)** 로 박혀 있어서, 걷는 칸에서 45° 돌려 ×자로 만들면
+  굴렀다는 것이 읽히리라 보았다. 실제로 해 보니 안 됐다 —
 
-수레는 칸 전체를 한 칸 올리는 것으로 튀게 한다. 발 높이는 칸0 에서만 재므로
-(sprites.js _measurePad) 다른 칸을 올려도 정렬은 안 흔들린다.
+    · 1픽셀 대각선은 픽셀끼리 **모서리로만** 닿아 끊겨 보인다. 같은 색·같은 굵기인데도
+      이어진 막대인 +자보다 훨씬 흐리다(팔 길이 2·3·4 를 다 그려 놓고 견줬다).
+    · 흐린 것을 메우려고 가운데를 3x3 으로 채웠더니 이번엔 살이 아니라 **어두운
+      네모 덩어리**가 됐다. 바퀴가 통째로 어두워져 다른 칸과 안 맞았다
+      ("바퀴 일관성 문제"로 지적받은 것이 이것이다).
+
+  그래서 **바퀴는 원래 십자 그대로 둔다.** 아홉 픽셀 안에서 회전을 그리려면 살을
+  옮길 게 아니라 바퀴를 다시 그려야 하고, 그건 이 도구가 할 일이 아니다.
+
+■ 대신 광차가 **튄다**
+
+  레일 위를 구르는 광차는 덜컹인다. 손대지 않는 서 있는 두 칸에서 만들되 높이만
+  달리해서 걷는 두 칸을 만든다 —
+
+      칸2 = 칸0 을 한 칸 올림
+      칸3 = 칸1 을 두 칸 올림
+
+  칸0 과 칸1 이 서로 다르므로(숨) 걷는 두 칸도 서로 다르고, 넷이 모두 구별된다.
+  두 번 돌려도 같다 — 늘 칸0·칸1 에서 만든다.
 
 사용법:
     python3 tools/cartwheel.py            # 바뀔 것만
@@ -28,10 +42,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, 'game', 'assets')
 MANIFEST = os.path.join(ASSETS, 'manifest.json')
 S = 4
-RIM = (106, 98, 88)        # 바퀴 테
-SPOKE = (64, 58, 52)       # 바퀴 살
-R = 3                      # 살이 뻗는 길이
-RIM_EDGE = (12, 12, 17)    # 테 바깥 선
+PLAN = [(2, 0, 1), (3, 1, 2)]       # (만들 칸, 바탕 칸, 올릴 높이)
 
 
 def main(argv):
@@ -41,72 +52,22 @@ def main(argv):
     path = os.path.join(ASSETS, m['file'])
     im = Image.open(path).convert('RGBA')
     px = im.load()
-    fw, fh, cnt = m['frameW'], m['frameH'], m['count']
+    fw, fh = m['frameW'], m['frameH']
     gap = m.get('gap', 0)
 
-    def at(i, x, y):
-        return px[i * (fw * S + gap) + x * S + 1, y * S + 1]
-
-    def put(i, x, y, c):
-        ox = i * (fw * S + gap)
-        for dy in range(S):
-            for dx in range(S):
-                px[ox + x * S + dx, y * S + dy] = c
-
-    # 바퀴 축을 찾는다 — 살 색이 **테에 둘러싸여** 가로로 길게 이어지는 줄이고,
-    # 그런 줄은 바퀴 수만큼(둘) 끊겨 있어야 한다. 수레 밑틀도 살 색이 길게 이어지지만
-    # 그건 한 덩어리라 이 조건에서 빠진다(처음엔 밑틀을 축으로 잘못 잡았다).
-    def runs(y):
-        out, cur = [], []
-        for x in range(fw):
-            if at(0, x, y)[:3] == SPOKE:
-                cur.append(x)
-            elif cur:
-                out.append(cur); cur = []
-        if cur:
-            out.append(cur)
-        return [g for g in out if len(g) >= 7]
-
-    axis = None
-    for y in range(fh):
-        g = runs(y)
-        if len(g) == 2 and all(at(0, r[0] - 1, y)[:3] == RIM_EDGE or
-                               at(0, r[0] - 1, y)[3] > 8 for r in g):
-            axis = y
-            centres = [((r[0] + r[-1]) // 2, y) for r in g]
-            break
-    if axis is None:
-        print('바퀴 축을 못 찾았다 — 아무것도 안 한다.')
-        return 1
-    print(f'  바퀴 축 y={axis}, 가운데 {centres}')
-
-    for i in (2, 3):
-        for cx, cy in centres:
-            # 있던 살을 테로 되돌린다
-            for y in range(cy - R - 1, cy + R + 2):
-                for x in range(cx - R - 1, cx + R + 2):
-                    if 0 <= x < fw and 0 <= y < fh and at(i, x, y)[:3] == SPOKE:
-                        if write:
-                            put(i, x, y, RIM + (255,))
-            # 대각선 둘로 다시 박는다 — 테 안(불투명한 자리)에만
-            for k in range(-R, R + 1):
-                for (dx, dy) in ((k, k), (k, -k)):
-                    x, y = cx + dx, cy + dy
-                    if 0 <= x < fw and 0 <= y < fh and at(i, x, y)[3] > 8:
-                        if write:
-                            put(i, x, y, SPOKE + (255,))
-        print(f'  칸{i}: 살을 ×자로')
-
-    # 칸3 은 한 칸 튀어 오른다
-    if write:
-        ox = 3 * (fw * S + gap)
-        col = [[px[ox + x, y] for y in range(fh * S)] for x in range(fw * S)]
-        for x in range(fw * S):
-            for y in range(fh * S):
-                src = y + S
-                px[ox + x, y] = col[x][src] if src < fh * S else (0, 0, 0, 0)
-    print('  칸3: 수레를 한 칸 올려 덜컹이게')
-
+    for dst, src, lift in PLAN:
+        so, do = src * (fw * S + gap), dst * (fw * S + gap)
+        grid = [[px[so + x * S + 1, y * S + 1] for x in range(fw)] for y in range(fh)]
+        out = [grid[y + lift] if y + lift < fh else [(0, 0, 0, 0)] * fw
+               for y in range(fh)]
+        n = sum(1 for row in out for c in row if c[3] > 8)
+        print(f'  칸{dst} ← 칸{src} 을 {lift}칸 올림   ({n}칸)')
+        if write:
+            for y in range(fh):
+                for x in range(fw):
+                    for dy in range(S):
+                        for dx in range(S):
+                            px[do + x * S + dx, y * S + dy] = out[y][x]
     if write:
         im.save(path)
     print('고쳤다.' if write else '보기만 했다(--write 로 저장).')

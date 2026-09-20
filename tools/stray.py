@@ -43,8 +43,11 @@ MANIFEST = os.path.join(ASSETS, 'manifest.json')
 S = 4
 
 # 사람이 보고 적은 표. 여기 없는 시트는 건드리지 않는다.
-#   cut  — 떨어진 덩어리 안에서 이 색만 지운다 (몸에는 없는 색이어야 한다)
-#   join — 지우고 남은 것을 몸까지 잇는다
+#   cut    — 떨어진 덩어리 안에서 이 색만 지운다 (몸에는 없는 색이어야 한다)
+#   join   — 지우고 남은 것을 몸까지 잇는다
+#   frames — 이 칸들만 본다. **죽는 칸을 보려면 반드시 적어야 한다** — 기본값은
+#            죽는 칸을 건너뛴다(무너진 잔해가 흩어지는 것은 정상이라서).
+#   cut_all— frames 에 적은 칸에서 떨어진 덩어리를 색과 상관없이 지운다
 PLAN = {
     # 등 줄무늬에서 떨어져 나온 (225,90,75) 조각이 칸0~4 의 빈 곳에 떠 있다.
     # 칸3 은 그 조각이 떨어진 뒷다리에 엉겨 있어서, 지운 다음 다리를 몸에 잇는다.
@@ -53,6 +56,9 @@ PLAN = {
     'lantern_jelly': {'join': True},
     # 공격 칸에서 왼팔이 몸에서 떨어졌다("공격할 때 왼쪽 팔 연결 안됨").
     'vinelash': {'join': True},
+    # 죽는 첫 칸에서 몸은 무너졌는데 **왼쪽에 2x8 기둥 하나만 그대로 서 있다**
+    # ("죽을 때 좌측 상단 이상"). 칸4 에는 없는 것이라 무너지다 남은 잔해로 본다.
+    'glacier_stalker': {'frames': (5,), 'cut_all': True},
 }
 MAX_JOIN = 3        # 이보다 멀면 잇지 않는다 — 멀리 있는 것은 잇는 게 아니라 딴 것이다
 
@@ -87,8 +93,9 @@ def main(argv):
         fw, fh, cnt = m['frameW'], m['frameH'], m['count']
         gap = m.get('gap', 0)
         acted = []
-        # ★ 죽는 칸(마지막 둘)은 보지 않는다 — 무너진 잔해는 원래 흩어진다.
-        for i in range(max(0, cnt - 2)):
+        # ★ 기본값은 죽는 칸(마지막 둘)을 안 본다 — 무너진 잔해는 원래 흩어진다.
+        #   표에 frames 를 적은 시트만 그 칸을 본다.
+        for i in (plan['frames'] if 'frames' in plan else range(max(0, cnt - 2))):
             ox = i * (fw * S + gap)
             at = lambda x, y: px[ox + x * S + 1, y * S + 1]
 
@@ -105,6 +112,15 @@ def main(argv):
                     return [], []
                 bl.sort(key=len, reverse=True)
                 return bl[0], [c for c in bl[1:] if gap_to(c, bl[0]) >= 2]
+
+            # (0) 색과 상관없이 떨어진 덩어리를 통째로 지운다
+            if plan.get('cut_all'):
+                body, loose = detached()
+                for cells in loose:
+                    if write:
+                        for lx, ly in cells:
+                            put(lx, ly, (0, 0, 0, 0))
+                    acted.append(f'칸{i}: {len(cells)}칸 지움')
 
             # (1) 떨어진 덩어리 안에서 표에 적은 색만 지운다
             if plan.get('cut'):
