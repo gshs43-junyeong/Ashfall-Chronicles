@@ -220,13 +220,20 @@ const TileArt = {
        ② 제 윗면을 스스로 그리는 타일 — 풀·눈·얼음·초가지붕·흉벽·건초는 그림 안에
           이미 `R(0, 0, TS, ...)` 로 밝은 윗줄이 박혀 있다(tileart 각 painter). 겹쳐 그으면
           두 겹이 된다. 기계도 제 윗면을 그린다.
-       ①은 solid로 자동 판별한다 — 이름을 하나씩 적다 보니 새 타일마다 빠뜨렸다.
-       ②만 손으로 적는다. **수정(CRYSTAL)은 뺐다** — 칸을 꽉 채우고 윗줄을 안 그리므로
-       공기에 드러났으면 다른 돌처럼 윗면이 밝아야 맞다. */
-    for (let id = 0; id < TILE_DEF.length; id++) if (TILE_DEF[id].solid !== 1) TOP_SKIP[id] = 1;
+       ①은 **다 그린 아틀라스를 실제로 읽어서** 판별한다(markFull 참고). 예전에는
+       solid 로 갈음했는데, solid 는 "뚫고 지나갈 수 있나"라는 **놀이 규칙**이지
+       "칸을 꽉 채웠나"라는 **그림 사실**이 아니다. 둘이 어긋나는 칸이 실제로 있다 —
+       창문·선인장 덩이는 solid 인데 모서리가 비어 있고, 반대로 발판류는 solid 가
+       아닌데도 가로로는 꽉 차 있다. 알파를 직접 세면 어긋날 일이 없고, 타일이 늘어도
+       목록을 손볼 필요가 없다.
+       ②만 손으로 적는다 — 투명해서가 아니라 **이미 제 윗면을 그렸기 때문**이라,
+       알파로는 가릴 수 없다. **수정(CRYSTAL)은 뺐다** — 칸을 꽉 채우고 윗줄을
+       안 그리므로 공기에 드러났으면 다른 돌처럼 윗면이 밝아야 맞다. */
+    this._topHand = {};
     for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS,
-                      T.SNOW, T.ICE, T.THATCH, T.BATTLEMENT, T.HAYBALE]) TOP_SKIP[id] = 1;
-    for (const id in MACH_OF_TILE) TOP_SKIP[id] = 1;
+                      T.SNOW, T.ICE, T.THATCH, T.BATTLEMENT, T.HAYBALE]) this._topHand[id] = 1;
+    for (const id in MACH_OF_TILE) this._topHand[id] = 1;
+    for (const id in this._topHand) TOP_SKIP[id] = 1;
 
     const N = TILE_DEF.length;
     const cv = document.createElement('canvas');
@@ -261,8 +268,44 @@ const TileArt = {
     this.wallAtlas = wc;
 
     this.buildAsh();
+    this.markFull();
     this.ready = true;
   },
+
+  /** 칸을 **꽉 채운** 타일을 아틀라스에서 직접 재어 TOP_SKIP 에 반영한다.
+
+      상단 하이라이트는 칸 맨 윗줄에 2px 짜리 밝은 선을 긋는 것이라, 그 자리가 비어
+      있으면 그림에서 떨어진 허공에 선이 뜬다. 그래서 **투명한 구석이 하나도 없는**
+      타일에만 긋는다. 변형(V칸) 하나라도 구멍이 있으면 그 타일은 안 긋는다 —
+      칸은 자리 해시로 고르므로, 한 칸만 비어도 어딘가에서는 그 칸이 뽑힌다.
+
+      ★ 손그림 타일(applySprite)이 절차 생성분을 덮어쓰면 알파가 달라진다. 그래서
+        이 함수는 덮어쓴 **뒤에 한 번 더** 불려야 한다(game.js 의 애셋 적용부).
+      ★ file:// 에서 손그림 타일을 얹으면 캔버스가 오염되어 getImageData 가 막힌다.
+        그때는 재지 못했다고 보고 예전 기준(solid)으로 물러선다 — 놀이 규칙이라
+        정확하지는 않지만, 다 긋거나 하나도 안 긋는 것보다는 가깝다. */
+  markFull() {
+    if (!this.atlas) return;
+    const N = TILE_DEF.length, W = this.atlas.width;
+    let data;
+    try {
+      data = this.atlas.getContext('2d').getImageData(0, 0, W, this.atlas.height).data;
+    } catch (e) {
+      for (let id = 0; id < N; id++) if (TILE_DEF[id].solid !== 1) TOP_SKIP[id] = 1;
+      this.topTainted = 1;
+      return;
+    }
+    for (let id = 0; id < N; id++) {
+      let full = !!ART[id];
+      for (let y = id * TS; full && y < (id + 1) * TS; y++)
+        for (let x = 0; full && x < W; x++)
+          if (data[(y * W + x) * 4 + 3] < 255) full = false;
+      if (!full) TOP_SKIP[id] = 1;
+      else if (!this._topHand[id]) delete TOP_SKIP[id];
+    }
+  },
+  /* ② — 제 윗면을 스스로 그리는 타일. markFull 이 다시 재도 이 목록은 안 풀린다. */
+  _topHand: {},
 
   /** 손그림 타일 텍스처가 로드되면 절차 생성 아틀라스의 해당 타일 행을 덮어 그린다.
       변형(V칸) 전부에 같은 이미지를 채운다 — 손그림은 한 장뿐이라 절차 생성처럼

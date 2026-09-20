@@ -23,6 +23,18 @@
           <div class="fill" id="mp-fill"></div>
           <span class="bar-label" id="mp-text">50 / 50</span>
         </div>
+        <!-- 숨·추진기는 **마나 아래 · 경험치 위**. 둘 다 그때그때 나타났다 사라지는
+             막대라, 늘 있는 경험치 줄 아래에 붙이면 나타날 때마다 경험치가 밀려
+             내려간다. 체력·마나 바로 밑이면 위쪽이 고정되어 눈이 따라간다. -->
+        <!-- 물에 잠겨 있는 동안에만 나온다 (숨). 추진기 막대와는 다른 것이다 -->
+        <div class="bar air" id="air-bar">
+          <div class="fill" id="air-fill"></div>
+          <span class="bar-label" id="air-text">14 / 14</span>
+        </div>
+        <div class="bar jet" id="jet-bar">
+          <div class="fill" id="jet-fill"></div>
+          <span class="bar-label" id="jet-text">100%</span>
+        </div>
         <div class="bar xp">
           <div class="fill" id="xp-fill"></div>
           <span class="bar-label" id="xp-text">Lv.1  0 / 40</span>
@@ -30,15 +42,6 @@
         <div class="bar pw" id="pw-bar">
           <div class="fill" id="pw-fill"></div>
           <span class="bar-label" id="pw-text">200 / 200</span>
-        </div>
-        <div class="bar jet" id="jet-bar">
-          <div class="fill" id="jet-fill"></div>
-          <span class="bar-label" id="jet-text">추진기</span>
-        </div>
-        <!-- 물에 잠겨 있는 동안에만 나온다 (숨). 추진기 막대와는 다른 것이다 -->
-        <div class="bar air" id="air-bar">
-          <div class="fill" id="air-fill"></div>
-          <span class="bar-label" id="air-text">14 / 14</span>
         </div>
       </div>
       <div id="buffs"></div>

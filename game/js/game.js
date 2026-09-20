@@ -141,6 +141,7 @@ const G = {
         // 손그림 타일 텍스처가 있으면 절차 생성 아틀라스의 해당 칸을 덮어 그린다
         for (const name in TILE_SPRITE) TileArt.applySprite(TILE_SPRITE[name], Sprites.img['tile_' + name]);
         TileArt.buildAsh();       // 잿빛 판은 아틀라스에서 뜬다 — 갈아 끼운 다음 다시 떠야 한다
+        TileArt.markFull();       // 상단 하이라이트 판정도 갈아 끼운 그림으로 다시 잰다
         // 아이템 아이콘도 같은 방식으로 — 아틀라스를 갈아 끼우면 UI와 캔버스가 함께 바뀐다
         if (Sprites.meta && Sprites.meta.items) {
           for (const id in Sprites.meta.items.files) Art.applyItemSprite(id, Sprites.img['item_' + id]);
@@ -3175,9 +3176,24 @@ const G = {
        조준이 흔들리고 소리가 겹쳐 전투와 채굴에 직접 끼어들었다. 세 대로 줄이고,
        사정권을 5칸으로 좁히고, 간격도 늦춰 탑 바로 밑에서만 들리게 했다.
        부딪히지 않고(판정 없음) 피해도 주지 않으며, 야영지·마을 근처에는 안 선다. */
-  RIG_BAND: [[660, 1360, 2], [2720, 3260, 1]],   // [숲 왼끝, 오른끝, 몇 대]
+  /* ★ 설 자리를 **바이옴 이름으로** 묻는다. 예전에는 `[[660,1360,2],[2720,3260,1]]`
+       처럼 x 를 손으로 적어 두었는데, v1.1 에서 세계를 왼쪽으로 800칸 늘리면서
+       (data.js 의 SHIFT) 이 숫자만 안 따라왔다. 주석에는 "숲 왼끝·오른끝"이라고
+       적혀 있는데 실제로 선 자리는 **서리 지대 둘과 메마른 사구 하나**였고, 사막
+       한 대는 하필 피라미드 지붕 위였다. 세션 2 를 미리 흘리려고 세션 1 숲에 세운
+       것인데 정작 숲에 없었던 셈이다. 이름으로 물으면 세계가 또 늘어나도 따라온다
+       (CLAUDE.md §1-5). */
+  RIG_IN: [['forest', 2], ['forest2', 1]],   // [바이옴 id, 몇 대]
+  RIG_EDGE: 40,             // 바이옴 경계에서 이만큼은 떨어뜨린다
   RIG_THUD: 4.6,            // 쿵 간격(초)
   RIG_NEAR: 5 * 22,         // 쿵이 들리는 거리(px) — 탑 바로 밑
+  /* 그림 배율. 1.0 은 260px(약 12칸) — 주인공 키의 여섯 배라 배경이 아니라 건물로
+     읽혔다. 0.66 이면 172px(약 8칸), 주인공의 네 배다. 다리 사이 너비도 84 → 55px
+     (2.5칸)로 줄어 숲 나무 사이에 들어간다. ★ 굴뚝 자리(연기가 나오는 곳)도 같은
+     값으로 줄여야 한다 — updateSmoke 참고. */
+  RIG_SCALE: 0.66,
+  RIG_TOP: 256,             // 굴뚝 꼭대기(배율 1일 때 y)
+  RIG_LEG: 2,               // 다리가 딛는 반폭(칸) — 이 안은 지면이 **똑같아야** 한다
 
   /** 채취탑 자리. 세계가 정해지면 한 번만 고르고 캐시한다. */
   rigs() {
@@ -3185,19 +3201,31 @@ const G = {
     const w = this.world;
     if (!w) return [];
     const out = [];
-    for (const [x0, x1, n] of this.RIG_BAND) {
+    const LEG = this.RIG_LEG;
+    for (const [bid, n] of this.RIG_IN) {
+      const b = BIOMES.find(q => q.id === bid);
+      if (!b) continue;
+      const x0 = b.x0 + this.RIG_EDGE, x1 = b.x1 - this.RIG_EDGE;
       for (let i = 0; i < n; i++) {
         // 띠를 n 등분한 가운데를 노리고, 거기서 바깥으로 훑어 평평한 자리를 찾는다
         const aim = Math.round(x0 + (x1 - x0) * (i + 0.5) / n);
         let at = null;
-        for (let d = 0; d <= 60 && at === null; d++) {
+        for (let d = 0; d <= 120 && at === null; d++) {
           for (const tx of (d ? [aim - d, aim + d] : [aim])) {
-            if (tx < 8 || tx >= WW - 8) continue;
+            if (tx < x0 || tx > x1) continue;
             const s = w.surface[tx];
             const z = w.zoneAt(tx, s);
-            if (z === 'camp' || z === 'village') continue;   // 쉬는 자리는 비워 둔다
+            if (z === 'camp' || z === 'village' || z === 'ruin') continue;   // 쉬는 자리는 비워 둔다
+            /* ★ 유적은 **지붕 위도** 피한다. zoneAt 은 유적 상자 안에 들어와야 'ruin'
+               이라, 지표에서 물으면 피라미드·얼음 신전 꼭대기가 그냥 'surface' 로
+               나온다 — 사막 한 대가 실제로 피라미드 지붕에 서 있었다. */
+            if (w.ruins && w.ruins.some(r => Math.abs(tx - r.x) <= (r.w >> 1) + LEG + 2)) continue;
+            /* 다리가 딛는 칸(±LEG)은 **한 칸도 어긋나면 안 된다.** 예전에는 ±3 칸을
+               "1칸 차이까지" 로 봐줬는데, 그러면 한쪽 다리가 22px 허공에 떠서
+               갖다 놓은 것처럼 보인다. 그 바깥은 1칸까지 봐준다(받침이 아니라 배경). */
             let flat = true;
-            for (let k = -3; k <= 3; k++) if (Math.abs(w.surface[tx + k] - s) > 1) { flat = false; break; }
+            for (let k = -LEG; k <= LEG && flat; k++) if (w.surface[tx + k] !== s) flat = false;
+            for (let k = -LEG - 2; k <= LEG + 2 && flat; k++) if (Math.abs(w.surface[tx + k] - s) > 1) flat = false;
             if (flat) { at = tx; break; }
           }
         }
@@ -3207,7 +3235,7 @@ const G = {
     return (this._rigs = out);
   },
 
-  /** 이 탑이 지금 도는가. 장마다 한 대씩 깨어난다(9장 첫 대 … 13장 다섯째). */
+  /** 이 탑이 지금 도는가. 장마다 한 대씩 깨어난다(9장 첫 대 · 10장 둘째 · 11장 셋째). */
   rigOn(r) { return this.chapter >= r.wake; },
 
   updateRigs(dt) {
@@ -3259,7 +3287,8 @@ const G = {
       for (const o of w.objects)
         if (o.type === 'forge') vents.push([o.x + this.SMOKE_VENT_X, o.y + this.SMOKE_VENT_Y]);
       for (const r of this.rigs())
-        if (this.rigOn(r)) vents.push([r.tx * TS + TS / 2 + 17, r.ty * TS - 256]);
+        if (this.rigOn(r)) vents.push([r.tx * TS + TS / 2 + 17 * this.RIG_SCALE,
+                                       r.ty * TS - this.RIG_TOP * this.RIG_SCALE]);
       for (const [vx, vy] of vents) {
         if (Math.abs(vx - p.cx) > rx || Math.abs(vy - p.cy) > ry) continue;
         if (this.smokes.length >= this.SMOKE_MAX) break;
@@ -3309,6 +3338,7 @@ const G = {
 
     c.save();
     c.translate(Math.round(x), Math.round(y));
+    c.scale(this.RIG_SCALE, this.RIG_SCALE);   // 아래 좌표는 배율 1 기준 — RIG_SCALE 참고
 
     // 다리 넷 — 바깥 둘은 굵게, 안쪽 둘은 가늘게. 땅에 박혀 있다
     c.strokeStyle = DARK; c.lineCap = 'butt';
