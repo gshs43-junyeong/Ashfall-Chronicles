@@ -46,9 +46,14 @@ button{
     bottom -1px left -1px,bottom -1px left -1px, bottom -1px right -1px,bottom -1px right -1px, 0 0}
 .orb-row:before{content:'';position:absolute;left:10px;right:10px;top:0;height:1px;
   background:linear-gradient(90deg,transparent,#d8a94bab,transparent)}
-.bar{position:relative;height:19px;margin-bottom:6px;background:#0e0d0b;border:1px solid var(--frame);
-  border-radius:2px;overflow:hidden;box-shadow:inset 0 1px 4px #000d,0 1px 0 #ffffff0a;padding-left:20px}
-.bar:last-child{margin-bottom:0}
+/* ★ 줄 사이는 margin 이 아니라 **flex gap** 으로 벌린다. margin-bottom + :last-child 로
+     하면 맨 아랫줄이 숨어 있을 때(전하·추진기·숨은 평소 display:none) 그 앞줄이
+     margin 을 그대로 들고 있어 틀 아래에 빈 6px 이 남는다. gap 은 보이는 것끼리만
+     벌리므로, 줄 차례를 바꿔도 따라올 것이 없다. */
+.orb-row{display:flex;flex-direction:column;gap:6px}
+.bar{position:relative;height:19px;background:#0e0d0b;border:1px solid var(--frame);
+  border-radius:2px;overflow:hidden;box-shadow:inset 0 1px 4px #000d,0 1px 0 #ffffff0a;padding-left:20px;
+  flex:0 0 auto}
 .bar:before{content:'';position:absolute;left:0;top:0;bottom:0;width:19px;
   background:radial-gradient(circle at 50% 40%,#332c1e,#100f0c 75%);border-right:1px solid var(--frame);
   display:flex;align-items:center;justify-content:center;font-size:10px;z-index:2;
