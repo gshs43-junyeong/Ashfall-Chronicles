@@ -451,7 +451,11 @@ class Player extends Ent {
     G.texts.push(new DmgText(this.cx, this.y, dmg, '#ff6b6b', 0));
     if (srcX !== undefined && !(this.d.dr >= 50)) { this.vx = Math.sign(this.cx - srcX) * 180; this.vy = -180; }
     for (let i = 0; i < 6; i++) G.parts.push(new Part(this.cx, this.cy, '#c8433c'));
-    G.sfx('damage');
+    /* ★ 몹이 맞을 때와 같은 소리를 쓰되 **작고 둔하게** 낸다(music.js SFX_FAM 의
+       hurt_player — hit_flesh 를 0.88배 음높이 · 0.42배 음량으로 빌린다). 예전에는
+       양쪽 다 damage 한 소리라, 몹 서넛에 둘러싸이면 내가 때리는 소리와 내가 맞는
+       소리가 한 덩어리로 들려서 체력이 깎이는 줄 모르고 계속 붙어 있게 됐다. */
+    G.sfx('hurt_player');
     /* 불굴 — 죽는 그 한 번을 넘긴다. 120초에 한 번뿐이라 "아껴 두는" 것이 아니라
        "여기서 한 번 살아남는다"에 가깝다. */
     if (this.hp <= 0 && this.skills.s_undying && this.undyingCd <= 0) {
@@ -1359,7 +1363,9 @@ class Enemy extends Ent {
       if (S && this.sgTook >= this.maxHp * S.brk) this.breakSurge();
     }
     G.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 14, this.y - 4, dmg, crit ? '#ffd24a' : '#fff', crit ? 1 : 0));
-    G.hitFx(this, this.cx, this.cy, crit);   // 재질 파편 + 재질 타격음(한 획마다 음높이가 다르다)
+    // 재질 파편 + 재질 타격음(한 획마다 음높이가 다르다) + 무기 계열 한 겹. fam 은 아래
+    // 타격 그림이 쓰는 것과 같은 값이라, 보이는 계열과 들리는 계열이 어긋날 수 없다.
+    G.hitFx(this, this.cx, this.cy, crit, fam);
     /* 맞는 그림. 치명타는 계열 위에 한 겹 얹는 게 아니라 **계열마다 따로 그려 둔 것**을
        쓴다(방향 C) — 베기는 초승달이 셋으로 갈라지고, 찌르기는 뚫고 나가 반대편에서
        터지고, 둔기는 고리가 두 겹으로 터진다. 무기마다 치명타의 얼굴이 다르다. */
@@ -2257,6 +2263,13 @@ const PROJ_FX = {
      맞는 순간이 같은 그림이 된다 — 지팡이를 바꿔도 손에 남는 것이 같아진다. 시트는
      셋(hit·fire·void)뿐이므로 그 위에 원소색 고리와 입자를 얹어 여섯 갈래로 갈랐다.
        burst 어느 시트를 · ring 퍼지는 고리의 색과 크기 · parts 튀는 입자 수 */
+/* 타격 그림 → 그 그림에 붙는 원소 소리(docs/v1.1-sfx-prompts.md C-3).
+   'hit'(물리 금빛)은 일부러 없다 — 화살·뼈·별 조각은 재질음만으로 충분하고, 여기에
+   한 겹을 더 얹으면 활을 쏠 때마다 두 소리가 난다. */
+const BURST_SFX = {
+  fire: 'hit_fire', frost: 'hit_frost', soul: 'hit_soul',
+  void: 'hit_void', arcane: 'hit_arcane'
+};
 const IMPACT_FX = {
   fire:  { burst: 'fire',   ring: '#ff8a3a', rr: 34, parts: 10 },
   frost: { burst: 'frost',  ring: '#9fe0ff', rr: 30, parts: 12 },
@@ -2330,6 +2343,10 @@ class Proj extends Ent {
     } else if (this.team === 'player' && this.hitSet.size) {
       /* 원소마다 다른 흔적. 시트가 같아도 고리 색과 입자 수가 달라 손에 남는 것이 다르다 */
       G.burst(this.cx, this.cy, fx ? fx.burst : 'hit', 36);
+      /* 원소 한 겹(docs C-3). 마법은 HIT_FAM 에 없어서 위의 무기 계열 겹이 안 붙는다 —
+         그 자리를 원소가 대신한다. 물리 투사체(arrow·bone·star)는 burst 가 'hit' 이고
+         BURST_SFX 에 없으므로 재질음만 울린다. */
+      if (fx && BURST_SFX[fx.burst]) G.sfxAt(BURST_SFX[fx.burst], this.cx / TS, this.cy / TS);
       if (fx) {
         G.ringFx(this.cx, this.cy, fx.rr, fx.ring, 0.26);
         for (let i = 0; i < fx.parts; i++) G.parts.push(new Part(this.cx, this.cy, fx.ring, -14, 0.42));

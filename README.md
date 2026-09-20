@@ -57,7 +57,7 @@
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
 | [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1 에 무엇이 들어갔는가** (아직 릴리스 전) |
 | [`CLAUDE.md`](CLAUDE.md) | 이 저장소에서 코드를 고칠 때의 규칙 — 타일 번호·좌표(`SHIFT`)·세이브처럼 **어기면 조용히 망가지는 것들** |
-| [`docs/v1.1-sfx-prompts.md`](docs/v1.1-sfx-prompts.md) | 필요한 효과음 36개와 생성 프롬프트 |
+| [`docs/v1.1-sfx-prompts.md`](docs/v1.1-sfx-prompts.md) | 효과음 44개의 생성 프롬프트와 **어디서 울리는지** — 다시 구울 때의 규격서입니다 |
 | [`docs/v1.1-plan-prompt.md`](docs/v1.1-plan-prompt.md) | v1.1 최초 작업 지시서 (실제 진행은 이 길과 달라졌습니다 — 현황은 changelog 쪽) |
 | [`docs/deploy-cache.md`](docs/deploy-cache.md) | 배포와 캐시 무효화 |
 
@@ -148,8 +148,8 @@ xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/   # 받은 판 번호로
 
 | 무엇 | 어디 | 어디서 왔나 |
 |---|---|---|
-| 배경 음악 10곡 | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
-| 효과음 45개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 배경 음악 13곡 | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
+| 효과음 89개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 
 이 둘은 바깥 서비스에서 만든 것이라 여기서 MIT 로 다시 내어 줄 권한이 없습니다.
 게임을 받아 즐기는 데에는 아무 제한이 없지만, **소리 파일만 따로 떼어다 쓰려면**

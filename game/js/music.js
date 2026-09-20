@@ -23,7 +23,15 @@ const BGM = {
   sky:      'assets/audio/skyward_overture.m4a',    // 하늘 섬
   // 세션 3 — 물 위와 물 아래. 같은 결의 두 곡이라 오갈 때 튀지 않는다
   sea:      'assets/audio/patient_emptiness.m4a',   // 바다 수면 · 해변 · 빙하 지대 (2:30)
-  seadeep:  'assets/audio/deep_pressure.m4a'        // 물에 잠겨 있는 동안 (2:45)
+  seadeep:  'assets/audio/deep_pressure.m4a',       // 물에 잠겨 있는 동안 (2:45)
+
+  /* 쓰러진 자리 — 사망 화면이 떠 있는 동안. 다시 일어나면 원래 곡으로 돌아간다. */
+  lastnote: 'assets/audio/the_final_note.m4a',
+  /* ★ 값이 **배열**인 유일한 키다. 세션 종장(5페이즈 보스)에서 두 곡 중 하나가 나온다 —
+     어느 쪽인지는 곡이 실제로 바뀌는 순간에 정한다(Music.pick). play() 가 첫 줄에서
+     `curKey === key` 로 돌아서므로, 매 프레임 불려도 다시 뽑지 않는다. 프레임마다
+     뽑으면 초당 60번 곡이 갈아엎혀 아무 소리도 안 난다. */
+  finale:  ['assets/audio/final_reprise_1.m4a', 'assets/audio/final_reprise_2.m4a']
 };
 
 /* 파일이 아직 없는 곡은 여기 적힌 곡으로 대신한다. 스프라이트·효과음과 같은 규칙 —
@@ -33,7 +41,9 @@ const BGM_FALLBACK = { east: 'normal', catacomb: 'tense', sky: 'normal',
   /* 바다 곡이 없으면 평상시 곡, 심해 곡이 없으면 바다 곡 → 결국 평상시 곡으로
      내려간다. 심해가 바다를 거쳐 가게 둔 이유는, 바다 곡만 먼저 들어와도
      물속에서 그 곡이 나오게 하려는 것이다. */
-  sea: 'normal', seadeep: 'sea' };
+  sea: 'normal', seadeep: 'sea',
+  // 종장 두 곡이 없으면 보스 곡, 마지막 음이 없으면 긴장 곡으로 내려간다
+  finale: 'boss', lastnote: 'tense' };
 
 const Music = {
   vol: 0.42, fadeDur: 0.9,
@@ -64,6 +74,13 @@ const Music = {
 
   /** fast를 주면 거의 즉시 갈아탄다 — 보스전처럼 "지금 바로" 바뀌어야 하는 전환용.
       (보스 등장 효과음을 따로 두지 않고 브금이 곧장 치고 들어오게 하기로 했다) */
+  /** 그 키가 이번에 실제로 틀 파일 하나. 배열로 적힌 키(finale)만 여기서 갈린다.
+      ★ play() 안에서만 부른다 — 곡이 바뀌는 순간에 한 번. */
+  pick(key) {
+    const v = BGM[key];
+    return Array.isArray(v) ? v[(Math.random() * v.length) | 0] : v;
+  },
+
   play(key, fast) {
     key = this.resolve(key);
     if (!this.started || this.curKey === key || !BGM[key]) return;
@@ -73,7 +90,7 @@ const Music = {
     // "위기 상황"에서 브금이 안 나온다는 제보의 원인). 성공했을 때만 교체를 확정한다.
     const prevKey = this.curKey;
     this.curKey = key;
-    const a = new Audio(aud(BGM[key]));
+    const a = new Audio(aud(this.pick(key)));
     a.loop = true; a.volume = 0;
     const dur = fast ? 0.12 : this.fadeDur;
     // 파일 자체가 없을 때(404) 울리는 신호. 이걸 안 잡으면 아래 catch가 매번 되돌려 놓아
@@ -138,31 +155,45 @@ const SFX_FILES = {
      둘(swim·fuse)만 아래 SFX_LOOP가 0.9초로 잘라 겹쳐 이어 붙인다. */
   swim: 'swim', bubble: 'bubble', drown: 'drown', fuse: 'fuse',
   boom_small: 'boom_small', boom_big: 'boom_big',
-  ore_hit: 'ore_hit', detector: 'detector'
+  ore_hit: 'ore_hit', detector: 'detector',
   /* boss(보스 등장)는 일부러 없다 — 대신 보스 브금이 곧장 치고 들어온다 */
 
-  /* ===== 재질음 — 열 개면 된다 =====
-     프롬프트는 docs/v1.1-sfx-prompts.md "재질" 절. 스물세 키(hit_* 열하나 · break_* 열둘)를
-     파일 열 개로 덮는다(어느 키가 어느 파일인지는 아래 SFX_FAM). 없는 동안에는
-     game.js 의 sfx() 가 스물세 가지 합성음으로 대신 울린다.
+  /* ===== 재질음 — 열 개로 스물세 자리 =====
+     스물세 키(hit_* 열하나 · break_* 열둘)를 파일 열 개로 덮는다. 어느 키가 어느 파일을
+     빌리는지는 아래 SFX_FAM 이 정한다. */
+  mat_flesh: 'mat_flesh', mat_bone: 'mat_bone', mat_stone: 'mat_stone',
+  mat_dirt: 'mat_dirt', mat_wood: 'mat_wood', mat_metal: 'mat_metal',
+  mat_glass: 'mat_glass', mat_plant: 'mat_plant', mat_ember: 'mat_ember',
+  mat_void: 'mat_void',
 
-  , mat_flesh: 'mat_flesh', mat_bone: 'mat_bone', mat_stone: 'mat_stone'
-  , mat_dirt: 'mat_dirt', mat_wood: 'mat_wood', mat_metal: 'mat_metal'
-  , mat_glass: 'mat_glass', mat_plant: 'mat_plant', mat_ember: 'mat_ember'
-  , mat_void: 'mat_void'
-  */
-  /* ===== 스킬음 — 파일이 오면 여기 한 줄씩 푼다 =====
-     프롬프트는 docs/v1.1-sfx-prompts.md "스킬" 절. 열아홉 스킬을 열다섯 갈래로 묶어
-     두었으므로 파일도 열다섯이면 된다(갈래는 data.js SKILL_FX).
+  /* ===== 스킬음 — 열아홉 =====
+     data.js 의 SKILL_FX(s: 키)와 SKILL_HIT 이 부르는 이름 그대로다. */
+  sk_slash: 'sk_slash', sk_whirl: 'sk_whirl', sk_charge: 'sk_charge',
+  sk_quake: 'sk_quake', sk_guard: 'sk_guard', sk_shout: 'sk_shout',
+  sk_volley: 'sk_volley', sk_pierce: 'sk_pierce', sk_smoke: 'sk_smoke',
+  sk_mark: 'sk_mark', sk_fire: 'sk_fire', sk_meteor: 'sk_meteor',
+  sk_frost: 'sk_frost', sk_heal: 'sk_heal', sk_shield: 'sk_shield',
+  sk_bolt: 'sk_bolt', sk_blink: 'sk_blink', sk_summon: 'sk_summon',
+  sk_deny: 'sk_deny',
 
-  , sk_slash: 'sk_slash', sk_whirl: 'sk_whirl', sk_charge: 'sk_charge'
-  , sk_quake: 'sk_quake', sk_guard: 'sk_guard', sk_shout: 'sk_shout'
-  , sk_volley: 'sk_volley', sk_pierce: 'sk_pierce', sk_smoke: 'sk_smoke'
-  , sk_mark: 'sk_mark', sk_fire: 'sk_fire', sk_meteor: 'sk_meteor'
-  , sk_frost: 'sk_frost', sk_heal: 'sk_heal', sk_shield: 'sk_shield'
-  , sk_bolt: 'sk_bolt', sk_blink: 'sk_blink', sk_summon: 'sk_summon'
-  , sk_deny: 'sk_deny'
-  */
+  /* ===== 타격 그림의 소리 =====
+     ★ 이 키들은 **무엇에 맞았나(재질)** 가 아니라 **어떻게 맞았나(무기 계열·원소)** 다.
+       재질 쪽은 위의 mat_* 한 벌이 SFX_FAM 을 거쳐 맡는다. 두 축이 겹치는 이름이 둘
+       있는데(hit_flesh · hit_void), Sfx.play 가 "제 이름 파일이 있으면 그것, 없으면
+       계열음"의 순서로 고르므로 이제 그 둘은 제 파일로 울린다 — 계열음은 break_* 쪽에
+       그대로 남는다. 일부러 그렇게 둔다: 닿는 소리와 부서지는 소리가 갈려야 한다. */
+  hit_slash: 'hit_slash', hit_pierce: 'hit_pierce', hit_blunt: 'hit_blunt',
+  hit_crit: 'hit_crit', hit_fire: 'hit_fire', hit_frost: 'hit_frost',
+  hit_soul: 'hit_soul', hit_arcane: 'hit_arcane',
+  hit_flesh: 'hit_flesh', hit_void: 'hit_void',
+  hit_water: 'hit_water',
+  /* hit_shock 은 파일만 받아 두고 아직 아무 데서도 안 부른다 — 전격은 이미 zap 이
+     맡고 있어서, 어느 자리를 넘겨야 하는지 정해지기 전에는 비워 둔다. */
+  hit_shock: 'hit_shock',
+
+  /* 별 조각 — 얻을 때 · 다섯이 합쳐질 때 · 떠오를 때. 셋 다 이야기의 한 순간이라
+     다른 효과음보다 길다(0.9~1.5초). */
+  star_gain: 'star_gain', star_merge: 'star_merge', star_rise: 'star_rise'
 };
 
 /* ================= 재질음 한 벌 =================
@@ -188,7 +219,15 @@ const SFX_FAM = {
   break_wood: ['mat_wood', .78, 1.4], break_metal: ['mat_metal', .78, 1.4],
   break_glass: ['mat_glass', .84, 1.45], break_ice: ['mat_glass', .7, 1.4],
   break_plant: ['mat_plant', .82, 1.35], break_ember: ['mat_ember', .78, 1.4],
-  break_void: ['mat_void', .72, 1.4], break_machine: ['mat_metal', .66, 1.5]
+  break_void: ['mat_void', .72, 1.4], break_machine: ['mat_metal', .66, 1.5],
+
+  /* ★ 내가 맞는 소리 — 제 파일 없이 hit_flesh 를 **빌려서** 음높이를 낮추고 음량을
+     크게 줄인다. 예전에는 몹이 맞을 때와 내가 맞을 때가 둘 다 damage 한 소리였다.
+     싸움 중에는 소리가 쉴 새 없이 겹치는데, 그중 "지금 내가 맞았다"만은 즉시 갈려
+     들려야 한다. 같은 결의 소리를 **작고 둔하게** 내는 쪽을 골랐다 — 아예 다른 소리를
+     쓰면 무엇에 맞았는지가 아니라 "무슨 소리지"가 되어 한 박자 늦는다.
+     0.42 는 내가 때리는 소리(배수 1)의 절반이 채 안 된다. */
+  hurt_player: ['hit_flesh', .88, .42]
 };
 
 /* 키별 최소 간격(초). 없으면 제한 없음 */
@@ -202,11 +241,31 @@ const SFX_GAP = {
   hit_metal: 0.06, hit_glass: 0.06, hit_gel: 0.06, hit_plant: 0.06, hit_ember: 0.06,
   hit_void: 0.06,
   // 세션 3 — 물방울은 잦아서 묶고, 탐지기는 반경에 들 때마다 울지 않게 넉넉히
-  bubble: 0.45, ore_hit: 0.12, detector: 0.6, splash: 0.25
+  bubble: 0.45, ore_hit: 0.12, detector: 0.6, splash: 0.25,
+  // 내가 맞는 소리는 damage 와 같은 박자로 (여러 마리에게 둘러싸이면 초당 수십 번 들어온다)
+  hurt_player: 0.07,
+  // 재질음 위에 얹는 겹들. 재질음과 같은 박자로 막아야 둘이 어긋나지 않는다
+  hit_slash: 0.06, hit_pierce: 0.06, hit_blunt: 0.06, hit_crit: 0.06,
+  hit_fire: 0.06, hit_frost: 0.06, hit_soul: 0.06, hit_arcane: 0.06,
+  // 물에 드는 소리 — 물가에서 들락날락하면 계속 울린다. splash 보다 긴 소리라 더 넉넉히
+  hit_water: 0.4,
+  /* 별 조각은 이야기의 한 순간이라 막을 일이 없다. star_rise 는 한 판에 몇 번뿐이고
+     star_gain 도 조각을 주울 때만 울린다 — 간격을 두면 오히려 빠진 것처럼 들린다. */
+  star_gain: 0.2
 };
 /* 키별 음량 배수 — 공장 상시음은 전투음보다 한참 작게 깔린다 */
 const SFX_VOL = { belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7,
-  bubble: 0.5, detector: 0.45, ore_hit: 0.7, drown: 0.85, boom_small: 0.9, boom_big: 1 };
+  bubble: 0.5, detector: 0.45, ore_hit: 0.7, drown: 0.85, boom_small: 0.9, boom_big: 1,
+  /* 별 조각 셋은 다른 효과음보다 길어서(0.9~1.5초) 같은 크기로 두면 그 동안 다른 소리를
+     전부 덮는다. 떠오르는 쪽은 화면이 멈춰 있는 순간이라 오히려 크게 둔다. */
+  star_gain: 0.7, star_merge: 0.85, star_rise: 0.9,
+  // 물에 드는 소리는 몸이 잠기는 소리지 사건이 아니다 — 전투음보다 한 단계 아래로
+  hit_water: 0.6,
+  /* ★ 재질음 위에 **얹는** 겹이라 재질음(배수 1)보다 작아야 한다. 같은 크기로 두면
+     두 소리가 각자 "한 대"로 들려서 때린 횟수가 두 배로 들린다 — 작게 깔려야 색만
+     입는다. 치명타는 강조라 조금 더 크고, 원소는 그 사이다. */
+  hit_slash: 0.55, hit_pierce: 0.55, hit_blunt: 0.55, hit_crit: 0.7,
+  hit_fire: 0.6, hit_frost: 0.6, hit_soul: 0.6, hit_arcane: 0.6 };
 /* 키별 재생 시작 지점(초). 앞에 쓸데없는 공백이 붙어 온 파일을 자르지 않고 건너뛴다.
    hatch는 생성 AI가 2초짜리로 뽑아 줬는데 정작 "빵!" 하는 순간이 1.70초에 있어서,
    0초부터 틀면 죽은 공기 1.7초를 듣고 나서야 소리가 난다. 파형을 재서 상승 직전
