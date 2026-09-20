@@ -3217,10 +3217,11 @@ const ACH_CAT = { story: '여정', farm: '농사', auto: '자동화', gather: '�
    기준은 "언제쯤 저절로 되는가"다. easy는 평범히 놀다 보면 닿고, mid는 마음먹고
    한동안 해야 하며, hard는 작정하고 파야 한다. */
 const ACH_TIER = { easy: ['쉬움', '#6fbf5a'], mid: ['중간', '#d8b048'], hard: ['어려움', '#d05a4a'] };
-const ACH_ORDER = { easy: 0, mid: 1, hard: 2 };
 /** 숨은 업적인가 — **어려움은 전부 숨긴다.** 어려운 것은 하나같이 "누가 시켜서 하는
     일이 아닌 것"이라, 조건을 미리 읽어 버리면 찾아내는 재미가 그 자리에서 사라진다.
-    쉬움·중간은 그대로 보여 준다 — 그쪽은 "다음에 뭘 할까"를 고르는 목록이어야 한다.
+    쉬움·중간은 그대로 보여 준다 — 무엇까지 있는 자리인지는 보여야 목록이 빈칸 표로
+    읽히지 않는다(차례로 해치우라는 뜻은 아니다 — 목록을 난이도로 줄 세우지 않는
+    까닭은 ui.js renderAch 참고).
     h: 1은 등급과 무관하게 숨기고 싶을 때 쓰는 딱지다(지금은 어려움과 겹친다).
     규칙을 여기 한 곳에 둔 이유는, 되돌리거나 등급을 바꾸는 게 한 줄이면 되게 하려는 것. */
 function achHidden(a) { return !!a.h || a.t === 'hard'; }
@@ -3230,30 +3231,38 @@ function achHidden(a) { return !!a.h || a.t === 'hard'; }
    난이도 배지는 그대로 보여 준다. 무엇인지는 몰라도 **얼마나 어려운지는** 알아야
    목록이 그냥 빈칸으로 읽히지 않는다. */
 
-/* 업적 50개. 갈래 여덟, 난이도 셋.
+/* 업적 60개. 갈래 여덟, 난이도 셋.
+
+   ★ 설명(d)은 **시킬 일이 아니라 지나간 일**로 적는다. 예전에는 "밀을 100개 거둔다"
+     처럼 목표를 적었는데, 그러면 같은 일지 안에 있는 의뢰 목록과 글투가 같아져서
+     업적표 전체가 **또 하나의 숙제 목록**으로 읽혔다. 업적은 시키는 자리가 아니라
+     해낸 것을 적어 두는 자리다. 숫자는 그대로 남긴다 — 어디까지 가야 하는지는
+     여전히 읽혀야 하고, 달라지는 건 말투뿐이다.
+     ("곳간에 밀 100개가 쌓였다.")
+
    기준은 되도록 **이미 세이브에 있는 값**으로 물었다 — p.gathered · p.kills ·
    p.mined · p.bossKilled · p.deepest · p.highest · G.crafted · G.talked ·
    G.sideDone · G.dayCount · G.tabletsRead · world.machines.
    그것만으로 못 재는 것(플레이 시간·거래 횟수·익사)만 G.tally에 따로 센다. */
 const ACHIEVEMENTS = [
   // ---------------- 여정 (스토리) ----------------
-  { id: 'a_ch1', cat: 'story', t: 'easy', i: '✦', n: '첫 조각', d: '제 1 장을 넘긴다.',
+  { id: 'a_ch1', cat: 'story', t: 'easy', i: '✦', n: '첫 조각', d: '제 1 장이 끝났다.',
     check: g => g.chapter >= 2 },
-  { id: 'a_village', cat: 'story', t: 'easy', i: '🏚', n: '되살아난 마을', d: '여명 마을을 되찾는다.',
+  { id: 'a_village', cat: 'story', t: 'easy', i: '🏚', n: '되살아난 마을', d: '여명 마을에 다시 불이 켜졌다.',
     check: g => !!g.villageUnlocked },
-  { id: 'a_session2', cat: 'story', t: 'mid', i: '🧱', n: '벽 너머', d: '세션 2에 들어선다.',
+  { id: 'a_session2', cat: 'story', t: 'mid', i: '🧱', n: '벽 너머', d: '벽 너머로 넘어갔다.',
     check: g => g.chapter >= SESSIONS[1].ch0 },
-  { id: 'a_session3', cat: 'story', t: 'mid', i: '🌊', n: '가라앉은 쪽', d: '세션 3에 들어선다.',
+  { id: 'a_session3', cat: 'story', t: 'mid', i: '🌊', n: '가라앉은 쪽', d: '물이 지운 쪽으로 내려갔다.',
     check: g => g.chapter >= SESSIONS[2].ch0 },
-  { id: 'a_first_boss', cat: 'story', t: 'easy', i: '👑', n: '처음 넘어뜨린 것', d: '보스를 하나 잡는다.',
+  { id: 'a_first_boss', cat: 'story', t: 'easy', i: '👑', n: '처음 넘어뜨린 것', d: '처음으로 큰 것을 넘어뜨렸다.',
     check: g => Object.keys(g.player.bossKilled || {}).length >= 1 },
-  { id: 'a_five_hearts', cat: 'story', t: 'mid', i: '💠', n: '다섯 심장', d: '별을 쫓아온 것까지 잡는다.',
+  { id: 'a_five_hearts', cat: 'story', t: 'mid', i: '💠', n: '다섯 심장', d: '별을 쫓아온 것이 멈췄다.',
     check: g => !!g.player.bossKilled.pursuer },
-  { id: 'a_story_bosses', cat: 'story', t: 'hard', i: '⚔', n: '이야기를 끝까지', d: '스토리 보스를 모두 잡는다.',
+  { id: 'a_story_bosses', cat: 'story', t: 'hard', i: '⚔', n: '이야기를 끝까지', d: '이야기에 나온 것들이 모두 쓰러졌다.',
     check: g => ['king_slime', 'bone_lord', 'corrupt_heart', 'frost_witch', 'void_king',
       'storm_warden', 'first_keeper', 'pursuer', 'overseer', 'proliferator', 'hepha',
       'archetype', 'tide_warden'].every(k => g.player.bossKilled[k]) },
-  { id: 'a_all_bosses', h: 1, cat: 'story', t: 'hard', i: '🏆', n: '남김없이', d: '스토리·유적·비밀 보스를 전부 잡는다.',
+  { id: 'a_all_bosses', h: 1, cat: 'story', t: 'hard', i: '🏆', n: '남김없이', d: '이름이 붙은 것은 하나도 남지 않았다.',
     check: g => ['king_slime', 'bone_lord', 'corrupt_heart', 'frost_witch', 'void_king',
       'storm_warden', 'first_keeper', 'pursuer', 'overseer', 'proliferator', 'hepha',
       'archetype', 'tide_warden', 'mine_horror', 'ice_warden', 'sand_guardian',
@@ -3261,128 +3270,128 @@ const ACHIEVEMENTS = [
       .every(k => g.player.bossKilled[k]) },
 
   // ---------------- 농사 ----------------
-  { id: 'a_first_crop', cat: 'farm', t: 'easy', i: '🌱', n: '첫 이랑', d: '작물을 처음 거둔다.',
+  { id: 'a_first_crop', cat: 'farm', t: 'easy', i: '🌱', n: '첫 이랑', d: '처음 심은 것을 거뒀다.',
     check: g => ['wheat', 'starroot', 'ashcap'].some(k => (g.player.gathered[k] || 0) >= 1) },
-  { id: 'a_first_cook', cat: 'farm', t: 'easy', i: '🍞', n: '첫 끼니', d: '요리를 하나 만든다.',
+  { id: 'a_first_cook', cat: 'farm', t: 'easy', i: '🍞', n: '첫 끼니', d: '불 위에 처음 냄비를 올렸다.',
     check: g => achCount(ACH_FOODS, k => (g.crafted || {})[k]) >= 1 },
-  { id: 'a_harvest', cat: 'farm', t: 'mid', i: '🌾', n: '첫 곳간', d: '밀을 100개 거둔다.',
+  { id: 'a_harvest', cat: 'farm', t: 'mid', i: '🌾', n: '첫 곳간', d: '곳간에 밀 100개가 쌓였다.',
     check: g => (g.player.gathered.wheat || 0) >= 100 },
-  { id: 'a_three_crops', cat: 'farm', t: 'mid', i: '🧺', n: '세 이랑', d: '밀·별무·잿버섯을 50개씩 거둔다.',
+  { id: 'a_three_crops', cat: 'farm', t: 'mid', i: '🧺', n: '세 이랑', d: '밀·별무·잿버섯이 50개씩 쌓였다.',
     check: g => ['wheat', 'starroot', 'ashcap'].every(k => (g.player.gathered[k] || 0) >= 50) },
-  { id: 'a_cook', cat: 'farm', t: 'mid', i: '🍲', n: '부엌을 아는 사람', d: '요리를 여섯 가지 만든다.',
+  { id: 'a_cook', cat: 'farm', t: 'mid', i: '🍲', n: '부엌을 아는 사람', d: '여섯 가지 요리를 할 줄 알게 됐다.',
     check: g => achCount(ACH_FOODS, k => (g.crafted || {})[k]) >= 6 },
-  { id: 'a_feast', cat: 'farm', t: 'hard', i: '🥘', n: '잔칫상', d: '가장 손이 많이 가는 요리를 만든다.',
+  { id: 'a_feast', cat: 'farm', t: 'hard', i: '🥘', n: '잔칫상', d: '가장 손이 많이 가는 상을 차렸다.',
     check: g => !!(g.crafted || {}).food_feast },
-  { id: 'a_farm_1000', cat: 'farm', t: 'hard', i: '🚜', n: '들판을 통째로', d: '작물을 모두 합쳐 1,000개 거둔다.',
+  { id: 'a_farm_1000', cat: 'farm', t: 'hard', i: '🚜', n: '들판을 통째로', d: '땅에서 거둔 것이 1,000개를 넘었다.',
     check: g => ['wheat', 'starroot', 'ashcap'].reduce((a, k) => a + (g.player.gathered[k] || 0), 0) >= 1000 },
 
   // ---------------- 자동화 ----------------
-  { id: 'a_first_mach', cat: 'auto', t: 'easy', i: '🔧', n: '처음 놓은 기계', d: '기계를 하나 놓는다.',
+  { id: 'a_first_mach', cat: 'auto', t: 'easy', i: '🔧', n: '처음 놓은 기계', d: '처음으로 기계 하나를 세웠다.',
     check: g => achMach(g) >= 1 },
-  { id: 'a_power', cat: 'auto', t: 'easy', i: '🔌', n: '전기를 끌어오다', d: '발전기·축전지·전주를 모두 만든다.',
+  { id: 'a_power', cat: 'auto', t: 'easy', i: '🔌', n: '전기를 끌어오다', d: '발전기와 축전지와 전주가 다 섰다.',
     check: g => ['m_gen', 'm_battery', 'm_pole'].every(k => (g.crafted || {})[k]) },
-  { id: 'a_first_line', cat: 'auto', t: 'mid', i: '⚙', n: '스스로 도는 것', d: '기계를 20대 놓는다.',
+  { id: 'a_first_line', cat: 'auto', t: 'mid', i: '⚙', n: '스스로 도는 것', d: '기계 스무 대가 저 혼자 돌고 있다.',
     check: g => achMach(g) >= 20 },
-  { id: 'a_smart', cat: 'auto', t: 'mid', i: '🤖', n: '기계를 만드는 기계', d: '조립기·제련기·압착기·정제기를 모두 만든다.',
+  { id: 'a_smart', cat: 'auto', t: 'mid', i: '🤖', n: '기계를 만드는 기계', d: '조립기·제련기·압착기·정제기가 한 줄에 섰다.',
     check: g => ['m_assembler', 'm_smelter', 'm_press', 'm_refinery'].every(k => (g.crafted || {})[k]) },
-  { id: 'a_lv4_mach', cat: 'auto', t: 'mid', i: '🔩', n: '가압 설비', d: '4단계 전용 기계 넷을 모두 만든다.',
+  { id: 'a_lv4_mach', cat: 'auto', t: 'mid', i: '🔩', n: '가압 설비', d: '가압 설비 넷을 다 갖췄다.',
     check: g => ['m_pressor', 'm_desal', 'm_belt_f', 'm_battery_hi'].every(k => (g.crafted || {})[k]) },
-  { id: 'a_factory', cat: 'auto', t: 'hard', i: '🏭', n: '공장', d: '기계를 80대 놓는다.',
+  { id: 'a_factory', cat: 'auto', t: 'hard', i: '🏭', n: '공장', d: '기계 여든 대가 돈다. 이쯤 되면 공장이다.',
     check: g => achMach(g) >= 80 },
   /* crafted는 **제작 횟수**를 센다(한 번에 8개가 나와도 1). 개수를 재려면 gathered를
      봐야 한다 — 만든 물건도 addItem을 거치므로 거기 쌓인다. */
-  { id: 'a_belt', cat: 'auto', t: 'hard', i: '➡', n: '길게 잇다', d: '컨베이어 벨트를 200개 만든다.',
+  { id: 'a_belt', cat: 'auto', t: 'hard', i: '➡', n: '길게 잇다', d: '벨트 200개가 깔렸다.',
     check: g => (g.player.gathered.m_belt || 0) + (g.player.gathered.m_belt_f || 0) >= 200 },
 
   // ---------------- 손재주 ----------------
-  { id: 'a_first_pick', cat: 'gather', t: 'easy', i: '⛏', n: '연장부터', d: '곡괭이를 만든다.',
+  { id: 'a_first_pick', cat: 'gather', t: 'easy', i: '⛏', n: '연장부터', d: '연장부터 하나 만들었다.',
     check: g => ['pick_copper', 'pick_iron', 'pick_steel', 'pick_mythril', 'pick_abyss']
       .some(k => (g.crafted || {})[k]) },
-  { id: 'a_wood_200', cat: 'gather', t: 'easy', i: '🪵', n: '나무꾼', d: '나무를 200개 모은다.',
+  { id: 'a_wood_200', cat: 'gather', t: 'easy', i: '🪵', n: '나무꾼', d: '나무 200개를 베어 왔다.',
     check: g => (g.player.gathered.wood || 0) >= 200 },
-  { id: 'a_first_fish', cat: 'gather', t: 'easy', i: '🐟', n: '첫 손맛', d: '물고기를 하나 낚는다.',
+  { id: 'a_first_fish', cat: 'gather', t: 'easy', i: '🐟', n: '첫 손맛', d: '처음으로 하나 걸렸다.',
     check: g => ['fish_common', 'fish_silver', 'fish_deep'].some(k => (g.player.gathered[k] || 0) >= 1) },
-  { id: 'a_gunpowder', cat: 'gather', t: 'mid', i: '💥', n: '터지는 것', d: '화약을 만든다.',
+  { id: 'a_gunpowder', cat: 'gather', t: 'mid', i: '💥', n: '터지는 것', d: '화약을 개어 봤다.',
     check: g => !!(g.crafted || {}).gunpowder },
-  { id: 'a_fish', cat: 'gather', t: 'mid', i: '🎣', n: '물가에 오래 앉아', d: '물고기 세 종류를 30마리씩 낚는다.',
+  { id: 'a_fish', cat: 'gather', t: 'mid', i: '🎣', n: '물가에 오래 앉아', d: '세 종류를 서른 마리씩 낚을 때까지 물가에 앉아 있었다.',
     check: g => ['fish_common', 'fish_silver', 'fish_deep'].every(k => (g.player.gathered[k] || 0) >= 30) },
-  { id: 'a_abyss_gear', cat: 'gather', t: 'mid', i: '🔱', n: '심해에서 온 것', d: '4단계 시설로 심해 장비를 만든다.',
+  { id: 'a_abyss_gear', cat: 'gather', t: 'mid', i: '🔱', n: '심해에서 온 것', d: '심해에서 난 것으로 벼린 장비를 들었다.',
     check: g => ['spear_tide', 'blade_shark', 'bow_harpoon', 'orb_abyss', 'hammer_tide',
       'gun_harpoon', 'tome_abyss', 'pick_abyss'].some(k => (g.crafted || {})[k]) },
-  { id: 'a_mine_2000', cat: 'gather', t: 'mid', i: '🪓', n: '파고 또 파고', d: '타일을 2,000번 캔다.',
+  { id: 'a_mine_2000', cat: 'gather', t: 'mid', i: '🪓', n: '파고 또 파고', d: '곡괭이가 2,000번 땅을 물었다.',
     check: g => achSum(g.player.mined) >= 2000 },
-  { id: 'a_enh10', cat: 'gather', t: 'hard', i: '🔨', n: '열 겹', d: '장비를 +10까지 두들긴다.',
+  { id: 'a_enh10', cat: 'gather', t: 'hard', i: '🔨', n: '열 겹', d: '모루 위에서 열 번을 견딘 물건이 있다.',
     check: g => achAnyItem(g, it => (it.e || 0) >= 10) },
-  { id: 'a_mine_20000', h: 1, cat: 'gather', t: 'hard', i: '🕳', n: '땅을 뒤집다', d: '타일을 20,000번 캔다.',
+  { id: 'a_mine_20000', h: 1, cat: 'gather', t: 'hard', i: '🕳', n: '땅을 뒤집다', d: '20,000번. 땅을 통째로 뒤집었다.',
     check: g => achSum(g.player.mined) >= 20000 },
 
   // ---------------- 탐험 ----------------
-  { id: 'a_cave', cat: 'explore', t: 'easy', i: '🕯', n: '첫 동굴', d: '지하 60칸까지 내려간다.',
+  { id: 'a_cave', cat: 'explore', t: 'easy', i: '🕯', n: '첫 동굴', d: '지하 60칸 아래를 봤다.',
     check: g => g.player.deepest >= 120 },
-  { id: 'a_deep', cat: 'explore', t: 'mid', i: '⬇', n: '심층', d: '지하 깊은 층까지 내려간다.',
+  { id: 'a_deep', cat: 'explore', t: 'mid', i: '⬇', n: '심층', d: '심층까지 내려갔다.',
     check: g => g.player.deepest >= DEEP_Y },
-  { id: 'a_hell', cat: 'explore', t: 'mid', i: '🔥', n: '가장 아래', d: '지옥에 발을 딛는다.',
+  { id: 'a_hell', cat: 'explore', t: 'mid', i: '🔥', n: '가장 아래', d: '가장 아래에 발을 디뎠다.',
     check: g => g.player.deepest >= HELL_Y },
-  { id: 'a_sky', cat: 'explore', t: 'mid', i: '☁', n: '구름 위', d: '하늘 섬에 오른다.',
+  { id: 'a_sky', cat: 'explore', t: 'mid', i: '☁', n: '구름 위', d: '구름 위에 올라섰다.',
     check: g => g.player.highest !== undefined && g.player.highest <= SKY_Y },
-  { id: 'a_lore', cat: 'explore', t: 'mid', i: '🪨', n: '읽은 사람', d: '유적 석판 셋을 모두 읽는다.',
+  { id: 'a_lore', cat: 'explore', t: 'mid', i: '🪨', n: '읽은 사람', d: '유적 석판 셋을 다 읽었다.',
     check: g => Object.keys(g.tabletsRead || {}).length >= 3 },
-  { id: 'a_seafloor', cat: 'explore', t: 'hard', i: '🐙', n: '숨이 닿지 않는 곳', d: '심해 평원 바닥까지 내려간다.',
+  { id: 'a_seafloor', cat: 'explore', t: 'hard', i: '🐙', n: '숨이 닿지 않는 곳', d: '숨이 닿지 않는 바닥까지 내려갔다.',
     check: g => g.player.deepest >= 690 },
-  { id: 'a_yunseul', h: 1, cat: 'explore', t: 'hard', i: '🫧', n: '물속의 집', d: '아무도 말해 주지 않은 사람을 찾아낸다.',
+  { id: 'a_yunseul', h: 1, cat: 'explore', t: 'hard', i: '🫧', n: '물속의 집', d: '아무도 말해 주지 않은 사람을 만났다.',
     check: g => !!(g.talked || {}).yunseul },
 
   // ---------------- 토벌 ----------------
-  { id: 'a_kill_50', cat: 'hunt', t: 'easy', i: '🗡', n: '쉰 번', d: '몬스터를 50마리 잡는다.',
+  { id: 'a_kill_50', cat: 'hunt', t: 'easy', i: '🗡', n: '쉰 번', d: '쉰 마리를 넘어뜨렸다.',
     check: g => achSum(g.player.kills) >= 50 },
-  { id: 'a_kill_300', cat: 'hunt', t: 'mid', i: '💀', n: '삼백 번', d: '몬스터를 300마리 잡는다.',
+  { id: 'a_kill_300', cat: 'hunt', t: 'mid', i: '💀', n: '삼백 번', d: '삼백 마리를 넘어뜨렸다.',
     check: g => achSum(g.player.kills) >= 300 },
-  { id: 'a_bloodmoon', cat: 'hunt', t: 'mid', i: '🌑', n: '붉은 밤을 견딘 자', d: '붉은 달에 나오는 것을 50마리 잡는다.',
+  { id: 'a_bloodmoon', cat: 'hunt', t: 'mid', i: '🌑', n: '붉은 밤을 견딘 자', d: '붉은 달에 나오는 것 쉰 마리를 견뎌 냈다.',
     check: g => (g.player.kills.crimson_howler || 0) + (g.player.kills.crimson_eye || 0) >= 50 },
-  { id: 'a_ruin_bosses', cat: 'hunt', t: 'hard', i: '🗝', n: '유적을 비운 자', d: '유적 미니보스 다섯을 모두 잡는다.',
+  { id: 'a_ruin_bosses', cat: 'hunt', t: 'hard', i: '🗝', n: '유적을 비운 자', d: '유적 다섯이 비었다.',
     check: g => ['mine_horror', 'ice_warden', 'sand_guardian', 'spore_queen', 'blight_maw']
       .every(k => g.player.bossKilled[k]) },
   /* 상자를 여는 것만으로는 안 준다 — **잡아야** 준다. 상자는 미끼일 뿐이고,
      이 업적이 가리키는 건 그 뒤에 벌어지는 일이다. 어려움이라 자동으로 숨는다. */
-  { id: 'a_isle', cat: 'hunt', t: 'hard', i: '🏝', n: '섬을 내려놓게 하다', d: '떠 있는 섬을 붙들고 있던 것을 잡는다.',
+  { id: 'a_isle', cat: 'hunt', t: 'hard', i: '🏝', n: '섬을 내려놓게 하다', d: '섬을 붙들고 있던 것이 손을 놓았다.',
     check: g => !!g.player.bossKilled.isle_keeper },
-  { id: 'a_secret_bosses', h: 1, cat: 'hunt', t: 'hard', i: '🕳', n: '아무도 시키지 않은 일', d: '환원기와 갱을 메운 것을 잡는다.',
+  { id: 'a_secret_bosses', h: 1, cat: 'hunt', t: 'hard', i: '🕳', n: '아무도 시키지 않은 일', d: '아무도 시키지 않은 둘을 끝냈다.',
     check: g => !!(g.player.bossKilled.restorer && g.player.bossKilled.shaft_maw) },
-  { id: 'a_kill_3000', cat: 'hunt', t: 'hard', i: '☠', n: '삼천 번', d: '몬스터를 3,000마리 잡는다.',
+  { id: 'a_kill_3000', cat: 'hunt', t: 'hard', i: '☠', n: '삼천 번', d: '삼천 마리를 넘어뜨렸다.',
     check: g => achSum(g.player.kills) >= 3000 },
 
   // ---------------- 살림 ----------------
-  { id: 'a_inn', cat: 'life', t: 'easy', i: '🛏', n: '하룻밤', d: '여관에서 한 번 잔다.',
+  { id: 'a_inn', cat: 'life', t: 'easy', i: '🛏', n: '하룻밤', d: '여관에서 하룻밤 잤다.',
     check: g => ((g.tally || {}).inn || 0) >= 1 },
-  { id: 'a_village4', cat: 'life', t: 'mid', i: '🏘', n: '여명 교역지', d: '마을을 4단계까지 올린다.',
+  { id: 'a_village4', cat: 'life', t: 'mid', i: '🏘', n: '여명 교역지', d: '마을이 교역지가 됐다.',
     check: g => g.villageLv() >= 4 },
-  { id: 'a_side10', cat: 'life', t: 'mid', i: '📜', n: '부탁받는 사람', d: '의뢰를 10건 끝낸다.',
+  { id: 'a_side10', cat: 'life', t: 'mid', i: '📜', n: '부탁받는 사람', d: '부탁 열 건을 들어줬다.',
     check: g => achSum(g.sideDone) >= 10 },
-  { id: 'a_day50', cat: 'life', t: 'mid', i: '🌅', n: '오십 일', d: '50일을 넘긴다.',
+  { id: 'a_day50', cat: 'life', t: 'mid', i: '🌅', n: '오십 일', d: '쉰 번째 아침이 왔다.',
     check: g => g.dayCount >= 50 },
-  { id: 'a_gold', cat: 'life', t: 'mid', i: '🪙', n: '금고가 무겁다', d: '금화를 100만 모은다.',
+  { id: 'a_gold', cat: 'life', t: 'mid', i: '🪙', n: '금고가 무겁다', d: '금화 100만이 쌓였다.',
     check: g => g.player.gold >= 1000000 },
-  { id: 'a_pet_max', cat: 'life', t: 'hard', i: '🐾', n: '끝까지 키운 것', d: '펫을 10레벨까지 키운다.',
+  { id: 'a_pet_max', cat: 'life', t: 'hard', i: '🐾', n: '끝까지 키운 것', d: '한 마리를 끝까지 키웠다.',
     check: g => achAnyItem(g, it => idef(it).type === 'pet' && (it.lv || 1) >= PET_LV_MAX) },
-  { id: 'a_gold10m', h: 1, cat: 'life', t: 'hard', i: '💰', n: '쓸 데가 없다', d: '금화를 1,000만 모은다.',
+  { id: 'a_gold10m', h: 1, cat: 'life', t: 'hard', i: '💰', n: '쓸 데가 없다', d: '금화 1,000만. 쓸 데가 없다.',
     check: g => g.player.gold >= 10000000 },
 
   // ---------------- 별난 것 ----------------
-  { id: 'a_trade1', cat: 'odd', t: 'easy', i: '🤝', n: '첫 거래', d: '상인과 처음 거래한다.',
+  { id: 'a_trade1', cat: 'odd', t: 'easy', i: '🤝', n: '첫 거래', d: '상인과 처음 물건을 주고받았다.',
     check: g => ((g.tally || {}).trade || 0) >= 1 },
-  { id: 'a_play1h', cat: 'odd', t: 'easy', i: '⏳', n: '한 시간', d: '한 시간을 논다.',
+  { id: 'a_play1h', cat: 'odd', t: 'easy', i: '⏳', n: '한 시간', d: '한 시간이 지났다.',
     check: g => ((g.tally || {}).play || 0) >= 3600 },
-  { id: 'a_drown', cat: 'odd', t: 'easy', i: '🫁', n: '숨이 먼저 다했다', d: '물속에서 숨이 다해 죽는다.',
+  { id: 'a_drown', cat: 'odd', t: 'easy', i: '🫁', n: '숨이 먼저 다했다', d: '물속에서 숨이 먼저 다했다.',
     check: g => ((g.tally || {}).drown || 0) >= 1 },
-  { id: 'a_trade100', cat: 'odd', t: 'mid', i: '🧾', n: '단골', d: '거래를 100건 한다.',
+  { id: 'a_trade100', cat: 'odd', t: 'mid', i: '🧾', n: '단골', d: '거래 백 건. 이제 단골이다.',
     check: g => ((g.tally || {}).trade || 0) >= 100 },
-  { id: 'a_play10h', cat: 'odd', t: 'mid', i: '🕰', n: '열 시간', d: '열 시간을 논다.',
+  { id: 'a_play10h', cat: 'odd', t: 'mid', i: '🕰', n: '열 시간', d: '열 시간이 지났다.',
     check: g => ((g.tally || {}).play || 0) >= 36000 },
-  { id: 'a_die20', cat: 'odd', t: 'mid', i: '⚰', n: '그래도 다시', d: '스무 번 쓰러졌다 일어난다.',
+  { id: 'a_die20', cat: 'odd', t: 'mid', i: '⚰', n: '그래도 다시', d: '스무 번 쓰러지고 스무 번 일어났다.',
     check: g => ((g.tally || {}).deaths || 0) >= 20 },
-  { id: 'a_play100h', h: 1, cat: 'odd', t: 'hard', i: '🌌', n: '백 시간', d: '백 시간을 논다.',
+  { id: 'a_play100h', h: 1, cat: 'odd', t: 'hard', i: '🌌', n: '백 시간', d: '백 시간이 지났다.',
     check: g => ((g.tally || {}).play || 0) >= 360000 },
-  { id: 'a_level100', cat: 'odd', t: 'hard', i: '⭐', n: '백 번째 아침', d: '레벨 100에 닿는다.',
+  { id: 'a_level100', cat: 'odd', t: 'hard', i: '⭐', n: '백 번째 아침', d: '레벨 100에 닿았다.',
     check: g => g.player.level >= 100 }
 ];
 const ACH_FOODS = ['food_bread', 'food_stew', 'food_soup', 'food_pie', 'food_curry',
