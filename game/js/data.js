@@ -3411,7 +3411,17 @@ const ACH_FOODS = ['food_bread', 'food_stew', 'food_soup', 'food_pie', 'food_cur
 /* 업적 판정에 쓰는 잔 도구들. check가 순수하도록 여기 모아 둔다. */
 function achSum(o) { let n = 0; for (const k in (o || {})) n += o[k] | 0; return n; }
 function achCount(list, fn) { let n = 0; for (const k of list) if (fn(k)) n++; return n; }
-function achMach(g) { return (g.world && g.world.machines) ? g.world.machines.size : 0; }
+/* ★ 세계가 지어 둔 기계(m.gen)는 빼고 센다. 유적 함정도 기계라서, 그냥 size 를 쓰면
+   **첫 지형 생성만으로** 새 세계에 이미 기계가 26대(dart 9·trap 8·flamejet 6·frostjet 3)
+   들어 있어 "처음 놓은 기계"(1대)와 "스스로 도는 것"(20대)이 시작하자마자 달성됐다.
+   옛 세이브의 기계에는 gen 이 없으므로 전부 플레이어 것으로 세어진다 — 이미 받은
+   업적을 도로 빼앗지 않으려고 표시를 그쪽으로 뒤집어 놓았다(factory.js place 참고). */
+function achMach(g) {
+  if (!g.world || !g.world.machines) return 0;
+  let n = 0;
+  for (const m of g.world.machines.values()) if (!m.gen) n++;
+  return n;
+}
 function achEquip(g, fn) {
   const eq = g.player.equip;
   for (const k in eq) if (eq[k] && fn(eq[k])) return true;

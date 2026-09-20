@@ -1012,11 +1012,11 @@ class World {
       // 기계식 함정 — 이 층은 기계가 지었다
       if (rng.chance(0.8) && window.Factory) {
         const left = rng.chance(0.5), tx = left ? r.x + 1 : r.x + r.w - 2;
-        if (Factory.canPlace(this, tx, fy)) Factory.place(this, tx, fy, rng.pick(['dart', 'flamejet', 'frostjet']), left ? 0 : 2);
+        if (Factory.canPlace(this, tx, fy)) Factory.place(this, tx, fy, rng.pick(['dart', 'flamejet', 'frostjet']), left ? 0 : 2, 1);
       }
       if (rng.chance(0.5) && window.Factory) {
         const tx2 = r.x + rng.int(3, Math.max(3, r.w - 4));
-        if (Factory.canPlace(this, tx2, fy)) Factory.place(this, tx2, fy, 'trap', 0);
+        if (Factory.canPlace(this, tx2, fy)) Factory.place(this, tx2, fy, 'trap', 0, 1);
       }
       if (rng.chance(0.6))
         // 세션 2 폭주로의 상자는 일반 유적 너프를 받지 않는 고보상 프로필이다.
@@ -1081,7 +1081,7 @@ class World {
       for (let x = r.x + 3; x < r.x + r.w - 2; x += 5) this.set(x, fy + 1, T.ARCHESTONE);
       if (rng.chance(0.55) && window.Factory) {
         const left = rng.chance(0.5), tx2 = left ? r.x + 1 : r.x + r.w - 2;
-        if (Factory.canPlace(this, tx2, fy)) Factory.place(this, tx2, fy, rng.pick(['dart', 'flamejet']), left ? 0 : 2);
+        if (Factory.canPlace(this, tx2, fy)) Factory.place(this, tx2, fy, rng.pick(['dart', 'flamejet']), left ? 0 : 2, 1);
       }
       if (rng.chance(0.55))
         this.objects.push({ type: 'chest', tier: 6, loot: 'session2',
@@ -1354,7 +1354,7 @@ class World {
     const rng = new RNG(this.seed + '_v' + lv);
     const P = (o) => this.objects.push(o);
     const mach = (tx, ty, key, dir) => {
-      if (window.Factory && Factory.canPlace(this, tx, ty)) Factory.place(this, tx, ty, key, dir || 0);
+      if (window.Factory && Factory.canPlace(this, tx, ty)) Factory.place(this, tx, ty, key, dir || 0, 1);
     };
 
     if (lv === 2) {
@@ -2207,6 +2207,23 @@ class World {
   openVaultAt(dx, dy) {
     for (const v of this.ruinVaults || [])
       if (dx >= v[0] - 1 && dx <= v[2] + 1 && dy >= v[1] && dy <= v[3]) v[5] = 1;
+  }
+
+  /** 암호를 맞힌 뒤 문간을 실제로 뚫는다 — 사람이 걸어 들어갈 수 있게.
+
+      ★ **두 겹을 다 뚫어야 한다.** buildCipherVault 는 골방을 암호석으로 두 겹 두른다
+        (옆을 파고 드는 것과 벽 너머로 상자만 여는 것을 막으려고). 그런데 문을 열 때는
+        안쪽 한 겹(dx)만 공기로 바꾸고 있었다. 바깥 겹(dx-1)이 문 높이 다섯 줄을 그대로
+        막아서, 쪽지 셋을 다 모아 암호를 맞혀도 들어갈 수가 없었다 — 암호석은 hard 99 라
+        캘 수도 없으니 **영영 막힌 방**이었다(씨앗 'a' 의 골방 세 곳 전부 그랬다).
+      ★ 암호석인 칸만 공기로 바꾼다. 문간 언저리의 다른 것(바닥·장식)은 건드리지 않고,
+        두 번 불러도 같은 결과다 — 그래서 옛 세이브를 불러올 때 그냥 다시 불러도 된다. */
+  openCodeDoorway(dx, dy) {
+    let n = 0;
+    for (let x = dx - 1; x <= dx; x++)
+      for (let y = dy - 4; y <= dy; y++)
+        if (this.get(x, y) === T.CIPHERSTONE) { this.set(x, y, T.AIR); n++; }
+    return n;
   }
 
   /** 자물쇠가 걸린 돌 — 암호석·봉인석. ★ 어떤 굴착·함정도 이 자리를 갈아엎지 않는다.
@@ -4418,6 +4435,12 @@ class World {
     w.surface = Int16Array.from(d.surface);
     w.objects = d.objects;
     w.fitObjects();   // 규격 도입 전 세이브에 담긴 큰 설치물도 여기서 한 칸 크기로 맞춘다
+    /* ★ 이미 연 암호 골방의 문간을 다시 뚫어 본다. 예전 판은 껍질 두 겹 중 안쪽 한 겹만
+       뚫어서, 암호를 맞히고도 못 들어간 세이브가 남아 있다(openCodeDoorway 의 ★).
+       암호석인 칸만 바꾸므로 이미 제대로 뚫린 문에는 아무 일도 일어나지 않는다.
+       세이브 **모양**은 그대로라 SAVE_UPGRADES 를 늘리지 않는다 — 고치는 것은 타일이다. */
+    for (const o of w.objects)
+      if (o.type === 'codedoor' && o.opened) w.openCodeDoorway(o.dx, o.dy);
     w.doors = w.objects.filter(o => o.type === 'door');   // objects와 같은 참조로 다시 캐싱
     for (const m of (d.machines || [])) w.machines.set(m.y * WW + m.x, m);
     for (const k of (d.crops || [])) w.crops.add(k);
