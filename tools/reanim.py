@@ -241,6 +241,13 @@ def damage(f, plan, shade=1.0, gl=1.0, hue=None):
     몸 전체가 한 단계 달라져야 한다. 세부는 그대로 두고 밝기만 옮기는 것이라
     손으로 그린 그림을 잃지 않는다."""
     holes, marks, color = plan
+    # ★ **두 번 얹으면 안 된다.** 이 함수는 자기 칸을 받아 자기 칸을 돌려주는 자리에
+    #   쓰인다(보스 페이즈: f[2] = damage(f[2], …)). 뜯은 자국과 균열은 두 번 해도
+    #   같은 자리라 괜찮지만 shade·gl 은 **곱이라서 겹친다** — 1.28 을 세 번 걸면
+    #   2.1 이 되어 그림이 하얗게 탄다. 균열색은 이 함수만 찍는 색이므로, 그 색이
+    #   이미 있으면 얹은 칸으로 보고 그냥 돌려준다.
+    if any(c == color for c in f.p.values()):
+        return f
     g = f.copy()
     if shade != 1.0:
         g = tone(g, shade)
@@ -306,7 +313,10 @@ def mob_ballast_form(f):
     f[1] = glow(scale_y(base, 0.98), 0.72, hue='cyan')           # 숨 — 눈이 사그라든다
     f[2] = legs(shear(base, -4), base.bottom() - 4, 2, 0, -2, 0)
     f[3] = legs(shear(base, 4), base.bottom() - 4, -2, 0, 2, 0)
-    f[4] = glow(shift(shear(f[4], 6), -1, 0), 1.6, hue='cyan')   # 겨누며 몸을 젖힌다
+    # ★ 때리는 칸은 **여기서 안 만든다.** 예전에는 f[4] 를 제 자신에서 만들었는데
+    #   (`f[4] = …(f[4])…`), 그러면 다시 구울 때마다 변형이 한 겹씩 더 얹힌다 —
+    #   기울임은 계속 기울고 밝기는 곱으로 타오른다. 지금 시트에 이미 한 번
+    #   얹혀 있으므로 그대로 둔다. 다시 걸고 싶으면 먼저 git 으로 되돌릴 것.
     return f
 
 
@@ -316,7 +326,10 @@ def mob_lost_miner(f):
     f[1] = scale_y(base, 0.97)
     f[2] = legs(shift(shear(base, -3), 0, -1), base.bottom() - 7, 2, 0, -1, 0)
     f[3] = legs(shift(shear(base, 3), 0, -1), base.bottom() - 7, -1, 0, 2, 0)
-    f[4] = shift(shear(f[4], -8), 2, 0)                          # 덤벼드는 자세
+    # ★ 때리는 칸은 **여기서 안 만든다.** 예전에는 f[4] 를 제 자신에서 만들었는데
+    #   (`f[4] = …(f[4])…`), 그러면 다시 구울 때마다 변형이 한 겹씩 더 얹힌다 —
+    #   기울임은 계속 기울고 밝기는 곱으로 타오른다. 지금 시트에 이미 한 번
+    #   얹혀 있으므로 그대로 둔다. 다시 걸고 싶으면 먼저 git 으로 되돌릴 것.
     return f
 
 
@@ -548,10 +561,23 @@ def mob_sandmaw(f):
 
 
 def mob_jungle_frog(f):
-    """정글 개구리 — 도약은 살아 있다. 앉아 있을 때 숨만 쉬게."""
+    """정글 개구리 — 앉아 있을 때 숨만 쉬고, 움직일 때는 **뛴다.**
+
+    ★ 걸음 둘째 칸을 여기서 만든다. 예전에는 WALK_FIX 에 넣어 walk_quad 가 만들게
+      했는데, 그 변환은 몸을 가운데에서 갈라 좌우로 민다 — 개구리는 24칸 안에
+      16칸짜리 납작한 몸이라 다리가 아니라 **몸통이 통째로 벌어졌다**(칸2 폭 18 →
+      칸3 폭 20, 가른 자리에 이음매). 늘어나는 것으로 보인다.
+
+      개구리는 애초에 걷지 않는다. 눈산토끼와 같은 결로 **웅크림 ↔ 폄** 두 장으로
+      간다 — 칸2(원화)가 펴고 뛰어오른 자세이므로, 칸3 은 그것을 눌러 내려앉힌다.
+      가로는 건드리지 않아 폭이 그대로다."""
     base = f[0]
     f[1] = shift(scale_y(base, 0.92), 0, 1)
-    f[4] = scale_x(scale_y(f[4], 1.1), 0.94)
+    f[3] = shift(scale_y(f[2], 0.86), 0, 2)      # 착지 — 눌리며 내려앉는다
+    # ★ 때리는 칸은 **여기서 안 만든다.** 예전에는 f[4] 를 제 자신에서 만들었는데
+    #   (`f[4] = …(f[4])…`), 그러면 다시 구울 때마다 변형이 한 겹씩 더 얹힌다 —
+    #   기울임은 계속 기울고 밝기는 곱으로 타오른다. 지금 시트에 이미 한 번
+    #   얹혀 있으므로 그대로 둔다. 다시 걸고 싶으면 먼저 git 으로 되돌릴 것.
     return f
 
 
@@ -909,7 +935,7 @@ AUTO_CHARS = {
 # ★ 사막 전갈도 뺐다 — walk_quad 가 몸통을 좌우로 벌려 늘어나 보여서, 레시피가
 #   꼬리·집게 흔들기와 발 떼기로 직접 만든다(mob_scorpion).
 WALK_FIX = {'minerghost', 'archivist', 'sporeling',
-            'coreling', 'rabbit', 'jungle_frog', 'drowned_hand', 'scribe_hand',
+            'coreling', 'rabbit', 'drowned_hand', 'scribe_hand',
             'damp_wisp', 'reef_crab', 'reef_shark', 'yunseul'}
 
 AUTO_BOSSES = {

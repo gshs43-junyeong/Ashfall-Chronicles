@@ -169,15 +169,15 @@
       "imp": {
         "file": "char/imp.png",
         "frameW": 28,
-        "frameH": 31,
+        "frameH": 32,
         "count": 7,
         "foot": -0.75,
         "side": 0.0
       },
       "golem": {
         "file": "char/golem.png",
-        "frameW": 38,
-        "frameH": 50,
+        "frameW": 40,
+        "frameH": 51,
         "count": 7,
         "foot": -0.75,
         "side": 0.0
@@ -217,7 +217,7 @@
       "lantern": {
         "file": "char/lantern.png",
         "frameW": 26,
-        "frameH": 34,
+        "frameH": 36,
         "count": 7,
         "foot": -0.75,
         "side": -0.5
