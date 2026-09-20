@@ -341,10 +341,30 @@ def mob_riveter(f):
 
 
 def mob_crystalcrab(f):
-    """수정게 — 걸음은 훌륭한데 서 있는 자세가 걸음과 같았다. 쉬는 자세를 만든다."""
+    """수정게 — 걸음은 훌륭한데 서 있는 자세가 걸음과 같았다. 쉬는 자세를 만든다.
+
+    ★ 걷는 둘째 칸도 여기서 만든다. 예전에는 WALK_FIX 에 넣어 walk_quad 가 만들게
+      했는데, 그 변환이 오른쪽을 위로 밀면서 **오른쪽 발을 잘라 먹었다**(칸3 아랫줄이
+      `############...##` 로 끝나 발 하나가 토막만 남았다). 삿갓짐승·붉은 울음꾼과
+      같은 구조라 같은 방법을 쓴다 — 발판을 통째로 든다(_footstep 참고).
+
+    ★ **두 칸 다 여기서 만든다.** 예전에는 칸2 를 원본 그대로 두고 칸3 에서만
+      오른발을 들었다. 걸음은 칸2↔칸3 을 오가므로 그러면 **왼발은 한 번도 안
+      떨어진다** — 오른발만 까딱이고 왼쪽은 붙박이로 끌려간다. 칸2 에서 왼발,
+      칸3 에서 오른발을 들어 제 걸음이 되게 한다.
+
+    ★ 그래서 원본 칸이 하나도 안 남는다. 다시 구우면 이미 든 발을 또 들게 되므로,
+      **발판이 둘 다 바닥에 있을 때만** 굽는다(아래 _feet 검사). 레시피를 고친
+      뒤에는 `git checkout game/assets/char/crystalcrab.png` 로 되돌리고 다시
+      구워야 한다."""
     mv = f[2]
+    if len(_feet(mv)) < 2:
+        return f                                 # 이미 구운 시트 — 그대로 둔다
+    step = _footstep(mv, mv.bottom() - 4)
     f[0] = shift(scale_y(mv, 0.84), 0, 1)
     f[1] = glow(shift(scale_y(mv, 0.88), 0, 1), 1.35, hue='cyan')
+    f[3] = step(mv, 1)                           # 오른발을 든다
+    f[2] = step(mv, 0)                           # 왼발을 든다 — 맨 나중에
     return f
 
 
@@ -356,23 +376,33 @@ def mob_scrapcrawler(f):
 
 
 def mob_glow_snail(f):
-    """빛달팽이 — 일곱 장이 전부 같았다. 껍질 발광과 몸의 신축으로 살린다."""
-    base = f[0]
-    f[0] = glow(base, 0.78, hue='cyan')
-    f[1] = glow(base, 1.4, hue='cyan')
-    f[2] = scale_x(shift(base, 0, -1), 1.14)                     # 몸을 앞으로 늘인다
-    f[3] = scale_x(base, 0.9)                                    # 껍질을 당겨 붙인다
-    f[4] = glow(base, 1.25, hue='cyan')
-    f[5] = fade(scale_y(base, 0.6), 0.9)
-    f[6] = fade(tone(scale_y(base, 0.3), 0.7), 0.55)
+    """빛달팽이 — 일곱 장이 전부 같았다. 껍질 발광과 몸의 신축으로 살린다.
+
+    ★ **칸을 제 자신에서 만들지 않는다.** 예전에는 f[0] = glow(f[0], …) 처럼 자기
+      자신에서 만들어서, 두 번 돌리면 변환이 겹쳐 걸렸다. 그래서 다시 구울 수가
+      없었고, 그 사이에 칸1·칸3 이 깨진 채로 굳었다 — 몸 한가운데에 **빈 줄**이
+      가로로 나 있었고(게임에서 흰 줄로 보인다), 껍질 위에 발 색으로 된 **네모
+      테두리**가 얹혀 있었다(뜻 없는 「[」 모양).
+
+    ★ 숨은 **어둡게** 쉰다. 껍질이 이미 거의 최대 밝기(249)라 밝히면 초록·파랑
+      채널이 255 에서 잘려 색이 하얗게 탄다 — 서리요정에서 똑같은 일이 있었다.
+    """
+    f[1] = glow(f[0], 0.82, hue='cyan')          # 숨 — 껍질이 사그라든다
+    f[3] = scale_x(f[2], 0.88)                   # 몸을 당겨 붙인다
     return f
 
 
 def mob_arctic_hare(f):
-    """눈산토끼 — 토끼는 걷지 않고 뛴다. 웅크림과 도약 두 장."""
+    """눈산토끼 — 토끼는 걷지 않고 뛴다. 웅크림과 도약 두 장.
+
+    ★ 도약에서 가로를 누르지 않는다. 예전에는 scale_x(0.94) 를 걸었는데, 발이
+      다섯 칸밖에 안 되는 것이라 0.94 를 먹으면 **뒷발이 한 칸으로 뭉개졌다**
+      (칸3 아랫줄이 `######.#` 이 되어 발 하나가 점 하나로 남았다). 세로로 늘이고
+      위로 띄우는 것만으로 도약은 충분히 읽힌다 — 작은 그림에서 가로 압축은
+      마디를 다듬는 게 아니라 지운다."""
     base = f[0]
     f[2] = scale_x(scale_y(base, 0.82), 1.1)                     # 웅크림
-    f[3] = shift(scale_x(scale_y(base, 1.14), 0.94), 0, -3)      # 도약
+    f[3] = shift(scale_y(base, 1.14), 0, -3)                     # 도약
     return f
 
 
@@ -382,6 +412,87 @@ def mob_ash_vole(f):
     f[2] = shift(scale_x(base, 1.12), 0, -1)
     f[3] = shift(shear(base, 8), 0, 1)
     f[4] = shift(shear(base, -10), 2, 0)
+    return f
+
+
+def _feet(fr):
+    """맨 아랫줄에서 가로로 이어진 x 묶음들 — 바닥을 딛고 있는 발판."""
+    xs = sorted({x for (x, y) in fr.p if y == fr.bottom()})
+    out, cur = [], []
+    for x in xs:
+        if cur and x == cur[-1] + 1:
+            cur.append(x)
+        else:
+            if cur:
+                out.append(cur)
+            cur = [x]
+    if cur:
+        out.append(cur)
+    return out
+
+
+def _footstep(f, y0):
+    """넓은 발판 두 짝을 한 짝씩 들어 올려 걷는 두 칸을 만든다.
+
+    네 발 기본 걸음(walk_quad)은 legs() 로 좌우를 **가로로** 민다. 발판이 넓은
+    녀석은 그러면 판이 쪼개져 **다리 수가 늘어 보인다**(삿갓짐승 넷→셋, 붉은
+    울음꾼 둘→셋). 가로로 밀지 않고 발판을 통째로 드는 쪽이 다리 수를 지킨다.
+
+    ★ 기둥만 따로 들면 안 된다 — 발판 위에 기둥이 둘씩 얹힌 구조라, 기둥 하나를
+      들면 그 아래 발판에 구멍이 뚫린다(해 보고 알았다)."""
+    def step(src, pick):
+        g = src.copy()
+        grp = _feet(src)
+        if pick >= len(grp):
+            return g
+        xs = set(grp[pick])
+        moved = [(x, y) for (x, y) in src.p if x in xs and y >= y0]
+        for k in moved:
+            g.p.pop(k, None)
+        for (x, y) in moved:
+            if y - 1 >= y0:
+                g.p[(x, y - 1)] = src.p[(x, y)]
+        return g
+    return step
+
+
+def mob_capbeast(f):
+    """삿갓짐승 — 걸을 때 **다리 수가 바뀌었다**(서면 넷, 걸으면 셋).
+    발판을 한 짝씩 들어 올린다 — _footstep 참고."""
+    step = _footstep(f[0], f[0].bottom() - 4)
+    f[2] = step(f[0], 0)
+    f[3] = step(f[1], 1)
+    return f
+
+
+def mob_crimson_howler(f):
+    """붉은 울음꾼 — 걸을 때 **다리가 둘에서 셋으로** 늘고, 쪼개진 오른쪽 조각이
+    몸에서 떨어져 보였다("오른쪽 다리가 몸통과 미연결"). 삿갓짐승과 같은 구조라
+    같은 방법으로 고친다 — 발판을 한 짝씩 통째로 든다."""
+    step = _footstep(f[0], f[0].bottom() - 4)
+    f[2] = step(f[0], 0)
+    f[3] = step(f[1], 1)
+    return f
+
+
+def mob_cave_minnow(f):
+    """굴 피라미 — 무는 칸이 서 있는 칸과 **똑같았다**(칸0 = 칸4).
+    다섯 칸짜리 몸이라 자세를 만들 마디가 없다. 앞으로 늘여 달려드는 것으로 읽게 한다.
+
+    ★ 헤엄치는 첫 칸(칸2)은 **몸이 조각나 있었다** — 가운데에 구멍이 둘, 몸 아래
+      두 줄 떨어진 곳에 점 하나. 옛 굽기가 깨진 채 굳은 것이라, 성한 칸0 에서
+      꼬리를 흔들어 다시 만든다."""
+    # 서기 둘째 칸도 꼬리지느러미가 몸에서 **떨어져** 있었다 — 같이 다시 만든다.
+    f[1] = tailwag(f[0], 1, 0.5, side=-1)
+    f[2] = tailwag(f[0], 2, 0.5, side=-1)
+    f[4] = scale_x(f[0], 1.18)
+    return f
+
+
+def mob_sandmaw(f):
+    """모래 아가리 — 걷는 첫 칸이 서 있는 둘째 칸과 **똑같았다**(칸1 = 칸2).
+    모래에 묻힌 것이라 다리가 없다. 나아갈 때 모래 위로 한 칸 솟는 것으로 가른다."""
+    f[2] = shift(f[1], 0, -1)
     return f
 
 
@@ -454,6 +565,10 @@ JOBS = [
     ('characters', 'glow_snail', mob_glow_snail),
     ('characters', 'arctic_hare', mob_arctic_hare),
     ('characters', 'ash_vole', mob_ash_vole),
+    ('characters', 'capbeast', mob_capbeast),
+    ('characters', 'crimson_howler', mob_crimson_howler),
+    ('characters', 'cave_minnow', mob_cave_minnow),
+    ('characters', 'sandmaw', mob_sandmaw),
     ('characters', 'jungle_frog', mob_jungle_frog),
     ('characters', 'corrupttree', mob_corrupttree),
     ('bosses', 'first_keeper', boss_first_keeper),
@@ -625,6 +740,15 @@ def idle_orb(b):
     return glow(squash(b, 1.04), 1.24)
 
 
+def idle_icebright(b):
+    """이미 흰 것에 가까운 얼음 — 구슬(orb)의 1.24 를 그대로 걸면 **채널이 잘린다.**
+       서리요정의 밑색 (143,208,232) 에 1.24 를 곱하면 (177,258,287) 이 되어 초록·파랑이
+       둘 다 255 에서 잘리므로, 얼음빛이 하얗게 타면서 칸1만 다른 색이 된다
+       (재 보니 칸1 의 팔레트가 다른 칸과 **한 색도 안 겹쳤다**).
+       가장 밝은 채널이 안 잘리는 만큼만 올린다."""
+    return glow(squash(b, 1.04), 1.08)
+
+
 def idle_fish(b):
     return tailwag(b, 2, 0.5, side=-1)
 
@@ -635,9 +759,15 @@ def idle_blob(b):
 
 def idle_ice(b):
     """얼음에 갇힌 것 — 팔이 얼음 속이라 사람꼴 변형이 안 먹고(7.5%), 살짝
-       누르는 것만으로도 모자랐다(5.1%). 얼음덩이째 크게 눌리고 푸른빛이
-       함께 일렁인다."""
-    return glow(squash(b, 1.10), 1.20, sat=14, minl=70)
+       누르는 것만으로도 모자랐다(5.1%). 얼음덩이째 크게 눌린다.
+
+    ★ 빛은 **어둡게** 쉰다. 서리요정·빛달팽이와 같은 함정이다 — 얼음 하이라이트가
+      (216,244,255)라 파랑이 이미 거의 255 다. 예전의 1.20 을 곱하면 밑색은
+      (111,168,196)→(133,202,235) 로 말끔히 밝아지는데 하이라이트는
+      (259,293,306) 이 되어 **세 채널이 다 255 에서 잘려 순백(255,255,255)** 이
+      된다. 그래서 칸1만 색이 따로 놀았다(고드름 무늬가 하얀 막대로 뭉갠 채로).
+      곱해서 내리는 쪽은 아무 채널도 잘리지 않으므로 색계열이 그대로 간다."""
+    return glow(squash(b, 1.10), 0.86, sat=14, minl=70)
 
 
 def walk_biped(b):
@@ -673,6 +803,7 @@ SHAPE = {
     'hover': (idle_hover, walk_hover), 'orb': (idle_orb, walk_orb),
     'fish': (idle_fish, walk_fish), 'blob': (idle_blob, walk_blob),
     'ice': (idle_ice, idle_ice),
+    'icebright': (idle_icebright, idle_icebright),
 }
 
 # 생김새는 눈으로 보고 붙였다(tools/animcheck.py 가 짚어 준 것만 여기 있다).
@@ -706,7 +837,9 @@ AUTO_CHARS = {
     'pet_ember_drake': 'hover', 'pet_storm_falcon': 'hover',
     # --- 구슬 · 눈 ---
     'shadoweye': 'orb', 'crimson_eye': 'orb', 'coreling': 'orb',
-    'meridian_eye': 'orb', 'damp_wisp': 'orb', 'frostling': 'orb',
+    'meridian_eye': 'orb', 'damp_wisp': 'orb',
+    # ★ 서리요정은 구슬이 아니라 **밝은 얼음**이다 — 위 idle_icebright 참고.
+    'frostling': 'icebright',
     'pet_thorn_wisp': 'orb', 'pet_star_sprite': 'orb', 'pet_void_hatchling': 'orb',
     # --- 헤엄치는 것 ---
     'grotto_eel': 'fish', 'jungle_koi': 'fish', 'reef_shark': 'fish',
@@ -720,7 +853,8 @@ AUTO_CHARS = {
 }
 
 # 걷기 칸(2·3)까지 멈춰 있던 것들. 나머지는 가만히 칸만 손본다.
-WALK_FIX = {'minerghost', 'scorpion', 'crystalcrab', 'archivist', 'sporeling',
+# ★ 수정게는 뺐다 — walk_quad 가 오른쪽 발을 잘라 먹어서, 레시피가 직접 만든다.
+WALK_FIX = {'minerghost', 'scorpion', 'archivist', 'sporeling',
             'coreling', 'rabbit', 'jungle_frog', 'drowned_hand', 'scribe_hand',
             'damp_wisp', 'reef_crab', 'reef_shark', 'yunseul'}
 
@@ -734,12 +868,17 @@ AUTO_BOSSES = {
 }
 
 
-def run_auto():
+def run_auto(only=()):
     """가만히 칸(1)은 0 에서, 걷기 칸(3)은 2 에서 만든다. 보스는 마디마다
        홀수 칸을 짝수 칸에서 만든다. 늘 원본 칸에서 만들므로 몇 번을 돌려도
-       결과가 같다(겹쳐 걸리지 않는다)."""
+       결과가 같다(겹쳐 걸리지 않는다).
+
+       이름을 주면 그것만 굽는다 — 다른 시트에 손으로 고쳐 둔 것을 건드리지 않고
+       한 장만 다시 구울 때 쓴다(`tools/reanim.py --auto frostbound`)."""
     n = 0
     for name, shape in sorted(AUTO_CHARS.items()):
+        if only and name not in only:
+            continue
         fs, spec, gap = load('characters', name)
         idle, walk = SHAPE[shape]
         fs[1] = idle(fs[0])
@@ -748,6 +887,8 @@ def run_auto():
         save('characters', name, fs, spec, gap)
         n += 1
     for name, shape in sorted(AUTO_BOSSES.items()):
+        if only and name not in only:
+            continue
         fs, spec, gap = load('bosses', name)
         idle, _ = SHAPE[shape]
         for k in range(len(fs) // 2):
@@ -759,8 +900,8 @@ def run_auto():
 
 if __name__ == '__main__':
     only = sys.argv[1:]
-    if only == ['--auto']:
-        print('생김새 갈래로 다시 구움:', run_auto(), '장')
+    if only and only[0] == '--auto':
+        print('생김새 갈래로 다시 구움:', run_auto(only[1:]), '장')
         raise SystemExit(0)
     for kind, name, fn in JOBS:
         if only and name not in only:

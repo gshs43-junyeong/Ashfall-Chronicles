@@ -1,0 +1,399 @@
+<!-- 애셋 모션 점검판 — 저장소 뿌리에서 서버를 띄우고 /tools/motion.html 로 연다.
+
+       cd /home/user/Ashfall-Chronicles && python3 -m http.server 8800
+       → http://127.0.0.1:8800/tools/motion.html
+
+     걷기·공격·죽음을 실제로 움직여 보여 주고, 칸마다 자동 검사 결과를 같이 띄운다.
+     고칠지 말지는 사람이 보고 정한다 — 이 판은 "어디가 이상한가"만 짚어 준다. -->
+<meta charset="utf-8">
+<title>애셋 모션 점검판</title>
+<script src="../game/assets/sprites-manifest.js"></script>
+<script>FIXED_URL = "fixed.json";</script>
+<style>
+:root{
+  --bg:#141210; --panel:#1c1917; --line:#3a332b; --ink:#e8e0cf; --dim:#9a9083;
+  --gold:#d8a94b; --bad:#e0605a; --warn:#d8a94b; --ok:#6fbf73;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:13px/1.5 "Pretendard",-apple-system,system-ui,"Segoe UI",sans-serif}
+header{position:sticky;top:0;z-index:20;background:#161311ee;backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);padding:10px 16px}
+h1{margin:0 0 8px;font-size:15px;letter-spacing:.06em;font-weight:600;color:var(--gold)}
+.row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+label{display:inline-flex;gap:5px;align-items:center;color:var(--dim);white-space:nowrap}
+input[type=search]{background:#0e0c0b;border:1px solid var(--line);color:var(--ink);
+  border-radius:3px;padding:5px 9px;min-width:180px;font:inherit}
+input[type=range]{width:104px}
+select{background:#0e0c0b;border:1px solid var(--line);color:var(--ink);border-radius:3px;padding:4px 6px;font:inherit}
+button{background:#272220;border:1px solid var(--line);color:var(--ink);border-radius:3px;
+  padding:5px 11px;cursor:pointer;font:inherit}
+button.on{background:var(--gold);color:#1a1510;border-color:var(--gold);font-weight:600}
+main{padding:14px 16px 60px;display:grid;gap:12px;
+  grid-template-columns:repeat(auto-fill,minmax(430px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.card.flag{border-color:#6a4340}
+.hd{display:flex;align-items:baseline;gap:8px;padding:7px 11px;border-bottom:1px solid var(--line)}
+.nm{font-weight:600;letter-spacing:.02em}
+.meta{color:var(--dim);font-size:11.5px;margin-left:auto;font-variant-numeric:tabular-nums}
+.tag{font-size:10px;letter-spacing:.04em;border-radius:3px;padding:1px 6px;font-weight:600;white-space:nowrap}
+.tag.fix{background:#1e3a24;color:#7fd08a;border:1px solid #2f5d39}
+.tag.pad{background:#2a2622;color:#a3957c;border:1px solid #423a30}
+.card.fixed{border-color:#2f5d39}
+.did{padding:0 11px 10px;font-size:11.5px;color:#7fd08a}
+.did span{color:#5f7f66}
+/* ★ 줄바꿈을 빼면 안 된다 — 칸이 넓은 시트(abyss_angler 42x32)는 세 미리보기가
+   카드보다 넓어지는데, .card 가 overflow:hidden 이라 죽음 미리보기가 잘려 나간다. */
+.body{display:flex;flex-wrap:wrap;gap:10px;padding:10px 11px}
+.mot{display:flex;flex-direction:column;align-items:center;gap:4px}
+.mot b{font-size:10.5px;font-weight:500;color:var(--dim);letter-spacing:.04em}
+.mot.none b{color:#6a625a}
+canvas{image-rendering:pixelated;display:block;border-radius:2px}
+.strip{padding:0 11px 10px;overflow-x:auto}
+.strip .fr{display:inline-flex;flex-direction:column;align-items:center;gap:3px;margin-right:6px;vertical-align:top}
+.strip .fr span{font-size:10px;color:var(--dim)}
+.strip .fr.warn span{color:var(--warn)}
+.strip .fr.bad span{color:var(--bad)}
+.notes{padding:0 11px 10px;font-size:11.5px;color:var(--dim)}
+.notes i{font-style:normal;color:var(--bad)}
+.notes.dimmed{color:#6f665c;font-size:11px;padding-top:0}
+.notes.dimmed u{color:#8a7f6e}
+.notes u{text-decoration:none;color:var(--warn)}
+.legend{color:var(--dim);font-size:11.5px;padding:0 16px 10px}
+.legend b{color:var(--ink);font-weight:600}
+.empty{color:var(--dim);padding:30px 16px}
+</style>
+
+<header>
+  <h1>애셋 모션 점검판 — 걷기 · 공격 · 죽음</h1>
+  <div class="row">
+    <input type="search" id="q" placeholder="이름으로 거르기 (예: golem, pet_)">
+    <label>무리
+      <select id="grp">
+        <option value="mob">몹</option>
+        <option value="pet">펫</option>
+        <option value="npc">NPC</option>
+        <option value="player">플레이어</option>
+        <option value="boss">보스</option>
+        <option value="all">전부</option>
+      </select>
+    </label>
+    <label>배율 <input type="range" id="zoom" min="2" max="10" value="5"><b id="zv">5×</b></label>
+    <label>속도 <input type="range" id="spd" min="1" max="12" value="5"><b id="sv">5</b></label>
+    <label>바탕
+      <select id="bg">
+        <option value="check">바둑판(투명 확인)</option>
+        <option value="dark">어둡게</option>
+        <option value="light">밝게</option>
+        <option value="mag">자홍(윤곽 확인)</option>
+      </select>
+    </label>
+    <button id="border" class="on">칸 테두리</button>
+    <label>수정
+      <select id="fixsel">
+        <option value="all">전부</option>
+        <option value="fix">고친 것만</option>
+        <option value="nofix">안 고친 것만</option>
+      </select>
+    </label>
+    <button id="onlyflag">문제 있는 것만</button>
+    <button id="play" class="on">재생</button>
+  </div>
+</header>
+<div class="legend">
+  <b>칸 번호</b> 몹 idle1 · idle2 · move1 · move2 · atk · death1 · death2 &nbsp;·&nbsp;
+  보스는 <b>마디마다 서기 두 칸</b>이 이어지고 <b>맨 뒤가 죽음</b>입니다(공격 칸이 없습니다) &nbsp;|&nbsp;
+  <b>자동 검사</b> 칸 가장자리에 닿음 · 반투명 픽셀(배경이 구워진 자국) · 떨어져 나온 덩어리 ·
+  다른 칸과 똑같음(움직임 없음) &nbsp;|&nbsp;
+  <b>표시</b> <span class="tag fix">수정됨</span> 결함을 고친 것(무엇을 고쳤는지 카드 아래에 적혀 있습니다) ·
+  <span class="tag pad">여백</span> 칸 가장자리 여백만 준 것
+</div>
+<main id="out"></main>
+
+<script>
+const M = window.SPRITE_MANIFEST;
+const S = (M.characters && M.characters.scale) || 4;
+const NAMES = ['idle1','idle2','move1','move2','atk','death1','death2'];
+const PET_NAMES = ['idle1','idle2','atk'];
+
+/* ★ 보스는 칸 구성이 **몹과 다르다.**
+     몹   : idle1 idle2 move1 move2 atk death1 death2   (일곱 칸 고정)
+     보스 : 마디마다 서기 두 칸이 이어지고 **맨 뒤 death 칸**이 붙는다
+            (manifest 의 frames / frames5 와 death 값이 그것이다)
+   예전에는 보스에도 몹 이름표를 붙이고 죽음을 칸5·6 으로 잡았다. count=8 인 보스는
+   죽음이 실제로 칸6·7 이고 archetype(count=12)은 칸10·11 이라, 미리보기가 PNG 의
+   엉뚱한 칸을 돌리고 있었다("공격·죽음 모션이 png 와 매칭이 안 된다").
+   보스에는 공격 칸이 아예 없다 — 그래서 '공격' 자리에 마지막 마디를 보여 준다. */
+function bossPlan(m){
+  const cnt = m.count, d = m.death || 0;
+  const live = Math.max(0, cnt - d);
+  const names = [];
+  for (let i = 0; i < live; i++)
+    names.push(`${Math.floor(i/2)+1}단계 ${i%2 ? 'b' : 'a'}`);
+  for (let i = 0; i < d; i++) names.push(`죽음${i+1}`);
+  const first = live >= 2 ? [0,1] : (live ? [0] : null);
+  const lastPair = live >= 4 ? [live-2, live-1] : null;
+  const death = d ? Array.from({length:d}, (_,i) => live + i) : null;
+  return { names, mots: [['1단계', first], ['마지막 단계', lastPair], ['죽음', death]] };
+}
+
+function group(n, sec){
+  if (sec === 'bosses') return 'boss';
+  if (n.startsWith('player')) return 'player';
+  if (n.startsWith('npcw_') || n.startsWith('npc_')) return 'npc';
+  if (n.startsWith('pet_')) return 'pet';
+  return 'mob';
+}
+
+const SHEETS = [];
+for (const sec of ['characters','bosses']){
+  const box = M[sec] && M[sec].sheets; if (!box) continue;
+  for (const n in box) SHEETS.push({ name:n, sec, g:group(n,sec), m:box[n] });
+}
+SHEETS.sort((a,b)=>a.name.localeCompare(b.name));
+
+/* ---- 시트 하나를 읽어 칸마다 검사한다 ---------------------------------- */
+function analyse(img, m){
+  const fw = m.frameW, fh = m.frameH, cnt = m.count, gap = m.gap || 0;
+  const cv = document.createElement('canvas');
+  cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+  const c = cv.getContext('2d', { willReadFrequently:true });
+  c.drawImage(img, 0, 0);
+  const D = c.getImageData(0,0,cv.width,cv.height).data;
+  const W = cv.width;
+  const at = (x,y)=>{ const i=(y*W+x)*4; return [D[i],D[i+1],D[i+2],D[i+3]]; };
+
+  const frames = [];
+  for (let f=0; f<cnt; f++){
+    const ox = f*(fw*S+gap);
+    const a = [];                       // 논리 해상도 알파
+    const key = [];                     // 색 지문(칸 비교용)
+    let semi = 0, opaque = 0;
+    for (let y=0; y<fh; y++){
+      const row = [];
+      for (let x=0; x<fw; x++){
+        const p = at(ox + x*S + 1, y*S + 1);
+        row.push(p[3]);
+        if (p[3] > 8 && p[3] < 250) semi++;
+        if (p[3] > 8) opaque++;
+        key.push(p[3] > 8 ? (p[0]<<16|p[1]<<8|p[2]) : -1);
+      }
+      a.push(row);
+    }
+    // 테두리 접촉
+    let L=1e9,R=1e9,T=1e9,B=1e9, any=false;
+    for (let y=0;y<fh;y++) for (let x=0;x<fw;x++) if (a[y][x]>8){
+      any=true; L=Math.min(L,x); R=Math.min(R,fw-1-x); T=Math.min(T,y); B=Math.min(B,fh-1-y);
+    }
+    const sides = [];
+    if (any){ if(T===0)sides.push('위'); if(L===0)sides.push('왼'); if(R===0)sides.push('오른'); }
+    // 떨어져 나온 덩어리
+    const seen = new Uint8Array(fw*fh); let blobs = 0;
+    for (let y=0;y<fh;y++) for (let x=0;x<fw;x++){
+      const i=y*fw+x;
+      if (seen[i] || a[y][x]<=8) continue;
+      let n=0; const st=[i]; seen[i]=1;
+      while (st.length){
+        const j=st.pop(); n++;
+        const jy=(j/fw)|0, jx=j%fw;
+        for (let dy=-1;dy<=1;dy++) for (let dx=-1;dx<=1;dx++){
+          const ny=jy+dy, nx=jx+dx;
+          if (ny<0||nx<0||ny>=fh||nx>=fw) continue;
+          const k=ny*fw+nx;
+          if (!seen[k] && a[ny][nx]>8){ seen[k]=1; st.push(k); }
+        }
+      }
+      if (n >= 6) blobs++;
+    }
+    frames.push({ sides, semi, opaque, blobs, sig:key.join(',') });
+  }
+  // 앞칸과 똑같은가(움직임 없음)
+  for (let f=1; f<frames.length; f++)
+    frames[f].same = frames[f].sig === frames[f-1].sig;
+  return { fw, fh, cnt, gap, frames };
+}
+
+/* ---- 카드 ------------------------------------------------------------- */
+const out = document.getElementById('out');
+const state = { zoom:5, speed:5, bg:'check', border:true, playing:true, only:false, q:'', g:'mob', fix:'all' };
+const cards = [];
+
+function paintBg(c, w, h){
+  if (state.bg === 'dark'){ c.fillStyle='#17140f'; c.fillRect(0,0,w,h); return; }
+  if (state.bg === 'light'){ c.fillStyle='#cfc8bb'; c.fillRect(0,0,w,h); return; }
+  if (state.bg === 'mag'){ c.fillStyle='#c000a0'; c.fillRect(0,0,w,h); return; }
+  const s = 6;                                   // 바둑판
+  for (let y=0;y<h;y+=s) for (let x=0;x<w;x+=s){
+    c.fillStyle = ((x/s + y/s) & 1) ? '#2a2724' : '#201d1b';
+    c.fillRect(x,y,s,s);
+  }
+}
+
+function makeCard(sheet, img, info){
+  const { name, m, g } = sheet;
+  const { fw, fh, cnt, gap, frames } = info;
+  const isBoss = sheet.sec === 'bosses';
+  const petLike = g === 'pet';
+  const bp = isBoss ? bossPlan(m) : null;
+  const lbl = bp ? bp.names : (petLike ? PET_NAMES : NAMES);
+
+  /* 빨강(문제)과 회색(참고)을 가른다.
+     ★ "변에 닿음"은 **참고**다 — 몹 시트 103장 중 75장이 어딘가 변에 닿아 있다.
+       땅에 서려면 발이 아랫줄에 닿아야 하고, 그림을 칸에 꽉 채우는 것도 흔하다.
+       이걸 빨강으로 세면 거의 전부가 빨개져서 아무 소용이 없다. */
+  const problems = [], notes = [];
+  const deadFrom = bp ? (cnt - (m.death || 0)) : (petLike ? cnt : cnt - 2);
+  frames.forEach((f,i)=>{
+    const nm = lbl[i] || ('칸'+i);
+    if (f.semi > 12) problems.push(`<i>${nm}: 반투명 ${f.semi}칸</i>`);
+    if (f.blobs > 1) problems.push(`<i>${nm}: 덩어리 ${f.blobs}개</i>`);
+    if (f.opaque === 0) problems.push(`<i>${nm}: 비어 있음</i>`);
+    if (f.same) notes.push(`<u>${nm}: 앞칸과 똑같음</u>`);
+    if (f.sides.length) notes.push(`${nm}: ${f.sides.join('·')} 변`);
+  });
+
+  const done = (window.FIXED && window.FIXED.fix && window.FIXED.fix[name]) || null;
+  const padded = !!(window.FIXED && window.FIXED.pad && window.FIXED.pad.includes(name));
+
+  const el = document.createElement('div');
+  el.className = 'card' + (problems.length ? ' flag' : '') + (done ? ' fixed' : '');
+  el.dataset.name = name; el.dataset.g = g; el.dataset.flag = problems.length ? '1':'0';
+  el.innerHTML =
+    `<div class="hd"><span class="nm">${name}</span>` +
+    (done ? `<span class="tag fix">수정됨</span>` : '') +
+    (padded ? `<span class="tag pad">여백</span>` : '') +
+    `<span class="meta">${fw}×${fh} · ${cnt}칸</span></div>` +
+    `<div class="body"></div><div class="strip"></div>` +
+    (done ? `<div class="did">` + done.map(d =>
+        `${d.why} <span>(${d.c})</span>`).join('<br>') + `</div>` : '') +
+    (problems.length ? `<div class="notes">${problems.join(' &nbsp;· ')}</div>` : '') +
+    (notes.length ? `<div class="notes dimmed">${notes.join(' &nbsp;· ')}</div>` : '');
+
+  // ---- 움직이는 미리보기 셋
+  const body = el.querySelector('.body');
+  const mots = bp ? bp.mots
+    : petLike
+    ? [['서기',[0,1]], ['공격',[2]], ['죽음',null]]
+    : [['걷기',[2,3]], ['공격',[4]], ['죽음',[5,6]]];
+  const anim = [];
+  for (const [title, list] of mots){
+    const wrap = document.createElement('div');
+    wrap.className = 'mot' + (list ? '' : ' none');
+    const cv = document.createElement('canvas');
+    wrap.innerHTML = `<b>${title}</b>`;
+    wrap.appendChild(cv);
+    body.appendChild(wrap);
+    if (list && list.every(i=>i<cnt)) anim.push({ cv, list });
+    else { cv.width=1; cv.height=1; wrap.querySelector('b').textContent = title + ' (없음)'; }
+  }
+
+  // ---- 칸 낱장
+  const strip = el.querySelector('.strip');
+  const stripCvs = [];
+  for (let i=0;i<cnt;i++){
+    const d = document.createElement('div');
+    const f = frames[i];
+    d.className = 'fr' + ((f.semi>12||f.blobs>1||f.opaque===0) ? ' bad' : (f.same ? ' warn':''));
+    const cv = document.createElement('canvas');
+    d.appendChild(cv);
+    const tag = document.createElement('span');
+    tag.textContent = `${i} ${lbl[i]||''}`;
+    d.appendChild(tag);
+    strip.appendChild(d);
+    stripCvs.push(cv);
+  }
+
+  /* ★ 배율은 칸 크기에 맞춰 **깎는다.** 원형(archetype)은 192x232 라 5배율이면
+     960px 이 되어 카드(430px) 밖으로 잘린다 — 큰 보스의 자세를 아예 볼 수 없었다.
+     미리보기 셋이 나란히 서야 하므로 하나에 130px, 낱장 띠는 110px 를 넘지 않게 한다. */
+  const fit = (want, cap) => Math.max(1, Math.min(want, Math.floor(cap / Math.max(fw, fh))));
+
+  function draw(t){
+    const z = fit(state.zoom, 130), w = fw*z, h = fh*z;
+    for (const a of anim){
+      const step = a.list.length > 1
+        ? a.list[Math.floor(t*state.speed/3) % a.list.length]
+        : a.list[0];
+      const c = a.cv.getContext('2d');
+      a.cv.width = w; a.cv.height = h;
+      c.imageSmoothingEnabled = false;
+      paintBg(c, w, h);
+      c.drawImage(img, step*(fw*S+gap), 0, fw*S, fh*S, 0, 0, w, h);
+      if (state.border){ c.strokeStyle='#e0605a99'; c.lineWidth=1; c.strokeRect(.5,.5,w-1,h-1); }
+    }
+    for (let i=0;i<stripCvs.length;i++){
+      const cv = stripCvs[i], c = cv.getContext('2d');
+      const zz = Math.max(1, fit(state.zoom - 1, 110)), ww = fw*zz, hh = fh*zz;
+      if (cv.width !== ww){ cv.width = ww; cv.height = hh; }
+      c.imageSmoothingEnabled = false;
+      paintBg(c, ww, hh);
+      c.drawImage(img, i*(fw*S+gap), 0, fw*S, fh*S, 0, 0, ww, hh);
+      if (state.border){ c.strokeStyle='#e0605a77'; c.lineWidth=1; c.strokeRect(.5,.5,ww-1,hh-1); }
+    }
+  }
+  cards.push({ el, draw, name, g, flag: problems.length>0, done: !!done });
+  out.appendChild(el);
+}
+
+/* ---- 불러오기 --------------------------------------------------------- */
+/* 무엇을 이미 고쳤는지는 tools/fixed.json 에 적혀 있다. 못 읽어도(파일 접근이 막힌
+   곳에서 열면 그렇다) 표시만 안 붙고 나머지는 그대로 돈다. */
+function boot(){
+let pending = SHEETS.length;
+for (const sheet of SHEETS){
+  const img = new Image();
+  img.onload = () => {
+    try { makeCard(sheet, img, analyse(img, sheet.m)); }
+    catch(e){ console.warn(sheet.name, e); }
+    if (--pending === 0) { applyFilter(); }
+  };
+  img.onerror = () => { if (--pending === 0) applyFilter(); };
+  img.src = '../game/assets/' + sheet.m.file;
+}
+}
+if (window.FIXED) boot();
+else fetch(FIXED_URL).then(r => r.json()).then(j => { window.FIXED = j; })
+       .catch(() => {}).finally(boot);
+
+/* ---- 조작 ------------------------------------------------------------- */
+function applyFilter(){
+  const q = state.q.trim().toLowerCase();
+  let shown = 0;
+  for (const c of cards){
+    const okG = state.g === 'all' || c.g === state.g;
+    const okQ = !q || c.name.toLowerCase().includes(q);
+    const okF = !state.only || c.flag;
+    const okD = state.fix === 'all' || (state.fix === 'fix' ? c.done : !c.done);
+    const vis = okG && okQ && okF && okD;
+    c.el.hidden = !vis;
+    if (vis) shown++;
+  }
+  let e = document.getElementById('none');
+  if (!shown){
+    if (!e){ e = document.createElement('div'); e.id='none'; e.className='empty';
+             e.textContent='해당하는 시트가 없습니다.'; out.appendChild(e); }
+    e.hidden = false;
+  } else if (e) e.hidden = true;
+}
+
+const $ = s => document.querySelector(s);
+$('#q').addEventListener('input', e => { state.q = e.target.value; applyFilter(); });
+$('#grp').addEventListener('change', e => { state.g = e.target.value; applyFilter(); });
+$('#zoom').addEventListener('input', e => { state.zoom = +e.target.value; $('#zv').textContent = state.zoom+'×'; });
+$('#spd').addEventListener('input', e => { state.speed = +e.target.value; $('#sv').textContent = state.speed; });
+$('#bg').addEventListener('change', e => { state.bg = e.target.value; });
+$('#border').addEventListener('click', e => { state.border = !state.border; e.target.classList.toggle('on', state.border); });
+$('#fixsel').addEventListener('change', e => { state.fix = e.target.value; applyFilter(); });
+$('#onlyflag').addEventListener('click', e => { state.only = !state.only; e.target.classList.toggle('on', state.only); applyFilter(); });
+$('#play').addEventListener('click', e => { state.playing = !state.playing; e.target.classList.toggle('on', state.playing);
+  e.target.textContent = state.playing ? '재생' : '멈춤'; });
+
+let t0 = performance.now(), tt = 0;
+function loop(now){
+  const dt = (now - t0)/1000; t0 = now;
+  if (state.playing) tt += dt;
+  for (const c of cards) if (!c.el.hidden) c.draw(tt);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>

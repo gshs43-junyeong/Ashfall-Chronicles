@@ -56,7 +56,7 @@ window.SPRITE_MANIFEST = {
         "oy": -1,
         "count": 13,
         "foot": -0.75,
-        "side": -1.0
+        "side": -1
       },
       "player_wanderer": {
         "file": "char/player_wanderer.png",
@@ -66,7 +66,7 @@ window.SPRITE_MANIFEST = {
         "oy": -1,
         "count": 13,
         "foot": -0.75,
-        "side": -1.0
+        "side": -1
       },
       "player_digger": {
         "file": "char/player_digger.png",
@@ -76,7 +76,7 @@ window.SPRITE_MANIFEST = {
         "oy": -1,
         "count": 13,
         "foot": -0.75,
-        "side": -1.0
+        "side": -1
       },
       "player_ranger": {
         "file": "char/player_ranger.png",
@@ -86,7 +86,7 @@ window.SPRITE_MANIFEST = {
         "oy": -1,
         "count": 13,
         "foot": -0.75,
-        "side": -1.0
+        "side": -1
       },
       "player_adept": {
         "file": "char/player_adept.png",
@@ -96,7 +96,7 @@ window.SPRITE_MANIFEST = {
         "oy": -1,
         "count": 13,
         "foot": -0.75,
-        "side": -1.0
+        "side": -1
       },
       "player_stray": {
         "file": "char/player_stray.png",
@@ -106,52 +106,52 @@ window.SPRITE_MANIFEST = {
         "oy": -1,
         "count": 13,
         "foot": -0.75,
-        "side": -1.0
+        "side": -1
       },
       "slime": {
         "file": "char/slime.png",
         "frameW": 30,
-        "frameH": 22,
+        "frameH": 23,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
       },
       "zombie": {
         "file": "char/zombie.png",
-        "frameW": 24,
-        "frameH": 40,
+        "frameW": 28,
+        "frameH": 41,
         "count": 7,
         "foot": -0.75,
-        "side": -3.0
+        "side": -3
       },
       "bat": {
         "file": "char/bat.png",
-        "frameW": 22,
-        "frameH": 16,
+        "frameW": 26,
+        "frameH": 18,
         "count": 7,
         "foot": 0.25,
-        "side": 0.0
+        "side": 0
       },
       "skeleton": {
         "file": "char/skeleton.png",
-        "frameW": 24,
-        "frameH": 40,
+        "frameW": 28,
+        "frameH": 41,
         "count": 7,
         "foot": -0.75,
-        "side": -1.0
+        "side": -1
       },
       "archer": {
         "file": "char/archer.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 26,
+        "frameH": 43,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "crawler": {
         "file": "char/crawler.png",
-        "frameW": 24,
-        "frameH": 40,
+        "frameW": 28,
+        "frameH": 42,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
@@ -162,7 +162,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 28,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "frostling": {
         "file": "char/frostling.png",
@@ -178,7 +178,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 30,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "golem": {
         "file": "char/golem.png",
@@ -186,23 +186,23 @@ window.SPRITE_MANIFEST = {
         "frameH": 50,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "wraith": {
         "file": "char/wraith.png",
-        "frameW": 26,
-        "frameH": 38,
+        "frameW": 28,
+        "frameH": 40,
         "count": 7,
         "foot": 1.25,
         "side": 0.5
       },
       "sky_sentry": {
         "file": "char/sky_sentry.png",
-        "frameW": 30,
-        "frameH": 36,
+        "frameW": 34,
+        "frameH": 38,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "gale": {
         "file": "char/gale.png",
@@ -210,7 +210,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 28,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "ruin_guard": {
         "file": "char/ruin_guard.png",
@@ -218,103 +218,103 @@ window.SPRITE_MANIFEST = {
         "frameH": 48,
         "count": 7,
         "foot": 0.25,
-        "side": 0.0
+        "side": 0
       },
       "lantern": {
         "file": "char/lantern.png",
-        "frameW": 22,
-        "frameH": 32,
+        "frameW": 26,
+        "frameH": 34,
         "count": 7,
         "foot": -0.75,
         "side": -0.5
       },
       "ashcrow": {
         "file": "char/ashcrow.png",
-        "frameW": 28,
-        "frameH": 18,
+        "frameW": 32,
+        "frameH": 20,
         "count": 7,
         "foot": -0.75,
         "side": -0.5
       },
       "spider": {
         "file": "char/spider.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 18,
         "count": 7,
         "foot": 0.25,
-        "side": 0.0
+        "side": 0
       },
       "minerghost": {
         "file": "char/minerghost.png",
-        "frameW": 22,
-        "frameH": 34,
+        "frameW": 26,
+        "frameH": 36,
         "count": 7,
         "foot": 7.25,
         "side": -1.5
       },
       "scorpion": {
         "file": "char/scorpion.png",
-        "frameW": 32,
-        "frameH": 22,
-        "count": 7,
-        "foot": -0.75,
-        "side": 1.0
-      },
-      "sandmaw": {
-        "file": "char/sandmaw.png",
-        "frameW": 34,
-        "frameH": 26,
-        "count": 7,
-        "foot": -0.75,
-        "side": 0.0
-      },
-      "icewolf": {
-        "file": "char/icewolf.png",
-        "frameW": 32,
+        "frameW": 36,
         "frameH": 24,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 1
+      },
+      "sandmaw": {
+        "file": "char/sandmaw.png",
+        "frameW": 38,
+        "frameH": 27,
+        "count": 7,
+        "foot": -0.75,
+        "side": 0
+      },
+      "icewolf": {
+        "file": "char/icewolf.png",
+        "frameW": 36,
+        "frameH": 24,
+        "count": 7,
+        "foot": -0.75,
+        "side": 0
       },
       "corrupttree": {
         "file": "char/corrupttree.png",
-        "frameW": 34,
-        "frameH": 48,
+        "frameW": 38,
+        "frameH": 49,
         "count": 7,
         "foot": -0.75,
         "side": -1.5
       },
       "crystalcrab": {
         "file": "char/crystalcrab.png",
-        "frameW": 38,
+        "frameW": 40,
         "frameH": 26,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "lavaslug": {
         "file": "char/lavaslug.png",
-        "frameW": 36,
+        "frameW": 38,
         "frameH": 24,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "cloudjelly": {
         "file": "char/cloudjelly.png",
-        "frameW": 28,
-        "frameH": 30,
+        "frameW": 32,
+        "frameH": 32,
         "count": 7,
         "foot": -0.75,
-        "side": 1.0
+        "side": 1
       },
       "archivist": {
         "file": "char/archivist.png",
-        "frameW": 24,
-        "frameH": 38,
+        "frameW": 28,
+        "frameH": 40,
         "count": 7,
         "foot": 4.25,
-        "side": 1.0
+        "side": 1
       },
       "scrapcrawler": {
         "file": "char/scrapcrawler.png",
@@ -326,15 +326,15 @@ window.SPRITE_MANIFEST = {
       },
       "sparkwisp": {
         "file": "char/sparkwisp.png",
-        "frameW": 20,
-        "frameH": 20,
+        "frameW": 24,
+        "frameH": 22,
         "count": 7,
         "foot": 5.25,
-        "side": 0.0
+        "side": 0
       },
       "riveter": {
         "file": "char/riveter.png",
-        "frameW": 32,
+        "frameW": 36,
         "frameH": 40,
         "count": 7,
         "foot": -0.75,
@@ -342,87 +342,87 @@ window.SPRITE_MANIFEST = {
       },
       "foreman": {
         "file": "char/foreman.png",
-        "frameW": 26,
-        "frameH": 42,
+        "frameW": 30,
+        "frameH": 44,
         "count": 7,
         "foot": 0.25,
-        "side": 0.0
+        "side": 0
       },
       "vinelash": {
         "file": "char/vinelash.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 34,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "bloomspitter": {
         "file": "char/bloomspitter.png",
-        "frameW": 26,
-        "frameH": 32,
+        "frameW": 30,
+        "frameH": 34,
         "count": 7,
         "foot": 0.25,
-        "side": 0.0
+        "side": 0
       },
       "canopy_ape": {
         "file": "char/canopy_ape.png",
-        "frameW": 34,
+        "frameW": 38,
         "frameH": 26,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "sporeling": {
         "file": "char/sporeling.png",
-        "frameW": 22,
-        "frameH": 22,
+        "frameW": 26,
+        "frameH": 24,
         "count": 7,
         "foot": 0.25,
         "side": 0.5
       },
       "capbeast": {
         "file": "char/capbeast.png",
-        "frameW": 34,
-        "frameH": 24,
+        "frameW": 38,
+        "frameH": 26,
         "count": 7,
         "foot": -0.75,
-        "side": 3.0
+        "side": 3
       },
       "crimson_howler": {
         "file": "char/crimson_howler.png",
-        "frameW": 30,
+        "frameW": 34,
         "frameH": 28,
         "count": 7,
         "foot": -0.75,
-        "side": 2.0
+        "side": 2
       },
       "crimson_eye": {
         "file": "char/crimson_eye.png",
-        "frameW": 28,
-        "frameH": 26,
+        "frameW": 32,
+        "frameH": 28,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
       },
       "splitter": {
         "file": "char/splitter.png",
-        "frameW": 30,
-        "frameH": 24,
+        "frameW": 34,
+        "frameH": 26,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "weldarm": {
         "file": "char/weldarm.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 30,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "coreling": {
         "file": "char/coreling.png",
-        "frameW": 24,
+        "frameW": 26,
         "frameH": 24,
         "count": 7,
         "foot": 0.25,
@@ -430,11 +430,11 @@ window.SPRITE_MANIFEST = {
       },
       "rabbit": {
         "file": "char/rabbit.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
         "count": 7,
         "foot": 2.25,
-        "side": 1.0
+        "side": 1
       },
       "arctic_hare": {
         "file": "char/arctic_hare.png",
@@ -442,11 +442,11 @@ window.SPRITE_MANIFEST = {
         "frameH": 40,
         "count": 7,
         "foot": 2.25,
-        "side": 1.0
+        "side": 1
       },
       "sand_lizard": {
         "file": "char/sand_lizard.png",
-        "frameW": 22,
+        "frameW": 26,
         "frameH": 36,
         "count": 7,
         "foot": 3.25,
@@ -454,23 +454,23 @@ window.SPRITE_MANIFEST = {
       },
       "jungle_frog": {
         "file": "char/jungle_frog.png",
-        "frameW": 22,
+        "frameW": 24,
         "frameH": 20,
         "count": 7,
         "foot": 0.25,
-        "side": 0.0
+        "side": 0
       },
       "glow_snail": {
         "file": "char/glow_snail.png",
-        "frameW": 30,
-        "frameH": 20,
+        "frameW": 32,
+        "frameH": 21,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "ash_vole": {
         "file": "char/ash_vole.png",
-        "frameW": 20,
+        "frameW": 22,
         "frameH": 20,
         "count": 7,
         "foot": 1.25,
@@ -494,7 +494,7 @@ window.SPRITE_MANIFEST = {
       },
       "drowned_hand": {
         "file": "char/drowned_hand.png",
-        "frameW": 28,
+        "frameW": 32,
         "frameH": 32,
         "count": 7,
         "foot": 0.25,
@@ -502,7 +502,7 @@ window.SPRITE_MANIFEST = {
       },
       "draft_form": {
         "file": "char/draft_form.png",
-        "frameW": 26,
+        "frameW": 30,
         "frameH": 44,
         "count": 7,
         "foot": 0.25,
@@ -510,7 +510,7 @@ window.SPRITE_MANIFEST = {
       },
       "scribe_hand": {
         "file": "char/scribe_hand.png",
-        "frameW": 24,
+        "frameW": 26,
         "frameH": 30,
         "count": 7,
         "foot": 3.25,
@@ -518,39 +518,39 @@ window.SPRITE_MANIFEST = {
       },
       "mold_walker": {
         "file": "char/mold_walker.png",
-        "frameW": 34,
+        "frameW": 38,
         "frameH": 50,
         "count": 7,
         "foot": 0.25,
-        "side": 1.0
+        "side": 1
       },
       "orbit_sentry": {
         "file": "char/orbit_sentry.png",
-        "frameW": 32,
+        "frameW": 36,
         "frameH": 40,
         "count": 7,
         "foot": 2.25,
-        "side": 0.0
+        "side": 0
       },
       "meridian_eye": {
         "file": "char/meridian_eye.png",
-        "frameW": 26,
+        "frameW": 28,
         "frameH": 26,
         "count": 7,
         "foot": 3.25,
-        "side": 2.0
+        "side": 2
       },
       "ballast_form": {
         "file": "char/ballast_form.png",
-        "frameW": 44,
+        "frameW": 46,
         "frameH": 57,
         "count": 7,
         "foot": 1.25,
-        "side": 0.0
+        "side": 0
       },
       "gloom_crawler": {
         "file": "char/gloom_crawler.png",
-        "frameW": 30,
+        "frameW": 38,
         "frameH": 24,
         "count": 7,
         "foot": -0.75,
@@ -558,8 +558,8 @@ window.SPRITE_MANIFEST = {
       },
       "damp_wisp": {
         "file": "char/damp_wisp.png",
-        "frameW": 22,
-        "frameH": 22,
+        "frameW": 24,
+        "frameH": 23,
         "count": 7,
         "foot": 1.25,
         "side": 0.5
@@ -570,180 +570,180 @@ window.SPRITE_MANIFEST = {
         "frameH": 42,
         "count": 7,
         "foot": 3.25,
-        "side": 1.0
+        "side": 1
       },
       "pet_ember_squirrel": {
         "file": "char/pet_ember_squirrel.png",
-        "frameW": 24,
-        "frameH": 20,
-        "count": 7,
+        "frameW": 28,
+        "frameH": 21,
+        "count": 3,
         "foot": 2.25,
         "side": 1.5
       },
       "pet_glass_moth": {
         "file": "char/pet_glass_moth.png",
-        "frameW": 24,
-        "frameH": 20,
-        "count": 7,
+        "frameW": 28,
+        "frameH": 21,
+        "count": 3,
         "foot": 4.25,
         "side": 0.5
       },
       "pet_pebble_kin": {
         "file": "char/pet_pebble_kin.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 4.25,
-        "side": 1.0
+        "side": 1
       },
       "pet_dust_sparrow": {
         "file": "char/pet_dust_sparrow.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 3.25,
         "side": 1.5
       },
       "pet_frost_kit": {
         "file": "char/pet_frost_kit.png",
-        "frameW": 24,
-        "frameH": 20,
-        "count": 7,
+        "frameW": 28,
+        "frameH": 21,
+        "count": 3,
         "foot": 2.25,
         "side": 0.5
       },
       "pet_ash_owl": {
         "file": "char/pet_ash_owl.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 2.25,
-        "side": 0.0
+        "side": 0
       },
       "pet_cinder_toad": {
         "file": "char/pet_cinder_toad.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 3.25,
-        "side": 0.0
+        "side": 0
       },
       "pet_thorn_wisp": {
         "file": "char/pet_thorn_wisp.png",
-        "frameW": 20,
-        "frameH": 20,
-        "count": 7,
+        "frameW": 24,
+        "frameH": 21,
+        "count": 3,
         "foot": 6.25,
         "side": -0.5
       },
       "pet_star_sprite": {
         "file": "char/pet_star_sprite.png",
-        "frameW": 24,
-        "frameH": 20,
-        "count": 7,
+        "frameW": 28,
+        "frameH": 21,
+        "count": 3,
         "foot": 5.25,
         "side": -0.5
       },
       "pet_ember_drake": {
         "file": "char/pet_ember_drake.png",
-        "frameW": 24,
-        "frameH": 20,
-        "count": 7,
+        "frameW": 28,
+        "frameH": 21,
+        "count": 3,
         "foot": 4.25,
         "side": 1.5
       },
       "pet_void_hatchling": {
         "file": "char/pet_void_hatchling.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 5.25,
-        "side": 0.0
+        "side": 0
       },
       "pet_storm_falcon": {
         "file": "char/pet_storm_falcon.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 20,
-        "count": 7,
+        "count": 3,
         "foot": 4.25,
         "side": 0.5
       },
       "npcw_elara": {
         "file": "char/npc_elara.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
-        "side": 1.0
+        "side": 1
       },
       "npcw_borin": {
         "file": "char/npc_borin.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
-        "side": 1.0
+        "side": 1
       },
       "npcw_mira": {
         "file": "char/npc_mira.png",
-        "frameW": 20,
+        "frameW": 22,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": -0.5
       },
       "npcw_elder": {
         "file": "char/npc_elder.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
-        "side": 1.0
+        "side": 1
       },
       "npcw_haran": {
         "file": "char/npc_haran.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
-        "side": 1.0
+        "side": 1
       },
       "npcw_rika": {
         "file": "char/npc_rika.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
-        "side": 1.0
+        "side": 1
       },
       "npcw_seira": {
         "file": "char/npc_seira.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7,
+        "frameW": 24,
+        "frameH": 41,
+        "count": 2,
         "foot": -0.75,
-        "side": 1.0
+        "side": 1
       },
       "npcw_garn": {
         "file": "char/npc_garn.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7,
+        "frameW": 24,
+        "frameH": 41,
+        "count": 2,
         "foot": -0.75,
-        "side": 1.0
+        "side": 1
       },
       "npcw_kade": {
         "file": "char/npc_kade.png",
-        "frameW": 20,
+        "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
-        "side": 1.0
+        "side": 1
       },
       "jungle_koi": {
         "file": "char/jungle_koi.png",
         "frameW": 24,
-        "frameH": 14,
+        "frameH": 15,
         "count": 7,
         "foot": 1.25,
         "side": -0.5
@@ -754,7 +754,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 32,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "crevasse_maw": {
         "file": "char/crevasse_maw.png",
@@ -762,23 +762,23 @@ window.SPRITE_MANIFEST = {
         "frameH": 30,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "reef_crab": {
         "file": "char/reef_crab.png",
         "frameW": 34,
-        "frameH": 20,
+        "frameH": 21,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "lantern_jelly": {
         "file": "char/lantern_jelly.png",
-        "frameW": 20,
+        "frameW": 22,
         "frameH": 28,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "reef_shark": {
         "file": "char/reef_shark.png",
@@ -786,11 +786,11 @@ window.SPRITE_MANIFEST = {
         "frameH": 22,
         "count": 7,
         "foot": 3.25,
-        "side": 0.0
+        "side": 0
       },
       "deep_octopus": {
         "file": "char/deep_octopus.png",
-        "frameW": 44,
+        "frameW": 46,
         "frameH": 34,
         "count": 7,
         "foot": 0.25,
@@ -814,17 +814,18 @@ window.SPRITE_MANIFEST = {
       },
       "npcw_guard": {
         "file": "char/npc_guard.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 24,
+        "frameH": 42,
         "count": 7,
         "foot": -0.75,
-        "side": 0.5
+        "side": 0.5,
+        "unused": true
       },
       "npcw_pedlar": {
         "file": "char/npc_pedlar.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": -0.5
       },
@@ -832,7 +833,7 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_oreman.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": 0.5
       },
@@ -840,37 +841,37 @@ window.SPRITE_MANIFEST = {
         "file": "char/npc_armsman.png",
         "frameW": 24,
         "frameH": 40,
-        "count": 7,
+        "count": 2,
         "foot": -0.75,
         "side": -0.5
       },
       "frostbound": {
         "file": "char/frostbound.png",
-        "frameW": 26,
-        "frameH": 38,
+        "frameW": 30,
+        "frameH": 39,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
       },
       "jarhusk": {
         "file": "char/jarhusk.png",
-        "frameW": 24,
-        "frameH": 26,
+        "frameW": 28,
+        "frameH": 28,
         "count": 7,
         "foot": -0.75,
         "side": 0.5
       },
       "cartwraith": {
         "file": "char/cartwraith.png",
-        "frameW": 30,
-        "frameH": 22,
+        "frameW": 34,
+        "frameH": 25,
         "count": 7,
         "foot": -0.75,
-        "side": 0.0
+        "side": 0
       },
       "sacling": {
         "file": "char/sacling.png",
-        "frameW": 24,
+        "frameW": 28,
         "frameH": 30,
         "count": 7,
         "foot": -0.75,
@@ -878,99 +879,27 @@ window.SPRITE_MANIFEST = {
       },
       "ventspitter": {
         "file": "char/ventspitter.png",
-        "frameW": 26,
-        "frameH": 28,
+        "frameW": 30,
+        "frameH": 29,
         "count": 7,
         "foot": 0.25,
-        "side": 0.0
+        "side": 0
       },
       "npc_guard": {
         "file": "char/npc_guard.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_elara": {
-        "file": "char/npc_elara.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_borin": {
-        "file": "char/npc_borin.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_mira": {
-        "file": "char/npc_mira.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_elder": {
-        "file": "char/npc_elder.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_haran": {
-        "file": "char/npc_haran.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_rika": {
-        "file": "char/npc_rika.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_seira": {
-        "file": "char/npc_seira.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_garn": {
-        "file": "char/npc_garn.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_kade": {
-        "file": "char/npc_kade.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 24,
+        "frameH": 42,
         "count": 7
       },
       "driftling": {
         "file": "char/driftling.png",
-        "frameW": 24,
-        "frameH": 26,
-        "count": 7
-      },
-      "npc_pedlar": {
-        "file": "char/npc_pedlar.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_oreman": {
-        "file": "char/npc_oreman.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_armsman": {
-        "file": "char/npc_armsman.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 28,
+        "frameH": 28,
         "count": 7
       },
       "npcw_yunseul": {
         "file": "char/yunseul.png",
-        "frameW": 22,
+        "frameW": 30,
         "frameH": 44,
         "count": 7
       }
@@ -994,7 +923,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 64,
         "count": 8,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "bone_lord": {
@@ -1003,7 +932,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 76,
         "count": 8,
         "foot": 5.25,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "corrupt_heart": {
@@ -1012,7 +941,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 65,
         "count": 8,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "frost_witch": {
@@ -1021,7 +950,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 58,
         "count": 8,
         "foot": -0.75,
-        "side": 1.0,
+        "side": 1,
         "death": 2
       },
       "void_king": {
@@ -1030,7 +959,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 95,
         "count": 8,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "storm_warden": {
@@ -1039,7 +968,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 70,
         "count": 8,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "first_keeper": {
@@ -1058,7 +987,7 @@ window.SPRITE_MANIFEST = {
         "count": 12,
         "gap": 0,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "overseer": {
@@ -1067,7 +996,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 95,
         "count": 9,
         "foot": 1.25,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "ice_warden": {
@@ -1087,7 +1016,7 @@ window.SPRITE_MANIFEST = {
         "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "mine_horror": {
@@ -1097,7 +1026,7 @@ window.SPRITE_MANIFEST = {
         "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "blight_maw": {
@@ -1117,7 +1046,7 @@ window.SPRITE_MANIFEST = {
         "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 1.0,
+        "side": 1,
         "death": 2
       },
       "spore_queen": {
@@ -1127,7 +1056,7 @@ window.SPRITE_MANIFEST = {
         "count": 6,
         "gap": 0,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "proliferator": {
@@ -1147,7 +1076,7 @@ window.SPRITE_MANIFEST = {
         "count": 12,
         "gap": 0,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "archetype": {
@@ -1167,7 +1096,7 @@ window.SPRITE_MANIFEST = {
         "count": 12,
         "gap": 0,
         "foot": 11.25,
-        "side": 1.0,
+        "side": 1,
         "death": 2
       },
       "shaft_maw": {
@@ -1177,7 +1106,7 @@ window.SPRITE_MANIFEST = {
         "count": 12,
         "gap": 0,
         "foot": -0.75,
-        "side": 3.0,
+        "side": 3,
         "death": 2
       },
       "drowned_keeper": {
@@ -1195,7 +1124,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 120,
         "count": 8,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       },
       "isle_keeper": {
@@ -1204,7 +1133,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 99,
         "count": 8,
         "foot": -0.75,
-        "side": 0.0,
+        "side": 0,
         "death": 2
       }
     },

@@ -948,8 +948,10 @@ const UI = {
       if (!list.length) continue;
       const n = list.filter(a => got[a.id]).length;
       h += `<div class="ach-head">${ACH_CAT[cat]} <span>${n}/${list.length}</span></div>`;
-      // 난이도 순으로 — 쉬운 것부터 보여야 다음에 뭘 할지 고르기 쉽다
-      list.sort((x, y) => ACH_ORDER[x.t] - ACH_ORDER[y.t]);
+      /* ★ 난이도로 다시 줄 세우지 않는다. 쉬운 것부터 늘어놓으면 "다음에 이걸 하고
+         그다음에 저걸 하고" 하는 **차례표**가 되어, 같은 일지 안의 의뢰 목록과
+         똑같이 읽힌다. 적어 둔 차례(갈래 안에서 이야기 순서로 묶여 있다)를 그대로
+         쓴다 — 난이도는 오른쪽 배지가 이미 말해 준다. */
       for (const a of list) {
         const on = !!got[a.id];
         const [tn, tc] = ACH_TIER[a.t] || ACH_TIER.mid;
@@ -1926,8 +1928,13 @@ const UI = {
       // 남은 쪽을 채운다 — 열이 오를수록 줄어든다(체력·마나와 같은 방향으로 읽히게)
       $('#jet-fill').style.width = Math.round((1 - (p.jetHeat || 0)) * 100) + '%';
       jb.classList.toggle('over', !!p.jetOver);
+      /* ★ 평상시에는 **숫자만** 쓴다. 다른 줄(체력·마나·숨·전하)이 전부 숫자만 쓰는데
+         여기만 이름표를 달고 있어서, 같은 틀 안에서 한 줄만 글줄이 길었다. 막대 왼쪽
+         칸에 이미 🚀 아이콘이 있어 무엇인지는 그것으로 읽힌다.
+         과열·한계 높이 두 상태만 글로 말한다 — 그건 값이 아니라 **왜 안 떠오르는지**라
+         숫자로는 못 읽는다. */
       $('#jet-text').textContent = p.jetOver ? '과열 — 식는 중'
-        : (p.jetGap > 30 ? '한계 높이' : `추진기 ${Math.round((1 - (p.jetHeat || 0)) * 100)}%`);
+        : (p.jetGap > 30 ? '한계 높이' : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`);
     }
     /* 산소 막대 — 물속이거나 아직 덜 찼을 때만 나온다(전하 막대와 같은 방식).
        평소에는 숨겨 두어야 HUD가 늘 네 줄로 붐비지 않는다. */
