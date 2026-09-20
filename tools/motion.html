@@ -101,7 +101,8 @@ canvas{image-rendering:pixelated;display:block;border-radius:2px}
   </div>
 </header>
 <div class="legend">
-  <b>칸 번호</b> idle1 · idle2 · move1 · move2 · atk · death1 · death2 &nbsp;|&nbsp;
+  <b>칸 번호</b> 몹 idle1 · idle2 · move1 · move2 · atk · death1 · death2 &nbsp;·&nbsp;
+  보스는 <b>마디마다 서기 두 칸</b>이 이어지고 <b>맨 뒤가 죽음</b>입니다(공격 칸이 없습니다) &nbsp;|&nbsp;
   <b>자동 검사</b> 칸 가장자리에 닿음 · 반투명 픽셀(배경이 구워진 자국) · 떨어져 나온 덩어리 ·
   다른 칸과 똑같음(움직임 없음) &nbsp;|&nbsp;
   <b>표시</b> <span class="tag fix">수정됨</span> 결함을 고친 것(무엇을 고쳤는지 카드 아래에 적혀 있습니다) ·
@@ -114,6 +115,27 @@ const M = window.SPRITE_MANIFEST;
 const S = (M.characters && M.characters.scale) || 4;
 const NAMES = ['idle1','idle2','move1','move2','atk','death1','death2'];
 const PET_NAMES = ['idle1','idle2','atk'];
+
+/* ★ 보스는 칸 구성이 **몹과 다르다.**
+     몹   : idle1 idle2 move1 move2 atk death1 death2   (일곱 칸 고정)
+     보스 : 마디마다 서기 두 칸이 이어지고 **맨 뒤 death 칸**이 붙는다
+            (manifest 의 frames / frames5 와 death 값이 그것이다)
+   예전에는 보스에도 몹 이름표를 붙이고 죽음을 칸5·6 으로 잡았다. count=8 인 보스는
+   죽음이 실제로 칸6·7 이고 archetype(count=12)은 칸10·11 이라, 미리보기가 PNG 의
+   엉뚱한 칸을 돌리고 있었다("공격·죽음 모션이 png 와 매칭이 안 된다").
+   보스에는 공격 칸이 아예 없다 — 그래서 '공격' 자리에 마지막 마디를 보여 준다. */
+function bossPlan(m){
+  const cnt = m.count, d = m.death || 0;
+  const live = Math.max(0, cnt - d);
+  const names = [];
+  for (let i = 0; i < live; i++)
+    names.push(`${Math.floor(i/2)+1}단계 ${i%2 ? 'b' : 'a'}`);
+  for (let i = 0; i < d; i++) names.push(`죽음${i+1}`);
+  const first = live >= 2 ? [0,1] : (live ? [0] : null);
+  const lastPair = live >= 4 ? [live-2, live-1] : null;
+  const death = d ? Array.from({length:d}, (_,i) => live + i) : null;
+  return { names, mots: [['1단계', first], ['마지막 단계', lastPair], ['죽음', death]] };
+}
 
 function group(n, sec){
   if (sec === 'bosses') return 'boss';
@@ -210,14 +232,17 @@ function paintBg(c, w, h){
 function makeCard(sheet, img, info){
   const { name, m, g } = sheet;
   const { fw, fh, cnt, gap, frames } = info;
+  const isBoss = sheet.sec === 'bosses';
   const petLike = g === 'pet';
-  const lbl = petLike ? PET_NAMES : NAMES;
+  const bp = isBoss ? bossPlan(m) : null;
+  const lbl = bp ? bp.names : (petLike ? PET_NAMES : NAMES);
 
   /* 빨강(문제)과 회색(참고)을 가른다.
      ★ "변에 닿음"은 **참고**다 — 몹 시트 103장 중 75장이 어딘가 변에 닿아 있다.
        땅에 서려면 발이 아랫줄에 닿아야 하고, 그림을 칸에 꽉 채우는 것도 흔하다.
        이걸 빨강으로 세면 거의 전부가 빨개져서 아무 소용이 없다. */
   const problems = [], notes = [];
+  const deadFrom = bp ? (cnt - (m.death || 0)) : (petLike ? cnt : cnt - 2);
   frames.forEach((f,i)=>{
     const nm = lbl[i] || ('칸'+i);
     if (f.semi > 12) problems.push(`<i>${nm}: 반투명 ${f.semi}칸</i>`);
@@ -246,7 +271,8 @@ function makeCard(sheet, img, info){
 
   // ---- 움직이는 미리보기 셋
   const body = el.querySelector('.body');
-  const mots = petLike
+  const mots = bp ? bp.mots
+    : petLike
     ? [['서기',[0,1]], ['공격',[2]], ['죽음',null]]
     : [['걷기',[2,3]], ['공격',[4]], ['죽음',[5,6]]];
   const anim = [];
@@ -277,8 +303,13 @@ function makeCard(sheet, img, info){
     stripCvs.push(cv);
   }
 
+  /* ★ 배율은 칸 크기에 맞춰 **깎는다.** 원형(archetype)은 192x232 라 5배율이면
+     960px 이 되어 카드(430px) 밖으로 잘린다 — 큰 보스의 자세를 아예 볼 수 없었다.
+     미리보기 셋이 나란히 서야 하므로 하나에 130px, 낱장 띠는 110px 를 넘지 않게 한다. */
+  const fit = (want, cap) => Math.max(1, Math.min(want, Math.floor(cap / Math.max(fw, fh))));
+
   function draw(t){
-    const z = state.zoom, w = fw*z, h = fh*z;
+    const z = fit(state.zoom, 130), w = fw*z, h = fh*z;
     for (const a of anim){
       const step = a.list.length > 1
         ? a.list[Math.floor(t*state.speed/3) % a.list.length]
@@ -292,7 +323,7 @@ function makeCard(sheet, img, info){
     }
     for (let i=0;i<stripCvs.length;i++){
       const cv = stripCvs[i], c = cv.getContext('2d');
-      const zz = Math.max(2, z-1), ww = fw*zz, hh = fh*zz;
+      const zz = Math.max(1, fit(state.zoom - 1, 110)), ww = fw*zz, hh = fh*zz;
       if (cv.width !== ww){ cv.width = ww; cv.height = hh; }
       c.imageSmoothingEnabled = false;
       paintBg(c, ww, hh);

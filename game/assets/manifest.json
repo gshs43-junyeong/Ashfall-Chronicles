@@ -136,8 +136,8 @@
       },
       "archer": {
         "file": "char/archer.png",
-        "frameW": 24,
-        "frameH": 42,
+        "frameW": 26,
+        "frameH": 43,
         "count": 7,
         "foot": -0.75,
         "side": 0.0
@@ -464,7 +464,7 @@
       },
       "ash_vole": {
         "file": "char/ash_vole.png",
-        "frameW": 20,
+        "frameW": 22,
         "frameH": 20,
         "count": 7,
         "foot": 1.25,
@@ -544,7 +544,7 @@
       },
       "gloom_crawler": {
         "file": "char/gloom_crawler.png",
-        "frameW": 34,
+        "frameW": 38,
         "frameH": 24,
         "count": 7,
         "foot": -0.75,
@@ -812,7 +812,8 @@
         "frameH": 42,
         "count": 7,
         "foot": -0.75,
-        "side": 0.5
+        "side": 0.5,
+        "unused": true
       },
       "npcw_pedlar": {
         "file": "char/npc_pedlar.png",
@@ -857,7 +858,7 @@
       "cartwraith": {
         "file": "char/cartwraith.png",
         "frameW": 34,
-        "frameH": 24,
+        "frameH": 25,
         "count": 7,
         "foot": -0.75,
         "side": 0.0
@@ -880,91 +881,19 @@
       },
       "npc_guard": {
         "file": "char/npc_guard.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_elara": {
-        "file": "char/npc_elara.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_borin": {
-        "file": "char/npc_borin.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_mira": {
-        "file": "char/npc_mira.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_elder": {
-        "file": "char/npc_elder.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_haran": {
-        "file": "char/npc_haran.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_rika": {
-        "file": "char/npc_rika.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_seira": {
-        "file": "char/npc_seira.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_garn": {
-        "file": "char/npc_garn.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_kade": {
-        "file": "char/npc_kade.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 24,
+        "frameH": 42,
         "count": 7
       },
       "driftling": {
         "file": "char/driftling.png",
-        "frameW": 24,
-        "frameH": 26,
-        "count": 7
-      },
-      "npc_pedlar": {
-        "file": "char/npc_pedlar.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_oreman": {
-        "file": "char/npc_oreman.png",
-        "frameW": 20,
-        "frameH": 40,
-        "count": 7
-      },
-      "npc_armsman": {
-        "file": "char/npc_armsman.png",
-        "frameW": 20,
-        "frameH": 40,
+        "frameW": 28,
+        "frameH": 28,
         "count": 7
       },
       "npcw_yunseul": {
         "file": "char/yunseul.png",
-        "frameW": 22,
+        "frameW": 30,
         "frameH": 44,
         "count": 7
       }
