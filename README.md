@@ -5,13 +5,16 @@
 테라리아식 2D 샌드박스 위에 스토리·RPG 성장·무기/능력 빌드를 얹은 어드벤처 게임.
 순수 HTML5 + JavaScript로 만들어졌고, 브라우저 안에서 돌아갑니다.
 
+세션 셋 · 장 열여덟 · 결착 열셋. 지상 아홉 바이옴에 하늘 섬과 지하 넷이 붙고,
+서쪽 끝에는 **가라앉은 바다**가 있습니다 — 숨이 닿는 만큼만 내려갈 수 있습니다.
+
 **[▶ 브라우저에서 바로 플레이](https://ashfall-chronicles.vercel.app/)** ·
 **[내려받기](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)**
 
 > **웹과 내려받는 판은 지금 다릅니다.** 웹(`/play`)에서는 **v1.1 개발판**이 돌고,
-> 내려받는 zip 은 아직 **v1.0.5** 입니다. v1.1 에 무엇이 들어갔고 무엇이 남았는지는
-> [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다 — 가장 큰 남은
-> 덩어리는 **세션 2의 메인 스토리**입니다.
+> 내려받는 zip 은 아직 **v1.0.5** 입니다. v1.1 에 무엇이 들어갔는지는
+> [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다 — **세션 2 「벽 너머」와
+> 세션 3 「물이 지운 쪽」이 모두 들어가** 장이 열다섯에서 **열여덟**으로 늘었습니다.
 
 ---
 
@@ -42,8 +45,9 @@
 
 | 문서 | 내용 |
 |---|---|
-| [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 작업은 여기서 시작합니다 |
-| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1 에 무엇이 들어갔고 무엇이 남았는가** (개발 중) |
+| [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
+| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1 에 무엇이 들어갔는가** (아직 릴리스 전) |
+| [`CLAUDE.md`](CLAUDE.md) | 이 저장소에서 코드를 고칠 때의 규칙 — 타일 번호·좌표(`SHIFT`)·세이브처럼 **어기면 조용히 망가지는 것들** |
 | [`docs/v1.1-sfx-prompts.md`](docs/v1.1-sfx-prompts.md) | 필요한 효과음 36개와 생성 프롬프트 |
 | [`docs/v1.1-plan-prompt.md`](docs/v1.1-plan-prompt.md) | v1.1 최초 작업 지시서 (실제 진행은 이 길과 달라졌습니다 — 현황은 changelog 쪽) |
 | [`docs/deploy-cache.md`](docs/deploy-cache.md) | 배포와 캐시 무효화 |
@@ -107,9 +111,9 @@ xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/   # 받은 판 번호로
 
 | 입력 | 동작 |
 |---|---|
-| `A` / `D` | 이동 |
-| `Space` | 점프 (특성·장신구로 이중 점프) |
-| `S` | 나무 발판 아래로 내려가기 |
+| `A` `D` · `←` `→` | 이동 |
+| `Space` `W` `↑` | 점프 (특성·장신구로 이중 점프) · 물속에서는 위로 저음 |
+| `S` `↓` | 나무 발판 아래로 내려가기 |
 | 좌클릭 | 공격 — 곡괭이/괭이를 든 상태면 채굴·밭갈이 |
 | 우클릭 | 설치 · 상호작용 · 낚싯대 던지기 |
 | `Shift` | 회피 대시 (무적 프레임) |
@@ -118,6 +122,11 @@ xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/   # 받은 판 번호로
 | `I` `K` `J` `H` | 가방 · 능력 · 일지 · 제작 |
 | `Esc` | 일시정지 |
 | `F5` | 저장 |
+
+이동·점프·대시·스킬·패널·저장은 게임 안 **설정 → 조작**에서 다른 키로 바꿀 수 있습니다.
+
+물에 들어가면 화면에 **숨 막대**가 생깁니다. 숨이 다하면 체력이 깎이므로, 더 내려가려면
+휴대용 산소통을 만들어 유틸리티 칸에 끼워야 합니다.
 
 ---
 

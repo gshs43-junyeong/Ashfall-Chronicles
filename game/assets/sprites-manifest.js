@@ -175,7 +175,7 @@ window.SPRITE_MANIFEST = {
       "imp": {
         "file": "char/imp.png",
         "frameW": 28,
-        "frameH": 30,
+        "frameH": 31,
         "count": 7,
         "foot": -0.75,
         "side": 0

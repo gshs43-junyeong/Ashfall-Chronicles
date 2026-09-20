@@ -368,6 +368,27 @@ def mob_crystalcrab(f):
     return f
 
 
+def mob_scorpion(f):
+    """사막 전갈 — 걸을 때 **몸이 좌우로 늘어났다.**
+
+    네 발 기본 걸음(walk_quad)은 몸을 가운데에서 갈라 왼쪽은 왼쪽으로, 오른쪽은
+    오른쪽으로 민다. 전갈은 가로로 긴 데다(30칸) 가르는 자리가 몸통 한복판
+    (키의 52%)이라, 다리가 아니라 **몸통이 통째로 한 칸씩 벌어졌다** — 폭이 30에서
+    31로 늘고 가른 자리에 이음매가 드러났다. 걷는 게 아니라 늘어나는 것으로 보인다.
+
+    전갈이 움직인다는 걸 읽히게 하는 건 3칸짜리 다리가 아니라 **꼬리와 집게**다.
+    좌우 바깥 띠를 서로 반대로 흔들고(limbs), 바닥에 닿은 발은 한 짝 걸러 하나씩
+    뗀다(_toelift). 몸통 가운데는 손대지 않으므로 폭이 그대로다.
+
+    ★ 흔드는 띠에서 **발 두 줄은 뺀다**(0.86). 발까지 같이 흔들면 땅에 닿은 발이
+      따라 올라가 다시 "떠 있는 그림"이 된다."""
+    base = f[0]
+    y0, y1 = _band(base, 0.0, 0.86)
+    f[2] = _toelift(limbs(base, -1, 1, frac=0.30, y0=y0, y1=y1), (0, 2))
+    f[3] = _toelift(limbs(base, 1, -1, frac=0.30, y0=y0, y1=y1), (1, 3))
+    return f
+
+
 def mob_scrapcrawler(f):
     """고철 기어다니는 것 — idle 두 장이 완전히 같았다."""
     base = f[0]
@@ -413,6 +434,36 @@ def mob_ash_vole(f):
     f[3] = shift(shear(base, 8), 0, 1)
     f[4] = shift(shear(base, -10), 2, 0)
     return f
+
+
+def _toelift(fr, pads, ink=40):
+    """바닥에 닿은 다리 끝을 골라 **한 칸 뗀다**(맨 아랫줄 칸을 지운다).
+
+    ★ 여기서는 _feet() 를 못 쓴다. 그쪽은 **투명**으로 갈라진 발판을 묶는데, 전갈은
+      다리 사이가 투명이 아니라 **윤곽선(검정)** 으로 갈라져 있다 — 바닥줄 x6~18 이
+      한 칸도 안 비어서 _feet 는 다리 넷을 한 덩이로 센다. 그래서 윤곽이 아닌
+      **채움색**만 보고 기둥을 나눈다(밝기 ink 이상).
+
+    pads 는 왼쪽부터 센 기둥 번호들이다. 지운 자리 좌우에는 윤곽선이 그대로 남아,
+    발이 땅에서 떨어진 틈으로 읽힌다."""
+    y = fr.bottom()
+    xs = sorted(x for (x, yy) in fr.p if yy == y and lum(fr.p[(x, yy)]) >= ink)
+    runs, cur = [], []
+    for x in xs:
+        if cur and x == cur[-1] + 1:
+            cur.append(x)
+        else:
+            if cur:
+                runs.append(cur)
+            cur = [x]
+    if cur:
+        runs.append(cur)
+    g = fr.copy()
+    for i in pads:
+        if i < len(runs):
+            for x in runs[i]:
+                g.p.pop((x, y), None)
+    return g
 
 
 def _feet(fr):
@@ -561,6 +612,7 @@ JOBS = [
     ('characters', 'lavaslug', mob_lavaslug),
     ('characters', 'riveter', mob_riveter),
     ('characters', 'crystalcrab', mob_crystalcrab),
+    ('characters', 'scorpion', mob_scorpion),
     ('characters', 'scrapcrawler', mob_scrapcrawler),
     ('characters', 'glow_snail', mob_glow_snail),
     ('characters', 'arctic_hare', mob_arctic_hare),
@@ -854,7 +906,9 @@ AUTO_CHARS = {
 
 # 걷기 칸(2·3)까지 멈춰 있던 것들. 나머지는 가만히 칸만 손본다.
 # ★ 수정게는 뺐다 — walk_quad 가 오른쪽 발을 잘라 먹어서, 레시피가 직접 만든다.
-WALK_FIX = {'minerghost', 'scorpion', 'archivist', 'sporeling',
+# ★ 사막 전갈도 뺐다 — walk_quad 가 몸통을 좌우로 벌려 늘어나 보여서, 레시피가
+#   꼬리·집게 흔들기와 발 떼기로 직접 만든다(mob_scorpion).
+WALK_FIX = {'minerghost', 'archivist', 'sporeling',
             'coreling', 'rabbit', 'jungle_frog', 'drowned_hand', 'scribe_hand',
             'damp_wisp', 'reef_crab', 'reef_shark', 'yunseul'}
 

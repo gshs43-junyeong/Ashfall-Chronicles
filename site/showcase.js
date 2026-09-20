@@ -124,6 +124,10 @@
     ['잿빛 숲',      'parallax_forest',   76, '#262232', '#7d6553', 1.40],
     ['여명 마을',    'parallax_village', 120, '#2a2434', '#8d6d4f', 1.15],
     ['서리 지대',    'parallax_snow',    112, '#26313f', '#86a0b4', 1.10],
+    /* 세션 3 — 서리 지대 **서쪽**으로 이어 붙은 둘. 원본이 다른 띠보다 유난히
+       어두워서(바다는 가장 밝은 칸이 63, 빙하는 126) 밝기 배수를 크게 잡았다. */
+    ['빙하 지대',    'parallax_glacier', 148, '#223448', '#8fb6cc', 1.45],
+    ['가라앉은 바다', 'parallax_sea',    212, '#1b2a3a', '#3f7fa8', 1.80],
     ['메마른 사구',  'parallax_desert',  200, '#2f2536', '#a37a55', 1.55],
     ['울림 정글',    'parallax_jungle',   90, '#1d2a26', '#6c8560', 1.25],
     ['버섯 골짜기',  'parallax_glowfen', 150, '#1f2436', '#4f6a76', 1.20],
@@ -235,7 +239,9 @@
     'slime', 'skeleton', 'bat', 'spider', 'zombie', 'imp',
     'frostling', 'sporeling', 'scorpion', 'crawler', 'wraith', 'golem',
     'sandmaw', 'vinelash', 'lavaslug', 'ashcrow', 'riveter', 'weldarm',
-    'scrapcrawler', 'gale', 'capbeast', 'archer'
+    'scrapcrawler', 'gale', 'capbeast', 'archer',
+    /* 세션 3 — 물속과 얼음. 줄이 흐르기만 하는 구조라 늘려도 붐비지 않는다 */
+    'lantern_jelly', 'abyss_angler', 'glacier_stalker'
   ];
 
   function initBeastBand() {

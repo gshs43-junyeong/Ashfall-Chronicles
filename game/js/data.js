@@ -2464,9 +2464,9 @@ const BOSS_DIE = {
    체력 막대의 **틀은 셋이 같고 화려함만 다르다.** 처음 잡는 갱도의 것과 마지막 환원기가
    똑같은 막대를 달고 나오면, 화면만 봐서는 지금이 어느 싸움인지 알 수가 없다.
 
-     mini   유적 미니보스 여섯. 얇은 막대, 장식 없음
+     mini   유적 미니보스와 숨은 보스 여덟. 얇은 막대, 장식 없음
      normal 스토리 보스 아홉. 모서리 꺾쇠와 그라디언트
-     grand  세션 종장과 특별 유적의 주인 다섯. 두 겹 테두리 · 쓸고 지나가는 빛 · 번짐
+     grand  세션 종장과 특별 유적의 주인 여섯. 두 겹 테두리 · 쓸고 지나가는 빛 · 번짐
 
    ★ 페이즈 수(ph)로 **대신하지 않는다.** 지금은 ph 2/3/5 가 등급과 딱 맞지만, 그건
      우연이다 — 2페이즈짜리 스토리 보스를 하나 넣는 순간 그것이 미니보스 막대를 달고
@@ -2475,10 +2475,14 @@ const BOSS_DIE = {
 const BOSS_TIER = {
   mine_horror: 'mini', ice_warden: 'mini', vine_lord: 'mini',
   sand_guardian: 'mini', spore_queen: 'mini', blight_maw: 'mini',
-  drowned_keeper: 'mini', tide_warden: 'mini', isle_keeper: 'mini',
+  drowned_keeper: 'mini', isle_keeper: 'mini',
 
+  /* ★ 조수의 파수꾼은 **세션 3 의 종장**이다(17장의 마지막 목표). 세션 3 을 붙이면서
+     새 보스 셋을 한꺼번에 mini 로 적어 넣는 바람에, 148,000 짜리 마지막 싸움이
+     갱도의 것(1,900)과 같은 얇은 막대를 달고 나왔다. 앞선 두 세션의 종장
+     (별을 쫓아온 것 · 원형)과 같은 grand 로 맞춘다. */
   pursuer: 'grand', hepha: 'grand', archetype: 'grand',
-  restorer: 'grand', shaft_maw: 'grand'
+  restorer: 'grand', shaft_maw: 'grand', tide_warden: 'grand'
 };
 
 /* ---------------- 보스의 힘 축적 ----------------
@@ -2677,10 +2681,18 @@ function profNeed(lv) { return Math.round(5 * Math.pow(lv, 1.45)); }
 
 /* 장의 결착이 되는 보스들. 이 목록에 있으면 scale() 을 타지 않고 표에 적힌 수치를
    그대로 쓴다(game.js spawnBoss) — 언제 오든 같은 싸움이어야 페이즈 설계가 선다. */
+/* 장의 목표로 걸린 보스들. 여기 있는 것만 **적은 체력 그대로** 나온다
+   (game.js spawnBoss: 나머지는 scale()×0.9 가 곱해진다).
+
+   ★ 세션 3 을 붙이면서 조수의 파수꾼이 빠져 있었다. 17장의 마지막 목표인데도
+     여기 없어서, 17장 기준 배수 2.28 이 곱해져 적어 둔 148,000 이 **337,000** 으로
+     나왔다 — 특별 유적의 환원기(320,000)보다 센 것이 세션 종장에 서 있었다.
+     장 목표로 보스를 걸면 여기에도 한 줄을 더해야 한다. */
 const STORY_BOSSES = {
   king_slime: 1, bone_lord: 1, corrupt_heart: 1, frost_witch: 1, void_king: 1,
   storm_warden: 1, first_keeper: 1, pursuer: 1,
-  overseer: 1, proliferator: 1, hepha: 1, archetype: 1
+  overseer: 1, proliferator: 1, hepha: 1, archetype: 1,
+  tide_warden: 1
 };
 
 /* ---------------- 보스 페이즈 대사 ----------------
