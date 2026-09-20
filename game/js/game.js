@@ -3661,7 +3661,10 @@ const G = {
     const w = this.world;
     if (!w || !w.machines) return 0;
     let m = null;
-    for (const q of w.machines.values()) if (q.t === o.mach) { m = q; break; }
+    /* 세계가 지어 둔 기계(m.gen)는 안 본다 — "세웠다"는 **내 손으로** 세웠다는 뜻이다.
+       지금 이 목표는 조립기 하나뿐이라 생성기와 겹치지 않지만, 함정류로 목표를 하나
+       더 붙이는 순간 유적 함정이 대신 채워 준다(data.js achMach 의 사고와 같은 꼴). */
+    for (const q of w.machines.values()) if (q.t === o.mach && !q.gen) { m = q; break; }
     if (!m) return 0;
     if (!o.stop) return 1;
     if (!this.asmRan) return 1;
@@ -4773,10 +4776,22 @@ const G = {
         if (ashOn && this.ASH_TILE[id]) { this.drawAshTile(c, id, v, sx, sy, tx, ty, ashF); continue; }
         if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
         else TileArt.draw(c, id, v, sx, sy);
-        /* 상단 하이라이트는 **하늘에 드러난 윗면**을 흉내 내는 선이다. "윗칸이 고체가
-           아니면"으로 두면 물에 잠긴 바닥이나 잡초·조개가 얹힌 칸에도 줄이 그어진다 —
-           빛이 닿지 않는 자리에 빛 자국이 남는 셈이다. 윗칸이 **정확히 공기일 때만** 긋는다. */
-        if (!TOP_SKIP[id] && w.tiles[k - WW] === T.AIR) {
+        /* 상단 하이라이트는 **하늘에 드러난 윗면**을 흉내 내는 선이다. 세 가지를 다 봐야 한다.
+
+           ① 윗칸이 **정확히 공기**일 것. "윗칸이 고체가 아니면"으로 두면 물에 잠긴
+              바닥이나 잡초·조개가 얹힌 칸에도 줄이 그어진다.
+           ② 타일 제가 **구멍 없이 꽉 찬** 것일 것 (TOP_SKIP — tileart.markFull 이 아틀라스
+              알파를 직접 재서 정한다). 안 그러면 그림에서 떨어진 허공에 선이 뜬다.
+           ③ ★ 그 공기가 **하늘로 이어진** 것일 것. ①②만으로는 모자랐다 — 지하 190m 동굴
+              바닥 53칸에 전부 줄이 그어졌고(그중 20칸은 빛이 0인 칠흑), 마을에서도 88칸 중
+              26칸이 **집 안 바닥**이었다. 햇빛 자국이 지하와 실내에 남는 셈이다.
+              판정은 지어내지 않고 조명이 쓰는 것을 그대로 쓴다 — world.computeLight 가
+              햇빛을 심는 조건이 `AIR && y <= surface[x] && walls[k] === 0` 이다. 같은 식을
+              쓰면 "밝은데 줄이 없다"거나 "어두운데 줄이 있다"가 원리적으로 생기지 않는다.
+              (제가 판 수직굴 바닥에는 안 그어진다. 조명도 거길 하늘로 안 치므로 어둡다 —
+               어두운 칸에 줄이 없는 것이 맞다.) */
+        if (!TOP_SKIP[id] && w.tiles[k - WW] === T.AIR
+            && w.walls[k - WW] === 0 && ty - 1 <= w.surface[tx]) {
           c.fillStyle = 'rgba(255,255,255,.10)'; c.fillRect(sx, sy, TS, 2);
         }
       }
@@ -6506,7 +6521,7 @@ const G = {
     msg.textContent = '맞물리는 소리가 났다';
     o.opened = true;
     if (w.openVaultAt) w.openVaultAt(o.dx, o.dy);   // 다시 봉하지 않게 표시
-    for (let y = o.dy - 4; y <= o.dy; y++) w.set(o.dx, y, T.AIR);
+    w.openCodeDoorway(o.dx, o.dy);                  // 껍질 두 겹을 다 뚫는다 (world.js 의 ★)
     for (let i = 0; i < 30; i++)
       this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#ffe08a', -30, 1.1));
     this.shake = 10;

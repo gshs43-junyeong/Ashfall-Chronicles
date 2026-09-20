@@ -36,10 +36,16 @@ const Factory = {
     return w.inB(tx, ty) && w.get(tx, ty) === T.AIR && !w.machines.has(ty * WW + tx);
   },
 
-  place(w, tx, ty, key, dir) {
+  /** gen 을 주면 "세계가 지어 둔 기계"로 표시한다.
+
+      ★ 표시를 **세계 쪽**에 다는 것이 중요하다. 반대로 "플레이자가 놓았다"를 달면
+        옛 세이브의 기계에는 그 표시가 없어서, 여든 대를 깔아 둔 사람이 불러오는
+        순간 자동화 업적을 통째로 잃는다. 없는 쪽이 기본값이 되도록 뒤집어 둔다. */
+  place(w, tx, ty, key, dir, gen) {
     const s = MACHINE[key];
     if (!s || !this.canPlace(w, tx, ty)) return null;
     const m = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: '' };
+    if (gen) m.gen = 1;
     if (key === 'belt' || key === 'belt_fast' || key === 'sorter') m.it = null;    // 물고 있는 아이템 1개
     if (key === 'sorter') m.f = null;                       // 통과시킬 아이템 id
     if (s.slots) { m.items = new Array(s.slots).fill(null); m.feed = 0; }
