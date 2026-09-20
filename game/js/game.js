@@ -693,7 +693,16 @@ const G = {
   /** 지금 상황에 맞는 배경음악 키를 고른다 (music.js의 BGM 테이블과 짝) */
   pickBgm() {
     if (this.state !== 'play' || !this.player || !this.world) return 'title';
-    if (this.boss) return 'boss';
+    /* 쓰러진 자리 — 사망 화면이 떠 있는 동안. 보스전보다 **먼저** 본다: 보스에게 죽으면
+       화면은 사망 창인데 소리만 싸움이 이어져서, 진 것이 아니라 멈춘 것처럼 들렸다.
+       판정은 화면의 클래스를 그대로 읽는다. 따로 깃발을 두면 부활·슬롯 초기화·불가능
+       모드 삭제까지 세 군데에서 내려 줘야 하고, 한 군데만 빠져도 브금이 영영 안 돌아온다. */
+    if (this._deathEl === undefined) this._deathEl = $('#death-screen');
+    if (this._deathEl && this._deathEl.classList.contains('open')) return 'lastnote';
+    /* 세션의 종장만 다른 곡을 쓴다. "5페이즈"가 곧 종장이라는 뜻이다 — 유적 미니보스는
+       2페이즈, 보통 보스는 3페이즈고, 다섯을 가진 것은 별을 쫓아온 것·헤파·원형·환원기·
+       갱을 메운 것 다섯뿐이다(ENEMIES 의 ph). 곡은 둘 중 하나가 무작위로 걸린다. */
+    if (this.boss) return this.boss.phases >= 5 ? 'finale' : 'boss';
     const p = this.player, w = this.world;
     const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
     // 베이스캠프는 기본 브금을 그대로 쓰고(낮/밤 전환도 평소처럼 적용), 여명 마을에만
@@ -3812,7 +3821,10 @@ const G = {
   get STAR_RISE() { return this.STAR_RISE_ALL * 2 / 3; }, // 올라가는 마디
   startStarRise() {
     this.starRise = { t: 0, dur: this.STAR_GATHER + this.STAR_RISE, x: 0, y: 0 };
-    this.sfx('learn');
+    /* 별의 세 사건에는 이제 제 소리가 있다. 예전에는 learn(특성을 배울 때)과
+       level(레벨업) 을 빌려 썼는데, 세션 1 전체에서 다섯 번뿐인 장면이 특성 창을
+       열 때와 같은 소리로 지나갔다. star_rise 는 1.5초짜리라 올라가는 5초를 받친다. */
+    this.sfx('star_rise');
   },
   /** 남은 시간(초). 연출이 끝나면 상태를 정리한다 */
   tickStarRise(dt) {
@@ -3829,7 +3841,7 @@ const G = {
       s.popped = 1;
       this.burst(p.cx, p.cy - 14, 'starmerge', 120, 2.6);
       this.ringFx(p.cx, p.cy - 14, 66, '#ffe8a8', .5);
-      this.sfx('level');
+      this.sfx('star_merge');
     }
     // 올라가는 동안 지나간 자리에 잔불을 남긴다
     const k = (s.t - this.STAR_GATHER) / this.STAR_RISE;
@@ -3854,7 +3866,7 @@ const G = {
       setTimeout(() => {
         const q = this.player;
         this.burst(q.cx + 30, q.cy - 8, 'stargain', 46, this.STAR_GAIN * 0.8);
-        this.sfx('learn');
+        this.sfx('star_gain');
       }, 700);
       setTimeout(() => this.toast(`별 조각이 하나 더 곁에 남았다 — ${p.starOrbits}/5`, 'good'),
                  this.STAR_GAIN * 1000 - 600);
@@ -3864,7 +3876,7 @@ const G = {
         setTimeout(() => {
           this.starMerge = this.STAR_MERGE;
           this.burst(this.player.cx, this.player.cy - 4, 'starmerge', 176, this.STAR_MERGE * 0.9);
-          this.shake = 10; this.sfx('level');
+          this.shake = 10; this.sfx('star_merge');
         }, this.STAR_GAIN * 1000);
         // 생성이 끝난 뒤 합성이 시작되고, 그것도 다 보고 나서 뒷이야기로
         return (this.STAR_GAIN + this.STAR_MERGE) * 1000 + 900;
@@ -4550,11 +4562,27 @@ const G = {
   /** 한 획마다 다른 음높이. ±6% — 음이 바뀐 것으로는 안 들리고 다른 타격으로만 들린다 */
   strokeRate() { return 0.94 + Math.random() * 0.12; },
 
-  /** 무기가 닿는 순간 — 맞은 것의 재질로 소리와 파편을 낸다 */
-  hitFx(e, x, y, crit) {
+  /** 무기가 닿는 순간 — 맞은 것의 재질로 소리와 파편을 낸다.
+
+      소리는 **두 겹**이다(docs/v1.1-sfx-prompts.md C·D 절).
+        ① 재질 — 무엇에 맞았나. 돌은 돌 소리, 뼈는 뼈 소리. 늘 울린다.
+        ② 무기 계열 — 어떻게 맞혔나. 베기·찌르기·둔기가 그 위에 얇게 얹힌다.
+      두 절이 따로 쓰였던 터라 겹칠 자리가 하나 있다. C 절의 `hit_flesh` 는 "물렁한
+      적에 맞을 때 위 셋을 대신한다"이고, D 절에서 flesh 의 재질음도 같은 `hit_flesh`
+      다 — 그래서 **물렁한 것(flesh·gel)에는 ②를 안 얹는다.** 얹으면 같은 파일이
+      두 겹으로 울려 한 대가 두 대로 들린다.
+      ★ ②를 ①보다 작게(0.55) 두는 것이 요점이다. 같은 크기로 두면 두 소리가 각자
+        "한 대"로 들려서, 때린 횟수가 두 배로 들린다. 작게 얹어야 색만 입는다. */
+  hitFx(e, x, y, crit, fam) {
     const mat = mobMat(e.type, e.mech);
     this.matBurst(mat, x, y, crit ? 8 : 4, { spd: crit ? 1.15 : 0.85, life: 0.75 });
-    this.sfxAt(MAT[mat].hit, x / TS, y / TS, this.strokeRate());
+    const tx = x / TS, ty = y / TS;
+    this.sfxAt(MAT[mat].hit, tx, ty, this.strokeRate());
+    if (fam && mat !== 'flesh' && mat !== 'gel') this.sfxAt('hit_' + fam, tx, ty, this.strokeRate());
+    /* 치명타는 계열마다 따로 굽지 않고 **한 겹을 얹는다**(C-1) — 짧고 높고 금속적이라
+       어느 계열 위에 올려도 섞인다. 계열 두 벌을 만들면 평타와 치명타가 서로 다른
+       악기처럼 들려 오히려 따로 논다. */
+    if (crit) this.sfxAt('hit_crit', tx, ty);
   },
   /** 한 칸이 떨어져 나가는 순간 */
   breakFx(tx, ty, id, mach) {
