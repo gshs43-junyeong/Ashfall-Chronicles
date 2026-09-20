@@ -3243,7 +3243,9 @@ function achHidden(a) { return !!a.h || a.t === 'hard'; }
    난이도 배지는 그대로 보여 준다. 무엇인지는 몰라도 **얼마나 어려운지는** 알아야
    목록이 그냥 빈칸으로 읽히지 않는다. */
 
-/* 업적 60개. 갈래 여덟, 난이도 셋.
+/* 업적 70개. 갈래 여덟, 난이도 셋.
+   (세션 3 을 붙이면서 열 개를 더했다 — 가라앉은 종·세 번의 끝·갈라지는 땅·아홉 땅·
+    물속의 것들·가라앉은 지킴이·빙정·심해 노심·터뜨려 본 사람·두 개의 눈.)
 
    ★ 설명(d)은 **시킬 일이 아니라 지나간 일**로 적는다. 예전에는 "밀을 100개 거둔다"
      처럼 목표를 적었는데, 그러면 같은 일지 안에 있는 의뢰 목록과 글투가 같아져서
@@ -3274,6 +3276,13 @@ const ACHIEVEMENTS = [
     check: g => ['king_slime', 'bone_lord', 'corrupt_heart', 'frost_witch', 'void_king',
       'storm_warden', 'first_keeper', 'pursuer', 'overseer', 'proliferator', 'hepha',
       'archetype', 'tide_warden'].every(k => g.player.bossKilled[k]) },
+  /* 세션 3 의 종장. 1장(a_ch1)·세션 전환(a_session2/3)처럼 **그 세션을 끝냈다**를
+     적어 두는 자리다. 세션 1 에는 '다섯 심장'(별을 쫓아온 것)이 있었는데 세션 2·3 에는
+     같은 자리가 비어 있었다 — 아래 '세 번의 끝'이 그 셋을 한 줄로 묶는다. */
+  { id: 'a_tide', cat: 'story', t: 'mid', i: '🔔', n: '가라앉은 종', d: '물 밑에서 울리던 것이 멈췄다.',
+    check: g => !!g.player.bossKilled.tide_warden },
+  { id: 'a_three_ends', cat: 'story', t: 'hard', i: '🌗', n: '세 번의 끝', d: '세 번의 결착을 모두 끝냈다.',
+    check: g => ['pursuer', 'archetype', 'tide_warden'].every(k => g.player.bossKilled[k]) },
   { id: 'a_all_bosses', h: 1, cat: 'story', t: 'hard', i: '🏆', n: '남김없이', d: '이름이 붙은 것은 하나도 남지 않았다.',
     check: g => ['king_slime', 'bone_lord', 'corrupt_heart', 'frost_witch', 'void_king',
       'storm_warden', 'first_keeper', 'pursuer', 'overseer', 'proliferator', 'hepha',
@@ -3330,6 +3339,10 @@ const ACHIEVEMENTS = [
   { id: 'a_abyss_gear', cat: 'gather', t: 'mid', i: '🔱', n: '심해에서 온 것', d: '심해에서 난 것으로 벼린 장비를 들었다.',
     check: g => ['spear_tide', 'blade_shark', 'bow_harpoon', 'orb_abyss', 'hammer_tide',
       'gun_harpoon', 'tome_abyss', 'pick_abyss'].some(k => (g.crafted || {})[k]) },
+  { id: 'a_glacium', cat: 'gather', t: 'mid', i: '🔷', n: '빙정', d: '빙정석 200덩이를 깨 왔다.',
+    check: g => (g.player.mined[T.GLACIUM] || 0) >= 200 },
+  { id: 'a_abyss_core', cat: 'gather', t: 'mid', i: '💠', n: '심해 노심', d: '4단계 설비의 심장을 손으로 굳혀 냈다.',
+    check: g => !!(g.crafted || {}).abyss_core },
   { id: 'a_mine_2000', cat: 'gather', t: 'mid', i: '🪓', n: '파고 또 파고', d: '곡괭이가 2,000번 땅을 물었다.',
     check: g => achSum(g.player.mined) >= 2000 },
   { id: 'a_enh10', cat: 'gather', t: 'hard', i: '🔨', n: '열 겹', d: '모루 위에서 열 번을 견딘 물건이 있다.',
@@ -3350,6 +3363,15 @@ const ACHIEVEMENTS = [
     check: g => Object.keys(g.tabletsRead || {}).length >= 3 },
   { id: 'a_seafloor', cat: 'explore', t: 'hard', i: '🐙', n: '숨이 닿지 않는 곳', d: '숨이 닿지 않는 바닥까지 내려갔다.',
     check: g => g.player.deepest >= 690 },
+  /* 발자국은 seenBiomes 가 이미 적고 있다(바이옴 이름표가 뜰 때 찍힌다) — 세이브에도
+     들어가므로 새 카운터를 만들 필요가 없었다. 세션 3 이 땅을 둘(바다·빙하) 늘려
+     BIOMES 가 아홉이 됐고, '아홉 땅'은 그 표를 그대로 읽는다 — 땅이 더 늘어도 조건이
+     저절로 따라간다. 베이스캠프·여명 마을도 같은 표에 찍히므로 **개수를 세지 않고**
+     BIOMES 의 id 를 하나하나 본다(개수로 세면 마을 둘로 대신 채워진다). */
+  { id: 'a_glacier', cat: 'explore', t: 'easy', i: '❄', n: '갈라지는 땅', d: '빙하 지대에 발을 디뎠다.',
+    check: g => !!(g.seenBiomes || {}).glacier },
+  { id: 'a_all_zones', cat: 'explore', t: 'hard', i: '🗺', n: '아홉 땅', d: '아홉 땅에 모두 발자국을 남겼다.',
+    check: g => BIOMES.every(b => (g.seenBiomes || {})[b.id]) },
   { id: 'a_yunseul', h: 1, cat: 'explore', t: 'hard', i: '🫧', n: '물속의 집', d: '아무도 말해 주지 않은 사람을 만났다.',
     check: g => !!(g.talked || {}).yunseul },
 
@@ -3367,6 +3389,10 @@ const ACHIEVEMENTS = [
      이 업적이 가리키는 건 그 뒤에 벌어지는 일이다. 어려움이라 자동으로 숨는다. */
   { id: 'a_isle', cat: 'hunt', t: 'hard', i: '🏝', n: '섬을 내려놓게 하다', d: '섬을 붙들고 있던 것이 손을 놓았다.',
     check: g => !!g.player.bossKilled.isle_keeper },
+  { id: 'a_deepsea', cat: 'hunt', t: 'mid', i: '🦈', n: '물속의 것들', d: '바다에서 나는 다섯 종을 모두 만났다.',
+    check: g => ACH_SEA_MOBS.every(k => (g.player.kills[k] || 0) >= 1) },
+  { id: 'a_drowned_keeper', cat: 'hunt', t: 'hard', i: '⚓', n: '가라앉은 지킴이', d: '물이 삼킨 유적 끝의 것이 쓰러졌다.',
+    check: g => !!g.player.bossKilled.drowned_keeper },
   { id: 'a_secret_bosses', h: 1, cat: 'hunt', t: 'hard', i: '🕳', n: '아무도 시키지 않은 일', d: '아무도 시키지 않은 둘을 끝냈다.',
     check: g => !!(g.player.bossKilled.restorer && g.player.bossKilled.shaft_maw) },
   { id: 'a_kill_3000', cat: 'hunt', t: 'hard', i: '☠', n: '삼천 번', d: '삼천 마리를 넘어뜨렸다.',
@@ -3401,6 +3427,12 @@ const ACHIEVEMENTS = [
     check: g => ((g.tally || {}).play || 0) >= 36000 },
   { id: 'a_die20', cat: 'odd', t: 'mid', i: '⚰', n: '그래도 다시', d: '스무 번 쓰러지고 스무 번 일어났다.',
     check: g => ((g.tally || {}).deaths || 0) >= 20 },
+  /* 터뜨린 횟수는 세이브에 없던 값이라 tally 에 센다(gathered 는 **만든** 수라 쟁여
+     두기만 해도 오른다 — "터뜨려 봤다"와는 다른 이야기다). */
+  { id: 'a_bomb', cat: 'odd', t: 'easy', i: '💣', n: '터뜨려 본 사람', d: '폭탄을 서른 번 터뜨렸다.',
+    check: g => ((g.tally || {}).bomb || 0) >= 30 },
+  { id: 'a_detector', cat: 'odd', t: 'mid', i: '📡', n: '두 개의 눈', d: '광맥을 보는 눈과 움직이는 것을 보는 눈을 둘 다 만들었다.',
+    check: g => ['det_metal', 'det_mob'].every(k => (g.crafted || {})[k]) },
   { id: 'a_play100h', h: 1, cat: 'odd', t: 'hard', i: '🌌', n: '백 시간', d: '백 시간이 지났다.',
     check: g => ((g.tally || {}).play || 0) >= 360000 },
   { id: 'a_level100', cat: 'odd', t: 'hard', i: '⭐', n: '백 번째 아침', d: '레벨 100에 닿았다.',
@@ -3408,6 +3440,9 @@ const ACHIEVEMENTS = [
 ];
 const ACH_FOODS = ['food_bread', 'food_stew', 'food_soup', 'food_pie', 'food_curry',
   'food_jelly', 'food_mstew', 'food_tea', 'food_feast'];
+/* 바다에서만 나는 것들(ENEMIES 의 biome: 'sea'). 손으로 적어 둔다 — ENEMIES 를 훑어
+   만들면 나중에 바다 몹을 하나 더 넣는 순간 **이미 받은 업적이 도로 풀린다**. */
+const ACH_SEA_MOBS = ['reef_crab', 'lantern_jelly', 'reef_shark', 'deep_octopus', 'abyss_angler'];
 /* 업적 판정에 쓰는 잔 도구들. check가 순수하도록 여기 모아 둔다. */
 function achSum(o) { let n = 0; for (const k in (o || {})) n += o[k] | 0; return n; }
 function achCount(list, fn) { let n = 0; for (const k of list) if (fn(k)) n++; return n; }

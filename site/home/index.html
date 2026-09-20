@@ -6,7 +6,7 @@
 <title>Ashfall Chronicles — 별이 잠든 땅</title>
 <meta name="description" content="별 조각이 잠들면 세계는 자기가 무엇이었는지를 잊는다. 파고, 짓고, 싸우며 열여덟 개의 장을 건너는 2D 샌드박스 어드벤처. 브라우저에서 바로 플레이하세요.">
 <meta property="og:title" content="Ashfall Chronicles — 별이 잠든 땅">
-<meta property="og:description" content="별 조각이 잠들면 세계는 자기가 무엇이었는지를 잊는다. 세 개의 세션, 열여덟 개의 장, 열세 번의 결착.">
+<meta property="og:description" content="별 조각이 잠들면 세계는 자기가 무엇이었는지를 잊는다. 세 개의 세션, 열여덟 개의 장, 스물세 종의 보스, 일흔 개의 업적.">
 <meta property="og:image" content="https://ashfall-chronicles.vercel.app/play/assets/bg/title_key.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://ashfall-chronicles.vercel.app/home">
@@ -244,14 +244,21 @@
       <div class="goal reveal"><span class="k">잠수</span><span class="v">5</span><p>특정 깊이까지 파고 내려갑니다.</p></div>
     </div>
 
+    <p class="sec-lede" style="margin-top:26px">목표를 다 끝내고 나서도 남는 것이 있습니다 — <strong>업적 일흔 개</strong>가 여덟 갈래로 나뉘어 일지에 쌓입니다. 시키는 숙제가 아니라 해낸 것을 적어 두는 자리라, 그중 여섯은 달성하기 전까지 무엇인지도 보이지 않습니다.</p>
+
     <p class="fig-lede">세어 보면 이만큼입니다. 위 화면과 아래 목록이 이 숫자의 실물입니다.</p>
 <div class="figures figures-inline">
   <div class="fig"><span class="n">425</span><span class="l">종의 아이템</span></div>
   <div class="fig"><span class="n">72</span><span class="l">종의 몬스터</span></div>
-  <div class="fig"><span class="n">22</span><span class="l">종의 기계</span></div>
-  <div class="fig"><span class="n">13</span><span class="l">개 지역</span></div>
+  <div class="fig"><span class="n">23</span><span class="l">종의 보스</span></div>
+  <div class="fig"><span class="n">70</span><span class="l">개의 업적</span></div>
+  <!-- ★ 여섯 칸을 지킨다. auto-fit 이라 폭에 따라 6 · 3 · 2 열로 접히는데, 여섯이면
+       어느 쪽에서도 빈 칸이 안 생긴다. 여덟로 늘렸더니 768px 에서 6+2 가 되어
+       빈 칸 넷이 커다란 판으로 남았다. 늘리려면 열둘로 — 그 사이 숫자는 반드시
+       어딘가에서 구멍이 뚫린다. 지역 수는 '지역 띠' 절의 눈썹(열세 곳)에, 제작법
+       수는 다운로드 페이지 변경 이력에 있다. -->
+  <div class="fig"><span class="n">26</span><span class="l">종의 기계</span></div>
   <div class="fig"><span class="n">18</span><span class="l">개의 장</span></div>
-  <div class="fig"><span class="n">13</span><span class="l">번의 결착</span></div>
 </div>
   </div>
 </section>
@@ -272,9 +279,9 @@
 <!-- ============ 보스 ============ -->
 <section id="bosses">
   <div class="wrap-wide">
-    <div class="sec-head"><p class="eyebrow">열세 번의 결착</p></div>
+    <div class="sec-head"><p class="eyebrow">스물세 종</p></div>
     <h2>길을 막고 선 것들</h2>
-    <p class="sec-lede">각 지역의 끝에는 그 지역을 그렇게 만든 존재가 있습니다. 싸우는 동안 두 번에서 네 번 모습을 바꾸고, 형태가 바뀔 때마다 통하던 자리가 죽는 자리가 됩니다.</p>
+    <p class="sec-lede">각 지역의 끝에는 그 지역을 그렇게 만든 존재가 있습니다. 싸우는 동안 두 번에서 네 번 모습을 바꾸고, 형태가 바뀔 때마다 통하던 자리가 죽는 자리가 됩니다. 모두 스물세 종이고, 아래는 이야기가 데려가는 열세 종입니다 — 나머지 열은 유적 안쪽과 아무도 말해 주지 않는 자리에 있습니다.</p>
     <div class="bosses" id="bossGrid"></div>
   </div>
 </section>
@@ -316,6 +323,9 @@
     <p class="foot-credit">음악 <a href="https://suno.com" target="_blank" rel="noopener">Suno</a>
        · 효과음 <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a>
        (https://elevenlabs.io)</p>
+    <p class="foot-credit">코드와 그림은 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
+       — 음악·효과음은 위 두 서비스의 약관을 따릅니다
+       (<a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md" target="_blank" rel="noopener">NOTICE</a>)</p>
     <nav class="foot-links">
       <a href="../download">다운로드</a>
       <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles">저장소</a>

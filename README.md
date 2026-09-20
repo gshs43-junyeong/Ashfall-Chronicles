@@ -8,6 +8,14 @@
 세션 셋 · 장 열여덟 · 결착 열셋. 지상 아홉 바이옴에 하늘 섬과 지하 넷이 붙고,
 서쪽 끝에는 **가라앉은 바다**가 있습니다 — 숨이 닿는 만큼만 내려갈 수 있습니다.
 
+| | | | | | |
+|---|---|---|---|---|---|
+| 아이템 **425** | 몬스터 **72** | 보스 **23** | 업적 **70** | 기계 **26** | 제작법 **220** |
+
+보스 스물셋 중 **열셋이 이야기가 데려가는 것**이고, 나머지 열은 유적 안쪽과
+아무도 말해 주지 않는 자리에 있습니다. 업적 일흔 개는 갈래 여덟에 난이도 셋으로
+나뉘고, 그중 여섯은 달성하기 전까지 무엇인지도 보이지 않습니다.
+
 **[▶ 브라우저에서 바로 플레이](https://ashfall-chronicles.vercel.app/)** ·
 **[내려받기](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)**
 
@@ -29,6 +37,7 @@
 | `site/home/` | 홈 페이지 — 주소는 `/home` (루트 `/`는 이쪽으로 넘깁니다) |
 | `site/download/` | 다운로드 페이지 — 주소는 `/download` |
 | `docs/` | 작업 문서 — 변경 사항·효과음 프롬프트·배포 캐시 메모 |
+| `LICENSE` · `NOTICE.md` | MIT 본문과, **거기서 빠지는 두 폴더**(음악·효과음)에 대한 설명 |
 | `design/` | 설계 캔버스 |
 | `tools/` | 배포용 zip 빌드 스크립트, 애셋을 굽고 재는 파이썬 도구들 |
 | `.github/workflows/` | Release 자동 첨부, Pages 자동 배포 |
@@ -130,10 +139,30 @@ xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/   # 받은 판 번호로
 
 ---
 
+## 라이선스
+
+**[MIT](LICENSE)** 입니다. 코드도 그림도 마음대로 쓰고 고치고 다시 내어도 됩니다 —
+저작권 표시만 남겨 주세요. 저작권은 `gshs43-junyeong` 에게 있습니다.
+
+**딱 두 폴더만 예외입니다.**
+
+| 무엇 | 어디 | 어디서 왔나 |
+|---|---|---|
+| 배경 음악 10곡 | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
+| 효과음 45개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+
+이 둘은 바깥 서비스에서 만든 것이라 여기서 MIT 로 다시 내어 줄 권한이 없습니다.
+게임을 받아 즐기는 데에는 아무 제한이 없지만, **소리 파일만 따로 떼어다 쓰려면**
+해당 서비스의 약관을 직접 확인하세요. 자세한 것은 [`NOTICE.md`](NOTICE.md) 에
+적어 두었습니다.
+
+그 둘을 뺀 **그림은 전부 이 저장소 안에서 만들었습니다.** 사 온 것도 받아 온 것도
+없습니다 — 손으로 그린 시트와 `tileart.js`·`itemart.js` 가 그때그때 그려 내는 것뿐입니다.
+
 ## 만든 것
 
+기획 `gshs43-junyeong` · 제작 Claude Opus 5 ·
 음악 [Suno](https://suno.com) · 효과음 [ElevenLabs](https://elevenlabs.io).
-그 밖의 그림·코드는 이 저장소 안에서 만들었습니다.
 
 버전별 변경 사항은 [릴리스 목록](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases)과
 [다운로드 페이지의 변경 이력](https://ashfall-chronicles.vercel.app/download#changelog)에 있습니다.
