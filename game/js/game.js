@@ -4541,11 +4541,11 @@ const G = {
   /** 타일 좌표에서 나는 소리 — 화면 근처가 아니면 아예 재생하지 않는다.
       공장이 커지면 화면 밖 기계들이 초당 수십 번씩 완료 이벤트를 내기 때문에,
       거리로 먼저 거르지 않으면 드릴·벨트 소리가 끊임없이 겹쳐 운다. */
-  sfxAt(kind, tx, ty, rate) {
+  sfxAt(kind, tx, ty, rate, vol) {
     const p = this.player; if (!p) return;
     const dx = Math.abs(tx * TS - p.cx), dy = Math.abs(ty * TS - p.cy);
     if (dx > this.W * 0.6 + 120 || dy > this.H * 0.6 + 120) return;
-    this.sfx(kind, rate);
+    this.sfx(kind, rate, vol);
   },
 
   /* ================= 재질 파편 =================
@@ -4641,11 +4641,23 @@ const G = {
   },
 
   /** 캐는 동안 한 획마다 — 파편 한 톨과 재질 타격음 */
+  /* ★ 캐는 **도중**의 소리는 거의 들리지 않을 만큼 줄여 두었다.
+       한 칸을 캐는 데 박자가 서넛씩 들어가고 그 박자마다 **무기 타격음과 같은 파일**이
+       제 음량으로 울렸다 — 곡괭이질을 조금만 이어 가도 그 소리가 화면을 덮어서,
+       정작 "칸이 떨어져 나가는" 소리(breakFx)가 그 속에 묻혔다. 기본으로 들려야 하는
+       것은 부수는 소리다.
+     ★ 없애지 않고 **깎아서** 남긴 까닭: 소리가 아예 없으면 단단한 돌을 팔 때 곡괭이가
+       닿고 있는지 허공을 치고 있는지가 파편 하나로만 갈린다. 지금은 음높이를 낮추고
+       (×0.62) 음량을 0.18 로 떨어뜨려, 같은 파일이지만 날 선 타격음이 아니라 **멀리서
+       나는 둔한 톡 소리**로 들린다. 부수는 소리와 겹쳐도 그쪽을 안 가린다. */
+  MINE_TICK_VOL: 0.18,
+  MINE_TICK_RATE: 0.62,
   mineTickFx(tx, ty, id) {
     const mat = tileMat(id);
     const x = (tx + .5) * TS, y = (ty + .5) * TS;
     this.matBurst(mat, x, y, 1, { spd: 0.7, life: 0.6 });
-    this.sfxAt(MAT[mat].hit, tx, ty, this.strokeRate());
+    this.sfxAt(MAT[mat].hit, tx, ty,
+      this.MINE_TICK_RATE * this.strokeRate(), this.MINE_TICK_VOL);
   },
 
   /* ================= 효과음 =================
@@ -4657,8 +4669,8 @@ const G = {
        하나로는 아무리 낮게 깔아도 "삐" 소리라 돌로 안 들린다. 그래서 짧은
        백색잡음을 대역통과로 깎아 함께 낸다. 파일이 오기 전까지의 대역이지만,
        이것만으로도 돌 · 흙 · 유리 · 쇠가 갈려 들린다. */
-  sfx(kind, rate) {
-    if (window.Sfx && Sfx.play(kind, rate)) return;   // 손그림 파일이 로드돼 있으면 그걸로 대신한다
+  sfx(kind, rate, volMul) {
+    if (window.Sfx && Sfx.play(kind, rate, volMul)) return;   // 손그림 파일이 로드돼 있으면 그걸로 대신한다
     const ac = this.ac; if (!ac) return;
     if (ac.state === 'suspended') ac.resume();
     const t = ac.currentTime;
@@ -4730,7 +4742,7 @@ const G = {
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type; o.frequency.setValueAtTime(f0 * r, t);
     o.frequency.exponentialRampToValueAtTime(Math.max(30, f1 * r), t + 0.16);
-    g.gain.setValueAtTime(vol * (nz ? 0.55 : 1), t);
+    g.gain.setValueAtTime(vol * (nz ? 0.55 : 1) * (volMul === undefined ? 1 : volMul), t);
     g.gain.exponentialRampToValueAtTime(0.0008, t + 0.22);
     o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.24);
     if (!nz) return;
@@ -5349,15 +5361,26 @@ const G = {
       const sc = 0.65 + (i % 5) * 0.24;
       const alpha = (0.14 + rainT * 0.62) * (0.65 + (i % 3) * 0.18);
       c.globalAlpha = Math.min(1, alpha);
-      /* 손그림 구름이 있으면 그걸 쓴다. 1~3은 맑은 날, 4~5는 먹구름 — 비가 짙어질수록
-         먹구름 쪽이 자주 뽑히게 섞는다. 파일이 없으면 아래 원 다섯 개로 돌아간다. */
-      const im = this.spritesOn && Sprites.img['cloud_' + (1 + ((rainT > 0.35 && i % 3 === 0) ? 3 + (i % 2) : i % 3))];
+      /* 손그림 구름 — 1~3 은 맑은 날, 4~7 은 먹구름. 파일이 없으면 아래 원 다섯 개로 돌아간다.
+
+         ★ **비가 오면 먹구름만, 안 오면 흰 구름만.** 예전에는 비가 짙어질 때
+           `i % 3 === 0` 인 것만 먹구름으로 바꿔서, 폭우에도 **셋 중 둘은 흰 구름**이
+           그대로 흘렀다 — 비는 쏟아지는데 하늘은 맑아 보였다. 게다가 문턱이 0.35 라
+           가랑비에는 먹구름이 한 점도 안 떴다.
+         ★ 갈리는 문턱을 구름마다 조금씩 어긋나게 둔다(자리 번호로). 한꺼번에 갈리면
+           비가 시작하는 프레임에 하늘 전체가 툭 바뀐다 — 조금씩 어긋나야 먹구름이
+           **몰려오는** 것으로 읽힌다. 비가 제대로 오는 동안(rainT ≳ 0.2)에는 어느
+           문턱이든 다 넘어서 먹구름만 남는다. */
+      const dark = rainT > 0.02 + (i % 7) * 0.025;
+      const im = this.spritesOn &&
+        Sprites.img['cloud_' + (dark ? 4 + (i % 4) : 1 + (i % 3))];
       if (im && im.width) {
         const w2 = 128 * sc, h2 = 64 * sc;
         c.drawImage(im, cx - w2 / 2, cy - h2 / 2, w2, h2);
         continue;
       }
-      c.fillStyle = mixHex('#ffffff', '#2e343c', rainT);
+      // 그림이 없을 때의 대체 — 손그림 쪽과 같은 규칙으로 갈린다(섞지 않고 둘 중 하나)
+      c.fillStyle = dark ? '#2e343c' : '#ffffff';
       for (const [dx, dy, r] of [[0, 0, 22], [18, -4, 17], [-16, -2, 16], [8, 6, 15], [-8, 7, 14]]) {
         c.beginPath(); c.arc(cx + dx * sc, cy + dy * sc, r * sc, 0, TAU); c.fill();
       }
