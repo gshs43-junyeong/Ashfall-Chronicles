@@ -1679,7 +1679,19 @@ const UI = {
             : d.type === 'machine' ? '기계' : d.type === 'seed' ? (d.fert ? '비료' : '씨앗')
               : d.type === 'summon' ? '소환' : '재료';
     h += `<div class="ttype">${RARITY[it.r]} · ${typeName}</div>`;
-    if (d.dmg) h += `<div class="tstat">공격력 <b>${Math.round(itemDamage(it))}</b> · 속도 <b>${itemSpeed(it).toFixed(2)}/초</b></div>`;
+    if (d.dmg) {
+      h += `<div class="tstat">공격력 <b>${Math.round(itemDamage(it))}</b> · 속도 <b>${itemSpeed(it).toFixed(2)}/초</b></div>`;
+      /* ★ 초당 피해를 같이 적는다. 다발 무기는 한 발의 공격력이 단발 무기보다 낮게
+         적혀 있어서(그래야 겹쳐 맞을 때 균형이 맞는다) 숫자만 보면 약해 보인다 —
+         "몇 발인지"와 "그래서 초당 얼마인지"를 나란히 놓아야 견줄 수 있다.
+         한 몸에 다 박히는 경우(보스)를 기준으로 적는다. 흩어진 적에게는 더 나온다. */
+      const n = d.multi || 1;
+      const one = itemDamage(it) * itemSpeed(it);
+      const eff = one * (n > 1 ? 1 + MULTI_FALLOFF * (n - 1) : 1);
+      h += `<div class="tstat">초당 피해 <b>${Math.round(eff)}</b>` +
+        (n > 1 ? ` <span class="thint">(한 몸에 다 맞을 때 · 흩어지면 ${Math.round(one * n)})</span>` : '') +
+        `</div>`;
+    }
     if (d.def) h += `<div class="tstat">방어 <b>${Math.round(d.def * enhMul(it))}</b></div>`;
     if (it.e) h += `<div class="tstat">강화 <b>+${it.e}</b> <span class="thint">(공격·방어 +${(it.e * 5)}%p)</span></div>`;
     /* 펫은 레벨이 곧 값어치다 — 패시브가 통째로 커지므로 지금 몇 레벨이고

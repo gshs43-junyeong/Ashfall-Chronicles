@@ -515,6 +515,7 @@ class Player extends Ent {
       G.sfx('swing');
     } else if (d.wc === 'ranged') {
       const n = d.multi || 1;
+      this.volley = (Player._vol = (Player._vol || 0) + 1);
       for (let i = 0; i < n; i++) {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.09 : 0);
         this.fireProj(d.proj || 'arrow', a, base, 'dex', BOW_TIP);
@@ -530,6 +531,7 @@ class Player extends Ent {
       if (this.mp < cost) { G.toast('마나가 부족하다', 'bad'); this.atkTimer = 0.2; return; }
       this.mp -= cost;
       const n = d.multi || 1;
+      this.volley = (Player._vol = (Player._vol || 0) + 1);
       const pt = d.proj || 'bolt';
       for (let i = 0; i < n; i++) {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.07 : 0);
@@ -589,6 +591,10 @@ class Player extends Ent {
     }
     const p = new Proj(this.cx + ox, this.cy + oy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), 'player', type);
     p.crit = crit;
+    /* 한 번의 발사에서 나간 것끼리 같은 표를 단다 — 같은 적에게 겹쳐 박히는 것을
+       가려내려는 것이다(data.js MULTI_FALLOFF). 표는 this.volley 에 들어 있고,
+       부채꼴 한 벌을 쏘기 직전에 공격부가 새로 매긴다. */
+    p.vol = this.volley;
     if (this.d.fire) p.fire = this.d.fire;
     if (this.d.frost) p.frost = this.d.frost;
     if (this.d.poison) p.poison = this.d.poison;
@@ -2330,8 +2336,17 @@ class Proj extends Ent {
         if (!(e instanceof Enemy) || e.dead || this.hitSet.has(e)) continue;
         if (!aabb(this.rect(), e.rect())) continue;
         this.hitSet.add(e);
+        /* ★ 같은 발사에서 나온 것이 **이 적에게 두 번째로** 박히면 몫이 준다.
+           흩어진 적에게 한 발씩 맞히면 그대로 제값이라, 여럿을 꿰는 것이 제 쓰임인
+           무기(등불 작살·연발 작살포)는 그대로다. 깎이는 것은 부채꼴이 한 몸에
+           통째로 박히는 경우 — 곧 보스뿐이다(data.js MULTI_FALLOFF 의 ★). */
+        let dmg = this.dmg;
+        if (this.vol) {
+          if (e._vol === this.vol) dmg *= MULTI_FALLOFF;
+          else e._vol = this.vol;
+        }
         // 물리 화살·별조각만 금빛 타격을 얹는다. 마법 탄은 원소마다 제 그림이 이미 있다
-        e.hurt(this.dmg, this.crit, G.player, 3, (this.type === 'arrow' || this.type === 'star') ? 'pierce' : null);
+        e.hurt(dmg, this.crit, G.player, 3, (this.type === 'arrow' || this.type === 'star') ? 'pierce' : null);
         if (this.fire) e.addDot('burn', this.dmg * 0.1, 4);
         if (this.frost) e.slow(0.4, 2.5);
         if (this.poison) e.addDot('poison', this.dmg * 0.11 * this.poison, 5);
