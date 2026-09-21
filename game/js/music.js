@@ -321,7 +321,10 @@ const Sfx = {
   },
 
   /** 재생을 시도한다. 파일이 있으면 틀고 true, 없으면 false (호출자가 합성음으로 대신) */
-  play(kind, rate) {
+  /** vol — 이 한 번만 음량을 더 줄이거나 키우는 배수(기본 1). SFX_VOL 은 키마다
+      한 값이라, **같은 소리를 자리에 따라 다르게** 내야 할 때 쓴다(캐는 박자음이
+      무기 타격음과 같은 파일을 쓰면서 훨씬 작아야 하는 것 같은 경우). */
+  play(kind, rate, vol) {
     /* 제 이름의 파일이 없으면 **같은 결의 한 벌**을 대신 튼다(SFX_FAM).
        재질음 스물세 자리를 파일 열 개로 채우는 장치다 — 부수는 쪽은 음을
        낮추고 크게 틀어 "같은 것이 더 크게 일어났다"로 들리게 한다.
@@ -342,7 +345,7 @@ const Sfx = {
        pool[NaN] 은 없는 목소리라, 파일을 넣는 순간 재질음이 통째로 터진다. */
     const i = this.turn[kind] = ((this.turn[kind] || 0) + 1) % pool.length;
     const a = pool[i];
-    a.volume = Math.min(1, this.vol * (SFX_VOL[kind] === undefined ? 1 : SFX_VOL[kind]) * fg);
+    a.volume = Math.min(1, this.vol * (SFX_VOL[kind] === undefined ? 1 : SFX_VOL[kind]) * fg * (vol === undefined ? 1 : vol));
     /* ★ 한 획마다 음높이를 흔든다. 같은 파일을 그대로 되풀이하면 세 번째
        휘두를 때부터 "같은 소리"로 들리고 손맛이 밋밋해진다. ±6% 면 음이
        바뀐 것으로는 안 들리고 '다른 타격'으로만 들린다. */

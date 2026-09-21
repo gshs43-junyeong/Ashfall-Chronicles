@@ -1215,13 +1215,15 @@ window.SPRITE_MANIFEST = {
         256,
         128
       ],
-      "note": "맑은 날 구름 1~3(옅음) · 먹구름 4~5(짙음). 비 세기에 따라 코드가 섞어 쓰며 화면 위쪽 띠 안에서만 흐름. 가장자리 여백 8~16px.",
+      "note": "맑은 날 구름 1~3(옅음) · 먹구름 4~7(짙음). 비가 오면 먹구름만, 안 오면 흰 구름만 쓴다(게임 쪽 drawClouds). 먹구름이 넷인 까닭은 폭우일 때 백 개 넘게 흐르기 때문 — 둘뿐이면 같은 그림이 줄줄이 지나가 벽지로 보인다. 6·7 은 tools/mkclouds.py 로 굽는다. 화면 위쪽 띠 안에서만 흐름. 가장자리 여백 8~16px.",
       "files": [
         "bg/cloud_1.png",
         "bg/cloud_2.png",
         "bg/cloud_3.png",
         "bg/cloud_4.png",
-        "bg/cloud_5.png"
+        "bg/cloud_5.png",
+        "bg/cloud_6.png",
+        "bg/cloud_7.png"
       ]
     }
   },
