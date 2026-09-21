@@ -3094,6 +3094,13 @@ const G = {
     [T.JUNGLEGRASS]: { shed: 0, fade: 0.62 }
   },
   ASH_BURNT: 0.30,          // 진 잎자리 중 타다 만 잎이 남는 비율
+  /* 풀 갓이 바래는 규칙 (drawAshTile 의 !shed 갈래).
+       EDGE  문턱을 넘고 나서 다 물들기까지의 폭 — 번지는 가장자리다. 0 이면 칸이
+             초록에서 회색으로 **딱** 갈려 바둑판처럼 보인다.
+       MIN   막 물들기 시작한 칸의 바램 정도. 0 부터 올리면 문턱 언저리 칸이 거의
+             안 보여서 "수가 늘었다"가 안 읽힌다. */
+  ASH_GRASS_EDGE: 0.16,
+  ASH_GRASS_MIN: 0.40,
 
   /** 잎 칸의 변형(=가지 방향)을 줄기 쪽을 보고 고른다.
       0 왼쪽에서 · 1 오른쪽에서 · 2 아래에서 · 3 좌우로 지나감(수관 속).
@@ -3120,11 +3127,24 @@ const G = {
     };
 
     if (!spec.shed) {
-      /* 풀은 칸째로 지울 수 없다(고체다). 흙은 남기고 **초록 갓만** 칸마다 벗긴다. */
-      const capGone = clamp((ashF * 1.05 - tileHash(tx + 31337, ty + 6151)) / 0.22, 0, 1);
-      if (!solid) { c.globalAlpha = 1 - ashF; TileArt.drawBare(c, id, v, sx, sy, 0); }
-      c.globalAlpha = ashF; TileArt.drawBare(c, id, v, sx, sy, 1);
-      if (capGone < 1) pair(1 - capGone);
+      /* 풀 칸 — **흙은 건드리지 않고 초록 갓만** 바랜다(tileart.js buildCapAsh).
+
+         장이 깊어질 때 두 가지가 같이 자란다.
+           ① 물든 **칸의 수** — 칸마다 문턱이 다르고(자리 해시) 잿빛이 그 문턱을 넘으면
+              그 칸이 물들기 시작한다. 그래서 군데군데 먼저 세다가 번져 나간다.
+           ② 물든 칸의 **바램 깊이** — 처음 물든 칸도 단번에 회색이 되지 않는다.
+
+         ★ 한 값(ashF)으로 화면 전체를 똑같이 덮으면 안 된다. 그러면 풀밭이 한 장의
+           색판처럼 통째로 밝아졌다 어두워져서, 잿빛이 **번지는** 것이 아니라 조명이
+           바뀌는 것으로 보인다. 자리마다 문턱을 달리해야 "여기부터 물들었다"가 읽힌다.
+         ★ 문턱은 자리로 정해 둔다 — 매 프레임 뽑으면 카메라를 움직일 때마다 물든
+           칸이 바뀌어 풀밭이 지글거린다(잎이 지는 쪽과 같은 이유). */
+      TileArt.draw(c, id, v, sx, sy);                     // 흙까지 성한 판이 늘 바닥
+      const on = clamp((ashF - tileHash(tx + 31337, ty + 6151)) / this.ASH_GRASS_EDGE, 0, 1);
+      if (on > 0) {
+        c.globalAlpha = on * (this.ASH_GRASS_MIN + (1 - this.ASH_GRASS_MIN) * ashF);
+        TileArt.drawCapAsh(c, id, v, sx, sy);
+      }
       c.globalAlpha = 1;
       return;
     }

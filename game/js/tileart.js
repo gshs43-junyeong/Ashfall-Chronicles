@@ -325,7 +325,7 @@ const TileArt = {
        배경에 먹힌다. */
   ASH_TILE: [T.LEAF, T.GRASS, T.FLOWER, T.WEED,
              T.JUNGLELEAF, T.JUNGLEGRASS, T.FERN, T.ORCHID],
-  BARE_TILE: [T.GRASS, T.JUNGLEGRASS],     // 갓만 벗겨 흙을 남길 고체 타일
+  CAP_TILE: [T.GRASS, T.JUNGLEGRASS],      // 위쪽 몇 줄이 초록 갓이고 아래는 흙인 타일
 
   buildAsh() {
     if (!this.atlas) return;
@@ -348,52 +348,57 @@ const TileArt = {
       g.putImageData(d, 0, row);
     }
     this.ashAtlas = cv;
-    this.buildBare();
+    this.buildCapAsh();
     this.buildThin();
     this.buildBurnt();     // 성근 판에서 뜨므로 buildThin 뒤라야 한다
   },
 
-  /* ---------- 잔디 벗긴 흙 판 (2행: 0 성한 것 · 1 잿빛) ----------
-     풀 칸(GRASS)은 고체라 통째로 지울 수 없다 — 사라지면 발밑에 구멍이 뚫린 것처럼
-     보인다. 대신 **초록 갓만 벗긴다.** 갓이 있는 자리를 원본 아틀라스에서 찾아
-     (잿빛 판은 채도가 빠져 초록을 못 찾는다) 바로 아래 흙을 위로 이어 붙인다. */
-  buildBare() {
+  /* ---------- 갓만 바랜 판 (풀 칸용 · 타일마다 한 줄) ----------
+     풀 칸은 위쪽 몇 줄이 초록 갓이고 그 **아래는 흙**이다.
+
+     ★ 잿빛이 들 때 바래는 것은 **갓뿐이다.** 예전에는 타일 행을 통째로 탈색한 판
+       (ashAtlas)을 그대로 겹쳐서 흙까지 같이 회색이 됐다 — 풀이 시든 것이 아니라
+       땅 전체가 죽은 것으로 보였고, 바로 옆 흙 타일(DIRT)은 멀쩡해서 같은 흙인데
+       색이 갈리는 자리까지 생겼다. 흙은 원본 그대로 두고 갓 줄만 잿빛 판에서 가져온다.
+     ★ 갓 높이는 **열마다 따로 잰다.** 풀 갓은 들쭉날쭉해서 한 값으로 자르면 어떤 열은
+       흙이 물들고 어떤 열은 초록이 남는다. 재는 기준은 원본이다 — 잿빛 판은 채도가
+       빠져 초록을 못 찾는다.
+     ★ 갓을 **벗겨 흙으로 바꾸지 않는다.** 예전 판(buildBare)은 갓 자리에 아래 흙을
+       이어 붙여 풀이 사라지게 했는데, 잿빛은 "색을 잊는 것"이지 풀을 뽑는 것이 아니다. */
+  buildCapAsh() {
     if (!this.atlas || !this.ashAtlas) return;
-    const W = this.V * TS, N = this.BARE_TILE.length;
-    const cv = this.bareAtlas || document.createElement('canvas');
-    cv.width = W; cv.height = TS * 2 * N;          // 타일마다 두 줄 (성한 것 · 잿빛)
+    const W = this.V * TS, N = this.CAP_TILE.length;
+    const cv = this.capAtlas || document.createElement('canvas');
+    cv.width = W; cv.height = TS * N;
     const g = cv.getContext('2d');
     g.clearRect(0, 0, W, cv.height);
-    for (let i = 0; i < N; i++) {
-      const id = this.BARE_TILE[i];
-      g.drawImage(this.atlas, 0, id * TS, W, TS, 0, (i * 2) * TS, W, TS);
-      g.drawImage(this.ashAtlas, 0, id * TS, W, TS, 0, (i * 2 + 1) * TS, W, TS);
-    }
+    for (let i = 0; i < N; i++)
+      g.drawImage(this.atlas, 0, this.CAP_TILE[i] * TS, W, TS, 0, i * TS, W, TS);
     const d = g.getImageData(0, 0, W, cv.height), px = d.data;
-    const at = (x, y) => (y * W + x) * 4;
+    const ag = this.atlas.getContext('2d'), sg = this.ashAtlas.getContext('2d');
+    this.capCells = 0;                     // 실제로 바꾼 칸 수 — 진단에서 본다
     for (let i = 0; i < N; i++) {
-      const src = this.atlas.getContext('2d').getImageData(0, this.BARE_TILE[i] * TS, W, TS).data;
-      const sat = (x, y) => (y * W + x) * 4;
+      const row = this.CAP_TILE[i] * TS;
+      const src = ag.getImageData(0, row, W, TS).data;
+      const ash = sg.getImageData(0, row, W, TS).data;
       for (let x = 0; x < W; x++) {
-        let cap = 0;                                // 초록이 붉은색보다 진한 동안이 갓이다
-        while (cap < TS - 2 && src[sat(x, cap) + 1] > src[sat(x, cap)] + 4) cap++;
-        if (!cap) continue;
-        for (let row = 0; row < 2; row++) {
-          const base = (i * 2 + row) * TS;
-          for (let y = 0; y < cap; y++) {
-            const f = at(x, base + cap + (y % (TS - cap))), t = at(x, base + y);
-            px[t] = px[f]; px[t + 1] = px[f + 1]; px[t + 2] = px[f + 2]; px[t + 3] = px[f + 3];
-          }
+        let cap = 0;                       // 초록이 붉은색보다 진한 동안이 갓이다
+        while (cap < TS - 2 && src[(cap * W + x) * 4 + 1] > src[(cap * W + x) * 4] + 4) cap++;
+        for (let y = 0; y < cap; y++) {
+          const f = (y * W + x) * 4, t = ((i * TS + y) * W + x) * 4;
+          px[t] = ash[f]; px[t + 1] = ash[f + 1]; px[t + 2] = ash[f + 2]; px[t + 3] = ash[f + 3];
+          this.capCells++;
         }
       }
     }
     g.putImageData(d, 0, 0);
-    this.bareAtlas = cv;
+    this.capAtlas = cv;
   },
-  drawBare(c, id, v, sx, sy, ash) {
-    const i = this.BARE_TILE.indexOf(id);
-    if (this.bareAtlas && i >= 0)
-      c.drawImage(this.bareAtlas, v * TS, (i * 2 + (ash ? 1 : 0)) * TS, TS, TS, sx, sy, TS, TS);
+  /** 흙은 원본 · 갓만 잿빛인 판. 성한 판 위에 투명도로 겹치면 갓만 색이 빠진다. */
+  drawCapAsh(c, id, v, sx, sy) {
+    const i = this.CAP_TILE.indexOf(id);
+    if (this.capAtlas && i >= 0)
+      c.drawImage(this.capAtlas, v * TS, i * TS, TS, TS, sx, sy, TS, TS);
   },
 
   /* ---------- 성근 잎 판 (잎 한 종마다 두 줄: 성한 색 · 잿빛) ----------
