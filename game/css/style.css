@@ -254,15 +254,27 @@ button{
 .sk-pane{display:none}
 .sk-pane.on{display:block}
 
-#tree-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px 16px 4px}
-.branch{background:#100f0a;border:1px solid #262418;border-radius:4px;padding:12px 10px 6px}
-.branch h3{font-size:12.5px;letter-spacing:.08em;margin-bottom:3px}
-.branch .btag{font-size:10px;color:#65614f;margin-bottom:6px}
+/* ★ 판 하나에 서른 칸. 갈래마다 테두리를 두르던 판 셋을 걷어냈다 — 벽이 있으면
+   갈래를 가로지르는 선을 그을 자리가 없다. 갈래는 위쪽 머리글과 칸 색으로만 남는다. */
+#tree-wrap{background:#100f0a;border:1px solid #262418;border-radius:4px;
+  padding:12px 12px 6px;margin:14px 16px 4px}
+.bheads{display:grid;grid-template-columns:repeat(3,1fr);margin-bottom:4px}
+.bhead{--hi:var(--bc);padding-left:2px;border-left:2px solid var(--bc)}
+.bhead h3{font-size:12.5px;letter-spacing:.08em;margin-bottom:3px;color:var(--bc)}
+.bhead .btag{font-size:10px;color:#65614f;margin-bottom:4px}
+.bnote{font-size:10.5px;color:#6b6553;margin:0 0 4px;padding:3px 8px;
+  background:#0d0c08;border:1px solid #221f15;border-radius:3px}
+.bnote b{color:#9a9079;font-weight:600}
 .bgrid{position:relative}
 .blines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 .bline{stroke:#2a2719;stroke-width:2;stroke-linecap:round}
 .bline.on{stroke:var(--bc);opacity:.42}
 .bline.full{opacity:.85;stroke-width:2.6;filter:drop-shadow(0 0 3px var(--bc))}
+/* 갈래를 건너는 선 — 점선이라 "여기서 넘어올 수 있다"가 한눈에 갈린다. 실선으로 두면
+   같은 갈래 안의 선과 구별이 안 되어 트리가 그냥 빽빽해 보인다. */
+.bline.cross{stroke-dasharray:5 7;stroke-width:1.6;opacity:.85}
+.bline.cross.on{opacity:.55}
+.bline.cross.full{stroke-width:2.2;opacity:.95}
 /* 습득한 순간 그 칸에 닿는 선으로 빛이 한 번 흐른다 */
 .bline.flow{stroke:#fff6d8;opacity:1;stroke-width:3;stroke-dasharray:10 12;animation:blineflow .9s linear}
 @keyframes blineflow{from{stroke-dashoffset:44;opacity:1}to{stroke-dashoffset:0;opacity:.55}}
@@ -951,7 +963,7 @@ body.booting #title-screen{visibility:hidden}
 
 /* 제 색이 있는 자리 — 모양은 위 그대로, 색만 갈아 끼운다 */
 .ng-mode { --hi: var(--mc); }          /* 난이도색 */
-.branch  { --hi: var(--bc); }          /* 특성 분기색 (트리 칸) */
+.bhead, .node { --hi: var(--bc); }     /* 특성 분기색 (머리글 · 트리 칸) */
 .slot.trash-zone { --hi: var(--hp); }  /* 버리기 = 위험 */
 .slot-del-btn    { --hi: #c8635a; }    /* 슬롯 지우기 = 위험 */
 
@@ -959,7 +971,9 @@ body.booting #title-screen{visibility:hidden}
 @media (max-width:820px){
   #bag-grid{grid-template-columns:repeat(6,46px)}
   #chest-grid{grid-template-columns:repeat(6,46px)}
-  #tree-wrap{grid-template-columns:1fr}
+  /* 좁은 화면에서는 아홉 칸이 뭉개진다 — 가로로 밀어 보게 둔다(칸 크기는 지킨다) */
+  #tree-wrap{overflow-x:auto}
+  .bgrid,.bheads{min-width:660px}
   #prof-wrap{grid-template-columns:1fr}
   #craft-list{grid-template-columns:1fr}
   #quest-tracker{width:190px;font-size:11px}

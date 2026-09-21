@@ -528,58 +528,82 @@ const UI = {
      세 분기가 각각 4단×3열의 **판**이다 — 세로로 늘어놓은 목록이면 "무엇 다음에 무엇"이
      코드에만 있다. 자리 계산은 SKILLS 의 tier(세로)와 col(가로, 0~2, .5 는 사이)로 끝나고,
      잇는 선은 SVG <line> 한 겹에 x 가 백분율이라 판 너비가 바뀌어도 따라온다. */
-  TREE_TOP: 16, TREE_ROW: 94, TREE_BOX: 44,
-  _nodeX(id) { return ((SKILLS[id].col + 0.5) / 3 * 100) + '%'; },
+  /* ★ 세 갈래를 **한 판**에 그린다. 예전에는 갈래마다 제 테두리와 제 SVG 를 가진 판이
+       셋이었다 — 판이 갈려 있으니 갈래를 가로지르는 선을 그을 자리가 아예 없었고,
+       그래서 "하나를 고르는" 화면으로 읽혔다. 이제 가로 아홉 칸(갈래마다 셋)짜리 판
+       하나에 서른 칸을 얹고, 선 한 겹이 그 위를 통째로 덮는다. 갈래 이름은 판 위에
+       머리글로만 남는다 — 벽이 아니라 이름표다. */
+  TREE_TOP: 14, TREE_ROW: 89, TREE_BOX: 44,
+  TREE_COLS: 9,                                   // 갈래 셋 × 가로 세 칸
+  _brIdx(br) { return BRANCHES.findIndex(b => b.id === br); },
+  /** 가로 자리 — 갈래 순서를 앞에 얹어 아홉 칸 중 하나로 편다 */
+  _nodeX(id) {
+    const sk = SKILLS[id];
+    return ((this._brIdx(sk.br) * 3 + sk.col + 0.5) / this.TREE_COLS * 100) + '%';
+  },
   _nodeY(id) { return this.TREE_TOP + SKILLS[id].tier * this.TREE_ROW; },
 
   buildTree() {
     const w = $('#tree-wrap'); if (!w) return;
     w.innerHTML = '';
     const NS = 'http://www.w3.org/2000/svg';
-    for (const br of BRANCHES) {
-      const b = document.createElement('div');
-      b.className = 'branch';
-      b.style.setProperty('--bc', br.c);
-      b.innerHTML = `<h3 style="color:${br.c}">${br.n}</h3><div class="btag">${br.tag}</div>`;
 
-      const grid = document.createElement('div');
-      grid.className = 'bgrid';
-      const rows = 1 + Math.max(...br.nodes.map(id => SKILLS[id].tier));
-      grid.style.height = (this.TREE_TOP + (rows - 1) * this.TREE_ROW + this.TREE_BOX + 36) + 'px';
+    // ① 갈래 머리글 — 아홉 칸 중 제 셋 위에 걸린다
+    const head = document.createElement('div');
+    head.className = 'bheads';
+    for (const br of BRANCHES)
+      head.innerHTML += `<div class="bhead" style="--bc:${br.c}">` +
+        `<h3>${br.n}</h3><div class="btag">${br.tag}</div></div>`;
+    w.appendChild(head);
+    /* 규칙을 한 줄로 적어 둔다. 점선과 "다른 갈래 절반"은 눌러 보기 전에는 알 수 없는
+       것이라, 적어 두지 않으면 세 갈래가 여전히 남남으로 보인다. */
+    const note = document.createElement('div');
+    note.className = 'bnote';
+    note.innerHTML = '점선은 <b>갈래를 건너는 길</b> — 이어진 칸을 하나라도 배우면 열립니다. ' +
+      '단을 여는 점수는 다른 갈래에 찍은 것도 <b>절반</b>이 쌓입니다.';
+    w.appendChild(note);
 
-      // ① 잇는 선 — 노드보다 먼저 넣어야 뒤로 깔린다
-      const svg = document.createElementNS(NS, 'svg');
-      svg.setAttribute('class', 'blines');
-      for (const id of br.nodes) for (const rq of (SKILLS[id].req || [])) {
-        const ln = document.createElementNS(NS, 'line');
-        ln.setAttribute('x1', this._nodeX(rq)); ln.setAttribute('y1', this._nodeY(rq) + this.TREE_BOX / 2);
-        ln.setAttribute('x2', this._nodeX(id)); ln.setAttribute('y2', this._nodeY(id) + this.TREE_BOX / 2);
-        ln.setAttribute('class', 'bline');
-        ln.dataset.from = rq; ln.dataset.to = id;
-        svg.appendChild(ln);
-      }
-      grid.appendChild(svg);
+    const grid = document.createElement('div');
+    grid.className = 'bgrid';
+    const rows = 1 + Math.max(...Object.values(SKILLS).map(s => s.tier));
+    grid.style.height = (this.TREE_TOP + (rows - 1) * this.TREE_ROW + this.TREE_BOX + 36) + 'px';
 
-      // ② 칸
-      for (const id of br.nodes) {
-        const sk = SKILLS[id];
-        const n = document.createElement('div');
-        n.className = 'node'; n.dataset.sk = id;
-        n.style.left = this._nodeX(id);
-        n.style.top = this._nodeY(id) + 'px';
-        n.innerHTML = `<div class="nbox"><span class="nic"></span><span class="nlock">🔒</span></div>` +
-          `<div class="nname">${sk.n}</div><div class="nrank"></div>`;
-        this.setIcon(n.querySelector('.nic'), Art.skillUrl(id));
-        n.addEventListener('click', () => this.learn(id));
-        n.addEventListener('contextmenu', e => { e.preventDefault(); this.assign(id); });
-        n.addEventListener('mouseenter', e => this.showSkillTip(id, e));
-        n.addEventListener('mousemove', e => this.placeTip(e.clientX, e.clientY));
-        n.addEventListener('mouseleave', () => this.hideTip());
-        grid.appendChild(n);
-      }
-      b.appendChild(grid);
-      w.appendChild(b);
+    // ② 잇는 선 — 칸보다 먼저 넣어야 뒤로 깔린다. 갈래를 건너는 선은 따로 표시한다
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'blines');
+    for (const id in SKILLS) for (const rq of (SKILLS[id].req || [])) {
+      const cross = SKILLS[rq].br !== SKILLS[id].br;
+      const ln = document.createElementNS(NS, 'line');
+      ln.setAttribute('x1', this._nodeX(rq)); ln.setAttribute('y1', this._nodeY(rq) + this.TREE_BOX / 2);
+      ln.setAttribute('x2', this._nodeX(id)); ln.setAttribute('y2', this._nodeY(id) + this.TREE_BOX / 2);
+      ln.setAttribute('class', 'bline' + (cross ? ' cross' : ''));
+      /* 선 색은 **도착하는 칸**의 갈래를 쓴다. 출발 쪽을 쓰면 갈래를 건너오는 선이
+         남의 색으로 그 갈래 안에 들어와 어디 소속인지가 흐려진다. */
+      ln.style.setProperty('--bc', BRANCHES[this._brIdx(SKILLS[id].br)].c);
+      ln.dataset.from = rq; ln.dataset.to = id;
+      svg.appendChild(ln);
     }
+    grid.appendChild(svg);
+
+    // ③ 칸
+    for (const id in SKILLS) {
+      const sk = SKILLS[id];
+      const n = document.createElement('div');
+      n.className = 'node'; n.dataset.sk = id; n.dataset.br = sk.br;
+      n.style.setProperty('--bc', BRANCHES[this._brIdx(sk.br)].c);
+      n.style.left = this._nodeX(id);
+      n.style.top = this._nodeY(id) + 'px';
+      n.innerHTML = `<div class="nbox"><span class="nic"></span><span class="nlock">🔒</span></div>` +
+        `<div class="nname">${sk.n}</div><div class="nrank"></div>`;
+      this.setIcon(n.querySelector('.nic'), Art.skillUrl(id));
+      n.addEventListener('click', () => this.learn(id));
+      n.addEventListener('contextmenu', e => { e.preventDefault(); this.assign(id); });
+      n.addEventListener('mouseenter', e => this.showSkillTip(id, e));
+      n.addEventListener('mousemove', e => this.placeTip(e.clientX, e.clientY));
+      n.addEventListener('mouseleave', () => this.hideTip());
+      grid.appendChild(n);
+    }
+    w.appendChild(grid);
     this.bindSkillTabs();
   },
 
@@ -598,10 +622,24 @@ const UI = {
     if (id === 'prof') this.refreshProf();
   },
 
+  /** 이 분기가 단을 여는 데 쓸 수 있는 점수.
+
+      ★ 세 갈래를 **가르던 벽이 여기였다.** 예전에는 제 갈래에 찍은 것만 셌다. req 는
+        원래부터 "하나라도"(OR)였는데도 세 판이 서로 남처럼 보였던 까닭이 이 셈이다 —
+        유격에 아무리 부어도 비전의 둘째 단은 1포인트도 안 열렸다.
+      ★ 이제 **다른 갈래에 찍은 것도 절반을 쳐 준다.** 순수 빌드는 그대로 가장 빠르고
+        (제 갈래 8점이면 막단), 섞어 타는 빌드는 같은 깊이에 더 많은 점을 쓴다
+        (5+6 → 5+3 = 8). 길이 막히는 것이 아니라 **값이 더 드는** 것이라, 고르는
+        재미를 남기면서 갈래가 이어진다.
+      ★ 내림(floor)이다. 올림으로 두면 다른 갈래 1점이 0.5 를 1로 쳐 줘서, 아무 갈래나
+        한 점 찍는 것이 늘 이득인 계산이 된다. */
+  BR_CROSS: 0.5,
   branchPts(brId) {
-    const p = G.player; let n = 0;
-    for (const br of BRANCHES) if (br.id === brId) for (const id of br.nodes) n += p.skills[id] || 0;
-    return n;
+    const p = G.player;
+    let own = 0, other = 0;
+    for (const br of BRANCHES) for (const id of br.nodes)
+      (br.id === brId ? (n => own += n) : (n => other += n))(p.skills[id] || 0);
+    return own + Math.floor(other * this.BR_CROSS);
   },
   /** 이어진 윗칸 중 하나라도 배웠는가. 윗칸이 없는 첫 단은 늘 열려 있다 */
   reqMet(id) {
@@ -614,7 +652,16 @@ const UI = {
   lockReason(id) {
     const sk = SKILLS[id];
     const need = TIER_REQ[sk.tier], have = this.branchPts(sk.br);
-    if (have < need) return `이 분기에 ${need}포인트 필요 (지금 ${have})`;
+    /* 모자란 까닭을 **내역까지** 적는다. 다른 갈래가 절반으로 얹히는 규칙은 숫자만
+       보면 알 길이 없어서, "7점이나 썼는데 왜 안 열리지"가 된다. */
+    if (have < need) {
+      let own = 0;
+      for (const br of BRANCHES) if (br.id === sk.br)
+        for (const q of br.nodes) own += G.player.skills[q] || 0;
+      const lend = have - own;
+      return `이 갈래에 ${need}점 필요 (지금 ${have}` +
+        (lend > 0 ? ` = 제 갈래 ${own} + 다른 갈래 ${lend}` : '') + ')';
+    }
     if (!this.reqMet(id)) return '윗단계 ' + sk.req.map(r => SKILLS[r].n).join(' 또는 ') + ' 을(를) 먼저';
     return '';
   },
