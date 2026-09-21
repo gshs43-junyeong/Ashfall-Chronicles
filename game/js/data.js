@@ -746,7 +746,7 @@ const ITEMS = {
 
   /* === 2부: 하늘 섬 / 숨겨진 유적 === */
   sword_aether: { n: '에테르 검', i: '⚔', type: 'weapon', wc: 'melee', dmg: 150, spd: 2.5, kb: 6, reach: 58, tier: 7, d: '무게가 느껴지지 않는다. 손이 아니라 바람이 든 것 같다.'  },
-  bow_gale:     { n: '질풍궁', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 118, spd: 3.0, kb: 3, tier: 7, proj: 'star', multi: 3, d: '구름 위에서는 화살이 떨어지지 않는다.'  },
+  bow_gale:     { n: '질풍궁', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 90, spd: 3.0, kb: 3, tier: 7, proj: 'star', multi: 3, d: '구름 위에서는 화살이 떨어지지 않는다.'  },
   staff_storm:  { n: '뇌운의 홀', i: '🔮', type: 'weapon', wc: 'magic', dmg: 132, spd: 2.3, kb: 4, mana: 15, tier: 7, proj: 'bolt', multi: 3, d: '천둥은 늘 한 박자 늦게 온다.'  },
   sword_first:  { n: '최초의 빛', i: '⚔', type: 'weapon', wc: 'melee', dmg: 210, spd: 2.2, kb: 10, reach: 70, tier: 8, fire: 3, lifesteal: 6, d: '별이 처음 떨어지기 전에 벼려진 것.'  },
   helm_aether:  { n: '에테르 관', i: '👑', type: 'armor', slot: 'helm', def: 34, b: { mp: 90, int: 10, cdr: 14 } , lvReq: 36 },
@@ -962,7 +962,7 @@ const ITEMS = {
   blade_arche: { n: '원형의 칼', i: '⚔', type: 'weapon', wc: 'melee', dmg: 238, spd: 2.4, kb: 11, reach: 72, tier: 8,
                  lifesteal: 7, fire: 2, lvReq: 95,
                  d: '설계도에만 있고 한 번도 벼려진 적 없던 칼. 결국 우리가 처음으로 만들었다.'  },
-  tome_origin: { n: '기원의 서', i: '📖', type: 'weapon', wc: 'magic', dmg: 224, spd: 2.5, kb: 5, mana: 16, tier: 8,
+  tome_origin: { n: '기원의 서', i: '📖', type: 'weapon', wc: 'magic', dmg: 127, spd: 2.5, kb: 5, mana: 16, tier: 8,
                  proj: 'soul', multi: 4, lvReq: 95,
                  d: '첫 장에 이렇게 적혀 있다 — 「이것을 읽는 너는 우리가 아니다. 그래도 괜찮다.」'  },
   charm_maker: { n: '만든 이의 표식', i: '🔯', type: 'acc', b: { allStat: 18, cdr: 20, def: 22, hp: 150, mpreg: 40 },
@@ -981,7 +981,7 @@ const ITEMS = {
                  d: '한 번 하늘로 돌아갔다가 다시 떨어진 것에서만 나온다.' },
   lance_orbit: { n: '궤도창', i: '🔱', type: 'weapon', wc: 'melee', dmg: 262, spd: 2.2, kb: 16, reach: 88, tier: 9,
                  d: '찌른 자리가 잠깐 위로 끌려 올라간다. 성채를 띄우던 힘을 창끝에 몰아넣었다.'  },
-  bow_meridian:{ n: '자오선', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 236, spd: 3.2, kb: 4, tier: 9, proj: 'star', multi: 5,
+  bow_meridian:{ n: '자오선', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 120, spd: 3.2, kb: 4, tier: 9, proj: 'star', multi: 5,
                  d: '겨눈 곳이 아니라 겨눈 것이 지나갈 곳으로 날아간다.'  },
   charm_orbit: { n: '궤도 인장', i: '🛰', type: 'acc', b: { allStat: 16, jump: 1, ms: 20, cdr: 18, glide: 1 },
                  d: '떨어지는 것을 조금 늦춘다. 성채가 천 년을 떠 있던 방식 그대로.' , lvReq: 42 },
@@ -1206,6 +1206,22 @@ const RUIN_LOOT = {
   blight: ['blight_spawn', 'nest_crown'],
   spore: ['spore_dust', 'cap_signet']
 };
+
+/* ★ 한 번 쏜 것이 **같은 적에게 겹쳐** 맞을 때, 두 번째부터의 몫.
+
+   multi 가 붙은 무기는 부채꼴로 여러 발을 뿌린다(entity.js 의 공격부). 잡몹 여럿에게는
+   한 발씩 나눠 맞으니 제값이 나오는데, **보스처럼 큰 표적에는 전부 한 몸에 박힌다.**
+   그래서 dmg 가 그대로 multi 배가 되어 있었다 — 같은 티어 단발 무기 대비 유효 DPS 가
+   자오선 6.55배 · 기원의 서 5.51배 · 질풍궁 3.72배(단발 중앙값 기준 실측)였고,
+   같은 티어인데 보스 잡는 시간이 여섯 배 갈렸다.
+
+   ★ 겹쳐 맞을 때만 깎는다. 흩어진 적에게 한 발씩 맞히면 **그대로 제값**이다 —
+     등불 작살(관통 2 · 다발 2)이나 연발 작살포처럼 여럿을 꿰는 것이 제 쓰임인 무기를
+     같이 죽이지 않으려는 것이다. 그쪽은 단일 표적이 약한 것이 설계다.
+   ★ 0.35 로 잡은 근거: 이 값이면 다발 무기의 단일 표적 유효 DPS 가 기준선의
+     1.10~1.81배에 들어온다(전에는 1.64~6.55배). 더 낮추면 부채꼴이 장식이 되고,
+     더 높이면 자오선·기원의 서가 도로 두 배를 넘는다. */
+const MULTI_FALLOFF = 0.35;
 
 /* ================= 맞는 순간 — 물리 타격 계열 =================
    ★ 계열은 무기 **앞머리**로 가른다. 무기마다 필드를 하나씩 다는 대신 이름을 읽는 이유:
@@ -2185,9 +2201,17 @@ const ENEMIES = {
   blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 66, h: 58, c: '#7a3f9c', xp: 9000, gold: 4000, ph: 2, boss: 1,
                  drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18], ['nest_crown', 1, 1, 1]] },
 
-  /* rank 7 — 세션 3 · 가라앉은 유적. 세션 2 미니보스(부패한 아가리)와 세션 3 보스
+  /* ★ 세션 3 보스 셋(가라앉은 지킴이 486 · 섬을 든 것 505 · 조수의 파수꾼 525)은 제
+     장 잡몹의 1.66~1.73배로 때렸다. 다른 보스 열여섯은 전부 0.49~1.12배다 — 보스는
+     한 대가 센 것이 아니라 체력과 마디로 버티는 것이 이 게임의 규칙이다.
+     셋 다 최초의 파수꾼과 **같은 b_keeper AI** 라 공격 주기도 투사체 계수(0.5·0.4)도
+     똑같은데, 그쪽은 0.61배다 — 보정이 따로 있는 것이 아니라 숫자만 어긋나 있었다.
+     잡몹은 장 배율(1 + 장×0.09)을 타고 보스는 안 타는데(entity.js `sc = d.boss ? 1 : scale`)
+     그 차이를 빼고 적은 값으로 보인다. 290/300/310 은 제 장 잡몹의 0.99~1.02배다.
+
+     rank 7 — 세션 3 · 가라앉은 유적. 세션 2 미니보스(부패한 아가리)와 세션 3 보스
      (조수의 파수꾼) 사이에 끼워 넣은 자리다. 물 밑에 봉해져 있어 아무도 안 건드렸다. */
-  drowned_keeper:{ n: '가라앉은 지킴이', hp: 18000, dmg: 486, def: 110, spd: 84, ai: 'b_keeper', w: 54, h: 62, c: '#3f6a7a', xp: 17000, gold: 7400, boss: 1,
+  drowned_keeper:{ n: '가라앉은 지킴이', hp: 18000, dmg: 290, def: 110, spd: 84, ai: 'b_keeper', w: 54, h: 62, c: '#3f6a7a', xp: 17000, gold: 7400, boss: 1,
                  drops: [['keeper_seal', 1, 1, 1], ['abyss_pearl', 1, 6, 10], ['pressure_plate_m', 1, 8, 14]] },
 
   /* --- 7단계: 폭주로 ---
@@ -2251,7 +2275,7 @@ const ENEMIES = {
                  drops: [['arche_core', 1, 1, 1], ['draft_glass', 1, 40, 60], ['archestone', 1, 30, 50]] },
 
   /* --- 세션 3 보스 --- */
-  tide_warden:  { n: '조수의 파수꾼 · 물이 지운 것', hp: 148000, dmg: 525, def: 104, spd: 96, ai: 'b_keeper', w: 104, h: 120, c: '#3f7fa8', boss: 1,
+  tide_warden:  { n: '조수의 파수꾼 · 물이 지운 것', hp: 148000, dmg: 310, def: 104, spd: 96, ai: 'b_keeper', w: 104, h: 120, c: '#3f7fa8', boss: 1,
                  xp: 1200000, gold: 520000, minion: 'deep_octopus', aggro: 4200,
                  drops: [['abyss_pearl', 1, 20, 30], ['abyss_core', 1, 4, 6], ['tide_heart', 1, 1, 1]] },
 
@@ -2281,7 +2305,7 @@ const ENEMIES = {
   /* 떠 있는 섬을 붙들고 있는 것 — 스토리와 무관하다. 황금 상자가 미끼이고,
      상자를 여는 순간 섬 아래에서 올라온다. 세기는 **세션 3 중반보다 한 뼘 위**:
      가라앉은 지킴이(18,000/486)와 조수의 파수꾼(148,000/525) 사이에 둔다. */
-  isle_keeper:  { n: '섬을 든 것', hp: 34000, dmg: 505, def: 118, spd: 92, ai: 'b_keeper', w: 88, h: 96, c: '#4a7a86', boss: 1,
+  isle_keeper:  { n: '섬을 든 것', hp: 34000, dmg: 300, def: 118, spd: 92, ai: 'b_keeper', w: 88, h: 96, c: '#4a7a86', boss: 1,
                  xp: 480000, gold: 240000, minion: 'reef_shark', aggro: 3200,
                  drops: [['abyss_pearl', 1, 6, 10], ['abyss_core', 1, 2, 3], ['coconut', 1, 8, 14]] },
   shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_heart', w: 184, h: 168, c: '#3a342c', ph: 5, boss: 1,
