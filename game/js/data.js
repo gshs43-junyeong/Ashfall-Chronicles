@@ -2531,7 +2531,7 @@ const SKILLS = {
                 d: '최대 체력 +%d, 방어 +%d.', b: r => ({ hp: r * 22, def: r * 3 }) },
 
   s_charge:   { n: '돌진 강타', i: '💥', br: 'blade', tier: 1, col: 0, max: 3, type: 'active', mana: 18, cd: 9,
-                req: ['s_cleave'],
+                req: ['s_cleave', 's_dash'],          // ↔ 유격: 돌진은 발놀림에서 나온다
                 d: '앞으로 돌진하며 부딪힌 적에게 무기 피해의 %d%%와 강한 넉백.', v: r => 180 + r * 70 },
   s_bloodlust:{ n: '피의 갈망', i: '🩸', br: 'blade', tier: 1, col: 1, max: 3, type: 'passive',
                 req: ['s_cleave', 's_toughen'],
@@ -2544,7 +2544,7 @@ const SKILLS = {
                 req: ['s_charge'],
                 d: '2.5초간 회전하며 초당 무기 피해의 %d%%를 준다.', v: r => 90 + r * 35 },
   s_quake:    { n: '대지 가르기', i: '⛰', br: 'blade', tier: 2, col: 1, max: 3, type: 'active', mana: 28, cd: 13,
-                req: ['s_charge', 's_bloodlust'],
+                req: ['s_charge', 's_bloodlust', 's_nova'],   // ↔ 비전: 둘 다 주변을 쓸고 둔화시킨다
                 d: '땅을 내리쳐 좌우로 충격파를 보낸다. 무기 피해의 %d%%와 2초 둔화.', v: r => 150 + r * 60 },
   s_warcry:   { n: '전투 함성', i: '📢', br: 'blade', tier: 2, col: 2, max: 3, type: 'active', mana: 22, cd: 26,
                 req: ['s_guard', 's_bloodlust'],
@@ -2564,13 +2564,13 @@ const SKILLS = {
                 d: '치명타 확률 +%d%%, 민첩 +%d.', b: r => ({ crit: r * 3, dex: r * 2 }) },
 
   s_volley:   { n: '화살 세례', i: '🏹', br: 'ranger', tier: 1, col: 0, max: 3, type: 'active', mana: 20, cd: 10,
-                req: ['s_dash'],
+                req: ['s_dash', 's_cleave'],          // ↔ 검투사: 부채꼴로 흩뿌리는 것은 휘두르는 것과 같은 결
                 d: '부채꼴로 %d발을 발사한다. 발당 무기 피해의 70%%.', v: r => 4 + r * 2 },
   s_swift:    { n: '질풍 보행', i: '🍃', br: 'ranger', tier: 1, col: 1, max: 3, type: 'passive',
                 req: ['s_dash', 's_eagle'],
                 d: '이동 속도 +%d%%, 공격 속도 +%d%%.', b: r => ({ ms: r * 6, spdP: r * 0.05 }) },
   s_pierce:   { n: '꿰뚫는 화살', i: '➶', br: 'ranger', tier: 1, col: 2, max: 3, type: 'active', mana: 16, cd: 7,
-                req: ['s_eagle'],
+                req: ['s_eagle', 's_fireball'],       // ↔ 비전: 한 점을 겨눠 쏘는 것끼리
                 d: '적을 관통하는 화살을 쏜다. 무기 피해의 %d%%.', v: r => 170 + r * 60 },
 
   s_rain:     { n: '유성 화살비', i: '☄', br: 'ranger', tier: 2, col: 0, max: 3, type: 'active', mana: 40, cd: 22,
@@ -2603,14 +2603,14 @@ const SKILLS = {
                 req: ['s_fireball', 's_wisdom'],
                 d: '즉시 체력 %d%%를 회복하고 5초간 재생.', v: r => 14 + r * 9 },
   s_barrier:  { n: '비전 방벽', i: '🔷', br: 'arcane', tier: 1, col: 2, max: 3, type: 'active', mana: 22, cd: 18,
-                req: ['s_wisdom'],
+                req: ['s_wisdom', 's_toughen'],       // ↔ 검투사: 몸을 두르는 것끼리
                 d: '피해를 %d까지 막아 내는 방벽을 두른다(지능 비례). 20초간.', v: r => 60 + r * 70 },
 
   s_wolf:     { n: '영혼 늑대 소환', i: '🐺', br: 'arcane', tier: 2, col: 0, max: 3, type: 'active', mana: 45, cd: 30,
                 req: ['s_nova'],
                 d: '30초간 싸우는 늑대 %d마리를 부른다.', v: r => r },
   s_chain:    { n: '사슬 번개', i: '⚡', br: 'arcane', tier: 2, col: 1, max: 3, type: 'active', mana: 30, cd: 11,
-                req: ['s_nova', 's_heal'],
+                req: ['s_nova', 's_heal', 's_pierce'],       // ↔ 유격: 관통이 튀는 번개가 된다
                 d: '번개가 적 %d명까지 튀며 갈수록 옅어진다.', v: r => 2 + r },
   s_blink:    { n: '차원 도약', i: '🌀', br: 'arcane', tier: 2, col: 2, max: 2, type: 'active', mana: 14, cd: 9,
                 req: ['s_barrier', 's_heal'],
