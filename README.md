@@ -1,134 +1,172 @@
 # Ashfall Chronicles
 
-> **별이 잠든 땅 / The Land Where Stars Sleep**
+> 별이 잠든 땅
 
-[![Play in browser](https://img.shields.io/badge/Play-Browser-5c8ee6?logo=googlechrome&logoColor=white)](https://ashfall-chronicles.vercel.app/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-6f8b5f.svg)](LICENSE)
+테라리아식 2D 샌드박스 위에 스토리·RPG 성장·무기/능력 빌드를 얹은 어드벤처 게임.
+순수 HTML5 + JavaScript로 만들어졌고, 브라우저 안에서 돌아갑니다.
 
-**한국어** · [English guide](docs/README.en.md) · [Play now](https://ashfall-chronicles.vercel.app/) · [Downloads](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)
+세션 셋 · 장 열여덟 · 결착 열셋. 지상 아홉 바이옴에 하늘 섬과 지하 넷이 붙고,
+서쪽 끝에는 **가라앉은 바다**가 있습니다 — 숨이 닿는 만큼만 내려갈 수 있습니다.
 
-*Ashfall Chronicles* is a story-led 2D sandbox adventure made with plain HTML5 and JavaScript. Carve routes through terrain, turn gathered materials into gear, and use that gear to open the next region.
+| | | | | | |
+|---|---|---|---|---|---|
+| 아이템 **425** | 몬스터 **72** | 보스 **23** | 업적 **70** | 기계 **26** | 제작법 **220** |
 
-지형을 직접 깎아 길을 내고, 캔 것으로 장비를 만들고, 그 장비로 다음 지역을 여는 스토리 중심 2D 샌드박스 어드벤처입니다. 순수 HTML5 + JavaScript로 만들어 브라우저에서 바로 실행됩니다.
+보스 스물셋 중 **열셋이 이야기가 데려가는 것**이고, 나머지 열은 유적 안쪽과
+아무도 말해 주지 않는 자리에 있습니다. 업적 일흔 개는 갈래 여덟에 난이도 셋으로
+나뉘고, 그중 여섯은 달성하기 전까지 무엇인지도 보이지 않습니다.
 
-| Items | Enemies | Bosses | Achievements | Machines | Recipes |
-|---:|---:|---:|---:|---:|---:|
-| 425 | 72 | 23 | 70 | 26 | 220 |
+**[▶ 브라우저에서 바로 플레이](https://ashfall-chronicles.vercel.app/)** ·
+**[내려받기](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)** ·
+**[영문 안내](docs/README.en.md)**
 
-The journey spans **3 sessions and 18 chapters**, across 9 surface biomes, sky islands, 4 underground layers, and the submerged sea at the western edge of the world.
-
----
-
-## Play and release status
-
-**[▶ Play the current browser build](https://ashfall-chronicles.vercel.app/)** · **[Download a release](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)**
-
-> **Important:** the web build is the in-development **v1.1** build; the downloadable package is currently **v1.0.5**. Their content and save data are not interchangeable. See [the v1.1 changelog](docs/v1.1-changelog.md) for in-progress changes.
-
-### What you do
-
-- **Mine and build** — reshape terrain, place blocks, and make a base anywhere.
-- **Fight your way** — specialize in melee, ranged, or magic; equip four active skills and raise a pet.
-- **Explore** — find biome-specific dungeons, secrets, bosses, and the story’s critical path.
-- **Live off the land** — farm, fish, cook, and prepare supplies for longer expeditions.
-- **Automate** — power and connect machines to move, process, and sort production.
-- **Grow a home** — Dawn Village develops with your progress and becomes a safer place to return to.
-
-The sandbox is open-ended in *how* you solve problems, while each chapter provides a clear objective and a destination.
+> **웹과 내려받는 판은 지금 다릅니다.** 웹(`/play`)에서는 **v1.1 개발판**이 돌고,
+> 내려받는 zip 은 아직 **v1.0.5** 입니다. v1.1 에 무엇이 들어갔는지는
+> [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다 — **세션 2 「벽 너머」와
+> 세션 3 「물이 지운 쪽」이 모두 들어가** 장이 열다섯에서 **열여덟**으로 늘었습니다.
 
 ---
 
-## Quick start / 빠른 시작
+## 저장소 구조
 
-1. Open the [browser build](https://ashfall-chronicles.vercel.app/) or download the latest release.
-2. Start a new single-player slot.
-3. Follow the current chapter objective in the journal; it introduces the core loop gradually.
-4. Make regular backups through **Settings → Export save**.
-
-No installation or server is required. The game runs from `index.html`; current progress is stored locally in the browser.
-
-### Save data
-
-- Saves use browser `localStorage`, not a game server.
-- Private/incognito windows can discard saves when closed.
-- Web and downloaded builds have different origins, so their saves are separate.
-- Use **Settings → Export/Import save** before moving browsers or machines.
-
-### Controls
-
-| Input | Action |
+| 경로 | 내용 |
 |---|---|
-| `A` / `D`, `←` / `→` | Move |
-| `Space`, `W`, `↑` | Jump; unlock double jump through traits |
-| `S`, `↓` | Drop through platforms |
-| Left click | Attack; mine or till while holding the relevant tool |
-| Right click | Place, interact, or cast a fishing line |
-| `Shift` | Dodge dash |
-| `Q` `E` `R` `F` | Active-skill slots |
-| `1`–`0`, mouse wheel | Hotbar selection |
-| `I` `K` `J` `H` | Inventory, abilities, journal, crafting |
-| `Esc` | Pause |
-| `F5` | Save |
+| `game/` | 게임 본체. 이 폴더만 있으면 정적 서버 위에서 그대로 돌아갑니다. |
+| `launchers/windows/` | `AshfallChronicles.bat` + Windows용 README |
+| `launchers/macos/` | `AshfallChronicles.command`, `launch.sh` + macOS용 README |
+| `site/` | 배포 사이트. 빌드할 때 `game/`이 `site/play/`로 복사됩니다. |
+| `site/home/` | 홈 페이지 — 주소는 `/home` (루트 `/`는 이쪽으로 넘깁니다) |
+| `site/download/` | 다운로드 페이지 — 주소는 `/download` |
+| `docs/` | 작업 문서 — 변경 사항·효과음 프롬프트·배포 캐시 메모 |
+| `LICENSE` · `NOTICE.md` | MIT 본문과, **거기서 빠지는 두 폴더**(음악·효과음)에 대한 설명 |
+| `design/` | 설계 캔버스 |
+| `tools/` | 배포용 zip 빌드 스크립트, 애셋을 굽고 재는 파이썬 도구들 |
+| `.github/workflows/` | Release 자동 첨부, Pages 자동 배포 |
 
-Controls, audio, visual effects, and UI preferences can be changed in **Settings**.
+**`game/` 만이 원본입니다.** `site/play/` 는 빌드 산출물이고 `.gitignore` 되어
+있습니다 — 거기를 고치면 다음 빌드에 날아갑니다.
+
+배포용 zip은 저장소에 커밋하지 않습니다(`.gitignore`). 태그를 push하면 Actions가
+그때 만들어 Release에 첨부합니다.
 
 ---
 
-## Repository map
+## 문서
 
-| Path | Purpose |
+| 문서 | 내용 |
 |---|---|
-| `game/` | Canonical game source. It can run on any static server. |
-| `site/` | Public website; `site/play/` is generated from `game/` and must not be edited directly. |
-| `docs/` | Project, release, deployment, and design-operation documentation. |
-| `launchers/` | Windows and macOS launch helpers for packaged builds. |
-| `tools/` | Asset, verification, site, and release build scripts. |
-| `design/` | Design canvases and reference material. |
-| `.github/workflows/` | Release and deployment automation. |
-
-For contributors: **edit `game/`, then rebuild.** Generated `site/play/` output is ignored and will be replaced by the next build.
-
----
-
-## Documentation
-
-| Document | Use it for |
-|---|---|
-| [English project guide](docs/README.en.md) | English quick start, project layout, release notes, and contribution orientation |
-| [Game assessment & roadmap](docs/game-assessment.md) | Current strengths, risks, scorecard, and prioritized improvements |
-| [Story and session rules](docs/story-and-sessions.md) | Safely extending chapters, sessions, content tables, and assets |
-| [v1.1 changelog](docs/v1.1-changelog.md) | Changes included in the in-development v1.1 build |
-| [System requirements](docs/system-requirements.md) | Supported environments and technical assumptions |
-| [Deployment cache notes](docs/deploy-cache.md) | Deployment and cache invalidation procedures |
-| [CLAUDE.md](CLAUDE.md) | Engineering constraints that can silently break saves, assets, or world generation |
-
-The older `v1.1-*.md` planning and change documents are preserved as implementation records. The guides above are the best entry points for current work.
+| [`docs/README.en.md`](docs/README.en.md) | 영어권 플레이어·기여자를 위한 프로젝트 안내 |
+| [`docs/game-assessment.md`](docs/game-assessment.md) | 게임 평가와 우선순위 개선 로드맵 |
+| [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
+| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1 에 무엇이 들어갔는가** (아직 릴리스 전) |
+| [`CLAUDE.md`](CLAUDE.md) | 이 저장소에서 코드를 고칠 때의 규칙 — 타일 번호·좌표(`SHIFT`)·세이브처럼 **어기면 조용히 망가지는 것들** |
+| [`docs/v1.1-sfx-prompts.md`](docs/v1.1-sfx-prompts.md) | 효과음 44개의 생성 프롬프트와 **어디서 울리는지** — 다시 구울 때의 규격서입니다 |
+| [`docs/v1.1-plan-prompt.md`](docs/v1.1-plan-prompt.md) | v1.1 최초 작업 지시서 (실제 진행은 이 길과 달라졌습니다 — 현황은 changelog 쪽) |
+| [`docs/deploy-cache.md`](docs/deploy-cache.md) | 배포와 캐시 무효화 |
 
 ---
 
-## Build and release
-
-Create a release by tagging a version:
+## 새 버전 내보내기
 
 ```bash
 git tag v1.1.0
 git push origin v1.1.0
 ```
 
-The release workflow builds Windows and macOS archives and attaches them with `SHA256SUMS.txt`. To build locally:
+태그가 올라가면 `.github/workflows/release.yml`이 자동으로:
+
+1. `tools/build.sh`로 Windows·macOS용 zip을 만들고
+2. `SHA256SUMS.txt`를 생성한 뒤
+3. 셋 다 해당 Release에 첨부합니다.
+
+로컬에서 직접 만들려면:
 
 ```bash
 bash tools/build.sh 1.1.0
 ```
 
-Artifacts are written to `dist/`.
+결과물은 `dist/`에 생깁니다.
 
 ---
 
-## License and attribution
+## 실행에 필요한 것
 
-Code and original visual assets are available under the [MIT License](LICENSE). Keep the copyright notice when redistributing or modifying them.
+- 최신 브라우저(Chrome · Safari · Edge) 하나면 됩니다.
+- 설치할 것은 없습니다. **서버도 파이썬도 필요하지 않습니다** — zip 을 풀고
+  `index.html`(또는 런처)을 더블클릭하면 그대로 돌아갑니다.
+- 시크릿 창에서는 하지 마세요. 저장이 창을 닫는 순간 사라집니다.
+  폴더를 옮길 때는 게임 안 **설정 → 저장 내보내기/가져오기**를 쓰세요.
 
-Music in `game/assets/audio/` was generated with [Suno](https://suno.com), and sound effects in `game/assets/sound_effects/` were generated with [ElevenLabs](https://elevenlabs.io). Those two asset folders are **not** relicensed under MIT; check the originating services’ terms before redistributing the audio separately. See [NOTICE.md](NOTICE.md) for details.
+### macOS에서 "확인되지 않은 개발자" 경고가 뜬다면
 
-Concept: gshs43-junyeong · Production: Claude Code + Codex · Music: Suno · Sound effects: ElevenLabs.
+파일을 **우클릭 → 열기**로 실행하면 그 뒤로는 경고 없이 열립니다. 그래도 막히면:
+
+```bash
+xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/   # 받은 판 번호로
+```
+
+---
+
+## 저장 데이터
+
+진행 상황은 서버가 아니라 **브라우저 안에**(`localStorage`) 저장됩니다.
+
+- 같은 브라우저로 다시 실행하면 이어하기가 됩니다.
+- 브라우저를 바꾸거나 "사이트 데이터 삭제"를 누르면 사라집니다.
+- 시크릿/프라이빗 모드에서는 창을 닫는 순간 없어집니다.
+- **웹에서 한 저장과 내려받은 버전의 저장은 서로 다른 곳에 쌓입니다.** 출처(origin)가
+  다르기 때문입니다. 이어서 하려면 같은 쪽을 계속 쓰세요.
+
+---
+
+## 조작
+
+| 입력 | 동작 |
+|---|---|
+| `A` `D` · `←` `→` | 이동 |
+| `Space` `W` `↑` | 점프 (특성·장신구로 이중 점프) · 물속에서는 위로 저음 |
+| `S` `↓` | 나무 발판 아래로 내려가기 |
+| 좌클릭 | 공격 — 곡괭이/괭이를 든 상태면 채굴·밭갈이 |
+| 우클릭 | 설치 · 상호작용 · 낚싯대 던지기 |
+| `Shift` | 회피 대시 (무적 프레임) |
+| `Q` `E` `R` `F` | 스킬 슬롯 |
+| `1`~`9`, `0` | 핫바 (마우스 휠로도 전환) |
+| `I` `K` `J` `H` | 가방 · 능력 · 일지 · 제작 |
+| `Esc` | 일시정지 |
+| `F5` | 저장 |
+
+이동·점프·대시·스킬·패널·저장은 게임 안 **설정 → 조작**에서 다른 키로 바꿀 수 있습니다.
+
+물에 들어가면 화면에 **숨 막대**가 생깁니다. 숨이 다하면 체력이 깎이므로, 더 내려가려면
+휴대용 산소통을 만들어 유틸리티 칸에 끼워야 합니다.
+
+---
+
+## 라이선스
+
+**[MIT](LICENSE)** 입니다. 코드도 그림도 마음대로 쓰고 고치고 다시 내어도 됩니다 —
+저작권 표시만 남겨 주세요. 저작권은 `gshs43-junyeong` 에게 있습니다.
+
+**딱 두 폴더만 예외입니다.**
+
+| 무엇 | 어디 | 어디서 왔나 |
+|---|---|---|
+| 배경 음악 13곡 | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
+| 효과음 89개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+
+이 둘은 바깥 서비스에서 만든 것이라 여기서 MIT 로 다시 내어 줄 권한이 없습니다.
+게임을 받아 즐기는 데에는 아무 제한이 없지만, **소리 파일만 따로 떼어다 쓰려면**
+해당 서비스의 약관을 직접 확인하세요. 자세한 것은 [`NOTICE.md`](NOTICE.md) 에
+적어 두었습니다.
+
+그 둘을 뺀 **그림은 전부 이 저장소 안에서 만들었습니다.** 사 온 것도 받아 온 것도
+없습니다 — 손으로 그린 시트와 `tileart.js`·`itemart.js` 가 그때그때 그려 내는 것뿐입니다.
+
+## 만든 것
+
+기획 `gshs43-junyeong` · 제작 Claude Code + Codex · 그림 애셋 Claude Design ·
+음악 [Suno](https://suno.com) · 효과음 [ElevenLabs](https://elevenlabs.io).
+
+버전별 변경 사항은 [릴리스 목록](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases)과
+[다운로드 페이지의 변경 이력](https://ashfall-chronicles.vercel.app/download#changelog)에 있습니다.
+개발 중인 v1.1 은 [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 를 보세요.
