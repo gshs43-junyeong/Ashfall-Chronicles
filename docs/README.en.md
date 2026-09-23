@@ -98,6 +98,8 @@ git push origin v1.1.0
 
 The release workflow produces Windows and macOS archives and a `SHA256SUMS.txt` checksum file. See `.github/workflows/release.yml` and `tools/build.sh` for the exact process.
 
-## License
+## Credits and license
+
+Concept: gshs43-junyeong · Production: Claude Code + Codex · Artwork assets: Claude Design · Music: Suno · Sound effects: ElevenLabs.
 
 Code and original graphics are [MIT licensed](../LICENSE). Music and sound-effect folders are exceptions because they were generated with external services; see [NOTICE.md](../NOTICE.md) before redistributing audio separately.
