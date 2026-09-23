@@ -131,4 +131,4 @@ Code and original visual assets are available under the [MIT License](LICENSE). 
 
 Music in `game/assets/audio/` was generated with [Suno](https://suno.com), and sound effects in `game/assets/sound_effects/` were generated with [ElevenLabs](https://elevenlabs.io). Those two asset folders are **not** relicensed under MIT; check the originating services’ terms before redistributing the audio separately. See [NOTICE.md](NOTICE.md) for details.
 
-Concept: gshs43-junyeong · Production: Claude Opus 5 · Music: Suno · Sound effects: ElevenLabs.
+Concept: gshs43-junyeong · Production: Claude Code + Codex · Music: Suno · Sound effects: ElevenLabs.
