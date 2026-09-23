@@ -20,7 +20,7 @@
 | 사이트 | `site/**` |
 | 문서 | `README.md`, `CLAUDE.md`, `docs/**` |
 
-그림은 전부 이 저장소 안에서 만들었습니다. 사 온 것도, 받아 온 것도 없습니다.
+그림 애셋은 이 저장소 안에서 제작했으며, 제작 과정에는 **Claude Design**을 사용했습니다. 사 온 것도, 받아 온 것도 없습니다.
 
 ## MIT 에서 **빠지는 것**
 
@@ -48,7 +48,7 @@ with one carve-out: the **music and sound-effect folders**. Those came from
 outside services, so they cannot be relicensed here.
 
 **Covered by MIT** (copyright held by gshs43-junyeong): all game code, all
-visual assets under `game/assets/` except the two folders below, the tools,
+visual assets under `game/assets/` except the two folders below (produced with Claude Design as part of the project), the tools,
 the build workflows, the website and the documentation.
 
 **Not covered by MIT:**
