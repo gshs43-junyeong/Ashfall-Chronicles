@@ -6655,19 +6655,22 @@ const G = {
   drawPlayer(c, p, sx, sy) {
     c.save();
     if (p.iframe > 0 && Math.floor(this.time * 24) % 2 === 0) c.globalAlpha = 0.45;
-    // 손그림 스프라이트가 있으면 그것으로, 없으면 아래 절차 렌더로 폴백
-    /* 캐릭터마다 제 시트를 쓴다 (char/player_<id>.png). 프레임 순서는 다섯 장 모두
-       같으므로 playerFrame() 은 그대로 쓴다. */
+    /* ★ 주인공은 **손그림 시트 한 장이 전부**다(char/player_<id>.png, tools/mkplayer.py).
+       한동안 팔·다리·망토를 코드로 그리는 인형(리그)을 썼는데, 원래 그림의 명암·주름·옷 결이 다 빠져
+       "그림이 너프됐다"는 말을 들었다. 지금은 원래 그림을 그대로 쓰고, 칸 벽에 잘려 있던 망토 자락·손·발만
+       시트를 넓혀 이어 그렸다. 무기는 시트에 적어 둔 **손 자리**(hand)에 쥐여 준다 — 예전에 무기와 팔이
+       어긋나던 것은 무기를 몸 가운데 고정점(sx+10, sy+20)에 그렸기 때문이다. */
     const ch = CHAR_OF(p.charId);
     const fr = this.playerFrame(p);
-    // 리그(몸 시트 + 코드가 그리는 두 팔·망토·무기) — tools/mkplayer.py 의 ★
-    if (this.spritesOn && this.drawRigPlayer(c, p, sx, sy, ch, fr)) { c.restore(); return; }
-    if (this.spritesOn && Sprites.draw(c, 'player_' + ch.id, fr, sx, sy, p.facing < 0)) {
-      this.drawHeldWeapon(c, p, sx, sy, 0);
+    const key = 'player_' + ch.id;
+    if (this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel
+        && this.drawSwimPlayer(c, p, sx, sy, key)) { c.restore(); return; }
+    if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
+      this.drawHeldWeapon(c, p, sx, sy, 0, this.playerHand(key, fr, sx, sy, p.facing < 0));
       c.restore();
       return;
     }
-    /* 전용 시트도 못 읽었으면 절차 렌더. 옛 공용 시트(char/player.png — 방랑자 시트와 같은 그림)에
+    /* 시트를 못 읽었으면 절차 렌더. 옛 공용 시트(char/player.png — 방랑자 시트와 같은 그림)에
        색조만 얹던 갈래는 그 시트를 지우면서 뺐다. */
     const f = 1;
     const skin = shade('#e8c39a', f), cloth = shade('#4a6fa8', f), pant = shade('#33384a', f), hair = shade('#3a2a1e', f);
@@ -6691,184 +6694,39 @@ const G = {
     c.restore();
   },
 
-  /* ================= 주인공 리그 =================
-     ★ 몸(머리·몸통·다리)만 시트에 있고 **두 팔 · 망토 · 무기는 여기서 그린다**(tools/mkplayer.py 의 ★).
-       예전에는 팔이 그림에 박혀 있어 손과 무기 자루가 프레임마다 어긋났고, 망토는 등에 붙은 채였고,
-       헤엄 그림은 팔이 셋이었다. 여기서는
-         · 앞팔은 어깨(rig.fs[프레임])에서 **무기 자루 자리**까지 — 손이 곧 자루라 절대 안 어긋난다.
-         · 뒷팔은 몸 뒤로, 걸음·점프 자세에 맞춰 흔든다. 앞팔은 무기 뒤(손이 자루를 쥔다), 뒷팔은 몸 뒤.
-         · 망토는 목 뒤(rig.nk)에 매단 점 일곱의 줄(drawCapeSim) — 몸이 움직이면 늦게 따라와 뒤로 날린다.
-         · 헤엄은 누운 몸 한 장에 두 팔을 반 바퀴 어긋나게 돌린다(크롤) — 팔은 언제나 둘이다.
-     각도는 전부 "오른쪽을 볼 때" 기준 θ(앞 = 0, 아래 = π/2)로 적고, 왼쪽을 보면 π - θ 로 뒤집는다. */
-  RIG_ARM: 10,
-  drawRigPlayer(c, p, sx, sy, ch, fr) {
-    const key = 'player_' + ch.id + '_rig';
+
+  /** 시트에 적힌 이 프레임의 무기 손 — { pt:[x,y] 화면 좌표(손 가운데), box:[x,y,w,h], key, fr, flip } 또는 null.
+      시트 좌표는 오른쪽을 볼 때 기준이라, 뒤집어 그릴 때는 칸 폭에서 거울로 뺀다(Sprites.draw 와 같은 식). */
+  playerHand(key, fr, sx, sy, flip) {
     const m = Sprites.meta && Sprites.meta.characters.sheets[key];
-    const im = Sprites.img[key];
-    if (!m || !m.rig || !im || !im.width) return false;
-    const R = m.rig, dir = p.facing < 0 ? -1 : 1, hurt = fr === 12;
-    const W = th => dir > 0 ? th : Math.PI - th;
-    const ox = p.x - sx, oy = p.y - sy;                      // 화면 → 세계 (망토는 세계 좌표로 흔든다)
-    const swimKey = 'player_' + ch.id + '_swim';
-    if (p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel && Sprites.img[swimKey] && Sprites.img[swimKey].width) {
-      const sim = Sprites.img[swimKey], f = Math.floor((p.swimPh || 0) * 4) % 4, S = R.swim;
-      const a = clamp(Math.atan2(p.vy, Math.max(20, Math.abs(p.vx))), -1.25, 1.25);
-      const cx = sx + p.w / 2, cy = sy + p.h / 2;
-      // 누운 프레임 좌표(48×28, 가운데 -24,-14) → 화면
-      const toScr = (lx, ly) => {
-        const x = lx - 24, y = ly - 14, ca = Math.cos(a), sa = Math.sin(a);
-        return [cx + dir * (x * ca - y * sa), cy + (x * sa + y * ca)];
-      };
-      this.drawCapeSim(c, p, toScr(S.nk[0], S.nk[1]), R, dir, true, ox, oy);
-      const ph = (p.swimPh || 0) * TAU;                     // 크롤 — 앞팔 θ, 뒷팔은 반 바퀴 뒤
-      c.save();
-      c.translate(cx, cy); c.scale(dir, 1); c.rotate(a);
-      c.imageSmoothingEnabled = false;
-      /* 팔 궤적은 원이 아니라 납작한 타원(앞으로 12 · 위아래 6)이다. 원으로 돌리면 몸에 수직으로 선
-         순간 팔이 막대처럼 삐죽 튀어나와 풍차가 된다 — 옆에서 본 크롤은 앞으로 길게 뻗고 짧게 긁는다. */
-      const arm = (s, t, front) => {
-        const sh = [s[0] - 24, s[1] - 14];
-        this.drawArmTo(c, sh, [sh[0] + Math.cos(t) * 12, sh[1] + Math.sin(t) * 6], R, front, hurt);
-      };
-      arm(S.bs, ph + Math.PI, false);
-      c.drawImage(sim, f * 48 * Sprites.scale, 0, 48 * Sprites.scale, 28 * Sprites.scale, -24, -14, 48, 28);
-      arm(S.fs, ph, true);
-      c.restore();
-      return true;
-    }
-    const L = pt => [Math.round(sx) + m.ox + (dir > 0 ? pt[0] + 0.5 : m.frameW - pt[0] - 0.5), Math.round(sy) + m.oy + pt[1] + 0.5];
-    this.drawCapeSim(c, p, L(R.nk[fr]), R, dir, p.swimming, ox, oy);
-    // 뒷팔 — 걸음은 다리와 반대로, 점프는 뒤로 젖히고, 떨어질 때는 위로 든다, 대시·공격은 뒤로 뻗는다
-    const walkSw = fr >= 2 && fr <= 5 ? [-0.55, 0, 0.5, 0][fr - 2] : 0;
-    const backTh = Math.PI / 2 + ({ 6: 0.9, 7: -1.0, 8: 1.2, 9: 0.5, 10: 0.8, 11: 0.6, 12: 0.4 }[fr] || 0.18) + walkSw
-      + Math.sin(this.time * 2.4) * (fr < 2 ? 0.05 : 0);
-    this.drawArm(c, L(R.bs[fr]), W(backTh), R, false, hurt);
-    Sprites.draw(c, key, fr, sx, sy, dir < 0);
-    this.drawHeldWeapon(c, p, sx, sy, 0, { sh: L(R.fs[fr]), dir, W, R, hurt, walk: -walkSw });
+    if (!m || !m.hand || !m.hand[fr]) return null;
+    const X0 = Math.round(sx) + m.ox, Y0 = Math.round(sy) + m.oy;
+    const [hx, hy] = m.hand[fr], [bx0, by0, bx1, by1] = m.handBox[fr];
+    const px = flip ? X0 + m.frameW - (hx + 0.5) : X0 + hx + 0.5;
+    const bx = flip ? X0 + m.frameW - bx1 - 1 : X0 + bx0;
+    return { pt: [px, Y0 + hy + 0.5], box: [bx, Y0 + by0, bx1 - bx0 + 1, by1 - by0 + 1], key, fr, flip };
+  },
+
+  /** 헤엄 — 따로 그린 헤엄 그림 없이 **걷기 네 장을 눕혀서** 돌린다(머리가 나아가는 쪽).
+      ★ 예전 헤엄 그림은 팔이 든 몸에 팔을 또 그려 팔이 셋이었다. 걷기 그림을 그대로 눕히면 팔 둘 ·
+        망토 · 옷 결이 원래 그림 그대로이고, 걷는 다리가 그대로 발차기가 된다. 기울기는 헤엄치는 방향. */
+  drawSwimPlayer(c, p, sx, sy, key) {
+    const im = Sprites.img[key], m = Sprites.meta && Sprites.meta.characters.sheets[key];
+    if (!im || !im.width || !m) return false;
+    const dir = p.facing < 0 ? -1 : 1;
+    const fr = 2 + (Math.floor((p.swimPh || 0) * 4) % 4);
+    const a = clamp(Math.atan2(p.vy, Math.max(20, Math.abs(p.vx))), -1.1, 1.1);
+    const S = Sprites.scale, fw = m.frameW, fh = m.frameH;
+    // 판정 상자 가운데를 돌림 중심으로 — 시트 칸 안의 판정 상자 가운데는 (-ox + 10, -oy + 20)
+    const ccx = -m.ox + p.w / 2, ccy = -m.oy + p.h / 2;
+    c.save();
+    c.imageSmoothingEnabled = false;
+    c.translate(Math.round(sx + p.w / 2), Math.round(sy + p.h / 2));
+    c.scale(dir, 1);
+    c.rotate(Math.PI / 2 + a);                               // 머리(위)가 앞(오른쪽)으로
+    c.drawImage(im, fr * fw * S, 0, fw * S, fh * S, -ccx, -ccy, fw, fh);
+    c.restore();
     return true;
-  },
-  /** 팔 하나 — 어깨 sh 에서 θ(지금 좌표계의 각) 쪽으로 RIG_ARM 칸. 소매(굵기 3) + 손(3×3), 1칸 윤곽.
-      화면 픽셀에 맞춘다. 뒷팔은 한 톤 어둡게. */
-  drawArm(c, sh, th, R, front, hurt) {
-    const n = this.RIG_ARM;
-    const ex = sh[0] + Math.cos(th) * n, ey = sh[1] + Math.sin(th) * n;
-    this.drawArmTo(c, sh, [ex, ey], R, front, hurt);
-    return [ex, ey];
-  },
-  drawArmTo(c, sh, hand, R, front, hurt) {
-    const sleeve = hurt ? '#b8483c' : front ? R.sleeve : shade(R.sleeve, 0.72);
-    const skin = hurt ? '#e08a78' : front ? R.hand : shade(R.hand, 0.8);
-    const cuff = hurt ? '#8a3028' : front ? R.cuff : shade(R.cuff, 0.75);
-    const [x0, y0] = sh, [x1, y1] = hand;
-    const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
-    const dot = (t, r, col) => {
-      c.fillStyle = col;
-      const x = Math.round(x0 + (x1 - x0) * t), y = Math.round(y0 + (y1 - y0) * t);
-      c.fillRect(x - r, y - r, r * 2 + 1, r * 2 + 1);
-    };
-    for (let i = 0; i <= n; i++) dot(i / n, 2, '#0c0c11');            // 윤곽
-    for (let i = 0; i <= n; i++) dot(i / n, 1, i >= n - 3 ? cuff : sleeve);
-    c.fillStyle = '#0c0c11'; c.fillRect(Math.round(x1) - 2, Math.round(y1) - 2, 5, 5);
-    c.fillStyle = skin; c.fillRect(Math.round(x1) - 1, Math.round(y1) - 1, 3, 3);
-    c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(Math.round(x1) - 1, Math.round(y1) - 1, 1, 1);
-  },
-  /** 망토 — 목 뒤(A, 화면 좌표)에 매단 점 일곱의 줄. 세계 좌표로 흔들어야 카메라가 움직여도 안 떤다.
-      매 그리기마다 한 걸음: 관성(검 0.94) + 중력(물속은 약하게) + 가벼운 바람, 그다음 앞 점을 따라가는
-      길이 제약. 망토는 **몸 앞으로 못 넘어온다**(목 앞 1칸에서 막는다) — 뒤돌면 반대편으로 넘어간다.
-      ★ 그림은 줄을 **가운데 선으로 한 천 띠**다(끝을 둥글게 막은 캡슐이 아니다). 처음엔 줄에서의 거리만 보고
-        칠해서 끝이 둥근 덩어리가 됐고, 시트에서 뽑은 망토 색 셋이 다섯 캐릭터 모두 #282832 한 색이라
-        명암도 없어 "물 채운 자루"처럼 보였다. 지금은
-          · 목에서 모였다가 밑단으로 갈수록 넓어지고(반폭 1.2 → 4.2), 밑단은 **지그재그로 잘린다**.
-          · 가운데 선 양옆으로 주름 두 줄(어두운 골 · 밝은 등)이 목에서 부채꼴로 퍼진다.
-          · 몸에서 먼 쪽 절반은 그늘, 몸 쪽 가장자리 한 줄은 안감(소매 색) — 천의 두 면이 읽힌다. */
-  drawCapeSim(c, p, A, R, dir, water, ox, oy) {
-    const N = 7, SEG = 3.1, now = this.time;
-    const ax = A[0] + ox, ay = A[1] + oy;
-    let st = p._capeSim;
-    if (!st || Math.hypot(st.pts[0].x - ax, st.pts[0].y - ay) > 60) {
-      st = p._capeSim = { t: now, pts: [] };
-      for (let i = 0; i < N; i++) st.pts.push({ x: ax - dir * i * 0.8, y: ay + i * SEG, px: ax - dir * i * 0.8, py: ay + i * SEG });
-    }
-    const dt = clamp(now - st.t, 0, 1 / 30); st.t = now;
-    const g = water ? 160 : 900, damp = water ? 0.86 : 0.94;
-    const pts = st.pts;
-    for (let i = 1; i < N; i++) {
-      const q = pts[i], vx = (q.x - q.px) * damp, vy = (q.y - q.py) * damp;
-      q.px = q.x; q.py = q.y;
-      const wind = Math.sin(now * 3.1 + i * 0.9) * (water ? 10 : 22);
-      /* 뒤로 미는 힘(-dir·260)은 천의 뻣뻣함 대신이다. 이게 없으면 서 있을 때 망토가 목 아래로
-         곧게 떨어져 몸통(폭 12)에 통째로 가려진다 — 중력 900 에 맞서 약 16° 뒤로 드리운다. */
-      q.x += vx + (-dir * (water ? 60 : 260) - dir * wind * 0.3 + wind * 0.2) * dt * dt;
-      q.y += vy + g * dt * dt;
-    }
-    for (let it = 0; it < 3; it++) {
-      pts[0].x = ax; pts[0].y = ay;
-      for (let i = 1; i < N; i++) {
-        const a = pts[i - 1], b = pts[i];
-        let dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
-        b.x = a.x + dx / d * SEG; b.y = a.y + dy / d * SEG;
-        if ((b.x - ax) * dir > 1) b.x = ax + dir;                 // 몸 앞으로 못 넘어온다
-      }
-    }
-    // 칸마다 칠하기 — 가장 가까운 마디에 투영해 줄을 따라 간 비율 t 와 줄에서 옆으로 벗어난 거리 sd(부호 있음)
-    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-    for (const q of pts) { x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y); x1 = Math.max(x1, q.x); y1 = Math.max(y1, q.y); }
-    x0 = Math.floor(x0 - 7); y0 = Math.floor(y0 - 3); x1 = Math.ceil(x1 + 7); y1 = Math.ceil(y1 + 7);
-    const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
-    this._capeCv = this._capeCv || document.createElement('canvas');
-    const cv = this._capeCv;
-    if (cv.width < bw || cv.height < bh) { cv.width = Math.max(cv.width, bw); cv.height = Math.max(cv.height, bh); }
-    const g2 = cv.getContext('2d');
-    const img = g2.createImageData(bw, bh), px = img.data;
-    const rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-    const base = R.cape[0];
-    const MID = rgb(shade(base, 1.55)), LT = rgb(shade(base, 2.05)), DK = rgb(shade(base, 1.1)),
-      FOLD = rgb(shade(base, 0.85)), LIN = rgb(shade(R.sleeve, 0.9)), O = [12, 12, 17];
-    const HW = t => 1.2 + 3.0 * t;
-    const inside = new Uint8Array(bw * bh), tv = new Float32Array(bw * bh), sv = new Float32Array(bw * bh);
-    for (let y = 0; y < bh; y++)
-      for (let x = 0; x < bw; x++) {
-        const wx = x0 + x + 0.5, wy = y0 + y + 0.5;
-        let best = 1e9, bt = 0, bs = 0, bu = 0, bi = 0;
-        for (let i = 0; i < N - 1; i++) {
-          const a = pts[i], b = pts[i + 1], vx = b.x - a.x, vy = b.y - a.y;
-          const L2 = vx * vx + vy * vy || 1, u0 = ((wx - a.x) * vx + (wy - a.y) * vy) / L2, u = clamp(u0, 0, 1);
-          const ddx = wx - (a.x + vx * u), ddy = wy - (a.y + vy * u), d = Math.hypot(ddx, ddy);
-          if (d < best) { best = d; bt = (i + u) / (N - 1); bu = u0; bi = i; bs = (vx * (wy - a.y) - vy * (wx - a.x)) / Math.sqrt(L2); }
-        }
-        const hw = HW(bt);
-        if (Math.abs(bs) > hw + 0.5) continue;
-        if (bi === 0 && bu < 0) continue;                                  // 목 위로는 안 나간다
-        if (bi === N - 2 && bu > 1) {                                     // 밑단 — 지그재그로 자른다
-          const over = (bu - 1) * SEG, zig = ((Math.floor((bs + hw) / 1.5) & 1) ? 0.4 : 1.6);
-          if (over > zig) continue;
-        }
-        const o = y * bw + x;
-        inside[o] = 1; tv[o] = bt; sv[o] = bs / hw * dir;                 // sv > 0 = 몸 쪽(앞)
-      }
-    for (let y = 0; y < bh; y++)
-      for (let x = 0; x < bw; x++) {
-        const o = y * bw + x;
-        let col = null;
-        if (inside[o]) {
-          const edge = !x || !y || x === bw - 1 || y === bh - 1 || !inside[o - 1] || !inside[o + 1] || !inside[o - bw] || !inside[o + bw];
-          const t = tv[o], s2 = sv[o];
-          if (edge) col = (s2 > 0.55 && t > 0.2 && inside[o + bw]) ? LIN : O;   // 몸 쪽 가장자리는 안감이 비친다
-          else if (!inside[o + bw * 2] && t > 0.6) col = DK;                     // 밑단 접힌 그늘
-          else {
-            const f1 = Math.abs(s2 - 0.3), f2 = Math.abs(s2 + 0.4);
-            if (t > 0.22 && (f1 < 0.13 || f2 < 0.13)) col = FOLD;                 // 주름 골
-            else if (t > 0.22 && (Math.abs(s2 - 0.05) < 0.12)) col = LT;          // 주름 등(빛)
-            else col = s2 < -0.1 ? DK : MID;                                      // 몸에서 먼 쪽 절반은 그늘
-          }
-        }
-        if (!col) continue;
-        const k = o * 4;
-        px[k] = col[0]; px[k + 1] = col[1]; px[k + 2] = col[2]; px[k + 3] = 255;
-      }
-    g2.clearRect(0, 0, cv.width, cv.height);
-    g2.putImageData(img, 0, 0);
-    c.drawImage(cv, 0, 0, bw, bh, x0 - ox, y0 - oy, bw, bh);
   },
 
   /** 장착 무기 + 스윙 궤적 + 채널링 링 (두 렌더 경로가 공유) */
@@ -8115,26 +7973,17 @@ const G = {
     return angleTo(p.cx, p.cy, i.wx, i.wy);
   },
 
-  drawHeldWeapon(c, p, sx, sy, bob, rig) {
+  drawHeldWeapon(c, p, sx, sy, bob, hand) {
     /* 손에 그려지는 것은 "지금 실제로 쓰는 것"이어야 한다 — 핫바에 도구·낚싯대가 있으면
        그것을, 아니면 장착 무기를. 장착 무기만 그리면 화면과 조작이 따로 논다. */
     const hi = p.held(), hd = hi && idef(hi);
     const tool = hd && (hd.type === 'tool' || hd.type === 'rod') ? hi : null;
     const wep = tool || p.equip.weapon;
-    /* 리그(drawRigPlayer)면 **손이 곧 무기 자루 자리**다 — 어깨에서 팔을 뻗은 끝을 무기의 돌림 중심으로 쓴다.
-       팔 방향: 휘두르는 중이면 무기 각 그대로(팔을 쭉 뻗는다), 활은 겨눈 각, 들고 서 있을 때는 앞아래. */
-    let piv = [sx + 10, sy + 20 + bob], armTh = null;
-    if (rig) {
-      const d0 = wep && idef(wep);
-      if (!wep) armTh = rig.W(Math.PI / 2 - 0.1 + (rig.walk || 0));
-      else if (hd && hd.type === 'rod') armTh = rig.W(0.35);
-      else if (!tool && d0.wc === 'ranged') armTh = this.aimAngle(p);
-      else if (p.swing > 0 && !(tool && p.swing <= 0))
-        armTh = p.swingAng + (p.swingDir > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2.0;
-      else armTh = rig.W(0.6);
-      piv = [rig.sh[0] + Math.cos(armTh) * this.RIG_ARM, rig.sh[1] + Math.sin(armTh) * this.RIG_ARM];
-    }
-    this._rodHand = rig ? piv : null;
+    /* hand(game.js playerHand — 시트에 적힌 이 프레임의 무기 손)가 있으면 **그 손이 곧 자루 자리**다.
+       ★ 예전에는 몸 가운데 고정점(sx+10, sy+20)에 그려서, 손을 흔드는 걷기·치켜든 공격 그림에서
+         무기가 손과 따로 놀았다. 없으면(절차 렌더) 예전 자리. */
+    const piv = hand ? hand.pt : [sx + 10, sy + 20 + bob];
+    this._rodHand = hand ? piv : null;
     if (wep) {
       const d = idef(wep);
       c.save();
@@ -8164,7 +8013,7 @@ const G = {
            (활: 메긴 화살이 오른쪽, 레일건: 총구가 오른쪽) 겨눔 각도만큼 돌리면 그대로
            발사 방향이 된다. 자루 무기용 90° 보정을 여기서 걸면 아래를 겨누게 된다. */
         c.rotate(this.aimAngle(p));
-        c.translate(rig ? 3 : BOW_HAND, 0);   // 팔을 뻗은 만큼 앞으로 — 리그는 이미 손 끝이라 조금만
+        c.translate(hand ? 3 : BOW_HAND, 0);  // 팔을 뻗은 만큼 앞으로 — 손 자리면 이미 팔 끝이라 조금만
         Art.drawItem(c, wep.id, -13, -13, 26);
         c.restore();
       } else {
@@ -8181,8 +8030,8 @@ const G = {
             : (p.facing > 0 ? -0.4 : Math.PI + 0.4);
           c.rotate(ang);
         }
-        // 스프라이트는 위를 향하므로 90° 돌려 자루가 손에 오게 한다
-        c.translate(15, 0); c.rotate(Math.PI / 2);
+        // 스프라이트는 위를 향하므로 90° 돌려 자루가 손에 오게 한다 — 손 자리면 자루 끝이 손을 한 칸 지나게(12)
+        c.translate(hand ? 12 : 15, 0); c.rotate(Math.PI / 2);
         Art.drawItem(c, wep.id, -13, -13, 26);
         c.restore();
       }
@@ -8191,12 +8040,18 @@ const G = {
         c.globalAlpha = p.swing / 0.24 * 0.32;
         c.strokeStyle = '#fff2c8'; c.lineWidth = 4;
         c.beginPath();
-        c.arc(rig ? rig.sh[0] : sx + 10, rig ? rig.sh[1] : sy + 20, p.swingReach * 0.8, p.swingAng - 0.9, p.swingAng + 0.9);
+        c.arc(piv[0], piv[1], p.swingReach * 0.8, p.swingAng - 0.9, p.swingAng + 0.9);
         c.stroke(); c.lineWidth = 1; c.globalAlpha = 1;
       }
     }
-    // 앞팔 — 무기 **다음에** 그려야 손이 자루를 쥔 것처럼 자루 위에 온다
-    if (rig) this.drawArmTo(c, rig.sh, piv, rig.R, true, rig.hurt);
+    /* 손을 무기 **위에** 한 번 더 — 시트의 손 칸만 잘라 다시 그리면 손가락이 자루를 감싼 것처럼 보인다.
+       (무기를 몸 뒤에 그리면 몸통에 가려지고, 몸 앞에 그리면 손 위를 덮어 "손 앞에 떠 있는" 무기가 된다) */
+    if (hand && wep) {
+      c.save();
+      c.beginPath(); c.rect(hand.box[0], hand.box[1], hand.box[2], hand.box[3]); c.clip();
+      Sprites.draw(c, hand.key, hand.fr, sx, sy, hand.flip);
+      c.restore();
+    }
     if (p.fish) this.drawFishLine(c, p, sx, sy, bob);
     if (p.channel) {
       c.globalAlpha = .5; c.strokeStyle = '#ffcf6a'; c.lineWidth = 3;

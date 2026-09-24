@@ -296,14 +296,13 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   생성 시간(헤드리스 실측): 소형 3.1초 · 중형 4.6초 · 대형 7초. 유적 통행 보수(`_walkBack`)가 예전엔
   생성의 8할이었다 — `_returnSet`(입구에서 거꾸로 한 번 걷기) · `BoxSet`으로 바꿨고 **소형 세계는 바이트
   단위로 똑같다**(d1·d3 해시 대조). 바다 비탈(`RUN`)도 `SX`로 늘인다 — 안 늘리면 가라앉은 유적이 뜬다.
-- **주인공 리그**: `python3 tools/mkplayer.py`가 `char/player_<id>.png`에서 머리·몸통만 떼어 다리를 자세별로
-  다시 그린 `_rig`(32×44 · 13장, **팔·망토 없음**)와 `_swim`(누운 몸 48×28 · 4장)을 굽고, 매니페스트에 어깨·목
-  닻점(`rig.fs`·`bs`·`nk`)과 소매·손·망토 색을 적는다. **두 팔 · 망토 · 무기는 game.js `drawRigPlayer`가 그린다** —
-  앞팔은 어깨에서 무기 자루 자리까지(손 = 자루라 안 어긋난다), 망토는 목에 매단 점 일곱 줄(`drawCapeSim`,
-  세계 좌표 · 몸 앞으로 못 넘어옴). 시트에 팔을 다시 그려 넣으면 헤엄 팔이 셋이 되고 무기와 손이 어긋난다.
-  주인공 시트를 고치면 mkplayer → sync. 헤엄 물리는 entity.js '헤엄' 절(팔 젓기 박자 · 속도 제곱 저항).
-  옛 공용 시트 `char/player.png`는 방랑자 시트와 픽셀까지 같아서 지웠다(타이틀·사이트 히어로도 `player_wanderer`).
-  망토 색은 시트에서 뽑으면 한 색(#282832)이라 `drawCapeSim`이 그 색에서 명암·주름·안감(소매 색)을 만든다.
+- **주인공 그림**: 손그림 시트 한 장이 전부다(`char/player_<id>.png` — 32×46 · 13장, ox/oy −6/−5, 판정 20×40 그대로).
+  **원본은 `tools/art/`**(22×41)이고 `python3 tools/mkplayer.py` → `sync-manifest.py` 로 굽는다 — 원래 그림은 그대로 두고
+  칸 벽에 잘린 망토 자락·손·발만 이어 그린 뒤(정수리는 안 늘린다), 테두리 빛·부드러운 윤곽·옷 결을 한 겹 더한다.
+  게임 폴더의 시트를 도구에 다시 먹이지 말 것(두 번 늘어난다). mkchars·unclip·mkhead·fixcrown 도 `tools/art/`를 본다.
+  무기는 매니페스트 `hand`·`handBox`(프레임마다 무기 손)에 쥐이고 손 칸을 무기 위에 다시 그린다(game.js `playerHand`).
+  헤엄은 걷기 네 장을 눕혀 돌린다(`drawSwimPlayer`). ★ 팔·망토를 코드로 그리던 리그는 원래 그림의 디테일이 빠져
+  되돌렸다 — 다시 만들지 말 것. 헤엄 물리는 entity.js '헤엄' 절. 옛 공용 시트 `player.png`는 `tools/art/base_player.png`.
 - **나무와 잎**: 눈 지대는 소나무(world.js `pineTree` — 톱니 원뿔 수관 · 기둥은 수관 밑까지 · 층 윗면에 눈).
   소나무 잎(`PINELEAF`)은 game.js `ASH_TILE`에 없어서 장이 넘어가도 안 진다. 정글 잎은 `shed 0.22 · thin 0.35`로
   조금만 진다. 잎마다 제 나뭇잎 아이템(`leaf_oak`·`leaf_pine`·`leaf_jungle`·`leaf_corrupt`·`leaf_sky`·`leaf_palm`)이

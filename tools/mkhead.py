@@ -152,8 +152,7 @@ def preview(files, out, frames=(2, 3, 8, 9), zoom=3):
 
 def main():
     check = '--check' in sys.argv
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
-                        'game', 'assets', 'char')
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'art')   # ★ 원본은 tools/art/ (game/ 쪽은 mkplayer 산출물)
     files = sorted(glob.glob(os.path.join(root, 'player*.png')))
     if '--preview' in sys.argv:
         print(preview(files, sys.argv[sys.argv.index('--preview') + 1]))

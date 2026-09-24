@@ -46,9 +46,10 @@
   ];
 
   /* 프레임은 22x40 논리픽셀의 4배다. tools/unclip.py 로 잘린 가장자리를 되살리면서
- * 사방에 한 논리픽셀씩 여백이 붙어 80x160 -> 88x164 가 됐다. 여기 숫자가 어긋나면
+ * 사방에 한 논리픽셀씩 여백이 붙어 80x160 -> 88x164 가 됐고, tools/mkplayer.py 가 잘린 망토·손·발을
+ * 이어 그리며 128x184(발 아래 한 논리픽셀 여백)가 됐다. 여기 숫자가 어긋나면
  * 프레임이 밀려 사람이 옆 프레임을 물고 잘린다. */
-var PLAYER = { file: 'char/player_wanderer.png', fw: 88, fh: 164, walk: [2, 3, 4, 5], fps: 9 };
+var PLAYER = { file: 'char/player_wanderer.png', fw: 128, fh: 184, walk: [2, 3, 4, 5], fps: 9 };
 
   /* 플레이어가 설 가로 위치(논리 폭에 대한 비율). 좁아지면 글이 폭을 다 쓰고 버튼도
    * 줄바꿈되므로 더 바깥으로 민다. resize 때마다 다시 잡는다. */
@@ -132,7 +133,7 @@ var PLAYER = { file: 'char/player_wanderer.png', fw: 88, fh: 164, walk: [2, 3, 4
     /* 발끝이 지면 줄에 거의 맞게. 예전에는 12px 을 더 내려 지면 아래로 밀어 넣었는데,
      * 아래쪽 페이드가 GROUND-90 에서부터 덮어 와서 다리와 신발이 통째로 먹혔다
      * (화면에서는 "플레이어가 짤려" 보였다). */
-    var y = GROUND - h + 4 + bob;
+    var y = GROUND - h + 8 + bob;       // 칸 맨 아래 한 논리픽셀(4px)은 발 밑 여백
 
     ctx.save();
     ctx.globalAlpha = 0.28;

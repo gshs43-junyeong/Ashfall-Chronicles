@@ -1016,12 +1016,13 @@ body.booting #title-screen{visibility:hidden}
   border-radius:4px;background:linear-gradient(#1a1915,#0f0e0a)}
 /* 시트 한 프레임을 잘라 보여 준다 — 프레임이 22x41(4배 = 88x164)로 넓어졌으므로
    (tools/unclip.py 로 잘린 가장자리를 되살리며 사방에 한 칸씩 여백이 생겼다)
-   상자 크기와 background-size 도 같이 맞춘다. 어긋나면 옆 프레임이 물려 보인다. */
-.ng-char .por{width:44px;height:82px;background-size:572px 82px;background-position:0 0;
+   상자 크기와 background-size 도 같이 맞춘다. 어긋나면 옆 프레임이 물려 보인다.
+   ★ tools/mkplayer.py 가 잘린 망토·손·발을 이어 그리며 칸이 32×46(4배 128×184)이 됐다. */
+.ng-char .por{width:64px;height:92px;background-size:832px 92px;background-position:0 0;
   background-repeat:no-repeat;image-rendering:pixelated}
 .ng-detail{display:flex;gap:15px;margin-top:11px;padding:13px 14px;
   border:1px solid var(--frame2);border-radius:4px;background:#0b0a07a0}
-.ng-detail .por-big{flex:none;width:88px;height:164px;background-size:1144px 164px;
+.ng-detail .por-big{flex:none;width:128px;height:184px;background-size:1664px 184px;
   background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated;
   border:1px solid var(--frame);border-radius:3px;background-color:#15140f}
 .ng-body{min-width:0}

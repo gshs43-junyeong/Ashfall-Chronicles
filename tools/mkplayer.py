@@ -1,310 +1,285 @@
 #!/usr/bin/env python3
-"""주인공 '인형'(리그) 시트를 굽는다 — 몸 13장 + 헤엄 4장, 캐릭터 여섯.
+"""주인공 시트 다섯 장을 **원래 손그림 그대로**, 잘린 데 없이 다시 굽는다.
 
-    python3 tools/mkplayer.py            # 굽고 manifest.json 의 player_*_rig / _swim 을 고친다
-    python3 tools/sync-manifest.py       # 그다음 매니페스트 옮겨 적기
+  python3 tools/mkplayer.py           # tools/art/player_<id>.png → game/assets/char/player_<id>.png
+  python3 tools/sync-manifest.py      # 그다음 매니페스트 옮겨 적기
 
-★ 왜 다시 그렸나 — 원래 시트(char/player_<id>.png)는 팔 · 망토 · 다리를 한 장에 구워 두었다.
-  그래서 세 가지가 끝내 안 맞았다.
-    ① 무기는 코드가 고정된 자리(몸 가운데)에 그리는데 그림의 손은 프레임마다 다른 곳에 있어
-       **손과 무기가 따로 놀았다.**
-    ② 망토가 그림에 박혀 있어 달려도 떨어져도 등에 붙은 채였고, 떼어 내 흔들어 봐도 몸 그림에
-       남은 윤곽·팔과 겹쳐 어색했다.
-    ③ 헤엄 그림을 선 그림에서 만들면 이미 그려진 두 팔 위에 젓는 팔이 하나 더 붙어 **팔이 셋**이 됐고,
-       프레임 폭(22칸)이 좁아 걷는 다리 끝이 잘렸다.
-  지금은 **몸(머리·몸통·다리)만** 굽고, 두 팔과 망토는 게임이 그린다(game.js drawRigPlayer).
-    · 팔: 어깨 자리(프레임마다 manifest rig.fs · rig.bs)에서 손까지. 손이 곧 무기 자루 자리라 늘 맞는다.
-    · 망토: 목 뒤(rig.nk)에 매단 줄(점 일곱)을 흔들어 그린다 — 몸이 움직이면 늦게 따라온다.
-    · 헤엄: 누운 몸만 굽고 두 팔은 게임이 크롤 박자로 돌린다 — 팔은 언제나 둘이다.
+★ 원본은 tools/art/ 의 22×41 시트(unclip.py 를 거친 것)다. game/assets/char/ 의 것은 **산출물**이라
+  그걸 다시 먹이면 두 번 늘어난다. 그림을 고치려면 tools/art/ 를 고치고 이걸 돌린다.
 
-  머리·몸통은 각 캐릭터 원래 그림을 그대로 떼어 쓴다(누구인지는 머리·옷이 말한다). 다리는 원래
-  그림의 바지·장화 색으로 **새로 그린다** — 걷기·점프·대시마다 무릎을 굽힌 자세를 줄 수 있게.
-  프레임은 32×44(원래 22×41 + 여백) — 보폭이 커도 발끝이 안 잘린다.
+■ 왜 다시 굽나
+  처음 그림은 20×40 칸에 꽉 차게 그려져 칸 벽에 닿은 곳이 칼로 자른 듯 끊겨 있었다 — 정수리 · 망토 뒷자락
+  (왼쪽 벽) · 앞으로 뻗은 손과 발(오른쪽 벽). unclip.py 는 칸을 한 줄 넓혀 그 단면에 **윤곽선만** 그었다.
+  그래서 잘린 자리가 "닫히기"는 했지만 모양은 그대로 납작했다(정수리가 평평하고 손이 네모로 끝났다).
+  그 다음에는 팔·다리·망토를 코드로 새로 그렸는데(리그), 원래 그림의 명암·주름·옷 결이 다 빠져
+  "그림이 너프됐다"는 말을 들었다. 이번에는 원래 그림을 **한 픽셀도 바꾸지 않고**, 잘린 자리만 이어 그린다.
 
-  원래 시트 여섯은 같은 모양의 색 바꿈이라(알파 차이는 머리 위쪽뿐) 떼어 낼 자리(팔·망토)는
-  player_wanderer.png 한 장에서 색으로 골라 다섯 장에 같은 자리로 쓴다.
-  (옛 공용 시트 char/player.png 는 player_wanderer.png 와 픽셀까지 같아서 지웠다 — 이 도구가 지운다.)
+■ 어떻게 잇나
+  unclip.py 가 덧댄 칸(맨 왼쪽 · 맨 오른쪽 열, 맨 윗줄)의 픽셀이 곧 "여기서 잘렸다"는 표시다. 그것을 걷어 내고,
+  잘린 줄마다 한 토막씩 묶어 바깥으로 늘인다 — 깊이는 상한(옆 2칸 · 위 1칸)까지 **곧게** 나가고 토막 양 끝에서만
+  한 칸씩 깎는다(모서리 깎기). ★ 처음에는 반타원으로 둥글게 늘였는데, 망토 밑자락(왼쪽 벽에 잘린 긴 토막)이
+  둥근 주머니처럼 부풀어 "물포대"가 도로 생겼고, 정수리는 뾰족한 두건이 됐다. 천 자락은 곧게 떨어져야 한다.
+  ★ 정수리는 **늘리지 않는다**(상한 0 — 단면에 윤곽선만). 한 줄만 얹어도 머리 꼭대기 토막이 다섯 칸뿐이라
+  가운데 세 칸이 솟아 두건 꼭지처럼 보였다. 원래 머리 모양이 우선이다. 채우는 색은 그 줄의 잘린 픽셀 색(윤곽선이면 한 칸
+  안쪽 색)을 그대로 끌어 내므로 옷의 줄무늬·명암이 그 방향으로 이어진다. 끝으로 새로 칠한 칸 둘레에만
+  윤곽선을 두른다 — 원래 윤곽선은 그대로다.
+
+■ 칸과 판정
+  22×41 을 32×46 칸의 (5,4) 에 놓는다. 매니페스트 ox/oy 를 -6/-5 로 두어 몸은 예전 자리 그대로 선다 —
+  판정 상자(20×40)도 그림 속 발 위치도 그대로다. 좌우로 5칸씩 똑같이 넓혔으므로 뒤집어 그려도 가운데가 안 틀어진다.
+
+■ 손 자리(무기 쥐는 곳)
+  방랑자 시트에서 프레임마다 얼굴 아닌 살색 덩어리 중 가장 앞(오른쪽)에 있는 것을 무기 손으로 잡아(예외는 HIGH·FIXED)
+  hand([x, y]) · handBox([x0, y0, x1, y1]) 로 매니페스트에 적는다. 다섯 장은 색만 다르고 몸 모양이 같아서
+  (mkchars.py) 한 장에서 잰 것을 다섯 장에 쓴다. 게임은 무기를 이 손에 쥐여 그리고, 손 칸을 무기 위에 한 번 더
+  그려 손이 자루를 감싼 것처럼 보이게 한다(game.js drawHeldWeapon).
 """
 import json, math, os
 from collections import Counter
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+SRC = os.path.join(HERE, 'art')
 ROOT = os.path.join(HERE, '..', 'game', 'assets')
 CHAR = os.path.join(ROOT, 'char')
-S = 4                                    # 시트는 4배
-OW, OH = 22, 41                          # 원래 프레임
-FW, FH = 32, 44                          # 새 프레임
-OX, OY = 5, 3                            # 원래 좌표 → 새 좌표
-SW, SH = 48, 28                          # 헤엄 프레임
-OUT = (12, 12, 17, 255)
-IDS = ['player_wanderer', 'player_digger', 'player_ranger', 'player_adept', 'player_stray']
-
-# player.png 기준 색 — 망토 · 뒷팔(소매 끝·손) · 앞팔(소매·손)
-CAPE = {(0x33, 0x3a, 0x4e), (0x25, 0x2b, 0x3a), (0x4a, 0x50, 0x65), (0x1e, 0x23, 0x30), (0x3f, 0x44, 0x52)}
-BACKARM = {(0x38, 0x29, 0x1d), (0xb0, 0x85, 0x5c), (0x3e, 0x39, 0x33), (0x55, 0x51, 0x4b)}
-FRONTARM = {(0x4a, 0x36, 0x26), (0xe6, 0xbb, 0x8a), (0xe9, 0xc3, 0x98), (0x1d, 0x1f, 0x29), (0xbd, 0x99, 0x71), (0x62, 0x5b, 0x50)}
-
-HIP_Y = 28                               # 원래 좌표에서 다리가 시작하는 줄
-THIGH, SHIN = 5, 4                       # 넓적다리 · 정강이 길이(칸)
-LEG_W = 4
-
-# 프레임: [이름, 몸 dx, 몸 dy, 뒷다리(넓적 각, 무릎), 앞다리(넓적 각, 무릎), 땅에 붙이나]
-#   각은 도(°), 앞(+x)으로 내미는 쪽이 +. 무릎은 뒤로 굽는 만큼.
-FRAMES = [
-    ['idle1', 0, 0, (-4, 0), (5, 0), True],
-    ['idle2', 0, 1, (-4, 4), (5, 4), True],
-    ['walk1', 0, 0, (-26, 6), (26, 10), True],
-    ['walk2', 0, -1, (-6, 34), (12, 0), True],
-    ['walk3', 0, 0, (24, 10), (-26, 6), True],
-    ['walk4', 0, -1, (12, 0), (-6, 34), True],
-    ['jump', 0, -1, (-14, 64), (34, 72), False],
-    ['fall', 0, 0, (-18, 22), (20, 30), False],
-    ['dash', 2, 1, (-48, 12), (42, 24), True],
-    ['atk1', 1, 0, (-22, 10), (22, 16), True],
-    ['atk2', 2, 1, (-32, 16), (32, 22), True],
-    ['atk3', 1, 0, (-26, 10), (26, 16), True],
-    ['hurt', -1, 0, (-12, 22), (12, 22), True],
-]
+S = 4
+OW, OH, N = 22, 41, 13                  # 원본(unclip 뒤) 프레임
+FW, FH = 32, 46                         # 새 프레임
+PX, PY = 5, 4                           # 원본을 놓는 자리
+IDS = ['wanderer', 'digger', 'ranger', 'adept', 'stray']
+MAXR = {'L': 2, 'R': 2, 'T': 0}
+SKIN = {'#e6bb8a', '#bc9971', '#a78864', '#ead19e'}   # 방랑자 살색(명암 넷)
+FACE = 19                                             # 얼굴 살색 칸 수(열두 장 모두 같다) — 손과 가른다
+# ★ 무기 쥐는 손은 대개 "가장 앞의 손"이지만 둘은 예외다(방랑자 시트를 한 장씩 열어 보고 정했다).
+#   9 atk1  머리 옆으로 치켜든 주먹이 무기 손이다 — 허리께의 뒷손이 더 앞(x)이라 가장 높은 것을 고른다.
+#  11 atk3  앞으로 뻗은 주먹이 장갑 색(#4a3626)이라 살색으로 안 잡힌다. 자리를 손으로 적는다.
+HIGH = {9}
+FIXED = {11: ([26.0, 16.0], [24, 14, 27, 18])}
 
 
-def frame0(path):
+def frames_of(path):
     im = Image.open(path).convert('RGBA')
-    return im.crop((0, 0, OW * S, OH * S)).resize((OW, OH), Image.NEAREST)
+    assert im.size == (OW * S * N, OH * S), '원본은 22×41 × 13 이어야 한다: %s %s' % (path, im.size)
+    px = im.load()
+    return [[[px[f * OW * S + x * S + 1, y * S + 1] for x in range(OW)] for y in range(OH)] for f in range(N)]
 
 
-def masks(base):
-    """player.png 첫 프레임에서 떼어 낼 칸 — 망토·뒷팔·앞팔(+ 거기에만 닿은 윤곽)"""
-    px = base.load()
-    cape, back, front = set(), set(), set()
-    for y in range(9, OH):
+def outline_color(g):
+    c = Counter()
+    for y in range(OH):
         for x in range(OW):
-            p = px[x, y]
-            if p[3] < 128:
-                continue
-            c = p[:3]
-            if c in CAPE and x <= 6:
-                cape.add((x, y))
-            elif c in BACKARM and x <= 6 and 17 <= y <= 30:
-                back.add((x, y))
-            elif c in FRONTARM and x >= 13 and 18 <= y <= 30:
-                front.add((x, y))
-    gone = cape | back | front
-    edge = set()
-    for y in range(9, OH):
-        for x in range(OW):
-            if px[x, y][3] < 128 or px[x, y][:3] != OUT[:3]:
-                continue
-            nb = [(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
-            solid = [q for q in nb if 0 <= q[0] < OW and 0 <= q[1] < OH and px[q][3] > 127 and px[q][:3] != OUT[:3]]
-            if solid and all(q in gone for q in solid):
-                edge.add((x, y))
-    return gone | edge, cape, back, front
-
-
-def most(px, pts):
-    cnt = Counter(px[p][:3] for p in pts if px[p][3] > 127 and px[p][:3] != OUT[:3])
-    return cnt.most_common(1)[0][0] if cnt else (80, 80, 80)
-
-
-def hexc(c):
-    return '#%02x%02x%02x' % tuple(c[:3])
-
-
-def palette(f, cape, back, front):
-    px = f.load()
-    sleeve = most(px, [p for p in front if p[1] <= 24])
-    hand = most(px, [p for p in front if p[1] >= 25])
-    capes = Counter(px[p][:3] for p in cape if px[p][3] > 127).most_common(3)
-    cc = [c for c, _ in capes] + [(40, 40, 50)] * 3
-    return {
-        'sleeve': hexc(sleeve), 'hand': hexc(hand), 'cuff': hexc(most(px, [p for p in back if p[1] <= 24] or list(back))),
-        'cape': [hexc(cc[0]), hexc(cc[1]), hexc(cc[2])],
-        'pant': px[9, 32][:3], 'pant2': px[13, 32][:3],
-        'boot': px[10, 39][:3], 'sole': px[10, 40][:3],
-    }
-
-
-def upper(f, gone):
-    """머리+몸통+엉덩이(원래 0~HIP_Y 줄) — 팔·망토를 떼고, 앞팔이 가리던 몸통 옆구리를 메운다"""
-    im = Image.new('RGBA', (OW, HIP_Y + 1), (0, 0, 0, 0))
-    src, dst = f.load(), im.load()
-    for y in range(HIP_Y + 1):
-        for x in range(OW):
-            if (x, y) in gone or src[x, y][3] < 128:
-                continue
-            dst[x, y] = src[x, y]
-    # ★ 몸통은 줄마다 **한 덩어리 띠**로 다듬는다 — 팔·망토를 떼고 나면 옆구리에 구멍(앞팔 자리 x14~16)과
-    #   떨어진 부스러기(어깨 위 망토 윤곽, 앞쪽의 망토색 한 줄)가 남았다. 목도리 아래(12줄~)는 몸통 폭
-    #   5~16(엉덩이 5~15)만 남기고, 그 안의 빈칸·안쪽 윤곽은 같은 줄 왼쪽(없으면 오른쪽) 몸 색으로 메운다.
-    for y in range(12, HIP_Y + 1):
-        lo, hi = 5, (16 if y <= 24 else 15)
-        for x in range(OW):
-            if x < lo or x > hi:
-                dst[x, y] = (0, 0, 0, 0)
-        row = [dst[x, y] for x in range(lo, hi + 1)]
-        ok = lambda c: c[3] and c[:3] != OUT[:3] and c[:3] not in CAPE
-        for i in range(len(row)):
-            if ok(row[i]):
-                continue
-            fill = next((row[j] for j in range(i - 1, -1, -1) if ok(row[j])), None) \
-                or next((row[j] for j in range(i + 1, len(row)) if ok(row[j])), None)
-            if fill:
-                row[i] = fill
-        for i, c in enumerate(row):
-            dst[lo + i, y] = c
-    return im
-
-
-def disc(px, w, h, x, y, r, c):
-    for yy in range(int(y - r) - 1, int(y + r) + 2):
-        for xx in range(int(x - r) - 1, int(x + r) + 2):
-            if 0 <= xx < w and 0 <= yy < h and (xx + 0.5 - x) ** 2 + (yy + 0.5 - y) ** 2 <= r * r:
-                px[xx, yy] = c
-
-
-def seg(px, w, h, a, b, r, c):
-    n = int(max(abs(b[0] - a[0]), abs(b[1] - a[1])) * 2) + 1
-    for i in range(n + 1):
-        t = i / n
-        disc(px, w, h, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, r, c)
-
-
-def leg_points(hip, th, kn, flip=False):
-    """넓적다리·정강이 끝점. 각은 수직 아래에서 앞(+x)으로 잰다"""
-    t1 = math.radians(th)
-    knee = (hip[0] + math.sin(t1) * THIGH, hip[1] + math.cos(t1) * THIGH)
-    t2 = math.radians(th - kn)
-    ank = (knee[0] + math.sin(t2) * SHIN, knee[1] + math.cos(t2) * SHIN)
-    return knee, ank
-
-
-def draw_leg(img, hip, th, kn, col, pal, outline_first):
-    px = img.load(); w, h = img.size
-    knee, ank = leg_points(hip, th, kn)
-    boot = [(ank[0] + dx, ank[1] + 1.2) for dx in (-1.2, 0.4, 1.8)]
-    if outline_first:                                          # 앞다리는 제 윤곽을 먼저 둘러 뒷다리와 갈라 보이게
-        seg(px, w, h, hip, knee, LEG_W / 2 + 1, OUT); seg(px, w, h, knee, ank, LEG_W / 2 + 1, OUT)
-        for b in boot:
-            disc(px, w, h, b[0], b[1], 2.1, OUT)
-    seg(px, w, h, hip, knee, LEG_W / 2, col + (255,))
-    seg(px, w, h, knee, ank, LEG_W / 2 - 0.2, col + (255,))
-    for b in boot:
-        disc(px, w, h, b[0], b[1], 1.5, pal['boot'] + (255,))
-    for dx in range(-2, 4):                                    # 밑창 — 발끝 쪽으로
-        x, y = int(round(ank[0] + dx)), int(round(ank[1] + 2.4))
-        if 0 <= x < w and 0 <= y < h and px[x, y][3]:
-            px[x, y] = pal['sole'] + (255,)
-    return max(b[1] for b in boot) + 2.4
-
-
-def outline(img):
-    src = img.copy().load(); px = img.load(); w, h = img.size
-    for y in range(h):
-        for x in range(w):
-            if src[x, y][3]:
+            if not g[y][x][3]:
                 continue
             for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                q = (x + dx, y + dy)
-                if 0 <= q[0] < w and 0 <= q[1] < h and src[q][3] and src[q][:3] != OUT[:3]:
-                    px[x, y] = OUT
+                xx, yy = x + dx, y + dy
+                if not (0 <= xx < OW and 0 <= yy < OH) or not g[yy][xx][3]:
+                    c[g[y][x]] += 1
                     break
+    return c.most_common(1)[0][0]
 
 
-def compose(up, pal, spec, w=FW, h=FH):
-    name, dx, dy, bl, fl, grounded = spec
-    # 발바닥 높이를 먼저 재서, 땅에 붙는 프레임은 가장 낮은 발이 맨 아래 줄에 닿게 몸 전체를 내린다
-    hipB = (OX + 9 + dx, OY + HIP_Y + dy); hipF = (OX + 13 + dx, OY + HIP_Y + dy)
-    lowest = max(leg_points(hipB, *bl)[1][1], leg_points(hipF, *fl)[1][1]) + 1.2 + 2.4
-    sink = int(round((h - 1) - lowest)) if grounded else 0
-    dy += sink
-    hipB = (hipB[0], hipB[1] + sink); hipF = (hipF[0], hipF[1] + sink)
-    img = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    draw_leg(img, hipB, bl[0], bl[1], pal['pant2'], pal, False)
-    img.alpha_composite(up, (OX + dx, OY + dy))
-    draw_leg(img, hipF, fl[0], fl[1], pal['pant'], pal, True)
-    outline(img)
-    # 닻 — 앞어깨 · 뒷어깨 · 목 뒤(망토)
-    anchors = {'fs': [OX + 15 + dx, OY + 13 + dy], 'bs': [OX + 6 + dx, OY + 13 + dy], 'nk': [OX + 6 + dx, OY + 11 + dy]}
-    return img, anchors
+def runs(flags):
+    out, a = [], None
+    for i, f in enumerate(flags + [False]):
+        if f and a is None:
+            a = i
+        if not f and a is not None:
+            out.append((a, i - 1)); a = None
+    return out
 
 
-def tint_hurt(img):
-    px = img.load(); w, h = img.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if not a or (r, g, b) == OUT[:3]:
+def rebuild(g):
+    """22×41 한 장 → 32×46 한 장(원본 픽셀 그대로 + 잘린 자리 이어 그리기)"""
+    OUTC = outline_color(g)
+    cut = {'L': [False] * OH, 'R': [False] * OH, 'T': [False] * OW}
+    for y in range(OH):
+        if g[y][0][3]: cut['L'][y] = True
+        if g[y][OW - 1][3]: cut['R'][y] = True
+    for x in range(OW):
+        if g[0][x][3]: cut['T'][x] = True
+    # 덧댄 단면선을 걷는다
+    for y in range(OH):
+        g[y][0] = g[y][OW - 1] = (0, 0, 0, 0)
+    for x in range(OW):
+        g[0][x] = (0, 0, 0, 0)
+    c = [[(0, 0, 0, 0)] * FW for _ in range(FH)]
+    for y in range(OH):
+        for x in range(OW):
+            c[y + PY][x + PX] = g[y][x]
+    new = set()
+
+    def src(x, y, sx, sy):
+        """(x,y) 에서 안쪽(sx,sy 방향)으로 들어가며 윤곽선이 아닌 첫 색"""
+        for k in range(4):
+            p = c[y + sy * k][x + sx * k]
+            if p[3] and p != OUTC:
+                return p
+        return None
+
+    for side in ('L', 'R', 'T'):
+        for a, b in runs(cut[side]):
+            n = b - a + 1
+            R = min(MAXR[side], round(n / 2))
+            e = 0 if side == 'T' else 1
+            for j in range(a, b + 1):
+                d = min(R, j - a + e, b - j + e)
+                if side == 'L':
+                    x0, y0, ox, oy, ix, iy = PX + 1, j + PY, -1, 0, 1, 0
+                elif side == 'R':
+                    x0, y0, ox, oy, ix, iy = PX + OW - 2, j + PY, 1, 0, -1, 0
+                else:
+                    x0, y0, ox, oy, ix, iy = j + PX, PY + 1, 0, -1, 0, 1
+                if not c[y0][x0][3]:
+                    continue
+                col = src(x0, y0, ix, iy)
+                if col is None:
+                    continue
+                # 원래 끝 칸(단면)이 윤곽선이었으면 그 자리도 속색으로 — 안 그러면 이음매에 줄이 남는다
+                if d <= 0:                                  # 안 늘리는 끝 칸 — 단면에 윤곽선만 다시 두른다
+                    xx, yy = x0 + ox, y0 + oy
+                    if not c[yy][xx][3]:
+                        c[yy][xx] = OUTC
+                    continue
+                if c[y0][x0] == OUTC:
+                    c[y0][x0] = col; new.add((x0, y0))
+                for k in range(1, d + 1):
+                    xx, yy = x0 + ox * k, y0 + oy * k
+                    if 0 <= xx < FW and 0 <= yy < FH and not c[yy][xx][3]:
+                        c[yy][xx] = col; new.add((xx, yy))
+    # 새로 칠한 칸 둘레에만 윤곽선
+    for (x, y) in list(new):
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)):
+            xx, yy = x + dx, y + dy
+            if 0 <= xx < FW and 0 <= yy < FH and not c[yy][xx][3]:
+                # 대각선만 닿은 칸은 계단이 두꺼워지지 않게, 곧은 이웃이 둘 다 비었을 때만
+                if dx and dy and (c[y][xx][3] or c[yy][x][3]):
+                    continue
+                c[yy][xx] = OUTC
+    return c
+
+
+def hand_of(c, high=False):
+    """살색 덩어리(얼굴 19칸 제외) 중 가장 앞(오른쪽) — high 면 가장 높은 것. (중심, 상자). 없으면 None"""
+    hexc = lambda p: '#%02x%02x%02x' % p[:3]
+    seen, best = set(), None
+    for y in range(FH):
+        for x in range(FW):
+            if (x, y) in seen or not c[y][x][3] or hexc(c[y][x]) not in SKIN:
                 continue
-            l = (r * 0.3 + g * 0.59 + b * 0.11) / 255
-            px[x, y] = (int(90 + 150 * l), int(30 + 60 * l), int(28 + 50 * l), a)
+            comp, st = [], [(x, y)]
+            seen.add((x, y))
+            while st:
+                q = st.pop(); comp.append(q)
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    xx, yy = q[0] + dx, q[1] + dy
+                    if (xx, yy) in seen or not (0 <= xx < FW and 0 <= yy < FH):
+                        continue
+                    if c[yy][xx][3] and hexc(c[yy][xx]) in SKIN:
+                        seen.add((xx, yy)); st.append((xx, yy))
+            if len(comp) < 2 or len(comp) == FACE:
+                continue
+            mx = -min(p[1] for p in comp) if high else max(p[0] for p in comp)
+            if best is None or mx > best[0]:
+                best = (mx, comp)
+    if not best:
+        return None
+    comp = best[1]
+    xs, ys = [p[0] for p in comp], [p[1] for p in comp]
+    return [round(sum(xs) / len(xs), 1), round(sum(ys) / len(ys), 1)], [min(xs), min(ys), max(xs), max(ys)]
 
 
-def swim_frames(up, pal):
-    """누운 몸 네 장 — 팔 없이. 머리가 오른쪽(앞), 등이 위. 다리는 가위차기"""
-    out = []
-    kicks = [(-12, 14), (4, -2), (12, -14), (-4, 2)]
-    for k, (a, b) in enumerate(kicks):
-        img = Image.new('RGBA', (FW, FH), (0, 0, 0, 0))
-        hipB = (OX + 9, OY + HIP_Y); hipF = (OX + 13, OY + HIP_Y)
-        draw_leg(img, hipB, a, 8, pal['pant2'], pal, False)
-        img.alpha_composite(up, (OX, OY))
-        draw_leg(img, hipF, b, 8, pal['pant'], pal, True)
-        outline(img)
-        lying = img.transpose(Image.Transpose.ROTATE_270)      # 44×32 — 머리 오른쪽, 등 위
-        fr = Image.new('RGBA', (SW, SH), (0, 0, 0, 0))
-        fr.alpha_composite(lying.crop((0, 2, 44, 30)), (2, 0))
-        out.append(fr)
-    # 누운 좌표의 닻: 원래 (x, y) → 누운 (FH-1-(y), x) → 자르기(-2 세로) · 붙이기(+2 가로)
-    def lay(p):
-        return [FH - 1 - p[1] + 2, p[0] - 2]
-    anchors = {'fs': lay([OX + 15, OY + 13]), 'bs': lay([OX + 6, OY + 13]), 'nk': lay([OX + 6, OY + 11])}
-    return out, anchors
+def polish(c):
+    """디테일 한 겹 — 원래 그림의 색·모양은 두고 **빛과 결**만 더한다(사용자 요청: "조금만 더 디테일있게").
+      · 테두리 빛: 몸 앞·위(오른쪽·위)가 트인 칸은 한 톤 밝게, 뒤·아래가 트인 칸은 한 톤 어둡게 —
+        원래 그림의 명암(앞쪽 외투가 밝다)과 같은 쪽에서 빛이 든다. 한 칸짜리 가는 부분은 안 건드린다
+        (양쪽이 다 트여 밝고 어두운 게 겹치면 번쩍인다).
+      · 부드러운 윤곽(sel-out): 빛 드는 쪽 **바깥** 윤곽선은 까만색 대신 맞닿은 옷 색을 아주 어둡게 —
+        실루엣은 그대로 읽히면서 덩어리가 둥글어 보인다. 몸 안쪽의 구분선(팔과 몸 사이 등)은 그대로 까맣다.
+      · 옷 결: 같은 색이 사방으로 이어진 넓은 면에만 성긴 점무늬(어둡게 · 밝게)를 찍는다. 자리로 정해져
+        있어(좌표 식) 프레임마다 결이 들끓지 않는다 — 몸이 움직이면 결도 몸을 따라 움직인다.
+      ★ 손 자리(hand_of)는 살색을 보고 찾으므로 이 단계 **전에** 잰다."""
+    OUTC = None
+    cnt = Counter()
+    for y in range(FH):
+        for x in range(FW):
+            if c[y][x][3] and any(not (0 <= x + dx < FW and 0 <= y + dy < FH) or not c[y + dy][x + dx][3]
+                                  for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                cnt[c[y][x]] += 1
+    OUTC = cnt.most_common(1)[0][0]
+    at = lambda x, y: c[y][x] if 0 <= x < FW and 0 <= y < FH else (0, 0, 0, 0)
+    fill = lambda p: p[3] and p != OUTC
+    open_ = lambda p: not p[3] or p == OUTC
+    sh = lambda p, k: tuple(max(0, min(255, round(v * k))) for v in p[:3]) + (255,)
+    lum = lambda p: 0.3 * p[0] + 0.59 * p[1] + 0.11 * p[2]
+    out = [row[:] for row in c]
+    for y in range(FH):
+        for x in range(FW):
+            p = c[y][x]
+            if not p[3]:
+                continue
+            if p == OUTC:
+                # 바깥 윤곽(한쪽이 투명)이면서 왼쪽/아래에 옷이 있으면 = 몸 오른쪽·위 가장자리
+                L, D, R, U = at(x - 1, y), at(x, y + 1), at(x + 1, y), at(x, y - 1)
+                src = L if fill(L) and not R[3] else D if fill(D) and not U[3] else None
+                if src is not None:
+                    out[y][x] = sh(src, 0.42)
+                continue
+            nb = [at(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+            nfill = sum(1 for q in nb if fill(q))
+            lit = open_(nb[0]) or open_(nb[3])
+            dark = open_(nb[1]) or open_(nb[2])
+            if nfill >= 2 and lit and not dark and lum(p) < 200:
+                out[y][x] = sh(p, 1.16)
+            elif nfill >= 2 and dark and not lit:
+                out[y][x] = sh(p, 0.84)
+            elif lum(p) < 150 and all(at(x + dx, y + dy) == p for dx in (-1, 0, 1) for dy in (-1, 0, 1)):   # 살·흰 머리엔 결을 안 찍는다(잡티로 보인다)
+                if (x * 2 + y * 3) % 7 == 0:
+                    out[y][x] = sh(p, 0.9)
+                elif (x * 5 + y) % 11 == 3:
+                    out[y][x] = sh(p, 1.08)
+    return out
 
 
-def sheet(frames, w, h):
-    im = Image.new('RGBA', (w * len(frames) * S, h * S), (0, 0, 0, 0))
-    for i, f in enumerate(frames):
-        im.paste(f.resize((w * S, h * S), Image.NEAREST), (i * w * S, 0))
-    return im
+def save(frames, path):
+    im = Image.new('RGBA', (FW * S * N, FH * S), (0, 0, 0, 0))
+    px = im.load()
+    for f, c in enumerate(frames):
+        for y in range(FH):
+            for x in range(FW):
+                p = c[y][x]
+                if not p[3]:
+                    continue
+                for yy in range(S):
+                    for xx in range(S):
+                        px[f * FW * S + x * S + xx, y * S + yy] = p
+    im.save(path)
 
 
 def main():
-    base = frame0(os.path.join(CHAR, 'player_wanderer.png'))
-    gone, cape, back, front = masks(base)
     man_p = os.path.join(ROOT, 'manifest.json')
     man = json.load(open(man_p, encoding='utf-8'))
     sheets = man['characters']['sheets']
-    for idn in IDS:
-        f = frame0(os.path.join(CHAR, idn + '.png'))
-        pal = palette(f, cape, back, front)
-        up = upper(f, gone)
-        frames, fs, bs, nk = [], [], [], []
-        for spec in FRAMES:
-            img, an = compose(up, pal, spec)
-            if spec[0] == 'hurt':
-                tint_hurt(img)
-            frames.append(img); fs.append(an['fs']); bs.append(an['bs']); nk.append(an['nk'])
-        sheet(frames, FW, FH).save(os.path.join(CHAR, idn + '_rig.png'))
-        sw, swa = swim_frames(up, pal)
-        sheet(sw, SW, SH).save(os.path.join(CHAR, idn + '_swim.png'))
-        rig = {'sleeve': pal['sleeve'], 'hand': pal['hand'], 'cuff': pal['cuff'], 'cape': pal['cape'],
-               'fs': fs, 'bs': bs, 'nk': nk, 'swim': swa}
-        sheets[idn + '_rig'] = {'file': 'char/%s_rig.png' % idn, 'frameW': FW, 'frameH': FH,
-                                'ox': -1 - OX, 'oy': -1 - OY, 'count': len(FRAMES), 'rig': rig}
-        sheets[idn + '_swim'] = {'file': 'char/%s_swim.png' % idn, 'frameW': SW, 'frameH': SH, 'count': 4}
-        for suf in ('_body', '_cape'):                       # 옛 망토 떼기(mkswim.py) 산출물은 쓰지 않는다
-            sheets.pop(idn + suf, None)
-            p = os.path.join(CHAR, idn + suf + '.png')
+    hands = None
+    for cid in IDS:
+        key = 'player_' + cid
+        frames = [rebuild(g) for g in frames_of(os.path.join(SRC, key + '.png'))]
+        if cid == 'wanderer':
+            hs = [FIXED.get(i) or hand_of(c, i in HIGH) for i, c in enumerate(frames)]
+            # 피격(붉게 물든 장)처럼 살색이 안 잡히는 장은 첫 장의 손을 쓴다
+            hands = [h or hs[0] for h in hs]
+        frames = [polish(c) for c in frames]
+        save(frames, os.path.join(CHAR, key + '.png'))
+        m = sheets[key]
+        m.update({'file': 'char/%s.png' % key, 'frameW': FW, 'frameH': FH, 'ox': -1 - PX, 'oy': -1 - PY, 'count': N,
+                  'hand': [h[0] for h in hands], 'handBox': [h[1] for h in hands]})
+        print('wrote', key)
+    # 리그 시절 산출물(팔·망토를 코드로 그리던 몸 시트 · 누운 헤엄 시트)은 이제 안 쓴다
+    for cid in IDS:
+        for suf in ('_rig', '_swim', '_body', '_cape'):
+            sheets.pop('player_' + cid + suf, None)
+            p = os.path.join(CHAR, 'player_' + cid + suf + '.png')
             if os.path.exists(p):
                 os.remove(p)
-        print('wrote', idn, '_rig', '_swim')
-    # 옛 공용 시트와 그 파생물 — 캐릭터마다 제 시트가 있어 아무도 안 쓴다
-    for key in ('player', 'player_rig', 'player_swim'):
-        sheets.pop(key, None)
-        p = os.path.join(CHAR, key + '.png')
-        if os.path.exists(p):
-            os.remove(p)
     json.dump(man, open(man_p, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
     open(man_p, 'a', encoding='utf-8').write('\n')
 
