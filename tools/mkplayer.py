@@ -255,6 +255,68 @@ def save(frames, path):
     im.save(path)
 
 
+# ── 손그림 고치기(rebuild 전에, 22×41 원본 좌표) ─────────────────────────────────────────
+# ★ 서 있을 때(0 idle1 · 1 idle2) 망토가 걸을 때와 딴판이었다 — 뒷팔이 늘어져 손 밑에 망토가 뭉쳐 있어
+#   허리 뒤에 자루를 매단 것처럼 보였다(걸을 때는 어깨에서 무릎까지 곧은 판). 사용자가 걸을 때 쪽을 골랐다.
+#   서 있는 두 장의 등 뒤(0~4열 · 17~35줄)를 walk4(5번 — 까딱인 높이가 idle2 와 같다)의 것으로 바꾼다.
+#   idle1 은 한 줄 덜 까딱이므로 한 줄 위에서 가져온다.
+# ★ walk3(4번, 깃허브에서 왼쪽 다섯째 그림)은 보폭이 칸보다 넓어 뒷다리가 망토에 파묻히고 뒷발이 벽에 잘려
+#   다리가 쐐기 한 덩어리로 보였다. walk1(2번)의 다리(28줄 아래)를 가져오되 **앞다리·뒷다리 색을 맞바꾼다**
+#   — 안 바꾸면 같은 다리만 늘 앞으로 나가 절뚝이는 걸음이 된다. 색 짝은 방랑자 기준(가까운 다리 ↔ 먼 다리)이고,
+#   다른 캐릭터는 같은 자리 색으로 옮겨 쓴다(mkchars.py 가 부위마다 색만 바꿔 구웠다).
+LEG_SWAP = {'33384a': '232632', '2a2e3d': '1c1f29', '494d5e': '3a3f50', '4a3626': '34261b',
+            '3d2c1f': '2b1f16', '575149': '47423b'}
+LEG_SWAP.update({v: k for k, v in LEG_SWAP.items()})
+hx = lambda p: '%02x%02x%02x' % p[:3]
+
+
+def fix_frames(g, w):
+    """g: 이 캐릭터의 13장(22×41, 고친다), w: 방랑자 13장(색 짝 찾기용, 안 고친다)"""
+    fwd, inv = {}, {}
+    for f in range(N):
+        for y in range(OH):
+            for x in range(OW):
+                a, b = w[f][y][x], g[f][y][x]
+                if a[3] and b[3]:
+                    fwd.setdefault(hx(a), Counter())[b] += 1
+                    inv.setdefault(b, Counter())[hx(a)] += 1
+    fwd = {k: v.most_common(1)[0][0] for k, v in fwd.items()}
+    inv = {k: v.most_common(1)[0][0] for k, v in inv.items()}
+
+    def swap(p):
+        if not p[3] or p not in inv:
+            return p
+        q = LEG_SWAP.get(inv[p])
+        return fwd.get(q, p) if q else p
+
+    def close(fr, x0, x1, y0, y1):
+        """고친 자리에서 윤곽 없이 투명과 맞닿은 칸에 윤곽선(벽 칸 0·21열 · 0줄은 잘림 표시라 안 건드림)"""
+        OUTC = outline_color(fr)
+        for y in range(max(1, y0), min(OH, y1 + 1)):
+            for x in range(max(1, x0), min(OW - 1, x1 + 1)):
+                if fr[y][x][3]:
+                    continue
+                if any(0 <= y + dy < OH and fr[y + dy][x + dx][3] and fr[y + dy][x + dx] != OUTC
+                       for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                    fr[y][x] = OUTC
+
+    # 서 있을 때 망토 = 걸을 때 망토
+    for f, dy in ((0, 1), (1, 0)):
+        for y in range(17, 36):
+            sy = y + dy
+            if sy >= OH:
+                continue
+            for x in range(0, 5):
+                g[f][y][x] = g[5][sy][x]
+        close(g[f], 0, 7, 16, 38)
+    # walk3 다리 = walk1 다리(앞뒤 색 맞바꿈)
+    for y in range(28, OH):
+        for x in range(OW):
+            g[4][y][x] = swap(g[2][y][x])
+    close(g[4], 0, OW - 1, 26, OH - 1)
+    return g
+
+
 def main():
     man_p = os.path.join(ROOT, 'manifest.json')
     man = json.load(open(man_p, encoding='utf-8'))
@@ -262,7 +324,9 @@ def main():
     hands = None
     for cid in IDS:
         key = 'player_' + cid
-        frames = [rebuild(g) for g in frames_of(os.path.join(SRC, key + '.png'))]
+        wsrc = frames_of(os.path.join(SRC, 'player_wanderer.png'))
+        src = fix_frames(frames_of(os.path.join(SRC, key + '.png')), wsrc)
+        frames = [rebuild(g) for g in src]
         if cid == 'wanderer':
             hs = [FIXED.get(i) or hand_of(c, i in HIGH) for i, c in enumerate(frames)]
             # 피격(붉게 물든 장)처럼 살색이 안 잡히는 장은 첫 장의 손을 쓴다

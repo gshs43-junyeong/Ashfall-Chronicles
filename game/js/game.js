@@ -409,7 +409,7 @@ const G = {
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
     this.achievements = {}; this.tally = {};
     this.survey = {}; this.ruinPulse = {}; this.pendingEcho = null; this.pulseHere = null;
-    this.rocks = []; this.quake = null; this.caveHere = 0; this._caveLast = 0;
+    this.rocks = []; this.quake = null; this.meteor = null; this.meteorRolled = undefined; this.caveHere = 0; this._caveLast = 0;
     this.nearStObj = { work: null, forge: null };
     this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
     this.rainT = 0; this.rainDrops = null; this.smokes = []; this.smokeT = 0;
@@ -433,6 +433,12 @@ const G = {
     // 플레이에는 영향 없음(파라미터가 없으면 이 블록은 그냥 안 탄다).
     // &lv=2 또는 &lv=3을 붙이면 그 단계까지(2층 증축, 3단계 성벽) 미리 올려서 시작한다.
     const qs = new URLSearchParams(location.search);
+    /* ?debug=meteor — 2.5초 뒤 운석. &at=me 면 머리 위(즉사 확인), &at=<x> 면 그 칸, 없으면 오른쪽 &dx=(30)칸.
+       자리 검사(meteorSiteOk)를 건너뛰는 시험 전용이다. */
+    if (qs.get('debug') === 'meteor') {
+      const at = qs.get('at'), me = Math.floor(this.player.cx / TS);
+      setTimeout(() => this.startMeteor(at === 'me' ? me : at ? +at : me + (+qs.get('dx') || 30)), 2500);
+    }
     if (qs.get('debug') === 'village') {
       this.villageUnlocked = true;
       this.world.restoreDawnCity();
@@ -3172,6 +3178,13 @@ const G = {
   updateEvents(dt) {
     const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
     const phase = (this.dayCount * 2) + (night ? 1 : 0);
+    /* 운석은 이벤트(this.event)와 따로 굴린다 — 비·붉은 달이 오는 중에도 떨어질 수 있다.
+       불러온 직후의 국면은 굴리지 않는다(같은 국면을 다시 굴려 같은 운석이 또 떨어지는 것을 막는다). */
+    if (this.meteorRolled === undefined) this.meteorRolled = phase;
+    if (this.meteorRolled !== phase) {
+      this.meteorRolled = phase;
+      if (!this.meteor && new RNG(this.world.seed + '_meteor' + phase).chance(this.METEOR.chance)) this.startMeteor();
+    }
     if (this.event) {
       this.event.t += dt;
       // 국면이 끝나면 이벤트도 끝난다. 비처럼 낮/밤 구분이 없는 이벤트는 dur(지속 시간)로 대신 끊는다
@@ -4472,7 +4485,7 @@ const G = {
       this.ruinMarks = d.ruinMarks || {}; this.ruinEvDone = d.ruinEvDone || {};
       this.cipherSeen = d.cipherSeen || {};
       this.survey = d.survey || {}; this.ruinPulse = {}; this.pendingEcho = null; this.pulseHere = null;
-      this.rocks = []; this.quake = null; this.caveHere = 0; this._caveLast = 0;
+      this.rocks = []; this.quake = null; this.meteor = null; this.meteorRolled = undefined; this.caveHere = 0; this._caveLast = 0;
       this.deathMark = d.deathMark || null;
       this.asmRan = d.asmRan || 0;
       this.everPlanted = d.everPlanted || 0;
@@ -5406,6 +5419,8 @@ const G = {
       c.restore();
     }
 
+    this.drawMeteorNear(c, camX, camY);                 // 가까이 떨어지는 운석 · 떨어진 순간의 섬광
+
     // ---- 용광로 굴뚝 연기 ---- (입자보다 먼저 — 불티가 연기 앞에 보이도록)
     this.drawSmoke(c, camX, camY);
 
@@ -5570,6 +5585,7 @@ const G = {
       c.globalAlpha = 1;
       // 구름 — 비가 오는 동안은 짙고 빽빽하게, 평소엔 옅게 흘러간다
       this.drawClouds(c, camX, camY, this.rainT || 0);
+      this.drawMeteorSky(c, camY);                     // 운석 — 구름 앞, 원경 능선 뒤
     } else {
       const deep = camY > HELL_Y * TS - 400;
       const g = c.createLinearGradient(0, 0, 0, this.H);
@@ -7361,6 +7377,7 @@ const G = {
     this.rocks = this.rocks || [];
     this.updateRocks(dt);
     if (this.quake) this.updateQuake(dt);
+    if (this.meteor) this.updateMeteor(dt);
     const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
     this._caveT = (this._caveT || 0) - dt;
     if (this._caveT > 0) return;
@@ -7438,6 +7455,206 @@ const G = {
         this.rocks.splice(i, 1);
       }
     }
+  },
+
+  /* ================= 운석 =================
+     아주 드문 사건 — 반나절(국면)마다 한 번 굴리고, 비(0.20)의 1/100 이 안 되는 0.0018 이다(0.9%).
+     흐름: ① 하늘 원경을 가르는 불덩이 + 알림 → ② FALL 초 뒤 떨어진다 — 지진(가까울수록 세고 길다),
+     구덩이, 폭발 반경 안의 생물은 죽는다. **플레이어 머리 위면 즉사**(onDeath('meteor')).
+     떨어질 자리는 세계 아무 데나지만 **이미 무언가 지어진 곳은 빼고** 고른다(meteorSiteOk).
+     ★ 운석 전용 타일·운석 수정은 아직 없다(사용자: "아직은 안 쓸 것"). 구덩이는 있는 타일로만 —
+       판 자리는 공기, 바닥은 재(T.ASH), 테두리는 흙이 한 칸 솟는다.
+     진행 상태(this.meteor)는 저장하지 않는다 — 떨어지는 몇 초 사이에 저장·불러오기를 하면 그냥 안 떨어진다.
+     구덩이는 타일이라 저장된다. */
+  METEOR: { chance: 0.0018, fall: 5.2, fg: 1.2, rMin: 5, rMax: 8 },
+
+  /** 떨어져도 되는 자리인가 — 구덩이 상자(좌우 R+3, 위 18 · 아래 R+2) 안에 지은 것이 하나도 없어야 한다 */
+  meteorSiteOk(cx, R) {
+    const w = this.world;
+    if (cx < 40 || cx > WW - 40 || inSeaZone(cx)) return false;
+    const cy = w.surface[cx];
+    const x0 = cx - R - 3, x1 = cx + R + 3, y0 = cy - 18, y1 = cy + R + 2;
+    if (w.giantTree && x1 >= w.giantTree.x - 24 && x0 <= w.giantTree.x + 24) return false;
+    const built = new Set([T.PLANK, T.BRICK, T.PLATFORM, T.TORCH, T.RUINBRICK, T.RUINTILE, T.ALTARSTONE]);
+    for (let x = x0; x <= x1; x++) {
+      if (Math.abs(w.surface[clamp(x, 0, WW - 1)] - cy) > R + 4) return false;     // 절벽 가장자리는 피한다
+      for (let y = y0; y <= y1; y++) {
+        const z = w.zoneAt(x, y);
+        if (z === 'village' || z === 'camp' || z === 'citadel' || z === 'deepshaft') return false;
+        if (w.ruinAt(x, y)) return false;
+        const t = w.get(x, y);
+        if (built.has(t) || MACH_OF_TILE[t] || TILE_DEF[t].liquid) return false;
+        if (y < w.surface[clamp(x, 0, WW - 1)] && w.walls[w.i(x, y)]) return false;   // 땅 위의 벽 = 누가 지은 집
+        if (w.machines && w.machines.has(y * WW + x)) return false;
+      }
+    }
+    const bx0 = x0 * TS, bx1 = (x1 + 1) * TS, by0 = y0 * TS, by1 = (y1 + 1) * TS;
+    for (const o of w.objects) if (o.x < bx1 && o.x + (o.w || TS) > bx0 && o.y < by1 && o.y + (o.h || TS) > by0) return false;
+    return true;
+  },
+
+  /** 운석을 띄운다. at 을 주면 그 칸에(디버그), 아니면 지은 것이 없는 자리를 뽑는다 */
+  startMeteor(at) {
+    if (this.meteor) return false;
+    const w = this.world, M = this.METEOR;
+    let x = -1, R = M.rMin + Math.floor(Math.random() * (M.rMax - M.rMin + 1));
+    if (at !== undefined) x = clamp(Math.round(at), 40, WW - 40);
+    else for (let i = 0; i < 400 && x < 0; i++) {
+      const c = 40 + Math.floor(Math.random() * (WW - 80));
+      if (this.meteorSiteOk(c, R)) x = c;
+    }
+    if (x < 0) return false;                                  // 떨어질 데가 없다 — 이번엔 지나간다
+    const p = this.player, pd = x - Math.floor(p.cx / TS);
+    this.meteor = { t: 0, x, y: w.surface[x], R, dir: pd >= 0 ? 1 : -1, hit: false, quake: 0, amp: 0 };
+    this.toast('☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!', 'bad');
+    this.sfx('boss');
+    return true;
+  },
+
+  updateMeteor(dt) {
+    const m = this.meteor, M = this.METEOR;
+    m.t += dt;
+    if (!m.hit && m.t >= M.fall) this.meteorImpact();
+    if (m.hit) {
+      /* 지진 — 떨어진 곳과의 거리로 세기(amp)와 길이(quake)가 갈린다. shake 는 초당 26씩 가라앉으므로
+         길게 흔들리려면 끝날 때까지 다시 채워 줘야 한다. */
+      if (m.quake > 0) {
+        m.quake -= dt;
+        this.shake = Math.max(this.shake, m.amp * clamp(m.quake / m.quakeMax, 0.25, 1));
+      }
+      if (m.t > M.fall + Math.max(4, m.quakeMax || 0)) this.meteor = null;
+    }
+  },
+
+  meteorImpact() {
+    const m = this.meteor, w = this.world, p = this.player;
+    m.hit = true;
+    const cx = m.x, cy = m.y, R = m.R;
+    const ptx = p.cx / TS, pty = p.cy / TS;
+    const dist = Math.hypot(ptx - (cx + 0.5), pty - cy);
+    /* 세기: 바로 곁 34 → 400칸 너머 3. 길이: 곁 4초 → 멀면 1초 */
+    const near = clamp(1 - dist / 420, 0, 1);
+    m.amp = 3 + 31 * near * near; m.quakeMax = m.quake = 1 + 3 * near;
+    this.shake = Math.max(this.shake, m.amp);
+    this.sfx('boom_big', 0.7, 0.4 + 0.6 * near);
+    this.sfx('sk_quake', 1, 0.3 + 0.7 * near);
+    this.carveCrater(cx, cy, R);
+    // 불티·흙
+    if (dist < 80) for (let i = 0; i < 90; i++) {
+      const c = i % 3 ? (i % 2 ? '#ffb24a' : '#ff6a2a') : '#6a5a48';
+      this.parts.push(new Part((cx + 0.5) * TS + (Math.random() - 0.5) * R * TS, cy * TS, c, -260 - Math.random() * 260, 0.9 + Math.random() * 0.9,
+        { glow: i % 3 ? 1 : 0, spd: 2.2, g: i % 3 ? 0.4 : 1.2, sq: i % 3 ? 0 : 1 }));
+    }
+    // 폭발 반경 안의 생물 — 주인은 버틴다(보스가 돌에 맞아 죽으면 이야기가 끊긴다)
+    const bx = (cx + 0.5) * TS, by = cy * TS, br = (R + 2) * TS;
+    for (const e of this.ents) {
+      if (e.dead || e.boss) continue;
+      // die() 는 경험치·금화를 준다 — 하늘이 잡은 것까지 플레이어 몫으로 치면 안 된다
+      if (Math.hypot(e.cx - bx, e.cy - by) < br) { e.hp = 0; e.dead = true; }
+    }
+    // ★ 머리 위면 즉사 — 판정 상자가 폭발 원(R+1칸)에 닿으면. 무적 시간도 소용없다
+    const qx = clamp(bx, p.x, p.x + p.w), qy = clamp(by, p.y, p.y + p.h);
+    if (Math.hypot(qx - bx, qy - by) < (R + 1) * TS && this.state === 'play') {
+      p.hp = 0;
+      this.toast('☄ 운석에 맞았다.', 'bad');
+      this.onDeath('meteor');
+      return;
+    }
+    const dx = cx - Math.floor(ptx);
+    const where = dist < 40 ? '바로 곁에' : `${dx >= 0 ? '동쪽' : '서쪽'}으로 ${Math.abs(dx)}칸 떨어진 곳에`;
+    this.toast(`☄ 운석이 ${where} 떨어졌다. 땅이 울린다.`, 'bad');
+  },
+
+  /** 운석 구덩이 — 있는 타일로만. 나무·풀은 날아가고, 사발 모양으로 파이고, 바닥은 재, 테두리는 흙이 솟는다 */
+  carveCrater(cx, cy, R) {
+    const w = this.world;
+    for (let dx = -R - 3; dx <= R + 3; dx++) {
+      const x = cx + dx;
+      if (x < 1 || x >= WW - 1) continue;
+      // 위의 나무·잎·풀·덩굴은 날아간다(안 떨구면 구덩이 위에 수관이 뜬다)
+      for (let y = cy - 24; y <= cy + R; y++) {
+        const t = w.get(x, y), d = TILE_DEF[t];
+        if (t !== T.AIR && (d.tree || d.leaf || d.plant || t === T.VINE || t === T.FLOWER || t === T.WEED)) w.set(x, y, T.AIR);
+      }
+      if (Math.abs(dx) <= R) {
+        const depth = Math.round(Math.sqrt(R * R - dx * dx) * 0.75);
+        const top = w.surface[x], bot = cy + depth;
+        for (let y = Math.min(top, cy) - 2; y <= bot; y++) {
+          if (w.get(x, y) === T.BEDROCK) continue;
+          w.set(x, y, T.AIR); w.setWall(x, y, 0);                 // 벽도 걷는다 — 하늘이 트여야 햇빛이 든다
+        }
+        if (w.solid(x, bot + 1) && w.get(x, bot + 1) !== T.BEDROCK) w.set(x, bot + 1, T.ASH);
+        if (w.solid(x, bot + 2) && w.get(x, bot + 2) !== T.BEDROCK && Math.random() < 0.5) w.set(x, bot + 2, T.ASH);
+        w.surface[x] = bot + 1;
+      } else if (Math.abs(dx) <= R + 2) {
+        // 테두리 — 튀어나간 흙이 한 칸 쌓인다
+        const s = w.surface[x];
+        if (w.get(x, s - 1) === T.AIR) { w.set(x, s - 1, T.DIRT); w.surface[x] = s - 1; }
+      }
+    }
+  },
+
+  /** 하늘 원경의 불덩이 — drawSky 가 부른다(땅 위 하늘을 그릴 때만). 떨어질 쪽으로 사선을 긋는다 */
+  drawMeteorSky(c, camY) {
+    const m = this.meteor;
+    if (!m) return;
+    const M = this.METEOR;
+    if (!m.hit) {
+      const u = clamp(m.t / M.fall, 0, 1);
+      const hx = this.W * (0.5 - m.dir * 0.42 + m.dir * 0.8 * u), hy = this.H * (0.04 + 0.62 * Math.pow(u, 1.3)) - camY * 0.05;
+      const L = 90 + 240 * u, ang = Math.atan2(0.62 * this.H, m.dir * 0.8 * this.W);
+      const tx = hx - Math.cos(ang) * L, ty = hy - Math.sin(ang) * L;
+      c.save();
+      c.globalCompositeOperation = 'lighter';
+      const g = c.createLinearGradient(tx, ty, hx, hy);
+      g.addColorStop(0, 'rgba(255,120,60,0)'); g.addColorStop(0.7, 'rgba(255,150,70,.45)'); g.addColorStop(1, 'rgba(255,230,170,.95)');
+      c.strokeStyle = g; c.lineWidth = 3 + 4 * u; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(tx, ty); c.lineTo(hx, hy); c.stroke();
+      const r = 5 + 7 * u, hg = c.createRadialGradient(hx, hy, 0, hx, hy, r * 3.5);
+      hg.addColorStop(0, 'rgba(255,250,220,1)'); hg.addColorStop(0.3, 'rgba(255,190,100,.8)'); hg.addColorStop(1, 'rgba(255,120,60,0)');
+      c.fillStyle = hg; c.beginPath(); c.arc(hx, hy, r * 3.5, 0, TAU); c.fill();
+      c.restore();
+    } else {
+      // 떨어진 뒤 — 지평선이 잠깐 달아오른다(멀리 떨어졌어도 어디쯤인지 보이게)
+      const k = clamp(1 - (m.t - M.fall) / 2.5, 0, 1);
+      if (k > 0) {
+        const hx = this.W * (0.5 + m.dir * 0.38), hy = this.H * 0.7 - camY * 0.05;
+        const hg = c.createRadialGradient(hx, hy, 0, hx, hy, this.W * 0.35);
+        hg.addColorStop(0, `rgba(255,170,90,${0.55 * k})`); hg.addColorStop(1, 'rgba(255,120,60,0)');
+        c.fillStyle = hg; c.fillRect(0, 0, this.W, this.H);
+      }
+    }
+  },
+
+  /** 가까이 떨어질 때 — 마지막 fg 초 동안 **세계 앞**으로 불덩이가 내리꽂힌다(화면 안이거나 곁이면) */
+  drawMeteorNear(c, camX, camY) {
+    const m = this.meteor;
+    if (!m) return;
+    const M = this.METEOR, ix = (m.x + 0.5) * TS, iy = m.y * TS;
+    if (m.hit) {
+      const k = clamp(1 - (m.t - M.fall) / 0.35, 0, 1);          // 떨어진 순간의 섬광
+      if (k > 0 && Math.abs(ix - camX - this.W / 2) < this.W) {
+        c.save(); c.globalAlpha = 0.8 * k; c.fillStyle = '#fff4d8'; c.fillRect(0, 0, this.W, this.H); c.restore();
+      }
+      return;
+    }
+    const left = M.fall - m.t;
+    if (left > M.fg || Math.abs(ix - camX - this.W / 2) > this.W * 1.2) return;
+    const u = 1 - left / M.fg;
+    const sx = ix - m.dir * 420 * (1 - u) - camX, sy = iy - 900 * (1 - u) - camY;
+    const tx = sx - m.dir * 120, ty = sy - 260;
+    c.save();                                      // 보통 합성 — 밝은 낮 하늘에 lighter 로 더하면 하얗게 날아간다
+    const g = c.createLinearGradient(tx, ty, sx, sy);
+    /* ★ 한가운데까지 흰색으로 두고 lighter 로 더했더니 낮 하늘과 합쳐져 **흰 원반**만 보였다(스크린샷).
+       보통 합성으로 · 불꼬리·불덩이 모두 주황 쪽으로 — 한가운데 작은 점만 밝게. */
+    g.addColorStop(0, 'rgba(255,90,30,0)'); g.addColorStop(0.6, 'rgba(255,120,40,.5)'); g.addColorStop(1, 'rgba(255,190,90,.85)');
+    c.strokeStyle = g; c.lineWidth = 14; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(tx, ty); c.lineTo(sx, sy); c.stroke();
+    const hg = c.createRadialGradient(sx, sy, 0, sx, sy, 34);
+    hg.addColorStop(0, 'rgba(255,220,150,.9)'); hg.addColorStop(0.3, 'rgba(255,130,50,.7)'); hg.addColorStop(1, 'rgba(200,60,20,0)');
+    c.fillStyle = hg; c.beginPath(); c.arc(sx, sy, 34, 0, TAU); c.fill();
+    c.restore();
+    c.fillStyle = '#3a2a22'; c.beginPath(); c.arc(sx, sy, 9, 0, TAU); c.fill();      // 돌덩이
   },
 
   /** 금 간 자갈을 깼다 — 곡괭이든 폭탄이든. 그 자리의 자갈 기록을 찾아 무너뜨린다 */

@@ -209,6 +209,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 | `?debug=sea` · `bomb` · `price` · `fishfarm` | 그 구역/기능 시험장 |
 | `?debug=ruin&id=mine` | 그 유적 방에서 시작 (`&pulse=` 맥박 · `&boss=1` 주인 처치 = 메아리) |
 | `?debug=cave` | 가장 가까운 금 간 자갈 앞에서 시작 (`&k=moss\|drip\|geode\|fume` 그 갈래 굴 안) |
+| `?debug=meteor` | 2.5초 뒤 운석 (`&at=me` 머리 위 = 즉사 · `&at=<x>` 그 칸 · `&dx=` 오른쪽 몇 칸, 기본 30) |
 | `&sess=` · `&ch=` · `&plv=` · `&gold=` | 세션·장·레벨·금화를 직접 준다 |
 
 ---
@@ -300,9 +301,15 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   **원본은 `tools/art/`**(22×41)이고 `python3 tools/mkplayer.py` → `sync-manifest.py` 로 굽는다 — 원래 그림은 그대로 두고
   칸 벽에 잘린 망토 자락·손·발만 이어 그린 뒤(정수리는 안 늘린다), 테두리 빛·부드러운 윤곽·옷 결을 한 겹 더한다.
   게임 폴더의 시트를 도구에 다시 먹이지 말 것(두 번 늘어난다). mkchars·unclip·mkhead·fixcrown 도 `tools/art/`를 본다.
+  서 있는 두 장의 망토는 걷기(walk4)의 것, walk3 다리는 walk1 다리(앞뒤 색 맞바꿈)로 고쳐 굽는다(`fix_frames`).
   무기는 매니페스트 `hand`·`handBox`(프레임마다 무기 손)에 쥐이고 손 칸을 무기 위에 다시 그린다(game.js `playerHand`).
   헤엄은 걷기 네 장을 눕혀 돌린다(`drawSwimPlayer`). ★ 팔·망토를 코드로 그리던 리그는 원래 그림의 디테일이 빠져
   되돌렸다 — 다시 만들지 말 것. 헤엄 물리는 entity.js '헤엄' 절. 옛 공용 시트 `player.png`는 `tools/art/base_player.png`.
+- **운석**(game.js '운석' 절 · `METEOR`): 반나절마다 0.0018(비의 0.9%). 하늘 원경 불덩이 + 알림 → 5.2초 뒤 떨어짐 ·
+  거리에 따라 지진 세기·길이 · 구덩이(있는 타일만 — 공기·재·흙, 운석 전용 타일·수정은 아직 안 쓴다) · 폭발 반경의
+  몹은 죽고(경험치 없음 · 보스 제외) **플레이어 판정이 R+1 칸 안이면 즉사**. 자리는 `meteorSiteOk`(마을·캠프·유적·물건·
+  기계·지은 타일·땅 위 벽·물·절벽 가장자리 제외). 진행 상태는 저장 안 함, 구덩이는 타일이라 저장된다.
+  구덩이 칸은 `surface[]`도 내린다(햇빛이 든다).
 - **나무와 잎**: 눈 지대는 소나무(world.js `pineTree` — 톱니 원뿔 수관 · 기둥은 수관 밑까지 · 층 윗면에 눈).
   소나무 잎(`PINELEAF`)은 game.js `ASH_TILE`에 없어서 장이 넘어가도 안 진다. 정글 잎은 `shed 0.22 · thin 0.35`로
   조금만 진다. 잎마다 제 나뭇잎 아이템(`leaf_oak`·`leaf_pine`·`leaf_jungle`·`leaf_corrupt`·`leaf_sky`·`leaf_palm`)이
