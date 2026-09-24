@@ -2484,6 +2484,7 @@ class Bomb extends Proj {
         if (d.hard > sp.mine) continue;                    // 등급 넘는 것은 못 부순다
         if (MACH_OF_TILE[id]) continue;                    // 남의 기계를 날리지 않는다
         world.set(x, y, T.AIR);
+        if (id === T.FAULTSTONE && G.triggerFault) G.triggerFault(x, y);   // 폭탄으로도 무너진다
         if (d.drop && Math.random() < 0.45)                // 절반쯤만 건진다 — 곡괭이가 손해는 아니게
           G.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(d.drop, 1)));
       }

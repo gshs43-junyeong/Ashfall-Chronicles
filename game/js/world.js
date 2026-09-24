@@ -12,6 +12,7 @@ const SURF_BASE = 70;       // 기준 지표 높이
 const HELL_Y = 390;         // 지옥 시작 깊이
 const DEEP_Y = 280;         // 심층 시작
 const SKY_Y = 40;           // 하늘 섬 구역 (이보다 위)
+const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buildCaveZones)
 const MIN_CAVE = 30;        // 이보다 작고 고립된 공동은 동굴로 치지 않고 메운다(타일 수)
 const CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1100 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
 
@@ -393,14 +394,19 @@ class World {
     }
 
     // --- 3. 동굴 ---
+    /* ★ v1.1 — 동굴을 눈에 띄게 키웠다. 노이즈 결을 굵게(0.075 → 0.058, 깊은 곳 0.055 → 0.045)
+       하고 띠를 넓혀(0.63~0.80 → 0.60~0.83) 굴 하나하나가 길고 넓어진다. 지표 아래 10칸부터
+       지옥 위까지 빈 칸 비율이 d1 19.4% · d2 18.8% 였다. 좁은 통로(n3)는 그대로 둔다 —
+       큰 굴 사이를 잇는 것은 여전히 그쪽이다. */
     for (let x = 1; x < WW - 1; x++) {
       const s = this.surface[x];
       for (let y = s + 4; y < WORLD_BOT - 5; y++) {
-        const scale = y > DEEP_Y - 36 ? 0.055 : 0.075;
+        const scale = y > DEEP_Y - 36 ? 0.045 : 0.058;
         let v = n2(x, y, scale, 3);
-        // 깊을수록 큰 공동
+        // 깊을수록 큰 공동. 지표 바로 밑(스무 칸)은 예전 띠 그대로 — 땅이 숭숭 꺼지지 않게
         const bias = y > DEEP_Y ? 0.06 : y > 180 ? 0.03 : 0;
-        if (v > 0.63 - bias && v < 0.80 + bias) this.tiles[this.i(x, y)] = T.AIR;
+        const wide = y > s + 20 ? 0.03 : 0;
+        if (v > 0.63 - bias - wide && v < 0.80 + bias + wide) this.tiles[this.i(x, y)] = T.AIR;
         // 좁은 통로
         if (n3(x, y, 0.13, 2) > 0.80 && y > s + 10) this.tiles[this.i(x, y)] = T.AIR;
       }
@@ -529,6 +535,7 @@ class World {
     this.floodCaves(rng);
     this.floodHell(rng);
     this.buildJungleFalls(rng);
+    this.buildCaveZones(rng);      // 동굴 갈래 · 장식 · 금 간 자갈 — 물이 고인 뒤라야 바닥을 안다
     this.scatterChests(rng);
     this.buildAltars(rng);
     /* 마지막으로 유적을 **걸어서** 오갈 수 있는지 확인하고 고친다.
@@ -545,6 +552,9 @@ class World {
        공중에 뜬 띠로 남았다(실제로 13곳 나왔다). */
     this.sealLiquids();
     this.decorateWater(rng);     // 물 위 초목 정리 + 수련 — 수면 높이가 확정된 뒤라야 한다
+    /* 뒷공사(상자·제단·통행 보수)가 자갈 칸을 덮어쓴 자리는 목록에서 뺀다 — 남겨 두면
+       아무것도 없는 벽을 캤을 때 무너질 자리를 찾다가 엉뚱한 곳이 열린다 */
+    this.faults = (this.faults || []).filter(f => this.get(f.x, f.y) === T.FAULTSTONE);
 
     this.spawnX = (vx0 + vx1) >> 1;
     this.spawnY = vh - 3;
@@ -3731,11 +3741,214 @@ class World {
 
   /** 큰 동굴을 여러 개 드렁커드 워크로 파낸다. 절반 정도는 안쪽에 황금 상자를 두고,
       그 옆에 가시 함정을 심어 둔다 — 욕심내면 다친다. */
+  /* ================= 동굴 갈래 (data.js CAVE_TYPES) =================
+     땅속을 가로 CAVE_GW · 세로 CAVE_GH 칸 구역으로 나눠 구역마다 갈래를 하나씩 매기고,
+     그 구역의 **자연 굴**만 꾸민다. 굴 덩어리(연결 성분)로 나누지 않은 이유: 넓어진 동굴은
+     세계 절반이 한 덩어리로 이어져서, 덩어리마다 갈래를 주면 지하 전체가 한 갈래가 됐다.
+     ★ "자연 굴"은 벽지로 가른다. 지층 벽지(MAT_LAYER 의 wall·subWall) 위의 빈 칸만 꾸민다 —
+       유적·공창·봉인실 같은 지은 곳은 제 벽지를 바르므로 거기에 석순이 솟지 않는다.
+       장식은 전부 solid 0 이거나(종유석·석순·이끼·수정 무리) 고체를 같은 고체로 바꾸는 것
+       (이끼 바위·가스 구멍)이라 걸어 다니는 길을 막지 않는다. */
+  caveTypeAt(tx, ty) {
+    if (!this.caveGrid || ty < 0 || ty >= HELL_Y) return 0;
+    const gx = Math.floor(tx / CAVE_GW), gy = Math.floor(ty / CAVE_GH);
+    return this.caveGrid[gy * this._cgW() + gx] || 0;
+  }
+  _cgW() { return Math.ceil(WW / CAVE_GW); }
+  /** 플레이어가 선 자리의 동굴 갈래 — **자연 굴 안**일 때만(지표 12칸 아래 · 지층 벽지 · 유적 밖).
+      지은 곳이나 지상에서는 0 이다. game.js 가 이끼 회복 · 독기 · 낙석을 이 값으로 켠다. */
+  caveKindAt(tx, ty) {
+    if (!this.caveGrid || !this.inB(tx, ty) || ty <= this.surface[tx] + 12) return 0;
+    if (!this._natural) {
+      this._natural = new Set();
+      for (const k in MAT_LAYER) { this._natural.add(MAT_LAYER[k].wall); this._natural.add(MAT_LAYER[k].subWall); }
+    }
+    if (!this._natural.has(this.walls[ty * WW + tx]) || this.ruinAt(tx, ty)) return 0;
+    return this.caveTypeAt(tx, ty);
+  }
+
+  buildCaveZones(rng) {
+    const gW = this._cgW(), gH = Math.ceil(HELL_Y / CAVE_GH);
+    this.caveGrid = new Uint8Array(gW * gH);
+    const natural = new Set();
+    for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
+    // 1) 구역마다 갈래를 굴린다. 왼쪽 구역을 40% 확률로 이어받아 갈래가 몇 구역씩 뭉친다
+    for (let gy = 0; gy < gH; gy++)
+      for (let gx = 0; gx < gW; gx++) {
+        const x = gx * CAVE_GW + (CAVE_GW >> 1), y = gy * CAVE_GH + (CAVE_GH >> 1);
+        if (inSeaZone(x) || y < SURF_BASE + 10) continue;
+        const deep = clamp((y - 120) / (DEEP_Y - 120), 0, 1);
+        if (gx > 0 && this.caveGrid[gy * gW + gx - 1] && rng.chance(0.4)) {
+          this.caveGrid[gy * gW + gx] = this.caveGrid[gy * gW + gx - 1]; continue;
+        }
+        if (rng.chance(0.22)) continue;                          // 넷에 하나쯤은 그냥 굴
+        const ws = CAVE_TYPES.map((c, i) => i === 0 ? 0 : lerp(c.w[0], c.w[1], deep));
+        let r = rng.range(0, ws.reduce((a, b) => a + b, 0)), k = 1;
+        for (let i = 1; i < ws.length; i++) { r -= ws[i]; if (r <= 0) { k = i; break; } }
+        this.caveGrid[gy * gW + gx] = k;
+      }
+    // 2) 꾸민다 — 자연 굴의 빈 칸마다 바닥·천장·옆벽을 보고
+    const hang = (x, y, tile, n) => {                          // 천장에서 아래로 n 칸
+      for (let k = 0; k < n; k++) { if (this.get(x, y + k) !== T.AIR) break; this.set(x, y + k, tile); }
+    };
+    for (let x = 4; x < WW - 4; x++) {
+      if (inSeaZone(x) || (x > CAMP_X0 - 30 && x < CAMP_X1 + 30)) continue;
+      for (let y = this.surface[x] + 12; y < HELL_Y - 2; y++) {
+        if (this.get(x, y) !== T.AIR) continue;
+        const k = this.caveTypeAt(x, y); if (!k) continue;
+        if (!natural.has(this.walls[y * WW + x]) || this.ruinAt(x, y)) continue;
+        const id = CAVE_TYPES[k].id;
+        const below = this.get(x, y + 1), above = this.get(x, y - 1);
+        const floor = below === T.STONE || below === T.DIRT || below === T.MOSSSTONE || below === T.SANDSTONE;
+        const ceil = above === T.STONE || above === T.DIRT || above === T.MOSSSTONE || above === T.SANDSTONE;
+        if (id === 'moss') {
+          if (floor && rng.chance(0.75)) this.set(x, y + 1, T.MOSSSTONE);
+          if (ceil) { if (rng.chance(0.6)) this.set(x, y - 1, T.MOSSSTONE); if (rng.chance(0.3)) hang(x, y, T.HANGMOSS, rng.int(1, 3)); }
+          else if (floor && rng.chance(0.05) && this.get(x, y - 1) === T.AIR) this.set(x, y, T.GLOWCAP);
+        } else if (id === 'drip') {
+          if (ceil && rng.chance(0.16)) hang(x, y, T.STALACTITE, rng.chance(0.35) ? 2 : 1);
+          else if (floor && rng.chance(0.12) && this.get(x, y - 1) === T.AIR) {
+            this.set(x, y, T.STALAGMITE);
+            if (rng.chance(0.3) && this.get(x, y - 2) === T.AIR) this.set(x, y - 1, T.STALAGMITE);
+          }
+        } else if (id === 'geode') {
+          const side = this.solid(x - 1, y) || this.solid(x + 1, y);
+          if (floor && rng.chance(0.07)) this.set(x, y, T.GEODE);
+          else if (side && rng.chance(0.03)) {
+            const sx = this.solid(x - 1, y) ? x - 1 : x + 1;
+            if (this.get(sx, y) === T.STONE) this.set(sx, y, T.CRYSTAL);
+          }
+        } else if (id === 'fume') {
+          if (floor && rng.chance(0.012) && below === T.STONE) this.set(x, y + 1, T.GASVENT);
+        }
+      }
+    }
+    /* 3) 독기 굴은 광맥이 짙다 — 구역 안 돌 몇 군데를 깊이에 맞는 광석으로 바꾼다.
+       숨이 따가운 값을 치르는 곳이라 들어갈 까닭이 있어야 한다. */
+    for (let gy = 0; gy < gH; gy++)
+      for (let gx = 0; gx < gW; gx++) {
+        if (CAVE_TYPES[this.caveGrid[gy * gW + gx]].id !== 'fume') continue;
+        for (let n = 0; n < 7; n++) {
+          const cx = gx * CAVE_GW + rng.int(3, CAVE_GW - 3), cy = gy * CAVE_GH + rng.int(3, CAVE_GH - 3);
+          const ore = cy > 300 ? T.MYTHRIL : cy > 200 ? T.GOLD : cy > 130 ? T.IRON : T.COPPER;
+          const r = rng.range(1.5, 2.8);
+          for (let x = Math.floor(cx - r); x <= cx + r; x++)
+            for (let y = Math.floor(cy - r); y <= cy + r; y++)
+              if (dist(x, y, cx, cy) <= r && this.get(x, y) === T.STONE) this.set(x, y, ore);
+        }
+      }
+    this.buildFaults(rng, natural);
+  }
+
+  /** 금 간 자갈 — 동굴 옆벽에 판 작은 굴(오목한 자리) 안쪽 끝에 박는다. 그 너머가 통바위여야
+      무너졌을 때 열릴 동굴 자리가 있다. 캐거나 터뜨리면 game.js triggerFault → expandFault. */
+  buildFaults(rng, natural) {
+    this.faults = [];
+    let tries = 0;
+    while (this.faults.length < FAULT.count && tries++ < 6000) {
+      const x = rng.int(40, WW - 40);
+      if (inSeaZone(x) || (x > CAMP_X0 - 60 && x < CAMP_X1 + 60)) continue;
+      const y = rng.int(this.surface[x] + 30, HELL_Y - 20);
+      // 자연 굴의 바닥 칸이어야 한다
+      if (this.get(x, y) !== T.AIR || !this.solid(x, y + 1) || this.get(x, y - 1) !== T.AIR) continue;
+      if (!natural.has(this.walls[y * WW + x]) || this.ruinAt(x, y)) continue;
+      const dir = rng.chance(0.5) ? 1 : -1;
+      // 벽이 바로 옆에 있어야 한다(한두 칸 안)
+      let wx = x;
+      for (let k = 1; k <= 3; k++) if (this.solid(x + dir * k, y)) { wx = x + dir * k; break; }
+      if (wx === x) continue;
+      // 그 너머 FAULT.rx 칸이 거의 통바위여야 한다 — 이미 굴이 있으면 열어 봐야 새로울 게 없다
+      let solid = 0, tot = 0, bad = false;
+      for (let dx = 2; dx <= FAULT.rx + 6 && !bad; dx += 2)
+        for (let dy = -FAULT.ry; dy <= FAULT.ry; dy += 2) {
+          const xx = wx + dir * dx, yy = y + dy; tot++;
+          if (this.solid(xx, yy)) solid++;
+          if (this.get(xx, yy) === T.BEDROCK || this.ruinAt(xx, yy) || yy >= HELL_Y - 4 || yy <= this.surface[clamp(xx, 0, WW - 1)] + 12) bad = true;
+        }
+      // ★ 0.88 로 두면 넓어진 동굴 탓에 스물여덟 중 일고여덟만 자리를 찾았다(d1 11 · d2 7)
+      if (bad || solid / tot < 0.78) continue;
+      if (this.faults.some(f => Math.abs(f.x - wx) < 90 && Math.abs(f.y - y) < 50)) continue;
+      // 오목한 작은 굴 — 넓이 다섯, 높이 셋. 안쪽 끝 벽 가운데에 자갈 한 칸
+      for (let dx = 0; dx < 5; dx++)
+        for (let dy = -2; dy <= 0; dy++) {
+          const xx = wx + dir * dx, yy = y + dy;
+          if (this.get(xx, yy) !== T.BEDROCK) this.set(xx, yy, T.AIR);
+        }
+      for (let dx = -1; dx < 6; dx++) if (!this.solid(wx + dir * dx, y + 1)) this.set(wx + dir * dx, y + 1, T.STONE);
+      const fx = wx + dir * 5, fy = y - 1;
+      this.set(fx, fy, T.FAULTSTONE);
+      this.set(fx, fy + 1, T.STONE); this.set(fx, fy - 1, T.STONE);
+      this.faults.push({ x: fx, y: fy, dir, cx: fx + dir * (FAULT.rx >> 1), cy: y - 3,
+                         seed: rng.int(1, 1e9), done: 0 });
+    }
+  }
+
+  /** 금 간 자갈이 무너진 뒤 열릴 동굴의 칸들 — 씨앗에서 뽑으므로 세계마다 같고, 저장할 필요가 없다.
+      ★ 못 파는 칸: 기반암 · 잠긴 돌 · 액체 · 유적 · 지은 곳(자연 벽지가 아닌 칸) · 지옥 · 지표 12칸 안 */
+  faultCells(f) {
+    const rng = new RNG(f.seed), cells = [], seen = new Set();
+    const natural = new Set();
+    for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
+    const dig = (xx, yy) => {
+      const key = yy * WW + xx;
+      if (seen.has(key) || !this.inB(xx, yy)) return;
+      seen.add(key);
+      const t = this.get(xx, yy);
+      if (t === T.AIR || t === T.BEDROCK || this.locked(xx, yy) || TILE_DEF[t].liquid) return;
+      if (yy >= HELL_Y - 2 || yy <= this.surface[xx] + 12 || this.ruinAt(xx, yy)) return;
+      if (!natural.has(this.walls[key])) return;
+      cells.push([xx, yy]);
+    };
+    // 자갈 자리에서 동굴 한가운데까지 이어지는 목(높이 넷)
+    for (let x = f.x; x !== f.cx + f.dir; x += f.dir)
+      for (let dy = -2; dy <= 1; dy++) dig(x, f.y + dy + (x === f.x ? 0 : Math.round((f.cy - f.y) * (x - f.x) / (f.cx - f.x || 1))));
+    let x = f.cx, y = f.cy;
+    for (let s = 0; s < FAULT.steps; s++) {
+      const r = rng.int(3, 6);
+      for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++)
+        if (dx * dx + dy * dy * 1.6 <= r * r) dig(x + dx, y + dy);
+      x = clamp(x + rng.int(-2, 2), f.cx - FAULT.rx, f.cx + FAULT.rx);
+      y = clamp(y + rng.int(-1, 1), f.cy - FAULT.ry, f.cy + FAULT.ry);
+    }
+    return cells;
+  }
+
+  /** 무너져 열린 칸들을 꾸민다 — 갈래를 하나 골라(이끼·종유·수정) 새 굴에 입히고, 드러난 벽의
+      몇 군데를 광석으로 바꾼다. game.js 가 마지막 칸을 판 뒤 한 번 부른다. */
+  dressFault(f, cells) {
+    const rng = new RNG(f.seed + 7);
+    const k = [1, 2, 3][rng.int(0, 2)];
+    f.k = k;
+    const id = CAVE_TYPES[k].id;
+    const ore = f.y > 300 ? T.MYTHRIL : f.y > 200 ? T.GOLD : f.y > 130 ? T.IRON : T.COPPER;
+    for (const [x, y] of cells) {
+      if (this.get(x, y) !== T.AIR) continue;
+      const floor = this.solid(x, y + 1), ceil = this.solid(x, y - 1);
+      if (id === 'moss') {
+        if (floor && rng.chance(0.8) && this.get(x, y + 1) === T.STONE) this.set(x, y + 1, T.MOSSSTONE);
+        if (ceil && rng.chance(0.35)) this.set(x, y, T.HANGMOSS);
+      } else if (id === 'drip') {
+        if (ceil && rng.chance(0.2)) this.set(x, y, T.STALACTITE);
+        else if (floor && rng.chance(0.14)) this.set(x, y, T.STALAGMITE);
+      } else if (floor && rng.chance(0.2)) this.set(x, y, T.GEODE);
+      // 드러난 벽 — 광석이 박히고, 수정 동굴이면 수정이 더 박힌다
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]])
+        if (this.get(x + dx, y + dy) === T.STONE) {
+          if (rng.chance(0.06)) this.set(x + dx, y + dy, ore);
+          else if (id === 'geode' && rng.chance(0.1)) this.set(x + dx, y + dy, T.CRYSTAL);
+        }
+    }
+    return k;
+  }
+
   buildCaverns(rng) {
     const reserved = x => (x > 685 + SHIFT && x < 845 + SHIFT) || (x > 1865 + SHIFT && x < 2055 + SHIFT) || (x > 1365 + SHIFT && x < 1445 + SHIFT);
     this.caverns = [];
     let placed = 0, tries = 0;
-    while (placed < 11 && tries < 3000) {
+    /* v1.1 — 큰 동굴을 열한 곳 → 열여섯 곳, 한 곳의 크기도 1.6배쯤(걸음 90~150 → 150~240,
+       붓 반지름 3~6 → 4~7, 퍼지는 폭 ±26·±20 → ±40·±24). "큰 동굴"이 들어서 봐야 큰 줄 알던
+       것을 멀리서도 알아보게 했다. */
+    while (placed < 16 && tries < 3000) {
       tries++;
       const cx = rng.int(20, WW - 20);
       if (reserved(cx) || inSeaZone(cx)) continue;
@@ -3745,17 +3958,17 @@ class World {
       if (cy < DEEP_Y - 30) continue;
       let x = cx, y = cy;
       const cells = [];
-      const steps = rng.int(90, 150);
+      const steps = rng.int(150, 240);
       for (let s = 0; s < steps; s++) {
-        const r = rng.int(3, 6);
+        const r = rng.int(4, 7);
         for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) {
           if (dx * dx + dy * dy > r * r) continue;
           const xx = x + dx, yy = y + dy;
           if (xx < 3 || xx >= WW - 3 || yy < 6 || yy >= WORLD_BOT - 8) continue;
           if (this.solid(xx, yy)) { this.set(xx, yy, T.AIR); cells.push([xx, yy]); }
         }
-        x = clamp(x + rng.int(-1, 1), cx - 26, cx + 26);
-        y = clamp(y + rng.int(-1, 1), cy - 20, cy + 20);
+        x = clamp(x + rng.int(-1, 1), cx - 40, cx + 40);
+        y = clamp(y + rng.int(-1, 1), cy - 24, cy + 24);
       }
       if (cells.length < 220) continue;   // 실패한 시도(막혀서 거의 안 파인 경우) — 개수에 안 센다
       // 벽 장식: 수정과 횃불을 군데군데
@@ -4807,6 +5020,7 @@ class World {
       dungeon: this.dungeon, ruins: this.ruins, sealRoom: this.sealRoom,
       skyIslands: this.skyIslands, skyGate: this.skyGate, giantTree: this.giantTree,
       caverns: this.caverns, pools: this.pools, lavaPools: this.lavaPools, falls: this.falls,
+      caveGrid: this.caveGrid ? Array.from(this.caveGrid) : null, faults: this.faults || [],
       explored: rleEncode(this.explored)
     };
   }
@@ -4838,6 +5052,9 @@ class World {
     // 물이 생기기 전의 세이브에는 이 둘이 없다 — 타일에는 이미 물이 없으니 빈 배열이 맞다
     w.caverns = d.caverns || []; w.pools = d.pools || []; w.lavaPools = d.lavaPools || [];
     w.falls = d.falls || [];   // 폭포 앰비언트 도입 전 세이브 — 빈 배열이면 그냥 조용할 뿐, 안전하다
+    // 동굴 갈래 도입 전 세이브 — 갈래가 없으면 모든 굴이 plain 이고, 무너질 자갈도 없다
+    w.caveGrid = d.caveGrid ? Uint8Array.from(d.caveGrid) : null;
+    w.faults = d.faults || [];
     return w;
   }
 }

@@ -181,6 +181,15 @@ ART[T.BLIGHTSAC] = { k: 'sac', c: '#8a4a80', a: 1, glow: 1 };
 ART[T.BONEHEAP] = { k: 'boneheap', c: '#cfc8b0', a: 1 };
 ART[T.SPOREVENT] = { k: 'sporevent', c: '#5a8a74', glow: 1 };
 ART[T.HYPHAE] = { k: 'hyphae', c: '#8fe0c4', a: 1, glow: 1 };
+/* --- v1.1 동굴 갈래 — 장식 넷은 a:1(뒤의 벽이 비친다). 이끼 바위와 금 간 자갈은 고체 ---
+   ★ 금 간 자갈은 **알아볼 수 있어야** 한다. 돌과 똑같이 그리면 무너뜨릴 이유를 못 찾는다 —
+     자갈 알갱이 결에 굵은 금 하나, 금 사이로 먼지가 비치게 그렸다. */
+ART[T.MOSSSTONE] = { k: 'mossrock', c: '#5d5d63', g: '#5f8f4a' };
+ART[T.HANGMOSS] = { k: 'hangmoss', c: '#6fa05a', a: 1 };
+ART[T.STALACTITE] = { k: 'dripstone', c: '#9a9488', a: 1, up: 0 };
+ART[T.STALAGMITE] = { k: 'dripstone', c: '#8a8478', a: 1, up: 1 };
+ART[T.GEODE] = { k: 'geode', c: '#a88fe8', a: 1, glow: 1 };
+ART[T.FAULTSTONE] = { k: 'fault', c: '#a8966e', glow: 1 };   // 누런 자갈 — 회색 돌 사이에서 튀어 보이게
 /* --- 7단계: 폭주로 --- */
 ART[T.SLAGSTEEL] = { k: 'slag', c: '#5a4a44' };
 ART[T.COREGLASS] = { k: 'crystal', c: '#e8b04a', glow: 1 };
@@ -231,7 +240,7 @@ const TileArt = {
        안 그리므로 공기에 드러났으면 다른 돌처럼 윗면이 밝아야 맞다. */
     this._topHand = {};
     for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS,
-                      T.SNOW, T.ICE, T.THATCH, T.BATTLEMENT, T.HAYBALE]) this._topHand[id] = 1;
+                      T.SNOW, T.ICE, T.THATCH, T.BATTLEMENT, T.HAYBALE, T.MOSSSTONE]) this._topHand[id] = 1;
     for (const id in MACH_OF_TILE) this._topHand[id] = 1;
     for (const id in this._topHand) TOP_SKIP[id] = 1;
 
@@ -1850,6 +1859,74 @@ const TileArt = {
           R(TS / 2 + Math.cos(a) * 6.5 - 1, TS / 2 + 1 + Math.sin(a) * 6.5 - 1, 3, 2, lt2);
         }
         R(TS / 2 - 2, TS / 2 - 4, 2, 2, lt2); R(TS / 2 + 2, TS / 2 - 6, 1, 1, lt2);   // 새어 나온 가루
+        break;
+      }
+      case 'mossrock': {            // 이끼 낀 바위 — 돌결 위에 이끼가 얼룩지고 윗면이 두툼하다
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 6; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(.5) ? lt : dk);
+        this._speck(g, ox, oy, rng, 14, dk2, lt2);
+        const m1 = s.g, m2 = shade(m1, 1.3), m3 = shade(m1, .7);
+        for (let i = 0; i < 9; i++) {                           // 얼룩진 이끼
+          const x = rng.range(0, TS - 4), y = rng.range(3, TS - 3);
+          R(x, y, rng.range(2, 5), rng.range(1, 3), rng.chance(.6) ? m1 : m3);
+        }
+        let h = 4;
+        for (let x = 0; x < TS; x++) {                          // 윗면 이끼
+          h = clamp(h + rng.range(-1, 1), 2, 6);
+          R(x, 0, 1, h, m1); R(x, 0, 1, 1, m2); R(x, h - 1, 1, 1, m3);
+        }
+        break;
+      }
+      case 'hangmoss': {            // 늘어진 이끼 — 가닥마다 길이가 다르고 끝이 가늘다
+        R(0, 0, TS, 2, shade(base, .7));
+        for (let x = 0; x < TS; x += 2) {
+          const len = rng.int(6, TS - 1);
+          R(x, 1, 2, len * .55, base);
+          R(x + (rng.chance(.5) ? 0 : 1), 1 + len * .55, 1, len * .45, shade(base, .8));
+          if (rng.chance(.4)) R(x, 2, 1, 2, lt2);
+        }
+        break;
+      }
+      case 'dripstone': {           // 종유석(위에 붙어 아래로) · 석순(바닥에서 위로) — 층이 진 원뿔
+        const up = !!s.up;
+        for (let y = 0; y < TS; y++) {
+          const t = up ? (TS - y) / TS : (y + 1) / TS;           // 0(붙은 쪽) → 1(끝)
+          const w = Math.max(1.2, (TS - 4) * (1 - t * 0.86));
+          const col = (y % 5 === 0) ? dk : (y % 5 === 2 ? lt : base);
+          R(TS / 2 - w / 2, y, w, 1, col);
+          R(TS / 2 - w / 2, y, Math.max(1, w * .25), 1, lt2);    // 한쪽에 비치는 빛
+        }
+        if (!up) R(TS / 2 - .5, TS - 2, 1, 2, '#9fd0e8');        // 끝에 맺힌 물방울
+        break;
+      }
+      case 'geode': {               // 수정 무리 — 바닥에서 여러 갈래로 솟은 결정
+        const cols = [base, lt, lt2, shade(base, .8)];
+        for (const [bx, h, w, lean] of [[6, 14, 5, -1.5], [12, 19, 6, 0.5], [17, 11, 4, 2]]) {
+          g.fillStyle = cols[rng.int(0, 3)];
+          g.beginPath();
+          g.moveTo(ox + bx - w / 2, oy + TS); g.lineTo(ox + bx + w / 2, oy + TS);
+          g.lineTo(ox + bx + w / 2 + lean, oy + TS - h + 3); g.lineTo(ox + bx + lean, oy + TS - h);
+          g.lineTo(ox + bx - w / 2 + lean, oy + TS - h + 3); g.closePath(); g.fill();
+          R(bx + lean - .5, TS - h + 2, 1, h - 4, '#ffffff');    // 결정 모서리의 빛
+        }
+        g.globalAlpha = .22; g.fillStyle = lt2;
+        g.beginPath(); g.arc(ox + TS / 2, oy + TS - 8, 10, 0, TAU); g.fill();
+        g.globalAlpha = 1;
+        break;
+      }
+      case 'fault': {               // 금 간 자갈 — 동글동글한 알갱이, 가운데를 가로지르는 굵은 금
+        this._fill(g, ox, oy, dk);
+        for (let i = 0; i < 16; i++) {
+          const x = rng.range(0, TS - 4), y = rng.range(0, TS - 4), r = rng.range(2, 3.6);
+          g.fillStyle = [base, lt, shade(base, .88)][rng.int(0, 2)];
+          g.beginPath(); g.arc(ox + x + r, oy + y + r, r, 0, TAU); g.fill();
+        }
+        let x = rng.range(3, 6), y = 0;
+        while (y < TS) {                                        // 굵은 금 — 위에서 아래로 번개꼴
+          R(x, y, 3, 2, '#15120f');
+          R(x + 3, y, 1, 1, '#ffe8b0');                           // 금 가장자리 — 안쪽에서 새어 나오는 빛
+          x = clamp(x + rng.range(-1.6, 2.2), 1, TS - 3); y += 1.5;
+        }
         break;
       }
       case 'hyphae': {              // 균사 발 — 천장에서 내린 실이 아래로 갈수록 성글다
