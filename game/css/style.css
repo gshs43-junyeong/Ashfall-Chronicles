@@ -1121,6 +1121,7 @@ body.booting #title-screen{visibility:hidden}
 .rv-grid span.ok{color:#c8e0a0}
 .rv-grid b{color:#c8bda4;font-weight:600}
 .rv-seal{margin-top:5px;font-size:11px;color:#c8a058}
+.rv-next{margin-top:5px;font-size:11px;color:#bda888;line-height:1.5}
 
 /* 업적 — 난이도 표시 */
 .ach-sum{display:flex;gap:14px;padding:0 0 10px;font-size:11.5px;color:#8a8271}

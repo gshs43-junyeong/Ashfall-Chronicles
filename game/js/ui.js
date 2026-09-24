@@ -987,6 +987,8 @@ const UI = {
     let h = topTabs + `<div class="rv-note">유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,
       쓰러뜨릴수록 가라앉는다. 깨어난 유적은 더 몰려오고 더 준다. 주인을 잡은 둥지는 유적이
       <b>「${PULSE.stages[ECHO.needStage].n}」</b> 이상일 때 <b>메아리</b>를 다시 부른다.
+      맥박이 한 단계 오를 때마다 <b>사건</b>(표식된 것 · 공명석 · 탐욕의 상자 · 포위)이 하나 터진다.
+      등급은 조건을 <b>모두</b> 채워야 오른다 — 아래에 다음 등급까지 남은 것을 적었다.
       기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.</div>`;
     const list = RUIN_SPEC.slice().sort((a, b) => (a.rank || 0) - (b.rank || 0));
     for (const spec of list) {
@@ -995,12 +997,13 @@ const UI = {
         `<span class="${q[0] >= q[1] ? 'ok' : ''}">${label} <b>${q[1] === 1 ? (q[0] ? '✔' : '—') : q[0] + '/' + q[1]}</b></span>`;
       const seal = ITEMS['seal_' + spec.id];
       h += `<div class="rv${sc.seen ? '' : ' off'}">` +
-        `<div class="rv-rank" style="color:${sc.seen ? sc.col : '#5a5448'}">${sc.seen ? sc.rank : '?'}<small>${sc.seen ? sc.score + '점' : ''}</small></div>` +
+        `<div class="rv-rank" style="color:${sc.seen ? sc.col : '#5a5448'}">${sc.seen ? sc.rank : '?'}<small>${sc.seen ? sc.score + '%' : ''}</small></div>` +
         `<div class="rv-body"><h4>${sc.seen ? spec.n : '아직 발을 들이지 않은 유적'}</h4>`;
       if (sc.seen) {
         h += `<div class="rv-grid">` + cell('방', P.rooms) + cell('상자', P.chests) + cell('비문', P.lore) +
           cell('주인', P.boss) + cell('골방', P.code) + cell('격노', P.rage) +
-          `<span class="${(sv.echo || 0) >= ECHO.max ? 'ok' : ''}">메아리 <b>${sv.echo || 0}/${ECHO.max}</b></span></div>`;
+          cell('사건', P.events) + cell('갈래', P.kinds) + cell('메아리', P.echo) + `</div>`;
+        if (sc.next) h += `<div class="rv-next">다음 ${sc.next} 까지 — ${sc.missing.join(' · ')}</div>`;
         if (seal) h += `<div class="rv-seal">${sv.s ? '✔ ' + seal.n + ' — ' + seal.d.replace(/^[^.]*\.\s*/, '') : 'S 등급 보상 · ' + seal.n}</div>`;
       }
       h += '</div></div>';
