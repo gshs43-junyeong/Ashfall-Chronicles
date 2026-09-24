@@ -930,6 +930,8 @@ const G = {
     this.checkRuinEvent();
     this.updatePulse(dt);          // 유적의 맥박 · 탐사 기록 (아래 '유적의 맥박' 절)
     this.updateCaves(dt);          // 동굴 갈래 · 낙석 · 무너지는 자갈 (아래 '동굴' 절)
+    this.world.fluidTick(dt);      // 물·바닷물·용암이 흐른다 (world.js '유체' 절)
+    this.updateFalls(dt);          // 폭포 밑 물보라
     /* 유적 고유 이벤트의 여운 — 꺼진 불(화면 어둠)과 홀씨(지속 피해)는 시간이 지나면 걷힌다 */
     if (this.ruinDark > 0) this.ruinDark -= dt;
     if (this.ruinSpore > 0) {
@@ -1261,7 +1263,8 @@ const G = {
         return;
       }
       p.mineProg = 0;
-      w.set(tx, ty, T.AIR);
+      // 수련·물풀·해초는 캐도 그 칸의 물이 남는다(data.js LEAVE_OF)
+      w.set(tx, ty, LEAVE_OF[id] || T.AIR);
       p.mined[id] = (p.mined[id] || 0) + 1;
       if (id === T.FAULTSTONE) this.triggerFault(tx, ty);   // 숨은 동굴이 무너져 열린다
       // 등급 5 광물은 다른 돌과 소리가 다르다 — 캐는 순간 "이건 다른 돌"이 들려야 한다
@@ -1553,7 +1556,10 @@ const G = {
     if (held && idef(held).type === 'block') {
       const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
       if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) return;
-      if (w.get(tx, ty) !== T.AIR) return;
+      /* 빈칸 말고 **액체 칸**에도 놓는다 — 물이 흐르게 된 뒤로는 블록을 물속에 끼워 넣어
+         물길을 막는 것이 물을 다루는 유일한 방법이다. 수련·물풀·해초 칸은 장식이라 빼고. */
+      const cur = w.get(tx, ty);
+      if (cur !== T.AIR && !(FLUID_KIND[cur] && !LEAVE_OF[cur])) return;
       const near = w.get(tx - 1, ty) || w.get(tx + 1, ty) || w.get(tx, ty - 1) || w.get(tx, ty + 1) || w.wall(tx, ty);
       if (!near) return;
       /* 잠긴 골방 안에는 아무것도 못 놓는다 — 안에 발판을 놓아 밖에서 타고 넘거나,
@@ -1563,7 +1569,15 @@ const G = {
       if (TILE_DEF[tileId].solid === 1 && aabb({ x: tx * TS, y: ty * TS, w: TS, h: TS }, p.rect())) return;
       // 장식은 기댈 데가 있어야 한다(data.js DECO_MOUNT) — 같은 장식끼리는 이어 붙는다
       const mount = DECO_MOUNT[tileId];
-      if (mount) {
+      if (mount === 'water') {
+        if (cur !== T.WATER || TILE_DEF[w.get(tx, ty + 1)].solid !== 1) {
+          this.toast('고인 물속 바닥에만 놓을 수 있다', 'bad');
+          return;
+        }
+      } else if (mount && FLUID_KIND[cur]) {
+        this.toast('물속에는 놓을 수 없다', 'bad');
+        return;
+      } else if (mount) {
         const by = mount === 'floor' ? ty + 1 : ty - 1, bt = w.get(tx, by);
         if (TILE_DEF[bt].solid !== 1 && bt !== tileId) {
           this.toast(mount === 'floor' ? '단단한 바닥 위에만 놓을 수 있다' : '천장에 매달아야 한다', 'bad');
@@ -4962,6 +4976,16 @@ const G = {
            규칙적인 톱니가 되지 않게 한다. */
         if (id === T.SEAWATER && w.tiles[k - WW] === T.AIR) { this.drawWave(c, tx, ty, sx, sy, wl); continue; }
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
+        // 흐르는 액체 — 수위만큼만 (world.js '유체' 절)
+        if (FLUID_FLOW[id]) { this.drawFlow(c, w, id, k, tx, ty, sx, sy); continue; }
+        /* 물에 뜬·잠긴 장식(수련·물풀·해초)은 그 칸 밑에 **진짜 물 타일**을 옆 물칸과 같은
+           프레임으로 먼저 깐다. 장식 그림에 물을 구워 넣으면 무늬·프레임이 따로 놀아
+           장식 둘레만 네모나게 다른 물이 된다(tileart.js ART[T.LILY] 주석). */
+        const ul = LEAVE_OF[id];
+        if (ul) {
+          const ua = TileArt.ANIM[ul];
+          TileArt.draw(c, ul, ua ? ((((this.time * ua.fps) + tx * 0.7 + ty * 0.4) | 0) % ua.fr) : 0, sx, sy);
+        }
         if (ashOn && this.ASH_TILE[id]) { this.drawAshTile(c, id, v, sx, sy, tx, ty, ashF); continue; }
         // 이웃을 보고 그리는 타일(이끼·종유석·위가 막힌 잔디 …) — tileart.js 의 ★ 참고.
         // 이것들은 전부 윗면 줄이 필요 없는 칸이라(위가 막혔거나 TOP_SKIP) 여기서 끝낸다.
@@ -5895,13 +5919,29 @@ const G = {
     c.restore();
   },
 
-  drawWave(c, tx, ty, sx, sy, wl) {
+  /** 바다 수면 칸에서 물이 차 있는 높이(0~1, 칸 아래에서부터). 그리기(drawWave)와
+      뜨는 것(entity.js Drop·헤엄 부력)이 **같은 식**을 써야 물건이 파도와 같이 오르내린다.
+      tx 는 소수도 받는다 — 칸 가운데가 아니라 몸 가운데의 물결을 따라가야 매끄럽다. */
+  waveFrac(tx) {
     const t = this.time;
     const K = 0.34, W = 1.15;                             // 물결의 공간 주파수 · 진행 속도
     const main = Math.sin(tx * K - t * W);                // 지나가는 큰 물결
     const sub = Math.sin(tx * K * 2.7 - t * W * 1.6) * 0.32;   // 잔물결
-    const jit = (tileHash(tx, 0) - 0.5) * 0.12;           // 칸마다 아주 약한 흔들림
-    const hFrac = clamp(0.66 + (main * 0.68 + sub + jit) * 0.32, 0.34, 1);
+    const jit = (tileHash(Math.floor(tx), 0) - 0.5) * 0.12;    // 칸마다 아주 약한 흔들림
+    return clamp(0.66 + (main * 0.68 + sub + jit) * 0.32, 0.34, 1);
+  },
+  /** 이 열의 수면이 화면(세계) 몇 px 에 있나 — 수면 칸 ty 를 알 때. 바다 수면은 물결을,
+      호수·흐르는 물은 칸 위쪽(흐르는 물은 수위)을 돌려준다. */
+  surfacePx(tx, ty) {
+    const w = this.world, t = w.get(Math.floor(tx), ty);
+    if (t === T.SEAWATER) return (ty + 1) * TS - this.waveFrac(tx) * TS;
+    if (FLUID_FLOW[t] && w.flv) return (ty + 1) * TS - (w.flv[ty * WW + Math.floor(tx)] || 8) / 8 * TS;
+    return ty * TS;
+  },
+
+  drawWave(c, tx, ty, sx, sy, wl) {
+    const t = this.time;
+    const hFrac = this.waveFrac(tx);
     const h = Math.max(3, Math.round(hFrac * TS));
     const top = sy + TS - h;
     // 물 타일 그림을 파도 높이만큼만 잘라 그린다 (색·결이 아래 물과 같아진다)
@@ -5921,6 +5961,53 @@ const G = {
     c.globalAlpha = 0.26; c.fillStyle = shade(ART[T.SEAWATER].c, 1.8);
     c.fillRect(sx, top, TS, 1.5);
     c.globalAlpha = 1;
+  },
+
+  /** 흐르는 액체 한 칸 — 고인 것과 **같은 그림**을 수위만큼 잘라 그린다.
+      위에서 같은 액체가 내려오고 있거나 수위 8(떨어지는 중)이면 칸을 꽉 채운다.
+      떨어지는 바닷물만 제 그림(세로 물줄기)을 쓴다 — 민물은 폭포(FALLS) 타일이 된다. */
+  drawFlow(c, w, id, k, tx, ty, sx, sy) {
+    const kind = FLUID_KIND[id], lv = w.flv ? (w.flv[k] || 7) : 7;
+    const full = lv >= 8 || FLUID_KIND[w.tiles[k - WW]] === kind;
+    const src = kind === 1 ? T.WATER : kind === 2 ? T.SEAWATER : T.LAVA;
+    const art = full && kind === 2 ? id : src;
+    const an = TileArt.ANIM[art];
+    const v = an ? ((((this.time * an.fps) + tx * 0.7 + ty * 0.4) | 0) % an.fr) : 0;
+    const h = full ? TS : Math.max(3, Math.round(TS * lv / 8));
+    c.save();
+    c.beginPath(); c.rect(sx, sy + TS - h, TS, h); c.clip();
+    TileArt.draw(c, art, v, sx, sy);
+    c.restore();
+    if (!full) {                                          // 얇은 수면 — 흐르는 결이 보이게 한 줄
+      c.globalAlpha = 0.28; c.fillStyle = kind === 3 ? '#ffd27a' : '#dff2ff';
+      c.fillRect(sx, sy + TS - h, TS, 1);
+      c.globalAlpha = 1;
+    }
+  },
+
+  /** 폭포 밑 물보라 — 물줄기가 수면·바닥에 닿는 칸에서 물방울이 튄다. 화면 안만 본다.
+      폭포는 소리(music.js)만 있고 떨어지는 자리에 아무 일도 안 일어나서, 물줄기가 수면에
+      그냥 꽂혀 사라지는 그림이었다. */
+  updateFalls(dt) {
+    this._fallsT = (this._fallsT || 0) - dt;
+    if (this._fallsT > 0) return;
+    this._fallsT = 0.08;
+    const w = this.world, cam = this.cam;
+    const tx0 = Math.max(1, Math.floor(cam.x / TS)), tx1 = Math.min(WW - 2, Math.ceil((cam.x + this.W) / TS));
+    const ty0 = Math.max(1, Math.floor(cam.y / TS)), ty1 = Math.min(WH - 2, Math.ceil((cam.y + this.H) / TS));
+    for (let ty = ty0; ty <= ty1; ty++)
+      for (let tx = tx0; tx <= tx1; tx++) {
+        const k = ty * WW + tx, t = w.tiles[k];
+        const falling = t === T.FALLS || (t === T.FLOWSEA && w.flv && w.flv[k] >= 8);
+        if (!falling) continue;
+        const b = w.tiles[k + WW];
+        if (b === T.FALLS || b === t) continue;             // 아직 떨어지는 중
+        if (Math.random() > 0.55) continue;
+        const px = (tx + Math.random()) * TS, py = (ty + 1) * TS - 2;
+        this.parts.push(new Part(px, py, Math.random() < 0.5 ? '#dff2ff' : '#9fd0f0', -150, 0.45, { g: 0.9, sq: 0, r: 0.7, spd: 0.8 }));
+        if (Math.random() < 0.3)                             // 물안개 — 느리게 떠오른다
+          this.parts.push(new Part(px, py - 4, 'rgba(220,240,255,.5)', -30, 1.0, { g: -0.15, sq: 0, r: 1.8, spd: 0.25, drag: 0.9 }));
+      }
   },
 
   /** 빛 색 — 빛나는 타일(data.js LIGHT_SPEC) 둘레에 제 색의 번짐을 **더하기**로 얹는다.

@@ -147,10 +147,12 @@ class Ent {
     const prevBottom = this.y + this.h;
     // 물 — 잠긴 비율만큼 중력과 낙하 상한이 줄고, 좌우로도 끈적해진다.
     // 물고기처럼 물이 제 집인 것(opts.aquatic)은 저항을 받지 않는다.
-    const liq = opts.aquatic ? { f: 0, flow: 0 } : world.liquidIn(this.x, this.y, this.w, this.h);
+    const liq = opts.aquatic ? { f: 0, flow: 0, cur: 0 } : world.liquidIn(this.x, this.y, this.w, this.h);
     this.submerged = liq.f;
-    // X
-    let nx = this.x + this.vx * dt;
+    /* X — 흐르는 물살은 속도가 아니라 **떠밀림**으로 더한다. 속도에 더하면 땅에 선 몸은
+       다음 프레임 마찰(초당 2600)이 고스란히 지워 물살 속에 서 있어도 꿈쩍 안 했다.
+       초당 70px — 걷는 속도(ms 약 200)보다 느려 거슬러 걸을 수는 있다(떠내려가되 갇히지 않는다). */
+    let nx = this.x + (this.vx + (liq.cur || 0) * 70) * dt;
     if (world.hitSolid(nx, this.y, this.w, this.h)) {
       // 한 칸 계단 오르기
       let stepped = false;
@@ -896,7 +898,10 @@ class Player extends Ent {
     // 머리 칸이 액체인가 — 몸 전체 비율(submerged)로 보면 목까지 잠겨도 익사한다
     const hx = Math.floor(this.cx / TS), hy = Math.floor((this.y + 4) / TS);
     const ht = world.get(hx, hy);
-    const under = !!TILE_DEF[ht].liquid;
+    let under = !!TILE_DEF[ht].liquid;
+    /* 머리가 **수면 칸** 안에 있으면 칸이 아니라 실제 수면 높이와 견준다 — 바다 물결이 칸 안에서
+       오르내리므로, 물결 골에 떠 있는 동안 머리가 물 밖인데도 숨이 닳았다. 흐르는 얕은 물도 같다. */
+    if (under && world.get(hx, hy - 1) === T.AIR && G.surfacePx) under = (this.y + 4) > G.surfacePx(this.cx / TS, hy);
     this.headUnder = under;
     if (under) {
       /* 깊이 압박 — 심해(세션 3)로 내려갈수록 숨이 빨리 닳는다. 수면에서 90칸
@@ -984,7 +989,22 @@ class Player extends Ent {
     if (inWater && !this.wasInWater) G.sfx('splash');
     this.wasInWater = inWater;
     if (this.onGround || inWater) this.jumpsLeft = d.jumps;
+    if (!inWater) this.floating = false;
     if (inWater) {
+      /* 수면에 떠 있기 — 아무것도 안 누르면 머리를 내민 채 **물결을 따라** 오르내린다.
+         예전에는 부력이 중력의 72%만 덜어 줘서 손을 놓으면 천천히 가라앉았고, 바다에서는
+         물결이 칸 안에서 오르내리는데 몸은 칸 경계에 멈춰 파도와 따로 놀았다.
+         수면이 머리 위 두 칸 안일 때만 끌어올린다 — 깊이 잠수한 것까지 끌어올리면 안 된다.
+         아래(S)를 누르면 이 부력을 끄고 가라앉는다. */
+      this.floating = false;
+      if (!input.jump && !input.down) {
+        const hx = this.cx / TS, sr = world.surfaceRow(Math.floor(hx), Math.floor((this.y + 6) / TS) + 1, 3);
+        if (sr >= 0 && G.surfacePx) {
+          this.floating = true;
+          const want = G.surfacePx(hx, sr) - 14;             // 목까지 잠기고 머리가 나온다
+          this.vy = lerp(this.vy, clamp((want - this.y) * 6, -160, 160), dt * 6);
+        }
+      }
       // 물가로 기어오르기 — 이게 없으면 좁은 웅덩이에서 영영 못 나온다
       if (input.jump && !this.jumpHeld) this.climbOut(world, want || this.facing);
       if (input.jump) this.vy = Math.max(this.vy - 1150 * dt, -215);
@@ -1079,7 +1099,8 @@ class Player extends Ent {
 
     // 낙하 데미지 판정용 — move() 안에서 착지 순간 vy가 0으로 꺾이기 전에 미리 재둔다
     const wasOnGround = this.onGround, fallVy = this.vy;
-    this.move(dt, world, { dropThrough: !!input.down });
+    // 수면에 떠 있는 동안은 중력을 끈다 — 끄지 않으면 부력 용수철이 중력과 비겨 몸이 14px 낮게 뜬다
+    this.move(dt, world, { dropThrough: !!input.down, gravMul: this.floating ? 0 : undefined });
     /* 물에 빠지면 안 다친다(폭포 아래 웅덩이가 착지 지점이 되어 주는 게 이 지형의 요점).
        제트팩·깃털도 마찬가지지만 ★ **지금 실제로 추진하거나 활공하는 중일 때만**이다 —
        `!d.glide && !d.jet`(끼고만 있으면 되는 조건)이면 장신구 하나가 영구 낙하 무효를
@@ -2510,7 +2531,21 @@ class Drop {
       this.x += this.vx * dt; this.y += this.vy * dt;
       return;
     }
-    this.vy = clamp(this.vy + GRAV * 0.7 * dt, -900, 700);
+    /* 물에 뜬다 — 예전에는 드롭이 물을 모르고 바닥까지 가라앉았다(바다에 떨군 전리품은
+       해저까지 헤엄쳐 가야 주웠다). 이제 수면까지 떠올라 수면에서 오르내린다. 바다 수면은
+       물결 높이(G.surfacePx — 그리는 쪽과 같은 식)를 따라가므로 파도를 타고, 흐르는 물에서는
+       물살에 떠내려간다. 수면에서 3칸보다 깊으면 천천히 떠오르기만 한다. */
+    const ctx = Math.floor((this.x + this.w / 2) / TS), cty = Math.floor((this.y + this.h * 0.75) / TS);
+    const sr = world.surfaceRow(ctx, cty, 3);
+    const wet = TILE_DEF[world.get(ctx, cty)].liquid;
+    if (wet) {
+      const cur = world.currentAt(ctx, cty);
+      this.vx = lerp(this.vx, cur * 120, dt * 2.5);
+      if (sr >= 0 && G.surfacePx) {
+        const want = G.surfacePx((this.x + this.w / 2) / TS, sr) - this.h * 0.55;
+        this.vy = lerp(this.vy, (want - this.y) * 5, dt * 8);
+      } else this.vy = lerp(this.vy, -40, dt * 2);
+    } else this.vy = clamp(this.vy + GRAV * 0.7 * dt, -900, 700);
     if (!world.hitSolid(this.x + this.vx * dt, this.y, this.w, this.h)) this.x += this.vx * dt; else this.vx = 0;
     if (!world.hitSolid(this.x, this.y + this.vy * dt, this.w, this.h)) this.y += this.vy * dt;
     else { if (this.vy > 0) { this.vx *= 0.7; } this.vy = 0; }

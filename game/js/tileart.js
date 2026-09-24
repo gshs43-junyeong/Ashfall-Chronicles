@@ -125,7 +125,10 @@ ART[T.GLOWMOSS] = { k: 'grass', c: '#3a4a44', g: '#4a9a7a' };
 ART[T.SPORESTONE] = { k: 'sporestone', c: '#4a5a5a' };
 ART[T.GLOWCAP] = { k: 'glowcap', c: '#6fe0c0', a: 1 };
 ART[T.GLOWLEAF] = { k: 'leaf', c: '#6fe0c0', a: 1, glow: 1, noTwig: 1 };   // 버섯나무 갓 조각
-ART[T.LILY] = { k: 'lily', c: '#3a9a6a', a: 1, fr: 3, fps: 4 };
+/* 수련·해초·물풀은 **물을 제 그림에 굽지 않는다** — game.js 가 그 칸 밑에 진짜 물 타일을
+   같은 프레임으로 먼저 깐다(UNDER_LIQ). 예전에는 물 그림을 칸마다 따로 구워 넣어서, 잔물결
+   무늬와 프레임이 옆 물칸과 어긋나 수련 둘레만 네모나게 다른 물로 보였다. */
+ART[T.LILY] = { k: 'lily', c: '#3a9a6a', a: 1 };
 ART[T.AIRPOCKET] = { k: 'airpocket', c: '#cfeeff', a: 1, fr: 3, fps: 4 };
 ART[T.ROOMAIR]   = { k: 'roomair', c: '#3b2c1c', a: 1 };
 /* 등급 5 광물 둘 — 바탕돌 색을 산지에 맞춘다(빙하는 얼음, 해저는 젖은 바위).
@@ -149,6 +152,16 @@ ART[T.M_BATTERY_HI] = { k: 'mk_battery', c: '#4a9a8a', a: 1 };
 ART[T.BRINEVENT] = { k: 'flamevent', c: '#2a6a7a' };   // 염수 분출구 — 화염과 같은 틀에 색만 물빛
 ART[T.TRIPMINE] = { k: 'tripmine', c: '#8a5a3a' };
 ART[T.KELPPLANT] = { k: 'kelpplant', c: '#3f7a5a', a: 1, fr: 3, fps: 2 };
+/* --- 흐르는 액체 · 샘 · 물가 장식 (v1.1 유체) ---
+   흐르는 물은 고인 물과 **같은 그림**을 수위만큼 잘라 그린다(game.js drawFlow). 여기 그림은
+   "떨어지는 중"일 때 쓰는 것 — 바닷물은 떨어지는 결을, 용암은 용암 그대로. */
+ART[T.FLOWWATER] = { k: 'water', c: '#2f6f9f', a: 1, fr: 3, fps: 4 };
+ART[T.FLOWSEA]   = { k: 'water', c: '#2a6a92', a: 1, fall: 1, fr: 3, fps: 10 };
+ART[T.FLOWLAVA]  = { k: 'lava', c: '#e0561c', a: 1, fr: 3, fps: 2.5 };   // a:1 — 얕은 칸 윗부분에 벽이 비쳐야 한다
+ART[T.SPRING]    = { k: 'spring', c: '#5a6a70' };
+ART[T.CATTAIL]   = { k: 'cattail', c: '#7a8a4a', a: 1 };
+ART[T.PONDWEED]  = { k: 'pondweed', c: '#4a8a5a', a: 1, fr: 3, fps: 1.5 };
+ART[T.PEBBLES]   = { k: 'pebbles', c: '#9a948a', a: 1 };
 ART[T.SEASHELL] = { k: 'seashell', c: '#e0cdb8', a: 1 };
 ART[T.SULFUR] = { k: 'ore', c: '#7a7268', o: '#d8c04a', glow: 1 };
 /* 마을 전신주 기둥 — 공장 전주(M_POLE)와 나란히 서도 이질감이 없어야 해서 같은 나뭇결·
@@ -1343,16 +1356,15 @@ const TileArt = {
         }
         g.fillStyle = '#ffe08a';
         g.beginPath(); g.arc(ox + cx, oy + cy, 1.7, 0, TAU); g.fill();
-        g.globalAlpha = .22; g.fillStyle = base;
-        g.beginPath(); g.arc(ox + cx, oy + cy, 7, 0, TAU); g.fill();
-        g.globalAlpha = 1;
+        /* 판 둘레에 초록 물빛(반지름 7 원)을 옅게 깔던 것을 뺐다 — 물 위에 초록 얼룩이
+           칸마다 떠서 수면이 수련 칸에서만 탁해 보였다. */
         break;
       }
 
       case 'kelpplant': {
         /* 해초 — 물속이므로 **물을 먼저 깔고** 그 위에 잎을 세운다(수련·공기 주머니와
            같은 방식). 프레임마다 휘는 방향을 바꿔 물살에 흔들리는 것처럼 보이게 한다. */
-        this.paint(g, ox, oy, ART[T.SEAWATER], rng);
+        // 물은 game.js 가 밑에 깐다(UNDER_LIQ) — 수련과 같은 까닭
         const sway = rng.range(-2.5, 2.5);
         for (let k = 0; k < 3; k++) {
           const bx = 5 + k * 6 + rng.range(-1, 1);
@@ -1472,10 +1484,10 @@ const TileArt = {
            한쪽 V자 노치 · 가운데에서 퍼지는 잎맥 · 판 위에 얹힌 작은 연꽃. */
         const cx = TS / 2, cy = 3.5;                   // 판의 중심선 (타일 위쪽)
         const rx = TS / 2 - 0.5, ry = 3;
-        /* 판 밑은 물이다 — 이 칸도 물칸(liquid)이다. 예전에는 물빛을 단색으로 칠했더니
-           옆 물 타일(물결·반짝임이 있는 그림)과 전혀 딴판으로 보였다. 이제 **물 타일
-           그림을 그대로 한 번 그리고** 그 위에 잎을 얹는다 — 색도 결도 옆 칸과 같다. */
-        this.paint(g, ox, oy, ART[T.WATER], rng);
+        /* 판 밑은 물이다 — 이 칸도 물칸(liquid)이다. ★ 물은 여기서 그리지 않는다.
+           물 그림을 이 칸에 구워 넣으면 잔물결 무늬·프레임이 옆 물칸과 따로 놀아 수련
+           둘레만 네모나게 다른 물이 된다. game.js 가 진짜 물 타일을 같은 프레임으로
+           먼저 깔고(UNDER_LIQ) 그 위에 이 잎만 얹는다. */
         g.fillStyle = base;
         g.beginPath(); g.ellipse(ox + cx, oy + cy, rx, ry, 0, 0, TAU); g.fill();
         // V자 노치 — 오른쪽을 물빛으로 도려내 연잎 특유의 갈라진 실루엣을 만든다
@@ -1507,6 +1519,61 @@ const TileArt = {
         }
         g.fillStyle = '#ffe08a';
         g.beginPath(); g.arc(fx, fy, .9, 0, TAU); g.fill();
+        break;
+      }
+
+      case 'spring': {
+        /* 샘 바위 — 돌 바탕에 젖어 검게 번진 틈 하나와 거기서 새는 물방울.
+           돌과 너무 다르면 벽에 박힌 블록처럼 튀므로 바탕은 돌 결 그대로, 젖은 자국으로만 알린다. */
+        this.paint(g, ox, oy, ART[T.STONE], rng);
+        g.globalAlpha = .45; R(0, 0, TS, TS, '#2a4a5a'); g.globalAlpha = 1;
+        const cx0 = rng.range(7, TS - 8);
+        for (let y = 0; y < TS; y += 2) R(cx0 + Math.sin(y * .7) * 2, y, 2, 2, '#1a2a32');   // 틈
+        R(cx0 - 1, TS - 4, 5, 4, '#3f7fa8');                                                 // 고인 물기
+        g.globalAlpha = .7;
+        for (let k = 0; k < 4; k++) R(rng.range(2, TS - 3), rng.range(4, TS - 2), 1, rng.range(2, 4), '#8fd0f0');
+        g.globalAlpha = 1;
+        R(cx0, TS - 2, 2, 2, '#bfe8ff');
+        break;
+      }
+      case 'cattail': {
+        /* 부들 — 가는 줄기 서너 대에 갈색 이삭. 물가 바닥에서 위로 곧게 선다 */
+        for (let k = 0; k < 4; k++) {
+          const bx = 4 + k * 4.5 + rng.range(-1, 1), h = rng.range(12, TS - 1), lean = rng.range(-1.5, 1.5);
+          g.strokeStyle = k % 2 ? lt : base; g.lineWidth = 1.2;
+          g.beginPath(); g.moveTo(ox + bx, oy + TS); g.quadraticCurveTo(ox + bx, oy + TS - h / 2, ox + bx + lean, oy + TS - h); g.stroke();
+          if (k % 2 === 0) {                                  // 이삭
+            g.fillStyle = '#6a4424';
+            g.beginPath(); g.ellipse(ox + bx + lean, oy + TS - h + 3, 1.4, 3, 0, 0, TAU); g.fill();
+          } else {                                            // 잎 — 이삭 없이 뾰족하게
+            g.strokeStyle = dk; g.beginPath(); g.moveTo(ox + bx, oy + TS - 3);
+            g.lineTo(ox + bx + lean * 3, oy + TS - h * .7); g.stroke();
+          }
+        }
+        break;
+      }
+      case 'pondweed': {
+        /* 물풀 — 물속 바닥에서 올라온 가는 잎. 해초보다 짧고 잎이 여럿 갈라진다 */
+        const sway = rng.range(-2, 2);
+        for (let k = 0; k < 5; k++) {
+          const bx = 3 + k * 4 + rng.range(-1, 1), h = rng.range(7, 15);
+          g.strokeStyle = k % 2 ? lt : base; g.lineWidth = 1;
+          g.beginPath(); g.moveTo(ox + bx, oy + TS);
+          g.quadraticCurveTo(ox + bx + sway, oy + TS - h / 2, ox + bx + sway * 1.6, oy + TS - h); g.stroke();
+          g.fillStyle = k % 2 ? base : lt;
+          for (let j = 1; j < 3; j++) g.fillRect(ox + bx + sway * j * .5, oy + TS - h * j / 3, 2, 1);
+        }
+        break;
+      }
+      case 'pebbles': {
+        /* 물가 조약돌 — 바닥에 둥글게 닳은 돌 몇 개. 물에 씻겨 모서리가 없다 */
+        for (let k = 0; k < 5; k++) {
+          const px = rng.range(3, TS - 4), rx = rng.range(1.8, 3.4), ry = rx * rng.range(.55, .75);
+          const c = [base, lt, dk, '#b8b0a4', '#7f8a8c'][k];
+          g.fillStyle = c;
+          g.beginPath(); g.ellipse(ox + px, oy + TS - ry, rx, ry, 0, 0, TAU); g.fill();
+          g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(ox + px - rx * .4, oy + TS - ry * 1.6, 1.5, 1);
+        }
         break;
       }
 
