@@ -60,13 +60,14 @@ const UI = {
     this.buildProf();
     $$('[data-ui-icon]').forEach(el => this.setIcon(el, Art.uiUrl(el.dataset.uiIcon)));
     this.bindSettings();
+    this.bindTabBar();
 
     const trash = $('#trash-zone');
     if (trash) {
       trash.addEventListener('mousedown', e => {
         e.preventDefault();
         if (this.cursor) this.discardCursor();
-        else this.toast('버릴 아이템을 먼저 집으세요 (칸을 클릭)');
+        else this.toast('버릴 아이템을 먼저 집어야 한다 (칸을 클릭)');
       });
       trash.addEventListener('mouseenter', e => { this.tipText('휴지통', '커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기', e); });
       trash.addEventListener('mouseleave', () => this.hideTip());
@@ -190,10 +191,7 @@ const UI = {
      Esc 는 취소로만 쓴다 — 바꿀 수 있게 두면 메뉴를 못 여는 상태를 만들 수 있다. */
   buildKeys() {
     const box = $('#set-keys'); if (!box) return;
-    const ARROW = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
-    const NAMED = { ShiftLeft: 'Shift(왼)', ShiftRight: 'Shift(오)', ControlLeft: 'Ctrl(왼)',
-      ControlRight: 'Ctrl(오)', AltLeft: 'Alt(왼)', AltRight: 'Alt(오)', Space: 'Space' };
-    const label = c => ARROW[c] || NAMED[c] || c.replace(/^Key/, '').replace(/^Digit/, '');
+    const label = c => this.keyLabel(c);
     box.innerHTML = KEY_ACTIONS.map(a =>
       `<div class="set-row key"><span>${a.n}</span>` +
       `<button class="keybtn" data-act="${a.id}">${G.keysFor(a.id).map(label).join(' · ')}</button></div>`).join('');
@@ -202,6 +200,40 @@ const UI = {
       btn.classList.add('waiting'); btn.textContent = '키를 누르세요…';
       this.keyWait = { act: btn.dataset.act, btn };
     }));
+  },
+  /** 키 코드 → 화면에 적을 이름(설정 창 · 화면 아래 탭 단추가 같이 쓴다) */
+  keyLabel(c) {
+    const ARROW = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
+    const NAMED = { ShiftLeft: 'Shift(왼)', ShiftRight: 'Shift(오)', ControlLeft: 'Ctrl(왼)',
+      ControlRight: 'Ctrl(오)', AltLeft: 'Alt(왼)', AltRight: 'Alt(오)', Space: 'Space' };
+    return ARROW[c] || NAMED[c] || c.replace(/^Key/, '').replace(/^Digit/, '');
+  },
+  /* ---- 화면 아래 탭 단추 ----
+     조작키로만 열리던 탭(가방·능력·일지·제작·지도)을 마우스로도 연다. 키를 몰라도 어떤 탭이 있는지 보이고,
+     단추마다 **지금 걸린 키**를 적어 두어 키를 익히는 안내도 겸한다(설정에서 바꾸면 따라 바뀐다). */
+  bindTabBar() {
+    const bar = $('#tabbar'); if (!bar) return;
+    bar.querySelectorAll('.tb').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      const t = b.dataset.tab;
+      if (t === 'inv') this.togglePanel('inv');
+      else if (t === 'skills') this.togglePanel('skill');
+      else if (t === 'quest') this.togglePanel('quest');
+      else if (t === 'craft') { this.craftTab = 'hand'; this.togglePanel('craft'); }
+      else if (t === 'map') this.openFullmap();
+      else if (t === 'menu') { if (this.open || this.dlg) { this.closePanel(); this.closeDialogue(); } else G.setPause(true); }
+      b.blur();                                   // 단추에 초점이 남으면 Space(점프)가 단추를 또 누른다
+    }));
+    this.refreshTabBar();
+  },
+  refreshTabBar() {
+    const bar = $('#tabbar'); if (!bar) return;
+    bar.querySelectorAll('.tb').forEach(b => {
+      const t = b.dataset.tab, kb = b.querySelector('kbd');
+      if (t !== 'menu' && kb) kb.textContent = G.keysFor(t).slice(0, 1).map(c => this.keyLabel(c)).join('');
+      const open = { inv: 'inv', skills: 'skill', quest: 'quest', craft: 'craft', map: 'fullmap' }[t];
+      b.classList.toggle('on', !!open && this.open === open);
+    });
   },
   /** bindInput 의 keydown 이 설정 창에서 먼저 들르는 자리 */
   captureKey(code) {
@@ -214,6 +246,7 @@ const UI = {
       G.setOpt('keys', keys);
     }
     this.buildKeys();
+    this.refreshTabBar();
     return true;
   },
   /** G.settings → 화면 (열 때와 값이 바뀔 때마다) */
@@ -260,12 +293,14 @@ const UI = {
     if (id === 'skill') { this.setSkillTab(this.skillTab || 'tree'); this.refreshTree(); this.refreshSkillSlots(); this.refreshProf(); }
     if (id === 'quest') this.refreshQuest();
     if (id === 'craft') this.refreshCraft();
+    this.refreshTabBar();
   },
   closePanel() {
     if (this.open) { const el = $('#panel-' + this.open); if (el) el.classList.remove('open'); }
     this.open = null; G.uiOpen = false; this.hideTip();
     if (this.cursor) { G.player.addItem(this.cursor); this.setCursor(null); }
     this.chestRef = null; this.shopRef = null; this.machRef = null; this.storeRef = null;
+    this.refreshTabBar();
   },
 
   /* ---------------- 핫바 ---------------- */
@@ -662,7 +697,7 @@ const UI = {
       return `이 갈래에 ${need}점 필요 (지금 ${have}` +
         (lend > 0 ? ` = 제 갈래 ${own} + 다른 갈래 ${lend}` : '') + ')';
     }
-    if (!this.reqMet(id)) return '윗단계 ' + sk.req.map(r => SKILLS[r].n).join(' 또는 ') + ' 을(를) 먼저';
+    if (!this.reqMet(id)) { const nm = sk.req.map(r => SKILLS[r].n).join(' 또는 '); return '윗단계 ' + eulreul(nm) + ' 먼저'; }
     return '';
   },
   skDesc(id, rank) {
@@ -873,7 +908,7 @@ const UI = {
       }
       for (const ch of chapterBlock.chapters) {
         const state = ch.id < g.chapter ? 'done' : ch.id === g.chapter ? 'cur' : 'locked';
-        // 세션 2의 sub는 "세션 2 · 제 1 장" 꼴이라, 세션 2 탭 안에서는 앞의 "세션 2 · "가
+        // 세션 2의 sub는 "세션 2 · 제1장" 꼴이라, 세션 2 탭 안에서는 앞의 "세션 2 · "가
         // 줄마다 반복돼 군더더기다. 그 접두어만 떼고 장 번호는 살린다 —
         // 예전에는 아예 제목만 남겨서 몇 장인지 알 수 없었다.
         const sub = ch.sub.replace(/^세션\s*\d+\s*·\s*/, '');
@@ -1560,7 +1595,7 @@ const UI = {
     fill($('#vault-bag'), p.bag, i => {
       const it = p.bag[i]; if (!it) return;
       const slot = store.indexOf(null);
-      if (slot < 0) { this.toast(`${label}가 가득 찼다`, 'bad'); return; }
+      if (slot < 0) { this.toast(`${iga(label)} 가득 찼다`, 'bad'); return; }
       store[slot] = it; p.bag[i] = null;
       this.refreshVault(); this.refreshBag(); G.sfx('place');
     });

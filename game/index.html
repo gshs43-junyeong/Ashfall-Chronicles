@@ -66,13 +66,22 @@
 
     <div id="skillbar"></div>
     <div id="hotbar"></div>
+    <!-- 조작키로 여는 탭들을 마우스로도 — 글자는 지금 걸린 키(설정에서 바꾸면 따라 바뀐다, ui.js refreshTabBar) -->
+    <div id="tabbar">
+      <button class="tb" data-tab="inv"><span class="tb-ic" data-ui-icon="bagui"></span><span class="tb-n">가방</span><kbd></kbd></button>
+      <button class="tb" data-tab="skills"><span class="tb-ic" data-ui-icon="p_skill"></span><span class="tb-n">능력</span><kbd></kbd></button>
+      <button class="tb" data-tab="quest"><span class="tb-ic" data-ui-icon="p_quest"></span><span class="tb-n">일지</span><kbd></kbd></button>
+      <button class="tb" data-tab="craft"><span class="tb-ic" data-ui-icon="p_craft"></span><span class="tb-n">제작</span><kbd></kbd></button>
+      <button class="tb" data-tab="map"><span class="tb-ic" data-ui-icon="p_map"></span><span class="tb-n">지도</span><kbd></kbd></button>
+      <button class="tb" data-tab="menu"><span class="tb-ic" data-ui-icon="p_menu"></span><span class="tb-n">메뉴</span><kbd>Esc</kbd></button>
+    </div>
   </div>
 
   <!-- ================= 패널 ================= -->
   <div id="panels">
     <!-- 인벤토리 -->
     <section class="panel" id="panel-inv">
-      <header><h2>가방</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="bagui" aria-hidden="true"></span><h2>가방</h2><button class="x" data-close>✕</button></header>
       <div class="inv-wrap">
         <div class="equip-col">
           <div class="equip-title"><span class="section-ic" data-ui-icon="equip" aria-hidden="true"></span>장비</div>
@@ -111,7 +120,7 @@
 
     <!-- 스킬/특성 -->
     <section class="panel wide" id="panel-skill">
-      <header><h2>능력과 특성</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_skill" aria-hidden="true"></span><h2>능력과 특성</h2><button class="x" data-close>✕</button></header>
       <div class="skill-top">
         <div class="pts">스탯 포인트 <b id="stat-pts">0</b> · 특성 포인트 <b id="skill-pts">0</b></div>
         <div id="stat-alloc"></div>
@@ -123,7 +132,7 @@
       <div class="sk-pane on" id="sk-pane-tree">
         <div id="tree-wrap"></div>
         <div class="skill-assign">
-          <div class="equip-title">스킬 슬롯 <small>(트리에서 배운 액티브를 우클릭해 슬롯에 등록)</small></div>
+          <div class="equip-title">스킬 슬롯 <small>(트리에서 배운 액티브 스킬을 우클릭하면 슬롯에 등록됩니다)</small></div>
           <div id="skill-slots"></div>
         </div>
       </div>
@@ -134,26 +143,26 @@
 
     <!-- 퀘스트 / 일지 -->
     <section class="panel" id="panel-quest">
-      <header><h2>여정의 기록</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_quest" aria-hidden="true"></span><h2>여정의 기록</h2><button class="x" data-close>✕</button></header>
       <div id="quest-body"></div>
     </section>
 
     <!-- 제작 -->
     <section class="panel" id="panel-craft">
-      <header><h2>제작</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_craft" aria-hidden="true"></span><h2>제작</h2><button class="x" data-close>✕</button></header>
       <div id="craft-note"></div>
       <div id="craft-list"></div>
     </section>
 
     <!-- 상자 -->
     <section class="panel" id="panel-chest">
-      <header><h2 id="chest-title">상자</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_chest" aria-hidden="true"></span><h2 id="chest-title">상자</h2><button class="x" data-close>✕</button></header>
       <div id="chest-grid"></div>
     </section>
 
     <!-- 보관고 (여명 마을) -->
     <section class="panel wide" id="panel-vault">
-      <header><h2 id="vault-title">보관고</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_vault" aria-hidden="true"></span><h2 id="vault-title">보관고</h2><button class="x" data-close>✕</button></header>
       <div id="vault-gold-row" class="vault-gold-row">
         <span>보관된 금화 <b id="vault-gold-amt">0</b></span>
         <button id="btn-vault-deposit">넣기</button>
@@ -173,41 +182,41 @@
 
     <!-- 의뢰 게시판 -->
     <section class="panel" id="panel-board">
-      <header><h2 id="board-title">의뢰 게시판</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_board" aria-hidden="true"></span><h2 id="board-title">의뢰 게시판</h2><button class="x" data-close>✕</button></header>
       <div id="board-body"></div>
     </section>
 
     <!-- 마을 회관 -->
     <section class="panel" id="panel-town">
-      <header><h2 id="town-title">여명 마을</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_town" aria-hidden="true"></span><h2 id="town-title">여명 마을</h2><button class="x" data-close>✕</button></header>
       <div id="town-body"></div>
     </section>
 
     <!-- 기계 (공장) -->
     <section class="panel" id="panel-machine">
-      <header><h2 id="mach-title">기계</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_mach" aria-hidden="true"></span><h2 id="mach-title">기계</h2><button class="x" data-close>✕</button></header>
       <div id="mach-body"></div>
     </section>
 
     <!-- 재련대 -->
     <section class="panel" id="panel-reforge">
-      <header><h2 id="reforge-title">재련대</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_reforge" aria-hidden="true"></span><h2 id="reforge-title">재련대</h2><button class="x" data-close>✕</button></header>
       <div id="reforge-note"></div>
       <div id="reforge-grid"></div>
     </section>
 
     <section class="panel" id="panel-anvil">
-      <header><h2 id="anvil-title">강화 모루</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_anvil" aria-hidden="true"></span><h2 id="anvil-title">강화 모루</h2><button class="x" data-close>✕</button></header>
       <div id="anvil-note"></div>
       <div id="anvil-grid"></div>
     </section>
 
     <!-- 전체 지도 -->
     <section class="panel fullmap" id="panel-fullmap">
-      <header><h2>지도</h2><button class="x" data-close>✕</button></header>
+      <header><span class="title-ic" data-ui-icon="p_map" aria-hidden="true"></span><h2>지도</h2><button class="x" data-close>✕</button></header>
       <div id="fullmap-wrap">
         <canvas id="fullmap-canvas"></canvas>
-        <div id="fullmap-hint">휠: 확대/축소 · 드래그: 이동 · 눈으로 본 곳만 표시된다</div>
+        <div id="fullmap-hint">휠: 확대/축소 · 드래그: 이동 · 직접 본 곳만 표시됩니다</div>
       </div>
     </section>
   </div>
@@ -452,7 +461,7 @@
           <p class="set-note">화면 흔들림과 큰 스킬의 섬광을 함께 조절합니다. 0%로 두면 둘 다 없습니다.</p>
           <label class="set-row"><span>시야 범위</span>
             <input type="range" id="set-view" min="70" max="140" step="5"><b id="set-view-v">100%</b></label>
-          <p class="set-note">시야를 낮추면 넓게, 높이면 크게 보입니다. 미니맵 범위는 그대로입니다.</p>
+          <p class="set-note">값을 낮추면 더 넓게, 높이면 더 크게 보입니다. 미니맵 범위는 그대로입니다.</p>
           <div class="set-grid">
             <label class="set-row chk"><span>피해 숫자</span><input type="checkbox" id="set-dmgnum"></label>
             <label class="set-row chk"><span>미니맵</span><input type="checkbox" id="set-minimap"></label>

@@ -259,6 +259,7 @@ const G = {
       else if (this.isKey('skills', k)) { UI.togglePanel('skill'); e.preventDefault(); }
       else if (this.isKey('quest', k)) { UI.togglePanel('quest'); e.preventDefault(); }
       else if (this.isKey('craft', k)) { UI.craftTab = 'hand'; UI.togglePanel('craft'); e.preventDefault(); }
+      else if (this.isKey('map', k)) { UI.openFullmap(); e.preventDefault(); }
       else if (this.isKey('save', k)) { e.preventDefault(); this.saveGame(); }
       else if (k.startsWith('Digit')) {
         const n = +k.slice(5); this.player.sel = (n === 0 ? 9 : n - 1); UI.refreshHotbar();
@@ -873,7 +874,7 @@ const G = {
     if (this.starMerge > 0) this.starMerge = Math.max(0, this.starMerge - dt);
     if (this.starGain) { this.starGain.t += dt; if (this.starGain.t >= this.starGain.dur) this.starGain = null; }
     this.tickStarRise(dt);
-    /* 11장의 결착은 "세우고 · 물리고 · 끊기"다. 가운데 걸음(동력이 돈 적이 있다)은
+    /* 11장의 결전은 "세우고 · 물리고 · 끊기"다. 가운데 걸음(동력이 돈 적이 있다)은
        지나가면 사라지므로 여기서 한 번 적어 둔다. 그 장에서만 본다. */
     if (this.chapter === 11 && !this.asmRan && this.world && this.world.machines
         && typeof Factory !== 'undefined') {
@@ -2029,7 +2030,7 @@ const G = {
     const choices = [];
     const give = t.it || 'blueprint_frag';
     if (first) choices.push({
-      t: `(${ITEMS[give].n}을(를) 뽑아낸다)`, quest: 1, fn: () => {
+      t: `(${eulreul(ITEMS[give].n)} 뽑아낸다)`, quest: 1, fn: () => {
         this.termsRead[o.term] = true;
         const it = makeItem(give, t.it ? 8 : 1);
         if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it));
@@ -2080,7 +2081,7 @@ const G = {
     const choices = [];
     if (p.gold >= cost)
       choices.push({
-        t: `(금화 ${fmt(cost)}를 던진다)`, quest: 1, fn: () => {
+        t: `(금화 ${fmt(cost)}개를 던진다)`, quest: 1, fn: () => {
           UI.closeDialogue();
           p.gold -= cost;
           p.addBuff('wish');
@@ -2090,7 +2091,7 @@ const G = {
           this.sfx('coin');
         }
       });
-    else lines.push(`동전을 던지려면 금화 ${fmt(cost)}가 필요하다.`);
+    else lines.push(`동전을 던지려면 금화 ${fmt(cost)}개가 필요하다.`);
     UI.openLore('여명의 분수', lines, choices);
   },
 
@@ -2741,7 +2742,7 @@ const G = {
   },
 
   /* ================= 제단 / 보스 ================= */
-  /** 이 장의 결착 보스인데 아직 자격이 없으면 막는다 — 소환 아이템만으로 깨울 수 있으면
+  /** 이 장의 결전 보스인데 아직 자격이 없으면 막는다 — 소환 아이템만으로 깨울 수 있으면
       장 목표를 통째로 건너뛴다. 다른 장의 보스는 그대로 자유롭게 깨운다. */
   bossGated(bossId) {
     const ch = CHAPTERS[this.chapter];
@@ -2759,7 +2760,7 @@ const G = {
     // 소환 아이템이 아예 없는 보스라면 제단이 아니라 둥지로 다뤄야 한다.
     // 예전에 이 자리에서 ITEMS[undefined]를 읽어 예외가 났었다
     if (!need) { this.wakeLair({ boss: o.boss, ruin: 12, nm: '제단', x: o.x, y: o.y, w: o.w, h: o.h }); return; }
-    if (p.countItem(need) <= 0) { this.toast(`${ITEMS[need].n}이(가) 필요하다`, 'bad'); return; }
+    if (p.countItem(need) <= 0) { this.toast(`${iga(ITEMS[need].n)} 필요하다`, 'bad'); return; }
     p.removeItem(need, 1);
     this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 60);
     UI.refreshBag();
@@ -2783,11 +2784,11 @@ const G = {
   },
   spawnBoss(id, x, y) {
     /* 스토리 보스는 수치를 고정한다. scale() 은 플레이어의 진행도를 따라 커지는
-       값이라, 늦게 온 사람일수록 결착이 더 두꺼워지고 페이즈가 지루해졌다.
+       값이라, 늦게 온 사람일수록 결전이 더 두꺼워지고 페이즈가 지루해졌다.
        필드·미니보스는 그대로 scale() 을 탄다(그쪽은 "지나가다 만난 것"이라 맞다). */
     const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
     this.ents.push(e); this.boss = e;
-    this.toast(`${ENEMIES[id].n}이(가) 깨어났다!`, 'bad');
+    this.toast(`${iga(ENEMIES[id].n)} 깨어났다!`, 'bad');
     this.shake = 16;
     // 등장 효과음을 따로 두지 않고 보스 브금이 바로 치고 들어오게 한다
     if (window.Music) Music.play('boss', true);
@@ -2876,7 +2877,7 @@ const G = {
     const id = this.rng.weighted(EGG_POOL[tier]);
     const it = makeItem('pet_' + id, 1);
     if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-    this.toast(`${PETS[id].n}를 얻었다! (장비창의 펫 칸에 끼울 수 있다)`, 'good');
+    this.toast(`${eulreul(PETS[id].n)} 얻었다! (장비창의 펫 칸에 끼울 수 있다)`, 'good');
     UI.refreshBag(); UI.refreshChest();
   },
   /** 장비창의 펫 슬롯을 실제로 따라다니는 펫 인스턴스와 맞춘다.
@@ -2926,7 +2927,7 @@ const G = {
     p.gold -= cost; this.trainedToday++;
     const xp = Math.round(p.xpNext * 0.18);
     p.addXp(xp);
-    this.toast(`수련으로 경험치 ${fmt(xp)}를 얻었다`, 'good');
+    this.toast(`수련으로 경험치 +${fmt(xp)}`, 'good');
   },
   /* ================= 마을 개선 =================
      등급은 world.dawnCity.lv 에 둔다 — 마을은 세계의 일부라 세계와 함께 저장되어야
@@ -2957,7 +2958,7 @@ const G = {
        가방에 저절로 생기는 것과 걸어가서 여는 것은 다르다 — 후자여야
        그 자리가 "내가 손댈 곳"으로 읽힌다. */
     if (lv + 1 === 2) this.toast('마을 서쪽에 땅을 내주었다 — 울타리 옆 상자에 연장과 씨앗이 있다', 'good');
-    this.toast(`마을이 『${spec.n}』이 되었다`, 'good');
+    this.toast(`마을이 『${spec.n}』${josa(spec.n, '이', '가')} 되었다`, 'good');
     for (let i = 0; i < 40; i++) this.parts.push(new Part(p.cx + (Math.random() - .5) * 200, p.cy, '#ffe08a', -70, 1.2));
     UI.chapterCard({ sub: '마을 개선', title: spec.n, line: spec.d });
     UI.refreshBag(); this.sfx('chapter');
@@ -3190,7 +3191,7 @@ const G = {
       // 국면이 끝나면 이벤트도 끝난다. 비처럼 낮/밤 구분이 없는 이벤트는 dur(지속 시간)로 대신 끊는다
       const e = EVENTS[this.event.id];
       if ((e.night && !night) || (e.day && night) || (e.dur && this.event.t >= e.dur)) {
-        this.toast(`${e.i} ${e.n}이(가) 지나갔다`);
+        this.toast(`${e.i} ${iga(e.n)} 지나갔다`);
         this.event = null;
       }
       return;
@@ -3832,7 +3833,7 @@ const G = {
      이제 셋으로 나뉜다.
        basics     넷 중 골라서 하는 것 (needBasics 개만 채우면 된다)
        require    이 장의 고유 동사. 그 verb 를 가진 basic 은 반드시 끝나 있어야 한다
-       goal       결착. 보통 보스다
+       goal       결전. 보통 보스다
      그래서 "무엇을 할지"는 고르되 "이 장이 무엇에 관한 장인지"는 지켜진다.
      항목 수를 줄인 대신 개별 숫자는 조금만 낮췄다 — 플레이 시간을 깎는 것이
      목적이 아니라 **숙제처럼 느껴지는 것**을 없애는 것이 목적이다. */
@@ -3858,7 +3859,7 @@ const G = {
         cur = (o.zone ? (this.seenBiomes && this.seenBiomes[o.zone])
                       : (this.seenRuins && this.seenRuins[o.ruin])) ? 1 : 0;
         break;
-      /* 세우고 · 물리고 · 끊기. 11장의 결착이다 — 자동화를 켜는 것이 아니라
+      /* 세우고 · 물리고 · 끊기. 11장의 결전이다 — 자동화를 켜는 것이 아니라
          "켠 것을 내 손으로 멈출 수 있다"가 그 장의 이야기라서 세 걸음을 다 본다. */
       case 'place': cur = this.placeProgress(o); max = o.stop ? 3 : 1; break;
     }
@@ -3895,7 +3896,7 @@ const G = {
     };
   },
 
-  /** 아직 자격이 없는데 결착에 손대려 할 때 한 줄로 알려 준다 */
+  /** 아직 자격이 없는데 결전에 손대려 할 때 한 줄로 알려 준다 */
   goalLocked(ch, st) {
     if (!ch || st.ready) return '';
     if (st.missing.length) {
@@ -4157,7 +4158,7 @@ const G = {
       this.sfx('death');
       return;
     }
-    const parts = [`경험치 ${fmt(lostXp)}와 금화 ${fmt(lostG)}를 잃었다.`];
+    const parts = [`경험치 ${fmt(lostXp)}, 금화 ${fmt(lostG)}개를 잃었다.`];
     if (lostItems.length) parts.push(`가방에서 ${lostItems.length}칸이 떨어졌다.`);
     parts.push('쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.');
     $('#death-line').textContent = parts.join(' ');
@@ -4184,7 +4185,7 @@ const G = {
       out.push({ x: (r.x + 0.5) * TS, y: r.y * TS, k: 'ruin', t: (sp ? sp.n : '유적') + ' — 지도의 자리' });
     }
     if (!ch || !w) return out;
-    /* 나침반 — 준비 중에는 basics 를, 자격을 갖춘 뒤에는 결착만 가리킨다.
+    /* 나침반 — 준비 중에는 basics 를, 자격을 갖춘 뒤에는 결전만 가리킨다.
        예전에는 남은 것을 전부 가리켜서 화면 가장자리가 화살표로 가득했다. */
     const stt = this.chapterState(ch);
     const aim = stt.ready ? (stt.goal ? [stt.goal.o] : []) : stt.basics.filter(b => !b.p.done).map(b => b.o);
@@ -5615,10 +5616,22 @@ const G = {
     g = c.createRadialGradient(x, y, r * 0.8, x, y, r * 2.4);
     g.addColorStop(0, rgba(core, 0.55)); g.addColorStop(1, rgba(core, 0));
     c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 2.4, 0, TAU); c.fill();
-    // 원반 — 가운데가 가장 희고 가장자리로 갈수록 짙어진다
-    g = c.createRadialGradient(x - r * 0.2, y - r * 0.2, 0, x, y, r);
-    g.addColorStop(0, '#ffffff'); g.addColorStop(0.55, core); g.addColorStop(1, rim);
-    c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+    /* 원반 — 구운 그림(tools/mksky.py: 주변 감광 · 쌀알 무늬 · 코로나). 낮 원반과 노을 원반을 gold 로 섞고,
+       지평선 가까이에서는 대기 굴절로 **위아래가 눌린다**(노을 해가 납작해 보이는 것 — 최대 12%).
+       그림 속 원반 반지름은 칸의 30%(128칸 중 38.4) — 그 비로 r 에 맞춰 키운다. */
+    const day = Sprites.img.sky_sun, set = Sprites.img.sky_sun_set;
+    if (day && day.width) {
+      const S = r / 38.4 * 128, sq = 1 - 0.12 * gold;
+      c.drawImage(day, x - S / 2, y - S * sq / 2, S, S * sq);
+      if (gold > 0.01 && set && set.width) {
+        c.globalAlpha = al * gold;
+        c.drawImage(set, x - S / 2, y - S * sq / 2, S, S * sq);
+      }
+    } else {
+      g = c.createRadialGradient(x - r * 0.2, y - r * 0.2, 0, x, y, r);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(0.55, core); g.addColorStop(1, rim);
+      c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+    }
     c.restore();
   },
   /** 달 — 차가운 원반에 옅은 얼룩 셋, 푸른 달무리 */
@@ -7223,7 +7236,7 @@ const G = {
       const gold = 1200 * (spec.rank || 3);
       p.gold += gold;
       give(makeItem('pulse_shard', 3));
-      this.toast(`${spec.n}을(를) 거의 다 봤다 — 금화 ${fmt(gold)} · 맥박 결정 셋`, 'good');
+      this.toast(`${eulreul(spec.n)} 거의 다 봤다 — 금화 ${fmt(gold)} · 맥박 결정 셋`, 'good');
       this.sfx('manycoins');
     }
     if (sc.rank === 'S' && !sv.s) {
@@ -7604,6 +7617,21 @@ const G = {
       const hx = this.W * (0.5 - m.dir * 0.42 + m.dir * 0.8 * u), hy = this.H * (0.04 + 0.62 * Math.pow(u, 1.3)) - camY * 0.05;
       const L = 90 + 240 * u, ang = Math.atan2(0.62 * this.H, m.dir * 0.8 * this.W);
       const tx = hx - Math.cos(ang) * L, ty = hy - Math.sin(ang) * L;
+      /* 구운 그림(tools/mksky.py sky_meteor — 흰 머리 · 녹청빛 가장자리 · 노랑→붉은 꼬리 · 불티)을 나아가는
+         쪽으로 돌려 그린다. 머리는 그림의 (242, 24). 가까워질수록(u) 커진다. 그림이 없으면 아래 선·원. */
+      const im = Sprites.img.sky_meteor;
+      if (im && im.width) {
+        const k = 1.0 + 1.4 * u;                                     // 낮 하늘에서도 읽히게 — 0.55+0.9u 는 한낮에 거의 안 보였다
+        c.save();
+        c.translate(hx, hy); c.rotate(ang);
+        c.drawImage(im, -242 * k, -24 * k, 256 * k, 48 * k);
+        c.globalCompositeOperation = 'lighter';                    // 머리의 섬광만 더한다(밤하늘에서 빛나게)
+        const hg = c.createRadialGradient(0, 0, 0, 0, 0, 14 * k);
+        hg.addColorStop(0, 'rgba(255,245,220,.55)'); hg.addColorStop(1, 'rgba(255,200,120,0)');
+        c.fillStyle = hg; c.beginPath(); c.arc(0, 0, 14 * k, 0, TAU); c.fill();
+        c.restore();
+        return;
+      }
       c.save();
       c.globalCompositeOperation = 'lighter';
       const g = c.createLinearGradient(tx, ty, hx, hy);
@@ -7642,6 +7670,16 @@ const G = {
     if (left > M.fg || Math.abs(ix - camX - this.W / 2) > this.W * 1.2) return;
     const u = 1 - left / M.fg;
     const sx = ix - m.dir * 420 * (1 - u) - camX, sy = iy - 900 * (1 - u) - camY;
+    /* 구운 그림(sky_meteor_near — 울퉁불퉁한 바위 · 달아오른 앞면 · 불꼬리 · 연기). 바위 가운데는 그림의 (286, 56).
+       내리꽂히는 방향(dir·420, 900)으로 돌린다. */
+    const nim = Sprites.img.sky_meteor_near;
+    if (nim && nim.width) {
+      c.save();
+      c.translate(sx, sy); c.rotate(Math.atan2(900, m.dir * 420));
+      c.drawImage(nim, -286, -56, 320, 112);
+      c.restore();
+      return;
+    }
     const tx = sx - m.dir * 120, ty = sy - 260;
     c.save();                                      // 보통 합성 — 밝은 낮 하늘에 lighter 로 더하면 하얗게 날아간다
     const g = c.createLinearGradient(tx, ty, sx, sy);
@@ -7737,7 +7775,7 @@ const G = {
     }
     this.tally = this.tally || {};
     this.tally.faults = (this.tally.faults || 0) + 1;
-    this.toast(`무너진 벽 너머에 ${C.n}이 숨어 있었다`, 'good');
+    this.toast(`무너진 벽 너머에 ${iga(C.n)} 숨어 있었다`, 'good');
     this.sfx('chapter');
     this.checkAch();
   },
@@ -7921,7 +7959,7 @@ const G = {
         ['읽는 법', ['새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다.',
                     '그러면 우리가 원래 적으려 한 수가 나온다.']],
         ['마지막 한 걸음', ['거꾸로 읽어 낸 수가 아직 답은 아니다.',
-                          `거기에 ${k}을(를) 더해야 홈이 물린다.`,
+                          `거기에 ${eulreul(String(k))} 더해야 홈이 물린다.`,
                           '문지기가 하루에 한 번씩 더하던 수다.']]
       ];
     }
@@ -8014,7 +8052,7 @@ const G = {
     if (!c) { msg.textContent = '이 문은 여기서 열 수 없다'; return; }
     if (got.length < c.len) {
       msg.classList.remove('ok');
-      msg.textContent = `${K.ask}를 다 넣어야 한다`;
+      msg.textContent = `${eulreul(K.ask)} 다 넣어야 한다`;
       return;
     }
     if (got !== c.ans) {
