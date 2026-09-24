@@ -1561,6 +1561,15 @@ const G = {
       if (w.inLockedVault(tx, ty)) { this.toast('잠긴 골방 안에는 놓을 수 없다', 'bad'); return; }
       const tileId = idef(held).tile;
       if (TILE_DEF[tileId].solid === 1 && aabb({ x: tx * TS, y: ty * TS, w: TS, h: TS }, p.rect())) return;
+      // 장식은 기댈 데가 있어야 한다(data.js DECO_MOUNT) — 같은 장식끼리는 이어 붙는다
+      const mount = DECO_MOUNT[tileId];
+      if (mount) {
+        const by = mount === 'floor' ? ty + 1 : ty - 1, bt = w.get(tx, by);
+        if (TILE_DEF[bt].solid !== 1 && bt !== tileId) {
+          this.toast(mount === 'floor' ? '단단한 바닥 위에만 놓을 수 있다' : '천장에 매달아야 한다', 'bad');
+          return;
+        }
+      }
       w.set(tx, ty, tileId);
       held.c--; if (held.c <= 0) p.bag[p.sel] = null;
       UI.refreshBag(); this.sfx('place');
@@ -5181,6 +5190,7 @@ const G = {
 
     // ---- 조명 (부드러운 그라디언트 오버레이) ----
     this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
+    this.drawGlow(c, camX, camY, tx0, ty0, tx1, ty1);   // 빛 색 — 어둠 위에 더한다
     this.drawFishCue(c, camX, camY);   // 입질 알림은 밤에도 보여야 한다 — 조명 위에
     /* 유적 고유 이벤트의 여운을 화면에 덮는다.
        불이 꺼졌을 때(ruinDark)는 타일을 건드리지 않고 화면만 어둡게 한다 — 장식을
@@ -5839,6 +5849,33 @@ const G = {
     c.globalAlpha = 1;
   },
 
+  /** 빛 색 — 빛나는 타일(data.js LIGHT_SPEC) 둘레에 제 색의 번짐을 **더하기**로 얹는다.
+      조명 계산은 세기 하나뿐이라 수정도 횃불도 같은 흰빛이었다. 어두운 데서 더 잘 보이게
+      어둠(조명 덮개) **위에** 칠한다. 번짐은 색·반지름마다 한 장씩 만들어 두고 찍기만 한다. */
+  drawGlow(c, camX, camY, tx0, ty0, tx1, ty1) {
+    const w = this.world;
+    this._glowC = this._glowC || {};
+    c.save();
+    c.globalCompositeOperation = 'lighter';
+    for (let ty = Math.max(0, ty0 - 2); ty <= Math.min(WH - 1, ty1 + 2); ty++)
+      for (let tx = Math.max(0, tx0 - 2); tx <= Math.min(WW - 1, tx1 + 2); tx++) {
+        const d = TILE_DEF[w.tiles[ty * WW + tx]];
+        if (!d.lc) continue;
+        const r = Math.round(10 + d.light * 5);
+        const key = d.lc + r;
+        let g = this._glowC[key];
+        if (!g) {
+          g = document.createElement('canvas'); g.width = g.height = r * 2;
+          const gc = g.getContext('2d'), gr = gc.createRadialGradient(r, r, 0, r, r, r);
+          gr.addColorStop(0, d.lc + '66'); gr.addColorStop(0.45, d.lc + '22'); gr.addColorStop(1, d.lc + '00');
+          gc.fillStyle = gr; gc.fillRect(0, 0, r * 2, r * 2);
+          this._glowC[key] = g;
+        }
+        c.globalAlpha = Math.min(1, 0.4 + d.light * 0.03);
+        c.drawImage(g, tx * TS + TS / 2 - camX - r, ty * TS + TS / 2 - camY - r);
+      }
+    c.restore();
+  },
   drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1) {
     const w = this.world;
     const x0 = tx0 - 1, y0 = ty0 - 1, x1 = tx1 + 1, y1 = ty1 + 1;
@@ -6468,9 +6505,25 @@ const G = {
   pulseRuinAt(tx, ty) {
     const r = this.world.ruinAt(tx, ty);
     if (!r || !r.id) return null;
-    const idx = RUIN_SPEC.findIndex(s => s.id === r.id);
-    if (idx < 0) return null;
-    return { r, spec: RUIN_SPEC[idx], idx, id: r.id };
+    const spec = this.ruinSpec(r.id);
+    if (!spec) return null;
+    return { r, spec, idx: RUIN_SPEC.indexOf(spec), id: r.id };
+  },
+  /** 맥박·탐사 기록이 쓰는 유적 명세 — 바이옴 유적은 RUIN_SPEC 그대로, 석판 유적(story0~2)은
+      STORY_RUIN 에서 한 벌 만든다(주인·메아리·인장 없음, story 에 석판 번호). 그 밖은 null.
+      ★ 예전에는 RUIN_SPEC 만 봐서 석판 유적 셋에는 맥박도 사건도 탐사 기록도 없었다. */
+  ruinSpec(id) {
+    const s = RUIN_SPEC.find(q => q.id === id);
+    if (s) return s;
+    const m = /^story(\d)$/.exec(id || '');
+    if (!m || !STORY_RUIN[+m[1]]) return null;
+    this._storySpec = this._storySpec || {};
+    if (!this._storySpec[id]) {
+      const st = STORY_RUIN[+m[1]];
+      this._storySpec[id] = { id, n: st.n, mobs: st.mobs || ['skeleton'], rank: st.rank || 3,
+        tier: 3, bonus: st.bonus, story: +m[1] };
+    }
+    return this._storySpec[id];
   },
   pulseStage(v) {
     let s = 0;
@@ -6683,7 +6736,7 @@ const G = {
     const ev = this.pulseEvent; if (!ev) return;
     this.pulseEvent = null;
     const E = PULSE_EVENTS[ev.k], p = this.player;
-    const spec = RUIN_SPEC.find(q => q.id === ev.id);
+    const spec = this.ruinSpec(ev.id);
     const give = it => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
     // 표식된 것이 살아 있으면 달아난다(사라진다) — 남겨 두면 표식 없는 정예가 되어 버린다
     if (ev.k === 'hunt') for (const e of ev.marks) if (!e.dead) {
@@ -6858,12 +6911,15 @@ const G = {
     }
     part.chests = chests ? [opened, chests] : null;
     part.lore = RUIN_LORE[id] ? [(this.loreRead || {})[id] ? 1 : 0, 1] : null;
-    part.boss = [idx >= 0 && (this.lairs || {})[idx] ? 1 : 0, 1];
+    const spec = this.ruinSpec(id), story = spec && spec.story !== undefined;
+    // 석판 유적은 주인 대신 석판 — 읽었나(tabletsRead 는 석판 번호로 적힌다)
+    part.boss = story ? [(this.tabletsRead || {})[spec.story] ? 1 : 0, 1]
+                      : [idx >= 0 && (this.lairs || {})[idx] ? 1 : 0, 1];
     part.code = code;
     part.rage = [(sv.peak || 0) >= 3 ? 1 : 0, 1];
     part.events = [sv.ev || 0, 5];
     part.kinds = [Object.keys(sv.evk || {}).length, Object.keys(PULSE_EVENTS).length];
-    part.echo = [sv.echo || 0, ECHO.max];
+    part.echo = story ? null : [sv.echo || 0, ECHO.max];   // 석판 유적에는 메아리가 없다
     /* 점수는 진행 막대용 — 등급은 아래 문턱으로만 정한다(data.js SURVEY_TIERS 의 ★) */
     let got = 0, max = 0;
     for (const k in SURVEY_W) {
@@ -6886,18 +6942,19 @@ const G = {
         tier = T0; next = i > 0 ? SURVEY_TIERS[i - 1] : null; break;
       }
     }
+    const label = k => (story && k === 'boss') ? '석판' : SURVEY_LABEL[k];
     if (next) missing = Object.keys(next.need).filter(k => !meets(k, next.need[k])).map(k => {
       const v = next.need[k], q = part[k];
-      if (k === 'rooms' || k === 'chests') return `${SURVEY_LABEL[k]} ${Math.round(v * 100)}% (지금 ${Math.floor(q[0] / q[1] * 100)}%)`;
-      if (k === 'events' || k === 'kinds' || k === 'echo') return `${SURVEY_LABEL[k]} ${v} (지금 ${q[0]})`;
-      return SURVEY_LABEL[k];
+      if (k === 'rooms' || k === 'chests') return `${label(k)} ${Math.round(v * 100)}% (지금 ${Math.floor(q[0] / q[1] * 100)}%)`;
+      if (k === 'events' || k === 'kinds' || k === 'echo') return `${label(k)} ${v} (지금 ${q[0]})`;
+      return label(k);
     });
-    return { score, rank: tier.r, col: tier.c, next: next && next.r, missing, part, sv,
+    return { score, rank: tier.r, col: tier.c, next: next && next.r, missing, part, sv, story,
              seen: !!(this.seenRuins || {})[id] };
   },
   /** 등급이 오르면 알리고, A · S 에 처음 닿으면 보상을 준다 */
   checkSurvey(id) {
-    const spec = RUIN_SPEC.find(s => s.id === id); if (!spec) return;
+    const spec = this.ruinSpec(id); if (!spec) return;
     const sc = this.surveyScore(id), sv = sc.sv, p = this.player;
     const order = SURVEY_TIERS.map(q => q.r);
     const give = it => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };

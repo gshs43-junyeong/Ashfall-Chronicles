@@ -13,7 +13,10 @@ const HELL_Y = 390;         // 지옥 시작 깊이
 const DEEP_Y = 280;         // 심층 시작
 const SKY_Y = 40;           // 하늘 섬 구역 (이보다 위)
 const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buildCaveZones)
-const MIN_CAVE = 30;        // 이보다 작고 고립된 공동은 동굴로 치지 않고 메운다(타일 수)
+/* 이보다 작고 고립된(지상과 안 통하는) 공동은 동굴로 치지 않고 메운다(타일 수).
+   ★ v1.1 에서 30 → 220. 30 이면 땅속이 한두 방짜리 굴로 숭숭했다 — 재 보니 지표 10칸 아래
+   (x 900~) 60칸 미만 굴이 d1 578 · d2 602개, 60~200칸이 373 · 417개였다. */
+const MIN_CAVE = 220;
 const CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1100 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
 
 /* 세션 3 — 왼쪽으로 갈수록 가라앉은 바다 · 빙하 지대 · 서리 지대 순으로 나온다.
@@ -568,6 +571,7 @@ class World {
     /* 액체 마무리는 **지형을 건드리는 마지막 단계 뒤**에 와야 한다. 제단은 방을
        clearBox로 파내는데, 그 방이 이미 고여 있던 용암 밑바닥을 걷어내면 용암이
        공중에 뜬 띠로 남았다(실제로 13곳 나왔다). */
+    this.sweepPockets(60);           // 뒷공사가 남긴 한두 칸짜리 구멍을 메운다 — 물을 고치기 전에
     this.sealLiquids();
     this.decorateWater(rng);     // 물 위 초목 정리 + 수련 — 수면 높이가 확정된 뒤라야 한다
     /* 뒷공사(상자·제단·통행 보수)가 자갈 칸을 덮어쓴 자리는 목록에서 뺀다 — 남겨 두면
@@ -673,6 +677,58 @@ class World {
     const L = MAT_LAYER[this.matId[x]], depth = y - this.surface[x];
     if (depth < 20) return L.sub;
     return L.deep;
+  }
+
+  /** 마지막 구멍 메우기 — pruneSmallCaves(생성 초반)가 끝난 **뒤에** 생긴 작은 굴을 메운다.
+      ★ 초반 메우기만으로는 모자랐다. 부패 지대 균열·지층 돌·유적·광맥 같은 뒷공사가 자국을
+      남겨서, MIN_CAVE 를 220 으로 올린 뒤에도 60칸 미만 굴이 d1 369개 남아 있었다(대부분
+      1~10칸 — 한 칸 구멍이 세로로 줄지어 난 곳도 있었다).
+      메우는 조건은 좁게 잡는다: 지표·물과 안 통하고, **전부 자연 벽지**(지은 곳이 아님)이고,
+      유적 상자 밖이고, 물건·기계가 하나도 안 걸린 것만. 장식(비고체)이 든 칸도 같이 메운다. */
+  sweepPockets(maxSize) {
+    const natural = new Set();
+    for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
+    const busy = new Set();
+    for (const o of this.objects) {
+      const x0 = Math.floor(o.x / TS) - 1, x1 = Math.floor((o.x + (o.w || TS)) / TS) + 1;
+      const y0 = Math.floor(o.y / TS) - 1, y1 = Math.floor((o.y + (o.h || TS)) / TS) + 1;
+      for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) busy.add(y * WW + x);
+    }
+    for (const k of this.machines.keys()) busy.add(k);
+    /* ★ 발판(solid 2)도 **트인 칸**으로 센다. 막힌 것으로 치면 통행 보수가 세운 발판 사다리의
+       발판과 발판 사이(두 칸 x 두 칸)가 저마다 "닫힌 작은 굴"로 잡혀 메워졌다 — 사다리가 끊겨
+       석판 유적 셋이 d3 · d4 에서 못 드나드는 곳이 됐다. */
+    const open = k => { const t = this.tiles[k], d = TILE_DEF[t]; return t === T.AIR || d.solid === 2 || (!d.solid && !d.liquid); };
+    const seen = new Uint8Array(WW * WH), cells = [];
+    let filled = 0;
+    for (let sx = 2; sx < WW - 2; sx++) {
+      if (inSeaZone(sx)) continue;
+      for (let sy = this.surface[sx] + 10; sy < HELL_Y - 2; sy++) {
+        const k0 = sy * WW + sx;
+        if (seen[k0] || !open(k0)) continue;
+        cells.length = 0;
+        const st = [k0]; seen[k0] = 1;
+        let ok = true;
+        while (st.length) {
+          const c = st.pop(); cells.push(c);
+          const cx = c % WW, cy = (c / WW) | 0;
+          if (cells.length > maxSize || cy <= this.surface[cx] + 9 || cy >= HELL_Y - 2 || inSeaZone(cx)) ok = false;
+          if (!natural.has(this.walls[c]) || busy.has(c)) ok = false;
+          /* ★ 실격이어도 **끝까지 돈다.** 중간에 멈추면 못 센 나머지 칸이 다음 바퀴에 따로
+             떨어진 작은 굴로 잡혀, 큰 굴 한가운데가 메워진다. */
+          for (const d of [c - 1, c + 1, c - WW, c + WW]) {
+            if (d < WW || d >= WW * (HELL_Y + 2)) { ok = false; continue; }
+            if (TILE_DEF[this.tiles[d]].liquid) ok = false;
+            if (!seen[d] && open(d)) { seen[d] = 1; st.push(d); }
+          }
+        }
+        if (!ok) continue;
+        if (cells.some(c => this.ruinAt(c % WW, (c / WW) | 0))) continue;
+        for (const c of cells) this.set(c % WW, (c / WW) | 0, this._bedAt(c % WW, (c / WW) | 0));
+        filled++;
+      }
+    }
+    return filled;
   }
 
   /** 이어진 공동을 하나씩 재서, 기준보다 작고 지표와도 통하지 않는 것은 도로 메운다.

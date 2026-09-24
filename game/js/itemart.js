@@ -114,6 +114,18 @@ const ISPEC = {
   /* 유적의 맥박 — 결정·물약·북, 그리고 탐사 기록 S 의 인장 여섯(유물과 같은 색 갈래) */
   cave_moss:    { k: 'weed_icon', c: '#6fa05a' },
   moss_poultice: { k: 'potion', c: '#7fb86a', sq: 1 },
+  /* 유적 재료 열 가지 — 그림이 없어 가방에서 빈 칸으로 나오던 것(CLAUDE.md §1-6). 색은 그 유적의
+     벽재·장식 색을 따라 어느 유적 것인지 알아보게 했다. */
+  neverthaw:    { k: 'crystal', c: '#bfe8ff', glow: 1 },                 // 얼음 던전
+  warden_seal:  { k: 'sigil', c: '#8fb8d8', glow: '#dff2ff' },
+  sealed_ash:   { k: 'sack', c: '#b89a6a', glow: '#e8d0a0' },            // 피라미드
+  caged_sun:    { k: 'star', c: '#ffd24a', glow: '#fff0a0', big: 1 },
+  deep_ember:   { k: 'ore', c: '#e8843a', glow: '#ffb45a' },             // 버려진 광산
+  foreman_tag:  { k: 'coin', c: '#a8805a' },
+  blight_spawn: { k: 'egg', c: '#8a4a80' },                              // 부패한 둥지
+  nest_crown:   { k: 'crown', c: '#6a3a7a', gem: '#e8303c' },
+  spore_dust:   { k: 'gel', c: '#8fe0c4' },                              // 포자 굴
+  cap_signet:   { k: 'sigil', c: '#5fa88a', glow: '#9fe8c8' },
   pulse_shard:  { k: 'shard', c: '#e8404c' },
   tonic_hush:   { k: 'potion', c: '#8fb8d8', sq: 1 },
   drum_pulse:   { k: 'heart', c: '#c8433c', glow: '#ff7a6a' },

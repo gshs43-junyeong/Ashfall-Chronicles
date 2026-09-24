@@ -2503,6 +2503,52 @@ const TILE_MAT = (() => {
   return m;
 })();
 function tileMat(id) { return TILE_MAT[id] || MAT_DEF; }
+/* ---------------- 빛 (v1.1) ----------------
+   빛을 내는 타일마다 **고유한 세기와 색**을 준다. 예전에는 세기가 0~15 정수 몇 개뿐이라
+   지옥석·봉인석·불길 분출구·화염 분사구가 모두 4, 유황·빙정석·조수석·알주머니·균사 발이 모두 2 —
+   무엇이 빛나는지 빛만 보고는 알 수 없었고, 색도 전부 같은 흰빛이었다.
+   [세기, 빛 색]. 세기는 TILE_DEF[].light 를 덮어쓴다(조명 계산 world.computeLight 가 그것을 읽는다).
+   색은 game.js drawGlow 가 그 타일 둘레에 덧칠하는 번짐 빛이다. 세기는 **둘이 같으면 안 된다** —
+   아래 검사가 로드할 때 겹침을 콘솔에 알린다. 자수정(수정 무리)은 보랏빛, 수정 광맥은 푸른빛. */
+const LIGHT_SPEC = {
+  LAMPPOST: [14, '#ffe0a0'], TORCH: [13, '#ffb45a'], LAVA: [11, '#ff6a2a'],
+  ORBITCORE: [10.5, '#7fe0ff'], COREGLASS: [10, '#ffb04a'], GLOWCAP: [9.5, '#6fe0c0'],
+  CONDUIT: [9, '#6fd8ff'], RUNESTONE: [8.5, '#b89fff'], CRYSTAL: [8, '#7fd8e8'],
+  DRAFTGLASS: [7.8, '#8fd8e8'], GEODE: [7.4, '#c08fff'], MINELAMP: [7, '#ffc070'],
+  POWERSTONE: [6.8, '#ffd24a'], AETHER: [6.6, '#bfe8ff'], M_OVEN: [6.2, '#ff8a3a'],
+  ALTARSTONE: [6, '#e8a0ff'], POD3: [5.6, '#ff9a3a'], SOULSTONE: [5.4, '#c49fff'],
+  M_GEN: [5.2, '#ff9a4a'], GLOWMOSS: [5, '#5fd0b8'], SPOREVENT: [4.6, '#8fe0a0'],
+  HELLSTONE: [4.4, '#ff5a2a'], SEALSTONE: [4.2, '#d8c080'], GLOWLEAF: [4, '#6fe0c0'],
+  M_BATTERY: [3.8, '#8fd0f0'], M_FLAME: [3.6, '#ff7a3a'], FLAMEVENT: [3.4, '#ff6a2a'],
+  FROSTGLYPH: [3.2, '#9fd8ea'], SPARKCOIL: [3.1, '#8fd0ff'], ORCHID: [3, '#ff8ac8'],
+  CIPHERSTONE: [2.9, '#ffe08a'], ROOT3: [2.8, '#ffe08a'], M_SWITCH: [2.6, '#ff5a5a'],
+  GLACIUM: [2.5, '#9fd8e8'], HYPHAE: [2.4, '#8fe0c4'], TIDESTONE: [2.3, '#3fc0a8'],
+  BLIGHTSAC: [2.2, '#c060c0'], BLACKDAMP: [2, '#a8c04a'], BLOOM3: [1.8, '#f0e8e0'],
+  HERB3: [1.6, '#bfe8ff'], SULFUR: [1.4, '#e8d04a']
+};
+{
+  const seen = {};
+  for (const k in LIGHT_SPEC) {
+    if (T[k] === undefined) continue;
+    const [lv, col] = LIGHT_SPEC[k];
+    if (seen[lv]) console.warn('빛 세기가 겹친다:', k, seen[lv], lv);
+    seen[lv] = k;
+    TILE_DEF[T[k]].light = lv; TILE_DEF[T[k]].lc = col;
+  }
+}
+
+/** 장식을 놓을 때 무엇에 기대야 하는가 — 'floor' 바로 아래가 단단해야 · 'ceil' 바로 위가 단단해야.
+    같은 장식 위·아래로는 이어 붙일 수 있다(석순 위에 석순, 종유석 아래 종유석, 이끼 아래 이끼).
+    적지 않은 장식은 벽이든 뒷벽이든 아무 데나 기대면 된다(블록과 같은 규칙).
+    ★ 이 표가 없으면 들꽃·석순이 허공에 뜬 채로 놓였다 — 블록 규칙은 "옆에 뭔가 있거나 뒷벽이
+      있으면 된다"라서 동굴 한가운데 공중에도 꽃이 핀다. */
+const DECO_MOUNT = (() => {
+  const m = {};
+  for (const k of ['FLOWER', 'WEED', 'CACTUS', 'MUSHROOM', 'FERN', 'ORCHID', 'GLOWCAP', 'STALAGMITE', 'GEODE',
+                   'BONEHEAP', 'CANOPIC', 'TOOLPILE', 'SEASHELL']) m[T[k]] = 'floor';
+  for (const k of ['STALACTITE', 'HANGMOSS', 'VINE', 'HYPHAE', 'MINELAMP', 'ICEBANNER']) m[T[k]] = 'ceil';
+  return m;
+})();
 /** 장식 타일 → 그 장식 아이템(ITEMS 의 deco: 1). 캐면 재료와 함께 이것이 떨어진다(game.js dropTile) */
 const DECO_OF = (() => {
   const m = {};
@@ -3064,6 +3110,13 @@ const STORY_RUIN = [
   { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 14, bsp: [5, 10, 7], decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
   { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 18, bsp: [5, 10, 7], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
 ];
+/* 석판 유적에도 맥박 · 사건 · 탐사 기록이 뛴다(v1.1). 바이옴 유적과 달리 주인(둥지)이 없어서
+   탐사 기록의 '주인' 칸은 **석판을 읽었나**가 대신하고, 메아리 시련·인장은 없다.
+   mobs 는 맥박이 부르는 것들 — 세 유적이 놓인 땅(서리 지대 · 울림 정글 · 부패한 땅)을 따랐다.
+   rank 는 보상 크기(금화)의 배수로만 쓴다. */
+STORY_RUIN[0].mobs = ['frostling', 'icewolf', 'skeleton']; STORY_RUIN[0].rank = 2;
+STORY_RUIN[1].mobs = ['skeleton', 'spider', 'bat'];         STORY_RUIN[1].rank = 3;
+STORY_RUIN[2].mobs = ['crawler', 'shadoweye', 'skeleton'];  STORY_RUIN[2].rank = 5;
 
 /* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다.
    지도는 그 유적이 아니라 **다른 유적의 보물방 상자**에 들어간다 — 한 곳을 털면
@@ -3165,7 +3218,10 @@ const PULSE_RAGE = {
   pyramid: { k: 'heat',  t: '벽 틈에서 달군 모래가 쏟아진다' },
   spore:   { k: 'spore', t: '벽의 홀씨가 한꺼번에 터진다' },
   blight:  { k: 'swarm', t: '둥지 전체가 요동친다' },
-  abyss:   { k: 'dark',  t: '물이 빛을 삼킨다' }
+  abyss:   { k: 'dark',  t: '물이 빛을 삼킨다' },
+  story0:  { k: 'dark',  t: '석실의 서리가 불을 삼킨다' },
+  story1:  { k: 'quake', t: '겹친 길이 비틀린다 — 무언가 내려온다' },
+  story2:  { k: 'swarm', t: '발밑의 방들이 한꺼번에 깨어난다' }
 };
 
 /* ---------------- 탐사 기록 (v1.1) ----------------
