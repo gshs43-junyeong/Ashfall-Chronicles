@@ -1594,7 +1594,7 @@ const G = {
     if (p.fish) {
       // 이미 드리운 줄 — 입질 중이면 즉시 챔질(보너스), 대기 중이면 거둔다
       if (p.fish.biting) { this.resolveFish('reel'); }
-      else { p.fish = null; this.toast('낚싯줄을 거두었다'); }
+      else { this.fishSplash(p.fish, 3); p.fish = null; this.toast('낚싯줄을 거두었다'); }
       return;
     }
     const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
@@ -1628,7 +1628,7 @@ const G = {
       f.t -= dt;
       if (f.t <= 0) {
         // 3레벨 '가벼운 손목' — 챌 수 있는 창이 1.0초에서 1.6초로 늘어난다
-        f.biting = true; f.bite = p.profLv('fish') >= 3 ? 1.6 : 1.0;
+        f.biting = true; f.bite = f.biteMax = p.profLv('fish') >= 3 ? 1.6 : 1.0;
         this.toast('손끝이 흔들린다!', 'good');
         for (let i = 0; i < 10; i++) this.parts.push(new Part((f.tx + .5) * TS, f.ty * TS, '#ffe08a', -30, .6));
       }
@@ -1641,8 +1641,15 @@ const G = {
   _fishLost(msg) {
     this.player.fish = null;
     this.toast(msg, 'bad');
-    this.sfx('splash');
-    UI.refreshBag();
+    UI.refreshBag();                // 물 튀김·소리는 resolveFish 가 줄을 걷는 순간 이미 냈다
+  },
+  /** 줄을 걷는 순간의 물 튀김. 챔질(reel)이면 크게 — "잡았다"가 손끝에 오게.
+      예전에는 던질 때만 튀고 걷을 때는 조용해서, 물고기가 물 밖으로 나왔다는 것이
+      토스트 글자로만 전해졌다. */
+  fishSplash(f, n) {
+    const wx = (f.tx + .5) * TS, wy = f.ty * TS;
+    for (let i = 0; i < n; i++)
+      this.parts.push(new Part(wx, wy, i % 3 ? '#cfe8ff' : '#ffffff', -60 - Math.random() * 50, .55));
   },
   /** 낚시 판정 — quality: 'auto'(시간 초과, 기본 확률) | 'reel'(입질 중 즉시 챔질, 보너스)
       2단계로 굴린다 — 1단계는 "물고기가 아니라 다른 것"이 걸릴지(itemChance, 낚싯대별로
@@ -1663,6 +1670,9 @@ const G = {
     const flv = p.profLv('fish');
     const fishBonus = (rod.fishBonus || 0) + (baited ? 0.20 : 0) + (quality === 'reel' ? 0.12 : 0) + (flv - 1) * 0.02;
     const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === 'reel' ? 0.05 : 0) + (flv - 1) * 0.015) * rareMul, 0, 0.85);
+    // ★ 자리를 지우기 **전에** 튀긴다 — p.fish 가 null 이 되면 어디서 걷었는지 모른다
+    this.fishSplash(p.fish, quality === 'reel' ? 14 : 7);
+    this.sfx('splash');
     p.fish = null;
     p.addProf('fish', 1);
 
@@ -5061,6 +5071,7 @@ const G = {
 
     // ---- 조명 (부드러운 그라디언트 오버레이) ----
     this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
+    this.drawFishCue(c, camX, camY);   // 입질 알림은 밤에도 보여야 한다 — 조명 위에
     /* 유적 고유 이벤트의 여운을 화면에 덮는다.
        불이 꺼졌을 때(ruinDark)는 타일을 건드리지 않고 화면만 어둡게 한다 — 장식을
        부수면 되돌릴 방법이 없다. 홀씨(ruinSpore)는 초록빛으로 시야를 흐린다.
@@ -6952,6 +6963,23 @@ const G = {
     const by = wy + 3 + dip;
 
     c.save();
+    /* 물고기 그림자 — 입질 1.2초 전부터 옆에서 찌 쪽으로 다가온다. 기다리는 시간이
+       "아무것도 안 보이는 시간"이면 낚시가 타이머로 읽힌다. 새 상태값 없이 남은 대기(f.t)로
+       거리를 잰다. ★ **물이 더 넓은 쪽**에서 온다 — 칸 번호로 쪽을 정했더니 기슭에 찌를
+       던지면 그림자가 흙 속을 헤엄쳐 와서 아예 안 보였다. */
+    if (!f.biting && f.t < this.FISH_SHADOW_T) {
+      const k = f.t / this.FISH_SHADOW_T;                    // 1 → 0 으로 다가온다
+      const wet = dx => { let n = 0; for (let i = 1; i <= 3; i++) if (TILE_DEF[this.world.get(f.tx + dx * i, f.ty)].liquid) n++; return n; };
+      const side = wet(1) >= wet(-1) ? 1 : -1;
+      const sx2 = fx + side * (8 + k * 46) + Math.sin(this.time * 7) * 1.5;
+      c.globalAlpha = 0.6 * (1 - k * 0.5);
+      c.fillStyle = '#0b1a26';
+      c.beginPath(); c.ellipse(sx2, wy + 12, 9, 3.2, 0, 0, TAU); c.fill();
+      c.beginPath();                                          // 꼬리
+      c.moveTo(sx2 + side * 8, wy + 12); c.lineTo(sx2 + side * 14, wy + 9); c.lineTo(sx2 + side * 14, wy + 15);
+      c.fill();
+      c.globalAlpha = 1;
+    }
     // 줄 — 어두운 배경에서도 보이게 검은 심 위에 밝은 줄을 겹쳐 긋는다
     for (const [col, wdt] of [['rgba(0,0,0,.55)', 3], ['#eef6ff', 1.4]]) {
       c.strokeStyle = col; c.lineWidth = wdt;
@@ -6960,19 +6988,48 @@ const G = {
       c.quadraticCurveTo((rx + fx) / 2, Math.max(ry, by) + 14, fx, by);   // 살짝 늘어지게
       c.stroke();
     }
-    // 물결 — 찌가 앉은 자리
-    c.strokeStyle = 'rgba(200,238,255,.7)'; c.lineWidth = 1;
-    const rr = f.biting ? 5 + fr * 3 : 4;
+    /* 물결 — 찌가 앉은 자리. ★ **물의 결(rareMul)을 물결 빛으로** 보여 준다. 웅덩이마다
+       "잡것이 걸릴 확률"이 다른데(깊은 바다 1.4 · 정글 폭포호 0.3) 화면으론 티가 안 나서,
+       좋은 물을 눈으로 익힐 길이 없었다. 물 전체를 칠하면 같은 호수 안에서 경계가 생겨
+       어색하므로, 던진 사람이 보고 있는 찌 둘레만 바꾼다 — 좋은 물은 금빛이 반짝이고,
+       묽은 물은 물결이 흐리다. */
+    const rich = f.rareMul === undefined ? 1 : f.rareMul;
+    c.strokeStyle = rich > 1 ? 'rgba(255,226,150,.85)' : rich < 1 ? 'rgba(170,186,196,.4)' : 'rgba(200,238,255,.7)';
+    c.lineWidth = 1;
+    // 가만히 있을 때 물결이 찌(폭 8px)보다 좁으면 찌에 가려 빛이 안 보인다 — 7px 로 숨 쉬게
+    const rr = f.biting ? 5 + fr * 3 : 7 + Math.sin(this.time * 2);
     c.beginPath(); c.ellipse(fx, wy + 4, rr, rr * 0.35, 0, 0, TAU); c.stroke();
+    if (rich > 1 && ((this.time * 3) | 0) % 3 === 0) {           // 좋은 물 — 물결 위 반짝임
+      c.fillStyle = '#fff2c0';
+      c.fillRect(fx + rr - 1, wy + 2, 2, 2); c.fillRect(fx - rr - 1, wy + 4, 2, 2);
+    }
     // 찌 — 빨강/흰색 두 토막이라 물 위에서 눈에 띈다
     c.fillStyle = '#101018'; c.fillRect(fx - 4, by - 9, 8, 12);           // 테두리
     c.fillStyle = '#e8523c'; c.fillRect(fx - 3, by - 8, 6, 5);
     c.fillStyle = '#f2f2ee'; c.fillRect(fx - 3, by - 3, 6, 5);
     c.fillStyle = '#101018'; c.fillRect(fx - 1, by - 12, 2, 4);           // 고리
-    if (f.biting) {                                                       // 입질 표시
-      c.fillStyle = '#ffe08a';
-      c.fillRect(fx - 1.5, by - 24, 3, 8); c.fillRect(fx - 1.5, by - 14, 3, 3);
-    }
+    c.restore();
+  },
+  FISH_SHADOW_T: 1.2,              // 입질 몇 초 전부터 그림자가 보이는가
+  /** 입질 표시 — 느낌표와 **챔질 창 게이지**. 조명 **뒤에** 그린다.
+      찌는 물 위의 물건이라 밤이면 같이 어두워지는 게 맞지만, 입질은 "지금 눌러라"는
+      알림이라 밤낚시에서 안 보이면 놓친다. 예전에는 느낌표도 찌와 함께 조명 밑에 깔려
+      있었고, 챔질하면 보너스가 붙는 그 1.0~1.6초 창은 화면 어디에도 없었다. */
+  drawFishCue(c, camX, camY) {
+    const p = this.player, f = p && p.fish;
+    if (!f || !f.biting) return;
+    const fx = (f.tx + 0.5) * TS - camX, wy = f.ty * TS - camY;
+    const left = clamp(f.bite / (f.biteMax || 1), 0, 1);
+    c.save();
+    c.globalAlpha = 0.65 + 0.35 * Math.abs(Math.sin(this.time * 12));
+    // 느낌표는 게이지 **옆**에 — 찌 바로 위에 세우면 낚싯줄과 겹쳐 줄이 빛나는 것으로 보였다
+    c.fillStyle = '#ffe08a';
+    c.fillRect(fx + 17, wy - 45, 3, 8); c.fillRect(fx + 17, wy - 35, 3, 3);
+    c.globalAlpha = 1;
+    // 게이지 — 줄어드는 막대. 반 넘게 남았으면 금빛, 아니면 붉어진다
+    c.fillStyle = 'rgba(8,10,16,.75)'; c.fillRect(fx - 13, wy - 38, 26, 5);
+    c.fillStyle = left > 0.5 ? '#ffd24a' : left > 0.25 ? '#ff9a3a' : '#ff5a4a';
+    c.fillRect(fx - 12, wy - 37, 24 * left, 3);
     c.restore();
   },
 
