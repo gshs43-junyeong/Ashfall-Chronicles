@@ -30,7 +30,7 @@
 </nav>
 
 <header class="wrap page-head">
-  <p class="eyebrow">v1.0.5 · Windows · macOS <span class="eyebrow-sub">웹에서는 v1.1 개발판이 돕니다</span></p>
+  <p class="eyebrow">v1.0.5 · Windows · macOS <span class="eyebrow-sub">웹에서는 v1.1 개발판을 할 수 있습니다</span></p>
   <h1>내려받기</h1>
   <p class="sec-lede">인터넷 없이 돌아가고, 압축을 푼 폴더 밖 어디에도 파일을 설치하지 않습니다. 지우고 싶으면 폴더째 버리면 됩니다.</p>
 </header>
@@ -83,7 +83,7 @@
   <div class="wrap">
     <div class="sec-head"><p class="eyebrow">압축을 푼 다음</p></div>
     <h2>실행 방법</h2>
-    <p class="sec-lede">두 방식 모두 로컬 웹 서버를 하나 띄우고 그 주소로 브라우저를 엽니다. 인터넷 연결이 필요 없고, 게임은 그 브라우저 창 안에서 돌아갑니다.</p>
+    <p class="sec-lede">런처는 게임 폴더의 <code>index.html</code>을 기본 브라우저로 여는 것이 전부입니다. 서버도 인터넷 연결도 필요 없고, 게임은 그 브라우저 창 안에서 돌아갑니다.</p>
 
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-win" aria-controls="panel-win" aria-selected="true">Windows</button>
@@ -92,31 +92,31 @@
 
     <div class="panel" id="panel-win" role="tabpanel" aria-labelledby="tab-win">
       <ol>
-        <li>zip을 풀고 폴더 안의 <strong>AshfallChronicles.bat</strong>을 더블클릭합니다. 검은 명령 창이 뜨고 잠시 뒤 브라우저로 게임이 열립니다.</li>
-        <li>게임을 끝내려면 그 명령 창을 닫습니다. 서버도 같이 꺼집니다.</li>
+        <li>zip을 풀고 폴더 안의 <strong>AshfallChronicles.bat</strong>을 더블클릭합니다. 기본 브라우저로 게임이 열립니다.</li>
+        <li>게임을 끝내려면 브라우저 탭을 닫습니다.</li>
       </ol>
       <div class="alert hot">
         <b class="h">설치할 것은 없습니다</b>
-        zip 을 풀고 <code>index.html</code> 을 더블클릭하면 그대로 돌아갑니다. 서버도 파이썬도 필요하지 않습니다.
+        <code>index.html</code>을 직접 더블클릭해도 똑같이 돌아갑니다. 서버도 파이썬도 필요하지 않습니다.
       </div>
       <div class="alert">
         <b class="h">SmartScreen 경고가 뜨면</b>
-        <strong>추가 정보 → 실행</strong>을 누르세요. 로컬 서버만 띄우는 배치 파일이라 인터넷으로 나가지 않습니다.
+        <strong>추가 정보 → 실행</strong>을 누르세요. 브라우저로 <code>index.html</code>을 여는 한 줄짜리 배치 파일이라 인터넷에 연결하지 않습니다.
       </div>
     </div>
 
     <div class="panel" id="panel-mac" role="tabpanel" aria-labelledby="tab-mac" hidden>
       <ol>
-        <li><strong>AshfallChronicles.command</strong>를 더블클릭합니다. 터미널 창이 자동으로 뜨고 브라우저로 게임이 열립니다.</li>
+        <li><strong>AshfallChronicles.command</strong>를 더블클릭합니다. 터미널 창이 잠깐 뜨고 기본 브라우저로 게임이 열립니다.</li>
         <li>터미널을 쓰고 싶다면 대신 이렇게 해도 됩니다.
           <pre class="cmd"><code>cd 압축을_푼_폴더_경로
 bash launch.sh</code></pre>
         </li>
-        <li>게임을 끝내려면 터미널 창을 닫습니다.</li>
+        <li>게임을 끝내려면 브라우저 탭을 닫습니다.</li>
       </ol>
       <div class="alert hot">
         <b class="h">"확인되지 않은 개발자" 경고</b>
-        앱을 지우거나 막는 경고가 아니라 그냥 확인창입니다. 파일을 <strong>우클릭 → 열기</strong>로 실행하면 그 뒤로는 경고 없이 열립니다. 더블클릭에서 "취소"를 누른 뒤 다시 우클릭 → 열기를 시도해도 됩니다.
+        파일을 지우거나 막는 경고가 아니라 확인 창일 뿐입니다. 파일을 <strong>우클릭 → 열기</strong>로 실행하면 그 뒤로는 경고 없이 열립니다. 더블클릭에서 "취소"를 누른 뒤 다시 우클릭 → 열기를 시도해도 됩니다.
       </div>
       <div class="alert">
         <b class="h">그래도 막힌다면</b>
@@ -223,7 +223,7 @@ bash launch.sh</code></pre>
           <tr><td><kbd>Shift</kbd></td><td>회피 대시 (무적 프레임)</td></tr>
           <tr><td><kbd>Q</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>F</kbd></td><td>스킬 슬롯</td></tr>
           <tr><td><kbd>1</kbd>~<kbd>9</kbd> <kbd>0</kbd></td><td>핫바 — 마우스 휠로도 전환</td></tr>
-          <tr><td><kbd>I</kbd> <kbd>K</kbd> <kbd>J</kbd> <kbd>H</kbd></td><td>가방 · 능력 · 일지 · 제작</td></tr>
+          <tr><td><kbd>I</kbd> <kbd>K</kbd> <kbd>J</kbd> <kbd>H</kbd> <kbd>M</kbd></td><td>가방 · 능력 · 일지 · 제작 · 지도 (화면 오른쪽 아래 단추로도 열림)</td></tr>
           <tr><td><kbd>Esc</kbd></td><td>일시정지 (설정 창 포함)</td></tr>
           <tr><td><kbd>F5</kbd></td><td>저장</td></tr>
           <tr><td><kbd>Shift</kbd> + 좌클릭 (가방 안)</td><td>해당 칸 즉시 버리기</td></tr>
@@ -250,26 +250,26 @@ bash launch.sh</code></pre>
           <a href="../home#play">웹에서 플레이</a>하면 지금까지 들어간 것을 해 볼 수 있습니다.
           <strong>세션 2 · 3 의 이야기가 모두 들어갔습니다</strong> — 장이 열다섯에서 열여덟로 늘었습니다.</p>
         <ul>
-          <li><strong>세션 2 「벽 너머」 — 여섯 장.</strong> 아무도 세우지 않은 도시에서 시작해 지하 공창·폭주로·설계실로 내려갑니다. 결착은 공창의 관리자 · 증식체 · 헤파 · 원형 넷입니다.</li>
+          <li><strong>세션 2 「벽 너머」 — 여섯 장.</strong> 아무도 세우지 않은 도시에서 시작해 지하 공창·폭주로·설계실로 내려갑니다. 결전 상대는 공창의 관리자 · 증식체 · 헤파 · 원형 넷입니다.</li>
           <li><strong>세션 3 「물이 지운 쪽」 — 세 장.</strong> 서리 지대 서쪽에 <strong>빙하 지대와 가라앉은 바다</strong>가 열립니다. 물속에서는 숨이 줄고, 산소통과 해초 밧줄이 있어야 더 내려갑니다. 마지막은 조수의 파수꾼입니다.</li>
           <li><strong>바다에서만 나오는 것들.</strong> 조수강·빙정 광맥, 심연 진주와 심해 노심, 그것으로만 만드는 4단계 작업대·용광로(심해 공작대 · 가압 제련로)와 심해 장비 여덟.</li>
           <li><strong>폭탄과 화약.</strong> 작은 것·큰 것·굴착용 셋. 지형을 한 번에 걷어 내고, 터지는 자리와 쓸리는 자리가 다릅니다.</li>
-          <li><strong>업적 일흔 개.</strong> 갈래 여덟에 난이도 셋. 세션 3 을 붙이며 열 개를 더했습니다(가라앉은 종 · 아홉 땅 · 물속의 것들 · 빙정 · 심해 노심 · 폭탄 · 탐지기 …). 여섯 개는 달성하기 전까지 무엇인지도 보이지 않습니다.</li>
-          <li><strong>강화 모루와 펫 레벨.</strong> 장비를 +10 까지 두들기고, 데리고 다니는 것이 10 레벨까지 자랍니다.</li>
+          <li><strong>업적 일흔다섯 개.</strong> 갈래 여덟에 난이도 셋. 세션 3과 함께 열 개, 그 뒤로 다섯 개를 더 붙였습니다(가라앉은 종 · 아홉 땅 · 물속의 것들 · 빙정 · 심해 노심 · 폭탄 · 탐지기 …). 여섯 개는 달성하기 전까지 무엇인지도 보이지 않습니다.</li>
+          <li><strong>강화 모루와 펫 레벨.</strong> 장비를 +10까지 두들겨 강화하고, 데리고 다니는 펫이 10레벨까지 자랍니다.</li>
           <li><strong>금속·몬스터 탐지기.</strong> 유틸리티 칸에 끼우면 벽 너머 광맥이나 움직이는 것이 보입니다. 대신 조금 느려집니다.</li>
           <li><strong>저장 봉인.</strong> 저장할 때 서명을 같이 적어, 손댄 기록은 열리지 않습니다. 봉인 표시가 없는 옛 기록은 그대로 열립니다.</li>
           <li><strong>시작 캐릭터 다섯과 난이도 셋.</strong> 각자 제 얼굴과 제 이야기, 다른 시작 장비를 갖습니다. 어려움은 잡몹이 2배에 죽으면 가방 절반, 불가능은 5배에 슬롯이 지워집니다.</li>
-          <li><strong>장 목표가 숙제 목록에서 고르는 것으로.</strong> 넷~여섯 개를 전부 채워야 다음으로 가던 것을, 골라서 하는 것·그 장의 고유 동사·결착 셋으로 나눴습니다.</li>
+          <li><strong>장 목표가 숙제 목록에서 고르는 것으로.</strong> 넷~여섯 개를 전부 채워야 다음으로 가던 것을, 골라서 하는 것 · 그 장에서만 하는 일 · 결전 셋으로 나눴습니다.</li>
           <li><strong>잿빛이 숲을 먹습니다.</strong> 장이 넘어갈수록 잎과 풀에서 색이 빠지고 잎이 한 칸씩 집니다. 1장의 숲과 8장의 숲이 다릅니다.</li>
           <li><strong>유적 전면 개편.</strong> 겉모양·입구·지도·고유 방과 이벤트. 유적마다 그곳에서만 보는 장식 둘, 전리품 둘, <strong>고유 몬스터 하나</strong>가 있습니다.</li>
           <li><strong>세션 2 개조.</strong> 옛 지역의 몹이 기계가 되어 돌아오고, 개조된 것에서는 부품만 나옵니다.</li>
           <li><strong>사람들이 오늘을 보고 말합니다.</strong> 죽은 자리를 두고 왔는지, 다쳤는지, 비가 오는지, 주머니가 비었는지에 따라 대사가 달라지고 대답을 고를 수 있습니다.</li>
           <li><strong>의뢰 게시판이 사람이 쓴 종이로.</strong> 제목·본문·붙인 사람이 있는 의뢰 스물아홉 장. 그중 넷은 끝내면 다음 날 뒷이야기가 붙습니다. 여명 마을 다섯에게도 부탁이 생겼습니다.</li>
           <li><strong>특성이 트리로.</strong> 칸 열둘을 더하고 레벨마다 점수를 하나씩 줍니다. 농사·낚시 숙련도 생겼습니다.</li>
-          <li><strong>보스 페이즈 재구성</strong> — 미니보스 둘, 최종 다섯. 후반 결착에는 전용 AI 와 약점 규칙이 붙습니다.</li>
+          <li><strong>보스 페이즈 재구성</strong> — 미니보스 둘, 최종 다섯. 후반 결전에는 전용 AI와 약점 규칙이 붙습니다.</li>
           <li><strong>손맛.</strong> 무엇을 때리고 부수는지가 소리와 파편으로 갈리고, 스킬 열아홉 가지가 저마다 다른 소리를 내고, 큰 것이 닿는 순간 화면이 짧게 멈춥니다. 보스와 몹이 쓰러지는 그림도 생겼습니다.</li>
           <li><strong>농사와 낚시.</strong> 밭은 아침에 자라고 낫으로 거둡니다. 물에서만 나오는 것 일곱과, 낚시로만 나오는 무기·장신구 열둘.</li>
-          <li>그림: 애셋 백여 종 교체·추가(바다 몹 아홉, 보스 셋, 야자수와 광물 타일), 몹·보스를 판정 박스에 맞춤, 미끄러지기만 하던 숨과 걸음 129칸을 되살림.</li>
+          <li>그림: 애셋 백여 종 교체·추가(바다 몹 아홉, 보스 셋, 야자수와 광물 타일), 몹·보스 그림을 판정 상자에 맞춤, 제자리에서 미끄러지기만 하던 숨쉬기·걷기 동작 129칸을 다시 움직이게 함.</li>
           <li>고침: 해와 달이 뒷배경 나무를 뚫고 나오던 것, 사막에 비가 내리던 것, 물건값이 재료마다 전부 같던 것.</li>
         </ul>
       </div>

@@ -1879,6 +1879,15 @@
         "bg/cloud_6.png",
         "bg/cloud_7.png"
       ]
+    },
+    "sky": {
+      "note": "하늘의 해(낮·노을)와 운석(먼 하늘·가까이) — tools/mksky.py 로 굽는다. 운석 그림은 오른쪽이 머리, 게임이 나아가는 방향으로 돌린다.",
+      "files": [
+        "bg/sky_sun.png",
+        "bg/sky_sun_set.png",
+        "bg/sky_meteor.png",
+        "bg/sky_meteor_near.png"
+      ]
     }
   },
   "npc": {

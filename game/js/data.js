@@ -696,7 +696,7 @@ const ITEMS = {
      장 보상만으로 금화가 9만~30만씩 들어와서, 예전 300~4000은 그냥 집어 오는 값이었다. */
   /* 알은 값이 흔들리면 안 된다. fixed를 달면 price()가 등급·시세·배수를 전부 건너뛰고
      이 값을 개수만 곱해 쓴다 — 언제 사도 팔아도 10,000 / 30,000 / 100,000 이다. */
-  egg_common:  { n: '평범한 알', i: '🥚', type: 'consum', use: { egg: 'common' }, price: 10000, fixed: 1, stack: 20, d: '깨보기 전까진 무엇이 나올지 모른다.' },
+  egg_common:  { n: '평범한 알', i: '🥚', type: 'consum', use: { egg: 'common' }, price: 10000, fixed: 1, stack: 20, d: '깨 보기 전까지는 무엇이 나올지 모른다.' },
   egg_rare:    { n: '푸른 알', i: '🥚', type: 'consum', use: { egg: 'rare' }, price: 30000, fixed: 1, stack: 20, d: '희귀한 짐승의 기운이 느껴진다.' },
   egg_epic:    { n: '보랏빛 알', i: '🥚', type: 'consum', use: { egg: 'epic' }, price: 100000, fixed: 1, stack: 20, d: '알 속에서 무언가 조용히 뛰고 있다.' },
   /* 펫 사탕 — 낀 펫 둘 다에게 경험치를 준다. 알과 같은 자리(리카)에서 판다.
@@ -1847,7 +1847,7 @@ const MACHINE = {
   },
   belt_fast: {
     n: '고속 컨베이어 벨트', tile: T.M_BELT_F, item: 'm_belt_f', rot: 1, fast: 1,
-    d: '한 틱에 **두 칸**을 민다. 일반 벨트와 섞어 깔아도 되고, 병목이 생기는 구간만 갈아 끼워도 된다.'
+    d: '한 틱에 두 칸을 민다. 일반 벨트와 섞어 깔아도 되고, 병목이 생기는 구간만 갈아 끼워도 된다.'
   },
   battery_hi: {
     n: '강화 축전지', tile: T.M_BATTERY_HI, item: 'm_battery_hi', store: 14000, proc: 'battery', power: 6, cap: 60,
@@ -2126,6 +2126,7 @@ const KEY_ACTIONS = [
   { id: 'skills', n: '능력', def: ['KeyK'] },
   { id: 'quest', n: '일지', def: ['KeyJ'] },
   { id: 'craft', n: '제작', def: ['KeyH'] },
+  { id: 'map', n: '지도', def: ['KeyM'] },
   { id: 'save', n: '저장', def: ['F5'] }
 ];
 
@@ -2944,7 +2945,7 @@ const PROFS = {
     한 시간짜리 노동이 되어 버려서 낮췄다. */
 function profNeed(lv) { return Math.round(5 * Math.pow(lv, 1.45)); }
 
-/* 장의 결착이 되는 보스들. 이 목록에 있으면 scale() 을 타지 않고 표에 적힌 수치를
+/* 장의 결전이 되는 보스들. 이 목록에 있으면 scale() 을 타지 않고 표에 적힌 수치를
    그대로 쓴다(game.js spawnBoss) — 언제 오든 같은 싸움이어야 페이즈 설계가 선다. */
 /* 장의 목표로 걸린 보스들. 여기 있는 것만 **적은 체력 그대로** 나온다
    (game.js spawnBoss: 나머지는 scale()×0.9 가 곱해진다).
@@ -3660,7 +3661,7 @@ function achHidden(a) { return !!a.h || a.t === 'hard'; }
    그것만으로 못 재는 것(플레이 시간·거래 횟수·익사)만 G.tally에 따로 센다. */
 const ACHIEVEMENTS = [
   // ---------------- 여정 (스토리) ----------------
-  { id: 'a_ch1', cat: 'story', t: 'easy', i: '✦', n: '첫 조각', d: '제 1 장이 끝났다.',
+  { id: 'a_ch1', cat: 'story', t: 'easy', i: '✦', n: '첫 조각', d: '제1장이 끝났다.',
     check: g => g.chapter >= 2 },
   { id: 'a_village', cat: 'story', t: 'easy', i: '🏚', n: '되살아난 마을', d: '여명 마을에 다시 불이 켜졌다.',
     check: g => !!g.villageUnlocked },
@@ -3681,7 +3682,7 @@ const ACHIEVEMENTS = [
      같은 자리가 비어 있었다 — 아래 '세 번의 끝'이 그 셋을 한 줄로 묶는다. */
   { id: 'a_tide', cat: 'story', t: 'mid', i: '🔔', n: '가라앉은 종', d: '물 밑에서 울리던 것이 멈췄다.',
     check: g => !!g.player.bossKilled.tide_warden },
-  { id: 'a_three_ends', cat: 'story', t: 'hard', i: '🌗', n: '세 번의 끝', d: '세 번의 결착을 모두 끝냈다.',
+  { id: 'a_three_ends', cat: 'story', t: 'hard', i: '🌗', n: '세 번의 끝', d: '세 번의 결전을 모두 끝냈다.',
     check: g => ['pursuer', 'archetype', 'tide_warden'].every(k => g.player.bossKilled[k]) },
   { id: 'a_all_bosses', h: 1, cat: 'story', t: 'hard', i: '🏆', n: '남김없이', d: '이름이 붙은 것은 하나도 남지 않았다.',
     check: g => ['king_slime', 'bone_lord', 'corrupt_heart', 'frost_witch', 'void_king',
@@ -3775,7 +3776,7 @@ const ACHIEVEMENTS = [
   /* 유적의 맥박 · 탐사 기록 — survey 는 세이브에 담긴다(SAVE_UPGRADES v6). */
   { id: 'a_pulse_rage', cat: 'explore', t: 'mid', i: '💓', n: '격노를 견딘 자', d: '유적의 맥박이 격노에 닿았다.',
     check: g => Object.values(g.survey || {}).some(s => (s.peak || 0) >= 3) },
-  { id: 'a_survey_s', cat: 'explore', t: 'hard', i: '🏅', n: '샅샅이', d: '유적 하나를 탐사 기록 S 로 남겼다.',
+  { id: 'a_survey_s', cat: 'explore', t: 'hard', i: '🏅', n: '샅샅이', d: '유적 하나를 탐사 기록 S로 남겼다.',
     check: g => Object.values(g.survey || {}).some(s => !!s.s) },
   /* 동굴 — tally.faults(무너뜨린 자갈 수) · tally.caves(들어가 본 갈래). 둘 다 세이브의 tally 에 산다 */
   { id: 'a_fault', cat: 'explore', t: 'mid', i: '🪨', n: '무너뜨린 사람', d: '금 간 자갈 셋을 무너뜨려 숨은 동굴을 열었다.',
@@ -4827,7 +4828,7 @@ const EGG_POOL = {
 /* obj types: kill(target,n) / mine(tile,n) / collect(item,n) / talk(npc) / depth(y) / boss(target) / craft(item) / equip(slot) */
 const CHAPTERS = [
   {
-    id: 0, title: '떨어진 별', sub: '서 장', art: 'chapter_0_fallen_star',
+    id: 0, title: '떨어진 별', sub: '서장', art: 'chapter_0_fallen_star',
     line: '별이 부서진 밤',
     intro: '한밤중에 하늘이 갈라졌다.\n' +
       '떨어진 것은 돌이 아니었다. 부딪히기 직전, 그것은 분명히 몸을 뒤틀어 피하려 했다.\n' +
@@ -4847,7 +4848,7 @@ const CHAPTERS = [
       '"…네 오른손. 빛나고 있는 거, 알고는 있니?"'
   },
   {
-    id: 1, title: '잿빛 야영지', sub: '제 1 장', art: 'chapter_1_ash_village',
+    id: 1, title: '잿빛 야영지', sub: '제1장', art: 'chapter_1_ash_village',
     line: '혼자이지 않기를 꿈꾼 것',
     intro: '미라가 알려준 사실은 이렇다.\n' +
       '별 조각은 홀로 남으면 잠들고, 잠들면 꿈을 꾼다. 그리고 그 꿈이 주변 물질에게\n' +
@@ -4872,7 +4873,7 @@ const CHAPTERS = [
       '미라: "하나야. 다섯 중에 하나."'
   },
   {
-    id: 2, title: '뼈가 쌓인 곳', sub: '제 2 장', art: 'chapter_2_bone_pit',
+    id: 2, title: '뼈가 쌓인 곳', sub: '제2장', art: 'chapter_2_bone_pit',
     line: '잠든 것들의 꿈을 대신 꾼 조각',
     intro: '두 번째 조각은 캠프가 서기 훨씬 전부터 있던 묘실에 떨어졌다.\n' +
       '조각은 제 꿈을 꾸지 않았다. 그 아래 잠들어 있던 것들의 꿈을 대신 꿨다.\n' +
@@ -4893,7 +4894,7 @@ const CHAPTERS = [
       '그는 재가 되기 전에 한 마디를 더 남겼다. "셋째는 스스로 걸어올 것이다."'
   },
   {
-    id: 3, title: '부패한 숲', sub: '제 3 장', art: 'chapter_3_corrupt_forest',
+    id: 3, title: '부패한 숲', sub: '제3장', art: 'chapter_3_corrupt_forest',
     line: '굶주림을 꿈꾼 것',
     intro: '세 번째 조각은 동쪽 숲 한가운데 떨어져 굶주림을 꿈꿨다.\n' +
       '그래서 숲이 먹기 시작했다. 나무가 짐승을 먹고, 짐승이 흙을 먹고,\n' +
@@ -4913,7 +4914,7 @@ const CHAPTERS = [
       '미라: "굶주림은 병이 아니야. 그냥, 아무도 먹여주지 않은 거지."'
   },
   {
-    id: 4, title: '서리 왕좌', sub: '제 4 장', art: 'chapter_4_frost_throne',
+    id: 4, title: '서리 왕좌', sub: '제4장', art: 'chapter_4_frost_throne',
     line: '조각을 재우지 않은 사람',
     intro: '네 번째 조각은 사람이 먼저 주웠다.\n\n' +
       '실비아는 그것을 재우지 않았다. 깨어 있는 조각을 맨손에 쥔 채 서른 해를 버텼고,\n' +
@@ -4935,7 +4936,7 @@ const CHAPTERS = [
       '"가져가. 대신 하나만 약속해. …아래에 있는 건 깨우지 마."'
   },
   {
-    id: 5, title: '별이 잠든 땅', sub: '제 5 장', art: 'chapter_5_sleeping_star',
+    id: 5, title: '별이 잠든 땅', sub: '제5장', art: 'chapter_5_sleeping_star',
     line: '꿈꿀 필요가 없었던 조각',
     intro: '마지막 조각은 가장 깊이 떨어졌다. 하필이면, 별이 도망쳐 온 바로 그 자리로.\n\n' +
       '그 조각은 꿈을 꾸지 않았다. 꿈꿀 필요가 없었으니까.\n' +
@@ -4957,7 +4958,7 @@ const CHAPTERS = [
       '구름이 걷힌 자리에, 아무도 본 적 없던 것들이 떠 있었다.'
   },
   {
-    id: 6, title: '구름 위의 계단', sub: '제 6 장', art: 'chapter_6_sky_stair',
+    id: 6, title: '구름 위의 계단', sub: '제6장', art: 'chapter_6_sky_stair',
     line: '이 일은 처음이 아니었다',
     intro: '섬들이 떠 있다. 누군가 아주 오래전에 저것들을 띄워 놓고 갔다.\n\n' +
       '동쪽 숲의 거대한 나무가 위로 이어져 있다. 자란 게 아니라 심어진 것이다 —\n' +
@@ -4978,8 +4979,8 @@ const CHAPTERS = [
       '"가라. 우리가 무엇을 잘못했는지, 네 눈으로 직접 읽어라."'
   },
   {
-    id: 7, title: '최초의 유적', sub: '제 7 장', art: 'chapter_7_first_ruin',
-    line: '우리보다 잘 하라',
+    id: 7, title: '최초의 유적', sub: '제7장', art: 'chapter_7_first_ruin',
+    line: '우리보다 잘하라',
     intro: '땅 밑에 봉인된 유적이 셋 있다. 석판 셋이 같은 이야기를 한다.\n\n' +
       '별은 전에도 떨어졌다. 그때도 누군가 다섯 조각을 모아 하늘로 돌려보냈다.\n' +
       '그리고 별은 또 도망쳤고, 또 떨어졌다. 돌려보내는 건 해결이 아니었다.\n' +
@@ -5029,7 +5030,7 @@ const CHAPTERS = [
       '— 세 션 1 · 끝 —'
   },
   {
-    id: 9, title: '아무도 세우지 않은 도시', sub: '세션 2 · 서 장', art: 'chapter_9_nobody_built',
+    id: 9, title: '아무도 세우지 않은 도시', sub: '세션 2 · 서장', art: 'chapter_9_nobody_built',
     line: '손자국이 하나도 없다',
     intro: '여명 마을을 손보다가 보린이 먼저 알아챘다.\n' +
       '벽돌에 정 자국이 없다. 기둥에 이음매가 없다. 어느 것 하나 사람 손이 닿은 흔적이 없다.\n\n' +
@@ -5052,7 +5053,7 @@ const CHAPTERS = [
       '"누가 이걸 만들었는지보다, 왜 아무도 안 남았는지가 더 궁금한데."'
   },
   {
-    id: 10, title: '지하 공창', sub: '세션 2 · 제 1 장', art: 'chapter_10_underworks',
+    id: 10, title: '지하 공창', sub: '세션 2 · 제1장', art: 'chapter_10_underworks',
     line: '멈추라고 가르친 사람이 없었다',
     intro: '통로 끝은 공장이었다. 세 층으로 겹친, 아직 살아 있는 공장.\n\n' +
       '기계들은 여전히 캐고 있다. 몇백 년째, 아무도 시키지 않았는데.\n' +
@@ -5079,7 +5080,7 @@ const CHAPTERS = [
       '— 공창의 설계 핵을 얻었다. 이제 작업대와 용광로를 뜯어고칠 수 있다 —'
   },
   {
-    id: 11, title: '굴뚝이 선 마을', sub: '세션 2 · 제 2 장', art: 'chapter_11_chimneys',
+    id: 11, title: '굴뚝이 선 마을', sub: '세션 2 · 제2장', art: 'chapter_11_chimneys',
     line: '하루아침에 늘어난 것',
     intro: '공창의 문을 잠그고 올라온 뒤, 마을이 달라지는 데는 열흘도 안 걸렸다.\n\n' +
       '케이드가 설계도 조각을 하나씩 꿰어 맞출 때마다, 보린의 대장간 옆으로 낯선 것이 하나씩 늘었다.\n' +
@@ -5106,7 +5107,7 @@ const CHAPTERS = [
       '그날 밤에도 발밑은 계속 울렸다. 마을이 조용해질수록, 그 소리는 오히려 더 또렷하게 들렸다.'
   },
   {
-    id: 12, title: '폭주로', sub: '세션 2 · 제 3 장', art: 'chapter_12_runaway',
+    id: 12, title: '폭주로', sub: '세션 2 · 제3장', art: 'chapter_12_runaway',
     line: '결재자 없음 — 자동 승인',
     intro: '마을의 조립기 소동이 가라앉은 뒤에도 발밑은 계속 울렸다.\n' +
       '케이드가 바닥에 귀를 대고 한참 있다가 일어났다. "…아래에 하나 더 있어."\n\n' +
@@ -5133,7 +5134,7 @@ const CHAPTERS = [
       '『당신들이 다시 왔다. 그러면 이제 멈춰도 되는 것인가.』'
   },
   {
-    id: 13, title: '헤파', sub: '세션 2 · 제 4 장', art: 'chapter_13_hepha',
+    id: 13, title: '헤파', sub: '세션 2 · 제4장', art: 'chapter_13_hepha',
     line: '멈추면 아무도 남지 않는다',
     intro: '가장 아래 격실에 첫 번째가 있었다.\n\n' +
       '헤파. 사람이 손으로 만든 마지막 기계이자, 기계가 만들지 않은 유일한 기계.\n' +
@@ -5212,7 +5213,7 @@ const CHAPTERS = [
      서장 · 제1장 · 제2장까지만이다. **종장은 아직 없다** — 계속 이어 갈 이야기라
      여기서 매듭지으면 안 된다. 세션 경계는 data.js의 SESSIONS 표가 잡는다. */
   {
-    id: 15, title: '물이 지운 쪽', sub: '세션 3 · 서 장', art: 'chapter_15_drowned',
+    id: 15, title: '물이 지운 쪽', sub: '세션 3 · 서장', art: 'chapter_15_drowned',
     line: '서쪽 끝, 지도가 끊기는 자리',
     intro: '설계실이 꺼지고 나흘째, 서쪽에서 바람이 달라졌다.\n\n' +
       '소금 냄새다. 이 대륙에는 바다가 없다고 배웠는데.\n\n' +
@@ -5237,7 +5238,7 @@ const CHAPTERS = [
       '케이드: "…아니. 여긴 저 사람들이 **버린** 거야."'
   },
   {
-    id: 16, title: '내려갈수록 밝은 것', sub: '세션 3 · 제 1 장', art: 'chapter_16_lanterns',
+    id: 16, title: '내려갈수록 밝은 것', sub: '세션 3 · 제1장', art: 'chapter_16_lanterns',
     line: '빛이 닿은 적 없는 곳에서 빛나는 것들',
     intro: '수면에서 열 칸만 내려가도 캄캄하다. 그런데 더 내려가면 다시 밝아진다.\n\n' +
       '초롱을 단 것들이 산다. 해파리도, 아귀도, 저 혼자 빛을 만든다.\n' +
@@ -5262,7 +5263,7 @@ const CHAPTERS = [
       '물속에서 쓸 것을 물 밖에서 만드는 자리가 하나 더 생겼다.'
   },
   {
-    id: 17, title: '가라앉은 종', sub: '세션 3 · 제 2 장', art: 'chapter_17_bell',
+    id: 17, title: '가라앉은 종', sub: '세션 3 · 제2장', art: 'chapter_17_bell',
     line: '물이 대신 대답한다',
     intro: '가장 깊은 골에 종탑이 서 있다. 물속인데 종이 녹슬지 않았다.\n\n' +
       '케이드가 손을 대자 물이 먼저 울렸다.\n' +
@@ -5275,7 +5276,7 @@ const CHAPTERS = [
     obj: [
       { type: 'kill', target: 'abyss_angler', n: 14, t: '심연 초롱아귀 14기 처치' },
       { type: 'craft', item: 'sum_tide', t: '가라앉은 종 제작' },
-      { type: 'boss', target: 'tide_warden', t: '조수의 파수꾼과의 결착' }
+      { type: 'boss', target: 'tide_warden', t: '조수의 파수꾼과의 결전' }
     ],
     rw: { xp: 14000000, gold: 5600000, items: [['tide_heart', 1], ['hammer_tide', 1], ['chest_abyss', 1]] },
     outro: '파수꾼은 싸우는 내내 한 번도 물 밖으로 나오려 하지 않았다.\n' +
@@ -5422,7 +5423,7 @@ const TABLETS = [
     id: 2, n: '세 번째 석판',
     lines: [
       '『파수꾼을 세운 뒤 우리는 잠들기로 했다. 깨어 있는 것이 너무 무거웠다.』',
-      '『이 글을 읽는 자에게. 우리를 깨우지 마라. 대신 우리보다 잘 하라.』',
+      '『이 글을 읽는 자에게. 우리를 깨우지 마라. 대신 우리보다 잘하라.』',
       '『문 너머의 것은 적이 아니다. 우리가 남긴 가장 큰 실수다.』',
       '『같은 길을 택하려거든, 파수꾼이 먼저 너를 멈출 것이다. 그것이 그의 일이다.』',
       '『그를 넘어섰다면 — 너는 우리가 못 한 선택을 할 자격을 얻은 것이다.』'
@@ -5645,7 +5646,7 @@ const SIDE_POOL = {
       const n = rng.int(5, 9);
       return {
         title: '마을을 지켜라',
-        desc: `요즘 ${ENEMIES[t].n}이(가) 부쩍 늘었어. ${n}마리만 줄여 주겠니?`,
+        desc: `요즘 ${iga(ENEMIES[t].n)} 부쩍 늘었어. ${n}마리만 줄여 주겠니?`,
         obj: { type: 'kill', target: t, n },
         rw: { gold: 35 + ch * 45, xp: 25 + ch * 35 },
         doneLine: '덕분에 한숨 돌렸다. 고마워.'
@@ -5723,7 +5724,7 @@ const SIDE_POOL = {
       const n = rng.int(14, 24);
       return {
         title: '광맥째로',
-        desc: `${TILE_DEF[tile].n}을 ${n}번 깨 와. 주워 온 것 말고 네가 깬 걸로.`,
+        desc: `${eulreul(TILE_DEF[tile].n)} ${n}번 깨 와. 주워 온 것 말고 네가 깬 걸로.`,
         obj: { type: 'mine', tile, n },
         rw: { gold: 45 + ch * 50, xp: 30 + ch * 40 },
         doneLine: '깬 자리가 고르군. 곡괭이를 아는 손이야.'
@@ -5744,7 +5745,7 @@ const SIDE_POOL = {
       const n = rng.int(5, 10);
       return {
         title: '마력 재료',
-        desc: `${ITEMS[item].n}이(가) ${n}개 필요해. 마법 재료야.`,
+        desc: `${iga(ITEMS[item].n)} ${n}개 필요해. 마법 재료야.`,
         obj: { type: 'collect', item, n },
         rw: { gold: 35 + ch * 50, xp: 25 + ch * 35 },
         doneLine: '좋아, 이걸로 주문을 하나 완성할 수 있겠어.'
@@ -5792,7 +5793,7 @@ const SIDE_POOL = {
       const n = rng.int(6, 12);
       return {
         title: '???',
-        desc: `${TILE_DEF[tile].n}을 ${n}번 캐 오너라. 이유는… 나중에 말해주마.`,
+        desc: `${eulreul(TILE_DEF[tile].n)} ${n}번 캐 오너라. 이유는… 나중에 말해주마.`,
         obj: { type: 'mine', tile, n },
         rw: { gold: 30 + ch * 40, xp: 40 + ch * 50 },
         doneLine: '…역시. 네가 맞았어.'
@@ -5912,7 +5913,7 @@ const SIDE_POOL = {
       const n = rng.int(16, 26);
       return {
         title: '주워 온 것 말고',
-        desc: `${TILE_DEF[tile].n}을 ${n}번 깨 와. 주워 온 쇠는 이미 한 번 남의 물건이었잖아.`,
+        desc: `${eulreul(TILE_DEF[tile].n)} ${n}번 깨 와. 주워 온 쇠는 이미 한 번 남의 물건이었잖아.`,
         obj: { type: 'mine', tile, n },
         rw: { gold: 75 + ch * 60, xp: 55 + ch * 50 },
         doneLine: '처음부터 우리 것인 쇠야. 이걸로 만든 건 팔지 말자.'

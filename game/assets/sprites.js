@@ -40,6 +40,9 @@ const Sprites = {
     // 구름 — 절이 있을 때만 읽는다(옛 매니페스트에는 없다)
     if (this.meta.backgrounds.clouds)
       this.meta.backgrounds.clouds.files.forEach(f => add(f.split('/')[1].replace('.png', ''), f));
+    // 하늘의 해·운석(tools/mksky.py) — 없으면 게임이 절차 그림으로 떨어진다
+    if (this.meta.backgrounds.sky)
+      this.meta.backgrounds.sky.files.forEach(f => add(f.split('/')[1].replace('.png', ''), f));
     // 여명 마을 시설물 (한 장짜리 정지 이미지, 상태별 변형 파일이 있을 수 있다)
     if (this.meta.objects) for (const k in this.meta.objects.files) {
       const o = this.meta.objects.files[k];

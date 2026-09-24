@@ -98,6 +98,18 @@ function josaRo(word) {
   return (jong === 0 || jong === 8) ? '로' : '으로';
 }
 
+/** 한국어 조사 짝 고르기 — josa('검', '이', '가') → '이'. 받침이 있으면 앞엣것.
+    ★ '이(가)' '을(를)' 처럼 둘 다 적으면 알림마다 괄호가 붙어 기계가 쓴 글처럼 읽혔다. 이름이 한글로
+      안 끝나면(숫자·영문) 받침 없는 쪽으로 친다. */
+function josa(word, withJong, noJong) {
+  const s = String(word), ch = s.charCodeAt(s.length - 1) - 0xAC00;
+  if (ch < 0 || ch > 11171) return noJong;
+  return ch % 28 ? withJong : noJong;
+}
+const iga = w => w + josa(w, '이', '가');
+const eulreul = w => w + josa(w, '을', '를');
+const eunneun = w => w + josa(w, '은', '는');
+
 /** 숫자 포맷 */
 /** 숫자 표기. 백만이 넘으면 M, 십억이 넘으면 B로 줄인다 — 금화·경험치가 수천만을
     넘어가면 자릿수만 길어져서 한눈에 안 읽힌다.
