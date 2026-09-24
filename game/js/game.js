@@ -45,7 +45,10 @@ const SAVE_UPGRADES = [
   /* v6 → v7 (v1.1) — 동굴 갈래(world.caveGrid)와 금 간 자갈(world.faults).
      옛 세계는 갈래 없이(전부 plain) 무너질 자갈도 없이 연다 — 타일은 이미 지어져 있으니
      새로 꾸밀 방법이 없다. 새 세계부터 갈래가 생긴다. */
-  (d) => { if (d.world) { if (d.world.caveGrid === undefined) d.world.caveGrid = null; if (!d.world.faults) d.world.faults = []; } }
+  (d) => { if (d.world) { if (d.world.caveGrid === undefined) d.world.caveGrid = null; if (!d.world.faults) d.world.faults = []; } },
+  /* v7 → v8 (v1.1) — 세계 크기(world.size: 's' 소형 · 'm' 중형 · 'l' 대형). 그전 세계는 전부 소형이다.
+     불러오기는 이 값으로 setWorldSize 를 먼저 부른 뒤 ww·wh 를 대조한다. */
+  (d) => { if (d.world && !d.world.size) d.world.size = 's'; }
 ];
 const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 
@@ -366,16 +369,19 @@ const G = {
     });
   },
 
-  newGame(seedStr, slot, name, charId, mode) {
+  newGame(seedStr, slot, name, charId, mode, size) {
     const seed = seedStr || ('' + Math.floor(Math.random() * 1e9));
     this.currentSlot = slot;
-    this.showLoading('세계를 빚는 중…');
+    this.showLoading(size && size !== 's' ? `${WORLD_SIZES[size].n} 세계를 빚는 중… 조금 오래 걸린다` : '세계를 빚는 중…');
     // 다음 프레임에 생성해서 로딩 화면이 먼저 그려지게 한다
-    setTimeout(() => { try { this._newGame(seed, name, charId, mode); } finally { this.hideLoading(); } }, 40);
+    setTimeout(() => { try { this._newGame(seed, name, charId, mode, size); } finally { this.hideLoading(); } }, 40);
   },
-  _newGame(seed, name, charId, mode) {
+  _newGame(seed, name, charId, mode, size) {
     this.rng = new RNG(seed + '_g');
+    // ★ World 를 만들기 **전에** — 배열 크기와 모든 좌표가 여기서 정해진다. 주소의 &size=m|l 은 디버그 바로가기용
+    setWorldSize(size || new URLSearchParams(location.search).get('size') || 's');
     this.world = new World(seed).generate();
+    this.fitMapAtlas();
     this._rigs = null; this._fbg = null;   // 세계가 바뀌었으니 자리·원경 캐시를 버린다
     this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
     const p = this.player;
@@ -3659,9 +3665,11 @@ const G = {
       const table = pool.biome === 'sea'
         /* 바다는 깊이가 곧 난이도다 — 수면 가까이는 게·해파리, 내려갈수록 상어·문어,
            바닥 근처에서 초롱아귀. 산소가 먼저 닳으므로 "더 내려갈까"를 계속 묻게 된다. */
-        ? (ty > (w.sea.level + 220) ? ['abyss_angler', 'deep_octopus', 'abyss_angler']
-         : ty > (w.sea.level + 90) ? ['deep_octopus', 'reef_shark', 'abyss_angler']
-         : ty > (w.sea.level + 30) ? ['reef_shark', 'reef_crab', 'lantern_jelly', 'reef_shark']
+        /* 깊이 칸 수는 세계 크기만큼 늘린다(WSY) — 중형·대형 바다는 그만큼 깊어서, 그대로 두면
+           바다 대부분이 '가장 깊은 층' 표로 떨어진다 */
+        ? (ty > (w.sea.level + 220 * WSY) ? ['abyss_angler', 'deep_octopus', 'abyss_angler']
+         : ty > (w.sea.level + 90 * WSY) ? ['deep_octopus', 'reef_shark', 'abyss_angler']
+         : ty > (w.sea.level + 30 * WSY) ? ['reef_shark', 'reef_crab', 'lantern_jelly', 'reef_shark']
          : ['reef_crab', 'lantern_jelly', 'reef_crab'])
         : pool.biome === 'jungle'
         ? ['jungle_koi', 'jungle_koi', 'jungle_koi', 'grotto_eel']
@@ -4400,11 +4408,17 @@ const G = {
       /* 세계 크기가 다른 판의 기록은 열지 않는다. 타일이 RLE 배열이라 폭·높이가 어긋나면
          지형이 통째로 밀려 버린다. 예전엔 ww만 봤는데, 세션 3에서 심해를 넣으려고 WH를
          늘리면 옛 세이브가 이 검사를 그냥 통과해 조용히 깨진다 — wh도 함께 본다. */
+      /* 세계 크기(소형·중형·대형)를 **먼저** 맞추고 대조한다 — 크기마다 WW·WH 가 다르다.
+         안 맞으면(옛 판의 폭이거나 크기 표시가 틀린 기록) 원래 크기로 되돌리고 열지 않는다. */
+      const prevSize = WSIZE;
+      setWorldSize((d.world && d.world.size) || 's');
       if (d.world && ((d.world.ww && d.world.ww !== WW) || (d.world.wh && d.world.wh !== WH))) {
+        setWorldSize(prevSize);
         this.toast(`이전 크기(${d.world.ww}×${d.world.wh || '?'})의 세계라 열 수 없다 — 새로 시작해야 한다`, 'bad');
         return;
       }
       this.world = World.deserialize(d.world);
+      this.fitMapAtlas();
       this._rigs = null; this._fbg = null;   // 다른 세계를 불러왔다 — 자리·원경 캐시를 버린다
       this.rng = new RNG(d.world.seed + '_g');
       const p = new Player(d.p.x, d.p.y);
@@ -4520,7 +4534,7 @@ const G = {
       try {
         const d = JSON.parse(raw);
         out.push({ name: d.name || '이름 없는 모험가', level: d.p.level, chapter: d.chapter,
-          savedAt: d.savedAt, bad: !saveSealOk(i, raw, d) });
+          size: (d.world && d.world.size) || 's', savedAt: d.savedAt, bad: !saveSealOk(i, raw, d) });
       } catch (e) { out.push(null); }
     }
     return out;
@@ -4548,7 +4562,7 @@ const G = {
       return `<div class="slot-card filled${s.bad ? ' tampered' : ''}" data-slot="${i}">
         <div class="slot-info">
           <div class="slot-name">${escHtml(s.name)}</div>
-          <div class="slot-meta">${s.bad ? '저장한 뒤에 바뀐 기록 — 열 수 없다' : `Lv.${s.level} · ${when}`}</div>
+          <div class="slot-meta">${s.bad ? '저장한 뒤에 바뀐 기록 — 열 수 없다' : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
         </div>
         <div class="slot-actions">
           <button class="slot-load-btn" data-slot="${i}">이어하기</button>
@@ -4596,7 +4610,7 @@ const G = {
       여기서 고른 캐릭터와 난이도는 되돌릴 수 없다(설정에 없다). */
   showNewGameForm(slot) {
     const box = $('#newgame-box');
-    let ci = 0, mi = 0;
+    let ci = 0, mi = 0, sz = 's';
     const kit = ch => {
       const nameOf = id => (ITEMS[id] && ITEMS[id].n) || id;
       const parts = [ch.weapon ? `<b>${escHtml(nameOf(ch.weapon))}</b>` : '<b>맨손</b>'];
@@ -4624,9 +4638,14 @@ const G = {
       </div>
 
       <div class="ng-sec">난이도</div>
-      <div class="ng-modes">${MODES.map((m, i) => `
+      <div class="ng-modes" id="ng-modes">${MODES.map((m, i) => `
         <button class="ng-mode${i ? '' : ' on'}" data-i="${i}" style="--mc:${m.c}">${escHtml(m.n)}</button>`).join('')}</div>
       <p class="ng-mdesc" id="ng-mdesc">${escHtml(MODES[0].d)}</p>
+
+      <div class="ng-sec">세계 크기</div>
+      <div class="ng-modes" id="ng-sizes">${Object.keys(WORLD_SIZES).map(k => `
+        <button class="ng-mode${k === 's' ? ' on' : ''}" data-k="${k}" style="--mc:#8fb8d8">${escHtml(WORLD_SIZES[k].n)}</button>`).join('')}</div>
+      <p class="ng-mdesc" id="ng-sdesc">${escHtml(WORLD_SIZES.s.d)}</p>
 
       <div class="ng-fields">
         <label>이름<input class="ng-name-input" placeholder="이름 없는 모험가" maxlength="12"></label>
@@ -4654,10 +4673,15 @@ const G = {
       box.querySelectorAll('.ng-char').forEach(x => x.classList.toggle('on', x === b));
       paint();
     });
-    box.querySelectorAll('.ng-mode').forEach(b => b.onclick = () => {
+    box.querySelectorAll('#ng-modes .ng-mode').forEach(b => b.onclick = () => {
       mi = +b.dataset.i;
-      box.querySelectorAll('.ng-mode').forEach(x => x.classList.toggle('on', x === b));
+      box.querySelectorAll('#ng-modes .ng-mode').forEach(x => x.classList.toggle('on', x === b));
       $('#ng-mdesc').textContent = MODES[mi].d;
+    });
+    box.querySelectorAll('#ng-sizes .ng-mode').forEach(b => b.onclick = () => {
+      sz = b.dataset.k;
+      box.querySelectorAll('#ng-sizes .ng-mode').forEach(x => x.classList.toggle('on', x === b));
+      $('#ng-sdesc').textContent = WORLD_SIZES[sz].d;
     });
     box.querySelector('.ng-start').onclick = () => {
       const name = box.querySelector('.ng-name-input').value;
@@ -4667,7 +4691,7 @@ const G = {
           !confirm('불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?')) return;
       this.closeModal('#newgame-screen');
       this.closeModal('#slots-screen');
-      this.newGame(seed, slot, name, CHARACTERS[ci].id, MODES[mi].id);
+      this.newGame(seed, slot, name, CHARACTERS[ci].id, MODES[mi].id, sz);
     };
     box.querySelector('.ng-cancel').onclick = () => this.closeModal('#newgame-screen');
     this.openModal('#newgame-screen');
@@ -7510,7 +7534,7 @@ const G = {
     const chestRng = new RNG(f.seed + 13);
     if (floors.length && chestRng.chance(0.3)) {
       const [gx, gy] = floors[0];
-      const tier = gy < 180 ? 3 : gy < DEEP_Y ? 4 : 5;
+      const tier = gy < SY(180) ? 3 : gy < DEEP_Y ? 4 : 5;
       w.objects.push({ type: 'chest', tier, x: gx * TS, y: (gy - 0.2) * TS, w: 30, h: 26, items: null });
     }
     // 굴에 살던 것들 — 셋, 플레이어에게서 떨어진 바닥에
@@ -8612,6 +8636,13 @@ const G = {
   },
   /** 세이브를 막 불러왔을 때(또는 새 게임 시작 시) explored 비트로부터 축소 지도를 다시 칠한다.
       화면에 실제로 그려질 때는 render()가 칸 단위로 이 캔버스를 계속 갱신한다. */
+  /** 축소 지도 캔버스를 지금 세계 크기(WW×WH)에 맞춘다 — 세계 크기가 바뀌면 다시 만든다.
+      ★ 처음 한 번만 만들어 두면 중형·대형에서 지도가 소형 크기로 잘려 오른쪽·아래가 안 칠해진다. */
+  fitMapAtlas() {
+    if (this.mapAtlas.width === WW && this.mapAtlas.height === WH) return;
+    this.mapAtlas.width = WW; this.mapAtlas.height = WH;
+    this.mapAtlasX = this.mapAtlas.getContext('2d');
+  },
   buildMapAtlas() {
     const c = this.mapAtlasX, w = this.world;
     c.fillStyle = '#07080c'; c.fillRect(0, 0, WW, WH);
