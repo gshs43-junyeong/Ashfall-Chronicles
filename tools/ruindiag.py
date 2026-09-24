@@ -31,17 +31,34 @@ WALK_JS = r"""
    **제자리에서 위로 뛰는 것도 이동이다** — 발판 사다리(폭 한 칸)는 그렇게만 오른다.
    아래 키를 누르면 발판을 뚫고 내려갈 수 있다(move의 dropThrough). */
 (args) => {
-  const w = G.world, WWl = 4200, JUMP = 3, FALL = 60, RUN = 4;
+  /* ★ WWl 은 자리를 하나의 숫자로 접는 가로폭이다 — **세계 폭과 같아야 한다.** 4200 으로
+     박혀 있던 동안 x 4200 이 넘는 자리(유적 셋이 거기 있다)가 다른 줄의 자리와 같은 번호로
+     접혀, 닿지도 않은 칸을 닿았다고 셌다. */
+  const w = G.world, WWl = WW, JUMP = 3, FALL = 60, RUN = 4;
   // 봉인석은 열쇠로 여는 문이다 — 여기까지 온 사람은 열쇠가 있으니 뚫린 것으로 본다
   const support = (x, y) => { const s = TILE_DEF[w.get(x, y)].solid; return s === 1 || s === 2; };
   const plat = (x, y) => TILE_DEF[w.get(x, y)].solid === 2;
-  const free = (x, y) => w.get(x, y) === T.SEALSTONE || TILE_DEF[w.get(x, y)].solid !== 1;
+  /* 암호석(CIPHERSTONE)도 같다 — 암호를 풀면 문이 열린다(openCodeDoorway). 막힌 벽으로
+     보면 "암호" 이벤트가 걸린 유적(석판 유적 2 · 피라미드)에서 골방 뒤 방들이 못 닿은
+     것으로 세어져, 골방이 크게 잡힌 씨앗마다 80% 문턱 아래로 떨어졌다(d5 · d6). */
+  const free = (x, y) => w.get(x, y) === T.SEALSTONE || w.get(x, y) === T.CIPHERSTONE
+    || TILE_DEF[w.get(x, y)].solid !== 1;
   const room = (x, y) => free(x, y) && free(x, y - 1);        // 몸 두 칸이 들어가는가
-  const stand = (x, y) => room(x, y) && support(x, y + 1);
+  /* 물속에서는 뜬다(entity.js Ent.move) — 발밑이 없어도 헤엄쳐 오르내린다. 세계 쪽 걸음
+     판정(world.js _standSet)도 그렇게 본다. 이걸 빼면 물에 잠긴 통로를 "못 지나감"으로 세어,
+     바다 밑 틈으로 헤엄쳐 들어가는 가라앉은 유적이 발판이 없을 때마다 실패로 나왔다(d6). */
+  const liquid = (x, y) => !!TILE_DEF[w.get(x, y)].liquid;
+  const stand = (x, y) => room(x, y) && (support(x, y + 1) || liquid(x, y));
   const key = (x, y) => y * WWl + x;
 
   const settle = (x, y) => {
-    for (let k = 0; k <= FALL; k++) if (stand(x, y + k)) return y + k;
+    /* ★ 떨어지는 것은 **빈 칸을 지나서만** 한다. 막힌 칸을 뚫고 예순 줄 아래까지 찾으면
+       둥지 밑 바위 속에 우연히 난 두 칸짜리 구멍에서 걷기를 시작해, 보스방이 멀쩡히
+       뚫려 있는데도 "칸 3 · 방 0/11"이 나왔다(d1 버려진 광산). */
+    for (let k = 0; k <= FALL; k++) {
+      if (stand(x, y + k)) return y + k;
+      if (!free(x, y + k)) break;
+    }
     for (let k = 1; k <= JUMP + 3; k++) if (stand(x, y - k)) return y - k;
     return -1;
   };
@@ -95,7 +112,9 @@ WALK_JS = r"""
     const site = w.ruinSites.find(s => s.id === r.id);
     const x0 = r.x - (r.w >> 1), x1 = r.x + (r.w >> 1);
     const y0 = r.y - (r.h >> 1), y1 = r.y + (r.h >> 1);
-    const box = [x0 - 14, 2, x1 + 14, Math.min(478, y1 + 14)];
+    /* ★ 아래 끝을 478(WORLD_BOT 시절 값)로 두면 y 600~660 의 가라앉은 유적을 검사 상자가
+       품지 못해 "방 1/52, 칸 1" 이 나왔다. 유적이 있는 데까지 내려 본다. */
+    const box = [x0 - 14, 2, x1 + 14, Math.min(WH - 3, y1 + 14)];
 
     /* 그 유적의 "가장 안쪽" — 바이옴 유적은 둥지·제단, 석판 유적은 제 번호의 석판.
        ★ 자리만 보고 아무거나 집으면 안 된다. 유적 상자끼리 겹치는 자리가 있어서
