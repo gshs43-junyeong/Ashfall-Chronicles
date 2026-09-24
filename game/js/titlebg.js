@@ -152,7 +152,8 @@ const TitleBG = {
       const ph = P.fh * k, pw = P.fw * k;
       const fr = this.WALK[Math.floor(t * this.FPS) % this.WALK.length];
       const bob = Math.sin(t * this.FPS * Math.PI) * (ph * 0.012);
-      const x = W * (W < 900 ? 0.8 : 0.76), y = ground - ph + bob;
+      // 칸 맨 아래 한 논리픽셀은 발 밑 여백(tools/mkplayer.py — 32×46 칸) — 그만큼 내려 발을 땅에 붙인다
+      const x = W * (W < 900 ? 0.8 : 0.76), y = ground - ph + 4 * k + bob;
       c.save();                                          // 발밑 그림자
       c.globalAlpha = 0.3; c.fillStyle = '#000';
       c.beginPath();

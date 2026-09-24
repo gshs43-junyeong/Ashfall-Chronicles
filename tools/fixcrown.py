@@ -52,7 +52,7 @@ def band_rows(px, ox, fw, h):
 
 def main():
     check = '--check' in sys.argv
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'game', 'assets', 'char')
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'art')   # ★ 원본은 tools/art/ (game/ 쪽은 mkplayer 산출물)
     files = sorted(glob.glob(os.path.join(root, 'player*.png')))
     if not files:
         print('char/player*.png 을 못 찾음'); return 1

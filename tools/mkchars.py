@@ -15,9 +15,11 @@ import os
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# 옛 공용 시트 player.png 는 지웠다(방랑자 시트와 픽셀까지 같았다) — 방랑자 시트가 원본을 대신한다
-SRC = os.path.join(ROOT, 'game/assets/char/player_wanderer.png')
-OUT = os.path.join(ROOT, 'game/assets/char')
+# ★ 원본 player.png(20×40 · 13장)는 tools/art/base_player.png 로 옮겨 두었다(게임 폴더에서는 지웠다).
+#   이 도구의 산출물도 이제 **tools/art/** 로 간다 — 그다음 unclip.py → tools/mkplayer.py 가 게임 시트를 굽는다.
+#   다시 돌리면 그 뒤에 손본 것(mkhead.py 정수리 · unclip.py 단면)이 사라지므로 그 둘도 이어서 돌릴 것.
+SRC = os.path.join(ROOT, 'tools/art/base_player.png')
+OUT = os.path.join(ROOT, 'tools/art')
 FW, FH, S, N = 20, 40, 4, 13
 OUTLINE = (0x0c, 0x0c, 0x11)
 

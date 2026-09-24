@@ -24,7 +24,8 @@ from collections import Counter
 
 from PIL import Image
 
-BASE = os.path.join(os.path.dirname(__file__), '..', 'game', 'assets', 'char')
+# ★ 원본 시트는 tools/art/ 에 있다. game/assets/char/ 의 것은 tools/mkplayer.py 의 산출물(32×46)이다.
+BASE = os.path.join(os.path.dirname(__file__), 'art')
 SHEETS = ['player_%s.png' % c for c in
                            ('wanderer', 'digger', 'ranger', 'adept', 'stray')]
 S = 4            # 시트는 4배로 구워져 있다 (논리 1px = 4x4 블록)
