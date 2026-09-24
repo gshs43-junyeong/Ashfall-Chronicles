@@ -41,7 +41,11 @@ const SAVE_UPGRADES = [
      시작한다 — 이미 연 상자·잡은 주인·읽은 비문은 기록이 **세이브에서 바로 재므로**
      그대로 점수에 들어간다(방만 다시 밟으면 된다). 맥박 자체는 저장하지 않는다(나갔다
      들어오면 가라앉아 있는 것이 맞다). */
-  (d) => { if (!d.survey) d.survey = {}; }
+  (d) => { if (!d.survey) d.survey = {}; },
+  /* v6 → v7 (v1.1) — 동굴 갈래(world.caveGrid)와 금 간 자갈(world.faults).
+     옛 세계는 갈래 없이(전부 plain) 무너질 자갈도 없이 연다 — 타일은 이미 지어져 있으니
+     새로 꾸밀 방법이 없다. 새 세계부터 갈래가 생긴다. */
+  (d) => { if (d.world) { if (d.world.caveGrid === undefined) d.world.caveGrid = null; if (!d.world.faults) d.world.faults = []; } }
 ];
 const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 
@@ -399,6 +403,7 @@ const G = {
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
     this.achievements = {}; this.tally = {};
     this.survey = {}; this.ruinPulse = {}; this.pendingEcho = null; this.pulseHere = null;
+    this.rocks = []; this.quake = null; this.caveHere = 0; this._caveLast = 0;
     this.nearStObj = { work: null, forge: null };
     this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
     this.rainT = 0; this.rainDrops = null; this.smokes = []; this.smokeT = 0;
@@ -602,6 +607,44 @@ const G = {
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
         UI.refreshBag();
       }
+    }
+
+    /* ?debug=cave — 동굴 확인 자리. 기본은 가장 가까운 **금 간 자갈** 앞(무너뜨려 보라고
+       곡괭이를 쥐여 준다). &k=moss|drip|geode|fume 이면 그 갈래 굴 한가운데에서 시작한다. */
+    if (qs.get('debug') === 'cave') {
+      const w = this.world, kq = qs.get('k');
+      const plv = +qs.get('plv') || 30;
+      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
+      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+      const give = (iid, n) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+      give('pick_iron', 1); give('potion_hp', 20); give('bomb_small', 10); give('torch', 60);
+      let at = null;
+      if (kq) {
+        const k = CAVE_TYPES.findIndex(c => c.id === kq);
+        const cx0 = w.spawnX;
+        // 그 갈래의 장식이 **실제로 깔린** 자리여야 한다(캠프 둘레처럼 갈래만 있고 안 꾸민 곳이 있다)
+        const mark = { moss: T.HANGMOSS, drip: T.STALACTITE, geode: T.GEODE, fume: T.GASVENT }[kq];
+        const near = (x, y) => {
+          let n = 0;
+          for (let dx = -8; dx <= 8; dx++) for (let dy = -8; dy <= 3; dy++) if (w.get(x + dx, y + dy) === mark) n++;
+          return n >= (kq === 'fume' ? 1 : 3);
+        };
+        for (let r = 0; r < WW && !at; r += 7)
+          for (const x of [cx0 + r, cx0 - r]) {
+            if (x < 5 || x >= WW - 5 || at) continue;
+            for (let y = w.surface[x] + 14; y < HELL_Y - 4; y++)
+              if (w.caveKindAt(x, y) === k && w.get(x, y) === T.AIR && w.get(x, y - 1) === T.AIR && w.solid(x, y + 1) && near(x, y)) { at = [x, y]; break; }
+          }
+      } else {
+        const f = (w.faults || []).filter(q => !q.done).sort((a, b) => Math.abs(a.x - w.spawnX) - Math.abs(b.x - w.spawnX))[0];
+        if (f) at = [f.x - f.dir * 3, f.y + 1];
+      }
+      if (at) {
+        p.x = at[0] * TS + TS / 2 - p.w / 2; p.y = (at[1] + 1) * TS - p.h; p.vx = p.vy = 0;
+        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
+        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+      }
+      UI.refreshBag();
     }
 
     /* ?debug=bomb — 폭탄만 확인하는 자리.
@@ -886,6 +929,7 @@ const G = {
     this.checkRuinEntry();
     this.checkRuinEvent();
     this.updatePulse(dt);          // 유적의 맥박 · 탐사 기록 (아래 '유적의 맥박' 절)
+    this.updateCaves(dt);          // 동굴 갈래 · 낙석 · 무너지는 자갈 (아래 '동굴' 절)
     /* 유적 고유 이벤트의 여운 — 꺼진 불(화면 어둠)과 홀씨(지속 피해)는 시간이 지나면 걷힌다 */
     if (this.ruinDark > 0) this.ruinDark -= dt;
     if (this.ruinSpore > 0) {
@@ -1219,6 +1263,7 @@ const G = {
       p.mineProg = 0;
       w.set(tx, ty, T.AIR);
       p.mined[id] = (p.mined[id] || 0) + 1;
+      if (id === T.FAULTSTONE) this.triggerFault(tx, ty);   // 숨은 동굴이 무너져 열린다
       // 등급 5 광물은 다른 돌과 소리가 다르다 — 캐는 순간 "이건 다른 돌"이 들려야 한다
       if (TILE_DEF[id] && TILE_DEF[id].hard >= 5) this.sfx('ore_hit');
       this.checkAch();
@@ -4185,6 +4230,7 @@ const G = {
        보상을 줬다. */
     this.pendingLair = null; this.pendingEcho = null;
     if (this.pulseEvent) this.endPulseEvent(false);   // 쓰러지면 사건도 놓친 것이다
+    this.rocks = [];
     $('#death-screen').classList.remove('open');
     this.paused = false;
   },
@@ -4358,6 +4404,7 @@ const G = {
       this.ruinMarks = d.ruinMarks || {}; this.ruinEvDone = d.ruinEvDone || {};
       this.cipherSeen = d.cipherSeen || {};
       this.survey = d.survey || {}; this.ruinPulse = {}; this.pendingEcho = null; this.pulseHere = null;
+      this.rocks = []; this.quake = null; this.caveHere = 0; this._caveLast = 0;
       this.deathMark = d.deathMark || null;
       this.asmRan = d.asmRan || 0;
       this.everPlanted = d.everPlanted || 0;
@@ -5152,6 +5199,7 @@ const G = {
       c.fillRect(0, 0, this.W, this.H);
       c.restore();
     }
+    this.drawCaves(c, camX, camY);
 
     // ---- 폭발/타격 이펙트 ----
     if (this.bursts) for (let i = this.bursts.length - 1; i >= 0; i--) {
@@ -6997,6 +7045,180 @@ const G = {
         eg.addColorStop(0, 'rgba(232,48,60,0)'); eg.addColorStop(1, 'rgba(232,48,60,1)');
         c.globalAlpha = a; c.fillStyle = eg; c.fillRect(0, 0, this.W, this.H); c.globalAlpha = 1;
       }
+    }
+  },
+
+  /* ================= 동굴 — 갈래 · 낙석 · 무너지는 자갈 =================
+     땅속은 예전에 "지형"이었다 — 어디를 파도 같은 회색 굴. 갈래(CAVE_TYPES)마다 몸에
+     오는 것이 다르게 했다: 이끼 굴은 아물고, 종유 동굴은 머리 위를 봐야 하고, 독기 굴은
+     숨이 따갑고, 금 간 자갈은 무너뜨리면 숨은 동굴이 열린다. 전부 저장 없이 돈다 —
+     무너진 자갈(faults[].done)만 세계와 함께 남는다. */
+  updateCaves(dt) {
+    const p = this.player, w = this.world;
+    if (!p || !w || p.dead) return;
+    this.rocks = this.rocks || [];
+    this.updateRocks(dt);
+    if (this.quake) this.updateQuake(dt);
+    const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
+    this._caveT = (this._caveT || 0) - dt;
+    if (this._caveT > 0) return;
+    this._caveT = 0.35;
+    const k = w.caveKindAt(tx, ty), C = CAVE_TYPES[k];
+    this.caveHere = k;
+    // 갈래가 바뀌면 이름을 알린다 — 같은 갈래는 90초 안에 다시 안 띄운다
+    if (k && k !== this._caveLast) {
+      this._caveCard = this._caveCard || {};
+      if (this.time - (this._caveCard[k] || -1e9) > 90) {
+        this._caveCard[k] = this.time;
+        this.toast(`${C.n} — ${C.line}`, C.id === 'moss' ? 'good' : 'bad');
+      }
+      this.tally = this.tally || {};
+      (this.tally.caves = this.tally.caves || {})[C.id] = 1;
+      this.checkAch();
+    }
+    this._caveLast = k;
+    // 갈래마다 몸에 오는 것 — 1초에 한 번
+    this._caveTick = (this._caveTick || 0) - 0.35;
+    if (this._caveTick <= 0 && k) {
+      this._caveTick = 1;
+      if (C.id === 'moss' && p.hp < p.d.maxHp) p.heal(Math.max(1, Math.round(p.d.maxHp * 0.012)));
+      if (C.id === 'fume') {
+        p.hurt(3 + p.level * 0.25);
+        for (let i = 0; i < 5; i++) this.parts.push(new Part(p.cx + (Math.random() - .5) * 26, p.cy, '#b8c85a', -18, .7));
+      }
+    }
+    // 종유 동굴 — 머리 위 종유석이 흔들리다 떨어진다. 한 번 떨어지면 5초는 조용하다
+    this._dripCd = (this._dripCd || 0) - 0.35;
+    if (C.id === 'drip' && this._dripCd <= 0 && Math.random() < 0.3) {
+      for (let dx = -3; dx <= 3; dx++) {
+        const x = tx + dx;
+        let y = -1;
+        for (let dy = 1; dy <= 10; dy++) {
+          const t = w.get(x, ty - dy);
+          if (t === T.STALACTITE) { if (w.get(x, ty - dy + 1) !== T.STALACTITE) y = ty - dy; break; }
+          if (w.solid(x, ty - dy)) break;
+        }
+        if (y < 0) continue;
+        w.set(x, y, T.AIR);
+        this.rocks.push({ x: (x + .5) * TS, y: (y + .5) * TS, vy: 0, t: 0.7, dmg: 14 + p.level * 0.9, kind: 'drip' });
+        this._dripCd = 5;
+        this.tally = this.tally || {};
+        if (!this.tally.dripHint) { this.tally.dripHint = 1; this.toast('머리 위 종유석이 흔들린다 — 비켜라!', 'bad'); }
+        break;
+      }
+    }
+    // 금 간 자갈 — 가까이 가면 금 사이로 먼지가 흘러내린다(알아보라는 표시)
+    for (const f of (w.faults || [])) {
+      if (f.done || Math.abs(f.x - tx) > 18 || Math.abs(f.y - ty) > 12) continue;
+      if (w.get(f.x, f.y) !== T.FAULTSTONE) { f.done = 1; continue; }   // 다른 까닭으로 사라진 자갈
+      this.parts.push(new Part((f.x + Math.random()) * TS, (f.y + 1) * TS, '#c8b890', 30, .9));
+    }
+  },
+
+  /** 떨어지는 돌 — 흔들리는 동안(t) 제자리에서 먼지를 떨구고, 그다음 떨어진다 */
+  updateRocks(dt) {
+    const p = this.player, w = this.world;
+    for (let i = this.rocks.length - 1; i >= 0; i--) {
+      const r = this.rocks[i];
+      if (r.t > 0) {
+        r.t -= dt;
+        if (Math.random() < dt * 14) this.parts.push(new Part(r.x + (Math.random() - .5) * 10, r.y + 8, '#a8a090', 40, .5));
+        continue;
+      }
+      r.vy = Math.min(900, r.vy + 1500 * dt);
+      r.y += r.vy * dt;
+      const hitP = Math.abs(r.x - p.cx) < p.w / 2 + 6 && r.y > p.y && r.y < p.y + p.h;
+      const hitW = w.solid(Math.floor(r.x / TS), Math.floor((r.y + 8) / TS));
+      if (hitP || hitW || r.y > (WH - 2) * TS) {
+        if (hitP) p.hurt(r.dmg, r.x);
+        for (let k = 0; k < 12; k++) this.parts.push(new Part(r.x, r.y, '#8a8478', -60, .8));
+        this.sfx('break_stone');
+        this.rocks.splice(i, 1);
+      }
+    }
+  },
+
+  /** 금 간 자갈을 깼다 — 곡괭이든 폭탄이든. 그 자리의 자갈 기록을 찾아 무너뜨린다 */
+  triggerFault(tx, ty) {
+    const w = this.world;
+    const f = (w.faults || []).find(q => !q.done && Math.abs(q.x - tx) <= 1 && Math.abs(q.y - ty) <= 1);
+    if (!f || this.quake) return;
+    f.done = 1;
+    this.quake = { f, cells: w.faultCells(f), t: 0, i: 0 };
+    this.toast('자갈이 무너지자 땅이 울린다 — 물러서라!', 'bad');
+    this.shake = 22;
+    this.sfx('sk_quake');
+  },
+  /* 지진 — 2.6초 동안 흔들리며 새 굴을 차례로 판다(한 번에 파면 화면이 한 프레임에 뒤바뀐다).
+     그동안 플레이어 둘레 천장에서 돌이 떨어진다. 다 파면 갈래를 입히고 상자·광석·굴의 것들. */
+  updateQuake(dt) {
+    const q = this.quake, w = this.world, p = this.player;
+    q.t += dt;
+    this.shake = Math.max(this.shake || 0, q.t < 2.2 ? 9 : 3);
+    const want = Math.floor(q.cells.length * clamp((q.t - 0.4) / 1.8, 0, 1));
+    for (; q.i < want; q.i++) {
+      const [x, y] = q.cells[q.i];
+      if (!w.solid(x, y) && w.get(x, y) !== T.FAULTSTONE) continue;
+      w.set(x, y, T.AIR);
+      if (Math.random() < 0.05) this.parts.push(new Part((x + .5) * TS, (y + .5) * TS, '#7a7266', 20, 1));
+    }
+    q.rockT = (q.rockT || 0) - dt;
+    if (q.t < 2.2 && q.rockT <= 0) {
+      q.rockT = 0.35;
+      const x = Math.floor(p.cx / TS) + Math.floor(Math.random() * 13) - 6;
+      let y = Math.floor(p.cy / TS) - 2;
+      while (y > Math.floor(p.cy / TS) - 14 && !w.solid(x, y - 1)) y--;
+      this.rocks.push({ x: (x + .5) * TS, y: (y + .5) * TS, vy: 0, t: 0.25, dmg: 10 + p.level * 0.6 });
+    }
+    if (q.t < 2.6 || q.i < q.cells.length) return;
+    this.quake = null;
+    const f = q.f;
+    const k = w.dressFault(f, q.cells);
+    const C = CAVE_TYPES[k];
+    // 상자 — 새 굴 한가운데에 가까운 바닥에. 깊이로 등급을 매긴다(큰 동굴과 같은 셈)
+    const floors = q.cells.filter(([x, y]) => w.get(x, y) === T.AIR && w.solid(x, y + 1) && w.get(x, y - 1) === T.AIR);
+    floors.sort((a, b) => Math.hypot(a[0] - f.cx, a[1] - f.cy) - Math.hypot(b[0] - f.cx, b[1] - f.cy));
+    if (floors.length) {
+      const [gx, gy] = floors[0];
+      const tier = gy < 180 ? 3 : gy < DEEP_Y ? 4 : 5;
+      w.objects.push({ type: 'chest', tier, x: gx * TS, y: (gy - 0.2) * TS, w: 30, h: 26, items: null });
+    }
+    // 굴에 살던 것들 — 셋, 플레이어에게서 떨어진 바닥에
+    const pool = f.y > DEEP_Y ? ['skeleton', 'spider'] : ['bat', 'spider'];
+    let made = 0;
+    for (const [x, y] of floors.slice().reverse()) {
+      if (made >= 3) break;
+      if (Math.abs(x * TS - p.cx) < 8 * TS) continue;
+      const e = new Enemy(pool[made % pool.length], x * TS, y * TS, this.scale());
+      e.y = (y + 1) * TS - e.h;
+      this.ents.push(e); made++;
+    }
+    this.tally = this.tally || {};
+    this.tally.faults = (this.tally.faults || 0) + 1;
+    this.toast(`무너진 벽 너머에 ${C.n}이 숨어 있었다`, 'good');
+    this.sfx('chapter');
+    this.checkAch();
+  },
+
+  /** 동굴 쪽 그리기 — 떨어지는 돌(흔들리는 동안은 제자리에서 떤다)과 독기 굴의 탁한 공기 */
+  drawCaves(c, camX, camY) {
+    for (const r of (this.rocks || [])) {
+      const jx = r.t > 0 ? (Math.random() - .5) * 3 : 0;
+      const sx = r.x - camX + jx, sy = r.y - camY;
+      if (sx < -30 || sx > this.W + 30 || sy < -30 || sy > this.H + 30) continue;
+      c.fillStyle = r.kind === 'drip' ? '#9a9488' : '#6a6258';
+      c.beginPath();
+      if (r.kind === 'drip') { c.moveTo(sx - 7, sy - 10); c.lineTo(sx + 7, sy - 10); c.lineTo(sx, sy + 11); }
+      else { c.moveTo(sx - 7, sy - 4); c.lineTo(sx - 2, sy - 8); c.lineTo(sx + 7, sy - 3); c.lineTo(sx + 5, sy + 6); c.lineTo(sx - 5, sy + 7); }
+      c.closePath(); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(sx - 4, sy - 7, 2, 7);
+    }
+    if (this.caveHere && CAVE_TYPES[this.caveHere].id === 'fume') {
+      c.save();
+      c.globalAlpha = 0.16 + Math.sin((this.time || 0) * 1.3) * 0.03;
+      c.fillStyle = '#9aa84a';
+      c.fillRect(0, 0, this.W, this.H);
+      c.restore();
     }
   },
 

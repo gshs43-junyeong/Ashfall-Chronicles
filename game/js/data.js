@@ -103,7 +103,9 @@ const T = {
   /* --- v1.1 세션 3: 바다·해변 장식 --- */
   KELPPLANT: 163, SEASHELL: 164,
   /* --- v1.1 H: 화약 원료. 세션 3(빙하·해저)에서만 나온다 --- */
-  SULFUR: 165, ROOMAIR: 166, PALMWOOD: 167, PALMLEAF: 168, COCONUT: 169, GLACIUM: 170, TIDESTONE: 171
+  SULFUR: 165, ROOMAIR: 166, PALMWOOD: 167, PALMLEAF: 168, COCONUT: 169, GLACIUM: 170, TIDESTONE: 171,
+  /* --- v1.1: 동굴 갈래(CAVE_TYPES) — 장식 다섯과 무너지는 자갈 하나 --- */
+  MOSSSTONE: 172, HANGMOSS: 173, STALACTITE: 174, STALAGMITE: 175, GEODE: 176, FAULTSTONE: 177
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -362,7 +364,17 @@ const TILE_DEF = [
      그 등급의 산지를 두어, 가압 곡괭이를 만들 이유를 준다.
      산지를 빙하·해저로 나눈 것은 일부러다 — 하나는 걸어서, 하나는 헤엄쳐서 캔다. */
   { n: '빙정석', c: '#9fd8e8', solid: 1, hard: 5, drop: 'glacium_ore', ore: 1, light: 2 },
-  { n: '조수석', c: '#3f9a8a', solid: 1, hard: 5, drop: 'tide_ore', ore: 1, light: 2 }
+  { n: '조수석', c: '#3f9a8a', solid: 1, hard: 5, drop: 'tide_ore', ore: 1, light: 2 },
+  /* --- v1.1 동굴 (T 의 172~177 과 같은 순서) ---
+     이끼 바위는 돌과 똑같이 캐진다 — 이끼 굴의 바닥·천장을 덮는 겉옷일 뿐이다.
+     나머지 장식 넷은 solid 0 이라 **걸음을 절대 막지 않는다**(유적 입구 통로에 떨어져도 안전).
+     금 간 자갈은 캐거나 터뜨리면 그 뒤에 숨은 동굴이 무너져 열린다(game.js triggerFault). */
+  { n: '이끼 낀 바위', c: '#4f6a4a', solid: 1, hard: 1, drop: 'stone' },
+  { n: '늘어진 이끼', c: '#6fa05a', solid: 0, hard: 0, drop: 'cave_moss', a: 1 },
+  { n: '종유석', c: '#9a9488', solid: 0, hard: 1, drop: 'stone', a: 1 },
+  { n: '석순', c: '#8a8478', solid: 0, hard: 1, drop: 'stone', a: 1 },
+  { n: '수정 무리', c: '#a88fe8', solid: 0, hard: 2, drop: 'crystal', light: 7, a: 1 },
+  { n: '금 간 자갈', c: '#a8966e', solid: 1, hard: 1, drop: 'stone', light: 2 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -738,6 +750,11 @@ const ITEMS = {
      메아리 시련. 그래서 이것을 쓰는 두 가지(가라앉히는 물약 · 깨우는 북)가 곧 **맥박을
      손으로 움직이는 수단**이 된다. 인장(seal)은 탐사 기록 S 등급의 보상이고, 수치보다
      "유적에서 노는 법"을 바꾸는 쪽에 무게를 뒀다(효과는 game.js 의 hasSeal 을 읽는 곳). */
+  /* 동굴 이끼 — 이끼 굴의 늘어진 이끼에서만 난다. 찧어 바르면 상처가 아문다 */
+  cave_moss:     { n: '동굴 이끼', i: '🌿', type: 'mat', stack: 999, price: 40,
+                   d: '빛이 안 드는 데서 물만 먹고 자랐다. 손에 쥐면 차갑고 축축하다.' },
+  moss_poultice: { n: '이끼 찜질', i: '🩹', type: 'consum', use: { hp: 110, buff: 'well' }, cd: 8, stack: 20,
+                   d: '체력 110 회복, 한동안 천천히 아문다. 동굴 이끼 넷을 찧어 만든다.' },
   pulse_shard: { n: '맥박 결정', i: '❤', type: 'mat', stack: 999, price: 900,
                  d: '깨어난 유적의 벽에서 떨어져 나온 것. 손바닥 위에서 아직 뛴다.' },
   tonic_hush:  { n: '고요의 물약', i: '🧪', type: 'consum', use: { pulse: -40 }, stack: 20,
@@ -1595,6 +1612,7 @@ const RECIPES = [
   /* 맥박을 손으로 움직이는 두 가지 — 결정은 깨어난 유적에서만 나오므로, 한 번 격노를
      견뎌 낸 사람만 이것으로 다음 유적의 맥박을 고른다. */
   { out: 'tonic_hush', n: 2, need: { pulse_shard: 1, mushroom: 3 }, station: 'work' },
+  { out: 'moss_poultice', n: 2, need: { cave_moss: 4, mushroom: 1 }, station: 'work' },
   { out: 'drum_pulse', n: 1, need: { pulse_shard: 1, wood: 6 }, station: 'work' },
 
   /* ========== 7단계: 폭주로 ========== */
@@ -2440,6 +2458,9 @@ const TILE_MAT = (() => {
   put('glass', 'CRYSTAL AETHER POWERSTONE SOULSTONE COREGLASS DRAFTGLASS ORBITCORE WINDOW');
   put('ember', 'LAVA HELLSTONE FLAMEVENT');
   put('bone', 'BONEHEAP');
+  put('stone', 'MOSSSTONE STALACTITE STALAGMITE FAULTSTONE');
+  put('plant', 'HANGMOSS');
+  put('glass', 'GEODE');
   put('flesh', 'BLIGHTSAC');
   put('void', 'CORRUPTGRASS');
   return m;
@@ -3132,6 +3153,29 @@ const SURVEY_LABEL = { rooms: '방', chests: '상자', boss: '주인', lore: '�
    예전에는 유적 주인을 한 번 잡으면 그 유적에 돌아갈 까닭이 없었다. */
 const ECHO = { max: 5, mul: lv => 1 + 0.35 * lv, needStage: 2 };
 
+/* ---------------- 동굴 갈래 (v1.1) ----------------
+   예전 지하는 어디를 파도 같은 회색 굴이었다 — "동굴"이 아니라 지형이었다. 땅속을 가로
+   60 · 세로 55 칸짜리 구역으로 나누고 구역마다 갈래를 하나씩 매긴다(world.js buildCaveZones).
+   갈래마다 **보이는 것 · 몸에 오는 것 · 얻는 것**이 다르다.
+     moss   이끼 굴   바닥·천장이 이끼로 덮이고 이끼가 늘어진다. 안에 있으면 천천히 아문다
+     drip   종유 동굴 종유석·석순. 종유석은 밑을 지나면 흔들리다 떨어진다(피하면 된다)
+     geode  수정 동굴 벽에 수정 무리가 빛난다. 수정이 박힌 벽 — 깊을수록 흔하다
+     fume   독기 굴   공기가 탁해 숨이 따갑다(지속 피해). 대신 광맥이 두세 배 짙다
+   w 는 [얕은 곳, 깊은 곳] 가중치. plain(0)은 아무것도 안 한다. */
+const CAVE_TYPES = [
+  { id: 'plain' },
+  { id: 'moss',  n: '이끼 굴',   c: '#8fd07a', w: [3, 1],
+    line: '공기가 촉촉하다. 이끼 사이에 있으면 상처가 조금씩 아문다.' },
+  { id: 'drip',  n: '종유 동굴', c: '#c8c0b0', w: [3, 2.5],
+    line: '물방울 소리가 난다. 머리 위의 것들이 전부 붙어 있는 것은 아니다.' },
+  { id: 'geode', n: '수정 동굴', c: '#b89fff', w: [0.8, 3],
+    line: '벽이 스스로 빛난다. 수정이 뿌리를 내린 자리다.' },
+  { id: 'fume',  n: '독기 굴',   c: '#a8c04a', w: [0.6, 1.6],
+    line: '숨이 따갑다. 오래 머물면 몸이 상하지만, 광맥이 짙다.' }
+];
+/* 금 간 자갈 — 무너지면 숨은 동굴이 열린다. 세계에 몇 곳, 한 곳에 한 번뿐이다. */
+const FAULT = { count: 28, steps: 260, rx: 34, ry: 15 };   // steps 190 이면 열린 굴이 500칸 남짓이라 '확장'으로 안 읽혔다
+
 /* ---------------- 암호문 (잠긴 골방의 자물쇠) ----------------
 
    예전에는 세 자리 숫자 하나뿐이라, 유적이 몇이든 하는 일이 "흔적 셋에서 숫자를 한
@@ -3531,6 +3575,11 @@ const ACHIEVEMENTS = [
     check: g => Object.values(g.survey || {}).some(s => (s.peak || 0) >= 3) },
   { id: 'a_survey_s', cat: 'explore', t: 'hard', i: '🏅', n: '샅샅이', d: '유적 하나를 탐사 기록 S 로 남겼다.',
     check: g => Object.values(g.survey || {}).some(s => !!s.s) },
+  /* 동굴 — tally.faults(무너뜨린 자갈 수) · tally.caves(들어가 본 갈래). 둘 다 세이브의 tally 에 산다 */
+  { id: 'a_fault', cat: 'explore', t: 'mid', i: '🪨', n: '무너뜨린 사람', d: '금 간 자갈 셋을 무너뜨려 숨은 동굴을 열었다.',
+    check: g => ((g.tally || {}).faults || 0) >= 3 },
+  { id: 'a_cave_kinds', cat: 'explore', t: 'mid', i: '🦇', n: '땅속의 네 얼굴', d: '이끼 굴 · 종유 동굴 · 수정 동굴 · 독기 굴에 모두 들어가 봤다.',
+    check: g => ['moss', 'drip', 'geode', 'fume'].every(k => ((g.tally || {}).caves || {})[k]) },
   { id: 'a_yunseul', h: 1, cat: 'explore', t: 'hard', i: '🫧', n: '물속의 집', d: '아무도 말해 주지 않은 사람을 만났다.',
     check: g => !!(g.talked || {}).yunseul },
 
