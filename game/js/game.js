@@ -3676,16 +3676,20 @@ const G = {
     return false;
   },
 
-  /** 바다 부유물 — 바다 수면 가까이 있을 때만, 드물게(스폰 틱 1.1초마다 3%, 한 번에 둘까지).
-      등급은 70 / 25 / 5. 화면 밖 수면 칸에 띄운다 — 눈앞에서 불쑥 생기면 안 된다. */
+  /** 바다 부유물 — 바다 수면 가까이 있을 때만, 드물게. 등급은 70 / 25 / 5.
+      ★ 밀도는 **가로 200칸에 한둘**이다. 예전(틱마다 3%, 플레이어 곁에 둘까지)에는 화면 하나에
+      둘이 금방 차서 바다가 짐짝 밭처럼 보였다. 지금은 틱마다 1.2%, 이미 떠 있는 것과 70칸 안에는
+      안 띄우고, 플레이어 둘레 ±100칸에 둘을 넘기지 않는다. 화면 밖 수면 칸에만 띄운다. */
   trySpawnFlotsam() {
     const p = this.player, w = this.world;
-    if (!w.sea || Math.random() > 0.03) return false;
+    if (!w.sea || Math.random() > 0.012) return false;
     const ptx = Math.floor(p.cx / TS), pty = Math.floor(p.cy / TS), lv = w.sea.level;
     if (ptx >= SEA_X1 + 20 || Math.abs(pty - lv) > 30) return false;
-    if (this.ents.filter(e => e instanceof Enemy && e.def.ai === 'flotsam').length >= 2) return false;
+    const fl = this.ents.filter(e => e instanceof Enemy && e.def.ai === 'flotsam');
+    if (fl.filter(e => Math.abs(e.cx / TS - ptx) < 100).length >= 2) return false;
     for (let att = 0; att < 10; att++) {
-      const tx = clamp(ptx + (Math.random() < 0.5 ? -1 : 1) * (30 + Math.floor(Math.random() * 16)), 4, SEA_X1 - 6);
+      const tx = clamp(ptx + (Math.random() < 0.5 ? -1 : 1) * (30 + Math.floor(Math.random() * 60)), 4, SEA_X1 - 6);
+      if (fl.some(e => Math.abs(e.cx / TS - tx) < 70)) continue;
       if (w.get(tx, lv) !== T.SEAWATER || w.get(tx, lv - 1) !== T.AIR) continue;
       const sx = tx * TS - this.cam.x;
       if (sx > -60 && sx < this.W + 60) continue;
@@ -6631,6 +6635,32 @@ const G = {
        원본 player.png와 같으므로 playerFrame() 은 그대로 쓴다. */
     const ch = CHAR_OF(p.charId);
     const fr = this.playerFrame(p);
+    /* 헤엄 — 물속에서 젓고 있으면 엎드린 헤엄 그림(player_*_swim, 네 장)을 헤엄치는 방향으로
+       기울여 그린다. 칸은 팔 젓기 박자(p.swimPh)를 그대로 따른다 — 그림과 미는 힘이 같은 박자다.
+       수면에 가만히 떠 있을 때·공격 중에는 선 그림 그대로(선헤엄). 판정 상자는 그대로 선 모양이다. */
+    const swimKey = 'player_' + ch.id + '_swim';
+    if (this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel
+        && Sprites.img[swimKey] && Sprites.img[swimKey].width) {
+      const im = Sprites.img[swimKey], f = Math.floor((p.swimPh || 0) * 4) % 4;
+      const lead = p.facing < 0 ? -1 : 1;
+      const a = clamp(Math.atan2(p.vy, Math.max(20, Math.abs(p.vx))), -1.25, 1.25);
+      c.translate(sx + p.w / 2, sy + p.h / 2);
+      c.scale(lead, 1);
+      c.rotate(a);
+      c.imageSmoothingEnabled = false;
+      c.drawImage(im, f * 48 * 4, 0, 48 * 4, 28 * 4, -26, -16, 48, 28);
+      c.restore();
+      return;
+    }
+    // 망토를 떼어 구운 몸(player_*_body) + 망토(_cape)가 둘 다 있으면 망토를 따로 날린다(drawCape)
+    const bodyKey = 'player_' + ch.id + '_body', capeKey = 'player_' + ch.id + '_cape';
+    if (this.spritesOn && Sprites.img[bodyKey] && Sprites.img[bodyKey].width && Sprites.img[capeKey] && Sprites.img[capeKey].width) {
+      this.drawCape(c, p, capeKey, fr, sx, sy);
+      Sprites.draw(c, bodyKey, fr, sx, sy, p.facing < 0);
+      this.drawHeldWeapon(c, p, sx, sy, 0);
+      c.restore();
+      return;
+    }
     if (this.spritesOn && Sprites.draw(c, 'player_' + ch.id, fr, sx, sy, p.facing < 0)) {
       this.drawHeldWeapon(c, p, sx, sy, 0);
       c.restore();
@@ -6670,6 +6700,37 @@ const G = {
     c.fillStyle = '#1a1a22';
     c.fillRect(sx + (p.facing > 0 ? 11 : 6), sy + 7 + bob, 2, 2);
     this.drawHeldWeapon(c, p, sx, sy, bob);
+    c.restore();
+  },
+
+  /** 망토 — 몸 그림에서 떼어 낸 망토 칸(tools/mkswim.py)을 **줄마다 뒤로 밀어** 그린다.
+      ★ 망토가 몸 그림에 박혀 있을 때는 달리든 떨어지든 등에 붙어 꼼짝하지 않았다.
+      어깨(프레임 11줄) 아래로 갈수록 많이 밀려(t^1.3) 천이 뒤로 휘날리는 모양이 된다.
+      세기(p.capeSway)는 달리는 빠르기 · 떨어지는 빠르기로 정하고, 바로 따라가지 않고 스프링처럼
+      늦게 따라간다 — 멈추면 한 번 앞으로 출렁였다가 가라앉는다. 가만히 서 있어도 아주 조금 나부낀다. */
+  drawCape(c, p, key, fr, sx, sy) {
+    const im = Sprites.img[key], m = Sprites.meta.characters.sheets[key];
+    const S = Sprites.scale, fw = m.frameW, fh = m.frameH, ox = m.ox || 0, oy = m.oy || 0;
+    const now = this.time, dt = clamp(now - (p._capeT || now), 0, 0.05);
+    p._capeT = now;
+    const run = clamp(Math.abs(p.vx) / 220, 0, 1), fall = clamp(p.vy / 500, -0.4, 1);
+    const target = run * 1.0 + Math.max(0, fall) * 0.7 + (p.swimming ? 0.2 : 0)
+      + Math.sin(now * 5.3 + p.x * 0.01) * (0.06 + run * 0.12);
+    // 스프링(감쇠 진동) — 늦게 따라가고 한 번 넘친다
+    p._capeV = (p._capeV || 0) + (target - (p.capeSway || 0)) * 60 * dt;
+    p._capeV *= Math.max(0, 1 - 9 * dt);
+    p.capeSway = clamp((p.capeSway || 0) + p._capeV * dt, -0.35, 1.4);
+    c.save();
+    c.imageSmoothingEnabled = false;
+    if (p.facing < 0) { c.translate(Math.round(sx) + ox + fw, Math.round(sy) + oy); c.scale(-1, 1); }
+    else c.translate(Math.round(sx) + ox, Math.round(sy) + oy);
+    const top = 11;
+    for (let r = 0; r < fh; r++) {
+      const t = r <= top ? 0 : Math.pow((r - top) / (fh - top), 1.3);
+      const off = -Math.round(p.capeSway * 7 * t);               // 등 쪽(그림의 왼쪽)으로
+      const lift = -Math.round(Math.max(0, fall) * 3 * t * t);   // 떨어질 때 끝자락이 들린다
+      c.drawImage(im, fr * fw * S, r * S, fw * S, S, off, r + lift, fw, 1);
+    }
     c.restore();
   },
 
