@@ -965,15 +965,16 @@ class Player extends Ent {
     if (this.swimming !== wasSwim && G.sfx) G.sfx('splash');
     this.updateOxygen(dt, world);
 
-    // 이동 — 물속에서는 느리게 밀리고 느리게 선다
-    const acc = this.swimming ? 950 : this.onGround ? 2400 : 1500;
+    // 이동 — 물속(헤엄)은 아래 '헤엄' 절이 따로 맡는다
+    const acc = this.onGround ? 2400 : 1500;
     let want = 0;
     if (input.left) want -= 1; if (input.right) want += 1;
     if (this.channel) want *= 0.4;
-    if (want !== 0) {
+    if (this.swimming) {
+      if (want !== 0 && (!this.swing || !this.channel)) this.facing = Math.sign(want);
+    } else if (want !== 0) {
       this.vx += want * acc * dt;
-      const swimMul = this.swimming ? 0.62 : 1;
-      this.vx = clamp(this.vx, -d.ms * swimMul * (this.dashV > 0 ? 3 : 1), d.ms * swimMul * (this.dashV > 0 ? 3 : 1));
+      this.vx = clamp(this.vx, -d.ms * (this.dashV > 0 ? 3 : 1), d.ms * (this.dashV > 0 ? 3 : 1));
       if (!this.swing || !this.channel) this.facing = want;
     } else {
       const fr = this.onGround ? 2600 : 700;
@@ -989,7 +990,7 @@ class Player extends Ent {
     if (inWater && !this.wasInWater) G.sfx('splash');
     this.wasInWater = inWater;
     if (this.onGround || inWater) this.jumpsLeft = d.jumps;
-    if (!inWater) this.floating = false;
+    if (!inWater) { this.floating = false; this.swimMove = false; }
     if (inWater) {
       /* 수면에 떠 있기 — 아무것도 안 누르면 머리를 내민 채 **물결을 따라** 오르내린다.
          예전에는 부력이 중력의 72%만 덜어 줘서 손을 놓으면 천천히 가라앉았고, 바다에서는
@@ -1006,8 +1007,36 @@ class Player extends Ent {
         }
       }
       // 물가로 기어오르기 — 이게 없으면 좁은 웅덩이에서 영영 못 나온다
-      if (input.jump && !this.jumpHeld) this.climbOut(world, want || this.facing);
-      if (input.jump) this.vy = Math.max(this.vy - 1150 * dt, -215);
+      const climbed = input.jump && !this.jumpHeld && this.climbOut(world, want || this.facing);
+      /* --- 헤엄 ---
+         ★ 예전에는 땅 위 걷기를 그대로 느리게 한 것이었다(좌우 가속 950 · 속도 62%, 점프를 누르면
+           위로만 떠오름). 물에서만의 규칙을 세 가지 둔다.
+           ① **팔 젓기 박자** — 입력 방향(좌우 + 위(점프)·아래)으로 미는 힘이 박자(swimPh)에 맞춰
+              세졌다 약해진다. 헤엄 시트(char/player_*_swim, tools/mkswim.py)의 네 장이 같은 박자로
+              넘어가서, 팔을 당기는 그림일 때 몸이 앞으로 나간다.
+           ② **물의 저항은 속도 제곱** — 느릴 때는 멀리 미끄러지고(젓기를 멈춰도 한동안 나간다),
+              빠를수록 세게 붙잡힌다. 그래서 상한을 따로 두지 않아도 걷기의 75% 근처에서 멎는다.
+           ③ **거의 뜨는 몸** — 잠긴 채 손을 놓으면 아주 천천히 가라앉는다(move 의 swimGrav).
+         수면에 떠 있을 때 점프를 막 누르면 물을 박차고 뛰어오른다(물가 턱으로 올라서지 못했을 때). */
+      let ix = want, iy = (input.down ? 1 : 0) - (input.jump ? 1 : 0);
+      if (this.floating && iy < 0) iy = 0;                  // 수면에서는 위로 저어 봐야 허공이다
+      const mag = Math.hypot(ix, iy);
+      if (mag) { ix /= mag; iy /= mag; }
+      this.swimPh = ((this.swimPh || 0) + dt * (mag ? 1.5 : 0.35)) % 1;
+      const beat = 0.35 + 0.65 * Math.max(0, Math.sin(this.swimPh * TAU));
+      const T = 1350 * beat;
+      this.vx += ix * T * dt;
+      this.vy += iy * T * dt;
+      const vref = d.ms * 0.75;
+      const sp = Math.hypot(this.vx, this.vy);
+      const drag = Math.min(0.9, (0.6 + 2.4 * sp / vref) * dt);
+      this.vx -= this.vx * drag; this.vy -= this.vy * drag;
+      if (this.floating && input.jump && !this.jumpHeld && !climbed) {
+        this.vy = -430; this.floating = false;                 // 물을 박차고 뛰어오르기
+        for (let i = 0; i < 10; i++) G.parts.push(new Part(this.cx, this.y + this.h * .6, '#dff2ff', -120, .5));
+        G.sfx('splash');
+      }
+      this.swimMove = mag > 0 || sp > 60;
       this.jumpHeld = !!input.jump;
       if (input.jump && Math.random() < dt * 10)
         G.parts.push(new Part(this.cx + (Math.random() - .5) * 14, this.y + this.h * .3, '#bfe4ff', -30, .5));
@@ -1100,7 +1129,8 @@ class Player extends Ent {
     // 낙하 데미지 판정용 — move() 안에서 착지 순간 vy가 0으로 꺾이기 전에 미리 재둔다
     const wasOnGround = this.onGround, fallVy = this.vy;
     // 수면에 떠 있는 동안은 중력을 끈다 — 끄지 않으면 부력 용수철이 중력과 비겨 몸이 14px 낮게 뜬다
-    this.move(dt, world, { dropThrough: !!input.down, gravMul: this.floating ? 0 : undefined });
+    // 수면에 떠 있으면 중력 0, 잠겨 헤엄치면 거의 뜨는 몸(0.3 — move 의 부력과 곱해져 중력의 8% 남짓)
+    this.move(dt, world, { dropThrough: !!input.down, gravMul: this.floating ? 0 : this.swimming ? 0.3 : undefined });
     /* 물에 빠지면 안 다친다(폭포 아래 웅덩이가 착지 지점이 되어 주는 게 이 지형의 요점).
        제트팩·깃털도 마찬가지지만 ★ **지금 실제로 추진하거나 활공하는 중일 때만**이다 —
        `!d.glide && !d.jet`(끼고만 있으면 되는 조건)이면 장신구 하나가 영구 낙하 무효를

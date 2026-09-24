@@ -585,6 +585,14 @@ const TileArt = {
   drawAsh(c, id, v, sx, sy) {
     if (this.ashAtlas) c.drawImage(this.ashAtlas, v * TS, id * TS, TS, TS, sx, sy, TS, TS);
   },
+  /** 바이옴 이끼 색을 돌 색(#5d5d63) 쪽으로 35% 섞어 채도를 죽인다 — 이끼 바위·늘어진 이끼가 같이 쓴다.
+      MOSS_COL 을 그대로 칠하면 형광으로 떴다. */
+  mossCol(c) {
+    this._mc = this._mc || {};
+    if (this._mc[c]) return this._mc[c];
+    const t = 0.35, g = '#5d5d63';
+    return (this._mc[c] = '#' + [1, 3, 5].map(i => Math.round(parseInt(c.slice(i, i + 2), 16) * (1 - t) + parseInt(g.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join(''));
+  },
   /** ①② 를 그린다. 그렸으면 true — game.js 는 그 칸의 평소 그리기를 건너뛴다. */
   drawConn(c, w, id, tx, ty, sx, sy, v) {
     if (BODY_ONLY[id]) {
@@ -595,7 +603,7 @@ const TileArt = {
       return true;
     }
     if (!CONN[id]) return false;
-    const mc = MOSS_COL[w.biomeAt(clamp(tx, 0, WW - 1)).id] || '#6f9a4a';
+    const mc = this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, WW - 1)).id] || '#6f9a4a');
     if (id === T.MOSSSTONE) {
       this.draw(c, T.STONE, v, sx, sy);
       c.drawImage(this._mossTile(w, tx, ty, mc), sx, sy);
@@ -607,7 +615,7 @@ const TileArt = {
       while (top > ty - 8 && w.get(tx, top - 1) === T.HANGMOSS) top--;
       while (bot < ty + 8 && w.get(tx, bot + 1) === T.HANGMOSS) bot++;
       const run = (bot - top + 1) * TS, y0 = (ty - top) * TS;
-      const dk = shade(mc, .72), lt = shade(mc, 1.3);
+      const dk = shade(mc, .72), lt = shade(mc, 1.15);
       if (ty === top) { c.fillStyle = dk; c.fillRect(sx, sy, TS, 2); }
       for (let j = 0; j < 7; j++) {
         const fx = 1 + j * 3, len = run * (0.45 + 0.55 * tileHash(tx * 7 + j, top));
@@ -653,7 +661,10 @@ const TileArt = {
     if (this._mt.size > 3000) this._mt.clear();
     const cv = document.createElement('canvas'); cv.width = cv.height = TS;
     const g = cv.getContext('2d');
-    const dk = shade(col, .68), dk2 = shade(col, .5), lt = shade(col, 1.28), lt2 = shade(col, 1.5);
+    /* ★ 밝은 쪽을 1.28·1.5배로 올리면 형광 초록 판으로 떠서 "방사능에 오염된 돌"처럼 보였다.
+       색 자체는 drawConn 이 돌 색 쪽으로 죽여서 넘기고(mossCol), 여기서는 밝은 쪽을 1.12·1.22배로만,
+       가운데 칸은 반투명(알파 215)으로 두어 밑의 돌 결이 비치게 한다. */
+    const dk = shade(col, .72), dk2 = shade(col, .56), lt = shade(col, 1.12), lt2 = shade(col, 1.22);
     // 세계 좌표 값 잡음 — 5px 마디 사이를 부드럽게 잇는다(이웃 칸과 같은 값을 본다)
     const vn = (u, s) => {
       const i = Math.floor(u / 5), f = u / 5 - i, e = f * f * (3 - 2 * f);
@@ -696,7 +707,7 @@ const TileArt = {
         } else if (fj > 0.27 && h < 0.35) c = C.dk;              // 바위로 번지는 잔점
         if (!c) continue;
         const o = (y * TS + x) * 4;
-        px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
+        px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = c === C.c ? 215 : 240;
       }
     g.putImageData(img, 0, 0);
     this._mt.set(key, cv);

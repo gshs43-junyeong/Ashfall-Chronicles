@@ -896,6 +896,162 @@
         "frameW": 30,
         "frameH": 44,
         "count": 7
+      },
+      "player_body": {
+        "file": "char/player_body.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_cape": {
+        "file": "char/player_cape.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_swim": {
+        "file": "char/player_swim.png",
+        "frameW": 48,
+        "frameH": 28,
+        "count": 4
+      },
+      "player_wanderer_body": {
+        "file": "char/player_wanderer_body.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_wanderer_cape": {
+        "file": "char/player_wanderer_cape.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_wanderer_swim": {
+        "file": "char/player_wanderer_swim.png",
+        "frameW": 48,
+        "frameH": 28,
+        "count": 4
+      },
+      "player_digger_body": {
+        "file": "char/player_digger_body.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_digger_cape": {
+        "file": "char/player_digger_cape.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_digger_swim": {
+        "file": "char/player_digger_swim.png",
+        "frameW": 48,
+        "frameH": 28,
+        "count": 4
+      },
+      "player_ranger_body": {
+        "file": "char/player_ranger_body.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_ranger_cape": {
+        "file": "char/player_ranger_cape.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_ranger_swim": {
+        "file": "char/player_ranger_swim.png",
+        "frameW": 48,
+        "frameH": 28,
+        "count": 4
+      },
+      "player_adept_body": {
+        "file": "char/player_adept_body.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_adept_cape": {
+        "file": "char/player_adept_cape.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_adept_swim": {
+        "file": "char/player_adept_swim.png",
+        "frameW": 48,
+        "frameH": 28,
+        "count": 4
+      },
+      "player_stray_body": {
+        "file": "char/player_stray_body.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_stray_cape": {
+        "file": "char/player_stray_cape.png",
+        "frameW": 22,
+        "frameH": 41,
+        "ox": -1,
+        "oy": -1,
+        "count": 13,
+        "foot": -0.75,
+        "side": -1.0
+      },
+      "player_stray_swim": {
+        "file": "char/player_stray_swim.png",
+        "frameW": 48,
+        "frameH": 28,
+        "count": 4
       }
     }
   },
