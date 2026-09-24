@@ -132,7 +132,9 @@ const T = {
   /* --- v1.1: 흐르는 액체(유체 물리 — world.js '유체' 절). 샘 바위는 폭포의 물이 나오는 곳 --- */
   FLOWWATER: 180, FLOWSEA: 181, FLOWLAVA: 182, SPRING: 183,
   /* --- v1.1: 물가 장식 — 부들 · 물풀 · 물가 조약돌 --- */
-  CATTAIL: 184, PONDWEED: 185, PEBBLES: 186
+  CATTAIL: 184, PONDWEED: 185, PEBBLES: 186,
+  /* --- v1.1: 눈 지대 소나무 잎 — 기둥은 여느 나무처럼 WOOD 다 --- */
+  PINELEAF: 187
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -151,7 +153,7 @@ const TILE_DEF = [
      바이옴별로 그 지형에서만 나오는 재료가 낮은 확률로 섞이게 해서 "특정 숲의 잎을
      일부러 훑을 이유"를 만들었다. */
   { n: '잎', c: '#3f6e2e', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
-    leafDrop: [['none', 64], ['wood', 36]] },
+    leafDrop: [['none', 44], ['wood', 26], ['leaf_oak', 30]] },
   { n: '흑요암', c: '#3a2b46', solid: 1, hard: 3, drop: 'ebon_chunk' },
   { n: '부패한 땅', c: '#4b3a5c', solid: 1, hard: 1, drop: 'dirt' },
   { n: '재', c: '#4a4038', solid: 1, hard: 2, drop: 'ash' },
@@ -172,13 +174,13 @@ const TILE_DEF = [
   { n: '용암', c: '#e0561c', solid: 0, hard: 99, light: 11, hurt: 26 },
   { n: '제단석', c: '#2e2438', solid: 1, hard: 99, light: 6 },
   { n: '부패한 잎', c: '#4a3060', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
-    leafDrop: [['none', 58], ['wood', 30], ['corrupt_ess', 12]] },
+    leafDrop: [['none', 40], ['wood', 22], ['leaf_corrupt', 26], ['corrupt_ess', 12]] },
   /* --- 2부 --- */
   { n: '구름', c: '#dfe9f5', solid: 1, hard: 0, drop: 'cloud_block' },
   { n: '하늘돌', c: '#8fa8c0', solid: 1, hard: 2, drop: 'skystone' },
   { n: '하늘 풀', c: '#7fd0a8', solid: 1, hard: 0, drop: 'cloud_block' },
   { n: '하늘 잎', c: '#6ec49a', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
-    leafDrop: [['none', 58], ['wood', 30], ['aether_shard', 12]] },
+    leafDrop: [['none', 40], ['wood', 22], ['leaf_sky', 26], ['aether_shard', 12]] },
   { n: '유적 벽돌', c: '#6a6250', solid: 1, hard: 3, drop: 'ruin_brick' },
   { n: '유적 바닥', c: '#57503f', solid: 1, hard: 3, drop: 'ruin_brick' },
   { n: '룬석', c: '#4a5f7a', solid: 1, hard: 99, light: 8 },
@@ -257,7 +259,7 @@ const TILE_DEF = [
   { n: '정글 풀', c: '#3f7a34', solid: 1, hard: 0, drop: 'mud' },
   { n: '진흙', c: '#4a3a26', solid: 1, hard: 0, drop: 'mud' },
   { n: '정글 잎', c: '#2f6a28', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
-    leafDrop: [['none', 50], ['wood', 26], ['fern_frond', 16], ['vine_coil', 8]] },
+    leafDrop: [['none', 36], ['wood', 18], ['leaf_jungle', 24], ['fern_frond', 14], ['vine_coil', 8]] },
   { n: '고사리', c: '#4a8a3a', solid: 0, hard: 0, drop: 'fern_frond' },
   { n: '밀림꽃', c: '#c85a9a', solid: 0, hard: 0, drop: 'orchid', light: 3 },
   /* --- 5단계: 버섯 골짜기 --- */
@@ -384,7 +386,8 @@ const TILE_DEF = [
      보통 나무와 따로 둔 이유: 줄기가 곧지 않고 기울어 자라며, 잎이 사방으로 처지고,
      열매가 따로 달린다. 기존 tree/leaf 타일에 얹으면 잿빛 숲 나무까지 같이 변한다. */
   { n: '야자 줄기', c: '#7a5a38', solid: 0, hard: 0, drop: 'wood', tree: 1 },
-  { n: '야자 잎', c: '#4f8a3a', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1 },
+  { n: '야자 잎', c: '#4f8a3a', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
+    leafDrop: [['none', 40], ['wood', 30], ['leaf_palm', 30]] },
   { n: '코코넛', c: '#6a4a2a', solid: 0, hard: 0, drop: 'coconut', tree: 1 },
   /* --- 세션 3 광물 둘 (채굴 등급 5) ---
      등급 5는 지금까지 아크 착암기(하늘 성채) 하나로만 닿던 자리다. 세션 3에도
@@ -422,7 +425,11 @@ const TILE_DEF = [
   /* 물가 장식 — 부들은 물가 바닥에, 물풀은 물속 바닥에(그 칸도 물이다), 조약돌은 물가에 */
   { n: '부들', c: '#7a8a4a', solid: 0, hard: 0, drop: 'deco_cattail', plant: 1, a: 1 },
   { n: '물풀', c: '#4a8a5a', solid: 0, hard: 0, drop: 'deco_pondweed', liquid: 1, plant: 1 },
-  { n: '물가 조약돌', c: '#9a948a', solid: 0, hard: 0, drop: 'deco_pebbles', plant: 1, a: 1 }
+  { n: '물가 조약돌', c: '#9a948a', solid: 0, hard: 0, drop: 'deco_pebbles', plant: 1, a: 1 },
+  /* 소나무 잎 — 눈 지대 나무. 잿빛에 먹히지 않는다(game.js ASH_TILE 에 없다): 늘푸른 바늘잎이라
+     장이 넘어가도 지지 않는다. 윗칸이 트였으면 눈을 얹어 그린다(tileart drawConn). */
+  { n: '소나무 잎', c: '#2f5a44', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
+    leafDrop: [['none', 40], ['wood', 26], ['leaf_pine', 34]] }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -1247,6 +1254,14 @@ const ITEMS = {
   fern_frond:  { n: '고사리 잎', i: '🌿', type: 'mat', stack: 999, d: '정글 바닥을 뒤덮고 있다. 짓이기면 진한 냄새가 난다.' },
   orchid:      { n: '밀림꽃', i: '🌺', type: 'mat', stack: 999, d: '어두울수록 더 선명하게 핀다.' },
   lily_pad:    { n: '수련잎', i: '🪷', type: 'mat', stack: 999, d: '폭포호 수면에 떠 있다.' },
+  /* 나뭇잎 — 나무마다 다른 잎이 떨어진다(TILE_DEF leafDrop). 예전에는 어느 나무 잎이든 가끔 나무토막만
+     떨어져서, 잎을 훑어도 "무슨 나무였나"가 가방에 안 남았다. 제분기에 넣으면 퇴비가 된다. */
+  leaf_oak:     { n: '떡갈잎', i: '🍂', type: 'mat', stack: 999, d: '잿빛 숲의 넓적한 잎. 잿가루가 앉아 있다.' },
+  leaf_pine:    { n: '솔잎', i: '🌲', type: 'mat', stack: 999, d: '눈 속에서도 푸른 바늘잎. 송진 냄새가 난다.' },
+  leaf_jungle:  { n: '정글 잎사귀', i: '🍃', type: 'mat', stack: 999, d: '손바닥 둘을 합친 것보다 넓다. 빗물이 고여 있다.' },
+  leaf_corrupt: { n: '말린 부패 잎', i: '🍂', type: 'mat', stack: 999, d: '보랏빛으로 말려 들어간 잎. 만지면 손끝이 저리다.' },
+  leaf_sky:     { n: '하늘 잎', i: '🍀', type: 'mat', stack: 999, d: '별 모양으로 갈라진 잎. 바람이 없어도 흔들린다.' },
+  leaf_palm:    { n: '야자 잎사귀', i: '🌴', type: 'mat', stack: 999, d: '깃처럼 갈라진 긴 잎. 엮으면 지붕이 된다.' },
   /* --- 세션 3: 바다 재료 --- */
   crab_shell:  { n: '게딱지', i: '🦀', type: 'mat', stack: 999, d: '두껍고 가볍다. 갑옷 속대로 쓴다.' },
   shark_tooth: { n: '상어 이빨', i: '🦈', type: 'mat', stack: 999, d: '빠지고 또 나는 이빨. 아무리 갈아도 무뎌지지 않는다.' },
@@ -1893,6 +1908,12 @@ const MRECIPES = [
   { m: 'mill', in: { starroot: 3 }, out: { flour: 1, fertilizer: 1 }, t: 16 },
   { m: 'mill', in: { bone_frag: 5 }, out: { fertilizer: 3 }, t: 16 },
   { m: 'mill', in: { weed: 6 }, out: { fertilizer: 2 }, t: 12 },
+  { m: 'mill', in: { leaf_oak: 8 }, out: { fertilizer: 2 }, t: 12 },
+  { m: 'mill', in: { leaf_pine: 8 }, out: { fertilizer: 2 }, t: 12 },
+  { m: 'mill', in: { leaf_jungle: 8 }, out: { fertilizer: 2 }, t: 12 },
+  { m: 'mill', in: { leaf_corrupt: 8 }, out: { fertilizer: 2 }, t: 12 },
+  { m: 'mill', in: { leaf_sky: 8 }, out: { fertilizer: 2 }, t: 12 },
+  { m: 'mill', in: { leaf_palm: 8 }, out: { fertilizer: 2 }, t: 12 },
   /* 화덕 — 연료. 요리 */
   { m: 'oven', in: { flour: 2 }, out: { food_bread: 1 }, t: 20 },
   { m: 'oven', in: { flour: 2, raw_meat: 2 }, out: { food_pie: 1 }, t: 28 },
@@ -2540,7 +2561,7 @@ const TILE_MAT = (() => {
   put('dirt', 'DIRT GRASS SAND MUD ASH FARMLAND SANDBAG CLOUD SKYGRASS');
   put('ice', 'SNOW ICE ICEBRICK FROSTGLYPH ICEBANNER');
   put('wood', 'WOOD PLANK PLATFORM TIMBERWALL FENCE THATCH HAYBALE MINEWOOD BANNER TORCH');
-  put('plant', 'LEAF CORRUPTLEAF SKYLEAF JUNGLELEAF GLOWLEAF VINE WEED FLOWER ORCHID FERN '
+  put('plant', 'LEAF CORRUPTLEAF SKYLEAF JUNGLELEAF GLOWLEAF PINELEAF VINE WEED FLOWER ORCHID FERN '
     + 'LILY MUSHROOM GLOWCAP GLOWMOSS CACTUS CACTUS_BLOCK JUNGLEGRASS SPOREVENT HYPHAE '
     + 'WHEAT0 WHEAT1 WHEAT2 WHEAT3 ROOT0 ROOT1 ROOT2 ROOT3 CAP0 CAP1 CAP2 CAP3 '
     + 'BEAN0 BEAN1 BEAN2 BEAN3 BLOOM0 BLOOM1 BLOOM2 BLOOM3 HERB0 HERB1 HERB2 HERB3 '

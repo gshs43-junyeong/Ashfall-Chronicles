@@ -605,7 +605,7 @@ class World {
       const g = this.get(x, s);
       if (g === T.GRASS && rng.chance(0.14)) this.tree(x, s, rng, T.WOOD, T.LEAF);
       else if (g === T.CORRUPTGRASS && rng.chance(0.11)) this.tree(x, s, rng, T.WOOD, T.CORRUPTLEAF);
-      else if (g === T.SNOW && rng.chance(0.08)) this.tree(x, s, rng, T.WOOD, T.LEAF);
+      else if (g === T.SNOW && rng.chance(0.08)) this.pineTree(x, s, rng);
       // 정글은 나무가 빽빽하고 키가 크다 — 수관이 겹쳐 아래가 늘 어둡다
       else if (g === T.JUNGLEGRASS && rng.chance(0.34)) this.jungleTree(x, s, rng);
       // 버섯 골짜기는 나무 대신 큰 발광 버섯이 자란다
@@ -721,7 +721,7 @@ class World {
       let leaf, chance;
       if (g === T.GRASS) { leaf = T.LEAF; chance = 0.14; }
       else if (g === T.CORRUPTGRASS) { leaf = T.CORRUPTLEAF; chance = 0.11; }
-      else if (g === T.SNOW) { leaf = T.LEAF; chance = 0.08; }
+      else if (g === T.SNOW) { leaf = T.PINELEAF; chance = 0.08; }
       else continue;
       if (!rng.chance(chance)) continue;
       if (this.get(x, s - 1) !== T.AIR) continue;
@@ -735,7 +735,8 @@ class World {
         }
       }
       if (occupied) continue;
-      this.tree(x, s, rng, T.WOOD, leaf);
+      if (leaf === T.PINELEAF) this.pineTree(x, s, rng);
+      else this.tree(x, s, rng, T.WOOD, leaf);
     }
   }
 
@@ -748,6 +749,40 @@ class World {
       for (let y = s - 1; y > s - h; y--) this.set(x + dx, y, woodT);
     if (wdt > 1) this._groundTrunk(x, wdt, s, woodT);
     this._canopy(x, s - h, rng.int(2, 3), wdt, leafT, 1);
+  }
+
+  /** 눈 지대 소나무 — 곧은 기둥에 **층층이 좁아지는 톱니 원뿔** 수관.
+      예전에는 눈 지대에도 잿빛 숲과 같은 둥근 활엽수(LEAF)를 심어서, 눈밭이 "눈 덮인 잿빛 숲"으로만
+      보였고 잿빛이 깊어지면 잎까지 같이 졌다. 소나무는 제 잎(PINELEAF)이라 잿빛에 안 진다.
+        · 꼭대기 두 칸은 폭 1(뾰족한 끝).
+        · 층마다 반폭이 0→1→2 로 벌어졌다가 다음 층은 한 칸 좁게 다시 시작한다(톱니). 층 넓은 줄의
+          윗면이 트여 있어 거기에 눈이 얹힌다.
+        · 밑의 2~3칸은 기둥만 — 가지 아래로 줄기가 보여야 나무로 읽힌다. */
+  pineTree(x, s, rng) {
+    // 수관 폭이 9칸까지라 옆 소나무와 붙으면 원뿔 둘이 한 덩어리 톱니 벽이 된다 — 5칸 안에 나무가 있으면 건너뛴다
+    for (let dx = -5; dx <= 5; dx++)
+      for (const dy of [-1, -3, -6]) {
+        const t = this.get(x + dx, s + dy);
+        if (t === T.WOOD || TILE_DEF[t].leaf) return;
+      }
+    const h = rng.int(8, 14);
+    const wdt = h >= 12 && rng.chance(0.4) ? 2 : 1;
+    const top = s - h, bare = rng.int(2, 3);
+    /* ★ 기둥은 수관 **밑까지만** 세운다. 수관 속까지 세우면 잎 칸 가운데로 갈색 기둥이 꼭대기까지 비쳐
+       "장대에 날개를 단" 것처럼 보였다(실제 스크린샷). 수관 맨 아랫줄이 기둥 꼭대기에 닿아 있어 벌목
+       (fellTree 의 "기둥에 닿은 잎 덩어리는 살린다")도 그대로 통한다. */
+    const rows = s - bare - top;
+    for (let dx = 0; dx < wdt; dx++)
+      for (let y = s - 1; y >= top + rows; y--) this.set(x + dx, y, T.WOOD);
+    if (wdt > 1) this._groundTrunk(x, wdt, s, T.WOOD);
+    for (let i = 0; i < rows; i++) {
+      const y = top + i;
+      const k = i - 2, hw = i < 2 ? 0 : Math.min(wdt > 1 ? 5 : 4, Math.floor(k / 3) + (k % 3));   // 0 0 | 0 1 2 | 1 2 3 | 2 3 4 …
+      for (let dx = -hw; dx <= hw + wdt - 1; dx++) {
+        const t = this.get(x + dx, y);
+        if (t === T.AIR) this.set(x + dx, y, T.PINELEAF);
+      }
+    }
   }
 
   /** 2칸 이상 폭인 기둥이 비탈에 걸치면 낮은 쪽 바닥까지 기둥을 이어 붙인다 — 기둥은

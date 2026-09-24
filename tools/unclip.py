@@ -25,7 +25,7 @@ from collections import Counter
 from PIL import Image
 
 BASE = os.path.join(os.path.dirname(__file__), '..', 'game', 'assets', 'char')
-SHEETS = ['player.png'] + ['player_%s.png' % c for c in
+SHEETS = ['player_%s.png' % c for c in
                            ('wanderer', 'digger', 'ranger', 'adept', 'stray')]
 S = 4            # 시트는 4배로 구워져 있다 (논리 1px = 4x4 블록)
 FW, FH, N = 80, 160, 13

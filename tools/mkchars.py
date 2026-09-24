@@ -15,7 +15,8 @@ import os
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, 'game/assets/char/player.png')
+# 옛 공용 시트 player.png 는 지웠다(방랑자 시트와 픽셀까지 같았다) — 방랑자 시트가 원본을 대신한다
+SRC = os.path.join(ROOT, 'game/assets/char/player_wanderer.png')
 OUT = os.path.join(ROOT, 'game/assets/char')
 FW, FH, S, N = 20, 40, 4, 13
 OUTLINE = (0x0c, 0x0c, 0x11)

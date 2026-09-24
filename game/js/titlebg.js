@@ -6,7 +6,7 @@
      "웹사이트처럼"이 되지 않았다 — 홈페이지는 재가 내린 뒤의 따뜻한 갈색 노을이다.
        하늘 #150f0d → #24191a → #3a2620 · 잔광 rgba(249,116,73,.30)
        능선 parallax_sky / village / forest (속도만 다르게, 색은 손대지 않는다)
-       사람 char/player.png 걷기 네 장 · 재 · 아래는 페이지 바탕색(#0d0b0a)으로 녹인다
+       사람 char/player_wanderer.png 걷기 네 장 · 재 · 아래는 페이지 바탕색(#0d0b0a)으로 녹인다
 
    화면에 안 보이면 아예 돌지 않고, 접근성 "움직임 줄이기"면 한 장만 그리고 멈춘다. */
 const TitleBG = {
@@ -19,13 +19,13 @@ const TitleBG = {
     { key: 'parallax_village', speed: 26, y: 0, alpha: 0.85 },
     { key: 'parallax_forest', speed: 58, y: -16, alpha: 1 }
   ],
-  WALK: [2, 3, 4, 5],          // player.png 의 걷기 프레임 (idle1 idle2 walk1..4 …)
+  WALK: [2, 3, 4, 5],          // 캐릭터 시트의 걷기 프레임 (idle1 idle2 walk1..4 …)
   FPS: 9,
 
   /* 타이틀 화면이 **실제로 필요로 하는** 그림. game.js 가 이 넷이 다 올 때까지
      로딩을 안 걷는다(waitForTitleArt). 여기 없는 그림은 타이틀에 안 쓰이므로
      기다릴 이유가 없다 — 애셋 전부를 기다리면 첫 접속이 하염없이 길어진다. */
-  NEEDED: ['parallax_sky', 'parallax_village', 'parallax_forest', 'player'],
+  NEEDED: ['parallax_sky', 'parallax_village', 'parallax_forest', 'player_wanderer'],
 
   /** 필요한 그림 중 몇 장이 준비됐나 — 로딩 진행 표시와 대기 판정에 함께 쓴다 */
   artReady() {
@@ -66,8 +66,9 @@ const TitleBG = {
       .filter(l => l.im && l.im.width);
     if (!got.length) return false;              // 아직 안 왔다 — 다음에 다시 본다
     this.layers = got;
-    const im = Sprites.img.player;
-    const m = Sprites.meta && Sprites.meta.characters && Sprites.meta.characters.sheets.player;
+    // 옛 공용 시트(char/player.png)는 방랑자 시트와 같은 그림이라 지웠다 — 방랑자 시트를 쓴다
+    const im = Sprites.img.player_wanderer;
+    const m = Sprites.meta && Sprites.meta.characters && Sprites.meta.characters.sheets.player_wanderer;
     // 프레임 크기는 매니페스트에서 가져온다 — 시트를 다시 구우면 여기도 저절로 따라온다
     if (im && im.width && m) this.player = { im, fw: m.frameW * Sprites.scale, fh: m.frameH * Sprites.scale };
     if (!this.on) this.frame(0);
