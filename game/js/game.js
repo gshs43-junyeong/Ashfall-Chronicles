@@ -3676,6 +3676,28 @@ const G = {
     return false;
   },
 
+  /** 바다 부유물 — 바다 수면 가까이 있을 때만, 드물게(스폰 틱 1.1초마다 3%, 한 번에 둘까지).
+      등급은 70 / 25 / 5. 화면 밖 수면 칸에 띄운다 — 눈앞에서 불쑥 생기면 안 된다. */
+  trySpawnFlotsam() {
+    const p = this.player, w = this.world;
+    if (!w.sea || Math.random() > 0.03) return false;
+    const ptx = Math.floor(p.cx / TS), pty = Math.floor(p.cy / TS), lv = w.sea.level;
+    if (ptx >= SEA_X1 + 20 || Math.abs(pty - lv) > 30) return false;
+    if (this.ents.filter(e => e instanceof Enemy && e.def.ai === 'flotsam').length >= 2) return false;
+    for (let att = 0; att < 10; att++) {
+      const tx = clamp(ptx + (Math.random() < 0.5 ? -1 : 1) * (30 + Math.floor(Math.random() * 16)), 4, SEA_X1 - 6);
+      if (w.get(tx, lv) !== T.SEAWATER || w.get(tx, lv - 1) !== T.AIR) continue;
+      const sx = tx * TS - this.cam.x;
+      if (sx > -60 && sx < this.W + 60) continue;
+      const r = Math.random();
+      const type = r < 0.70 ? 'flotsam1' : r < 0.95 ? 'flotsam2' : 'flotsam3';
+      const d = ENEMIES[type];
+      this.ents.push(new Enemy(type, tx * TS, lv * TS - d.h * 0.5, this.scale()));
+      return true;
+    }
+    return false;
+  },
+
   trySpawn() {
     const p = this.player, w = this.world;
     const normal = this.ents.filter(e => e instanceof Enemy && !e.boss).length;
@@ -3688,6 +3710,7 @@ const G = {
     // 물속 생물은 웅덩이 안에서만 산다. 무작위 좌표가 물에 떨어질 확률은 거의 0이라
     // 근처 웅덩이 목록에서 직접 골라 채운다 (그 물이 화면 밖일 때만).
     if (this.trySpawnWater(normal)) return;
+    if (this.trySpawnFlotsam()) return;
     for (let att = 0; att < 22; att++) {
       const ang = Math.random() * TAU;
       const rad = 520 + Math.random() * 460;
@@ -5964,13 +5987,13 @@ const G = {
   },
 
   /** 흐르는 액체 한 칸 — 고인 것과 **같은 그림**을 수위만큼 잘라 그린다.
-      위에서 같은 액체가 내려오고 있거나 수위 8(떨어지는 중)이면 칸을 꽉 채운다.
-      떨어지는 바닷물만 제 그림(세로 물줄기)을 쓴다 — 민물은 폭포(FALLS) 타일이 된다. */
+      위에서 같은 액체가 내려오고 있거나 수위 8(떨어지는 중)이면 칸을 꽉 채운다. */
   drawFlow(c, w, id, k, tx, ty, sx, sy) {
     const kind = FLUID_KIND[id], lv = w.flv ? (w.flv[k] || 7) : 7;
     const full = lv >= 8 || FLUID_KIND[w.tiles[k - WW]] === kind;
     const src = kind === 1 ? T.WATER : kind === 2 ? T.SEAWATER : T.LAVA;
-    const art = full && kind === 2 ? id : src;
+    /* 떨어지는 물도 고인 물 그림 그대로 — 물줄기 그림은 폭포(FALLS)만 쓴다(world._fallsCol 의 ★) */
+    const art = src;
     const an = TileArt.ANIM[art];
     const v = an ? ((((this.time * an.fps) + tx * 0.7 + ty * 0.4) | 0) % an.fr) : 0;
     const h = full ? TS : Math.max(3, Math.round(TS * lv / 8));
@@ -5998,10 +6021,9 @@ const G = {
     for (let ty = ty0; ty <= ty1; ty++)
       for (let tx = tx0; tx <= tx1; tx++) {
         const k = ty * WW + tx, t = w.tiles[k];
-        const falling = t === T.FALLS || (t === T.FLOWSEA && w.flv && w.flv[k] >= 8);
-        if (!falling) continue;
+        if (t !== T.FALLS) continue;                       // 폭포 판정(world._fallsCol)을 받은 줄기만
         const b = w.tiles[k + WW];
-        if (b === T.FALLS || b === t) continue;             // 아직 떨어지는 중
+        if (b === T.FALLS || (FLUID_FLOW[b] && w.flv[k + WW] >= 8)) continue;   // 아직 떨어지는 중
         if (Math.random() > 0.55) continue;
         const px = (tx + Math.random()) * TS, py = (ty + 1) * TS - 2;
         this.parts.push(new Part(px, py, Math.random() < 0.5 ? '#dff2ff' : '#9fd0f0', -150, 0.45, { g: 0.9, sq: 0, r: 0.7, spd: 0.8 }));
@@ -8006,11 +8028,35 @@ const G = {
       c.save(); c.globalAlpha = Math.min(.55, e.phaseT * 0.8); c.fillStyle = '#ffe08a';
       c.fillRect(sx, sy - dy, w, e.h + dy); c.restore();
     }
-    if (e.hp < e.maxHp && !e.boss) {
+    // 바다 부유물은 다치지 않아도 늘 보인다 — 막대 길이가 곧 "몇 대 쳐야 하나"(= 등급)라서
+    if ((e.hp < e.maxHp || e.def.ai === 'flotsam') && !e.boss) {
       const bw = Math.max(22, e.w);
       c.fillStyle = '#000a'; c.fillRect(sx + (e.w - bw) / 2, sy - dy - 8, bw, 4);
       c.fillStyle = '#d0564c'; c.fillRect(sx + (e.w - bw) / 2, sy - dy - 8, bw * (e.hp / e.maxHp), 4);
     }
+  },
+
+  /** 바다 부유물 — 구운 그림(obj_flotsamN, tools/mkflotsam.py)을 물결 기울기(e.tilt)만큼
+      기울여 그린다. 그림이 없으면 제 색 상자로 떨어진다. 3단계 궤짝은 봉인이 은은히 빛난다. */
+  drawFlotsam(c, e, sx, sy) {
+    const m = Sprites.meta && Sprites.meta.objects && Sprites.meta.objects.files[e.type];
+    const w = m ? m.w : e.w, h = m ? m.h : e.h;
+    const dx = (e.w - w) / 2, dy = h - e.h;
+    c.save();
+    c.translate(sx + e.w / 2, sy + e.h * 0.55);
+    c.rotate(clamp(e.tilt || 0, -0.35, 0.35));
+    c.translate(-(sx + e.w / 2), -(sy + e.h * 0.55));
+    if (e.def.tier === 3) {
+      const a = 0.25 + Math.sin(this.time * 2.6) * 0.12;
+      c.globalCompositeOperation = 'lighter'; c.globalAlpha = a; c.fillStyle = '#6fe0ff';
+      c.beginPath(); c.arc(sx + e.w / 2, sy + e.h * 0.5, 9, 0, TAU); c.fill();
+      c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+    }
+    if (!(this.spritesOn && Sprites.drawObj(c, 'obj_' + e.type, sx + dx, sy - dy, w, h))) {
+      c.fillStyle = e.def.c; c.fillRect(sx, sy, e.w, e.h);
+    }
+    c.restore();
+    this.drawEnemyOverlay(c, e, sx, sy, dy, null, dx);
   },
 
   /* ================= 시체 ==========
@@ -8161,6 +8207,7 @@ const G = {
   },
 
   drawEnemy(c, e, sx, sy) {
+    if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
     /* 손그림 스프라이트 우선. ★ 프레임이 판정 박스보다 크면 **바닥을 맞춰** 그린다 —
        들토끼는 판정 12px 에 프레임 40px 이고 그림 속 발이 프레임 맨 아래에 있어서,
        위쪽을 맞추면 28px(1.27칸) 아래로 처져 "한 블록 아래에서 움직이는" 것처럼 보인다. */

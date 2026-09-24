@@ -1536,6 +1536,23 @@ class Enemy extends Ent {
       if (this.vx !== 0 && !wet(lookX, this.cy)) { this.vx *= -0.5; this.wDir = -(this.wDir || 1); }
       if (this.vy !== 0 && !wet(this.cx, lookY)) this.vy *= -0.5;
       this.move(dt, world, { gravMul: 0, aquatic: 1 });
+    } else if (AI === 'flotsam') {
+      /* 바다 부유물 — 수면에 떠서 물결(G.surfacePx — 파도를 그리는 식)을 따라 오르내리고,
+         제 방향으로 천천히 흘러간다. 맞으면 밀려났다가 다시 느려진다. 바닥에 걸리거나
+         바다 밖(뭍)으로 가려 하면 방향을 돌린다 — 해변 모래 위에 궤짝이 얹히면 안 된다. */
+      if (this.drift === undefined) this.drift = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 10);
+      const hx = this.cx / TS;
+      const sr = world.surfaceRow(Math.floor(hx), Math.floor((this.y + this.h * 0.8) / TS), 4);
+      if (sr >= 0 && G.surfacePx) {
+        const want = G.surfacePx(hx, sr) - this.h * 0.55;
+        this.vy = lerp(this.vy, (want - this.y) * 5, dt * 6);
+      } else this.vy = Math.min(this.vy + 900 * dt, 400);   // 물 밖으로 튕겼다 — 떨어져 물로 돌아간다
+      const ahead = Math.floor((this.cx + Math.sign(this.drift) * (this.w / 2 + 6)) / TS);
+      if (this.hitWall || !world.liquid(ahead, sr >= 0 ? sr : Math.floor(this.cy / TS)) || ahead >= SEA_X1 - 2) this.drift = -this.drift;
+      this.vx = lerp(this.vx, this.drift, dt * 1.2);
+      // 기울기 — 이웃한 물결 높이 차로 몸을 기울인다(그리는 쪽이 쓴다)
+      if (sr >= 0 && G.surfacePx) this.tilt = Math.atan2(G.surfacePx(hx + 0.6, sr) - G.surfacePx(hx - 0.6, sr), TS * 1.2);
+      this.move(dt, world, { gravMul: 0, aquatic: 1 });
     } else {
       this.bossAI(dt, world, player, dx, dy, dd);
     }

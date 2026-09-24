@@ -267,6 +267,14 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   않고 tiles 를 쓰면 물이 그 변화를 모른다.** 떨어지는 민물은 폭포(FALLS)이고, 폭포는 위에 물이나
   **샘 바위**가 있어야 산다(`springFalls` 가 옛 폭포에 샘을 단다). 물이 밀고 들어가는 칸은 `FLUID_WASH`
   뿐 — 공기 주머니·방 공기를 거기 넣으면 물속 방이 잠긴다. 캐면 물이 남는 장식은 `LEAVE_OF`.
+  **폭포 판정**(`_fallsCol`): 떨어지는 민물 중 4칸 이상 곧게 떨어지고 양옆에 고인·흐르는 물이 없는 토막만
+  FALLS(물줄기 그림·아래로 미는 힘·물보라), 나머지는 흐르는 물 수위 8(그냥 물). 동굴 폭포는 호수 옆벽 샘에서
+  나오고 `_extendLake` 가 호수를 폭포 밑까지 잇는다. 정글 폭포는 윗대지 물길(언덕 굴에서 나옴) → 절벽 → 폭포 뒤 굴.
+- **이끼 바위 그림**은 칸 띠가 아니라 세계 좌표의 두께 장(`TileArt._mossTile` — 칸 위치별 캐시)이다. 오목한
+  모서리 칸은 생성 끝 `fillMossCorners` 가 이끼 바위로 바꿔 둬야 둥글게 이어진다.
+- **바다 부유물**(ENEMIES `flotsam1~3`, ai `'flotsam'`, game.js `trySpawnFlotsam`·`drawFlotsam`): 물결을 타는 짐짝.
+  그림은 `python3 tools/mkflotsam.py` 로 굽는다(obj/flotsam1~3 · item/mariner_compass) — 고치면 다시 굽고 sync.
+  값 매김(`ITEM_VAL`)에서 빠진다(금화 적은 짐짝이 나무 값을 끌어내린다).
 - 하늘: 해의 높이로 노을(gold)을 매기고 하늘·원경 안개(`skyHaze`)가 같이 물든다(`drawSky`·`drawSun`).
 - 동굴에는 **갈래**가 있다(data.js `CAVE_TYPES` · world.js `buildCaveZones`) — 60×55 칸 구역마다
   이끼·종유·수정·독기 중 하나. 장식은 **자연 벽지 위 빈 칸에만** 놓고 전부 걸음을 안 막는다.

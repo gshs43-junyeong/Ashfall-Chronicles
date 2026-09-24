@@ -589,6 +589,9 @@ const ITEMS = {
                    d: '수문을 여는 손잡이였다. 열면 무엇이 오는지는 그때도 알고 있었다.' },
 
   /* ---- 물에서만 나오는 장신구 여섯 (세션마다 셋) ---- */
+  /* 뱃사람의 나침반 — 바다 부유물 3단계(봉인된 표류 궤짝)에서만 2%. 그림은 PNG(item/mariner_compass) */
+  mariner_compass: { n: '뱃사람의 나침반', i: '🧭', type: 'acc', b: { ms: 14, oxyMax: 8, crit: 6, dex: 4, oxyReg: 1 }, lvReq: 28, price: 4200,
+                   d: '바늘이 북쪽이 아니라 뭍을 가리킨다. 한 번도 틀린 적이 없다고 한다.' },
   charm_float:   { n: '찌 부적', i: '🎏', type: 'acc', b: { jump: 1, ms: 8, dex: 3 },
                    d: '가라앉지 않는다. 차고 있으면 발도 그렇게 된다.' , lvReq: 8 },
   ring_ripple:   { n: '물결 반지', i: '💍', type: 'acc', b: { cdr: 10, mp: 40, int: 4 },
@@ -2248,6 +2251,19 @@ const ENEMIES = {
   driftling:  { n: '표류물 더미', hp: 1400, dmg: 96, def: 48, spd: 62, ai: 'walker', w: 32, h: 30, c: '#9a8a6a', biome: 'beach', xp: 620, gold: 260, aggro: 340,
                 drops: [['kelp', .7, 2, 5], ['rope_kelp', .3, 1, 2], ['crab_shell', .35, 1, 3], ['lost_lamp', .12, 1, 1]] },
 
+  /* --- 세션 3: 바다 부유물 (ai 'flotsam') ---
+     몹이 아니라 **물 위에 뜬 짐짝**이다. 때리지도 쫓지도 않고(passive, dmg 0) 물결을 타고
+     천천히 흘러간다. 부수면 대부분 잡동사니가 나온다 — 바다를 건너는 길에 들르는 작은 보상.
+     체력 막대는 늘 보인다(game.js drawEnemyOverlay) — 몇 대 쳐야 하는지가 곧 등급이라서.
+     단계가 오를수록 드물고(game.js trySpawnFlotsam — 70 / 25 / 5) 단단하며, 3단계 궤짝에서만
+     아주 드물게 뱃사람의 나침반이 나온다. 그림은 tools/mkflotsam.py 로 굽는다. */
+  flotsam1:   { n: '떠다니는 나뭇더미', hp: 240, dmg: 0, def: 4, spd: 0, ai: 'flotsam', passive: 1, w: 32, h: 16, c: '#7a5a36', biome: 'sea', xp: 18, gold: 8, tier: 1,
+                drops: [['wood', 1, 3, 7], ['kelp', .6, 1, 3], ['rope_kelp', .25, 1, 2], ['crab_shell', .15, 1, 1]] },
+  flotsam2:   { n: '난파 상자', hp: 640, dmg: 0, def: 14, spd: 0, ai: 'flotsam', passive: 1, w: 26, h: 22, c: '#8a6238', biome: 'sea', xp: 55, gold: 40, tier: 2,
+                drops: [['wood', .8, 2, 5], ['rope_kelp', .6, 1, 3], ['sea_salt', .5, 1, 3], ['iron_ore', .35, 1, 3], ['crab_shell', .35, 1, 2], ['lost_lamp', .05, 1, 1]] },
+  flotsam3:   { n: '봉인된 표류 궤짝', hp: 1500, dmg: 0, def: 30, spd: 0, ai: 'flotsam', passive: 1, w: 30, h: 24, c: '#2f5a5a', biome: 'sea', xp: 160, gold: 180, tier: 3,
+                drops: [['sea_salt', .7, 2, 4], ['rope_kelp', .6, 2, 4], ['shark_tooth', .35, 1, 2], ['ink_sac', .3, 1, 2], ['lost_lamp', .15, 1, 1], ['mariner_compass', .02, 1, 1]] },
+
   /* --- 세션 3: 빙하 지대 (지상) ---
      서리 지대 몹보다 세고, 바다 몹보다는 순하다. 얼음이 흙 없이 그대로 쌓인 곳이라
      "미끄러지는 것"과 "덩어리째 굴러오는 것" 둘로 성격을 갈랐다. */
@@ -2619,6 +2635,7 @@ const MOB_MAT = (() => {
   put('plant', 'vinelash bloomspitter sporeling capbeast vine_lord spore_queen '
     + 'corrupttree sacling');
   put('glass', 'crystalcrab pursuer');
+  put('wood', 'flotsam1 flotsam2 flotsam3');   // 바다 부유물 — 부서지는 소리가 나무라야 한다
   return m;
 })();
 function mobMat(type, mech) {
@@ -6156,6 +6173,8 @@ const ITEM_VAL = (() => {
     for (const k in ENEMIES) {
       const e = ENEMIES[k];
       if (!e.boss !== !bossPass) continue;          // 이 차례의 것만
+      // 바다 부유물은 값 매김에서 뺀다 — 금화가 적은 짐짝이 나무·해초 값을 끌어내린다
+      if (e.ai === 'flotsam') continue;
       const ds = e.drops || [];
       let tot = 0;
       for (const [id, c, a, b] of ds) if ((ITEMS[id] || {}).type === 'mat') tot += c * (a + b) / 2;
