@@ -10,7 +10,7 @@
 |---|---|---|
 | [README](../README.md) | 플레이어·기여자 | 게임 소개, 실행 방법, 조작, 저장, 저장소 구조 |
 | [About 문구](about-copy.md) | 저장소·배포 담당자 | GitHub About과 소개 페이지에 바로 쓸 한국어·영어 문구 |
-| [최근 변경 요약](v1.1-changelog.md#최근-통합-변경--2026-09-2021) | 플레이어·QA | 최신 게임플레이·표현 품질 개선의 짧은 요약 |
+| [최근 변경 요약](v1.1-changelog.md#최근-변경--2026-09-19--09-24) | 플레이어·QA | 세션 3 통합 뒤 들어간 것 — 유적 입구 · 낚시 · 소리 · 특성 · 밸런스 |
 | [English project guide](README.en.md) | English readers | 영어권 플레이어·기여자를 위한 빠른 시작과 구조 안내 |
 | [게임 평가와 로드맵](game-assessment.md) | 기획·제작 | 현재 강점, 위험, 우선순위 개선안 |
 | [세션과 이야기 공용 규약](story-and-sessions.md) | 콘텐츠 제작자 | 장·세션을 늘릴 때 반드시 확인할 표와 세이브·애셋 규칙 |
@@ -21,6 +21,7 @@
 - [system-requirements.md](system-requirements.md): 실행 환경과 기술적 전제
 - [deploy-cache.md](deploy-cache.md): 배포와 캐시 무효화 절차
 - [v1.1-sfx-prompts.md](v1.1-sfx-prompts.md): 효과음 제작 규격과 배치
+- [../NOTICE.md](../NOTICE.md): MIT 에서 빠지는 것(음악·효과음)과 사이트 글꼴
 - [CLAUDE.md](../CLAUDE.md): 코드·월드·세이브를 안전하게 고치기 위한 제약
 
 ## 제작 기록

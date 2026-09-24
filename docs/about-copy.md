@@ -1,30 +1,71 @@
 # About 문구 / About Copy
 
-이 문서는 GitHub 저장소의 **About**과 소개 페이지에 쓰는 짧은 문구의 원본입니다. 두 언어를 함께 쓰는 자리에서는 한국어를 먼저, 영어를 다음 줄에 둡니다. 숫자·버전·출시 상태처럼 자주 바뀌는 정보는 넣지 않습니다.
+GitHub 저장소의 **About** 칸과 소개 페이지·릴리스 첫 줄에 쓰는 문구의 원본입니다.
+문구를 고치면 여기부터 고치고, 같은 문구를 GitHub·사이트에 옮깁니다.
 
-## GitHub About — 한국어
+> 원칙 — **자주 바뀌는 숫자·버전·출시 상태는 넣지 않습니다.** 장 수·아이템 수·판 번호는
+> 세션이 붙을 때마다 바뀌므로 README 와 릴리스 노트에서만 관리합니다.
+> 제작 크레딧도 About 이 아니라 README · 게임 내 크레딧 · `NOTICE.md` 에 둡니다.
 
-> 지형을 깎아 길을 내고, 캔 것으로 장비를 만들어 다음 지역을 여는 스토리 중심 2D 샌드박스 어드벤처. 채굴·건설·전투·농사·낚시·공장 자동화. HTML5 + JavaScript로 브라우저에서 바로 플레이.
+---
 
-## GitHub About — English
+## 1. GitHub About — Description
 
-> A story-led 2D sandbox adventure where you carve routes through terrain, craft gear from what you gather, and unlock the next region. Mine, build, fight, farm, fish, and automate production — playable in the browser with HTML5 + JavaScript.
+GitHub 의 Description 칸은 **350자**까지 들어갑니다. 저장소의 기본 언어가 한국어이므로
+기본값은 **한국어 한 줄**을 권합니다. 두 언어를 한 칸에 넣고 싶으면 1-3 을 씁니다.
 
-## 짧은 소개 — 한국어
+### 1-1. 한국어 (권장 · 117자)
 
-> 파고, 짓고, 싸우며 별이 잠든 땅을 지나세요. 자유롭게 길을 만들되, 18개 장의 이야기는 다음에 갈 곳을 알려 줍니다.
+> 별이 잠든 땅을 파고, 짓고, 싸우며 건너는 스토리 중심 2D 샌드박스 어드벤처. 채굴·제작·전투에 농사·낚시·설비 자동화까지 — 설치 없이 브라우저에서 바로 하는 순수 HTML5 + JavaScript 게임.
 
-## Short introduction — English
+### 1-2. English (200자)
 
-> Mine, build, and fight your way across the land where stars sleep. Shape your own route while an 18-chapter story gives your journey direction.
+> A story-driven 2D sandbox adventure through the land where the stars sleep. Mine, craft and fight, then farm, fish and automate production — pure HTML5 + JavaScript, playable instantly in the browser.
 
-## 권장 토픽 / Suggested topics
+### 1-3. 두 언어 한 칸 (243자)
 
-`html5` · `javascript` · `2d-game` · `sandbox-game` · `browser-game` · `pixel-art` · `crafting` · `automation`
+> 별이 잠든 땅을 파고, 짓고, 싸우며 건너는 스토리 중심 2D 샌드박스 어드벤처. 설치 없이 브라우저에서 바로. · A story-driven 2D sandbox adventure: mine, craft, fight, farm, fish and automate your way across the land where the stars sleep. Pure HTML5 + JavaScript, playable in the browser.
 
-## 사용 원칙
+## 2. GitHub About — 나머지 칸
 
-- GitHub About에는 위의 언어별 긴 문구 중 하나만 넣습니다. 두 언어를 함께 넣으면 모바일에서 너무 길어집니다.
-- 저장소 기본 언어가 한국어이므로 About의 기본값은 한국어를 권장합니다. 영문 소개는 README와 배포 사이트에서 병기합니다.
-- 공개 빌드·릴리스 버전은 About이 아니라 README와 릴리스 노트에서 관리합니다.
-- 제작 크레딧은 About에 넣지 않고 README, 게임 내 크레딧, NOTICE에 둡니다.
+| 칸 | 넣을 것 |
+|---|---|
+| Website | `https://ashfall-chronicles.vercel.app/` |
+| Topics | 아래 목록 |
+| Releases · Packages · Deployments | Releases 만 켭니다(태그를 올리면 Actions 가 zip 을 붙입니다) |
+
+Topics (GitHub 은 소문자·하이픈만 받습니다):
+
+`html5-game` · `javascript` · `canvas` · `2d-game` · `sandbox-game` · `browser-game` ·
+`pixel-art` · `crafting` · `automation` · `procedural-generation` · `rpg` · `korean`
+
+## 3. 짧은 소개 / Short introduction
+
+사이트 첫 화면·릴리스 노트 첫 줄·홍보 글에 쓰는 두세 문장입니다.
+
+**한국어**
+
+> 떨어진 별의 조각을 좇아, 잿빛에 먹혀 가는 땅을 파고 짓고 싸우며 건너세요.
+> 길은 직접 내되, 장마다 이어지는 이야기가 다음에 갈 곳을 알려 줍니다.
+> 숲과 사막, 무너진 유적과 기계 도시를 지나면 서쪽 끝에는 가라앉은 바다가 기다립니다.
+
+**English**
+
+> Follow the shards of a fallen star across a land slowly swallowed by ash — dig, build and fight your own way through.
+> You carve the routes; a chapter-by-chapter story tells you where to go next.
+> Past forests and deserts, buried ruins and a machine city, a sunken sea waits at the western edge.
+
+## 4. 한 줄 태그라인 / Tagline
+
+| 한국어 | English |
+|---|---|
+| 별이 잠든 땅 — 파고, 짓고, 싸우며 건너는 2D 샌드박스 | The land where stars sleep — dig, build and fight your way across |
+
+---
+
+### 고칠 때 확인할 것
+
+- 1-1 · 1-2 · 1-3 은 **350자 안**이어야 합니다(괄호 안 글자 수는 공백 포함).
+- 게임에 없는 것을 약속하지 않습니다 — 멀티플레이·Steam·모바일은 아직 없습니다.
+- "브라우저에서 바로"는 웹 개발판 기준입니다. 내려받는 판도 서버 없이
+  `index.html` 을 열면 돌기 때문에 About 문구는 둘 다에 맞습니다.

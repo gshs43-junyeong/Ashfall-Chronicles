@@ -17,6 +17,17 @@ The project is intentionally a single-player, no-install experience. A current d
 | Enemies / bosses | 72 / 23 |
 | Achievements / machines | 70 / 26 |
 
+## Latest in the web build
+
+Recent changes to the v1.1 development build (details in Korean in the [changelog](v1.1-changelog.md)):
+
+- **Ruin entrances are winding slopes** instead of vertical shafts with ladder platforms. They rise and fall along the way, and most need no platforms at all.
+- **Fishing reads on screen:** a fish shadow approaches before a bite, a shrinking gauge shows the hook window (visible at night), the water splashes when you reel in, and richer water glints gold around the bobber.
+- **Sound:** three new music tracks (death screen, five-phase finale bosses) and 44 new sound effects for materials, skills, hits and star moments; enemy projectiles now make sound.
+- **One skill tree:** the three branches share one board with cross-branch prerequisites.
+- **Balance:** multi-shot weapons deal 0.35× from the second hit on the same target; the overtuned session 3 weapons and bosses were brought in line.
+- **World:** ash now fades only the grass, rain brings dark clouds only, and mining ticks are quieter than the break sound.
+
 ## Play safely
 
 - **Browser build:** [ashfall-chronicles.vercel.app](https://ashfall-chronicles.vercel.app/)
@@ -41,7 +52,8 @@ The game gives each chapter a destination, but does not force one base location 
 | Input | Action |
 |---|---|
 | `A` / `D`, `←` / `→` | Move |
-| `Space`, `W`, `↑` | Jump |
+| `Space`, `W`, `↑` | Jump (swim up in water) |
+| `S`, `↓` | Drop through wooden platforms |
 | Left click / right click | Attack or mine / place or interact |
 | `Shift` | Dodge dash |
 | `Q` `E` `R` `F` | Active skills |
