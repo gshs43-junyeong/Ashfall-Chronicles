@@ -239,7 +239,8 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 - `main` = v1.1 통합 완료. 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
   들어가 있고, 업적은 70개다.
-- 유적 입구는 **비탈**이다(`_carveEntranceShaft`). 유적을 건드렸으면 `tools/ruindiag.py`
+- 유적 입구는 **벽돌로 두른 복도**다(`_buildPassage` — 계단·복도·층계참·계단실). 피라미드는
+  삼각형(plan `'tri'`)이고 빗면에 문이 난다. 유적을 건드렸으면 `tools/ruindiag.py`
   (걸어서 오가는가)와 `tools/entdiag.py`(입구 발판이 어디서 왔나)를 여러 씨앗으로 돌릴 것.
 - 세계는 `WW 5000 × WH 720`, 타일 번호는 **171까지** 썼다.
 - `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1`이다.
