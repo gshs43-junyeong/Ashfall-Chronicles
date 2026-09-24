@@ -654,7 +654,8 @@ const TileArt = {
     const cTL = !oT && !oL && !sol(tx - 1, ty - 1), cTR = !oT && !oR && !sol(tx + 1, ty - 1);
     const cBR = !oB && !oR && !sol(tx + 1, ty + 1), cBL = !oB && !oL && !sol(tx - 1, ty + 1);
     const nm = (mos(tx, ty - 1) ? 1 : 0) + (mos(tx + 1, ty) ? 1 : 0) + (mos(tx, ty + 1) ? 1 : 0) + (mos(tx - 1, ty) ? 1 : 0);
-    const key = tx + ',' + ty + ':' + [oT, oR, oB, oL, cTL, cTR, cBR, cBL].map(Number).join('') + nm + col;
+    const D = this._mossDensity(w, tx, ty);
+    const key = tx + ',' + ty + ':' + [oT, oR, oB, oL, cTL, cTR, cBR, cBL].map(Number).join('') + nm + col + D;
     this._mt = this._mt || new Map();
     const hit = this._mt.get(key);
     if (hit) return hit;
@@ -672,9 +673,9 @@ const TileArt = {
     };
     const T0 = 3.4 + nm * 1.3;
     const gx0 = tx * TS, gy0 = ty * TS;
-    // 안쪽 뭉치 — 외톨이 칸에도 하나, 이웃 이끼가 많을수록 더
+    // 안쪽 뭉치 — 외톨이 칸에도 하나, 이웃 이끼가 많을수록 더. 마른 곳(D<1)은 그만큼 덜
     const blobs = [];
-    const nb = (oT || oR || oB || oL) ? 1 + (nm >> 1) : (nm >= 2 ? nm - 1 : 0);
+    const nb = Math.round(((oT || oR || oB || oL) ? 1 + (nm >> 1) : (nm >= 2 ? nm - 1 : 0)) * D);
     for (let i = 0; i < nb; i++)
       blobs.push([3 + tileHash(tx * 5 + i, ty * 3) * (TS - 6), 3 + tileHash(tx * 3, ty * 5 + i) * (TS - 6), 2.5 + tileHash(tx + i, ty - i) * 2.5 + nm * 0.5]);
     const img = g.createImageData(TS, TS), px = img.data;
@@ -695,6 +696,9 @@ const TileArt = {
         if (cBR) f += Math.exp(-Math.hypot(TS - ex, TS - ey) / tc);
         if (cBL) f += Math.exp(-Math.hypot(ex, TS - ey) / tc);
         for (const [bx, by, br] of blobs) f += 0.75 * Math.exp(-((ex - bx) ** 2 + (ey - by) ** 2) / (br * br));
+        /* 밀도 D 는 f 에 곱한다 — 문턱(0.37)이 그대로라 두께가 D 에 따라 줄고, 마른 곳은 세계 좌표
+           잡음(7px 마디)으로 군데군데 끊겨 얼룩이 된다. D = 1 이면 곱이 정확히 1 이라 최대 밀도 그림 그대로다. */
+        if (D < 1) f *= D * (1 + (1 - D) * 1.4 * (vn(gx * 0.7 + gy * 1.3, 23) - 0.5));
         const h = tileHash(gx, gy);
         const fj = f + (h - 0.5) * 0.14;                       // 가장자리를 보풀처럼
         let c = null;
@@ -712,6 +716,38 @@ const TileArt = {
     g.putImageData(img, 0, 0);
     this._mt.set(key, cv);
     return cv;
+  },
+  /** 이끼가 얼마나 빽빽한가 — 0.4(마른 외톨이) ~ 1(최대). ★ 1 이 지금까지의 그림(사용자가 "최대 밀도"로
+      정한 것)이고, 거기서 **줄이기만** 한다. 두 가지 중 큰 쪽:
+        · 물기 — 민물·바닷물에서 2칸 안이면 1, 6칸까지 칸마다 0.06씩 준다.
+        · 무리 — 둘레 5×5 의 이끼 바위 수(12칸이면 가득). 바탕은 이끼 굴 안 0.55 · 밖 0.35.
+          이끼는 무리 지어 자란다 — 무리 한가운데는 빽빽하고 외톨이·가장자리는 성기다.
+      ★ 처음에는 "이끼 굴 안이면 무조건 1"로 했더니 이끼 바위 6472칸 중 6255칸(96.6%)이 최대라 달라지는 것이
+        안 보였다. 굴 안도 무리·물기로 가른다.
+      0.1 단위로 끊어 _mossTile 캐시 열쇠에 넣는다. 칸마다 둘레를 매 그림마다 세면 화면의 이끼 수백 칸 × 150번
+      이라, 칸 번호로 1.5초 담아 둔다(물이 흘러와도 1.5초 안에 따라온다). */
+  _mossDensity(w, tx, ty) {
+    this._md = this._md || new Map();
+    const i = ty * WW + tx, now = performance.now(), hit = this._md.get(i);
+    if (hit && now - hit[1] < 1500) return hit[0];
+    if (this._md.size > 6000) this._md.clear();
+    // 물까지의 거리(체비쇼프, 6칸까지) — 2칸 안이면 1, 멀어질수록 0.06씩
+    let wd = 99;
+    for (let dy = -6; dy <= 6; dy++)
+      for (let dx = -6; dx <= 6; dx++) {
+        const k = FLUID_KIND[w.get(tx + dx, ty + dy)];
+        if (k === 1 || k === 2) wd = Math.min(wd, Math.max(Math.abs(dx), Math.abs(dy)));
+      }
+    const wet = wd <= 2 ? 1 : wd <= 6 ? 1 - (wd - 2) * 0.06 : 0;
+    let n = 0;
+    for (let dy = -2; dy <= 2; dy++)
+      for (let dx = -2; dx <= 2; dx++) if ((dx || dy) && w.get(tx + dx, ty + dy) === T.MOSSSTONE) n++;
+    const moss = CAVE_TYPES.findIndex(k => k.id === 'moss');
+    const inCave = w.caveTypeAt && w.caveTypeAt(tx, ty) === moss && ty > w.surface[clamp(tx, 0, WW - 1)] + 12;
+    const base = inCave ? 0.55 : 0.35;
+    const D = Math.round(Math.max(wet, base + (1 - base) * Math.min(1, n / 12)) * 10) / 10;
+    this._md.set(i, [D, now]);
+    return D;
   },
   /** 종유석(위에 붙음)·석순(바닥에 붙음) 한 줄의 i 번째 칸 — 줄 전체가 원뿔 하나가 되게 */
   _drip(id, i, n) {
