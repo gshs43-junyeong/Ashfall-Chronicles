@@ -908,7 +908,8 @@ class Player extends Ent {
          내려갈 때마다 소모가 한 배씩 늘고, 네 배에서 멈춘다. 바다가 없는 세계
          (세션 1·2 저장본)에서는 seaLevel이 없어 배수가 늘 1이다. */
       const lv = world.sea ? world.sea.level : null;
-      const deep = lv === null ? 1 : clamp(1 + Math.max(0, (this.cy / TS) - lv) / 90, 1, 4);
+      // 90칸마다 한 배 — 중형·대형 바다는 그만큼 깊으므로 칸 수도 세계 크기(WSY)만큼 늘린다
+      const deep = lv === null ? 1 : clamp(1 + Math.max(0, (this.cy / TS) - lv) / (90 * WSY), 1, 4);
       this.oxygen = Math.max(0, this.oxygen - dt * deep);
       this.oxyPressure = deep;
       if (this.oxygen <= 0) {

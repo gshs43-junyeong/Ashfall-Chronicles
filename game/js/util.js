@@ -143,19 +143,39 @@ function tileHash(x, y) {
 }
 
 /** 배열 RLE 압축 (저장용) */
+/* ★ 세이브의 타일·벽지·탐험 배열은 **글자열** RLE 다. 예전에는 [값, 길이, 값, 길이 …] 숫자 배열을
+   JSON 에 그대로 넣어 한 토막에 7~8글자가 들었다 — 소형 세계 타일만 101만 글자였고, 중형·대형
+   (넓이 2.25·4배)은 브라우저 저장소(한 곳에 약 500만 글자)를 혼자 넘겼다.
+   지금은 한 토막 = 두 글자: 값은 U+0100+값, 길이는 U+1000+길이(최대 U+6FFF = 28671, 넘치면 끊어 적는다).
+   두 범위 다 JSON 이 이스케이프하지 않는 평범한 글자이고 대리쌍(U+D800~) 근처에도 안 간다.
+   맨 앞의 'r1' 이 표시다. 옛 세이브(숫자 배열)도 rleDecode 가 그대로 읽는다. */
+const RLE_V = 0x100, RLE_N = 0x1000, RLE_MAX = 0x6FFF;
 function rleEncode(arr) {
-  const out = [];
+  const out = ['r1'];
+  let buf = '';
   let cur = arr[0], run = 1;
+  const put = () => {
+    buf += String.fromCharCode(RLE_V + cur, RLE_N + run);
+    if (buf.length > 8192) { out.push(buf); buf = ''; }
+  };
   for (let i = 1; i < arr.length; i++) {
-    if (arr[i] === cur && run < 65535) run++;
-    else { out.push(cur, run); cur = arr[i]; run = 1; }
+    if (arr[i] === cur && run < RLE_MAX) run++;
+    else { put(); cur = arr[i]; run = 1; }
   }
-  out.push(cur, run);
-  return out;
+  put();
+  out.push(buf);
+  return out.join('');
 }
 function rleDecode(pairs, len, Ctor) {
   const out = new Ctor(len);
   let i = 0;
+  if (typeof pairs === 'string') {
+    for (let p = 2; p + 1 < pairs.length; p += 2) {
+      const v = pairs.charCodeAt(p) - RLE_V, n = pairs.charCodeAt(p + 1) - RLE_N;
+      for (let k = 0; k < n && i < len; k++) out[i++] = v;
+    }
+    return out;
+  }
   for (let p = 0; p < pairs.length; p += 2) {
     const v = pairs[p], n = pairs[p + 1];
     for (let k = 0; k < n && i < len; k++) out[i++] = v;

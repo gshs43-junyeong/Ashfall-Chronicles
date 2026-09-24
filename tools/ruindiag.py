@@ -20,6 +20,7 @@ import asyncio
 import sys
 
 SEEDS = sys.argv[1:] or ['d1', 'd2', 'd3']
+# 세계 크기는 '크기:씨앗'으로 준다 — 'm:d1' 은 중형 d1, 'l:d2' 는 대형 d2. 크기를 안 적으면 소형.
 
 WALK_JS = r"""
 /* 플레이어를 흉내 낸 이동 판정. 선 자리에서 선 자리로만 옮겨 다닌다.
@@ -201,8 +202,9 @@ async def main():
 
         bad = 0
         for seed in SEEDS:
-            await pg.evaluate("(s) => G.newGame(s, 0, '진단', 'wanderer', 'normal')", seed)
-            await pg.wait_for_timeout(3400)
+            size, _, sd = seed.rpartition(':')
+            await pg.evaluate("([s, z]) => G.newGame(s, 0, '진단', 'wanderer', 'normal', z || 's')", [sd, size])
+            await pg.wait_for_timeout(3400 if not size or size == 's' else 12000)
             print('=== 씨앗', seed)
             rows = await pg.evaluate(WALK_JS, {})
             for r in rows:

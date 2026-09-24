@@ -40,7 +40,8 @@ Ashfall Chronicles(별이 잠든 땅)는 빌드 도구 없이 도는 순수 HTML
 그 필드를 기본값으로 얻게 한다. 버전 숫자를 손으로 올리지 말 것.
 
 `WW`·`WH`를 바꾸면 옛 세이브는 **못 연다.** 로더가 `ww`/`wh`를 검사해 막는다 —
-이 검사를 지우면 검사만 통과한 뒤 조용히 깨진 세계가 열린다.
+이 검사를 지우면 검사만 통과한 뒤 조용히 깨진 세계가 열린다. 세계 크기(소형·중형·대형)가 생긴
+뒤로는 로더가 **먼저** `world.size`로 `setWorldSize`를 부르고 나서 대조한다(§1-7).
 
 ### 1-5. 좌표에는 `+ SHIFT`가 붙는다
 
@@ -78,6 +79,20 @@ const SHIFT = 800;   // data.js — world.js보다 먼저 읽혀야 해서 여�
 `ITEMS`에 항목만 더하면 가방에서 **빈 칸**으로 나온다. `itemart.js`의 `ISPEC`에
 그리는 법을 적거나, PNG를 넣고 `assets/manifest.json`의 `items.files`에 등록한다.
 이 저장소에서 가장 자주 재발한 실수다.
+
+### 1-7. 세계 크기 — 좌표는 소형 기준으로 적고 `SX`/`SY`로 옮긴다
+
+세계는 소형(5000×720) · 중형(1.5배) · 대형(2배)이다(data.js `WORLD_SIZES`, world.js `setWorldSize`).
+`WW`·`WH`·`WORLD_BOT`·`SURF_BASE`·`HELL_Y`·`DEEP_Y`·`SKY_Y`·`CAMP_X0/1`·`SEA_X1`·`GLACIER_X1`·바이옴 경계·
+`RUIN_SPEC` 좌표·깊이 목표는 **`let`이고 크기마다 다시 계산된다** — 파일 맨 위에서 이 값으로 다른
+상수를 만들어 두면 소형 값에 얼어붙는다.
+
+- 새로 하드코딩하는 **자리**는 소형 기준 값에 `SX(x)` · `SY(y)`(땅속은 k배, 지표 위는 지표가 내려간
+  만큼만 민다) · `SYB(y)`(세계 바닥 기준 — 심해)를 씌운다. `+ SHIFT`는 그 안에: `SX(1850 + SHIFT)`.
+- **크기(너비·높이·방 규격)에는 절대 씌우지 않는다.** 구조물은 크기 그대로 자리만 옮긴다.
+- 세계에 흩뿌리는 **개수**(동굴·웅덩이·상자·자갈…)는 넓이 배수 `WSX * WSY`를 곱한다.
+- 확인: `python3 tools/sizediag.py`(s·m·l 로 만들어 구조물 상자끼리 겹침 0 · 세계 밖 0)와
+  `python3 tools/ruindiag.py m:d1 l:d2`(유적 통행). 새 구조물은 sizediag 의 상자 목록에도 더할 것.
 
 ---
 
@@ -275,6 +290,15 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - **바다 부유물**(ENEMIES `flotsam1~3`, ai `'flotsam'`, game.js `trySpawnFlotsam`·`drawFlotsam`): 물결을 타는 짐짝.
   그림은 `python3 tools/mkflotsam.py` 로 굽는다(obj/flotsam1~3 · item/mariner_compass) — 고치면 다시 굽고 sync.
   값 매김(`ITEM_VAL`)에서 빠진다(금화 적은 짐짝이 나무 값을 끌어내린다).
+- **세계 크기**(§1-7): 새 게임 창에서 고른다. 세이브 v8 에 `world.size`. 세이브의 타일·벽지·탐험은
+  **글자열 RLE**(util.js `rleEncode` — 한 토막 두 글자)라 소형 세이브가 119만 → 52만 글자로 줄었다
+  (중형 104만 · 대형 174만). 옛 숫자 배열 세이브도 `rleDecode`가 읽는다.
+  생성 시간(헤드리스 실측): 소형 3.1초 · 중형 4.6초 · 대형 7초. 유적 통행 보수(`_walkBack`)가 예전엔
+  생성의 8할이었다 — `_returnSet`(입구에서 거꾸로 한 번 걷기) · `BoxSet`으로 바꿨고 **소형 세계는 바이트
+  단위로 똑같다**(d1·d3 해시 대조). 바다 비탈(`RUN`)도 `SX`로 늘인다 — 안 늘리면 가라앉은 유적이 뜬다.
+- **주인공 시트 파생물**: `python3 tools/mkswim.py`가 `char/player_<id>.png`에서 `_body`(망토 뺀 몸) ·
+  `_cape`(망토) · `_swim`(엎드린 헤엄 네 장)을 굽는다. 주인공 시트를 고치면 다시 돌리고 sync.
+  망토는 game.js `drawCape`가 줄마다 밀어 날리고, 헤엄은 entity.js '헤엄' 절(팔 젓기 박자 · 속도 제곱 저항).
 - 하늘: 해의 높이로 노을(gold)을 매기고 하늘·원경 안개(`skyHaze`)가 같이 물든다(`drawSky`·`drawSun`).
 - 동굴에는 **갈래**가 있다(data.js `CAVE_TYPES` · world.js `buildCaveZones`) — 60×55 칸 구역마다
   이끼·종유·수정·독기 중 하나. 장식은 **자연 벽지 위 빈 칸에만** 놓고 전부 걸음을 안 막는다.
