@@ -2020,21 +2020,66 @@ class World {
       return false;
     };
     let guard = 0;
+    const tried = new Map();                                  // 자리마다 틈 잇기를 몇 번 해 봤나
     while (guard++ < spots.length * 2 + 4) {                  // 한 번에 한 자리씩 잇는다
       const seen = this._standSet(box, anchor[0], anchor[1]);
       if (!seen.size) return;
       const lost = spots.filter(p => !hit(seen, p));
       if (!lost.length) return;
       const a = lost[0];
+      /* 틈 잇기는 **한 자리에 여섯 번까지** 해 본다. 맨 아래 방에서 입구 목까지는 턱이 한
+         군데가 아니다(유적 속에도 저마다 턱이 있다) — 한 번에 하나씩 메우므로 한 번만 해 보고
+         물러서면, 남은 턱 때문에 곧장 예전 방식으로 떨어져 목부터 바닥까지 사다리를 세웠다
+         (실측: 입구 사슬은 방마다 다 오가는데도 봉인실 275칸 · 석판 유적 2 166칸).
+         그래도 못 닿으면 예전 방식(자리 좌표에서 곧장)으로 판다 — 그쪽은 한 번에 반드시
+         잇는다. 틈 잇기만 쓰면 잃은 자리에서 "닿는" 무리와 이었을 뿐 그 자리"로" 닿는다는
+         보장이 없어, 씨앗 셋 중 유적 셋이 "보스↔밖"을 잃었다. */
+      const key = a[1] * WW + a[0];
+      const once = (tried.get(key) || 0) < 6;
+      tried.set(key, (tried.get(key) || 0) + 1);
+      /* ★ 굴은 **두 무리 사이의 틈**에 판다 — 기준점에서 닿는 무리(seen)와, 잃은 자리에서
+         닿는 무리(from) 중 서로 가장 가까운 두 칸을 잇는다.
+         예전에는 잃은 자리의 **좌표 자체**에서 seen 까지 팠다. 기준점이 맨 아래 방일 때
+         잃은 자리는 입구 목인데, 목에서 걸어 내려오는 길은 거의 다 멀쩡하고 한두 군데만
+         되올라갈 수 없는 턱이 있을 뿐이다. 그런데도 목 좌표에서 곧장 파 내려가니
+         입구마다 지표부터 유적 바닥까지 두 칸짜리 발판 사다리가 한 줄씩 섰다
+         (실측 씨앗 둘: 입구 열네 곳 전부, 99~281칸 — 입구 둘레 발판 1804장 중 1103장이
+         이 보수에서 나왔다). 틈에 파면 사다리는 그 턱 높이만큼만 선다. */
+      const from = once ? this._standSet(box, a[0], a[1]) : new Set();
+      let src = a, best = null, bd = 1e9;
+      if (from.size) {
+        const cols = new Map();                               // seen 을 열별로 묶어 가까운 열만 본다
+        for (const k of seen) {
+          const y = Math.floor(k / WW), x = k - y * WW;
+          const c = cols.get(x); if (c) c.push(y); else cols.set(x, [y]);
+        }
+        /* 두 무리가 겹치는 칸은 뺀다 — 걸음은 한쪽으로만 흐를 수 있어서, 목에서 떨어져
+           닿는 칸은 맨 아래 방에서도 닿는다. 겹친 칸끼리 이으면 길이 0 인 굴이 되고
+           고리가 제자리를 돈다. 겹치지 않는 쪽(= 턱 위)과 seen 사이가 진짜 틈이다. */
+        for (const k of from) {
+          if (seen.has(k)) continue;
+          const fy = Math.floor(k / WW), fx = k - fy * WW;
+          for (let dx = 0; dx < bd; dx++) {
+            for (const x of dx ? [fx - dx, fx + dx] : [fx]) {
+              const c = cols.get(x); if (!c) continue;
+              for (const y of c) {
+                const d = dx + Math.abs(y - fy);
+                if (d < bd) { bd = d; best = [x, y]; src = [fx, fy]; }
+              }
+            }
+          }
+        }
+      }
       /* ★ 굴은 **실제로 닿는 칸**에서 시작해야 한다. "닿은 방"의 대표 자리는 닿은 칸
          근처일 뿐 정작 자기는 못 닿는 곳일 때가 있어, 허공에 굴만 파고 서른 번을 헛돈다. */
-      let best = null, bd = 1e9;
-      for (const k of seen) {
-        const y = Math.floor(k / WW), x = k - y * WW;
-        const d = Math.abs(x - a[0]) + Math.abs(y - a[1]);
-        if (d < bd) { bd = d; best = [x, y]; }
+      if (!best) {
+        for (const k of seen) {
+          const y = Math.floor(k / WW), x = k - y * WW;
+          const d = Math.abs(x - a[0]) + Math.abs(y - a[1]);
+          if (d < bd) { bd = d; best = [x, y]; }
+        }
       }
-      this._digStair(a[0], a[1], best[0], best[1], floor, box, traps, rng);
+      this._digStair(src[0], src[1], best[0], best[1], floor, box, traps, rng);
     }
   }
 
@@ -2250,9 +2295,13 @@ class World {
     for (let k = 0; k <= 1; k++) {
       const x = cx + k;
       if (!solid(x, fy + 1) || this.locked(x, fy + 1)) continue;
+      /* ★ 구덩이 바닥(fy+4)이 **이미 비어 있으면** 여기에 구덩이를 파지 않는다. 예전에는 그 칸을
+         발밑 재질로 메웠는데, 거기가 아래를 지나는 다른 길의 걷는 줄일 때가 있다 — 입구 비탈이
+         네 칸 간격으로 겹쳐 지나가는 자리에서 위 다리에 구덩이를 파자 아래 다리가 막혔다
+         (실측 d6 피라미드: 이 함정 하나로 보스가 밖으로 못 나왔다). */
+      if (!solid(x, fy + 4)) continue;
       const f = this.get(x, fy + 1);
-      this.set(x, fy + 2, T.AIR); this.set(x, fy + 3, T.AIR);
-      if (!solid(x, fy + 4)) this.set(x, fy + 4, f);   // 두 칸 구덩이 — 점프로 나올 수 있다
+      this.set(x, fy + 2, T.AIR); this.set(x, fy + 3, T.AIR);   // 두 칸 구덩이 — 점프로 나올 수 있다
       this.set(x, fy + 1, T.CRUMBLE);
       put++;
     }
@@ -2382,9 +2431,10 @@ class World {
         for (let k = 0; k < n; k++) {
           if (this.get(sx + k, fy + 1) === T.AIR) continue;   // 원래 구멍이면 그대로
           if (this.locked(sx + k, fy + 1)) continue;          // 잠긴 돌은 건드리지 않는다
+          // 구덩이 바닥 자리가 이미 비어 있으면 파지 않는다 — 메우면 아래 길을 막는다(putPathTrap 참고)
+          if (TILE_DEF[this.get(sx + k, fy + 4)].solid !== 1) continue;
           this.set(sx + k, fy + 2, T.AIR);
           this.set(sx + k, fy + 3, T.AIR);
-          if (TILE_DEF[this.get(sx + k, fy + 4)].solid !== 1) this.set(sx + k, fy + 4, floorTile);
         }
         if (rng.chance(0.45)) this.set(sx + rng.int(0, n - 1), fy + 3, T.SPIKE);
       }
@@ -2496,21 +2546,137 @@ class World {
     return this._entranceLandX === null ? ex : this._entranceLandX;
   }
 
-  /** 입구 통로 — **작은 방을 여러 개 엮은 불규칙한 길**. 곧은 수직 갱도에 화살 구멍을
-      규칙적으로 박아 두면 한 번 보고 다음 유적도 아는 길이 된다. 내려가는 동안 작은 방
-      서넛을 지나고, 방마다 폭·높이·치우침이 다르고 함정이 하나씩 심긴다.
+  /** 비탈 한 구간의 칸 목록 — `[x, 바닥줄]` 을 len 개와, 끝났을 때의 진행 방향.
 
-      entryKind 는 성격만 정한다 — foothold(발판이 있다) · maze(좌우로 크게 치우쳐
-      다음 방이 안 보인다) · nofoothold(발판이 없고 바닥에 가시가 있다). */
+      ★ 한 칸 옆으로 갈 때 높이는 **-3 ~ +3 만** 바뀐다. 그 안이면 발판 없이 양방향이
+        보장되기 때문이다 — 점프가 세 칸(실측 4.4칸을 보수적으로 잡은 값)이라 세 칸까지는
+        걸어 올라가고, 떨어지는 것은 원래 공짜다. 네 칸을 떨어뜨리는 순간 그 자리는
+        발판이 있어야만 되올라올 수 있는 자리가 된다.
+      yMin 은 **이보다 위로는 올라가지 않는다**는 천장이다. 첫 구간에서 올려 버리면
+        입구 목 위로 파고 올라가는데, 묻힌 입구(sunken)는 그 위를 흙으로 도로 덮으므로
+        통로가 통째로 묻혀 버린다(실측: 석판 유적 3이 목에서 세 칸 만에 끊겼다).
+      내리막·평지·오르막을 서너 칸마다 갈아 가며 쓴다. 한 가지만 쓰면 비탈이 아니라
+      미끄럼틀이 되고, 굽이도 오르내림도 안 생긴다. */
+  _slopeCols(sx, sy, dir, len, drop, lo, hi, yMin, kind, rng, clash) {
+    const ST = 3;                                              // 한 칸에 바뀌는 최대 높이
+    const cols = [];
+    let x = sx, y = sy, d = dir, left = drop;
+    let mode = 'down', hold = 0, wasEdge = false;
+    /* 같은 열에 이미 다리가 지나가면, 바닥이 그 다리와 **한두 칸** 차이 나는 자리는 못 쓴다.
+       세 칸 이상 벌어지면 위 다리 발밑이 아래 다리 머리 위를 덮는 층이 되고, 같은 줄이면
+       두 다리가 만나는 갈림목이 된다 — 둘 다 괜찮다. 한두 칸이면 한쪽이 다른 쪽의 발밑이나
+       몸 두 칸을 파먹는다. clash 는 앞 구간들, own 은 이 구간이 앞서 지나간 칸이다. */
+    const own = (cx, f) => cols.some(c => c[0] === cx && c[1] !== f && Math.abs(c[1] - f) < 3);
+    for (let i = 0; i < len; i++) {
+      /* 벽에 닿으면 꺾인다(굽이). ★ **바깥쪽으로 갈 때만** 꺾는다. 방이 자리가 모자라 통로 폭
+         밖으로 삐져나가면 다음 구간이 폭 **밖에서** 시작하는데, 방향을 안 보고 꺾으면 걸음마다
+         꺾여 두 열 사이를 세 칸씩 떨어지며 오가는 굴뚝이 됐다(실측: 석판 유적 3에서 열두 칸). */
+      if ((d < 0 && x + d <= lo) || (d > 0 && x + d >= hi)) d = -d;
+      x += d;
+      /* ★ 굽이의 **맨 끝 칸으로 들어가는 걸음은 세 칸을 떨어진다.** 되돌아오는 다리는 바로
+         옆 열을 다시 지나는데, 그 사이가 세 칸 벌어져야 위 다리의 발밑이 아래 다리의 머리
+         위에 남는다. 한두 칸이면 아래 다리가 머리 둘 자리를 파면서 위 다리 발밑을 지워,
+         굽이마다 되올라갈 수 없는 턱이 하나씩 생겼다. 끝 칸을 돌아 나오는 걸음은
+         오르지 않는다(오르면 그 벌어짐을 도로 좁힌다). */
+      const edge = (d < 0 && x + d <= lo) || (d > 0 && x + d >= hi);
+      const rem = len - i - 1;
+      // 남은 칸으로 반드시 목표 깊이에 닿을 수 있는 범위 안에서만 고른다
+      const loD = Math.max(-ST, left - ST * rem), hiD = Math.min(ST, left + ST * rem);
+      if (hold-- <= 0) {
+        hold = rng.int(2, 5);
+        mode = rng.weighted([['down', kind === 'nofoothold' ? 5 : 3],
+                             ['flat', 2], ['up', kind === 'maze' ? 2 : 1.4]]);
+      }
+      const wgt = mode === 'down' ? [[0, 1], [1, 4], [2, kind === 'nofoothold' ? 4 : 2], [3, 1]]
+                : mode === 'flat' ? [[0, 5], [1, 2], [-1, 1]]
+                : [[-1, 4], [-2, 2], [0, 2]];
+      /* ★ 비탈은 **지표 아래에만** 놓는다. 천장이 y-2 이므로 지표보다 세 칸은 내려가야
+         머리 위에 흙이 남는다. 이걸 안 걸면 비탈이 언덕 비탈면을 따라 지상으로 기어올라
+         한동안 노천을 걷다가, 땅이 꺼지는 자리에서 길이 뚝 끊긴다(실측: 버려진 광산이
+         문틀에서 왼쪽 비탈면으로 나가 지표만 서른여덟 칸 걷고 끝났다). */
+      const lim = Math.max(yMin, this.surface[clamp(x, 0, WW - 1)] + 3);
+      const okv = v => v >= loD && v <= hiD && y + v >= lim && (!wasEdge || v >= 0)
+        && !own(x, y + v) && !(clash && clash(x, y + v));
+      const bag = [];
+      if (edge && okv(3)) bag.push(3);
+      else for (const [v, k] of wgt) if (okv(v)) for (let q = 0; q < k; q++) bag.push(v);
+      // 고를 것이 없으면 겹침 검사만 빼고 다시 — 그래도 없으면 깊이를 맞추는 쪽이 이긴다
+      if (!bag.length)
+        for (const [v] of [[0], [1], [2], [3], [-1], [-2], [-3]])
+          if (v >= loD && v <= hiD && y + v >= lim) { bag.push(v); break; }
+      let dy = bag.length ? rng.pick(bag) : clamp(left, Math.min(loD, hiD), Math.max(loD, hiD));
+      if (y + dy < lim) dy = lim - y;
+      y += dy; left -= dy;
+      wasEdge = edge;
+      cols.push([x, y]);
+    }
+    return { cols, dir: d };
+  }
+
+  /** 입구 통로 — **비탈로 굽이치며 내려가는 길**과 그 길에 매달린 작은 방들.
+
+      ★ 예전에는 세로 갱도를 뚫고 세 칸마다 발판을 박았다. 수직굴은 걸어서 오를 수
+        없으니 발판이 **반드시** 있어야 했고, 그래서 입구 일곱이 전부 "세 칸마다 발판이
+        박힌 굴뚝" 하나로 수렴했다(실측 씨앗 둘: 작은 방 86곳에 발판 792장 = 방당 9.2장,
+        되올라가는 구간은 0개 — 어느 입구든 처음부터 끝까지 내리막이었다).
+      비탈은 **걸어서** 오르내리므로 발판이 필요 없다. 그래서 여기서는 길을 비탈로 깔고,
+      발판은 아래 두 군데에만 남긴다 — foothold 유적의 수직굴 한 구간, 그리고 남은
+      깊이가 비탈로 도저히 안 닿을 때의 마지막 수단.
+
+      entryKind 는 성격만 정한다 —
+        foothold   완만하다. 구간 하나쯤은 옛 갱도처럼 수직굴이고 거기만 발판이 있다
+        maze       좌우로 크게 꺾이고 오르내림이 잦다. 발판이 없다
+        nofoothold 급경사다. 뚝 떨어지는 자리마다 가시가 있고 발판이 없다 */
   _carveEntranceShaft(ex, yTop, yBot, spec, rng) {
     const kind = spec.entryKind || 'foothold';
-    const span = Math.max(6, (spec.w || 40) >> 2);
+    const span = Math.max(12, (spec.w || 40) >> 2);
     const lo = ex - span, hi = ex + span;
     const bg = spec.bg, wall = spec.wall || T.RUINBRICK;
+    const floorT = spec.floor || T.RUINTILE;
     const traps = spec.traps || ['dart', 'crumble'];
-    const sway = kind === 'maze' ? 7 : kind === 'nofoothold' ? 4 : 3;
 
-    const dig = (x, y) => { if (this.inB(x, y)) { this.set(x, y, T.AIR); this.setWall(x, y, bg); } };
+    const dug = new Set();
+    const dig = (x, y) => {
+      if (!this.inB(x, y)) return;
+      this.set(x, y, T.AIR); this.setWall(x, y, bg); dug.add(y * WW + x);
+    };
+    /* 비탈 발밑을 채운다. ★ **이미 판 칸에는 깔지 않는다** — 굽이에서 아래 다리가 위
+       다리 밑을 지날 때 바닥을 깔면 아래 다리 천장이 막힌다. 끝에서 한 번 더 본다. */
+    /* ★ yBot 은 유적 **안쪽 첫 줄**이다. 그 아래로는 바닥을 깔지 않는다 — 마지막 비탈이
+       유적에 내려앉는 자리에서 발밑을 채우면 유적 맨 윗방 속에 돌이 박혀 방이 갈라진다
+       (실측: 석판 유적 2 의 방이 9곳 중 7곳만 닿았다). 거기부터는 유적의 바닥이다. */
+    const ground = (x, y) => {
+      if (y < yBot && this.inB(x, y) && !dug.has(y * WW + x) && TILE_DEF[this.get(x, y)].solid === 0)
+        this.set(x, y, floorT);
+    };
+    const legs = [];                   // 판 비탈 칸 [열, 바닥, 꼭 필요한 천장] — 마지막에 바닥을 한 번 더 본다
+    const legAt = new Map();           // 열 -> 그 열을 지나는 다리들의 바닥 줄
+    const floors = new Set();          // 다리·방의 발밑 칸 — 머리 위 여유를 팔 때 건드리지 않는다
+    const clash = (x, f) => (legAt.get(x) || []).some(g => g !== f && Math.abs(g - f) < 3);
+    const solid = (x, y) => TILE_DEF[this.get(x, y)].solid === 1;
+    /** 칸 목록을 실제로 판다.
+        ★ **꼭 필요한 천장**은 이웃한 두 칸 중 높은 바닥보다 **한 칸 위**다. 걸음 판정
+          (_standSet)이 한 칸 오르는 데 요구하는 것이 정확히 그만큼이다 — 뛰어오를 열의 머리
+          위가 이웃 바닥-1 까지 비어 있고, 이웃 열의 몸 두 칸이 비어 있으면 된다.
+        그 위 한 줄은 **여유**다. 예전에는 여유까지 무조건 팠는데, 굽이에서 되돌아 내려오는
+        다리의 여유 줄이 하필 위 다리의 발밑이라 그걸 지우고 지나갔다(한 방향 이음 140곳
+        중 대부분). 이제 여유 줄은 **다른 다리의 발밑이 아닐 때만** 판다. */
+    const carve = (cols, prevY) => {
+      for (const c of cols) {
+        floors.add((c[1] + 1) * WW + c[0]);
+        const a = legAt.get(c[0]); if (a) a.push(c[1]); else legAt.set(c[0], [c[1]]);
+      }
+      for (let i = 0; i < cols.length; i++) {
+        const x = cols[i][0], f = cols[i][1];
+        const need = Math.min(f, i ? cols[i - 1][1] : prevY,
+                              i + 1 < cols.length ? cols[i + 1][1] : f) - 1;
+        for (let y = need; y <= f; y++) dig(x, y);
+        const k = (need - 1) * WW + x;                         // 여유 한 줄
+        if (!floors.has(k) && this.inB(x, need - 1)) { this.set(x, need - 1, T.AIR); this.setWall(x, need - 1, bg); }
+        legs.push([x, f, need]);
+      }
+      for (const c of cols) ground(c[0], c[1] + 1);
+    };
     /* 방마다 바닥 한 자리를 적어 둔다. 유적을 다 짓고 나서 _ensureWalkable 이
        이 자리들까지 걸어 오갈 수 있는지 검사한다 — 그래야 "들어는 갔는데 못 나오는
        통로"가 안 남는다. */
@@ -2519,40 +2685,115 @@ class World {
     // 입구 목 — 먼저 뚫어 둔다. 방을 두를 때 세우는 벽은 이미 AIR인 칸을 건너뛰므로
     // 여기서 뚫어 놓으면 다시 막히지 않는다 (막혀서 지상에서 못 들어가던 일이 있었다)
     for (let y = yTop - 2; y <= yTop + 1; y++) for (let dx = -1; dx <= 1; dx++) dig(ex + dx, y);
+    /* ★ 목은 **땅에 닿을 때까지** 내리고 나서 비탈을 시작한다.
+       yTop 은 유적 생김새가 정하는 값이라(문틀형은 surface[ex]-4, 솟은 탑은 탑 안 공중)
+       실제 지면보다 몇 칸 위일 때가 있다. 예전처럼 거기서 세로로 파 내려가면 저절로
+       땅에 닿았지만, 비탈은 옆으로 가므로 허공에 다리를 놓게 된다 — 실측에서 버려진
+       광산 입구가 지면 다섯 칸 위에 떠서 목 밖으로 한 칸도 못 나갔다. */
+    let cx = ex, cy = yTop + 1;
+    for (let k = 0; k < 24 && cy < yBot - 4 && !solid(ex, cy + 1); k++) {
+      for (let dx = -1; dx <= 1; dx++) dig(ex + dx, cy + 1);
+      cy++;
+    }
+    for (let dx = -1; dx <= 1; dx++) ground(ex + dx, cy + 1);
     /* ★ 목에도 함정을 하나 심는다. 아래 작은 방마다 함정이 들어가긴 하지만, 문지방을
        넘는 순간부터 무사한 구간이 있으면 "그냥 걸어 들어가는 문"이 된다.
        들어가는 쪽·나오는 쪽을 가리지 않는다 — 어느 방향이든 여기를 지난다. */
-    this.putPathTrap(ex, yTop + 1, rng);
-    let cx = ex, cy = yTop;
-    let n = 0;
-    while (cy < yBot - 3 && n < 8) {
-      n++;
-      // --- 이 칸의 작은 방 ---
+    this.putPathTrap(ex, cy, rng);
+    let dir = rng.chance(0.5) ? 1 : -1;
+    /* 수직굴을 한 구간 끼울지 — foothold 만, 그것도 절반쯤만 굴린다. 발판이 있는
+       입구와 하나도 없는 입구가 섞여야 "이 유적은 이렇게 들어간다"가 생긴다. */
+    const shaftAt = (kind === 'foothold' && rng.chance(0.55)) ? rng.int(2, 4) : 0;
+    /* ★ 방 개수는 **깊이와 통로 폭에서 거꾸로 계산한다.** 고정해 두면 안 된다 —
+       입구가 얼마나 깊은지가 저마다 다르다(피라미드 34칸, 석판 유적 131칸, 심층
+       봉인실 282칸). 비탈 한 구간이 내려갈 수 있는 깊이는 쓸 수 있는 가로 폭의
+       세 배까지이므로(한 칸에 세 칸), 그 벽에 부딪히면 구간 수를 늘려야 한다.
+       안 그러면 남은 깊이를 마지막에 세로 갱도로 한 번에 떨어뜨리게 되고, 그 갱도는
+       발판 없이 못 올라오니 발판이 도로 수십 장 깔린다. */
+    const maxLen = Math.max(6, span * 2 - 11);
+    const rooms = clamp(Math.max(Math.round((yBot - cy) / 26),
+                                 Math.ceil((yBot - cy) / (maxLen * 3 - 3))), 3, 10);
+    for (let n = 1; n <= rooms && cy < yBot - 5; n++) {
       const rw = rng.int(5, 9), rh = rng.int(4, 6);
-      const rx = clamp(cx - (rw >> 1) + rng.int(-1, 1), lo, hi - rw);
-      const ry = Math.min(cy, yBot - rh - 1);
-      for (let x = rx - 1; x <= rx + rw; x++)
-        for (let y = ry - 1; y <= ry + rh; y++) {
-          const edge = (x === rx - 1 || x === rx + rw || y === ry - 1 || y === ry + rh);
+      /* ★ 방들은 유적 꼭대기보다 **여덟 칸 위**까지만 내려간다. 마지막 방이 yBot(유적 안쪽
+         첫 줄)에 딱 내려앉으면 마지막 비탈이 생기지 않고, 그 방의 바닥이 유적 윗방과 통로
+         사이를 막는다 — 아래로 가는 길이 방 바닥의 무너지는 함정뿐이라 떨어지면 못 올라온다
+         (실측 d6: 가라앉은 유적의 보스가 밖으로 못 나갔다). 남긴 여덟 칸은 마지막 비탈이 딛는다. */
+      let drop = Math.round((yBot - 8 - cy) / (rooms - n + 1));
+      /* ★ 중간에 한 번쯤은 **되올라간다.** 입구가 처음부터 끝까지 내리막이면 길이
+         아니라 미끄럼틀이고, 나올 때도 한 방향으로만 기어오르게 된다. 위로 꺾었다가
+         다시 내려가면 같은 깊이를 가는 데에도 굽이가 생긴다. */
+      if (n > 1 && n < rooms && rng.chance(0.3)) drop = -rng.int(2, 4);
+
+      let endX, endY, thX, thY;          // th* = 이 방으로 **들어오는 목**의 자리
+      if (n === shaftAt && drop > 3) {
+        /* 옛 갱도 수직굴 — 입구에서 발판이 남아 있는 거의 유일한 자리다.
+           세 칸마다 한 장이면 점프(세 칸) 안에 반드시 걸린다. */
+        for (let y = cy; y <= cy + drop + 1; y++) {
+          for (let dx = -1; dx <= 1; dx++) dig(cx + dx, y);
+          if ((y - cy) % 3 === 0 && y > cy) this.set(cx, y, T.PLATFORM);
+        }
+        endX = cx; endY = cy + drop;
+        ground(cx - 1, endY + 1); ground(cx, endY + 1); ground(cx + 1, endY + 1);
+        thX = cx - dir; thY = endY;
+      } else {
+        const len = clamp(Math.ceil(Math.abs(drop) / 1.6) + rng.int(4, 9), 6, maxLen);
+        drop = clamp(drop, -(3 * len - 3), 3 * len - 3);
+        /* 첫 구간은 **입구 목보다 위로 못 올라간다.** 목 위는 묻힌 입구라면 흙으로
+           도로 덮이는 자리고, 솟은 입구(surface)라면 탑 천장이다. 두 번째 구간부터는
+           여덟 칸까지 되올라갈 수 있게 풀어 준다. */
+        const yMin = n === 1 ? cy : cy - 8;
+        const r = this._slopeCols(cx, cy, dir, len, drop, lo, hi, yMin, kind, rng, clash);
+        carve(r.cols, cy);
+        dir = r.dir;
+        endX = r.cols[len - 1][0]; endY = r.cols[len - 1][1];
+        // 방 벽이 될 칸에 마지막으로 서 있던 자리 — 아래에서 다시 뚫어야 할 목이다
+        for (let i = len - 1; i >= 0; i--)
+          if (r.cols[i][0] === endX - dir) { thX = r.cols[i][0]; thY = r.cols[i][1]; break; }
+        // 비탈 중간에도 하나 — 방과 방 사이를 완전히 무사하게 두지 않는다
+        if (len > 4 && rng.chance(0.4)) {
+          const t = r.cols[rng.int(1, len - 2)];
+          this.putPathTrap(t[0], t[1], rng);
+        }
+        // 무발판형은 뚝 떨어지는 자리마다 가시 — 발판 대신 이쪽으로 사납게 만든다
+        if (kind === 'nofoothold')
+          for (let i = 1; i < len; i++)
+            if (r.cols[i][1] - r.cols[i - 1][1] >= 2 && rng.chance(0.35)
+                && solid(r.cols[i][0], r.cols[i][1] + 1))
+              this.set(r.cols[i][0], r.cols[i][1], T.SPIKE);
+      }
+
+      // --- 비탈 끝에 매달린 작은 방. 통로가 **옆구리로 바닥 높이에** 들어온다 ---
+      const fy = endY;
+      const ry = fy - rh + 1;
+      /* ★ 방은 **가던 쪽으로** 편다. 들어온 쪽으로 한 칸이라도 물리면, 올라오는 비탈로
+         들어온 경우 방금 걸어온 칸이 방 바닥 줄(fy+1)에 걸려 floorT 로 메워진다 —
+         길이 제 뒤를 막는다(실측: 씨앗 둘에서 입구 셋이 두 번째 방에서 끊겼다). */
+      /* ★ 그리고 **자리가 모자라도 뒤로 밀지 않는다.** 비탈은 통로 폭(lo~hi) 끝에서 꺾이므로
+         방이 그 끝 바로 앞에 놓이는 일이 잦은데, 예전처럼 clamp 로 안쪽으로 밀어 넣으면 방이
+         방금 내려온 비탈 위에 겹쳐 파여 비탈 끝 서너 칸의 발밑이 사라졌다 — 세 칸씩 내려오던
+         계단이 방 천장에 매달려 되올라갈 수 없게 된다(실측: 한 방향으로만 가는 이음 74곳 중
+         절반이 이것). 폭을 줄이고, 그래도 모자라면 통로 폭 밖으로 몇 칸 삐져나가게 둔다. */
+      const room = dir > 0 ? hi - endX : endX - lo;
+      const rw2 = Math.max(4, Math.min(rw, room));
+      const rx = dir > 0 ? endX : endX - rw2 + 1;
+      for (let x = rx - 1; x <= rx + rw2; x++)
+        for (let y = ry - 1; y <= fy + 1; y++) {
+          const edge = (x === rx - 1 || x === rx + rw2 || y === ry - 1 || y === fy + 1);
           if (edge) { if (this.get(x, y) === T.AIR) continue; this.set(x, y, wall); this.setWall(x, y, bg); }
           else dig(x, y);
         }
-      const fy = ry + rh - 1;
-      for (let x = rx; x < rx + rw; x++) this.set(x, fy + 1, spec.floor || T.RUINTILE);
-      /* 위에서 이 방으로 들어오는 목. 이게 없으면 방을 두를 때 세운 천장 벽이
-         내려오던 길을 도로 막는다 — 통로 입구가 통째로 봉해져 지상에서 못 들어갔다. */
-      const inX = clamp(cx, rx + 1, rx + rw - 2);
-      for (let y = Math.min(cy, ry) - 1; y <= ry + 1; y++)
-        for (let dx = -1; dx <= 1; dx++) dig(inX + dx, y);
-      /* 방 바닥에서 그 목까지 되짚어 올라가는 디딤판. 방 높이가 다섯~여섯 칸이면
-         바닥에서 천장 구멍까지 네다섯 칸이라 점프(세 칸)로는 못 닿았다 —
-         내려오기만 하고 못 올라가는 통로가 돼서 보스를 잡고도 걸어 나올 수 없었다. */
-      for (let y = fy - 2; y > ry; y -= 3)
-        for (let dx = -1; dx <= 1; dx++) this.set(clamp(inX + dx, rx, rx + rw - 1), y, T.PLATFORM);
+      // 바닥 — 비탈이 지나간 칸은 건드리지 않는다(굽이가 방 밑을 지날 때 천장을 막는다)
+      for (let x = rx; x < rx + rw2; x++) {
+        if (!dug.has((fy + 1) * WW + x)) this.set(x, fy + 1, floorT);
+        floors.add((fy + 1) * WW + x);
+        const a = legAt.get(x); if (a) a.push(fy); else legAt.set(x, [fy]);
+      }
+      const inX = clamp(endX, rx + 1, rx + rw2 - 2);
       this._entranceSpots.push([inX, fy]);
-      this._entranceRooms.push([rx - 1, ry - 1, rw + 2, rh + 2, fy]);
+      this._entranceRooms.push([rx - 1, ry - 1, rw2 + 2, rh + 2, fy]);
       // 함정 — 방마다 반드시 하나, 절반은 둘. 확률로만 두면 함정 없는 길이 생긴다
-      const fake = { x: rx - 1, y: ry - 1, w: rw + 2, h: rh + 2 };
+      const fake = { x: rx - 1, y: ry - 1, w: rw2 + 2, h: rh + 2 };
       /* ★ 방마다 **서로 다른 함정을 여럿** 심는다 — "함정 없이 그냥 걸어 들어가는 문"을
          하나도 남기지 않기 위해서다. 한 가지를 여러 번 놓으면 첫 방만 보고 나머지를
          다 아는 길이 되므로 종류를 섞고 개수도 방마다 다르게(2~4) 굴린다. 고른 종류가
@@ -2565,51 +2806,80 @@ class World {
       }
       let placed = 0;
       const used = {};
-      for (const kind of pool) {
+      for (const tk of pool) {
         if (placed >= want) break;
-        if (used[kind]) continue;                     // 같은 종류를 겹쳐 놓지 않는다
-        if (this.putTileTrap(fake, fy, kind, rng)) { used[kind] = 1; placed++; }
+        if (used[tk]) continue;                       // 같은 종류를 겹쳐 놓지 않는다
+        if (this.putTileTrap(fake, fy, tk, rng)) { used[tk] = 1; placed++; }
       }
-      while (placed < 2 && this.putPathTrap(rx + 1 + rng.int(0, Math.max(0, rw - 3)), fy, rng)) placed++;
+      while (placed < 2 && this.putPathTrap(rx + 1 + rng.int(0, Math.max(0, rw2 - 3)), fy, rng)) placed++;
       if (!placed) this.putPathTrap(rx + 1, fy, rng);
-      if (kind === 'nofoothold' && rng.chance(0.6)) this.set(rx + rng.int(1, rw - 2), fy, T.SPIKE);
+      if (kind === 'nofoothold' && rng.chance(0.6)) this.set(rx + rng.int(1, rw2 - 2), fy, T.SPIKE);
+      /* ★ 함정을 다 박은 **뒤에** 들어온 목을 도로 뚫는다. 화살 구멍(dart)과 톱니(grind)는
+         방 벽에 박히고 둘 다 solid 1 이다. 예전에는 통로가 천장으로 들어와 벽에 무엇이
+         박히든 상관없었는데, 이제는 그 벽이 곧 문이라 하필 그 자리에 박히면 입구가
+         거기서 통째로 끊긴다. 나가는 쪽 벽은 다음 구간이 어차피 파고 나간다. */
+      if (thX !== undefined) for (let y = thY - 2; y <= thY; y++) dig(thX, y);
       if (rng.chance(0.45)) this.set(rx + 1, ry + 1, spec.torch || T.TORCH);
 
       // --- 막다른 곁방 (가끔) — 뒤져 볼 것이 있거나, 없거나 ---
       if (rng.chance(0.4)) {
-        const dir = rng.chance(0.5) ? 1 : -1;
-        const ax = clamp(dir > 0 ? rx + rw + 1 : rx - 5, lo, hi - 4);
-        for (let x = Math.min(ax, ax + 3); x <= Math.max(ax, ax + 3); x++)
-          for (let y = fy - 2; y <= fy; y++) dig(x, y);
-        for (let x = ax; x <= ax + 3; x++) this.set(x, fy + 1, spec.floor || T.RUINTILE);
-        // 이은 목
-        for (let x = Math.min(rx + rw, ax); x <= Math.max(rx - 1, ax + 3); x++)
-          if (Math.abs(x - (rx + rw / 2)) > rw / 2) { dig(x, fy); dig(x, fy - 1); }
+        /* 곁방은 **가는 쪽** 벽에 붙인다. 들어온 쪽에 파면 방금 내려온 비탈을 가로질러 파
+           비탈 발밑이 사라진다(방을 뒤로 밀 때와 같은 일). 가는 쪽은 다음 비탈이 곁방을
+           지나 나가게 되는데, 그러면 곁방이 층계참이 될 뿐 막히는 곳은 없다. */
+        const ax = dir > 0 ? rx + rw2 + 1 : rx - 5;
+        for (let x = ax; x <= ax + 3; x++) for (let y = fy - 2; y <= fy; y++) dig(x, y);
+        for (let x = ax; x <= ax + 3; x++) ground(x, fy + 1);
+        // 이은 목 — 방과 곁방 사이를 두 줄로 뚫는다
+        for (let x = Math.min(ax + 4, rx); x <= Math.max(ax - 1, rx + rw2 - 1); x++) {
+          if (x >= rx && x < rx + rw2) continue;
+          dig(x, fy); dig(x, fy - 1); ground(x, fy + 1);
+        }
         if (rng.chance(0.22)) this.objects.push({ type: 'chest', tier: 1,
           x: (ax + 1) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
         else this.putTileTrap({ x: ax - 1, y: fy - 3, w: 6, h: 5 }, fy, rng.pick(traps), rng);
       }
 
-      // --- 다음 방으로 내려가는 목 ---
-      const nx = clamp(rx + rng.int(1, rw - 2) + rng.int(-sway, sway), lo + 1, hi - 1);
-      const drop = rng.int(3, 6);
-      const ny = Math.min(fy + 1 + drop, yBot);
-      /* ★ 발판은 **어느 성격이든** 세 칸마다 남긴다. foothold 만 깔던 시절에는 나머지가
-         한 번 떨어지면 다시 못 올라와, 보스를 잡고도 걸어 나올 길이 없었다(다섯 유적 모두
-         "보스↔밖" 실패). 내려가는 길의 사나움은 발판이 아니라 함정과 가시로 낸다. */
-      for (let y = fy + 1; y <= ny + 1; y++) {
-        for (let dx = -1; dx <= 1; dx++) dig(nx + dx, y);
-        if ((y - fy) % 3 === 0) this.set(nx, y, T.PLATFORM);
-      }
-      // 목이 옆으로 치우쳤으면 가로로도 이어 준다
-      const bx0 = Math.min(nx, rx + 1), bx1 = Math.max(nx, rx + rw - 2);
-      for (let x = bx0; x <= bx1; x++) { dig(x, fy); dig(x, fy - 1); }
-      cx = nx; cy = ny;
+      // 다음 구간은 방의 **반대쪽 끝**에서 이어 간다. 들어온 쪽으로 되돌아 나가면
+      // 방금 판 비탈을 그대로 덧파게 된다 — 꺾임은 비탈이 벽에 닿을 때만 일어난다
+      cx = dir > 0 ? rx + rw2 - 1 : rx;
+      cy = fy;
     }
-    // 마지막 목을 방 묶음까지 곧게 잇는다 (여기도 발판을 남긴다 — 나올 때 쓴다)
-    for (let y = cy; y <= yBot; y++) {
-      for (let dx = -1; dx <= 1; dx++) dig(cx + dx, y);
-      if ((y - cy) % 3 === 0 && y > cy) this.set(cx, y, T.PLATFORM);
+
+    // --- 마지막으로 유적 꼭대기까지 ---
+    const rest = yBot - cy;
+    if (rest > 2) {
+      const len = clamp(Math.ceil(rest / 1.6) + rng.int(2, 6), 4, maxLen);
+      if (rest <= 3 * len - 3) {
+        const r = this._slopeCols(cx, cy, dir, len, rest, lo, hi, cy, kind, rng, clash);
+        carve(r.cols, cy);
+        cx = r.cols[len - 1][0];
+      } else {
+        /* 남은 깊이가 비탈로는 안 닿는다(통로 폭이 좁은 입구). 이때만 세로 갱도를 파고
+           발판을 남긴다 — 없으면 떨어지기만 하고 되올라올 수가 없다. */
+        for (let y = cy; y <= yBot; y++) {
+          for (let dx = -1; dx <= 1; dx++) dig(cx + dx, y);
+          if ((y - cy) % 3 === 0 && y > cy) this.set(cx, y, T.PLATFORM);
+        }
+      }
+    }
+    /* ★ 마지막으로 비탈 발밑을 한 번 더 본다.
+       비탈은 판 다음 자리에 바닥을 깔지만, **뒤에 판 구간이 앞 구간 밑을 지나가면서**
+       그 바닥을 도로 파낸다. 그대로 두면 앞 구간이 허공에 뜬다 — 땅속에서는 아래 다리로
+       떨어질 뿐이라 상관없지만, 지표 가까이나 동굴 위를 지날 때는 길이 통째로 끊긴다.
+       ★ 다만 **다른 다리가 판 속(천장~바닥)에 드는 자리에는 깔지 않는다.** 깔면 그
+       다리의 몸 두 칸이 막혀 길이 거기서 끊긴다 — 실측에서 석판 유적 1·3 이 굽이가
+       네 칸 차이로 엇갈린 자리에서 그렇게 막혔다(위아래 두 칸 차이만 봐서는 못 잡는다). */
+    for (const c of legs) {
+      const x = c[0], y = c[1] + 1;
+      if (y >= yBot || !this.inB(x, y) || solid(x, y)) continue;
+      let blocked = false;
+      for (const o of legs)
+        if (o !== c && o[0] === x && y >= o[2] && y <= o[1]) { blocked = true; break; }
+      // 작은 방 속도 건너뛴다 — 방 안 허공에 돌을 하나 놓는 꼴이 된다
+      if (!blocked)
+        for (const b of this._entranceRooms)
+          if (x >= b[0] && x <= b[0] + b[2] && y >= b[1] && y <= b[1] + b[3]) { blocked = true; break; }
+      if (!blocked) this.set(x, y, floorT);
     }
     this._entranceLandX = cx;
     this._entranceSpots.push([ex, yTop + 1]);                 // 입구 목 — 지상으로 나가는 자리
