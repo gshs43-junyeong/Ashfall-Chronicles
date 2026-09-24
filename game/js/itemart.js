@@ -166,6 +166,8 @@ const ISPEC = {
   /* 재료 · 설치물 */
   wood: { k: 'log', c: '#7a5734' },
   stone: { k: 'block', tile: T.STONE },
+  limestone: { k: 'block', tile: T.LIMESTONE },
+  granite: { k: 'block', tile: T.GRANITE },
   dirt: { k: 'block', tile: T.DIRT },
   sand: { k: 'block', tile: T.SAND },
   ash: { k: 'block', tile: T.ASH },
@@ -605,6 +607,11 @@ for (const g of ['shard', 'house', 'wall', 'wave', 'crown', 'sword', 'trophy', '
   'key', 'candle', 'bed', 'scroll', 'sun', 'coin', 'coins', 'paw', 'hands', 'receipt',
   'clock', 'clock2', 'clock3', 'lung', 'grave', 'star', 'hidden'])
   GLSPEC[g] = { k: 'gl', g };
+
+/* 장식 아이템(ITEMS 의 deco: 1)은 하나하나 적지 않고 제 타일 그림을 쓴다 — 장식을 더할 때
+   그림을 빠뜨리는 일(CLAUDE.md §1-6)이 원리적으로 안 생긴다. 이끼 낀 바위만 블록 틀을 쓴다. */
+for (const k in ITEMS) if (ITEMS[k].deco && !ISPEC[k])
+  ISPEC[k] = { k: ITEMS[k].tile === T.MOSSSTONE ? 'block' : 'deco', tile: ITEMS[k].tile };
 
 /* 업적 → 그림. 'i:' 는 아이템 그림 재사용, 'g:' 는 위에서 새로 그린 것. */
 const ACH_ART = {
@@ -1328,6 +1335,13 @@ const Art = {
         break;
       }
 
+      /* 장식 아이템 — 타일 그림을 테두리 없이 그대로 키운다. 블록처럼 틀을 두르면 꽃 한 포기가
+         돌덩이로 읽힌다. */
+      case 'deco': {
+        if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 3, 3, 26, 26);
+        else P(8, 8, 16, 16, TILE_DEF[s.tile].c || '#666');
+        break;
+      }
       case 'block': {
         if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 4, 5, 24, 24);
         else P(4, 5, 24, 24, TILE_DEF[s.tile].c || '#666');

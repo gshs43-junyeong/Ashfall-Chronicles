@@ -189,7 +189,9 @@ ART[T.HANGMOSS] = { k: 'hangmoss', c: '#6fa05a', a: 1 };
 ART[T.STALACTITE] = { k: 'dripstone', c: '#9a9488', a: 1, up: 0 };
 ART[T.STALAGMITE] = { k: 'dripstone', c: '#8a8478', a: 1, up: 1 };
 ART[T.GEODE] = { k: 'geode', c: '#a88fe8', a: 1, glow: 1 };
-ART[T.FAULTSTONE] = { k: 'fault', c: '#a8966e', glow: 1 };   // 누런 자갈 — 회색 돌 사이에서 튀어 보이게
+ART[T.FAULTSTONE] = { k: 'fault', c: '#5f5e62' };   // 돌과 거의 같은 색 — 알갱이 결과 가는 금으로만 알아본다
+ART[T.LIMESTONE] = { k: 'strata', c: '#9a9486' };    // 석회암 — 밝고 결이 가로로 진다
+ART[T.GRANITE] = { k: 'granite', c: '#7a6868' };      // 화강암 — 굵은 알갱이가 점점이
 /* --- 7단계: 폭주로 --- */
 ART[T.SLAGSTEEL] = { k: 'slag', c: '#5a4a44' };
 ART[T.COREGLASS] = { k: 'crystal', c: '#e8b04a', glow: 1 };
@@ -205,6 +207,27 @@ ART[T.ORBITPLATE] = { k: 'brick', c: '#8fa8c8' };
 ART[T.ORBITCORE] = { k: 'ore', c: '#6a7f9c', o: '#7fe0ff', glow: 1 };
 ART[T.DEEPROCK] = { k: 'rock', c: '#3a3630' };
 ART[T.BLACKDAMP] = { k: 'water', c: '#6a7a4a', a: 1, fall: 0 };
+
+/* ---------------- 이웃을 보고 그리는 타일 (v1.1) ----------------
+   아틀라스 한 칸은 이웃을 모른다. 그래서 두 가지가 어긋났다.
+   ① ★ **윗면을 제 그림에 그려 넣은 타일**(잔디·부패한 풀·밀림 풀·발광 이끼·눈·얼음·이끼 바위)이
+     위가 막혀 있어도 윗면 띠를 그렸다. 부패한 땅은 흙 층 자체가 '부패한 풀'이라 땅속 수십 줄에
+     한 칸마다 보라 띠가 그어졌고, 이끼 굴 천장(이끼 바위)에는 **바위 속 쪽**에 이끼 띠가 떴다 —
+     상단 하이라이트 줄(game.js)을 아무리 고쳐도 남던 "하이라이트"가 이것이다.
+     위가 막힌 칸은 그림의 **아랫부분만** 두 번 이어 그린다(띠 없는 몸통).
+   ② 이끼 · 늘어진 이끼 · 종유석 · 석순은 여러 칸이 이어져 **한 덩어리**여야 한다. 칸마다 같은
+     그림을 찍으면 이끼는 윗면에만 붙고, 두 칸짜리 종유석은 원뿔 두 개를 쌓은 꼴이 된다.
+   이끼 색은 바이옴을 따른다(MOSS_COL — 전부 다를 필요는 없어서 비슷한 땅은 같은 색). */
+const MOSS_COL = {
+  sea: '#4f8a6a', glacier: '#9fc8c0', ice: '#8fb8a8',          // 서리 이끼 — 희푸르다
+  forest: '#6f9a4a', forest2: '#6f9a4a', jungle: '#3f8a2f',     // 푸른 이끼
+  desert: '#b09a50',                                             // 바위옷 — 누렇게 마른 이끼
+  glowfen: '#5fd0b8', corrupt: '#9a6ab8'                         // 발광 이끼 · 부패 이끼
+};
+const BODY_ONLY = {};   // 위가 막히면 몸통만 그리는 타일(①)
+const CONN = {};        // 이웃을 보고 통째로 그리는 타일(②)
+for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS, T.SNOW, T.ICE]) BODY_ONLY[id] = 1;
+for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE]) CONN[id] = 1;
 
 const TileArt = {
   /* 타일마다 아틀라스에 미리 그려 두는 칸 수. 원래는 "같은 타일이 다 똑같아 보이지
@@ -250,6 +273,11 @@ const TileArt = {
     const g = cv.getContext('2d');
     const rng = new RNG('ashfall-tileart-1');
     this.ANIM = {};
+    /* ★ 칸마다 **잘라서** 그린다. 그리는 쪽 대부분이 결을 칸 밖(-3 ~ TS+2)에서 시작해 자연스럽게
+       이어지게 그리는데, 아틀라스에서는 칸 밖이 곧 **옆 타일의 그림**이다. 잘라 두지 않으면
+       석회암(178)의 가로 결이 바로 위 타일(금 간 자갈, 177)의 맨 아랫줄에 밝은 띠로 새어 들어가,
+       자갈이 이어진 곳마다 타일 경계에 흰 줄이 그어졌다. 다른 타일끼리도 같은 일이 있었다. */
+    const clipCell = (gg, ox, oy, fn) => { gg.save(); gg.beginPath(); gg.rect(ox, oy, TS, TS); gg.clip(); fn(); gg.restore(); };
     for (let id = 0; id < N; id++) {
       const s = ART[id];
       if (!s) continue;
@@ -260,11 +288,11 @@ const TileArt = {
         this.ANIM[id] = { fr: Math.min(s.fr, this.V), fps: s.fps || 4 };
         for (let v = 0; v < this.V; v++) {
           const fr = v % this.ANIM[id].fr;
-          this.paint(g, v * TS, id * TS, s, new RNG('ashfall-anim-' + id + '-' + fr), v, id + '-' + fr);
+          clipCell(g, v * TS, id * TS, () => this.paint(g, v * TS, id * TS, s, new RNG('ashfall-anim-' + id + '-' + fr), v, id + '-' + fr));
         }
         continue;
       }
-      for (let v = 0; v < this.V; v++) this.paint(g, v * TS, id * TS, s, rng, v, id + '-' + v);
+      for (let v = 0; v < this.V; v++) clipCell(g, v * TS, id * TS, () => this.paint(g, v * TS, id * TS, s, rng, v, id + '-' + v));
     }
     this.atlas = cv;
 
@@ -273,7 +301,7 @@ const TileArt = {
     const wg = wc.getContext('2d');
     for (let i = 1; i < WALL_COLOR.length; i++)
       for (let v = 0; v < this.V; v++)
-        (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, wg, v * TS, i * TS, WALL_COLOR[i], rng);
+        clipCell(wg, v * TS, i * TS, () => (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, wg, v * TS, i * TS, WALL_COLOR[i], rng));
     this.wallAtlas = wc;
 
     this.buildAsh();
@@ -543,6 +571,99 @@ const TileArt = {
   /** 잿빛 판 블릿 — 같은 자리, 색만 빠진 것 */
   drawAsh(c, id, v, sx, sy) {
     if (this.ashAtlas) c.drawImage(this.ashAtlas, v * TS, id * TS, TS, TS, sx, sy, TS, TS);
+  },
+  /** ①② 를 그린다. 그렸으면 true — game.js 는 그 칸의 평소 그리기를 건너뛴다. */
+  drawConn(c, w, id, tx, ty, sx, sy, v) {
+    if (BODY_ONLY[id]) {
+      if (TILE_DEF[w.get(tx, ty - 1)].solid !== 1) return false;   // 위가 트였으면 평소대로
+      const h = TS >> 1, oy = id * TS + TS - h;
+      c.drawImage(this.atlas, v * TS, oy, TS, h, sx, sy, TS, h);
+      c.drawImage(this.atlas, v * TS, oy, TS, h, sx, sy + h, TS, TS - h);
+      return true;
+    }
+    if (!CONN[id]) return false;
+    const mc = MOSS_COL[w.biomeAt(clamp(tx, 0, WW - 1)).id] || '#6f9a4a';
+    if (id === T.MOSSSTONE) {
+      this.draw(c, T.STONE, v, sx, sy);
+      const open = (x, y) => TILE_DEF[w.get(x, y)].solid !== 1;
+      const m = (open(tx, ty - 1) ? 1 : 0) | (open(tx + 1, ty) ? 2 : 0) | (open(tx, ty + 1) ? 4 : 0) | (open(tx - 1, ty) ? 8 : 0);
+      if (m) c.drawImage(this._mossFace(m, mc, v), sx, sy);
+      return true;
+    }
+    if (id === T.HANGMOSS) {
+      // 이어진 줄의 맨 위(붙은 칸)와 길이를 잰다 — 가닥이 여러 칸을 건너 한 줄로 이어지게
+      let top = ty, bot = ty;
+      while (top > ty - 8 && w.get(tx, top - 1) === T.HANGMOSS) top--;
+      while (bot < ty + 8 && w.get(tx, bot + 1) === T.HANGMOSS) bot++;
+      const run = (bot - top + 1) * TS, y0 = (ty - top) * TS;
+      const dk = shade(mc, .72), lt = shade(mc, 1.3);
+      if (ty === top) { c.fillStyle = dk; c.fillRect(sx, sy, TS, 2); }
+      for (let j = 0; j < 7; j++) {
+        const fx = 1 + j * 3, len = run * (0.45 + 0.55 * tileHash(tx * 7 + j, top));
+        const a0 = y0, a1 = Math.min(y0 + TS, len);
+        if (a1 <= a0) continue;
+        c.fillStyle = j % 2 ? mc : dk;
+        c.fillRect(sx + fx, sy + (a0 - y0), 2, a1 - a0);
+        if (a1 < y0 + TS && a1 === len) { c.fillStyle = lt; c.fillRect(sx + fx, sy + (a1 - y0) - 1, 2, 1); }
+      }
+      return true;
+    }
+    if (id === T.STALACTITE || id === T.STALAGMITE) {
+      const up = id === T.STALAGMITE;
+      let i = 0, n = 1;                                    // i: 붙은 쪽에서 몇 번째 칸, n: 줄 길이
+      if (!up) { while (i < 6 && w.get(tx, ty - i - 1) === id) i++; n = i + 1; while (n < 8 && w.get(tx, ty - i + n) === id) n++; }
+      else { while (i < 6 && w.get(tx, ty + i + 1) === id) i++; n = i + 1; while (n < 8 && w.get(tx, ty + i - n) === id) n++; }
+      c.drawImage(this._drip(id, i, n), sx, sy);
+      return true;
+    }
+    return false;
+  },
+  /** 이끼 면 — 트인 쪽(m: 위1 · 오른2 · 아래4 · 왼8)마다 띠를 두른다. 모서리에서 띠끼리 이어진다 */
+  _mossFace(m, col, v) {
+    const key = m + col + v;
+    this._mf = this._mf || {};
+    if (this._mf[key]) return this._mf[key];
+    const cv = document.createElement('canvas'); cv.width = cv.height = TS;
+    const g = cv.getContext('2d'), rng = new RNG('moss' + key);
+    const dk = shade(col, .7), lt = shade(col, 1.3);
+    const band = (horiz, at, inward) => {                  // at: 붙는 가장자리, inward: 안쪽 방향(+1/-1)
+      for (let q = 0; q < TS; q++) {
+        const d = 2 + Math.round(rng.range(0, 3));
+        for (let k = 0; k < d; k++) {
+          const p = at + inward * k;
+          g.fillStyle = k === 0 ? lt : k === d - 1 ? dk : col;
+          if (horiz) g.fillRect(q, p, 1, 1); else g.fillRect(p, q, 1, 1);
+        }
+      }
+    };
+    if (m & 1) band(true, 0, 1);
+    if (m & 4) band(true, TS - 1, -1);
+    if (m & 8) band(false, 0, 1);
+    if (m & 2) band(false, TS - 1, -1);
+    // 트인 쪽이 아닌 면에도 얼룩 몇 점 — 이끼가 바위 속까지 번진 자국
+    for (let k = 0; k < 5; k++) { g.fillStyle = rng.chance(.5) ? col : dk; g.fillRect(rng.int(2, TS - 4), rng.int(2, TS - 4), rng.int(1, 3), rng.int(1, 2)); }
+    return (this._mf[key] = cv);
+  },
+  /** 종유석(위에 붙음)·석순(바닥에 붙음) 한 줄의 i 번째 칸 — 줄 전체가 원뿔 하나가 되게 */
+  _drip(id, i, n) {
+    const key = id + ':' + i + ':' + n;
+    this._dc = this._dc || {};
+    if (this._dc[key]) return this._dc[key];
+    const cv = document.createElement('canvas'); cv.width = cv.height = TS;
+    const g = cv.getContext('2d');
+    const base = TILE_DEF[id].c, dk = shade(base, .74), lt = shade(base, 1.2), lt2 = shade(base, 1.4);
+    const up = id === T.STALAGMITE;
+    for (let y = 0; y < TS; y++) {
+      const yy = up ? TS - 1 - y : y;                       // 붙은 쪽에서 잰 칸 속 높이
+      const t = (i + (yy + 0.5) / TS) / n;                   // 0(붙은 쪽) → 1(끝)
+      const wdt = Math.max(1, (TS - 3) * (1 - t * 0.9));
+      const gy = i * TS + yy;                                // 줄 전체에서의 높이 — 줄무늬가 칸을 건너 이어진다
+      g.fillStyle = gy % 6 === 0 ? dk : gy % 6 === 3 ? lt : base;
+      g.fillRect(TS / 2 - wdt / 2, y, wdt, 1);
+      g.fillStyle = lt2; g.fillRect(TS / 2 - wdt / 2, y, Math.max(1, wdt * .22), 1);
+    }
+    if (!up && i === n - 1) { g.fillStyle = '#9fd0e8'; g.fillRect(TS / 2 - 0.5, TS - 2, 1, 2); }
+    return (this._dc[key] = cv);
   },
   drawWall(c, wl, v, sx, sy) {
     c.drawImage(this.wallAtlas, v * TS, wl * TS, TS, TS, sx, sy, TS, TS);
@@ -1914,19 +2035,30 @@ const TileArt = {
         g.globalAlpha = 1;
         break;
       }
-      case 'fault': {               // 금 간 자갈 — 동글동글한 알갱이, 가운데를 가로지르는 굵은 금
-        this._fill(g, ox, oy, dk);
-        for (let i = 0; i < 16; i++) {
-          const x = rng.range(0, TS - 4), y = rng.range(0, TS - 4), r = rng.range(2, 3.6);
-          g.fillStyle = [base, lt, shade(base, .88)][rng.int(0, 2)];
+      case 'fault': {               // 금 간 자갈 — 돌 바탕에 알갱이 결이 옅게, 가는 금 하나
+        /* ★ 바탕을 돌과 같은 밝기(base)로 깐다. 어두운 바탕(dk)에 알갱이를 얹었더니 자갈로 채운
+           굴 자리 전체가 돌보다 한 톤 어두운 네모 덩어리로 드러났다. */
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 7; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(.5) ? lt : dk);
+        for (let i = 0; i < 9; i++) {
+          const x = rng.range(1, TS - 5), y = rng.range(1, TS - 5), r = rng.range(1.4, 2.4);
+          g.fillStyle = rng.chance(.5) ? shade(base, 1.1) : shade(base, .9);
           g.beginPath(); g.arc(ox + x + r, oy + y + r, r, 0, TAU); g.fill();
         }
-        let x = rng.range(3, 6), y = 0;
-        while (y < TS) {                                        // 굵은 금 — 위에서 아래로 번개꼴
-          R(x, y, 3, 2, '#15120f');
-          R(x + 3, y, 1, 1, '#ffe8b0');                           // 금 가장자리 — 안쪽에서 새어 나오는 빛
-          x = clamp(x + rng.range(-1.6, 2.2), 1, TS - 3); y += 1.5;
+        this._speck(g, ox, oy, rng, 16, dk2, lt2);
+        /* 금은 네 변형 중 하나에만, 짧게 — 칸마다 같은 자리에 금을 그었더니 자갈 덩어리가
+           격자 무늬로 드러났다(변형이 넷뿐이라 금 자리가 되풀이된다). */
+        if (v === 1) {
+          let x = rng.range(4, TS - 6), y = rng.range(2, 8);
+          for (let k = 0; k < 8; k++) { R(x, y, 1, 1, dk2); x = clamp(x + rng.range(-1.2, 1.4), 1, TS - 2); y += 1.2; }
         }
+        break;
+      }
+      case 'granite': {             // 화강암 — 바탕 위에 밝은 알갱이·검은 알갱이가 굵게 박힌다
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 5; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 8), rng.range(3, 6), rng.chance(.5) ? lt : dk);
+        for (let i = 0; i < 22; i++) R(rng.range(0, TS - 2), rng.range(0, TS - 2), 2, 2, rng.chance(.5) ? '#d8c8c0' : '#2a2224');
+        this._speck(g, ox, oy, rng, 16, dk2, lt2);
         break;
       }
       case 'hyphae': {              // 균사 발 — 천장에서 내린 실이 아래로 갈수록 성글다

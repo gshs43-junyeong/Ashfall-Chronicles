@@ -105,7 +105,9 @@ const T = {
   /* --- v1.1 H: 화약 원료. 세션 3(빙하·해저)에서만 나온다 --- */
   SULFUR: 165, ROOMAIR: 166, PALMWOOD: 167, PALMLEAF: 168, COCONUT: 169, GLACIUM: 170, TIDESTONE: 171,
   /* --- v1.1: 동굴 갈래(CAVE_TYPES) — 장식 다섯과 무너지는 자갈 하나 --- */
-  MOSSSTONE: 172, HANGMOSS: 173, STALACTITE: 174, STALAGMITE: 175, GEODE: 176, FAULTSTONE: 177
+  MOSSSTONE: 172, HANGMOSS: 173, STALACTITE: 174, STALAGMITE: 175, GEODE: 176, FAULTSTONE: 177,
+  /* --- v1.1: 지층 돌 둘 — 얕은 곳의 석회암, 깊은 곳의 화강암 --- */
+  LIMESTONE: 178, GRANITE: 179
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -374,7 +376,14 @@ const TILE_DEF = [
   { n: '종유석', c: '#9a9488', solid: 0, hard: 1, drop: 'stone', a: 1 },
   { n: '석순', c: '#8a8478', solid: 0, hard: 1, drop: 'stone', a: 1 },
   { n: '수정 무리', c: '#a88fe8', solid: 0, hard: 2, drop: 'crystal', light: 7, a: 1 },
-  { n: '금 간 자갈', c: '#a8966e', solid: 1, hard: 1, drop: 'stone', light: 2 }
+  /* ★ 금 간 자갈은 **돌과 거의 같은 색**이다(누렇게 튀던 것을 되돌렸다). 무너질 굴 자리 전체가
+     이 자갈로 채워지므로, 튀는 색이면 땅속에 큰 누런 덩어리가 그대로 보여 숨은 동굴이
+     숨어 있지 않다. 알갱이 결과 가는 금으로만 알아본다. */
+  { n: '금 간 자갈', c: '#5f5e62', solid: 1, hard: 1, drop: 'stone' },
+  /* 지층 돌 — 돌과 똑같이 캐지고(석회암 1 · 화강암 2), 캐면 그 돌이 나와 다시 쌓을 수 있다.
+     석회암은 얕은 곳과 종유 동굴 둘레에 짙다(석회암이 녹아 종유석이 자란다는 흉내). */
+  { n: '석회암', c: '#9a9486', solid: 1, hard: 1, drop: 'limestone' },
+  { n: '화강암', c: '#7a6868', solid: 1, hard: 2, drop: 'granite' }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -671,6 +680,8 @@ const ITEMS = {
   /* --- 재료 --- */
   wood:        { n: '나무', i: '🪵', type: 'mat', stack: 999 },
   stone:       { n: '돌', i: '🪨', type: 'block', tile: T.STONE, stack: 999 },
+  limestone:   { n: '석회암', i: '🪨', type: 'block', tile: T.LIMESTONE, stack: 999, d: '무르고 밝은 돌. 물이 스민 자리에 종유석이 자란다.' },
+  granite:     { n: '화강암', i: '🪨', type: 'block', tile: T.GRANITE, stack: 999, d: '깊은 데서 굳은 돌. 알갱이가 굵고 단단하다.' },
   dirt:        { n: '흙', i: '🟤', type: 'block', tile: T.DIRT, stack: 999 },
   sand:        { n: '모래', i: '🟨', type: 'block', tile: T.SAND, stack: 999 },
   ash:         { n: '재', i: '⬛', type: 'block', tile: T.ASH, stack: 999 },
@@ -750,6 +761,32 @@ const ITEMS = {
      메아리 시련. 그래서 이것을 쓰는 두 가지(가라앉히는 물약 · 깨우는 북)가 곧 **맥박을
      손으로 움직이는 수단**이 된다. 인장(seal)은 탐사 기록 S 등급의 보상이고, 수치보다
      "유적에서 노는 법"을 바꾸는 쪽에 무게를 뒀다(효과는 game.js 의 hasSeal 을 읽는 곳). */
+  /* --- 장식 (v1.1) — 숲·동굴·유적의 장식을 **캐면 그 장식이 그대로** 나온다(deco: 1).
+     예전에는 들꽃을 캐면 '들꽃'(재료)만, 덩굴·잎은 '나무'로만 나와서, 마음에 드는 장식을
+     집에 옮겨 놓을 길이 없었다. 재료 드롭은 그대로 두고 **장식 하나를 함께** 준다
+     (재료를 장식으로 바꾸면 제작 재료가 끊긴다). 설치는 블록과 같다(type: 'block').
+     타일 → 장식 아이템 표는 아래 DECO_OF 가 이 표에서 뽑는다. */
+  deco_flower:     { n: '들꽃 포기', i: '🌼', type: 'block', tile: T.FLOWER, stack: 999, deco: 1 },
+  deco_weed:       { n: '풀 포기', i: '🌱', type: 'block', tile: T.WEED, stack: 999, deco: 1 },
+  deco_cactus:     { n: '작은 선인장', i: '🌵', type: 'block', tile: T.CACTUS, stack: 999, deco: 1 },
+  deco_mushroom:   { n: '버섯 무리', i: '🍄', type: 'block', tile: T.MUSHROOM, stack: 999, deco: 1 },
+  deco_fern:       { n: '고사리 포기', i: '🌿', type: 'block', tile: T.FERN, stack: 999, deco: 1 },
+  deco_orchid:     { n: '밀림꽃 포기', i: '🌺', type: 'block', tile: T.ORCHID, stack: 999, deco: 1 },
+  deco_glowcap:    { n: '발광 버섯 무리', i: '🍄', type: 'block', tile: T.GLOWCAP, stack: 999, deco: 1 },
+  deco_vine:       { n: '덩굴 줄기', i: '🌿', type: 'block', tile: T.VINE, stack: 999, deco: 1 },
+  deco_shell:      { n: '조개 껍데기', i: '🐚', type: 'block', tile: T.SEASHELL, stack: 999, deco: 1 },
+  deco_sac:        { n: '알주머니 장식', i: '🫧', type: 'block', tile: T.BLIGHTSAC, stack: 999, deco: 1 },
+  deco_bones:      { n: '뼈 더미', i: '🦴', type: 'block', tile: T.BONEHEAP, stack: 999, deco: 1 },
+  deco_hyphae:     { n: '균사 발 장식', i: '🕸', type: 'block', tile: T.HYPHAE, stack: 999, deco: 1 },
+  deco_canopic:    { n: '장기 단지', i: '🏺', type: 'block', tile: T.CANOPIC, stack: 999, deco: 1 },
+  deco_tools:      { n: '버린 연장 더미', i: '🛠', type: 'block', tile: T.TOOLPILE, stack: 999, deco: 1 },
+  deco_minelamp:   { n: '매단 갱등', i: '🏮', type: 'block', tile: T.MINELAMP, stack: 999, deco: 1 },
+  deco_icebanner:  { n: '언 깃발', i: '🚩', type: 'block', tile: T.ICEBANNER, stack: 999, deco: 1 },
+  deco_hangmoss:   { n: '늘어진 이끼', i: '🌿', type: 'block', tile: T.HANGMOSS, stack: 999, deco: 1 },
+  deco_stalactite: { n: '종유석', i: '🪨', type: 'block', tile: T.STALACTITE, stack: 999, deco: 1 },
+  deco_stalagmite: { n: '석순', i: '🪨', type: 'block', tile: T.STALAGMITE, stack: 999, deco: 1 },
+  deco_geode:      { n: '수정 무리', i: '💎', type: 'block', tile: T.GEODE, stack: 999, deco: 1 },
+  deco_mossstone:  { n: '이끼 낀 바위', i: '🪨', type: 'block', tile: T.MOSSSTONE, stack: 999, deco: 1 },
   /* 동굴 이끼 — 이끼 굴의 늘어진 이끼에서만 난다. 찧어 바르면 상처가 아문다 */
   cave_moss:     { n: '동굴 이끼', i: '🌿', type: 'mat', stack: 999, price: 40,
                    d: '빛이 안 드는 데서 물만 먹고 자랐다. 손에 쥐면 차갑고 축축하다.' },
@@ -2458,7 +2495,7 @@ const TILE_MAT = (() => {
   put('glass', 'CRYSTAL AETHER POWERSTONE SOULSTONE COREGLASS DRAFTGLASS ORBITCORE WINDOW');
   put('ember', 'LAVA HELLSTONE FLAMEVENT');
   put('bone', 'BONEHEAP');
-  put('stone', 'MOSSSTONE STALACTITE STALAGMITE FAULTSTONE');
+  put('stone', 'MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE');
   put('plant', 'HANGMOSS');
   put('glass', 'GEODE');
   put('flesh', 'BLIGHTSAC');
@@ -2466,6 +2503,12 @@ const TILE_MAT = (() => {
   return m;
 })();
 function tileMat(id) { return TILE_MAT[id] || MAT_DEF; }
+/** 장식 타일 → 그 장식 아이템(ITEMS 의 deco: 1). 캐면 재료와 함께 이것이 떨어진다(game.js dropTile) */
+const DECO_OF = (() => {
+  const m = {};
+  for (const k in ITEMS) if (ITEMS[k].deco) m[ITEMS[k].tile] = k;
+  return m;
+})();
 
 /* 몹의 재질. 이름이 아니라 **무엇으로 만들어졌는가**로 갈랐다 —
    '무덤지기'는 뼈고 '언 순례자'는 얼음이다. 적지 않은 것은 살(flesh). */
