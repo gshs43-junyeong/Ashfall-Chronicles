@@ -162,6 +162,7 @@ ART[T.SPRING]    = { k: 'spring', c: '#5a6a70' };
 ART[T.CATTAIL]   = { k: 'cattail', c: '#7a8a4a', a: 1 };
 ART[T.PONDWEED]  = { k: 'pondweed', c: '#4a8a5a', a: 1, fr: 3, fps: 1.5 };
 ART[T.PEBBLES]   = { k: 'pebbles', c: '#9a948a', a: 1 };
+ART[T.PINELEAF]  = { k: 'pine', c: '#2f5a44', a: 1 };
 ART[T.SEASHELL] = { k: 'seashell', c: '#e0cdb8', a: 1 };
 ART[T.SULFUR] = { k: 'ore', c: '#7a7268', o: '#d8c04a', glow: 1 };
 /* 마을 전신주 기둥 — 공장 전주(M_POLE)와 나란히 서도 이질감이 없어야 해서 같은 나뭇결·
@@ -240,7 +241,7 @@ const MOSS_COL = {
 const BODY_ONLY = {};   // 위가 막히면 몸통만 그리는 타일(①)
 const CONN = {};        // 이웃을 보고 통째로 그리는 타일(②)
 for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS, T.SNOW, T.ICE]) BODY_ONLY[id] = 1;
-for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE]) CONN[id] = 1;
+for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.PINELEAF]) CONN[id] = 1;
 
 const TileArt = {
   /* 타일마다 아틀라스에 미리 그려 두는 칸 수. 원래는 "같은 타일이 다 똑같아 보이지
@@ -609,6 +610,23 @@ const TileArt = {
       c.drawImage(this._mossTile(w, tx, ty, mc), sx, sy);
       return true;
     }
+    if (id === T.PINELEAF) {
+      /* 윗칸이 트였으면(공기·비고체이고 같은 솔잎이 아님) 눈을 얹는다 — 톱니 원뿔 층마다 넓은 줄의 윗면이
+         트여 있어 층층이 눈이 쌓인 것처럼 보인다. 칸 가장자리 몇 칸은 눈이 흘러내린 자국(1~3px). */
+      this.draw(c, id, v, sx, sy);
+      const up = w.get(tx, ty - 1);
+      if (up !== T.PINELEAF && up !== T.WOOD && TILE_DEF[up].solid !== 1) {
+        c.fillStyle = '#dfe8f0'; c.fillRect(sx, sy, TS, 3);
+        c.fillStyle = '#f4f8fb'; c.fillRect(sx + 1, sy, TS - 2, 1);
+        c.fillStyle = '#a8b8c8';
+        for (let x = 0; x < TS; x++) {
+          const d = (tileHash(tx * TS + x, ty) * 4) | 0;
+          if (d) { c.fillStyle = '#dfe8f0'; c.fillRect(sx + x, sy + 3, 1, d - 1); }
+          c.fillStyle = '#a8b8c8'; c.fillRect(sx + x, sy + 2 + d, 1, 1);
+        }
+      }
+      return true;
+    }
     if (id === T.HANGMOSS) {
       // 이어진 줄의 맨 위(붙은 칸)와 길이를 잰다 — 가닥이 여러 칸을 건너 한 줄로 이어지게
       let top = ty, bot = ty;
@@ -873,6 +891,30 @@ const TileArt = {
           const kx = x0 + rng.range(3, w - 6), ky = rng.range(3, TS - 7);
           R(kx, ky, 5, 4, dk2); R(kx + 1, ky + 1, 3, 2, dk);
         }
+        break;
+      }
+
+      case 'pine': {
+        /* 소나무 잎 — 둥근 잎덩이(leaf)가 아니라 **아래로 처진 가지 줄** 위에 짧은 바늘잎을 세운다.
+           한 칸에 가지 줄 넷(5칸 간격). 줄마다 가운데가 처지게(포물선) 두어 층층이 늘어진 소나무
+           가지로 읽히게 한다. 줄 사이는 어두운 속잎 · 바늘 끝은 밝게. 빛이 새는 구멍을 조금 둔다. */
+        const c1 = base, c2 = shade(base, 1.3), c3 = shade(base, .72), c4 = shade(base, .52);
+        const lr = new RNG('pine-' + seed);
+        const Rc = (x, y, w, h, col) => { if (y + h > 0 && y < TS) R(x, Math.max(0, y), w, Math.min(h, TS - Math.max(0, y)), col); };
+        for (let y = 0; y < TS; y++)
+          for (let x = 0; x < TS; x++) if (!lr.chance(.06)) R(x, y, 1, 1, (x + y) % 3 ? c3 : c4);
+        const off = lr.int(0, 4);
+        for (let b = -1; b < 5; b++) {
+          const y0 = b * 5 + off, cx = lr.range(4, TS - 4);
+          for (let x = 0; x < TS; x++) {
+            const y = Math.round(y0 + ((x - cx) / TS) ** 2 * 6);
+            Rc(x, y, 1, 2, c1);
+            if ((x + b) % 2 === 0) Rc(x, y - 2, 1, 2, c1);          // 위로 선 바늘
+            if ((x + b) % 3 === 0) Rc(x, y - 3, 1, 1, c2);          // 바늘 끝 빛
+            if ((x + b) % 4 === 1) Rc(x, y + 2, 1, 1, c4);          // 가지 밑 그늘
+          }
+        }
+        for (let i = 0; i < 6; i++) R(lr.range(1, TS - 2), lr.range(1, TS - 2), 1, 1, c2);
         break;
       }
 

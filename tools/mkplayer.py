@@ -22,7 +22,8 @@
   프레임은 32×44(원래 22×41 + 여백) — 보폭이 커도 발끝이 안 잘린다.
 
   원래 시트 여섯은 같은 모양의 색 바꿈이라(알파 차이는 머리 위쪽뿐) 떼어 낼 자리(팔·망토)는
-  player.png 한 장에서 색으로 골라 여섯 장에 같은 자리로 쓴다.
+  player_wanderer.png 한 장에서 색으로 골라 다섯 장에 같은 자리로 쓴다.
+  (옛 공용 시트 char/player.png 는 player_wanderer.png 와 픽셀까지 같아서 지웠다 — 이 도구가 지운다.)
 """
 import json, math, os
 from collections import Counter
@@ -37,7 +38,7 @@ FW, FH = 32, 44                          # 새 프레임
 OX, OY = 5, 3                            # 원래 좌표 → 새 좌표
 SW, SH = 48, 28                          # 헤엄 프레임
 OUT = (12, 12, 17, 255)
-IDS = ['player', 'player_wanderer', 'player_digger', 'player_ranger', 'player_adept', 'player_stray']
+IDS = ['player_wanderer', 'player_digger', 'player_ranger', 'player_adept', 'player_stray']
 
 # player.png 기준 색 — 망토 · 뒷팔(소매 끝·손) · 앞팔(소매·손)
 CAPE = {(0x33, 0x3a, 0x4e), (0x25, 0x2b, 0x3a), (0x4a, 0x50, 0x65), (0x1e, 0x23, 0x30), (0x3f, 0x44, 0x52)}
@@ -269,7 +270,7 @@ def sheet(frames, w, h):
 
 
 def main():
-    base = frame0(os.path.join(CHAR, 'player.png'))
+    base = frame0(os.path.join(CHAR, 'player_wanderer.png'))
     gone, cape, back, front = masks(base)
     man_p = os.path.join(ROOT, 'manifest.json')
     man = json.load(open(man_p, encoding='utf-8'))
@@ -298,6 +299,12 @@ def main():
             if os.path.exists(p):
                 os.remove(p)
         print('wrote', idn, '_rig', '_swim')
+    # 옛 공용 시트와 그 파생물 — 캐릭터마다 제 시트가 있어 아무도 안 쓴다
+    for key in ('player', 'player_rig', 'player_swim'):
+        sheets.pop(key, None)
+        p = os.path.join(CHAR, key + '.png')
+        if os.path.exists(p):
+            os.remove(p)
     json.dump(man, open(man_p, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
     open(man_p, 'a', encoding='utf-8').write('\n')
 

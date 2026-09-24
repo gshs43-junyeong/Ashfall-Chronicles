@@ -3214,17 +3214,18 @@ const G = {
   /* 잿빛에 먹히는 칸과 그 세기.
        shed  잿빛이 깊어질 때 **칸째로 지는** 비율의 상한 (0 이면 색만 빠진다)
        fade  이 칸에 잿빛이 얼마나 세게 드는가. 1 이 잿빛 숲이다.
-     정글은 0.5 — 말짱하면 이야기 밖에 있는 것처럼 보이고, 같은 세기로 죽이면 잿빛 숲과
-     구분이 안 된다. 눈 지대는 따로 두지 않는다(같은 T.LEAF 라 저절로 같이 진다 —
-     세계가 색을 잃는 것이지 숲만 잃는 게 아니다). */
+       thin  칸 **안쪽**이 성글어지는 세기(성근 판으로 넘어가는 속도). 없으면 1.
+     정글은 색(fade 0.62)은 빠지되 잎은 **조금만** 진다(shed 0.22 · thin 0.35) — 예전 값(shed 0.62 ·
+     thin 1)은 8장 정글이 잿빛 숲만큼 앙상해져서 "우거진 밀림"이 안 남았다(사용자 요청으로 줄임).
+     눈 지대는 소나무(PINELEAF)라 여기에 없다 — 늘푸른 잎이라 장이 넘어가도 안 진다. */
   ASH_TILE: {
     [T.LEAF]: { shed: 0.82, fade: 1 },
     [T.FLOWER]: { shed: 0.95, fade: 1 },
     [T.WEED]: { shed: 0.70, fade: 1 },
     [T.GRASS]: { shed: 0, fade: 1 },
-    [T.JUNGLELEAF]: { shed: 0.62, fade: 0.62 },
-    [T.FERN]: { shed: 0.66, fade: 0.62 },
-    [T.ORCHID]: { shed: 0.75, fade: 0.62 },
+    [T.JUNGLELEAF]: { shed: 0.22, fade: 0.62, thin: 0.35 },
+    [T.FERN]: { shed: 0.30, fade: 0.62 },
+    [T.ORCHID]: { shed: 0.35, fade: 0.62 },
     [T.JUNGLEGRASS]: { shed: 0, fade: 0.62 }
   },
   ASH_BURNT: 0.30,          // 진 잎자리 중 타다 만 잎이 남는 비율
@@ -3297,7 +3298,7 @@ const G = {
          세 판이 서로 부분집합이라 겹쳐 놓고 위엣것을 걷으면 남은 잎만 사라진다. */
       const canThin = TileArt.thinAtlas && LEAF_TWIG[id];
       if (canThin) {
-        const d = clamp((ashF - 0.10) / 0.80, 0, 1);
+        const d = clamp((ashF - 0.10) / 0.80, 0, 1) * (spec.thin || 1);
         const t1 = clamp(d * 2, 0, 1), t2 = clamp(d * 2 - 1, 0, 1);
         const plate = (lv, a) => {
           if (a <= 0) return;
@@ -6656,7 +6657,7 @@ const G = {
     if (p.iframe > 0 && Math.floor(this.time * 24) % 2 === 0) c.globalAlpha = 0.45;
     // 손그림 스프라이트가 있으면 그것으로, 없으면 아래 절차 렌더로 폴백
     /* 캐릭터마다 제 시트를 쓴다 (char/player_<id>.png). 프레임 순서는 다섯 장 모두
-       원본 player.png와 같으므로 playerFrame() 은 그대로 쓴다. */
+       같으므로 playerFrame() 은 그대로 쓴다. */
     const ch = CHAR_OF(p.charId);
     const fr = this.playerFrame(p);
     // 리그(몸 시트 + 코드가 그리는 두 팔·망토·무기) — tools/mkplayer.py 의 ★
@@ -6666,21 +6667,8 @@ const G = {
       c.restore();
       return;
     }
-    /* 전용 시트를 못 읽었으면 옛 방식 — 공용 시트 한 장에 색조만 얹는다 */
-    if (this.spritesOn && Sprites.draw(c, 'player', fr, sx, sy, p.facing < 0)) {
-      if (ch.tint) {
-        const m = Sprites.meta && Sprites.meta.characters.sheets.player;
-        c.save();
-        c.globalCompositeOperation = 'source-atop';
-        c.globalAlpha = 0.34;
-        c.fillStyle = ch.tint;
-        c.fillRect(sx - 2, sy - 2, (m ? m.frameW : p.w) + 4, (m ? m.frameH : p.h) + 4);
-        c.restore();
-      }
-      this.drawHeldWeapon(c, p, sx, sy, 0);
-      c.restore();
-      return;
-    }
+    /* 전용 시트도 못 읽었으면 절차 렌더. 옛 공용 시트(char/player.png — 방랑자 시트와 같은 그림)에
+       색조만 얹던 갈래는 그 시트를 지우면서 뺐다. */
     const f = 1;
     const skin = shade('#e8c39a', f), cloth = shade('#4a6fa8', f), pant = shade('#33384a', f), hair = shade('#3a2a1e', f);
     const bob = p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 1.6 : 0;
@@ -6731,7 +6719,7 @@ const G = {
         const x = lx - 24, y = ly - 14, ca = Math.cos(a), sa = Math.sin(a);
         return [cx + dir * (x * ca - y * sa), cy + (x * sa + y * ca)];
       };
-      this.drawCapeSim(c, p, toScr(S.nk[0], S.nk[1]), R.cape, dir, true, ox, oy);
+      this.drawCapeSim(c, p, toScr(S.nk[0], S.nk[1]), R, dir, true, ox, oy);
       const ph = (p.swimPh || 0) * TAU;                     // 크롤 — 앞팔 θ, 뒷팔은 반 바퀴 뒤
       c.save();
       c.translate(cx, cy); c.scale(dir, 1); c.rotate(a);
@@ -6749,7 +6737,7 @@ const G = {
       return true;
     }
     const L = pt => [Math.round(sx) + m.ox + (dir > 0 ? pt[0] + 0.5 : m.frameW - pt[0] - 0.5), Math.round(sy) + m.oy + pt[1] + 0.5];
-    this.drawCapeSim(c, p, L(R.nk[fr]), R.cape, dir, p.swimming, ox, oy);
+    this.drawCapeSim(c, p, L(R.nk[fr]), R, dir, p.swimming, ox, oy);
     // 뒷팔 — 걸음은 다리와 반대로, 점프는 뒤로 젖히고, 떨어질 때는 위로 든다, 대시·공격은 뒤로 뻗는다
     const walkSw = fr >= 2 && fr <= 5 ? [-0.55, 0, 0.5, 0][fr - 2] : 0;
     const backTh = Math.PI / 2 + ({ 6: 0.9, 7: -1.0, 8: 1.2, 9: 0.5, 10: 0.8, 11: 0.6, 12: 0.4 }[fr] || 0.18) + walkSw
@@ -6787,8 +6775,13 @@ const G = {
   /** 망토 — 목 뒤(A, 화면 좌표)에 매단 점 일곱의 줄. 세계 좌표로 흔들어야 카메라가 움직여도 안 떤다.
       매 그리기마다 한 걸음: 관성(검 0.94) + 중력(물속은 약하게) + 가벼운 바람, 그다음 앞 점을 따라가는
       길이 제약. 망토는 **몸 앞으로 못 넘어온다**(목 앞 1칸에서 막는다) — 뒤돌면 반대편으로 넘어간다.
-      그림은 줄에서 떨어진 거리로 칸마다 칠한다(아래로 갈수록 넓어지는 천 · 1칸 윤곽 · 가장자리 어둡게). */
-  drawCapeSim(c, p, A, cols, dir, water, ox, oy) {
+      ★ 그림은 줄을 **가운데 선으로 한 천 띠**다(끝을 둥글게 막은 캡슐이 아니다). 처음엔 줄에서의 거리만 보고
+        칠해서 끝이 둥근 덩어리가 됐고, 시트에서 뽑은 망토 색 셋이 다섯 캐릭터 모두 #282832 한 색이라
+        명암도 없어 "물 채운 자루"처럼 보였다. 지금은
+          · 목에서 모였다가 밑단으로 갈수록 넓어지고(반폭 1.2 → 4.2), 밑단은 **지그재그로 잘린다**.
+          · 가운데 선 양옆으로 주름 두 줄(어두운 골 · 밝은 등)이 목에서 부채꼴로 퍼진다.
+          · 몸에서 먼 쪽 절반은 그늘, 몸 쪽 가장자리 한 줄은 안감(소매 색) — 천의 두 면이 읽힌다. */
+  drawCapeSim(c, p, A, R, dir, water, ox, oy) {
     const N = 7, SEG = 3.1, now = this.time;
     const ax = A[0] + ox, ay = A[1] + oy;
     let st = p._capeSim;
@@ -6817,10 +6810,10 @@ const G = {
         if ((b.x - ax) * dir > 1) b.x = ax + dir;                 // 몸 앞으로 못 넘어온다
       }
     }
-    // 칸마다 칠하기 — 줄에서의 거리 d, 줄을 따라 간 비율 t
+    // 칸마다 칠하기 — 가장 가까운 마디에 투영해 줄을 따라 간 비율 t 와 줄에서 옆으로 벗어난 거리 sd(부호 있음)
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     for (const q of pts) { x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y); x1 = Math.max(x1, q.x); y1 = Math.max(y1, q.y); }
-    x0 = Math.floor(x0 - 6); y0 = Math.floor(y0 - 3); x1 = Math.ceil(x1 + 6); y1 = Math.ceil(y1 + 6);
+    x0 = Math.floor(x0 - 7); y0 = Math.floor(y0 - 3); x1 = Math.ceil(x1 + 7); y1 = Math.ceil(y1 + 7);
     const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
     this._capeCv = this._capeCv || document.createElement('canvas');
     const cv = this._capeCv;
@@ -6828,23 +6821,50 @@ const G = {
     const g2 = cv.getContext('2d');
     const img = g2.createImageData(bw, bh), px = img.data;
     const rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-    const C0 = rgb(cols[0]), C1 = rgb(cols[1]), C2 = rgb(cols[2]), O = [12, 12, 17];
+    const base = R.cape[0];
+    const MID = rgb(shade(base, 1.55)), LT = rgb(shade(base, 2.05)), DK = rgb(shade(base, 1.1)),
+      FOLD = rgb(shade(base, 0.85)), LIN = rgb(shade(R.sleeve, 0.9)), O = [12, 12, 17];
+    const HW = t => 1.2 + 3.0 * t;
+    const inside = new Uint8Array(bw * bh), tv = new Float32Array(bw * bh), sv = new Float32Array(bw * bh);
     for (let y = 0; y < bh; y++)
       for (let x = 0; x < bw; x++) {
         const wx = x0 + x + 0.5, wy = y0 + y + 0.5;
-        let best = 1e9, bt = 0;
+        let best = 1e9, bt = 0, bs = 0, bu = 0, bi = 0;
         for (let i = 0; i < N - 1; i++) {
           const a = pts[i], b = pts[i + 1], vx = b.x - a.x, vy = b.y - a.y;
-          const L2 = vx * vx + vy * vy || 1;
-          const u = clamp(((wx - a.x) * vx + (wy - a.y) * vy) / L2, 0, 1);
-          const d = Math.hypot(wx - (a.x + vx * u), wy - (a.y + vy * u));
-          if (d < best) { best = d; bt = (i + u) / (N - 1); }
+          const L2 = vx * vx + vy * vy || 1, u0 = ((wx - a.x) * vx + (wy - a.y) * vy) / L2, u = clamp(u0, 0, 1);
+          const ddx = wx - (a.x + vx * u), ddy = wy - (a.y + vy * u), d = Math.hypot(ddx, ddy);
+          if (d < best) { best = d; bt = (i + u) / (N - 1); bu = u0; bi = i; bs = (vx * (wy - a.y) - vy * (wx - a.x)) / Math.sqrt(L2); }
         }
-        const hw = 1.4 + 2.6 * bt;
-        if (best > hw + 1) continue;
-        const o = (y * bw + x) * 4;
-        const col = best > hw ? O : best > hw - 1 ? C1 : (bt > 0.8 && best < 0.8 ? C2 : C0);
-        px[o] = col[0]; px[o + 1] = col[1]; px[o + 2] = col[2]; px[o + 3] = 255;
+        const hw = HW(bt);
+        if (Math.abs(bs) > hw + 0.5) continue;
+        if (bi === 0 && bu < 0) continue;                                  // 목 위로는 안 나간다
+        if (bi === N - 2 && bu > 1) {                                     // 밑단 — 지그재그로 자른다
+          const over = (bu - 1) * SEG, zig = ((Math.floor((bs + hw) / 1.5) & 1) ? 0.4 : 1.6);
+          if (over > zig) continue;
+        }
+        const o = y * bw + x;
+        inside[o] = 1; tv[o] = bt; sv[o] = bs / hw * dir;                 // sv > 0 = 몸 쪽(앞)
+      }
+    for (let y = 0; y < bh; y++)
+      for (let x = 0; x < bw; x++) {
+        const o = y * bw + x;
+        let col = null;
+        if (inside[o]) {
+          const edge = !x || !y || x === bw - 1 || y === bh - 1 || !inside[o - 1] || !inside[o + 1] || !inside[o - bw] || !inside[o + bw];
+          const t = tv[o], s2 = sv[o];
+          if (edge) col = (s2 > 0.55 && t > 0.2 && inside[o + bw]) ? LIN : O;   // 몸 쪽 가장자리는 안감이 비친다
+          else if (!inside[o + bw * 2] && t > 0.6) col = DK;                     // 밑단 접힌 그늘
+          else {
+            const f1 = Math.abs(s2 - 0.3), f2 = Math.abs(s2 + 0.4);
+            if (t > 0.22 && (f1 < 0.13 || f2 < 0.13)) col = FOLD;                 // 주름 골
+            else if (t > 0.22 && (Math.abs(s2 - 0.05) < 0.12)) col = LT;          // 주름 등(빛)
+            else col = s2 < -0.1 ? DK : MID;                                      // 몸에서 먼 쪽 절반은 그늘
+          }
+        }
+        if (!col) continue;
+        const k = o * 4;
+        px[k] = col[0]; px[k + 1] = col[1]; px[k + 2] = col[2]; px[k + 3] = 255;
       }
     g2.clearRect(0, 0, cv.width, cv.height);
     g2.putImageData(img, 0, 0);

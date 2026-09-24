@@ -329,6 +329,12 @@ const ISPEC = {
   lily_pad: { k: 'wildflower', c: '#e888c0' },
   glowcap: { k: 'mushroom', c: '#6fe0c0', glow: 1 },
   vine_coil: { k: 'wire', c: '#3f7a34' },
+  leaf_oak: { k: 'leafitem', sh: 'oak', c: '#6f8a3a', st: '#5a3c22' },
+  leaf_pine: { k: 'leafitem', sh: 'needle', c: '#2f6a4a', st: '#5a3c22' },
+  leaf_jungle: { k: 'leafitem', sh: 'broad', c: '#3f8a34', st: '#2a4a1e' },
+  leaf_corrupt: { k: 'leafitem', sh: 'curl', c: '#7a4a9a', st: '#3a2448' },
+  leaf_sky: { k: 'leafitem', sh: 'star', c: '#6ec49a', st: '#3f7a5a' },
+  leaf_palm: { k: 'leafitem', sh: 'palm', c: '#5f9a3a', st: '#6a5030' },
   spore_sac: { k: 'gel', c: '#6fe0c0' },
   food_curry: { k: 'bowl', c: '#8a6a4a', soup: '#c8843a', bits: '#4a8a3a' },
   potion_glow: { k: 'potion', c: '#6fe0c0', glow: 1 },
@@ -1981,6 +1987,59 @@ const Art = {
           const len = Math.sin(t * Math.PI) * 8 + 1.5;
           stroke(i % 2 ? c : lt, 1.6, () => { g.moveTo(x, y); g.lineTo(x - len, y - len * .35); });
           stroke(i % 2 ? dk : c, 1.6, () => { g.moveTo(x, y); g.lineTo(x + len * .8, y + len * .3); });
+        }
+        break;
+      }
+      /* 나뭇잎 — 나무마다 모양이 다르다(sh). 색만 갈아 끼우면 여섯 가지가 가방에서 한 가지로 보여서
+         모양을 갈랐다: oak 둥근 잎 · needle 솔가지 · broad 넓은 정글 잎 · palm 깃꼴 잎 ·
+         curl 말린 부패 잎 · star 별꼴 하늘 잎. 윤곽은 늘 한 톤 어두운 색 — 밝은 칸 위에서도 읽히게. */
+      case 'leafitem': {
+        const c = s.c, dk = sh2(c, .62), lt = sh2(c, 1.22), stem = s.st || sh2(c, .5);
+        const blade = (pts) => { poly(pts, dk); poly(pts.map(([x, y]) => [x + (16 - x) * .12, y + (16 - y) * .12]), c); };
+        if (s.sh === 'needle') {
+          stroke(stem, 2, () => { g.moveTo(8, 28); g.lineTo(22, 4); });
+          for (let i = 0; i < 9; i++) {
+            const t = i / 8, x = 8 + t * 14, y = 28 - t * 24, L = 7 - t * 3;
+            stroke(i % 2 ? c : dk, 1.5, () => { g.moveTo(x, y); g.lineTo(x - L, y - L * .45); });
+            stroke(i % 2 ? dk : lt, 1.5, () => { g.moveTo(x, y); g.lineTo(x + L * .9, y + L * .2); });
+          }
+        } else if (s.sh === 'palm') {
+          stroke(stem, 1.8, () => { g.moveTo(6, 28); g.quadraticCurveTo(14, 12, 27, 5); });
+          for (let i = 1; i < 10; i++) {
+            const t = i / 10, x = 6 + t * 20, y = 28 - t * 22 - Math.sin(t * 3) * 3, L = 9 - t * 5;
+            stroke(i % 2 ? c : lt, 1.7, () => { g.moveTo(x, y); g.lineTo(x - L * .3, y - L); });
+            stroke(i % 2 ? dk : c, 1.7, () => { g.moveTo(x, y); g.lineTo(x + L * .8, y + L * .5); });
+          }
+        } else if (s.sh === 'star') {
+          const pts = [];
+          for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 5.5 : 12; pts.push([16 + Math.cos(a) * r, 15 + Math.sin(a) * r]); }
+          glow(16, 15, 12, c, .2);
+          blade(pts);
+          for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * TAU / 5; stroke(lt, 1, () => { g.moveTo(16, 15); g.lineTo(16 + Math.cos(a) * 9, 15 + Math.sin(a) * 9); }); }
+          stroke(stem, 1.6, () => { g.moveTo(16, 21); g.lineTo(15, 29); });
+        } else {
+          // 잎몸 윤곽 — 잎자루(아래 왼쪽)에서 잎끝(위 오른쪽)까지
+          const W = s.sh === 'broad' ? 9.5 : s.sh === 'curl' ? 6 : 7.5;
+          const pts = [];
+          for (let i = 0; i <= 12; i++) {
+            const t = i / 12, w = Math.sin(t * Math.PI) ** (s.sh === 'broad' ? .7 : .9) * W;
+            const cx = 9 + t * 16, cy = 25 - t * 20 + (s.sh === 'curl' ? Math.sin(t * 5) * 2.5 : 0);
+            pts.push([cx - w * .78, cy - w * .62]);
+          }
+          for (let i = 12; i >= 0; i--) {
+            const t = i / 12, w = Math.sin(t * Math.PI) ** (s.sh === 'broad' ? .7 : .9) * W * (s.sh === 'curl' ? .6 : 1);
+            const cx = 9 + t * 16, cy = 25 - t * 20 + (s.sh === 'curl' ? Math.sin(t * 5) * 2.5 : 0);
+            pts.push([cx + w * .78, cy + w * .62]);
+          }
+          blade(pts);
+          stroke(stem, 1.6, () => { g.moveTo(5, 29); g.lineTo(10, 24); });
+          stroke(sh2(c, .78), 1.1, () => { g.moveTo(10, 24); g.lineTo(24, 6); });           // 잎맥
+          for (let i = 1; i < (s.sh === 'broad' ? 6 : 4); i++) {
+            const t = i / (s.sh === 'broad' ? 6 : 4), x = 10 + t * 14, y = 24 - t * 18;
+            stroke(sh2(c, .8), .9, () => { g.moveTo(x, y); g.lineTo(x - 4, y - 1); });
+            stroke(sh2(c, .8), .9, () => { g.moveTo(x, y); g.lineTo(x + 1, y + 4); });
+          }
+          stroke(lt, 1, () => { g.moveTo(9, 19); g.quadraticCurveTo(13, 11, 21, 7); });   // 윗가 빛
         }
         break;
       }

@@ -48,16 +48,6 @@ window.SPRITE_MANIFEST = {
       "hurt"
     ],
     "sheets": {
-      "player": {
-        "file": "char/player.png",
-        "frameW": 22,
-        "frameH": 41,
-        "ox": -1,
-        "oy": -1,
-        "count": 13,
-        "foot": -0.75,
-        "side": -1
-      },
       "player_wanderer": {
         "file": "char/player_wanderer.png",
         "frameW": 22,
@@ -903,12 +893,6 @@ window.SPRITE_MANIFEST = {
         "frameH": 44,
         "count": 7
       },
-      "player_swim": {
-        "file": "char/player_swim.png",
-        "frameW": 48,
-        "frameH": 28,
-        "count": 4
-      },
       "player_wanderer_swim": {
         "file": "char/player_wanderer_swim.png",
         "frameW": 48,
@@ -939,200 +923,6 @@ window.SPRITE_MANIFEST = {
         "frameH": 28,
         "count": 4
       },
-      "player_rig": {
-        "file": "char/player_rig.png",
-        "frameW": 32,
-        "frameH": 44,
-        "ox": -6,
-        "oy": -4,
-        "count": 13,
-        "rig": {
-          "sleeve": "#4a3626",
-          "hand": "#e6bb8a",
-          "cuff": "#38291d",
-          "cape": [
-            "#333a4e",
-            "#252b3a",
-            "#4a5065"
-          ],
-          "fs": [
-            [
-              20,
-              15
-            ],
-            [
-              20,
-              15
-            ],
-            [
-              20,
-              16
-            ],
-            [
-              20,
-              16
-            ],
-            [
-              20,
-              16
-            ],
-            [
-              20,
-              16
-            ],
-            [
-              20,
-              15
-            ],
-            [
-              20,
-              16
-            ],
-            [
-              22,
-              17
-            ],
-            [
-              21,
-              16
-            ],
-            [
-              22,
-              16
-            ],
-            [
-              21,
-              16
-            ],
-            [
-              19,
-              16
-            ]
-          ],
-          "bs": [
-            [
-              11,
-              15
-            ],
-            [
-              11,
-              15
-            ],
-            [
-              11,
-              16
-            ],
-            [
-              11,
-              16
-            ],
-            [
-              11,
-              16
-            ],
-            [
-              11,
-              16
-            ],
-            [
-              11,
-              15
-            ],
-            [
-              11,
-              16
-            ],
-            [
-              13,
-              17
-            ],
-            [
-              12,
-              16
-            ],
-            [
-              13,
-              16
-            ],
-            [
-              12,
-              16
-            ],
-            [
-              10,
-              16
-            ]
-          ],
-          "nk": [
-            [
-              11,
-              13
-            ],
-            [
-              11,
-              13
-            ],
-            [
-              11,
-              14
-            ],
-            [
-              11,
-              14
-            ],
-            [
-              11,
-              14
-            ],
-            [
-              11,
-              14
-            ],
-            [
-              11,
-              13
-            ],
-            [
-              11,
-              14
-            ],
-            [
-              13,
-              15
-            ],
-            [
-              12,
-              14
-            ],
-            [
-              13,
-              14
-            ],
-            [
-              12,
-              14
-            ],
-            [
-              10,
-              14
-            ]
-          ],
-          "swim": {
-            "fs": [
-              29,
-              18
-            ],
-            "bs": [
-              29,
-              9
-            ],
-            "nk": [
-              31,
-              9
-            ]
-          }
-        }
-      },
       "player_wanderer_rig": {
         "file": "char/player_wanderer_rig.png",
         "frameW": 32,
@@ -1145,9 +935,9 @@ window.SPRITE_MANIFEST = {
           "hand": "#e6bb8a",
           "cuff": "#38291d",
           "cape": [
-            "#35394b",
-            "#272a38",
-            "#494e5e"
+            "#282832",
+            "#282832",
+            "#282832"
           ],
           "fs": [
             [
@@ -1339,9 +1129,9 @@ window.SPRITE_MANIFEST = {
           "hand": "#d9ab7a",
           "cuff": "#493320",
           "cape": [
-            "#3c3c43",
-            "#2e2e33",
-            "#515157"
+            "#282832",
+            "#282832",
+            "#282832"
           ],
           "fs": [
             [
@@ -1533,9 +1323,9 @@ window.SPRITE_MANIFEST = {
           "hand": "#dcb184",
           "cuff": "#38291d",
           "cape": [
-            "#4c4334",
-            "#3c3528",
-            "#60584a"
+            "#282832",
+            "#282832",
+            "#282832"
           ],
           "fs": [
             [
@@ -1727,9 +1517,9 @@ window.SPRITE_MANIFEST = {
           "hand": "#e9cba6",
           "cuff": "#312a4d",
           "cape": [
-            "#362e5b",
-            "#453c73",
-            "#5a5182"
+            "#282832",
+            "#282832",
+            "#282832"
           ],
           "fs": [
             [
@@ -1921,9 +1711,9 @@ window.SPRITE_MANIFEST = {
           "hand": "#e3c9ab",
           "cuff": "#352f28",
           "cape": [
-            "#413d38",
-            "#322e2a",
-            "#55524c"
+            "#282832",
+            "#282832",
+            "#282832"
           ],
           "fs": [
             [
