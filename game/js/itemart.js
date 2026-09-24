@@ -111,6 +111,16 @@ const ISPEC = {
   relic_frostmark:  { k: 'sigil', c: '#bcd8f0' },
   relic_mazeeye:    { k: 'sigil', c: '#c8a04a' },
   relic_hollowseed: { k: 'crystal', c: '#6a4a8a', glow: 1 },
+  /* 유적의 맥박 — 결정·물약·북, 그리고 탐사 기록 S 의 인장 여섯(유물과 같은 색 갈래) */
+  pulse_shard:  { k: 'shard', c: '#e8404c' },
+  tonic_hush:   { k: 'potion', c: '#8fb8d8', sq: 1 },
+  drum_pulse:   { k: 'heart', c: '#c8433c', glow: '#ff7a6a' },
+  seal_mine:    { k: 'amulet', c: '#a0784a', gem: '#ffb84a' },
+  seal_ice:     { k: 'amulet', c: '#9fc8e0', gem: '#e8f6ff' },
+  seal_pyramid: { k: 'amulet', c: '#d8b13d', gem: '#ffe08a', shape: 'wing' },
+  seal_spore:   { k: 'amulet', c: '#5fa88a', gem: '#9fe8c8' },
+  seal_blight:  { k: 'amulet', c: '#6a3a7a', gem: '#e8303c', shape: 'drop' },
+  seal_abyss:   { k: 'amulet', c: '#2f6a8a', gem: '#7fe0ff', shape: 'drop' },
   ruinmap_ice:    { k: 'sigil', c: '#9fe0ff' },
   ruinmap_spore:  { k: 'sigil', c: '#7fd8c0' },
   ruinmap_blight: { k: 'sigil', c: '#9a5fd8' },
@@ -617,6 +627,7 @@ const ACH_ART = {
 
   a_isle: 'g:trophy', a_kill_50: 'i:sword_copper', a_kill_300: 'g:skull', a_bloodmoon: 'g:redmoon',
   a_ruin_bosses: 'g:key', a_secret_bosses: 'g:candle', a_kill_3000: 'g:skull',
+  a_pulse_rage: 'i:pulse_shard', a_survey_s: 'i:seal_pyramid', a_echo5: 'i:drum_pulse',
 
   a_inn: 'g:bed', a_village4: 'g:house', a_side10: 'g:scroll', a_day50: 'g:sun',
   a_gold: 'g:coin', a_pet_max: 'g:paw', a_gold10m: 'g:coins',

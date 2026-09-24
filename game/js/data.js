@@ -733,6 +733,30 @@ const ITEMS = {
   relic_hollowseed: { n: '빈 씨앗', i: '🌑', type: 'acc', b: { int: 6, str: 6, critD: 30 },
                       d: '흔들어도 소리가 없다. 심으면 안 된다고 석판에 적혀 있었다.', lvReq: 22 },
 
+  /* --- 유적의 맥박 (v1.1) ---
+     맥박 결정은 유적이 깨어 있을 때만 나온다 — 격노 단계의 상자, 격노 중에 잡은 보스,
+     메아리 시련. 그래서 이것을 쓰는 두 가지(가라앉히는 물약 · 깨우는 북)가 곧 **맥박을
+     손으로 움직이는 수단**이 된다. 인장(seal)은 탐사 기록 S 등급의 보상이고, 수치보다
+     "유적에서 노는 법"을 바꾸는 쪽에 무게를 뒀다(효과는 game.js 의 hasSeal 을 읽는 곳). */
+  pulse_shard: { n: '맥박 결정', i: '❤', type: 'mat', stack: 999, price: 900,
+                 d: '깨어난 유적의 벽에서 떨어져 나온 것. 손바닥 위에서 아직 뛴다.' },
+  tonic_hush:  { n: '고요의 물약', i: '🧪', type: 'consum', use: { pulse: -40 }, stack: 20,
+                 d: '유적 안에서 마시면 맥박이 40 가라앉는다. 유적 밖에서는 아무 일도 없다.' },
+  drum_pulse:  { n: '맥박 북', i: '🥁', type: 'consum', use: { pulse: 35 }, stack: 20,
+                 d: '유적 안에서 두드리면 맥박이 35 오른다. 메아리를 부르려면 유적이 깨어 있어야 한다.' },
+  seal_mine:    { n: '갱부의 인장', i: '⛏', type: 'acc', b: { hp: 45, def: 8, hpreg: 1 }, seal: 'mine', lvReq: 8,
+                  d: '버려진 광산을 샅샅이 뒤진 표식. 어느 유적에서든 맥박이 4분의 1 느리게 오른다.' },
+  seal_ice:     { n: '서리 인장', i: '❄', type: 'acc', b: { def: 12, vit: 5, frost: 1 }, seal: 'ice', lvReq: 12,
+                  d: '얼음 던전을 샅샅이 뒤진 표식. 유적이 깨어나면(2단계부터) 몸이 얼음처럼 단단해진다.' },
+  seal_pyramid: { n: '태양 인장', i: '☀', type: 'acc', b: { crit: 9, dex: 6, ms: 5 }, seal: 'pyramid', lvReq: 16,
+                  d: '피라미드를 샅샅이 뒤진 표식. 맥박이 뛸 때 연 상자에 덤이 한 단계 더 얹힌다.' },
+  seal_spore:   { n: '포자 인장', i: '🍄', type: 'acc', b: { int: 7, mp: 55, cdr: 6 }, seal: 'spore', lvReq: 24,
+                  d: '포자 굴을 샅샅이 뒤진 표식. 유적 안에서 적을 쓰러뜨리면 맥박이 두 배로 가라앉는다.' },
+  seal_blight:  { n: '부패 인장', i: '🩸', type: 'acc', b: { str: 8, lifesteal: 4, hp: 50 }, seal: 'blight', lvReq: 30,
+                  d: '부패한 둥지를 샅샅이 뒤진 표식. 유적이 격노하면 피해가 20% 오른다.' },
+  seal_abyss:   { n: '심해 인장', i: '🌊', type: 'acc', b: { allStat: 6, hp: 70, oxyMax: 3 }, seal: 'abyss', lvReq: 34,
+                  d: '가라앉은 유적을 샅샅이 뒤진 표식. 메아리 시련의 보상이 절반 더 나온다.' },
+
   /* --- 유적 위치 지도 ---
      입구가 없는 유적은 이것 없이는 못 찾는다. 쓰면 그 유적 자리가 나침반에 잡힌다.
      지도 자체는 다른 유적의 보물방 상자에 들어 있다(RUIN_MAP_IN) — 한 곳을 털면
@@ -1568,6 +1592,10 @@ const RECIPES = [
   { out: 'food_curry', n: 1, need: { fern_frond: 4, raw_meat: 2, flour: 1 }, station: 'work' },
   { out: 'charm_canopy', n: 1, need: { vine_coil: 10, orchid: 6, spider_silk: 12 }, station: 'forge' },
   { out: 'charm_spore', n: 1, need: { spore_sac: 10, glowcap: 12, crystal: 8 }, station: 'forge' },
+  /* 맥박을 손으로 움직이는 두 가지 — 결정은 깨어난 유적에서만 나오므로, 한 번 격노를
+     견뎌 낸 사람만 이것으로 다음 유적의 맥박을 고른다. */
+  { out: 'tonic_hush', n: 2, need: { pulse_shard: 1, mushroom: 3 }, station: 'work' },
+  { out: 'drum_pulse', n: 1, need: { pulse_shard: 1, wood: 6 }, station: 'work' },
 
   /* ========== 7단계: 폭주로 ========== */
   { out: 'sword_arc', n: 1, need: { core_shard: 20, machine_frame: 3, mythril_bar: 10, battery_cell: 5 }, station: 'forge', lv: 3 },
@@ -2772,6 +2800,10 @@ const BUFFS = {
   starlit: { n: '별빛', i: '✨', dur: 480, b: { allStat: 6, crit: 8, ms: 10 } },
   echoed: { n: '메아리', i: '🌀', dur: 480, b: { cdr: 14, mpreg: 24, int: 6 } },
   weighed: { n: '저울에 오름', i: '⚖', dur: 480, b: { dmgP: 0.22, def: 14 } },
+  /* 유적 인장이 맥박 단계에 따라 켜 두는 것. 유적 안에서 조건이 맞는 동안 2초씩 갱신되므로
+     유적을 나서거나 맥박이 가라앉으면 곧 꺼진다(game.js updatePulse). */
+  pulse_ward: { n: '얼음 살갗', i: '❄', dur: 2, b: { def: 18, dr: 6 } },
+  pulse_fury: { n: '격노의 맥', i: '🩸', dur: 2, b: { dmgP: 0.20 } },
   /* 음식 버프 — 앞에 fed_ 가 붙은 것은 한 번에 하나만 유지된다.
      여러 개를 겹쳐 두면 요리를 고를 이유가 없어지기 때문이다. */
   fed_bread: { n: '갓 구운 빵', i: '🍞', dur: 300, b: { hpreg: 1.8, vit: 4 } },
@@ -3007,6 +3039,58 @@ const RUIN_RELIC = {
   blight: 'relic_rotcore', spore: 'relic_sporebell',
   story0: 'relic_frostmark', story1: 'relic_mazeeye', story2: 'relic_hollowseed'
 };
+
+/* ---------------- 유적의 맥박 (v1.1) ----------------
+   유적은 **들어온 사람을 알아챈다.** 안에 머무는 동안 맥박이 오르고, 상자를 열면 크게
+   뛰고, 안에서 피를 보면(적을 쓰러뜨리면) 가라앉는다. 단계가 오를수록 유적의 것들이
+   몰려오지만, 그 사이에 연 상자에는 덤이 얹히고 격노 단계에서만 맥박 결정이 나온다.
+   ★ 상자 **등급**은 올리지 않는다. 유적 상자는 rollChest 가 제작 진행을 건너뛰지 않게
+     4등급으로 묶어 두었다 — 덤은 그 유적의 재료(bonus · bonus2)와 맥박 결정으로만 준다.
+   "더 머물러 더 얻을 것인가, 가라앉히고 나갈 것인가"가 이 유적들만의 고민이다.
+   RUIN_SPEC 의 여섯 유적에만 뛴다(석판 유적 셋은 이야기 길이라 뺐다).
+
+   수치 근거 — 안에 가만히 있으면 0 → 25(뒤척임) 55초, → 75(격노) 약 2분 50초.
+   격노에서는 18초마다 셋이 몰려오고 하나 쓰러뜨릴 때 3씩 가라앉으므로(18초 동안 오르는
+   양 8.1 · 셋을 잡으면 9), **싸우면 제자리를 지키고 피하면 계속 오른다.** 상자 하나는 12,
+   보물방 상자는 22 — 유적 하나를 다 털면 반드시 격노를 한 번은 본다. */
+const PULSE = {
+  stages: [
+    { n: '잠듦',   at: 0,  c: '#7a8a9a' },
+    { n: '뒤척임', at: 25, c: '#d8b13d' },
+    { n: '깨어남', at: 50, c: '#e0782a' },
+    { n: '격노',   at: 75, c: '#e8303c' }
+  ],
+  rise: 0.45, fall: 2.5,          // 초당 — 안에 있을 때 오르고, 밖에 나가면 가라앉는다
+  chest: 12, vault: 22, kill: 3,  // 상자 · 보물방 상자(유물·지도 · 지킴이 붙은 것) · 쓰러뜨릴 때 가라앉는 양
+  wave: [0, 42, 28, 18],          // 단계별로 유적의 것들이 몰려오는 간격(초)
+  waveN: [0, 1, 2, 3],            // 한 번에 몇
+  rageEvery: 24                   // 격노 중 그 유적 고유의 발작 간격(초)
+};
+/* 격노 발작 — 유적마다 하나. 예전 고유 이벤트(한 번뿐)를 격노 동안 되풀이하는 꼴이다.
+   dark 화면이 꺼진다 · spore 홀씨(지속 피해) · heat 화상 · quake 흔들림과 낙석 무리 ·
+   swarm 둥지가 셋을 더 토한다. 타일은 건드리지 않는다(되돌릴 수 없는 일은 안 한다). */
+const PULSE_RAGE = {
+  ice:     { k: 'dark',  t: '얼음 속의 불이 한꺼번에 꺼진다' },
+  mine:    { k: 'quake', t: '갱도가 울린다 — 무언가 내려온다' },
+  pyramid: { k: 'heat',  t: '벽 틈에서 달군 모래가 쏟아진다' },
+  spore:   { k: 'spore', t: '벽의 홀씨가 한꺼번에 터진다' },
+  blight:  { k: 'swarm', t: '둥지 전체가 요동친다' },
+  abyss:   { k: 'dark',  t: '물이 빛을 삼킨다' }
+};
+
+/* ---------------- 탐사 기록 (v1.1) ----------------
+   유적마다 무엇을 얼마나 봤는지를 점수로 매긴다. 방 하나하나 · 상자 · 비문 · 주인 ·
+   암호 골방 · 격노를 견딘 것. 한 번 훑고 지나가면 C, 구석구석 다 보면 S 다.
+   가중치 합이 100 이 아니어도 된다 — 그 유적에 없는 항목(골방·비문)은 빼고 비율로 잰다.
+   A 에 처음 닿으면 금화·맥박 결정, S 에 처음 닿으면 그 유적의 인장. */
+const SURVEY_W = { rooms: 40, chests: 20, lore: 10, boss: 15, code: 5, rage: 10 };
+const SURVEY_RANK = [['S', 95, '#ffd24a'], ['A', 80, '#e8a0ff'], ['B', 60, '#8fd0ff'], ['C', 35, '#9fdc8f'], ['D', 0, '#9a9a9a']];
+
+/* ---------------- 메아리 시련 (v1.1) ----------------
+   주인을 잡은 둥지는 비어 있지만, 유적이 깨어 있을 때(맥박 2단계 이상) 다가가면 주인의
+   **메아리**를 다시 부를 수 있다. 단계마다 세지고(체력·공격 ×1.35, ×1.70 …) 호위가 붙는다.
+   예전에는 유적 주인을 한 번 잡으면 그 유적에 돌아갈 까닭이 없었다. */
+const ECHO = { max: 5, mul: lv => 1 + 0.35 * lv, needStage: 2 };
 
 /* ---------------- 암호문 (잠긴 골방의 자물쇠) ----------------
 
@@ -3402,6 +3486,11 @@ const ACHIEVEMENTS = [
     check: g => !!(g.seenBiomes || {}).glacier },
   { id: 'a_all_zones', cat: 'explore', t: 'hard', i: '🗺', n: '아홉 땅', d: '아홉 땅에 모두 발자국을 남겼다.',
     check: g => BIOMES.every(b => (g.seenBiomes || {})[b.id]) },
+  /* 유적의 맥박 · 탐사 기록 — survey 는 세이브에 담긴다(SAVE_UPGRADES v6). */
+  { id: 'a_pulse_rage', cat: 'explore', t: 'mid', i: '💓', n: '격노를 견딘 자', d: '유적의 맥박이 격노에 닿았다.',
+    check: g => Object.values(g.survey || {}).some(s => (s.peak || 0) >= 3) },
+  { id: 'a_survey_s', cat: 'explore', t: 'hard', i: '🏅', n: '샅샅이', d: '유적 하나를 탐사 기록 S 로 남겼다.',
+    check: g => Object.values(g.survey || {}).some(s => !!s.s) },
   { id: 'a_yunseul', h: 1, cat: 'explore', t: 'hard', i: '🫧', n: '물속의 집', d: '아무도 말해 주지 않은 사람을 만났다.',
     check: g => !!(g.talked || {}).yunseul },
 
@@ -3425,6 +3514,8 @@ const ACHIEVEMENTS = [
     check: g => !!g.player.bossKilled.drowned_keeper },
   { id: 'a_secret_bosses', h: 1, cat: 'hunt', t: 'hard', i: '🕳', n: '아무도 시키지 않은 일', d: '아무도 시키지 않은 둘을 끝냈다.',
     check: g => !!(g.player.bossKilled.restorer && g.player.bossKilled.shaft_maw) },
+  { id: 'a_echo5', cat: 'hunt', t: 'hard', i: '🌀', n: '마지막 메아리', d: '메아리 시련 다섯째 단계를 넘겼다.',
+    check: g => Object.values(g.survey || {}).some(s => (s.echo || 0) >= 5) },
   { id: 'a_kill_3000', cat: 'hunt', t: 'hard', i: '☠', n: '삼천 번', d: '삼천 마리를 넘어뜨렸다.',
     check: g => achSum(g.player.kills) >= 3000 },
 

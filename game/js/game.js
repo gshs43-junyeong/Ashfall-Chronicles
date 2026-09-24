@@ -35,7 +35,13 @@ const SAVE_UPGRADES = [
      모아 둔다 — 나중에 세는 것이 더 생겨도 세이브 모양이 안 바뀐다.
      옛 세이브는 0부터 시작한다. 그건 어쩔 수 없다 — 지난 플레이 시간을 되살릴 방법이
      없기 때문이고, 그래서 **셀 수 있는 것은 최대한 기존 카운터로 물었다.** */
-  (d) => { if (!d.tally) d.tally = {}; }
+  (d) => { if (!d.tally) d.tally = {}; },
+  /* v5 → v6 (v1.1) — 유적 탐사 기록. 유적마다 { rooms: 밟은 방, peak: 가장 높이 오른 맥박
+     단계, echo: 넘긴 메아리 단계, a·s: 등급 보상을 받았는가 }. 옛 세이브는 빈 기록으로
+     시작한다 — 이미 연 상자·잡은 주인·읽은 비문은 기록이 **세이브에서 바로 재므로**
+     그대로 점수에 들어간다(방만 다시 밟으면 된다). 맥박 자체는 저장하지 않는다(나갔다
+     들어오면 가라앉아 있는 것이 맞다). */
+  (d) => { if (!d.survey) d.survey = {}; }
 ];
 const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 
@@ -392,6 +398,7 @@ const G = {
     this.deathMark = null;
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
     this.achievements = {}; this.tally = {};
+    this.survey = {}; this.ruinPulse = {}; this.pendingEcho = null; this.pulseHere = null;
     this.nearStObj = { work: null, forge: null };
     this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
     this.rainT = 0; this.rainDrops = null; this.smokes = []; this.smokeT = 0;
@@ -569,6 +576,32 @@ const G = {
         this.toast('낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭', 'good');
       }
       UI.refreshBag(); UI.refreshEquip();
+    }
+
+    /* ?debug=ruin&id=mine — 유적의 맥박·탐사 기록·메아리 확인 자리.
+       그 유적 입구에서 가장 가까운 방에 서서 시작한다. id 는 RUIN_SPEC 의 여섯
+       (mine · ice · pyramid · spore · blight · abyss). &pulse= 로 맥박을 미리 올리고,
+       &boss=1 이면 주인을 이미 잡은 것으로 쳐서 빈 둥지(메아리)를 바로 볼 수 있다.
+       맥박 물약·북과 결정을 조금 쥐여 준다. &plv= 레벨(기본 30). */
+    if (qs.get('debug') === 'ruin') {
+      const w = this.world, id = qs.get('id') || 'mine';
+      const idx = RUIN_SPEC.findIndex(s => s.id === id);
+      const site = (w.ruinSites || []).find(s => s.id === id);
+      if (idx >= 0 && site && site.rooms.length) {
+        const plv = +qs.get('plv') || 30;
+        while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
+        p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+        const give = (iid, n) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+        give('tonic_hush', 4); give('drum_pulse', 4); give('pulse_shard', 3); give('potion_hp', 20);
+        const r = site.rooms.slice().sort((a, b) => a.y - b.y)[0];
+        p.x = (r.x + (r.w >> 1)) * TS; p.y = (r.y + r.h - 3) * TS - p.h + TS; p.vx = p.vy = 0;
+        this.seenRuins[id] = 1;
+        if (qs.get('boss') === '1') this.lairs[idx] = 1;
+        this.ruinPulse = { [id]: clamp(+qs.get('pulse') || 0, 0, 100) };
+        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
+        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+        UI.refreshBag();
+      }
     }
 
     /* ?debug=bomb — 폭탄만 확인하는 자리.
@@ -852,6 +885,7 @@ const G = {
 
     this.checkRuinEntry();
     this.checkRuinEvent();
+    this.updatePulse(dt);          // 유적의 맥박 · 탐사 기록 (아래 '유적의 맥박' 절)
     /* 유적 고유 이벤트의 여운 — 꺼진 불(화면 어둠)과 홀씨(지속 피해)는 시간이 지나면 걷힌다 */
     if (this.ruinDark > 0) this.ruinDark -= dt;
     if (this.ruinSpore > 0) {
@@ -1827,6 +1861,7 @@ const G = {
         if (o.bonus && ITEMS[o.bonus]) o.items.push(makeItem(o.bonus, this.rng.int(2, 5)));
         // 그 유적에서만 나오는 재료 — 흔한 자원(bonus)과 나란히 넣는다
         if (o.bonus2 && ITEMS[o.bonus2]) o.items.push(makeItem(o.bonus2, this.rng.int(2, 4)));
+        this.pulseChest(o, tx, ty);      // 맥박이 뛰는 유적의 상자 — 덤을 얹고 맥박을 올린다
       }
       UI.openChest(o); this.sfx('open');
       // 지킴이가 붙은 상자 — 열면 그 자리에서 깨어난다. 상자만 훔치고 달아나지 못하게.
@@ -2599,6 +2634,8 @@ const G = {
      한 번 잡으면 다시 깨지 않는다. 처치 여부는 세이브에 남는다. */
   wakeLair(o) {
     this.lairs = this.lairs || {};
+    // 바이옴 유적의 빈 둥지는 메아리 시련 자리다(RUIN_SPEC 의 여섯만 — 나머지 둥지는 그대로 빈다)
+    if (this.lairs[o.ruin] && RUIN_SPEC[o.ruin] && RUIN_SPEC[o.ruin].id) { this.openEcho(o); return; }
     if (this.lairs[o.ruin]) { this.toast('이미 비어 있다'); return; }
     if (this.boss) { this.toast('이미 무언가가 깨어 있다', 'bad'); return; }
     if (this.bossGated(o.boss)) return;
@@ -2674,6 +2711,7 @@ const G = {
   },
   onBossDown(id) {
     this.boss = null;
+    this.pulseBossDown();          // 유적 주인 · 메아리 — 맥박을 가라앉히고 보상을 준다
     // 둥지에서 깨운 것이라면 그 둥지를 비운 것으로 남긴다
     if (this.pendingLair !== undefined && this.pendingLair !== null) {
       this.lairs = this.lairs || {};
@@ -2707,6 +2745,15 @@ const G = {
     }
     // instant(치유·마나 물약)는 공유 재사용 대기시간을 아예 안 걸고 안 본다 —
     // 음식·물고기 등 나머지 회복 소비품끼리는 여전히 potionCd를 공유한다
+    /* 맥박을 움직이는 것(고요의 물약 · 맥박 북) — 유적 밖에서는 쓰지 않고 그대로 둔다 */
+    if (d.use.pulse) {
+      if (!this.pulseHere) { this.toast('유적 안에서만 듣는다', 'bad'); return; }
+      this.addPulse(this.pulseHere, d.use.pulse, true);
+      this.toast(d.use.pulse < 0 ? '유적의 맥박이 가라앉는다' : '유적이 북소리에 뒤척인다', d.use.pulse < 0 ? 'good' : 'bad');
+      it.c--; if (it.c <= 0) p.bag[slot] = null;
+      UI.refreshBag(); this.sfx(d.use.pulse < 0 ? 'drink' : 'chapter');
+      return;
+    }
     if (!d.instant && p.potionCd > 0 && d.use.hp) { this.toast('아직 회복할 수 없다', 'bad'); return; }
     if (d.use.hp) { p.heal(d.use.hp); if (!d.instant) p.potionCd = d.cd || 10; }
     if (d.use.mp) p.mp = Math.min(p.d.maxMp, p.mp + d.use.mp);
@@ -3800,7 +3847,11 @@ const G = {
     this.sfx('chapter');
     if (ch.rw.gold) this.pending.push({ t: 0.45, fn: () => this.sfx('manycoins') });
   },
-  onKill() { this.checkAch(); },
+  onKill() {
+    // 유적 안에서 피를 보면 맥박이 가라앉는다 — 싸우는 사람은 격노를 붙들어 둘 수 있다
+    if (this.pulseHere) this.addPulse(this.pulseHere, -PULSE.kill * (this.hasSeal('spore') ? 2 : 1));
+    this.checkAch();
+  },
   /* 업적 판정. **프레임마다 돌리지 않는다** — 처치·제작·채굴·장 넘김·깊이 갱신처럼
      "무언가 달라진 순간"에만 부른다. 스물다섯 개를 훑는 것 자체는 싸지만, 매 프레임
      스물다섯 번의 객체 순회는 싸지 않다.
@@ -4129,6 +4180,10 @@ const G = {
     p.vx = p.vy = 0;
     p.hp = p.d.maxHp; p.mp = p.d.maxMp; p.iframe = 2; p.buffs = [];
     this.ents = []; this.corpses = []; this.boss = null; this.projs = [];
+    /* ★ 깨워 둔 둥지·메아리 표시도 같이 지운다. 보스는 위에서 사라지는데 이 둘이 남아 있으면,
+       나중에 **다른** 보스(제단·소환석)를 잡았을 때 그 둥지를 비운 것으로 적거나 메아리
+       보상을 줬다. */
+    this.pendingLair = null; this.pendingEcho = null;
     $('#death-screen').classList.remove('open');
     this.paused = false;
   },
@@ -4165,7 +4220,7 @@ const G = {
         lairs: this.lairs, asmRan: this.asmRan, everPlanted: this.everPlanted,
         vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties, bountyNext: this.bountyNext,
         shopStock: this.shopStock, shopStockDay: this.shopStockDay,
-        achievements: this.achievements, tally: this.tally,
+        achievements: this.achievements, tally: this.tally, survey: this.survey,
         p: {
           x: p.x, y: p.y, level: p.level, xp: p.xp, xpNext: p.xpNext, statPts: p.statPts, skillPts: p.skillPts,
           base: p.base, hp: p.hp, mp: p.mp, charge: p.charge, gold: p.gold, bag: p.bag, equip: p.equip, sel: p.sel,
@@ -4301,6 +4356,7 @@ const G = {
       this._bgId = undefined;   // 불러온 자리의 배경을 기준으로 다시 잡는다
       this.ruinMarks = d.ruinMarks || {}; this.ruinEvDone = d.ruinEvDone || {};
       this.cipherSeen = d.cipherSeen || {};
+      this.survey = d.survey || {}; this.ruinPulse = {}; this.pendingEcho = null; this.pulseHere = null;
       this.deathMark = d.deathMark || null;
       this.asmRan = d.asmRan || 0;
       this.everPlanted = d.everPlanted || 0;
@@ -5272,6 +5328,7 @@ const G = {
 
     // ---- 길잡이 (비네트 위에 얹어야 어두운 곳에서도 읽힌다) ----
     if (this.settings === undefined || this.settings.compass !== false) this.drawCompass(c, camX, camY);
+    this.drawPulse(c);
   },
 
   dayFactor() {
@@ -6342,6 +6399,387 @@ const G = {
   },
 
   /** 장착 무기 + 스윙 궤적 + 채널링 링 (두 렌더 경로가 공유) */
+  /* ================= 유적의 맥박 · 탐사 기록 · 메아리 시련 =================
+
+     유적 여섯(RUIN_SPEC)은 예전에 "들어가서 상자 열고 주인 잡고 나온다"가 전부였다.
+     다른 게임의 던전과 다를 것이 없었고, 주인을 잡고 나면 돌아갈 까닭도 없었다.
+     셋을 서로 물리게 짰다 —
+       맥박      머물수록·털수록 유적이 깨어나고, 깨어난 유적은 더 주고 더 친다(data.js PULSE)
+       탐사 기록  무엇을 얼마나 봤는가를 등급으로(S 는 그 유적의 인장 — 맥박을 다루는 법이 바뀐다)
+       메아리    잡은 주인을 **깨어난 유적에서만** 다시 부른다. 단계마다 세지고 더 준다
+     맥박 값은 저장하지 않는다(나갔다 오면 가라앉아 있는 것이 자연스럽다). 기록만 남긴다. */
+
+  /** 그 자리의 바이옴 유적 — { r, spec, idx, id } 또는 null. 석판 유적·봉인실은 뺀다 */
+  pulseRuinAt(tx, ty) {
+    const r = this.world.ruinAt(tx, ty);
+    if (!r || !r.id) return null;
+    const idx = RUIN_SPEC.findIndex(s => s.id === r.id);
+    if (idx < 0) return null;
+    return { r, spec: RUIN_SPEC[idx], idx, id: r.id };
+  },
+  pulseStage(v) {
+    let s = 0;
+    for (let i = 0; i < PULSE.stages.length; i++) if (v >= PULSE.stages[i].at) s = i;
+    return s;
+  },
+  pulseOf(id) { return ((this.ruinPulse || {})[id]) || 0; },
+  hasSeal(k) {
+    const e = this.player && this.player.equip;
+    return !!e && [e.acc1, e.acc2].some(it => it && it.id === 'seal_' + k);
+  },
+  /** 맥박을 움직인다. 오를 때만 갱부의 인장이 깎는다(가라앉는 쪽은 그대로).
+      byHand 는 물약·북처럼 플레이어가 일부러 움직인 것 — 인장 감쇠를 안 건다 */
+  addPulse(id, v, byHand) {
+    this.ruinPulse = this.ruinPulse || {};
+    if (v > 0 && !byHand && this.hasSeal('mine')) v *= 0.75;
+    const before = this.ruinPulse[id] || 0;
+    const now = clamp(before + v, 0, 100);
+    this.ruinPulse[id] = now;
+    const s0 = this.pulseStage(before), s1 = this.pulseStage(now);
+    /* 가장 높이 오른 단계는 **단계가 바뀔 때가 아니라 늘** 본다 — 물약·북이나 디버그처럼
+       값이 곧장 놓이면 경계를 안 넘고도 격노 안에 있을 수 있다 */
+    const sv = this.surveyOf(id);
+    if (s1 > (sv.peak || 0)) sv.peak = s1;
+    if (s1 !== s0) this.onPulseStage(id, s0, s1);
+  },
+  onPulseStage(id, s0, s1) {
+    const S = PULSE.stages[s1];
+    if (s1 > s0) {
+      /* 처음 한 번은 무엇이 일어나는지 말해 준다 — 규칙을 모르면 "갑자기 몹이 쏟아졌다"로만 읽힌다 */
+      this.tally = this.tally || {};
+      if (!this.tally.pulseHint) {
+        this.tally.pulseHint = 1;
+        this.toast('유적이 당신을 알아챘다 — 머물수록 · 상자를 열수록 깨어나고, 쓰러뜨릴수록 가라앉는다', 'bad');
+      }
+      this.toast(`유적의 맥박 — ${S.n}`, 'bad');
+      this.shake = Math.max(this.shake || 0, 4 + s1 * 3);
+      this.sfx('chapter');
+      this._waveT = 4;                       // 단계가 오른 직후 한 번은 곧 몰려온다
+      if (s1 >= 3) { this._rageT = 5; this.checkSurvey(id); this.checkAch(); }
+    } else if (this.pulseHere === id && s1 === 0) {
+      this.toast('유적이 다시 잠든다', 'good');
+    }
+  },
+
+  /** 매 프레임 — 유적 안이면 맥박을 올리고 기록을 적고, 밖에 있는 유적은 가라앉힌다 */
+  updatePulse(dt) {
+    const p = this.player, w = this.world;
+    if (!p || !w || p.dead) return;
+    this.ruinPulse = this.ruinPulse || {};
+    const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
+    const here = this.pulseRuinAt(tx, ty);
+    this.pulseHere = here ? here.id : null;
+    for (const k in this.ruinPulse)
+      if ((!here || k !== here.id) && this.ruinPulse[k] > 0)
+        this.ruinPulse[k] = Math.max(0, this.ruinPulse[k] - PULSE.fall * dt);
+    if (!here) return;
+    const id = here.id;
+    /* 주인과 싸우는 동안은 오르지도 몰려오지도 않는다 — 그건 결판이지 탐험이 아니다.
+       격노 중에 주인을 깨우면 그 격노를 그대로 들고 싸운다(보상은 pulseBossDown). */
+    if (!this.boss) this.addPulse(id, PULSE.rise * dt);
+    this.surveyTick(here, dt);
+    const st = this.pulseStage(this.pulseOf(id));
+
+    // 인장 — 2초짜리 버프를 1초마다 갱신한다(매 프레임 걸면 매 프레임 recalc 가 돈다)
+    this._sealT = (this._sealT || 0) - dt;
+    if (this._sealT <= 0) {
+      this._sealT = 1;
+      if (st >= 2 && this.hasSeal('ice')) p.addBuff('pulse_ward', 2);
+      if (st >= 3 && this.hasSeal('blight')) p.addBuff('pulse_fury', 2);
+    }
+    if (this.boss || st === 0) return;
+    this._waveT = (this._waveT === undefined ? PULSE.wave[st] : this._waveT) - dt;
+    if (this._waveT <= 0) {
+      this._waveT = PULSE.wave[st];
+      /* 이미 둘레에 많으면 더 부르지 않는다 — 몰려오는 것이 쌓이기만 하면 "피하면 계속
+         오른다"가 아니라 "그냥 못 버틴다"가 된다. 상한은 단계를 따라 6 · 8 · 10 */
+      const near = this.ents.filter(e => e instanceof Enemy && !e.boss &&
+        Math.abs(e.cx - p.cx) < 900 && Math.abs(e.cy - p.cy) < 600).length;
+      if (near < 4 + st * 2) this.spawnRuinMobs(here, PULSE.waveN[st]);
+    }
+    if (st >= 3) {
+      this._rageT = (this._rageT === undefined ? 5 : this._rageT) - dt;
+      if (this._rageT <= 0) { this._rageT = PULSE.rageEvery; this.pulseRage(here); }
+    }
+  },
+
+  /** 유적의 것들을 **그 유적 안, 설 수 있는 자리에** 부른다.
+      ★ 고유 이벤트가 쓰는 _ruinSpawn 은 플레이어 둘레 원 위에 곧장 놓아서 벽 속에 박히는
+        일이 있었다. 몇 번이고 불리는 맥박에서는 그러면 안 된다 — 발밑이 단단하고 몸 두 칸이
+        비어 있고, 같은 유적 안이고, 플레이어에게서 여섯 칸 이상 떨어진 자리만 쓴다. */
+  spawnRuinMobs(here, n) {
+    const w = this.world, p = this.player, pool = here.spec.mobs || ['skeleton'];
+    const ptx = Math.floor(p.cx / TS), pty = Math.floor((p.y + p.h - 1) / TS);
+    const mul = this.scale() * w.ruinMobMul(ptx, pty);
+    let made = 0;
+    for (let att = 0; att < 80 && made < n; att++) {
+      const tx = ptx + (Math.random() < 0.5 ? -1 : 1) * (6 + Math.floor(Math.random() * 14));
+      const ty = pty + Math.floor(Math.random() * 11) - 6;
+      if (w.solid(tx, ty) || w.solid(tx, ty - 1) || w.solid(tx + 1, ty) || w.solid(tx + 1, ty - 1)) continue;
+      if (!w.solid(tx, ty + 1) || TILE_DEF[w.get(tx, ty)].liquid) continue;
+      if (w.ruinAt(tx, ty) !== here.r) continue;
+      const e = new Enemy(pool[(made + att) % pool.length], tx * TS, ty * TS, mul);
+      e.x = tx * TS + TS / 2 - e.w / 2; e.y = (ty + 1) * TS - e.h;
+      this.ents.push(e); made++;
+      for (let k = 0; k < 10; k++) this.parts.push(new Part(e.cx, e.cy, '#e8303c', -40, .7));
+    }
+    return made;
+  },
+
+  /** 격노 발작 — 그 유적 고유의 한 가지(data.js PULSE_RAGE). 타일은 건드리지 않는다 */
+  pulseRage(here) {
+    const R = PULSE_RAGE[here.id]; if (!R) return;
+    const p = this.player;
+    this.toast(R.t, 'bad');
+    this.sfx('chapter');
+    if (R.k === 'dark') { this.ruinDark = Math.max(this.ruinDark || 0, 6); this.spawnRuinMobs(here, 1); }
+    else if (R.k === 'spore') this.ruinSpore = Math.max(this.ruinSpore || 0, 5);
+    else if (R.k === 'heat') {
+      p.hurt(8 + p.level * 0.6);
+      for (let i = 0; i < 36; i++)
+        this.parts.push(new Part(p.cx + (Math.random() - .5) * 320, p.cy - 120, '#ffb45a', 60, 1.0));
+    } else if (R.k === 'quake') {
+      this.shake = 18;
+      for (let i = 0; i < 40; i++)
+        this.parts.push(new Part(p.cx + (Math.random() - .5) * 300, p.cy - 110, '#6a5a48', 40, 1.1));
+      this.spawnRuinMobs(here, 2);
+    } else if (R.k === 'swarm') { this.shake = 12; this.spawnRuinMobs(here, 3); }
+  },
+
+  /** 유적 상자를 처음 열 때 — 맥박 단계만큼 덤을 얹고 맥박을 올린다.
+      ★ 상자 **등급**은 안 올린다(rollChest 가 유적 상자를 4등급으로 묶는 이유를 따른다) */
+  pulseChest(o, tx, ty) {
+    const here = this.pulseRuinAt(tx, ty);
+    if (!here) return;
+    const st = this.pulseStage(this.pulseOf(here.id));
+    const up = st > 0 ? st + (this.hasSeal('pyramid') ? 1 : 0) : 0;
+    const big = !!(o.relic || o.guard || o.ruinmap);        // 보물방 상자
+    if (up >= 1 && here.spec.bonus && ITEMS[here.spec.bonus]) o.items.push(makeItem(here.spec.bonus, 1 + up));
+    if (up >= 2 && here.spec.bonus2 && ITEMS[here.spec.bonus2]) o.items.push(makeItem(here.spec.bonus2, up));
+    if (up >= 3) o.items.push(makeItem('pulse_shard', (big ? 2 : 1) + (up >= 4 ? 1 : 0)));
+    if (up > 0) this.toast(`맥박이 뛰는 상자 — ${PULSE.stages[st].n}의 덤`, 'good');
+    this.addPulse(here.id, big ? PULSE.vault : PULSE.chest);
+  },
+
+  /** 보스가 쓰러졌을 때(onBossDown 맨 앞) — 유적 주인이나 메아리였다면 맥박을 가라앉히고 보상 */
+  pulseBossDown() {
+    const echo = this.pendingEcho;
+    this.pendingEcho = null;
+    const idx = echo ? echo.idx : this.pendingLair;
+    const spec = (idx !== undefined && idx !== null) ? RUIN_SPEC[idx] : null;
+    if (!spec || !spec.id) return;
+    const p = this.player, st = this.pulseStage(this.pulseOf(spec.id));
+    const give = it => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+    if (echo) this.echoReward(spec, echo.lv);
+    else if (st >= 3) {
+      // 격노를 들고 주인을 쓰러뜨렸다 — 그 값을 따로 친다
+      give(makeItem('pulse_shard', 3));
+      this.toast('격노 속에서 주인을 쓰러뜨렸다 — 맥박 결정 셋', 'good');
+    }
+    /* 주인이 쓰러지면 유적이 잠잠해진다. 메아리는 절반만 — 메아리를 거듭 부르려면
+       다시 깨워야 하지만, 처음부터 다시 쌓게 하면 되풀이가 지루하다. */
+    this.ruinPulse = this.ruinPulse || {};
+    this.ruinPulse[spec.id] = echo ? Math.min(this.pulseOf(spec.id), PULSE.stages[2].at) : 0;
+    this.checkSurvey(spec.id);
+    UI.refreshBag();
+  },
+
+  /* ---- 탐사 기록 ---- */
+  surveyOf(id) {
+    this.survey = this.survey || {};
+    return this.survey[id] || (this.survey[id] = { rooms: {}, peak: 0, echo: 0 });
+  },
+  /** 유적 안에 있는 동안 — 밟은 방을 적고, 2초마다 등급을 다시 잰다 */
+  surveyTick(here, dt) {
+    this._svT = (this._svT || 0) - dt;
+    if (this._svT > 0) return;
+    this._svT = 0.5;
+    const p = this.player, sv = this.surveyOf(here.id);
+    const site = (this.world.ruinSites || []).find(s => s.id === here.id);
+    if (!site) return;
+    const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
+    let fresh = false;
+    site.rooms.forEach((r, i) => {
+      if (sv.rooms[i]) return;
+      if (tx > r.x && tx < r.x + r.w - 1 && ty > r.y && ty < r.y + r.h - 1) { sv.rooms[i] = 1; fresh = true; }
+    });
+    this._svFull = (this._svFull || 0) + 1;
+    if (fresh || this._svFull >= 4) { this._svFull = 0; this.checkSurvey(here.id); }
+  },
+  /** 그 유적의 점수와 등급. 상자·비문·주인·골방은 **세이브에 이미 있는 것**에서 곧장 잰다 —
+      따로 세면 옛 세이브에서 이미 한 일이 빠진다. */
+  surveyScore(id) {
+    const w = this.world, sv = (this.survey || {})[id] || { rooms: {} };
+    const site = (w.ruinSites || []).find(s => s.id === id);
+    const r = (w.ruins || []).find(q => q.id === id);
+    const idx = RUIN_SPEC.findIndex(s => s.id === id);
+    const part = {};
+    const nRooms = site ? site.rooms.length : 0;
+    part.rooms = nRooms ? [Object.keys(sv.rooms || {}).length, nRooms] : null;
+    let chests = 0, opened = 0, code = null;
+    if (r) {
+      const x0 = r.x - r.w / 2, x1 = r.x + r.w / 2, y0 = r.y - r.h / 2, y1 = r.y + r.h / 2;
+      for (const o of w.objects) {
+        if (o.type === 'codedoor' && o.ruin === id) code = [o.opened ? 1 : 0, 1];
+        if (o.type !== 'chest') continue;
+        const ox = o.x / TS, oy = o.y / TS;
+        if (ox > x0 && ox < x1 && oy > y0 && oy < y1) { chests++; if (o.items) opened++; }
+      }
+    }
+    part.chests = chests ? [opened, chests] : null;
+    part.lore = RUIN_LORE[id] ? [(this.loreRead || {})[id] ? 1 : 0, 1] : null;
+    part.boss = [idx >= 0 && (this.lairs || {})[idx] ? 1 : 0, 1];
+    part.code = code;
+    part.rage = [(sv.peak || 0) >= 3 ? 1 : 0, 1];
+    let got = 0, max = 0;
+    for (const k in SURVEY_W) {
+      if (!part[k]) continue;
+      got += SURVEY_W[k] * Math.min(1, part[k][0] / part[k][1]); max += SURVEY_W[k];
+    }
+    const score = max ? Math.floor(got / max * 100) : 0;
+    const rk = SURVEY_RANK.find(q => score >= q[1]);
+    return { score, rank: rk[0], col: rk[2], part, sv, seen: !!(this.seenRuins || {})[id] };
+  },
+  /** 등급이 오르면 알리고, A · S 에 처음 닿으면 보상을 준다 */
+  checkSurvey(id) {
+    const spec = RUIN_SPEC.find(s => s.id === id); if (!spec) return;
+    const sc = this.surveyScore(id), sv = sc.sv, p = this.player;
+    const order = SURVEY_RANK.map(q => q[0]);
+    const give = it => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+    if (sv.best && order.indexOf(sc.rank) >= order.indexOf(sv.best)) return;   // 오르지 않았다
+    const firstTime = !sv.best;
+    sv.best = sc.rank;
+    if (firstTime && sc.rank === 'D') return;      // 막 들어온 것 — 알릴 만한 일이 아니다
+    this.toast(`탐사 기록 ${sc.rank} — ${spec.n} (${sc.score}점)`, 'good');
+    if ((sc.rank === 'A' || sc.rank === 'S') && !sv.a) {
+      sv.a = 1;
+      const gold = 1200 * (spec.rank || 3);
+      p.gold += gold;
+      give(makeItem('pulse_shard', 3));
+      this.toast(`${spec.n}을(를) 거의 다 봤다 — 금화 ${fmt(gold)} · 맥박 결정 셋`, 'good');
+      this.sfx('manycoins');
+    }
+    if (sc.rank === 'S' && !sv.s) {
+      sv.s = 1;
+      const sid = 'seal_' + id;
+      if (ITEMS[sid]) { give(makeItem(sid, 1)); this.toast(`샅샅이 뒤졌다 — ${ITEMS[sid].n}`, 'good'); }
+      this.shake = 8; this.sfx('chapter');
+    }
+    this.checkAch();
+    UI.refreshBag();
+    if (UI.questTab === 'ruins') UI.refreshQuest();
+  },
+
+  /* ---- 메아리 시련 ---- */
+  openEcho(o) {
+    const spec = RUIN_SPEC[o.ruin];
+    if (this.boss) { this.toast('이미 무언가가 깨어 있다', 'bad'); return; }
+    const sv = this.surveyOf(spec.id);
+    const best = sv.echo || 0, next = Math.min(ECHO.max, best + 1);
+    const st = this.pulseStage(this.pulseOf(spec.id));
+    const bn = ENEMIES[spec.boss] ? ENEMIES[spec.boss].n : '주인';
+    const lines = ['주인은 쓰러졌지만, 둥지는 아직 그 모양을 기억한다.',
+                   '유적이 깨어 있으면 그 기억이 다시 일어선다.', '',
+                   `넘긴 메아리 ${best} / ${ECHO.max}` +
+                   (best < ECHO.max ? ` · 다음 ${next}단계 — ${bn} 체력·공격 ×${ECHO.mul(next).toFixed(2)}` +
+                     (next > 1 ? ` · 호위 ${next - 1}` : '') : ' · 끝까지 넘겼다')];
+    if (st < ECHO.needStage) {
+      lines.push('', `유적이 잠들어 있다 — 맥박이 「${PULSE.stages[ECHO.needStage].n}」에 닿아야 메아리가 대답한다.`);
+      UI.openLore(`${spec.n} — 빈 둥지`, lines, [{ t: '(물러난다)', fn: () => UI.closeDialogue() }]);
+      this.sfx('open');
+      return;
+    }
+    const choices = [];
+    const lvs = best < ECHO.max ? [next] : [];
+    if (best >= 1) lvs.push(best);
+    for (const lv of lvs) choices.push({
+      t: `(메아리를 부른다 — ${lv}단계${lv > best ? ' · 처음' : ' · 다시'})`, quest: 1,
+      fn: () => { UI.closeDialogue(); this.summonEcho(o, spec, lv); }
+    });
+    choices.push({ t: '(그냥 둔다)', fn: () => UI.closeDialogue() });
+    UI.openLore(`${spec.n} — 메아리`, lines, choices);
+    this.sfx('open');
+  },
+  summonEcho(o, spec, lv) {
+    if (this.boss) return;
+    this.pendingLair = null;
+    this.pendingEcho = { idx: o.ruin, id: spec.id, lv };
+    this.spawnBoss(spec.boss, o.x + o.w / 2, o.y - 70);
+    const e = this.boss;
+    if (e) {
+      // 보스는 장 배수를 안 탄다(Enemy 생성자의 ★) — 메아리 배수는 여기서 직접 곱한다
+      const m = ECHO.mul(lv);
+      e.maxHp = Math.round(e.maxHp * m); e.hp = e.maxHp; e.dmg *= m; e.armor *= m;
+      e.echo = lv;
+    }
+    const here = this.pulseRuinAt(Math.floor((o.x + o.w / 2) / TS), Math.floor(o.y / TS));
+    if (here && lv > 1) this.spawnRuinMobs(here, lv - 1);
+    this.toast(`메아리 ${lv}단계`, 'bad');
+  },
+  echoReward(spec, lv) {
+    const p = this.player, sv = this.surveyOf(spec.id);
+    const give = it => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+    const first = lv > (sv.echo || 0);
+    sv.echo = Math.max(sv.echo || 0, lv);
+    const k = this.hasSeal('abyss') ? 1.5 : 1;
+    const gold = Math.round(350 * lv * (spec.rank || 3) * k * (first ? 1.5 : 1));
+    p.gold += gold;
+    p.addXp(Math.round(1200 * lv * this.scale() * k));
+    give(makeItem('pulse_shard', Math.round((lv + 1) * k)));
+    if (spec.bonus2 && ITEMS[spec.bonus2]) give(makeItem(spec.bonus2, Math.round(2 * lv * k)));
+    // 마지막 단계를 처음 넘기면 그 유적의 유물을 한 번 더 — 이번엔 잘 벼린 것으로
+    const relic = RUIN_RELIC[spec.id];
+    if (first && lv === ECHO.max && relic && ITEMS[relic]) {
+      give(rollGear(relic, this.rng, 3));
+      this.toast(`마지막 메아리가 흩어졌다 — ${ITEMS[relic].n}`, 'good');
+    }
+    this.toast(`메아리 ${lv}단계를 넘겼다 — 금화 ${fmt(gold)}`, 'good');
+    this.sfx('manycoins');
+    this.checkAch();
+  },
+
+  /** 맥박 막대 — 바이옴 유적 안에 있을 때만. 보스 막대가 떠 있으면 그 아래로 내린다 */
+  drawPulse(c) {
+    const id = this.pulseHere; if (!id) return;
+    const v = this.pulseOf(id), st = this.pulseStage(v), S = PULSE.stages[st];
+    const Wd = 230, x = Math.round((this.W - Wd) / 2), y = this.boss ? 84 : 20;
+    const t = this.time || 0;
+    c.save();
+    c.fillStyle = 'rgba(12,9,16,0.72)';
+    c.fillRect(x, y, Wd, 30);
+    c.strokeStyle = S.c; c.globalAlpha = 0.55; c.strokeRect(x + .5, y + .5, Wd - 1, 29); c.globalAlpha = 1;
+    // 뛰는 심장 — 단계가 오를수록 빨리 뛴다
+    const beat = Math.pow(Math.max(0, Math.sin(t * (2.2 + st * 1.6))), 6);
+    const hr = 6 + beat * 2.2;
+    c.fillStyle = S.c;
+    c.beginPath();
+    const hx = x + 16, hy = y + 15;
+    c.moveTo(hx, hy + hr * 0.9);
+    c.bezierCurveTo(hx - hr * 1.6, hy - hr * 0.2, hx - hr * 0.7, hy - hr * 1.3, hx, hy - hr * 0.35);
+    c.bezierCurveTo(hx + hr * 0.7, hy - hr * 1.3, hx + hr * 1.6, hy - hr * 0.2, hx, hy + hr * 0.9);
+    c.fill();
+    // 막대 — 단계 경계에 눈금
+    const bx = x + 32, bw = Wd - 44, by = y + 19;
+    c.fillStyle = 'rgba(255,255,255,0.10)'; c.fillRect(bx, by, bw, 5);
+    c.fillStyle = S.c; c.fillRect(bx, by, Math.round(bw * v / 100), 5);
+    c.fillStyle = 'rgba(0,0,0,0.6)';
+    for (const s of PULSE.stages) if (s.at > 0) c.fillRect(bx + Math.round(bw * s.at / 100), by, 1, 5);
+    c.font = '600 11px "Pretendard",sans-serif'; c.textBaseline = 'middle'; c.textAlign = 'left';
+    c.fillStyle = '#e8e0d0'; c.fillText('유적의 맥박', bx, y + 10);
+    c.textAlign = 'right'; c.fillStyle = S.c; c.fillText(S.n, bx + bw, y + 10);
+    c.restore();
+    // 격노 — 화면 테두리가 맥박에 맞춰 붉게 물든다('화면 효과' 설정을 따른다)
+    if (st >= 3) {
+      const a = 0.16 * beat * (this.fxScale ? this.fxScale() : 1);
+      if (a > 0.004) {
+        const eg = c.createRadialGradient(this.W / 2, this.H / 2, Math.min(this.W, this.H) * .34,
+          this.W / 2, this.H / 2, Math.max(this.W, this.H) * .64);
+        eg.addColorStop(0, 'rgba(232,48,60,0)'); eg.addColorStop(1, 'rgba(232,48,60,1)');
+        c.globalAlpha = a; c.fillStyle = eg; c.fillRect(0, 0, this.W, this.H); c.globalAlpha = 1;
+      }
+    }
+  },
+
   /* ================= 유적 — 지도 · 고유 이벤트 · 암호문 ================= */
 
   /** 위치 지도를 편다. 그 유적 자리가 나침반에 잡히고, 지도는 사라진다.

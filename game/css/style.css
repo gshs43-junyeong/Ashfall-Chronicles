@@ -1107,6 +1107,21 @@ body.booting #title-screen{visibility:hidden}
 .ach-txt i{font-style:normal;font-size:11px;color:#8a8271;line-height:1.4}
 .ach-when{font-size:10.5px;color:#6a6250;flex:0 0 72px;text-align:right}
 
+/* 유적 탐사 기록 — 유적 하나가 카드 하나. 왼쪽 큰 글자가 등급이다 */
+.rv-note{font-size:11.5px;color:#8a8271;line-height:1.55;padding:0 0 10px}
+.rv-note b{color:#c8bda4;font-weight:600}
+.rv{display:flex;gap:12px;align-items:flex-start;margin:0 0 6px;padding:9px 11px;
+  background:#1a1712;border:1px solid var(--frame);border-radius:4px}
+.rv.off{opacity:.5}
+.rv-rank{flex:0 0 38px;text-align:center;font:700 26px/1 "Hahmlet","Pretendard",serif}
+.rv-rank small{display:block;font:500 10px/1.6 "Pretendard",sans-serif;color:#7a7263}
+.rv-body{flex:1;min-width:0}
+.rv-body h4{margin:0 0 5px;font-size:13px;color:#e8dcc0;font-weight:600}
+.rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:3px 10px;font-size:11px;color:#8a8271}
+.rv-grid span.ok{color:#c8e0a0}
+.rv-grid b{color:#c8bda4;font-weight:600}
+.rv-seal{margin-top:5px;font-size:11px;color:#c8a058}
+
 /* 업적 — 난이도 표시 */
 .ach-sum{display:flex;gap:14px;padding:0 0 10px;font-size:11.5px;color:#8a8271}
 .ach-sum b{font-weight:600}
