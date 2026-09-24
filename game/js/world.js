@@ -1852,6 +1852,31 @@ class World {
     // 5) 맞닿은 방끼리 잇는다
     for (let i = 0; i < leaves.length; i++)
       for (let j = i + 1; j < leaves.length; j++) this._linkRooms(leaves[i], leaves[j], floor);
+    /* 5.5) 피라미드 — 방마다 **아래층과 한 군데는 반드시** 잇는다.
+       층마다 방을 나누는 자리가 달라서, 위아래 방이 겹치는 폭이 _linkRooms 의 문턱(일곱 칸)에
+       못 미치는 일이 잦다. 특히 좁은 위층이 그래서 d3 에서는 꼭대기 두 층이 통째로 끊겼고,
+       통행 보수가 피라미드를 가로지르는 세 줄짜리 굴을 파서 이었다. 가장 많이 겹치는
+       아랫방으로 발판 사다리를 하나 내린다 — 옆문 턱 자리(방 오른쪽 벽 안쪽 칸)는 피한다. */
+    if (tri) {
+      for (const r of leaves) {
+        let best = null, bo = 0;
+        for (const q of leaves) {
+          if (q.y !== r.y + r.h) continue;
+          const o = Math.min(r.x + r.w, q.x + q.w) - Math.max(r.x, q.x);
+          if (o > bo) { bo = o; best = q; }
+        }
+        if (!best || bo < 4) continue;
+        const lo = Math.max(r.x, best.x) + 1, hi = Math.min(r.x + r.w, best.x + best.w) - 2;
+        const bad = new Set([r.x, r.x + r.w - 2, r.x + r.w - 1, best.x, best.x + best.w - 2, best.x + best.w - 1]);
+        const mid0 = (lo + hi) >> 1;
+        let dx = -1;
+        for (let d = 0; d <= hi - lo && dx < 0; d++)
+          for (const c of [mid0 - d, mid0 + d]) if (c >= lo && c <= hi && !bad.has(c)) { dx = c; break; }
+        if (dx < 0) continue;
+        const walk = best.y + best.h - 3;                    // 아랫방 걷는 줄
+        for (let y = r.y + r.h - 2; y <= walk - 2; y++) this.set(dx, y, T.PLATFORM);
+      }
+    }
     // 6) 그래도 못 들어가는 방이 남으면 직접 굴을 뚫는다.
     //    공유 벽이 너무 짧으면 5)가 실패할 수 있어서, 여기서 반드시 메꿔야
     //    "문이 없는 방"이 생기지 않는다
@@ -1921,7 +1946,12 @@ class World {
   _standSet(box, sx, sy) {
     const JUMP = 3, RUN = 4;                                  // 오를 수 있는 높이 · 한 번에 나는 폭
     const sup = (x, y) => { const s = TILE_DEF[this.get(x, y)].solid; return s === 1 || s === 2; };
-    const free = (x, y) => TILE_DEF[this.get(x, y)].solid !== 1;
+    /* ★ 잠긴 돌(암호석·봉인석)은 **지나갈 수 있는 것으로** 본다 — 풀면 열리는 문이다
+       (tools/ruindiag.py 도 그렇게 잰다). 막힌 벽으로 보면 보수가 골방 너머의 방을 "못 닿음"
+       으로 잡고, _digStair 는 잠긴 돌을 건드리지 않으니 같은 굴을 한도까지 되판다. 실측 d7
+       부패한 둥지: 보스방 옆벽에 암호 골방이 앉자 보수 428번이 거의 다 그 한 자리에 쓰여,
+       다른 쪽 방 아홉이 이어지지 못한 채 남았다. */
+    const free = (x, y) => TILE_DEF[this.get(x, y)].solid !== 1 || this.locked(x, y);
     const liq = (x, y) => !!TILE_DEF[this.get(x, y)].liquid;  // 물속에서는 뜬다 (Ent.move)
     const body = (x, y) => free(x, y) && free(x, y - 1);      // 키 두 칸이 들어가는가
     const stand = (x, y) => body(x, y) && (sup(x, y + 1) || liq(x, y));
@@ -2660,7 +2690,7 @@ class World {
       ★ 무작위로 오르내리는 좁은 굴(한 칸마다 -3~+3)로 바꿨더니 발판은 줄었지만 **유적이
         아니라 동굴**로 읽혔다(폭 세 칸, 벽돌 없음, 기울기가 칸마다 달라 "지었다"는 느낌이
         없다). 그래서 길을 **규칙 있는 부품**으로만 짓는다 —
-          계단(flight)  한 칸에 한 칸(45°) 또는 두 칸에 한 칸씩 곧게 내려간다
+          계단(flight)  한 칸에 한 칸, **45° 하나로만** 곧게 내려간다
           복도(hall)    평평하게 간다. 발판 함정·가스·불기둥을 놓기 좋은 자리다
           오르막(rise)  두세 칸 도로 올라간다 — 길이 무조건 내리막이 아니게
           층계참(landing) 네모난 방. 함정 두셋 · 횃불 · 가끔 상자
@@ -2803,11 +2833,17 @@ class World {
         let seg = rng.weighted([['flight', 5], ['hall', kind === 'maze' ? 3 : 2],
                                 ['rise', kind === 'maze' ? 1.6 : 1]]);
         if (seg === 'rise' && (lastSeg === 'well' || lastSeg === 'rise' || rem < 12 || ahead() < 30)) seg = 'flight';
-        if (seg === 'hall' && (ahead() < 18 || lastSeg === 'hall')) seg = 'flight';
+        /* ★ 평평한 복도는 **방(층계참·계단실) 바로 뒤에만** 둔다. 계단 사이에 끼우면
+           45° → 평지 → 45° 가 한 방향으로 이어져 평균 기울기가 들쭉날쭉해지고, 멀리서 보면
+           비탈이 휘어진 곡선으로 읽힌다. 방과 방 사이의 한 다리는 한 줄로 곧게 뻗는다. */
+        if (seg === 'hall' && (ahead() < 18 || !(lastSeg === 'landing' || lastSeg === 'well' || lastSeg === 'start')))
+          seg = 'flight';
         if (seg === 'flight') {
-          const every = kind === 'nofoothold' ? 1 : rng.pick([1, 1, 2]);
+          /* ★ 기울기는 **45° 하나**다. 계단마다 45° 와 반 기울기(두 칸에 한 칸)를 섞어 굴렸더니,
+             이어지는 계단의 각이 조금씩 달라 길이 휘어진 곡선처럼 보였다 — 쌓은 계단이 아니라
+             파낸 굴로 읽힌다. 각이 하나면 계단이 몇 번 이어지든 한 줄로 곧다. */
           const n = Math.max(3, Math.min(rng.int(5, 12), ahead() - 12));
-          for (let i = 1; i <= n && !stop && f < yT; i++) step(i % every === 0 ? 1 : 0);
+          for (let i = 1; i <= n && !stop && f < yT; i++) step(1);
           // 계단 함정 — 한 칸을 무너지게 하거나 가시를 박는다. 무발판형은 계단 끝에 가시
           if (cols.length > 3 && rng.chance(0.45)) {
             const c = cols[rng.int(1, cols.length - 2)];
