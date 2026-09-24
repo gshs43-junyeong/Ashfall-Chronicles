@@ -21,7 +21,8 @@ The project is intentionally a single-player, no-install experience. A current d
 
 Recent changes to the v1.1 development build (details in Korean in the [changelog](v1.1-changelog.md)):
 
-- **Ruin entrances are winding slopes** instead of vertical shafts with ladder platforms. They rise and fall along the way, and most need no platforms at all.
+- **Ruin entrances are built dungeon passages** — brick-lined 45° staircases, flat halls, short climbs, landing rooms and switchback stairwells with floating steps — ending at a side door into the ruin. Far fewer ladder platforms than the old vertical shafts.
+- **The pyramid is a real pyramid:** a symmetric, half-buried triangle with a gold capstone, rooms stacked in levels, and a door on one face.
 - **Fishing reads on screen:** a fish shadow approaches before a bite, a shrinking gauge shows the hook window (visible at night), the water splashes when you reel in, and richer water glints gold around the bobber.
 - **Sound:** three new music tracks (death screen, five-phase finale bosses) and 44 new sound effects for materials, skills, hits and star moments; enemy projectiles now make sound.
 - **One skill tree:** the three branches share one board with cross-branch prerequisites.

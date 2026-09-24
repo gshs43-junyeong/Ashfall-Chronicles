@@ -2816,7 +2816,11 @@ const RUIN_SPEC = [
     rank: 2, tier: 3, trapRate: 0.46, spikeRate: 0.26, chestRate: 0.16, mobMul: 1.0
   },
   {
-    id: 'pyramid', n: '피라미드', x: 2180 + SHIFT, y: 96, w: 80, h: 56,
+    /* ★ 피라미드는 **반쯤 묻힌 삼각형**이다(plan 'tri'). 사구 지면이 y 72~82 쯤이라 상자를
+       y 50~102 에 두면 꼭대기 스무 줄 남짓이 모래 위로 솟는다. 예전에는 y 96~152 에 통째로
+       묻힌 네모 방 묶음 위에 탑 하나를 세웠는데, 멀리서 보이는 것이 "탑"이지 피라미드가
+       아니었다. 밑변 96 · 높이 52 라 옆면 기울기가 거의 1:1 이다. */
+    id: 'pyramid', n: '피라미드', x: 2180 + SHIFT, y: 50, w: 96, h: 52,
     wall: T.SANDBRICK, floor: T.SANDSTONE, bg: 8, torch: T.TORCH,
     traps: ['dart', 'vent', 'crumble', 'gas'], boss: 'sand_guardian',
     mobs: ['scorpion', 'sandmaw', 'skeleton', 'jarhusk'],
@@ -2855,11 +2859,11 @@ const RUIN_SPEC = [
    gated:   입구는 뚜렷한데 들어가는 길이 시련이다 (수직 갱도 + 함정)
    buried:  입구가 없다. 동굴을 파고 들어가다 우연히 벽 너머로 닿는다 */
 /* 입구 통로 자체의 성격(entryKind) — arch(바깥 생김새)와는 별개 축이다.
-   입구는 전부 **비탈**이다(world.js _carveEntranceShaft). 걸어서 오르내리므로 발판이 필요
-   없고, 중간에 되올라가는 구간도 있다. 성격은 비탈의 결만 바꾼다.
-   foothold   완만하다. 절반쯤은 한 구간이 옛 갱도 수직굴이라 거기만 발판이 있다
-   nofoothold 급경사다. 뚝 떨어지는 자리마다 가시가 있고 발판이 없다
-   maze       좌우로 크게 꺾이고 오르내림이 잦다. 발판이 없다
+   입구는 전부 **벽돌로 두른 복도**다(world.js _buildPassage — 계단·복도·오르막·층계참·
+   계단실). 성격은 부품을 고르는 결만 바꾼다.
+   foothold   반 기울기 계단이 섞여 완만하다. 계단실 다섯에 둘은 나무 발판 계단이다
+   nofoothold 45° 계단만 쓰고 계단 끝마다 가시가 박힌다. 발판이 없다
+   maze       평평한 복도와 오르막이 잦아 길이 길고 오르내린다. 발판이 없다
    ★ buried 는 입구가 없어 해당 없음. 함정을 rng.chance 로만 심으면 운이 나쁠 때
      함정 없이 직행 입장이 된다 — 자리를 고정해 최소 개수를 보장한다. */
 /* ★ `rooms` 가 **목표 방 수**다(carveDungeon 의 target). 자르는 깊이(bsp)와 최소 크기만으로
@@ -2868,7 +2872,7 @@ const RUIN_SPEC = [
    넓은 방부터 한 번 더 자른다(겉모양은 그대로, 속만 나뉜다). 최소 크기는 그 목표가
    들어갈 만큼 낮춰 잡았다. */
 RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].bsp = [5, 14, 8]; RUIN_SPEC[0].rooms = 14;  // 얼음 (rank 2)
-RUIN_SPEC[1].plan = 'pyramid'; RUIN_SPEC[1].arch = 'surface'; RUIN_SPEC[1].bsp = [6, 11, 6]; RUIN_SPEC[1].rooms = 21;  // 피라미드 (rank 4)
+RUIN_SPEC[1].plan = 'tri';     RUIN_SPEC[1].arch = 'pyramid'; RUIN_SPEC[1].bsp = [6, 9, 6]; RUIN_SPEC[1].rooms = 18;  // 피라미드 (rank 4) — 삼각형 안에 든 방만
 RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].bsp = [5, 12, 7]; RUIN_SPEC[2].rooms = 11;  // 광산 (rank 1 — 가장 작다)
 RUIN_SPEC[3].plan = 'warren'; RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].bsp = [6, 12, 7]; RUIN_SPEC[3].rooms = 30;  // 부패한 둥지 (rank 6 — 가장 크다)
 RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp = [5, 12, 7]; RUIN_SPEC[4].rooms = 26; // 포자 굴 (rank 5)
