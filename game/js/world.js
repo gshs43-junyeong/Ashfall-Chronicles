@@ -470,6 +470,24 @@ class World {
       }
     }
 
+    /* --- 5-B. 지층 돌 둘 — 돌(STONE)만 갈아 끼운다. 광맥 **다음**에 두어야 광석을 안 지운다.
+       석회암은 얕은 층(지표 15칸 ~ y 230), 화강암은 깊은 층(y 200 ~ 지옥 위)에 덩어리로.
+       덩어리 수는 광맥처럼 세계 폭에 비례한다(폭 2800 기준 석회암 520 · 화강암 420). */
+    for (const [tile, y0, y1, count, r0, r1] of [[T.LIMESTONE, 0, 230, 520, 4, 9], [T.GRANITE, 200, HELL_Y - 8, 420, 4, 10]]) {
+      const n = Math.round(count * oreScale);
+      for (let k = 0; k < n; k++) {
+        const cx = rng.int(4, WW - 5);
+        const cy = rng.int(Math.max(y0, this.surface[cx] + 15), y1);
+        if (cy >= y1) continue;
+        const rx = rng.range(r0, r1), ry = rx * rng.range(0.45, 0.8);   // 가로로 눕힌 덩어리 — 지층처럼
+        for (let x = Math.floor(cx - rx); x <= cx + rx; x++)
+          for (let y = Math.floor(cy - ry); y <= cy + ry; y++) {
+            const dx = (x - cx) / rx, dy = (y - cy) / ry;
+            if (dx * dx + dy * dy <= 1 && this.get(x, y) === T.STONE) this.set(x, y, tile);
+          }
+      }
+    }
+
     /* --- 6. 지옥 용암은 여기서 만들지 않는다 ---
        동굴·유적이 다 파인 뒤라야 "고일 자리"를 제대로 고를 수 있어서, 물 호수와 같은
        순서(floodCaves 다음)로 floodHell에서 만든다. */
@@ -3788,6 +3806,9 @@ class World {
         this.caveGrid[gy * gW + gx] = k;
       }
     // 2) 꾸민다 — 자연 굴의 빈 칸마다 바닥·천장·옆벽을 보고
+    // 장식이 붙을 수 있는 자연 돌 — 이끼·종유석은 흙·돌·지층 돌 위에만
+    const host = t => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE ||
+                      t === T.LIMESTONE || t === T.GRANITE;
     const hang = (x, y, tile, n) => {                          // 천장에서 아래로 n 칸
       for (let k = 0; k < n; k++) { if (this.get(x, y + k) !== T.AIR) break; this.set(x, y + k, tile); }
     };
@@ -3799,27 +3820,37 @@ class World {
         if (!natural.has(this.walls[y * WW + x]) || this.ruinAt(x, y)) continue;
         const id = CAVE_TYPES[k].id;
         const below = this.get(x, y + 1), above = this.get(x, y - 1);
-        const floor = below === T.STONE || below === T.DIRT || below === T.MOSSSTONE || below === T.SANDSTONE;
-        const ceil = above === T.STONE || above === T.DIRT || above === T.MOSSSTONE || above === T.SANDSTONE;
+        const floor = host(below), ceil = host(above);
+        /* ★ v1.1 두 번째 손질 — 밀도를 올리고 이끼를 **옆벽에도** 붙였다. 바닥·천장에만 붙이면
+           벽을 따라 이끼가 끊겨 "바닥에 깐 카펫"으로 읽혔다. 바닥·옆벽·천장이 한 덩어리로
+           이어지고, 그리는 쪽(tileart.js drawConn)이 트인 면마다 이끼를 두른다. */
         if (id === 'moss') {
-          if (floor && rng.chance(0.75)) this.set(x, y + 1, T.MOSSSTONE);
-          if (ceil) { if (rng.chance(0.6)) this.set(x, y - 1, T.MOSSSTONE); if (rng.chance(0.3)) hang(x, y, T.HANGMOSS, rng.int(1, 3)); }
-          else if (floor && rng.chance(0.05) && this.get(x, y - 1) === T.AIR) this.set(x, y, T.GLOWCAP);
+          if (floor && rng.chance(0.92)) this.set(x, y + 1, T.MOSSSTONE);
+          for (const sx of [x - 1, x + 1]) if (host(this.get(sx, y)) && rng.chance(0.75)) this.set(sx, y, T.MOSSSTONE);
+          if (ceil) { if (rng.chance(0.85)) this.set(x, y - 1, T.MOSSSTONE); if (rng.chance(0.45)) hang(x, y, T.HANGMOSS, rng.int(1, 4)); }
+          else if (floor && rng.chance(0.08) && this.get(x, y - 1) === T.AIR) this.set(x, y, T.GLOWCAP);
         } else if (id === 'drip') {
-          if (ceil && rng.chance(0.16)) hang(x, y, T.STALACTITE, rng.chance(0.35) ? 2 : 1);
-          else if (floor && rng.chance(0.12) && this.get(x, y - 1) === T.AIR) {
+          // 종유 동굴의 벽은 석회암이 많다 — 석회암이 녹아 종유석이 자란다는 흉내
+          for (const [hx, hy] of [[x, y - 1], [x, y + 1], [x - 1, y], [x + 1, y]])
+            if (this.get(hx, hy) === T.STONE && rng.chance(0.4)) this.set(hx, hy, T.LIMESTONE);
+          if (ceil && rng.chance(0.26)) hang(x, y, T.STALACTITE, rng.chance(0.15) ? 3 : rng.chance(0.4) ? 2 : 1);
+          else if (floor && rng.chance(0.2) && this.get(x, y - 1) === T.AIR) {
             this.set(x, y, T.STALAGMITE);
-            if (rng.chance(0.3) && this.get(x, y - 2) === T.AIR) this.set(x, y - 1, T.STALAGMITE);
+            if (rng.chance(0.35) && this.get(x, y - 2) === T.AIR) this.set(x, y - 1, T.STALAGMITE);
           }
         } else if (id === 'geode') {
-          const side = this.solid(x - 1, y) || this.solid(x + 1, y);
-          if (floor && rng.chance(0.07)) this.set(x, y, T.GEODE);
-          else if (side && rng.chance(0.03)) {
-            const sx = this.solid(x - 1, y) ? x - 1 : x + 1;
-            if (this.get(sx, y) === T.STONE) this.set(sx, y, T.CRYSTAL);
+          const side = host(this.get(x - 1, y)) || host(this.get(x + 1, y));
+          if (floor && rng.chance(0.13)) this.set(x, y, T.GEODE);
+          else if (side && rng.chance(0.06)) {
+            const sx = host(this.get(x - 1, y)) ? x - 1 : x + 1;
+            this.set(sx, y, T.CRYSTAL);
           }
         } else if (id === 'fume') {
-          if (floor && rng.chance(0.012) && below === T.STONE) this.set(x, y + 1, T.GASVENT);
+          if (floor && rng.chance(0.02) && below === T.STONE) this.set(x, y + 1, T.GASVENT);
+        } else {
+          // 그냥 굴도 맨숭맨숭하지 않게 — 작은 종유석 · 석순이 드문드문
+          if (ceil && rng.chance(0.04)) hang(x, y, T.STALACTITE, 1);
+          else if (floor && rng.chance(0.03) && this.get(x, y - 1) === T.AIR) this.set(x, y, T.STALAGMITE);
         }
       }
     }
@@ -3878,8 +3909,12 @@ class World {
       const fx = wx + dir * 5, fy = y - 1;
       this.set(fx, fy, T.FAULTSTONE);
       this.set(fx, fy + 1, T.STONE); this.set(fx, fy - 1, T.STONE);
-      this.faults.push({ x: fx, y: fy, dir, cx: fx + dir * (FAULT.rx >> 1), cy: y - 3,
-                         seed: rng.int(1, 1e9), done: 0 });
+      const f = { x: fx, y: fy, dir, cx: fx + dir * (FAULT.rx >> 1), cy: y - 3, seed: rng.int(1, 1e9), done: 0 };
+      /* ★ 무너질 자리 **전부**를 자갈로 채운다. 자갈 한 칸만 박아 두면 그 한 칸을 찾아야만
+         열렸다 — 이제는 그 덩어리 어디를 캐도(옆 굴에서 파고 들어와도) 무너진다. 자갈 색이
+         돌과 거의 같아서(data.js ★) 덩어리가 겉으로 드러나지는 않는다. */
+      for (const [cx, cy] of this.faultCells(f)) this.set(cx, cy, T.FAULTSTONE);
+      this.faults.push(f);
     }
   }
 
@@ -3894,7 +3929,7 @@ class World {
       if (seen.has(key) || !this.inB(xx, yy)) return;
       seen.add(key);
       const t = this.get(xx, yy);
-      if (t === T.AIR || t === T.BEDROCK || this.locked(xx, yy) || TILE_DEF[t].liquid) return;
+      if (t === T.AIR || t === T.BEDROCK || this.locked(xx, yy) || TILE_DEF[t].liquid || TILE_DEF[t].solid !== 1) return;
       if (yy >= HELL_Y - 2 || yy <= this.surface[xx] + 12 || this.ruinAt(xx, yy)) return;
       if (!natural.has(this.walls[key])) return;
       cells.push([xx, yy]);
@@ -3924,12 +3959,15 @@ class World {
     for (const [x, y] of cells) {
       if (this.get(x, y) !== T.AIR) continue;
       const floor = this.solid(x, y + 1), ceil = this.solid(x, y - 1);
+      const stoneAt = (sx, sy) => { const t = this.get(sx, sy); return t === T.STONE || t === T.LIMESTONE || t === T.GRANITE || t === T.DIRT; };
       if (id === 'moss') {
-        if (floor && rng.chance(0.8) && this.get(x, y + 1) === T.STONE) this.set(x, y + 1, T.MOSSSTONE);
-        if (ceil && rng.chance(0.35)) this.set(x, y, T.HANGMOSS);
+        for (const [hx, hy] of [[x, y + 1], [x, y - 1], [x - 1, y], [x + 1, y]])
+          if (stoneAt(hx, hy) && rng.chance(0.85)) this.set(hx, hy, T.MOSSSTONE);
+        if (ceil && rng.chance(0.45)) { this.set(x, y, T.HANGMOSS); if (this.get(x, y + 1) === T.AIR && rng.chance(0.5)) this.set(x, y + 1, T.HANGMOSS); }
+        else if (floor && rng.chance(0.08)) this.set(x, y, T.GLOWCAP);
       } else if (id === 'drip') {
-        if (ceil && rng.chance(0.2)) this.set(x, y, T.STALACTITE);
-        else if (floor && rng.chance(0.14)) this.set(x, y, T.STALAGMITE);
+        if (ceil && rng.chance(0.3)) { this.set(x, y, T.STALACTITE); if (this.get(x, y + 1) === T.AIR && rng.chance(0.4)) this.set(x, y + 1, T.STALACTITE); }
+        else if (floor && rng.chance(0.22)) this.set(x, y, T.STALAGMITE);
       } else if (floor && rng.chance(0.2)) this.set(x, y, T.GEODE);
       // 드러난 벽 — 광석이 박히고, 수정 동굴이면 수정이 더 박힌다
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]])

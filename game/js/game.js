@@ -1365,6 +1365,9 @@ const G = {
     let out = d.drop;
     if (d.leafDrop) { const r = this.rng.weighted(d.leafDrop); out = r === 'none' ? null : r; }
     if (out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(out, 1)));
+    // 장식이면 그 장식도 하나 — 옮겨 놓을 수 있게(data.js 의 deco 절). 재료 드롭은 그대로 둔다
+    const deco = DECO_OF[id];
+    if (deco && deco !== out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(deco, 1)));
   },
 
   /** 벌목 — 기둥을 자르면 그 위 기둥이 무너지고, 살아 있는 기둥에서 떨어져 나간 잎
@@ -4951,6 +4954,9 @@ const G = {
         if (id === T.SEAWATER && w.tiles[k - WW] === T.AIR) { this.drawWave(c, tx, ty, sx, sy, wl); continue; }
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
         if (ashOn && this.ASH_TILE[id]) { this.drawAshTile(c, id, v, sx, sy, tx, ty, ashF); continue; }
+        // 이웃을 보고 그리는 타일(이끼·종유석·위가 막힌 잔디 …) — tileart.js 의 ★ 참고.
+        // 이것들은 전부 윗면 줄이 필요 없는 칸이라(위가 막혔거나 TOP_SKIP) 여기서 끝낸다.
+        if ((BODY_ONLY[id] || CONN[id]) && TileArt.drawConn(c, w, id, tx, ty, sx, sy, v)) continue;
         if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
         else TileArt.draw(c, id, v, sx, sy);
         /* 상단 하이라이트는 **하늘에 드러난 윗면**을 흉내 내는 선이다. 세 가지를 다 봐야 한다.
@@ -7141,10 +7147,28 @@ const G = {
   /** 금 간 자갈을 깼다 — 곡괭이든 폭탄이든. 그 자리의 자갈 기록을 찾아 무너뜨린다 */
   triggerFault(tx, ty) {
     const w = this.world;
-    const f = (w.faults || []).find(q => !q.done && Math.abs(q.x - tx) <= 1 && Math.abs(q.y - ty) <= 1);
-    if (!f || this.quake) return;
+    if (this.quake) return;                  // 이미 울리는 중 — 남은 자갈은 다음에 캐면 무너진다
+    /* 무너질 칸 = 깬 칸에 **맞닿아 이어진 자갈 전부**. 세계가 굴 자리 전체를 자갈로 채워 두므로
+       (world.js buildFaults 의 ★) 덩어리 어디를 캐도 같은 굴이 열린다. 깬 자리에서 가까운
+       칸부터 무너지게 거리로 줄 세운다 — 무너짐이 깬 자리에서 퍼져 나간다. */
+    const cells = [], seen = new Set([ty * WW + tx]), st = [[tx, ty]];
+    while (st.length && cells.length < 6000) {
+      const [x, y] = st.pop();
+      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+        const k = ny * WW + nx;
+        if (seen.has(k) || w.get(nx, ny) !== T.FAULTSTONE) continue;
+        seen.add(k); cells.push([nx, ny]); st.push([nx, ny]);
+      }
+    }
+    let f = (w.faults || []).find(q => !q.done && Math.abs(q.cx - tx) <= FAULT.rx + 8 && Math.abs(q.cy - ty) <= FAULT.ry + 8);
+    // 자갈 한 칸만 박혀 있던 v7 첫 판 세계 — 그때처럼 씨앗에서 굴 모양을 뽑는다
+    const old = !cells.length && !!f;
+    if (old) cells.push(...w.faultCells(f));
+    if (!cells.length) return;
+    if (!f) f = { x: tx, y: ty, dir: 1, cx: tx, cy: ty, seed: tx * 9973 + ty * 31 };
     f.done = 1;
-    this.quake = { f, cells: w.faultCells(f), t: 0, i: 0 };
+    cells.sort((a, b) => Math.hypot(a[0] - tx, a[1] - ty) - Math.hypot(b[0] - tx, b[1] - ty));
+    this.quake = { f, cells, t: 0, i: 0, old };
     this.toast('자갈이 무너지자 땅이 울린다 — 물러서라!', 'bad');
     this.shake = 22;
     this.sfx('sk_quake');
@@ -7158,7 +7182,9 @@ const G = {
     const want = Math.floor(q.cells.length * clamp((q.t - 0.4) / 1.8, 0, 1));
     for (; q.i < want; q.i++) {
       const [x, y] = q.cells[q.i];
-      if (!w.solid(x, y) && w.get(x, y) !== T.FAULTSTONE) continue;
+      const t = w.get(x, y);
+      if (t !== T.FAULTSTONE && !(q.old && w.solid(x, y))) continue;   // 그새 다른 것이 된 칸은 두고
+      if (t === T.BEDROCK) continue;
       w.set(x, y, T.AIR);
       if (Math.random() < 0.05) this.parts.push(new Part((x + .5) * TS, (y + .5) * TS, '#7a7266', 20, 1));
     }
@@ -7178,7 +7204,10 @@ const G = {
     // 상자 — 새 굴 한가운데에 가까운 바닥에. 깊이로 등급을 매긴다(큰 동굴과 같은 셈)
     const floors = q.cells.filter(([x, y]) => w.get(x, y) === T.AIR && w.solid(x, y + 1) && w.get(x, y - 1) === T.AIR);
     floors.sort((a, b) => Math.hypot(a[0] - f.cx, a[1] - f.cy) - Math.hypot(b[0] - f.cx, b[1] - f.cy));
-    if (floors.length) {
+    /* 상자는 **드물게**(열에 셋) — 무너진 굴마다 상자가 있으면 자갈을 보자마자 캐는 것이 곧
+       정답이 된다. 굴 자체(장식·드러난 광맥·굴의 것들)가 보상의 몸통이다. */
+    const chestRng = new RNG(f.seed + 13);
+    if (floors.length && chestRng.chance(0.3)) {
       const [gx, gy] = floors[0];
       const tier = gy < 180 ? 3 : gy < DEEP_Y ? 4 : 5;
       w.objects.push({ type: 'chest', tier, x: gx * TS, y: (gy - 0.2) * TS, w: 30, h: 26, items: null });
