@@ -990,7 +990,9 @@ const UI = {
       맥박이 한 단계 오를 때마다 <b>사건</b>(표식된 것 · 공명석 · 탐욕의 상자 · 포위)이 하나 터진다.
       등급은 조건을 <b>모두</b> 채워야 오른다 — 아래에 다음 등급까지 남은 것을 적었다.
       기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.</div>`;
-    const list = RUIN_SPEC.slice().sort((a, b) => (a.rank || 0) - (b.rank || 0));
+    // 바이옴 유적 여섯 + 석판 유적 셋(G.ruinSpec 이 STORY_RUIN 에서 만든 것) — 등급(난이도) 순
+    const list = RUIN_SPEC.concat(STORY_RUIN.map((_, i) => g.ruinSpec('story' + i)).filter(Boolean))
+      .sort((a, b) => (a.rank || 0) - (b.rank || 0));
     for (const spec of list) {
       const sc = g.surveyScore(spec.id), P = sc.part, sv = sc.sv;
       const cell = (label, q) => !q ? '' :
@@ -1001,7 +1003,7 @@ const UI = {
         `<div class="rv-body"><h4>${sc.seen ? spec.n : '아직 발을 들이지 않은 유적'}</h4>`;
       if (sc.seen) {
         h += `<div class="rv-grid">` + cell('방', P.rooms) + cell('상자', P.chests) + cell('비문', P.lore) +
-          cell('주인', P.boss) + cell('골방', P.code) + cell('격노', P.rage) +
+          cell(sc.story ? '석판' : '주인', P.boss) + cell('골방', P.code) + cell('격노', P.rage) +
           cell('사건', P.events) + cell('갈래', P.kinds) + cell('메아리', P.echo) + `</div>`;
         if (sc.next) h += `<div class="rv-next">다음 ${sc.next} 까지 — ${sc.missing.join(' · ')}</div>`;
         if (seal) h += `<div class="rv-seal">${sv.s ? '✔ ' + seal.n + ' — ' + seal.d.replace(/^[^.]*\.\s*/, '') : 'S 등급 보상 · ' + seal.n}</div>`;
