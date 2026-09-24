@@ -5416,14 +5416,41 @@ const G = {
       const zone = p && w ? w.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS)) : null;
       if (zone === 'village' || zone === 'camp') ev = this.eventSpec();
     }
+    /* ---- 노을 ----
+       예전 하늘은 낮 파랑과 밤 남색 사이를 밝기(f)로만 오갔다. 해가 지평선에 걸려도 하늘은
+       그냥 파랗게 어두워질 뿐이라 해넘이가 없었다. 해의 높이(sunUp)가 지평선 언저리일수록
+       gold 가 1 에 가깝고, 그만큼 아래는 주황 · 가운데는 분홍 · 위는 보랏빛 남색으로 물든다.
+       해가 **진 뒤에도** 잠깐 남는다(지평선 아래 0.3 까지) — 노을은 해가 넘어간 다음이 더 짙다. */
+    const ang = (this.dayT / 1440) * TAU - Math.PI / 2;
+    const sunUp = Math.sin(ang), sunX = this.W / 2 + Math.cos(ang) * this.W * .42;
+    const gold = clamp(1 - Math.abs(sunUp - 0.02) / 0.32, 0, 1) * (ev ? 0.4 : 1);
     if (ev) { top = mixHex(top, ev.tint, ev.tintAmt); bot = mixHex(bot, ev.tint, ev.tintAmt * 0.7); }
+    let mid = mixHex(top, bot, 0.55);
+    if (gold > 0) {
+      top = mixHex(top, '#3a3a78', gold * 0.5);
+      mid = mixHex(mid, '#d8849a', gold * 0.6);
+      bot = mixHex(bot, '#f3a45a', gold * 0.85);
+    }
     /* 원경이 "멀어 보이는" 색으로 쓸 지금의 하늘색. 원경을 투명하게 만드는 대신
-       이 색으로 물들이므로, 하늘이 물들면 원경도 같이 물든다(drawParallaxArt). */
+       이 색으로 물들이므로, 하늘이 물들면 원경도 같이 물든다(drawParallaxArt).
+       노을이 지면 원경도 노을빛으로 씻긴다 — 해와 뒷배경이 한 빛 안에 있게 된다. */
     this.skyHaze = bot;
     if (camY < surfPx + 400) {
       const g = c.createLinearGradient(0, 0, 0, this.H);
-      g.addColorStop(0, top); g.addColorStop(1, bot);
+      // 가장 따뜻한 띠(bot)가 원경 능선 높이(화면 0.5~0.8)에 오게 — 화면 맨 아래는 어차피 땅이다
+      g.addColorStop(0, top); g.addColorStop(0.42, mid); g.addColorStop(0.78, bot); g.addColorStop(1, bot);
       c.fillStyle = g; c.fillRect(0, 0, this.W, this.H);
+      // 해 쪽 지평선이 더 달아오른다 — 노을은 하늘 전체가 아니라 해가 있는 쪽이 짙다
+      if (gold > 0.02) {
+        /* ★ 달아오른 자리는 해보다 **위**(화면 0.5)에 둔다. 해가 지는 높이(0.7)에 두면 원경 능선이
+           그 빛을 통째로 가려, 노을을 보여 주려고 칠한 빛이 한 줌도 안 보였다. */
+        const hy = this.H * .5 - camY * .05;
+        const hg = c.createRadialGradient(sunX, hy, 0, sunX, hy, this.W * .8);
+        hg.addColorStop(0, `rgba(255,176,96,${0.6 * gold})`);
+        hg.addColorStop(0.4, `rgba(240,130,110,${0.25 * gold})`);
+        hg.addColorStop(1, 'rgba(240,130,110,0)');
+        c.fillStyle = hg; c.fillRect(0, 0, this.W, this.H);
+      }
       // 별
       if (f < 0.55) {
         c.fillStyle = `rgba(255,255,255,${(1 - f / .55) * .8})`;
@@ -5447,20 +5474,22 @@ const G = {
          물체가 반대편으로 순간이동했다.
 
          지평선에 가까워지면 **흐려져 사라진다.** 지형에 닿기 전에 없어지므로
-         무엇을 어떻게 그리든 다시는 땅을 뚫지 않는다. */
-      const ang = (this.dayT / 1440) * TAU - Math.PI / 2;
+         무엇을 어떻게 그리든 다시는 땅을 뚫지 않는다.
+         ★ v1.1 — 해를 다시 그렸다. 납작한 원 하나에 같은 색 동그라미 테두리 하나라 "대충 찍은
+           점"으로 보였다. 이제 번짐 셋(넓은 햇무리 · 안쪽 광채 · 원반)이 가운데서 바깥으로
+           옅어지고, 지평선에 가까울수록(gold) 커지고 붉어진다 — 노을빛 하늘과 같은 색으로
+           번지므로 해가 하늘에 박힌 스티커가 아니라 하늘의 가장 밝은 자리로 읽힌다.
+           원경보다 **먼저** 그리므로 해가 지면 원경 능선 뒤로 넘어간다. */
       for (const sun of [1, 0]) {
         const a = sun ? ang : ang + Math.PI;
         const up = Math.sin(a);
-        const al = clamp((up - 0.02) / 0.16, 0, 1);       // 지평선 언저리에서 흐려진다
+        const al = clamp((up + 0.04) / 0.16, 0, 1);       // 지평선 조금 아래까지 — 원경 뒤로 넘어간다
         if (al <= 0) continue;
         const bx = this.W / 2 + Math.cos(a) * this.W * .42;
-        const by = this.H * .80 - up * this.H * .62 - camY * .05;
-        c.fillStyle = sun ? '#ffe9a8' : '#dfe8f5';
-        c.globalAlpha = .9 * al;
-        c.beginPath(); c.arc(bx, by, sun ? 26 : 20, 0, TAU); c.fill();
-        c.globalAlpha = .12 * al;
-        c.beginPath(); c.arc(bx, by, 60, 0, TAU); c.fill();
+        // 지평선을 0.80 → 0.70 으로 올렸다 — 노을 녘 해가 능선 위에 조금 더 오래 머문다
+        const by = this.H * .70 - up * this.H * .55 - camY * .05;
+        if (sun) this.drawSun(c, bx, by, al, gold);
+        else this.drawMoon(c, bx, by, al);
       }
       c.globalAlpha = 1;
       // 구름 — 비가 오는 동안은 짙고 빽빽하게, 평소엔 옅게 흘러간다
@@ -5475,6 +5504,45 @@ const G = {
          먼 바위가 파랗게 물든다 */
       this.skyHaze = deep ? '#4a1408' : '#06060a';
     }
+  },
+  /** 해 — 넓은 햇무리 · 안쪽 광채 · 원반. gold(0~1)가 오르면 커지고 주황·붉은빛으로 간다 */
+  drawSun(c, x, y, al, gold) {
+    const r = 22 * (1 + gold * 0.35);
+    const core = mixHex('#fff6d8', '#ffd08a', gold), rim = mixHex('#ffd66a', '#ff7a3a', gold);
+    const halo = mixHex('#fff0b8', '#ff9a50', gold);
+    const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+    c.save();
+    c.globalAlpha = al;
+    // 넓은 햇무리 — 하늘에 녹아드는 빛. 노을일수록 옆으로 퍼진다(지평선을 따라 번지는 빛)
+    c.translate(x, y); c.scale(1 + gold * 0.6, 1);
+    let g = c.createRadialGradient(0, 0, 0, 0, 0, r * 7);
+    g.addColorStop(0, rgba(halo, 0.34)); g.addColorStop(0.35, rgba(halo, 0.12)); g.addColorStop(1, rgba(halo, 0));
+    c.fillStyle = g; c.beginPath(); c.arc(0, 0, r * 7, 0, TAU); c.fill();
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    // 안쪽 광채
+    g = c.createRadialGradient(x, y, r * 0.8, x, y, r * 2.4);
+    g.addColorStop(0, rgba(core, 0.55)); g.addColorStop(1, rgba(core, 0));
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 2.4, 0, TAU); c.fill();
+    // 원반 — 가운데가 가장 희고 가장자리로 갈수록 짙어진다
+    g = c.createRadialGradient(x - r * 0.2, y - r * 0.2, 0, x, y, r);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.55, core); g.addColorStop(1, rim);
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+    c.restore();
+  },
+  /** 달 — 차가운 원반에 옅은 얼룩 셋, 푸른 달무리 */
+  drawMoon(c, x, y, al) {
+    const r = 18;
+    c.save();
+    c.globalAlpha = al;
+    let g = c.createRadialGradient(x, y, r * 0.8, x, y, r * 5);
+    g.addColorStop(0, 'rgba(190,210,255,0.22)'); g.addColorStop(1, 'rgba(190,210,255,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 5, 0, TAU); c.fill();
+    g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r);
+    g.addColorStop(0, '#fbfcff'); g.addColorStop(1, '#c4cce0');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(120,130,160,0.22)';
+    for (const [dx, dy, rr] of [[-5, -3, 4.5], [6, 4, 3.2], [-2, 8, 2.4]]) { c.beginPath(); c.arc(x + dx, y + dy, rr, 0, TAU); c.fill(); }
+    c.restore();
   },
   /** 하늘에 늘 몇 점씩 흘러가는 구름. rainT(0~1)가 오르면 색이 짙어지고 빽빽해진다 —
       비가 오기 전에 구름부터 몰려오는 것처럼 보이도록 같은 값을 그대로 쓴다. */
@@ -5735,10 +5803,16 @@ const G = {
     const dark = (1 - f) * 0.58;          // 밤에는 어두워진다 — 옅어지는 게 아니라
     // 먼 층은 느리고 흐리게, 가까운 층은 빠르고 진하게
     c.globalAlpha = 1;
-    for (const [slot, spd, hz, dy, sc] of [[0, 0.16, .55, -54, 1.15], [1, 0.34, 0, 0, 1]]) {
+    /* ★ 잿빛 숲의 먼 층이 **거의 흰색**이었다. 먼 층은 지평선 하늘색(낮 #a8c8e0)으로 55% 씻기는데,
+       숲 원경은 그림 자체가 옅은 회색이라 씻고 나면 흰 종이처럼 떴다. 숲만 씻는 색을 푸른 녹회색
+       쪽으로 당기고(하늘색 반 · 숲 그늘 반) 양을 줄여, 멀어도 숲의 색이 남게 한다.
+       노을·밤에는 haze 자체가 물들므로 그 빛은 그대로 따라간다. */
+    const forest = key === 'parallax_forest';
+    const farHaze = forest ? mixHex(haze, '#4f7a6a', 0.5) : haze;
+    for (const [slot, spd, hz, dy, sc] of [[0, 0.16, forest ? .40 : .55, -54, 1.15], [1, 0.34, 0, 0, 1]]) {
       const w = IW * sc, h = IH * sc;
       const baseY = restY + (refCamY - camY) * spd;
-      const img = this.tintBg(src, slot, key + af, haze, hz, dark);
+      const img = this.tintBg(src, slot, key + af, slot === 0 ? farHaze : haze, hz, dark);
       let ox = -((camX * spd) % w);
       if (ox > 0) ox -= w;
       for (let x = ox; x < this.W; x += w) c.drawImage(img, x, baseY - h + dy, w, h);
