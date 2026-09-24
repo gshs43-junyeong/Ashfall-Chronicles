@@ -829,7 +829,7 @@ const UI = {
   },
 
   /* ---------------- 퀘스트 ---------------- */
-  questTab: 'journey',      // 'journey' | 'ach'
+  questTab: 'journey',      // 'journey' | 'ach' | 'ruins'
   refreshQuest() {
     const g = G;
     /* 창 하나에 탭 둘. 업적은 새 패널을 만들지 않고 여기 얹는다 — 패널을 새로 내면
@@ -838,8 +838,10 @@ const UI = {
     const topTabs = `<div class="qtabs">` +
       `<button class="qtab${this.questTab === 'journey' ? ' on' : ''}" data-qtab="journey">여정</button>` +
       `<button class="qtab${this.questTab === 'ach' ? ' on' : ''}" data-qtab="ach">업적 <b>${done}/${ACHIEVEMENTS.length}</b></button>` +
+      `<button class="qtab${this.questTab === 'ruins' ? ' on' : ''}" data-qtab="ruins">유적</button>` +
       `</div>`;
     if (this.questTab === 'ach') { this.renderAch(topTabs); return; }
+    if (this.questTab === 'ruins') { this.renderRuins(topTabs); return; }
     /* 탭은 SESSIONS 표에서 만든다. 예전에는 여기 두 줄이 손으로 적혀 있어서,
        세션을 늘리면 일지에만 안 나타나는 식으로 어긋났다. */
     const currentSession = 's' + sessionOf(g.chapter).id;
@@ -978,6 +980,41 @@ const UI = {
   },
   /** 업적 목록 — 갈래(cat)별로 묶어 보여 준다. 잠긴 것도 조건은 보여 준다:
       무엇을 하면 되는지 안 보이면 목록이 그냥 '못 한 것 표'가 된다. */
+  /** 유적 탐사 기록 — 여섯 유적의 등급 · 무엇이 남았는가 · 메아리 · 인장.
+      가 본 적 없는 유적은 이름만 가린다(어디 있는지는 지도·나침반의 몫이다). */
+  renderRuins(topTabs) {
+    const g = G;
+    let h = topTabs + `<div class="rv-note">유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,
+      쓰러뜨릴수록 가라앉는다. 깨어난 유적은 더 몰려오고 더 준다. 주인을 잡은 둥지는 유적이
+      <b>「${PULSE.stages[ECHO.needStage].n}」</b> 이상일 때 <b>메아리</b>를 다시 부른다.
+      기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.</div>`;
+    const list = RUIN_SPEC.slice().sort((a, b) => (a.rank || 0) - (b.rank || 0));
+    for (const spec of list) {
+      const sc = g.surveyScore(spec.id), P = sc.part, sv = sc.sv;
+      const cell = (label, q) => !q ? '' :
+        `<span class="${q[0] >= q[1] ? 'ok' : ''}">${label} <b>${q[1] === 1 ? (q[0] ? '✔' : '—') : q[0] + '/' + q[1]}</b></span>`;
+      const seal = ITEMS['seal_' + spec.id];
+      h += `<div class="rv${sc.seen ? '' : ' off'}">` +
+        `<div class="rv-rank" style="color:${sc.seen ? sc.col : '#5a5448'}">${sc.seen ? sc.rank : '?'}<small>${sc.seen ? sc.score + '점' : ''}</small></div>` +
+        `<div class="rv-body"><h4>${sc.seen ? spec.n : '아직 발을 들이지 않은 유적'}</h4>`;
+      if (sc.seen) {
+        h += `<div class="rv-grid">` + cell('방', P.rooms) + cell('상자', P.chests) + cell('비문', P.lore) +
+          cell('주인', P.boss) + cell('골방', P.code) + cell('격노', P.rage) +
+          `<span class="${(sv.echo || 0) >= ECHO.max ? 'ok' : ''}">메아리 <b>${sv.echo || 0}/${ECHO.max}</b></span></div>`;
+        if (seal) h += `<div class="rv-seal">${sv.s ? '✔ ' + seal.n + ' — ' + seal.d.replace(/^[^.]*\.\s*/, '') : 'S 등급 보상 · ' + seal.n}</div>`;
+      }
+      h += '</div></div>';
+    }
+    const body = $('#quest-body');
+    if (!body) return;
+    body.innerHTML = h;
+    body.onmouseover = null; body.onmouseout = null;
+    body.onclick = ev => {
+      const tab = ev.target.closest('.qtab');
+      if (tab) { this.questTab = tab.dataset.qtab; this.refreshQuest(); }
+    };
+  },
+
   renderAch(topTabs) {
     const g = G, got = g.achievements || {};
     // 난이도별 진행도를 맨 위에 — 쉬운 것부터 얼마나 남았는지가 한눈에 보인다
