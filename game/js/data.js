@@ -2902,12 +2902,17 @@ const RUIN_SPEC = [
    두면 실제로는 시드 운이 된다 — 세 시드에서 버려진 광산이 5 · 8 · 11 이었고, rank 5 인
    포자 굴(9.0)이 rank 2 인 얼음 던전(9.7)보다 작았다. 도면으로 걸러 낸 뒤 모자라면 가장
    넓은 방부터 한 번 더 자른다(겉모양은 그대로, 속만 나뉜다). 최소 크기는 그 목표가
-   들어갈 만큼 낮춰 잡았다. */
-RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].bsp = [5, 14, 8]; RUIN_SPEC[0].rooms = 14;  // 얼음 (rank 2)
+   들어갈 만큼 낮춰 잡았다.
+   ★ v1.1 에서 목표를 네 할쯤 올렸다(광산 11→15 · 얼음 14→18 · 포자 26→32 · 부패 30→36 ·
+     가라앉은 유적 26→32 · 석판 9·11·14→12·14·18). 목표는 **바닥**이다 — carveDungeon 이
+     그 뒤에 홀을 합치고(−) 골방을 가르므로(+) 실제 방 수는 이보다 한 할쯤 많다.
+     목표를 채우려면 더 잘게 잘라야 해서 최소 가로를 12→10(얼음 14→12)으로 낮췄다 — 12 로는
+     d1 에서 석판 1 이 9/12 · 포자 굴 23/32 에서 더 못 잘랐다. */
+RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].bsp = [5, 12, 7]; RUIN_SPEC[0].rooms = 18;  // 얼음 (rank 2)
 RUIN_SPEC[1].plan = 'tri';     RUIN_SPEC[1].arch = 'pyramid'; RUIN_SPEC[1].bsp = [6, 9, 6]; RUIN_SPEC[1].rooms = 18;  // 피라미드 (rank 4) — 삼각형 안에 든 방만
-RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].bsp = [5, 12, 7]; RUIN_SPEC[2].rooms = 11;  // 광산 (rank 1 — 가장 작다)
-RUIN_SPEC[3].plan = 'warren'; RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].bsp = [6, 12, 7]; RUIN_SPEC[3].rooms = 30;  // 부패한 둥지 (rank 6 — 가장 크다)
-RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp = [5, 12, 7]; RUIN_SPEC[4].rooms = 26; // 포자 굴 (rank 5)
+RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].bsp = [5, 10, 7]; RUIN_SPEC[2].rooms = 15;  // 광산 (rank 1 — 가장 작다)
+RUIN_SPEC[3].plan = 'warren'; RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].bsp = [6, 10, 7]; RUIN_SPEC[3].rooms = 36;  // 부패한 둥지 (rank 6 — 가장 크다)
+RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp = [5, 10, 7]; RUIN_SPEC[4].rooms = 32; // 포자 굴 (rank 5)
 
 /* 겉으로 보이는 재질을 유적마다 갈랐다 — 나무 · 돌 · 구리 · 얼음 · 유기물.
    [배치방식, 타일, 밀도] 를 여럿 줄 수 있고 방마다 전부 돌린다.
@@ -2963,7 +2968,7 @@ RUIN_SPEC.push({
   traps: ['brine', 'dart', 'crumble', 'mine'], boss: 'drowned_keeper',
   mobs: ['ruin_guard', 'archivist', 'lantern'],
   rank: 7, tier: 5, trapRate: 1.0, spikeRate: 0.5, chestRate: 0.24, mobMul: 1.25,
-  arch: 'seabed', plan: 'warren', rooms: 26, maze: 1, entryKind: 'maze',
+  arch: 'seabed', plan: 'warren', rooms: 32, maze: 1, entryKind: 'maze',
   decor: [['growth', T.KELPPLANT, 0.5], ['stalac', T.RUINBRICK, 0.35], ['brazier', T.GLOWCAP, 0.4]],
   bonus: 'sunken_coin', bonus2: 'abyss_pearl'
 });
@@ -2989,11 +2994,11 @@ const RUIN_PLANS = {
    셋은 제7장에 한 번에 열리는 본편 경로라 입구를 아주 없애지는 않았다 —
    대신 지표 아래에 묻어(sunken) 부러진 기둥 하나만 지상에 남긴다. */
 /* 석판 유적 셋도 같은 규칙이다 — rooms 가 목표 방 수, bsp 가 [깊이, 최소 가로, 최소 세로].
-   석판 번호가 곧 난이도 계단이라 방 수도 그 순서로 늘어난다(9 · 11 · 14). */
+   석판 번호가 곧 난이도 계단이라 방 수도 그 순서로 늘어난다(12 · 14 · 18). */
 const STORY_RUIN = [
-  { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', rooms: 9, bsp: [5, 12, 7], decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
-  { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 11, bsp: [5, 12, 7], decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
-  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 14, bsp: [5, 12, 7], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
+  { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', rooms: 12, bsp: [5, 10, 7], decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
+  { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 14, bsp: [5, 10, 7], decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
+  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 18, bsp: [5, 10, 7], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
 ];
 
 /* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다.

@@ -1765,9 +1765,12 @@ class World {
           for (let x = kx - 1; x - 8 >= xl;) { const rw = Math.min(rng.int(9, 13), x - xl + 1); row.push({ x: x - rw + 1, y: by, w: rw, h: bh }); x -= rw; }
           for (let x = kx + kw; x + 8 <= xr;) { const rw = Math.min(rng.int(9, 13), xr - x + 1); row.push({ x, y: by, w: rw, h: bh }); x += rw; }
         } else {
-          for (let x = xl; x + 8 <= xr;) {
-            let rw = rng.int(9, 14);
-            if (xr - (x + rw) + 1 < 9) rw = xr - x + 1;       // 남는 폭이 방 하나가 안 되면 붙인다
+          /* ★ 폭을 9~14 에서 **7~18** 로 벌렸다. 고르게 9~14 면 층마다 비슷한 방이 늘어서
+             방 수도 열다섯 남짓에 묶였고(d1·d2 15 · 15), 크기도 한결같았다. 좁은 곁방과 넓은
+             전실이 섞여야 무덤의 방 배치로 읽힌다. */
+          for (let x = xl; x + 6 <= xr;) {
+            let rw = rng.chance(0.3) ? rng.int(14, 18) : rng.int(7, 10);
+            if (xr - (x + rw) + 1 < 7) rw = xr - x + 1;       // 남는 폭이 방 하나가 안 되면 붙인다
             row.push({ x, y: by, w: rw, h: bh }); x += rw;
           }
         }
@@ -1806,6 +1809,50 @@ class World {
         leaves.splice(leaves.indexOf(best), 1, ...two);
       }
     }
+    /* 2.6) 방 크기를 **눈에 띄게** 가른다 — 큰 홀 · 보통 방 · 골방.
+       ★ 2.5) 는 "가장 넓은 방부터 자른다"라서 돌리면 돌릴수록 방이 한 크기로 고르게 된다
+         (실측 d1: 부패한 둥지 29방 넓이 표준편차가 평균의 25% · 광산 23% · 포자 굴 26%).
+         유적이 "같은 방 서른 개"로 읽혔다. 그래서 목표를 채운 뒤 일부러 흔든다 —
+           홀   같은 줄에 나란히 붙은(y·h 가 같은) 두 방을 하나로 합친다. 가장 넓은 방이
+                보스방이 되므로 주인은 늘 홀에 산다
+           골방 보통 방 하나를 세로로 갈라 좁은 쪽을 골방으로. 모양은 네모로만 판다
+       홀은 방 수를 하나 줄이고 골방은 하나 늘리므로 목표 수는 그대로 이상이 된다.
+       도면(plan)과 피라미드(tri)의 겉모양은 건드리지 않는다 — 이미 남은 방 안에서만 가른다. */
+    if (target && rng) {
+      const halls = Math.max(1, Math.round(leaves.length * 0.10));
+      for (let k = 0; k < halls; k++) {
+        const pairs = [];
+        for (const a of leaves) for (const b of leaves)
+          if (a !== b && !a.hall && !b.hall && !a.cell && !b.cell && a.y === b.y && a.h === b.h &&
+              a.x + a.w === b.x && a.w + b.w <= 46) pairs.push([a, b]);
+        if (!pairs.length) break;
+        const [a, b] = rng.pick(pairs);
+        leaves.splice(leaves.indexOf(b), 1);
+        a.w += b.w; a.hall = 1;
+      }
+      const cw = Math.max(7, minW - 4);                 // 골방 가로(벽 포함) — 안쪽 다섯 칸
+      /* 골방은 목표 방 수의 **바닥을 지키는** 몫도 한다 — 2.5) 가 최소 크기에 걸려 목표에
+         못 미치면(실측 d1 석판 2: 11/14) 모자란 만큼 더 가른다. */
+      const cells = Math.max(Math.round(leaves.length * 0.22), target - leaves.length);
+      for (let k = 0; k < cells || leaves.length < target; k++) {
+        /* 세로로 가를 폭이 없으면 **가로로**, 위쪽에 낮은 다락(높이 6)을 떼어 낸다.
+           가로로만 가르면 좁은 방이 많은 유적(석판 2 · 포자 굴)에서 후보가 먼저 바닥났다. */
+        const cand = leaves.filter(r => !r.hall && !r.cell && (r.w >= cw + minW || r.h >= minH + 6));
+        if (!cand.length) break;
+        const r = rng.pick(cand);
+        let a, b;
+        if (r.w >= cw + minW) {
+          const left = rng.chance(0.5);
+          const cut = left ? cw : r.w - cw;
+          a = { x: r.x, y: r.y, w: cut, h: r.h }; b = { x: r.x + cut, y: r.y, w: r.w - cut, h: r.h };
+          (left ? a : b).cell = 1;
+        } else {
+          a = { x: r.x, y: r.y, w: r.w, h: 6 }; b = { x: r.x, y: r.y + 6, w: r.w, h: r.h - 6 };
+          a.cell = 1;
+        }
+        leaves.splice(leaves.indexOf(r), 1, a, b);
+      }
+    }
     if (tri)                                                   // 삼각형 전체를 먼저 벽돌 덩어리로
       for (let y = y0; y < y0 + h; y++)
         for (let x = x0; x < x0 + w; x++)
@@ -1822,7 +1869,8 @@ class World {
     // 피라미드는 네모와 기둥 홀만 — 둥근 방·팔각 방은 돌을 쌓은 무덤으로 안 읽힌다
     const shapes = cfg.shapes || (tri ? ['rect', 'rect', 'rect', 'pillars'] : ['rect', 'rect', 'round', 'octagon', 'pillars']);
     for (const r of leaves) {
-      const shape = rng ? rng.pick(shapes) : 'rect';
+      // 골방은 좁아서 둥글게 깎으면 걸을 자리가 없다 — 네모로만
+      const shape = r.cell ? 'rect' : rng ? rng.pick(shapes) : 'rect';
       r.shape = shape;
       const x1 = r.x + r.w - 1, y1 = r.y + r.h - 1;
       const cx = (r.x + x1) / 2, cy = (r.y + y1) / 2;
@@ -3401,10 +3449,15 @@ class World {
        방을 덮어써서, 겹친 자리의 방이 통째로 사라지거나 벽이 어긋났다. 서쪽으로
        90칸 옮겨 떼어 놓는다(포자 굴 3570~3670 과도 안 닿는다). */
     const spots = [
-      { x: 420 + SHIFT,  y: 220, trap: 0.52, spike: 0.24, chest: 0.56, w: 72, h: 40, tier: 2, traps: ['dart', 'crumble'], entryKind: 'foothold' },
+      { x: 420 + SHIFT,  y: 220, trap: 0.52, spike: 0.24, chest: 0.56, w: 84, h: 44, tier: 2, traps: ['dart', 'crumble'], entryKind: 'foothold' },
       { x: 1700 + SHIFT, y: 252, trap: 0.72, spike: 0.38, chest: 0.60, w: 68, h: 40, tier: 3, traps: ['dart', 'crumble', 'vent'], entryKind: 'maze' },
-      { x: 3860 + SHIFT, y: 236, trap: 0.90, spike: 0.52, chest: 0.64, w: 76, h: 44, tier: 4, traps: ['dart', 'vent', 'crumble'], entryKind: 'nofoothold' }
+      { x: 3860 + SHIFT, y: 236, trap: 0.90, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ['dart', 'vent', 'crumble'], entryKind: 'nofoothold' }
     ];
+    /* ★ 석판 1 은 72x40 이었다. 도면(hook, ㄴ 자)이 격자 열둘 중 다섯만 쓰는 데다 상자가
+       작아서, 방 목표를 12 로 올려도 9~10 에서 더 못 잘랐다(d1 9 · d3 10). 84x44 로 넓혔다 —
+       서쪽 얼음 던전(x 1056~1144)과는 여전히 서른 칸 넘게 떨어져 있다.
+       석판 3 도 같은 까닭으로 76x44 → 88x48(H 도면의 기둥 두 줄이 폭 12 방뿐이라 d4 13/18).
+       x 4616~4704 — 포자 굴(~4470)과 부패한 둥지(4770~)사이에 그대로 들어간다. */
     spots.forEach((sp, i) => {
       const cx = sp.x, cy = sp.y, w = sp.w, h = sp.h;
       const x0 = cx - (w >> 1), y0 = cy - (h >> 1);
