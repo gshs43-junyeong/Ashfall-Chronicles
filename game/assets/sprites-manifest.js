@@ -1421,6 +1421,21 @@ window.SPRITE_MANIFEST = {
         "file": "obj/anvil.png",
         "w": 44,
         "h": 44
+      },
+      "flotsam1": {
+        "file": "obj/flotsam1.png",
+        "w": 32,
+        "h": 16
+      },
+      "flotsam2": {
+        "file": "obj/flotsam2.png",
+        "w": 26,
+        "h": 22
+      },
+      "flotsam3": {
+        "file": "obj/flotsam3.png",
+        "w": 30,
+        "h": 24
       }
     }
   },
@@ -1600,7 +1615,8 @@ window.SPRITE_MANIFEST = {
       "glacium_ore": "item/glacium_ore.png",
       "tide_ore": "item/tide_ore.png",
       "glacium_bar": "item/glacium_bar.png",
-      "tide_bar": "item/tide_bar.png"
+      "tide_bar": "item/tide_bar.png",
+      "mariner_compass": "item/mariner_compass.png"
     }
   }
 };

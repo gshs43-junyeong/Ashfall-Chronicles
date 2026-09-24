@@ -236,8 +236,8 @@ class World {
         const k = y * WW + x, lv = this.flv[k] || 8;
         const topped = FLUID_KIND[this.tiles[k - WW]] === FLUID_KIND[t];
         n += topped ? 1 : lv / 8;
-        if (lv >= 8) flow = 1;
-        else if (!cur) cur = this.currentAt(x, y);        // 겹친 칸 중 처음 흐르는 칸 하나로 — 더하면 칸 수만큼 세진다
+        // 떨어지는 물(수위 8)은 폭포가 아니다 — 아래로 미는 것은 폭포(FALLS, d.flow)만 한다
+        if (lv < 8 && !cur) cur = this.currentAt(x, y);        // 겹친 칸 중 처음 흐르는 칸 하나로 — 더하면 칸 수만큼 세진다
       } else n++;
     }
     return { f: tot ? n / tot : 0, flow, cur };
@@ -611,6 +611,7 @@ class World {
     this.sealLiquids();
     this.decorateWater(rng);     // 물 위 초목 정리 + 수련 — 수면 높이가 확정된 뒤라야 한다
     this.decoratePonds(rng);     // 동굴 웅덩이 — 수련·물풀·부들·조약돌, 둘레 이끼
+    this.fillMossCorners();      // 바닥 이끼와 벽 이끼가 만나는 오목한 모서리 칸도 이끼로
     this.springFalls();          // 샘 없는 폭포(정글 절벽)에 샘을 단다 — 유체를 켜기 전에
     /* 뒷공사(상자·제단·통행 보수)가 자갈 칸을 덮어쓴 자리는 목록에서 뺀다 — 남겨 두면
        아무것도 없는 벽을 캤을 때 무너질 자리를 찾다가 엉뚱한 곳이 열린다 */
@@ -4776,16 +4777,20 @@ class World {
        세계에 따라 폭포를 한 번도 못 보는 일이 없도록. */
     const host = t => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE || t === T.MUD;
     /* 큰 동굴의 호수는 평평한 바닥 한가운데에 판 것이라 호수 바로 위에 벽이 있는 일이 드물다
-       (d1·d3 은 한 곳도 없었다 — 호숫가에서 벽까지 5~18칸). 그래서 호숫가에서 **열여섯 칸
-       바깥**까지 벽을 찾고 가까운 자리를 먼저 고른다. 물이 호수 밖 바닥에 떨어지면 거기서
-       흘러(최대 일곱 칸) 호수로 든다.
+       (d1·d3 은 한 곳도 없었다 — 호숫가에서 벽까지 5~18칸). 그래서 호숫가에서 여섯 칸
+       바깥까지 벽을 찾고, 폭포가 호수 밖에 떨어지면 **호수를 폭포 밑까지 늘인다**(_extendLake).
+       ★ 예전(열여섯 칸)에는 호수 밖 바닥에 떨어진 물이 턱에 막혀 호수와 따로 작은 웅덩이를
+         만들었다 — 폭포 따로, 호수 따로였다.
        물길은 여기서 그리지 않고 세계를 다 만든 뒤 유체를 한 번 돌려 저절로 생기게 한다
        (fluidSettle). 손으로 그리면 물리와 어긋난 칸이 켜지자마자 말라 버린다. */
     const springAt = (lk) => {
       let best = null;
-      for (let fx = lk.x0 - 16; fx <= lk.x1 + 16; fx++) {
+      for (let fx = lk.x0 - 6; fx <= lk.x1 + 6; fx++) {
         const over = fx >= lk.x0 && fx <= lk.x1;                  // 호수 위로 바로 떨어지나
         for (const dir of [-1, 1]) {
+          // 호수 밖이면 벽은 **호수 반대쪽**이어야 한다 — 호수를 늘여 폭포 밑까지 잇는데(extendLake),
+          // 벽이 호수 쪽에 있으면 그 벽을 뚫어야 이어진다
+          if ((fx < lk.x0 && dir > 0) || (fx > lk.x1 && dir < 0)) continue;
           // 아래에서 위로 — 이 열이 빈칸인 동안, 옆이 벽이고 그 벽 밑도 벽인 자리
           let floor = -1;
           for (let y = lk.top - 1; y < lk.top + 3; y++) if (this.get(fx, y) === T.AIR && (this.solid(fx, y + 1) || this.get(fx, y + 1) === T.WATER)) { floor = y; break; }
@@ -4810,6 +4815,7 @@ class World {
         if (lk.done) continue;
         const b = springAt(lk);
         if (!b) continue;
+        if (!this._extendLake(lk, b.fx, b.dir)) continue;
         this.set(b.fx + b.dir, b.hy, T.SPRING);
         this.set(b.fx, b.hy, T.FLOWWATER);                        // 샘에서 한 칸 흘러나온 물 — 나머지는 fluidSettle
         // 폭포 앰비언트 음량을 거리로 매길 때 참조할 위치(music.js Ambient) — 타일을
@@ -4958,31 +4964,84 @@ class World {
       this.surface[x] = rightY;
     }
 
-    /* --- 3. 절벽면: 물줄기는 왼쪽 두 칸(=호수를 마주 보는 면) ---
-       ★ cx-1·cx 에 두면 그 왼쪽이 진흙 기둥이라 물줄기와 호수 사이에 벽이 선다.
-       절벽의 노출면으로 옮기고, 밑동은 웅덩이 바닥까지 물로 이어 붙인다. */
-    for (let x = cliffL; x < cliffR; x++) {
-      const isFalls = x <= cliffL + 1;
-      if (isFalls) {
-        for (let y = rightY; y < leftY; y++) { this.set(x, y, T.FALLS); this.setWall(x, y, 11); }
-        for (let y = leftY; y <= leftY + POOL_D; y++) { this.set(x, y, T.WATER); this.setWall(x, y, 11); }
-      } else {
-        // 웅덩이보다 두 칸 더 깊게 채워 오른쪽 벽이 물을 받쳐 주게 한다
-        for (let y = rightY; y <= leftY + POOL_D + 2; y++) { this.set(x, y, T.MUD); this.setWall(x, y, 11); }
+    /* --- 3. 절벽 · 윗물 · 폭포 뒤 굴 ---
+       ★ 예전 절벽은 진흙 직사각형이었고, 폭포는 그 앞 두 칸에 평지 풀밭 한가운데서 물줄기만
+         세워 두었다 — 어디서 오는 물인지 없었고 절벽은 벽돌을 쌓은 듯 곧았다.
+         지금은 동굴을 파듯 만든다.
+         · 절벽은 돌(위 세 줄만 진흙), 면에 이끼가 군데군데 붙는다.
+         · 윗대지에 **물길**을 판다(두 줄 깊이의 고인 물). 물길 안쪽 끝은 작은 언덕 속 **굴**이라
+           물이 굴 어귀에서 흘러나와 절벽 끝으로 쏟아진다.
+         · 폭포 칸(cliffL·+1)은 물길의 아랫줄만 절벽 밖으로 내민다 — 윗줄까지 내밀면 그 원천이
+           옆 허공으로 한 줄기 더 흘려 폭포가 세 줄이 된다(유체의 받침 규칙).
+         · 폭포 뒤, 수면 높이에 **굴**을 파 둔다. 폭포 뒤로 걸어 들어갈 수 있다. */
+    const RIV = 12;                                  // 물길 길이(절벽 끝에서 굴 안쪽 벽까지)
+    const hill0 = cliffL + 5, hill1 = cliffL + 18;   // 물길이 파고드는 언덕
+    const clearAbove = (x, y) => {                   // 돋운 땅 위에 남은 나무·잎을 걷는다
+      for (let yy = y - 1; yy > y - 26 && yy > 3; yy--) {
+        const d = TILE_DEF[this.get(x, yy)];
+        if (d.tree || d.leaf || this.get(x, yy) === T.VINE) this.set(x, yy, T.AIR);
       }
-      this.surface[x] = rightY;
+    };
+    for (let x = cliffL; x <= hill1; x++) {
+      if (x >= cliffL + 2) {
+        // 절벽·대지 몸통 — 수면 아래 웅덩이 바닥보다 두 칸 더 깊게(물을 받쳐 준다)
+        for (let y = rightY; y <= leftY + POOL_D + 2; y++) {
+          this.set(x, y, y === rightY ? T.JUNGLEGRASS : y < rightY + 3 ? T.MUD : T.STONE);
+          this.setWall(x, y, 11);
+        }
+        this.surface[x] = rightY;
+      }
+      // 언덕 — 가운데가 불룩한 둔덕. 물길 굴의 지붕이 된다
+      if (x >= hill0) {
+        const h = 4 + Math.round(3 * Math.sin(Math.PI * (x - hill0) / (hill1 - hill0)));
+        for (let y = rightY - h; y < rightY; y++) {
+          this.set(x, y, y === rightY - h ? T.JUNGLEGRASS : y < rightY - h + 3 ? T.MUD : T.STONE);
+          this.setWall(x, y, 11);
+        }
+        this.set(x, rightY, T.MUD);
+        this.surface[x] = rightY - h;
+        clearAbove(x, rightY - h);
+      } else if (x >= cliffL + 2) clearAbove(x, rightY);
     }
+    // 물길 — 두 줄 깊이. 굴 구간은 머리 위 두 줄을 비워 굴을 낸다
+    for (let x = cliffL + 2; x < cliffL + RIV; x++) {
+      for (let y = rightY; y <= rightY + 1; y++) { this.set(x, y, T.WATER); this.setWall(x, y, 11); }
+      if (x >= hill0 + 1) for (let y = rightY - 2; y < rightY; y++) { this.set(x, y, T.AIR); this.setWall(x, y, 11); }
+      if (x < hill0 + 1) this.surface[x] = rightY;
+    }
+    // 절벽 끝으로 내민 아랫줄 물 — 폭포의 머리
+    for (const x of [cliffL, cliffL + 1]) {
+      for (let y = rightY - 3; y <= rightY; y++) if (this.get(x, y) !== T.AIR && !TILE_DEF[this.get(x, y)].solid) this.set(x, y, T.AIR);
+      this.set(x, rightY + 1, T.WATER); this.setWall(x, rightY + 1, 11);
+      for (let y = rightY + 2; y < leftY; y++) { this.set(x, y, T.FALLS); this.setWall(x, y, 11); }
+      for (let y = leftY; y <= leftY + POOL_D; y++) { this.set(x, y, T.WATER); this.setWall(x, y, 11); }
+      this.surface[x] = rightY + 1;
+    }
+    // 절벽 면의 이끼 — 폭포 물보라가 닿는 면이라 축축하다
+    for (let y = rightY + 3; y < leftY + 2; y++)
+      if (rng.chance(0.45)) this.set(cliffL + 2, y, T.MOSSSTONE);
+    // 폭포 뒤 굴 — 수면 높이 바닥(leftY 줄은 돌로 남긴다), 둥근 천장
+    const gx0 = cliffL + 2, gw = 5, gh = 5;
+    for (let dx = 0; dx < gw; dx++) {
+      const hh = Math.round(gh * Math.sqrt(1 - ((dx + 0.5) / gw) ** 2));
+      for (let k = 1; k <= hh; k++) { this.set(gx0 + dx, leftY - k, T.AIR); this.setWall(gx0 + dx, leftY - k, 11); }
+      const ceil = leftY - hh - 1;
+      if (this.get(gx0 + dx, ceil) === T.STONE) this.set(gx0 + dx, ceil, T.MOSSSTONE);
+    }
+    this.set(gx0 + gw - 1, leftY - 1, T.GLOWCAP);
+    this.set(gx0 + 2, leftY - 1, T.FERN);
     this.falls = this.falls || [];
     this.falls.push({ x: cliffL, y: (rightY + leftY) / 2 });
 
     /* --- 4. 호수: 폭포 바로 옆에 붙여서 판다 ---
        _carveBasin은 지표 근처를 _noWater로 걸러 내므로(지상엔 물을 안 놓는 게 기본값),
        지상 폭포호는 여기서 직접 판다. 먼 기슭은 얕고 폭포 밑이 가장 깊다 —
-       떨어지는 물이 파낸 웅덩이로 읽히고, 반대편은 걸어 들어갈 수 있는 여울이 된다. */
+       떨어지는 물이 파낸 웅덩이로 읽히고, 반대편은 걸어 들어갈 수 있는 여울이 된다.
+       깊이는 곧은 비탈이 아니라 **둥근 그릇**(사인 곡선) — 곧은 비탈은 계단처럼 보였다. */
     const lakeR = cliffL - 1, lakeL = lakeR - 20;
     const cells = [];
     for (let x = lakeL; x <= lakeR; x++) {
-      const d = Math.round(1 + (POOL_D - 1) * ((x - lakeL) / (lakeR - lakeL)));
+      const d = Math.round(1 + (POOL_D - 1) * Math.sin(Math.PI / 2 * ((x - lakeL) / (lakeR - lakeL))));
       for (let k = 1; k <= d; k++) this.set(x, leftY + k, T.AIR);
       for (let k = 0; k <= d; k++) { cells.push([x, leftY + k]); this.setWall(x, leftY + k, 11); }
     }
@@ -5047,11 +5106,12 @@ class World {
       for (let y = top - 1; y >= top - 26 && y > 4; y--) {
         const t = this.get(x, y);
         if (t === T.AIR || t === T.FALLS || t === T.LILY) continue;
-        if (TILE_DEF[t].solid) break;
+        if (TILE_DEF[t].solid || FLUID_KIND[t]) break;           // 그 위는 다른 층(절벽 위 물길의 물 등)
         this.set(x, y, T.AIR);
       }
-      // (2) 수련 — 수면 칸 자체에 띄운다
-      if (rng.chance(0.3)) this.set(x, top, T.LILY);
+      // (2) 수련 — 수면 칸 자체에 띄운다. 폭포가 꽂히는 열과 그 곁은 뺀다(물줄기가 잎을 뚫는다)
+      const nearFall = [-1, 0, 1].some(d => this.get(x + d, top - 1) === T.FALLS);
+      if (!nearFall && rng.chance(0.3)) this.set(x, top, T.LILY);
     }
   }
 
@@ -5131,6 +5191,25 @@ class World {
         }
       }
     }
+  }
+
+  /** 오목한 모서리 — 바닥 이끼 칸과 벽 이끼 칸 사이, 대각선으로만 굴에 닿는 돌 한 칸.
+      ★ 이 칸이 맨돌로 남으면 바닥 이끼와 벽 이끼가 모서리에서 뚝 끊겨 **직각으로** 만난다.
+      이끼 바위로 바꿔 두면 그리는 쪽(tileart _mossTile)이 모서리 한 점에서 둥글게 번진
+      이끼를 칠해 둘을 곡선으로 잇는다. 두 번 돌리면 새로 바뀐 칸 옆도 잡히지만 한 번이면
+      충분했다(두 번째 판에 바뀌는 칸이 거의 없었다). */
+  fillMossCorners() {
+    const host = t => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE;
+    const open = (x, y) => TILE_DEF[this.get(x, y)].solid !== 1;
+    const mos = (x, y) => this.get(x, y) === T.MOSSSTONE;
+    const put = [];
+    for (let x = 2; x < WW - 2; x++)
+      for (let y = this.surface[x] + 6; y < HELL_Y; y++) {
+        if (!host(this.get(x, y))) continue;
+        for (const [dx, dy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]])
+          if (open(x + dx, y + dy) && mos(x + dx, y) && mos(x, y + dy)) { put.push([x, y]); break; }
+      }
+    for (const [x, y] of put) this.set(x, y, T.MOSSSTONE);   // d1 실측 1416칸
   }
 
   scatterChests(rng) {
@@ -5267,11 +5346,13 @@ class World {
     this.fAcc = [0, 0];
     for (let k = WW; k < WW * (WH - 1); k++) {
       const t = this.tiles[k];
+      if (t === T.FALLS) { this.flv[k] = 8; continue; }
       if (!FLUID_FLOW[t]) continue;
       // 불러온 흐름은 우선 높게 잡는다 — 다시 재는 동안 낮아지기만 하므로 한 번에 끊기지 않는다
       this.flv[k] = FLUID_KIND[this.tiles[k - WW]] ? 8 : 7;
       this.fluidWake(k % WW, (k / WW) | 0);
     }
+    this.fallsAll();
   }
   fluidWake(x, y) {
     const q = this.fq;
@@ -5317,11 +5398,24 @@ class World {
       if (r) out.push(r);
     }
     // 다 재고 나서 한꺼번에 바꾼다 — 재는 도중에 바꾸면 줄 순서에 따라 한쪽으로만 번진다
+    const cols = new Set();
     for (const [k, t, lv] of out) {
       const x = k % WW, y = (k / WW) | 0;
       if (this.tiles[k] !== t) this.set(x, y, t);
       else this.fluidWake(x, y);
       this.flv[k] = lv;
+      // 떨어지는 줄기가 바뀌었거나 그 옆 물이 바뀌었다 — 이 칸과 양옆 열의 폭포 판정을 다시 한다
+      if (j === 0) for (const d of [-1, 0, 1]) cols.add(k + d);
+    }
+    for (const k of cols) this._fallsCol(k % WW, (k / WW) | 0);
+  }
+  /** 불러온 세계·막 만든 세계의 폭포를 한 번 판정한다(_fallsCol). 판정 도입 전 세이브의
+      짧은 폭포도 여기서 그냥 떨어지는 물로 바뀐다. */
+  fallsAll() {
+    for (let k = WW; k < WW * (WH - 1); k++) {
+      if (this.tiles[k] !== T.FALLS || this.tiles[k - WW] === T.FALLS) continue;   // 줄기마다 맨 윗칸에서 한 번
+      const x = k % WW, y = (k / WW) | 0;
+      this._fallsCol(x, y);
     }
   }
   /** 칸 k 가 무엇이 되어야 하는가 → [k, 타일, 수위] 또는 null(그대로). j: 0 물 · 1 용암 */
@@ -5370,10 +5464,69 @@ class World {
       if (flowing) return [k, T.AIR, 0];                 // 먹여 주던 것이 끊겼다 — 마른다
       return null;
     }
-    const nt = bestL >= 8 && bestK === 1 ? T.FALLS : FLUID_TILE[bestK];
+    // 떨어지는 민물은 폭포(FALLS)일 수도, 그냥 떨어지는 물(흐르는 물 수위 8)일 수도 있다 —
+    // 어느 쪽인지는 줄기 전체를 봐야 알므로 여기서는 둘 다 맞는 것으로 치고 _fallsCol 에 맡긴다
+    if (bestL >= 8 && bestK === 1 && (t === T.FALLS || t === T.FLOWWATER) && this.flv[k] === 8) return null;
+    const nt = FLUID_TILE[bestK];
     const lv = bestL;
     if (t === nt && this.flv[k] === lv) return null;
     return [k, nt, lv];
+  }
+  /** ★ 폭포 판정 — 떨어지는 민물 줄기 가운데 **4칸 이상 곧게 떨어지고, 양옆에 고인·흐르는
+      물이 없는** 토막만 폭포(FALLS)다. 나머지는 그냥 떨어지는 물(흐르는 물 수위 8)이다.
+      예전에는 떨어지는 민물이 한 칸이라도 전부 폭포였다 — 호숫가 턱에서 한 칸 흘러내린
+      물, 물웅덩이 옆구리를 타고 내린 물까지 물줄기 그림에 물보라가 튀고 몸을 아래로 밀었다.
+      옆의 **떨어지는** 물은 막는 물로 치지 않는다 — 두 칸 넓이 폭포가 서로를 막으면 안 된다. */
+  _fallsCol(x, y) {
+    const falling = k => this.tiles[k] === T.FALLS || (this.tiles[k] === T.FLOWWATER && this.flv[k] === 8);
+    let k = y * WW + x;
+    if (!falling(k)) return;
+    let top = k, bot = k;
+    while (top - WW > WW && falling(top - WW)) top -= WW;
+    while (bot + WW < WW * (WH - 1) && falling(bot + WW)) bot += WW;
+    const still = n => {
+      const t = this.tiles[n], kd = FLUID_KIND[t];
+      if (kd !== 1 && kd !== 2) return false;
+      return !(t === T.FALLS || (FLUID_FLOW[t] && this.flv[n] === 8));
+    };
+    let seg = [];
+    const flush = () => {
+      const want = seg.length >= 4 ? T.FALLS : T.FLOWWATER;
+      for (const n of seg) if (this.tiles[n] !== want) { this.set(n % WW, (n / WW) | 0, want); this.flv[n] = 8; }
+      seg = [];
+    };
+    for (let n = top; n <= bot; n += WW) {
+      if (still(n - 1) || still(n + 1)) {
+        flush();
+        if (this.tiles[n] !== T.FLOWWATER) { this.set(n % WW, (n / WW) | 0, T.FLOWWATER); this.flv[n] = 8; }
+      } else seg.push(n);
+    }
+    flush();
+  }
+  /** 동굴 호수를 폭포가 떨어지는 열(fx)까지 **한 덩어리로** 잇는다.
+      ★ 호수 안쪽도 본다. _carveBasin 은 바닥 높이가 한 칸 넘게 다른 열을 건너뛰어서, 호수 가운데
+        둔덕이 남아 물이 둘로 갈린 곳이 있었다(d1 1470 — 폭포가 둔덕 너머 작은 웅덩이에 떨어져
+        "폭포 따로, 호수 따로"). 그래서 호수 양 끝과 fx 사이 모든 열의 수면 줄·그 아래 한 줄을
+        물로 채우고, 수면 위로 솟은 낮은 둔덕(네 칸 안에 빈칸이 있는 것)은 걷어 낸다.
+      밑과 먼 끝(fx+dir)은 돌로 막아 새지 않게 한다. 유적에 닿으면 포기(false). */
+  _extendLake(lk, fx, dir) {
+    const x0 = Math.min(fx, lk.x0), x1 = Math.max(fx, lk.x1), top = lk.top;
+    for (let x = x0; x <= x1; x++)
+      for (let y = top - 4; y <= top + 2; y++) if (this.ruinAt(x, y) || this.get(x, y) === T.BEDROCK) return false;
+    const wet = t => t === T.WATER || t === T.LILY || t === T.PONDWEED;
+    for (let x = x0; x <= x1; x++) {
+      if (wet(this.get(x, top)) && wet(this.get(x, top + 1))) continue;
+      for (let y = top; y <= top + 1; y++) if (!wet(this.get(x, y))) this.set(x, y, T.WATER);
+      if (!this.solid(x, top + 2) && !wet(this.get(x, top + 2))) this.set(x, top + 2, T.STONE);
+      // 수면 위 둔덕 — 네 칸 안에 빈칸이 있으면 둔덕이다(없으면 벽이라 두고, 굴 지붕 밑 물이 된다)
+      let ya = -1;
+      for (let y = top - 1; y >= top - 4; y--) if (this.get(x, y) === T.AIR) { ya = y; break; }
+      if (ya >= 0) for (let y = ya + 1; y < top; y++) if (this.solid(x, y)) this.set(x, y, T.AIR);
+    }
+    if (fx < lk.x0 || fx > lk.x1)
+      for (let y = top; y <= top + 1; y++) if (!this.solid(fx + dir, y)) this.set(fx + dir, y, T.STONE);
+    lk.x0 = x0; lk.x1 = x1;
+    return true;
   }
   /** 세계를 막 만들었을 때 — 샘에서 나온 물이 폭포가 되어 떨어지고 물길이 되어 호수로
       들기까지 흐름을 끝까지 돌려 둔다. 첫 화면부터 물이 흐르고 있어야지, 들어가 보니

@@ -598,9 +598,7 @@ const TileArt = {
     const mc = MOSS_COL[w.biomeAt(clamp(tx, 0, WW - 1)).id] || '#6f9a4a';
     if (id === T.MOSSSTONE) {
       this.draw(c, T.STONE, v, sx, sy);
-      const open = (x, y) => TILE_DEF[w.get(x, y)].solid !== 1;
-      const m = (open(tx, ty - 1) ? 1 : 0) | (open(tx + 1, ty) ? 2 : 0) | (open(tx, ty + 1) ? 4 : 0) | (open(tx - 1, ty) ? 8 : 0);
-      if (m) c.drawImage(this._mossFace(m, mc, v), sx, sy);
+      c.drawImage(this._mossTile(w, tx, ty, mc), sx, sy);
       return true;
     }
     if (id === T.HANGMOSS) {
@@ -631,31 +629,78 @@ const TileArt = {
     }
     return false;
   },
-  /** 이끼 면 — 트인 쪽(m: 위1 · 오른2 · 아래4 · 왼8)마다 띠를 두른다. 모서리에서 띠끼리 이어진다 */
-  _mossFace(m, col, v) {
-    const key = m + col + v;
-    this._mf = this._mf || {};
-    if (this._mf[key]) return this._mf[key];
+  /** 이끼 바위 한 칸의 이끼 — ★ 칸 단위 띠가 아니라 **세계 좌표의 이끼 두께 장**을 칸마다 잘라 그린다.
+      예전(_mossFace)에는 트인 면마다 띠를 따로 둘러서 세 가지가 어색했다.
+        ① 바닥과 벽이 만나는 오목한 모서리에서 띠 둘이 **직각으로** 만났다(모서리 칸이 맨돌이었다).
+        ② 띠 두께를 칸마다 따로 굴려서 이웃 칸과 이음매에서 두께가 뚝 끊겼다.
+        ③ 이끼 칸 하나만 있으면 가장자리 한 줄만 초록이라 이끼보다 칠 자국처럼 보였다.
+      지금은 픽셀마다 "트인 면·트인 모서리에서 얼마나 가까운가"를 지수로 더해(f) 문턱을 넘으면
+      이끼다. 두 면이 만나는 곳은 두 항이 겹쳐 **둥글게 불룩** 차오르고, 대각선만 트인 모서리
+      칸은 모서리 한 점에서 번진 둥근 이끼가 생겨 바닥 이끼와 벽 이끼를 곡선으로 잇는다.
+      두께의 흔들림은 세계 좌표로 뽑아 이음매에서 이어지고, 이웃 이끼 칸이 많을수록 칸 안쪽까지
+      채운다(사방이 이끼면 거의 통째로 덮인다). 외톨이 칸도 두께 4~7px + 안쪽 뭉치 하나. */
+  _mossTile(w, tx, ty, col) {
+    const sol = (x, y) => TILE_DEF[w.get(x, y)].solid === 1;
+    const mos = (x, y) => w.get(x, y) === T.MOSSSTONE;
+    const oT = !sol(tx, ty - 1), oR = !sol(tx + 1, ty), oB = !sol(tx, ty + 1), oL = !sol(tx - 1, ty);
+    const cTL = !oT && !oL && !sol(tx - 1, ty - 1), cTR = !oT && !oR && !sol(tx + 1, ty - 1);
+    const cBR = !oB && !oR && !sol(tx + 1, ty + 1), cBL = !oB && !oL && !sol(tx - 1, ty + 1);
+    const nm = (mos(tx, ty - 1) ? 1 : 0) + (mos(tx + 1, ty) ? 1 : 0) + (mos(tx, ty + 1) ? 1 : 0) + (mos(tx - 1, ty) ? 1 : 0);
+    const key = tx + ',' + ty + ':' + [oT, oR, oB, oL, cTL, cTR, cBR, cBL].map(Number).join('') + nm + col;
+    this._mt = this._mt || new Map();
+    const hit = this._mt.get(key);
+    if (hit) return hit;
+    if (this._mt.size > 3000) this._mt.clear();
     const cv = document.createElement('canvas'); cv.width = cv.height = TS;
-    const g = cv.getContext('2d'), rng = new RNG('moss' + key);
-    const dk = shade(col, .7), lt = shade(col, 1.3);
-    const band = (horiz, at, inward) => {                  // at: 붙는 가장자리, inward: 안쪽 방향(+1/-1)
-      for (let q = 0; q < TS; q++) {
-        const d = 2 + Math.round(rng.range(0, 3));
-        for (let k = 0; k < d; k++) {
-          const p = at + inward * k;
-          g.fillStyle = k === 0 ? lt : k === d - 1 ? dk : col;
-          if (horiz) g.fillRect(q, p, 1, 1); else g.fillRect(p, q, 1, 1);
-        }
-      }
+    const g = cv.getContext('2d');
+    const dk = shade(col, .68), dk2 = shade(col, .5), lt = shade(col, 1.28), lt2 = shade(col, 1.5);
+    // 세계 좌표 값 잡음 — 5px 마디 사이를 부드럽게 잇는다(이웃 칸과 같은 값을 본다)
+    const vn = (u, s) => {
+      const i = Math.floor(u / 5), f = u / 5 - i, e = f * f * (3 - 2 * f);
+      return lerp(tileHash(i, s), tileHash(i + 1, s), e);
     };
-    if (m & 1) band(true, 0, 1);
-    if (m & 4) band(true, TS - 1, -1);
-    if (m & 8) band(false, 0, 1);
-    if (m & 2) band(false, TS - 1, -1);
-    // 트인 쪽이 아닌 면에도 얼룩 몇 점 — 이끼가 바위 속까지 번진 자국
-    for (let k = 0; k < 5; k++) { g.fillStyle = rng.chance(.5) ? col : dk; g.fillRect(rng.int(2, TS - 4), rng.int(2, TS - 4), rng.int(1, 3), rng.int(1, 2)); }
-    return (this._mf[key] = cv);
+    const T0 = 3.4 + nm * 1.3;
+    const gx0 = tx * TS, gy0 = ty * TS;
+    // 안쪽 뭉치 — 외톨이 칸에도 하나, 이웃 이끼가 많을수록 더
+    const blobs = [];
+    const nb = (oT || oR || oB || oL) ? 1 + (nm >> 1) : (nm >= 2 ? nm - 1 : 0);
+    for (let i = 0; i < nb; i++)
+      blobs.push([3 + tileHash(tx * 5 + i, ty * 3) * (TS - 6), 3 + tileHash(tx * 3, ty * 5 + i) * (TS - 6), 2.5 + tileHash(tx + i, ty - i) * 2.5 + nm * 0.5]);
+    const img = g.createImageData(TS, TS), px = img.data;
+    const rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+    const C = { lt2: rgb(lt2), lt: rgb(lt), c: rgb(col), dk: rgb(dk), dk2: rgb(dk2) };
+    for (let y = 0; y < TS; y++)
+      for (let x = 0; x < TS; x++) {
+        const gx = gx0 + x, gy = gy0 + y;
+        const ex = x + .5, ey = y + .5;
+        let f = 0;
+        if (oT) f += Math.exp(-ey / (T0 + 3.5 * vn(gx, 11)));
+        if (oB) f += Math.exp(-(TS - ey) / (T0 + 3.5 * vn(gx, 13)));
+        if (oL) f += Math.exp(-ex / (T0 + 3.5 * vn(gy, 17)));
+        if (oR) f += Math.exp(-(TS - ex) / (T0 + 3.5 * vn(gy, 19)));
+        const tc = T0 + 2.5;
+        if (cTL) f += Math.exp(-Math.hypot(ex, ey) / tc);
+        if (cTR) f += Math.exp(-Math.hypot(TS - ex, ey) / tc);
+        if (cBR) f += Math.exp(-Math.hypot(TS - ex, TS - ey) / tc);
+        if (cBL) f += Math.exp(-Math.hypot(ex, TS - ey) / tc);
+        for (const [bx, by, br] of blobs) f += 0.75 * Math.exp(-((ex - bx) ** 2 + (ey - by) ** 2) / (br * br));
+        const h = tileHash(gx, gy);
+        const fj = f + (h - 0.5) * 0.14;                       // 가장자리를 보풀처럼
+        let c = null;
+        if (fj > 0.37) {
+          // 트인 면에 가까울수록(f 큼) 밝고, 바위 쪽 끝은 어둡다
+          /* 밝은 색을 넓게 쓰면 형광 초록 판으로 보였다 — 가운데 색을 바탕으로 두고,
+             트인 면 바로 곁만 밝게, 잔점을 섞어 잎 무더기 결을 낸다 */
+          const h2 = tileHash(gx * 3 + 1, gy * 7 + 2);
+          c = f > 1.5 ? (h < 0.3 ? C.lt2 : C.lt) : f > 0.6 ? (h2 < 0.2 ? C.dk : h2 > 0.85 ? C.lt : C.c) : (h < 0.35 ? C.dk2 : C.dk);
+        } else if (fj > 0.27 && h < 0.35) c = C.dk;              // 바위로 번지는 잔점
+        if (!c) continue;
+        const o = (y * TS + x) * 4;
+        px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
+      }
+    g.putImageData(img, 0, 0);
+    this._mt.set(key, cv);
+    return cv;
   },
   /** 종유석(위에 붙음)·석순(바닥에 붙음) 한 줄의 i 번째 칸 — 줄 전체가 원뿔 하나가 되게 */
   _drip(id, i, n) {
