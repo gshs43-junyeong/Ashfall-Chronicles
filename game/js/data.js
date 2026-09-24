@@ -107,7 +107,11 @@ const T = {
   /* --- v1.1: 동굴 갈래(CAVE_TYPES) — 장식 다섯과 무너지는 자갈 하나 --- */
   MOSSSTONE: 172, HANGMOSS: 173, STALACTITE: 174, STALAGMITE: 175, GEODE: 176, FAULTSTONE: 177,
   /* --- v1.1: 지층 돌 둘 — 얕은 곳의 석회암, 깊은 곳의 화강암 --- */
-  LIMESTONE: 178, GRANITE: 179
+  LIMESTONE: 178, GRANITE: 179,
+  /* --- v1.1: 흐르는 액체(유체 물리 — world.js '유체' 절). 샘 바위는 폭포의 물이 나오는 곳 --- */
+  FLOWWATER: 180, FLOWSEA: 181, FLOWLAVA: 182, SPRING: 183,
+  /* --- v1.1: 물가 장식 — 부들 · 물풀 · 물가 조약돌 --- */
+  CATTAIL: 184, PONDWEED: 185, PEBBLES: 186
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -383,7 +387,21 @@ const TILE_DEF = [
   /* 지층 돌 — 돌과 똑같이 캐지고(석회암 1 · 화강암 2), 캐면 그 돌이 나와 다시 쌓을 수 있다.
      석회암은 얕은 곳과 종유 동굴 둘레에 짙다(석회암이 녹아 종유석이 자란다는 흉내). */
   { n: '석회암', c: '#9a9486', solid: 1, hard: 1, drop: 'limestone' },
-  { n: '화강암', c: '#7a6868', solid: 1, hard: 2, drop: 'granite' }
+  { n: '화강암', c: '#7a6868', solid: 1, hard: 2, drop: 'granite' },
+  /* --- 흐르는 액체 ---
+     고인 물(원천)에서 흘러나온 물. 원천과 달리 **수위**(world.flv, 1~8)가 있고 저장하지
+     않는다 — 수위는 원천에서 몇 칸 떨어졌나로 정해지는 값이라 불러온 뒤 다시 흘려 보면
+     똑같이 나온다. 떨어지는 민물은 새 타일이 아니라 폭포(FALLS)가 된다. */
+  { n: '흐르는 물', c: '#2f6f9f', solid: 0, hard: 99, liquid: 1, fluid: 1 },
+  { n: '흐르는 바닷물', c: '#12496e', solid: 0, hard: 99, liquid: 1, sea: 1, fluid: 1 },
+  { n: '흐르는 용암', c: '#e0561c', solid: 0, hard: 99, hurt: 26, fluid: 1 },
+  /* 샘 바위 — 물이 스며 나오는 바위. 폭포는 여기서 시작한다. 캐면 샘이 끊기고 폭포가
+     위에서부터 말라 내려간다. 예전 폭포는 천장 한가운데서 아무 까닭 없이 쏟아졌다. */
+  { n: '샘 바위', c: '#5a6a70', solid: 1, hard: 2, drop: 'stone' },
+  /* 물가 장식 — 부들은 물가 바닥에, 물풀은 물속 바닥에(그 칸도 물이다), 조약돌은 물가에 */
+  { n: '부들', c: '#7a8a4a', solid: 0, hard: 0, drop: 'deco_cattail', plant: 1, a: 1 },
+  { n: '물풀', c: '#4a8a5a', solid: 0, hard: 0, drop: 'deco_pondweed', liquid: 1, plant: 1 },
+  { n: '물가 조약돌', c: '#9a948a', solid: 0, hard: 0, drop: 'deco_pebbles', plant: 1, a: 1 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -787,6 +805,9 @@ const ITEMS = {
   deco_stalagmite: { n: '석순', i: '🪨', type: 'block', tile: T.STALAGMITE, stack: 999, deco: 1 },
   deco_geode:      { n: '수정 무리', i: '💎', type: 'block', tile: T.GEODE, stack: 999, deco: 1 },
   deco_mossstone:  { n: '이끼 낀 바위', i: '🪨', type: 'block', tile: T.MOSSSTONE, stack: 999, deco: 1 },
+  deco_cattail:    { n: '부들', i: '🌾', type: 'block', tile: T.CATTAIL, stack: 999, deco: 1 },
+  deco_pondweed:   { n: '물풀', i: '🌿', type: 'block', tile: T.PONDWEED, stack: 999, deco: 1 },
+  deco_pebbles:    { n: '물가 조약돌', i: '🪨', type: 'block', tile: T.PEBBLES, stack: 999, deco: 1 },
   /* 동굴 이끼 — 이끼 굴의 늘어진 이끼에서만 난다. 찧어 바르면 상처가 아문다 */
   cave_moss:     { n: '동굴 이끼', i: '🌿', type: 'mat', stack: 999, price: 40,
                    d: '빛이 안 드는 데서 물만 먹고 자랐다. 손에 쥐면 차갑고 축축하다.' },
@@ -2511,7 +2532,7 @@ function tileMat(id) { return TILE_MAT[id] || MAT_DEF; }
    색은 game.js drawGlow 가 그 타일 둘레에 덧칠하는 번짐 빛이다. 세기는 **둘이 같으면 안 된다** —
    아래 검사가 로드할 때 겹침을 콘솔에 알린다. 자수정(수정 무리)은 보랏빛, 수정 광맥은 푸른빛. */
 const LIGHT_SPEC = {
-  LAMPPOST: [14, '#ffe0a0'], TORCH: [13, '#ffb45a'], LAVA: [11, '#ff6a2a'],
+  LAMPPOST: [14, '#ffe0a0'], TORCH: [13, '#ffb45a'], LAVA: [11, '#ff6a2a'], FLOWLAVA: [10.8, '#ff7a34'],
   ORBITCORE: [10.5, '#7fe0ff'], COREGLASS: [10, '#ffb04a'], GLOWCAP: [9.5, '#6fe0c0'],
   CONDUIT: [9, '#6fd8ff'], RUNESTONE: [8.5, '#b89fff'], CRYSTAL: [8, '#7fd8e8'],
   DRAFTGLASS: [7.8, '#8fd8e8'], GEODE: [7.4, '#c08fff'], MINELAMP: [7, '#ffc070'],
@@ -2537,6 +2558,28 @@ const LIGHT_SPEC = {
   }
 }
 
+/* 유체 표(world.js '유체' 절). 종류: 1 민물 · 2 바닷물 · 3 용암.
+   수련·물풀은 민물, 해초는 바닷물 **원천**이다 — 그 칸도 물이라 옆으로 물을 먹여 준다. */
+const FLUID_KIND = new Uint8Array(TILE_DEF.length);
+const FLUID_SRC = new Uint8Array(TILE_DEF.length);
+const FLUID_FLOW = new Uint8Array(TILE_DEF.length);
+for (const k of ['WATER', 'FALLS', 'FLOWWATER', 'LILY', 'PONDWEED']) FLUID_KIND[T[k]] = 1;
+for (const k of ['SEAWATER', 'FLOWSEA', 'KELPPLANT']) FLUID_KIND[T[k]] = 2;
+for (const k of ['LAVA', 'FLOWLAVA']) FLUID_KIND[T[k]] = 3;
+for (const k of ['WATER', 'SEAWATER', 'LAVA', 'LILY', 'PONDWEED', 'KELPPLANT']) FLUID_SRC[T[k]] = 1;
+for (const k of ['FLOWWATER', 'FLOWSEA', 'FLOWLAVA']) FLUID_FLOW[T[k]] = 1;
+const FLUID_TILE = [0, T.FLOWWATER, T.FLOWSEA, T.FLOWLAVA];     // 종류 → 흐르는 타일
+/* 물이 밀고 들어갈 수 있는 칸 — 빈칸과 풀·꽃·고사리·조개(쓸려 간다). 나머지는 전부 막는다.
+   공기 주머니·방 공기가 특히 그렇다: 거기로 물이 들면 물속 숨 돌릴 곳과 가라앉은 방이
+   통째로 잠긴다. 부들·조약돌은 물가에 놓는 장식이라 쓸려 가면 물가에 남을 게 없다. */
+const FLUID_WASH = new Uint8Array(TILE_DEF.length);
+for (const k of ['AIR', 'FLOWER', 'WEED', 'FERN', 'SEASHELL']) FLUID_WASH[T[k]] = 1;
+const FLUID_OPEN = t => FLUID_WASH[t] === 1;
+/** 캐거나 부쉈을 때 그 자리에 남는 것 — 물 위의 수련, 물속의 물풀·해초는 캐도 물칸이 남는다.
+    예전에는 빈칸이 남아 수면에 구멍이 뚫렸다(물이 흐르게 된 지금은 옆 물이 곧 메우지만,
+    그 사이 한 칸이 비었다 차는 게 보이고, 호숫가 끝이면 영영 안 찬다). */
+const LEAVE_OF = { [T.LILY]: T.WATER, [T.PONDWEED]: T.WATER, [T.KELPPLANT]: T.SEAWATER };
+
 /** 장식을 놓을 때 무엇에 기대야 하는가 — 'floor' 바로 아래가 단단해야 · 'ceil' 바로 위가 단단해야.
     같은 장식 위·아래로는 이어 붙일 수 있다(석순 위에 석순, 종유석 아래 종유석, 이끼 아래 이끼).
     적지 않은 장식은 벽이든 뒷벽이든 아무 데나 기대면 된다(블록과 같은 규칙).
@@ -2545,7 +2588,8 @@ const LIGHT_SPEC = {
 const DECO_MOUNT = (() => {
   const m = {};
   for (const k of ['FLOWER', 'WEED', 'CACTUS', 'MUSHROOM', 'FERN', 'ORCHID', 'GLOWCAP', 'STALAGMITE', 'GEODE',
-                   'BONEHEAP', 'CANOPIC', 'TOOLPILE', 'SEASHELL']) m[T[k]] = 'floor';
+                   'BONEHEAP', 'CANOPIC', 'TOOLPILE', 'SEASHELL', 'CATTAIL', 'PEBBLES']) m[T[k]] = 'floor';
+  m[T.PONDWEED] = 'water';   // 고인 물 칸 안, 바닥 위에만 — 물 밖에 놓으면 마른 풀이 된다
   for (const k of ['STALACTITE', 'HANGMOSS', 'VINE', 'HYPHAE', 'MINELAMP', 'ICEBANNER']) m[T[k]] = 'ceil';
   return m;
 })();

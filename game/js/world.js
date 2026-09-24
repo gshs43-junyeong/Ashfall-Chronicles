@@ -207,7 +207,13 @@ class World {
   inB(x, y) { return x >= 0 && y >= 0 && x < WW && y < WH; }
   get(x, y) { return this.inB(x, y) ? this.tiles[y * WW + x] : T.BEDROCK; }
   wall(x, y) { return this.inB(x, y) ? this.walls[y * WW + x] : 0; }
-  set(x, y, t) { if (this.inB(x, y)) this.tiles[y * WW + x] = t; }
+  set(x, y, t) {
+    if (!this.inB(x, y)) return;
+    this.tiles[y * WW + x] = t;
+    /* 유체가 켜진 뒤(생성·불러오기 끝)에만 — 바뀐 칸과 그 네 이웃을 흐름 검사 줄에 세운다.
+       세계를 만드는 동안 수백만 번 불리므로 꺼져 있을 때는 이 비교 하나로 끝난다. */
+    if (this.fq) this.fluidWake(x, y);
+  }
   setWall(x, y, w) { if (this.inB(x, y)) this.walls[y * WW + x] = w; }
   solid(x, y) { const d = TILE_DEF[this.get(x, y)]; return d.solid === 1; }
   platform(x, y) { return TILE_DEF[this.get(x, y)].solid === 2; }
@@ -218,15 +224,45 @@ class World {
   liquidIn(px, py, w, h) {
     const x0 = Math.floor(px / TS), x1 = Math.floor((px + w - 0.01) / TS);
     const y0 = Math.floor(py / TS), y1 = Math.floor((py + h - 0.01) / TS);
-    let n = 0, tot = 0, flow = 0;
+    let n = 0, tot = 0, flow = 0, cur = 0;
     for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
       tot++;
-      const d = TILE_DEF[this.get(x, y)];
+      const t = this.get(x, y), d = TILE_DEF[t];
       if (!d.liquid) continue;
-      n++;
       if (d.flow) flow = 1;
+      /* 흐르는 물은 수위만큼만 잠긴 것으로 친다 — 발목 깊이 물에서 헤엄치게 되면 안 된다.
+         떨어지는 흐름(수위 8)은 폭포처럼 아래로 밀고, 옆으로 흐르는 물은 물살(cur)로 민다. */
+      if (FLUID_FLOW[t] && this.flv) {
+        const k = y * WW + x, lv = this.flv[k] || 8;
+        const topped = FLUID_KIND[this.tiles[k - WW]] === FLUID_KIND[t];
+        n += topped ? 1 : lv / 8;
+        if (lv >= 8) flow = 1;
+        else if (!cur) cur = this.currentAt(x, y);        // 겹친 칸 중 처음 흐르는 칸 하나로 — 더하면 칸 수만큼 세진다
+      } else n++;
     }
-    return { f: tot ? n / tot : 0, flow };
+    return { f: tot ? n / tot : 0, flow, cur };
+  }
+  /** 흐르는 칸의 물살 방향과 세기(-1~1) — 수위가 높은 쪽에서 낮은 쪽으로.
+      벽 쪽은 제 수위와 같다고 친다(벽으로 밀어붙이지 않는다). 빈칸 쪽은 0 — 그리로 쏟아진다. */
+  currentAt(x, y) {
+    const k = y * WW + x, t = this.tiles[k], kind = FLUID_KIND[t];
+    if (!FLUID_FLOW[t] || !this.flv) return 0;
+    const me = this.flv[k] || 8;
+    const side = n => {
+      const nt = this.tiles[n];
+      if (FLUID_KIND[nt] === kind) return this._flvAt(n);
+      return FLUID_OPEN(nt) ? 0 : me;
+    };
+    // 비탈 한 칸의 수위 차는 보통 2(양옆이 +1·-1)라 2로 나눈다 — 8로 나누면 물살이 4분의 1로 약해졌다
+    return clamp((side(k - 1) - side(k + 1)) / 2, -1, 1);
+  }
+  /** (tx, ty) 칸이 물이면 그 물기둥의 **맨 윗칸**을 찾는다(최대 lim 칸 위까지). 없으면 -1.
+      뜨는 것(드롭·헤엄치는 몸)이 수면 높이를 알아야 파도를 따라 오르내린다. */
+  surfaceRow(tx, ty, lim) {
+    if (!TILE_DEF[this.get(tx, ty)].liquid) return -1;
+    for (let y = ty; y > ty - lim && y > 1; y--)
+      if (!TILE_DEF[this.get(tx, y - 1)].liquid) return this.get(tx, y - 1) === T.AIR ? y : -1;
+    return -1;
   }
   /** 사각형이 겹치거나 맞닿은 타일 중 가장 큰 hurt값을 돌려준다. 1px 여유를 두는 이유 —
       고체 함정(큰 선인장 등)은 충돌 처리가 항상 틈 0으로 딱 붙여 놓기만 하지 절대 겹치게
@@ -574,6 +610,8 @@ class World {
     this.sweepPockets(60);           // 뒷공사가 남긴 한두 칸짜리 구멍을 메운다 — 물을 고치기 전에
     this.sealLiquids();
     this.decorateWater(rng);     // 물 위 초목 정리 + 수련 — 수면 높이가 확정된 뒤라야 한다
+    this.decoratePonds(rng);     // 동굴 웅덩이 — 수련·물풀·부들·조약돌, 둘레 이끼
+    this.springFalls();          // 샘 없는 폭포(정글 절벽)에 샘을 단다 — 유체를 켜기 전에
     /* 뒷공사(상자·제단·통행 보수)가 자갈 칸을 덮어쓴 자리는 목록에서 뺀다 — 남겨 두면
        아무것도 없는 벽을 캤을 때 무너질 자리를 찾다가 엉뚱한 곳이 열린다 */
     this.faults = (this.faults || []).filter(f => this.get(f.x, f.y) === T.FAULTSTONE);
@@ -581,6 +619,8 @@ class World {
     this.spawnX = (vx0 + vx1) >> 1;
     this.spawnY = vh - 3;
     this.fitObjects();
+    this.fluidInit();            // 여기서부터 물이 흐른다 — 생성 중에는 꺼 둔다(set 이 수백만 번 불린다)
+    this.fluidSettle();          // 샘에서 폭포·물길이 흘러 자리 잡을 때까지 미리 돌린다
     return this;
   }
 
@@ -4721,34 +4761,62 @@ class World {
       let top = WH;
       for (const [, cy] of cells) if (cy < top) top = cy;
       this.pools.push({ x: best.x, y: top, n: cells.length, big: 1 });
-      lakes.push({ c, x: best.x, top });
+      let x0 = WW, x1 = 0;
+      for (const [cx, cy] of cells) if (cy === top) { x0 = Math.min(x0, cx); x1 = Math.max(x1, cx); }
+      lakes.push({ c, x: best.x, top, x0, x1 });
       this._airPocket(best.x, top, cells, rng);
     }
 
-    // --- 폭포: 호수 위쪽 천장에서 물줄기를 떨어뜨린다 ---
-    // 호수 절반쯤에만 두되, 한 곳도 못 놓았으면 마지막에 한 번은 반드시 놓는다 —
-    // 세계에 따라 폭포를 한 번도 못 보는 일이 없도록.
+    /* --- 폭포: 호숫가 **옆벽의 샘 바위**에서 물이 나와 호수로 떨어진다 ---
+       ★ 예전에는 호수 위 아무 열에서 천장까지 물기둥을 세웠다. 큰 동굴은 천장이 높고
+         넓어서 물줄기가 동굴 한가운데 허공에서 뚝 떨어졌다(어디서 오는 물인지 모른다).
+         지금은 호수 가장자리 열 바로 옆이 **벽**인 높이를 찾아 그 벽 칸을 샘 바위로 바꾼다.
+         샘 → 한 칸 흘러나온 물 → 폭포 줄기 → 호수. 유체가 켜지면 샘이 이 줄기를 먹여 살린다.
+       호수 절반쯤에만 두되, 한 곳도 못 놓았으면 마지막에 한 번은 반드시 놓는다 —
+       세계에 따라 폭포를 한 번도 못 보는 일이 없도록. */
+    const host = t => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE || t === T.MUD;
+    /* 큰 동굴의 호수는 평평한 바닥 한가운데에 판 것이라 호수 바로 위에 벽이 있는 일이 드물다
+       (d1·d3 은 한 곳도 없었다 — 호숫가에서 벽까지 5~18칸). 그래서 호숫가에서 **열여섯 칸
+       바깥**까지 벽을 찾고 가까운 자리를 먼저 고른다. 물이 호수 밖 바닥에 떨어지면 거기서
+       흘러(최대 일곱 칸) 호수로 든다.
+       물길은 여기서 그리지 않고 세계를 다 만든 뒤 유체를 한 번 돌려 저절로 생기게 한다
+       (fluidSettle). 손으로 그리면 물리와 어긋난 칸이 켜지자마자 말라 버린다. */
+    const springAt = (lk) => {
+      let best = null;
+      for (let fx = lk.x0 - 16; fx <= lk.x1 + 16; fx++) {
+        const over = fx >= lk.x0 && fx <= lk.x1;                  // 호수 위로 바로 떨어지나
+        for (const dir of [-1, 1]) {
+          // 아래에서 위로 — 이 열이 빈칸인 동안, 옆이 벽이고 그 벽 밑도 벽인 자리
+          let floor = -1;
+          for (let y = lk.top - 1; y < lk.top + 3; y++) if (this.get(fx, y) === T.AIR && (this.solid(fx, y + 1) || this.get(fx, y + 1) === T.WATER)) { floor = y; break; }
+          if (floor < 0) continue;
+          for (let hy = floor; hy > floor - 30 && hy > 6; hy--) {
+            if (this.get(fx, hy) !== T.AIR) break;
+            if (floor - hy < 5) continue;                        // 낙차가 너무 짧다
+            if (!host(this.get(fx + dir, hy)) || !this.solid(fx + dir, hy + 1)) continue;
+            if (this.ruinAt(fx + dir, hy)) continue;
+            const dx = fx < lk.x0 ? lk.x0 - fx : fx > lk.x1 ? fx - lk.x1 : 0;   // 호숫가에서 몇 칸
+            const sc = Math.min(floor - hy, 14) + (over ? 12 : 0) - dx * 2;
+            if (!best || sc > best.sc) best = { fx, hy, dir, sc };
+          }
+        }
+      }
+      return best;
+    };
     let fell = 0;
     for (const pass of [0, 1]) {
       for (const lk of lakes) {
-        if (pass === 0 ? !rng.chance(0.6) : fell > 0) continue;
+        if (pass === 0 ? !rng.chance(0.75) : fell > 0) continue;
         if (lk.done) continue;
-        for (let k = 0; k < 18; k++) {
-          const fx = clamp(lk.x + rng.int(-6, 6), lk.c.x0 + 1, lk.c.x1 - 1);
-          if (this.get(fx, lk.top) !== T.WATER) continue;       // 물 위로만 떨어뜨린다
-          let cy = lk.top - 1;
-          while (cy > 6 && this.get(fx, cy) === T.AIR) cy--;    // 천장 찾기
-          const ceil = cy + 1;
-          if (ceil >= lk.top - 4) continue;                     // 낙차가 너무 짧다
-          if (this._noWater(fx, ceil)) continue;
-          for (let y = ceil; y < lk.top; y++) this.set(fx, y, T.FALLS);
-          // 폭포 앰비언트 음량을 거리로 매길 때 참조할 위치(music.js Ambient) — 타일을
-          // 매 프레임 훑는 대신 이 목록만 본다
-          this.falls = this.falls || [];
-          this.falls.push({ x: fx, y: (ceil + lk.top) / 2 });
-          lk.done = 1; fell++;
-          break;
-        }
+        const b = springAt(lk);
+        if (!b) continue;
+        this.set(b.fx + b.dir, b.hy, T.SPRING);
+        this.set(b.fx, b.hy, T.FLOWWATER);                        // 샘에서 한 칸 흘러나온 물 — 나머지는 fluidSettle
+        // 폭포 앰비언트 음량을 거리로 매길 때 참조할 위치(music.js Ambient) — 타일을
+        // 매 프레임 훑는 대신 이 목록만 본다
+        this.falls = this.falls || [];
+        this.falls.push({ x: b.fx, y: (b.hy + lk.top) / 2 });
+        lk.done = 1; fell++;
       }
     }
 
@@ -4987,6 +5055,84 @@ class World {
     }
   }
 
+  /** 동굴 웅덩이 꾸미기 — 물·지형이 다 정해진 뒤에 한 번.
+      수면에는 수련, 물속 바닥에는 물풀, 물가 바닥에는 부들·조약돌을 놓고, 웅덩이 둘레의
+      굴은 이끼로 덮는다(물이 있는 굴이 가장 축축하다). 바다·정글 폭포호는 따로 꾸민다. */
+  decoratePonds(rng) {
+    const natural = new Set();
+    for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
+    const host = t => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE ||
+                      t === T.LIMESTONE || t === T.GRANITE;
+    const wild = (x, y) => natural.has(this.walls[y * WW + x]) && !this.ruinAt(x, y);
+    const seen = new Uint8Array(WW * WH);
+    for (const pl of this.pools || []) {
+      if (pl.biome) continue;                                   // 바다·정글은 제 손질이 있다
+      // 웅덩이의 물칸을 모은다 — 기록된 수면 둘레에서 물칸 하나를 찾아 번진다
+      let sk = -1;
+      for (let dy = 0; dy <= 3 && sk < 0; dy++)
+        for (let dx = -6; dx <= 6; dx++) if (this.get(pl.x + dx, pl.y + dy) === T.WATER) { sk = (pl.y + dy) * WW + pl.x + dx; break; }
+      if (sk < 0 || seen[sk]) continue;
+      const cells = [], st = [sk];
+      seen[sk] = 1;
+      while (st.length && cells.length < 900) {
+        const k = st.pop(); cells.push(k);
+        for (const d of [-1, 1, -WW, WW]) {
+          const n = k + d;
+          if (!seen[n] && this.tiles[n] === T.WATER) { seen[n] = 1; st.push(n); }
+        }
+      }
+      if (cells.length < 4) continue;
+      const y0 = (cells[0] / WW) | 0;
+      if (y0 < this.surface[cells[0] % WW] + 8) continue;         // 지표 웅덩이는 건드리지 않는다
+      let bx0 = WW, bx1 = 0, by0 = WH, by1 = 0;
+      for (const k of cells) {
+        const x = k % WW, y = (k / WW) | 0;
+        bx0 = Math.min(bx0, x); bx1 = Math.max(bx1, x); by0 = Math.min(by0, y); by1 = Math.max(by1, y);
+      }
+      // 1) 이끼 — 웅덩이 둘레 굴. 가까울수록 짙다(물에서 멀어지면 마른 굴로 돌아간다)
+      const RX = 11, RY = 8;
+      for (let y = by0 - RY; y <= by1 + 3; y++)
+        for (let x = bx0 - RX; x <= bx1 + RX; x++) {
+          if (this.get(x, y) !== T.AIR || !wild(x, y)) continue;
+          const dx = x < bx0 ? bx0 - x : x > bx1 ? x - bx1 : 0, dy = y < by0 ? by0 - y : 0;
+          const p = 0.85 * (1 - Math.max(dx / RX, dy / RY));
+          if (p <= 0) continue;
+          if (host(this.get(x, y + 1)) && rng.chance(p)) this.set(x, y + 1, T.MOSSSTONE);
+          for (const sx of [x - 1, x + 1]) if (host(this.get(sx, y)) && rng.chance(p * 0.8)) this.set(sx, y, T.MOSSSTONE);
+          if (host(this.get(x, y - 1))) {
+            if (rng.chance(p)) this.set(x, y - 1, T.MOSSSTONE);
+            if (rng.chance(p * 0.5)) for (let k = 0, n = rng.int(1, 3); k < n && this.get(x, y + k) === T.AIR && this.get(x, y + k + 1) === T.AIR; k++) this.set(x, y + k, T.HANGMOSS);
+          }
+        }
+      // 2) 수면·물속
+      for (const k of cells) {
+        const x = k % WW, y = (k / WW) | 0;
+        const up = this.tiles[k - WW];
+        if (up === T.AIR) {
+          // 수면 — 폭포가 떨어지는 열과 그 옆에는 안 띄운다(물줄기가 잎을 뚫고 떨어진다)
+          const nearFall = [-1, 0, 1].some(d => this.get(x + d, y - 1) === T.FALLS);
+          if (!nearFall && rng.chance(0.24)) this.set(x, y, T.LILY);
+        } else if (up === T.WATER && this.solid(x, y + 1) && rng.chance(0.3)) this.set(x, y, T.PONDWEED);
+      }
+      // 3) 물가 — 수면 줄 양 끝에서 바깥으로 세 칸까지, 바닥이 있는 빈칸
+      let tx0 = WW, tx1 = 0;
+      for (const k of cells) if (((k / WW) | 0) === by0) { tx0 = Math.min(tx0, k % WW); tx1 = Math.max(tx1, k % WW); }
+      const sy = by0;
+      for (const dir of [-1, 1]) {
+        const ex = dir < 0 ? tx0 : tx1;
+        for (let step = 1; step <= 3; step++) {
+          const x = ex + dir * step;
+          // 물가 바닥 높이 — 수면과 같은 줄이거나 한두 칸 위
+          let fy = -1;
+          for (let y = sy + 1; y >= sy - 2; y--) if (this.get(x, y) === T.AIR && this.solid(x, y + 1)) { fy = y; break; }
+          if (fy < 0 || !wild(x, fy) || this.get(x, fy - 1) !== T.AIR) continue;
+          if (rng.chance(step === 1 ? 0.55 : 0.3)) this.set(x, fy, T.CATTAIL);
+          else if (rng.chance(0.35)) this.set(x, fy, T.PEBBLES);
+        }
+      }
+    }
+  }
+
   scatterChests(rng) {
     let placed = 0, tries = 0;
     while (placed < 165 && tries < 140000) {
@@ -5098,6 +5244,162 @@ class World {
     return this.lightBuf[ly * this.lbw + lx];
   }
 
+  /* ================= 유체 =================
+     물·바닷물·용암이 흐른다. 마인크래프트의 물을 본떴다.
+
+       · **원천**(고인 물·바닷물·용암, 그리고 그 칸을 겸하는 수련·해초·물풀)은 움직이지
+         않고 마르지도 않는다. 세계가 만든 호수·바다가 저절로 빠지는 일이 없다.
+       · 원천 옆이 비면 **흐르는 물**이 번진다. 수위 8에서 한 칸마다 1씩(용암은 2씩) 줄어
+         물은 일곱 칸, 용암은 세 칸까지 간다. 아래가 비면 옆으로 번지지 않고 **먼저 떨어진다**.
+       · 떨어지는 민물은 폭포(FALLS) 타일이다. 폭포는 위에 물이 있거나 **샘 바위**가 있어야
+         이어진다 — 샘을 캐거나 물줄기 중간을 막으면 그 아래가 위에서부터 말라 내려간다.
+       · 원천 둘 사이에 난 한 칸 구멍은 원천이 된다(무한 물). 물과 용암이 닿으면
+         용암 원천은 흑암석, 흐르는 용암은 돌이 된다.
+
+     ★ 수위(flv)는 **저장하지 않는다.** 원천에서 몇 칸 떨어졌는가로 정해지는 값이라
+       불러온 뒤 흐르는 칸을 전부 한 번 다시 재면 같은 모양으로 돌아온다(fluidInit).
+     ★ 검사는 **바뀐 칸 둘레만** 한다(fluidWake 가 세우는 줄). 세계 전체를 훑지 않으므로
+       물이 가만히 있는 동안에는 비용이 0이다. */
+  fluidInit() {
+    this.flv = new Uint8Array(WW * WH);
+    this.fq = [[], []];                                  // [물·바닷물, 용암]
+    this.fmark = [new Uint8Array(WW * WH), new Uint8Array(WW * WH)];
+    this.fAcc = [0, 0];
+    for (let k = WW; k < WW * (WH - 1); k++) {
+      const t = this.tiles[k];
+      if (!FLUID_FLOW[t]) continue;
+      // 불러온 흐름은 우선 높게 잡는다 — 다시 재는 동안 낮아지기만 하므로 한 번에 끊기지 않는다
+      this.flv[k] = FLUID_KIND[this.tiles[k - WW]] ? 8 : 7;
+      this.fluidWake(k % WW, (k / WW) | 0);
+    }
+  }
+  fluidWake(x, y) {
+    const q = this.fq;
+    for (let d = 0; d < 5; d++) {
+      const xx = x + (d === 1 ? -1 : d === 2 ? 1 : 0), yy = y + (d === 3 ? -1 : d === 4 ? 1 : 0);
+      if (xx < 1 || yy < 1 || xx >= WW - 1 || yy >= WH - 1) continue;
+      const k = yy * WW + xx;
+      for (let j = 0; j < 2; j++) if (!this.fmark[j][k]) { this.fmark[j][k] = 1; q[j].push(k); }
+    }
+  }
+  /** 물은 0.2초, 용암은 0.9초에 한 걸음 — 용암은 느리고 짧게 번진다 */
+  fluidTick(dt) {
+    if (!this.fq) return;
+    const STEP = [0.2, 0.9];
+    for (let j = 0; j < 2; j++) {
+      this.fAcc[j] += dt;
+      if (this.fAcc[j] < STEP[j]) continue;
+      this.fAcc[j] = 0;
+      if (this.fq[j].length) this._fluidStep(j);
+    }
+  }
+  /** 이 칸의 수위 — 원천·샘·폭포는 8, 흐르는 칸은 flv, 액체가 아니면 0 */
+  _flvAt(k) {
+    const t = this.tiles[k];
+    if (FLUID_SRC[t] || t === T.SPRING || t === T.FALLS) return 8;
+    return FLUID_FLOW[t] ? this.flv[k] : 0;
+  }
+  /** 흐르는 물이 옆으로 번지려면 밑이 받쳐 줘야 한다 — 고체·발판·막힌 칸·고인 원천.
+      밑이 흐르는 물이나 폭포면 받침이 아니다(폭포 줄기 칸마다 옆으로 물이 번지면 벽이 된다). */
+  _fluidHeld(t) {
+    if (FLUID_SRC[t]) return true;
+    if (FLUID_FLOW[t] || t === T.FALLS) return false;
+    return !FLUID_OPEN(t);
+  }
+  _fluidStep(j) {
+    const q = this.fq[j], mark = this.fmark[j];
+    const n = Math.min(q.length, 6000);                 // 한 걸음에 이만큼만 — 큰 범람도 프레임을 안 먹는다
+    const todo = q.splice(0, n);
+    const out = [];
+    for (const k of todo) {
+      mark[k] = 0;
+      const r = this._fluidEval(k, j);
+      if (r) out.push(r);
+    }
+    // 다 재고 나서 한꺼번에 바꾼다 — 재는 도중에 바꾸면 줄 순서에 따라 한쪽으로만 번진다
+    for (const [k, t, lv] of out) {
+      const x = k % WW, y = (k / WW) | 0;
+      if (this.tiles[k] !== t) this.set(x, y, t);
+      else this.fluidWake(x, y);
+      this.flv[k] = lv;
+    }
+  }
+  /** 칸 k 가 무엇이 되어야 하는가 → [k, 타일, 수위] 또는 null(그대로). j: 0 물 · 1 용암 */
+  _fluidEval(k, j) {
+    const t = this.tiles[k], kind = FLUID_KIND[t];
+    // 용암이 물에 닿았다 — 원천은 흑암석, 흐르는 용암은 돌. 물 쪽 걸음에서도 바로 굳힌다
+    if (kind === 3) {
+      for (const d of [-1, 1, -WW, WW]) {
+        const nk = FLUID_KIND[this.tiles[k + d]];
+        if (nk === 1 || nk === 2) return [k, t === T.LAVA ? T.OBSIDIAN : T.STONE, 0];
+      }
+    }
+    if (FLUID_SRC[t]) return null;
+    const flowing = FLUID_FLOW[t] || t === T.FALLS;
+    if (!flowing && !FLUID_OPEN(t)) return null;
+    // 이 걸음이 맡은 액체만 본다 — 흐르는 칸이 제 종류가 아니면 다른 걸음에 맡긴다
+    if (flowing && (kind === 3) !== (j === 1)) return null;
+
+    let bestK = 0, bestL = 0;
+    // 1) 위에서 떨어지는 것이 먼저다
+    const up = this.tiles[k - WW];
+    const upK = up === T.SPRING ? 1 : FLUID_KIND[up];
+    if (upK && (upK === 3) === (j === 1)) { bestK = upK; bestL = 8; }
+    else {
+      // 2) 옆에서 번져 오는 것 — 이웃이 받쳐져 있을 때만
+      let srcN = 0;
+      for (const d of [-1, 1]) {
+        const nt = this.tiles[k + d];
+        const nk = nt === T.SPRING ? 1 : FLUID_KIND[nt];
+        if (!nk || (nk === 3) !== (j === 1)) continue;
+        if (FLUID_SRC[nt] && nk !== 3 && (nt === T.WATER || nt === T.SEAWATER)) srcN++;
+        /* 받침: 원천은 밑이 고체든 물이든 받쳐진 것으로 친다(호숫가 턱으로 번진다). 흐르는
+           물은 밑이 **고체**일 때만 — 폭포가 호수에 떨어진 자리에서 수면 위로 얇은 물이
+           일곱 칸씩 번지면 호수 위에 물 한 겹이 더 뜬다. */
+        const bt = this.tiles[k + d + WW];
+        const held = FLUID_SRC[nt] || nt === T.SPRING ? this._fluidHeld(bt) : !FLUID_KIND[bt] && !FLUID_OPEN(bt);
+        if (!held) continue;
+        const l = this._flvAt(k + d) - (nk === 3 ? 2 : 1);
+        if (l > bestL || (l === bestL && nk < bestK)) { bestL = l; bestK = nk; }
+      }
+      // 무한 물 — 고인 물 둘 사이 칸은, 밑이 받쳐져 있으면 원천이 된다
+      if (srcN >= 2 && bestK !== 3 && this._fluidHeld(this.tiles[k + WW]))
+        return [k, bestK === 2 ? T.SEAWATER : T.WATER, 0];
+    }
+    if (bestL <= 0 || !bestK) {
+      if (flowing) return [k, T.AIR, 0];                 // 먹여 주던 것이 끊겼다 — 마른다
+      return null;
+    }
+    const nt = bestL >= 8 && bestK === 1 ? T.FALLS : FLUID_TILE[bestK];
+    const lv = bestL;
+    if (t === nt && this.flv[k] === lv) return null;
+    return [k, nt, lv];
+  }
+  /** 세계를 막 만들었을 때 — 샘에서 나온 물이 폭포가 되어 떨어지고 물길이 되어 호수로
+      들기까지 흐름을 끝까지 돌려 둔다. 첫 화면부터 물이 흐르고 있어야지, 들어가 보니
+      그제야 샘에서 물이 새기 시작하면 안 된다. 수백 걸음이면 끝난다(줄이 빈다). */
+  fluidSettle() {
+    for (let i = 0; i < 600 && (this.fq[0].length || this.fq[1].length); i++) {
+      if (this.fq[0].length) this._fluidStep(0);
+      if (i % 4 === 0 && this.fq[1].length) this._fluidStep(1);
+    }
+  }
+  /** 옛 세이브·생성된 폭포의 윗머리 — 폭포 꼭대기 위가 막혀 있으면 그 칸을 샘 바위로,
+      위가 트여 있으면(정글 절벽 폭포처럼 땅 위로 쏟아지는 것) 꼭대기 칸을 샘 바위로 바꾼다.
+      이게 없으면 유체가 켜지는 순간 "먹여 주는 것 없는 폭포"로 보고 통째로 말려 버린다.
+      이미 바꾼 곳은 위가 샘이라 아무 일도 안 일어난다. */
+  springFalls() {
+    for (let k = WW; k < WW * (WH - 1); k++) {
+      if (this.tiles[k] !== T.FALLS) continue;
+      const up = this.tiles[k - WW];
+      if (up === T.FALLS || up === T.SPRING || FLUID_KIND[up]) continue;
+      if (up === T.BEDROCK) continue;
+      const x = k % WW, y = (k / WW) | 0;
+      if (TILE_DEF[up].solid === 1) this.set(x, y - 1, T.SPRING);
+      else this.set(x, y, T.SPRING);
+    }
+  }
+
   /* ================= 저장 ================= */
   serialize() {
     return {
@@ -5149,6 +5451,9 @@ class World {
     // 동굴 갈래 도입 전 세이브 — 갈래가 없으면 모든 굴이 plain 이고, 무너질 자갈도 없다
     w.caveGrid = d.caveGrid ? Uint8Array.from(d.caveGrid) : null;
     w.faults = d.faults || [];
+    // 유체 — 샘 없는 옛 폭포에 샘을 달아 주고 켠다(springFalls 의 ★)
+    w.springFalls();
+    w.fluidInit();
     return w;
   }
 }
