@@ -2032,9 +2032,15 @@ class World {
     if (spots.length < 2) return;
     // 검사 범위는 유적 둘레 열두 칸. 입구 통로처럼 유적보다 위에 있는 자리가 끼면
     // 그만큼 위로 넓힌다 — 안 그러면 "나가는 길"을 검사에서 빼놓게 된다
+    /* ★ 옆으로도 같다 — 입구 통로는 유적 옆 바깥 열(x0-5)에서 좌우로 서른여섯 칸까지
+       오르내리며 내려오므로, 통로의 방이 상자(유적 ±12) 밖에 놓일 수 있다. 상자 밖 자리는
+       걸음이 닿을 수 없어 보수가 같은 굴을 한도까지 되팠다(실측 d3 버려진 광산: 193번,
+       그 사이 방 셋이 끝내 안 이어졌다). */
     const top = spots.reduce((m, p) => Math.min(m, p[1] - 3), y0 - 12);
-    const box = [Math.max(2, x0 - 12), Math.max(2, top),
-                 Math.min(WW - 3, x0 + w + 12), Math.min(WH - 3, y0 + h + 12)];
+    const left = spots.reduce((m, p) => Math.min(m, p[0] - 6), x0 - 12);
+    const right = spots.reduce((m, p) => Math.max(m, p[0] + 6), x0 + w + 12);
+    const box = [Math.max(2, left), Math.max(2, top),
+                 Math.min(WW - 3, right), Math.min(WH - 3, y0 + h + 12)];
     /* 오르내림은 대칭이 아니다 — 떨어지는 것은 공짜지만 올라오는 데는 발판이 있어야 한다.
        그래서 기준점을 바꿔 세 번 훑는다: ① 입구에서 모든 방으로 ② 가장 먼 방에서
        입구 쪽으로(= 돌아 나오는 길) ③ 다시 입구에서. 여기서 파는 계단은 발판 사다리라
@@ -2894,9 +2900,14 @@ class World {
     lo = side < 0 ? cxo - 36 : cxo; hi = side < 0 ? cxo : cxo + 36;
     dir = side; yGuard = tf + 3;
     run(tf);
-    // 유적 쪽으로 돌아 들어간다 — 벽 속에 들어갔다가 처음 빈 칸(방)을 만나면 멈춘다
-    dir = -side; stopAtAir = true; inWall = false;
-    for (let i = 0; i < 60 && !stop; i++) step(0);
+    /* 유적 쪽으로 돌아 들어간다 — **고른 방 안에 한 칸 들어설 때까지** 판다.
+       ★ "처음 빈 칸에서 멈춤"(stopAtAir)을 쓰면 안 된다. 유적 벽과 통로 사이에 자연 동굴이
+       끼어 있으면 그 굴에서 멈춰, 방 벽이 통째로 남았다. 그러면 통행 보수가 입구 목부터
+       유적 옆까지 두 칸짜리 발판 사다리를 세워 이었다(실측 d2 버려진 광산: 지표에서 방
+       바닥까지 100여 칸 — 출구처럼 보였지만 양쪽으로 드나드는 샛길일 뿐이었다). */
+    dir = -side;
+    const inRoom = () => (dir > 0 ? x >= T0.x + 1 : x <= T0.x + T0.w - 2);
+    for (let i = 0; i < 60 && !stop && !inRoom(); i++) step(0);
     return { x, f };
   }
 
