@@ -1476,6 +1476,12 @@ const G = {
       if (hi && idef(hi).type === 'machine') {
         if (w.inRig(mtx, mty)) { this.toast('채취탑 자리에는 놓을 수 없다', 'bad'); return; }
         if (!Factory.canPlace(w, mtx, mty)) { this.toast('그 자리에는 놓을 수 없다', 'bad'); return; }
+        // 벨트 말고는 몸이 있는 기계다 — 제 몸이나 몹이 선 칸에 놓으면 그 안에 낀다
+        const cell = { x: mtx * TS, y: mty * TS, w: TS, h: TS };
+        if (TILE_DEF[MACHINE[idef(hi).mach].tile].solid === 1 &&
+            (aabb(cell, p.rect()) || this.ents.some(e => !e.dead && aabb(cell, e.rect())))) {
+          this.toast('누가 서 있는 자리다', 'bad'); return;
+        }
         // 설치 방향은 플레이어가 보고 있는 쪽 — 벨트를 깔면서 걸으면 자연히 이어진다
         const dir = p.facing >= 0 ? 0 : 2;
         const placed = Factory.place(w, mtx, mty, idef(hi).mach, dir);
@@ -1956,11 +1962,14 @@ const G = {
     this.dayT = 12 * 60;
     for (const k in MACHINE) give(MACHINE[k].item, 10);   // 가방엔 기계만 — 재료는 줄 왼쪽 끝 자재 상자에
 
-    const X0 = CAMP_X1 + 8, LEN = 84;
+    const X0 = CAMP_X1 + 8, LEN = 84, AX = X0 + LEN + 12, BX = AX + 40, XEND = BX + 28;
     let gy = 0;
-    for (let x = X0 - 8; x <= X0 + LEN + 4; x++) gy = Math.max(gy, w.surface[clamp(x, 0, WW - 1)]);
+    for (let x = X0 - 8; x <= XEND; x++) gy = Math.max(gy, w.surface[clamp(x, 0, WW - 1)]);
     gy = Math.min(gy, WORLD_BOT - 20);
-    for (let x = X0 - 8; x <= X0 + LEN + 4; x++) {
+    // 시험장 자리에 걸린 채취탑은 걷는다(디버그 전용)
+    for (const o of w.objects) if (o.type === 'rig' && o.tx >= X0 - 16 && o.tx <= XEND + 8) o.gone = 1;
+    this._rigs = null;
+    for (let x = X0 - 8; x <= XEND; x++) {
       for (let y = gy - 30; y <= gy + 6; y++) {
         if (!w.inB(x, y)) continue;
         w.set(x, y, y < gy ? T.AIR : y === gy ? T.GRASS : T.DIRT);
@@ -2019,13 +2028,92 @@ const G = {
     // 8. 함정(위를 보게 — 줄을 따라 쏘지 않는다)
     put(74, 'dart', 3); put(76, 'flamejet', 3); put(78, 'frostjet', 3);
     put(81, 'battery', 0, { battery_empty: 4 });
+    this.buildDebugTowers(w, AX, BX, gy);
     Factory.buildNets(w);
 
     p.x = (X0 - 5) * TS; p.y = (gy - 3) * TS; p.vx = p.vy = 0;
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
     this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
     UI.refreshBag(); UI.refreshEquip();
-    this.toast('공장 확인 자리 — 오른쪽으로 기계 전 종류. 기계를 우클릭하면 기계 화면이 열린다', 'good');
+    this.toast('공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다', 'good');
+  },
+
+  /** ?debug=factory 의 여러 층 공장 둘 — A: 3층 금속 공장(광석 → 주괴 → 강철판·전선), B: 지하 탄광이 제 발전기를 먹이는 순환 발전소 + 방어 갑판.
+      층 사이는 위로 가는 벨트 기둥, 사람은 오른쪽(A)·왼쪽(B) 발판 사다리로 오간다. */
+  buildDebugTowers(w, AX, BX, gy) {
+    const P = (x, y, key, dir, fill) => {
+      const m = Factory.place(w, x, y, key, dir || 0);
+      if (!m) return null;
+      if (MACHINE[key].proj) m.own = 1;
+      if (fill) for (const id in fill) {
+        if (m.items) Factory.insert(w, m, id, fill[id]);
+        else if (m.in) Factory.bufAdd(m.in, id, fill[id]);
+      }
+      return m;
+    };
+    const shell = (x0, x1, top, holes, ladder, slabs) => {
+      for (let x = x0; x <= x1; x++) {
+        for (let y = top; y < gy; y++) { w.set(x, y, T.AIR); if (x > x0 && x < x1) w.setWall(x, y, 6); }
+        w.set(x, top, T.STEELPLATE);
+        for (const sy of slabs) w.set(x, sy, holes.includes(x) ? T.AIR : ladder.includes(x) ? T.PLATFORM : T.STEELPLATE);
+      }
+      for (const x of [x0, x1]) for (let y = top; y < gy; y++) w.set(x, y, y >= gy - 3 ? T.AIR : T.WALLSTONE);   // 양쪽 문
+      for (const x of ladder) for (const sy of slabs) { w.set(x, sy + 2, T.PLATFORM); }
+      for (const x of ladder) w.set(x, gy - 3, T.PLATFORM);
+      // 층마다 벽 횃불 — 벽지 친 실내라 햇빛이 안 든다
+      for (let y = gy - 4; y > top; y -= 5) for (let x = x0 + 3; x < x1; x += 6) if (w.get(x, y) === T.AIR) w.set(x, y, T.TORCH);
+    };
+    const feed = (m) => { if (m) m.feed = 1; return m; };
+
+    /* ---- A. 3층 금속 공장 ---- */
+    const A1 = gy - 1, A2 = gy - 6, A3 = gy - 11;
+    shell(AX, AX + 31, gy - 15, [AX + 14, AX + 16], [AX + 28, AX + 29], [gy - 5, gy - 10]);
+    // 1층 — 발전 · 철광 줄(왼쪽에서) · 동광 줄(오른쪽에서) → 위로 가는 기둥(AX+14)
+    P(AX + 2, A1, 'gen', 0, { coal: 60 }); P(AX + 3, A1, 'gen', 0, { fuel_brick: 30 });
+    const ab = P(AX + 4, A1, 'battery_hi'); if (ab) ab.e = 6000;
+    P(AX + 6, A1, 'pole'); P(AX + 22, A1, 'pole');
+    feed(P(AX + 8, A1, 'crate', 0, { iron_ore: 99 }));
+    P(AX + 9, A1, 'belt'); P(AX + 10, A1, 'smelter', 0, { coal: 60 }); P(AX + 11, A1, 'belt'); P(AX + 12, A1, 'belt'); P(AX + 13, A1, 'belt');
+    feed(P(AX + 20, A1, 'crate', 2, { copper_ore: 99 }));
+    P(AX + 19, A1, 'belt', 2); P(AX + 18, A1, 'smelter', 2, { coal: 60 }); P(AX + 17, A1, 'belt', 2); P(AX + 16, A1, 'belt_fast', 2); P(AX + 15, A1, 'belt', 2);
+    for (let y = A1; y > A2; y--) P(AX + 14, y, 'belt', 3);
+    // 2층 — 분류기: 동 주괴는 위로, 나머지(철 주괴)는 오른쪽 압축기로 → 강철판 상자
+    P(AX + 14, A2, 'belt'); P(AX + 15, A2, 'belt');
+    const sA = P(AX + 16, A2, 'sorter', 3); if (sA) sA.f = 'copper_bar';
+    P(AX + 17, A2, 'belt'); P(AX + 18, A2, 'press'); P(AX + 19, A2, 'belt'); P(AX + 20, A2, 'belt_fast'); P(AX + 21, A2, 'crate');
+    // 전주는 10칸 안이어야 서로 잇는다 — 1층 둘(6·22)은 16칸이라 가운데(13)에 하나 더 세워 한 망으로 묶는다
+    P(AX + 8, A2, 'pole'); P(AX + 13, A2, 'pole'); P(AX + 24, A2, 'pole'); P(AX + 26, A2, 'battery', 0, { battery_empty: 5 });
+    for (let y = A2 - 1; y > A3; y--) P(AX + 16, y, 'belt', 3);
+    // 3층 — 조립기(수지 미리)로 전선 → 상자, 지붕 위 풍차
+    P(AX + 16, A3, 'belt'); P(AX + 17, A3, 'belt'); P(AX + 18, A3, 'assembler', 0, { polymer: 60 }); P(AX + 19, A3, 'belt'); P(AX + 20, A3, 'crate');
+    P(AX + 10, A3, 'pole'); P(AX + 22, A3, 'pole');
+    P(AX + 6, gy - 16, 'windmill');
+
+    /* ---- B. 지하 탄광 순환 발전소 + 방어 갑판 ---- */
+    const B0 = gy + 4, B1 = gy - 1, B2 = gy - 7;
+    shell(BX, BX + 23, gy - 12, [], [BX + 2, BX + 3], [gy - 6]);
+    // 지하층 — 땅(gy)이 천장, 기둥 구멍(BX+9)과 사다리 구멍(BX+2~3)만 뚫는다. 벽과 바닥에 석탄층
+    for (let x = BX; x <= BX + 23; x++) {
+      for (let y = gy + 1; y <= gy + 9; y++) w.set(x, y, y <= B0 && x > BX && x < BX + 23 ? T.AIR : y === gy + 5 ? T.STEELPLATE : T.STONE);
+      w.set(x, gy, x === BX + 9 ? T.AIR : (x === BX + 2 || x === BX + 3) ? T.PLATFORM : T.STEELPLATE);
+      for (let y = gy + 1; y <= B0; y++) if (x > BX && x < BX + 23) w.setWall(x, y, 6);
+    }
+    for (let x = BX + 1; x <= BX + 16; x++) for (let y = gy + 6; y <= gy + 8; y++) w.set(x, y, T.COAL);
+    for (const x of [BX + 2, BX + 3]) w.set(x, gy + 2, T.PLATFORM);
+    for (let x = BX + 5; x < BX + 23; x += 6) w.set(x, gy + 1, T.TORCH);
+    P(BX + 4, B0, 'drill_e'); for (let x = BX + 5; x <= BX + 8; x++) P(x, B0, 'belt');
+    for (let y = B0; y > B1; y--) P(BX + 9, y, 'belt', 3);
+    P(BX + 6, gy + 1, 'pole');
+    // 1층 — 석탄 → 압축기 → 압축 연료가 벨트로 발전기에 들어간다(발전기가 드릴·압축기를 돌린다)
+    P(BX + 9, B1, 'belt'); P(BX + 10, B1, 'press'); P(BX + 11, B1, 'belt'); P(BX + 12, B1, 'belt'); P(BX + 13, B1, 'belt_fast');
+    P(BX + 14, B1, 'gen', 0, { fuel_brick: 4 });
+    const bb = P(BX + 16, B1, 'battery_hi'); if (bb) bb.e = 2000;
+    P(BX + 6, B1, 'pole'); P(BX + 18, B1, 'pole');
+    // 방어 갑판 — 대갈못 상자 둘이 포탑 둘을 먹이고, 가운데 전격 함정
+    feed(P(BX + 6, B2, 'crate', 0, { rivet: 200 })); P(BX + 7, B2, 'belt'); P(BX + 8, B2, 'belt'); P(BX + 9, B2, 'turret');
+    feed(P(BX + 18, B2, 'crate', 2, { rivet: 200 })); P(BX + 17, B2, 'belt', 2); P(BX + 16, B2, 'turret');
+    P(BX + 12, B2, 'trap'); P(BX + 12, gy - 9, 'pole');
+    P(BX + 12, gy - 13, 'windmill');
   },
 
   /** 공창 단말 — 로어를 읽고 설계도 조각을 얻는다 (단말마다 1회) */

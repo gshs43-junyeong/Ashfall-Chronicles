@@ -10,6 +10,7 @@ function dirTable(t) { return (t === 'belt' || t === 'belt_fast') ? DIR6 : DIR4;
 const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위'];
 
 const Factory = {
+  CHARGE_TICK: 6,          // 플레이어 전주 충전 — 한 틱(0.125초)에 6 = 초당 48
 
   /* ================= 조회 / 설치 / 철거 ================= */
   spec(m) { return MACHINE[m.t]; },
@@ -119,6 +120,7 @@ const Factory = {
     }
     w.nets = nets;
     w.wires = wires;
+    w.cover = cover;          // 칸 → 망 — 플레이어가 전주 곁에서 충전하는 데도 쓴다
     w.netDirty = false;
   },
 
@@ -187,11 +189,19 @@ const Factory = {
     const [dx, dy] = dirTable(m.t)[dir] || DIR4[dir & 3];
     const t = this.at(w, m.x + dx, m.y + dy);
     if (!t) return false;
-    return this.insert(w, t, id, 1) > 0;
+    if (this.insert(w, t, id, 1) <= 0) return false;
+    /* 벨트 위 물건은 어디서 언제 왔는지 적어 두고 render 가 한 틱에 걸쳐 미끄러뜨린다 — 칸 가운데서 칸 가운데로
+       뚝뚝 끊겨 보였다. 고속 벨트가 한 틱에 두 칸을 가면 출발점을 이어받아 두 칸을 한 번에 미끄러진다. */
+    if (t.it) {
+      const same = m.it && m.it.t0 === this.now;
+      t.it.fx = same ? m.it.fx : m.x; t.it.fy = same ? m.it.fy : m.y; t.it.t0 = this.now;
+    }
+    return true;
   },
 
   /* ================= 틱 ================= */
   tick(w, G) {
+    this.now = G.time;
     if (w.netDirty) this.buildNets(w);
     const ms = w.machines;
     if (!ms.size) return;
@@ -209,6 +219,16 @@ const Factory = {
       if (s.store) { n.e += m.e; n.emax += s.store; n.bats.push(m); }
       // 지난 틱에 실제로 일한 기계만 수요로 잡는다 — 놀고 있는 조립기가 발전기를 태우지 않게
       if (s.power && m.on && !n.off && m.act) n.dem += s.power;
+    }
+    /* 플레이어 충전 — 전주 반경 안에 서 있으면 그 망에서 전하를 받는다. 다른 기계와 같은 수요로 셈해
+       발전기 여유분 → 축전지 순으로 빠져나간다(공짜 충전이 아니다). 한 틱에 CHARGE_TICK 까지. */
+    const p = G.player;
+    let pn = null, pwant = 0;
+    if (p && !p.dead && w.cover) {
+      const k = w.cover.get(Math.floor(p.cy / TS) * WW + Math.floor(p.cx / TS));
+      pn = k === undefined ? null : nets[k];
+      if (pn && !pn.off) { pwant = Math.min(this.CHARGE_TICK, p.d.maxCharge - p.charge); if (pwant > 0) pn.dem += pwant; }
+      else pn = null;
     }
     for (const m of ms.values()) {
       const s = MACHINE[m.t];
@@ -241,10 +261,16 @@ const Factory = {
       }
       let sur = n.sur, drawn = n.drawn;
       for (const b of n.bats) {
-        const cap = MACHINE.battery.store;
+        const cap = MACHINE[b.t].store;              // ★ 제 용량 — 강화 축전지(14000)가 3000에서 멈췄었다
         if (sur > 0) { const c = Math.min(sur, cap - b.e); b.e += c; sur -= c; }
         else if (drawn > 0) { const c = Math.min(drawn, b.e); b.e -= c; drawn -= c; }
       }
+    }
+
+    if (pn && pwant > 0) {
+      const got = pwant * pn.sat;
+      p.charge = Math.min(p.d.maxCharge, p.charge + got);
+      if (got > 0) p.gridT = G.time;                // HUD 가 ⚡ 를 띄운다
     }
 
     /* ---- 2. 기계 동작 ---- */
@@ -329,7 +355,8 @@ const Factory = {
         for (const k in r.in) if ((m.in[k] || 0) < r.in[k]) { ok = false; break; }
         if (ok) { pick = i; break; }
       }
-      if (pick < 0) { m.st = '재료 없음'; m.prog = 0; m.act = 0; return; }
+      // 축전지는 방전 배터리가 없을 때가 평상시다 — '재료 없음' 이 아니라 전기를 담고 있다고 보인다
+      if (pick < 0) { m.st = s.store ? (m.e >= s.store ? '가득 참' : '축전 중') : '재료 없음'; m.prog = 0; m.act = 0; return; }
       const r = MRECIPES[pick];
       for (const k in r.in) this.bufTake(m.in, k, r.in[k]);   // 착수 시점에 재료를 잡아 둔다
       m.rec = pick; m.prog = 0;
@@ -411,7 +438,9 @@ const Factory = {
     this.bufTake(m.in, s.ammo, 1);
     const ang = angleTo(cx, cy, tgt.cx, tgt.cy);
     const dmg = s.dmg * (1 + G.player.level * 0.05);
-    const p = new Proj(cx, cy, Math.cos(ang) * 840, Math.sin(ang) * 840, dmg, 'player', 'arrow');
+    // 포탑은 몸이 있는 칸이라 한가운데서 쏘면 제 칸에 부딪혀 사라진다 — 총구(칸 반지름 + 3px) 밖에서 낸다
+    const mz = TS / 2 + 3;
+    const p = new Proj(cx + Math.cos(ang) * mz, cy + Math.sin(ang) * mz, Math.cos(ang) * 840, Math.sin(ang) * 840, dmg, 'player', 'arrow');
     G.projs.push(p);
     m.cd = s.cycle;
     m.st = '사격';
@@ -451,14 +480,14 @@ const Factory = {
     G.sfxAt(s.proj === 'fire' ? 'zap' : 'turret', m.x, m.y);
   },
 
-  /* ---- 전격 함정: 자기 칸에 들어온 적만 지진다 (플레이어는 안전) ---- */
+  /* ---- 전격 함정: 위에 올라선 적만 지진다 (플레이어는 안전) — 함정도 몸이 있는 칸이라 들어올 수는 없다 ---- */
   runTrap(w, m, s, G) {
     const step = this.sat(w, m);
     if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; }
     m.act = 1;
     m.cd -= step;
     if (m.cd > 0) { m.st = '대기'; return; }
-    const r = { x: m.x * TS, y: m.y * TS, w: TS, h: TS };
+    const r = { x: m.x * TS, y: (m.y - 1) * TS, w: TS, h: TS + 2 };   // 윗칸 + 윗면에 닿은 발
     let hit = 0;
     for (const e of G.ents) {
       if (!(e instanceof Enemy) || e.dead) continue;
@@ -498,7 +527,7 @@ const Factory = {
     const st = m.st || '';
     if (!m.on) return '#8a8a92';
     if (st === '가동' || st === '채굴 중' || st === '시추 중' || st === '이송' || st === '사격' ||
-        st === '방전' || st === '통과' || st === '분기' || st === '배출 중' || st === '가동 중') return '#5fc45f';
+        st === '방전' || st === '통과' || st === '분기' || st === '배출 중' || st === '가동 중' || st === '축전 중' || st === '가득 참') return '#5fc45f';
     if (st.indexOf('전력') >= 0 || st.indexOf('연료') >= 0 || st.indexOf('망') === 0 || st === '전면 정지') return '#e0563c';
     return '#e0b23c';
   },
@@ -614,8 +643,15 @@ const Factory = {
           }
         }
 
-        // 벨트/분류기가 물고 있는 아이템
-        if (m.it) Art.drawItem(c, m.it.id, sx + 4, sy + 3, 14);
+        // 벨트/분류기가 물고 있는 아이템 — 들어온 칸에서 지금 칸까지 한 틱에 걸쳐 미끄러진다(pushTo)
+        if (m.it) {
+          let ix = sx, iy = sy;
+          if (m.it.t0 !== undefined) {
+            const k = clamp((time - m.it.t0) / FAC_TICK, 0, 1);
+            ix = (m.it.fx + (m.x - m.it.fx) * k) * TS - camX; iy = (m.it.fy + (m.y - m.it.fy) * k) * TS - camY;
+          }
+          Art.drawItem(c, m.it.id, Math.round(ix) + 4, Math.round(iy) + 3, 14);
+        }
 
         // 연료 막대 (왼쪽 세로)
         if (m.fmax && m.fuel > 0) {

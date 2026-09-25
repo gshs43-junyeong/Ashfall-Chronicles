@@ -1961,7 +1961,8 @@ const UI = {
     $('#hp-fill').closest('.orb-row').classList.toggle('has-pw', !!usesPw);
     if (usesPw) {
       $('#pw-fill').style.width = (p.charge / d.maxCharge * 100) + '%';
-      $('#pw-text').textContent = `${Math.floor(p.charge)} / ${d.maxCharge}`;
+      const grid = p.gridT !== undefined && G.time - p.gridT < 0.4;   // 전주 곁에서 망으로 차는 중
+      $('#pw-text').textContent = `${grid ? '⚡ ' : ''}${Math.floor(p.charge)} / ${d.maxCharge}`;
     }
     /* 추진기 열 — 제트팩을 낀 동안에만. */
     $('#hp-fill').closest('.orb-row').classList.toggle('has-jet', !!d.jet);
