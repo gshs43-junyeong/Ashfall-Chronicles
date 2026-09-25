@@ -4678,6 +4678,7 @@ class World {
     if (!this.lightBuf || this.lightBuf.length < w * h) this.lightBuf = new Float32Array(w * h + 64);
     const L = this.lightBuf;
     L.fill(0, 0, w * h);
+    const sea = this.sea, seaAmb = 1.2 + dayLight * 0.1;   // 깊은 바다: 낮 2.7 · 밤 1.5 (/15)
     // 시드
     for (let x = x0; x <= x1; x++) {
       const s = this.surface[x];
@@ -4687,6 +4688,10 @@ class World {
         const k = (y - y0) * w + (x - x0);
         if (d.light) L[k] = d.light;
         if (t === T.AIR && y <= s && this.walls[y * WW + x] === 0) L[k] = Math.max(L[k], dayLight);
+        /* 바닷물은 깊이만큼 햇빛을 잃되 흩어진 빛이 남는다 — 수면이 화면(+14칸) 밖이면 스윕이
+           빛을 못 받아 수심 30칸부터 새까매졌고, 그 어둠에 바다 몹이 통째로 묻혔다. */
+        else if (d.sea && sea && y > sea.level)
+          L[k] = Math.max(L[k], dayLight - (y - sea.level) * 0.42, seaAmb);
       }
     }
     // 추가 광원 (플레이어 등)

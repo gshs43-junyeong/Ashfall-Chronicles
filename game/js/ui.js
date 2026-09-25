@@ -695,12 +695,20 @@ const UI = {
 
   refreshTree() {
     const p = G.player;
+    /* 잠긴 칸은 열린 칸과 선으로 바로 이어진 것만 보인다 — 트리 전체를 처음부터 펼치면
+       갈 길보다 못 갈 길이 더 많이 보인다. 열린 칸 = 배웠거나 지금 배울 수 있는 칸. */
+    const open = {};
+    for (const id in SKILLS) open[id] = (p.skills[id] || 0) > 0 || !this.lockReason(id);
+    const seen = { ...open };
+    for (const id in SKILLS) for (const r of (SKILLS[id].req || []))
+      if (open[r] || open[id]) seen[id] = seen[r] = true;
     $$('#tree-wrap .node').forEach(el => {
       const id = el.dataset.sk, sk = SKILLS[id], rank = p.skills[id] || 0;
       const locked = !!this.lockReason(id);
       const can = !locked && rank < sk.max && p.skillPts > 0;
       el.className = 'node' + (rank > 0 ? ' learned' : '') + (rank >= sk.max ? ' maxed' : '') +
-        (locked ? ' locked' : '') + (can ? ' can' : '') + (p.slots.includes(id) ? ' active' : '');
+        (locked ? ' locked' : '') + (can ? ' can' : '') + (p.slots.includes(id) ? ' active' : '') +
+        (seen[id] ? '' : ' unseen');
       el.querySelector('.nrank').textContent = `${rank}/${sk.max}`;
     });
     // 선 — 윗칸을 배운 순간부터 길이 열린 것으로 본다
@@ -708,6 +716,7 @@ const UI = {
       const a = (p.skills[ln.dataset.from] || 0) > 0, b = (p.skills[ln.dataset.to] || 0) > 0;
       ln.classList.toggle('on', a);
       ln.classList.toggle('full', a && b);
+      ln.classList.toggle('unseen', !seen[ln.dataset.from] || !seen[ln.dataset.to]);
     });
     this.refreshStatAlloc();
   },

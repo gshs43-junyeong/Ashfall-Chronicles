@@ -2,7 +2,7 @@
  *
  * 트레일러 영상 대신 게임이 실제로 쓰는 애셋을 그대로 움직인다.
  *   - bg/parallax_*.png  1920x400, 가로로 이음매 없이 반복되고 위쪽은 투명하다.
- *   - char/player_wanderer.png  1144x164 = 20x40 프레임 13개를 4배 확대한 가로 스트립. 간격 없음.
+ *   - char/player_wanderer.png  36x46 프레임 13개를 4배 확대한 가로 스트립(1872x184). 간격 없음.
  *
  * 그래서 영상 파일을 따로 만들 필요 없이, 게임과 같은 그림이 같은 방식으로 움직인다.
  */
@@ -49,7 +49,8 @@
  * 사방에 한 논리픽셀씩 여백이 붙어 80x160 -> 88x164 가 됐고, tools/mkplayer.py 가 잘린 망토·손·발을
  * 이어 그리며 128x184(발 아래 한 논리픽셀 여백)가 됐다. 여기 숫자가 어긋나면
  * 프레임이 밀려 사람이 옆 프레임을 물고 잘린다. */
-var PLAYER = { file: 'char/player_wanderer.png', fw: 128, fh: 184, walk: [2, 3, 4, 5], fps: 9 };
+/* 칸 폭은 그림에서 잰다(너비 / 13) — 시트 폭이 바뀌어도 칸이 어긋나 옆 장이 새지 않게. */
+var PLAYER = { file: 'char/player_wanderer.png', frames: 13, walk: [2, 3, 4, 5], fps: 9 };
 
   /* 플레이어가 설 가로 위치(논리 폭에 대한 비율). 좁아지면 글이 폭을 다 쓰고 버튼도
    * 줄바꿈되므로 더 바깥으로 민다. resize 때마다 다시 잡는다. */
@@ -124,7 +125,7 @@ var PLAYER = { file: 'char/player_wanderer.png', fw: 128, fh: 184, walk: [2, 3, 
      * 그 결과가 다시 캔버스 변환(예: 2.25배)으로 늘어난다 — 최근접 확대·축소를 두 번
      * 겹치면 픽셀 열이 들쭉날쭉 겹치거나 빠져서, 팔과 발이 잘려 보인다.
      * 배경 능선도 원본 크기로 그리므로 사람만 따로 줄일 이유가 없다. */
-    var w = PLAYER.fw, h = PLAYER.fh;
+    var w = img.width / PLAYER.frames, h = img.height;
     /* 글 반대쪽. 왼쪽(0.19)에 두었더니 제목·설명 줄과 버튼 상자에 그대로 파묻혔다.
      * 히어로 글은 전부 왼쪽에 붙으므로 오른쪽 트인 자리로 옮긴다. */
     var x = W * PLAYER_X;
@@ -144,7 +145,7 @@ var PLAYER = { file: 'char/player_wanderer.png', fw: 128, fh: 184, walk: [2, 3, 
     ctx.fill();
     ctx.restore();
 
-    ctx.drawImage(img, frame * PLAYER.fw, 0, PLAYER.fw, PLAYER.fh,
+    ctx.drawImage(img, frame * w, 0, w, h,
                   Math.round(x), Math.round(y), Math.round(w), Math.round(h));
   }
 
