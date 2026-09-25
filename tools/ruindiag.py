@@ -127,7 +127,9 @@ WALK_JS = r"""
     const lair = st0
       ? w.objects.find(o => o.type === 'tablet' && o.tablet === +st0[1])
       : w.objects.find(o => (o.type === 'lair' || o.type === 'altar') && inBox(o));
-    const chests = w.objects.filter(o => o.type === 'chest' &&
+    /* 흩뿌린 동굴 상자(cave)는 뺀다 — 둘레 사각형에 걸린 닫힌 굴 속 상자가 "유적 상자 5/6" 으로 세어졌다
+       (d1·d2 석판 유적 2, d2 부패한 둥지, d3 석판 유적 1 — 넷 다 자연 벽지 위, 유적 방 밖). */
+    const chests = w.objects.filter(o => o.type === 'chest' && !o.cave &&
       o.x / 22 > x0 - 4 && o.x / 22 < x1 + 4 && o.y / 22 > y0 - 4 && o.y / 22 < y1 + 6);
 
     /* ① 보스 자리에서 걸어 다닐 수 있는 범위. 여기서 유적 밖으로 나갈 수 있으면
