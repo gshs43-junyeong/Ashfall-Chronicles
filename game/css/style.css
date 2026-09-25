@@ -1161,3 +1161,12 @@ body.booting #title-screen{visibility:hidden}
 /* 탭 단추 — 핫바(가운데 약 520px)와 겹치는 폭에서는 핫바 **위** 오른쪽으로 올리고, 좁으면 이름을 뺀다 */
 @media (max-width:1180px){ #tabbar{bottom:78px} }
 @media (max-width:820px){ #tabbar{bottom:70px;right:8px} #tabbar .tb{width:36px;height:38px} #tabbar .tb-n{display:none} #tabbar .tb-ic{width:20px;height:20px} }
+
+/* 단추·소제목 앞 아이콘(itemart UISPEC — 새 게임 · 슬롯 · 타이틀) */
+.ui-ic{display:inline-block;width:18px;height:18px;margin-right:6px;vertical-align:-4px;
+  background-size:contain;background-repeat:no-repeat;flex:none}
+.ng-sec .ui-ic{width:16px;height:16px;vertical-align:-3px}
+.ng-mode{display:flex;align-items:center;justify-content:center}
+.ng-mode .ui-ic{width:24px;height:24px;vertical-align:middle}
+.ng-fields label .ui-ic{width:14px;height:14px;margin-right:4px;vertical-align:-2px}
+#title-screen button .ui-ic{width:20px;height:20px;vertical-align:-5px}
