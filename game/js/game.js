@@ -2951,8 +2951,11 @@ const G = {
     for (const k in spec.need) p.removeItem(k, spec.need[k]);
     this.world.upgradeVillage(lv + 1);
     while (this.vault.length < this.vaultCap()) this.vault.push(null);
-    /* 2단계에서 씨앗·괭이·낫을 가방에 바로 꽂아 주던 것을 없앴다. */
-    if (lv + 1 === 2) this.toast('마을 서쪽에 땅을 내주었다 — 울타리 옆 상자에 연장과 씨앗이 있다', 'good');
+    // 밭을 내주는 단계 — 연장과 씨앗을 바로 쥐여 준다(밭 한가운데 상자는 뜬금없어 보였다). 가방이 차면 발밑에
+    if (lv + 1 === 2) {
+      for (const [id, n] of FARM_KIT) { const it = makeItem(id, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); }
+      this.toast('마을 서쪽에 밭을 내주었다 — 괭이·낫·씨앗을 받았다', 'good');
+    }
     this.toast(`마을이 『${spec.n}』${josa(spec.n, '이', '가')} 되었다`, 'good');
     for (let i = 0; i < 40; i++) this.parts.push(new Part(p.cx + (Math.random() - .5) * 200, p.cy, '#ffe08a', -70, 1.2));
     UI.chapterCard({ sub: '마을 개선', title: spec.n, line: spec.d });
@@ -5929,12 +5932,12 @@ const G = {
       /* 손그림은 1프레임(정지)과 2프레임(움직임) 둘 다 받는다. */
       const im = this.spritesOn && Sprites.img.obj_fountain;
       if (im && im.width) {
-        const want = o.w / o.h;
-        const frames = Math.abs(im.width / im.height - want) < 0.03 ? 1
-          : Math.abs(im.width / 2 / im.height - want) < 0.03 ? 2 : 0;
+        // 장 수는 가로세로 비로 잰다 — tools/mkfountain.py 는 물방울이 길 따라 흐르는 8장(12fps)을 굽는다
+        const want = o.w / o.h, n = Math.max(1, Math.round(im.width / im.height / want));
+        const frames = Math.abs(im.width / n / im.height - want) < 0.03 ? n : 0;
         if (frames) {
           const fw = im.width / frames;
-          const fr = frames > 1 ? (((this.time * 3.5) | 0) % frames) : 0;
+          const fr = frames > 1 ? (((this.time * (frames > 2 ? 12 : 3.5)) | 0) % frames) : 0;
           c.save(); c.imageSmoothingEnabled = false;
           c.drawImage(im, fr * fw, 0, fw, im.height, Math.round(sx), Math.round(sy), o.w, o.h);
           c.restore();

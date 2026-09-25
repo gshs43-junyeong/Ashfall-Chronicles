@@ -1487,7 +1487,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 40,
         "count": 2,
         "foot": -0.75,
-        "side": -0.5
+        "side": -1
       },
       "npcw_oreman": {
         "file": "char/npc_oreman.png",
@@ -1495,7 +1495,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 40,
         "count": 2,
         "foot": -0.75,
-        "side": 0.5
+        "side": 2
       },
       "npcw_armsman": {
         "file": "char/npc_armsman.png",
@@ -1503,7 +1503,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 40,
         "count": 2,
         "foot": -0.75,
-        "side": -0.5
+        "side": 1
       },
       "frostbound": {
         "file": "char/frostbound.png",
@@ -2018,7 +2018,7 @@ window.SPRITE_MANIFEST = {
         "file": "obj/fountain.png",
         "w": 110,
         "h": 66,
-        "frames": 2
+        "frames": 8
       },
       "terminal": {
         "file": "obj/terminal.png",
