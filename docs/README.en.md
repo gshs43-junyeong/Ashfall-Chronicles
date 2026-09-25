@@ -13,7 +13,7 @@ The project is intentionally a single-player, no-install experience. A current d
 | Current scope | Count |
 |---|---:|
 | Sessions / chapters | 3 / 18 |
-| Items / recipes | 445 / 223 |
+| Items / recipes | 447 / 223 |
 | Enemies / bosses | 72 / 23 |
 | Achievements / machines | 75 / 26 |
 

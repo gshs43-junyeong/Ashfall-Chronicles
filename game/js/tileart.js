@@ -205,6 +205,11 @@ ART[T.GEODE] = { k: 'geode', c: '#a88fe8', a: 1, glow: 1 };
 ART[T.FAULTSTONE] = { k: 'fault', c: '#5f5e62' };   // 돌과 거의 같은 색 — 알갱이 결과 가는 금으로만 알아본다
 ART[T.LIMESTONE] = { k: 'strata', c: '#9a9486' };    // 석회암 — 밝고 결이 가로로 진다
 ART[T.GRANITE] = { k: 'granite', c: '#7a6868' };      // 화강암 — 굵은 알갱이가 점점이
+/* --- 운석 구덩이 --- 운석은 검은 쇳덩이에 엄지로 누른 듯한 오목 자국(공기에 녹아 파인 자리)과
+   쇠붙이 알갱이, 식다 만 붉은 금. 녹아 굳은 돌은 윤이 나는 검은 유리 같은 바닥. */
+ART[T.METEORITE] = { k: 'meteorite', c: '#3a3436' };
+ART[T.STARCRYSTAL] = { k: 'starcrystal', c: '#ffe6a8', a: 1, glow: 1 };
+ART[T.FUSEDROCK] = { k: 'fused', c: '#2e2a2e' };
 /* --- 7단계: 폭주로 --- */
 ART[T.SLAGSTEEL] = { k: 'slag', c: '#5a4a44' };
 ART[T.COREGLASS] = { k: 'crystal', c: '#e8b04a', glow: 1 };
@@ -2239,6 +2244,64 @@ const TileArt = {
           let x = rng.range(4, TS - 6), y = rng.range(2, 8);
           for (let k = 0; k < 8; k++) { R(x, y, 1, 1, dk2); x = clamp(x + rng.range(-1.2, 1.4), 1, TS - 2); y += 1.2; }
         }
+        break;
+      }
+      case 'meteorite': {           // 운석 — 오목 자국 · 쇠 알갱이 · 식다 만 금
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 5; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(.5) ? lt : dk);
+        for (let i = 0; i < 4; i++) {               // 오목 자국 — 위 가장자리는 그늘, 아래 가장자리는 빛
+          const x = rng.range(3, TS - 4), y = rng.range(3, TS - 4), r = rng.range(2.2, 3.6);
+          g.fillStyle = dk2; g.beginPath(); g.arc(ox + x, oy + y, r, 0, TAU); g.fill();
+          g.fillStyle = dk; g.beginPath(); g.arc(ox + x + .6, oy + y + .8, r * .75, 0, TAU); g.fill();
+          g.fillStyle = lt; g.beginPath(); g.arc(ox + x, oy + y, r, .3, 2.6); g.lineTo(ox + x, oy + y); g.fill();
+        }
+        for (let i = 0; i < 9; i++) R(rng.range(1, TS - 3), rng.range(1, TS - 3), rng.chance(.4) ? 2 : 1, 1, rng.chance(.5) ? '#c8ccd4' : '#8a8e98');
+        if (v === 1 || v === 3) {                   // 붉은 금 — 넷 중 둘에만, 짧게(칸마다 그으면 줄무늬가 된다)
+          let x = rng.range(4, TS - 6), y = rng.range(3, 9);
+          for (let k = 0; k < 6; k++) {
+            R(x, y, 1, 1, '#ff7a3a'); if (k % 3 === 0) R(x + 1, y, 1, 1, '#ffb070');
+            x = clamp(x + rng.range(-1.3, 1.3), 1, TS - 2); y += 1.4;
+          }
+        }
+        this._speck(g, ox, oy, rng, 10, dk2, lt2);
+        break;
+      }
+      case 'starcrystal': {         // 별빛 수정 — 가늘고 곧은 결정 다발, 끝에 별빛이 맺힌다
+        g.globalAlpha = .2; g.fillStyle = lt2;
+        g.beginPath(); g.arc(ox + TS / 2, oy + TS - 6, 9, 0, TAU); g.fill();
+        g.globalAlpha = 1;
+        const sets = [[[5, 11, 3, -2], [11, 20, 4, 0], [16, 14, 3, 2.5]],
+          [[7, 17, 4, -1], [14, 12, 3, 1.5], [18, 8, 2.5, 3]],
+          [[4, 9, 3, -2.5], [9, 15, 3.5, -.5], [15, 19, 4, 1]],
+          [[6, 13, 3.5, -1.5], [12, 17, 3, .5], [17, 11, 3, 2]]][v & 3];
+        for (const [bx, h, w, lean] of sets) {
+          const tipX = ox + bx + lean, tipY = oy + TS - h;
+          g.fillStyle = shade(base, .82);
+          g.beginPath(); g.moveTo(ox + bx - w / 2, oy + TS); g.lineTo(ox + bx + w / 2, oy + TS);
+          g.lineTo(tipX + w / 2, tipY + 3); g.lineTo(tipX, tipY); g.lineTo(tipX - w / 2, tipY + 3); g.closePath(); g.fill();
+          g.fillStyle = lt2;                        // 빛 받는 쪽 면
+          g.beginPath(); g.moveTo(ox + bx - w / 2, oy + TS); g.lineTo(ox + bx, oy + TS);
+          g.lineTo(tipX, tipY); g.lineTo(tipX - w / 2, tipY + 3); g.closePath(); g.fill();
+          R(bx + lean - .5, TS - h + 2, 1, h - 4, '#ffffff');
+          R(bx + lean - 1.5, TS - h - .5, 3, 1, '#fffbe8');   // 끝의 별빛(십자)
+          R(bx + lean - .5, TS - h - 1.5, 1, 3, '#fffbe8');
+        }
+        R(0, TS - 2, TS, 2, '#2e2a2e');             // 뿌리 — 녹아 굳은 바닥에 박힌 자리
+        break;
+      }
+      case 'fused': {               // 녹아 굳은 돌 — 검은 유리 바탕, 흘러 굳은 결과 공기 방울, 윤
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 4; i++) {
+          let x = rng.range(0, TS - 4), y = rng.range(1, TS - 2);
+          for (let k = 0; k < 10; k++) { R(x, y, 2, 1, rng.chance(.5) ? dk : shade(base, 1.12)); x += 1.8; y += rng.range(-.6, .6); }
+        }
+        for (let i = 0; i < 5; i++) {
+          const x = rng.range(2, TS - 3), y = rng.range(2, TS - 3);
+          R(x, y, 2, 2, dk2); R(x, y, 1, 1, lt2);
+        }
+        R(rng.range(2, 8), rng.range(2, 6), rng.range(5, 9), 1, '#6a6070');   // 유리 윤
+        R(rng.range(10, 16), rng.range(12, 18), rng.range(3, 6), 1, '#5a5060');
+        if (v === 1) R(rng.range(3, TS - 5), rng.range(3, TS - 5), 2, 1, '#c85a2a');   // 아직 붉은 한 점
         break;
       }
       case 'granite': {             // 화강암 — 바탕 위에 밝은 알갱이·검은 알갱이가 굵게 박힌다

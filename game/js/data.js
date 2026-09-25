@@ -134,7 +134,9 @@ const T = {
   /* --- v1.1: 물가 장식 — 부들 · 물풀 · 물가 조약돌 --- */
   CATTAIL: 184, PONDWEED: 185, PEBBLES: 186,
   /* --- v1.1: 눈 지대 소나무 잎 — 기둥은 여느 나무처럼 WOOD 다 --- */
-  PINELEAF: 187
+  PINELEAF: 187,
+  /* --- v1.1: 운석 구덩이 — 운석 덩이 · 그 위에 자란 별빛 수정 · 열에 녹아 굳은 바닥돌 --- */
+  METEORITE: 188, STARCRYSTAL: 189, FUSEDROCK: 190
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -428,7 +430,15 @@ const TILE_DEF = [
   /* 소나무 잎 — 눈 지대 나무. 잿빛에 먹히지 않는다(game.js ASH_TILE 에 없다): 늘푸른 바늘잎이라
      장이 넘어가도 지지 않는다. 윗칸이 트였으면 눈을 얹어 그린다(tileart drawConn). */
   { n: '소나무 잎', c: '#2f5a44', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
-    leafDrop: [['none', 40], ['wood', 26], ['leaf_pine', 34]] }
+    leafDrop: [['none', 40], ['wood', 26], ['leaf_pine', 34]] },
+  /* --- 운석 구덩이(game.js carveCrater) — 세계 생성에는 없고 운석이 떨어질 때만 생긴다 ---
+     운석은 곡괭이 3등급(지옥석과 같다): 하늘에서 떨어진 쇳덩이라 초반 곡괭이로 캐면 안 된다.
+     별빛 수정은 solid 0 — 구덩이 바닥에 솟아도 걸음을 막지 않는다(수정 무리와 같다).
+     녹아 굳은 돌은 캐면 그냥 돌이다 — 구덩이 모양을 보여 주는 겉옷일 뿐이다.
+     ★ 둘 다 아직 쓰는 제작법이 없다(재료로만 모인다). 쓰임은 다음 판에 붙인다. */
+  { n: '운석', c: '#3a3436', solid: 1, hard: 3, drop: 'meteorite', ore: 1 },
+  { n: '별빛 수정', c: '#ffe6a8', solid: 0, hard: 2, drop: 'star_crystal', a: 1 },
+  { n: '녹아 굳은 돌', c: '#2e2a2e', solid: 1, hard: 2, drop: 'stone' }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -707,6 +717,11 @@ const ITEMS = {
     d: '녹이면 오히려 더 차가워진다.' },
   tide_bar:    { n: '조수 주괴', i: '🌀', type: 'mat', stack: 999, price: 460,
     d: '두드릴 때마다 물결 무늬가 남는다.' },
+  /* 운석 구덩이에서만 나온다(game.js carveCrater). 아직 쓰는 곳이 없다 — 모아 두는 재료. */
+  meteorite:    { n: '운석 조각', i: '☄️', type: 'mat', stack: 999, price: 180,
+    d: '하늘에서 떨어진 쇳덩이. 아직 식지 않은 듯 손바닥이 따뜻하다.' },
+  star_crystal: { n: '별빛 수정', i: '✨', type: 'mat', stack: 999, price: 320,
+    d: '운석이 떨어진 자리에만 자란다. 밤이 되면 더 밝아진다.' },
   /* --- 유틸리티 탐지기 둘 ---
      장신구가 아니라 유틸리티 칸에 낀다. 산소통과 자리를 다투게 해서, 무엇을 하러
      가는지에 따라 갈아 끼우게 하려는 것이다 — 깊이 갈 때는 산소통, 캐러 갈 때는 탐지기. */
@@ -1967,7 +1982,8 @@ const MAT_TIER = {
   miner_tag: 6, lost_lamp: 6,
   orbit_gear: 7, orbit_plate: 7, gloom_pearl: 7, abyss_pearl: 7,
   star_ash: 8, void_lens: 8, abyss_core: 8, keeper_seal: 8,
-  glacium_ore: 7, tide_ore: 7, glacium_bar: 8, tide_bar: 8
+  glacium_ore: 7, tide_ore: 7, glacium_bar: 8, tide_bar: 8,
+  meteorite: 6, star_crystal: 7
 };
 function priceTier(d, id) {
   if (d.tier !== undefined) return clamp(d.tier, 0, 12);
@@ -2565,7 +2581,8 @@ const TILE_MAT = (() => {
   put('bone', 'BONEHEAP');
   put('stone', 'MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE');
   put('plant', 'HANGMOSS');
-  put('glass', 'GEODE');
+  put('glass', 'GEODE STARCRYSTAL FUSEDROCK');
+  put('metal', 'METEORITE');
   put('flesh', 'BLIGHTSAC');
   put('void', 'CORRUPTGRASS');
   return m;
@@ -2589,7 +2606,8 @@ const LIGHT_SPEC = {
   CIPHERSTONE: [2.9, '#ffe08a'], ROOT3: [2.8, '#ffe08a'], M_SWITCH: [2.6, '#ff5a5a'],
   GLACIUM: [2.5, '#9fd8e8'], HYPHAE: [2.4, '#8fe0c4'], TIDESTONE: [2.3, '#3fc0a8'],
   BLIGHTSAC: [2.2, '#c060c0'], BLACKDAMP: [2, '#a8c04a'], BLOOM3: [1.8, '#f0e8e0'],
-  HERB3: [1.6, '#bfe8ff'], SULFUR: [1.4, '#e8d04a']
+  HERB3: [1.6, '#bfe8ff'], SULFUR: [1.4, '#e8d04a'],
+  STARCRYSTAL: [7.2, '#ffe6a8'], METEORITE: [1.2, '#ff7a3a']
 };
 {
   const seen = {};
