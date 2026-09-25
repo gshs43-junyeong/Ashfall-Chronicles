@@ -4147,7 +4147,7 @@ const EGG_POOL = {
    craft(item) / */
 const CHAPTERS = [
   {
-    id: 0, title: '떨어진 별', sub: '서장', art: 'chapter_0_fallen_star',
+    id: 0, title: '떨어진 별', sub: '서 장', art: 'chapter_0_fallen_star',
     line: '별이 부서진 밤',
     intro: '한밤중에 하늘이 갈라졌다.\n' +
       '떨어진 것은 돌이 아니었다. 부딪히기 직전, 그것은 분명히 몸을 뒤틀어 피하려 했다.\n' +
@@ -4349,7 +4349,7 @@ const CHAPTERS = [
       '— 세 션 1 · 끝 —'
   },
   {
-    id: 9, title: '아무도 세우지 않은 도시', sub: '세션 2 · 서장', art: 'chapter_9_nobody_built',
+    id: 9, title: '아무도 세우지 않은 도시', sub: '세션 2 · 서 장', art: 'chapter_9_nobody_built',
     line: '손자국이 하나도 없다',
     intro: '여명 마을을 손보다가 보린이 먼저 알아챘다.\n' +
       '벽돌에 정 자국이 없다. 기둥에 이음매가 없다. 어느 것 하나 사람 손이 닿은 흔적이 없다.\n\n' +
@@ -4530,7 +4530,7 @@ const CHAPTERS = [
   },
   /* ================= 세 션 3 ================= */
   {
-    id: 15, title: '물이 지운 쪽', sub: '세션 3 · 서장', art: 'chapter_15_drowned',
+    id: 15, title: '물이 지운 쪽', sub: '세션 3 · 서 장', art: 'chapter_15_drowned',
     line: '서쪽 끝, 지도가 끊기는 자리',
     intro: '설계실이 꺼지고 나흘째, 서쪽에서 바람이 달라졌다.\n\n' +
       '소금 냄새다. 이 대륙에는 바다가 없다고 배웠는데.\n\n' +
