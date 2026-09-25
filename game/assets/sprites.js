@@ -7,6 +7,9 @@ const Sprites = {
   img: {}, meta: null, loaded: 0, total: 0,
   // index.html의 <script src=".../sprites.js?v=NNN">에서 버전을 그대로 물려받는다.
   _ver: (document.currentScript && document.currentScript.src.split('?')[1]) || '',
+  /** CSS·DOM 에서 그림을 부를 때도 같은 ?v= 를 붙인다 — 배포는 /play/assets/*.png 를 1년 immutable 로 캐시해서,
+      ?v= 없는 주소는 시트를 다시 구워도 옛 그림이 나온다(옛 32칸 시트가 36칸 자리로 늘어나 뚱뚱해 보였다). */
+  url(path) { return path + (this._ver ? '?' + this._ver : ''); },
 
   async ready() {
     /* 매니페스트는 <script> 로 미리 들어와 있다(assets/sprites-manifest.js) — 사연: docs/code-history.md#h137 */

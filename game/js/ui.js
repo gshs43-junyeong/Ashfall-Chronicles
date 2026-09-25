@@ -26,7 +26,7 @@ const UI = {
     if (this.dlg) this.setIcon($('#dlg-portrait'), this.npcPortrait(this.dlg.npcId));
   },
   npcPortrait(id) {
-    if (this.npcArt && this.npcArt[id]) return `assets/npc/portrait_${this.npcArt[id]}.png`;
+    if (this.npcArt && this.npcArt[id]) return Sprites.url(`assets/npc/portrait_${this.npcArt[id]}.png`);
     return Art.npcUrl(id);
   },
   open: null,          // 열린 패널 id
@@ -875,7 +875,7 @@ const UI = {
       }
       for (const ch of chapterBlock.chapters) {
         const state = ch.id < g.chapter ? 'done' : ch.id === g.chapter ? 'cur' : 'locked';
-        // 세션 2의 sub는 "세션 2 · 제1장" 꼴이라, 세션 2 탭 안에서는 앞의 "세션 2 · "가 줄마다 반복돼 군더더기다 — 사연: docs/code-history.md#h93
+        // 세션 2의 sub는 "세션 2 · 제 1 장" 꼴이라, 세션 2 탭 안에서는 앞의 "세션 2 · "가 줄마다 반복돼 군더더기다 — 사연: docs/code-history.md#h93
         const sub = ch.sub.replace(/^세션\s*\d+\s*·\s*/, '');
         /* 아직 안 열린 장은 **제목도 가린다.** — 사연: docs/code-history.md#h94 */
         const titleText = state === 'locked' ? `${sub} · ???` : `${sub} · ${ch.title}`;
@@ -1884,7 +1884,7 @@ const UI = {
   /** 장 도입·마무리 이야기. */
   storyScene(ch, kind, done) {
     const art = $('#cc-art');
-    if (G.spritesOn && ch.art) { art.style.backgroundImage = `url(assets/bg/${ch.art}.png)`; art.classList.add('show', 'story'); }
+    if (G.spritesOn && ch.art) { art.style.backgroundImage = `url(${Sprites.url(`assets/bg/${ch.art}.png`)})`; art.classList.add('show', 'story'); }
     const raw = (kind === 'outro' ? ch.outro : ch.intro) || '';
     const lines = raw.split('\n\n').map(s => s.trim()).filter(Boolean);
     // 장을 끝낼 때는 마지막에 "다음이 궁금해지는 한 줄"을 따로 한 장 더 넘긴다
@@ -1918,7 +1918,7 @@ const UI = {
     $('#cc-line').textContent = ch.line;
     // 장 도입 일러스트
     const art = $('#cc-art');
-    if (G.spritesOn && ch.art) { art.style.backgroundImage = `url(assets/bg/${ch.art}.png)`; art.classList.add('show'); }
+    if (G.spritesOn && ch.art) { art.style.backgroundImage = `url(${Sprites.url(`assets/bg/${ch.art}.png`)})`; art.classList.add('show'); }
     else art.classList.remove('show');
     const el = $('#chapter-card');
     el.classList.add('show');

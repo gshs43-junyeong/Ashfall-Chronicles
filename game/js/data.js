@@ -3058,7 +3058,7 @@ function achHidden(a) { return !!a.h || a.t === 'hard'; }
 /* 업적 70개 — 사연: docs/code-history.md#h18 */
 const ACHIEVEMENTS = [
   // ---------------- 여정 (스토리) ----------------
-  { id: 'a_ch1', cat: 'story', t: 'easy', i: '✦', n: '첫 조각', d: '제1장이 끝났다.',
+  { id: 'a_ch1', cat: 'story', t: 'easy', i: '✦', n: '첫 조각', d: '제 1 장이 끝났다.',
     check: g => g.chapter >= 2 },
   { id: 'a_village', cat: 'story', t: 'easy', i: '🏚', n: '되살아난 마을', d: '여명 마을에 다시 불이 켜졌다.',
     check: g => !!g.villageUnlocked },
@@ -4167,7 +4167,7 @@ const CHAPTERS = [
       '"…네 오른손. 빛나고 있는 거, 알고는 있니?"'
   },
   {
-    id: 1, title: '잿빛 야영지', sub: '제1장', art: 'chapter_1_ash_village',
+    id: 1, title: '잿빛 야영지', sub: '제 1 장', art: 'chapter_1_ash_village',
     line: '혼자이지 않기를 꿈꾼 것',
     intro: '미라가 알려준 사실은 이렇다.\n' +
       '별 조각은 홀로 남으면 잠들고, 잠들면 꿈을 꾼다. 그리고 그 꿈이 주변 물질에게\n' +
@@ -4192,7 +4192,7 @@ const CHAPTERS = [
       '미라: "하나야. 다섯 중에 하나."'
   },
   {
-    id: 2, title: '뼈가 쌓인 곳', sub: '제2장', art: 'chapter_2_bone_pit',
+    id: 2, title: '뼈가 쌓인 곳', sub: '제 2 장', art: 'chapter_2_bone_pit',
     line: '잠든 것들의 꿈을 대신 꾼 조각',
     intro: '두 번째 조각은 캠프가 서기 훨씬 전부터 있던 묘실에 떨어졌다.\n' +
       '조각은 제 꿈을 꾸지 않았다. 그 아래 잠들어 있던 것들의 꿈을 대신 꿨다.\n' +
@@ -4213,7 +4213,7 @@ const CHAPTERS = [
       '그는 재가 되기 전에 한 마디를 더 남겼다. "셋째는 스스로 걸어올 것이다."'
   },
   {
-    id: 3, title: '부패한 숲', sub: '제3장', art: 'chapter_3_corrupt_forest',
+    id: 3, title: '부패한 숲', sub: '제 3 장', art: 'chapter_3_corrupt_forest',
     line: '굶주림을 꿈꾼 것',
     intro: '세 번째 조각은 동쪽 숲 한가운데 떨어져 굶주림을 꿈꿨다.\n' +
       '그래서 숲이 먹기 시작했다. 나무가 짐승을 먹고, 짐승이 흙을 먹고,\n' +
@@ -4233,7 +4233,7 @@ const CHAPTERS = [
       '미라: "굶주림은 병이 아니야. 그냥, 아무도 먹여주지 않은 거지."'
   },
   {
-    id: 4, title: '서리 왕좌', sub: '제4장', art: 'chapter_4_frost_throne',
+    id: 4, title: '서리 왕좌', sub: '제 4 장', art: 'chapter_4_frost_throne',
     line: '조각을 재우지 않은 사람',
     intro: '네 번째 조각은 사람이 먼저 주웠다.\n\n' +
       '실비아는 그것을 재우지 않았다. 깨어 있는 조각을 맨손에 쥔 채 서른 해를 버텼고,\n' +
@@ -4255,7 +4255,7 @@ const CHAPTERS = [
       '"가져가. 대신 하나만 약속해. …아래에 있는 건 깨우지 마."'
   },
   {
-    id: 5, title: '별이 잠든 땅', sub: '제5장', art: 'chapter_5_sleeping_star',
+    id: 5, title: '별이 잠든 땅', sub: '제 5 장', art: 'chapter_5_sleeping_star',
     line: '꿈꿀 필요가 없었던 조각',
     intro: '마지막 조각은 가장 깊이 떨어졌다. 하필이면, 별이 도망쳐 온 바로 그 자리로.\n\n' +
       '그 조각은 꿈을 꾸지 않았다. 꿈꿀 필요가 없었으니까.\n' +
@@ -4277,7 +4277,7 @@ const CHAPTERS = [
       '구름이 걷힌 자리에, 아무도 본 적 없던 것들이 떠 있었다.'
   },
   {
-    id: 6, title: '구름 위의 계단', sub: '제6장', art: 'chapter_6_sky_stair',
+    id: 6, title: '구름 위의 계단', sub: '제 6 장', art: 'chapter_6_sky_stair',
     line: '이 일은 처음이 아니었다',
     intro: '섬들이 떠 있다. 누군가 아주 오래전에 저것들을 띄워 놓고 갔다.\n\n' +
       '동쪽 숲의 거대한 나무가 위로 이어져 있다. 자란 게 아니라 심어진 것이다 —\n' +
@@ -4298,7 +4298,7 @@ const CHAPTERS = [
       '"가라. 우리가 무엇을 잘못했는지, 네 눈으로 직접 읽어라."'
   },
   {
-    id: 7, title: '최초의 유적', sub: '제7장', art: 'chapter_7_first_ruin',
+    id: 7, title: '최초의 유적', sub: '제 7 장', art: 'chapter_7_first_ruin',
     line: '우리보다 잘하라',
     intro: '땅 밑에 봉인된 유적이 셋 있다. 석판 셋이 같은 이야기를 한다.\n\n' +
       '별은 전에도 떨어졌다. 그때도 누군가 다섯 조각을 모아 하늘로 돌려보냈다.\n' +
@@ -4372,7 +4372,7 @@ const CHAPTERS = [
       '"누가 이걸 만들었는지보다, 왜 아무도 안 남았는지가 더 궁금한데."'
   },
   {
-    id: 10, title: '지하 공창', sub: '세션 2 · 제1장', art: 'chapter_10_underworks',
+    id: 10, title: '지하 공창', sub: '세션 2 · 제 1 장', art: 'chapter_10_underworks',
     line: '멈추라고 가르친 사람이 없었다',
     intro: '통로 끝은 공장이었다. 세 층으로 겹친, 아직 살아 있는 공장.\n\n' +
       '기계들은 여전히 캐고 있다. 몇백 년째, 아무도 시키지 않았는데.\n' +
@@ -4399,7 +4399,7 @@ const CHAPTERS = [
       '— 공창의 설계 핵을 얻었다. 이제 작업대와 용광로를 뜯어고칠 수 있다 —'
   },
   {
-    id: 11, title: '굴뚝이 선 마을', sub: '세션 2 · 제2장', art: 'chapter_11_chimneys',
+    id: 11, title: '굴뚝이 선 마을', sub: '세션 2 · 제 2 장', art: 'chapter_11_chimneys',
     line: '하루아침에 늘어난 것',
     intro: '공창의 문을 잠그고 올라온 뒤, 마을이 달라지는 데는 열흘도 안 걸렸다.\n\n' +
       '케이드가 설계도 조각을 하나씩 꿰어 맞출 때마다, 보린의 대장간 옆으로 낯선 것이 하나씩 늘었다.\n' +
@@ -4426,7 +4426,7 @@ const CHAPTERS = [
       '그날 밤에도 발밑은 계속 울렸다. 마을이 조용해질수록, 그 소리는 오히려 더 또렷하게 들렸다.'
   },
   {
-    id: 12, title: '폭주로', sub: '세션 2 · 제3장', art: 'chapter_12_runaway',
+    id: 12, title: '폭주로', sub: '세션 2 · 제 3 장', art: 'chapter_12_runaway',
     line: '결재자 없음 — 자동 승인',
     intro: '마을의 조립기 소동이 가라앉은 뒤에도 발밑은 계속 울렸다.\n' +
       '케이드가 바닥에 귀를 대고 한참 있다가 일어났다. "…아래에 하나 더 있어."\n\n' +
@@ -4453,7 +4453,7 @@ const CHAPTERS = [
       '『당신들이 다시 왔다. 그러면 이제 멈춰도 되는 것인가.』'
   },
   {
-    id: 13, title: '헤파', sub: '세션 2 · 제4장', art: 'chapter_13_hepha',
+    id: 13, title: '헤파', sub: '세션 2 · 제 4 장', art: 'chapter_13_hepha',
     line: '멈추면 아무도 남지 않는다',
     intro: '가장 아래 격실에 첫 번째가 있었다.\n\n' +
       '헤파. 사람이 손으로 만든 마지막 기계이자, 기계가 만들지 않은 유일한 기계.\n' +
@@ -4555,7 +4555,7 @@ const CHAPTERS = [
       '케이드: "…아니. 여긴 저 사람들이 **버린** 거야."'
   },
   {
-    id: 16, title: '내려갈수록 밝은 것', sub: '세션 3 · 제1장', art: 'chapter_16_lanterns',
+    id: 16, title: '내려갈수록 밝은 것', sub: '세션 3 · 제 1 장', art: 'chapter_16_lanterns',
     line: '빛이 닿은 적 없는 곳에서 빛나는 것들',
     intro: '수면에서 열 칸만 내려가도 캄캄하다. 그런데 더 내려가면 다시 밝아진다.\n\n' +
       '초롱을 단 것들이 산다. 해파리도, 아귀도, 저 혼자 빛을 만든다.\n' +
@@ -4580,7 +4580,7 @@ const CHAPTERS = [
       '물속에서 쓸 것을 물 밖에서 만드는 자리가 하나 더 생겼다.'
   },
   {
-    id: 17, title: '가라앉은 종', sub: '세션 3 · 제2장', art: 'chapter_17_bell',
+    id: 17, title: '가라앉은 종', sub: '세션 3 · 제 2 장', art: 'chapter_17_bell',
     line: '물이 대신 대답한다',
     intro: '가장 깊은 골에 종탑이 서 있다. 물속인데 종이 녹슬지 않았다.\n\n' +
       '케이드가 손을 대자 물이 먼저 울렸다.\n' +
