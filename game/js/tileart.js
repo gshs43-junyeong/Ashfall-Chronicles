@@ -701,7 +701,7 @@ const TileArt = {
           if (s > 4 && !inL(x, y)) break;
           pts.push([x, y]);
         }
-        return pts;
+        return pts.slice(0, Math.max(2, pts.length - 4));   // 칸 끝에서 6px 앞에서 멈춘다 — 잘린 단면이 안 보이게
       };
       const fr = [];
       for (const deg of [176, 165, 152, 139, 126, 112, 98, 84, 70, 56, 43, 30, 17, 5]) {
@@ -715,30 +715,38 @@ const TileArt = {
             for (let i = 2; i < n - 1; i += 2) {
               const [x, y] = pts[i], [nx, ny] = pts[i + 1];
               const ang = Math.atan2(ny - y, nx - x), t = i / n;
-              const len = (1 - t * 0.7) * (8 + rr.range(0, 3));
+              // 끝으로 갈수록 짧아져 잎줄기 끝이 뾰족하게 모인다
+              let len = Math.min((1 - t * 0.6) * (8 + rr.range(0, 3)), (n - i) * 1.1);
               const la = ang + (pass ? -1 : 1) * 1.2;
+              const ex = l => x + Math.cos(la) * l, ey = l => y + Math.sin(la) * l + l * 0.45;
+              while (len > 1 && !inL(ex(len), ey(len))) len -= 1;   // 잎 칸 밖으로 나가는 작은 잎은 줄인다(잘리지 않게)
+              if (len <= 1) continue;
               g.strokeStyle = pass ? (i % 4 ? lt : lt2) : (i % 4 ? dk : base);
               g.lineWidth = 1.7;
-              g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(la) * len, y + Math.sin(la) * len + len * 0.45); g.stroke();
+              g.beginPath(); g.moveTo(x, y); g.lineTo(ex(len), ey(len)); g.stroke();
             }
           }
-        for (const pts of list) {
+        for (const pts of list) {                         // 잎줄기 — 끝 쪽 3분의 1은 가늘게
           if (pts.length < 2) continue;
-          g.strokeStyle = dk2; g.lineWidth = 1.6;
-          g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
-          for (const [x, y] of pts) g.lineTo(x, y);
-          g.stroke();
+          const cut = Math.floor(pts.length * 0.66);
+          g.strokeStyle = dk2;
+          for (const [from, to, lw] of [[0, cut, 1.6], [cut, pts.length - 1, 0.9]]) {
+            if (to <= from) continue;
+            g.lineWidth = lw; g.beginPath(); g.moveTo(pts[from][0], pts[from][1]);
+            for (let i = from + 1; i <= to; i++) g.lineTo(pts[i][0], pts[i][1]);
+            g.stroke();
+          }
         }
       };
       paint(fr);
-      // 덜 덮인 칸(잎이 30% 미만) — 닻 쪽에서 그 칸을 가로지르는 짧은 잎줄기 둘
+      // 거의 빈 칸(잎이 12% 미만) — 닻 쪽에서 그 칸을 가로지르는 짧은 잎줄기 둘
       const id = g.getImageData(0, 0, CW, CH).data, extra = [];
       for (let j = 0; j < H; j++)
         for (let i = 0; i < W; i++) {
           if (mask[j * W + i] !== '1') continue;
           let n = 0;
           for (let y = 0; y < TS; y += 2) for (let x = 0; x < TS; x += 2) if (id[((j * TS + y) * CW + i * TS + x) * 4 + 3] > 40) n++;
-          if (n / ((TS / 2) * (TS / 2)) >= 0.3) continue;
+          if (n / ((TS / 2) * (TS / 2)) >= 0.12) continue;   // 거의 빈 칸에만 — 흔하면 잎줄기가 엇갈려 어지럽다
           const cx = (i + 0.5) * TS, cy = (j + 0.5) * TS;
           const a = Math.atan2(-(cy - O[1]), cx - O[0] || 0.01);
           const sx = cx - Math.cos(a) * 9, sy = cy + Math.sin(a) * 9;
