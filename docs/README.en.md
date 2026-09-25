@@ -1,6 +1,6 @@
 # Ashfall Chronicles — English Project Guide
 
-[← Back to the README](../README.md) · [Game assessment and roadmap](game-assessment.md)
+[← Back to the README](../README.md)
 
 ## At a glance
 
@@ -95,7 +95,6 @@ Edit **only** `game/` for game changes. `site/play/` is generated output and is 
 
 ## Documentation map
 
-- [Game assessment and roadmap](game-assessment.md) — English/Korean evaluation with prioritized next steps.
 - [Story and session rules](story-and-sessions.md) — Korean operational rules for adding chapters and sessions.
 - [v1.1 changelog](v1.1-changelog.md) — what v1.1 adds (Korean).
 - [System requirements](system-requirements.md) — Korean environment and runtime notes.

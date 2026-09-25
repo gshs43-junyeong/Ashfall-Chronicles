@@ -119,9 +119,8 @@ function rollChest(tier, rng, source) {
   const gold = !ruin && tier >= 6;   // 큰 동굴의 황금 상자만 기존의 고보상을 유지한다
   const spec = CHEST_LOOT[clamp(lootTier, 1, 5)];
   const out = [];
-  /* v1.1: 황금 상자(gold) 특혜가 지나쳤다 — 최고 등급이 5배 이상 잘 뜨는 luckTier 9에 재료는 100% 확정으로 최대 수량까지 나와서, 하나만 열면 한
-     단계를 통째로 건너뛰었다.
-      6까지 돌려 달라는 요청을 받고 올렸다.)
+  /* 황금 상자(gold)는 장비 2~3개 · 등급 6까지다 — 재료를 확정·최대 수량으로 주면 하나만 열어도
+     한 단계를 통째로 건너뛴다.
      사연: docs/code-history.md#h23 */
   const nGear = ruin ? 1 : gold ? rng.int(2, 3) : rng.int(1, 2);
   for (let i = 0; i < nGear; i++) out.push(rollGear(rng.pick(spec.gear), rng, ruin ? 0 : gold ? 6 : tier));
@@ -206,7 +205,7 @@ class Player extends Ent {
     this.hp = 100; this.mp = 50;
     this.gold = 0;
     this.bag = new Array(BASE_BAG_SIZE).fill(null);
-    /* util(유틸리티) 칸 — v1.1. 산소통처럼 "싸우는 데 쓰는 물건이 아닌데 몸에 지녀야 하는 것"의 자리다. 그 맞바꿈은 재미가 아니라 그냥 벌이라서 칸을 따로
+    /* util(유틸리티) 칸 — 산소통처럼 "싸우는 데 쓰는 물건이 아닌데 몸에 지녀야 하는 것"의 자리다. 그 맞바꿈은 재미가 아니라 그냥 벌이라서 칸을 따로
        냈다.
        사연: docs/code-history.md#h24 */
     this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
@@ -223,17 +222,17 @@ class Player extends Ent {
     this.hurtCd = 0; this.flash = 0;
     this.channel = null;
     this.potionCd = 0;
-    /* v1.1 특성 — 비전 방벽이 남긴 흡수량과, 불굴이 다시 준비되기까지의 시간 */
+    /* 특성 — 비전 방벽이 남긴 흡수량과, 불굴이 다시 준비되기까지의 시간 */
     this.shield = 0; this.shieldMax = 0; this.shieldT = 0; this.undyingCd = 0;
-    /* v1.1 세션 1 진행 표시 — 장을 끝낼 때마다 곁을 도는 조각이 하나씩 는다 */
+    /* 세션 1 진행 표시 — 장을 끝낼 때마다 곁을 도는 조각이 하나씩 는다 */
     this.starOrbits = 0; this.starLit = 0; this.starFade = 0;
-    /* v1.1 생활 숙련 — 포인트로 찍지 않고 하다 보면 오른다 */
+    /* 생활 숙련 — 포인트로 찍지 않고 하다 보면 오른다 */
     this.prof = { farm: { lv: 1, xp: 0 }, fish: { lv: 1, xp: 0 } };
     this.charge = 200;             // 동력 장비용 전하. 바닥나면 가방의 배터리를 자동으로 쓴다
     this.jetHeat = 0; this.jetOver = false; this.jetGap = 0;   // 제트팩의 열·높이 (저장 안 함 — 땅에 닿으면 곧 식는다)
     this.kills = {}; this.mined = {}; this.bossKilled = {}; this.gathered = {};
     this.deepest = 0;
-    /* 펫은 v1.0.2부터 장비 아이템(equip.pet1/pet2)이다. pets/activePet은 그전 세이브를
+    /* 펫은 장비 아이템(equip.pet1/pet2)이다. pets/activePet은 펫이 도감이던 옛 세이브를
        읽어 들일 때만 잠깐 쓰이고(로드 시 아이템으로 바꿔 준다) 이후로는 비어 있다. */
     this.d = {};
     this.recalc();
@@ -413,8 +412,7 @@ class Player extends Ent {
     while (this.xp >= this.xpNext) {
       this.xp -= this.xpNext; this.level++;
       this.statPts += 3;
-      /* v1.1 — 두 레벨에 하나였다. 트리에 칸이 열둘 늘어서 그 속도로는 한 분기의
-         밑동도 못 보고 게임이 끝났다. 이제 레벨마다 하나씩 준다. */
+      /* 특성 포인트는 레벨마다 하나 — 두 레벨에 하나면 한 분기의 밑동도 못 보고 게임이 끝난다. */
       this.skillPts++;
       this.xpNext = Math.round(40 * Math.pow(this.level, 1.42));
       this.recalc(); this.hp = this.d.maxHp; this.mp = this.d.maxMp;
@@ -687,7 +685,7 @@ class Player extends Ent {
         break;
       }
 
-      /* ===== v1.1 새 특성 ===== */
+      /* ===== 새 특성 ===== */
       case 's_guard': {
         // 철벽 — 짧게 굳는다. 지속 시간만 랭크가 정하고 감쇄율은 버프가 들고 있다
         this.addBuff('bulwark', sk.v(r));
@@ -2427,7 +2425,7 @@ class Proj extends Ent {
     } else if (this.team === 'player' && this.hitSet.size) {
       /* 원소마다 다른 흔적. 시트가 같아도 고리 색과 입자 수가 달라 손에 남는 것이 다르다 */
       G.burst(this.cx, this.cy, fx ? fx.burst : 'hit', 36);
-      /* 원소 한 겹(docs C-3). 마법은 HIT_FAM 에 없어서 위의 무기 계열 겹이 안 붙는다 —
+      /* 원소 한 겹. 마법은 HIT_FAM 에 없어서 위의 무기 계열 겹이 안 붙는다 —
          그 자리를 원소가 대신한다. 물리 투사체(arrow·bone·star)는 burst 가 'hit' 이고
          BURST_SFX 에 없으므로 재질음만 울린다. */
       if (fx && BURST_SFX[fx.burst]) G.sfxAt(BURST_SFX[fx.burst], this.cx / TS, this.cy / TS);

@@ -151,7 +151,7 @@ const SFX_FILES = {
   hoe: 'hoe', harvest: 'harvest',
   splash: 'splash',             // 낚싯줄 던질 때 — 파일 없으면 sfx()의 절차생성 톤으로 대신함
   hatch: 'hatch',               // 알에서 펫이 나올 때 — 사연: docs/code-history.md#h78
-  /* v1.1 세션 3 — 전부 1.0초짜리로 들어왔다. 단발은 그대로 쓰고, 계속 울려야 하는
+  /* 전부 1.0초짜리다. 단발은 그대로 쓰고, 계속 울려야 하는
      둘(swim·fuse)만 아래 SFX_LOOP가 0.9초로 잘라 겹쳐 이어 붙인다. */
   swim: 'swim', bubble: 'bubble', drown: 'drown', fuse: 'fuse',
   boom_small: 'boom_small', boom_big: 'boom_big',

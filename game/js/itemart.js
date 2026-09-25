@@ -38,7 +38,7 @@ const ISPEC = {
   fish_silver: { k: 'fishitem', c: '#c8d0dc', glow: '#e8eef5' },
   fish_deep: { k: 'fishitem', c: '#7a5a9c', glow: '#a878e0' },
   ring_angler: { k: 'ring', c: '#8a6a4a', gem: '#4f9cf0' },
-  /* v1.1 — 물에서만 나오는 일곱 */
+  /* 물에서만 나오는 일곱 */
   tide_pearl: { k: 'crystal', c: '#dfe9f5', glow: 1 },
   sunken_coin: { k: 'coin', c: '#c8a850' },
   lantern_fry: { k: 'fishitem', c: '#e8c86a', glow: '#ffe08a' },
@@ -265,7 +265,7 @@ const ISPEC = {
   charm_dawn: { k: 'star', c: '#ffd8a0', glow: '#ff9a3a', big: 1 },
   sum_pursuer: { k: 'sigil', c: '#6a4a92' },
 
-  /* --- 세션 2: 지하 공창 --- */
+  /* --- 지하 공창 --- */
   steel_plate: { k: 'block', tile: T.STEELPLATE },
   power_core: { k: 'crystal', c: '#e8a53a', glow: 1 },
   conduit_part: { k: 'bar', c: '#8a6a3a' },
@@ -274,7 +274,7 @@ const ISPEC = {
   gear_basic: { k: 'ring', c: '#8a8a96', gem: '#4a4a52' },
   pick_drill: { k: 'pick', c: '#c8a06a', glow: '#e8a53a' },
 
-  /* --- 3단계: 동력 자원 · 중간재 --- */
+  /* --- 동력 자원 · 중간재 --- */
   coal: { k: 'rock', c: '#2e2c32' },
   lead_ore: { k: 'ore', c: '#8e8ea4' },
   lead_bar: { k: 'bar', c: '#8e8ea4' },
@@ -290,7 +290,7 @@ const ISPEC = {
   battery_cell: { k: 'cell', c: '#4a7a6a', fill: 1, glow: '#6fe0c0' },
   rivet: { k: 'rivet', c: '#b8bcc4' },
 
-  /* --- 3단계: 기계 (타일 그림을 그대로 아이콘으로 쓴다) --- */
+  /* --- 기계 (타일 그림을 그대로 아이콘으로 쓴다) --- */
   m_belt: { k: 'machine', tile: T.M_BELT },
   m_drill: { k: 'machine', tile: T.M_DRILL },
   m_drill_e: { k: 'machine', tile: T.M_DRILL_E, glow: '#4a8ab0' },
@@ -315,7 +315,7 @@ const ISPEC = {
   m_trap: { k: 'machine', tile: T.M_TRAP, glow: '#9fd8ff' },
   m_switch: { k: 'machine', tile: T.M_SWITCH, glow: '#e0563c' },
 
-  /* --- 3단계: 동력 장비 --- */
+  /* --- 동력 장비 --- */
   pick_arc: { k: 'pick', c: '#7fd0e8', glow: '#9fd8ff' },
   saw_auto: { k: 'sawblade', c: '#c8ccd4', glow: '#e0b93d' },
   gun_rail: { k: 'railgun', c: '#8a8a96', glow: '#9fd8ff' },
@@ -324,7 +324,7 @@ const ISPEC = {
   boots_exo: { k: 'boots', c: '#8fa8b8', glow: '#6fe0c0' },
   charm_cap: { k: 'cell', c: '#e0b93d', fill: 1, glow: '#ffe08a' },
 
-  /* --- 5단계: 정글 · 버섯 골짜기 --- */
+  /* --- 정글 · 버섯 골짜기 --- */
   mud: { k: 'block', tile: T.MUD },
   fern_frond: { k: 'weed_icon', c: '#4a8a3a' },
   orchid: { k: 'wildflower', c: '#c85a9a' },
@@ -344,7 +344,7 @@ const ISPEC = {
   charm_canopy: { k: 'feather', c: '#4a8a3a' },
   charm_spore: { k: 'crystal', c: '#6fe0c0', glow: 1 },
 
-  /* --- 6단계: 유적 --- */
+  /* --- 유적 --- */
   icebrick: { k: 'block', tile: T.ICEBRICK },
   sandbrick: { k: 'block', tile: T.SANDBRICK },
   m_dart: { k: 'machine', tile: T.M_DART },
@@ -358,7 +358,7 @@ const ISPEC = {
   queen_spore: { k: 'gel', c: '#6fe0c0' },
   charm_delver: { k: 'sigil', c: '#8a8478' },
 
-  /* --- 7단계: 폭주로 --- */
+  /* --- 폭주로 --- */
   core_shard: { k: 'shard', c: '#e8b04a', glow: 1 },
   sword_arc: { k: 'sword', c: '#3a3a44', g: '#e0d030', grip: '#2a2a30', w: 4.2, glow: '#f0e070' },
   stop_core: { k: 'stopcore', c: '#c03a30' },
@@ -422,7 +422,7 @@ const ISPEC = {
   orb_core: { k: 'staff', c: '#5a4a30', head: '#e8b04a', style: 'orb', glow: '#f0e070' },
   tome_first: { k: 'staff', c: '#7a6a4a', head: '#fff0b8', style: 'crystal', glow: '#ffe08a' },
 
-  /* --- 4단계: 마을 건축 (타일 그림을 그대로 아이콘으로) --- */
+  /* --- 마을 건축 (타일 그림을 그대로 아이콘으로) --- */
   thatch: { k: 'block', tile: T.THATCH },
   rooftile: { k: 'block', tile: T.ROOFTILE },
   timberwall: { k: 'block', tile: T.TIMBERWALL },
@@ -438,7 +438,7 @@ const ISPEC = {
   m_mill: { k: 'machine', tile: T.M_MILL },
   m_oven: { k: 'machine', tile: T.M_OVEN, glow: '#e8842a' },
 
-  /* --- 4단계: 농업 --- */
+  /* --- 농업 --- */
   hoe_iron: { k: 'hoe', c: '#b8bcc4' },
   /* 낫 — 이미 있는 낫 그림(scythe_void가 쓰는 것)에 색만 갈아 끼운다 */
   scythe_iron: { k: 'scythe', c: '#c8ccd4', shaft: '#6a4a2a' },
@@ -459,7 +459,7 @@ const ISPEC = {
   flour: { k: 'flouritem', c: '#e8dcc0' },
   fertilizer: { k: 'compost', c: '#5a4632' },
 
-  /* --- 4단계: 음식 --- */
+  /* --- 음식 --- */
   food_bread: { k: 'bread', c: '#c89050' },
   food_pie: { k: 'pie', c: '#d8a860', fill: '#a04a3a' },
   food_mstew: { k: 'bowl', c: '#8a6a4a', soup: '#6a5a3a', bits: '#d8503c' },
@@ -474,9 +474,7 @@ const ISPEC = {
   bag_pack: { k: 'sack', c: '#cfe8ff', strap: '#8fb8d8', glow: '#dfe9f5' },
   bag_vault: { k: 'sack', c: '#7a7160', strap: '#3a3550', glow: '#a06fff' },
 
-  /* ================= v1.1 세션 3 =================
-     새로 넣은 물건에 그림을 안 붙여 두면 가방·상점·장비 칸이 통째로 빈칸으로 뜬다
-     (유틸리티 칸에 산소통을 끼웠는데 아무것도 안 보이던 것이 이 때문이다).
+  /* ================= 바다 · 빙하 =================
      전부 기존 painter(k)를 재사용하고 색만 바다 쪽으로 잡았다. */
   /* 산소통 — 셋이 한눈에 구분되게 색과 발광을 계단으로 준다 */
   tank_air: { k: 'cell', c: '#8fb8c8', fill: 1 },
@@ -553,7 +551,7 @@ const SKSPEC = {
   s_nova: { k: 'snow', c: '#9fe0ff' },
   s_wolf: { k: 'wolf', c: '#9fd8ff' },
   s_arch: { k: 'rune', c: '#a06fff' },
-  /* v1.1 트리 확장분 — 열두 칸이 늘었다. 분기 색을 따라간다
+  /* 분기 색을 따라간다
      (검투사 붉은 계열 · 유격 초록 계열 · 비전 푸른/보라 계열) */
   s_guard: { k: 'bulwark', c: '#d8a05a' },
   s_quake: { k: 'quake', c: '#c8845a' },
@@ -714,8 +712,7 @@ const Art = {
       // 저마다 다른 높이로 떠 보인다. 좌표를 형태별로 손보는 대신 실제로 칠해진 영역을
       // 재서 칸 한가운데로 맞춘다 — 나중에 종류를 더 그려도 저절로 정렬된다.
       // 빈 펫 칸의 발자국 실루엣(slotic/pet)도 같은 문제라 함께 맞춘다 — 손으로 잡은
-      // 좌표가 칸 중심에서 왼쪽으로 약 1.85px 치우쳐 있었다(장비 칸(vault 실루엣들)은
-      // 지적된 적이 없어 건드리지 않는다).
+      // 좌표가 칸 중심에서 왼쪽으로 약 1.85px 치우쳐 있었다.
       if (spec.k === 'pet' || (spec.k === 'slotic' && spec.m === 'pet')) this.centerCell(g, cx * S32, cy * S32);
       this.outline(g, cx * S32, cy * S32);
     });
@@ -1375,7 +1372,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 3단계: 기계 ----------
+      /* ---------- 기계 ----------
          타일 아틀라스에 이미 종류별로 다르게 그려 둔 그림을 그대로 키워 쓴다.
          받침대를 깔아 "설치하는 물건"이라는 걸 블록 아이콘과 구분한다. */
       case 'machine': {
@@ -1387,7 +1384,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 3단계: 자원 · 부품 ---------- */
+      /* ---------- 자원 · 부품 ---------- */
       case 'barrel': {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .68);
         P(7, 7, 18, 21, c);
@@ -1535,7 +1532,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 4단계: 농업 ---------- */
+      /* ---------- 농업 ---------- */
       case 'hoe': {
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .65);
         P(17, 4, 3, 22, '#6a4a28');                        // 자루
@@ -1611,7 +1608,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 4단계: 음식 ---------- */
+      /* ---------- 음식 ---------- */
       case 'bread': {
         const c = s.c, lt = sh2(c, 1.28), dk = sh2(c, .68);
         ell(16, 19, 12, 8.5, c);
@@ -2333,7 +2330,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 스킬 아이콘 (v1.1 트리 확장분) ---------- */
+      /* ---------- 스킬 아이콘 ---------- */
       case 'bulwark': {           // 철벽 — 벽돌을 쌓아 올린 방벽
         const c = s.c;
         glow(16, 18, 12, c, .18);
