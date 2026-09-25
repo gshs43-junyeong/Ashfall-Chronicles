@@ -98,9 +98,7 @@ function josaRo(word) {
   return (jong === 0 || jong === 8) ? '로' : '으로';
 }
 
-/** 한국어 조사 짝 고르기 — josa('검', '이', '가') → '이'. 받침이 있으면 앞엣것.
-    ★ '이(가)' '을(를)' 처럼 둘 다 적으면 알림마다 괄호가 붙어 기계가 쓴 글처럼 읽혔다. 이름이 한글로
-      안 끝나면(숫자·영문) 받침 없는 쪽으로 친다. */
+/** 한국어 조사 짝 고르기 — josa('검', '이', '가') → '이'. 받침이 있으면 앞엣것. */
 function josa(word, withJong, noJong) {
   const s = String(word), ch = s.charCodeAt(s.length - 1) - 0xAC00;
   if (ch < 0 || ch > 11171) return noJong;
@@ -111,16 +109,12 @@ const eulreul = w => w + josa(w, '을', '를');
 const eunneun = w => w + josa(w, '은', '는');
 
 /** 숫자 포맷 */
-/** 숫자 표기. 백만이 넘으면 M, 십억이 넘으면 B로 줄인다 — 금화·경험치가 수천만을
-    넘어가면 자릿수만 길어져서 한눈에 안 읽힌다.
-    소수점 셋째 자리에서 반올림하므로 소수 두 자리까지 남고, 뒤에 붙는 0은 지운다
-    (1.00M → 1M, 1.20M → 1.2M). */
+/** 숫자 표기. */
 function fmt(n) {
   const v = Math.round(n);
   const a = Math.abs(v);
   if (a < 1e6) return v.toLocaleString('ko-KR');
-  /* 반올림한 **표시값**으로 단위를 정한다. 999,999,999를 그냥 M으로 두면 '1000M'이
-     되어, 바로 다음 값(10억)의 '1B'와 나란히 놓였을 때 앞뒤가 안 맞는다. */
+  /* 반올림한 **표시값**으로 단위를 정한다. */
   let d = 1e6, u = 'M';
   if (a >= 1e9 || Math.abs(v / 1e6).toFixed(2) >= 1000) { d = 1e9; u = 'B'; }
   const t = (v / d).toFixed(2).replace(/\.?0+$/, '');
@@ -155,10 +149,7 @@ function tileHash(x, y) {
 }
 
 /** 배열 RLE 압축 (저장용) */
-/* ★ 세이브의 타일·벽지·탐험 배열은 **글자열** RLE 다. 지금은 한 토막 = 두 글자: 값은 U+0100+값, 길이는 U+1000+길이(최대 U+6FFF = 28671,
-   넘치면 끊어 적는다). 두 범위 다 JSON 이 이스케이프하지 않는 평범한 글자이고 대리쌍(U+D800~) 근처에도 안 간다. 맨 앞의 'r1' 이 표시다. 옛 세이브(숫자
-   배열)도 rleDecode 가 그대로 읽는다.
-   사연: docs/code-history.md#h100 */
+/* ★ 세이브의 타일·벽지·탐험 배열은 **글자열** RLE 다 — 사연: docs/code-history.md#h100 */
 const RLE_V = 0x100, RLE_N = 0x1000, RLE_MAX = 0x6FFF;
 function rleEncode(arr) {
   const out = ['r1'];

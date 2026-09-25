@@ -1,19 +1,15 @@
-/* assets/sprites.js — 손그림 애셋 로더 (선택 사용)
-   index.html의 js/itemart.js 뒤에 <script src="assets/sprites.js"></script> 로 추가.
-   Sprites.ready() 이후 Sprites.draw(...)를 game.js의 drawPlayer/drawEnemy에서 호출하면 된다. */
+/* assets/sprites.js — 손그림 애셋 로더 (선택 사용) index.html의 js/itemart.js 뒤에 <script
+   src="assets/sprites.js"></script> 로 추가. */
 const Sprites = {
   base: 'assets/',
   scale: 4,           // 시트가 4배로 구워져 있다
   gap: 0,             // 문자 시트는 간격 0, 보스/이펙트 시트는 4
   img: {}, meta: null, loaded: 0, total: 0,
   // index.html의 <script src=".../sprites.js?v=NNN">에서 버전을 그대로 물려받는다.
-  // 같은 파일명으로 그림을 교체했을 때 브라우저가 옛 캐시 바이트를 계속 내려주는 걸 막기 위함.
   _ver: (document.currentScript && document.currentScript.src.split('?')[1]) || '',
 
   async ready() {
-    /* 매니페스트는 <script> 로 미리 들어와 있다(assets/sprites-manifest.js). 게임을 하려고 파이썬을 깔게 만드는 셈이었다. 이 한 줄이 그
-       서버의 유일한 이유였다. fetch 는 <script> 가 없을 때를 위한 뒷문으로만 남긴다.
-       사연: docs/code-history.md#h137 */
+    /* 매니페스트는 <script> 로 미리 들어와 있다(assets/sprites-manifest.js) — 사연: docs/code-history.md#h137 */
     this.meta = (typeof window !== 'undefined' && window.SPRITE_MANIFEST) || null;
     if (!this.meta) {
       this.meta = await (await fetch(this.base + 'manifest.json', { cache: 'no-cache' })).json();
@@ -52,13 +48,8 @@ const Sprites = {
     // 손그림 아이템 아이콘 (32×32, 절차 생성 아이콘 아틀라스를 대체)
     if (this.meta.items) for (const k in this.meta.items.files) add('item_' + k, this.meta.items.files[k]);
     await Promise.all(jobs);
-    /* 발 밀착 보정 — "프레임 맨 아래 줄 = 그림 발끝"이라고 가정하고 dy를 계산했더니,
-       실제로는 시트마다 그림 아래에 몇 px씩 투명 여백이 남아 있어(들토끼류 실측 2.25px)
-       판정 박스가 작은 몹일수록 그 여백이 상대적으로 크게 보여 "공중에 뜬" 것처럼
-       보였다. 프레임 0의 알파 채널을 실측해 진짜 여백을 한 번만 재고 캐시해 둔다. */
-    /* ★ file:// 에서는 이 측정이 통째로 막힌다. 디스크에서 온 그림을 캔버스에 그리면 캔버스가 "오염"되어 getImageData 가 SecurityError 를
-       던지기 때문이다. 여백 보정은 발끝이 몇 px 뜨느냐는 곁다리라, 못 재면 0으로 두고 넘어간다.
-       사연: docs/code-history.md#h138 */
+    /* 프레임 0의 알파 채널을 실측해 진짜 여백을 한 번만 재고 캐시해 둔다. */
+    /* ★ file:// 에서는 이 측정이 통째로 막힌다 — 사연: docs/code-history.md#h138 */
     this.footInset = {};
     this.sideInset = {};   // 시트별 그림의 가로 치우침(게임픽셀)
     for (const k in { ...this.meta.characters.sheets, ...this.meta.bosses.sheets }) {
@@ -69,12 +60,7 @@ const Sprites = {
         const pad = this._measurePad(im, m);
         this.footInset[k] = pad.foot; this.sideInset[k] = pad.side;
       } catch (e) {
-        /* ★ 못 잴 때는 0 이 아니라 **매니페스트에 적어 둔 값**을 쓴다.
-           칸에 부딪혀 잘린 시트들에 여백을 주면서(tools/unclipmob.py) 그림이
-           칸 안쪽으로 들어갔다. 여기서 0 으로 떨어지면 그 여백만큼 그림이
-           떠 보인다 — 여백을 준 서른네 장이 전부 발이 땅에서 뜬다.
-           foot/side 는 같은 도구가 프레임 0 을 실측해 적어 둔 값이라
-           재는 것과 결과가 같다. */
+        /* ★ 못 잴 때는 0 이 아니라 **매니페스트에 적어 둔 값**을 쓴다. */
         this.footInset[k] = m.foot || 0; this.sideInset[k] = m.side || 0;
         this.tainted = 1;
       }
@@ -82,13 +68,7 @@ const Sprites = {
     return this;
   },
 
-  /** 시트 프레임 0의 알파 채널을 한 번 훑어 두 가지를 잰다.
-      footPad — 그림 맨 아래 불투명 줄이 프레임 바닥에서 몇 게임픽셀 위에 있나(발 여백)
-      sidePad — 그림의 가로 중심이 프레임 가로 중심에서 몇 게임픽셀 치우쳐 있나
-
-      ★ sidePad 를 새로 잰다. 프레임을 판정 박스 가운데에 맞추는 것만으로는 부족하다 —
-        그림 자체가 프레임 안에서 치우쳐 있으면(리벳 사수는 오른쪽으로 2.5px) 프레임을
-        가운데 놓아도 그림은 옆으로 밀린다. 프레임이 아니라 **그림**을 가운데 맞춘다. */
+  /** 시트 프레임 0의 알파 채널을 한 번 훑어 두 가지를 잰다. */
   _measurePad(im, m) {
     const S = this.scale, fw = m.frameW * S, fh = m.frameH * S;
     const cv = document.createElement('canvas'); cv.width = fw; cv.height = fh;
@@ -111,19 +91,7 @@ const Sprites = {
     };
   },
 
-  /* ================= 개조 시트 =================
-     세션 2 의 개조된 몹은 **원래 시트를 강철로 눕힌 사본**으로 그린다.
-     스물다섯 마리를 손으로 다시 그리는 대신 이렇게 한 이유는 그림 품이 아니라
-     읽힘 때문이다 — 플레이어가 아는 실루엣이 그대로 서 있어야 "여기 살던 것이
-     손을 탔다"로 읽히지, 새로 그리면 그냥 다른 몹이 된다.
-
-     ★ getImageData 를 쓰지 않는다. file:// 로 열면 디스크에서 온 그림이 캔버스를
-       오염시켜 픽셀을 못 읽는다(ready() 의 tainted 참고 — 여백 측정은 그래서 0으로
-       떨어진다). 합성 연산만 쓰면 픽셀을 한 번도 안 읽고도 같은 일을 할 수 있다:
-       source-atop 은 **이미 그려진 알파 안쪽에만** 칠하므로 실루엣 밖으로 안 샌다.
-
-     여기서 굽는 것은 두 겹뿐이다 — 강철과 리벳. 세 번째 겹인 화로 불빛은
-     G.drawEnemyOverlay 가 게임 중에 얹는다(아래 이유를 적어 두었다). */
+  /* ================= 개조 시트 ================= */
   mechSheet(key) {
     const have = this.img['mech_' + key];
     if (have !== undefined) return have;
@@ -140,8 +108,7 @@ const Sprites = {
     const S = this.scale, W = cv.width, H = cv.height;
     g.globalCompositeOperation = 'source-atop';
 
-    // 1. 강철. 세계가 어두워서 밝은 회색으로 눕히면 몹만 화면에서 떠오른다 —
-    //    바탕보다 조금 밝은 정도의 찬 쇠빛으로 잡는다.
+    // 1.
     const grad = g.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0, '#7d8896');
     grad.addColorStop(0.5, '#4d555f');
@@ -149,46 +116,33 @@ const Sprites = {
     g.globalAlpha = 0.66;
     g.fillStyle = grad; g.fillRect(0, 0, W, H);
 
-    /* 2. 판 이음매와 대갈못.
-       처음에 가로 6px · 세로 9px 로 박았더니 20~40px 짜리 몸에 못이 수십 개가 박혀
-       리벳이 아니라 물방울무늬 옷이 되었다. 몸 하나에 한두 줄만 지나가게 벌린다.
-       자리를 난수로 흩뿌리지 않는 이유: 프레임마다 못이 옮겨 다녀 그림이 떤다.
-       시트 좌표로 정해 두면 걸어도 못은 제자리에 붙어 있다. */
+    /* 2. */
     g.globalAlpha = 0.22; g.fillStyle = '#171c23';
     for (let y = 7 * S; y < H; y += 13 * S) g.fillRect(0, y, W, S);
     g.globalAlpha = 0.55; g.fillStyle = '#cfd8e2';
     for (let y = 5 * S; y < H; y += 13 * S)
       for (let x = 3 * S; x < W; x += 9 * S) g.fillRect(x, y, S, S);
 
-    /* 화로 불빛은 여기서 굽지 않는다. 시트 아래 절반에 깔았더니 다리가 통째로
-       녹슨 주황이 되어 진창을 밟고 선 것처럼 보였다 — 시트에는 프레임의 어디가
-       몸통이고 어디가 다리인지가 없다. 불빛은 판정 박스를 아는 쪽에서,
-       뛰게 해서 얹는다(G.drawEnemyOverlay). */
+    /* 화로 불빛은 여기서 굽지 않는다. */
     g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
-    /* 매니페스트에도 같은 규격으로 등록해 둔다 — draw() 는 여기서 프레임 칸을 읽는다.
-       naturalWidth 보정(옛 캐시 그림)이 통하도록 count·gap 까지 그대로 물려준다. */
+    /* 매니페스트에도 같은 규격으로 등록해 둔다 — draw() 는 여기서 프레임 칸을 읽는다. */
     this.meta.characters.sheets['mech_' + key] = m;
     this.footInset['mech_' + key] = this.footInset[key] || 0;
     this.sideInset['mech_' + key] = this.sideInset[key] || 0;
     return (this.img['mech_' + key] = cv);
   },
 
-  /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다.
-     flip=true면 좌우 반전(왼쪽을 볼 때). */
+  /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다. */
   draw(c, key, frame, x, y, flip) {
     const im = this.img[key]; if (!im || !im.width) return false;
     const m = (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
     if (!m) return false;
-    /* 시트가 제 gap을 들고 있으면 그것을 쓰고, 없을 때만 무리 기본값으로 떨어진다.
-       사연: docs/code-history.md#h139 */
+    /* 시트가 제 gap을 들고 있으면 그것을 쓰고, 없을 때만 무리 기본값으로 떨어진다 — 사연: docs/code-history.md#h139 */
     const S = this.scale;
     const isBoss = !!this.meta.bosses.sheets[key];
     const gap = m.gap !== undefined ? m.gap : (isBoss ? this.meta.bosses.gap : 0);
     let fw = m.frameW, fh = m.frameH, ox = m.ox || 0, oy = m.oy || 0;
-    /* 시트를 다시 구워 프레임 크기가 바뀌었는데 브라우저가 옛 그림을 캐시에서 내주면
-       (매니페스트는 no-cache라 새것, 그림은 ?v= 그대로라 옛것) 칸이 어긋나 그림이
-       썰려 보인다. 실제 그림 크기가 매니페스트와 다르면 그림 쪽을 믿는다 — 옛 그림은
-       여백이 없으니 ox/oy 도 0으로 되돌린다. (간격 없는 시트에만 쓸 수 있다) */
+    /* 시트를 다시 구워 프레임 크기가 바뀌었는데 브라우저가 옛 그림을 캐시에서 내주면 (매니페스트는 no-cache라 새것, 그림은 ?v= 그대로라 옛것) 칸이 어긋나 그림이 썰려 보인다. */
     if (!gap && im.naturalWidth && m.count &&
         Math.round(im.naturalWidth / S / m.count) !== fw) {
       fw = Math.round(im.naturalWidth / S / m.count);
@@ -206,8 +160,7 @@ const Sprites = {
     return true;
   },
 
-  /* 이펙트 시트(투사체 16×16 / 폭발 64×64) 한 프레임을 size 크기로 그린다.
-     현재 변환(회전 등)이 걸린 상태에서 호출해도 되도록 x,y는 그대로 쓴다. */
+  /* 이펙트 시트(투사체 16×16 / 폭발 64×64) 한 프레임을 size 크기로 그린다. */
   drawFx(c, key, frame, x, y, size) {
     const im = this.img[key]; if (!im || !im.width || !this.meta) return false;
     const m = key.startsWith('proj_') ? this.meta.fx.projectiles
@@ -224,10 +177,7 @@ const Sprites = {
     return true;
   },
 
-  /* 시설물을 게임 좌표(x,y)에 w×h 크기로 그린다.
-     정지 그림 한 장이 기본이고, **가로가 규격 비율의 꼭 두 배면 2프레임 시트**로 읽어
-     번갈아 그린다(분수대와 같은 규칙). 프레임 수를 매니페스트에 따로 적지 않는 이유는,
-     그림을 새로 넣는 날 매니페스트 고치는 걸 잊어도 저절로 맞게 하려는 것이다. */
+  /* 시설물을 게임 좌표(x,y)에 w×h 크기로 그린다. */
   drawObj(c, key, x, y, w, h) {
     const im = this.img[key]; if (!im || !im.width) return false;
     const want = w / h;

@@ -1,19 +1,9 @@
-/* js/titlebg.js — 타이틀 화면 배경.
-   별똥별 그림 한 장을 깔던 것을(그 그림은 로딩 화면으로 옮겼다) **홈페이지 첫 화면과
-   같은 풍경**으로 바꿨다. 영상 파일을 새로 만들지 않는다 — 게임이 쓰는 애셋이 움직인다.
-
-   ★ 색과 구성은 site/hero.js 를 그대로 따른다. 처음에 푸른 밤하늘로 그렸더니
-     "웹사이트처럼"이 되지 않았다 — 홈페이지는 재가 내린 뒤의 따뜻한 갈색 노을이다.
-       하늘 #150f0d → #24191a → #3a2620 · 잔광 rgba(249,116,73,.30)
-       능선 parallax_sky / village / forest (속도만 다르게, 색은 손대지 않는다)
-       사람 char/player_wanderer.png 걷기 네 장 · 재 · 아래는 페이지 바탕색(#0d0b0a)으로 녹인다
-
-   화면에 안 보이면 아예 돌지 않고, 접근성 "움직임 줄이기"면 한 장만 그리고 멈춘다. */
+/* js/titlebg.js — 타이틀 화면 배경. */
 const TitleBG = {
   cv: null, ctx: null, layers: [], flakes: [], player: null,
   t: 0, last: 0, on: false, still: false, raf: 0, w: 0, h: 0,
 
-  /* 뒤에서 앞으로. speed 는 흐르는 속도(그림 원본 픽셀/초), y 는 바닥에서 띄운 높이 */
+  /* 뒤에서 앞으로. */
   LAYER_SPEC: [
     { key: 'parallax_sky', speed: 10, y: 6, alpha: 0.55 },
     { key: 'parallax_village', speed: 26, y: 0, alpha: 0.85 },
@@ -22,9 +12,7 @@ const TitleBG = {
   WALK: [2, 3, 4, 5],          // 캐릭터 시트의 걷기 프레임 (idle1 idle2 walk1..4 …)
   FPS: 9,
 
-  /* 타이틀 화면이 **실제로 필요로 하는** 그림. game.js 가 이 넷이 다 올 때까지
-     로딩을 안 걷는다(waitForTitleArt). 여기 없는 그림은 타이틀에 안 쓰이므로
-     기다릴 이유가 없다 — 애셋 전부를 기다리면 첫 접속이 하염없이 길어진다. */
+  /* 타이틀 화면이 **실제로 필요로 하는** 그림. */
   NEEDED: ['parallax_sky', 'parallax_village', 'parallax_forest', 'player_wanderer'],
 
   /** 필요한 그림 중 몇 장이 준비됐나 — 로딩 진행 표시와 대기 판정에 함께 쓴다 */
@@ -49,12 +37,7 @@ const TitleBG = {
     this.resize();
   },
 
-  /** 그림이 준비됐으면 능선과 사람을 얹는다. 붙었으면 true.
-
-      ★ 이 함수는 **스스로 다시 시도된다**(frame() 안에서 0.4초마다). "초기 접속 때 배경이 안 뜬다"의 진짜 원인이 이것이다. 앞서 두 번은 **부르는
-        시점**을 옮겨서 고치려 했는데(init 으로 당기기), 한 번만 부르는 구조가 그대로면 그 한 번이 실패했을 때 되돌릴 길이 없다. 시점이 아니라 구조 문제였다.
-        이제 바깥에서 아무도 안 불러 줘도, 그림이 준비되는 순간 제가 알아서 붙는다.
-      사연: docs/code-history.md#h89 */
+  /** 그림이 준비됐으면 능선과 사람을 얹는다 — 사연: docs/code-history.md#h89 */
   useSprites() {
     if (typeof Sprites === 'undefined' || !Sprites.img) return false;
     const got = this.LAYER_SPEC
@@ -103,8 +86,7 @@ const TitleBG = {
 
   frame(dt) {
     const c = this.ctx; if (!c) return;
-    /* 그림이 아직 안 붙었으면 0.4초마다 다시 두드린다. 바깥에서 불러 주기를
-       기다리지 않는다 — 그 한 번을 놓치면 배경이 영영 비기 때문이다. */
+    /* 그림이 아직 안 붙었으면 0.4초마다 다시 두드린다. */
     if (!this.layers.length) {
       this._try = (this._try || 0) - (dt || 0.016);
       if (this._try <= 0) { this._try = 0.4; this.useSprites(); }
@@ -142,8 +124,7 @@ const TitleBG = {
     /* ---- 걸어가는 사람 — 메뉴를 피해 오른쪽 트인 자리에 ---- */
     const P = this.player;
     if (P) {
-      /* 원본의 정수 배로만 키운다. 어중간한 배율로 줄이면 최근접 확대·축소가 두 번
-         겹쳐 픽셀 열이 들쭉날쭉해지고, 팔과 발이 잘려 보인다(홈페이지에서 실제로 그랬다). */
+      /* 원본의 정수 배로만 키운다. */
       const k = Math.max(1, Math.min(3, Math.round(H / 820)));
       const ph = P.fh * k, pw = P.fw * k;
       const fr = this.WALK[Math.floor(t * this.FPS) % this.WALK.length];
@@ -174,9 +155,7 @@ const TitleBG = {
     }
     c.globalAlpha = 1;
 
-    /* ---- 아래쪽을 바탕색으로 녹인다 (홈페이지와 같은 마무리).
-       녹이는 구간은 **딛는 줄 아래**로만 둔다 — 홈페이지처럼 90px 위에서부터 덮었더니
-       걸어가는 사람의 다리가 절반쯤 먹혔다. 여기는 사람이 더 크게 보이는 화면이다. */
+    /* ---- 아래쪽을 바탕색으로 녹인다 (홈페이지와 같은 마무리). */
     const fade = c.createLinearGradient(0, ground - H * 0.05, 0, ground + H * 0.03);
     fade.addColorStop(0, 'rgba(13,11,10,0)');
     fade.addColorStop(1, '#0d0b0a');
