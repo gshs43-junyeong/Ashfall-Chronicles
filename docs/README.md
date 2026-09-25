@@ -22,6 +22,7 @@
 - [deploy-cache.md](deploy-cache.md): 배포와 캐시 무효화 절차
 - [../NOTICE.md](../NOTICE.md): MIT 에서 빠지는 것(음악·효과음)과 사이트 글꼴
 - [CLAUDE.md](../CLAUDE.md): 코드·월드·세이브를 안전하게 고치기 위한 제약
+- [code-history.md](code-history.md): 코드 주석에서 옮겨 온 「예전에는 …였다」 사연 모음(코드의 `사연: …#hN` 이 가리키는 곳)
 
 ## 제작 기록
 

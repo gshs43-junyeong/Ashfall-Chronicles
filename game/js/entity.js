@@ -119,11 +119,10 @@ function rollChest(tier, rng, source) {
   const gold = !ruin && tier >= 6;   // 큰 동굴의 황금 상자만 기존의 고보상을 유지한다
   const spec = CHEST_LOOT[clamp(lootTier, 1, 5)];
   const out = [];
-  /* v1.1: 황금 상자(gold) 특혜가 지나쳤다 — 최고 등급이 5배 이상 잘 뜨는 luckTier 9에
-     재료는 100% 확정으로 최대 수량까지 나와서, 하나만 열면 한 단계를 통째로 건너뛰었다.
-     특혜는 남기되 폭을 줄인다: luckTier 9→6, 재료 확정 → 85%, 금 원석 10~18 → 6~11.
-     (처음엔 4로 낮췄다가, 깊이 제약·함정·광맥 벽으로 접근이 이미 어려워졌으니 보상 쪽은
-      6까지 돌려 달라는 요청을 받고 올렸다.) */
+  /* v1.1: 황금 상자(gold) 특혜가 지나쳤다 — 최고 등급이 5배 이상 잘 뜨는 luckTier 9에 재료는 100% 확정으로 최대 수량까지 나와서, 하나만 열면 한
+     단계를 통째로 건너뛰었다.
+      6까지 돌려 달라는 요청을 받고 올렸다.)
+     사연: docs/code-history.md#h23 */
   const nGear = ruin ? 1 : gold ? rng.int(2, 3) : rng.int(1, 2);
   for (let i = 0; i < nGear; i++) out.push(rollGear(rng.pick(spec.gear), rng, ruin ? 0 : gold ? 6 : tier));
   for (const [id, a, b] of spec.mats) {
@@ -207,10 +206,9 @@ class Player extends Ent {
     this.hp = 100; this.mp = 50;
     this.gold = 0;
     this.bag = new Array(BASE_BAG_SIZE).fill(null);
-    /* util(유틸리티) 칸 — v1.1. 산소통처럼 "싸우는 데 쓰는 물건이 아닌데 몸에 지녀야
-       하는 것"의 자리다. 예전에는 장신구 칸을 먹어서, 숨을 늘리려면 전투 장신구 하나를
-       빼야 했다(갑옷 칸을 먹였으면 방어가 깎였을 것이고). 그 맞바꿈은 재미가 아니라
-       그냥 벌이라서 칸을 따로 냈다. */
+    /* util(유틸리티) 칸 — v1.1. 산소통처럼 "싸우는 데 쓰는 물건이 아닌데 몸에 지녀야 하는 것"의 자리다. 그 맞바꿈은 재미가 아니라 그냥 벌이라서 칸을 따로
+       냈다.
+       사연: docs/code-history.md#h24 */
     this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
     this.sel = 0;
     this.skills = {};              // id -> rank
@@ -259,10 +257,9 @@ class Player extends Ent {
 
     acc.def = Math.round(acc.def + s.vit * 0.8);
     const maxHp = Math.round(100 + (this.level - 1) * 12 + s.vit * 6 + acc.hp);
-    /* ★ 체력 재생은 **최대 체력에 비례하는 몫**을 기본으로 깐다. 고정 0.5/초면 최대 체력이
-       레벨·스탯으로 수십 배 불어나는 동안 재생은 그대로라, 후반에 10%를 채우는 데도 몇
-       분씩 걸린다(레벨 234·체력 올인 기준 약 1424초). 0.4%/초 ≈ 다 채우는 데 4분 —
-       레벨과 무관하게 비슷하고, 1레벨 체감은 예전과 거의 같다. */
+    /* ★ 체력 재생은 **최대 체력에 비례하는 몫**을 기본으로 깐다. 고정 0.5/초면 최대 체력이 레벨·스탯으로 수십 배 불어나는 동안 재생은 그대로라, 후반에 10%를
+       채우는 데도 몇 분씩 걸린다(레벨 234·체력 올인 기준 약 1424초).
+       사연: docs/code-history.md#h25 */
     const hpreg = maxHp * 0.004 + (acc.hpreg || 0);
     this.d = {
       str: s.str, dex: s.dex, int: s.int, vit: s.vit,
@@ -453,10 +450,9 @@ class Player extends Ent {
     G.texts.push(new DmgText(this.cx, this.y, dmg, '#ff6b6b', 0));
     if (srcX !== undefined && !(this.d.dr >= 50)) { this.vx = Math.sign(this.cx - srcX) * 180; this.vy = -180; }
     for (let i = 0; i < 6; i++) G.parts.push(new Part(this.cx, this.cy, '#c8433c'));
-    /* ★ 몹이 맞을 때와 같은 소리를 쓰되 **작고 둔하게** 낸다(music.js SFX_FAM 의
-       hurt_player — hit_flesh 를 0.88배 음높이 · 0.42배 음량으로 빌린다). 예전에는
-       양쪽 다 damage 한 소리라, 몹 서넛에 둘러싸이면 내가 때리는 소리와 내가 맞는
-       소리가 한 덩어리로 들려서 체력이 깎이는 줄 모르고 계속 붙어 있게 됐다. */
+    /* ★ 몹이 맞을 때와 같은 소리를 쓰되 **작고 둔하게** 낸다(music.js SFX_FAM 의 hurt_player — hit_flesh 를 0.88배 음높이 ·
+       0.42배 음량으로 빌린다).
+       사연: docs/code-history.md#h26 */
     G.sfx('hurt_player');
     /* 불굴 — 죽는 그 한 번을 넘긴다. 120초에 한 번뿐이라 "아껴 두는" 것이 아니라
        "여기서 한 번 살아남는다"에 가깝다. */
@@ -539,9 +535,8 @@ class Player extends Ent {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.07 : 0);
         this.fireProj(pt, a, base, 'int');
       }
-      /* 지팡이 끝의 발화. 원소색으로 작게 한 번 — 쏘는 순간부터 무엇이 나가는지
-         보이게 한다. 예전에는 소리만 같고 그림은 아무것도 없어서, 지팡이를 바꿔도
-         손끝에서 달라지는 게 없었다. */
+      /* 지팡이 끝의 발화. 원소색으로 작게 한 번 — 쏘는 순간부터 무엇이 나가는지 보이게 한다.
+         사연: docs/code-history.md#h27 */
       {
         const st = PROJ_STYLE[pt] || PROJ_STYLE.bolt;
         const mx2 = this.cx + Math.cos(ang) * 16, my2 = this.cy - 4 + Math.sin(ang) * 16;
@@ -610,9 +605,8 @@ class Player extends Ent {
     const id = this.slots[i]; if (!id) return;
     const sk = SKILLS[id], r = this.skills[id] || 0;
     if (!r || sk.type !== 'active') return;
-    /* 못 쓰는 것을 눌렀을 때도 **대답은 한다.** 예전에는 재사용 대기 중이면
-       조용히 return 이라, 눌렀는데 안 나간 건지 키가 안 먹은 건지 몰랐다.
-       식는 중은 칸에 숫자가 도니 소리와 흔들림만, 마나는 한 줄 더 띄운다. */
+    /* 못 쓰는 것을 눌렀을 때도 **대답은 한다.** 식는 중은 칸에 숫자가 도니 소리와 흔들림만, 마나는 한 줄 더 띄운다.
+       사연: docs/code-history.md#h28 */
     if ((this.cd[id] || 0) > 0) { G.skillDeny(i); return; }
     if (this.mp < sk.mana) { G.skillDeny(i, '마나가 부족하다'); return; }
     this.mp -= sk.mana;
@@ -954,10 +948,9 @@ class Player extends Ent {
     this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
     if (this.hurtCd <= 0) this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
 
-    /* --- 헤엄 상태 ---
-       예전에는 그때그때 `submerged > 0.3` 을 봤다. 수면에서 몸이 오르내리면 그 값이
-       임계값을 계속 넘나들어 한 프레임씩 물속/물 밖이 뒤바뀌고, 점프 횟수와 중력이 같이
-       떨렸다. 들어가는 값과 나오는 값을 갈라 둔다(히스테리시스). */
+    /* 수면에서 몸이 오르내리면 그 값이 임계값을 계속 넘나들어 한 프레임씩 물속/물 밖이 뒤바뀌고, 점프 횟수와 중력이 같이 떨렸다. 들어가는 값과 나오는 값을 갈라
+       둔다(히스테리시스).
+       사연: docs/code-history.md#h29 */
     const sub = this.submerged || 0;
     /* 물에 들고 나는 순간에만 첨벙. 히스테리시스(0.35 진입 / 0.25 이탈) 덕에
        수면에서 값이 떨릴 때 소리가 연달아 나지 않는다. */
@@ -993,11 +986,9 @@ class Player extends Ent {
     if (this.onGround || inWater) this.jumpsLeft = d.jumps;
     if (!inWater) { this.floating = false; this.swimMove = false; }
     if (inWater) {
-      /* 수면에 떠 있기 — 아무것도 안 누르면 머리를 내민 채 **물결을 따라** 오르내린다.
-         예전에는 부력이 중력의 72%만 덜어 줘서 손을 놓으면 천천히 가라앉았고, 바다에서는
-         물결이 칸 안에서 오르내리는데 몸은 칸 경계에 멈춰 파도와 따로 놀았다.
-         수면이 머리 위 두 칸 안일 때만 끌어올린다 — 깊이 잠수한 것까지 끌어올리면 안 된다.
-         아래(S)를 누르면 이 부력을 끄고 가라앉는다. */
+      /* 수면에 떠 있기 — 아무것도 안 누르면 머리를 내민 채 **물결을 따라** 오르내린다. 수면이 머리 위 두 칸 안일 때만 끌어올린다 — 깊이 잠수한 것까지
+         끌어올리면 안 된다. 아래(S)를 누르면 이 부력을 끄고 가라앉는다.
+         사연: docs/code-history.md#h30 */
       this.floating = false;
       if (!input.jump && !input.down) {
         const hx = this.cx / TS, sr = world.surfaceRow(Math.floor(hx), Math.floor((this.y + 6) / TS) + 1, 3);
@@ -1010,15 +1001,15 @@ class Player extends Ent {
       // 물가로 기어오르기 — 이게 없으면 좁은 웅덩이에서 영영 못 나온다
       const climbed = input.jump && !this.jumpHeld && this.climbOut(world, want || this.facing);
       /* --- 헤엄 ---
-         ★ 예전에는 땅 위 걷기를 그대로 느리게 한 것이었다(좌우 가속 950 · 속도 62%, 점프를 누르면
-           위로만 떠오름). 물에서만의 규칙을 세 가지 둔다.
+         물에서만의 규칙을 세 가지 둔다.
            ① **팔 젓기 박자** — 입력 방향(좌우 + 위(점프)·아래)으로 미는 힘이 박자(swimPh)에 맞춰
-              세졌다 약해진다. 헤엄 시트(char/player_*_swim, tools/mkplayer.py)의 네 장이 같은 박자로
-              넘어가서, 팔을 당기는 그림일 때 몸이 앞으로 나간다.
+              세졌다 약해진다. 헤엄 그림(걷기 네 장을 눕힌 것 — game.js drawSwimPlayer)이 같은
+              박자로 넘어가서, 팔을 당기는 그림일 때 몸이 앞으로 나간다.
            ② **물의 저항은 속도 제곱** — 느릴 때는 멀리 미끄러지고(젓기를 멈춰도 한동안 나간다),
               빠를수록 세게 붙잡힌다. 그래서 상한을 따로 두지 않아도 걷기의 75% 근처에서 멎는다.
            ③ **거의 뜨는 몸** — 잠긴 채 손을 놓으면 아주 천천히 가라앉는다(move 의 swimGrav).
-         수면에 떠 있을 때 점프를 막 누르면 물을 박차고 뛰어오른다(물가 턱으로 올라서지 못했을 때). */
+         수면에 떠 있을 때 점프를 막 누르면 물을 박차고 뛰어오른다(물가 턱으로 올라서지 못했을 때).
+         사연: docs/code-history.md#h31 */
       let ix = want, iy = (input.down ? 1 : 0) - (input.jump ? 1 : 0);
       if (this.floating && iy < 0) iy = 0;                  // 수면에서는 위로 저어 봐야 허공이다
       const mag = Math.hypot(ix, iy);
@@ -1055,13 +1046,12 @@ class Player extends Ent {
        한 개만 갈면 된다.
 
        ★ 셋을 조심할 것. 전부 한 번씩 물렸던 자리다.
-       ① 이미 추진 상한(-330)보다 빨리 오르는 중이면 **손대지 않는다.** 예전에는
-          막 뛰어오른 순간(vy -620)에 그 프레임에 곧장 -330으로 느려져, 제트팩을 끼면
-          점프가 오히려 나빠졌다.
+       ① 이미 추진 상한(-330)보다 빨리 오르는 중이면 **손대지 않는다.**
        ② 누르는 **순간에 먼저** 전하를 받는다. 안 그러면 0.25초보다 빠르게 눌렀다 떼는
           연타로 전하를 한 톨도 안 쓰고 날 수 있다.
        ③ 추진 중에는 이중 점프를 되차지 않는다(땅과 물에서만). 되차면 떼었다 누를 때마다
-          -620 점프가 무한히 나와, ①과 겹쳐 "연타가 더 빠른" 뒤집힌 조작이 된다. */
+          -620 점프가 무한히 나와, ①과 겹쳐 "연타가 더 빠른" 뒤집힌 조작이 된다.
+       사연: docs/code-history.md#h32 */
     this.jetting = false;
     /* 발밑 지면에서 얼마나 떠 있나 — 30칸을 넘으면 더 오르지 못한다(위 JET_MAX_UP 주석) */
     this.jetGap = d.jet ? this.groundGap(world) : 0;
@@ -1237,15 +1227,13 @@ class Enemy extends Ent {
     this.boss = !!d.boss;
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
     this.flash = 0; this.atkCd = 0; this.jumpCd = 0; this.think = 0;
-    /* 공격 포즈를 띄워 둘 시간. 예전에는 atkCd > 1.4 로 대신했는데, atkCd 는
-       화살·마법을 쏘는 놈만 쓴다 — 근접은 접촉 피해라 값이 늘 0이었고, 그래서
-       프레임 4(공격 그림)를 한 번도 못 보여 주고 있었다. 때린 순간에 직접 켠다. */
+    /* 공격 포즈를 띄워 둘 시간. 때린 순간에 직접 켠다.
+       사연: docs/code-history.md#h33 */
     this.atkPose = 0;
     this.lastPhase = 0;
     this.slowT = 0; this.slowF = 1; this.dots = [];
-    /* 페이즈 수는 보스마다 다르다(ENEMIES 의 ph). 유적 미니보스는 2, 세션 종장과
-       특별 유적의 주인은 5, 나머지 스토리 보스는 3. 예전에는 전부 3 이었다 —
-       처음 잡는 슬라임 왕과 마지막 환원기가 같은 마디로 나뉘었다는 뜻이다. */
+    /* 페이즈 수는 보스마다 다르다(ENEMIES 의 ph).
+       사연: docs/code-history.md#h34 */
     this.phases = d.ph || 3;
     this.phase = 0; this.pf = 0; this.state = 0; this.stateT = 0;
     this.facing = -1;
@@ -1464,9 +1452,8 @@ class Enemy extends Ent {
       if (ITEMS[id] && (ITEMS[id].stack || 1) > 1) G.drops.push(new Drop(this.cx, this.cy, makeItem(id, n)));
       else for (let k = 0; k < n; k++) G.drops.push(new Drop(this.cx, this.cy, rollGear(id, rng, this.boss ? 3 : 0)));
     }
-    /* 쓰러지는 그림을 남긴다. 이 개체는 **예전과 똑같이** 이 프레임에 ents 에서
-       빠지고(dead = true), 남는 것은 G.corpses 의 그리기 전용 기록뿐이다.
-       판정·조준·스폰 수 어디에도 안 잡히므로 손맛이 안 바뀐다. */
+    /* 쓰러지는 그림을 남긴다. 판정·조준·스폰 수 어디에도 안 잡히므로 손맛이 안 바뀐다.
+       사연: docs/code-history.md#h35 */
     G.addCorpse(this);
     G.deathBurst(this);
     if (this.boss) { G.shake = 18; G.onBossDown(this.type); }
@@ -1698,10 +1685,10 @@ class Enemy extends Ent {
     const AI = this.def.ai;
     this.stateT -= dt;
     const hpr = this.hp / this.maxHp;
-    /* 체력을 페이즈 수만큼 균등하게 자른다(3페이즈면 66%/33% 로 예전과 같다).
-       ★ pf 를 같이 둔다 — 0(첫 페이즈)에서 1(마지막)까지의 **비율**이다. AI 의 세기 식은
+    /* ★ pf 를 같이 둔다 — 0(첫 페이즈)에서 1(마지막)까지의 **비율**이다. AI 의 세기 식은
        전부 이 비율로 쓴다. phase 를 그대로 곱하면 5페이즈 보스에서 `1.5 - phase*0.35` 가
-       0.1 이 되어(원래 최저 0.8) 사람이 반응할 수 없는 속도가 나온다. */
+       0.1 이 되어(원래 최저 0.8) 사람이 반응할 수 없는 속도가 나온다.
+       사연: docs/code-history.md#h36 */
     const nph = this.phases;
     this.phase = Math.min(nph - 1, Math.floor((1 - hpr) * nph));
     this.pf = nph > 1 ? this.phase / (nph - 1) : 0;
@@ -2454,13 +2441,14 @@ class Proj extends Ent {
 
 /* ================= 이펙트 ================= */
 class Part {
-  /* o(선택) — 재질 파편을 위해 뒤에 붙였다. 안 주면 예전과 한 톨도 안 다르다.
+  /* o(선택) — 재질 파편을 위해 뒤에 붙였다.
        g     중력 배수. 음수면 위로 뜬다(불티 · 영혼)
        sq    1이면 네모(돌 · 쇠 · 유리), 0이면 동그라미(살 · 젤 · 연기)
        glow  1이면 빛난다 — 그리는 쪽에서 합성 모드를 바꾼다
        spd   튀어 나가는 속도 배수
        r     파편 크기 배수
-       drag  공기 저항. 연기는 금방 서고 돌조각은 멀리 간다 */
+       drag  공기 저항. 연기는 금방 서고 돌조각은 멀리 간다
+     사연: docs/code-history.md#h37 */
   constructor(x, y, c, vy0 = 0, life = 0.5, o = null) {
     this.x = x; this.y = y; this.c = c;
     const sp = o && o.spd !== undefined ? o.spd : 1;
@@ -2579,10 +2567,9 @@ class Drop {
       this.x += this.vx * dt; this.y += this.vy * dt;
       return;
     }
-    /* 물에 뜬다 — 예전에는 드롭이 물을 모르고 바닥까지 가라앉았다(바다에 떨군 전리품은
-       해저까지 헤엄쳐 가야 주웠다). 이제 수면까지 떠올라 수면에서 오르내린다. 바다 수면은
-       물결 높이(G.surfacePx — 그리는 쪽과 같은 식)를 따라가므로 파도를 타고, 흐르는 물에서는
-       물살에 떠내려간다. 수면에서 3칸보다 깊으면 천천히 떠오르기만 한다. */
+    /* 이제 수면까지 떠올라 수면에서 오르내린다. 바다 수면은 물결 높이(G.surfacePx — 그리는 쪽과 같은 식)를 따라가므로 파도를 타고, 흐르는 물에서는 물살에
+       떠내려간다. 수면에서 3칸보다 깊으면 천천히 떠오르기만 한다.
+       사연: docs/code-history.md#h38 */
     const ctx = Math.floor((this.x + this.w / 2) / TS), cty = Math.floor((this.y + this.h * 0.75) / TS);
     const sr = world.surfaceRow(ctx, cty, 3);
     const wet = TILE_DEF[world.get(ctx, cty)].liquid;
