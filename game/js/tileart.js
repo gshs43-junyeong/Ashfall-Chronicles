@@ -739,19 +739,31 @@ const TileArt = {
         }
       };
       paint(fr);
-      // 거의 빈 칸(잎이 12% 미만) — 닻 쪽에서 그 칸을 가로지르는 짧은 잎줄기 둘
+      // 덜 덮인 칸(20% 미만) — 닻에서 잎 칸을 따라 건너온 앞 칸(부모) 가운데에서 이 칸을 지나 뻗는 잎줄기.
+      // 부모 칸에서 시작하므로 떨어져 뜬 조각이 되지 않고, 가지처럼 덩어리 끝까지 이어진다.
       const id = g.getImageData(0, 0, CW, CH).data, extra = [];
-      for (let j = 0; j < H; j++)
-        for (let i = 0; i < W; i++) {
-          if (mask[j * W + i] !== '1') continue;
-          let n = 0;
-          for (let y = 0; y < TS; y += 2) for (let x = 0; x < TS; x += 2) if (id[((j * TS + y) * CW + i * TS + x) * 4 + 3] > 40) n++;
-          if (n / ((TS / 2) * (TS / 2)) >= 0.12) continue;   // 거의 빈 칸에만 — 흔하면 잎줄기가 엇갈려 어지럽다
-          const cx = (i + 0.5) * TS, cy = (j + 0.5) * TS;
-          const a = Math.atan2(-(cy - O[1]), cx - O[0] || 0.01);
-          const sx = cx - Math.cos(a) * 9, sy = cy + Math.sin(a) * 9;
-          for (const da of [-0.35, 0.35]) extra.push(frond(sx, sy, a + da, 0.012, 40));
+      const ai = cl.an[0] - cl.x0, aj = cl.an[1] - cl.y0, par = new Map([[aj * W + ai, -1]]), order = [aj * W + ai];
+      for (let q = 0; q < order.length; q++) {
+        const k = order[q], i = k % W, j = (k / W) | 0;
+        for (const [di, dj] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) {
+          const ni = i + di, nj = j + dj, nk = nj * W + ni;
+          if (ni < 0 || nj < 0 || ni >= W || nj >= H || mask[nk] !== '1' || par.has(nk)) continue;
+          par.set(nk, k); order.push(nk);
         }
+      }
+      const cov = k => {
+        const i = k % W, j = (k / W) | 0; let n = 0;
+        for (let y = 0; y < TS; y += 2) for (let x = 0; x < TS; x += 2) if (id[((j * TS + y) * CW + i * TS + x) * 4 + 3] > 40) n++;
+        return n / ((TS / 2) * (TS / 2));
+      };
+      for (const k of order) {
+        const pk = par.get(k);
+        if (pk < 0 || cov(k) >= 0.2) continue;
+        const px0 = (pk % W + 0.5) * TS, py0 = (((pk / W) | 0) + 0.5) * TS;
+        const cx = (k % W + 0.5) * TS, cy = (((k / W) | 0) + 0.5) * TS;
+        const a = Math.atan2(-(cy - py0), cx - px0);
+        for (const da of [-0.3, 0.3]) extra.push(frond(px0, py0, a + da, 0.006, 90));
+      }
       if (extra.length) paint(extra);
       if (cl.an && w.get(cl.an[0], cl.an[1] + 1) === T.PALMWOOD) {
         g.fillStyle = dk2; g.beginPath(); g.ellipse(O[0], O[1], 6, 4, 0, 0, Math.PI * 2); g.fill();
