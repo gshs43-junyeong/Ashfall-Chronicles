@@ -3949,7 +3949,7 @@ class World {
         for (let k = 0; k < hgt; k++) {
           const y = iy - 1 - k;
           this.set(cx, y, T.PALMWOOD);
-          if (k > 1 && k % 3 === 0) { cx += lean; this.set(cx, y, T.PALMWOOD); }   // 이음칸
+          if (k > 1 && k % 3 === 0 && k < hgt - 1) { cx += lean; this.set(cx, y, T.PALMWOOD); }   // 이음칸(꼭대기 줄은 빼야 잎갓 밑이 안 꺾인다)
         }
         /* 잎갓 — 줄기 끝에 **가로로 넓게** 얹는다 — 사연: docs/code-history.md#h131 */
         const ty = iy - 1 - hgt;
