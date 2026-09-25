@@ -916,6 +916,7 @@ const G = {
     for (let i = this.projs.length - 1; i >= 0; i--) { this.projs[i].update(dt, w, p); if (this.projs[i].dead) this.projs.splice(i, 1); }
     for (let i = this.drops.length - 1; i >= 0; i--) { this.drops[i].update(dt, w, p); if (this.drops[i].dead) this.drops.splice(i, 1); }
     for (let i = this.parts.length - 1; i >= 0; i--) if (!this.parts[i].update(dt)) this.parts.splice(i, 1);
+    this.walkDust(p);
     /* ★ 잰 최고치는 257개라 PART_CAP(900)에 정상 전투로는 닿지 않지만, 난간이 없으면 언젠가 프레임으로 값을 치른다. */
     if (this.parts.length > PART_CAP) this.parts.splice(0, this.parts.length - PART_CAP);
     for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
@@ -5657,6 +5658,23 @@ const G = {
   },
 
   /* ---- 프레임 선택 (우리 엔티티 필드 기준) ---- */
+  /** 걸을 때 발밑 흙먼지 — 그림만(Part 는 충돌·판정이 없다). 걷기 프레임(9fps)의 발 딛는 두 칸에 맞춰
+      절반쯤만 한 톨씩 — 매 프레임 뿌리면 달리기 내내 연기처럼 깔린다. */
+  walkDust(p) {
+    const st = Math.floor(this.time * 9) % 4;
+    const step = st !== this._dustSt && (st === 0 || st === 2);
+    this._dustSt = st;
+    if (!step || !p.onGround || p.swimming || Math.abs(p.vx) < 60 || Math.random() > 0.55) return;
+    const w = this.world, fy = p.y + p.h + 1;
+    const tx = Math.floor(p.cx / TS), ty = Math.floor(fy / TS);
+    if (w.liquid(tx, ty - 1)) return;                     // 얕은 물을 걸을 땐 먼지가 안 인다
+    const d = TILE_DEF[w.get(tx, ty)];
+    if (!d || !d.solid || !d.c) return;
+    const n = Math.random() < 0.3 ? 2 : 1;
+    for (let i = 0; i < n; i++)
+      this.parts.push(new Part(p.cx - Math.sign(p.vx) * 5, fy - 2, mixHex(d.c, '#d2c6a8', 0.75), -22, 0.38,
+        { spd: 0.2, r: 1, g: 0.2, drag: 0.9 }));
+  },
   playerFrame(p) {
     if (p.flash > 0.12) return 12;                                  // 피격
     if (p.dashV > 0) return 8;                                      // 대시
@@ -7881,6 +7899,22 @@ const G = {
       c.globalAlpha = 0.5;
       for (const [ox, oy] of [[-2, 0], [2, 0], [0, -2], [0, 2]])
         Sprites.draw(c, key, this.enemyFrame(e), sx + dx + ox, sy - dy + oy, e.facing < 0);
+      c.restore();
+      c.filter = 'none';
+    } else if (this.spritesOn && meta && e.def.ai === 'swimmer'
+      && this.world.liquid(Math.floor(e.cx / TS), Math.floor(e.cy / TS))) {
+      /* 물속 몹은 물색과 명도가 비슷해(암초 상어 #5a6a78 : 바닷물 #12496e) 윤곽이 풀린다.
+         발광 대신 물속에서 실제로 보이는 식으로 — 아래·옆은 어두운 그림자 윤곽,
+         위는 수면에서 내려오는 빛이 등에 맺힌 한 줄. 둘 다 조명 아래라 어둠에선 같이 어둡다. */
+      const fr = this.enemyFrame(e), fl = e.facing < 0, bx = sx + dx, by = sy - dy;
+      c.save();
+      c.filter = 'brightness(0)';
+      c.globalAlpha = 0.55;
+      for (const [ox, oy] of [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]])
+        Sprites.draw(c, key, fr, bx + ox, by + oy, fl);
+      c.filter = 'brightness(0) invert(1)';
+      c.globalAlpha = 0.32;
+      Sprites.draw(c, key, fr, bx, by - 1, fl);
       c.restore();
       c.filter = 'none';
     }
