@@ -329,7 +329,11 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   이끼·종유·수정·독기 중 하나. 장식은 **자연 벽지 위 빈 칸에만** 놓고 전부 걸음을 안 막는다.
   **금 간 자갈**(`world.faults`)을 캐거나 터뜨리면 지진과 함께 숨은 동굴이 열린다(game.js `triggerFault`).
   세이브 v7 에 `world.caveGrid` · `world.faults` 가 들어갔다.
+- **저장소**(game.js `SaveStore`): 세이브는 IndexedDB(`ashfall` DB · `data` 본문 gzip+서명 · `head` 슬롯 요약)에 넣고,
+  안 열리면 localStorage 로 떨어진다. 세이브를 읽고 쓰는 곳은 **전부 `SaveStore.put/get/remove/list`** 를 거친다 —
+  localStorage 를 직접 만지면 IndexedDB 쪽과 어긋난다(설정 `SET_KEY` 만 localStorage). 저장은 비동기라 `saveGame()` 은
+  끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
 - `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1`이다.
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 조작 커스터마이징·설정·날씨 /
   v1.2.0 데코레이션·멀티플레이. 멀티플레이는 지금 구조(전역 `G` 하나 +
-  localStorage 세이브 + 절차 생성 월드)와 정면으로 부딪히므로 구조 논의가 먼저다.
+  브라우저 안 세이브 + 절차 생성 월드)와 정면으로 부딪히므로 구조 논의가 먼저다.

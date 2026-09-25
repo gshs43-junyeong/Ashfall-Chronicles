@@ -83,19 +83,143 @@ function saveSign(text) {
   }
   return a.toString(36) + '.' + b.toString(36) + '.' + (t.length % 1e6).toString(36);
 }
-/** 슬롯에 글자열을 넣으면서 서명도 같이 적는다 (저장·이관·되돌리기가 모두 이 문을 쓴다) */
-function saveSealed(slot, text) {
-  localStorage.setItem(slotKey(slot), text);
-  try { localStorage.setItem(sigKey(slot), saveSign(text)); } catch (e) { }
-}
-/** 열어도 되는 기록인가. 봉인 표시가 없는 옛 기록은 그냥 통과시킨다 —
+/** 열어도 되는 기록인가(sig 는 그 기록에 딸린 서명). 봉인 표시가 없는 옛 기록은 그냥 통과시킨다 —
     판을 올렸다고 남의 진행을 못 열게 만들 수는 없다. 다음 저장 때 저절로 봉인된다. */
-function saveSealOk(slot, raw, d) {
+function saveSealOk(raw, d, sig) {
   if (!d || !d.sealed) return true;
-  let sig = null;
-  try { sig = localStorage.getItem(sigKey(slot)); } catch (e) { return true; }
   return !!sig && sig === saveSign(raw);
 }
+/** 슬롯 목록에 띄울 요약 — 본문을 열지 않고 목록을 그리려고 따로 적는다 */
+function saveHead(d) {
+  return { name: d.name || '이름 없는 모험가', level: d.p ? d.p.level : 1, chapter: d.chapter,
+    size: (d.world && d.world.size) || 's', savedAt: d.savedAt };
+}
+
+/* ================= 저장소 =================
+   세이브는 **IndexedDB** 에 gzip 으로 넣는다. localStorage 는 출처마다 5 MB 남짓이고 글자당 2바이트로
+   세서, 대형 세계(173만 글자 ≈ 3.5 MB) 슬롯 셋이면 넘친다. gzip 하면 대형 한 칸이 0.96 MB(소형 0.28 MB),
+   IndexedDB 한도는 수백 MB 이상이다(실측 — 크로미움 file:// 에서도 열린다).
+   IndexedDB 가 안 열리는 곳(일부 브라우저의 시크릿 창·file://)에서는 예전처럼 localStorage 에 쓴다.
+
+   레코드 둘로 나눈다: 'data'(본문 gz + 서명)와 'head'(슬롯 요약). 타이틀 목록은 head 만 읽는다 —
+   본문을 읽으면 슬롯마다 수백 KB 를 풀어야 한다.
+   ★ 옛 localStorage 기록은 init 에서 옮긴다. **다시 읽어 원문과 같을 때만** 지운다 — 옮기다 실패해도
+     원본은 남는다. 서명도 그대로 옮긴다(손댄 기록이 옮기는 길에 봉인이 풀리면 안 된다). */
+const SaveStore = {
+  mode: 'ls',
+  db: null,
+  ready: null,
+  start() { return this.ready || (this.ready = this.init()); },
+  async init() {
+    try {
+      if (typeof indexedDB === 'undefined') throw new Error('no indexedDB');
+      this.db = await new Promise((res, rej) => {
+        const q = indexedDB.open('ashfall', 1);
+        q.onupgradeneeded = () => { q.result.createObjectStore('data'); q.result.createObjectStore('head'); };
+        q.onsuccess = () => res(q.result);
+        q.onerror = () => rej(q.error);
+        q.onblocked = () => rej(new Error('blocked'));
+        setTimeout(() => rej(new Error('timeout')), 4000);     // 열기가 멈춘 채로 안 돌아오는 브라우저가 있다
+      });
+      this.mode = 'idb';
+    } catch (e) { console.warn('IndexedDB 를 못 열어 localStorage 에 저장한다:', e); this.mode = 'ls'; return; }
+    try { await this.migrate(); } catch (e) { console.error(e); }
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { }
+  },
+  _req(r) { return new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
+  _tx(stores, mode, fn) {
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction(stores, mode);
+      let out;
+      Promise.resolve(fn(tx)).then(v => { out = v; }, rej);
+      tx.oncomplete = () => res(out);
+      tx.onerror = () => rej(tx.error);
+      tx.onabort = () => rej(tx.error || new Error('abort'));
+    });
+  },
+  async _gz(text) {
+    if (typeof CompressionStream === 'undefined') return null;
+    return new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+  },
+  async _ungz(buf) {
+    return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  },
+  /** 슬롯에 글자열을 넣으면서 서명도 같이 적는다. sig 를 주면 그것을 쓴다(옮기기 — 봉인을 그대로 둔다) */
+  async put(slot, text, head, sig) {
+    await this.start();
+    if (sig === undefined) sig = saveSign(text);
+    if (this.mode === 'ls') {
+      localStorage.setItem(slotKey(slot), text);
+      try { if (sig) localStorage.setItem(sigKey(slot), sig); else localStorage.removeItem(sigKey(slot)); } catch (e) { }
+      return;
+    }
+    // 압축은 트랜잭션 **밖에서** 끝낸다 — 트랜잭션은 기다리는 동안 저절로 닫힌다
+    const gz = await this._gz(text);
+    const rec = gz ? { gz, sig } : { text, sig };
+    await this._tx(['data', 'head'], 'readwrite', tx => {
+      tx.objectStore('data').put(rec, slotKey(slot));
+      tx.objectStore('head').put(head, slotKey(slot));
+    });
+  },
+  /** { raw, sig } 또는 null */
+  async get(slot) {
+    await this.start();
+    if (this.mode === 'ls') {
+      const raw = localStorage.getItem(slotKey(slot));
+      if (!raw) return null;
+      let sig = null;
+      try { sig = localStorage.getItem(sigKey(slot)); } catch (e) { }
+      return { raw, sig };
+    }
+    const rec = await this._tx(['data'], 'readonly', tx => this._req(tx.objectStore('data').get(slotKey(slot))));
+    if (!rec) return null;
+    return { raw: rec.gz ? await this._ungz(rec.gz) : rec.text, sig: rec.sig || null };
+  },
+  async remove(slot) {
+    await this.start();
+    localStorage.removeItem(slotKey(slot));
+    localStorage.removeItem(sigKey(slot));   // 서명만 남으면 다음 기록이 헛되이 잠긴다
+    if (this.mode === 'idb') await this._tx(['data', 'head'], 'readwrite', tx => {
+      tx.objectStore('data').delete(slotKey(slot)); tx.objectStore('head').delete(slotKey(slot));
+    });
+  },
+  /** 슬롯 요약 SAVE_SLOTS 개(빈 칸은 null). localStorage 쪽은 본문을 풀어 손댄 기록(bad)까지 가린다 */
+  async list() {
+    await this.start();
+    const out = [];
+    for (let i = 0; i < SAVE_SLOTS; i++) {
+      if (this.mode === 'idb') {
+        out.push(await this._tx(['head'], 'readonly', tx => this._req(tx.objectStore('head').get(slotKey(i)))) || null);
+        continue;
+      }
+      const raw = localStorage.getItem(slotKey(i));
+      if (!raw) { out.push(null); continue; }
+      try {
+        const d = JSON.parse(raw);
+        let sig = null;
+        try { sig = localStorage.getItem(sigKey(i)); } catch (e) { }
+        out.push(Object.assign(saveHead(d), { bad: !saveSealOk(raw, d, sig) }));
+      } catch (e) { out.push(null); }
+    }
+    return out;
+  },
+  async migrate() {
+    for (let i = 0; i < SAVE_SLOTS; i++) {
+      const raw = localStorage.getItem(slotKey(i));
+      if (!raw) continue;
+      const have = await this._tx(['head'], 'readonly', tx => this._req(tx.objectStore('head').get(slotKey(i))));
+      if (have) continue;                         // 이미 옮긴 칸은 건드리지 않는다
+      let d;
+      try { d = JSON.parse(raw); } catch (e) { continue; }
+      const sig = localStorage.getItem(sigKey(i));
+      await this.put(i, raw, saveHead(d), sig);
+      const back = await this.get(i);
+      if (back && back.raw === raw && back.sig === sig) {
+        localStorage.removeItem(slotKey(i)); localStorage.removeItem(sigKey(i));
+      }
+    }
+  }
+};
 const SET_KEY = 'ashfall_settings';
 /* 설정 기본값. 세이브와 별개로 저장되므로 새 게임을 시작해도 유지된다.
    view 는 시야 배율(%), keys 는 바꾼 조작키만 담는 표, notice 는 끈 알림만 담는 표 —
@@ -178,6 +302,7 @@ const G = {
     this.loadSettings();
     if (window.Music) Music.armStart(() => this.pickBgm());
     this.migrateLegacySave();
+    SaveStore.start();                   // 옛 localStorage 기록을 IndexedDB 로 옮기는 것도 여기서 시작한다
     this.renderSlotScreen();
     /* 타이틀에는 버튼 넷만 둔다 — 저장 슬롯도, 캐릭터 선택도 팝업으로 뺐다.
        조작법은 설정 안으로 합쳤다(조작키 목록 바로 아래). */
@@ -195,9 +320,9 @@ const G = {
     $('#btn-resume').onclick = () => this.setPause(false);
     $('#btn-save').onclick = () => this.saveGame();
     /* 저장하기의 선택지 — 먼저 저장하고 그 결과를 파일로 내보낸다.
-       순서가 중요하다: exportSaves() 는 localStorage 를 읽으므로, 저장을 먼저 하지
-       않으면 방금 한 것이 빠진 파일이 나간다. */
-    $('#btn-save-export').onclick = () => { this.saveGame(); this.exportSaves(); };
+       순서가 중요하다: exportSaves() 는 저장소를 읽으므로, 저장이 **끝난 뒤에** 불러야
+       방금 한 것이 빠지지 않는다(저장은 비동기다). */
+    $('#btn-save-export').onclick = async () => { if (await this.saveGame()) this.exportSaves(); };
     const openSettings = () => { UI.syncSettings(); $('#settings-screen').classList.add('open'); };
     $('#btn-settings-title').onclick = openSettings;
     $('#btn-settings-pause').onclick = openSettings;
@@ -4119,10 +4244,7 @@ const G = {
     if (md.death === 'wipe') {
       // 불가능 모드 — 이 슬롯의 기록을 지운다. 비석도 남지 않는다.
       this.deathMark = null;
-      if (this.currentSlot !== null) {
-        localStorage.removeItem(slotKey(this.currentSlot));
-        localStorage.removeItem(sigKey(this.currentSlot));
-      }
+      if (this.currentSlot !== null) SaveStore.remove(this.currentSlot).catch(e => console.error(e));
       $('#death-line').textContent = '불가능 모드였다. 이 슬롯의 기록이 지워졌다.';
       $('#death-screen').classList.add('open');
       $('#death-screen').classList.add('wipe');
@@ -4296,8 +4418,11 @@ const G = {
   },
 
   /* ================= 저장 ================= */
-  saveGame() {
-    if (this.currentSlot === null) return;   // 타이틀에서 슬롯을 거치지 않고는 저장할 수 없다
+  /** 저장이 끝나면 true. 저장은 비동기다(압축·IndexedDB) — 글자열은 부른 순간의 상태로 먼저 만든다 */
+  async saveGame() {
+    if (this.currentSlot === null) return false;   // 타이틀에서 슬롯을 거치지 않고는 저장할 수 없다
+    if (this._saving) { this.toast('저장하는 중이다', 'info'); return false; }
+    this._saving = true;
     try {
       const p = this.player;
       const data = {
@@ -4325,22 +4450,27 @@ const G = {
         }
       };
       data.sealed = 1;                                 // 서명이 있는 기록이라는 표시
-      saveSealed(this.currentSlot, JSON.stringify(data));
+      await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
       this.toast('저장했다', 'good');
-    } catch (e) { this.toast('저장 실패: 용량 초과', 'bad'); console.error(e); }
+      return true;
+    } catch (e) {
+      this.toast(e && e.name === 'QuotaExceededError' ? '저장 실패: 용량 초과' : '저장 실패', 'bad'); console.error(e);
+      return false;
+    } finally { this._saving = false; }
   },
   /* ================= 저장 내보내기 / 가져오기 =================
-     저장은 localStorage 안에만 있다. 브라우저를 바꾸거나, zip 폴더를 옮기거나,
+     저장은 브라우저 안(IndexedDB · 안 되면 localStorage)에만 있다. 브라우저를 바꾸거나, zip 폴더를 옮기거나,
      시크릿 창을 닫으면 그대로 사라진다 — file:// 은 경로가 곧 출처라 폴더 이름만
      바뀌어도 남남이 된다. 그래서 세 칸과 설정을 파일 한 장으로 꺼내고 되돌린다.
      웹이든 zip 이든 같은 파일이다. */
-  exportSaves() {
+  /* 파일은 슬롯 번호(0부터)를 열쇠로 본문 글자열을 담는다 — 저장소가 바뀌어도 파일 모양은 그대로다. */
+  async exportSaves() {
     try {
       const out = { app: 'ashfall', key: SAVE_KEY, at: new Date().toISOString(), slots: {} };
       let n = 0;
-      for (let i = 1; i <= 3; i++) {
-        const raw = localStorage.getItem(slotKey(i));
-        if (raw) { out.slots[i] = raw; n++; }
+      for (let i = 0; i < SAVE_SLOTS; i++) {
+        const rec = await SaveStore.get(i);
+        if (rec) { out.slots[i] = rec.raw; n++; }
       }
       const st = localStorage.getItem(SET_KEY);
       if (st) out.settings = st;
@@ -4355,14 +4485,19 @@ const G = {
     } catch (e) { this.toast('내보내기 실패', 'bad'); console.error(e); }
   },
   /** 내보낸 파일을 되돌린다. 같은 세계 폭(SAVE_KEY)만 받는다 */
-  importSaves(text) {
+  async importSaves(text) {
     try {
       const d = JSON.parse(text);
       if (!d || d.app !== 'ashfall' || !d.slots) { this.toast('이 게임의 저장 파일이 아니다', 'bad'); return; }
       if (d.key && d.key !== SAVE_KEY) { this.toast('이전 판의 저장이라 열 수 없다', 'bad'); return; }
       let n = 0;
       // 되돌린 기록도 이 기계에서 다시 봉인한다 — 안 그러면 봉인된 파일이 안 열린다
-      for (let i = 1; i <= 3; i++) if (d.slots[i]) { saveSealed(i, d.slots[i]); n++; }
+      for (const k in d.slots) {
+        const i = +k;
+        if (!(i >= 0 && i < SAVE_SLOTS) || !d.slots[k]) continue;
+        await SaveStore.put(i, d.slots[k], saveHead(JSON.parse(d.slots[k])));
+        n++;
+      }
       if (d.settings) { localStorage.setItem(SET_KEY, d.settings); this.loadSettings(); UI.syncSettings(); }
       if (!n) { this.toast('파일에 기록이 없다', 'bad'); return; }
       this.toast(`${n}칸을 되돌렸다 — 이어하기에서 고르면 된다`, 'good');
@@ -4370,14 +4505,16 @@ const G = {
     } catch (e) { this.toast('저장 파일을 읽지 못했다', 'bad'); console.error(e); }
   },
 
-  loadGame(slot) {
-    const raw = localStorage.getItem(slotKey(slot));
-    if (!raw) { this.toast('저장된 기록이 없다', 'bad'); return; }
+  async loadGame(slot) {
+    let rec = null;
+    try { rec = await SaveStore.get(slot); } catch (e) { console.error(e); }
+    if (!rec) { this.toast('저장된 기록이 없다', 'bad'); return; }
+    const raw = rec.raw;
     /* 손댄 기록은 열지 않는다. **막을 뿐 지우지는 않는다** — 서명 쪽에 문제가 있어
        멀쩡한 기록을 잠갔더라도 파일은 그대로 남아 있어야 한다. */
     let head = null;
     try { head = JSON.parse(raw); } catch (e) { }
-    if (!saveSealOk(slot, raw, head)) {
+    if (!saveSealOk(raw, head, rec.sig)) {
       this.toast('이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다', 'bad');
       return;
     }
@@ -4505,34 +4642,22 @@ const G = {
       d.name = d.name || '이름 없는 모험가';
       d.savedAt = d.savedAt || Date.now();
       d.sealed = 1;
-      saveSealed(0, JSON.stringify(d));
+      const text = JSON.stringify(d);
+      localStorage.setItem(slotKey(0), text);          // 이어서 SaveStore.start() 가 IndexedDB 로 옮긴다
+      localStorage.setItem(sigKey(0), saveSign(text));
       localStorage.removeItem(SAVE_KEY);
     } catch (e) { console.error(e); }
   },
-  /** 슬롯 요약만 가볍게 읽는다 — World.deserialize()까지 갈 필요 없이 JSON.parse만 하면 된다 */
-  listSlots() {
-    const out = [];
-    for (let i = 0; i < SAVE_SLOTS; i++) {
-      const raw = localStorage.getItem(slotKey(i));
-      if (!raw) { out.push(null); continue; }
-      try {
-        const d = JSON.parse(raw);
-        out.push({ name: d.name || '이름 없는 모험가', level: d.p.level, chapter: d.chapter,
-          size: (d.world && d.world.size) || 's', savedAt: d.savedAt, bad: !saveSealOk(i, raw, d) });
-      } catch (e) { out.push(null); }
-    }
-    return out;
-  },
-  deleteSlot(i) {
+  async deleteSlot(i) {
     if (!confirm('이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.')) return;
-    localStorage.removeItem(slotKey(i));
-    localStorage.removeItem(sigKey(i));   // 서명만 남으면 다음 기록이 헛되이 잠긴다
+    try { await SaveStore.remove(i); } catch (e) { this.toast('삭제하지 못했다', 'bad'); console.error(e); }
     this.renderSlotScreen();
   },
   /** 타이틀 화면의 슬롯 목록을 새로 그린다. 빈 칸은 "새로운 여정" 버튼 하나만,
       찬 칸은 이름·레벨·장·마지막 저장 시각과 이어하기/삭제 버튼을 보여 준다. */
-  renderSlotScreen() {
-    const slots = this.listSlots();
+  async renderSlotScreen() {
+    let slots;
+    try { slots = await SaveStore.list(); } catch (e) { console.error(e); slots = new Array(SAVE_SLOTS).fill(null); }
     const box = $('#slot-list');
     box.innerHTML = slots.map((s, i) => {
       if (!s) {
