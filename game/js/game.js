@@ -121,6 +121,9 @@ const SaveStore = {
         q.onblocked = () => rej(new Error('blocked'));
         setTimeout(() => rej(new Error('timeout')), 4000);     // 열기가 멈춘 채로 안 돌아오는 브라우저가 있다
       });
+      /* 다른 탭이 DB 를 지우거나 판을 올리려 하면 이쪽 연결을 닫아 준다 — 안 닫으면 그쪽이 영영 기다린다.
+         닫힌 뒤의 저장은 실패로 알린다(조용히 사라지지 않는다). */
+      this.db.onversionchange = () => { this.db.close(); };
       this.mode = 'idb';
     } catch (e) { console.warn('IndexedDB 를 못 열어 localStorage 에 저장한다:', e); this.mode = 'ls'; return; }
     try { await this.migrate(); } catch (e) { console.error(e); }
@@ -147,6 +150,11 @@ const SaveStore = {
   /** 슬롯에 글자열을 넣으면서 서명도 같이 적는다. sig 를 주면 그것을 쓴다(옮기기 — 봉인을 그대로 둔다) */
   async put(slot, text, head, sig) {
     await this.start();
+    return this._put(slot, text, head, sig);
+  },
+  /* ★ init·migrate 안에서는 put/get 이 아니라 _put/_get 을 쓴다 — put 은 init 이 끝나기를 기다리므로
+     init 안에서 부르면 서로를 기다리며 멈춘다(타이틀 목록이 영영 안 뜬다). */
+  async _put(slot, text, head, sig) {
     if (sig === undefined) sig = saveSign(text);
     if (this.mode === 'ls') {
       localStorage.setItem(slotKey(slot), text);
@@ -164,6 +172,9 @@ const SaveStore = {
   /** { raw, sig } 또는 null */
   async get(slot) {
     await this.start();
+    return this._get(slot);
+  },
+  async _get(slot) {
     if (this.mode === 'ls') {
       const raw = localStorage.getItem(slotKey(slot));
       if (!raw) return null;
@@ -212,8 +223,8 @@ const SaveStore = {
       let d;
       try { d = JSON.parse(raw); } catch (e) { continue; }
       const sig = localStorage.getItem(sigKey(i));
-      await this.put(i, raw, saveHead(d), sig);
-      const back = await this.get(i);
+      await this._put(i, raw, saveHead(d), sig);
+      const back = await this._get(i);
       if (back && back.raw === raw && back.sig === sig) {
         localStorage.removeItem(slotKey(i)); localStorage.removeItem(sigKey(i));
       }
