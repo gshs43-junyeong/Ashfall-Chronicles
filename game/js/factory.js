@@ -55,6 +55,7 @@ const Factory = {
     const add = (id, n) => { if (n > 0 && ITEMS[id]) back.push(makeItem(id, n)); };
     if (m.it) add(m.it.id, m.it.c);
     if (m.in) for (const k in m.in) add(k, m.in[k]);
+    if (m.rec >= 0) { const r = MRECIPES[m.rec]; for (const k in r.in) add(k, r.in[k]); }   // 착수 때 잡아 둔 재료
     if (m.out) for (const k in m.out) add(k, m.out[k]);
     if (m.items) for (const it of m.items) if (it) back.push(it);
     w.machines.delete(ty * WW + tx);
@@ -313,13 +314,14 @@ const Factory = {
     }
     }
     for (const m of ms.values()) {                       // 기계 출력 배출
+      /* 앞이 받는 것을 찾을 때까지 차례로 — 첫 것만 보면 안 받는 출력(밀링기의 거름 → 화덕)이 줄을 영영 막았다 */
       if (m.out) {
-        for (const k in m.out) { if (m.out[k] > 0 && this.pushTo(w, m, m.dir, k)) this.bufTake(m.out, k, 1); break; }
+        for (const k in m.out) if (m.out[k] > 0 && this.pushTo(w, m, m.dir, k)) { this.bufTake(m.out, k, 1); break; }
       } else if (m.t === 'crate' && m.feed) {
         for (let i = 0; i < m.items.length; i++) {
           const it = m.items[i];
-          if (!it) continue;
-          if (this.pushTo(w, m, m.dir, it.id)) { it.c--; if (it.c <= 0) m.items[i] = null; }
+          if (!it || !this.pushTo(w, m, m.dir, it.id)) continue;
+          it.c--; if (it.c <= 0) m.items[i] = null;
           break;
         }
       }
@@ -358,10 +360,13 @@ const Factory = {
       // 축전지는 방전 배터리가 없을 때가 평상시다 — '재료 없음' 이 아니라 전기를 담고 있다고 보인다
       if (pick < 0) { m.st = s.store ? (m.e >= s.store ? '가득 참' : '축전 중') : '재료 없음'; m.prog = 0; m.act = 0; return; }
       const r = MRECIPES[pick];
+      if (this.outFull(m, r, cap)) { m.st = '출력 가득'; m.act = 0; return; }
       for (const k in r.in) this.bufTake(m.in, k, r.in[k]);   // 착수 시점에 재료를 잡아 둔다
       m.rec = pick; m.prog = 0;
     }
     const r = MRECIPES[m.rec];
+    /* ★ 연료를 태우기 **전에** 출구를 본다 — 뒤에서 보면 막힌 채 매 틱 연료만 탔다(용광로 50초에 석탄 5개) */
+    if (m.prog >= r.t && this.outFull(m, r, cap)) { m.st = '출력 가득'; m.act = 0; return; }
     let step = 1;
     if (s.fuelIn) { if (!this.burn(m)) { m.st = '연료 없음'; return; } }
     // 전력이 끊겼을 때 act를 내리면 안 된다 — 수요가 사라져 sat이 1로 돌아가고, 그러면 발전기 없이도 한 틱씩 공짜로 도는 톱니 현상이 생긴다
@@ -369,10 +374,15 @@ const Factory = {
     m.act = 1;
     if (m.prog < r.t) { m.prog += step; m.st = '가동'; }
     if (m.prog < r.t) return;
-    for (const k in r.out) if ((m.out[k] || 0) + r.out[k] > cap) { m.st = '출력 가득'; m.act = 0; return; }
+    if (this.outFull(m, r, cap)) { m.st = '출력 가득'; m.act = 0; return; }
     for (const k in r.out) this.bufAdd(m.out, k, r.out[k]);
     m.prog = 0; m.rec = -1;
     G.sfxAt(m.t === 'oven' ? 'cook' : 'smelt', m.x, m.y);
+  },
+
+  outFull(m, r, cap) {
+    for (const k in r.out) if ((m.out[k] || 0) + r.out[k] > cap) return true;
+    return false;
   },
 
   /* ---- 드릴: 반경 안의 광맥을 실제로 캐낸다 (캐낸 자리는 사라진다) ---- */

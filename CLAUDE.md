@@ -347,7 +347,8 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - 하늘 섬 고유 재료 둘(쓰임은 다음 판): `storm_amber` 폭풍 호박(큰 섬 굴·신전 상자 bonus) · `cloud_pearl` 구름 진주(지킴이 상자 bonus · 구름 해파리 4%).
   그림은 `tools/mkskyitems.py`. PNG 만 있는 아이템도 itemart 가 자리 칸을 만들어 준다(없으면 가방에 빈 칸이었다).
 - **채취탑**(잿빛 숲 대형 기계 그림): 자리는 world.js `placeRigs` 가 골라 object(type `'rig'`, 저장됨)로 세운다 — 발자국(data.js `RIG`)엔
-  나무가 안 나고(생성·`regrow` 둘 다) 플레이어도 아무것도 못 놓는다(`world.inRig`). 세션 3(ch15) 부터 우클릭으로 해체 → `RIG.parts`.
+  나무가 안 나고(생성·`regrow` 둘 다) 플레이어도 아무것도 못 놓는다(`world.inRig` — **그린 칸만**: 다리·몸통 3×6 + 굴뚝 2×8, 우클릭 상자는 `fitRig`).
+  세션 3(ch15) 부터 우클릭으로 해체 → `RIG.parts`.
 - **공장 기계**: 벨트·고속 벨트만 지나갈 수 있고 나머지 기계 타일은 전부 `solid: 1` 이다. 기계 타일에는 반드시 `mach:` 를
   단다 — 빠지면 캤을 때 기계가 유령으로 남는다(가압기·증류기·고속 벨트·강화 축전지가 그랬다). 벨트 위 물건은 `pushTo` 가
   `fx/fy/t0` 를 적고 그리기가 한 틱(`FAC_TICK`) 동안 미끄러뜨린다. 전력: 발전 → 소비 → 남으면 축전지(`MACHINE.store` 까지)
