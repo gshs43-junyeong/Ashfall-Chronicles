@@ -3926,30 +3926,25 @@ class World {
 
     /* --- 바다 한복판의 섬 (비밀) --- */
     {
-      const ix = SX(200), iw = 26;
-      /* 흙 윗면을 수면 세 칸 위에 둔다. */
-      const RISE = 3, THICK = 9;
-      const iy = this.seaLevel - RISE;
-      const half = iw >> 1;
+      /* 윗면은 파도와 같은 줄(seaLevel)에 둔다 — 파도 바로 위에 선다. 가운데 평평한 모래톱
+         양쪽이 한 칸에 한 칸씩 물 밑으로 잠기는 비탈이고, 밑면은 타원 — 끝이 벽이나 얇은 날개가 되지 않는다. */
+      const ix = SX(200), FLAT = 9, SLOPE = 5, THICK = 12;
+      const half = FLAT + SLOPE, iw = half * 2 + 1;
+      const iy = this.seaLevel;
       for (let dx = -half; dx <= half; dx++) {
-        const x = ix + dx;
+        const x = ix + dx, ax = Math.abs(dx);
         if (!this.inB(x, iy)) continue;
-        /* 가운데가 두껍고 끝으로 갈수록 얇아진다 — 물에 잠기는 밑동이 둥글게 깎인다. */
-        const th = Math.max(RISE + 1, Math.round(THICK * Math.cos((dx / half) * Math.PI / 2)));
-        for (let d = 0; d < th; d++) {
-          const y = iy + d;
-          if (!this.inB(x, y)) break;
-          this.set(x, y, d === 0 ? T.SAND : T.SANDSTONE);
+        const top = iy + Math.max(0, ax - FLAT);
+        const r = ax / (half + 1);
+        const bot = Math.max(top + 1, iy + Math.round(THICK * Math.sqrt(1 - r * r)));
+        for (let y = top; y <= bot && this.inB(x, y); y++) {
+          this.set(x, y, y - top < 2 ? T.SAND : T.SANDSTONE);
           // 물에 잠긴 몸통 뒤에는 벽을 둔다 — 안 그러면 그 칸이 '바깥'이라 물빛이 샌다
           this.walls[this.i(x, y)] = 8;
         }
       }
-      // 물가에 닿는 가장자리 한 줄은 모래로 — 육지와 바다가 모래에서 만나야 해변으로 읽힌다
-      for (const ex of [ix - half, ix + half])
-        for (let y = iy; y < this.seaLevel + 2 && this.inB(ex, y); y++)
-          if (this.get(ex, y) === T.SANDSTONE) this.set(ex, y, T.SAND);
       /* 야자수 — 줄기가 기울어 자란다 — 사연: docs/code-history.md#h130 */
-      for (const [px, lean, hgt] of [[ix - 9, -1, 7], [ix + 5, 1, 8], [ix + 11, 1, 6]]) {
+      for (const [px, lean, hgt] of [[ix - 7, -1, 7], [ix + 3, 1, 8], [ix + 8, 1, 6]]) {   // 평평한 모래톱 안에만
         let cx = px;
         for (let k = 0; k < hgt; k++) {
           const y = iy - 1 - k;
