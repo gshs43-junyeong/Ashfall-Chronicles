@@ -704,6 +704,9 @@ const G = {
       UI.refreshBag();
     }
 
+    /* ?debug=factory — 기계 화면·애셋 확인 자리. 캠프 오른쪽 평지에 기계 전 종류를 재료를 채워 한 줄로 세운다. */
+    if (qs.get('debug') === 'factory') this.buildDebugFactory(qs);
+
     /* ?debug=bomb — 폭탄만 확인하는 자리. */
     if (qs.get('debug') === 'bomb') {
       const give = (id, n) => {
@@ -1924,6 +1927,97 @@ const G = {
       o.closed = !o.closed;
       this.sfx(o.closed ? 'door_shut' : 'door_open');
     }
+  },
+
+  /** ?debug=factory — 캠프 오른쪽을 평평하게 밀고 기계 스물여섯 종을 한 줄로 세운다.
+      전주는 10칸마다(반경 5 · 이음 10) 서서 줄 전체가 망 하나다. 몹은 &mobs=1 일 때만 나온다. */
+  buildDebugFactory(qs) {
+    const p = this.player, w = this.world;
+    const give = (id, n) => {
+      const max = ITEMS[id].stack || 1;
+      for (let left = n; left > 0; left -= max) {
+        const it = makeItem(id, Math.min(max, left), 0);
+        if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+      }
+    };
+    const plv = +qs.get('plv') || 40;
+    while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
+    p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+    p.gold = +qs.get('gold') || 200000;
+    this.dbgCalm = qs.get('mobs') !== '1';
+    this.dayT = 12 * 60;
+    for (const k in MACHINE) give(MACHINE[k].item, 10);   // 가방엔 기계만 — 재료는 줄 왼쪽 끝 자재 상자에
+
+    const X0 = CAMP_X1 + 8, LEN = 84;
+    let gy = 0;
+    for (let x = X0 - 8; x <= X0 + LEN + 4; x++) gy = Math.max(gy, w.surface[clamp(x, 0, WW - 1)]);
+    gy = Math.min(gy, WORLD_BOT - 20);
+    for (let x = X0 - 8; x <= X0 + LEN + 4; x++) {
+      for (let y = gy - 30; y <= gy + 6; y++) {
+        if (!w.inB(x, y)) continue;
+        w.set(x, y, y < gy ? T.AIR : y === gy ? T.GRASS : T.DIRT);
+        if (y < gy) w.walls[w.i(x, y)] = 0;               // 풍차가 볼 하늘 — 뒷벽도 걷는다
+      }
+      w.surface[x] = gy;
+    }
+    const Y = gy - 1;
+    for (let x = 0; x <= 8; x++) for (let y = gy + 1; y <= gy + 4; y++) w.set(X0 + 28 + (x % 5), y, T.OILSHALE);
+    [T.IRON, T.COPPER, T.COAL, T.GOLD, T.IRON, T.LEAD, T.COPPER, T.IRON, T.COAL].forEach((t, i) => {
+      for (let y = gy + 1; y <= gy + 3; y++) w.set(X0 + 50 + i, y, t);
+    });
+
+    const put = (dx, key, dir, fill) => {
+      const m = Factory.place(w, X0 + dx, Y, key, dir || 0);
+      if (!m) return null;
+      if (MACHINE[key].proj) { m.own = 1; }
+      if (fill) for (const id in fill) {
+        if (m.items) Factory.insert(w, m, id, fill[id]);
+        else if (m.in) Factory.bufAdd(m.in, id, fill[id]);
+      }
+      return m;
+    };
+    for (let dx = 0; dx <= LEN; dx += 10) put(dx, 'pole');
+    put(-3, 'crate', 0, { coal: 99, fuel_brick: 99, iron_ore: 99, copper_ore: 99, gold_ore: 99, iron_bar: 99,
+      copper_bar: 99, gold_bar: 99, steel_plate: 99, polymer: 99, wire: 99, crude_oil: 99, rivet: 99, wheat: 99,
+      flour: 99, raw_meat: 20, sand: 99, kelp: 99, crab_shell: 99, sea_salt: 99, battery_empty: 20 });
+    // 1. 전력
+    put(1, 'gen', 0, { coal: 40 }); put(2, 'gen', 0, { fuel_brick: 20 });
+    const b1 = put(3, 'battery'); if (b1) b1.e = 1500;
+    const b2 = put(4, 'battery_hi', 0, { battery_empty: 3 }); if (b2) b2.e = 7000;
+    put(6, 'windmill'); put(8, 'switch');
+    // 2. 제련 줄: 상자(배출) → 벨트 → 자동 용광로 → 벨트·고속 벨트 → 상자
+    const c1 = put(11, 'crate', 0, { iron_ore: 99, copper_ore: 60 }); if (c1) c1.feed = 1;
+    put(12, 'belt'); put(13, 'belt'); put(14, 'smelter', 0, { coal: 30 });
+    put(15, 'belt'); put(16, 'belt_fast'); put(17, 'belt_fast'); put(18, 'crate');
+    // 3. 압축 줄: 석탄 → 압축기 → 분류기(압축 연료만) → 상자
+    const c2 = put(21, 'crate', 0, { coal: 99 }); if (c2) c2.feed = 1;
+    put(22, 'belt'); put(23, 'press'); put(24, 'belt');
+    const so = put(25, 'sorter'); if (so) so.f = 'fuel_brick';
+    put(26, 'crate');
+    // 4. 원유: 유혈암 위 시추 펌프 → 정제기 → 벨트 → 상자
+    put(31, 'pump'); put(32, 'refinery', 0, { crude_oil: 20 }); put(33, 'belt'); put(34, 'crate');
+    put(36, 'turret', 0, { rivet: 100 }); put(38, 'trap');
+    // 5. 조립 줄
+    const c3 = put(41, 'crate', 0, { copper_bar: 60 }); if (c3) c3.feed = 1;   // 상자는 한 가지만 흘리니 수지는 조립기에 미리
+    put(42, 'belt'); put(43, 'assembler', 0, { polymer: 40, wire: 6, gold_bar: 4 }); put(44, 'belt'); put(45, 'crate');
+    // 6. 광맥 위 드릴
+    put(51, 'drill', 0, { coal: 30 }); put(52, 'crate');
+    put(55, 'drill_e'); put(56, 'crate');
+    // 7. 4단계 설비 · 마을 설비
+    put(61, 'pressor', 0, { steel_plate: 12, crab_shell: 16, sea_salt: 8 }); put(62, 'crate');
+    put(64, 'desal', 0, { sand: 40, kelp: 30 }); put(65, 'crate');
+    put(67, 'mill', 0, { wheat: 30 }); put(68, 'crate');
+    put(71, 'oven', 0, { wood: 30, flour: 20, raw_meat: 10 }); put(72, 'crate');
+    // 8. 함정(위를 보게 — 줄을 따라 쏘지 않는다)
+    put(74, 'dart', 3); put(76, 'flamejet', 3); put(78, 'frostjet', 3);
+    put(81, 'battery', 0, { battery_empty: 4 });
+    Factory.buildNets(w);
+
+    p.x = (X0 - 5) * TS; p.y = (gy - 3) * TS; p.vx = p.vy = 0;
+    this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
+    this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+    UI.refreshBag(); UI.refreshEquip();
+    this.toast('공장 확인 자리 — 오른쪽으로 기계 전 종류. 기계를 우클릭하면 기계 화면이 열린다', 'good');
   },
 
   /** 공창 단말 — 로어를 읽고 설계도 조각을 얻는다 (단말마다 1회) */
@@ -3446,6 +3540,7 @@ const G = {
   },
 
   trySpawn() {
+    if (this.dbgCalm) return;                           // 디버그 확인 자리(공장)만 켠다
     const p = this.player, w = this.world;
     const normal = this.ents.filter(e => e instanceof Enemy && !e.boss).length;
     const ev = this.eventActive() ? this.eventSpec() : null;

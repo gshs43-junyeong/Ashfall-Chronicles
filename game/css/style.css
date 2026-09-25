@@ -516,7 +516,7 @@ button{
 .mach-sec small{letter-spacing:0;color:#6a6656;margin-left:5px}
 .mach-grid{display:grid;grid-template-columns:repeat(auto-fill,46px);gap:5px;
   max-height:150px;overflow-y:auto}
-.mach-empty{font-size:11px;color:#5c5849;font-style:italic;padding:4px 0}
+.mach-empty{grid-column:1/-1;font-size:11px;color:#5c5849;font-style:italic;padding:4px 0}
 
 #chest-grid{padding:16px;display:grid;grid-template-columns:repeat(8,46px);gap:5px}
 
