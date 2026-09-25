@@ -21,19 +21,18 @@ const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buil
 const MIN_CAVE = 220;
 let CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1100 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
 
-/* 세션 3 — 왼쪽으로 갈수록 가라앉은 바다 · 빙하 지대 · 서리 지대 순으로 나온다.
-   처음에는 WW를 못 늘린다는 전제로 서리 지대(0~620)를 셋으로 쪼갰는데, 그러면 서리
-   지대가 190칸으로 줄고 세션 2 제단 하나가 새 지역에 파묻혔다. WW를 5000으로 늘려
+/* 세션 3 — 왼쪽으로 갈수록 가라앉은 바다 · 빙하 지대 · 서리 지대 순으로 나온다. WW를 5000으로 늘려
    **왼쪽에 800칸을 새로 붙이는** 쪽으로 바꿨다 — 기존 세계는 좌표만 통째로 밀릴 뿐
    구성이 그대로고(서리 지대도 620칸 그대로), 새 지역은 바다 430 + 빙하 370을 온전히 쓴다.
-   그래서 **옛 좌표는 전부 `+ SHIFT`가 붙는다.** 새로 하드코딩하는 x도 마찬가지다. */
+   그래서 **옛 좌표는 전부 `+ SHIFT`가 붙는다.** 새로 하드코딩하는 x도 마찬가지다.
+   사연: docs/code-history.md#h101 */
 let SEA_X1 = 430;            // 가라앉은 바다 — 여기부터 왼쪽이 물
 /* 해변 폭. 46칸이던 것을 90칸으로 넓혔다 — 몹 생성은 플레이어에서 24~45칸 떨어진
    **화면 밖** 지점을 고르는데, 해변이 46칸이면 그 반경이 통째로 해변 밖으로 나가서
    해변 전용 몹(표류물 더미)이 사실상 안 나왔다. */
 const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 모래 해변이다
-/* 바다 + 해변 — 나무·풀·꽃 같은 지상 초목을 놓지 않는다. 예전에는 바다만 막아서
-   (SEA_X1+8=438) 해변 뒷부분(438~476)에 나무가 자랐다. */
+/* 바다 + 해변 — 나무·풀·꽃 같은 지상 초목을 놓지 않는다.
+   사연: docs/code-history.md#h102 */
 const inSeaZone = x => x < SEA_X1 + BEACH_W + 4;
 let GLACIER_X1 = SHIFT;      // 빙하 지대 오른쪽 끝 = 원래 세계가 시작하는 자리
 /* 바이옴.
@@ -115,8 +114,8 @@ const ZONE_CARD = {
              card: { line: '재가 내린 뒤에도 굴뚝이 서 있다. 사람이 남긴 마지막 거리.' } }
 };
 
-/* 재질 번호 → 지층 구성. 예전에는 삼항 연산자를 길게 이어 붙였는데,
-   바이옴이 늘어나면서 표로 뽑았다. wall은 배경 벽 색 번호(WALL_COLOR). */
+/* 재질 번호 → 지층 구성. wall은 배경 벽 색 번호(WALL_COLOR).
+   사연: docs/code-history.md#h103 */
 const MAT_LAYER = [
   { top: T.SNOW, soil: T.SNOW, sub: T.ICE, deep: T.STONE, wall: 5, subWall: 2 },
   { top: T.GRASS, soil: T.DIRT, sub: T.DIRT, deep: T.STONE, wall: 1, subWall: 2 },
@@ -212,10 +211,10 @@ const DAWN_WALL = { leftOff: -16, rightOff: 15, gateH: 3, towerH: 14,
      낭떠러지가 되지 않게 하는 값이라, 성벽 위치를 옮기면 이것도 같이 본다. */
   flatPad: 10 };
 
-/** 유적 통행 검사(_standSet)가 쓰는 칸 집합 — Set 과 같은 쓰임(has · add · size · 순회)을 상자 크기의
-    Uint8Array 로 한다. ★ Set 으로 두면 유적 통행 보수가 세계 생성 시간의 79%(소형 5.4초 / 6.9초)였고,
-    세계가 깊어지는 중형·대형에서는 입구 통로가 길어져 25초를 넘겼다. 상자 밖(점프로 몇 칸 삐져나간
-    자리)은 작은 Set 으로 받아 둔다. 키는 예전처럼 y*WW+x 그대로다. */
+/** 유적 통행 검사(_standSet)가 쓰는 칸 집합 — Set 과 같은 쓰임(has · add · size · 순회)을 상자 크기의 Uint8Array 로 한다. ★ Set
+    으로 두면 유적 통행 보수가 세계 생성 시간의 79%(소형 5.4초 / 6.9초)였고, 세계가 깊어지는 중형·대형에서는 입구 통로가 길어져 25초를 넘겼다. 상자 밖(점프로
+    몇 칸 삐져나간 자리)은 작은 Set 으로 받아 둔다.
+    사연: docs/code-history.md#h104 */
 class BoxSet {
   constructor(box, pad) {
     this.x0 = box[0] - pad; this.y0 = box[1] - pad;
@@ -751,13 +750,12 @@ class World {
     this._canopy(x, s - h, rng.int(2, 3), wdt, leafT, 1);
   }
 
-  /** 눈 지대 소나무 — 곧은 기둥에 **층층이 좁아지는 톱니 원뿔** 수관.
-      예전에는 눈 지대에도 잿빛 숲과 같은 둥근 활엽수(LEAF)를 심어서, 눈밭이 "눈 덮인 잿빛 숲"으로만
-      보였고 잿빛이 깊어지면 잎까지 같이 졌다. 소나무는 제 잎(PINELEAF)이라 잿빛에 안 진다.
+  /** 눈 지대 소나무 — 곧은 기둥에 **층층이 좁아지는 톱니 원뿔** 수관. 소나무는 제 잎(PINELEAF)이라 잿빛에 안 진다.
         · 꼭대기 두 칸은 폭 1(뾰족한 끝).
         · 층마다 반폭이 0→1→2 로 벌어졌다가 다음 층은 한 칸 좁게 다시 시작한다(톱니). 층 넓은 줄의
           윗면이 트여 있어 거기에 눈이 얹힌다.
-        · 밑의 2~3칸은 기둥만 — 가지 아래로 줄기가 보여야 나무로 읽힌다. */
+        · 밑의 2~3칸은 기둥만 — 가지 아래로 줄기가 보여야 나무로 읽힌다.
+      사연: docs/code-history.md#h105 */
   pineTree(x, s, rng) {
     // 수관 폭이 9칸까지라 옆 소나무와 붙으면 원뿔 둘이 한 덩어리 톱니 벽이 된다 — 5칸 안에 나무가 있으면 건너뛴다
     for (let dx = -5; dx <= 5; dx++)
@@ -1065,10 +1063,8 @@ class World {
       this.pushDoor(rx * TS, (gy - 2) * TS, TS, TS * 2, 1);
       this.objects.push({ type: 'npc', npc: h.npc, x: (bx + h.w / 2) * TS, y: gy * TS - 44, w: 22, h: 44 });
     }
-    // 광장 — 작업대/용광로는 플레이어가 직접 만들어 놓는 것과 **같은 크기**(OBJ_SIZE)를
-    // 쓴다. 예전엔 여기·여명 마을만 44×34/44×40으로 따로 커서, 손수 지은 것과 나란히
-    // 놓고 보면 같은 시설인데 눈에 띄게 크기가 달라 보였다 — 하나의 값만 바꾸면
-    // 어디서든 같이 바뀌도록 아예 같은 상수를 참조하게 했다.
+    // 광장 — 작업대/용광로는 플레이어가 직접 만들어 놓는 것과 **같은 크기**(OBJ_SIZE)를 쓴다.
+    // 사연: docs/code-history.md#h106
     const cx = (x0 + x1) >> 1;
     const wbS = OBJ_SIZE.workbench, fgS = OBJ_SIZE.forge;
     this.objects.push({ type: 'workbench', x: (cx - 4) * TS, y: gy * TS - wbS.h, w: wbS.w, h: wbS.h, lv: 1 });
@@ -1106,16 +1102,12 @@ class World {
           this.set(x, y, edge && !fallen ? T.RUINBRICK : T.AIR);
           this.setWall(x, y, 10);
         }
-      // 처마는 지붕 줄에만 얹는다. 예전에는 여기에 더해 문 옆(b.x-2 · b.x+b.w+1)에
-      // 3칸짜리 돌기둥을 세웠는데, 그 기둥이 길 한복판을 막고 있었다 — 어느 문에서든
-      // 한 칸 나오면 벽이었고, 건물 0·1 사이는 기둥 둘이 나란히 붙어 아예 지나갈 수
-      // 없었다(실측: 지면이 막힌 구간 7곳이 전부 이 기둥이었다). 기둥은 없앤다.
+      // 처마는 지붕 줄에만 얹는다. 기둥은 없앤다.
+      // 사연: docs/code-history.md#h107
       for (let x = b.x - 2; x <= b.x + b.w + 1; x++) this.set(x, by - 1, T.RUINTILE);
     }
-    // 중앙 광장 — 건물 사이를 비우고, 분수대 물받이만 놓는다.
-    // 물받이 폭은 분수대 그림 폭과 정확히 같아야 한다(DAWN_PLAZA의 fountain.w = 5칸).
-    // 예전에는 단이 7칸인데 그림은 4칸이었고, 게다가 (cx, gy-2)에 벽돌이 하나 더 서서
-    // 분수 한가운데를 뚫고 올라와 있었다 — "분수대 정렬 안 됨"의 실제 정체.
+    // 중앙 광장 — 건물 사이를 비우고, 분수대 물받이만 놓는다. 물받이 폭은 분수대 그림 폭과 정확히 같아야 한다(DAWN_PLAZA의 fountain.w = 5칸).
+    // 사연: docs/code-history.md#h108
     const cx = (x0 + x1) >> 1;
     const [pL, pR] = this.dawnPlazaSpan();
     for (let x = pL; x <= pR; x++)
@@ -1678,10 +1670,9 @@ class World {
       ];
       // 기계를 먼저 다 놓는다 — 기둥을 세우고 나면 그 칸이 막혀 canPlace가 실패한다
       for (const [px, py] of poles) mach(px, py, 'pole');
-      /* 기둥(전주 아래 몸통)은 타일로 깔지 않는다. 예전엔 통과 가능한 전용 타일을
-         세워 뒀는데, 밭 위 한 칸을 비워야 해서 기둥이 중간에 끊겨 보였고 그 칸만
-         상호작용이 달라지는 문제도 있었다. 이제 기둥은 **그림으로만** 지면까지
-         이어 그린다(factory.js render) — 어떤 상호작용에도 걸리지 않는다. */
+      /* 기둥(전주 아래 몸통)은 타일로 깔지 않는다. 이제 기둥은 **그림으로만** 지면까지 이어 그린다(factory.js render) — 어떤 상호작용에도 걸리지
+         않는다.
+         사연: docs/code-history.md#h109 */
       return true;
     }
 
@@ -1722,8 +1713,8 @@ class World {
         for (let y = gy - 1; y > gy - 4; y--) this.set(wx, y, T.AIR);
         this.pushDoor(wx * TS, (gy - DAWN_WALL.gateH) * TS, TS, TS * DAWN_WALL.gateH, -inward, { gate: 1 });
         this.set(wx + inward, gy - 4, T.BANNER);
-        /* 예전엔 성문 바깥에 모래주머니 2칸을 바리케이드로 놓았는데, 벽돌 덩어리가
-           길에 튀어나온 것처럼 보이는 데다 solid라 성문 앞을 실제로 막고 있었다. 없앤다. */
+        /* 없앤다.
+           사연: docs/code-history.md#h110 */
         mach(wx, gy - 15, 'turret');
         d.towers.push(wx);
         d.posts.push(wx + inward * 3);          // 경비병은 문 안쪽 길 위에 선다
@@ -1766,11 +1757,9 @@ class World {
         this.set(nx1 + 1, gy - 1, T.FENCE);
         f.x0 = nx0; f.x1 = nx1;
       }
-      /* 강화 모루 — **재련대 바로 옆.** 벼리는 일은 한자리에 모여 있어야 오가지 않는다.
-         재련대가 있는 집(DAWN_BUILDINGS에서 fac==='reforge')을 찾아 그 시설칸(10~11)
-         다음 칸(12~13)에 놓는다. 탁자는 14칸부터라 겹칠 자리가 없다.
-         세로는 dawnPlace가 바닥선(gy)에 발을 붙여 주므로 손으로 맞추지 않는다 —
-         예전에 (gy+1)로 잡았다가 한 칸 파묻혔다. */
+      /* 강화 모루 — **재련대 바로 옆.** 벼리는 일은 한자리에 모여 있어야 오가지 않는다. 재련대가 있는 집(DAWN_BUILDINGS에서
+         fac==='reforge')을 찾아 그 시설칸(10~11) 다음 칸(12~13)에 놓는다. 탁자는 14칸부터라 겹칠 자리가 없다.
+         사연: docs/code-history.md#h111 */
       if (!this.objects.some(o => o.type === 'anvil')) {
         const bi = DAWN_BUILDINGS.findIndex(sp => sp.fac === 'reforge');
         const rb = bi >= 0 ? blocks[bi] : null;
@@ -2083,7 +2072,7 @@ class World {
         for (let x = x0; x < x0 + w; x++)
           if (inTri(x, y) && this.get(x, y) !== T.BEDROCK) { this.set(x, y, wall); this.setWall(x, y, bg); }
     // 3) 남긴 방들의 자리만 벽으로 채운다 (테두리 한 칸 포함).
-    //    도면이 없으면 BSP가 직사각형을 빈틈없이 나누므로 결과가 예전과 똑같다.
+    // 사연: docs/code-history.md#h112
     for (const r of leaves)
       for (let x = r.x - 1; x <= r.x + r.w; x++)
         for (let y = r.y - 1; y <= r.y + r.h; y++) { this.set(x, y, wall); this.setWall(x, y, bg); }
@@ -2277,10 +2266,9 @@ class World {
     return seen;
   }
   /** 거꾸로 걷기 — 상자 안 설 자리 가운데 **rootK 까지 걸어 닿을 수 있는** 칸 전부.
-      ★ _walkBack 은 예전에 자리마다 _standSet 을 새로 돌려 "여기서 입구로 돌아가나"를 물었다.
-        한 유적에 자리가 수십이라 이것이 세계 생성의 8할(소형 5.4초, 중형은 입구 통로가 길어져
-        25초)을 먹었다. 상자 안의 걸음 그래프를 한 번 만들어 입구에서 **거꾸로** 한 번 걸으면
-        모든 자리의 답이 한꺼번에 나온다(같은 _standNext 를 쓰므로 답이 똑같다). */
+      한 유적에 자리가 수십이라 이것이 세계 생성의 8할(소형 5.4초, 중형은 입구 통로가 길어져 25초)을 먹었다. 상자 안의 걸음 그래프를 한 번 만들어 입구에서
+        **거꾸로** 한 번 걸으면 모든 자리의 답이 한꺼번에 나온다(같은 _standNext 를 쓰므로 답이 똑같다).
+      사연: docs/code-history.md#h113 */
   _returnSet(box, rootK) {
     const f = this._standFns();
     const preds = new Map();
@@ -2445,24 +2433,17 @@ class World {
       const lost = spots.filter(p => !hit(seen, p));
       if (!lost.length) return;
       const a = lost[0];
-      /* 틈 잇기는 **한 자리에 여섯 번까지** 해 본다. 맨 아래 방에서 입구 목까지는 턱이 한
-         군데가 아니다(유적 속에도 저마다 턱이 있다) — 한 번에 하나씩 메우므로 한 번만 해 보고
-         물러서면, 남은 턱 때문에 곧장 예전 방식으로 떨어져 목부터 바닥까지 사다리를 세웠다
-         (실측: 입구 사슬은 방마다 다 오가는데도 봉인실 275칸 · 석판 유적 2 166칸).
-         그래도 못 닿으면 예전 방식(자리 좌표에서 곧장)으로 판다 — 그쪽은 한 번에 반드시
-         잇는다. 틈 잇기만 쓰면 잃은 자리에서 "닿는" 무리와 이었을 뿐 그 자리"로" 닿는다는
-         보장이 없어, 씨앗 셋 중 유적 셋이 "보스↔밖"을 잃었다. */
+      /* 틈 잇기는 **한 자리에 여섯 번까지** 해 본다. 틈 잇기만 쓰면 잃은 자리에서 "닿는" 무리와 이었을 뿐 그 자리"로" 닿는다는 보장이 없어, 씨앗 셋 중 유적
+         셋이 "보스↔밖"을 잃었다.
+         사연: docs/code-history.md#h114 */
       const key = a[1] * WW + a[0];
       const once = (tried.get(key) || 0) < 6;
       tried.set(key, (tried.get(key) || 0) + 1);
-      /* ★ 굴은 **두 무리 사이의 틈**에 판다 — 기준점에서 닿는 무리(seen)와, 잃은 자리에서
-         닿는 무리(from) 중 서로 가장 가까운 두 칸을 잇는다.
-         예전에는 잃은 자리의 **좌표 자체**에서 seen 까지 팠다. 기준점이 맨 아래 방일 때
-         잃은 자리는 입구 목인데, 목에서 걸어 내려오는 길은 거의 다 멀쩡하고 한두 군데만
-         되올라갈 수 없는 턱이 있을 뿐이다. 그런데도 목 좌표에서 곧장 파 내려가니
-         입구마다 지표부터 유적 바닥까지 두 칸짜리 발판 사다리가 한 줄씩 섰다
-         (실측 씨앗 둘: 입구 열네 곳 전부, 99~281칸 — 입구 둘레 발판 1804장 중 1103장이
-         이 보수에서 나왔다). 틈에 파면 사다리는 그 턱 높이만큼만 선다. */
+      /* ★ 굴은 **두 무리 사이의 틈**에 판다 — 기준점에서 닿는 무리(seen)와, 잃은 자리에서 닿는 무리(from) 중 서로 가장 가까운 두 칸을 잇는다.
+         기준점이 맨 아래 방일 때 잃은 자리는 입구 목인데, 목에서 걸어 내려오는 길은 거의 다 멀쩡하고 한두 군데만 되올라갈 수 없는 턱이 있을 뿐이다. 그런데도 목
+         좌표에서 곧장 파 내려가니 입구마다 지표부터 유적 바닥까지 두 칸짜리 발판 사다리가 한 줄씩 섰다 (실측 씨앗 둘: 입구 열네 곳 전부, 99~281칸 — 입구
+         둘레 발판 1804장 중 1103장이 이 보수에서 나왔다). 틈에 파면 사다리는 그 턱 높이만큼만 선다.
+         사연: docs/code-history.md#h115 */
       const from = once ? this._standSet(box, a[0], a[1]) : new Set();
       let src = a, best = null, bd = 1e9;
       if (from.size) {
@@ -2713,10 +2694,8 @@ class World {
     for (let k = 0; k <= 1; k++) {
       const x = cx + k;
       if (!solid(x, fy + 1) || this.locked(x, fy + 1)) continue;
-      /* ★ 구덩이 바닥(fy+4)이 **이미 비어 있으면** 여기에 구덩이를 파지 않는다. 예전에는 그 칸을
-         발밑 재질로 메웠는데, 거기가 아래를 지나는 다른 길의 걷는 줄일 때가 있다 — 입구 비탈이
-         네 칸 간격으로 겹쳐 지나가는 자리에서 위 다리에 구덩이를 파자 아래 다리가 막혔다
-         (실측 d6 피라미드: 이 함정 하나로 보스가 밖으로 못 나왔다). */
+      /* ★ 구덩이 바닥(fy+4)이 **이미 비어 있으면** 여기에 구덩이를 파지 않는다.
+         사연: docs/code-history.md#h116 */
       if (!solid(x, fy + 4)) continue;
       const f = this.get(x, fy + 1);
       this.set(x, fy + 2, T.AIR); this.set(x, fy + 3, T.AIR);   // 두 칸 구덩이 — 점프로 나올 수 있다
@@ -2775,7 +2754,7 @@ class World {
          양쪽 벽에 하나씩 박으면 방을 가로지르는 전기 띠가 된다. */
       const ty = fy - rng.int(1, 2);          // 아크가 몸을 지나가는 높이
       const gap = Math.min(r.w - 3, rng.int(4, 9));
-      // 아크 띠의 가운데가 길목에 오도록 — 예전엔 왼쪽 어딘가에 몰려 섰다
+      // 아크 띠의 가운데가 길목에 오도록 — 사연: docs/code-history.md#h117
       const sx = clamp(this.trapSpot(r, fy, rng) - (gap >> 1), r.x + 1, r.x + r.w - gap - 2);
       if (this.get(sx, ty) !== T.AIR || this.get(sx + gap, ty) !== T.AIR) {
         this.set(sx, ty, T.SPARKCOIL); this.set(sx + gap, ty, T.SPARKCOIL);
@@ -3203,11 +3182,9 @@ class World {
     const ruin = o.ruin;
     if (!ruin || !ruin.rooms || !ruin.rooms.length) { run(yBot); return { x, f }; }
 
-    /* ★ 유적에는 **옆문으로 바닥 높이에서** 들어간다. 예전에는 유적 지붕 줄(yBot)에서 길이
-       끝나, 그 아래 방 바닥까지 수십 칸을 통행 보수가 발판 사다리로 이었다(화면 왼쪽 아래의
-       긴 사다리 둘이 그것). 이제는 지붕 위 세 줄에서 멈추고, 맨 윗방 하나를 골라 **그 방이
-       붙은 쪽 바깥**으로 건너가 그 방 바닥 높이까지 유적 옆을 따라 내려간 뒤, 가로로 벽을
-       뚫고 들어간다. 테라리아 던전의 입구 복도나 요새의 옆문과 같은 모양이다. */
+    /* ★ 유적에는 **옆문으로 바닥 높이에서** 들어간다. 이제는 지붕 위 세 줄에서 멈추고, 맨 윗방 하나를 골라 **그 방이 붙은 쪽 바깥**으로 건너가 그 방 바닥
+       높이까지 유적 옆을 따라 내려간 뒤, 가로로 벽을 뚫고 들어간다. 테라리아 던전의 입구 복도나 요새의 옆문과 같은 모양이다.
+       사연: docs/code-history.md#h118 */
     run(ruin.y0 - 3);
     if (stop) return { x, f };
     const edgeL = r => r.x - ruin.x0, edgeR = r => ruin.x0 + ruin.w - (r.x + r.w);
@@ -3574,10 +3551,9 @@ class World {
     for (const r of rooms) {
       const fy = r.y + r.h - 3;                              // 바닥 바로 위 줄
       const cx = r.x + (r.w >> 1);
-      // 벽 장식 — 예전엔 방마다 횃불 말고는 아무것도 없어 통짜 상자처럼 밋밋했다.
-      // 양쪽 벽에 깃발을 하나씩 걸어 방 하나하나가 "누가 살았던 자리"로 읽히게 한다
-      // (역할 상관없이 전부 — 함정/상자 자리는 안 건드리는 천장 쪽 줄이라 안전하다)
+      // 양쪽 벽에 깃발을 하나씩 걸어 방 하나하나가 "누가 살았던 자리"로 읽히게 한다 (역할 상관없이 전부 — 함정/상자 자리는 안 건드리는 천장 쪽 줄이라 안전하다)
       // 깃발은 벽에 건다 — 벽이 안 닿는 자리면 안 건다(허공에 뜬 깃발이 되지 않게)
+      // 사연: docs/code-history.md#h119
       if (r.h > 6) { this.putDecor(r.x + 1, r.y + 4, T.BANNER, 'wall'); this.putDecor(r.x + r.w - 2, r.y + 4, T.BANNER, 'wall'); }
       this.putRuinDecor(spec, r, fy, rng);                   // 그 유적에만 있는 장식
       if (r === boss) {
@@ -3713,8 +3689,8 @@ class World {
     this.ruinEvents = [];
     this.ruinSites = [];                                      // 석판 유적도 같이 담는다 (진단·저장용)
     this._walkJobs = [];                                      // 마지막에 돌릴 통행 검사 목록
-    // 스토리 유적 3곳 — 예전엔 큰 상자 하나였는데, 석판 하나 놓인 빈 방이라 들를 이유가 없었다.
     // 같은 방 생성기를 태워 방을 여럿 두고 함정·상자를 흩뿌렸다. 석판은 가장 넓은 방에 둔다.
+    // 사연: docs/code-history.md#h120
     /* 스토리 유적 3곳 — 석판 하나 놓인 빈 방이던 것을 방 생성기로 채웠다.
        셋은 제7장에 한 번에 열리지만, 석판 번호 순서대로 읽는 사람이 대부분이라
        그 순서를 그대로 난이도 계단으로 삼았다. 서리(0)가 가장 순하고 부패지대(2)가 가장 사납다.
@@ -3738,9 +3714,8 @@ class World {
     spots.forEach((sp, i) => {
       const cx = sp.x, cy = sp.y, w = sp.w, h = sp.h;
       const x0 = cx - (w >> 1), y0 = cy - (h >> 1);
-      /* 석판 유적도 바이옴 유적과 같은 규격을 쓴다 — 도면(겉모양) · 묻힌 입구 ·
-         고유 장식 · 고유 방 · 고유 이벤트. 예전에는 이 셋만 별도 코드라 저쪽을
-         고쳐도 여기엔 안 미쳤다. */
+      /* 석판 유적도 바이옴 유적과 같은 규격을 쓴다 — 도면(겉모양) · 묻힌 입구 · 고유 장식 · 고유 방 · 고유 이벤트.
+         사연: docs/code-history.md#h121 */
       const st = STORY_RUIN[i] || {};
       const spec = {
         id: 'story' + i, n: '석판 유적 ' + (i + 1), x: cx, y: y0, w, h, tier: sp.tier,
@@ -3820,13 +3795,11 @@ class World {
       this.ruins.push({ id: spec.id, x: spec.x, y: spec.y + (spec.h >> 1), w: spec.w, h: spec.h });
     });
 
-    // 심층 봉인실 — 봉인석 문 너머에 최초의 파수꾼 제단
-    // 예전엔 버섯 골짜기(3300~3760) 밑이었다. "마을 아래"로 옮기라는 요청은 베이스캠프가
-    // 아니라 실제로 "마을"이라 불리는 곳 — 여명 마을(dawnCity, x 2850~2960)을 가리킨다
-    // (베이스캠프는 마을이 아니라는 지적을 받고 정정). 다만 여명 마을 바로 아래(x 2905
-    // 중심) 심층은 이미 지하 공창(y 210~250)·폭주로(y 306~360)·설계실(폭주로 동쪽)이
-    // 거의 다 채우고 있어서, 그 구조물들과 안 겹치도록 마을 지하 서쪽 가장자리(x 2800)로
-    // 뒀다 — 같은 마을 지하 권역이되 세션 2 던전들과는 충분히 떨어진 자리다.
+    // "마을 아래"로 옮기라는 요청은 베이스캠프가 아니라 실제로 "마을"이라 불리는 곳 — 여명 마을(dawnCity, x 2850~2960)을 가리킨다 (베이스캠프는
+    // 마을이 아니라는 지적을 받고 정정). 다만 여명 마을 바로 아래(x 2905 중심) 심층은 이미 지하 공창(y 210~250)·폭주로(y 306~360)·설계실(폭주로
+    // 동쪽)이 거의 다 채우고 있어서, 그 구조물들과 안 겹치도록 마을 지하 서쪽 가장자리(x 2800)로 뒀다 — 같은 마을 지하 권역이되 세션 2 던전들과는 충분히
+    // 떨어진 자리다.
+    // 사연: docs/code-history.md#h122
     const kx = SX(2800 + SHIFT), ky = SY(350), kw = 56, kh = 26;   // 심층 봉인실 — 여명 마을 지하(서쪽)
     const dx0 = kx - kw / 2;
     this.objects.push({ type: 'seal', x: (dx0 + 1) * TS, y: (ky - 2) * TS, w: 44, h: 66 });
@@ -4265,10 +4238,9 @@ class World {
         if (this.get(px, py + 1) !== T.AIR) continue;
         this.set(px, py, rng.chance(.5) ? T.TORCH : T.CRYSTAL);
       }
-      /* 큰 동굴 상자 — 예전엔 45% 확률로 무조건 6등급(황금)이었다. 얕은 곳에서도
-         최고 등급이 나와 제작·채굴 단계를 통째로 건너뛰게 만들었다.
-         이제 **깊이로 등급을 매기고**(DEEP_Y 위는 4, 그 아래는 5, 지옥 근처만 6),
-         확률도 30%로 낮췄다. 등급은 caverns에 함께 남겨 세이브에서도 보이게 한다. */
+      /* 얕은 곳에서도 최고 등급이 나와 제작·채굴 단계를 통째로 건너뛰게 만들었다. 이제 **깊이로 등급을 매기고**(DEEP_Y 위는 4, 그 아래는 5, 지옥 근처만
+         6), 확률도 30%로 낮췄다. 등급은 caverns에 함께 남겨 세이브에서도 보이게 한다.
+         사연: docs/code-history.md#h123 */
       let chestTier = 0;
       if (rng.chance(0.30)) {
         const [gx, gy0] = cells[rng.int(0, cells.length - 1)];
@@ -4278,7 +4250,7 @@ class World {
           chestTier = fy < DEEP_Y ? 4 : fy < (DEEP_Y + HELL_Y) / 2 ? 5 : 6;
           this.objects.push({ type: 'chest', tier: chestTier, x: gx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
           this.set(gx - 1, fy, T.TORCH);
-          // 함정 — 등급이 높을수록 촘촘하게(예전엔 어디든 1개뿐이라 그냥 걸어가 열었다)
+          // 함정 — 등급이 높을수록 촘촘하게 — 사연: docs/code-history.md#h124
           let laid = 0;
           const want = chestTier >= 6 ? 4 : chestTier >= 5 ? 3 : 2;
           for (const tdx of [2, -2, 3, -3, 4, -4, 5, -5, 6, -6]) {
@@ -4351,13 +4323,11 @@ class World {
     const FLOOR = WH - 26;                               // 가장 깊은 바닥
     this.sea = { x1: shore, level: this.seaLevel, floor: FLOOR };
 
-    /* --- 해저 단면 ---
-       예전에는 물가에서 끝까지 하나의 곡선(t²)으로 떨어뜨렸다. 그러면 430칸 내내
-       비스듬한 비탈이라 "바닥"이라고 부를 자리가 없다 — 어디서 멈춰도 발밑이 기울어 있다.
-       실제 바다처럼 셋으로 나눈다.
+    /* 실제 바다처럼 셋으로 나눈다.
          대륙붕(물가~90칸)  : 얕고 거의 평평 — 헤엄쳐 들어가는 구간
          비탈(90~170칸)     : 여기서만 급하게 떨어진다
-         심해 평원(170칸~)  : **평평하다.** 여기가 진짜 바닥이고, 굴도 여기에만 판다 */
+         심해 평원(170칸~)  : **평평하다.** 여기가 진짜 바닥이고, 굴도 여기에만 판다
+       사연: docs/code-history.md#h125 */
     const WADE = 50;                                      // 걸어 들어가는 여울
     /* 여울 끝에서 평원까지. ★ 세계 크기만큼 옆으로 늘인다(SX) — 300칸에 묶어 두면 중형·대형 바다는
        거의 전부 평평한 바닥이 되어, 비탈 밑에 묻혀 있어야 할 가라앉은 유적(x 210)이 바닥보다
@@ -4369,9 +4339,8 @@ class World {
     this.shoreY = this.seaLevel + 2;                       // 물가 깊이 — 바다·해변이 함께 쓴다
     const wadeRng = new RNG(this.seed + '_wade');
     const wadeBed = new Int16Array(WADE + 1);
-    /* 물가 깊이는 **한 값으로 정해 두고 바다·해변 양쪽이 함께 쓴다.** 예전에는 바다가
-       surface[shore]+1(=수면-? )에서 시작하고 해변은 수면+2에서 시작해, 정확히 x=shore
-       자리에 두 칸짜리 구덩이가 생겼다("해변 근처에서 갑자기 깊어진다"는 게 이것). */
+    /* 물가 깊이는 **한 값으로 정해 두고 바다·해변 양쪽이 함께 쓴다.**
+       사연: docs/code-history.md#h126 */
     wadeBed[0] = this.shoreY;
     for (let k = 1; k <= WADE; k++) wadeBed[k] = wadeBed[k - 1] + (wadeRng.chance(0.5) ? 1 : 0);
     for (let x = 0; x < shore; x++) {
@@ -4379,10 +4348,9 @@ class World {
       let base;
       if (fromShore <= WADE) base = wadeBed[fromShore];
       else {
-        /* 여울 뒤로는 **기울기가 서서히 커졌다가 다시 작아진다**(smoothstep).
-           예전에는 대륙붕 → 비탈 두 토막을 직선으로 이어서, 90칸 지점에서 갑자기
-           칸당 7칸씩 꺼졌다 — 헤엄쳐 가다 절벽을 만나는 꼴이었다.
-           t²(3-2t)는 시작과 끝의 기울기가 0이라 여울에서도, 평원에서도 매끄럽게 붙는다. */
+        /* 여울 뒤로는 **기울기가 서서히 커졌다가 다시 작아진다**(smoothstep). t²(3-2t)는 시작과 끝의 기울기가 0이라 여울에서도, 평원에서도 매끄럽게
+           붙는다.
+           사연: docs/code-history.md#h127 */
         const t = clamp((fromShore - WADE) / RUN, 0, 1);
         base = lerp(wadeBed[WADE], FLOOR, t * t * (3 - 2 * t));
       }
@@ -4499,9 +4467,8 @@ class World {
       else if (k < FLAT) want = this.seaLevel - 1;
       else want = Math.round(lerp(this.seaLevel - 1, target, (k - FLAT) / (BEACH_W - FLAT)));
       const cur = this.surface[x];
-      /* 위쪽은 **want보다 위를 전부** 비운다. 예전에는 min(cur, want)에서 시작해서,
-         원래 지형이 해변보다 낮았던 열은 모래 위에 얼음이 그대로 얹혀 있었다
-         (그 자리에는 조개도 못 놓였다 — 지면이 모래가 아니어서). */
+      /* 위쪽은 **want보다 위를 전부** 비운다.
+         사연: docs/code-history.md#h128 */
       for (let y = Math.min(cur, want) - 10; y < Math.max(cur, want) + 8; y++) {
         if (y < 4) continue;
         if (y < want) { this.set(x, y, T.AIR); this.walls[this.i(x, y)] = 0; }
@@ -4566,11 +4533,10 @@ class World {
     /* --- 바다 한복판의 섬 (비밀) ---
        스토리와 아무 상관이 없다. 원경 그림에서도 "저 먼 곳의 작은 섬"으로만 보이고,
        실제로 갈 수 있다는 걸 알려면 헤엄쳐 나와 봐야 한다.
-       ★ 예전에는 수면에서 34칸 **위 공중**에 띄웠는데, 그러면 원경의 섬과 실제 섬이
-         따로 놀고(그림엔 물 위에 있다) 제트팩 없이는 닿을 길이 아예 없었다.
-         이제 물 위에 떠 있는 진짜 섬이다 — 헤엄쳐 가서 기어오른다.
+       이제 물 위에 떠 있는 진짜 섬이다 — 헤엄쳐 가서 기어오른다.
        섬 위에 황금 상자가 있고, **그 상자가 미끼다** — 열면 섬 밑에 있던 것이
-       올라온다(game.js의 상자 열기 분기, o.boss). 상자만 훔치고 달아나지 못한다. */
+       올라온다(game.js의 상자 열기 분기, o.boss). 상자만 훔치고 달아나지 못한다.
+       사연: docs/code-history.md#h129 */
     {
       const ix = SX(200), iw = 26;
       /* 흙 윗면을 수면 세 칸 위에 둔다. 밑동은 그만큼 물에 잠겨(아래 THICK) 물에
@@ -4597,9 +4563,9 @@ class World {
       for (const ex of [ix - half, ix + half])
         for (let y = iy; y < this.seaLevel + 2 && this.inB(ex, y); y++)
           if (this.get(ex, y) === T.SANDSTONE) this.set(ex, y, T.SAND);
-      /* 야자수 — 줄기가 기울어 자란다. 곧게 세우면 잿빛 숲 나무와 실루엣이 같아진다.
-         **휘는 칸에서는 두 칸을 다 채운다.** 처음엔 x만 옮겼더니 줄기가 대각선으로
-         끊겨 조각조각 떠 보였다(실제로 그랬다) — 대각선은 타일로 이을 수 없다. */
+      /* 야자수 — 줄기가 기울어 자란다. 곧게 세우면 잿빛 숲 나무와 실루엣이 같아진다. *휘는 칸에서는 두 칸을 다 채운다.**
+         끊겨 조각조각 떠 보였다(실제로 그랬다) — 대각선은 타일로 이을 수 없다.
+         사연: docs/code-history.md#h130 */
       for (const [px, lean, hgt] of [[ix - 9, -1, 7], [ix + 5, 1, 8], [ix + 11, 1, 6]]) {
         let cx = px;
         for (let k = 0; k < hgt; k++) {
@@ -4607,8 +4573,8 @@ class World {
           this.set(cx, y, T.PALMWOOD);
           if (k > 1 && k % 3 === 0) { cx += lean; this.set(cx, y, T.PALMWOOD); }   // 이음칸
         }
-        /* 잎갓 — 줄기 끝에 **가로로 넓게** 얹는다. 예전엔 마름모로 흩뿌려서 잎이
-           낱개로 떨어져 보였다. 가운데 줄을 길게, 위 줄을 짧게 두어 갓처럼 보이게. */
+        /* 잎갓 — 줄기 끝에 **가로로 넓게** 얹는다. 가운데 줄을 길게, 위 줄을 짧게 두어 갓처럼 보이게.
+           사연: docs/code-history.md#h131 */
         const ty = iy - 1 - hgt;
         for (let dx = -3; dx <= 3; dx++) this.set(cx + dx, ty, T.PALMLEAF);
         for (let dx = -2; dx <= 2; dx++) this.set(cx + dx, ty - 1, T.PALMLEAF);
@@ -4925,12 +4891,11 @@ class World {
     }
 
     /* --- 폭포: 호숫가 **옆벽의 샘 바위**에서 물이 나와 호수로 떨어진다 ---
-       ★ 예전에는 호수 위 아무 열에서 천장까지 물기둥을 세웠다. 큰 동굴은 천장이 높고
-         넓어서 물줄기가 동굴 한가운데 허공에서 뚝 떨어졌다(어디서 오는 물인지 모른다).
-         지금은 호수 가장자리 열 바로 옆이 **벽**인 높이를 찾아 그 벽 칸을 샘 바위로 바꾼다.
-         샘 → 한 칸 흘러나온 물 → 폭포 줄기 → 호수. 유체가 켜지면 샘이 이 줄기를 먹여 살린다.
+       큰 동굴은 천장이 높고 넓어서 물줄기가 동굴 한가운데 허공에서 뚝 떨어졌다(어디서 오는 물인지 모른다). 지금은 호수 가장자리 열 바로 옆이 **벽**인 높이를 찾아
+         그 벽 칸을 샘 바위로 바꾼다. 샘 → 한 칸 흘러나온 물 → 폭포 줄기 → 호수. 유체가 켜지면 샘이 이 줄기를 먹여 살린다.
        호수 절반쯤에만 두되, 한 곳도 못 놓았으면 마지막에 한 번은 반드시 놓는다 —
-       세계에 따라 폭포를 한 번도 못 보는 일이 없도록. */
+       세계에 따라 폭포를 한 번도 못 보는 일이 없도록.
+       사연: docs/code-history.md#h132 */
     const host = t => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE || t === T.MUD;
     /* 큰 동굴의 호수는 평평한 바닥 한가운데에 판 것이라 호수 바로 위에 벽이 있는 일이 드물다
        (d1·d3 은 한 곳도 없었다 — 호숫가에서 벽까지 5~18칸). 그래서 호숫가에서 여섯 칸
@@ -5025,15 +4990,13 @@ class World {
       }
   }
 
-  /* ================= 지옥 용암 =================
-     예전에는 2D 노이즈로 **낱개 타일**을 흩뿌려서, 용암 호수가 아니라 '용암 점박이'가
-     됐다. 그다음엔 _fillBasin만 썼는데, 그건 "이미 웅덩이 모양인 자리"에만 고이므로
-     지옥처럼 바닥이 완만한 곳에서는 얕은 자국만 남았다.
-     이제 동굴 호수·정글 호수와 **같은 방식**이다:
+  /* 그다음엔 _fillBasin만 썼는데, 그건 "이미 웅덩이 모양인 자리"에만 고이므로 지옥처럼 바닥이 완만한 곳에서는 얕은 자국만 남았다. 이제 동굴 호수·정글 호수와
+     **같은 방식**이다:
        1) 바닥이 평평한 자리를 골라 (동굴 호수와 같은 평탄도 기준)
        2) _carveBasin으로 웅덩이를 **파낸 뒤** 용암을 붓고
        3) 그 밖의 자잘한 자리는 _fillBasin으로 고이는 만큼만 채운다(작은 동굴 물과 같음).
-     _noWater(…, true)가 지옥 밖을 막아 주므로 용암이 위로 새어 나가지 않는다. */
+     _noWater(…, true)가 지옥 밖을 막아 주므로 용암이 위로 새어 나가지 않는다.
+     사연: docs/code-history.md#h133 */
   floodHell(rng) {
     this.lavaPools = [];
 
@@ -5225,9 +5188,9 @@ class World {
       const fy = this.surface[clamp(x, 0, WW - 1)];
       if (this.get(x, fy) === T.AIR && this.solid(x, fy + 1)) this.set(x, fy, T.ORCHID);
     }
-    /* 수련은 여기서 놓지 않는다 — 수면 높이가 뒤에서 한 번 더 바뀐다(sealLiquids).
-       예전에는 여기서 leftY-1(수면 **위** 칸)에 놓아 한 칸 떠 있었다. 물 위 장식과
-       초목 정리는 지형이 다 끝난 뒤 decorateWater가 한 번에 한다. */
+    /* 수련은 여기서 놓지 않는다 — 수면 높이가 뒤에서 한 번 더 바뀐다(sealLiquids). 물 위 장식과 초목 정리는 지형이 다 끝난 뒤 decorateWater가
+       한 번에 한다.
+       사연: docs/code-history.md#h134 */
     this.jungleLake = { x0: lakeL, x1: cliffR, y: leftY };
   }
 
@@ -5628,11 +5591,9 @@ class World {
     if (t === nt && this.flv[k] === lv) return null;
     return [k, nt, lv];
   }
-  /** ★ 폭포 판정 — 떨어지는 민물 줄기 가운데 **4칸 이상 곧게 떨어지고, 양옆에 고인·흐르는
-      물이 없는** 토막만 폭포(FALLS)다. 나머지는 그냥 떨어지는 물(흐르는 물 수위 8)이다.
-      예전에는 떨어지는 민물이 한 칸이라도 전부 폭포였다 — 호숫가 턱에서 한 칸 흘러내린
-      물, 물웅덩이 옆구리를 타고 내린 물까지 물줄기 그림에 물보라가 튀고 몸을 아래로 밀었다.
-      옆의 **떨어지는** 물은 막는 물로 치지 않는다 — 두 칸 넓이 폭포가 서로를 막으면 안 된다. */
+  /** ★ 폭포 판정 — 떨어지는 민물 줄기 가운데 **4칸 이상 곧게 떨어지고, 양옆에 고인·흐르는 물이 없는** 토막만 폭포(FALLS)다. 나머지는 그냥 떨어지는
+      물(흐르는 물 수위 8)이다. 옆의 **떨어지는** 물은 막는 물로 치지 않는다 — 두 칸 넓이 폭포가 서로를 막으면 안 된다.
+      사연: docs/code-history.md#h135 */
   _fallsCol(x, y) {
     const falling = k => this.tiles[k] === T.FALLS || (this.tiles[k] === T.FLOWWATER && this.flv[k] === 8);
     let k = y * WW + x;
@@ -5736,10 +5697,9 @@ class World {
     w.surface = Int16Array.from(d.surface);
     w.objects = d.objects;
     w.fitObjects();   // 규격 도입 전 세이브에 담긴 큰 설치물도 여기서 한 칸 크기로 맞춘다
-    /* ★ 이미 연 암호 골방의 문간을 다시 뚫어 본다. 예전 판은 껍질 두 겹 중 안쪽 한 겹만
-       뚫어서, 암호를 맞히고도 못 들어간 세이브가 남아 있다(openCodeDoorway 의 ★).
-       암호석인 칸만 바꾸므로 이미 제대로 뚫린 문에는 아무 일도 일어나지 않는다.
-       세이브 **모양**은 그대로라 SAVE_UPGRADES 를 늘리지 않는다 — 고치는 것은 타일이다. */
+    /* ★ 이미 연 암호 골방의 문간을 다시 뚫어 본다. 암호석인 칸만 바꾸므로 이미 제대로 뚫린 문에는 아무 일도 일어나지 않는다. 세이브 **모양**은 그대로라
+       SAVE_UPGRADES 를 늘리지 않는다 — 고치는 것은 타일이다.
+       사연: docs/code-history.md#h136 */
     for (const o of w.objects)
       if (o.type === 'codedoor' && o.opened) w.openCodeDoorway(o.dx, o.dy);
     w.doors = w.objects.filter(o => o.type === 'door');   // objects와 같은 참조로 다시 캐싱

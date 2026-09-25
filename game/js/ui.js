@@ -563,11 +563,9 @@ const UI = {
      세 분기가 각각 4단×3열의 **판**이다 — 세로로 늘어놓은 목록이면 "무엇 다음에 무엇"이
      코드에만 있다. 자리 계산은 SKILLS 의 tier(세로)와 col(가로, 0~2, .5 는 사이)로 끝나고,
      잇는 선은 SVG <line> 한 겹에 x 가 백분율이라 판 너비가 바뀌어도 따라온다. */
-  /* ★ 세 갈래를 **한 판**에 그린다. 예전에는 갈래마다 제 테두리와 제 SVG 를 가진 판이
-       셋이었다 — 판이 갈려 있으니 갈래를 가로지르는 선을 그을 자리가 아예 없었고,
-       그래서 "하나를 고르는" 화면으로 읽혔다. 이제 가로 아홉 칸(갈래마다 셋)짜리 판
-       하나에 서른 칸을 얹고, 선 한 겹이 그 위를 통째로 덮는다. 갈래 이름은 판 위에
-       머리글로만 남는다 — 벽이 아니라 이름표다. */
+  /* ★ 세 갈래를 **한 판**에 그린다. 이제 가로 아홉 칸(갈래마다 셋)짜리 판 하나에 서른 칸을 얹고, 선 한 겹이 그 위를 통째로 덮는다. 갈래 이름은 판 위에
+       머리글로만 남는다 — 벽이 아니라 이름표다.
+     사연: docs/code-history.md#h90 */
   TREE_TOP: 14, TREE_ROW: 89, TREE_BOX: 44,
   TREE_COLS: 9,                                   // 갈래 셋 × 가로 세 칸
   _brIdx(br) { return BRANCHES.findIndex(b => b.id === br); },
@@ -659,15 +657,15 @@ const UI = {
 
   /** 이 분기가 단을 여는 데 쓸 수 있는 점수.
 
-      ★ 세 갈래를 **가르던 벽이 여기였다.** 예전에는 제 갈래에 찍은 것만 셌다. req 는
-        원래부터 "하나라도"(OR)였는데도 세 판이 서로 남처럼 보였던 까닭이 이 셈이다 —
-        유격에 아무리 부어도 비전의 둘째 단은 1포인트도 안 열렸다.
+      ★ 세 갈래를 **가르던 벽이 여기였다.** req 는 원래부터 "하나라도"(OR)였는데도 세 판이 서로 남처럼 보였던 까닭이 이 셈이다 — 유격에 아무리 부어도 비전의
+        둘째 단은 1포인트도 안 열렸다.
       ★ 이제 **다른 갈래에 찍은 것도 절반을 쳐 준다.** 순수 빌드는 그대로 가장 빠르고
         (제 갈래 8점이면 막단), 섞어 타는 빌드는 같은 깊이에 더 많은 점을 쓴다
         (5+6 → 5+3 = 8). 길이 막히는 것이 아니라 **값이 더 드는** 것이라, 고르는
         재미를 남기면서 갈래가 이어진다.
       ★ 내림(floor)이다. 올림으로 두면 다른 갈래 1점이 0.5 를 1로 쳐 줘서, 아무 갈래나
-        한 점 찍는 것이 늘 이득인 계산이 된다. */
+        한 점 찍는 것이 늘 이득인 계산이 된다.
+      사연: docs/code-history.md#h91 */
   BR_CROSS: 0.5,
   branchPts(brId) {
     const p = G.player;
@@ -877,8 +875,8 @@ const UI = {
       `</div>`;
     if (this.questTab === 'ach') { this.renderAch(topTabs); return; }
     if (this.questTab === 'ruins') { this.renderRuins(topTabs); return; }
-    /* 탭은 SESSIONS 표에서 만든다. 예전에는 여기 두 줄이 손으로 적혀 있어서,
-       세션을 늘리면 일지에만 안 나타나는 식으로 어긋났다. */
+    /* 탭은 SESSIONS 표에서 만든다.
+       사연: docs/code-history.md#h92 */
     const currentSession = 's' + sessionOf(g.chapter).id;
     const selectedSession = this.questSession || currentSession;
     const sessions = SESSIONS.map(x =>
@@ -908,19 +906,16 @@ const UI = {
       }
       for (const ch of chapterBlock.chapters) {
         const state = ch.id < g.chapter ? 'done' : ch.id === g.chapter ? 'cur' : 'locked';
-        // 세션 2의 sub는 "세션 2 · 제1장" 꼴이라, 세션 2 탭 안에서는 앞의 "세션 2 · "가
-        // 줄마다 반복돼 군더더기다. 그 접두어만 떼고 장 번호는 살린다 —
-        // 예전에는 아예 제목만 남겨서 몇 장인지 알 수 없었다.
+        // 세션 2의 sub는 "세션 2 · 제1장" 꼴이라, 세션 2 탭 안에서는 앞의 "세션 2 · "가 줄마다 반복돼 군더더기다.
+        // 사연: docs/code-history.md#h93
         const sub = ch.sub.replace(/^세션\s*\d+\s*·\s*/, '');
-        /* 아직 안 열린 장은 **제목도 가린다.** 예전에는 본문만 ???로 덮고 제목은
-           그대로 뒀는데, 장 제목이 곧 그 장의 사건이라(「가라앉은 지킴이」처럼)
-           목록만 훑어도 앞으로 무슨 일이 나는지 다 읽혔다. 몇 장인지는 남긴다 —
-           그건 순서일 뿐이고, 가리면 어디까지 왔는지도 안 보인다. */
+        /* 아직 안 열린 장은 **제목도 가린다.** 몇 장인지는 남긴다 — 그건 순서일 뿐이고, 가리면 어디까지 왔는지도 안 보인다.
+           사연: docs/code-history.md#h94 */
         const titleText = state === 'locked' ? `${sub} · ???` : `${sub} · ${ch.title}`;
         h += `<div class="chap ${state}"><div class="chap-badge ${state}">${state === 'done' ? '완료' : state === 'cur' ? '진행 중' : '대기'}</div><h3>${titleText}</h3>`;
         if (state !== 'locked') {
-          /* 끝낸 장은 도입부와 뒷이야기를 **둘 다** 남긴다. 예전에는 완료 순간 도입부가
-             사라져서, 나중에 기록을 펼쳐도 이야기가 중간부터 시작하는 것처럼 끊겼다. */
+          /* 끝낸 장은 도입부와 뒷이야기를 **둘 다** 남긴다.
+             사연: docs/code-history.md#h95 */
           const para = t => (t || '').split('\n\n').map(s =>
             `<p>${s.trim().replace(/\n/g, '<br>')}</p>`).join('');
           h += `<div class="cdesc">${para(ch.intro)}`;
@@ -975,8 +970,8 @@ const UI = {
       sh += '</div>';
     }
     if (!hasActive) sh += '<div class="side-q empty">지금 맡아 둔 부탁이 없다.</div>';
-    /* 게시판에 붙은 종이도 일지에서 보인다. 예전에는 게시판 앞에 서야만 남은
-       수를 알 수 있어서, 밖에서 몇 마리를 더 잡아야 하는지 알 방법이 없었다. */
+    /* 게시판에 붙은 종이도 일지에서 보인다.
+       사연: docs/code-history.md#h96 */
     if ((G.bounties || []).length) {
       sh += '<div class="side-head">의뢰 게시판</div>';
       for (const q of G.bounties) {
@@ -1154,8 +1149,8 @@ const UI = {
      현재 단계와 다음 단계 개조 비용이 함께 붙어, 무엇을 열려면 무엇을 모아야 하는지가
      한 화면에서 읽힌다. */
   craftTab: 'work',
-  /* null이면 **지금 진행 중인 세션**을 연다. 예전엔 's1'로 박아 둬서, 세션 2·3을
-     하고 있어도 기록을 열면 늘 세션 1이 펼쳐져 있었다. 탭을 누르면 그때부터 그 값이 남는다. */
+  /* null이면 **지금 진행 중인 세션**을 연다. 탭을 누르면 그때부터 그 값이 남는다.
+     사연: docs/code-history.md#h97 */
   questSession: null,
   craftGroup: 'all',
   craftShowLocked: false,
@@ -1180,10 +1175,8 @@ const UI = {
     const p = G.player, near = G.nearSt;
     const lv = { work: (G.nearStObj.work && G.nearStObj.work.lv) || 1, forge: (G.nearStObj.forge && G.nearStObj.forge.lv) || 1 };
     let tab = this.craftTab;
-    // H로 열었을 때(tab==='hand') 예전엔 "마지막으로 들렀던 시설" 탭을 기억해 뒀다가
-    // 같이 보여줬다 — 그 시설에서 몇 리 떨어져 있어도 탭과 레벨 표시("작업대 Lv.2")가
-    // 그대로 남아 있어서 실제로는 아무 시설도 없는데 있는 것처럼 보였다. 이제는 **지금
-    // 이 순간 실제로 근처(70px)에 있는 시설만** 같이 보여준다 — 없으면 맨손 탭 하나뿐.
+    // 이제는 **지금 이 순간 실제로 근처(70px)에 있는 시설만** 같이 보여준다 — 없으면 맨손 탭 하나뿐.
+    // 사연: docs/code-history.md#h98
     if (tab !== 'hand' && !near[tab]) tab = this.craftTab = 'hand';
     const allTabs = { work: ['work', `작업대 Lv.${lv.work}`], forge: ['forge', `용광로 Lv.${lv.forge}`], hand: ['hand', '맨손'] };
     const tabs = [];
@@ -1806,8 +1799,8 @@ const UI = {
     }
     if (d.mana) h += `<div class="tstat">소모 마나 <b>${d.mana}</b></div>`;
     if (d.multi) h += `<div class="tstat">투사체 <b>${d.multi}발</b></div>`;
-    /* 칸 수 표기 — 가방은 "가방이 몇 칸 늘어난다", 저장 상자는 "상자에 몇 칸이 있다"로
-       뜻이 다르다. 예전엔 둘 다 "+24 가방 칸"이라 상자가 가방을 늘려 주는 것처럼 읽혔다. */
+    /* 칸 수 표기 — 가방은 "가방이 몇 칸 늘어난다", 저장 상자는 "상자에 몇 칸이 있다"로 뜻이 다르다.
+       사연: docs/code-history.md#h99 */
     // 심연용 산소통만 가진 값 — 배수라 위 표(+n)로는 뜻이 안 통한다
     if (st.oxyReg) h += `<div class="taff">물 밖 숨 회복 ${1 + st.oxyReg}배</div>`;
     if (d.slots) h += d.type === 'bag'
