@@ -1613,12 +1613,21 @@ class World {
   buildSkyIslands(rng, n1) {
     this.skyIslands = [];
     const N = Math.round(32 * WSX);     // 세계 폭에 맞춰 — 소형 32개
+    /* 높이는 제 난수로 높·중·낮 세 층을 이웃과 다르게 고른다. ★ 본 난수의 cy 는 뽑기만 하고 버린다 —
+       안 뽑으면 뒤따르는 유적·동굴이 씨앗마다 바뀐다(carveIsland·tree 가 뽑는 수는 높이와 무관하다). */
+    const alt = new RNG(this.seed + '_skyalt');
+    let last = -1;
     for (let i = 0; i < N; i++) {
       const cx = Math.round(((i + 0.5) / N) * WW + rng.range(-32, 32));
       if (inSeaZone(cx)) continue;                // 바다 위에는 하늘 섬을 띄우지 않는다
-      const cy = rng.int(SY(12), SKY_Y - 8);
+      rng.int(SY(12), SKY_Y - 8);
+      let tier = alt.int(0, 2);
+      if (tier === last) tier = (tier + 1 + alt.int(0, 1)) % 3;
+      last = tier;
+      const cy = this.skyAlt(alt, tier);
       const rw = rng.int(13, 26), rh = rng.int(4, 8);
       this.carveIsland(cx, cy, rw, rh, rng);
+      if (tier === 0) this._skyStrip(cx - rw, cx + rw + 1, cy);   // 높은 층 나무는 세계 천장에 잘린다
       this.skyIslands.push({ x: cx, y: cy, w: rw });
       // 섬마다 상자 하나
       this.objects.push({ type: 'chest', tier: 6, x: (cx + rng.int(-4, 4)) * TS, y: (cy - 1.2) * TS, w: 30, h: 26, items: null });
@@ -1764,9 +1773,21 @@ class World {
     return false;
   }
 
+  /** 하늘 섬 높이 — 0 높은 층 · 1 가운데 · 2 낮은 층. 낮은 층 바닥(SKY_Y-8)은 이중 점프로 지상에서 못 닿게 둔 최소 높이다. */
+  skyAlt(r, tier) {
+    return tier === 0 ? r.int(SY(5), SY(10)) : tier === 1 ? r.int(SY(14), SY(21)) : r.int(SKY_Y - 13, SKY_Y - 8);
+  }
+  /** 섬 위 나무를 걷는다. */
+  _skyStrip(x0, x1, cy) {
+    for (let x = x0; x <= x1; x++) for (let y = 0; y < cy; y++) {
+      const t = this.get(x, y);
+      if (t === T.WOOD || t === T.SKYLEAF) this.set(x, y, T.AIR);
+    }
+  }
+
   /** 하늘 섬을 더 — 큰 섬 · 작은 섬 · 조각 섬, 그리고 상자 말고도 찾아갈 거리.
       ★ 제 난수(seed+'_sky')를 쓴다. 본 난수를 더 뽑으면 뒤따르는 유적·동굴·성채가 씨앗마다 통째로 바뀐다.
-      높이 띠는 원래 섬과 같다(SY(12) ~ SKY_Y-8) — 이중 점프로 지상에서 닿지 않게 둔 최소 높이다. */
+      찾아갈 거리가 있는 섬은 위로 13칸이 필요해 SY(14) 아래 두 층, 조각 섬은 SY(5) 까지 — 바닥은 SKY_Y-8 그대로. */
   buildSkyExtras() {
     const r = new RNG(this.seed + '_sky');
     const occ = [];
@@ -1774,9 +1795,10 @@ class World {
     for (const s of this.skyIslands) occ.push([s.x - s.w - 6, s.y - 14, s.x + s.w + 6, s.y + 14]);
     const g = this.skyGate; occ.push([g.x - 46, 0, g.x + 46, g.y + 16]);
     const cz = SX(3300 + SHIFT); occ.push([cz - 16, 0, cz + 74 + 16, 4 + 30 + 10]);   // 부유 성채(buildCitadel)
-    const place = (rw, rh, tries) => {
+    const feat = () => r.chance(0.5) ? r.int(SY(14), SY(20)) : r.int(SKY_Y - 13, SKY_Y - 8);
+    const place = (rw, rh, tries, band) => {
       for (let t = 0; t < tries; t++) {
-        const cx = r.int(40 + rw, WW - 40 - rw), cy = r.int(SY(12), SKY_Y - 8);
+        const cx = r.int(40 + rw, WW - 40 - rw), cy = band();
         if (inSeaZone(cx - rw) || inSeaZone(cx + rw)) continue;
         const box = [cx - rw - 5, cy - 13, cx + rw + 5, cy + rh + 6];
         if (hit(...box)) continue;
@@ -1794,8 +1816,8 @@ class World {
       return feats[fi++ % feats.length];
     };
     // 큰 섬 — 속이 빈 굴(그 안에 광맥과 상자) + 겉에 한 가지
-    for (let i = 0; i < Math.round(6 * WSX); i++) {
-      const rw = r.int(32, 44), rh = r.int(10, 13), at = place(rw, rh, 80);
+    for (let i = 0; i < Math.round(5 * WSX); i++) {
+      const rw = r.int(32, 44), rh = r.int(10, 13), at = place(rw, rh, 80, feat);
       if (!at) continue;
       this.carveIsland(at.cx, at.cy, rw, rh, r);
       this.skyIslands.push({ x: at.cx, y: at.cy, w: rw, k: 'grand' });
@@ -1804,8 +1826,8 @@ class World {
       this.skyFeature(nextFeat(), at.cx + side * Math.round(rw * 0.45), at.cy, r, () => hint++);
     }
     // 보통 섬 — 저마다 찾아갈 거리 하나
-    for (let i = 0; i < Math.round(16 * WSX); i++) {
-      const rw = r.int(11, 20), rh = r.int(6, 9), at = place(rw, rh, 60);
+    for (let i = 0; i < Math.round(13 * WSX); i++) {
+      const rw = r.int(11, 20), rh = r.int(6, 9), at = place(rw, rh, 60, feat);
       if (!at) continue;
       this.carveIsland(at.cx, at.cy, rw, rh, r);
       const k = nextFeat();
@@ -1813,8 +1835,8 @@ class World {
       this.skyFeature(k, at.cx, at.cy, r, () => hint++);
     }
     // 조각 섬 — 건너뛰는 디딤돌. 구름 덩이 · 들꽃 · 에테르 한 알 · 드물게 별빛 수정
-    for (let i = 0; i < Math.round(46 * WSX); i++) {
-      const rw = r.int(3, 7), rh = r.int(2, 4), at = place(rw, rh, 30);
+    for (let i = 0; i < Math.round(30 * WSX); i++) {
+      const rw = r.int(3, 7), rh = r.int(2, 4), at = place(rw, rh, 30, () => r.int(SY(5), SKY_Y - 8));
       if (!at) continue;
       const cloud = r.chance(0.3);
       for (let x = at.cx - rw; x <= at.cx + rw; x++) {
