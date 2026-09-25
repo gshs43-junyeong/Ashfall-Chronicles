@@ -1681,7 +1681,7 @@ class World {
     for (const k of [-1, 1]) for (let d = 8; d <= 9; d++) this.set(gx + k * d, F - 13, T.AIR);
     // 위층 회랑(한쪽으로만 막히는 발판) — 왼쪽엔 상자, 오른쪽엔 비문
     for (const k of [-1, 1]) for (let d = 9; d <= R - 1; d++) this.set(gx + k * d, F - 7, T.PLATFORM);
-    this.objects.push({ type: 'chest', tier: 6, x: (gx - 13) * TS, y: (F - 7) * TS - 26, w: 30, h: 26, items: null });
+    this.objects.push({ type: 'chest', tier: 6, bonus: 'storm_amber', x: (gx - 13) * TS, y: (F - 7) * TS - 26, w: 30, h: 26, items: null });
     this.objects.push({ type: 'lorestone', lore: 'sky', hint: 3, x: (gx + 12) * TS + 4, y: (F - 7) * TS - 34, w: 26, h: 34 });
     // 매단 깃발 · 횃불(좌우 같은 자리)
     for (const k of [-1, 1]) {
@@ -1813,7 +1813,7 @@ class World {
     const chx = cx - side * Math.round(cw * 0.45), fy = floorOf[chx];
     if (fy !== undefined) {
       if (this.get(chx, fy) === T.GEODE) this.set(chx, fy, T.AIR);
-      this.objects.push({ type: 'chest', tier: 6, x: chx * TS - 4, y: (fy + 1) * TS - 26, w: 30, h: 26, items: null });
+      this.objects.push({ type: 'chest', tier: 6, bonus: 'storm_amber', x: chx * TS - 4, y: (fy + 1) * TS - 26, w: 30, h: 26, items: null });
       this.set(chx - side * 2, fy, T.TORCH);
     }
     // 굴 가운데와 입구 쪽에도 횃불 — 섬 속이라 햇빛이 안 든다
@@ -1862,7 +1862,7 @@ class World {
       // 지킴이 둥지 — 낮은 돌 울타리 안의 상자. 열면 하늘 몹이 깨어난다
       this._skyClear(cx - 4, cx + 4, cy, 8);
       for (const k2 of [-1, 1]) { this.set(cx + k2 * 3, cy - 1, T.RUINBRICK); this.set(cx + k2 * 4, cy - 1, T.PEBBLES); }
-      this.objects.push({ type: 'chest', tier: 6, x: cx * TS - 4, y: cy * TS - 26, w: 30, h: 26, items: null,
+      this.objects.push({ type: 'chest', tier: 6, bonus: 'cloud_pearl', x: cx * TS - 4, y: cy * TS - 26, w: 30, h: 26, items: null,
         guard: { t: r.pick(['gale', 'sky_sentry', 'cloudjelly']), n: r.int(2, 3) } });
     } else if (k === 'garden') {
       // 버려진 하늘 밭 — 다 여문 서리쑥 · 뼈꽃. 캐면 씨앗이 함께 나온다(전리품으로만 얻던 씨앗)

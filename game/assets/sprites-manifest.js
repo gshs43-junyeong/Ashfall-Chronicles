@@ -2285,7 +2285,9 @@ window.SPRITE_MANIFEST = {
       "tide_ore": "item/tide_ore.png",
       "glacium_bar": "item/glacium_bar.png",
       "tide_bar": "item/tide_bar.png",
-      "mariner_compass": "item/mariner_compass.png"
+      "mariner_compass": "item/mariner_compass.png",
+      "storm_amber": "item/storm_amber.png",
+      "cloud_pearl": "item/cloud_pearl.png"
     }
   }
 };
