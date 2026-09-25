@@ -819,9 +819,9 @@ window.SPRITE_MANIFEST = {
       "shadoweye": {
         "file": "char/shadoweye.png",
         "frameW": 34,
-        "frameH": 28,
+        "frameH": 34,
         "count": 7,
-        "foot": -0.75,
+        "foot": 0.25,
         "side": 0
       },
       "frostling": {
@@ -1426,11 +1426,11 @@ window.SPRITE_MANIFEST = {
       },
       "reef_crab": {
         "file": "char/reef_crab.png",
-        "frameW": 34,
-        "frameH": 21,
+        "frameW": 37,
+        "frameH": 25,
         "count": 7,
         "foot": -0.75,
-        "side": 0
+        "side": 0.5
       },
       "lantern_jelly": {
         "file": "char/lantern_jelly.png",
