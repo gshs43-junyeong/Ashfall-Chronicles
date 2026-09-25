@@ -1692,7 +1692,7 @@ const UI = {
     if (!g.children.length) $('#anvil-note').textContent = '가방에 두들길 만한 장비가 없다.';
   },
 
-  /* 펫 목록 패널은 없앴다 — v1.0.2부터 펫이 인벤토리 아이템이라, 가방에서 바로
+  /* 펫 목록 패널은 없다 — 펫이 인벤토리 아이템이라, 가방에서 바로
      장비창의 펫 칸으로 끼우면 된다(다른 장비와 똑같은 조작). */
 
   /* ---------------- 툴팁 ---------------- */
@@ -1725,7 +1725,7 @@ const UI = {
     if (d.type === 'bag' && (d.slots || idef(cur).slots)) push('가방 칸', d.slots || 0, idef(cur).slots || 0);
     const sa = itemStats(it), sb = itemStats(cur);
     const NM = { hp: '생명', mp: '마나', def: '방어', ms: '이속', crit: '치명', critD: '치명피해', cdr: '쿨감', lifesteal: '흡혈', str: '힘', dex: '민첩', int: '지능', vit: '체력', jump: '점프', mpreg: '마나재생', hpreg: '생명재생',
-      // v1.1 — 산소통·잠수 장비. 이름이 없으면 툴팁에 키(oxyMax)가 그대로 찍힌다
+      // 산소통·잠수 장비. 이름이 없으면 툴팁에 키(oxyMax)가 그대로 찍힌다
       oxyMax: '숨(초)', oxyReg: '숨 회복', charge: '전하' };
     for (const k in NM) {
       const a = sa[k] || 0, b = sb[k] || 0;
@@ -1807,7 +1807,7 @@ const UI = {
       ? `<div class="taff">+${d.slots} 가방 칸</div>`
       : `<div class="taff">${d.slots}개 칸</div>`;
     const NAME = { hp: '최대 생명', mp: '최대 마나', def: '방어', ms: '이동 속도', crit: '치명타', critD: '치명 피해', cdr: '재사용 감소', lifesteal: '흡혈', jump: '추가 점프', str: '힘', dex: '민첩', int: '지능', vit: '체력', dmgP: '피해', spdP: '공격 속도', fire: '화염 부여', frost: '냉기 부여', mpreg: '마나 재생', hpreg: '생명 재생', magicP: '마법 피해',
-      // v1.1 — 산소통·잠수 장비가 늘려 주는 값. 이름이 없으면 툴팁에 아예 안 뜬다
+      // 산소통·잠수 장비가 늘려 주는 값. 이름이 없으면 툴팁에 아예 안 뜬다
       oxyMax: '숨 참는 시간', charge: '전하' };
     for (const k in st) {
       if (!NAME[k] || !st[k]) continue;

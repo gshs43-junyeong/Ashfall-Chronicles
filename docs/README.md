@@ -1,6 +1,6 @@
 # 문서 안내 / Documentation map
 
-[← README로 돌아가기](../README.md) · [English project guide](README.en.md) · [게임 평가와 로드맵](game-assessment.md)
+[← README로 돌아가기](../README.md) · [English project guide](README.en.md)
 
 이 폴더에는 지금 쓰는 운영 문서만 있습니다. 처음 읽는 사람은 아래 순서로 시작하세요.
 
@@ -12,7 +12,6 @@
 | [About 문구](about-copy.md) | 저장소·배포 담당자 | GitHub About과 소개 페이지에 바로 쓸 한국어·영어 문구 |
 | [v1.1 한눈에](v1.1-changelog.md#한눈에) | 플레이어·QA | v1.1 에 들어간 것을 여섯 줄로 |
 | [English project guide](README.en.md) | English readers | 영어권 플레이어·기여자를 위한 빠른 시작과 구조 안내 |
-| [게임 평가와 로드맵](game-assessment.md) | 기획·제작 | 현재 강점, 위험, 우선순위 개선안 |
 | [세션과 이야기 공용 규약](story-and-sessions.md) | 콘텐츠 제작자 | 장·세션을 늘릴 때 반드시 확인할 표와 세이브·애셋 규칙 |
 | [v1.1 변경 사항](v1.1-changelog.md) | QA·릴리스 | 개발 중인 웹 빌드에 들어간 변경 기록 |
 

@@ -58,7 +58,6 @@
 | [`docs/README.md`](docs/README.md) | **문서 안내** — 어떤 문서를 어디서부터 읽으면 되는지 |
 | [`docs/README.en.md`](docs/README.en.md) | 영어권 플레이어·기여자를 위한 프로젝트 안내 |
 | [`docs/about-copy.md`](docs/about-copy.md) | GitHub About · 소개 문구(한국어·영어)의 원본 |
-| [`docs/game-assessment.md`](docs/game-assessment.md) | 게임 평가와 우선순위 개선 로드맵 |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
 | [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1 에 무엇이 들어갔는가** (릴리스 준비 중 — 남은 것은 애셋 다듬기) |
 | [`docs/system-requirements.md`](docs/system-requirements.md) | 시스템 요구사항과 그 숫자를 잰 방법 |

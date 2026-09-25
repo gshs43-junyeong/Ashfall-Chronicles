@@ -53,7 +53,7 @@ ART[T.RUINTILE] = { k: 'ruintile', c: '#57503f' };
 ART[T.RUNESTONE] = { k: 'runestone', c: '#4a5f7a' };
 ART[T.SEALSTONE] = { k: 'seal', c: '#3a3550' };
 ART[T.AETHER] = { k: 'ore', c: '#6f8296', o: '#8fe0d8', glow: 1 };
-/* --- 세션 2: 지하 공창 --- */
+/* --- 지하 공창 --- */
 ART[T.STEELPLATE] = { k: 'brick', c: '#6a6a74' };
 ART[T.POWERSTONE] = { k: 'ore', c: '#4a4a52', o: '#e8a53a', glow: 1 };
 ART[T.CONDUIT] = { k: 'runestone', c: '#8a6a3a' };
@@ -63,11 +63,11 @@ ART[T.WEED] = { k: 'weed', c: '#5a8f3a', a: 1 };
 ART[T.CACTUS] = { k: 'cactustile', c: '#4a8a4a', a: 1 };
 ART[T.MUSHROOM] = { k: 'mushroomtile', c: '#e0402c', a: 1 };
 ART[T.CACTUS_BLOCK] = { k: 'cactusblock', c: '#3a7a3a' };
-/* --- 3단계: 동력 자원 --- */
+/* --- 동력 자원 --- */
 ART[T.COAL] = { k: 'ore', c: '#4e4e56', o: '#22212a' };
 ART[T.LEAD] = { k: 'ore', c: '#5d5d63', o: '#8e8ea4' };
 ART[T.OILSHALE] = { k: 'oilshale', c: '#3b352c' };
-/* --- 3단계: 기계 ---
+/* --- 기계 ---
    전부 배경(a:1)이 비치는 1×1 설비다. mk가 기계 몸통 뼈대를 그리고, 위에 종류별 표식을 얹는다 */
 ART[T.M_BELT] = { k: 'mk_belt', c: '#6a6a74', a: 1 };
 ART[T.M_DRILL] = { k: 'mk_drill', c: '#8a6a3a', a: 1 };
@@ -85,7 +85,7 @@ ART[T.M_SORTER] = { k: 'mk_sorter', c: '#8a7a4a', a: 1 };
 ART[T.M_TURRET] = { k: 'mk_turret', c: '#55555f', a: 1 };
 ART[T.M_TRAP] = { k: 'mk_trap', c: '#4a6a8a', a: 1 };
 ART[T.M_SWITCH] = { k: 'mk_switch', c: '#a03a30', a: 1 };
-/* --- 4단계: 마을 건축 --- */
+/* --- 마을 건축 --- */
 ART[T.THATCH] = { k: 'thatch', c: '#c8a860' };
 ART[T.ROOFTILE] = { k: 'rooftile', c: '#8a4a3a' };
 ART[T.TIMBERWALL] = { k: 'timber', c: '#d8cbaa', g: '#6a4a2a' };
@@ -97,13 +97,13 @@ ART[T.LAMPPOST] = { k: 'lamppost', c: '#e8c86a', a: 1 };
 ART[T.BANNER] = { k: 'bannertile', c: '#b03a3a', a: 1 };
 ART[T.HAYBALE] = { k: 'hay', c: '#d8b850' };
 ART[T.SANDBAG] = { k: 'sandbagtile', c: '#a89468' };
-/* --- 4단계: 농업. 한 페인터가 작물 종류(kind)와 자란 단계(st)를 받아 그린다 --- */
+/* --- 농업. 한 페인터가 작물 종류(kind)와 자란 단계(st)를 받아 그린다 --- */
 ART[T.FARMLAND] = { k: 'farmland', c: '#4a3620' };
 for (let i = 0; i < 4; i++) {
   ART[T.WHEAT0 + i] = { k: 'crop', kind: 'wheat', st: i, c: ['#7fa84a', '#8fb84a', '#c8b04a', '#e0c058'][i], a: 1 };
   ART[T.ROOT0 + i] = { k: 'crop', kind: 'root', st: i, c: ['#7fa84a', '#6f9f5a', '#5f9f6a', '#8fd0a0'][i], a: 1 };
   ART[T.CAP0 + i] = { k: 'crop', kind: 'cap', st: i, c: ['#8a7a6a', '#9a7a68', '#b06a54', '#e0402c'][i], a: 1 };
-  /* v1.1: 전리품 작물 넷. 같은 페인터에 kind 만 넷 더 붙였다 —
+  /* 전리품 작물 넷. 같은 페인터에 kind 만 넷 더 붙였다 —
      자라는 세 단계는 셋과 똑같이 읽히고, 다 여문 단계에서만 서로 달라 보이면 된다.
      (덜 자란 밭에서 종류를 구분할 필요는 없다. 중요한 건 "여물었나"다) */
   ART[T.BEAN0 + i] = { k: 'crop', kind: 'bean', st: i, c: ['#6f8a4a', '#7f9a4a', '#a8804a', '#c04a44'][i], a: 1 };
@@ -111,11 +111,11 @@ for (let i = 0; i < 4; i++) {
   ART[T.HERB0 + i] = { k: 'crop', kind: 'herb', st: i, c: ['#6a8a8a', '#6a9a9a', '#7aacb4', '#a8e0e8'][i], a: 1 };
   ART[T.POD0 + i] = { k: 'crop', kind: 'pod', st: i, c: ['#7a6a48', '#8a6a44', '#b06a34', '#e8842a'][i], a: 1 };
 }
-/* --- 4단계: 마을 기계 --- */
+/* --- 마을 기계 --- */
 ART[T.M_WINDMILL] = { k: 'mk_windmill', c: '#c8bca0', a: 1 };
 ART[T.M_MILL] = { k: 'mk_mill', c: '#8a7a5a', a: 1 };
 ART[T.M_OVEN] = { k: 'mk_oven', c: '#9a6a4a', a: 1 };
-/* --- 5단계: 울림 정글 / 버섯 골짜기 --- */
+/* --- 울림 정글 / 버섯 골짜기 --- */
 ART[T.JUNGLEGRASS] = { k: 'grass', c: '#4a3a26', g: '#3f7a34' };
 ART[T.MUD] = { k: 'mud', c: '#4a3a26' };
 ART[T.JUNGLELEAF] = { k: 'leaf', c: '#2f6a28', a: 1, tw: '#3e2a14' };
@@ -137,7 +137,7 @@ ART[T.TIDESTONE] = { k: 'ore', c: '#4a5f60', o: '#54d0b4', glow: 1 };
 ART[T.PALMWOOD]  = { k: 'palmwood', c: '#7a5a38' };
 ART[T.PALMLEAF]  = { k: 'palmleaf', c: '#4f8a3a' };
 ART[T.COCONUT]   = { k: 'coconut', c: '#6a4a2a' };
-// 바닷물 — 물과 같은 그림틀에 색만 짙게. 프레임도 같이 준다(C단계 타일 애니메이션)
+// 바닷물 — 물과 같은 그림틀에 색만 짙게. 프레임도 같이 준다
 ART[T.SEAWATER] = { k: 'water', c: '#12496e', a: 1, fr: 3, fps: 3 };
 /* 4단계 설비 — 기존 기계 그림틀(mk_*)을 그대로 쓴다. 가압기는 압축기의 윗줄이라
    같은 실루엣에 색만 무겁게, 증류기는 물을 다루므로 푸른 관을 얹는다. */
@@ -151,7 +151,7 @@ ART[T.M_BATTERY_HI] = { k: 'mk_battery', c: '#4a9a8a', a: 1 };
 ART[T.BRINEVENT] = { k: 'flamevent', c: '#2a6a7a' };   // 염수 분출구 — 화염과 같은 틀에 색만 물빛
 ART[T.TRIPMINE] = { k: 'tripmine', c: '#8a5a3a' };
 ART[T.KELPPLANT] = { k: 'kelpplant', c: '#3f7a5a', a: 1, fr: 3, fps: 2 };
-/* --- 흐르는 액체 · 샘 · 물가 장식 (v1.1 유체) ---
+/* --- 흐르는 액체 · 샘 · 물가 장식 ---
    흐르는 물은 고인 물과 **같은 그림**을 수위만큼 잘라 그린다(game.js drawFlow). 여기 그림은
    "떨어지는 중"일 때 쓰는 것 — 바닷물은 떨어지는 결을, 용암은 용암 그대로. */
 ART[T.FLOWWATER] = { k: 'water', c: '#2f6f9f', a: 1, fr: 3, fps: 4 };
@@ -166,7 +166,7 @@ ART[T.SEASHELL] = { k: 'seashell', c: '#e0cdb8', a: 1 };
 ART[T.SULFUR] = { k: 'ore', c: '#7a7268', o: '#d8c04a', glow: 1 };
 /* 마을 전신주 기둥 — 공장 전주(M_POLE)와 나란히 서도 이질감이 없어야 해서 같은 나뭇결·
    같은 폭으로 그린다. 다만 가로대와 애자는 꼭대기 칸(M_POLE)에만 있고 여기는 기둥만이다. */
-/* --- 6단계: 유적 --- */
+/* --- 유적 --- */
 ART[T.ICEBRICK] = { k: 'ashlar', c: '#7fb0d8' };
 ART[T.SANDBRICK] = { k: 'ashlar', c: '#c8a468' };
 ART[T.MINEWOOD] = { k: 'plank', c: '#6a4a2a' };
@@ -181,7 +181,7 @@ ART[T.SPARKCOIL] = { k: 'flamevent', c: '#5a8aa8' };
 ART[T.GASVENT] = { k: 'flamevent', c: '#6a7a4a' };
 ART[T.GRINDER] = { k: 'flamevent', c: '#6a6058' };
 ART[T.CRUMBLE] = { k: 'crumble', c: '#6a6050' };
-/* --- v1.1: 유적마다 그곳에서만 나오는 장식 둘 ---
+/* --- 유적마다 그곳에서만 나오는 장식 둘 ---
    벽에 붙는 것(서리 글자·새긴 벽·포자 구멍)은 고체라 배경이 안 비치고,
    나머지는 전부 a:1 — 뒤의 벽이 비쳐야 "매달려 있다"로 읽힌다. */
 ART[T.ICEBANNER] = { k: 'banner_ice', c: '#7fb6cc', a: 1 };
@@ -194,7 +194,7 @@ ART[T.BLIGHTSAC] = { k: 'sac', c: '#8a4a80', a: 1, glow: 1 };
 ART[T.BONEHEAP] = { k: 'boneheap', c: '#cfc8b0', a: 1 };
 ART[T.SPOREVENT] = { k: 'sporevent', c: '#5a8a74', glow: 1 };
 ART[T.HYPHAE] = { k: 'hyphae', c: '#8fe0c4', a: 1, glow: 1 };
-/* --- v1.1 동굴 갈래 — 장식 넷은 a:1(뒤의 벽이 비친다). 이끼 바위와 금 간 자갈은 고체 ---
+/* --- 동굴 갈래 — 장식 넷은 a:1(뒤의 벽이 비친다). 이끼 바위와 금 간 자갈은 고체 ---
    ★ 금 간 자갈은 **알아볼 수 있어야** 한다. 돌과 똑같이 그리면 무너뜨릴 이유를 못 찾는다 —
      자갈 알갱이 결에 굵은 금 하나, 금 사이로 먼지가 비치게 그렸다. */
 ART[T.MOSSSTONE] = { k: 'mossrock', c: '#5d5d63', g: '#5f8f4a' };
@@ -210,7 +210,7 @@ ART[T.GRANITE] = { k: 'granite', c: '#7a6868' };      // 화강암 — 굵은 �
 ART[T.METEORITE] = { k: 'meteorite', c: '#3a3436' };
 ART[T.STARCRYSTAL] = { k: 'starcrystal', c: '#ffe6a8', a: 1, glow: 1 };
 ART[T.FUSEDROCK] = { k: 'fused', c: '#2e2a2e' };
-/* --- 7단계: 폭주로 --- */
+/* --- 폭주로 --- */
 ART[T.SLAGSTEEL] = { k: 'slag', c: '#5a4a44' };
 ART[T.COREGLASS] = { k: 'crystal', c: '#e8b04a', glow: 1 };
 /* --- 동굴 물 — 둘 다 반투명(a:1)이라 뒤의 벽이 비쳐 보인다 --- */
@@ -226,7 +226,7 @@ ART[T.ORBITCORE] = { k: 'ore', c: '#6a7f9c', o: '#7fe0ff', glow: 1 };
 ART[T.DEEPROCK] = { k: 'rock', c: '#3a3630' };
 ART[T.BLACKDAMP] = { k: 'water', c: '#6a7a4a', a: 1, fall: 0 };
 
-/* ---------------- 이웃을 보고 그리는 타일 (v1.1) ----------------
+/* ---------------- 이웃을 보고 그리는 타일 ----------------
    아틀라스 한 칸은 이웃을 모른다. 그래서 두 가지가 어긋났다.
    ① ★ **윗면을 제 그림에 그려 넣은 타일**(잔디·부패한 풀·밀림 풀·발광 이끼·눈·얼음·이끼 바위)이
      위가 막혀 있어도 윗면 띠를 그렸다. 부패한 땅은 흙 층 자체가 '부패한 풀'이라 땅속 수십 줄에
@@ -1280,7 +1280,7 @@ const TileArt = {
         this._speck(g, ox, oy, rng, 14, '#ffd27a', shade(base, .6));
         break;
 
-      /* ---------- 3단계: 유혈암 ---------- */
+      /* ---------- 유혈암 ---------- */
       case 'oilshale': {
         this._fill(g, ox, oy, base);
         let y = rng.range(-3, 0);
@@ -1295,7 +1295,7 @@ const TileArt = {
         break;
       }
 
-      /* ---------- 3단계: 기계 ----------
+      /* ---------- 기계 ----------
          전부 같은 뼈대(_mkBody) 위에 종류별 표식만 다르게 얹어, 한눈에 "기계"로 묶여 보이게 했다 */
       case 'mk_belt': {
         R(0, 6, TS, TS - 10, dk2);
@@ -1435,7 +1435,7 @@ const TileArt = {
         R(3, TS - 14, 2, 3, '#9fd8ff'); R(13, TS - 15, 2, 4, '#9fd8ff');
         break;
       }
-      /* ---------- 5단계: 정글 / 버섯 골짜기 ---------- */
+      /* ---------- 정글 / 버섯 골짜기 ---------- */
       case 'mud':
         // 흙과 헷갈리지 않게 더 어둡게 깔고, 물기와 뿌리를 얹어 젖은 땅으로 읽히게 한다
         this._fill(g, ox, oy, dk);
@@ -1730,7 +1730,7 @@ const TileArt = {
         break;
       }
 
-      /* ---------- 4단계: 마을 건축 ---------- */
+      /* ---------- 마을 건축 ---------- */
       case 'thatch': {
         this._fill(g, ox, oy, dk);
         for (let i = 0; i < 40; i++) {          // 비스듬히 눕힌 짚단
@@ -1859,7 +1859,7 @@ const TileArt = {
         break;
       }
 
-      /* ---------- 4단계: 농업 ---------- */
+      /* ---------- 농업 ---------- */
       case 'farmland': {
         // 옆에서 본 밭 — 세로 줄무늬로 그리면 울타리처럼 보여서, 위에 갈아엎은 흙두둑을 얹는다
         this._fill(g, ox, oy, dk);
@@ -1949,7 +1949,7 @@ const TileArt = {
         break;
       }
 
-      /* ---------- 4단계: 마을 기계 ---------- */
+      /* ---------- 마을 기계 ---------- */
       case 'mk_windmill': {
         R(TS / 2 - 4, 9, 8, TS - 9, base);      // 탑
         R(TS / 2 - 4, 9, 2, TS - 9, lt2);
@@ -2077,7 +2077,7 @@ const TileArt = {
         break;
       }
 
-      /* ---------- v1.1: 유적 고유 장식 열 ----------
+      /* ---------- 유적 고유 장식 열 ----------
          한 칸(22px) 안에서 실루엣만으로 무엇인지 읽혀야 한다. 그래서 열 개가
          서로 **다른 자리를 쓴다** — 매달린 것은 위에서 내려오고, 놓인 것은 아래에
          깔리고, 새긴 것은 칸을 꽉 채운다. 색이 아니라 자리로 먼저 갈린다. */
