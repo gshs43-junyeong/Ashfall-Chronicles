@@ -959,6 +959,7 @@ class Player extends Ent {
         G.parts.push(new Part(this.cx + (Math.random() - .5) * 14, this.y + this.h * .3, '#bfe4ff', -30, .5));
     } else {
       if (input.jump && !this.jumpHeld && this.jumpsLeft > 0) {
+        G.sfx(this.onGround ? 'jump' : 'jump2', 0.94 + Math.random() * 0.12);
         this.vy = -620; this.jumpsLeft--; this.jumpHeld = true;
         if (!this.onGround) for (let i = 0; i < 8; i++) G.parts.push(new Part(this.cx, this.y + this.h, '#cfe8ff'));
       }

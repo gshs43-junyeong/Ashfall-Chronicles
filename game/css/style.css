@@ -313,7 +313,11 @@ button{
 .node.learned .nrank{color:var(--gold)}
 .node.maxed .nbox{background:#221d0e;box-shadow:0 0 0 1px var(--bc),0 0 16px color-mix(in srgb,var(--bc) 42%,transparent)}
 .node.locked{opacity:.4}
-.node.unseen,.bline.unseen{visibility:hidden}
+/* 아직 먼 칸 — 무엇인지는 숨기고 '여기에 칸이 있다'는 빈 틀만 남긴다 */
+.bline.unseen{visibility:hidden}
+.node.unseen{opacity:1;pointer-events:none}
+.node.unseen .nbox{background:transparent;border:1px dashed #3a3524;box-shadow:none}
+.node.unseen .nic,.node.unseen .nlock,.node.unseen .nname,.node.unseen .nrank{visibility:hidden}
 .node.locked .nlock{opacity:.9}
 .node.active .nbox::after{content:'';position:absolute;inset:-4px;border-radius:8px;
   border:1px solid var(--gold);opacity:.75;pointer-events:none}

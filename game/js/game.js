@@ -5664,10 +5664,11 @@ const G = {
     const st = Math.floor(this.time * 9) % 4;
     const step = st !== this._dustSt && (st === 0 || st === 2);
     this._dustSt = st;
-    if (!step || !p.onGround || p.swimming || Math.abs(p.vx) < 60 || Math.random() > 0.55) return;
+    if (!step || !p.onGround || p.swimming || Math.abs(p.vx) < 60) return;
     const w = this.world, fy = p.y + p.h + 1;
     const tx = Math.floor(p.cx / TS), ty = Math.floor(fy / TS);
-    if (w.liquid(tx, ty - 1)) return;                     // 얕은 물을 걸을 땐 먼지가 안 인다
+    this.sfx('step', 0.9 + Math.random() * 0.2);          // 발소리는 딛는 칸마다(파일이 있을 때만 울린다)
+    if (w.liquid(tx, ty - 1) || Math.random() > 0.55) return;   // 얕은 물을 걸을 땐 먼지가 안 인다
     const d = TILE_DEF[w.get(tx, ty)];
     if (!d || !d.solid || !d.c) return;
     const n = Math.random() < 0.3 ? 2 : 1;
