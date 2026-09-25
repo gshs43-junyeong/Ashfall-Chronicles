@@ -166,6 +166,8 @@ const ISPEC = {
   tide_ore: { k: 'ore', c: '#54d0b4', glow: '#54d0b4' },
   glacium_bar: { k: 'bar', c: '#bfeaf7', glow: '#8fd8ee' },
   tide_bar: { k: 'bar', c: '#54d0b4', glow: '#3fb89c' },
+  meteorite: { k: 'meteorite', c: '#4a4448' },
+  star_crystal: { k: 'crystal', c: '#ffe6a8', glow: 1 },
   det_metal: { k: 'detector', c: '#9fd8e8' },
   det_mob: { k: 'detector', c: '#e08a6a' },
 
@@ -1736,6 +1738,20 @@ const Art = {
           P(x, y, w - 1, 1.2, sh2(c, 1.45));
           P(x + 1, y + h - 1, w - 1, 1, sh2(c, .6));
         }
+        break;
+      }
+
+      case 'meteorite': {           // 운석 조각 — 둥근 검은 쇳덩이, 오목 자국 셋, 쇠 윤과 붉은 금
+        const c = s.c;
+        glow(16, 17, 12, '#ff7a3a', .12);
+        poly([[7, 13], [12, 7], [20, 6], [26, 11], [27, 19], [22, 26], [12, 26], [6, 20]], c);
+        poly([[7, 13], [12, 7], [20, 6], [26, 11], [18, 13], [10, 16]], sh2(c, 1.3));
+        poly([[27, 19], [22, 26], [12, 26], [16, 21], [24, 18]], sh2(c, .65));
+        for (const [x, y, r] of [[13, 14, 3], [20, 12, 2.4], [18, 20, 3.2]]) {
+          circ(x, y, r, sh2(c, .6)); circ(x + .7, y + .8, r * .7, sh2(c, .8));
+        }
+        P(11, 9, 5, 1.2, '#c8ccd4'); P(22, 16, 2, 1, '#c8ccd4'); P(9, 20, 1.5, 1, '#9aa0aa');
+        P(15, 23, 1, 1, '#ff7a3a'); P(16, 22, 1, 1, '#ff7a3a'); P(17, 22, 1, 1, '#ffb070'); P(18, 21, 1, 1, '#ff7a3a');
         break;
       }
 

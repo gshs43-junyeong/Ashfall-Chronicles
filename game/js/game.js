@@ -7546,14 +7546,48 @@ const G = {
           if (w.get(x, y) === T.BEDROCK) continue;
           w.set(x, y, T.AIR); w.setWall(x, y, 0);                 // 벽도 걷는다 — 하늘이 트여야 햇빛이 든다
         }
-        if (w.solid(x, bot + 1) && w.get(x, bot + 1) !== T.BEDROCK) w.set(x, bot + 1, T.ASH);
-        if (w.solid(x, bot + 2) && w.get(x, bot + 2) !== T.BEDROCK && Math.random() < 0.5) w.set(x, bot + 2, T.ASH);
+        // 바닥 — 가운데(반지름의 7할)는 열에 녹아 굳은 돌, 바깥은 재
+        const skin = Math.abs(dx) <= R * 0.7 ? T.FUSEDROCK : T.ASH;
+        if (w.solid(x, bot + 1) && w.get(x, bot + 1) !== T.BEDROCK) w.set(x, bot + 1, skin);
+        if (w.solid(x, bot + 2) && w.get(x, bot + 2) !== T.BEDROCK && Math.random() < 0.5) w.set(x, bot + 2, skin);
         w.surface[x] = bot + 1;
       } else if (Math.abs(dx) <= R + 2) {
         // 테두리 — 튀어나간 흙이 한 칸 쌓인다
         const s = w.surface[x];
         if (w.get(x, s - 1) === T.AIR) { w.set(x, s - 1, T.DIRT); w.surface[x] = s - 1; }
       }
+    }
+    this.placeMeteorite(cx, cy, R);
+  },
+
+  /** 구덩이 한가운데에 운석 덩이를 반쯤 묻고, 그 둘레 바닥에 별빛 수정을 틔운다.
+      덩이는 줄마다 반폭을 적은 둥근 덩어리(R 7 이상 3·5·3칸, 아니면 1·3·3칸)이고 윗줄이 바닥 위로 솟는다 —
+      다 묻으면 무엇이 떨어졌는지 모르고, 7칸 타원으로 깔았더니 구덩이 바닥을 다 메워 그릇이 평평해 보였다.
+      수정은 **바닥 바로 위 빈 칸**에만(걸음을 안 막는다). */
+  placeMeteorite(cx, cy, R) {
+    const w = this.world;
+    const floor = cy + Math.round(R * 0.75) + 1;            // 가운데 칸의 바닥(첫 고체) 높이
+    const rows = R >= 7 ? [1, 2, 1] : [0, 1, 1], rx = R >= 7 ? 2 : 1;
+    rows.forEach((hw, k) => {
+      const y = floor - 1 + k;
+      for (let dx = -hw; dx <= hw; dx++) {
+        const x = cx + dx;
+        if (w.get(x, y) === T.BEDROCK) continue;
+        w.set(x, y, T.METEORITE); w.setWall(x, y, 0);
+        if (y < w.surface[x]) w.surface[x] = y;
+      }
+    });
+    // 수정 — 덩이 둘레(덩이 폭 + 4칸)의 바닥에 드문드문. 적어도 둘은 난다
+    const spots = [];
+    for (let dx = -rx - 4; dx <= rx + 4; dx++) {
+      const x = cx + dx, s = w.surface[x];
+      if (w.get(x, s - 1) === T.AIR && w.solid(x, s)) spots.push(x);
+    }
+    let n = 0;
+    for (const x of spots) if (Math.random() < 0.4) { w.set(x, w.surface[x] - 1, T.STARCRYSTAL); n++; }
+    for (let k = 0; n < 2 && k < spots.length; k++) {
+      const x = spots[(k * 5 + 3) % spots.length];
+      if (w.get(x, w.surface[x] - 1) === T.AIR) { w.set(x, w.surface[x] - 1, T.STARCRYSTAL); n++; }
     }
   },
 
