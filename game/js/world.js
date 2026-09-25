@@ -4912,7 +4912,8 @@ class World {
       if (this.get(x, y) !== T.AIR || this.get(x, y - 1) !== T.AIR) continue;
       if (!this.solid(x, y + 1) || !this.solid(x + 1, y + 1)) continue;
       let tier = y > HELL_Y ? 5 : y > SY(326) ? 4 : y > SY(214) ? 3 : y > SY(142) ? 2 : 1;
-      this.objects.push({ type: 'chest', tier, x: x * TS, y: (y - 0.2) * TS, w: 30, h: 26, items: null });
+      /* cave: 닫힌 굴에도 놓이는 '파고 찾는' 상자 — 유적 둘레에 걸려도 유적 상자가 아니다(tools/ruindiag.py) */
+      this.objects.push({ type: 'chest', tier, cave: 1, x: x * TS, y: (y - 0.2) * TS, w: 30, h: 26, items: null });
       this.set(x - 1, y - 1, T.TORCH);
       placed++;
     }

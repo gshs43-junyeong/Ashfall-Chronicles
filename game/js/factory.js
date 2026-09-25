@@ -218,7 +218,7 @@ const Factory = {
       if (!n) continue;
       if (s.store) { n.e += m.e; n.emax += s.store; n.bats.push(m); }
       // 지난 틱에 실제로 일한 기계만 수요로 잡는다 — 놀고 있는 조립기가 발전기를 태우지 않게
-      if (s.power && m.on && !n.off && m.act) n.dem += s.power;
+      if (s.power && m.on && !n.off && m.act && !(m.gen && !m.own)) n.dem += s.power;   // 유적 함정은 제 힘
     }
     /* 플레이어 충전 — 전주 반경 안에 서 있으면 그 망에서 전하를 받는다. 다른 기계와 같은 수요로 셈해
        발전기 여유분 → 축전지 순으로 빠져나간다(공짜 충전이 아니다). 한 틱에 CHARGE_TICK 까지. */
@@ -482,12 +482,14 @@ const Factory = {
 
   /* ---- 전격 함정: 위에 올라선 적만 지진다 (플레이어는 안전) — 함정도 몸이 있는 칸이라 들어올 수는 없다 ---- */
   runTrap(w, m, s, G) {
+    const r = { x: m.x * TS, y: (m.y - 1) * TS, w: TS, h: TS + 2 };   // 윗칸 + 윗면에 닿은 발
+    /* ★ 세계가 지은 함정(gen, 유적 공장)은 망 없이 돌고 **올라선 누구든** 지진다 — 망을 찾으면 영영 꺼져 있었다 */
+    if (m.gen && !m.own) return this.runWildTrap(w, m, r, G);
     const step = this.sat(w, m);
     if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; }
     m.act = 1;
     m.cd -= step;
     if (m.cd > 0) { m.st = '대기'; return; }
-    const r = { x: m.x * TS, y: (m.y - 1) * TS, w: TS, h: TS + 2 };   // 윗칸 + 윗면에 닿은 발
     let hit = 0;
     for (const e of G.ents) {
       if (!(e instanceof Enemy) || e.dead) continue;
@@ -497,6 +499,26 @@ const Factory = {
     }
     m.st = hit ? '방전' : '대기';
     if (hit) { m.cd = 4; m.fx = 3; G.sfxAt('zap', m.x, m.y); } else m.cd = 1;
+  },
+  /** 유적 함정 — 밟으면 0.5초 불꽃으로 알리고 그때도 위에 있으면 방전, 2초 쉰다. */
+  runWildTrap(w, m, r, G) {
+    const p = G.player, on = !p.dead && aabb(r, p.rect());
+    let foe = false;
+    for (const e of G.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) { foe = true; break; }
+    if (m.cd > 0) { m.cd--; m.st = '식는 중'; m.act = 0; return; }
+    if (!m.arm) {
+      if (!on && !foe) { m.st = '대기'; m.act = 0; return; }
+      m.arm = 4;
+    }
+    m.act = 1; m.st = '충전';
+    if (--m.arm > 0) {
+      for (let i = 0; i < 2; i++) G.parts.push(new Part((m.x + Math.random()) * TS, m.y * TS - 1, '#9fd8ff', -40, .25));
+      return;
+    }
+    m.arm = 0; m.cd = 16; m.fx = 3; m.st = '방전';
+    if (on && p.iframe <= 0) p.hurt(26 + p.level * 1.1);
+    for (const e of G.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) e.hurt(34, false, null, 0);
+    G.sfxAt('zap', m.x, m.y);
   },
 
   /* ================= 플레이어 조작 ================= */
