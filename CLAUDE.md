@@ -346,6 +346,9 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   game.js 는 가로세로 비로 장 수를 잰다) · `mknpc.py`(상인 셋을 다른 NPC 몸 틀 `npc_template.png` 로 · 윤슬은 윤곽선만) · `mkanvil.py`(강화 모루).
 - 하늘 섬 고유 재료 둘(쓰임은 다음 판): `storm_amber` 폭풍 호박(큰 섬 굴·신전 상자 bonus) · `cloud_pearl` 구름 진주(지킴이 상자 bonus · 구름 해파리 4%).
   그림은 `tools/mkskyitems.py`. PNG 만 있는 아이템도 itemart 가 자리 칸을 만들어 준다(없으면 가방에 빈 칸이었다).
+- **채취탑**(잿빛 숲 대형 기계 그림): 자리는 world.js `placeRigs` 가 골라 object(type `'rig'`, 저장됨)로 세운다 — 발자국(data.js `RIG`)엔
+  나무가 안 나고(생성·`regrow` 둘 다) 플레이어도 아무것도 못 놓는다(`world.inRig`). 세션 3(ch15) 부터 우클릭으로 해체 → `RIG.parts`.
+  옛 세이브는 불러올 때 지금 지면으로 한 번 세운다. 그림은 game.js `drawRig`.
 - 마을 2단계의 괭이·낫·씨앗은 가방으로 준다(data.js `FARM_KIT`) — 밭 위 상자는 없앴다.
 - **하늘 섬**(world.js `buildSkyIslands` → `buildSkyTemple` · `buildSkyExtras`): 원래 섬 서른둘(섬마다 상자)에 더해 **제 난수**(`seed+'_sky'`)로
   큰 섬(속 빈 굴 `skyGrotto` + 윗면 하나) · 보통 섬(`skyFeature` — 샘 연못 · 바람의 사당 `MYSTIC.gale`(공중 점프 +1) · 별똥 자리(운석·별빛 수정) ·

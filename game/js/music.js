@@ -206,7 +206,7 @@ const SFX_GAP = {
   step: 0.12
 };
 /* 키별 음량 배수 — 공장 상시음은 전투음보다 한참 작게 깔린다 */
-const SFX_VOL = { step: 0.8, jump: 0.6, jump2: 0.6, belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7,
+const SFX_VOL = { step: 0.28, jump: 0.3, jump2: 0.34, belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7,
   bubble: 0.5, detector: 0.45, ore_hit: 0.7, drown: 0.85, boom_small: 0.9, boom_big: 1,
   /* 별 조각 셋은 다른 효과음보다 길어서(0.9~1.5초) 같은 크기로 두면 그 동안 다른 소리를 전부 덮는다. */
   star_gain: 0.7, star_merge: 0.85, star_rise: 0.9,

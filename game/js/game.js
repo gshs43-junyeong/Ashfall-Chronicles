@@ -1474,6 +1474,7 @@ const G = {
       if (mac) { UI.openMachine(mac); this.sfx('open'); return; }
       const hi = p.held();
       if (hi && idef(hi).type === 'machine') {
+        if (w.inRig(mtx, mty)) { this.toast('채취탑 자리에는 놓을 수 없다', 'bad'); return; }
         if (!Factory.canPlace(w, mtx, mty)) { this.toast('그 자리에는 놓을 수 없다', 'bad'); return; }
         // 설치 방향은 플레이어가 보고 있는 쪽 — 벨트를 깔면서 걸으면 자연히 이어진다
         const dir = p.facing >= 0 ? 0 : 2;
@@ -1491,6 +1492,7 @@ const G = {
       const hd = hi && idef(hi);
       if (hd && hd.hoe) {
         const t = w.get(mtx, mty);
+        if (w.inRig(mtx, mty - 1)) { this.toast('채취탑 자리다', 'bad'); return; }
         /* 전주 기둥이 내려오는 열은 갈 수 없다. */
         if (this._poleAbove(mtx, mty)) { this.toast('전신주 기둥이 지나가는 자리다', 'bad'); return; }
         if ((t === T.DIRT || t === T.GRASS || t === T.SNOW || t === T.CORRUPTGRASS) && w.get(mtx, mty - 1) === T.AIR) {
@@ -1535,6 +1537,7 @@ const G = {
       if (!near) return;
       /* 잠긴 골방 안에는 아무것도 못 놓는다 — 안에 발판을 놓아 밖에서 타고 넘거나, 문틀 옆에 블록을 끼워 판정을 흔드는 길을 막는다. */
       if (w.inLockedVault(tx, ty)) { this.toast('잠긴 골방 안에는 놓을 수 없다', 'bad'); return; }
+      if (w.inRig(tx, ty)) { this.toast('채취탑 자리에는 놓을 수 없다', 'bad'); return; }
       const tileId = idef(held).tile;
       if (TILE_DEF[tileId].solid === 1 && aabb({ x: tx * TS, y: ty * TS, w: TS, h: TS }, p.rect())) return;
       // 장식은 기댈 데가 있어야 한다(data.js DECO_MOUNT) — 같은 장식끼리는 이어 붙는다
@@ -1570,6 +1573,7 @@ const G = {
     const x0 = tx, y0 = ty - th + 1;   // 발자국 좌상단
     for (let yy = y0; yy <= ty; yy++) for (let xx = x0; xx < x0 + tw; xx++) {
       if (w.get(xx, yy) !== T.AIR) { this.toast('빈 자리에만 놓을 수 있다', 'bad'); return; }
+      if (w.inRig(xx, yy)) { this.toast('채취탑 자리에는 놓을 수 없다', 'bad'); return; }
       if (Factory.at(w, xx, yy)) { this.toast('이미 기계가 있다', 'bad'); return; }
     }
     for (let xx = x0; xx < x0 + tw; xx++)
@@ -1599,6 +1603,7 @@ const G = {
     const y0 = ty - 1;                       // 겨눈 칸이 문의 **아랫칸** — 위로 한 칸 더 선다
     for (let yy = y0; yy <= ty; yy++) {
       if (w.get(tx, yy) !== T.AIR) { this.toast('빈 자리에만 달 수 있다', 'bad'); return; }
+      if (w.inRig(tx, yy)) { this.toast('채취탑 자리에는 달 수 없다', 'bad'); return; }
       if (Factory.at(w, tx, yy)) { this.toast('이미 기계가 있다', 'bad'); return; }
     }
     if (!w.solid(tx, ty + 1)) { this.toast('바닥이 있어야 문을 단다', 'bad'); return; }
@@ -1890,6 +1895,8 @@ const G = {
       this.talkTo(o.npc);
     } else if (o.type === 'altar') {
       this.altar(o);
+    } else if (o.type === 'rig') {
+      if (!o.gone) this.useRig(o);
     } else if (o.type === 'tablet') {
       this.readTablet(o);
     } else if (o.type === 'seal') {
@@ -3275,50 +3282,44 @@ const G = {
 
   /* ================= 용광로 굴뚝 연기 ================= */
   /* ================= 채취탑 — 세션 2 에 다시 도는 대형 기계 ================= */
-  /* ★ 설 자리를 **바이옴 이름으로** 묻는다 — 사연: docs/code-history.md#h51 */
-  RIG_IN: [['forest', 2], ['forest2', 1]],   // [바이옴 id, 몇 대]
-  RIG_EDGE: 40,             // 바이옴 경계에서 이만큼은 떨어뜨린다
+  /* 자리는 world.placeRigs 가 골라 object(type 'rig')로 저장한다 — 여기는 그림·쿵·해체만. */
   RIG_THUD: 4.6,            // 쿵 간격(초)
   RIG_NEAR: 5 * 22,         // 쿵이 들리는 거리(px) — 탑 바로 밑
   /* 그림 배율. */
   RIG_SCALE: 0.66,
   RIG_TOP: 256,             // 굴뚝 꼭대기(배율 1일 때 y)
-  RIG_LEG: 2,               // 다리가 딛는 반폭(칸) — 이 안은 지면이 **똑같아야** 한다
 
-  /** 채취탑 자리. */
+  /** 서 있는 채취탑들(해체한 것은 빼고). */
   rigs() {
-    if (this._rigs) return this._rigs;
     const w = this.world;
     if (!w) return [];
-    const out = [];
-    const LEG = this.RIG_LEG;
-    for (const [bid, n] of this.RIG_IN) {
-      const b = BIOMES.find(q => q.id === bid);
-      if (!b) continue;
-      const x0 = b.x0 + this.RIG_EDGE, x1 = b.x1 - this.RIG_EDGE;
-      for (let i = 0; i < n; i++) {
-        // 띠를 n 등분한 가운데를 노리고, 거기서 바깥으로 훑어 평평한 자리를 찾는다
-        const aim = Math.round(x0 + (x1 - x0) * (i + 0.5) / n);
-        let at = null;
-        for (let d = 0; d <= 120 && at === null; d++) {
-          for (const tx of (d ? [aim - d, aim + d] : [aim])) {
-            if (tx < x0 || tx > x1) continue;
-            const s = w.surface[tx];
-            const z = w.zoneAt(tx, s);
-            if (z === 'camp' || z === 'village' || z === 'ruin') continue;   // 쉬는 자리는 비워 둔다
-            /* ★ 유적은 **지붕 위도** 피한다. */
-            if (w.ruins && w.ruins.some(r => Math.abs(tx - r.x) <= (r.w >> 1) + LEG + 2)) continue;
-            /* 다리가 딛는 칸(±LEG)은 **한 칸도 어긋나면 안 된다.** — 사연: docs/code-history.md#h52 */
-            let flat = true;
-            for (let k = -LEG; k <= LEG && flat; k++) if (w.surface[tx + k] !== s) flat = false;
-            for (let k = -LEG - 2; k <= LEG + 2 && flat; k++) if (Math.abs(w.surface[tx + k] - s) > 1) flat = false;
-            if (flat) { at = tx; break; }
-          }
-        }
-        if (at !== null) out.push({ tx: at, ty: w.surface[at], wake: 9 + out.length, thud: 0 });
-      }
+    if (!this._rigs) this._rigs = w.objects.filter(o => o.type === 'rig');
+    return this._rigs.filter(o => !o.gone);
+  },
+
+  /** 채취탑 해체 — 세션 2(공창)가 끝난 뒤에만. 부품(RIG.parts)이 쏟아지고 탑은 사라진다. */
+  useRig(o) {
+    const done = this.chapter >= SESSIONS[2].ch0;
+    if (!done) {
+      UI.openLore('채취탑', this.rigOn(o)
+        ? ['공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다.', '공창이 멈추기 전에는 손댈 엄두가 안 난다.']
+        : ['녹슨 채취탑이다. 바퀴살 사이로 재가 쌓여 있다.', '누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.'], []);
+      this.sfx('open');
+      return;
     }
-    return (this._rigs = out);
+    UI.openLore('멈춘 채취탑', ['공창이 멈춘 뒤로 이 탑도 더는 돌지 않는다.', '볼트를 풀면 강철판과 톱니, 모터까지 건질 수 있겠다.'], [{
+      t: '채취탑을 해체한다', fn: () => {
+        UI.closeDialogue();
+        o.gone = 1;
+        const cx = o.tx * TS + TS / 2, cy = (o.ty - 3) * TS;
+        for (const [id, n] of RIG.parts) this.drops.push(new Drop(cx + (Math.random() - 0.5) * 60, cy, makeItem(id, n)));
+        this.matBurst('metal', cx, cy, 30, { spd: 1.4 });
+        this.shake = 10;
+        this.sfx('break_machine');
+        this.toast('채취탑을 해체했다 — 부품이 쏟아졌다', 'good');
+      }
+    }]);
+    this.sfx('open');
   },
 
   /** 이 탑이 지금 도는가. */
@@ -3331,7 +3332,7 @@ const G = {
       if (!this.rigOn(r)) continue;
       const dx = r.tx * TS + TS / 2 - p.cx, dy = r.ty * TS - p.cy;
       if (Math.abs(dx) > this.RIG_NEAR || Math.abs(dy) > this.RIG_NEAR * 1.4) { r.thud = 0; continue; }
-      r.thud += dt;
+      r.thud = (r.thud || 0) + dt;
       if (r.thud >= this.RIG_THUD) {
         r.thud = 0;
         this.shake = Math.max(this.shake, 2);     // 전투 타격(18)의 1/9 — 있는 줄만 알 정도
@@ -4248,6 +4249,7 @@ const G = {
       this.world = World.deserialize(d.world);
       this.fitMapAtlas();
       this._rigs = null; this._fbg = null;   // 다른 세계를 불러왔다 — 자리·원경 캐시를 버린다
+      this.world.placeRigs(true);            // 채취탑이 object 가 되기 전 세이브 — 지금 지면으로 한 번 골라 세운다
       this.rng = new RNG(d.world.seed + '_g');
       const p = new Player(d.p.x, d.p.y);
       p.name = d.name || '이름 없는 모험가';
@@ -4802,6 +4804,7 @@ const G = {
 
     // ---- 오브젝트 ----
     for (const o of w.objects) {
+      if (o.type === 'rig') continue;           // 채취탑은 drawRigs 가 지형 뒤에 따로 그린다
       const sx = o.x - camX, sy = o.y - camY;
       if (sx < -120 || sx > this.W + 120 || sy < -140 || sy > this.H + 140) continue;
       const f = 1;   // 명암은 조명 오버레이가 담당
