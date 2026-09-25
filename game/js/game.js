@@ -5703,9 +5703,8 @@ const G = {
     /* 경첩을 축으로 도는 판의 보이는 폭은 cos(각) — 처음엔 천천히, 끝에서 빨리 좁아진다. */
     const ang = sw * Math.PI / 2;
     const wN = flat + (o.w - flat) * Math.cos(ang);
-    // 문틀 밖으로 젖혀 나가는 만큼 — 다 열린 문짝이 문틀 경계에 **걸쳐** 서는 정도로만.
-    const out = o.w * 0.12 * Math.sin(ang);
-    const x = hinge < 0 ? sx - out : sx + o.w - wN + out;
+    // 문짝은 어느 상태에서도 제 칸(o.w) 밖으로 그리지 않는다 — 경첩 쪽 가장자리에 붙어 좁아진다
+    const x = hinge < 0 ? sx : sx + o.w - wN;
     c.globalAlpha = alpha;
     if (im && im.width) {
       /* 그림은 경첩이 **왼쪽**에 있는 문이다(손잡이가 오른쪽). */
