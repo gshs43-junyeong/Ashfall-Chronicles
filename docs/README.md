@@ -2,7 +2,7 @@
 
 [← README로 돌아가기](../README.md) · [English project guide](README.en.md) · [게임 평가와 로드맵](game-assessment.md)
 
-이 폴더에는 현재 운영 문서와 v1.1 제작 기록이 함께 있습니다. 처음 읽는 사람은 아래 순서로 시작하세요.
+이 폴더에는 지금 쓰는 운영 문서만 있습니다. 처음 읽는 사람은 아래 순서로 시작하세요.
 
 ## 시작점
 
@@ -10,7 +10,7 @@
 |---|---|---|
 | [README](../README.md) | 플레이어·기여자 | 게임 소개, 실행 방법, 조작, 저장, 저장소 구조 |
 | [About 문구](about-copy.md) | 저장소·배포 담당자 | GitHub About과 소개 페이지에 바로 쓸 한국어·영어 문구 |
-| [최근 변경 요약](v1.1-changelog.md#최근-변경--2026-09-19--09-24) | 플레이어·QA | 세션 3 통합 뒤 들어간 것 — 유적 입구 · 낚시 · 소리 · 특성 · 밸런스 |
+| [v1.1 한눈에](v1.1-changelog.md#한눈에) | 플레이어·QA | v1.1 에 들어간 것을 여섯 줄로 |
 | [English project guide](README.en.md) | English readers | 영어권 플레이어·기여자를 위한 빠른 시작과 구조 안내 |
 | [게임 평가와 로드맵](game-assessment.md) | 기획·제작 | 현재 강점, 위험, 우선순위 개선안 |
 | [세션과 이야기 공용 규약](story-and-sessions.md) | 콘텐츠 제작자 | 장·세션을 늘릴 때 반드시 확인할 표와 세이브·애셋 규칙 |
@@ -20,13 +20,13 @@
 
 - [system-requirements.md](system-requirements.md): 실행 환경과 기술적 전제
 - [deploy-cache.md](deploy-cache.md): 배포와 캐시 무효화 절차
-- [v1.1-sfx-prompts.md](v1.1-sfx-prompts.md): 효과음 제작 규격과 배치
 - [../NOTICE.md](../NOTICE.md): MIT 에서 빠지는 것(음악·효과음)과 사이트 글꼴
 - [CLAUDE.md](../CLAUDE.md): 코드·월드·세이브를 안전하게 고치기 위한 제약
 
 ## 제작 기록
 
-`v1.1-plan-prompt.md`, `v1.1-repo-changes.md`, `v1.1-animation-fix.md`, `v1.1-fishing-plan.md`은 실제 제작 과정의 상세 기록입니다. 과거 의사결정과 자산 작업을 추적할 때 참고하되, 현재 기능의 기준은 README·공용 규약·changelog를 우선합니다.
+v1.1 을 만들며 쓴 작업 지시서·계획서·중간 보고(최초 작업 지시서, 낚시 계획, 둔한 애셋 대응, 원격 변경 정리, 효과음
+프롬프트)는 일이 끝나 지웠습니다. 필요하면 git 기록에서 꺼내 볼 수 있습니다 — 현재 기능의 기준은 README·공용 규약·changelog 입니다.
 
 ## 문서 작성 원칙
 

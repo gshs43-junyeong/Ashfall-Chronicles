@@ -444,8 +444,7 @@ const MACH_OF_TILE = {};
 for (let i = 0; i < TILE_DEF.length; i++) if (TILE_DEF[i].mach) MACH_OF_TILE[i] = TILE_DEF[i].mach;
 
 /* 손그림 타일 애셋 이름 → 타일 ID.
-   manifest.json의 tiles에 이 이름으로 파일을 넣어 두면 절차 생성 텍스처를 자동으로 덮어쓴다
-   (ASSETS-TODO.md의 파일명과 짝을 맞춰 둔 표다). */
+   manifest.json의 tiles에 이 이름으로 파일을 넣어 두면 절차 생성 텍스처를 자동으로 덮어쓴다. */
 const TILE_SPRITE = {
   steelplate: T.STEELPLATE, conduit: T.CONDUIT,
   coal: T.COAL, lead: T.LEAD, oilshale: T.OILSHALE,
@@ -2045,7 +2044,7 @@ const VILLAGE = [
 
 /* ---------------- 시작 캐릭터 ---------------- */
 /* 다섯이 각자 제 시트를 쓴다 — char/player_<id>.png (13프레임, 원본 player.png 와 순서가
-   동일: idle1 idle2 walk1..4 jump fall dash atk1..3 hurt). tools/mkchars.py 가 굽는다.
+   동일: idle1 idle2 walk1..4 jump fall dash atk1..3 hurt). tools/mkplayer.py 가 굽는다(원본 tools/art/).
    tint 는 시트를 못 읽었을 때의 폴백 겸 선택 화면 표식. 저장에는 charId 만 남는다.
 
    ★ 시작 무기는 **넷 다 초당 피해가 같다**(19.8~20.0) — 목검 9×2.2 · 곡괭이 9×2.2 ·
@@ -2144,7 +2143,7 @@ const NOTICE_KINDS = [
 // ai: walker / jumper / flyer / archer / caster / boss별 전용
 //
 // stiff: 그림이 거의 안 움직이는 개체를 렌더러가 절차적으로 흔들어 주는 값.
-//   지금은 붙은 개체가 하나도 없다 — tools/reanim.py 로 시트를 다시 구워 실제로
+//   지금은 붙은 개체가 하나도 없다 — 시트를 다시 구워 실제로
 //   걷고 숨 쉬게 만들었기 때문이다(측정값은 tools/framediff.py 로 확인). 그림이
 //   움직이는데 코드까지 흔들면 이중으로 흔들려서 오히려 어색해진다.
 //   drawEnemy 의 흔들림 경로는 남겨 뒀다 — 앞으로 추가할 몹 중에 또 정지한 그림이
