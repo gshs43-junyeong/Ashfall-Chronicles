@@ -4429,7 +4429,7 @@ const G = {
       if (ch.gold) parts.push(`금화 ${ch.gold}`);
       return parts.join(' · ');
     };
-    const sheet = ch => `assets/char/player_${ch.id}.png`;
+    const sheet = ch => Sprites.url(`assets/char/player_${ch.id}.png`);
     box.innerHTML = `
       <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>캐릭터</div>
       <div class="ng-chars">${CHARACTERS.map((ch, i) => `
