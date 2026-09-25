@@ -773,6 +773,11 @@ const ITEMS = {
   ruin_brick:   { n: '유적 벽돌', i: '🧱', type: 'block', tile: T.RUINBRICK, stack: 999 },
   aether_shard: { n: '에테르 파편', i: '💠', type: 'mat', stack: 999 },
   sky_feather:  { n: '하늘 깃털', i: '🪶', type: 'mat', stack: 999 },
+  /* 하늘 섬에서만 — 쓰임은 다음 판. 폭풍 호박은 큰 섬 굴·신전 상자, 구름 진주는 지킴이 상자·구름 해파리 */
+  storm_amber:  { n: '폭풍 호박', i: '🟠', type: 'mat', stack: 999,
+    d: '번개가 구름 수액을 한순간에 굳힌 덩이. 속에 갇힌 번개가 아직 희미하게 꺾인다.' },
+  cloud_pearl:  { n: '구름 진주', i: '⚪', type: 'mat', stack: 999,
+    d: '구름 해파리 속에서 자란다. 손에 쥐면 무게가 없는 것처럼 떠오르려 한다.' },
   rune_frag:    { n: '룬 조각', i: '🔹', type: 'mat', stack: 9, d: '세 유적의 석판에서 하나씩 나온다.' },
   ruin_key:     { n: '유적의 열쇠', i: '🗝', type: 'mat', stack: 9, d: '심층 유적의 봉인문을 연다.' },
 
@@ -1732,7 +1737,7 @@ const MAT_TIER = {
   orbit_gear: 7, orbit_plate: 7, gloom_pearl: 7, abyss_pearl: 7,
   star_ash: 8, void_lens: 8, abyss_core: 8, keeper_seal: 8,
   glacium_ore: 7, tide_ore: 7, glacium_bar: 8, tide_bar: 8,
-  meteorite: 6, star_crystal: 7
+  meteorite: 6, star_crystal: 7, storm_amber: 7, cloud_pearl: 7
 };
 function priceTier(d, id) {
   if (d.tier !== undefined) return clamp(d.tier, 0, 12);
@@ -1937,7 +1942,7 @@ const ENEMIES = {
   lavaslug:   { n: '용암 슬러그', hp: 340, dmg: 52, def: 18, spd: 40, ai: 'walker', w: 32, h: 20, c: '#e0703a', xp: 120, gold: 58, biome: 'hell', aggro: 360,
                 drops: [['lava_gel', .7, 1, 3], ['hell_ore', .5, 1, 3], ['mace_lava', .035, 1, 1]] },
   cloudjelly: { n: '구름 해파리', hp: 300, dmg: 48, def: 14, spd: 62, ai: 'flyer', w: 28, h: 30, c: '#e8f0fa', xp: 130, gold: 60, biome: 'sky', aggro: 460,
-                drops: [['cloud_jelly', .7, 1, 3], ['cloud_block', .6, 3, 8]] },
+                drops: [['cloud_jelly', .7, 1, 3], ['cloud_block', .6, 3, 8], ['cloud_pearl', .04, 1, 1]] },
   archivist:  { n: '잊힌 사서', hp: 420, dmg: 70, def: 22, spd: 68, ai: 'caster', w: 24, h: 36, c: '#c8b98a', xp: 220, gold: 120, biome: 'ruin', range: 340, aggro: 560,
                 drops: [['archive_seal', .55, 1, 2], ['aether_shard', .4, 1, 3]] },
 

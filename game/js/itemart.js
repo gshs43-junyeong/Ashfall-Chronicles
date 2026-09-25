@@ -623,6 +623,10 @@ for (const g of ['shard', 'house', 'wall', 'wave', 'crown', 'sword', 'trophy', '
 /* 장식 아이템(ITEMS 의 deco: 1)은 하나하나 적지 않고 제 타일 그림을 쓴다 — 장식을 더할 때 그림을 빠뜨리는 일(CLAUDE.md §1-6)이 원리적으로 안 생긴다. */
 for (const k in ITEMS) if (ITEMS[k].deco && !ISPEC[k])
   ISPEC[k] = { k: ITEMS[k].tile === T.MOSSSTONE ? 'block' : 'deco', tile: ITEMS[k].tile };
+/* 그림 PNG 만 있는 아이템(manifest items.files)도 아틀라스 칸이 있어야 PNG 가 그 칸에 덮인다 — 칸이 없으면 가방에 빈 칸으로
+   나왔다(뱃사람의 나침반이 그랬다). 절차 그림이 없는 아이템엔 수수한 조각 그림을 칸 삼아 둔다. */
+for (const k in ITEMS) if (!ISPEC[k] && !ITEMS[k].tile)
+  ISPEC[k] = { k: 'shard', c: '#9a9aa2' };
 
 /* 업적 → 그림. */
 const ACH_ART = {
