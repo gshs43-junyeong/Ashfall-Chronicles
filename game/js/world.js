@@ -597,6 +597,7 @@ class World {
     this.spawnX = (vx0 + vx1) >> 1;
     this.spawnY = vh - 3;
     this.fitObjects();
+    this.placeRigs(true);        // 채취탑 자리 — 물건을 다 맞춘 뒤(지면·유적이 확정된 뒤)
     this.fluidInit();            // 여기서부터 물이 흐른다 — 생성 중에는 꺼 둔다(set 이 수백만 번 불린다)
     this.fluidSettle();          // 샘에서 폭포·물길이 흘러 자리 잡을 때까지 미리 돌린다
     return this;
@@ -621,6 +622,7 @@ class World {
     for (let k = 0; k < n; k++) {
       const x = clamp(Math.round(centerX + rng.range(-420, 420)), 2, WW - 3);
       if (Math.abs(x - this.spawnX) < 40) continue;   // 마을 안쪽은 피한다
+      if (this.objects.some(o => o.type === 'rig' && !o.gone && Math.abs(x - o.tx) <= 12)) continue;   // 채취탑 둘레
       const s = this.surface[x];
       const g = this.get(x, s);
       let leaf, chance;
@@ -1700,6 +1702,57 @@ class World {
     }
     // 바닥(신전이 선 섬 표면 gy)에 밑면이 정확히 닿도록 h만큼 끌어올린다
     this.objects.push({ type: 'altar', boss: 'storm_warden', x: gx * TS + TS / 2 - 22, y: F * TS - 48, w: 44, h: 48 });
+  }
+
+  /** 잿빛 숲의 채취탑 자리를 골라 object(type 'rig')로 세운다 — 저장되므로 땅을 파도 자리가 옮겨 가지 않는다.
+      ★ 자리 고르는 법은 예전 game.js rigs() 그대로다(바이옴 이름으로 묻는다 — 사연: docs/code-history.md#h51 · #h52).
+      clear 면 발자국 안의 나무·풀을 걷는다 — 나무가 탑을 뚫고 자라 보였다. */
+  placeRigs(clear) {
+    if (this.objects.some(o => o.type === 'rig')) return;
+    const LEG = RIG.leg;
+    let wake = 9;
+    for (const [bid, n] of RIG.in) {
+      const b = BIOMES.find(q => q.id === bid);
+      if (!b) continue;
+      const x0 = b.x0 + RIG.edge, x1 = b.x1 - RIG.edge;
+      for (let i = 0; i < n; i++) {
+        const aim = Math.round(x0 + (x1 - x0) * (i + 0.5) / n);
+        let at = null;
+        for (let d = 0; d <= 120 && at === null; d++) {
+          for (const tx of (d ? [aim - d, aim + d] : [aim])) {
+            if (tx < x0 || tx > x1) continue;
+            const s = this.surface[tx];
+            const z = this.zoneAt(tx, s);
+            if (z === 'camp' || z === 'village' || z === 'ruin') continue;
+            if (this.ruins && this.ruins.some(r => Math.abs(tx - r.x) <= (r.w >> 1) + LEG + 2)) continue;
+            let flat = true;
+            for (let k = -LEG; k <= LEG && flat; k++) if (this.surface[tx + k] !== s) flat = false;
+            for (let k = -LEG - 2; k <= LEG + 2 && flat; k++) if (Math.abs(this.surface[tx + k] - s) > 1) flat = false;
+            if (flat) { at = tx; break; }
+          }
+        }
+        if (at === null) continue;
+        const ty = this.surface[at];
+        this.objects.push({ type: 'rig', tx: at, ty, wake: wake++,
+          x: (at - RIG.half) * TS, y: (ty - RIG.tall) * TS, w: (RIG.half * 2 + 1) * TS, h: RIG.tall * TS });
+        if (clear) this.clearRigSite(at, ty);
+      }
+    }
+  }
+  /** 발자국 둘레의 나무를 통째로(기둥이 ±9칸 안이면 수관까지) 걷고, 발자국 안의 풀·꽃을 걷는다. */
+  clearRigSite(tx, ty) {
+    for (let x = tx - 9; x <= tx + 9; x++)
+      for (let y = ty - 26; y < ty; y++) {
+        const t = this.get(x, y), d = TILE_DEF[t];
+        if (t === T.WOOD || d.leaf || d.tree || t === T.VINE || (Math.abs(x - tx) <= RIG.half && !d.solid && t !== T.AIR && !d.liquid))
+          this.set(x, y, T.AIR);
+      }
+  }
+  /** 채취탑 발자국 안인가 — 나무를 새로 심지 않고, 플레이어도 아무것도 못 놓는다(해체한 탑은 빼고). */
+  inRig(x, y) {
+    for (const o of this.objects)
+      if (o.type === 'rig' && !o.gone && Math.abs(x - o.tx) <= RIG.half && y < o.ty && y >= o.ty - RIG.tall) return true;
+    return false;
   }
 
   /** 하늘 섬을 더 — 큰 섬 · 작은 섬 · 조각 섬, 그리고 상자 말고도 찾아갈 거리.
