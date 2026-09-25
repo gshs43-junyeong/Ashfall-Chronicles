@@ -2390,7 +2390,77 @@ const G = {
     UI.refreshBag(); this.sfx('chapter');
   },
 
-  /* ================= NPC ================= */
+  /* ================= NPC =================
+     대사는 두 겹이다(data.js TALK 주석) — ① 이야기(DIALOGUE·VILLAGE_TALK)
+     ② 상황 한 줄(죽은 자리·다친 몸·날씨·밤낮…).
+     ★ ①은 "처음 듣는 것"일 때만 나온다. 한 장에 머무는 동안 몇 번을 말 걸어도 같은
+       세 줄을 다시 읽게 하지 않는다(다시 듣고 싶으면 선택지가 있다). */
+
+  /** 지금 이 사람이 보고 있는 것 — 상황 판정에 쓰는 값들을 한 번에 모은다 */
+  talkCtx() {
+    const p = this.player, ch = CHAPTERS[this.chapter];
+    let complete = false, ready = false;
+    try {
+      const st = ch ? this.chapterState(ch) : null;
+      complete = !!(st && st.complete);
+      ready = !!(st && st.ready && !st.complete);   // 준비는 끝났고 마지막 하나만 남았다
+    } catch (e) { complete = ready = false; }
+    return {
+      ch: this.chapter,
+      session: sessionOf(this.chapter).id,
+      hour: Math.floor(this.dayT / 60),
+      night: this.dayT < 5 * 60 || this.dayT > 19 * 60,
+      /* 날씨는 지금 발밑에서 작동 중이 아니어도 본다 — 사막에서 모래를 뒤집어쓰고
+         돌아오면 기술자가 그 모래를 알아보는 편이 사람답다. */
+      ev: this.event ? this.event.id : null,
+      hpr: p.d.maxHp > 0 ? p.hp / p.d.maxHp : 1,
+      gold: p.gold,
+      grave: !!this.deathMark,
+      complete, ready,
+      villageLv: this.villageLv()
+    };
+  },
+
+  /** 이 사람이 지금 상황에서 들고 있는 칸을 고른다. 없으면 아래 칸으로 내려간다. */
+  talkMood(id, c) {
+    const pool = TALK[id];
+    if (!pool) return null;
+    for (const m of TALK_MOODS) if (m.when(c) && pool[m.id]) return m.id;
+    return null;
+  },
+
+  /** 상황 한 줄과 그에 딸린 대답을 뽑는다.
+      같은 칸을 다시 만나면 다음 말로 넘어간다 — 무작위가 아니라 순번이라 반드시
+      다른 말이 나온다. 순번(talkSeq)은 저장에 남아서 불러와도 이어진다. */
+  talkPick(id) {
+    const mood = this.talkMood(id, this.talkCtx());
+    if (!mood) return null;
+    const b = TALK[id][mood], key = id + '|' + mood;
+    this.talkSeq = this.talkSeq || {};
+    const t = this.talkSeq[key] || 0;
+    this.talkSeq[key] = (t + 1) % 2520;    // 2520 = 1~10의 최소공배수 (칸 길이가 몇이든 균등)
+    return {
+      mood,
+      say: b.say[t % b.say.length],
+      re: (b.re && b.re.length) ? b.re[t % b.re.length] : null
+    };
+  },
+
+  /** 대화창 아래의 선택지 = [상황 대답] + 늘 있는 것들(rest).
+      대답을 고르면 대꾸를 보여 주고 rest 로 돌아온다 — 대답 한 번 했다고
+      가게나 의뢰가 사라지면 안 되니까. */
+  talkMenu(id, pick, rest) {
+    if (!(pick && pick.re)) return rest;
+    const re = pick.re;
+    return [{ t: re.t, say: 1, fn: () => { UI.closeDialogue(); this.talkAnswer(id, re, rest); } }].concat(rest);
+  },
+
+  talkAnswer(id, re, rest) {
+    const lines = Array.isArray(re.s) ? re.s.slice() : [re.s];
+    UI.openDialogue(id, lines, rest);
+    this.sfx('talk');
+  },
+
   talkExtra(id) {
     const cs = [];
     if (NPCS[id].shop) cs.push({ t: '물건을 보여 달라', fn: () => { UI.closeDialogue(); UI.openShop(id); } });
