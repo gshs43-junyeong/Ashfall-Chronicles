@@ -181,6 +181,13 @@ class BoxSet {
   [Symbol.iterator]() { return this.list[Symbol.iterator](); }
 }
 
+/** 닫힌 문 = 옆에서 본 문짝 — 경첩 쪽 가장자리의 얇은 판만 막는다(열린 문은 칸을 채운 앞면이고 안 막는다).
+    game.js drawDoor 가 같은 폭으로 그린다. */
+function doorEdge(d) {
+  const w = Math.max(6, Math.round(d.w * 0.32));
+  return { x: d.dir === -1 ? d.x : d.x + d.w - w, y: d.y, w, h: d.h };
+}
+
 class World {
   constructor(seed) {
     this.seed = seed;
@@ -4647,10 +4654,12 @@ class World {
     for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) if (this.solid(x, y)) return true;
     for (const d of this.doors) {
       if (!d.closed) continue;
-      if (px < d.x + d.w && px + w > d.x && py < d.y + d.h && py + h > d.y) return true;
+      const e = this.doorEdge(d);
+      if (px < e.x + e.w && px + w > e.x && py < d.y + d.h && py + h > d.y) return true;
     }
     return false;
   }
+  doorEdge(d) { return doorEdge(d); }
   /** 문 하나를 만들어 objects/doors 양쪽에 같은 참조로 등록한다 (열고 닫는 상태가 항상 같이 반영되도록). */
   pushDoor(x, y, w, h, dir, extra) {
     const d = Object.assign({ type: 'door', x, y, w, h, closed: true, dir: dir || -1 }, extra);
