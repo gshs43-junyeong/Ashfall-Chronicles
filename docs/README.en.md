@@ -13,27 +13,29 @@ The project is intentionally a single-player, no-install experience. A current d
 | Current scope | Count |
 |---|---:|
 | Sessions / chapters | 3 / 18 |
-| Items / recipes | 425 / 220 |
+| Items / recipes | 445 / 223 |
 | Enemies / bosses | 72 / 23 |
-| Achievements / machines | 70 / 26 |
+| Achievements / machines | 75 / 26 |
 
-## Latest in the web build
+## What v1.1 adds
 
-Recent changes to the v1.1 development build (details in Korean in the [changelog](v1.1-changelog.md)):
+v1.1 is feature-complete; only asset polish (mostly monster sprites) remains before release.
+Full details (Korean) are in the [changelog](v1.1-changelog.md).
 
-- **Ruin entrances are built dungeon passages** — brick-lined 45° staircases, flat halls, short climbs, landing rooms and switchback stairwells with floating steps — ending at a side door into the ruin. Far fewer ladder platforms than the old vertical shafts.
-- **The pyramid is a real pyramid:** a symmetric, half-buried triangle with a gold capstone, rooms stacked in levels, and a door on one face.
-- **Fishing reads on screen:** a fish shadow approaches before a bite, a shrinking gauge shows the hook window (visible at night), the water splashes when you reel in, and richer water glints gold around the bobber.
-- **Sound:** three new music tracks (death screen, five-phase finale bosses) and 44 new sound effects for materials, skills, hits and star moments; enemy projectiles now make sound.
-- **One skill tree:** the three branches share one board with cross-branch prerequisites.
-- **Balance:** multi-shot weapons deal 0.35× from the second hit on the same target; the overtuned session 3 weapons and bosses were brought in line.
-- **World:** ash now fades only the grass, rain brings dark clouds only, and mining ticks are quieter than the break sound.
+- **Three sessions, eighteen chapters** — session 2 "Beyond the Wall" and session 3 "What the Water Erased".
+- **World sizes** — small (the classic 5000×720), medium (1.5×) and large (2×), chosen per new game.
+- **The drowned sea and glacier** — swimming, breath, oxygen tanks, and flowing water/lava physics.
+- **Caves with four kinds** (moss, dripstone, crystal, fume) and hidden caverns behind cracked gravel.
+- **Living ruins** — pulse, survey ranks, echo trials, built entrance halls and a real pyramid.
+- **Five starting characters, three difficulties**, a skill tree, farming/fishing mastery, an anvil and pet levels.
+- **Pine forests in the snow, per-tree leaves, rare meteor strikes**, a redrawn sky with sunsets.
+- **On-screen tab buttons** (bag, skills, journal, crafting, map, menu) with the current key shown.
 
 ## Play safely
 
 - **Browser build:** [ashfall-chronicles.vercel.app](https://ashfall-chronicles.vercel.app/)
 - **Packaged builds:** [GitHub Releases](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)
-- **Status:** the browser build is the active **v1.1 development build**. The latest downloadable archive remains **v1.0.5**.
+- **Status:** the browser build runs **v1.1** (release pending asset polish). The latest downloadable archive remains **v1.0.5**.
 
 Keep a save export before switching between the web build and a downloaded build. They use different browser origins, so their saves do not automatically transfer.
 
@@ -95,11 +97,11 @@ Edit **only** `game/` for game changes. `site/play/` is generated output and is 
 
 - [Game assessment and roadmap](game-assessment.md) — English/Korean evaluation with prioritized next steps.
 - [Story and session rules](story-and-sessions.md) — Korean operational rules for adding chapters and sessions.
-- [v1.1 changelog](v1.1-changelog.md) — Korean implementation and change record for the development build.
+- [v1.1 changelog](v1.1-changelog.md) — what v1.1 adds (Korean).
 - [System requirements](system-requirements.md) — Korean environment and runtime notes.
 - [Deployment cache notes](deploy-cache.md) — Korean deployment/cache procedure.
 
-Several historical `v1.1-*.md` files are detailed production records. They are valuable for implementation history, but the README, this guide, the story/session rules, and the current changelog should be preferred for orientation.
+Finished v1.1 working notes (plans, prompts, interim reports) were removed; they remain in git history.
 
 ## Build and release
 

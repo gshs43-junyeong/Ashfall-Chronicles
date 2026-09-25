@@ -111,11 +111,10 @@ const SHIFT = 800;   // data.js — world.js보다 먼저 읽혀야 해서 여�
 | `game/assets/sprites-manifest.js` | 위의 **자동 생성물** — 손으로 고치지 말 것 |
 | `site/` | 배포 사이트. 빌드하면 `game/`이 `site/play/`로 복사된다 |
 | `tools/` | zip 빌드·애셋을 굽고 재는 파이썬 도구들 |
-| `docs/` | 작업 기록 — 변경 사항·효과음 프롬프트·배포 캐시 메모 |
+| `docs/` | 변경 사항 · 세션 규약 · 배포 캐시 · 시스템 요구사항 |
 
-> `tools/sync-from-flat.sh` 은 **잠가 두었다.** v1.1까지는 평면 작업본(저장소 밖)에서
-> 고치고 이 스크립트로 `game/`에 옮겼지만, 2026-09-20부터 **리포가 원본**이다.
-> 그 스크립트를 되살려 돌리면 통합 이후의 작업이 옛 코드로 덮인다.
+> **리포가 원본이다.** v1.1까지는 저장소 밖의 평면 작업본에서 고쳐 옮겼지만(그 스크립트는 지웠다),
+> 2026-09-20부터는 `game/`에서 바로 고친다.
 
 읽는 순서(`game/index.html` 기준):
 `util → data → world → tileart → itemart → titlebg → sprites-manifest →
@@ -300,16 +299,22 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - **주인공 그림**: 손그림 시트 한 장이 전부다(`char/player_<id>.png` — 32×46 · 13장, ox/oy −6/−5, 판정 20×40 그대로).
   **원본은 `tools/art/`**(22×41)이고 `python3 tools/mkplayer.py` → `sync-manifest.py` 로 굽는다 — 원래 그림은 그대로 두고
   칸 벽에 잘린 망토 자락·손·발만 이어 그린 뒤(정수리는 안 늘린다), 테두리 빛·부드러운 윤곽·옷 결을 한 겹 더한다.
-  게임 폴더의 시트를 도구에 다시 먹이지 말 것(두 번 늘어난다). mkchars·unclip·mkhead·fixcrown 도 `tools/art/`를 본다.
+  게임 폴더의 시트를 도구에 다시 먹이지 말 것(두 번 늘어난다).
   서 있는 두 장의 망토는 걷기(walk4)의 것, walk3 다리는 walk1 다리(앞뒤 색 맞바꿈)로 고쳐 굽는다(`fix_frames`).
   무기는 매니페스트 `hand`·`handBox`(프레임마다 무기 손)에 쥐이고 손 칸을 무기 위에 다시 그린다(game.js `playerHand`).
   헤엄은 걷기 네 장을 눕혀 돌린다(`drawSwimPlayer`). ★ 팔·망토를 코드로 그리던 리그는 원래 그림의 디테일이 빠져
-  되돌렸다 — 다시 만들지 말 것. 헤엄 물리는 entity.js '헤엄' 절. 옛 공용 시트 `player.png`는 `tools/art/base_player.png`.
+  되돌렸다 — 다시 만들지 말 것. 헤엄 물리는 entity.js '헤엄' 절.
 - **운석**(game.js '운석' 절 · `METEOR`): 반나절마다 0.0018(비의 0.9%). 하늘 원경 불덩이 + 알림 → 5.2초 뒤 떨어짐 ·
   거리에 따라 지진 세기·길이 · 구덩이(있는 타일만 — 공기·재·흙, 운석 전용 타일·수정은 아직 안 쓴다) · 폭발 반경의
   몹은 죽고(경험치 없음 · 보스 제외) **플레이어 판정이 R+1 칸 안이면 즉사**. 자리는 `meteorSiteOk`(마을·캠프·유적·물건·
   기계·지은 타일·땅 위 벽·물·절벽 가장자리 제외). 진행 상태는 저장 안 함, 구덩이는 타일이라 저장된다.
   구덩이 칸은 `surface[]`도 내린다(햇빛이 든다).
+- **해·운석 그림**은 `python3 tools/mksky.py` 가 굽는다(bg/sky_sun · sky_sun_set · sky_meteor · sky_meteor_near,
+  manifest `backgrounds.sky`). 햇무리·노을 번짐은 하늘색을 따라야 해서 게임(`drawSun`)이 칠한다.
+- **탭 단추**(index.html `#tabbar`, ui.js `bindTabBar`·`refreshTabBar`): 조작키로 여는 탭을 마우스로도 연다. 새 탭을
+  키에 걸면 여기에도 단추를 더할 것. 패널 제목 아이콘은 itemart `UISPEC` 의 `p_*`.
+- **한국어 조사**는 util.js `josa`·`iga`·`eulreul`·`eunneun`·`josaRo` 로 받침에 맞춘다 — 이름을 끼우는 문장에
+  '이(가)' '을(를)' 처럼 둘 다 적지 말 것. 보스전은 '결전'이라 부른다('결착'은 일본어투라 전부 바꿨다).
 - **나무와 잎**: 눈 지대는 소나무(world.js `pineTree` — 톱니 원뿔 수관 · 기둥은 수관 밑까지 · 층 윗면에 눈).
   소나무 잎(`PINELEAF`)은 game.js `ASH_TILE`에 없어서 장이 넘어가도 안 진다. 정글 잎은 `shed 0.22 · thin 0.35`로
   조금만 진다. 잎마다 제 나뭇잎 아이템(`leaf_oak`·`leaf_pine`·`leaf_jungle`·`leaf_corrupt`·`leaf_sky`·`leaf_palm`)이

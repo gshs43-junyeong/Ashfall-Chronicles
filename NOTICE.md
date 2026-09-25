@@ -18,7 +18,6 @@
 | 절차 생성 그림 | `game/js/tileart.js` · `itemart.js` · `titlebg.js` 가 그려 내는 것 |
 | 도구·빌드 | `tools/**`, `.github/workflows/**`, `launchers/**` |
 | 사이트 | `site/**` (아래 '글꼴' 참고) |
-| 설계 캔버스 | `design/**` |
 | 문서 | `README.md`, `CLAUDE.md`, `NOTICE.md`, `docs/**` |
 
 그림 애셋은 이 저장소를 위해 제작했고, 제작에는 **Claude Design** 을 썼습니다.
@@ -69,7 +68,7 @@ plain MIT; the exceptions are documented here instead.
 All game code (`game/js/**`, `game/index.html`, `game/css/**`); every visual asset under
 `game/assets/` except the two folders below, together with the procedurally drawn art
 from `tileart.js`, `itemart.js` and `titlebg.js`; tools, build workflows and launchers;
-the website (`site/**`, see *Fonts*); the design canvases (`design/**`); and the
+the website (`site/**`, see *Fonts*); and the
 documentation.
 
 The visual assets were created for this project with **Claude Design**. No artwork was

@@ -7,13 +7,14 @@
 
 세션 셋 · 장 열여덟 · 결전 열셋. 지상 아홉 바이옴에 하늘 섬과 지하 넷이 붙고,
 서쪽 끝에는 **가라앉은 바다**가 있습니다 — 숨이 닿는 만큼만 내려갈 수 있습니다.
+세계는 새 게임마다 **소형 · 중형(1.5배) · 대형(2배)** 중에서 고릅니다.
 
 | | | | | | |
 |---|---|---|---|---|---|
-| 아이템 **425** | 몬스터 **72** | 보스 **23** | 업적 **70** | 기계 **26** | 제작법 **220** |
+| 아이템 **445** | 몬스터 **72** | 보스 **23** | 업적 **75** | 기계 **26** | 제작법 **223** |
 
 보스 스물셋 중 **열셋이 이야기가 데려가는 것**이고, 나머지 열은 유적 안쪽과
-아무도 말해 주지 않는 자리에 있습니다. 업적 일흔 개는 갈래 여덟에 난이도 셋으로
+아무도 말해 주지 않는 자리에 있습니다. 업적 일흔다섯 개는 갈래 여덟에 난이도 셋으로
 나뉘고, 그중 여섯은 달성하기 전까지 무엇인지도 보이지 않습니다.
 
 **[▶ 브라우저에서 바로 플레이](https://ashfall-chronicles.vercel.app/)** ·
@@ -37,9 +38,8 @@
 | `site/` | 배포 사이트. 빌드할 때 `game/`이 `site/play/`로 복사됩니다. |
 | `site/home/` | 홈 페이지 — 주소는 `/home` (루트 `/`는 이쪽으로 넘깁니다) |
 | `site/download/` | 다운로드 페이지 — 주소는 `/download` |
-| `docs/` | 작업 문서 — 변경 사항·효과음 프롬프트·배포 캐시 메모 |
+| `docs/` | 변경 사항 · 세션 규약 · 배포 캐시 · 시스템 요구사항 |
 | `LICENSE` · `NOTICE.md` | MIT 본문과, **거기서 빠지는 두 폴더**(음악·효과음)에 대한 설명 |
-| `design/` | 설계 캔버스 |
 | `tools/` | 배포용 zip 빌드 스크립트, 애셋을 굽고 재는 파이썬 도구들 |
 | `.github/workflows/` | Release 자동 첨부, Pages 자동 배포 |
 
@@ -55,15 +55,14 @@
 
 | 문서 | 내용 |
 |---|---|
-| [`docs/README.md`](docs/README.md) | **문서 안내** — 어떤 문서가 현재 기준이고 어떤 것이 제작 기록인지 |
+| [`docs/README.md`](docs/README.md) | **문서 안내** — 어떤 문서를 어디서부터 읽으면 되는지 |
 | [`docs/README.en.md`](docs/README.en.md) | 영어권 플레이어·기여자를 위한 프로젝트 안내 |
 | [`docs/about-copy.md`](docs/about-copy.md) | GitHub About · 소개 문구(한국어·영어)의 원본 |
 | [`docs/game-assessment.md`](docs/game-assessment.md) | 게임 평가와 우선순위 개선 로드맵 |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
-| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1 에 무엇이 들어갔는가** (아직 릴리스 전) |
+| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1 에 무엇이 들어갔는가** (릴리스 준비 중 — 남은 것은 애셋 다듬기) |
+| [`docs/system-requirements.md`](docs/system-requirements.md) | 시스템 요구사항과 그 숫자를 잰 방법 |
 | [`CLAUDE.md`](CLAUDE.md) | 이 저장소에서 코드를 고칠 때의 규칙 — 타일 번호·좌표(`SHIFT`)·세이브처럼 **어기면 조용히 망가지는 것들** |
-| [`docs/v1.1-sfx-prompts.md`](docs/v1.1-sfx-prompts.md) | 효과음 44개의 생성 프롬프트와 **어디서 울리는지** — 다시 구울 때의 규격서입니다 |
-| [`docs/v1.1-plan-prompt.md`](docs/v1.1-plan-prompt.md) | v1.1 최초 작업 지시서 (실제 진행은 이 길과 달라졌습니다 — 현황은 changelog 쪽) |
 | [`docs/deploy-cache.md`](docs/deploy-cache.md) | 배포와 캐시 무효화 |
 
 ---
@@ -133,7 +132,7 @@ xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/   # 받은 판 번호로
 | `Shift` | 회피 대시 (무적 프레임) |
 | `Q` `E` `R` `F` | 스킬 슬롯 |
 | `1`~`9`, `0` | 핫바 (마우스 휠로도 전환) |
-| `I` `K` `J` `H` | 가방 · 능력 · 일지 · 제작 |
+| `I` `K` `J` `H` `M` | 가방 · 능력 · 일지 · 제작 · 지도 — 화면 오른쪽 아래 단추로도 엽니다 |
 | `Esc` | 일시정지 |
 | `F5` | 저장 |
 
@@ -171,4 +170,4 @@ xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/   # 받은 판 번호로
 
 버전별 변경 사항은 [릴리스 목록](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases)과
 [다운로드 페이지의 변경 이력](https://ashfall-chronicles.vercel.app/download#changelog)에 있습니다.
-개발 중인 v1.1 은 [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 를 보세요.
+릴리스를 앞둔 v1.1 은 [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 를 보세요.

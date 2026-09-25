@@ -10,8 +10,7 @@
 > 이번에 그렇게 걸린 것이 여럿입니다(아래 2절).
 
 관련 문서: [`v1.1-changelog.md`](v1.1-changelog.md) (무엇이 들어갔나) ·
-[`v1.1-sfx-prompts.md`](v1.1-sfx-prompts.md) (소리 애셋) ·
-[`v1.1-plan-prompt.md`](v1.1-plan-prompt.md) (저장소 구조·코드 규약, 0·3·4절만 유효)
+[`../CLAUDE.md`](../CLAUDE.md) (저장소 구조·코드 규약)
 
 ---
 

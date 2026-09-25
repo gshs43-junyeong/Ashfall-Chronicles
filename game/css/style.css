@@ -1029,7 +1029,7 @@ body.booting #title-screen{visibility:hidden}
   padding:9px 4px 8px;font-size:11.5px;color:#8d8774;border:1px solid var(--frame);
   border-radius:4px;background:linear-gradient(#1a1915,#0f0e0a)}
 /* 시트 한 프레임을 잘라 보여 준다 — 프레임이 22x41(4배 = 88x164)로 넓어졌으므로
-   (tools/unclip.py 로 잘린 가장자리를 되살리며 사방에 한 칸씩 여백이 생겼다)
+   (잘린 가장자리를 되살리며 여백이 생겼다)
    상자 크기와 background-size 도 같이 맞춘다. 어긋나면 옆 프레임이 물려 보인다.
    ★ tools/mkplayer.py 가 잘린 망토·손·발을 이어 그리며 칸이 32×46(4배 128×184)이 됐다. */
 .ng-char .por{width:64px;height:92px;background-size:832px 92px;background-position:0 0;

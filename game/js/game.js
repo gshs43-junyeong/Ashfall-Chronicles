@@ -1495,9 +1495,6 @@ const G = {
       if (hb && idef(hb).type === 'bomb') { this.throwBomb(p.sel); return; }
     }
 
-    /* 1.6) 소비품 — 핫바에 든 채로 바로 먹는다. 예전에는 물약 한 모금 마시려고 매번
-       가방을 열었다 닫아야 했는데, 정작 급한 건 싸우는 도중이라 그 사이에 죽는다.
-       상호작용 대상(위 1번)이 먼저라 상자 앞에서 물약을 들고 있어도 상자가 열린다. */
     /* 1.6) 소비품 — 핫바에 든 채로 바로 먹는다(급한 건 싸우는 도중인데 가방을 열었다
        닫는 사이에 죽는다). 상호작용 대상이 먼저라 상자 앞에서는 상자가 열린다. */
     {
@@ -1761,9 +1758,7 @@ const G = {
     this.toast(msg, 'bad');
     UI.refreshBag();                // 물 튀김·소리는 resolveFish 가 줄을 걷는 순간 이미 냈다
   },
-  /** 줄을 걷는 순간의 물 튀김. 챔질(reel)이면 크게 — "잡았다"가 손끝에 오게.
-      예전에는 던질 때만 튀고 걷을 때는 조용해서, 물고기가 물 밖으로 나왔다는 것이
-      토스트 글자로만 전해졌다. */
+  /** 줄을 걷는 순간의 물 튀김. 챔질(reel)이면 크게 — "잡았다"가 손끝에 오게. */
   fishSplash(f, n) {
     const wx = (f.tx + .5) * TS, wy = f.ty * TS;
     for (let i = 0; i < n; i++)
@@ -2491,8 +2486,7 @@ const G = {
     this.storyHeard = this.storyHeard || {};
     const fresh = !!story && this.storyHeard[id] !== this.chapter;
     if (story) this.storyHeard[id] = this.chapter;
-    /* 그 사람을 처음 만나는 자리에서만 서명 같은 한 줄을 듣는다. 예전에는 이 한 줄이
-       매번 맨 앞에 나와서, 열 번을 말 걸면 열 번 다 같은 말이었다. */
+    /* 그 사람을 처음 만나는 자리에서만 서명 같은 한 줄을 듣는다 — 매번 앞에 두면 열 번 말 걸어 열 번 같은 말이 된다. */
     const pick = (first || fresh) ? null : this.talkPick(id);
     const lines = [];
     if (first) lines.push(d.line);
@@ -2515,8 +2509,7 @@ const G = {
       t: this.sideActive[id] ? '맡은 일에 대해 묻는다' : '도울 일이 있는지 묻는다',
       quest: 1, fn: () => { UI.closeDialogue(); this.sideTalk(id); }
     });
-    /* 마을 주민에게도 길을 물을 수 있다. 세션 2는 대부분의 시간을 여기서 보내는데
-       예전에는 이 물음이 베이스캠프 넷에게만 있어서, 답을 들으러 캠프까지 걸어가야 했다. */
+    /* 마을 주민에게도 길을 물을 수 있다 — 세션 2는 대부분의 시간을 여기서 보낸다. */
     rest.push({ t: '지금 무엇을 해야 하지?', quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
     UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
     this.sfx('talk');
@@ -2538,8 +2531,7 @@ const G = {
     const pool = SIDE_POOL[npcId];
     if (!pool) return;
     const tpl = pool[this.rng.int(0, pool.length - 1)](this.chapter, this.rng);
-    /* 값을 먼저 알려 준다. 예전에는 받고 끝낼 때까지 얼마인지 몰랐다 —
-       고를 수 있는 것이 "한다·안 한다"뿐인데 재료가 없으면 고를 수가 없다. */
+    /* 값을 먼저 알려 준다 — 고를 수 있는 것이 "한다·안 한다"뿐이라 값을 모르면 고를 수가 없다. */
     const pay = this.sidePay(tpl);
     UI.openDialogue(npcId, [`${tpl.desc}\n(보상은 🪙 ${fmt(pay.gold)} · 경험치 ${fmt(pay.xp)})`], [
       { t: '(수락한다)', quest: 1, fn: () => { this.acceptSideQuest(npcId, tpl); UI.closeDialogue(); } },
@@ -4023,9 +4015,8 @@ const G = {
   get STAR_RISE() { return this.STAR_RISE_ALL * 2 / 3; }, // 올라가는 마디
   startStarRise() {
     this.starRise = { t: 0, dur: this.STAR_GATHER + this.STAR_RISE, x: 0, y: 0 };
-    /* 별의 세 사건에는 이제 제 소리가 있다. 예전에는 learn(특성을 배울 때)과
-       level(레벨업) 을 빌려 썼는데, 세션 1 전체에서 다섯 번뿐인 장면이 특성 창을
-       열 때와 같은 소리로 지나갔다. star_rise 는 1.5초짜리라 올라가는 5초를 받친다. */
+    /* 별의 세 사건은 제 소리를 쓴다(learn·level 을 빌리면 다섯 번뿐인 장면이 특성 창 소리로 지나간다).
+       star_rise 는 1.5초짜리라 올라가는 5초를 받친다. */
     this.sfx('star_rise');
   },
   /** 남은 시간(초). 연출이 끝나면 상태를 정리한다 */
@@ -4085,8 +4076,7 @@ const G = {
       }
       return this.STAR_GAIN * 1000 + 500;   // 조각이 맺히고 한 줄 뜰 때까지
     } else if (id === 8) {
-      /* 세션 1 의 끝 — 조각이 곁을 떠나 하늘로 돌아간다.
-         예전에는 starFade = 1 한 줄뿐이라 조각이 소리 없이 옅어져 있었다. */
+      /* 세션 1 의 끝 — 조각이 곁을 떠나 하늘로 돌아간다. */
       setTimeout(() => this.startStarRise(), 700);
       setTimeout(() => this.toast('다섯 조각이 곁을 떠나 하늘로 돌아갔다', 'good'),
                  700 + (this.STAR_GATHER + this.STAR_RISE) * 1000 + 200);
@@ -4790,7 +4780,7 @@ const G = {
 
   /** 무기가 닿는 순간 — 맞은 것의 재질로 소리와 파편을 낸다.
 
-      소리는 **두 겹**이다(docs/v1.1-sfx-prompts.md C·D 절).
+      소리는 **두 겹**이다.
         ① 재질 — 무엇에 맞았나. 돌은 돌 소리, 뼈는 뼈 소리. 늘 울린다.
         ② 무기 계열 — 어떻게 맞혔나. 베기·찌르기·둔기가 그 위에 얇게 얹힌다.
       두 절이 따로 쓰였던 터라 겹칠 자리가 하나 있다. C 절의 `hit_flesh` 는 "물렁한
@@ -6474,7 +6464,7 @@ const G = {
     /* 손그림 시트가 있으면 그쪽을 쓴다.
        ★ 펫 시트는 **세 칸뿐이다**(idle1 · idle2 · atk). 펫은 죽지 않고(Pet 에 체력도
          die() 도 없다) 걷는 그림도 안 쓰므로, 다른 생물의 일곱 칸 규격에서 걷는 칸과
-         죽는 칸을 떼어 냈다(tools/trimpets.py). 아무도 안 보는 칸이라 깨진 채로
+         죽는 칸을 떼어 냈다. 아무도 안 보는 칸이라 깨진 채로
          남아 있었다 — 안 그리는 그림은 아예 두지 않는다.
        칸 크기는 시트에 적힌 값으로 재서 가운데를 맞춘다(펫마다 크기가 달라도 안 흔들리게). */
     const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets['pet_' + pet.id];
@@ -6649,8 +6639,7 @@ const G = {
     for (let i = 0; i < n; i++) {
       const a = t * 0.7 + i * TAU / Math.max(n, 1);
       let x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
-      /* 방금 얻은 조각(마지막 하나)은 3초에 걸쳐 위에서 내려와 궤도에 앉는다.
-         예전에는 폭죽 한 번 터지고 곧바로 제자리에 있었다 — 얻는 장면이 없었다. */
+      /* 방금 얻은 조각(마지막 하나)은 3초에 걸쳐 위에서 내려와 궤도에 앉는다 — 얻는 장면. */
       if (this.starGain && i === n - 1) {
         const gk = Math.min(1, this.starGain.t / this.starGain.dur);
         const ease = 1 - Math.pow(1 - gk, 3);        // 빨리 내려와 천천히 앉는다
@@ -7995,8 +7984,7 @@ const G = {
     const c = this.ruinCipher(o.ruin);
     const K = c ? CIPHER_KIND[c.kind] : null;
     inp.value = ''; msg.textContent = ''; msg.classList.remove('ok');
-    /* 자물쇠 갈래마다 문에 적힌 것이 다르다 — 숫자 홈인지 글자 홈인지, 문설주에
-       새겨진 수가 있는지. 예전에는 세 갈래가 다 "숫자 세 자리"라고만 적혀 있었다. */
+    /* 자물쇠 갈래마다 문에 적힌 것이 다르다 — 숫자 홈인지 글자 홈인지, 문설주에 새겨진 수가 있는지. */
     $('#code-title').textContent = K ? K.n : '돌판의 홈';
     $('#code-door').textContent = K ? K.door : '홈이 셋.';
     const seen = ((this.cipherSeen || {})[o.ruin]) || {};
@@ -8394,7 +8382,7 @@ const G = {
        효과음·보스바는 전부 죽는 그 순간 그대로다. 손맛은 한 톨도 안 바뀐다.
 
      시트의 마지막 두 칸이 쓰러지는 그림이다(몹은 death1·death2 = 5·6,
-     보스는 tools/mkbossdie.py 가 붙인 끝의 두 칸). */
+     보스는 시트 끝의 두 칸). */
   CORPSE_MAX: 24,
   addCorpse(e) {
     if (!this.spritesOn || !Sprites.meta) return;
@@ -8441,14 +8429,13 @@ const G = {
       drawHeldWeapon과 같은 손 위치(sx+10, sy+20)·같은 각도(-0.4)를 쓴다. */
   rodTip(id, face, sx, sy) {
     const L = this.rodLook(id), A = -0.4;
-    // 리그로 그렸으면 손(= 대 손잡이) 자리가 따로 있다 — drawHeldWeapon 이 적어 둔 것을 쓴다
+    // 시트에 손 자리가 적혀 있으면(playerHand) 그 손이 곧 대 손잡이다 — drawHeldWeapon 이 적어 둔 것을 쓴다
     const h = this._rodHand || [sx + 10, sy + 20];
     return [h[0] + face * Math.cos(A) * L.len, h[1] + Math.sin(A) * L.len];
   },
 
-  /* 낚싯줄과 찌 — 예전에는 던져 놓고도 화면에 아무것도 안 그려서, 줄이 어디에
-     드리워졌는지 토스트 글로만 알 수 있었다. 낚싯대 끝에서 물까지 줄을 잇고 찌를
-     띄운다. 입질하면 찌가 물속으로 쑥 들어갔다 나오고 물결이 퍼진다. */
+  /* 낚싯줄과 찌 — 낚싯대 끝에서 물까지 줄을 잇고 찌를 띄운다.
+     입질하면 찌가 물속으로 쑥 들어갔다 나오고 물결이 퍼진다. */
   drawFishLine(c, p, sx, sy, bob) {
     const f = p.fish;
     const face = p.facing > 0 ? 1 : -1;
