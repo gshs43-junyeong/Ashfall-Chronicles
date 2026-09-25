@@ -2143,6 +2143,8 @@ const G = {
   ENH_MAX: 10,
   /* 실패 확률 — 낮은 단계는 **반드시 성공한다.** */
   enhFail(e) { return e < 3 ? 0 : Math.min(0.30, (e - 2) * 0.05); },
+  /* 파괴 확률 — 한 단계 떨어진다. +5 부터 3%씩(+9 에서 15%) — 실패와 따로 굴리지 않고 한 번에 가른다. */
+  enhBreak(e) { return e < 5 ? 0 : (e - 4) * 0.03; },
   /** 단계마다 갈아타는 재료 — 무엇을 캐러 갈 때인지가 재료로 드러난다 */
   enhMat(e) {
     return e < 3 ? { id: 'iron_bar', n: 2 + e }
@@ -2165,7 +2167,17 @@ const G = {
     if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
     if (!p.hasAll({ [mat.id]: mat.n })) { this.toast(`${ITEMS[mat.id].n} ${mat.n}개가 필요하다`, 'bad'); return; }
     p.gold -= cost; p.removeItem(mat.id, mat.n);
-    if (Math.random() < this.enhFail(e)) {
+    const roll = Math.random(), brk = this.enhBreak(e);
+    if (roll < brk) {
+      it.e = e - 1;
+      this.toast(`${itemName(it)} — 쇠가 갈라졌다. 한 단계 떨어진다 (+${e} → +${e - 1})`, 'bad');
+      for (let k = 0; k < 22; k++) this.parts.push(new Part(p.cx, p.cy, k % 2 ? '#c8443a' : '#6a6a74', -40, 0.8));
+      this.shake = Math.max(this.shake, 6);
+      p.recalc();
+      UI.refreshAnvil(); UI.refreshBag(); UI.refreshEquip(); this.sfx('damage');
+      return;
+    }
+    if (roll < brk + this.enhFail(e)) {
       this.toast(`${itemName(it)} — 결이 어긋났다. 단계는 그대로다`, 'bad');
       for (let k = 0; k < 12; k++) this.parts.push(new Part(p.cx, p.cy, '#8a8a96', -30, 0.6));
       this.shake = Math.max(this.shake, 3);
@@ -5589,12 +5601,11 @@ const G = {
       c.fillStyle = '#140e08'; c.fillRect(sx, sy, o.w, o.h);
       c.globalAlpha = 1;
     }
-    /* ★ 끝까지 좁히지 않는다. */
-    const flat = Math.max(6, o.w * 0.28);         // 더는 안 좁아지는 폭
-    const FADE = 0.82;                            // 여기까지 좁히고, 남은 구간은 흐려진다
-    const alpha = 1 - clamp((sw - FADE) / (1 - FADE), 0, 1);
-    if (alpha <= 0.02) { c.restore(); return; }   // 다 열림 — 마지막 한 장은 그리지 않는다
-    const wN = o.w + (flat - o.w) * Math.min(1, sw / FADE);
+    /* ★ 끝까지 좁히지도, 지우지도 않는다 — 다 열린 문도 읽히는 폭으로 문틀 끝에 선다.
+       사연: docs/code-history.md#h66 */
+    const flat = Math.max(8, o.w * 0.38);         // 다 열린 문짝의 폭
+    const alpha = 1;
+    const wN = o.w + (flat - o.w) * sw;
     // 문틀 밖으로 젖혀 나가는 만큼 — 다 열린 문짝이 문틀 경계에 **걸쳐** 서는 정도로만.
     const out = o.w * 0.12 * sw;
     const x = hinge < 0 ? sx - out : sx + o.w - wN + out;

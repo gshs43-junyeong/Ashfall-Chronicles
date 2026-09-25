@@ -1598,7 +1598,7 @@ const UI = {
   refreshAnvil() {
     $('#anvil-title').textContent = `강화 모루 — 🪙 ${fmt(G.player.gold)}`;
     $('#anvil-note').textContent =
-      `한 단계마다 공격력·방어력이 오른다 (최대 +${G.ENH_MAX}). 실패는 없지만 값이 가파르게 오른다.`;
+      `한 단계마다 공격력·방어력이 오른다 (최대 +${G.ENH_MAX}). +3부터 실패(단계 그대로), +5부터 파괴(한 단계 하락)가 있다.`;
     const g = $('#anvil-grid'); g.innerHTML = '';
     G.player.bag.forEach((it, i) => {
       if (!it || !isGear(it)) return;
@@ -1606,6 +1606,8 @@ const UI = {
       if (!d.dmg && !d.def) return;                     // 벼릴 수치가 없는 장신구는 뺀다
       const e = it.e || 0, max = e >= G.ENH_MAX;
       const cost = G.enhCost(it), mat = G.enhMat(e);
+      const fail = Math.round(G.enhFail(e) * 100), brk = Math.round(G.enhBreak(e) * 100);
+      const risk = (fail ? ` · 실패 ${fail}%` : '') + (brk ? ` · 파괴 ${brk}%` : '');
       const el = document.createElement('div');
       el.className = 'slot r' + it.r + (max ? ' dim' : '');
       el.innerHTML = `<span class="ic"></span><span class="cnt">${max ? 'MAX' : '+' + (e + 1)}</span>`;
@@ -1613,7 +1615,7 @@ const UI = {
       if (!max) el.addEventListener('click', () => G.enhanceSlot(i));
       el.addEventListener('mouseenter', ev => this.showTip(it, ev, max
         ? '더 두들길 데가 없다'
-        : `+${e} → +${e + 1} · 🪙 ${fmt(cost)} · ${ITEMS[mat.id].n} ${mat.n}개`));
+        : `+${e} → +${e + 1} · 🪙 ${fmt(cost)} · ${ITEMS[mat.id].n} ${mat.n}개` + risk));
       el.addEventListener('mouseleave', () => this.hideTip());
       g.appendChild(el);
     });
