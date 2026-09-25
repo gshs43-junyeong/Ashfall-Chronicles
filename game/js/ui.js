@@ -1598,7 +1598,7 @@ const UI = {
   refreshAnvil() {
     $('#anvil-title').textContent = `강화 모루 — 🪙 ${fmt(G.player.gold)}`;
     $('#anvil-note').textContent =
-      `한 단계마다 공격력·방어력이 오른다 (최대 +${G.ENH_MAX}). +3부터 실패(단계 그대로), +5부터 파괴(한 단계 하락)가 있다.`;
+      `한 단계마다 공격력·방어력이 오른다 (최대 +${G.ENH_MAX}). +2부터 실패(단계 그대로), +4부터 파괴(한 단계 하락)가 있다.`;
     const g = $('#anvil-grid'); g.innerHTML = '';
     G.player.bag.forEach((it, i) => {
       if (!it || !isGear(it)) return;

@@ -888,7 +888,7 @@ const G = {
       const tgt = d.closed ? 0 : 1;
       if (d.sw === undefined) d.sw = tgt;
       else if (d.sw !== tgt) {
-        const step = dt * (tgt > d.sw ? 7 : 5);
+        const step = dt * (tgt > d.sw ? 3.2 : 3.6);   // 여는 데 0.31초 · 닫는 데 0.28초
         d.sw = tgt > d.sw ? Math.min(tgt, d.sw + step) : Math.max(tgt, d.sw - step);
       }
     }
@@ -2142,9 +2142,9 @@ const G = {
   /* ---- 강화: 장비 수치를 한 단계씩 올린다 (여명 교역지 4단계, 강화 모루) ---- */
   ENH_MAX: 10,
   /* 실패 확률 — 낮은 단계는 **반드시 성공한다.** */
-  enhFail(e) { return e < 3 ? 0 : Math.min(0.30, (e - 2) * 0.05); },
-  /* 파괴 확률 — 한 단계 떨어진다. +5 부터 3%씩(+9 에서 15%) — 실패와 따로 굴리지 않고 한 번에 가른다. */
-  enhBreak(e) { return e < 5 ? 0 : (e - 4) * 0.03; },
+  enhFail(e) { return e < 2 ? 0 : Math.min(0.45, (e - 1) * 0.07); },
+  /* 파괴 확률 — 한 단계 떨어진다. +4 부터 5%씩(+9 에서 30%) — 실패와 따로 굴리지 않고 한 번에 가른다. */
+  enhBreak(e) { return e < 4 ? 0 : (e - 3) * 0.05; },
   /** 단계마다 갈아타는 재료 — 무엇을 캐러 갈 때인지가 재료로 드러난다 */
   enhMat(e) {
     return e < 3 ? { id: 'iron_bar', n: 2 + e }
@@ -5605,9 +5605,11 @@ const G = {
        사연: docs/code-history.md#h66 */
     const flat = Math.max(8, o.w * 0.38);         // 다 열린 문짝의 폭
     const alpha = 1;
-    const wN = o.w + (flat - o.w) * sw;
+    /* 경첩을 축으로 도는 판의 보이는 폭은 cos(각) — 처음엔 천천히, 끝에서 빨리 좁아진다. */
+    const ang = sw * Math.PI / 2;
+    const wN = flat + (o.w - flat) * Math.cos(ang);
     // 문틀 밖으로 젖혀 나가는 만큼 — 다 열린 문짝이 문틀 경계에 **걸쳐** 서는 정도로만.
-    const out = o.w * 0.12 * sw;
+    const out = o.w * 0.12 * Math.sin(ang);
     const x = hinge < 0 ? sx - out : sx + o.w - wN + out;
     c.globalAlpha = alpha;
     if (im && im.width) {
@@ -5635,6 +5637,11 @@ const G = {
         }
         c.globalAlpha = alpha;
       }
+    }
+    // 돌아간 만큼 빛을 덜 받는다
+    if (sw > 0.02) {
+      c.globalAlpha = 0.3 * Math.sin(ang);
+      c.fillStyle = '#000'; c.fillRect(x, sy, wN, o.h);
     }
     // 젖혀진 문짝의 앞모서리 — 두께가 보이는 자리라 한 줄 어둡게 닫는다
     if (sw > 0.05) {
