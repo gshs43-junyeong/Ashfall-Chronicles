@@ -506,17 +506,20 @@ class World {
     /* --- 6. 지옥 용암은 여기서 만들지 않는다 --- */
 
     // --- 7. 나무 / 덩굴 ---
+    /* 나무끼리는 수관 사이에 빈 칸을 둘 이상 둔다(occR = 앞 나무가 차지한 가장 오른쪽 칸).
+       정글은 수관이 겹쳐 어두운 게 제맛이라 기둥 사이만 두 칸 띄운다. */
+    let occR = -99;
     for (let x = 4; x < WW - 4; x++) {
       const s = this.surface[x];
       if (inSeaZone(x)) continue;                 // 바다에는 나무가 안 선다
       if (x > vx0 - 6 && x < vx1 + 6) continue;
       if (x > dx0 - 10 && x < dx1 + 10) continue;
       const g = this.get(x, s);
-      if (g === T.GRASS && rng.chance(0.14)) this.tree(x, s, rng, T.WOOD, T.LEAF);
-      else if (g === T.CORRUPTGRASS && rng.chance(0.11)) this.tree(x, s, rng, T.WOOD, T.CORRUPTLEAF);
-      else if (g === T.SNOW && rng.chance(0.08)) this.pineTree(x, s, rng);
+      if (g === T.GRASS && rng.chance(0.14)) { const r = this.tree(x, s, rng, T.WOOD, T.LEAF, occR); if (r !== null) occR = r; }
+      else if (g === T.CORRUPTGRASS && rng.chance(0.11)) { const r = this.tree(x, s, rng, T.WOOD, T.CORRUPTLEAF, occR); if (r !== null) occR = r; }
+      else if (g === T.SNOW && rng.chance(0.08)) { if (x - 5 >= occR + 3) { this.pineTree(x, s, rng); occR = x + 6; } }
       // 정글은 나무가 빽빽하고 키가 크다 — 수관이 겹쳐 아래가 늘 어둡다
-      else if (g === T.JUNGLEGRASS && rng.chance(0.34)) this.jungleTree(x, s, rng);
+      else if (g === T.JUNGLEGRASS && rng.chance(0.34)) { if (x >= occR + 3) { this.jungleTree(x, s, rng); occR = x + 1; } }
       // 버섯 골짜기는 나무 대신 큰 발광 버섯이 자란다
       else if (g === T.GLOWMOSS && rng.chance(0.2)) this.glowStalk(x, s, rng);
       // 채집물을 흩뿌린다 (나무가 없는 자리에만) — 캐면 제작 재료가 되는 아이템이라 예전 순수 장식 때보다 밀도를 눈에 띄게 올렸다
@@ -620,10 +623,10 @@ class World {
       else continue;
       if (!rng.chance(chance)) continue;
       if (this.get(x, s - 1) !== T.AIR) continue;
-      // 여유를 ±6으로 넓히고 잎 변종도 전부 본다.
+      // 수관 사이 두 칸 — 굵은 나무 폭(곁잎 포함 ±4)을 둘 합친 ±11 안에 기둥·잎이 있으면 건너뛴다
       let occupied = false;
-      for (let dx = -6; dx <= 6 && !occupied; dx++) {
-        for (const dy of [-1, -4]) {
+      for (let dx = -11; dx <= 11 && !occupied; dx++) {
+        for (const dy of [-1, -4, -8]) {
           const t = this.get(x + dx, s + dy);
           if (t === T.WOOD || TILE_DEF[t].leaf) { occupied = true; break; }
         }
@@ -634,14 +637,24 @@ class World {
     }
   }
 
-  /** 기둥은 x부터 오른쪽으로 wdt칸을 차지한다. */
-  tree(x, s, rng, woodT, leafT) {
-    const h = rng.int(5, 11);
+  /** 기둥은 x부터 오른쪽으로 wdt칸을 차지한다. occR 를 주면 수관이 그 칸과 빈 칸 둘 이상 떨어질 때만 심고,
+      심은 나무가 차지한 가장 오른쪽 칸을 돌려준다(못 심으면 null). 굵은(2칸) 나무는 키가 크고 잎이 많다. */
+  tree(x, s, rng, woodT, leafT, occR) {
+    let h = rng.int(5, 11);
     const wdt = h >= 9 && rng.chance(0.55) ? 2 : 1;
+    if (wdt > 1) h = rng.int(12, 16);
+    const r = wdt > 1 ? rng.int(3, 4) : rng.int(2, 3);
+    const ext = wdt > 1 ? Math.max(r, 4) : r;              // 굵은 나무는 아래 곁잎 뭉치까지 4칸
+    if (occR !== undefined && x - ext < occR + 3) return null;
     for (let dx = 0; dx < wdt; dx++)
       for (let y = s - 1; y > s - h; y--) this.set(x + dx, y, woodT);
     if (wdt > 1) this._groundTrunk(x, wdt, s, woodT);
-    this._canopy(x, s - h, rng.int(2, 3), wdt, leafT, 1);
+    this._canopy(x, s - h, r, wdt, leafT, wdt > 1 ? 2 : 1);
+    if (wdt > 1) {                                        // 수관 아래 좌우 곁잎 뭉치
+      this._canopy(x - 2, s - h + r, 2, 1, leafT, 1);
+      this._canopy(x + 3, s - h + r + 1, 2, 1, leafT, 1);
+    }
+    return x + wdt - 1 + ext;
   }
 
   /** 눈 지대 소나무 — 곧은 기둥에 **층층이 좁아지는 톱니 원뿔** 수관 — 사연: docs/code-history.md#h105 */
