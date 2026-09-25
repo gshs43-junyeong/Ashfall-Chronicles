@@ -1,23 +1,11 @@
-/* ===== factory.js — 공장: 기계 / 전력망 / 물류 =====
-
-   · 기계는 전부 1×1 타일이다. 지형(tiles)이 "여기 무슨 기계가 있는지"를, world.machines
-     (Map: 타일인덱스→상태)가 "지금 어떤 상태인지"를 든다. 나눠 두면 조명·렌더·저장·충돌이
-     전부 기존 타일 경로를 그대로 타고, 기계 쪽은 실제로 있는 것만 순회한다.
-   · 시뮬레이션은 초당 8틱(FAC_TICK). 벨트는 한 틱에 정확히 한 칸. 프레임마다 돌리지 않는
-     이유는 공장이 커져도 비용이 프레임률과 무관해야 하기 때문이다.
-   · 한 틱의 순서: 전력망 재계산 → 수요/발전/축전 정산 → 기계 동작 → 물류(벨트 이동 →
-     기계 출력 배출). ★ 벨트를 배출보다 **먼저** 처리해야 갓 배출된 것이 같은 틱에
-     두 칸 가지 않는다. */
+/* ===== factory.js — 공장: 기계 / 전력망 / 물류 ===== */
 'use strict';
 
 const FAC_TICK = 0.125;                                   // 공장 1틱 = 0.125초
 const DIR4 = [[1, 0], [0, 1], [-1, 0], [0, -1]];          // 0=우 1=하 2=좌 3=상
-/* 벨트만 쓰는 여섯 방향. 앞 넷은 DIR4와 같은 순서라 옛 세이브의 dir(0~3)이 그대로
-   맞는다 — 여기 순서를 바꾸면 깔아 둔 벨트가 전부 엉뚱한 데로 민다.
-   내리막(우하·좌하)을 안 넣은 것은 일부러다: 물건은 아래로는 그냥 떨어뜨리면 되고,
-   벨트가 필요한 건 **올려 보낼 때**다. 방향이 여덟이면 돌려 맞추기도 번거롭다. */
+/* 벨트만 쓰는 여섯 방향. */
 const DIR6 = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, -1], [-1, -1]];   // 4=우상 5=좌상
-/** 이 기계가 쓰는 방향표. 벨트만 대각선을 안다 */
+/** 이 기계가 쓰는 방향표. */
 function dirTable(t) { return (t === 'belt' || t === 'belt_fast') ? DIR6 : DIR4; }
 const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위'];
 
@@ -36,11 +24,7 @@ const Factory = {
     return w.inB(tx, ty) && w.get(tx, ty) === T.AIR && !w.machines.has(ty * WW + tx);
   },
 
-  /** gen 을 주면 "세계가 지어 둔 기계"로 표시한다.
-
-      ★ 표시를 **세계 쪽**에 다는 것이 중요하다. 반대로 "플레이자가 놓았다"를 달면
-        옛 세이브의 기계에는 그 표시가 없어서, 여든 대를 깔아 둔 사람이 불러오는
-        순간 자동화 업적을 통째로 잃는다. 없는 쪽이 기본값이 되도록 뒤집어 둔다. */
+  /** gen 을 주면 "세계가 지어 둔 기계"로 표시한다. */
   place(w, tx, ty, key, dir, gen) {
     const s = MACHINE[key];
     if (!s || !this.canPlace(w, tx, ty)) return null;
@@ -84,9 +68,7 @@ const Factory = {
     return true;
   },
 
-  /* ================= 전력망 =================
-     전주가 반경 5칸을 덮고, 전주끼리 10칸 안이면 같은 망이 된다.
-     전주가 많아져도 O(P²)가 되지 않도록 격자 해시로 이웃 전주만 검사한다. */
+  /* ================= 전력망 ================= */
   buildNets(w) {
     const R = MACHINE.pole.reach, LINK = R * 2;
     const poles = [];
@@ -165,8 +147,7 @@ const Factory = {
     return false;
   },
 
-  /* ================= 아이템 투입 =================
-     성공하면 넣은 개수를 돌려준다. 벨트·상자·기계 종류에 따라 규칙이 다르다. */
+  /* ================= 아이템 투입 ================= */
   insert(w, m, id, n) {
     if (!m || !m.on || n <= 0) return 0;
     const s = MACHINE[m.t];
@@ -237,7 +218,7 @@ const Factory = {
       if (!n) { m.st = '망 없음'; continue; }
       if (n.off) { m.st = '전면 정지'; continue; }
       if (s.sky) {
-        // 풍차: 연료 대신 트인 하늘이 필요하다. 위로 막힌 게 하나라도 있으면 날개가 못 돈다
+        // 풍차: 연료 대신 트인 하늘이 필요하다.
         let clear = true;
         for (let k = 1; k <= s.sky; k++) if (this.blocksWind(w, m.x, m.y - k)) { clear = false; break; }
         if (!clear) { m.st = '바람 막힘'; continue; }
@@ -288,10 +269,7 @@ const Factory = {
     }
 
     /* ---- 3. 물류 ---- */
-    /* 고속 벨트는 한 틱에 **두 칸**을 간다 — 물류 패스를 한 번 더 돌리되, 두 번째
-       패스에서는 고속 벨트만 본다. `just`(이번 틱에 받았다는 표시)를 지워 줘야 방금
-       받은 물건이 이어서 한 칸 더 나간다. 일반 벨트를 섞어 깔면 거기서 다시 한 칸씩
-       가므로, 병목 구간만 갈아 끼우는 식으로 쓸 수 있다. */
+    /* 고속 벨트는 한 틱에 **두 칸**을 간다 — 물류 패스를 한 번 더 돌리되, 두 번째 패스에서는 고속 벨트만 본다. */
     for (let pass = 0; pass < 2; pass++) {
     if (pass) for (const m of ms.values()) if (m.t === 'belt_fast') m.just = 0;
     for (const m of ms.values()) {                       // 벨트 · 분류기 먼저
@@ -359,8 +337,7 @@ const Factory = {
     const r = MRECIPES[m.rec];
     let step = 1;
     if (s.fuelIn) { if (!this.burn(m)) { m.st = '연료 없음'; return; } }
-    // 전력이 끊겼을 때 act를 내리면 안 된다 — 수요가 사라져 sat이 1로 돌아가고,
-    // 그러면 발전기 없이도 한 틱씩 공짜로 도는 톱니 현상이 생긴다
+    // 전력이 끊겼을 때 act를 내리면 안 된다 — 수요가 사라져 sat이 1로 돌아가고, 그러면 발전기 없이도 한 틱씩 공짜로 도는 톱니 현상이 생긴다
     else { step = this.sat(w, m); if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; } }
     m.act = 1;
     if (m.prog < r.t) { m.prog += step; m.st = '가동'; }
@@ -442,15 +419,13 @@ const Factory = {
     G.sfxAt('turret', m.x, m.y);
   },
 
-  /* ---- 발사형 함정 (화살·화염·서리) ----
-     동력이 필요 없는 기계식이다. 유적이 깔아 둔 것(own 없음)은 플레이어를 쏘고,
-     플레이어가 설치한 것(own=1)은 적을 쏜다 — 같은 기계인데 편이 갈린다. */
+  /* ---- 발사형 함정 (화살·화염·서리) ---- */
   runShooter(w, m, s, G) {
     m.cd -= 1;
     if (m.cd > 0) { m.st = '장전 중'; m.act = 0; return; }
     const [dx, dy] = DIR4[m.dir];
     const cx = m.x * TS + TS / 2, cy = m.y * TS + TS / 2;
-    // 정면 일직선에 목표가 들어왔는지 본다. 중간에 벽이 있으면 쏘지 않는다
+    // 정면 일직선에 목표가 들어왔는지 본다.
     let tgt = null;
     for (let k = 1; k <= s.range; k++) {
       const tx = m.x + dx * k, ty = m.y + dy * k;
@@ -504,7 +479,7 @@ const Factory = {
     if (put > 0) { it.c -= put; if (it.c <= 0) p.bag[bagIdx] = null; }
     return put;
   },
-  /** 기계 버퍼에서 아이템을 꺼내 가방으로. 가방이 모자라면 들어간 만큼만 빠진다 */
+  /** 기계 버퍼에서 아이템을 꺼내 가방으로. */
   playerTake(w, m, which, id, p) {
     const buf = which === 'in' ? m.in : m.out;
     if (!buf || !buf[id]) return 0;
@@ -528,9 +503,7 @@ const Factory = {
     return '#e0b23c';
   },
 
-  /* ================= 렌더 =================
-     타일 그림 자체는 tileart 아틀라스가 그린다. 여기서는 칸마다 달라지는 것만 덧그린다 —
-     방향 화살표, 벨트 위의 아이템, 진행/연료 막대, 상태 점. */
+  /* ================= 렌더 ================= */
   render(c, w, camX, camY, tx0, ty0, tx1, ty1, time) {
     if (!w.machines.size) return;
     c.save();
@@ -539,7 +512,6 @@ const Factory = {
     const x0 = Math.max(0, tx0), x1 = Math.min(WW - 1, tx1);
 
     // 전주 사이의 전선 — 이걸 안 그리면 공중에 뜬 전주가 그냥 떠 있는 기둥으로 보인다.
-    // 어느 전주끼리 한 망인지도 이 선으로 읽힌다.
     if (w.wires && w.wires.length) {
       c.strokeStyle = 'rgba(28,26,22,.85)'; c.lineWidth = 1.4;
       c.beginPath();
@@ -561,15 +533,11 @@ const Factory = {
         const sx = tx * TS - camX, sy = ty * TS - camY;
         const s = MACHINE[m.t];
 
-        /* 전주 몸통 — 타일이 아니라 **그림**이다. 아래를 통과 가능한 전용 타일로 메워 봤지만, 밭 위 한 칸을 비워야 해서 기둥이 끊기고 그 칸만 채굴 판정이
-           달라졌다. 그래서 몸통은 지면(첫 고체 칸)까지 그림으로만 잇는다 — 충돌·채굴·심기 어디에도 걸리지 않는다. mk_pole 타일 그림과 기둥
-           폭(4px)·하이라이트를 맞춘다.
-           사연: docs/code-history.md#h39 */
+        /* 전주 몸통 — 타일이 아니라 **그림**이다 — 사연: docs/code-history.md#h39 */
         if (m.t === 'pole') {
           let by = ty + 1;
           while (by < WH && !w.solid(tx, by) && by - ty < 40) by++;
-          /* 기둥 밑끝은 **바닥 칸의 윗면**에 딱 맞춰야 한다. 예전 계산은 -3 이라
-             바닥 안으로 18px 파고들어 땅을 뚫고 나온 것처럼 보였다. */
+          /* 기둥 밑끝은 **바닥 칸의 윗면**에 딱 맞춰야 한다. */
           const h = (by - ty) * TS - (TS - 1);
           if (h > 0) {
             const px = sx + TS / 2 - 2, py = sy + TS - 1;
@@ -578,8 +546,7 @@ const Factory = {
             c.fillStyle = shade('#7a6a4a', .62);
             for (let k = 1; k * TS * 2 < h; k++) c.fillRect(px - 1, py + k * TS * 2, 6, 1.5);   // 이음매
           }
-          /* 가로대에서 지지직 — 3프레임으로 끊어 튄다. 매끄럽게 흔들면 전기가 아니라
-             빛나는 점이 미끄러지는 것처럼 보인다. */
+          /* 가로대에서 지지직 — 3프레임으로 끊어 튄다. */
           const fr = ((time * 9) + tx * 2 + ty) | 0;
           if (fr % 4 !== 3) {                                  // 4틱 중 3틱만 — 끊겨야 지지직거린다
             const q = fr % 3, ax = sx + 3 + q * 6, ay = sy + 3;
@@ -596,9 +563,7 @@ const Factory = {
           }
         }
 
-        /* 풍차는 한 칸짜리 타일로 그리기엔 너무 작아 지붕 위에서 잘 안 보였다.
-           타일은 그대로 두고(설치·전력 판정은 1칸) **그림만 제 칸 위로 키워** 얹는다.
-           날개는 시간으로 돌린다(타일 애니메이션처럼 프레임으로 끊는다). */
+        /* 타일은 그대로 두고(설치·전력 판정은 1칸) **그림만 제 칸 위로 키워** 얹는다. */
         if (m.t === 'windmill') {
           const R = 26;                                   // 날개 반지름 (타일의 약 2.4배)
           const hx = sx + TS / 2, hy = sy - 10;           // 회전축 — 날개 아래끝이 지붕에 닿지 않을 만큼 올린다
@@ -617,10 +582,7 @@ const Factory = {
           c.beginPath(); c.arc(hx, hy, 3, 0, TAU); c.fill();
         }
 
-        /* 벨트 몸통은 타일 그림이 **가로 한 방향**뿐이다(mk_belt). 세우거나 비스듬히
-           놓으면 몸은 가로인데 화살표만 위로 흘러 어긋나 보인다 — 가로가 아닌 벨트는
-           방향에 맞춰 돌린 띠를 한 겹 덮어 그린다. 타일 아틀라스를 방향마다 만들지
-           않은 이유는, 아틀라스는 타일 번호 하나에 그림 하나라 방향을 모르기 때문이다. */
+        /* 벨트 몸통은 타일 그림이 **가로 한 방향**뿐이다(mk_belt). */
         if ((m.t === 'belt' || m.t === 'belt_fast') && m.dir !== 0 && m.dir !== 2) {
           const ang = m.dir === 1 ? Math.PI / 2 : m.dir === 3 ? -Math.PI / 2
             : m.dir === 4 ? -Math.PI / 4 : -Math.PI * 3 / 4;

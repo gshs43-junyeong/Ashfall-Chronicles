@@ -14,8 +14,7 @@ const UI = {
   /* 손그림 애셋이 로드되면 코드 생성분 위에 덮어쓴다 */
   npcArt: null,
   applySpriteOverrides() {
-    // 손그림 초상화가 실제로 로드된 NPC만 덮어쓴다 — 아직 애셋이 없는 NPC(여명 마을 주민 등)는
-    // 매핑하지 않고 두어야 Art.npcUrl()의 절차 생성 초상화로 자연스럽게 폴백된다
+    // 손그림 초상화가 실제로 로드된 NPC만 덮어쓴다 — 아직 애셋이 없는 NPC(여명 마을 주민 등)는 매핑하지 않고 두어야 Art.npcUrl()의 절차 생성 초상화로 자연스럽게 폴백된다
     this.npcArt = {};
     for (const id in NPCS) {
       const art = NPCS[id].art;
@@ -82,9 +81,7 @@ const UI = {
     if (depBtn) depBtn.addEventListener('click', () => this.depositGold());
     if (wdBtn) wdBtn.addEventListener('click', () => this.withdrawGold());
   },
-  /* ---------------- 보관고 금화 ----------------
-     아이템 칸과 달리 금화는 하나의 총액이라 슬롯이 아니라 넣기/빼기 버튼 두 개와
-     프롬프트로 액수를 받는다. 저장 상자(storeRef)에는 안 붙는다 — 마을 금고 전용. */
+  /* ---------------- 보관고 금화 ---------------- */
   depositGold() {
     const p = G.player;
     if (p.gold <= 0) { this.toast('가진 금화가 없다', 'bad'); return; }
@@ -106,8 +103,7 @@ const UI = {
     this.refreshVault(); G.sfx('coin');
     this.toast(`금화 ${fmt(amt)}개를 꺼냈다`, 'good');
   },
-  /* ---------------- 설정 (일시정지 화면) ----------------
-     값은 G.settings가 들고 있고, 여기서는 화면과 맞춰 주기만 한다. */
+  /* ---------------- 설정 (일시정지 화면) ---------------- */
   bindSettings() {
     const num = [['music', 'set-music', '%'], ['sfx', 'set-sfx', '%'], ['shake', 'set-shake', '%']];
     for (const [key, id] of num) {
@@ -124,8 +120,7 @@ const UI = {
     this.buildNotices();
     this.buildKeys();
 
-    /* 갈래 전환. 열 때는 늘 첫 갈래(화면·소리)로 돌아간다 — 지난번에 조작 갈래를
-       보다 닫았다고 다음에 조작부터 열리면, 소리를 줄이러 온 사람이 헤맨다. */
+    /* 갈래 전환. */
     const tabs = document.querySelectorAll('.set-tab');
     tabs.forEach(t => t.addEventListener('click', () => this.setTab(t.dataset.tab)));
 
@@ -144,11 +139,7 @@ const UI = {
       this.toast('설정을 기본값으로 되돌렸다');
     });
 
-    /* ---- 저장 내보내기 / 가져오기 ----
-       저장은 localStorage 에만 있다. 브라우저를 바꾸거나, zip 폴더를 옮기거나,
-       시크릿 창을 닫으면 그대로 사라진다(file:// 은 경로가 곧 출처라 폴더 이름만
-       바뀌어도 남남이 된다). 파일 한 장으로 꺼내고 되돌릴 길을 둔다 — 웹과 zip
-       양쪽에서 같은 방식이다. */
+    /* ---- 저장 내보내기 / 가져오기 ---- */
     const ex = $('#set-export');
     if (ex) ex.addEventListener('click', () => G.exportSaves());
     const im = $('#set-import'), imf = $('#set-import-file');
@@ -187,8 +178,7 @@ const UI = {
   },
 
   /* ---- 조작키 ---- */
-  /* 누르면 그 항목이 대기 상태가 되고, 다음에 눌린 키를 그 자리에 넣는다.
-     Esc 는 취소로만 쓴다 — 바꿀 수 있게 두면 메뉴를 못 여는 상태를 만들 수 있다. */
+  /* 누르면 그 항목이 대기 상태가 되고, 다음에 눌린 키를 그 자리에 넣는다. */
   buildKeys() {
     const box = $('#set-keys'); if (!box) return;
     const label = c => this.keyLabel(c);
@@ -208,9 +198,7 @@ const UI = {
       ControlRight: 'Ctrl(오)', AltLeft: 'Alt(왼)', AltRight: 'Alt(오)', Space: 'Space' };
     return ARROW[c] || NAMED[c] || c.replace(/^Key/, '').replace(/^Digit/, '');
   },
-  /* ---- 화면 아래 탭 단추 ----
-     조작키로만 열리던 탭(가방·능력·일지·제작·지도)을 마우스로도 연다. 키를 몰라도 어떤 탭이 있는지 보이고,
-     단추마다 **지금 걸린 키**를 적어 두어 키를 익히는 안내도 겸한다(설정에서 바꾸면 따라 바뀐다). */
+  /* ---- 화면 아래 탭 단추 ---- */
   bindTabBar() {
     const bar = $('#tabbar'); if (!bar) return;
     bar.querySelectorAll('.tb').forEach(b => b.addEventListener('click', e => {
@@ -342,7 +330,6 @@ const UI = {
   },
   refreshBag() {
     // 손그림 스프라이트가 비동기로 도착하면 새 게임 전에도 이 함수가 호출될 수 있다.
-    // 그 시점에는 플레이어가 아직 없으므로 UI만 조용히 건너뛴다.
     if (!G.player) return;
     const p = G.player, cap = p.bag.length;
     $$('#bag-grid .slot').forEach((el, i) => {
@@ -357,8 +344,7 @@ const UI = {
   bagClick(i, btn, shift, ctrl) {
     const p = G.player;
     if (i >= p.bag.length) return;         // 아직 열리지 않은 확장 칸
-    // Ctrl+좌클릭: 잠금 토글. 잠근 것은 버리기·팔기·정렬이 모두 건너뛴다 —
-    // 좋은 물건을 Shift+좌클릭 한 번에 날려 먹는 사고를 막기 위한 자물쇠다
+    // Ctrl+좌클릭: 잠금 토글.
     if (ctrl && btn === 0) {
       const it = p.bag[i]; if (!it) return;
       it.lk = it.lk ? 0 : 1;
@@ -397,8 +383,7 @@ const UI = {
     this.refreshBag();
     G.sfx('place');
   },
-  /** 가방 정리 — 같은 것끼리 합치고, 종류·등급 순으로 앞에서부터 채운다.
-      잠근 물건은 자리를 그대로 지킨다(찾던 자리에 그대로 있어야 잠근 보람이 있다). */
+  /** 가방 정리 — 같은 것끼리 합치고, 종류·등급 순으로 앞에서부터 채운다. */
   sortBag() {
     const p = G.player;
     const keep = [];                                   // [index, item] — 잠긴 것
@@ -450,7 +435,7 @@ const UI = {
 
   /* ---------------- 장비 ---------------- */
   buildEquipSlots() {
-    // 칸마다 비었을 때 깔릴 실루엣. acc1/acc2는 같은 그림을 쓴다
+    // 칸마다 비었을 때 깔릴 실루엣.
     const SLOT_IC = { weapon: 'weapon', helm: 'helm', chest: 'chest', boots: 'boots', acc1: 'acc', acc2: 'acc', util1: 'util', util2: 'util', bag: 'bag', pet1: 'pet', pet2: 'pet' };
     $$('.slot.equip').forEach(el => {
       const key = el.dataset.eq;
@@ -559,13 +544,8 @@ const UI = {
     $$('#stat-alloc button').forEach(b => b.style.opacity = p.statPts > 0 ? 1 : .35);
   },
 
-  /* ---------------- 특성 트리 ----------------
-     세 분기가 각각 4단×3열의 **판**이다 — 세로로 늘어놓은 목록이면 "무엇 다음에 무엇"이
-     코드에만 있다. 자리 계산은 SKILLS 의 tier(세로)와 col(가로, 0~2, .5 는 사이)로 끝나고,
-     잇는 선은 SVG <line> 한 겹에 x 가 백분율이라 판 너비가 바뀌어도 따라온다. */
-  /* ★ 세 갈래를 **한 판**에 그린다. 이제 가로 아홉 칸(갈래마다 셋)짜리 판 하나에 서른 칸을 얹고, 선 한 겹이 그 위를 통째로 덮는다. 갈래 이름은 판 위에
-       머리글로만 남는다 — 벽이 아니라 이름표다.
-     사연: docs/code-history.md#h90 */
+  /* ---------------- 특성 트리 ---------------- */
+  /* ★ 세 갈래를 **한 판**에 그린다 — 사연: docs/code-history.md#h90 */
   TREE_TOP: 14, TREE_ROW: 89, TREE_BOX: 44,
   TREE_COLS: 9,                                   // 갈래 셋 × 가로 세 칸
   _brIdx(br) { return BRANCHES.findIndex(b => b.id === br); },
@@ -588,8 +568,7 @@ const UI = {
       head.innerHTML += `<div class="bhead" style="--bc:${br.c}">` +
         `<h3>${br.n}</h3><div class="btag">${br.tag}</div></div>`;
     w.appendChild(head);
-    /* 규칙을 한 줄로 적어 둔다. 점선과 "다른 갈래 절반"은 눌러 보기 전에는 알 수 없는
-       것이라, 적어 두지 않으면 세 갈래가 여전히 남남으로 보인다. */
+    /* 규칙을 한 줄로 적어 둔다. */
     const note = document.createElement('div');
     note.className = 'bnote';
     note.innerHTML = '점선은 <b>갈래를 건너는 길</b> — 이어진 칸을 하나라도 배우면 열립니다. ' +
@@ -601,7 +580,7 @@ const UI = {
     const rows = 1 + Math.max(...Object.values(SKILLS).map(s => s.tier));
     grid.style.height = (this.TREE_TOP + (rows - 1) * this.TREE_ROW + this.TREE_BOX + 36) + 'px';
 
-    // ② 잇는 선 — 칸보다 먼저 넣어야 뒤로 깔린다. 갈래를 건너는 선은 따로 표시한다
+    // ② 잇는 선 — 칸보다 먼저 넣어야 뒤로 깔린다.
     const svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('class', 'blines');
     for (const id in SKILLS) for (const rq of (SKILLS[id].req || [])) {
@@ -610,8 +589,7 @@ const UI = {
       ln.setAttribute('x1', this._nodeX(rq)); ln.setAttribute('y1', this._nodeY(rq) + this.TREE_BOX / 2);
       ln.setAttribute('x2', this._nodeX(id)); ln.setAttribute('y2', this._nodeY(id) + this.TREE_BOX / 2);
       ln.setAttribute('class', 'bline' + (cross ? ' cross' : ''));
-      /* 선 색은 **도착하는 칸**의 갈래를 쓴다. 출발 쪽을 쓰면 갈래를 건너오는 선이
-         남의 색으로 그 갈래 안에 들어와 어디 소속인지가 흐려진다. */
+      /* 선 색은 **도착하는 칸**의 갈래를 쓴다. */
       ln.style.setProperty('--bc', BRANCHES[this._brIdx(SKILLS[id].br)].c);
       ln.dataset.from = rq; ln.dataset.to = id;
       svg.appendChild(ln);
@@ -655,17 +633,7 @@ const UI = {
     if (id === 'prof') this.refreshProf();
   },
 
-  /** 이 분기가 단을 여는 데 쓸 수 있는 점수.
-
-      ★ 세 갈래를 **가르던 벽이 여기였다.** req 는 원래부터 "하나라도"(OR)였는데도 세 판이 서로 남처럼 보였던 까닭이 이 셈이다 — 유격에 아무리 부어도 비전의
-        둘째 단은 1포인트도 안 열렸다.
-      ★ 이제 **다른 갈래에 찍은 것도 절반을 쳐 준다.** 순수 빌드는 그대로 가장 빠르고
-        (제 갈래 8점이면 막단), 섞어 타는 빌드는 같은 깊이에 더 많은 점을 쓴다
-        (5+6 → 5+3 = 8). 길이 막히는 것이 아니라 **값이 더 드는** 것이라, 고르는
-        재미를 남기면서 갈래가 이어진다.
-      ★ 내림(floor)이다. 올림으로 두면 다른 갈래 1점이 0.5 를 1로 쳐 줘서, 아무 갈래나
-        한 점 찍는 것이 늘 이득인 계산이 된다.
-      사연: docs/code-history.md#h91 */
+  /** 이 분기가 단을 여는 데 쓸 수 있는 점수 — 사연: docs/code-history.md#h91 */
   BR_CROSS: 0.5,
   branchPts(brId) {
     const p = G.player;
@@ -674,7 +642,7 @@ const UI = {
       (br.id === brId ? (n => own += n) : (n => other += n))(p.skills[id] || 0);
     return own + Math.floor(other * this.BR_CROSS);
   },
-  /** 이어진 윗칸 중 하나라도 배웠는가. 윗칸이 없는 첫 단은 늘 열려 있다 */
+  /** 이어진 윗칸 중 하나라도 배웠는가. */
   reqMet(id) {
     const req = SKILLS[id].req;
     if (!req || !req.length) return true;
@@ -685,8 +653,7 @@ const UI = {
   lockReason(id) {
     const sk = SKILLS[id];
     const need = TIER_REQ[sk.tier], have = this.branchPts(sk.br);
-    /* 모자란 까닭을 **내역까지** 적는다. 다른 갈래가 절반으로 얹히는 규칙은 숫자만
-       보면 알 길이 없어서, "7점이나 썼는데 왜 안 열리지"가 된다. */
+    /* 모자란 까닭을 **내역까지** 적는다. */
     if (have < need) {
       let own = 0;
       for (const br of BRANCHES) if (br.id === sk.br)
@@ -706,7 +673,7 @@ const UI = {
     else if (sk.b) { const b = sk.b(r); const vals = Object.values(b); let i = 0; txt = txt.replace(/%d/g, () => vals[i++] ?? 0); }
     return txt.replace(/%%/g, '%');
   },
-  /** 칸 위에 올렸을 때의 설명. 지금 랭크와 다음 랭크를 나란히 보여 준다 */
+  /** 칸 위에 올렸을 때의 설명. */
   showSkillTip(id, e) {
     const p = G.player, sk = SKILLS[id], rank = p.skills[id] || 0;
     const why = this.lockReason(id);
@@ -763,8 +730,7 @@ const UI = {
     this.flashNode(id);
   },
 
-  /** 습득 연출 — 찍은 칸이 한 번 부풀고, 그 칸에서 뻗어 나가는 선에 빛이 흐른다.
-      CSS 애니메이션이라 클래스를 붙였다가 떼기만 하면 된다(다시 찍으면 다시 돈다). */
+  /** 습득 연출 — 찍은 칸이 한 번 부풀고, 그 칸에서 뻗어 나가는 선에 빛이 흐른다. */
   flashNode(id) {
     const el = $(`#tree-wrap .node[data-sk="${id}"]`);
     if (el) {
@@ -817,10 +783,7 @@ const UI = {
     });
   },
 
-  /* ---------------- 생활 숙련 ----------------
-     같은 팝업의 다른 갈래다. 포인트가 없다 — 밭에서 거두고 물에서 올린 횟수가
-     그대로 눈금이 된다. 그래서 여기엔 누를 것이 없고, 지금 어디까지 왔는지와
-     다음에 무엇이 열리는지만 보여 준다. */
+  /* ---------------- 생활 숙련 ---------------- */
   buildProf() {
     const w = $('#prof-wrap'); if (!w) return;
     w.innerHTML = '';
@@ -865,8 +828,7 @@ const UI = {
   questTab: 'journey',      // 'journey' | 'ach' | 'ruins'
   refreshQuest() {
     const g = G;
-    /* 창 하나에 탭 둘. 업적은 새 패널을 만들지 않고 여기 얹는다 — 패널을 새로 내면
-       여는 키를 하나 더 배정해야 하고, "여정의 기록"이 이미 업적을 담기에 맞는 자리다. */
+    /* 창 하나에 탭 둘. */
     const done = Object.keys(g.achievements || {}).length;
     const topTabs = `<div class="qtabs">` +
       `<button class="qtab${this.questTab === 'journey' ? ' on' : ''}" data-qtab="journey">여정</button>` +
@@ -875,14 +837,12 @@ const UI = {
       `</div>`;
     if (this.questTab === 'ach') { this.renderAch(topTabs); return; }
     if (this.questTab === 'ruins') { this.renderRuins(topTabs); return; }
-    /* 탭은 SESSIONS 표에서 만든다.
-       사연: docs/code-history.md#h92 */
+    /* 탭은 SESSIONS 표에서 만든다 — 사연: docs/code-history.md#h92 */
     const currentSession = 's' + sessionOf(g.chapter).id;
     const selectedSession = this.questSession || currentSession;
     const sessions = SESSIONS.map(x =>
       ({ key: 's' + x.id, label: x.n, title: x.t, chapters: chaptersOf(x.id) }));
-    /* 버튼이 셋 이상이면 창 폭을 넘긴다 — 줄바꿈하면 탭 줄이 두 줄이 되어 아래
-       내용이 밀리므로, 가로로 스크롤하게 둔다(스크롤바는 CSS에서 얇게 그린다). */
+    /* 버튼이 셋 이상이면 창 폭을 넘긴다 — 줄바꿈하면 탭 줄이 두 줄이 되어 아래 내용이 밀리므로, 가로로 스크롤하게 둔다(스크롤바는 CSS에서 얇게 그린다). */
     let h = '<div class="session-tabs">' + sessions.map(s => {
       const isCurrent = s.key === currentSession;
       const isSelected = s.key === selectedSession;
@@ -906,16 +866,13 @@ const UI = {
       }
       for (const ch of chapterBlock.chapters) {
         const state = ch.id < g.chapter ? 'done' : ch.id === g.chapter ? 'cur' : 'locked';
-        // 세션 2의 sub는 "세션 2 · 제1장" 꼴이라, 세션 2 탭 안에서는 앞의 "세션 2 · "가 줄마다 반복돼 군더더기다.
-        // 사연: docs/code-history.md#h93
+        // 세션 2의 sub는 "세션 2 · 제1장" 꼴이라, 세션 2 탭 안에서는 앞의 "세션 2 · "가 줄마다 반복돼 군더더기다 — 사연: docs/code-history.md#h93
         const sub = ch.sub.replace(/^세션\s*\d+\s*·\s*/, '');
-        /* 아직 안 열린 장은 **제목도 가린다.** 몇 장인지는 남긴다 — 그건 순서일 뿐이고, 가리면 어디까지 왔는지도 안 보인다.
-           사연: docs/code-history.md#h94 */
+        /* 아직 안 열린 장은 **제목도 가린다.** — 사연: docs/code-history.md#h94 */
         const titleText = state === 'locked' ? `${sub} · ???` : `${sub} · ${ch.title}`;
         h += `<div class="chap ${state}"><div class="chap-badge ${state}">${state === 'done' ? '완료' : state === 'cur' ? '진행 중' : '대기'}</div><h3>${titleText}</h3>`;
         if (state !== 'locked') {
-          /* 끝낸 장은 도입부와 뒷이야기를 **둘 다** 남긴다.
-             사연: docs/code-history.md#h95 */
+          /* 끝낸 장은 도입부와 뒷이야기를 **둘 다** 남긴다 — 사연: docs/code-history.md#h95 */
           const para = t => (t || '').split('\n\n').map(s =>
             `<p>${s.trim().replace(/\n/g, '<br>')}</p>`).join('');
           h += `<div class="cdesc">${para(ch.intro)}`;
@@ -924,15 +881,12 @@ const UI = {
             if (ch.hook) h += `<p class="cdesc-hook">◆ ${ch.hook}</p>`;
           }
           h += '</div>';
-          /* 목록은 여기(일지)에만 편다. HUD 에는 한 줄만 나간다.
-             넷 중 몇 개만 채우면 되는 것이므로 "몇 개 중 몇 개"를 머리에 적어 준다. */
+          /* 목록은 여기(일지)에만 편다. */
           if (state === 'cur') {
             const st = g.chapterState(ch);
             h += `<div class="obj-head">준비 <b>${st.done}/${st.need}</b>` +
               (st.missing.length ? ' · <em>이 장의 일이 남았다</em>' : '') + '</div>';
-            /* ★ 제목은 이야기, 부제는 과제. "무덤지기 10마리 처치"가 곧 제목이면 여정의
-               기록을 펼쳐도 읽히는 것이 숙제 목록이다. 제목은 그 장의 이야기에서 온 한 줄
-               (o.t), 무엇을 몇 개 해야 하는지는 아래 작은 줄(o.task)에. */
+            /* ★ 제목은 이야기, 부제는 과제. */
             for (const b of st.basics) {
               const must = (ch.require || []).includes(b.o.verb);
               h += `<div class="obj ${b.p.done ? 'ok' : ''}${must ? ' must' : ''}">` +
@@ -970,8 +924,7 @@ const UI = {
       sh += '</div>';
     }
     if (!hasActive) sh += '<div class="side-q empty">지금 맡아 둔 부탁이 없다.</div>';
-    /* 게시판에 붙은 종이도 일지에서 보인다.
-       사연: docs/code-history.md#h96 */
+    /* 게시판에 붙은 종이도 일지에서 보인다 — 사연: docs/code-history.md#h96 */
     if ((G.bounties || []).length) {
       sh += '<div class="side-head">의뢰 게시판</div>';
       for (const q of G.bounties) {
@@ -1008,10 +961,8 @@ const UI = {
       };
     }
   },
-  /** 업적 목록 — 갈래(cat)별로 묶어 보여 준다. 잠긴 것도 조건은 보여 준다:
-      무엇을 하면 되는지 안 보이면 목록이 그냥 '못 한 것 표'가 된다. */
-  /** 유적 탐사 기록 — 여섯 유적의 등급 · 무엇이 남았는가 · 메아리 · 인장.
-      가 본 적 없는 유적은 이름만 가린다(어디 있는지는 지도·나침반의 몫이다). */
+  /** 업적 목록 — 갈래(cat)별로 묶어 보여 준다. */
+  /** 유적 탐사 기록 — 여섯 유적의 등급 · 무엇이 남았는가 · 메아리 · 인장. */
   renderRuins(topTabs) {
     const g = G;
     let h = topTabs + `<div class="rv-note">유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,
@@ -1067,14 +1018,11 @@ const UI = {
       if (!list.length) continue;
       const n = list.filter(a => got[a.id]).length;
       h += `<div class="ach-head">${ACH_CAT[cat]} <span>${n}/${list.length}</span></div>`;
-      /* ★ 난이도로 다시 줄 세우지 않는다. 쉬운 것부터 늘어놓으면 "다음에 이걸 하고
-         그다음에 저걸 하고" 하는 **차례표**가 되어, 같은 일지 안의 의뢰 목록과
-         똑같이 읽힌다. 적어 둔 차례(갈래 안에서 이야기 순서로 묶여 있다)를 그대로
-         쓴다 — 난이도는 오른쪽 배지가 이미 말해 준다. */
+      /* ★ 난이도로 다시 줄 세우지 않는다. */
       for (const a of list) {
         const on = !!got[a.id];
         const [tn, tc] = ACH_TIER[a.t] || ACH_TIER.mid;
-        // 숨은 업적은 달성 전까지 이름도 조건도 안 보인다. 난이도만 보여 준다
+        // 숨은 업적은 달성 전까지 이름도 조건도 안 보인다.
         const hide = achHidden(a) && !on;
         const nm = hide ? '???' : a.n;
         const ds = hide ? '숨겨진 업적 — 해내면 그때 드러난다.' : a.d;
@@ -1109,26 +1057,20 @@ const UI = {
     const ch = CHAPTERS[G.chapter];
     let h = '';
     if (ch) {
-      /* ★ HUD 는 한 줄이다. 남은 목표를 전부 세로로 쌓으면 화면 오른쪽이 할 일 목록이
-         되고, 무엇을 하든 "아직 넷 남았다"가 계속 보인다 — 이 게임을 숙제처럼 느끼게
-         하는 가장 큰 몫이었다. 자세한 것은 일지(J)에. */
+      /* ★ HUD 는 한 줄이다. */
       const st = G.chapterState(ch);
       h += `<div style="color:#c9b07a;margin-bottom:4px">${ch.title}</div>`;
       if (st.ready) {
         h += `<div class="qt-obj">${st.goal ? st.goal.o.t : '목표'}` +
           (st.goal && st.goal.o.task ? `<span class="qt-task">${st.goal.o.task}</span>` : '') + '</div>';
       } else {
-        /* ★ 갈림길은 **고를 수 있다는 것을 보여 주는 것**이다. "준비 0/2" 한 줄만 두면
-           무엇을 해서 채우라는 건지 화면에 없고, 남은 것을 전부 쌓으면 숙제 목록이 된다.
-           후보를 펴되 "이 중 N개만"이라고 먼저 못을 박아 메뉴판으로 읽히게 한다.
-           끝낸 것은 지워서 남기고(고른 흔적) '필수' 표시는 그대로 둔다. */
+        /* ★ 갈림길은 **고를 수 있다는 것을 보여 주는 것**이다. */
         h += `<div class="qt-obj">준비 <b>${st.done}/${st.need}</b></div>`;
         h += '<div class="qt-list">';
         for (const b of st.basics) {
           const must = (ch.require || []).includes(b.o.verb);
           // HUD 는 좁으므로 이야기 한 줄만 두고, 과제와 숫자는 작게 뒤에 붙인다
-          /* '필수' 는 제목과 같은 줄에 붙인다 — 제목·필수·과제 셋이 각자 줄을 차지하면
-             한 항목이 세 줄이 되어 목록이 다시 길어진다. */
+          /* '필수' 는 제목과 같은 줄에 붙인다 — 제목·필수·과제 셋이 각자 줄을 차지하면 한 항목이 세 줄이 되어 목록이 다시 길어진다. */
           h += `<div class="qt-pick${b.p.done ? ' done' : ''}${must ? ' must' : ''}">` +
             `<span class="qt-line">${b.p.done ? '✔' : '·'} ` +
             (must ? '<span class="qt-must">필수</span> ' : '') + `${b.o.t}</span>` +
@@ -1144,18 +1086,14 @@ const UI = {
     $('#qt-body').innerHTML = h;
   },
 
-  /* ---------------- 제작 ----------------
-     작업대와 용광로가 완전히 갈라졌으므로 탭도 갈라 놓는다. 탭 안에는 그 시설의
-     현재 단계와 다음 단계 개조 비용이 함께 붙어, 무엇을 열려면 무엇을 모아야 하는지가
-     한 화면에서 읽힌다. */
+  /* ---------------- 제작 ---------------- */
   craftTab: 'work',
-  /* null이면 **지금 진행 중인 세션**을 연다. 탭을 누르면 그때부터 그 값이 남는다.
-     사연: docs/code-history.md#h97 */
+  /* null이면 **지금 진행 중인 세션**을 연다 — 사연: docs/code-history.md#h97 */
   questSession: null,
   craftGroup: 'all',
   craftShowLocked: false,
   craftQuery: '',
-  /** 제작품의 쓰임새 기준 분류. 아이템 데이터의 type만으로는 기계와 설치물을 가릴 수 있어 보완한다. */
+  /** 제작품의 쓰임새 기준 분류. */
   craftGroupFor(r) {
     const id = r.out, type = ITEMS[id].type;
     const factory = new Set(['wire', 'circuit', 'motor', 'machine_frame', 'battery_empty', 'battery_cell', 'fuel_brick', 'refined_oil', 'polymer', 'steel_plate', 'rivet']);
@@ -1175,8 +1113,7 @@ const UI = {
     const p = G.player, near = G.nearSt;
     const lv = { work: (G.nearStObj.work && G.nearStObj.work.lv) || 1, forge: (G.nearStObj.forge && G.nearStObj.forge.lv) || 1 };
     let tab = this.craftTab;
-    // 이제는 **지금 이 순간 실제로 근처(70px)에 있는 시설만** 같이 보여준다 — 없으면 맨손 탭 하나뿐.
-    // 사연: docs/code-history.md#h98
+    // 이제는 **지금 이 순간 실제로 근처(70px)에 있는 시설만** 같이 보여준다 — 없으면 맨손 탭 하나뿐 — 사연: docs/code-history.md#h98
     if (tab !== 'hand' && !near[tab]) tab = this.craftTab = 'hand';
     const allTabs = { work: ['work', `작업대 Lv.${lv.work}`], forge: ['forge', `용광로 Lv.${lv.forge}`], hand: ['hand', '맨손'] };
     const tabs = [];
@@ -1202,7 +1139,6 @@ const UI = {
       }
     }
     // 만들 수 있는 것 → 재료만 모자란 것 → 아직 안 열린 것 순.
-    // 기본값은 잠긴 제작법을 감춰 초반에 긴 목록을 한꺼번에 읽지 않게 한다.
     const rows = [];
     for (let i = 0; i < RECIPES.length; i++) {
       const r = RECIPES[i];
@@ -1256,9 +1192,7 @@ const UI = {
     });
   },
 
-  /* ---------------- 마을 회관 ----------------
-     지금 등급이 무엇을 주고 있는지, 다음 등급이 무엇을 더 주는지를 한 화면에 놓는다.
-     베이스캠프는 이 체계 바깥이므로 여기 나오지 않는다. */
+  /* ---------------- 마을 회관 ---------------- */
   openTownhall() {
     this.closePanel();
     $('#panel-town').classList.add('open'); this.open = 'town'; G.uiOpen = true;
@@ -1291,9 +1225,7 @@ const UI = {
     if (b) b.addEventListener('click', () => { G.upgradeVillage(); this.refreshTownhall(); });
   },
 
-  /* ---------------- 기계 ----------------
-     공장은 8틱/초로 계속 움직이므로, 패널이 열려 있는 동안은 HUD 주기(10Hz)에 맞춰
-     다시 그려 준다. 값이 살아 움직이는 게 보여야 어디가 막혔는지 알 수 있다. */
+  /* ---------------- 기계 ---------------- */
   openMachine(m) {
     this.closePanel();
     this.machRef = m;
@@ -1475,8 +1407,7 @@ const UI = {
         $('#chest-title').textContent = this.shopTitle();
         return;
       }
-      /* 재고가 날마다 바뀌는 상인(dynamicShop)은 정적 shop 배열 대신 G가 굴려 둔
-         재고를 읽는다. 사면 그 자리에서 없어지므로 칸마다 개수도 함께 보여 준다. */
+      /* 재고가 날마다 바뀌는 상인(dynamicShop)은 정적 shop 배열 대신 G가 굴려 둔 재고를 읽는다. */
       if (NPCS[this.shopRef].dynamicShop) {
         const npc = this.shopRef, m = G.merchantOf(npc);
         const stock = G.stockOf(npc);
@@ -1539,15 +1470,14 @@ const UI = {
 
   /* ---------------- 여명 마을 시설 ---------------- */
 
-  /** 보관고 — 가방과 별개로 유지되는 60칸 창고. 좌우 클릭 한 번으로 옮긴다 */
+  /** 보관고 — 가방과 별개로 유지되는 60칸 창고. */
   openVault() {
     this.closePanel();
     this.storeRef = null;
     $('#panel-vault').classList.add('open'); this.open = 'vault'; G.uiOpen = true;
     this.refreshVault();
   },
-  /** 플레이어가 놓은 저장 상자 — 마을 보관고와 같은 두 칸짜리 화면을 그대로 쓴다.
-      넣고 빼는 조작이 이미 여기 다 있어서 새 패널을 만들 이유가 없다. */
+  /** 플레이어가 놓은 저장 상자 — 마을 보관고와 같은 두 칸짜리 화면을 그대로 쓴다. */
   openStore(obj) {
     this.closePanel();
     this.storeRef = obj;
@@ -1613,12 +1543,10 @@ const UI = {
       const pr = G.bountyProgress(q);
       const el = document.createElement('div');
       el.className = 'quest-card' + (q.done ? ' done' : pr.done ? ' ready' : '');
-      /* 종이 한 장을 그대로 옮긴다 — 제목 · 본문 · 붙인 사람 · 목표 · 값.
-         떼어 간 뒤에는 그 사람이 남긴 한 줄로 바뀐다. */
+      /* 종이 한 장을 그대로 옮긴다 — 제목 · 본문 · 붙인 사람 · 목표 · 값. */
       const body = (q.done && q.doneLine) ? `<div class="qc-say">${q.doneLine}</div>`
         : (q.body || []).map(l => `<div class="qc-line">${l}</div>`).join('');
-      /* 값은 그때그때 센다 — 레벨이 오르면 종이에 적힌 값도 같이 오른다.
-         떼어 간 종이만은 그때 받은 값을 그대로 보여 준다. */
+      /* 값은 그때그때 센다 — 레벨이 오르면 종이에 적힌 값도 같이 오른다. */
       const pay = G.bountyPay(q);
       el.innerHTML = `<div class="qc-title">${q.title || ''}</div>` + body +
         `<div class="qc-from">— ${q.from || ''}</div>` +
@@ -1692,11 +1620,10 @@ const UI = {
     if (!g.children.length) $('#anvil-note').textContent = '가방에 두들길 만한 장비가 없다.';
   },
 
-  /* 펫 목록 패널은 없다 — 펫이 인벤토리 아이템이라, 가방에서 바로
-     장비창의 펫 칸으로 끼우면 된다(다른 장비와 똑같은 조작). */
+  /* 펫 목록 패널은 없다 — 펫이 인벤토리 아이템이라, 가방에서 바로 장비창의 펫 칸으로 끼우면 된다(다른 장비와 똑같은 조작). */
 
   /* ---------------- 툴팁 ---------------- */
-  /** 같은 자리에 차고 있는 장비와 견준 한 줄. 비교할 게 없으면 null */
+  /** 같은 자리에 차고 있는 장비와 견준 한 줄. */
   compareLine(it) {
     const p = G.player;
     if (!p || !it) return null;
@@ -1725,7 +1652,7 @@ const UI = {
     if (d.type === 'bag' && (d.slots || idef(cur).slots)) push('가방 칸', d.slots || 0, idef(cur).slots || 0);
     const sa = itemStats(it), sb = itemStats(cur);
     const NM = { hp: '생명', mp: '마나', def: '방어', ms: '이속', crit: '치명', critD: '치명피해', cdr: '쿨감', lifesteal: '흡혈', str: '힘', dex: '민첩', int: '지능', vit: '체력', jump: '점프', mpreg: '마나재생', hpreg: '생명재생',
-      // 산소통·잠수 장비. 이름이 없으면 툴팁에 키(oxyMax)가 그대로 찍힌다
+      // 산소통·잠수 장비.
       oxyMax: '숨(초)', oxyReg: '숨 회복', charge: '전하' };
     for (const k in NM) {
       const a = sa[k] || 0, b = sb[k] || 0;
@@ -1751,10 +1678,7 @@ const UI = {
     h += `<div class="ttype">${RARITY[it.r]} · ${typeName}</div>`;
     if (d.dmg) {
       h += `<div class="tstat">공격력 <b>${Math.round(itemDamage(it))}</b> · 속도 <b>${itemSpeed(it).toFixed(2)}/초</b></div>`;
-      /* ★ 초당 피해를 같이 적는다. 다발 무기는 한 발의 공격력이 단발 무기보다 낮게
-         적혀 있어서(그래야 겹쳐 맞을 때 균형이 맞는다) 숫자만 보면 약해 보인다 —
-         "몇 발인지"와 "그래서 초당 얼마인지"를 나란히 놓아야 견줄 수 있다.
-         한 몸에 다 박히는 경우(보스)를 기준으로 적는다. 흩어진 적에게는 더 나온다. */
+      /* ★ 초당 피해를 같이 적는다. */
       const n = d.multi || 1;
       const one = itemDamage(it) * itemSpeed(it);
       const eff = one * (n > 1 ? 1 + MULTI_FALLOFF * (n - 1) : 1);
@@ -1764,8 +1688,7 @@ const UI = {
     }
     if (d.def) h += `<div class="tstat">방어 <b>${Math.round(d.def * enhMul(it))}</b></div>`;
     if (it.e) h += `<div class="tstat">강화 <b>+${it.e}</b> <span class="thint">(공격·방어 +${(it.e * 5)}%p)</span></div>`;
-    /* 펫은 레벨이 곧 값어치다 — 패시브가 통째로 커지므로 지금 몇 레벨이고
-       다음까지 얼마나 남았는지가 한눈에 보여야 한다. */
+    /* 펫은 레벨이 곧 값어치다 — 패시브가 통째로 커지므로 지금 몇 레벨이고 다음까지 얼마나 남았는지가 한눈에 보여야 한다. */
     if (d.type === 'pet') {
       const lv = it.lv || 1, max = lv >= PET_LV_MAX;
       h += `<div class="tstat">레벨 <b>${lv}</b> / ${PET_LV_MAX}` +
@@ -1799,15 +1722,14 @@ const UI = {
     }
     if (d.mana) h += `<div class="tstat">소모 마나 <b>${d.mana}</b></div>`;
     if (d.multi) h += `<div class="tstat">투사체 <b>${d.multi}발</b></div>`;
-    /* 칸 수 표기 — 가방은 "가방이 몇 칸 늘어난다", 저장 상자는 "상자에 몇 칸이 있다"로 뜻이 다르다.
-       사연: docs/code-history.md#h99 */
+    /* 칸 수 표기 — 가방은 "가방이 몇 칸 늘어난다", 저장 상자는 "상자에 몇 칸이 있다"로 뜻이 다르다 — 사연: docs/code-history.md#h99 */
     // 심연용 산소통만 가진 값 — 배수라 위 표(+n)로는 뜻이 안 통한다
     if (st.oxyReg) h += `<div class="taff">물 밖 숨 회복 ${1 + st.oxyReg}배</div>`;
     if (d.slots) h += d.type === 'bag'
       ? `<div class="taff">+${d.slots} 가방 칸</div>`
       : `<div class="taff">${d.slots}개 칸</div>`;
     const NAME = { hp: '최대 생명', mp: '최대 마나', def: '방어', ms: '이동 속도', crit: '치명타', critD: '치명 피해', cdr: '재사용 감소', lifesteal: '흡혈', jump: '추가 점프', str: '힘', dex: '민첩', int: '지능', vit: '체력', dmgP: '피해', spdP: '공격 속도', fire: '화염 부여', frost: '냉기 부여', mpreg: '마나 재생', hpreg: '생명 재생', magicP: '마법 피해',
-      // 산소통·잠수 장비가 늘려 주는 값. 이름이 없으면 툴팁에 아예 안 뜬다
+      // 산소통·잠수 장비가 늘려 주는 값.
       oxyMax: '숨 참는 시간', charge: '전하' };
     for (const k in st) {
       if (!NAME[k] || !st[k]) continue;
@@ -1821,9 +1743,7 @@ const UI = {
       if (d.use.mp) h += `<div class="taff">마나 ${d.use.mp} 회복</div>`;
       if (d.use.buff) h += `<div class="taff">${BUFFS[d.use.buff].n} 효과</div>`;
     }
-    /* 지금 차고 있는 것과의 비교 — 장비가 100종을 넘어가면서 "이게 더 나은가"를
-       수치를 외워서 판단해야 하는 상태였다. 같은 자리에 낀 것과 견줘 증감만 보여 준다.
-       장신구는 두 칸이라 더 약한 쪽과 견준다(어차피 그쪽을 갈아 끼우게 된다). */
+    /* 같은 자리에 낀 것과 견줘 증감만 보여 준다. */
     const cmp = this.compareLine(it);
     if (cmp) h += cmp;
     if (d.d) h += `<div class="tdesc">"${d.d}"</div>`;
@@ -1863,8 +1783,7 @@ const UI = {
 
   openDialogue(npcId, lines, choices) {
     const d = NPCS[npcId];
-    /* 다시 듣기는 고르는 말이 아니라 창의 기능이라 선택지 줄에서 빼낸다 —
-       선택지가 여섯 줄까지 늘어나 정작 할 말이 어느 것인지 안 보였다. */
+    /* 다시 듣기는 고르는 말이 아니라 창의 기능이라 선택지 줄에서 빼낸다 — 선택지가 여섯 줄까지 늘어나 정작 할 말이 어느 것인지 안 보였다. */
     const cs = (choices || []).slice();
     const ri = cs.findIndex(c => c.replay);
     this.setReplay(ri >= 0 ? cs.splice(ri, 1)[0] : null);
@@ -1876,16 +1795,7 @@ const UI = {
     G.uiOpen = true;
     this.nextLine(true);
   },
-  /* ---- 한 글자씩 흘러나오는 대사 ----
-     말하는 소리(talk.mp3)가 1.06초라, 글자가 한꺼번에 뜨면 소리만 혼자 울리고 끝난다.
-     소리가 우는 동안 글자가 흘러나오게 맞춘다 — 글자당 34ms(대사 452줄의 중앙이 30자라
-     중앙값 한 줄이 1.02초), 긴 줄은 **전체 1.1초에서 끊고**, 아주 짧은 줄은 0.3초는 채운다.
-
-     ★ 1.3초였다. 긴 줄 한 장이 1.3초면 세 장에 4초 — 대화가 아니라 대기가 된다.
-       소리(1.06초)보다 글자가 더 오래 흐르는 것도 앞뒤가 바뀐 것이다.
-
-     타자가 도는 중에는 선택지도 "클릭하여 계속"도 안 내보낸다(다 읽기 전에 버튼이 뜨면
-     눈이 그리로 끌린다). 누르면 그 자리에서 끝까지 펼친다 — 넘어가지는 않는다. */
+  /* ---- 한 글자씩 흘러나오는 대사 ---- */
   TYPE_MS: 34, TYPE_MIN: 300, TYPE_MAX: 1100,
 
   typeLine(text, done) {
@@ -1910,7 +1820,7 @@ const UI = {
     if (this._typeRaf) { cancelAnimationFrame(this._typeRaf); this._typeRaf = 0; }
     this.typing = null;
   },
-  /** 타자가 도는 중이면 끝까지 펼치고 true. 화면 클릭이 넘김 대신 이걸 먼저 쓴다. */
+  /** 타자가 도는 중이면 끝까지 펼치고 true. */
   finishType() {
     if (!this.typing) return false;
     const t = this.typing;
@@ -1935,9 +1845,7 @@ const UI = {
       else $('#dlg-choices').innerHTML = '<div class="dlg-next"><span class="dlg-next-ic"></span>클릭하여 계속</div>';
     });
   },
-  /* 한 겹 더 들어가는 선택지(sub)를 받는다. 가게·수련·여관처럼 **말이 아니라
-     볼일**인 것은 한 줄로 묶어 두고, 누르면 그 자리에서 갈린다 — 대사를 다시
-     타자로 치지 않으므로 끊기는 느낌이 없다. */
+  /* 한 겹 더 들어가는 선택지(sub)를 받는다. */
   showChoices(list) {
     const box = $('#dlg-choices'); box.innerHTML = '';
     const cs = list || (this.dlg && this.dlg.choices) || [];
@@ -1962,9 +1870,7 @@ const UI = {
   },
   closeDialogue() { this.stopType(); $('#dialogue').classList.remove('open'); this.dlg = null; G.uiOpen = false; },
 
-  /** 장 도입·마무리 이야기. 대사창을 쓰되 뒤에 장 삽화를 깔아 "읽는 장면"으로 만든다.
-      intro/outro는 원래 여정의 기록 패널에만 있어서, 실제로 플레이하는 동안에는
-      이야기를 한 줄도 못 보고 지나가는 게 문제였다. */
+  /** 장 도입·마무리 이야기. */
   storyScene(ch, kind, done) {
     const art = $('#cc-art');
     if (G.spritesOn && ch.art) { art.style.backgroundImage = `url(assets/bg/${ch.art}.png)`; art.classList.add('show', 'story'); }
@@ -2007,9 +1913,7 @@ const UI = {
     el.classList.add('show');
     setTimeout(() => { el.classList.remove('show'); art.classList.remove('show'); }, 3800);
   },
-  /* 보스 막대. 등급은 BOSS_TIER 가 정하고, 틀과 읽는 법은 셋이 같다.
-     ★ 이름과 등급은 **보스가 바뀔 때만** 다시 쓴다 — textContent 를 매 프레임 넣으면
-       글자가 떤다. 마지막 페이즈 표시(.last)는 싸우는 중에 바뀌므로 매번 본다. */
+  /* 보스 막대. */
   bossBar(e) {
     const el = $('#bossbar');
     if (!e || e.dead) { el.classList.remove('show'); this.bbFor = null; return; }
@@ -2025,8 +1929,7 @@ const UI = {
     el.classList.toggle('last', e.lastPh());
     const r = Math.max(0, e.hp / e.maxHp);
     $('#bb-fill').style.width = r * 100 + '%';
-    /* 잔상은 같은 값을 넣고 **느리게 따라오게만** 한다(CSS: 0.18초 늦게 0.5초에 걸쳐).
-       자바스크립트로 옛 값을 들고 있을 필요가 없다 — 전이 자체가 지연이다. */
+    /* 잔상은 같은 값을 넣고 **느리게 따라오게만** 한다(CSS: 0.18초 늦게 0.5초에 걸쳐). */
     $('#bb-ghost').style.width = r * 100 + '%';
     $('#bb-hp').textContent = `${fmt(Math.ceil(e.hp))} / ${fmt(e.maxHp)}`;
   },
@@ -2049,24 +1952,18 @@ const UI = {
       $('#pw-fill').style.width = (p.charge / d.maxCharge * 100) + '%';
       $('#pw-text').textContent = `${Math.floor(p.charge)} / ${d.maxCharge}`;
     }
-    /* 추진기 열 — 제트팩을 낀 동안에만. 과열이면 무엇이 막고 있는지 글로 말해 준다
-       (막대만 빨개지면 "왜 안 떠오르지"가 된다). */
+    /* 추진기 열 — 제트팩을 낀 동안에만. */
     $('#hp-fill').closest('.orb-row').classList.toggle('has-jet', !!d.jet);
     if (d.jet) {
       const jb = $('#jet-bar');
       // 남은 쪽을 채운다 — 열이 오를수록 줄어든다(체력·마나와 같은 방향으로 읽히게)
       $('#jet-fill').style.width = Math.round((1 - (p.jetHeat || 0)) * 100) + '%';
       jb.classList.toggle('over', !!p.jetOver);
-      /* ★ 평상시에는 **숫자만** 쓴다. 다른 줄(체력·마나·숨·전하)이 전부 숫자만 쓰는데
-         여기만 이름표를 달고 있어서, 같은 틀 안에서 한 줄만 글줄이 길었다. 막대 왼쪽
-         칸에 이미 🚀 아이콘이 있어 무엇인지는 그것으로 읽힌다.
-         과열·한계 높이 두 상태만 글로 말한다 — 그건 값이 아니라 **왜 안 떠오르는지**라
-         숫자로는 못 읽는다. */
+      /* ★ 평상시에는 **숫자만** 쓴다. */
       $('#jet-text').textContent = p.jetOver ? '과열 — 식는 중'
         : (p.jetGap > 30 ? '한계 높이' : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`);
     }
-    /* 산소 막대 — 물속이거나 아직 덜 찼을 때만 나온다(전하 막대와 같은 방식).
-       평소에는 숨겨 두어야 HUD가 늘 네 줄로 붐비지 않는다. */
+    /* 산소 막대 — 물속이거나 아직 덜 찼을 때만 나온다(전하 막대와 같은 방식). */
     const oxy = p.oxygen === undefined ? d.oxyMax : p.oxygen;
     const showAir = p.headUnder || oxy < d.oxyMax - 0.05;
     $('#hp-fill').closest('.orb-row').classList.toggle('has-air', !!showAir);
@@ -2077,9 +1974,7 @@ const UI = {
       $('#air-fill').parentElement.classList.toggle('low', r < 0.3);
     }
     $('#gold-text').innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl('coin')})"></span>${fmt(p.gold)}`;
-    // 발밑 지형이 아니라 세계 공통 기준선(SURF_BASE)에서 잰다 — 발밑 지형 기준이면
-    // 어디를 걷든 "발밑에서 몇 칸 떠 있나"만 재서 늘 비슷한 값(예: 항상 5m)이 나오고,
-    // 사막 분지처럼 실제로 낮은 지형으로 이동해도 그 고도 변화가 반영되지 않는다.
+    // 발밑 지형이 아니라 세계 공통 기준선(SURF_BASE)에서 잰다 — 발밑 지형 기준이면 어디를 걷든 "발밑에서 몇 칸 떠 있나"만 재서 늘 비슷한 값(예: 항상 5m)이 나오고
     const ty = Math.floor(p.cy / TS);
     const depth = Math.round((ty - SURF_BASE) * 5);
     $('#depth-text').textContent = depth > 0 ? `지하 ${depth}m` : `지상 ${-depth}m`;
@@ -2095,9 +1990,7 @@ const UI = {
     this.refreshSkillbar();
   },
 
-  /* ---------------- 전체 지도 ----------------
-     축소 지도(G.mapAtlas, 타일당 1px)를 확대해서 보여준다. 미니맵을 눌러 연다.
-     안개(fog) 판정은 minimap과 같은 원본(explored)을 쓰므로 둘이 항상 일치한다. */
+  /* ---------------- 전체 지도 ---------------- */
   initFullmap() {
     const canvas = $('#fullmap-canvas');
     this.fmCanvas = canvas; this.fmC = canvas.getContext('2d');

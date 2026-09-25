@@ -2,23 +2,10 @@
 'use strict';
 
 /* ---------------- 타일 ---------------- */
-/* 세계를 4200 → 5000칸으로 넓히면서 늘린 800칸을 전부 **왼쪽**에 붙였다(세션 3의
-   가라앉은 바다 · 빙하 지대). 그래서 기존 세계는 통째로 오른쪽으로 800칸 밀린다.
-   좌표를 하나씩 고쳐 적으면 어디를 빠뜨렸는지 알 수 없어서, 원래 값 + SHIFT로 적는다.
-   world.js보다 먼저 읽히는 파일에 두는 이유: RUIN_SPEC의 x도 같은 값으로 밀어야 한다. */
+/* 세계를 4200 → 5000칸으로 넓히면서 늘린 800칸을 전부 **왼쪽**에 붙였다(세션 3의 가라앉은 바다 · 빙하 지대). */
 const SHIFT = 800;
 
-/* ---------------- 세계 크기 ----------------
-   소형(지금까지의 세계 5000×720) · 중형(가로·세로 1.5배) · 대형(2배).
-   ★ 좌표는 전부 **소형 기준으로 적고** 아래 셋으로 옮긴다. 구조물은 **크기 그대로 자리만** 옮긴다
-     — 너비·높이·방 크기에는 절대 씌우지 말 것(유적이 늘어나면 방·함정 규격이 다 틀어진다).
-     SX(x)  가로 자리. 바이옴 폭이 k배가 되므로 그 안의 자리도 k배.
-     SY(y)  세로 자리. 기준 지표(70)보다 아래(땅속)는 k배 — 지층이 통째로 깊어진다.
-            지표보다 위(하늘·지표 위 구조물)는 k배가 아니라 **지표가 내려간 만큼만 민다** —
-            피라미드처럼 땅 위로 솟은 것이 지표에서 떨어진 거리가 그대로여야 한다.
-     SYB(y) 세계 **바닥**에 붙은 자리(심해). 바다 바닥은 늘 WH-26 이라 k배로 옮기면
-            가라앉은 유적이 바닥에서 떠 버린다 — 바닥에서 잰 거리를 그대로 둔다.
-   값은 setWorldSize(world.js)가 새 게임·불러오기 때 바꾼다. 세이브는 world.size 에 적는다. */
+/* ---------------- 세계 크기 ---------------- */
 const WORLD_SIZES = {
   s: { n: '소형', k: 1, d: '지금까지의 세계. 5000×720칸.' },
   m: { n: '중형', k: 1.5, d: '가로·세로 1.5배(7500×1080칸). 바이옴이 넓고 땅속이 깊다. 만드는 데 두 배 남짓 걸린다.' },
@@ -62,7 +49,7 @@ const T = {
   CAP0: 87, CAP1: 88, CAP2: 89, CAP3: 90,
   /* --- 마을 기계 --- */
   M_WINDMILL: 91, M_MILL: 92, M_OVEN: 93,
-  /* --- 새 바이옴 (울림 정글 / 버섯 골짜기) --- */
+  /* --- 바이옴 (울림 정글 / 버섯 골짜기) --- */
   JUNGLEGRASS: 94, MUD: 95, JUNGLELEAF: 96, FERN: 97, ORCHID: 98,
   GLOWMOSS: 99, SPORESTONE: 100, GLOWCAP: 101,
   /* --- 유적 --- */
@@ -78,46 +65,31 @@ const T = {
   ARCHESTONE: 116, DRAFTGLASS: 117, ARCHSEAL: 118,
   /* --- 특별 유적: 부유 성채(하늘) · 무너진 갱(최심부) --- */
   ORBITPLATE: 119, ORBITCORE: 120, DEEPROCK: 121, BLACKDAMP: 122,
-  /* --- 버섯 골짜기 나무 갓(캐노피) 전용 타일 ---
-     GLOWCAP(101)은 유적 등에서 "혼자 선 발광 버섯" 장식으로 계속 쓰인다(줄기+갓을
-     한 타일에 다 그려서 하나만 있어도 버섯처럼 보여야 하는 자리). 나무 갓은 그 타일을
-     여러 개 붙여 놓다 보니 "따로 선 버섯 여러 개"로 보였다 — 잎(LEAF)처럼 타일 하나가
-     캐노피의 "표면 조각"만 그리는 전용 타일을 따로 둔다. */
+  /* --- 버섯 골짜기 나무 갓(캐노피) 전용 타일 --- */
   GLOWLEAF: 123,
   /* --- 울림 정글 호수 수면 장식 --- */
   LILY: 124,
-  /* --- 유적 함정 셋 (기계가 아니라 타일만으로 돈다) ---
-     SPARKCOIL 은 마주 보는 코일끼리 전기 아크를 잇고, GASVENT 는 유독 가스를 뿜고,
-     GRINDER 는 벽에 박힌 톱니가 튀어나온다. 세션 2 지역(공창·폭주로)은 전기 문명이라
-     코일을 더 많이 세운다. */
+  /* --- 유적 함정 셋 (기계가 아니라 타일만으로 돈다) --- */
   SPARKCOIL: 125, GASVENT: 126, GRINDER: 127, CIPHERSTONE: 128,
-  /* --- 전리품으로만 씨를 얻는 작물 넷 ---
-     밀·별무·잿버섯은 씨앗이 밭에서 돌아오지만, 이 넷은 **몬스터가 떨군 것으로만**
-     씨를 만든다(RECIPES 참고). 그래서 밭이 사냥과 이어진다 — 젤을 모아야 콩을 심고,
-     뼛조각을 모아야 뼈꽃이 핀다. 새 재료를 하나도 늘리지 않고 기존 전리품만 쓴다. */
+  /* --- 전리품으로만 씨를 얻는 작물 넷 --- */
   BEAN0: 129, BEAN1: 130, BEAN2: 131, BEAN3: 132,
   BLOOM0: 133, BLOOM1: 134, BLOOM2: 135, BLOOM3: 136,
   HERB0: 137, HERB1: 138, HERB2: 139, HERB3: 140,
   POD0: 141, POD1: 142, POD2: 143, POD3: 144,
-  /* --- 유적마다 그곳에서만 나오는 장식 둘 ---
-     유적 장식이 전부 다른 데서 가져다 쓴 타일이면(얼음 던전은 동굴의 얼음, 광산은 마을의
-     널판) 어느 유적인지가 벽돌 색으로만 갈린다. 다섯이 저마다 여기서만 볼 수 있는 것
-     둘을 갖는다 — 하나는 벽에, 하나는 바닥·천장에. 눈이 두 군데에서 걸리게. */
+  /* --- 유적마다 그곳에서만 나오는 장식 둘 --- */
   ICEBANNER: 145, FROSTGLYPH: 146,      // 얼음 던전 — 언 깃발 · 서리 글자
   CANOPIC: 147, HIEROGLYPH: 148,        // 피라미드 — 장기 단지 · 새긴 벽
   MINELAMP: 149, TOOLPILE: 150,         // 버려진 광산 — 매단 갱등 · 버린 연장
   BLIGHTSAC: 151, BONEHEAP: 152,        // 부패한 둥지 — 알주머니 · 삭은 뼈
   SPOREVENT: 153, HYPHAE: 154,          // 포자 굴 — 포자 구멍 · 균사 발
-  /* ★ 아래 155번부터는 세션 3(바다·빙하) 타일이다. 원래 125번부터 붙였는데, 그 사이
-     원격 쪽에서 125~154를 유적 함정·작물·장식으로 먼저 써 버렸다. 타일 번호는
-     세이브에 그대로 들어가므로 **가운데를 비집고 넣을 수 없다** — 뒤로 밀어 붙인다. */
+  /* ★ 아래 155번부터는 세션 3(바다·빙하) 타일이다. */
   /* --- 물속 공기 주머니. 액체가 아니라서 그 안에서는 숨을 쉰다 --- */
   AIRPOCKET: 155,
   /* --- 바닷물. 호수 물과 **색이 다르다**(더 짙고 푸르다) --- */
   SEAWATER: 156,
   /* --- 4단계 설비 (기계 타일도 맨 끝에 붙인다) --- */
   M_PRESSOR: 157, M_DESAL: 158, M_BELT_F: 159, M_BATTERY_HI: 160,
-  /* --- 새 함정. 피해보다 **숨**을 빼앗는다 --- */
+  /* --- 함정. 피해보다 **숨**을 빼앗는다 --- */
   BRINEVENT: 161,
   /* --- 촉발 지뢰. 밟으면 터진다 --- */
   TRIPMINE: 162,
@@ -150,10 +122,7 @@ const TILE_DEF = [
   { n: '눈', c: '#d5e2ee', solid: 1, hard: 0, drop: 'dirt' },
   { n: '얼음', c: '#8fc0dd', solid: 1, hard: 1, drop: 'ice_shard' },
   { n: '나무', c: '#5a3c22', solid: 0, hard: 0, drop: 'wood', tree: 1 },
-  /* 잎 — tree(벌목 연쇄 대상)이면서 leaf(기둥이 아니라 수관)로 따로 표시한다.
-     leafDrop은 가중치 표. 'none'이면 아무것도 안 떨어진다 — 잎은 원래 대부분 빈손이고,
-     바이옴별로 그 지형에서만 나오는 재료가 낮은 확률로 섞이게 해서 "특정 숲의 잎을
-     일부러 훑을 이유"를 만들었다. */
+  /* 잎 — tree(벌목 연쇄 대상)이면서 leaf(기둥이 아니라 수관)로 따로 표시한다. */
   { n: '잎', c: '#3f6e2e', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
     leafDrop: [['none', 44], ['wood', 26], ['leaf_oak', 30]] },
   { n: '흑요암', c: '#3a2b46', solid: 1, hard: 3, drop: 'ebon_chunk' },
@@ -205,9 +174,7 @@ const TILE_DEF = [
   { n: '석탄층', c: '#2b2a2f', solid: 1, hard: 1, drop: 'coal', ore: 1 },
   { n: '납 광맥', c: '#7d7d90', solid: 1, hard: 1, drop: 'lead_ore', ore: 1 },
   { n: '유혈암', c: '#3b352c', solid: 1, hard: 2, drop: 'crude_oil', ore: 1 },
-  /* --- 공장 기계 ---
-     전부 1×1 · 통과 가능 · 곡괭이 등급과 무관하게 즉시 회수된다.
-     mach 필드가 MACHINE 표의 키와 짝을 이루고, 이걸로 타일↔기계를 오간다. */
+  /* --- 공장 기계 --- */
   { n: '컨베이어 벨트', c: '#6a6a74', solid: 0, hard: 0, drop: 'm_belt', mach: 'belt' },
   { n: '기계식 드릴', c: '#8a6a3a', solid: 0, hard: 0, drop: 'm_drill', mach: 'drill' },
   { n: '전동 드릴', c: '#4a8ab0', solid: 0, hard: 0, drop: 'm_drill_e', mach: 'drill_e' },
@@ -224,8 +191,7 @@ const TILE_DEF = [
   { n: '자동 포탑', c: '#6a6a74', solid: 0, hard: 0, drop: 'm_turret', mach: 'turret' },
   { n: '전격 함정', c: '#4a6a8a', solid: 0, hard: 0, drop: 'm_trap', mach: 'trap' },
   { n: '정지 스위치', c: '#a03a30', solid: 0, hard: 0, drop: 'm_switch', mach: 'switch', light: 3 },
-  /* --- 마을 건축 ---
-     clear: 빛이 거의 그대로 통과하는 고체(창문). soft: 위에 떨어져도 낙하 피해가 없는 것(건초더미) */
+  /* --- 마을 건축 --- */
   { n: '초가지붕', c: '#c8a860', solid: 1, hard: 0, drop: 'thatch' },
   { n: '기와지붕', c: '#8a4a3a', solid: 1, hard: 1, drop: 'rooftile' },
   { n: '목골벽', c: '#d8cbaa', solid: 1, hard: 0, drop: 'timberwall' },
@@ -237,9 +203,7 @@ const TILE_DEF = [
   { n: '깃발', c: '#b03a3a', solid: 0, hard: 0, drop: 'banner' },
   { n: '건초더미', c: '#d8b850', solid: 1, hard: 0, drop: 'haybale', soft: 1 },
   { n: '모래주머니', c: '#a89468', solid: 1, hard: 0, drop: 'sandbag' },
-  /* --- 농업 ---
-     crop.next 가 있으면 아직 자라는 중, crop.ripe 면 다 여문 것.
-     seed 는 수확할 때 함께 돌려주는 씨앗이다. */
+  /* --- 농업 --- */
   { n: '경작지', c: '#4a3620', solid: 1, hard: 0, drop: 'dirt', farm: 1 },
   { n: '밀 (싹)', c: '#7fa84a', solid: 0, hard: 0, drop: 'seed_wheat', crop: { next: T.WHEAT1 } },
   { n: '밀 (자람)', c: '#8fb84a', solid: 0, hard: 0, drop: 'seed_wheat', crop: { next: T.WHEAT2 } },
@@ -276,9 +240,7 @@ const TILE_DEF = [
   { n: '화살 발사기', c: '#7a6a5a', solid: 0, hard: 0, drop: 'm_dart', mach: 'dart' },
   { n: '화염 분사구', c: '#9a5a3a', solid: 0, hard: 0, drop: 'm_flame', mach: 'flamejet', light: 4 },
   { n: '서리 분사구', c: '#6a9ab0', solid: 0, hard: 0, drop: 'm_frost', mach: 'frostjet' },
-  /* --- 고대 유적 함정 ---
-     세션 1의 유적은 기계 문명 이전 것이라 기계 체계를 쓰지 않는다. 상태를 저장하지 않고
-     타일 좌표 해시로 각자 다른 박자를 만들어 돌아간다. */
+  /* --- 고대 유적 함정 --- */
   { n: '화살 구멍 (왼쪽)', c: '#4a4238', solid: 1, hard: 2, drop: 'stone', tdart: -1 },
   { n: '화살 구멍 (오른쪽)', c: '#4a4238', solid: 1, hard: 2, drop: 'stone', tdart: 1 },
   { n: '불길 분출구', c: '#8a4a2a', solid: 1, hard: 2, drop: 'stone', tvent: 1, light: 4 },
@@ -286,44 +248,29 @@ const TILE_DEF = [
   /* --- 폭주로 --- */
   { n: '녹아내린 강철', c: '#5a4a44', solid: 1, hard: 4, drop: 'steel_plate' },
   { n: '노심 유리', c: '#e8b04a', solid: 1, hard: 4, drop: 'power_core', ore: 1, light: 10 },
-  /* --- 동굴 물 ---
-     용암과 같은 자리(비고체·곡괭이로 못 캠)지만 hurt가 없다. liquid를 보고 Ent.move가
-     부력과 저항을 건다. 떨어지는 물은 아래로 밀어내는 흐름(flow)이 하나 더 붙는다. */
+  /* --- 동굴 물 --- */
   { n: '고인 물', c: '#2f6f9f', solid: 0, hard: 99, liquid: 1 },
   { n: '떨어지는 물', c: '#4a8fc0', solid: 0, hard: 99, liquid: 1, flow: 1 },
-  /* --- 세션 2 종장: 설계실 ---
-     공창이 강철로 지어졌다면 이곳은 그보다 앞선 것 — 이음매가 없는 흰 돌이다. */
+  /* --- 세션 2 종장: 설계실 --- */
   { n: '원형석', c: '#cfc7b8', solid: 1, hard: 4, drop: 'archestone' },
   { n: '설계 유리', c: '#8fd8e8', solid: 1, hard: 4, drop: 'draft_glass', ore: 1, light: 8 },
   { n: '설계실 봉인', c: '#b8a878', solid: 1, hard: 99 },
-  /* --- 특별 유적 ---
-     궤도판은 부유 성채의 벽·바닥. 궤도핵은 그 안에 박힌 광맥이다.
-     심층암과 유독가스 주머니는 최심부 폐광의 것 — 가스는 밟으면 아프고 곡괭이로 못 캔다. */
+  /* --- 특별 유적 --- */
   { n: '궤도판', c: '#8fa8c8', solid: 1, hard: 5, drop: 'orbit_plate' },
   { n: '궤도핵', c: '#7fe0ff', solid: 1, hard: 5, drop: 'orbit_gear', ore: 1, light: 10 },
   { n: '심층암', c: '#3a3630', solid: 1, hard: 5, drop: 'deep_stone' },
   { n: '유독 가스', c: '#6a7a4a', solid: 0, hard: 99, hurt: 14, light: 2 },
   { n: '갓 조각', c: '#6fe0c0', solid: 0, hard: 0, drop: 'glowcap', tree: 1, leaf: 1, light: 4,
     leafDrop: [['none', 55], ['glowcap', 30], ['spore_sac', 15]] },
-  /* 수련 — 물 위에 뜬 잎이므로 **그 칸도 물이다**(liquid 1). 그림도 판 밑에 물을 함께 칠한다. 발판(solid 2)은 그대로라 위에 올라설 수 있다.
-     사연: docs/code-history.md#h1 */
+  /* 수련 — 물 위에 뜬 잎이므로 **그 칸도 물이다**(liquid 1) — 사연: docs/code-history.md#h1 */
   { n: '수련', c: '#3a9a6a', solid: 2, hard: 0, drop: 'lily_pad', liquid: 1 },
-  /* --- 새 유적 함정 ---
-     tcoil: 마주 보는 코일을 찾아 그 사이에 전기 아크를 놓는다 (세션 2 전기 문명)
-     tgas:  유독 가스를 위로 뿜는다. 예고가 길고 범위가 넓다 — 지나갈 틈을 재는 함정
-     tgrind: 벽에서 톱니가 튀어나온다. 붙어 걷지 못하게 만든다 */
+  /* --- 유적 함정 --- */
   { n: '방전 코일', c: '#5a8aa8', solid: 1, hard: 3, drop: 'copper_ore', tcoil: 1, light: 3 },
   { n: '가스 분출구', c: '#6a7a4a', solid: 1, hard: 2, drop: 'stone', tgas: 1 },
   { n: '톱니 구멍', c: '#6a6058', solid: 1, hard: 3, drop: 'iron_ore', tgrind: 1 },
-  /* 암호석 — 숫자 잠긴 골방을 통째로 두르는 돌.
-     ★ hard 99 라 **어떤 곡괭이로도 캘 수 없다.**
-     겉모습은 유적 벽돌(#6a6250)에서 크게 벗어나지 않게 두고, 룬빛만 옅게 얹어
-       "여기는 손대지 못하는 자리"로 읽히게 했다 — 구조 안에 어울려야 하므로.
-     사연: docs/code-history.md#h2 */
+  /* 암호석 — 숫자 잠긴 골방을 통째로 두르는 돌 — 사연: docs/code-history.md#h2 */
   { n: '암호석', c: '#5f5947', solid: 1, hard: 99, light: 3 },
-  /* --- 전리품 작물 넷 ---
-     기존 셋과 규칙이 완전히 같다(4단계 · crop.next / crop.ripe · drop).
-     다른 것은 씨앗을 밭에서 얻을 수 없다는 것뿐이다 — 잡아야 심는다. */
+  /* --- 전리품 작물 넷 --- */
   { n: '핏빛 콩 (싹)', c: '#6f8a4a', solid: 0, hard: 0, drop: 'seed_bloodbean', crop: { next: T.BEAN1 } },
   { n: '핏빛 콩 (자람)', c: '#7f9a4a', solid: 0, hard: 0, drop: 'seed_bloodbean', crop: { next: T.BEAN2 } },
   { n: '핏빛 콩 (여무는 중)', c: '#a8804a', solid: 0, hard: 0, drop: 'seed_bloodbean', crop: { next: T.BEAN3 } },
@@ -340,11 +287,7 @@ const TILE_DEF = [
   { n: '불씨 꼬투리 (자람)', c: '#8a6a44', solid: 0, hard: 0, drop: 'seed_emberpod', crop: { next: T.POD2 } },
   { n: '불씨 꼬투리 (여무는 중)', c: '#b06a34', solid: 0, hard: 0, drop: 'seed_emberpod', crop: { next: T.POD3 } },
   { n: '불씨 꼬투리', c: '#e8842a', solid: 0, hard: 0, drop: 'emberpod', crop: { ripe: 1, seed: 'seed_emberpod' }, light: 5 },
-  /* --- 유적 고유 장식 열 ---
-     ★ 걷는 줄(fy·fy-1)에 놓이는 것은 반드시 solid 0 이어야 한다 — 고체를 놓으면 방문을
-       봉해서 유적 절반이 못 들어가는 곳이 된다(world.js putRuinDecor). 벽을 갈아끼우는
-       것(statue 자리)만 solid 1.
-     ★ 캐면 그 유적의 재료가 나온다 — 장식이 곧 그 유적을 터는 이유가 된다. */
+  /* --- 유적 고유 장식 열 --- */
   { n: '언 깃발', c: '#7fb6cc', solid: 0, hard: 0, drop: 'neverthaw', a: 1 },
   { n: '서리 글자', c: '#9fd8ea', solid: 1, hard: 2, drop: 'neverthaw', light: 3 },
   { n: '장기 단지', c: '#c8a86a', solid: 0, hard: 0, drop: 'sealed_ash', a: 1 },
@@ -355,87 +298,60 @@ const TILE_DEF = [
   { n: '삭은 뼈', c: '#cfc8b0', solid: 0, hard: 0, drop: 'blight_spawn', a: 1 },
   { n: '포자 구멍', c: '#5a8a74', solid: 1, hard: 2, drop: 'spore_dust', light: 4 },
   { n: '균사 발', c: '#8fe0c4', solid: 0, hard: 0, drop: 'spore_dust', light: 2, a: 1 },
-  // 공기 주머니 — 물속에 갇힌 공기. 통과 가능하고 액체가 아니라 부력·산소가 모두 끊긴다
+  // 공기 주머니 — 물속에 갇힌 공기.
   { n: '공기 주머니', c: '#cfeeff', solid: 0, hard: 99, air: 1 },
-  // 바닷물 — 호수 물(#2f6f9f)보다 짙고 푸르다. 물성은 같다(헤엄·산소 전부 동일)
+  // 바닷물 — 호수 물(#2f6f9f)보다 짙고 푸르다.
   { n: '바닷물', c: '#12496e', solid: 0, hard: 99, liquid: 1, sea: 1 },
   // 4단계 설비 — 다른 기계 타일과 같은 규격(단단함 1, 곡괭이 등급 무관하게 회수)
   { n: '가압기', c: '#4a5a6a', solid: 1, hard: 1, drop: 'm_pressor' },
   { n: '염수 증류기', c: '#3a6a7a', solid: 1, hard: 1, drop: 'm_desal' },
   { n: '고속 컨베이어 벨트', c: '#8a9aa8', solid: 0, hard: 1, drop: 'm_belt_f' },
   { n: '강화 축전지', c: '#4a9a8a', solid: 1, hard: 1, drop: 'm_battery_hi' },
-  /* 염수 분출구 — 위로 짠물을 뿜는다. 피해는 작지만 **숨을 통째로 빼앗는다**.
-     이미 숨을 참고 내려온 자리에서는 화염 분출구보다 훨씬 무섭다. */
+  /* 염수 분출구 — 위로 짠물을 뿜는다. */
   { n: '염수 분출구', c: '#2a6a7a', solid: 1, hard: 2, drop: 'stone', tbrine: 1 },
-  /* 촉발 지뢰 — 밟으면 터진다. 밟기 전에는 바닥에 박힌 원반으로만 보이므로,
-     들어가는 길을 "보고 걷게" 만든다. 곡괭이로 캐면 안 터지고 화약이 나온다. */
+  /* 촉발 지뢰 — 밟으면 터진다. */
   { n: '촉발 지뢰', c: '#8a5a3a', solid: 1, hard: 1, drop: 'gunpowder', tmine: 1 },
-  /* 해초 — 얕은 해저에서 자란다. 이게 없으면 해초를 얻을 길이 표류물 더미 드롭뿐이라
-     15장의 "해초 30개" 목표가 몹 사냥에만 매달리게 된다. 물칸이라 헤엄에 안 걸린다. */
+  /* 해초 — 얕은 해저에서 자란다. */
   { n: '해초', c: '#3f7a5a', solid: 0, hard: 0, drop: 'kelp', liquid: 1, plant: 1 },
-  /* 조개 — 해변 장식. 지상의 잡초·꽃과 같은 자리다. 캐면 게딱지가 나온다 */
+  /* 조개 — 해변 장식. */
   { n: '조개', c: '#e0cdb8', solid: 0, hard: 0, drop: 'crab_shell', plant: 1 },
-  /* 유황 — 화약의 원료. 빙하 얼음층과 해저 바위에만 박혀 있다.
-     세션 3에 가야 폭탄을 만들 수 있게 하려고 산지를 그쪽으로 몰았다. */
+  /* 유황 — 화약의 원료. */
   { n: '유황', c: '#d8c04a', solid: 1, hard: 2, drop: 'sulfur', light: 1 },
-  /* 방 공기 — 공기 주머니와 물리는 똑같다(air:1이라 숨이 안 줄고, 칸을 차지하니
-     물이 못 들어온다). 다른 점은 **보이는 것뿐**: 공기 주머니는 바닷속에서 안 튀도록
-     물을 그대로 깔고 그리는데, 사람이 사는 방 안에서까지 그러면 방이 물에 잠긴
-     것처럼 보인다. 이쪽은 아무것도 안 그려서 뒤에 바른 벽지가 그대로 드러난다. */
+  /* 방 공기 — 공기 주머니와 물리는 똑같다(air:1이라 숨이 안 줄고, 칸을 차지하니 물이 못 들어온다). */
   { n: '방 공기', c: '#3b2c1c', solid: 0, hard: 99, air: 1 },
-  /* --- 야자수 (떠 있는 섬) ---
-     보통 나무와 따로 둔 이유: 줄기가 곧지 않고 기울어 자라며, 잎이 사방으로 처지고,
-     열매가 따로 달린다. 기존 tree/leaf 타일에 얹으면 잿빛 숲 나무까지 같이 변한다. */
+  /* --- 야자수 (떠 있는 섬) --- */
   { n: '야자 줄기', c: '#7a5a38', solid: 0, hard: 0, drop: 'wood', tree: 1 },
   { n: '야자 잎', c: '#4f8a3a', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
     leafDrop: [['none', 40], ['wood', 30], ['leaf_palm', 30]] },
   { n: '코코넛', c: '#6a4a2a', solid: 0, hard: 0, drop: 'coconut', tree: 1 },
-  /* --- 세션 3 광물 둘 (채굴 등급 5) ---
-     등급 5는 지금까지 아크 착암기(하늘 성채) 하나로만 닿던 자리다. 세션 3에도
-     그 등급의 산지를 두어, 가압 곡괭이를 만들 이유를 준다.
-     산지를 빙하·해저로 나눈 것은 일부러다 — 하나는 걸어서, 하나는 헤엄쳐서 캔다. */
+  /* --- 세션 3 광물 둘 (채굴 등급 5) --- */
   { n: '빙정석', c: '#9fd8e8', solid: 1, hard: 5, drop: 'glacium_ore', ore: 1, light: 2 },
   { n: '조수석', c: '#3f9a8a', solid: 1, hard: 5, drop: 'tide_ore', ore: 1, light: 2 },
-  /* --- 동굴 (T 의 172~177 과 같은 순서) ---
-     이끼 바위는 돌과 똑같이 캐진다 — 이끼 굴의 바닥·천장을 덮는 겉옷일 뿐이다.
-     나머지 장식 넷은 solid 0 이라 **걸음을 절대 막지 않는다**(유적 입구 통로에 떨어져도 안전).
-     금 간 자갈은 캐거나 터뜨리면 그 뒤에 숨은 동굴이 무너져 열린다(game.js triggerFault). */
+  /* --- 동굴 (T 의 172~177 과 같은 순서) --- */
   { n: '이끼 낀 바위', c: '#4f6a4a', solid: 1, hard: 1, drop: 'stone' },
   { n: '늘어진 이끼', c: '#6fa05a', solid: 0, hard: 0, drop: 'cave_moss', a: 1 },
   { n: '종유석', c: '#9a9488', solid: 0, hard: 1, drop: 'stone', a: 1 },
   { n: '석순', c: '#8a8478', solid: 0, hard: 1, drop: 'stone', a: 1 },
   { n: '수정 무리', c: '#a88fe8', solid: 0, hard: 2, drop: 'crystal', light: 7, a: 1 },
-  /* ★ 금 간 자갈은 **돌과 거의 같은 색**이다(누렇게 튀던 것을 되돌렸다). 무너질 굴 자리 전체가
-     이 자갈로 채워지므로, 튀는 색이면 땅속에 큰 누런 덩어리가 그대로 보여 숨은 동굴이
-     숨어 있지 않다. 알갱이 결과 가는 금으로만 알아본다. */
+  /* ★ 무너질 굴 자리 전체가 이 자갈로 채워지므로, 튀는 색이면 땅속에 큰 누런 덩어리가 그대로 보여 숨은 동굴이 숨어 있지 않다. */
   { n: '금 간 자갈', c: '#5f5e62', solid: 1, hard: 1, drop: 'stone' },
-  /* 지층 돌 — 돌과 똑같이 캐지고(석회암 1 · 화강암 2), 캐면 그 돌이 나와 다시 쌓을 수 있다.
-     석회암은 얕은 곳과 종유 동굴 둘레에 짙다(석회암이 녹아 종유석이 자란다는 흉내). */
+  /* 지층 돌 — 돌과 똑같이 캐지고(석회암 1 · 화강암 2), 캐면 그 돌이 나와 다시 쌓을 수 있다. */
   { n: '석회암', c: '#9a9486', solid: 1, hard: 1, drop: 'limestone' },
   { n: '화강암', c: '#7a6868', solid: 1, hard: 2, drop: 'granite' },
-  /* --- 흐르는 액체 ---
-     고인 물(원천)에서 흘러나온 물. 원천과 달리 **수위**(world.flv, 1~8)가 있고 저장하지
-     않는다 — 수위는 원천에서 몇 칸 떨어졌나로 정해지는 값이라 불러온 뒤 다시 흘려 보면
-     똑같이 나온다. 떨어지는 민물은 새 타일이 아니라 폭포(FALLS)가 된다. */
+  /* --- 흐르는 액체 --- */
   { n: '흐르는 물', c: '#2f6f9f', solid: 0, hard: 99, liquid: 1, fluid: 1 },
   { n: '흐르는 바닷물', c: '#12496e', solid: 0, hard: 99, liquid: 1, sea: 1, fluid: 1 },
   { n: '흐르는 용암', c: '#e0561c', solid: 0, hard: 99, hurt: 26, fluid: 1 },
-  /* 샘 바위 — 물이 스며 나오는 바위. 폭포는 여기서 시작한다. 캐면 샘이 끊기고 폭포가
-     위에서부터 말라 내려간다. 예전 폭포는 천장 한가운데서 아무 까닭 없이 쏟아졌다. */
+  /* 샘 바위 — 물이 스며 나오는 바위. */
   { n: '샘 바위', c: '#5a6a70', solid: 1, hard: 2, drop: 'stone' },
   /* 물가 장식 — 부들은 물가 바닥에, 물풀은 물속 바닥에(그 칸도 물이다), 조약돌은 물가에 */
   { n: '부들', c: '#7a8a4a', solid: 0, hard: 0, drop: 'deco_cattail', plant: 1, a: 1 },
   { n: '물풀', c: '#4a8a5a', solid: 0, hard: 0, drop: 'deco_pondweed', liquid: 1, plant: 1 },
   { n: '물가 조약돌', c: '#9a948a', solid: 0, hard: 0, drop: 'deco_pebbles', plant: 1, a: 1 },
-  /* 소나무 잎 — 눈 지대 나무. 잿빛에 먹히지 않는다(game.js ASH_TILE 에 없다): 늘푸른 바늘잎이라
-     장이 넘어가도 지지 않는다. 윗칸이 트였으면 눈을 얹어 그린다(tileart drawConn). */
+  /* 소나무 잎 — 눈 지대 나무. */
   { n: '소나무 잎', c: '#2f5a44', solid: 0, hard: 0, drop: 'wood', tree: 1, leaf: 1,
     leafDrop: [['none', 40], ['wood', 26], ['leaf_pine', 34]] },
-  /* --- 운석 구덩이(game.js carveCrater) — 세계 생성에는 없고 운석이 떨어질 때만 생긴다 ---
-     운석은 곡괭이 3등급(지옥석과 같다): 하늘에서 떨어진 쇳덩이라 초반 곡괭이로 캐면 안 된다.
-     별빛 수정은 solid 0 — 구덩이 바닥에 솟아도 걸음을 막지 않는다(수정 무리와 같다).
-     녹아 굳은 돌은 캐면 그냥 돌이다 — 구덩이 모양을 보여 주는 겉옷일 뿐이다.
-     ★ 둘 다 아직 쓰는 제작법이 없다(재료로만 모인다). 쓰임은 다음 판에 붙인다. */
+  /* --- 운석 구덩이(game.js carveCrater) — 세계 생성에는 없고 운석이 떨어질 때만 생긴다 --- */
   { n: '운석', c: '#3a3436', solid: 1, hard: 3, drop: 'meteorite', ore: 1 },
   { n: '별빛 수정', c: '#ffe6a8', solid: 0, hard: 2, drop: 'star_crystal', a: 1 },
   { n: '녹아 굳은 돌', c: '#2e2a2e', solid: 1, hard: 2, drop: 'stone' }
@@ -452,8 +368,7 @@ const SEED_TILE = {
 const MACH_OF_TILE = {};
 for (let i = 0; i < TILE_DEF.length; i++) if (TILE_DEF[i].mach) MACH_OF_TILE[i] = TILE_DEF[i].mach;
 
-/* 손그림 타일 애셋 이름 → 타일 ID.
-   manifest.json의 tiles에 이 이름으로 파일을 넣어 두면 절차 생성 텍스처를 자동으로 덮어쓴다. */
+/* 손그림 타일 애셋 이름 → 타일 ID. manifest.json의 tiles에 이 이름으로 파일을 넣어 두면 절차 생성 텍스처를 자동으로 덮어쓴다. */
 const TILE_SPRITE = {
   steelplate: T.STEELPLATE, conduit: T.CONDUIT,
   coal: T.COAL, lead: T.LEAD, oilshale: T.OILSHALE,
@@ -487,19 +402,15 @@ for (const id in MACH_OF_TILE) TILE_SPRITE['m_' + MACH_OF_TILE[id]] = +id;
 
 const WALL_COLOR = [null, '#3a2a1a', '#33333a', '#241c2e', '#402d1a', '#4a5f6e', '#32323c', '#2a2018', '#6b5a34',
   '#3f5266', '#332f26', '#23301f', '#22322e', '#3c3a34', '#4a3520', '#5a4128'];
-// 9: 하늘돌, 10: 유적, 11: 정글, 12: 버섯 골짜기,
-// 13: 성벽(WALLSTONE을 어둡게 — 성문 안쪽 배경)
-// 15: 나무 판자 벽지 — 벽돌결이 아니라 세로 판자결로 그린다(paintWoodWall)
+// 9: 하늘돌, 10: 유적, 11: 정글, 12: 버섯 골짜기, 13: 성벽(WALLSTONE을 어둡게 — 성문 안쪽 배경) 15: 나무 판자 벽지 — 벽돌결이 아니라 세로 판자결로
+// 그린다(paintWoodWall)
 
 /* ---------------- 희귀도 ---------------- */
 const RARITY = ['일반', '고급', '희귀', '영웅', '전설', '신화'];
 const RARITY_COLOR = ['#b8b8b8', '#5fc45f', '#4f9cf0', '#a866e8', '#e8912a', '#e8484f'];
 const RARITY_MULT = [1, 1.12, 1.28, 1.5, 1.8, 2.2];
 
-/* 무기 최소 착용 레벨 — 등급(tier)이 곧 세기이므로 무기마다 따로 적지 않고 여기서 뽑는다.
-   기준은 "그 등급이 처음 손에 들어오는 장에서의 레벨"보다 살짝 아래다. ★ 위로 잡으면
-   방금 잡은 보스가 떨군 무기를 못 드는 일이 생긴다(뼈의 군주는 2장 보스인데 그 전리품이
-   레벨 12를 요구하던 식) — 막는 쪽보다 자연스럽게 충족되는 쪽으로. */
+/* 무기 최소 착용 레벨 — 등급(tier)이 곧 세기이므로 무기마다 따로 적지 않고 여기서 뽑는다. */
 const WEAPON_TIER_LV = [1, 2, 5, 6, 11, 16, 20, 26, 44, 78];
 
 /* ---------------- 접사 ---------------- */
@@ -545,21 +456,15 @@ const ITEMS = {
 
   /* --- 도구 --- */
   pick_copper:  { n: '구리 곡괭이', i: '⛏', type: 'tool', power: 1, dmg: 6, spd: 2.2, d: '돌 · 얼음 · 구리 · 철까지 캘 수 있다.' , lvReq: 0},
-  /* 굴 파는 이의 시작 곡괭이. 채굴 등급(power)과 속도는 구리 곡괭이와 똑같고
-     날만 세워 두어 공격력이 조금 높다 — 곡괭이 하나로 시작해도 다른 넷과
-     초반 화력이 같아지도록 맞춘 값이다(9 × 2.2 = 19.8, 목검과 동일). */
+  /* 굴 파는 이의 시작 곡괭이. */
   pick_sharp:   { n: '날카로운 곡괭이', i: '⛏', type: 'tool', power: 1, dmg: 9, spd: 2.2, d: '구리 곡괭이와 같은 것을 캐지만, 날을 세워 두어 더 아프게 때린다.' , lvReq: 0},
   pick_iron:    { n: '강철 곡괭이', i: '⛏', type: 'tool', power: 2, dmg: 9, spd: 2.4, d: '금 · 수정 · 미스릴을 캘 수 있다.' , lvReq: 5},
   pick_mythril: { n: '미스릴 곡괭이', i: '⛏', type: 'tool', power: 3, dmg: 14, spd: 2.7, d: '흑요암 · 영혼석 · 지옥석을 캘 수 있다.' , lvReq: 10},
   pick_soul:    { n: '영혼 착암기', i: '⛏', type: 'tool', power: 4, dmg: 20, spd: 3.2, d: '기반암 외의 모든 것을 뚫는다.' , lvReq: 16},
   axe_iron:     { n: '강철 도끼', i: '🪓', type: 'tool', power: 1, dmg: 12, spd: 2.0, chop: 3 , lvReq: 5},
 
-  /* --- 낚시 ---
-     type: 'rod'는 곡괭이(mine)나 블록(place)과는 다른 우클릭 경로를 탄다 — 물 블록을 겨눠야
-     캐스팅된다. fishWait는 입질까지 걸리는 시간 배율, fishBonus는 상위 어종 확률 가산치다. */
-  /* fishItemChance — 물고기가 아니라 "무언가 다른 것"이 걸릴 기본 확률.
-     일반 낚싯대는 거의 0에 가깝고, 숙련된 낚싯대에서 크게 뛴다 — 결과표는
-     resolveFish()의 itemTable을 보라(포션·잡템·장신구). */
+  /* --- 낚시 --- */
+  /* fishItemChance — 물고기가 아니라 "무언가 다른 것"이 걸릴 기본 확률. */
   rod_basic: { n: '평범한 낚싯대', i: '🎣', type: 'rod', fishWait: 1, fishBonus: 0, fishItemChance: 0.015,
                d: '물 블록에 우클릭해 던진다. 생고기가 있으면 자동으로 미끼가 된다.' , lvReq: 1 },
   rod_adv:   { n: '숙련된 낚싯대', i: '🎣', type: 'rod', fishWait: 0.7, fishBonus: 0.15, fishItemChance: 0.22,
@@ -570,11 +475,8 @@ const ITEMS = {
                  d: '비늘이 동전처럼 반짝인다.' },
   fish_deep:   { n: '심해어', i: '🐡', type: 'consum', use: { hp: 90, buff: 'fed_stew' }, cd: 6, stack: 12,
                  d: '이런 깊이에 살 리 없는 눈을 하고 있다.' },
-  /* 산소통 — 잠수 시간을 늘린다. oxyMax는 recalc()의 merge가 모르는 키를 그대로
-     acc에 얹어 주므로 별도 배선이 필요 없다(펫 패시브 b와 같은 방식). */
-  /* 산소통 — **유틸리티 칸(util)** 에 낀다. 장신구·갑옷 칸을 안 먹으므로 숨을 늘리려고
-     전투 성능을 깎을 일이 없다. 셋은 위로 갈아 끼우는 계단이고, 아래 통을 재료로 쓴다 —
-     세션 3 깊이가 늘어날 때마다 통만 갈아 끼우면 된다. */
+  /* 산소통 — 잠수 시간을 늘린다. */
+  /* 산소통 — **유틸리티 칸(util)** 에 낀다. */
   tank_air:    { n: '휴대용 산소통', i: '🫧', type: 'util', b: { oxyMax: 14, ms: -2 },
                  d: '등에 메는 낡은 통. 숨을 오래 참게 해 주지만 물살을 조금 더 탄다.', lvReq: 8 },
   tank_deep:   { n: '심해용 산소통', i: '🫧', type: 'util', b: { oxyMax: 32, def: 6 },
@@ -584,11 +486,7 @@ const ITEMS = {
   ring_angler: { n: '낚시꾼의 반지', i: '💍', type: 'acc', b: { crit: 8, lifesteal: 3, ms: 4 },
                  d: '미끼도 없이 이걸 낚았다는 사람이 있다. 아무도 안 믿는다.' , lvReq: 1 },
 
-  /* ================= 물에서만 나오는 것 일곱 =================
-     낚시 결과표가 "이미 어디서나 나오는 물건"(젤·뼈·포션·파편) 위주면 아무리 좋은 것이
-     걸려도 손에 남는 게 사냥과 똑같다. 잡템 칸을 셋으로 줄이고 나머지를 물에서만 나오는
-     일곱으로 바꿨다 — 세션 1은 진주·주화·등불 치어·물비늘, 세션 2는 물먹은 전지·냉각액·
-     삭은 봉돌. 매듭 하나만 양쪽에 걸쳐 아주 드물게 올라온다. */
+  /* ================= 물에서만 나오는 것 일곱 ================= */
   tide_pearl:   { n: '물때 진주', i: '🫧', type: 'mat', stack: 999, price: 620,
                   d: '조수가 바뀔 때만 열리는 조개 속에 있다. 재가 내린 뒤로는 더 귀해졌다.' },
   sunken_coin:  { n: '가라앉은 주화', i: '🪙', type: 'mat', stack: 999, price: 1100,
@@ -606,11 +504,7 @@ const ITEMS = {
   knot_angler:  { n: '낚시꾼의 매듭', i: '🪢', type: 'acc', b: { crit: 10, ms: 6, cdr: 6, hp: 60 },
                   d: '누가 언제 묶었는지 모른다. 풀리지도 않고, 끊기지도 않는다.' , lvReq: 1 },
 
-  /* ---- 물에서만 나오는 무기 여섯 (세션마다 셋) ----
-     재료로 만들 수 없다. 오직 낚아야 나온다 — 그래서 낚시가 "부업"이 아니라
-     한 갈래가 된다. 등급은 그 세션에서 실제로 쓰이는 구간에 맞췄다:
-     세션 1은 3~4(강철~미스릴 사이), 세션 2는 6~7(심연~에테르 사이).
-     셋을 근접·원거리·마법으로 갈라 두어, 어느 갈래를 키우든 하나는 제 것이 된다. */
+  /* ---- 물에서만 나오는 무기 여섯 (세션마다 셋) ---- */
   spear_tide:    { n: '물살 작살', i: '🔱', type: 'weapon', wc: 'melee', dmg: 46, spd: 2.8, kb: 4, reach: 62, tier: 3,
                    d: '물속에서 던지라고 만든 것이라 유난히 길다. 뭍에서도 잘 든다.' },
   bow_reed:      { n: '갈대 활', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 36, spd: 2.8, kb: 2, tier: 3, proj: 'arrow',
@@ -651,8 +545,7 @@ const ITEMS = {
   helm_iron:   { n: '강철 투구', i: '⛑', type: 'armor', slot: 'helm', def: 9, b: { hp: 20, vit: 2 } , lvReq: 12 },
   chest_iron:  { n: '강철 판금', i: '🦺', type: 'armor', slot: 'chest', def: 13, b: { hp: 30, def: 3 } , lvReq: 12 },
   boots_iron:  { n: '강철 정강이받이', i: '🥾', type: 'armor', slot: 'boots', def: 7, b: { ms: 5, vit: 2 } , lvReq: 12 },
-  /* 낚시로만 모을 수 있는 물비늘을 겹쳐 꿰맨 갑옷. 강철 판금과 같은 등급이지만
-     방어를 조금 내주고 발이 훨씬 가볍다 — 낚시를 한 사람만 고를 수 있는 선택지 */
+  /* 낚시로만 모을 수 있는 물비늘을 겹쳐 꿰맨 갑옷. */
   chest_scale: { n: '물비늘 갑옷', i: '🐚', type: 'armor', slot: 'chest', def: 11, b: { hp: 24, ms: 12, dex: 4 },
                  d: '물에 젖지 않는다. 물에서 건진 것으로 지었으니 당연한 일인지도 모른다.' , lvReq: 12 },
   helm_mythril:{ n: '미스릴 투구', i: '👑', type: 'armor', slot: 'helm', def: 16, b: { mp: 30, int: 4, cdr: 6 } , lvReq: 20 },
@@ -678,12 +571,7 @@ const ITEMS = {
   bag_pack:    { n: '구름결 배낭', i: '🎒', type: 'bag', slots: 12, d: '무게가 반쯤 사라진 것처럼 가볍다.' , lvReq: 24 },
   bag_vault:   { n: '유적의 보관함', i: '🧳', type: 'bag', slots: 16, d: '안쪽이 바깥보다 넓다. 어떻게 만든 건지는 아무도 모른다.' , lvReq: 20 },
 
-  /* --- 소비 ---
-     치유·마나 물약은 instant — 재사용 대기(potionCd)를 아예 안 걸고 안 본다. 음식·물고기는
-     potionCd 를 공유한다. 치유·마나는 3단계(작은/일반/큰), 나머지 비약은 2단계.
-     ★ 값을 한 칸씩 밀면서 id 는 그대로 뒀다 — 예전 'potion_hp' 를 참조하던 초반 상점·몹
-       드랍·챕터 보상은 전부 '_small' 로 내려 원래 세기를 유지한다. 후반 보상은
-       '_greater' 로 올리되 개수를 크게 줄였다(양보다 급). */
+  /* --- 소비 --- */
   potion_hp_small: { n: '작은 치유 물약', i: '🧪', type: 'consum', use: { hp: 60 }, instant: 1, stack: 20, d: '즉시 체력 60 회복. 재사용 대기시간이 없다.' },
   potion_hp:   { n: '치유 물약', i: '🧪', type: 'consum', use: { hp: 140 }, instant: 1, stack: 20, d: '즉시 체력 140 회복. 재사용 대기시간이 없다.' },
   potion_hp_greater: { n: '상급 치유 물약', i: '🧪', type: 'consum', use: { hp: 280 }, instant: 1, stack: 20,
@@ -700,15 +588,12 @@ const ITEMS = {
   raw_meat:    { n: '생고기', i: '🥩', type: 'consum', use: { hp: 30 }, cd: 8, stack: 20, d: '안 익혔다. 그래도 없는 것보단 낫다.' },
 
   /* --- 펫 알 (우클릭으로 깨서 펫을 얻는다) --- */
-  /* 알값 — 파는 사람(조련사 리카)이 여명 마을 주민이라 세션 2에나 만난다. 그 무렵
-     장 보상만으로 금화가 9만~30만씩 들어와서, 예전 300~4000은 그냥 집어 오는 값이었다. */
-  /* 알은 값이 흔들리면 안 된다. fixed를 달면 price()가 등급·시세·배수를 전부 건너뛰고
-     이 값을 개수만 곱해 쓴다 — 언제 사도 팔아도 10,000 / 30,000 / 100,000 이다. */
+  /* 알값 — 파는 사람(조련사 리카)이 여명 마을 주민이라 세션 2에나 만난다. */
+  /* 알은 값이 흔들리면 안 된다. */
   egg_common:  { n: '평범한 알', i: '🥚', type: 'consum', use: { egg: 'common' }, price: 10000, fixed: 1, stack: 20, d: '깨 보기 전까지는 무엇이 나올지 모른다.' },
   egg_rare:    { n: '푸른 알', i: '🥚', type: 'consum', use: { egg: 'rare' }, price: 30000, fixed: 1, stack: 20, d: '희귀한 짐승의 기운이 느껴진다.' },
   egg_epic:    { n: '보랏빛 알', i: '🥚', type: 'consum', use: { egg: 'epic' }, price: 100000, fixed: 1, stack: 20, d: '알 속에서 무언가 조용히 뛰고 있다.' },
-  /* 펫 사탕 — 낀 펫 둘 다에게 경험치를 준다. 알과 같은 자리(리카)에서 판다.
-     값이 고정(fixed)인 이유는 알과 같다: 되팔이로 금화를 만드는 길을 막는다. */
+  /* 펫 사탕 — 낀 펫 둘 다에게 경험치를 준다. */
   glacium_ore: { n: '빙정 원석', i: '🔷', type: 'mat', stack: 999, price: 140,
     d: '빙하 깊은 곳에서만 나온다. 손에 쥐면 손끝이 아리다.' },
   tide_ore:    { n: '조수 원석', i: '🔶', type: 'mat', stack: 999, price: 140,
@@ -717,14 +602,12 @@ const ITEMS = {
     d: '녹이면 오히려 더 차가워진다.' },
   tide_bar:    { n: '조수 주괴', i: '🌀', type: 'mat', stack: 999, price: 460,
     d: '두드릴 때마다 물결 무늬가 남는다.' },
-  /* 운석 구덩이에서만 나온다(game.js carveCrater). 아직 쓰는 곳이 없다 — 모아 두는 재료. */
+  /* 운석 구덩이에서만 나온다(game.js carveCrater). */
   meteorite:    { n: '운석 조각', i: '☄️', type: 'mat', stack: 999, price: 180,
     d: '하늘에서 떨어진 쇳덩이. 아직 식지 않은 듯 손바닥이 따뜻하다.' },
   star_crystal: { n: '별빛 수정', i: '✨', type: 'mat', stack: 999, price: 320,
     d: '운석이 떨어진 자리에만 자란다. 밤이 되면 더 밝아진다.' },
-  /* --- 유틸리티 탐지기 둘 ---
-     장신구가 아니라 유틸리티 칸에 낀다. 산소통과 자리를 다투게 해서, 무엇을 하러
-     가는지에 따라 갈아 끼우게 하려는 것이다 — 깊이 갈 때는 산소통, 캐러 갈 때는 탐지기. */
+  /* --- 유틸리티 탐지기 둘 --- */
   det_metal:   { n: '금속 탐지기', i: '📡', type: 'util', det: 'ore', b: { ms: -3 },
     d: '가까운 광맥이 지도에 비친다. 반경 30칸. 들고 다니면 조금 무겁다.' },
   det_mob:     { n: '몬스터 탐지기', i: '📡', type: 'util', det: 'mob', b: { ms: -3 },
@@ -797,10 +680,7 @@ const ITEMS = {
   charm_hawk:   { n: '매눈 부적', i: '🪶', type: 'acc', b: { crit: 7, dex: 5 }, d: '늑대들 사이에서도 유난히 눈이 밝던 것의 발톱.' , lvReq: 12 },
   ring_brand:   { n: '낙인의 고리', i: '💍', type: 'acc', b: { str: 7, crit: 6 }, d: '재의 골렘 가슴팍에 박혀 있던 것.' , lvReq: 20 },
 
-  /* --- 유적 유물 ---
-     유적마다 하나씩, 그 유적에서만 나온다(RUIN_RELIC). 가장 깊은 보물방 상자에
-     반드시 들어 있어서, 끝까지 들어가 본 사람만 갖는다. 성능은 그 유적의 등급을
-     따라가지만 진짜 값은 "이 유적을 봤다"는 표식이다 — 여덟 개가 다 다르다. */
+  /* --- 유적 유물 --- */
   relic_frostpane:  { n: '서리 낀 창', i: '🪟', type: 'acc', b: { def: 12, vit: 4, frost: 1 },
                       d: '얼음 안에 갇힌 채로 아직 김이 서려 있다. 안쪽에서 누가 닦아 낸 자국이 있다.', lvReq: 10 },
   relic_sundial:    { n: '멈춘 해시계', i: '🕛', type: 'acc', b: { crit: 9, dex: 5, ms: 6 },
@@ -818,14 +698,8 @@ const ITEMS = {
   relic_hollowseed: { n: '빈 씨앗', i: '🌑', type: 'acc', b: { int: 6, str: 6, critD: 30 },
                       d: '흔들어도 소리가 없다. 심으면 안 된다고 석판에 적혀 있었다.', lvReq: 22 },
 
-  /* --- 유적의 맥박 ---
-     맥박 결정은 유적이 깨어 있을 때만 나온다 — 격노 단계의 상자, 격노 중에 잡은 보스,
-     메아리 시련. 그래서 이것을 쓰는 두 가지(가라앉히는 물약 · 깨우는 북)가 곧 **맥박을
-     손으로 움직이는 수단**이 된다. 인장(seal)은 탐사 기록 S 등급의 보상이고, 수치보다
-     "유적에서 노는 법"을 바꾸는 쪽에 무게를 뒀다(효과는 game.js 의 hasSeal 을 읽는 곳). */
-  /* --- 장식 — 숲·동굴·유적의 장식을 **캐면 그 장식이 그대로** 나온다(deco: 1). 재료 드롭은 그대로 두고 **장식 하나를 함께** 준다 (재료를
-     장식으로 바꾸면 제작 재료가 끊긴다). 설치는 블록과 같다(type: 'block'). 타일 → 장식 아이템 표는 아래 DECO_OF 가 이 표에서 뽑는다.
-     사연: docs/code-history.md#h3 */
+  /* --- 유적의 맥박 --- */
+  /* --- 장식 — 숲·동굴·유적의 장식을 **캐면 그 장식이 그대로** 나온다(deco: 1) — 사연: docs/code-history.md#h3 */
   deco_flower:     { n: '들꽃 포기', i: '🌼', type: 'block', tile: T.FLOWER, stack: 999, deco: 1 },
   deco_weed:       { n: '풀 포기', i: '🌱', type: 'block', tile: T.WEED, stack: 999, deco: 1 },
   deco_cactus:     { n: '작은 선인장', i: '🌵', type: 'block', tile: T.CACTUS, stack: 999, deco: 1 },
@@ -850,7 +724,7 @@ const ITEMS = {
   deco_cattail:    { n: '부들', i: '🌾', type: 'block', tile: T.CATTAIL, stack: 999, deco: 1 },
   deco_pondweed:   { n: '물풀', i: '🌿', type: 'block', tile: T.PONDWEED, stack: 999, deco: 1 },
   deco_pebbles:    { n: '물가 조약돌', i: '🪨', type: 'block', tile: T.PEBBLES, stack: 999, deco: 1 },
-  /* 동굴 이끼 — 이끼 굴의 늘어진 이끼에서만 난다. 찧어 바르면 상처가 아문다 */
+  /* 동굴 이끼 — 이끼 굴의 늘어진 이끼에서만 난다. */
   cave_moss:     { n: '동굴 이끼', i: '🌿', type: 'mat', stack: 999, price: 40,
                    d: '빛이 안 드는 데서 물만 먹고 자랐다. 손에 쥐면 차갑고 축축하다.' },
   moss_poultice: { n: '이끼 찜질', i: '🩹', type: 'consum', use: { hp: 110, buff: 'well' }, cd: 8, stack: 20,
@@ -874,10 +748,7 @@ const ITEMS = {
   seal_abyss:   { n: '심해 인장', i: '🌊', type: 'acc', b: { allStat: 6, hp: 70, oxyMax: 3 }, seal: 'abyss', lvReq: 34,
                   d: '가라앉은 유적을 샅샅이 뒤진 표식. 메아리 시련의 보상이 절반 더 나온다.' },
 
-  /* --- 유적 위치 지도 ---
-     입구가 없는 유적은 이것 없이는 못 찾는다. 쓰면 그 유적 자리가 나침반에 잡힌다.
-     지도 자체는 다른 유적의 보물방 상자에 들어 있다(RUIN_MAP_IN) — 한 곳을 털면
-     다음 곳이 열리는 사슬이다. 쓰고 나면 사라지지만 표시는 세이브에 남는다. */
+  /* --- 유적 위치 지도 --- */
   ruinmap_ice:    { n: '얼어붙은 골짜기 지도', i: '🗺', type: 'map', ruin: 'ice', stack: 1,
                     d: '가죽에 그린 골짜기 지도. 한 지점에만 구멍이 뚫려 있다.' },
   ruinmap_spore:  { n: '포자 굴 지도', i: '🗺', type: 'map', ruin: 'spore', stack: 1,
@@ -957,10 +828,7 @@ const ITEMS = {
   m_trap:      { n: '전격 함정', i: '⚡', type: 'machine', mach: 'trap', stack: 99 },
   m_switch:    { n: '정지 스위치', i: '🛑', type: 'machine', mach: 'switch', stack: 99 },
 
-  /* --- 손으로 놓는 설치물 (type:'station') ---
-     타일도 기계도 아니고 w.objects 에 얹히는 물건. 우클릭으로 놓고 좌클릭으로 회수한다.
-     ★ 작업대만은 제작대가 필요 없다(station 없음) — 유일한 작업대를 부수면 아무것도
-       못 만드는 상태로 잠기므로, 맨손 제작으로 되살릴 수 있어야 한다. */
+  /* --- 손으로 놓는 설치물 (type:'station') --- */
   station_work:  { n: '작업대', i: '🔨', type: 'station', obj: 'workbench', stack: 20,
                    d: '어디든 펴면 그 자리가 작업장이 된다. 개조는 놓은 것마다 따로 쌓인다.' },
   station_forge: { n: '용광로', i: '🔥', type: 'station', obj: 'forge', stack: 20,
@@ -970,11 +838,7 @@ const ITEMS = {
   crate_gold:    { n: '황금 저장 상자', i: '🧰', type: 'station', obj: 'crate', slots: 48, gold: 1, stack: 20,
                    d: '48칸. 금테를 두른 만큼 두 배로 들어간다.' },
 
-  /* --- 문 (type:'door') ---
-     마을과 캠프에는 문이 서 있는데 플레이어는 만들 수가 없었다. 벽은 블록으로 쌓을 수
-     있어도 드나들 구멍을 막을 방법이 없어서, 지어 놓은 집이 전부 뚫린 채였다.
-     설치물(station)과 경로를 나누는 까닭은 규격이 다르기 때문이다 — 문은 세로 두 칸에
-     바닥에 서고, 닫힌 동안만 길을 막는다(OBJ_SIZE 한 칸 규격에 넣으면 성문이 눌린다). */
+  /* --- 문 (type:'door') --- */
   door_wood:     { n: '나무 문', i: '🚪', type: 'door', stack: 20,
                    d: '경첩은 다는 사람이 바라본 쪽에 붙는다. 그쪽으로 열린다.' },
 
@@ -1010,10 +874,7 @@ const ITEMS = {
   /* --- 농기구 · 씨앗 · 작물 --- */
   hoe_iron:   { n: '강철 괭이', i: '🛠', type: 'tool', power: 0, dmg: 8, spd: 2.0, hoe: 1,
                 d: '흙이나 풀을 우클릭해 밭을 간다. 씨앗은 밭 위에 심는다.' , lvReq: 3},
-  /* --- 낫 ---
-     ★ 다 여문 작물은 **낫으로만** 거둘 수 있다. 곡괭이나 도끼로 치면 이삭이 으스러져
-       아무것도 남지 않는다(game.js mine 참고). 밭을 시작하려면 괭이·씨앗·낫 셋이
-       한 벌이라, 마을 2단계 씨앗 상자에 셋을 같이 넣어 둔다. */
+  /* --- 낫 --- */
   scythe_iron:  { n: '강철 낫', i: '🌾', type: 'tool', power: 0, dmg: 14, spd: 2.4, scythe: 1,
                   d: '다 여문 작물을 이걸로 베어야 알곡이 성하게 남는다. 다른 연장으로 치면 다 으스러진다.', lvReq: 3 },
   scythe_star:  { n: '별무늬 낫', i: '🌾', type: 'tool', power: 0, dmg: 34, spd: 2.8, scythe: 1, reap: 1,
@@ -1021,9 +882,7 @@ const ITEMS = {
   seed_wheat:    { n: '밀 씨앗', i: '🌱', type: 'seed', stack: 999, d: '밭에 우클릭해 심는다.' },
   seed_starroot: { n: '별무 씨앗', i: '🌱', type: 'seed', stack: 999, d: '떨어진 별 근처에서만 돋던 뿌리채소다.' },
   seed_ashcap:   { n: '잿버섯 홀씨', i: '🌱', type: 'seed', stack: 999, d: '어두운 곳에서도 잘 자란다.' },
-  /* --- 전리품으로만 씨를 얻는 작물 넷 ---
-     밭에서 씨가 돌아오기는 하지만(수확 보너스), 처음 한 톨은 반드시 사냥해서 만들어야
-     한다. 재료는 전부 이미 있던 전리품이다 — 새 재료를 늘리지 않는다. */
+  /* --- 전리품으로만 씨를 얻는 작물 넷 --- */
   seed_bloodbean: { n: '핏빛 콩 씨앗', i: '🌱', type: 'seed', stack: 999, d: '슬라임 젤을 굳혀 뭉친 씨. 젤 냄새가 난다.' },
   seed_bonebloom: { n: '뼈꽃 씨앗', i: '🌱', type: 'seed', stack: 999, d: '뼛가루를 뭉쳤더니 싹이 텄다. 왜 그런지는 아무도 모른다.' },
   seed_frostherb: { n: '서리쑥 씨앗', i: '🌱', type: 'seed', stack: 999, d: '심은 자리 흙이 하얗게 언다.' },
@@ -1085,8 +944,7 @@ const ITEMS = {
   hammer_still:{ n: '정지의 망치', i: '🔨', type: 'weapon', wc: 'melee', dmg: 196, spd: 1.6, kb: 14, reach: 68, tier: 8, pw: 4,
                  d: '맞은 것은 잠시 아무것도 하지 못한다. 부수는 무기가 아니라 멈추는 무기다.'  },
 
-  /* ================= 세션 2 종장: 설계실 =================
-     공창을 지은 손이 남긴 곳. 강철이 아니라 이음매 없는 흰 돌로 되어 있다. */
+  /* ================= 세션 2 종장: 설계실 ================= */
   archestone:  { n: '원형석', i: '🪨', type: 'block', tile: T.ARCHESTONE, stack: 999,
                  d: '자른 자국이 없다. 처음부터 이 모양이었던 것처럼 생겼다.' },
   draft_glass: { n: '설계 유리', i: '🔷', type: 'mat', stack: 999,
@@ -1098,8 +956,8 @@ const ITEMS = {
   arche_core:  { n: '원형의 핵', i: '💠', type: 'mat', stack: 9,
                  d: '사람을 본떠 만든 첫 번째 것의 한가운데. 아직도 사람처럼 미지근하다.' },
   /* 종장 보상 */
-  /* 이 둘만 등급 표(WEAPON_TIER_LV)를 안 따르고 lvReq를 직접 갖는다 — 같은 8등급이어도
-     설계실에서 마지막 장에 나오는 물건이라, 8등급 기본값(44)으로는 한참 헐거워진다. */
+  /* 이 둘만 등급 표(WEAPON_TIER_LV)를 안 따르고 lvReq를 직접 갖는다 — 같은 8등급이어도 설계실에서 마지막 장에 나오는 물건이라, 8등급 기본값(44)으로는 한참
+     헐거워진다. */
   blade_arche: { n: '원형의 칼', i: '⚔', type: 'weapon', wc: 'melee', dmg: 238, spd: 2.4, kb: 11, reach: 72, tier: 8,
                  lifesteal: 7, fire: 2, lvReq: 95,
                  d: '설계도에만 있고 한 번도 벼려진 적 없던 칼. 결국 우리가 처음으로 만들었다.'  },
@@ -1109,9 +967,7 @@ const ITEMS = {
   charm_maker: { n: '만든 이의 표식', i: '🔯', type: 'acc', b: { allStat: 18, cdr: 20, def: 22, hp: 150, mpreg: 40 },
                  d: '무엇을 만들었느냐가 아니라, 멈출 줄 알았느냐를 적어 두는 표식.' , lvReq: 38 },
 
-  /* ================= 특별 유적 ① 부유 성채 (하늘) =================
-     세션 2의 설계실에서 "그들은 별을 돌려보낸 뒤 멈췄다"고 했다. 그 돌려보내는 장치가
-     아직 하늘에 떠 있고, 관리자가 다시 한 번 쏘아 올리려고 기다리고 있다. */
+  /* ================= 특별 유적 ① 부유 성채 (하늘) ================= */
   orbit_plate: { n: '궤도판', i: '🔩', type: 'block', tile: T.ORBITPLATE, stack: 999,
                  d: '떠 있는 것을 떠 있게 하는 판. 손에 들면 아주 조금 가볍다.' },
   orbit_gear:  { n: '궤도 톱니', i: '⚙', type: 'mat', stack: 999,
@@ -1127,8 +983,7 @@ const ITEMS = {
   charm_orbit: { n: '궤도 인장', i: '🛰', type: 'acc', b: { allStat: 16, jump: 1, ms: 20, cdr: 18, glide: 1 },
                  d: '떨어지는 것을 조금 늦춘다. 성채가 천 년을 떠 있던 방식 그대로.' , lvReq: 42 },
 
-  /* ================= 특별 유적 ② 무너진 갱 (최심부) =================
-     스토리와 무관하다. 사람이 파다가 너무 깊이 내려간 자리 — 그게 전부다. */
+  /* ================= 특별 유적 ② 무너진 갱 (최심부) ================= */
   deep_stone:  { n: '심층암', i: '🪨', type: 'block', tile: T.DEEPROCK, stack: 999 },
   deep_alloy:  { n: '심층 합금', i: '🔗', type: 'mat', stack: 999,
                  d: '지옥보다 아래에서만 굳는다. 뜨겁지도 차갑지도 않은 게 오히려 불쾌하다.' },
@@ -1143,14 +998,11 @@ const ITEMS = {
   charm_lamp2: { n: '꺼지지 않는 안전등', i: '🏮', type: 'acc', b: { hp: 180, def: 26, vit: 10, hpreg: 2 },
                  d: '마지막까지 켜져 있던 등. 든 사람은 끝내 올라오지 못했다.' , lvReq: 40 },
 
-  /* ================= 제트팩 =================
-     동력 장비 계통(pw)의 정점. 두 특별 유적을 다 털어야 재료가 모인다. */
+  /* ================= 제트팩 ================= */
   jetpack:     { n: '제트팩', i: '🚀', type: 'acc', b: { jet: 1, charge: 260, ms: 10 },
                  d: '점프를 누르고 있으면 떠오른다. 발밑에서 30칸까지, 한 번에 4초까지. 그 뒤엔 식혀야 한다.' , lvReq: 40 },
 
-  /* ================= 무기 다양화 — 몬스터 전리품 위주로 검·활·마법서 계열을 늘렸다 =================
-     대부분은 제작이 아니라 처치 확률 드랍이다(ENEMIES의 drops 참고). 창·철퇴 두 계열은
-     새로 만들었고, 나머지는 기존 칼·활·지팡이 그림을 재사용해 색만 새로 입혔다. */
+  /* ================= 무기 다양화 — 몬스터 전리품 위주로 검·활·마법서 계열을 늘렸다 ================= */
   spear_reed:    { n: '갈대 창', i: '🔱', type: 'weapon', wc: 'melee', dmg: 14, spd: 2.6, kb: 2, reach: 58, tier: 1,
                    d: '찌르기 한 번으로 거리부터 벌린다.'  },
   mace_iron:     { n: '무쇠 철퇴', i: '🔨', type: 'weapon', wc: 'melee', dmg: 24, spd: 1.5, kb: 9, reach: 42, tier: 2,
@@ -1202,10 +1054,7 @@ const ITEMS = {
   tome_first:    { n: '최초의 경전', i: '📖', type: 'weapon', wc: 'magic', dmg: 205, spd: 2.0, kb: 5, mana: 16, tier: 8, proj: 'void', multi: 3,
                    d: '처음 별이 떨어지던 밤을 기록한 유일한 책.'  },
 
-  /* --- 바다 장비 ---
-     물속에서 쓸 것을 전제로 짠다 — 휘두르는 무기는 사거리를 길게(물살에 밀려도 닿게),
-     마법은 마나를 조금 더 먹되 관통을 준다. 값은 세션 3 재료(심연 진주·내압판)를 요구해
-     바다에 들어가 본 사람만 만들 수 있게 한다. */
+  /* --- 바다 장비 --- */
   spear_tide:    { n: '조수의 삼지창', i: '🔱', type: 'weapon', wc: 'melee', dmg: 168, spd: 1.7, kb: 12, reach: 92, tier: 7,
                    d: '물살을 가르는 데 익숙한 모양이다. 뭍에서는 조금 무겁다.' },
   blade_shark:   { n: '상어이빨 검', i: '🗡', type: 'weapon', wc: 'melee', dmg: 152, spd: 1.15, kb: 8, reach: 62, tier: 7,
@@ -1225,10 +1074,7 @@ const ITEMS = {
   charm_ink:   { n: '먹물 부적', i: '🖤', type: 'acc', b: { dashCd: 0.4, dashI: 90, crit: 6 }, lvReq: 28,
                  d: '한 번 사라졌다 나타나는 법을 문어에게 배웠다.' },
 
-  /* --- 「윤슬」의 좌판에서만 나오는 것들 ---
-     가라앉은 도시의 마지막 사람이 제 손으로 만들어 쓰던 물건들이다. **제작법이 없다.**
-     재고는 하루 단위로 무작위라, 원하는 것이 뜰 때까지 날을 넘겨야 한다 —
-     그게 바다에 계속 들어갈 이유가 된다. */
+  /* --- 「윤슬」의 좌판에서만 나오는 것들 --- */
   amul_scale:  { n: '물비늘 목걸이', i: '📿', type: 'acc', b: { oxyMax: 18, ms: 8, def: 4 }, lvReq: 30,
                  d: '비늘을 한 장씩 꿰어 만들었다. 물속에서 숨이 조금 덜 급해진다.' },
   charm_bell:  { n: '가라앉은 종의 조각', i: '🔔', type: 'acc', b: { cdr: 10, mpreg: 20, int: 6 }, lvReq: 30,
@@ -1242,9 +1088,7 @@ const ITEMS = {
   harpoon_lamp:{ n: '등불 작살', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 168, spd: 1.05, kb: 9, tier: 8, proj: 'star', pierce: 2, multi: 2,
                  d: '초롱을 매단 작살. 어두운 데서 쏘면 날아가는 길이 보인다.' },
 
-  /* --- 시설 4단계 전용 ---
-     "물속에서 쓸 것을 물 밖에서 만든다"는 4단계의 성격을 그대로 딴 물건들이다.
-     전부 심해 노심을 요구하므로, 바다에 들어가 본 적 없으면 이 줄은 통째로 잠겨 있다. */
+  /* --- 시설 4단계 전용 --- */
   bag_abyss:   { n: '심해 짐가방', i: '🧳', type: 'bag', slots: 22, lvReq: 30,
                  d: '물이 안 새게 겹으로 여몄다. 안쪽이 바깥보다 넓은 건 유적 보관함에서 배웠다.' },
   pick_abyss:  { n: '가압 곡괭이', i: '⛏', type: 'tool', power: 5, dmg: 26, spd: 2.1, pw: 3,
@@ -1260,13 +1104,12 @@ const ITEMS = {
   charm_core:  { n: '노심 부적', i: '💠', type: 'acc', b: { charge: 320, cdr: 12, oxyMax: 12, int: 8 }, lvReq: 32,
                  d: '심해 노심 조각 하나를 그대로 달았다. 계속 미지근하다.' },
 
-  /* ================= 새 바이옴 채집물 ================= */
+  /* ================= 바이옴 채집물 ================= */
   mud:         { n: '진흙', i: '🟫', type: 'block', tile: T.MUD, stack: 999 },
   fern_frond:  { n: '고사리 잎', i: '🌿', type: 'mat', stack: 999, d: '정글 바닥을 뒤덮고 있다. 짓이기면 진한 냄새가 난다.' },
   orchid:      { n: '밀림꽃', i: '🌺', type: 'mat', stack: 999, d: '어두울수록 더 선명하게 핀다.' },
   lily_pad:    { n: '수련잎', i: '🪷', type: 'mat', stack: 999, d: '폭포호 수면에 떠 있다.' },
-  /* 나뭇잎 — 나무마다 다른 잎이 떨어진다(TILE_DEF leafDrop). 제분기에 넣으면 퇴비가 된다.
-     사연: docs/code-history.md#h4 */
+  /* 나뭇잎 — 나무마다 다른 잎이 떨어진다(TILE_DEF leafDrop) — 사연: docs/code-history.md#h4 */
   leaf_oak:     { n: '떡갈잎', i: '🍂', type: 'mat', stack: 999, d: '잿빛 숲의 넓적한 잎. 잿가루가 앉아 있다.' },
   leaf_pine:    { n: '솔잎', i: '🌲', type: 'mat', stack: 999, d: '눈 속에서도 푸른 바늘잎. 송진 냄새가 난다.' },
   leaf_jungle:  { n: '정글 잎사귀', i: '🍃', type: 'mat', stack: 999, d: '손바닥 둘을 합친 것보다 넓다. 빗물이 고여 있다.' },
@@ -1284,10 +1127,7 @@ const ITEMS = {
   sea_salt:    { n: '바다 소금', i: '🧂', type: 'mat', stack: 999, d: '해저 모래를 졸이면 남는다.' },
   sulfur:      { n: '유황', i: '🟡', type: 'mat', stack: 999, d: '빙하와 해저 바위에 박혀 있다. 성냥을 그으면 안 된다.' },
   gunpowder:   { n: '화약', i: '💥', type: 'mat', stack: 999, d: '유황과 소금을 숯에 섞어 빻았다. 다루기 나름이다.' },
-  /* --- 폭탄 ---
-     소비품처럼 우클릭해서 **커서 쪽으로 던진다.** 던진 뒤에는 손을 떠나므로 조준이
-     전부다. r은 타일을 부수는 반경(칸), dmg는 폭발 피해, mine은 부술 수 있는 타일
-     단단함의 상한이다(그 위 등급은 안 부서진다 — 미스릴·기반암을 폭탄으로 뚫지 못하게). */
+  /* --- 폭탄 --- */
   bomb_small:  { n: '폭탄', i: '💣', type: 'bomb', r: 3, dmg: 150, mine: 2, fuse: 1.6, look: 'iron', stack: 99,
                  d: '심지에 불을 붙여 던진다. 붙이고 나면 되돌릴 수 없다.' },
   bomb_big:    { n: '강력 폭탄', i: '🧨', type: 'bomb', r: 5, dmg: 340, mine: 3, fuse: 1.9, look: 'keg', stack: 99,
@@ -1317,13 +1157,7 @@ const ITEMS = {
   sum_frost:   { n: '얼어붙은 왕관', i: '🔷', type: 'summon', boss: 'frost_witch', stack: 9, d: '서리 지대에서 사용하라.' },
   sum_void:    { n: '별의 눈물', i: '💧', type: 'summon', boss: 'void_king', stack: 9, d: '심연 앞에서만 열린다.' },
 
-  /* ================= 유적마다 그곳에서만 나오는 전리품 둘 =================
-     벽 색이 다르고 몹이 달라도 털어 온 자루 안이 똑같으면 어느 유적을 갔는지가 가방에
-     남지 않는다. 둘의 성격을 일부러 갈랐다.
-       재료  그 유적의 **장식을 캐면** 나온다. 흔하고, 값은 낮고, 쓸 데가 있다
-       유물  그 유적의 **상자에서만** 드물게. 쓸 데는 없고 값이 아주 높다 — 값이 곧 이야기다
-     값은 유적 rank 를 따라간다(광산 1 → 부패한 둥지 6). 순한 곳을 털어 부자가 되는
-     지름길이 생기면 안 되므로 깊이와 값이 어긋나지 않게 계단으로 벌렸다. */
+  /* ================= 유적마다 그곳에서만 나오는 전리품 둘 ================= */
   neverthaw:    { n: '식지 않는 서리', i: '🧊', type: 'mat', stack: 999, price: 340,
                   d: '얼음 던전 밖으로 꺼내도 녹지 않는다. 손에 쥐면 손이 먼저 식는다.' },
   warden_seal:  { n: '파수꾼의 인장', i: '🛡', type: 'mat', stack: 99, price: 5200,
@@ -1346,8 +1180,7 @@ const ITEMS = {
                   d: '포자 굴에는 문이 없다. 그런데 여는 데 쓰는 물건이 있었다.' }
 };
 
-/* 유적 → 그곳에서만 나오는 전리품 [재료, 유물].
-   RUIN_SPEC 의 id 로 찾는다. 상자·보스 보상이 여기를 읽는다(game.js ruinLoot). */
+/* 유적 → 그곳에서만 나오는 전리품 [재료, 유물]. */
 const RUIN_LOOT = {
   ice: ['neverthaw', 'warden_seal'],
   pyramid: ['sealed_ash', 'caged_sun'],
@@ -1356,47 +1189,23 @@ const RUIN_LOOT = {
   spore: ['spore_dust', 'cap_signet']
 };
 
-/* ★ 한 번 쏜 것이 **같은 적에게 겹쳐** 맞을 때, 두 번째부터의 몫.
-
-   multi 가 붙은 무기는 부채꼴로 여러 발을 뿌린다(entity.js 의 공격부). 잡몹 여럿에게는
-   한 발씩 나눠 맞으니 제값이 나오는데, **보스처럼 큰 표적에는 전부 한 몸에 박힌다.**
-   그래서 dmg 가 그대로 multi 배가 되어 있었다 — 같은 티어 단발 무기 대비 유효 DPS 가
-   자오선 6.55배 · 기원의 서 5.51배 · 질풍궁 3.72배(단발 중앙값 기준 실측)였고,
-   같은 티어인데 보스 잡는 시간이 여섯 배 갈렸다.
-
-   ★ 겹쳐 맞을 때만 깎는다. 흩어진 적에게 한 발씩 맞히면 **그대로 제값**이다 —
-     등불 작살(관통 2 · 다발 2)이나 연발 작살포처럼 여럿을 꿰는 것이 제 쓰임인 무기를
-     같이 죽이지 않으려는 것이다. 그쪽은 단일 표적이 약한 것이 설계다.
-   ★ 0.35 로 잡은 근거: 이 값이면 다발 무기의 단일 표적 유효 DPS 가 기준선의
-     1.10~1.81배에 들어온다(전에는 1.64~6.55배). 더 낮추면 부채꼴이 장식이 되고,
-     더 높이면 자오선·기원의 서가 도로 두 배를 넘는다. */
+/* ★ 한 번 쏜 것이 **같은 적에게 겹쳐** 맞을 때, 두 번째부터의 몫. */
 const MULTI_FALLOFF = 0.35;
 
-/* ================= 맞는 순간 — 물리 타격 계열 =================
-   ★ 계열은 무기 **앞머리**로 가른다. 무기마다 필드를 하나씩 다는 대신 이름을 읽는 이유:
-     무기가 예순 자루가 넘고 앞으로도 느는데, 잊지 않고 달아야 하는 필드는 결국 어딘가에서
-     빠진다. 이름 규칙은 이미 지켜지고 있으므로 그쪽이 스스로 유지된다.
-   마법(orb·staff·tome)은 여기 없다 — 원소마다 제 그림이 이미 있고, 그 위에 금빛 물리
-   타격까지 겹치면 무엇에 맞았는지가 도로 흐려진다. */
+/* ================= 맞는 순간 — 물리 타격 계열 ================= */
 const HIT_FAM = {
   sword: 'slash', blade: 'slash', dagger: 'slash', scythe: 'slash', axe: 'slash', saw: 'slash',
   spear: 'pierce', lance: 'pierce', harpoon: 'pierce', bow: 'pierce', crossbow: 'pierce', gun: 'pierce',
   hammer: 'blunt', mace: 'blunt'
 };
-/* 계열마다 크기와 남는 시간이 다르다. 이게 무게로 읽힌다 — 베기는 가장 빨리 사라져야
-   연타가 겹쳐도 화면이 안 막히고, 둔기는 가장 크고 늦게까지 남아야 한 방이 무겁다.
-
-   ★ size 는 그림이 차지하는 크기가 아니라 **틀(64칸)을 그리는 크기**다. 시트는 틀 안에
-     여백 2칸을 남기고 구워지므로(tools/mkhitphys.py) 보이는 크기는 size × 그 배율이다 —
-     52×0.879≈46 · 52×0.853≈44 · 72×0.829≈60. 시트를 다시 구우면 그 스크립트가 찍어
-     주는 숫자로 여기를 같이 고친다. */
+/* 계열마다 크기와 남는 시간이 다르다. */
 const HIT_FX = {
   slash: { size: 52, slow: 0.80 },
   pierce: { size: 52, slow: 0.90 },
   blunt: { size: 72, slow: 1.35 }
 };
 
-/** 이 무기로 때렸을 때 어느 타격 그림을 쓰는가. 없으면(마법·맨손) null */
+/** 이 무기로 때렸을 때 어느 타격 그림을 쓰는가. */
 function hitFam(it) {
   if (!it || !it.id) return null;
   const f = HIT_FAM[it.id.split('_')[0]];
@@ -1406,18 +1215,11 @@ function hitFam(it) {
   return d && d.type === 'weapon' && d.wc !== 'magic' ? 'blunt' : null;
 }
 
-/* ---------------- 제작 시설 ---------------- 3단계에서 작업대와 용광로의 기능을 완전히 분리했다. 승급은 시설 앞에서 재료를 내면 되고, 한 번
-   올리면 세계의 모든 같은 시설에 적용된다 (마을 것 · 캠프 것을 따로 올릴 필요가 없다). 승급은 기존 제작법을 막지 않고 새 제작법만 연다.
-   사연: docs/code-history.md#h5 */
-/* 설치물 규격 — 전부 한 타일(TS=22px) 안에 들어가야 한다. 플레이어가 직접 설치할 수 있게 되면서 좁은 데 여러 개를 붙여 놓게 되므로 한 칸 규격을 지키는 게 특히
-   중요해졌다.
-   사연: docs/code-history.md#h6 */
-/* tw/th = 실제로 차지하는 칸 수(충돌 판정용). w/h는 그 칸 안에 그려지는 실제 픽셀
-   크기 — 칸 크기(tw*TS)보다 살짝 작게 둬서 옆 시설과 시각적으로도 여유가 있게 한다.
-   tw/th가 없으면(=상자류) 기존처럼 1칸으로 본다. */
+/* ---------------- 제작 시설 ---------------- */
+/* 설치물 규격 — 전부 한 타일(TS=22px) 안에 들어가야 한다 — 사연: docs/code-history.md#h6 */
+/* tw/th = 실제로 차지하는 칸 수(충돌 판정용). */
 const OBJ_SIZE = {
-  // 작업대는 낮고 넓은 상판이라 2×1(가로로 긴 모양)이 실물에 더 가깝다는 판단 — 나머지
-  // 둘은 2×2 그대로.
+  // 작업대는 낮고 넓은 상판이라 2×1(가로로 긴 모양)이 실물에 더 가깝다는 판단 — 나머지 둘은 2×2 그대로.
   workbench: { w: 40, h: 20, tw: 2, th: 1 },
   forge: { w: 40, h: 40, tw: 2, th: 2 },
   chest: { w: 18, h: 16 },
@@ -1435,8 +1237,7 @@ const STATION_DESC = {
   forge: ['', '광석을 녹여 주괴로.', '풀무를 걸었다. 강철판이 나온다.', '전기로 녹인다. 공창이 하던 걸 우리가 한다.',
           '노를 통째로 가압해 녹인다. 소금과 진주까지 재료가 된다.']
 };
-/* STATION_UP[종류][현재레벨] = 다음 레벨로 올리는 비용
-   4단계는 **세션 3 재료(심해 노심)를 요구한다** — 바다에 들어가 보지 않으면 못 올린다. */
+/* STATION_UP[종류][현재레벨] = 다음 레벨로 올리는 비용 4단계는 **세션 3 재료(심해 노심)를 요구한다** — 바다에 들어가 보지 않으면 못 올린다. */
 const STATION_UP = {
   work: [null,
     { need: { plank: 40, iron_bar: 14, gear_basic: 8 } },
@@ -1449,8 +1250,7 @@ const STATION_UP = {
 };
 
 /* ---------------- 제작법 ---------------- */
-// need: {아이템:수량}, station: null(어디서나) / 'work'(작업대) / 'forge'(용광로)
-// lv: 그 시설의 필요 승급 단계 (없으면 1). 용광로는 더 이상 작업대를 대신하지 않는다.
+// need: {아이템:수량}, station: null(어디서나) / 'work'(작업대) / 'forge'(용광로) lv: 그 시설의 필요 승급 단계 (없으면 1).
 const RECIPES = [
   { out: 'plank', n: 4, need: { wood: 1 } },
   { out: 'torch', n: 5, need: { wood: 1 } },
@@ -1466,15 +1266,13 @@ const RECIPES = [
   { out: 'station_forge', n: 1, need: { stone: 30, wood: 10 }, station: 'work' },
   { out: 'crate_wood', n: 1, need: { plank: 14, iron_bar: 2 }, station: 'work' },
   { out: 'crate_gold', n: 1, need: { gold_bar: 10, plank: 20 }, station: 'forge' },
-  // 문 — 널판 여덟에 경첩 한 벌. 벽만 쌓을 수 있고 드나들 구멍은 못 막던 것을 푼다
+  // 문 — 널판 여덟에 경첩 한 벌.
   { out: 'door_wood', n: 1, need: { plank: 8, iron_bar: 1 }, station: 'work' },
 
   { out: 'rod_basic', n: 1, need: { wood: 10, spider_silk: 4 }, station: 'work' },
   { out: 'rod_adv', n: 1, need: { machine_frame: 1, motor: 2, mythril_bar: 4, spider_silk: 14, crystal: 6 }, station: 'work', lv: 3 },
 
-  /* --- 바다 계통 (시설 4단계) ---
-     내압판·심해 노심이 관문이다. 노심 하나에 진주 두 개가 들어가므로, 4단계 설비를
-     세우려면 심해까지 내려가 문어·아귀를 상대해야 한다. */
+  /* --- 바다 계통 (시설 4단계) --- */
   { out: 'pressure_plate_m', n: 2, need: { steel_plate: 3, crab_shell: 4, sea_salt: 2 }, station: 'forge', lv: 3 },
   { out: 'sea_salt', n: 3, need: { sand: 8 }, station: 'forge', lv: 2 },
   { out: 'abyss_core', n: 1, need: { abyss_pearl: 2, pressure_plate_m: 6, circuit: 4 }, station: 'work', lv: 3 },
@@ -1502,12 +1300,10 @@ const RECIPES = [
   { out: 'm_battery_hi', n: 1, need: { abyss_core: 1, battery_cell: 6, circuit: 8, steel_plate: 12 , glacium_bar: 4}, station: 'work', lv: 4 },
   /* 4단계 전용 특별 장비 — 전부 심해 노심이 든다 */
   { out: 'bag_abyss', n: 1, need: { rope_kelp: 12, pressure_plate_m: 8, abyss_pearl: 2, spider_silk: 20 }, station: 'work', lv: 4 },
-  /* 세션 3 광물 — 제련은 4단계 노(가압 제련로)라야 된다. 등급 5 광물을 3단계
-     아크 용광로에서 녹일 수 있으면 4단계를 올릴 이유가 하나 줄어든다. */
+  /* 세션 3 광물 — 제련은 4단계 노(가압 제련로)라야 된다. */
   { out: 'glacium_bar', n: 1, need: { glacium_ore: 3, coal: 2 }, station: 'forge', lv: 4 },
   { out: 'tide_bar', n: 1, need: { tide_ore: 3, sea_salt: 2 }, station: 'forge', lv: 4 },
-  /* 탐지기 — 광물 하나씩 갈라 쓴다. 광맥을 찾는 쪽은 빙정, 움직이는 것을 잡아내는
-     쪽은 조수. 둘 다 만들려면 빙하와 해저를 모두 파야 한다. */
+  /* 탐지기 — 광물 하나씩 갈라 쓴다. */
   { out: 'det_metal', n: 1, need: { glacium_bar: 4, circuit: 8, battery_cell: 2 }, station: 'work', lv: 4 },
   { out: 'det_mob', n: 1, need: { tide_bar: 4, circuit: 8, jelly_lamp: 6 }, station: 'work', lv: 4 },
   { out: 'pick_abyss', n: 1, need: { abyss_core: 1, mythril_bar: 10, battery_cell: 3 , glacium_bar: 5}, station: 'forge', lv: 4 },
@@ -1607,11 +1403,9 @@ const RECIPES = [
   /* 종장 — 다섯 조각을 하나로 되맞추고, 그것으로 쫓아오던 것을 부른다 */
   { out: 'star_whole', n: 1, need: { star_heart: 5, rune_frag: 3, aether_shard: 30 }, station: 'forge' },
   { out: 'sum_pursuer', n: 1, need: { star_whole: 1, void_frag: 25, ruin_brick: 40 }, station: 'forge' },
-  /* 세션 2 — 공창에서 배워 온 것들. 3단계(작업대·용광로 분리, 공장)의 재료가 된다 */
+  /* 세션 2 — 공창에서 배워 온 것들. */
   { out: 'gear_basic', n: 4, need: { steel_plate: 3, iron_bar: 2 }, station: 'forge' },
-  /* 개조된 것에서 나온 녹슨 톱니를 쓸 데. 강철판 3 + 주괴 2 → 4개 쪽이
-     여전히 싸므로 지름길은 아니고, 세션 2 지상에서 모은 것이 버려지지만
-     않게 하는 정도다(11장 목표가 기본 톱니다). */
+  /* 개조된 것에서 나온 녹슨 톱니를 쓸 데. */
   { out: 'gear_basic', n: 1, need: { rust_gear: 4 }, station: 'forge' },
   { out: 'pick_drill', n: 1, need: { blueprint_core: 1, power_core: 12, gear_basic: 20, mythril_bar: 10 }, station: 'forge' },
 
@@ -1631,7 +1425,7 @@ const RECIPES = [
   { out: 'charm_cap', n: 1, need: { circuit: 8, battery_cell: 4, gold_bar: 6 }, station: 'forge', lv: 3 },
 
   /* ========== 작업대 ========== */
-  /* 정밀 작업대(Lv2) — 1세대 공장. 연료로 굴러가는 최소 구성 */
+  /* 정밀 작업대(Lv2) — 1세대 공장. */
   { out: 'm_belt', n: 4, need: { iron_bar: 1, gear_basic: 1 }, station: 'work', lv: 2 },
   { out: 'm_pole', n: 2, need: { wood: 6, copper_bar: 1 }, station: 'work', lv: 2 },
   { out: 'm_crate', n: 1, need: { plank: 20, iron_bar: 4 }, station: 'work', lv: 2 },
@@ -1641,10 +1435,9 @@ const RECIPES = [
   { out: 'fuel_brick', n: 1, need: { coal: 6 }, station: 'work', lv: 2 },
   { out: 'wire', n: 4, need: { copper_bar: 1, polymer: 1 }, station: 'work', lv: 2 },
   { out: 'circuit', n: 1, need: { wire: 3, gold_bar: 1 }, station: 'work', lv: 2 },
-  /* 전동기는 Lv3 승급 비용에 들어가므로 반드시 Lv2에서 만들 수 있어야 한다 —
-     Lv3에 두면 "전동기를 만들려면 Lv3, Lv3이 되려면 전동기"로 서로 잠긴다 */
+  /* 전동기는 Lv3 승급 비용에 들어가므로 반드시 Lv2에서 만들 수 있어야 한다 — Lv3에 두면 "전동기를 만들려면 Lv3, Lv3이 되려면 전동기"로 서로 잠긴다 */
   { out: 'motor', n: 1, need: { circuit: 1, gear_basic: 2, steel_plate: 1 }, station: 'work', lv: 2 },
-  /* 자동 조립대(Lv3) — 2세대 공장. 전력·정제·조립 계통 전부 */
+  /* 자동 조립대(Lv3) — 2세대 공장. */
   { out: 'machine_frame', n: 1, need: { motor: 1, circuit: 2, steel_plate: 4 }, station: 'work', lv: 3 },
   { out: 'battery_empty', n: 1, need: { lead_bar: 2, polymer: 1, refined_oil: 1 }, station: 'work', lv: 3 },
   { out: 'm_drill_e', n: 1, need: { machine_frame: 1, motor: 2, circuit: 4 }, station: 'work', lv: 3 },
@@ -1669,8 +1462,7 @@ const RECIPES = [
   { out: 'haybale', n: 2, need: { weed: 6 }, station: 'work' },
   { out: 'sandbag', n: 4, need: { sand: 6, spider_silk: 1 }, station: 'work' },
   { out: 'hoe_iron', n: 1, need: { iron_bar: 3, wood: 2 }, station: 'work' },
-  /* 낫 — 다 여문 작물을 성하게 거두는 유일한 연장. 괭이와 같은 값에 두어
-     "밭을 하려면 둘 다"가 부담이 되지 않게 했다 */
+  /* 낫 — 다 여문 작물을 성하게 거두는 유일한 연장. */
   { out: 'scythe_iron', n: 1, need: { iron_bar: 3, wood: 2 }, station: 'work' },
   { out: 'scythe_star', n: 1, need: { mythril_bar: 4, aether_shard: 6, wood: 4 }, station: 'forge', lv: 2 },
   { out: 'lamppost', n: 2, need: { iron_bar: 1, torch: 2, crystal: 1 }, station: 'work' },
@@ -1685,16 +1477,12 @@ const RECIPES = [
   { out: 'seed_wheat', n: 4, need: { wheat: 1 } },
   { out: 'seed_starroot', n: 4, need: { starroot: 1 } },
   { out: 'seed_ashcap', n: 4, need: { mushroom: 2 } },
-  /* --- 전리품으로만 씨를 얻는 작물 넷 ---
-     ★ 재료는 **전부 몬스터가 떨군 것**이다. 캐거나 주운 것은 한 톨도 안 섞는다 — 그래야
-       "잡아야 심는다"가 규칙으로 읽히고, 밭이 따로 노는 부업이 아니라 사냥의 뒷마당이 된다.
-       새 재료는 하나도 안 늘렸다. 손에 흔한 순서대로 놓았다(젤·거미 실 → 뼈·잿빛 깃 →
-       얼음 송곳니 → 용암 점액). */
+  /* --- 전리품으로만 씨를 얻는 작물 넷 --- */
   { out: 'seed_bloodbean', n: 3, need: { slime_gel: 5, spider_silk: 2 }, station: 'work' },
   { out: 'seed_bonebloom', n: 3, need: { bone_frag: 5, ash_feather: 2 }, station: 'work' },
   { out: 'seed_frostherb', n: 3, need: { ice_fang: 3, frost_core: 1 }, station: 'work' },
   { out: 'seed_emberpod', n: 3, need: { lava_gel: 3, crystal_claw: 2 }, station: 'work' },
-  /* 거둔 것의 쓸모. 넷 다 "이걸 심을 이유"가 손에 잡혀야 한다 */
+  /* 거둔 것의 쓸모. */
   { out: 'potion_hp', n: 3, need: { bonebloom: 2, wildflower: 2 }, station: 'work' },
   { out: 'potion_hp_greater', n: 1, need: { bonebloom: 8, crystal: 3 }, station: 'work', lv: 2 },
   { out: 'potion_iron', n: 2, need: { frostherb: 3, ice_shard: 2 }, station: 'work' },
@@ -1708,14 +1496,13 @@ const RECIPES = [
   { out: 'rivet', n: 12, need: { rust_sinker: 2 }, station: 'work', lv: 2 },
   { out: 'chest_scale', n: 1, need: { river_scale: 14, tide_pearl: 4, spider_silk: 10 }, station: 'forge' },
 
-  /* ========== 새 바이옴 ========== */
+  /* ========== 바이옴 ========== */
   { out: 'potion_glow', n: 2, need: { glowcap: 2, crystal: 1 }, station: 'work' },
   { out: 'potion_glow_greater', n: 1, need: { glowcap: 6, crystal: 4 }, station: 'work', lv: 2 },
   { out: 'food_curry', n: 1, need: { fern_frond: 4, raw_meat: 2, flour: 1 }, station: 'work' },
   { out: 'charm_canopy', n: 1, need: { vine_coil: 10, orchid: 6, spider_silk: 12 }, station: 'forge' },
   { out: 'charm_spore', n: 1, need: { spore_sac: 10, glowcap: 12, crystal: 8 }, station: 'forge' },
-  /* 맥박을 손으로 움직이는 두 가지 — 결정은 깨어난 유적에서만 나오므로, 한 번 격노를
-     견뎌 낸 사람만 이것으로 다음 유적의 맥박을 고른다. */
+  /* 맥박을 손으로 움직이는 두 가지 — 결정은 깨어난 유적에서만 나오므로, 한 번 격노를 견뎌 낸 사람만 이것으로 다음 유적의 맥박을 고른다. */
   { out: 'tonic_hush', n: 2, need: { pulse_shard: 1, mushroom: 3 }, station: 'work' },
   { out: 'moss_poultice', n: 2, need: { cave_moss: 4, mushroom: 1 }, station: 'work' },
   { out: 'drum_pulse', n: 1, need: { pulse_shard: 1, wood: 6 }, station: 'work' },
@@ -1725,8 +1512,7 @@ const RECIPES = [
   { out: 'stop_core', n: 1, need: { core_shard: 25, circuit: 20, machine_frame: 4, power_core: 20 }, station: 'work', lv: 3 },
   { out: 'hammer_still', n: 1, need: { hepha_heart: 1, stop_core: 1, mythril_bar: 20, steel_plate: 30 }, station: 'forge', lv: 3 },
   { out: 'charm_govern', n: 1, need: { hepha_heart: 1, circuit: 20, battery_cell: 6, aether_shard: 20 }, station: 'forge', lv: 3 },
-  /* --- 세션 2 종장: 설계실 ---
-     인장은 헤파의 심장을 녹여 만든다. 벽이 만든 것이라야 벽이 열린다는 게 이 장의 전제다. */
+  /* --- 세션 2 종장: 설계실 --- */
   { out: 'atelier_key', n: 1, need: { hepha_heart: 1, stop_core: 1, blueprint_core: 1, core_shard: 40 }, station: 'forge', lv: 3 },
   { out: 'archestone', n: 4, need: { draft_glass: 1, stone: 6 }, station: 'forge', lv: 3 },
   { out: 'blade_arche', n: 1, need: { arche_core: 1, draft_glass: 30, mythril_bar: 24, aether_shard: 30 }, station: 'forge', lv: 3 },
@@ -1740,28 +1526,17 @@ const RECIPES = [
   { out: 'charm_lamp2', n: 1, need: { miner_tag: 3, lost_lamp: 5, deep_alloy: 20, gold_bar: 10 }, station: 'forge', lv: 3 },
   { out: 'orbit_plate', n: 4, need: { orbit_gear: 1, steel_plate: 4 }, station: 'forge', lv: 3 },
 
-  /* --- 제트팩 ---
-     동력 장비 계통의 정점이라 두 특별 유적을 **둘 다** 털어야 재료가 모인다.
-     하늘(궤도 톱니·별의 재)과 최심부(심층 합금·어둠 진주)를 하나씩 요구하는 게 요점이다.
-     작업대(정밀 3단계)에서 만든다 — 용광로가 아니라 조립물이라서. */
+  /* --- 제트팩 --- */
   { out: 'jetpack', n: 1, need: {
       orbit_gear: 40, star_ash: 3, deep_alloy: 35, gloom_pearl: 2,
       machine_frame: 3, motor: 4, circuit: 20, battery_cell: 6, polymer: 20
     }, station: 'work', lv: 3 }
 ];
 
-/* ---------------- 연료 ----------------
-   숫자는 "이 한 개로 몇 틱을 태울 수 있나". 공장 1틱 = 0.125초.
-   석유 계통이 사막 한정인 대신 압도적으로 효율이 좋다 — 사막까지 벨트를 끌 이유가 된다. */
+/* ---------------- 연료 ---------------- */
 const FUEL = { wood: 16, plank: 20, ash: 8, coal: 90, fuel_brick: 560, crude_oil: 150, refined_oil: 640 };
 
-/* ---------------- 기계 ----------------
-   전부 1×1 타일이다. 여러 칸짜리로 만들면 설치·철거·저장·충돌이 전부 특수 처리가 되므로,
-   타일 하나에 정보를 몰고 그림으로 구분한다.
-
-   power 틱당 소비 · gen 틱당 생산 · store 축전 용량 · fuelIn 연료를 직접 태운다
-   rot 방향을 돌릴 수 있다 · proc MRECIPES 계통 · cap 입출력 버퍼 · cycle 한 동작의 틱
-   mine 채굴 등급(곡괭이 power 와 같은 체계) */
+/* ---------------- 기계 ---------------- */
 const MACHINE = {
   belt: {
     n: '컨베이어 벨트', tile: T.M_BELT, item: 'm_belt', rot: 1,
@@ -1827,9 +1602,7 @@ const MACHINE = {
     n: '정지 스위치', tile: T.M_SWITCH, item: 'm_switch',
     d: '이어진 전력망 전체를 한 번에 멈추고 다시 돌린다. 공창이 끝내 만들지 못한 물건이다.'
   },
-  /* --- 유적 함정 ---
-     동력이 필요 없는 기계식이다. 유적에 놓인 것은 플레이어를 노리고(own 없음),
-     플레이어가 설치한 것은 적을 노린다(own=1) — 같은 기계인데 편이 갈린다. */
+  /* --- 유적 함정 --- */
   dart: {
     n: '화살 발사기', tile: T.M_DART, item: 'm_dart', rot: 1, cycle: 13, range: 10, dmg: 26, proj: 'arrow',
     d: '정면 10칸 안에 무언가 들어오면 화살을 쏜다. 동력이 필요 없다.'
@@ -1842,9 +1615,7 @@ const MACHINE = {
     n: '서리 분사구', tile: T.M_FROST, item: 'm_frost', rot: 1, cycle: 19, range: 8, dmg: 20, proj: 'frost', slow: 1,
     d: '맞은 것은 한동안 느려진다. 좁은 통로에 걸어 두면 무섭다.'
   },
-  /* --- 4단계 설비 ---
-     가압기는 압축기(press)의 윗줄이다. 압축기가 못 누르는 것(내압판·노심)을 누른다.
-     증류기는 해저 모래·해초를 소금과 물자로 되돌린다 — 바다에서 퍼 온 것을 뭍에서 쓴다. */
+  /* --- 4단계 설비 --- */
   pressor: {
     n: '가압기', tile: T.M_PRESSOR, item: 'm_pressor', power: 34, rot: 1, proc: 'pressor', cap: 40,
     d: '압축기보다 한참 센 힘으로 누른다. 내압판과 심해 노심은 여기서만 나온다.'
@@ -1877,9 +1648,7 @@ const MACHINE = {
   }
 };
 
-/* ---------------- 기계 제작법 ----------------
-   기계는 입력 버퍼에 든 재료로 만들 수 있는 첫 번째 제작법을 스스로 고른다.
-   t: 걸리는 틱 수 (전력이 모자라면 그만큼 느려진다) */
+/* ---------------- 기계 제작법 ---------------- */
 const MRECIPES = [
   /* 자동 용광로 — 연료 */
   { m: 'smelter', in: { copper_ore: 2 }, out: { copper_bar: 1 }, t: 16 },
@@ -1899,7 +1668,7 @@ const MRECIPES = [
   { m: 'assembler', in: { iron_bar: 1, steel_plate: 1 }, out: { gear_basic: 2 }, t: 16 },
   { m: 'assembler', in: { circuit: 1, gear_basic: 2, steel_plate: 1 }, out: { motor: 1 }, t: 26 },
   { m: 'assembler', in: { motor: 1, circuit: 2, steel_plate: 4 }, out: { machine_frame: 1 }, t: 34 },
-  /* 가압기 — 4단계. 압축기가 못 누르는 것을 누른다 */
+  /* 가압기 — 4단계. */
   { m: 'pressor', in: { steel_plate: 3, crab_shell: 4, sea_salt: 2 }, out: { pressure_plate_m: 2 }, t: 30 },
   { m: 'pressor', in: { abyss_pearl: 2, pressure_plate_m: 6, circuit: 4 }, out: { abyss_core: 1 }, t: 52 },
   { m: 'pressor', in: { mythril_ore: 4 }, out: { mythril_bar: 2 }, t: 36 },
@@ -1909,7 +1678,7 @@ const MRECIPES = [
   { m: 'desal', in: { ink_sac: 2 }, out: { crude_oil: 3 }, t: 20 },
   { m: 'assembler', in: { lead_bar: 2, polymer: 1, refined_oil: 1 }, out: { battery_empty: 1 }, t: 24 },
   { m: 'assembler', in: { steel_plate: 1 }, out: { rivet: 12 }, t: 12 },
-  /* 축전지 — 전력. 방전된 배터리를 다시 채운다 */
+  /* 축전지 — 전력. */
   { m: 'battery', in: { battery_empty: 1 }, out: { battery_cell: 1 }, t: 48 },
   /* 밀링기 — 전력 */
   { m: 'mill', in: { wheat: 3 }, out: { flour: 2 }, t: 14 },
@@ -1922,7 +1691,7 @@ const MRECIPES = [
   { m: 'mill', in: { leaf_corrupt: 8 }, out: { fertilizer: 2 }, t: 12 },
   { m: 'mill', in: { leaf_sky: 8 }, out: { fertilizer: 2 }, t: 12 },
   { m: 'mill', in: { leaf_palm: 8 }, out: { fertilizer: 2 }, t: 12 },
-  /* 화덕 — 연료. 요리 */
+  /* 화덕 — 연료. */
   { m: 'oven', in: { flour: 2 }, out: { food_bread: 1 }, t: 20 },
   { m: 'oven', in: { flour: 2, raw_meat: 2 }, out: { food_pie: 1 }, t: 28 },
   { m: 'oven', in: { mushroom: 3, flour: 1 }, out: { food_mstew: 1 }, t: 24 },
@@ -1930,8 +1699,7 @@ const MRECIPES = [
   { m: 'oven', in: { wildflower: 4 }, out: { food_tea: 2 }, t: 18 },
   { m: 'oven', in: { cactus_flesh: 3, flour: 1 }, out: { food_jelly: 2 }, t: 20 },
   { m: 'oven', in: { food_bread: 1, food_pie: 1, food_soup: 1 }, out: { food_feast: 1 }, t: 60 },
-  /* 전리품 작물 넷. 고기 없이도 파이가 되고, 꽃 없이도 차가 된다 —
-     사냥해서 심은 것이 부엌까지 이어지도록 */
+  /* 전리품 작물 넷. */
   { m: 'oven', in: { bloodbean: 3, flour: 1 }, out: { food_pie: 2 }, t: 26 },
   { m: 'oven', in: { frostherb: 3 }, out: { food_tea: 2 }, t: 18 },
   { m: 'oven', in: { bloodbean: 2, frostherb: 2, mushroom: 2 }, out: { food_curry: 1 }, t: 30 },
@@ -1939,39 +1707,20 @@ const MRECIPES = [
   { m: 'mill', in: { emberpod: 4 }, out: { fuel_brick: 2 }, t: 16 }
 ];
 
-/* 공장 재화 — 전력 설비(압축기·정제기·조립기)에서만 나오는 물건들.
-   제련로/화덕/밀링기 산출물(주괴·음식)은 손으로도 만들 수 있는 평범한 재료라 뺀다.
-   MRECIPES에서 자동으로 뽑는다 — 조리법을 늘려도 값 표를 따로 손볼 필요가 없다. */
+/* 공장 재화 — 전력 설비(압축기·정제기·조립기)에서만 나오는 물건들. */
 const FACTORY_LINES = new Set(['press', 'refinery', 'assembler', 'pressor', 'desal']);
 const FACTORY_GOODS = new Set();
 for (const r of MRECIPES) if (FACTORY_LINES.has(r.m)) for (const k in r.out) FACTORY_GOODS.add(k);
 
-/* 값 배수 — price()가 종류별 기본값을 낸 뒤 여기서 한 번 곱한다.
-   공장 물건(기계·설치물·공장 재화)은 들인 품만큼 비싸게 둔다. 무기는
-   이미 tier로 값이 크게 벌어져 있어 그대로 두고, 나머지 일반 물건만 조금 올린다.
-   판매가는 price() 그대로, 구매가는 buyPrice()가 여기에 다시 SHOP_BUY_MUL을 곱한다 —
-   한 군데만 고쳐도 사고파는 값이 같이 움직인다. */
+/* 값 배수 — price()가 종류별 기본값을 낸 뒤 여기서 한 번 곱한다. */
 const PRICE_MUL = { machine: 4.5, station: 4.5, weapon: 1 };
 const PRICE_MUL_DEFAULT = 1.75;
 const FACTORY_PRICE_MUL = 4.5;
 
-/* ---------------- 값의 티어 가중 ----------------
-   "물건 값을 몇 배 올리되, 티어가 오를수록 더 얹어 달라"는 요청.
-   한 배수를 전부에 곱하면 후반 물건과 초반 물건의 **간격**은 그대로라, 진행해도
-   돈의 무게가 안 달라진다. 티어를 지수로 태워 뒤로 갈수록 벌어지게 한다.
-     티어 0 → 2.2배 · 3 → 4.8 · 6 → 10.6 · 9 → 23.3
-
-   티어를 어떻게 아는가: tier가 박힌 물건(무기·도구)은 그대로 쓰고, 착용 레벨이
-   있으면 4레벨을 한 티어로 세고, 둘 다 없는 재료·소비품은 **제 값으로 가늠한다**
-   (값이 두 배가 될 때마다 한 티어). 재료에 티어 필드를 새로 박으면 수백 줄을
-   손대야 하는데, 재료의 값은 이미 진행 순서를 따라 매겨져 있어서 그럴 필요가 없다.
-
-   알처럼 fixed가 붙은 물건은 price()가 먼저 빠져나가므로 여기까지 오지 않는다. */
+/* ---------------- 값의 티어 가중 ---------------- */
 const PRICE_BASE_MUL = 2.2;
 const PRICE_TIER_STEP = 1.30;
-/* 재료의 티어 — 재료에는 tier도 lvReq도 없다. 값으로 가늠해 봤더니 대부분 기본값(12)에
-   걸려 **심해 노심이 나무와 같은 티어 0**이 됐다(실측). 진행 순서를 아는 것은 사람뿐이라
-   여기에 손으로 적는다. 적지 않은 재료는 0으로 떨어지며, 그건 초반 재료라는 뜻이다. */
+/* 재료의 티어 — 재료에는 tier도 lvReq도 없다. */
 const MAT_TIER = {
   coal: 0, copper_bar: 1, gear_basic: 1, bone_frag: 1, spider_silk: 2,
   iron_bar: 2, crystal: 3, gold_bar: 3, circuit: 3, motor: 3, steel_plate: 3,
@@ -1994,10 +1743,7 @@ function priceTier(d, id) {
 function priceTierMulOf(d, id) { return PRICE_BASE_MUL * Math.pow(PRICE_TIER_STEP, priceTier(d, id)); }
 
 
-/* ---------------- 마을 등급 ----------------
-   여명 마을에만 적용된다. 베이스캠프는 이 체계 바깥이다 — 캠프는 "돌아올 곳"이지
-   키우는 곳이 아니라는 세션 1의 설정을 그대로 둔다.
-   등급을 올리면 world.upgradeVillage()가 실제로 타일을 바꾸고 시설을 들여놓는다. */
+/* ---------------- 마을 등급 ---------------- */
 const VILLAGE = [
   null,
   {
@@ -2007,9 +1753,8 @@ const VILLAGE = [
   },
   {
     n: '자리 잡은 마을',
-    /* ★ 밭을 "갈아 준다"고 쓰지 않는다 — 마을은 자리를 내주고 연장을 건넬 뿐, 가는 것도 심는 것도 플레이어 몫이다(world.js upgradeVillage 2단계
-       참고).
-       사연: docs/code-history.md#h7 */
+    /* ★ 밭을 "갈아 준다"고 쓰지 않는다 — 마을은 자리를 내주고 연장을 건넬 뿐, 가는 것도 심는 것도 플레이어 몫이다(world.js upgradeVillage 2단계 참고) — 사연:
+       docs/code-history.md#h7 */
     d: '지붕을 다시 얹고, 울타리를 두르고, 밤에도 길이 보이게 했다.',
     need: { plank: 60, brick: 60, steel_plate: 20, gear_basic: 10 },
     gain: [
@@ -2023,9 +1768,7 @@ const VILLAGE = [
   {
     n: '여명 요새',
     d: '다시는 빼앗기지 않겠다는 뜻으로 벽을 세웠다.',
-    /* 값을 조금만 덜었다(성벽돌 120→100 · 강철판 40→32 · 회로 10→8 · 전동기 4→3). 요새는 마을의 마지막 단계다 — 쉽게 서면 안 된다. 그 늘어짐만
-       덜어 내고, "벽을 세우려면 제대로 벌어야 한다"는 무게는 그대로 둔다.
-       사연: docs/code-history.md#h8 */
+    /* 값을 조금만 덜었다(성벽돌 120→100 · 강철판 40→32 · 회로 10→8 · 전동기 4→3) — 사연: docs/code-history.md#h8 */
     need: { wallstone: 100, steel_plate: 32, circuit: 8, motor: 3 },
     gain: [
       '마을 양쪽에 성벽과 흉벽이 올라간다',
@@ -2051,14 +1794,8 @@ const VILLAGE = [
 ];
 
 /* ---------------- 시작 캐릭터 ---------------- */
-/* 다섯이 각자 제 시트를 쓴다 — char/player_<id>.png (13프레임, 원본 player.png 와 순서가
-   동일: idle1 idle2 walk1..4 jump fall dash atk1..3 hurt). tools/mkplayer.py 가 굽는다(원본 tools/art/).
-   tint 는 시트를 못 읽었을 때의 폴백 겸 선택 화면 표식. 저장에는 charId 만 남는다.
-
-   ★ 시작 무기는 **넷 다 초당 피해가 같다**(19.8~20.0) — 목검 9×2.2 · 곡괭이 9×2.2 ·
-     활 10×2.0 · 나뭇가지 11×1.8. 성격 차이는 사거리·마나·탄속으로 남기고 숫자만 맞췄다
-     (굴 파는 이만 13.2 이던 시절에는 고른 캐릭터 하나 때문에 초반이 통째로 팍팍했다).
-   ★ **곡괭이는 다섯 모두가 들고 시작한다.** 없으면 첫 나무·첫 돌에서 막혀 시작이 안 된다. */
+/* 다섯이 각자 제 시트를 쓴다 — char/player_<id>.png (13프레임, 원본 player.png 와 순서가 동일: idle1 idle2 walk1..4 jump fall dash
+   atk1..3 */
 const CHARACTERS = [
   { id: 'wanderer', n: '떠돌이', tint: null, d: '치우침이 없다. 처음이라면 이쪽.',
     story: '재가 내리기 전, 어느 마을의 문을 마지막으로 잠근 사람. ' +
@@ -2093,9 +1830,7 @@ const CHARACTERS = [
 ];
 
 /* ---------------- 난이도 ---------------- */
-/* 새 게임에서 한 번 고르고 끝이다 — 설정에서 바꿀 수 없다. 저장에 남는다.
-   mul 은 몹의 체력·공격력에만 곱한다(경험치·금화는 건드리지 않는다).
-   death: 'normal' 잃은 것만 · 'drop' 인벤토리 절반까지 · 'wipe' 슬롯 삭제 */
+/* 새 게임에서 한 번 고르고 끝이다 — 설정에서 바꿀 수 없다. */
 const MODES = [
   { id: 'normal', n: '일반', mul: 1, death: 'normal', c: '#8fb87a',
     d: '경험치 일부와 금화를 잃습니다. 쓰러진 자리에서 절반을 되찾을 수 있습니다.' },
@@ -2108,17 +1843,12 @@ const MODE_OF = id => MODES.find(m => m.id === id) || MODES[0];
 const CHAR_OF = id => CHARACTERS.find(c => c.id === id) || CHARACTERS[0];
 
 /* ---------------- 활·총을 든 손 ---------------- */
-/* 활은 겨눈 쪽으로 돌려 그리는데, 손 바로 위에 그리면 몸을 파고든다. 팔을 뻗은 만큼
-   앞으로 밀어 두고(BOW_HAND), 화살은 활 끝에서 나가게 한다(BOW_TIP).
-   BOW_TIP 은 BOW_HAND + 아이콘 안에서 화살촉이 놓인 자리(26px 상자 기준 +11.4)다.
-   그리는 쪽(game.js drawHeldWeapon)과 쏘는 쪽(entity.js fireProj)이 같은 값을 봐야
-   화살이 활 끝에서 나가는 것처럼 보인다 — 한쪽만 고치지 말 것. */
+/* 활은 겨눈 쪽으로 돌려 그리는데, 손 바로 위에 그리면 몸을 파고든다. */
 const BOW_HAND = 18;
 const BOW_TIP = BOW_HAND + 11.4;
 
 /* ---------------- 조작키 ---------------- */
-/* 설정에서 바꾼다. 저장은 설정(SET_KEY)에 붙고 세이브와는 무관하다.
-   값은 KeyboardEvent.code — 자판 배열이 달라도 자리로 잡히게. */
+/* 설정에서 바꾼다. */
 const KEY_ACTIONS = [
   { id: 'left', n: '왼쪽', def: ['KeyA', 'ArrowLeft'] },
   { id: 'right', n: '오른쪽', def: ['KeyD', 'ArrowRight'] },
@@ -2138,8 +1868,7 @@ const KEY_ACTIONS = [
 ];
 
 /* ---------------- 알림 갈래 ---------------- */
-/* toast 두 번째 인자에 넘기는 갈래. 설정에서 갈래마다 끌 수 있다.
-   'bad' 는 죽음·실패처럼 놓치면 안 되는 것이라 목록에 두지 않는다(항상 뜬다). */
+/* toast 두 번째 인자에 넘기는 갈래. */
 const NOTICE_KINDS = [
   { id: 'good', n: '획득 · 성공', def: 1 },
   { id: 'info', n: '안내 · 발견', def: 1 },
@@ -2148,15 +1877,7 @@ const NOTICE_KINDS = [
 ];
 
 /* ---------------- 적 ---------------- */
-// ai: walker / jumper / flyer / archer / caster / boss별 전용
-//
-// stiff: 그림이 거의 안 움직이는 개체를 렌더러가 절차적으로 흔들어 주는 값.
-//   지금은 붙은 개체가 하나도 없다 — 시트를 다시 구워 실제로
-//   걷고 숨 쉬게 만들었기 때문이다(측정값은 tools/framediff.py 로 확인). 그림이
-//   움직이는데 코드까지 흔들면 이중으로 흔들려서 오히려 어색해진다.
-//   drawEnemy 의 흔들림 경로는 남겨 뒀다 — 앞으로 추가할 몹 중에 또 정지한 그림이
-//   나오면 stiff: 0.8 처럼 붙이면 그때부터 다시 돈다.
-//   근본 해결은 프레임을 다시 그리는 것이고, 이건 그때까지의 가림막이다.
+// ai: walker / jumper / flyer / archer / caster / boss별 전용 stiff: 그림이 거의 안 움직이는 개체를 렌더러가 절차적으로 흔들어 주는 값.
 const ENEMIES = {
   /* --- 순한 동물: 적대하지 않고 어슬렁거리다 맞으면 도망친다. 잡으면 생고기를 준다 --- */
   rabbit:      { n: '들토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', w: 16, h: 12, c: '#ad9678', xp: 2, gold: 0, passive: 1,
@@ -2174,9 +1895,7 @@ const ENEMIES = {
 
   slime:      { n: '잿빛 슬라임', hp: 34, dmg: 8, def: 0, spd: 34, ai: 'jumper', w: 24, h: 18, c: '#6f8ba0', xp: 9, gold: 3, biome: 'surface', aggro: 320,
                 drops: [['slime_gel', .9, 1, 3], ['potion_hp_small', .06, 1, 1]] },
-  /* 좀비만 잡몹 중에 **플레이어 레벨을 탄다**(lvScale). 붉은 달과 같은 꼴이되 지수가
-     절반이라 훨씬 완만하다 — 50레벨 1.58배 · 100레벨 2.5배(붉은 달은 2.5배 · 6.25배).
-     밤마다 나오는 놈이라 붉은 달만큼 세지면 밤이 통째로 못 나가는 시간이 된다. */
+  /* 좀비만 잡몹 중에 **플레이어 레벨을 탄다**(lvScale). */
   zombie:     { n: '떠도는 시체', hp: 60, dmg: 14, def: 2, spd: 30, ai: 'walker', w: 20, h: 40, c: '#5b7a52', xp: 16, gold: 6, biome: 'night', aggro: 460, lvScale: 0.5,
                 drops: [['bone_frag', .5, 1, 2], ['iron_ore', .12, 1, 2], ['potion_hp_small', .07, 1, 1]] },
   bat:        { n: '동굴 박쥐', hp: 26, dmg: 11, def: 0, spd: 84, ai: 'flyer', w: 22, h: 16, c: '#6b4a6b', xp: 12, gold: 4, biome: 'cave', aggro: 420,
@@ -2232,12 +1951,7 @@ const ENEMIES = {
   lantern:    { n: '잊힌 등불', hp: 380, dmg: 66, def: 16, spd: 74, ai: 'caster', w: 22, h: 30, c: '#e0c86a', xp: 200, gold: 110, biome: 'ruin', range: 330, aggro: 520,
                 drops: [['aether_shard', .5, 1, 3], ['crystal', .5, 2, 5]] },
 
-  /* ================= 유적마다 그곳에서만 나오는 것 하나 =================
-     유적 잡몹이 전부 세계 어디서나 나오는 것이면(얼음 던전엔 얼음 지대의 서리 정령)
-     유적에 들어와야만 볼 수 있는 것이 수호병 하나뿐이 된다.
-     ★ 다섯 다 **그 유적의 장식에서 나온 것**이다 — 몬스터와 장식이 같은 이야기를 해야
-       나중에 붙여 넣은 것처럼 안 보인다. ai 도 실루엣도 겹치지 않게 갈랐다(어두운 방에서
-       형체만 보고도 무엇인지 갈려야 한다). 세기는 그 유적의 rank 를 따라간다. */
+  /* ================= 유적마다 그곳에서만 나오는 것 하나 ================= */
   cartwraith: { n: '빈 광차', cw: '기', hp: 140, dmg: 30, def: 8, spd: 124, ai: 'walker', w: 30, h: 22, c: '#7a5a38', xp: 44, gold: 24, biome: 'ruin', aggro: 400,
                 d: '아무도 밀지 않는데 굴러온다. 안에서 잉걸이 아직 타고 있다.',
                 drops: [['deep_ember', .7, 1, 3], ['iron_ore', .5, 1, 3], ['rust_gear', .2, 1, 1]] },
@@ -2264,10 +1978,7 @@ const ENEMIES = {
   foreman:      { n: '옛 십장', cw: '기', hp: 1900, dmg: 88, def: 44, spd: 88, ai: 'caster', w: 26, h: 42, c: '#c8a06a', xp: 1700, gold: 480, aggro: 640, range: 380, proj: 'rune',
                  drops: [['power_core', 1, 2, 4], ['steel_plate', 1, 5, 10], ['blueprint_frag', .4, 1, 1]] },
 
-  /* --- 울림 정글 ---
-     지상 셋은 사막(2000~2680)보다 앞서 지나는 길목(1400~2000)인데도 사막 몹보다 전부
-     셌다 — 곁가지 바이옴으로 나중에 추가되며 균형을 안 맞춘 채였다. hp·dmg 를 15% 낮춰
-     사막과 비슷하거나 살짝 아래로(동굴·유적 안의 같은 이름 몹은 rank 로 따로 관리). */
+  /* --- 울림 정글 --- */
   vinelash:   { n: '덩굴채찍', hp: 162, dmg: 29, def: 8, spd: 74, ai: 'walker', w: 26, h: 40, c: '#3f7a34', xp: 62, gold: 28, biome: 'jungle', aggro: 500,
                 drops: [['vine_coil', .7, 1, 3], ['fern_frond', .5, 1, 3]] },
   bloomspitter:{ n: '꽃뱉이', hp: 128, dmg: 26, def: 4, spd: 58, ai: 'caster', w: 26, h: 26, c: '#c85a9a', xp: 58, gold: 26, biome: 'jungle', range: 320, aggro: 480,
@@ -2279,9 +1990,7 @@ const ENEMIES = {
                 drops: [['spore_sac', .7, 1, 3], ['glowcap', .5, 1, 2]] },
   capbeast:   { n: '갓짐승', hp: 280, dmg: 44, def: 16, spd: 52, ai: 'jumper', w: 32, h: 26, c: '#8fd0b0', xp: 96, gold: 44, biome: 'glowfen', aggro: 420,
                 drops: [['glowcap', .8, 2, 4], ['spore_sac', .4, 1, 2]] },
-  /* --- 동굴 물웅덩이 · 폭포 ---
-     물 밖으로는 나오지 못한다(ai: 'swimmer'). 웅덩이가 곧 이들의 영역이라, 물에 들어가지
-     않으면 싸울 일이 없다 — 들어갈지 말지를 고르게 하는 게 이 구역의 재미다. */
+  /* --- 동굴 물웅덩이 · 폭포 --- */
   cave_minnow:{ n: '눈먼 송사리', hp: 12, dmg: 0, def: 0, spd: 62, ai: 'swimmer', passive: 1, w: 16, h: 10, c: '#9fd8e8', xp: 6, gold: 2, aggro: 0,
                 drops: [['raw_meat', .5, 1, 1]] },
   // 정글 폭포호 전용 — 동굴 웅덩이의 눈먼 송사리와 같은 자리지만, 지상 호수답게 화사한 색을 준다
@@ -2289,24 +1998,13 @@ const ENEMIES = {
                 drops: [['raw_meat', .5, 1, 1]] },
   grotto_eel: { n: '웅덩이 뱀장어', hp: 150, dmg: 32, def: 8, spd: 128, ai: 'swimmer', w: 34, h: 14, c: '#3a6a5a', xp: 64, gold: 30, aggro: 300,
                 drops: [['raw_meat', .6, 1, 2], ['crystal', .25, 1, 2]] },
-  /* === 세션 3 몹 세기 기준 ===
-     세션 2 마지막 구간(설계실)이 hp 1300~2400 · dmg 88~110 · def 34~66 이다.
-     세션 3은 **그보다 조금 위**로 잡는다 — 얕은 물(해파리 1100)은 세션 2 중간과 겹치고,
-     가장 깊은 것(초롱아귀 3600/168/96)이 세션 2 최고보다 1.5배쯤 세다.
-     깊이가 곧 난이도라, 수면에서 멀어질수록 이 계단을 타고 올라간다. */
+  /* === 세션 3 몹 세기 기준 === */
 
-  /* --- 해변 (지상, 물가) ---
-     바다도 빙하도 아닌 그 사이의 자리다. 물 밖으로 밀려 나온 것들이 모래에 반쯤 묻혀
-     있다가 사람이 지나가면 일어선다. 물속 몹과 달리 뭍에서 싸우므로 도망칠 수는 있다. */
+  /* --- 해변 (지상, 물가) --- */
   driftling:  { n: '표류물 더미', hp: 1400, dmg: 96, def: 48, spd: 62, ai: 'walker', w: 32, h: 30, c: '#9a8a6a', biome: 'beach', xp: 620, gold: 260, aggro: 340,
                 drops: [['kelp', .7, 2, 5], ['rope_kelp', .3, 1, 2], ['crab_shell', .35, 1, 3], ['lost_lamp', .12, 1, 1]] },
 
-  /* --- 바다 부유물 (ai 'flotsam') ---
-     몹이 아니라 **물 위에 뜬 짐짝**이다. 때리지도 쫓지도 않고(passive, dmg 0) 물결을 타고
-     천천히 흘러간다. 부수면 대부분 잡동사니가 나온다 — 바다를 건너는 길에 들르는 작은 보상.
-     체력 막대는 늘 보인다(game.js drawEnemyOverlay) — 몇 대 쳐야 하는지가 곧 등급이라서.
-     단계가 오를수록 드물고(game.js trySpawnFlotsam — 70 / 25 / 5) 단단하며, 3단계 궤짝에서만
-     아주 드물게 뱃사람의 나침반이 나온다. 그림은 tools/mkflotsam.py 로 굽는다. */
+  /* --- 바다 부유물 (ai 'flotsam') --- */
   flotsam1:   { n: '떠다니는 나뭇더미', hp: 240, dmg: 0, def: 4, spd: 0, ai: 'flotsam', passive: 1, w: 32, h: 16, c: '#7a5a36', biome: 'sea', xp: 18, gold: 8, tier: 1,
                 drops: [['wood', 1, 3, 7], ['kelp', .6, 1, 3], ['rope_kelp', .25, 1, 2], ['crab_shell', .15, 1, 1]] },
   flotsam2:   { n: '난파 상자', hp: 640, dmg: 0, def: 14, spd: 0, ai: 'flotsam', passive: 1, w: 26, h: 22, c: '#8a6238', biome: 'sea', xp: 55, gold: 40, tier: 2,
@@ -2314,18 +2012,13 @@ const ENEMIES = {
   flotsam3:   { n: '봉인된 표류 궤짝', hp: 1500, dmg: 0, def: 30, spd: 0, ai: 'flotsam', passive: 1, w: 30, h: 24, c: '#2f5a5a', biome: 'sea', xp: 160, gold: 180, tier: 3,
                 drops: [['sea_salt', .7, 2, 4], ['rope_kelp', .6, 2, 4], ['shark_tooth', .35, 1, 2], ['ink_sac', .3, 1, 2], ['lost_lamp', .15, 1, 1], ['mariner_compass', .02, 1, 1]] },
 
-  /* --- 빙하 지대 (지상) ---
-     서리 지대 몹보다 세고, 바다 몹보다는 순하다. 얼음이 흙 없이 그대로 쌓인 곳이라
-     "미끄러지는 것"과 "덩어리째 굴러오는 것" 둘로 성격을 갈랐다. */
+  /* --- 빙하 지대 (지상) --- */
   glacier_stalker:{ n: '빙하 추적자', hp: 1250, dmg: 92, def: 36, spd: 152, ai: 'jumper', w: 30, h: 28, c: '#bfe8ff', xp: 560, gold: 240, biome: 'glacier', aggro: 620,
                 drops: [['ice_shard', .7, 3, 6], ['frost_core', .35, 1, 2], ['raw_meat', .4, 1, 2]] },
   crevasse_maw: { n: '크레바스 아가리', hp: 2100, dmg: 116, def: 74, spd: 44, ai: 'walker', w: 42, h: 40, c: '#6a9ac0', xp: 900, gold: 400, biome: 'glacier', aggro: 380,
                 drops: [['ice_shard', .8, 6, 12], ['frost_core', .5, 2, 4], ['crystal', .3, 1, 3]] },
 
-  /* --- 가라앉은 바다 ---
-     전부 ai 'swimmer'라 물 밖으로 못 나온다. 바다는 "들어갈지 말지"를 고르는 곳이고,
-     들어가면 숨(산소)이 먼저 줄기 때문에 **오래 버티는 것 자체가 위험**이다.
-     그래서 개별 몹은 느리되 아프게, 깊이 내려갈수록 사나워지도록 계단을 뒀다. */
+  /* --- 가라앉은 바다 --- */
   reef_crab:  { n: '암초 게', hp: 1600, dmg: 100, def: 78, spd: 54, ai: 'swimmer', w: 26, h: 18, c: '#c86a4a', xp: 760, gold: 330, biome: 'sea', aggro: 260,
                 drops: [['crab_shell', .65, 1, 3], ['raw_meat', .4, 1, 2]] },
   lantern_jelly:{ n: '초롱해파리', hp: 1100, dmg: 112, def: 20, spd: 46, ai: 'swimmer', passive: 1, w: 20, h: 26, c: '#8fd0e8', xp: 820, gold: 300, biome: 'sea', aggro: 200,
@@ -2338,21 +2031,15 @@ const ENEMIES = {
                 drops: [['jelly_lamp', .6, 1, 3], ['abyss_pearl', .35, 1, 2], ['soul_shard', .3, 1, 2]] },
   drowned_hand:{ n: '가라앉은 손', hp: 260, dmg: 46, def: 18, spd: 88, ai: 'swimmer', w: 24, h: 32, c: '#6a7a86', xp: 120, gold: 62, aggro: 340,
                 drops: [['bone_frag', .7, 2, 4], ['lost_lamp', .3, 1, 1], ['soul_shard', .25, 1, 2]] },
-  /* --- 붉은 달 전용 (이벤트 중에만 나온다) ---
-     예전 수치(hp260/dmg52·hp210/dmg46)는 사실 같은 자리의 평범한 잡몹(가라앉은 손 등)과
-     별 차이가 없어서, 처치 보상만 2.2배(EVENTS.bloodmoon.rw)일 뿐 몸으로 느끼는 위협은
-     "레드문 전용"이라는 이름값을 못 했다. 눈에 띄게 세게 올렸다. */
+  /* --- 붉은 달 전용 (이벤트 중에만 나온다) --- */
   crimson_howler: { n: '붉은 울음', hp: 450, dmg: 78, def: 22, spd: 128, ai: 'walker', w: 26, h: 40, c: '#c03a3a', xp: 220, gold: 130, aggro: 700,
                 drops: [['bone_frag', .8, 2, 5], ['soul_shard', .3, 1, 2], ['potion_hp', .2, 1, 2]] },
   crimson_eye:{ n: '붉은 눈', hp: 380, dmg: 70, def: 18, spd: 112, ai: 'flyer', w: 28, h: 28, c: '#e0503c', xp: 200, gold: 120, aggro: 760,
                 drops: [['corrupt_ess', .6, 1, 3], ['soul_shard', .35, 1, 2]] },
 
-  /* --- 유적 미니보스 ---
-     스토리 보스와 달리 제단이 아니라 방에 들어서면 깨어난다. 보스 바와 보스 브금은 함께 쓴다. */
-  /* 여섯의 세기를 RUIN_SPEC의 rank(1~6)에 맞춰 계단식으로 벌렸다. 이제 갱도(rank 1)와 부패(rank 6)가 체력 4배 · 공격력 3배 가까이 차이
-     난다.
-     사연: docs/code-history.md#h9 */
-  /* rank 1 — 베이스캠프 옆. 처음 잡아 보는 미니보스 */
+  /* --- 유적 미니보스 --- */
+  /* 이제 갱도(rank 1)와 부패(rank 6)가 체력 4배 · 공격력 3배 가까이 차이 난다 — 사연: docs/code-history.md#h9 */
+  /* rank 1 — 베이스캠프 옆. */
   mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_slime', w: 60, h: 52, c: '#6a5a4a', xp: 1500, gold: 620, ph: 2, boss: 1,
                  drops: [['rust_gear', 1, 2, 3], ['iron_ore', 1, 20, 30], ['lost_lamp', 1, 1, 2], ['foreman_tag', 1, 1, 1]] },
   /* rank 2 */
@@ -2364,28 +2051,18 @@ const ENEMIES = {
   /* rank 4 — 함정이 가장 촘촘한 유적의 주인 */
   sand_guardian:{ n: '모래 파수꾼', hp: 5600, dmg: 92, def: 46, spd: 66, ai: 'b_bone', w: 54, h: 70, c: '#d8b878', xp: 4800, gold: 2100, ph: 2, boss: 1,
                  drops: [['sun_disc', 1, 2, 3], ['gold_ore', 1, 15, 25], ['venom_sting', 1, 6, 10], ['caged_sun', 1, 1, 1]] },
-  /* rank 5 — 입구가 없는 굴. 도망칠 길이 없다 */
+  /* rank 5 — 입구가 없는 굴. */
   spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 50, h: 72, c: '#6fe0c0', xp: 6400, gold: 2800, ph: 2, boss: 1,
                  drops: [['queen_spore', 1, 2, 3], ['spore_sac', 1, 12, 20], ['glowcap', 1, 15, 25], ['cap_signet', 1, 1, 1]] },
   /* rank 6 — 동쪽 끝, 가장 깊은 곳 */
   blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 66, h: 58, c: '#7a3f9c', xp: 9000, gold: 4000, ph: 2, boss: 1,
                  drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18], ['nest_crown', 1, 1, 1]] },
 
-  /* ★ 세션 3 보스 셋(가라앉은 지킴이 486 · 섬을 든 것 505 · 조수의 파수꾼 525)은 제
-     장 잡몹의 1.66~1.73배로 때렸다. 다른 보스 열여섯은 전부 0.49~1.12배다 — 보스는
-     한 대가 센 것이 아니라 체력과 마디로 버티는 것이 이 게임의 규칙이다.
-     셋 다 최초의 파수꾼과 **같은 b_keeper AI** 라 공격 주기도 투사체 계수(0.5·0.4)도
-     똑같은데, 그쪽은 0.61배다 — 보정이 따로 있는 것이 아니라 숫자만 어긋나 있었다.
-     잡몹은 장 배율(1 + 장×0.09)을 타고 보스는 안 타는데(entity.js `sc = d.boss ? 1 : scale`)
-     그 차이를 빼고 적은 값으로 보인다. 290/300/310 은 제 장 잡몹의 0.99~1.02배다.
-
-     rank 7 — 세션 3 · 가라앉은 유적. 세션 2 미니보스(부패한 아가리)와 세션 3 보스
-     (조수의 파수꾼) 사이에 끼워 넣은 자리다. 물 밑에 봉해져 있어 아무도 안 건드렸다. */
+  /* ★ 다른 보스 열여섯은 전부 0.49~1.12배다 — 보스는 한 대가 센 것이 아니라 체력과 마디로 버티는 것이 이 게임의 규칙이다. */
   drowned_keeper:{ n: '가라앉은 지킴이', hp: 18000, dmg: 290, def: 110, spd: 84, ai: 'b_keeper', w: 54, h: 62, c: '#3f6a7a', xp: 17000, gold: 7400, boss: 1,
                  drops: [['keeper_seal', 1, 1, 1], ['abyss_pearl', 1, 6, 10], ['pressure_plate_m', 1, 8, 14]] },
 
-  /* --- 폭주로 ---
-     공창이 스스로 불려 낸 것들. 사람이 설계한 흔적이 점점 옅어진다 */
+  /* --- 폭주로 --- */
   splitter:   { n: '증식 기계', cw: '기', hp: 1500, dmg: 84, def: 40, spd: 84, ai: 'walker', w: 28, h: 34, c: '#8a7a6a', xp: 2600, gold: 520, aggro: 520,
                 drops: [['core_shard', .8, 1, 3], ['steel_plate', .7, 3, 7], ['gear_basic', .5, 2, 5], ['orb_core', .02, 1, 1]] },
   weldarm:    { n: '용접 팔', cw: '기', hp: 1800, dmg: 92, def: 46, spd: 64, ai: 'archer', w: 26, h: 44, c: '#c8763a', xp: 2900, gold: 600, aggro: 640, proj: 'fire',
@@ -2429,9 +2106,7 @@ const ENEMIES = {
                  minion: 'riveter',
                  drops: [['steel_plate', 1, 60, 90], ['power_core', 1, 20, 30], ['blueprint_core', 1, 1, 1], ['pick_drill', 1, 1, 1]] },
 
-  /* --- 세션 2 종장: 설계실 ---
-     끝까지 조립되지 못한 것들. 공격적이라기보다 "하던 일을 계속 하려는" 것들이라
-     플레이어를 밀어내는 쪽에 가깝다. */
+  /* --- 세션 2 종장: 설계실 --- */
   draft_form:   { n: '미완의 형상', cw: '기', hp: 1600, dmg: 96, def: 52, spd: 82, ai: 'walker', w: 26, h: 44, c: '#cfc7b8', xp: 3200, gold: 700, aggro: 520,
                  drops: [['proto_ash', 1, 2, 5], ['draft_glass', .5, 1, 3]] },
   scribe_hand:  { n: '기록하는 손', cw: '기', hp: 1300, dmg: 88, def: 34, spd: 150, ai: 'caster', w: 24, h: 30, c: '#8fd8e8', xp: 3000, gold: 660, aggro: 620, range: 360, proj: 'rune',
@@ -2457,8 +2132,7 @@ const ENEMIES = {
   ballast_form: { n: '평형추', cw: '기', hp: 5200, dmg: 152, def: 96, spd: 54, ai: 'walker', w: 38, h: 54, c: '#5a6a80', xp: 6400, gold: 1500, aggro: 460,
                  drops: [['orbit_plate', 1, 6, 12], ['star_ash', .3, 1, 2], ['orbit_gear', .5, 2, 4]] },
 
-  /* 부유 성채의 주인 — 지금까지 나온 무엇보다 세다.
-     기반암과 제단만 빼고 발밑을 계속 부순다(b_restorer). 하늘 위라 떨어지면 그대로 끝이다. */
+  /* 부유 성채의 주인 — 지금까지 나온 무엇보다 세다. */
   restorer:     { n: '환원기 · 되돌리려는 것', cw: '기', hp: 320000, dmg: 340, def: 130, spd: 132, ai: 'b_restorer', w: 236, h: 264, c: '#a8c8e8', ph: 5, boss: 1,
                  xp: 2600000, gold: 1200000, minion: 'orbit_sentry', aggro: 5000,
                  drops: [['star_ash', 1, 4, 6], ['orbit_gear', 1, 40, 60], ['void_lens', 1, 2, 3], ['lance_orbit', 1, 1, 1]] },
@@ -2472,9 +2146,7 @@ const ENEMIES = {
                  drops: [['miner_tag', .5, 1, 1], ['deep_alloy', 1, 3, 7], ['lost_lamp', .35, 1, 2]] },
 
   /* 무너진 갱의 주인 — 스토리와 무관한 순수 탐험 보상 */
-  /* 떠 있는 섬을 붙들고 있는 것 — 스토리와 무관하다. 황금 상자가 미끼이고,
-     상자를 여는 순간 섬 아래에서 올라온다. 세기는 **세션 3 중반보다 한 뼘 위**:
-     가라앉은 지킴이(18,000/486)와 조수의 파수꾼(148,000/525) 사이에 둔다. */
+  /* 떠 있는 섬을 붙들고 있는 것 — 스토리와 무관하다. */
   isle_keeper:  { n: '섬을 든 것', hp: 34000, dmg: 300, def: 118, spd: 92, ai: 'b_keeper', w: 88, h: 96, c: '#4a7a86', boss: 1,
                  xp: 480000, gold: 240000, minion: 'reef_shark', aggro: 3200,
                  drops: [['abyss_pearl', 1, 6, 10], ['abyss_core', 1, 2, 3], ['coconut', 1, 8, 14]] },
@@ -2483,24 +2155,11 @@ const ENEMIES = {
                  drops: [['gloom_pearl', 1, 3, 4], ['deep_alloy', 1, 40, 60], ['miner_tag', 1, 2, 3], ['hammer_cave', 1, 1, 1]] }
 };
 
-/* ================= 개조 — 세션 2에서 옛 몹이 기계가 되어 돌아온다 =================
-
-   세션 2 는 같은 땅을 다시 걷는데 사는 것이 1장 때와 똑같으면 "돌아왔다"가 아니라
-   "옛 구역을 다시 지나간다"로 읽힌다. 새 몹을 만들지 않는 이유는 정예와 같다 —
-   여기 원래 살던 것이 손을 탔다는 인상이라야 하고, 그러려면 아는 실루엣이 서 있어야 한다.
-
-   ★ 한꺼번에 바꾸지 않는다. 9장에 전부 기계가 되면 그건 그냥 다른 지역이다. 장이
-     넘어갈 때마다 종류가 늘어난다(9장 넷 → 14장 스물다섯). 차례는 세다가 아니라
-     **기계에 가까운 순서**다 — 흔하고 작은 것부터, 스스로 하나의 생태인 것이 마지막.
-   ★ 유적·하늘·공창 몹과 순한 동물(passive)은 뺀다. 개조는 **바이옴**에만 건다. */
+/* ================= 개조 — 세션 2에서 옛 몹이 기계가 되어 돌아온다 ================= */
 const mobCw = t => (ENEMIES[t] && ENEMIES[t].cw) || '마리';
 
 const MECH_MUL = 1.5;                 // 체력·공격력·방어·보상 모두 원래의 1.5배
-/* ★ 개조된 것에서는 **부품만** 나온다. 원래 떨구던 것에 얹지 않고 통째로 바꾼다 —
-   얹으면 개조된 몹이 그냥 더 좋은 사냥감이 되어 세션 2 내내 그쪽만 잡게 된다.
-   바꿔치기라야 "가죽 대신 고철이 나온다"가 되고 보상 총량이 그대로다.
-   녹슨 톱니 하나로 통일한다 — 강철판·동력석은 지하 공창의 몫이라, 지상에서 같은 것이
-   나오면 공창에 내려갈 이유가 없어진다. */
+/* ★ 개조된 것에서는 **부품만** 나온다. */
 const MECH_PART = 'rust_gear';
 const MECH_CH0 = 9;                   // 세션 2 서장
 const MECH_CH1 = 14;                  // 세션 2 종장 — 이때 전부 넘어간다
@@ -2513,7 +2172,7 @@ const MECH_ORDER = [
   /* 14장 */ 'lavaslug', 'capbeast', 'corrupttree', 'golem'
 ];
 
-/** 그 장까지 개조가 끝난 몹의 수. 9장에 넷, 14장에 전부. */
+/** 그 장까지 개조가 끝난 몹의 수. */
 function mechCount(chapter) {
   if (chapter < MECH_CH0) return 0;
   const t = clamp((chapter - MECH_CH0) / (MECH_CH1 - MECH_CH0), 0, 1);
@@ -2526,19 +2185,15 @@ function isMech(type, chapter) {
   const i = MECH_ORDER.indexOf(type);
   return i >= 0 && i < n;
 }
-/** 살아 있는 개체의 이름. 개조된 것은 앞에 '개조된'이 붙는다 —
-    퀘스트·통계는 원래 type 을 그대로 세므로 이름만 갈린다. */
+/** 살아 있는 개체의 이름. */
 function mobName(type, mech) {
   const n = (ENEMIES[type] || {}).n || type;
   return mech ? '개조된 ' + n : n;
 }
 
 
-/* 
-     c 파편 색 셋(밝은 쪽→어두운 쪽) · n 기본 개수 · g 중력 배수(음수면 위로 뜬다)
-     life 사는 시간(초) · sq 1이면 네모(돌·쇠·유리) 0이면 동그라미(살·젤·연기)
-     glow 1이면 빛난다(불·공허) · hit 때린 소리 키 · brk 부순 소리 키
-   사연: docs/code-history.md#h10 */
+/* c 파편 색 셋(밝은 쪽→어두운 쪽) · n 기본 개수 · g 중력 배수(음수면 위로 뜬다) life 사는 시간(초) · sq 1이면 네모(돌·쇠·유리) 0이면 동그라미(살·젤·연기) glow
+   1이면 — 사연: docs/code-history.md#h10 */
 const MAT = {
   stone: { c: ['#9a9aa0', '#6a6a70', '#4a4a50'], n: 9, g: 1.0, life: .50, sq: 1, hit: 'hit_stone', brk: 'break_stone' },
   dirt:  { c: ['#8a6a44', '#5d4429', '#40301d'], n: 8, g: 1.25, life: .36, sq: 1, hit: 'hit_stone', brk: 'break_dirt' },
@@ -2555,8 +2210,7 @@ const MAT = {
 };
 const MAT_DEF = 'stone';
 
-/* 타일·기계의 재질. 적지 않은 것은 전부 stone 이다 — 이 게임 지형의 기본이 돌이라
-   기본값이 가장 많이 맞는다. 물·가스처럼 못 부수는 것은 아예 안 적는다. */
+/* 타일·기계의 재질. */
 const TILE_MAT = (() => {
   const m = {};
   const put = (mat, keys) => keys.split(' ').forEach(k => {
@@ -2588,10 +2242,7 @@ const TILE_MAT = (() => {
   return m;
 })();
 function tileMat(id) { return TILE_MAT[id] || MAT_DEF; }
-/* ---------------- 빛 ---------------- 빛을 내는 타일마다 **고유한 세기와 색**을 준다. [세기, 빛 색]. 세기는
-   TILE_DEF[].light 를 덮어쓴다(조명 계산 world.computeLight 가 그것을 읽는다). 색은 game.js drawGlow 가 그 타일 둘레에 덧칠하는
-   번짐 빛이다. 세기는 **둘이 같으면 안 된다** — 아래 검사가 로드할 때 겹침을 콘솔에 알린다. 자수정(수정 무리)은 보랏빛, 수정 광맥은 푸른빛.
-   사연: docs/code-history.md#h11 */
+/* ---------------- 빛 ---------------- */
 const LIGHT_SPEC = {
   LAMPPOST: [14, '#ffe0a0'], TORCH: [13, '#ffb45a'], LAVA: [11, '#ff6a2a'], FLOWLAVA: [10.8, '#ff7a34'],
   ORBITCORE: [10.5, '#7fe0ff'], COREGLASS: [10, '#ffb04a'], GLOWCAP: [9.5, '#6fe0c0'],
@@ -2620,8 +2271,7 @@ const LIGHT_SPEC = {
   }
 }
 
-/* 유체 표(world.js '유체' 절). 종류: 1 민물 · 2 바닷물 · 3 용암.
-   수련·물풀은 민물, 해초는 바닷물 **원천**이다 — 그 칸도 물이라 옆으로 물을 먹여 준다. */
+/* 유체 표(world.js '유체' 절). */
 const FLUID_KIND = new Uint8Array(TILE_DEF.length);
 const FLUID_SRC = new Uint8Array(TILE_DEF.length);
 const FLUID_FLOW = new Uint8Array(TILE_DEF.length);
@@ -2631,21 +2281,14 @@ for (const k of ['LAVA', 'FLOWLAVA']) FLUID_KIND[T[k]] = 3;
 for (const k of ['WATER', 'SEAWATER', 'LAVA', 'LILY', 'PONDWEED', 'KELPPLANT']) FLUID_SRC[T[k]] = 1;
 for (const k of ['FLOWWATER', 'FLOWSEA', 'FLOWLAVA']) FLUID_FLOW[T[k]] = 1;
 const FLUID_TILE = [0, T.FLOWWATER, T.FLOWSEA, T.FLOWLAVA];     // 종류 → 흐르는 타일
-/* 물이 밀고 들어갈 수 있는 칸 — 빈칸과 풀·꽃·고사리·조개(쓸려 간다). 나머지는 전부 막는다.
-   공기 주머니·방 공기가 특히 그렇다: 거기로 물이 들면 물속 숨 돌릴 곳과 가라앉은 방이
-   통째로 잠긴다. 부들·조약돌은 물가에 놓는 장식이라 쓸려 가면 물가에 남을 게 없다. */
+/* 물이 밀고 들어갈 수 있는 칸 — 빈칸과 풀·꽃·고사리·조개(쓸려 간다). */
 const FLUID_WASH = new Uint8Array(TILE_DEF.length);
 for (const k of ['AIR', 'FLOWER', 'WEED', 'FERN', 'SEASHELL']) FLUID_WASH[T[k]] = 1;
 const FLUID_OPEN = t => FLUID_WASH[t] === 1;
-/** 캐거나 부쉈을 때 그 자리에 남는 것 — 물 위의 수련, 물속의 물풀·해초는 캐도 물칸이 남는다.
-    사연: docs/code-history.md#h12 */
+/** 캐거나 부쉈을 때 그 자리에 남는 것 — 물 위의 수련, 물속의 물풀·해초는 캐도 물칸이 남는다 — 사연: docs/code-history.md#h12 */
 const LEAVE_OF = { [T.LILY]: T.WATER, [T.PONDWEED]: T.WATER, [T.KELPPLANT]: T.SEAWATER };
 
-/** 장식을 놓을 때 무엇에 기대야 하는가 — 'floor' 바로 아래가 단단해야 · 'ceil' 바로 위가 단단해야.
-    같은 장식 위·아래로는 이어 붙일 수 있다(석순 위에 석순, 종유석 아래 종유석, 이끼 아래 이끼).
-    적지 않은 장식은 벽이든 뒷벽이든 아무 데나 기대면 된다(블록과 같은 규칙).
-    ★ 이 표가 없으면 들꽃·석순이 허공에 뜬 채로 놓였다 — 블록 규칙은 "옆에 뭔가 있거나 뒷벽이
-      있으면 된다"라서 동굴 한가운데 공중에도 꽃이 핀다. */
+/** 장식을 놓을 때 무엇에 기대야 하는가 — 'floor' 바로 아래가 단단해야 · 'ceil' 바로 위가 단단해야. */
 const DECO_MOUNT = (() => {
   const m = {};
   for (const k of ['FLOWER', 'WEED', 'CACTUS', 'MUSHROOM', 'FERN', 'ORCHID', 'GLOWCAP', 'STALAGMITE', 'GEODE',
@@ -2654,15 +2297,14 @@ const DECO_MOUNT = (() => {
   for (const k of ['STALACTITE', 'HANGMOSS', 'VINE', 'HYPHAE', 'MINELAMP', 'ICEBANNER']) m[T[k]] = 'ceil';
   return m;
 })();
-/** 장식 타일 → 그 장식 아이템(ITEMS 의 deco: 1). 캐면 재료와 함께 이것이 떨어진다(game.js dropTile) */
+/** 장식 타일 → 그 장식 아이템(ITEMS 의 deco: 1). */
 const DECO_OF = (() => {
   const m = {};
   for (const k in ITEMS) if (ITEMS[k].deco) m[ITEMS[k].tile] = k;
   return m;
 })();
 
-/* 몹의 재질. 이름이 아니라 **무엇으로 만들어졌는가**로 갈랐다 —
-   '무덤지기'는 뼈고 '언 순례자'는 얼음이다. 적지 않은 것은 살(flesh). */
+/* 몹의 재질. */
 const MOB_MAT = (() => {
   const m = {};
   const put = (mat, keys) => keys.split(' ').forEach(k => { m[k] = mat; });
@@ -2690,13 +2332,7 @@ function mobMat(type, mech) {
 }
 
 
-/* ================= 보스가 무너지는 방식 =================
-   스물세 마리가 전부 같은 입자 예순 개로 사라지면 "이 놈을 이겼다"가 아니라 "죽는 연출이
-   하나 있다"가 된다. 무엇으로 만들어진 놈인지에 따라 무너지는 방식이 다르다.
-
-     mat/n/spd/vy/life  첫 터짐(재질·개수·속도·초기 상승·수명 배수)
-     ring/in  고리에서 시작 / 안쪽으로 빨려 든다 · mat2/n2/at  한 박자 늦은 두 번째 터짐
-     shake  화면 흔들림 · sfx2  두 번째 터짐에 얹는 소리 */
+/* ================= 보스가 무너지는 방식 ================= */
 const BOSS_DIE = {
   /* --- 세션 1 --- */
   king_slime:    { mat: 'gel', n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: 'gel', n2: 34, at: .22, shake: 20 },
@@ -2728,47 +2364,18 @@ const BOSS_DIE = {
   isle_keeper:    { mat: 'stone', n: 62, spd: 1.1, life: 1.3, mat2: 'plant', n2: 26, at: .18, shake: 22 },
 };
 
-/* ---------------- 보스 등급 ----------------
-   체력 막대의 **틀은 셋이 같고 화려함만 다르다.** 처음 잡는 갱도의 것과 마지막 환원기가
-   똑같은 막대를 달고 나오면, 화면만 봐서는 지금이 어느 싸움인지 알 수가 없다.
-
-     mini   유적 미니보스와 숨은 보스 여덟. 얇은 막대, 장식 없음
-     normal 스토리 보스 아홉. 모서리 꺾쇠와 그라디언트
-     grand  세션 종장과 특별 유적의 주인 여섯. 두 겹 테두리 · 쓸고 지나가는 빛 · 번짐
-
-   ★ 페이즈 수(ph)로 **대신하지 않는다.** 지금은 ph 2/3/5 가 등급과 딱 맞지만, 그건
-     우연이다 — 2페이즈짜리 스토리 보스를 하나 넣는 순간 그것이 미니보스 막대를 달고
-     나온다. 등급은 "얼마나 큰 싸움인가"고 ph 는 "몇 번 바뀌는가"라 서로 다른 것이다.
-   여기 없는 보스는 normal 로 나간다 — 빠뜨려도 막대는 뜬다. */
+/* ---------------- 보스 등급 ---------------- */
 const BOSS_TIER = {
   mine_horror: 'mini', ice_warden: 'mini', vine_lord: 'mini',
   sand_guardian: 'mini', spore_queen: 'mini', blight_maw: 'mini',
   drowned_keeper: 'mini', isle_keeper: 'mini',
 
-  /* ★ 조수의 파수꾼은 **세션 3 의 종장**이다(17장의 마지막 목표). 세션 3 을 붙이면서
-     새 보스 셋을 한꺼번에 mini 로 적어 넣는 바람에, 148,000 짜리 마지막 싸움이
-     갱도의 것(1,900)과 같은 얇은 막대를 달고 나왔다. 앞선 두 세션의 종장
-     (별을 쫓아온 것 · 원형)과 같은 grand 로 맞춘다. */
+  /* ★ 조수의 파수꾼은 **세션 3 의 종장**이다(17장의 마지막 목표). */
   pursuer: 'grand', hepha: 'grand', archetype: 'grand',
   restorer: 'grand', shaft_maw: 'grand', tide_warden: 'grand'
 };
 
-/* ---------------- 보스의 힘 축적 ----------------
-   여섯 보스만 **모았다가 터뜨린다.** 상태 순환(state)만 도는 보스는 오래 붙어 있으면
-   순서가 외워져서, 뒤로 갈수록 싸움이 아니라 암기가 된다. 모으는 동안은 멈춰 서 있고
-   그 시간이 그대로 **되받아칠 틈**이다.
-
-   ★ 모으는 동안에는 원래 AI 가 아예 안 돈다(bossAI 가 앞에서 돌아선다). 두 쪽이 같이
-     vx/vy 를 잡으면 보스가 떨거나 제자리에서 미끄러진다 — 한 번에 한 쪽만 움직인다.
-   ★ 첫 페이즈에는 안 나온다. 처음부터 나오면 새 규칙이 아니라 그냥 기본기다.
-   ★ 모으는 중에 brk(최대 체력 비율)만큼 때리면 **끊긴다.** 끊으면 1.4초 비틀거린다 —
-     이것이 없으면 "무적이 됐다가 핵을 쏜다"라 피하는 것 말고 할 것이 없다.
-
-     k    종류. ward 갑옷 · nova 사방으로 터뜨림 · rage 달아오름 · mend 되돌림
-     t    모으는 시간(초)   cd 끝나고 다음까지(초)   dur 버프 지속(초)
-     v    세기. ward=방어 증가 · nova=탄 수 · rage=피해 배수 · mend=최대 체력 비율
-     brk  끊는 데 필요한 피해(최대 체력 비율)   pj 탄 종류   c 색   s 터질 때 소리
-     n    모으기 시작할 때 띄우는 말   m 버프 이름 */
+/* ---------------- 보스의 힘 축적 ---------------- */
 const BOSS_SURGE = {
   bone_lord:   { k: 'ward', t: 1.5, cd: 15, dur: 7, v: 60,  brk: .060, c: '#ded6bd', s: 'sk_guard', n: '뼈를 그러모은다', m: '뼈 갑옷' },
   frost_witch: { k: 'nova', t: 1.4, cd: 13,         v: 16,  brk: .050, c: '#a8dcf0', pj: 'frost', s: 'sk_frost', n: '서리를 모은다' },
@@ -2777,20 +2384,10 @@ const BOSS_SURGE = {
   hepha:       { k: 'rage', t: 1.8, cd: 20, dur: 9, v: .35, brk: .040, c: '#ff9a4a', s: 'sk_fire',  n: '화로를 올린다', m: '달아오름' },
   restorer:    { k: 'mend', t: 2.0, cd: 22,         v: .03, brk: .035, c: '#a8c8e8', s: 'sk_heal',  n: '되돌리려 한다' }
 };
-/* 뜨는 보스 — 모으는 동안에도 원래대로 떠 있어야 한다. 여기 없으면 바닥으로 떨어진다 */
+/* 뜨는 보스 — 모으는 동안에도 원래대로 떠 있어야 한다. */
 const SURGE_FLY = { b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
 
-/* ---------------- 스킬 / 특성 ----------------
-   표 나열에서 **트리**로. 각 칸은 자리(tier·col)와 이어진 윗칸(req)을 가진다 —
-   윗칸 중 하나라도 배워야 아래가 열리므로, 어느 길로 내려갈지가 실제 선택이 된다.
-
-     tier  0~3(위→아래). TIER_REQ 만큼 그 분기에 포인트가 쌓여야 열린다
-     col   0~2(왼→오른). .5 는 두 칸 사이 — 트리 모양을 잡는 값
-     req   이어진 윗칸들. **하나라도** 배웠으면 열린다(전부가 아니다)
-     max   최대 랭크 · type  active(슬롯 등록) / passive(즉시 적용)
-
-   ★ 칸이 열둘 늘었으니 손에 쥐는 것도 같이 늘어야 "골라서 찍는" 맛이 산다 —
-     TIER_REQ 3/7/12 → 2/5/8, 레벨당 특성 포인트 2레벨에 1 → 1레벨에 1(entity.js addXp). */
+/* ---------------- 스킬 / 특성 ---------------- */
 const SKILLS = {
   /* ===== 검투사 — 붙어서 버티고 밀어붙인다 ===== */
   s_cleave:   { n: '광폭 베기', i: '🌀', br: 'blade', tier: 0, col: 0.5, max: 3, type: 'active', mana: 12, cd: 6,
@@ -2904,11 +2501,7 @@ const BRANCHES = [
 /* 특성 티어 해금에 필요한 해당 분기 누적 포인트 */
 const TIER_REQ = [0, 2, 5, 8];
 
-/* ---------------- 생활 숙련 ----------------
-   전투 특성과 같은 팝업의 다른 갈래. 포인트로 찍는 것이 아니라 **하다 보면 는다** —
-   밭에서 거두면 농사가, 물고기를 낚으면 낚시가 오른다.
-   숫자가 아니라 규칙이 바뀐다
-   사연: docs/code-history.md#h13 */
+/* ---------------- 생활 숙련 ---------------- */
 const PROF_MAX = 10;
 const PROFS = {
   farm: {
@@ -2941,21 +2534,11 @@ const PROFS = {
   }
 };
 
-/** 숙련 lv -> 다음 레벨까지 필요한 경험치. 10레벨이 끝이다.
-    1->10 을 다 채우는 데 480 남짓 — 밭 한 뙈기를 몇 번 돌리거나, 물가에 한참
-    앉아 있으면 닿는 양이다. 처음에 훨씬 가파르게 잡았다가(1300) 낚시가
-    한 시간짜리 노동이 되어 버려서 낮췄다. */
+/** 숙련 lv -> 다음 레벨까지 필요한 경험치. */
 function profNeed(lv) { return Math.round(5 * Math.pow(lv, 1.45)); }
 
-/* 장의 결전이 되는 보스들. 이 목록에 있으면 scale() 을 타지 않고 표에 적힌 수치를
-   그대로 쓴다(game.js spawnBoss) — 언제 오든 같은 싸움이어야 페이즈 설계가 선다. */
-/* 장의 목표로 걸린 보스들. 여기 있는 것만 **적은 체력 그대로** 나온다
-   (game.js spawnBoss: 나머지는 scale()×0.9 가 곱해진다).
-
-   ★ 세션 3 을 붙이면서 조수의 파수꾼이 빠져 있었다. 17장의 마지막 목표인데도
-     여기 없어서, 17장 기준 배수 2.28 이 곱해져 적어 둔 148,000 이 **337,000** 으로
-     나왔다 — 특별 유적의 환원기(320,000)보다 센 것이 세션 종장에 서 있었다.
-     장 목표로 보스를 걸면 여기에도 한 줄을 더해야 한다. */
+/* 장의 결전이 되는 보스들. */
+/* 장의 목표로 걸린 보스들. */
 const STORY_BOSSES = {
   king_slime: 1, bone_lord: 1, corrupt_heart: 1, frost_witch: 1, void_king: 1,
   storm_warden: 1, first_keeper: 1, pursuer: 1,
@@ -2963,13 +2546,8 @@ const STORY_BOSSES = {
   tide_warden: 1
 };
 
-/* ---------------- 보스 페이즈 대사 ----------------
-   페이즈가 넘어가는 순간 한 줄만 뜬다. 규칙이 바뀌는 이유를 말로 붙여 두면
-   "체력이 줄었다"가 아니라 "저것이 태도를 바꿨다"로 읽힌다. */
-/* 페이즈가 넘어갈 때 뜨는 한 줄. 키는 **넘어간 페이즈 번호**다.
-   3페이즈 보스는 1·2 만 쓰고, 5페이즈 보스(세션 종장·특별 유적의 주인)는 1~4 를
-   다 쓴다 — 마디가 넷인데 할 말이 둘뿐이면 뒤 두 마디가 조용히 지나간다.
-   2페이즈 미니보스는 1 만 쓴다(원래 대사가 없던 것들이라 비어 있다). */
+/* ---------------- 보스 페이즈 대사 ---------------- */
+/* 페이즈가 넘어갈 때 뜨는 한 줄. */
 const BOSS_LINES = {
   king_slime:   { 1: '갈라져도 갈라져도, 아직 혼자다.', 2: '껍데기가 굳는다 — 안쪽이 뛴다.' },
   bone_lord:    { 1: '뼈가 일어선다.', 2: '기둥이 저를 대신 든다.' },
@@ -3008,25 +2586,22 @@ const BUFFS = {
   bulwark: { n: '철벽', i: '🧱', dur: 3, b: { dr: 55 } },
   smokescreen: { n: '연막', i: '🌫', dur: 5, b: { ms: 34 } },
   warcry: { n: '전투 함성', i: '📢', dur: 12, b: { dmgP: 0.18, def: 14, str: 5 } },
-  /* 여명 마을 분수대에 금화를 던지면 붙는다. 여관(유료·시간 경과·전체 회복)과 겹치지
-     않게 회복은 일부러 넣지 않았다 — 이쪽은 "운을 산다"는 쪽이다. */
+  /* 여명 마을 분수대에 금화를 던지면 붙는다. */
   wish: { n: '분수의 축복', i: '🪙', dur: 420, b: { allStat: 3, crit: 5 } },
   rested: { n: '잘 쉼', i: '🛏', dur: 600, b: { allStat: 4, hpreg: 1.5, mpreg: 20 } },
-  /* 유적의 신비한 방에서만 붙는다. 한 세계에 두세 곳뿐이라 세게 잡았다 */
+  /* 유적의 신비한 방에서만 붙는다. */
   starlit: { n: '별빛', i: '✨', dur: 480, b: { allStat: 6, crit: 8, ms: 10 } },
   echoed: { n: '메아리', i: '🌀', dur: 480, b: { cdr: 14, mpreg: 24, int: 6 } },
   weighed: { n: '저울에 오름', i: '⚖', dur: 480, b: { dmgP: 0.22, def: 14 } },
-  /* 유적 인장이 맥박 단계에 따라 켜 두는 것. 유적 안에서 조건이 맞는 동안 2초씩 갱신되므로
-     유적을 나서거나 맥박이 가라앉으면 곧 꺼진다(game.js updatePulse). */
+  /* 유적 인장이 맥박 단계에 따라 켜 두는 것. */
   pulse_ward: { n: '얼음 살갗', i: '❄', dur: 2, b: { def: 18, dr: 6 } },
   pulse_fury: { n: '격노의 맥', i: '🩸', dur: 2, b: { dmgP: 0.20 } },
-  /* 음식 버프 — 앞에 fed_ 가 붙은 것은 한 번에 하나만 유지된다.
-     여러 개를 겹쳐 두면 요리를 고를 이유가 없어지기 때문이다. */
+  /* 음식 버프 — 앞에 fed_ 가 붙은 것은 한 번에 하나만 유지된다. */
   fed_bread: { n: '갓 구운 빵', i: '🍞', dur: 300, b: { hpreg: 1.8, vit: 4 } },
   fed_pie: { n: '고기 파이', i: '🥧', dur: 300, b: { str: 7, dmgP: 0.10 } },
   fed_stew: { n: '버섯 스튜', i: '🍲', dur: 300, b: { mpreg: 40, int: 6 } },
   fed_soup: { n: '별무 수프', i: '🥣', dur: 300, b: { def: 16, hp: 45 } },
-  /* 코코넛 — 섬에서만 난다. 물이 든 열매라 숨과 이동 쪽으로 붙인다 */
+  /* 코코넛 — 섬에서만 난다. */
   fed_coconut: { n: '코코넛', i: '🥥', dur: 300, b: { oxyMax: 4, ms: 12 } },
   fed_tea: { n: '들꽃차', i: '🍵', dur: 300, b: { cdr: 10, mp: 35 } },
   fed_jelly: { n: '선인장 젤리', i: '🍮', dur: 300, b: { ms: 16, dex: 6 } },
@@ -3034,27 +2609,14 @@ const BUFFS = {
   fed_curry: { n: '정글 카레', i: '🍛', dur: 300, b: { str: 6, def: 8, hpreg: 1.2 } },
   lit: { n: '발광', i: '🔦', dur: 480, b: {} },
   lit_greater: { n: '상급 발광', i: '🔦', dur: 900, b: {} },
-  /* 물에서만 나오는 것 둘이 주는 버프. fed_ 를 안 붙였으므로 음식과 같이 유지된다 —
-     낚시로만 얻는 것이라 음식 한 자리를 빼앗지 않는 편이 낫다. */
+  /* 물에서만 나오는 것 둘이 주는 버프. */
   lantern: { n: '등불', i: '🏮', dur: 420, b: { vit: 5, hpreg: 1.2 } },
   coolant: { n: '냉각', i: '🧴', dur: 360, b: { cdr: 12, ms: 10, mpreg: 20 } }
 };
 
-/* ---------------- 바이옴 유적 ----------------
-   스토리와 무관한 순수 탐험 콘텐츠다. 전부 같은 BSP 방 생성기를 쓰고,
-   벽재·함정·잡몹·미니보스만 갈아 끼운다.
-   x는 세계 좌표, y는 방 묶음의 위쪽 깊이. */
-/* traps 값은 기계 키가 아니라 타일 함정 종류다 — 'dart'(화살 구멍) · 'vent'(불길 분출구) ·
-   'crumble'(부서지는 바닥). 세션 1의 유적은 기계 문명 이전이라 기계 체계를 쓰지 않는다. */
-/* 난이도 등급(rank) — 기준은 "플레이어가 실제로 언제 여기 닿는가"다. 베이스캠프
-   (x≈1050)에서의 거리와 깊이가 그대로 순서가 된다: 광산(바로 옆) → 얼음(서쪽) →
-   피라미드(사막) → 포자(버섯 골짜기) → 부패(동쪽 끝). rank 3 은 빈 번호다 —
-   등급값일 뿐 순서 목록이 아니라 당겨 채울 필요 없다.
-
-   rank 가 조종하는 것 — 미니보스 수치 · 상자 티어 · 함정 밀도 · 가시 밀도 ·
-   상자 빈도 · 잡몹 배율 · 방 수(rooms).
-   ★ chestRate 는 절반 아래로 내렸다(0.30~0.52 → 0.14~0.24). 방마다 상자가 있으면 여는
-     맛이 없다(유적 하나에 스물몇 개). 보물방·보스방의 확정 상자는 그대로다. */
+/* ---------------- 바이옴 유적 ---------------- */
+/* traps 값은 기계 키가 아니라 타일 함정 종류다 — 'dart'(화살 구멍) · 'vent'(불길 분출구) · 'crumble'(부서지는 바닥). */
+/* 난이도 등급(rank) — 기준은 "플레이어가 실제로 언제 여기 닿는가"다. */
 const RUIN_SPEC = [
   {
     id: 'ice', n: '얼음 던전', x: 300 + SHIFT, y: 150, w: 88, h: 50,
@@ -3064,15 +2626,12 @@ const RUIN_SPEC = [
     rank: 2, tier: 3, trapRate: 0.46, spikeRate: 0.26, chestRate: 0.16, mobMul: 1.0
   },
   {
-    /* ★ 피라미드는 **반쯤 묻힌 삼각형**이다(plan 'tri'). 사구 지면이 y 72~82 쯤이라 상자를 y 50~102 에 두면 꼭대기 스무 줄 남짓이 모래 위로
-       솟는다. 밑변 96 · 높이 52 라 옆면 기울기가 거의 1:1 이다.
-       사연: docs/code-history.md#h14 */
+    /* ★ 피라미드는 **반쯤 묻힌 삼각형**이다(plan 'tri') — 사연: docs/code-history.md#h14 */
     id: 'pyramid', n: '피라미드', x: 2180 + SHIFT, y: 50, w: 96, h: 52,
     wall: T.SANDBRICK, floor: T.SANDSTONE, bg: 8, torch: T.TORCH,
     traps: ['dart', 'vent', 'crumble', 'gas'], boss: 'sand_guardian',
     mobs: ['scorpion', 'sandmaw', 'skeleton', 'jarhusk'],
-    // 지상으로 튀어나온 데다 얕아서 일찍 눈에 띄지만, 안은 함정이 가장 촘촘하다 —
-    // "보이는 것과 실제 난이도가 다른" 유적 하나는 있어야 한다
+    // 지상으로 튀어나온 데다 얕아서 일찍 눈에 띄지만, 안은 함정이 가장 촘촘하다 — "보이는 것과 실제 난이도가 다른" 유적 하나는 있어야 한다
     rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.20, mobMul: 1.35
   },
   {
@@ -3080,7 +2639,7 @@ const RUIN_SPEC = [
     wall: T.MINEWOOD, floor: T.PLANK, bg: 4, torch: T.TORCH,
     traps: ['dart', 'crumble', 'gas'], boss: 'mine_horror',
     mobs: ['minerghost', 'spider', 'bat', 'cartwraith'],
-    // 베이스캠프 바로 옆. 처음 들어가 보는 유적이라 가장 순하게 둔다
+    // 베이스캠프 바로 옆.
     rank: 1, tier: 2, trapRate: 0.32, spikeRate: 0.16, chestRate: 0.14, mobMul: 0.85
   },
   {
@@ -3088,7 +2647,7 @@ const RUIN_SPEC = [
     wall: T.EBONSTONE, floor: T.EBONSTONE, bg: 3, torch: T.TORCH,
     traps: ['dart', 'vent', 'gas', 'coil'], boss: 'blight_maw',
     mobs: ['crawler', 'shadoweye', 'sacling'],
-    // 동쪽 끝 + 가장 깊다. 여섯 중 마지막에 닿는 곳이라 제일 세게
+    // 동쪽 끝 + 가장 깊다.
     rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.24, mobMul: 1.85
   },
   {
@@ -3096,44 +2655,21 @@ const RUIN_SPEC = [
     wall: T.SPORESTONE, floor: T.GLOWMOSS, bg: 12, torch: T.GLOWCAP,
     traps: ['vent', 'dart', 'gas', 'coil'], boss: 'spore_queen',
     mobs: ['sporeling', 'capbeast', 'ventspitter'], arch: 'buried',
-    // 입구가 없어 우연히 뚫고 들어가는 곳. 준비 없이 떨어질 수 있으니 함정은 낮추고
-    // 대신 잡몹을 세게 — 도망칠 길이 없다는 게 이 유적의 압박이다
+    // 입구가 없어 우연히 뚫고 들어가는 곳.
     rank: 5, tier: 5, trapRate: 0.50, spikeRate: 0.30, chestRate: 0.22, mobMul: 1.6
   }
 ];
-/* 유적 생김새(arch) — 같은 방 생성기를 쓰되 "어떻게 발견되는가"를 갈랐다.
-   surface: 윗부분이 지상으로 튀어나와 멀리서도 보인다 (대신 입구가 함정투성이)
-   gated:   입구는 뚜렷한데 들어가는 길이 시련이다 (수직 갱도 + 함정)
-   buried:  입구가 없다. 동굴을 파고 들어가다 우연히 벽 너머로 닿는다 */
-/* 입구 통로 자체의 성격(entryKind) — arch(바깥 생김새)와는 별개 축이다.
-   입구는 전부 **벽돌로 두른 복도**다(world.js _buildPassage — 계단·복도·오르막·층계참·
-   계단실). 성격은 부품을 고르는 결만 바꾼다.
-   foothold   계단실 다섯에 둘은 나무 발판 계단이다. 계단은 어느 성격이든 45° 하나다
-   nofoothold 45° 계단만 쓰고 계단 끝마다 가시가 박힌다. 발판이 없다
-   maze       평평한 복도와 오르막이 잦아 길이 길고 오르내린다. 발판이 없다
-   ★ buried 는 입구가 없어 해당 없음. 함정을 rng.chance 로만 심으면 운이 나쁠 때
-     함정 없이 직행 입장이 된다 — 자리를 고정해 최소 개수를 보장한다. */
-/* ★ `rooms` 가 **목표 방 수**다(carveDungeon 의 target). 자르는 깊이(bsp)와 최소 크기만으로
-   두면 실제로는 시드 운이 된다 — 세 시드에서 버려진 광산이 5 · 8 · 11 이었고, rank 5 인
-   포자 굴(9.0)이 rank 2 인 얼음 던전(9.7)보다 작았다. 도면으로 걸러 낸 뒤 모자라면 가장
-   넓은 방부터 한 번 더 자른다(겉모양은 그대로, 속만 나뉜다). 최소 크기는 그 목표가
-   들어갈 만큼 낮춰 잡았다.
-   ★ 목표는 **바닥**이다 — carveDungeon 이 그 뒤에 홀을 합치고(−) 골방을 가르므로(+)
-     실제 방 수는 이보다 한 할쯤 많다. 최소 가로 10(얼음 12)은 목표를 채울 만큼 잘게
-     자르려고 낮춘 값이다 — 12 로는 d1 에서 석판 1 이 9/12 · 포자 굴 23/32 에서 더 못 잘랐다. */
+/* 유적 생김새(arch) — 같은 방 생성기를 쓰되 "어떻게 발견되는가"를 갈랐다. */
+/* 입구 통로 자체의 성격(entryKind) — arch(바깥 생김새)와는 별개 축이다. */
+/* ★ `rooms` 가 **목표 방 수**다(carveDungeon 의 target). */
 RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].bsp = [5, 12, 7]; RUIN_SPEC[0].rooms = 18;  // 얼음 (rank 2)
 RUIN_SPEC[1].plan = 'tri';     RUIN_SPEC[1].arch = 'pyramid'; RUIN_SPEC[1].bsp = [6, 9, 6]; RUIN_SPEC[1].rooms = 18;  // 피라미드 (rank 4) — 삼각형 안에 든 방만
 RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].bsp = [5, 10, 7]; RUIN_SPEC[2].rooms = 15;  // 광산 (rank 1 — 가장 작다)
 RUIN_SPEC[3].plan = 'warren'; RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].bsp = [6, 10, 7]; RUIN_SPEC[3].rooms = 36;  // 부패한 둥지 (rank 6 — 가장 크다)
 RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp = [5, 10, 7]; RUIN_SPEC[4].rooms = 32; // 포자 굴 (rank 5)
 
-/* 겉으로 보이는 재질을 유적마다 갈랐다 — 나무 · 돌 · 구리 · 얼음 · 유기물.
-   [배치방식, 타일, 밀도] 를 여럿 줄 수 있고 방마다 전부 돌린다.
-   배치방식은 putRuinDecor 참고. 걷는 줄(fy · fy-1)은 어떤 것도 막지 않는다. */
-/* 앞의 셋은 그 유적의 '재질'이고(다른 데서도 보는 것), 뒤의 둘이
-   **그곳에서만 보는 것**이다. 둘은 일부러 서로 다른 자리를 쓴다 — 하나는 벽에
-   (statue: 벽을 갈아끼움), 하나는 바닥이나 천장에. 방에 들어섰을 때 눈이 두
-   군데에서 걸려야 "여기가 그 유적"으로 읽힌다. */
+/* 겉으로 보이는 재질을 유적마다 갈랐다 — 나무 · 돌 · 구리 · 얼음 · 유기물. */
+/* 앞의 셋은 그 유적의 '재질'이고(다른 데서도 보는 것), 뒤의 둘이 *그곳에서만 보는 것**이다. */
 RUIN_SPEC[0].decor = [['pillar', T.ICE, 0.5], ['stalac', T.ICE, 0.5], ['brazier', T.TORCH, 0.35],
                       ['statue', T.FROSTGLYPH, 0.55], ['growth', T.ICEBANNER, 0.30]];
 RUIN_SPEC[1].decor = [['statue', T.SANDBRICK, 0.5], ['frieze', T.GOLD, 0.35], ['brazier', T.TORCH, 0.3],
@@ -3157,24 +2693,14 @@ RUIN_SPEC[2].bonus = 'coal';
 RUIN_SPEC[3].bonus = 'corrupt_ess';
 RUIN_SPEC[4].bonus = 'mushroom';
 
-/* bonus 는 그 유적에서 많이 나오는 **흔한 자원**이고(위), bonus2 는
-   **그 유적에서만 나오는 재료**다. 둘을 합치지 않은 이유: 기존 bonus 를 갈아치우면
-   유적 상자에서 석탄·금광석이 사라져 초반 제작 흐름이 끊긴다. 나란히 넣는다.
-   유물(값이 높고 쓸 데가 없는 쪽)은 상자가 아니라 그 유적의 보스가 떨군다. */
+/* bonus 는 그 유적에서 많이 나오는 **흔한 자원**이고(위), bonus2 는 *그 유적에서만 나오는 재료**다. */
 RUIN_SPEC[0].bonus2 = 'neverthaw';
 RUIN_SPEC[1].bonus2 = 'sealed_ash';
 RUIN_SPEC[2].bonus2 = 'deep_ember';
 RUIN_SPEC[3].bonus2 = 'blight_spawn';
 RUIN_SPEC[4].bonus2 = 'spore_dust';
 
-/* --- 가라앉은 유적 (비밀) ---
-   스토리와 아무 상관이 없다. 바다 밑 **가장 깊은 바위층**(y 600~660)에 봉해져 있고,
-   해저 바닥에 갈라진 틈 하나로만 들어간다(arch 'seabed' — 지표 아래에 묻는 'sunken'과
-   이름이 겹쳐 헷갈렸던 자리다). 틈 입구는 바닷물에 잠겨 있어 헤엄쳐 들어가야 하고,
-   거기서 400칸을 더 내려간다 — 산소가 곧 입장료다.
-   난이도는 세션 2 마지막 유적(rank 6)과 세션 3 보스 사이 — rank 7.
-   방을 잘게 쪼개(maze) 다른 유적보다 훨씬 미로 같다.
-   ★ 다섯 유적 뒤에 붙인다 — 위의 RUIN_SPEC[0..4] 배정이 먼저 끝나야 한다. */
+/* --- 가라앉은 유적 (비밀) --- */
 RUIN_SPEC.push({
   id: 'abyss', n: '가라앉은 유적', x: 210, y: 600, w: 92, h: 60,
   wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10, torch: T.GLOWCAP,
@@ -3186,9 +2712,7 @@ RUIN_SPEC.push({
   bonus: 'sunken_coin', bonus2: 'abyss_pearl'
 });
 
-/* 도면 — 굵은 격자(가로 4칸 x 세로 3칸). `#` 에 방을 둔다.
-   방 하나가 최소 11x9라 격자 한 칸에 방 하나둘이 들어간다. 도면이 너무 빡빡해서
-   남는 방이 셋도 안 되면 생성기가 도면을 버리고 통짜로 판다(안전장치). */
+/* 도면 — 굵은 격자(가로 4칸 x 세로 3칸). */
 const RUIN_PLANS = {
   full:      ['####', '####', '####'],
   ring:      ['####', '#..#', '####'],   // O — 가운데가 통짜 암반으로 남는다
@@ -3203,31 +2727,20 @@ const RUIN_PLANS = {
   hall:      ['#..#', '####', '#..#']    // H
 };
 
-/* 스토리 유적 셋(석판)의 도면·입구·고유 요소. buildRuins 가 참조한다.
-   셋은 제7장에 한 번에 열리는 본편 경로라 입구를 아주 없애지는 않았다 —
-   대신 지표 아래에 묻어(sunken) 부러진 기둥 하나만 지상에 남긴다. */
-/* 석판 유적 셋도 같은 규칙이다 — rooms 가 목표 방 수, bsp 가 [깊이, 최소 가로, 최소 세로].
-   석판 번호가 곧 난이도 계단이라 방 수도 그 순서로 늘어난다(12 · 14 · 18). */
+/* 스토리 유적 셋(석판)의 도면·입구·고유 요소. */
+/* 석판 유적 셋도 같은 규칙이다 — rooms 가 목표 방 수, bsp 가 [깊이, 최소 가로, 최소 세로]. */
 const STORY_RUIN = [
   { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', rooms: 12, bsp: [5, 10, 7], decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
   { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 14, bsp: [5, 10, 7], decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
   { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 18, bsp: [5, 10, 7], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
 ];
-/* 석판 유적에도 맥박 · 사건 · 탐사 기록이 뛴다. 바이옴 유적과 달리 주인(둥지)이 없어서
-   탐사 기록의 '주인' 칸은 **석판을 읽었나**가 대신하고, 메아리 시련·인장은 없다.
-   mobs 는 맥박이 부르는 것들 — 세 유적이 놓인 땅(서리 지대 · 울림 정글 · 부패한 땅)을 따랐다.
-   rank 는 보상 크기(금화)의 배수로만 쓴다. */
+/* 석판 유적에도 맥박 · 사건 · 탐사 기록이 뛴다. */
 STORY_RUIN[0].mobs = ['frostling', 'icewolf', 'skeleton']; STORY_RUIN[0].rank = 2;
 STORY_RUIN[1].mobs = ['skeleton', 'spider', 'bat'];         STORY_RUIN[1].rank = 3;
 STORY_RUIN[2].mobs = ['crawler', 'shadoweye', 'skeleton'];  STORY_RUIN[2].rank = 5;
 
-/* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다.
-   지도는 그 유적이 아니라 **다른 유적의 보물방 상자**에 들어간다 — 한 곳을 털면
-   다음 곳이 열리는 사슬이다. 사슬의 시작(광산·피라미드)은 지도 없이 들어갈 수 있다.
-   { 지도가 가리키는 유적: 지도가 들어 있는 유적 } */
-/* 신비한 방 — 한 세계에 두세 곳. 유적 아무 데나 붙는 게 아니라 유적마다 하나씩만
-   후보로 두고 그중 셋을 고른다. 싸움이 아니라 "고르는 것"이 내용이라, 방에는
-   함정도 몹도 두지 않는다. 한 번 쓰면 끝난다(o.used, 세이브에 남는다). */
+/* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다. */
+/* 신비한 방 — 한 세계에 두세 곳. */
 const MYSTIC = {
   well: { n: '가라앉은 우물', tile: 'WATER',
     lines: ['바닥이 안 보이는 우물이다. 물이 아니라 그보다 무거운 것이 담겨 있다.',
@@ -3252,32 +2765,15 @@ const RUIN_MAP_IN = {
   blight: 'spore'     // 포자 굴 → 부패한 둥지 (가장 깊은 사슬 끝)
 };
 
-/* ---------------- 유적 비문 ----------------
-   다섯 유적은 원래 "스토리와 무관한 탐험 콘텐츠"였는데, 그러다 보니 세계가 넓기만 하고
-   할 말이 없었다. 각 유적에 비문을 하나씩 두어, 본편이 아직 말하지 않은 것을 조금씩 흘린다.
-   전부 같은 사건(별이 떨어지기 전에 이미 무언가 있었다)을 다른 각도에서 본 기록이다. */
-/* 유적마다 하나씩 있는 유물. 가장 깊은 보물방 상자에 반드시 들어 있다.
-   story0~2 는 석판 유적 셋(서리 · 가운데 · 부패지대)이다.
-   "이 유적에 왜 끝까지 들어가야 하는가"에 대한 답이라, 유적 수와 항상 같아야 한다. */
+/* ---------------- 유적 비문 ---------------- */
+/* 유적마다 하나씩 있는 유물. */
 const RUIN_RELIC = {
   ice: 'relic_frostpane', pyramid: 'relic_sundial', mine: 'relic_lastlamp',
   blight: 'relic_rotcore', spore: 'relic_sporebell',
   story0: 'relic_frostmark', story1: 'relic_mazeeye', story2: 'relic_hollowseed'
 };
 
-/* ---------------- 유적의 맥박 ----------------
-   유적은 **들어온 사람을 알아챈다.** 안에 머무는 동안 맥박이 오르고, 상자를 열면 크게
-   뛰고, 안에서 피를 보면(적을 쓰러뜨리면) 가라앉는다. 단계가 오를수록 유적의 것들이
-   몰려오지만, 그 사이에 연 상자에는 덤이 얹히고 격노 단계에서만 맥박 결정이 나온다.
-   ★ 상자 **등급**은 올리지 않는다. 유적 상자는 rollChest 가 제작 진행을 건너뛰지 않게
-     4등급으로 묶어 두었다 — 덤은 그 유적의 재료(bonus · bonus2)와 맥박 결정으로만 준다.
-   "더 머물러 더 얻을 것인가, 가라앉히고 나갈 것인가"가 이 유적들만의 고민이다.
-   RUIN_SPEC 의 여섯 유적에만 뛴다(석판 유적 셋은 이야기 길이라 뺐다).
-
-   수치 근거 — 안에 가만히 있으면 0 → 25(뒤척임) 55초, → 75(격노) 약 2분 50초.
-   격노에서는 18초마다 셋이 몰려오고 하나 쓰러뜨릴 때 3씩 가라앉으므로(18초 동안 오르는
-   양 8.1 · 셋을 잡으면 9), **싸우면 제자리를 지키고 피하면 계속 오른다.** 상자 하나는 12,
-   보물방 상자는 22 — 유적 하나를 다 털면 반드시 격노를 한 번은 본다. */
+/* ---------------- 유적의 맥박 ---------------- */
 const PULSE = {
   stages: [
     { n: '잠듦',   at: 0,  c: '#7a8a9a' },
@@ -3285,22 +2781,14 @@ const PULSE = {
     { n: '깨어남', at: 50, c: '#e0782a' },
     { n: '격노',   at: 75, c: '#e8303c' }
   ],
-  /* ★ 맥박은 천천히 오른다 — 빨리 오르면 유적이 "들어가면 곧 몹 떼"로만 읽힌다.
-     단계가 오를 때마다 대신 **사건**(PULSE_EVENTS)이 하나 터진다 — 몹이 많아지는 것이
-     아니라 해야 할 일이 생긴다. 가만히 있으면 0 → 뒤척임 약 1분 30초 · 격노 약 4분 30초. */
+  /* ★ 맥박은 천천히 오른다 — 빨리 오르면 유적이 "들어가면 곧 몹 떼"로만 읽힌다. */
   rise: 0.28, fall: 2.5,          // 초당 — 안에 있을 때 오르고, 밖에 나가면 가라앉는다
   chest: 12, vault: 22, kill: 3,  // 상자 · 보물방 상자(유물·지도 · 지킴이 붙은 것) · 쓰러뜨릴 때 가라앉는 양
   wave: [0, 60, 40, 28],          // 단계별로 유적의 것들이 몰려오는 간격(초)
   waveN: [0, 1, 1, 2],            // 한 번에 몇
   rageEvery: 24                   // 격노 중 그 유적 고유의 발작 간격(초)
 };
-/* 맥박 사건 — 단계가 오를 때마다 하나(이미 벌어진 사건이 없을 때). stages 는 그 사건이
-   나올 수 있는 단계, t 는 제한 시간(초). 성공하면 맥박이 가라앉고 덤을 주며, 실패하면
-   맥박이 튀어 오른다. 성공 횟수와 갈래가 탐사 기록 A · S 의 조건이 된다(SURVEY_TIERS).
-     hunt    표식된 것 — 정예 하나(격노면 둘)가 표식을 달고 나온다. 제한 시간 안에 쓰러뜨린다
-     stones  공명석 — 다른 방 셋에 돌이 떠오른다. 셋을 다 만지면 맥박이 크게 가라앉는다
-     greed   탐욕의 상자 — 지킴이가 붙은 황금 상자. 열면 깨어나고, 안 열면 가라앉아 사라진다
-     siege   포위 — 세 차례 몰려온다. 마지막 무리까지 다 쓰러뜨려야 풀린다(유적을 나가면 실패) */
+/* 맥박 사건 — 단계가 오를 때마다 하나(이미 벌어진 사건이 없을 때). */
 const PULSE_EVENTS = {
   hunt:   { n: '표식된 것', i: '🎯', t: 60, stages: [1, 3],
             d: '유적이 하나에 표식을 새겼다 — 달아나기 전에 쓰러뜨려라' },
@@ -3311,9 +2799,7 @@ const PULSE_EVENTS = {
   siege:  { n: '포위', i: '⚔', t: 75, stages: [2, 3],
             d: '유적이 문을 닫았다 — 세 차례 몰려오는 것을 모두 쓰러뜨려라' }
 };
-/* 격노 발작 — 유적마다 하나. 예전 고유 이벤트(한 번뿐)를 격노 동안 되풀이하는 꼴이다.
-   dark 화면이 꺼진다 · spore 홀씨(지속 피해) · heat 화상 · quake 흔들림과 낙석 무리 ·
-   swarm 둥지가 셋을 더 토한다. 타일은 건드리지 않는다(되돌릴 수 없는 일은 안 한다). */
+/* 격노 발작 — 유적마다 하나. */
 const PULSE_RAGE = {
   ice:     { k: 'dark',  t: '얼음 속의 불이 한꺼번에 꺼진다' },
   mine:    { k: 'quake', t: '갱도가 울린다 — 무언가 내려온다' },
@@ -3326,16 +2812,7 @@ const PULSE_RAGE = {
   story2:  { k: 'swarm', t: '발밑의 방들이 한꺼번에 깨어난다' }
 };
 
-/* ---------------- 탐사 기록 ----------------
-   유적마다 무엇을 얼마나 했는지로 등급을 매긴다.
-   지금은 **등급마다 문턱이 따로** 있고 전부 넘어야 그 등급이다(SURVEY_TIERS, 위에서부터 본다). 점수는 진행 막대로만 쓴다. 그 유적에 없는 항목(비문·골방)은
-     조건에서 빠진다.
-       rooms·chests  밟은 방 · 연 상자의 비율
-       boss·lore·code 주인을 잡았나 · 비문을 옮겨 적었나 · 암호 골방을 열었나
-       rage   격노를 한 번이라도 견뎠나
-       events 맥박 사건 성공 횟수 · kinds 서로 다른 사건 갈래 수 · echo 넘긴 메아리 단계
-   A 에 처음 닿으면 금화·맥박 결정, S 에 처음 닿으면 그 유적의 인장.
-   사연: docs/code-history.md#h15 */
+/* ---------------- 탐사 기록 ---------------- */
 const SURVEY_W = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12 };
 const SURVEY_TIERS = [
   { r: 'S', c: '#ffd24a', need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 4, echo: 3 } },
@@ -3347,21 +2824,10 @@ const SURVEY_TIERS = [
 const SURVEY_LABEL = { rooms: '방', chests: '상자', boss: '주인', lore: '비문', code: '골방', rage: '격노',
                        events: '사건', kinds: '사건 갈래', echo: '메아리' };
 
-/* ---------------- 메아리 시련 ----------------
-   주인을 잡은 둥지는 비어 있지만, 유적이 깨어 있을 때(맥박 2단계 이상) 다가가면 주인의
-   **메아리**를 다시 부를 수 있다. 단계마다 세지고(체력·공격 ×1.35, ×1.70 …) 호위가 붙는다.
-   사연: docs/code-history.md#h16 */
+/* ---------------- 메아리 시련 ---------------- */
 const ECHO = { max: 5, mul: lv => 1 + 0.35 * lv, needStage: 2 };
 
-/* ---------------- 동굴 갈래 ----------------
-   예전 지하는 어디를 파도 같은 회색 굴이었다 — "동굴"이 아니라 지형이었다. 땅속을 가로
-   60 · 세로 55 칸짜리 구역으로 나누고 구역마다 갈래를 하나씩 매긴다(world.js buildCaveZones).
-   갈래마다 **보이는 것 · 몸에 오는 것 · 얻는 것**이 다르다.
-     moss   이끼 굴   바닥·천장이 이끼로 덮이고 이끼가 늘어진다. 안에 있으면 천천히 아문다
-     drip   종유 동굴 종유석·석순. 종유석은 밑을 지나면 흔들리다 떨어진다(피하면 된다)
-     geode  수정 동굴 벽에 수정 무리가 빛난다. 수정이 박힌 벽 — 깊을수록 흔하다
-     fume   독기 굴   공기가 탁해 숨이 따갑다(지속 피해). 대신 광맥이 두세 배 짙다
-   w 는 [얕은 곳, 깊은 곳] 가중치. plain(0)은 아무것도 안 한다. */
+/* ---------------- 동굴 갈래 ---------------- */
 const CAVE_TYPES = [
   { id: 'plain' },
   { id: 'moss',  n: '이끼 굴',   c: '#8fd07a', w: [3, 1],
@@ -3373,22 +2839,10 @@ const CAVE_TYPES = [
   { id: 'fume',  n: '독기 굴',   c: '#a8c04a', w: [0.6, 1.6],
     line: '숨이 따갑다. 오래 머물면 몸이 상하지만, 광맥이 짙다.' }
 ];
-/* 금 간 자갈 — 무너지면 숨은 동굴이 열린다. 세계에 몇 곳, 한 곳에 한 번뿐이다. */
+/* 금 간 자갈 — 무너지면 숨은 동굴이 열린다. */
 const FAULT = { count: 28, steps: 260, rx: 34, ry: 15 };   // steps 190 이면 열린 굴이 500칸 남짓이라 '확장'으로 안 읽혔다
 
-/* ---------------- 암호문 (잠긴 골방의 자물쇠) ----------------
-
-   **플레이어가 무엇을 하는가**로 셋을 가른다.
-
-     digits  모은다 — 세 자리 숫자. 쪽지 셋에 한 자리씩
-     word    읽는다 — 세 글자 낱말. 쪽지 셋에 한 글자씩. 문이 글자를 받는다
-     decode  푼다   — 문설주의 수가 답이 아니다. 쪽지 셋이 그 수를 어떻게 고쳐 읽는지
-                      말한다. 주워 적는 것만으로는 안 되고 한 번 셈을 해야 열린다
-
-   ★ 쪽지(ciphernote)는 비문 흔적표(RUIN_HINTS)와 **따로 둔다.** 단서를 흔적에 얹었더니
-     흔적표가 없는 유적에서는 단서가 아예 안 나왔다 — '겹친 길'의 암호는 실제로 **풀
-     방법이 없었다.** 이제 골방을 세우는 쪽이 쪽지도 같이 흩뿌린다.
-   사연: docs/code-history.md#h17 */
+/* ---------------- 암호문 (잠긴 골방의 자물쇠) ---------------- */
 const CIPHER_KIND = {
   digits: {
     n: '숫자 자물쇠', len: 3, numeric: 1,
@@ -3407,23 +2861,18 @@ const CIPHER_KIND = {
   }
 };
 
-/* 글자 자물쇠가 쓰는 세 글자 낱말. 전부 이 세계의 말이라, 답을 보면 "아 그거"가 된다.
-   받침 없는 쉬운 글자로만 골랐다 — 자판이 어려우면 자물쇠가 아니라 시험이 된다. */
+/* 글자 자물쇠가 쓰는 세 글자 낱말. */
 const CIPHER_WORDS = ['재의문', '별무덤', '잠긴돌', '마른뼈', '언바람', '검은눈',
                       '첫파수', '깊은잠', '흰재별', '무너짐', '돌의뼈', '마지막'];
 
-/* 어느 유적에 어떤 자물쇠가 걸리는가. 하나씩만 맡는다 — 같은 자물쇠를 두 곳에
-   달면 두 번째는 이미 아는 놀이가 된다. 쪽지는 그 유적 안에 흩어진다. */
+/* 어느 유적에 어떤 자물쇠가 걸리는가. */
 const RUIN_CIPHER = {
   pyramid: 'digits',   // 하늘을 재던 곳 — 수로 잠갔다
   story1: 'word',      // 겹친 길 — 두 사람이 말을 나눠 적었다
   blight: 'decode'     // 가장 깊고 사나운 곳 — 주워 적는 것만으로는 안 열린다
 };
 
-/* 유적에 처음 발을 들일 때 뜨는 카드. 들어가기 전에 무엇을 기대할지 한 줄 준다 —
-   유적이 열 개인데 안에 들어가 보기 전에는 다 똑같은 벽돌방이었다.
-   sub 는 카드 윗줄, line 은 아랫줄. 스포일러가 되지 않게 "무엇이 있다"가 아니라
-   "여기가 어떤 자리였나"를 말한다. */
+/* 유적에 처음 발을 들일 때 뜨는 카드. */
 const RUIN_CARD = {
   ice:     { sub: '얼어붙은 골짜기 아래', line: '스스로 골짜기를 얼린 사람들이 있었다. 그 얼음이 지금 녹고 있다.' },
   pyramid: { sub: '모래에 반쯤 잠긴', line: '왕의 무덤이 아니다. 하늘을 감시하려고 세운 눈이다.' },
@@ -3526,9 +2975,7 @@ const RUIN_LORE = {
   }
 };
 
-/* 유적 안에 흩어 둔 짧은 흔적. 비문 하나로는 방을 다 채울 수 없어서, 지나가다 읽는
-   한두 줄짜리를 방마다 뿌린다. 보상은 없고 오직 이야기만 있다 — 대신 전부 본편의
-   같은 질문(별보다 먼저 여기 있던 것은 무엇인가)을 향한다. */
+/* 유적 안에 흩어 둔 짧은 흔적. */
 const RUIN_HINTS = {
   ice: [
     ['성에 낀 손자국', ['벽 안쪽에 손바닥 자국이 얼어붙어 있다. 안에서 밖으로 밀어낸 자국이다.', '나가려던 게 아니라, 무언가 못 들어오게 막던 손이다.']],
@@ -3562,12 +3009,7 @@ const RUIN_HINTS = {
   ]
 };
 
-/* ---------------- 세계 이벤트 ----------------
-   "밤이 되면 늘 같은 좀비"가 아니라, 가끔 밤 자체가 달라지도록 만든 장치다.
-   조건이 맞는 동안만 켜지고, 켜져 있는 동안 스폰표·하늘색·스폰 상한이 바뀐다.
-
-   when: 발동 조건 (밤인가 · 어느 바이옴인가) · table: 그 동안의 스폰표
-   cap: 동시 등장 상한 · tint: 하늘에 섞을 색 · rw: 처치 보상 배수 */
+/* ---------------- 세계 이벤트 ---------------- */
 const EVENTS = {
   bloodmoon: {
     n: '붉은 달', i: '🌑',
@@ -3575,9 +3017,7 @@ const EVENTS = {
     night: 1, chance: 0.08, zones: ['surface', 'ice', 'corrupt', 'jungle', 'glowfen'],
     table: ['crimson_howler', 'crimson_eye', 'crimson_howler', 'zombie', 'crimson_eye'],
     cap: 34, tint: '#6a1414', tintAmt: 0.5, rw: 2.2,
-    /* 붉은 달만 **플레이어 레벨을 탄다.** 세계의 다른 모든 몹은 레벨을 안 따라간다
-       (그래야 레벨을 올릴수록 강해진 느낌이 남는다). 이 밤 하나만 예외로 두어,
-       "오늘은 나가면 안 된다"가 후반에도 그대로 성립하게 한다. */
+    /* 붉은 달만 **플레이어 레벨을 탄다.** */
     lvScale: 1
   },
   sandstorm: {
@@ -3594,10 +3034,7 @@ const EVENTS = {
     table: ['sporeling', 'capbeast', 'sporeling', 'sporeling'],
     cap: 30, tint: '#2f8a70', tintAmt: 0.4, rw: 1.7
   },
-  /* 비 — 다른 이벤트와 달리 스폰표를 바꾸지 않는다(table 없음). 그 구역 평소 몬스터가
-     그대로 나오되 buff만큼 강해진다. 낮/밤 구분 없이 지상이면 어디서나 온다.
-     ★ 사막만 뺀다. zones 의 'surface' 에는 사막도 들어 있어서, 사구 한복판에
-       빗줄기가 내리고 하늘이 잿빛으로 물들었다. 모래폭풍이 사막의 날씨다. */
+  /* 비 — 다른 이벤트와 달리 스폰표를 바꾸지 않는다(table 없음). */
   rain: {
     n: '비', i: '🌧',
     d: '비가 몰아친다. 놈들이 평소보다 사납다.',
@@ -3609,50 +3046,16 @@ const EVENTS = {
   }
 };
 
-/* ---------------- 업적 ----------------
-   **새 카운터를 만들지 않는다.** 세이브에 이미 들어 있는 것만 읽는다 —
-   p.kills · p.mined · p.bossKilled · p.gathered · p.deepest · p.highest ·
-   G.talked · G.crafted · G.sideDone · G.dayCount · G.lairs · G.tabletsRead.
-   업적 하나 때문에 세는 값을 새로 만들면 세이브가 계속 불어나고, 옛 세이브에서는
-   그 값이 0부터 시작해 "이미 한 일"이 사라진다.
-
-   check(G)는 **순수 함수**다. 부수 효과를 넣지 말 것 — 달성 여부를 다시 계산해도
-   같은 답이 나와야 하고, 아래 checkAch()가 여러 시점에서 반복 호출한다.
-
-   판정 시점은 game.js의 checkAch()가 정한다(처치·제작·채굴·장 넘김·깊이 갱신 등).
-   프레임마다 전부 순회하지 않는다. */
+/* ---------------- 업적 ---------------- */
 const ACH_CAT = { story: '여정', farm: '농사', auto: '자동화', gather: '손재주',
   explore: '탐험', hunt: '토벌', life: '살림', odd: '별난 것' };
-/* 난이도 — UI가 색으로 가른다. 쉬움 초록 · 중간 노랑 · 어려움 빨강.
-   기준은 "언제쯤 저절로 되는가"다. easy는 평범히 놀다 보면 닿고, mid는 마음먹고
-   한동안 해야 하며, hard는 작정하고 파야 한다. */
+/* 난이도 — UI가 색으로 가른다. */
 const ACH_TIER = { easy: ['쉬움', '#6fbf5a'], mid: ['중간', '#d8b048'], hard: ['어려움', '#d05a4a'] };
-/** 숨은 업적인가 — **어려움은 전부 숨긴다.** 어려운 것은 하나같이 "누가 시켜서 하는
-    일이 아닌 것"이라, 조건을 미리 읽어 버리면 찾아내는 재미가 그 자리에서 사라진다.
-    쉬움·중간은 그대로 보여 준다 — 무엇까지 있는 자리인지는 보여야 목록이 빈칸 표로
-    읽히지 않는다(차례로 해치우라는 뜻은 아니다 — 목록을 난이도로 줄 세우지 않는
-    까닭은 ui.js renderAch 참고).
-    h: 1은 등급과 무관하게 숨기고 싶을 때 쓰는 딱지다(지금은 어려움과 겹친다).
-    규칙을 여기 한 곳에 둔 이유는, 되돌리거나 등급을 바꾸는 게 한 줄이면 되게 하려는 것. */
+/** 숨은 업적인가 — **어려움은 전부 숨긴다.** */
 function achHidden(a) { return !!a.h || a.t === 'hard'; }
-/* h: 1 — **숨은 업적.** 달성하기 전에는 이름도 조건도 안 보이고 '???'로만 뜬다.
-   전부 어려움 등급이고, 하나같이 "누가 시켜서 하는 일이 아닌 것"들이다 —
-   조건을 미리 읽어 버리면 찾아내는 재미가 그 자리에서 사라진다.
-   난이도 배지는 그대로 보여 준다. 무엇인지는 몰라도 **얼마나 어려운지는** 알아야
-   목록이 그냥 빈칸으로 읽히지 않는다. */
+/* h: 1 — **숨은 업적.** */
 
-/* 업적 70개. 갈래 여덟, 난이도 셋.
-   (세션 3 을 붙이면서 열 개를 더했다 — 가라앉은 종·세 번의 끝·갈라지는 땅·아홉 땅·
-    물속의 것들·가라앉은 지킴이·빙정·심해 노심·터뜨려 본 사람·두 개의 눈.)
-
-   ★ 설명(d)은 **시킬 일이 아니라 지나간 일**로 적는다. 업적은 시키는 자리가 아니라 해낸 것을 적어 두는 자리다. 숫자는 그대로 남긴다 — 어디까지 가야 하는지는
-     여전히 읽혀야 하고, 달라지는 건 말투뿐이다. ("곳간에 밀 100개가 쌓였다.")
-
-   기준은 되도록 **이미 세이브에 있는 값**으로 물었다 — p.gathered · p.kills ·
-   p.mined · p.bossKilled · p.deepest · p.highest · G.crafted · G.talked ·
-   G.sideDone · G.dayCount · G.tabletsRead · world.machines.
-   그것만으로 못 재는 것(플레이 시간·거래 횟수·익사)만 G.tally에 따로 센다.
-   사연: docs/code-history.md#h18 */
+/* 업적 70개 — 사연: docs/code-history.md#h18 */
 const ACHIEVEMENTS = [
   // ---------------- 여정 (스토리) ----------------
   { id: 'a_ch1', cat: 'story', t: 'easy', i: '✦', n: '첫 조각', d: '제1장이 끝났다.',
@@ -3671,9 +3074,7 @@ const ACHIEVEMENTS = [
     check: g => ['king_slime', 'bone_lord', 'corrupt_heart', 'frost_witch', 'void_king',
       'storm_warden', 'first_keeper', 'pursuer', 'overseer', 'proliferator', 'hepha',
       'archetype', 'tide_warden'].every(k => g.player.bossKilled[k]) },
-  /* 세션 3 의 종장. 1장(a_ch1)·세션 전환(a_session2/3)처럼 **그 세션을 끝냈다**를
-     적어 두는 자리다. 세션 1 에는 '다섯 심장'(별을 쫓아온 것)이 있었는데 세션 2·3 에는
-     같은 자리가 비어 있었다 — 아래 '세 번의 끝'이 그 셋을 한 줄로 묶는다. */
+  /* 세션 3 의 종장. */
   { id: 'a_tide', cat: 'story', t: 'mid', i: '🔔', n: '가라앉은 종', d: '물 밑에서 울리던 것이 멈췄다.',
     check: g => !!g.player.bossKilled.tide_warden },
   { id: 'a_three_ends', cat: 'story', t: 'hard', i: '🌗', n: '세 번의 끝', d: '세 번의 결전을 모두 끝냈다.',
@@ -3714,8 +3115,7 @@ const ACHIEVEMENTS = [
     check: g => ['m_pressor', 'm_desal', 'm_belt_f', 'm_battery_hi'].every(k => (g.crafted || {})[k]) },
   { id: 'a_factory', cat: 'auto', t: 'hard', i: '🏭', n: '공장', d: '기계 여든 대가 돈다. 이쯤 되면 공장이다.',
     check: g => achMach(g) >= 80 },
-  /* crafted는 **제작 횟수**를 센다(한 번에 8개가 나와도 1). 개수를 재려면 gathered를
-     봐야 한다 — 만든 물건도 addItem을 거치므로 거기 쌓인다. */
+  /* crafted는 **제작 횟수**를 센다(한 번에 8개가 나와도 1). */
   { id: 'a_belt', cat: 'auto', t: 'hard', i: '➡', n: '길게 잇다', d: '벨트 200개가 깔렸다.',
     check: g => (g.player.gathered.m_belt || 0) + (g.player.gathered.m_belt_f || 0) >= 200 },
 
@@ -3758,11 +3158,7 @@ const ACHIEVEMENTS = [
     check: g => Object.keys(g.tabletsRead || {}).length >= 3 },
   { id: 'a_seafloor', cat: 'explore', t: 'hard', i: '🐙', n: '숨이 닿지 않는 곳', d: '숨이 닿지 않는 바닥까지 내려갔다.',
     check: g => g.player.deepest >= 690 },
-  /* 발자국은 seenBiomes 가 이미 적고 있다(바이옴 이름표가 뜰 때 찍힌다) — 세이브에도
-     들어가므로 새 카운터를 만들 필요가 없었다. 세션 3 이 땅을 둘(바다·빙하) 늘려
-     BIOMES 가 아홉이 됐고, '아홉 땅'은 그 표를 그대로 읽는다 — 땅이 더 늘어도 조건이
-     저절로 따라간다. 베이스캠프·여명 마을도 같은 표에 찍히므로 **개수를 세지 않고**
-     BIOMES 의 id 를 하나하나 본다(개수로 세면 마을 둘로 대신 채워진다). */
+  /* 세션 3 이 땅을 둘(바다·빙하) 늘려 BIOMES 가 아홉이 됐고, '아홉 땅'은 그 표를 그대로 읽는다 — 땅이 더 늘어도 조건이 저절로 따라간다. */
   { id: 'a_glacier', cat: 'explore', t: 'easy', i: '❄', n: '갈라지는 땅', d: '빙하 지대에 발을 디뎠다.',
     check: g => !!(g.seenBiomes || {}).glacier },
   { id: 'a_all_zones', cat: 'explore', t: 'hard', i: '🗺', n: '아홉 땅', d: '아홉 땅에 모두 발자국을 남겼다.',
@@ -3772,7 +3168,7 @@ const ACHIEVEMENTS = [
     check: g => Object.values(g.survey || {}).some(s => (s.peak || 0) >= 3) },
   { id: 'a_survey_s', cat: 'explore', t: 'hard', i: '🏅', n: '샅샅이', d: '유적 하나를 탐사 기록 S로 남겼다.',
     check: g => Object.values(g.survey || {}).some(s => !!s.s) },
-  /* 동굴 — tally.faults(무너뜨린 자갈 수) · tally.caves(들어가 본 갈래). 둘 다 세이브의 tally 에 산다 */
+  /* 동굴 — tally.faults(무너뜨린 자갈 수) · tally.caves(들어가 본 갈래). */
   { id: 'a_fault', cat: 'explore', t: 'mid', i: '🪨', n: '무너뜨린 사람', d: '금 간 자갈 셋을 무너뜨려 숨은 동굴을 열었다.',
     check: g => ((g.tally || {}).faults || 0) >= 3 },
   { id: 'a_cave_kinds', cat: 'explore', t: 'mid', i: '🦇', n: '땅속의 네 얼굴', d: '이끼 굴 · 종유 동굴 · 수정 동굴 · 독기 굴에 모두 들어가 봤다.',
@@ -3790,8 +3186,7 @@ const ACHIEVEMENTS = [
   { id: 'a_ruin_bosses', cat: 'hunt', t: 'hard', i: '🗝', n: '유적을 비운 자', d: '유적 다섯이 비었다.',
     check: g => ['mine_horror', 'ice_warden', 'sand_guardian', 'spore_queen', 'blight_maw']
       .every(k => g.player.bossKilled[k]) },
-  /* 상자를 여는 것만으로는 안 준다 — **잡아야** 준다. 상자는 미끼일 뿐이고,
-     이 업적이 가리키는 건 그 뒤에 벌어지는 일이다. 어려움이라 자동으로 숨는다. */
+  /* 상자를 여는 것만으로는 안 준다 — **잡아야** 준다. */
   { id: 'a_isle', cat: 'hunt', t: 'hard', i: '🏝', n: '섬을 내려놓게 하다', d: '섬을 붙들고 있던 것이 손을 놓았다.',
     check: g => !!g.player.bossKilled.isle_keeper },
   { id: 'a_deepsea', cat: 'hunt', t: 'mid', i: '🦈', n: '물속의 것들', d: '바다에서 나는 다섯 종을 모두 만났다.',
@@ -3834,8 +3229,7 @@ const ACHIEVEMENTS = [
     check: g => ((g.tally || {}).play || 0) >= 36000 },
   { id: 'a_die20', cat: 'odd', t: 'mid', i: '⚰', n: '그래도 다시', d: '스무 번 쓰러지고 스무 번 일어났다.',
     check: g => ((g.tally || {}).deaths || 0) >= 20 },
-  /* 터뜨린 횟수는 세이브에 없던 값이라 tally 에 센다(gathered 는 **만든** 수라 쟁여
-     두기만 해도 오른다 — "터뜨려 봤다"와는 다른 이야기다). */
+  /* 터뜨린 횟수는 세이브에 없던 값이라 tally 에 센다(gathered 는 **만든** 수라 쟁여 두기만 해도 오른다 — "터뜨려 봤다"와는 다른 이야기다). */
   { id: 'a_bomb', cat: 'odd', t: 'easy', i: '💣', n: '터뜨려 본 사람', d: '폭탄을 서른 번 터뜨렸다.',
     check: g => ((g.tally || {}).bomb || 0) >= 30 },
   { id: 'a_detector', cat: 'odd', t: 'mid', i: '📡', n: '두 개의 눈', d: '광맥을 보는 눈과 움직이는 것을 보는 눈을 둘 다 만들었다.',
@@ -3847,17 +3241,12 @@ const ACHIEVEMENTS = [
 ];
 const ACH_FOODS = ['food_bread', 'food_stew', 'food_soup', 'food_pie', 'food_curry',
   'food_jelly', 'food_mstew', 'food_tea', 'food_feast'];
-/* 바다에서만 나는 것들(ENEMIES 의 biome: 'sea'). 손으로 적어 둔다 — ENEMIES 를 훑어
-   만들면 나중에 바다 몹을 하나 더 넣는 순간 **이미 받은 업적이 도로 풀린다**. */
+/* 바다에서만 나는 것들(ENEMIES 의 biome: 'sea'). */
 const ACH_SEA_MOBS = ['reef_crab', 'lantern_jelly', 'reef_shark', 'deep_octopus', 'abyss_angler'];
-/* 업적 판정에 쓰는 잔 도구들. check가 순수하도록 여기 모아 둔다. */
+/* 업적 판정에 쓰는 잔 도구들. */
 function achSum(o) { let n = 0; for (const k in (o || {})) n += o[k] | 0; return n; }
 function achCount(list, fn) { let n = 0; for (const k of list) if (fn(k)) n++; return n; }
-/* ★ 세계가 지어 둔 기계(m.gen)는 빼고 센다. 유적 함정도 기계라서, 그냥 size 를 쓰면
-   **첫 지형 생성만으로** 새 세계에 이미 기계가 26대(dart 9·trap 8·flamejet 6·frostjet 3)
-   들어 있어 "처음 놓은 기계"(1대)와 "스스로 도는 것"(20대)이 시작하자마자 달성됐다.
-   옛 세이브의 기계에는 gen 이 없으므로 전부 플레이어 것으로 세어진다 — 이미 받은
-   업적을 도로 빼앗지 않으려고 표시를 그쪽으로 뒤집어 놓았다(factory.js place 참고). */
+/* ★ 세계가 지어 둔 기계(m.gen)는 빼고 센다. */
 function achMach(g) {
   if (!g.world || !g.world.machines) return 0;
   let n = 0;
@@ -3879,8 +3268,7 @@ function achAnyItem(g, fn) {
 /* ---------------- NPC ---------------- */
 const NPCS = {
   elara:  { n: '엘라라', i: '🧝‍♀️', c: '#c8a06a', role: '캠프 관리인', art: 'elara' },
-  /* disc — 이 사람에게 살 때 붙는 할인. 베이스캠프는 "돌아올 곳"이지 장사하는
-     자리가 아니라, 여기서 파는 초반 물건까지 값이 오르면 시작이 답답해진다. */
+  /* disc — 이 사람에게 살 때 붙는 할인. */
   borin:  { n: '보린', i: '🧔', c: '#8a6a4a', role: '대장장이', disc: 0.4, shop: ['pick_iron', 'sword_iron', 'helm_iron', 'potion_hp_small', 'potion_iron', 'torch', 'band_worn'], art: 'borin' },
   mira:   { n: '미라', i: '🧙‍♀️', c: '#8f6fd8', role: '마녀', shop: ['staff_branch', 'potion_mp_small', 'ring_focus', 'potion_str'], art: 'mira' },
   old:    { n: '이름 없는 노인', i: '👴', c: '#9a9a9a', role: '???', art: 'elder' },
@@ -3895,15 +3283,10 @@ const NPCS = {
             line: '물건은 그대로 두고 이름만 바꿔 주는 거야. 운이 나쁘면 더 나빠지고.' },
   kade:   { n: '케이드', i: '⚙', c: '#8a8a96', role: '기술자', art: 'kade', shop: ['charm_cap', 'charm_conduit', 'battery_cell', 'circuit'],
             line: '이 도시, 사람이 지은 게 아니야. 그럼 누가 지었냐고? 그걸 알아내는 게 내 일이고.' },
-  /* 떠돌이 상인 셋 — 마을이 커질수록 하나씩 늘어난다(1·3·4단계).
-     shop 배열이 아니라 dynamicShop 표시를 쓴다: 재고가 날마다 다시 굴려지므로
-     정적 표에 박아 둘 수 없고, G.shopStock(세이브에 남는다)에서 읽어 온다.
-     셋은 파는 갈래가 갈린다 — 겹치면 굳이 셋을 둘 이유가 없다. */
+  /* 떠돌이 상인 셋 — 마을이 커질수록 하나씩 늘어난다(1·3·4단계). */
   pedlar:  { n: '허윤', i: '🎒', c: '#c8925a', role: '잡화상', art: 'pedlar', dynamicShop: true,
              line: '오늘 실은 건 이게 전부요. 내일 오면 또 다른 게 있을 거고.' },
-  /* 가라앉은 도시의 마지막 주민. 심해 평원의 굴 속 공기 주머니에 산다.
-     세션 2의 원형이 "나는 첫 번째였고 마지막까지 혼자였다"고 한 것의 반대편 —
-     만들어진 것이 아니라 남겨진 사람이다. */
+  /* 가라앉은 도시의 마지막 주민. */
   yunseul: { n: '윤슬', i: '🫧', c: '#7fb8d8', role: '가라앉은 도시의 마지막 사람', art: 'yunseul', dynamicShop: true,
              from: 15,          // 대사 묶음이 15장(세션 3 서장)부터 시작한다
              line: '위로 올라간 사람은 아무도 안 돌아왔어. 그래서 나는 안 올라가기로 했지.' },
@@ -3915,37 +3298,25 @@ const NPCS = {
 /* 여명 마을 주민 — 종장 전에는 아예 등장하지 않으므로 별도 잠금 대사가 필요 없다 */
 const DAWN_NPCS = ['tamer', 'trainer', 'haran', 'seira', 'kade', 'pedlar', 'oreman', 'armsman'];
 
-/* ---------------- 떠돌이 상인 ----------------
-   마을이 커질수록 상인이 하나씩 는다(1·3·4단계). 셋이 파는 갈래가 갈리는 게 핵심 —
-   겹치면 굳이 셋일 이유가 없다. 마을 고정 상점 넷(보린·미라·리카·케이드)은 재고가
-   고정이라, 이쪽 셋은 "그날 운"이 역할이다.
+/* ---------------- 떠돌이 상인 ---------------- */
 
-   pool 항목: { id, w(뽑기 가중치), max(한 칸 최대 개수) }
-   equip: true 면 개별 목록 대신 ITEMS를 훑어 **플레이어 레벨에 맞는 장비**를 후보로
-   삼는다(고정 목록으로 두면 레벨이 오를수록 쓸모없어지고, 다 적어 두면 초반에
-   못 드는 물건만 잔뜩 뜬다). */
-
-/* 장비상이 절대 취급하지 않는 것 — 보스·스토리 산출물. 사서 넘길 수 있으면
-   그 보스를 잡을 이유가 사라진다. */
+/* 장비상이 절대 취급하지 않는 것 — 보스·스토리 산출물. */
 const SHOP_DENY = new Set([
   'sword_first', 'hammer_still', 'crossbow_first', 'tome_first', 'blade_arche', 'tome_origin',
   'lance_orbit', 'bow_meridian', 'hammer_cave', 'sword_arc', 'gun_rail', 'saw_auto', 'drill_abyss',
   'charm_govern', 'charm_orbit', 'charm_maker', 'charm_zenith', 'jetpack', 'charm_lamp2',
   'helm_exo', 'chest_exo', 'boots_exo', 'helm_aether', 'chest_aether', 'boots_aether',
   'pick_arc', 'pick_soul',
-  /* 윤슬 전용 — 다른 상인의 equipPool이 ITEMS를 훑어 뽑으므로, 막지 않으면
-     벽산(장비상) 재고에 그대로 섞여 "유일한 경로"가 아니게 된다 */
+  /* 윤슬 전용 — 다른 상인의 equipPool이 ITEMS를 훑어 뽑으므로, 막지 않으면 벽산(장비상) 재고에 그대로 섞여 "유일한 경로"가 아니게 된다 */
   'amul_scale', 'charm_bell', 'ring_deep', 'sigil_current', 'mace_bell', 'harpoon_lamp'
 ]);
 
 const MERCHANTS = [
-  /* --- 윤슬 (비밀 상점) ---
-     마을이 아니라 심해 평원의 굴에 있다. spot이 없으므로 placeMerchants가 건너뛰고,
-     buildSea가 직접 놓는다. 재고 갱신은 마을 상인과 똑같이 stockOf()가 dayCount로 굴린다. */
+  /* --- 윤슬 (비밀 상점) --- */
   {
     npc: 'yunseul', lv: 1, slots: 5, markup: 1.6, spot: null,
     pool: [
-      // 고유 장신구 — 여기서만 나온다. 비중을 낮춰 "오늘 떴다"가 사건이 되게 한다
+      // 고유 장신구 — 여기서만 나온다.
       { id: 'amul_scale', w: 3 }, { id: 'charm_bell', w: 3 },
       { id: 'ring_deep', w: 3 }, { id: 'sigil_current', w: 3 },
       // 고유 무기 2종 — 더 귀하다
@@ -3953,7 +3324,7 @@ const MERCHANTS = [
       // 바다 계열 무기 — 4단계 시설이 없어도 손에 넣을 수 있는 우회로
       { id: 'spear_tide', w: 4 }, { id: 'blade_shark', w: 4 },
       { id: 'bow_harpoon', w: 4 }, { id: 'orb_abyss', w: 4 },
-      // 포션 — 물속에서 쓸 것 위주. 제일 흔하다
+      // 포션 — 물속에서 쓸 것 위주.
       { id: 'potion_hp_greater', w: 12, max: 4 }, { id: 'potion_mp_greater', w: 10, max: 4 },
       { id: 'potion_glow_greater', w: 10, max: 3 }, { id: 'potion_iron', w: 8, max: 3 },
       { id: 'potion_str', w: 7, max: 3 },
@@ -3992,8 +3363,7 @@ const MERCHANTS = [
     npc: 'oreman', lv: 3, slots: 7, markup: 1.3,
     spot: { kind: 'floor2', block: 2, off: 3 },   // 재련집 2층
     pool: [
-      /* 마을은 세션 2에 열린다 — 그 시점 제작이 강철·회로 쪽이라 그쪽을 주로 판다.
-         나무·돌 같은 기초 재료도 계속 쓰이므로 남기되 가중치를 낮췄다. */
+      /* 마을은 세션 2에 열린다 — 그 시점 제작이 강철·회로 쪽이라 그쪽을 주로 판다. */
       { id: 'iron_ore', w: 7, max: 14 }, { id: 'iron_bar', w: 7, max: 10 },
       { id: 'coal', w: 7, max: 14 }, { id: 'steel_plate', w: 7, max: 10, sess: 2 },
       { id: 'gear_basic', w: 6, max: 8, sess: 2 }, { id: 'wire', w: 6, max: 10, sess: 2 },
@@ -4024,11 +3394,7 @@ const MERCHANTS = [
 ];
 
 
-/* ---------------- 마을 단계별 주민 한 마디 ----------------
-   주민 다섯이 고정 대사 하나씩만 들고 있으면, 지붕이 올라가고 성벽이 서도 마을 사람
-   입에서는 아무 일도 일어나지 않는다. 단계마다 한 줄씩 더 붙는다(고정 대사 뒤에).
-   내용은 전부 **그 단계에서 실제로 눈에 보이게 바뀐 것**이다. 사냥 의뢰는 여전히
-   베이스캠프 게시판 몫이라 여기서는 한 마디도 하지 않는다. */
+/* ---------------- 마을 단계별 주민 한 마디 ---------------- */
 const VILLAGE_TALK = {
   tamer: [null,
     '짐승들이 아직 이 거리를 못 미더워해. 하긴 나도 그래.',
@@ -4052,18 +3418,7 @@ const VILLAGE_TALK = {
     '포탑 두 기, 대갈못만 채워 두면 알아서 쏜다. 채우는 건 자네 몫이고.']
 };
 
-/* ================= 사람들이 지금을 보고 하는 말 =================
-
-   대화는 두 겹이다 — ① 지금 눈에 보이는 것에 대한 반응 한 줄(죽은 자리·다친 몸·
-   날씨·장을 끝낸 얼굴·빈 주머니·밤낮), ② 원래의 장별 대사(DIALOGUE·VILLAGE_TALK).
-   ①은 아래 TALK 에서 고른다. 줄거리는 흐려지지 않으면서 그 위에 오늘이 얹힌다.
-
-   ★ 같은 상황이어도 같은 말을 하지 않는다. 칸마다 말이 두세 개 들어 있고 말을 걸 때마다
-     다음 것으로 넘어간다(무작위가 아니라 **순번**이라 반드시 다르다). 순번은 저장에 남는다.
-     플레이어의 대답(re)도 같은 방식으로 돈다.
-
-   칸 이름(mood)은 TALK_MOODS 순서대로 판정한다 — 위에 있는 것이 먼저고, 그 사람이
-   안 들고 있으면 다음 칸으로 내려간다. 'day' 칸만은 모두가 들고 있어야 한다(마지막 그물). */
+/* ================= 사람들이 지금을 보고 하는 말 ================= */
 const TALK_MOODS = [
   { id: 'grave',      when: c => c.grave },                       // 어딘가에 죽은 자리를 두고 왔다
   { id: 'hurt',       when: c => c.hpr < 0.35 },                   // 피가 3분의 1 아래
@@ -4075,8 +3430,7 @@ const TALK_MOODS = [
   { id: 'goal',       when: c => c.ready },                        // 준비는 끝났고 마지막 하나만 남았다
   { id: 'broke',      when: c => c.gold < 40 },
   { id: 'rich',       when: c => c.gold >= 5000 },
-  /* 세션 2 — 별이 하늘로 돌아간 뒤. 같은 밤낮이어도 사람들이 하는 말이 달라진다.
-     (마을 주민 다섯은 애초에 세션 2에만 있으므로 이 칸을 들지 않는다) */
+  /* 세션 2 — 별이 하늘로 돌아간 뒤. */
   { id: 'night2',     when: c => c.session === 2 && c.night },
   { id: 'night',      when: c => c.night },
   { id: 'dawn',       when: c => c.hour >= 5 && c.hour < 8 },
@@ -4084,8 +3438,7 @@ const TALK_MOODS = [
   { id: 'day',        when: () => true }
 ];
 
-/* say: 상황 한 줄(순번으로 돌아간다) · re: 그 상황에서 할 수 있는 대답과 대꾸
-   대꾸(s)는 한 줄이어도 되고 여러 줄이어도 된다. */
+/* say: 상황 한 줄(순번으로 돌아간다) · re: 그 상황에서 할 수 있는 대답과 대꾸 대꾸(s)는 한 줄이어도 되고 여러 줄이어도 된다. */
 const TALK = {
   /* ---------------- 베이스캠프 ---------------- */
   elara: {
@@ -4710,16 +4063,7 @@ const TALK = {
   }
 };
 
-/* ---------------- 펫 ----------------
-   장신구처럼 장비창의 펫 슬롯 두 칸에 끼운다(펫 자체가 인벤토리 아이템이다).
-   b 는 착용 중 붙는 패시브, atk 는 고유 자동 공격 — 근처 적을 알아서 문다.
-
-   ★ 수치 기준: 펫은 조련사 리카에게서만 나오고 리카는 9장부터 존재한다. 그 시점
-     플레이어는 레벨 80대이고 상대 잡몹이 체력 1200~5200 · 공격력 76~152 다. 초반 장비
-     감각으로 잡으면 있으나 마나 한 장식이 된다.
-
-   atk — k('proj'/'melee') · proj(투사체 종류) · dmg(PET_DMG_SCALE 로 레벨 비례) ·
-   cd(초) · range(px) · spd. c 는 절차 생성 그림의 몸 색. */
+/* ---------------- 펫 ---------------- */
 const PETS = {
   /* --- 공통 --- */
   ember_squirrel: { n: '잿불 다람쥐', i: '🐿', r: 0, c: '#c8703a', b: { ms: 8 },
@@ -4761,45 +4105,27 @@ const PETS = {
     atk: { k: 'proj', proj: 'bolt', dmg: 140, cd: 1.05, range: 340, spd: 560 },
     d: '내려꽂힐 때 소리가 한 박자 늦게 온다.' }
 };
-/* 펫 피해 배율 — 위 기준 피해는 "펫을 처음 손에 넣는 레벨 80 언저리"에서의 값이다.
-   레벨에 정비례로 곱하면 후반(레벨 200)에 터무니없이 커지므로 완만하게만 키운다.
-   레벨 80에서 약 1.0배, 200에서 약 2.4배. */
-/* 레벨 배수 — 세계의 기본 규칙(몹은 레벨을 안 탄다)에서 **일부러 뺀 것들**만 쓴다.
-   pow가 클수록 가파르다: 붉은 달 1.0, 좀비 0.5(절반).
-     붉은 달  25레벨 1.58 · 50레벨 2.50 · 75레벨 3.95 · 100레벨 6.25
-     좀비     25레벨 1.26 · 50레벨 1.58 · 75레벨 1.99 · 100레벨 2.50 체력·공격력에만 걸고 방어력은 그대로 둔다 — 방어까지 배로 오르면 피해가
-   낮은 무기로는 아예 흠집도 안 난다. 50레벨마다 곱해지는 모양은 그대로다.
-   사연: docs/code-history.md#h19 */
+/* 펫 피해 배율 — 위 기준 피해는 "펫을 처음 손에 넣는 레벨 80 언저리"에서의 값이다. */
+/* 레벨 배수 — 세계의 기본 규칙(몹은 레벨을 안 탄다)에서 **일부러 뺀 것들**만 쓴다 — 사연: docs/code-history.md#h19 */
 const LV_SCALE_BASE = 2.5;
 function levelMult(level, pow) { return Math.pow(LV_SCALE_BASE, Math.max(0, level) / 50 * (pow || 1)); }
 function bloodMult(level) { return levelMult(level, 1); }
 
 function petDmgScale(level) { return Math.max(0.45, 0.07 + level * 0.0116); }
 
-/* ---------------- 펫 레벨 ----------------
-   펫 아이템 인스턴스에 lv·xp를 붙인다(it.lv, it.xp). 인스턴스는 세이브의 bag/equip에
-   그대로 직렬화되므로 필드를 더하면 저장은 저절로 된다. 옛 세이브의 펫은 lv가 없어
-   `it.lv || 1` 로 읽는다 — 마이그레이션이 필요 없는 대신 읽는 쪽이 늘 이 꼴이어야 한다.
-
-   ★ 배수를 둘로 나눈 이유. 펫 피해는 **이미 플레이어 레벨을 타고 있다**
-   (petDmgScale, entity.js). 여기에 펫 레벨까지 같은 폭으로 곱하면 성장이 두 겹이 되어
-   후반에 펫이 본체를 앞지른다. 그래서 레벨이 주로 키우는 것은 **패시브(b)** 쪽이고
-   (10레벨 2.08배), 공격력 쪽은 완만하게만 따라온다(10레벨 1.54배). */
+/* ---------------- 펫 레벨 ---------------- */
 const PET_LV_MAX = 10;
 function petLvMul(lv) { return 1 + 0.12 * ((lv || 1) - 1); }   // 패시브 b 배수
 function petAtkMul(lv) { return 1 + 0.06 * ((lv || 1) - 1); }  // 자동 공격 배수
 function petXpNext(lv) { return Math.round(600 * Math.pow(1.6, (lv || 1) - 1)); }
-/* 처치 경험치의 이 비율만큼 낀 펫에게 들어간다. 두 칸에 각각 온전히 들어간다 —
-   나눠 주면 펫을 둘 끼울수록 둘 다 안 크는 이상한 벌이 된다. */
+/* 처치 경험치의 이 비율만큼 낀 펫에게 들어간다. */
 const PET_XP_SHARE = 0.08;
-/* 펫 아이템 — PETS를 단일 출처로 삼아 ITEMS 항목을 자동으로 만든다.
-   이름·수치를 두 군데 적어 두면 반드시 어긋나므로 여기서 파생시킨다. */
+/* 펫 아이템 — PETS를 단일 출처로 삼아 ITEMS 항목을 자동으로 만든다. */
 for (const id in PETS) {
   const pt = PETS[id];
   ITEMS['pet_' + id] = {
     n: pt.n, i: pt.i, type: 'pet', pet: id, b: pt.b, stack: 1,
-    // 최소 레벨·값어치도 세션 2 기준 — 마을에 막 닿으면 공통·희귀는 바로 쓸 수 있고
-    // 영웅은 조금 더 키운 뒤에 붙는다(레벨 100). 값은 그 시점 소지금 규모에 맞춰 올렸다.
+    // 최소 레벨·값어치도 세션 2 기준 — 마을에 막 닿으면 공통·희귀는 바로 쓸 수 있고 영웅은 조금 더 키운 뒤에 붙는다(레벨 100).
     lvReq: [60, 80, 100][pt.r], price: [9000, 34000, 95000][pt.r], d: pt.d
   };
 }
@@ -4817,7 +4143,8 @@ const EGG_POOL = {
 };
 
 /* ---------------- 스토리 ---------------- */
-/* obj types: kill(target,n) / mine(tile,n) / collect(item,n) / talk(npc) / depth(y) / boss(target) / craft(item) / equip(slot) */
+/* obj types: kill(target,n) / mine(tile,n) / collect(item,n) / talk(npc) / depth(y) / boss(target) /
+   craft(item) / */
 const CHAPTERS = [
   {
     id: 0, title: '떨어진 별', sub: '서장', art: 'chapter_0_fallen_star',
@@ -5201,9 +4528,7 @@ const CHAPTERS = [
       '케이드가 웃었다. "응. 처음으로, 아래보다 위가 더 시끄러워."\n\n' +
       '— 세 션 2 · 끝 —'
   },
-  /* ================= 세 션 3 =================
-     서장 · 제1장 · 제2장까지만이다. **종장은 아직 없다** — 계속 이어 갈 이야기라
-     여기서 매듭지으면 안 된다. 세션 경계는 data.js의 SESSIONS 표가 잡는다. */
+  /* ================= 세 션 3 ================= */
   {
     id: 15, title: '물이 지운 쪽', sub: '세션 3 · 서장', art: 'chapter_15_drowned',
     line: '서쪽 끝, 지도가 끊기는 자리',
@@ -5286,26 +4611,14 @@ const CHAPTERS = [
   }
 ];
 
-/* 장마다 붙는 "다음이 궁금해지는 한 줄"(hook).
-   장을 끝냈을 때 뒷이야기(outro) 다음에 한 박자 쉬고 따로 뜬다. 지금 당장은 답이 없는,
-   그러나 뒤에 반드시 답이 나오는 질문만 골라 적었다 — 세계가 넓기만 하고 할 말이 없다는
-   인상을 없애기 위한 장치다. */
-/* ================= 세션 =================
-
-   ★ "세션 2인가"를 묻는 자리가 `chapter >= 9` 로 **아홉 군데에 손으로** 적혀 있었다.
-     하나라도 빠뜨리면 3세션에서 2세션 규칙이 **에러 없이** 조용히 돌아간다.
-     이제 표 한 줄이다 — 세션을 늘릴 때는 여기에 한 줄만 더한다.
-
-       id 세션 번호 · n t 일지 탭 이름과 부제 · ch0 이 세션이 시작하는 장
-
-   ★ 다만 이 표만 고치고 끝나는 게 아니다. 장을 늘릴 때 같이 봐야 하는 자리는
-     docs/story-and-sessions.md 에 표로 모아 두었다. */
+/* 장마다 붙는 "다음이 궁금해지는 한 줄"(hook). */
+/* ================= 세션 ================= */
 const SESSIONS = [
   { id: 1, n: '세션 1', t: '잿빛의 여정', ch0: 0 },
   { id: 2, n: '세션 2', t: '벽 너머', ch0: 9 },
   { id: 3, n: '세션 3', t: '물이 지운 쪽', ch0: 15 }
 ];
-/** 그 장이 속한 세션. 표보다 큰 장은 마지막 세션으로 본다 */
+/** 그 장이 속한 세션. */
 const sessionOf = (ch) => {
   let s = SESSIONS[0];
   for (const x of SESSIONS) if ((ch || 0) >= x.ch0) s = x;
@@ -5338,7 +4651,7 @@ const CHAPTER_HOOK = {
 };
 for (const ch of CHAPTERS) if (CHAPTER_HOOK[ch.id]) ch.hook = CHAPTER_HOOK[ch.id];
 
-/* 지하 공창의 단말 — 세션 2 오프닝의 로어. 읽으면 설계도 조각이 나온다 */
+/* 지하 공창의 단말 — 세션 2 오프닝의 로어. */
 const TERMINALS = [
   {
     id: 0, n: '첫 번째 단말',
@@ -5423,19 +4736,9 @@ const TABLETS = [
   }
 ];
 
-/* ================= 장마다 듣는 이야기 =================
-
-   ★ 아홉 사람 × 열다섯 장을 **빠짐없이** 채운다. game.js 가
-     `DIALOGUE[id][Math.min(chapter, 길이-1)]` 로 읽으므로 표가 짧으면 에러 없이
-     **마지막 칸을 되풀이한다** — 실제로 7~14장 여덟 장이 같은 대사를 하고 있었다.
-     캠프 넷은 0번부터, 여명 마을 다섯은 9장부터 존재하므로 0~8 칸을 null 로 비운다
-     (talkVillager 가 빈 칸이면 서명 대사로 떨어진다).
-
-   장 카드가 "무슨 일이 일어났는가"라면 이쪽은 "그 일을 사람들이 어떻게 받아들였는가"다 —
-   보린은 손으로, 미라는 꿈으로, 가른은 몸으로, 하란은 방 수로 센다. */
+/* ================= 장마다 듣는 이야기 ================= */
 const DIALOGUE = {
-  /* 윤슬 — 15·16·17장. DIALOGUE는 챕터 인덱스로 고르고 넘치면 마지막 것이 잘려 쓰이므로,
-     세션 3 이전에 어쩌다 만나도 첫 묶음이 나온다(만날 수 있는 곳이 심해뿐이라 사실상 없다). */
+  /* 윤슬 — 15·16·17장. */
   yunseul: [
     ['…사람이네. 진짜 사람.',
      '놀라진 마. 나도 그쪽이 더 놀라워.',
@@ -5558,8 +4861,7 @@ const DIALOGUE = {
      '이제는 네가 보았으니, 나보다 네가 더 안다.']
   ],
 
-  /* ---- 여명 마을 다섯 (9장부터 세계에 존재한다) ----
-     앞의 아홉 칸(0~8장)은 비워 둔다. talkVillager 가 빈 칸이면 서명 대사로 떨어진다. */
+  /* ---- 여명 마을 다섯 (9장부터 세계에 존재한다) ---- */
   tamer: [null, null, null, null, null, null, null, null, null,
     ['애들이 이 도시를 안 좋아해. 냄새가 없대.',
      '짐승은 사람 살던 자리 냄새를 맡거든. 여긴 그게 없어.'],
@@ -5725,9 +5027,7 @@ const SIDE_POOL = {
   ],
   mira: [
     (ch, rng) => {
-      /* 세션마다 다른 표를 쓴다. 한 표에 이어 붙이면 안 된다. 그러면 7·8장(아직 세션 1)이 동력관·동력석을 요구하는데, 그건 지하 공창에 내려가기 전이라 구할
-         데가 없다.
-         사연: docs/code-history.md#h20 */
+      /* 세션마다 다른 표를 쓴다 — 사연: docs/code-history.md#h20 */
       const s1 = ['crystal', 'frost_core', 'corrupt_ess', 'soul_shard', 'void_frag'];
       const s2 = ['aether_shard', 'conduit_part', 'power_core', 'core_shard', 'draft_glass'];
       const item = sessionOf(ch).id >= 2 ? s2[clamp(ch - 10, 0, s2.length - 1)]
@@ -5814,11 +5114,7 @@ const SIDE_POOL = {
     }
   ],
 
-  /* ---------------- 여명 마을 다섯 (세션 2) ----------------
-     종장 뒤로 플레이 시간의 절반이 이 다섯 사람 옆에서 흐르는데, 이들에게는
-     부탁할 일이 하나도 없었다. 말은 걸 수 있고 물건은 살 수 있는데 "해 줄
-     일"만 없어서, 도시가 사람이 사는 곳이 아니라 상점가로 보였다.
-     다섯 다 세션 2 에서만 존재하므로 세션 2 재료를 바로 써도 된다. */
+  /* ---------------- 여명 마을 다섯 (세션 2) ---------------- */
   tamer: [
     (ch, rng) => {
       const t = chPick(CH_MOB, ch);
@@ -5935,10 +5231,7 @@ const SIDE_POOL = {
   ]
 };
 
-/* ================= 장마다 안전한 표 =================
-   의뢰가 **그 장에 없는 것**을 요구하면 받을 수 없는 의뢰가 된다(미라의 공허 조각이
-   실제로 그랬다 — 13장에 망령이 개조되어 떨구지 않게 됐는데 표는 그대로였다).
-   장을 색인으로 쓰는 표를 한군데 모아 두고, 장이 표보다 길면 마지막 칸으로 잡는다. */
+/* ================= 장마다 안전한 표 ================= */
 const CH_MOB = ['slime', 'slime', 'skeleton', 'crawler', 'frostling', 'wraith', 'cloudjelly',
   'ruin_guard', 'wraith', 'scrapcrawler', 'riveter', 'riveter', 'splitter', 'coreling', 'draft_form'];
 const CH_ORE = [T.COPPER, T.COPPER, T.IRON, T.IRON, T.GOLD, T.MYTHRIL, T.CRYSTAL, T.SOULSTONE,
@@ -5948,19 +5241,7 @@ const CH_MAT = ['wood', 'copper_ore', 'iron_ore', 'corrupt_ess', 'frost_core', '
   'core_shard', 'core_shard', 'draft_glass'];
 const chPick = (arr, ch) => arr[clamp(ch || 0, 0, arr.length - 1)];
 
-/* ================= 의뢰 게시판에 붙는 종이 =================
-
-
-     from   붙인 사람 — 캠프 바깥에 사는 이름들. 만날 수는 없지만 산다
-     title  종이에 크게 적힌 말 · body  그 사람의 말투로 두 줄
-     obj    목표(kill · collect · mine). 받을 수 있는 장에만 붙는다
-     done   떼어 갈 때 그 사람이 남긴 한 줄
-     next   이어지는 종이 — 끝내면 **다음 날** 뒷이야기가 붙는다
-     pin    이어지는 쪽이라 그냥은 안 붙는다(앞 이야기를 끝내야 나온다)
-     ch     [처음, 끝] 장 · s  세션(1·2, 없으면 둘 다) · rw  보상 배수
-
-   의뢰가 줄거리를 건드리지는 않는다 — 줄거리 옆에서 사람들이 겪는 일이다.
-   사연: docs/code-history.md#h21 */
+/* ================= 의뢰 게시판에 붙는 종이 ================= */
 const BOUNTY_POOL = [
   /* ---------------- 세션 1 · 잿빛 야영지 둘레 ---------------- */
   { id: 'swamp_two', s: 1, ch: [0, 4], from: '늪가 오두막 · 톨렌', title: '하나였던 것',
@@ -6143,28 +5424,10 @@ const BOUNTY_BY_ID = (() => {
   for (const b of BOUNTY_POOL) m[b.id] = b;
   return m;
 })();
-/* 목표 종류마다 "한 건"의 크기가 다르다 — 스물여섯 개를 모으는 것과 열두 마리를
-   잡는 것이 같은 보상일 수는 없다. 이 수로 나눠 배수를 잡는다. */
+/* 목표 종류마다 "한 건"의 크기가 다르다 — 스물여섯 개를 모으는 것과 열두 마리를 잡는 것이 같은 보상일 수는 없다. */
 const BOUNTY_UNIT = { kill: 10, collect: 22, mine: 18 };
 
-/* ================= 물건값 =================
-
-   372가지를 한 벌의 셈으로 매긴다.
-
-     ① 값이 적혀 있는 것(보스·낚시 노획물)은 그대로 둔다.
-     ② ★ **캘 수 있으면 캐는 쪽이 값을 정한다.** 만들 수도 있는 것이라도 그렇다 —
-        도시가 통째로 강철판인데 강철판을 벼려서 값을 매기면 벽을 뜯는 것이
-        무한한 금화가 된다. 광맥은 등급 사다리(VAL_0·VAL_R^등급)에 올린다.
-     ③ 몹이 떨구는 것은 그 몹이 내놓는 금화를 재료가 나눠 갖는다. 여러 몹이
-        떨구면 가장 만만한 데와 가장 센 데의 **기하평균**(최솟값만 쓰면 보스도
-        떨구는 재료가 잡값이 되고, 최댓값만 쓰면 흔한 뼛조각이 보스 값이 된다).
-     ④ 만드는 것은 재료값 합의 CRAFT배(장비는 GEAR배). 만들면 값이 붙는다.
-     ⑤ 만들 수 없는 장비는 필요 레벨로 등급을 잡아 사다리에 올린다.
-     ⑥ 먹고 마시는 것은 재료가 아니라 효과로 팔린다(바닥 22).
-     ⑦ 어디서도 안 나오는 재료는 같은 조리법에 함께 적힌 재료들로 자리를 잡는다.
-
-   실측: 조리법 배율 중앙 0.57 → 1.32, 뒤집힌 것 121개 → 19개.
-   사연: docs/code-history.md#h22 */
+/* ================= 물건값 ================= */
 const VAL_R = 1.55;     // 등급 한 칸에 값이 몇 배
 const VAL_0 = 3.3;      // 0등급 재료 한 개
 const VAL_SHARE = 0.5;  // 몹이 내놓는 금화 중 재료 몫
@@ -6172,8 +5435,7 @@ const VAL_CAP = 0.45;   // 한 가지 재료가 가져갈 수 있는 최대 몫
 const VAL_MIN = 3;      // 재료 바닥값
 const VAL_CRAFT = 1.30; // 만들면 붙는 값
 const VAL_GEAR = 1.45;  // 장비는 조금 더
-/* 광맥의 등급. hard(필요 곡괭이)만으로는 구리와 철이, 금과 미스릴이 같은 칸에
-   묶여 버린다 — 실제로 나오는 깊이와 장으로 갈라 적는다. */
+/* 광맥의 등급. */
 const ORE_TIER = {
   copper_ore: 1, lead_ore: 1, coal: 1, iron_ore: 2, crude_oil: 2, steel_plate: 3,
   crystal: 3, gold_ore: 3, mythril_ore: 4, soul_shard: 4, hell_ore: 4,
@@ -6195,11 +5457,7 @@ const ITEM_VAL = (() => {
   for (const d of TILE_DEF)
     if (d.drop && V[d.drop] === undefined && !made[d.drop]) V[d.drop] = step(0) * 0.35;
 
-  /* 보스는 **나중에 따로 본다.** 같이 보면 보스도 떨구는 흔한 재료(공허 조각·
-     에테르 파편)가 보스 금화로 값이 매겨져 뛴다. 반대로 아예 안 보면 보스만
-     떨구는 것 — 별의 심장·헤파의 심장·원형의 핵 — 이 근거를 못 찾아 바닥값 3에
-     내려앉는다(다섯 조각을 모으는 이야기인데 조각 하나가 나무 한 개 값이었다).
-     그래서 잡몹으로 먼저 매기고, 그때까지 값이 없는 것만 보스로 매긴다. */
+  /* 보스는 **나중에 따로 본다.** */
   for (const bossPass of [0, 1]) {
     const lo = {}, hi = {};
     for (const k in ENEMIES) {
@@ -6254,7 +5512,6 @@ const ITEM_VAL = (() => {
   }
 
   // 등급 사다리 — 만들 수 있는 무기들을 로그 자리에서 직선으로 맞춘다.
-  // 등급별 평균을 그냥 쓰면 6등급이 5등급보다 싸지는 식으로 들쭉날쭉하다.
   const pts = [];
   for (const r of RECIPES) {
     const d = ITEMS[r.out];
@@ -6297,18 +5554,7 @@ const ITEM_VAL = (() => {
   return V;
 })();
 
-/* ================= 스킬 손맛 =================
-
-   열아홉 가지가 전부 같은 삑 소리 하나(G.sfx('skill'))였고, 화면 흔들림은 열넷이 0
-   이었다. 한 표로 모은다.
-
-     s   소리 키. 열아홉을 열다섯 갈래로 묶었다(베기와 검무는 같은 칼바람).
-     k   화면 흔들림. 세기 순서대로(0 · 4 · 7 · 10 · 14 · 20)
-     st  ★ **손이 멈추는 한 박자**(초). 큰 것이 닿는 순간 세계가 잠깐 선다 —
-         손맛에서 가장 크게 먹히는 한 가지인데 이 게임에는 아예 없었다.
-     c   시전 고리 색. 제자리에 아무 표시도 안 남는 스킬(화살 세례·비·늑대·표식)이
-         많아 눌렀는지도 몰랐다.
-     r   고리 크기. 스킬이 실제로 닿는 범위와 맞춘다 — 고리가 곧 사거리다. */
+/* ================= 스킬 손맛 ================= */
 const SKILL_FX = {
   /* 검투사 */
   s_cleave:   { s: 'sk_slash',  k: 7,  st: .04, c: '#ffb24a', r: 108 },
@@ -6336,19 +5582,7 @@ const SKILL_FX = {
 /* 운석이 실제로 닿는 순간 — 이 게임에서 가장 큰 한 방이라 멈춤도 가장 길다 */
 const SKILL_HIT = { meteor: { s: 'sk_meteor', k: 20, st: .10 } };
 
-/* ---------------- 특별한 스킬의 고유 연출 ----------------
-   SKILL_FX 는 열아홉에 **똑같이** 붙는 감촉이다. 그래서 마나 60을 붓는 별의 낙하와
-   14를 붓는 화염구가 고리 하나로 같아 보인다. 비싼 것 다섯만 제 그림을 갖는다 —
-   잰 것: 회오리 검무는 2.5초를 도는 동안 입자가 **0개**, 영혼 늑대는 3개였다.
-
-   ★ 한도를 표로 모아 둔 이유. 연출이 세지면 가장 먼저 잃는 것은 "적이 보이는가"다.
-     셋을 넘지 않는다 —
-       1. 바닥 연출은 적·플레이어 **아래**에 깔린다. 위에 얹는 것은 선과 낮은 알파만.
-       2. 히트스톱은 한 톨도 더 붙이지 않는다. 0.12초가 상한이고 이미 다 차 있다.
-       3. 입자는 아래 n 을 넘지 않는다. 전투 중 최고치를 재 보니 257개였다.
-     화면 전체를 덮는 둘(섬광·불굴)은 '화면 효과' 설정에 함께 묶여 0%면 사라진다.
-
-     a 최대 알파 · n 한 번에 만드는 입자 수 · t 지속(초) */
+/* ---------------- 특별한 스킬의 고유 연출 ---------------- */
 const SIG_FX = {
   whirl:   { a: .50, n: 3, t: 0 },    // 채널 내내 — 피해 박자(0.28초)마다 3개씩만
   rain:    { a: .46, n: 0, t: 0 },    // 떨어질 띠. 입자 없음 — 이건 연출이 아니라 정보다
@@ -6357,6 +5591,5 @@ const SIG_FX = {
   flash:   { a: .20, n: 0, t: .18 },  // 착탄 섬광. 0.2를 넘기면 적이 흰 바닥에 묻힌다
   undying: { a: .34, n: 0, t: .55 }   // 화면 테두리가 한 번 붉게 — 살아남은 그 한 번
 };
-/* 입자 전체 상한. 잰 최고치 257의 3.5배라 정상 전투에서는 닿지 않는 난간이다 —
-   닿으면 오래된 것부터 버린다(새 연출이 안 나오는 것보다 낫다). */
+/* 입자 전체 상한. */
 const PART_CAP = 900;

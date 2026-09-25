@@ -2,14 +2,7 @@
 'use strict';
 
 const GRAV = 2000, MAX_FALL = 1250;
-/* ================= 제트팩의 두 한계 =================
-   ★ 연료(전하)만으로는 "언제까지"만 정해질 뿐 "어디까지 · 얼마나 오래 제자리에"는 아무것도
-     막지 않는다 — 배터리를 몇 개 넣고 다니면 보스방 천장에 붙어 싸움을 건너뛸 수 있다.
-     ① 높이  발밑 지면에서 30칸까지. 넘어서면 추진이 **오르는 쪽으로만** 끊긴다
-              (떨어지는 속도를 죽이는 것은 그 위에서도 된다 — 안 그러면 추락사한다)
-     ② 열    4초 연속이면 과열되어 꺼진다(공중 3초, 땅을 밟으면 1.2초에 식는다).
-              30칸을 오르는 데 2초면 되므로 **제자리 부양**만 끊긴다
-   둘이 맞물려 "높은 데로 옮겨 간다"는 되고 "공중에 눌러앉는다"는 안 된다. */
+/* ================= 제트팩의 두 한계 ================= */
 const JET_MAX_UP = 30;         // 발밑 지면에서 오를 수 있는 한계 (칸)
 const JET_BURN = 4.0;          // 이만큼 연속으로 밀면 과열 (초)
 const JET_COOL_AIR = 3.0;      // 공중에서 다 식는 시간 (초)
@@ -32,14 +25,12 @@ function makeItem(id, count = 1, rarity = 0, affixes = null) {
 function idef(it) { return ITEMS[it.id]; }
 function maxStack(it) { return idef(it).stack || 1; }
 function isGear(it) { const t = idef(it).type; return t === 'weapon' || t === 'armor' || t === 'acc' || t === 'tool' || t === 'bag' || t === 'pet'; }
-/* 장비 최소 착용 레벨. 이름(재질 접미사)으로 추정하지 않고 아이템마다 lvReq를 직접 갖는다.
-   없으면 무기는 tier*4, 그 외(장신구 등)는 1. */
+/* 장비 최소 착용 레벨. */
 function equipReqLv(id) {
   const d = ITEMS[id];
   if (!d) return 1;
   if (d.lvReq !== undefined) return d.lvReq;
-  // 무기는 등급 표에서 뽑는다(WEAPON_TIER_LV 주석 참고). lvReq를 직접 적어 둔 무기만
-  // 위에서 걸러져 그 값을 쓴다 — 등급으로 설명이 안 되는 몇 개(설계실 산물 등)를 위한 것.
+  // 무기는 등급 표에서 뽑는다(WEAPON_TIER_LV 주석 참고).
   if (d.type === 'weapon' && d.tier !== undefined) return WEAPON_TIER_LV[d.tier] || 1;
   if (d.tier !== undefined) return d.tier * 4;
   return 1;
@@ -73,9 +64,7 @@ function itemName(it) {
   if (it.e) n += ' +' + it.e;
   return n;
 }
-/* 강화 배수. **곱이 아니라 합이다** — 희귀도에 곱하면 전설(2.2배)만 3.3배로 뛰어
-   등급 격차가 더 벌어진다. 더해 두면 낮은 등급 무기도 같은 절대량을 얻어서,
-   손에 익은 무기를 계속 쓰는 길이 생긴다. 단계당 +0.05, 상한 10단계(=+0.5). */
+/* 강화 배수. */
 function enhMul(it) { return RARITY_MULT[it.r] + 0.05 * (it.e || 0); }
 function itemDamage(it) {
   const d = idef(it);
@@ -113,15 +102,12 @@ const CHEST_LOOT = [
 ];
 function rollChest(tier, rng, source) {
   // 유적 상자는 탐험 보상은 남기되, 제작·채굴 진행을 건너뛰지 않도록 별도 테이블을 쓴다.
-  // 이전 세이브의 높은 등급 상자에도 적용되도록 여기서 4티어로 한 번 더 상한을 둔다.
   const ruin = source === 'ruin';
   const lootTier = ruin ? Math.min(tier, 4) : tier;
   const gold = !ruin && tier >= 6;   // 큰 동굴의 황금 상자만 기존의 고보상을 유지한다
   const spec = CHEST_LOOT[clamp(lootTier, 1, 5)];
   const out = [];
-  /* 황금 상자(gold)는 장비 2~3개 · 등급 6까지다 — 재료를 확정·최대 수량으로 주면 하나만 열어도
-     한 단계를 통째로 건너뛴다.
-     사연: docs/code-history.md#h23 */
+  /* 황금 상자(gold)는 장비 2~3개 · 등급 6까지다 — 재료를 확정·최대 수량으로 주면 하나만 열어도 한 단계를 통째로 건너뛴다 — 사연: docs/code-history.md#h23 */
   const nGear = ruin ? 1 : gold ? rng.int(2, 3) : rng.int(1, 2);
   for (let i = 0; i < nGear; i++) out.push(rollGear(rng.pick(spec.gear), rng, ruin ? 0 : gold ? 6 : tier));
   for (const [id, a, b] of spec.mats) {
@@ -144,12 +130,9 @@ class Ent {
   move(dt, world, opts = {}) {
     const prevBottom = this.y + this.h;
     // 물 — 잠긴 비율만큼 중력과 낙하 상한이 줄고, 좌우로도 끈적해진다.
-    // 물고기처럼 물이 제 집인 것(opts.aquatic)은 저항을 받지 않는다.
     const liq = opts.aquatic ? { f: 0, flow: 0, cur: 0 } : world.liquidIn(this.x, this.y, this.w, this.h);
     this.submerged = liq.f;
-    /* X — 흐르는 물살은 속도가 아니라 **떠밀림**으로 더한다. 속도에 더하면 땅에 선 몸은
-       다음 프레임 마찰(초당 2600)이 고스란히 지워 물살 속에 서 있어도 꿈쩍 안 했다.
-       초당 70px — 걷는 속도(ms 약 200)보다 느려 거슬러 걸을 수는 있다(떠내려가되 갇히지 않는다). */
+    /* X — 흐르는 물살은 속도가 아니라 **떠밀림**으로 더한다. */
     let nx = this.x + (this.vx + (liq.cur || 0) * 70) * dt;
     if (world.hitSolid(nx, this.y, this.w, this.h)) {
       // 한 칸 계단 오르기
@@ -205,9 +188,7 @@ class Player extends Ent {
     this.hp = 100; this.mp = 50;
     this.gold = 0;
     this.bag = new Array(BASE_BAG_SIZE).fill(null);
-    /* util(유틸리티) 칸 — 산소통처럼 "싸우는 데 쓰는 물건이 아닌데 몸에 지녀야 하는 것"의 자리다. 그 맞바꿈은 재미가 아니라 그냥 벌이라서 칸을 따로
-       냈다.
-       사연: docs/code-history.md#h24 */
+    /* util(유틸리티) 칸 — 산소통처럼 "싸우는 데 쓰는 물건이 아닌데 몸에 지녀야 하는 것"의 자리다 — 사연: docs/code-history.md#h24 */
     this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
     this.sel = 0;
     this.skills = {};              // id -> rank
@@ -232,8 +213,7 @@ class Player extends Ent {
     this.jetHeat = 0; this.jetOver = false; this.jetGap = 0;   // 제트팩의 열·높이 (저장 안 함 — 땅에 닿으면 곧 식는다)
     this.kills = {}; this.mined = {}; this.bossKilled = {}; this.gathered = {};
     this.deepest = 0;
-    /* 펫은 장비 아이템(equip.pet1/pet2)이다. pets/activePet은 펫이 도감이던 옛 세이브를
-       읽어 들일 때만 잠깐 쓰이고(로드 시 아이템으로 바꿔 준다) 이후로는 비어 있다. */
+    /* 펫은 장비 아이템(equip.pet1/pet2)이다. */
     this.d = {};
     this.recalc();
     this.hp = this.d.maxHp; this.mp = this.d.maxMp;
@@ -256,9 +236,7 @@ class Player extends Ent {
 
     acc.def = Math.round(acc.def + s.vit * 0.8);
     const maxHp = Math.round(100 + (this.level - 1) * 12 + s.vit * 6 + acc.hp);
-    /* ★ 체력 재생은 **최대 체력에 비례하는 몫**을 기본으로 깐다. 고정 0.5/초면 최대 체력이 레벨·스탯으로 수십 배 불어나는 동안 재생은 그대로라, 후반에 10%를
-       채우는 데도 몇 분씩 걸린다(레벨 234·체력 올인 기준 약 1424초).
-       사연: docs/code-history.md#h25 */
+    /* ★ 체력 재생은 **최대 체력에 비례하는 몫**을 기본으로 깐다 — 사연: docs/code-history.md#h25 */
     const hpreg = maxHp * 0.004 + (acc.hpreg || 0);
     this.d = {
       str: s.str, dex: s.dex, int: s.int, vit: s.vit,
@@ -269,14 +247,12 @@ class Player extends Ent {
       jumps: 1 + (acc.jump || 0), mpreg: 2.2 * (1 + acc.mpreg / 100), hpreg,
       dmgP: acc.dmgP, spdP: acc.spdP, magicP: acc.magicP, fire: acc.fire, frost: acc.frost, poison: acc.poison,
       dashCd: Math.max(0.5, 1.6 - acc.dashCd), dashI: 260 + acc.dashI,
-      /* dr — 방어(def)와 달리 적 수치를 타지 않고 **최종 피해**를 그대로 깎는다.
-         철벽 같은 짧은 버프에만 붙어서, 방어를 아무리 쌓아도 못 버티는 한 방을
-         한 번 넘기게 해 준다. 겹쳐도 80%가 한계다. */
+      /* dr — 방어(def)와 달리 적 수치를 타지 않고 **최종 피해**를 그대로 깎는다. */
       dr: Math.min(80, acc.dr || 0),
       glide: acc.glide || 0,
       jet: acc.jet || 0,
       maxCharge: 200 + (acc.charge || 0),
-      // 숨 참는 시간(초). 장비의 oxyMax가 그대로 더해진다
+      // 숨 참는 시간(초).
       oxyMax: 14 + (acc.oxyMax || 0),
       // 물 밖에서 숨이 차는 속도 배수 — 심연용 산소통(oxyReg)만 올려 준다
       oxyReg: 1 + (acc.oxyReg || 0)
@@ -290,9 +266,7 @@ class Player extends Ent {
   weapon() { return this.equip.weapon; }
   held() { return this.bag[this.sel]; }
 
-  /* ---- 동력 장비의 전하 ----
-     전하가 모자라면 가방의 충전된 배터리를 한 개 자동으로 갈아 끼우고, 다 쓴 껍데기는
-     방전된 배터리로 돌려준다. 그 껍데기를 축전지에 넣으면 다시 채워지는 순환이 된다. */
+  /* ---- 동력 장비의 전하 ---- */
   useCharge(n) {
     if (this.charge >= n) { this.charge -= n; return true; }
     if (!this.removeItem('battery_cell', 1)) return false;
@@ -304,9 +278,7 @@ class Player extends Ent {
     return true;
   }
 
-  /** 발밑에서 지면까지 몇 칸인가. JET_MAX_UP+1 안에 아무것도 없으면 그 값을 돌려준다
-      (그보다 높이 떠 있다는 뜻). 물도 지면으로 친다 — 물 위에는 내려앉을 수 있으니까.
-      몸이 걸친 칸을 다 보고 그중 가장 가까운 것을 쓴다(난간 끝에 서 있어도 끊기지 않게). */
+  /** 발밑에서 지면까지 몇 칸인가. */
   groundGap(world) {
     if (!world) return 0;
     const fy = Math.floor((this.y + this.h + 1) / TS);
@@ -389,8 +361,7 @@ class Player extends Ent {
   }
 
   /* ---- 성장 ---- */
-  /** 낀 펫에게 경험치. 두 칸에 각각 온전히 들어간다 — 나눠 주면 둘을 끼울수록
-      둘 다 안 크는 이상한 벌이 된다. 레벨이 오르면 패시브가 커지므로 recalc까지 한다. */
+  /** 낀 펫에게 경험치. */
   addPetXp(n) {
     if (n <= 0) return;
     let up = false;
@@ -433,7 +404,7 @@ class Player extends Ent {
     if (this.iframe > 0 || this.dead) return;
     const red = this.d.def / (this.d.def + 60);
     let dmg = Math.max(1, Math.round(amount * (1 - red) * (1 - (this.d.dr || 0) / 100)));
-    /* 비전 방벽이 남아 있으면 먼저 그쪽이 받는다. 다 깎이면 그 자리에서 깨진다 */
+    /* 비전 방벽이 남아 있으면 먼저 그쪽이 받는다. */
     if (this.shield > 0) {
       const take = Math.min(this.shield, dmg);
       this.shield -= take; dmg -= take;
@@ -448,19 +419,17 @@ class Player extends Ent {
     G.texts.push(new DmgText(this.cx, this.y, dmg, '#ff6b6b', 0));
     if (srcX !== undefined && !(this.d.dr >= 50)) { this.vx = Math.sign(this.cx - srcX) * 180; this.vy = -180; }
     for (let i = 0; i < 6; i++) G.parts.push(new Part(this.cx, this.cy, '#c8433c'));
-    /* ★ 몹이 맞을 때와 같은 소리를 쓰되 **작고 둔하게** 낸다(music.js SFX_FAM 의 hurt_player — hit_flesh 를 0.88배 음높이 ·
-       0.42배 음량으로 빌린다).
-       사연: docs/code-history.md#h26 */
+    /* ★ 몹이 맞을 때와 같은 소리를 쓰되 **작고 둔하게** 낸다(music.js SFX_FAM 의 hurt_player — hit_flesh 를 0.88배 음높이 · 0.42배 음량으로
+       빌린다) — 사연: docs/code-history.md#h26 */
     G.sfx('hurt_player');
-    /* 불굴 — 죽는 그 한 번을 넘긴다. 120초에 한 번뿐이라 "아껴 두는" 것이 아니라
-       "여기서 한 번 살아남는다"에 가깝다. */
+    /* 불굴 — 죽는 그 한 번을 넘긴다. */
     if (this.hp <= 0 && this.skills.s_undying && this.undyingCd <= 0) {
       this.hp = 1; this.undyingCd = 120;
       this.heal(this.d.maxHp * 0.25);
       this.iframe = Math.max(this.iframe, 1.2);
       G.ringFx(this.cx, this.cy, 90, '#e05a6a', .6);
       for (let i = 0; i < 30; i++) G.parts.push(new Part(this.cx, this.cy, '#e05a6a', -110, .9));
-      // 테두리만 한 번 물든다 — 가운데는 비워 둔다. 살아남은 직후가 가장 위험한 때다
+      // 테두리만 한 번 물든다 — 가운데는 비워 둔다.
       G.edgeFx('200,46,58', SIG_FX.undying.t);
       G.shake = 14; G.toast('불굴 — 아직 쓰러지지 않는다', 'good');
     }
@@ -468,9 +437,7 @@ class Player extends Ent {
     this.recalc();
   }
 
-  /* ---- 생활 숙련 ----
-     밭에서 거두면 farm, 물에서 올리면 fish. 레벨은 10에서 멈춘다.
-     한 번에 여러 레벨이 오를 수 있어 while 로 돈다. */
+  /* ---- 생활 숙련 ---- */
   addProf(kind, n) {
     const pr = this.prof && this.prof[kind];
     if (!pr || pr.lv >= PROF_MAX) return;
@@ -516,7 +483,7 @@ class Player extends Ent {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.09 : 0);
         this.fireProj(d.proj || 'arrow', a, base, 'dex', BOW_TIP);
       }
-      /* 폭풍의 시위 — 가끔 한 발이 더 나간다. 살짝 어긋나게 쏴서 두 발인 게 보이도록 */
+      /* 폭풍의 시위 — 가끔 한 발이 더 나간다. */
       if (this.skills.s_tempest && Math.random() < 0.3) {
         this.fireProj(d.proj || 'arrow', ang + (Math.random() - 0.5) * 0.12, base, 'dex', BOW_TIP);
         for (let k = 0; k < 4; k++) G.parts.push(new Part(this.cx, this.cy - 4, '#8fe0c8', -30, .3));
@@ -533,8 +500,7 @@ class Player extends Ent {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.07 : 0);
         this.fireProj(pt, a, base, 'int');
       }
-      /* 지팡이 끝의 발화. 원소색으로 작게 한 번 — 쏘는 순간부터 무엇이 나가는지 보이게 한다.
-         사연: docs/code-history.md#h27 */
+      /* 지팡이 끝의 발화 — 사연: docs/code-history.md#h27 */
       {
         const st = PROJ_STYLE[pt] || PROJ_STYLE.bolt;
         const mx2 = this.cx + Math.cos(ang) * 16, my2 = this.cy - 4 + Math.sin(ang) * 16;
@@ -570,9 +536,7 @@ class Player extends Ent {
     const dmg = this.scaleDmg(base, kind);
     const crit = this.rollCrit();
     const spd = type === 'arrow' ? 760 : type === 'star' ? 900 : 560;
-    /* off 가 있으면 그 거리만큼 겨눈 쪽으로 밀어 낸다 — 활 끝에서 화살이 나가게.
-       다만 활 끝이 벽 너머면(벽에 붙어 쏘는 경우) 화살이 벽을 그냥 건너뛰어 버리므로,
-       몸에서 활 끝까지를 반 칸 간격으로 훑어 막힌 데가 있으면 거기서 멈춘다. */
+    /* off 가 있으면 그 거리만큼 겨눈 쪽으로 밀어 낸다 — 활 끝에서 화살이 나가게. */
     let ox = 0, oy = -4;
     if (off) {
       const cs = Math.cos(ang), sn = Math.sin(ang);
@@ -586,9 +550,7 @@ class Player extends Ent {
     }
     const p = new Proj(this.cx + ox, this.cy + oy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), 'player', type);
     p.crit = crit;
-    /* 한 번의 발사에서 나간 것끼리 같은 표를 단다 — 같은 적에게 겹쳐 박히는 것을
-       가려내려는 것이다(data.js MULTI_FALLOFF). 표는 this.volley 에 들어 있고,
-       부채꼴 한 벌을 쏘기 직전에 공격부가 새로 매긴다. */
+    /* 한 번의 발사에서 나간 것끼리 같은 표를 단다 — 같은 적에게 겹쳐 박히는 것을 가려내려는 것이다(data.js MULTI_FALLOFF). */
     p.vol = this.volley;
     if (this.d.fire) p.fire = this.d.fire;
     if (this.d.frost) p.frost = this.d.frost;
@@ -603,8 +565,7 @@ class Player extends Ent {
     const id = this.slots[i]; if (!id) return;
     const sk = SKILLS[id], r = this.skills[id] || 0;
     if (!r || sk.type !== 'active') return;
-    /* 못 쓰는 것을 눌렀을 때도 **대답은 한다.** 식는 중은 칸에 숫자가 도니 소리와 흔들림만, 마나는 한 줄 더 띄운다.
-       사연: docs/code-history.md#h28 */
+    /* 못 쓰는 것을 눌렀을 때도 **대답은 한다.** — 사연: docs/code-history.md#h28 */
     if ((this.cd[id] || 0) > 0) { G.skillDeny(i); return; }
     if (this.mp < sk.mana) { G.skillDeny(i, '마나가 부족하다'); return; }
     this.mp -= sk.mana;
@@ -641,9 +602,7 @@ class Player extends Ent {
       }
       case 's_rain': {
         const n = sk.v(r);
-        /* ★ 겨눈 자리 표시가 없었다 — 별의 낙하에는 예고 원이 있는데 이쪽은 아무것도
-           없어서, 마나 40을 붓고 나서야 어디에 떨어졌는지 알았다. 실제 퍼지는 폭
-           (±130)과 같은 띠를 깔아 둔다. 연출이 아니라 정보라 입자는 안 쓴다. */
+        /* ★ 실제 퍼지는 폭 (±130)과 같은 띠를 깔아 둔다. */
         G.bandFx(mx, my, 130, n * 0.07 + 0.45, '#9fe07a');
         for (let i2 = 0; i2 < n; i2++) {
           G.pending.push({
@@ -672,9 +631,7 @@ class Player extends Ent {
         break;
       }
       case 's_wolf': {
-        /* 마나 45에 재사용 30초인데 늑대가 소리 없이 **그냥 나타났다**(잰 입자 3개).
-           나올 자리마다 문양이 조여들고 영혼이 올라온다. 늑대마다 따로 — 셋을 부르면
-           셋이 각자 선다. */
+        /* 마나 45에 재사용 30초인데 늑대가 소리 없이 **그냥 나타났다**(잰 입자 3개). */
         for (let k = 0; k < sk.v(r); k++) {
           const wx = this.cx + (k - 1) * 26;
           G.ents.push(new Wolf(wx, this.cy, this));
@@ -685,9 +642,9 @@ class Player extends Ent {
         break;
       }
 
-      /* ===== 새 특성 ===== */
+      /* ===== 특성 ===== */
       case 's_guard': {
-        // 철벽 — 짧게 굳는다. 지속 시간만 랭크가 정하고 감쇄율은 버프가 들고 있다
+        // 철벽 — 짧게 굳는다.
         this.addBuff('bulwark', sk.v(r));
         G.ringFx(this.cx, this.cy, 52, '#d8a05a', .45);
         for (let k = 0; k < 16; k++) {
@@ -753,7 +710,7 @@ class Player extends Ent {
         break;
       }
       case 's_mark': {
-        // 겨눈 자리에서 가장 가까운 적 하나. 표식은 그 적이 받는 모든 피해를 키운다
+        // 겨눈 자리에서 가장 가까운 적 하나.
         let best = null, bd = 260;
         for (const e of G.ents) {
           if (!(e instanceof Enemy) || e.dead) continue;
@@ -778,7 +735,7 @@ class Player extends Ent {
         break;
       }
       case 's_chain': {
-        // 첫 표적에서 시작해 가까운 적으로 옮겨 붙는다. 한 번 튈 때마다 25%씩 옅어진다
+        // 첫 표적에서 시작해 가까운 적으로 옮겨 붙는다.
         const hops = sk.v(r);
         const base = this.scaleDmg(60 + this.d.int * 2.4, 'int');
         const hit = new Set();
@@ -802,7 +759,7 @@ class Player extends Ent {
         break;
       }
       case 's_blink': {
-        // 겨눈 쪽으로 최대 190px. 벽 안으로는 못 간다 — 반 칸씩 훑어 뚫린 데까지만
+        // 겨눈 쪽으로 최대 190px.
         const maxD = 190, cs = Math.cos(ang), sn = Math.sin(ang);
         let reach = 0;
         for (let t = TS / 2; t <= maxD; t += TS / 2) {
@@ -826,9 +783,7 @@ class Player extends Ent {
         // 겨눈 자리에 예고를 띄우고 0.9초 뒤에 떨어진다 — 피할 시간을 주는 대신 크다
         const tx = mx, ty = my;
         G.warnFx(tx, ty, 150, 0.9, '#ffb04a');
-        /* ★ 예고와 착탄 사이 0.9초가 **비어 있었다.** 하나뿐인 궁극인데 별이 정작
-           떨어지는 것은 안 보이고 바닥에서 갑자기 터졌다. 하늘에 있는 동안은 아무것도
-           가리지 않으므로 여기만은 진하게 둔다. */
+        /* ★ 하늘에 있는 동안은 아무것도 가리지 않으므로 여기만은 진하게 둔다. */
         G.fallFx(tx, ty, 0.9, '#ffd07a');
         G.pending.push({
           t: 0.9, fn: () => {
@@ -841,7 +796,7 @@ class Player extends Ent {
               const a = Math.random() * TAU, d2 = Math.random() * 140;
               G.parts.push(new Part(tx + Math.cos(a) * d2, ty + Math.sin(a) * d2, k % 3 ? '#ffb04a' : '#fff0c0', -150, 1));
             }
-            /* 착탄 섬광 — 바닥에 깔리므로 적을 지우지 않는다. 알파 상한은 SIG_FX.flash */
+            /* 착탄 섬광 — 바닥에 깔리므로 적을 지우지 않는다. */
             G.flashFx(tx, ty, 230, '#fff0c0');
             const h = SKILL_HIT.meteor;
             G.shake = Math.max(G.shake, h.k); G.hitStop(h.st); G.sfx(h.s);
@@ -850,9 +805,7 @@ class Player extends Ent {
         break;
       }
     }
-    /* 시전의 끝맺음 — 소리·흔들림·멈춤·고리를 SKILL_FX 한 표에서 가져온다.
-       고리는 **제자리에 아무것도 안 남는** 스킬(화살 세례·비·화염구·늑대·표식)에 특히
-       크다 — 눌린 것이 보인다. */
+    /* 시전의 끝맺음 — 소리·흔들림·멈춤·고리를 SKILL_FX 한 표에서 가져온다. */
     const fx = SKILL_FX[id] || {};
     if (fx.c) G.ringFx(this.cx, this.cy, fx.r || 44, fx.c, .26);
     if (fx.k) G.shake = Math.max(G.shake, fx.k);
@@ -860,10 +813,7 @@ class Player extends Ent {
     G.sfx(fx.s || 'skill');
   }
 
-  /* ---- 물가로 기어오르기 ----
-     수면에 떠 있을 때 점프를 누르면, 옆에 있는 "올라설 수 있는 턱"으로 몸을 올려 준다.
-     헤엄 발차기만으로는 수면보다 높은 땅을 넘지 못해 좁은 웅덩이에 갇히는 일이 있었다.
-     턱은 발밑 기준 위아래 2칸까지만 본다 — 더 넓게 잡으면 벽을 타고 오르는 꼴이 된다. */
+  /* ---- 물가로 기어오르기 ---- */
   climbOut(world, dir) {
     if (!world || !dir) return false;
     const step = Math.sign(dir) * (this.w * 0.75 + 2);
@@ -880,10 +830,7 @@ class Player extends Ent {
     return false;
   }
 
-  /* ---- 산소 ----
-     완전히 잠겼을 때만 준다. 수면에 머리를 내밀고 있거나 공기 주머니 안이면 회복한다.
-     바닥나면 초당 최대 체력의 일정 비율을 깎는다 — 고정 피해로 두면 후반 장비에서
-     익사가 아무 일도 아니게 된다. */
+  /* ---- 산소 ---- */
   updateOxygen(dt, world) {
     const max = this.d.oxyMax;
     if (this.oxygen === undefined || this.oxygen > max) this.oxygen = max;
@@ -891,14 +838,11 @@ class Player extends Ent {
     const hx = Math.floor(this.cx / TS), hy = Math.floor((this.y + 4) / TS);
     const ht = world.get(hx, hy);
     let under = !!TILE_DEF[ht].liquid;
-    /* 머리가 **수면 칸** 안에 있으면 칸이 아니라 실제 수면 높이와 견준다 — 바다 물결이 칸 안에서
-       오르내리므로, 물결 골에 떠 있는 동안 머리가 물 밖인데도 숨이 닳았다. 흐르는 얕은 물도 같다. */
+    /* 흐르는 얕은 물도 같다. */
     if (under && world.get(hx, hy - 1) === T.AIR && G.surfacePx) under = (this.y + 4) > G.surfacePx(this.cx / TS, hy);
     this.headUnder = under;
     if (under) {
-      /* 깊이 압박 — 심해(세션 3)로 내려갈수록 숨이 빨리 닳는다. 수면에서 90칸
-         내려갈 때마다 소모가 한 배씩 늘고, 네 배에서 멈춘다. 바다가 없는 세계
-         (세션 1·2 저장본)에서는 seaLevel이 없어 배수가 늘 1이다. */
+      /* 깊이 압박 — 심해(세션 3)로 내려갈수록 숨이 빨리 닳는다. */
       const lv = world.sea ? world.sea.level : null;
       // 90칸마다 한 배 — 중형·대형 바다는 그만큼 깊으므로 칸 수도 세계 크기(WSY)만큼 늘린다
       const deep = lv === null ? 1 : clamp(1 + Math.max(0, (this.cy / TS) - lv) / (90 * WSY), 1, 4);
@@ -908,8 +852,7 @@ class Player extends Ent {
         this.drownT = (this.drownT || 0) + dt;
         if (this.drownT >= 1) {                                  // 초당 한 번
           this.drownT -= 1;
-          /* 익사는 hurt()를 타지 않는다 — 방어력으로 깎이면 안 되고(숨은 갑옷으로 못
-             막는다), hurt()의 무적 0.5초가 붙으면 물속에서 오히려 무적이 된다. */
+          /* 익사는 hurt()를 타지 않는다 — 방어력으로 깎이면 안 되고(숨은 갑옷으로 못 막는다), hurt()의 무적 0.5초가 붙으면 물속에서 오히려 무적이 된다. */
           const dmg = Math.max(4, Math.round(this.d.maxHp * 0.06));
           this.hp -= dmg; this.flash = 0.25;
           // 피해 숫자는 다른 피해와 같은 빨강이어야 한다 — 물빛으로 띄우면 회복처럼 읽힌다
@@ -946,12 +889,9 @@ class Player extends Ent {
     this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
     if (this.hurtCd <= 0) this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
 
-    /* 수면에서 몸이 오르내리면 그 값이 임계값을 계속 넘나들어 한 프레임씩 물속/물 밖이 뒤바뀌고, 점프 횟수와 중력이 같이 떨렸다. 들어가는 값과 나오는 값을 갈라
-       둔다(히스테리시스).
-       사연: docs/code-history.md#h29 */
+    /* 들어가는 값과 나오는 값을 갈라 둔다(히스테리시스) — 사연: docs/code-history.md#h29 */
     const sub = this.submerged || 0;
-    /* 물에 들고 나는 순간에만 첨벙. 히스테리시스(0.35 진입 / 0.25 이탈) 덕에
-       수면에서 값이 떨릴 때 소리가 연달아 나지 않는다. */
+    /* 물에 들고 나는 순간에만 첨벙. */
     const wasSwim = this.swimming;
     this.swimming = this.swimming ? sub > 0.25 : sub > 0.35;
     if (this.swimming !== wasSwim && G.sfx) G.sfx('splash');
@@ -974,9 +914,7 @@ class Player extends Ent {
     }
     this.dashV = Math.max(0, this.dashV - dt);
 
-    // 점프 / 헤엄 — 물에 잠겨 있으면 점프가 발차기가 된다. 누르고 있는 동안 계속 떠오르고,
-    // 횟수도 세지 않는다(물속에서 이중 점프를 아껴야 할 이유가 없다).
-    // submerged는 직전 프레임 move()가 남긴 값이라 한 프레임 늦지만 체감되지 않는다.
+    // 점프 / 헤엄 — 물에 잠겨 있으면 점프가 발차기가 된다.
     const inWater = this.swimming;
     // 입수 엣지 — 잠기기 시작하는 그 프레임에 한 번만 첨벙 소리(계속 잠겨 있는 동안은 안 울림)
     if (inWater && !this.wasInWater) G.sfx('splash');
@@ -984,9 +922,7 @@ class Player extends Ent {
     if (this.onGround || inWater) this.jumpsLeft = d.jumps;
     if (!inWater) { this.floating = false; this.swimMove = false; }
     if (inWater) {
-      /* 수면에 떠 있기 — 아무것도 안 누르면 머리를 내민 채 **물결을 따라** 오르내린다. 수면이 머리 위 두 칸 안일 때만 끌어올린다 — 깊이 잠수한 것까지
-         끌어올리면 안 된다. 아래(S)를 누르면 이 부력을 끄고 가라앉는다.
-         사연: docs/code-history.md#h30 */
+      /* 수면에 떠 있기 — 아무것도 안 누르면 머리를 내민 채 **물결을 따라** 오르내린다 — 사연: docs/code-history.md#h30 */
       this.floating = false;
       if (!input.jump && !input.down) {
         const hx = this.cx / TS, sr = world.surfaceRow(Math.floor(hx), Math.floor((this.y + 6) / TS) + 1, 3);
@@ -998,16 +934,7 @@ class Player extends Ent {
       }
       // 물가로 기어오르기 — 이게 없으면 좁은 웅덩이에서 영영 못 나온다
       const climbed = input.jump && !this.jumpHeld && this.climbOut(world, want || this.facing);
-      /* --- 헤엄 ---
-         물에서만의 규칙을 세 가지 둔다.
-           ① **팔 젓기 박자** — 입력 방향(좌우 + 위(점프)·아래)으로 미는 힘이 박자(swimPh)에 맞춰
-              세졌다 약해진다. 헤엄 그림(걷기 네 장을 눕힌 것 — game.js drawSwimPlayer)이 같은
-              박자로 넘어가서, 팔을 당기는 그림일 때 몸이 앞으로 나간다.
-           ② **물의 저항은 속도 제곱** — 느릴 때는 멀리 미끄러지고(젓기를 멈춰도 한동안 나간다),
-              빠를수록 세게 붙잡힌다. 그래서 상한을 따로 두지 않아도 걷기의 75% 근처에서 멎는다.
-           ③ **거의 뜨는 몸** — 잠긴 채 손을 놓으면 아주 천천히 가라앉는다(move 의 swimGrav).
-         수면에 떠 있을 때 점프를 막 누르면 물을 박차고 뛰어오른다(물가 턱으로 올라서지 못했을 때).
-         사연: docs/code-history.md#h31 */
+      /* --- 헤엄 --- */
       let ix = want, iy = (input.down ? 1 : 0) - (input.jump ? 1 : 0);
       if (this.floating && iy < 0) iy = 0;                  // 수면에서는 위로 저어 봐야 허공이다
       const mag = Math.hypot(ix, iy);
@@ -1038,24 +965,11 @@ class Player extends Ent {
       if (!input.jump) this.jumpHeld = false;
       if (this.vy < 0 && !input.jump) this.vy += 1400 * dt;   // 가변 점프
     }
-    /* 제트팩 — 공중에서 점프를 누르고 있는 동안 떠오른다. 0.25초마다 전하 6(초당 24)을
-       먹고, 바닥나면 useCharge 가 가방의 배터리를 갈아 끼운다. 최대 전하 460이면 연속
-       19.2초 = 288칸 — 이 세계에서 제일 긴 오르막(지옥 390 → 지표 70, 320칸)에 배터리
-       한 개만 갈면 된다.
-
-       ★ 셋을 조심할 것. 전부 한 번씩 물렸던 자리다.
-       ① 이미 추진 상한(-330)보다 빨리 오르는 중이면 **손대지 않는다.**
-       ② 누르는 **순간에 먼저** 전하를 받는다. 안 그러면 0.25초보다 빠르게 눌렀다 떼는
-          연타로 전하를 한 톨도 안 쓰고 날 수 있다.
-       ③ 추진 중에는 이중 점프를 되차지 않는다(땅과 물에서만). 되차면 떼었다 누를 때마다
-          -620 점프가 무한히 나와, ①과 겹쳐 "연타가 더 빠른" 뒤집힌 조작이 된다.
-       사연: docs/code-history.md#h32 */
+    /* 제트팩 — 공중에서 점프를 누르고 있는 동안 떠오른다 — 사연: docs/code-history.md#h32 */
     this.jetting = false;
     /* 발밑 지면에서 얼마나 떠 있나 — 30칸을 넘으면 더 오르지 못한다(위 JET_MAX_UP 주석) */
     this.jetGap = d.jet ? this.groundGap(world) : 0;
-    /* 한계 높이를 **딱 끊지 않고 서서히 힘이 빠지게** 한다. 30칸에서 칼같이 끊으면
-       거기서 올라갔다 내려왔다를 초당 몇 번씩 반복해 화면이 덜덜 떨린다(실측).
-       마지막 네 칸에 걸쳐 추진력이 빠지면서 30칸 언저리에 스스로 멎는다. */
+    /* 한계 높이를 **딱 끊지 않고 서서히 힘이 빠지게** 한다. */
     const room = d.jet ? clamp((JET_MAX_UP + 1 - this.jetGap) / 4, 0, 1) : 1;
     const tooHigh = d.jet && this.jetGap >= JET_MAX_UP;
     if (d.jet && input.jump && !this.onGround && !inWater && !this.jetOver) {
@@ -1065,9 +979,7 @@ class Player extends Ent {
         if (this.jetT >= 0.25) { this.jetT -= 0.25; this.jetOk = this.useCharge(6); }
       }
       if (this.jetOk) {
-        /* 오를 수 있는 속도 — 한계 높이에 가까울수록 -330에서 +140(천천히 내려오는
-           속도)으로 옮겨 간다. 140px/s 는 안전 낙하선(938)보다 한참 아래라 그대로
-           내려앉아도 안 다친다. 두 값이 만나는 자리(추진력 0)가 곧 한계 높이다. */
+        /* 오를 수 있는 속도 — 한계 높이에 가까울수록 -330에서 +140(천천히 내려오는 속도)으로 옮겨 간다. */
         const cap = -330 * room + JET_HIGH_FALL * (1 - room);
         if (this.vy > cap) this.vy = Math.max(this.vy - 2400 * dt, cap);
         this.jetting = true;
@@ -1077,11 +989,7 @@ class Player extends Ent {
         if (tooHigh) this.jetNote('여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다');
       }
     } else { this.jetT = 0; this.jetOk = undefined; }
-    /* 열 — **밀어 올릴 때만** 오른다. 놓으면 식고, 땅을 밟으면 훨씬 빨리 식는다.
-
-       한계 높이 위에서는 추진기가 올리는 게 아니라 내려오는 속도만 죽이고 있으므로
-       열을 세지 않는다. 안 그러면 높은 데서 천천히 내려오는 도중에 과열되어 남은
-       높이를 그대로 떨어진다 — 제트팩을 메고 추락사하는 꼴이 된다(실측 49 피해). */
+    /* 열 — **밀어 올릴 때만** 오른다. */
     if (d.jet) {
       if (this.jetting && !tooHigh) {
         this.jetHeat = Math.min(1, (this.jetHeat || 0) + dt / JET_BURN);
@@ -1117,13 +1025,9 @@ class Player extends Ent {
 
     // 낙하 데미지 판정용 — move() 안에서 착지 순간 vy가 0으로 꺾이기 전에 미리 재둔다
     const wasOnGround = this.onGround, fallVy = this.vy;
-    // 수면에 떠 있는 동안은 중력을 끈다 — 끄지 않으면 부력 용수철이 중력과 비겨 몸이 14px 낮게 뜬다
-    // 수면에 떠 있으면 중력 0, 잠겨 헤엄치면 거의 뜨는 몸(0.3 — move 의 부력과 곱해져 중력의 8% 남짓)
+    // 수면에 떠 있는 동안은 중력을 끈다 — 끄지 않으면 부력 용수철이 중력과 비겨 몸이 14px 낮게 뜬다 수면에 떠 있으면 중력 0, 잠겨 헤엄치면 거의 뜨는 몸(0.3
     this.move(dt, world, { dropThrough: !!input.down, gravMul: this.floating ? 0 : this.swimming ? 0.3 : undefined });
-    /* 물에 빠지면 안 다친다(폭포 아래 웅덩이가 착지 지점이 되어 주는 게 이 지형의 요점).
-       제트팩·깃털도 마찬가지지만 ★ **지금 실제로 추진하거나 활공하는 중일 때만**이다 —
-       `!d.glide && !d.jet`(끼고만 있으면 되는 조건)이면 장신구 하나가 영구 낙하 무효를
-       겸하게 된다. 추진으로 속도를 죽이며 내려앉는 것만 면제된다. */
+    /* 물에 빠지면 안 다친다(폭포 아래 웅덩이가 착지 지점이 되어 주는 게 이 지형의 요점). */
     if (!wasOnGround && this.onGround && !this.gliding && !this.jetting && (this.submerged || 0) <= 0.2) {
       // 건초더미 위로 떨어지면 안 다친다 — 마을에서 지붕을 타고 다니라고 둔 것
       const bt = world.get(Math.floor(this.cx / TS), Math.floor((this.y + this.h + 2) / TS));
@@ -1146,13 +1050,10 @@ class Player extends Ent {
       if (this.channel.tick <= 0) {
         this.channel.tick = 0.28;
         G.aoe(this.cx, this.cy, 96, this.channel.dmg * 0.28, 3, '#ffcf6a');
-        /* 도는 동안 박자마다 운다. 소리 없이 도는 2.5초는 채널이 아니라
-           멈춘 화면으로 보였다. 박자마다 음을 조금씩 달리해 같은 소리가
-           아홉 번 나는 것을 피한다. */
+        /* 도는 동안 박자마다 운다. */
         G.sfx('sk_whirl', G.strokeRate());
         G.shake = Math.max(G.shake, 3);
-        /* 발밑 먼지 — 박자에만 세 개다. 매 프레임 뿌리면 2.5초에 450개가 되어
-           입자 한도(900)의 절반을 이 하나가 먹는다. 잰 것이 그렇게 나왔다. */
+        /* 발밑 먼지 — 박자에만 세 개다. */
         const foot = this.y + this.h;
         for (let k = 0; k < SIG_FX.whirl.n; k++)
           G.parts.push(new Part(this.cx + (Math.random() - .5) * 70, foot - 4, '#c8a878', -40, .5));
@@ -1184,8 +1085,7 @@ class Player extends Ent {
     const tx = Math.floor(this.cx / TS), ty = Math.floor(this.cy / TS);
     const hurt = world.hurtInRect(this.x, this.y, this.w, this.h);
     if (hurt && this.iframe <= 0) { this.hurt(hurt); this.hurtCd = 3; }
-    /* 깊이·고도 기록이 **실제로 갱신될 때만** 업적을 본다. 매 프레임 돌리면
-       스물다섯 개를 초당 예순 번 훑게 된다. */
+    /* 깊이·고도 기록이 **실제로 갱신될 때만** 업적을 본다. */
     const d0 = this.deepest, h0 = this.highest;
     this.deepest = Math.max(this.deepest, ty);
     this.highest = Math.min(this.highest === undefined ? ty : this.highest, ty);
@@ -1199,21 +1099,7 @@ class Enemy extends Ent {
     const d = ENEMIES[type];
     super(x, y, d.w, d.h);
     this.type = type; this.def = d;
-    /* 세 가지 배수가 한자리에서 곱해진다. 서로 다른 것을 재므로 갈라 둔다.
-       · scale  — 장(章)이 오를수록 잡몹이 세진다. **보스는 안 탄다**(아래 sc).
-       · lf     — 그 몹만의 레벨 배수. 지금은 좀비뿐이다(d.lvScale).
-       · md     — 고른 난이도. 체력·공격력에만 걸고 보상에는 안 건다.
-
-       **보스가 장 배수를 안 타는 이유**: 보스는 "지금 내가 얼마나 세졌는가"를 재는
-       자라서, 자가 같이 늘어나면 잴 수가 없다. 소환석으로 옛 보스를 다시 부르는 것도
-       이래야 뜻이 있다. 그 대신 공격력 기본값을 제 장에서 실제로 맞던 값으로 올려
-       두었다(ENEMIES 표) — 붙는 감각은 그대로 두고 들쭉날쭉한 것만 없앴다.
-       보상(xp·금화)도 같이 고정한다. 안 그러면 17장에서 슬라임 왕을 다시 불러
-       2.3배를 받는 자리가 생긴다.
-
-       **lvFactor를 남겨 두는 이유**: 붉은 달 표에도 좀비가 들어 있어서, 그냥 곱하면
-       제 배수와 붉은 달 배수가 겹쳐 곱해진다(2.5 × 6.25 = 15.6배). 스폰 쪽에서 이 값을
-       나눠 낸 뒤 붉은 달 배수를 걸어, 최종이 정확히 붉은 달 배수가 되게 한다. */
+    /* 세 가지 배수가 한자리에서 곱해진다. */
     const sc = d.boss ? 1 : scale;
     this.lvFactor = (!d.boss && d.lvScale && typeof G !== 'undefined' && G.player)
       ? levelMult(G.player.level, d.lvScale) : 1;
@@ -1225,27 +1111,22 @@ class Enemy extends Ent {
     this.boss = !!d.boss;
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
     this.flash = 0; this.atkCd = 0; this.jumpCd = 0; this.think = 0;
-    /* 공격 포즈를 띄워 둘 시간. 때린 순간에 직접 켠다.
-       사연: docs/code-history.md#h33 */
+    /* 공격 포즈를 띄워 둘 시간 — 사연: docs/code-history.md#h33 */
     this.atkPose = 0;
     this.lastPhase = 0;
     this.slowT = 0; this.slowF = 1; this.dots = [];
-    /* 페이즈 수는 보스마다 다르다(ENEMIES 의 ph).
-       사연: docs/code-history.md#h34 */
+    /* 페이즈 수는 보스마다 다르다(ENEMIES 의 ph) — 사연: docs/code-history.md#h34 */
     this.phases = d.ph || 3;
     this.phase = 0; this.pf = 0; this.state = 0; this.stateT = 0;
     this.facing = -1;
     this.hitCd = 0;
     this.markT = 0; this.markAmt = 0;   // 사냥꾼의 표식
     this.mech = 0;                      // 개조된 개체(세션 2) — makeMech() 가 켠다
-    /* 힘 축적(BOSS_SURGE). sgT>0 이면 모으는 중이라 원래 AI 가 멈춘다 */
+    /* 힘 축적(BOSS_SURGE). */
     this.sgT = 0; this.sgCd = 6; this.sgTook = 0; this.sgBuf = 0; this.sgRing = 0; this.sgStun = 0;
   }
 
-  /** 개조 — 세션 2 에서 이 몹이 기계가 되어 나온다.
-      새 종류를 만들지 않고 이미 뽑힌 개체를 부풀리는 것은 정예와 같은 방식이다.
-      보상까지 같이 1.5배로 올린다. 세기만 오르면 개조된 지역은 그냥 손해라
-      플레이어가 피해 다니게 되고, 그러면 "돌아온 땅"을 안 보게 된다. */
+  /** 개조 — 세션 2 에서 이 몹이 기계가 되어 나온다. */
   makeMech(mul) {
     this.mech = 1;
     this.maxHp = Math.round(this.maxHp * mul); this.hp = this.maxHp;
@@ -1254,12 +1135,10 @@ class Enemy extends Ent {
     this.sparkT = 0;
     return this;
   }
-  /** 지금이 마지막 페이즈인가. 예전 코드의 `phase === 2` 가 뜻하던 것이다. */
+  /** 지금이 마지막 페이즈인가. */
   lastPh() { return this.phase >= this.phases - 1; }
 
-  /* ================= 힘 축적 (BOSS_SURGE) =================
-     돌아오는 값이 true 면 **이번 프레임은 원래 AI 를 돌리지 않는다.** 모으는 동안과
-     끊겨서 비틀거리는 동안이 그렇다 — 두 쪽이 같이 움직이면 보스가 떤다. */
+  /* ================= 힘 축적 (BOSS_SURGE) ================= */
   tickSurge(dt, world, p) {
     const S = BOSS_SURGE[this.type];
     if (!S) return false;
@@ -1273,7 +1152,7 @@ class Enemy extends Ent {
         G.parts.push(new Part(this.cx + (Math.random() - .5) * this.w, this.y + this.h, S.c, -40, .6, { g: -.3, glow: 1 }));
     }
 
-    // 끊겨서 비틀거리는 중 — 아무것도 못 한다. 여기가 되받아치는 시간이다
+    // 끊겨서 비틀거리는 중 — 아무것도 못 한다.
     if (this.sgStun > 0) {
       this.sgStun -= dt;
       this.vx *= 0.86;
@@ -1287,11 +1166,9 @@ class Enemy extends Ent {
     if (this.sgT > 0) {
       this.sgT -= dt;
       const k = 1 - this.sgT / S.t;                 // 0 -> 1 로 차오른다
-      /* 제자리에 선다. 뜨는 보스는 뜬 채로 — gravMul 을 원래대로 넘기지 않으면
-         모으는 동안만 바닥으로 가라앉았다가 끝나고 다시 떠오른다. */
+      /* 제자리에 선다. */
       this.vx *= 0.82; if (fly) this.vy *= 0.82;
-      /* 조여드는 고리. 이 게임에서 퍼지는 고리는 "나간 것", 조여드는 고리는 "오는 것"이라
-         (영혼 늑대와 같은 어법) 모으는 중이라는 것이 글 없이도 읽힌다. 차오를수록 잦다. */
+      /* 조여드는 고리. */
       this.sgRing -= dt;
       if (this.sgRing <= 0) {
         this.sgRing = 0.34 - k * 0.16;
@@ -1311,8 +1188,7 @@ class Enemy extends Ent {
 
     // 쉬는 중 — 첫 페이즈에는 안 나온다(새 규칙은 형태가 한 번 바뀐 뒤에 온다)
     this.sgCd -= dt;
-    /* ★ phaseInv 는 0 에서 멈추지 않고 **살짝 음수로 남는다**(-0.01 로 관측). `!phaseInv`
-       로 적으면 음수는 참이라 조건이 영영 거짓이 되어 축적이 한 번도 안 나갔다. */
+    /* ★ phaseInv 는 0 에서 멈추지 않고 **살짝 음수로 남는다**(-0.01 로 관측). */
     if (this.sgCd <= 0 && this.phase >= 1 && this.phaseInv <= 0 && dist(this.cx, this.cy, p.cx, p.cy) < 760) {
       this.sgT = S.t; this.sgTook = 0; this.sgRing = 0;
       G.bossLine(this.def.n, S.n);
@@ -1326,16 +1202,14 @@ class Enemy extends Ent {
   /** 다 모았다 — 종류대로 터뜨린다 */
   releaseSurge(S, p) {
     this.sgCd = S.cd;
-    /* ★ 앞의 버프가 아직 살아 있으면 먼저 내린다. 지금 값(cd 15 · dur 7)으로는 겹칠 일이
-       없지만, 표를 손대다 겹치는 순간 방어가 두 번 올라가고 한 번만 내려가서 영영
-       단단한 보스가 된다 — 되돌릴 수 없는 쪽이라 미리 막아 둔다. */
+    /* ★ 앞의 버프가 아직 살아 있으면 먼저 내린다. */
     if (this.sgBuf > 0) this.endBuff();
     G.ringFx(this.cx, this.cy, this.w * 2.6, S.c, .55);
     G.shake = Math.max(G.shake, 12);
     for (let i = 0; i < 24; i++)
       G.parts.push(new Part(this.cx, this.cy, S.c, -50, .8, { glow: 1, spd: 1.6 }));
     if (S.k === 'nova') {
-      // 사방으로. 촘촘하지만 **틈이 있다** — 다 막으면 피할 데가 없어 서서 맞는 수밖에 없다
+      // 사방으로.
       const n = S.v, base = Math.random() * TAU;
       for (let i = 0; i < n; i++) {
         const a = base + (i / n) * TAU;
@@ -1376,43 +1250,34 @@ class Enemy extends Ent {
   addDot(kind, dps, dur) { this.dots.push({ kind, dps, t: dur }); }
   slow(f, t) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
 
-  /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). 때린 쪽이 넘긴다 —
-      여기서 무기를 다시 읽지 않는 이유: hurt 는 지속 피해·함정·기계도 함께 지나가는
-      길목이라, 여기서 무기를 보면 독이 한 번 닳을 때마다 칼자국이 뜬다. */
+  /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). */
   hurt(amount, crit, src, kb, fam) {
     if (this.dead) return;
-    /* 페이즈가 넘어가는 0.8초 동안은 피해가 들어가지 않는다. 연출을 끊고 때려서
-       전환을 못 보고 지나가는 일을 막는다. */
+    /* 페이즈가 넘어가는 0.8초 동안은 피해가 들어가지 않는다. */
     if (this.phaseInv > 0) {
       G.texts.push(new DmgText(this.cx, this.y - 4, '전환 중', '#9fd4ff', 0));
       return;
     }
-    /* 굳어 있을 때(guard) — 약점이 드러나기 전에는 거의 통하지 않는다.
-       0으로 두지 않는 이유: 아무 반응이 없으면 버그처럼 보인다. 12%는 "지금은
-       때릴 때가 아니다"를 손으로 알려 주는 값이다. */
+    /* 굳어 있을 때(guard) — 약점이 드러나기 전에는 거의 통하지 않는다. */
     if (this.guard) {
       amount *= 0.12;
       if (Math.random() < 0.5) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, '막혔다', '#8d8874', 0));
     }
     const red = this.armor / (this.armor + 70);
-    // 사냥꾼의 표식 — 출처를 가리지 않는다. 표식이 붙은 동안은 무엇에 맞아도 더 아프다
+    // 사냥꾼의 표식 — 출처를 가리지 않는다.
     if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
     let dmg = Math.max(1, Math.round(amount * (1 - red)));
     this.hp -= dmg; this.flash = 0.12;
-    /* 모으는 중에 맞은 것을 쌓는다 — brk 를 넘기면 끊긴다. ★ 방어를 **뚫고 들어간
-       뒤의** 값으로 센다. 때린 쪽 숫자로 세면 갑옷 높은 보스가 실제보다 쉽게 끊긴다. */
+    /* 모으는 중에 맞은 것을 쌓는다 — brk 를 넘기면 끊긴다. */
     if (this.sgT > 0) {
       const S = BOSS_SURGE[this.type];
       this.sgTook += dmg;
       if (S && this.sgTook >= this.maxHp * S.brk) this.breakSurge();
     }
     G.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 14, this.y - 4, dmg, crit ? '#ffd24a' : '#fff', crit ? 1 : 0));
-    // 재질 파편 + 재질 타격음(한 획마다 음높이가 다르다) + 무기 계열 한 겹. fam 은 아래
-    // 타격 그림이 쓰는 것과 같은 값이라, 보이는 계열과 들리는 계열이 어긋날 수 없다.
+    // 재질 파편 + 재질 타격음(한 획마다 음높이가 다르다) + 무기 계열 한 겹.
     G.hitFx(this, this.cx, this.cy, crit, fam);
-    /* 맞는 그림. 치명타는 계열 위에 한 겹 얹는 게 아니라 **계열마다 따로 그려 둔 것**을
-       쓴다(방향 C) — 베기는 초승달이 셋으로 갈라지고, 찌르기는 뚫고 나가 반대편에서
-       터지고, 둔기는 고리가 두 겹으로 터진다. 무기마다 치명타의 얼굴이 다르다. */
+    /* 맞는 그림. */
     if (fam && HIT_FX[fam]) {
       const s = HIT_FX[fam];
       G.burst(this.cx, this.cy - 2, 'hit_' + fam + (crit ? '_crit' : ''),
@@ -1425,8 +1290,7 @@ class Enemy extends Ent {
     if (kb && !this.boss) { this.vx += Math.sign(this.cx - (src ? src.cx : this.cx)) * kb * 26; this.vy = -kb * 12; }
     else if (kb && this.boss) this.vx += Math.sign(this.cx - (src ? src.cx : this.cx)) * kb * 3;
     if (this.def.passive) this.fleeT = 2.2;
-    /* 맞는 소리는 hitFx 가 재질에 맞춰 낸다 — 여기서 'damage' 를 또 울리면
-       무엇을 때리든 같은 소리가 한 겹 덮여 재질이 안 갈린다. */
+    /* 맞는 소리는 hitFx 가 재질에 맞춰 낸다 — 여기서 'damage' 를 또 울리면 무엇을 때리든 같은 소리가 한 겹 덮여 재질이 안 갈린다. */
     if (this.hp <= 0) this.die(src);
   }
   die(src) {
@@ -1442,16 +1306,13 @@ class Enemy extends Ent {
     const rng = G.rng;
     for (const [id0, ch, a, b] of (this.def.drops || [])) {
       if (!rng.chance(ch)) continue;
-      /* 개조된 것에서는 부품만 나온다 — 원래 표에 얹지 않고 **바꿔친다**.
-         얹으면 개조된 쪽이 그냥 더 좋은 사냥감이 되어 세기 1.5배를 치르고도
-         이득이 남는다. 확률과 개수는 원래 그대로 두므로 총량이 안 변한다. */
+      /* 개조된 것에서는 부품만 나온다 — 원래 표에 얹지 않고 **바꿔친다**. 얹으면 개조된 쪽이 그냥 더 좋은 사냥감이 되어 세기 1.5배를 치르고도 이득이 남는다. */
       const id = (this.mech && typeof MECH_PART !== 'undefined') ? MECH_PART : id0;
       const n = rng.int(a, b);
       if (ITEMS[id] && (ITEMS[id].stack || 1) > 1) G.drops.push(new Drop(this.cx, this.cy, makeItem(id, n)));
       else for (let k = 0; k < n; k++) G.drops.push(new Drop(this.cx, this.cy, rollGear(id, rng, this.boss ? 3 : 0)));
     }
-    /* 쓰러지는 그림을 남긴다. 판정·조준·스폰 수 어디에도 안 잡히므로 손맛이 안 바뀐다.
-       사연: docs/code-history.md#h35 */
+    /* 쓰러지는 그림을 남긴다 — 사연: docs/code-history.md#h35 */
     G.addCorpse(this);
     G.deathBurst(this);
     if (this.boss) { G.shake = 18; G.onBossDown(this.type); }
@@ -1532,8 +1393,7 @@ class Enemy extends Ent {
       if (this.onGround && this.hitWall && this.jumpCd <= 0) { this.vy = -300; this.jumpCd = 0.5; }
       this.move(dt, world);
     } else if (AI === 'swimmer') {
-      // 물속 생물 — 물 밖으로는 못 나간다. 다음 한 걸음이 물이 아니면 그 방향을 버린다.
-      // (물 밖으로 튕겨 나가 바닥에서 파닥거리는 꼴을 막는 게 이 AI의 전부다)
+      // 물속 생물 — 물 밖으로는 못 나간다.
       const wet = (x, y) => world.liquid(Math.floor(x / TS), Math.floor(y / TS));
       this.think -= dt;
       if (this.think <= 0) { this.think = 0.7 + Math.random() * 1.1; this.wob = (Math.random() - 0.5) * 70; }
@@ -1553,9 +1413,7 @@ class Enemy extends Ent {
       if (this.vy !== 0 && !wet(this.cx, lookY)) this.vy *= -0.5;
       this.move(dt, world, { gravMul: 0, aquatic: 1 });
     } else if (AI === 'flotsam') {
-      /* 바다 부유물 — 수면에 떠서 물결(G.surfacePx — 파도를 그리는 식)을 따라 오르내리고,
-         제 방향으로 천천히 흘러간다. 맞으면 밀려났다가 다시 느려진다. 바닥에 걸리거나
-         바다 밖(뭍)으로 가려 하면 방향을 돌린다 — 해변 모래 위에 궤짝이 얹히면 안 된다. */
+      /* 바다 부유물 — 수면에 떠서 물결(G.surfacePx — 파도를 그리는 식)을 따라 오르내리고, 제 방향으로 천천히 흘러간다. */
       if (this.drift === undefined) this.drift = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 10);
       const hx = this.cx / TS;
       const sr = world.surfaceRow(Math.floor(hx), Math.floor((this.y + this.h * 0.8) / TS), 4);
@@ -1581,10 +1439,7 @@ class Enemy extends Ent {
     }
   }
 
-  /* ---- 페이즈가 바뀌는 순간 ----
-     ★ 전환은 세 가지를 한다 — 0.8초 무적 · 한 줄 대사 · **약점 규칙 교체**.
-       규칙이 바뀌는 것이 페이즈의 본체다. 흔들림과 입자만 있으면 "숫자가 줄었다" 말고는
-       달라진 게 없어, 같은 AI 를 쓰는 후반 보스 넷이 전부 같은 탄막으로 끝난다. */
+  /* ---- 페이즈가 바뀌는 순간 ---- */
   onPhaseChange(ph, world, p) {
     this.phaseInv = 0.8;
     this.guard = 0;
@@ -1600,38 +1455,30 @@ class Enemy extends Ent {
     const line = (BOSS_LINES[this.type] || {})[ph];
     if (line) G.bossLine(this.def.n, line);
 
-    /* 보스마다 이 순간에 켜지는 규칙.
-       lock 은 '약점만 통하는 굳은 상태'가 시작되는 페이즈다. 3페이즈까지는 마지막
-       한 마디였는데, 5페이즈에서 그대로 마지막 한 마디에만 두면 그 보스의 간판
-       규칙(받침대를 깨야 열린다 · 정지 핵을 써야 열린다)을 1/5 동안만 보게 된다.
-       다섯이면 **뒤 두 마디**를 준다. */
+    /* 보스마다 이 순간에 켜지는 규칙. */
     const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
     switch (this.def.ai) {
       case 'b_slime':
-        // 2페이즈 — 껍데기가 굳는다. 착지 직후 벌어질 때만 핵이 드러난다
+        // 2페이즈 — 껍데기가 굳는다.
         if (ph >= lock) { this.guard = 1; this.openT = 0; }
         break;
       case 'b_witch':
-        /* 2페이즈 — 바닥이 언다. 열원 옆이 아니면 계속 얼어붙는다.
-           싸울 수 있게 하려고 전환하면서 화톳불 셋을 바닥에 세운다. */
+        /* 2페이즈 — 바닥이 언다. */
         if (ph >= lock) { this.iceFloor = 1; this.layHeat(world, p); }
         break;
       case 'b_prolif': if (ph >= lock) this.guard = 1; break;      // 핵만 약점
       case 'b_hepha':  if (ph >= lock) this.guard = 1; break;      // 정지 핵을 써야 열린다
       case 'b_arche':
-        /* 받침대를 깨야 열린다 — 그런데 방에 받침대가 없으면 규칙이 걸리지도 않는다.
-           전환하면서 넷을 세운다(마녀가 화톳불을 놓는 것과 같은 이유다). */
+        /* 받침대를 깨야 열린다 — 그런데 방에 받침대가 없으면 규칙이 걸리지도 않는다. */
         if (ph >= lock) { this.guard = 1; this.raisePedestals(); }
         break;
       case 'b_overseer': if (ph >= 1) this.term = 0; break;
     }
   }
 
-  /** 원형 2페이즈 — 받침대 넷. 이것들이 살아 있는 동안 원형은 열리지 않는다 */
+  /** 원형 2페이즈 — 받침대 넷. */
   raisePedestals() {
-    /* 살아남은 받침대를 먼저 치운다. 5페이즈가 되면서 이게 ph3·ph4 두 번 불리는데,
-       앞 마디 것을 안 치우면 안 깬 받침대 위에 넷이 더 서서 최대 여덟이 된다.
-       "넷을 깨야 열린다"가 규칙이므로 언제나 정확히 넷이어야 한다. */
+    /* 살아남은 받침대를 먼저 치운다. */
     for (const e of G.ents) if (e.pedestal && !e.dead) { e.dead = true; e.hp = 0; }
     for (let i = 0; i < 4; i++) {
       const e = new Enemy('draft_form', this.cx + (i - 1.5) * 96, this.cy - 10, 1);
@@ -1642,8 +1489,7 @@ class Enemy extends Ent {
     G.toast('받침대 넷이 그것을 붙들고 있다', 'bad');
   }
 
-  /* 서리 마녀 2페이즈 — 발밑에 설 수 있는 자리를 만들어 준다.
-     "열원 칸만 안전"인데 방에 열원이 없으면 그냥 죽는 방이 된다. */
+  /* 서리 마녀 2페이즈 — 발밑에 설 수 있는 자리를 만들어 준다. */
   layHeat(world, p) {
     const fy = Math.floor((this.y + this.h + 4) / TS);
     for (const off of [-9, 0, 9]) {
@@ -1655,13 +1501,12 @@ class Enemy extends Ent {
     G.toast('바닥이 언다 — 불 옆에 서라', 'bad');
   }
 
-  /** 매 프레임 도는 약점·장판 규칙. 보스별 갈래는 짧게 둔다 */
+  /** 매 프레임 도는 약점·장판 규칙. */
   tickWeak(dt, world, p) {
     // 껍데기가 벌어지는 시간 — 그동안만 피해가 제대로 들어간다
     if (this.openT > 0) { this.openT -= dt; if (this.openT <= 0) this.guard = 1; }
     if (!this.iceFloor) return;
-    /* 서리 장판 — 발밑 세 칸 안에 열원(횃불·용암)이 없으면 얼어붙는다.
-       즉사가 아니라 둔화 + 잔피해다. 불 사이를 옮겨 다니는 싸움이 된다. */
+    /* 서리 장판 — 발밑 세 칸 안에 열원(횃불·용암)이 없으면 얼어붙는다. */
     this.iceCd = (this.iceCd || 0) - dt;
     if (this.iceCd > 0) return;
     this.iceCd = 0.5;
@@ -1683,16 +1528,11 @@ class Enemy extends Ent {
     const AI = this.def.ai;
     this.stateT -= dt;
     const hpr = this.hp / this.maxHp;
-    /* ★ pf 를 같이 둔다 — 0(첫 페이즈)에서 1(마지막)까지의 **비율**이다. AI 의 세기 식은
-       전부 이 비율로 쓴다. phase 를 그대로 곱하면 5페이즈 보스에서 `1.5 - phase*0.35` 가
-       0.1 이 되어(원래 최저 0.8) 사람이 반응할 수 없는 속도가 나온다.
-       사연: docs/code-history.md#h36 */
+    /* ★ pf 를 같이 둔다 — 0(첫 페이즈)에서 1(마지막)까지의 **비율**이다 — 사연: docs/code-history.md#h36 */
     const nph = this.phases;
     this.phase = Math.min(nph - 1, Math.floor((1 - hpr) * nph));
     this.pf = nph > 1 ? this.phase / (nph - 1) : 0;
-    /* 페이즈가 올라가는 순간을 연출로 알린다. 보스 시트는 페이즈마다 idle 두 장뿐이고
-       그림 차이가 작은 보스가 여럿이라(void_king 1.5% · bone_lord 3.3% · shaft_maw 6.6%)
-       그림만으로는 바뀐 걸 알아챌 수 없었다. 그림을 다시 그리기 전까지 이걸로 메운다. */
+    /* 페이즈가 올라가는 순간을 연출로 알린다. */
     if (this.phase > this.lastPhase) {
       this.lastPhase = this.phase;
       this.phaseT = 0.7;
@@ -1702,27 +1542,20 @@ class Enemy extends Ent {
     if (this.phaseInv > 0) this.phaseInv -= dt;
     this.tickWeak(dt, world, p);
 
-    /* 힘 축적 — 모으는 중이면 여기서 돌아선다. ★ stateT 를 도로 얹어 준다: 위에서 이미
-       한 번 빼 놓았으므로, 그냥 돌아서면 모으는 동안에도 상태 시계가 흘러 끝나자마자
-       다음 상태로 건너뛴다(하던 동작이 잘린다). */
+    /* 힘 축적 — 모으는 중이면 여기서 돌아선다. */
     if (this.tickSurge(dt, world, p)) { this.stateT += dt; return; }
 
     if (AI === 'b_slime') {
       if (this.onGround) {
         this.vx *= 0.86;
-        /* 2페이즈 — 껍데기가 굳는다(onPhaseChange 에서 guard=1). 착지해서 몸이
-           출렁이는 1.6초 동안만 핵이 드러나고, 그때 때려야 제대로 들어간다.
-           "핵만 약점"을 별도 개체 없이 시간 창으로 옮긴 것이다 — 창이 열릴 때까지
-           기다렸다 붙는 싸움이 된다. */
+        /* 2페이즈 — 껍데기가 굳는다(onPhaseChange 에서 guard=1). */
         if (this.lastPh() && this.landT !== 1) {
           this.landT = 1; this.guard = 0; this.openT = 0.9;
           G.ringFx(this.cx, this.cy, this.w * 0.9, '#9fe0ff', .4);
         }
         if (this.jumpCd <= 0) {
           this.landT = 0;
-          /* 2페이즈는 일부러 느리게 뛴다. 창이 0.9초인데 주기가 0.8초면 창이 겹쳐서
-             사실상 늘 열려 있게 된다(처음에 그렇게 되어 있었다 — 599/600 프레임이
-             열림). 굳어 있는 시간이 있어야 "기다렸다 친다"가 성립한다. */
+          /* 2페이즈는 일부러 느리게 뛴다. */
           this.jumpCd = this.lastPh() ? 2.2 : 1.5 - this.pf * 0.7;
           this.vy = -680 - this.pf * 120;
           this.vx = Math.sign(dx) * (200 + this.pf * 140);
@@ -1878,7 +1711,7 @@ class Enemy extends Ent {
       } else { this.vx *= 0.92; this.vy *= 0.92; }
       this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'b_keeper') {
-      /* 최초의 파수꾼 — 지상 보스. 방벽 → 룬 광선 → 돌진 → 소환 */
+      /* 최초의 파수꾼 — 지상 보스. */
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 4;
         this.stateT = 2.8 - this.pf * 0.6;
@@ -1913,8 +1746,7 @@ class Enemy extends Ent {
       } else this.vx *= 0.9;
       this.move(dt, world);
     } else if (AI === 'b_pursuer') {
-      /* 종장 — 별을 쫓아온 것. 공허 탄막 → 순간이동 강타 → 잿비 → 망령 소환.
-         지상에 발을 딛지 않는다(gravMul 0). 상태가 1로 바뀌는 순간 플레이어 옆으로 도약한다. */
+      /* 종장 — 별을 쫓아온 것. */
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 4;
         this.stateT = 3.0 - this.pf * 0.8;
@@ -1962,9 +1794,7 @@ class Enemy extends Ent {
       } else { this.vx *= 0.9; this.vy *= 0.9; }
       this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'b_prolif') {
-      /* 증식체 — 뛰지 않는다. 이 장의 이야기는 "스스로를 불려 멈추지 않는 것"이지
-         점프가 아니다. 제자리에서 갈라져 나오고 갈라진 것이 다시 갈라진다.
-         2페이즈부터는 껍데기가 닫혀, 갈라져 나온 것을 다 치워야 본체가 열린다. */
+      /* 증식체 — 뛰지 않는다. */
       this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.35, dt * 2);
       if (this.stateT <= 0) {
         this.stateT = 2.4 - this.pf * 0.8;
@@ -1995,9 +1825,7 @@ class Enemy extends Ent {
       this.move(dt, world);
 
     } else if (AI === 'b_overseer') {
-      /* 공창의 관리자 — 파수꾼의 룬 광선이 아니라 **단말로 명령을 내린다**.
-         제가 직접 때리는 일이 거의 없고, 방 안의 기계를 깨워 대신 싸우게 한다.
-         플레이어가 할 일은 관리자를 쫓는 게 아니라 명령이 도는 주기를 읽는 것이다. */
+      /* 공창의 관리자 — 파수꾼의 룬 광선이 아니라 **단말로 명령을 내린다**. 제가 직접 때리는 일이 거의 없고, 방 안의 기계를 깨워 대신 싸우게 한다. */
       this.term = (this.term || 0) + dt;
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 3;
@@ -2029,10 +1857,7 @@ class Enemy extends Ent {
       this.move(dt, world);
 
     } else if (AI === 'b_hepha') {
-      /* 헤파 — 컨베이어 위에 서 있는 것. 제자리에서 팔만 돌리고, 플레이어를 자기
-         쪽으로 끌어당긴다(컨베이어). 2페이즈에는 껍데기가 닫혀서 때리는 것으로는
-         열 수 없다 — **정지 핵**(stop_core)을 손에 들고 붙어야 열린다.
-         13장이 "멈추는 법"에 관한 장이라, 결전도 때리는 게 아니라 멈추는 것이다. */
+      /* 헤파 — 컨베이어 위에 서 있는 것. */
       this.vx *= 0.88;
       // 컨베이어 — 가까이 있으면 계속 끌려온다
       if (dd < 420) p.vx += Math.sign(this.cx - p.cx) * 150 * dt;
@@ -2060,8 +1885,7 @@ class Enemy extends Ent {
         }
       }
       if (this.lastPh() && this.guard) {
-        /* 정지 핵을 들고 붙어 있으면 열린다. 들고만 있으면 되는 게 아니라
-           끌어당기는 컨베이어를 거슬러 붙어야 하므로 그 자체가 한 판이다. */
+        /* 정지 핵을 들고 붙어 있으면 열린다. */
         const held = p.held();
         if (held && held.id === 'stop_core' && dd < 90) {
           this.stopT = (this.stopT || 0) + dt;
@@ -2072,9 +1896,7 @@ class Enemy extends Ent {
       this.move(dt, world);
 
     } else if (AI === 'b_arche') {
-      /* 원형 — 사람을 본떠 만든 첫 번째 것. 그래서 탄막을 쓰지 않는다.
-         거리를 좁히고 **근접 연격**을 넣는다(md: 탄막 최소화).
-         2페이즈에는 방의 받침대 넷이 그것을 붙들고 있어, 받침대를 깨야 열린다. */
+      /* 원형 — 사람을 본떠 만든 첫 번째 것. */
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 3;
         this.stateT = this.state === 1 ? 1.5 : 2.2;
@@ -2094,17 +1916,14 @@ class Enemy extends Ent {
         this.vx *= 0.86;
       }
       if (this.lastPh() && this.guard) {
-        // 받침대(제단석)를 다 깨면 열린다. 방에 없으면 그냥 열어 준다(막히지 않게)
+        // 받침대(제단석)를 다 깨면 열린다.
         const ped = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === 'draft_form').length;
         if (!ped) { this.guard = 0; G.toast('받침대가 무너졌다', 'good'); }
       }
       this.move(dt, world);
 
     } else if (AI === 'b_restorer') {
-      /* 부유 성채의 환원기 — 지금까지 나온 무엇보다 세다.
-         다른 보스와 갈리는 점은 딱 하나, **발판을 없앤다**는 것이다. 기반암과 제단만 남기고
-         제 주변 타일을 계속 지운다. 하늘 위라 바닥이 사라지면 그대로 떨어진다 —
-         그래서 이 싸움은 "때리는 것"보다 "설 자리를 남기는 것"이 먼저다. */
+      /* 부유 성채의 환원기 — 지금까지 나온 무엇보다 세다. */
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 4;
         this.stateT = 2.6 - this.pf * 0.7;
@@ -2164,9 +1983,7 @@ class Enemy extends Ent {
 }
 
 /* ================= 소환수 ================= */
-/* ================= 마을 경비병 =================
-   여명 마을이 요새(3단계)가 되면 성문에 상주한다. 플레이어가 멀어지면 다른 잡몹처럼
-   정리되고, 돌아오면 game.js가 다시 세운다 — 그래서 따로 저장할 상태가 없다. */
+/* ================= 마을 경비병 ================= */
 class Guard extends Ent {
   constructor(x, y, lv) {
     super(x, y, 20, 40);
@@ -2244,11 +2061,7 @@ class Wolf extends Ent {
   }
 }
 
-/* ================= 펫 =================
-   장비창의 펫 슬롯에 낀 펫 하나가 이 인스턴스 하나다. 지형 충돌을 받지 않고
-   플레이어 옆을 떠다니다가(그래서 Ent를 상속하지 않는다) 사거리 안에 적이 들어오면
-   저 혼자 문다. 죽지 않고 피해도 받지 않는다 — 잃어버리는 재미보다 늘 곁에 있는 쪽이
-   장비로서 예측 가능하다. */
+/* ================= 펫 ================= */
 class Pet {
   constructor(petId, slot) {
     this.id = petId; this.slot = slot;
@@ -2259,8 +2072,7 @@ class Pet {
     this.facing = 1;
     this.flash = 0;
   }
-  /** 지금 이 칸에 낀 펫 아이템의 레벨. Pet은 아이템을 들고 있지 않고 칸 번호만
-      알고 있다 — 아이템을 붙잡아 두면 갈아 끼웠을 때 옛 레벨이 남는다. */
+  /** 지금 이 칸에 낀 펫 아이템의 레벨. */
   lvOf(p) { const it = p.equip['pet' + (this.slot + 1)]; return it ? (it.lv || 1) : 1; }
   /** 플레이어 기준 떠 있을 자리 — 슬롯마다 반대쪽 어깨 뒤에 선다 */
   anchor(p) {
@@ -2272,7 +2084,7 @@ class Pet {
     this.cd -= dt;
     if (this.flash > 0) this.flash -= dt;
     const [ax, ay] = this.anchor(p);
-    // 부드럽게 따라붙는다. 너무 멀어지면(순간이동·낙하) 그냥 옆으로 끌어다 놓는다
+    // 부드럽게 따라붙는다.
     if (dist2(this.x, this.y, ax, ay) > 640 * 640) { this.x = ax; this.y = ay; }
     this.x = lerp(this.x, ax, Math.min(1, dt * 6));
     this.y = lerp(this.y, ay, Math.min(1, dt * 6));
@@ -2290,9 +2102,7 @@ class Pet {
     if (this.cd > 0) return;
     this.cd = a.cd;
     this.flash = 0.18;
-    // 레벨과 플레이어의 피해 증가를 함께 탄다 — 안 그러면 후반에 장식이 된다
-    // 펫 레벨 배수는 여기서만 완만하게 — 플레이어 레벨(petDmgScale)과 이중으로
-    // 곱해지는 자리라, 패시브만큼 키우면 후반에 펫이 본체를 앞지른다
+    // 레벨과 플레이어의 피해 증가를 함께 탄다 — 안 그러면 후반에 장식이 된다 펫 레벨 배수는 여기서만 완만하게
     const dmg = a.dmg * petDmgScale(p.level) * petAtkMul(this.lvOf(p)) * (1 + (p.d.dmgP || 0));
     if (a.k === 'melee') {
       target.hurt(dmg, false, null, 2);
@@ -2312,20 +2122,12 @@ const PROJ_FX = {
   frost: 'frost',
   void: 'void', dark: 'void', soul: 'void',
   wind: 'wind', rune: 'rune',
-  /* bolt 는 여태 시트가 없어서 절차 생성 동그라미로만 날아갔다. 마법 지팡이 넷
-     (옹이진 나뭇가지 · 이끼의 홀 · 뇌운의 홀 · 수압 사출기)이 전부 bolt 라,
-     "마법은 다 똑같이 생겼다"의 가장 큰 몫이었다. 룬 시트를 물려 준다. */
+  /* 룬 시트를 물려 준다. */
   bolt: 'rune'
 };
 
-/* 원소마다 맞는 순간이 달라야 한다.
-   ★ 터지는 투사체가 아니면 **무엇이든** burst('hit') 하나이면, 불도 서리도 영혼도 공허도
-     맞는 순간이 같은 그림이 된다 — 지팡이를 바꿔도 손에 남는 것이 같아진다. 시트는
-     셋(hit·fire·void)뿐이므로 그 위에 원소색 고리와 입자를 얹어 여섯 갈래로 갈랐다.
-       burst 어느 시트를 · ring 퍼지는 고리의 색과 크기 · parts 튀는 입자 수 */
-/* 타격 그림 → 그 그림에 붙는 원소 소리.
-   'hit'(물리 금빛)은 일부러 없다 — 화살·뼈·별 조각은 재질음만으로 충분하고, 여기에
-   한 겹을 더 얹으면 활을 쏠 때마다 두 소리가 난다. */
+/* 원소마다 맞는 순간이 달라야 한다. */
+/* 타격 그림 → 그 그림에 붙는 원소 소리. */
 const BURST_SFX = {
   fire: 'hit_fire', frost: 'hit_frost', soul: 'hit_soul',
   void: 'hit_void', arcane: 'hit_arcane'
@@ -2340,9 +2142,7 @@ const IMPACT_FX = {
   rune:  { burst: 'arcane', ring: '#9fe8d8', rr: 26, parts: 8 },
   wind:  { burst: 'arcane', ring: '#bcd8f0', rr: 32, parts: 6 },
   star:  { burst: 'hit',    ring: '#ffe08a', rr: 24, parts: 8 }
-  /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다.
-     마법 셋(arcane · frost · soul)은 tools/mkhitfx.py 로 새로 구웠다 —
-     hit_impact 는 살점이 튀는 유기적인 금빛이라 서리 지팡이에 맞아도 금빛이 튀었다. */
+  /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
 const PROJ_STYLE = {
   arrow: { c: '#d8c898', r: 3, len: 14 },
@@ -2358,9 +2158,7 @@ const PROJ_STYLE = {
   dark: { c: '#9a5fd8', r: 6, glow: 1 },
   bone: { c: '#e8e0c8', r: 5 }
 };
-/* 몹이 쏘는 것 중 **물리**인 것. 나머지는 전부 마법으로 친다.
-   IMPACT_FX 로 가르지 않는 이유: 거기에는 별 조각(star)도 들어 있는데 그건 물리다
-   ("arrow · bone · star 는 물리라 예전 금빛 hit 그대로다"). 셋뿐이라 그냥 적는다. */
+/* 몹이 쏘는 것 중 **물리**인 것. */
 const PHYS_PROJ = { arrow: 1, bone: 1, star: 1 };
 
 class Proj extends Ent {
@@ -2368,12 +2166,7 @@ class Proj extends Ent {
     super(x - 6, y - 6, 12, 12);
     this.vx = vx; this.vy = vy; this.dmg = dmg; this.team = team; this.type = type;
     this.life = 3.2; this.grav = 0; this.pierce = 0; this.hitSet = new Set(); this.crit = false;
-    /* ★ 발사음은 **여기 한 군데**에서 낸다. 몹·보스가 쏘는 자리가 스무 군데라
-       하나씩 붙이면 반드시 어딘가 빠지고, 새 보스를 넣을 때마다 또 빠진다.
-       생성자를 지나지 않고 날아가는 탄은 없으므로 여기가 유일한 길목이다.
-       sfxAt 은 화면 밖(가로 0.6폭 · 세로 0.6높이 + 120px)을 잘라 낸다 — 먼 데서
-       쏘는 것까지 들리면 어디서 오는지가 아니라 소음이 된다.
-       내가 쏘는 것은 제 소리(bow · magic)가 이미 있으므로 건드리지 않는다. */
+    /* ★ 발사음은 **여기 한 군데**에서 낸다. */
     if (team === 'enemy' && typeof G !== 'undefined' && G.sfxAt)
       G.sfxAt(PHYS_PROJ[type] ? 'efire_phys' : 'efire_magic', x / TS, y / TS);
   }
@@ -2390,16 +2183,13 @@ class Proj extends Ent {
         if (!(e instanceof Enemy) || e.dead || this.hitSet.has(e)) continue;
         if (!aabb(this.rect(), e.rect())) continue;
         this.hitSet.add(e);
-        /* ★ 같은 발사에서 나온 것이 **이 적에게 두 번째로** 박히면 몫이 준다.
-           흩어진 적에게 한 발씩 맞히면 그대로 제값이라, 여럿을 꿰는 것이 제 쓰임인
-           무기(등불 작살·연발 작살포)는 그대로다. 깎이는 것은 부채꼴이 한 몸에
-           통째로 박히는 경우 — 곧 보스뿐이다(data.js MULTI_FALLOFF 의 ★). */
+        /* ★ 같은 발사에서 나온 것이 **이 적에게 두 번째로** 박히면 몫이 준다. */
         let dmg = this.dmg;
         if (this.vol) {
           if (e._vol === this.vol) dmg *= MULTI_FALLOFF;
           else e._vol = this.vol;
         }
-        // 물리 화살·별조각만 금빛 타격을 얹는다. 마법 탄은 원소마다 제 그림이 이미 있다
+        // 물리 화살·별조각만 금빛 타격을 얹는다.
         e.hurt(dmg, this.crit, G.player, 3, (this.type === 'arrow' || this.type === 'star') ? 'pierce' : null);
         if (this.fire) e.addDot('burn', this.dmg * 0.1, 4);
         if (this.frost) e.slow(0.4, 2.5);
@@ -2423,11 +2213,9 @@ class Proj extends Ent {
       if (fx && fx.ring) G.ringFx(this.cx, this.cy, this.explode, fx.ring, 0.34);
       G.shake = Math.max(G.shake, 4);
     } else if (this.team === 'player' && this.hitSet.size) {
-      /* 원소마다 다른 흔적. 시트가 같아도 고리 색과 입자 수가 달라 손에 남는 것이 다르다 */
+      /* 원소마다 다른 흔적. */
       G.burst(this.cx, this.cy, fx ? fx.burst : 'hit', 36);
-      /* 원소 한 겹. 마법은 HIT_FAM 에 없어서 위의 무기 계열 겹이 안 붙는다 —
-         그 자리를 원소가 대신한다. 물리 투사체(arrow·bone·star)는 burst 가 'hit' 이고
-         BURST_SFX 에 없으므로 재질음만 울린다. */
+      /* 원소 한 겹. */
       if (fx && BURST_SFX[fx.burst]) G.sfxAt(BURST_SFX[fx.burst], this.cx / TS, this.cy / TS);
       if (fx) {
         G.ringFx(this.cx, this.cy, fx.rr, fx.ring, 0.26);
@@ -2439,14 +2227,7 @@ class Proj extends Ent {
 
 /* ================= 이펙트 ================= */
 class Part {
-  /* o(선택) — 재질 파편을 위해 뒤에 붙였다.
-       g     중력 배수. 음수면 위로 뜬다(불티 · 영혼)
-       sq    1이면 네모(돌 · 쇠 · 유리), 0이면 동그라미(살 · 젤 · 연기)
-       glow  1이면 빛난다 — 그리는 쪽에서 합성 모드를 바꾼다
-       spd   튀어 나가는 속도 배수
-       r     파편 크기 배수
-       drag  공기 저항. 연기는 금방 서고 돌조각은 멀리 간다
-     사연: docs/code-history.md#h37 */
+  /* g 중력 배수 — 사연: docs/code-history.md#h37 */
   constructor(x, y, c, vy0 = 0, life = 0.5, o = null) {
     this.x = x; this.y = y; this.c = c;
     const sp = o && o.spd !== undefined ? o.spd : 1;
@@ -2472,14 +2253,7 @@ class DmgText {
   constructor(x, y, v, c, crit) { this.x = x + (Math.random() - 0.5) * 8; this.y = y; this.v = v; this.c = c; this.crit = crit; this.life = 0.85; this.vy = -70; }
   update(dt) { this.life -= dt; this.y += this.vy * dt; this.vy += 110 * dt; return this.life > 0; }
 }
-/* ===== 폭탄 =====
-   던진 뒤 심지가 타는 동안 굴러다니다 터진다. Proj를 상속하되 충돌 처리를 통째로
-   갈아 끼웠다 — Proj는 벽에 닿으면 그 자리에서 사라지지만, 폭탄은 **튕기고 굴러야**
-   던진 자리에서 조금 더 굴러가 터지는 맛이 난다.
-   터질 때 타일을 부수는데, 규칙 셋을 반드시 지킨다.
-     1) 타일은 **world.set()** 으로만 바꾼다 (조명·미니맵·탐험 기록이 같이 갱신된다)
-     2) 기반암(BEDROCK)은 절대 안 부순다 — 세계 경계다
-     3) 마을·캠프 안에서는 타일을 아예 안 부순다 — 구조물이 뚫리면 진행이 막힌다 */
+/* ===== 폭탄 ===== */
 class Bomb extends Proj {
   constructor(x, y, vx, vy, spec) {
     super(x, y, vx, vy, spec.dmg, 'player', 'bomb');
@@ -2516,8 +2290,7 @@ class Bomb extends Proj {
     for (let i = 0; i < 10 + R * 4; i++)
       G.parts.push(new Part(this.cx + (Math.random() - .5) * R * 8, this.cy + (Math.random() - .5) * R * 8,
         Math.random() < .5 ? '#ff9a3a' : '#e8dcc0', -120, 0.8));
-    /* 던진 사람도 맞는다 — 자기 발밑에 던지면 아프다. 그래야 조준할 이유가 생긴다.
-       다만 굴착 폭탄은 피해가 작아 실수로 죽지는 않는다. */
+    /* 던진 사람도 맞는다 — 자기 발밑에 던지면 아프다. */
     const p = G.player;
     if (dist(p.cx, p.cy, this.cx, this.cy) < R * TS && p.iframe <= 0) p.hurt(sp.dmg * 0.5, this.cx);
 
@@ -2565,9 +2338,7 @@ class Drop {
       this.x += this.vx * dt; this.y += this.vy * dt;
       return;
     }
-    /* 이제 수면까지 떠올라 수면에서 오르내린다. 바다 수면은 물결 높이(G.surfacePx — 그리는 쪽과 같은 식)를 따라가므로 파도를 타고, 흐르는 물에서는 물살에
-       떠내려간다. 수면에서 3칸보다 깊으면 천천히 떠오르기만 한다.
-       사연: docs/code-history.md#h38 */
+    /* 이제 수면까지 떠올라 수면에서 오르내린다 — 사연: docs/code-history.md#h38 */
     const ctx = Math.floor((this.x + this.w / 2) / TS), cty = Math.floor((this.y + this.h * 0.75) / TS);
     const sr = world.surfaceRow(ctx, cty, 3);
     const wet = TILE_DEF[world.get(ctx, cty)].liquid;

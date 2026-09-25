@@ -1,6 +1,4 @@
-/* ===== itemart.js — 절차적 아이템/스킬/UI 스프라이트 =====
-   32×32 셀 아틀라스에 코드로 직접 그린다. 외부 이미지 의존 없음.
-   DOM(인벤토리·트리·핫바)에는 셀을 잘라 data URL로, 캔버스(드롭·장착 무기)에는 blit으로 쓴다. */
+/* ===== itemart.js — 절차적 아이템/스킬/UI 스프라이트 ===== */
 'use strict';
 
 const S32 = 32;
@@ -47,12 +45,8 @@ const ISPEC = {
   coolant_vial: { k: 'potion', c: '#6fd8e0', glow: '#9fe8ff' },
   rust_sinker: { k: 'pellet', c: '#8a6a4a' },
   knot_angler: { k: 'amulet', c: '#c8b08a', gem: '#5fc4c4' },
-  /* 물에서만 나오는 무기·장신구 열둘 (세션마다 여섯) — 기존 그림에 색만 갈아 끼운다.
-     작살은 창(spear), 사출기는 활(bow) 자세를 쓴다. */
-  /* ★ 칸 이름을 그림 쪽이 쓰는 것과 맞춰야 한다 —
-     staff 는 head + style('orb'|'crystal'|'claw'), bow 는 c + s(시위 색)다.
-     gem 은 ring·amulet 만 쓴다. 처음에 staff 에 gem 을 줬다가 head 가 undefined 라
-     아이콘 아틀라스를 짓는 도중에 터졌고, 게임이 아예 안 켜졌다. */
+  /* 물에서만 나오는 무기·장신구 열둘 (세션마다 여섯) — 기존 그림에 색만 갈아 끼운다. */
+  /* ★ 칸 이름을 그림 쪽이 쓰는 것과 맞춰야 한다 — staff 는 head + style('orb'|'crystal'|'claw'), bow 는 c + s(시위 색)다. */
   spear_tide: { k: 'spear', c: '#7fc8d8', glow: '#a8e8f0' },
   bow_reed: { k: 'bow', c: '#a8b878', s: '#e8e0c0' },
   staff_current: { k: 'staff', c: '#5a7a6a', head: '#9fe0ff', style: 'crystal', glow: '#9fe0ff' },
@@ -102,7 +96,7 @@ const ISPEC = {
   charm_hawk: { k: 'feather', c: '#c8a06a' },
   ring_brand: { k: 'ring', c: '#c0762f', gem: '#ff6a2a' },
 
-  /* 유적 유물 여덟 — 유적마다 하나씩. 색으로도 어느 유적 것인지 알아보게 갈랐다 */
+  /* 유적 유물 여덟 — 유적마다 하나씩. */
   relic_frostpane:  { k: 'crystal', c: '#9fe0ff', glow: 1 },
   relic_sundial:    { k: 'amulet', c: '#d8b13d', gem: '#ffe08a', shape: 'drop' },
   relic_lastlamp:   { k: 'torchitem' },
@@ -114,8 +108,7 @@ const ISPEC = {
   /* 유적의 맥박 — 결정·물약·북, 그리고 탐사 기록 S 의 인장 여섯(유물과 같은 색 갈래) */
   cave_moss:    { k: 'weed_icon', c: '#6fa05a' },
   moss_poultice: { k: 'potion', c: '#7fb86a', sq: 1 },
-  /* 유적 재료 열 가지 — 그림이 없어 가방에서 빈 칸으로 나오던 것(CLAUDE.md §1-6). 색은 그 유적의
-     벽재·장식 색을 따라 어느 유적 것인지 알아보게 했다. */
+  /* 유적 재료 열 가지 — 그림이 없어 가방에서 빈 칸으로 나오던 것(CLAUDE.md §1-6). */
   neverthaw:    { k: 'crystal', c: '#bfe8ff', glow: 1 },                 // 얼음 던전
   warden_seal:  { k: 'sigil', c: '#8fb8d8', glow: '#dff2ff' },
   sealed_ash:   { k: 'sack', c: '#b89a6a', glow: '#e8d0a0' },            // 피라미드
@@ -141,8 +134,7 @@ const ISPEC = {
   charm_conduit: { k: 'cell', c: '#4f9cf0', fill: 1, glow: '#8fd0f0' },
   charm_zenith: { k: 'amulet', c: '#bcd8f0', gem: '#e8f0fa', shape: 'wing' },
 
-  /* 소비 — 병 크기(sz)로 작은/일반/큰을 가른다. 치유·마나는 원형 병, 비약류는 각진 병으로
-     이미 나뉘어 있었으니 그 구분은 그대로 두고 크기만 얹었다. */
+  /* 소비 — 병 크기(sz)로 작은/일반/큰을 가른다. */
   potion_hp_small: { k: 'potion', c: '#e0483c', sz: 'sm' },
   potion_hp: { k: 'potion', c: '#e0483c' },
   potion_hp_greater: { k: 'potion', c: '#ff6a5a', sq: 1, sz: 'lg' },
@@ -300,8 +292,7 @@ const ISPEC = {
   m_refinery: { k: 'machine', tile: T.M_REFINERY },
   m_assembler: { k: 'machine', tile: T.M_ASSEMBLER },
   m_crate: { k: 'machine', tile: T.M_CRATE },
-  /* 손으로 놓는 설치물 — 세계에 그려지는 모습과 같은 실루엣을 쓴다(아이콘만 보고
-     "이게 그 작업대"라고 알아볼 수 있어야 한다) */
+  /* 손으로 놓는 설치물 — 세계에 그려지는 모습과 같은 실루엣을 쓴다(아이콘만 보고 "이게 그 작업대"라고 알아볼 수 있어야 한다) */
   station_work: { k: 'stationic', m: 'work' },
   station_forge: { k: 'stationic', m: 'forge' },
   crate_wood: { k: 'stationic', m: 'crate' },
@@ -474,8 +465,7 @@ const ISPEC = {
   bag_pack: { k: 'sack', c: '#cfe8ff', strap: '#8fb8d8', glow: '#dfe9f5' },
   bag_vault: { k: 'sack', c: '#7a7160', strap: '#3a3550', glow: '#a06fff' },
 
-  /* ================= 바다 · 빙하 =================
-     전부 기존 painter(k)를 재사용하고 색만 바다 쪽으로 잡았다. */
+  /* ================= 바다 · 빙하 ================= */
   /* 산소통 — 셋이 한눈에 구분되게 색과 발광을 계단으로 준다 */
   tank_air: { k: 'cell', c: '#8fb8c8', fill: 1 },
   tank_deep: { k: 'cell', c: '#4f9cc0', fill: 1, glow: '#8fd0e8' },
@@ -551,8 +541,7 @@ const SKSPEC = {
   s_nova: { k: 'snow', c: '#9fe0ff' },
   s_wolf: { k: 'wolf', c: '#9fd8ff' },
   s_arch: { k: 'rune', c: '#a06fff' },
-  /* 분기 색을 따라간다
-     (검투사 붉은 계열 · 유격 초록 계열 · 비전 푸른/보라 계열) */
+  /* 분기 색을 따라간다 (검투사 붉은 계열 · 유격 초록 계열 · 비전 푸른/보라 계열) */
   s_guard: { k: 'bulwark', c: '#d8a05a' },
   s_quake: { k: 'quake', c: '#c8845a' },
   s_warcry: { k: 'shout', c: '#e8a04a' },
@@ -596,8 +585,7 @@ const UISPEC = {
   p_vault: { k: 'pvault' }, p_board: { k: 'pboard' }, p_town: { k: 'ptown' }, p_mach: { k: 'pmach' },
   p_reforge: { k: 'preforge' }, p_anvil: { k: 'panvil' }, p_map: { k: 'pmap' }, p_menu: { k: 'pmenu' }
 };
-/* 펫 생김새 — 색은 PETS의 c를 그대로 쓰고, 여기서는 실루엣만 고른다.
-   beast(네발) · moth(날개벌레) · bird(새) · rock(둥근 돌) · wisp(불꽃) · drake(뿔 달린 새끼용) */
+/* 펫 생김새 — 색은 PETS의 c를 그대로 쓰고, 여기서는 실루엣만 고른다. */
 const PET_FORM = {
   ember_squirrel: 'beast', glass_moth: 'moth', pebble_kin: 'rock', dust_sparrow: 'bird',
   frost_kit: 'beast', ash_owl: 'bird', cinder_toad: 'rock', thorn_wisp: 'wisp',
@@ -615,14 +603,7 @@ const NPCSPEC = {
   kade: { hair: '#5a5a62', skin: '#d0a880', cloth: '#8a8a96' }
 };
 
-/* ================= 업적 아이콘 =================
-   **이모지를 쓰지 않는다.** 창 안의 다른 그림은 전부 여기서 그린 것인데 업적만
-   이모지면 글꼴이 다른 글자가 섞인 것처럼 튄다(운영체제마다 모양도 다르다).
-
-   두 갈래로 댄다.
-   ① 그 업적이 가리키는 물건이 이미 있으면 **그 아이템 그림을 그대로 쓴다**
-      (밀·곡괭이·물고기…). 새로 그릴 이유가 없고, 창 안에서 같은 물건이 같게 보인다.
-   ② 물건으로 가리킬 수 없는 것(시간·죽음·거래·장 진행)만 여기서 새로 그린다. */
+/* ================= 업적 아이콘 ================= */
 const GLSPEC = {};
 for (const g of ['shard', 'house', 'wall', 'wave', 'crown', 'sword', 'trophy', 'field',
   'factory', 'anvil', 'pit', 'down', 'cloud', 'tablet', 'bubble', 'skull', 'redmoon',
@@ -630,12 +611,11 @@ for (const g of ['shard', 'house', 'wall', 'wave', 'crown', 'sword', 'trophy', '
   'clock', 'clock2', 'clock3', 'lung', 'grave', 'star', 'hidden'])
   GLSPEC[g] = { k: 'gl', g };
 
-/* 장식 아이템(ITEMS 의 deco: 1)은 하나하나 적지 않고 제 타일 그림을 쓴다 — 장식을 더할 때
-   그림을 빠뜨리는 일(CLAUDE.md §1-6)이 원리적으로 안 생긴다. 이끼 낀 바위만 블록 틀을 쓴다. */
+/* 장식 아이템(ITEMS 의 deco: 1)은 하나하나 적지 않고 제 타일 그림을 쓴다 — 장식을 더할 때 그림을 빠뜨리는 일(CLAUDE.md §1-6)이 원리적으로 안 생긴다. */
 for (const k in ITEMS) if (ITEMS[k].deco && !ISPEC[k])
   ISPEC[k] = { k: ITEMS[k].tile === T.MOSSSTONE ? 'block' : 'deco', tile: ITEMS[k].tile };
 
-/* 업적 → 그림. 'i:' 는 아이템 그림 재사용, 'g:' 는 위에서 새로 그린 것. */
+/* 업적 → 그림. */
 const ACH_ART = {
   a_ch1: 'g:shard', a_village: 'g:house', a_session2: 'g:wall', a_session3: 'g:wave',
   a_first_boss: 'g:crown', a_five_hearts: 'g:shard', a_story_bosses: 'g:sword',
@@ -680,8 +660,7 @@ const Art = {
     for (const id in UISPEC) keys.push(['u:' + id, UISPEC[id]]);
     for (const id in GLSPEC) keys.push(['g:' + id, GLSPEC[id]]);
     for (const id in NPCSPEC) keys.push(['n:' + id, { k: 'npc', p: NPCSPEC[id] }]);
-    /* 펫 — PETS를 그대로 훑어 그린다. 'p:'는 세계에 떠다니는 그림, 'i:pet_xxx'는
-       가방/장비창 아이콘이고 둘 다 같은 페인터를 쓴다(같은 생김새라야 알아본다). */
+    /* 펫 — PETS를 그대로 훑어 그린다. */
     for (const id in PETS) {
       const spec = { k: 'pet', c: PETS[id].c, form: PET_FORM[id] || 'beast', r: PETS[id].r };
       keys.push(['p:' + id, spec]);
@@ -699,20 +678,14 @@ const Art = {
       this.cells[key] = [cx, cy];
       g.save();
       g.translate(cx * S32, cy * S32);
-      /* ★ 한 칸이 터져도 나머지는 그린다. 아이콘 규격(ISPEC)에 칸 이름을 하나 잘못 적으면
-         그 자리에서 예외가 나고, 그것이 build() 를 끊고 init() 까지 타고 올라가 **게임이
-         아예 안 켜진다.** 여기서 끊고 콘솔에 어느 칸인지 남긴다 — 그 칸만 빈다. */
+      /* ★ 한 칸이 터져도 나머지는 그린다. */
       try {
         this.paint(g, spec, rng);
       } catch (e) {
         console.warn('[아이콘] ' + key + ' 를 그리지 못했습니다:', e && e.message);
       }
       g.restore();
-      // 펫은 형태(네발·새·정령…)마다 그림이 칸 안에서 치우쳐 있어서, 슬롯에 나란히 놓으면
-      // 저마다 다른 높이로 떠 보인다. 좌표를 형태별로 손보는 대신 실제로 칠해진 영역을
-      // 재서 칸 한가운데로 맞춘다 — 나중에 종류를 더 그려도 저절로 정렬된다.
-      // 빈 펫 칸의 발자국 실루엣(slotic/pet)도 같은 문제라 함께 맞춘다 — 손으로 잡은
-      // 좌표가 칸 중심에서 왼쪽으로 약 1.85px 치우쳐 있었다.
+      // 펫은 형태(네발·새·정령…)마다 그림이 칸 안에서 치우쳐 있어서, 슬롯에 나란히 놓으면 저마다 다른 높이로 떠 보인다.
       if (spec.k === 'pet' || (spec.k === 'slotic' && spec.m === 'pet')) this.centerCell(g, cx * S32, cy * S32);
       this.outline(g, cx * S32, cy * S32);
     });
@@ -721,13 +694,8 @@ const Art = {
     this.ready = true;
   },
 
-  /** 손그림 아이콘이 로드되면 절차 생성 아틀라스의 해당 칸을 덮어 그린다.
-      아틀라스만 갈아 끼우면 itemUrl(DOM)과 drawItem(캔버스)이 둘 다 자동으로 새 그림을 쓴다.
-      urls 캐시는 이미 만들어진 data URL이 남아 있을 수 있으므로 같이 지운다. */
-  /* ★ file:// 로 열었을 때는 손그림을 아틀라스에 얹지 않는다. 디스크에서 온 그림을
-     캔버스에 그리면 캔버스가 "오염"되고 toDataURL 이 통째로 막혀, 가방·툴팁·제작창의
-     아이콘이 **전부** 사라진다(아이콘은 전부 그 URL 로 나간다). 절차 생성 아이콘을 쓴다 —
-     손그림은 세계·캐릭터 쪽에서 drawImage 로 계속 쓰이므로 그쪽은 무관하다. */
+  /** 손그림 아이콘이 로드되면 절차 생성 아틀라스의 해당 칸을 덮어 그린다. */
+  /* ★ file:// 로 열었을 때는 손그림을 아틀라스에 얹지 않는다. */
   noTaint: (typeof location !== 'undefined' && location.protocol === 'file:'),
   applySprite(key, img) {
     if (this.noTaint) return false;
@@ -745,9 +713,7 @@ const Art = {
   },
   applyItemSprite(id, img) { return this.applySprite('i:' + id, img); },
 
-  /** 칸 안에서 실제로 칠해진 부분을 재서 한가운데로 옮긴다.
-      putImageData는 덮어쓰기라 옮길 때 옆 칸을 건드릴 수 있어서, 잉크가 있는 사각형만
-      골라(dirty rect) 쓰고 그 범위가 칸을 벗어나지 않게 이동량을 제한한다. */
+  /** 칸 안에서 실제로 칠해진 부분을 재서 한가운데로 옮긴다. */
   centerCell(g, ox, oy) {
     const img = g.getImageData(ox, oy, S32, S32), d = img.data;
     let x0 = S32, y0 = S32, x1 = -1, y1 = -1;
@@ -834,9 +800,7 @@ const Art = {
 
     switch (s.k) {
 
-      /* ---------- 업적 글리프 ----------
-         물건으로 가리킬 수 없는 것들. 32×32 칸 안에서 굵고 단순하게 — 목록에서는
-         18px로 줄어들어 보이므로, 잔무늬를 넣으면 뭉개져서 얼룩으로만 남는다. */
+      /* ---------- 업적 글리프 ---------- */
       case 'gl': {
         const G1 = '#e8dcc0', G2 = '#c8a058', DK = '#4a4238', RD = '#d05a4a', GR = '#6fbf5a';
         const BL = '#6fa8d8', PL = '#b17fe0';
@@ -1303,8 +1267,7 @@ const Art = {
       /* ---------- 소비 ---------- */
       case 'potion': {
         const liq = s.c;
-        // sz: 'sm'(작은) | undefined(보통) | 'lg'(큰) — 병 밑동(16,29)을 기준점 삼아 통째로
-        // 축소/확대한다. 그림을 새로 그리지 않고 같은 원본을 스케일만 달리해 3단계를 낸다.
+        // sz: 'sm'(작은) | undefined(보통) | 'lg'(큰) — 병 밑동(16,29)을 기준점 삼아 통째로 축소/확대한다.
         const scale = s.sz === 'sm' ? 0.72 : s.sz === 'lg' ? 1.22 : 1;
         if (scale !== 1) { g.save(); g.translate(16, 29); g.scale(scale, scale); g.translate(-16, -29); }
         P(13, 4, 6, 4, '#7a5734'); P(13, 4, 6, 1.4, '#9c7248');
@@ -1356,8 +1319,7 @@ const Art = {
         break;
       }
 
-      /* 장식 아이템 — 타일 그림을 테두리 없이 그대로 키운다. 블록처럼 틀을 두르면 꽃 한 포기가
-         돌덩이로 읽힌다. */
+      /* 장식 아이템 — 타일 그림을 테두리 없이 그대로 키운다. */
       case 'deco': {
         if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 3, 3, 26, 26);
         else P(8, 8, 16, 16, TILE_DEF[s.tile].c || '#666');
@@ -1372,9 +1334,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 기계 ----------
-         타일 아틀라스에 이미 종류별로 다르게 그려 둔 그림을 그대로 키워 쓴다.
-         받침대를 깔아 "설치하는 물건"이라는 걸 블록 아이콘과 구분한다. */
+      /* ---------- 기계 ---------- */
       case 'machine': {
         if (s.glow) glow(16, 15, 13, s.glow, .24);
         P(4, 26, 24, 3, '#3a3a44'); P(4, 26, 24, 1, '#5a5a66');
@@ -1397,8 +1357,7 @@ const Art = {
       }
 
       case 'bomb': {
-        /* 폭탄 — 둥근 몸통 + 심지. 세 종류를 몸통 색과 심지 색으로 구분한다.
-           칸 안에서 아래쪽에 앉혀야 손에 들었을 때 굴러떨어질 것처럼 보인다. */
+        /* 폭탄 — 둥근 몸통 + 심지. */
         const c = s.c;
         circ(15, 20, 9, sh2(c, .7));
         circ(15, 20, 8, c);
@@ -1830,8 +1789,7 @@ const Art = {
       }
 
       case 'detector': {
-        /* 탐지기 — 접시 안테나 달린 손잡이 상자. 산소통(둥근 통)과 한 칸에 나란히
-           놓이므로 실루엣이 확실히 달라야 한다: 이쪽은 각지고 위로 뻗는다. */
+        /* 탐지기 — 접시 안테나 달린 손잡이 상자. */
         const c = s.c, dk = sh2(c, .5), lt = sh2(c, 1.3);
         g.fillStyle = dk; g.fillRect(10, 17, 12, 12);          // 몸통
         g.fillStyle = c; g.fillRect(11, 18, 10, 4);            // 화면
@@ -1847,8 +1805,7 @@ const Art = {
       }
 
       case 'coconut_i': {
-        /* 코코넛 — 반으로 쪼갠 모양. 통짜 갈색 공으로 그리면 목록에서 돌멩이·알과
-           구분이 안 된다. 흰 속살과 씨눈 셋이 코코넛의 표식이다. */
+        /* 코코넛 — 반으로 쪼갠 모양. */
         const c = s.c, husk = sh2(c, .72), meat = '#f0e8d8';
         circ(16, 17, 11, husk);
         for (let i = 0; i < 26; i++) {                      // 겉껍질 섬유결
@@ -1864,9 +1821,7 @@ const Art = {
       }
 
       case 'candy': {
-        /* 사탕 — 가운데 알맹이에 양쪽 포장지를 꼬아 묶은 모양.
-           알(egg)과 한 줄에 놓이는 물건이라, 둥근 것끼리 헷갈리지 않게
-           **양옆으로 뻗은 포장지**를 실루엣의 특징으로 삼는다. */
+        /* 사탕 — 가운데 알맹이에 양쪽 포장지를 꼬아 묶은 모양. */
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .62);
         g.fillStyle = dk;                                   // 포장지 (좌우 삼각)
         g.beginPath(); g.moveTo(4, 11); g.lineTo(11, 16); g.lineTo(4, 21); g.closePath(); g.fill();
@@ -2007,9 +1962,7 @@ const Art = {
         }
         break;
       }
-      /* 나뭇잎 — 나무마다 모양이 다르다(sh). 색만 갈아 끼우면 여섯 가지가 가방에서 한 가지로 보여서
-         모양을 갈랐다: oak 둥근 잎 · needle 솔가지 · broad 넓은 정글 잎 · palm 깃꼴 잎 ·
-         curl 말린 부패 잎 · star 별꼴 하늘 잎. 윤곽은 늘 한 톤 어두운 색 — 밝은 칸 위에서도 읽히게. */
+      /* 나뭇잎 — 나무마다 모양이 다르다(sh). */
       case 'leafitem': {
         const c = s.c, dk = sh2(c, .62), lt = sh2(c, 1.22), stem = s.st || sh2(c, .5);
         const blade = (pts) => { poly(pts, dk); poly(pts.map(([x, y]) => [x + (16 - x) * .12, y + (16 - y) * .12]), c); };
@@ -2507,7 +2460,7 @@ const Art = {
         break;
       }
       case 'bagui': {
-        // 소지품 — 열린 자루. 장비 칸의 배낭(slot_bag)과 달리 뚜껑이 열려 있다
+        // 소지품 — 열린 자루.
         glow(16, 17, 12, '#d8a94b', .13);
         poly([[8, 12], [24, 12], [26, 27], [6, 27]], '#8c7651');
         poly([[8, 12], [16, 12], [16, 27], [6, 27]], '#c8aa70');
@@ -2623,7 +2576,7 @@ const Art = {
         break;
       }
       case 'statui': {
-        // 능력치 — 올라가는 막대 셋. 숫자를 다루는 자리라는 뜻
+        // 능력치 — 올라가는 막대 셋.
         glow(16, 17, 12, '#d8a94b', .13);
         P(7, 19, 5, 9, '#8c7651');
         P(13.5, 13, 5, 15, '#c8aa70');
@@ -2653,8 +2606,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 장비 칸 실루엣 ----------
-         빈 칸에만 깔리므로 단색 윤곽으로만 그린다. 아이템이 들어오면 가려진다. */
+      /* ---------- 장비 칸 실루엣 ---------- */
       case 'slotic': {
         const c = '#6a6250', l = '#8e8672';
         switch (s.m) {
@@ -2697,14 +2649,10 @@ const Art = {
             P(13, 17, 6, 5, '#3d382d');                    // 잠금쇠
             break;
           case 'util':                                     // 렌치 — '유틸리티' 칸 그 자체
-            /* 여기는 앞으로 산소통 말고도 여러 도구가 들어올 자리라, 특정 물건이 아니라
-               **도구**를 뜻하는 그림이어야 한다. 무기(검)·장신구(반지)·가방(배낭)·
-               펫(발자국) 어느 것과도 안 겹친다.
-               세로로 곧게 세우고 물림쇠를 'ㄷ'자로 각지게 그린다 — 비스듬한 자루에
-               둥근 호를 얹었더니 렌치가 아니라 구부러진 막대로 보였다. */
+            /* 여기는 앞으로 산소통 말고도 여러 도구가 들어올 자리라, 특정 물건이 아니라 *도구**를 뜻하는 그림이어야 한다. */
             P(13.5, 12, 5, 13, c);                         // 자루
             P(14.5, 13, 1.6, 11, l);                       // 빛 받는 면
-            // 물림쇠 — 'ㄷ'을 옆으로 눕힌 모양. 가운데가 비어야 렌치로 읽힌다
+            // 물림쇠 — 'ㄷ'을 옆으로 눕힌 모양.
             P(10.5, 4, 11, 3.2, c);                        // 위 턱
             P(10.5, 9.5, 11, 3.2, c);                      // 아래 턱
             P(18.5, 4, 3, 8.7, c);                         // 등
@@ -2722,8 +2670,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 손으로 놓는 설치물 ----------
-         세계에 그려지는 모습(game.js render)과 같은 실루엣이라 아이콘만 봐도 무엇인지 안다 */
+      /* ---------- 손으로 놓는 설치물 ---------- */
       case 'stationic': {
         if (s.m === 'work') {                             // 작업대 — 상판 + 다리 두 개
           P(3, 9, 26, 4, '#9c7a4a');
@@ -2748,10 +2695,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 문 ----------
-         세계에 서 있는 모습 그대로 — 널판 한 장, 경첩은 왼쪽 가장자리에 둘,
-         손잡이는 그 반대쪽. 색과 모양은 obj/door.png 의 것을 따른다
-         (놋쇠 판에 어두운 열쇠구멍). 아이콘만 보고 그 문임을 알아볼 수 있게. */
+      /* ---------- 문 ---------- */
       case 'doorit': {
         P(4, 2, 24, 28, '#3a2610');                     // 문틀
         P(5.5, 3.5, 21, 25, '#6f4c2c');                 // 문짝
@@ -2763,10 +2707,7 @@ const Art = {
         break;
       }
 
-      /* ---------- 펫 ----------
-         한 마리씩 따로 그리지 않고 실루엣 6종 × 몸 색으로 조합한다. 12마리를 각각
-         손으로 그리면 서로 안 닮은 잡동사니가 되는데, 형태를 공유하면 "같은 세계의
-         작은 짐승들"로 읽히고 나중에 종류를 더 늘리기도 쉽다. */
+      /* ---------- 펫 ---------- */
       case 'pet': {
         const c = s.c, dark = sh2(c, 0.62), lite = sh2(c, 1.3);
         const eye = '#1a1a22';
