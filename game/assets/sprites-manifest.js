@@ -874,11 +874,11 @@ window.SPRITE_MANIFEST = {
       },
       "ruin_guard": {
         "file": "char/ruin_guard.png",
-        "frameW": 34,
-        "frameH": 48,
+        "frameW": 41,
+        "frameH": 50,
         "count": 7,
         "foot": 0.25,
-        "side": 0
+        "side": 3.5
       },
       "lantern": {
         "file": "char/lantern.png",
