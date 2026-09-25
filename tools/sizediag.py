@@ -32,7 +32,7 @@ async def main():
               add('camp', CAMP_X0 - 12, w.villageY - 25, CAMP_X1 + 12, w.villageY + 4);
               if (w.jungleLake) add('junglefalls', w.jungleLake.x0 - 2, w.jungleLake.y - 22, w.jungleLake.x1 + 14, w.jungleLake.y + 8);
               if (w.isle) add('isle', w.isle.x - (w.isle.w >> 1), w.isle.y - 12, w.isle.x + (w.isle.w >> 1), w.isle.y + 13);
-              if (w.skyGate) add('skygate', w.skyGate.x - 17, w.skyGate.y - 13, w.skyGate.x + 17, w.skyGate.y + 9);
+              if (w.skyGate) add('skygate', w.skyGate.x - 28, w.skyGate.y - 18, w.skyGate.x + 28, w.skyGate.y + 9);
               const ov = [];
               for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++) {
                 const a = B[i], b = B[j];
