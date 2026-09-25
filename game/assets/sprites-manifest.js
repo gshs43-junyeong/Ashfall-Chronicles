@@ -906,11 +906,11 @@ window.SPRITE_MANIFEST = {
       },
       "minerghost": {
         "file": "char/minerghost.png",
-        "frameW": 26,
+        "frameW": 28,
         "frameH": 36,
         "count": 7,
         "foot": 7.25,
-        "side": -1.5
+        "side": -2.5
       },
       "scorpion": {
         "file": "char/scorpion.png",
