@@ -1003,7 +1003,7 @@ window.SPRITE_MANIFEST = {
       "foreman": {
         "file": "char/foreman.png",
         "frameW": 30,
-        "frameH": 44,
+        "frameH": 46,
         "count": 7,
         "foot": 0.25,
         "side": 0
