@@ -4842,12 +4842,7 @@ const G = {
           c.globalAlpha = 1;
         }
       } else if (o.type === 'altar') {
-        const gl = 0.6 + Math.sin(this.time * 2) * 0.25;
-        c.fillStyle = shade('#2e2438', Math.max(f, .5)); c.fillRect(sx, sy + 10, o.w, o.h - 10);
-        c.fillStyle = shade('#463a55', Math.max(f, .5)); c.fillRect(sx - 4, sy + 4, o.w + 8, 9);
-        c.globalAlpha = gl; c.fillStyle = this.boss ? '#e05050' : '#a06fff';
-        c.fillRect(sx + o.w / 2 - 5, sy - 12, 10, 16);
-        c.globalAlpha = gl * .35; c.beginPath(); c.arc(sx + o.w / 2, sy - 4, 26, 0, TAU); c.fill();
+        this.drawAltar(c, o, sx, sy, Math.max(f, .5));
       } else if (o.type === 'lorestone') {
         // 유적 비문 — 벽에 기대 세운 낮은 비석.
         const done = o.hint !== undefined || (this.loreRead && this.loreRead[o.lore]);
@@ -5771,6 +5766,81 @@ const G = {
     if (e.def.squish && !e.onGround) return e.vy < 0 ? 2 : 0;
     if (Math.abs(e.vx) > 6) return 2 + (Math.floor(this.time * 7) % 2);
     return Math.floor(this.time * 2.4) % 2;
+  },
+
+  /** 소환 제단 — 새긴 받침 위 세 갈래 발톱이 구슬을 받친다. 구슬은 빛이 안에서 도는 유리알:
+      가장자리는 어둡고 속은 밝고, 왼쪽 위에 창빛 한 점. 결전 중이면 붉게 물든다. */
+  drawAltar(c, o, sx, sy, f) {
+    const t = this.time, cx = sx + o.w / 2, w = o.w, h = o.h;
+    const hot = !!this.boss;
+    const [c0, c1, c2] = hot ? ['#ffe0d0', '#e05050', '#4a0d14'] : ['#f2e6ff', '#a06fff', '#1e0f3a'];
+    const S = (hex, k) => shade(hex, f * (k || 1));
+    c.save();
+    // 받침 — 계단 두 단 · 기둥 · 윗판
+    c.fillStyle = S('#241c2e'); c.fillRect(sx - 4, sy + h - 5, w + 8, 5);
+    c.fillStyle = S('#33283f'); c.fillRect(sx - 1, sy + h - 10, w + 2, 5);
+    c.fillStyle = S('#2e2438'); c.fillRect(sx + 5, sy + 14, w - 10, h - 24);
+    c.fillStyle = S('#3d3149');                                  // 기둥 빛 받는 면
+    c.fillRect(sx + 5, sy + 14, 3, h - 24);
+    c.fillStyle = S('#1c1524');                                  // 세로 홈 둘
+    c.fillRect(sx + w / 2 - 7, sy + 17, 2, h - 30); c.fillRect(sx + w / 2 + 5, sy + 17, 2, h - 30);
+    c.fillStyle = S('#463a55'); c.fillRect(sx - 3, sy + 8, w + 6, 7);
+    c.fillStyle = S('#5a4b6b'); c.fillRect(sx - 3, sy + 8, w + 6, 2);   // 윗판 모서리
+    c.fillStyle = S('#241c2e'); c.fillRect(sx - 3, sy + 14, w + 6, 1);
+    // 기둥의 룬 — 구슬 박자에 맞춰 숨 쉰다
+    const beat = 0.5 + Math.sin(t * 2) * 0.5;
+    c.globalAlpha = 0.35 + beat * 0.45; c.fillStyle = c1;
+    c.fillRect(cx - 1, sy + 19, 2, 7); c.fillRect(cx - 3, sy + 21, 6, 2);
+    c.fillRect(cx - 1, sy + 30, 2, 2);
+    c.globalAlpha = 1;
+    // 발톱 셋 — 윗판에서 올라와 구슬 아래쪽을 감싼다
+    const oy = sy - 8 + Math.sin(t * 1.6) * 1.2, R = 11;
+    for (const k of [-1, 1]) {
+      c.fillStyle = S('#6a5a7e');
+      c.beginPath();
+      c.moveTo(cx + k * 7, sy + 8); c.lineTo(cx + k * 13, sy + 1); c.lineTo(cx + k * 12, oy - 4);
+      c.lineTo(cx + k * 9, oy); c.lineTo(cx + k * 3, sy + 8); c.closePath(); c.fill();
+      c.fillStyle = S('#8a7aa0');                                 // 발톱 끝 · 바깥 모서리
+      c.fillRect(cx + k * 12 - (k > 0 ? 1 : 0), oy - 5, 1, 3);
+      c.fillRect(cx + k * 13 - (k > 0 ? 1 : 0), sy - 2, 1, 4);
+    }
+    c.fillStyle = S('#6a5a7e'); c.fillRect(cx - 2, sy + 1, 4, 7);
+    // 둘레 빛무리 — 옅게
+    c.globalAlpha = 0.16 + beat * 0.1;
+    const halo = c.createRadialGradient(cx, oy, R * 0.6, cx, oy, R * 2.8);
+    halo.addColorStop(0, c1); halo.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = halo; c.beginPath(); c.arc(cx, oy, R * 2.8, 0, TAU); c.fill();
+    c.globalAlpha = 1;
+    // 구슬 몸 — 빛은 왼쪽 위에서, 가장자리로 갈수록 짙다
+    const g = c.createRadialGradient(cx - 3, oy - 3, 1, cx, oy, R);
+    g.addColorStop(0, c0); g.addColorStop(0.35, c1); g.addColorStop(1, c2);
+    c.fillStyle = g; c.beginPath(); c.arc(cx, oy, R, 0, TAU); c.fill();
+    // 속에서 도는 빛줄기 두 가닥
+    c.save();
+    c.beginPath(); c.arc(cx, oy, R - 1, 0, TAU); c.clip();
+    c.strokeStyle = c0; c.lineWidth = 1.4;
+    for (let k = 0; k < 2; k++) {
+      const a = t * (1.3 + k * 0.6) + k * Math.PI;
+      c.globalAlpha = 0.35 + 0.25 * Math.sin(t * 3 + k);
+      c.beginPath(); c.ellipse(cx, oy, R * 0.75, R * 0.28, a, 0.2, Math.PI * 1.1); c.stroke();
+    }
+    c.restore();
+    // 테두리 · 창빛 · 아래쪽 되비침
+    c.strokeStyle = c2; c.lineWidth = 1; c.globalAlpha = 0.9;
+    c.beginPath(); c.arc(cx, oy, R - 0.5, 0, TAU); c.stroke();
+    c.globalAlpha = 0.85; c.fillStyle = '#ffffff';
+    c.beginPath(); c.ellipse(cx - 4, oy - 5, 2.6, 1.6, -0.6, 0, TAU); c.fill();
+    c.fillRect(cx - 1, oy - 7, 1, 1);
+    c.globalAlpha = 0.35; c.fillStyle = c0;
+    c.beginPath(); c.ellipse(cx + 1, oy + R - 3, 4, 1.4, 0, 0, TAU); c.fill();
+    // 떠도는 티끌 셋
+    for (let k = 0; k < 3; k++) {
+      const a = t * 0.9 + k * TAU / 3, rr = R + 5 + Math.sin(t * 2 + k) * 1.5;
+      const mx = cx + Math.cos(a) * rr, my = oy + Math.sin(a) * rr * 0.45;
+      c.globalAlpha = 0.45 + 0.35 * Math.sin(a); c.fillStyle = c0;
+      c.fillRect(Math.round(mx), Math.round(my), 1.5, 1.5);
+    }
+    c.restore();
   },
 
   /* ================= 문 그리기 ================= */

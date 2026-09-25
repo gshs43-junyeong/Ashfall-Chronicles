@@ -1646,9 +1646,10 @@ class World {
       }
     for (let x = gx - 8; x <= gx + 8; x += 8) this.set(x, gy - 10, T.RUNESTONE);
     // 신전 내부 조명
-    for (let x = gx - 9; x <= gx + 9; x += 4) { this.set(x, gy - 8, T.TORCH); this.set(x, gy - 2, T.TORCH); }
+    // 신전은 gx 칸 가운데를 축으로 좌우가 같다 — 횃불·제단도 그 축에 맞춘다(-9부터 4칸씩이면 7에서 끝나 한쪽으로 쏠렸다)
+    for (const dx of [-9, -5, 5, 9]) { this.set(gx + dx, gy - 8, T.TORCH); this.set(gx + dx, gy - 2, T.TORCH); }
     // 바닥(신전이 선 섬 표면 gy)에 밑면이 정확히 닿도록 h만큼 끌어올린다
-    this.objects.push({ type: 'altar', boss: 'storm_warden', x: gx * TS, y: gy * TS - 48, w: 44, h: 48 });
+    this.objects.push({ type: 'altar', boss: 'storm_warden', x: gx * TS + TS / 2 - 22, y: gy * TS - 48, w: 44, h: 48 });
     this.skyGate = { x: gx, y: gy };
 
     // 거대 나무: 지상 → 관문 섬
