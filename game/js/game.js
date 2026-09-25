@@ -1609,9 +1609,9 @@ const G = {
       if (aabb(box, { x: o.x, y: o.y, w: o.w, h: o.h })) { this.toast('그 자리에는 놓을 수 없다', 'bad'); return; }
     }
     /* 문틀 안에 서 있는 채로 달면 닫힌 문에 갇힌다 — 그때만 열어 둔 채로 세운다. */
-    const inside = aabb(box, p.rect());
-    w.pushDoor(tx * TS, y0 * TS, TS, TS * 2, p.facing >= 0 ? 1 : -1,
-               { placed: 1, closed: !inside, sw: inside ? 1 : 0 });
+    const dir = p.facing >= 0 ? 1 : -1;
+    const inside = aabb(w.doorEdge({ x: tx * TS, y: y0 * TS, w: TS, h: TS * 2, dir }), p.rect());
+    w.pushDoor(tx * TS, y0 * TS, TS, TS * 2, dir, { placed: 1, closed: !inside, sw: inside ? 1 : 0 });
     it.c--; if (it.c <= 0) p.bag[p.sel] = null;
     for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, '#8a6a42', -30, .5));
     UI.refreshBag(); this.sfx('place');
@@ -1922,7 +1922,7 @@ const G = {
       this.readTerminal(o);
     } else if (o.type === 'door') {
       /* 닫을 때 문틀 안에 누가 서 있으면 닫히지 않는다 — 닫힌 문은 길을 막으므로 제자리에서 닫으면 제 몸이 벽에 낀다(빠져나갈 길이 없다). */
-      if (!o.closed && aabb({ x: o.x, y: o.y, w: o.w, h: o.h }, this.player.rect())) {
+      if (!o.closed && aabb(this.world.doorEdge(o), this.player.rect())) {
         this.toast('문틀에서 비켜야 닫힌다', 'bad'); return;
       }
       o.closed = !o.closed;
@@ -5709,20 +5709,14 @@ const G = {
     const hinge = o.dir === -1 ? -1 : 1;          // 경첩이 선 가장자리 (-1 왼쪽 / +1 오른쪽)
     c.save();
     c.imageSmoothingEnabled = false;
-    // 열린 만큼 드러나는 문틀 안쪽 — 문짝 뒤로 먼저 깔아야 틈이 어둡게 읽힌다
-    if (sw > 0.02) {
-      c.globalAlpha = sw * 0.5;
-      c.fillStyle = '#140e08'; c.fillRect(sx, sy, o.w, o.h);
-      c.globalAlpha = 1;
-    }
-    /* ★ 끝까지 좁히지도, 지우지도 않는다 — 다 열린 문도 읽히는 폭으로 문틀 끝에 선다.
-       사연: docs/code-history.md#h66 */
-    const flat = Math.max(8, o.w * 0.38);         // 다 열린 문짝의 폭
+    /* ★ 닫힌 문은 **옆모습**(경첩 쪽 얇은 판 = 판정 world.doorEdge), 열린 문은 칸을 채운 **앞면**이다.
+       판정과 그림의 폭이 같아야 닫힌 문 옆 빈자리에 서도 몸이 문에 파묻혀 보이지 않는다. 사연: docs/code-history.md#h66 */
+    const flat = doorEdge(o).w;
     const alpha = 1;
-    /* 경첩을 축으로 도는 판의 보이는 폭은 cos(각) — 처음엔 천천히, 끝에서 빨리 좁아진다. */
+    /* 옆모습에서 앞면으로 도는 판의 보이는 폭은 sin(각) — 처음엔 빨리, 다 열릴 즈음 천천히 넓어진다. */
     const ang = sw * Math.PI / 2;
-    const wN = flat + (o.w - flat) * Math.cos(ang);
-    // 문짝은 어느 상태에서도 제 칸(o.w) 밖으로 그리지 않는다 — 경첩 쪽 가장자리에 붙어 좁아진다
+    const wN = flat + (o.w - flat) * Math.sin(ang);
+    // 문짝은 어느 상태에서도 제 칸(o.w) 밖으로 그리지 않는다 — 경첩 쪽 가장자리에 붙어 있다
     const x = hinge < 0 ? sx : sx + o.w - wN;
     c.globalAlpha = alpha;
     if (im && im.width) {
@@ -5751,13 +5745,13 @@ const G = {
         c.globalAlpha = alpha;
       }
     }
-    // 돌아간 만큼 빛을 덜 받는다
-    if (sw > 0.02) {
-      c.globalAlpha = 0.3 * Math.sin(ang);
+    // 비스듬할수록 빛을 덜 받는다 — 옆모습(닫힘)은 판의 모서리라 가장 어둡다
+    if (sw < 0.98) {
+      c.globalAlpha = 0.34 * Math.cos(ang);
       c.fillStyle = '#000'; c.fillRect(x, sy, wN, o.h);
     }
-    // 젖혀진 문짝의 앞모서리 — 두께가 보이는 자리라 한 줄 어둡게 닫는다
-    if (sw > 0.05) {
+    // 문짝의 바깥 모서리 — 두께가 보이는 자리라 한 줄 어둡게 닫는다
+    if (sw < 0.95) {
       c.globalAlpha = alpha * 0.55;
       c.fillStyle = '#140e08';
       c.fillRect(hinge < 0 ? x + wN - 1.2 : x, sy, 1.2, o.h);
