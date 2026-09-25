@@ -25,8 +25,8 @@
   윤곽선을 두른다 — 원래 윤곽선은 그대로다.
 
 ■ 칸과 판정
-  22×41 을 32×46 칸의 (5,4) 에 놓는다. 매니페스트 ox/oy 를 -6/-5 로 두어 몸은 예전 자리 그대로 선다 —
-  판정 상자(20×40)도 그림 속 발 위치도 그대로다. 좌우로 5칸씩 똑같이 넓혔으므로 뒤집어 그려도 가운데가 안 틀어진다.
+  22×41 을 36×46 칸의 (7,4) 에 놓는다(좌우 7칸씩 — 뒤로 끌리는 망토 자락 자리, 같게 두어 뒤집어도 안 밀린다). 매니페스트 ox/oy 를
+  -8/-5 로 두어 몸은 예전 자리 그대로 선다 — 판정 상자(20×40)도 그림 속 발 위치도 그대로다.
 
 ■ 손 자리(무기 쥐는 곳)
   방랑자 시트에서 프레임마다 얼굴 아닌 살색 덩어리 중 가장 앞(오른쪽)에 있는 것을 무기 손으로 잡아(예외는 HIGH·FIXED)
@@ -44,8 +44,8 @@ ROOT = os.path.join(HERE, '..', 'game', 'assets')
 CHAR = os.path.join(ROOT, 'char')
 S = 4
 OW, OH, N = 22, 41, 13                  # 원본(unclip 뒤) 프레임
-FW, FH = 32, 46                         # 새 프레임
-PX, PY = 5, 4                           # 원본을 놓는 자리
+FW, FH = 36, 46                         # 새 프레임(뒤로 끌리는 망토 자락 자리 · 좌우 7칸씩 같게 — 뒤집어도 몸이 안 밀린다)
+PX, PY = 7, 4                           # 원본을 놓는 자리
 IDS = ['wanderer', 'digger', 'ranger', 'adept', 'stray']
 MAXR = {'L': 2, 'R': 2, 'T': 0}
 SKIN = {'#e6bb8a', '#bc9971', '#a78864', '#ead19e'}   # 방랑자 살색(명암 넷)
@@ -240,6 +240,94 @@ def polish(c):
     return out
 
 
+# ── 망토(rebuild 뒤, 34×46 좌표) ─────────────────────────────────────────────────────
+# ★ 원래 망토는 허리 뒤에서 무릎까지의 좁은 판이라 "망토"로 안 읽혔다(어깨 쪽은 몸 윤곽에 가려 1~2칸).
+#   등 쪽(원본 6열까지)의 망토색을 걷어 내고, 목도리 바로 아래 어깨에서 발목(발 3줄 위)까지 늘어져
+#   아래로 갈수록 넓어지는 천을 새로 그린다. 투명한 칸에만 칠하므로 몸·뒷손·다리는 늘 망토 앞에 있다.
+#   주름은 좌표로 정한 세로 줄(5칸마다 한 번 어둡게·밝게)이라 프레임이 바뀌어도 들끓지 않고, 밑단은 톱니.
+# 프레임별 (뒤로 끌림, 밑단 올라감): 0·1 서기 · 2~5 걷기 · 6 점프 · 7 낙하 · 8 대시 · 9~11 공격 · 12 피격
+CAPE_MOTION = {0: (0, 0), 1: (0, 0), 2: (2, 0), 3: (3, 1), 4: (2, 0), 5: (3, 1), 6: (2, 1), 7: (4, 4),
+               8: (3, 8), 9: (1, 0), 10: (2, 1), 11: (2, 1), 12: (2, 1)}
+CAPE_HEX = ('20232e', '272a38', '35394b', '494e5e')   # 방랑자 망토색(어둡게→밝게)
+
+
+def drape(c, f, pal, near=None):
+    OUTC = outline_color(c)
+    tr = (0, 0, 0, 0)
+    dk2, dk, mid, lt = pal
+    XB = PX + 6
+    d2 = lambda p, q: sum((p[i] - q[i]) ** 2 for i in range(3))
+    head = min(y for y in range(FH) for x in range(FW) if c[y][x][3])
+    for y in range(head + 9, FH):                      # 옛 망토 걷기(머리 9줄은 안 건드린다)
+        for x in range(XB + 1):
+            p = c[y][x]
+            if p[3] and (p[:3] in [q[:3] for q in pal] or (near and min(d2(p, q) for q in pal) < near)):
+                c[y][x] = tr
+    for _ in range(2):                                 # 몸과 떨어진 윤곽선 지우기
+        for y in range(FH):
+            for x in range(XB + 2):
+                if c[y][x] == OUTC and not any(0 <= x + dx < FW and 0 <= y + dy < FH and c[y + dy][x + dx][3]
+                                               and c[y + dy][x + dx] != OUTC for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                    c[y][x] = tr
+    bx = {}
+    for y in range(FH):
+        xs = [x for x in range(FW) if c[y][x][3] and c[y][x] != OUTC]
+        if xs:
+            bx[y] = xs[0]
+    feet = max(bx)
+    scarf = [y for y in range(FH) for x in range(FW) if c[y][x][3] and hx(c[y][x]) == '9c463f']
+    top = min(scarf) + 1 if scarf else head + 10
+    sway, lift = CAPE_MOTION[f]
+    hem = feet - 3 - lift
+    anchor = min(bx.get(y, 99) for y in range(top, top + 4))
+    new = []
+    for y in range(top, hem + 1):
+        t = (y - top) / max(1, hem - top)
+        xl = round(anchor - (1.2 + 3.0 * t ** 0.85) - sway * t * t)
+        xr = min(bx.get(y, anchor + 2), anchor + 2) if y > top + 3 else bx.get(y, anchor + 1)
+        for x in range(max(1, xl), xr):
+            if c[y][x][3] or (y == hem and (x + f) % 3 == 0):
+                continue
+            u, fold = x - xl, (x * 2 + (y - top) // 5) % 5
+            col = dk if u == 0 or (y <= top + 1) else (dk2 if fold == 0 else lt if fold == 3 else mid)
+            c[y][x] = col
+            new.append((x, y))
+    for x, y in new:
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < FW and 0 <= ny < FH and not c[ny][nx][3]:
+                c[ny][nx] = OUTC
+    return c
+
+
+def cape_palettes(w, g):
+    """이 캐릭터의 망토색 넷(방랑자 같은 자리 색으로 옮김)과 피격 장(12)용으로 물든 넷.
+    피격 장은 통째로 붉게 물들인 장이라, 자세가 가장 가까운 9번과 같은 자리 색으로 채널별 1차 맞춤을 구해 똑같이 물들인다."""
+    fwd = {}
+    for f in range(N):
+        for y in range(OH):
+            for x in range(OW):
+                a, b = w[f][y][x], g[f][y][x]
+                if a[3] and b[3]:
+                    fwd.setdefault(hx(a), Counter())[b] += 1
+    pal = tuple(fwd[k].most_common(1)[0][0] for k in CAPE_HEX)
+    xs, ys = [[], [], []], [[], [], []]
+    for y in range(OH):
+        for x in range(OW):
+            a, b = g[9][y][x], g[12][y][x]
+            if a[3] and b[3]:
+                for k in range(3):
+                    xs[k].append(a[k]); ys[k].append(b[k])
+
+    def fit(X, Y):
+        n = len(X); mx = sum(X) / n; my = sum(Y) / n
+        k = sum((x - mx) * (y - my) for x, y in zip(X, Y)) / (sum((x - mx) ** 2 for x in X) or 1)
+        return k, my - k * mx
+    F = [fit(xs[k], ys[k]) for k in range(3)]
+    tint = lambda p: tuple(max(0, min(255, round(F[k][0] * p[k] + F[k][1]))) for k in range(3)) + (255,)
+    return pal, tuple(tint(p) for p in pal)
+
+
 def save(frames, path):
     im = Image.new('RGBA', (FW * S * N, FH * S), (0, 0, 0, 0))
     px = im.load()
@@ -326,7 +414,8 @@ def main():
         key = 'player_' + cid
         wsrc = frames_of(os.path.join(SRC, 'player_wanderer.png'))
         src = fix_frames(frames_of(os.path.join(SRC, key + '.png')), wsrc)
-        frames = [rebuild(g) for g in src]
+        pal, pal12 = cape_palettes(wsrc, src)
+        frames = [drape(rebuild(g), i, pal12 if i == 12 else pal, 900 if i == 12 else None) for i, g in enumerate(src)]
         if cid == 'wanderer':
             hs = [FIXED.get(i) or hand_of(c, i in HIGH) for i, c in enumerate(frames)]
             # 피격(붉게 물든 장)처럼 살색이 안 잡히는 장은 첫 장의 손을 쓴다
