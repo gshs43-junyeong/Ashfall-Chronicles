@@ -4183,7 +4183,7 @@ const G = {
       if (!s) {
         return `<div class="slot-card empty" data-slot="${i}">
           <div class="slot-empty-label">빈 슬롯</div>
-          <button class="slot-new-btn" data-slot="${i}">새로운 여정</button>
+          <button class="slot-new-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_new"></span>새로운 여정</button>
         </div>`;
       }
       const when = s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
@@ -4194,11 +4194,12 @@ const G = {
           <div class="slot-meta">${s.bad ? '저장한 뒤에 바뀐 기록 — 열 수 없다' : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
         </div>
         <div class="slot-actions">
-          <button class="slot-load-btn" data-slot="${i}">이어하기</button>
-          <button class="slot-del-btn" data-slot="${i}">삭제</button>
+          <button class="slot-load-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_start"></span>이어하기</button>
+          <button class="slot-del-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="trash"></span>삭제</button>
         </div>
       </div>`;
     }).join('');
+    this.fillIcons(box);
     box.querySelectorAll('.slot-card.filled').forEach(el => {
       const i = +el.dataset.slot;
       el.addEventListener('click', (e) => { if (!e.target.closest('.slot-del-btn')) this.loadGame(i); });
@@ -4235,6 +4236,11 @@ const G = {
   },
 
   /** 새 게임 팝업 — 캐릭터를 가장 크게 고르고, 난이도·이름·씨앗을 그 아래에서 정한다. */
+  /** 새로 그린 HTML 의 data-ui-icon 칸에 그림을 채운다(UI.init 은 처음 한 번만 훑는다) */
+  fillIcons(root) {
+    if (typeof Art === 'undefined' || !Art.ready) { setTimeout(() => this.fillIcons(root), 200); return; }
+    root.querySelectorAll('[data-ui-icon]').forEach(el => UI.setIcon(el, Art.uiUrl(el.dataset.uiIcon)));
+  },
   showNewGameForm(slot) {
     const box = $('#newgame-box');
     let ci = 0, mi = 0, sz = 's';
@@ -4247,7 +4253,7 @@ const G = {
     };
     const sheet = ch => `assets/char/player_${ch.id}.png`;
     box.innerHTML = `
-      <div class="ng-sec">캐릭터</div>
+      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>캐릭터</div>
       <div class="ng-chars">${CHARACTERS.map((ch, i) => `
         <button class="ng-char${i ? '' : ' on'}" data-i="${i}">
           <span class="por" style="background-image:url(${sheet(ch)})"></span>
@@ -4264,24 +4270,25 @@ const G = {
         </div>
       </div>
 
-      <div class="ng-sec">난이도</div>
+      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_mode"></span>난이도</div>
       <div class="ng-modes" id="ng-modes">${MODES.map((m, i) => `
-        <button class="ng-mode${i ? '' : ' on'}" data-i="${i}" style="--mc:${m.c}">${escHtml(m.n)}</button>`).join('')}</div>
+        <button class="ng-mode${i ? '' : ' on'}" data-i="${i}" style="--mc:${m.c}"><span class="ui-ic" data-ui-icon="mode_${m.id}"></span>${escHtml(m.n)}</button>`).join('')}</div>
       <p class="ng-mdesc" id="ng-mdesc">${escHtml(MODES[0].d)}</p>
 
-      <div class="ng-sec">세계 크기</div>
+      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_world"></span>세계 크기</div>
       <div class="ng-modes" id="ng-sizes">${Object.keys(WORLD_SIZES).map(k => `
-        <button class="ng-mode${k === 's' ? ' on' : ''}" data-k="${k}" style="--mc:#8fb8d8">${escHtml(WORLD_SIZES[k].n)}</button>`).join('')}</div>
+        <button class="ng-mode${k === 's' ? ' on' : ''}" data-k="${k}" style="--mc:#8fb8d8"><span class="ui-ic" data-ui-icon="size_${k}"></span>${escHtml(WORLD_SIZES[k].n)}</button>`).join('')}</div>
       <p class="ng-mdesc" id="ng-sdesc">${escHtml(WORLD_SIZES.s.d)}</p>
 
       <div class="ng-fields">
-        <label>이름<input class="ng-name-input" placeholder="이름 없는 모험가" maxlength="12"></label>
-        <label>세계 씨앗<input class="ng-seed-input" placeholder="비워두면 무작위"></label>
+        <label><span class="ui-ic" data-ui-icon="ng_name"></span>이름<input class="ng-name-input" placeholder="이름 없는 모험가" maxlength="12"></label>
+        <label><span class="ui-ic" data-ui-icon="ng_seed"></span>세계 씨앗<input class="ng-seed-input" placeholder="비워두면 무작위"></label>
       </div>
       <div class="ng-btns">
-        <button class="ng-start">시작</button>
-        <button class="ng-cancel">취소</button>
+        <button class="ng-start"><span class="ui-ic" data-ui-icon="ng_start"></span>시작</button>
+        <button class="ng-cancel"><span class="ui-ic" data-ui-icon="ng_cancel"></span>취소</button>
       </div>`;
+    this.fillIcons(box);
 
     const paint = () => {
       const ch = CHARACTERS[ci];

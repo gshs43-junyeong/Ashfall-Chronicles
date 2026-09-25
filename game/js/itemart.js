@@ -583,7 +583,16 @@ const UISPEC = {
   /* 탭(패널) 제목 · 화면 아래 탭 단추 아이콘 — 모두 같은 금빛·가죽빛 한 벌(bagui 와 같은 색)이라 나란히 둬도 한 식구로 읽힌다 */
   p_skill: { k: 'pskill' }, p_quest: { k: 'pquest' }, p_craft: { k: 'pcraft' }, p_chest: { k: 'pchest' },
   p_vault: { k: 'pvault' }, p_board: { k: 'pboard' }, p_town: { k: 'ptown' }, p_mach: { k: 'pmach' },
-  p_reforge: { k: 'preforge' }, p_anvil: { k: 'panvil' }, p_map: { k: 'pmap' }, p_menu: { k: 'pmenu' }
+  p_reforge: { k: 'preforge' }, p_anvil: { k: 'panvil' }, p_map: { k: 'pmap' }, p_menu: { k: 'pmenu' },
+  /* 새 게임 · 슬롯 · 타이틀 — 난이도는 MODES 색, 나머지는 탭 아이콘과 같은 금빛 한 벌 */
+  mode_normal: { k: 'ng', g: 'shield', c: '#8fb87a' }, mode_hard: { k: 'ng', g: 'swords', c: '#e0a03a' },
+  mode_impossible: { k: 'ng', g: 'skull', c: '#d0564c' },
+  size_s: { k: 'ng', g: 'land', n: 1 }, size_m: { k: 'ng', g: 'land', n: 2 }, size_l: { k: 'ng', g: 'land', n: 3 },
+  ng_char: { k: 'ng', g: 'hood' }, ng_mode: { k: 'ng', g: 'sword' }, ng_world: { k: 'ng', g: 'globe' },
+  ng_name: { k: 'ng', g: 'quill' }, ng_seed: { k: 'ng', g: 'seed' },
+  ng_start: { k: 'ng', g: 'play' }, ng_cancel: { k: 'ng', g: 'cross' }, ng_new: { k: 'ng', g: 'compass' },
+  t_single: { k: 'ng', g: 'sword' }, t_settings: { k: 'ng', g: 'gear' }, t_credits: { k: 'ng', g: 'scroll' },
+  t_quit: { k: 'ng', g: 'door' }
 };
 /* 펫 생김새 — 색은 PETS의 c를 그대로 쓰고, 여기서는 실루엣만 고른다. */
 const PET_FORM = {
@@ -2567,6 +2576,116 @@ const Art = {
         poly([[12, 6], [20, 8], [20, 27], [12, 25]], '#a88a5a');
         for (let i = 0; i < 5; i++) P(7 + i * 3.4, 20 - i * 1.8, 1.8, 1.4, '#5c4930');
         stroke('#b8483c', 1.8, () => { g.moveTo(22, 10); g.lineTo(26, 14); g.moveTo(26, 10); g.lineTo(22, 14); });
+        break;
+      }
+      case 'ng': {
+        const G1 = '#c8aa70', G2 = '#8c7651', DK = '#5c4930', c = s.c || G1;
+        glow(16, 16, 12, s.c || '#d8a94b', .14);
+        switch (s.g) {
+          case 'shield':                                   // 일반 — 방패
+            poly([[6, 6], [26, 6], [25, 18], [16, 28], [7, 18]], sh2(c, .7));
+            poly([[6, 6], [16, 6], [16, 28], [7, 18]], c);
+            P(15, 9, 2, 15, sh2(c, 1.35)); P(10, 14, 12, 2, sh2(c, 1.35));
+            break;
+          case 'swords':                                   // 하드 — 방패 뒤로 엇갈린 두 검
+            for (const d of [1, -1]) stroke('#d8dce4', 2.4, () => { g.moveTo(16 - 12 * d, 4); g.lineTo(16 + 10 * d, 26); });
+            for (const d of [1, -1]) { P(16 + 8 * d - 2, 22, 4, 2, DK); }
+            poly([[10, 11], [22, 11], [21.5, 19], [16, 25], [10.5, 19]], sh2(c, .7));
+            poly([[10, 11], [16, 11], [16, 25], [10.5, 19]], c);
+            break;
+          case 'skull':                                    // 불가능 — 해골
+            ell(16, 13, 10, 9, '#e8e0cc');
+            P(10, 18, 12, 8, '#e8e0cc');
+            ell(12, 14, 2.8, 3.2, c); ell(20, 14, 2.8, 3.2, c);
+            poly([[16, 17], [17.6, 20.5], [14.4, 20.5]], DK);
+            for (let i = 0; i < 4; i++) P(11.5 + i * 2.6, 23, 1.2, 3, DK);
+            P(10, 18, 12, 1, sh2('#e8e0cc', .8));
+            break;
+          case 'land': {                                   // 세계 크기 — 둥근 창 속 땅의 폭이 커진다(섬 → 대륙)
+            g.save(); g.beginPath(); g.arc(16, 16, 13, 0, TAU); g.clip();
+            P(0, 0, 32, 32, '#9fc4dc'); P(0, 19, 32, 13, '#3f6f94');          // 하늘 · 바다
+            const hw = [0, 5, 9.5, 16][s.n], top = [0, 13, 10, 5][s.n];
+            poly([[16 - hw, 21], [16 - hw * .55, 16], [16, top], [16 + hw * .55, 16], [16 + hw, 21], [16 + hw, 32], [16 - hw, 32]], '#6f9a4a');
+            poly([[16 - hw, 21], [16 - hw * .55, 16], [16, top], [16, 32], [16 - hw, 32]], '#8fbf5a');
+            if (s.n === 3) {                                                  // 대형 — 설산 봉우리 둘 더
+              poly([[16, top], [13.4, top + 4], [18.6, top + 4]], '#eef4f8');
+              poly([[5, 21], [8.5, 11], [12, 21]], '#5f8a40'); poly([[20, 21], [24, 12], [28, 21]], '#5f8a40');
+            }
+            P(16 - hw - 1, 21, hw * 2 + 2, 1.6, '#c8ab6a');                    // 물가 모래
+            g.restore();
+            stroke(G2, 1.8, () => { g.arc(16, 16, 13, 0, TAU); });
+            break;
+          }
+          case 'hood':                                     // 캐릭터 — 두건 쓴 머리
+            poly([[16, 4], [26, 14], [25, 28], [7, 28], [6, 14]], G2);
+            poly([[16, 4], [16, 28], [7, 28], [6, 14]], G1);
+            ell(16, 17, 5.5, 6.5, '#2a2218');
+            P(13, 16, 2, 1.6, '#e8dcc0'); P(17.5, 16, 2, 1.6, '#e8dcc0');
+            break;
+          case 'sword':                                    // 검 — 난이도 소제목 · 싱글플레이
+            poly([[16, 3], [19, 7], [19, 21], [13, 21], [13, 7]], '#d8dce4');
+            poly([[16, 3], [16, 21], [13, 21], [13, 7]], '#f2f4f8');
+            P(9, 21, 14, 3, G2); P(9, 21, 14, 1.2, G1);
+            P(14.5, 24, 3, 5, DK); circ(16, 29.5, 1.8, G1);
+            break;
+          case 'globe':                                    // 세계 — 지구본
+            circ(16, 16, 12, '#5a86a8'); circ(16, 16, 10.6, '#7fb0d0');
+            poly([[9, 10], [15, 8], [17, 13], [13, 17], [8, 15]], '#8fbf5a');
+            poly([[18, 17], [24, 16], [25, 21], [19, 24]], '#8fbf5a');
+            stroke('#5a86a8', 1, () => { g.ellipse(16, 16, 5, 11, 0, 0, TAU); g.moveTo(5, 16); g.lineTo(27, 16); });
+            stroke(G2, 1.6, () => { g.arc(16, 16, 12, 0, TAU); });
+            break;
+          case 'quill':                                    // 이름 — 깃펜
+            poly([[25, 3], [28, 6], [14, 22], [10, 22], [10, 18]], '#e8e0cc');
+            poly([[25, 3], [10, 18], [10, 22]], '#c8c0ac');
+            stroke(DK, 1.4, () => { g.moveTo(24, 6); g.lineTo(11, 21); });
+            poly([[10, 22], [6, 28], [8, 23]], '#3a3228');
+            P(5, 28, 16, 1.6, G2);
+            break;
+          case 'seed':                                     // 세계 씨앗 — 싹 튼 씨
+            ell(16, 21, 7, 6, G2); ell(14.5, 19.5, 4, 3.4, G1);
+            stroke('#6f9a4a', 2, () => { g.moveTo(16, 16); g.quadraticCurveTo(16, 10, 18, 7); });
+            ell(21, 7.5, 4, 2.2, '#8fbf5a'); ell(12.5, 10, 3.4, 2, '#6f9a4a');
+            break;
+          case 'play':                                     // 시작 · 이어하기
+            poly([[9, 5], [26, 16], [9, 27]], G2);
+            poly([[9, 5], [26, 16], [9, 16]], G1);
+            break;
+          case 'cross':                                    // 취소
+            for (const d of [1, -1]) stroke(G2, 4, () => { g.moveTo(8, 16 - 8 * d); g.lineTo(24, 16 + 8 * d); });
+            stroke(G1, 1.6, () => { g.moveTo(8, 8); g.lineTo(24, 24); });
+            break;
+          case 'compass': {                                // 새로운 여정 — 나침반
+            circ(16, 16, 12, G2); circ(16, 16, 10, '#2a2218');
+            poly([[16, 6], [19, 16], [13, 16]], '#d0564c');
+            poly([[16, 26], [19, 16], [13, 16]], '#e8e0cc');
+            circ(16, 16, 1.6, G1);
+            for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; P(16 + Math.cos(a) * 11 - 1, 16 + Math.sin(a) * 11 - 1, 2, 2, G1); }
+            break;
+          }
+          case 'gear': {                                   // 설정 — 톱니바퀴
+            for (let i = 0; i < 8; i++) {
+              const a = i * Math.PI / 4;
+              g.save(); g.translate(16, 16); g.rotate(a); P(-2.5, -14, 5, 6, G2); g.restore();
+            }
+            circ(16, 16, 10, G2); circ(16, 16, 8.4, G1); circ(16, 16, 3.6, '#2a2218');
+            break;
+          }
+          case 'scroll':                                   // 크레딧 — 두루마리
+            P(8, 7, 16, 18, '#e8dcc0');
+            for (let i = 0; i < 4; i++) P(11, 11 + i * 3.5, 10 - (i % 2) * 3, 1.3, '#8c7651');
+            ell(8, 7, 3, 2.4, G2); P(5, 5, 22, 4, G2); P(5, 5, 22, 1.4, G1);
+            P(5, 24, 22, 4, G2); P(5, 24, 22, 1.4, G1);
+            break;
+          case 'door':                                     // 나가기 — 열린 문
+            P(7, 4, 16, 25, '#2a2218');
+            P(7, 4, 16, 2, G2); P(7, 4, 2, 25, G2); P(21, 4, 2, 25, G2);
+            poly([[9, 6], [17, 9], [17, 30], [9, 27]], G1);
+            poly([[13, 9], [17, 9], [17, 30], [13, 28]], G2);
+            circ(15, 19, 1.1, DK);
+            stroke('#e8dcc0', 2, () => { g.moveTo(22, 16); g.lineTo(29, 16); g.moveTo(26, 13); g.lineTo(29, 16); g.lineTo(26, 19); });
+            break;
+        }
         break;
       }
       case 'pmenu': {
