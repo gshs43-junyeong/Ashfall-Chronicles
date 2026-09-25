@@ -328,7 +328,7 @@ const TILE_DEF = [
   { n: '빙정석', c: '#9fd8e8', solid: 1, hard: 5, drop: 'glacium_ore', ore: 1, light: 2 },
   { n: '조수석', c: '#3f9a8a', solid: 1, hard: 5, drop: 'tide_ore', ore: 1, light: 2 },
   /* --- 동굴 (T 의 172~177 과 같은 순서) --- */
-  { n: '이끼 낀 바위', c: '#4f6a4a', solid: 1, hard: 1, drop: 'stone' },
+  { n: '이끼 낀 바위', c: '#4f6a4a', solid: 1, hard: 1, drop: 'deco_mossstone' },   // 캐면 이끼째 블록 하나 — 다시 놓으면 이끼가 이웃에 맞춰 자란다
   { n: '늘어진 이끼', c: '#6fa05a', solid: 0, hard: 0, drop: 'cave_moss', a: 1 },
   { n: '종유석', c: '#9a9488', solid: 0, hard: 1, drop: 'stone', a: 1 },
   { n: '석순', c: '#8a8478', solid: 0, hard: 1, drop: 'stone', a: 1 },
