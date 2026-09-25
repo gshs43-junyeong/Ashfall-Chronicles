@@ -342,6 +342,9 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - **문**: 닫힌 문 = 옆모습(경첩 쪽 얇은 판, world.js `doorEdge` — 판정도 그 판만), 열린 문 = 칸을 채운 앞면(안 막음).
   그림(`drawDoor`)과 판정이 같은 `doorEdge` 를 쓴다 — 한쪽만 고치지 말 것. 사연: docs/code-history.md#h66
 - 효과음 `step`(걷기 박자마다)·`jump`·`jump2`(공중)·`door_open`·`door_shut` — 파일 앞 무음은 music.js `SFX_START` 로 건너뛴다.
+- **굽는 그림 셋**(원본은 `tools/art/`, 게임 폴더 시트를 다시 먹이지 말 것): `mkfountain.py`(분수대 8장 — 물줄기 길은 고정, 물방울이 길을 따라 흐른다 ·
+  game.js 는 가로세로 비로 장 수를 잰다) · `mknpc.py`(상인 셋을 다른 NPC 몸 틀 `npc_template.png` 로 · 윤슬은 윤곽선만) · `mkanvil.py`(강화 모루).
+- 마을 2단계의 괭이·낫·씨앗은 가방으로 준다(data.js `FARM_KIT`) — 밭 위 상자는 없앴다.
 - **하늘 섬**(world.js `buildSkyIslands` → `buildSkyTemple` · `buildSkyExtras`): 원래 섬 서른둘(섬마다 상자)에 더해 **제 난수**(`seed+'_sky'`)로
   큰 섬(속 빈 굴 `skyGrotto` + 윗면 하나) · 보통 섬(`skyFeature` — 샘 연못 · 바람의 사당 `MYSTIC.gale`(공중 점프 +1) · 별똥 자리(운석·별빛 수정) ·
   지킴이 상자 · 하늘 밭(여문 서리쑥·뼈꽃 — 낫으로 씨앗) · 무너진 열주(비문 `RUIN_HINTS.sky`)) · 조각 섬 · 구름 섬. 높이 띠는 원래대로 `SY(12)~SKY_Y-8`.

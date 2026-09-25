@@ -1473,17 +1473,7 @@ class World {
       this.set(fx0 - 1, gy - 1, T.FENCE); this.set(fx1 + 1, gy - 1, T.FENCE);
       /* 건초더미는 밭 왼쪽 울타리 바깥 — fx1+2 는 전주 선로가 내려오는 기둥 줄이라 전주 밑동에 건초가 박혀 보였다(경비병 초소 fx0-2 와도 안 겹치게 한 칸 더 왼쪽). */
       this.set(fx0 - 3, gy - 1, T.HAYBALE);
-      /* 씨앗 상자 — 괭이·낫·씨앗 한 벌. */
-      /* 자리는 밭 자리 안쪽 끝(fx1-1). */
-      this.objects.push({
-        type: 'chest', tier: 1, seedbox: 1,
-        x: (fx1 - 1) * TS + 4, y: (gy - 1.2) * TS, w: 30, h: 26,
-        items: [
-          makeItem('hoe_iron', 1), makeItem('scythe_iron', 1),
-          makeItem('seed_wheat', 12), makeItem('seed_starroot', 8),
-          makeItem('seed_ashcap', 6), makeItem('fertilizer', 6)
-        ]
-      });
+      /* 괭이·낫·씨앗 한 벌은 밭 위 상자가 아니라 마을이 2단계가 될 때 가방으로 준다(data.js FARM_KIT). */
 
       /* --- 지붕 위 풍차 + 마을 전주 선로 --- */
       const rb = blocks[0], ry = gy - rb.h - 7;

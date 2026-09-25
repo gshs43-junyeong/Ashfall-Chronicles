@@ -1481,7 +1481,7 @@
         "frameH": 40,
         "count": 2,
         "foot": -0.75,
-        "side": -0.5
+        "side": -1.0
       },
       "npcw_oreman": {
         "file": "char/npc_oreman.png",
@@ -1489,7 +1489,7 @@
         "frameH": 40,
         "count": 2,
         "foot": -0.75,
-        "side": 0.5
+        "side": 2.0
       },
       "npcw_armsman": {
         "file": "char/npc_armsman.png",
@@ -1497,7 +1497,7 @@
         "frameH": 40,
         "count": 2,
         "foot": -0.75,
-        "side": -0.5
+        "side": 1.0
       },
       "frostbound": {
         "file": "char/frostbound.png",
@@ -2012,7 +2012,7 @@
         "file": "obj/fountain.png",
         "w": 110,
         "h": 66,
-        "frames": 2
+        "frames": 8
       },
       "terminal": {
         "file": "obj/terminal.png",
