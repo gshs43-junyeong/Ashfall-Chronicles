@@ -3944,7 +3944,7 @@ class World {
         }
       }
       /* 야자수 — 줄기가 기울어 자란다 — 사연: docs/code-history.md#h130 */
-      for (const [px, lean, hgt] of [[ix - 7, -1, 7], [ix + 3, 1, 8], [ix + 8, 1, 6]]) {   // 평평한 모래톱 안에만
+      for (const [px, lean, hgt] of [[ix - 7, -1, 7], [ix - 1, 1, 8], [ix + 7, 1, 6]]) {   // 모래톱 안 · 잎갓(7칸)끼리 안 겹치게
         let cx = px;
         for (let k = 0; k < hgt; k++) {
           const y = iy - 1 - k;
