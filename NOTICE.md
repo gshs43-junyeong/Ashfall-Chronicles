@@ -28,7 +28,7 @@
 | 무엇 | 어디 | 어떻게 만들었나 |
 |---|---|---|
 | 배경 음악 13곡 | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
-| 효과음 89개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 효과음 87개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 
 이 두 폴더의 파일은 **각 서비스의 이용 약관을 따릅니다.**
 
@@ -79,7 +79,7 @@ purchased or taken from elsewhere.
 | What | Where | Made with |
 |---|---|---|
 | 13 background music tracks | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
-| 89 sound effects | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 87 sound effects | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 
 These files are governed by the terms of the respective services.
 

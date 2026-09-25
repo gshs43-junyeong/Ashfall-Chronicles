@@ -186,10 +186,6 @@ const SFX_FILES = {
   hit_crit: 'hit_crit', hit_fire: 'hit_fire', hit_frost: 'hit_frost',
   hit_soul: 'hit_soul', hit_arcane: 'hit_arcane',
   hit_flesh: 'hit_flesh', hit_void: 'hit_void',
-  hit_water: 'hit_water',
-  /* hit_shock 은 파일만 받아 두고 아직 아무 데서도 안 부른다 — 전격은 이미 zap 이
-     맡고 있어서, 어느 자리를 넘겨야 하는지 정해지기 전에는 비워 둔다. */
-  hit_shock: 'hit_shock',
 
   /* 별 조각 — 얻을 때 · 다섯이 합쳐질 때 · 떠오를 때. 셋 다 이야기의 한 순간이라
      다른 효과음보다 길다(0.9~1.5초). */
@@ -270,8 +266,6 @@ const SFX_GAP = {
      부채꼴 서넛은 한 소리로 묶이고, 따로 쏜 것은 따로 울린다. 더 넓히면(0.22초)
      뼈의 군주처럼 **실제로 초당 두 번 던지는** 것이 절반으로 깎여 정보가 준다. */
   efire_phys: 0.1, efire_magic: 0.1,
-  // 물에 드는 소리 — 물가에서 들락날락하면 계속 울린다. splash 보다 긴 소리라 더 넉넉히
-  hit_water: 0.4,
   /* 별 조각은 이야기의 한 순간이라 막을 일이 없다. star_rise 는 한 판에 몇 번뿐이고
      star_gain 도 조각을 주울 때만 울린다 — 간격을 두면 오히려 빠진 것처럼 들린다. */
   star_gain: 0.2
@@ -282,8 +276,6 @@ const SFX_VOL = { belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, z
   /* 별 조각 셋은 다른 효과음보다 길어서(0.9~1.5초) 같은 크기로 두면 그 동안 다른 소리를
      전부 덮는다. 떠오르는 쪽은 화면이 멈춰 있는 순간이라 오히려 크게 둔다. */
   star_gain: 0.7, star_merge: 0.85, star_rise: 0.9,
-  // 물에 드는 소리는 몸이 잠기는 소리지 사건이 아니다 — 전투음보다 한 단계 아래로
-  hit_water: 0.6,
   /* ★ 재질음 위에 **얹는** 겹이라 재질음(배수 1)보다 작아야 한다. 같은 크기로 두면
      두 소리가 각자 "한 대"로 들려서 때린 횟수가 두 배로 들린다 — 작게 깔려야 색만
      입는다. 치명타는 강조라 조금 더 크고, 원소는 그 사이다. */
