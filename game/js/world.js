@@ -622,7 +622,7 @@ class World {
     for (let k = 0; k < n; k++) {
       const x = clamp(Math.round(centerX + rng.range(-420, 420)), 2, WW - 3);
       if (Math.abs(x - this.spawnX) < 40) continue;   // 마을 안쪽은 피한다
-      if (this.objects.some(o => o.type === 'rig' && !o.gone && Math.abs(x - o.tx) <= 12)) continue;   // 채취탑 둘레
+      if (this.objects.some(o => o.type === 'rig' && !o.gone && Math.abs(x - o.tx) <= 7)) continue;   // 채취탑 둘레 — 수관이 탑에 안 걸리게
       const s = this.surface[x];
       const g = this.get(x, s);
       let leaf, chance;
@@ -1708,7 +1708,7 @@ class World {
       ★ 자리 고르는 법은 예전 game.js rigs() 그대로다(바이옴 이름으로 묻는다 — 사연: docs/code-history.md#h51 · #h52).
       clear 면 발자국 안의 나무·풀을 걷는다 — 나무가 탑을 뚫고 자라 보였다. */
   placeRigs(clear) {
-    if (this.objects.some(o => o.type === 'rig')) return;
+    if (this.objects.some(o => o.type === 'rig')) { for (const o of this.objects) if (o.type === 'rig') this.fitRig(o); return; }
     const LEG = RIG.leg;
     let wake = 9;
     for (const [bid, n] of RIG.in) {
@@ -1733,25 +1733,34 @@ class World {
         }
         if (at === null) continue;
         const ty = this.surface[at];
-        this.objects.push({ type: 'rig', tx: at, ty, wake: wake++,
-          x: (at - RIG.half) * TS, y: (ty - RIG.tall) * TS, w: (RIG.half * 2 + 1) * TS, h: RIG.tall * TS });
+        this.objects.push(this.fitRig({ type: 'rig', tx: at, ty, wake: wake++ }));
         if (clear) this.clearRigSite(at, ty);
       }
     }
   }
-  /** 발자국 둘레의 나무를 통째로(기둥이 ±9칸 안이면 수관까지) 걷고, 발자국 안의 풀·꽃을 걷는다. */
+  /** 우클릭 상자 = 그린 탑(다리·몸통·굴뚝)을 두른 사각형. 옛 세이브의 11×10칸 상자도 불러올 때 여기로 맞춘다. */
+  fitRig(o) {
+    o.x = (o.tx - RIG.half) * TS; o.y = (o.ty - RIG.stack) * TS;
+    o.w = (RIG.half * 2 + 1) * TS; o.h = RIG.stack * TS;
+    return o;
+  }
+  /** 둘레의 나무를 통째로(기둥이 ±6칸 안이면 수관까지 — 수관 반폭 5칸이 탑에 걸린다) 걷고, 발자국 안의 풀·꽃을 걷는다. */
   clearRigSite(tx, ty) {
-    for (let x = tx - 9; x <= tx + 9; x++)
+    for (let x = tx - 6; x <= tx + 6; x++)
       for (let y = ty - 26; y < ty; y++) {
         const t = this.get(x, y), d = TILE_DEF[t];
-        if (t === T.WOOD || d.leaf || d.tree || t === T.VINE || (Math.abs(x - tx) <= RIG.half && !d.solid && t !== T.AIR && !d.liquid))
+        if (t === T.WOOD || d.leaf || d.tree || t === T.VINE || (this.inRig(x, y) && !d.solid && t !== T.AIR && !d.liquid))
           this.set(x, y, T.AIR);
       }
   }
-  /** 채취탑 발자국 안인가 — 나무를 새로 심지 않고, 플레이어도 아무것도 못 놓는다(해체한 탑은 빼고). */
+  /** 채취탑이 그려진 칸인가 — 플레이어가 아무것도 못 놓는다(해체한 탑은 빼고). */
   inRig(x, y) {
-    for (const o of this.objects)
-      if (o.type === 'rig' && !o.gone && Math.abs(x - o.tx) <= RIG.half && y < o.ty && y >= o.ty - RIG.tall) return true;
+    for (const o of this.objects) {
+      if (o.type !== 'rig' || o.gone) continue;
+      const dx = x - o.tx, up = o.ty - y;
+      if (up < 1) continue;
+      if ((Math.abs(dx) <= RIG.half && up <= RIG.tall) || (dx >= 0 && dx <= 1 && up <= RIG.stack)) return true;
+    }
     return false;
   }
 
@@ -5246,7 +5255,10 @@ class World {
     for (const o of w.objects)
       if (o.type === 'codedoor' && o.opened) w.openCodeDoorway(o.dx, o.dy);
     w.doors = w.objects.filter(o => o.type === 'door');   // objects와 같은 참조로 다시 캐싱
-    for (const m of (d.machines || [])) w.machines.set(m.y * WW + m.x, m);
+    for (const m of (d.machines || [])) {
+      if (m.it) { delete m.it.t0; delete m.it.fx; delete m.it.fy; }   // 미끄러짐 시각은 지난 판의 G.time — 남기면 한 칸 뒤에 얼어붙는다
+      w.machines.set(m.y * WW + m.x, m);
+    }
     for (const k of (d.crops || [])) w.crops.add(k);
     w.netDirty = true;
     // 예전 세이브(v3 이전)에는 explored가 없다 — 그런 경우 처음부터 다시 밝혀 나가면 된다

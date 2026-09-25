@@ -2991,11 +2991,12 @@ const RUIN_LORE = {
 /* 유적 안에 흩어 둔 짧은 흔적. */
 /* 채취탑(잿빛 숲의 대형 기계 그림) — 자리 고르기 · 발자국 · 해체 부품.
    in: [바이옴 id, 몇 대] · edge: 바이옴 경계에서 떨어뜨릴 칸 · leg: 다리가 딛는 반폭(이 안은 지면이 같아야 한다)
-   half/tall: 나무·설치를 막는 발자국(칸) — 그림은 배율 0.66 으로 좌우 약 ±3칸, 위로 8칸 */
+   half/tall: 다리·몸통 칸(가운데 ±1칸 · 위로 6칸) · stack: 굴뚝(가운데와 오른쪽 한 칸, 위로 8칸)
+   — **그린 칸만** 막는다. 둘레 11×10칸을 막던 때는 빈 풀밭에도 아무것도 못 놓았다 */
 /* 충전된 배터리 한 개가 채우는 전하 — 최대 전하(부적으로 늘어남)와 무관하게 같다 */
 const CELL_CHARGE = 200;
 
-const RIG = { in: [['forest', 2], ['forest2', 1]], edge: 40, leg: 2, half: 5, tall: 10,
+const RIG = { in: [['forest', 2], ['forest2', 1]], edge: 40, leg: 2, half: 1, tall: 6, stack: 8,
   parts: [['steel_plate', 10], ['gear_basic', 8], ['iron_bar', 12], ['wire', 12], ['motor', 2], ['circuit', 3], ['machine_frame', 1]] };
 
 /* 마을 2단계(밭이 생기는 때)에 가방으로 주는 연장·씨앗 한 벌 */

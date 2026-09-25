@@ -3391,7 +3391,7 @@ const G = {
     if (!done) {
       UI.openLore('채취탑', this.rigOn(o)
         ? ['공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다.', '공창이 멈추기 전에는 손댈 엄두가 안 난다.']
-        : ['녹슨 채취탑이다. 바퀴살 사이로 재가 쌓여 있다.', '누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.'], []);
+        : ['녹슨 채취탑이다. 리벳 틈마다 재가 쌓여 있다.', '누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.'], []);
       this.sfx('open');
       return;
     }
@@ -3503,7 +3503,7 @@ const G = {
     };
     const k = on ? 1 : 0.52;          // 죽은 것은 같은 색을 어둡게 — 검게 칠하면 실루엣이 된다
     const DARK = dim('#39414a', k), MID = dim('#5a6470', k), LITE = dim('#7c8794', k);
-    const RIVET = dim('#b9c4d0', k), RUST = dim('#7a5a38', k);
+    const RIVET = dim('#b9c4d0', k);
 
     c.save();
     c.translate(Math.round(x), Math.round(y));
@@ -3531,18 +3531,6 @@ const G = {
     c.fillStyle = RIVET;
     for (let ry = -184; ry < -124; ry += 14)
       for (let rx = -25; rx <= 25; rx += 10) c.fillRect(rx, ry, 2, 2);
-
-    // 바퀴 — 돌 때만 돈다.
-    const wr = 24, wx = -40, wy = -156;
-    c.strokeStyle = LITE; c.lineWidth = 4;
-    c.beginPath(); c.arc(wx, wy, wr, 0, TAU); c.stroke();
-    c.lineWidth = 3; c.strokeStyle = MID;
-    for (let i = 0; i < 6; i++) {
-      const a = (on ? ph * 0.9 : 0.4) + i * TAU / 6;
-      c.beginPath(); c.moveTo(wx, wy);
-      c.lineTo(wx + Math.cos(a) * wr, wy + Math.sin(a) * wr); c.stroke();
-    }
-    c.fillStyle = RUST; c.beginPath(); c.arc(wx, wy, 5, 0, TAU); c.fill();
 
     // 굴뚝
     c.fillStyle = DARK; c.fillRect(8, -252, 18, 64);
