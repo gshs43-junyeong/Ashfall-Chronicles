@@ -819,10 +819,10 @@ window.SPRITE_MANIFEST = {
       "shadoweye": {
         "file": "char/shadoweye.png",
         "frameW": 34,
-        "frameH": 33,
+        "frameH": 28,
         "count": 7,
         "foot": -0.75,
-        "side": -1
+        "side": 0
       },
       "frostling": {
         "file": "char/frostling.png",
@@ -874,11 +874,11 @@ window.SPRITE_MANIFEST = {
       },
       "ruin_guard": {
         "file": "char/ruin_guard.png",
-        "frameW": 36,
+        "frameW": 34,
         "frameH": 48,
         "count": 7,
         "foot": 0.25,
-        "side": -1
+        "side": 0
       },
       "lantern": {
         "file": "char/lantern.png",
