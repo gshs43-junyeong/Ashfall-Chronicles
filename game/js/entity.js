@@ -317,19 +317,21 @@ class Player extends Ent {
   /* ---- 인벤토리 ---- */
   addItem(it) {
     if (!it) return true;
-    this.gathered[it.id] = (this.gathered[it.id] || 0) + it.c;
+    /* 모은 수(장 목표)는 **실제로 들어간 만큼만** — 먼저 세면 가방이 찬 채 기계 산출 칸을 누를 때마다 부풀었다 */
+    const id = it.id, c0 = it.c;
+    const done = ok => { const got = ok ? c0 : c0 - it.c; if (got > 0) this.gathered[id] = (this.gathered[id] || 0) + got; return ok; };
     const ms = maxStack(it);
     if (ms > 1) {
       for (let i = 0; i < this.bag.length; i++) {
         const s = this.bag[i];
         if (s && s.id === it.id && !s.a && !it.a && s.r === it.r && s.c < ms) {
           const move = Math.min(ms - s.c, it.c); s.c += move; it.c -= move;
-          if (it.c <= 0) return true;
+          if (it.c <= 0) return done(true);
         }
       }
     }
-    for (let i = 0; i < this.bag.length; i++) if (!this.bag[i]) { this.bag[i] = it; return true; }
-    return false;
+    for (let i = 0; i < this.bag.length; i++) if (!this.bag[i]) { this.bag[i] = it; return done(true); }
+    return done(false);
   }
   countItem(id) { let n = 0; for (const s of this.bag) if (s && s.id === id) n += s.c; return n; }
   removeItem(id, n) {

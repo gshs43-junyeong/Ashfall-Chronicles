@@ -347,7 +347,8 @@ const G = {
         const n = +k.slice(5); this.player.sel = (n === 0 ? 9 : n - 1); UI.refreshHotbar();
       }
       else if (!UI.dlg && !UI.open) {
-        if (this.isKey('skill1', k)) this.player.useSkill(0, this.input.wx, this.input.wy);
+        if (this.isKey('rotate', k)) this.rotatePlace();
+        else if (this.isKey('skill1', k)) this.player.useSkill(0, this.input.wx, this.input.wy);
         else if (this.isKey('skill2', k)) this.player.useSkill(1, this.input.wx, this.input.wy);
         else if (this.isKey('skill3', k)) this.player.useSkill(2, this.input.wx, this.input.wy);
         else if (this.isKey('skill4', k)) this.player.useSkill(3, this.input.wx, this.input.wy);
@@ -1236,7 +1237,11 @@ const G = {
       if (this.time - (this._machRm || -9) < 0.25) return;
       this._machRm = this.time;
       const back = Factory.remove(w, tx, ty);
-      if (back) for (const it of back) this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it));
+      /* 가방에 먼저 — 바닥에 떨군 것은 5분 뒤 사라지고 저장도 안 된다(가득 찬 상자를 캐면 통째로 잃었다) */
+      let spill = 0;
+      if (back) for (const it of back) if (!p.addItem(it)) { this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it)); spill++; }
+      if (spill) this.toast('가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라', 'bad');
+      UI.refreshBag();
       this.breakFx(tx, ty, id, 1);           // 쇠 파편 + 불티 + 기계가 꺼지는 소리
       return;
     }
@@ -1482,9 +1487,7 @@ const G = {
             (aabb(cell, p.rect()) || this.ents.some(e => !e.dead && aabb(cell, e.rect())))) {
           this.toast('누가 서 있는 자리다', 'bad'); return;
         }
-        // 설치 방향은 플레이어가 보고 있는 쪽 — 벨트를 깔면서 걸으면 자연히 이어진다
-        const dir = p.facing >= 0 ? 0 : 2;
-        const placed = Factory.place(w, mtx, mty, idef(hi).mach, dir);
+        const placed = Factory.place(w, mtx, mty, idef(hi).mach, this.placeDirFor(idef(hi).mach));
         // 발사형 함정은 누가 놓았는지에 따라 편이 갈린다 — 내가 놓은 건 적을 쏜다
         if (placed && MACHINE[placed.t].proj) placed.own = 1;
         hi.c--; if (hi.c <= 0) p.bag[p.sel] = null;
@@ -3369,6 +3372,56 @@ const G = {
   },
 
   /* ================= 용광로 굴뚝 연기 ================= */
+  /* ================= 기계 놓기 ================= */
+  /** 놓을 방향 — 방향 키(T)로 고르지 않았으면 보고 있는 쪽(벨트를 깔며 걸으면 자연히 이어진다). */
+  placeDirFor(key) {
+    const n = dirTable(key).length;
+    return this.placeDir != null && this.placeDir < n ? this.placeDir : (this.player.facing >= 0 ? 0 : 2);
+  },
+  /** 방향 키 — 기계를 들었으면 놓을 방향을 [보는 쪽 → 오른쪽 → 아래 …] 로 돌리고, 아니면 커서 밑 기계를 돌린다. */
+  rotatePlace() {
+    const p = this.player, w = this.world, hi = p.held();
+    const key = hi && idef(hi).type === 'machine' ? idef(hi).mach : null;
+    if (key) {
+      if (!MACHINE[key].rot) { this.toast('방향이 없는 기계다', 'info'); return; }
+      const n = dirTable(key).length, cur = this.placeDir != null && this.placeDir < n ? this.placeDir : -1;
+      this.placeDir = cur + 1 >= n ? null : cur + 1;
+      this.toast('놓을 방향 — ' + (this.placeDir == null ? '보는 쪽' : DIR_NAME[this.placeDir]), 'craft');
+      this.sfx('place');
+      return;
+    }
+    const mtx = Math.floor(this.input.wx / TS), mty = Math.floor(this.input.wy / TS);
+    const mac = Factory.at(w, mtx, mty);
+    if (mac && dist(p.cx, p.cy, (mtx + .5) * TS, (mty + .5) * TS) <= TS * 7 && Factory.rotate(mac)) {
+      this.sfx('place');
+      if (UI.open === 'machine' && UI.machRef === mac) UI.refreshMachine(true);
+    }
+  },
+  /** 기계를 들고 있으면 커서 칸에 반투명 미리보기 + 방향 화살표. 못 놓는 자리는 붉게. */
+  drawPlaceGhost(c, camX, camY) {
+    const p = this.player, w = this.world, hi = p && p.held();
+    if (!hi || idef(hi).type !== 'machine' || UI.open) return;
+    const key = idef(hi).mach, s = MACHINE[key];
+    const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
+    if (Factory.at(w, tx, ty) || dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 7) return;
+    const sx = tx * TS - camX, sy = ty * TS - camY;
+    const ok = Factory.canPlace(w, tx, ty) && !w.inRig(tx, ty);
+    c.save();
+    c.globalAlpha = 0.45;
+    TileArt.draw(c, s.tile, 0, sx, sy);
+    c.globalAlpha = 1;
+    c.strokeStyle = ok ? 'rgba(160,230,140,.9)' : 'rgba(230,90,70,.9)';
+    c.lineWidth = 1; c.strokeRect(sx + .5, sy + .5, TS - 1, TS - 1);
+    if (s.rot) {
+      const [dx, dy] = dirTable(key)[this.placeDirFor(key)];
+      const cx = sx + TS / 2, cy = sy + TS / 2, ang = Math.atan2(dy, dx);
+      c.translate(cx, cy); c.rotate(ang);
+      c.fillStyle = 'rgba(255,230,150,.95)';
+      c.beginPath(); c.moveTo(TS / 2 + 5, 0); c.lineTo(TS / 2 - 3, -5); c.lineTo(TS / 2 - 3, 5); c.closePath(); c.fill();
+    }
+    c.restore();
+  },
+
   /* ================= 채취탑 — 세션 2 에 다시 도는 대형 기계 ================= */
   /* 자리는 world.placeRigs 가 골라 object(type 'rig')로 저장한다 — 여기는 그림·쿵·해체만. */
   RIG_THUD: 4.6,            // 쿵 간격(초)
@@ -4878,6 +4931,7 @@ const G = {
 
     // ---- 기계 오버레이 (방향 · 벨트 위 아이템 · 진행/연료 · 상태등) ----
     Factory.render(c, w, camX, camY, tx0, ty0, tx1, ty1, this.time);
+    this.drawPlaceGhost(c, camX, camY);
 
     // ---- 오브젝트 ----
     for (const o of w.objects) {
@@ -7421,7 +7475,7 @@ const G = {
       const [x, y] = q.cells[q.i];
       const t = w.get(x, y);
       if (t !== T.FAULTSTONE && !(q.old && w.solid(x, y))) continue;   // 그새 다른 것이 된 칸은 두고
-      if (t === T.BEDROCK) continue;
+      if (t === T.BEDROCK || MACH_OF_TILE[t]) continue;           // 기계 칸을 지우면 속이 빈 유령 기계가 남는다
       w.set(x, y, T.AIR);
       if (Math.random() < 0.05) this.parts.push(new Part((x + .5) * TS, (y + .5) * TS, '#7a7266', 20, 1));
     }
