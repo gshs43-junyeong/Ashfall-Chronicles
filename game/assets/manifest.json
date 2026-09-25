@@ -813,10 +813,10 @@
       "shadoweye": {
         "file": "char/shadoweye.png",
         "frameW": 34,
-        "frameH": 28,
+        "frameH": 33,
         "count": 7,
-        "foot": -0.75,
-        "side": 0.0
+        "foot": 0.25,
+        "side": -0.5
       },
       "frostling": {
         "file": "char/frostling.png",
