@@ -822,7 +822,7 @@ window.SPRITE_MANIFEST = {
         "frameH": 33,
         "count": 7,
         "foot": 0.25,
-        "side": 1.5
+        "side": 1
       },
       "frostling": {
         "file": "char/frostling.png",
