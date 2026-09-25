@@ -205,7 +205,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
    `?debug=village&sess=3&plv=45` 같은 바로가기로 해당 구역까지 간다.
 4. **스크린샷으로 눈으로 확인.** 겹침·공중 부양·안 보이는 몹은 수치로 안 잡힌다.
 
-디버그 바로가기(주소 끝에 붙인다, 정상 플레이에는 영향 없음):
+디버그 바로가기(주소 끝에 붙이고 **새로운 여정**으로 시작, 정상 플레이에는 영향 없음 — 전체 옵션·주의점은 [`docs/debug-urls.md`](docs/debug-urls.md)):
 
 | 파라미터 | 뜻 |
 |---|---|
@@ -214,6 +214,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 | `?debug=ruin&id=mine` | 그 유적 방에서 시작 (`&pulse=` 맥박 · `&boss=1` 주인 처치 = 메아리) |
 | `?debug=cave` | 가장 가까운 금 간 자갈 앞에서 시작 (`&k=moss\|drip\|geode\|fume` 그 갈래 굴 안) |
 | `?debug=meteor` | 2.5초 뒤 운석 (`&at=me` 머리 위 = 즉사 · `&at=<x>` 그 칸 · `&dx=` 오른쪽 몇 칸, 기본 30) |
+| `?debug=factory` | 캠프 오른쪽 예시 공장 — 기계 26종을 재료 채워 한 줄로(`&mobs=1` 몹 켜기) |
 | `&sess=` · `&ch=` · `&plv=` · `&gold=` | 세션·장·레벨·금화를 직접 준다 |
 
 ---
