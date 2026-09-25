@@ -522,6 +522,18 @@ button{
 .mach-grid{display:grid;grid-template-columns:repeat(auto-fill,46px);gap:5px;
   max-height:150px;overflow-y:auto}
 .mach-empty{grid-column:1/-1;font-size:11px;color:#5c5849;font-style:italic;padding:4px 0}
+.mach-prog{position:relative;height:18px;margin:8px 0 2px;background:#15140f;border:1px solid var(--frame);border-radius:3px;overflow:hidden}
+.mach-prog i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#5a7a3a,#8fbf5a);transition:width .1s linear}
+.mach-prog span{position:relative;display:block;font-size:10.5px;line-height:16px;padding:0 7px;color:var(--ink);text-shadow:0 1px 2px #000}
+.mrecs{display:flex;flex-direction:column;gap:3px;max-height:132px;overflow-y:auto}
+.mrec{display:flex;align-items:center;gap:3px;padding:2px 6px;border:1px solid #2a2820;border-radius:3px;font-size:10.5px;color:#8a8574}
+.mrec.ok{border-color:#3f5a2e;background:#1a2214}
+.mrec.cur{border-color:var(--gold);background:#2a2412}
+.mrec b{margin:0 5px;color:#6a6656}
+.mrec small{margin-right:4px;color:var(--ink)}
+.mrec em{margin-left:auto;font-style:normal;color:#6a6656}
+.ri{width:18px;height:18px;display:inline-block;background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated}
+#mg-bag .slot.no{opacity:.35}
 
 #chest-grid{padding:16px;display:grid;grid-template-columns:repeat(8,46px);gap:5px}
 

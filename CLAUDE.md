@@ -354,6 +354,10 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   `fx/fy/t0` 를 적고 그리기가 한 틱(`FAC_TICK`) 동안 미끄러뜨린다. 전력: 발전 → 소비 → 남으면 축전지(`MACHINE.store` 까지)
   이고, 전주 범위에 선 플레이어도 소비자로 끼어 충전량이 찬다(`CHARGE_TICK`, `w.cover`). 배터리 셀은 `CELL_CHARGE` 만큼만 채운다.
   `?debug=factory` 오른쪽에 여러 층 공장 둘(`buildDebugTowers`) — 배치는 docs/debug-urls.md.
+  기계 창(ui.js `refreshMachine`)은 **칸 구성이 바뀔 때만 다시 짠다**(`machSig`) — 개수·상태·전력·진행 막대는 `machLive` 가 제자리에서
+  고친다. 0.1초마다 통째로 짜면 클릭이 씹힌다. 칸 조작은 mousedown. 놓을 방향은 T(`KEY_ACTIONS.rotate`, `G.placeDir` — 빈 손이면
+  커서 밑 기계를 돌린다), 기계를 들면 커서 칸에 미리보기(`drawPlaceGhost`). 연료 기계는 출구가 막히면 연료를 안 태운다(`outFull`),
+  세계가 지은 유적 함정(`m.gen && !m.own`)은 망 없이 돈다(`runWildTrap`). 기계를 캐면 내용물은 가방 먼저.
   옛 세이브는 불러올 때 지금 지면으로 한 번 세운다. 그림은 game.js `drawRig`.
 - 마을 2단계의 괭이·낫·씨앗은 가방으로 준다(data.js `FARM_KIT`) — 밭 위 상자는 없앴다.
 - **하늘 섬**(world.js `buildSkyIslands` → `buildSkyTemple` · `buildSkyExtras`): 원래 섬 서른둘(섬마다 상자)에 더해 **제 난수**(`seed+'_sky'`)로

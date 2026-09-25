@@ -7,7 +7,7 @@ const DIR4 = [[1, 0], [0, 1], [-1, 0], [0, -1]];          // 0=우 1=하 2=좌 3
 const DIR6 = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, -1], [-1, -1]];   // 4=우상 5=좌상
 /** 이 기계가 쓰는 방향표. */
 function dirTable(t) { return (t === 'belt' || t === 'belt_fast') ? DIR6 : DIR4; }
-const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위'];
+const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위', '오른쪽 위', '왼쪽 위'];   // 뒤 둘은 벨트 대각선
 
 const Factory = {
   CHARGE_TICK: 6,          // 플레이어 전주 충전 — 한 틱(0.125초)에 6 = 초당 48
@@ -150,6 +150,14 @@ const Factory = {
     return false;
   },
 
+  /** 이 기계가 이 아이템을 받는가(자리 여부는 안 본다) — insert 와 기계 창의 가방 정렬이 같이 쓴다 */
+  accepts(m, id) {
+    const s = MACHINE[m.t];
+    if (m.t === 'belt' || m.t === 'belt_fast' || m.t === 'sorter' || s.slots) return true;
+    if (!m.in) return false;
+    return !!((s.fuelIn && FUEL[id]) || s.ammo === id || (s.proc && this.isInput(s.proc, id)));
+  },
+
   /* ================= 아이템 투입 ================= */
   insert(w, m, id, n) {
     if (!m || !m.on || n <= 0) return 0;
@@ -171,15 +179,10 @@ const Factory = {
       }
       return n - left;
     }
-    if (!m.in) return 0;
+    if (!this.accepts(m, id)) return 0;
     const cap = s.cap || 40;
     const room = cap - (m.in[id] || 0);
     if (room <= 0) return 0;
-    let ok = false;
-    if (s.fuelIn && FUEL[id]) ok = true;
-    if (s.ammo === id) ok = true;
-    if (s.proc && this.isInput(s.proc, id)) ok = true;
-    if (!ok) return 0;
     const put = Math.min(room, n);
     this.bufAdd(m.in, id, put);
     return put;
@@ -536,6 +539,15 @@ const Factory = {
   playerInsert(w, m, bagIdx, p) {
     const it = p.bag[bagIdx];
     if (!it) return 0;
+    /* ★ 등급·접사·레벨이 붙은 물건은 상자에 **그 물건 그대로** 넣는다 — insert 는 id·개수로 새로 만들어서
+       강화한 장비를 넣었다 빼면 맨 물건이 되어 나왔다 */
+    if (MACHINE[m.t].slots && (it.r || Object.keys(it).some(k => k !== 'id' && k !== 'c' && k !== 'r'))) {
+      if (!m.on) return 0;
+      const i = m.items.indexOf(null);
+      if (i < 0) return 0;
+      m.items[i] = it; p.bag[bagIdx] = null;
+      return it.c;
+    }
     const put = this.insert(w, m, it.id, it.c);
     if (put > 0) { it.c -= put; if (it.c <= 0) p.bag[bagIdx] = null; }
     return put;
