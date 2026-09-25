@@ -351,8 +351,9 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
 /* 전체 화면 중에만 뜨는 나가기 버튼. 게임을 가리지 않게 평소엔 흐리게 두고
    마우스를 올리거나 초점이 오면 또렷해진다. */
 .fs-exit{
-  /* 아래로 더 붙이면 타이틀 화면의 버전 표기(v1.0.5)와 겹친다 */
-  display:none;position:absolute;right:14px;bottom:42px;z-index:2;
+  /* 왼쪽 아래 — 게임 HUD 에서 유일하게 빈 모서리다(오른쪽 아래는 탭 단추 줄 · 타이틀의 판 표기,
+     왼쪽 위 체력 · 오른쪽 위 미니맵 · 가운데 아래 핫바). 오른쪽에 두면 탭 단추를 덮는다. */
+  display:none;position:absolute;left:14px;bottom:14px;z-index:2;
   align-items:center;gap:8px;padding:8px 13px;
   background:rgba(13,11,10,.72);border:1px solid rgba(214,196,171,.22);
   color:var(--bone);font-family:inherit;font-size:.8rem;font-weight:600;

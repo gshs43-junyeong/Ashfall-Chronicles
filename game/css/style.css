@@ -272,10 +272,10 @@ button{
    갈래를 가로지르는 선을 그을 자리가 없다. 갈래는 위쪽 머리글과 칸 색으로만 남는다. */
 #tree-wrap{background:#100f0a;border:1px solid #262418;border-radius:4px;
   padding:12px 12px 6px;margin:14px 16px 4px}
-.bheads{display:grid;grid-template-columns:repeat(3,1fr);margin-bottom:4px}
-.bhead{--hi:var(--bc);padding-left:2px;border-left:2px solid var(--bc)}
+.bheads{display:grid;grid-template-columns:repeat(3,1fr);margin-bottom:8px}
+.bhead{--hi:var(--bc);padding-left:9px;border-left:3px solid var(--bc)}   /* 글자가 색 막대에 붙지 않게 */
 .bhead h3{font-size:12.5px;letter-spacing:.08em;margin-bottom:3px;color:var(--bc)}
-.bhead .btag{font-size:10px;color:#65614f;margin-bottom:4px}
+.bhead .btag{font-size:10px;color:#65614f;margin-bottom:2px}
 .bnote{font-size:10.5px;color:#6b6553;margin:0 0 4px;padding:3px 8px;
   background:#0d0c08;border:1px solid #221f15;border-radius:3px}
 .bnote b{color:#9a9079;font-weight:600}
@@ -673,6 +673,9 @@ button{
 .toast{background:#0e0d0ae8;border:1px solid var(--frame);border-left:2px solid var(--gold);
   padding:8px 16px;border-radius:2px;font-size:12.5px;animation:tin .3s ease-out;box-shadow:0 6px 24px #000a}
 .toast.good{border-left-color:#5fc45f}.toast.bad{border-left-color:#c8433c}
+/* 패널이 열려 있으면 알림이 패널 내용(스탯·탭 줄)을 덮는다 — 화면 맨 위로 올리고 가장 새 것 하나만 */
+#app:has(.panel.open) #toasts{top:8px}
+#app:has(.panel.open) #toasts .toast:not(:last-child){display:none}
 @keyframes tin{from{opacity:0;transform:translateY(-10px)}}
 
 #tooltip{position:absolute;display:none;width:270px;background:#0b0a07f5;border:1px solid var(--frame);
