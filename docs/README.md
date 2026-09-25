@@ -19,6 +19,7 @@
 
 - [system-requirements.md](system-requirements.md): 실행 환경과 기술적 전제
 - [deploy-cache.md](deploy-cache.md): 배포와 캐시 무효화 절차
+- [v1.1.1-engine-plan.md](v1.1.1-engine-plan.md): v1.1.1 엔진화·모듈 분리·TypeScript·다국어(6개)·모바일·Docker 계획과 단계별 작업 프롬프트
 - [debug-urls.md](debug-urls.md): 구역·기능 앞에서 바로 시작하는 디버그 주소(`?debug=village` · `factory` · `sea` …)와 옵션
 - [../NOTICE.md](../NOTICE.md): MIT 에서 빠지는 것(음악·효과음)과 사이트 글꼴
 - [CLAUDE.md](../CLAUDE.md): 코드·월드·세이브를 안전하게 고치기 위한 제약
