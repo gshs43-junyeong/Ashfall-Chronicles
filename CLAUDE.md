@@ -362,6 +362,8 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   폭풍 제단 신전은 gx 칸 가운데 축 좌우 대칭, 바닥 가운데 5칸은 거대 나무 구멍이라 한쪽 발판이다.
 - 특성 트리: 잠긴 칸은 **열린 칸(배웠거나 배울 수 있는 칸)과 선으로 이어진 것만** 보이고, 나머지는 빈 점선 틀만 남는다(ui.js `refreshTree` · `.unseen`).
 - 하늘: 해의 높이로 노을(gold)을 매기고 하늘·원경 안개(`skyHaze`)가 같이 물든다(`drawSky`·`drawSun`).
+  해·달은 `skyArc` 로 오른쪽(동)에서 떠 왼쪽(서)으로 진다 — 해 5:30~18:30(dayFactor 밝아지고 어두워지는 한가운데), 달은 그 반대.
+  폭포(FALLS)는 아틀라스 프레임이 아니라 `drawFallsTile` 이 세계 y 에 건 물줄기를 아래로 민다.
 - 동굴에는 **갈래**가 있다(data.js `CAVE_TYPES` · world.js `buildCaveZones`) — 60×55 칸 구역마다
   이끼·종유·수정·독기 중 하나. 장식은 **자연 벽지 위 빈 칸에만** 놓고 전부 걸음을 안 막는다.
   **금 간 자갈**(`world.faults`)을 캐거나 터뜨리면 지진과 함께 숨은 동굴이 열린다(game.js `triggerFault`).
