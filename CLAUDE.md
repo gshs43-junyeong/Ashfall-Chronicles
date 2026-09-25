@@ -342,6 +342,11 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - **문**: 닫힌 문 = 옆모습(경첩 쪽 얇은 판, world.js `doorEdge` — 판정도 그 판만), 열린 문 = 칸을 채운 앞면(안 막음).
   그림(`drawDoor`)과 판정이 같은 `doorEdge` 를 쓴다 — 한쪽만 고치지 말 것. 사연: docs/code-history.md#h66
 - 효과음 `step`(걷기 박자마다)·`jump`·`jump2`(공중)·`door_open`·`door_shut` — 파일 앞 무음은 music.js `SFX_START` 로 건너뛴다.
+- **하늘 섬**(world.js `buildSkyIslands` → `buildSkyTemple` · `buildSkyExtras`): 원래 섬 서른둘(섬마다 상자)에 더해 **제 난수**(`seed+'_sky'`)로
+  큰 섬(속 빈 굴 `skyGrotto` + 윗면 하나) · 보통 섬(`skyFeature` — 샘 연못 · 바람의 사당 `MYSTIC.gale`(공중 점프 +1) · 별똥 자리(운석·별빛 수정) ·
+  지킴이 상자 · 하늘 밭(여문 서리쑥·뼈꽃 — 낫으로 씨앗) · 무너진 열주(비문 `RUIN_HINTS.sky`)) · 조각 섬 · 구름 섬. 높이 띠는 원래대로 `SY(12)~SKY_Y-8`.
+  ★ 본 난수를 더 뽑지 말 것 — 뒤따르는 유적·동굴·성채가 씨앗마다 바뀐다(지금은 y≥52 가 바이트 단위로 예전과 같다). 부유 성채 자리는 비워 둔다.
+  폭풍 제단 신전은 gx 칸 가운데 축 좌우 대칭, 바닥 가운데 5칸은 거대 나무 구멍이라 한쪽 발판이다.
 - 특성 트리: 잠긴 칸은 **열린 칸(배웠거나 배울 수 있는 칸)과 선으로 이어진 것만** 보이고, 나머지는 빈 점선 틀만 남는다(ui.js `refreshTree` · `.unseen`).
 - 하늘: 해의 높이로 노을(gold)을 매기고 하늘·원경 안개(`skyHaze`)가 같이 물든다(`drawSky`·`drawSun`).
 - 동굴에는 **갈래**가 있다(data.js `CAVE_TYPES` · world.js `buildCaveZones`) — 60×55 칸 구역마다
