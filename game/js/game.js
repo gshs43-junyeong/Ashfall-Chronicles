@@ -5294,8 +5294,9 @@ const G = {
       if (zone === 'village' || zone === 'camp') ev = this.eventSpec();
     }
     /* ---- 노을 ---- */
-    const ang = (this.dayT / 1440) * TAU - Math.PI / 2;
-    const sunUp = Math.sin(ang), sunX = this.W / 2 + Math.cos(ang) * this.W * .42;
+    /* 땅 위에 설 때 0 — camY 그대로 쓰면 지표 깊이(수천 px)만큼 해가 화면 밖으로 밀려 한낮 해가 잘렸다 */
+    const skyDy = clamp((camY + this.H / 2 - surfPx) * .05, -this.H * .3, this.H * .3);
+    const sunU = this.skyArc(1), sunUp = Math.sin(Math.PI * sunU), sunX = this.W / 2 + Math.cos(Math.PI * sunU) * this.W * .42;
     const gold = clamp(1 - Math.abs(sunUp - 0.02) / 0.32, 0, 1) * (ev ? 0.4 : 1);
     if (ev) { top = mixHex(top, ev.tint, ev.tintAmt); bot = mixHex(bot, ev.tint, ev.tintAmt * 0.7); }
     let mid = mixHex(top, bot, 0.55);
@@ -5314,7 +5315,7 @@ const G = {
       // 해 쪽 지평선이 더 달아오른다 — 노을은 하늘 전체가 아니라 해가 있는 쪽이 짙다
       if (gold > 0.02) {
         /* ★ 달아오른 자리는 해보다 **위**(화면 0.5)에 둔다. */
-        const hy = this.H * .5 - camY * .05;
+        const hy = this.H * .5 - skyDy;
         const hg = c.createRadialGradient(sunX, hy, 0, sunX, hy, this.W * .8);
         hg.addColorStop(0, `rgba(255,176,96,${0.6 * gold})`);
         hg.addColorStop(0.4, `rgba(240,130,110,${0.25 * gold})`);
@@ -5334,13 +5335,12 @@ const G = {
       }
       /* ---- 해와 달 ---- */
       for (const sun of [1, 0]) {
-        const a = sun ? ang : ang + Math.PI;
-        const up = Math.sin(a);
+        const u = sun ? sunU : this.skyArc(0), up = Math.sin(Math.PI * u);
         const al = clamp((up + 0.04) / 0.16, 0, 1);       // 지평선 조금 아래까지 — 원경 뒤로 넘어간다
         if (al <= 0) continue;
-        const bx = this.W / 2 + Math.cos(a) * this.W * .42;
-        // 지평선을 0.80 → 0.70 으로 올렸다 — 노을 녘 해가 능선 위에 조금 더 오래 머문다
-        const by = this.H * .70 - up * this.H * .55 - camY * .05;
+        const bx = this.W / 2 + Math.cos(Math.PI * u) * this.W * .42;   // u 0 = 오른쪽(동) → 1 = 왼쪽(서)
+        /* 높이는 √up — 선형이면 아침·저녁 내내 숲 원경(화면 0.15~0.5) 뒤에 숨어 한낮에만 보였다 */
+        const by = this.H * .52 - (up > 0 ? Math.sqrt(up) : up) * this.H * .40 - skyDy;
         if (sun) this.drawSun(c, bx, by, al, gold);
         else this.drawMoon(c, bx, by, al);
       }
@@ -5357,6 +5357,14 @@ const G = {
       /* 땅속에서는 원경이 씻길 색도 땅속 색이다 — 하늘색을 그대로 두면 지옥의 먼 바위가 파랗게 물든다 */
       this.skyHaze = deep ? '#4a1408' : '#06060a';
     }
+  },
+  /** 해(1)·달(0)이 하늘을 건넌 몫 — 0 = 동쪽 지평선(화면 오른쪽), 1 = 서쪽 지평선. 밖이면 지평선 밑(sin 이 음수).
+      ★ 뜨고 지는 시각은 dayFactor 가 밝아지고(4~7시) 어두워지는(17~20시) 한가운데여야 한다 — 어긋나면
+      밝은 하늘에 해가 없거나, 해가 중천 가까이에서 갑자기 나타나 제멋대로 떠 보인다. */
+  skyArc(sun) {
+    const RISE = 330, SET = 1110;                         // 5:30 · 18:30
+    const t0 = sun ? RISE : SET, dur = sun ? SET - RISE : 1440 - SET + RISE, off = (1440 - dur) / 2;
+    return ((((this.dayT - t0 + off) % 1440) + 1440) % 1440 - off) / dur;
   },
   /** 해 — 넓은 햇무리 · 안쪽 광채 · 원반. */
   drawSun(c, x, y, al, gold) {
