@@ -68,7 +68,7 @@ All key bindings are configurable in Settings.
 
 ## Save model
 
-Progress lives in the browser's `localStorage`. There is no account or online sync.
+Progress lives in the browser (IndexedDB, gzip-compressed; `localStorage` where IndexedDB is unavailable). There is no account or online sync.
 
 - Do not rely on private/incognito browsing for persistent play.
 - Clearing site data removes that build's local save.
