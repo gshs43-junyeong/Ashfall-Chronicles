@@ -5804,6 +5804,24 @@ const G = {
     return cv;
   },
 
+  /** 바이옴 → 원경 그림 열쇠. 전용 그림이 없는 바이옴은 가장 덜 어긋나는 것으로 떨어뜨린다 */
+  bgKeyFor(b) {
+    return b === 'ice' ? 'parallax_snow' : b === 'corrupt' ? 'parallax_corrupt' : b === 'desert' ? 'parallax_desert'
+      // jungle·glowfen 전용 배경(parallax_jungle·parallax_glowfen)은 아직 그림이 없다.
+      // 파일이 들어오면 매니페스트 등록만으로 자동 전환되게 먼저 시도하고, 없으면
+      // (Sprites.img에 안 잡히면) forest로 대체한다 — 키를 무작정 바꾸면 그림이 오기
+      // 전까지 절차 생성 배경으로 떨어져 오히려 지금보다 못해 보이므로 이렇게 갈랐다.
+      : (b === 'jungle' && Sprites.img.parallax_jungle && Sprites.img.parallax_jungle.width) ? 'parallax_jungle'
+      : (b === 'glowfen' && Sprites.img.parallax_glowfen && Sprites.img.parallax_glowfen.width) ? 'parallax_glowfen'
+      /* 세션 3(바다·빙하)이 이 사슬에 빠져 있어서 **바다 위에 잿빛 숲 원경**이 떴다.
+         전용 그림이 오면 저절로 바뀌게 먼저 시도하고, 없는 동안은 숲 대신 설원으로
+         떨어뜨린다 — 바다·빙하 옆에 숲 지평선이 서는 것보다 훨씬 덜 어긋난다. */
+      : (b === 'sea' && Sprites.img.parallax_sea && Sprites.img.parallax_sea.width) ? 'parallax_sea'
+      : (b === 'glacier' && Sprites.img.parallax_glacier && Sprites.img.parallax_glacier.width) ? 'parallax_glacier'
+      : (b === 'sea' || b === 'glacier') ? 'parallax_snow'
+      : 'parallax_forest';
+  },
+
   drawParallaxArt(c, camX, camY, f) {
     const p = this.player;
     const zone = this.world.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
@@ -5828,32 +5846,32 @@ const G = {
          뒤에 서 있어야 하는 것은 그 숲이다(장이 지날수록 같이 잿빛이 된다).
          그림 파일은 지우지 않고 남겨 둔다 — 다시 쓰고 싶어지면 이 줄만 되살리면 된다. */
     else if (zone === 'village' || zone === 'camp') key = 'parallax_forest';
+    /* 바이옴 원경은 경계 양쪽 BG_BAND 칸에 걸쳐 두 그림을 **섞는다**. 카메라 가운데 칸 하나로
+       고르면 경계를 넘는 순간 뒤 배경이 통째로 바뀌어, 지형은 아직 정글(지형은 BIOME_BAND 104칸에
+       걸쳐 섞인다)인데 뒤에는 사막 산이 섰다. 섞는 비중은 경계에서 0.5 — 어느 쪽에서 넘어도 같다. */
+    let layers;
+    if (key) layers = [[key, 1]];
     else {
-      const b = this.world.biomeAt(clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1)).id;
-      key = b === 'ice' ? 'parallax_snow' : b === 'corrupt' ? 'parallax_corrupt' : b === 'desert' ? 'parallax_desert'
-        // jungle·glowfen 전용 배경(parallax_jungle·parallax_glowfen)은 아직 그림이 없다.
-        // 파일이 들어오면 매니페스트 등록만으로 자동 전환되게 먼저 시도하고, 없으면
-        // (Sprites.img에 안 잡히면) forest로 대체한다 — 키를 무작정 바꾸면 그림이 오기
-        // 전까지 절차 생성 배경으로 떨어져 오히려 지금보다 못해 보이므로 이렇게 갈랐다.
-        : (b === 'jungle' && Sprites.img.parallax_jungle && Sprites.img.parallax_jungle.width) ? 'parallax_jungle'
-        : (b === 'glowfen' && Sprites.img.parallax_glowfen && Sprites.img.parallax_glowfen.width) ? 'parallax_glowfen'
-        /* 세션 3(바다·빙하)이 이 사슬에 빠져 있어서 **바다 위에 잿빛 숲 원경**이 떴다.
-           전용 그림이 오면 저절로 바뀌게 먼저 시도하고, 없는 동안은 숲 대신 설원으로
-           떨어뜨린다 — 바다·빙하 옆에 숲 지평선이 서는 것보다 훨씬 덜 어긋난다. */
-        : (b === 'sea' && Sprites.img.parallax_sea && Sprites.img.parallax_sea.width) ? 'parallax_sea'
-        : (b === 'glacier' && Sprites.img.parallax_glacier && Sprites.img.parallax_glacier.width) ? 'parallax_glacier'
-        : (b === 'sea' || b === 'glacier') ? 'parallax_snow'
-        : 'parallax_forest';
+      const w = this.world, tx = clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1);
+      const i = w.biomeIndexAt(tx), bi = BIOMES[i], BG_BAND = 48;
+      let j = i, wt = 0;                                   // 이웃 바이옴과 그 비중
+      if (i > 0 && tx - bi.x0 < BG_BAND) { j = i - 1; wt = 0.5 - (tx - bi.x0) / (2 * BG_BAND); }
+      else if (i < BIOMES.length - 1 && bi.x1 - tx <= BG_BAND) { j = i + 1; wt = 0.5 - (bi.x1 - tx) / (2 * BG_BAND); }
+      const ka = this.bgKeyFor(bi.id), kb = this.bgKeyFor(BIOMES[j].id);
+      layers = (kb === ka || wt <= 0.01) ? [[ka, 1]] : [[ka, 1 - wt], [kb, wt]];
     }
-    const im = Sprites.img[key];
-    if (!im || !im.width) return false;
-    /* 잿빛 숲 원경만 장에 따라 색이 빠진다. 그림은 이미 다 죽은 회색으로 그려져 있어서
-       — 그게 8장의 모습이다 — 여기서 같은 밝기의 숲색을 만들어 두고 잿빛만큼
-       원본 쪽으로 되돌린다. 지형의 잎·풀과 같은 곡선을 타야 능선만 따로 노는 일이 없다. */
-    const src = key === 'parallax_forest' ? this.forestBg(im) : im;
+    const parts = [];
+    for (const [k, a] of layers) {
+      const im = Sprites.img[k];
+      if (!im || !im.width) continue;
+      /* 잿빛 숲 원경만 장에 따라 색이 빠진다. 그림은 이미 다 죽은 회색으로 그려져 있어서
+         — 그게 8장의 모습이다 — 여기서 같은 밝기의 숲색을 만들어 두고 잿빛만큼
+         원본 쪽으로 되돌린다. 지형의 잎·풀과 같은 곡선을 타야 능선만 따로 노는 일이 없다. */
+      parts.push({ key: k, a, im, src: k === 'parallax_forest' ? this.forestBg(im) : im });
+    }
+    if (!parts.length) return false;
     const af = '|' + Math.round(this.ashF() * 20);   // 숲 원경은 장마다 그림이 달라진다
 
-    const IW = im.width, IH = im.height;
     // 배경의 세로 위치는 camY(카메라의 실제 세계 y좌표) 하나로만 정한다. camY는 플레이어가
     // 점프해서 오르든, 지형이 솟아 걸어 올라가든 값이 똑같이 줄어든다 — 지형 고도가 오르면
     // camY가 줄고, 그만큼 baseY가 커져(=화면에서 더 아래로) 배경이 내려간다. 반대로 지형이
@@ -5865,37 +5883,38 @@ const G = {
     const refCamY = ref - this.H / 2;
     c.save();
     c.imageSmoothingEnabled = false;
-    let nearBaseY = 0, nearW = IW, nearOx = 0, nearSrc = src;
     const haze = this.skyHaze || '#a8c8e0';
     const dark = (1 - f) * 0.58;          // 밤에는 어두워진다 — 옅어지는 게 아니라
-    // 먼 층은 느리고 흐리게, 가까운 층은 빠르고 진하게
-    c.globalAlpha = 1;
     /* ★ 잿빛 숲의 먼 층이 **거의 흰색**이었다. 먼 층은 지평선 하늘색(낮 #a8c8e0)으로 55% 씻기는데,
        숲 원경은 그림 자체가 옅은 회색이라 씻고 나면 흰 종이처럼 떴다. 숲만 씻는 색을 푸른 녹회색
        쪽으로 당기고(하늘색 반 · 숲 그늘 반) 양을 줄여, 멀어도 숲의 색이 남게 한다.
        노을·밤에는 haze 자체가 물들므로 그 빛은 그대로 따라간다. */
-    const forest = key === 'parallax_forest';
-    const farHaze = forest ? mixHex(haze, '#4f7a6a', 0.5) : haze;
-    for (const [slot, spd, hz, dy, sc] of [[0, 0.16, forest ? .40 : .55, -54, 1.15], [1, 0.34, 0, 0, 1]]) {
-      const w = IW * sc, h = IH * sc;
-      const baseY = restY + (refCamY - camY) * spd;
-      const img = this.tintBg(src, slot, key + af, slot === 0 ? farHaze : haze, hz, dark);
-      let ox = -((camX * spd) % w);
-      if (ox > 0) ox -= w;
-      for (let x = ox; x < this.W; x += w) c.drawImage(img, x, baseY - h + dy, w, h);
-      if (spd === 0.34) { nearBaseY = baseY + dy; nearW = w; nearOx = ox; nearSrc = img; }
+    /* 먼 층은 느리고 흐리게, 가까운 층은 빠르고 진하게. 두 그림을 섞을 때는 **층 순서로** 그린다
+       (둘의 먼 층 → 둘의 가까운 층) — 그림 순서로 그리면 뒤 그림의 먼 산이 앞 그림의 가까운 숲을 덮는다.
+       물들인 판의 캐시 칸도 그림마다 따로(slot + 2·n) — 한 칸을 둘이 나눠 쓰면 매 프레임 다시 굽는다. */
+    for (const [slot, spd, dy, sc] of [[0, 0.16, -54, 1.15], [1, 0.34, 0, 1]]) {
+      parts.forEach((pt, n) => {
+        const forest = pt.key === 'parallax_forest';
+        const hz = slot === 0 ? (forest ? .40 : .55) : 0;
+        const tint = slot === 0 && forest ? mixHex(haze, '#4f7a6a', 0.5) : haze;
+        const IW = pt.im.width, IH = pt.im.height, w = IW * sc, h = IH * sc;
+        const baseY = restY + (refCamY - camY) * spd;
+        const img = this.tintBg(pt.src, slot + 2 * n, pt.key + af, tint, hz, dark);
+        let ox = -((camX * spd) % w);
+        if (ox > 0) ox -= w;
+        c.globalAlpha = pt.a;
+        for (let x = ox; x < this.W; x += w) c.drawImage(img, x, baseY - h + dy, w, h);
+        // 사막 분지 같은 저지대에서는 카메라가 내려가면서 근경 이미지의 바닥이 화면 바닥보다
+        // 위로 올라와, 그 아래로 빈 캔버스가 그대로 드러나는 틈이 생긴다. 이미지 맨 아래 한 줄
+        // 픽셀(경계와 맞닿는 바로 그 색)만 그대로 늘려 붙여서 이어붙인 자리가 티나지 않게 한다.
+        // (여러 줄을 통째로 늘리면 그 띠의 위쪽 끝이 경계에 오게 되어, 정작 경계와 맞닿는 색은
+        //  이미지의 몇 픽셀 안쪽 색이 되어버려 오히려 거기서 다시 끊겨 보인다.)
+        if (slot === 1 && baseY + dy < this.H) {
+          for (let x = ox; x < this.W; x += w) c.drawImage(img, 0, IH - 1, IW, 1, x, baseY + dy, w, this.H - baseY - dy);
+        }
+      });
     }
-    // 사막 분지 같은 저지대에서는 카메라가 내려가면서 근경 이미지의 바닥이 화면 바닥보다
-    // 위로 올라와, 그 아래로 빈 캔버스가 그대로 드러나는 틈이 생긴다. 이미지 맨 아래 한 줄
-    // 픽셀(경계와 맞닿는 바로 그 색)만 그대로 늘려 붙여서 이어붙인 자리가 티나지 않게 한다.
-    // (여러 줄을 통째로 늘리면 그 띠의 위쪽 끝이 경계에 오게 되어, 정작 경계와 맞닿는 색은
-    //  이미지의 몇 픽셀 안쪽 색이 되어버려 오히려 거기서 다시 끊겨 보인다.)
-    if (nearBaseY < this.H) {
-      c.globalAlpha = 1;
-      for (let x = nearOx; x < this.W; x += nearW) {
-        c.drawImage(nearSrc, 0, IH - 1, IW, 1, x, nearBaseY, nearW, this.H - nearBaseY);
-      }
-    }
+    c.globalAlpha = 1;
     c.restore();
     return true;
   },
