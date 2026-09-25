@@ -247,7 +247,9 @@ def polish(c):
 #   주름은 좌표로 정한 세로 줄(5칸마다 한 번 어둡게·밝게)이라 프레임이 바뀌어도 들끓지 않고, 밑단은 톱니.
 # 프레임별 (뒤로 끌림, 밑단 올라감): 0·1 서기 · 2~5 걷기 · 6 점프 · 7 낙하 · 8 대시 · 9~11 공격 · 12 피격
 CAPE_MOTION = {0: (0, 0), 1: (0, 0), 2: (2, 0), 3: (3, 1), 4: (2, 0), 5: (3, 1), 6: (2, 1), 7: (4, 4),
-               8: (3, 8), 9: (1, 0), 10: (2, 1), 11: (2, 1), 12: (2, 1)}
+               8: (16, 10), 9: (1, 0), 10: (2, 1), 11: (2, 1), 12: (2, 1)}
+AIR_FRAMES = (6, 7, 8)                               # 점프 · 낙하 · 대시
+AIR_ANCHOR = {6: 10, 7: 11, 8: 17}                   # 방랑자에서 잰 값(그리면서 다시 채운다)
 CAPE_HEX = ('20232e', '272a38', '35394b', '494e5e')   # 방랑자 망토색(어둡게→밝게)
 
 
@@ -280,11 +282,21 @@ def drape(c, f, pal, near=None):
     sway, lift = CAPE_MOTION[f]
     hem = feet - 3 - lift
     anchor = min(bx.get(y, 99) for y in range(top, top + 4))
+    # 공중·대시 장은 팔을 뒤로 뻗어 몸 왼끝이 팔끝이다 — 거기 매달면 망토가 몸에서 떨어져 난다.
+    # 이 장만 목도리(몸통) 기준으로 걸고, 팔 줄도 망토를 채운다(팔은 불투명이라 앞에 남는다).
+    air = f in AIR_FRAMES
+    if air and scarf:
+        anchor = min(x for y in range(FH) for x in range(FW) if c[y][x][3] and hx(c[y][x]) == '9c463f') - 2
+        AIR_ANCHOR[f] = anchor
+    elif air:
+        anchor = AIR_ANCHOR[f]                         # 목도리 색이 다른 캐릭터 — 자세는 방랑자와 같다
     new = []
     for y in range(top, hem + 1):
         t = (y - top) / max(1, hem - top)
         xl = round(anchor - (1.2 + 3.0 * t ** 0.85) - sway * t * t)
         xr = min(bx.get(y, anchor + 2), anchor + 2) if y > top + 3 else bx.get(y, anchor + 1)
+        if air:
+            xr = anchor + 2 if y > top + 3 else anchor + 1
         for x in range(max(1, xl), xr):
             if c[y][x][3] or (y == hem and (x + f) % 3 == 0):
                 continue
