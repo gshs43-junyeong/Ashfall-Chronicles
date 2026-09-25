@@ -12,10 +12,13 @@
 
 | 어디서 | 주소 앞부분 |
 |---|---|
-| 배포 사이트 | `https://ashfall-chronicles.vercel.app/play/` |
+| 배포 사이트 | `https://ashfall-chronicles.vercel.app/play/index.html` — 예: `…/play/index.html?debug=village` |
 | 로컬 | `game/` 폴더에서 `python3 -m http.server 8000` → `http://127.0.0.1:8000/` |
 | zip 빌드 | `index.html` 을 연 뒤 주소창 끝에 붙인다 |
 
+> ★ `…/play/?debug=…` 처럼 폴더 주소로 열지 말 것 — 배포 설정(`trailingSlash: false`)이 `/play` 로 돌려 css·js 가 404 가 된다.
+> 지금은 `vercel.json` 리다이렉트와 index.html 첫 줄 가드가 `/play/index.html` 로 되돌리지만, 문서의 주소는 파일 주소로 적는다.
+>
 > 배포 사이트에는 `bash tools/build-site.sh`로 빌드해 배포한 뒤에 반영된다. 새로 생긴 `?debug=factory`도 마찬가지다.
 
 ## 목록

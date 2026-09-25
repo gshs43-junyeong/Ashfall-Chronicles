@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ashfall Chronicles — 별이 잠든 땅</title>
+<script>
+/* ★ 주소가 폴더 이름으로 끝나면(/play — 배포는 trailingSlash:false 라 /play/ 를 /play 로 돌린다)
+   css/…·js/… 상대 경로가 사이트 뿌리로 풀려 전부 404 가 된다. 파일 주소로 다시 연다(쿼리 유지). */
+(function () {
+  var p = location.pathname;
+  if (location.protocol !== 'file:' && !/\/$/.test(p) && !/\.html?$/.test(p))
+    location.replace(p + '/index.html' + location.search + location.hash);
+})();
+</script>
 <!-- 아이콘을 안 적으면 브라우저가 /favicon.ico 를 제멋대로 찾아 404 가 콘솔에 남는다(진단 도구의
      '콘솔 오류 1'이 이것이었다). 사이트(site/home · download)와 같은 곡괭이 커서를 쓴다. -->
 <link rel="icon" href="assets/ui/cursor_pick.png">
