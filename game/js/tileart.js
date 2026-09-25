@@ -613,47 +613,43 @@ const TileArt = {
       return cv;
     });
   },
-  /** 야자 줄기 — ★ 칸 격자를 따른다: 칸 가운데 곧은 줄기, 이음줄(옆 칸으로 옮겨 가는 줄)은 두 칸이
-      같은 높이의 가로 띠로 이어지는 직각 굽이. 마디는 세계 좌표라 칸을 넘어 이어진다. */
+  /** 야자 줄기 — ★ 칸 격자를 따른다: 보통 칸은 가운데 곧은 줄기, 이음줄(옆 칸으로 옮겨 가는 줄)만
+      그 줄 두 칸 안에서 S자로 넘어간다(줄 위아래 끝에서 세로라 꺾인 데가 없다). 마디는 세계 y. */
   _palmTile(w, tx, ty) {
     const pw = (x, y) => w.get(x, y) === T.PALMWOOD;
     const U = pw(tx, ty - 1), D = pw(tx, ty + 1), L = pw(tx - 1, ty), R = pw(tx + 1, ty);
     const side = R ? 1 : L ? -1 : 0;
-    const leafUp = w.get(tx, ty - 1) === T.PALMLEAF;
-    // 세로로 이어지는 쪽: 아래(D 또는 밑동) · 위(U 또는 잎갓)
-    const down = D || (!side && TILE_DEF[w.get(tx, ty + 1)].solid === 1) || (!side && !U);
-    const up = U || leafUp || (!side && !D);
+    const top = U || w.get(tx, ty - 1) === T.PALMLEAF;
+    // 이음줄: 아래로 이어진 칸(lower)은 위 끝이 옆 칸 가운데, 위로 이어진 칸(upper)은 아래 끝이 옆 칸 가운데
+    const role = !side ? 0 : (D && !top) ? 1 : (top && !D) ? 2 : 0;
     const ground = !D && TILE_DEF[w.get(tx, ty + 1)].solid === 1;
-    const key = tx + ',' + ty + ':' + side + (+down) + (+up) + (+ground);
+    const key = tx + ',' + ty + ':' + side + role + (+ground);
     return this._cache('_pk', key, () => {
       const cv = document.createElement('canvas'); cv.width = cv.height = TS;
       const g = cv.getContext('2d'), img = g.createImageData(TS, TS), px = img.data;
       const base = [0x7a, 0x5a, 0x38];
       const mul = (c, k) => c.map(v => Math.min(255, Math.round(v * k)));
       const lt = mul(base, 1.2), dk = mul(base, .72), dk2 = mul(base, .52);
-      const A = 7, B = 16;                               // 줄기 폭(칸 가운데 9px) — 가로 띠도 같은 높이
-      const put = (x, y, c) => { const o = (y * TS + x) * 4; px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255; };
-      for (let y = 0; y < TS; y++)
+      const sm = t => t * t * (3 - 2 * t);
+      const cx = y => {                                  // 칸 안 y(0=위)의 줄기 가운데
+        const t = clamp((TS - y) / TS, 0, 1);
+        return role === 1 ? 11 + side * TS * sm(t) : role === 2 ? 11 + side * TS * (1 - sm(t)) : 11;
+      };
+      for (let y = 0; y < TS; y++) {
+        const c0 = cx(y + 0.5), slope = (cx(y - 1.5) - cx(y + 2.5)) / 4;
+        let hw = 4.5 * Math.sqrt(1 + slope * slope);      // 기울어도 줄기 굵기(수직 폭 9)는 같게
+        if (ground && y > TS - 6) hw += (y - (TS - 6)) * 0.9;
+        const gy = ty * TS + y;
         for (let x = 0; x < TS; x++) {
-          const gx = tx * TS + x, gy = ty * TS + y;
-          let a = A, b = B;
-          if (ground && y > TS - 6) { a -= (y - (TS - 6)) >> 1; b += (y - (TS - 6)) >> 1; }
-          const inV = x >= a && x < b && ((down && y >= A) || (up && y < B) || (down && up));
-          // 가로 띠 — 옆 칸 쪽 가장자리부터 가운데까지
-          const inH = side && y >= A && y < B && (side > 0 ? x >= A : x < B);
-          if (!inV && !inH) continue;
-          let c;
-          if (inV && !(inH && ((side > 0 && x >= B) || (side < 0 && x < A)))) {
-            const ring = ((gy % 5) + 5) % 5;
-            c = ring === 0 ? dk2 : ring === 1 ? lt : base;
-            if (x < a + 2 && ring) c = lt; else if (x >= b - 2) c = dk;
-          } else {
-            const ring = ((gx % 5) + 5) % 5;              // 가로 띠의 마디는 세로
-            c = ring === 0 ? dk2 : ring === 1 ? lt : base;
-            if (y < A + 2 && ring) c = lt; else if (y >= B - 2) c = dk;
-          }
-          put(x, y, c);
+          const u = x + 0.5 - c0;
+          if (Math.abs(u) > hw) continue;
+          const ring = ((Math.floor(gy - u * slope) % 5) + 5) % 5;   // 마디는 줄기 축에 수직
+          let c = ring === 0 ? dk2 : ring === 1 ? lt : base;
+          const e = 2 * Math.sqrt(1 + slope * slope);
+          if (u < -hw + e && ring) c = lt; else if (u > hw - e) c = dk;
+          const o = (y * TS + x) * 4; px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
         }
+      }
       g.putImageData(img, 0, 0);
       return cv;
     });
@@ -669,45 +665,69 @@ const TileArt = {
       }
     return null;
   },
-  /** 야자 잎 — ★ 잎 칸을 꽉 채운다(격자 밖으로는 안 그린다). 잎결은 닻에서 바깥·아래로 처지는 사선이
-      세계 좌표로 이어지고, 트인 가장자리만 톱니(아래)·뾰족한 끝(옆)으로 깎는다. */
+  /** 야자 잎 — 닻(줄기 꼭대기)에서 잎줄기를 촘촘히 뻗되 ★ 잎 칸이 끝나는 곳에서 멈춘다. 잎갓 한 장을
+      통째로 그리고(칸을 넘어 이어짐) 잎 칸은 제 몫만 잘라 쓰므로 윤곽은 잎 칸 계단을 따른다. */
   _palmLeafTile(w, tx, ty) {
-    const lf = (x, y) => w.get(x, y) === T.PALMLEAF;
-    const oT = !lf(tx, ty - 1), oB = !lf(tx, ty + 1), oL = !lf(tx - 1, ty), oR = !lf(tx + 1, ty);
-    const an = this._palmAnchor(w, tx, ty) || [tx, ty];
-    const key = tx + ',' + ty + ':' + [oT, oB, oL, oR].map(Number).join('') + an.join(',');
-    return this._cache('_pf', key, () => {
-      const cv = document.createElement('canvas'); cv.width = cv.height = TS;
-      const g = cv.getContext('2d'), img = g.createImageData(TS, TS), px = img.data;
-      const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-      const base = ART[T.PALMLEAF].c;
-      const C = [rgb(shade(base, .5)), rgb(shade(base, .72)), rgb(base), rgb(shade(base, 1.3)), rgb(shade(base, 1.55))];
-      const Ax = an[0] * TS + TS / 2, Ay = (an[1] + 1) * TS;
-      for (let y = 0; y < TS; y++)
-        for (let x = 0; x < TS; x++) {
-          const gx = tx * TS + x, gy = ty * TS + y;
-          const h = tileHash(gx, gy);
-          // 트인 가장자리 깎기 — 아래는 늘어진 잎끝 톱니, 위는 살짝 둥글게, 옆 끝은 아래로 처진 뾰족한 끝
-          if (oB && TS - 1 - y < 2 + ((gx * 7) % 5 < 2 ? 3 : 0) * (1 - h * 0.4)) continue;
-          if (oT && y < 1 + (tileHash(gx, 91) < 0.4 ? 1 : 0)) continue;
-          if (oL && x < (TS - y) * 0.45 - 2) continue;
-          if (oR && TS - 1 - x < (TS - y) * 0.45 - 2) continue;
-          if (oT && oL && x + y < 5) continue;
-          if (oT && oR && (TS - 1 - x) + y < 5) continue;
-          const dx = gx - Ax, dy = gy - Ay, ad = Math.abs(dx);
-          // 잎결 — 바깥으로 갈수록 아래로 처지는 사선(3px 줄) 을 5px 남짓한 작은 잎으로 끊는다
-          const sv = dy - ad * 0.55 + ad * ad * 0.004, si = Math.floor(sv / 3), st = sv - si * 3;
-          const along = ad + dy * 0.5 + tileHash(si, 57) * 5, di = Math.floor(along / 5);
-          const ang = Math.atan2(-dy, ad), rib = Math.abs(((ang * 5.5) % 1 + 1) % 1 - 0.5) < 0.06 && ad + Math.abs(dy) > 6;
-          let k = st < 1 || along - di * 5 < 0.9 ? 1 : [2, 3, 3, 2, 4][(tileHash(si, di) * 5) | 0];
-          if (k !== 1 && st > 2.2) k = Math.max(1, k - 1);             // 잎 아랫단은 그늘
-          if (h < 0.08) k = 4; else if (h > 0.94) k = 0;
-          if (rib) k = 0;
-          const c = C[k], o = (y * TS + x) * 4;
-          px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
-        }
-      g.putImageData(img, 0, 0);
+    const an = this._palmAnchor(w, tx, ty);
+    if (!an) {                                            // 줄기에서 떨어진 잎 — 제 칸만 잎결로
+      const cv = this._cache('_pf', 'lone', () => { const c = document.createElement('canvas'); c.width = c.height = TS; const g = c.getContext('2d'); g.fillStyle = ART[T.PALMLEAF].c; g.fillRect(2, 4, TS - 4, TS - 8); return c; });
       return cv;
+    }
+    const [ax, ay] = an, x0 = ax - 4, y0 = ay - 3;
+    let mask = '';
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 9; i++) mask += +(w.get(x0 + i, y0 + j) === T.PALMLEAF);
+    const cr = this._cache('_pc', ax + ',' + ay + ':' + mask, () => {
+      const cv = document.createElement('canvas'); cv.width = 9 * TS; cv.height = 4 * TS;
+      const g = cv.getContext('2d');
+      const inL = (x, y) => x >= 0 && y >= 0 && x < 9 * TS && y < 4 * TS && mask[((y / TS) | 0) * 9 + ((x / TS) | 0)] === '1';
+      const base = ART[T.PALMLEAF].c, lt = shade(base, 1.3), lt2 = shade(base, 1.55), dk = shade(base, .72), dk2 = shade(base, .5);
+      const O = [4.5 * TS, 4 * TS - 4];
+      const rr = new RNG('palm-' + ax + ',' + ay);
+      // 잎줄기 방향(도) — 옆으로 누운 것일수록 많이 처진다. 칸을 벗어나는 곳에서 멈춘다.
+      const ANG = [176, 165, 152, 139, 126, 112, 98, 84, 70, 56, 43, 30, 17, 5];
+      const fr = [];
+      for (const deg of ANG) {
+        const a = deg * Math.PI / 180, dx = Math.cos(a), dy = -Math.sin(a);
+        const droop = 0.004 + 0.016 * (1 - Math.abs(dy));
+        const pts = [];
+        for (let s = 0; s < 140; s += 1.5) {
+          const x = O[0] + dx * s, y = O[1] + dy * s + droop * s * s;
+          if (s > 4 && !inL(x, y)) break;
+          pts.push([x, y]);
+        }
+        fr.push(pts);
+      }
+      const clip = () => { for (let j = 0; j < 4; j++) for (let i = 0; i < 9; i++) if (mask[j * 9 + i] !== '1') g.clearRect(i * TS, j * TS, TS, TS); };
+      // 작은 잎 — 잎줄기 양옆으로 비스듬히 처진다(아랫면 먼저, 윗면 나중에 얹는다)
+      for (const pass of [0, 1])
+        for (const pts of fr) {
+          const n = pts.length;
+          for (let i = 2; i < n - 1; i += 2) {
+            const [x, y] = pts[i], [nx, ny] = pts[i + 1];
+            const ang = Math.atan2(ny - y, nx - x), t = i / n;
+            const len = (1 - t * 0.7) * (8 + rr.range(0, 3));
+            const sd = pass ? -1 : 1;
+            const la = ang + sd * 1.2;
+            g.strokeStyle = pass ? (i % 4 ? lt : lt2) : (i % 4 ? dk : base);
+            g.lineWidth = 1.7;
+            g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(la) * len, y + Math.sin(la) * len + len * 0.45); g.stroke();
+          }
+        }
+      for (const pts of fr) {
+        if (pts.length < 2) continue;
+        g.strokeStyle = dk2; g.lineWidth = 1.6;
+        g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+        for (const [x, y] of pts) g.lineTo(x, y);
+        g.stroke();
+      }
+      g.fillStyle = dk2; g.beginPath(); g.ellipse(O[0], O[1], 6, 4, 0, 0, Math.PI * 2); g.fill();
+      clip();
+      return { cv, x0, y0 };
+    });
+    return this._cache('_pf', tx + ',' + ty + ':' + ax + ',' + ay + ':' + mask, () => {
+      const c = document.createElement('canvas'); c.width = c.height = TS;
+      c.getContext('2d').drawImage(cr.cv, (tx - cr.x0) * TS, (ty - cr.y0) * TS, TS, TS, 0, 0, TS, TS);
+      return c;
     });
   },
   /** 이끼 바위 한 칸의 이끼 — ★ 칸 단위 띠가 아니라 **세계 좌표의 이끼 두께 장**을 칸마다 잘라 그린다. */
