@@ -1893,7 +1893,7 @@ const ENEMIES = {
   ash_vole:    { n: '잿들쥐', hp: 9, dmg: 0, def: 0, spd: 85, ai: 'critter', w: 14, h: 10, c: '#8a7a8c', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
 
-  slime:      { n: '잿빛 슬라임', hp: 34, dmg: 8, def: 0, spd: 34, ai: 'jumper', w: 24, h: 18, c: '#6f8ba0', xp: 9, gold: 3, biome: 'surface', aggro: 320,
+  slime:      { n: '잿빛 슬라임', hp: 34, dmg: 8, def: 0, spd: 34, ai: 'jumper', squish: 1, w: 24, h: 18, c: '#6f8ba0', xp: 9, gold: 3, biome: 'surface', aggro: 320,
                 drops: [['slime_gel', .9, 1, 3], ['potion_hp_small', .06, 1, 1]] },
   /* 좀비만 잡몹 중에 **플레이어 레벨을 탄다**(lvScale). */
   zombie:     { n: '떠도는 시체', hp: 60, dmg: 14, def: 2, spd: 30, ai: 'walker', w: 20, h: 40, c: '#5b7a52', xp: 16, gold: 6, biome: 'night', aggro: 460, lvScale: 0.5,

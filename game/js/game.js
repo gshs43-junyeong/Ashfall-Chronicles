@@ -5767,6 +5767,8 @@ const G = {
     }
     /* ★ 공격 직후는 atkPose 로 본다. */
     if (e.atkPose > 0) return 4;
+    /* 말랑한 몹(ENEMIES squish)은 공중에서 걷기 두 장을 번갈아 돌리면 떨어뜨린 상자처럼 보였다 — 오를 땐 늘어난 장, 내릴 땐 둥근 장. */
+    if (e.def.squish && !e.onGround) return e.vy < 0 ? 2 : 0;
     if (Math.abs(e.vx) > 6) return 2 + (Math.floor(this.time * 7) % 2);
     return Math.floor(this.time * 2.4) % 2;
   },
@@ -7982,6 +7984,18 @@ const G = {
       Sprites.draw(c, key, fr, bx, by - 1, fl);
       c.restore();
       c.filter = 'none';
+    }
+
+    /* 말랑한 몹 — 공중에선 속도만큼 세로로 늘고(최대 10%) 폭은 그만큼 준다. 부피가 같아 말랑하게 읽힌다. */
+    if (e.def.squish && !e.onGround && this.spritesOn && meta) {
+      const k = 1 + Math.min(0.1, Math.abs(e.vy) / 4000);
+      c.save();
+      c.translate(sx + e.w / 2, sy + e.h);
+      c.scale(1 / k, k);
+      c.translate(-(sx + e.w / 2), -(sy + e.h));
+      const ok = Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0);
+      c.restore();
+      if (ok) { this.drawEnemyOverlay(c, e, sx, sy, dy, meta, dx); return; }
     }
 
     /* 그림이 거의 안 움직이는 개체는(ENEMIES 의 stiff — 프레임 간 픽셀 차를 재서 골랐다) 렌더러가 대신 흔들어 준다. */
