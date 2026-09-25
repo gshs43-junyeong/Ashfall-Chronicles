@@ -348,6 +348,11 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   그림은 `tools/mkskyitems.py`. PNG 만 있는 아이템도 itemart 가 자리 칸을 만들어 준다(없으면 가방에 빈 칸이었다).
 - **채취탑**(잿빛 숲 대형 기계 그림): 자리는 world.js `placeRigs` 가 골라 object(type `'rig'`, 저장됨)로 세운다 — 발자국(data.js `RIG`)엔
   나무가 안 나고(생성·`regrow` 둘 다) 플레이어도 아무것도 못 놓는다(`world.inRig`). 세션 3(ch15) 부터 우클릭으로 해체 → `RIG.parts`.
+- **공장 기계**: 벨트·고속 벨트만 지나갈 수 있고 나머지 기계 타일은 전부 `solid: 1` 이다. 기계 타일에는 반드시 `mach:` 를
+  단다 — 빠지면 캤을 때 기계가 유령으로 남는다(가압기·증류기·고속 벨트·강화 축전지가 그랬다). 벨트 위 물건은 `pushTo` 가
+  `fx/fy/t0` 를 적고 그리기가 한 틱(`FAC_TICK`) 동안 미끄러뜨린다. 전력: 발전 → 소비 → 남으면 축전지(`MACHINE.store` 까지)
+  이고, 전주 범위에 선 플레이어도 소비자로 끼어 충전량이 찬다(`CHARGE_TICK`, `w.cover`). 배터리 셀은 `CELL_CHARGE` 만큼만 채운다.
+  `?debug=factory` 오른쪽에 여러 층 공장 둘(`buildDebugTowers`) — 배치는 docs/debug-urls.md.
   옛 세이브는 불러올 때 지금 지면으로 한 번 세운다. 그림은 game.js `drawRig`.
 - 마을 2단계의 괭이·낫·씨앗은 가방으로 준다(data.js `FARM_KIT`) — 밭 위 상자는 없앴다.
 - **하늘 섬**(world.js `buildSkyIslands` → `buildSkyTemple` · `buildSkyExtras`): 원래 섬 서른둘(섬마다 상자)에 더해 **제 난수**(`seed+'_sky'`)로

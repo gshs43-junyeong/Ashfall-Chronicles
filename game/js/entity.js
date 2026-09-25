@@ -267,13 +267,16 @@ class Player extends Ent {
   held() { return this.bag[this.sel]; }
 
   /* ---- 동력 장비의 전하 ---- */
+  /** 전하를 쓴다. 모자라면 가방의 충전된 배터리 하나를 **더한다**(CELL_CHARGE) — 남은 전하를 버리고 최대치로 채우면
+      부적으로 최대치를 늘린 사람만 배터리 한 개 값이 두 배가 됐다. 전주 곁에 서 있으면 망에서도 찬다(factory.js). */
   useCharge(n) {
     if (this.charge >= n) { this.charge -= n; return true; }
     if (!this.removeItem('battery_cell', 1)) return false;
-    this.charge = this.d.maxCharge;
+    this.charge = Math.min(this.d.maxCharge, this.charge + CELL_CHARGE);
     if (!this.addItem(makeItem('battery_empty', 1))) G.drops.push(new Drop(this.cx, this.cy, makeItem('battery_empty', 1)));
     G.toast('배터리를 갈아 끼웠다');
     UI.refreshBag();
+    if (this.charge < n) return false;
     this.charge -= n;
     return true;
   }
