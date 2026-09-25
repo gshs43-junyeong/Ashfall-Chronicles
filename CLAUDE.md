@@ -344,6 +344,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
 - `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1`이다.
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 엔진화·모듈 분리·TS·다국어·모바일·Docker — 계획과 단계별 프롬프트는
-  [`docs/v1.1.1-engine-plan.md`](docs/v1.1.1-engine-plan.md)(§8 결정 항목부터) / 그 밖에 조작 커스터마이징·설정·날씨 /
+  [`docs/v1.1.1-engine-plan.md`](docs/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
+  `World extends TileMap` · 번역 Claude/검수 Grok · 폰 가로+태블릿) / 그 밖에 조작 커스터마이징·설정·날씨 /
   v1.2.0 데코레이션·멀티플레이. 멀티플레이는 지금 구조(전역 `G` 하나 +
   브라우저 안 세이브 + 절차 생성 월드)와 정면으로 부딪히므로 구조 논의가 먼저다.
