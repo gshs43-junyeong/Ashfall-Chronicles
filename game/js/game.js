@@ -4868,6 +4868,7 @@ const G = {
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
         // 흐르는 액체 — 수위만큼만 (world.js '유체' 절)
         if (FLUID_FLOW[id]) { this.drawFlow(c, w, id, k, tx, ty, sx, sy); continue; }
+        if (id === T.FALLS) { this.drawFallsTile(c, tx, ty, sx, sy); continue; }
         /* 물에 뜬·잠긴 장식(수련·물풀·해초)은 그 칸 밑에 **진짜 물 타일**을 옆 물칸과 같은 프레임으로 먼저 깐다. */
         const ul = LEAVE_OF[id];
         if (ul) {
@@ -5736,6 +5737,27 @@ const G = {
       c.fillRect(sx, sy + TS - h, TS, 1);
       c.globalAlpha = 1;
     }
+  },
+
+  /** 폭포 한 칸 — 물줄기를 세계 y 에 걸고 시간만큼 **아래로** 민다(칸 경계에서 이어진다).
+      ★ 아틀라스 프레임을 돌리면 안 된다 — 프레임마다 줄기가 제멋대로라 위상(ty*0.4)과 겹쳐 물이 거슬러 오르는 듯 보였다. */
+  drawFallsTile(c, tx, ty, sx, sy) {
+    const t = this.time, top = ty * TS;
+    c.globalAlpha = 0.5; c.fillStyle = ART[T.FALLS].c; c.fillRect(sx, sy, TS, TS);
+    for (let i = 0; i < 7; i++) {
+      const h1 = tileHash(tx, i * 131 + 7), h2 = tileHash(tx, i * 131 + 8), h3 = tileHash(tx, i * 131 + 9);
+      const drop = i >= 5;                                  // 뒤 둘은 빠르고 짧은 물방울
+      const x = Math.round(h1 * (TS - 2)), wd = drop ? 1 : 1 + ((h2 * 2) | 0);
+      const P = drop ? 22 + h3 * 14 : 26 + h2 * 18, L = drop ? 3 + h3 * 2 : 9 + h3 * 12;
+      const off = ((t * (drop ? 190 : 120 + h3 * 50) + h2 * P) % P + P) % P;
+      c.globalAlpha = drop ? 0.55 : 0.28 + h2 * 0.3;
+      c.fillStyle = drop ? '#eaf6ff' : '#bfe3fa';
+      for (let y = off + Math.floor((top - L - off) / P) * P; y < top + TS; y += P) {
+        const y0 = Math.max(y, top), y1 = Math.min(y + L, top + TS);
+        if (y1 > y0) c.fillRect(sx + x, sy + y0 - top, wd, y1 - y0);
+      }
+    }
+    c.globalAlpha = 1;
   },
 
   /** 폭포 밑 물보라 — 물줄기가 수면·바닥에 닿는 칸에서 물방울이 튄다. */
