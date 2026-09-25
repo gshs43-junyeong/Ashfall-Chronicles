@@ -341,7 +341,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   물과 가른다(game.js `drawEnemy`). 걸을 때 발밑 흙먼지는 `walkDust`(그림만, 발 딛는 칸마다 절반쯤 한 톨).
 - **문**: 닫힌 문 = 옆모습(경첩 쪽 얇은 판, world.js `doorEdge` — 판정도 그 판만), 열린 문 = 칸을 채운 앞면(안 막음).
   그림(`drawDoor`)과 판정이 같은 `doorEdge` 를 쓴다 — 한쪽만 고치지 말 것. 사연: docs/code-history.md#h66
-- 효과음 `step`·`jump`·`jump2`·`door_open`·`door_shut` 은 부르는 자리가 이미 있다 — 파일을 넣으면 music.js `SFX_FILES` 에 한 줄만 더한다.
+- 효과음 `step`(걷기 박자마다)·`jump`·`jump2`(공중)·`door_open`·`door_shut` — 파일 앞 무음은 music.js `SFX_START` 로 건너뛴다.
 - 특성 트리: 잠긴 칸은 **열린 칸(배웠거나 배울 수 있는 칸)과 선으로 이어진 것만** 보이고, 나머지는 빈 점선 틀만 남는다(ui.js `refreshTree` · `.unseen`).
 - 하늘: 해의 높이로 노을(gold)을 매기고 하늘·원경 안개(`skyHaze`)가 같이 물든다(`drawSky`·`drawSun`).
 - 동굴에는 **갈래**가 있다(data.js `CAVE_TYPES` · world.js `buildCaveZones`) — 60×55 칸 구역마다

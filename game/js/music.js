@@ -152,8 +152,8 @@ const SFX_FILES = {
   hit_soul: 'hit_soul', hit_arcane: 'hit_arcane',
   hit_flesh: 'hit_flesh', hit_void: 'hit_void',
 
-  /* 몸짓 — step(걷기 박자마다) · jump · jump2(공중 점프) · door_open · door_shut 은 부르는 자리가 이미 있다.
-     파일을 넣을 때 여기에 한 줄 더한다 — 없는 파일을 적어 두면 켤 때마다 404 가 난다. 그전엔 조용하고 문만 합성음. */
+  /* 몸짓 — 발소리(걷기 박자마다) · 점프 · 공중 점프 · 문 */
+  step: 'step', jump: 'jump', jump2: 'jump2', door_open: 'door_open', door_shut: 'door_shut',
 
   /* 별 조각 — 얻을 때 · 다섯이 합쳐질 때 · 떠오를 때. */
   star_gain: 'star_gain', star_merge: 'star_merge', star_rise: 'star_rise'
@@ -206,7 +206,7 @@ const SFX_GAP = {
   step: 0.12
 };
 /* 키별 음량 배수 — 공장 상시음은 전투음보다 한참 작게 깔린다 */
-const SFX_VOL = { step: 0.35, jump: 0.6, jump2: 0.6, belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7,
+const SFX_VOL = { step: 0.8, jump: 0.6, jump2: 0.6, belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7,
   bubble: 0.5, detector: 0.45, ore_hit: 0.7, drown: 0.85, boom_small: 0.9, boom_big: 1,
   /* 별 조각 셋은 다른 효과음보다 길어서(0.9~1.5초) 같은 크기로 두면 그 동안 다른 소리를 전부 덮는다. */
   star_gain: 0.7, star_merge: 0.85, star_rise: 0.9,
@@ -214,7 +214,8 @@ const SFX_VOL = { step: 0.35, jump: 0.6, jump2: 0.6, belt: 0.3, drill: 0.45, sme
   hit_slash: 0.55, hit_pierce: 0.55, hit_blunt: 0.55, hit_crit: 0.7,
   hit_fire: 0.6, hit_frost: 0.6, hit_soul: 0.6, hit_arcane: 0.6 };
 /* 키별 재생 시작 지점(초). */
-const SFX_START = { hatch: 1.60 };
+/* jump 은 앞 0.15초가 무음이라 누른 뒤 늦게 들렸다(실측: 50ms 창 봉우리 200ms) · jump2 는 0.1초에 걸쳐 차오른다. */
+const SFX_START = { hatch: 1.60, jump: 0.12, jump2: 0.08 };
 
 const Sfx = {
   vol: 0.5,
