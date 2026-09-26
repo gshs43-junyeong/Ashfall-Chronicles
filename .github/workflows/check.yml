@@ -1,0 +1,29 @@
+name: Check
+
+# 회귀 검사(엔진화 계획 §6) — 문법 · 매니페스트 · 세계 생성 해시 · 동작 스크립트.
+# 스크린샷 대조는 글꼴·브라우저 판에 따라 글자 모양이 달라져 여기서는 건너뛴다(SKIP_SHOTS) — 로컬·Docker 에서 돌린다.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: npm run check
+        env:
+          SKIP_SHOTS: '1'
+        run: npm run check
