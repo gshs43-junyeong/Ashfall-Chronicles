@@ -52,7 +52,7 @@ for (const [f, m] of mods) {
     }
   })(m.ast);
   // 4) ctx 계약 — import { app as G } 로 받은 이름에서 무엇을 꺼내 쓰는가
-  const ctxImp = m.ast.body.find(n => n.type === 'ImportDeclaration' && n.source.value === './ctx.js');
+  const ctxImp = m.ast.body.find(n => n.type === 'ImportDeclaration' && /(^|\/)ctx\.js$/.test(n.source.value));
   if (!ctxImp) continue;
   const scope = m.sm.globalScope.childScopes[0];
   for (const s of ctxImp.specifiers) {
@@ -63,7 +63,11 @@ for (const [f, m] of mods) {
       const id = ref.identifier, p = id.parent;
       used.add(p && p.type === 'MemberExpression' && p.object === id && !p.computed ? p.property.name : '(값 그대로)');
     }
-    ((ctxUse[path.basename(f)] ||= {})[s.local.name] = [...used].sort());
+    /* 나눈 조각(ui/*.js)은 부모 모듈(ui.js) 이름으로 합쳐 센다 — 쪼개도 계약은 그대로여야 한다 */
+    const key = path.relative(LEGACY, f).split(path.sep).length > 1 ? path.relative(LEGACY, f).split(path.sep)[0] + '.js' : path.basename(f);
+    const slot = ((ctxUse[key] ||= {})[s.local.name] ||= []);
+    for (const u of used) if (!slot.includes(u)) slot.push(u);
+    slot.sort();
   }
 }
 
