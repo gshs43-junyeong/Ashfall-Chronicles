@@ -2035,6 +2035,7 @@ const G = {
     // 6. 광맥 위 드릴
     put(51, 'drill', 0, { coal: 30 }); put(52, 'crate');
     put(55, 'drill_e'); put(56, 'crate');
+    w.set(X0 + 58, gy + 1, T.GLACIUM); put(58, 'drill_x'); put(59, 'crate');   // 심층 드릴 — 세션 3 빙정석(등급 5)
     // 7. 4단계 설비 · 마을 설비
     put(61, 'pressor', 0, { steel_plate: 12, crab_shell: 16, sea_salt: 8 }); put(62, 'crate');
     put(64, 'desal', 0, { sand: 40, kelp: 30 }); put(65, 'crate');
@@ -3989,7 +3990,7 @@ const G = {
     this.toast(`업적 달성 — ${a.n}`, 'good');
     for (let i = 0; i < 24; i++)
       this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 1.0));
-    this.sfx('chapter');
+    this.sfx('ach');
     if (UI.open === 'quest') UI.refreshQuest();
   },
   /** 이벤트 중 처치 보상 배수 (경험치·금화) */
@@ -4751,6 +4752,7 @@ const G = {
     this.matBurst(mat, x, y, mach ? 14 : undefined, { spd: mach ? 1.2 : 1 });
     if (mach) this.matBurst('ember', x, y, 6, { spd: 1.4, life: 0.6 });   // 기계는 불티가 튄다
     this.sfx(mach ? 'break_machine' : MAT[mat].brk, this.strokeRate());
+    if (mach || (this.HEAVY[mat] && TILE_DEF[id].solid === 1)) this.thump(mach ? 1 : TILE_DEF[id].ore ? 0.9 : 0.7);
   },
   /* 죽을 때 — 보스는 **무엇으로 만들어졌는지**에 따라 다르게 무너진다(BOSS_DIE). */
   deathBurst(e) {
@@ -4788,6 +4790,31 @@ const G = {
     this.matBurst(mat, x, y, 1, { spd: 0.7, life: 0.6 });
     this.sfxAt(MAT[mat].hit, tx, ty,
       this.MINE_TICK_RATE * this.strokeRate(), this.MINE_TICK_VOL);
+    if (this.HEAVY[mat] && TILE_DEF[id].solid === 1) this.thump(TILE_DEF[id].ore ? 0.5 : 0.38);
+  },
+  HEAVY: { stone: 1, metal: 1, glass: 1, ember: 1, ice: 1, bone: 1 },
+  /** 묵직한 한 겹 — 파일 소리 위에 얹는 짧은 저음(140→48Hz)과 낮게 거른 잡음. 돌·광석·기계를 칠 때와 깰 때.
+      ★ 파일(mat_stone · ore_hit · mine)의 저음 비중이 0~3%(실측, 150Hz 아래 에너지)라 곡괭이가 가볍게만 들렸다. */
+  thump(power) {
+    const ac = this.ac; if (!ac) return;
+    const v = (window.Sfx ? Sfx.vol : 0.5) * power;
+    if (v < 0.005) return;
+    if (ac.state === 'suspended') ac.resume();
+    const t = ac.currentTime;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.13);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.22);
+    if (!this._thumpNoise) {
+      const b = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.09), ac.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+      this._thumpNoise = b;
+    }
+    const n = ac.createBufferSource(), f = ac.createBiquadFilter(), ng = ac.createGain();
+    n.buffer = this._thumpNoise; f.type = 'lowpass'; f.frequency.value = 650; ng.gain.value = v * 0.6;
+    n.connect(f); f.connect(ng); ng.connect(ac.destination); n.start(t);
   },
 
   /* ================= 효과음 ================= */
@@ -7150,13 +7177,8 @@ const G = {
     this._caveT = 0.35;
     const k = w.caveKindAt(tx, ty), C = CAVE_TYPES[k];
     this.caveHere = k;
-    // 갈래가 바뀌면 이름을 알린다 — 같은 갈래는 90초 안에 다시 안 띄운다
+    /* 갈래가 바뀌면 업적용으로만 센다 — 알림은 띄우지 않는다(구역이 60×55칸이라 굴 근처만 지나가도 떴다) */
     if (k && k !== this._caveLast) {
-      this._caveCard = this._caveCard || {};
-      if (this.time - (this._caveCard[k] || -1e9) > 90) {
-        this._caveCard[k] = this.time;
-        this.toast(`${C.n} — ${C.line}`, C.id === 'moss' ? 'good' : 'bad');
-      }
       this.tally = this.tally || {};
       (this.tally.caves = this.tally.caves || {})[C.id] = 1;
       this.checkAch();
@@ -8528,10 +8550,11 @@ const G = {
         }
       }
     }
-    // 조준선
+    // 조준선 — 캔버스에는 시야 배율이 걸려 있어 화면 좌표를 배율로 나눈다(안 나누면 100% 가 아닐 때 커서와 따로 놀았다)
+    const zv = this.viewZoom();
     c.strokeStyle = 'rgba(255,255,255,.35)';
     c.beginPath();
-    c.arc(this.input.mx, this.input.my, 5, 0, TAU); c.stroke();
+    c.arc(this.input.mx / zv, this.input.my / zv, 5 / zv, 0, TAU); c.stroke();
   },
 
   /* ---- 지도 색 (미니맵 · 전체 지도 공용) ---- */

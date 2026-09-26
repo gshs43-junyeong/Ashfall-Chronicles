@@ -2120,6 +2120,7 @@ window.SPRITE_MANIFEST = {
       "m_belt": "tile/tile_m_belt.png",
       "m_drill": "tile/tile_m_drill.png",
       "m_drill_e": "tile/tile_m_drill_e.png",
+      "m_drill_x": "tile/tile_m_drill_x.png",
       "m_pump": "tile/tile_m_pump.png",
       "m_smelter": "tile/tile_m_smelter.png",
       "m_gen": "tile/tile_m_gen.png",
