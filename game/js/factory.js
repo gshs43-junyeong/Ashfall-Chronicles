@@ -12,6 +12,7 @@ const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위', '오른쪽 위', '왼�
 const Factory = {
   /* 벨트 한 칸에 머무는 시간(초) — 물건도 벨트 무늬도 이 속도로 간다(일반 1칸/초 · 고속 2칸/초) */
   DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK },
+  ORE_HITS: 20,            // 드릴이 광맥 한 칸에서 캐는 최소 횟수
   CHARGE_TICK: 6,          // 플레이어 전주 충전 — 한 틱(0.125초)에 6 = 초당 48
 
   /* ================= 조회 / 설치 / 철거 ================= */
@@ -375,7 +376,7 @@ const Factory = {
     // 전력이 끊겼을 때 act를 내리면 안 된다 — 수요가 사라져 sat이 1로 돌아가고, 그러면 발전기 없이도 한 틱씩 공짜로 도는 톱니 현상이 생긴다
     else { step = this.sat(w, m); if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; } }
     m.act = 1;
-    if (m.prog < r.t) { m.prog += step; m.st = '가동'; }
+    if (m.prog < r.t) { m.prog += step; m.st = '가동'; if (s.fuelIn && Math.random() < 0.18) this.puff(m); }
     if (m.prog < r.t) return;
     if (this.outFull(m, r, cap)) { m.st = '출력 가득'; m.act = 0; return; }
     for (const k in r.out) this.bufAdd(m.out, k, r.out[k]);
@@ -395,6 +396,127 @@ const Factory = {
     if (!p.addItem(makeItem(m.it.id, 1))) return false;
     m.it = null;
     return true;
+  },
+
+  SHAKE: { drill: 1, drill_e: 1.3, press: 0.6, pressor: 0.8, gen: 0.5, pump: 0.4, mill: 0.5 },   // 일할 때 몸체 떨림(px)
+
+  /** 일하는 모습 — 기계마다 한 가지 움직임. 일하지 않으면(act 0) 그리지 않는다. */
+  drawWork(c, w, m, sx, sy, time, camX, camY) {
+    if (!m.on || !m.act) return;
+    const cx = sx + TS / 2, cy = sy + TS / 2, t = time + m.x * 0.37;
+    c.save();
+    switch (m.t) {
+      case 'drill': case 'drill_e': {
+        if (!m.tgt) break;
+        const elec = m.t === 'drill_e';
+        const gx = (m.tgt[0] + .5) * TS - camX, gy = (m.tgt[1] + .5) * TS - camY;
+        const ang = Math.atan2(gy - cy, gx - cx);
+        // 어느 광맥을 캐는지 — 옅은 점선이 흘러간다
+        c.globalAlpha = .3; c.strokeStyle = elec ? '#8fd0ff' : '#e8b060'; c.lineWidth = 1;
+        c.setLineDash([2, 3]); c.lineDashOffset = -t * 24;
+        c.beginPath(); c.moveTo(cx, cy); c.lineTo(gx, gy); c.stroke(); c.setLineDash([]);
+        c.globalAlpha = 1;
+        // 나사 비트 — 광맥 쪽으로 튀어나와 돈다(줄무늬가 뒤로 흐른다)
+        c.translate(cx, cy); c.rotate(ang);
+        const L = 8, ph = (t * (elec ? 44 : 20)) % 3;
+        c.fillStyle = '#6a6e76'; c.fillRect(7, -2.5, L, 5);
+        c.fillStyle = '#c8ccd4'; for (let x = 7 + ph; x < 7 + L; x += 3) c.fillRect(x, -2.5, 1, 5);
+        c.fillStyle = '#e0e4ea'; c.beginPath(); c.moveTo(7 + L, -2.5); c.lineTo(7 + L + 4, 0); c.lineTo(7 + L, 2.5); c.fill();
+        c.restore(); c.save();                                         // 회전을 풀고 광맥 쪽을 그린다
+        // 광맥의 금 — 남은 횟수가 줄수록 늘어난다(광상은 줄지 않으니 가는 금만)
+        const k = m.tgt[1] * WW + m.tgt[0], left = w.oreHits[k];
+        const tot = this.ORE_HITS + ((tileHash(m.tgt[0], m.tgt[1]) * 10) | 0);
+        const n = left === undefined ? 1 : 1 + Math.round((1 - left / tot) * 5);
+        c.strokeStyle = 'rgba(20,16,12,.75)'; c.lineWidth = 1;
+        c.beginPath();
+        for (let i = 0; i < n; i++) {
+          const h1 = tileHash(m.tgt[0] + i * 7, m.tgt[1]), h2 = tileHash(m.tgt[0], m.tgt[1] + i * 13);
+          const ax = gx - TS / 2 + 2 + h1 * (TS - 4), ay = gy - TS / 2 + 2 + h2 * (TS - 4);
+          c.moveTo(ax, ay); c.lineTo(ax + (h2 - .5) * 10, ay + (h1 - .5) * 10); c.lineTo(ax + (h1 - .5) * 14, ay + (h2 - .2) * 12);
+        }
+        c.stroke();
+        if (time - (m.hitT || -9) < 0.1) {                           // 캔 순간 번쩍
+          c.globalAlpha = .45; c.fillStyle = elec ? '#cfeaff' : '#fff0c0'; c.fillRect(gx - TS / 2, gy - TS / 2, TS, TS);
+        }
+        break;
+      }
+      case 'smelter': case 'oven': case 'gen': {                     // 불 — 아궁이 불빛이 일렁인다
+        const f = 0.55 + 0.45 * Math.sin(t * 13) * Math.sin(t * 7.3);
+        c.globalCompositeOperation = 'lighter';
+        c.globalAlpha = 0.35 + f * 0.35;
+        const g = c.createRadialGradient(cx, sy + TS - 5, 0, cx, sy + TS - 5, 11);
+        g.addColorStop(0, '#ffb050'); g.addColorStop(1, 'rgba(255,90,20,0)');
+        c.fillStyle = g; c.fillRect(sx - 2, sy + 4, TS + 4, TS);
+        c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+        c.fillStyle = f > .6 ? '#ffe08a' : '#ff9a3a';
+        c.fillRect(cx - 3 + Math.round(Math.sin(t * 9) * 1.5), sy + TS - 7, 2, 2);
+        break;
+      }
+      case 'press': case 'pressor': {                                // 피스톤 — 내려찍고 올라간다
+        const k = Math.max(0, Math.sin(t * (m.t === 'pressor' ? 5 : 6.5)));
+        const d = Math.round(k * k * 6);
+        c.fillStyle = '#9aa0a8'; c.fillRect(cx - 1, sy - 3, 2, 4 + d);
+        c.fillStyle = '#c8ccd4'; c.fillRect(cx - 6, sy + 1 + d, 12, 2);
+        c.fillStyle = '#5a5e66'; c.fillRect(cx - 6, sy + 3 + d, 12, 1);
+        break;
+      }
+      case 'assembler': {                                            // 팔 — 좌우로 집어 옮긴다
+        const a = -Math.PI / 2 + Math.sin(t * 3.2) * 0.9;
+        const ex = sx + 6 + Math.cos(a) * 9, ey = sy - 1 + Math.sin(a) * 9 + 9;
+        c.strokeStyle = '#d8b46a'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(sx + 6, sy + 8); c.lineTo(ex, ey); c.stroke();
+        c.fillStyle = '#e8e0c8'; c.fillRect(ex - 2, ey - 1, 4, 2);
+        break;
+      }
+      case 'refinery': case 'desal': {                               // 거품 — 창 안에서 오른다
+        c.fillStyle = m.t === 'desal' ? 'rgba(200,240,255,.8)' : 'rgba(255,230,160,.8)';
+        for (let i = 0; i < 4; i++) {
+          const q = (t * 9 + i * 4.3) % 12;
+          c.fillRect(sx + 6 + ((i * 5 + (q | 0)) % 10), sy + TS - 5 - q, 1.5, 1.5);
+        }
+        break;
+      }
+      case 'pump': {                                                 // 흔들대 — 끄덕이며 퍼 올린다
+        const a = Math.sin(t * 2.6) * 0.35;
+        c.translate(cx, sy - 1); c.rotate(a);
+        c.fillStyle = '#6a5a44'; c.fillRect(-9, -1.5, 18, 3);
+        c.fillStyle = '#8a7a60'; c.fillRect(-11, -3, 4, 6);
+        c.fillStyle = '#3a3026'; c.fillRect(8, 1, 1, 6 + Math.round(a * 8));
+        break;
+      }
+      case 'mill': {                                                 // 톱니 — 돈다
+        c.translate(cx, cy); c.rotate(t * 2.4);
+        c.fillStyle = '#b8a888';
+        for (let i = 0; i < 8; i++) { c.rotate(TAU / 8); c.fillRect(-1, -7, 2, 3); }
+        c.beginPath(); c.arc(0, 0, 4.5, 0, TAU); c.fill();
+        c.fillStyle = '#5a4a3a'; c.beginPath(); c.arc(0, 0, 1.5, 0, TAU); c.fill();
+        break;
+      }
+      case 'battery': case 'battery_hi': {                           // 충전 — 위로 흐르는 화살
+        const q = (t * 1.6) % 1;
+        c.fillStyle = '#9ff0c8'; c.globalAlpha = 1 - q;
+        const y = sy + TS - 6 - q * 10;
+        c.beginPath(); c.moveTo(cx, y - 3); c.lineTo(cx + 3, y); c.lineTo(cx - 3, y); c.fill();
+        break;
+      }
+    }
+    c.restore();
+  },
+
+  /** 캔 순간 — 광맥에서 파편이 튀고, 가까우면 땅이 조금 울린다(멀면 안 뿌린다) */
+  drillFx(bx, by, col) {
+    const p = G.player; if (!p || !G.parts) return;
+    const px = (bx + .5) * TS, py = (by + .5) * TS, d = Math.hypot(px - p.cx, py - p.cy);
+    if (d > 900) return;
+    for (let i = 0; i < 6; i++) G.parts.push(new Part(px, py, i % 2 ? col : '#8a8478', -70, .35, { g: 1, spd: .55 }));
+    if (d < 6 * TS) G.shake = Math.max(G.shake || 0, 1.5);
+  },
+  /** 연료 기계의 연기 한 덩이 — 굴뚝(칸 위)에서 느리게 오른다 */
+  puff(m) {
+    const p = G.player; if (!p || !G.parts) return;
+    const px = (m.x + .5) * TS, py = m.y * TS;
+    if (Math.hypot(px - p.cx, py - p.cy) > 900) return;
+    G.parts.push(new Part(px + (Math.random() - .5) * 6, py, 'rgba(120,114,108,.55)', -28, 1.4, { g: -0.12, sq: 0, r: 2.2, spd: 0.2, drag: 0.9 }));
   },
 
   /** 물건 그림의 칸 안 높이(px) — 가로 벨트는 띠 윗면(TS-9)에 얹히고, 세로·대각선·기계는 가운데쯤. */
@@ -475,8 +597,15 @@ const Factory = {
       const d = dx * dx + dy * dy;
       if (d < bestD) { bestD = d; best = [tx, ty, def.drop]; }
     }
-    if (!best) { m.cd = 0; m.st = '광맥 없음'; m.act = 0; return; }
-    w.set(best[0], best[1], T.AIR);
+    if (!best) { m.cd = 0; m.st = '광맥 없음'; m.act = 0; m.tgt = null; return; }
+    /* 광맥 한 칸 = 20~29번(칸마다 고정). 광상(rich)은 줄지 않는다 — 곡괭이로 캐면 몇 개에 그친다 */
+    const [bx, by] = best, k = by * WW + bx;
+    this.drillFx(bx, by, TILE_DEF[w.get(bx, by)].c);
+    if (!TILE_DEF[w.get(bx, by)].rich) {
+      if (w.oreHits[k] === undefined) w.oreHits[k] = this.ORE_HITS + ((tileHash(bx, by) * 10) | 0);
+      if (--w.oreHits[k] <= 0) { delete w.oreHits[k]; w.set(bx, by, T.AIR); }
+    }
+    m.tgt = [bx, by]; m.hitT = G.time;
     this.bufAdd(m.out, best[2], 1);
     m.cd = s.cycle;
     m.st = '채굴 중';
@@ -675,6 +804,13 @@ const Factory = {
         if (!m) continue;
         const sx = tx * TS - camX, sy = ty * TS - camY;
         const s = MACHINE[m.t];
+        if (m.t !== 'belt' && m.t !== 'belt_fast') {                  // 몸체(타일 그리기는 기계 칸을 건너뛴다) + 일하는 모습
+          const busy = m.on && m.act && this.SHAKE[m.t];
+          const jx = busy ? Math.round(Math.sin(time * 53 + tx) * this.SHAKE[m.t]) : 0;
+          const jy = busy && m.hitT !== undefined && time - m.hitT < 0.09 ? 1 : 0;   // 드릴이 한 번 캘 때마다 쿵
+          TileArt.draw(c, s.tile, (tileHash(tx, ty) * TileArt.V) | 0, sx + jx, sy + jy);
+          this.drawWork(c, w, m, sx, sy, time, camX, camY);
+        }
 
         /* 전주 몸통 — 타일이 아니라 **그림**이다 — 사연: docs/code-history.md#h39 */
         if (m.t === 'pole') {

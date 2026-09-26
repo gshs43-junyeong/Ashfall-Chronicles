@@ -62,6 +62,12 @@ ART[T.CACTUS_BLOCK] = { k: 'cactusblock', c: '#3a7a3a' };
 /* --- 동력 자원 --- */
 ART[T.COAL] = { k: 'ore', c: '#4e4e56', o: '#22212a' };
 ART[T.LEAD] = { k: 'ore', c: '#5d5d63', o: '#8e8ea4' };
+ART[T.COALRICH] = { k: 'ore', c: '#3e3e46', o: '#16151c', rich: 1 };
+ART[T.COPPERRICH] = { k: 'ore', c: '#5d5d63', o: '#d0803a', rich: 1 };
+ART[T.IRONRICH] = { k: 'ore', c: '#5d5d63', o: '#bcb0a0', rich: 1 };
+ART[T.LEADRICH] = { k: 'ore', c: '#5d5d63', o: '#a0a0b8', rich: 1 };
+ART[T.GOLDRICH] = { k: 'ore', c: '#5d5d63', o: '#f0c848', rich: 1, glow: 1 };
+ART[T.MYTHRILRICH] = { k: 'ore', c: '#5d5d63', o: '#5ac8ba', rich: 1, glow: 1 };
 ART[T.OILSHALE] = { k: 'oilshale', c: '#3b352c' };
 /* --- 기계 --- */
 ART[T.M_BELT] = { k: 'mk_belt', c: '#6a6a74', a: 1 };
@@ -1109,7 +1115,9 @@ const TileArt = {
         this._speck(g, ox, oy, rng, 16, dk2, lt2);
         // 광석 덩이
         const o = s.o, oL = shade(o, 1.4), oD = shade(o, .58);
-        const n = rng.int(4, 6);
+        /* 광상은 덩이가 칸을 거의 덮고 굵은 결이 가로지른다 — 멀리서도 보통 광맥과 가려진다 */
+        if (s.rich) { R(0, TS * .35, TS, TS * .3, oD); R(0, TS * .38, TS, 2, o); }
+        const n = s.rich ? rng.int(9, 12) : rng.int(4, 6);
         for (let i = 0; i < n; i++) {
           const x = rng.range(1, TS - 7), y = rng.range(1, TS - 6);
           const w = rng.range(4, 7), h = rng.range(3, 6);
