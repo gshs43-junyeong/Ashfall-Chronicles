@@ -1,8 +1,11 @@
 # CLAUDE.md — 이 저장소에서 일하는 AI를 위한 안내
 
-Ashfall Chronicles(별이 잠든 땅)는 빌드 도구 없이 도는 순수 HTML5 + JavaScript
-게임이다. `game/js/*.js` 열한 개가 전부고, 트랜스파일러도 번들러도 패키지 의존성도
-없다. **파일을 고치고 새로고침하면 그게 곧 실행 결과다.**
+Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다. 게임 코드의 **원본은
+`src/legacy/*.js` 열두 개**이고, `tools/bundle.mjs` 가 읽는 순서대로 이어 붙여 `game/js/ashfall.js`
+하나로 만든다(감싸지 않는다 — 전역 공유 그대로. 트랜스파일러·게임 의존성은 없다). **`npm run dev`
+를 켜 두면 고치고 새로고침하는 흐름 그대로다**(소스를 고치면 번들이 다시 만들어진다).
+번들은 커밋한다 — `game/` 만 받아도 빌드 없이 돈다. **소스를 고쳤으면 번들도 같이 커밋할 것**
+(`npm run check` · CI · `build.sh` 가 어긋나면 막는다). 엔진화 계획은 `docs/v1.1.1-engine-plan.md`.
 
 이 문서는 "어디에 무엇이 있는가"보다 **"무엇을 하면 조용히 망가지는가"**에 무게를
 둔다. 아래 §1의 규칙은 어기면 되돌릴 수 없는 피해(남의 세이브 파괴 등)가 나는
@@ -23,7 +26,7 @@ Ashfall Chronicles(별이 잠든 땅)는 빌드 도구 없이 도는 순수 HTML
 - 번호를 **재사용하지 않는다.** 쓰지 않게 된 타일도 자리를 비워 두고 놔둔다.
 
 > 실제 사고: 두 갈래에서 각자 125번부터 붙이다가 정면으로 부딪혀, 나중 것을
-> 155~171로 통째로 밀어야 했다(커밋 2b2f91f). 먼저 `grep -n 'SPOREVENT\|TIDESTONE' game/js/data.js`
+> 155~171로 통째로 밀어야 했다(커밋 2b2f91f). 먼저 `grep -n 'SPOREVENT\|TIDESTONE' src/legacy/data.js`
 > 로 **현재 최대 번호를 확인하고 시작할 것.**
 
 ### 1-2. 타일은 `world.set()`으로만 바꾼다
@@ -100,25 +103,25 @@ const SHIFT = 800;   // data.js — world.js보다 먼저 읽혀야 해서 여�
 
 | 경로 | 내용 |
 |---|---|
-| `game/` | 게임 본체. 이 폴더만 정적 서버에 올리면 그대로 돈다 |
-| `game/js/data.js` | 타일·아이템·몹·제작법·챕터·업적 — **표만 있는 곳** (5,900줄) |
-| `game/js/world.js` | 결정론적 월드 생성 · 직렬화 · 마을/유적/바다 (4,400줄) |
-| `game/js/game.js` | 게임 루프 · 입력 · 그리기 · 세이브 (7,300줄) |
-| `game/js/entity.js` | 플레이어·몹·투사체 물리 |
-| `game/js/tileart.js` · `itemart.js` | 절차 생성 그림(아틀라스) |
-| `game/js/ui.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` | 그 이름대로 |
+| `game/` | 실행 폴더. 이 폴더만 정적 서버에 올리면 그대로 돈다(`js/ashfall.js` 는 **산출물**) |
+| `src/legacy/data.js` | 타일·아이템·몹·제작법·챕터·업적 — **표만 있는 곳** (5,700줄) |
+| `src/legacy/world.js` | 결정론적 월드 생성 · 직렬화 · 마을/유적/바다 (5,300줄) |
+| `src/legacy/game.js` | 게임 루프 · 입력 · 그리기 · 세이브 (8,800줄) |
+| `src/legacy/entity.js` | 플레이어·몹·투사체 물리 |
+| `src/legacy/tileart.js` · `itemart.js` · `sprites.js` | 절차 생성 그림(아틀라스) · 스프라이트 로더 |
+| `src/legacy/ui.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` | 그 이름대로 |
+| `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵). `--check` 어긋남 검사 · `--watch` |
+| `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/` |
 | `game/assets/manifest.json` | **애셋 원본 목록** |
 | `game/assets/sprites-manifest.js` | 위의 **자동 생성물** — 손으로 고치지 말 것 |
 | `site/` | 배포 사이트. 빌드하면 `game/`이 `site/play/`로 복사된다 |
 | `tools/` | zip 빌드·애셋을 굽고 재는 파이썬 도구들 |
 | `docs/` | 변경 사항 · 세션 규약 · 코드의 사연(`code-history.md`) · 배포 캐시 · 시스템 요구사항 |
 
-> **리포가 원본이다.** v1.1까지는 저장소 밖의 평면 작업본에서 고쳐 옮겼지만(그 스크립트는 지웠다),
-> 2026-09-20부터는 `game/`에서 바로 고친다.
+> **리포가 원본이다.** 게임 코드는 `src/legacy/` 에서 고친다 — `game/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
 
-읽는 순서(`game/index.html` 기준):
-`util → data → world → tileart → itemart → titlebg → sprites-manifest →
-sprites → entity → factory → ui → music → game`
+읽는 순서(`tools/bundle.mjs` 의 `ORDER`): `sprites-manifest`(번들 밖, 먼저) →
+`util → data → world → tileart → itemart → titlebg → sprites → entity → factory → ui → music → game`
 
 `data.js`의 상수를 `world.js`가 쓰므로 **`data.js`가 먼저**다. `SHIFT`가
 world.js가 아니라 data.js에 있는 것도 그래서다.
@@ -200,7 +203,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 1. **월드 생성 회귀** — 노드에서 여러 시드를 돌려 예외·누락을 먼저 잡는다.
    `World`를 만들고 `generate()`를 부른 뒤 `w.ruins`·타일 히스토그램을 찍어
    보면 "유적이 안 생겼다" 같은 것이 바로 드러난다.
-2. **문법** — `node --check game/js/*.js`.
+2. **문법** — `npm run test:syntax` (src/legacy · 번들 · 매니페스트를 `node --check`, 번들이 소스와 같은지).
 3. **브라우저** — 정적 서버를 띄우고 실제로 본다. 콘솔 오류 0을 확인하고,
    `?debug=village&sess=3&plv=45` 같은 바로가기로 해당 구역까지 간다.
 4. **스크린샷으로 눈으로 확인.** 겹침·공중 부양·안 보이는 몹은 수치로 안 잡힌다.

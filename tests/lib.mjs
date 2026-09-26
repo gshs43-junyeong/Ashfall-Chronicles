@@ -25,7 +25,7 @@ export function serve(dir = GAME) {
     res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
     fs.createReadStream(f).pipe(res);
   });
-  return new Promise(r => srv.listen(0, '127.0.0.1', () => r({ srv, url: `http://127.0.0.1:${srv.address().port}` })));
+  return new Promise(r => srv.listen(+process.env.PORT || 0, '127.0.0.1', () => r({ srv, url: `http://127.0.0.1:${srv.address().port}` })));
 }
 
 /* Playwright 가 제 판의 브라우저를 못 찾으면(내려받기를 막은 환경) PW_CHROMIUM 이나 설치된 크로미움으로 띄운다. */
@@ -50,6 +50,7 @@ export const DETERMINISM = (seed = 1234) => `(() => {
   window.requestAnimationFrame = cb => { q.push(cb); return q.length; };
   window.cancelAnimationFrame = () => {};
   window.__step = (n = 1) => { for (let i = 0; i < n; i++) { now += 1000 / 60; const run = q; q = []; for (const cb of run) cb(now); } };
+  window.__reseed = n => { s = n >>> 0; };   // 난수를 다시 씨앗부터 — 부팅에 걸린 프레임 수와 상관없이 같은 장면을 만들 때
   window.__deterministic = true;
   /* CSS 전이·애니메이션은 진짜 시간으로 돈다 — 첫 장에 멈춰 둔다(로딩 화면이 걷히는 0.45초에 찍히면 화면 전체가 달랐다). */
   addEventListener('DOMContentLoaded', () => { const st = document.createElement('style');

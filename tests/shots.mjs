@@ -11,6 +11,7 @@ if (process.env.SKIP_SHOTS) { console.log('- 스크린샷 대조 건너뜀(SKIP_
 
 const DIR = path.join(BASE, 'shots');
 const TOL = 0.004;                               // 달라도 되는 화소 비율(0.4%) — 글자 안티에일리어싱 정도
+const ONLY = process.env.SHOTS_ONLY ? process.env.SHOTS_ONLY.split(',') : null;   // 몇 장만: SHOTS_ONLY=title,start
 const CASES = [
   { id: 'title', q: '', title: true },
   { id: 'newgame', q: '', form: true },
@@ -30,6 +31,7 @@ const { srv, url } = await serve();
 const b = await browser();
 let bad = 0;
 for (const c of CASES) {
+  if (ONLY && !ONLY.includes(c.id)) continue;
   const page = await b.newPage({ viewport: { width: 1280, height: 720 } });
   await page.addInitScript(DETERMINISM(99));
   const errs = collectErrors(page);
@@ -40,7 +42,10 @@ for (const c of CASES) {
     /* 장 카드 → 4초 뒤 도입 대사(진짜 setTimeout)가 뜬다. 뜰 때까지 기다렸다 닫고 찍는다 — 안 그러면 찍힌 판마다 대사창이 있다 없다 했다. */
     await page.waitForTimeout(4800);
     await page.evaluate(() => { G.player.iframe = 1e9; for (let i = 0; i < 3; i++) { if (UI.dlg) UI.closeDialogue(); __step(60); } });
-  } else await page.evaluate(() => __step(60));
+  } else {
+    /* 부팅을 기다리는 동안 돈 프레임 수가 판마다 달라 눈송이 자리가 달랐다(0.35%) — 타이틀 배경을 씨앗부터 다시 깐다. */
+    await page.evaluate(() => { __reseed(5); TitleBG.flakes = []; TitleBG.t = 0; TitleBG.last = 0; TitleBG.init(); __step(60); });
+  }
   /* 진짜 시간(setTimeout)으로 떴다 사라지는 것 — 장·구역 이름 카드와 알림 — 은 찍지 않는다. 찍히는 때가 판마다 달라 흔들렸다. */
   await page.addStyleTag({ content: '#chapter-card,#toasts{visibility:hidden!important}' });
   const buf = await page.screenshot();

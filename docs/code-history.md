@@ -7,7 +7,7 @@
 - 줄 번호는 옮길 때의 것이라 코드가 바뀌면 어긋난다 — `#hN` 으로 찾을 것.
 - 새 사연도 같은 방식으로: 코드에는 지킬 것과 `사연: …#hN` 한 줄, 여기에는 번호를 이어 붙인 절.
 
-## game/js/data.js
+## src/legacy/data.js
 
 <a id="h1"></a>
 ### h1 — `data.js` · `leafDrop` · 306줄
@@ -247,7 +247,7 @@
 > 실측: 조리법 배율 중앙 0.57 → 1.32, 뒤집힌 것 121개 → 19개.
 > 자세한 것은 docs/v1.1-changelog.md 4절.
 
-## game/js/entity.js
+## src/legacy/entity.js
 
 <a id="h23"></a>
 ### h23 — `entity.js` · `out` · 122줄
@@ -392,7 +392,7 @@
 > 물결 높이(G.surfacePx — 그리는 쪽과 같은 식)를 따라가므로 파도를 타고, 흐르는 물에서는
 > 물살에 떠내려간다. 수면에서 3칸보다 깊으면 천천히 떠오르기만 한다.
 
-## game/js/factory.js
+## src/legacy/factory.js
 
 <a id="h39"></a>
 ### h39 — `factory.js` · `s` · 564줄
@@ -404,7 +404,7 @@
 > 잇는다 — 충돌·채굴·심기 어디에도 걸리지 않는다.
 > mk_pole 타일 그림과 기둥 폭(4px)·하이라이트를 맞춘다.
 
-## game/js/game.js
+## src/legacy/game.js
 
 <a id="h40"></a>
 ### h40 — `game.js` · `at` · 446줄
@@ -793,7 +793,7 @@
 > 알림이라 밤낚시에서 안 보이면 놓친다. 예전에는 느낌표도 찌와 함께 조명 밑에 깔려
 > 있었고, 챔질하면 보너스가 붙는 그 1.0~1.6초 창은 화면 어디에도 없었다.
 
-## game/js/music.js
+## src/legacy/music.js
 
 <a id="h78"></a>
 ### h78 — `music.js` · `SFX_FILES` · 153줄
@@ -810,7 +810,7 @@
 > 쓰면 무엇에 맞았는지가 아니라 "무슨 소리지"가 되어 한 박자 늦는다.
 > 0.42 는 내가 때리는 소리(배수 1)의 절반이 채 안 된다.
 
-## game/js/tileart.js
+## src/legacy/tileart.js
 
 <a id="h80"></a>
 ### h80 — `tileart.js` · 128줄
@@ -909,7 +909,7 @@
 > 투명을 칠하는 건 아무 일도 안 한다 — 실제로 화면에서는 네모난 초록 덩어리가
 > 그대로 남았다. 픽셀을 없애려면 clearRect라야 한다.
 
-## game/js/titlebg.js
+## src/legacy/titlebg.js
 
 <a id="h89"></a>
 ### h89 — `titlebg.js` · `init` · 52줄
@@ -925,7 +925,7 @@
 > 그 한 번이 실패했을 때 되돌릴 길이 없다. 시점이 아니라 구조 문제였다.
 > 이제 바깥에서 아무도 안 불러 줘도, 그림이 준비되는 순간 제가 알아서 붙는다.
 
-## game/js/ui.js
+## src/legacy/ui.js
 
 <a id="h90"></a>
 ### h90 — `ui.js` · `p` · 566줄
@@ -1004,7 +1004,7 @@
 > 칸 수 표기 — 가방은 "가방이 몇 칸 늘어난다", 저장 상자는 "상자에 몇 칸이 있다"로
 > 뜻이 다르다. 예전엔 둘 다 "+24 가방 칸"이라 상자가 가방을 늘려 주는 것처럼 읽혔다.
 
-## game/js/util.js
+## src/legacy/util.js
 
 <a id="h100"></a>
 ### h100 — `util.js` · `h` · 158줄
@@ -1016,7 +1016,7 @@
 > 두 범위 다 JSON 이 이스케이프하지 않는 평범한 글자이고 대리쌍(U+D800~) 근처에도 안 간다.
 > 맨 앞의 'r1' 이 표시다. 옛 세이브(숫자 배열)도 rleDecode 가 그대로 읽는다.
 
-## game/js/world.js
+## src/legacy/world.js
 
 <a id="h101"></a>
 ### h101 — `world.js` · `CAMP_X0` · 24줄
