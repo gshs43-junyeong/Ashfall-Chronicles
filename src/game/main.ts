@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== main.js — 묶는 입구: 모듈을 읽는 순서 + 디버그 창구 ===== */
 /* ★ 순서가 곧 읽히는 순서다 — 각 모듈은 앞 모듈만 import 하므로(tests/modules.mjs 가 막는다) 이 줄 순서대로 돈다. */
 import * as e_math from '../engine/core/math.js';

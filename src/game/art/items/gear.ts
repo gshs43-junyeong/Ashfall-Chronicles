@@ -1,10 +1,9 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== art/items/gear.js — 무기 · 낚싯대·물고기 · 방어구 · 장신구 ===== */
 import { TAU } from '../../../engine/core/math.js';
 import { ITEM_PAINT, sh2 } from '../../itemart.js';
 /* itemart.js Art.paint 의 갈래들 — 읽히는 순간 ITEM_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 Art. */
 
-export const ItemPaintGear = {
+export const ItemPaintGear: Bag = {
   /* ---------- 무기 ---------- */
   sword(H) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;

@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/act.js — 좌클릭 · 우클릭 · 농사 · 설치물 · 문 ===== */
 import { aabb, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -17,7 +16,7 @@ import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const ActPart = {
+export const ActPart: Bag = {
 
   /* ================= 좌클릭: 채굴 또는 공격 ================= */
   leftHold(dt) {
@@ -415,7 +414,7 @@ export const ActPart = {
       if (!OBJ_SIZE[o.type] && o.type !== 'npc') continue;
       if (aabb(box, { x: o.x, y: o.y, w: o.w, h: o.h })) { this.toast(tr('그 자리에는 놓을 수 없다'), 'bad'); return; }
     }
-    const o = {
+    const o: Bag = {
       type: d.obj, placed: 1,
       x: Math.round(x0 * TS + (tw * TS - s.w) / 2), y: (ty + 1) * TS - s.h, w: s.w, h: s.h
     };

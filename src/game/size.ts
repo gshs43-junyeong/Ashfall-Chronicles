@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== size.js — 세계 크기(소형·중형·대형)와 좌표 예산 ===== */
 /* ★ data.js(표 — 업적 깊이·유적 좌표)와 world.js(생성)가 둘 다 읽는 값이라 둘보다 먼저 읽히는 여기에 둔다.
    let 은 이 파일의 applyWorldSize 만 고쳐 쓴다 — 다른 파일에서 대입하면 모듈로 옮길 때 깨진다. */
@@ -33,7 +32,7 @@ export let SEA_X1 = 430;            // 가라앉은 바다 — 여기부터 왼�
 export let GLACIER_X1 = SHIFT;      // 빙하 지대 오른쪽 끝 = 원래 세계가 시작하는 자리
 
 /* 바이옴. */
-export const BIOMES = [
+export const BIOMES: Bag[] = [
   { id: 'sea', x0: 0, x1: SEA_X1, n: '가라앉은 바다',
     card: { sub: '가장 먼 서쪽', line: '물이 지운 쪽. 숨을 셈하며 내려가는 곳.' },
     air: { c: '#2f7fb8', a: 0.22 } },

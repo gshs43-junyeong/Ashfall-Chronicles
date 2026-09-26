@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== entity.js — 아이템 인스턴스 / 플레이어 / 적 / 투사체 ===== */
 import { app as G, ui as UI } from './ctx.js';
 import { TAU, aabb, angleTo, clamp, dist, dist2, lerp } from '../engine/core/math.js';
@@ -31,7 +30,7 @@ export const VAULT_SIZE = 60;   // 여명 마을 보관고 (가방과 별개로 
 export function makeItem(id, count = 1, rarity = 0, affixes = null) {
   const def = ITEMS[id];
   if (!def) { console.warn('unknown item', id); return null; }
-  const it = { id, c: count, r: rarity | 0 };
+  const it: Bag = { id, c: count, r: rarity | 0 };
   if (affixes && affixes.length) it.a = affixes;
   return it;
 }
@@ -134,8 +133,11 @@ export function rollChest(tier, rng, source) {
 /* ================= 기본 엔티티 ================= */
 /* 칸 충돌 이동은 엔진(Entity)이 하고, 물(부력·끌림·물살·폭포)과 계단 높이는 여기서 끼운다. */
 export class Ent extends Entity {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare submerged: any;
+
   /** 타일 충돌을 포함한 이동 */
-  move(dt, world, opts = {}) {
+  move(dt, world, opts: Bag = {}) {
     const prevBottom = this.y + this.h;
     // 물 — 잠긴 비율만큼 중력과 낙하 상한이 줄고, 좌우로도 끈적해진다.
     const liq = opts.aquatic ? { f: 0, flow: 0, cur: 0 } : world.liquidIn(this.x, this.y, this.w, this.h);
@@ -162,6 +164,19 @@ export class Ent extends Entity {
 
 /* ================= 플레이어 ================= */
 export class Player extends Ent {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare static _vol: number;   // 한 번 휘두른 공격의 번호(여러 몹이 같은 휘두름에 맞았는지)
+  declare _jetNoteAt: any; declare atkTimer: any; declare bag: any; declare base: any; declare bossKilled: any;
+  declare buffs: any; declare cd: any; declare channel: any; declare charId: any; declare charge: any; declare d: any;
+  declare dashCd: any; declare dashV: any; declare deepest: any; declare equip: any; declare facing: any; declare flash: any;
+  declare gathered: any; declare gold: any; declare hp: any; declare hurtCd: any; declare iframe: any; declare jetGap: any;
+  declare jetHeat: any; declare jetOver: any; declare jumpHeld: any; declare jumpsLeft: any; declare kills: any;
+  declare level: any; declare mineProg: any; declare mineTx: any; declare mineTy: any; declare mined: any; declare mp: any;
+  declare name: any; declare potionCd: any; declare prof: any; declare sel: any; declare shield: any; declare shieldMax: any;
+  declare shieldT: any; declare skillPts: any; declare skills: any; declare slots: any; declare starFade: any;
+  declare starLit: any; declare starOrbits: any; declare statPts: any; declare swing: any; declare swingDir: any;
+  declare swingHit: any; declare undyingCd: any; declare xp: any; declare xpNext: any;
+
   constructor(x, y) {
     super(x, y, 20, 40);
     this.name = '';
@@ -205,7 +220,7 @@ export class Player extends Ent {
   /* ---- 파생 스탯 ---- */
   recalc() {
     const s = { str: this.base.str, dex: this.base.dex, int: this.base.int, vit: this.base.vit };
-    const acc = { def: 0, hp: 0, mp: 0, ms: 0, crit: 5, critD: 50, cdr: 0, lifesteal: 0, jump: 0, mpreg: 0, hpreg: 0, dmgP: 0, spdP: 0, magicP: 0, fire: 0, frost: 0, poison: 0, dashCd: 0, dashI: 0, charge: 0, dr: 0 };
+    const acc: Bag = { def: 0, hp: 0, mp: 0, ms: 0, crit: 5, critD: 50, cdr: 0, lifesteal: 0, jump: 0, mpreg: 0, hpreg: 0, dmgP: 0, spdP: 0, magicP: 0, fire: 0, frost: 0, poison: 0, dashCd: 0, dashI: 0, charge: 0, dr: 0 };
     const merge = (o) => { for (const k in o) { if (k in s) s[k] += o[k]; else acc[k] = (acc[k] || 0) + o[k]; } };
     for (const k in this.equip) { const it = this.equip[k]; if (!it) continue; const st = itemStats(it); merge(st); acc.def += (idef(it).def || 0) * enhMul(it); }
     // 특성 패시브
@@ -447,6 +462,16 @@ export class Player extends Ent {
 
 /* ================= 적 ================= */
 export class Enemy extends Ent {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare _vol: any; declare aggro: any; declare armor: any; declare atkCd: any; declare atkPose: any; declare boss: any;
+  declare def: any; declare dmg: any; declare dots: any; declare elite: any; declare facing: any; declare flash: any;
+  declare fleeT: any; declare gold: any; declare guard: any; declare hitCd: any; declare hp: any; declare jumpCd: any;
+  declare lastPhase: any; declare lvFactor: any; declare markAmt: any; declare markT: any; declare maxHp: any; declare mech: any;
+  declare pedestal: any; declare pf: any; declare phase: any; declare phaseInv: any; declare phases: any; declare sgAmt: any;
+  declare sgBuf: any; declare sgCd: any; declare sgKind: any; declare sgRing: any; declare sgStun: any; declare sgT: any;
+  declare sgTook: any; declare slowF: any; declare slowT: any; declare sparkT: any; declare spd: any; declare state: any;
+  declare stateT: any; declare think: any; declare type: any; declare weatherBuffed: any; declare xp: any;
+
   constructor(type, x, y, scale = 1) {
     const d = ENEMIES[type];
     super(x, y, d.w, d.h);
@@ -603,7 +628,7 @@ export class Enemy extends Ent {
   slow(f, t) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
 
   /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). */
-  hurt(amount, crit, src, kb, fam) {
+  hurt(amount, crit?, src?, kb?, fam?) {
     if (this.dead) return;
     /* 페이즈가 넘어가는 0.8초 동안은 피해가 들어가지 않는다. */
     if (this.phaseInv > 0) {
@@ -681,6 +706,10 @@ export class Enemy extends Ent {
 /* ================= 소환수 ================= */
 /* ================= 마을 경비병 ================= */
 export class Guard extends Ent {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare atkCd: any; declare dmg: any; declare face: any; declare guard: any; declare home: any; declare homeTx: any;
+  declare hp: any; declare maxHp: any; declare shootCd: any;
+
   constructor(x, y, lv) {
     super(x, y, 20, 40);
     this.home = x;          // 초소 위치 — 픽셀 좌표다 (타일 아님)
@@ -730,6 +759,9 @@ export class Guard extends Ent {
 }
 
 export class Wolf extends Ent {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare atkCd: any; declare dmg: any; declare life: any; declare minion: any; declare owner: any;
+
   constructor(x, y, owner) {
     super(x, y, 30, 22);
     this.owner = owner; this.life = 30; this.atkCd = 0; this.minion = true;
@@ -759,6 +791,10 @@ export class Wolf extends Ent {
 
 /* ================= 펫 ================= */
 export class Pet {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare cd: any; declare def: any; declare facing: any; declare flash: any; declare id: any; declare slot: any; declare t: any;
+  declare x: any; declare y: any;
+
   constructor(petId, slot) {
     this.id = petId; this.slot = slot;
     this.def = PETS[petId];
@@ -860,6 +896,11 @@ export const PROJ_STYLE = {
 export const PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1 };
 
 export class Proj extends Ent {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare crit: any; declare dmg: any; declare explode: any; declare fire: any; declare frost: any; declare grav: any;
+  declare hitSet: any; declare life: any; declare pierce: any; declare poison: any; declare team: any; declare type: any;
+  declare vol: any;
+
   constructor(x, y, vx, vy, dmg, team, type) {
     super(x - 6, y - 6, 12, 12);
     this.vx = vx; this.vy = vy; this.dmg = dmg; this.team = team; this.type = type;
@@ -925,6 +966,10 @@ export class Proj extends Ent {
 
 /* ================= 이펙트 ================= */
 export class Part {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare c: any; declare drag: any; declare g: any; declare glow: any; declare life: any; declare max: any; declare r: any;
+  declare rot: any; declare spin: any; declare sq: any; declare vx: any; declare vy: any; declare x: any; declare y: any;
+
   /* g 중력 배수 — 사연: docs/code-history.md#h37 */
   constructor(x, y, c, vy0 = 0, life = 0.5, o = null) {
     this.x = x; this.y = y; this.c = c;
@@ -948,11 +993,17 @@ export class Part {
   }
 }
 export class DmgText {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare c: any; declare crit: any; declare life: any; declare v: any; declare vy: any; declare x: any; declare y: any;
+
   constructor(x, y, v, c, crit) { this.x = x + (Math.random() - 0.5) * 8; this.y = y; this.v = v; this.c = c; this.crit = crit; this.life = 0.85; this.vy = -70; }
   update(dt) { this.life -= dt; this.y += this.vy * dt; this.vy += 110 * dt; return this.life > 0; }
 }
 /* ===== 폭탄 ===== */
 export class Bomb extends Proj {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare grav: any; declare life: any; declare spec: any; declare spin: any;
+
   constructor(x, y, vx, vy, spec) {
     super(x, y, vx, vy, spec.dmg, 'player', 'bomb');
     this.spec = spec;
@@ -1018,6 +1069,10 @@ export class Bomb extends Proj {
 }
 
 export class Drop {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare dead: any; declare h: any; declare item: any; declare life: any; declare pick: any; declare t: any; declare vx: any;
+  declare vy: any; declare w: any; declare x: any; declare y: any;
+
   constructor(x, y, item) {
     this.x = x - 8; this.y = y - 8; this.w = 16; this.h = 16; this.item = item;
     this.vx = (Math.random() - 0.5) * 140; this.vy = -160 - Math.random() * 80;

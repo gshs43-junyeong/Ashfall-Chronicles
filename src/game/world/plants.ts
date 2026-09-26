@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== world/plants.js — 물건 맞추기 · 나무 · 굴 메우기 · 농업 · 풀꽃 ===== */
 import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
@@ -9,7 +8,7 @@ import { OBJ_SIZE } from '../data/items.js';
 import { MAT_LAYER, TS, World, inSeaZone } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
-export const WorldPlants = {
+export const WorldPlants: Bag & ThisType<World> = {
 
   /** 설치물을 한 타일 규격(OBJ_SIZE)으로 맞춘다. */
   fitObjects() {

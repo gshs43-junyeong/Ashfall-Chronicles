@@ -1,10 +1,9 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== art/items/farm.js — 농사 · 음식 · 광석·수정 · 알·사탕 따위 ===== */
 import { TAU } from '../../../engine/core/math.js';
 import { ITEM_PAINT, sh2 } from '../../itemart.js';
 /* itemart.js Art.paint 의 갈래들 — 읽히는 순간 ITEM_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 Art. */
 
-export const ItemPaintFarm = {
+export const ItemPaintFarm: Bag = {
   /* ---------- 농업 ---------- */
   hoe(H) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;

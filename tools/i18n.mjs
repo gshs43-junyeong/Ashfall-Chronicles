@@ -14,7 +14,7 @@ import * as acorn from 'acorn';
 import * as escope from 'eslint-scope';
 import * as esbuild from 'esbuild';
 import { execFileSync } from 'node:child_process';
-import { ROOT, LEGACY, listModules } from './srcmods.mjs';
+import { ROOT, LEGACY, listModules, stripTypes } from './srcmods.mjs';
 
 const HANGUL = /[가-힣ㄱ-ㆎ]/;
 const SOURCE_JSON = path.join(LEGACY, 'locales', 'source.json');
@@ -32,7 +32,7 @@ const eng = await (async () => {
 })();
 
 function parse(src) {
-  const ast = acorn.parse(src, { ecmaVersion: 'latest', sourceType: 'module', ranges: true, locations: true });
+  const ast = acorn.parse(stripTypes(src), { ecmaVersion: 'latest', sourceType: 'module', ranges: true, locations: true });
   (function up(n, p) {
     if (!n || typeof n.type !== 'string') return;
     n.parent = p;

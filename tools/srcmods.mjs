@@ -7,11 +7,18 @@ import { fileURLToPath } from 'node:url';
 import * as acorn from 'acorn';
 import * as escope from 'eslint-scope';
 import * as esbuild from 'esbuild';
+import { stripTypeScriptTypes } from 'node:module';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const SRC = path.join(ROOT, 'src');
 export const LEGACY = path.join(SRC, 'game');   // 게임 소스(예전 이름 legacy 를 변수에 남겼다)
 export const ENGINE = path.join(SRC, 'engine');
+/** 타입만 공백으로 지운다 — 글자 위치가 그대로라 원문 자리로 고치는 도구(imports · i18n wrap · split)가 쓴다. */
+export function stripTypes(src) {
+  const warn = process.emitWarning;
+  process.emitWarning = () => {};              // 실험 기능 경고 한 줄을 삼킨다
+  try { return stripTypeScriptTypes(src); } finally { process.emitWarning = warn; }
+}
 export const rel = f => path.relative(SRC, f).split(path.sep).join('/');
 
 export function listModules() {

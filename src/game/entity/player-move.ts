@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== entity/player-move.js — 플레이어 — 숨 · 움직임(갱신) ===== */
 import { app as G, ui as UI } from '../ctx.js';
 import { TAU, aabb, clamp, lerp } from '../../engine/core/math.js';
@@ -13,7 +12,7 @@ import { DmgText, Enemy, JET_BURN, JET_COOL_AIR, JET_COOL_GROUND, JET_HIGH_FALL,
   Part, Player, SAFE_FALL_VY, itemDamage } from '../entity.js';
 /* entity.js 의 Player 에서 나눈 조각 — 읽히는 순간 Player.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
-export const PlayerMove = {
+export const PlayerMove: Bag & ThisType<Player> = {
 
   /* ---- 산소 ---- */
   updateOxygen(dt, world) {

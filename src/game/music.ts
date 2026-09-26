@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== music.js — 곡 · 효과음 · 환경음 표와 거리로 맞추는 환경음(틀은 src/engine/audio) ===== */
 import { createAmbient } from '../engine/audio/ambient.js';
 import { createMusic } from '../engine/audio/music.js';
@@ -93,7 +92,7 @@ export const SFX_FILES = {
 };
 
 /* ================= 재질음 한 벌 ================= */
-export const SFX_FAM = {
+export const SFX_FAM: Record<string, [string, number, number]> = {
   hit_flesh: ['mat_flesh', 1, 1], hit_gel: ['mat_flesh', 1.22, .9],
   hit_bone: ['mat_bone', 1, 1], hit_stone: ['mat_stone', 1, 1],
   hit_dirt: ['mat_dirt', 1, 1], hit_wood: ['mat_wood', 1, 1],
@@ -173,7 +172,7 @@ export const AMBIENT_FILES = { waterfall: 'waterfall_loop', water: 'water_ambien
   sea: 'amb_sea', glacier: 'amb_glacier' };
 export const AMBIENT_RADIUS = { waterfall: 13 * TS, water: 9 * TS };   // 이 거리 안이면 소리가 들리기 시작한다
 
-export const Ambient = createAmbient({ dir: SFX_DIR, files: AMBIENT_FILES });
+export const Ambient: Bag = createAmbient({ dir: SFX_DIR, files: AMBIENT_FILES });
 Object.assign(Ambient, {
   /** 매 프레임 — 플레이어와 가장 가까운 폭포/큰 웅덩이까지 거리를 재서 음량을 맞춘다. */
   updateFromWorld(w, p, dt, active) {

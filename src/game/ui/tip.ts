@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== ui/tip.js — 툴팁 ===== */
 import { app as G } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
@@ -16,7 +15,7 @@ import { enhMul, equipReqLv, isGear, itemDamage, itemName, itemSpeed, itemStats 
 import { UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
 
-export const TipUIPart = {
+export const TipUIPart: Bag = {
 
   /* 펫 목록 패널은 없다 — 펫이 인벤토리 아이템이라, 가방에서 바로 장비창의 펫 칸으로 끼우면 된다(다른 장비와 똑같은 조작). */
 
@@ -40,7 +39,7 @@ export const TipUIPart = {
     if (!cur) return `<div class="tcmp new">${tr('빈 자리에 낄 수 있다')}</div>`;
     if (cur === it) return `<div class="tcmp same">${tr('지금 차고 있는 것')}</div>`;
     const rows = [];
-    const push = (label, a, b, unit) => {
+    const push = (label, a, b, unit?) => {
       const dv = Math.round((a - b) * 10) / 10;
       if (!dv) return;
       rows.push(`<span class="${dv > 0 ? 'up' : 'down'}">${dv > 0 ? '▲' : '▼'} ${label} ${dv > 0 ? '+' : ''}${dv}${unit || ''}</span>`);

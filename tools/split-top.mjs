@@ -7,13 +7,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import * as acorn from 'acorn';
-import { LEGACY } from './srcmods.mjs';
+import { LEGACY, stripTypes } from './srcmods.mjs';
 
 const spec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const DRY = process.argv.includes('--dry');
 const file = path.join(LEGACY, spec.file);
 const src = fs.readFileSync(file, 'utf8');
-const ast = acorn.parse(src, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
+const ast = acorn.parse(stripTypes(src), { ecmaVersion: 'latest', sourceType: 'module', locations: true });
 const body = ast.body;
 const declares = (n, name) => {
   const d = n.type === 'ExportNamedDeclaration' ? n.declaration : n;
@@ -36,7 +36,7 @@ const core = src.slice(0, cuts[0]);
 if (core + pieces.join('') !== src) throw new Error('이어 붙인 글이 원래와 다르다');
 for (const [k, g] of spec.groups.entries()) {
   const text = `/* ===== ${g.file} — ${g.title} ===== */\n/* ${spec.file} 에서 나눈 표 — ${spec.file} 다음 층에서 소스 순서대로 읽힌다 */\n\n` + pieces[k].replace(/^\n+/, '');
-  acorn.parse(text, { ecmaVersion: 'latest', sourceType: 'module' });
+  acorn.parse(stripTypes(text), { ecmaVersion: 'latest', sourceType: 'module' });
   const lines = text.split('\n').length;
   console.log(`${lines > 2000 ? '✗' : '✓'} ${g.file}: ${lines}줄`);
   if (!DRY) { const out = path.join(LEGACY, g.file); fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, text); }

@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== util.js — 두 자리 수 · HTML 이스케이프(수학·난수는 src/engine/core, 조사는 engine/i18n/ko, 숫자 표기는 lang.js) ===== */
 
 export function pad2(n) { return n < 10 ? '0' + n : '' + n; }

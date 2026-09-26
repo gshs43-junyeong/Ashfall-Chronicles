@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/quests.js — 부탁 · 의뢰 ===== */
 import { clamp } from '../../engine/core/math.js';
 import { tr } from '../lang.js';

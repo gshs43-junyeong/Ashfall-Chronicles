@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/values.js — 물건값 · 스킬 연출 · 입자 상한 · 설정 기본값 ===== */
 import { clamp } from '../../engine/core/math.js';
 import { TILE_DEF, WEAPON_TIER_LV } from '../data.js';
@@ -51,7 +50,7 @@ export const ITEM_VAL = (() => {
       if (!tot) continue;
       const per = Math.min((e.gold || 1) * VAL_SHARE / tot, (e.gold || 1) * VAL_CAP);
       for (const [id] of ds) {
-        const d = ITEMS[id] || {};
+        const d: Bag = ITEMS[id] || {};
         if (d.type !== 'mat' || d.price || made[id] || V[id] !== undefined) continue;
         lo[id] = lo[id] === undefined ? per : Math.min(lo[id], per);
         hi[id] = hi[id] === undefined ? per : Math.max(hi[id], per);

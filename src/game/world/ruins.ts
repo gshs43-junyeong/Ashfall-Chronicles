@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== world/ruins.js — 유적 입구 · 복도 · 장식 · 암호 · 인장 · 신비의 방 ===== */
 import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
@@ -9,7 +8,7 @@ import { MYSTIC } from '../data/ruins.js';
 import { TS, World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
-export const WorldRuins = {
+export const WorldRuins: Bag & ThisType<World> = {
 
   /** 유적 입구를 판다 — 생김새(arch)에 따라 들어가는 방식이 다르다. */
   carveRuinEntrance(spec, x0, y0, rng) {

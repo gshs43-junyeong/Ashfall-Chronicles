@@ -1,11 +1,10 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/items.js — 아이템 · 유적 전리품 · 맞는 순간 연출 · 설치물 크기 · 제작 시설 ===== */
 import { T } from '../data.js';
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
 
 /* ---------------- 아이템 ---------------- */
 // type: weapon / tool / armor / acc / consum / mat / block / summon
-export const ITEMS = {
+export const ITEMS: Record<string, ItemDef> = {
   /* --- 근접 --- */
   sword_wood:   { n: '금 간 목검', i: '🗡', type: 'weapon', wc: 'melee', dmg: 9,  spd: 2.2, kb: 3, reach: 40, tier: 0, d: '아버지의 창고 구석에서 찾아낸 연습용 검.'  },
   sword_copper: { n: '구리 장검', i: '⚔', type: 'weapon', wc: 'melee', dmg: 16, spd: 2.0, kb: 4, reach: 44, tier: 1, d: '무르지만 정직하게 벤다.'  },

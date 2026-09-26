@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== world/traps.js — 입구 함정 · 떠 있는 장식 · 암호 골방 · 함정 자리 ===== */
 import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
@@ -8,7 +7,7 @@ import { RUIN_SPEC, STORY_RUIN } from '../data/ruins.js';
 import { TS, World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
-export const WorldTraps = {
+export const WorldTraps: Bag & ThisType<World> = {
 
   /** 입구 통로의 작은 방마다 함정이 **하나는 남아 있게** 마무리한다. */
   ensureEntranceTraps(rng) {
@@ -20,7 +19,7 @@ export const WorldTraps = {
     for (const site of this.ruinSites || []) {
       for (const b of site.ent || []) {
         const fy0 = b[4] === undefined ? b[1] + b[3] - 2 : b[4];
-        const have = {};
+        const have: Bag = {};
         let n = 0;
         for (let x = b[0]; x <= b[0] + b[2]; x++)
           for (let y = b[1]; y <= b[1] + b[3]; y++) {

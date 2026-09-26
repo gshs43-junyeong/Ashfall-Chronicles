@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/corpse.js — 시체 · 그 밖의 연출 ===== */
 import { shade } from '../../engine/core/color.js';
 import { TAU, clamp, dist } from '../../engine/core/math.js';
@@ -14,7 +13,7 @@ import { Enemy } from '../entity.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const CorpsePart = {
+export const CorpsePart: Bag = {
 
   /* ================= 시체 ================= */
   CORPSE_MAX: 24,

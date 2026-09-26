@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/render-far.js — 원경 · 문 그리기 ===== */
 import { mixHex, shade } from '../../engine/core/color.js';
 import { TAU, clamp } from '../../engine/core/math.js';
@@ -16,7 +15,7 @@ import { Part } from '../entity.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const RenderFarPart = {
+export const RenderFarPart: Bag = {
 
   /** 손그림 원경 — 두 겹으로 무한 스크롤. */
   /* ================= 원경을 불투명하게 ================= */
@@ -408,7 +407,7 @@ export const RenderFarPart = {
     const done = !!(this.lairs && this.lairs[o.ruin]);
     const col = this.lairCol(o);
     const beat = done ? 0 : 0.5 + Math.sin(t * 2.1) * 0.5;
-    const S = (hex, k) => shade(hex, f * (k || 1));
+    const S = (hex, k?) => shade(hex, f * (k || 1));
     c.save();
     if (o.ruin >= 10) {
       // 강철 요람 — 받침 · 양옆 집게 · 가운데 노심 · 받침관
@@ -489,7 +488,7 @@ export const RenderFarPart = {
     const t = this.time, cx = sx + o.w / 2, w = o.w, h = o.h;
     const hot = !!this.boss;
     const [c0, c1, c2] = hot ? ['#ffe0d0', '#e05050', '#4a0d14'] : ['#f2e6ff', '#a06fff', '#1e0f3a'];
-    const S = (hex, k) => shade(hex, f * (k || 1));
+    const S = (hex, k?) => shade(hex, f * (k || 1));
     c.save();
     // 받침 — 계단 두 단 · 기둥 · 윗판
     c.fillStyle = S('#241c2e'); c.fillRect(sx - 4, sy + h - 5, w + 8, 5);

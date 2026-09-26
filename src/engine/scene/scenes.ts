@@ -16,7 +16,7 @@ export interface LayerDef {
 export function createScenes<S extends string, L extends string>({ scenes, layers, start }: {
   scenes: Record<S, SceneDef>;
   layers: Record<L, LayerDef>;
-  start: S;
+  start: NoInfer<S>;
 }) {
   let cur: S = start;
   const stack: L[] = [];                      // 연 순서 — 끝이 맨 위

@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/altar.js — 제단·보스 · 소비·제작 · 판매 · 펫 · 훈련소 · 마을 개선 · 광역 피해 · 특성 연출 ===== */
 import { dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -19,7 +18,7 @@ import { Music } from '../music.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const AltarPart = {
+export const AltarPart: Bag = {
 
   /* ================= 제단 / 보스 ================= */
   /** 이 장의 결전 보스인데 아직 자격이 없으면 막는다 — 소환 아이템만으로 깨울 수 있으면 장 목표를 통째로 건너뛴다. */
@@ -166,6 +165,7 @@ export const AltarPart = {
 
   /* ================= 훈련소 ================= */
   /* 세션이 넘어가면 금화가 도는 규모 자체가 달라진다(세션 2에서 상자·판매 수입이 크게 뛴다). */
+  // @ts-expect-error sessionOf 는 세션 객체를 준다 — 배율이 늘 1(계획서 §9-1 #16, v1.1.1 뒤에 고친다)
   costMul() { return [1, 1, 3.2, 7][sessionOf(this.chapter)] || 1; },
   respecCost() { return Math.round((60 + this.player.level * 25) * this.costMul()); },
   respecStats() {
@@ -303,7 +303,7 @@ export const AltarPart = {
   skillDeny(slot, msg) {
     this.sfx('sk_deny');
     const el = document.querySelectorAll('#skillbar .sk')[slot];
-    if (el) { el.classList.remove('deny'); void el.offsetWidth; el.classList.add('deny'); }
+    if (el) { el.classList.remove('deny'); void (el as HTMLElement).offsetWidth; el.classList.add('deny'); }
     if (msg) this.toast(msg, 'bad');
   },
 

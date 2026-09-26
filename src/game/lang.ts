@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== lang.js — 번역 창구: tr(원문, 값) · 언어 고르기 ===== */
 /* 코드의 한국어 문구는 tr('원문', { 값 }) 으로 쓴다 — 원문이 곧 열쇠이고, 한국어에서는 원문 그대로 나온다.
    값은 {이름} 자리표로, 조사는 {이름|을} 로(엔진 ko.ts). 표(아이템 이름 따위)는 id 경로로 따로 덮는다(I18N.applyTables).
@@ -30,7 +29,7 @@ export function localizeDom(root) {
   let n = 0;
   const HAN = /[\uAC00-\uD7A3]/;
   const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
-  for (let node = walk.currentNode; node; node = walk.nextNode()) {
+  for (let node: any = walk.currentNode; node; node = walk.nextNode()) {
     if (node.nodeType === 3) {
       const s = node.data, t = s.trim();
       if (!t || !HAN.test(t) || /^(SCRIPT|STYLE)$/.test(node.parentNode.nodeName)) continue;
@@ -53,7 +52,7 @@ export function fmt(n) {
   if (a < 1e6) { try { return v.toLocaleString(NUM_LOCALE); } catch (e) { return v.toLocaleString(); } }
   /* 반올림한 **표시값**으로 단위를 정한다. */
   let d = 1e6, u = 'M';
-  if (a >= 1e9 || Math.abs(v / 1e6).toFixed(2) >= 1000) { d = 1e9; u = 'B'; }
+  if (a >= 1e9 || +Math.abs(v / 1e6).toFixed(2) >= 1000) { d = 1e9; u = 'B'; }
   const t = (v / d).toFixed(2).replace(/\.?0+$/, '');
   return t + u;
 }

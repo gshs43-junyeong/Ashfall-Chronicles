@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== world/caves.js — 동굴 갈래 · 금 간 자갈 · 큰 굴 ===== */
 import { factory as Factory } from '../ctx.js';
 import { clamp, dist, lerp } from '../../engine/core/math.js';
@@ -10,7 +9,7 @@ import { CAVE_TYPES, FAULT } from '../data/ruins.js';
 import { CAVE_GH, CAVE_GW, MAT_LAYER, TS, World, inSeaZone } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
-export const WorldCaves = {
+export const WorldCaves: Bag & ThisType<World> = {
 
   /** 큰 동굴을 여러 개 드렁커드 워크로 파낸다. */
   /* ================= 동굴 갈래 (data.js CAVE_TYPES) ================= */

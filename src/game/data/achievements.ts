@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/achievements.js — 업적 ===== */
 import { BIOMES, DEEP_Y, HELL_Y, SKY_Y } from '../size.js';
 import { T } from '../data.js';
@@ -17,7 +16,7 @@ export function achHidden(a) { return !!a.h || a.t === 'hard'; }
 /* h: 1 — **숨은 업적.** */
 
 /* 업적 75개 — 사연: docs/code-history.md#h18 */
-export const ACHIEVEMENTS = [
+export const ACHIEVEMENTS: AchDef[] = [
   // ---------------- 여정 (스토리) ----------------
   { id: 'a_ch1', cat: 'story', i: '✦', n: '첫 조각', d: '제 1 장이 끝났다.',
     check: g => g.chapter >= 2 },
@@ -126,9 +125,9 @@ export const ACHIEVEMENTS = [
     check: g => BIOMES.every(b => (g.seenBiomes || {})[b.id]) },
   /* 유적의 맥박 · 탐사 기록 — survey 는 세이브에 담긴다(SAVE_UPGRADES v6). */
   { id: 'a_pulse_rage', cat: 'explore', i: '💓', n: '격노를 견딘 자', d: '유적의 맥박이 격노에 닿았다.',
-    check: g => Object.values(g.survey || {}).some(s => (s.peak || 0) >= 3) },
+    check: g => Object.values(g.survey || {}).some((s: Bag) => (s.peak || 0) >= 3) },
   { id: 'a_survey_s', cat: 'explore', i: '🏅', n: '샅샅이', d: '유적 하나를 탐사 기록 S로 남겼다.',
-    check: g => Object.values(g.survey || {}).some(s => !!s.s) },
+    check: g => Object.values(g.survey || {}).some((s: Bag) => !!s.s) },
   /* 동굴 — tally.faults(무너뜨린 자갈 수) · tally.caves(들어가 본 갈래). */
   { id: 'a_fault', cat: 'explore', i: '🪨', n: '무너뜨린 사람', d: '금 간 자갈 셋을 무너뜨려 숨은 동굴을 열었다.',
     check: g => ((g.tally || {}).faults || 0) >= 3 },
@@ -157,7 +156,7 @@ export const ACHIEVEMENTS = [
   { id: 'a_secret_bosses', h: 1, cat: 'hunt', i: '🕳', n: '아무도 시키지 않은 일', d: '아무도 시키지 않은 둘을 끝냈다.',
     check: g => !!(g.player.bossKilled.restorer && g.player.bossKilled.shaft_maw) },
   { id: 'a_echo5', cat: 'hunt', i: '🌀', n: '마지막 메아리', d: '메아리 시련 다섯째 단계를 넘겼다.',
-    check: g => Object.values(g.survey || {}).some(s => (s.echo || 0) >= 5) },
+    check: g => Object.values(g.survey || {}).some((s: Bag) => (s.echo || 0) >= 5) },
   { id: 'a_kill_3000', cat: 'hunt', i: '☠', n: '삼천 번', d: '삼천 마리를 넘어뜨렸다.',
     check: g => achSum(g.player.kills) >= 3000 },
 

@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data.js — 타일 / 아이템 / 적 / 스킬 / 스토리 ===== */
 
 /* ---------------- 타일 ---------------- */
@@ -102,7 +101,7 @@ export const T = {
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
-export const TILE_DEF = [
+export const TILE_DEF: TileDef[] = [
   { n: '공기', c: null, solid: 0, hard: 0 },
   { n: '흙', c: '#6b4a2f', solid: 1, hard: 0, drop: 'dirt' },
   { n: '풀', c: '#4a7a34', solid: 1, hard: 0, drop: 'dirt' },

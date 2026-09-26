@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/spawn.js — 스폰 · 잿빛 · 굴뚝 연기 · 기계 놓기 · 채취탑 ===== */
 import { TAU, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -21,7 +20,7 @@ import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const SpawnPart = {
+export const SpawnPart: Bag = {
 
   /* ================= 스폰 ================= */
   /* 개조가 걸리는 구역 — 세션 1 바이옴의 지층들. */

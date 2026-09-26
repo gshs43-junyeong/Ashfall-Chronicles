@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== itemart.js — 절차적 아이템/스킬/UI 스프라이트 ===== */
 import { shade } from '../engine/core/color.js';
 import { TAU, clamp } from '../engine/core/math.js';
@@ -675,7 +674,7 @@ export const ACH_ART = {
 /** 그림 갈래(spec.k) → 그리는 법 — art/items/*.js 가 채운다. this 는 Art, H 는 paint 의 인자·도우미 */
 export const ITEM_PAINT = {};
 
-export const Art = {
+export const Art: Bag = {
   atlas: null, cells: {}, urls: {}, ready: false, COLS: 16,
 
   build() {

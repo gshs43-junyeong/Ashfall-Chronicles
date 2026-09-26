@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== world/village.js — 여명 마을 · 공창 · 폭주로 · 공방 · 성채 · 심층 갱도 · 상인 · 마을 개선 ===== */
 import { factory as Factory } from '../ctx.js';
 import { aabb } from '../../engine/core/math.js';
@@ -12,7 +11,7 @@ import { MERCHANTS } from '../data/npcs.js';
 import { DAWN_BUILDINGS, DAWN_INSIDE, DAWN_OBJ, DAWN_PLAZA, DAWN_WALL, TS, World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
-export const WorldVillage = {
+export const WorldVillage: Bag & ThisType<World> = {
 
   /* ---- 마을: 오두막 3채 + 작업대 + 용광로 + NPC ---- */
   buildVillage(x0, x1, gy, rng) {
@@ -512,7 +511,7 @@ export const WorldVillage = {
     const cx = (x0 + x1) >> 1;
     const rng = new RNG(this.seed + '_v' + lv);
     const P = (o) => this.objects.push(o);
-    const mach = (tx, ty, key, dir) => {
+    const mach = (tx, ty, key, dir?) => {
       if (Factory && Factory.canPlace(this, tx, ty)) Factory.place(this, tx, ty, key, dir || 0, 1);
     };
 

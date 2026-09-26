@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/village.js — 여명 마을 시설 · 의뢰 · NPC ===== */
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -19,7 +18,7 @@ import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const VillagePart = {
+export const VillagePart: Bag = {
 
   /* ================= 여명 마을 시설 ================= */
 

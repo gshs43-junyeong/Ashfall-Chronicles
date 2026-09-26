@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/start.js — 여명 마을 단계 · 캐릭터 · 난이도 · 조작키 · 알림 갈래 ===== */
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
 
@@ -55,7 +54,7 @@ export const VILLAGE = [
 /* ---------------- 시작 캐릭터 ---------------- */
 /* 다섯이 각자 제 시트를 쓴다 — char/player_<id>.png (13프레임, 원본 player.png 와 순서가 동일: idle1 idle2 walk1..4 jump fall dash
    atk1..3 */
-export const CHARACTERS = [
+export const CHARACTERS: Bag[] = [
   { id: 'wanderer', n: '떠돌이', tint: null, d: '치우침이 없다. 처음이라면 이쪽.',
     story: '재가 내리기 전, 어느 마을의 문을 마지막으로 잠근 사람. ' +
            '이름도 고향도 그 문 안에 두고 왔다. 지도 대신 제 걸음을 믿는다.',

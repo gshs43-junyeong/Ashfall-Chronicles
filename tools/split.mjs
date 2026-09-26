@@ -7,12 +7,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import * as acorn from 'acorn';
-import { ROOT, LEGACY } from './srcmods.mjs';
+import { ROOT, LEGACY, stripTypes } from './srcmods.mjs';
 
 const spec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const file = path.join(LEGACY, spec.file);
 const src = fs.readFileSync(file, 'utf8');
-const ast = acorn.parse(src, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
+const ast = acorn.parse(stripTypes(src), { ecmaVersion: 'latest', sourceType: 'module', locations: true });
 let body = null;
 for (const n of ast.body) {
   const d = n.type === 'ExportNamedDeclaration' ? n.declaration : n;
@@ -60,9 +60,9 @@ for (const [k, g] of spec.groups.entries()) {
   const out = path.join(LEGACY, g.file);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, text);
-  acorn.parse(text, { ecmaVersion: 'latest', sourceType: 'module' });
+  acorn.parse(stripTypes(text), { ecmaVersion: 'latest', sourceType: 'module' });
   console.log(`✓ ${g.file}: ${text.split('\n').length}줄 (${g.part})`);
 }
 fs.writeFileSync(file, core);
-acorn.parse(core, { ecmaVersion: 'latest', sourceType: 'module' });
+acorn.parse(stripTypes(core), { ecmaVersion: 'latest', sourceType: 'module' });
 console.log(`✓ ${spec.file}: ${core.split('\n').length}줄 남음`);

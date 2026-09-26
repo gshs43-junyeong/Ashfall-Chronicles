@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/materials.js — 재질 · 빛 · 유체 · 장식 · 몹 재질 ===== */
 import { T, TILE_DEF } from '../data.js';
 import { ITEMS } from './items.js';

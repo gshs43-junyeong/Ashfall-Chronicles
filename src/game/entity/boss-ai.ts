@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== entity/boss-ai.js — 적 — 보스 AI ===== */
 import { app as G, ui as UI } from '../ctx.js';
 import { TAU, angleTo, clamp, lerp } from '../../engine/core/math.js';
@@ -10,7 +9,7 @@ import { TS } from '../world.js';
 import { Enemy, Part, Proj } from '../entity.js';
 /* entity.js 의 Enemy 에서 나눈 조각 — 읽히는 순간 Enemy.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
-export const BossAI = {
+export const BossAI: Bag & ThisType<Enemy> = {
 
   /* ---- 보스 AI ---- */
   bossAI(dt, world, p, dx, dy, dd) {

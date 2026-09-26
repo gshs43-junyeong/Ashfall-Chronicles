@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/render.js — 렌더 — 파이프라인 단계 ===== */
 import { mixHex, shade } from '../../engine/core/color.js';
 import { TAU, clamp, inv, lerp } from '../../engine/core/math.js';
@@ -19,7 +18,7 @@ import { Factory } from '../factory.js';
 import { G, MAP_REVEAL_LIGHT } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const RenderPart = {
+export const RenderPart: Bag = {
 
 
   /* ================= 렌더 ================= */
@@ -747,7 +746,7 @@ export const RenderPart = {
     if (this.spritesOn && this.drawParallaxArt(c, camX, camY, f)) return;
     if (camY > SURF_BASE * TS + 500) return;
     c.save();
-    const layers = [[0.22, '#2b3a4a', 150], [0.38, '#25313f', 90]];
+    const layers: [number, string, number][] = [[0.22, '#2b3a4a', 150], [0.38, '#25313f', 90]];
     const groundCamY = SURF_BASE * TS - this.H / 2;
     for (const [sp, col, off] of layers) {
       c.fillStyle = mixHex('#0d1018', col, 0.3 + f * 0.7);

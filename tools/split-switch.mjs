@@ -10,12 +10,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import * as acorn from 'acorn';
-import { LEGACY } from './srcmods.mjs';
+import { LEGACY, stripTypes } from './srcmods.mjs';
 
 const spec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const file = path.join(LEGACY, spec.file);
 const src = fs.readFileSync(file, 'utf8');
-const ast = acorn.parse(src, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
+const ast = acorn.parse(stripTypes(src), { ecmaVersion: 'latest', sourceType: 'module', locations: true });
 let obj = null;
 for (const n of ast.body) { const d = n.type === 'ExportNamedDeclaration' ? n.declaration : n; if (d && d.type === 'VariableDeclaration') for (const v of d.declarations) if (v.id.name === spec.object) obj = v.init; }
 const prop = obj.properties.find(p => p.key && p.key.name === spec.method);
@@ -100,12 +100,12 @@ for (const [k, g] of spec.groups.entries()) {
   const out = path.join(LEGACY, g.file);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, text);
-  acorn.parse(text, { ecmaVersion: 'latest', sourceType: 'module' });
+  acorn.parse(stripTypes(text), { ecmaVersion: 'latest', sourceType: 'module' });
   console.log(`✓ ${g.file}: 갈래 ${to - startAt[k]}개 · ${text.split('\n').length}줄`);
 }
 /* 메서드 몸통: switch 자리에 표 부르기 */
 const callText = `const paint = ${spec.table}[${src.slice(sw.discriminant.start, sw.discriminant.end)}]${sw.cases.some(c => !c.test) ? ` || ${spec.table}.default` : ''};\n    if (paint) paint.call(this, ${H});`;
 const core = src.slice(0, sw.start) + callText + src.slice(sw.end);
 fs.writeFileSync(file, core);
-acorn.parse(core, { ecmaVersion: 'latest', sourceType: 'module' });
+acorn.parse(stripTypes(core), { ecmaVersion: 'latest', sourceType: 'module' });
 console.log(`✓ ${spec.file}: ${core.split('\n').length}줄 남음 · 갈래 ${cases.length}개(이름 ${sw.cases.length}개) · 넘기는 이름 ${names.length}개 · 뒤 문장 ${after.length}개`);
