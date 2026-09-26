@@ -17,3 +17,7 @@ design/*.html
 
 # 파이썬 도구가 만드는 캐시 — 저장소에 들어갈 것이 아니다
 tools/__pycache__/
+
+# 회귀 검사 — 의존성과 실패 때 남기는 비교 그림
+node_modules/
+tests/out/

@@ -1,0 +1,23 @@
+{
+  "name": "ashfall-chronicles",
+  "private": true,
+  "version": "1.1.0",
+  "description": "Ashfall Chronicles — 별이 잠든 땅. 게임 본체는 game/ (빌드 없이 돈다). 이 파일은 회귀 검사 도구만 싣는다.",
+  "type": "module",
+  "scripts": {
+    "serve": "node tests/serve.mjs",
+    "test:syntax": "node tests/syntax.mjs",
+    "test:manifest": "python3 tools/sync-manifest.py --check",
+    "test:gen": "node tests/gen-hash.mjs",
+    "test:play": "node tests/play.mjs",
+    "test:shots": "node tests/shots.mjs",
+    "baseline": "node tests/gen-hash.mjs --update && node tests/shots.mjs --update",
+    "check": "npm run test:syntax && npm run test:manifest && npm run test:gen && npm run test:play && npm run test:shots"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0",
+    "pixelmatch": "7.2.0",
+    "pngjs": "7.0.0"
+  },
+  "engines": { "node": ">=20" }
+}
