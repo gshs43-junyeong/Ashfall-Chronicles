@@ -825,10 +825,12 @@ const G = {
 
     const zone = w.zoneAt(tx, ty);
     const lowHp = p.hp / p.d.maxHp < 0.3;
-    const raining = !!(this.event && this.event.id === 'rain' && this.eventActive());
+    /* 날씨 — 비(눈)는 제 곡, 나머지 날씨(붉은 달·모래 폭풍·포자)는 긴장 곡. 저체력은 날씨보다 먼저 긴장 곡이다. */
+    const wx = this.event && this.eventActive() ? this.event.id : null;
+    const weather = lowHp ? 'tense' : wx === 'rain' ? 'rain' : wx ? 'tense' : null;
 
     // 부유 성채도 하늘 곡을 쓴다 — 하늘 위에 떠 있는 유적이라서
-    if (zone === 'citadel') return (lowHp || raining) ? 'tense' : 'sky';
+    if (zone === 'citadel') return weather || 'sky';
     // 하늘 섬 — 고도로만 갈리는 구역이라 지상 판정보다 먼저 본다
     if (zone === 'sky' || ty < SKY_Y) return 'sky';
 
@@ -836,13 +838,12 @@ const G = {
     if (p.swimming || p.submerged > 0.5) return 'seadeep';
 
     // 던전·유적·심층은 전부 카타콤 한 곡으로 통일한다.
-    if (this.inCatacomb(tx, ty, zone)) return (lowHp || raining) ? 'tense' : 'catacomb';
+    if (this.inCatacomb(tx, ty, zone)) return weather || 'catacomb';
 
-    // 비는 평소 몬스터를 강화하는 위협 이벤트다.
-    if (raining) return 'tense';
+    if (weather) return weather;
     const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
     const dark = w.lightAt(tx, ty) < 4;
-    if (night || dark || lowHp) return 'tense';
+    if (night || dark) return 'tense';
 
     // 여명 마을 동쪽 — 버섯 골짜기와 부패한 땅
     if (zone === 'glowfen' || zone === 'corrupt') return 'east';
