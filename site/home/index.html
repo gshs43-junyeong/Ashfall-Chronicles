@@ -315,7 +315,7 @@
          없어서, "사이트를 고쳤는데 반영이 안 된다"가 났을 때 그것이 캐시인지 배포인지
          코드인지 구별할 방법이 아예 없었다. 이제 이 일곱 자로 확인한다.
          634fa86e28ad 는 tools/build-site.sh 가 배포 때 커밋 해시로 바꾼다. -->
-    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.1 개발 중</span>
+    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.1.0</span>
        <span class="mono site-build" id="siteBuild">__AC_BUILD__</span></p>
     <p class="foot-credit">음악 <a href="https://suno.com" target="_blank" rel="noopener">Suno</a>
        · 효과음 <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a>
@@ -340,11 +340,11 @@
   'use strict';
 
   /* ---- 판 번호 ----
-     치환 전(개발 중·파일 직접 열기)에는 '개발판'으로 적는다. 배포판이면 앞 일곱 자만. */
+     치환 전(파일 직접 열기)에는 비워 둔다. 배포판이면 커밋 해시 앞 일곱 자. */
   var sb = document.getElementById('siteBuild');
   if (sb) {
     var raw = sb.textContent.trim();
-    sb.textContent = (raw === '__AC_' + 'BUILD__') ? '개발판' : raw.slice(0, 7);
+    sb.textContent = (raw === '__AC_' + 'BUILD__') ? '' : raw.slice(0, 7);
   }
 
   /* ---- 게임 시작과 전체 화면 ---- */
