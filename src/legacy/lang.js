@@ -33,3 +33,17 @@ export function localizeDom(root) {
   }
   return n;
 }
+
+/* 숫자 표기의 로케일 — 원본(ko)은 예전 그대로 ko-KR */
+const NUM_LOCALE = LANG === 'ko' ? 'ko-KR' : LANG;
+/** 숫자 표기 — 백만부터 M · B 로 줄인다. */
+export function fmt(n) {
+  const v = Math.round(n);
+  const a = Math.abs(v);
+  if (a < 1e6) { try { return v.toLocaleString(NUM_LOCALE); } catch (e) { return v.toLocaleString(); } }
+  /* 반올림한 **표시값**으로 단위를 정한다. */
+  let d = 1e6, u = 'M';
+  if (a >= 1e9 || Math.abs(v / 1e6).toFixed(2) >= 1000) { d = 1e9; u = 'B'; }
+  const t = (v / d).toFixed(2).replace(/\.?0+$/, '');
+  return t + u;
+}

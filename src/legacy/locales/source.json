@@ -2060,10 +2060,7 @@
    "game.showNewGameForm"
   ],
   "이름 없는 모험가": [
-   "game.saveHead",
-   "game._newGame",
-   "game._loadGame",
-   "game.migrateLegacySave",
+   "game",
    "game.showNewGameForm"
   ],
   "이름 없는 유적": [
