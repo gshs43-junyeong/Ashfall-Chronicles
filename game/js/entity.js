@@ -1303,6 +1303,9 @@ class Enemy extends Ent {
     if (this.dead) return;
     this.dead = true;
     const p = G.player;
+    /* ★ 플레이어가 먼저 쓰러졌으면 보스는 **처치가 아니다** — onDeath 가 피해 처리 도중에 불려 같은 프레임의
+       남은 투사체·펫·지속 피해가 보스를 마저 잡으면 토벌·장 목표·둥지 비움이 그대로 잡혔다 */
+    if (this.boss && p.hp <= 0) return;
     // 붉은 달 같은 이벤트 중에는 위험한 만큼 보상도 오른다
     const mult = G.killMult ? G.killMult() : 1;
     p.addXp(Math.round(this.xp * mult)); p.gold += Math.round(this.gold * mult);

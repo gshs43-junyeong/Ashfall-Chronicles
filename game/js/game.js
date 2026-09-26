@@ -1231,20 +1231,6 @@ const G = {
     const id = w.get(tx, ty);
     const def = TILE_DEF[id];
     if (id === T.AIR || !def.drop) { p.mineTx = -1; return; }
-    // 기계는 곡괭이 등급과 무관하게 한 번에 회수된다 — 안에 든 것도 같이 돌려준다.
-    if (MACH_OF_TILE[id]) {
-      p.mineTx = -1; p.mineProg = 0;
-      if (this.time - (this._machRm || -9) < 0.25) return;
-      this._machRm = this.time;
-      const back = Factory.remove(w, tx, ty);
-      /* 가방에 먼저 — 바닥에 떨군 것은 5분 뒤 사라지고 저장도 안 된다(가득 찬 상자를 캐면 통째로 잃었다) */
-      let spill = 0;
-      if (back) for (const it of back) if (!p.addItem(it)) { this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it)); spill++; }
-      if (spill) this.toast('가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라', 'bad');
-      UI.refreshBag();
-      this.breakFx(tx, ty, id, 1);           // 쇠 파편 + 불티 + 기계가 꺼지는 소리
-      return;
-    }
     if (def.hard > (tool.power || 1) + (def.tree ? 2 : 0)) {
       p.mineTx = -1;
       if (!this._pickWarn || this.time - this._pickWarn > 1.5) { this._pickWarn = this.time; this.toast('더 좋은 곡괭이가 필요하다', 'bad'); }
@@ -1267,6 +1253,17 @@ const G = {
         return;
       }
       p.mineProg = 0;
+      /* 기계는 제 등급(TILE_DEF.hard 1~4)대로 캐여 회수된다 — 안에 든 것도 같이, 가방 먼저
+         (바닥에 떨군 것은 5분 뒤 사라지고 저장도 안 된다) */
+      if (MACH_OF_TILE[id]) {
+        const back = Factory.remove(w, tx, ty);
+        let spill = 0;
+        if (back) for (const it of back) if (!p.addItem(it)) { this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it)); spill++; }
+        if (spill) this.toast('가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라', 'bad');
+        UI.refreshBag();
+        this.breakFx(tx, ty, id, 1);           // 쇠 파편 + 불티 + 기계가 꺼지는 소리
+        return;
+      }
       // 수련·물풀·해초는 캐도 그 칸의 물이 남는다(data.js LEAVE_OF)
       w.set(tx, ty, LEAVE_OF[id] || T.AIR);
       p.mined[id] = (p.mined[id] || 0) + 1;
@@ -4084,6 +4081,7 @@ const G = {
     if (cause) this.tally[cause] = (this.tally[cause] || 0) + 1;
     this.checkAch();
     const p = this.player;
+    this.endBossFight();
     const lostXp = Math.floor(p.xp * 0.15), lostG = Math.floor(p.gold * 0.4);
     p.xp -= lostXp; p.gold -= lostG;
     // 죽은 자리를 남긴다 — 세계가 4200타일이라 "어디서 죽었더라"를 기억으로 버티기 어렵다.
@@ -4123,6 +4121,13 @@ const G = {
     $('#death-screen').classList.add('open');
     this.paused = true;
     this.sfx('death');
+  },
+
+  /** 쓰러지면 싸움은 없던 일 — 깨운 보스는 조용히 사라지고(처치 아님 · 보상 없음) 제단·둥지·메아리는 다시 깨울 수 있다. */
+  endBossFight() {
+    if (this.boss) { this.boss.dead = true; this.boss = null; }       // die() 를 거치지 않는다
+    this.pendingLair = null; this.pendingEcho = null;
+    UI.bossBar(null);
   },
 
   /* ---- 길잡이 ---- */
