@@ -1,0 +1,17 @@
+{
+  "//": "타입 검사만 한다(noEmit) — 묶기는 esbuild 가 한다. 엔진(src/engine)만 strict. 게임(src/legacy)은 아직 JS 그대로.",
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/engine/**/*.ts"]
+}
