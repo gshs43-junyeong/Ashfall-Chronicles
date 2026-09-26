@@ -6,6 +6,7 @@ import { TAU, aabb, angleTo, clamp, dist, dist2, inv, lerp } from '../engine/cor
 import { RNG, hashStr, tileHash } from '../engine/core/rng.js';
 import { createInput } from '../engine/input/actions.js';
 import { bindPointer } from '../engine/input/pointer.js';
+import { mountTouch } from '../engine/input/touch.js';
 import { fitCanvas } from '../engine/platform/viewport.js';
 import { makeSigner } from '../engine/save/seal.js';
 import { createSaveStore } from '../engine/save/store.js';
@@ -224,6 +225,15 @@ export const G = {
         UI.refreshHotbar();
       }
     });
+    /* 터치 조작 뼈대 — 아직은 ?touch=1 일 때만 켠다(모바일 완성은 엔진화 P9). */
+    if (new URLSearchParams(location.search).get('touch') === '1')
+      this.touch = mountTouch({ input: this.inp, ptr: this.input, surface: this.cv, rightDown: () => this.rightClick(),
+        buttons: [{ id: 'jump', label: '점프' }, { id: 'dash', label: '대시' }], altLabel: '사용' });
+    if (this.touch) {         // 오른쪽 단추가 탭 단추 줄(패널을 여는 유일한 길)을 가리지 않게 그 윗변 위로 올린다 — 좁은 화면에선 줄이 핫바 위에 있다
+      const lift = () => { const bar = $('#tabbar'), r = bar && bar.getBoundingClientRect();
+        this.touch.el.style.setProperty('--ti-bottom', (r && r.height ? innerHeight - r.top + 14 : 24) + 'px'); };
+      lift(); addEventListener('resize', lift);
+    }
     /* 타자가 도는 중이면 넘기지 말고 그 자리에서 끝까지 펼친다 — 한 번 누른 것이 "다 읽었다"가 아니라 "빨리 보여 달라"인 경우가 훨씬 많다 */
     $('#dialogue').addEventListener('click', () => { if (UI.dlg && !UI.finishType()) UI.nextLine(false); });
   },
