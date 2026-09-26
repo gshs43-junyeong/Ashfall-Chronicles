@@ -1358,8 +1358,8 @@ const UI = {
     } else {
       if (m.in) body += '<div class="mach-sec">투입 <small>(클릭해서 되찾기)</small></div><div class="mach-grid" id="mg-in">' + this.bufGrid(m.in, 'mi') + '</div>';
       if (m.out) body += '<div class="mach-sec">산출 <small>(클릭해서 가방으로)</small></div><div class="mach-grid" id="mg-out">' + this.bufGrid(m.out, 'mo') + '</div>';
-      if (m.it) body += '<div class="mach-sec">이송 중</div><div class="mach-grid">' +
-        `<div class="slot"><span class="ic" style="background-image:url(${Art.itemUrl(m.it.id)})"></span></div></div>`;
+      if (m.it) body += `<div class="mach-sec">이송 중 <small>(3초 넘게 멈춘 물건은 클릭해서 가방으로)</small></div><div class="mach-grid">` +
+        `<div class="slot" id="mg-it"><span class="ic" style="background-image:url(${Art.itemUrl(m.it.id)})"></span></div></div>`;
     }
     if (recs) body += `<div class="mach-sec">만드는 것 <small>(재료가 다 들어 있으면 초록 · 지금 만드는 것은 금색)</small></div><div class="mrecs">${recs}</div>`;
     body += `<div class="mach-sec">소지품 <small>(${m.t === 'sorter' ? '클릭해서 필터 지정' : '클릭해서 기계에 넣기 · 흐린 것은 이 기계가 안 받는다'})</small></div><div class="mach-grid" id="mg-bag"></div>`;
@@ -1389,6 +1389,11 @@ const UI = {
       }
       G.sfx(snd); this.refreshMachine(true);
     }));
+    const itEl = $('#mg-it');
+    if (itEl) press(itEl, () => {
+      if (Factory.takeStalled(m, p)) { this.refreshMachine(true); this.refreshBag(); G.sfx('place'); }
+      else this.toast(Factory.stalled(m) ? '가방이 가득 찼다' : '움직이는 중이다 — 3초 넘게 멈춘 것만 꺼낼 수 있다', 'bad');
+    });
     const store = $('#mg-store');
     if (store) {
       m.items.forEach((it, i) => {
