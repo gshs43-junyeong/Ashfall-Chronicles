@@ -105,12 +105,12 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 |---|---|
 | `game/` | 실행 폴더. 이 폴더만 정적 서버에 올리면 그대로 돈다(`js/ashfall.js` 는 **산출물**) |
 | `src/legacy/size.js` | 세계 크기 — `SHIFT`·`SX`/`SY`·치수 `let`·바이옴 경계. `let` 은 여기서만 고쳐 쓴다 |
-| `src/legacy/data.js` | 타일·아이템·몹·제작법·챕터·업적 — **표만 있는 곳** (5,700줄) |
-| `src/legacy/world.js` | 결정론적 월드 생성 · 직렬화 · 마을/유적/바다 (5,300줄) |
-| `src/legacy/game.js` | 게임 루프 · 입력 · 그리기 · 세이브 (8,800줄) |
-| `src/legacy/entity.js` | 플레이어·몹·투사체 물리 |
-| `src/legacy/tileart.js` · `itemart.js` · `sprites.js` | 절차 생성 그림(아틀라스) · 스프라이트 로더 |
-| `src/legacy/ui.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` | 그 이름대로 |
+| `src/legacy/data.js` + `data/*.js` | 표만 있는 곳 — `data.js` 는 타일·희귀도, `data/` 에 아이템 · 제작법 · 적 · 재질 · 스킬 · 유적 · 업적 · NPC·대사 · 펫 · 장·이야기 · 부탁·의뢰 · 물건값 |
+| `src/legacy/world.js` + `world/*.js` | `World`(생성자 · generate · 충돌 · 조명 · 유체 · 저장) + 생성 조각(나무 · 마을 · 하늘 섬 · 던전 · 함정 · 유적 · 동굴 · 바다 · 물) |
+| `src/legacy/game.js` + `game/*.js` | `G` 뼈대(초기화 · 입력 · 게임 시작 · 루프) + 조각 15개(채굴·설치 · 낚시 · 마을 · 제단 · 스폰 · 진행 · 저장 · 소리 · 렌더 셋 · 유적 맥박 · 운석 · 유적 지도 · 시체) |
+| `src/legacy/entity.js` + `entity/*.js` | 아이템 인스턴스 · `Ent`·`Player`·`Enemy`·투사체 · 조각(플레이어 공격·움직임 · 적 AI · 보스 AI) |
+| `src/legacy/tileart.js` · `itemart.js` + `art/tiles` · `art/items` | 절차 생성 그림 — 갈래마다 그리는 법은 `TILE_PAINT` · `ITEM_PAINT` 표(조각 파일이 채운다) |
+| `src/legacy/ui.js` + `ui/*.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` · `sprites.js` | UI 뼈대 + 창 조각(특성 · 퀘스트 · 제작 · 기계 · 상점 · 툴팁 · 대화 · HUD) · 그 이름대로 |
 | `src/legacy/main.js` · `ctx.js` | 묶는 입구(모듈 순서 · 디버그 창구 · 다른 언어면 표·HTML 덮기) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
 | `src/legacy/lang.js` · `locales/` | 번역 창구 `tr` · `N_` · `fmt` · `FONT` · `LANG` · 원문 목록 `locales/source.json`(`extract` 산출물) · 번역 `locales/<lang>.json` · 용어집 `glossary.csv` |
 | `game/locales/` | `<script>` 로 싣는 번역 묶음과 언어 목록 — `node tools/i18n.mjs build` 산출물(손으로 고치지 말 것). 언어는 index.html 이 번들보다 먼저 고른다(`?lang=` → 설정 → 브라우저 언어 → ko) |
@@ -130,6 +130,9 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 `ctx → util → lang → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
 
 **모듈 규칙**(`npm run test:modules` 가 기계로 막는다):
+- **한 파일 한 영역 — 코드 1,200줄 · 표(data/) 2,000줄 이하.** 큰 객체(`G` · `UI` · 클래스)는 조각 모듈로 나눠 `mixin(대상, 조각)` 으로
+  붙인다(조각은 부모 다음 층에서 읽히며 스스로 붙는다 — 부모는 조각을 import 하지 않는다). 나눌 때는 도구로: `tools/split.mjs`(객체·클래스 절) ·
+  `tools/split-switch.mjs`(거대 switch → 갈래 표) · `tools/split-top.mjs`(최상위 표) — 모두 글자 그대로 옮기고 이어 붙이면 원래와 같은지 확인한다.
 - **엔진(`src/engine`)은 게임(`src/legacy`)을 import 하지 않는다.** 게임 고유값(키 이름·곡 표·DB 이름…)은 `createSaveStore({…})`·`createMusic({…})`
   처럼 설정으로 넘긴다. 엔진은 `.ts`(strict, `npm run typecheck`)이고 클래스 필드는 `declare` 로 적는다(필드 정의 의미가 바뀌지 않게).
 - **앞 모듈은 뒤 모듈을 import 하지 않는다**(순환 0). `data.js`의 상수를 `world.js`가 쓰므로 **`data.js`가 먼저**다. 둘 다 쓰는 세계

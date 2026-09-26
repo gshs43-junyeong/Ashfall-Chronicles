@@ -3,6 +3,7 @@
    2) 순환 0 · 엔진(src/engine)은 게임(src/legacy)을 import 하지 않는다 · 게임 모듈끼리는 main.js 의 import 순서가 층 순서
       (앞 모듈은 뒤 모듈을 모른다 — 위층 객체는 ctx.js 로 늦게 묶는다).
    3) window.<모듈 이름> 읽기 0 — 디버그 창구(main.js)는 사람·도구용이다. 게임 코드는 import 할 것.
+   5) 줄 수 — 코드 1,200 · 표(data/) 2,000 줄 이하.
    4) ctx 계약 — 아래층이 G·UI·Factory 의 무엇을 쓰는지 tests/baseline/ctx.json 과 대조한다. 새로 쓰면 실패:
       일부러 넓히는 것이면 node tests/modules.mjs --update 로 적고 커밋 메시지에 이유를 남길 것. */
 import fs from 'node:fs';
@@ -69,6 +70,12 @@ for (const [f, m] of mods) {
     for (const u of used) if (!slot.includes(u)) slot.push(u);
     slot.sort();
   }
+}
+
+/* 줄 수 — 한 파일 한 영역(계획서 §7-1). 표 모듈(src/legacy/data/)은 2,000, 나머지는 1,200. 넘으면 영역을 나눌 것(tools/split*.mjs). */
+for (const f of files) {
+  const n = fs.readFileSync(f, 'utf8').split('\n').length, cap = f.includes(path.sep + 'data' + path.sep) ? 2000 : 1200;
+  if (n > cap) err(f, 0, `${n}줄 — 한도 ${cap}줄을 넘는다(영역을 나눌 것)`);
 }
 
 /* 순환 — 깊이 우선으로 돌며 돌아오는 간선을 찾는다(게임 쪽은 층 규칙이 막지만 엔진 안쪽은 층이 없어 따로 본다). */
