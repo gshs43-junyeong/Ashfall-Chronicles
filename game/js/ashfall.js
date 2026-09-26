@@ -1174,6 +1174,42 @@
     return { tx0: Math.floor(camX / ts), tx1: Math.ceil((camX + W) / ts), ty0: Math.floor(camY / ts), ty1: Math.ceil((camY + H) / ts) };
   }
 
+  // src/engine/render/atlas.ts
+  var atlas_exports = {};
+  __export(atlas_exports, {
+    bakeAtlas: () => bakeAtlas,
+    blitCell: () => blitCell,
+    cacheGet: () => cacheGet,
+    clipCell: () => clipCell
+  });
+  function clipCell(g, ox, oy, ts, fn) {
+    g.save();
+    g.beginPath();
+    g.rect(ox, oy, ts, ts);
+    g.clip();
+    fn();
+    g.restore();
+  }
+  function bakeAtlas(ts, cols, rows, paint) {
+    const cv = document.createElement("canvas");
+    cv.width = cols * ts;
+    cv.height = rows * ts;
+    const g = cv.getContext("2d");
+    for (let r = 0; r < rows; r++) for (let v = 0; v < cols; v++) clipCell(g, v * ts, r * ts, ts, () => paint(g, v * ts, r * ts, r, v));
+    return cv;
+  }
+  function blitCell(c, atlas, ts, col, row, sx, sy, h) {
+    c.drawImage(atlas, col * ts, row * ts, ts, h || ts, sx, sy, ts, h || ts);
+  }
+  function cacheGet(m, key, make, max = 2500) {
+    let hit = m.get(key);
+    if (hit) return hit;
+    if (m.size > max) m.clear();
+    hit = make();
+    m.set(key, hit);
+    return hit;
+  }
+
   // src/legacy/util.js
   var util_exports = {};
   __export(util_exports, {
@@ -18413,42 +18449,23 @@
       for (const id in MACH_OF_TILE) this._topHand[id] = 1;
       for (const id in this._topHand) TOP_SKIP[id] = 1;
       const N = TILE_DEF.length;
-      const cv = document.createElement("canvas");
-      cv.width = this.V * TS;
-      cv.height = N * TS;
-      const g = cv.getContext("2d");
       const rng = new RNG("ashfall-tileart-1");
       this.ANIM = {};
-      const clipCell = (gg, ox, oy, fn) => {
-        gg.save();
-        gg.beginPath();
-        gg.rect(ox, oy, TS, TS);
-        gg.clip();
-        fn();
-        gg.restore();
-      };
-      for (let id = 0; id < N; id++) {
+      this.atlas = bakeAtlas(TS, this.V, N, (g, ox, oy, id, v) => {
         const s = ART[id];
-        if (!s) continue;
+        if (!s) return;
         if (s.fr) {
-          this.ANIM[id] = { fr: Math.min(s.fr, this.V), fps: s.fps || 4 };
-          for (let v = 0; v < this.V; v++) {
-            const fr = v % this.ANIM[id].fr;
-            clipCell(g, v * TS, id * TS, () => this.paint(g, v * TS, id * TS, s, new RNG("ashfall-anim-" + id + "-" + fr), v, id + "-" + fr));
-          }
-          continue;
+          if (v === 0) this.ANIM[id] = { fr: Math.min(s.fr, this.V), fps: s.fps || 4 };
+          const fr = v % this.ANIM[id].fr;
+          this.paint(g, ox, oy, s, new RNG("ashfall-anim-" + id + "-" + fr), v, id + "-" + fr);
+          return;
         }
-        for (let v = 0; v < this.V; v++) clipCell(g, v * TS, id * TS, () => this.paint(g, v * TS, id * TS, s, rng, v, id + "-" + v));
-      }
-      this.atlas = cv;
-      const wc = document.createElement("canvas");
-      wc.width = this.V * TS;
-      wc.height = WALL_COLOR.length * TS;
-      const wg = wc.getContext("2d");
-      for (let i = 1; i < WALL_COLOR.length; i++)
-        for (let v = 0; v < this.V; v++)
-          clipCell(wg, v * TS, i * TS, () => (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, wg, v * TS, i * TS, WALL_COLOR[i], rng));
-      this.wallAtlas = wc;
+        this.paint(g, ox, oy, s, rng, v, id + "-" + v);
+      });
+      this.wallAtlas = bakeAtlas(TS, this.V, WALL_COLOR.length, (g, ox, oy, i) => {
+        if (i === 0) return;
+        (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, g, ox, oy, WALL_COLOR[i], rng);
+      });
       this.buildAsh();
       this.markFull();
       this.ready = true;
@@ -18674,7 +18691,7 @@
     },
     /** 타일 블릿. */
     draw(c, id, v, sx, sy, h) {
-      c.drawImage(this.atlas, v * TS, id * TS, TS, h || TS, sx, sy, TS, h || TS);
+      blitCell(c, this.atlas, TS, v, id, sx, sy, h);
     },
     /** 잿빛 판 블릿 — 같은 자리, 색만 빠진 것 */
     drawAsh(c, id, v, sx, sy) {
@@ -18778,13 +18795,7 @@
     },
     /** 칸 캐시 — 열쇠가 같으면 다시 그리지 않는다 */
     _cache(name, key, make) {
-      const m = this[name] = this[name] || /* @__PURE__ */ new Map();
-      let hit = m.get(key);
-      if (hit) return hit;
-      if (m.size > 2500) m.clear();
-      hit = make();
-      m.set(key, hit);
-      return hit;
+      return cacheGet(this[name] = this[name] || /* @__PURE__ */ new Map(), key, make);
     },
     /* ★ 나무 기둥·야자 줄기·야자 잎은 칸 무늬가 아니라 **세계 좌표**로 칠한다 — 이웃 칸과 결이 이어져
        한 그루로 읽힌다(이끼 바위와 같은 방식). 칸마다 난수로 그리면 칸 경계마다 결이 끊긴다. */
@@ -19143,7 +19154,7 @@
       return this._dc[key] = cv;
     },
     drawWall(c, wl, v, sx, sy) {
-      c.drawImage(this.wallAtlas, v * TS, wl * TS, TS, TS, sx, sy, TS, TS);
+      blitCell(c, this.wallAtlas, TS, v, wl, sx, sy);
     },
     /* ---------- 그리기 도우미 ---------- */
     _r(g, ox, oy, x, y, w, h, col) {
@@ -42416,7 +42427,7 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, pipeline_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, pipeline_exports, atlas_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
