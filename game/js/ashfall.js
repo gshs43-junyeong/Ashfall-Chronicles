@@ -1177,7 +1177,8 @@
     tileView: () => tileView
   });
   function createPipeline(names) {
-    const stages = names.map((name) => ({ name, fns: [] }));
+    const stages = names.map((name) => ({ name, fns: [], ms: 0 }));
+    let profile = false;
     return {
       /** 그 단계 끝에 그리기 함수를 하나 건다 — 없는 단계 이름이면 바로 알린다(조용히 안 그려지는 것을 막는다). */
       add(name, fn) {
@@ -1187,7 +1188,26 @@
       },
       /** 한 프레임 — 단계 순서대로 전부 */
       run(frame) {
-        for (const s of stages) for (const fn of s.fns) fn(frame);
+        if (!profile) {
+          for (const s of stages) for (const fn of s.fns) fn(frame);
+          return;
+        }
+        for (const s of stages) {
+          const t = performance.now();
+          for (const fn of s.fns) fn(frame);
+          s.ms += (performance.now() - t - s.ms) * 0.05;
+        }
+      },
+      /** 단계별 시간 재기 — 켜 둔 동안만 잰다(평소에는 시계를 부르지 않는다) */
+      profile(on) {
+        profile = on;
+        if (!on) for (const s of stages) s.ms = 0;
+      },
+      /** 단계 이름 → 최근 평균 ms */
+      stats() {
+        const o = {};
+        for (const s of stages) o[s.name] = +s.ms.toFixed(2);
+        return o;
       },
       names() {
         return stages.map((s) => s.name);
@@ -13069,6 +13089,7 @@
     // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
     view: 100,
     uiscale: 100,
+    quality: "auto",
     keys: null,
     notice: null
   };
@@ -29855,6 +29876,8 @@
         if (!el) continue;
         el.addEventListener("change", () => app.setOpt(key, el.checked ? 1 : 0));
       }
+      const ql = $("#set-quality");
+      if (ql) ql.addEventListener("change", () => app.setOpt("quality", ql.value));
       const view = $("#set-view");
       if (view) view.addEventListener("input", () => app.setOpt("view", +view.value));
       const ls = $("#set-lang");
@@ -30035,6 +30058,7 @@
       chk("set-dlgtype", s.dlgtype === void 0 ? 1 : s.dlgtype);
       set("set-view", s.view);
       txt("set-view-v", s.view);
+      set("set-quality", s.quality || "auto");
       set("set-uiscale", s.uiscale || 100);
       txt("set-uiscale-v", s.uiscale || 100);
     },
@@ -32453,6 +32477,7 @@
     G: () => G,
     MAP_REVEAL_LIGHT: () => MAP_REVEAL_LIGHT,
     NONAME: () => NONAME,
+    QUALITY: () => QUALITY,
     SAVE_KEY: () => SAVE_KEY,
     SAVE_SALT: () => SAVE_SALT,
     SAVE_SLOTS: () => SAVE_SLOTS,
@@ -32547,6 +32572,7 @@
   });
   var SET_KEY = "ashfall_settings";
   var MAP_REVEAL_LIGHT = 1;
+  var QUALITY = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 300 } };
   var TOUCH = (() => {
     const q = new URLSearchParams(location.search).get("touch");
     if (q === "1" || q === "0") return q === "1";
@@ -32703,12 +32729,18 @@
       this.buildPipeline();
       startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
     },
+    /** 화질 — 자동이면 폰 절약 · 태블릿 보통 · 컴퓨터 높음 */
+    quality() {
+      const q = this.settings && this.settings.quality || "auto";
+      if (QUALITY[q]) return q;
+      return !TOUCH ? "high" : Math.min(screen.width, screen.height) <= 540 ? "low" : "mid";
+    },
     /** 설정의 시야 배율. */
     viewZoom() {
       return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6);
     },
     resize() {
-      const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), TOUCH ? 1.5 : 2);
+      const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), QUALITY[this.quality()].dpr);
       this.W = v.W;
       this.H = v.H;
     },
@@ -33514,7 +33546,8 @@
       }
       for (let i = this.parts.length - 1; i >= 0; i--) if (!this.parts[i].update(dt)) this.parts.splice(i, 1);
       this.walkDust(p);
-      if (this.parts.length > PART_CAP) this.parts.splice(0, this.parts.length - PART_CAP);
+      const cap = QUALITY[this.quality()].parts;
+      if (this.parts.length > cap) this.parts.splice(0, this.parts.length - cap);
       for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
       for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
       for (let i = this.pending.length - 1; i >= 0; i--) {
@@ -38041,8 +38074,9 @@
       for (const k of ["tabbar", "quest", "buffs", "clock", "hotbar"])
         document.body.classList.toggle("hide-" + k, !s["hud_" + k]);
       document.documentElement.style.setProperty("--ui-scale", String((s.uiscale || 100) / 100));
-      if (this._viewApplied !== s.view) {
-        this._viewApplied = s.view;
+      const vq = s.view + "/" + this.quality();
+      if (this._viewApplied !== vq) {
+        this._viewApplied = vq;
         this.resize();
       }
       UI.syncSettings();

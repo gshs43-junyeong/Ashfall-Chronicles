@@ -5,7 +5,8 @@
 export type Stage<F> = (frame: F) => void;
 
 export function createPipeline<F>(names: readonly string[]) {
-  const stages = names.map(name => ({ name, fns: [] as Stage<F>[] }));
+  const stages = names.map(name => ({ name, fns: [] as Stage<F>[], ms: 0 }));
+  let profile = false;
   return {
     /** 그 단계 끝에 그리기 함수를 하나 건다 — 없는 단계 이름이면 바로 알린다(조용히 안 그려지는 것을 막는다). */
     add(name: string, fn: Stage<F>): void {
@@ -15,8 +16,17 @@ export function createPipeline<F>(names: readonly string[]) {
     },
     /** 한 프레임 — 단계 순서대로 전부 */
     run(frame: F): void {
-      for (const s of stages) for (const fn of s.fns) fn(frame);
+      if (!profile) { for (const s of stages) for (const fn of s.fns) fn(frame); return; }
+      for (const s of stages) {
+        const t = performance.now();
+        for (const fn of s.fns) fn(frame);
+        s.ms += (performance.now() - t - s.ms) * 0.05;        // 느린 평균(20프레임쯤)
+      }
     },
+    /** 단계별 시간 재기 — 켜 둔 동안만 잰다(평소에는 시계를 부르지 않는다) */
+    profile(on: boolean): void { profile = on; if (!on) for (const s of stages) s.ms = 0; },
+    /** 단계 이름 → 최근 평균 ms */
+    stats(): Record<string, number> { const o: Record<string, number> = {}; for (const s of stages) o[s.name] = +s.ms.toFixed(2); return o; },
     names(): string[] { return stages.map(s => s.name); }
   };
 }

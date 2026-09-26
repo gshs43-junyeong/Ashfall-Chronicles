@@ -5747,4 +5747,4 @@ export function idef(it) { return ITEMS[it.id]; }
 export const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1,
   hud_tabbar: 1, hud_quest: 1, hud_buffs: 1, hud_clock: 1, hud_hotbar: 1,   // 화면 구성 — 끄면 body 에 hide-* 를 단다
   dlgtype: 1,          // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
-  view: 100, uiscale: 100, keys: null, notice: null };
+  view: 100, uiscale: 100, quality: 'auto', keys: null, notice: null };
