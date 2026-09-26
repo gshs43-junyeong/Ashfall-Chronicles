@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const GAME = path.join(ROOT, 'game');
+export const GAME = process.env.GAME_DIR ? path.resolve(process.env.GAME_DIR) : path.join(ROOT, 'game');   // GAME_DIR — 다른 판의 game/ 으로 기준값을 찍을 때
 export const BASE = path.join(ROOT, 'tests', 'baseline');
 export const OUT = path.join(ROOT, 'tests', 'out');
 export const UPDATE = process.argv.includes('--update');
@@ -51,6 +51,10 @@ export const DETERMINISM = (seed = 1234) => `(() => {
   window.cancelAnimationFrame = () => {};
   window.__step = (n = 1) => { for (let i = 0; i < n; i++) { now += 1000 / 60; const run = q; q = []; for (const cb of run) cb(now); } };
   window.__deterministic = true;
+  /* CSS 전이·애니메이션은 진짜 시간으로 돈다 — 첫 장에 멈춰 둔다(로딩 화면이 걷히는 0.45초에 찍히면 화면 전체가 달랐다). */
+  addEventListener('DOMContentLoaded', () => { const st = document.createElement('style');
+    st.textContent = '*,*::before,*::after{transition:none!important;animation-play-state:paused!important;animation-delay:0s!important}';
+    document.head.appendChild(st); });
   const P = HTMLMediaElement.prototype; P.play = function () { return Promise.resolve(); };
 })();`;
 
@@ -66,7 +70,8 @@ export function collectErrors(page) {
 export async function boot(page, url) {
   await page.goto(url);
   for (let i = 0; i < 600; i++) {
-    const ok = await page.evaluate(() => { window.__step && window.__step(2); return typeof G !== 'undefined' && !!G.booted && !document.body.classList.contains('booting'); });
+    const ok = await page.evaluate(() => { window.__step && window.__step(2); return typeof G !== 'undefined' && !!G.booted && !document.body.classList.contains('booting')
+      && !document.querySelector('#loading').classList.contains('open'); });
     if (ok) return;
     await page.waitForTimeout(20);
   }
