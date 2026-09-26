@@ -37,8 +37,12 @@ for (const c of CASES) {
   if (c.form) await page.evaluate(() => { G.showNewGameForm(0); __step(10); });
   else if (!c.title) {
     await newGame(page, { seed: 'd1', size: 's' });
-    await page.evaluate(() => { G.player.iframe = 1e9; __step(90); if (UI.dlg) UI.closeDialogue(); __step(90); });
+    /* 장 카드 → 4초 뒤 도입 대사(진짜 setTimeout)가 뜬다. 뜰 때까지 기다렸다 닫고 찍는다 — 안 그러면 찍힌 판마다 대사창이 있다 없다 했다. */
+    await page.waitForTimeout(4800);
+    await page.evaluate(() => { G.player.iframe = 1e9; for (let i = 0; i < 3; i++) { if (UI.dlg) UI.closeDialogue(); __step(60); } });
   } else await page.evaluate(() => __step(60));
+  /* 진짜 시간(setTimeout)으로 떴다 사라지는 것 — 장·구역 이름 카드와 알림 — 은 찍지 않는다. 찍히는 때가 판마다 달라 흔들렸다. */
+  await page.addStyleTag({ content: '#chapter-card,#toasts{visibility:hidden!important}' });
   const buf = await page.screenshot();
   await page.close();
   if (errs.length) { bad++; fail(`${c.id}: 콘솔 오류\n  ` + errs.slice(0, 4).join('\n  ')); }
