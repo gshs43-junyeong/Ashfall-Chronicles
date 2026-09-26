@@ -1264,28 +1264,9 @@
   var util_exports = {};
   __export(util_exports, {
     escHtml: () => escHtml,
-    eulreul: () => eulreul,
-    eunneun: () => eunneun,
     fmt: () => fmt,
-    iga: () => iga,
-    josa: () => josa,
-    josaRo: () => josaRo,
     pad2: () => pad2
   });
-  function josaRo(word) {
-    const ch = word.charCodeAt(word.length - 1) - 44032;
-    if (ch < 0 || ch > 11171) return "로";
-    const jong = ch % 28;
-    return jong === 0 || jong === 8 ? "로" : "으로";
-  }
-  function josa(word, withJong, noJong) {
-    const s = String(word), ch = s.charCodeAt(s.length - 1) - 44032;
-    if (ch < 0 || ch > 11171) return noJong;
-    return ch % 28 ? withJong : noJong;
-  }
-  var iga = (w) => w + josa(w, "이", "가");
-  var eulreul = (w) => w + josa(w, "을", "를");
-  var eunneun = (w) => w + josa(w, "은", "는");
   function fmt(n) {
     const v = Math.round(n);
     const a = Math.abs(v);
@@ -1625,6 +1606,31 @@
     sessionOf: () => sessionOf,
     tileMat: () => tileMat
   });
+
+  // src/engine/i18n/ko.ts
+  function josa(word, withJong, noJong) {
+    const s = String(word), ch = s.charCodeAt(s.length - 1) - 44032;
+    if (ch < 0 || ch > 11171) return noJong;
+    return ch % 28 ? withJong : noJong;
+  }
+  function josaRo(word) {
+    const ch = word.charCodeAt(word.length - 1) - 44032;
+    if (ch < 0 || ch > 11171) return "로";
+    const jong = ch % 28;
+    return jong === 0 || jong === 8 ? "로" : "으로";
+  }
+  var iga = (w) => w + josa(w, "이", "가");
+  var eulreul = (w) => w + josa(w, "을", "를");
+  var eunneun = (w) => w + josa(w, "은", "는");
+  var PAIRS = [["을", "를"], ["이", "가"], ["은", "는"], ["과", "와"], ["아", "야"], ["이나", "나"], ["이랑", "랑"]];
+  function koParticle(v, p) {
+    const s = String(v);
+    if (p === "로" || p === "으로") return s + josaRo(s);
+    for (const [a, b] of PAIRS) if (p === a || p === b) return s + josa(s, a, b);
+    return null;
+  }
+
+  // src/legacy/data.js
   var T = {
     AIR: 0,
     DIRT: 1,

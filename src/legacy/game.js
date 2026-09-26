@@ -4,6 +4,7 @@ import { mixHex, shade } from '../engine/core/color.js';
 import { startLoop } from '../engine/core/loop.js';
 import { TAU, aabb, angleTo, clamp, dist, dist2, inv, lerp } from '../engine/core/math.js';
 import { RNG, hashStr, tileHash } from '../engine/core/rng.js';
+import { eulreul, iga, josa, josaRo } from '../engine/i18n/ko.js';
 import { createInput } from '../engine/input/actions.js';
 import { bindPointer } from '../engine/input/pointer.js';
 import { mountTouch } from '../engine/input/touch.js';
@@ -13,7 +14,7 @@ import { makeSigner } from '../engine/save/seal.js';
 import { createSaveStore } from '../engine/save/store.js';
 import { upgrade } from '../engine/save/upgrade.js';
 import { createScenes } from '../engine/scene/scenes.js';
-import { escHtml, eulreul, fmt, iga, josa, josaRo } from './util.js';
+import { escHtml, fmt } from './util.js';
 import { BIOMES, CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SKY_Y, SURF_BASE, SY, WH, WORLD_BOT, WORLD_SIZES, WSIZE, WSY, WW } from './size.js';
 import { ACHIEVEMENTS, BOSS_DIE, BOUNTY_BY_ID, BOUNTY_POOL, BOUNTY_UNIT, BOW_HAND, CAVE_TYPES, CHAPTERS, CHARACTERS,
   CHAR_OF, CIPHER_KIND, CIPHER_WORDS, DAWN_NPCS, DECO_MOUNT, DECO_OF, DIALOGUE, ECHO, EGG_POOL, ENEMIES, EVENTS,
