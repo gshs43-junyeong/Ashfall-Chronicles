@@ -1074,11 +1074,11 @@ const ITEMS = {
                    d: '처음 별이 떨어지던 밤을 기록한 유일한 책.'  },
 
   /* --- 바다 장비 --- */
-  spear_tide:    { n: '조수의 삼지창', i: '🔱', type: 'weapon', wc: 'melee', dmg: 168, spd: 1.7, kb: 12, reach: 92, tier: 7,
+  spear_tide:    { n: '조수의 삼지창', i: '🔱', type: 'weapon', wc: 'melee', dmg: 168, spd: 2.0, kb: 12, reach: 92, tier: 7,
                    d: '물살을 가르는 데 익숙한 모양이다. 뭍에서는 조금 무겁다.' },
-  blade_shark:   { n: '상어이빨 검', i: '🗡', type: 'weapon', wc: 'melee', dmg: 152, spd: 1.15, kb: 8, reach: 62, tier: 7,
+  blade_shark:   { n: '상어이빨 검', i: '🗡', type: 'weapon', wc: 'melee', dmg: 152, spd: 2.4, kb: 8, reach: 62, tier: 7,
                    d: '이빨을 줄줄이 박아 넣었다. 빠지면 또 박으면 된다.' },
-  bow_harpoon:   { n: '작살 사수', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 146, spd: 1.5, kb: 10, tier: 7, proj: 'arrow', pierce: 2,
+  bow_harpoon:   { n: '작살 사수', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 146, spd: 2.2, kb: 10, tier: 7, proj: 'arrow', pierce: 2,
                    d: '줄이 달려 있었지만 아무도 되감지 않는다.' },
   orb_abyss:     { n: '심연의 구슬', i: '🔮', type: 'weapon', wc: 'magic', dmg: 158, spd: 2.1, kb: 4, mana: 17, tier: 7, proj: 'frost', multi: 2,
                    d: '빛이 닿은 적 없는 곳의 물을 담았다.' },
@@ -1114,7 +1114,7 @@ const ITEMS = {
                  d: '누르는 힘으로 캔다. 기반암 말고는 전부 부순다.', lvReq: 30 },
   hammer_tide: { n: '해일 망치', i: '🔨', type: 'weapon', wc: 'melee', dmg: 214, spd: 1.9, kb: 18, reach: 76, tier: 8,
                  d: '휘두르면 물이 먼저 간다. 뭍에서도 그렇다.' },
-  gun_harpoon: { n: '연발 작살포', i: '🔫', type: 'weapon', wc: 'ranged', dmg: 178, spd: 0.9, kb: 8, tier: 8, proj: 'arrow', pierce: 3, pw: 5,
+  gun_harpoon: { n: '연발 작살포', i: '🔫', type: 'weapon', wc: 'ranged', dmg: 178, spd: 2.2, kb: 8, tier: 8, proj: 'arrow', pierce: 3, pw: 5,
                  d: '되감을 줄을 아예 없앴다. 그만큼 빨리 나간다.' },
   tome_abyss:  { n: '심연의 서', i: '📘', type: 'weapon', wc: 'magic', dmg: 188, spd: 2.0, kb: 5, mana: 18, tier: 8, proj: 'void', multi: 3,
                  d: '빛이 닿은 적 없는 곳에도 글자가 있었다.' },
