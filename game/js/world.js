@@ -16,6 +16,7 @@ const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buil
 /* 이보다 작고 고립된(지상과 안 통하는) 공동은 동굴로 치지 않고 메운다(타일 수). */
 const MIN_CAVE = 220;
 let CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1066 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
+let CAMP_GX1 = 1100 + SHIFT;                          // 생성 발자국(평탄화·나무·물·자갈 제외)의 오른쪽 끝
 
 /* 세션 3 — 왼쪽으로 갈수록 가라앉은 바다 · 빙하 지대 · 서리 지대 순으로 나온다 — 사연: docs/code-history.md#h101 */
 let SEA_X1 = 430;            // 가라앉은 바다 — 여기부터 왼쪽이 물
@@ -62,8 +63,9 @@ function setWorldSize(key) {
   WSX = WSY = WORLD_SIZES[WSIZE].k;
   WW = SX(5000); WH = SY(720);
   WORLD_BOT = SY(480); SURF_BASE = SY(70); HELL_Y = SY(390); DEEP_Y = SY(280); SKY_Y = SY(40);
-  /* 오두막 셋 x0+2~49 · 광장 가운데 x0+50(±12) — 오른쪽 끝은 광장 횃불(x0+59) 바로 밖. 100 이던 동안 오른쪽 55칸이 빈 안전 지대였다. */
-  CAMP_X0 = SX(1050 + SHIFT) - 50; CAMP_X1 = CAMP_X0 + 66;
+  /* 캠프 구역(안전 지대·곡·원경)은 오두막 셋 x0+2~49 · 광장 x0+38~59 에 맞춘 X1 = X0+66. 100 이던 동안 오른쪽 55칸이 빈 안전 지대였다.
+     ★ 생성 발자국(CAMP_GX1)은 100 그대로 — 줄이면 지형·난수가 밀려 d3 석판 유적 1 이 방 3/16 만 걸어서 닿았다. */
+  CAMP_X0 = SX(1050 + SHIFT) - 50; CAMP_X1 = CAMP_X0 + 66; CAMP_GX1 = CAMP_X0 + 100;
   SEA_X1 = SX(430); GLACIER_X1 = SX(SHIFT);
   for (const b of BIOMES) { b.x0 = b.bx0 === 0 ? 0 : SX(b.bx0); b.x1 = b.bx1 >= 5000 ? WW : SX(b.bx1); }
   for (const r of RUIN_SPEC) {
@@ -383,8 +385,8 @@ class World {
       this.surface[x] = Math.round((a + b2 * 2 + c2) / 4);
     }
     // 마을 부지 평탄화
-    const vx0 = CAMP_X0, vx1 = CAMP_X1;    // 베이스캠프 — 잿빛 숲
-    let vh = this.surface[vx0 + 50];
+    const vx0 = CAMP_X0, vx1 = CAMP_GX1;   // 베이스캠프 — 잿빛 숲 (생성 발자국)
+    let vh = this.surface[(vx0 + vx1) >> 1];
     for (let x = vx0 - 12; x < vx1 + 12; x++) {
       const t = clamp(inv(vx0 - 12, vx0, x), 0, 1) * clamp(inv(vx1 + 12, vx1, x), 0, 1);
       this.surface[x] = Math.round(lerp(this.surface[x], vh, Math.min(1, t * 1.6)));
@@ -597,7 +599,7 @@ class World {
     this.faults = (this.faults || []).filter(f => this.get(f.x, f.y) === T.FAULTSTONE);
     this.placeRichOres();        // 광상 — 제 난수, 광맥 칸만 바꾼다
 
-    this.spawnX = vx0 + 50;                  // 광장 가운데
+    this.spawnX = (vx0 + vx1) >> 1;          // 광장 가운데(x0+50)
     this.spawnY = vh - 3;
     this.fitObjects();
     this.placeRigs(true);        // 채취탑 자리 — 물건을 다 맞춘 뒤(지면·유적이 확정된 뒤)
@@ -964,7 +966,8 @@ class World {
     // 귀환 비석 — 여명 마을이 되살아나기 전까지는 아무 반응이 없다
     this.objects.push({ type: 'waystone', x: (cx - 12) * TS, y: gy * TS - 48, w: 30, h: 48 });
     // 노인
-    this.objects.push({ type: 'npc', npc: 'old', x: (x1 + 6) * TS, y: this.surface[x1 + 6] * TS - 44, w: 22, h: 44 });
+    const ox = CAMP_X1 + 6;                  // 노인은 캠프 구역 오른쪽 끝 바로 밖
+    this.objects.push({ type: 'npc', npc: 'old', x: ox * TS, y: this.surface[ox] * TS - 44, w: 22, h: 44 });
   }
 
   /* ---- 여명 마을 ---- */
@@ -3771,7 +3774,7 @@ class World {
     this.clearBox(cx2 - 16, sy2 - 15, 32, 15);
     for (let x = cx2 - 16; x < cx2 + 16; x++) { this.set(x, sy2, T.BRICK); this.set(x, sy2 + 1, T.BRICK); }
     this.objects.push({ type: 'altar', boss: 'frost_witch', x: cx2 * TS, y: sy2 * TS - 44, w: 40, h: 44 });
-    // 슬라임 제단 (마을 근처 언덕) — 베이스캠프(vx0..vx1 = 1000..1066, 여유폭 포함 984..1082)와 겹치지 않도록 서쪽으로 충분히 떨어뜨려 둔다
+    // 슬라임 제단 (마을 근처 언덕) — 베이스캠프(vx0..vx1 = 1000..1100, 여유폭 포함 984..1115)와 겹치지 않도록 서쪽으로 충분히 떨어뜨려 둔다
     const cx3 = SX(800 + SHIFT), sy3 = this.surface[cx3];
     this.clearBox(cx3 - 14, sy3 - 13, 28, 13);
     for (let x = cx3 - 14; x < cx3 + 14; x++) { this.set(x, sy3, T.STONE); this.set(x, sy3 + 1, T.STONE); }
@@ -3838,7 +3841,7 @@ class World {
       for (let k = 0; k < n; k++) { if (this.get(x, y + k) !== T.AIR) break; this.set(x, y + k, tile); }
     };
     for (let x = 4; x < WW - 4; x++) {
-      if (inSeaZone(x) || (x > CAMP_X0 - 30 && x < CAMP_X1 + 30)) continue;
+      if (inSeaZone(x) || (x > CAMP_X0 - 30 && x < CAMP_GX1 + 30)) continue;
       for (let y = this.surface[x] + 12; y < HELL_Y - 2; y++) {
         if (this.get(x, y) !== T.AIR) continue;
         const k = this.caveTypeAt(x, y); if (!k) continue;
@@ -3899,7 +3902,7 @@ class World {
     let tries = 0;
     while (this.faults.length < Math.round(FAULT.count * WSX * WSY) && tries++ < 6000 * WSX * WSY) {
       const x = rng.int(40, WW - 40);
-      if (inSeaZone(x) || (x > CAMP_X0 - 60 && x < CAMP_X1 + 60)) continue;
+      if (inSeaZone(x) || (x > CAMP_X0 - 60 && x < CAMP_GX1 + 60)) continue;
       const y = rng.int(this.surface[x] + 30, HELL_Y - 20);
       // 자연 굴의 바닥 칸이어야 한다
       if (this.get(x, y) !== T.AIR || !this.solid(x, y + 1) || this.get(x, y - 1) !== T.AIR) continue;
@@ -4086,7 +4089,7 @@ class World {
     if (this.inRunaway && this.inRunaway(tx, ty)) return true;
     const d = this.dungeon;
     if (d && Math.abs(tx - d.x) <= d.w / 2 + 4 && Math.abs(ty - d.y) <= d.h / 2 + 4) return true;
-    if (tx >= CAMP_X0 - 24 && tx <= CAMP_X1 + 24) return true;
+    if (tx >= CAMP_X0 - 24 && tx <= CAMP_GX1 + 24) return true;
     const dc = this.dawnCity;
     if (dc && tx >= dc.x0 - 24 && tx <= dc.x1 + 24) return true;
     return false;

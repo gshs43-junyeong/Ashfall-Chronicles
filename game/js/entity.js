@@ -1317,6 +1317,7 @@ class Enemy extends Ent {
       if (!rng.chance(ch)) continue;
       /* 개조된 것에서는 부품만 나온다 — 원래 표에 얹지 않고 **바꿔친다**. 얹으면 개조된 쪽이 그냥 더 좋은 사냥감이 되어 세기 1.5배를 치르고도 이득이 남는다. */
       const id = (this.mech && typeof MECH_PART !== 'undefined') ? MECH_PART : id0;
+      if (!ITEMS[id]) continue;                  // 없는 아이템이면 rollGear 가 null 을 준다 — 빈 Drop 을 만들지 않는다
       const n = rng.int(a, b);
       if (ITEMS[id] && (ITEMS[id].stack || 1) > 1) G.drops.push(new Drop(this.cx, this.cy, makeItem(id, n)));
       else for (let k = 0; k < n; k++) G.drops.push(new Drop(this.cx, this.cy, rollGear(id, rng, this.boss ? 3 : 0)));
