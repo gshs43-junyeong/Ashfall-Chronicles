@@ -6,7 +6,7 @@ import { createPanels } from '../engine/ui/panels.js';
 import { makeSlot, paintSlot, setIcon } from '../engine/ui/slots.js';
 import { createTooltip } from '../engine/ui/tooltip.js';
 import { pad2 } from './util.js';
-import { fmt, tr } from './lang.js';
+import { LANG, LANGS, LANG_KEY, LANG_NAMES, fmt, setLang, tr } from './lang.js';
 import { SURF_BASE, WH, WW } from './size.js';
 import { ACHIEVEMENTS, ACH_CAT, ACH_TIER, BOSS_TIER, BRANCHES, BUFFS, CHAPTERS, ECHO, FUEL, ITEMS, KEY_ACTIONS,
   MACHINE, MRECIPES, MULTI_FALLOFF, NOTICE_KINDS, NPCS, PETS, PET_LV_MAX, PROFS, PROF_MAX, PULSE, RARITY,
@@ -139,6 +139,18 @@ export const UI = {
     }
     const view = $('#set-view');
     if (view) view.addEventListener('input', () => G.setOpt('view', +view.value));
+    /* 언어 — 둘 이상 실렸을 때만 보인다. 글·표는 켤 때 정해지므로 게임 중이면 다음에 켤 때부터 */
+    const ls = $('#set-lang');
+    if (ls && LANGS.length > 1) {
+      $('#set-lang-row').hidden = false;
+      ls.innerHTML = LANGS.map(l => `<option value="${l}"${l === LANG ? ' selected' : ''}>${LANG_NAMES[l] || l}</option>`).join('');
+      ls.addEventListener('change', () => {
+        if (G.state === 'play') {
+          try { localStorage.setItem(LANG_KEY, ls.value); } catch (e) { }
+          this.toast(tr('다음에 켤 때부터 이 언어로 나온다'));
+        } else setLang(ls.value);
+      });
+    }
 
     this.buildNotices();
     this.buildKeys();

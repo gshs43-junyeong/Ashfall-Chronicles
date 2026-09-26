@@ -1,11 +1,4 @@
 {
-  "world.js": {
-    "Factory": [
-      "(값 그대로)",
-      "canPlace",
-      "place"
-    ]
-  },
   "entity.js": {
     "G": [
       "(값 그대로)",
@@ -117,6 +110,7 @@
       "sidePay",
       "sideProgress",
       "spritesOn",
+      "state",
       "stockOf",
       "time",
       "toast",
@@ -129,6 +123,13 @@
       "vaultGold",
       "villageLv",
       "world"
+    ]
+  },
+  "world.js": {
+    "Factory": [
+      "(값 그대로)",
+      "canPlace",
+      "place"
     ]
   }
 }
