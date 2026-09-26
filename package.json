@@ -2,9 +2,11 @@
   "name": "ashfall-chronicles",
   "private": true,
   "version": "1.1.0",
-  "description": "Ashfall Chronicles — 별이 잠든 땅. 게임 본체는 game/ (빌드 없이 돈다). 이 파일은 회귀 검사 도구만 싣는다.",
+  "description": "Ashfall Chronicles — 별이 잠든 땅. 원본은 src/, game/ 은 실행 폴더(번들을 커밋해 빌드 없이 돈다). 이 파일은 묶기·검사 도구만 싣는다.",
   "type": "module",
   "scripts": {
+    "dev": "node tools/dev.mjs",
+    "build": "node tools/bundle.mjs",
     "serve": "node tests/serve.mjs",
     "test:syntax": "node tests/syntax.mjs",
     "test:manifest": "python3 tools/sync-manifest.py --check",
