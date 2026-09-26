@@ -1,11 +1,32 @@
 /* ===== game.js — 루프 / 입력 / 렌더 / 진행 ===== */
-'use strict';
+import { bindApp } from './ctx.js';
+import { RNG, TAU, aabb, angleTo, clamp, dist, dist2, escHtml, eulreul, fmt, hashStr, iga, inv, josa, josaRo, lerp,
+  mixHex, shade, tileHash } from './util.js';
+import { BIOMES, CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SKY_Y, SURF_BASE, SY, WH, WORLD_BOT, WORLD_SIZES, WSIZE, WSY, WW } from './size.js';
+import { ACHIEVEMENTS, BOSS_DIE, BOUNTY_BY_ID, BOUNTY_POOL, BOUNTY_UNIT, BOW_HAND, CAVE_TYPES, CHAPTERS, CHARACTERS,
+  CHAR_OF, CIPHER_KIND, CIPHER_WORDS, DAWN_NPCS, DECO_MOUNT, DECO_OF, DIALOGUE, ECHO, EGG_POOL, ENEMIES, EVENTS,
+  FARM_KIT, FAULT, FLUID_FLOW, FLUID_KIND, ITEMS, ITEM_VAL, KEY_ACTIONS, LEAVE_OF, MACHINE, MACH_OF_TILE, MAT,
+  MAT_DEF, MECH_MUL, MERCHANTS, MODES, MODE_OF, MYSTIC, NPCS, OBJ_SIZE, PART_CAP, PETS, PROFS, PROF_MAX, PULSE,
+  PULSE_EVENTS, PULSE_RAGE, RARITY_MULT, RECIPES, RIG, RUIN_CARD, RUIN_CIPHER, RUIN_HINTS, RUIN_LORE, RUIN_RELIC,
+  RUIN_SPEC, SESSIONS, SET_DEFAULT, SHOP_DENY, SIDE_POOL, SIG_FX, STATION_NAME, STATION_UP, STORY_BOSSES, STORY_RUIN,
+  SURVEY_LABEL, SURVEY_TIERS, SURVEY_W, T, TABLETS, TALK, TALK_MOODS, TERMINALS, TILE_DEF, TILE_SPRITE, VILLAGE,
+  VILLAGE_TALK, bloodMult, idef, isMech, mobCw, mobMat, mobName, sessionOf, tileMat } from './data.js';
+import { DAWN_WALL, TS, World, ZONE_CARD, doorEdge, inSeaZone, setWorldSize } from './world.js';
+import { ALPHA_TILE, ART, BODY_ONLY, CONN, LEAF_TWIG, TOP_SKIP, TileArt } from './tileart.js';
+import { Art } from './itemart.js';
+import { Sprites } from './sprites.js';
+import { TitleBG } from './titlebg.js';
+import { Bomb, Drop, Enemy, Guard, HOTBAR, PROJ_FX, PROJ_STYLE, Part, Pet, Player, Proj, VAULT_SIZE, Wolf,
+  equipReqLv, isGear, itemName, makeItem, rollChest, rollGear } from './entity.js';
+import { DIR_NAME, FAC_TICK, Factory, dirTable } from './factory.js';
+import { $, UI } from './ui.js';
+import { Ambient, Music, SFX_GAP, Sfx, SfxLoop } from './music.js';
 
-const SAVE_KEY = 'ashfall_save_v3';   // v1: 640×232 · v2: 2800×480 — 세계 폭이 바뀌면 호환 불가
-const SAVE_SLOTS = 3;
+export const SAVE_KEY = 'ashfall_save_v3';   // v1: 640×232 · v2: 2800×480 — 세계 폭이 바뀌면 호환 불가
+export const SAVE_SLOTS = 3;
 
 /* ---------------- 세이브 판올림 ---------------- */
-const SAVE_UPGRADES = [
+export const SAVE_UPGRADES = [
   // v1 → v2
   (d) => {
     // 상인 재고 — 하루 단위로 갈리는 무작위 재고를 세이브에 담는다
@@ -34,22 +55,22 @@ const SAVE_UPGRADES = [
   /* v9 → v10 — 바다 수면(world.sea). 없으면 World.deserialize 가 타일에서 다시 잰다(null 로 두면 그쪽이 채운다). */
   (d) => { if (d.world && d.world.sea === undefined) d.world.sea = null; }
 ];
-const SAVE_VERSION = SAVE_UPGRADES.length + 1;
+export const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 
 /** 옛 세이브를 지금 판까지 끌어올린다. */
-function upgradeSave(d) {
+export function upgradeSave(d) {
   let v = d.v || 1;
   while (v < SAVE_VERSION) { SAVE_UPGRADES[v - 1](d); v++; }
   d.v = SAVE_VERSION;
   return d;
 }
-const slotKey = (i) => `${SAVE_KEY}_slot${i}`;
-const sigKey = (i) => `${SAVE_KEY}_slot${i}_s`;
+export const slotKey = (i) => `${SAVE_KEY}_slot${i}`;
+export const sigKey = (i) => `${SAVE_KEY}_slot${i}_s`;
 
 /* ================= 세이브 무결성 ================= */
-const SAVE_SALT = 'ashfall-seal-1';
+export const SAVE_SALT = 'ashfall-seal-1';
 /** FNV-1a 32비트 두 벌. */
-function saveSign(text) {
+export function saveSign(text) {
   let a = 0x811c9dc5, b = 0x01000193;
   const t = text + SAVE_SALT;
   for (let i = 0; i < t.length; i++) {
@@ -60,18 +81,18 @@ function saveSign(text) {
   return a.toString(36) + '.' + b.toString(36) + '.' + (t.length % 1e6).toString(36);
 }
 /** 열어도 되는 기록인가(sig 는 그 기록에 딸린 서명). */
-function saveSealOk(raw, d, sig) {
+export function saveSealOk(raw, d, sig) {
   if (!d || !d.sealed) return true;
   return !!sig && sig === saveSign(raw);
 }
 /** 슬롯 목록에 띄울 요약 — 본문을 열지 않고 목록을 그리려고 따로 적는다 */
-function saveHead(d) {
+export function saveHead(d) {
   return { name: d.name || '이름 없는 모험가', level: d.p ? d.p.level : 1, chapter: d.chapter,
     size: (d.world && d.world.size) || 's', savedAt: d.savedAt };
 }
 
 /* ================= 저장소 ================= */
-const SaveStore = {
+export const SaveStore = {
   mode: 'ls',
   db: null,
   ready: null,
@@ -196,11 +217,11 @@ const SaveStore = {
     }
   }
 };
-const SET_KEY = 'ashfall_settings';
+export const SET_KEY = 'ashfall_settings';
 // 완전한 암흑(0)은 지도에 남기지 않는다.
-const MAP_REVEAL_LIGHT = 1;
+export const MAP_REVEAL_LIGHT = 1;
 
-const G = {
+export const G = {
   cv: null, ctx: null, mm: null, mmx: null,
   W: 0, H: 0, cam: { x: 0, y: 0 },
   state: 'title',
@@ -237,7 +258,7 @@ const G = {
     /* ★ 타이틀 배경은 여기서 바로 돌린다. */
     if (typeof TitleBG !== 'undefined') { TitleBG.init(); TitleBG.start(); }
     // 손그림 애셋은 비동기로 붙인다 — 실패해도 절차 생성 렌더로 계속 동작
-    if (window.Sprites) {
+    if (Sprites) {
       Sprites.ready().then(() => {
         this.spritesOn = true;
         UI.applySpriteOverrides();
@@ -263,7 +284,7 @@ const G = {
     this.waitForTitleArt();
     this.bindInput();
     this.loadSettings();
-    if (window.Music) Music.armStart(() => this.pickBgm());
+    if (Music) Music.armStart(() => this.pickBgm());
     this.migrateLegacySave();
     SaveStore.start();                   // 옛 localStorage 기록을 IndexedDB 로 옮기는 것도 여기서 시작한다
     this.renderSlotScreen();
@@ -789,9 +810,9 @@ const G = {
     if (this.state === 'play' && !this.paused) { this.update(dt); }
     if (this.state === 'play') this.render();
     // 배경음악은 일시정지/타이틀과 무관하게 항상 갱신해야 크로스페이드가 끊기지 않는다.
-    if (window.Music) { Music.update(Math.min(rawDt, 3)); Music.play(this.pickBgm()); }
+    if (Music) { Music.update(Math.min(rawDt, 3)); Music.play(this.pickBgm()); }
     /* 이어지는 효과음 — 매 프레임 "지금 나야 하는가"만 넘긴다. */
-    if (window.SfxLoop) {
+    if (SfxLoop) {
       const pl = this.player, playing = this.state === 'play' && !this.paused;
       const swim = playing && pl && (pl.swimming || pl.submerged > 0.5);
       const fuse = playing && this.projs.some(q => q instanceof Bomb);
@@ -799,7 +820,7 @@ const G = {
       SfxLoop.set('fuse', fuse);
     }
     // 환경음(폭포·호수)은 실제 플레이 중이고 안 멈춰 있을 때만 — 아니면 페이드아웃되게 dt만 흘려보낸다
-    if (window.Ambient) {
+    if (Ambient) {
       const active = this.state === 'play' && !this.paused && !!this.world && !!this.player;
       Ambient.updateFromWorld(this.world, this.player, dt, active);
     }
@@ -2916,7 +2937,7 @@ const G = {
     this.toast(`${iga(ENEMIES[id].n)} 깨어났다!`, 'bad');
     this.shake = 16;
     // 등장 효과음을 따로 두지 않고 보스 브금이 바로 치고 들어오게 한다
-    if (window.Music) Music.play('boss', true);
+    if (Music) Music.play('boss', true);
   },
   onBossDown(id) {
     this.boss = null;
@@ -4695,9 +4716,9 @@ const G = {
   /** 설정값을 실제 동작에 반영한다. */
   applySettings() {
     const s = this.settings;
-    if (window.Music) Music.vol = s.music / 100;
-    if (window.Sfx) Sfx.vol = s.sfx / 100;
-    if (window.Ambient) Ambient.vol = 0.45 * (s.sfx / 100);
+    if (Music) Music.vol = s.music / 100;
+    if (Sfx) Sfx.vol = s.sfx / 100;
+    if (Ambient) Ambient.vol = 0.45 * (s.sfx / 100);
     const mm = $('#minimap'); if (mm) mm.style.display = s.minimap ? '' : 'none';
     /* ★ 퀘스트 추적은 ui.js 가 style.display 를 직접 켜고 끄므로, 숨김은 body 클래스(!important)로 건다 */
     for (const k of ['tabbar', 'quest', 'buffs', 'clock', 'hotbar'])
@@ -4810,7 +4831,7 @@ const G = {
       ★ 파일(mat_stone · ore_hit · mine)의 저음 비중이 0~3%(실측, 150Hz 아래 에너지)라 곡괭이가 가볍게만 들렸다. */
   thump(power) {
     const ac = this.ac; if (!ac) return;
-    const v = (window.Sfx ? Sfx.vol : 0.5) * power;
+    const v = (Sfx ? Sfx.vol : 0.5) * power;
     if (v < 0.005) return;
     if (ac.state === 'suspended') ac.resume();
     const t = ac.currentTime;
@@ -4832,7 +4853,7 @@ const G = {
 
   /* ================= 효과음 ================= */
   sfx(kind, rate, volMul) {
-    if (window.Sfx && Sfx.play(kind, rate, volMul)) return;   // 손그림 파일이 로드돼 있으면 그걸로 대신한다
+    if (Sfx && Sfx.play(kind, rate, volMul)) return;   // 손그림 파일이 로드돼 있으면 그걸로 대신한다
     const ac = this.ac; if (!ac) return;
     if (ac.state === 'suspended') ac.resume();
     const t = ac.currentTime;
@@ -4888,7 +4909,7 @@ const G = {
     }[kind];
     if (!spec) return;
     /* ★ 파일이 없어 합성음으로 떨어질 때도 SFX_GAP 을 지킨다. */
-    const gap = window.SFX_GAP && SFX_GAP[kind];
+    const gap = SFX_GAP && SFX_GAP[kind];
     if (gap !== undefined) {
       this._synLast = this._synLast || {};
       const now = t;
@@ -8828,4 +8849,5 @@ const G = {
   }
 };
 
+bindApp(G);
 addEventListener('DOMContentLoaded', () => G.init());

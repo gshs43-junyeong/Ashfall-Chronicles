@@ -1,11 +1,13 @@
 /* ===== music.js — 배경음악: 상황별 자동 전환 + 무한 반복 + 부드러운 크로스페이드 ===== */
-'use strict';
+import { clamp, lerp } from './util.js';
+import { WW } from './size.js';
+import { TS } from './world.js';
 
 /* ★ 소리 주소에도 판 번호를 붙인다. */
-const AUD_VER = (document.currentScript && document.currentScript.src.split('?')[1]) || '';
-const aud = (src) => src + (AUD_VER ? (src.includes('?') ? '&' : '?') + AUD_VER : '');
+export const AUD_VER = (document.currentScript && document.currentScript.src.split('?')[1]) || '';
+export const aud = (src) => src + (AUD_VER ? (src.includes('?') ? '&' : '?') + AUD_VER : '');
 
-const BGM = {
+export const BGM = {
   // mp3 원본은 용량이 커서(5~11MB) AAC(m4a)로 다시 구웠다 — 브라우저 재생엔 문제없다.
   title:   'assets/audio/falling_stars.m4a',        // 타이틀 화면
   normal:  'assets/audio/stars_of_despair.m4a',     // 평상시
@@ -27,13 +29,13 @@ const BGM = {
 };
 
 /* 파일이 아직 없는 곡은 여기 적힌 곡으로 대신한다. */
-const BGM_FALLBACK = { east: 'normal', catacomb: 'tense', sky: 'normal', rain: 'tense',
+export const BGM_FALLBACK = { east: 'normal', catacomb: 'tense', sky: 'normal', rain: 'tense',
   /* 바다 곡이 없으면 평상시 곡, 심해 곡이 없으면 바다 곡 → 결국 평상시 곡으로 내려간다. */
   sea: 'normal', seadeep: 'sea',
   // 종장 두 곡이 없으면 보스 곡, 마지막 음이 없으면 긴장 곡으로 내려간다
   finale: 'boss', lastnote: 'tense' };
 
-const Music = {
+export const Music = {
   vol: 0.42, fadeDur: 0.9,
   cur: null, curKey: null, prev: null, fadeT: 0, fadeDurCur: 0, started: false,
   missing: {},   // 파일이 없다고 확인된 키
@@ -103,15 +105,13 @@ const Music = {
     }
   }
 };
-window.Music = Music;
 
 /* ===== Sfx: 짧은 효과음 ===== */
-'use strict';
 
-const SFX_DIR = 'assets/sound_effects/';
+export const SFX_DIR = 'assets/sound_effects/';
 
 /* 게임 안에서 쓰는 키 → 실제 파일 이름 (다른 것만 적어 두면 나머지는 이름이 같다) */
-const SFX_FILES = {
+export const SFX_FILES = {
   swing: 'swing', bow: 'bow', magic: 'magic', mine: 'mine', place: 'place',
   die: 'die', bossdie: 'bossdie', level: 'level', craft: 'craft', equip: 'equip',
   drink: 'drink', dash: 'dash', skill: 'skill', chapter: 'chapter', talk: 'talk',
@@ -161,7 +161,7 @@ const SFX_FILES = {
 };
 
 /* ================= 재질음 한 벌 ================= */
-const SFX_FAM = {
+export const SFX_FAM = {
   hit_flesh: ['mat_flesh', 1, 1], hit_gel: ['mat_flesh', 1.22, .9],
   hit_bone: ['mat_bone', 1, 1], hit_stone: ['mat_stone', 1, 1],
   hit_dirt: ['mat_dirt', 1, 1], hit_wood: ['mat_wood', 1, 1],
@@ -187,7 +187,7 @@ const SFX_FAM = {
 };
 
 /* 키별 최소 간격(초). */
-const SFX_GAP = {
+export const SFX_GAP = {
   damage: 0.07, swing: 0.04, mine: 0.05, turret: 0.09, zap: 0.18,
   belt: 0.34, drill: 0.28, smelt: 0.24, cook: 0.3,
   // 스킬 — 막힌 소리는 키를 누르고 있으면 연달아 울린다.
@@ -210,7 +210,7 @@ const SFX_GAP = {
   step: 0.12
 };
 /* 키별 음량 배수 — 공장 상시음은 전투음보다 한참 작게 깔린다 */
-const SFX_VOL = { step: 0.5, jump: 0.24, jump2: 0.27, level: 0.75, place: 2, sk_heal: 1.8, sk_shield: 1.8, splash: 1.8,   // 최대 0.1~0.19 로 거의 안 들렸다
+export const SFX_VOL = { step: 0.5, jump: 0.24, jump2: 0.27, level: 0.75, place: 2, sk_heal: 1.8, sk_shield: 1.8, splash: 1.8,   // 최대 0.1~0.19 로 거의 안 들렸다
   belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7,
   bubble: 0.5, detector: 0.45, ore_hit: 0.7, drown: 0.85, boom_small: 0.9, boom_big: 1,
   /* 별 조각 셋은 다른 효과음보다 길어서(0.9~1.5초) 같은 크기로 두면 그 동안 다른 소리를 전부 덮는다. */
@@ -222,12 +222,12 @@ const SFX_VOL = { step: 0.5, jump: 0.24, jump2: 0.27, level: 0.75, place: 2, sk_
 /* jump 은 앞 0.15초가 무음이라 누른 뒤 늦게 들렸다(실측: 50ms 창 봉우리 200ms) · jump2 는 0.1초에 걸쳐 차오른다. */
 /* 파일 앞 무음(실측, 최대의 10% 가 처음 넘는 곳) — 곡괭이가 닿은 뒤 0.14~0.2초 늦게 들려 손맛이 빠졌다.
    빌려 쓰는 키(hit_stone → mat_stone)는 파일 이름으로 찾는다. */
-const SFX_START = { hatch: 1.60, jump: 0.12, jump2: 0.08,
+export const SFX_START = { hatch: 1.60, jump: 0.12, jump2: 0.08,
   mine: 0.19, mat_stone: 0.13, ore_hit: 0.16, open: 0.12, hit_blunt: 0.13, power_on: 0.06,
   swing: 0.15, hit_crit: 0.14, sk_guard: 0.13, sk_whirl: 0.12, drown: 0.11, sk_charge: 0.1, sk_slash: 0.08,
   mat_plant: 0.08, mat_flesh: 0.08 };
 
-const Sfx = {
+export const Sfx = {
   vol: 0.5,
   voices: {},   // key -> [Audio, ...] (로드 성공한 것만)
   turn: {},     // key -> 다음에 쓸 목소리 번호
@@ -276,15 +276,13 @@ const Sfx = {
   }
 };
 Sfx.init();
-window.Sfx = Sfx;
-window.SFX_GAP = SFX_GAP;   // 합성음 폴백도 같은 간격을 지키게 (game.js sfx())
 
 /* ===== SfxLoop: 계속 울려야 하는 효과음 ===== */
-const SFX_LOOP_LEN = 0.90;      // 실제로 쓰는 길이 — 파일 끝 0.1초는 버린다
-const SFX_LOOP_OV = 0.12;       // 겹치는 구간
-const SFX_LOOP_KEYS = { swim: 0.55, fuse: 0.5 };   // 키 → 음량 배수
+export const SFX_LOOP_LEN = 0.90;      // 실제로 쓰는 길이 — 파일 끝 0.1초는 버린다
+export const SFX_LOOP_OV = 0.12;       // 겹치는 구간
+export const SFX_LOOP_KEYS = { swim: 0.55, fuse: 0.5 };   // 키 → 음량 배수
 
-const SfxLoop = {
+export const SfxLoop = {
   pair: {}, active: {}, on: {}, cur: {}, missing: {},
   ensure(key) {
     if (this.pair[key] || this.missing[key]) return;
@@ -331,16 +329,15 @@ const SfxLoop = {
     for (const k in SFX_LOOP_KEYS) if (!except || !except[k]) this.set(k, false);
   }
 };
-window.SfxLoop = SfxLoop;
 
 /* ===== Ambient: 위치 기반 환경음 (폭포·호수) ===== */
 /* sea·glacier는 '가까운 지형까지의 거리'가 아니라 **어느 구역에 있는가**로 켜진다. */
-const AMBIENT_FILES = { waterfall: 'waterfall_loop', water: 'water_ambient_loop',
+export const AMBIENT_FILES = { waterfall: 'waterfall_loop', water: 'water_ambient_loop',
   sea: 'amb_sea', glacier: 'amb_glacier' };
-const AMBIENT_RADIUS = { waterfall: 13 * TS, water: 9 * TS };   // 이 거리 안이면 소리가 들리기 시작한다
-const AMBIENT_OVERLAP = 0.3;   // 겹쳐 트는 구간(초)
+export const AMBIENT_RADIUS = { waterfall: 13 * TS, water: 9 * TS };   // 이 거리 안이면 소리가 들리기 시작한다
+export const AMBIENT_OVERLAP = 0.3;   // 겹쳐 트는 구간(초)
 
-const Ambient = {
+export const Ambient = {
   vol: 0.45,
   pair: {},      // key -> [AudioA, AudioB]
   active: {},    // key -> 지금 "메인"인 쪽의 인덱스(0|1)
@@ -435,4 +432,3 @@ const Ambient = {
     }
   }
 };
-window.Ambient = Ambient;

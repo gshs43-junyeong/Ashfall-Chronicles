@@ -1,19 +1,25 @@
 /* ===== world.js — 세계 생성 / 충돌 / 조명 ===== */
-'use strict';
+import { factory as Factory } from './ctx.js';
+import { RNG, aabb, clamp, dist, inv, lerp, makeNoise1D, makeNoise2D, rleDecode, rleEncode } from './util.js';
+import { BIOMES, CAMP_GX1, CAMP_X0, CAMP_X1, DEEP_Y, GLACIER_X1, HELL_Y, SEA_X1, SHIFT, SKY_Y, SURF_BASE, SX, SY,
+  SYB, WH, WORLD_BOT, WSIZE, WSX, WSY, WW, applyWorldSize } from './size.js';
+import { CAVE_TYPES, CHAPTERS, FAULT, FLUID_FLOW, FLUID_KIND, FLUID_OPEN, FLUID_SRC, FLUID_TILE, MERCHANTS, MYSTIC,
+  OBJ_SIZE, RIG, RUIN_CIPHER, RUIN_HINTS, RUIN_MAP_IN, RUIN_PLANS, RUIN_RELIC, RUIN_SPEC, SEED_TILE, STORY_RUIN, T,
+  TILE_DEF } from './data.js';
 
-const TS = 22;              // 타일 픽셀 크기
-const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buildCaveZones)
+export const TS = 22;              // 타일 픽셀 크기
+export const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buildCaveZones)
 /* 이보다 작고 고립된(지상과 안 통하는) 공동은 동굴로 치지 않고 메운다(타일 수). */
-const MIN_CAVE = 220;
+export const MIN_CAVE = 220;
 
 /* 해변 폭. */
-const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 모래 해변이다
+export const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 모래 해변이다
 /* 바다 + 해변 — 나무·풀·꽃 같은 지상 초목을 놓지 않는다 — 사연: docs/code-history.md#h102 */
-const inSeaZone = x => x < SEA_X1 + BEACH_W + 4;
-const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
+export const inSeaZone = x => x < SEA_X1 + BEACH_W + 4;
+export const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
 
 /** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(치수는 size.js). */
-function setWorldSize(key) {
+export function setWorldSize(key) {
   applyWorldSize(key);
   for (const r of RUIN_SPEC) {
     if (r.bx === undefined) { r.bx = r.x; r.by = r.y; }
@@ -35,7 +41,7 @@ function setWorldSize(key) {
 }
 
 /* 바이옴이 아닌 구역의 이름표 — 원경 그림이 바뀌는 자리와 짝이다(G.bgId). */
-const ZONE_CARD = {
+export const ZONE_CARD = {
   camp: { n: '베이스캠프', sub: '잿빛 숲 한복판',
           card: { line: '살아남은 이들이 처음 불을 피운 자리. 여기서부터 다시 센다.' } },
   village: { n: '여명 마을', sub: '재를 이고 사는 곳',
@@ -43,7 +49,7 @@ const ZONE_CARD = {
 };
 
 /* 재질 번호 → 지층 구성 — 사연: docs/code-history.md#h103 */
-const MAT_LAYER = [
+export const MAT_LAYER = [
   { top: T.SNOW, soil: T.SNOW, sub: T.ICE, deep: T.STONE, wall: 5, subWall: 2 },
   { top: T.GRASS, soil: T.DIRT, sub: T.DIRT, deep: T.STONE, wall: 1, subWall: 2 },
   { top: T.SAND, soil: T.SAND, sub: T.SANDSTONE, deep: T.STONE, wall: 8, subWall: 2 },
@@ -55,11 +61,11 @@ const MAT_LAYER = [
   // 7 바다 — 지면은 해저 모래다
   { top: T.SAND, soil: T.SAND, sub: T.SANDSTONE, deep: T.STONE, wall: 8, subWall: 2 }
 ];
-const MAT_OF = { ice: 0, forest: 1, forest2: 1, desert: 2, corrupt: 3, jungle: 4, glowfen: 5,
+export const MAT_OF = { ice: 0, forest: 1, forest2: 1, desert: 2, corrupt: 3, jungle: 4, glowfen: 5,
                  glacier: 6, sea: 7 };
 
 /* ================= 여명 마을 배치표 ================= */
-const DAWN_BUILDINGS = [
+export const DAWN_BUILDINGS = [
   // off: 시작 칸, w/h: 폭·높이, npc/fac: 그 안에 사는 사람과 시설.
   { off:  2, w: 18, h: 10, npc: 'haran',   fac: 'inn'       },   // 여관
   { off: 24, w: 17, h: 13, npc: 'tamer',   fac: 'workbench' },   // 조련사
@@ -68,11 +74,11 @@ const DAWN_BUILDINGS = [
 ];
 /* 건물 안 배치 — 건물 시작점 기준. */
 /* 시설(fac)은 9~10칸, 강화 모루는 11~12칸, 탁자는 14~15칸. */
-const DAWN_INSIDE = { shelf: 2, npc: 6, fac: 9, anvil: 11, table: 14 };
+export const DAWN_INSIDE = { shelf: 2, npc: 6, fac: 9, anvil: 11, table: 14 };
 
 /* 광장 — 건물1과 건물2 사이. */
 // 작업대는 조련사네 집 안(DAWN_BUILDINGS[1].fac)으로 옮겨서 여기 목록엔 없다.
-const DAWN_PLAZA = [
+export const DAWN_PLAZA = [
   { id: 'kade',      off: -10, w: 1 },
   { id: 'board',     off:  -7, w: 2 },
   { id: 'fountain',  off:  -2, w: 5 },
@@ -81,7 +87,7 @@ const DAWN_PLAZA = [
   { id: 'forge',     off:  12, w: 2 }
 ];
 /* 광장 물건의 실제 그림 크기(px). */
-const DAWN_OBJ = {
+export const DAWN_OBJ = {
   // 베이스캠프·여명 마을·플레이어가 직접 놓는 것 전부 같은 크기(OBJ_SIZE)를 쓴다
   workbench: { type: 'workbench', w: OBJ_SIZE.workbench.w, h: OBJ_SIZE.workbench.h, lv: 1 },
   kade:      { type: 'npc', npc: 'kade', w: 22, h: 44 },
@@ -103,13 +109,13 @@ const DAWN_OBJ = {
   npcBase:   { type: 'npc', w: 22, h: 44 }   // 건물 주민 — npc 이름만 갈아 끼워 쓴다
 };
 /* 3단계 성벽 — 마을 양 끝 바깥. */
-const DAWN_WALL = { leftOff: -16, rightOff: 15, gateH: 3, towerH: 14,
+export const DAWN_WALL = { leftOff: -16, rightOff: 15, gateH: 3, towerH: 14,
   /* 성벽에서 이만큼 더 바깥까지 지면을 평평하게 깎는다. */
   flatPad: 10 };
 
 /** 유적 통행 검사(_standSet)가 쓰는 칸 집합 — Set 과 같은 쓰임(has · add · size · 순회)을 상자 크기의 Uint8Array 로 한다 — 사연:
    docs/code-history.md#h104 */
-class BoxSet {
+export class BoxSet {
   constructor(box, pad) {
     this.x0 = box[0] - pad; this.y0 = box[1] - pad;
     this.bw = box[2] - box[0] + 1 + pad * 2; this.bh = box[3] - box[1] + 1 + pad * 2;
@@ -133,12 +139,12 @@ class BoxSet {
 
 /** 닫힌 문 = 옆에서 본 문짝 — 경첩 쪽 가장자리의 얇은 판만 막는다(열린 문은 칸을 채운 앞면이고 안 막는다).
     game.js drawDoor 가 같은 폭으로 그린다. */
-function doorEdge(d) {
+export function doorEdge(d) {
   const w = Math.max(6, Math.round(d.w * 0.32));
   return { x: d.dir === -1 ? d.x : d.x + d.w - w, y: d.y, w, h: d.h };
 }
 
-class World {
+export class World {
   constructor(seed) {
     this.seed = seed;
     this.rng = new RNG(seed);
@@ -805,8 +811,7 @@ class World {
       const x = k % WW, y = (k / WW) | 0;
       if (this.tiles[k] === T.CRUMBLE) {
         this.tiles[k] = T.AIR;
-        this.crumbled.set(k, 9);                               // 9초 뒤 제자리로
-        if (window.G) for (let i = 0; i < 6; i++) G.parts.push(new Part(x * TS + TS / 2, y * TS + TS / 2, '#6a6050'));
+        this.crumbled.set(k, 9);                               // 9초 뒤 제자리로 · 먼지 없음(사연 #h140)
       } else {
         // 그 자리에 누가 서 있으면 끼이므로, 비어 있을 때만 되돌린다
         if (!this.hitSolid(x * TS, y * TS, TS, TS)) this.tiles[k] = T.CRUMBLE;
@@ -1054,11 +1059,11 @@ class World {
       }
       if (r === boss || r === deep) continue;
       // 기계식 함정 — 이 층은 기계가 지었다
-      if (rng.chance(0.8) && window.Factory) {
+      if (rng.chance(0.8) && Factory) {
         const left = rng.chance(0.5), tx = left ? r.x + 1 : r.x + r.w - 2;
         if (Factory.canPlace(this, tx, fy)) Factory.place(this, tx, fy, rng.pick(['dart', 'flamejet', 'frostjet']), left ? 0 : 2, 1);
       }
-      if (rng.chance(0.5) && window.Factory) {
+      if (rng.chance(0.5) && Factory) {
         const tx2 = r.x + rng.int(3, Math.max(3, r.w - 4));
         if (Factory.canPlace(this, tx2, fy)) Factory.place(this, tx2, fy, 'trap', 0, 1);
       }
@@ -1120,7 +1125,7 @@ class World {
       if (r === last) continue;
       // 조립되다 만 것들이 줄지어 선 자리 — 받침대만 남기고 비워 둔다
       for (let x = r.x + 3; x < r.x + r.w - 2; x += 5) this.set(x, fy + 1, T.ARCHESTONE);
-      if (rng.chance(0.55) && window.Factory) {
+      if (rng.chance(0.55) && Factory) {
         const left = rng.chance(0.5), tx2 = left ? r.x + 1 : r.x + r.w - 2;
         if (Factory.canPlace(this, tx2, fy)) Factory.place(this, tx2, fy, rng.pick(['dart', 'flamejet']), left ? 0 : 2, 1);
       }
@@ -1374,7 +1379,7 @@ class World {
     const rng = new RNG(this.seed + '_v' + lv);
     const P = (o) => this.objects.push(o);
     const mach = (tx, ty, key, dir) => {
-      if (window.Factory && Factory.canPlace(this, tx, ty)) Factory.place(this, tx, ty, key, dir || 0, 1);
+      if (Factory && Factory.canPlace(this, tx, ty)) Factory.place(this, tx, ty, key, dir || 0, 1);
     };
 
     if (lv === 2) {

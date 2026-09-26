@@ -1,8 +1,9 @@
 /* ===== data.js — 타일 / 아이템 / 적 / 스킬 / 스토리 ===== */
-'use strict';
+import { clamp, eulreul, iga } from './util.js';
+import { BIOMES, DEEP_Y, HELL_Y, SHIFT, SKY_Y } from './size.js';
 
 /* ---------------- 타일 ---------------- */
-const T = {
+export const T = {
   AIR: 0, DIRT: 1, GRASS: 2, STONE: 3, SAND: 4, SANDSTONE: 5, SNOW: 6, ICE: 7,
   WOOD: 8, LEAF: 9, EBONSTONE: 10, CORRUPTGRASS: 11, ASH: 12, OBSIDIAN: 13,
   COPPER: 14, IRON: 15, GOLD: 16, MYTHRIL: 17, SOULSTONE: 18, HELLSTONE: 19,
@@ -102,7 +103,7 @@ const T = {
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
-const TILE_DEF = [
+export const TILE_DEF = [
   { n: '공기', c: null, solid: 0, hard: 0 },
   { n: '흙', c: '#6b4a2f', solid: 1, hard: 0, drop: 'dirt' },
   { n: '풀', c: '#4a7a34', solid: 1, hard: 0, drop: 'dirt' },
@@ -356,7 +357,7 @@ const TILE_DEF = [
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
-const SEED_TILE = {
+export const SEED_TILE = {
   seed_wheat: T.WHEAT0, seed_starroot: T.ROOT0, seed_ashcap: T.CAP0,
   seed_bloodbean: T.BEAN0, seed_bonebloom: T.BLOOM0,
   seed_frostherb: T.HERB0, seed_emberpod: T.POD0
@@ -364,11 +365,11 @@ const SEED_TILE = {
 
 /* 타일 ID → 기계 키 (data.js 로드 시 1회 구축) */
 /* ★ 기계 타일은 벨트 둘만 통과하고 나머지는 전부 몸이 있다(밟고 서거나 막힌다). */
-const MACH_OF_TILE = {};
+export const MACH_OF_TILE = {};
 for (let i = 0; i < TILE_DEF.length; i++) if (TILE_DEF[i].mach) MACH_OF_TILE[i] = TILE_DEF[i].mach;
 
 /* 손그림 타일 애셋 이름 → 타일 ID. manifest.json의 tiles에 이 이름으로 파일을 넣어 두면 절차 생성 텍스처를 자동으로 덮어쓴다. */
-const TILE_SPRITE = {
+export const TILE_SPRITE = {
   steelplate: T.STEELPLATE, conduit: T.CONDUIT,
   coal: T.COAL, lead: T.LEAD, oilshale: T.OILSHALE,
   icebrick: T.ICEBRICK, sandbrick: T.SANDBRICK, minewood: T.MINEWOOD,
@@ -399,28 +400,28 @@ for (let i = 0; i < 4; i++) {
 }
 for (const id in MACH_OF_TILE) TILE_SPRITE['m_' + MACH_OF_TILE[id]] = +id;
 
-const WALL_COLOR = [null, '#3a2a1a', '#33333a', '#241c2e', '#402d1a', '#4a5f6e', '#32323c', '#2a2018', '#6b5a34',
+export const WALL_COLOR = [null, '#3a2a1a', '#33333a', '#241c2e', '#402d1a', '#4a5f6e', '#32323c', '#2a2018', '#6b5a34',
   '#3f5266', '#332f26', '#23301f', '#22322e', '#3c3a34', '#4a3520', '#5a4128'];
 // 9: 하늘돌, 10: 유적, 11: 정글, 12: 버섯 골짜기, 13: 성벽(WALLSTONE을 어둡게 — 성문 안쪽 배경) 15: 나무 판자 벽지 — 벽돌결이 아니라 세로 판자결로
 // 그린다(paintWoodWall)
 
 /* ---------------- 희귀도 ---------------- */
-const RARITY = ['일반', '고급', '희귀', '영웅', '전설', '신화'];
-const RARITY_COLOR = ['#b8b8b8', '#5fc45f', '#4f9cf0', '#a866e8', '#e8912a', '#e8484f'];
-const RARITY_MULT = [1, 1.12, 1.28, 1.5, 1.8, 2.2];
+export const RARITY = ['일반', '고급', '희귀', '영웅', '전설', '신화'];
+export const RARITY_COLOR = ['#b8b8b8', '#5fc45f', '#4f9cf0', '#a866e8', '#e8912a', '#e8484f'];
+export const RARITY_MULT = [1, 1.12, 1.28, 1.5, 1.8, 2.2];
 
 /* 무기 최소 착용 레벨 — 등급(tier)이 곧 세기이므로 무기마다 따로 적지 않고 여기서 뽑는다. */
-const WEAPON_TIER_LV = [1, 2, 5, 6, 11, 16, 20, 26, 44, 78];
+export const WEAPON_TIER_LV = [1, 2, 5, 6, 11, 16, 20, 26, 44, 78];
 
 /* ---------------- 접사 ---------------- */
-const PREFIX = [
+export const PREFIX = [
   { n: '날카로운', s: { dmgP: 0.10 } }, { n: '잔혹한', s: { dmgP: 0.16, crit: 3 } },
   { n: '신속한', s: { spdP: 0.16 } }, { n: '가벼운', s: { spdP: 0.10, ms: 4 } },
   { n: '불타는', s: { fire: 1, dmgP: 0.08 } }, { n: '서리 맺힌', s: { frost: 1 } },
   { n: '영혼을 먹는', s: { lifesteal: 4 } }, { n: '정밀한', s: { crit: 8 } },
   { n: '무거운', s: { dmgP: 0.22, spdP: -0.12, kbP: 0.5 } }, { n: '고대의', s: { dmgP: 0.14, allStat: 2 } }
 ];
-const SUFFIX = [
+export const SUFFIX = [
   { n: '의 활력', s: { hp: 20 } }, { n: '의 통찰', s: { mp: 15, cdr: 5 } },
   { n: '의 분노', s: { str: 4 } }, { n: '의 바람', s: { dex: 4 } },
   { n: '의 심연', s: { int: 4 } }, { n: '의 성벽', s: { def: 5, vit: 3 } },
@@ -429,7 +430,7 @@ const SUFFIX = [
 
 /* ---------------- 아이템 ---------------- */
 // type: weapon / tool / armor / acc / consum / mat / block / summon
-const ITEMS = {
+export const ITEMS = {
   /* --- 근접 --- */
   sword_wood:   { n: '금 간 목검', i: '🗡', type: 'weapon', wc: 'melee', dmg: 9,  spd: 2.2, kb: 3, reach: 40, tier: 0, d: '아버지의 창고 구석에서 찾아낸 연습용 검.'  },
   sword_copper: { n: '구리 장검', i: '⚔', type: 'weapon', wc: 'melee', dmg: 16, spd: 2.0, kb: 4, reach: 44, tier: 1, d: '무르지만 정직하게 벤다.'  },
@@ -1186,7 +1187,7 @@ const ITEMS = {
 };
 
 /* 유적 → 그곳에서만 나오는 전리품 [재료, 유물]. */
-const RUIN_LOOT = {
+export const RUIN_LOOT = {
   ice: ['neverthaw', 'warden_seal'],
   pyramid: ['sealed_ash', 'caged_sun'],
   mine: ['deep_ember', 'foreman_tag'],
@@ -1195,23 +1196,23 @@ const RUIN_LOOT = {
 };
 
 /* ★ 한 번 쏜 것이 **같은 적에게 겹쳐** 맞을 때, 두 번째부터의 몫. */
-const MULTI_FALLOFF = 0.35;
+export const MULTI_FALLOFF = 0.35;
 
 /* ================= 맞는 순간 — 물리 타격 계열 ================= */
-const HIT_FAM = {
+export const HIT_FAM = {
   sword: 'slash', blade: 'slash', dagger: 'slash', scythe: 'slash', axe: 'slash', saw: 'slash',
   spear: 'pierce', lance: 'pierce', harpoon: 'pierce', bow: 'pierce', crossbow: 'pierce', gun: 'pierce',
   hammer: 'blunt', mace: 'blunt'
 };
 /* 계열마다 크기와 남는 시간이 다르다. */
-const HIT_FX = {
+export const HIT_FX = {
   slash: { size: 52, slow: 0.80 },
   pierce: { size: 52, slow: 0.90 },
   blunt: { size: 72, slow: 1.35 }
 };
 
 /** 이 무기로 때렸을 때 어느 타격 그림을 쓰는가. */
-function hitFam(it) {
+export function hitFam(it) {
   if (!it || !it.id) return null;
   const f = HIT_FAM[it.id.split('_')[0]];
   if (f) return f;
@@ -1223,7 +1224,7 @@ function hitFam(it) {
 /* ---------------- 제작 시설 ---------------- */
 /* 설치물 규격 — 전부 한 타일(TS=22px) 안에 들어가야 한다 — 사연: docs/code-history.md#h6 */
 /* tw/th = 실제로 차지하는 칸 수(충돌 판정용). */
-const OBJ_SIZE = {
+export const OBJ_SIZE = {
   // 작업대는 낮고 넓은 상판이라 2×1(가로로 긴 모양)이 실물에 더 가깝다는 판단 — 나머지 둘은 2×2 그대로.
   workbench: { w: 40, h: 20, tw: 2, th: 1 },
   forge: { w: 40, h: 40, tw: 2, th: 2 },
@@ -1232,18 +1233,18 @@ const OBJ_SIZE = {
 };
 
 /* 4단계 추가 — 세션 3(바다) 재료로만 올릴 수 있다. */
-const STATION_NAME = {
+export const STATION_NAME = {
   work: ['—', '작업대', '정밀 작업대', '자동 조립대', '심해 공작대'],
   forge: ['—', '용광로', '고로', '아크 용광로', '가압 제련로']
 };
-const STATION_DESC = {
+export const STATION_DESC = {
   work: ['', '판자와 못으로 되는 것들.', '치수를 재고 깎는다. 부품이 나오기 시작한다.', '설계 핵을 얹었다. 이제 기계를 만드는 기계를 만든다.',
          '심해 노심을 물려 압력으로 눌러 붙인다. 물속에서 쓸 것을 물 밖에서 만드는 자리다.'],
   forge: ['', '광석을 녹여 주괴로.', '풀무를 걸었다. 강철판이 나온다.', '전기로 녹인다. 이제 공장처럼 돌린다.',
           '노를 통째로 가압해 녹인다. 소금과 진주까지 재료가 된다.']
 };
 /* STATION_UP[종류][현재레벨] = 다음 레벨로 올리는 비용 4단계는 **세션 3 재료(심해 노심)를 요구한다** — 바다에 들어가 보지 않으면 못 올린다. */
-const STATION_UP = {
+export const STATION_UP = {
   work: [null,
     { need: { plank: 40, iron_bar: 14, gear_basic: 8 } },
     { need: { steel_plate: 30, circuit: 12, motor: 6 } },
@@ -1256,7 +1257,7 @@ const STATION_UP = {
 
 /* ---------------- 제작법 ---------------- */
 // need: {아이템:수량}, station: null(어디서나) / 'work'(작업대) / 'forge'(용광로) lv: 그 시설의 필요 승급 단계 (없으면 1).
-const RECIPES = [
+export const RECIPES = [
   { out: 'plank', n: 4, need: { wood: 1 } },
   { out: 'torch', n: 5, need: { wood: 1 } },
   { out: 'platform', n: 4, need: { wood: 1 } },
@@ -1540,10 +1541,10 @@ const RECIPES = [
 ];
 
 /* ---------------- 연료 ---------------- */
-const FUEL = { wood: 16, plank: 20, ash: 8, coal: 90, fuel_brick: 560, crude_oil: 150, refined_oil: 640 };
+export const FUEL = { wood: 16, plank: 20, ash: 8, coal: 90, fuel_brick: 560, crude_oil: 150, refined_oil: 640 };
 
 /* ---------------- 기계 ---------------- */
-const MACHINE = {
+export const MACHINE = {
   belt: {
     n: '컨베이어 벨트', tile: T.M_BELT, item: 'm_belt', rot: 1,
     d: '아이템을 1초에 한 칸씩 앞으로 나른다. 동력이 필요 없다. 앞이 막히면 그 자리에서 기다린다.'
@@ -1659,7 +1660,7 @@ const MACHINE = {
 };
 
 /* ---------------- 기계 제작법 ---------------- */
-const MRECIPES = [
+export const MRECIPES = [
   /* 자동 용광로 — 연료 */
   { m: 'smelter', in: { copper_ore: 2 }, out: { copper_bar: 1 }, t: 16 },
   { m: 'smelter', in: { iron_ore: 2 }, out: { iron_bar: 1 }, t: 18 },
@@ -1718,20 +1719,20 @@ const MRECIPES = [
 ];
 
 /* 공장 재화 — 전력 설비(압축기·정제기·조립기)에서만 나오는 물건들. */
-const FACTORY_LINES = new Set(['press', 'refinery', 'assembler', 'pressor', 'desal']);
-const FACTORY_GOODS = new Set();
+export const FACTORY_LINES = new Set(['press', 'refinery', 'assembler', 'pressor', 'desal']);
+export const FACTORY_GOODS = new Set();
 for (const r of MRECIPES) if (FACTORY_LINES.has(r.m)) for (const k in r.out) FACTORY_GOODS.add(k);
 
 /* 값 배수 — price()가 종류별 기본값을 낸 뒤 여기서 한 번 곱한다. */
-const PRICE_MUL = { machine: 4.5, station: 4.5, weapon: 1 };
-const PRICE_MUL_DEFAULT = 1.75;
-const FACTORY_PRICE_MUL = 4.5;
+export const PRICE_MUL = { machine: 4.5, station: 4.5, weapon: 1 };
+export const PRICE_MUL_DEFAULT = 1.75;
+export const FACTORY_PRICE_MUL = 4.5;
 
 /* ---------------- 값의 티어 가중 ---------------- */
-const PRICE_BASE_MUL = 2.2;
-const PRICE_TIER_STEP = 1.30;
+export const PRICE_BASE_MUL = 2.2;
+export const PRICE_TIER_STEP = 1.30;
 /* 재료의 티어 — 재료에는 tier도 lvReq도 없다. */
-const MAT_TIER = {
+export const MAT_TIER = {
   coal: 0, copper_bar: 1, gear_basic: 1, bone_frag: 1, spider_silk: 2,
   iron_bar: 2, crystal: 3, gold_bar: 3, circuit: 3, motor: 3, steel_plate: 3,
   soul_shard: 4, hell_ore: 4, power_core: 4, battery_cell: 4,
@@ -1744,17 +1745,17 @@ const MAT_TIER = {
   glacium_ore: 7, tide_ore: 7, glacium_bar: 8, tide_bar: 8,
   meteorite: 6, star_crystal: 7, storm_amber: 7, cloud_pearl: 7
 };
-function priceTier(d, id) {
+export function priceTier(d, id) {
   if (d.tier !== undefined) return clamp(d.tier, 0, 12);
   if (d.lvReq) return clamp(Math.round(d.lvReq / 4), 0, 12);
   if (id && MAT_TIER[id] !== undefined) return MAT_TIER[id];
   return clamp(Math.round(Math.log2(Math.max(1, d.price || 12) / 10)), 0, 12);
 }
-function priceTierMulOf(d, id) { return PRICE_BASE_MUL * Math.pow(PRICE_TIER_STEP, priceTier(d, id)); }
+export function priceTierMulOf(d, id) { return PRICE_BASE_MUL * Math.pow(PRICE_TIER_STEP, priceTier(d, id)); }
 
 
 /* ---------------- 마을 등급 ---------------- */
-const VILLAGE = [
+export const VILLAGE = [
   null,
   {
     n: '되살아난 마을',
@@ -1806,7 +1807,7 @@ const VILLAGE = [
 /* ---------------- 시작 캐릭터 ---------------- */
 /* 다섯이 각자 제 시트를 쓴다 — char/player_<id>.png (13프레임, 원본 player.png 와 순서가 동일: idle1 idle2 walk1..4 jump fall dash
    atk1..3 */
-const CHARACTERS = [
+export const CHARACTERS = [
   { id: 'wanderer', n: '떠돌이', tint: null, d: '치우침이 없다. 처음이라면 이쪽.',
     story: '재가 내리기 전, 어느 마을의 문을 마지막으로 잠근 사람. ' +
            '이름도 고향도 그 문 안에 두고 왔다. 지도 대신 제 걸음을 믿는다.',
@@ -1841,7 +1842,7 @@ const CHARACTERS = [
 
 /* ---------------- 난이도 ---------------- */
 /* 새 게임에서 한 번 고르고 끝이다 — 설정에서 바꿀 수 없다. */
-const MODES = [
+export const MODES = [
   { id: 'normal', n: '일반', mul: 1, death: 'normal', c: '#8fb87a',
     d: '경험치 일부와 금화를 잃습니다. 쓰러진 자리에서 절반을 되찾을 수 있습니다.' },
   { id: 'hard', n: '하드', mul: 2, death: 'drop', c: '#e0a03a',
@@ -1849,17 +1850,17 @@ const MODES = [
   { id: 'impossible', n: '불가능', mul: 5, death: 'wipe', c: '#d0564c',
     d: '몬스터의 체력과 공격력이 5배. 한 번 죽으면 이 슬롯의 기록이 지워집니다.' }
 ];
-const MODE_OF = id => MODES.find(m => m.id === id) || MODES[0];
-const CHAR_OF = id => CHARACTERS.find(c => c.id === id) || CHARACTERS[0];
+export const MODE_OF = id => MODES.find(m => m.id === id) || MODES[0];
+export const CHAR_OF = id => CHARACTERS.find(c => c.id === id) || CHARACTERS[0];
 
 /* ---------------- 활·총을 든 손 ---------------- */
 /* 활은 겨눈 쪽으로 돌려 그리는데, 손 바로 위에 그리면 몸을 파고든다. */
-const BOW_HAND = 18;
-const BOW_TIP = BOW_HAND + 11.4;
+export const BOW_HAND = 18;
+export const BOW_TIP = BOW_HAND + 11.4;
 
 /* ---------------- 조작키 ---------------- */
 /* 설정에서 바꾼다. */
-const KEY_ACTIONS = [
+export const KEY_ACTIONS = [
   { id: 'left', n: '왼쪽', def: ['KeyA', 'ArrowLeft'] },
   { id: 'right', n: '오른쪽', def: ['KeyD', 'ArrowRight'] },
   { id: 'down', n: '내려가기', def: ['KeyS', 'ArrowDown'] },
@@ -1880,7 +1881,7 @@ const KEY_ACTIONS = [
 
 /* ---------------- 알림 갈래 ---------------- */
 /* toast 두 번째 인자에 넘기는 갈래. */
-const NOTICE_KINDS = [
+export const NOTICE_KINDS = [
   { id: 'good', n: '획득 · 성공', def: 1 },
   { id: 'info', n: '안내 · 발견', def: 1 },
   { id: 'quest', n: '목표 진행', def: 1 },
@@ -1889,7 +1890,7 @@ const NOTICE_KINDS = [
 
 /* ---------------- 적 ---------------- */
 // ai: walker / jumper / flyer / archer / caster / boss별 전용 stiff: 그림이 거의 안 움직이는 개체를 렌더러가 절차적으로 흔들어 주는 값.
-const ENEMIES = {
+export const ENEMIES = {
   /* --- 순한 동물: 적대하지 않고 어슬렁거리다 맞으면 도망친다. 잡으면 생고기를 준다 --- */
   rabbit:      { n: '들토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', w: 16, h: 12, c: '#ad9678', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
@@ -2167,14 +2168,14 @@ const ENEMIES = {
 };
 
 /* ================= 개조 — 세션 2에서 옛 몹이 기계가 되어 돌아온다 ================= */
-const mobCw = t => (ENEMIES[t] && ENEMIES[t].cw) || '마리';
+export const mobCw = t => (ENEMIES[t] && ENEMIES[t].cw) || '마리';
 
-const MECH_MUL = 1.5;                 // 체력·공격력·방어·보상 모두 원래의 1.5배
+export const MECH_MUL = 1.5;                 // 체력·공격력·방어·보상 모두 원래의 1.5배
 /* ★ 개조된 것에서는 **부품만** 나온다. */
-const MECH_PART = 'rust_gear';
-const MECH_CH0 = 9;                   // 세션 2 서장
-const MECH_CH1 = 14;                  // 세션 2 종장 — 이때 전부 넘어간다
-const MECH_ORDER = [
+export const MECH_PART = 'rust_gear';
+export const MECH_CH0 = 9;                   // 세션 2 서장
+export const MECH_CH1 = 14;                  // 세션 2 종장 — 이때 전부 넘어간다
+export const MECH_ORDER = [
   /* 9장 */  'slime', 'ashcrow', 'bat', 'zombie',
   /* 10장 */ 'spider', 'skeleton', 'archer', 'sporeling',
   /* 11장 */ 'scorpion', 'sandmaw', 'minerghost', 'vinelash',
@@ -2184,20 +2185,20 @@ const MECH_ORDER = [
 ];
 
 /** 그 장까지 개조가 끝난 몹의 수. */
-function mechCount(chapter) {
+export function mechCount(chapter) {
   if (chapter < MECH_CH0) return 0;
   const t = clamp((chapter - MECH_CH0) / (MECH_CH1 - MECH_CH0), 0, 1);
   return Math.round(4 + t * (MECH_ORDER.length - 4));
 }
 /** 이 장에서 이 몹이 개조되어 나오는가. */
-function isMech(type, chapter) {
+export function isMech(type, chapter) {
   const n = mechCount(chapter);
   if (!n) return false;
   const i = MECH_ORDER.indexOf(type);
   return i >= 0 && i < n;
 }
 /** 살아 있는 개체의 이름. */
-function mobName(type, mech) {
+export function mobName(type, mech) {
   const n = (ENEMIES[type] || {}).n || type;
   return mech ? '개조된 ' + n : n;
 }
@@ -2205,7 +2206,7 @@ function mobName(type, mech) {
 
 /* c 파편 색 셋(밝은 쪽→어두운 쪽) · n 기본 개수 · g 중력 배수(음수면 위로 뜬다) life 사는 시간(초) · sq 1이면 네모(돌·쇠·유리) 0이면 동그라미(살·젤·연기) glow
    1이면 — 사연: docs/code-history.md#h10 */
-const MAT = {
+export const MAT = {
   stone: { c: ['#9a9aa0', '#6a6a70', '#4a4a50'], n: 9, g: 1.0, life: .50, sq: 1, hit: 'hit_stone', brk: 'break_stone' },
   dirt:  { c: ['#8a6a44', '#5d4429', '#40301d'], n: 8, g: 1.25, life: .36, sq: 1, hit: 'hit_stone', brk: 'break_dirt' },
   wood:  { c: ['#a67a44', '#77542d', '#523a1e'], n: 8, g: .95, life: .55, sq: 1, hit: 'hit_wood', brk: 'break_wood' },
@@ -2219,10 +2220,10 @@ const MAT = {
   flesh: { c: ['#e07a6a', '#b8484a', '#7a2c2e'], n: 10, g: 1.10, life: .42, sq: 0, hit: 'hit_flesh', brk: 'break_flesh' },
   void:  { c: ['#d8c0ff', '#a06fff', '#5a3a86'], n: 12, g: -.20, life: .78, sq: 0, glow: 1, hit: 'hit_void', brk: 'break_void' },
 };
-const MAT_DEF = 'stone';
+export const MAT_DEF = 'stone';
 
 /* 타일·기계의 재질. */
-const TILE_MAT = (() => {
+export const TILE_MAT = (() => {
   const m = {};
   const put = (mat, keys) => keys.split(' ').forEach(k => {
     if (T[k] === undefined) return;      // 오타는 조용히 넘긴다(표가 시트보다 앞설 수 있다)
@@ -2253,9 +2254,9 @@ const TILE_MAT = (() => {
   put('void', 'CORRUPTGRASS');
   return m;
 })();
-function tileMat(id) { return TILE_MAT[id] || MAT_DEF; }
+export function tileMat(id) { return TILE_MAT[id] || MAT_DEF; }
 /* ---------------- 빛 ---------------- */
-const LIGHT_SPEC = {
+export const LIGHT_SPEC = {
   LAMPPOST: [14, '#ffe0a0'], TORCH: [13, '#ffb45a'], LAVA: [11, '#ff6a2a'], FLOWLAVA: [10.8, '#ff7a34'],
   ORBITCORE: [10.5, '#7fe0ff'], COREGLASS: [10, '#ffb04a'], GLOWCAP: [9.5, '#6fe0c0'],
   CONDUIT: [9, '#6fd8ff'], RUNESTONE: [8.5, '#b89fff'], CRYSTAL: [8, '#7fd8e8'],
@@ -2284,24 +2285,24 @@ const LIGHT_SPEC = {
 }
 
 /* 유체 표(world.js '유체' 절). */
-const FLUID_KIND = new Uint8Array(TILE_DEF.length);
-const FLUID_SRC = new Uint8Array(TILE_DEF.length);
-const FLUID_FLOW = new Uint8Array(TILE_DEF.length);
+export const FLUID_KIND = new Uint8Array(TILE_DEF.length);
+export const FLUID_SRC = new Uint8Array(TILE_DEF.length);
+export const FLUID_FLOW = new Uint8Array(TILE_DEF.length);
 for (const k of ['WATER', 'FALLS', 'FLOWWATER', 'LILY', 'PONDWEED']) FLUID_KIND[T[k]] = 1;
 for (const k of ['SEAWATER', 'FLOWSEA', 'KELPPLANT']) FLUID_KIND[T[k]] = 2;
 for (const k of ['LAVA', 'FLOWLAVA']) FLUID_KIND[T[k]] = 3;
 for (const k of ['WATER', 'SEAWATER', 'LAVA', 'LILY', 'PONDWEED', 'KELPPLANT']) FLUID_SRC[T[k]] = 1;
 for (const k of ['FLOWWATER', 'FLOWSEA', 'FLOWLAVA']) FLUID_FLOW[T[k]] = 1;
-const FLUID_TILE = [0, T.FLOWWATER, T.FLOWSEA, T.FLOWLAVA];     // 종류 → 흐르는 타일
+export const FLUID_TILE = [0, T.FLOWWATER, T.FLOWSEA, T.FLOWLAVA];     // 종류 → 흐르는 타일
 /* 물이 밀고 들어갈 수 있는 칸 — 빈칸과 풀·꽃·고사리·조개(쓸려 간다). */
-const FLUID_WASH = new Uint8Array(TILE_DEF.length);
+export const FLUID_WASH = new Uint8Array(TILE_DEF.length);
 for (const k of ['AIR', 'FLOWER', 'WEED', 'FERN', 'SEASHELL']) FLUID_WASH[T[k]] = 1;
-const FLUID_OPEN = t => FLUID_WASH[t] === 1;
+export const FLUID_OPEN = t => FLUID_WASH[t] === 1;
 /** 캐거나 부쉈을 때 그 자리에 남는 것 — 물 위의 수련, 물속의 물풀·해초는 캐도 물칸이 남는다 — 사연: docs/code-history.md#h12 */
-const LEAVE_OF = { [T.LILY]: T.WATER, [T.PONDWEED]: T.WATER, [T.KELPPLANT]: T.SEAWATER };
+export const LEAVE_OF = { [T.LILY]: T.WATER, [T.PONDWEED]: T.WATER, [T.KELPPLANT]: T.SEAWATER };
 
 /** 장식을 놓을 때 무엇에 기대야 하는가 — 'floor' 바로 아래가 단단해야 · 'ceil' 바로 위가 단단해야. */
-const DECO_MOUNT = (() => {
+export const DECO_MOUNT = (() => {
   const m = {};
   for (const k of ['FLOWER', 'WEED', 'CACTUS', 'MUSHROOM', 'FERN', 'ORCHID', 'GLOWCAP', 'STALAGMITE', 'GEODE',
                    'BONEHEAP', 'CANOPIC', 'TOOLPILE', 'SEASHELL', 'CATTAIL', 'PEBBLES']) m[T[k]] = 'floor';
@@ -2310,14 +2311,14 @@ const DECO_MOUNT = (() => {
   return m;
 })();
 /** 장식 타일 → 그 장식 아이템(ITEMS 의 deco: 1). */
-const DECO_OF = (() => {
+export const DECO_OF = (() => {
   const m = {};
   for (const k in ITEMS) if (ITEMS[k].deco) m[ITEMS[k].tile] = k;
   return m;
 })();
 
 /* 몹의 재질. */
-const MOB_MAT = (() => {
+export const MOB_MAT = (() => {
   const m = {};
   const put = (mat, keys) => keys.split(' ').forEach(k => { m[k] = mat; });
   put('bone', 'skeleton archer bone_lord');
@@ -2337,7 +2338,7 @@ const MOB_MAT = (() => {
   put('wood', 'flotsam1 flotsam2 flotsam3');   // 바다 부유물 — 부서지는 소리가 나무라야 한다
   return m;
 })();
-function mobMat(type, mech) {
+export function mobMat(type, mech) {
   /* 개조된 것은 무엇이었든 강철이다 — 보이는 것도 강철이니 소리도 강철이라야 한다 */
   if (mech) return 'metal';
   return MOB_MAT[type] || 'flesh';
@@ -2345,7 +2346,7 @@ function mobMat(type, mech) {
 
 
 /* ================= 보스가 무너지는 방식 ================= */
-const BOSS_DIE = {
+export const BOSS_DIE = {
   /* --- 세션 1 --- */
   king_slime:    { mat: 'gel', n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: 'gel', n2: 34, at: .22, shake: 20 },
   bone_lord:     { mat: 'bone', n: 60, spd: 1.7, life: 1.6, mat2: 'void', n2: 20, at: .26, shake: 20 },
@@ -2377,7 +2378,7 @@ const BOSS_DIE = {
 };
 
 /* ---------------- 보스 등급 ---------------- */
-const BOSS_TIER = {
+export const BOSS_TIER = {
   mine_horror: 'mini', ice_warden: 'mini', vine_lord: 'mini',
   sand_guardian: 'mini', spore_queen: 'mini', blight_maw: 'mini',
   drowned_keeper: 'mini', isle_keeper: 'mini',
@@ -2388,7 +2389,7 @@ const BOSS_TIER = {
 };
 
 /* ---------------- 보스의 힘 축적 ---------------- */
-const BOSS_SURGE = {
+export const BOSS_SURGE = {
   bone_lord:   { k: 'ward', t: 1.5, cd: 15, dur: 7, v: 60,  brk: .060, c: '#ded6bd', s: 'sk_guard', n: '뼈를 그러모은다', m: '뼈 갑옷' },
   frost_witch: { k: 'nova', t: 1.4, cd: 13,         v: 16,  brk: .050, c: '#a8dcf0', pj: 'frost', s: 'sk_frost', n: '서리를 모은다' },
   void_king:   { k: 'nova', t: 1.6, cd: 14,         v: 20,  brk: .050, c: '#a06fff', pj: 'void',  s: 'sk_bolt',  n: '공허를 삼킨다' },
@@ -2397,10 +2398,10 @@ const BOSS_SURGE = {
   restorer:    { k: 'mend', t: 2.0, cd: 22,         v: .03, brk: .035, c: '#a8c8e8', s: 'sk_heal',  n: '되돌리려 한다' }
 };
 /* 뜨는 보스 — 모으는 동안에도 원래대로 떠 있어야 한다. */
-const SURGE_FLY = { b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
+export const SURGE_FLY = { b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
 
 /* ---------------- 스킬 / 특성 ---------------- */
-const SKILLS = {
+export const SKILLS = {
   /* ===== 검투사 — 붙어서 버티고 밀어붙인다 ===== */
   s_cleave:   { n: '광폭 베기', i: '🌀', br: 'blade', tier: 0, col: 0.5, max: 3, type: 'active', mana: 12, cd: 6,
                 d: '주변을 원형으로 베어 무기 피해의 %d%%를 준다.', v: r => 130 + r * 45 },
@@ -2501,7 +2502,7 @@ const SKILLS = {
                 d: '겨눈 자리에 별을 떨어뜨린다. 넓은 범위에 큰 피해와 화상.', v: () => 0 }
 };
 
-const BRANCHES = [
+export const BRANCHES = [
   { id: 'blade', n: '검투사', tag: '근접 · 생존 · 압박', c: '#c8433c',
     nodes: ['s_cleave', 's_toughen', 's_charge', 's_bloodlust', 's_guard', 's_whirl', 's_quake', 's_warcry', 's_titan', 's_undying'] },
   { id: 'ranger', n: '유격', tag: '원거리 · 기동 · 치명타', c: '#5fc45f',
@@ -2511,11 +2512,11 @@ const BRANCHES = [
 ];
 
 /* 특성 티어 해금에 필요한 해당 분기 누적 포인트 */
-const TIER_REQ = [0, 2, 5, 8];
+export const TIER_REQ = [0, 2, 5, 8];
 
 /* ---------------- 생활 숙련 ---------------- */
-const PROF_MAX = 10;
-const PROFS = {
+export const PROF_MAX = 10;
+export const PROFS = {
   farm: {
     n: '농사', i: '🌾', c: '#8fc85a',
     line: '갈고, 심고, 거둔다. 다 여문 칸을 거둘 때마다 는다.',
@@ -2547,11 +2548,11 @@ const PROFS = {
 };
 
 /** 숙련 lv -> 다음 레벨까지 필요한 경험치. */
-function profNeed(lv) { return Math.round(5 * Math.pow(lv, 1.45)); }
+export function profNeed(lv) { return Math.round(5 * Math.pow(lv, 1.45)); }
 
 /* 장의 결전이 되는 보스들. */
 /* 장의 목표로 걸린 보스들. */
-const STORY_BOSSES = {
+export const STORY_BOSSES = {
   king_slime: 1, bone_lord: 1, corrupt_heart: 1, frost_witch: 1, void_king: 1,
   storm_warden: 1, first_keeper: 1, pursuer: 1,
   overseer: 1, proliferator: 1, hepha: 1, archetype: 1,
@@ -2560,7 +2561,7 @@ const STORY_BOSSES = {
 
 /* ---------------- 보스 페이즈 대사 ---------------- */
 /* 페이즈가 넘어갈 때 뜨는 한 줄. */
-const BOSS_LINES = {
+export const BOSS_LINES = {
   king_slime:   { 1: '갈라져도 갈라져도, 아직 혼자다.', 2: '껍데기가 굳는다 — 안쪽이 뛴다.' },
   bone_lord:    { 1: '뼈가 일어선다.', 2: '기둥이 저를 대신 든다.' },
   corrupt_heart:{ 1: '뿌리가 바닥을 짚는다.', 2: '제단만이 아직 뛰고 있다.' },
@@ -2585,7 +2586,7 @@ const BOSS_LINES = {
 };
 
 /* ---------------- 버프 ---------------- */
-const BUFFS = {
+export const BUFFS = {
   rage: { n: '분노', i: '😤', dur: 180, b: { dmgP: 0.20 } },
   rage_greater: { n: '상급 분노', i: '😤', dur: 240, b: { dmgP: 0.32 } },
   iron: { n: '무쇠 피부', i: '🪨', dur: 180, b: { def: 12 } },
@@ -2631,7 +2632,7 @@ const BUFFS = {
 /* ---------------- 바이옴 유적 ---------------- */
 /* traps 값은 기계 키가 아니라 타일 함정 종류다 — 'dart'(화살 구멍) · 'vent'(불길 분출구) · 'crumble'(부서지는 바닥). */
 /* 난이도 등급(rank) — 기준은 "플레이어가 실제로 언제 여기 닿는가"다. */
-const RUIN_SPEC = [
+export const RUIN_SPEC = [
   {
     id: 'ice', n: '얼음 던전', x: 300 + SHIFT, y: 150, w: 88, h: 50,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
@@ -2727,7 +2728,7 @@ RUIN_SPEC.push({
 });
 
 /* 도면 — 굵은 격자(가로 4칸 x 세로 3칸). */
-const RUIN_PLANS = {
+export const RUIN_PLANS = {
   full:      ['####', '####', '####'],
   ring:      ['####', '#..#', '####'],   // O — 가운데가 통짜 암반으로 남는다
   horseshoe: ['####', '#...', '####'],   // C — 한쪽이 트인 고리
@@ -2743,7 +2744,7 @@ const RUIN_PLANS = {
 
 /* 스토리 유적 셋(석판)의 도면·입구·고유 요소. */
 /* 석판 유적 셋도 같은 규칙이다 — rooms 가 목표 방 수, bsp 가 [깊이, 최소 가로, 최소 세로]. */
-const STORY_RUIN = [
+export const STORY_RUIN = [
   { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', rooms: 12, bsp: [5, 10, 7], decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
   { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 14, bsp: [5, 10, 7], decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
   { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 18, bsp: [5, 10, 7], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
@@ -2755,7 +2756,7 @@ STORY_RUIN[2].mobs = ['crawler', 'shadoweye', 'skeleton'];  STORY_RUIN[2].rank =
 
 /* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다. */
 /* 신비한 방 — 한 세계에 두세 곳. */
-const MYSTIC = {
+export const MYSTIC = {
   well: { n: '가라앉은 우물', tile: 'WATER',
     lines: ['바닥이 안 보이는 우물이다. 물이 아니라 그보다 무거운 것이 담겨 있다.',
             '가장자리에 손자국이 여럿 있다. 전부 안쪽을 향해 나 있다.'],
@@ -2778,7 +2779,7 @@ const MYSTIC = {
     got: '발밑이 가벼워졌다 — 공중에서 한 번 더 뛸 수 있다' }
 };
 
-const RUIN_MAP_IN = {
+export const RUIN_MAP_IN = {
   ice: 'mine',        // 광산(입구 있음) → 얼음 던전
   spore: 'pyramid',   // 피라미드(지상에 솟음) → 포자 굴
   blight: 'spore'     // 포자 굴 → 부패한 둥지 (가장 깊은 사슬 끝)
@@ -2786,14 +2787,14 @@ const RUIN_MAP_IN = {
 
 /* ---------------- 유적 비문 ---------------- */
 /* 유적마다 하나씩 있는 유물. */
-const RUIN_RELIC = {
+export const RUIN_RELIC = {
   ice: 'relic_frostpane', pyramid: 'relic_sundial', mine: 'relic_lastlamp',
   blight: 'relic_rotcore', spore: 'relic_sporebell',
   story0: 'relic_frostmark', story1: 'relic_mazeeye', story2: 'relic_hollowseed'
 };
 
 /* ---------------- 유적의 맥박 ---------------- */
-const PULSE = {
+export const PULSE = {
   stages: [
     { n: '잠듦',   at: 0,  c: '#7a8a9a' },
     { n: '뒤척임', at: 25, c: '#d8b13d' },
@@ -2808,7 +2809,7 @@ const PULSE = {
   rageEvery: 24                   // 격노 중 그 유적 고유의 발작 간격(초)
 };
 /* 맥박 사건 — 단계가 오를 때마다 하나(이미 벌어진 사건이 없을 때). */
-const PULSE_EVENTS = {
+export const PULSE_EVENTS = {
   hunt:   { n: '표식된 것', i: '🎯', t: 60, stages: [1, 3],
             d: '유적이 하나에 표식을 새겼다 — 달아나기 전에 쓰러뜨려라' },
   stones: { n: '공명석', i: '💠', t: 90, stages: [1, 2],
@@ -2819,7 +2820,7 @@ const PULSE_EVENTS = {
             d: '유적이 문을 닫았다 — 세 차례 몰려오는 것을 모두 쓰러뜨려라' }
 };
 /* 격노 발작 — 유적마다 하나. */
-const PULSE_RAGE = {
+export const PULSE_RAGE = {
   ice:     { k: 'dark',  t: '얼음 속의 불이 한꺼번에 꺼진다' },
   mine:    { k: 'quake', t: '갱도가 울린다 — 무언가 내려온다' },
   pyramid: { k: 'heat',  t: '벽 틈에서 달군 모래가 쏟아진다' },
@@ -2832,22 +2833,22 @@ const PULSE_RAGE = {
 };
 
 /* ---------------- 탐사 기록 ---------------- */
-const SURVEY_W = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12 };
-const SURVEY_TIERS = [
+export const SURVEY_W = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12 };
+export const SURVEY_TIERS = [
   { r: 'S', c: '#ffd24a', need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 4, echo: 3 } },
   { r: 'A', c: '#e8a0ff', need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 2, echo: 1 } },
   { r: 'B', c: '#8fd0ff', need: { rooms: 0.65, chests: 0.5, boss: 1, events: 1 } },
   { r: 'C', c: '#9fdc8f', need: { rooms: 0.35, chests: 0.2 } },
   { r: 'D', c: '#9a9a9a', need: {} }
 ];
-const SURVEY_LABEL = { rooms: '방', chests: '상자', boss: '주인', lore: '비문', code: '골방', rage: '격노',
+export const SURVEY_LABEL = { rooms: '방', chests: '상자', boss: '주인', lore: '비문', code: '골방', rage: '격노',
                        events: '사건', kinds: '사건 갈래', echo: '메아리' };
 
 /* ---------------- 메아리 시련 ---------------- */
-const ECHO = { max: 5, mul: lv => 1 + 0.35 * lv, needStage: 2 };
+export const ECHO = { max: 5, mul: lv => 1 + 0.35 * lv, needStage: 2 };
 
 /* ---------------- 동굴 갈래 ---------------- */
-const CAVE_TYPES = [
+export const CAVE_TYPES = [
   { id: 'plain' },
   { id: 'moss',  n: '이끼 굴',   c: '#8fd07a', w: [3, 1],
     line: '공기가 촉촉하다. 이끼 사이에 있으면 상처가 조금씩 아문다.' },
@@ -2859,10 +2860,10 @@ const CAVE_TYPES = [
     line: '숨이 따갑다. 오래 머물면 몸이 상하지만, 광맥이 짙다.' }
 ];
 /* 금 간 자갈 — 무너지면 숨은 동굴이 열린다. */
-const FAULT = { count: 28, steps: 260, rx: 34, ry: 15 };   // steps 190 이면 열린 굴이 500칸 남짓이라 '확장'으로 안 읽혔다
+export const FAULT = { count: 28, steps: 260, rx: 34, ry: 15 };   // steps 190 이면 열린 굴이 500칸 남짓이라 '확장'으로 안 읽혔다
 
 /* ---------------- 암호문 (잠긴 골방의 자물쇠) ---------------- */
-const CIPHER_KIND = {
+export const CIPHER_KIND = {
   digits: {
     n: '숫자 자물쇠', len: 3, numeric: 1,
     door: '홈이 셋. 숫자를 하나씩 맞춰 넣는 자리다.',
@@ -2881,18 +2882,18 @@ const CIPHER_KIND = {
 };
 
 /* 글자 자물쇠가 쓰는 세 글자 낱말. */
-const CIPHER_WORDS = ['재의문', '별무덤', '잠긴돌', '마른뼈', '언바람', '검은눈',
+export const CIPHER_WORDS = ['재의문', '별무덤', '잠긴돌', '마른뼈', '언바람', '검은눈',
                       '첫파수', '깊은잠', '흰재별', '무너짐', '돌의뼈', '마지막'];
 
 /* 어느 유적에 어떤 자물쇠가 걸리는가. */
-const RUIN_CIPHER = {
+export const RUIN_CIPHER = {
   pyramid: 'digits',   // 하늘을 재던 곳 — 수로 잠갔다
   story1: 'word',      // 겹친 길 — 두 사람이 말을 나눠 적었다
   blight: 'decode'     // 가장 깊고 사나운 곳 — 주워 적는 것만으로는 안 열린다
 };
 
 /* 유적에 처음 발을 들일 때 뜨는 카드. */
-const RUIN_CARD = {
+export const RUIN_CARD = {
   ice:     { sub: '얼어붙은 골짜기 아래', line: '스스로 골짜기를 얼린 사람들이 있었다. 그 얼음이 지금 녹고 있다.' },
   pyramid: { sub: '모래에 반쯤 잠긴', line: '왕의 무덤이 아니다. 하늘을 감시하려고 세운 눈이다.' },
   mine:    { sub: '베이스캠프 곁의', line: '갱도는 아직 따뜻하다. 마지막 교대가 올라오지 않았다.' },
@@ -2903,7 +2904,7 @@ const RUIN_CARD = {
   story2:  { sub: '세 번째 석판', line: '발 디딜 곳이 없다. 여기까지 온 사람은 돌아갈 생각이 없던 사람이다.' }
 };
 
-const RUIN_LORE = {
+export const RUIN_LORE = {
   ice: {
     n: '얼어붙은 비문',
     lines: [
@@ -3000,15 +3001,15 @@ const RUIN_LORE = {
    half/tall: 다리·몸통 칸(가운데 ±1칸 · 위로 6칸) · stack: 굴뚝(가운데와 오른쪽 한 칸, 위로 8칸)
    — **그린 칸만** 막는다. 둘레 11×10칸을 막던 때는 빈 풀밭에도 아무것도 못 놓았다 */
 /* 충전된 배터리 한 개가 채우는 전하 — 최대 전하(부적으로 늘어남)와 무관하게 같다 */
-const CELL_CHARGE = 200;
+export const CELL_CHARGE = 200;
 
-const RIG = { in: [['forest', 2], ['forest2', 1]], edge: 40, leg: 2, half: 1, tall: 6, stack: 8,
+export const RIG = { in: [['forest', 2], ['forest2', 1]], edge: 40, leg: 2, half: 1, tall: 6, stack: 8,
   parts: [['steel_plate', 10], ['gear_basic', 8], ['iron_bar', 12], ['wire', 12], ['motor', 2], ['circuit', 3], ['machine_frame', 1]] };
 
 /* 마을 2단계(밭이 생기는 때)에 가방으로 주는 연장·씨앗 한 벌 */
-const FARM_KIT = [['hoe_iron', 1], ['scythe_iron', 1], ['seed_wheat', 12], ['seed_starroot', 8], ['seed_ashcap', 6], ['fertilizer', 6]];
+export const FARM_KIT = [['hoe_iron', 1], ['scythe_iron', 1], ['seed_wheat', 12], ['seed_starroot', 8], ['seed_ashcap', 6], ['fertilizer', 6]];
 
-const RUIN_HINTS = {
+export const RUIN_HINTS = {
   ice: [
     ['성에 낀 손자국', ['벽 안쪽에 손바닥 자국이 얼어붙어 있다. 안에서 밖으로 밀어낸 자국이다.', '나가려던 게 아니라, 무언가 못 들어오게 막던 손이다.']],
     ['깨진 온기석', ['불을 담아 두던 돌이다. 일부러 깨뜨렸다.', '따뜻한 것부터 먹힌다는 걸 알고 있었다는 뜻이다.']],
@@ -3051,7 +3052,7 @@ const RUIN_HINTS = {
 };
 
 /* ---------------- 세계 이벤트 ---------------- */
-const EVENTS = {
+export const EVENTS = {
   bloodmoon: {
     n: '붉은 달', i: '🌑',
     d: '달이 붉다. 오늘 밤은 밖에 있으면 안 된다.',
@@ -3088,16 +3089,16 @@ const EVENTS = {
 };
 
 /* ---------------- 업적 ---------------- */
-const ACH_CAT = { story: '여정', farm: '농사', auto: '자동화', gather: '손재주',
+export const ACH_CAT = { story: '여정', farm: '농사', auto: '자동화', gather: '손재주',
   explore: '탐험', hunt: '토벌', life: '살림', odd: '별난 것' };
 /* 난이도 — UI가 색으로 가른다. */
-const ACH_TIER = { easy: ['쉬움', '#6fbf5a'], mid: ['중간', '#d8b048'], hard: ['어려움', '#d05a4a'] };
+export const ACH_TIER = { easy: ['쉬움', '#6fbf5a'], mid: ['중간', '#d8b048'], hard: ['어려움', '#d05a4a'] };
 /** 숨은 업적인가 — **어려움은 전부 숨긴다.** */
-function achHidden(a) { return !!a.h || a.t === 'hard'; }
+export function achHidden(a) { return !!a.h || a.t === 'hard'; }
 /* h: 1 — **숨은 업적.** */
 
 /* 업적 75개 — 사연: docs/code-history.md#h18 */
-const ACHIEVEMENTS = [
+export const ACHIEVEMENTS = [
   // ---------------- 여정 (스토리) ----------------
   { id: 'a_ch1', cat: 'story', i: '✦', n: '첫 조각', d: '제 1 장이 끝났다.',
     check: g => g.chapter >= 2 },
@@ -3282,7 +3283,7 @@ const ACHIEVEMENTS = [
 ];
 /* 업적의 품 — 1(시작하자마자) ~ 10(끝까지 파고든 사람). 닿을 수 있게 되는 때(몇 장 · 어느 세션)와 거기서 드는 시간으로 매겼다.
    ★ 난이도(t)는 손으로 적지 않는다 — 여기 점수에서 나온다(≤3 쉬움 · ≤6 중간 · 7↑ 어려움). 새 업적은 점수만 더할 것. */
-const ACH_LV = {
+export const ACH_LV = {
   a_ch1: 1,
   a_first_boss: 1,
   a_village: 5,
@@ -3364,26 +3365,26 @@ for (const a of ACHIEVEMENTS) {
   a.t = a.lv <= 3 ? 'easy' : a.lv <= 6 ? 'mid' : 'hard';
 }
 ACHIEVEMENTS.sort((a, b) => a.lv - b.lv);      // 안정 정렬 — 같은 점수는 적힌 순서대로. 갈래별 목록(ui.js)이 이 순서를 그대로 쓴다
-const ACH_FOODS = ['food_bread', 'food_stew', 'food_soup', 'food_pie', 'food_curry',
+export const ACH_FOODS = ['food_bread', 'food_stew', 'food_soup', 'food_pie', 'food_curry',
   'food_jelly', 'food_mstew', 'food_tea', 'food_feast'];
 /* 바다에서만 나는 것들(ENEMIES 의 biome: 'sea'). */
-const ACH_SEA_MOBS = ['reef_crab', 'lantern_jelly', 'reef_shark', 'deep_octopus', 'abyss_angler'];
+export const ACH_SEA_MOBS = ['reef_crab', 'lantern_jelly', 'reef_shark', 'deep_octopus', 'abyss_angler'];
 /* 업적 판정에 쓰는 잔 도구들. */
-function achSum(o) { let n = 0; for (const k in (o || {})) n += o[k] | 0; return n; }
-function achCount(list, fn) { let n = 0; for (const k of list) if (fn(k)) n++; return n; }
+export function achSum(o) { let n = 0; for (const k in (o || {})) n += o[k] | 0; return n; }
+export function achCount(list, fn) { let n = 0; for (const k of list) if (fn(k)) n++; return n; }
 /* ★ 세계가 지어 둔 기계(m.gen)는 빼고 센다. */
-function achMach(g) {
+export function achMach(g) {
   if (!g.world || !g.world.machines) return 0;
   let n = 0;
   for (const m of g.world.machines.values()) if (!m.gen) n++;
   return n;
 }
-function achEquip(g, fn) {
+export function achEquip(g, fn) {
   const eq = g.player.equip;
   for (const k in eq) if (eq[k] && fn(eq[k])) return true;
   return false;
 }
-function achAnyItem(g, fn) {
+export function achAnyItem(g, fn) {
   if (achEquip(g, fn)) return true;
   for (const it of g.player.bag) if (it && fn(it)) return true;
   for (const it of (g.vault || [])) if (it && fn(it)) return true;
@@ -3391,7 +3392,7 @@ function achAnyItem(g, fn) {
 }
 
 /* ---------------- NPC ---------------- */
-const NPCS = {
+export const NPCS = {
   elara:  { n: '엘라라', i: '🧝‍♀️', c: '#c8a06a', role: '캠프 관리인', art: 'elara' },
   /* disc — 이 사람에게 살 때 붙는 할인. */
   borin:  { n: '보린', i: '🧔', c: '#8a6a4a', role: '대장장이', disc: 0.4, shop: ['pick_iron', 'sword_iron', 'helm_iron', 'potion_hp_small', 'potion_iron', 'torch', 'band_worn'], art: 'borin' },
@@ -3421,12 +3422,12 @@ const NPCS = {
              line: '자네 손에 맞는 것만 내놓네. 들지도 못할 걸 팔아 봐야 서로 손해니까.' }
 };
 /* 여명 마을 주민 — 종장 전에는 아예 등장하지 않으므로 별도 잠금 대사가 필요 없다 */
-const DAWN_NPCS = ['tamer', 'trainer', 'haran', 'seira', 'kade', 'pedlar', 'oreman', 'armsman'];
+export const DAWN_NPCS = ['tamer', 'trainer', 'haran', 'seira', 'kade', 'pedlar', 'oreman', 'armsman'];
 
 /* ---------------- 떠돌이 상인 ---------------- */
 
 /* 장비상이 절대 취급하지 않는 것 — 보스·스토리 산출물. */
-const SHOP_DENY = new Set([
+export const SHOP_DENY = new Set([
   'sword_first', 'hammer_still', 'crossbow_first', 'tome_first', 'blade_arche', 'tome_origin',
   'lance_orbit', 'bow_meridian', 'hammer_cave', 'sword_arc', 'gun_rail', 'saw_auto', 'drill_abyss',
   'charm_govern', 'charm_orbit', 'charm_maker', 'charm_zenith', 'jetpack', 'charm_lamp2',
@@ -3436,7 +3437,7 @@ const SHOP_DENY = new Set([
   'amul_scale', 'charm_bell', 'ring_deep', 'sigil_current', 'mace_bell', 'harpoon_lamp'
 ]);
 
-const MERCHANTS = [
+export const MERCHANTS = [
   /* --- 윤슬 (비밀 상점) --- */
   {
     npc: 'yunseul', lv: 1, slots: 5, markup: 1.6, spot: null,
@@ -3520,7 +3521,7 @@ const MERCHANTS = [
 
 
 /* ---------------- 마을 단계별 주민 한 마디 ---------------- */
-const VILLAGE_TALK = {
+export const VILLAGE_TALK = {
   tamer: [null,
     '짐승들이 아직 이 거리를 못 미더워해. 하긴 나도 그래.',
     '가로등이 서니까 밤에도 알을 돌볼 수 있어. 그전엔 해 지면 그냥 접었거든.',
@@ -3544,7 +3545,7 @@ const VILLAGE_TALK = {
 };
 
 /* ================= 사람들이 지금을 보고 하는 말 ================= */
-const TALK_MOODS = [
+export const TALK_MOODS = [
   { id: 'grave',      when: c => c.grave },                       // 어딘가에 죽은 자리를 두고 왔다
   { id: 'hurt',       when: c => c.hpr < 0.35 },                   // 피가 3분의 1 아래
   { id: 'bloodmoon',  when: c => c.ev === 'bloodmoon' },
@@ -3564,7 +3565,7 @@ const TALK_MOODS = [
 ];
 
 /* say: 상황 한 줄(순번으로 돌아간다) · re: 그 상황에서 할 수 있는 대답과 대꾸 대꾸(s)는 한 줄이어도 되고 여러 줄이어도 된다. */
-const TALK = {
+export const TALK = {
   /* ---------------- 베이스캠프 ---------------- */
   elara: {
     grave: { say: [
@@ -4189,7 +4190,7 @@ const TALK = {
 };
 
 /* ---------------- 펫 ---------------- */
-const PETS = {
+export const PETS = {
   /* --- 공통 --- */
   ember_squirrel: { n: '잿불 다람쥐', i: '🐿', r: 0, c: '#c8703a', b: { ms: 8 },
     atk: { k: 'proj', proj: 'fire', dmg: 55, cd: 1.6, range: 240, spd: 380 },
@@ -4232,19 +4233,19 @@ const PETS = {
 };
 /* 펫 피해 배율 — 위 기준 피해는 "펫을 처음 손에 넣는 레벨 80 언저리"에서의 값이다. */
 /* 레벨 배수 — 세계의 기본 규칙(몹은 레벨을 안 탄다)에서 **일부러 뺀 것들**만 쓴다 — 사연: docs/code-history.md#h19 */
-const LV_SCALE_BASE = 2.5;
-function levelMult(level, pow) { return Math.pow(LV_SCALE_BASE, Math.max(0, level) / 50 * (pow || 1)); }
-function bloodMult(level) { return levelMult(level, 1); }
+export const LV_SCALE_BASE = 2.5;
+export function levelMult(level, pow) { return Math.pow(LV_SCALE_BASE, Math.max(0, level) / 50 * (pow || 1)); }
+export function bloodMult(level) { return levelMult(level, 1); }
 
-function petDmgScale(level) { return Math.max(0.45, 0.07 + level * 0.0116); }
+export function petDmgScale(level) { return Math.max(0.45, 0.07 + level * 0.0116); }
 
 /* ---------------- 펫 레벨 ---------------- */
-const PET_LV_MAX = 10;
-function petLvMul(lv) { return 1 + 0.12 * ((lv || 1) - 1); }   // 패시브 b 배수
-function petAtkMul(lv) { return 1 + 0.06 * ((lv || 1) - 1); }  // 자동 공격 배수
-function petXpNext(lv) { return Math.round(600 * Math.pow(1.6, (lv || 1) - 1)); }
+export const PET_LV_MAX = 10;
+export function petLvMul(lv) { return 1 + 0.12 * ((lv || 1) - 1); }   // 패시브 b 배수
+export function petAtkMul(lv) { return 1 + 0.06 * ((lv || 1) - 1); }  // 자동 공격 배수
+export function petXpNext(lv) { return Math.round(600 * Math.pow(1.6, (lv || 1) - 1)); }
 /* 처치 경험치의 이 비율만큼 낀 펫에게 들어간다. */
-const PET_XP_SHARE = 0.08;
+export const PET_XP_SHARE = 0.08;
 /* 펫 아이템 — PETS를 단일 출처로 삼아 ITEMS 항목을 자동으로 만든다. */
 for (const id in PETS) {
   const pt = PETS[id];
@@ -4255,7 +4256,7 @@ for (const id in PETS) {
   };
 }
 /* 등급별 알 뽑기 확률 [펫 키, 가중치] — 공통(0)·희귀(1)·영웅(2) */
-const EGG_POOL = {
+export const EGG_POOL = {
   common: [['ember_squirrel', 26], ['glass_moth', 26], ['pebble_kin', 22], ['dust_sparrow', 22],
            ['frost_kit', 4], ['ash_owl', 4], ['cinder_toad', 3], ['thorn_wisp', 3],
            ['star_sprite', 0.4], ['ember_drake', 0.4], ['void_hatchling', 0.3], ['storm_falcon', 0.3]],
@@ -4270,7 +4271,7 @@ const EGG_POOL = {
 /* ---------------- 스토리 ---------------- */
 /* obj types: kill(target,n) / mine(tile,n) / collect(item,n) / talk(npc) / depth(y) / boss(target) /
    craft(item) / and(parts — 이어서 하는 일: 모으고 → 만들기. 전부 끝나야 한 칸) */
-const CHAPTERS = [
+export const CHAPTERS = [
   {
     id: 0, title: '떨어진 별', sub: '서 장', art: 'chapter_0_fallen_star',
     line: '별이 부서진 밤',
@@ -4750,26 +4751,26 @@ const CHAPTERS = [
 
 /* 장마다 붙는 "다음이 궁금해지는 한 줄"(hook). */
 /* ================= 세션 ================= */
-const SESSIONS = [
+export const SESSIONS = [
   { id: 1, n: '세션 1', t: '잿빛의 여정', ch0: 0 },
   { id: 2, n: '세션 2', t: '벽 너머', ch0: 9 },
   { id: 3, n: '세션 3', t: '물이 지운 쪽', ch0: 15 }
 ];
 /** 그 장이 속한 세션. */
-const sessionOf = (ch) => {
+export const sessionOf = (ch) => {
   let s = SESSIONS[0];
   for (const x of SESSIONS) if ((ch || 0) >= x.ch0) s = x;
   return s;
 };
 /** 그 세션의 장 목록 (CHAPTERS 를 훑어 만든다 — 장에 세션을 따로 적지 않는다) */
-const chaptersOf = (sid) => {
+export const chaptersOf = (sid) => {
   const i = SESSIONS.findIndex(x => x.id === sid);
   if (i < 0) return [];
   const lo = SESSIONS[i].ch0, hi = SESSIONS[i + 1] ? SESSIONS[i + 1].ch0 : Infinity;
   return CHAPTERS.filter(c => c.id >= lo && c.id < hi);
 };
 
-const CHAPTER_HOOK = {
+export const CHAPTER_HOOK = {
   0: '별은 무언가로부터 도망치고 있었다. 그렇다면 쫓아온 것은 어디까지 왔을까.',
   1: '엘라라는 잿빛이 "번지고 있다"고 했다. 번진다는 건, 시작점이 있다는 뜻이다.',
   2: '뼈의 군주는 왕이었던 적이 없다. 누군가 그를 여기 묻었고, 다시 일어나게 두었다.',
@@ -4789,7 +4790,7 @@ const CHAPTER_HOOK = {
 for (const ch of CHAPTERS) if (CHAPTER_HOOK[ch.id]) ch.hook = CHAPTER_HOOK[ch.id];
 
 /* 지하 공창의 단말 — 세션 2 오프닝의 로어. */
-const TERMINALS = [
+export const TERMINALS = [
   {
     id: 0, n: '첫 번째 단말',
     lines: [
@@ -4841,7 +4842,7 @@ TERMINALS.push(
   }
 );
 
-const TABLETS = [
+export const TABLETS = [
   {
     id: 0, n: '첫 번째 석판',
     lines: [
@@ -4874,7 +4875,7 @@ const TABLETS = [
 ];
 
 /* ================= 장마다 듣는 이야기 ================= */
-const DIALOGUE = {
+export const DIALOGUE = {
   /* 윤슬 — 15·16·17장. */
   yunseul: [
     ['…사람이네. 진짜 사람.',
@@ -5069,7 +5070,7 @@ const DIALOGUE = {
 };
 
 
-const SIDE_POOL = {
+export const SIDE_POOL = {
   elara: [
     (ch, rng) => {
       const targets = ['slime', 'zombie', 'bat', 'skeleton', 'archer', 'crawler', 'shadoweye', 'frostling', 'imp', 'golem', 'wraith'];
@@ -5369,17 +5370,17 @@ const SIDE_POOL = {
 };
 
 /* ================= 장마다 안전한 표 ================= */
-const CH_MOB = ['slime', 'slime', 'skeleton', 'crawler', 'frostling', 'wraith', 'cloudjelly',
+export const CH_MOB = ['slime', 'slime', 'skeleton', 'crawler', 'frostling', 'wraith', 'cloudjelly',
   'ruin_guard', 'wraith', 'scrapcrawler', 'riveter', 'riveter', 'splitter', 'coreling', 'draft_form'];
-const CH_ORE = [T.COPPER, T.COPPER, T.IRON, T.IRON, T.GOLD, T.MYTHRIL, T.CRYSTAL, T.SOULSTONE,
+export const CH_ORE = [T.COPPER, T.COPPER, T.IRON, T.IRON, T.GOLD, T.MYTHRIL, T.CRYSTAL, T.SOULSTONE,
   T.SOULSTONE, T.IRON, T.IRON, T.GOLD, T.MYTHRIL, T.MYTHRIL, T.CRYSTAL];
-const CH_MAT = ['wood', 'copper_ore', 'iron_ore', 'corrupt_ess', 'frost_core', 'soul_shard',
+export const CH_MAT = ['wood', 'copper_ore', 'iron_ore', 'corrupt_ess', 'frost_core', 'soul_shard',
   'aether_shard', 'crystal', 'crystal', 'steel_plate', 'gear_basic', 'steel_plate',
   'core_shard', 'core_shard', 'draft_glass'];
-const chPick = (arr, ch) => arr[clamp(ch || 0, 0, arr.length - 1)];
+export const chPick = (arr, ch) => arr[clamp(ch || 0, 0, arr.length - 1)];
 
 /* ================= 의뢰 게시판에 붙는 종이 ================= */
-const BOUNTY_POOL = [
+export const BOUNTY_POOL = [
   /* ---------------- 세션 1 · 잿빛 야영지 둘레 ---------------- */
   { id: 'swamp_two', s: 1, ch: [0, 4], from: '늪가 오두막 · 톨렌', title: '하나였던 것',
     body: ['어젯밤에 하나를 밟았는데 아침에 둘이 되어 있었다.',
@@ -5556,30 +5557,30 @@ const BOUNTY_POOL = [
     obj: r => ({ type: 'collect', item: 'draft_glass', n: r.int(24, 36) }),
     done: '셀: 스물네 장을 벽에 걸었다. 아직 아무도 못 읽는다.' }
 ];
-const BOUNTY_BY_ID = (() => {
+export const BOUNTY_BY_ID = (() => {
   const m = {};
   for (const b of BOUNTY_POOL) m[b.id] = b;
   return m;
 })();
 /* 목표 종류마다 "한 건"의 크기가 다르다 — 스물여섯 개를 모으는 것과 열두 마리를 잡는 것이 같은 보상일 수는 없다. */
-const BOUNTY_UNIT = { kill: 10, collect: 22, mine: 18 };
+export const BOUNTY_UNIT = { kill: 10, collect: 22, mine: 18 };
 
 /* ================= 물건값 ================= */
-const VAL_R = 1.55;     // 등급 한 칸에 값이 몇 배
-const VAL_0 = 3.3;      // 0등급 재료 한 개
-const VAL_SHARE = 0.5;  // 몹이 내놓는 금화 중 재료 몫
-const VAL_CAP = 0.45;   // 한 가지 재료가 가져갈 수 있는 최대 몫
-const VAL_MIN = 3;      // 재료 바닥값
-const VAL_CRAFT = 1.30; // 만들면 붙는 값
-const VAL_GEAR = 1.45;  // 장비는 조금 더
+export const VAL_R = 1.55;     // 등급 한 칸에 값이 몇 배
+export const VAL_0 = 3.3;      // 0등급 재료 한 개
+export const VAL_SHARE = 0.5;  // 몹이 내놓는 금화 중 재료 몫
+export const VAL_CAP = 0.45;   // 한 가지 재료가 가져갈 수 있는 최대 몫
+export const VAL_MIN = 3;      // 재료 바닥값
+export const VAL_CRAFT = 1.30; // 만들면 붙는 값
+export const VAL_GEAR = 1.45;  // 장비는 조금 더
 /* 광맥의 등급. */
-const ORE_TIER = {
+export const ORE_TIER = {
   copper_ore: 1, lead_ore: 1, coal: 1, iron_ore: 2, crude_oil: 2, steel_plate: 3,
   crystal: 3, gold_ore: 3, mythril_ore: 4, soul_shard: 4, hell_ore: 4,
   aether_shard: 5, power_core: 5, draft_glass: 6, orbit_gear: 6
 };
 
-const ITEM_VAL = (() => {
+export const ITEM_VAL = (() => {
   const V = {}, step = t => VAL_0 * Math.pow(VAL_R, t);
   const made = {}, recipesOf = {};
   for (const r of RECIPES) { if (!made[r.out]) made[r.out] = r; (recipesOf[r.out] = recipesOf[r.out] || []).push(r); }
@@ -5699,7 +5700,7 @@ const ITEM_VAL = (() => {
 })();
 
 /* ================= 스킬 손맛 ================= */
-const SKILL_FX = {
+export const SKILL_FX = {
   /* 검투사 */
   s_cleave:   { s: 'sk_slash',  k: 7,  st: .04, c: '#ffb24a', r: 108 },
   s_charge:   { s: 'sk_charge', k: 10, st: .05, c: '#ffd07a', r: 46 },
@@ -5724,10 +5725,10 @@ const SKILL_FX = {
   s_wolf:     { s: 'sk_summon', k: 4,  st: 0,   c: '#c8b88a', r: 56 }
 };
 /* 운석이 실제로 닿는 순간 — 이 게임에서 가장 큰 한 방이라 멈춤도 가장 길다 */
-const SKILL_HIT = { meteor: { s: 'sk_meteor', k: 20, st: .10 } };
+export const SKILL_HIT = { meteor: { s: 'sk_meteor', k: 20, st: .10 } };
 
 /* ---------------- 특별한 스킬의 고유 연출 ---------------- */
-const SIG_FX = {
+export const SIG_FX = {
   whirl:   { a: .50, n: 3, t: 0 },    // 채널 내내 — 피해 박자(0.28초)마다 3개씩만
   rain:    { a: .46, n: 0, t: 0 },    // 떨어질 띠. 입자 없음 — 이건 연출이 아니라 정보다
   wolf:    { a: .55, n: 7, t: .45 },
@@ -5736,13 +5737,13 @@ const SIG_FX = {
   undying: { a: .34, n: 0, t: .55 }   // 화면 테두리가 한 번 붉게 — 살아남은 그 한 번
 };
 /* 입자 전체 상한. */
-const PART_CAP = 900;
+export const PART_CAP = 900;
 
 /* 아이템 인스턴스 → 정의. */
-function idef(it) { return ITEMS[it.id]; }
+export function idef(it) { return ITEMS[it.id]; }
 
 /* 설정 기본값. */
-const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1,
+export const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1,
   hud_tabbar: 1, hud_quest: 1, hud_buffs: 1, hud_clock: 1, hud_hotbar: 1,   // 화면 구성 — 끄면 body 에 hide-* 를 단다
   dlgtype: 1,          // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
   view: 100, keys: null, notice: null };

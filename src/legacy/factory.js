@@ -1,15 +1,22 @@
 /* ===== factory.js — 공장: 기계 / 전력망 / 물류 ===== */
-'use strict';
+import { app as G, bindFactory } from './ctx.js';
+import { TAU, aabb, angleTo, clamp, dist2, shade, tileHash } from './util.js';
+import { WH, WW } from './size.js';
+import { FUEL, ITEMS, MACHINE, MRECIPES, T, TILE_DEF } from './data.js';
+import { TS } from './world.js';
+import { TileArt } from './tileart.js';
+import { Art } from './itemart.js';
+import { Enemy, Part, Proj, makeItem } from './entity.js';
 
-const FAC_TICK = 0.125;                                   // 공장 1틱 = 0.125초
-const DIR4 = [[1, 0], [0, 1], [-1, 0], [0, -1]];          // 0=우 1=하 2=좌 3=상
+export const FAC_TICK = 0.125;                                   // 공장 1틱 = 0.125초
+export const DIR4 = [[1, 0], [0, 1], [-1, 0], [0, -1]];          // 0=우 1=하 2=좌 3=상
 /* 벨트만 쓰는 여섯 방향. */
-const DIR6 = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, -1], [-1, -1]];   // 4=우상 5=좌상
+export const DIR6 = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, -1], [-1, -1]];   // 4=우상 5=좌상
 /** 이 기계가 쓰는 방향표. */
-function dirTable(t) { return (t === 'belt' || t === 'belt_fast') ? DIR6 : DIR4; }
-const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위', '오른쪽 위', '왼쪽 위'];   // 뒤 둘은 벨트 대각선
+export function dirTable(t) { return (t === 'belt' || t === 'belt_fast') ? DIR6 : DIR4; }
+export const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위', '오른쪽 위', '왼쪽 위'];   // 뒤 둘은 벨트 대각선
 
-const Factory = {
+export const Factory = {
   /* 벨트 한 칸에 머무는 시간(초) — 물건도 벨트 무늬도 이 속도로 간다(일반 1칸/초 · 고속 2칸/초) */
   DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK },
   ORE_HITS: 20,            // 드릴이 광맥 한 칸에서 캐는 최소 횟수
@@ -972,4 +979,4 @@ const Factory = {
   }
 };
 
-window.Factory = Factory;
+bindFactory(Factory);

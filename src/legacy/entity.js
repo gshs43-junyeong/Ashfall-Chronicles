@@ -1,31 +1,38 @@
 /* ===== entity.js — 아이템 인스턴스 / 플레이어 / 적 / 투사체 ===== */
-'use strict';
+import { app as G, ui as UI } from './ctx.js';
+import { TAU, aabb, angleTo, clamp, dist, dist2, fmt, lerp } from './util.js';
+import { SEA_X1, WH, WSY, WW } from './size.js';
+import { BOSS_LINES, BOSS_SURGE, BOW_TIP, BUFFS, CELL_CHARGE, ENEMIES, HIT_FX, ITEMS, MACH_OF_TILE, MECH_PART,
+  MULTI_FALLOFF, PETS, PET_LV_MAX, PET_XP_SHARE, PREFIX, PROF_MAX, RARITY_MULT, SIG_FX, SKILLS, SKILL_FX, SKILL_HIT,
+  SUFFIX, SURGE_FLY, T, TILE_DEF, WEAPON_TIER_LV, hitFam, idef, levelMult, petAtkMul, petDmgScale, petLvMul,
+  petXpNext, profNeed } from './data.js';
+import { TS } from './world.js';
 
-const GRAV = 2000, MAX_FALL = 1250;
+export const GRAV = 2000, MAX_FALL = 1250;
 /* ================= 제트팩의 두 한계 ================= */
-const JET_MAX_UP = 30;         // 발밑 지면에서 오를 수 있는 한계 (칸)
-const JET_BURN = 4.0;          // 이만큼 연속으로 밀면 과열 (초)
-const JET_COOL_AIR = 3.0;      // 공중에서 다 식는 시간 (초)
-const JET_COOL_GROUND = 1.2;   // 땅을 밟았을 때 (초)
-const JET_RESUME = 0.3;        // 과열 뒤 열이 이만큼 내려와야 다시 걸린다
-const JET_HIGH_FALL = 140;     // 한계 높이 위에서는 이 속도로 내려온다 (안전 낙하선 938보다 한참 아래)
-const SAFE_FALL_TILES = 10;                                  // 이만큼까지는 낙하 데미지 없음
-const SAFE_FALL_VY = Math.sqrt(2 * GRAV * SAFE_FALL_TILES * TS);   // v² = 2·g·d 로 역산한 안전 낙하 속도
-const BASE_BAG_SIZE = 40, MAX_BAG_SIZE = 56, HOTBAR = 10;
-const VAULT_SIZE = 60;   // 여명 마을 보관고 (가방과 별개로 유지되는 공용 창고)
+export const JET_MAX_UP = 30;         // 발밑 지면에서 오를 수 있는 한계 (칸)
+export const JET_BURN = 4.0;          // 이만큼 연속으로 밀면 과열 (초)
+export const JET_COOL_AIR = 3.0;      // 공중에서 다 식는 시간 (초)
+export const JET_COOL_GROUND = 1.2;   // 땅을 밟았을 때 (초)
+export const JET_RESUME = 0.3;        // 과열 뒤 열이 이만큼 내려와야 다시 걸린다
+export const JET_HIGH_FALL = 140;     // 한계 높이 위에서는 이 속도로 내려온다 (안전 낙하선 938보다 한참 아래)
+export const SAFE_FALL_TILES = 10;                                  // 이만큼까지는 낙하 데미지 없음
+export const SAFE_FALL_VY = Math.sqrt(2 * GRAV * SAFE_FALL_TILES * TS);   // v² = 2·g·d 로 역산한 안전 낙하 속도
+export const BASE_BAG_SIZE = 40, MAX_BAG_SIZE = 56, HOTBAR = 10;
+export const VAULT_SIZE = 60;   // 여명 마을 보관고 (가방과 별개로 유지되는 공용 창고)
 
 /* ================= 아이템 인스턴스 ================= */
-function makeItem(id, count = 1, rarity = 0, affixes = null) {
+export function makeItem(id, count = 1, rarity = 0, affixes = null) {
   const def = ITEMS[id];
   if (!def) { console.warn('unknown item', id); return null; }
   const it = { id, c: count, r: rarity | 0 };
   if (affixes && affixes.length) it.a = affixes;
   return it;
 }
-function maxStack(it) { return idef(it).stack || 1; }
-function isGear(it) { const t = idef(it).type; return t === 'weapon' || t === 'armor' || t === 'acc' || t === 'tool' || t === 'bag' || t === 'pet'; }
+export function maxStack(it) { return idef(it).stack || 1; }
+export function isGear(it) { const t = idef(it).type; return t === 'weapon' || t === 'armor' || t === 'acc' || t === 'tool' || t === 'bag' || t === 'pet'; }
 /* 장비 최소 착용 레벨. */
-function equipReqLv(id) {
+export function equipReqLv(id) {
   const d = ITEMS[id];
   if (!d) return 1;
   if (d.lvReq !== undefined) return d.lvReq;
@@ -36,7 +43,7 @@ function equipReqLv(id) {
 }
 
 /** 접사 + 희귀도가 반영된 종합 스탯 */
-function itemStats(it) {
+export function itemStats(it) {
   const d = idef(it), s = Object.assign({}, d.b || {});
   const add = (o) => { for (const k in o) s[k] = (s[k] || 0) + o[k]; };
   if (d.lifesteal) add({ lifesteal: d.lifesteal });
@@ -52,7 +59,7 @@ function itemStats(it) {
   if (s.allStat) { s.str = (s.str || 0) + s.allStat; s.dex = (s.dex || 0) + s.allStat; s.int = (s.int || 0) + s.allStat; s.vit = (s.vit || 0) + s.allStat; delete s.allStat; }
   return s;
 }
-function itemName(it) {
+export function itemName(it) {
   const d = idef(it);
   let n = d.n;
   if (it.a) {
@@ -64,20 +71,20 @@ function itemName(it) {
   return n;
 }
 /* 강화 배수. */
-function enhMul(it) { return RARITY_MULT[it.r] + 0.05 * (it.e || 0); }
-function itemDamage(it) {
+export function enhMul(it) { return RARITY_MULT[it.r] + 0.05 * (it.e || 0); }
+export function itemDamage(it) {
   const d = idef(it);
   if (!d.dmg) return 0;
   const s = itemStats(it);
   return d.dmg * enhMul(it) * (1 + (s.dmgP || 0));
 }
-function itemSpeed(it) {
+export function itemSpeed(it) {
   const d = idef(it), s = itemStats(it);
   return (d.spd || 2) * (1 + (s.spdP || 0));
 }
 
 /** 전리품 굴리기: 등급/접사 랜덤 */
-function rollGear(id, rng, luckTier = 0) {
+export function rollGear(id, rng, luckTier = 0) {
   const d = ITEMS[id];
   if (!d) return null;
   let r = rng.weighted([[0, 46], [1, 27], [2, 15], [3, 8], [4, 3.2], [5, 0.8 + luckTier * 0.4]]);
@@ -91,7 +98,7 @@ function rollGear(id, rng, luckTier = 0) {
   return it;
 }
 
-const CHEST_LOOT = [
+export const CHEST_LOOT = [
   null,
   { gear: ['sword_wood', 'bow_hunt', 'staff_branch', 'helm_cloth', 'chest_cloth', 'boots_cloth', 'ring_vigor'], mats: [['copper_ore', 4, 10], ['wood', 5, 12], ['torch', 5, 12], ['potion_hp', 1, 2]] },
   { gear: ['sword_copper', 'bow_copper', 'helm_copper', 'chest_copper', 'boots_copper', 'ring_focus', 'amul_swift'], mats: [['iron_ore', 4, 10], ['copper_bar', 2, 5], ['potion_hp', 2, 4], ['potion_mp', 1, 3]] },
@@ -99,7 +106,7 @@ const CHEST_LOOT = [
   { gear: ['sword_mythril', 'staff_frost', 'bow_storm', 'helm_mythril', 'boots_mythril', 'pick_mythril', 'charm_cloud', 'charm_leech'], mats: [['mythril_ore', 4, 9], ['soul_shard', 3, 8], ['crystal', 4, 10], ['potion_hp', 4, 7]] },
   { gear: ['staff_soul', 'chest_mythril', 'helm_soul', 'boots_soul', 'pick_soul', 'charm_leech'], mats: [['hell_ore', 5, 12], ['soul_shard', 6, 14], ['void_frag', 1, 3], ['potion_hp', 6, 10]] }
 ];
-function rollChest(tier, rng, source) {
+export function rollChest(tier, rng, source) {
   // 유적 상자는 탐험 보상은 남기되, 제작·채굴 진행을 건너뛰지 않도록 별도 테이블을 쓴다.
   const ruin = source === 'ruin';
   const lootTier = ruin ? Math.min(tier, 4) : tier;
@@ -119,7 +126,7 @@ function rollChest(tier, rng, source) {
 }
 
 /* ================= 기본 엔티티 ================= */
-class Ent {
+export class Ent {
   constructor(x, y, w, h) { this.x = x; this.y = y; this.w = w; this.h = h; this.vx = 0; this.vy = 0; this.dead = false; this.onGround = false; }
   get cx() { return this.x + this.w / 2; }
   get cy() { return this.y + this.h / 2; }
@@ -177,7 +184,7 @@ class Ent {
 }
 
 /* ================= 플레이어 ================= */
-class Player extends Ent {
+export class Player extends Ent {
   constructor(x, y) {
     super(x, y, 20, 40);
     this.name = '';
@@ -345,7 +352,7 @@ class Player extends Ent {
   equipFrom(slotIdx) {
     const it = this.bag[slotIdx]; if (!it) return;
     const d = idef(it);
-    if (this.level < equipReqLv(it.id)) { if (window.G) G.toast(`레벨 ${equipReqLv(it.id)} 필요`, 'bad'); return false; }
+    if (this.level < equipReqLv(it.id)) return false;   // 알림 없음 — 사연: docs/code-history.md#h140
     let key = null;
     if (d.type === 'weapon') key = 'weapon';
     else if (d.type === 'armor') key = d.slot;
@@ -1099,7 +1106,7 @@ class Player extends Ent {
 }
 
 /* ================= 적 ================= */
-class Enemy extends Ent {
+export class Enemy extends Ent {
   constructor(type, x, y, scale = 1) {
     const d = ENEMIES[type];
     super(x, y, d.w, d.h);
@@ -1993,7 +2000,7 @@ class Enemy extends Ent {
 
 /* ================= 소환수 ================= */
 /* ================= 마을 경비병 ================= */
-class Guard extends Ent {
+export class Guard extends Ent {
   constructor(x, y, lv) {
     super(x, y, 20, 40);
     this.home = x;          // 초소 위치 — 픽셀 좌표다 (타일 아님)
@@ -2042,7 +2049,7 @@ class Guard extends Ent {
   }
 }
 
-class Wolf extends Ent {
+export class Wolf extends Ent {
   constructor(x, y, owner) {
     super(x, y, 30, 22);
     this.owner = owner; this.life = 30; this.atkCd = 0; this.minion = true;
@@ -2071,7 +2078,7 @@ class Wolf extends Ent {
 }
 
 /* ================= 펫 ================= */
-class Pet {
+export class Pet {
   constructor(petId, slot) {
     this.id = petId; this.slot = slot;
     this.def = PETS[petId];
@@ -2125,7 +2132,7 @@ class Pet {
 
 /* ================= 투사체 ================= */
 /* 손그림 이펙트 시트로 대체할 투사체 종류 */
-const PROJ_FX = {
+export const PROJ_FX = {
   arrow: 'arrow', star: 'arrow',
   fire: 'flame',
   frost: 'frost',
@@ -2137,11 +2144,11 @@ const PROJ_FX = {
 
 /* 원소마다 맞는 순간이 달라야 한다. */
 /* 타격 그림 → 그 그림에 붙는 원소 소리. */
-const BURST_SFX = {
+export const BURST_SFX = {
   fire: 'hit_fire', frost: 'hit_frost', soul: 'hit_soul',
   void: 'hit_void', arcane: 'hit_arcane'
 };
-const IMPACT_FX = {
+export const IMPACT_FX = {
   fire:  { burst: 'fire',   ring: '#ff8a3a', rr: 34, parts: 10 },
   frost: { burst: 'frost',  ring: '#9fe0ff', rr: 30, parts: 12 },
   soul:  { burst: 'soul',   ring: '#c49fff', rr: 26, parts: 8 },
@@ -2154,7 +2161,7 @@ const IMPACT_FX = {
   bullet: { burst: 'hit',   ring: '#ffd86a', rr: 12, parts: 6 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
-const PROJ_STYLE = {
+export const PROJ_STYLE = {
   arrow: { c: '#d8c898', r: 3, len: 14 },
   bullet: { c: '#ffe0a0', r: 2, tracer: 22 },   // 포탑 총탄 — 예광 줄기
   bomb: { c: '#3a3630', r: 6 },          // 폭탄 — 심지 불티는 Bomb.update가 따로 뿌린다
@@ -2170,9 +2177,9 @@ const PROJ_STYLE = {
   bone: { c: '#e8e0c8', r: 5 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */
-const PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1 };
+export const PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1 };
 
-class Proj extends Ent {
+export class Proj extends Ent {
   constructor(x, y, vx, vy, dmg, team, type) {
     super(x - 6, y - 6, 12, 12);
     this.vx = vx; this.vy = vy; this.dmg = dmg; this.team = team; this.type = type;
@@ -2237,7 +2244,7 @@ class Proj extends Ent {
 }
 
 /* ================= 이펙트 ================= */
-class Part {
+export class Part {
   /* g 중력 배수 — 사연: docs/code-history.md#h37 */
   constructor(x, y, c, vy0 = 0, life = 0.5, o = null) {
     this.x = x; this.y = y; this.c = c;
@@ -2260,12 +2267,12 @@ class Part {
     return this.life > 0;
   }
 }
-class DmgText {
+export class DmgText {
   constructor(x, y, v, c, crit) { this.x = x + (Math.random() - 0.5) * 8; this.y = y; this.v = v; this.c = c; this.crit = crit; this.life = 0.85; this.vy = -70; }
   update(dt) { this.life -= dt; this.y += this.vy * dt; this.vy += 110 * dt; return this.life > 0; }
 }
 /* ===== 폭탄 ===== */
-class Bomb extends Proj {
+export class Bomb extends Proj {
   constructor(x, y, vx, vy, spec) {
     super(x, y, vx, vy, spec.dmg, 'player', 'bomb');
     this.spec = spec;
@@ -2330,7 +2337,7 @@ class Bomb extends Proj {
   }
 }
 
-class Drop {
+export class Drop {
   constructor(x, y, item) {
     this.x = x - 8; this.y = y - 8; this.w = 16; this.h = 16; this.item = item;
     this.vx = (Math.random() - 0.5) * 140; this.vy = -160 - Math.random() * 80;

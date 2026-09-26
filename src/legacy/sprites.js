@@ -1,6 +1,5 @@
-/* assets/sprites.js — 손그림 애셋 로더 (선택 사용) index.html의 js/itemart.js 뒤에 <script
-   src="assets/sprites.js"></script> 로 추가. */
-const Sprites = {
+/* ===== sprites.js — 손그림 애셋 로더(매니페스트 · 발 여백) — 없어도 절차 생성 그림으로 돈다 ===== */
+export const Sprites = {
   base: 'assets/',
   scale: 4,           // 시트가 4배로 구워져 있다
   gap: 0,             // 문자 시트는 간격 0, 보스/이펙트 시트는 4
@@ -187,7 +186,7 @@ const Sprites = {
     const frames = Math.abs(im.width / im.height - want) < 0.03 ? 1
       : Math.abs(im.width / 2 / im.height - want) < 0.03 ? 2 : 1;
     const fw = im.width / frames;
-    const t = (window.G && G.time) || 0;
+    const t = 0;                     // 두 장짜리도 첫 장만 — 사연: docs/code-history.md#h140
     const fr = frames > 1 ? (((t * 3.5) | 0) % frames) : 0;
     c.save();
     c.imageSmoothingEnabled = false;
@@ -214,4 +213,3 @@ const Sprites = {
     return Math.floor(t * 2) % 2;
   }
 };
-window.Sprites = Sprites;

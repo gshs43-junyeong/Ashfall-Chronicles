@@ -1,15 +1,18 @@
 /* ===== tileart.js — 절차적 타일 텍스처 아틀라스 ===== */
-'use strict';
+import { RNG, TAU, clamp, lerp, shade, tileHash } from './util.js';
+import { WW } from './size.js';
+import { CAVE_TYPES, FLUID_KIND, MACH_OF_TILE, T, TILE_DEF, WALL_COLOR } from './data.js';
+import { TS } from './world.js';
 
 /* 배경이 비쳐야 하는 타일 (나무·잎·횃불·발판·덩굴) */
-const ALPHA_TILE = {};
-const WOOD_WALL = 15;             // WALL_COLOR 색인 — 나무 판자 벽지
+export const ALPHA_TILE = {};
+export const WOOD_WALL = 15;             // WALL_COLOR 색인 — 나무 판자 벽지
 /* 상단 하이라이트를 생략할 타일 (이미 텍스처에 윗면이 있거나 반투명) */
-const TOP_SKIP = {};
+export const TOP_SKIP = {};
 /* 변형 넷이 '무작위 노이즈'가 아니라 '가지 방향'인 타일. */
-const LEAF_TWIG = {};
+export const LEAF_TWIG = {};
 
-const ART = {};
+export const ART = {};
 ART[T.DIRT] = { k: 'soil', c: '#6b4a2f' };
 ART[T.GRASS] = { k: 'grass', c: '#6b4a2f', g: '#4c7f34' };
 ART[T.STONE] = { k: 'rock', c: '#5d5d63' };
@@ -215,18 +218,18 @@ ART[T.DEEPROCK] = { k: 'rock', c: '#3a3630' };
 ART[T.BLACKDAMP] = { k: 'water', c: '#6a7a4a', a: 1, fall: 0 };
 
 /* ---------------- 이웃을 보고 그리는 타일 ---------------- */
-const MOSS_COL = {
+export const MOSS_COL = {
   sea: '#4f8a6a', glacier: '#9fc8c0', ice: '#8fb8a8',          // 서리 이끼 — 희푸르다
   forest: '#6f9a4a', forest2: '#6f9a4a', jungle: '#3f8a2f',     // 푸른 이끼
   desert: '#b09a50',                                             // 바위옷 — 누렇게 마른 이끼
   glowfen: '#5fd0b8', corrupt: '#9a6ab8'                         // 발광 이끼 · 부패 이끼
 };
-const BODY_ONLY = {};   // 위가 막히면 몸통만 그리는 타일(①)
-const CONN = {};        // 이웃을 보고 통째로 그리는 타일(②)
+export const BODY_ONLY = {};   // 위가 막히면 몸통만 그리는 타일(①)
+export const CONN = {};        // 이웃을 보고 통째로 그리는 타일(②)
 for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS, T.SNOW, T.ICE]) BODY_ONLY[id] = 1;
 for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
 
-const TileArt = {
+export const TileArt = {
   /* 타일마다 아틀라스에 미리 그려 두는 칸 수. */
   V: 6,
   atlas: null, wallAtlas: null, ready: false,

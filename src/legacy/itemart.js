@@ -1,11 +1,14 @@
 /* ===== itemart.js — 절차적 아이템/스킬/UI 스프라이트 ===== */
-'use strict';
+import { RNG, TAU, clamp, shade } from './util.js';
+import { ITEMS, PETS, T, TILE_DEF } from './data.js';
+import { TS } from './world.js';
+import { TileArt } from './tileart.js';
 
-const S32 = 32;
-const sh2 = (c, m) => shade(c, m);
+export const S32 = 32;
+export const sh2 = (c, m) => shade(c, m);
 
 /* ---------------- 아이템 명세 ---------------- */
-const ISPEC = {
+export const ISPEC = {
   /* 근접 */
   sword_wood: { k: 'sword', c: '#a3814f', g: '#6a4a28', grip: '#4a3122', w: 3 },
   sword_copper: { k: 'sword', c: '#c0762f', g: '#8a5520', grip: '#4a3122', w: 3.5 },
@@ -523,7 +526,7 @@ const ISPEC = {
 };
 
 /* ---------------- 스킬 아이콘 명세 ---------------- */
-const SKSPEC = {
+export const SKSPEC = {
   s_cleave: { k: 'slash', c: '#ff9a4a' },
   s_toughen: { k: 'shield', c: '#c8433c' },
   s_charge: { k: 'impact', c: '#ff6a4a' },
@@ -558,7 +561,7 @@ const SKSPEC = {
 };
 
 /* ---------------- 버프 / UI / NPC ---------------- */
-const BFSPEC = {
+export const BFSPEC = {
   rage: { k: 'impact', c: '#e0603c' },
   iron: { k: 'shield', c: '#a8a49a' },
   well: { k: 'stew' },
@@ -567,7 +570,7 @@ const BFSPEC = {
   swift_kill: { k: 'wind', c: '#9fe0c0' },
   wish: { k: 'coin', c: '#ffd85a' }        // 분수대에 던진 금화
 };
-const UISPEC = {
+export const UISPEC = {
   sun: { k: 'sun' }, moon: { k: 'moon' }, coin: { k: 'coin' }, chat: { k: 'chat' },
   equip: { k: 'equipui' }, trash: { k: 'trashui' },
   /* 장비 칸이 비었을 때 흐리게 깔리는 실루엣 — 어느 칸에 뭘 끼우는지 글자 없이 보이게 */
@@ -598,12 +601,12 @@ const UISPEC = {
   s_disp: { k: 'ng', g: 'speaker' }, s_noti: { k: 'ng', g: 'bell' }, s_keys: { k: 'ng', g: 'keys' }, s_hud: { k: 'ng', g: 'layout' }
 };
 /* 펫 생김새 — 색은 PETS의 c를 그대로 쓰고, 여기서는 실루엣만 고른다. */
-const PET_FORM = {
+export const PET_FORM = {
   ember_squirrel: 'beast', glass_moth: 'moth', pebble_kin: 'rock', dust_sparrow: 'bird',
   frost_kit: 'beast', ash_owl: 'bird', cinder_toad: 'rock', thorn_wisp: 'wisp',
   star_sprite: 'wisp', ember_drake: 'drake', void_hatchling: 'wisp', storm_falcon: 'bird'
 };
-const NPCSPEC = {
+export const NPCSPEC = {
   elara: { hair: '#d8c07a', skin: '#e8c39a', cloth: '#c8a06a', long: 1 },
   borin: { hair: '#6a4a2a', skin: '#d8b088', cloth: '#8a6a4a', beard: 1 },
   mira: { hair: '#6a4a92', skin: '#e0bfa0', cloth: '#8f6fd8', long: 1, hat: 1 },
@@ -616,7 +619,7 @@ const NPCSPEC = {
 };
 
 /* ================= 업적 아이콘 ================= */
-const GLSPEC = {};
+export const GLSPEC = {};
 for (const g of ['shard', 'house', 'wall', 'wave', 'crown', 'sword', 'trophy', 'field',
   'factory', 'anvil', 'pit', 'down', 'cloud', 'tablet', 'bubble', 'skull', 'redmoon',
   'key', 'candle', 'bed', 'scroll', 'sun', 'coin', 'coins', 'paw', 'hands', 'receipt',
@@ -632,7 +635,7 @@ for (const k in ITEMS) if (!ISPEC[k] && !ITEMS[k].tile)
   ISPEC[k] = { k: 'shard', c: '#9a9aa2' };
 
 /* 업적 → 그림. */
-const ACH_ART = {
+export const ACH_ART = {
   a_ch1: 'g:shard', a_village: 'g:house', a_session2: 'g:wall', a_session3: 'g:wave',
   a_first_boss: 'g:crown', a_five_hearts: 'g:shard', a_story_bosses: 'g:sword',
   a_all_bosses: 'g:trophy',
@@ -665,7 +668,7 @@ const ACH_ART = {
 };
 
 /* ================= 아틀라스 ================= */
-const Art = {
+export const Art = {
   atlas: null, cells: {}, urls: {}, ready: false, COLS: 16,
 
   build() {
