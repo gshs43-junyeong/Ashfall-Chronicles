@@ -15,16 +15,18 @@
 
 보스 스물셋 중 **열셋이 이야기가 데려가는 것**이고, 나머지 열은 유적 안쪽과
 아무도 말해 주지 않는 자리에 있습니다. 업적 일흔다섯 개는 갈래 여덟에 난이도 셋으로
-나뉘고, 그중 여섯은 달성하기 전까지 무엇인지도 보이지 않습니다.
+나뉘고, 어려움 갈래는 달성하기 전까지 무엇인지도 보이지 않습니다.
 
 **[▶ 브라우저에서 바로 플레이](https://ashfall-chronicles.vercel.app/)** ·
 **[내려받기](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)** ·
 **[영문 안내](docs/README.en.md)**
 
-> **웹과 내려받는 판은 지금 다릅니다.** 웹(`/play`)에서는 **v1.1 개발판**이 돌고,
-> 내려받는 zip 은 아직 **v1.0.5** 입니다. v1.1 에 무엇이 들어갔는지는
-> [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다 — **세션 2 「벽 너머」와
+> **v1.1.0 (2026-09-26)** — 웹과 내려받는 zip 이 같은 판입니다. **세션 2 「벽 너머」와
 > 세션 3 「물이 지운 쪽」이 모두 들어가** 장이 열다섯에서 **열여덟**으로 늘었습니다.
+> 무엇이 들어갔는지는 [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다.
+>
+> ⚠ **v1.0.x 의 저장은 v1.1 에서 열리지 않습니다** — 세계 폭이 4200 → 5000 칸으로 넓어졌습니다.
+> 새로 시작해야 하며, 옛 기록은 슬롯에 그대로 남습니다.
 
 ---
 
@@ -59,7 +61,7 @@
 | [`docs/README.en.md`](docs/README.en.md) | 영어권 플레이어·기여자를 위한 프로젝트 안내 |
 | [`docs/about-copy.md`](docs/about-copy.md) | GitHub About · 소개 문구(한국어·영어)의 원본 |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
-| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1 에 무엇이 들어갔는가** (릴리스 준비 중 — 남은 것은 애셋 다듬기) |
+| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1.0 에 무엇이 들어갔는가** |
 | [`docs/system-requirements.md`](docs/system-requirements.md) | 시스템 요구사항과 그 숫자를 잰 방법 |
 | [`CLAUDE.md`](CLAUDE.md) | 이 저장소에서 코드를 고칠 때의 규칙 — 타일 번호·좌표(`SHIFT`)·세이브처럼 **어기면 조용히 망가지는 것들** |
 | [`docs/deploy-cache.md`](docs/deploy-cache.md) | 배포와 캐시 무효화 |
@@ -102,7 +104,7 @@ bash tools/build.sh 1.1.0
 파일을 **우클릭 → 열기**로 실행하면 그 뒤로는 경고 없이 열립니다. 그래도 막히면:
 
 ```bash
-xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/   # 받은 판 번호로
+xattr -dr com.apple.quarantine AshfallChronicles-1.1.0/   # 받은 판 번호로
 ```
 
 ---
@@ -169,4 +171,4 @@ xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/   # 받은 판 번호로
 
 버전별 변경 사항은 [릴리스 목록](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases)과
 [다운로드 페이지의 변경 이력](https://ashfall-chronicles.vercel.app/download#changelog)에 있습니다.
-릴리스를 앞둔 v1.1 은 [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 를 보세요.
+v1.1.0 의 전체 목록은 [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다.

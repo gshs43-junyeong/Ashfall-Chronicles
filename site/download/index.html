@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>다운로드 — Ashfall Chronicles</title>
-<meta name="description" content="Ashfall Chronicles — 별이 잠든 땅 v1.0.5 내려받기. Windows·macOS용 실행 방법, 시스템 요구사항, 저장 데이터 안내, 문제 해결.">
+<meta name="description" content="Ashfall Chronicles — 별이 잠든 땅 v1.1.0 내려받기. Windows·macOS용 실행 방법, 시스템 요구사항, 저장 데이터 안내, 문제 해결.">
 <link rel="canonical" href="https://ashfall-chronicles.vercel.app/download">
 <link rel="icon" href="../play/assets/ui/cursor_pick.png?v=dev">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +30,7 @@
 </nav>
 
 <header class="wrap page-head">
-  <p class="eyebrow">v1.0.5 · Windows · macOS <span class="eyebrow-sub">웹에서는 v1.1 개발판을 할 수 있습니다</span></p>
+  <p class="eyebrow">v1.1.0 · Windows · macOS <span class="eyebrow-sub">웹과 같은 판입니다</span></p>
   <h1>내려받기</h1>
   <p class="sec-lede">인터넷 없이 돌아가고, 압축을 푼 폴더 밖 어디에도 파일을 설치하지 않습니다. 지우고 싶으면 폴더째 버리면 됩니다.</p>
 </header>
@@ -48,8 +48,8 @@
         </div>
         <a class="btn btn-primary" data-dl href="#">Windows용 내려받기</a>
         <div class="dl-meta">
-          <div><span class="k">버전</span> 1.0.5</div>
-          <div><span class="k">크기</span> 56.3 MiB</div>
+          <div><span class="k">버전</span> 1.1.0</div>
+          <div><span class="k">크기</span> 79.1 MiB</div>
           <div><span class="k">요구</span> Windows 10 이상 · 최신 브라우저</div>
           <div class="hash"><span class="k">SHA-256</span> <span data-hash="windows">—</span></div>
         </div>
@@ -62,8 +62,8 @@
         </div>
         <a class="btn btn-primary" data-dl href="#">macOS용 내려받기</a>
         <div class="dl-meta">
-          <div><span class="k">버전</span> 1.0.5</div>
-          <div><span class="k">크기</span> 56.3 MiB</div>
+          <div><span class="k">버전</span> 1.1.0</div>
+          <div><span class="k">크기</span> 79.1 MiB</div>
           <div><span class="k">요구</span> 최신 브라우저</div>
           <div class="hash"><span class="k">SHA-256</span> <span data-hash="macos">—</span></div>
         </div>
@@ -71,7 +71,7 @@
     </div>
 
     <p style="margin-top:18px;font-size:.84rem;color:var(--bone-faint)">
-      전체 해시는 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/download/v1.0.5/SHA256SUMS.txt">SHA256SUMS.txt</a>,
+      전체 해시는 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/download/v1.1.0/SHA256SUMS.txt">SHA256SUMS.txt</a>,
       지난 버전은 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases">릴리스 목록</a>에 있습니다.
       받지 않고 해 보려면 <a href="../home#play">브라우저에서 바로 플레이</a>할 수 있습니다.
     </p>
@@ -121,7 +121,7 @@ bash launch.sh</code></pre>
       <div class="alert">
         <b class="h">그래도 막힌다면</b>
         터미널에서 격리 속성을 지우고 다시 시도하세요.
-        <pre class="cmd" style="margin-top:10px"><code>xattr -dr com.apple.quarantine AshfallChronicles-1.0.5/</code></pre>
+        <pre class="cmd" style="margin-top:10px"><code>xattr -dr com.apple.quarantine AshfallChronicles-1.1.0/</code></pre>
       </div>
     </div>
   </div>
@@ -238,17 +238,16 @@ bash launch.sh</code></pre>
   <div class="wrap">
     <div class="sec-head"><p class="eyebrow">변경 이력</p></div>
     <h2>이번에 달라진 것</h2>
-    <p class="sec-lede">내려받는 판은 <span class="mono">v1.0.5</span> 입니다. 그 위에 만들고 있는 것은 웹에서 먼저 해 볼 수 있습니다.</p>
+    <p class="sec-lede">내려받는 판은 <span class="mono">v1.1.0</span> 이고, 웹에서 도는 것과 같습니다.</p>
 
-    <!-- v1.1 은 아직 안 나왔다. 내려받는 판은 1.0.5 이고, 아래 내용은 웹(/play)에서
-         지금 돌고 있는 개발판의 것이다. 딱지를 분명히 달아 두지 않으면 "받았는데
-         이 기능이 없다"가 난다. 전체 목록은 docs/v1.1-changelog.md. -->
-    <details class="log log-wip" open>
-      <summary>v1.1 — 개발 중 <span class="wip">웹에서만</span></summary>
+    <!-- 전체 목록은 docs/v1.1-changelog.md. 저장 호환이 깨진 판이라 맨 위에 크게 알린다(CLAUDE.md §7). -->
+    <details class="log" open>
+      <summary>v1.1.0 — 벽 너머와 물이 지운 쪽 <span class="wip">2026-09-26</span></summary>
       <div class="log-body">
-        <p class="log-note">기능은 모두 들어갔고 애셋 다듬기만 남았습니다. <strong>내려받는 판에는 아직 없고</strong>,
-          <a href="../home#play">웹에서 플레이</a>하면 지금까지 들어간 것을 해 볼 수 있습니다.
-          <strong>세션 2 · 3 의 이야기가 모두 들어갔습니다</strong> — 장이 열다섯에서 열여덟로 늘었습니다.</p>
+        <p class="log-note"><strong>⚠ v1.0.x 의 저장은 열리지 않습니다.</strong> 세계 폭이 4200 → 5000 칸으로 넓어져(왼쪽에 바다와 빙하 지대가 붙었습니다)
+          옛 세계를 그대로 풀 수 없습니다. 이어하기에서 고르면 "이전 크기의 세계라 열 수 없다"가 뜨니 <strong>새 여정으로 시작해 주세요.</strong>
+          옛 기록은 지워지지 않고 슬롯에 남아 있고, 설정 → 저장 내보내기로 파일로 꺼내 둘 수 있습니다.</p>
+        <p class="log-note"><strong>세션 2 · 3 의 이야기가 모두 들어갔습니다</strong> — 장이 열다섯에서 열여덟으로 늘었습니다.</p>
         <ul>
           <li><strong>세션 2 「벽 너머」 — 여섯 장.</strong> 아무도 세우지 않은 도시에서 시작해 지하 공창·폭주로·설계실로 내려갑니다. 결전 상대는 공창의 관리자 · 증식체 · 헤파 · 원형 넷입니다.</li>
           <li><strong>세션 3 「물이 지운 쪽」 — 세 장.</strong> 서리 지대 서쪽에 <strong>빙하 지대와 가라앉은 바다</strong>가 열립니다. 물속에서는 숨이 줄고, 산소통과 해초 밧줄이 있어야 더 내려갑니다. 마지막은 조수의 파수꾼입니다.</li>
@@ -260,10 +259,10 @@ bash launch.sh</code></pre>
           <li><strong>화면 아래 탭 단추.</strong> 가방 · 능력 · 일지 · 제작 · 지도 · 메뉴를 마우스로도 엽니다. 지도 키(<kbd>M</kbd>)가 생겼습니다.</li>
           <li><strong>바다에서만 나오는 것들.</strong> 조수강·빙정 광맥, 심연 진주와 심해 노심, 그것으로만 만드는 4단계 작업대·용광로(심해 공작대 · 가압 제련로)와 심해 장비 여덟.</li>
           <li><strong>폭탄과 화약.</strong> 작은 것·큰 것·굴착용 셋. 지형을 한 번에 걷어 내고, 터지는 자리와 쓸리는 자리가 다릅니다.</li>
-          <li><strong>업적 일흔다섯 개.</strong> 갈래 여덟에 난이도 셋. 세션 3과 함께 열 개, 그 뒤로 다섯 개를 더 붙였습니다(가라앉은 종 · 아홉 땅 · 물속의 것들 · 빙정 · 심해 노심 · 폭탄 · 탐지기 …). 여섯 개는 달성하기 전까지 무엇인지도 보이지 않습니다.</li>
+          <li><strong>업적 일흔다섯 개.</strong> 갈래 여덟에 난이도 셋. 세션 3과 함께 열 개, 그 뒤로 다섯 개를 더 붙였습니다(가라앉은 종 · 아홉 땅 · 물속의 것들 · 빙정 · 심해 노심 · 폭탄 · 탐지기 …). 난이도는 쉬운 것부터 줄을 서고, 어려움은 달성하기 전까지 무엇인지도 보이지 않습니다.</li>
           <li><strong>강화 모루와 펫 레벨.</strong> 장비를 +10까지 두들겨 강화하고, 데리고 다니는 펫이 10레벨까지 자랍니다.</li>
           <li><strong>금속·몬스터 탐지기.</strong> 유틸리티 칸에 끼우면 벽 너머 광맥이나 움직이는 것이 보입니다. 대신 조금 느려집니다.</li>
-          <li><strong>저장 봉인.</strong> 저장할 때 서명을 같이 적어, 손댄 기록은 열리지 않습니다. 봉인 표시가 없는 옛 기록은 그대로 열립니다.</li>
+          <li><strong>저장 봉인.</strong> 저장할 때 서명을 같이 적어, 손댄 기록은 열리지 않습니다. v1.1 안에서 만든 봉인 표시 없는 옛 기록은 그대로 열립니다.</li>
           <li><strong>시작 캐릭터 다섯과 난이도 셋.</strong> 각자 제 얼굴과 제 이야기, 다른 시작 장비를 갖습니다. 어려움은 잡몹이 2배에 죽으면 가방 절반, 불가능은 5배에 슬롯이 지워집니다.</li>
           <li><strong>장 목표가 숙제 목록에서 고르는 것으로.</strong> 넷~여섯 개를 전부 채워야 다음으로 가던 것을, 골라서 하는 것 · 그 장에서만 하는 일 · 결전 셋으로 나눴습니다.</li>
           <li><strong>잿빛이 숲을 먹습니다.</strong> 장이 넘어갈수록 잎과 풀에서 색이 빠지고 잎이 한 칸씩 집니다. 1장의 숲과 8장의 숲이 다릅니다.</li>
@@ -276,7 +275,11 @@ bash launch.sh</code></pre>
           <li><strong>손맛.</strong> 무엇을 때리고 부수는지가 소리와 파편으로 갈리고, 스킬 열아홉 가지가 저마다 다른 소리를 내고, 큰 것이 닿는 순간 화면이 짧게 멈춥니다. 보스와 몹이 쓰러지는 그림도 생겼습니다.</li>
           <li><strong>농사와 낚시.</strong> 밭은 아침에 자라고 낫으로 거둡니다. 물에서만 나오는 것 일곱과, 낚시로만 나오는 무기·장신구 열둘.</li>
           <li>그림: 애셋 백여 종 교체·추가(바다 몹 아홉, 보스 셋, 야자수와 광물 타일), 몹·보스 그림을 판정 상자에 맞춤, 제자리에서 미끄러지기만 하던 숨쉬기·걷기 동작 129칸을 다시 움직이게 함.</li>
-          <li>고침: 해와 달이 뒷배경 나무를 뚫고 나오던 것, 사막에 비가 내리던 것, 물건값이 재료마다 전부 같던 것.</li>
+          <li><strong>공장.</strong> 옆에서 본 벨트가 물건과 같은 속도로 흐르고, 드릴·피스톤·팔·톱니가 일하는 모습을 보여 줍니다. 드릴 한 칸에 20~29번, 드릴마다 채굴 등급(심층 드릴은 세션 3 광석까지), 드물게 줄지 않는 광상. 자동 포탑은 목표를 향해 돌아 예광탄을 쏩니다.</li>
+          <li><strong>설정 「화면 구성」.</strong> 탭 단추 · 미니맵 · 퀘스트 추적 · 버프 · 시계 · 단축 칸을 켜고 끕니다. 지도에는 눈으로 본 곳만 남습니다.</li>
+          <li><strong>비 오는 날의 곡</strong> 「Lonely Rain」. 다른 날씨에는 긴장 곡이 흐릅니다.</li>
+          <li><strong>세계 크기와 상관없이</strong> 같은 로딩 화면, 둥지 그림, 물약 그림, 업적을 난이도순으로.</li>
+          <li>고침: 해와 달이 뒷배경 나무를 뚫고 나오던 것, 사막에 비가 내리던 것, 물건값이 재료마다 전부 같던 것, 세션 3 장이 들어서자마자 끝나던 것, 저장했다 불러온 바다에서 오류가 나던 것, 세션 1 낚시에서 세션 3 무기가 나오던 것, 싼 제작법으로 만들어 비싸게 파는 금화 샘.</li>
         </ul>
       </div>
     </details>
@@ -339,7 +342,7 @@ bash launch.sh</code></pre>
 
 <footer>
   <div class="wrap foot-row">
-    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.0.5</span></p>
+    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.1.0</span></p>
     <p class="foot-credit">코드와 그림은 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
        — 음악(<a href="https://suno.com" target="_blank" rel="noopener">Suno</a>)과
        효과음(<a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a>)은 각 서비스의 약관을 따릅니다
@@ -358,7 +361,7 @@ bash launch.sh</code></pre>
   'use strict';
 
   var REPO = 'gshs43-junyeong/Ashfall-Chronicles';
-  var VERSION = '1.0.5';
+  var VERSION = '1.1.0';
 
   var FILES = {
     windows: 'AshfallChronicles-' + VERSION + '-Windows.zip',
@@ -367,8 +370,8 @@ bash launch.sh</code></pre>
 
   /* 릴리스 파일의 SHA-256 앞 8자리. tools/build.sh 가 찍어 주는 값과 같아야 한다. */
   var HASHES = {
-    windows: '6e52490a',
-    macos:   '6d86de8a'
+    windows: 'ceb7a289',
+    macos:   '9af38dbb'
   };
 
   document.querySelectorAll('.dl').forEach(function (card) {
