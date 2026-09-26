@@ -2,6 +2,7 @@
 import { shade } from '../engine/core/color.js';
 import { TAU, clamp, lerp } from '../engine/core/math.js';
 import { RNG, tileHash } from '../engine/core/rng.js';
+import { bakeAtlas, blitCell, cacheGet } from '../engine/render/atlas.js';
 import { WW } from './size.js';
 import { CAVE_TYPES, FLUID_KIND, MACH_OF_TILE, T, TILE_DEF, WALL_COLOR } from './data.js';
 import { TS } from './world.js';
@@ -249,36 +250,25 @@ export const TileArt = {
     for (const id in this._topHand) TOP_SKIP[id] = 1;
 
     const N = TILE_DEF.length;
-    const cv = document.createElement('canvas');
-    cv.width = this.V * TS; cv.height = N * TS;
-    const g = cv.getContext('2d');
     const rng = new RNG('ashfall-tileart-1');
     this.ANIM = {};
-    /* ★ 칸마다 **잘라서** 그린다. */
-    const clipCell = (gg, ox, oy, fn) => { gg.save(); gg.beginPath(); gg.rect(ox, oy, TS, TS); gg.clip(); fn(); gg.restore(); };
-    for (let id = 0; id < N; id++) {
+    /* 타일 번호 = 행, 변형 = 열. 칸을 자르는 것과 부르는 순서(행 → 열)는 엔진 bakeAtlas — ★ 공유 난수(rng)를 그 순서로 뽑는다. */
+    this.atlas = bakeAtlas(TS, this.V, N, (g, ox, oy, id, v) => {
       const s = ART[id];
-      if (!s) continue;
+      if (!s) return;
       if (s.fr) {
         /* 움직이는 타일 — 칸을 변형이 아니라 프레임으로 쓴다. */
-        this.ANIM[id] = { fr: Math.min(s.fr, this.V), fps: s.fps || 4 };
-        for (let v = 0; v < this.V; v++) {
-          const fr = v % this.ANIM[id].fr;
-          clipCell(g, v * TS, id * TS, () => this.paint(g, v * TS, id * TS, s, new RNG('ashfall-anim-' + id + '-' + fr), v, id + '-' + fr));
-        }
-        continue;
+        if (v === 0) this.ANIM[id] = { fr: Math.min(s.fr, this.V), fps: s.fps || 4 };
+        const fr = v % this.ANIM[id].fr;
+        this.paint(g, ox, oy, s, new RNG('ashfall-anim-' + id + '-' + fr), v, id + '-' + fr);
+        return;
       }
-      for (let v = 0; v < this.V; v++) clipCell(g, v * TS, id * TS, () => this.paint(g, v * TS, id * TS, s, rng, v, id + '-' + v));
-    }
-    this.atlas = cv;
-
-    const wc = document.createElement('canvas');
-    wc.width = this.V * TS; wc.height = WALL_COLOR.length * TS;
-    const wg = wc.getContext('2d');
-    for (let i = 1; i < WALL_COLOR.length; i++)
-      for (let v = 0; v < this.V; v++)
-        clipCell(wg, v * TS, i * TS, () => (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, wg, v * TS, i * TS, WALL_COLOR[i], rng));
-    this.wallAtlas = wc;
+      this.paint(g, ox, oy, s, rng, v, id + '-' + v);
+    });
+    this.wallAtlas = bakeAtlas(TS, this.V, WALL_COLOR.length, (g, ox, oy, i) => {
+      if (i === 0) return;                                  // 0 = 벽지 없음
+      (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, g, ox, oy, WALL_COLOR[i], rng);
+    });
 
     this.buildAsh();
     this.markFull();
@@ -489,9 +479,7 @@ export const TileArt = {
   },
 
   /** 타일 블릿. */
-  draw(c, id, v, sx, sy, h) {
-    c.drawImage(this.atlas, v * TS, id * TS, TS, h || TS, sx, sy, TS, h || TS);
-  },
+  draw(c, id, v, sx, sy, h) { blitCell(c, this.atlas, TS, v, id, sx, sy, h); },
   /** 잿빛 판 블릿 — 같은 자리, 색만 빠진 것 */
   drawAsh(c, id, v, sx, sy) {
     if (this.ashAtlas) c.drawImage(this.ashAtlas, v * TS, id * TS, TS, TS, sx, sy, TS, TS);
@@ -567,14 +555,7 @@ export const TileArt = {
     return false;
   },
   /** 칸 캐시 — 열쇠가 같으면 다시 그리지 않는다 */
-  _cache(name, key, make) {
-    const m = (this[name] = this[name] || new Map());
-    let hit = m.get(key);
-    if (hit) return hit;
-    if (m.size > 2500) m.clear();
-    hit = make(); m.set(key, hit);
-    return hit;
-  },
+  _cache(name, key, make) { return cacheGet(this[name] = this[name] || new Map(), key, make); },
   /* ★ 나무 기둥·야자 줄기·야자 잎은 칸 무늬가 아니라 **세계 좌표**로 칠한다 — 이웃 칸과 결이 이어져
      한 그루로 읽힌다(이끼 바위와 같은 방식). 칸마다 난수로 그리면 칸 경계마다 결이 끊긴다. */
   _trunkTile(w, tx, ty) {
@@ -902,9 +883,7 @@ export const TileArt = {
     if (!up && i === n - 1) { g.fillStyle = '#9fd0e8'; g.fillRect(TS / 2 - 0.5, TS - 2, 1, 2); }
     return (this._dc[key] = cv);
   },
-  drawWall(c, wl, v, sx, sy) {
-    c.drawImage(this.wallAtlas, v * TS, wl * TS, TS, TS, sx, sy, TS, TS);
-  },
+  drawWall(c, wl, v, sx, sy) { blitCell(c, this.wallAtlas, TS, v, wl, sx, sy); },
 
   /* ---------- 그리기 도우미 ---------- */
   _r(g, ox, oy, x, y, w, h, col) {
