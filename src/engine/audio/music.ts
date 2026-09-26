@@ -1,22 +1,26 @@
-/* ===== engine/audio/music.js — 배경음악: 상황별 자동 전환 + 무한 반복 + 부드러운 크로스페이드 ===== */
+/* ===== engine/audio/music.ts — 배경음악: 상황별 자동 전환 + 무한 반복 + 부드러운 크로스페이드 ===== */
 import { aud } from './url.js';
 
 /** 곡 표(키 → 파일, 배열이면 그중 하나)와 대체 곡 표를 받아 음악 틀을 만든다. */
-export function createMusic({ tracks: BGM, fallback: BGM_FALLBACK }) {
+/** 곡 표 — 키 → 파일(배열이면 틀 때마다 그중 하나) · 대체 곡(파일이 없을 때 따라갈 키). */
+export interface MusicConfig { tracks: Record<string, string | string[]>; fallback: Record<string, string> }
+
+export function createMusic({ tracks: BGM, fallback: BGM_FALLBACK }: MusicConfig) {
   return {
     vol: 0.42, fadeDur: 0.9,
-    cur: null, curKey: null, prev: null, fadeT: 0, fadeDurCur: 0, started: false,
-    missing: {},   // 파일이 없다고 확인된 키
+    cur: null as HTMLAudioElement | null, curKey: null as string | null, prev: null as HTMLAudioElement | null,
+    fadeT: 0, fadeDurCur: 0, started: false,
+    missing: {} as Record<string, boolean>,   // 파일이 없다고 확인된 키
 
     /** 실제로 틀 수 있는 키로 바꾼다 — 파일이 없으면 대체 곡을 따라간다 */
-    resolve(key) {
+    resolve(key: string): string {
       let k = key;
       for (let i = 0; i < 4 && k && this.missing[k]; i++) k = BGM_FALLBACK[k];
       return k && BGM[k] && !this.missing[k] ? k : (BGM[key] && !this.missing[key] ? key : 'normal');
     },
 
     /** 브라우저 자동재생 정책 때문에 최초 사용자 입력이 있어야 재생을 시작할 수 있다. */
-    armStart(getKeyFn) {
+    armStart(getKeyFn: () => string): void {
       if (this.started) return;
       const start = () => {
         if (this.started) return;
@@ -31,12 +35,12 @@ export function createMusic({ tracks: BGM, fallback: BGM_FALLBACK }) {
 
     /** fast를 주면 거의 즉시 갈아탄다 — 보스전처럼 "지금 바로" 바뀌어야 하는 전환용. */
     /** 그 키가 이번에 실제로 틀 파일 하나. */
-    pick(key) {
+    pick(key: string): string {
       const v = BGM[key];
       return Array.isArray(v) ? v[(Math.random() * v.length) | 0] : v;
     },
 
-    play(key, fast) {
+    play(key: string, fast?: boolean): void {
       key = this.resolve(key);
       if (!this.started || this.curKey === key || !BGM[key]) return;
       // curKey를 여기서 바로 확정하지 않는다 — play()가 (자동재생 차단 등으로) 실패하면 이 값만 미리 바뀐 채 굳어 버려서
@@ -61,7 +65,7 @@ export function createMusic({ tracks: BGM, fallback: BGM_FALLBACK }) {
     },
 
     /** 매 프레임 호출 — 게임 상태(일시정지 등)와 무관하게 항상 불러서 페이드가 끊기지 않게 한다. */
-    update(dt) {
+    update(dt: number): void {
       if (this.fadeT <= 0) { if (this.cur) this.cur.volume = this.vol; return; }
       const dur = this.fadeDurCur || this.fadeDur;
       this.fadeT = Math.max(0, this.fadeT - dt);

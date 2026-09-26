@@ -1,15 +1,21 @@
-/* ===== engine/audio/sfx.js — 짧은 효과음 · 이어지는 효과음 ===== */
+/* ===== engine/audio/sfx.ts — 짧은 효과음 · 이어지는 효과음 ===== */
 import { aud } from './url.js';
 
 /** 효과음 표를 받아 효과음 틀을 만든다 — files(키 → 파일 이름) · fam(빌려 쓰는 한 벌) · gap(최소 간격) · vol(음량 배수) · start(시작 지점). */
-export function createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: SFX_GAP, vol: SFX_VOL, start: SFX_START }) {
+/** fam[키] = [빌려 쓸 키, 음높이 배수, 음량 배수] */
+export interface SfxConfig {
+  dir: string; files: Record<string, string>; fam: Record<string, [string, number, number]>;
+  gap: Record<string, number>; vol: Record<string, number>; start: Record<string, number>;
+}
+
+export function createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: SFX_GAP, vol: SFX_VOL, start: SFX_START }: SfxConfig) {
   return {
     vol: 0.5,
-    voices: {},   // key -> [Audio, ...] (로드 성공한 것만)
-    turn: {},     // key -> 다음에 쓸 목소리 번호
-    last: {},     // key -> 마지막 재생 시각
+    voices: {} as Record<string, HTMLAudioElement[]>,   // key -> [Audio, ...] (로드 성공한 것만)
+    turn: {} as Record<string, number>,     // key -> 다음에 쓸 목소리 번호
+    last: {} as Record<string, number>,     // key -> 마지막 재생 시각
 
-    init() {
+    init(): void {
       for (const k in SFX_FILES) {
         const src = aud(SFX_DIR + SFX_FILES[k] + '.mp3');
         const probe = new Audio(src);
@@ -28,7 +34,7 @@ export function createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: S
 
     /** 재생을 시도한다. */
     /** vol — 이 한 번만 음량을 더 줄이거나 키우는 배수(기본 1). */
-    play(kind, rate, vol) {
+    play(kind: string, rate?: number, vol?: number): boolean {
       /* 제 이름의 파일이 없으면 **같은 결의 한 벌**을 대신 튼다(SFX_FAM). */
       let pool = this.voices[kind], fr = 1, fg = 1, file = kind;
       if (!pool) {
@@ -58,10 +64,13 @@ export const SFX_LOOP_LEN = 0.90;      // 실제로 쓰는 길이 — 파일 끝
 export const SFX_LOOP_OV = 0.12;       // 겹치는 구간
 
 /** 이어 트는 키(키 → 음량 배수)와 짧은 효과음 틀(그 음량을 따른다)을 받는다. */
-export function createSfxLoop({ dir: SFX_DIR, files: SFX_FILES, keys: SFX_LOOP_KEYS, sfx: Sfx }) {
+export interface SfxLoopConfig { dir: string; files: Record<string, string>; keys: Record<string, number>; sfx: { vol: number } }
+
+export function createSfxLoop({ dir: SFX_DIR, files: SFX_FILES, keys: SFX_LOOP_KEYS, sfx: Sfx }: SfxLoopConfig) {
   return {
-    pair: {}, active: {}, on: {}, cur: {}, missing: {},
-    ensure(key) {
+    pair: {} as Record<string, [HTMLAudioElement, HTMLAudioElement]>, active: {} as Record<string, number>, on: {} as Record<string, boolean>,
+    cur: {} as Record<string, number>, missing: {} as Record<string, boolean>,
+    ensure(key: string): void {
       if (this.pair[key] || this.missing[key]) return;
       const src = SFX_DIR + (SFX_FILES[key] || key) + '.mp3';
       const mk = () => { const a = new Audio(src); a.loop = false; a.preload = 'auto'; a.volume = 0; return a; };
@@ -70,7 +79,7 @@ export function createSfxLoop({ dir: SFX_DIR, files: SFX_FILES, keys: SFX_LOOP_K
       this.pair[key] = [a0, a1]; this.active[key] = 0; this.on[key] = false;
     },
     /** 이 프레임에 이 소리가 나야 하는가. */
-    set(key, want, vol) {
+    set(key: string, want: boolean, vol?: number): void {
       this.ensure(key);
       if (this.missing[key]) return;
       const target = want ? (SFX_LOOP_KEYS[key] || 1) * (vol === undefined ? 1 : vol) * Sfx.vol : 0;
@@ -102,7 +111,7 @@ export function createSfxLoop({ dir: SFX_DIR, files: SFX_FILES, keys: SFX_LOOP_K
       }
     },
     /** 이번 프레임에 아무도 안 켠 소리는 꺼 준다 */
-    idle(except) {
+    idle(except?: Record<string, unknown>): void {
       for (const k in SFX_LOOP_KEYS) if (!except || !except[k]) this.set(k, false);
     }
   };

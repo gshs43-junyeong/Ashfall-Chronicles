@@ -8,7 +8,7 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
-  // src/engine/core/math.js
+  // src/engine/core/math.ts
   var math_exports = {};
   __export(math_exports, {
     TAU: () => TAU,
@@ -38,7 +38,7 @@
     return Math.atan2(by - ay, bx - ax);
   }
 
-  // src/engine/core/rng.js
+  // src/engine/core/rng.ts
   var rng_exports = {};
   __export(rng_exports, {
     RNG: () => RNG,
@@ -54,6 +54,7 @@
     return h >>> 0;
   }
   var RNG = class {
+    // declare — 필드 정의를 따로 내지 않는다(예전 JS 와 같은 모양)
     constructor(seed) {
       this.s = (typeof seed === "string" ? hashStr(seed) : seed >>> 0) || 1;
     }
@@ -95,7 +96,7 @@
     return (h >>> 8) / 16777216;
   }
 
-  // src/engine/core/noise.js
+  // src/engine/core/noise.ts
   var noise_exports = {};
   __export(noise_exports, {
     makeNoise1D: () => makeNoise1D,
@@ -166,7 +167,7 @@
     };
   }
 
-  // src/engine/core/color.js
+  // src/engine/core/color.ts
   var color_exports = {};
   __export(color_exports, {
     mixHex: () => mixHex,
@@ -188,7 +189,7 @@
     return "#" + (r << 16 | g << 8 | bl).toString(16).padStart(6, "0");
   }
 
-  // src/engine/save/rle.js
+  // src/engine/save/rle.ts
   var rle_exports = {};
   __export(rle_exports, {
     RLE_MAX: () => RLE_MAX,
@@ -238,7 +239,7 @@
     return out;
   }
 
-  // src/engine/save/seal.js
+  // src/engine/save/seal.ts
   var seal_exports = {};
   __export(seal_exports, {
     makeSigner: () => makeSigner
@@ -257,7 +258,7 @@
     };
   }
 
-  // src/engine/save/upgrade.js
+  // src/engine/save/upgrade.ts
   var upgrade_exports = {};
   __export(upgrade_exports, {
     upgrade: () => upgrade
@@ -273,7 +274,7 @@
     return d;
   }
 
-  // src/engine/save/store.js
+  // src/engine/save/store.ts
   var store_exports = {};
   __export(store_exports, {
     createSaveStore: () => createSaveStore
@@ -450,7 +451,7 @@
     };
   }
 
-  // src/engine/audio/url.js
+  // src/engine/audio/url.ts
   var url_exports = {};
   __export(url_exports, {
     AUD_VER: () => AUD_VER,
@@ -459,7 +460,7 @@
   var AUD_VER = document.currentScript && document.currentScript.src.split("?")[1] || "";
   var aud = (src) => src + (AUD_VER ? (src.includes("?") ? "&" : "?") + AUD_VER : "");
 
-  // src/engine/audio/music.js
+  // src/engine/audio/music.ts
   var music_exports = {};
   __export(music_exports, {
     createMusic: () => createMusic
@@ -545,7 +546,7 @@
     };
   }
 
-  // src/engine/audio/sfx.js
+  // src/engine/audio/sfx.ts
   var sfx_exports = {};
   __export(sfx_exports, {
     SFX_LOOP_LEN: () => SFX_LOOP_LEN,
@@ -700,7 +701,7 @@
     };
   }
 
-  // src/engine/audio/ambient.js
+  // src/engine/audio/ambient.ts
   var ambient_exports = {};
   __export(ambient_exports, {
     AMBIENT_OVERLAP: () => AMBIENT_OVERLAP,
@@ -791,7 +792,7 @@
     };
   }
 
-  // src/engine/assets/image.js
+  // src/engine/assets/image.ts
   var image_exports = {};
   __export(image_exports, {
     ASSET_VER: () => ASSET_VER,
@@ -831,7 +832,7 @@
     };
   }
 
-  // src/engine/core/loop.js
+  // src/engine/core/loop.ts
   var loop_exports = {};
   __export(loop_exports, {
     startLoop: () => startLoop
@@ -848,7 +849,7 @@
     requestAnimationFrame(tick);
   }
 
-  // src/engine/platform/viewport.js
+  // src/engine/platform/viewport.ts
   var viewport_exports = {};
   __export(viewport_exports, {
     fitCanvas: () => fitCanvas

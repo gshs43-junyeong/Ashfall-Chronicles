@@ -16,7 +16,7 @@
     "test:play": "node tests/play.mjs",
     "test:shots": "node tests/shots.mjs",
     "baseline": "node tests/gen-hash.mjs --update && node tests/shots.mjs --update",
-    "check": "npm run test:syntax && npm run test:modules && npm run test:manifest && npm run test:gen && npm run test:play && npm run test:shots"
+    "check": "npm run test:syntax && npm run typecheck && npm run test:modules && npm run test:manifest && npm run test:gen && npm run test:play && npm run test:shots"
   },
   "devDependencies": {
     "acorn": "8.18.0",
