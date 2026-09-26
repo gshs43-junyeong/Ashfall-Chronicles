@@ -112,7 +112,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `src/legacy/tileart.js` · `itemart.js` · `sprites.js` | 절차 생성 그림(아틀라스) · 스프라이트 로더 |
 | `src/legacy/ui.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` | 그 이름대로 |
 | `src/legacy/main.js` · `ctx.js` | 묶는 입구(모듈 순서 · 디버그 창구) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
-| `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기). 게임 고유값은 `create*({…})` 설정으로 받는다 |
+| `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기) · `input`(키·액션 매핑 · 마우스 · 터치 뼈대). 게임 고유값은 `create*({…})` 설정으로 받는다 |
 | `tools/imports.mjs` | 코드를 옮긴 뒤 `src/legacy` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
 | `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/` |
@@ -235,6 +235,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 | `?debug=cave` | 가장 가까운 금 간 자갈 앞에서 시작 (`&k=moss\|drip\|geode\|fume` 그 갈래 굴 안) |
 | `?debug=meteor` | 2.5초 뒤 운석 (`&at=me` 머리 위 = 즉사 · `&at=<x>` 그 칸 · `&dx=` 오른쪽 몇 칸, 기본 30) |
 | `?debug=factory` | 캠프 오른쪽 예시 공장 — 기계 26종을 재료 채워 한 줄로(`&mobs=1` 몹 켜기) |
+| `?touch=1` | 터치 조작 뼈대(가상 스틱 · 점프/대시 · 탭 · '사용' 전환) — 기본은 꺼짐, 모바일 완성은 엔진화 P9 |
 | `&sess=` · `&ch=` · `&plv=` · `&gold=` | 세션·장·레벨·금화를 직접 준다 |
 
 ---
@@ -283,7 +284,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-26)
 
-- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) 끝. 다음은 P4(입력 + 모바일 입력 뼈대).
+- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) 끝. 다음은 P5(타일맵·렌더 분리).
   도중에 찾은 버그·새 기능 요청은 계획서 §9-1 에 모아 두고 **v1.1.1 이 끝난 뒤** 한꺼번에 한다(사용자 결정).
 - **v1.1.0 출시**(태그 `v1.1.0`). 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
   들어가 있고, 업적은 75개다. v1.0.x 세이브는 세계 폭이 달라 열리지 않는다(릴리스 노트·다운로드 페이지에 알림).
