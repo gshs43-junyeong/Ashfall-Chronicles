@@ -238,6 +238,218 @@
     return out;
   }
 
+  // src/engine/save/seal.js
+  var seal_exports = {};
+  __export(seal_exports, {
+    makeSigner: () => makeSigner
+  });
+  function makeSigner(SAVE_SALT2) {
+    return function saveSign2(text) {
+      let a = 2166136261, b = 16777619;
+      const t = text + SAVE_SALT2;
+      for (let i = 0; i < t.length; i++) {
+        const c = t.charCodeAt(i);
+        a ^= c;
+        a = a + ((a << 1) + (a << 4) + (a << 7) + (a << 8) + (a << 24)) >>> 0;
+        b = (b ^ c) * 16777619 >>> 0;
+      }
+      return a.toString(36) + "." + b.toString(36) + "." + (t.length % 1e6).toString(36);
+    };
+  }
+
+  // src/engine/save/upgrade.js
+  var upgrade_exports = {};
+  __export(upgrade_exports, {
+    upgrade: () => upgrade
+  });
+  function upgrade(d, steps) {
+    const SAVE_VERSION2 = steps.length + 1;
+    let v = d.v || 1;
+    while (v < SAVE_VERSION2) {
+      steps[v - 1](d);
+      v++;
+    }
+    d.v = SAVE_VERSION2;
+    return d;
+  }
+
+  // src/engine/save/store.js
+  var store_exports = {};
+  __export(store_exports, {
+    createSaveStore: () => createSaveStore
+  });
+  function createSaveStore({ dbName, slots: SAVE_SLOTS2, slotKey: slotKey2, sigKey: sigKey2, sign: saveSign2, head: saveHead2, sealOk: saveSealOk2 }) {
+    return {
+      mode: "ls",
+      db: null,
+      ready: null,
+      start() {
+        return this.ready || (this.ready = this.init());
+      },
+      async init() {
+        try {
+          if (typeof indexedDB === "undefined") throw new Error("no indexedDB");
+          this.db = await new Promise((res, rej) => {
+            const q = indexedDB.open(dbName, 1);
+            q.onupgradeneeded = () => {
+              q.result.createObjectStore("data");
+              q.result.createObjectStore("head");
+            };
+            q.onsuccess = () => res(q.result);
+            q.onerror = () => rej(q.error);
+            q.onblocked = () => rej(new Error("blocked"));
+            setTimeout(() => rej(new Error("timeout")), 4e3);
+          });
+          this.db.onversionchange = () => {
+            this.db.close();
+          };
+          this.mode = "idb";
+        } catch (e) {
+          console.warn("IndexedDB 를 못 열어 localStorage 에 저장한다:", e);
+          this.mode = "ls";
+          return;
+        }
+        try {
+          await this.migrate();
+        } catch (e) {
+          console.error(e);
+        }
+        try {
+          if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+        } catch (e) {
+        }
+      },
+      _req(r) {
+        return new Promise((res, rej) => {
+          r.onsuccess = () => res(r.result);
+          r.onerror = () => rej(r.error);
+        });
+      },
+      _tx(stores, mode, fn) {
+        return new Promise((res, rej) => {
+          const tx = this.db.transaction(stores, mode);
+          let out;
+          Promise.resolve(fn(tx)).then((v) => {
+            out = v;
+          }, rej);
+          tx.oncomplete = () => res(out);
+          tx.onerror = () => rej(tx.error);
+          tx.onabort = () => rej(tx.error || new Error("abort"));
+        });
+      },
+      async _gz(text) {
+        if (typeof CompressionStream === "undefined") return null;
+        return new Response(new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
+      },
+      async _ungz(buf) {
+        return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+      },
+      /** 슬롯에 글자열을 넣으면서 서명도 같이 적는다. */
+      async put(slot, text, head, sig) {
+        await this.start();
+        return this._put(slot, text, head, sig);
+      },
+      /* ★ init·migrate 안에서는 put/get 이 아니라 _put/_get 을 쓴다 — put 은 init 이 끝나기를 기다리므로 init 안에서 부르면 서로를 기다리며 멈춘다(타이틀
+         목록이 영영 안 뜬다). */
+      async _put(slot, text, head, sig) {
+        if (sig === void 0) sig = saveSign2(text);
+        if (this.mode === "ls") {
+          localStorage.setItem(slotKey2(slot), text);
+          try {
+            if (sig) localStorage.setItem(sigKey2(slot), sig);
+            else localStorage.removeItem(sigKey2(slot));
+          } catch (e) {
+          }
+          return;
+        }
+        const gz = await this._gz(text);
+        const rec = gz ? { gz, sig } : { text, sig };
+        await this._tx(["data", "head"], "readwrite", (tx) => {
+          tx.objectStore("data").put(rec, slotKey2(slot));
+          tx.objectStore("head").put(head, slotKey2(slot));
+        });
+      },
+      /** { raw, sig } 또는 null */
+      async get(slot) {
+        await this.start();
+        return this._get(slot);
+      },
+      async _get(slot) {
+        if (this.mode === "ls") {
+          const raw = localStorage.getItem(slotKey2(slot));
+          if (!raw) return null;
+          let sig = null;
+          try {
+            sig = localStorage.getItem(sigKey2(slot));
+          } catch (e) {
+          }
+          return { raw, sig };
+        }
+        const rec = await this._tx(["data"], "readonly", (tx) => this._req(tx.objectStore("data").get(slotKey2(slot))));
+        if (!rec) return null;
+        return { raw: rec.gz ? await this._ungz(rec.gz) : rec.text, sig: rec.sig || null };
+      },
+      async remove(slot) {
+        await this.start();
+        localStorage.removeItem(slotKey2(slot));
+        localStorage.removeItem(sigKey2(slot));
+        if (this.mode === "idb") await this._tx(["data", "head"], "readwrite", (tx) => {
+          tx.objectStore("data").delete(slotKey2(slot));
+          tx.objectStore("head").delete(slotKey2(slot));
+        });
+      },
+      /** 슬롯 요약 SAVE_SLOTS 개(빈 칸은 null). */
+      async list() {
+        await this.start();
+        const out = [];
+        for (let i = 0; i < SAVE_SLOTS2; i++) {
+          if (this.mode === "idb") {
+            out.push(await this._tx(["head"], "readonly", (tx) => this._req(tx.objectStore("head").get(slotKey2(i)))) || null);
+            continue;
+          }
+          const raw = localStorage.getItem(slotKey2(i));
+          if (!raw) {
+            out.push(null);
+            continue;
+          }
+          try {
+            const d = JSON.parse(raw);
+            let sig = null;
+            try {
+              sig = localStorage.getItem(sigKey2(i));
+            } catch (e) {
+            }
+            out.push(Object.assign(saveHead2(d), { bad: !saveSealOk2(raw, d, sig) }));
+          } catch (e) {
+            out.push(null);
+          }
+        }
+        return out;
+      },
+      async migrate() {
+        for (let i = 0; i < SAVE_SLOTS2; i++) {
+          const raw = localStorage.getItem(slotKey2(i));
+          if (!raw) continue;
+          const have = await this._tx(["head"], "readonly", (tx) => this._req(tx.objectStore("head").get(slotKey2(i))));
+          if (have) continue;
+          let d;
+          try {
+            d = JSON.parse(raw);
+          } catch (e) {
+            continue;
+          }
+          const sig = localStorage.getItem(sigKey2(i));
+          await this._put(i, raw, saveHead2(d), sig);
+          const back = await this._get(i);
+          if (back && back.raw === raw && back.sig === sig) {
+            localStorage.removeItem(slotKey2(i));
+            localStorage.removeItem(sigKey2(i));
+          }
+        }
+      }
+    };
+  }
+
   // src/legacy/util.js
   var util_exports = {};
   __export(util_exports, {
@@ -31490,28 +31702,12 @@
   ];
   var SAVE_VERSION = SAVE_UPGRADES.length + 1;
   function upgradeSave(d) {
-    let v = d.v || 1;
-    while (v < SAVE_VERSION) {
-      SAVE_UPGRADES[v - 1](d);
-      v++;
-    }
-    d.v = SAVE_VERSION;
-    return d;
+    return upgrade(d, SAVE_UPGRADES);
   }
   var slotKey = (i) => `${SAVE_KEY}_slot${i}`;
   var sigKey = (i) => `${SAVE_KEY}_slot${i}_s`;
   var SAVE_SALT = "ashfall-seal-1";
-  function saveSign(text) {
-    let a = 2166136261, b = 16777619;
-    const t = text + SAVE_SALT;
-    for (let i = 0; i < t.length; i++) {
-      const c = t.charCodeAt(i);
-      a ^= c;
-      a = a + ((a << 1) + (a << 4) + (a << 7) + (a << 8) + (a << 24)) >>> 0;
-      b = (b ^ c) * 16777619 >>> 0;
-    }
-    return a.toString(36) + "." + b.toString(36) + "." + (t.length % 1e6).toString(36);
-  }
+  var saveSign = makeSigner(SAVE_SALT);
   function saveSealOk(raw, d, sig) {
     if (!d || !d.sealed) return true;
     return !!sig && sig === saveSign(raw);
@@ -31525,175 +31721,15 @@
       savedAt: d.savedAt
     };
   }
-  var SaveStore = {
-    mode: "ls",
-    db: null,
-    ready: null,
-    start() {
-      return this.ready || (this.ready = this.init());
-    },
-    async init() {
-      try {
-        if (typeof indexedDB === "undefined") throw new Error("no indexedDB");
-        this.db = await new Promise((res, rej) => {
-          const q = indexedDB.open("ashfall", 1);
-          q.onupgradeneeded = () => {
-            q.result.createObjectStore("data");
-            q.result.createObjectStore("head");
-          };
-          q.onsuccess = () => res(q.result);
-          q.onerror = () => rej(q.error);
-          q.onblocked = () => rej(new Error("blocked"));
-          setTimeout(() => rej(new Error("timeout")), 4e3);
-        });
-        this.db.onversionchange = () => {
-          this.db.close();
-        };
-        this.mode = "idb";
-      } catch (e) {
-        console.warn("IndexedDB 를 못 열어 localStorage 에 저장한다:", e);
-        this.mode = "ls";
-        return;
-      }
-      try {
-        await this.migrate();
-      } catch (e) {
-        console.error(e);
-      }
-      try {
-        if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
-      } catch (e) {
-      }
-    },
-    _req(r) {
-      return new Promise((res, rej) => {
-        r.onsuccess = () => res(r.result);
-        r.onerror = () => rej(r.error);
-      });
-    },
-    _tx(stores, mode, fn) {
-      return new Promise((res, rej) => {
-        const tx = this.db.transaction(stores, mode);
-        let out;
-        Promise.resolve(fn(tx)).then((v) => {
-          out = v;
-        }, rej);
-        tx.oncomplete = () => res(out);
-        tx.onerror = () => rej(tx.error);
-        tx.onabort = () => rej(tx.error || new Error("abort"));
-      });
-    },
-    async _gz(text) {
-      if (typeof CompressionStream === "undefined") return null;
-      return new Response(new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
-    },
-    async _ungz(buf) {
-      return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
-    },
-    /** 슬롯에 글자열을 넣으면서 서명도 같이 적는다. */
-    async put(slot, text, head, sig) {
-      await this.start();
-      return this._put(slot, text, head, sig);
-    },
-    /* ★ init·migrate 안에서는 put/get 이 아니라 _put/_get 을 쓴다 — put 은 init 이 끝나기를 기다리므로 init 안에서 부르면 서로를 기다리며 멈춘다(타이틀
-       목록이 영영 안 뜬다). */
-    async _put(slot, text, head, sig) {
-      if (sig === void 0) sig = saveSign(text);
-      if (this.mode === "ls") {
-        localStorage.setItem(slotKey(slot), text);
-        try {
-          if (sig) localStorage.setItem(sigKey(slot), sig);
-          else localStorage.removeItem(sigKey(slot));
-        } catch (e) {
-        }
-        return;
-      }
-      const gz = await this._gz(text);
-      const rec = gz ? { gz, sig } : { text, sig };
-      await this._tx(["data", "head"], "readwrite", (tx) => {
-        tx.objectStore("data").put(rec, slotKey(slot));
-        tx.objectStore("head").put(head, slotKey(slot));
-      });
-    },
-    /** { raw, sig } 또는 null */
-    async get(slot) {
-      await this.start();
-      return this._get(slot);
-    },
-    async _get(slot) {
-      if (this.mode === "ls") {
-        const raw = localStorage.getItem(slotKey(slot));
-        if (!raw) return null;
-        let sig = null;
-        try {
-          sig = localStorage.getItem(sigKey(slot));
-        } catch (e) {
-        }
-        return { raw, sig };
-      }
-      const rec = await this._tx(["data"], "readonly", (tx) => this._req(tx.objectStore("data").get(slotKey(slot))));
-      if (!rec) return null;
-      return { raw: rec.gz ? await this._ungz(rec.gz) : rec.text, sig: rec.sig || null };
-    },
-    async remove(slot) {
-      await this.start();
-      localStorage.removeItem(slotKey(slot));
-      localStorage.removeItem(sigKey(slot));
-      if (this.mode === "idb") await this._tx(["data", "head"], "readwrite", (tx) => {
-        tx.objectStore("data").delete(slotKey(slot));
-        tx.objectStore("head").delete(slotKey(slot));
-      });
-    },
-    /** 슬롯 요약 SAVE_SLOTS 개(빈 칸은 null). */
-    async list() {
-      await this.start();
-      const out = [];
-      for (let i = 0; i < SAVE_SLOTS; i++) {
-        if (this.mode === "idb") {
-          out.push(await this._tx(["head"], "readonly", (tx) => this._req(tx.objectStore("head").get(slotKey(i)))) || null);
-          continue;
-        }
-        const raw = localStorage.getItem(slotKey(i));
-        if (!raw) {
-          out.push(null);
-          continue;
-        }
-        try {
-          const d = JSON.parse(raw);
-          let sig = null;
-          try {
-            sig = localStorage.getItem(sigKey(i));
-          } catch (e) {
-          }
-          out.push(Object.assign(saveHead(d), { bad: !saveSealOk(raw, d, sig) }));
-        } catch (e) {
-          out.push(null);
-        }
-      }
-      return out;
-    },
-    async migrate() {
-      for (let i = 0; i < SAVE_SLOTS; i++) {
-        const raw = localStorage.getItem(slotKey(i));
-        if (!raw) continue;
-        const have = await this._tx(["head"], "readonly", (tx) => this._req(tx.objectStore("head").get(slotKey(i))));
-        if (have) continue;
-        let d;
-        try {
-          d = JSON.parse(raw);
-        } catch (e) {
-          continue;
-        }
-        const sig = localStorage.getItem(sigKey(i));
-        await this._put(i, raw, saveHead(d), sig);
-        const back = await this._get(i);
-        if (back && back.raw === raw && back.sig === sig) {
-          localStorage.removeItem(slotKey(i));
-          localStorage.removeItem(sigKey(i));
-        }
-      }
-    }
-  };
+  var SaveStore = createSaveStore({
+    dbName: "ashfall",
+    slots: SAVE_SLOTS,
+    slotKey,
+    sigKey,
+    sign: saveSign,
+    head: saveHead,
+    sealOk: saveSealOk
+  });
   var SET_KEY = "ashfall_settings";
   var MAP_REVEAL_LIGHT = 1;
   var G = {
@@ -41970,7 +42006,7 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
