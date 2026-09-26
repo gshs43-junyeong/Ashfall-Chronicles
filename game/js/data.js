@@ -1985,7 +1985,7 @@ const ENEMIES = {
                 drops: [['neverthaw', .7, 1, 2], ['ice_shard', .8, 2, 5], ['frost_core', .3, 1, 2]] },
   jarhusk:    { n: '단지 껍데기', hp: 230, dmg: 46, def: 12, spd: 74, ai: 'jumper', w: 24, h: 26, c: '#c8a86a', xp: 92, gold: 46, biome: 'ruin', aggro: 420,
                 d: '단지 안에 있던 것. 봉을 뜯은 사람이 없다는 말은, 스스로 나왔다는 뜻이다.',
-                drops: [['sealed_ash', .7, 1, 3], ['gold_ore', .4, 1, 3], ['bone', .6, 2, 4]] },
+                drops: [['sealed_ash', .7, 1, 3], ['gold_ore', .4, 1, 3], ['bone_frag', .6, 2, 4]] },
   ventspitter:{ n: '구멍벌레', hp: 240, dmg: 42, def: 14, spd: 30, ai: 'caster', w: 26, h: 28, c: '#5a8a74', xp: 110, gold: 52, biome: 'ruin', range: 320, aggro: 460, proj: 'rune',
                 d: '포자 구멍에 살던 것. 구멍이 벌레의 집인지 벌레가 구멍인지는 모른다.',
                 drops: [['spore_dust', .7, 1, 3], ['spore_sac', .5, 1, 3], ['glowcap', .4, 2, 4]] },
