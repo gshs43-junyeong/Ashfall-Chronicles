@@ -2150,11 +2150,13 @@ const IMPACT_FX = {
   bolt:  { burst: 'arcane', ring: '#8fd8ff', rr: 22, parts: 9 },
   rune:  { burst: 'arcane', ring: '#9fe8d8', rr: 26, parts: 8 },
   wind:  { burst: 'arcane', ring: '#bcd8f0', rr: 32, parts: 6 },
-  star:  { burst: 'hit',    ring: '#ffe08a', rr: 24, parts: 8 }
+  star:  { burst: 'hit',    ring: '#ffe08a', rr: 24, parts: 8 },
+  bullet: { burst: 'hit',   ring: '#ffd86a', rr: 12, parts: 6 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
 const PROJ_STYLE = {
   arrow: { c: '#d8c898', r: 3, len: 14 },
+  bullet: { c: '#ffe0a0', r: 2, tracer: 22 },   // 포탑 총탄 — 예광 줄기
   bomb: { c: '#3a3630', r: 6 },          // 폭탄 — 심지 불티는 Bomb.update가 따로 뿌린다
   star: { c: '#ffe08a', r: 5, glow: 1 },
   bolt: { c: '#8fd8ff', r: 5, glow: 1 },
@@ -2168,7 +2170,7 @@ const PROJ_STYLE = {
   bone: { c: '#e8e0c8', r: 5 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */
-const PHYS_PROJ = { arrow: 1, bone: 1, star: 1 };
+const PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1 };
 
 class Proj extends Ent {
   constructor(x, y, vx, vy, dmg, team, type) {
@@ -2199,7 +2201,7 @@ class Proj extends Ent {
           else e._vol = this.vol;
         }
         // 물리 화살·별조각만 금빛 타격을 얹는다.
-        e.hurt(dmg, this.crit, G.player, 3, (this.type === 'arrow' || this.type === 'star') ? 'pierce' : null);
+        e.hurt(dmg, this.crit, G.player, 3, (this.type === 'arrow' || this.type === 'star' || this.type === 'bullet') ? 'pierce' : null);
         if (this.fire) e.addDot('burn', this.dmg * 0.1, 4);
         if (this.frost) e.slow(0.4, 2.5);
         if (this.poison) e.addDot('poison', this.dmg * 0.11 * this.poison, 5);

@@ -3966,7 +3966,7 @@ const G = {
       });
     }, delay);
     UI.refreshTracker(); UI.refreshQuest();
-    this.sfx('chapter');
+    this.sfx('story');
     if (ch.rw.gold) this.pending.push({ t: 0.45, fn: () => this.sfx('manycoins') });
   },
   onKill() {
@@ -5173,6 +5173,7 @@ const G = {
     // ---- 조명 (부드러운 그라디언트 오버레이) ----
     this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
     this.drawGlow(c, camX, camY, tx0, ty0, tx1, ty1);   // 빛 색 — 어둠 위에 더한다
+    this.drawLairGlow(c, camX, camY);                  // 깨어 있는 둥지의 알·노심 — 어두운 유적에서도 보이게
     this.drawFishCue(c, camX, camY);   // 입질 알림은 밤에도 보여야 한다 — 조명 위에
     /* 유적 고유 이벤트의 여운을 화면에 덮는다. */
     // 이름표는 원경이 바뀌는 자리에서 — 그리는 김에 같은 카메라 값으로 본다
@@ -5218,6 +5219,15 @@ const G = {
         continue;
       }
       if (pr instanceof Bomb) { this.drawBomb(c, pr, sx, sy); continue; }
+      if (st.tracer) {                                     // 예광탄 — 지나온 자리로 옅어지는 줄기 + 밝은 머리
+        const sp = Math.hypot(pr.vx, pr.vy) || 1, ux = pr.vx / sp, uy = pr.vy / sp;
+        const g = c.createLinearGradient(sx - ux * st.tracer, sy - uy * st.tracer, sx, sy);
+        g.addColorStop(0, 'rgba(255,200,90,0)'); g.addColorStop(1, 'rgba(255,230,160,.95)');
+        c.strokeStyle = g; c.lineWidth = 2; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(sx - ux * st.tracer, sy - uy * st.tracer); c.lineTo(sx, sy); c.stroke();
+        c.fillStyle = '#fffbe8'; c.fillRect(sx - 1, sy - 1, 2.5, 2.5);
+        continue;
+      }
       c.fillStyle = st.c;
       if (st.glow) { c.globalAlpha = .28; c.beginPath(); c.arc(sx, sy, st.r * 2.4, 0, TAU); c.fill(); c.globalAlpha = 1; }
       if (st.len) {
@@ -5890,6 +5900,29 @@ const G = {
   },
 
   /** 빛 색 — 빛나는 타일(data.js LIGHT_SPEC) 둘레에 제 색의 번짐을 **더하기**로 얹는다. */
+  /** 둥지 빛 — 어둠 **위에** 더한다(둥지 그림은 조명보다 먼저 그려져 어두운 방에서 거의 안 보였다). 비운 둥지는 없다. */
+  drawLairGlow(c, camX, camY) {
+    const w = this.world; if (!w) return;
+    const beat = 0.5 + Math.sin(this.time * 2.1) * 0.5;
+    c.save(); c.globalCompositeOperation = 'lighter';
+    for (const o of w.objects) {
+      if (o.type !== 'lair' || (this.lairs && this.lairs[o.ruin])) continue;
+      const x = o.x + o.w / 2 - camX, y = o.y + (o.ruin >= 10 ? 20 : 24) - camY;
+      if (x < -60 || y < -60 || x > this.W + 60 || y > this.H + 60) continue;
+      const col = this.lairCol(o);
+      const g = c.createRadialGradient(x, y, 2, x, y, 34);
+      g.addColorStop(0, col); g.addColorStop(0.35, col + '66'); g.addColorStop(1, col + '00');
+      c.globalAlpha = 0.45 + beat * 0.35;
+      c.fillStyle = g; c.fillRect(x - 34, y - 34, 68, 68);
+    }
+    c.restore();
+  },
+  /** 둥지 빛 색 — 주인 색을 쓰되 너무 어두우면 밝힌다(물에 잠긴 파수꾼처럼 짙은 색은 알이 검게 보였다). */
+  lairCol(o) {
+    const c0 = (ENEMIES[o.boss] && ENEMIES[o.boss].c) || '#e0563c';
+    const n = parseInt(c0.slice(1), 16), l = ((n >> 16) + ((n >> 8) & 255) + (n & 255)) / 3;
+    return l < 120 ? shade(c0, 120 / Math.max(30, l)) : c0;
+  },
   drawGlow(c, camX, camY, tx0, ty0, tx1, ty1) {
     const w = this.world;
     this._glowC = this._glowC || {};
@@ -5993,6 +6026,90 @@ const G = {
 
   /** 소환 제단 — 새긴 받침 위 세 갈래 발톱이 구슬을 받친다. 구슬은 빛이 안에서 도는 유리알:
       가장자리는 어둡고 속은 밝고, 왼쪽 위에 창빛 한 점. 결전 중이면 붉게 물든다. */
+  /** 둥지 — 제단처럼 손으로 다듬은 한 장. 바이옴 유적은 흙·뼈 둔덕에 갈비가 휘어 감싼 알, 공창 격실(ruin 10+)은
+      강철 요람에 박힌 노심. 빛은 주인(보스) 색으로 맥박친다. 비우면 알은 깨진 껍데기, 노심은 꺼진 유리. */
+  drawLair(c, o, sx, sy, f) {
+    const t = this.time, w = o.w, h = o.h, cx = sx + w / 2;
+    const done = !!(this.lairs && this.lairs[o.ruin]);
+    const col = this.lairCol(o);
+    const beat = done ? 0 : 0.5 + Math.sin(t * 2.1) * 0.5;
+    const S = (hex, k) => shade(hex, f * (k || 1));
+    c.save();
+    if (o.ruin >= 10) {
+      // 강철 요람 — 받침 · 양옆 집게 · 가운데 노심 · 받침관
+      c.fillStyle = S('#2a2c32'); c.fillRect(sx - 4, sy + h - 6, w + 8, 6);
+      c.fillStyle = S('#3c4048'); c.fillRect(sx - 1, sy + h - 12, w + 2, 6);
+      c.fillStyle = S('#5a606a'); c.fillRect(sx - 1, sy + h - 12, w + 2, 1);
+      for (const k of [-1, 1]) {
+        c.fillStyle = S('#4a505a');
+        c.beginPath(); c.moveTo(cx + k * 16, sy + h - 12); c.lineTo(cx + k * 19, sy + 10); c.lineTo(cx + k * 11, sy + 2);
+        c.lineTo(cx + k * 9, sy + 6); c.lineTo(cx + k * 13, sy + 12); c.lineTo(cx + k * 10, sy + h - 12); c.closePath(); c.fill();
+        c.fillStyle = S('#7a808a'); c.fillRect(cx + k * 18 - (k > 0 ? 1 : 0), sy + 10, 1, h - 22);
+        c.fillStyle = S('#2a2c32'); for (let y = sy + 16; y < sy + h - 14; y += 6) c.fillRect(cx + k * 15 - 1, y, 2, 2);   // 리벳
+      }
+      const oy = sy + 20, R = 9;
+      c.fillStyle = S('#3c4048'); c.fillRect(cx - 3, oy + R - 1, 6, sy + h - 12 - (oy + R - 1));
+      if (!done) {
+        c.globalAlpha = 0.18 + beat * 0.15;
+        const halo = c.createRadialGradient(cx, oy, R * .5, cx, oy, R * 3);
+        halo.addColorStop(0, col); halo.addColorStop(1, 'rgba(0,0,0,0)');
+        c.fillStyle = halo; c.beginPath(); c.arc(cx, oy, R * 3, 0, TAU); c.fill();
+        c.globalAlpha = 1;
+      }
+      const g = c.createRadialGradient(cx - 2, oy - 3, 1, cx, oy, R);
+      g.addColorStop(0, done ? '#6a6e76' : '#ffffff'); g.addColorStop(.4, done ? '#3a3e46' : col); g.addColorStop(1, done ? '#1a1c20' : shade(col, .35));
+      c.fillStyle = g; c.beginPath(); c.arc(cx, oy, R, 0, TAU); c.fill();
+      c.strokeStyle = S('#1a1c20'); c.lineWidth = 1.5; c.beginPath(); c.arc(cx, oy, R, 0, TAU); c.stroke();
+      if (done) {                                                 // 금 간 유리
+        c.strokeStyle = '#8a8e96'; c.lineWidth = 1; c.beginPath();
+        c.moveTo(cx - 5, oy - 4); c.lineTo(cx, oy); c.lineTo(cx + 4, oy - 6); c.moveTo(cx, oy); c.lineTo(cx + 1, oy + 7); c.stroke();
+      } else {                                                    // 속에서 도는 고리
+        c.strokeStyle = '#ffffff'; c.globalAlpha = .5; c.lineWidth = 1;
+        c.beginPath(); c.ellipse(cx, oy, R * .7, R * .25, t * 1.7, 0, TAU); c.stroke(); c.globalAlpha = 1;
+      }
+      c.restore();
+      return;
+    }
+    // 둔덕 — 흙과 재가 쌓인 낮은 언덕, 앞쪽에 뼈 부스러기
+    c.fillStyle = S('#241e18');
+    c.beginPath(); c.ellipse(cx, sy + h - 3, w * 0.62, 9, 0, Math.PI, TAU); c.fill();
+    c.fillRect(sx - 5, sy + h - 4, w + 10, 4);
+    c.fillStyle = S('#3a3026'); c.beginPath(); c.ellipse(cx, sy + h - 4, w * 0.5, 6, 0, Math.PI, TAU); c.fill();
+    c.fillStyle = S('#cfc4a8', .8);
+    for (const [dx, dy, l] of [[-15, -4, 5], [-9, -2, 3], [8, -3, 4], [14, -2, 5], [2, -1, 3]]) c.fillRect(cx + dx, sy + h + dy, l, 1.5);
+    // 갈비 — 양쪽에서 휘어 올라 알을 감싼다(뒤쪽 셋은 어둡게)
+    const rib = (k, i, back) => {
+      const bx = cx + k * (7 + i * 5), top = sy + 8 + i * 5;
+      c.strokeStyle = back ? S('#6a6250') : S('#d8ccb0'); c.lineWidth = back ? 2 : 2.5; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(bx, sy + h - 7); c.quadraticCurveTo(bx + k * 6, top + 12, cx + k * (3 + i * 2), top); c.stroke();
+    };
+    for (let i = 0; i < 3; i++) { rib(-1, i, true); rib(1, i, true); }
+    // 알 — 주인 색으로 맥박친다
+    const oy = sy + 24, rx = 8, ry = 11;
+    if (!done) {
+      c.globalAlpha = 0.2 + beat * 0.18;
+      const halo = c.createRadialGradient(cx, oy, 4, cx, oy, 30);
+      halo.addColorStop(0, col); halo.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = halo; c.beginPath(); c.arc(cx, oy, 30, 0, TAU); c.fill();
+      c.globalAlpha = 1;
+      const g = c.createRadialGradient(cx - 3, oy - 4, 1, cx, oy, ry);
+      g.addColorStop(0, '#fff4e0'); g.addColorStop(.45, col); g.addColorStop(1, shade(col, .3));
+      c.fillStyle = g; c.beginPath(); c.ellipse(cx, oy, rx, ry, 0, 0, TAU); c.fill();
+      c.globalAlpha = .35 + beat * .4; c.strokeStyle = shade(col, 1.6); c.lineWidth = 1;   // 핏줄
+      c.beginPath(); c.moveTo(cx - 4, oy + 6); c.quadraticCurveTo(cx - 1, oy, cx - 3, oy - 7);
+      c.moveTo(cx + 3, oy + 7); c.quadraticCurveTo(cx + 5, oy, cx + 2, oy - 6); c.stroke();
+      c.globalAlpha = .8; c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(cx - 3, oy - 5, 1.8, 2.6, -.4, 0, TAU); c.fill();
+      c.globalAlpha = 1;
+    } else {                                                      // 깨진 껍데기 — 아래 반쪽만 남는다
+      c.fillStyle = S('#8a8070');
+      c.beginPath(); c.moveTo(cx - rx, oy + 2);
+      for (let i = 0; i <= 6; i++) c.lineTo(cx - rx + i * (rx * 2 / 6), oy + 2 - (i % 2 ? 4 : 0));
+      c.ellipse(cx, oy + 2, rx, ry - 2, 0, 0, Math.PI); c.closePath(); c.fill();
+      c.fillStyle = S('#4a4238'); c.beginPath(); c.ellipse(cx, oy + 3, rx - 2, 3, 0, 0, TAU); c.fill();
+    }
+    for (let i = 0; i < 3; i++) { rib(-1, i, false); rib(1, i, false); }   // 앞쪽 갈비는 알 위로
+    c.restore();
+  },
   drawAltar(c, o, sx, sy, f) {
     const t = this.time, cx = sx + o.w / 2, w = o.w, h = o.h;
     const hot = !!this.boss;
@@ -6266,21 +6383,7 @@ const G = {
       c.globalAlpha = 1;
       c.fillStyle = shade('#8a6a3a', f); c.fillRect(sx + o.w / 2 - 2, sy + 26, 4, o.h - 26);
     } else if (o.type === 'lair') {
-      // 미니보스 둥지 — 비어 있으면 불이 꺼진다
-      const done = this.lairs && this.lairs[o.ruin];
-      const gl = done ? 0.12 : 0.5 + Math.sin(t * 1.9) * 0.28;
-      c.fillStyle = shade('#2a2620', f); c.fillRect(sx, sy + 12, o.w, o.h - 12);
-      c.fillStyle = shade('#3d372e', f); c.fillRect(sx - 4, sy + 6, o.w + 8, 9);
-      for (let k = 0; k < 3; k++) {
-        c.fillStyle = shade('#4a4238', f);
-        c.fillRect(sx + 4 + k * 11, sy + 16, 7, o.h - 20);
-      }
-      c.globalAlpha = gl;
-      c.fillStyle = done ? '#4a4a52' : '#e0563c';
-      c.fillRect(sx + o.w / 2 - 6, sy - 10, 12, 18);
-      c.globalAlpha = gl * 0.4;
-      c.beginPath(); c.arc(sx + o.w / 2, sy - 2, 24, 0, TAU); c.fill();
-      c.globalAlpha = 1;
+      this.drawLair(c, o, sx, sy, Math.max(f, .5));
     } else if (o.type === 'townhall') {
       // 마을 설계도가 펼쳐진 판 — 등급이 오를수록 판에 못이 하나씩 더 박힌다
       const lv = this.villageLv();

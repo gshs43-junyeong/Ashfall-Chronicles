@@ -181,7 +181,8 @@ const SFX_FAM = {
   efire_phys:  ['bow', .82, .5],
   efire_magic: ['magic', .80, .5],
   /* 업적 — 장 넘김(chapter)과 같은 소리를 조금 작게. 따로 두어야 업적만 줄일 수 있다 */
-  ach: ['chapter', 1, .7]
+  ach: ['chapter', 1, .7],
+  story: ['chapter', 1, .7]         // 장(이야기) 완료 — 업적과 같은 크기
 };
 
 /* 키별 최소 간격(초). */

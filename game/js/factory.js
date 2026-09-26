@@ -671,12 +671,21 @@ const Factory = {
     const ang = m.aim;
     const dmg = s.dmg * (1 + G.player.level * 0.05);
     // 포탑은 몸이 있는 칸이라 한가운데서 쏘면 제 칸에 부딪혀 사라진다 — 총구(칸 반지름 + 3px) 밖에서 낸다
-    const mz = TS / 2 + 3;
-    const p = new Proj(cx + Math.cos(ang) * mz, cy + Math.sin(ang) * mz, Math.cos(ang) * 840, Math.sin(ang) * 840, dmg, 'player', 'arrow');
+    const mz = TS / 2 + 5, mx = cx + Math.cos(ang) * mz, my = cy + Math.sin(ang) * mz;
+    const p = new Proj(mx, my, Math.cos(ang) * 1150, Math.sin(ang) * 1150, dmg, 'player', 'bullet');
     G.projs.push(p);
     m.cd = s.cycle;
     m.st = '사격';
-    m.fx = 2;
+    m.fx = 3;
+    /* 탄피 · 총구 연기 · 가까우면 짧은 울림 — 포탑이 쏘는 게 몸으로 느껴지게(화면 밖은 안 뿌린다) */
+    const pl = G.player, d = pl ? Math.hypot(cx - pl.cx, cy - pl.cy) : 1e9;
+    if (d < 900) {
+      const back = ang + Math.PI + (Math.cos(ang) >= 0 ? -0.9 : 0.9);
+      const shell = new Part(cx, cy, '#d8b048', -110, 0.7, { g: 1.3, spd: 0.25 });
+      shell.vx = Math.cos(back) * 90; G.parts.push(shell);
+      G.parts.push(new Part(mx, my, 'rgba(170,170,170,.55)', -18, 0.7, { g: -0.1, sq: 0, r: 2, spd: 0.15, drag: 0.9 }));
+      if (d < 7 * TS) G.shake = Math.max(G.shake || 0, 1.2);
+    }
     G.sfxAt('turret', m.x, m.y);
   },
 
@@ -939,12 +948,20 @@ const Factory = {
 
         // 순간 이펙트 (포탑 발사 / 함정 방전)
         if (m.fx > 0) {
-          m.fx -= 0.35;
+          m.fx -= m.t === 'turret' ? 0.2 : 0.35;             // 포탑 섬광은 조금 더 남긴다(3프레임이면 거의 안 보였다)
           c.globalAlpha = clamp(m.fx / 3, 0, 1) * 0.8;
           c.fillStyle = m.t === 'trap' ? '#9fd8ff' : '#ffd86a';
-          if (m.t === 'turret' && m.aimV !== undefined) {           // 총구 끝에서 터진다
-            const mx = sx + TS / 2 + Math.cos(m.aimV) * 15, my = sy + 11 + Math.sin(m.aimV) * 15;
-            c.beginPath(); c.arc(mx, my, 2 + m.fx * 1.3, 0, TAU); c.fill();
+          if (m.t === 'turret' && m.aimV !== undefined) {           // 총구 섬광 — 앞으로 길게, 옆으로 짧게 뻗는 별
+            const k = clamp(m.fx / 3, 0, 1);
+            c.save(); c.translate(sx + TS / 2 + Math.cos(m.aimV) * 15, sy + 11 + Math.sin(m.aimV) * 15); c.rotate(m.aimV);
+            c.globalAlpha = k; c.fillStyle = '#ffb040';
+            c.beginPath(); c.moveTo(0, -3); c.lineTo(10 * k + 4, 0); c.lineTo(0, 3); c.lineTo(-2, 0); c.closePath(); c.fill();
+            c.beginPath(); c.moveTo(1, -6 * k - 1); c.lineTo(3, 0); c.lineTo(1, 6 * k + 1); c.lineTo(-1, 0); c.closePath(); c.fill();
+            c.fillStyle = '#fff6d0'; c.beginPath(); c.arc(1, 0, 2.2, 0, TAU); c.fill();
+            c.globalCompositeOperation = 'lighter'; c.globalAlpha = k * 0.5;
+            const gl = c.createRadialGradient(0, 0, 0, 0, 0, 14); gl.addColorStop(0, '#ffcf70'); gl.addColorStop(1, 'rgba(255,160,60,0)');
+            c.fillStyle = gl; c.beginPath(); c.arc(0, 0, 14, 0, TAU); c.fill();
+            c.restore();
           } else c.fillRect(sx - 2, sy - 2, TS + 4, TS + 4);
           c.globalAlpha = 1;
         }
