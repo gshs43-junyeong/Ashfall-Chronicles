@@ -1,6 +1,6 @@
 /* ===== data.js — 타일 / 아이템 / 적 / 스킬 / 스토리 ===== */
 import { clamp } from '../engine/core/math.js';
-import { eulreul, iga } from './util.js';
+import { eulreul, iga } from '../engine/i18n/ko.js';
 import { BIOMES, DEEP_Y, HELL_Y, SHIFT, SKY_Y } from './size.js';
 
 /* ---------------- 타일 ---------------- */
