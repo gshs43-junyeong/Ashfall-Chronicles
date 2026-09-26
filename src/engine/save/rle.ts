@@ -1,9 +1,9 @@
-/* ===== engine/save/rle.js — 배열 RLE(세이브의 타일·벽지·탐험) ===== */
+/* ===== engine/save/rle.ts — 배열 RLE(세이브의 타일·벽지·탐험) ===== */
 
 /** 배열 RLE 압축 (저장용) */
 /* ★ 세이브의 타일·벽지·탐험 배열은 **글자열** RLE 다 — 사연: docs/code-history.md#h100 */
 export const RLE_V = 0x100, RLE_N = 0x1000, RLE_MAX = 0x6FFF;
-export function rleEncode(arr) {
+export function rleEncode(arr: ArrayLike<number>): string {
   const out = ['r1'];
   let buf = '';
   let cur = arr[0], run = 1;
@@ -19,7 +19,7 @@ export function rleEncode(arr) {
   out.push(buf);
   return out.join('');
 }
-export function rleDecode(pairs, len, Ctor) {
+export function rleDecode<A extends { [i: number]: number }>(pairs: string | ArrayLike<number>, len: number, Ctor: new (n: number) => A): A {
   const out = new Ctor(len);
   let i = 0;
   if (typeof pairs === 'string') {

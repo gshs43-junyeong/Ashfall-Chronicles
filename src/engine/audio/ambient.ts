@@ -1,20 +1,22 @@
-/* ===== engine/audio/ambient.js — 이어지는 환경음: 두 플레이어를 엇갈려 틀며 크로스페이드 ===== */
+/* ===== engine/audio/ambient.ts — 이어지는 환경음: 두 플레이어를 엇갈려 틀며 크로스페이드 ===== */
 import { aud } from './url.js';
 
 export const AMBIENT_OVERLAP = 0.3;   // 겹쳐 트는 구간(초)
 
 /** 환경음 표(키 → 파일 이름)를 받는다. 언제 얼마나 크게 틀지는 게임이 step(키, 음량) 으로 정한다. */
-export function createAmbient({ dir: SFX_DIR, files: AMBIENT_FILES }) {
+export interface AmbientConfig { dir: string; files: Record<string, string> }
+
+export function createAmbient({ dir: SFX_DIR, files: AMBIENT_FILES }: AmbientConfig) {
   return {
     vol: 0.45,
-    pair: {},      // key -> [AudioA, AudioB]
-    active: {},    // key -> 지금 "메인"인 쪽의 인덱스(0|1)
-    started: {},   // key -> 재생을 이미 시작했는가(다시 가까워질 때 처음부터 틀기 위한 리셋용)
-    dur: {},       // key -> 파일 길이(초). loadedmetadata 전에는 모름 — 그동안은 크로스페이드 없이 튼다
-    missing: {},   // key -> 파일 없음 확인됨
-    cur: {},       // key -> 지금 부드럽게 따라가는 중인 음량(0~1, 거리 기반)
+    pair: {} as Record<string, [HTMLAudioElement, HTMLAudioElement]>,      // key -> [AudioA, AudioB]
+    active: {} as Record<string, number>,    // key -> 지금 "메인"인 쪽의 인덱스(0|1)
+    started: {} as Record<string, boolean>,   // key -> 재생을 이미 시작했는가(다시 가까워질 때 처음부터 틀기 위한 리셋용)
+    dur: {} as Record<string, number>,       // key -> 파일 길이(초). loadedmetadata 전에는 모름 — 그동안은 크로스페이드 없이 튼다
+    missing: {} as Record<string, boolean>,   // key -> 파일 없음 확인됨
+    cur: {} as Record<string, number>,       // key -> 지금 부드럽게 따라가는 중인 음량(0~1, 거리 기반)
 
-    ensure(key) {
+    ensure(key: string): void {
       if (this.pair[key] || this.missing[key]) return;
       const mk = () => {
         const a = new Audio(aud(SFX_DIR + AMBIENT_FILES[key] + '.mp3'));
@@ -30,7 +32,7 @@ export function createAmbient({ dir: SFX_DIR, files: AMBIENT_FILES }) {
     },
 
     /** 두 플레이어를 엇갈려 틀며 볼륨을 맞춘다. */
-    step(key, targetVol) {
+    step(key: string, targetVol: number): void {
       const [a, b0] = this.pair[key];
       const ai = this.active[key];
       const cur = ai === 0 ? a : b0, other = ai === 0 ? b0 : a;
