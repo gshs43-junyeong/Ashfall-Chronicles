@@ -21,7 +21,7 @@
 **[내려받기](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)** ·
 **[영문 안내](docs/README.en.md)**
 
-> **v1.1.0 (2026-09-26)** — 웹과 내려받는 zip 이 같은 판입니다. **세션 2 「벽 너머」와
+> **v1.1.0 (2026-09-26)** — 웹과 내려받는 zip 이 같은 판입니다. **
 > 세션 3 「물이 지운 쪽」이 모두 들어가** 장이 열다섯에서 **열여덟**으로 늘었습니다.
 > 무엇이 들어갔는지는 [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다.
 >
