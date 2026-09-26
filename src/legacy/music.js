@@ -1,11 +1,11 @@
-/* ===== music.js — 배경음악: 상황별 자동 전환 + 무한 반복 + 부드러운 크로스페이드 ===== */
+/* ===== music.js — 곡 · 효과음 · 환경음 표와 거리로 맞추는 환경음(틀은 src/engine/audio) ===== */
+import { createAmbient } from '../engine/audio/ambient.js';
+import { createMusic } from '../engine/audio/music.js';
+import { createSfx, createSfxLoop } from '../engine/audio/sfx.js';
 import { clamp, lerp } from '../engine/core/math.js';
 import { WW } from './size.js';
 import { TS } from './world.js';
 
-/* ★ 소리 주소에도 판 번호를 붙인다. */
-export const AUD_VER = (document.currentScript && document.currentScript.src.split('?')[1]) || '';
-export const aud = (src) => src + (AUD_VER ? (src.includes('?') ? '&' : '?') + AUD_VER : '');
 
 export const BGM = {
   // mp3 원본은 용량이 커서(5~11MB) AAC(m4a)로 다시 구웠다 — 브라우저 재생엔 문제없다.
@@ -35,76 +35,7 @@ export const BGM_FALLBACK = { east: 'normal', catacomb: 'tense', sky: 'normal', 
   // 종장 두 곡이 없으면 보스 곡, 마지막 음이 없으면 긴장 곡으로 내려간다
   finale: 'boss', lastnote: 'tense' };
 
-export const Music = {
-  vol: 0.42, fadeDur: 0.9,
-  cur: null, curKey: null, prev: null, fadeT: 0, fadeDurCur: 0, started: false,
-  missing: {},   // 파일이 없다고 확인된 키
-
-  /** 실제로 틀 수 있는 키로 바꾼다 — 파일이 없으면 대체 곡을 따라간다 */
-  resolve(key) {
-    let k = key;
-    for (let i = 0; i < 4 && k && this.missing[k]; i++) k = BGM_FALLBACK[k];
-    return k && BGM[k] && !this.missing[k] ? k : (BGM[key] && !this.missing[key] ? key : 'normal');
-  },
-
-  /** 브라우저 자동재생 정책 때문에 최초 사용자 입력이 있어야 재생을 시작할 수 있다. */
-  armStart(getKeyFn) {
-    if (this.started) return;
-    const start = () => {
-      if (this.started) return;
-      this.started = true;
-      this.play(getKeyFn());
-      document.removeEventListener('pointerdown', start);
-      document.removeEventListener('keydown', start);
-    };
-    document.addEventListener('pointerdown', start, { once: true });
-    document.addEventListener('keydown', start, { once: true });
-  },
-
-  /** fast를 주면 거의 즉시 갈아탄다 — 보스전처럼 "지금 바로" 바뀌어야 하는 전환용. */
-  /** 그 키가 이번에 실제로 틀 파일 하나. */
-  pick(key) {
-    const v = BGM[key];
-    return Array.isArray(v) ? v[(Math.random() * v.length) | 0] : v;
-  },
-
-  play(key, fast) {
-    key = this.resolve(key);
-    if (!this.started || this.curKey === key || !BGM[key]) return;
-    // curKey를 여기서 바로 확정하지 않는다 — play()가 (자동재생 차단 등으로) 실패하면 이 값만 미리 바뀐 채 굳어 버려서
-    const prevKey = this.curKey;
-    this.curKey = key;
-    const a = new Audio(aud(this.pick(key)));
-    a.loop = true; a.volume = 0;
-    const dur = fast ? 0.12 : this.fadeDur;
-    // 파일 자체가 없을 때(404) 울리는 신호.
-    a.addEventListener('error', () => { this.missing[key] = true; }, { once: true });
-    a.play().then(() => {
-      if (this.prev) this.prev.pause();
-      this.prev = this.cur;
-      this.cur = a;
-      this.fadeDurCur = dur;
-      this.fadeT = dur;
-    }).catch(err => {
-      // 소스를 못 읽는 실패는 "없는 파일"로 확정하고 다시 시도하지 않는다.
-      if (err && (err.name === 'NotSupportedError' || a.error)) this.missing[key] = true;
-      this.curKey = prevKey;
-    });
-  },
-
-  /** 매 프레임 호출 — 게임 상태(일시정지 등)와 무관하게 항상 불러서 페이드가 끊기지 않게 한다. */
-  update(dt) {
-    if (this.fadeT <= 0) { if (this.cur) this.cur.volume = this.vol; return; }
-    const dur = this.fadeDurCur || this.fadeDur;
-    this.fadeT = Math.max(0, this.fadeT - dt);
-    const p = 1 - this.fadeT / dur;
-    if (this.cur) this.cur.volume = this.vol * p;
-    if (this.prev) {
-      this.prev.volume = this.vol * (1 - p);
-      if (p >= 1) { this.prev.pause(); this.prev = null; }
-    }
-  }
-};
+export const Music = createMusic({ tracks: BGM, fallback: BGM_FALLBACK });
 
 /* ===== Sfx: 짧은 효과음 ===== */
 
@@ -227,175 +158,22 @@ export const SFX_START = { hatch: 1.60, jump: 0.12, jump2: 0.08,
   swing: 0.15, hit_crit: 0.14, sk_guard: 0.13, sk_whirl: 0.12, drown: 0.11, sk_charge: 0.1, sk_slash: 0.08,
   mat_plant: 0.08, mat_flesh: 0.08 };
 
-export const Sfx = {
-  vol: 0.5,
-  voices: {},   // key -> [Audio, ...] (로드 성공한 것만)
-  turn: {},     // key -> 다음에 쓸 목소리 번호
-  last: {},     // key -> 마지막 재생 시각
-
-  init() {
-    for (const k in SFX_FILES) {
-      const src = aud(SFX_DIR + SFX_FILES[k] + '.mp3');
-      const probe = new Audio(src);
-      probe.preload = 'auto';
-      probe.addEventListener('canplaythrough', () => {
-        // 같은 소리가 겹쳐 울릴 수 있도록 몇 개를 미리 복제해 둔다
-        const n = SFX_GAP[k] !== undefined && SFX_GAP[k] < 0.15 ? 4 : 2;
-        const pool = [probe];
-        for (let i = 1; i < n; i++) { const a = new Audio(src); a.preload = 'auto'; pool.push(a); }
-        this.voices[k] = pool; this.turn[k] = 0;
-      }, { once: true });
-      probe.addEventListener('error', () => {}, { once: true });   // 파일이 없으면 조용히 포기
-      probe.load();
-    }
-  },
-
-  /** 재생을 시도한다. */
-  /** vol — 이 한 번만 음량을 더 줄이거나 키우는 배수(기본 1). */
-  play(kind, rate, vol) {
-    /* 제 이름의 파일이 없으면 **같은 결의 한 벌**을 대신 튼다(SFX_FAM). */
-    let pool = this.voices[kind], fr = 1, fg = 1, file = kind;
-    if (!pool) {
-      const f = SFX_FAM[kind];
-      if (f && this.voices[f[0]]) { pool = this.voices[f[0]]; fr = f[1]; fg = f[2]; file = f[0]; }
-    }
-    if (!pool) return false;
-    const now = performance.now() / 1000;
-    const gap = SFX_GAP[kind];
-    if (gap !== undefined && now - (this.last[kind] || -9) < gap) return true;   // 너무 잦다 — 조용히 건너뛴다
-    this.last[kind] = now;
-    /* 순번은 ||0 으로 받는다 — 한 벌을 빌려 쓰는 키(hit_stone → mat_stone)는 제 이름으로 로드된 적이 없어 turn 에 자리가 없다. */
-    const i = this.turn[kind] = ((this.turn[kind] || 0) + 1) % pool.length;
-    const a = pool[i];
-    a.volume = Math.min(1, this.vol * (SFX_VOL[kind] === undefined ? 1 : SFX_VOL[kind]) * fg * (vol === undefined ? 1 : vol));
-    /* ★ 한 획마다 음높이를 흔든다. */
-    a.playbackRate = (rate || 1) * fr;
-    try { a.currentTime = SFX_START[kind] !== undefined ? SFX_START[kind] : (SFX_START[file] || 0); } catch (e) { }
-    a.play().catch(() => { });
-    return true;
-  }
-};
+export const Sfx = createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: SFX_GAP, vol: SFX_VOL, start: SFX_START });
 Sfx.init();
 
 /* ===== SfxLoop: 계속 울려야 하는 효과음 ===== */
-export const SFX_LOOP_LEN = 0.90;      // 실제로 쓰는 길이 — 파일 끝 0.1초는 버린다
-export const SFX_LOOP_OV = 0.12;       // 겹치는 구간
 export const SFX_LOOP_KEYS = { swim: 0.55, fuse: 0.5 };   // 키 → 음량 배수
 
-export const SfxLoop = {
-  pair: {}, active: {}, on: {}, cur: {}, missing: {},
-  ensure(key) {
-    if (this.pair[key] || this.missing[key]) return;
-    const src = SFX_DIR + (SFX_FILES[key] || key) + '.mp3';
-    const mk = () => { const a = new Audio(src); a.loop = false; a.preload = 'auto'; a.volume = 0; return a; };
-    const a0 = mk(), a1 = mk();
-    a0.addEventListener('error', () => { this.missing[key] = true; }, { once: true });
-    this.pair[key] = [a0, a1]; this.active[key] = 0; this.on[key] = false;
-  },
-  /** 이 프레임에 이 소리가 나야 하는가. */
-  set(key, want, vol) {
-    this.ensure(key);
-    if (this.missing[key]) return;
-    const target = want ? (SFX_LOOP_KEYS[key] || 1) * (vol === undefined ? 1 : vol) * Sfx.vol : 0;
-    const c = this.cur[key] || 0;
-    this.cur[key] = c + (target - c) * 0.25;             // 켜고 끌 때 툭 끊기지 않게
-    const v = this.cur[key];
-    const [a, b] = this.pair[key];
-    if (v < 0.004) {                                     // 다 잦아들었으면 멈춘다
-      if (!a.paused) a.pause(); if (!b.paused) b.pause();
-      a.currentTime = 0; b.currentTime = 0; this.on[key] = false; this.cur[key] = 0;
-      return;
-    }
-    const ai = this.active[key];
-    const cur = ai === 0 ? a : b, other = ai === 0 ? b : a;
-    if (!this.on[key]) {
-      cur.currentTime = 0; cur.volume = v; cur.play().catch(() => { });
-      this.on[key] = true; return;
-    }
-    const remain = SFX_LOOP_LEN - cur.currentTime;
-    if (remain <= SFX_LOOP_OV) {
-      if (other.paused) { other.currentTime = 0; other.play().catch(() => { }); }
-      const t = Math.max(0, Math.min(1, 1 - remain / SFX_LOOP_OV));
-      cur.volume = v * Math.sqrt(1 - t);
-      other.volume = v * Math.sqrt(t);
-      if (remain <= 0) { cur.pause(); cur.currentTime = 0; this.active[key] = ai === 0 ? 1 : 0; }
-    } else {
-      cur.volume = v;
-      if (!other.paused && other.currentTime > SFX_LOOP_OV) { other.pause(); other.currentTime = 0; }
-    }
-  },
-  /** 이번 프레임에 아무도 안 켠 소리는 꺼 준다 */
-  idle(except) {
-    for (const k in SFX_LOOP_KEYS) if (!except || !except[k]) this.set(k, false);
-  }
-};
+export const SfxLoop = createSfxLoop({ dir: SFX_DIR, files: SFX_FILES, keys: SFX_LOOP_KEYS, sfx: Sfx });
 
 /* ===== Ambient: 위치 기반 환경음 (폭포·호수) ===== */
 /* sea·glacier는 '가까운 지형까지의 거리'가 아니라 **어느 구역에 있는가**로 켜진다. */
 export const AMBIENT_FILES = { waterfall: 'waterfall_loop', water: 'water_ambient_loop',
   sea: 'amb_sea', glacier: 'amb_glacier' };
 export const AMBIENT_RADIUS = { waterfall: 13 * TS, water: 9 * TS };   // 이 거리 안이면 소리가 들리기 시작한다
-export const AMBIENT_OVERLAP = 0.3;   // 겹쳐 트는 구간(초)
 
-export const Ambient = {
-  vol: 0.45,
-  pair: {},      // key -> [AudioA, AudioB]
-  active: {},    // key -> 지금 "메인"인 쪽의 인덱스(0|1)
-  started: {},   // key -> 재생을 이미 시작했는가(다시 가까워질 때 처음부터 틀기 위한 리셋용)
-  dur: {},       // key -> 파일 길이(초). loadedmetadata 전에는 모름 — 그동안은 크로스페이드 없이 튼다
-  missing: {},   // key -> 파일 없음 확인됨
-  cur: {},       // key -> 지금 부드럽게 따라가는 중인 음량(0~1, 거리 기반)
-
-  ensure(key) {
-    if (this.pair[key] || this.missing[key]) return;
-    const mk = () => {
-      const a = new Audio(aud(SFX_DIR + AMBIENT_FILES[key] + '.mp3'));
-      a.loop = false; a.preload = 'auto'; a.volume = 0;   // loop는 직접 관리 — 끝나기 전에 다음 걸 겹쳐 튼다
-      return a;
-    };
-    const a0 = mk(), a1 = mk();
-    a0.addEventListener('error', () => { this.missing[key] = true; }, { once: true });
-    a0.addEventListener('loadedmetadata', () => { this.dur[key] = a0.duration; }, { once: true });
-    this.pair[key] = [a0, a1];
-    this.active[key] = 0;
-    this.started[key] = false;
-  },
-
-  /** 두 플레이어를 엇갈려 틀며 볼륨을 맞춘다. */
-  step(key, targetVol) {
-    const [a, b0] = this.pair[key];
-    const ai = this.active[key];
-    const cur = ai === 0 ? a : b0, other = ai === 0 ? b0 : a;
-
-    if (!this.started[key]) {
-      cur.currentTime = 0; cur.volume = targetVol; cur.play().catch(() => { });
-      other.pause(); other.currentTime = 0;
-      this.started[key] = true;
-      return;
-    }
-    const dur = this.dur[key];
-    if (!dur) { cur.volume = targetVol; return; }   // 길이를 아직 몰라 크로스페이드 타이밍을 못 잰다
-
-    const ov = Math.min(AMBIENT_OVERLAP, dur * 0.4);   // 곡이 아주 짧으면 겹침도 비례해 줄인다
-    const remaining = dur - cur.currentTime;
-    if (remaining <= 0) {
-      // 넘어갔다 — 역할을 교대하고 방금 것은 다음 순번을 위해 처음으로 되돌려 둔다.
-      cur.pause(); cur.currentTime = 0; cur.volume = 0;
-      other.volume = targetVol;
-      this.active[key] = 1 - ai;
-    } else if (remaining <= ov) {
-      if (other.paused) { other.currentTime = 0; other.volume = 0; other.play().catch(() => { }); }
-      const p = 1 - remaining / ov;             // 0(겹침 시작)~1(끝)
-      // 등가파워(equal-power) 크로스페이드 — 직선(1-p)/p로 섞으면 서로 다른 두 소리가 겹치는 중간 지점에서 체감 음량이 살짝 꺼져 보인다(선형 합이 지각 음량과 안
-      // 맞음).
-      cur.volume = targetVol * Math.sqrt(1 - p);
-      other.volume = targetVol * Math.sqrt(p);
-    } else {
-      cur.volume = targetVol;
-      if (!other.paused) { other.pause(); other.currentTime = 0; }
-    }
-  },
-
+export const Ambient = createAmbient({ dir: SFX_DIR, files: AMBIENT_FILES });
+Object.assign(Ambient, {
   /** 매 프레임 — 플레이어와 가장 가까운 폭포/큰 웅덩이까지 거리를 재서 음량을 맞춘다. */
   updateFromWorld(w, p, dt, active) {
     for (const key in AMBIENT_FILES) {
@@ -431,4 +209,4 @@ export const Ambient = {
       }
     }
   }
-};
+});
