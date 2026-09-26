@@ -111,8 +111,9 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `src/legacy/entity.js` | 플레이어·몹·투사체 물리 |
 | `src/legacy/tileart.js` · `itemart.js` · `sprites.js` | 절차 생성 그림(아틀라스) · 스프라이트 로더 |
 | `src/legacy/ui.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` | 그 이름대로 |
-| `src/legacy/main.js` · `ctx.js` | 묶는 입구(모듈 순서 · 디버그 창구) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
-| `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기) · `input`(키·액션 매핑 · 마우스 · 터치 뼈대) · `tilemap`(`TileMap` — `World extends TileMap` · 빛 퍼뜨리기) · `render`(파이프라인 단계 · 아틀라스 굽기 · 연결 타일 틀) · `entity`(`Entity` — `Ent extends Entity` · 칸 충돌 이동 조각) · `scene`(씬 스택 — `G.state`·`paused`·`uiOpen` 은 접근자) · `ui`(패널 · 툴팁 · 슬롯 칸). 게임 고유값은 `create*({…})` 설정으로 받는다 |
+| `src/legacy/main.js` · `ctx.js` | 묶는 입구(모듈 순서 · 디버그 창구 · 다른 언어면 표·HTML 덮기) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
+| `src/legacy/lang.js` · `locales/` | 번역 창구 `tr` · `N_` · `fmt` · `LANG`(`?lang=`) · 원문 목록 `locales/source.json`(`tools/i18n.mjs extract` 산출물) |
+| `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기) · `input`(키·액션 매핑 · 마우스 · 터치 뼈대) · `tilemap`(`TileMap` — `World extends TileMap` · 빛 퍼뜨리기) · `render`(파이프라인 단계 · 아틀라스 굽기 · 연결 타일 틀) · `i18n`(tr · ICU 부분집합 · 한국어 조사 · 표 덮기) · `entity`(`Entity` — `Ent extends Entity` · 칸 충돌 이동 조각) · `scene`(씬 스택 — `G.state`·`paused`·`uiOpen` 은 접근자) · `ui`(패널 · 툴팁 · 슬롯 칸). 게임 고유값은 `create*({…})` 설정으로 받는다 |
 | `tools/imports.mjs` | 코드를 옮긴 뒤 `src/legacy` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
 | `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/` |
@@ -125,7 +126,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 > **리포가 원본이다.** 게임 코드는 `src/legacy/` 에서 고친다 — `game/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
 
 읽는 순서(`main.js` 의 import 순서 = 층): `sprites-manifest`(번들 밖, 먼저) →
-`ctx → util → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
+`ctx → util → lang → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
 
 **모듈 규칙**(`npm run test:modules` 가 기계로 막는다):
 - **엔진(`src/engine`)은 게임(`src/legacy`)을 import 하지 않는다.** 게임 고유값(키 이름·곡 표·DB 이름…)은 `createSaveStore({…})`·`createMusic({…})`
@@ -137,6 +138,11 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 - **최상위 이름은 전부 `export`**, 다른 파일 이름은 **`import`**. 빠뜨리면 번들은 되지만 그 줄이 돌 때 터진다 — 검사가 먼저 잡는다.
   코드를 다른 모듈로 옮겼으면 `node tools/imports.mjs` 로 import 줄을 다시 짠다(손으로 고치지 말 것).
 - **남의 `let` 에 대입할 수 없다**(`WW = …` 은 size.js 안에서만). 객체 속은 고쳐도 된다(`G.x = …`).
+- **코드의 한국어 문구는 `tr('원문', { 값 })`** 으로 쓴다(원문이 곧 번역 열쇠 — ko 는 원문 그대로). 값은 `{이름}`, 조사는 `{이름|을}`,
+  문구 안에 `{ }` 글자는 못 쓴다. 로그·`Error` 문구는 감싸지 않는다. 값으로 비교·저장하는 글(기계 상태 `m.st` 따위)은 `N_('원문')` 으로
+  두고 보일 때 `tr(값)`. 표(data.js 등 최상위 객체)의 글은 감싸지 않는다 — 다른 언어면 `main.js` 가 id 경로(`ITEMS.wood.n`)로 덮는다.
+  새 문구를 넣었으면 `node tools/i18n.mjs wrap <파일>`(자리마다 계산 대조 후 감싼다) → `node tools/i18n.mjs extract`. `npm run test:i18n` 이
+  안 감싼 문구 · 원문 목록 어긋남을, `test:pseudo`(한글을 Ж 로 바꾼 시험 언어)가 한국어 글에 기대는 로직 · 화면에 남은 한글을 막는다.
 - 콘솔·`?debug`·`tests`·`tools/*.py` 는 예전처럼 `G`·`World`·`WW` 를 이름으로 읽는다 — `main.js` 가 모든 export 를 `window` 에
   **읽기 전용 · 살아 있는 값**으로 싣는다(디버그 창구). **게임 코드는 `window.<이름>` 을 읽지 말 것**(검사가 막는다).
 
@@ -284,7 +290,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-26)
 
-- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 끝. 다음은 P7(i18n + ko 추출). 도중에 찾은 버그는 계획서 §9-1 에 모아 P11 뒤에 고친다.
+- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. 다음은 P8(다국어 5종 + 글꼴). 도중에 찾은 버그는 계획서 §9-1 에 모아 P11 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
   도중에 찾은 버그·새 기능 요청은 계획서 §9-1 에 모아 두고 **v1.1.1 이 끝난 뒤** 한꺼번에 한다(사용자 결정).
@@ -363,8 +369,8 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   manifest `backgrounds.sky`). 햇무리·노을 번짐은 하늘색을 따라야 해서 게임(`drawSun`)이 칠한다.
 - **탭 단추**(index.html `#tabbar`, ui.js `bindTabBar`·`refreshTabBar`): 조작키로 여는 탭을 마우스로도 연다. 새 탭을
   키에 걸면 여기에도 단추를 더할 것. 패널 제목 아이콘은 itemart `UISPEC` 의 `p_*`.
-- **한국어 조사**는 util.js `josa`·`iga`·`eulreul`·`eunneun`·`josaRo` 로 받침에 맞춘다 — 이름을 끼우는 문장에
-  '이(가)' '을(를)' 처럼 둘 다 적지 말 것. 보스전은 '결전'이라 부른다('결착'은 일본어투라 전부 바꿨다).
+- **한국어 조사**는 메시지 안에서 `{이름|을}`(값 + 조사) · `{이름|-이}`(조사만, 『…』 뒤처럼 사이에 글이 낄 때)로 받침에 맞춘다
+  (engine/i18n/ko.ts — 코드에서는 `josa`·`iga`·`eulreul`·`eunneun`·`josaRo`). 이름을 끼우는 문장에 '이(가)' '을(를)' 처럼 둘 다 적지 말 것. 보스전은 '결전'이라 부른다('결착'은 일본어투라 전부 바꿨다).
 - **나무와 잎**: 눈 지대는 소나무(world.js `pineTree` — 톱니 원뿔 수관 · 기둥은 수관 밑까지 · 층 윗면에 눈).
   소나무 잎(`PINELEAF`)은 game.js `ASH_TILE`에 없어서 장이 넘어가도 안 진다. 정글 잎은 `shed 0.22 · thin 0.35`로
   조금만 진다. 잎마다 제 나뭇잎 아이템(`leaf_oak`·`leaf_pine`·`leaf_jungle`·`leaf_corrupt`·`leaf_sky`·`leaf_palm`)이

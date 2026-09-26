@@ -5,8 +5,8 @@ import { eulreul } from '../engine/i18n/ko.js';
 import { createPanels } from '../engine/ui/panels.js';
 import { makeSlot, paintSlot, setIcon } from '../engine/ui/slots.js';
 import { createTooltip } from '../engine/ui/tooltip.js';
-import { fmt, pad2 } from './util.js';
-import { tr } from './lang.js';
+import { pad2 } from './util.js';
+import { fmt, tr } from './lang.js';
 import { SURF_BASE, WH, WW } from './size.js';
 import { ACHIEVEMENTS, ACH_CAT, ACH_TIER, BOSS_TIER, BRANCHES, BUFFS, CHAPTERS, ECHO, FUEL, ITEMS, KEY_ACTIONS,
   MACHINE, MRECIPES, MULTI_FALLOFF, NOTICE_KINDS, NPCS, PETS, PET_LV_MAX, PROFS, PROF_MAX, PULSE, RARITY,

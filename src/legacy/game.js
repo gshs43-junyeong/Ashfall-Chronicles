@@ -13,8 +13,8 @@ import { makeSigner } from '../engine/save/seal.js';
 import { createSaveStore } from '../engine/save/store.js';
 import { upgrade } from '../engine/save/upgrade.js';
 import { createScenes } from '../engine/scene/scenes.js';
-import { escHtml, fmt } from './util.js';
-import { tr } from './lang.js';
+import { escHtml } from './util.js';
+import { N_, fmt, tr } from './lang.js';
 import { BIOMES, CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SKY_Y, SURF_BASE, SY, WH, WORLD_BOT, WORLD_SIZES, WSIZE, WSY, WW } from './size.js';
 import { ACHIEVEMENTS, BOSS_DIE, BOUNTY_BY_ID, BOUNTY_POOL, BOUNTY_UNIT, BOW_HAND, CAVE_TYPES, CHAPTERS, CHARACTERS,
   CHAR_OF, CIPHER_KIND, CIPHER_WORDS, DAWN_NPCS, DECO_MOUNT, DECO_OF, DIALOGUE, ECHO, EGG_POOL, ENEMIES, EVENTS,
@@ -86,7 +86,7 @@ export function saveSealOk(raw, d, sig) {
 }
 /** 슬롯 목록에 띄울 요약 — 본문을 열지 않고 목록을 그리려고 따로 적는다 */
 export function saveHead(d) {
-  return { name: d.name || tr('이름 없는 모험가'), level: d.p ? d.p.level : 1, chapter: d.chapter,
+  return { name: d.name || NONAME, level: d.p ? d.p.level : 1, chapter: d.chapter,
     size: (d.world && d.world.size) || 's', savedAt: d.savedAt };
 }
 
@@ -96,6 +96,9 @@ export const SaveStore = createSaveStore({ dbName: 'ashfall', slots: SAVE_SLOTS,
 export const SET_KEY = 'ashfall_settings';
 // 완전한 암흑(0)은 지도에 남기지 않는다.
 export const MAP_REVEAL_LIGHT = 1;
+
+/** 이름을 비워 둔 모험가 — 세이브에는 원문으로 남기고 보일 때 옮긴다(언어를 바꿔도 따라온다) */
+export const NONAME = N_('이름 없는 모험가');
 
 export const G = {
   cv: null, ctx: null, mm: null, mmx: null,
@@ -363,7 +366,7 @@ export const G = {
     this._rigs = null; this._fbg = null;   // 세계가 바뀌었으니 자리·원경 캐시를 버린다
     this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
     const p = this.player;
-    p.name = (name || '').trim().slice(0, 12) || tr('이름 없는 모험가');
+    p.name = (name || '').trim().slice(0, 12) || NONAME;
     /* 난이도와 캐릭터는 새 게임에서 한 번 정하고 끝이다 — 설정에서 못 바꾼다. */
     this.mode = MODE_OF(mode).id;
     const ch = CHAR_OF(charId);
@@ -4320,7 +4323,7 @@ export const G = {
       this.world.placeRigs(true);            // 채취탑이 object 가 되기 전 세이브 — 지금 지면으로 한 번 골라 세운다
       this.rng = new RNG(d.world.seed + '_g');
       const p = new Player(d.p.x, d.p.y);
-      p.name = d.name || tr('이름 없는 모험가');
+      p.name = d.name || NONAME;
       Object.assign(p, {
         level: d.p.level, xp: d.p.xp, xpNext: d.p.xpNext, statPts: d.p.statPts, skillPts: d.p.skillPts,
         base: d.p.base, gold: d.p.gold, bag: d.p.bag, equip: d.p.equip, sel: d.p.sel,
@@ -4411,7 +4414,7 @@ export const G = {
     if (!legacy || localStorage.getItem(slotKey(0))) return;
     try {
       const d = JSON.parse(legacy);
-      d.name = d.name || tr('이름 없는 모험가');
+      d.name = d.name || NONAME;
       d.savedAt = d.savedAt || Date.now();
       d.sealed = 1;
       const text = JSON.stringify(d);
@@ -4441,7 +4444,7 @@ export const G = {
       // 손댄 기록은 목록에서부터 알려 준다 — 눌러 보고 나서야 알면 답답하다
       return `<div class="slot-card filled${s.bad ? ' tampered' : ''}" data-slot="${i}">
         <div class="slot-info">
-          <div class="slot-name">${escHtml(s.name)}</div>
+          <div class="slot-name">${escHtml(s.name === NONAME ? tr(NONAME) : s.name)}</div>
           <div class="slot-meta">${s.bad ? tr('저장한 뒤에 바뀐 기록 — 열 수 없다') : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
         </div>
         <div class="slot-actions">

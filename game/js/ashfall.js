@@ -1688,21 +1688,8 @@
   var util_exports = {};
   __export(util_exports, {
     escHtml: () => escHtml,
-    fmt: () => fmt,
     pad2: () => pad2
   });
-  function fmt(n) {
-    const v = Math.round(n);
-    const a = Math.abs(v);
-    if (a < 1e6) return v.toLocaleString("ko-KR");
-    let d = 1e6, u = "M";
-    if (a >= 1e9 || Math.abs(v / 1e6).toFixed(2) >= 1e3) {
-      d = 1e9;
-      u = "B";
-    }
-    const t = (v / d).toFixed(2).replace(/\.?0+$/, "");
-    return t + u;
-  }
   function pad2(n) {
     return n < 10 ? "0" + n : "" + n;
   }
@@ -1717,6 +1704,7 @@
     LANG: () => LANG,
     LOCALES: () => LOCALES,
     N_: () => N_,
+    fmt: () => fmt,
     localizeDom: () => localizeDom,
     tr: () => tr
   });
@@ -1746,6 +1734,25 @@
       }
     }
     return n;
+  }
+  var NUM_LOCALE = LANG === "ko" ? "ko-KR" : LANG;
+  function fmt(n) {
+    const v = Math.round(n);
+    const a = Math.abs(v);
+    if (a < 1e6) {
+      try {
+        return v.toLocaleString(NUM_LOCALE);
+      } catch (e) {
+        return v.toLocaleString();
+      }
+    }
+    let d = 1e6, u = "M";
+    if (a >= 1e9 || Math.abs(v / 1e6).toFixed(2) >= 1e3) {
+      d = 1e9;
+      u = "B";
+    }
+    const t = (v / d).toFixed(2).replace(/\.?0+$/, "");
+    return t + u;
   }
 
   // src/legacy/size.js
@@ -32393,6 +32400,7 @@
   __export(game_exports, {
     G: () => G,
     MAP_REVEAL_LIGHT: () => MAP_REVEAL_LIGHT,
+    NONAME: () => NONAME,
     SAVE_KEY: () => SAVE_KEY,
     SAVE_SALT: () => SAVE_SALT,
     SAVE_SLOTS: () => SAVE_SLOTS,
@@ -32468,7 +32476,7 @@
   }
   function saveHead(d) {
     return {
-      name: d.name || tr("이름 없는 모험가"),
+      name: d.name || NONAME,
       level: d.p ? d.p.level : 1,
       chapter: d.chapter,
       size: d.world && d.world.size || "s",
@@ -32486,6 +32494,7 @@
   });
   var SET_KEY = "ashfall_settings";
   var MAP_REVEAL_LIGHT = 1;
+  var NONAME = N_("이름 없는 모험가");
   var G = {
     cv: null,
     ctx: null,
@@ -32843,7 +32852,7 @@
       this._fbg = null;
       this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
       const p = this.player;
-      p.name = (name || "").trim().slice(0, 12) || tr("이름 없는 모험가");
+      p.name = (name || "").trim().slice(0, 12) || NONAME;
       this.mode = MODE_OF(mode).id;
       const ch = CHAR_OF(charId);
       p.charId = ch.id;
@@ -37573,7 +37582,7 @@
         this.world.placeRigs(true);
         this.rng = new RNG(d.world.seed + "_g");
         const p = new Player(d.p.x, d.p.y);
-        p.name = d.name || tr("이름 없는 모험가");
+        p.name = d.name || NONAME;
         Object.assign(p, {
           level: d.p.level,
           xp: d.p.xp,
@@ -37728,7 +37737,7 @@
       if (!legacy || localStorage.getItem(slotKey(0))) return;
       try {
         const d = JSON.parse(legacy);
-        d.name = d.name || tr("이름 없는 모험가");
+        d.name = d.name || NONAME;
         d.savedAt = d.savedAt || Date.now();
         d.sealed = 1;
         const text = JSON.stringify(d);
@@ -37769,7 +37778,7 @@
         const when = s.savedAt ? new Date(s.savedAt).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
         return `<div class="slot-card filled${s.bad ? " tampered" : ""}" data-slot="${i}">
         <div class="slot-info">
-          <div class="slot-name">${escHtml(s.name)}</div>
+          <div class="slot-name">${escHtml(s.name === NONAME ? tr(NONAME) : s.name)}</div>
           <div class="slot-meta">${s.bad ? tr("저장한 뒤에 바뀐 기록 — 열 수 없다") : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
         </div>
         <div class="slot-actions">
