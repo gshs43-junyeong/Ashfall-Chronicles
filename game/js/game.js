@@ -931,7 +931,9 @@ const G = {
 
     // 공장 — 프레임률과 무관하게 고정 8틱/초로 돌린다
     this.facTimer = (this.facTimer || 0) - dt;
-    if (this.facTimer <= 0) { this.facTimer = FAC_TICK; Factory.tick(w, this); }
+    /* 남은 시간을 이어 간다 — FAC_TICK 으로 되돌리면 60fps 에서 8프레임(0.133초)마다 돌아 벨트 1초가 1.07초가 되고,
+       물건이 칸마다 가운데서 멈칫했다 */
+    if (this.facTimer <= 0) { this.facTimer = Math.max(this.facTimer + FAC_TICK, -FAC_TICK); Factory.tick(w, this); }
 
     // 고대 유적의 타일 함정 — 화면 근처만 훑는다
     this.trapTimer = (this.trapTimer || 0) - dt;
@@ -1473,7 +1475,16 @@ const G = {
     const mtx = Math.floor(this.input.wx / TS), mty = Math.floor(this.input.wy / TS);
     if (dist(p.cx, p.cy, (mtx + .5) * TS, (mty + .5) * TS) <= TS * 7) {
       const mac = Factory.at(w, mtx, mty);
-      if (mac) { UI.openMachine(mac); this.sfx('open'); return; }
+      if (mac) {
+        // 벨트 위에서 멈춰 버린 물건(3초+)은 창을 열지 않고 바로 집는다
+        if (mac.it && Factory.stalled(mac)) {
+          const id = mac.it.id;
+          if (Factory.takeStalled(mac, p)) { this.toast(`${ITEMS[id].n}${eulreul(ITEMS[id].n)} 벨트에서 집었다`, 'good'); UI.refreshBag(); this.sfx('place'); }
+          else this.toast('가방이 가득 찼다', 'bad');
+          return;
+        }
+        UI.openMachine(mac); this.sfx('open'); return;
+      }
       const hi = p.held();
       if (hi && idef(hi).type === 'machine') {
         if (w.inRig(mtx, mty)) { this.toast('채취탑 자리에는 놓을 수 없다', 'bad'); return; }
@@ -3405,7 +3416,8 @@ const G = {
     const ok = Factory.canPlace(w, tx, ty) && !w.inRig(tx, ty);
     c.save();
     c.globalAlpha = 0.45;
-    TileArt.draw(c, s.tile, 0, sx, sy);
+    if (key === 'belt' || key === 'belt_fast') Factory.drawBelt(c, sx, sy, key, this.placeDirFor(key), 0);
+    else TileArt.draw(c, s.tile, 0, sx, sy);
     c.globalAlpha = 1;
     c.strokeStyle = ok ? 'rgba(160,230,140,.9)' : 'rgba(230,90,70,.9)';
     c.lineWidth = 1; c.strokeRect(sx + .5, sy + .5, TS - 1, TS - 1);
@@ -4912,6 +4924,8 @@ const G = {
         /* 바다 수면 — 타일을 통째로 칠하지 않고 **파도 높이만큼만** 채운다. */
         if (id === T.SEAWATER && w.tiles[k - WW] === T.AIR) { this.drawWave(c, tx, ty, sx, sy, wl); continue; }
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
+        // 벨트는 Factory.drawBelt 가 방향·흐름대로 다시 그린다 — 아틀라스의 멈춘 가로 벨트가 밑에 비치면 안 된다
+        if ((id === T.M_BELT || id === T.M_BELT_F) && w.machines.has(k)) continue;
         // 흐르는 액체 — 수위만큼만 (world.js '유체' 절)
         if (FLUID_FLOW[id]) { this.drawFlow(c, w, id, k, tx, ty, sx, sy); continue; }
         if (id === T.FALLS) { this.drawFallsTile(c, tx, ty, sx, sy); continue; }

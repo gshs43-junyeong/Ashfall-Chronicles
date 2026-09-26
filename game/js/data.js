@@ -186,7 +186,7 @@ const TILE_DEF = [
   { n: '수집 상자', c: '#8a6a3a', solid: 1, hard: 1, drop: 'm_crate', mach: 'crate' },
   { n: '화력 발전기', c: '#7a5a3a', solid: 1, hard: 2, drop: 'm_gen', mach: 'gen', light: 5 },
   { n: '축전지', c: '#4a7a6a', solid: 1, hard: 2, drop: 'm_battery', mach: 'battery', light: 4 },
-  { n: '전주', c: '#7a6a4a', solid: 1, hard: 1, drop: 'm_pole', mach: 'pole' },
+  { n: '전주', c: '#7a6a4a', solid: 0, hard: 1, drop: 'm_pole', mach: 'pole' },
   { n: '분류기', c: '#8a7a4a', solid: 1, hard: 2, drop: 'm_sorter', mach: 'sorter' },
   { n: '자동 포탑', c: '#6a6a74', solid: 1, hard: 3, drop: 'm_turret', mach: 'turret' },
   { n: '전격 함정', c: '#4a6a8a', solid: 1, hard: 2, drop: 'm_trap', mach: 'trap' },

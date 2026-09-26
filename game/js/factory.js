@@ -198,7 +198,7 @@ const Factory = {
     if (this.insert(w, t, id, 1) <= 0) return false;
     /* 벨트 위 물건은 어디서 언제 왔는지 적어 두고 render 가 머무는 시간(DWELL)에 걸쳐 미끄러뜨린다 —
        tick 도 그 시간이 지나야 다음 칸으로 넘긴다. 그림과 물류가 같은 시계를 본다. */
-    if (t.it) { t.it.fx = m.x; t.it.fy = m.y; t.it.t0 = this.now; }
+    if (t.it) { t.it.fx = m.x; t.it.fy = m.y; t.it.fo = this.itemOff(m); t.it.t0 = this.now; }
     return true;
   },
 
@@ -298,17 +298,22 @@ const Factory = {
     }
 
     /* ---- 3. 물류 ---- */
-    for (const m of ms.values()) {                       // 벨트 · 분류기 먼저
-      if (m.t === 'belt' || m.t === 'belt_fast') {
-        if (!m.it || m.just) continue;
-        if (m.it.t0 !== undefined && this.now - m.it.t0 < this.DWELL[m.t] - 0.01) continue;   // 아직 칸을 건너는 중
-        if (this.pushTo(w, m, m.dir, m.it.id)) { m.it = null; G.sfxAt('belt', m.x, m.y); }
-      } else if (m.t === 'sorter') {
-        if (!m.it || m.just) continue;
-        if (this.sat(w, m) <= 0) { m.st = '전력 없음'; continue; }
-        const match = !m.f || m.f === m.it.id;
-        m.st = match ? '통과' : '분기';
-        if (this.pushTo(w, m, match ? m.dir : (m.dir + 1) & 3, m.it.id)) m.it = null;
+    /* 벨트 · 분류기 먼저 — 비는 칸이 생기면 한 틱 안에 다시 훑는다. 한 번만 돌면 뒤 벨트가 앞 벨트보다 먼저
+       차례를 받을 때 한 틱(0.125초)씩 멈칫해, 줄지어 가는 물건 사이가 벌어지고 모퉁이에서 끊겨 보였다. */
+    for (let moved = 1, pass = 0; moved && pass < 16; pass++) {
+      moved = 0;
+      for (const m of ms.values()) {
+        if (m.t === 'belt' || m.t === 'belt_fast') {
+          if (!m.it || m.just) continue;
+          if (m.it.t0 !== undefined && this.now - m.it.t0 < this.DWELL[m.t] - FAC_TICK / 2) continue;   // 아직 칸을 건너는 중(틱은 프레임에 맞춰 ±반 틱 흔들린다)
+          if (this.pushTo(w, m, m.dir, m.it.id)) { m.it = null; moved++; if (!pass) G.sfxAt('belt', m.x, m.y); }
+        } else if (m.t === 'sorter') {
+          if (!m.it || m.just) continue;
+          if (this.sat(w, m) <= 0) { m.st = '전력 없음'; continue; }
+          const match = !m.f || m.f === m.it.id;
+          m.st = match ? '통과' : '분기';
+          if (this.pushTo(w, m, match ? m.dir : (m.dir + 1) & 3, m.it.id)) { m.it = null; moved++; }
+        }
       }
     }
     for (const m of ms.values()) {                       // 기계 출력 배출
@@ -376,6 +381,75 @@ const Factory = {
     for (const k in r.out) this.bufAdd(m.out, k, r.out[k]);
     m.prog = 0; m.rec = -1;
     G.sfxAt(m.t === 'oven' ? 'cook' : 'smelt', m.x, m.y);
+  },
+
+  /** 벨트·분류기 위에서 3초 넘게 멈춘 물건인가 — 플레이어가 집어 갈 수 있다(불러온 뒤 시각이 없는 것도 멈춘 것으로 본다) */
+  stalled(m) {
+    if (!m.it || !(m.t === 'belt' || m.t === 'belt_fast' || m.t === 'sorter')) return false;
+    const t0 = m.it.t0 !== undefined ? m.it.t0 : -1e9;
+    return G.time - t0 >= (this.DWELL[m.t] || FAC_TICK) + 3;
+  },
+  /** 멈춘 물건을 가방으로. 가져갔으면 true */
+  takeStalled(m, p) {
+    if (!this.stalled(m)) return false;
+    if (!p.addItem(makeItem(m.it.id, 1))) return false;
+    m.it = null;
+    return true;
+  },
+
+  /** 물건 그림의 칸 안 높이(px) — 가로 벨트는 띠 윗면(TS-9)에 얹히고, 세로·대각선·기계는 가운데쯤. */
+  itemOff(m) {
+    if ((m.t === 'belt' || m.t === 'belt_fast') && (m.dir === 0 || m.dir === 2)) return TS - 9 - 14;
+    return 4;
+  },
+  /** 벨트 한 칸 — **옆에서 본 모습**. run 0→1 = 물건이 한 칸을 가는 동안(물건과 같은 시계).
+      가로(0·2): 아랫단 틀 · 굴대 둘 · 윗면 띠(무늬가 흐른다). 세로(1·3): 양옆 기둥 사이로 발판이 오르내리는 승강 벨트.
+      대각선(4·5): 비탈 띠. 무늬 간격은 칸 길이를 나눠 떨어지게 — 옆 칸과 이어져 한 줄로 흐른다. */
+  drawBelt(c, sx, sy, key, dir, run) {
+    const fast = key === 'belt_fast';
+    const FR = fast ? '#6a7684' : '#5c5046', FR2 = fast ? '#3c4550' : '#3a312a', BAND = '#202328';
+    const TREAD = fast ? '#8c9cac' : '#6a6f78', RL = fast ? '#9aa6b2' : '#8a8078';
+    const gap = TS / 4;
+    const flow = (sg, len) => ((run * len * sg) % gap + gap) % gap;    // 흐르는 무늬의 시작점
+    c.save();
+    if (dir === 0 || dir === 2) {
+      const sg = dir === 0 ? 1 : -1, top = sy + TS - 9;
+      c.fillStyle = FR2; c.fillRect(sx, top + 2, TS, 7);                // 틀
+      c.fillStyle = FR; c.fillRect(sx, top + 2, TS, 1);
+      c.fillStyle = BAND; c.fillRect(sx, top, TS, 2); c.fillRect(sx, sy + TS - 1, TS, 1);   // 윗면 띠 · 돌아오는 띠
+      c.fillStyle = TREAD;
+      for (let x = flow(sg, TS) - gap; x < TS; x += gap) {
+        const x0 = Math.max(0, x), x1 = Math.min(TS, x + 2);
+        if (x1 > x0) c.fillRect(sx + x0, top, x1 - x0, 1);
+      }
+      const r = 2.5, ang = run * (TS / r) * sg;                        // 띠가 TS 가는 동안 굴대가 도는 각
+      for (const cx of [sx + TS * 0.27, sx + TS * 0.73]) {
+        const cy = top + 5.5;
+        c.fillStyle = RL; c.beginPath(); c.arc(cx, cy, r, 0, TAU); c.fill();
+        c.strokeStyle = FR2; c.lineWidth = 1;
+        c.beginPath(); c.moveTo(cx - Math.cos(ang) * r, cy - Math.sin(ang) * r); c.lineTo(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r); c.stroke();
+      }
+    } else if (dir === 1 || dir === 3) {
+      const sg = dir === 1 ? 1 : -1;
+      c.fillStyle = 'rgba(20,22,26,.75)'; c.fillRect(sx + 5, sy, TS - 10, TS);   // 뒤판
+      c.fillStyle = TREAD;
+      for (let y = flow(sg, TS) - gap; y < TS; y += gap) {             // 발판
+        const y0 = Math.max(0, y), y1 = Math.min(TS, y + 2);
+        if (y1 > y0) c.fillRect(sx + 5, sy + y0, TS - 10, y1 - y0);
+      }
+      c.fillStyle = FR; c.fillRect(sx + 2, sy, 3, TS); c.fillRect(sx + TS - 5, sy, 3, TS);   // 기둥
+      c.fillStyle = FR2; c.fillRect(sx + 4, sy, 1, TS); c.fillRect(sx + TS - 5, sy, 1, TS);
+    } else {
+      const L = TS * Math.SQRT2;
+      c.translate(sx + TS / 2, sy + TS / 2);
+      c.rotate(dir === 4 ? -Math.PI / 4 : -Math.PI * 3 / 4);
+      c.beginPath(); c.rect(-L / 2, -5, L, 10); c.clip();
+      c.fillStyle = FR2; c.fillRect(-L / 2, -1, L, 5);
+      c.fillStyle = BAND; c.fillRect(-L / 2, -3, L, 2);
+      c.fillStyle = TREAD;
+      for (let x = flow(1, L) * (L / TS) - gap; x < L; x += gap) c.fillRect(-L / 2 + x, -3, 2, 1);
+    }
+    c.restore();
   },
 
   outFull(m, r, cap) {
@@ -594,6 +668,7 @@ const Factory = {
       }
       c.stroke();
     }
+    const items = [];                        // 벨트 위 물건은 **맨 나중에** — 칸마다 그리면 다음 칸 벨트가 넘어가는 물건을 덮어 잘려 보였다
     for (let ty = y0; ty <= y1; ty++) {
       for (let tx = x0; tx <= x1; tx++) {
         const m = w.machines.get(ty * WW + tx);
@@ -650,46 +725,26 @@ const Factory = {
           c.beginPath(); c.arc(hx, hy, 3, 0, TAU); c.fill();
         }
 
-        /* 벨트 몸통은 방향과 상관없이 여기서 그린다 — 마디가 물건과 **같은 속도**(1/DWELL 칸/초)로 흐른다.
-           타일 그림(mk_belt)은 멈춘 마디라, 위에 덮지 않으면 벨트와 물건이 서로 다른 빠르기로 보였다. */
         if (m.t === 'belt' || m.t === 'belt_fast') {
-          const fast = m.t === 'belt_fast';
-          const ang = [0, Math.PI / 2, Math.PI, -Math.PI / 2, -Math.PI / 4, -Math.PI * 3 / 4][m.dir] || 0;
-          const run = m.on ? (time / this.DWELL[m.t]) % 1 : 0;       // 한 칸을 가는 동안 0 → 1
-          const L = m.dir >= 4 ? TS * Math.SQRT2 : TS;               // 대각선은 한 칸이 √2 배 — 마디도 그만큼 간다
-          c.save();
-          c.translate(sx + TS / 2, sy + TS / 2);
-          c.rotate(ang);
-          c.beginPath(); c.rect(-L / 2, -6, L, 12); c.clip();
-          c.fillStyle = fast ? '#3a4450' : '#2e3238'; c.fillRect(-L / 2, -5, L, 10);   // 띠
-          c.fillStyle = fast ? '#6a7a8a' : '#4a5058'; c.fillRect(-L / 2, -5, L, 2);
-          c.fillStyle = '#20242a'; c.fillRect(-L / 2, 3, L, 2);
-          /* 마디 간격은 칸 길이를 나눠 떨어지게(L/5) — 옆 칸 마디와 이어져 한 줄로 흐른다 */
-          const gap = L / 5, off = run * L;
-          c.fillStyle = fast ? '#56626e' : '#3c424a';
-          for (let k = -L / 2 - gap + (off % gap); k < L / 2; k += gap) c.fillRect(k, -3, 2, 6);
-          c.restore();
-          // 흐르는 점 — 한 칸을 DWELL 초에 건넌다
-          const [dx, dy] = dirTable(m.t)[m.dir] || DIR4[m.dir & 3];
-          c.fillStyle = 'rgba(226,238,255,.55)';
-          for (let k = 0; k < 2; k++) {
-            const t2 = (run + k * 0.5) % 1;
-            c.fillRect(sx + TS / 2 + dx * (t2 - 0.5) * TS - 1.5, sy + TS / 2 + dy * (t2 - 0.5) * TS - 1.5, 3, 3);
-          }
+          this.drawBelt(c, sx, sy, m.t, m.dir, m.on ? (time / this.DWELL[m.t]) % 1 : 0);
         } else if (s.rot) {                                          // 나머지는 배출구 삼각형
           const [dx, dy] = DIR4[m.dir & 3];
           c.fillStyle = 'rgba(255,214,120,.85)';
           c.fillRect(sx + TS / 2 + dx * 8 - 2, sy + TS / 2 + dy * 8 - 2, 4, 4);
         }
 
-        // 벨트/분류기가 물고 있는 아이템 — 들어온 칸에서 지금 칸까지 한 틱에 걸쳐 미끄러진다(pushTo)
+        // 벨트/분류기가 물고 있는 아이템 — 들어온 칸에서 지금 칸까지 DWELL 에 걸쳐 미끄러진다(pushTo).
+        // 높이(itemOff)도 같이 옮긴다 — 가로 벨트는 띠 위, 세로 벨트는 가운데라 모퉁이에서 튀지 않게
         if (m.it) {
-          let ix = sx, iy = sy;
+          const off = this.itemOff(m);
+          let ix = sx, iy = sy + off;
           if (m.it.t0 !== undefined) {
             const k = clamp((time - m.it.t0) / (this.DWELL[m.t] || FAC_TICK), 0, 1);
-            ix = (m.it.fx + (m.x - m.it.fx) * k) * TS - camX; iy = (m.it.fy + (m.y - m.it.fy) * k) * TS - camY;
+            const fo = m.it.fo !== undefined ? m.it.fo : off;
+            ix = (m.it.fx + (m.x - m.it.fx) * k) * TS - camX;
+            iy = (m.it.fy + (m.y - m.it.fy) * k) * TS - camY + fo + (off - fo) * k;
           }
-          Art.drawItem(c, m.it.id, Math.round(ix) + 4, Math.round(iy) + 3, 14);
+          items.push([m.it.id, Math.round(ix) + 4, Math.round(iy)]);
         }
 
         // 연료 막대 (왼쪽 세로)
@@ -718,9 +773,11 @@ const Factory = {
             c.fillRect(sx + 3, sy + TS - 4, Math.round((TS - 6) * used / m.items.length), 2);
           }
         }
-        // 상태 점
-        c.fillStyle = this.statusColor(m);
-        c.fillRect(sx + TS - 4, sy + 2, 2, 2);
+        // 상태 점 — 벨트·전주는 빼고(줄지어 깔려 흐르는 물건처럼 보였다)
+        if (m.t !== 'belt' && m.t !== 'belt_fast' && m.t !== 'pole') {
+          c.fillStyle = this.statusColor(m);
+          c.fillRect(sx + TS - 4, sy + 2, 2, 2);
+        }
 
         // 순간 이펙트 (포탑 발사 / 함정 방전)
         if (m.fx > 0) {
@@ -732,6 +789,7 @@ const Factory = {
         }
       }
     }
+    for (const [id, ix, iy] of items) Art.drawItem(c, id, ix, iy, 14);
     c.restore();
   }
 };
