@@ -1146,6 +1146,30 @@
     }
   };
 
+  // src/engine/tilemap/light.ts
+  var light_exports = {};
+  __export(light_exports, {
+    sweepLight: () => sweepLight
+  });
+  function sweepLight(L, w, h, x0, y0, passes, dec) {
+    for (let pass = 0; pass < passes; pass++) {
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const k = y * w + x;
+        let v = L[k];
+        if (x > 0) v = Math.max(v, L[k - 1] - dec(x0 + x, y0 + y));
+        if (y > 0) v = Math.max(v, L[k - w] - dec(x0 + x, y0 + y));
+        L[k] = v;
+      }
+      for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+        const k = y * w + x;
+        let v = L[k];
+        if (x < w - 1) v = Math.max(v, L[k + 1] - dec(x0 + x, y0 + y));
+        if (y < h - 1) v = Math.max(v, L[k + w] - dec(x0 + x, y0 + y));
+        L[k] = v;
+      }
+    }
+  }
+
   // src/engine/render/pipeline.ts
   var pipeline_exports = {};
   __export(pipeline_exports, {
@@ -17887,22 +17911,7 @@
         if (t === T.SEAWATER) return 0.42;
         return 0.92;
       };
-      for (let pass = 0; pass < 2; pass++) {
-        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-          const k = y * w + x;
-          let v = L[k];
-          if (x > 0) v = Math.max(v, L[k - 1] - dec(x0 + x, y0 + y));
-          if (y > 0) v = Math.max(v, L[k - w] - dec(x0 + x, y0 + y));
-          L[k] = v;
-        }
-        for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
-          const k = y * w + x;
-          let v = L[k];
-          if (x < w - 1) v = Math.max(v, L[k + 1] - dec(x0 + x, y0 + y));
-          if (y < h - 1) v = Math.max(v, L[k + w] - dec(x0 + x, y0 + y));
-          L[k] = v;
-        }
-      }
+      sweepLight(L, w, h, x0, y0, 2, dec);
       this.lbx = x0;
       this.lby = y0;
       this.lbw = w;
@@ -42456,7 +42465,7 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, pipeline_exports, atlas_exports, conn_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
