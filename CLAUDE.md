@@ -1,7 +1,7 @@
 # CLAUDE.md — 이 저장소에서 일하는 AI를 위한 안내
 
-Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다. 게임 코드의 **원본은
-`src/legacy/*.js` — ES 모듈 열다섯 개**이고, `tools/bundle.mjs`(esbuild)가 `main.js` 에서 import 를 따라
+Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다. 코드의 **원본은 `src/`** — 게임 쪽
+`src/legacy/*.js`(ES 모듈)와 게임을 모르는 엔진 `src/engine/**/*.ts`(TypeScript strict)이고, `tools/bundle.mjs`(esbuild)가 `main.js` 에서 import 를 따라
 `game/js/ashfall.js` 하나(클래식 스크립트 · IIFE)로 묶는다 — file:// 에서도 돈다. 처음 한 번 `npm ci`, 그다음 **`npm run dev`
 를 켜 두면 고치고 새로고침하는 흐름 그대로다**(소스를 고치면 번들이 다시 만들어진다).
 번들은 커밋한다 — `game/` 만 받아도 빌드 없이 돈다. **소스를 고쳤으면 번들도 같이 커밋할 것**
@@ -112,6 +112,8 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `src/legacy/tileart.js` · `itemart.js` · `sprites.js` | 절차 생성 그림(아틀라스) · 스프라이트 로더 |
 | `src/legacy/ui.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` | 그 이름대로 |
 | `src/legacy/main.js` · `ctx.js` | 묶는 입구(모듈 순서 · 디버그 창구) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
+| `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기). 게임 고유값은 `create*({…})` 설정으로 받는다 |
+| `tools/imports.mjs` | 코드를 옮긴 뒤 `src/legacy` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
 | `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/` |
 | `game/assets/manifest.json` | **애셋 원본 목록** |
@@ -126,11 +128,14 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 `ctx → util → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
 
 **모듈 규칙**(`npm run test:modules` 가 기계로 막는다):
+- **엔진(`src/engine`)은 게임(`src/legacy`)을 import 하지 않는다.** 게임 고유값(키 이름·곡 표·DB 이름…)은 `createSaveStore({…})`·`createMusic({…})`
+  처럼 설정으로 넘긴다. 엔진은 `.ts`(strict, `npm run typecheck`)이고 클래스 필드는 `declare` 로 적는다(필드 정의 의미가 바뀌지 않게).
 - **앞 모듈은 뒤 모듈을 import 하지 않는다**(순환 0). `data.js`의 상수를 `world.js`가 쓰므로 **`data.js`가 먼저**다. 둘 다 쓰는 세계
   치수(`SHIFT`·`WW`·`DEEP_Y`·`BIOMES` …)는 그래서 `size.js` 에 있다. 아래층이 위층 객체(`G`·`UI`·`Factory`)를 써야 하면
   `import { app as G } from './ctx.js'` — 위층이 읽힐 때 `bindApp(G)` 로 건다. **최상위(읽히는 순간)에서는 null** 이니 함수 안에서만 쓸 것.
   아래층이 `G` 의 무엇을 쓰는지는 `tests/baseline/ctx.json` 에 적혀 있다 — 새로 쓰면 검사가 멈추고, 일부러면 `node tests/modules.mjs --update`.
 - **최상위 이름은 전부 `export`**, 다른 파일 이름은 **`import`**. 빠뜨리면 번들은 되지만 그 줄이 돌 때 터진다 — 검사가 먼저 잡는다.
+  코드를 다른 모듈로 옮겼으면 `node tools/imports.mjs` 로 import 줄을 다시 짠다(손으로 고치지 말 것).
 - **남의 `let` 에 대입할 수 없다**(`WW = …` 은 size.js 안에서만). 객체 속은 고쳐도 된다(`G.x = …`).
 - 콘솔·`?debug`·`tests`·`tools/*.py` 는 예전처럼 `G`·`World`·`WW` 를 이름으로 읽는다 — `main.js` 가 모든 export 를 `window` 에
   **읽기 전용 · 살아 있는 값**으로 싣는다(디버그 창구). **게임 코드는 `window.<이름>` 을 읽지 말 것**(검사가 막는다).
@@ -212,8 +217,8 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 1. **월드 생성 회귀** — 노드에서 여러 시드를 돌려 예외·누락을 먼저 잡는다.
    `World`를 만들고 `generate()`를 부른 뒤 `w.ruins`·타일 히스토그램을 찍어
    보면 "유적이 안 생겼다" 같은 것이 바로 드러난다.
-2. **문법 · 모듈** — `npm run test:syntax` (src/legacy · 번들 · 매니페스트를 `node --check`, 번들이 소스와 같은지) ·
-   `npm run test:modules` (import 빠뜨림 · 순환·역방향 · window 창구 읽기 · ctx 계약).
+2. **문법 · 타입 · 모듈** — `npm run test:syntax` (src/legacy · 번들 · 매니페스트를 `node --check`, 번들이 소스와 같은지) ·
+   `npm run typecheck` (엔진 TS) · `npm run test:modules` (import 빠뜨림 · 순환·역방향·엔진→게임 · window 창구 읽기 · ctx 계약 · import 줄).
 3. **브라우저** — 정적 서버를 띄우고 실제로 본다. 콘솔 오류 0을 확인하고,
    `?debug=village&sess=3&plv=45` 같은 바로가기로 해당 구역까지 간다.
 4. **스크린샷으로 눈으로 확인.** 겹침·공중 부양·안 보이는 몹은 수치로 안 잡힌다.
@@ -278,7 +283,8 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-26)
 
-- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) 끝. 다음은 P3(엔진 core · TS).
+- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) 끝. 다음은 P4(입력 + 모바일 입력 뼈대).
+  도중에 찾은 버그·새 기능 요청은 계획서 §9-1 에 모아 두고 **v1.1.1 이 끝난 뒤** 한꺼번에 한다(사용자 결정).
 - **v1.1.0 출시**(태그 `v1.1.0`). 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
   들어가 있고, 업적은 75개다. v1.0.x 세이브는 세계 폭이 달라 열리지 않는다(릴리스 노트·다운로드 페이지에 알림).
 - 세이브는 v10 — `world.sea`(바다 수면)를 저장한다. 빠졌던 동안 불러온 세계에서 바다 물고기 생성이 터졌다; sea 없는
@@ -328,7 +334,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   그림은 `python3 tools/mkflotsam.py` 로 굽는다(obj/flotsam1~3 · item/mariner_compass) — 고치면 다시 굽고 sync.
   값 매김(`ITEM_VAL`)에서 빠진다(금화 적은 짐짝이 나무 값을 끌어내린다).
 - **세계 크기**(§1-7): 새 게임 창에서 고른다. 세이브 v8 에 `world.size`. 세이브의 타일·벽지·탐험은
-  **글자열 RLE**(util.js `rleEncode` — 한 토막 두 글자)라 소형 세이브가 119만 → 52만 글자로 줄었다
+  **글자열 RLE**(engine/save/rle.ts `rleEncode` — 한 토막 두 글자)라 소형 세이브가 119만 → 52만 글자로 줄었다
   (중형 104만 · 대형 174만). 옛 숫자 배열 세이브도 `rleDecode`가 읽는다.
   생성 시간(헤드리스 실측): 소형 3.1초 · 중형 4.6초 · 대형 7초. 유적 통행 보수(`_walkBack`)가 예전엔
   생성의 8할이었다 — `_returnSet`(입구에서 거꾸로 한 번 걷기) · `BoxSet`으로 바꿨고 **소형 세계는 바이트
@@ -434,7 +440,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   이끼·종유·수정·독기 중 하나. 장식은 **자연 벽지 위 빈 칸에만** 놓고 전부 걸음을 안 막는다.
   **금 간 자갈**(`world.faults`)을 캐거나 터뜨리면 지진과 함께 숨은 동굴이 열린다(game.js `triggerFault`).
   세이브 v7 에 `world.caveGrid` · `world.faults` 가 들어갔다.
-- **저장소**(game.js `SaveStore`): 세이브는 IndexedDB(`ashfall` DB · `data` 본문 gzip+서명 · `head` 슬롯 요약)에 넣고,
+- **저장소**(game.js `SaveStore` = engine/save/store.ts `createSaveStore`): 세이브는 IndexedDB(`ashfall` DB · `data` 본문 gzip+서명 · `head` 슬롯 요약)에 넣고,
   안 열리면 localStorage 로 떨어진다. 세이브를 읽고 쓰는 곳은 **전부 `SaveStore.put/get/remove/list`** 를 거친다 —
   localStorage 를 직접 만지면 IndexedDB 쪽과 어긋난다(설정 `SET_KEY` 만 localStorage). 저장은 비동기라 `saveGame()` 은
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
