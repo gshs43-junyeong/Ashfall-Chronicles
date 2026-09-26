@@ -1,4 +1,5 @@
-/* 번역 검사 — ① 함수 안에 안 감싼 한국어 문구 0 ② 원문 목록(locales/source.json)이 소스와 같다
+/* 번역 검사 — ① 함수 안에 안 감싼 한국어 문구 0 ② 원문 목록(locales/source.json)이 소스와 같다 · game/locales 가 묶음과 같다
+   · 언어마다 자리표·태그·남은 한글·형식(빠진 열쇠는 비율만 알린다)
    ③ 형식기: 자리표 · 조사 훅(엔진 josa 와 같은 결과) · plural · select · 번역 찾기 순서 */
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -9,6 +10,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const run = args => execFileSync('node', [path.join(ROOT, 'tools/i18n.mjs'), ...args], { stdio: 'inherit' });
 run(['scan']);
 run(['extract', '--check']);
+run(['build', '--check']);
+run(['check']);
 
 const r = esbuild.buildSync({
   stdin: { contents: "export * from './src/engine/i18n/i18n.ts'; export * from './src/engine/i18n/format.ts'; export * from './src/engine/i18n/ko.ts';", resolveDir: ROOT, loader: 'ts' },

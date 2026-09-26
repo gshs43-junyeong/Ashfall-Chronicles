@@ -2,6 +2,10 @@
      node tools/i18n.mjs wrap <파일…>     코드의 한국어 문구를 tr('원문', { 값 }) 으로 감싼다
      node tools/i18n.mjs scan              아직 안 감싼 한국어 문구(함수 안) — 남으면 1
      node tools/i18n.mjs extract [--check] 원문 목록 src/legacy/locales/source.json 을 새로 쓴다(--check 는 어긋나면 1)
+     node tools/i18n.mjs build [--check]   번역 묶음 src/legacy/locales/<lang>.json → game/locales/<lang>.js + list.js
+     node tools/i18n.mjs check             언어마다 빠진 열쇠 · 원문에 없는 열쇠 · 자리표 · 태그 · 남은 한글 · 형식
+     node tools/i18n.mjs sheet <lang>      검수 시트 tools/i18n-review/<lang>.csv
+     node tools/i18n.mjs merge <lang> <csv> 검수본을 받아 넣는다(열쇠 기준 · 자리표 검사)
    ★ wrap 은 자리마다 스스로 확인한다 — 원래 식과 새 tr() 을 같은 가짜 값(받침 있는 말·없는 말·수)으로 둘 다 계산해
      글자가 하나라도 다르면 그 자리는 손대지 않고 알린다. 원본 언어(ko)에서 화면이 글자까지 같은 것은 이것으로 막는다. */
 import fs from 'node:fs';
@@ -328,6 +332,67 @@ function extract() {
     msgs: sorted, tables: tables() }, null, 1) + '\n';
 }
 
+/* ---- 번역 묶음: src/legacy/locales/<lang>.json = { msgs: {원문: 번역}, tables: {경로: 번역} } ---- */
+const LOC = path.join(LEGACY, 'locales');
+const OUT = path.join(ROOT, 'game/locales');
+const ORDER = ['ko', 'en', 'ja', 'zh-Hans', 'de', 'es'];
+const langs = () => fs.readdirSync(LOC).filter(f => /^[a-z]{2}(-[A-Za-z]+)?\.json$/.test(f)).map(f => f.slice(0, -5))
+  .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+const readLoc = l => JSON.parse(fs.readFileSync(path.join(LOC, l + '.json'), 'utf8'));
+const writeLoc = (l, d) => fs.writeFileSync(path.join(LOC, l + '.json'), JSON.stringify(d, null, 1) + '\n');
+const readSource = () => JSON.parse(fs.readFileSync(SOURCE_JSON, 'utf8'));
+
+/** game/locales/*.js — <script> 로 싣는 묶음과 언어 목록 */
+function buildFiles() {
+  const files = {};
+  const ls = langs();
+  files['list.js'] = '/* tools/i18n.mjs build 가 만든다 — 손으로 고치지 말 것. 실려 있는 언어(원본 ko 가 맨 앞) */\n' +
+    'window.ASHFALL_LANGS = ' + JSON.stringify(['ko', ...ls]) + ';\n';
+  for (const l of ls) files[l + '.js'] = '/* tools/i18n.mjs build 가 만든다 — 손으로 고치지 말 것. 원본은 src/legacy/locales/' + l + '.json */\n' +
+    '(window.ASHFALL_LOCALES = window.ASHFALL_LOCALES || {})[' + JSON.stringify(l) + '] = ' + JSON.stringify(readLoc(l)) + ';\n';
+  return files;
+}
+
+/** 한 언어의 문제 — { missing, stale, bad[] } */
+function checkLang(l, src) {
+  const d = readLoc(l), bad = [];
+  let missing = 0, stale = 0;
+  for (const [kind, from] of [['msgs', src.msgs], ['tables', src.tables]]) {
+    const tr = d[kind] || {};
+    for (const k in from) if (!(k in tr)) missing++;
+    for (const k in tr) {
+      if (!(k in from)) { stale++; continue; }
+      const t = tr[k], ko = kind === 'msgs' ? k : from[k];
+      if (HANGUL.test(t)) bad.push(`${kind} ${JSON.stringify(k).slice(0, 50)}: 번역에 한글이 남았다`);
+      try {
+        const a = eng.placeholders(ko).join(','), b = eng.placeholders(t).join(',');
+        if (a !== b) bad.push(`${kind} ${JSON.stringify(k).slice(0, 50)}: 자리표 다름 {${a}} ≠ {${b}}`);
+      } catch (e) { bad.push(`${kind} ${JSON.stringify(k).slice(0, 50)}: 형식 오류 — ${e.message}`); }
+      if (/<[a-z]/i.test(ko) || /<[a-z]/i.test(t)) {
+        const tags = x => (x.match(/<\/?[a-z]+/gi) || []).sort().join('');
+        if (tags(ko) !== tags(t)) bad.push(`${kind} ${JSON.stringify(k).slice(0, 50)}: 태그 다름`);
+      }
+    }
+  }
+  return { missing, stale, bad, total: Object.keys(src.msgs).length + Object.keys(src.tables).length };
+}
+
+/* CSV — 따옴표로 감싸고 안의 따옴표는 두 번 */
+const csvCell = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+function csvParse(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; continue; }
+    if (c === '"') q = true; else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x !== ''));
+}
+const SHEET_HEAD = ['kind', 'key', 'ko', 'translation', 'where', 'placeholders', 'max_len'];
+
 const [cmd, ...args] = process.argv.slice(2);
 if (cmd === 'wrap') {
   let bad = 0;
@@ -352,6 +417,65 @@ if (cmd === 'wrap') {
     fs.writeFileSync(SOURCE_JSON, text);
     console.log(`✓ 원문 ${Object.keys(JSON.parse(text).msgs).length}개 → ${path.relative(ROOT, SOURCE_JSON)}`);
   }
+} else if (cmd === 'build') {
+  const files = buildFiles();
+  if (args.includes('--check')) {
+    const stale = Object.entries(files).filter(([f, t]) => !fs.existsSync(path.join(OUT, f)) || fs.readFileSync(path.join(OUT, f), 'utf8') !== t);
+    const extra = fs.existsSync(OUT) ? fs.readdirSync(OUT).filter(f => !(f in files)) : [];
+    if (stale.length || extra.length) { console.error('✗ game/locales 가 번역 묶음과 어긋난다 — node tools/i18n.mjs build (' + [...stale.map(x => x[0]), ...extra].join(', ') + ')'); process.exit(1); }
+    console.log(`✓ game/locales 가 번역 묶음과 맞다(${Object.keys(files).length - 1}개 언어 묶음)`);
+  } else {
+    fs.mkdirSync(OUT, { recursive: true });
+    for (const f of fs.readdirSync(OUT)) if (!(f in files)) fs.unlinkSync(path.join(OUT, f));
+    for (const [f, t] of Object.entries(files)) fs.writeFileSync(path.join(OUT, f), t);
+    console.log('✓ game/locales — ' + Object.keys(files).join(' · '));
+  }
+} else if (cmd === 'check') {
+  const src = readSource(); let fail = 0;
+  for (const l of langs()) {
+    const r = checkLang(l, src);
+    const pct = ((r.total - r.missing) / r.total * 100).toFixed(1);
+    console.log(`${r.bad.length || r.stale ? '✗' : '✓'} ${l}: ${pct}% (빠짐 ${r.missing} · 원문에 없는 열쇠 ${r.stale} · 문제 ${r.bad.length})`);
+    for (const b of r.bad.slice(0, 20)) console.log('   ' + b);
+    if (r.bad.length || r.stale) fail = 1;
+  }
+  if (!langs().length) console.log('✓ 번역 묶음 없음(원본 ko 만)');
+  process.exit(fail);
+} else if (cmd === 'sheet') {
+  /* 검수 시트 — tools/i18n-review/<lang>.csv. 이미 번역이 있으면 채워 둔다. */
+  const l = args[0]; if (!l) { console.log('node tools/i18n.mjs sheet <lang>'); process.exit(1); }
+  const src = readSource(), d = fs.existsSync(path.join(LOC, l + '.json')) ? readLoc(l) : { msgs: {}, tables: {} };
+  const lines = [SHEET_HEAD.map(csvCell).join(',')];
+  for (const k in src.msgs) lines.push(['msg', k, k, (d.msgs || {})[k], src.msgs[k].join(' '), eng.placeholders(k).join(' '), ''].map(csvCell).join(','));
+  for (const k in src.tables) lines.push(['table', k, src.tables[k], (d.tables || {})[k], k.split('.')[0], eng.placeholders(src.tables[k]).join(' '),
+    /\.n$/.test(k) ? 24 : ''].map(csvCell).join(','));
+  const f = path.join(ROOT, 'tools/i18n-review', l + '.csv');
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, '﻿' + lines.join('\n') + '\n');
+  console.log(`✓ ${path.relative(ROOT, f)} — ${lines.length - 1}줄`);
+} else if (cmd === 'merge') {
+  /* 검수본을 받아 넣는다 — 열쇠 기준, 번역 칸이 빈 줄은 건너뛴다. 자리표·한글·형식이 틀린 줄은 넣지 않고 알린다. */
+  const [l, file] = args; if (!l || !file) { console.log('node tools/i18n.mjs merge <lang> <csv>'); process.exit(1); }
+  const src = readSource(), rows = csvParse(fs.readFileSync(file, 'utf8').replace(/^﻿/, ''));
+  const head = rows.shift().map(h => h.trim());
+  const col = n => head.indexOf(n);
+  const d = fs.existsSync(path.join(LOC, l + '.json')) ? readLoc(l) : { msgs: {}, tables: {} };
+  d.msgs = d.msgs || {}; d.tables = d.tables || {};
+  let put = 0; const bad = [];
+  for (const r of rows) {
+    const kind = r[col('kind')], key = r[col('key')], t = (r[col('translation')] || '').trim();
+    if (!t) continue;
+    const ko = kind === 'msg' ? key : src.tables[key];
+    if (ko === undefined || (kind === 'msg' && !(key in src.msgs))) { bad.push(`원문에 없는 열쇠: ${key.slice(0, 50)}`); continue; }
+    try {
+      if (eng.placeholders(ko).join(',') !== eng.placeholders(t).join(',')) { bad.push(`자리표 다름: ${key.slice(0, 50)}`); continue; }
+    } catch (e) { bad.push(`형식 오류: ${key.slice(0, 50)} — ${e.message}`); continue; }
+    if (HANGUL.test(t)) { bad.push(`한글이 남음: ${key.slice(0, 50)}`); continue; }
+    (kind === 'msg' ? d.msgs : d.tables)[key] = t; put++;
+  }
+  writeLoc(l, d);
+  console.log(`✓ ${l}: ${put}줄 넣음` + (bad.length ? `, 못 넣은 줄 ${bad.length}` : ''));
+  for (const b of bad.slice(0, 30)) console.log('   ' + b);
 } else {
-  console.log('node tools/i18n.mjs wrap <파일…> | scan | extract [--check]');
+  console.log('node tools/i18n.mjs wrap <파일…> | scan | extract [--check] | build [--check] | check | sheet <lang> | merge <lang> <csv>');
 }

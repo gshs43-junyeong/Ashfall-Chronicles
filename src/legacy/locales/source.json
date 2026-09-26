@@ -918,6 +918,9 @@
   "다음 레벨까지 {n}": [
    "ui.showTip"
   ],
+  "다음에 켤 때부터 이 언어로 나온다": [
+   "ui.bindSettings"
+  ],
   "단단한 바닥 위에만 놓을 수 있다": [
    "game.rightClick"
   ],
@@ -1805,6 +1808,9 @@
   ],
   "어제 나간 사람이 안 돌아왔어. {enemy} {n}{mobCw}만 걷어 주면 내가 찾으러 나갈 수 있어.": [
    "data"
+  ],
+  "언어": [
+   "index.html"
   ],
   "업적 <b>{done}/{achievementsCount}</b>": [
    "ui.refreshQuest"

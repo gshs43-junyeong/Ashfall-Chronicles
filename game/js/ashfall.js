@@ -1700,16 +1700,39 @@
   // src/legacy/lang.js
   var lang_exports = {};
   __export(lang_exports, {
+    FONT: () => FONT,
+    FONT_PLAIN: () => FONT_PLAIN,
+    FONT_UI: () => FONT_UI,
     I18N: () => I18N,
     LANG: () => LANG,
+    LANGS: () => LANGS,
+    LANG_KEY: () => LANG_KEY,
+    LANG_NAMES: () => LANG_NAMES,
     LOCALES: () => LOCALES,
     N_: () => N_,
     fmt: () => fmt,
     localizeDom: () => localizeDom,
+    setLang: () => setLang,
     tr: () => tr
   });
+
+  // src/engine/i18n/fonts.ts
+  var STACKS = {
+    ja: '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Meiryo","Noto Sans JP","Noto Sans CJK JP"',
+    "zh-Hans": '"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC"',
+    latin: '-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial'
+  };
+  function fontStack(lang, source, base) {
+    if (lang === source) return base;
+    return (STACKS[lang] || STACKS.latin) + ",sans-serif";
+  }
+
+  // src/legacy/lang.js
   var LOCALES = typeof globalThis !== "undefined" && globalThis.ASHFALL_LOCALES || {};
-  var LANG = typeof location !== "undefined" && new URLSearchParams(location.search).get("lang") || "ko";
+  var LANG = typeof globalThis !== "undefined" && globalThis.ASHFALL_LANG || typeof location !== "undefined" && new URLSearchParams(location.search).get("lang") || "ko";
+  var LANGS = typeof globalThis !== "undefined" && globalThis.ASHFALL_LANGS || ["ko"];
+  var LANG_NAMES = { ko: "한국어", en: "English", ja: "日本語", "zh-Hans": "简体中文", de: "Deutsch", es: "Español" };
+  var LANG_KEY = "ashfall.lang";
   var I18N = createI18n({ source: "ko", lang: LANG, locales: LOCALES, fallback: ["en"], hooks: { ko: koParticle } });
   var tr = I18N.tr;
   var N_ = (s) => s;
@@ -1753,6 +1776,18 @@
     }
     const t = (v / d).toFixed(2).replace(/\.?0+$/, "");
     return t + u;
+  }
+  var FONT = fontStack(LANG, "ko", '"Pretendard",sans-serif');
+  var FONT_UI = fontStack(LANG, "ko", "system-ui, sans-serif");
+  var FONT_PLAIN = fontStack(LANG, "ko", "sans-serif");
+  function setLang(l) {
+    try {
+      localStorage.setItem(LANG_KEY, l);
+    } catch (e) {
+    }
+    const u = new URL(location.href);
+    u.searchParams.delete("lang");
+    location.replace(u.href);
   }
 
   // src/legacy/size.js
@@ -29821,6 +29856,20 @@
       }
       const view = $("#set-view");
       if (view) view.addEventListener("input", () => app.setOpt("view", +view.value));
+      const ls = $("#set-lang");
+      if (ls && LANGS.length > 1) {
+        $("#set-lang-row").hidden = false;
+        ls.innerHTML = LANGS.map((l) => `<option value="${l}"${l === LANG ? " selected" : ""}>${LANG_NAMES[l] || l}</option>`).join("");
+        ls.addEventListener("change", () => {
+          if (app.state === "play") {
+            try {
+              localStorage.setItem(LANG_KEY, ls.value);
+            } catch (e) {
+            }
+            this.toast(tr("다음에 켤 때부터 이 언어로 나온다"));
+          } else setLang(ls.value);
+        });
+      }
       this.buildNotices();
       this.buildKeys();
       const tabs = document.querySelectorAll(".set-tab");
@@ -37236,7 +37285,7 @@
       const ox = p.cx - camX, oy = p.cy - camY;
       const R = 132;
       c.save();
-      c.font = "11px system-ui, sans-serif";
+      c.font = "11px " + FONT_UI;
       c.textAlign = "left";
       c.textBaseline = "middle";
       const used = [];
@@ -38761,14 +38810,14 @@
           const a = Math.min(1, bs.t / 0.6);
           c.save();
           c.globalAlpha = a;
-          c.font = '600 15px "Pretendard",sans-serif';
+          c.font = "600 15px " + FONT;
           c.textAlign = "center";
           const y = this.H - 96;
           c.fillStyle = "#000a";
           c.fillText(bs.text, this.W / 2 + 1, y + 1);
           c.fillStyle = "#f0e2b1";
           c.fillText(bs.text, this.W / 2, y);
-          c.font = '11px "Pretendard",sans-serif';
+          c.font = "11px " + FONT;
           c.fillStyle = "#c8a05a";
           c.fillText(bs.who, this.W / 2, y - 18);
           c.textAlign = "left";
@@ -38827,13 +38876,13 @@
       c.globalAlpha = 1;
       if (!this.settings || this.settings.dmgnum) for (const t of this.texts) {
         c.globalAlpha = clamp(t.life / 0.85, 0, 1);
-        c.font = (t.crit ? "bold 19px" : "14px") + ' "Pretendard",sans-serif';
+        c.font = (t.crit ? "bold 19px" : "14px") + " " + FONT;
         c.fillStyle = "#000";
         c.fillText(t.v, t.x - camX + 1, t.y - camY + 1);
         c.fillStyle = t.c;
         c.fillText(t.v, t.x - camX, t.y - camY);
         if (t.crit) {
-          c.font = "10px sans-serif";
+          c.font = "10px " + FONT_PLAIN;
           c.fillStyle = "#ffd24a";
           c.fillText(tr("치명"), t.x - camX, t.y - camY - 15);
         }
@@ -41103,7 +41152,7 @@
       c.fillRect(bx, by, Math.round(bw * v / 100), 5);
       c.fillStyle = "rgba(0,0,0,0.6)";
       for (const s of PULSE.stages) if (s.at > 0) c.fillRect(bx + Math.round(bw * s.at / 100), by, 1, 5);
-      c.font = '600 11px "Pretendard",sans-serif';
+      c.font = "600 11px " + FONT;
       c.textBaseline = "middle";
       c.textAlign = "left";
       c.fillStyle = "#e8e0d0";
@@ -42687,7 +42736,7 @@
           }[o.type];
           if (label) {
             c.fillStyle = "#e8dcc0";
-            c.font = '11px "Pretendard",sans-serif';
+            c.font = "11px " + FONT;
             c.textAlign = "center";
             c.fillText(label + ` ${tr("(우클릭)")}`, o.x - camX + o.w / 2, o.y - camY - 12);
           }

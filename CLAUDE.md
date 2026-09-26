@@ -112,7 +112,8 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `src/legacy/tileart.js` · `itemart.js` · `sprites.js` | 절차 생성 그림(아틀라스) · 스프라이트 로더 |
 | `src/legacy/ui.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` | 그 이름대로 |
 | `src/legacy/main.js` · `ctx.js` | 묶는 입구(모듈 순서 · 디버그 창구 · 다른 언어면 표·HTML 덮기) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
-| `src/legacy/lang.js` · `locales/` | 번역 창구 `tr` · `N_` · `fmt` · `LANG`(`?lang=`) · 원문 목록 `locales/source.json`(`tools/i18n.mjs extract` 산출물) |
+| `src/legacy/lang.js` · `locales/` | 번역 창구 `tr` · `N_` · `fmt` · `FONT` · `LANG` · 원문 목록 `locales/source.json`(`extract` 산출물) · 번역 `locales/<lang>.json` · 용어집 `glossary.csv` |
+| `game/locales/` | `<script>` 로 싣는 번역 묶음과 언어 목록 — `node tools/i18n.mjs build` 산출물(손으로 고치지 말 것). 언어는 index.html 이 번들보다 먼저 고른다(`?lang=` → 설정 → 브라우저 언어 → ko) |
 | `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기) · `input`(키·액션 매핑 · 마우스 · 터치 뼈대) · `tilemap`(`TileMap` — `World extends TileMap` · 빛 퍼뜨리기) · `render`(파이프라인 단계 · 아틀라스 굽기 · 연결 타일 틀) · `i18n`(tr · ICU 부분집합 · 한국어 조사 · 표 덮기) · `entity`(`Entity` — `Ent extends Entity` · 칸 충돌 이동 조각) · `scene`(씬 스택 — `G.state`·`paused`·`uiOpen` 은 접근자) · `ui`(패널 · 툴팁 · 슬롯 칸). 게임 고유값은 `create*({…})` 설정으로 받는다 |
 | `tools/imports.mjs` | 코드를 옮긴 뒤 `src/legacy` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
 | `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
@@ -274,7 +275,7 @@ bash tools/build.sh 1.1.0        # dist/ 에 Windows·macOS zip + SHA256SUMS
 bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트 검사
 ```
 
-- **캐시 무효화**: `game/index.html`의 `?v=NNN`이 **14곳**에 있다(v1.1.0 = 255). zip 을 낼 때
+- **캐시 무효화**: `game/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255). zip 을 낼 때
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
   PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.

@@ -52,6 +52,9 @@ export const DETERMINISM = (seed = 1234) => `(() => {
   window.__step = (n = 1) => { for (let i = 0; i < n; i++) { now += 1000 / 60; const run = q; q = []; for (const cb of run) cb(now); } };
   window.__reseed = n => { s = n >>> 0; };   // 난수를 다시 씨앗부터 — 부팅에 걸린 프레임 수와 상관없이 같은 장면을 만들 때
   window.__deterministic = true;
+  /* 브라우저 언어는 ko 로 — 헤드리스 크롬은 en-US 라, 영어 묶음이 실리면 기준 화면이 영어로 바뀐다(?lang= 은 그대로 먹는다) */
+  Object.defineProperty(navigator, 'language', { get: () => 'ko-KR' });
+  Object.defineProperty(navigator, 'languages', { get: () => ['ko-KR', 'ko'] });
   /* CSS 전이·애니메이션은 진짜 시간으로 돈다 — 첫 장에 멈춰 둔다(로딩 화면이 걷히는 0.45초에 찍히면 화면 전체가 달랐다). */
   addEventListener('DOMContentLoaded', () => { const st = document.createElement('style');
     st.textContent = '*,*::before,*::after{transition:none!important;animation-play-state:paused!important;animation-delay:0s!important}';

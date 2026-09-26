@@ -14,7 +14,7 @@ import { createSaveStore } from '../engine/save/store.js';
 import { upgrade } from '../engine/save/upgrade.js';
 import { createScenes } from '../engine/scene/scenes.js';
 import { escHtml } from './util.js';
-import { N_, fmt, tr } from './lang.js';
+import { FONT, FONT_PLAIN, FONT_UI, N_, fmt, tr } from './lang.js';
 import { BIOMES, CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SKY_Y, SURF_BASE, SY, WH, WORLD_BOT, WORLD_SIZES, WSIZE, WSY, WW } from './size.js';
 import { ACHIEVEMENTS, BOSS_DIE, BOUNTY_BY_ID, BOUNTY_POOL, BOUNTY_UNIT, BOW_HAND, CAVE_TYPES, CHAPTERS, CHARACTERS,
   CHAR_OF, CIPHER_KIND, CIPHER_WORDS, DAWN_NPCS, DECO_MOUNT, DECO_OF, DIALOGUE, ECHO, EGG_POOL, ENEMIES, EVENTS,
@@ -4107,7 +4107,7 @@ export const G = {
     const ox = p.cx - camX, oy = p.cy - camY;      // 플레이어의 화면 좌표
     const R = 132;
     c.save();
-    c.font = '11px system-ui, sans-serif'; c.textAlign = 'left'; c.textBaseline = 'middle';
+    c.font = '11px ' + FONT_UI; c.textAlign = 'left'; c.textBaseline = 'middle';
     // 같은 방향에 여럿이 겹치지 않도록 살짝 밀어 놓는다
     const used = [];
     for (const g of targets) {
@@ -5256,12 +5256,12 @@ export const G = {
         const a = Math.min(1, bs.t / 0.6);
         c.save();
         c.globalAlpha = a;
-        c.font = '600 15px "Pretendard",sans-serif';
+        c.font = '600 15px ' + FONT;
         c.textAlign = 'center';
         const y = this.H - 96;
         c.fillStyle = '#000a'; c.fillText(bs.text, this.W / 2 + 1, y + 1);
         c.fillStyle = '#f0e2b1'; c.fillText(bs.text, this.W / 2, y);
-        c.font = '11px "Pretendard",sans-serif'; c.fillStyle = '#c8a05a';
+        c.font = '11px ' + FONT; c.fillStyle = '#c8a05a';
         c.fillText(bs.who, this.W / 2, y - 18);
         c.textAlign = 'left';
         c.restore();
@@ -5315,10 +5315,10 @@ export const G = {
     // ---- 피해 숫자 ----
     if (!this.settings || this.settings.dmgnum) for (const t of this.texts) {
       c.globalAlpha = clamp(t.life / 0.85, 0, 1);
-      c.font = (t.crit ? 'bold 19px' : '14px') + ' "Pretendard",sans-serif';
+      c.font = (t.crit ? 'bold 19px' : '14px') + ' ' + FONT;
       c.fillStyle = '#000'; c.fillText(t.v, t.x - camX + 1, t.y - camY + 1);
       c.fillStyle = t.c; c.fillText(t.v, t.x - camX, t.y - camY);
-      if (t.crit) { c.font = '10px sans-serif'; c.fillStyle = '#ffd24a'; c.fillText(tr('치명'), t.x - camX, t.y - camY - 15); }
+      if (t.crit) { c.font = '10px ' + FONT_PLAIN; c.fillStyle = '#ffd24a'; c.fillText(tr('치명'), t.x - camX, t.y - camY - 15); }
     }
     c.globalAlpha = 1;
   },
@@ -7226,7 +7226,7 @@ export const G = {
     c.fillStyle = S.c; c.fillRect(bx, by, Math.round(bw * v / 100), 5);
     c.fillStyle = 'rgba(0,0,0,0.6)';
     for (const s of PULSE.stages) if (s.at > 0) c.fillRect(bx + Math.round(bw * s.at / 100), by, 1, 5);
-    c.font = '600 11px "Pretendard",sans-serif'; c.textBaseline = 'middle'; c.textAlign = 'left';
+    c.font = '600 11px ' + FONT; c.textBaseline = 'middle'; c.textAlign = 'left';
     c.fillStyle = '#e8e0d0'; c.fillText(tr('유적의 맥박'), bx, y + 10);
     c.textAlign = 'right'; c.fillStyle = S.c; c.fillText(S.n, bx + bw, y + 10);
     // 사건 — 막대 바로 아래에 이름 · 진행 · 남은 시간
@@ -8644,7 +8644,7 @@ export const G = {
           ciphernote: tr('쪽지 읽기'), codedoor: tr('잠긴 홈')
         }[o.type];
         if (label) {
-          c.fillStyle = '#e8dcc0'; c.font = '11px "Pretendard",sans-serif'; c.textAlign = 'center';
+          c.fillStyle = '#e8dcc0'; c.font = '11px ' + FONT; c.textAlign = 'center';
           c.fillText(label + ` ${tr('(우클릭)')}`, o.x - camX + o.w / 2, o.y - camY - 12);
         }
       }
