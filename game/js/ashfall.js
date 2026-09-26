@@ -186,11 +186,12 @@ function rleDecode(pairs, len, Ctor) {
   }
   return out;
 }
-// ---- src/legacy/data.js ----
-/* ===== data.js — 타일 / 아이템 / 적 / 스킬 / 스토리 ===== */
+// ---- src/legacy/size.js ----
+/* ===== size.js — 세계 크기(소형·중형·대형)와 좌표 예산 ===== */
+/* ★ data.js(표 — 업적 깊이·유적 좌표)와 world.js(생성)가 둘 다 읽는 값이라 둘보다 먼저 읽히는 여기에 둔다.
+   let 은 이 파일의 applyWorldSize 만 고쳐 쓴다 — 다른 파일에서 대입하면 모듈로 옮길 때 깨진다. */
 'use strict';
 
-/* ---------------- 타일 ---------------- */
 /* 세계를 4200 → 5000칸으로 넓히면서 늘린 800칸을 전부 **왼쪽**에 붙였다(세션 3의 가라앉은 바다 · 빙하 지대). */
 const SHIFT = 800;
 
@@ -205,6 +206,69 @@ const SX = x => Math.round(x * WSX);
 const SY = y => y >= 70 ? Math.round(y * WSY) : y + Math.round(70 * (WSY - 1));
 const SYB = y => y + Math.round(720 * WSY) - 720;
 
+/* ★ 아래 세계 치수는 **세계 크기(소형·중형·대형)마다 다르다** — setWorldSize 가 새 게임·불러오기 때 고쳐 쓴다(let). */
+let WW = 5000;              // 세계 가로(타일, 소형) — 세션 3 지역(바다·빙하)이 왼쪽 800칸(SHIFT)
+let WH = 720;               // 세계 세로(타일) — 세션 3 심해를 담으려고 480에서 늘렸다
+/* 보통 세계의 바닥. */
+let WORLD_BOT = 480;
+let SURF_BASE = 70;         // 기준 지표 높이
+let HELL_Y = 390;           // 지옥 시작 깊이
+let DEEP_Y = 280;           // 심층 시작
+let SKY_Y = 40;             // 하늘 섬 구역 (이보다 위)
+let CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1066 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
+let CAMP_GX1 = 1100 + SHIFT;                          // 생성 발자국(평탄화·나무·물·자갈 제외)의 오른쪽 끝
+/* 세션 3 — 왼쪽으로 갈수록 가라앉은 바다 · 빙하 지대 · 서리 지대 순으로 나온다 — 사연: docs/code-history.md#h101 */
+let SEA_X1 = 430;            // 가라앉은 바다 — 여기부터 왼쪽이 물
+let GLACIER_X1 = SHIFT;      // 빙하 지대 오른쪽 끝 = 원래 세계가 시작하는 자리
+
+/* 바이옴. */
+const BIOMES = [
+  { id: 'sea', x0: 0, x1: SEA_X1, n: '가라앉은 바다',
+    card: { sub: '가장 먼 서쪽', line: '물이 지운 쪽. 숨을 셈하며 내려가는 곳.' },
+    air: { c: '#2f7fb8', a: 0.22 } },
+  { id: 'glacier', x0: SEA_X1, x1: GLACIER_X1, n: '빙하 지대',
+    card: { sub: '물가 안쪽', line: '바다가 얼어붙은 자리. 밟는 것마다 갈라진다.' },
+    air: { c: '#bfeaf7', a: 0.20 } },
+  { id: 'ice', x0: GLACIER_X1, x1: 620 + SHIFT, n: '서리 지대',
+    card: { sub: '서쪽 끝', line: '눈이 소리를 먹는다. 밟은 자리가 오래 남는 땅.' },
+    air: { c: '#a8c8ee', a: 0.19 } },
+  { id: 'forest', x0: 620 + SHIFT, x1: 1400 + SHIFT, n: '잿빛 숲',
+    card: { sub: '시작한 자리', line: '재가 잎을 대신한 숲. 나무는 서 있으나 그늘이 없다.' },
+    air: { c: '#b0aa90', a: 0.11 } },
+  { id: 'jungle', x0: 1400 + SHIFT, x1: 2000 + SHIFT, n: '울림 정글',
+    card: { sub: '남쪽 골짜기', line: '골이 깊어 소리가 되돌아온다. 젖은 공기가 무겁다.' },
+    air: { c: '#5fbf86', a: 0.15 } },
+  { id: 'desert', x0: 2000 + SHIFT, x1: 2680 + SHIFT, n: '메마른 사구',
+    card: { sub: '가운데 모래', line: '물이 마른 자리에 바람이 길을 낸다. 낮과 밤이 다른 땅.' },
+    air: { c: '#e8be74', a: 0.18 } },
+  { id: 'forest2', x0: 2680 + SHIFT, x1: 3300 + SHIFT, n: '동쪽 숲',
+    card: { sub: '마을 언저리', line: '재가 덜 닿은 숲. 사람이 아직 길을 내고 사는 곳.' },
+    air: { c: '#93c47a', a: 0.15 } },
+  { id: 'glowfen', x0: 3300 + SHIFT, x1: 3760 + SHIFT, n: '버섯 골짜기',
+    card: { sub: '내려앉은 땅', line: '땅이 통째로 꺼져 갓이 자랐다. 어둠이 스스로 빛난다.' },
+    air: { c: '#6fe0c4', a: 0.24 } },
+  { id: 'corrupt', x0: 3760 + SHIFT, x1: WW, n: '부패한 땅',
+    card: { sub: '동쪽 끝', line: '별이 떨어진 자리. 흙까지 물들어 되돌릴 수 없다.' },
+    air: { c: '#a874e0', a: 0.27 } }];
+for (const b of BIOMES) { b.bx0 = b.x0; b.bx1 = b.x1; }   // 소형 기준 경계 — setWorldSize 가 여기서 다시 잰다
+
+/** 세계 치수와 바이옴 경계를 그 크기로 다시 잰다 — world.js setWorldSize 가 부른다. */
+function applyWorldSize(key) {
+  WSIZE = WORLD_SIZES[key] ? key : 's';
+  WSX = WSY = WORLD_SIZES[WSIZE].k;
+  WW = SX(5000); WH = SY(720);
+  WORLD_BOT = SY(480); SURF_BASE = SY(70); HELL_Y = SY(390); DEEP_Y = SY(280); SKY_Y = SY(40);
+  /* 캠프 구역(안전 지대·곡·원경)은 오두막 셋 x0+2~49 · 광장 x0+38~59 에 맞춘 X1 = X0+66. 100 이던 동안 오른쪽 55칸이 빈 안전 지대였다.
+     ★ 생성 발자국(CAMP_GX1)은 100 그대로 — 줄이면 지형·난수가 밀려 d3 석판 유적 1 이 방 3/16 만 걸어서 닿았다. */
+  CAMP_X0 = SX(1050 + SHIFT) - 50; CAMP_X1 = CAMP_X0 + 66; CAMP_GX1 = CAMP_X0 + 100;
+  SEA_X1 = SX(430); GLACIER_X1 = SX(SHIFT);
+  for (const b of BIOMES) { b.x0 = b.bx0 === 0 ? 0 : SX(b.bx0); b.x1 = b.bx1 >= 5000 ? WW : SX(b.bx1); }
+}
+// ---- src/legacy/data.js ----
+/* ===== data.js — 타일 / 아이템 / 적 / 스킬 / 스토리 ===== */
+'use strict';
+
+/* ---------------- 타일 ---------------- */
 const T = {
   AIR: 0, DIRT: 1, GRASS: 2, STONE: 3, SAND: 4, SANDSTONE: 5, SNOW: 6, ICE: 7,
   WOOD: 8, LEAF: 9, EBONSTONE: 10, CORRUPTGRASS: 11, ASH: 12, OBSIDIAN: 13,
@@ -5940,77 +6004,33 @@ const SIG_FX = {
 };
 /* 입자 전체 상한. */
 const PART_CAP = 900;
+
+/* 아이템 인스턴스 → 정의. */
+function idef(it) { return ITEMS[it.id]; }
+
+/* 설정 기본값. */
+const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1,
+  hud_tabbar: 1, hud_quest: 1, hud_buffs: 1, hud_clock: 1, hud_hotbar: 1,   // 화면 구성 — 끄면 body 에 hide-* 를 단다
+  dlgtype: 1,          // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
+  view: 100, keys: null, notice: null };
 // ---- src/legacy/world.js ----
 /* ===== world.js — 세계 생성 / 충돌 / 조명 ===== */
 'use strict';
 
 const TS = 22;              // 타일 픽셀 크기
-/* ★ 아래 세계 치수는 **세계 크기(소형·중형·대형)마다 다르다** — setWorldSize 가 새 게임·불러오기 때 고쳐 쓴다(let). */
-let WW = 5000;              // 세계 가로(타일, 소형) — 세션 3 지역(바다·빙하)이 왼쪽 800칸(SHIFT)
-// SHIFT(=800)는 data.js에 있다 — RUIN_SPEC 좌표도 같은 값으로 밀어야 해서 거기서 먼저 정의한다.
-let WH = 720;               // 세계 세로(타일) — 세션 3 심해를 담으려고 480에서 늘렸다
-/* 보통 세계의 바닥. */
-let WORLD_BOT = 480;
-let SURF_BASE = 70;         // 기준 지표 높이
-let HELL_Y = 390;           // 지옥 시작 깊이
-let DEEP_Y = 280;           // 심층 시작
-let SKY_Y = 40;             // 하늘 섬 구역 (이보다 위)
 const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buildCaveZones)
 /* 이보다 작고 고립된(지상과 안 통하는) 공동은 동굴로 치지 않고 메운다(타일 수). */
 const MIN_CAVE = 220;
-let CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1066 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
-let CAMP_GX1 = 1100 + SHIFT;                          // 생성 발자국(평탄화·나무·물·자갈 제외)의 오른쪽 끝
 
-/* 세션 3 — 왼쪽으로 갈수록 가라앉은 바다 · 빙하 지대 · 서리 지대 순으로 나온다 — 사연: docs/code-history.md#h101 */
-let SEA_X1 = 430;            // 가라앉은 바다 — 여기부터 왼쪽이 물
 /* 해변 폭. */
 const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 모래 해변이다
 /* 바다 + 해변 — 나무·풀·꽃 같은 지상 초목을 놓지 않는다 — 사연: docs/code-history.md#h102 */
 const inSeaZone = x => x < SEA_X1 + BEACH_W + 4;
-let GLACIER_X1 = SHIFT;      // 빙하 지대 오른쪽 끝 = 원래 세계가 시작하는 자리
-/* 바이옴. */
-const BIOMES = [
-  { id: 'sea', x0: 0, x1: SEA_X1, n: '가라앉은 바다',
-    card: { sub: '가장 먼 서쪽', line: '물이 지운 쪽. 숨을 셈하며 내려가는 곳.' },
-    air: { c: '#2f7fb8', a: 0.22 } },
-  { id: 'glacier', x0: SEA_X1, x1: GLACIER_X1, n: '빙하 지대',
-    card: { sub: '물가 안쪽', line: '바다가 얼어붙은 자리. 밟는 것마다 갈라진다.' },
-    air: { c: '#bfeaf7', a: 0.20 } },
-  { id: 'ice', x0: GLACIER_X1, x1: 620 + SHIFT, n: '서리 지대',
-    card: { sub: '서쪽 끝', line: '눈이 소리를 먹는다. 밟은 자리가 오래 남는 땅.' },
-    air: { c: '#a8c8ee', a: 0.19 } },
-  { id: 'forest', x0: 620 + SHIFT, x1: 1400 + SHIFT, n: '잿빛 숲',
-    card: { sub: '시작한 자리', line: '재가 잎을 대신한 숲. 나무는 서 있으나 그늘이 없다.' },
-    air: { c: '#b0aa90', a: 0.11 } },
-  { id: 'jungle', x0: 1400 + SHIFT, x1: 2000 + SHIFT, n: '울림 정글',
-    card: { sub: '남쪽 골짜기', line: '골이 깊어 소리가 되돌아온다. 젖은 공기가 무겁다.' },
-    air: { c: '#5fbf86', a: 0.15 } },
-  { id: 'desert', x0: 2000 + SHIFT, x1: 2680 + SHIFT, n: '메마른 사구',
-    card: { sub: '가운데 모래', line: '물이 마른 자리에 바람이 길을 낸다. 낮과 밤이 다른 땅.' },
-    air: { c: '#e8be74', a: 0.18 } },
-  { id: 'forest2', x0: 2680 + SHIFT, x1: 3300 + SHIFT, n: '동쪽 숲',
-    card: { sub: '마을 언저리', line: '재가 덜 닿은 숲. 사람이 아직 길을 내고 사는 곳.' },
-    air: { c: '#93c47a', a: 0.15 } },
-  { id: 'glowfen', x0: 3300 + SHIFT, x1: 3760 + SHIFT, n: '버섯 골짜기',
-    card: { sub: '내려앉은 땅', line: '땅이 통째로 꺼져 갓이 자랐다. 어둠이 스스로 빛난다.' },
-    air: { c: '#6fe0c4', a: 0.24 } },
-  { id: 'corrupt', x0: 3760 + SHIFT, x1: WW, n: '부패한 땅',
-    card: { sub: '동쪽 끝', line: '별이 떨어진 자리. 흙까지 물들어 되돌릴 수 없다.' },
-    air: { c: '#a874e0', a: 0.27 } }];
 const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
-for (const b of BIOMES) { b.bx0 = b.x0; b.bx1 = b.x1; }   // 소형 기준 경계 — setWorldSize 가 여기서 다시 잰다
 
-/** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(data.js WORLD_SIZES 의 ★). */
+/** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(치수는 size.js). */
 function setWorldSize(key) {
-  WSIZE = WORLD_SIZES[key] ? key : 's';
-  WSX = WSY = WORLD_SIZES[WSIZE].k;
-  WW = SX(5000); WH = SY(720);
-  WORLD_BOT = SY(480); SURF_BASE = SY(70); HELL_Y = SY(390); DEEP_Y = SY(280); SKY_Y = SY(40);
-  /* 캠프 구역(안전 지대·곡·원경)은 오두막 셋 x0+2~49 · 광장 x0+38~59 에 맞춘 X1 = X0+66. 100 이던 동안 오른쪽 55칸이 빈 안전 지대였다.
-     ★ 생성 발자국(CAMP_GX1)은 100 그대로 — 줄이면 지형·난수가 밀려 d3 석판 유적 1 이 방 3/16 만 걸어서 닿았다. */
-  CAMP_X0 = SX(1050 + SHIFT) - 50; CAMP_X1 = CAMP_X0 + 66; CAMP_GX1 = CAMP_X0 + 100;
-  SEA_X1 = SX(430); GLACIER_X1 = SX(SHIFT);
-  for (const b of BIOMES) { b.x0 = b.bx0 === 0 ? 0 : SX(b.bx0); b.x1 = b.bx1 >= 5000 ? WW : SX(b.bx1); }
+  applyWorldSize(key);
   for (const r of RUIN_SPEC) {
     if (r.bx === undefined) { r.bx = r.x; r.by = r.y; }
     r.x = SX(r.bx); r.y = r.id === 'abyss' ? SYB(r.by) : SY(r.by);
@@ -16668,179 +16688,6 @@ const Art = {
     }
   }
 };
-// ---- src/legacy/titlebg.js ----
-/* js/titlebg.js — 타이틀 화면 배경. */
-const TitleBG = {
-  cv: null, ctx: null, layers: [], flakes: [], player: null,
-  t: 0, last: 0, on: false, still: false, raf: 0, w: 0, h: 0,
-
-  /* 뒤에서 앞으로. */
-  LAYER_SPEC: [
-    { key: 'parallax_sky', speed: 10, y: 6, alpha: 0.55 },
-    { key: 'parallax_village', speed: 26, y: 0, alpha: 0.85 },
-    { key: 'parallax_forest', speed: 58, y: -16, alpha: 1 }
-  ],
-  WALK: [2, 3, 4, 5],          // 캐릭터 시트의 걷기 프레임 (idle1 idle2 walk1..4 …)
-  FPS: 9,
-
-  /* 타이틀 화면이 **실제로 필요로 하는** 그림. */
-  NEEDED: ['parallax_sky', 'parallax_village', 'parallax_forest', 'player_wanderer'],
-
-  /** 필요한 그림 중 몇 장이 준비됐나 — 로딩 진행 표시와 대기 판정에 함께 쓴다 */
-  artReady() {
-    if (typeof Sprites === 'undefined' || !Sprites.img) return 0;
-    let n = 0;
-    for (const k of this.NEEDED) { const im = Sprites.img[k]; if (im && im.width) n++; }
-    return n;
-  },
-
-  init() {
-    this.cv = document.getElementById('title-bg');
-    if (!this.cv) return;
-    this.ctx = this.cv.getContext('2d');
-    this.still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    for (let i = 0; i < 120; i++) {
-      this.flakes.push({ x: Math.random(), y: Math.random(),
-        r: 0.6 + Math.random() * 1.7, vy: 8 + Math.random() * 22,
-        drift: 0.4 + Math.random() * 1.4, ph: Math.random() * 7, a: 0.15 + Math.random() * 0.4 });
-    }
-    addEventListener('resize', () => this.resize());
-    this.resize();
-  },
-
-  /** 그림이 준비됐으면 능선과 사람을 얹는다 — 사연: docs/code-history.md#h89 */
-  useSprites() {
-    if (typeof Sprites === 'undefined' || !Sprites.img) return false;
-    const got = this.LAYER_SPEC
-      .map(s => Object.assign({}, s, { im: Sprites.img[s.key] }))
-      .filter(l => l.im && l.im.width);
-    if (!got.length) return false;              // 아직 안 왔다 — 다음에 다시 본다
-    this.layers = got;
-    // 옛 공용 시트(char/player.png)는 방랑자 시트와 같은 그림이라 지웠다 — 방랑자 시트를 쓴다
-    const im = Sprites.img.player_wanderer;
-    const m = Sprites.meta && Sprites.meta.characters && Sprites.meta.characters.sheets.player_wanderer;
-    // 프레임 크기는 매니페스트에서 가져온다 — 시트를 다시 구우면 여기도 저절로 따라온다
-    if (im && im.width && m) this.player = { im, fw: m.frameW * Sprites.scale, fh: m.frameH * Sprites.scale };
-    if (!this.on) this.frame(0);
-    return true;
-  },
-
-  resize() {
-    if (!this.cv) return;
-    const dpr = Math.min(2, devicePixelRatio || 1);
-    this.w = innerWidth; this.h = innerHeight;
-    this.cv.width = Math.round(this.w * dpr);
-    this.cv.height = Math.round(this.h * dpr);
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (!this.on) this.frame(0);              // 멈춰 있어도 크기가 바뀌면 다시 그린다
-  },
-
-  start() {
-    if (!this.cv || this.on) return;
-    this.on = true; this.last = 0;
-    if (this.still) { this.frame(0); this.on = false; return; }
-    this.raf = requestAnimationFrame(t => this.tick(t));
-  },
-  stop() {
-    this.on = false;
-    if (this.raf) cancelAnimationFrame(this.raf);
-    this.raf = 0;
-  },
-  tick(now) {
-    if (!this.on) return;
-    const dt = this.last ? Math.min(0.05, (now - this.last) / 1000) : 0.016;
-    this.last = now;
-    this.t += dt;
-    this.frame(dt);
-    this.raf = requestAnimationFrame(t => this.tick(t));
-  },
-
-  frame(dt) {
-    const c = this.ctx; if (!c) return;
-    /* 그림이 아직 안 붙었으면 0.4초마다 다시 두드린다. */
-    if (!this.layers.length) {
-      this._try = (this._try || 0) - (dt || 0.016);
-      if (this._try <= 0) { this._try = 0.4; this.useSprites(); }
-    }
-    const W = this.w, H = this.h, t = this.t;
-    const ground = H * 0.93;                  // 사람이 딛는 줄
-    const sc = Math.max(1, (H * 0.62) / 400); // 능선 그림(400px)을 화면 높이에 맞춘 배율
-
-    /* ---- 하늘 (site/hero.js 의 drawSky 와 같은 색) ---- */
-    const sky = c.createLinearGradient(0, 0, 0, ground);
-    sky.addColorStop(0, '#150f0d');
-    sky.addColorStop(0.45, '#24191a');
-    sky.addColorStop(1, '#3a2620');
-    c.fillStyle = sky; c.fillRect(0, 0, W, H);
-
-    /* ---- 떨어진 별이 남긴 잔광 ---- */
-    const gx = W * 0.74, gy = H * 0.2, gr = Math.max(W, H) * 0.42;
-    const glow = c.createRadialGradient(gx, gy, 0, gx, gy, gr);
-    glow.addColorStop(0, 'rgba(249,116,73,0.30)');
-    glow.addColorStop(1, 'rgba(249,116,73,0)');
-    c.fillStyle = glow; c.fillRect(0, 0, W, H);
-
-    /* ---- 시차 능선 — 게임이 쓰는 그림 그대로, 색은 손대지 않는다 ---- */
-    c.imageSmoothingEnabled = false;
-    for (const L of this.layers) {
-      const im = L.im;
-      const w = im.width * sc, h = 400 * sc;
-      const y = ground - h + L.y * sc;
-      const off = -((t * L.speed * sc) % w);
-      c.globalAlpha = L.alpha;
-      for (let x = off; x < W; x += w) c.drawImage(im, Math.round(x), Math.round(y), w, h);
-      c.globalAlpha = 1;
-    }
-
-    /* ---- 걸어가는 사람 — 메뉴를 피해 오른쪽 트인 자리에 ---- */
-    const P = this.player;
-    if (P) {
-      /* 원본의 정수 배로만 키운다. */
-      const k = Math.max(1, Math.min(3, Math.round(H / 820)));
-      const ph = P.fh * k, pw = P.fw * k;
-      const fr = this.WALK[Math.floor(t * this.FPS) % this.WALK.length];
-      const bob = Math.sin(t * this.FPS * Math.PI) * (ph * 0.012);
-      // 칸 맨 아래 한 논리픽셀은 발 밑 여백(tools/mkplayer.py — 32×46 칸) — 그만큼 내려 발을 땅에 붙인다
-      const x = W * (W < 900 ? 0.8 : 0.76), y = ground - ph + 4 * k + bob;
-      c.save();                                          // 발밑 그림자
-      c.globalAlpha = 0.3; c.fillStyle = '#000';
-      c.beginPath();
-      c.ellipse(x + pw / 2, ground + ph * 0.03, pw * 0.34, ph * 0.028, 0, 0, Math.PI * 2);
-      c.fill();
-      c.restore();
-      c.drawImage(P.im, fr * P.fw, 0, P.fw, P.fh, Math.round(x), Math.round(y), Math.round(pw), Math.round(ph));
-    }
-    c.imageSmoothingEnabled = true;
-
-    /* ---- 재 — 비스듬히 내려오는 동그란 점 ---- */
-    c.fillStyle = '#c9bdb0';
-    for (const f of this.flakes) {
-      if (!this.still && dt) {
-        f.y += (f.vy / H) * dt;
-        f.x -= (f.drift * f.vy * 0.5 / W) * dt;
-        if (f.y > 1.01) { f.y = -0.01; f.x = Math.random(); }
-        if (f.x < -0.01) f.x = 1.01;
-      }
-      c.globalAlpha = f.a * (0.7 + 0.3 * Math.sin(t * 1.5 + f.ph));
-      c.beginPath(); c.arc(f.x * W, f.y * H, f.r, 0, Math.PI * 2); c.fill();
-    }
-    c.globalAlpha = 1;
-
-    /* ---- 아래쪽을 바탕색으로 녹인다 (홈페이지와 같은 마무리). */
-    const fade = c.createLinearGradient(0, ground - H * 0.05, 0, ground + H * 0.03);
-    fade.addColorStop(0, 'rgba(13,11,10,0)');
-    fade.addColorStop(1, '#0d0b0a');
-    c.fillStyle = fade; c.fillRect(0, ground - H * 0.05, W, H);
-    c.fillStyle = '#0d0b0a'; c.fillRect(0, ground + H * 0.03, W, H);
-
-    /* ---- 글자가 앉을 가운데를 살짝 눌러 준다 ---- */
-    const vig = c.createRadialGradient(W / 2, H * 0.4, H * 0.12, W / 2, H * 0.4, H * 0.9);
-    vig.addColorStop(0, 'rgba(13,11,10,0.20)');
-    vig.addColorStop(0.5, 'rgba(13,11,10,0.42)');
-    vig.addColorStop(1, 'rgba(13,11,10,0.80)');
-    c.fillStyle = vig; c.fillRect(0, 0, W, H);
-  }
-};
 // ---- src/legacy/sprites.js ----
 /* assets/sprites.js — 손그림 애셋 로더 (선택 사용) index.html의 js/itemart.js 뒤에 <script
    src="assets/sprites.js"></script> 로 추가. */
@@ -17059,6 +16906,179 @@ const Sprites = {
   }
 };
 window.Sprites = Sprites;
+// ---- src/legacy/titlebg.js ----
+/* js/titlebg.js — 타이틀 화면 배경. */
+const TitleBG = {
+  cv: null, ctx: null, layers: [], flakes: [], player: null,
+  t: 0, last: 0, on: false, still: false, raf: 0, w: 0, h: 0,
+
+  /* 뒤에서 앞으로. */
+  LAYER_SPEC: [
+    { key: 'parallax_sky', speed: 10, y: 6, alpha: 0.55 },
+    { key: 'parallax_village', speed: 26, y: 0, alpha: 0.85 },
+    { key: 'parallax_forest', speed: 58, y: -16, alpha: 1 }
+  ],
+  WALK: [2, 3, 4, 5],          // 캐릭터 시트의 걷기 프레임 (idle1 idle2 walk1..4 …)
+  FPS: 9,
+
+  /* 타이틀 화면이 **실제로 필요로 하는** 그림. */
+  NEEDED: ['parallax_sky', 'parallax_village', 'parallax_forest', 'player_wanderer'],
+
+  /** 필요한 그림 중 몇 장이 준비됐나 — 로딩 진행 표시와 대기 판정에 함께 쓴다 */
+  artReady() {
+    if (typeof Sprites === 'undefined' || !Sprites.img) return 0;
+    let n = 0;
+    for (const k of this.NEEDED) { const im = Sprites.img[k]; if (im && im.width) n++; }
+    return n;
+  },
+
+  init() {
+    this.cv = document.getElementById('title-bg');
+    if (!this.cv) return;
+    this.ctx = this.cv.getContext('2d');
+    this.still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for (let i = 0; i < 120; i++) {
+      this.flakes.push({ x: Math.random(), y: Math.random(),
+        r: 0.6 + Math.random() * 1.7, vy: 8 + Math.random() * 22,
+        drift: 0.4 + Math.random() * 1.4, ph: Math.random() * 7, a: 0.15 + Math.random() * 0.4 });
+    }
+    addEventListener('resize', () => this.resize());
+    this.resize();
+  },
+
+  /** 그림이 준비됐으면 능선과 사람을 얹는다 — 사연: docs/code-history.md#h89 */
+  useSprites() {
+    if (typeof Sprites === 'undefined' || !Sprites.img) return false;
+    const got = this.LAYER_SPEC
+      .map(s => Object.assign({}, s, { im: Sprites.img[s.key] }))
+      .filter(l => l.im && l.im.width);
+    if (!got.length) return false;              // 아직 안 왔다 — 다음에 다시 본다
+    this.layers = got;
+    // 옛 공용 시트(char/player.png)는 방랑자 시트와 같은 그림이라 지웠다 — 방랑자 시트를 쓴다
+    const im = Sprites.img.player_wanderer;
+    const m = Sprites.meta && Sprites.meta.characters && Sprites.meta.characters.sheets.player_wanderer;
+    // 프레임 크기는 매니페스트에서 가져온다 — 시트를 다시 구우면 여기도 저절로 따라온다
+    if (im && im.width && m) this.player = { im, fw: m.frameW * Sprites.scale, fh: m.frameH * Sprites.scale };
+    if (!this.on) this.frame(0);
+    return true;
+  },
+
+  resize() {
+    if (!this.cv) return;
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    this.w = innerWidth; this.h = innerHeight;
+    this.cv.width = Math.round(this.w * dpr);
+    this.cv.height = Math.round(this.h * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (!this.on) this.frame(0);              // 멈춰 있어도 크기가 바뀌면 다시 그린다
+  },
+
+  start() {
+    if (!this.cv || this.on) return;
+    this.on = true; this.last = 0;
+    if (this.still) { this.frame(0); this.on = false; return; }
+    this.raf = requestAnimationFrame(t => this.tick(t));
+  },
+  stop() {
+    this.on = false;
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.raf = 0;
+  },
+  tick(now) {
+    if (!this.on) return;
+    const dt = this.last ? Math.min(0.05, (now - this.last) / 1000) : 0.016;
+    this.last = now;
+    this.t += dt;
+    this.frame(dt);
+    this.raf = requestAnimationFrame(t => this.tick(t));
+  },
+
+  frame(dt) {
+    const c = this.ctx; if (!c) return;
+    /* 그림이 아직 안 붙었으면 0.4초마다 다시 두드린다. */
+    if (!this.layers.length) {
+      this._try = (this._try || 0) - (dt || 0.016);
+      if (this._try <= 0) { this._try = 0.4; this.useSprites(); }
+    }
+    const W = this.w, H = this.h, t = this.t;
+    const ground = H * 0.93;                  // 사람이 딛는 줄
+    const sc = Math.max(1, (H * 0.62) / 400); // 능선 그림(400px)을 화면 높이에 맞춘 배율
+
+    /* ---- 하늘 (site/hero.js 의 drawSky 와 같은 색) ---- */
+    const sky = c.createLinearGradient(0, 0, 0, ground);
+    sky.addColorStop(0, '#150f0d');
+    sky.addColorStop(0.45, '#24191a');
+    sky.addColorStop(1, '#3a2620');
+    c.fillStyle = sky; c.fillRect(0, 0, W, H);
+
+    /* ---- 떨어진 별이 남긴 잔광 ---- */
+    const gx = W * 0.74, gy = H * 0.2, gr = Math.max(W, H) * 0.42;
+    const glow = c.createRadialGradient(gx, gy, 0, gx, gy, gr);
+    glow.addColorStop(0, 'rgba(249,116,73,0.30)');
+    glow.addColorStop(1, 'rgba(249,116,73,0)');
+    c.fillStyle = glow; c.fillRect(0, 0, W, H);
+
+    /* ---- 시차 능선 — 게임이 쓰는 그림 그대로, 색은 손대지 않는다 ---- */
+    c.imageSmoothingEnabled = false;
+    for (const L of this.layers) {
+      const im = L.im;
+      const w = im.width * sc, h = 400 * sc;
+      const y = ground - h + L.y * sc;
+      const off = -((t * L.speed * sc) % w);
+      c.globalAlpha = L.alpha;
+      for (let x = off; x < W; x += w) c.drawImage(im, Math.round(x), Math.round(y), w, h);
+      c.globalAlpha = 1;
+    }
+
+    /* ---- 걸어가는 사람 — 메뉴를 피해 오른쪽 트인 자리에 ---- */
+    const P = this.player;
+    if (P) {
+      /* 원본의 정수 배로만 키운다. */
+      const k = Math.max(1, Math.min(3, Math.round(H / 820)));
+      const ph = P.fh * k, pw = P.fw * k;
+      const fr = this.WALK[Math.floor(t * this.FPS) % this.WALK.length];
+      const bob = Math.sin(t * this.FPS * Math.PI) * (ph * 0.012);
+      // 칸 맨 아래 한 논리픽셀은 발 밑 여백(tools/mkplayer.py — 32×46 칸) — 그만큼 내려 발을 땅에 붙인다
+      const x = W * (W < 900 ? 0.8 : 0.76), y = ground - ph + 4 * k + bob;
+      c.save();                                          // 발밑 그림자
+      c.globalAlpha = 0.3; c.fillStyle = '#000';
+      c.beginPath();
+      c.ellipse(x + pw / 2, ground + ph * 0.03, pw * 0.34, ph * 0.028, 0, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+      c.drawImage(P.im, fr * P.fw, 0, P.fw, P.fh, Math.round(x), Math.round(y), Math.round(pw), Math.round(ph));
+    }
+    c.imageSmoothingEnabled = true;
+
+    /* ---- 재 — 비스듬히 내려오는 동그란 점 ---- */
+    c.fillStyle = '#c9bdb0';
+    for (const f of this.flakes) {
+      if (!this.still && dt) {
+        f.y += (f.vy / H) * dt;
+        f.x -= (f.drift * f.vy * 0.5 / W) * dt;
+        if (f.y > 1.01) { f.y = -0.01; f.x = Math.random(); }
+        if (f.x < -0.01) f.x = 1.01;
+      }
+      c.globalAlpha = f.a * (0.7 + 0.3 * Math.sin(t * 1.5 + f.ph));
+      c.beginPath(); c.arc(f.x * W, f.y * H, f.r, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+
+    /* ---- 아래쪽을 바탕색으로 녹인다 (홈페이지와 같은 마무리). */
+    const fade = c.createLinearGradient(0, ground - H * 0.05, 0, ground + H * 0.03);
+    fade.addColorStop(0, 'rgba(13,11,10,0)');
+    fade.addColorStop(1, '#0d0b0a');
+    c.fillStyle = fade; c.fillRect(0, ground - H * 0.05, W, H);
+    c.fillStyle = '#0d0b0a'; c.fillRect(0, ground + H * 0.03, W, H);
+
+    /* ---- 글자가 앉을 가운데를 살짝 눌러 준다 ---- */
+    const vig = c.createRadialGradient(W / 2, H * 0.4, H * 0.12, W / 2, H * 0.4, H * 0.9);
+    vig.addColorStop(0, 'rgba(13,11,10,0.20)');
+    vig.addColorStop(0.5, 'rgba(13,11,10,0.42)');
+    vig.addColorStop(1, 'rgba(13,11,10,0.80)');
+    c.fillStyle = vig; c.fillRect(0, 0, W, H);
+  }
+};
 // ---- src/legacy/entity.js ----
 /* ===== entity.js — 아이템 인스턴스 / 플레이어 / 적 / 투사체 ===== */
 'use strict';
@@ -17084,7 +17104,6 @@ function makeItem(id, count = 1, rarity = 0, affixes = null) {
   if (affixes && affixes.length) it.a = affixes;
   return it;
 }
-function idef(it) { return ITEMS[it.id]; }
 function maxStack(it) { return idef(it).stack || 1; }
 function isGear(it) { const t = idef(it).type; return t === 'weapon' || t === 'armor' || t === 'acc' || t === 'tool' || t === 'bag' || t === 'pet'; }
 /* 장비 최소 착용 레벨. */
@@ -23195,11 +23214,6 @@ const SaveStore = {
   }
 };
 const SET_KEY = 'ashfall_settings';
-/* 설정 기본값. */
-const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1,
-  hud_tabbar: 1, hud_quest: 1, hud_buffs: 1, hud_clock: 1, hud_hotbar: 1,   // 화면 구성 — 끄면 body 에 hide-* 를 단다
-  dlgtype: 1,          // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
-  view: 100, keys: null, notice: null };
 // 완전한 암흑(0)은 지도에 남기지 않는다.
 const MAP_REVEAL_LIGHT = 1;
 

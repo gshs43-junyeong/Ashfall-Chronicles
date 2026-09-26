@@ -2,72 +2,19 @@
 'use strict';
 
 const TS = 22;              // 타일 픽셀 크기
-/* ★ 아래 세계 치수는 **세계 크기(소형·중형·대형)마다 다르다** — setWorldSize 가 새 게임·불러오기 때 고쳐 쓴다(let). */
-let WW = 5000;              // 세계 가로(타일, 소형) — 세션 3 지역(바다·빙하)이 왼쪽 800칸(SHIFT)
-// SHIFT(=800)는 data.js에 있다 — RUIN_SPEC 좌표도 같은 값으로 밀어야 해서 거기서 먼저 정의한다.
-let WH = 720;               // 세계 세로(타일) — 세션 3 심해를 담으려고 480에서 늘렸다
-/* 보통 세계의 바닥. */
-let WORLD_BOT = 480;
-let SURF_BASE = 70;         // 기준 지표 높이
-let HELL_Y = 390;           // 지옥 시작 깊이
-let DEEP_Y = 280;           // 심층 시작
-let SKY_Y = 40;             // 하늘 섬 구역 (이보다 위)
 const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buildCaveZones)
 /* 이보다 작고 고립된(지상과 안 통하는) 공동은 동굴로 치지 않고 메운다(타일 수). */
 const MIN_CAVE = 220;
-let CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1066 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
-let CAMP_GX1 = 1100 + SHIFT;                          // 생성 발자국(평탄화·나무·물·자갈 제외)의 오른쪽 끝
 
-/* 세션 3 — 왼쪽으로 갈수록 가라앉은 바다 · 빙하 지대 · 서리 지대 순으로 나온다 — 사연: docs/code-history.md#h101 */
-let SEA_X1 = 430;            // 가라앉은 바다 — 여기부터 왼쪽이 물
 /* 해변 폭. */
 const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 모래 해변이다
 /* 바다 + 해변 — 나무·풀·꽃 같은 지상 초목을 놓지 않는다 — 사연: docs/code-history.md#h102 */
 const inSeaZone = x => x < SEA_X1 + BEACH_W + 4;
-let GLACIER_X1 = SHIFT;      // 빙하 지대 오른쪽 끝 = 원래 세계가 시작하는 자리
-/* 바이옴. */
-const BIOMES = [
-  { id: 'sea', x0: 0, x1: SEA_X1, n: '가라앉은 바다',
-    card: { sub: '가장 먼 서쪽', line: '물이 지운 쪽. 숨을 셈하며 내려가는 곳.' },
-    air: { c: '#2f7fb8', a: 0.22 } },
-  { id: 'glacier', x0: SEA_X1, x1: GLACIER_X1, n: '빙하 지대',
-    card: { sub: '물가 안쪽', line: '바다가 얼어붙은 자리. 밟는 것마다 갈라진다.' },
-    air: { c: '#bfeaf7', a: 0.20 } },
-  { id: 'ice', x0: GLACIER_X1, x1: 620 + SHIFT, n: '서리 지대',
-    card: { sub: '서쪽 끝', line: '눈이 소리를 먹는다. 밟은 자리가 오래 남는 땅.' },
-    air: { c: '#a8c8ee', a: 0.19 } },
-  { id: 'forest', x0: 620 + SHIFT, x1: 1400 + SHIFT, n: '잿빛 숲',
-    card: { sub: '시작한 자리', line: '재가 잎을 대신한 숲. 나무는 서 있으나 그늘이 없다.' },
-    air: { c: '#b0aa90', a: 0.11 } },
-  { id: 'jungle', x0: 1400 + SHIFT, x1: 2000 + SHIFT, n: '울림 정글',
-    card: { sub: '남쪽 골짜기', line: '골이 깊어 소리가 되돌아온다. 젖은 공기가 무겁다.' },
-    air: { c: '#5fbf86', a: 0.15 } },
-  { id: 'desert', x0: 2000 + SHIFT, x1: 2680 + SHIFT, n: '메마른 사구',
-    card: { sub: '가운데 모래', line: '물이 마른 자리에 바람이 길을 낸다. 낮과 밤이 다른 땅.' },
-    air: { c: '#e8be74', a: 0.18 } },
-  { id: 'forest2', x0: 2680 + SHIFT, x1: 3300 + SHIFT, n: '동쪽 숲',
-    card: { sub: '마을 언저리', line: '재가 덜 닿은 숲. 사람이 아직 길을 내고 사는 곳.' },
-    air: { c: '#93c47a', a: 0.15 } },
-  { id: 'glowfen', x0: 3300 + SHIFT, x1: 3760 + SHIFT, n: '버섯 골짜기',
-    card: { sub: '내려앉은 땅', line: '땅이 통째로 꺼져 갓이 자랐다. 어둠이 스스로 빛난다.' },
-    air: { c: '#6fe0c4', a: 0.24 } },
-  { id: 'corrupt', x0: 3760 + SHIFT, x1: WW, n: '부패한 땅',
-    card: { sub: '동쪽 끝', line: '별이 떨어진 자리. 흙까지 물들어 되돌릴 수 없다.' },
-    air: { c: '#a874e0', a: 0.27 } }];
 const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
-for (const b of BIOMES) { b.bx0 = b.x0; b.bx1 = b.x1; }   // 소형 기준 경계 — setWorldSize 가 여기서 다시 잰다
 
-/** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(data.js WORLD_SIZES 의 ★). */
+/** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(치수는 size.js). */
 function setWorldSize(key) {
-  WSIZE = WORLD_SIZES[key] ? key : 's';
-  WSX = WSY = WORLD_SIZES[WSIZE].k;
-  WW = SX(5000); WH = SY(720);
-  WORLD_BOT = SY(480); SURF_BASE = SY(70); HELL_Y = SY(390); DEEP_Y = SY(280); SKY_Y = SY(40);
-  /* 캠프 구역(안전 지대·곡·원경)은 오두막 셋 x0+2~49 · 광장 x0+38~59 에 맞춘 X1 = X0+66. 100 이던 동안 오른쪽 55칸이 빈 안전 지대였다.
-     ★ 생성 발자국(CAMP_GX1)은 100 그대로 — 줄이면 지형·난수가 밀려 d3 석판 유적 1 이 방 3/16 만 걸어서 닿았다. */
-  CAMP_X0 = SX(1050 + SHIFT) - 50; CAMP_X1 = CAMP_X0 + 66; CAMP_GX1 = CAMP_X0 + 100;
-  SEA_X1 = SX(430); GLACIER_X1 = SX(SHIFT);
-  for (const b of BIOMES) { b.x0 = b.bx0 === 0 ? 0 : SX(b.bx0); b.x1 = b.bx1 >= 5000 ? WW : SX(b.bx1); }
+  applyWorldSize(key);
   for (const r of RUIN_SPEC) {
     if (r.bx === undefined) { r.bx = r.x; r.by = r.y; }
     r.x = SX(r.bx); r.y = r.id === 'abyss' ? SYB(r.by) : SY(r.by);

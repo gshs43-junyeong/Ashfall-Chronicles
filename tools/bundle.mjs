@@ -16,7 +16,7 @@ const SRC = path.join(ROOT, 'src', 'legacy');
 const OUT = path.join(ROOT, 'game', 'js', 'ashfall.js');
 
 /* 읽는 순서 — 예전 index.html 의 <script> 순서 그대로(sprites-manifest 는 번들 밖, 먼저 읽힌다). */
-export const ORDER = ['util', 'data', 'world', 'tileart', 'itemart', 'titlebg', 'sprites',
+export const ORDER = ['util', 'size', 'data', 'world', 'tileart', 'itemart', 'sprites', 'titlebg',
   'entity', 'factory', 'ui', 'music', 'game'];
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
