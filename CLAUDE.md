@@ -112,7 +112,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `src/legacy/tileart.js` · `itemart.js` · `sprites.js` | 절차 생성 그림(아틀라스) · 스프라이트 로더 |
 | `src/legacy/ui.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` | 그 이름대로 |
 | `src/legacy/main.js` · `ctx.js` | 묶는 입구(모듈 순서 · 디버그 창구) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
-| `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기) · `input`(키·액션 매핑 · 마우스 · 터치 뼈대) · `tilemap`(`TileMap` — `World extends TileMap` · 빛 퍼뜨리기) · `render`(파이프라인 단계 · 아틀라스 굽기 · 연결 타일 틀). 게임 고유값은 `create*({…})` 설정으로 받는다 |
+| `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기) · `input`(키·액션 매핑 · 마우스 · 터치 뼈대) · `tilemap`(`TileMap` — `World extends TileMap` · 빛 퍼뜨리기) · `render`(파이프라인 단계 · 아틀라스 굽기 · 연결 타일 틀) · `entity`(`Entity` — `Ent extends Entity` · 칸 충돌 이동 조각) · `scene`(씬 스택 — `G.state`·`paused`·`uiOpen` 은 접근자) · `ui`(패널 · 툴팁 · 슬롯 칸). 게임 고유값은 `create*({…})` 설정으로 받는다 |
 | `tools/imports.mjs` | 코드를 옮긴 뒤 `src/legacy` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
 | `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/` |
@@ -284,7 +284,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-26)
 
-- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 끝. 다음은 P6(엔티티·씬·UI 틀).
+- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 끝. 다음은 P7(i18n + ko 추출). 도중에 찾은 버그는 계획서 §9-1 에 모아 P11 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
   도중에 찾은 버그·새 기능 요청은 계획서 §9-1 에 모아 두고 **v1.1.1 이 끝난 뒤** 한꺼번에 한다(사용자 결정).
@@ -450,6 +450,6 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1`이다.
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 엔진화·모듈 분리·TS·다국어·모바일·Docker — 계획과 단계별 프롬프트는
   [`docs/v1.1.1-engine-plan.md`](docs/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
-  `World extends TileMap` · 번역 Claude/검수 Grok · 폰 가로+태블릿) / 그 밖에 조작 커스터마이징·설정·날씨 /
-  v1.2.0 데코레이션·멀티플레이. 멀티플레이는 지금 구조(전역 `G` 하나 +
+  `World extends TileMap` · 번역 Claude/검수 Grok · 폰 가로+태블릿) / v1.1.1 뒤 몰아서 할 수정(계획서 §9-1 — 해·비·세이브 삭제 팝업·사이트 재구성·영어 화면 다시 찍기) /
+  v1.1.2 멀티플레이 · 한글·영문 글꼴 · 무서명 Electron(§9-2) / v1.2.0 데코레이션. 엔진화 도중 게임플레이 개선은 넣어도 된다(따로 '바꾸는 커밋'). 멀티플레이는 지금 구조(전역 `G` 하나 +
   브라우저 안 세이브 + 절차 생성 월드)와 정면으로 부딪히므로 구조 논의가 먼저다.
