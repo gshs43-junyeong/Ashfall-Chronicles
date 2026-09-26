@@ -5,10 +5,10 @@
    "ui.refreshMachine"
   ],
   "({item|을} 뽑아낸다)": [
-   "game.readTerminal"
+   "game/fishing.readTerminal"
   ],
   "({to}(으)로 이동한다)": [
-   "game.useWaystone"
+   "game/village.useWaystone"
   ],
   "(계속한다)": [
    "ui.storyScene"
@@ -17,17 +17,17 @@
    "ui.showTip"
   ],
   "(그냥 둔다)": [
-   "game.wakeLair",
-   "game.openEcho"
+   "game/ruin-pulse.openEcho",
+   "game/village.wakeLair"
   ],
   "(금화 {cost}개를 던진다)": [
-   "game.useFountain"
+   "game/village.useFountain"
   ],
   "(금화가 모자란다)": [
-   "game.useMystic"
+   "game/ruin-map.useMystic"
   ],
   "(깨운다)": [
-   "game.wakeLair"
+   "game/village.wakeLair"
   ],
   "(끝까지 키웠다)": [
    "ui.showTip"
@@ -36,7 +36,7 @@
    "ui.storyScene"
   ],
   "(다음에 하겠다)": [
-   "game.sideTalk"
+   "game/village.sideTalk"
   ],
   "(대화를 마친다)": [
    "ui.showChoices"
@@ -45,28 +45,28 @@
    "ui.showChoices"
   ],
   "(룬 조각을 떼어낸다)": [
-   "game.readTablet"
+   "game/village.readTablet"
   ],
   "(메아리를 부른다 — {lv}단계{v})": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "(물러난다)": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "(보상을 받는다)": [
-   "game.sideTalk"
+   "game/village.sideTalk"
   ],
   "(비문을 옮겨 적는다)": [
-   "game.readRuinLore"
+   "game/village.readRuinLore"
   ],
   "(수락한다)": [
-   "game.sideTalk"
+   "game/village.sideTalk"
   ],
   "(여정을 시작한다)": [
-   "game.talkTo"
+   "game/village.talkTo"
   ],
   "(우클릭)": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "(재료가 다 들어 있으면 초록 · 지금 만드는 것은 금색)": [
    "ui.refreshMachine"
@@ -93,7 +93,7 @@
    "ui.showTip"
   ],
   "(🪙 {cost} 내고 잔다)": [
-   "game.useInn"
+   "game/village.useInn"
   ],
   "+{e} → +{n} · 🪙 {cost} · {item} {mat}개": [
    "ui.enter"
@@ -108,7 +108,7 @@
    "ui.refreshQuest"
   ],
   "<b>맨손</b>": [
-   "game.kit"
+   "game/save.kit"
   ],
   "<em>{n}초</em>": [
    "ui.refreshMachine"
@@ -156,28 +156,28 @@
    "world.checkDawnLayout"
   ],
   "{E} — 놓쳤다. 유적이 더 깨어난다": [
-   "game.endPulseEvent"
+   "game/ruin-pulse.endPulseEvent"
   ],
   "{E} — 해냈다 · 금화 {gold}{v}": [
-   "game.endPulseEvent"
+   "game/ruin-pulse.endPulseEvent"
   ],
   "{P} {P2} 숙련 {lv}{v}": [
-   "game.onProfUp"
+   "game/progress.onProfUp"
   ],
   "{P} 숙련 {lv}": [
-   "game.onProfUp"
+   "game/progress.onProfUp"
   ],
   "{ask|을} 다 넣어야 한다": [
-   "game.tryCodeDoor"
+   "game/ruin-map.tryCodeDoor"
   ],
   "{buff} 효과": [
    "ui.showTip"
   ],
   "{desc}\n(보상은 🪙 {gold} · 경험치 {xp})": [
-   "game.sideTalk"
+   "game/village.sideTalk"
   ],
   "{enemy|이} 깨어났다!": [
-   "game.spawnBoss"
+   "game/altar.spawnBoss"
   ],
   "{enemy} {n}{mobCw}. 세어서 와. 몇을 쓰러뜨렸는지 모르는 놈은 제 실력도 모른다.": [
    "data"
@@ -186,31 +186,31 @@
    "data"
   ],
   "{enemy} 토벌!": [
-   "game.onBossDown"
+   "game/altar.onBossDown"
   ],
   "{enemy}에게서 이상한 마력이 느껴져. {n}마리만 처리해 줘.": [
    "data"
   ],
   "{e} {e2|이} 지나갔다": [
-   "game.updateEvents"
+   "game/spawn.updateEvents"
   ],
   "{idef} — {lv}레벨이 되었다": [
    "entity.addPetXp"
   ],
   "{itemName} — 결이 어긋났다. 단계는 그대로다": [
-   "game.enhanceSlot"
+   "game/village.enhanceSlot"
   ],
   "{itemName} — 다시 벼렸다": [
-   "game.reforgeSlot"
+   "game/village.reforgeSlot"
   ],
   "{itemName} — 쇠가 갈라졌다. 한 단계 떨어진다 (+{e} → +{n})": [
-   "game.enhanceSlot"
+   "game/village.enhanceSlot"
   ],
   "{itemName} — 이 유적의 것": [
-   "game.interact"
+   "game/fishing.interact"
   ],
   "{itemName} — 한 겹 더 두들겼다": [
-   "game.enhanceSlot"
+   "game/village.enhanceSlot"
   ],
   "{itemName} 잠금": [
    "ui.bagClick"
@@ -219,19 +219,19 @@
    "ui.bagClick"
   ],
   "{itemName} 판매 — 🪙 {price}": [
-   "game.sellItem"
+   "game/altar.sellItem"
   ],
   "{itemName} 획득": [
-   "game.onPickup"
+   "game/progress.onPickup"
   ],
   "{item|이} {n}개 필요해. 마법 재료야.": [
    "data"
   ],
   "{item|이} 필요하다": [
-   "game.altar"
+   "game/altar.altar"
   ],
   "{item} {mat}개가 필요하다": [
-   "game.enhanceSlot"
+   "game/village.enhanceSlot"
   ],
   "{item} {n}개. 조각을 재우는 건 못 하지만, 꿈을 얕게는 만들 수 있어.": [
    "data"
@@ -243,20 +243,20 @@
    "data"
   ],
   "{item} {o}개": [
-   "game.objLabel"
+   "game/village.objLabel"
   ],
   "{item} 구매": [
-   "game.buyStock",
-   "game.buy"
+   "game/village.buyStock",
+   "game/village.buy"
   ],
   "{item} 제작 완료": [
-   "game.craft"
+   "game/altar.craft"
   ],
   "{item} 획득": [
-   "game.fn"
+   "game/fishing.fn"
   ],
   "{item}{item|을} 벨트에서 집었다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "{kind} · {rank}/{max} 랭크": [
    "ui.showSkillTip"
@@ -265,52 +265,52 @@
    "ui.refreshVault"
   ],
   "{label} {n}% (지금 {n2}%)": [
-   "game.surveyScore"
+   "game/ruin-pulse.surveyScore"
   ],
   "{label} {v} (지금 {q})": [
-   "game.surveyScore"
+   "game/ruin-pulse.surveyScore"
   ],
   "{nm|으로} 개조해야 만들 수 있다": [
-   "game.craft"
+   "game/altar.craft"
   ],
   "{nm|으로} 개조했다": [
-   "game.upgradeStation"
+   "game/altar.upgradeStation"
   ],
   "{npc}의 상점 — 🪙 {gold} · 환율 {rate}%{arrow}": [
    "ui.shopTitle"
   ],
   "{n}/{max}단계": [
-   "game.objProgress"
+   "game/progress.objProgress"
   ],
   "{n}초": [
-   "game.drawPulse"
+   "game/ruin-pulse.drawPulse"
   ],
   "{n}칸을 되돌렸다 — 이어하기에서 고르면 된다": [
-   "game.importSaves"
+   "game/save.importSaves"
   ],
   "{n}칸을 파일로 내보냈다": [
-   "game.exportSaves"
+   "game/save.exportSaves"
   ],
   "{oxyMax}초": [
    "ui.refreshStatSheet"
   ],
   "{o} 글자": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "{o} 홈": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "{pet|을} 얻었다! (장비창의 펫 칸에 끼울 수 있다)": [
-   "game.hatchEgg"
+   "game/altar.hatchEgg"
   ],
   "{rowsCount}개 표시": [
    "ui.refreshCraft"
   ],
   "{session} · 목표 — {v}": [
-   "game.tellQuest"
+   "game/village.tellQuest"
   ],
   "{session} · 준비 {done}/{need}": [
-   "game.tellQuest"
+   "game/village.tellQuest"
   ],
   "{sk} 습득 ({skills}/{max})": [
    "ui.learn"
@@ -319,19 +319,19 @@
    "ui.showTip"
   ],
   "{spec|을} 거의 다 봤다 — 금화 {gold} · 맥박 결정 셋": [
-   "game.checkSurvey"
+   "game/ruin-pulse.checkSurvey"
   ],
   "{spec} — 메아리": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "{spec} — 빈 둥지": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "{stationName} 앞에서만 개조할 수 있다": [
-   "game.upgradeStation"
+   "game/altar.upgradeStation"
   ],
   "{stationName} 앞에서만 만들 수 있다": [
-   "game.craft"
+   "game/altar.craft"
   ],
   "{tileDef|을} {n}번 깨 와. 주워 온 것 말고 네가 깬 걸로.": [
    "data"
@@ -343,7 +343,7 @@
    "data"
   ],
   "{tileDef} {o}번": [
-   "game.objLabel"
+   "game/village.objLabel"
   ],
   "{tileDef}에 별빛이 스며 있어. {n}번만 깨 와 줘. 깨야 보여.": [
    "data"
@@ -352,19 +352,19 @@
    "ui.storyScene"
   ],
   "{to}에 도착했다": [
-   "game.fn"
+   "game/village.fn"
   ],
   "{v}배": [
    "ui.refreshStatSheet"
   ],
   "{v}으로 {dx}칸 떨어진 곳에": [
-   "game.meteorImpact"
+   "game/meteor.meteorImpact"
   ],
   "{v}의 자리를 알았다 — 나침반을 보라": [
-   "game.useRuinMap"
+   "game/ruin-map.useRuinMap"
   ],
   "{wave}/3 무리": [
-   "game.drawPulse"
+   "game/ruin-pulse.drawPulse"
   ],
   "· <b>{clearedN}개</b> 완료": [
    "ui.refreshQuest"
@@ -376,22 +376,22 @@
    "ui.showTip"
   ],
   "· {ripe}칸은 다 여물었다": [
-   "game.growCropsDaily"
+   "game/act.growCropsDaily"
   ],
   "· 끝까지 넘겼다": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "· 다시": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "· 다음 {next}단계 — {bn} 체력·공격 ×{mul}": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "· 마나 {mana} · 재사용 {cd}초": [
    "ui.showSkillTip"
   ],
   "· 맥박 -": [
-   "game.endPulseEvent"
+   "game/ruin-pulse.endPulseEvent"
   ],
   "· 방향 <b>{dirName}</b>": [
    "ui.machLive"
@@ -412,7 +412,7 @@
    "index.html"
   ],
   "· 처음": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "· 축전 <b>{e}</b>/{emax}": [
    "ui.machLive"
@@ -427,7 +427,7 @@
    "ui.refreshAnvil"
   ],
   "· 호위 {n}": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "— {n}% · {n2}초 남음": [
    "ui.machLive"
@@ -436,16 +436,16 @@
    "ui.refreshMachine"
   ],
   "— 여기까지가 지금까지 쓰인 이야기다 —": [
-   "game.checkChapter"
+   "game/progress.checkChapter"
   ],
   "— 이 유적에서 찾은 쪽지 {seen}/3": [
-   "game.readCipherNote"
+   "game/ruin-map.readCipherNote"
   ],
   "— 전부 지났다.": [
    "ui.refreshQuest"
   ],
   "— 지도의 자리": [
-   "game.questTargets"
+   "game/progress.questTargets"
   ],
   "…그래. 아직은 이것으로 되는군. 다음에는 더 있어야 할 게다.": [
    "data"
@@ -475,31 +475,31 @@
    "ui.refreshChest"
   ],
   "☄ 운석에 맞았다.": [
-   "game.meteorImpact"
+   "game/meteor.meteorImpact"
   ],
   "☄ 운석이 {where} 떨어졌다. 땅이 울린다.": [
-   "game.meteorImpact"
+   "game/meteor.meteorImpact"
   ],
   "☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!": [
-   "game.startMeteor"
+   "game/meteor.startMeteor"
   ],
   "⤓ 전부 가방으로": [
    "ui.refreshMachine"
   ],
   "『{o} 글자는 {ans}』": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "『{o} 자리는 {ans}』": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "『{title}』 완료 — 경험치 {xp} · 금화 {gold}": [
-   "game.checkChapter"
+   "game/progress.checkChapter"
   ],
   "『세 석판을 모두 읽은 자만이 이 문을 연다.』": [
-   "game.openSeal"
+   "game/village.openSeal"
   ],
   "『이 벽은 밖에서 열리지 않습니다.』": [
-   "game.openSeal"
+   "game/village.openSeal"
   ],
   "가격 🪙 {price}": [
    "ui.enter"
@@ -540,18 +540,18 @@
    "ui.refreshAnvil"
   ],
   "가방에서 {lostItemsCount}칸이 떨어졌다.": [
-   "game.onDeath"
+   "game/progress.onDeath"
   ],
   "가방을 정리했다": [
    "ui.sortBag"
   ],
   "가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라": [
-   "game.mine"
+   "game/act.mine"
   ],
   "가방이 가득 찼다": [
-   "game.rightClick",
-   "game.buyStock",
-   "game.buy",
+   "game/act.rightClick",
+   "game/village.buyStock",
+   "game/village.buy",
    "ui.refreshMachine",
    "ui.click",
    "ui.refreshVault"
@@ -560,7 +560,7 @@
    "game.update"
   ],
   "가운데에 손바닥만 한 홈이 하나 파여 있다 — 안쪽에서 만든 것만 맞는 크기다.": [
-   "game.openSeal"
+   "game/village.openSeal"
   ],
   "가져오기": [
    "index.html"
@@ -578,7 +578,7 @@
    "ui.showTip"
   ],
   "갈아 둔 밭 위에만 심을 수 있다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "갑옷": [
    "index.html"
@@ -620,16 +620,16 @@
    "data.mobName"
   ],
   "거기에 {k|을} 더해야 홈이 물린다.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "거꾸로 읽어 낸 수가 아직 답은 아니다.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "거짓으로 새긴 것": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "건드리면 깨어난다.": [
-   "game.wakeLair"
+   "game/village.wakeLair"
   ],
   "건축": [
    "ui.refreshCraft"
@@ -650,7 +650,7 @@
    "ui.renderRuins"
   ],
   "격노 속에서 주인을 쓰러뜨렸다 — 맥박 결정 셋": [
-   "game.pulseBossDown"
+   "game/ruin-pulse.pulseBossDown"
   ],
   "겹침: {slotKey}({tx0}~{tx1}) ↔ {slotKey2}({tx02}~{tx12})": [
    "world.checkDawnLayout"
@@ -662,7 +662,7 @@
    "game.update"
   ],
   "경험치 {lostXp}, 금화 {lostG}개를 잃었다.": [
-   "game.onDeath"
+   "game/progress.onDeath"
   ],
   "계속하기": [
    "index.html"
@@ -671,7 +671,7 @@
    "ui.showTip"
   ],
   "고인 물속 바닥에만 놓을 수 있다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "골방": [
    "ui.renderRuins"
@@ -690,22 +690,22 @@
    "ui.showTip"
   ],
   "공격력도 방어력도 없는 것은 벼릴 데가 없다": [
-   "game.enhanceSlot"
+   "game/village.enhanceSlot"
   ],
   "공명석 — {n}/3": [
-   "game.updatePulseEvent"
+   "game/ruin-pulse.updatePulseEvent"
   ],
   "공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다": [
-   "game.buildDebugFactory"
+   "game/fishing.buildDebugFactory"
   ],
   "공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다.": [
-   "game.useRig"
+   "game/spawn.useRig"
   ],
   "공창이 멈추기 전에는 손댈 엄두가 안 난다.": [
-   "game.useRig"
+   "game/spawn.useRig"
   ],
   "공창이 멈춘 뒤로 이 탑도 더는 돌지 않는다.": [
-   "game.useRig"
+   "game/spawn.useRig"
   ],
   "과열 — 식는 중": [
    "ui.updateHUD"
@@ -729,19 +729,19 @@
    "world.checkDawnLayout"
   ],
   "귀환 비석": [
-   "game.useWaystone",
-   "game.drawCursor"
+   "game/corpse.drawCursor",
+   "game/village.useWaystone"
   ],
   "그 뒤": [
    "ui.refreshQuest"
   ],
   "그 자리에는 놓을 수 없다": [
-   "game.rightClick",
-   "game.placeStation",
-   "game.placeDoor"
+   "game/act.rightClick",
+   "game/act.placeStation",
+   "game/act.placeDoor"
   ],
   "그러면 우리가 원래 적으려 한 수가 나온다.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "그림 애셋": [
    "index.html"
@@ -765,26 +765,26 @@
    "game.update"
   ],
   "금화 {gold}": [
-   "game.kit"
+   "game/save.kit"
   ],
   "금화가 모자란다": [
-   "game.fn"
+   "game/ruin-map.fn"
   ],
   "금화가 부족하다": [
-   "game.fn",
-   "game.enhanceSlot",
-   "game.reforgeSlot",
-   "game.buyStock",
-   "game.buy",
-   "game.respecStats",
-   "game.trainXp"
+   "game/altar.respecStats",
+   "game/altar.trainXp",
+   "game/village.fn",
+   "game/village.enhanceSlot",
+   "game/village.reforgeSlot",
+   "game/village.buyStock",
+   "game/village.buy"
   ],
   "기계": [
    "ui.showTip",
    "index.html"
   ],
   "기록을 불러오는 중…": [
-   "game.loadGame"
+   "game/save.loadGame"
   ],
   "기본": [
    "ui.refreshStatSheet"
@@ -811,7 +811,7 @@
    "index.html"
   ],
   "나머지는 다른 방에 나누어 적었다 — 한 사람이 다 알면 안 되었으므로.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭": [
    "game._newGame"
@@ -823,19 +823,19 @@
    "ui.bagClick"
   ],
   "낚싯줄을 거두었다": [
-   "game.tryFish"
+   "game/fishing.tryFish"
   ],
   "낚싯줄을 드리웠다": [
-   "game.tryFish"
+   "game/fishing.tryFish"
   ],
   "낚았다 — {itemName}{v}": [
-   "game.resolveFish"
+   "game/fishing.resolveFish"
   ],
   "난이도": [
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "낫 없이 거두면 다 으스러진다 — 낫이 필요하다": [
-   "game.mine"
+   "game/act.mine"
   ],
   "낮추면 화면 픽셀이 줄어 폰에서 더 부드럽게 돕니다. 자동은 폰 절약 · 태블릿 보통 · 컴퓨터 높음입니다.": [
    "index.html"
@@ -844,21 +844,21 @@
    "data"
   ],
   "내보내기 실패": [
-   "game.exportSaves"
+   "game/save.exportSaves"
   ],
   "내보낼 기록이 없다": [
-   "game.exportSaves"
+   "game/save.exportSaves"
   ],
   "냉기 부여": [
    "ui.showTip"
   ],
   "너무 멀다": [
-   "game.placeStation",
-   "game.placeDoor",
-   "game.tryFish"
+   "game/act.placeStation",
+   "game/act.placeDoor",
+   "game/fishing.tryFish"
   ],
   "넘긴 메아리 {best} / {max}": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "넣기": [
    "index.html"
@@ -870,7 +870,7 @@
    "ui.depositGold"
   ],
   "녹슨 채취탑이다. 리벳 틈마다 재가 쌓여 있다.": [
-   "game.useRig"
+   "game/spawn.useRig"
   ],
   "높음": [
    "index.html"
@@ -879,13 +879,13 @@
    "index.html"
   ],
   "놓을 방향 —": [
-   "game.rotatePlace"
+   "game/spawn.rotatePlace"
   ],
   "누가 서 있는 자리다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.": [
-   "game.useRig"
+   "game/spawn.useRig"
   ],
   "는 바꿀 수 없습니다.": [
    "index.html"
@@ -903,14 +903,14 @@
    "ui.showTip"
   ],
   "다 자란 작물에는 쓸 수 없다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "다섯 조각이 곁을 떠나 하늘로 돌아갔다": [
-   "game.gainStarOrbit"
+   "game/progress.gainStarOrbit"
   ],
   "다시 듣기": [
-   "game.talkTo",
-   "game.talkVillager"
+   "game/village.talkTo",
+   "game/village.talkVillager"
   ],
   "다시 벼릴 장비를 고르시오. 접사가 새로 붙지만, 더 나빠질 수도 있다.": [
    "ui.refreshReforge"
@@ -934,10 +934,10 @@
    "ui.bindSettings"
   ],
   "단단한 바닥 위에만 놓을 수 있다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "단말 읽기": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "단을 여는 점수는 다른 갈래에 찍은 것도 <b>절반</b>이 쌓입니다.": [
    "ui.buildTree"
@@ -969,17 +969,17 @@
    "game.bindInput"
   ],
   "대화": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "더 두들길 데가 없다": [
-   "game.enhanceSlot",
+   "game/village.enhanceSlot",
    "ui.enter"
   ],
   "더 들어갈 자리가 없다": [
    "ui.refreshMachine"
   ],
   "더 손볼 데가 없다": [
-   "game.upgradeStation"
+   "game/altar.upgradeStation"
   ],
   "더 손볼 데가 없다. 마지막 단계다.": [
    "ui.refreshCraft"
@@ -988,10 +988,10 @@
    "ui.refreshProf"
   ],
   "더 올릴 단계가 없다": [
-   "game.upgradeVillage"
+   "game/altar.upgradeVillage"
   ],
   "더 좋은 곡괭이가 필요하다": [
-   "game.mine"
+   "game/act.mine"
   ],
   "덕분에 한숨 돌렸다. 고마워.": [
    "data"
@@ -1003,7 +1003,7 @@
    "ui.bagClick"
   ],
   "도울 일이 있는지 묻는다": [
-   "game.talkVillager"
+   "game/village.talkVillager"
   ],
   "돌아가기": [
    "index.html"
@@ -1012,33 +1012,33 @@
    "data"
   ],
   "돌판의 홈": [
-   "game.openCodeDoor",
+   "game/ruin-map.openCodeDoor",
    "index.html"
   ],
   "동력관 조각 {n}개. 이 도시 선은 다 끊겨 있는데, 끊긴 자리가 전부 같은 모양이야.": [
    "data"
   ],
   "동전을 던지려면 금화 {cost}개가 필요하다.": [
-   "game.useFountain"
+   "game/village.useFountain"
   ],
   "동쪽": [
-   "game.meteorImpact"
+   "game/meteor.meteorImpact"
   ],
   "동쪽 숲에 묻혀 있던 도시가 드러났다.": [
-   "game.checkChapter"
+   "game/progress.checkChapter"
   ],
   "두 방을 더 열었다. 채울 사람은 아직 없지만, 열어는 뒀어.": [
    "data"
   ],
   "둘째": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "둥지": [
-   "game.wakeLair",
-   "game.drawCursor"
+   "game/corpse.drawCursor",
+   "game/village.wakeLair"
   ],
   "둥지가 깨어났다": [
-   "game.fireRuinEvent"
+   "game/ruin-map.fireRuinEvent"
   ],
   "따뜻하게 날 수 있겠어. 고맙다.": [
    "data"
@@ -1068,10 +1068,10 @@
    "ui.buildEquipSlots"
   ],
   "레벨 {lv} 달성! 스탯 +3, 특성 +1": [
-   "game.onLevelUp"
+   "game/progress.onLevelUp"
   ],
   "룬 조각 획득": [
-   "game.fn"
+   "game/village.fn"
   ],
   "를 그리지 못했습니다:": [
    "itemart.build"
@@ -1111,22 +1111,22 @@
    "ui.showTip"
   ],
   "마을 개선": [
-   "game.upgradeVillage"
+   "game/altar.upgradeVillage"
   ],
   "마을 서쪽에 밭을 내주었다 — 괭이·낫·씨앗을 받았다": [
-   "game.upgradeVillage"
+   "game/altar.upgradeVillage"
   ],
   "마을을 지켜라": [
    "data"
   ],
   "마을이 『{spec}』{spec|-이} 되었다": [
-   "game.upgradeVillage"
+   "game/altar.upgradeVillage"
   ],
   "마지막 메아리가 흩어졌다 — {item}": [
-   "game.echoReward"
+   "game/ruin-pulse.echoReward"
   ],
   "마지막 한 걸음": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "막혔다": [
    "entity.hurt"
@@ -1155,22 +1155,22 @@
    "factory.runTrap"
   ],
   "맞물리는 소리가 났다": [
-   "game.tryCodeDoor"
+   "game/ruin-map.tryCodeDoor"
   ],
   "맞지 않는다 — 홈이 그대로다": [
-   "game.tryCodeDoor"
+   "game/ruin-map.tryCodeDoor"
   ],
   "맡은 일에 대해 묻는다": [
-   "game.talkVillager"
+   "game/village.talkVillager"
   ],
   "맥박이 뛰는 상자 — {stages}의 덤": [
-   "game.pulseChest"
+   "game/ruin-pulse.pulseChest"
   ],
   "맨손": [
    "ui.refreshCraft"
   ],
   "머리 위 종유석이 흔들린다 — 비켜라!": [
-   "game.updateCaves"
+   "game/ruin-pulse.updateCaves"
   ],
   "먹일 것": [
    "data"
@@ -1182,7 +1182,7 @@
    "ui.refreshMachine"
   ],
   "멈춘 채취탑": [
-   "game.useRig"
+   "game/spawn.useRig"
   ],
   "메뉴": [
    "index.html"
@@ -1191,16 +1191,16 @@
    "ui.renderRuins"
   ],
   "메아리 {lv}단계": [
-   "game.summonEcho"
+   "game/ruin-pulse.summonEcho"
   ],
   "메아리 {lv}단계를 넘겼다 — 금화 {gold}": [
-   "game.echoReward"
+   "game/ruin-pulse.echoReward"
   ],
   "메워진 막장": [
    "world.buildDeepShaft"
   ],
   "모든 여정이 끝났다.": [
-   "game.tellQuest"
+   "game/village.tellQuest"
   ],
   "모으던 것이 흩어졌다": [
    "entity.breakSurge"
@@ -1219,76 +1219,76 @@
    "data"
   ],
   "무너진 벽 너머에 {C|이} 숨어 있었다": [
-   "game.updateQuake"
+   "game/meteor.updateQuake"
   ],
   "무언가가 이 자리에서 아주 오래 기다렸다.": [
-   "game.wakeLair"
+   "game/village.wakeLair"
   ],
   "문": [
    "ui.showTip"
   ],
   "문 닫기": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "문 열기": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "문설주에 새긴 것 — {shown}": [
-   "game.openCodeDoor"
+   "game/ruin-map.openCodeDoor"
   ],
   "문설주의 수를 곧이곧대로 넣지 마라.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "문에는 손잡이가 없다. 대신 세 개의 홈이 파여 있다.": [
-   "game.openSeal"
+   "game/village.openSeal"
   ],
   "문을 여는 것은 수가 아니라 말이다. 세 글자짜리 말.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "문지기가 하루에 한 번씩 더하던 수다.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "문틀에서 비켜야 닫힌다": [
-   "game.interact"
+   "game/fishing.interact"
   ],
   "물 밖 숨 회복 {n}배": [
    "ui.showTip"
   ],
   "물 위에 던져야 한다": [
-   "game.tryFish"
+   "game/fishing.tryFish"
   ],
   "물건 {backCount}칸": [
    "game.update"
   ],
   "물건을 보여 달라": [
-   "game.talkExtra"
+   "game/village.talkExtra"
   ],
   "물러선다": [
    "index.html"
   ],
   "물속에 동전이 여럿 가라앉아 있다. 오래된 것도, 어제 것도 있다.": [
-   "game.useFountain"
+   "game/village.useFountain"
   ],
   "물속에는 놓을 수 없다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "물속에서 무언가 딸려 올라왔다 — {itemName}": [
-   "game.resolveFish"
+   "game/fishing.resolveFish"
   ],
   "물어뜯기": [
    "ui.showTip"
   ],
   "뭔가 걸렸다 — {itemName}{v}": [
-   "game.resolveFish"
+   "game/fishing.resolveFish"
   ],
   "미끼만 사라졌다": [
-   "game.resolveFish"
+   "game/fishing.resolveFish"
   ],
   "미니맵": [
    "index.html"
   ],
   "민첩": [
-   "game.paint",
+   "game/save.paint",
    "ui.refreshStatSheet",
    "ui.buildStatAlloc",
    "ui.compareLine",
@@ -1301,16 +1301,16 @@
    "entity.layHeat"
   ],
   "바닥이 있어야 놓을 수 있다": [
-   "game.placeStation"
+   "game/act.placeStation"
   ],
   "바닥이 있어야 문을 단다": [
-   "game.placeDoor"
+   "game/act.placeDoor"
   ],
   "바람 막힘": [
    "factory.tick"
   ],
   "바로 곁에": [
-   "game.meteorImpact"
+   "game/meteor.meteorImpact"
   ],
   "받침대 넷이 그것을 붙들고 있다": [
    "entity.raisePedestals"
@@ -1319,7 +1319,7 @@
    "entity.bossAI"
   ],
   "발밑이 내려앉는다": [
-   "game.fireRuinEvent"
+   "game/ruin-map.fireRuinEvent"
   ],
   "발사": [
    "factory.runShooter"
@@ -1328,7 +1328,7 @@
    "ui.showTip"
   ],
   "밤새 밭이 자랐다 — {n}칸{v}": [
-   "game.growCropsDaily"
+   "game/act.growCropsDaily"
   ],
   "밤새 불이 안 꺼졌어. 자다 깨서 확인 안 해도 되겠군.": [
    "data"
@@ -1351,7 +1351,7 @@
    "ui.showTip"
   ],
   "방을 잡는다": [
-   "game.talkExtra"
+   "game/village.talkExtra"
   ],
   "방전": [
    "factory",
@@ -1359,7 +1359,7 @@
    "factory.runWildTrap"
   ],
   "방향이 없는 기계다": [
-   "game.rotatePlace"
+   "game/spawn.rotatePlace"
   ],
   "배출 끄기": [
    "ui.refreshMachine"
@@ -1388,28 +1388,28 @@
    "index.html"
   ],
   "베이스캠프": [
-   "game.useWaystone"
+   "game/village.useWaystone"
   ],
   "베이스캠프의 귀환 비석으로 여명 마을에 갈 수 있다.": [
-   "game.checkChapter"
+   "game/progress.checkChapter"
   ],
   "벼릴 것": [
    "data"
   ],
   "벽 너머": [
-   "game.checkChapter"
+   "game/progress.checkChapter"
   ],
   "벽 너머에 빈 곳이 있다": [
-   "game.fireRuinEvent"
+   "game/ruin-map.fireRuinEvent"
   ],
   "벽 너머에 빈 곳이 있다 — {K}이다": [
-   "game.fireRuinEvent"
+   "game/ruin-map.fireRuinEvent"
   ],
   "벽에 이음매가 없다. 문이 아니라, 문이었던 적이 없는 벽이다.": [
-   "game.openSeal"
+   "game/village.openSeal"
   ],
   "별 조각이 하나 더 곁에 남았다 — {starOrbits}/5": [
-   "game.gainStarOrbit"
+   "game/progress.gainStarOrbit"
   ],
   "별빛이 닿은 자리": [
    "data"
@@ -1425,7 +1425,7 @@
    "ui.refreshMachine"
   ],
   "보관고": [
-   "game.drawCursor",
+   "game/corpse.drawCursor",
    "ui.refreshVault",
    "index.html"
   ],
@@ -1442,7 +1442,7 @@
    "ui.withdrawGold"
   ],
   "보는 쪽": [
-   "game.rotatePlace"
+   "game/spawn.rotatePlace"
   ],
   "보상 🪙 {gold} · 경험치 {xp}": [
    "ui.refreshBoard"
@@ -1451,17 +1451,17 @@
    "index.html"
   ],
   "볼일이 있다": [
-   "game.talkExtra"
+   "game/village.talkExtra"
   ],
   "볼트를 풀면 강철판과 톱니, 모터까지 건질 수 있겠다.": [
-   "game.useRig"
+   "game/spawn.useRig"
   ],
   "봉인문": [
-   "game.openSeal",
-   "game.drawCursor"
+   "game/corpse.drawCursor",
+   "game/village.openSeal"
   ],
   "봉인이 풀렸다": [
-   "game.openSeal"
+   "game/village.openSeal"
   ],
   "봐, 벌써 문 앞까지 나왔잖아. 짐승은 사람보다 빨리 잊어.": [
    "data"
@@ -1470,32 +1470,32 @@
    "ui.refreshTracker"
   ],
   "부탁 완료: {title} — 경험치 {xp} · 금화 {gold}": [
-   "game.completeSideQuest"
+   "game/village.completeSideQuest"
   ],
   "부탁을 맡았다: {title}": [
-   "game.acceptSideQuest"
+   "game/village.acceptSideQuest"
   ],
   "부탁할 일이 있는지 묻는다": [
-   "game.talkTo"
+   "game/village.talkTo"
   ],
   "분기": [
    "factory",
    "factory.tick"
   ],
   "분수의 축복 — 잠시 운이 따른다": [
-   "game.fn"
+   "game/village.fn"
   ],
   "불가능 모드였다. 이 슬롯의 기록이 지워졌다.": [
-   "game.onDeath"
+   "game/progress.onDeath"
   ],
   "불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?": [
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "불굴 — 아직 쓰러지지 않는다": [
    "entity.hurt"
   ],
   "불러오기 실패": [
-   "game._loadGame"
+   "game/save._loadGame"
   ],
   "불러오는 중…": [
    "game.init",
@@ -1508,7 +1508,7 @@
    "data"
   ],
   "불이 한꺼번에 꺼졌다": [
-   "game.fireRuinEvent"
+   "game/ruin-map.fireRuinEvent"
   ],
   "블록 설치 · NPC/상자 상호작용": [
    "index.html"
@@ -1520,13 +1520,13 @@
    "ui.renderRuins"
   ],
   "비문 읽기": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "비문을 옮겨 적었다 — 여정의 기록에 남는다": [
-   "game.fn"
+   "game/village.fn"
   ],
   "비석에 손을 대면 {to}(으)로 돌아간다.": [
-   "game.useWaystone"
+   "game/village.useWaystone"
   ],
   "비석이 잿빛에 삼켜졌다": [
    "game.update"
@@ -1538,22 +1538,22 @@
    "ui.bufGrid"
   ],
   "비워두면 무작위": [
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "빈 바늘만 올라왔다": [
-   "game.resolveFish"
+   "game/fishing.resolveFish"
   ],
   "빈 슬롯": [
-   "game.renderSlotScreen"
+   "game/save.renderSlotScreen"
   ],
   "빈 자리에 낄 수 있다": [
    "ui.compareLine"
   ],
   "빈 자리에만 놓을 수 있다": [
-   "game.placeStation"
+   "game/act.placeStation"
   ],
   "빈 자리에만 달 수 있다": [
-   "game.placeDoor"
+   "game/act.placeDoor"
   ],
   "빚을 갚았군. 이제 좀 편히 잘 수 있겠어.": [
    "data"
@@ -1578,40 +1578,40 @@
    "game.bindInput"
   ],
   "삭제": [
-   "game.renderSlotScreen"
+   "game/save.renderSlotScreen"
   ],
   "삭제하지 못했다": [
-   "game.deleteSlot"
+   "game/save.deleteSlot"
   ],
   "산출": [
    "ui.refreshMachine"
   ],
   "상자": [
-   "game.drawPulse",
+   "game/ruin-pulse.drawPulse",
    "ui.renderRuins",
    "ui.openChest",
    "index.html"
   ],
   "상자 열기": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "상자를 열자 무언가 깨어났다": [
-   "game.interact"
+   "game/fishing.interact"
   ],
   "상자를 열자 섬이 흔들렸다": [
-   "game.interact"
+   "game/fishing.interact"
   ],
   "상자에 손이 닿지 않는다 — 골방 문을 먼저 열어야 한다": [
-   "game.interact"
+   "game/fishing.interact"
   ],
   "샅샅이 뒤졌다 — {item}": [
-   "game.checkSurvey"
+   "game/ruin-pulse.checkSurvey"
   ],
   "새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "새로운 여정": [
-   "game.renderSlotScreen"
+   "game/save.renderSlotScreen"
   ],
   "생고기 {n}개만. 이 도시엔 풀이 없어서 애들이 고기만 먹어.": [
    "data"
@@ -1641,23 +1641,23 @@
    "index.html"
   ],
   "서쪽": [
-   "game.meteorImpact"
+   "game/meteor.meteorImpact"
   ],
   "석탄 {n}개. 손님한테 찬물을 내놓을 수는 없잖아.": [
    "data"
   ],
   "석판": [
-   "game.label",
+   "game/ruin-pulse.label",
    "ui.renderRuins"
   ],
   "석판 유적": [
    "world.buildRuins"
   ],
   "석판 읽기": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "설계실 봉인": [
-   "game.openSeal"
+   "game/village.openSeal"
   ],
   "설정": [
    "index.html"
@@ -1669,10 +1669,10 @@
    "ui.showTip"
   ],
   "세계 씨앗": [
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "세계 크기": [
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "세계를 빚는 중…": [
    "game.newGame"
@@ -1684,7 +1684,7 @@
    "data"
   ],
   "셋째": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "소모 마나 <b>{mana}</b>": [
    "ui.showTip"
@@ -1703,13 +1703,13 @@
    "ui.showTip"
   ],
   "손끝이 흔들린다!": [
-   "game.updateFishing"
+   "game/fishing.updateFishing"
   ],
   "수련 · 🪙 {trainCost} · 오늘 {trainedToday}/5": [
-   "game.talkExtra"
+   "game/village.talkExtra"
   ],
   "수련으로 경험치 +{xp}": [
-   "game.trainXp"
+   "game/altar.trainXp"
   ],
   "숨": [
    "ui.refreshStatSheet"
@@ -1731,13 +1731,13 @@
    "index.html"
   ],
   "스탯 재분배 · 🪙 {respecCost}": [
-   "game.talkExtra"
+   "game/village.talkExtra"
   ],
   "스탯 포인트": [
    "index.html"
   ],
   "스탯을 초기화했다. 능력 창에서 다시 분배하라": [
-   "game.respecStats"
+   "game/altar.respecStats"
   ],
   "시계 · 깊이": [
    "index.html"
@@ -1749,7 +1749,7 @@
    "index.html"
   ],
   "시작": [
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "시추 중": [
    "factory",
@@ -1771,10 +1771,10 @@
    "game.update"
   ],
   "쓰러진 자리": [
-   "game.questTargets"
+   "game/progress.questTargets"
   ],
   "쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.": [
-   "game.onDeath"
+   "game/progress.onDeath"
   ],
   "씨앗": [
    "ui.showTip"
@@ -1783,25 +1783,25 @@
    "data"
   ],
   "아직 다 하지 못했다": [
-   "game.claimBounty"
+   "game/village.claimBounty"
   ],
   "아직 마을이 없다": [
-   "game.upgradeVillage"
+   "game/altar.upgradeVillage"
   ],
   "아직 발을 들이지 않은 유적": [
    "ui.renderRuins"
   ],
   "아직 열리지 않은 장이 남아 있다. 그때까지 이 세계는 당신 것이다.": [
-   "game.checkChapter"
+   "game/progress.checkChapter"
   ],
   "아직 자격이 없다 —": [
-   "game.goalLocked"
+   "game/progress.goalLocked"
   ],
   "아직 자격이 없다 — 준비 {done}/{need}": [
-   "game.goalLocked"
+   "game/progress.goalLocked"
   ],
   "아직 회복할 수 없다": [
-   "game.useConsumable"
+   "game/altar.useConsumable"
   ],
   "안쪽을 봤어. 사람이 만든 게 아니야. …사람을 보고 만든 거야.": [
    "data"
@@ -1819,7 +1819,7 @@
    "data"
   ],
   "어디선가 유난히 사나운 {mobName}의 기척이 느껴진다": [
-   "game.trySpawn"
+   "game/spawn.trySpawn"
   ],
   "어제 나간 사람이 안 돌아왔어. {enemy} {n}{mobCw}만 걷어 주면 내가 찾으러 나갈 수 있어.": [
    "data"
@@ -1831,7 +1831,7 @@
    "ui.refreshQuest"
   ],
   "업적 달성 — {a}": [
-   "game.onAchieved"
+   "game/progress.onAchieved"
   ],
   "없음 (전부 통과)": [
    "ui.refreshMachine"
@@ -1840,14 +1840,14 @@
    "ui.refreshTownhall"
   ],
   "여관": [
-   "game.useInn",
-   "game.drawCursor"
+   "game/corpse.drawCursor",
+   "game/village.useInn"
   ],
   "여기 사람들은 무엇이든 거꾸로 적는 버릇이 있었다.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "여기 새긴 것은 문을 여는 수의 한 자리다.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다": [
    "entity.update"
@@ -1856,33 +1856,33 @@
    "ui.refreshCraft"
   ],
   "여기서는 반응하지 않는다": [
-   "game.useSummon"
+   "game/altar.useSummon"
   ],
   "여기서는 쓸 수 없다": [
-   "game.useRuinMap"
+   "game/ruin-map.useRuinMap"
   ],
   "여기서는 터뜨려도 아무것도 부서지지 않는다": [
    "entity.boom"
   ],
   "여명 마을": [
-   "game.useWaystone",
-   "game.checkChapter",
+   "game/progress.checkChapter",
+   "game/village.useWaystone",
    "index.html"
   ],
   "여명 마을 — {v}": [
    "ui.refreshTownhall"
   ],
   "여명의 분수": [
-   "game.useFountain"
+   "game/village.useFountain"
   ],
   "여섯 유적을 모두 뒤졌다 — 탐굴자의 인장을 얻었다": [
-   "game.fn"
+   "game/village.fn"
   ],
   "여정": [
    "ui.refreshQuest"
   ],
   "여정을 이어간다": [
-   "game._loadGame"
+   "game/save._loadGame"
   ],
   "여정의 기록": [
    "index.html"
@@ -1908,7 +1908,7 @@
    "data"
   ],
   "오늘 실은 것을 보자": [
-   "game.talkExtra"
+   "game/village.talkExtra"
   ],
   "오늘은 다 먹였다. 먹인 날은 기분이 좋아.": [
    "data"
@@ -1917,7 +1917,7 @@
    "ui.refreshChest"
   ],
   "오늘은 더 가르칠 게 없다고 한다": [
-   "game.trainXp"
+   "game/altar.trainXp"
   ],
   "오래된 빚": [
    "data"
@@ -1933,13 +1933,13 @@
    "data"
   ],
   "용광로": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "용광로 Lv.{forge}": [
    "ui.refreshCraft"
   ],
   "우리는 그 말을 셋으로 끊어 서로 다른 방에 두었다.": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "우클릭": [
    "index.html"
@@ -1972,45 +1972,45 @@
    "ui.lockReason"
   ],
   "유적": [
-   "game.questTargets",
-   "game.useRuinMap",
+   "game/progress.questTargets",
+   "game/ruin-map.useRuinMap",
    "ui.refreshQuest"
   ],
   "유적 안에 흩어진 쪽지 셋이 답을 나눠 들고 있다 (찾은 것 {keysCount}/3)": [
-   "game.openCodeDoor"
+   "game/ruin-map.openCodeDoor"
   ],
   "유적 안에 흩어진 쪽지 셋이 답을 나눠 들고 있다.": [
    "index.html"
   ],
   "유적 안에서만 듣는다": [
-   "game.useConsumable"
+   "game/altar.useConsumable"
   ],
   "유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,\n      쓰러뜨릴수록 가라앉는다. 깨어난 유적은 더 몰려오고 더 준다. 주인을 잡은 둥지는 유적이\n      <b>「{stages}」</b> 이상일 때 <b>메아리</b>를 다시 부른다.\n      맥박이 한 단계 오를 때마다 <b>사건</b>(표식된 것 · 공명석 · 탐욕의 상자 · 포위)이 하나 터진다.\n      등급은 조건을 <b>모두</b> 채워야 오른다 — 아래에 다음 등급까지 남은 것을 적었다.\n      기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.": [
    "ui.renderRuins"
   ],
   "유적의 맥박": [
-   "game.drawPulse"
+   "game/ruin-pulse.drawPulse"
   ],
   "유적의 맥박 — {S}": [
-   "game.onPulseStage"
+   "game/ruin-pulse.onPulseStage"
   ],
   "유적의 맥박이 가라앉는다": [
-   "game.useConsumable"
+   "game/altar.useConsumable"
   ],
   "유적이 깨어 있으면 그 기억이 다시 일어선다.": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "유적이 다시 잠든다": [
-   "game.onPulseStage"
+   "game/ruin-pulse.onPulseStage"
   ],
   "유적이 당신을 알아챘다 — 머물수록 · 상자를 열수록 깨어나고, 쓰러뜨릴수록 가라앉는다": [
-   "game.onPulseStage"
+   "game/ruin-pulse.onPulseStage"
   ],
   "유적이 북소리에 뒤척인다": [
-   "game.useConsumable"
+   "game/altar.useConsumable"
   ],
   "유적이 잠들어 있다 — 맥박이 「{stages}」에 닿아야 메아리가 대답한다.": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "유틸리티": [
    "index.html"
@@ -2025,7 +2025,7 @@
    "index.html"
   ],
   "의뢰 게시판": [
-   "game.drawCursor",
+   "game/corpse.drawCursor",
    "ui.refreshQuest",
    "index.html"
   ],
@@ -2033,37 +2033,37 @@
    "ui.refreshBoard"
   ],
   "의뢰 완료: {title} — 경험치 {xp} · 금화 {gold}": [
-   "game.claimBounty"
+   "game/village.claimBounty"
   ],
   "의뢰에 대해 묻는다": [
-   "game.talkTo"
+   "game/village.talkTo"
   ],
   "이 갈래에 {need}점 필요 (지금 {have}": [
    "ui.lockReason"
   ],
   "이 게임의 저장 파일이 아니다": [
-   "game.importSaves"
+   "game/save.importSaves"
   ],
   "이 기계가 받지 않는 물건이다": [
    "ui.refreshMachine"
   ],
   "이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다": [
-   "game.loadGame"
+   "game/save.loadGame"
   ],
   "이 단계로 올린다": [
    "ui.refreshTownhall"
   ],
   "이 문은 여기서 열 수 없다": [
-   "game.tryCodeDoor"
+   "game/ruin-map.tryCodeDoor"
   ],
   "이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.": [
-   "game.deleteSlot"
+   "game/save.deleteSlot"
   ],
   "이 장의 마지막": [
-   "game.tellQuest"
+   "game/village.tellQuest"
   ],
   "이 장의 일이 남았다": [
-   "game.goalLocked"
+   "game/progress.goalLocked"
   ],
   "이 탭은 이제 닫으셔도 됩니다.": [
    "index.html"
@@ -2078,34 +2078,34 @@
    "ui.showTip"
   ],
   "이름": [
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "이름 없는 모험가": [
    "game",
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "이름 없는 유적": [
-   "game.checkRuinEntry"
+   "game/ruin-map.checkRuinEntry"
   ],
   "이미 기계가 있다": [
-   "game.placeStation",
-   "game.placeDoor"
+   "game/act.placeStation",
+   "game/act.placeDoor"
   ],
   "이미 무언가가 깨어 있다": [
-   "game.wakeLair",
-   "game.altar",
-   "game.useSummon",
-   "game.openEcho"
+   "game/altar.altar",
+   "game/altar.useSummon",
+   "game/ruin-pulse.openEcho",
+   "game/village.wakeLair"
   ],
   "이미 비어 있다": [
-   "game.wakeLair"
+   "game/village.wakeLair"
   ],
   "이미 열려 있다": [
-   "game.openSeal",
-   "game.openCodeDoor"
+   "game/ruin-map.openCodeDoor",
+   "game/village.openSeal"
   ],
   "이미 자리를 안다": [
-   "game.useRuinMap"
+   "game/ruin-map.useRuinMap"
   ],
   "이미 최대 랭크다": [
    "ui.learn"
@@ -2121,16 +2121,16 @@
    "ui.refreshMachine"
   ],
   "이야기는 계속된다": [
-   "game.checkChapter"
+   "game/progress.checkChapter"
   ],
   "이어하기": [
-   "game.renderSlotScreen"
+   "game/save.renderSlotScreen"
   ],
   "이전 크기({ww}×{v})의 세계라 열 수 없다 — 새로 시작해야 한다": [
-   "game._loadGame"
+   "game/save._loadGame"
   ],
   "이전 판의 저장이라 열 수 없다": [
-   "game.importSaves"
+   "game/save.importSaves"
   ],
   "일시정지": [
    "index.html"
@@ -2139,13 +2139,13 @@
    "index.html"
   ],
   "읽는 법": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "입질을 흘렸다 — 미끼만 털렸다": [
-   "game.resolveFish"
+   "game/fishing.resolveFish"
   ],
   "자갈이 무너지자 땅이 울린다 — 물러서라!": [
-   "game.triggerFault"
+   "game/meteor.triggerFault"
   ],
   "자동": [
    "index.html"
@@ -2157,17 +2157,17 @@
    "ui.showTip"
   ],
   "작업대": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "작업대 Lv.{work}": [
    "ui.refreshCraft"
   ],
   "잠긴 골방 안에는 놓을 수 없다": [
-   "game.rightClick",
-   "game.placeDoor"
+   "game/act.rightClick",
+   "game/act.placeDoor"
   ],
   "잠긴 물건은 팔 수 없다 (Ctrl+좌클릭으로 해제)": [
-   "game.sellItem"
+   "game/altar.sellItem"
   ],
   "잠긴 물건이다 (Ctrl+좌클릭으로 해제)": [
    "ui.discardSlot"
@@ -2179,7 +2179,7 @@
    "ui.refreshCraft"
   ],
   "잠긴 홈": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "잠김": [
    "ui.refreshTownhall"
@@ -2192,13 +2192,13 @@
    "index.html"
   ],
   "장비를 다시 벼려 달라": [
-   "game.talkExtra"
+   "game/village.talkExtra"
   ],
   "장비만 강화할 수 있다": [
-   "game.enhanceSlot"
+   "game/village.enhanceSlot"
   ],
   "장비만 재련할 수 있다": [
-   "game.reforgeSlot"
+   "game/village.reforgeSlot"
   ],
   "장신구": [
    "ui.showTip",
@@ -2214,7 +2214,7 @@
    "ui.enter"
   ],
   "재련대": [
-   "game.drawCursor",
+   "game/corpse.drawCursor",
    "index.html"
   ],
   "재련대 — 🪙 {gold}": [
@@ -2227,9 +2227,9 @@
    "factory.runProc"
   ],
   "재료가 부족하다": [
-   "game.upgradeVillage",
-   "game.upgradeStation",
-   "game.craft"
+   "game/altar.upgradeVillage",
+   "game/altar.upgradeStation",
+   "game/altar.craft"
   ],
   "재사용 감소": [
    "ui.showTip"
@@ -2238,7 +2238,7 @@
    "data"
   ],
   "잿빛이 걷혔다": [
-   "game.checkChapter"
+   "game/progress.checkChapter"
   ],
   "저 아래 {enemy}에게 진 빚이 있다. {n}마리를 대신 갚아 다오.": [
    "data"
@@ -2253,16 +2253,16 @@
    "index.html"
   ],
   "저장 실패": [
-   "game.saveGame"
+   "game/save.saveGame"
   ],
   "저장 실패: 용량 초과": [
-   "game.saveGame"
+   "game/save.saveGame"
   ],
   "저장 파일을 읽지 못했다": [
-   "game.importSaves"
+   "game/save.importSaves"
   ],
   "저장된 기록이 없다": [
-   "game.loadGame"
+   "game/save.loadGame"
   ],
   "저장하고 파일로 내보내기": [
    "index.html"
@@ -2271,13 +2271,13 @@
    "index.html"
   ],
   "저장하는 중이다": [
-   "game.saveGame"
+   "game/save.saveGame"
   ],
   "저장한 뒤에 바뀐 기록 — 열 수 없다": [
-   "game.renderSlotScreen"
+   "game/save.renderSlotScreen"
   ],
   "저장했다": [
-   "game.saveGame"
+   "game/save.saveGame"
   ],
   "전 <b>{totalN}개 장</b>": [
    "ui.refreshQuest"
@@ -2307,7 +2307,7 @@
    "factory.statusColor"
   ],
   "전신주 기둥이 지나가는 자리다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "전에 한 이야기를 다시 듣는다": [
    "index.html"
@@ -2327,7 +2327,7 @@
   ],
   "전하가 없다 — 충전된 배터리가 필요하다": [
    "entity.doAttack",
-   "game.mine"
+   "game/act.mine"
   ],
   "전환 중": [
    "entity.hurt"
@@ -2358,8 +2358,8 @@
    "entity.bossAI"
   ],
   "제단": [
-   "game.altar",
-   "game.drawCursor"
+   "game/altar.altar",
+   "game/corpse.drawCursor"
   ],
   "제법인데. 대장장이 소질이 있어.": [
    "data"
@@ -2401,18 +2401,18 @@
    "data"
   ],
   "주인": [
-   "game.openEcho",
+   "game/ruin-pulse.openEcho",
    "ui.renderRuins"
   ],
   "주인은 쓰러졌지만, 둥지는 아직 그 모양을 기억한다.": [
-   "game.openEcho"
+   "game/ruin-pulse.openEcho"
   ],
   "준비 <b>{done}/{need}</b>": [
    "ui.refreshQuest",
    "ui.refreshTracker"
   ],
   "줄이 끊겼다": [
-   "game.resolveFish"
+   "game/fishing.resolveFish"
   ],
   "증식체의 노심": [
    "world.buildRunaway"
@@ -2424,14 +2424,14 @@
    "ui.refreshQuest"
   ],
   "지금 무엇을 해야 하지?": [
-   "game.talkTo",
-   "game.talkVillager"
+   "game/village.talkTo",
+   "game/village.talkVillager"
   ],
   "지금 차고 있는 것": [
    "ui.compareLine"
   ],
   "지능": [
-   "game.paint",
+   "game/save.paint",
    "ui.refreshStatSheet",
    "ui.buildStatAlloc",
    "ui.compareLine",
@@ -2463,7 +2463,7 @@
    "game.tickTileTraps"
   ],
   "쪽지 읽기": [
-   "game.drawCursor"
+   "game/corpse.drawCursor"
   ],
   "차고 있는 것과 큰 차이 없다": [
    "ui.compareLine"
@@ -2482,38 +2482,38 @@
    "factory.runDrill"
   ],
   "채취탑": [
-   "game.useRig"
+   "game/spawn.useRig"
   ],
   "채취탑 자리다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "채취탑 자리에는 놓을 수 없다": [
-   "game.rightClick",
-   "game.placeStation"
+   "game/act.rightClick",
+   "game/act.placeStation"
   ],
   "채취탑 자리에는 달 수 없다": [
-   "game.placeDoor"
+   "game/act.placeDoor"
   ],
   "채취탑을 해체한다": [
-   "game.useRig"
+   "game/spawn.useRig"
   ],
   "채취탑을 해체했다 — 부품이 쏟아졌다": [
-   "game.fn"
+   "game/spawn.fn"
   ],
   "챘지만 바늘이 빠졌다": [
-   "game.resolveFish"
+   "game/fishing.resolveFish"
   ],
   "처음부터 우리 것인 쇠야. 이걸로 만든 건 팔지 말자.": [
    "data"
   ],
   "천장에 매달아야 한다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "첫": [
-   "game.ruinCipher"
+   "game/ruin-map.ruinCipher"
   ],
   "체력": [
-   "game.paint",
+   "game/save.paint",
    "ui.refreshStatSheet",
    "ui.buildStatAlloc",
    "ui.compareLine",
@@ -2559,10 +2559,10 @@
    "factory.runWildTrap"
   ],
   "취소": [
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "치명": [
-   "game.rFx",
+   "game/render.rFx",
    "ui.refreshStatSheet",
    "ui.compareLine"
   ],
@@ -2577,7 +2577,7 @@
    "ui.compareLine"
   ],
   "캐릭터": [
-   "game.showNewGameForm"
+   "game/save.showNewGameForm"
   ],
   "커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기": [
    "ui.init"
@@ -2614,7 +2614,7 @@
    "factory.runTurret"
   ],
   "탐사 기록 {rank} — {spec} (진행 {score}%)": [
-   "game.checkSurvey"
+   "game/ruin-pulse.checkSurvey"
   ],
   "통과": [
    "factory",
@@ -2643,7 +2643,7 @@
    "data"
   ],
   "파일에 기록이 없다": [
-   "game.importSaves"
+   "game/save.importSaves"
   ],
   "파일을 읽지 못했다": [
    "ui.bindSettings"
@@ -2669,22 +2669,22 @@
    "index.html"
   ],
   "펫을 끼고 있어야 준다": [
-   "game.useConsumable"
+   "game/altar.useConsumable"
   ],
   "포위 — {wave}/3 무리": [
-   "game.updatePulseEvent"
+   "game/ruin-pulse.updatePulseEvent"
   ],
   "폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳": [
    "game._newGame"
   ],
   "표면의 홈이 잿빛으로 막혀 있다. 아직 이어진 곳이 없다.": [
-   "game.useWaystone"
+   "game/village.useWaystone"
   ],
   "표적": [
    "data"
   ],
   "푹 잤다 — 아침이다": [
-   "game.fn"
+   "game/village.fn"
   ],
   "피해": [
    "ui.showTip"
@@ -2709,7 +2709,7 @@
    "ui.refreshMachine"
   ],
   "하란: \"한숨 자고 가. 아침까진 봐 줄게. 🪙 {cost}.\"": [
-   "game.useInn"
+   "game/village.useInn"
   ],
   "하루가 지나거나 여관에서 자고 나면 새 종이가 붙는다.": [
    "ui.refreshBoard"
@@ -2718,13 +2718,13 @@
    "ui.refreshAnvil"
   ],
   "한 번 쓰고 나면 아무 일도 일어나지 않는다.": [
-   "game.useMystic"
+   "game/ruin-map.useMystic"
   ],
   "한계 높이": [
    "ui.updateHUD"
   ],
   "할 일은 모두 끝냈다.": [
-   "game.tellQuest"
+   "game/village.tellQuest"
   ],
   "핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)": [
    "ui.showTip"
@@ -2745,10 +2745,10 @@
    "world.buildRunaway"
   ],
   "홀씨가 한꺼번에 터졌다": [
-   "game.fireRuinEvent"
+   "game/ruin-map.fireRuinEvent"
   ],
   "홈이 셋.": [
-   "game.openCodeDoor"
+   "game/ruin-map.openCodeDoor"
   ],
   "홈이 셋. 무언가를 맞춰 넣는 자리다.": [
    "index.html"
@@ -2793,7 +2793,7 @@
    "ui.init"
   ],
   "흙이나 풀 위에서만 밭을 갈 수 있다": [
-   "game.rightClick"
+   "game/act.rightClick"
   ],
   "흙이나 풀에 우클릭해 밭 갈기": [
    "ui.showTip"
@@ -2804,7 +2804,7 @@
    "ui.showTip"
   ],
   "힘": [
-   "game.paint",
+   "game/save.paint",
    "ui.refreshStatSheet",
    "ui.buildStatAlloc",
    "ui.compareLine",

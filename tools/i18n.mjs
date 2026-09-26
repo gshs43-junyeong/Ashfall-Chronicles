@@ -14,10 +14,13 @@ import * as acorn from 'acorn';
 import * as escope from 'eslint-scope';
 import * as esbuild from 'esbuild';
 import { execFileSync } from 'node:child_process';
-import { ROOT, LEGACY } from './srcmods.mjs';
+import { ROOT, LEGACY, listModules } from './srcmods.mjs';
 
 const HANGUL = /[가-힣ㄱ-ㆎ]/;
 const SOURCE_JSON = path.join(LEGACY, 'locales', 'source.json');
+
+/** 게임 쪽 .js 전부(하위 폴더 포함) — LEGACY 기준 상대 경로, 정렬 */
+const gameFiles = () => listModules().filter(f => f.startsWith(LEGACY + path.sep) && f.endsWith('.js')).map(f => path.relative(LEGACY, f).split(path.sep).join('/')).sort();
 
 /* 엔진 형식기를 그대로 불러 쓴다(자리 확인이 게임과 같은 계산을 하도록) */
 const eng = await (async () => {
@@ -298,7 +301,7 @@ function tables() {
 /** 원문 목록 — tr('…') · N_('…') 의 첫 인자를 파일:함수 자리와 함께 */
 function extract() {
   const msgs = {};
-  for (const f of fs.readdirSync(LEGACY).filter(f => f.endsWith('.js')).sort()) {
+  for (const f of gameFiles()) {
     const src = fs.readFileSync(path.join(LEGACY, f), 'utf8'), ast = parse(src);
     walk(ast, n => {
       if (n.type !== 'CallExpression' || !['tr', 'N_'].includes(calleeName(n.callee))) return;
@@ -403,7 +406,7 @@ if (cmd === 'wrap') {
     bad += r.problems.length;
   }
 } else if (cmd === 'scan') {
-  const left = fs.readdirSync(LEGACY).filter(f => f.endsWith('.js')).sort().flatMap(f => scanFile(path.join(LEGACY, f)));
+  const left = gameFiles().flatMap(f => scanFile(path.join(LEGACY, f)));
   console.log(left.join('\n') || '✓ 함수 안에 안 감싼 한국어 문구 없음');
   process.exit(left.length ? 1 : 0);
 } else if (cmd === 'extract') {
