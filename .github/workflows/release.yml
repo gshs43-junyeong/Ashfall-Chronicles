@@ -28,6 +28,12 @@ jobs:
             echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
           fi
 
+      # 번들 대조(build.sh)에 esbuild 가 필요하다 — 없으면 대조를 건너뛰고 커밋된 번들로 묶는다.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+
       - name: zip 빌드
         run: bash tools/build.sh "${{ steps.ver.outputs.value }}"
 

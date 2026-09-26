@@ -1,8 +1,8 @@
 # CLAUDE.md — 이 저장소에서 일하는 AI를 위한 안내
 
 Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다. 게임 코드의 **원본은
-`src/legacy/*.js` 열세 개**이고, `tools/bundle.mjs` 가 읽는 순서대로 이어 붙여 `game/js/ashfall.js`
-하나로 만든다(감싸지 않는다 — 전역 공유 그대로. 트랜스파일러·게임 의존성은 없다). **`npm run dev`
+`src/legacy/*.js` — ES 모듈 열다섯 개**이고, `tools/bundle.mjs`(esbuild)가 `main.js` 에서 import 를 따라
+`game/js/ashfall.js` 하나(클래식 스크립트 · IIFE)로 묶는다 — file:// 에서도 돈다. 처음 한 번 `npm ci`, 그다음 **`npm run dev`
 를 켜 두면 고치고 새로고침하는 흐름 그대로다**(소스를 고치면 번들이 다시 만들어진다).
 번들은 커밋한다 — `game/` 만 받아도 빌드 없이 돈다. **소스를 고쳤으면 번들도 같이 커밋할 것**
 (`npm run check` · CI · `build.sh` 가 어긋나면 막는다). 엔진화 계획은 `docs/v1.1.1-engine-plan.md`.
@@ -111,7 +111,8 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `src/legacy/entity.js` | 플레이어·몹·투사체 물리 |
 | `src/legacy/tileart.js` · `itemart.js` · `sprites.js` | 절차 생성 그림(아틀라스) · 스프라이트 로더 |
 | `src/legacy/ui.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` | 그 이름대로 |
-| `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵). `--check` 어긋남 검사 · `--watch` |
+| `src/legacy/main.js` · `ctx.js` | 묶는 입구(모듈 순서 · 디버그 창구) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
+| `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/` |
 | `game/assets/manifest.json` | **애셋 원본 목록** |
 | `game/assets/sprites-manifest.js` | 위의 **자동 생성물** — 손으로 고치지 말 것 |
@@ -121,11 +122,18 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 
 > **리포가 원본이다.** 게임 코드는 `src/legacy/` 에서 고친다 — `game/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
 
-읽는 순서(`tools/bundle.mjs` 의 `ORDER`): `sprites-manifest`(번들 밖, 먼저) →
-`util → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
+읽는 순서(`main.js` 의 import 순서 = 층): `sprites-manifest`(번들 밖, 먼저) →
+`ctx → util → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
 
-앞 파일은 뒤 파일을 모른다 — `data.js`의 상수를 `world.js`가 쓰므로 **`data.js`가 먼저**다. 둘 다 쓰는 세계 치수(`SHIFT`·`WW`·`DEEP_Y`·`BIOMES` …)는
-그래서 `size.js` 에 있다.
+**모듈 규칙**(`npm run test:modules` 가 기계로 막는다):
+- **앞 모듈은 뒤 모듈을 import 하지 않는다**(순환 0). `data.js`의 상수를 `world.js`가 쓰므로 **`data.js`가 먼저**다. 둘 다 쓰는 세계
+  치수(`SHIFT`·`WW`·`DEEP_Y`·`BIOMES` …)는 그래서 `size.js` 에 있다. 아래층이 위층 객체(`G`·`UI`·`Factory`)를 써야 하면
+  `import { app as G } from './ctx.js'` — 위층이 읽힐 때 `bindApp(G)` 로 건다. **최상위(읽히는 순간)에서는 null** 이니 함수 안에서만 쓸 것.
+  아래층이 `G` 의 무엇을 쓰는지는 `tests/baseline/ctx.json` 에 적혀 있다 — 새로 쓰면 검사가 멈추고, 일부러면 `node tests/modules.mjs --update`.
+- **최상위 이름은 전부 `export`**, 다른 파일 이름은 **`import`**. 빠뜨리면 번들은 되지만 그 줄이 돌 때 터진다 — 검사가 먼저 잡는다.
+- **남의 `let` 에 대입할 수 없다**(`WW = …` 은 size.js 안에서만). 객체 속은 고쳐도 된다(`G.x = …`).
+- 콘솔·`?debug`·`tests`·`tools/*.py` 는 예전처럼 `G`·`World`·`WW` 를 이름으로 읽는다 — `main.js` 가 모든 export 를 `window` 에
+  **읽기 전용 · 살아 있는 값**으로 싣는다(디버그 창구). **게임 코드는 `window.<이름>` 을 읽지 말 것**(검사가 막는다).
 
 ---
 
@@ -204,11 +212,12 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 1. **월드 생성 회귀** — 노드에서 여러 시드를 돌려 예외·누락을 먼저 잡는다.
    `World`를 만들고 `generate()`를 부른 뒤 `w.ruins`·타일 히스토그램을 찍어
    보면 "유적이 안 생겼다" 같은 것이 바로 드러난다.
-2. **문법** — `npm run test:syntax` (src/legacy · 번들 · 매니페스트를 `node --check`, 번들이 소스와 같은지).
+2. **문법 · 모듈** — `npm run test:syntax` (src/legacy · 번들 · 매니페스트를 `node --check`, 번들이 소스와 같은지) ·
+   `npm run test:modules` (import 빠뜨림 · 순환·역방향 · window 창구 읽기 · ctx 계약).
 3. **브라우저** — 정적 서버를 띄우고 실제로 본다. 콘솔 오류 0을 확인하고,
    `?debug=village&sess=3&plv=45` 같은 바로가기로 해당 구역까지 간다.
 4. **스크린샷으로 눈으로 확인.** 겹침·공중 부양·안 보이는 몹은 수치로 안 잡힌다.
-5. **`npm run check`** (처음엔 `npm ci`) — 문법 · 매니페스트 · 세계 생성 해시(d1·d3 × s·m·l) · 동작 스크립트(걷기·캐기·놓기·문·저장/불러오기·공장) ·
+5. **`npm run check`** (처음엔 `npm ci`) — 문법 · 모듈 경계 · 매니페스트 · 세계 생성 해시(d1·d3 × s·m·l) · 동작 스크립트(걷기·캐기·놓기·문·저장/불러오기·공장) ·
    스크린샷 대조를 한 번에(3분 남짓). 생성을 **일부러** 바꾼 커밋에서만 `npm run baseline` 으로 기준값을 다시 찍는다 — 그 커밋 메시지에 이유를 적을 것.
 
 디버그 바로가기(주소 끝에 붙이고 **새로운 여정**으로 시작, 정상 플레이에는 영향 없음 — 전체 옵션·주의점은 [`docs/debug-urls.md`](docs/debug-urls.md)):
@@ -269,6 +278,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-26)
 
+- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) 끝. 다음은 P3(엔진 core · TS).
 - **v1.1.0 출시**(태그 `v1.1.0`). 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
   들어가 있고, 업적은 75개다. v1.0.x 세이브는 세계 폭이 달라 열리지 않는다(릴리스 노트·다운로드 페이지에 알림).
 - 세이브는 v10 — `world.sea`(바다 수면)를 저장한다. 빠졌던 동안 불러온 세계에서 바다 물고기 생성이 터졌다; sea 없는

@@ -1,19 +1,18 @@
 /* ===== util.js — 수학, 난수, 노이즈 ===== */
-'use strict';
 
-const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-const lerp = (a, b, t) => a + (b - a) * t;
-const inv = (a, b, v) => (v - a) / (b - a || 1);
-const TAU = Math.PI * 2;
+export const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+export const lerp = (a, b, t) => a + (b - a) * t;
+export const inv = (a, b, v) => (v - a) / (b - a || 1);
+export const TAU = Math.PI * 2;
 
-function hashStr(s) {
+export function hashStr(s) {
   let h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
   return h >>> 0;
 }
 
 /** 결정론적 난수기 (mulberry32) */
-class RNG {
+export class RNG {
   constructor(seed) { this.s = (typeof seed === 'string' ? hashStr(seed) : (seed >>> 0)) || 1; }
   next() {
     this.s = (this.s + 0x6D2B79F5) >>> 0;
@@ -36,7 +35,7 @@ class RNG {
 }
 
 /** 1D 값 노이즈 (부드러운 지형선) */
-function makeNoise1D(rng, octaves = 4) {
+export function makeNoise1D(rng, octaves = 4) {
   const tables = [];
   for (let o = 0; o < octaves; o++) {
     const t = new Float32Array(512);
@@ -57,7 +56,7 @@ function makeNoise1D(rng, octaves = 4) {
 }
 
 /** 2D 값 노이즈 (동굴, 광맥) */
-function makeNoise2D(rng) {
+export function makeNoise2D(rng) {
   const P = new Uint8Array(512);
   const perm = new Uint8Array(256);
   for (let i = 0; i < 256; i++) perm[i] = i;
@@ -83,15 +82,15 @@ function makeNoise2D(rng) {
 }
 
 /** 사각형 겹침 */
-function aabb(a, b) {
+export function aabb(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
-function dist2(ax, ay, bx, by) { const dx = bx - ax, dy = by - ay; return dx * dx + dy * dy; }
-function dist(ax, ay, bx, by) { return Math.sqrt(dist2(ax, ay, bx, by)); }
-function angleTo(ax, ay, bx, by) { return Math.atan2(by - ay, bx - ax); }
+export function dist2(ax, ay, bx, by) { const dx = bx - ax, dy = by - ay; return dx * dx + dy * dy; }
+export function dist(ax, ay, bx, by) { return Math.sqrt(dist2(ax, ay, bx, by)); }
+export function angleTo(ax, ay, bx, by) { return Math.atan2(by - ay, bx - ax); }
 
 /** 한국어 조사 '로/으로' — 받침이 없거나 'ㄹ'이면 '로' */
-function josaRo(word) {
+export function josaRo(word) {
   const ch = word.charCodeAt(word.length - 1) - 0xAC00;
   if (ch < 0 || ch > 11171) return '로';
   const jong = ch % 28;
@@ -99,18 +98,18 @@ function josaRo(word) {
 }
 
 /** 한국어 조사 짝 고르기 — josa('검', '이', '가') → '이'. 받침이 있으면 앞엣것. */
-function josa(word, withJong, noJong) {
+export function josa(word, withJong, noJong) {
   const s = String(word), ch = s.charCodeAt(s.length - 1) - 0xAC00;
   if (ch < 0 || ch > 11171) return noJong;
   return ch % 28 ? withJong : noJong;
 }
-const iga = w => w + josa(w, '이', '가');
-const eulreul = w => w + josa(w, '을', '를');
-const eunneun = w => w + josa(w, '은', '는');
+export const iga = w => w + josa(w, '이', '가');
+export const eulreul = w => w + josa(w, '을', '를');
+export const eunneun = w => w + josa(w, '은', '는');
 
 /** 숫자 포맷 */
 /** 숫자 표기. */
-function fmt(n) {
+export function fmt(n) {
   const v = Math.round(n);
   const a = Math.abs(v);
   if (a < 1e6) return v.toLocaleString('ko-KR');
@@ -120,19 +119,19 @@ function fmt(n) {
   const t = (v / d).toFixed(2).replace(/\.?0+$/, '');
   return t + u;
 }
-function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+export function pad2(n) { return n < 10 ? '0' + n : '' + n; }
 
 /** 사용자 입력(플레이어 이름 등)을 innerHTML에 넣기 전에 이스케이프한다 */
-function escHtml(s) { return ('' + s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+export function escHtml(s) { return ('' + s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
 /** 색 보간 (#rrggbb) */
-function shade(hex, amt) {
+export function shade(hex, amt) {
   const n = parseInt(hex.slice(1), 16);
   let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
   r = clamp(Math.round(r * amt), 0, 255); g = clamp(Math.round(g * amt), 0, 255); b = clamp(Math.round(b * amt), 0, 255);
   return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
 }
-function mixHex(h1, h2, t) {
+export function mixHex(h1, h2, t) {
   const a = parseInt(h1.slice(1), 16), b = parseInt(h2.slice(1), 16);
   const r = Math.round(lerp((a >> 16) & 255, (b >> 16) & 255, t));
   const g = Math.round(lerp((a >> 8) & 255, (b >> 8) & 255, t));
@@ -141,7 +140,7 @@ function mixHex(h1, h2, t) {
 }
 
 /** 타일 텍스처용 결정론적 해시 (0..1) */
-function tileHash(x, y) {
+export function tileHash(x, y) {
   let h = (x * 73856093) ^ (y * 19349663);
   h = (h ^ (h >>> 13)) >>> 0;
   h = Math.imul(h, 1274126177) >>> 0;
@@ -150,8 +149,8 @@ function tileHash(x, y) {
 
 /** 배열 RLE 압축 (저장용) */
 /* ★ 세이브의 타일·벽지·탐험 배열은 **글자열** RLE 다 — 사연: docs/code-history.md#h100 */
-const RLE_V = 0x100, RLE_N = 0x1000, RLE_MAX = 0x6FFF;
-function rleEncode(arr) {
+export const RLE_V = 0x100, RLE_N = 0x1000, RLE_MAX = 0x6FFF;
+export function rleEncode(arr) {
   const out = ['r1'];
   let buf = '';
   let cur = arr[0], run = 1;
@@ -167,7 +166,7 @@ function rleEncode(arr) {
   out.push(buf);
   return out.join('');
 }
-function rleDecode(pairs, len, Ctor) {
+export function rleDecode(pairs, len, Ctor) {
   const out = new Ctor(len);
   let i = 0;
   if (typeof pairs === 'string') {

@@ -1,10 +1,22 @@
 /* ===== ui.js — DOM 인터페이스 ===== */
-'use strict';
+import { app as G, bindUI } from './ctx.js';
+import { TAU, clamp, eulreul, fmt, iga, josaRo, pad2 } from './util.js';
+import { SURF_BASE, WH, WW } from './size.js';
+import { ACHIEVEMENTS, ACH_CAT, ACH_TIER, BOSS_TIER, BRANCHES, BUFFS, CHAPTERS, ECHO, FUEL, ITEMS, KEY_ACTIONS,
+  MACHINE, MRECIPES, MULTI_FALLOFF, NOTICE_KINDS, NPCS, PETS, PET_LV_MAX, PROFS, PROF_MAX, PULSE, RARITY,
+  RARITY_MULT, RECIPES, RUIN_SPEC, SESSIONS, SET_DEFAULT, SIDE_POOL, SKILLS, STATION_DESC, STATION_NAME, STATION_UP,
+  STORY_RUIN, TIER_REQ, VILLAGE, achHidden, chaptersOf, idef, petAtkMul, petLvMul, petXpNext, profNeed, sessionOf } from './data.js';
+import { TS } from './world.js';
+import { Art } from './itemart.js';
+import { Sprites } from './sprites.js';
+import { HOTBAR, MAX_BAG_SIZE, enhMul, equipReqLv, isGear, itemDamage, itemName, itemSpeed, itemStats, makeItem,
+  maxStack } from './entity.js';
+import { DIR_NAME, FAC_TICK, Factory } from './factory.js';
 
-const $ = (s) => document.querySelector(s);
-const $$ = (s) => Array.from(document.querySelectorAll(s));
+export const $ = (s) => document.querySelector(s);
+export const $$ = (s) => Array.from(document.querySelectorAll(s));
 
-const UI = {
+export const UI = {
   cursor: null,        // 집어든 아이템
   cursorEl: null,
 
@@ -2148,3 +2160,4 @@ const UI = {
     c.beginPath(); c.arc(clamp(px, 4, W - 4), clamp(py, 4, H - 4), 4, 0, TAU); c.fill(); c.stroke();
   }
 };
+bindUI(UI);

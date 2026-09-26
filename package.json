@@ -9,17 +9,24 @@
     "build": "node tools/bundle.mjs",
     "serve": "node tests/serve.mjs",
     "test:syntax": "node tests/syntax.mjs",
+    "test:modules": "node tests/modules.mjs",
     "test:manifest": "python3 tools/sync-manifest.py --check",
     "test:gen": "node tests/gen-hash.mjs",
     "test:play": "node tests/play.mjs",
     "test:shots": "node tests/shots.mjs",
     "baseline": "node tests/gen-hash.mjs --update && node tests/shots.mjs --update",
-    "check": "npm run test:syntax && npm run test:manifest && npm run test:gen && npm run test:play && npm run test:shots"
+    "check": "npm run test:syntax && npm run test:modules && npm run test:manifest && npm run test:gen && npm run test:play && npm run test:shots"
   },
   "devDependencies": {
-    "playwright": "1.63.0",
+    "acorn": "8.18.0",
+    "esbuild": "0.28.2",
+    "eslint-scope": "9.1.2",
+    "globals": "17.12.0",
     "pixelmatch": "7.2.0",
+    "playwright": "1.63.0",
     "pngjs": "7.0.0"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

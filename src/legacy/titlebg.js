@@ -1,5 +1,6 @@
 /* js/titlebg.js — 타이틀 화면 배경. */
-const TitleBG = {
+import { Sprites } from './sprites.js';
+export const TitleBG = {
   cv: null, ctx: null, layers: [], flakes: [], player: null,
   t: 0, last: 0, on: false, still: false, raf: 0, w: 0, h: 0,
 

@@ -81,7 +81,7 @@ Progress lives in the browser (IndexedDB, gzip-compressed; `localStorage` where 
 | Path | Role |
 |---|---|
 | `game/` | Playable runtime folder (serve it as-is). `game/js/ashfall.js` is a generated bundle. |
-| `src/legacy/*.js` | **Game source.** Concatenated in order by `tools/bundle.mjs` into `game/js/ashfall.js`. |
+| `src/legacy/*.js` | **Game source** — ES modules. `tools/bundle.mjs` (esbuild) bundles them from `main.js` into `game/js/ashfall.js`, a single classic script that also runs from `file://`. |
 | `src/legacy/data.js` | Content tables: chapters, dialogue, items, enemies, objectives, and balancing data. |
 | `src/legacy/world.js` | World generation, terrain, biome, and dungeon logic. |
 | `src/legacy/entity.js` | Player, enemy, boss, combat, and interaction behavior. |
@@ -93,7 +93,7 @@ Progress lives in the browser (IndexedDB, gzip-compressed; `localStorage` where 
 
 ### Source-of-truth rule
 
-Edit game code in `src/legacy/` (run `npm run dev` to rebuild the bundle on save) and commit the rebuilt `game/js/ashfall.js` with it; assets and HTML stay in `game/`. `site/play/` is generated output and is overwritten by the next build. `npm run check` runs the regression suite. The repository’s [CLAUDE.md](../CLAUDE.md) and [story/session rules](story-and-sessions.md) document the content tables and save-sensitive constraints to check before extending the game.
+Edit game code in `src/legacy/` (run `npm ci` once, then `npm run dev` to rebuild the bundle on save) and commit the rebuilt `game/js/ashfall.js` with it; assets and HTML stay in `game/`. `site/play/` is generated output and is overwritten by the next build. `npm run check` runs the regression suite. The repository’s [CLAUDE.md](../CLAUDE.md) and [story/session rules](story-and-sessions.md) document the content tables and save-sensitive constraints to check before extending the game.
 
 ## Documentation map
 
