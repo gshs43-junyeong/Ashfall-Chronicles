@@ -1260,6 +1260,430 @@
     };
   }
 
+  // src/engine/entity/entity.ts
+  var entity_exports = {};
+  __export(entity_exports, {
+    Entity: () => Entity
+  });
+  var Entity = class {
+    // 마지막 가로 이동이 벽에 막혔나(계단을 올랐으면 그대로 둔다)
+    constructor(x, y, w, h) {
+      this.x = x;
+      this.y = y;
+      this.w = w;
+      this.h = h;
+      this.vx = 0;
+      this.vy = 0;
+      this.dead = false;
+      this.onGround = false;
+    }
+    get cx() {
+      return this.x + this.w / 2;
+    }
+    get cy() {
+      return this.y + this.h / 2;
+    }
+    rect() {
+      return { x: this.x, y: this.y, w: this.w, h: this.h };
+    }
+    /** 가로로 nx 까지. 막히면 바닥에 선 채로 step 픽셀 올라 retry 로 다시 가 보고(step 0 이면 안 오름),
+        그래도 막히면 한 픽셀씩 붙고 멈춘다. ★ 올라선 뒤 막혀도 올라선 높이는 그대로다. */
+    moveX(map, nx, step, retry) {
+      if (map.hitSolid(nx, this.y, this.w, this.h)) {
+        let stepped = false;
+        if (this.onGround && step > 0 && !map.hitSolid(nx, this.y - step, this.w, this.h)) {
+          this.y -= step;
+          nx = retry;
+          stepped = true;
+        }
+        if (!stepped || map.hitSolid(nx, this.y, this.w, this.h)) {
+          const dir = Math.sign(this.vx);
+          while (!map.hitSolid(this.x + dir, this.y, this.w, this.h) && Math.abs(this.x - nx) > 1) this.x += dir;
+          this.vx = 0;
+          nx = this.x;
+          this.hitWall = true;
+        }
+      } else this.hitWall = false;
+      this.x = nx;
+    }
+    /** 중력 — 위로는 up, 아래로는 cap 까지 */
+    fall(dt, grav, up, cap) {
+      this.vy = clamp(this.vy + grav * dt, up, cap);
+    }
+    /** 세로로 ny 까지. 막히면 한 픽셀씩 붙고(내려가다 막히면 땅), 아니면 내려갈 때 발판(platforms)에 선다. */
+    moveY(map, ny, prevBottom, platforms) {
+      this.onGround = false;
+      if (map.hitSolid(this.x, ny, this.w, this.h)) {
+        const dir = Math.sign(this.vy);
+        while (!map.hitSolid(this.x, this.y + dir, this.w, this.h) && Math.abs(this.y - ny) > 1) this.y += dir;
+        if (this.vy > 0) this.onGround = true;
+        this.vy = 0;
+        ny = this.y;
+      } else if (this.vy >= 0 && platforms) {
+        const top = map.hitPlatform(this.x, ny, this.w, this.h, prevBottom);
+        if (top >= 0) {
+          ny = top - this.h;
+          this.vy = 0;
+          this.onGround = true;
+        }
+      }
+      this.y = ny;
+    }
+    /** 세계 안에 가둔다 — x 는 [x0, x1 - w], 바닥 yMax 아래로 빠지면 거기 멈춘다 */
+    keepIn(x0, x1, yMax) {
+      this.x = clamp(this.x, x0, x1 - this.w);
+      if (this.y > yMax) {
+        this.y = yMax;
+        this.vy = 0;
+      }
+    }
+  };
+
+  // src/engine/scene/scenes.ts
+  var scenes_exports = {};
+  __export(scenes_exports, {
+    createScenes: () => createScenes
+  });
+  function createScenes({ scenes, layers, start }) {
+    let cur = start;
+    const stack = [];
+    const any = (k) => stack.some((l) => layers[l][k]);
+    const open = (l) => {
+      if (!stack.includes(l)) stack.push(l);
+    };
+    const close = (l) => {
+      const i = stack.indexOf(l);
+      if (i >= 0) stack.splice(i, 1);
+    };
+    return {
+      get current() {
+        return cur;
+      },
+      /** 바닥 씬을 바꾼다 — 얹힌 겹은 그대로 둔다(걷는 것은 부르는 쪽이 정한다) */
+      go(s) {
+        cur = s;
+      },
+      open,
+      close,
+      set(l, on) {
+        if (on) open(l);
+        else close(l);
+      },
+      has(l) {
+        return stack.includes(l);
+      },
+      top() {
+        return stack[stack.length - 1];
+      },
+      paused() {
+        return any("pause");
+      },
+      inputBlocked() {
+        return any("input");
+      },
+      /** 한 프레임 — 멈춤 겹이 없으면 갱신, 그리고 그리기 */
+      frame(dt) {
+        const s = scenes[cur];
+        if (s.update && !any("pause")) s.update(dt);
+        if (s.render) s.render();
+      }
+    };
+  }
+
+  // src/engine/ui/panels.ts
+  var panels_exports = {};
+  __export(panels_exports, {
+    createPanels: () => createPanels
+  });
+  function createPanels(el) {
+    let cur = null;
+    return {
+      /** 열린 창 이름(없으면 null) */
+      get current() {
+        return cur;
+      },
+      /** 그 창을 연다 — 창이 없으면 false(아무것도 안 바뀐다) */
+      show(id) {
+        const e = el(id);
+        if (!e) return false;
+        e.classList.add("open");
+        cur = id;
+        return true;
+      },
+      /** 열린 창을 닫는다 */
+      hide() {
+        if (cur) {
+          const e = el(cur);
+          if (e) e.classList.remove("open");
+        }
+        cur = null;
+      }
+    };
+  }
+
+  // src/engine/ui/tooltip.ts
+  var tooltip_exports = {};
+  __export(tooltip_exports, {
+    createTooltip: () => createTooltip
+  });
+  function createTooltip(el, { width = 280, dx = 18, dy = 14, gap = 8, top = 4 } = {}) {
+    const place = (x, y) => {
+      let lx = x + dx, ly = y + dy;
+      if (lx + width > innerWidth) lx = x - width - gap;
+      if (ly + el.offsetHeight > innerHeight) ly = innerHeight - el.offsetHeight - gap;
+      el.style.left = lx + "px";
+      el.style.top = Math.max(top, ly) + "px";
+    };
+    return {
+      el,
+      place,
+      show(html, x, y) {
+        el.innerHTML = html;
+        el.style.display = "block";
+        place(x, y);
+      },
+      hide() {
+        el.style.display = "none";
+      }
+    };
+  }
+
+  // src/engine/ui/slots.ts
+  var slots_exports = {};
+  __export(slots_exports, {
+    makeSlot: () => makeSlot,
+    paintSlot: () => paintSlot,
+    setIcon: () => setIcon
+  });
+  function setIcon(el, url) {
+    if (el) el.style.backgroundImage = url ? `url(${url})` : "";
+  }
+  function makeSlot(cls, o, host) {
+    const d = document.createElement("div");
+    d.className = cls;
+    if (o.data) for (const k in o.data) d.dataset[k] = "" + o.data[k];
+    if (o.fill) {
+      d.innerHTML = `<span class="ic"></span><span class="cnt">${o.fill.count}</span>` + (o.fill.extra || "");
+      setIcon(d.querySelector(".ic"), o.fill.icon);
+    } else if (o.html !== void 0) d.innerHTML = o.html;
+    const down = o.down;
+    if (down) d.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      down(e);
+    });
+    if (o.click) d.addEventListener("click", o.click);
+    if (o.noMenu) d.addEventListener("contextmenu", (e) => e.preventDefault());
+    if (o.enter) d.addEventListener("mouseenter", o.enter);
+    if (o.leave) d.addEventListener("mouseleave", o.leave);
+    if (host) host.appendChild(d);
+    return d;
+  }
+  function paintSlot(el, cls, icon, count) {
+    el.className = cls;
+    setIcon(el.querySelector(".ic"), icon);
+    el.querySelector(".cnt").textContent = "" + count;
+  }
+
+  // src/engine/i18n/ko.ts
+  var ko_exports = {};
+  __export(ko_exports, {
+    eulreul: () => eulreul,
+    eunneun: () => eunneun,
+    iga: () => iga,
+    josa: () => josa,
+    josaRo: () => josaRo,
+    koParticle: () => koParticle
+  });
+  function josa(word, withJong, noJong) {
+    const s = String(word), ch = s.charCodeAt(s.length - 1) - 44032;
+    if (ch < 0 || ch > 11171) return noJong;
+    return ch % 28 ? withJong : noJong;
+  }
+  function josaRo(word) {
+    const ch = word.charCodeAt(word.length - 1) - 44032;
+    if (ch < 0 || ch > 11171) return "로";
+    const jong = ch % 28;
+    return jong === 0 || jong === 8 ? "로" : "으로";
+  }
+  var iga = (w) => w + josa(w, "이", "가");
+  var eulreul = (w) => w + josa(w, "을", "를");
+  var eunneun = (w) => w + josa(w, "은", "는");
+  var PAIRS = [["을", "를"], ["이", "가"], ["은", "는"], ["과", "와"], ["아", "야"], ["이나", "나"], ["이랑", "랑"]];
+  function koParticle(v, p) {
+    const s = String(v), only = p[0] === "-", q = only ? p.slice(1) : p, w = only ? "" : s;
+    if (q === "로" || q === "으로") return w + josaRo(s);
+    for (const [a, b] of PAIRS) if (q === a || q === b) return w + josa(s, a, b);
+    return null;
+  }
+
+  // src/engine/i18n/format.ts
+  var format_exports = {};
+  __export(format_exports, {
+    compile: () => compile,
+    placeholders: () => placeholders,
+    render: () => render
+  });
+  function parse(s, i, stop) {
+    const out = [];
+    let buf = "";
+    while (i < s.length) {
+      const c = s[i];
+      if (c === "}" && stop) break;
+      if (c !== "{") {
+        buf += c;
+        i++;
+        continue;
+      }
+      if (buf) {
+        out.push(buf);
+        buf = "";
+      }
+      const end = s.indexOf("}", i), comma = s.indexOf(",", i);
+      if (end < 0) throw new Error("닫는 } 가 없다: " + s);
+      if (comma < 0 || comma > end) {
+        const [v2, hook] = s.slice(i + 1, end).split("|").map((x) => x.trim());
+        out.push(hook ? { v: v2, hook } : { v: v2 });
+        i = end + 1;
+        continue;
+      }
+      const v = s.slice(i + 1, comma).trim();
+      const k2 = s.indexOf(",", comma + 1);
+      const kind = s.slice(comma + 1, k2).trim();
+      if (kind !== "plural" && kind !== "select") throw new Error("모르는 형식 " + kind + ": " + s);
+      const opts = {};
+      i = k2 + 1;
+      for (; ; ) {
+        while (/\s/.test(s[i])) i++;
+        if (s[i] === "}") {
+          i++;
+          break;
+        }
+        const b = s.indexOf("{", i);
+        if (b < 0) throw new Error("갈래가 끊겼다: " + s);
+        const key = s.slice(i, b).trim();
+        const [body, j] = parse(s, b + 1, true);
+        opts[key] = body;
+        i = j + 1;
+      }
+      if (!opts.other) throw new Error("other 갈래가 없다: " + s);
+      out.push({ v, kind, opts });
+    }
+    if (buf) out.push(buf);
+    return [out, i];
+  }
+  var cache = /* @__PURE__ */ new Map();
+  function compile(msg) {
+    let n = cache.get(msg);
+    if (!n) {
+      n = parse(msg, 0, false)[0];
+      cache.set(msg, n);
+    }
+    return n;
+  }
+  function render(nodes, p, lang, hook, num) {
+    let out = "";
+    for (const n of nodes) {
+      if (typeof n === "string") {
+        out += num === void 0 ? n : n.replace(/#/g, String(num));
+        continue;
+      }
+      const v = p[n.v];
+      if (!("kind" in n)) {
+        if (n.hook) {
+          const r = hook ? hook(v, n.hook) : null;
+          out += r === null ? String(v) : r;
+        } else out += String(v);
+        continue;
+      }
+      if (n.kind === "select") {
+        out += render(n.opts[String(v)] || n.opts.other, p, lang, hook, num);
+        continue;
+      }
+      const x = Number(v);
+      const exact = n.opts["=" + x];
+      const body = exact || n.opts[new Intl.PluralRules(lang).select(x)] || n.opts.other;
+      out += render(body, p, lang, hook, x);
+    }
+    return out;
+  }
+  function placeholders(msg) {
+    const names = /* @__PURE__ */ new Set();
+    (function walk(ns) {
+      for (const n of ns) {
+        if (typeof n === "string") continue;
+        names.add(n.v);
+        if ("kind" in n) for (const k in n.opts) walk(n.opts[k]);
+      }
+    })(compile(msg));
+    return [...names].sort();
+  }
+
+  // src/engine/i18n/i18n.ts
+  var i18n_exports = {};
+  __export(i18n_exports, {
+    collectTables: () => collectTables,
+    createI18n: () => createI18n
+  });
+  function createI18n({ source, lang, locales, fallback = [], hooks = {} }) {
+    const chain = [lang, ...fallback].filter((l, i, a) => l !== source && a.indexOf(l) === i);
+    const isSource = lang === source;
+    return {
+      lang,
+      source,
+      isSource,
+      tr(src, p) {
+        let msg = src, ml = source;
+        if (!isSource) for (const l of chain) {
+          const m = locales[l] && locales[l].msgs && locales[l].msgs[src];
+          if (m !== void 0) {
+            msg = m;
+            ml = l;
+            break;
+          }
+        }
+        if (!p && msg.indexOf("{") < 0) return msg;
+        return render(compile(msg), p || {}, ml, hooks[ml] || null);
+      },
+      /** 표의 글을 그 언어로 덮어쓴다 — roots 는 { ITEMS, ENEMIES, … }. 원본 언어면 아무것도 안 한다. 덮은 수를 돌려준다. */
+      applyTables(roots) {
+        if (isSource) return 0;
+        let n = 0;
+        for (const l of [...chain].reverse()) {
+          const t = locales[l] && locales[l].tables;
+          if (!t) continue;
+          for (const path in t) {
+            const keys = path.split(".");
+            let o = roots[keys[0]];
+            for (let i = 1; i < keys.length - 1 && o; i++) o = o[keys[i]];
+            const last = keys[keys.length - 1];
+            if (o && typeof o[last] === "string") {
+              o[last] = t[path];
+              n++;
+            }
+          }
+        }
+        return n;
+      }
+    };
+  }
+  function collectTables(roots, keep) {
+    const out = {};
+    const seen = /* @__PURE__ */ new Set();
+    (function walk(o, path) {
+      if (typeof o === "string") {
+        if (keep(o)) out[path] = o;
+        return;
+      }
+      if (!o || typeof o !== "object" || seen.has(o)) return;
+      seen.add(o);
+      for (const k of Object.keys(o)) {
+        if (k.indexOf(".") >= 0) continue;
+        walk(o[k], path ? path + "." + k : k);
+      }
+    })(roots, "");
+    return out;
+  }
+
   // src/legacy/util.js
   var util_exports = {};
   __export(util_exports, {
@@ -1284,6 +1708,44 @@
   }
   function escHtml(s) {
     return ("" + s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  // src/legacy/lang.js
+  var lang_exports = {};
+  __export(lang_exports, {
+    I18N: () => I18N,
+    LANG: () => LANG,
+    LOCALES: () => LOCALES,
+    N_: () => N_,
+    localizeDom: () => localizeDom,
+    tr: () => tr
+  });
+  var LOCALES = typeof globalThis !== "undefined" && globalThis.ASHFALL_LOCALES || {};
+  var LANG = typeof location !== "undefined" && new URLSearchParams(location.search).get("lang") || "ko";
+  var I18N = createI18n({ source: "ko", lang: LANG, locales: LOCALES, fallback: ["en"], hooks: { ko: koParticle } });
+  var tr = I18N.tr;
+  var N_ = (s) => s;
+  function localizeDom(root) {
+    if (I18N.isSource || !root) return 0;
+    let n = 0;
+    const HAN = /[\uAC00-\uD7A3]/;
+    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+    for (let node = walk.currentNode; node; node = walk.nextNode()) {
+      if (node.nodeType === 3) {
+        const s = node.data, t = s.trim();
+        if (!t || !HAN.test(t) || /^(SCRIPT|STYLE)$/.test(node.parentNode.nodeName)) continue;
+        const i = s.indexOf(t);
+        node.data = s.slice(0, i) + tr(t) + s.slice(i + t.length);
+        n++;
+      } else for (const a of ["placeholder", "title", "aria-label", "alt"]) {
+        const v = node.getAttribute && node.getAttribute(a);
+        if (v && HAN.test(v)) {
+          node.setAttribute(a, tr(v.trim()));
+          n++;
+        }
+      }
+    }
+    return n;
   }
 
   // src/legacy/size.js
@@ -1606,31 +2068,6 @@
     sessionOf: () => sessionOf,
     tileMat: () => tileMat
   });
-
-  // src/engine/i18n/ko.ts
-  function josa(word, withJong, noJong) {
-    const s = String(word), ch = s.charCodeAt(s.length - 1) - 44032;
-    if (ch < 0 || ch > 11171) return noJong;
-    return ch % 28 ? withJong : noJong;
-  }
-  function josaRo(word) {
-    const ch = word.charCodeAt(word.length - 1) - 44032;
-    if (ch < 0 || ch > 11171) return "로";
-    const jong = ch % 28;
-    return jong === 0 || jong === 8 ? "로" : "으로";
-  }
-  var iga = (w) => w + josa(w, "이", "가");
-  var eulreul = (w) => w + josa(w, "을", "를");
-  var eunneun = (w) => w + josa(w, "은", "는");
-  var PAIRS = [["을", "를"], ["이", "가"], ["은", "는"], ["과", "와"], ["아", "야"], ["이나", "나"], ["이랑", "랑"]];
-  function koParticle(v, p) {
-    const s = String(v);
-    if (p === "로" || p === "으로") return s + josaRo(s);
-    for (const [a, b] of PAIRS) if (p === a || p === b) return s + josa(s, a, b);
-    return null;
-  }
-
-  // src/legacy/data.js
   var T = {
     AIR: 0,
     DIRT: 1,
@@ -6846,7 +7283,7 @@
       drops: [["gloom_pearl", 1, 3, 4], ["deep_alloy", 1, 40, 60], ["miner_tag", 1, 2, 3], ["hammer_cave", 1, 1, 1]]
     }
   };
-  var mobCw = (t) => ENEMIES[t] && ENEMIES[t].cw || "마리";
+  var mobCw = (t) => ENEMIES[t] && ENEMIES[t].cw || tr("마리");
   var MECH_MUL = 1.5;
   var MECH_PART = "rust_gear";
   var MECH_CH0 = 9;
@@ -6897,7 +7334,7 @@
   }
   function mobName(type, mech) {
     const n = (ENEMIES[type] || {}).n || type;
-    return mech ? "개조된 " + n : n;
+    return mech ? `${tr("개조된")} ` + n : n;
   }
   var MAT = {
     stone: { c: ["#9a9aa0", "#6a6a70", "#4a4a50"], n: 9, g: 1, life: 0.5, sq: 1, hit: "hit_stone", brk: "break_stone" },
@@ -11647,42 +12084,42 @@
         const t = targets[clamp(ch * 2 + rng.int(0, 1), 0, targets.length - 1)];
         const n = rng.int(5, 9);
         return {
-          title: "마을을 지켜라",
-          desc: `요즘 ${iga(ENEMIES[t].n)} 부쩍 늘었어. ${n}마리만 줄여 주겠니?`,
+          title: tr("마을을 지켜라"),
+          desc: tr("요즘 {enemy|이} 부쩍 늘었어. {n}마리만 줄여 주겠니?", { enemy: ENEMIES[t].n, n }),
           obj: { type: "kill", target: t, n },
           rw: { gold: 35 + ch * 45, xp: 25 + ch * 35 },
-          doneLine: "덕분에 한숨 돌렸다. 고마워."
+          doneLine: tr("덕분에 한숨 돌렸다. 고마워.")
         };
       },
       (ch, rng) => {
         const n = rng.int(8, 16);
         return {
-          title: "땔감 모으기",
-          desc: `겨울이 오기 전에 나무 ${n}개만 더 모아 주련?`,
+          title: tr("땔감 모으기"),
+          desc: tr("겨울이 오기 전에 나무 {n}개만 더 모아 주련?", { n }),
           obj: { type: "collect", item: "wood", n },
           rw: { gold: 20 + ch * 20, xp: 15 + ch * 20 },
-          doneLine: "따뜻하게 날 수 있겠어. 고맙다."
+          doneLine: tr("따뜻하게 날 수 있겠어. 고맙다.")
         };
       },
       (ch, rng) => {
         const n = rng.int(20, 32);
         return {
-          title: "무너진 담",
-          desc: `담이 한쪽으로 주저앉았어. 돌 ${n}개면 다시 세울 수 있을 것 같아.`,
+          title: tr("무너진 담"),
+          desc: tr("담이 한쪽으로 주저앉았어. 돌 {n}개면 다시 세울 수 있을 것 같아.", { n }),
           obj: { type: "collect", item: "stone", n },
           rw: { gold: 25 + ch * 25, xp: 20 + ch * 25 },
-          doneLine: "담이 섰어. 담이 있으면 안쪽이 생기더라. 그게 마을이지."
+          doneLine: tr("담이 섰어. 담이 있으면 안쪽이 생기더라. 그게 마을이지.")
         };
       },
       (ch, rng) => {
         const t = chPick(CH_MOB, ch);
         const n = rng.int(6, 10);
         return {
-          title: "돌아오지 않은 사람",
-          desc: `어제 나간 사람이 안 돌아왔어. ${ENEMIES[t].n} ${n}${mobCw(t)}만 걷어 주면 내가 찾으러 나갈 수 있어.`,
+          title: tr("돌아오지 않은 사람"),
+          desc: tr("어제 나간 사람이 안 돌아왔어. {enemy} {n}{mobCw}만 걷어 주면 내가 찾으러 나갈 수 있어.", { enemy: ENEMIES[t].n, n, mobCw: mobCw(t) }),
           obj: { type: "kill", target: t, n },
           rw: { gold: 45 + ch * 50, xp: 40 + ch * 45 },
-          doneLine: "…찾았어. 다치기만 했더라. 네가 길을 열어 준 덕이야."
+          doneLine: tr("…찾았어. 다치기만 했더라. 네가 길을 열어 준 덕이야.")
         };
       }
     ],
@@ -11692,11 +12129,11 @@
         const item = ores[clamp(ch, 0, ores.length - 1)];
         const n = rng.int(6, 12);
         return {
-          title: "광석 배달",
-          desc: `${ITEMS[item].n} ${n}개가 필요해. 가져다 주면 사례하지.`,
+          title: tr("광석 배달"),
+          desc: tr("{item} {n}개가 필요해. 가져다 주면 사례하지.", { item: ITEMS[item].n, n }),
           obj: { type: "collect", item, n },
           rw: { gold: 40 + ch * 55, xp: 20 + ch * 30 },
-          doneLine: "좋은 광석이군. 이걸로 뭔가 만들 수 있겠어."
+          doneLine: tr("좋은 광석이군. 이걸로 뭔가 만들 수 있겠어.")
         };
       },
       (ch, rng) => {
@@ -11704,32 +12141,32 @@
         const item = bars[clamp(ch - 1, 0, bars.length - 1)];
         const n = rng.int(3, 6);
         return {
-          title: "주괴 시험",
-          desc: `내가 정련법을 가르쳐줄 테니, ${ITEMS[item].n} ${n}개를 직접 만들어 와 봐.`,
+          title: tr("주괴 시험"),
+          desc: tr("내가 정련법을 가르쳐줄 테니, {item} {n}개를 직접 만들어 와 봐.", { item: ITEMS[item].n, n }),
           obj: { type: "collect", item, n },
           rw: { gold: 50 + ch * 60, xp: 30 + ch * 40 },
-          doneLine: "제법인데. 대장장이 소질이 있어."
+          doneLine: tr("제법인데. 대장장이 소질이 있어.")
         };
       },
       (ch, rng) => {
         const n = rng.int(12, 20);
         return {
-          title: "불에 넣을 것",
-          desc: `화로가 자꾸 식어. 석탄 ${n}개만 있으면 밤새 살려 둘 수 있어.`,
+          title: tr("불에 넣을 것"),
+          desc: tr("화로가 자꾸 식어. 석탄 {n}개만 있으면 밤새 살려 둘 수 있어.", { n }),
           obj: { type: "collect", item: "coal", n },
           rw: { gold: 30 + ch * 35, xp: 20 + ch * 25 },
-          doneLine: "밤새 불이 안 꺼졌어. 자다 깨서 확인 안 해도 되겠군."
+          doneLine: tr("밤새 불이 안 꺼졌어. 자다 깨서 확인 안 해도 되겠군.")
         };
       },
       (ch, rng) => {
         const tile = chPick(CH_ORE, ch);
         const n = rng.int(14, 24);
         return {
-          title: "광맥째로",
-          desc: `${eulreul(TILE_DEF[tile].n)} ${n}번 깨 와. 주워 온 것 말고 네가 깬 걸로.`,
+          title: tr("광맥째로"),
+          desc: tr("{tileDef|을} {n}번 깨 와. 주워 온 것 말고 네가 깬 걸로.", { tileDef: TILE_DEF[tile].n, n }),
           obj: { type: "mine", tile, n },
           rw: { gold: 45 + ch * 50, xp: 30 + ch * 40 },
-          doneLine: "깬 자리가 고르군. 곡괭이를 아는 손이야."
+          doneLine: tr("깬 자리가 고르군. 곡괭이를 아는 손이야.")
         };
       }
     ],
@@ -11740,11 +12177,11 @@
         const item = sessionOf(ch).id >= 2 ? s2[clamp(ch - 10, 0, s2.length - 1)] : s1[clamp(ch - 1, 0, s1.length - 1)];
         const n = rng.int(5, 10);
         return {
-          title: "마력 재료",
-          desc: `${iga(ITEMS[item].n)} ${n}개 필요해. 마법 재료야.`,
+          title: tr("마력 재료"),
+          desc: tr("{item|이} {n}개 필요해. 마법 재료야.", { item: ITEMS[item].n, n }),
           obj: { type: "collect", item, n },
           rw: { gold: 35 + ch * 50, xp: 25 + ch * 35 },
-          doneLine: "좋아, 이걸로 주문을 하나 완성할 수 있겠어."
+          doneLine: tr("좋아, 이걸로 주문을 하나 완성할 수 있겠어.")
         };
       },
       (ch, rng) => {
@@ -11752,33 +12189,33 @@
         const t = targets[clamp(ch - 2, 0, targets.length - 1)];
         const n = rng.int(4, 7);
         return {
-          title: "마력 파동 조사",
-          desc: `${ENEMIES[t].n}에게서 이상한 마력이 느껴져. ${n}마리만 처리해 줘.`,
+          title: tr("마력 파동 조사"),
+          desc: tr("{enemy}에게서 이상한 마력이 느껴져. {n}마리만 처리해 줘.", { enemy: ENEMIES[t].n, n }),
           obj: { type: "kill", target: t, n },
           rw: { gold: 45 + ch * 55, xp: 35 + ch * 40 },
-          doneLine: "파동이 잦아들었어. 역시 네 덕분이야."
+          doneLine: tr("파동이 잦아들었어. 역시 네 덕분이야.")
         };
       },
       (ch, rng) => {
         const tile = chPick(CH_ORE, ch);
         const n = rng.int(10, 18);
         return {
-          title: "별빛이 닿은 자리",
-          desc: `${TILE_DEF[tile].n}에 별빛이 스며 있어. ${n}번만 깨 와 줘. 깨야 보여.`,
+          title: tr("별빛이 닿은 자리"),
+          desc: tr("{tileDef}에 별빛이 스며 있어. {n}번만 깨 와 줘. 깨야 보여.", { tileDef: TILE_DEF[tile].n, n }),
           obj: { type: "mine", tile, n },
           rw: { gold: 40 + ch * 45, xp: 35 + ch * 45 },
-          doneLine: "역시. 조각이 떨어진 자리부터 빛이 스며들고 있어."
+          doneLine: tr("역시. 조각이 떨어진 자리부터 빛이 스며들고 있어.")
         };
       },
       (ch, rng) => {
         const item = chPick(CH_MAT, ch);
         const n = rng.int(10, 18);
         return {
-          title: "재우는 데 쓸 것",
-          desc: `${ITEMS[item].n} ${n}개. 조각을 재우는 건 못 하지만, 꿈을 얕게는 만들 수 있어.`,
+          title: tr("재우는 데 쓸 것"),
+          desc: tr("{item} {n}개. 조각을 재우는 건 못 하지만, 꿈을 얕게는 만들 수 있어.", { item: ITEMS[item].n, n }),
           obj: { type: "collect", item, n },
           rw: { gold: 40 + ch * 50, xp: 35 + ch * 45 },
-          doneLine: "이걸로 하룻밤은 얕게 재울 수 있어. 하룻밤이라도 어디야."
+          doneLine: tr("이걸로 하룻밤은 얕게 재울 수 있어. 하룻밤이라도 어디야.")
         };
       }
     ],
@@ -11789,10 +12226,10 @@
         const n = rng.int(6, 12);
         return {
           title: "???",
-          desc: `${eulreul(TILE_DEF[tile].n)} ${n}번 캐 오너라. 이유는… 나중에 말해주마.`,
+          desc: tr("{tileDef|을} {n}번 캐 오너라. 이유는… 나중에 말해주마.", { tileDef: TILE_DEF[tile].n, n }),
           obj: { type: "mine", tile, n },
           rw: { gold: 30 + ch * 40, xp: 40 + ch * 50 },
-          doneLine: "…역시. 네가 맞았어."
+          doneLine: tr("…역시. 네가 맞았어.")
         };
       },
       (ch, rng) => {
@@ -11800,22 +12237,22 @@
         const t = targets[clamp(ch - 1, 0, targets.length - 1)];
         const n = rng.int(5, 9);
         return {
-          title: "오래된 빚",
-          desc: `저 아래 ${ENEMIES[t].n}에게 진 빚이 있다. ${n}마리를 대신 갚아 다오.`,
+          title: tr("오래된 빚"),
+          desc: tr("저 아래 {enemy}에게 진 빚이 있다. {n}마리를 대신 갚아 다오.", { enemy: ENEMIES[t].n, n }),
           obj: { type: "kill", target: t, n },
           rw: { gold: 40 + ch * 50, xp: 45 + ch * 55 },
-          doneLine: "빚을 갚았군. 이제 좀 편히 잘 수 있겠어."
+          doneLine: tr("빚을 갚았군. 이제 좀 편히 잘 수 있겠어.")
         };
       },
       (ch, rng) => {
         const item = chPick(CH_MAT, ch);
         const n = rng.int(10, 16);
         return {
-          title: "가져와 보아라",
-          desc: `${ITEMS[item].n} ${n}개를 가져와 보아라. 무엇에 쓰는지는 나중에 말해주마.`,
+          title: tr("가져와 보아라"),
+          desc: tr("{item} {n}개를 가져와 보아라. 무엇에 쓰는지는 나중에 말해주마.", { item: ITEMS[item].n, n }),
           obj: { type: "collect", item, n },
           rw: { gold: 35 + ch * 45, xp: 45 + ch * 50 },
-          doneLine: "…그래. 아직은 이것으로 되는군. 다음에는 더 있어야 할 게다."
+          doneLine: tr("…그래. 아직은 이것으로 되는군. 다음에는 더 있어야 할 게다.")
         };
       }
     ],
@@ -11825,21 +12262,21 @@
         const t = chPick(CH_MOB, ch);
         const n = rng.int(8, 13);
         return {
-          title: "겁을 먹었다",
-          desc: `애들이 우리 밖으로 안 나가려 해. ${ENEMIES[t].n} ${n}${mobCw(t)}만 치워 주면 다시 나올 거야.`,
+          title: tr("겁을 먹었다"),
+          desc: tr("애들이 우리 밖으로 안 나가려 해. {enemy} {n}{mobCw}만 치워 주면 다시 나올 거야.", { enemy: ENEMIES[t].n, n, mobCw: mobCw(t) }),
           obj: { type: "kill", target: t, n },
           rw: { gold: 70 + ch * 55, xp: 60 + ch * 50 },
-          doneLine: "봐, 벌써 문 앞까지 나왔잖아. 짐승은 사람보다 빨리 잊어."
+          doneLine: tr("봐, 벌써 문 앞까지 나왔잖아. 짐승은 사람보다 빨리 잊어.")
         };
       },
       (ch, rng) => {
         const n = rng.int(10, 18);
         return {
-          title: "먹일 것",
-          desc: `생고기 ${n}개만. 이 도시엔 풀이 없어서 애들이 고기만 먹어.`,
+          title: tr("먹일 것"),
+          desc: tr("생고기 {n}개만. 이 도시엔 풀이 없어서 애들이 고기만 먹어.", { n }),
           obj: { type: "collect", item: "raw_meat", n },
           rw: { gold: 55 + ch * 45, xp: 45 + ch * 40 },
-          doneLine: "오늘은 다 먹였다. 먹인 날은 기분이 좋아."
+          doneLine: tr("오늘은 다 먹였다. 먹인 날은 기분이 좋아.")
         };
       }
     ],
@@ -11848,21 +12285,21 @@
         const t = chPick(CH_MOB, ch);
         const n = rng.int(12, 18);
         return {
-          title: "표적",
-          desc: `${ENEMIES[t].n} ${n}${mobCw(t)}. 세어서 와. 몇을 쓰러뜨렸는지 모르는 놈은 제 실력도 모른다.`,
+          title: tr("표적"),
+          desc: tr("{enemy} {n}{mobCw}. 세어서 와. 몇을 쓰러뜨렸는지 모르는 놈은 제 실력도 모른다.", { enemy: ENEMIES[t].n, n, mobCw: mobCw(t) }),
           obj: { type: "kill", target: t, n },
           rw: { gold: 80 + ch * 60, xp: 90 + ch * 70 },
-          doneLine: "세었군. 이제 네가 뭘 할 수 있는지 너도 안다."
+          doneLine: tr("세었군. 이제 네가 뭘 할 수 있는지 너도 안다.")
         };
       },
       (ch, rng) => {
         const n = rng.int(6, 12);
         return {
-          title: "무게",
-          desc: `강철 주괴 ${n}개를 지고 와라. 나르는 것도 훈련이다. 무겁게 걸으면 가볍게 싸운다.`,
+          title: tr("무게"),
+          desc: tr("강철 주괴 {n}개를 지고 와라. 나르는 것도 훈련이다. 무겁게 걸으면 가볍게 싸운다.", { n }),
           obj: { type: "collect", item: "iron_bar", n },
           rw: { gold: 60 + ch * 50, xp: 80 + ch * 60 },
-          doneLine: "어깨가 내려앉았군. 내일이면 그 자리에 근육이 붙는다."
+          doneLine: tr("어깨가 내려앉았군. 내일이면 그 자리에 근육이 붙는다.")
         };
       }
     ],
@@ -11870,21 +12307,21 @@
       (ch, rng) => {
         const n = rng.int(20, 32);
         return {
-          title: "지붕과 바닥",
-          desc: `판자 ${n}장. 방은 많은데 바닥이 꺼진 방이 더 많아.`,
+          title: tr("지붕과 바닥"),
+          desc: tr("판자 {n}장. 방은 많은데 바닥이 꺼진 방이 더 많아.", { n }),
           obj: { type: "collect", item: "plank", n },
           rw: { gold: 60 + ch * 45, xp: 45 + ch * 40 },
-          doneLine: "두 방을 더 열었다. 채울 사람은 아직 없지만, 열어는 뒀어."
+          doneLine: tr("두 방을 더 열었다. 채울 사람은 아직 없지만, 열어는 뒀어.")
         };
       },
       (ch, rng) => {
         const n = rng.int(14, 24);
         return {
-          title: "아궁이",
-          desc: `석탄 ${n}개. 손님한테 찬물을 내놓을 수는 없잖아.`,
+          title: tr("아궁이"),
+          desc: tr("석탄 {n}개. 손님한테 찬물을 내놓을 수는 없잖아.", { n }),
           obj: { type: "collect", item: "coal", n },
           rw: { gold: 55 + ch * 45, xp: 40 + ch * 40 },
-          doneLine: "오늘 묵는 사람은 더운물로 씻는다. 그거 하나로 여관이 여관이 돼."
+          doneLine: tr("오늘 묵는 사람은 더운물로 씻는다. 그거 하나로 여관이 여관이 돼.")
         };
       }
     ],
@@ -11892,22 +12329,22 @@
       (ch, rng) => {
         const n = rng.int(18, 30);
         return {
-          title: "벼릴 것",
-          desc: `강철판 ${n}개. 도시에서 뜯어 온 걸로 벼리면 이 도시 물건이 되는 거지.`,
+          title: tr("벼릴 것"),
+          desc: tr("강철판 {n}개. 도시에서 뜯어 온 걸로 벼리면 이 도시 물건이 되는 거지.", { n }),
           obj: { type: "collect", item: "steel_plate", n },
           rw: { gold: 70 + ch * 55, xp: 50 + ch * 45 },
-          doneLine: "같은 판인데 두들기면 다른 게 돼. 그래서 이 일을 그만 못 둬."
+          doneLine: tr("같은 판인데 두들기면 다른 게 돼. 그래서 이 일을 그만 못 둬.")
         };
       },
       (ch, rng) => {
         const tile = chPick(CH_ORE, ch);
         const n = rng.int(16, 26);
         return {
-          title: "주워 온 것 말고",
-          desc: `${eulreul(TILE_DEF[tile].n)} ${n}번 깨 와. 주워 온 쇠는 이미 한 번 남의 물건이었잖아.`,
+          title: tr("주워 온 것 말고"),
+          desc: tr("{tileDef|을} {n}번 깨 와. 주워 온 쇠는 이미 한 번 남의 물건이었잖아.", { tileDef: TILE_DEF[tile].n, n }),
           obj: { type: "mine", tile, n },
           rw: { gold: 75 + ch * 60, xp: 55 + ch * 50 },
-          doneLine: "처음부터 우리 것인 쇠야. 이걸로 만든 건 팔지 말자."
+          doneLine: tr("처음부터 우리 것인 쇠야. 이걸로 만든 건 팔지 말자.")
         };
       }
     ],
@@ -11915,22 +12352,22 @@
       (ch, rng) => {
         const n = rng.int(8, 14);
         return {
-          title: "끊긴 선",
-          desc: `동력관 조각 ${n}개. 이 도시 선은 다 끊겨 있는데, 끊긴 자리가 전부 같은 모양이야.`,
+          title: tr("끊긴 선"),
+          desc: tr("동력관 조각 {n}개. 이 도시 선은 다 끊겨 있는데, 끊긴 자리가 전부 같은 모양이야.", { n }),
           obj: { type: "collect", item: "conduit_part", n },
           rw: { gold: 75 + ch * 60, xp: 60 + ch * 55 },
-          doneLine: "같은 모양이지? 누가 한 번에 다 끊은 거야. 왜 끊었는지가 다음 문제고."
+          doneLine: tr("같은 모양이지? 누가 한 번에 다 끊은 거야. 왜 끊었는지가 다음 문제고.")
         };
       },
       (ch, rng) => {
         const t = chPick(CH_MOB, ch);
         const n = rng.int(8, 13);
         return {
-          title: "뜯어 봐야 안다",
-          desc: `${ENEMIES[t].n} ${n}${mobCw(t)}만 부숴 줘. 멀쩡한 건 못 뜯어. 부서진 걸 봐야 어떻게 만들었는지가 보여.`,
+          title: tr("뜯어 봐야 안다"),
+          desc: tr("{enemy} {n}{mobCw}만 부숴 줘. 멀쩡한 건 못 뜯어. 부서진 걸 봐야 어떻게 만들었는지가 보여.", { enemy: ENEMIES[t].n, n, mobCw: mobCw(t) }),
           obj: { type: "kill", target: t, n },
           rw: { gold: 80 + ch * 65, xp: 70 + ch * 60 },
-          doneLine: "안쪽을 봤어. 사람이 만든 게 아니야. …사람을 보고 만든 거야."
+          doneLine: tr("안쪽을 봤어. 사람이 만든 게 아니야. …사람을 보고 만든 거야.")
         };
       }
     ]
@@ -13625,7 +14062,7 @@
         type: "lair",
         boss: "overseer",
         ruin: 12,
-        nm: "관리자 격실",
+        nm: tr("관리자 격실"),
         x: bx * TS,
         y: (by + 10) * TS - 48,
         w: 40,
@@ -13671,7 +14108,7 @@
         type: "lair",
         boss: "proliferator",
         ruin: 10,
-        nm: "증식체의 노심",
+        nm: tr("증식체의 노심"),
         x: (boss.x + (boss.w >> 1)) * TS,
         y: (bfy + 1) * TS - 48,
         w: 44,
@@ -13685,7 +14122,7 @@
         type: "lair",
         boss: "hepha",
         ruin: 11,
-        nm: "헤파의 격실",
+        nm: tr("헤파의 격실"),
         x: (deep.x + (deep.w >> 1)) * TS,
         y: (dfy + 1) * TS - 52,
         w: 48,
@@ -13781,7 +14218,7 @@
         type: "lair",
         boss: "archetype",
         ruin: 15,
-        nm: "비어 있는 받침대",
+        nm: tr("비어 있는 받침대"),
         x: (last.x + (last.w >> 1)) * TS,
         y: (lfy + 1) * TS - 56,
         w: 48,
@@ -13865,7 +14302,7 @@
         type: "lair",
         boss: "restorer",
         ruin: 13,
-        nm: "환원 기관",
+        nm: tr("환원 기관"),
         x: (main.x + (main.w >> 1)) * TS,
         y: (mfy + 1) * TS - 60,
         w: 52,
@@ -13942,7 +14379,7 @@
         type: "lair",
         boss: "shaft_maw",
         ruin: 14,
-        nm: "메워진 막장",
+        nm: tr("메워진 막장"),
         x: (main.x + (main.w >> 1)) * TS,
         y: (mfy + 1) * TS - 52,
         w: 48,
@@ -14007,19 +14444,20 @@
       const sorted = items.slice().sort((a, b) => a.tx0 - b.tx0);
       for (let i = 1; i < sorted.length; i++) {
         const a = sorted[i - 1], b = sorted[i];
-        if (b.tx0 <= a.tx1) bad.push(`겹침: ${a.slotKey}(${a.tx0}~${a.tx1}) ↔ ${b.slotKey}(${b.tx0}~${b.tx1})`);
+        if (b.tx0 <= a.tx1) bad.push(tr("겹침: {slotKey}({tx0}~{tx1}) ↔ {slotKey2}({tx02}~{tx12})", { slotKey: a.slotKey, tx0: a.tx0, tx1: a.tx1, slotKey2: b.slotKey, tx02: b.tx0, tx12: b.tx1 }));
       }
       for (const o of items) {
         if (o.slotKey === "fountain") continue;
         for (let x = o.tx0; x <= o.tx1; x++)
-          if (this.solid(x, gy - 1)) bad.push(`막힌 칸 위: ${o.slotKey}가 ${x}칸(벽/기둥) 위에 있음`);
+          if (this.solid(x, gy - 1)) bad.push(tr("막힌 칸 위: {slotKey}가 {x}칸(벽/기둥) 위에 있음", { slotKey: o.slotKey, x }));
       }
       if (plaza) {
         for (const o of items)
           if (o.plaza && (o.tx0 < plaza[0] || o.tx1 > plaza[1]))
-            bad.push(`광장 밖으로 삐져나감: ${o.slotKey}(${o.tx0}~${o.tx1}) vs 광장 ${plaza[0]}~${plaza[1]}`);
+            bad.push(tr("광장 밖으로 삐져나감: {slotKey}({tx0}~{tx1}) vs 광장 {plaza}~{plaza2}", { slotKey: o.slotKey, tx0: o.tx0, tx1: o.tx1, plaza: plaza[0], plaza2: plaza[1] }));
       }
-      if (bad.length) console.warn("[여명 마을 배치 문제]\n" + bad.join("\n"));
+      if (bad.length) console.warn(`${tr("[여명 마을 배치 문제]")}
+` + bad.join("\n"));
       return bad;
     }
     restoreDawnCity() {
@@ -16357,7 +16795,7 @@
         const st = STORY_RUIN[i] || {};
         const spec = {
           id: "story" + i,
-          n: "석판 유적 " + (i + 1),
+          n: `${tr("석판 유적")} ` + (i + 1),
           x: cx,
           y: y0,
           w,
@@ -18642,7 +19080,7 @@
         g.drawImage(this.atlas, 0, ids[i] * TS, W, TS, 0, i * 4 * TS, W, TS);
       const at = (x, y) => (y * W + x) * 4;
       const rng = new RNG("ashfall-leaf-thin");
-      const eraser = (px) => (row, n, tr, tg, tb) => {
+      const eraser = (px) => (row, n, tr2, tg, tb) => {
         for (let k = 0; k < n * this.V; k++) {
           const bx = rng.range(0, W), by = rng.range(0, TS), r = rng.range(1.1, 2.5);
           for (let dy = -3; dy <= 3; dy++)
@@ -18652,7 +19090,7 @@
               if (x < 0 || x >= W || y < 0 || y >= TS) continue;
               const p = at(x, row + y);
               if (!px[p + 3]) continue;
-              if (Math.abs(px[p] - tr) + Math.abs(px[p + 1] - tg) + Math.abs(px[p + 2] - tb) < 34) continue;
+              if (Math.abs(px[p] - tr2) + Math.abs(px[p + 1] - tg) + Math.abs(px[p + 2] - tb) < 34) continue;
               px[p + 3] = 0;
             }
         }
@@ -21709,7 +22147,7 @@
         try {
           this.paint(g, spec, rng);
         } catch (e) {
-          console.warn("[아이콘] " + key + " 를 그리지 못했습니다:", e && e.message);
+          console.warn(`${tr("[아이콘]")} ` + key + ` ${tr("를 그리지 못했습니다:")}`, e && e.message);
         }
         g.restore();
         if (spec.k === "pet" || spec.k === "slotic" && spec.m === "pet") this.centerCell(g, cx * S32, cy * S32);
@@ -22693,22 +23131,22 @@
           break;
         }
         case "circuit": {
-          const c = s.c, tr = s.trace;
+          const c = s.c, tr2 = s.trace;
           P(5, 6, 22, 21, sh2(c, 0.72));
           P(5, 6, 22, 2, sh2(c, 1.3));
           P(5, 6, 2, 21, sh2(c, 1.1));
-          stroke(tr, 1.4, () => {
+          stroke(tr2, 1.4, () => {
             g.moveTo(9, 10);
             g.lineTo(9, 18);
             g.lineTo(18, 18);
             g.lineTo(18, 24);
           });
-          stroke(tr, 1.4, () => {
+          stroke(tr2, 1.4, () => {
             g.moveTo(23, 10);
             g.lineTo(14, 10);
             g.lineTo(14, 14);
           });
-          for (const [x, y] of [[9, 10], [18, 24], [23, 10], [14, 14]]) circ(x, y, 1.5, tr);
+          for (const [x, y] of [[9, 10], [18, 24], [23, 10], [14, 14]]) circ(x, y, 1.5, tr2);
           P(19, 13, 6, 6, "#1a1a1f");
           P(20, 14, 4, 4, "#33333d");
           break;
@@ -25107,8 +25545,8 @@
   };
 
   // src/legacy/entity.js
-  var entity_exports = {};
-  __export(entity_exports, {
+  var entity_exports2 = {};
+  __export(entity_exports2, {
     BASE_BAG_SIZE: () => BASE_BAG_SIZE,
     BURST_SFX: () => BURST_SFX,
     Bomb: () => Bomb,
@@ -25152,83 +25590,6 @@
     rollChest: () => rollChest,
     rollGear: () => rollGear
   });
-
-  // src/engine/entity/entity.ts
-  var Entity = class {
-    // 마지막 가로 이동이 벽에 막혔나(계단을 올랐으면 그대로 둔다)
-    constructor(x, y, w, h) {
-      this.x = x;
-      this.y = y;
-      this.w = w;
-      this.h = h;
-      this.vx = 0;
-      this.vy = 0;
-      this.dead = false;
-      this.onGround = false;
-    }
-    get cx() {
-      return this.x + this.w / 2;
-    }
-    get cy() {
-      return this.y + this.h / 2;
-    }
-    rect() {
-      return { x: this.x, y: this.y, w: this.w, h: this.h };
-    }
-    /** 가로로 nx 까지. 막히면 바닥에 선 채로 step 픽셀 올라 retry 로 다시 가 보고(step 0 이면 안 오름),
-        그래도 막히면 한 픽셀씩 붙고 멈춘다. ★ 올라선 뒤 막혀도 올라선 높이는 그대로다. */
-    moveX(map, nx, step, retry) {
-      if (map.hitSolid(nx, this.y, this.w, this.h)) {
-        let stepped = false;
-        if (this.onGround && step > 0 && !map.hitSolid(nx, this.y - step, this.w, this.h)) {
-          this.y -= step;
-          nx = retry;
-          stepped = true;
-        }
-        if (!stepped || map.hitSolid(nx, this.y, this.w, this.h)) {
-          const dir = Math.sign(this.vx);
-          while (!map.hitSolid(this.x + dir, this.y, this.w, this.h) && Math.abs(this.x - nx) > 1) this.x += dir;
-          this.vx = 0;
-          nx = this.x;
-          this.hitWall = true;
-        }
-      } else this.hitWall = false;
-      this.x = nx;
-    }
-    /** 중력 — 위로는 up, 아래로는 cap 까지 */
-    fall(dt, grav, up, cap) {
-      this.vy = clamp(this.vy + grav * dt, up, cap);
-    }
-    /** 세로로 ny 까지. 막히면 한 픽셀씩 붙고(내려가다 막히면 땅), 아니면 내려갈 때 발판(platforms)에 선다. */
-    moveY(map, ny, prevBottom, platforms) {
-      this.onGround = false;
-      if (map.hitSolid(this.x, ny, this.w, this.h)) {
-        const dir = Math.sign(this.vy);
-        while (!map.hitSolid(this.x, this.y + dir, this.w, this.h) && Math.abs(this.y - ny) > 1) this.y += dir;
-        if (this.vy > 0) this.onGround = true;
-        this.vy = 0;
-        ny = this.y;
-      } else if (this.vy >= 0 && platforms) {
-        const top = map.hitPlatform(this.x, ny, this.w, this.h, prevBottom);
-        if (top >= 0) {
-          ny = top - this.h;
-          this.vy = 0;
-          this.onGround = true;
-        }
-      }
-      this.y = ny;
-    }
-    /** 세계 안에 가둔다 — x 는 [x0, x1 - w], 바닥 yMax 아래로 빠지면 거기 멈춘다 */
-    keepIn(x0, x1, yMax) {
-      this.x = clamp(this.x, x0, x1 - this.w);
-      if (this.y > yMax) {
-        this.y = yMax;
-        this.vy = 0;
-      }
-    }
-  };
-
-  // src/legacy/entity.js
   var GRAV = 2e3, MAX_FALL = 1250;
   var JET_MAX_UP = 30;
   var JET_BURN = 4;
@@ -25528,7 +25889,7 @@
       if (!this.removeItem("battery_cell", 1)) return false;
       this.charge = Math.min(this.d.maxCharge, this.charge + CELL_CHARGE);
       if (!this.addItem(makeItem("battery_empty", 1))) app.drops.push(new Drop(this.cx, this.cy, makeItem("battery_empty", 1)));
-      app.toast("배터리를 갈아 끼웠다");
+      app.toast(tr("배터리를 갈아 끼웠다"));
       ui.refreshBag();
       if (this.charge < n) return false;
       this.charge -= n;
@@ -25658,7 +26019,7 @@
           it.xp -= petXpNext(it.lv);
           it.lv++;
           up = true;
-          app.toast(`${idef(it).n} — ${it.lv}레벨이 되었다`, "good");
+          app.toast(tr("{idef} — {lv}레벨이 되었다", { idef: idef(it).n, lv: it.lv }), "good");
         }
         if (it.lv >= PET_LV_MAX) it.xp = 0;
       }
@@ -25733,7 +26094,7 @@
         for (let i = 0; i < 30; i++) app.parts.push(new Part(this.cx, this.cy, "#e05a6a", -110, 0.9));
         app.edgeFx("200,46,58", SIG_FX.undying.t);
         app.shake = 14;
-        app.toast("불굴 — 아직 쓰러지지 않는다", "good");
+        app.toast(tr("불굴 — 아직 쓰러지지 않는다"), "good");
       }
       if (this.hp <= 0) {
         this.hp = 0;
@@ -25772,7 +26133,7 @@
       const d = idef(w);
       if (d.type === "tool") return this.punch(mx, my);
       if (d.pw && !this.useCharge(d.pw)) {
-        app.toast("전하가 없다 — 충전된 배터리가 필요하다", "bad");
+        app.toast(tr("전하가 없다 — 충전된 배터리가 필요하다"), "bad");
         this.atkTimer = 0.3;
         return;
       }
@@ -25802,7 +26163,7 @@
       } else if (d.wc === "magic") {
         const cost = d.mana || 5;
         if (this.mp < cost) {
-          app.toast("마나가 부족하다", "bad");
+          app.toast(tr("마나가 부족하다"), "bad");
           this.atkTimer = 0.2;
           return;
         }
@@ -25887,7 +26248,7 @@
         return;
       }
       if (this.mp < sk.mana) {
-        app.skillDeny(i, "마나가 부족하다");
+        app.skillDeny(i, tr("마나가 부족하다"));
         return;
       }
       this.mp -= sk.mana;
@@ -26058,7 +26419,7 @@
           if (!best) {
             this.cd[id] = 1;
             this.mp += sk.mana;
-            app.toast("겨눈 곳에 적이 없다", "bad");
+            app.toast(tr("겨눈 곳에 적이 없다"), "bad");
             return;
           }
           best.markT = 10;
@@ -26075,7 +26436,7 @@
             const a = Math.random() * TAU;
             app.parts.push(new Part(this.cx + Math.cos(a) * 30, this.cy + Math.sin(a) * 34, "#6fb8ff", -40, 0.8));
           }
-          app.toast(`방벽 ${this.shield}`, "good");
+          app.toast(tr("방벽 {shield}", { shield: this.shield }), "good");
           break;
         }
         case "s_chain": {
@@ -26118,7 +26479,7 @@
           if (reach < TS) {
             this.cd[id] = 1;
             this.mp += sk.mana;
-            app.toast("그쪽은 막혀 있다", "bad");
+            app.toast(tr("그쪽은 막혀 있다"), "bad");
             return;
           }
           const ox = this.cx, oy = this.cy;
@@ -26359,7 +26720,7 @@
               60,
               0.35
             ));
-          if (tooHigh) this.jetNote("여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다");
+          if (tooHigh) this.jetNote(tr("여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다"));
         }
       } else {
         this.jetT = 0;
@@ -26371,7 +26732,7 @@
           if (this.jetHeat >= 1 && !this.jetOver) {
             this.jetOver = true;
             this.jetting = false;
-            this.jetNote("추진기가 과열됐다 — 식을 때까지 꺼진다", "bad");
+            this.jetNote(tr("추진기가 과열됐다 — 식을 때까지 꺼진다"), "bad");
             app.sfx("power_off");
             for (let i = 0; i < 10; i++)
               app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 12, this.y + this.h, "#6a6a72", -10, 0.6));
@@ -26617,7 +26978,7 @@
       this.sgT = 0;
       this.sgCd = (BOSS_SURGE[this.type] || {}).cd || 14;
       this.sgStun = 1.4;
-      app.toast("모으던 것이 흩어졌다", "good");
+      app.toast(tr("모으던 것이 흩어졌다"), "good");
       app.sfx("sk_deny");
       app.shake = Math.max(app.shake, 10);
       for (let i = 0; i < 20; i++)
@@ -26645,12 +27006,12 @@
     hurt(amount, crit, src, kb, fam) {
       if (this.dead) return;
       if (this.phaseInv > 0) {
-        app.texts.push(new DmgText(this.cx, this.y - 4, "전환 중", "#9fd4ff", 0));
+        app.texts.push(new DmgText(this.cx, this.y - 4, tr("전환 중"), "#9fd4ff", 0));
         return;
       }
       if (this.guard) {
         amount *= 0.12;
-        if (Math.random() < 0.5) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, "막혔다", "#8d8874", 0));
+        if (Math.random() < 0.5) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#8d8874", 0));
       }
       const red = this.armor / (this.armor + 70);
       if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
@@ -26937,7 +27298,7 @@
         e.spd = 0;
         app.ents.push(e);
       }
-      app.toast("받침대 넷이 그것을 붙들고 있다", "bad");
+      app.toast(tr("받침대 넷이 그것을 붙들고 있다"), "bad");
     }
     /* 서리 마녀 2페이즈 — 발밑에 설 수 있는 자리를 만들어 준다. */
     layHeat(world, p) {
@@ -26951,7 +27312,7 @@
           }
         }
       }
-      app.toast("바닥이 언다 — 불 옆에 서라", "bad");
+      app.toast(tr("바닥이 언다 — 불 옆에 서라"), "bad");
     }
     /** 매 프레임 도는 약점·장판 규칙. */
     tickWeak(dt, world, p) {
@@ -27298,7 +27659,7 @@
           const open = kids === 0;
           if (open && this.guard) {
             this.guard = 0;
-            app.toast("핵이 드러났다", "good");
+            app.toast(tr("핵이 드러났다"), "good");
           } else if (!open && !this.guard) this.guard = 1;
         }
         if (this.atkCd <= 0 && dd < 320) {
@@ -27312,7 +27673,7 @@
         if (this.stateT <= 0) {
           this.state = (this.state + 1) % 3;
           this.stateT = 3 - this.pf * 0.8;
-          if (this.state === 0) app.toast("관리자가 명령을 내린다", "bad");
+          if (this.state === 0) app.toast(tr("관리자가 명령을 내린다"), "bad");
         }
         if (this.state === 0) {
           this.vx *= 0.9;
@@ -27375,7 +27736,7 @@
             for (let i = 0; i < 2; i++) app.parts.push(new Part(this.cx, this.cy, "#9fd4ff", -40, 0.5));
             if (this.stopT > 1.2) {
               this.guard = 0;
-              app.toast("정지 핵이 물렸다 — 지금이다", "good");
+              app.toast(tr("정지 핵이 물렸다 — 지금이다"), "good");
               app.shake = 12;
             }
           } else this.stopT = 0;
@@ -27408,7 +27769,7 @@
           const ped = app.ents.filter((e) => e instanceof _Enemy && !e.dead && e.type === "draft_form").length;
           if (!ped) {
             this.guard = 0;
-            app.toast("받침대가 무너졌다", "good");
+            app.toast(tr("받침대가 무너졌다"), "good");
           }
         }
         this.move(dt, world);
@@ -27860,7 +28221,7 @@
       const tx = Math.floor(this.cx / TS), ty = Math.floor(this.cy / TS);
       const zone = world.zoneAt(tx, ty);
       if (zone === "village" || zone === "camp") {
-        app.toast("여기서는 터뜨려도 아무것도 부서지지 않는다", "bad");
+        app.toast(tr("여기서는 터뜨려도 아무것도 부서지지 않는다"), "bad");
         return;
       }
       for (let dy = -R; dy <= R; dy++)
@@ -27949,6 +28310,7 @@
     DIR_NAME: () => DIR_NAME,
     FAC_TICK: () => FAC_TICK,
     Factory: () => Factory,
+    ST_RUN: () => ST_RUN,
     dirTable: () => dirTable
   });
   var FAC_TICK = 0.125;
@@ -27958,6 +28320,20 @@
     return t === "belt" || t === "belt_fast" ? DIR6 : DIR4;
   }
   var DIR_NAME = ["오른쪽", "아래", "왼쪽", "위", "오른쪽 위", "왼쪽 위"];
+  var ST_RUN = /* @__PURE__ */ new Set([
+    N_("가동"),
+    N_("채굴 중"),
+    N_("시추 중"),
+    N_("이송"),
+    N_("사격"),
+    N_("방전"),
+    N_("통과"),
+    N_("분기"),
+    N_("배출 중"),
+    N_("가동 중"),
+    N_("축전 중"),
+    N_("가득 참")
+  ]);
   var Factory = {
     /* 벨트 한 칸에 머무는 시간(초) — 물건도 벨트 무늬도 이 속도로 간다(일반 1칸/초 · 고속 2칸/초) */
     DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK },
@@ -28229,15 +28605,15 @@
         if (!s.gen) continue;
         const n = m.net >= 0 ? nets[m.net] : null;
         if (!m.on) {
-          m.st = "정지";
+          m.st = N_("정지");
           continue;
         }
         if (!n) {
-          m.st = "망 없음";
+          m.st = N_("망 없음");
           continue;
         }
         if (n.off) {
-          m.st = "전면 정지";
+          m.st = N_("전면 정지");
           continue;
         }
         if (s.sky) {
@@ -28247,15 +28623,15 @@
             break;
           }
           if (!clear) {
-            m.st = "바람 막힘";
+            m.st = N_("바람 막힘");
             continue;
           }
           n.gen += s.gen;
-          m.st = "회전 중";
+          m.st = N_("회전 중");
           continue;
         }
         if (n.dem <= 0 && n.e >= n.emax) {
-          m.st = "대기";
+          m.st = N_("대기");
           continue;
         }
         if (m.fuel <= 0) {
@@ -28269,8 +28645,8 @@
         if (m.fuel > 0) {
           m.fuel--;
           n.gen += s.gen;
-          m.st = "가동";
-        } else m.st = "연료 없음";
+          m.st = N_("가동");
+        } else m.st = N_("연료 없음");
       }
       for (const n of nets) {
         if (n.gen >= n.dem) {
@@ -28306,7 +28682,7 @@
         m.just = 0;
         const s = MACHINE[m.t];
         if (!m.on && m.t !== "switch") {
-          m.st = "정지";
+          m.st = N_("정지");
           m.act = 0;
           continue;
         }
@@ -28331,23 +28707,23 @@
             this.runShooter(w, m, s, G2);
             break;
           case "switch":
-            m.st = m.on ? "가동 중" : "전면 정지";
+            m.st = m.on ? N_("가동 중") : N_("전면 정지");
             m.act = 0;
             break;
           case "belt":
           case "belt_fast":
-            m.st = m.it ? "이송" : "대기";
+            m.st = m.it ? N_("이송") : N_("대기");
             m.act = 0;
             break;
           case "sorter":
             m.act = m.it ? 1 : 0;
             break;
           case "pole":
-            m.st = m.net >= 0 ? "망 #" + (m.net + 1) : "—";
+            m.st = m.net >= 0 ? N_("망 #{n}") : "—";
             m.act = 0;
             break;
           case "crate":
-            m.st = m.feed ? "배출 중" : "보관";
+            m.st = m.feed ? N_("배출 중") : N_("보관");
             m.act = 0;
             break;
           case "gen":
@@ -28373,11 +28749,11 @@
           } else if (m.t === "sorter") {
             if (!m.it || m.just) continue;
             if (this.sat(w, m) <= 0) {
-              m.st = "전력 없음";
+              m.st = N_("전력 없음");
               continue;
             }
             const match = !m.f || m.f === m.it.id;
-            m.st = match ? "통과" : "분기";
+            m.st = match ? N_("통과") : N_("분기");
             if (this.pushTo(w, m, match ? m.dir : m.dir + 1 & 3, m.it.id)) {
               m.it = null;
               moved++;
@@ -28440,14 +28816,14 @@
           }
         }
         if (pick < 0) {
-          m.st = s.store ? m.e >= s.store ? "가득 참" : "축전 중" : "재료 없음";
+          m.st = s.store ? m.e >= s.store ? N_("가득 참") : N_("축전 중") : N_("재료 없음");
           m.prog = 0;
           m.act = 0;
           return;
         }
         const r2 = MRECIPES[pick];
         if (this.outFull(m, r2, cap)) {
-          m.st = "출력 가득";
+          m.st = N_("출력 가득");
           m.act = 0;
           return;
         }
@@ -28457,32 +28833,32 @@
       }
       const r = MRECIPES[m.rec];
       if (m.prog >= r.t && this.outFull(m, r, cap)) {
-        m.st = "출력 가득";
+        m.st = N_("출력 가득");
         m.act = 0;
         return;
       }
       let step = 1;
       if (s.fuelIn) {
         if (!this.burn(m)) {
-          m.st = "연료 없음";
+          m.st = N_("연료 없음");
           return;
         }
       } else {
         step = this.sat(w, m);
         if (step <= 0) {
-          m.st = m.net < 0 ? "망 없음" : "전력 없음";
+          m.st = m.net < 0 ? N_("망 없음") : N_("전력 없음");
           return;
         }
       }
       m.act = 1;
       if (m.prog < r.t) {
         m.prog += step;
-        m.st = "가동";
+        m.st = N_("가동");
         if (s.fuelIn && Math.random() < 0.18) this.puff(m);
       }
       if (m.prog < r.t) return;
       if (this.outFull(m, r, cap)) {
-        m.st = "출력 가득";
+        m.st = N_("출력 가득");
         m.act = 0;
         return;
       }
@@ -28791,25 +29167,25 @@
       let step = 1;
       if (s.fuelIn) {
         if (!this.burn(m)) {
-          m.st = "연료 없음";
+          m.st = N_("연료 없음");
           return;
         }
       } else {
         step = this.sat(w, m);
         if (step <= 0) {
-          m.st = m.net < 0 ? "망 없음" : "전력 없음";
+          m.st = m.net < 0 ? N_("망 없음") : N_("전력 없음");
           return;
         }
       }
       if (this.bufTotal(m.out) >= (s.cap || 40)) {
-        m.st = "출력 가득";
+        m.st = N_("출력 가득");
         m.act = 0;
         return;
       }
       m.act = 1;
       m.cd -= step;
       if (m.cd > 0) {
-        m.st = "채굴 중";
+        m.st = N_("채굴 중");
         return;
       }
       const R = s.range;
@@ -28826,7 +29202,7 @@
       }
       if (!best) {
         m.cd = 0;
-        m.st = "광맥 없음";
+        m.st = N_("광맥 없음");
         m.act = 0;
         m.tgt = null;
         return;
@@ -28844,18 +29220,18 @@
       m.hitT = app.time;
       this.bufAdd(m.out, best[2], 1);
       m.cd = s.cycle;
-      m.st = "채굴 중";
+      m.st = N_("채굴 중");
       app.sfxAt("drill", m.x, m.y);
     },
     /* ---- 시추 펌프: 유혈암을 소모하지 않는다. 마르지 않는 대신 느리다 ---- */
     runPump(w, m, s) {
       const step = this.sat(w, m);
       if (step <= 0) {
-        m.st = m.net < 0 ? "망 없음" : "전력 없음";
+        m.st = m.net < 0 ? N_("망 없음") : N_("전력 없음");
         return;
       }
       if (this.bufTotal(m.out) >= (s.cap || 40)) {
-        m.st = "출력 가득";
+        m.st = N_("출력 가득");
         m.act = 0;
         return;
       }
@@ -28867,29 +29243,29 @@
           break;
         }
       if (!found) {
-        m.st = "유혈암 없음";
+        m.st = N_("유혈암 없음");
         m.act = 0;
         return;
       }
       m.act = 1;
       m.cd -= step;
       if (m.cd > 0) {
-        m.st = "시추 중";
+        m.st = N_("시추 중");
         return;
       }
       this.bufAdd(m.out, "crude_oil", 1);
       m.cd = s.cycle;
-      m.st = "시추 중";
+      m.st = N_("시추 중");
     },
     /* ---- 자동 포탑 ---- */
     runTurret(w, m, s, G2) {
       const step = this.sat(w, m);
       if (step <= 0) {
-        m.st = m.net < 0 ? "망 없음" : "전력 없음";
+        m.st = m.net < 0 ? N_("망 없음") : N_("전력 없음");
         return;
       }
       if (!(m.in[s.ammo] > 0)) {
-        m.st = "탄약 없음";
+        m.st = N_("탄약 없음");
         m.act = 0;
         return;
       }
@@ -28907,12 +29283,12 @@
       if (tgt) m.aim = angleTo(cx, cy, tgt.cx, tgt.cy);
       m.cd -= step;
       if (m.cd > 0) {
-        m.st = "경계";
+        m.st = N_("경계");
         return;
       }
       if (!tgt) {
         m.cd = 0;
-        m.st = "경계";
+        m.st = N_("경계");
         return;
       }
       this.bufTake(m.in, s.ammo, 1);
@@ -28922,7 +29298,7 @@
       const p = new Proj(mx, my, Math.cos(ang) * 1150, Math.sin(ang) * 1150, dmg, "player", "bullet");
       G2.projs.push(p);
       m.cd = s.cycle;
-      m.st = "사격";
+      m.st = N_("사격");
       m.fx = 3;
       const pl = G2.player, d = pl ? Math.hypot(cx - pl.cx, cy - pl.cy) : 1e9;
       if (d < 900) {
@@ -28939,7 +29315,7 @@
     runShooter(w, m, s, G2) {
       m.cd -= 1;
       if (m.cd > 0) {
-        m.st = "장전 중";
+        m.st = N_("장전 중");
         m.act = 0;
         return;
       }
@@ -28961,7 +29337,7 @@
         if (tgt) break;
       }
       if (!tgt) {
-        m.st = "대기";
+        m.st = N_("대기");
         m.act = 0;
         return;
       }
@@ -28981,7 +29357,7 @@
       if (s.slow) pr.frost = 1;
       G2.projs.push(pr);
       m.cd = s.cycle;
-      m.st = "발사";
+      m.st = N_("발사");
       m.fx = 2;
       G2.sfxAt(s.proj === "fire" ? "zap" : "turret", m.x, m.y);
     },
@@ -28991,13 +29367,13 @@
       if (m.gen && !m.own) return this.runWildTrap(w, m, r, G2);
       const step = this.sat(w, m);
       if (step <= 0) {
-        m.st = m.net < 0 ? "망 없음" : "전력 없음";
+        m.st = m.net < 0 ? N_("망 없음") : N_("전력 없음");
         return;
       }
       m.act = 1;
       m.cd -= step;
       if (m.cd > 0) {
-        m.st = "대기";
+        m.st = N_("대기");
         return;
       }
       let hit = 0;
@@ -29007,7 +29383,7 @@
         e.hurt(s.dmg * (1 + G2.player.level * 0.04), false, G2.player, 2);
         hit++;
       }
-      m.st = hit ? "방전" : "대기";
+      m.st = hit ? N_("방전") : N_("대기");
       if (hit) {
         m.cd = 4;
         m.fx = 3;
@@ -29024,20 +29400,20 @@
       }
       if (m.cd > 0) {
         m.cd--;
-        m.st = "식는 중";
+        m.st = N_("식는 중");
         m.act = 0;
         return;
       }
       if (!m.arm) {
         if (!on && !foe) {
-          m.st = "대기";
+          m.st = N_("대기");
           m.act = 0;
           return;
         }
         m.arm = 4;
       }
       m.act = 1;
-      m.st = "충전";
+      m.st = N_("충전");
       if (--m.arm > 0) {
         for (let i = 0; i < 2; i++) G2.parts.push(new Part((m.x + Math.random()) * TS, m.y * TS - 1, "#9fd8ff", -40, 0.25));
         return;
@@ -29045,7 +29421,7 @@
       m.arm = 0;
       m.cd = 16;
       m.fx = 3;
-      m.st = "방전";
+      m.st = N_("방전");
       if (on && p.iframe <= 0) p.hurt(26 + p.level * 1.1);
       for (const e of G2.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) e.hurt(34, false, null, 0);
       G2.sfxAt("zap", m.x, m.y);
@@ -29086,9 +29462,13 @@
     statusColor(m) {
       const st = m.st || "";
       if (!m.on) return "#8a8a92";
-      if (st === "가동" || st === "채굴 중" || st === "시추 중" || st === "이송" || st === "사격" || st === "방전" || st === "통과" || st === "분기" || st === "배출 중" || st === "가동 중" || st === "축전 중" || st === "가득 참") return "#5fc45f";
-      if (st.indexOf("전력") >= 0 || st.indexOf("연료") >= 0 || st.indexOf("망") === 0 || st === "전면 정지") return "#e0563c";
+      if (ST_RUN.has(st)) return "#5fc45f";
+      if (st.indexOf(N_("전력")) >= 0 || st.indexOf(N_("연료")) >= 0 || st.indexOf(N_("망")) === 0 || st === N_("전면 정지")) return "#e0563c";
       return "#e0b23c";
+    },
+    /** 기계 창에 보일 상태 글 — m.st 는 원문 그대로 두고(색 판정 · 세이브) 보일 때 옮긴다 */
+    stLabel(m) {
+      return tr(m.st || N_("대기"), { n: m.net + 1 });
     },
     /* ================= 렌더 ================= */
     render(c, w, camX, camY, tx0, ty0, tx1, ty1, time) {
@@ -29285,88 +29665,6 @@
     $$: () => $$,
     UI: () => UI
   });
-
-  // src/engine/ui/panels.ts
-  function createPanels(el) {
-    let cur = null;
-    return {
-      /** 열린 창 이름(없으면 null) */
-      get current() {
-        return cur;
-      },
-      /** 그 창을 연다 — 창이 없으면 false(아무것도 안 바뀐다) */
-      show(id) {
-        const e = el(id);
-        if (!e) return false;
-        e.classList.add("open");
-        cur = id;
-        return true;
-      },
-      /** 열린 창을 닫는다 */
-      hide() {
-        if (cur) {
-          const e = el(cur);
-          if (e) e.classList.remove("open");
-        }
-        cur = null;
-      }
-    };
-  }
-
-  // src/engine/ui/slots.ts
-  function setIcon(el, url) {
-    if (el) el.style.backgroundImage = url ? `url(${url})` : "";
-  }
-  function makeSlot(cls, o, host) {
-    const d = document.createElement("div");
-    d.className = cls;
-    if (o.data) for (const k in o.data) d.dataset[k] = "" + o.data[k];
-    if (o.fill) {
-      d.innerHTML = `<span class="ic"></span><span class="cnt">${o.fill.count}</span>` + (o.fill.extra || "");
-      setIcon(d.querySelector(".ic"), o.fill.icon);
-    } else if (o.html !== void 0) d.innerHTML = o.html;
-    const down = o.down;
-    if (down) d.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      down(e);
-    });
-    if (o.click) d.addEventListener("click", o.click);
-    if (o.noMenu) d.addEventListener("contextmenu", (e) => e.preventDefault());
-    if (o.enter) d.addEventListener("mouseenter", o.enter);
-    if (o.leave) d.addEventListener("mouseleave", o.leave);
-    if (host) host.appendChild(d);
-    return d;
-  }
-  function paintSlot(el, cls, icon, count) {
-    el.className = cls;
-    setIcon(el.querySelector(".ic"), icon);
-    el.querySelector(".cnt").textContent = "" + count;
-  }
-
-  // src/engine/ui/tooltip.ts
-  function createTooltip(el, { width = 280, dx = 18, dy = 14, gap = 8, top = 4 } = {}) {
-    const place = (x, y) => {
-      let lx = x + dx, ly = y + dy;
-      if (lx + width > innerWidth) lx = x - width - gap;
-      if (ly + el.offsetHeight > innerHeight) ly = innerHeight - el.offsetHeight - gap;
-      el.style.left = lx + "px";
-      el.style.top = Math.max(top, ly) + "px";
-    };
-    return {
-      el,
-      place,
-      show(html, x, y) {
-        el.innerHTML = html;
-        el.style.display = "block";
-        place(x, y);
-      },
-      hide() {
-        el.style.display = "none";
-      }
-    };
-  }
-
-  // src/legacy/ui.js
   var $ = (s) => document.querySelector(s);
   var $$ = (s) => Array.from(document.querySelectorAll(s));
   var UI = {
@@ -29437,17 +29735,17 @@
         trash.addEventListener("mousedown", (e) => {
           e.preventDefault();
           if (this.cursor) this.discardCursor();
-          else this.toast("버릴 아이템을 먼저 집어야 한다 (칸을 클릭)");
+          else this.toast(tr("버릴 아이템을 먼저 집어야 한다 (칸을 클릭)"));
         });
         trash.addEventListener("mouseenter", (e) => {
-          this.tipText("휴지통", "커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기", e);
+          this.tipText(tr("휴지통"), tr("커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기"), e);
         });
         trash.addEventListener("mouseleave", () => this.hideTip());
       }
       const sortBtn = $("#btn-sort-bag");
       if (sortBtn) {
         sortBtn.addEventListener("click", () => this.sortBag());
-        sortBtn.addEventListener("mouseenter", (e) => this.tipText("가방 정리", "같은 것끼리 합치고 종류·등급 순으로 정렬합니다. 잠근 물건은 자리를 지킵니다.", e));
+        sortBtn.addEventListener("mouseenter", (e) => this.tipText(tr("가방 정리"), tr("같은 것끼리 합치고 종류·등급 순으로 정렬합니다. 잠근 물건은 자리를 지킵니다."), e));
         sortBtn.addEventListener("mouseleave", () => this.hideTip());
       }
       const depBtn = $("#btn-vault-deposit"), wdBtn = $("#btn-vault-withdraw");
@@ -29458,39 +29756,39 @@
     depositGold() {
       const p = app.player;
       if (p.gold <= 0) {
-        this.toast("가진 금화가 없다", "bad");
+        this.toast(tr("가진 금화가 없다"), "bad");
         return;
       }
-      const raw = prompt(`보관고에 넣을 금화 (최대 ${p.gold})`, p.gold);
+      const raw = prompt(tr("보관고에 넣을 금화 (최대 {gold})", { gold: p.gold }), p.gold);
       if (raw === null) return;
       const amt = Math.floor(+raw);
       if (!amt || amt <= 0 || amt > p.gold) {
-        this.toast("넣을 수 없는 금액이다", "bad");
+        this.toast(tr("넣을 수 없는 금액이다"), "bad");
         return;
       }
       p.gold -= amt;
       app.vaultGold += amt;
       this.refreshVault();
       app.sfx("coin");
-      this.toast(`금화 ${fmt(amt)}개를 보관했다`, "good");
+      this.toast(tr("금화 {amt}개를 보관했다", { amt: fmt(amt) }), "good");
     },
     withdrawGold() {
       if (app.vaultGold <= 0) {
-        this.toast("보관된 금화가 없다", "bad");
+        this.toast(tr("보관된 금화가 없다"), "bad");
         return;
       }
-      const raw = prompt(`보관고에서 뺄 금화 (최대 ${app.vaultGold})`, app.vaultGold);
+      const raw = prompt(tr("보관고에서 뺄 금화 (최대 {vaultGold})", { vaultGold: app.vaultGold }), app.vaultGold);
       if (raw === null) return;
       const amt = Math.floor(+raw);
       if (!amt || amt <= 0 || amt > app.vaultGold) {
-        this.toast("뺄 수 없는 금액이다", "bad");
+        this.toast(tr("뺄 수 없는 금액이다"), "bad");
         return;
       }
       app.vaultGold -= amt;
       app.player.gold += amt;
       this.refreshVault();
       app.sfx("coin");
-      this.toast(`금화 ${fmt(amt)}개를 꺼냈다`, "good");
+      this.toast(tr("금화 {amt}개를 꺼냈다", { amt: fmt(amt) }), "good");
     },
     /* ---------------- 설정 (일시정지 화면) ---------------- */
     bindSettings() {
@@ -29527,7 +29825,7 @@
         app.applySettings();
         app.saveSettings();
         this.buildKeys();
-        this.toast("조작키를 기본값으로 되돌렸다");
+        this.toast(tr("조작키를 기본값으로 되돌렸다"));
       });
       const r = $("#set-reset");
       if (r) r.addEventListener("click", () => {
@@ -29536,7 +29834,7 @@
         app.saveSettings();
         this.buildNotices();
         this.buildKeys();
-        this.toast("설정을 기본값으로 되돌렸다");
+        this.toast(tr("설정을 기본값으로 되돌렸다"));
       });
       const ex = $("#set-export");
       if (ex) ex.addEventListener("click", () => app.exportSaves());
@@ -29551,7 +29849,7 @@
           if (!f) return;
           const rd = new FileReader();
           rd.onload = () => app.importSaves(rd.result);
-          rd.onerror = () => this.toast("파일을 읽지 못했다", "bad");
+          rd.onerror = () => this.toast(tr("파일을 읽지 못했다"), "bad");
           rd.readAsText(f);
         });
       }
@@ -29586,7 +29884,7 @@
       box.querySelectorAll(".keybtn").forEach((btn) => btn.addEventListener("click", () => {
         if (this.keyWait) return;
         btn.classList.add("waiting");
-        btn.textContent = "키를 누르세요…";
+        btn.textContent = tr("키를 누르세요…");
         this.keyWait = { act: btn.dataset.act, btn };
       }));
     },
@@ -29594,12 +29892,12 @@
     keyLabel(c) {
       const ARROW = { ArrowLeft: "←", ArrowRight: "→", ArrowUp: "↑", ArrowDown: "↓" };
       const NAMED = {
-        ShiftLeft: "Shift(왼)",
-        ShiftRight: "Shift(오)",
-        ControlLeft: "Ctrl(왼)",
-        ControlRight: "Ctrl(오)",
-        AltLeft: "Alt(왼)",
-        AltRight: "Alt(오)",
+        ShiftLeft: tr("Shift(왼)"),
+        ShiftRight: tr("Shift(오)"),
+        ControlLeft: tr("Ctrl(왼)"),
+        ControlRight: tr("Ctrl(오)"),
+        AltLeft: tr("Alt(왼)"),
+        AltRight: tr("Alt(오)"),
         Space: "Space"
       };
       return ARROW[c] || NAMED[c] || c.replace(/^Key/, "").replace(/^Digit/, "");
@@ -29802,7 +30100,7 @@
         const it2 = p.bag[i];
         if (!it2) return;
         it2.lk = it2.lk ? 0 : 1;
-        this.toast(it2.lk ? `${itemName(it2)} 잠금` : `${itemName(it2)} 잠금 해제`);
+        this.toast(it2.lk ? tr("{itemName} 잠금", { itemName: itemName(it2) }) : tr("{itemName} 잠금 해제", { itemName: itemName(it2) }));
         this.refreshBag();
         return;
       }
@@ -29820,9 +30118,9 @@
         } else if (d.type === "summon") {
           app.useSummon(i);
         } else if (d.type === "tool") {
-          this.toast("도구는 핫바에 두고 좌클릭으로 사용한다");
+          this.toast(tr("도구는 핫바에 두고 좌클릭으로 사용한다"));
         } else if (d.type === "rod") {
-          this.toast("낚싯대는 핫바에 두고 물가에서 우클릭한다");
+          this.toast(tr("낚싯대는 핫바에 두고 물가에서 우클릭한다"));
         } else if (isGear(it2)) {
           p.equipFrom(i);
           this.refreshBag();
@@ -29850,10 +30148,10 @@
       const p = app.player, it = p.bag[i];
       if (!it) return;
       if (it.lk) {
-        this.toast("잠긴 물건이다 (Ctrl+좌클릭으로 해제)", "bad");
+        this.toast(tr("잠긴 물건이다 (Ctrl+좌클릭으로 해제)"), "bad");
         return;
       }
-      this.toast(`버렸다: ${itemName(it)}${it.c > 1 ? " ×" + it.c : ""}`, "bad");
+      this.toast(tr("버렸다: {itemName}{v}", { itemName: itemName(it), v: it.c > 1 ? " ×" + it.c : "" }), "bad");
       p.bag[i] = null;
       this.refreshBag();
       app.sfx("place");
@@ -29899,12 +30197,12 @@
       this.refreshBag();
       this.refreshHotbar();
       app.sfx("place");
-      this.toast("가방을 정리했다");
+      this.toast(tr("가방을 정리했다"));
     },
     /** 휴지통에 커서 아이템을 놓으면 전량 삭제 */
     discardCursor() {
       if (!this.cursor) return;
-      this.toast(`버렸다: ${itemName(this.cursor)}${this.cursor.c > 1 ? " ×" + this.cursor.c : ""}`, "bad");
+      this.toast(tr("버렸다: {itemName}{v}", { itemName: itemName(this.cursor), v: this.cursor.c > 1 ? " ×" + this.cursor.c : "" }), "bad");
       this.setCursor(null);
       app.sfx("place");
     },
@@ -29935,7 +30233,7 @@
             const ok = key === "weapon" && d.type === "weapon" || d.type === "armor" && d.slot === key || d.type === "acc" && key.startsWith("acc") || d.type === "util" && key.startsWith("util") || d.type === "bag" && key === "bag";
             if (!ok) return;
             if (p.level < equipReqLv(this.cursor.id)) {
-              app.toast(`레벨 ${equipReqLv(this.cursor.id)} 필요`, "bad");
+              app.toast(tr("레벨 {equipReqLv} 필요", { equipReqLv: equipReqLv(this.cursor.id) }), "bad");
               return;
             }
             const old = p.equip[key];
@@ -29972,20 +30270,20 @@
       const w = p.equip.weapon;
       const wd = w && idef(w).dmg ? Math.round(p.scaleDmg(itemDamage(w), idef(w).wc === "melee" ? "str" : idef(w).wc === "ranged" ? "dex" : "int")) : "—";
       $("#stat-sheet").innerHTML = `
-      <h4>기본</h4>
-      힘<span class="sv">${d.str}</span><br>민첩<span class="sv">${d.dex}</span><br>
-      지능<span class="sv">${d.int}</span><br>체력<span class="sv">${d.vit}</span>
-      <h4>전투</h4>
-      공격력<span class="sv">${wd}</span><br>
-      방어<span class="sv">${d.def}</span><br>
-      치명<span class="sv">${d.crit.toFixed(1)}%</span><br>
-      치명피해<span class="sv">${Math.round(d.critD)}%</span><br>
-      흡혈<span class="sv">${d.lifesteal.toFixed(0)}%</span><br>
-      쿨감<span class="sv">${Math.round(d.cdr)}%</span><br>
-      이동<span class="sv">${Math.round(d.ms)}</span>
-      <h4>잠수</h4>
-      숨<span class="sv">${d.oxyMax}초</span><br>
-      숨 회복<span class="sv">${(d.oxyReg || 1).toFixed(1)}배</span>`;
+      <h4>${tr("기본")}</h4>
+      ${tr("힘")}<span class="sv">${d.str}</span><br>${tr("민첩")}<span class="sv">${d.dex}</span><br>
+      ${tr("지능")}<span class="sv">${d.int}</span><br>${tr("체력")}<span class="sv">${d.vit}</span>
+      <h4>${tr("전투")}</h4>
+      ${tr("공격력")}<span class="sv">${wd}</span><br>
+      ${tr("방어")}<span class="sv">${d.def}</span><br>
+      ${tr("치명")}<span class="sv">${d.crit.toFixed(1)}%</span><br>
+      ${tr("치명피해")}<span class="sv">${Math.round(d.critD)}%</span><br>
+      ${tr("흡혈")}<span class="sv">${d.lifesteal.toFixed(0)}%</span><br>
+      ${tr("쿨감")}<span class="sv">${Math.round(d.cdr)}%</span><br>
+      ${tr("이동")}<span class="sv">${Math.round(d.ms)}</span>
+      <h4>${tr("잠수")}</h4>
+      ${tr("숨")}<span class="sv">${tr("{oxyMax}초", { oxyMax: d.oxyMax })}</span><br>
+      ${tr("숨 회복")}<span class="sv">${tr("{v}배", { v: (d.oxyReg || 1).toFixed(1) })}</span>`;
     },
     /* ---------------- 스킬바 ---------------- */
     buildSkillbar() {
@@ -30018,7 +30316,7 @@
     },
     /* ---------------- 스탯 분배 ---------------- */
     buildStatAlloc() {
-      const defs = [["str", "힘", "근접 피해"], ["dex", "민첩", "원거리 · 치명"], ["int", "지능", "마법 · 마나"], ["vit", "체력", "생명 · 방어"]];
+      const defs = [["str", tr("힘"), tr("근접 피해")], ["dex", tr("민첩"), tr("원거리 · 치명")], ["int", tr("지능"), tr("마법 · 마나")], ["vit", tr("체력"), tr("생명 · 방어")]];
       const box = $("#stat-alloc");
       box.innerHTML = "";
       for (const [k, n, dsc] of defs) {
@@ -30076,7 +30374,7 @@
       w.appendChild(head);
       const note = document.createElement("div");
       note.className = "bnote";
-      note.innerHTML = "점선은 <b>갈래를 건너는 길</b> — 이어진 칸을 하나라도 배우면 열립니다. 단을 여는 점수는 다른 갈래에 찍은 것도 <b>절반</b>이 쌓입니다.";
+      note.innerHTML = `${tr("점선은 <b>갈래를 건너는 길</b> — 이어진 칸을 하나라도 배우면 열립니다.")} ` + tr("단을 여는 점수는 다른 갈래에 찍은 것도 <b>절반</b>이 쌓입니다.");
       w.appendChild(note);
       const grid = document.createElement("div");
       grid.className = "bgrid";
@@ -30162,11 +30460,11 @@
         for (const br of BRANCHES) if (br.id === sk.br)
           for (const q of br.nodes) own += app.player.skills[q] || 0;
         const lend = have - own;
-        return `이 갈래에 ${need}점 필요 (지금 ${have}` + (lend > 0 ? ` = 제 갈래 ${own} + 다른 갈래 ${lend}` : "") + ")";
+        return tr("이 갈래에 {need}점 필요 (지금 {have}", { need, have }) + (lend > 0 ? ` ${tr("= 제 갈래 {own} + 다른 갈래 {lend}", { own, lend })}` : "") + ")";
       }
       if (!this.reqMet(id)) {
-        const nm = sk.req.map((r) => SKILLS[r].n).join(" 또는 ");
-        return "윗단계 " + eulreul(nm) + " 먼저";
+        const nm = sk.req.map((r) => SKILLS[r].n).join(` ${tr("또는")} `);
+        return `${tr("윗단계")} ` + eulreul(nm) + ` ${tr("먼저")}`;
       }
       return "";
     },
@@ -30187,16 +30485,16 @@
     showSkillTip(id, e) {
       const p = app.player, sk = SKILLS[id], rank = p.skills[id] || 0;
       const why = this.lockReason(id);
-      const kind = sk.type === "active" ? "액티브" : "패시브";
+      const kind = sk.type === "active" ? tr("액티브") : tr("패시브");
       let h = `<div class="tname c${rank > 0 ? 3 : 0}">${sk.n}</div>`;
-      h += `<div class="tmeta">${kind} · ${rank}/${sk.max} 랭크` + (sk.type === "active" ? ` · 마나 ${sk.mana} · 재사용 ${sk.cd}초` : "") + `</div>`;
+      h += `<div class="tmeta">${tr("{kind} · {rank}/{max} 랭크", { kind, rank, max: sk.max })}` + (sk.type === "active" ? ` ${tr("· 마나 {mana} · 재사용 {cd}초", { mana: sk.mana, cd: sk.cd })}` : "") + `</div>`;
       h += `<div class="tdesc">${this.skDesc(id, rank)}</div>`;
       if (rank > 0 && rank < sk.max)
-        h += `<div class="tnext">다음 랭크 — ${this.skDesc(id, rank + 1)}</div>`;
+        h += `<div class="tnext">${tr("다음 랭크 — {skDesc}", { skDesc: this.skDesc(id, rank + 1) })}</div>`;
       if (why) h += `<div class="tbad">${why}</div>`;
-      else if (rank >= sk.max) h += `<div class="tdim">최대 랭크</div>`;
-      else if (p.skillPts <= 0) h += `<div class="tbad">특성 포인트가 없다</div>`;
-      else h += `<div class="tgood">좌클릭으로 습득${sk.type === "active" ? " · 우클릭으로 슬롯 등록" : ""}</div>`;
+      else if (rank >= sk.max) h += `<div class="tdim">${tr("최대 랭크")}</div>`;
+      else if (p.skillPts <= 0) h += `<div class="tbad">${tr("특성 포인트가 없다")}</div>`;
+      else h += `<div class="tgood">${tr("좌클릭으로 습득{v}", { v: sk.type === "active" ? ` ${tr("· 우클릭으로 슬롯 등록")}` : "" })}</div>`;
       this.tip.show(h, e.clientX, e.clientY);
       this.tipTarget = true;
     },
@@ -30225,11 +30523,11 @@
     learn(id) {
       const p = app.player, sk = SKILLS[id];
       if (p.skillPts <= 0) {
-        this.toast("특성 포인트가 없다", "bad");
+        this.toast(tr("특성 포인트가 없다"), "bad");
         return;
       }
       if ((p.skills[id] || 0) >= sk.max) {
-        this.toast("이미 최대 랭크다", "bad");
+        this.toast(tr("이미 최대 랭크다"), "bad");
         return;
       }
       const why = this.lockReason(id);
@@ -30244,7 +30542,7 @@
         if (empty >= 0) p.slots[empty] = id;
       }
       p.recalc();
-      this.toast(`${sk.n} 습득 (${p.skills[id]}/${sk.max})`, "good");
+      this.toast(tr("{sk} 습득 ({skills}/{max})", { sk: sk.n, skills: p.skills[id], max: sk.max }), "good");
       app.sfx("learn");
       this.refreshTree();
       this.refreshSkillSlots();
@@ -30346,9 +30644,9 @@
         const pr = p.prof && p.prof[k] || { lv: 1, xp: 0 };
         const capped = pr.lv >= PROF_MAX;
         const need = capped ? 1 : profNeed(pr.lv);
-        el.querySelector(".plv").textContent = capped ? `Lv ${PROF_MAX} · 끝` : `Lv ${pr.lv}`;
+        el.querySelector(".plv").textContent = capped ? tr("Lv {profMax} · 끝", { profMax: PROF_MAX }) : `Lv ${pr.lv}`;
         el.querySelector(".pbar i").style.width = (capped ? 100 : Math.min(100, pr.xp / need * 100)) + "%";
-        el.querySelector(".pxp").textContent = capped ? "더 오를 곳이 없다" : `${pr.xp} / ${need}`;
+        el.querySelector(".pxp").textContent = capped ? tr("더 오를 곳이 없다") : `${pr.xp} / ${need}`;
         el.querySelector(".plin").innerHTML = P.lin.map(([n, f]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join("");
         el.querySelector(".pperks").innerHTML = P.perks.map(([at, n, dsc]) => `<div class="perk${pr.lv >= at ? " on" : ""}"><span class="pk">Lv ${at}</span><span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>`).join("");
       }
@@ -30359,7 +30657,7 @@
     refreshQuest() {
       const g = app;
       const done = Object.keys(g.achievements || {}).length;
-      const topTabs = `<div class="qtabs"><button class="qtab${this.questTab === "journey" ? " on" : ""}" data-qtab="journey">여정</button><button class="qtab${this.questTab === "ach" ? " on" : ""}" data-qtab="ach">업적 <b>${done}/${ACHIEVEMENTS.length}</b></button><button class="qtab${this.questTab === "ruins" ? " on" : ""}" data-qtab="ruins">유적</button></div>`;
+      const topTabs = `<div class="qtabs"><button class="qtab${this.questTab === "journey" ? " on" : ""}" data-qtab="journey">${tr("여정")}</button><button class="qtab${this.questTab === "ach" ? " on" : ""}" data-qtab="ach">${tr("업적 <b>{done}/{achievementsCount}</b>", { done, achievementsCount: ACHIEVEMENTS.length })}</button><button class="qtab${this.questTab === "ruins" ? " on" : ""}" data-qtab="ruins">${tr("유적")}</button></div>`;
       if (this.questTab === "ach") {
         this.renderAch(topTabs);
         return;
@@ -30386,31 +30684,31 @@
         {
           const clearedN = chapterBlock.chapters.filter((ch) => ch.id < g.chapter).length;
           const totalN = chapterBlock.chapters.length;
-          h += `<div class="session-note">전 <b>${totalN}개 장</b>` + (clearedN >= totalN ? " — 전부 지났다." : ` · <b>${clearedN}개</b> 완료`) + `</div>`;
+          h += `<div class="session-note">${tr("전 <b>{totalN}개 장</b>", { totalN })}` + (clearedN >= totalN ? ` ${tr("— 전부 지났다.")}` : ` ${tr("· <b>{clearedN}개</b> 완료", { clearedN })}`) + `</div>`;
         }
         for (const ch of chapterBlock.chapters) {
           const state = ch.id < g.chapter ? "done" : ch.id === g.chapter ? "cur" : "locked";
           const sub = ch.sub.replace(/^세션\s*\d+\s*·\s*/, "");
           const titleText = state === "locked" ? `${sub} · ???` : `${sub} · ${ch.title}`;
-          h += `<div class="chap ${state}"><div class="chap-badge ${state}">${state === "done" ? "완료" : state === "cur" ? "진행 중" : "대기"}</div><h3>${titleText}</h3>`;
+          h += `<div class="chap ${state}"><div class="chap-badge ${state}">${state === "done" ? tr("완료") : state === "cur" ? tr("진행 중") : tr("대기")}</div><h3>${titleText}</h3>`;
           if (state !== "locked") {
             const para = (t) => (t || "").split("\n\n").map((s) => `<p>${s.trim().replace(/\n/g, "<br>")}</p>`).join("");
             h += `<div class="cdesc">${para(ch.intro)}`;
             if (state === "done") {
-              h += `<div class="cdesc-sep">그 뒤</div>${para(ch.outro)}`;
+              h += `<div class="cdesc-sep">${tr("그 뒤")}</div>${para(ch.outro)}`;
               if (ch.hook) h += `<p class="cdesc-hook">◆ ${ch.hook}</p>`;
             }
             h += "</div>";
             if (state === "cur") {
               const st = g.chapterState(ch);
-              h += `<div class="obj-head">준비 <b>${st.done}/${st.need}</b>` + (st.missing.length ? " · <em>이 장의 일이 남았다</em>" : "") + "</div>";
+              h += `<div class="obj-head">${tr("준비 <b>{done}/{need}</b>", { done: st.done, need: st.need })}` + (st.missing.length ? ` ${tr("· <em>이 장의 일이 남았다</em>")}` : "") + "</div>";
               for (const b of st.basics) {
                 const must = (ch.require || []).includes(b.o.verb);
-                h += `<div class="obj ${b.p.done ? "ok" : ""}${must ? " must" : ""}">${b.p.done ? "✔" : "◆"} ${must ? '<span class="objreq">필수</span> ' : ""}${b.o.t}<span class="obj-task">${b.o.task || ""} <b>${b.p.label || b.p.cur + "/" + b.p.max}</b></span></div>`;
+                h += `<div class="obj ${b.p.done ? "ok" : ""}${must ? " must" : ""}">${b.p.done ? "✔" : "◆"} ${must ? `<span class="objreq">${tr("필수")}</span> ` : ""}${b.o.t}<span class="obj-task">${b.o.task || ""} <b>${b.p.label || b.p.cur + "/" + b.p.max}</b></span></div>`;
               }
               if (st.goal) {
                 const gp = st.goal.p, go = st.goal.o;
-                h += `<div class="obj-head">목표</div>`;
+                h += `<div class="obj-head">${tr("목표")}</div>`;
                 h += `<div class="obj goal ${gp.done ? "ok" : ""}${st.ready ? "" : " locked"}">${gp.done ? "✔" : st.ready ? "◆" : "🔒"} ${go.t}<span class="obj-task">${go.task || ""} <b>${gp.cur}/${gp.max}</b></span></div>`;
               }
             }
@@ -30419,7 +30717,7 @@
         }
         h += "</div>";
       }
-      let sh = '<div class="side-head">사람들의 부탁</div>';
+      let sh = `<div class="side-head">${tr("사람들의 부탁")}</div>`;
       const sideNpcIds = Object.keys(NPCS).filter((k) => SIDE_POOL[k]);
       let hasActive = false;
       for (const id of sideNpcIds) {
@@ -30428,18 +30726,18 @@
         hasActive = true;
         const done2 = app.sideDone[id] || 0;
         const p = app.sideProgress(active);
-        sh += `<div class="side-npc"><b>${NPCS[id].n}</b><span class="side-done">완료 ${done2}건</span>`;
+        sh += `<div class="side-npc"><b>${NPCS[id].n}</b><span class="side-done">${tr("완료 {done}건", { done: done2 })}</span>`;
         const sp = app.sidePay(active);
-        sh += `<div class="side-q ${p.done ? "ok" : ""}">${active.title} — ${active.desc} <b>${p.cur}/${p.max}</b><span class="side-rw">🪙 ${fmt(sp.gold)} · 경험치 ${fmt(sp.xp)}</span></div>`;
+        sh += `<div class="side-q ${p.done ? "ok" : ""}">${active.title} — ${active.desc} <b>${p.cur}/${p.max}</b><span class="side-rw">${tr("🪙 {gold} · 경험치 {xp}", { gold: fmt(sp.gold), xp: fmt(sp.xp) })}</span></div>`;
         sh += "</div>";
       }
-      if (!hasActive) sh += '<div class="side-q empty">지금 맡아 둔 부탁이 없다.</div>';
+      if (!hasActive) sh += `<div class="side-q empty">${tr("지금 맡아 둔 부탁이 없다.")}</div>`;
       if ((app.bounties || []).length) {
-        sh += '<div class="side-head">의뢰 게시판</div>';
+        sh += `<div class="side-head">${tr("의뢰 게시판")}</div>`;
         for (const q of app.bounties) {
           const p = app.bountyProgress(q);
           sh += `<div class="side-npc"><b>${q.title || ""}</b><span class="side-done">${q.from || ""}</span>`;
-          sh += `<div class="side-q ${q.done ? "" : p.done ? "ok" : ""}">${app.objLabel(q.obj)} ${q.done ? "<b>떼어 감</b>" : `<b>${p.cur}/${p.max}</b>`}</div></div>`;
+          sh += `<div class="side-q ${q.done ? "" : p.done ? "ok" : ""}">${app.objLabel(q.obj)} ${q.done ? tr("<b>떼어 감</b>") : `<b>${p.cur}/${p.max}</b>`}</div></div>`;
         }
       }
       const questBody = $("#quest-body");
@@ -30477,22 +30775,17 @@
     /** 유적 탐사 기록 — 여섯 유적의 등급 · 무엇이 남았는가 · 메아리 · 인장. */
     renderRuins(topTabs) {
       const g = app;
-      let h = topTabs + `<div class="rv-note">유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,
-      쓰러뜨릴수록 가라앉는다. 깨어난 유적은 더 몰려오고 더 준다. 주인을 잡은 둥지는 유적이
-      <b>「${PULSE.stages[ECHO.needStage].n}」</b> 이상일 때 <b>메아리</b>를 다시 부른다.
-      맥박이 한 단계 오를 때마다 <b>사건</b>(표식된 것 · 공명석 · 탐욕의 상자 · 포위)이 하나 터진다.
-      등급은 조건을 <b>모두</b> 채워야 오른다 — 아래에 다음 등급까지 남은 것을 적었다.
-      기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.</div>`;
+      let h = topTabs + `<div class="rv-note">${tr("유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,\n      쓰러뜨릴수록 가라앉는다. 깨어난 유적은 더 몰려오고 더 준다. 주인을 잡은 둥지는 유적이\n      <b>「{stages}」</b> 이상일 때 <b>메아리</b>를 다시 부른다.\n      맥박이 한 단계 오를 때마다 <b>사건</b>(표식된 것 · 공명석 · 탐욕의 상자 · 포위)이 하나 터진다.\n      등급은 조건을 <b>모두</b> 채워야 오른다 — 아래에 다음 등급까지 남은 것을 적었다.\n      기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.", { stages: PULSE.stages[ECHO.needStage].n })}</div>`;
       const list = RUIN_SPEC.concat(STORY_RUIN.map((_, i) => g.ruinSpec("story" + i)).filter(Boolean)).sort((a, b) => (a.rank || 0) - (b.rank || 0));
       for (const spec of list) {
         const sc = g.surveyScore(spec.id), P = sc.part, sv = sc.sv;
         const cell = (label, q) => !q ? "" : `<span class="${q[0] >= q[1] ? "ok" : ""}">${label} <b>${q[1] === 1 ? q[0] ? "✔" : "—" : q[0] + "/" + q[1]}</b></span>`;
         const seal = ITEMS["seal_" + spec.id];
-        h += `<div class="rv${sc.seen ? "" : " off"}"><div class="rv-rank" style="color:${sc.seen ? sc.col : "#5a5448"}">${sc.seen ? sc.rank : "?"}<small>${sc.seen ? sc.score + "%" : ""}</small></div><div class="rv-body"><h4>${sc.seen ? spec.n : "아직 발을 들이지 않은 유적"}</h4>`;
+        h += `<div class="rv${sc.seen ? "" : " off"}"><div class="rv-rank" style="color:${sc.seen ? sc.col : "#5a5448"}">${sc.seen ? sc.rank : "?"}<small>${sc.seen ? sc.score + "%" : ""}</small></div><div class="rv-body"><h4>${sc.seen ? spec.n : tr("아직 발을 들이지 않은 유적")}</h4>`;
         if (sc.seen) {
-          h += `<div class="rv-grid">` + cell("방", P.rooms) + cell("상자", P.chests) + cell("비문", P.lore) + cell(sc.story ? "석판" : "주인", P.boss) + cell("골방", P.code) + cell("격노", P.rage) + cell("사건", P.events) + cell("갈래", P.kinds) + cell("메아리", P.echo) + `</div>`;
-          if (sc.next) h += `<div class="rv-next">다음 ${sc.next} 까지 — ${sc.missing.join(" · ")}</div>`;
-          if (seal) h += `<div class="rv-seal">${sv.s ? "✔ " + seal.n + " — " + seal.d.replace(/^[^.]*\.\s*/, "") : "S 등급 보상 · " + seal.n}</div>`;
+          h += `<div class="rv-grid">` + cell(tr("방"), P.rooms) + cell(tr("상자"), P.chests) + cell(tr("비문"), P.lore) + cell(sc.story ? tr("석판") : tr("주인"), P.boss) + cell(tr("골방"), P.code) + cell(tr("격노"), P.rage) + cell(tr("사건"), P.events) + cell(tr("갈래"), P.kinds) + cell(tr("메아리"), P.echo) + `</div>`;
+          if (sc.next) h += `<div class="rv-next">${tr("다음 {next} 까지 — {join}", { next: sc.next, join: sc.missing.join(" · ") })}</div>`;
+          if (seal) h += `<div class="rv-seal">${sv.s ? "✔ " + seal.n + " — " + seal.d.replace(/^[^.]*\.\s*/, "") : `${tr("S 등급 보상 ·")} ` + seal.n}</div>`;
         }
         h += "</div></div>";
       }
@@ -30533,7 +30826,7 @@
           const [tn, tc] = ACH_TIER[a.t] || ACH_TIER.mid;
           const hide = achHidden(a) && !on;
           const nm = hide ? "???" : a.n;
-          const ds = hide ? "숨겨진 업적 — 해내면 그때 드러난다." : a.d;
+          const ds = hide ? tr("숨겨진 업적 — 해내면 그때 드러난다.") : a.d;
           h += `<div class="ach ${on ? "on" : "off"}${hide ? " hid" : ""} t-${a.t}"><span class="ach-ic" style="background-image:url(${hide ? Art.achHiddenUrl() : Art.achUrl(a.id)})"></span><span class="ach-txt"><b>${nm}</b><i>${ds}</i></span><span class="ach-tier" style="color:${tc};border-color:${tc}66">${tn}</span><span class="ach-when">${on ? fmtDate(got[a.id]) : ""}</span></div>`;
         }
       }
@@ -30568,19 +30861,19 @@
         const st = app.chapterState(ch);
         h += `<div style="color:#c9b07a;margin-bottom:4px">${ch.title}</div>`;
         if (st.ready) {
-          h += `<div class="qt-obj">${st.goal ? st.goal.o.t : "목표"}` + (st.goal && st.goal.o.task ? `<span class="qt-task">${st.goal.o.task}</span>` : "") + "</div>";
+          h += `<div class="qt-obj">${st.goal ? st.goal.o.t : tr("목표")}` + (st.goal && st.goal.o.task ? `<span class="qt-task">${st.goal.o.task}</span>` : "") + "</div>";
         } else {
-          h += `<div class="qt-obj">준비 <b>${st.done}/${st.need}</b></div>`;
+          h += `<div class="qt-obj">${tr("준비 <b>{done}/{need}</b>", { done: st.done, need: st.need })}</div>`;
           h += '<div class="qt-list">';
           for (const b of st.basics) {
             const must = (ch.require || []).includes(b.o.verb);
-            h += `<div class="qt-pick${b.p.done ? " done" : ""}${must ? " must" : ""}"><span class="qt-line">${b.p.done ? "✔" : "·"} ` + (must ? '<span class="qt-must">필수</span> ' : "") + `${b.o.t}</span><span class="qt-task">${b.o.task || ""} <b>${b.p.label || b.p.cur + "/" + b.p.max}</b></span></div>`;
+            h += `<div class="qt-pick${b.p.done ? " done" : ""}${must ? " must" : ""}"><span class="qt-line">${b.p.done ? "✔" : "·"} ` + (must ? `<span class="qt-must">${tr("필수")}</span> ` : "") + `${b.o.t}</span><span class="qt-task">${b.o.task || ""} <b>${b.p.label || b.p.cur + "/" + b.p.max}</b></span></div>`;
           }
           h += "</div>";
         }
       }
       const activeSide = Object.values(app.sideActive).filter(Boolean);
-      if (activeSide.length) h += `<div class="qt-side">부탁 ${activeSide.length}건 진행 중 (J로 확인)</div>`;
+      if (activeSide.length) h += `<div class="qt-side">${tr("부탁 {activeSideCount}건 진행 중 (J로 확인)", { activeSideCount: activeSide.length })}</div>`;
       if (!ch && !activeSide.length) {
         $("#quest-tracker").style.display = "none";
         return;
@@ -30616,22 +30909,22 @@
       const lv = { work: app.nearStObj.work && app.nearStObj.work.lv || 1, forge: app.nearStObj.forge && app.nearStObj.forge.lv || 1 };
       let tab = this.craftTab;
       if (tab !== "hand" && !near[tab]) tab = this.craftTab = "hand";
-      const allTabs = { work: ["work", `작업대 Lv.${lv.work}`], forge: ["forge", `용광로 Lv.${lv.forge}`], hand: ["hand", "맨손"] };
+      const allTabs = { work: ["work", tr("작업대 Lv.{work}", { work: lv.work })], forge: ["forge", tr("용광로 Lv.{forge}", { forge: lv.forge })], hand: ["hand", tr("맨손")] };
       const tabs = [];
       if (tab === "work" || tab === "hand" && near.work) tabs.push(allTabs.work);
       if (tab === "forge" || tab === "hand" && near.forge) tabs.push(allTabs.forge);
       tabs.push(allTabs.hand);
       let head = '<div class="craft-tabs">' + tabs.map(([k, n]) => `<button class="ctab${tab === k ? " on" : ""}" data-tab="${k}">${n}</button>`).join("") + "</div>";
       if (tab === "hand") {
-        head += '<div class="st-info">시설 없이 만들 수 있는 것들이다.</div>';
+        head += `<div class="st-info">${tr("시설 없이 만들 수 있는 것들이다.")}</div>`;
       } else {
         const L = lv[tab];
-        head += `<div class="st-info"><b>${STATION_NAME[tab][L]}</b> — ${STATION_DESC[tab][L]}` + (near[tab] ? "" : ' <span class="lack">· 시설 앞으로 가야 쓸 수 있다</span>') + "</div>";
+        head += `<div class="st-info"><b>${STATION_NAME[tab][L]}</b> — ${STATION_DESC[tab][L]}` + (near[tab] ? "" : ` <span class="lack">${tr("· 시설 앞으로 가야 쓸 수 있다")}</span>`) + "</div>";
         if (L < STATION_UP[tab].length) {
           const up = STATION_UP[tab][L], can = near[tab] && p.hasAll(up.need);
-          head += `<div class="st-up${can ? "" : " no"}" data-up="${tab}"><div class="rname">▲ ${STATION_NAME[tab][L + 1]}${josaRo(STATION_NAME[tab][L + 1])} 개조</div><div class="rmat">${this.matLine(p, up.need)}</div></div>`;
+          head += `<div class="st-up${can ? "" : " no"}" data-up="${tab}"><div class="rname">${tr("▲ {stationName|으로} 개조", { stationName: STATION_NAME[tab][L + 1] })}</div><div class="rmat">${this.matLine(p, up.need)}</div></div>`;
         } else {
-          head += '<div class="st-up done">더 손볼 데가 없다. 마지막 단계다.</div>';
+          head += `<div class="st-up done">${tr("더 손볼 데가 없다. 마지막 단계다.")}</div>`;
         }
       }
       const rows = [];
@@ -30647,19 +30940,19 @@
         rows.push({ i, r, locked, mat: p.hasAll(r.need), group });
       }
       rows.sort((a, b) => a.locked - b.locked || b.mat - a.mat || (a.r.lv || 1) - (b.r.lv || 1));
-      const groups = [["all", "전체"], ["gear", "장비"], ["survival", "생존"], ["build", "건축"], ["factory", "자동화"], ["other", "기타"]];
+      const groups = [["all", tr("전체")], ["gear", tr("장비")], ["survival", tr("생존")], ["build", tr("건축")], ["factory", tr("자동화")], ["other", tr("기타")]];
       const escapedQuery = this.craftQuery.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-      head += `<div class="craft-filter"><input id="craft-search" type="search" value="${escapedQuery}" placeholder="제작품 검색">` + groups.map(([key, label]) => `<button class="cg${this.craftGroup === key ? " on" : ""}" data-cgroup="${key}">${label}</button>`).join("") + `<button class="lock-toggle${this.craftShowLocked ? " on" : ""}" data-lock-toggle>${this.craftShowLocked ? "잠긴 제작법 숨기기" : "잠긴 제작법 보기"}</button><span class="craft-count">${rows.length}개 표시</span></div>`;
+      head += `<div class="craft-filter"><input id="craft-search" type="search" value="${escapedQuery}" placeholder="${tr("제작품 검색")}">` + groups.map(([key, label]) => `<button class="cg${this.craftGroup === key ? " on" : ""}" data-cgroup="${key}">${label}</button>`).join("") + `<button class="lock-toggle${this.craftShowLocked ? " on" : ""}" data-lock-toggle>${this.craftShowLocked ? tr("잠긴 제작법 숨기기") : tr("잠긴 제작법 보기")}</button><span class="craft-count">${tr("{rowsCount}개 표시", { rowsCount: rows.length })}</span></div>`;
       $("#craft-note").innerHTML = head;
       let h = "";
       for (const { i, r, locked, mat } of rows) {
         const d = ITEMS[r.out];
         const ok = !locked && mat && (!r.station || near[r.station]);
         let mats = this.matLine(p, r.need);
-        if (locked) mats = `<span class="lack">[${STATION_NAME[tab][r.lv]} 필요]</span> ` + mats;
+        if (locked) mats = `<span class="lack">${tr("[{stationName} 필요]", { stationName: STATION_NAME[tab][r.lv] })}</span> ` + mats;
         h += `<div class="recipe ${ok ? "" : "no"}" data-r="${i}"><div class="ric"></div><div><div class="rname">${d.n}${r.n > 1 ? " ×" + r.n : ""}</div><div class="rmat">${mats}</div></div></div>`;
       }
-      $("#craft-list").innerHTML = h || '<div class="st-info">여기서 만들 수 있는 것이 아직 없다.</div>';
+      $("#craft-list").innerHTML = h || `<div class="st-info">${tr("여기서 만들 수 있는 것이 아직 없다.")}</div>`;
       $$("#craft-note .ctab").forEach((b) => b.addEventListener("click", () => {
         this.craftTab = b.dataset.tab;
         this.craftGroup = "all";
@@ -30699,19 +30992,19 @@
     },
     refreshTownhall() {
       const p = app.player, lv = app.villageLv();
-      $("#town-title").textContent = `여명 마을 — ${VILLAGE[lv] ? VILLAGE[lv].n : "—"}`;
+      $("#town-title").textContent = tr("여명 마을 — {v}", { v: VILLAGE[lv] ? VILLAGE[lv].n : "—" });
       let h = "";
       for (let i = 1; i <= VILLAGE.length - 1; i++) {
         const v = VILLAGE[i];
         const state = i <= lv ? "done" : i === lv + 1 ? "next" : "far";
-        h += `<div class="tv ${state}"><div class="tv-head"><b>${i}단계 · ${v.n}</b><span class="tv-tag">${state === "done" ? "완료" : state === "next" ? "다음" : "잠김"}</span></div><div class="tv-desc">${v.d}</div><ul class="tv-gain">` + v.gain.map((g) => `<li>${g}</li>`).join("") + "</ul>";
+        h += `<div class="tv ${state}"><div class="tv-head">${tr("<b>{i}단계 · {v}</b>", { i, v: v.n })}<span class="tv-tag">${state === "done" ? tr("완료") : state === "next" ? tr("다음") : tr("잠김")}</span></div><div class="tv-desc">${v.d}</div><ul class="tv-gain">` + v.gain.map((g) => `<li>${g}</li>`).join("") + "</ul>";
         if (state === "next") {
           const can = p.hasAll(v.need);
-          h += `<div class="tv-cost">필요한 것 — ${this.matLine(p, v.need)}</div><button class="tv-btn${can ? "" : " no"}" id="town-up">이 단계로 올린다</button>`;
+          h += `<div class="tv-cost">${tr("필요한 것 — {matLine}", { matLine: this.matLine(p, v.need) })}</div><button class="tv-btn${can ? "" : " no"}" id="town-up">${tr("이 단계로 올린다")}</button>`;
         }
         h += "</div>";
       }
-      h += '<div class="tv-note">지어 올린 것은 되돌릴 수 없다. 베이스캠프는 이 개선의 대상이 아니다 — 엘라라가 거긴 그냥 두라고 했다.</div>';
+      h += `<div class="tv-note">${tr("지어 올린 것은 되돌릴 수 없다. 베이스캠프는 이 개선의 대상이 아니다 —")} ${tr("엘라라가 거긴 그냥 두라고 했다.")}</div>`;
       $("#town-body").innerHTML = h;
       const b = $("#town-up");
       if (b) b.addEventListener("click", () => {
@@ -30735,7 +31028,7 @@
         if (!buf[k]) continue;
         h += `<div class="slot ${cls}" data-id="${k}"><span class="ic"></span><span class="cnt">${buf[k]}</span></div>`;
       }
-      return h || '<div class="mach-empty">비어 있음</div>';
+      return h || `<div class="mach-empty">${tr("비어 있음")}</div>`;
     },
     /** 창을 다시 짜야 하는 것만 모은 열쇠 — 상태·전력·진행처럼 계속 바뀌는 값은 machLive 가 제자리에서 고친다.
         ★ 0.1초마다 통째로 다시 짜면 누르는 사이에 칸이 바뀌어 클릭이 씹히고 툴팁이 깜빡였다. */
@@ -30762,26 +31055,26 @@
     machLive(m) {
       const s = MACHINE[m.t], w = app.world;
       const st = $("#mach-st");
-      if (st) st.innerHTML = `<span class="mdot" style="background:${Factory.statusColor(m)}"></span><b>${m.st || "대기"}</b>` + (s.rot ? ` · 방향 <b>${DIR_NAME[m.dir]}</b>` : "");
+      if (st) st.innerHTML = `<span class="mdot" style="background:${Factory.statusColor(m)}"></span><b>${Factory.stLabel(m)}</b>` + (s.rot ? ` ${tr("· 방향 <b>{dirName}</b>", { dirName: DIR_NAME[m.dir] })}` : "");
       const net = $("#mach-net");
       if (net) {
         const n = m.net >= 0 ? w.nets[m.net] : null;
         if (!n) {
           net.className = "mach-row lack";
-          net.textContent = "전력망에 이어져 있지 않다 — 반경 5칸 안에 전주를 세워라.";
+          net.textContent = tr("전력망에 이어져 있지 않다 — 반경 5칸 안에 전주를 세워라.");
         } else {
           const pct = Math.round(n.sat * 100);
           net.className = "mach-row";
-          net.innerHTML = `전력망 #${m.net + 1} · 발전 <b>${n.gen}</b> / 수요 <b>${n.dem}</b> · 충족 <b class="${pct < 100 ? "lack" : ""}">${pct}%</b>` + (n.emax ? ` · 축전 <b>${Math.round(n.e)}</b>/${n.emax}` : "") + (n.off ? ' · <b class="lack">정지 스위치 내려짐</b>' : "");
+          net.innerHTML = tr("전력망 #{n} · 발전 <b>{gen}</b> / 수요 <b>{dem}</b>", { n: m.net + 1, gen: n.gen, dem: n.dem }) + ` ${tr("· 충족")} <b class="${pct < 100 ? "lack" : ""}">${pct}%</b>` + (n.emax ? ` ${tr("· 축전 <b>{e}</b>/{emax}", { e: Math.round(n.e), emax: n.emax })}` : "") + (n.off ? ` · <b class="lack">${tr("정지 스위치 내려짐</b>")}` : "");
         }
       }
       const sto = $("#mach-store");
-      if (sto) sto.textContent = `축전 잔량 ${Math.round(m.e)} / ${s.store}`;
+      if (sto) sto.textContent = tr("축전 잔량 {e} / {store}", { e: Math.round(m.e), store: s.store });
       const fu = $("#mach-fuel");
       if (fu) {
         let left = 0;
         for (const k in m.in) if (FUEL[k]) left += m.in[k] * FUEL[k];
-        fu.textContent = `연료 — 타는 중 ${(m.fuel * FAC_TICK).toFixed(1)}초 · 넣어 둔 연료로 ${Math.round(left * FAC_TICK)}초 더`;
+        fu.textContent = tr("연료 — 타는 중 {n}초 · 넣어 둔 연료로 {n2}초 더", { n: (m.fuel * FAC_TICK).toFixed(1), n2: Math.round(left * FAC_TICK) });
       }
       for (const [sel, buf] of [["#mg-in", m.in], ["#mg-out", m.out]])
         if (buf) $$(sel + " .slot").forEach((el) => {
@@ -30803,7 +31096,7 @@
         const r = m.rec >= 0 ? MRECIPES[m.rec] : null;
         const k = r ? clamp(m.prog / r.t, 0, 1) : 0;
         pr.querySelector("i").style.width = (k * 100).toFixed(1) + "%";
-        pr.querySelector("span").textContent = r ? Object.keys(r.out).map((id) => ITEMS[id].n + " ×" + r.out[id]).join(" · ") + ` — ${Math.round(k * 100)}% · ${((r.t - m.prog) * FAC_TICK).toFixed(1)}초 남음` : "만들 것이 없다 — 아래 목록의 재료를 넣어라";
+        pr.querySelector("span").textContent = r ? Object.keys(r.out).map((id) => ITEMS[id].n + " ×" + r.out[id]).join(" · ") + ` ${tr("— {n}% · {n2}초 남음", { n: Math.round(k * 100), n2: ((r.t - m.prog) * FAC_TICK).toFixed(1) })}` : tr("만들 것이 없다 — 아래 목록의 재료를 넣어라");
       }
     },
     refreshMachine(force) {
@@ -30821,21 +31114,21 @@
       let info = `<div class="mach-desc">${s.d}</div><div class="mach-row" id="mach-st"></div>`;
       if (s.power || s.gen || s.store) {
         info += '<div class="mach-row" id="mach-net"></div>';
-        if (s.power) info += `<div class="mach-row dim">소비 ${s.power}/틱 (1틱 = ${FAC_TICK}초)</div>`;
-        if (s.gen) info += `<div class="mach-row dim">생산 ${s.gen}/틱</div>`;
+        if (s.power) info += `<div class="mach-row dim">${tr("소비 {power}/틱 (1틱 = {facTick}초)", { power: s.power, facTick: FAC_TICK })}</div>`;
+        if (s.gen) info += `<div class="mach-row dim">${tr("생산 {gen}/틱", { gen: s.gen })}</div>`;
         if (s.store) info += '<div class="mach-row dim" id="mach-store"></div>';
       }
       if (s.fuelIn) info += '<div class="mach-row dim" id="mach-fuel"></div>';
       if (m.t === "sorter") {
-        info += `<div class="mach-row">필터: <b>${m.f ? ITEMS[m.f].n : "없음 (전부 통과)"}</b> <span class="dim">— 맞는 것은 앞으로, 나머지는 시계 방향 옆으로. 아래 가방 칸을 클릭해 지정</span></div>`;
+        info += `<div class="mach-row">${tr("필터: <b>{v}</b>", { v: m.f ? ITEMS[m.f].n : tr("없음 (전부 통과)") })} <span class="dim">${tr("— 맞는 것은 앞으로, 나머지는 시계 방향 옆으로. 아래 가방 칸을 클릭해 지정")}</span></div>`;
       }
       if (s.proc) info += '<div class="mach-prog" id="mach-prog"><i></i><span></span></div>';
-      let btns = `<button class="mbtn" data-act="power">${m.on ? "■ 정지" : "▶ 가동"}</button>`;
-      if (s.rot) btns += '<button class="mbtn" data-act="rot">↻ 방향 돌리기</button>';
-      if (s.slots) btns += `<button class="mbtn" data-act="feed">${m.feed ? "배출 끄기" : "배출 켜기"}</button>`;
-      if (m.t === "sorter" && m.f) btns += '<button class="mbtn" data-act="clearf">필터 해제</button>';
+      let btns = `<button class="mbtn" data-act="power">${m.on ? tr("■ 정지") : tr("▶ 가동")}</button>`;
+      if (s.rot) btns += `<button class="mbtn" data-act="rot">${tr("↻ 방향 돌리기")}</button>`;
+      if (s.slots) btns += `<button class="mbtn" data-act="feed">${m.feed ? tr("배출 끄기") : tr("배출 켜기")}</button>`;
+      if (m.t === "sorter" && m.f) btns += `<button class="mbtn" data-act="clearf">${tr("필터 해제")}</button>`;
       if (m.out && Factory.bufTotal(m.out) || m.items && m.items.some(Boolean))
-        btns += '<button class="mbtn" data-act="takeall">⤓ 전부 가방으로</button>';
+        btns += `<button class="mbtn" data-act="takeall">${tr("⤓ 전부 가방으로")}</button>`;
       const ic = (id) => `<span class="ri" style="background-image:url(${Art.itemUrl(id)})" title="${ITEMS[id].n}"></span>`;
       let recs = "";
       if (s.proc) {
@@ -30847,19 +31140,19 @@
             break;
           }
           const side = (o) => Object.keys(o).map((k) => `${ic(k)}<small>${o[k]}</small>`).join("");
-          recs += `<div class="mrec${i === m.rec ? " cur" : ok ? " ok" : ""}">${side(r.in)}<b>→</b>${side(r.out)}<em>${(r.t * FAC_TICK).toFixed(1)}초</em></div>`;
+          recs += `<div class="mrec${i === m.rec ? " cur" : ok ? " ok" : ""}">${side(r.in)}<b>→</b>${side(r.out)}${tr("<em>{n}초</em>", { n: (r.t * FAC_TICK).toFixed(1) })}</div>`;
         });
       }
       let body = "";
       if (s.slots) {
-        body += '<div class="mach-sec">보관 <small>(클릭해서 가방으로)</small></div><div class="mach-grid" id="mg-store"></div>';
+        body += `<div class="mach-sec">${tr("보관")} <small>${tr("(클릭해서 가방으로)")}</small></div><div class="mach-grid" id="mg-store"></div>`;
       } else {
-        if (m.in) body += '<div class="mach-sec">투입 <small>(클릭해서 되찾기)</small></div><div class="mach-grid" id="mg-in">' + this.bufGrid(m.in, "mi") + "</div>";
-        if (m.out) body += '<div class="mach-sec">산출 <small>(클릭해서 가방으로)</small></div><div class="mach-grid" id="mg-out">' + this.bufGrid(m.out, "mo") + "</div>";
-        if (m.it) body += `<div class="mach-sec">이송 중 <small>(3초 넘게 멈춘 물건은 클릭해서 가방으로)</small></div><div class="mach-grid"><div class="slot" id="mg-it"><span class="ic" style="background-image:url(${Art.itemUrl(m.it.id)})"></span></div></div>`;
+        if (m.in) body += `<div class="mach-sec">${tr("투입")} <small>${tr("(클릭해서 되찾기)")}</small></div><div class="mach-grid" id="mg-in">` + this.bufGrid(m.in, "mi") + "</div>";
+        if (m.out) body += `<div class="mach-sec">${tr("산출")} <small>${tr("(클릭해서 가방으로)")}</small></div><div class="mach-grid" id="mg-out">` + this.bufGrid(m.out, "mo") + "</div>";
+        if (m.it) body += `<div class="mach-sec">${tr("이송 중")} <small>${tr("(3초 넘게 멈춘 물건은 클릭해서 가방으로)")}</small></div><div class="mach-grid"><div class="slot" id="mg-it"><span class="ic" style="background-image:url(${Art.itemUrl(m.it.id)})"></span></div></div>`;
       }
-      if (recs) body += `<div class="mach-sec">만드는 것 <small>(재료가 다 들어 있으면 초록 · 지금 만드는 것은 금색)</small></div><div class="mrecs">${recs}</div>`;
-      body += `<div class="mach-sec">소지품 <small>(${m.t === "sorter" ? "클릭해서 필터 지정" : "클릭해서 기계에 넣기 · 흐린 것은 이 기계가 안 받는다"})</small></div><div class="mach-grid" id="mg-bag"></div>`;
+      if (recs) body += `<div class="mach-sec">${tr("만드는 것")} <small>${tr("(재료가 다 들어 있으면 초록 · 지금 만드는 것은 금색)")}</small></div><div class="mrecs">${recs}</div>`;
+      body += `<div class="mach-sec">${tr("소지품")} <small>(${m.t === "sorter" ? tr("클릭해서 필터 지정") : tr("클릭해서 기계에 넣기 · 흐린 것은 이 기계가 안 받는다")})</small></div><div class="mach-grid" id="mg-bag"></div>`;
       $("#mach-body").innerHTML = info + '<div class="mach-btns">' + btns + "</div>" + body;
       this.machLive(m);
       const press = (el, fn) => el.addEventListener("mousedown", (e) => {
@@ -30890,7 +31183,7 @@
             if (p.addItem(it)) m.items[i] = null;
             else full = true;
           });
-          if (full) this.toast("가방이 가득 찼다", "bad");
+          if (full) this.toast(tr("가방이 가득 찼다"), "bad");
           this.refreshBag();
         }
         app.sfx(snd);
@@ -30902,7 +31195,7 @@
           this.refreshMachine(true);
           this.refreshBag();
           app.sfx("place");
-        } else this.toast(Factory.stalled(m) ? "가방이 가득 찼다" : "움직이는 중이다 — 3초 넘게 멈춘 것만 꺼낼 수 있다", "bad");
+        } else this.toast(Factory.stalled(m) ? tr("가방이 가득 찼다") : tr("움직이는 중이다 — 3초 넘게 멈춘 것만 꺼낼 수 있다"), "bad");
       });
       const store = $("#mg-store");
       if (store) {
@@ -30920,7 +31213,7 @@
               this.refreshMachine(true);
               this.refreshBag();
             } else {
-              this.toast("가방이 가득 찼다", "bad");
+              this.toast(tr("가방이 가득 찼다"), "bad");
               this.refreshMachine(true);
             }
           });
@@ -30933,7 +31226,7 @@
           const id = el.dataset.id;
           this.setIcon(el.querySelector(".ic"), Art.itemUrl(id));
           press(el, () => {
-            if (Factory.playerTake(w, m, which, id, p) <= 0) this.toast("가방이 가득 찼다", "bad");
+            if (Factory.playerTake(w, m, which, id, p) <= 0) this.toast(tr("가방이 가득 찼다"), "bad");
             this.refreshMachine(true);
             this.refreshBag();
           });
@@ -30964,7 +31257,7 @@
             this.refreshMachine(true);
             this.refreshBag();
             app.sfx("place");
-          } else this.toast(yes(i) ? m.on ? "더 들어갈 자리가 없다" : "멈춘 기계에는 넣을 수 없다" : "이 기계가 받지 않는 물건이다", "bad");
+          } else this.toast(yes(i) ? m.on ? tr("더 들어갈 자리가 없다") : tr("멈춘 기계에는 넣을 수 없다") : tr("이 기계가 받지 않는 물건이다"), "bad");
         });
       }
     },
@@ -30973,7 +31266,7 @@
       this.closePanel();
       this.chestRef = obj;
       this.shopRef = null;
-      $("#chest-title").textContent = "상자";
+      $("#chest-title").textContent = tr("상자");
       this.panels.show("chest");
       app.uiOpen = true;
       this.refreshChest();
@@ -30996,7 +31289,7 @@
         $("#panel-chest header").insertBefore(toggle, $("#panel-chest header .x"));
       }
       toggle.style.display = "";
-      toggle.textContent = "판매하기 ▸";
+      toggle.textContent = tr("판매하기 ▸");
       this.panels.show("chest");
       app.uiOpen = true;
       this.refreshChest();
@@ -31004,7 +31297,7 @@
     shopTitle() {
       const rate = app.marketRate ? Math.round((app.goldRate || 1) * 100) : 100;
       const arrow = rate > 105 ? " 📈" : rate < 95 ? " 📉" : "";
-      return `${NPCS[this.shopRef].n}의 상점 — 🪙 ${fmt(app.player.gold)} · 환율 ${rate}%${arrow}`;
+      return tr("{npc}의 상점 — 🪙 {gold} · 환율 {rate}%{arrow}", { npc: NPCS[this.shopRef].n, gold: fmt(app.player.gold), rate, arrow });
     },
     refreshChest() {
       const g = $("#chest-grid");
@@ -31013,7 +31306,7 @@
       if (this.shopRef) {
         if (toggle) {
           toggle.style.display = "";
-          toggle.textContent = this.shopMode === "buy" ? "판매하기 ▸" : "◂ 구매하기";
+          toggle.textContent = this.shopMode === "buy" ? tr("판매하기 ▸") : tr("◂ 구매하기");
         }
         if (this.shopMode === "sell") {
           const p = app.player;
@@ -31023,7 +31316,7 @@
             makeSlot("slot" + (it.r ? " r" + it.r : ""), {
               fill: { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : "" },
               click: () => app.sellItem(i),
-              enter: (e) => this.showTip(it, e, `판매가 🪙 ${price}`),
+              enter: (e) => this.showTip(it, e, tr("판매가 🪙 {price}", { price })),
               leave: () => this.hideTip()
             }, g);
           });
@@ -31034,7 +31327,7 @@
           const npc = this.shopRef, m = app.merchantOf(npc);
           const stock = app.stockOf(npc);
           if (!stock.length) {
-            g.innerHTML = '<div class="st-info">오늘은 다 팔렸다. 내일 다시 오라는군.</div>';
+            g.innerHTML = `<div class="st-info">${tr("오늘은 다 팔렸다. 내일 다시 오라는군.")}</div>`;
             $("#chest-title").textContent = this.shopTitle();
             return;
           }
@@ -31044,7 +31337,7 @@
             makeSlot("slot", {
               fill: { icon: Art.itemUrl(row.id), count: price, extra: row.c > 1 ? `<span class="num">×${row.c}</span>` : "" },
               click: () => app.buyStock(npc, i),
-              enter: (e) => this.showTip(it, e, `가격 🪙 ${price} · 오늘 재고 ${row.c}개`),
+              enter: (e) => this.showTip(it, e, tr("가격 🪙 {price} · 오늘 재고 {row}개", { price, row: row.c })),
               leave: () => this.hideTip()
             }, g);
           });
@@ -31058,7 +31351,7 @@
           makeSlot("slot", {
             fill: { icon: Art.itemUrl(id), count: price },
             click: () => app.buy(id, this.shopRef),
-            enter: (e) => this.showTip(it, e, `가격 🪙 ${price}`),
+            enter: (e) => this.showTip(it, e, tr("가격 🪙 {price}", { price })),
             leave: () => this.hideTip()
           }, g);
         });
@@ -31078,7 +31371,7 @@
               app.onPickup(it);
               this.refreshChest();
               this.refreshBag();
-            } else this.toast("가방이 가득 찼다", "bad");
+            } else this.toast(tr("가방이 가득 찼다"), "bad");
           },
           enter: (e) => this.showTip(it, e),
           leave: () => this.hideTip()
@@ -31106,7 +31399,7 @@
       const p = app.player;
       const store = this.storeRef ? this.storeRef.items : app.vault;
       const used = store.filter(Boolean).length;
-      const label = this.storeRef ? this.storeRef.gold ? "황금 저장 상자" : "저장 상자" : "보관고";
+      const label = this.storeRef ? this.storeRef.gold ? tr("황금 저장 상자") : tr("저장 상자") : tr("보관고");
       $("#vault-title").textContent = `${label} — ${used} / ${store.length}`;
       const goldRow = $("#vault-gold-row");
       if (goldRow) {
@@ -31130,14 +31423,14 @@
           this.refreshVault();
           this.refreshBag();
           app.sfx("place");
-        } else this.toast("가방이 가득 찼다", "bad");
+        } else this.toast(tr("가방이 가득 찼다"), "bad");
       });
       fill($("#vault-bag"), p.bag, (i) => {
         const it = p.bag[i];
         if (!it) return;
         const slot = store.indexOf(null);
         if (slot < 0) {
-          this.toast(`${iga(label)} 가득 찼다`, "bad");
+          this.toast(tr("{label|이} 가득 찼다", { label }), "bad");
           return;
         }
         store[slot] = it;
@@ -31158,11 +31451,11 @@
     refreshBoard() {
       const b = $("#board-body");
       b.innerHTML = "";
-      $("#board-title").textContent = `의뢰 게시판 — ${app.dayCount}일차`;
+      $("#board-title").textContent = tr("의뢰 게시판 — {dayCount}일차", { dayCount: app.dayCount });
       const note = document.createElement("div");
       note.className = "qt-title";
       note.style.cssText = "margin-bottom:8px;opacity:.75";
-      note.textContent = "하루가 지나거나 여관에서 자고 나면 새 종이가 붙는다.";
+      note.textContent = tr("하루가 지나거나 여관에서 자고 나면 새 종이가 붙는다.");
       b.appendChild(note);
       (app.bounties || []).forEach((q, i) => {
         const pr = app.bountyProgress(q);
@@ -31170,10 +31463,10 @@
         el.className = "quest-card" + (q.done ? " done" : pr.done ? " ready" : "");
         const body = q.done && q.doneLine ? `<div class="qc-say">${q.doneLine}</div>` : (q.body || []).map((l) => `<div class="qc-line">${l}</div>`).join("");
         const pay = app.bountyPay(q);
-        el.innerHTML = `<div class="qc-title">${q.title || ""}</div>` + body + `<div class="qc-from">— ${q.from || ""}</div><div class="qc-obj">${app.objLabel(q.obj)}${q.done ? " · 완료됨" : ` <b>${pr.cur} / ${pr.max}</b>`}</div><div class="qc-rw">보상 🪙 ${fmt(pay.gold)} · 경험치 ${fmt(pay.xp)}${(q.items || []).map(([id, n]) => ` · ${ITEMS[id].n}×${n}`).join("")}</div>`;
+        el.innerHTML = `<div class="qc-title">${q.title || ""}</div>` + body + `<div class="qc-from">— ${q.from || ""}</div><div class="qc-obj">${app.objLabel(q.obj)}${q.done ? ` ${tr("· 완료됨")}` : ` <b>${pr.cur} / ${pr.max}</b>`}</div><div class="qc-rw">${tr("보상 🪙 {gold} · 경험치 {xp}", { gold: fmt(pay.gold), xp: fmt(pay.xp) })}${(q.items || []).map(([id, n]) => ` · ${ITEMS[id].n}×${n}`).join("")}</div>`;
         if (!q.done && pr.done) {
           const btn = document.createElement("button");
-          btn.textContent = "떼어 간다";
+          btn.textContent = tr("떼어 간다");
           btn.addEventListener("click", () => app.claimBounty(i));
           el.appendChild(btn);
         }
@@ -31188,8 +31481,8 @@
       this.refreshReforge();
     },
     refreshReforge() {
-      $("#reforge-title").textContent = `재련대 — 🪙 ${fmt(app.player.gold)}`;
-      $("#reforge-note").textContent = "다시 벼릴 장비를 고르시오. 접사가 새로 붙지만, 더 나빠질 수도 있다.";
+      $("#reforge-title").textContent = tr("재련대 — 🪙 {gold}", { gold: fmt(app.player.gold) });
+      $("#reforge-note").textContent = tr("다시 벼릴 장비를 고르시오. 접사가 새로 붙지만, 더 나빠질 수도 있다.");
       const g = $("#reforge-grid");
       g.innerHTML = "";
       app.player.bag.forEach((it, i) => {
@@ -31198,11 +31491,11 @@
         makeSlot("slot r" + it.r, {
           fill: { icon: Art.itemUrl(it.id), count: fmt(cost) },
           click: () => app.reforgeSlot(i),
-          enter: (e) => this.showTip(it, e, `재련 비용 🪙 ${fmt(cost)}`),
+          enter: (e) => this.showTip(it, e, tr("재련 비용 🪙 {cost}", { cost: fmt(cost) })),
           leave: () => this.hideTip()
         }, g);
       });
-      if (!g.children.length) $("#reforge-note").textContent = "가방에 다시 벼릴 만한 장비가 없다.";
+      if (!g.children.length) $("#reforge-note").textContent = tr("가방에 다시 벼릴 만한 장비가 없다.");
     },
     /** 강화 모루 — 금화와 재료를 내고 장비 수치를 한 단계 올린다 */
     openAnvil() {
@@ -31212,8 +31505,8 @@
       this.refreshAnvil();
     },
     refreshAnvil() {
-      $("#anvil-title").textContent = `강화 모루 — 🪙 ${fmt(app.player.gold)}`;
-      $("#anvil-note").textContent = `한 단계마다 공격력·방어력이 오른다 (최대 +${app.ENH_MAX}). +2부터 실패(단계 그대로), +4부터 파괴(한 단계 하락)가 있다.`;
+      $("#anvil-title").textContent = tr("강화 모루 — 🪙 {gold}", { gold: fmt(app.player.gold) });
+      $("#anvil-note").textContent = tr("한 단계마다 공격력·방어력이 오른다 (최대 +{ENH_MAX}). +2부터 실패(단계 그대로), +4부터 파괴(한 단계 하락)가 있다.", { ENH_MAX: app.ENH_MAX });
       const g = $("#anvil-grid");
       g.innerHTML = "";
       app.player.bag.forEach((it, i) => {
@@ -31223,15 +31516,15 @@
         const e = it.e || 0, max = e >= app.ENH_MAX;
         const cost = app.enhCost(it), mat = app.enhMat(e);
         const fail = Math.round(app.enhFail(e) * 100), brk = Math.round(app.enhBreak(e) * 100);
-        const risk = (fail ? ` · 실패 ${fail}%` : "") + (brk ? ` · 파괴 ${brk}%` : "");
+        const risk = (fail ? ` ${tr("· 실패 {fail}%", { fail })}` : "") + (brk ? ` ${tr("· 파괴 {brk}%", { brk })}` : "");
         makeSlot("slot r" + it.r + (max ? " dim" : ""), {
           fill: { icon: Art.itemUrl(it.id), count: max ? "MAX" : "+" + (e + 1) },
           click: max ? void 0 : () => app.enhanceSlot(i),
-          enter: (ev) => this.showTip(it, ev, max ? "더 두들길 데가 없다" : `+${e} → +${e + 1} · 🪙 ${fmt(cost)} · ${ITEMS[mat.id].n} ${mat.n}개` + risk),
+          enter: (ev) => this.showTip(it, ev, max ? tr("더 두들길 데가 없다") : tr("+{e} → +{n} · 🪙 {cost} · {item} {mat}개", { e, n: e + 1, cost: fmt(cost), item: ITEMS[mat.id].n, mat: mat.n }) + risk),
           leave: () => this.hideTip()
         }, g);
       });
-      if (!g.children.length) $("#anvil-note").textContent = "가방에 두들길 만한 장비가 없다.";
+      if (!g.children.length) $("#anvil-note").textContent = tr("가방에 두들길 만한 장비가 없다.");
     },
     /* 펫 목록 패널은 없다 — 펫이 인벤토리 아이템이라, 가방에서 바로 장비창의 펫 칸으로 끼우면 된다(다른 장비와 똑같은 조작). */
     /* ---------------- 툴팁 ---------------- */
@@ -31256,45 +31549,45 @@
       }
       if (!key) return null;
       const cur = p.equip[key];
-      if (!cur) return `<div class="tcmp new">빈 자리에 낄 수 있다</div>`;
-      if (cur === it) return `<div class="tcmp same">지금 차고 있는 것</div>`;
+      if (!cur) return `<div class="tcmp new">${tr("빈 자리에 낄 수 있다")}</div>`;
+      if (cur === it) return `<div class="tcmp same">${tr("지금 차고 있는 것")}</div>`;
       const rows = [];
       const push = (label, a, b, unit) => {
         const dv = Math.round((a - b) * 10) / 10;
         if (!dv) return;
         rows.push(`<span class="${dv > 0 ? "up" : "down"}">${dv > 0 ? "▲" : "▼"} ${label} ${dv > 0 ? "+" : ""}${dv}${unit || ""}</span>`);
       };
-      if (d.dmg || idef(cur).dmg) push("공격력", Math.round(itemDamage(it)), Math.round(itemDamage(cur)));
-      if (d.def || idef(cur).def) push("방어", Math.round((d.def || 0) * RARITY_MULT[it.r]), Math.round((idef(cur).def || 0) * RARITY_MULT[cur.r]));
-      if (d.type === "bag" && (d.slots || idef(cur).slots)) push("가방 칸", d.slots || 0, idef(cur).slots || 0);
+      if (d.dmg || idef(cur).dmg) push(tr("공격력"), Math.round(itemDamage(it)), Math.round(itemDamage(cur)));
+      if (d.def || idef(cur).def) push(tr("방어"), Math.round((d.def || 0) * RARITY_MULT[it.r]), Math.round((idef(cur).def || 0) * RARITY_MULT[cur.r]));
+      if (d.type === "bag" && (d.slots || idef(cur).slots)) push(tr("가방 칸"), d.slots || 0, idef(cur).slots || 0);
       const sa = itemStats(it), sb = itemStats(cur);
       const NM = {
-        hp: "생명",
-        mp: "마나",
-        def: "방어",
-        ms: "이속",
-        crit: "치명",
-        critD: "치명피해",
-        cdr: "쿨감",
-        lifesteal: "흡혈",
-        str: "힘",
-        dex: "민첩",
-        int: "지능",
-        vit: "체력",
-        jump: "점프",
-        mpreg: "마나재생",
-        hpreg: "생명재생",
+        hp: tr("생명"),
+        mp: tr("마나"),
+        def: tr("방어"),
+        ms: tr("이속"),
+        crit: tr("치명"),
+        critD: tr("치명피해"),
+        cdr: tr("쿨감"),
+        lifesteal: tr("흡혈"),
+        str: tr("힘"),
+        dex: tr("민첩"),
+        int: tr("지능"),
+        vit: tr("체력"),
+        jump: tr("점프"),
+        mpreg: tr("마나재생"),
+        hpreg: tr("생명재생"),
         // 산소통·잠수 장비.
-        oxyMax: "숨(초)",
-        oxyReg: "숨 회복",
-        charge: "전하"
+        oxyMax: tr("숨(초)"),
+        oxyReg: tr("숨 회복"),
+        charge: tr("전하")
       };
       for (const k in NM) {
         const a = sa[k] || 0, b = sb[k] || 0;
         if (a || b) push(NM[k], a, b);
       }
-      if (!rows.length) return `<div class="tcmp same">차고 있는 것과 큰 차이 없다</div>`;
-      return `<div class="tcmp"><span class="cmp-h">지금 낀 것과 비교</span>${rows.join("")}</div>`;
+      if (!rows.length) return `<div class="tcmp same">${tr("차고 있는 것과 큰 차이 없다")}</div>`;
+      return `<div class="tcmp"><span class="cmp-h">${tr("지금 낀 것과 비교")}</span>${rows.join("")}</div>`;
     },
     showTip(it, e, extra) {
       if (!it) {
@@ -31303,97 +31596,97 @@
       }
       const d = idef(it), st = itemStats(it);
       let h = `<div class="thead"><span class="tip-ic" style="background-image:url(${Art.itemUrl(it.id)})"></span><span class="tname c${it.r}">${itemName(it)}</span></div>`;
-      const typeName = d.type === "weapon" ? { melee: "근접 무기", ranged: "원거리 무기", magic: "마법 무기" }[d.wc] : d.type === "armor" ? "방어구" : d.type === "acc" ? "장신구" : d.type === "tool" ? "도구" : d.type === "rod" ? "낚싯대" : d.type === "pet" ? "펫" : d.type === "station" ? "설치물" : d.type === "door" ? "문" : d.type === "bag" ? "가방" : d.type === "consum" ? "소비품" : d.type === "block" ? "설치물" : d.type === "machine" ? "기계" : d.type === "seed" ? d.fert ? "비료" : "씨앗" : d.type === "summon" ? "소환" : "재료";
+      const typeName = d.type === "weapon" ? { melee: tr("근접 무기"), ranged: tr("원거리 무기"), magic: tr("마법 무기") }[d.wc] : d.type === "armor" ? tr("방어구") : d.type === "acc" ? tr("장신구") : d.type === "tool" ? tr("도구") : d.type === "rod" ? tr("낚싯대") : d.type === "pet" ? tr("펫") : d.type === "station" ? tr("설치물") : d.type === "door" ? tr("문") : d.type === "bag" ? tr("가방") : d.type === "consum" ? tr("소비품") : d.type === "block" ? tr("설치물") : d.type === "machine" ? tr("기계") : d.type === "seed" ? d.fert ? tr("비료") : tr("씨앗") : d.type === "summon" ? tr("소환") : tr("재료");
       h += `<div class="ttype">${RARITY[it.r]} · ${typeName}</div>`;
       if (d.dmg) {
-        h += `<div class="tstat">공격력 <b>${Math.round(itemDamage(it))}</b> · 속도 <b>${itemSpeed(it).toFixed(2)}/초</b></div>`;
+        h += `<div class="tstat">${tr("공격력 <b>{itemDamage}</b> · 속도 <b>{itemSpeed}/초</b>", { itemDamage: Math.round(itemDamage(it)), itemSpeed: itemSpeed(it).toFixed(2) })}</div>`;
         const n = d.multi || 1;
         const one = itemDamage(it) * itemSpeed(it);
         const eff = one * (n > 1 ? 1 + MULTI_FALLOFF * (n - 1) : 1);
-        h += `<div class="tstat">초당 피해 <b>${Math.round(eff)}</b>` + (n > 1 ? ` <span class="thint">(한 몸에 다 맞을 때 · 흩어지면 ${Math.round(one * n)})</span>` : "") + `</div>`;
+        h += `<div class="tstat">${tr("초당 피해 <b>{eff}</b>", { eff: Math.round(eff) })}` + (n > 1 ? ` <span class="thint">${tr("(한 몸에 다 맞을 때 · 흩어지면 {n})", { n: Math.round(one * n) })}</span>` : "") + `</div>`;
       }
-      if (d.def) h += `<div class="tstat">방어 <b>${Math.round(d.def * enhMul(it))}</b></div>`;
-      if (it.e) h += `<div class="tstat">강화 <b>+${it.e}</b> <span class="thint">(공격·방어 +${it.e * 5}%p)</span></div>`;
+      if (d.def) h += `<div class="tstat">${tr("방어 <b>{n}</b>", { n: Math.round(d.def * enhMul(it)) })}</div>`;
+      if (it.e) h += `<div class="tstat">${tr("강화 <b>+{e}</b>", { e: it.e })} <span class="thint">${tr("(공격·방어 +{n}%p)", { n: it.e * 5 })}</span></div>`;
       if (d.type === "pet") {
         const lv = it.lv || 1, max = lv >= PET_LV_MAX;
-        h += `<div class="tstat">레벨 <b>${lv}</b> / ${PET_LV_MAX}` + (max ? ' <span class="thint">(끝까지 키웠다)</span>' : ` <span class="thint">패시브 ×${petLvMul(lv).toFixed(2)} · 공격 ×${petAtkMul(lv).toFixed(2)}</span>`) + `</div>`;
+        h += `<div class="tstat">${tr("레벨 <b>{lv}</b> / {petLvMax}", { lv, petLvMax: PET_LV_MAX })}` + (max ? ` <span class="thint">${tr("(끝까지 키웠다)")}</span>` : ` <span class="thint">${tr("패시브 ×{petLvMul} · 공격 ×{petAtkMul}", { petLvMul: petLvMul(lv).toFixed(2), petAtkMul: petAtkMul(lv).toFixed(2) })}</span>`) + `</div>`;
         if (!max) {
           const need = petXpNext(lv), cur = it.xp || 0;
-          h += `<div class="petxp"><i style="width:${Math.round(clamp(cur / need, 0, 1) * 100)}%"></i></div><div class="thint">다음 레벨까지 ${fmt(need - cur)}</div>`;
+          h += `<div class="petxp"><i style="width:${Math.round(clamp(cur / need, 0, 1) * 100)}%"></i></div><div class="thint">${tr("다음 레벨까지 {n}", { n: fmt(need - cur) })}</div>`;
         }
       }
-      if (d.power) h += `<div class="tstat">채굴 등급 <b>${d.power}</b></div>`;
-      if (d.type === "tool") h += `<div class="tstat">필요 레벨 <b>Lv.${equipReqLv(it.id)}</b></div>`;
-      if (d.pw) h += `<div class="tstat">전하 소모 <b>${d.pw}</b> / 사용</div>`;
+      if (d.power) h += `<div class="tstat">${tr("채굴 등급 <b>{power}</b>", { power: d.power })}</div>`;
+      if (d.type === "tool") h += `<div class="tstat">${tr("필요 레벨 <b>Lv.{equipReqLv}</b>", { equipReqLv: equipReqLv(it.id) })}</div>`;
+      if (d.pw) h += `<div class="tstat">${tr("전하 소모 <b>{pw}</b> / 사용", { pw: d.pw })}</div>`;
       if (d.mach) {
         const M = MACHINE[d.mach];
-        if (M.power) h += `<div class="tstat">전력 <b>${M.power}</b>/틱</div>`;
-        if (M.gen) h += `<div class="tstat">발전 <b>${M.gen}</b>/틱</div>`;
-        if (M.store) h += `<div class="tstat">축전 <b>${M.store}</b></div>`;
-        if (M.fuelIn) h += `<div class="tstat">연료를 직접 태운다</div>`;
-        if (M.mine) h += `<div class="tstat">채굴 등급 <b>${M.mine}</b> · 반경 <b>${M.range}</b>칸</div>`;
+        if (M.power) h += `<div class="tstat">${tr("전력 <b>{power}</b>/틱", { power: M.power })}</div>`;
+        if (M.gen) h += `<div class="tstat">${tr("발전 <b>{gen}</b>/틱", { gen: M.gen })}</div>`;
+        if (M.store) h += `<div class="tstat">${tr("축전 <b>{store}</b>", { store: M.store })}</div>`;
+        if (M.fuelIn) h += `<div class="tstat">${tr("연료를 직접 태운다")}</div>`;
+        if (M.mine) h += `<div class="tstat">${tr("채굴 등급 <b>{mine}</b> · 반경 <b>{range}</b>칸", { mine: M.mine, range: M.range })}</div>`;
         h += `<div class="tdesc">"${M.d}"</div>`;
       }
       if (d.pet && PETS[d.pet] && PETS[d.pet].atk) {
         const a = PETS[d.pet].atk;
-        h += `<div class="tstat">고유 공격 <b>${a.k === "melee" ? "물어뜯기" : "투사체"}</b> · 피해 <b>${a.dmg}</b> · ${a.cd}초마다 · 사거리 <b>${Math.round(a.range / TS)}</b>칸</div>`;
-        h += `<div class="tstat">필요 레벨 <b>Lv.${equipReqLv(it.id)}</b></div>`;
+        h += `<div class="tstat">${tr("고유 공격 <b>{v}</b> · 피해 <b>{dmg}</b>", { v: a.k === "melee" ? tr("물어뜯기") : tr("투사체"), dmg: a.dmg })} ${tr("· {cd}초마다 · 사거리 <b>{n}</b>칸", { cd: a.cd, n: Math.round(a.range / TS) })}</div>`;
+        h += `<div class="tstat">${tr("필요 레벨 <b>Lv.{equipReqLv}</b>", { equipReqLv: equipReqLv(it.id) })}</div>`;
       }
-      if (d.mana) h += `<div class="tstat">소모 마나 <b>${d.mana}</b></div>`;
-      if (d.multi) h += `<div class="tstat">투사체 <b>${d.multi}발</b></div>`;
-      if (st.oxyReg) h += `<div class="taff">물 밖 숨 회복 ${1 + st.oxyReg}배</div>`;
-      if (d.slots) h += d.type === "bag" ? `<div class="taff">+${d.slots} 가방 칸</div>` : `<div class="taff">${d.slots}개 칸</div>`;
+      if (d.mana) h += `<div class="tstat">${tr("소모 마나 <b>{mana}</b>", { mana: d.mana })}</div>`;
+      if (d.multi) h += `<div class="tstat">${tr("투사체 <b>{multi}발</b>", { multi: d.multi })}</div>`;
+      if (st.oxyReg) h += `<div class="taff">${tr("물 밖 숨 회복 {n}배", { n: 1 + st.oxyReg })}</div>`;
+      if (d.slots) h += d.type === "bag" ? `<div class="taff">${tr("+{slots} 가방 칸", { slots: d.slots })}</div>` : `<div class="taff">${tr("{slots}개 칸", { slots: d.slots })}</div>`;
       const NAME = {
-        hp: "최대 생명",
-        mp: "최대 마나",
-        def: "방어",
-        ms: "이동 속도",
-        crit: "치명타",
-        critD: "치명 피해",
-        cdr: "재사용 감소",
-        lifesteal: "흡혈",
-        jump: "추가 점프",
-        str: "힘",
-        dex: "민첩",
-        int: "지능",
-        vit: "체력",
-        dmgP: "피해",
-        spdP: "공격 속도",
-        fire: "화염 부여",
-        frost: "냉기 부여",
-        mpreg: "마나 재생",
-        hpreg: "생명 재생",
-        magicP: "마법 피해",
+        hp: tr("최대 생명"),
+        mp: tr("최대 마나"),
+        def: tr("방어"),
+        ms: tr("이동 속도"),
+        crit: tr("치명타"),
+        critD: tr("치명 피해"),
+        cdr: tr("재사용 감소"),
+        lifesteal: tr("흡혈"),
+        jump: tr("추가 점프"),
+        str: tr("힘"),
+        dex: tr("민첩"),
+        int: tr("지능"),
+        vit: tr("체력"),
+        dmgP: tr("피해"),
+        spdP: tr("공격 속도"),
+        fire: tr("화염 부여"),
+        frost: tr("냉기 부여"),
+        mpreg: tr("마나 재생"),
+        hpreg: tr("생명 재생"),
+        magicP: tr("마법 피해"),
         // 산소통·잠수 장비가 늘려 주는 값.
-        oxyMax: "숨 참는 시간",
-        charge: "전하"
+        oxyMax: tr("숨 참는 시간"),
+        charge: tr("전하")
       };
       for (const k in st) {
         if (!NAME[k] || !st[k]) continue;
         const pct = k === "ms" || k === "crit" || k === "critD" || k === "cdr" || k === "lifesteal" || k === "mpreg" || k === "magicP";
-        const v = k === "dmgP" || k === "spdP" ? Math.round(st[k] * 100) + "%" : k === "oxyMax" ? st[k] + "초" : st[k] + (pct ? "%" : "");
+        const v = k === "dmgP" || k === "spdP" ? Math.round(st[k] * 100) + "%" : k === "oxyMax" ? st[k] + tr("초") : st[k] + (pct ? "%" : "");
         h += `<div class="taff">${st[k] < 0 ? "" : "+"}${v} ${NAME[k]}</div>`;
       }
       if (d.use) {
-        if (d.use.hp) h += `<div class="taff">생명 ${d.use.hp} 회복</div>`;
-        if (d.use.mp) h += `<div class="taff">마나 ${d.use.mp} 회복</div>`;
-        if (d.use.buff) h += `<div class="taff">${BUFFS[d.use.buff].n} 효과</div>`;
+        if (d.use.hp) h += `<div class="taff">${tr("생명 {hp} 회복", { hp: d.use.hp })}</div>`;
+        if (d.use.mp) h += `<div class="taff">${tr("마나 {mp} 회복", { mp: d.use.mp })}</div>`;
+        if (d.use.buff) h += `<div class="taff">${tr("{buff} 효과", { buff: BUFFS[d.use.buff].n })}</div>`;
       }
       const cmp = this.compareLine(it);
       if (cmp) h += cmp;
       if (d.d) h += `<div class="tdesc">"${d.d}"</div>`;
       if (extra) h += `<div class="thint">${extra}</div>`;
-      else if (d.type === "tool") h += `<div class="thint">핫바에 두고 좌클릭으로 채굴</div>`;
-      else if (d.type === "rod") h += `<div class="thint">핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)</div>`;
-      else if (d.type === "pet") h += `<div class="thint">우클릭으로 펫 칸에 장착 — 두 마리까지 데리고 다닐 수 있다</div>`;
-      else if (d.type === "station") h += `<div class="thint">핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)</div>`;
-      else if (d.type === "door") h += `<div class="thint">바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수</div>`;
-      else if (isGear(it)) h += `<div class="thint">우클릭으로 장착</div>`;
-      else if (d.type === "consum" || d.type === "summon") h += `<div class="thint">우클릭으로 사용</div>`;
-      else if (d.type === "machine") h += `<div class="thint">우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정</div>`;
-      else if (d.type === "seed") h += `<div class="thint">${d.fert ? "자라는 중인 작물에 우클릭" : "갈아 둔 밭 위에 우클릭해 심기"}</div>`;
-      else if (d.hoe) h += `<div class="thint">흙이나 풀에 우클릭해 밭 갈기</div>`;
-      else if (d.scythe) h += `<div class="thint">다 여문 작물을 좌클릭해 거두기 — 다른 연장으로 치면 아무것도 안 나온다</div>`;
+      else if (d.type === "tool") h += `<div class="thint">${tr("핫바에 두고 좌클릭으로 채굴")}</div>`;
+      else if (d.type === "rod") h += `<div class="thint">${tr("핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)")}</div>`;
+      else if (d.type === "pet") h += `<div class="thint">${tr("우클릭으로 펫 칸에 장착 — 두 마리까지 데리고 다닐 수 있다")}</div>`;
+      else if (d.type === "station") h += `<div class="thint">${tr("핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)")}</div>`;
+      else if (d.type === "door") h += `<div class="thint">${tr("바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수")}</div>`;
+      else if (isGear(it)) h += `<div class="thint">${tr("우클릭으로 장착")}</div>`;
+      else if (d.type === "consum" || d.type === "summon") h += `<div class="thint">${tr("우클릭으로 사용")}</div>`;
+      else if (d.type === "machine") h += `<div class="thint">${tr("우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정")}</div>`;
+      else if (d.type === "seed") h += `<div class="thint">${d.fert ? tr("자라는 중인 작물에 우클릭") : tr("갈아 둔 밭 위에 우클릭해 심기")}</div>`;
+      else if (d.hoe) h += `<div class="thint">${tr("흙이나 풀에 우클릭해 밭 갈기")}</div>`;
+      else if (d.scythe) h += `<div class="thint">${tr("다 여문 작물을 좌클릭해 거두기 — 다른 연장으로 치면 아무것도 안 나온다")}</div>`;
       this.tip.show(h, e.clientX, e.clientY);
       this.tipTarget = true;
     },
@@ -31490,7 +31783,7 @@
       this.typeLine(this.dlg.lines[at], () => {
         if (!this.dlg || this.dlg.i !== at) return;
         if (last) this.showChoices();
-        else $("#dlg-choices").innerHTML = '<div class="dlg-next"><span class="dlg-next-ic"></span>클릭하여 계속</div>';
+        else $("#dlg-choices").innerHTML = `<div class="dlg-next"><span class="dlg-next-ic"></span>${tr("클릭하여 계속")}</div>`;
       });
     },
     /* 한 겹 더 들어가는 선택지(sub)를 받는다. */
@@ -31509,7 +31802,7 @@
             return;
           }
           if (c.sub) {
-            this.showChoices(c.sub.concat([{ t: "(돌아간다)", back: 1 }]));
+            this.showChoices(c.sub.concat([{ t: tr("(돌아간다)"), back: 1 }]));
             return;
           }
           c.fn();
@@ -31519,7 +31812,7 @@
       if (list) return;
       const b = document.createElement("button");
       b.className = "dchoice meta";
-      b.textContent = "(대화를 마친다)";
+      b.textContent = tr("(대화를 마친다)");
       b.addEventListener("click", (ev) => {
         ev.stopPropagation();
         this.closeDialogue();
@@ -31546,9 +31839,9 @@
         if (done) done();
         return;
       }
-      const label = kind === "outro" ? `${ch.title} — 그 뒤` : `${ch.sub} · ${ch.title}`;
+      const label = kind === "outro" ? tr("{title} — 그 뒤", { title: ch.title }) : `${ch.sub} · ${ch.title}`;
       this.openLore(label, lines, [{
-        t: kind === "outro" ? "(다음 이야기로)" : "(계속한다)",
+        t: kind === "outro" ? tr("(다음 이야기로)") : tr("(계속한다)"),
         quest: 1,
         fn: () => {
           this.closeDialogue();
@@ -31632,7 +31925,7 @@
         const jb = $("#jet-bar");
         $("#jet-fill").style.width = Math.round((1 - (p.jetHeat || 0)) * 100) + "%";
         jb.classList.toggle("over", !!p.jetOver);
-        $("#jet-text").textContent = p.jetOver ? "과열 — 식는 중" : p.jetGap > 30 ? "한계 높이" : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`;
+        $("#jet-text").textContent = p.jetOver ? tr("과열 — 식는 중") : p.jetGap > 30 ? tr("한계 높이") : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`;
       }
       const oxy = p.oxygen === void 0 ? d.oxyMax : p.oxygen;
       const showAir = p.headUnder || oxy < d.oxyMax - 0.05;
@@ -31646,7 +31939,7 @@
       $("#gold-text").innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl("coin")})"></span>${fmt(p.gold)}`;
       const ty = Math.floor(p.cy / TS);
       const depth = Math.round((ty - SURF_BASE) * 5);
-      $("#depth-text").textContent = depth > 0 ? `지하 ${depth}m` : `지상 ${-depth}m`;
+      $("#depth-text").textContent = depth > 0 ? tr("지하 {depth}m", { depth }) : tr("지상 {n}m", { n: -depth });
       const hh = Math.floor(app.dayT / 60), mm = Math.floor(app.dayT % 60);
       $("#clock-text").textContent = `${pad2(hh)}:${pad2(mm)}`;
       $("#clock-icon").textContent = "";
@@ -32114,55 +32407,6 @@
     slotKey: () => slotKey,
     upgradeSave: () => upgradeSave
   });
-
-  // src/engine/scene/scenes.ts
-  function createScenes({ scenes, layers, start }) {
-    let cur = start;
-    const stack = [];
-    const any = (k) => stack.some((l) => layers[l][k]);
-    const open = (l) => {
-      if (!stack.includes(l)) stack.push(l);
-    };
-    const close = (l) => {
-      const i = stack.indexOf(l);
-      if (i >= 0) stack.splice(i, 1);
-    };
-    return {
-      get current() {
-        return cur;
-      },
-      /** 바닥 씬을 바꾼다 — 얹힌 겹은 그대로 둔다(걷는 것은 부르는 쪽이 정한다) */
-      go(s) {
-        cur = s;
-      },
-      open,
-      close,
-      set(l, on) {
-        if (on) open(l);
-        else close(l);
-      },
-      has(l) {
-        return stack.includes(l);
-      },
-      top() {
-        return stack[stack.length - 1];
-      },
-      paused() {
-        return any("pause");
-      },
-      inputBlocked() {
-        return any("input");
-      },
-      /** 한 프레임 — 멈춤 겹이 없으면 갱신, 그리고 그리기 */
-      frame(dt) {
-        const s = scenes[cur];
-        if (s.update && !any("pause")) s.update(dt);
-        if (s.render) s.render();
-      }
-    };
-  }
-
-  // src/legacy/game.js
   var SAVE_KEY = "ashfall_save_v3";
   var SAVE_SLOTS = 3;
   var SAVE_UPGRADES = [
@@ -32224,7 +32468,7 @@
   }
   function saveHead(d) {
     return {
-      name: d.name || "이름 없는 모험가",
+      name: d.name || tr("이름 없는 모험가"),
       level: d.p ? d.p.level : 1,
       chapter: d.chapter,
       size: d.world && d.world.size || "s",
@@ -32319,7 +32563,7 @@
       UI.init();
       document.body.classList.add("booting");
       window.__acBooting = 1;
-      this.showLoading("불러오는 중…");
+      this.showLoading(tr("불러오는 중…"));
       if (typeof TitleBG !== "undefined") {
         TitleBG.init();
         TitleBG.start();
@@ -32441,8 +32685,8 @@
           ptr: this.input,
           surface: this.cv,
           rightDown: () => this.rightClick(),
-          buttons: [{ id: "jump", label: "점프" }, { id: "dash", label: "대시" }],
-          altLabel: "사용"
+          buttons: [{ id: "jump", label: tr("점프") }, { id: "dash", label: tr("대시") }],
+          altLabel: tr("사용")
         });
       if (this.touch) document.body.classList.add("touch");
       if (this.touch) {
@@ -32555,7 +32799,7 @@
           this.bootDone();
           return;
         }
-        this.showLoading(`불러오는 중… ${got}/${NEED}`);
+        this.showLoading(tr("불러오는 중… {got}/{need}", { got, need: NEED }));
         setTimeout(tick, 120);
       };
       tick();
@@ -32581,7 +32825,7 @@
     newGame(seedStr, slot, name, charId, mode, size) {
       const seed = seedStr || "" + Math.floor(Math.random() * 1e9);
       this.currentSlot = slot;
-      this.showLoading("세계를 빚는 중…");
+      this.showLoading(tr("세계를 빚는 중…"));
       setTimeout(() => {
         try {
           this._newGame(seed, name, charId, mode, size);
@@ -32599,7 +32843,7 @@
       this._fbg = null;
       this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
       const p = this.player;
-      p.name = (name || "").trim().slice(0, 12) || "이름 없는 모험가";
+      p.name = (name || "").trim().slice(0, 12) || tr("이름 없는 모험가");
       this.mode = MODE_OF(mode).id;
       const ch = CHAR_OF(charId);
       p.charId = ch.id;
@@ -32697,7 +32941,7 @@
       UI.refreshStatAlloc();
       UI.chapterCard(CHAPTERS[0]);
       setTimeout(() => UI.storyScene(CHAPTERS[0], "intro"), 4e3);
-      this.toast("별이 떨어진 다음 날 아침이다.");
+      this.toast(tr("별이 떨어진 다음 날 아침이다."));
       this.audioInit();
       this.buildMapAtlas();
       const qs = new URLSearchParams(location.search);
@@ -32783,7 +33027,7 @@
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
         UI.refreshBag();
         UI.refreshEquip();
-        this.toast(`값 확인 자리 — ${plv}레벨 · 마을 ${VILLAGE.length - 1}단계 · 세션 ${sess}`, "good");
+        this.toast(tr("값 확인 자리 — {plv}레벨 · 마을 {n}단계 · 세션 {sess}", { plv, n: VILLAGE.length - 1, sess }), "good");
       }
       if (qs.get("debug") === "sea") {
         const give = (id, n) => {
@@ -32843,7 +33087,7 @@
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
         UI.refreshBag();
         UI.refreshEquip();
-        this.toast("세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급", "good");
+        this.toast(tr("세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급"), "good");
       }
       if (qs.get("debug") === "fishfarm") {
         const give = (id, n) => {
@@ -32899,7 +33143,7 @@
           p.vx = p.vy = 0;
           this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
           this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-          this.toast("낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭", "good");
+          this.toast(tr("낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭"), "good");
         }
         UI.refreshBag();
         UI.refreshEquip();
@@ -33061,7 +33305,7 @@
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
         UI.refreshBag();
         UI.refreshEquip();
-        this.toast("폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳", "good");
+        this.toast(tr("폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳"), "good");
       }
     },
     /* ================= 루프 ================= */
@@ -33304,7 +33548,7 @@
         const now = this.dayCount * 1440 + this.dayT;
         if (now - (dm.at || 0) >= 720) {
           this.deathMark = null;
-          this.toast("비석이 잿빛에 삼켜졌다", "bad");
+          this.toast(tr("비석이 잿빛에 삼켜졌다"), "bad");
         } else if (dist(p.cx, p.cy, dm.x, dm.y) < 70) {
           const gxp = Math.floor((dm.xp || 0) / 2), ggold = Math.floor((dm.gold || 0) / 2);
           if (gxp) p.addXp(gxp);
@@ -33318,11 +33562,11 @@
           this.deathMark = null;
           for (let i = 0; i < 18; i++) this.parts.push(new Part(p.cx, p.cy - 10, "#ffe08a", -90, 1));
           const bits = [];
-          if (gxp) bits.push(`경험치 ${fmt(gxp)}`);
-          if (ggold) bits.push(`금화 ${fmt(ggold)}`);
-          if (back.length) bits.push(`물건 ${back.length}칸`);
-          this.toast(bits.length ? bits.join(" · ") + "을 되찾았다" : "쓰러졌던 자리로 돌아왔다", "good");
-          if (dropped) this.toast("가방이 차서 일부는 바닥에 떨어졌다", "info");
+          if (gxp) bits.push(tr("경험치 {gxp}", { gxp: fmt(gxp) }));
+          if (ggold) bits.push(tr("금화 {ggold}", { ggold: fmt(ggold) }));
+          if (back.length) bits.push(tr("물건 {backCount}칸", { backCount: back.length }));
+          this.toast(bits.length ? bits.join(" · ") + tr("을 되찾았다") : tr("쓰러졌던 자리로 돌아왔다"), "good");
+          if (dropped) this.toast(tr("가방이 차서 일부는 바닥에 떨어졌다"), "info");
           UI.refreshBag();
           this.sfx("chapter");
         }
@@ -33404,7 +33648,7 @@
               if (aabb(r, p.rect()) && p.iframe <= 0) {
                 p.hurt(16 + this.player.level * 0.6);
                 p.oxygen = Math.max(0, (p.oxygen === void 0 ? p.d.oxyMax : p.oxygen) - 5);
-                this.toast("짠물이 폐를 채운다 — 숨이 줄었다", "bad");
+                this.toast(tr("짠물이 폐를 채운다 — 숨이 줄었다"), "bad");
               }
               for (const e of this.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) e.hurt(24, false, null, 0);
             }
@@ -33534,7 +33778,7 @@
         p.mineTx = -1;
         if (!this._pickWarn || this.time - this._pickWarn > 1.5) {
           this._pickWarn = this.time;
-          this.toast("더 좋은 곡괭이가 필요하다", "bad");
+          this.toast(tr("더 좋은 곡괭이가 필요하다"), "bad");
         }
         return;
       }
@@ -33556,7 +33800,7 @@
           p.mineProg = 0;
           if (!this._pwWarn || this.time - this._pwWarn > 1.5) {
             this._pwWarn = this.time;
-            this.toast("전하가 없다 — 충전된 배터리가 필요하다", "bad");
+            this.toast(tr("전하가 없다 — 충전된 배터리가 필요하다"), "bad");
           }
           return;
         }
@@ -33570,7 +33814,7 @@
               spill++;
             }
           }
-          if (spill) this.toast("가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라", "bad");
+          if (spill) this.toast(tr("가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라"), "bad");
           UI.refreshBag();
           this.breakFx(tx, ty, id, 1);
           return;
@@ -33586,7 +33830,7 @@
           this.matBurst("plant", (tx + 0.5) * TS, (ty + 0.5) * TS, 12, { spd: 1.1, vy: -40 });
           if (!this._scytheWarn || this.time - this._scytheWarn > 2.5) {
             this._scytheWarn = this.time;
-            this.toast("낫 없이 거두면 다 으스러진다 — 낫이 필요하다", "bad");
+            this.toast(tr("낫 없이 거두면 다 으스러진다 — 낫이 필요하다"), "bad");
           }
           this.sfx("break_plant", this.strokeRate());
           return;
@@ -33616,7 +33860,7 @@
         ripe += g.ripe.length;
       }
       if (grew + ripe > 0 && this.everPlanted) {
-        this.toast(`밤새 밭이 자랐다 — ${grew + ripe}칸${ripe ? ` · ${ripe}칸은 다 여물었다` : ""}`, "good");
+        this.toast(tr("밤새 밭이 자랐다 — {n}칸{v}", { n: grew + ripe, v: ripe ? ` ${tr("· {ripe}칸은 다 여물었다", { ripe })}` : "" }), "good");
         for (const k of w.crops) {
           const x = k % WW, y = k / WW | 0;
           if (Math.abs(x * TS - this.cam.x - this.W / 2) > this.W / 2 + TS) continue;
@@ -33779,10 +34023,10 @@
           if (mac.it && Factory.stalled(mac)) {
             const id = mac.it.id;
             if (Factory.takeStalled(mac, p)) {
-              this.toast(`${ITEMS[id].n}${eulreul(ITEMS[id].n)} 벨트에서 집었다`, "good");
+              this.toast(tr("{item}{item|을} 벨트에서 집었다", { item: ITEMS[id].n }), "good");
               UI.refreshBag();
               this.sfx("place");
-            } else this.toast("가방이 가득 찼다", "bad");
+            } else this.toast(tr("가방이 가득 찼다"), "bad");
             return;
           }
           UI.openMachine(mac);
@@ -33792,16 +34036,16 @@
         const hi = p.held();
         if (hi && idef(hi).type === "machine") {
           if (w.inRig(mtx, mty)) {
-            this.toast("채취탑 자리에는 놓을 수 없다", "bad");
+            this.toast(tr("채취탑 자리에는 놓을 수 없다"), "bad");
             return;
           }
           if (!Factory.canPlace(w, mtx, mty)) {
-            this.toast("그 자리에는 놓을 수 없다", "bad");
+            this.toast(tr("그 자리에는 놓을 수 없다"), "bad");
             return;
           }
           const cell = { x: mtx * TS, y: mty * TS, w: TS, h: TS };
           if (TILE_DEF[MACHINE[idef(hi).mach].tile].solid === 1 && (aabb(cell, p.rect()) || this.ents.some((e) => !e.dead && aabb(cell, e.rect())))) {
-            this.toast("누가 서 있는 자리다", "bad");
+            this.toast(tr("누가 서 있는 자리다"), "bad");
             return;
           }
           const placed = Factory.place(w, mtx, mty, idef(hi).mach, this.placeDirFor(idef(hi).mach));
@@ -33819,34 +34063,34 @@
         if (hd && hd.hoe) {
           const t = w.get(mtx, mty);
           if (w.inRig(mtx, mty - 1)) {
-            this.toast("채취탑 자리다", "bad");
+            this.toast(tr("채취탑 자리다"), "bad");
             return;
           }
           if (this._poleAbove(mtx, mty)) {
-            this.toast("전신주 기둥이 지나가는 자리다", "bad");
+            this.toast(tr("전신주 기둥이 지나가는 자리다"), "bad");
             return;
           }
           if ((t === T.DIRT || t === T.GRASS || t === T.SNOW || t === T.CORRUPTGRASS) && w.get(mtx, mty - 1) === T.AIR) {
             w.set(mtx, mty, T.FARMLAND);
             for (let i = 0; i < 5; i++) this.parts.push(new Part((mtx + 0.5) * TS, mty * TS, "#6b4a2f"));
             this.sfx("hoe");
-          } else this.toast("흙이나 풀 위에서만 밭을 갈 수 있다", "bad");
+          } else this.toast(tr("흙이나 풀 위에서만 밭을 갈 수 있다"), "bad");
           return;
         }
         if (hd && hd.type === "seed") {
           if (hd.fert) {
             if (!w.forceGrow(mtx, mty)) {
-              this.toast("다 자란 작물에는 쓸 수 없다", "bad");
+              this.toast(tr("다 자란 작물에는 쓸 수 없다"), "bad");
               return;
             }
             for (let i = 0; i < 8; i++) this.parts.push(new Part((mtx + 0.5) * TS, (mty + 0.5) * TS, "#8fd06a", -40));
           } else {
             if (this._poleAbove(mtx, mty + 1)) {
-              this.toast("전신주 기둥이 지나가는 자리다", "bad");
+              this.toast(tr("전신주 기둥이 지나가는 자리다"), "bad");
               return;
             }
             if (!w.plantSeed(mtx, mty, hi.id)) {
-              this.toast("갈아 둔 밭 위에만 심을 수 있다", "bad");
+              this.toast(tr("갈아 둔 밭 위에만 심을 수 있다"), "bad");
               return;
             }
             this.everPlanted = 1;
@@ -33878,11 +34122,11 @@
         const near = w.get(tx - 1, ty) || w.get(tx + 1, ty) || w.get(tx, ty - 1) || w.get(tx, ty + 1) || w.wall(tx, ty);
         if (!near) return;
         if (w.inLockedVault(tx, ty)) {
-          this.toast("잠긴 골방 안에는 놓을 수 없다", "bad");
+          this.toast(tr("잠긴 골방 안에는 놓을 수 없다"), "bad");
           return;
         }
         if (w.inRig(tx, ty)) {
-          this.toast("채취탑 자리에는 놓을 수 없다", "bad");
+          this.toast(tr("채취탑 자리에는 놓을 수 없다"), "bad");
           return;
         }
         const tileId = idef(held).tile;
@@ -33890,16 +34134,16 @@
         const mount = DECO_MOUNT[tileId];
         if (mount === "water") {
           if (cur !== T.WATER || TILE_DEF[w.get(tx, ty + 1)].solid !== 1) {
-            this.toast("고인 물속 바닥에만 놓을 수 있다", "bad");
+            this.toast(tr("고인 물속 바닥에만 놓을 수 있다"), "bad");
             return;
           }
         } else if (mount && FLUID_KIND[cur]) {
-          this.toast("물속에는 놓을 수 없다", "bad");
+          this.toast(tr("물속에는 놓을 수 없다"), "bad");
           return;
         } else if (mount) {
           const by = mount === "floor" ? ty + 1 : ty - 1, bt = w.get(tx, by);
           if (TILE_DEF[bt].solid !== 1 && bt !== tileId) {
-            this.toast(mount === "floor" ? "단단한 바닥 위에만 놓을 수 있다" : "천장에 매달아야 한다", "bad");
+            this.toast(mount === "floor" ? tr("단단한 바닥 위에만 놓을 수 있다") : tr("천장에 매달아야 한다"), "bad");
             return;
           }
         }
@@ -33916,7 +34160,7 @@
       const p = this.player, w = this.world;
       const it = p.held(), d = idef(it);
       if (dist(p.cx, p.cy, (tx + 0.5) * TS, (ty + 0.5) * TS) > TS * 6) {
-        this.toast("너무 멀다", "bad");
+        this.toast(tr("너무 멀다"), "bad");
         return;
       }
       const s = OBJ_SIZE[d.obj];
@@ -33924,28 +34168,28 @@
       const x0 = tx, y0 = ty - th + 1;
       for (let yy = y0; yy <= ty; yy++) for (let xx = x0; xx < x0 + tw; xx++) {
         if (w.get(xx, yy) !== T.AIR) {
-          this.toast("빈 자리에만 놓을 수 있다", "bad");
+          this.toast(tr("빈 자리에만 놓을 수 있다"), "bad");
           return;
         }
         if (w.inRig(xx, yy)) {
-          this.toast("채취탑 자리에는 놓을 수 없다", "bad");
+          this.toast(tr("채취탑 자리에는 놓을 수 없다"), "bad");
           return;
         }
         if (Factory.at(w, xx, yy)) {
-          this.toast("이미 기계가 있다", "bad");
+          this.toast(tr("이미 기계가 있다"), "bad");
           return;
         }
       }
       for (let xx = x0; xx < x0 + tw; xx++)
         if (!w.solid(xx, ty + 1)) {
-          this.toast("바닥이 있어야 놓을 수 있다", "bad");
+          this.toast(tr("바닥이 있어야 놓을 수 있다"), "bad");
           return;
         }
       const box = { x: x0 * TS, y: y0 * TS, w: tw * TS, h: th * TS };
       for (const o2 of w.objects) {
         if (!OBJ_SIZE[o2.type] && o2.type !== "npc") continue;
         if (aabb(box, { x: o2.x, y: o2.y, w: o2.w, h: o2.h })) {
-          this.toast("그 자리에는 놓을 수 없다", "bad");
+          this.toast(tr("그 자리에는 놓을 수 없다"), "bad");
           return;
         }
       }
@@ -33974,37 +34218,37 @@
       const p = this.player, w = this.world;
       const it = p.held();
       if (dist(p.cx, p.cy, (tx + 0.5) * TS, (ty + 0.5) * TS) > TS * 6) {
-        this.toast("너무 멀다", "bad");
+        this.toast(tr("너무 멀다"), "bad");
         return;
       }
       const y0 = ty - 1;
       for (let yy = y0; yy <= ty; yy++) {
         if (w.get(tx, yy) !== T.AIR) {
-          this.toast("빈 자리에만 달 수 있다", "bad");
+          this.toast(tr("빈 자리에만 달 수 있다"), "bad");
           return;
         }
         if (w.inRig(tx, yy)) {
-          this.toast("채취탑 자리에는 달 수 없다", "bad");
+          this.toast(tr("채취탑 자리에는 달 수 없다"), "bad");
           return;
         }
         if (Factory.at(w, tx, yy)) {
-          this.toast("이미 기계가 있다", "bad");
+          this.toast(tr("이미 기계가 있다"), "bad");
           return;
         }
       }
       if (!w.solid(tx, ty + 1)) {
-        this.toast("바닥이 있어야 문을 단다", "bad");
+        this.toast(tr("바닥이 있어야 문을 단다"), "bad");
         return;
       }
       if (w.inLockedVault(tx, ty)) {
-        this.toast("잠긴 골방 안에는 놓을 수 없다", "bad");
+        this.toast(tr("잠긴 골방 안에는 놓을 수 없다"), "bad");
         return;
       }
       const box = { x: tx * TS, y: y0 * TS, w: TS, h: TS * 2 };
       for (const o of w.objects) {
         if (!OBJ_SIZE[o.type] && o.type !== "npc" && o.type !== "door") continue;
         if (aabb(box, { x: o.x, y: o.y, w: o.w, h: o.h })) {
-          this.toast("그 자리에는 놓을 수 없다", "bad");
+          this.toast(tr("그 자리에는 놓을 수 없다"), "bad");
           return;
         }
       }
@@ -34060,18 +34304,18 @@
         } else {
           this.fishSplash(p.fish, 3);
           p.fish = null;
-          this.toast("낚싯줄을 거두었다");
+          this.toast(tr("낚싯줄을 거두었다"));
         }
         return;
       }
       const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
       if (dist(p.cx, p.cy, (tx + 0.5) * TS, (ty + 0.5) * TS) > TS * 6) {
-        this.toast("너무 멀다", "bad");
+        this.toast(tr("너무 멀다"), "bad");
         return;
       }
       const t = w.get(tx, ty);
       if (!TILE_DEF[t].liquid) {
-        this.toast("물 위에 던져야 한다", "bad");
+        this.toast(tr("물 위에 던져야 한다"), "bad");
         return;
       }
       let rareMul = 1;
@@ -34086,7 +34330,7 @@
       p.fish = { tx, ty, t: wait, biting: false, bite: 0, rodId: p.held().id, rareMul };
       for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + 0.5) * TS, ty * TS, "#cfe8ff", -20, 0.5));
       this.sfx("splash");
-      this.toast("낚싯줄을 드리웠다");
+      this.toast(tr("낚싯줄을 드리웠다"));
     },
     updateFishing(dt) {
       const p = this.player;
@@ -34102,7 +34346,7 @@
         if (f.t <= 0) {
           f.biting = true;
           f.bite = f.biteMax = p.profLv("fish") >= 3 ? 1.6 : 1;
-          this.toast("손끝이 흔들린다!", "good");
+          this.toast(tr("손끝이 흔들린다!"), "good");
           for (let i = 0; i < 10; i++) this.parts.push(new Part((f.tx + 0.5) * TS, f.ty * TS, "#ffe08a", -30, 0.6));
         }
       } else {
@@ -34140,7 +34384,7 @@
       const missBase = quality === "reel" ? 0.12 : 0.55;
       const miss = clamp(missBase - (rod.fishBonus || 0) * 0.5 - (baited ? 0.05 : 0), 0.04, 0.75);
       if (this.rng.chance(miss)) {
-        this._fishLost(quality === "reel" ? this.rng.chance(0.5) ? "챘지만 바늘이 빠졌다" : "줄이 끊겼다" : "입질을 흘렸다 — 미끼만 털렸다");
+        this._fishLost(quality === "reel" ? this.rng.chance(0.5) ? tr("챘지만 바늘이 빠졌다") : tr("줄이 끊겼다") : tr("입질을 흘렸다 — 미끼만 털렸다"));
         return;
       }
       if (this.rng.chance(itemChance)) {
@@ -34190,12 +34434,12 @@
         if (!p.addItem(it2)) this.drops.push(new Drop(p.cx, p.cy, it2));
         const rare = isGear(makeItem(catchId2)) || ["knot_angler", "sunken_coin", "tide_pearl"].includes(catchId2);
         if (rare) {
-          this.toast(`물속에서 무언가 딸려 올라왔다 — ${itemName(it2)}`, "good");
+          this.toast(tr("물속에서 무언가 딸려 올라왔다 — {itemName}", { itemName: itemName(it2) }), "good");
           this.burst(p.cx, p.cy - 4, "stargain", 52, 2);
           this.ringFx(p.cx, p.cy, 60, "#7fc8e8", 0.5);
           this.sfx("level");
         } else {
-          this.toast(`뭔가 걸렸다 — ${itemName(it2)}${n2 > 1 ? " ×" + n2 : ""}`, "good");
+          this.toast(tr("뭔가 걸렸다 — {itemName}{v}", { itemName: itemName(it2), v: n2 > 1 ? " ×" + n2 : "" }), "good");
           this.sfx("open");
         }
         p.addProf("fish", rare ? 3 : 1);
@@ -34211,14 +34455,14 @@
       ];
       const catchId = this.rng.weighted(table);
       if (catchId === "none") {
-        this.toast(baited ? "미끼만 사라졌다" : "빈 바늘만 올라왔다", "bad");
+        this.toast(baited ? tr("미끼만 사라졌다") : tr("빈 바늘만 올라왔다"), "bad");
         UI.refreshBag();
         return;
       }
       const n = flv >= PROF_MAX && this.rng.chance(0.25) ? 2 : 1;
       const it = makeItem(catchId, n);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-      this.toast(`낚았다 — ${itemName(it)}${n > 1 ? " ×" + n : ""}`, "good");
+      this.toast(tr("낚았다 — {itemName}{v}", { itemName: itemName(it), v: n > 1 ? " ×" + n : "" }), "good");
       p.addProf("fish", 1);
       this.sfx("open");
       UI.refreshBag();
@@ -34241,7 +34485,7 @@
     interact(o) {
       if (o.type === "chest") {
         if (o.codeRuin && !this.ruinCodeDone(o.codeRuin)) {
-          this.toast("상자에 손이 닿지 않는다 — 골방 문을 먼저 열어야 한다", "bad");
+          this.toast(tr("상자에 손이 닿지 않는다 — 골방 문을 먼저 열어야 한다"), "bad");
           return;
         }
         if (!o.items) {
@@ -34251,7 +34495,7 @@
           if (o.relic && ITEMS[o.relic]) {
             const relic = makeItem(o.relic, 1);
             o.items.unshift(relic);
-            this.toast(`${itemName(relic)} — 이 유적의 것`, "good");
+            this.toast(tr("{itemName} — 이 유적의 것", { itemName: itemName(relic) }), "good");
           }
           if (o.ruinmap && ITEMS[o.ruinmap]) o.items.unshift(makeItem(o.ruinmap, 1));
           if (o.bonus && ITEMS[o.bonus]) o.items.push(makeItem(o.bonus, this.rng.int(2, 5)));
@@ -34267,13 +34511,13 @@
             const e = new Enemy(o.guard.t, o.x + (i - n / 2) * 34, o.y - 40, this.scale());
             this.ents.push(e);
           }
-          this.toast("상자를 열자 무언가 깨어났다", "bad");
+          this.toast(tr("상자를 열자 무언가 깨어났다"), "bad");
           this.shake = 10;
         }
         if (o.boss && !o.woke) {
           o.woke = 1;
           this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 80);
-          this.toast("상자를 열자 섬이 흔들렸다", "bad");
+          this.toast(tr("상자를 열자 섬이 흔들렸다"), "bad");
           this.shake = 20;
         }
       } else if (o.type === "crate") {
@@ -34331,7 +34575,7 @@
         this.readTerminal(o);
       } else if (o.type === "door") {
         if (!o.closed && aabb(this.world.doorEdge(o), this.player.rect())) {
-          this.toast("문틀에서 비켜야 닫힌다", "bad");
+          this.toast(tr("문틀에서 비켜야 닫힌다"), "bad");
           return;
         }
         o.closed = !o.closed;
@@ -34485,7 +34729,7 @@
       this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
       UI.refreshBag();
       UI.refreshEquip();
-      this.toast("공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다", "good");
+      this.toast(tr("공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다"), "good");
     },
     /** ?debug=factory 의 여러 층 공장 둘 — A: 3층 금속 공장(광석 → 주괴 → 강철판·전선), B: 지하 탄광이 제 발전기를 먹이는 순환 발전소 + 방어 갑판.
         층 사이는 위로 가는 벨트 기둥, 사람은 오른쪽(A)·왼쪽(B) 발판 사다리로 오간다. */
@@ -34607,13 +34851,13 @@
       const choices = [];
       const give = t.it || "blueprint_frag";
       if (first) choices.push({
-        t: `(${eulreul(ITEMS[give].n)} 뽑아낸다)`,
+        t: tr("({item|을} 뽑아낸다)", { item: ITEMS[give].n }),
         quest: 1,
         fn: () => {
           this.termsRead[o.term] = true;
           const it = makeItem(give, t.it ? 8 : 1);
           if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it));
-          this.toast(`${ITEMS[give].n} 획득`, "good");
+          this.toast(tr("{item} 획득", { item: ITEMS[give].n }), "good");
           UI.closeDialogue();
           UI.refreshBag();
           this.checkChapter();
@@ -34628,15 +34872,15 @@
       const p = this.player, w = this.world;
       const d = w.dawnCity;
       if (!this.villageUnlocked) {
-        UI.openLore("귀환 비석", ["표면의 홈이 잿빛으로 막혀 있다. 아직 이어진 곳이 없다."], []);
+        UI.openLore(tr("귀환 비석"), [tr("표면의 홈이 잿빛으로 막혀 있다. 아직 이어진 곳이 없다.")], []);
         return;
       }
       const atDawn = d && Math.abs(p.cx / TS - (d.x0 + d.x1) / 2) < 90;
       const [tx, ty] = atDawn ? [w.spawnX, w.spawnY - 3] : [d.x0 + d.x1 >> 1, d.gy - 3];
-      const to = atDawn ? "베이스캠프" : "여명 마을";
-      UI.openLore("귀환 비석", [`비석에 손을 대면 ${to}(으)로 돌아간다.`], [
+      const to = atDawn ? tr("베이스캠프") : tr("여명 마을");
+      UI.openLore(tr("귀환 비석"), [tr("비석에 손을 대면 {to}(으)로 돌아간다.", { to })], [
         {
-          t: `(${to}(으)로 이동한다)`,
+          t: tr("({to}(으)로 이동한다)", { to }),
           quest: 1,
           fn: () => {
             UI.closeDialogue();
@@ -34646,7 +34890,7 @@
             this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
             this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
             for (let i = 0; i < 30; i++) this.parts.push(new Part(p.cx, p.cy, "#9fe8dc", -60, 1.1));
-            this.toast(`${to}에 도착했다`, "good");
+            this.toast(tr("{to}에 도착했다", { to }), "good");
             this.sfx("chapter");
           }
         }
@@ -34658,11 +34902,11 @@
     },
     useFountain(o) {
       const p = this.player, cost = this.wishCost();
-      const lines = ["물속에 동전이 여럿 가라앉아 있다. 오래된 것도, 어제 것도 있다."];
+      const lines = [tr("물속에 동전이 여럿 가라앉아 있다. 오래된 것도, 어제 것도 있다.")];
       const choices = [];
       if (p.gold >= cost)
         choices.push({
-          t: `(금화 ${fmt(cost)}개를 던진다)`,
+          t: tr("(금화 {cost}개를 던진다)", { cost: fmt(cost) }),
           quest: 1,
           fn: () => {
             UI.closeDialogue();
@@ -34670,12 +34914,12 @@
             p.addBuff("wish");
             const mx = o.x + o.w / 2, my = o.y + o.h * 0.55;
             for (let i = 0; i < 16; i++) this.parts.push(new Part(mx, my, "#ffd85a", -40, 0.9));
-            this.toast("분수의 축복 — 잠시 운이 따른다", "good");
+            this.toast(tr("분수의 축복 — 잠시 운이 따른다"), "good");
             this.sfx("coin");
           }
         });
-      else lines.push(`동전을 던지려면 금화 ${fmt(cost)}개가 필요하다.`);
-      UI.openLore("여명의 분수", lines, choices);
+      else lines.push(tr("동전을 던지려면 금화 {cost}개가 필요하다.", { cost: fmt(cost) }));
+      UI.openLore(tr("여명의 분수"), lines, choices);
     },
     /** 여관 — 금화를 내고 아침까지 잔다. */
     innCost() {
@@ -34684,14 +34928,14 @@
     useInn() {
       const p = this.player;
       const cost = this.innCost();
-      UI.openLore("여관", [`하란: "한숨 자고 가. 아침까진 봐 줄게. 🪙 ${fmt(cost)}."`], [
+      UI.openLore(tr("여관"), [tr('하란: "한숨 자고 가. 아침까진 봐 줄게. 🪙 {cost}."', { cost: fmt(cost) })], [
         {
-          t: `(🪙 ${fmt(cost)} 내고 잔다)`,
+          t: tr("(🪙 {cost} 내고 잔다)", { cost: fmt(cost) }),
           quest: 1,
           fn: () => {
             UI.closeDialogue();
             if (p.gold < cost) {
-              this.toast("금화가 부족하다", "bad");
+              this.toast(tr("금화가 부족하다"), "bad");
               return;
             }
             p.gold -= cost;
@@ -34703,7 +34947,7 @@
             p.hp = p.d.maxHp;
             p.mp = p.d.maxMp;
             p.addBuff("rested");
-            this.toast("푹 잤다 — 아침이다", "good");
+            this.toast(tr("푹 잤다 — 아침이다"), "good");
             this.sfx("level");
             this.tally = this.tally || {};
             this.tally.inn = (this.tally.inn || 0) + 1;
@@ -34780,8 +35024,8 @@
     /** 목표를 한 줄로 — "무덤지기 12마리" */
     objLabel(o) {
       if (o.type === "kill") return `${ENEMIES[o.target].n} ${o.n}${mobCw(o.target)}`;
-      if (o.type === "collect") return `${ITEMS[o.item].n} ${o.n}개`;
-      if (o.type === "mine") return `${TILE_DEF[o.tile].n} ${o.n}번`;
+      if (o.type === "collect") return tr("{item} {o}개", { item: ITEMS[o.item].n, o: o.n });
+      if (o.type === "mine") return tr("{tileDef} {o}번", { tileDef: TILE_DEF[o.tile].n, o: o.n });
       return "";
     },
     /* ---- 의뢰 게시판 ---- */
@@ -34831,7 +35075,7 @@
       const b = this.bounties[i];
       if (!b || b.done) return;
       if (!this.bountyProgress(b).done) {
-        this.toast("아직 다 하지 못했다", "bad");
+        this.toast(tr("아직 다 하지 못했다"), "bad");
         return;
       }
       const p = this.player, pay = this.bountyPay(b);
@@ -34846,7 +35090,7 @@
       if (b.next && !(this.bountyNext || []).includes(b.next)) {
         this.bountyNext = (this.bountyNext || []).concat(b.next);
       }
-      this.toast(`의뢰 완료: ${b.title} — 경험치 ${fmt(pay.xp)} · 금화 ${fmt(pay.gold)}`, "good");
+      this.toast(tr("의뢰 완료: {title} — 경험치 {xp} · 금화 {gold}", { title: b.title, xp: fmt(pay.xp), gold: fmt(pay.gold) }), "good");
       UI.refreshBoard();
       UI.refreshBag();
       this.sfx("manycoins");
@@ -34872,26 +35116,26 @@
     enhanceSlot(i) {
       const p = this.player, it = p.bag[i];
       if (!it || !isGear(it)) {
-        this.toast("장비만 강화할 수 있다", "bad");
+        this.toast(tr("장비만 강화할 수 있다"), "bad");
         return;
       }
       const d = idef(it);
       if (!d.dmg && !d.def) {
-        this.toast("공격력도 방어력도 없는 것은 벼릴 데가 없다", "bad");
+        this.toast(tr("공격력도 방어력도 없는 것은 벼릴 데가 없다"), "bad");
         return;
       }
       const e = it.e || 0;
       if (e >= this.ENH_MAX) {
-        this.toast("더 두들길 데가 없다", "bad");
+        this.toast(tr("더 두들길 데가 없다"), "bad");
         return;
       }
       const cost = this.enhCost(it), mat = this.enhMat(e);
       if (p.gold < cost) {
-        this.toast("금화가 부족하다", "bad");
+        this.toast(tr("금화가 부족하다"), "bad");
         return;
       }
       if (!p.hasAll({ [mat.id]: mat.n })) {
-        this.toast(`${ITEMS[mat.id].n} ${mat.n}개가 필요하다`, "bad");
+        this.toast(tr("{item} {mat}개가 필요하다", { item: ITEMS[mat.id].n, mat: mat.n }), "bad");
         return;
       }
       p.gold -= cost;
@@ -34899,7 +35143,7 @@
       const roll = Math.random(), brk = this.enhBreak(e);
       if (roll < brk) {
         it.e = e - 1;
-        this.toast(`${itemName(it)} — 쇠가 갈라졌다. 한 단계 떨어진다 (+${e} → +${e - 1})`, "bad");
+        this.toast(tr("{itemName} — 쇠가 갈라졌다. 한 단계 떨어진다 (+{e} → +{n})", { itemName: itemName(it), e, n: e - 1 }), "bad");
         for (let k = 0; k < 22; k++) this.parts.push(new Part(p.cx, p.cy, k % 2 ? "#c8443a" : "#6a6a74", -40, 0.8));
         this.shake = Math.max(this.shake, 6);
         p.recalc();
@@ -34910,7 +35154,7 @@
         return;
       }
       if (roll < brk + this.enhFail(e)) {
-        this.toast(`${itemName(it)} — 결이 어긋났다. 단계는 그대로다`, "bad");
+        this.toast(tr("{itemName} — 결이 어긋났다. 단계는 그대로다", { itemName: itemName(it) }), "bad");
         for (let k = 0; k < 12; k++) this.parts.push(new Part(p.cx, p.cy, "#8a8a96", -30, 0.6));
         this.shake = Math.max(this.shake, 3);
         UI.refreshAnvil();
@@ -34919,7 +35163,7 @@
         return;
       }
       it.e = e + 1;
-      this.toast(`${itemName(it)} — 한 겹 더 두들겼다`, "good");
+      this.toast(tr("{itemName} — 한 겹 더 두들겼다", { itemName: itemName(it) }), "good");
       for (let k = 0; k < 18; k++) this.parts.push(new Part(p.cx, p.cy, "#ff9a3a", -50, 0.7));
       p.recalc();
       UI.refreshAnvil();
@@ -34934,19 +35178,19 @@
     reforgeSlot(i) {
       const p = this.player, it = p.bag[i];
       if (!it || !isGear(it)) {
-        this.toast("장비만 재련할 수 있다", "bad");
+        this.toast(tr("장비만 재련할 수 있다"), "bad");
         return;
       }
       const cost = this.reforgeCost(it);
       if (p.gold < cost) {
-        this.toast("금화가 부족하다", "bad");
+        this.toast(tr("금화가 부족하다"), "bad");
         return;
       }
       p.gold -= cost;
       const fresh = rollGear(it.id, this.rng, Math.max(1, it.r));
       fresh.c = it.c;
       p.bag[i] = fresh;
-      this.toast(`${itemName(fresh)} — 다시 벼렸다`, fresh.r > it.r ? "good" : "");
+      this.toast(tr("{itemName} — 다시 벼렸다", { itemName: itemName(fresh) }), fresh.r > it.r ? "good" : "");
       UI.refreshReforge();
       UI.refreshBag();
       this.sfx("craft");
@@ -34958,13 +35202,13 @@
       const first = !this.tabletsRead[o.tablet];
       const choices = [];
       if (first) choices.push({
-        t: "(룬 조각을 떼어낸다)",
+        t: tr("(룬 조각을 떼어낸다)"),
         quest: 1,
         fn: () => {
           this.tabletsRead[o.tablet] = true;
           const it = makeItem("rune_frag", 1);
           if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it));
-          this.toast("룬 조각 획득", "good");
+          this.toast(tr("룬 조각 획득"), "good");
           UI.closeDialogue();
           UI.refreshBag();
           UI.refreshTracker();
@@ -34989,7 +35233,7 @@
       const first = !this.loreRead[o.lore];
       const choices = [];
       if (first) choices.push({
-        t: "(비문을 옮겨 적는다)",
+        t: tr("(비문을 옮겨 적는다)"),
         quest: 1,
         fn: () => {
           this.loreRead[o.lore] = true;
@@ -34997,11 +35241,11 @@
           p.addXp(Math.round(600 * this.scale()));
           const it = makeItem("aether_shard", 3);
           if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-          this.toast("비문을 옮겨 적었다 — 여정의 기록에 남는다", "good");
+          this.toast(tr("비문을 옮겨 적었다 — 여정의 기록에 남는다"), "good");
           if (Object.keys(RUIN_LORE).every((k) => this.loreRead[k])) {
             const seal = rollGear("charm_delver", this.rng, 3);
             if (!p.addItem(seal)) this.drops.push(new Drop(p.cx, p.cy, seal));
-            this.toast("여섯 유적을 모두 뒤졌다 — 탐굴자의 인장을 얻었다", "good");
+            this.toast(tr("여섯 유적을 모두 뒤졌다 — 탐굴자의 인장을 얻었다"), "good");
           }
           UI.closeDialogue();
           UI.refreshBag();
@@ -35014,19 +35258,19 @@
     openSeal(o) {
       const p = this.player, w = this.world;
       if (o.opened) {
-        this.toast("이미 열려 있다");
+        this.toast(tr("이미 열려 있다"));
         return;
       }
       const atelier = o.gate === "atelier";
       const keyId = o.key || "ruin_key";
       if (p.countItem(keyId) <= 0) {
-        UI.openLore(atelier ? "설계실 봉인" : "봉인문", atelier ? [
-          "벽에 이음매가 없다. 문이 아니라, 문이었던 적이 없는 벽이다.",
-          "가운데에 손바닥만 한 홈이 하나 파여 있다 — 안쪽에서 만든 것만 맞는 크기다.",
-          "『이 벽은 밖에서 열리지 않습니다.』"
+        UI.openLore(atelier ? tr("설계실 봉인") : tr("봉인문"), atelier ? [
+          tr("벽에 이음매가 없다. 문이 아니라, 문이었던 적이 없는 벽이다."),
+          tr("가운데에 손바닥만 한 홈이 하나 파여 있다 — 안쪽에서 만든 것만 맞는 크기다."),
+          tr("『이 벽은 밖에서 열리지 않습니다.』")
         ] : [
-          "문에는 손잡이가 없다. 대신 세 개의 홈이 파여 있다.",
-          "『세 석판을 모두 읽은 자만이 이 문을 연다.』"
+          tr("문에는 손잡이가 없다. 대신 세 개의 홈이 파여 있다."),
+          tr("『세 석판을 모두 읽은 자만이 이 문을 연다.』")
         ], []);
         return;
       }
@@ -35048,7 +35292,7 @@
       for (let i = 0; i < 40; i++)
         this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, atelier ? "#ffe8a0" : "#a06fff", -30, 1.2));
       this.shake = 12;
-      this.toast("봉인이 풀렸다", "good");
+      this.toast(tr("봉인이 풀렸다"), "good");
       UI.refreshBag();
       this.sfx("chapter");
     },
@@ -35125,36 +35369,36 @@
     },
     talkExtra(id) {
       const cs = [];
-      if (NPCS[id].shop) cs.push({ t: "물건을 보여 달라", fn: () => {
+      if (NPCS[id].shop) cs.push({ t: tr("물건을 보여 달라"), fn: () => {
         UI.closeDialogue();
         UI.openShop(id);
       } });
       if (id === "trainer") {
-        cs.push({ t: `스탯 재분배 · 🪙 ${fmt(this.respecCost())}`, fn: () => {
+        cs.push({ t: tr("스탯 재분배 · 🪙 {respecCost}", { respecCost: fmt(this.respecCost()) }), fn: () => {
           UI.closeDialogue();
           this.respecStats();
         } });
-        cs.push({ t: `수련 · 🪙 ${fmt(this.trainCost())} · 오늘 ${this.trainedToday}/5`, fn: () => {
+        cs.push({ t: tr("수련 · 🪙 {trainCost} · 오늘 {trainedToday}/5", { trainCost: fmt(this.trainCost()), trainedToday: this.trainedToday }), fn: () => {
           UI.closeDialogue();
           this.trainXp();
         } });
       } else if (id === "haran") {
-        cs.push({ t: "방을 잡는다", fn: () => {
+        cs.push({ t: tr("방을 잡는다"), fn: () => {
           UI.closeDialogue();
           this.useInn();
         } });
       } else if (id === "seira") {
-        cs.push({ t: "장비를 다시 벼려 달라", fn: () => {
+        cs.push({ t: tr("장비를 다시 벼려 달라"), fn: () => {
           UI.closeDialogue();
           UI.openReforge();
         } });
       } else if (NPCS[id].dynamicShop) {
-        cs.push({ t: "오늘 실은 것을 보자", fn: () => {
+        cs.push({ t: tr("오늘 실은 것을 보자"), fn: () => {
           UI.closeDialogue();
           UI.openShop(id);
         } });
       }
-      return cs.length > 1 ? [{ t: "볼일이 있다", sub: cs }] : cs;
+      return cs.length > 1 ? [{ t: tr("볼일이 있다"), sub: cs }] : cs;
     },
     talkTo(id) {
       this.talked = this.talked || {};
@@ -35173,25 +35417,25 @@
       if (pick) lines.push(pick.say);
       if (!lines.length) lines.push(story[story.length - 1]);
       const rest = [];
-      if (!fresh) rest.push({ t: "다시 듣기", replay: 1, fn: () => {
+      if (!fresh) rest.push({ t: tr("다시 듣기"), replay: 1, fn: () => {
         UI.closeDialogue();
         UI.openDialogue(id, story.slice(), rest);
         this.sfx("talk");
       } });
       rest.push(...this.talkExtra(id));
       if (SIDE_POOL[id]) rest.push({
-        t: this.sideActive[id] ? "의뢰에 대해 묻는다" : "부탁할 일이 있는지 묻는다",
+        t: this.sideActive[id] ? tr("의뢰에 대해 묻는다") : tr("부탁할 일이 있는지 묻는다"),
         quest: 1,
         fn: () => {
           UI.closeDialogue();
           this.sideTalk(id);
         }
       });
-      rest.push({ t: "지금 무엇을 해야 하지?", quest: 1, fn: () => {
+      rest.push({ t: tr("지금 무엇을 해야 하지?"), quest: 1, fn: () => {
         UI.closeDialogue();
         this.tellQuest();
       } });
-      if (id === "elara" && this.chapter === 0) rest.push({ t: "(여정을 시작한다)", quest: 1, fn: () => {
+      if (id === "elara" && this.chapter === 0) rest.push({ t: tr("(여정을 시작한다)"), quest: 1, fn: () => {
         UI.closeDialogue();
       } });
       UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
@@ -35224,20 +35468,20 @@
       }
       if (!lines.length) lines.push(story ? story[story.length - 1] : d.line);
       const rest = this.talkExtra(id);
-      if (story && !fresh) rest.push({ t: "다시 듣기", replay: 1, fn: () => {
+      if (story && !fresh) rest.push({ t: tr("다시 듣기"), replay: 1, fn: () => {
         UI.closeDialogue();
         UI.openDialogue(id, story.slice(), rest);
         this.sfx("talk");
       } });
       if (SIDE_POOL[id]) rest.push({
-        t: this.sideActive[id] ? "맡은 일에 대해 묻는다" : "도울 일이 있는지 묻는다",
+        t: this.sideActive[id] ? tr("맡은 일에 대해 묻는다") : tr("도울 일이 있는지 묻는다"),
         quest: 1,
         fn: () => {
           UI.closeDialogue();
           this.sideTalk(id);
         }
       });
-      rest.push({ t: "지금 무엇을 해야 하지?", quest: 1, fn: () => {
+      rest.push({ t: tr("지금 무엇을 해야 하지?"), quest: 1, fn: () => {
         UI.closeDialogue();
         this.tellQuest();
       } });
@@ -35253,7 +35497,7 @@
       if (active) {
         const p = this.sideProgress(active);
         if (p.done) {
-          UI.openDialogue(npcId, [active.doneLine], [{ t: "(보상을 받는다)", quest: 1, fn: () => {
+          UI.openDialogue(npcId, [active.doneLine], [{ t: tr("(보상을 받는다)"), quest: 1, fn: () => {
             this.completeSideQuest(npcId);
             UI.closeDialogue();
           } }]);
@@ -35266,18 +35510,17 @@
       if (!pool) return;
       const tpl = pool[this.rng.int(0, pool.length - 1)](this.chapter, this.rng);
       const pay = this.sidePay(tpl);
-      UI.openDialogue(npcId, [`${tpl.desc}
-(보상은 🪙 ${fmt(pay.gold)} · 경험치 ${fmt(pay.xp)})`], [
-        { t: "(수락한다)", quest: 1, fn: () => {
+      UI.openDialogue(npcId, [tr("{desc}\n(보상은 🪙 {gold} · 경험치 {xp})", { desc: tpl.desc, gold: fmt(pay.gold), xp: fmt(pay.xp) })], [
+        { t: tr("(수락한다)"), quest: 1, fn: () => {
           this.acceptSideQuest(npcId, tpl);
           UI.closeDialogue();
         } },
-        { t: "(다음에 하겠다)", fn: () => UI.closeDialogue() }
+        { t: tr("(다음에 하겠다)"), fn: () => UI.closeDialogue() }
       ]);
     },
     acceptSideQuest(npcId, tpl) {
       this.sideActive[npcId] = Object.assign({}, tpl, { start: this.objStart(tpl.obj) });
-      this.toast(`부탁을 맡았다: ${tpl.title}`, "good");
+      this.toast(tr("부탁을 맡았다: {title}", { title: tpl.title }), "good");
       UI.refreshQuest();
       UI.refreshTracker();
     },
@@ -35293,7 +35536,7 @@
       }
       this.sideDone[npcId] = (this.sideDone[npcId] || 0) + 1;
       delete this.sideActive[npcId];
-      this.toast(`부탁 완료: ${sq.title} — 경험치 ${fmt(pay.xp)} · 금화 ${fmt(pay.gold)}`, "good");
+      this.toast(tr("부탁 완료: {title} — 경험치 {xp} · 금화 {gold}", { title: sq.title, xp: fmt(pay.xp), gold: fmt(pay.gold) }), "good");
       UI.refreshQuest();
       UI.refreshTracker();
       UI.refreshBag();
@@ -35302,16 +35545,16 @@
     tellQuest() {
       const ch = CHAPTERS[this.chapter];
       if (!ch) {
-        this.toast("모든 여정이 끝났다.");
+        this.toast(tr("모든 여정이 끝났다."));
         return;
       }
       const st = this.chapterState(ch);
       const session = sessionOf(this.chapter).n;
-      if (st.complete) this.toast("할 일은 모두 끝냈다.");
-      else if (st.ready) this.toast(`${session} · 목표 — ${st.goal ? st.goal.o.t : "이 장의 마지막"}`);
+      if (st.complete) this.toast(tr("할 일은 모두 끝냈다."));
+      else if (st.ready) this.toast(tr("{session} · 목표 — {v}", { session, v: st.goal ? st.goal.o.t : tr("이 장의 마지막") }));
       else {
         const pick = st.basics.find((b) => !b.p.done && st.missing.includes(b.o.verb)) || st.basics.find((b) => !b.p.done);
-        this.toast(`${session} · 준비 ${st.done}/${st.need}` + (pick ? ` · ${pick.o.t} (${pick.p.label || pick.p.cur + "/" + pick.p.max})` : ""));
+        this.toast(tr("{session} · 준비 {done}/{need}", { session, done: st.done, need: st.need }) + (pick ? ` · ${pick.o.t} (${pick.p.label || pick.p.cur + "/" + pick.p.max})` : ""));
       }
       UI.togglePanel("quest");
     },
@@ -35379,16 +35622,16 @@
       const it = makeItem(row.id, row.c, 0);
       const cost = this.buyPrice(it, m.markup);
       if (p.gold < cost) {
-        this.toast("금화가 부족하다", "bad");
+        this.toast(tr("금화가 부족하다"), "bad");
         return;
       }
       if (!p.addItem(it)) {
-        this.toast("가방이 가득 찼다", "bad");
+        this.toast(tr("가방이 가득 찼다"), "bad");
         return;
       }
       p.gold -= cost;
       stock.splice(slotIdx, 1);
-      this.toast(`${ITEMS[row.id].n} 구매`, "good");
+      this.toast(tr("{item} 구매", { item: ITEMS[row.id].n }), "good");
       UI.refreshChest();
       UI.refreshBag();
       this.sfx("coin");
@@ -35432,15 +35675,15 @@
       const it = makeItem(id, this.shopBundle(id), 0);
       const cost = this.buyPrice(it, 1, npc);
       if (p.gold < cost) {
-        this.toast("금화가 부족하다", "bad");
+        this.toast(tr("금화가 부족하다"), "bad");
         return;
       }
       if (!p.addItem(it)) {
-        this.toast("가방이 가득 찼다", "bad");
+        this.toast(tr("가방이 가득 찼다"), "bad");
         return;
       }
       p.gold -= cost;
-      this.toast(`${ITEMS[id].n} 구매`, "good");
+      this.toast(tr("{item} 구매", { item: ITEMS[id].n }), "good");
       UI.refreshChest();
       UI.refreshBag();
       this.sfx("coin");
@@ -35454,22 +35697,22 @@
         return;
       }
       if (this.lairs[o.ruin]) {
-        this.toast("이미 비어 있다");
+        this.toast(tr("이미 비어 있다"));
         return;
       }
       if (this.boss) {
-        this.toast("이미 무언가가 깨어 있다", "bad");
+        this.toast(tr("이미 무언가가 깨어 있다"), "bad");
         return;
       }
       if (this.bossGated(o.boss)) return;
       const spec = RUIN_SPEC[o.ruin];
-      const name = o.nm || (spec ? spec.n : "둥지");
+      const name = o.nm || (spec ? spec.n : tr("둥지"));
       UI.openLore(name, [
-        "무언가가 이 자리에서 아주 오래 기다렸다.",
-        "건드리면 깨어난다."
+        tr("무언가가 이 자리에서 아주 오래 기다렸다."),
+        tr("건드리면 깨어난다.")
       ], [
         {
-          t: "(깨운다)",
+          t: tr("(깨운다)"),
           quest: 1,
           fn: () => {
             UI.closeDialogue();
@@ -35477,7 +35720,7 @@
             this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 70);
           }
         },
-        { t: "(그냥 둔다)", fn: () => UI.closeDialogue() }
+        { t: tr("(그냥 둔다)"), fn: () => UI.closeDialogue() }
       ]);
     },
     /* ================= 제단 / 보스 ================= */
@@ -35494,16 +35737,16 @@
       const p = this.player;
       const need = Object.keys(ITEMS).find((k) => ITEMS[k].boss === o.boss);
       if (this.boss) {
-        this.toast("이미 무언가가 깨어 있다", "bad");
+        this.toast(tr("이미 무언가가 깨어 있다"), "bad");
         return;
       }
       if (this.bossGated(o.boss)) return;
       if (!need) {
-        this.wakeLair({ boss: o.boss, ruin: 12, nm: "제단", x: o.x, y: o.y, w: o.w, h: o.h });
+        this.wakeLair({ boss: o.boss, ruin: 12, nm: tr("제단"), x: o.x, y: o.y, w: o.w, h: o.h });
         return;
       }
       if (p.countItem(need) <= 0) {
-        this.toast(`${iga(ITEMS[need].n)} 필요하다`, "bad");
+        this.toast(tr("{item|이} 필요하다", { item: ITEMS[need].n }), "bad");
         return;
       }
       p.removeItem(need, 1);
@@ -35514,7 +35757,7 @@
       const p = this.player, it = p.bag[slot];
       const bossId = idef(it).boss;
       if (this.boss) {
-        this.toast("이미 무언가가 깨어 있다", "bad");
+        this.toast(tr("이미 무언가가 깨어 있다"), "bad");
         return;
       }
       if (this.bossGated(bossId)) return;
@@ -35532,7 +35775,7 @@
         overseer: ["works"]
       }[bossId];
       if (req && !req.includes(zone)) {
-        this.toast("여기서는 반응하지 않는다", "bad");
+        this.toast(tr("여기서는 반응하지 않는다"), "bad");
         return;
       }
       p.removeItem(it.id, 1);
@@ -35543,7 +35786,7 @@
       const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
       this.ents.push(e);
       this.boss = e;
-      this.toast(`${iga(ENEMIES[id].n)} 깨어났다!`, "bad");
+      this.toast(tr("{enemy|이} 깨어났다!", { enemy: ENEMIES[id].n }), "bad");
       this.shake = 16;
       if (Music) Music.play("boss", true);
     },
@@ -35555,7 +35798,7 @@
         this.lairs[this.pendingLair] = 1;
         this.pendingLair = null;
       }
-      this.toast(`${ENEMIES[id].n} 토벌!`, "good");
+      this.toast(tr("{enemy} 토벌!", { enemy: ENEMIES[id].n }), "good");
       UI.bossBar(null);
     },
     /* 몹의 세기는 **스토리 진행(장)만** 따라간다. */
@@ -35579,7 +35822,7 @@
       }
       if (d.use.petXp) {
         if (!p.equip.pet1 && !p.equip.pet2) {
-          this.toast("펫을 끼고 있어야 준다", "bad");
+          this.toast(tr("펫을 끼고 있어야 준다"), "bad");
           return;
         }
         p.addPetXp(d.use.petXp);
@@ -35591,11 +35834,11 @@
       }
       if (d.use.pulse) {
         if (!this.pulseHere) {
-          this.toast("유적 안에서만 듣는다", "bad");
+          this.toast(tr("유적 안에서만 듣는다"), "bad");
           return;
         }
         this.addPulse(this.pulseHere, d.use.pulse, true);
-        this.toast(d.use.pulse < 0 ? "유적의 맥박이 가라앉는다" : "유적이 북소리에 뒤척인다", d.use.pulse < 0 ? "good" : "bad");
+        this.toast(d.use.pulse < 0 ? tr("유적의 맥박이 가라앉는다") : tr("유적이 북소리에 뒤척인다"), d.use.pulse < 0 ? "good" : "bad");
         it.c--;
         if (it.c <= 0) p.bag[slot] = null;
         UI.refreshBag();
@@ -35603,7 +35846,7 @@
         return;
       }
       if (!d.instant && p.potionCd > 0 && d.use.hp) {
-        this.toast("아직 회복할 수 없다", "bad");
+        this.toast(tr("아직 회복할 수 없다"), "bad");
         return;
       }
       if (d.use.hp) {
@@ -35631,12 +35874,12 @@
       const p = this.player, it = p.bag[slot];
       if (!it) return;
       if (it.lk) {
-        this.toast("잠긴 물건은 팔 수 없다 (Ctrl+좌클릭으로 해제)", "bad");
+        this.toast(tr("잠긴 물건은 팔 수 없다 (Ctrl+좌클릭으로 해제)"), "bad");
         return;
       }
       const price = Math.round(this.price(it) * 0.5 * this.villageTrade());
       p.gold += price;
-      this.toast(`${itemName(it)} 판매 — 🪙 ${fmt(price)}`, "good");
+      this.toast(tr("{itemName} 판매 — 🪙 {price}", { itemName: itemName(it), price: fmt(price) }), "good");
       p.bag[slot] = null;
       UI.refreshBag();
       UI.refreshChest();
@@ -35649,7 +35892,7 @@
       const id = this.rng.weighted(EGG_POOL[tier]);
       const it = makeItem("pet_" + id, 1);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-      this.toast(`${eulreul(PETS[id].n)} 얻었다! (장비창의 펫 칸에 끼울 수 있다)`, "good");
+      this.toast(tr("{pet|을} 얻었다! (장비창의 펫 칸에 끼울 수 있다)", { pet: PETS[id].n }), "good");
       UI.refreshBag();
       UI.refreshChest();
     },
@@ -35685,7 +35928,7 @@
       const p = this.player;
       const cost = this.respecCost();
       if (p.gold < cost) {
-        this.toast("금화가 부족하다", "bad");
+        this.toast(tr("금화가 부족하다"), "bad");
         return;
       }
       p.gold -= cost;
@@ -35693,7 +35936,7 @@
       p.statPts += spent;
       p.base = { str: 5, dex: 5, int: 5, vit: 5 };
       p.recalc();
-      this.toast("스탯을 초기화했다. 능력 창에서 다시 분배하라", "good");
+      this.toast(tr("스탯을 초기화했다. 능력 창에서 다시 분배하라"), "good");
       UI.refreshStatAlloc();
       UI.refreshStatSheet();
     },
@@ -35703,19 +35946,19 @@
     trainXp() {
       const p = this.player;
       if (this.trainedToday >= 5) {
-        this.toast("오늘은 더 가르칠 게 없다고 한다", "bad");
+        this.toast(tr("오늘은 더 가르칠 게 없다고 한다"), "bad");
         return;
       }
       const cost = this.trainCost();
       if (p.gold < cost) {
-        this.toast("금화가 부족하다", "bad");
+        this.toast(tr("금화가 부족하다"), "bad");
         return;
       }
       p.gold -= cost;
       this.trainedToday++;
       const xp = Math.round(p.xpNext * 0.18);
       p.addXp(xp);
-      this.toast(`수련으로 경험치 +${fmt(xp)}`, "good");
+      this.toast(tr("수련으로 경험치 +{xp}", { xp: fmt(xp) }), "good");
     },
     /* ================= 마을 개선 ================= */
     villageLv() {
@@ -35733,16 +35976,16 @@
     upgradeVillage() {
       const lv = this.villageLv();
       if (!lv) {
-        this.toast("아직 마을이 없다", "bad");
+        this.toast(tr("아직 마을이 없다"), "bad");
         return;
       }
       if (lv >= VILLAGE.length - 1) {
-        this.toast("더 올릴 단계가 없다", "bad");
+        this.toast(tr("더 올릴 단계가 없다"), "bad");
         return;
       }
       const spec = VILLAGE[lv + 1], p = this.player;
       if (!p.hasAll(spec.need)) {
-        this.toast("재료가 부족하다", "bad");
+        this.toast(tr("재료가 부족하다"), "bad");
         return;
       }
       for (const k in spec.need) p.removeItem(k, spec.need[k]);
@@ -35753,11 +35996,11 @@
           const it = makeItem(id, n);
           if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
         }
-        this.toast("마을 서쪽에 밭을 내주었다 — 괭이·낫·씨앗을 받았다", "good");
+        this.toast(tr("마을 서쪽에 밭을 내주었다 — 괭이·낫·씨앗을 받았다"), "good");
       }
-      this.toast(`마을이 『${spec.n}』${josa(spec.n, "이", "가")} 되었다`, "good");
+      this.toast(tr("마을이 『{spec}』{spec|-이} 되었다", { spec: spec.n }), "good");
       for (let i = 0; i < 40; i++) this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 200, p.cy, "#ffe08a", -70, 1.2));
-      UI.chapterCard({ sub: "마을 개선", title: spec.n, line: spec.d });
+      UI.chapterCard({ sub: tr("마을 개선"), title: spec.n, line: spec.d });
       UI.refreshBag();
       this.sfx("chapter");
     },
@@ -35779,23 +36022,23 @@
     upgradeStation(kind) {
       const o = this.nearStObj[kind];
       if (!o) {
-        this.toast(`${STATION_NAME[kind][1]} 앞에서만 개조할 수 있다`, "bad");
+        this.toast(tr("{stationName} 앞에서만 개조할 수 있다", { stationName: STATION_NAME[kind][1] }), "bad");
         return;
       }
       const lv = o.lv || 1;
       if (lv >= STATION_UP[kind].length) {
-        this.toast("더 손볼 데가 없다", "bad");
+        this.toast(tr("더 손볼 데가 없다"), "bad");
         return;
       }
       const up = STATION_UP[kind][lv], p = this.player;
       if (!p.hasAll(up.need)) {
-        this.toast("재료가 부족하다", "bad");
+        this.toast(tr("재료가 부족하다"), "bad");
         return;
       }
       for (const k in up.need) p.removeItem(k, up.need[k]);
       o.lv = lv + 1;
       const nm = STATION_NAME[kind][lv + 1];
-      this.toast(`${nm}${josaRo(nm)} 개조했다`, "good");
+      this.toast(tr("{nm|으로} 개조했다", { nm }), "good");
       for (let i = 0; i < 22; i++) this.parts.push(new Part(p.cx, p.cy, kind === "forge" ? "#ff9a3a" : "#d8b06a", -50, 0.8));
       UI.refreshCraft();
       UI.refreshBag();
@@ -35805,16 +36048,16 @@
       const r = RECIPES[i], p = this.player;
       const st = r.station ? this.nearStObj[r.station] : null;
       if (r.station && !st) {
-        this.toast(`${STATION_NAME[r.station][1]} 앞에서만 만들 수 있다`, "bad");
+        this.toast(tr("{stationName} 앞에서만 만들 수 있다", { stationName: STATION_NAME[r.station][1] }), "bad");
         return;
       }
       if (r.station && (st.lv || 1) < (r.lv || 1)) {
         const nm = STATION_NAME[r.station][r.lv];
-        this.toast(`${nm}${josaRo(nm)} 개조해야 만들 수 있다`, "bad");
+        this.toast(tr("{nm|으로} 개조해야 만들 수 있다", { nm }), "bad");
         return;
       }
       if (!p.hasAll(r.need)) {
-        this.toast("재료가 부족하다", "bad");
+        this.toast(tr("재료가 부족하다"), "bad");
         return;
       }
       for (const k in r.need) p.removeItem(k, r.need[k]);
@@ -35826,7 +36069,7 @@
       this.crafted = this.crafted || {};
       this.crafted[r.out] = (this.crafted[r.out] || 0) + 1;
       this.checkAch();
-      this.toast(`${ITEMS[r.out].n} 제작 완료`, "good");
+      this.toast(tr("{item} 제작 완료", { item: ITEMS[r.out].n }), "good");
       UI.refreshCraft();
       UI.refreshBag();
       this.sfx("craft");
@@ -36001,7 +36244,7 @@
         this.event.t += dt;
         const e = EVENTS[this.event.id];
         if (e.night && !night || e.day && night || e.dur && this.event.t >= e.dur) {
-          this.toast(`${e.i} ${iga(e.n)} 지나갔다`);
+          this.toast(tr("{e} {e2|이} 지나갔다", { e: e.i, e2: e.n }));
           this.event = null;
         }
         return;
@@ -36119,12 +36362,12 @@
       const key = hi && idef(hi).type === "machine" ? idef(hi).mach : null;
       if (key) {
         if (!MACHINE[key].rot) {
-          this.toast("방향이 없는 기계다", "info");
+          this.toast(tr("방향이 없는 기계다"), "info");
           return;
         }
         const n = dirTable(key).length, cur = this.placeDir != null && this.placeDir < n ? this.placeDir : -1;
         this.placeDir = cur + 1 >= n ? null : cur + 1;
-        this.toast("놓을 방향 — " + (this.placeDir == null ? "보는 쪽" : DIR_NAME[this.placeDir]), "craft");
+        this.toast(`${tr("놓을 방향 —")} ` + (this.placeDir == null ? tr("보는 쪽") : DIR_NAME[this.placeDir]), "craft");
         this.sfx("place");
         return;
       }
@@ -36188,12 +36431,12 @@
     useRig(o) {
       const done = this.chapter >= SESSIONS[2].ch0;
       if (!done) {
-        UI.openLore("채취탑", this.rigOn(o) ? ["공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다.", "공창이 멈추기 전에는 손댈 엄두가 안 난다."] : ["녹슨 채취탑이다. 리벳 틈마다 재가 쌓여 있다.", "누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다."], []);
+        UI.openLore(tr("채취탑"), this.rigOn(o) ? [tr("공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다."), tr("공창이 멈추기 전에는 손댈 엄두가 안 난다.")] : [tr("녹슨 채취탑이다. 리벳 틈마다 재가 쌓여 있다."), tr("누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.")], []);
         this.sfx("open");
         return;
       }
-      UI.openLore("멈춘 채취탑", ["공창이 멈춘 뒤로 이 탑도 더는 돌지 않는다.", "볼트를 풀면 강철판과 톱니, 모터까지 건질 수 있겠다."], [{
-        t: "채취탑을 해체한다",
+      UI.openLore(tr("멈춘 채취탑"), [tr("공창이 멈춘 뒤로 이 탑도 더는 돌지 않는다."), tr("볼트를 풀면 강철판과 톱니, 모터까지 건질 수 있겠다.")], [{
+        t: tr("채취탑을 해체한다"),
         fn: () => {
           UI.closeDialogue();
           o.gone = 1;
@@ -36202,7 +36445,7 @@
           this.matBurst("metal", cx, cy, 30, { spd: 1.4 });
           this.shake = 10;
           this.sfx("break_machine");
-          this.toast("채취탑을 해체했다 — 부품이 쏟아졌다", "good");
+          this.toast(tr("채취탑을 해체했다 — 부품이 쏟아졌다"), "good");
         }
       }]);
       this.sfx("open");
@@ -36591,7 +36834,7 @@
           e.xp = Math.round(e.xp * 4);
           e.gold = Math.round(e.gold * 4);
           e.elite = true;
-          this.toast(`어디선가 유난히 사나운 ${mobName(type, e.mech)}의 기척이 느껴진다`, "bad");
+          this.toast(tr("어디선가 유난히 사나운 {mobName}의 기척이 느껴진다", { mobName: mobName(type, e.mech) }), "bad");
         }
         this.ents.push(e);
         return;
@@ -36652,7 +36895,7 @@
           max = ps.length;
           cur = ps.findIndex((q) => !q.done);
           if (cur < 0) cur = max;
-          else label = `${cur + 1}/${max}단계` + (ps[cur].max > 1 ? ` · ${ps[cur].cur}/${ps[cur].max}` : "");
+          else label = tr("{n}/{max}단계", { n: cur + 1, max }) + (ps[cur].max > 1 ? ` · ${ps[cur].cur}/${ps[cur].max}` : "");
           break;
         }
       }
@@ -36696,9 +36939,9 @@
       if (!ch || st.ready) return "";
       if (st.missing.length) {
         const b = (ch.basics || []).find((o) => o.verb === st.missing[0]);
-        return "아직 자격이 없다 — " + (b ? b.t : "이 장의 일이 남았다");
+        return `${tr("아직 자격이 없다 —")} ` + (b ? b.t : tr("이 장의 일이 남았다"));
       }
-      return `아직 자격이 없다 — 준비 ${st.done}/${st.need}`;
+      return tr("아직 자격이 없다 — 준비 {done}/{need}", { done: st.done, need: st.need });
     },
     checkChapter() {
       const ch = CHAPTERS[this.chapter];
@@ -36714,7 +36957,7 @@
         const it = ITEMS[id].stack > 1 ? makeItem(id, n) : rollGear(id, this.rng, 2);
         if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
       }
-      this.toast(`『${ch.title}』 완료 — 경험치 ${fmt(ch.rw.xp)} · 금화 ${fmt(ch.rw.gold)}`, "good");
+      this.toast(tr("『{title}』 완료 — 경험치 {xp} · 금화 {gold}", { title: ch.title, xp: fmt(ch.rw.xp), gold: fmt(ch.rw.gold) }), "good");
       const starShow = this.gainStarOrbit(ch.id) || 0;
       this.chapter++;
       this.checkAch();
@@ -36726,9 +36969,9 @@
         this.rollBounties();
         const villageAt = starShow + 600;
         setTimeout(() => {
-          UI.chapterCard({ sub: "", title: "여명 마을", line: "잿빛이 걷혔다" });
-          this.toast("동쪽 숲에 묻혀 있던 도시가 드러났다.", "good");
-          setTimeout(() => this.toast("베이스캠프의 귀환 비석으로 여명 마을에 갈 수 있다.", "good"), 2400);
+          UI.chapterCard({ sub: "", title: tr("여명 마을"), line: tr("잿빛이 걷혔다") });
+          this.toast(tr("동쪽 숲에 묻혀 있던 도시가 드러났다."), "good");
+          setTimeout(() => this.toast(tr("베이스캠프의 귀환 비석으로 여명 마을에 갈 수 있다."), "good"), 2400);
         }, villageAt);
         delay = villageAt + 4600;
       }
@@ -36739,8 +36982,8 @@
             UI.chapterCard(next);
             setTimeout(() => UI.storyScene(next, "intro"), 4e3);
           } else {
-            UI.chapterCard({ sub: "이야기는 계속된다", title: "벽 너머", line: "— 여기까지가 지금까지 쓰인 이야기다 —" });
-            this.toast("아직 열리지 않은 장이 남아 있다. 그때까지 이 세계는 당신 것이다.", "good");
+            UI.chapterCard({ sub: tr("이야기는 계속된다"), title: tr("벽 너머"), line: tr("— 여기까지가 지금까지 쓰인 이야기다 —") });
+            this.toast(tr("아직 열리지 않은 장이 남아 있다. 그때까지 이 세계는 당신 것이다."), "good");
           }
         });
       }, delay);
@@ -36770,7 +37013,7 @@
       }
     },
     onAchieved(a) {
-      this.toast(`업적 달성 — ${a.n}`, "good");
+      this.toast(tr("업적 달성 — {a}", { a: a.n }), "good");
       for (let i = 0; i < 24; i++)
         this.parts.push(new Part(this.player.cx, this.player.cy, "#ffe08a", -80, 1));
       this.sfx("ach");
@@ -36782,7 +37025,7 @@
       return ev ? ev.rw : 1;
     },
     onPickup(it) {
-      if (it && idef(it).type !== "block" && idef(it).type !== "mat") this.toast(`${itemName(it)} 획득`, "good");
+      if (it && idef(it).type !== "block" && idef(it).type !== "mat") this.toast(tr("{itemName} 획득", { itemName: itemName(it) }), "good");
       UI.refreshBag();
     },
     /** 세션 1 의 진행 표시. */
@@ -36842,7 +37085,7 @@
           this.sfx("star_gain");
         }, 700);
         setTimeout(
-          () => this.toast(`별 조각이 하나 더 곁에 남았다 — ${p.starOrbits}/5`, "good"),
+          () => this.toast(tr("별 조각이 하나 더 곁에 남았다 — {starOrbits}/5", { starOrbits: p.starOrbits }), "good"),
           this.STAR_GAIN * 1e3 - 600
         );
         if (id === 5) {
@@ -36859,7 +37102,7 @@
       } else if (id === 8) {
         setTimeout(() => this.startStarRise(), 700);
         setTimeout(
-          () => this.toast("다섯 조각이 곁을 떠나 하늘로 돌아갔다", "good"),
+          () => this.toast(tr("다섯 조각이 곁을 떠나 하늘로 돌아갔다"), "good"),
           700 + (this.STAR_GATHER + this.STAR_RISE) * 1e3 + 200
         );
         return 700 + (this.STAR_GATHER + this.STAR_RISE) * 1e3 + 1200;
@@ -36867,7 +37110,7 @@
       return 0;
     },
     onLevelUp(lv) {
-      this.toast(`레벨 ${lv} 달성! 스탯 +3, 특성 +1`, "good");
+      this.toast(tr("레벨 {lv} 달성! 스탯 +3, 특성 +1", { lv }), "good");
       for (let i = 0; i < 30; i++) this.parts.push(new Part(this.player.cx, this.player.cy, "#ffe08a", -80, 0.9));
       UI.refreshStatAlloc();
       this.sfx("level");
@@ -36877,13 +37120,13 @@
       const P = PROFS[kind];
       if (!P) return;
       const perk = P.perks.find(([at]) => at === lv);
-      this.toast(`${P.i} ${P.n} 숙련 ${lv}${perk ? ` — ${perk[1]}` : ""}`, "good");
+      this.toast(tr("{P} {P2} 숙련 {lv}{v}", { P: P.i, P2: P.n, lv, v: perk ? ` — ${perk[1]}` : "" }), "good");
       const p = this.player;
       this.ringFx(p.cx, p.cy, perk ? 74 : 46, P.c, perk ? 0.55 : 0.35);
       for (let i = 0; i < (perk ? 26 : 12); i++)
         this.parts.push(new Part(p.cx, p.cy, P.c, -70, 0.8));
       this.sfx(perk ? "level" : "learn");
-      if (perk) UI.chapterCard({ sub: `${P.n} 숙련 ${lv}`, title: perk[1], line: perk[2] });
+      if (perk) UI.chapterCard({ sub: tr("{P} 숙련 {lv}", { P: P.n, lv }), title: perk[1], line: perk[2] });
       if (UI.open === "skill") UI.refreshProf();
     },
     onDeath(cause) {
@@ -36921,16 +37164,16 @@
       if (md.death === "wipe") {
         this.deathMark = null;
         if (this.currentSlot !== null) SaveStore.remove(this.currentSlot).catch((e) => console.error(e));
-        $("#death-line").textContent = "불가능 모드였다. 이 슬롯의 기록이 지워졌다.";
+        $("#death-line").textContent = tr("불가능 모드였다. 이 슬롯의 기록이 지워졌다.");
         $("#death-screen").classList.add("open");
         $("#death-screen").classList.add("wipe");
         this.scenes.open("pause");
         this.sfx("death");
         return;
       }
-      const parts = [`경험치 ${fmt(lostXp)}, 금화 ${fmt(lostG)}개를 잃었다.`];
-      if (lostItems.length) parts.push(`가방에서 ${lostItems.length}칸이 떨어졌다.`);
-      parts.push("쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.");
+      const parts = [tr("경험치 {lostXp}, 금화 {lostG}개를 잃었다.", { lostXp: fmt(lostXp), lostG: fmt(lostG) })];
+      if (lostItems.length) parts.push(tr("가방에서 {lostItemsCount}칸이 떨어졌다.", { lostItemsCount: lostItems.length }));
+      parts.push(tr("쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다."));
       $("#death-line").textContent = parts.join(" ");
       $("#death-screen").classList.add("open");
       this.scenes.open("pause");
@@ -36950,13 +37193,13 @@
     questTargets() {
       const w = this.world, ch = CHAPTERS[this.chapter];
       const out = [];
-      if (this.deathMark) out.push({ x: this.deathMark.x, y: this.deathMark.y, k: "death", t: "쓰러진 자리" });
+      if (this.deathMark) out.push({ x: this.deathMark.x, y: this.deathMark.y, k: "death", t: tr("쓰러진 자리") });
       for (const id in this.ruinMarks || {}) {
         if (this.seenRuins && this.seenRuins[id]) continue;
         const r = w && w.ruins && w.ruins.find((q) => q.id === id);
         if (!r) continue;
         const sp = RUIN_SPEC.find((q) => q.id === id);
-        out.push({ x: (r.x + 0.5) * TS, y: r.y * TS, k: "ruin", t: (sp ? sp.n : "유적") + " — 지도의 자리" });
+        out.push({ x: (r.x + 0.5) * TS, y: r.y * TS, k: "ruin", t: (sp ? sp.n : tr("유적")) + ` ${tr("— 지도의 자리")}` });
       }
       if (!ch || !w) return out;
       const stt = this.chapterState(ch);
@@ -37123,7 +37366,7 @@
     async saveGame() {
       if (this.currentSlot === null) return false;
       if (this._saving) {
-        this.toast("저장하는 중이다", "info");
+        this.toast(tr("저장하는 중이다"), "info");
         return false;
       }
       this._saving = true;
@@ -37201,10 +37444,10 @@
         };
         data.sealed = 1;
         await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
-        this.toast("저장했다", "good");
+        this.toast(tr("저장했다"), "good");
         return true;
       } catch (e) {
-        this.toast(e && e.name === "QuotaExceededError" ? "저장 실패: 용량 초과" : "저장 실패", "bad");
+        this.toast(e && e.name === "QuotaExceededError" ? tr("저장 실패: 용량 초과") : tr("저장 실패"), "bad");
         console.error(e);
         return false;
       } finally {
@@ -37227,7 +37470,7 @@
         const st = localStorage.getItem(SET_KEY);
         if (st) out.settings = st;
         if (!n) {
-          this.toast("내보낼 기록이 없다", "bad");
+          this.toast(tr("내보낼 기록이 없다"), "bad");
           return;
         }
         const blob = new Blob([JSON.stringify(out)], { type: "application/json" });
@@ -37240,9 +37483,9 @@
           URL.revokeObjectURL(a.href);
           a.remove();
         }, 1e3);
-        this.toast(`${n}칸을 파일로 내보냈다`, "good");
+        this.toast(tr("{n}칸을 파일로 내보냈다", { n }), "good");
       } catch (e) {
-        this.toast("내보내기 실패", "bad");
+        this.toast(tr("내보내기 실패"), "bad");
         console.error(e);
       }
     },
@@ -37251,11 +37494,11 @@
       try {
         const d = JSON.parse(text);
         if (!d || d.app !== "ashfall" || !d.slots) {
-          this.toast("이 게임의 저장 파일이 아니다", "bad");
+          this.toast(tr("이 게임의 저장 파일이 아니다"), "bad");
           return;
         }
         if (d.key && d.key !== SAVE_KEY) {
-          this.toast("이전 판의 저장이라 열 수 없다", "bad");
+          this.toast(tr("이전 판의 저장이라 열 수 없다"), "bad");
           return;
         }
         let n = 0;
@@ -37271,13 +37514,13 @@
           UI.syncSettings();
         }
         if (!n) {
-          this.toast("파일에 기록이 없다", "bad");
+          this.toast(tr("파일에 기록이 없다"), "bad");
           return;
         }
-        this.toast(`${n}칸을 되돌렸다 — 이어하기에서 고르면 된다`, "good");
+        this.toast(tr("{n}칸을 되돌렸다 — 이어하기에서 고르면 된다", { n }), "good");
         this.renderSlotScreen();
       } catch (e) {
-        this.toast("저장 파일을 읽지 못했다", "bad");
+        this.toast(tr("저장 파일을 읽지 못했다"), "bad");
         console.error(e);
       }
     },
@@ -37289,7 +37532,7 @@
         console.error(e);
       }
       if (!rec) {
-        this.toast("저장된 기록이 없다", "bad");
+        this.toast(tr("저장된 기록이 없다"), "bad");
         return;
       }
       const raw = rec.raw;
@@ -37299,11 +37542,11 @@
       } catch (e) {
       }
       if (!saveSealOk(raw, head, rec.sig)) {
-        this.toast("이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다", "bad");
+        this.toast(tr("이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다"), "bad");
         return;
       }
       this.currentSlot = slot;
-      this.showLoading("기록을 불러오는 중…");
+      this.showLoading(tr("기록을 불러오는 중…"));
       setTimeout(() => {
         try {
           this._loadGame(raw);
@@ -37320,7 +37563,7 @@
         setWorldSize(d.world && d.world.size || "s");
         if (d.world && (d.world.ww && d.world.ww !== WW || d.world.wh && d.world.wh !== WH)) {
           setWorldSize(prevSize);
-          this.toast(`이전 크기(${d.world.ww}×${d.world.wh || "?"})의 세계라 열 수 없다 — 새로 시작해야 한다`, "bad");
+          this.toast(tr("이전 크기({ww}×{v})의 세계라 열 수 없다 — 새로 시작해야 한다", { ww: d.world.ww, v: d.world.wh || "?" }), "bad");
           return;
         }
         this.world = World.deserialize(d.world);
@@ -37330,7 +37573,7 @@
         this.world.placeRigs(true);
         this.rng = new RNG(d.world.seed + "_g");
         const p = new Player(d.p.x, d.p.y);
-        p.name = d.name || "이름 없는 모험가";
+        p.name = d.name || tr("이름 없는 모험가");
         Object.assign(p, {
           level: d.p.level,
           xp: d.p.xp,
@@ -37470,11 +37713,11 @@
         UI.refreshSkillbar();
         UI.refreshStatAlloc();
         UI.refreshSkillSlots();
-        this.toast("여정을 이어간다", "good");
+        this.toast(tr("여정을 이어간다"), "good");
         this.audioInit();
         this.buildMapAtlas();
       } catch (e) {
-        this.toast("불러오기 실패", "bad");
+        this.toast(tr("불러오기 실패"), "bad");
         console.error(e);
       }
     },
@@ -37485,7 +37728,7 @@
       if (!legacy || localStorage.getItem(slotKey(0))) return;
       try {
         const d = JSON.parse(legacy);
-        d.name = d.name || "이름 없는 모험가";
+        d.name = d.name || tr("이름 없는 모험가");
         d.savedAt = d.savedAt || Date.now();
         d.sealed = 1;
         const text = JSON.stringify(d);
@@ -37497,11 +37740,11 @@
       }
     },
     async deleteSlot(i) {
-      if (!confirm("이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.")) return;
+      if (!confirm(tr("이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다."))) return;
       try {
         await SaveStore.remove(i);
       } catch (e) {
-        this.toast("삭제하지 못했다", "bad");
+        this.toast(tr("삭제하지 못했다"), "bad");
         console.error(e);
       }
       this.renderSlotScreen();
@@ -37519,19 +37762,19 @@
       box.innerHTML = slots.map((s, i) => {
         if (!s) {
           return `<div class="slot-card empty" data-slot="${i}">
-          <div class="slot-empty-label">빈 슬롯</div>
-          <button class="slot-new-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_new"></span>새로운 여정</button>
+          <div class="slot-empty-label">${tr("빈 슬롯")}</div>
+          <button class="slot-new-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_new"></span>${tr("새로운 여정")}</button>
         </div>`;
         }
         const when = s.savedAt ? new Date(s.savedAt).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
         return `<div class="slot-card filled${s.bad ? " tampered" : ""}" data-slot="${i}">
         <div class="slot-info">
           <div class="slot-name">${escHtml(s.name)}</div>
-          <div class="slot-meta">${s.bad ? "저장한 뒤에 바뀐 기록 — 열 수 없다" : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
+          <div class="slot-meta">${s.bad ? tr("저장한 뒤에 바뀐 기록 — 열 수 없다") : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
         </div>
         <div class="slot-actions">
-          <button class="slot-load-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_start"></span>이어하기</button>
-          <button class="slot-del-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="trash"></span>삭제</button>
+          <button class="slot-load-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_start"></span>${tr("이어하기")}</button>
+          <button class="slot-del-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="trash"></span>${tr("삭제")}</button>
         </div>
       </div>`;
       }).join("");
@@ -37608,14 +37851,14 @@
       let ci = 0, mi = 0, sz = "s";
       const kit = (ch) => {
         const nameOf = (id) => ITEMS[id] && ITEMS[id].n || id;
-        const parts = [ch.weapon ? `<b>${escHtml(nameOf(ch.weapon))}</b>` : "<b>맨손</b>"];
+        const parts = [ch.weapon ? `<b>${escHtml(nameOf(ch.weapon))}</b>` : tr("<b>맨손</b>")];
         (ch.bag || []).forEach(([id, n]) => parts.push(`${escHtml(nameOf(id))} ×${n}`));
-        if (ch.gold) parts.push(`금화 ${ch.gold}`);
+        if (ch.gold) parts.push(tr("금화 {gold}", { gold: ch.gold }));
         return parts.join(" · ");
       };
       const sheet = (ch) => Sprites.url(`assets/char/player_${ch.id}.png`);
       box.innerHTML = `
-      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>캐릭터</div>
+      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>${tr("캐릭터")}</div>
       <div class="ng-chars">${CHARACTERS.map((ch, i) => `
         <button class="ng-char${i ? "" : " on"}" data-i="${i}">
           <span class="por" style="background-image:url(${sheet(ch)})"></span>
@@ -37632,23 +37875,23 @@
         </div>
       </div>
 
-      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_mode"></span>난이도</div>
+      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_mode"></span>${tr("난이도")}</div>
       <div class="ng-modes" id="ng-modes">${MODES.map((m, i) => `
         <button class="ng-mode${i ? "" : " on"}" data-i="${i}" style="--mc:${m.c}"><span class="ui-ic" data-ui-icon="mode_${m.id}"></span>${escHtml(m.n)}</button>`).join("")}</div>
       <p class="ng-mdesc" id="ng-mdesc">${escHtml(MODES[0].d)}</p>
 
-      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_world"></span>세계 크기</div>
+      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_world"></span>${tr("세계 크기")}</div>
       <div class="ng-modes" id="ng-sizes">${Object.keys(WORLD_SIZES).map((k) => `
         <button class="ng-mode${k === "s" ? " on" : ""}" data-k="${k}" style="--mc:#8fb8d8"><span class="ui-ic" data-ui-icon="size_${k}"></span>${escHtml(WORLD_SIZES[k].n)}</button>`).join("")}</div>
       <p class="ng-mdesc" id="ng-sdesc">${escHtml(WORLD_SIZES.s.d)}</p>
 
       <div class="ng-fields">
-        <label><span class="ui-ic" data-ui-icon="ng_name"></span>이름<input class="ng-name-input" placeholder="이름 없는 모험가" maxlength="12"></label>
-        <label><span class="ui-ic" data-ui-icon="ng_seed"></span>세계 씨앗<input class="ng-seed-input" placeholder="비워두면 무작위"></label>
+        <label><span class="ui-ic" data-ui-icon="ng_name"></span>${tr("이름")}<input class="ng-name-input" placeholder="${tr("이름 없는 모험가")}" maxlength="12"></label>
+        <label><span class="ui-ic" data-ui-icon="ng_seed"></span>${tr("세계 씨앗")}<input class="ng-seed-input" placeholder="${tr("비워두면 무작위")}"></label>
       </div>
       <div class="ng-btns">
-        <button class="ng-start"><span class="ui-ic" data-ui-icon="ng_start"></span>시작</button>
-        <button class="ng-cancel"><span class="ui-ic" data-ui-icon="ng_cancel"></span>취소</button>
+        <button class="ng-start"><span class="ui-ic" data-ui-icon="ng_start"></span>${tr("시작")}</button>
+        <button class="ng-cancel"><span class="ui-ic" data-ui-icon="ng_cancel"></span>${tr("취소")}</button>
       </div>`;
       this.fillIcons(box);
       const paint = () => {
@@ -37657,7 +37900,7 @@
         $("#ng-name").textContent = ch.n;
         $("#ng-desc").textContent = ch.d;
         $("#ng-story").textContent = ch.story;
-        $("#ng-stats").innerHTML = [["힘", "str"], ["민첩", "dex"], ["지능", "int"], ["체력", "vit"]].map(([n, k]) => `<span>${n} <b>${ch.base[k]}</b></span>`).join("");
+        $("#ng-stats").innerHTML = [[tr("힘"), "str"], [tr("민첩"), "dex"], [tr("지능"), "int"], [tr("체력"), "vit"]].map(([n, k]) => `<span>${n} <b>${ch.base[k]}</b></span>`).join("");
         $("#ng-kit").innerHTML = kit(ch);
       };
       paint();
@@ -37679,7 +37922,7 @@
       box.querySelector(".ng-start").onclick = () => {
         const name = box.querySelector(".ng-name-input").value;
         const seed = box.querySelector(".ng-seed-input").value.trim();
-        if (MODES[mi].id === "impossible" && !confirm("불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?")) return;
+        if (MODES[mi].id === "impossible" && !confirm(tr("불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?"))) return;
         this.closeModal("#newgame-screen");
         this.closeModal("#slots-screen");
         this.newGame(seed, slot, name, CHARACTERS[ci].id, MODES[mi].id, sz);
@@ -38583,7 +38826,7 @@
         if (t.crit) {
           c.font = "10px sans-serif";
           c.fillStyle = "#ffd24a";
-          c.fillText("치명", t.x - camX, t.y - camY - 15);
+          c.fillText(tr("치명"), t.x - camX, t.y - camY - 15);
         }
       }
       c.globalAlpha = 1;
@@ -39273,13 +39516,13 @@
         this.lightImg = this.lightCx.createImageData(lw, lh);
       }
       const mid = (ty0 + ty1) / 2;
-      let tr = 0, tg = 0, tb = 0;
+      let tr2 = 0, tg = 0, tb = 0;
       if (mid > HELL_Y - 24) {
-        tr = 44;
+        tr2 = 44;
         tg = 8;
         tb = 2;
       } else if (mid > SURF_BASE + 24) {
-        tr = 4;
+        tr2 = 4;
         tg = 7;
         tb = 18;
       }
@@ -39288,7 +39531,7 @@
       for (let y = y0; y <= y1; y++) {
         for (let x = x0; x <= x1; x++) {
           const f = Math.pow(clamp(w.lightAt(x, y) / 15, 0.022, 1), 0.72);
-          d[i] = tr;
+          d[i] = tr2;
           d[i + 1] = tg;
           d[i + 2] = tb;
           d[i + 3] = 255 * (1 - f);
@@ -40241,9 +40484,9 @@
         this.tally = this.tally || {};
         if (!this.tally.pulseHint) {
           this.tally.pulseHint = 1;
-          this.toast("유적이 당신을 알아챘다 — 머물수록 · 상자를 열수록 깨어나고, 쓰러뜨릴수록 가라앉는다", "bad");
+          this.toast(tr("유적이 당신을 알아챘다 — 머물수록 · 상자를 열수록 깨어나고, 쓰러뜨릴수록 가라앉는다"), "bad");
         }
-        this.toast(`유적의 맥박 — ${S.n}`, "bad");
+        this.toast(tr("유적의 맥박 — {S}", { S: S.n }), "bad");
         this.shake = Math.max(this.shake || 0, 4 + s1 * 3);
         this.sfx("chapter");
         this._waveT = PULSE.wave[s1];
@@ -40254,7 +40497,7 @@
         }
         if (!this.pulseEvent && this.pulseHere === id) this.startPulseEvent(id, s1);
       } else if (this.pulseHere === id && s1 === 0) {
-        this.toast("유적이 다시 잠든다", "good");
+        this.toast(tr("유적이 다시 잠든다"), "good");
       }
     },
     /** 매 프레임 — 유적 안이면 맥박을 올리고 기록을 적고, 밖에 있는 유적은 가라앉힌다 */
@@ -40416,7 +40659,7 @@
             this.sfx("coin");
             for (let q = 0; q < 24; q++) this.parts.push(new Part(s.x, s.y - 14, "#8fe0ff", -50, 1));
             const left = ev.stones.filter((q) => !q.got).length;
-            if (left) this.toast(`공명석 — ${3 - left}/3`, "good");
+            if (left) this.toast(tr("공명석 — {n}/3", { n: 3 - left }), "good");
           }
         if (ev.stones.every((q) => q.got)) {
           this.endPulseEvent(true);
@@ -40433,7 +40676,7 @@
           ev.wave++;
           ev.waveT = 15;
           ev.mobs.push(...this.spawnRuinMobs(here, 1 + ev.stage + (ev.wave === 3 ? 1 : 0)));
-          this.toast(`포위 — ${ev.wave}/3 무리`, "bad");
+          this.toast(tr("포위 — {wave}/3 무리", { wave: ev.wave }), "bad");
         }
         if (ev.wave >= 3 && ev.mobs.every((e) => e.dead)) {
           this.endPulseEvent(true);
@@ -40463,7 +40706,7 @@
       }
       if (!ok) {
         this.addPulse(ev.id, 15);
-        this.toast(`${E.n} — 놓쳤다. 유적이 더 깨어난다`, "bad");
+        this.toast(tr("{E} — 놓쳤다. 유적이 더 깨어난다", { E: E.n }), "bad");
         this.sfx("mine");
         return;
       }
@@ -40478,7 +40721,7 @@
       if (st >= 2) give(makeItem("pulse_shard", st - 1));
       const calm = { hunt: 15, stones: 35, greed: 0, siege: 25 }[ev.k];
       if (calm) this.addPulse(ev.id, -calm);
-      this.toast(`${E.n} — 해냈다 · 금화 ${fmt(gold)}${calm ? " · 맥박 -" + calm : ""}`, "good");
+      this.toast(tr("{E} — 해냈다 · 금화 {gold}{v}", { E: E.n, gold: fmt(gold), v: calm ? ` ${tr("· 맥박 -")}` + calm : "" }), "good");
       this.sfx("chapter");
       this.checkSurvey(ev.id);
       UI.refreshBag();
@@ -40582,7 +40825,7 @@
       if (up >= 1 && here.spec.bonus && ITEMS[here.spec.bonus]) o.items.push(makeItem(here.spec.bonus, 1 + up));
       if (up >= 2 && here.spec.bonus2 && ITEMS[here.spec.bonus2]) o.items.push(makeItem(here.spec.bonus2, up));
       if (up >= 3) o.items.push(makeItem("pulse_shard", (big ? 2 : 1) + (up >= 4 ? 1 : 0)));
-      if (up > 0) this.toast(`맥박이 뛰는 상자 — ${PULSE.stages[st].n}의 덤`, "good");
+      if (up > 0) this.toast(tr("맥박이 뛰는 상자 — {stages}의 덤", { stages: PULSE.stages[st].n }), "good");
       this.addPulse(here.id, big ? PULSE.vault : PULSE.chest);
     },
     /** 보스가 쓰러졌을 때(onBossDown 맨 앞) — 유적 주인이나 메아리였다면 맥박을 가라앉히고 보상 */
@@ -40599,7 +40842,7 @@
       if (echo) this.echoReward(spec, echo.lv);
       else if (st >= 3) {
         give(makeItem("pulse_shard", 3));
-        this.toast("격노 속에서 주인을 쓰러뜨렸다 — 맥박 결정 셋", "good");
+        this.toast(tr("격노 속에서 주인을 쓰러뜨렸다 — 맥박 결정 셋"), "good");
       }
       this.ruinPulse = this.ruinPulse || {};
       this.ruinPulse[spec.id] = echo ? Math.min(this.pulseOf(spec.id), PULSE.stages[2].at) : 0;
@@ -40688,11 +40931,11 @@
           break;
         }
       }
-      const label = (k) => story && k === "boss" ? "석판" : SURVEY_LABEL[k];
+      const label = (k) => story && k === "boss" ? tr("석판") : SURVEY_LABEL[k];
       if (next) missing = Object.keys(next.need).filter((k) => !meets(k, next.need[k])).map((k) => {
         const v = next.need[k], q = part[k];
-        if (k === "rooms" || k === "chests") return `${label(k)} ${Math.round(v * 100)}% (지금 ${Math.floor(q[0] / q[1] * 100)}%)`;
-        if (k === "events" || k === "kinds" || k === "echo") return `${label(k)} ${v} (지금 ${q[0]})`;
+        if (k === "rooms" || k === "chests") return tr("{label} {n}% (지금 {n2}%)", { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
+        if (k === "events" || k === "kinds" || k === "echo") return tr("{label} {v} (지금 {q})", { label: label(k), v, q: q[0] });
         return label(k);
       });
       return {
@@ -40720,13 +40963,13 @@
       const firstTime = !sv.best;
       sv.best = sc.rank;
       if (firstTime && sc.rank === "D") return;
-      this.toast(`탐사 기록 ${sc.rank} — ${spec.n} (진행 ${sc.score}%)`, "good");
+      this.toast(tr("탐사 기록 {rank} — {spec} (진행 {score}%)", { rank: sc.rank, spec: spec.n, score: sc.score }), "good");
       if ((sc.rank === "A" || sc.rank === "S") && !sv.a) {
         sv.a = 1;
         const gold = 1200 * (spec.rank || 3);
         p.gold += gold;
         give(makeItem("pulse_shard", 3));
-        this.toast(`${eulreul(spec.n)} 거의 다 봤다 — 금화 ${fmt(gold)} · 맥박 결정 셋`, "good");
+        this.toast(tr("{spec|을} 거의 다 봤다 — 금화 {gold} · 맥박 결정 셋", { spec: spec.n, gold: fmt(gold) }), "good");
         this.sfx("manycoins");
       }
       if (sc.rank === "S" && !sv.s) {
@@ -40734,7 +40977,7 @@
         const sid = "seal_" + id;
         if (ITEMS[sid]) {
           give(makeItem(sid, 1));
-          this.toast(`샅샅이 뒤졌다 — ${ITEMS[sid].n}`, "good");
+          this.toast(tr("샅샅이 뒤졌다 — {item}", { item: ITEMS[sid].n }), "good");
         }
         this.shake = 8;
         this.sfx("chapter");
@@ -40747,22 +40990,22 @@
     openEcho(o) {
       const spec = RUIN_SPEC[o.ruin];
       if (this.boss) {
-        this.toast("이미 무언가가 깨어 있다", "bad");
+        this.toast(tr("이미 무언가가 깨어 있다"), "bad");
         return;
       }
       const sv = this.surveyOf(spec.id);
       const best = sv.echo || 0, next = Math.min(ECHO.max, best + 1);
       const st = this.pulseStage(this.pulseOf(spec.id));
-      const bn = ENEMIES[spec.boss] ? ENEMIES[spec.boss].n : "주인";
+      const bn = ENEMIES[spec.boss] ? ENEMIES[spec.boss].n : tr("주인");
       const lines = [
-        "주인은 쓰러졌지만, 둥지는 아직 그 모양을 기억한다.",
-        "유적이 깨어 있으면 그 기억이 다시 일어선다.",
+        tr("주인은 쓰러졌지만, 둥지는 아직 그 모양을 기억한다."),
+        tr("유적이 깨어 있으면 그 기억이 다시 일어선다."),
         "",
-        `넘긴 메아리 ${best} / ${ECHO.max}` + (best < ECHO.max ? ` · 다음 ${next}단계 — ${bn} 체력·공격 ×${ECHO.mul(next).toFixed(2)}` + (next > 1 ? ` · 호위 ${next - 1}` : "") : " · 끝까지 넘겼다")
+        tr("넘긴 메아리 {best} / {max}", { best, max: ECHO.max }) + (best < ECHO.max ? ` ${tr("· 다음 {next}단계 — {bn} 체력·공격 ×{mul}", { next, bn, mul: ECHO.mul(next).toFixed(2) })}` + (next > 1 ? ` ${tr("· 호위 {n}", { n: next - 1 })}` : "") : ` ${tr("· 끝까지 넘겼다")}`)
       ];
       if (st < ECHO.needStage) {
-        lines.push("", `유적이 잠들어 있다 — 맥박이 「${PULSE.stages[ECHO.needStage].n}」에 닿아야 메아리가 대답한다.`);
-        UI.openLore(`${spec.n} — 빈 둥지`, lines, [{ t: "(물러난다)", fn: () => UI.closeDialogue() }]);
+        lines.push("", tr("유적이 잠들어 있다 — 맥박이 「{stages}」에 닿아야 메아리가 대답한다.", { stages: PULSE.stages[ECHO.needStage].n }));
+        UI.openLore(tr("{spec} — 빈 둥지", { spec: spec.n }), lines, [{ t: tr("(물러난다)"), fn: () => UI.closeDialogue() }]);
         this.sfx("open");
         return;
       }
@@ -40770,15 +41013,15 @@
       const lvs = best < ECHO.max ? [next] : [];
       if (best >= 1) lvs.push(best);
       for (const lv of lvs) choices.push({
-        t: `(메아리를 부른다 — ${lv}단계${lv > best ? " · 처음" : " · 다시"})`,
+        t: tr("(메아리를 부른다 — {lv}단계{v})", { lv, v: lv > best ? ` ${tr("· 처음")}` : ` ${tr("· 다시")}` }),
         quest: 1,
         fn: () => {
           UI.closeDialogue();
           this.summonEcho(o, spec, lv);
         }
       });
-      choices.push({ t: "(그냥 둔다)", fn: () => UI.closeDialogue() });
-      UI.openLore(`${spec.n} — 메아리`, lines, choices);
+      choices.push({ t: tr("(그냥 둔다)"), fn: () => UI.closeDialogue() });
+      UI.openLore(tr("{spec} — 메아리", { spec: spec.n }), lines, choices);
       this.sfx("open");
     },
     summonEcho(o, spec, lv) {
@@ -40797,7 +41040,7 @@
       }
       const here = this.pulseRuinAt(Math.floor((o.x + o.w / 2) / TS), Math.floor(o.y / TS));
       if (here && lv > 1) this.spawnRuinMobs(here, lv - 1);
-      this.toast(`메아리 ${lv}단계`, "bad");
+      this.toast(tr("메아리 {lv}단계", { lv }), "bad");
     },
     echoReward(spec, lv) {
       const p = this.player, sv = this.surveyOf(spec.id);
@@ -40815,9 +41058,9 @@
       const relic = RUIN_RELIC[spec.id];
       if (first && lv === ECHO.max && relic && ITEMS[relic]) {
         give(rollGear(relic, this.rng, 3));
-        this.toast(`마지막 메아리가 흩어졌다 — ${ITEMS[relic].n}`, "good");
+        this.toast(tr("마지막 메아리가 흩어졌다 — {item}", { item: ITEMS[relic].n }), "good");
       }
-      this.toast(`메아리 ${lv}단계를 넘겼다 — 금화 ${fmt(gold)}`, "good");
+      this.toast(tr("메아리 {lv}단계를 넘겼다 — 금화 {gold}", { lv, gold: fmt(gold) }), "good");
       this.sfx("manycoins");
       this.checkAch();
     },
@@ -40855,7 +41098,7 @@
       c.textBaseline = "middle";
       c.textAlign = "left";
       c.fillStyle = "#e8e0d0";
-      c.fillText("유적의 맥박", bx, y + 10);
+      c.fillText(tr("유적의 맥박"), bx, y + 10);
       c.textAlign = "right";
       c.fillStyle = S.c;
       c.fillText(S.n, bx + bw, y + 10);
@@ -40865,8 +41108,8 @@
         let prog = "";
         if (ev.k === "stones") prog = `${ev.stones.filter((q) => q.got).length}/3`;
         else if (ev.k === "hunt") prog = `${ev.marks.filter((e) => e.dead).length}/${ev.marks.length}`;
-        else if (ev.k === "siege") prog = `${ev.wave}/3 무리`;
-        else if (ev.k === "greed") prog = "상자";
+        else if (ev.k === "siege") prog = tr("{wave}/3 무리", { wave: ev.wave });
+        else if (ev.k === "greed") prog = tr("상자");
         const ey = y + 32;
         c.fillStyle = "rgba(12,9,16,0.72)";
         c.fillRect(x, ey, Wd, 24);
@@ -40879,7 +41122,7 @@
         c.fillText(`${E.i} ${E.n}  ${prog}`, x + 8, ey + 9);
         c.textAlign = "right";
         c.fillStyle = ev.t < 10 ? "#ff6a5a" : "#bdb49a";
-        c.fillText(`${Math.max(0, Math.ceil(ev.t))}초`, x + Wd - 8, ey + 9);
+        c.fillText(tr("{n}초", { n: Math.max(0, Math.ceil(ev.t)) }), x + Wd - 8, ey + 9);
       }
       c.restore();
       this.drawPulseEvent(c);
@@ -40953,7 +41196,7 @@
           this.tally = this.tally || {};
           if (!this.tally.dripHint) {
             this.tally.dripHint = 1;
-            this.toast("머리 위 종유석이 흔들린다 — 비켜라!", "bad");
+            this.toast(tr("머리 위 종유석이 흔들린다 — 비켜라!"), "bad");
           }
           break;
         }
@@ -41028,7 +41271,7 @@
       if (x < 0) return false;
       const p = this.player, pd = x - Math.floor(p.cx / TS);
       this.meteor = { t: 0, x, y: w.surface[x], R, dir: pd >= 0 ? 1 : -1, hit: false, quake: 0, amp: 0 };
-      this.toast("☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!", "bad");
+      this.toast(tr("☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!"), "bad");
       this.sfx("boss");
       return true;
     },
@@ -41079,13 +41322,13 @@
       const qx = clamp(bx, p.x, p.x + p.w), qy = clamp(by, p.y, p.y + p.h);
       if (Math.hypot(qx - bx, qy - by) < (R + 1) * TS && this.state === "play") {
         p.hp = 0;
-        this.toast("☄ 운석에 맞았다.", "bad");
+        this.toast(tr("☄ 운석에 맞았다."), "bad");
         this.onDeath("meteor");
         return;
       }
       const dx = cx - Math.floor(ptx);
-      const where = dist3 < 40 ? "바로 곁에" : `${dx >= 0 ? "동쪽" : "서쪽"}으로 ${Math.abs(dx)}칸 떨어진 곳에`;
-      this.toast(`☄ 운석이 ${where} 떨어졌다. 땅이 울린다.`, "bad");
+      const where = dist3 < 40 ? tr("바로 곁에") : tr("{v}으로 {dx}칸 떨어진 곳에", { v: dx >= 0 ? tr("동쪽") : tr("서쪽"), dx: Math.abs(dx) });
+      this.toast(tr("☄ 운석이 {where} 떨어졌다. 땅이 울린다.", { where }), "bad");
     },
     /** 운석 구덩이 — 있는 타일로만. */
     carveCrater(cx, cy, R) {
@@ -41293,7 +41536,7 @@
       f.done = 1;
       cells.sort((a, b) => Math.hypot(a[0] - tx, a[1] - ty) - Math.hypot(b[0] - tx, b[1] - ty));
       this.quake = { f, cells, t: 0, i: 0, old };
-      this.toast("자갈이 무너지자 땅이 울린다 — 물러서라!", "bad");
+      this.toast(tr("자갈이 무너지자 땅이 울린다 — 물러서라!"), "bad");
       this.shake = 22;
       this.sfx("sk_quake");
     },
@@ -41344,7 +41587,7 @@
       }
       this.tally = this.tally || {};
       this.tally.faults = (this.tally.faults || 0) + 1;
-      this.toast(`무너진 벽 너머에 ${iga(C.n)} 숨어 있었다`, "good");
+      this.toast(tr("무너진 벽 너머에 {C|이} 숨어 있었다", { C: C.n }), "good");
       this.sfx("chapter");
       this.checkAch();
     },
@@ -41389,18 +41632,18 @@
       if (!this.ruinMarks) this.ruinMarks = {};
       const r = this.world.ruins.find((q) => q.id === d.ruin);
       if (!r) {
-        this.toast("여기서는 쓸 수 없다", "bad");
+        this.toast(tr("여기서는 쓸 수 없다"), "bad");
         return;
       }
       if (this.ruinMarks[d.ruin]) {
-        this.toast("이미 자리를 안다");
+        this.toast(tr("이미 자리를 안다"));
         return;
       }
       this.ruinMarks[d.ruin] = 1;
       it.c--;
       if (it.c <= 0) p.bag[slot] = null;
       const spec = RUIN_SPEC.find((s) => s.id === d.ruin);
-      this.toast(`${spec ? spec.n : "유적"}의 자리를 알았다 — 나침반을 보라`, "good");
+      this.toast(tr("{v}의 자리를 알았다 — 나침반을 보라", { v: spec ? spec.n : tr("유적") }), "good");
       this.sfx("chapter");
       UI.refreshBag();
     },
@@ -41439,12 +41682,12 @@
         this.ruinDark = 16;
         this.shake = 10;
         this.sfx("chapter");
-        this.toast("불이 한꺼번에 꺼졌다", "bad");
+        this.toast(tr("불이 한꺼번에 꺼졌다"), "bad");
         this._ruinSpawn(e.ruin, 5, 150);
       } else if (e.ev === "swarm") {
         this.shake = 14;
         this.sfx("chapter");
-        this.toast("둥지가 깨어났다", "bad");
+        this.toast(tr("둥지가 깨어났다"), "bad");
         this._ruinSpawn(e.ruin, 8, 170);
       } else if (e.ev === "collapse") {
         const w = this.world, ty = Math.floor((p.y + p.h + 2) / TS);
@@ -41453,7 +41696,7 @@
           if (TILE_DEF[w.get(x, ty)].solid === 1) w.set(x, ty, T.CRUMBLE);
         this.shake = 18;
         this.sfx("chapter");
-        this.toast("발밑이 내려앉는다", "bad");
+        this.toast(tr("발밑이 내려앉는다"), "bad");
         for (let i = 0; i < 40; i++)
           this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 260, p.cy - 90, "#6a5a48", 40, 1.1));
         this._ruinSpawn(e.ruin, 3, 190);
@@ -41461,11 +41704,11 @@
         this.ruinSpore = 9;
         this.shake = 8;
         this.sfx("chapter");
-        this.toast("홀씨가 한꺼번에 터졌다", "bad");
+        this.toast(tr("홀씨가 한꺼번에 터졌다"), "bad");
         this._ruinSpawn(e.ruin, 5, 150);
       } else if (e.ev === "password") {
         const c = this.ruinCipher(e.ruin), K = c && CIPHER_KIND[c.kind];
-        this.toast(K ? `벽 너머에 빈 곳이 있다 — ${K.n}이다` : "벽 너머에 빈 곳이 있다");
+        this.toast(K ? tr("벽 너머에 빈 곳이 있다 — {K}이다", { K: K.n }) : tr("벽 너머에 빈 곳이 있다"));
         this.sfx("open");
       }
     },
@@ -41475,17 +41718,17 @@
       if (!m) return;
       const p = this.player;
       if (o.used) {
-        UI.openLore(m.n, ["한 번 쓰고 나면 아무 일도 일어나지 않는다."], []);
+        UI.openLore(m.n, [tr("한 번 쓰고 나면 아무 일도 일어나지 않는다.")], []);
         this.sfx("open");
         return;
       }
       const choices = [];
       const afford = !m.cost || p.gold >= m.cost;
       choices.push({
-        t: m.ask + (afford ? "" : " (금화가 모자란다)"),
+        t: m.ask + (afford ? "" : ` ${tr("(금화가 모자란다)")}`),
         fn: () => {
           if (!afford) {
-            this.toast("금화가 모자란다", "bad");
+            this.toast(tr("금화가 모자란다"), "bad");
             UI.closeDialogue();
             return;
           }
@@ -41520,22 +41763,22 @@
       const h = hashStr(ck);
       const K = CIPHER_KIND[kind];
       let ans = "", shown = "", notes = [];
-      const ord = ["첫", "둘째", "셋째"];
+      const ord = [tr("첫"), tr("둘째"), tr("셋째")];
       if (kind === "digits") {
         ans = String(100 + h % 900);
-        notes = ord.map((o, i) => [`${o} 홈`, [
-          "여기 새긴 것은 문을 여는 수의 한 자리다.",
-          "나머지는 다른 방에 나누어 적었다 — 한 사람이 다 알면 안 되었으므로.",
+        notes = ord.map((o, i) => [tr("{o} 홈", { o }), [
+          tr("여기 새긴 것은 문을 여는 수의 한 자리다."),
+          tr("나머지는 다른 방에 나누어 적었다 — 한 사람이 다 알면 안 되었으므로."),
           "",
-          `『${o} 자리는 ${ans[i]}』`
+          tr("『{o} 자리는 {ans}』", { o, ans: ans[i] })
         ]]);
       } else if (kind === "word") {
         ans = CIPHER_WORDS[h % CIPHER_WORDS.length];
-        notes = ord.map((o, i) => [`${o} 글자`, [
-          "문을 여는 것은 수가 아니라 말이다. 세 글자짜리 말.",
-          "우리는 그 말을 셋으로 끊어 서로 다른 방에 두었다.",
+        notes = ord.map((o, i) => [tr("{o} 글자", { o }), [
+          tr("문을 여는 것은 수가 아니라 말이다. 세 글자짜리 말."),
+          tr("우리는 그 말을 셋으로 끊어 서로 다른 방에 두었다."),
           "",
-          `『${o} 글자는 ${ans[i]}』`
+          tr("『{o} 글자는 {ans}』", { o, ans: ans[i] })
         ]]);
       } else {
         const base = 141 + h % 850;
@@ -41543,18 +41786,18 @@
         ans = String(base + k);
         shown = String(base).split("").reverse().join("");
         notes = [
-          ["거짓으로 새긴 것", [
-            "문설주의 수를 곧이곧대로 넣지 마라.",
-            "여기 사람들은 무엇이든 거꾸로 적는 버릇이 있었다."
+          [tr("거짓으로 새긴 것"), [
+            tr("문설주의 수를 곧이곧대로 넣지 마라."),
+            tr("여기 사람들은 무엇이든 거꾸로 적는 버릇이 있었다.")
           ]],
-          ["읽는 법", [
-            "새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다.",
-            "그러면 우리가 원래 적으려 한 수가 나온다."
+          [tr("읽는 법"), [
+            tr("새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다."),
+            tr("그러면 우리가 원래 적으려 한 수가 나온다.")
           ]],
-          ["마지막 한 걸음", [
-            "거꾸로 읽어 낸 수가 아직 답은 아니다.",
-            `거기에 ${eulreul(String(k))} 더해야 홈이 물린다.`,
-            "문지기가 하루에 한 번씩 더하던 수다."
+          [tr("마지막 한 걸음"), [
+            tr("거꾸로 읽어 낸 수가 아직 답은 아니다."),
+            tr("거기에 {k|을} 더해야 홈이 물린다.", { k: String(k) }),
+            tr("문지기가 하루에 한 번씩 더하던 수다.")
           ]]
         ];
       }
@@ -41569,7 +41812,7 @@
       (this.cipherSeen[o.ruin] = this.cipherSeen[o.ruin] || {})[o.idx] = 1;
       const seen = Object.keys(this.cipherSeen[o.ruin]).length;
       const lines = nt[1].slice();
-      lines.push("", `— 이 유적에서 찾은 쪽지 ${seen}/3`);
+      lines.push("", tr("— 이 유적에서 찾은 쪽지 {seen}/3", { seen }));
       UI.openLore(nt[0], lines, []);
       this.sfx("open");
     },
@@ -41582,7 +41825,7 @@
     },
     openCodeDoor(o) {
       if (o.opened) {
-        this.toast("이미 열려 있다");
+        this.toast(tr("이미 열려 있다"));
         return;
       }
       const el = $("#code-screen"), inp = $("#code-input"), msg = $("#code-msg");
@@ -41591,14 +41834,14 @@
       inp.value = "";
       msg.textContent = "";
       msg.classList.remove("ok");
-      $("#code-title").textContent = K ? K.n : "돌판의 홈";
-      $("#code-door").textContent = K ? K.door : "홈이 셋.";
+      $("#code-title").textContent = K ? K.n : tr("돌판의 홈");
+      $("#code-door").textContent = K ? K.door : tr("홈이 셋.");
       const seen = (this.cipherSeen || {})[o.ruin] || {};
-      $("#code-hint").textContent = `유적 안에 흩어진 쪽지 셋이 답을 나눠 들고 있다 (찾은 것 ${Object.keys(seen).length}/3)`;
+      $("#code-hint").textContent = tr("유적 안에 흩어진 쪽지 셋이 답을 나눠 들고 있다 (찾은 것 {keysCount}/3)", { keysCount: Object.keys(seen).length });
       const carved = $("#code-carved");
       if (c && c.shown) {
         carved.hidden = false;
-        carved.textContent = `문설주에 새긴 것 — ${c.shown}`;
+        carved.textContent = tr("문설주에 새긴 것 — {shown}", { shown: c.shown });
       } else carved.hidden = true;
       inp.maxLength = c ? c.len : 3;
       inp.placeholder = c && !c.numeric ? "○○○" : "000";
@@ -41644,31 +41887,31 @@
       const K = c ? CIPHER_KIND[c.kind] : null;
       const got = inp.value.replace(/\s/g, "");
       if (!c) {
-        msg.textContent = "이 문은 여기서 열 수 없다";
+        msg.textContent = tr("이 문은 여기서 열 수 없다");
         return;
       }
       if (got.length < c.len) {
         msg.classList.remove("ok");
-        msg.textContent = `${eulreul(K.ask)} 다 넣어야 한다`;
+        msg.textContent = tr("{ask|을} 다 넣어야 한다", { ask: K.ask });
         return;
       }
       if (got !== c.ans) {
         msg.classList.remove("ok");
-        msg.textContent = "맞지 않는다 — 홈이 그대로다";
+        msg.textContent = tr("맞지 않는다 — 홈이 그대로다");
         inp.value = "";
         inp.focus();
         this.sfx("mine");
         return;
       }
       msg.classList.add("ok");
-      msg.textContent = "맞물리는 소리가 났다";
+      msg.textContent = tr("맞물리는 소리가 났다");
       o.opened = true;
       if (w.openVaultAt) w.openVaultAt(o.dx, o.dy);
       w.openCodeDoorway(o.dx, o.dy);
       for (let i = 0; i < 30; i++)
         this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, "#ffe08a", -30, 1.1));
       this.shake = 10;
-      this.toast("맞물리는 소리가 났다", "good");
+      this.toast(tr("맞물리는 소리가 났다"), "good");
       this.sfx("chapter");
       setTimeout(() => this.closeCodeDoor(), 700);
     },
@@ -41686,7 +41929,7 @@
       const card = RUIN_CARD[r.id];
       const spec = RUIN_SPEC.find((s) => s.id === r.id);
       const st = /^story(\d)$/.exec(r.id);
-      const name = spec ? spec.n : st && STORY_RUIN[+st[1]] && STORY_RUIN[+st[1]].n || "이름 없는 유적";
+      const name = spec ? spec.n : st && STORY_RUIN[+st[1]] && STORY_RUIN[+st[1]].n || tr("이름 없는 유적");
       if (card) UI.chapterCard({ sub: card.sub, title: name, line: card.line });
       this.sfx("chapter");
     },
@@ -42414,30 +42657,30 @@
           c.lineWidth = 1.5;
           c.strokeRect(o.x - camX - 2.5, o.y - camY - 2.5, o.w + 5, o.h + 5);
           c.lineWidth = 1;
-          const label = o.type === "door" ? o.closed ? "문 열기" : "문 닫기" : {
-            chest: "상자 열기",
-            workbench: "작업대",
-            forge: "용광로",
-            npc: "대화",
-            altar: "제단",
-            vault: "보관고",
-            board: "의뢰 게시판",
-            reforge: "재련대",
-            waystone: "귀환 비석",
-            inn: "여관",
-            terminal: "단말 읽기",
-            lorestone: "비문 읽기",
-            tablet: "석판 읽기",
-            lair: "둥지",
-            seal: "봉인문",
-            ciphernote: "쪽지 읽기",
-            codedoor: "잠긴 홈"
+          const label = o.type === "door" ? o.closed ? tr("문 열기") : tr("문 닫기") : {
+            chest: tr("상자 열기"),
+            workbench: tr("작업대"),
+            forge: tr("용광로"),
+            npc: tr("대화"),
+            altar: tr("제단"),
+            vault: tr("보관고"),
+            board: tr("의뢰 게시판"),
+            reforge: tr("재련대"),
+            waystone: tr("귀환 비석"),
+            inn: tr("여관"),
+            terminal: tr("단말 읽기"),
+            lorestone: tr("비문 읽기"),
+            tablet: tr("석판 읽기"),
+            lair: tr("둥지"),
+            seal: tr("봉인문"),
+            ciphernote: tr("쪽지 읽기"),
+            codedoor: tr("잠긴 홈")
           }[o.type];
           if (label) {
             c.fillStyle = "#e8dcc0";
             c.font = '11px "Pretendard",sans-serif';
             c.textAlign = "center";
-            c.fillText(label + " (우클릭)", o.x - camX + o.w / 2, o.y - camY - 12);
+            c.fillText(label + ` ${tr("(우클릭)")}`, o.x - camX + o.w / 2, o.y - camY - 12);
           }
         }
       }
@@ -42584,7 +42827,12 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
+  if (!I18N.isSource) {
+    I18N.applyTables(Object.assign({}, size_exports, data_exports, world_exports, factory_exports));
+    localizeDom(document.documentElement);
+    document.documentElement.lang = LANG;
+  }
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports2, factory_exports, ui_exports, music_exports2, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

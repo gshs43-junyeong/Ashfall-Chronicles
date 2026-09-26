@@ -1,11 +1,12 @@
 /* ===== ui.js — DOM 인터페이스 ===== */
 import { app as G, bindUI } from './ctx.js';
 import { TAU, clamp } from '../engine/core/math.js';
-import { eulreul, iga, josaRo } from '../engine/i18n/ko.js';
+import { eulreul } from '../engine/i18n/ko.js';
 import { createPanels } from '../engine/ui/panels.js';
 import { makeSlot, paintSlot, setIcon } from '../engine/ui/slots.js';
 import { createTooltip } from '../engine/ui/tooltip.js';
 import { fmt, pad2 } from './util.js';
+import { tr } from './lang.js';
 import { SURF_BASE, WH, WW } from './size.js';
 import { ACHIEVEMENTS, ACH_CAT, ACH_TIER, BOSS_TIER, BRANCHES, BUFFS, CHAPTERS, ECHO, FUEL, ITEMS, KEY_ACTIONS,
   MACHINE, MRECIPES, MULTI_FALLOFF, NOTICE_KINDS, NPCS, PETS, PET_LV_MAX, PROFS, PROF_MAX, PULSE, RARITY,
@@ -86,15 +87,15 @@ export const UI = {
       trash.addEventListener('mousedown', e => {
         e.preventDefault();
         if (this.cursor) this.discardCursor();
-        else this.toast('버릴 아이템을 먼저 집어야 한다 (칸을 클릭)');
+        else this.toast(tr('버릴 아이템을 먼저 집어야 한다 (칸을 클릭)'));
       });
-      trash.addEventListener('mouseenter', e => { this.tipText('휴지통', '커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기', e); });
+      trash.addEventListener('mouseenter', e => { this.tipText(tr('휴지통'), tr('커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기'), e); });
       trash.addEventListener('mouseleave', () => this.hideTip());
     }
     const sortBtn = $('#btn-sort-bag');
     if (sortBtn) {
       sortBtn.addEventListener('click', () => this.sortBag());
-      sortBtn.addEventListener('mouseenter', e => this.tipText('가방 정리', '같은 것끼리 합치고 종류·등급 순으로 정렬합니다. 잠근 물건은 자리를 지킵니다.', e));
+      sortBtn.addEventListener('mouseenter', e => this.tipText(tr('가방 정리'), tr('같은 것끼리 합치고 종류·등급 순으로 정렬합니다. 잠근 물건은 자리를 지킵니다.'), e));
       sortBtn.addEventListener('mouseleave', () => this.hideTip());
     }
     const depBtn = $('#btn-vault-deposit'), wdBtn = $('#btn-vault-withdraw');
@@ -104,24 +105,24 @@ export const UI = {
   /* ---------------- 보관고 금화 ---------------- */
   depositGold() {
     const p = G.player;
-    if (p.gold <= 0) { this.toast('가진 금화가 없다', 'bad'); return; }
-    const raw = prompt(`보관고에 넣을 금화 (최대 ${p.gold})`, p.gold);
+    if (p.gold <= 0) { this.toast(tr('가진 금화가 없다'), 'bad'); return; }
+    const raw = prompt(tr('보관고에 넣을 금화 (최대 {gold})', { gold: p.gold }), p.gold);
     if (raw === null) return;
     const amt = Math.floor(+raw);
-    if (!amt || amt <= 0 || amt > p.gold) { this.toast('넣을 수 없는 금액이다', 'bad'); return; }
+    if (!amt || amt <= 0 || amt > p.gold) { this.toast(tr('넣을 수 없는 금액이다'), 'bad'); return; }
     p.gold -= amt; G.vaultGold += amt;
     this.refreshVault(); G.sfx('coin');
-    this.toast(`금화 ${fmt(amt)}개를 보관했다`, 'good');
+    this.toast(tr('금화 {amt}개를 보관했다', { amt: fmt(amt) }), 'good');
   },
   withdrawGold() {
-    if (G.vaultGold <= 0) { this.toast('보관된 금화가 없다', 'bad'); return; }
-    const raw = prompt(`보관고에서 뺄 금화 (최대 ${G.vaultGold})`, G.vaultGold);
+    if (G.vaultGold <= 0) { this.toast(tr('보관된 금화가 없다'), 'bad'); return; }
+    const raw = prompt(tr('보관고에서 뺄 금화 (최대 {vaultGold})', { vaultGold: G.vaultGold }), G.vaultGold);
     if (raw === null) return;
     const amt = Math.floor(+raw);
-    if (!amt || amt <= 0 || amt > G.vaultGold) { this.toast('뺄 수 없는 금액이다', 'bad'); return; }
+    if (!amt || amt <= 0 || amt > G.vaultGold) { this.toast(tr('뺄 수 없는 금액이다'), 'bad'); return; }
     G.vaultGold -= amt; G.player.gold += amt;
     this.refreshVault(); G.sfx('coin');
-    this.toast(`금화 ${fmt(amt)}개를 꺼냈다`, 'good');
+    this.toast(tr('금화 {amt}개를 꺼냈다', { amt: fmt(amt) }), 'good');
   },
   /* ---------------- 설정 (일시정지 화면) ---------------- */
   bindSettings() {
@@ -150,7 +151,7 @@ export const UI = {
     if (kr) kr.addEventListener('click', () => {
       if (!G.settings) return;
       G.settings.keys = null; G.applySettings(); G.saveSettings();
-      this.buildKeys(); this.toast('조작키를 기본값으로 되돌렸다');
+      this.buildKeys(); this.toast(tr('조작키를 기본값으로 되돌렸다'));
     });
 
     const r = $('#set-reset');
@@ -158,7 +159,7 @@ export const UI = {
       G.settings = Object.assign({}, SET_DEFAULT);
       G.applySettings(); G.saveSettings();
       this.buildNotices(); this.buildKeys();
-      this.toast('설정을 기본값으로 되돌렸다');
+      this.toast(tr('설정을 기본값으로 되돌렸다'));
     });
 
     /* ---- 저장 내보내기 / 가져오기 ---- */
@@ -171,7 +172,7 @@ export const UI = {
         const f = imf.files && imf.files[0]; if (!f) return;
         const rd = new FileReader();
         rd.onload = () => G.importSaves(rd.result);
-        rd.onerror = () => this.toast('파일을 읽지 못했다', 'bad');
+        rd.onerror = () => this.toast(tr('파일을 읽지 못했다'), 'bad');
         rd.readAsText(f);
       });
     }
@@ -209,15 +210,15 @@ export const UI = {
       `<button class="keybtn" data-act="${a.id}">${G.keysFor(a.id).map(label).join(' · ')}</button></div>`).join('');
     box.querySelectorAll('.keybtn').forEach(btn => btn.addEventListener('click', () => {
       if (this.keyWait) return;
-      btn.classList.add('waiting'); btn.textContent = '키를 누르세요…';
+      btn.classList.add('waiting'); btn.textContent = tr('키를 누르세요…');
       this.keyWait = { act: btn.dataset.act, btn };
     }));
   },
   /** 키 코드 → 화면에 적을 이름(설정 창 · 화면 아래 탭 단추가 같이 쓴다) */
   keyLabel(c) {
     const ARROW = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
-    const NAMED = { ShiftLeft: 'Shift(왼)', ShiftRight: 'Shift(오)', ControlLeft: 'Ctrl(왼)',
-      ControlRight: 'Ctrl(오)', AltLeft: 'Alt(왼)', AltRight: 'Alt(오)', Space: 'Space' };
+    const NAMED = { ShiftLeft: tr('Shift(왼)'), ShiftRight: tr('Shift(오)'), ControlLeft: tr('Ctrl(왼)'),
+      ControlRight: tr('Ctrl(오)'), AltLeft: tr('Alt(왼)'), AltRight: tr('Alt(오)'), Space: 'Space' };
     return ARROW[c] || NAMED[c] || c.replace(/^Key/, '').replace(/^Digit/, '');
   },
   /* ---- 화면 아래 탭 단추 ---- */
@@ -355,7 +356,7 @@ export const UI = {
     if (ctrl && btn === 0) {
       const it = p.bag[i]; if (!it) return;
       it.lk = it.lk ? 0 : 1;
-      this.toast(it.lk ? `${itemName(it)} 잠금` : `${itemName(it)} 잠금 해제`);
+      this.toast(it.lk ? tr('{itemName} 잠금', { itemName: itemName(it) }) : tr('{itemName} 잠금 해제', { itemName: itemName(it) }));
       this.refreshBag(); return;
     }
     if (shift && btn === 0) { this.discardSlot(i); return; }   // Shift+좌클릭: 즉시 버리기
@@ -365,8 +366,8 @@ export const UI = {
       const d = idef(it);
       if (d.type === 'consum') { G.useConsumable(i); }
       else if (d.type === 'summon') { G.useSummon(i); }
-      else if (d.type === 'tool') { this.toast('도구는 핫바에 두고 좌클릭으로 사용한다'); }
-      else if (d.type === 'rod') { this.toast('낚싯대는 핫바에 두고 물가에서 우클릭한다'); }
+      else if (d.type === 'tool') { this.toast(tr('도구는 핫바에 두고 좌클릭으로 사용한다')); }
+      else if (d.type === 'rod') { this.toast(tr('낚싯대는 핫바에 두고 물가에서 우클릭한다')); }
       else if (isGear(it)) { p.equipFrom(i); this.refreshBag(); this.refreshEquip(); this.refreshStatSheet(); G.sfx('equip'); }
       this.refreshBag();
       return;
@@ -384,8 +385,8 @@ export const UI = {
   discardSlot(i) {
     const p = G.player, it = p.bag[i];
     if (!it) return;
-    if (it.lk) { this.toast('잠긴 물건이다 (Ctrl+좌클릭으로 해제)', 'bad'); return; }
-    this.toast(`버렸다: ${itemName(it)}${it.c > 1 ? ' ×' + it.c : ''}`, 'bad');
+    if (it.lk) { this.toast(tr('잠긴 물건이다 (Ctrl+좌클릭으로 해제)'), 'bad'); return; }
+    this.toast(tr('버렸다: {itemName}{v}', { itemName: itemName(it), v: it.c > 1 ? ' ×' + it.c : '' }), 'bad');
     p.bag[i] = null;
     this.refreshBag();
     G.sfx('place');
@@ -422,12 +423,12 @@ export const UI = {
     p.bag = out;
     this.refreshBag(); this.refreshHotbar();
     G.sfx('place');
-    this.toast('가방을 정리했다');
+    this.toast(tr('가방을 정리했다'));
   },
   /** 휴지통에 커서 아이템을 놓으면 전량 삭제 */
   discardCursor() {
     if (!this.cursor) return;
-    this.toast(`버렸다: ${itemName(this.cursor)}${this.cursor.c > 1 ? ' ×' + this.cursor.c : ''}`, 'bad');
+    this.toast(tr('버렸다: {itemName}{v}', { itemName: itemName(this.cursor), v: this.cursor.c > 1 ? ' ×' + this.cursor.c : '' }), 'bad');
     this.setCursor(null);
     G.sfx('place');
   },
@@ -459,7 +460,7 @@ export const UI = {
             (d.type === 'util' && key.startsWith('util')) ||
             (d.type === 'bag' && key === 'bag');
           if (!ok) return;
-          if (p.level < equipReqLv(this.cursor.id)) { G.toast(`레벨 ${equipReqLv(this.cursor.id)} 필요`, 'bad'); return; }
+          if (p.level < equipReqLv(this.cursor.id)) { G.toast(tr('레벨 {equipReqLv} 필요', { equipReqLv: equipReqLv(this.cursor.id) }), 'bad'); return; }
           const old = p.equip[key]; p.equip[key] = this.cursor; this.setCursor(old);
         } else {
           const old = p.equip[key]; if (!old) return;
@@ -486,20 +487,20 @@ export const UI = {
     const w = p.equip.weapon;
     const wd = w && idef(w).dmg ? Math.round(p.scaleDmg(itemDamage(w), idef(w).wc === 'melee' ? 'str' : idef(w).wc === 'ranged' ? 'dex' : 'int')) : '—';
     $('#stat-sheet').innerHTML = `
-      <h4>기본</h4>
-      힘<span class="sv">${d.str}</span><br>민첩<span class="sv">${d.dex}</span><br>
-      지능<span class="sv">${d.int}</span><br>체력<span class="sv">${d.vit}</span>
-      <h4>전투</h4>
-      공격력<span class="sv">${wd}</span><br>
-      방어<span class="sv">${d.def}</span><br>
-      치명<span class="sv">${d.crit.toFixed(1)}%</span><br>
-      치명피해<span class="sv">${Math.round(d.critD)}%</span><br>
-      흡혈<span class="sv">${d.lifesteal.toFixed(0)}%</span><br>
-      쿨감<span class="sv">${Math.round(d.cdr)}%</span><br>
-      이동<span class="sv">${Math.round(d.ms)}</span>
-      <h4>잠수</h4>
-      숨<span class="sv">${d.oxyMax}초</span><br>
-      숨 회복<span class="sv">${(d.oxyReg || 1).toFixed(1)}배</span>`;
+      <h4>${tr('기본')}</h4>
+      ${tr('힘')}<span class="sv">${d.str}</span><br>${tr('민첩')}<span class="sv">${d.dex}</span><br>
+      ${tr('지능')}<span class="sv">${d.int}</span><br>${tr('체력')}<span class="sv">${d.vit}</span>
+      <h4>${tr('전투')}</h4>
+      ${tr('공격력')}<span class="sv">${wd}</span><br>
+      ${tr('방어')}<span class="sv">${d.def}</span><br>
+      ${tr('치명')}<span class="sv">${d.crit.toFixed(1)}%</span><br>
+      ${tr('치명피해')}<span class="sv">${Math.round(d.critD)}%</span><br>
+      ${tr('흡혈')}<span class="sv">${d.lifesteal.toFixed(0)}%</span><br>
+      ${tr('쿨감')}<span class="sv">${Math.round(d.cdr)}%</span><br>
+      ${tr('이동')}<span class="sv">${Math.round(d.ms)}</span>
+      <h4>${tr('잠수')}</h4>
+      ${tr('숨')}<span class="sv">${tr('{oxyMax}초', { oxyMax: d.oxyMax })}</span><br>
+      ${tr('숨 회복')}<span class="sv">${tr('{v}배', { v: (d.oxyReg || 1).toFixed(1) })}</span>`;
   },
 
   /* ---------------- 스킬바 ---------------- */
@@ -528,7 +529,7 @@ export const UI = {
 
   /* ---------------- 스탯 분배 ---------------- */
   buildStatAlloc() {
-    const defs = [['str', '힘', '근접 피해'], ['dex', '민첩', '원거리 · 치명'], ['int', '지능', '마법 · 마나'], ['vit', '체력', '생명 · 방어']];
+    const defs = [['str', tr('힘'), tr('근접 피해')], ['dex', tr('민첩'), tr('원거리 · 치명')], ['int', tr('지능'), tr('마법 · 마나')], ['vit', tr('체력'), tr('생명 · 방어')]];
     const box = $('#stat-alloc'); box.innerHTML = '';
     for (const [k, n, dsc] of defs) {
       const el = document.createElement('div');
@@ -578,8 +579,8 @@ export const UI = {
     /* 규칙을 한 줄로 적어 둔다. */
     const note = document.createElement('div');
     note.className = 'bnote';
-    note.innerHTML = '점선은 <b>갈래를 건너는 길</b> — 이어진 칸을 하나라도 배우면 열립니다. ' +
-      '단을 여는 점수는 다른 갈래에 찍은 것도 <b>절반</b>이 쌓입니다.';
+    note.innerHTML = `${tr('점선은 <b>갈래를 건너는 길</b> — 이어진 칸을 하나라도 배우면 열립니다.')} ` +
+      tr('단을 여는 점수는 다른 갈래에 찍은 것도 <b>절반</b>이 쌓입니다.');
     w.appendChild(note);
 
     const grid = document.createElement('div');
@@ -666,10 +667,10 @@ export const UI = {
       for (const br of BRANCHES) if (br.id === sk.br)
         for (const q of br.nodes) own += G.player.skills[q] || 0;
       const lend = have - own;
-      return `이 갈래에 ${need}점 필요 (지금 ${have}` +
-        (lend > 0 ? ` = 제 갈래 ${own} + 다른 갈래 ${lend}` : '') + ')';
+      return tr('이 갈래에 {need}점 필요 (지금 {have}', { need, have }) +
+        (lend > 0 ? ` ${tr('= 제 갈래 {own} + 다른 갈래 {lend}', { own, lend })}` : '') + ')';
     }
-    if (!this.reqMet(id)) { const nm = sk.req.map(r => SKILLS[r].n).join(' 또는 '); return '윗단계 ' + eulreul(nm) + ' 먼저'; }
+    if (!this.reqMet(id)) { const nm = sk.req.map(r => SKILLS[r].n).join(` ${tr('또는')} `); return `${tr('윗단계')} ` + eulreul(nm) + ` ${tr('먼저')}`; }
     return '';
   },
   skDesc(id, rank) {
@@ -684,17 +685,17 @@ export const UI = {
   showSkillTip(id, e) {
     const p = G.player, sk = SKILLS[id], rank = p.skills[id] || 0;
     const why = this.lockReason(id);
-    const kind = sk.type === 'active' ? '액티브' : '패시브';
+    const kind = sk.type === 'active' ? tr('액티브') : tr('패시브');
     let h = `<div class="tname c${rank > 0 ? 3 : 0}">${sk.n}</div>`;
-    h += `<div class="tmeta">${kind} · ${rank}/${sk.max} 랭크` +
-      (sk.type === 'active' ? ` · 마나 ${sk.mana} · 재사용 ${sk.cd}초` : '') + `</div>`;
+    h += `<div class="tmeta">${tr('{kind} · {rank}/{max} 랭크', { kind, rank, max: sk.max })}` +
+      (sk.type === 'active' ? ` ${tr('· 마나 {mana} · 재사용 {cd}초', { mana: sk.mana, cd: sk.cd })}` : '') + `</div>`;
     h += `<div class="tdesc">${this.skDesc(id, rank)}</div>`;
     if (rank > 0 && rank < sk.max)
-      h += `<div class="tnext">다음 랭크 — ${this.skDesc(id, rank + 1)}</div>`;
+      h += `<div class="tnext">${tr('다음 랭크 — {skDesc}', { skDesc: this.skDesc(id, rank + 1) })}</div>`;
     if (why) h += `<div class="tbad">${why}</div>`;
-    else if (rank >= sk.max) h += `<div class="tdim">최대 랭크</div>`;
-    else if (p.skillPts <= 0) h += `<div class="tbad">특성 포인트가 없다</div>`;
-    else h += `<div class="tgood">좌클릭으로 습득${sk.type === 'active' ? ' · 우클릭으로 슬롯 등록' : ''}</div>`;
+    else if (rank >= sk.max) h += `<div class="tdim">${tr('최대 랭크')}</div>`;
+    else if (p.skillPts <= 0) h += `<div class="tbad">${tr('특성 포인트가 없다')}</div>`;
+    else h += `<div class="tgood">${tr('좌클릭으로 습득{v}', { v: sk.type === 'active' ? ` ${tr('· 우클릭으로 슬롯 등록')}` : '' })}</div>`;
     this.tip.show(h, e.clientX, e.clientY);
     this.tipTarget = true;
   },
@@ -729,8 +730,8 @@ export const UI = {
 
   learn(id) {
     const p = G.player, sk = SKILLS[id];
-    if (p.skillPts <= 0) { this.toast('특성 포인트가 없다', 'bad'); return; }
-    if ((p.skills[id] || 0) >= sk.max) { this.toast('이미 최대 랭크다', 'bad'); return; }
+    if (p.skillPts <= 0) { this.toast(tr('특성 포인트가 없다'), 'bad'); return; }
+    if ((p.skills[id] || 0) >= sk.max) { this.toast(tr('이미 최대 랭크다'), 'bad'); return; }
     const why = this.lockReason(id);
     if (why) { this.toast(why, 'bad'); return; }
     p.skillPts--; p.skills[id] = (p.skills[id] || 0) + 1;
@@ -739,7 +740,7 @@ export const UI = {
       if (empty >= 0) p.slots[empty] = id;
     }
     p.recalc();
-    this.toast(`${sk.n} 습득 (${p.skills[id]}/${sk.max})`, 'good');
+    this.toast(tr('{sk} 습득 ({skills}/{max})', { sk: sk.n, skills: p.skills[id], max: sk.max }), 'good');
     G.sfx('learn');
     this.refreshTree(); this.refreshSkillSlots(); this.refreshSkillbar(); this.refreshStatSheet();
     this.flashNode(id);
@@ -828,9 +829,9 @@ export const UI = {
       const pr = (p.prof && p.prof[k]) || { lv: 1, xp: 0 };
       const capped = pr.lv >= PROF_MAX;
       const need = capped ? 1 : profNeed(pr.lv);
-      el.querySelector('.plv').textContent = capped ? `Lv ${PROF_MAX} · 끝` : `Lv ${pr.lv}`;
+      el.querySelector('.plv').textContent = capped ? tr('Lv {profMax} · 끝', { profMax: PROF_MAX }) : `Lv ${pr.lv}`;
       el.querySelector('.pbar i').style.width = (capped ? 100 : Math.min(100, pr.xp / need * 100)) + '%';
-      el.querySelector('.pxp').textContent = capped ? '더 오를 곳이 없다' : `${pr.xp} / ${need}`;
+      el.querySelector('.pxp').textContent = capped ? tr('더 오를 곳이 없다') : `${pr.xp} / ${need}`;
       el.querySelector('.plin').innerHTML = P.lin
         .map(([n, f]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join('');
       el.querySelector('.pperks').innerHTML = P.perks.map(([at, n, dsc]) =>
@@ -846,9 +847,9 @@ export const UI = {
     /* 창 하나에 탭 둘. */
     const done = Object.keys(g.achievements || {}).length;
     const topTabs = `<div class="qtabs">` +
-      `<button class="qtab${this.questTab === 'journey' ? ' on' : ''}" data-qtab="journey">여정</button>` +
-      `<button class="qtab${this.questTab === 'ach' ? ' on' : ''}" data-qtab="ach">업적 <b>${done}/${ACHIEVEMENTS.length}</b></button>` +
-      `<button class="qtab${this.questTab === 'ruins' ? ' on' : ''}" data-qtab="ruins">유적</button>` +
+      `<button class="qtab${this.questTab === 'journey' ? ' on' : ''}" data-qtab="journey">${tr('여정')}</button>` +
+      `<button class="qtab${this.questTab === 'ach' ? ' on' : ''}" data-qtab="ach">${tr('업적 <b>{done}/{achievementsCount}</b>', { done, achievementsCount: ACHIEVEMENTS.length })}</button>` +
+      `<button class="qtab${this.questTab === 'ruins' ? ' on' : ''}" data-qtab="ruins">${tr('유적')}</button>` +
       `</div>`;
     if (this.questTab === 'ach') { this.renderAch(topTabs); return; }
     if (this.questTab === 'ruins') { this.renderRuins(topTabs); return; }
@@ -875,8 +876,8 @@ export const UI = {
       {
         const clearedN = chapterBlock.chapters.filter(ch => ch.id < g.chapter).length;
         const totalN = chapterBlock.chapters.length;
-        h += `<div class="session-note">전 <b>${totalN}개 장</b>` +
-          (clearedN >= totalN ? ' — 전부 지났다.' : ` · <b>${clearedN}개</b> 완료`) +
+        h += `<div class="session-note">${tr('전 <b>{totalN}개 장</b>', { totalN })}` +
+          (clearedN >= totalN ? ` ${tr('— 전부 지났다.')}` : ` ${tr('· <b>{clearedN}개</b> 완료', { clearedN })}`) +
           `</div>`;
       }
       for (const ch of chapterBlock.chapters) {
@@ -885,32 +886,32 @@ export const UI = {
         const sub = ch.sub.replace(/^세션\s*\d+\s*·\s*/, '');
         /* 아직 안 열린 장은 **제목도 가린다.** — 사연: docs/code-history.md#h94 */
         const titleText = state === 'locked' ? `${sub} · ???` : `${sub} · ${ch.title}`;
-        h += `<div class="chap ${state}"><div class="chap-badge ${state}">${state === 'done' ? '완료' : state === 'cur' ? '진행 중' : '대기'}</div><h3>${titleText}</h3>`;
+        h += `<div class="chap ${state}"><div class="chap-badge ${state}">${state === 'done' ? tr('완료') : state === 'cur' ? tr('진행 중') : tr('대기')}</div><h3>${titleText}</h3>`;
         if (state !== 'locked') {
           /* 끝낸 장은 도입부와 뒷이야기를 **둘 다** 남긴다 — 사연: docs/code-history.md#h95 */
           const para = t => (t || '').split('\n\n').map(s =>
             `<p>${s.trim().replace(/\n/g, '<br>')}</p>`).join('');
           h += `<div class="cdesc">${para(ch.intro)}`;
           if (state === 'done') {
-            h += `<div class="cdesc-sep">그 뒤</div>${para(ch.outro)}`;
+            h += `<div class="cdesc-sep">${tr('그 뒤')}</div>${para(ch.outro)}`;
             if (ch.hook) h += `<p class="cdesc-hook">◆ ${ch.hook}</p>`;
           }
           h += '</div>';
           /* 목록은 여기(일지)에만 편다. */
           if (state === 'cur') {
             const st = g.chapterState(ch);
-            h += `<div class="obj-head">준비 <b>${st.done}/${st.need}</b>` +
-              (st.missing.length ? ' · <em>이 장의 일이 남았다</em>' : '') + '</div>';
+            h += `<div class="obj-head">${tr('준비 <b>{done}/{need}</b>', { done: st.done, need: st.need })}` +
+              (st.missing.length ? ` ${tr('· <em>이 장의 일이 남았다</em>')}` : '') + '</div>';
             /* ★ 제목은 이야기, 부제는 과제. */
             for (const b of st.basics) {
               const must = (ch.require || []).includes(b.o.verb);
               h += `<div class="obj ${b.p.done ? 'ok' : ''}${must ? ' must' : ''}">` +
-                `${b.p.done ? '✔' : '◆'} ${must ? '<span class="objreq">필수</span> ' : ''}${b.o.t}` +
+                `${b.p.done ? '✔' : '◆'} ${must ? `<span class="objreq">${tr('필수')}</span> ` : ''}${b.o.t}` +
                 `<span class="obj-task">${b.o.task || ''} <b>${b.p.label || b.p.cur + '/' + b.p.max}</b></span></div>`;
             }
             if (st.goal) {
               const gp = st.goal.p, go = st.goal.o;
-              h += `<div class="obj-head">목표</div>`;
+              h += `<div class="obj-head">${tr('목표')}</div>`;
               h += `<div class="obj goal ${gp.done ? 'ok' : ''}${st.ready ? '' : ' locked'}">` +
                 `${gp.done ? '✔' : (st.ready ? '◆' : '🔒')} ${go.t}` +
                 `<span class="obj-task">${go.task || ''} <b>${gp.cur}/${gp.max}</b></span></div>`;
@@ -923,7 +924,7 @@ export const UI = {
     }
 
     // 부탁(사이드 퀘스트)
-    let sh = '<div class="side-head">사람들의 부탁</div>';
+    let sh = `<div class="side-head">${tr('사람들의 부탁')}</div>`;
     const sideNpcIds = Object.keys(NPCS).filter(k => SIDE_POOL[k]);
     let hasActive = false;
     for (const id of sideNpcIds) {
@@ -932,21 +933,21 @@ export const UI = {
       hasActive = true;
       const done = G.sideDone[id] || 0;
       const p = G.sideProgress(active);
-      sh += `<div class="side-npc"><b>${NPCS[id].n}</b><span class="side-done">완료 ${done}건</span>`;
+      sh += `<div class="side-npc"><b>${NPCS[id].n}</b><span class="side-done">${tr('완료 {done}건', { done })}</span>`;
       const sp = G.sidePay(active);
       sh += `<div class="side-q ${p.done ? 'ok' : ''}">${active.title} — ${active.desc} <b>${p.cur}/${p.max}</b>` +
-        `<span class="side-rw">🪙 ${fmt(sp.gold)} · 경험치 ${fmt(sp.xp)}</span></div>`;
+        `<span class="side-rw">${tr('🪙 {gold} · 경험치 {xp}', { gold: fmt(sp.gold), xp: fmt(sp.xp) })}</span></div>`;
       sh += '</div>';
     }
-    if (!hasActive) sh += '<div class="side-q empty">지금 맡아 둔 부탁이 없다.</div>';
+    if (!hasActive) sh += `<div class="side-q empty">${tr('지금 맡아 둔 부탁이 없다.')}</div>`;
     /* 게시판에 붙은 종이도 일지에서 보인다 — 사연: docs/code-history.md#h96 */
     if ((G.bounties || []).length) {
-      sh += '<div class="side-head">의뢰 게시판</div>';
+      sh += `<div class="side-head">${tr('의뢰 게시판')}</div>`;
       for (const q of G.bounties) {
         const p = G.bountyProgress(q);
         sh += `<div class="side-npc"><b>${q.title || ''}</b><span class="side-done">${q.from || ''}</span>`;
         sh += `<div class="side-q ${q.done ? '' : p.done ? 'ok' : ''}">${G.objLabel(q.obj)} ` +
-          `${q.done ? '<b>떼어 감</b>' : `<b>${p.cur}/${p.max}</b>`}</div></div>`;
+          `${q.done ? tr('<b>떼어 감</b>') : `<b>${p.cur}/${p.max}</b>`}</div></div>`;
       }
     }
     const questBody = $('#quest-body');
@@ -980,12 +981,7 @@ export const UI = {
   /** 유적 탐사 기록 — 여섯 유적의 등급 · 무엇이 남았는가 · 메아리 · 인장. */
   renderRuins(topTabs) {
     const g = G;
-    let h = topTabs + `<div class="rv-note">유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,
-      쓰러뜨릴수록 가라앉는다. 깨어난 유적은 더 몰려오고 더 준다. 주인을 잡은 둥지는 유적이
-      <b>「${PULSE.stages[ECHO.needStage].n}」</b> 이상일 때 <b>메아리</b>를 다시 부른다.
-      맥박이 한 단계 오를 때마다 <b>사건</b>(표식된 것 · 공명석 · 탐욕의 상자 · 포위)이 하나 터진다.
-      등급은 조건을 <b>모두</b> 채워야 오른다 — 아래에 다음 등급까지 남은 것을 적었다.
-      기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.</div>`;
+    let h = topTabs + `<div class="rv-note">${tr('유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,\n      쓰러뜨릴수록 가라앉는다. 깨어난 유적은 더 몰려오고 더 준다. 주인을 잡은 둥지는 유적이\n      <b>「{stages}」</b> 이상일 때 <b>메아리</b>를 다시 부른다.\n      맥박이 한 단계 오를 때마다 <b>사건</b>(표식된 것 · 공명석 · 탐욕의 상자 · 포위)이 하나 터진다.\n      등급은 조건을 <b>모두</b> 채워야 오른다 — 아래에 다음 등급까지 남은 것을 적었다.\n      기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.', { stages: PULSE.stages[ECHO.needStage].n })}</div>`;
     // 바이옴 유적 여섯 + 석판 유적 셋(G.ruinSpec 이 STORY_RUIN 에서 만든 것) — 등급(난이도) 순
     const list = RUIN_SPEC.concat(STORY_RUIN.map((_, i) => g.ruinSpec('story' + i)).filter(Boolean))
       .sort((a, b) => (a.rank || 0) - (b.rank || 0));
@@ -996,13 +992,13 @@ export const UI = {
       const seal = ITEMS['seal_' + spec.id];
       h += `<div class="rv${sc.seen ? '' : ' off'}">` +
         `<div class="rv-rank" style="color:${sc.seen ? sc.col : '#5a5448'}">${sc.seen ? sc.rank : '?'}<small>${sc.seen ? sc.score + '%' : ''}</small></div>` +
-        `<div class="rv-body"><h4>${sc.seen ? spec.n : '아직 발을 들이지 않은 유적'}</h4>`;
+        `<div class="rv-body"><h4>${sc.seen ? spec.n : tr('아직 발을 들이지 않은 유적')}</h4>`;
       if (sc.seen) {
-        h += `<div class="rv-grid">` + cell('방', P.rooms) + cell('상자', P.chests) + cell('비문', P.lore) +
-          cell(sc.story ? '석판' : '주인', P.boss) + cell('골방', P.code) + cell('격노', P.rage) +
-          cell('사건', P.events) + cell('갈래', P.kinds) + cell('메아리', P.echo) + `</div>`;
-        if (sc.next) h += `<div class="rv-next">다음 ${sc.next} 까지 — ${sc.missing.join(' · ')}</div>`;
-        if (seal) h += `<div class="rv-seal">${sv.s ? '✔ ' + seal.n + ' — ' + seal.d.replace(/^[^.]*\.\s*/, '') : 'S 등급 보상 · ' + seal.n}</div>`;
+        h += `<div class="rv-grid">` + cell(tr('방'), P.rooms) + cell(tr('상자'), P.chests) + cell(tr('비문'), P.lore) +
+          cell(sc.story ? tr('석판') : tr('주인'), P.boss) + cell(tr('골방'), P.code) + cell(tr('격노'), P.rage) +
+          cell(tr('사건'), P.events) + cell(tr('갈래'), P.kinds) + cell(tr('메아리'), P.echo) + `</div>`;
+        if (sc.next) h += `<div class="rv-next">${tr('다음 {next} 까지 — {join}', { next: sc.next, join: sc.missing.join(' · ') })}</div>`;
+        if (seal) h += `<div class="rv-seal">${sv.s ? '✔ ' + seal.n + ' — ' + seal.d.replace(/^[^.]*\.\s*/, '') : `${tr('S 등급 보상 ·')} ` + seal.n}</div>`;
       }
       h += '</div></div>';
     }
@@ -1040,7 +1036,7 @@ export const UI = {
         // 숨은 업적은 달성 전까지 이름도 조건도 안 보인다.
         const hide = achHidden(a) && !on;
         const nm = hide ? '???' : a.n;
-        const ds = hide ? '숨겨진 업적 — 해내면 그때 드러난다.' : a.d;
+        const ds = hide ? tr('숨겨진 업적 — 해내면 그때 드러난다.') : a.d;
         h += `<div class="ach ${on ? 'on' : 'off'}${hide ? ' hid' : ''} t-${a.t}">` +
           `<span class="ach-ic" style="background-image:url(${hide ? Art.achHiddenUrl() : Art.achUrl(a.id)})"></span>` +
           `<span class="ach-txt"><b>${nm}</b><i>${ds}</i></span>` +
@@ -1076,11 +1072,11 @@ export const UI = {
       const st = G.chapterState(ch);
       h += `<div style="color:#c9b07a;margin-bottom:4px">${ch.title}</div>`;
       if (st.ready) {
-        h += `<div class="qt-obj">${st.goal ? st.goal.o.t : '목표'}` +
+        h += `<div class="qt-obj">${st.goal ? st.goal.o.t : tr('목표')}` +
           (st.goal && st.goal.o.task ? `<span class="qt-task">${st.goal.o.task}</span>` : '') + '</div>';
       } else {
         /* ★ 갈림길은 **고를 수 있다는 것을 보여 주는 것**이다. */
-        h += `<div class="qt-obj">준비 <b>${st.done}/${st.need}</b></div>`;
+        h += `<div class="qt-obj">${tr('준비 <b>{done}/{need}</b>', { done: st.done, need: st.need })}</div>`;
         h += '<div class="qt-list">';
         for (const b of st.basics) {
           const must = (ch.require || []).includes(b.o.verb);
@@ -1088,14 +1084,14 @@ export const UI = {
           /* '필수' 는 제목과 같은 줄에 붙인다 — 제목·필수·과제 셋이 각자 줄을 차지하면 한 항목이 세 줄이 되어 목록이 다시 길어진다. */
           h += `<div class="qt-pick${b.p.done ? ' done' : ''}${must ? ' must' : ''}">` +
             `<span class="qt-line">${b.p.done ? '✔' : '·'} ` +
-            (must ? '<span class="qt-must">필수</span> ' : '') + `${b.o.t}</span>` +
+            (must ? `<span class="qt-must">${tr('필수')}</span> ` : '') + `${b.o.t}</span>` +
             `<span class="qt-task">${b.o.task || ''} <b>${b.p.label || b.p.cur + '/' + b.p.max}</b></span></div>`;
         }
         h += '</div>';
       }
     }
     const activeSide = Object.values(G.sideActive).filter(Boolean);
-    if (activeSide.length) h += `<div class="qt-side">부탁 ${activeSide.length}건 진행 중 (J로 확인)</div>`;
+    if (activeSide.length) h += `<div class="qt-side">${tr('부탁 {activeSideCount}건 진행 중 (J로 확인)', { activeSideCount: activeSide.length })}</div>`;
     if (!ch && !activeSide.length) { $('#quest-tracker').style.display = 'none'; return; }
     $('#quest-tracker').style.display = '';
     $('#qt-body').innerHTML = h;
@@ -1130,7 +1126,7 @@ export const UI = {
     let tab = this.craftTab;
     // 이제는 **지금 이 순간 실제로 근처(70px)에 있는 시설만** 같이 보여준다 — 없으면 맨손 탭 하나뿐 — 사연: docs/code-history.md#h98
     if (tab !== 'hand' && !near[tab]) tab = this.craftTab = 'hand';
-    const allTabs = { work: ['work', `작업대 Lv.${lv.work}`], forge: ['forge', `용광로 Lv.${lv.forge}`], hand: ['hand', '맨손'] };
+    const allTabs = { work: ['work', tr('작업대 Lv.{work}', { work: lv.work })], forge: ['forge', tr('용광로 Lv.{forge}', { forge: lv.forge })], hand: ['hand', tr('맨손')] };
     const tabs = [];
     if (tab === 'work' || (tab === 'hand' && near.work)) tabs.push(allTabs.work);
     if (tab === 'forge' || (tab === 'hand' && near.forge)) tabs.push(allTabs.forge);
@@ -1139,18 +1135,18 @@ export const UI = {
       `<button class="ctab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('') + '</div>';
 
     if (tab === 'hand') {
-      head += '<div class="st-info">시설 없이 만들 수 있는 것들이다.</div>';
+      head += `<div class="st-info">${tr('시설 없이 만들 수 있는 것들이다.')}</div>`;
     } else {
       const L = lv[tab];
       head += `<div class="st-info"><b>${STATION_NAME[tab][L]}</b> — ${STATION_DESC[tab][L]}` +
-        (near[tab] ? '' : ' <span class="lack">· 시설 앞으로 가야 쓸 수 있다</span>') + '</div>';
+        (near[tab] ? '' : ` <span class="lack">${tr('· 시설 앞으로 가야 쓸 수 있다')}</span>`) + '</div>';
       if (L < STATION_UP[tab].length) {
         const up = STATION_UP[tab][L], can = near[tab] && p.hasAll(up.need);
         head += `<div class="st-up${can ? '' : ' no'}" data-up="${tab}">` +
-          `<div class="rname">▲ ${STATION_NAME[tab][L + 1]}${josaRo(STATION_NAME[tab][L + 1])} 개조</div>` +
+          `<div class="rname">${tr('▲ {stationName|으로} 개조', { stationName: STATION_NAME[tab][L + 1] })}</div>` +
           `<div class="rmat">${this.matLine(p, up.need)}</div></div>`;
       } else {
-        head += '<div class="st-up done">더 손볼 데가 없다. 마지막 단계다.</div>';
+        head += `<div class="st-up done">${tr('더 손볼 데가 없다. 마지막 단계다.')}</div>`;
       }
     }
     // 만들 수 있는 것 → 재료만 모자란 것 → 아직 안 열린 것 순.
@@ -1168,12 +1164,12 @@ export const UI = {
     }
     rows.sort((a, b) => (a.locked - b.locked) || (b.mat - a.mat) || ((a.r.lv || 1) - (b.r.lv || 1)));
 
-    const groups = [['all', '전체'], ['gear', '장비'], ['survival', '생존'], ['build', '건축'], ['factory', '자동화'], ['other', '기타']];
+    const groups = [['all', tr('전체')], ['gear', tr('장비')], ['survival', tr('생존')], ['build', tr('건축')], ['factory', tr('자동화')], ['other', tr('기타')]];
     const escapedQuery = this.craftQuery.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-    head += `<div class="craft-filter"><input id="craft-search" type="search" value="${escapedQuery}" placeholder="제작품 검색">` +
+    head += `<div class="craft-filter"><input id="craft-search" type="search" value="${escapedQuery}" placeholder="${tr('제작품 검색')}">` +
       groups.map(([key, label]) => `<button class="cg${this.craftGroup === key ? ' on' : ''}" data-cgroup="${key}">${label}</button>`).join('') +
-      `<button class="lock-toggle${this.craftShowLocked ? ' on' : ''}" data-lock-toggle>${this.craftShowLocked ? '잠긴 제작법 숨기기' : '잠긴 제작법 보기'}</button>` +
-      `<span class="craft-count">${rows.length}개 표시</span></div>`;
+      `<button class="lock-toggle${this.craftShowLocked ? ' on' : ''}" data-lock-toggle>${this.craftShowLocked ? tr('잠긴 제작법 숨기기') : tr('잠긴 제작법 보기')}</button>` +
+      `<span class="craft-count">${tr('{rowsCount}개 표시', { rowsCount: rows.length })}</span></div>`;
     $('#craft-note').innerHTML = head;
 
     let h = '';
@@ -1181,11 +1177,11 @@ export const UI = {
       const d = ITEMS[r.out];
       const ok = !locked && mat && (!r.station || near[r.station]);
       let mats = this.matLine(p, r.need);
-      if (locked) mats = `<span class="lack">[${STATION_NAME[tab][r.lv]} 필요]</span> ` + mats;
+      if (locked) mats = `<span class="lack">${tr('[{stationName} 필요]', { stationName: STATION_NAME[tab][r.lv] })}</span> ` + mats;
       h += `<div class="recipe ${ok ? '' : 'no'}" data-r="${i}"><div class="ric"></div><div>` +
         `<div class="rname">${d.n}${r.n > 1 ? ' ×' + r.n : ''}</div><div class="rmat">${mats}</div></div></div>`;
     }
-    $('#craft-list').innerHTML = h || '<div class="st-info">여기서 만들 수 있는 것이 아직 없다.</div>';
+    $('#craft-list').innerHTML = h || `<div class="st-info">${tr('여기서 만들 수 있는 것이 아직 없다.')}</div>`;
 
     $$('#craft-note .ctab').forEach(b => b.addEventListener('click', () => {
       this.craftTab = b.dataset.tab;
@@ -1215,26 +1211,26 @@ export const UI = {
   },
   refreshTownhall() {
     const p = G.player, lv = G.villageLv();
-    $('#town-title').textContent = `여명 마을 — ${VILLAGE[lv] ? VILLAGE[lv].n : '—'}`;
+    $('#town-title').textContent = tr('여명 마을 — {v}', { v: VILLAGE[lv] ? VILLAGE[lv].n : '—' });
     let h = '';
     // 단계 수는 VILLAGE 표가 정한다 — 3으로 박아 두면 표에 단계를 더해도 창에 안 뜬다
     for (let i = 1; i <= VILLAGE.length - 1; i++) {
       const v = VILLAGE[i];
       const state = i <= lv ? 'done' : i === lv + 1 ? 'next' : 'far';
       h += `<div class="tv ${state}">` +
-        `<div class="tv-head"><b>${i}단계 · ${v.n}</b>` +
-        `<span class="tv-tag">${state === 'done' ? '완료' : state === 'next' ? '다음' : '잠김'}</span></div>` +
+        `<div class="tv-head">${tr('<b>{i}단계 · {v}</b>', { i, v: v.n })}` +
+        `<span class="tv-tag">${state === 'done' ? tr('완료') : state === 'next' ? tr('다음') : tr('잠김')}</span></div>` +
         `<div class="tv-desc">${v.d}</div>` +
         '<ul class="tv-gain">' + v.gain.map(g => `<li>${g}</li>`).join('') + '</ul>';
       if (state === 'next') {
         const can = p.hasAll(v.need);
-        h += `<div class="tv-cost">필요한 것 — ${this.matLine(p, v.need)}</div>` +
-          `<button class="tv-btn${can ? '' : ' no'}" id="town-up">이 단계로 올린다</button>`;
+        h += `<div class="tv-cost">${tr('필요한 것 — {matLine}', { matLine: this.matLine(p, v.need) })}</div>` +
+          `<button class="tv-btn${can ? '' : ' no'}" id="town-up">${tr('이 단계로 올린다')}</button>`;
       }
       h += '</div>';
     }
-    h += '<div class="tv-note">지어 올린 것은 되돌릴 수 없다. 베이스캠프는 이 개선의 대상이 아니다 — ' +
-      '엘라라가 거긴 그냥 두라고 했다.</div>';
+    h += `<div class="tv-note">${tr('지어 올린 것은 되돌릴 수 없다. 베이스캠프는 이 개선의 대상이 아니다 —')} ` +
+      `${tr('엘라라가 거긴 그냥 두라고 했다.')}</div>`;
     $('#town-body').innerHTML = h;
     const b = $('#town-up');
     if (b) b.addEventListener('click', () => { G.upgradeVillage(); this.refreshTownhall(); });
@@ -1254,7 +1250,7 @@ export const UI = {
       if (!buf[k]) continue;
       h += `<div class="slot ${cls}" data-id="${k}"><span class="ic"></span><span class="cnt">${buf[k]}</span></div>`;
     }
-    return h || '<div class="mach-empty">비어 있음</div>';
+    return h || `<div class="mach-empty">${tr('비어 있음')}</div>`;
   },
   /** 창을 다시 짜야 하는 것만 모은 열쇠 — 상태·전력·진행처럼 계속 바뀌는 값은 machLive 가 제자리에서 고친다.
       ★ 0.1초마다 통째로 다시 짜면 누르는 사이에 칸이 바뀌어 클릭이 씹히고 툴팁이 깜빡였다. */
@@ -1271,28 +1267,28 @@ export const UI = {
   machLive(m) {
     const s = MACHINE[m.t], w = G.world;
     const st = $('#mach-st');
-    if (st) st.innerHTML = `<span class="mdot" style="background:${Factory.statusColor(m)}"></span><b>${m.st || '대기'}</b>` +
-      (s.rot ? ` · 방향 <b>${DIR_NAME[m.dir]}</b>` : '');
+    if (st) st.innerHTML = `<span class="mdot" style="background:${Factory.statusColor(m)}"></span><b>${Factory.stLabel(m)}</b>` +
+      (s.rot ? ` ${tr('· 방향 <b>{dirName}</b>', { dirName: DIR_NAME[m.dir] })}` : '');
     const net = $('#mach-net');
     if (net) {
       const n = m.net >= 0 ? w.nets[m.net] : null;
-      if (!n) { net.className = 'mach-row lack'; net.textContent = '전력망에 이어져 있지 않다 — 반경 5칸 안에 전주를 세워라.'; }
+      if (!n) { net.className = 'mach-row lack'; net.textContent = tr('전력망에 이어져 있지 않다 — 반경 5칸 안에 전주를 세워라.'); }
       else {
         const pct = Math.round(n.sat * 100);
         net.className = 'mach-row';
-        net.innerHTML = `전력망 #${m.net + 1} · 발전 <b>${n.gen}</b> / 수요 <b>${n.dem}</b>` +
-          ` · 충족 <b class="${pct < 100 ? 'lack' : ''}">${pct}%</b>` +
-          (n.emax ? ` · 축전 <b>${Math.round(n.e)}</b>/${n.emax}` : '') +
-          (n.off ? ' · <b class="lack">정지 스위치 내려짐</b>' : '');
+        net.innerHTML = tr('전력망 #{n} · 발전 <b>{gen}</b> / 수요 <b>{dem}</b>', { n: m.net + 1, gen: n.gen, dem: n.dem }) +
+          ` ${tr('· 충족')} <b class="${pct < 100 ? 'lack' : ''}">${pct}%</b>` +
+          (n.emax ? ` ${tr('· 축전 <b>{e}</b>/{emax}', { e: Math.round(n.e), emax: n.emax })}` : '') +
+          (n.off ? ` · <b class="lack">${tr('정지 스위치 내려짐</b>')}` : '');
       }
     }
     const sto = $('#mach-store');
-    if (sto) sto.textContent = `축전 잔량 ${Math.round(m.e)} / ${s.store}`;
+    if (sto) sto.textContent = tr('축전 잔량 {e} / {store}', { e: Math.round(m.e), store: s.store });
     const fu = $('#mach-fuel');
     if (fu) {
       let left = 0;
       for (const k in m.in) if (FUEL[k]) left += m.in[k] * FUEL[k];
-      fu.textContent = `연료 — 타는 중 ${(m.fuel * FAC_TICK).toFixed(1)}초 · 넣어 둔 연료로 ${Math.round(left * FAC_TICK)}초 더`;
+      fu.textContent = tr('연료 — 타는 중 {n}초 · 넣어 둔 연료로 {n2}초 더', { n: (m.fuel * FAC_TICK).toFixed(1), n2: Math.round(left * FAC_TICK) });
     }
     // 개수 — 칸 구성은 같고 수만 바뀐 경우
     for (const [sel, buf] of [['#mg-in', m.in], ['#mg-out', m.out]])
@@ -1306,8 +1302,8 @@ export const UI = {
       const k = r ? clamp(m.prog / r.t, 0, 1) : 0;
       pr.querySelector('i').style.width = (k * 100).toFixed(1) + '%';
       pr.querySelector('span').textContent = r
-        ? Object.keys(r.out).map(id => ITEMS[id].n + ' ×' + r.out[id]).join(' · ') + ` — ${Math.round(k * 100)}% · ${((r.t - m.prog) * FAC_TICK).toFixed(1)}초 남음`
-        : '만들 것이 없다 — 아래 목록의 재료를 넣어라';
+        ? Object.keys(r.out).map(id => ITEMS[id].n + ' ×' + r.out[id]).join(' · ') + ` ${tr('— {n}% · {n2}초 남음', { n: Math.round(k * 100), n2: ((r.t - m.prog) * FAC_TICK).toFixed(1) })}`
+        : tr('만들 것이 없다 — 아래 목록의 재료를 넣어라');
     }
   },
   refreshMachine(force) {
@@ -1324,24 +1320,24 @@ export const UI = {
     let info = `<div class="mach-desc">${s.d}</div><div class="mach-row" id="mach-st"></div>`;
     if (s.power || s.gen || s.store) {
       info += '<div class="mach-row" id="mach-net"></div>';
-      if (s.power) info += `<div class="mach-row dim">소비 ${s.power}/틱 (1틱 = ${FAC_TICK}초)</div>`;
-      if (s.gen) info += `<div class="mach-row dim">생산 ${s.gen}/틱</div>`;
+      if (s.power) info += `<div class="mach-row dim">${tr('소비 {power}/틱 (1틱 = {facTick}초)', { power: s.power, facTick: FAC_TICK })}</div>`;
+      if (s.gen) info += `<div class="mach-row dim">${tr('생산 {gen}/틱', { gen: s.gen })}</div>`;
       if (s.store) info += '<div class="mach-row dim" id="mach-store"></div>';
     }
     if (s.fuelIn) info += '<div class="mach-row dim" id="mach-fuel"></div>';
     if (m.t === 'sorter') {
-      info += `<div class="mach-row">필터: <b>${m.f ? ITEMS[m.f].n : '없음 (전부 통과)'}</b>` +
-        ' <span class="dim">— 맞는 것은 앞으로, 나머지는 시계 방향 옆으로. 아래 가방 칸을 클릭해 지정</span></div>';
+      info += `<div class="mach-row">${tr('필터: <b>{v}</b>', { v: m.f ? ITEMS[m.f].n : tr('없음 (전부 통과)') })}` +
+        ` <span class="dim">${tr('— 맞는 것은 앞으로, 나머지는 시계 방향 옆으로. 아래 가방 칸을 클릭해 지정')}</span></div>`;
     }
     if (s.proc) info += '<div class="mach-prog" id="mach-prog"><i></i><span></span></div>';
 
     // ---- 버튼 ----
-    let btns = `<button class="mbtn" data-act="power">${m.on ? '■ 정지' : '▶ 가동'}</button>`;
-    if (s.rot) btns += '<button class="mbtn" data-act="rot">↻ 방향 돌리기</button>';
-    if (s.slots) btns += `<button class="mbtn" data-act="feed">${m.feed ? '배출 끄기' : '배출 켜기'}</button>`;
-    if (m.t === 'sorter' && m.f) btns += '<button class="mbtn" data-act="clearf">필터 해제</button>';
+    let btns = `<button class="mbtn" data-act="power">${m.on ? tr('■ 정지') : tr('▶ 가동')}</button>`;
+    if (s.rot) btns += `<button class="mbtn" data-act="rot">${tr('↻ 방향 돌리기')}</button>`;
+    if (s.slots) btns += `<button class="mbtn" data-act="feed">${m.feed ? tr('배출 끄기') : tr('배출 켜기')}</button>`;
+    if (m.t === 'sorter' && m.f) btns += `<button class="mbtn" data-act="clearf">${tr('필터 해제')}</button>`;
     if ((m.out && Factory.bufTotal(m.out)) || (m.items && m.items.some(Boolean)))
-      btns += '<button class="mbtn" data-act="takeall">⤓ 전부 가방으로</button>';
+      btns += `<button class="mbtn" data-act="takeall">${tr('⤓ 전부 가방으로')}</button>`;
 
     // ---- 만드는 것 — 이 기계의 제작법. 지금 하는 것은 금색, 재료가 다 들어 있으면 초록 ----
     const ic = id => `<span class="ri" style="background-image:url(${Art.itemUrl(id)})" title="${ITEMS[id].n}"></span>`;
@@ -1353,22 +1349,22 @@ export const UI = {
         for (const k in r.in) if ((m.in[k] || 0) < r.in[k]) { ok = false; break; }
         const side = o => Object.keys(o).map(k => `${ic(k)}<small>${o[k]}</small>`).join('');
         recs += `<div class="mrec${i === m.rec ? ' cur' : ok ? ' ok' : ''}">${side(r.in)}<b>→</b>${side(r.out)}` +
-          `<em>${(r.t * FAC_TICK).toFixed(1)}초</em></div>`;
+          `${tr('<em>{n}초</em>', { n: (r.t * FAC_TICK).toFixed(1) })}</div>`;
       });
     }
 
     // ---- 내용물 ----
     let body = '';
     if (s.slots) {
-      body += '<div class="mach-sec">보관 <small>(클릭해서 가방으로)</small></div><div class="mach-grid" id="mg-store"></div>';
+      body += `<div class="mach-sec">${tr('보관')} <small>${tr('(클릭해서 가방으로)')}</small></div><div class="mach-grid" id="mg-store"></div>`;
     } else {
-      if (m.in) body += '<div class="mach-sec">투입 <small>(클릭해서 되찾기)</small></div><div class="mach-grid" id="mg-in">' + this.bufGrid(m.in, 'mi') + '</div>';
-      if (m.out) body += '<div class="mach-sec">산출 <small>(클릭해서 가방으로)</small></div><div class="mach-grid" id="mg-out">' + this.bufGrid(m.out, 'mo') + '</div>';
-      if (m.it) body += `<div class="mach-sec">이송 중 <small>(3초 넘게 멈춘 물건은 클릭해서 가방으로)</small></div><div class="mach-grid">` +
+      if (m.in) body += `<div class="mach-sec">${tr('투입')} <small>${tr('(클릭해서 되찾기)')}</small></div><div class="mach-grid" id="mg-in">` + this.bufGrid(m.in, 'mi') + '</div>';
+      if (m.out) body += `<div class="mach-sec">${tr('산출')} <small>${tr('(클릭해서 가방으로)')}</small></div><div class="mach-grid" id="mg-out">` + this.bufGrid(m.out, 'mo') + '</div>';
+      if (m.it) body += `<div class="mach-sec">${tr('이송 중')} <small>${tr('(3초 넘게 멈춘 물건은 클릭해서 가방으로)')}</small></div><div class="mach-grid">` +
         `<div class="slot" id="mg-it"><span class="ic" style="background-image:url(${Art.itemUrl(m.it.id)})"></span></div></div>`;
     }
-    if (recs) body += `<div class="mach-sec">만드는 것 <small>(재료가 다 들어 있으면 초록 · 지금 만드는 것은 금색)</small></div><div class="mrecs">${recs}</div>`;
-    body += `<div class="mach-sec">소지품 <small>(${m.t === 'sorter' ? '클릭해서 필터 지정' : '클릭해서 기계에 넣기 · 흐린 것은 이 기계가 안 받는다'})</small></div><div class="mach-grid" id="mg-bag"></div>`;
+    if (recs) body += `<div class="mach-sec">${tr('만드는 것')} <small>${tr('(재료가 다 들어 있으면 초록 · 지금 만드는 것은 금색)')}</small></div><div class="mrecs">${recs}</div>`;
+    body += `<div class="mach-sec">${tr('소지품')} <small>(${m.t === 'sorter' ? tr('클릭해서 필터 지정') : tr('클릭해서 기계에 넣기 · 흐린 것은 이 기계가 안 받는다')})</small></div><div class="mach-grid" id="mg-bag"></div>`;
 
     $('#mach-body').innerHTML = info + '<div class="mach-btns">' + btns + '</div>' + body;
     this.machLive(m);
@@ -1390,7 +1386,7 @@ export const UI = {
         let full = false;
         if (m.out) for (const k of Object.keys(m.out)) if (Factory.playerTake(w, m, 'out', k, p) < 1) full = true;
         if (m.items) m.items.forEach((it, i) => { if (!it) return; if (p.addItem(it)) m.items[i] = null; else full = true; });
-        if (full) this.toast('가방이 가득 찼다', 'bad');
+        if (full) this.toast(tr('가방이 가득 찼다'), 'bad');
         this.refreshBag();
       }
       G.sfx(snd); this.refreshMachine(true);
@@ -1398,7 +1394,7 @@ export const UI = {
     const itEl = $('#mg-it');
     if (itEl) press(itEl, () => {
       if (Factory.takeStalled(m, p)) { this.refreshMachine(true); this.refreshBag(); G.sfx('place'); }
-      else this.toast(Factory.stalled(m) ? '가방이 가득 찼다' : '움직이는 중이다 — 3초 넘게 멈춘 것만 꺼낼 수 있다', 'bad');
+      else this.toast(Factory.stalled(m) ? tr('가방이 가득 찼다') : tr('움직이는 중이다 — 3초 넘게 멈춘 것만 꺼낼 수 있다'), 'bad');
     });
     const store = $('#mg-store');
     if (store) {
@@ -1408,7 +1404,7 @@ export const UI = {
         press(d, () => {
           if (!it) return;
           if (p.addItem(it)) { m.items[i] = null; this.refreshMachine(true); this.refreshBag(); }
-          else { this.toast('가방이 가득 찼다', 'bad'); this.refreshMachine(true); }
+          else { this.toast(tr('가방이 가득 찼다'), 'bad'); this.refreshMachine(true); }
         });
       });
     }
@@ -1418,7 +1414,7 @@ export const UI = {
         const id = el.dataset.id;
         this.setIcon(el.querySelector('.ic'), Art.itemUrl(id));
         press(el, () => {
-          if (Factory.playerTake(w, m, which, id, p) <= 0) this.toast('가방이 가득 찼다', 'bad');
+          if (Factory.playerTake(w, m, which, id, p) <= 0) this.toast(tr('가방이 가득 찼다'), 'bad');
           this.refreshMachine(true); this.refreshBag();
         });
         el.addEventListener('mouseenter', e => this.showTip(makeItem(id, 1, 0), e));
@@ -1436,7 +1432,7 @@ export const UI = {
       press(d, () => {
         if (m.t === 'sorter') { m.f = it.id; this.refreshMachine(true); G.sfx('place'); return; }
         if (Factory.playerInsert(w, m, i, p) > 0) { this.refreshMachine(true); this.refreshBag(); G.sfx('place'); }
-        else this.toast(yes(i) ? (m.on ? '더 들어갈 자리가 없다' : '멈춘 기계에는 넣을 수 없다') : '이 기계가 받지 않는 물건이다', 'bad');
+        else this.toast(yes(i) ? (m.on ? tr('더 들어갈 자리가 없다') : tr('멈춘 기계에는 넣을 수 없다')) : tr('이 기계가 받지 않는 물건이다'), 'bad');
       });
     }
   },
@@ -1445,7 +1441,7 @@ export const UI = {
   openChest(obj) {
     this.closePanel();
     this.chestRef = obj; this.shopRef = null;
-    $('#chest-title').textContent = '상자';
+    $('#chest-title').textContent = tr('상자');
     this.panels.show('chest'); G.uiOpen = true;
     this.refreshChest();
   },
@@ -1461,27 +1457,27 @@ export const UI = {
       $('#panel-chest header').insertBefore(toggle, $('#panel-chest header .x'));
     }
     toggle.style.display = '';
-    toggle.textContent = '판매하기 ▸';
+    toggle.textContent = tr('판매하기 ▸');
     this.panels.show('chest'); G.uiOpen = true;
     this.refreshChest();
   },
   shopTitle() {
     const rate = G.marketRate ? Math.round((G.goldRate || 1) * 100) : 100;
     const arrow = rate > 105 ? ' 📈' : rate < 95 ? ' 📉' : '';
-    return `${NPCS[this.shopRef].n}의 상점 — 🪙 ${fmt(G.player.gold)} · 환율 ${rate}%${arrow}`;
+    return tr('{npc}의 상점 — 🪙 {gold} · 환율 {rate}%{arrow}', { npc: NPCS[this.shopRef].n, gold: fmt(G.player.gold), rate, arrow });
   },
   refreshChest() {
     const g = $('#chest-grid'); g.innerHTML = '';
     const toggle = $('#shop-mode-btn');
     if (this.shopRef) {
-      if (toggle) { toggle.style.display = ''; toggle.textContent = this.shopMode === 'buy' ? '판매하기 ▸' : '◂ 구매하기'; }
+      if (toggle) { toggle.style.display = ''; toggle.textContent = this.shopMode === 'buy' ? tr('판매하기 ▸') : tr('◂ 구매하기'); }
       if (this.shopMode === 'sell') {
         const p = G.player;
         p.bag.forEach((it, i) => {
           if (!it) return;
           const price = Math.round(G.price(it) * 0.5);
           makeSlot('slot' + (it.r ? ' r' + it.r : ''), { fill: { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' },
-            click: () => G.sellItem(i), enter: e => this.showTip(it, e, `판매가 🪙 ${price}`), leave: () => this.hideTip() }, g);
+            click: () => G.sellItem(i), enter: e => this.showTip(it, e, tr('판매가 🪙 {price}', { price })), leave: () => this.hideTip() }, g);
         });
         $('#chest-title').textContent = this.shopTitle();
         return;
@@ -1491,7 +1487,7 @@ export const UI = {
         const npc = this.shopRef, m = G.merchantOf(npc);
         const stock = G.stockOf(npc);
         if (!stock.length) {
-          g.innerHTML = '<div class="st-info">오늘은 다 팔렸다. 내일 다시 오라는군.</div>';
+          g.innerHTML = `<div class="st-info">${tr('오늘은 다 팔렸다. 내일 다시 오라는군.')}</div>`;
           $('#chest-title').textContent = this.shopTitle();
           return;
         }
@@ -1499,7 +1495,7 @@ export const UI = {
           const it = makeItem(row.id, row.c, 0);
           const price = G.buyPrice(it, m.markup);
           makeSlot('slot', { fill: { icon: Art.itemUrl(row.id), count: price, extra: row.c > 1 ? `<span class="num">×${row.c}</span>` : '' },
-            click: () => G.buyStock(npc, i), enter: e => this.showTip(it, e, `가격 🪙 ${price} · 오늘 재고 ${row.c}개`), leave: () => this.hideTip() }, g);
+            click: () => G.buyStock(npc, i), enter: e => this.showTip(it, e, tr('가격 🪙 {price} · 오늘 재고 {row}개', { price, row: row.c })), leave: () => this.hideTip() }, g);
         });
         $('#chest-title').textContent = this.shopTitle();
         return;
@@ -1509,7 +1505,7 @@ export const UI = {
         const it = makeItem(id, G.shopBundle(id), 0);
         const price = G.buyPrice(it, 1, this.shopRef);
         makeSlot('slot', { fill: { icon: Art.itemUrl(id), count: price },
-          click: () => G.buy(id, this.shopRef), enter: e => this.showTip(it, e, `가격 🪙 ${price}`), leave: () => this.hideTip() }, g);
+          click: () => G.buy(id, this.shopRef), enter: e => this.showTip(it, e, tr('가격 🪙 {price}', { price })), leave: () => this.hideTip() }, g);
       });
       $('#chest-title').textContent = this.shopTitle();
       return;
@@ -1521,7 +1517,7 @@ export const UI = {
         click: () => {
           if (!it) return;
           if (G.player.addItem(it)) { c.items[i] = null; G.onPickup(it); this.refreshChest(); this.refreshBag(); }
-          else this.toast('가방이 가득 찼다', 'bad');
+          else this.toast(tr('가방이 가득 찼다'), 'bad');
         },
         enter: e => this.showTip(it, e), leave: () => this.hideTip() }, g);
     });
@@ -1547,7 +1543,7 @@ export const UI = {
     const p = G.player;
     const store = this.storeRef ? this.storeRef.items : G.vault;
     const used = store.filter(Boolean).length;
-    const label = this.storeRef ? (this.storeRef.gold ? '황금 저장 상자' : '저장 상자') : '보관고';
+    const label = this.storeRef ? (this.storeRef.gold ? tr('황금 저장 상자') : tr('저장 상자')) : tr('보관고');
     $('#vault-title').textContent = `${label} — ${used} / ${store.length}`;
     const goldRow = $('#vault-gold-row');
     if (goldRow) {
@@ -1562,12 +1558,12 @@ export const UI = {
     fill($('#vault-grid'), store, i => {
       const it = store[i]; if (!it) return;
       if (p.addItem(it)) { store[i] = null; this.refreshVault(); this.refreshBag(); G.sfx('place'); }
-      else this.toast('가방이 가득 찼다', 'bad');
+      else this.toast(tr('가방이 가득 찼다'), 'bad');
     });
     fill($('#vault-bag'), p.bag, i => {
       const it = p.bag[i]; if (!it) return;
       const slot = store.indexOf(null);
-      if (slot < 0) { this.toast(`${iga(label)} 가득 찼다`, 'bad'); return; }
+      if (slot < 0) { this.toast(tr('{label|이} 가득 찼다', { label }), 'bad'); return; }
       store[slot] = it; p.bag[i] = null;
       this.refreshVault(); this.refreshBag(); G.sfx('place');
     });
@@ -1582,11 +1578,11 @@ export const UI = {
   },
   refreshBoard() {
     const b = $('#board-body'); b.innerHTML = '';
-    $('#board-title').textContent = `의뢰 게시판 — ${G.dayCount}일차`;
+    $('#board-title').textContent = tr('의뢰 게시판 — {dayCount}일차', { dayCount: G.dayCount });
     const note = document.createElement('div');
     note.className = 'qt-title';
     note.style.cssText = 'margin-bottom:8px;opacity:.75';
-    note.textContent = '하루가 지나거나 여관에서 자고 나면 새 종이가 붙는다.';
+    note.textContent = tr('하루가 지나거나 여관에서 자고 나면 새 종이가 붙는다.');
     b.appendChild(note);
     (G.bounties || []).forEach((q, i) => {
       const pr = G.bountyProgress(q);
@@ -1600,12 +1596,12 @@ export const UI = {
       el.innerHTML = `<div class="qc-title">${q.title || ''}</div>` + body +
         `<div class="qc-from">— ${q.from || ''}</div>` +
         `<div class="qc-obj">${G.objLabel(q.obj)}` +
-        `${q.done ? ' · 완료됨' : ` <b>${pr.cur} / ${pr.max}</b>`}</div>` +
-        `<div class="qc-rw">보상 🪙 ${fmt(pay.gold)} · 경험치 ${fmt(pay.xp)}` +
+        `${q.done ? ` ${tr('· 완료됨')}` : ` <b>${pr.cur} / ${pr.max}</b>`}</div>` +
+        `<div class="qc-rw">${tr('보상 🪙 {gold} · 경험치 {xp}', { gold: fmt(pay.gold), xp: fmt(pay.xp) })}` +
         `${(q.items || []).map(([id, n]) => ` · ${ITEMS[id].n}×${n}`).join('')}</div>`;
       if (!q.done && pr.done) {
         const btn = document.createElement('button');
-        btn.textContent = '떼어 간다';
+        btn.textContent = tr('떼어 간다');
         btn.addEventListener('click', () => G.claimBounty(i));
         el.appendChild(btn);
       }
@@ -1620,16 +1616,16 @@ export const UI = {
     this.refreshReforge();
   },
   refreshReforge() {
-    $('#reforge-title').textContent = `재련대 — 🪙 ${fmt(G.player.gold)}`;
-    $('#reforge-note').textContent = '다시 벼릴 장비를 고르시오. 접사가 새로 붙지만, 더 나빠질 수도 있다.';
+    $('#reforge-title').textContent = tr('재련대 — 🪙 {gold}', { gold: fmt(G.player.gold) });
+    $('#reforge-note').textContent = tr('다시 벼릴 장비를 고르시오. 접사가 새로 붙지만, 더 나빠질 수도 있다.');
     const g = $('#reforge-grid'); g.innerHTML = '';
     G.player.bag.forEach((it, i) => {
       if (!it || !isGear(it)) return;
       const cost = G.reforgeCost(it);
       makeSlot('slot r' + it.r, { fill: { icon: Art.itemUrl(it.id), count: fmt(cost) },
-        click: () => G.reforgeSlot(i), enter: e => this.showTip(it, e, `재련 비용 🪙 ${fmt(cost)}`), leave: () => this.hideTip() }, g);
+        click: () => G.reforgeSlot(i), enter: e => this.showTip(it, e, tr('재련 비용 🪙 {cost}', { cost: fmt(cost) })), leave: () => this.hideTip() }, g);
     });
-    if (!g.children.length) $('#reforge-note').textContent = '가방에 다시 벼릴 만한 장비가 없다.';
+    if (!g.children.length) $('#reforge-note').textContent = tr('가방에 다시 벼릴 만한 장비가 없다.');
   },
 
   /** 강화 모루 — 금화와 재료를 내고 장비 수치를 한 단계 올린다 */
@@ -1639,9 +1635,9 @@ export const UI = {
     this.refreshAnvil();
   },
   refreshAnvil() {
-    $('#anvil-title').textContent = `강화 모루 — 🪙 ${fmt(G.player.gold)}`;
+    $('#anvil-title').textContent = tr('강화 모루 — 🪙 {gold}', { gold: fmt(G.player.gold) });
     $('#anvil-note').textContent =
-      `한 단계마다 공격력·방어력이 오른다 (최대 +${G.ENH_MAX}). +2부터 실패(단계 그대로), +4부터 파괴(한 단계 하락)가 있다.`;
+      tr('한 단계마다 공격력·방어력이 오른다 (최대 +{ENH_MAX}). +2부터 실패(단계 그대로), +4부터 파괴(한 단계 하락)가 있다.', { ENH_MAX: G.ENH_MAX });
     const g = $('#anvil-grid'); g.innerHTML = '';
     G.player.bag.forEach((it, i) => {
       if (!it || !isGear(it)) return;
@@ -1650,15 +1646,15 @@ export const UI = {
       const e = it.e || 0, max = e >= G.ENH_MAX;
       const cost = G.enhCost(it), mat = G.enhMat(e);
       const fail = Math.round(G.enhFail(e) * 100), brk = Math.round(G.enhBreak(e) * 100);
-      const risk = (fail ? ` · 실패 ${fail}%` : '') + (brk ? ` · 파괴 ${brk}%` : '');
+      const risk = (fail ? ` ${tr('· 실패 {fail}%', { fail })}` : '') + (brk ? ` ${tr('· 파괴 {brk}%', { brk })}` : '');
       makeSlot('slot r' + it.r + (max ? ' dim' : ''), { fill: { icon: Art.itemUrl(it.id), count: max ? 'MAX' : '+' + (e + 1) },
         click: max ? undefined : () => G.enhanceSlot(i),
         enter: ev => this.showTip(it, ev, max
-          ? '더 두들길 데가 없다'
-          : `+${e} → +${e + 1} · 🪙 ${fmt(cost)} · ${ITEMS[mat.id].n} ${mat.n}개` + risk),
+          ? tr('더 두들길 데가 없다')
+          : tr('+{e} → +{n} · 🪙 {cost} · {item} {mat}개', { e, n: e + 1, cost: fmt(cost), item: ITEMS[mat.id].n, mat: mat.n }) + risk),
         leave: () => this.hideTip() }, g);
     });
-    if (!g.children.length) $('#anvil-note').textContent = '가방에 두들길 만한 장비가 없다.';
+    if (!g.children.length) $('#anvil-note').textContent = tr('가방에 두들길 만한 장비가 없다.');
   },
 
   /* 펫 목록 패널은 없다 — 펫이 인벤토리 아이템이라, 가방에서 바로 장비창의 펫 칸으로 끼우면 된다(다른 장비와 똑같은 조작). */
@@ -1680,27 +1676,27 @@ export const UI = {
     }
     if (!key) return null;
     const cur = p.equip[key];
-    if (!cur) return `<div class="tcmp new">빈 자리에 낄 수 있다</div>`;
-    if (cur === it) return `<div class="tcmp same">지금 차고 있는 것</div>`;
+    if (!cur) return `<div class="tcmp new">${tr('빈 자리에 낄 수 있다')}</div>`;
+    if (cur === it) return `<div class="tcmp same">${tr('지금 차고 있는 것')}</div>`;
     const rows = [];
     const push = (label, a, b, unit) => {
       const dv = Math.round((a - b) * 10) / 10;
       if (!dv) return;
       rows.push(`<span class="${dv > 0 ? 'up' : 'down'}">${dv > 0 ? '▲' : '▼'} ${label} ${dv > 0 ? '+' : ''}${dv}${unit || ''}</span>`);
     };
-    if (d.dmg || idef(cur).dmg) push('공격력', Math.round(itemDamage(it)), Math.round(itemDamage(cur)));
-    if (d.def || idef(cur).def) push('방어', Math.round((d.def || 0) * RARITY_MULT[it.r]), Math.round((idef(cur).def || 0) * RARITY_MULT[cur.r]));
-    if (d.type === 'bag' && (d.slots || idef(cur).slots)) push('가방 칸', d.slots || 0, idef(cur).slots || 0);
+    if (d.dmg || idef(cur).dmg) push(tr('공격력'), Math.round(itemDamage(it)), Math.round(itemDamage(cur)));
+    if (d.def || idef(cur).def) push(tr('방어'), Math.round((d.def || 0) * RARITY_MULT[it.r]), Math.round((idef(cur).def || 0) * RARITY_MULT[cur.r]));
+    if (d.type === 'bag' && (d.slots || idef(cur).slots)) push(tr('가방 칸'), d.slots || 0, idef(cur).slots || 0);
     const sa = itemStats(it), sb = itemStats(cur);
-    const NM = { hp: '생명', mp: '마나', def: '방어', ms: '이속', crit: '치명', critD: '치명피해', cdr: '쿨감', lifesteal: '흡혈', str: '힘', dex: '민첩', int: '지능', vit: '체력', jump: '점프', mpreg: '마나재생', hpreg: '생명재생',
+    const NM = { hp: tr('생명'), mp: tr('마나'), def: tr('방어'), ms: tr('이속'), crit: tr('치명'), critD: tr('치명피해'), cdr: tr('쿨감'), lifesteal: tr('흡혈'), str: tr('힘'), dex: tr('민첩'), int: tr('지능'), vit: tr('체력'), jump: tr('점프'), mpreg: tr('마나재생'), hpreg: tr('생명재생'),
       // 산소통·잠수 장비.
-      oxyMax: '숨(초)', oxyReg: '숨 회복', charge: '전하' };
+      oxyMax: tr('숨(초)'), oxyReg: tr('숨 회복'), charge: tr('전하') };
     for (const k in NM) {
       const a = sa[k] || 0, b = sb[k] || 0;
       if (a || b) push(NM[k], a, b);
     }
-    if (!rows.length) return `<div class="tcmp same">차고 있는 것과 큰 차이 없다</div>`;
-    return `<div class="tcmp"><span class="cmp-h">지금 낀 것과 비교</span>${rows.join('')}</div>`;
+    if (!rows.length) return `<div class="tcmp same">${tr('차고 있는 것과 큰 차이 없다')}</div>`;
+    return `<div class="tcmp"><span class="cmp-h">${tr('지금 낀 것과 비교')}</span>${rows.join('')}</div>`;
   },
 
   showTip(it, e, extra) {
@@ -1708,97 +1704,97 @@ export const UI = {
     const d = idef(it), st = itemStats(it);
     let h = `<div class="thead"><span class="tip-ic" style="background-image:url(${Art.itemUrl(it.id)})"></span>` +
       `<span class="tname c${it.r}">${itemName(it)}</span></div>`;
-    const typeName = d.type === 'weapon' ? ({ melee: '근접 무기', ranged: '원거리 무기', magic: '마법 무기' })[d.wc]
-      : d.type === 'armor' ? '방어구' : d.type === 'acc' ? '장신구' : d.type === 'tool' ? '도구'
-        : d.type === 'rod' ? '낚싯대' : d.type === 'pet' ? '펫' : d.type === 'station' ? '설치물'
-          : d.type === 'door' ? '문'
-          : d.type === 'bag' ? '가방' : d.type === 'consum' ? '소비품' : d.type === 'block' ? '설치물'
-            : d.type === 'machine' ? '기계' : d.type === 'seed' ? (d.fert ? '비료' : '씨앗')
-              : d.type === 'summon' ? '소환' : '재료';
+    const typeName = d.type === 'weapon' ? ({ melee: tr('근접 무기'), ranged: tr('원거리 무기'), magic: tr('마법 무기') })[d.wc]
+      : d.type === 'armor' ? tr('방어구') : d.type === 'acc' ? tr('장신구') : d.type === 'tool' ? tr('도구')
+        : d.type === 'rod' ? tr('낚싯대') : d.type === 'pet' ? tr('펫') : d.type === 'station' ? tr('설치물')
+          : d.type === 'door' ? tr('문')
+          : d.type === 'bag' ? tr('가방') : d.type === 'consum' ? tr('소비품') : d.type === 'block' ? tr('설치물')
+            : d.type === 'machine' ? tr('기계') : d.type === 'seed' ? (d.fert ? tr('비료') : tr('씨앗'))
+              : d.type === 'summon' ? tr('소환') : tr('재료');
     h += `<div class="ttype">${RARITY[it.r]} · ${typeName}</div>`;
     if (d.dmg) {
-      h += `<div class="tstat">공격력 <b>${Math.round(itemDamage(it))}</b> · 속도 <b>${itemSpeed(it).toFixed(2)}/초</b></div>`;
+      h += `<div class="tstat">${tr('공격력 <b>{itemDamage}</b> · 속도 <b>{itemSpeed}/초</b>', { itemDamage: Math.round(itemDamage(it)), itemSpeed: itemSpeed(it).toFixed(2) })}</div>`;
       /* ★ 초당 피해를 같이 적는다. */
       const n = d.multi || 1;
       const one = itemDamage(it) * itemSpeed(it);
       const eff = one * (n > 1 ? 1 + MULTI_FALLOFF * (n - 1) : 1);
-      h += `<div class="tstat">초당 피해 <b>${Math.round(eff)}</b>` +
-        (n > 1 ? ` <span class="thint">(한 몸에 다 맞을 때 · 흩어지면 ${Math.round(one * n)})</span>` : '') +
+      h += `<div class="tstat">${tr('초당 피해 <b>{eff}</b>', { eff: Math.round(eff) })}` +
+        (n > 1 ? ` <span class="thint">${tr('(한 몸에 다 맞을 때 · 흩어지면 {n})', { n: Math.round(one * n) })}</span>` : '') +
         `</div>`;
     }
-    if (d.def) h += `<div class="tstat">방어 <b>${Math.round(d.def * enhMul(it))}</b></div>`;
-    if (it.e) h += `<div class="tstat">강화 <b>+${it.e}</b> <span class="thint">(공격·방어 +${(it.e * 5)}%p)</span></div>`;
+    if (d.def) h += `<div class="tstat">${tr('방어 <b>{n}</b>', { n: Math.round(d.def * enhMul(it)) })}</div>`;
+    if (it.e) h += `<div class="tstat">${tr('강화 <b>+{e}</b>', { e: it.e })} <span class="thint">${tr('(공격·방어 +{n}%p)', { n: it.e * 5 })}</span></div>`;
     /* 펫은 레벨이 곧 값어치다 — 패시브가 통째로 커지므로 지금 몇 레벨이고 다음까지 얼마나 남았는지가 한눈에 보여야 한다. */
     if (d.type === 'pet') {
       const lv = it.lv || 1, max = lv >= PET_LV_MAX;
-      h += `<div class="tstat">레벨 <b>${lv}</b> / ${PET_LV_MAX}` +
-        (max ? ' <span class="thint">(끝까지 키웠다)</span>' : ` <span class="thint">패시브 ×${petLvMul(lv).toFixed(2)} · 공격 ×${petAtkMul(lv).toFixed(2)}</span>`) +
+      h += `<div class="tstat">${tr('레벨 <b>{lv}</b> / {petLvMax}', { lv, petLvMax: PET_LV_MAX })}` +
+        (max ? ` <span class="thint">${tr('(끝까지 키웠다)')}</span>` : ` <span class="thint">${tr('패시브 ×{petLvMul} · 공격 ×{petAtkMul}', { petLvMul: petLvMul(lv).toFixed(2), petAtkMul: petAtkMul(lv).toFixed(2) })}</span>`) +
         `</div>`;
       if (!max) {
         const need = petXpNext(lv), cur = it.xp || 0;
         h += `<div class="petxp"><i style="width:${Math.round(clamp(cur / need, 0, 1) * 100)}%"></i></div>` +
-          `<div class="thint">다음 레벨까지 ${fmt(need - cur)}</div>`;
+          `<div class="thint">${tr('다음 레벨까지 {n}', { n: fmt(need - cur) })}</div>`;
       }
     }
-    if (d.power) h += `<div class="tstat">채굴 등급 <b>${d.power}</b></div>`;
-    if (d.type === 'tool') h += `<div class="tstat">필요 레벨 <b>Lv.${equipReqLv(it.id)}</b></div>`;
-    if (d.pw) h += `<div class="tstat">전하 소모 <b>${d.pw}</b> / 사용</div>`;
+    if (d.power) h += `<div class="tstat">${tr('채굴 등급 <b>{power}</b>', { power: d.power })}</div>`;
+    if (d.type === 'tool') h += `<div class="tstat">${tr('필요 레벨 <b>Lv.{equipReqLv}</b>', { equipReqLv: equipReqLv(it.id) })}</div>`;
+    if (d.pw) h += `<div class="tstat">${tr('전하 소모 <b>{pw}</b> / 사용', { pw: d.pw })}</div>`;
     // 기계는 정보를 MACHINE 표가 들고 있다 — 아이템 쪽에 같은 내용을 또 쓰지 않는다
     if (d.mach) {
       const M = MACHINE[d.mach];
-      if (M.power) h += `<div class="tstat">전력 <b>${M.power}</b>/틱</div>`;
-      if (M.gen) h += `<div class="tstat">발전 <b>${M.gen}</b>/틱</div>`;
-      if (M.store) h += `<div class="tstat">축전 <b>${M.store}</b></div>`;
-      if (M.fuelIn) h += `<div class="tstat">연료를 직접 태운다</div>`;
-      if (M.mine) h += `<div class="tstat">채굴 등급 <b>${M.mine}</b> · 반경 <b>${M.range}</b>칸</div>`;
+      if (M.power) h += `<div class="tstat">${tr('전력 <b>{power}</b>/틱', { power: M.power })}</div>`;
+      if (M.gen) h += `<div class="tstat">${tr('발전 <b>{gen}</b>/틱', { gen: M.gen })}</div>`;
+      if (M.store) h += `<div class="tstat">${tr('축전 <b>{store}</b>', { store: M.store })}</div>`;
+      if (M.fuelIn) h += `<div class="tstat">${tr('연료를 직접 태운다')}</div>`;
+      if (M.mine) h += `<div class="tstat">${tr('채굴 등급 <b>{mine}</b> · 반경 <b>{range}</b>칸', { mine: M.mine, range: M.range })}</div>`;
       h += `<div class="tdesc">"${M.d}"</div>`;
     }
     // 펫 — 고유 자동 공격이 이 펫의 정체성이라 수치를 그대로 보여 준다
     if (d.pet && PETS[d.pet] && PETS[d.pet].atk) {
       const a = PETS[d.pet].atk;
-      h += `<div class="tstat">고유 공격 <b>${a.k === 'melee' ? '물어뜯기' : '투사체'}</b> · 피해 <b>${a.dmg}</b>` +
-        ` · ${a.cd}초마다 · 사거리 <b>${Math.round(a.range / TS)}</b>칸</div>`;
-      h += `<div class="tstat">필요 레벨 <b>Lv.${equipReqLv(it.id)}</b></div>`;
+      h += `<div class="tstat">${tr('고유 공격 <b>{v}</b> · 피해 <b>{dmg}</b>', { v: a.k === 'melee' ? tr('물어뜯기') : tr('투사체'), dmg: a.dmg })}` +
+        ` ${tr('· {cd}초마다 · 사거리 <b>{n}</b>칸', { cd: a.cd, n: Math.round(a.range / TS) })}</div>`;
+      h += `<div class="tstat">${tr('필요 레벨 <b>Lv.{equipReqLv}</b>', { equipReqLv: equipReqLv(it.id) })}</div>`;
     }
-    if (d.mana) h += `<div class="tstat">소모 마나 <b>${d.mana}</b></div>`;
-    if (d.multi) h += `<div class="tstat">투사체 <b>${d.multi}발</b></div>`;
+    if (d.mana) h += `<div class="tstat">${tr('소모 마나 <b>{mana}</b>', { mana: d.mana })}</div>`;
+    if (d.multi) h += `<div class="tstat">${tr('투사체 <b>{multi}발</b>', { multi: d.multi })}</div>`;
     /* 칸 수 표기 — 가방은 "가방이 몇 칸 늘어난다", 저장 상자는 "상자에 몇 칸이 있다"로 뜻이 다르다 — 사연: docs/code-history.md#h99 */
     // 심연용 산소통만 가진 값 — 배수라 위 표(+n)로는 뜻이 안 통한다
-    if (st.oxyReg) h += `<div class="taff">물 밖 숨 회복 ${1 + st.oxyReg}배</div>`;
+    if (st.oxyReg) h += `<div class="taff">${tr('물 밖 숨 회복 {n}배', { n: 1 + st.oxyReg })}</div>`;
     if (d.slots) h += d.type === 'bag'
-      ? `<div class="taff">+${d.slots} 가방 칸</div>`
-      : `<div class="taff">${d.slots}개 칸</div>`;
-    const NAME = { hp: '최대 생명', mp: '최대 마나', def: '방어', ms: '이동 속도', crit: '치명타', critD: '치명 피해', cdr: '재사용 감소', lifesteal: '흡혈', jump: '추가 점프', str: '힘', dex: '민첩', int: '지능', vit: '체력', dmgP: '피해', spdP: '공격 속도', fire: '화염 부여', frost: '냉기 부여', mpreg: '마나 재생', hpreg: '생명 재생', magicP: '마법 피해',
+      ? `<div class="taff">${tr('+{slots} 가방 칸', { slots: d.slots })}</div>`
+      : `<div class="taff">${tr('{slots}개 칸', { slots: d.slots })}</div>`;
+    const NAME = { hp: tr('최대 생명'), mp: tr('최대 마나'), def: tr('방어'), ms: tr('이동 속도'), crit: tr('치명타'), critD: tr('치명 피해'), cdr: tr('재사용 감소'), lifesteal: tr('흡혈'), jump: tr('추가 점프'), str: tr('힘'), dex: tr('민첩'), int: tr('지능'), vit: tr('체력'), dmgP: tr('피해'), spdP: tr('공격 속도'), fire: tr('화염 부여'), frost: tr('냉기 부여'), mpreg: tr('마나 재생'), hpreg: tr('생명 재생'), magicP: tr('마법 피해'),
       // 산소통·잠수 장비가 늘려 주는 값.
-      oxyMax: '숨 참는 시간', charge: '전하' };
+      oxyMax: tr('숨 참는 시간'), charge: tr('전하') };
     for (const k in st) {
       if (!NAME[k] || !st[k]) continue;
       const pct = (k === 'ms' || k === 'crit' || k === 'critD' || k === 'cdr' || k === 'lifesteal' || k === 'mpreg' || k === 'magicP');
       const v = (k === 'dmgP' || k === 'spdP') ? Math.round(st[k] * 100) + '%'
-        : k === 'oxyMax' ? st[k] + '초' : st[k] + (pct ? '%' : '');
+        : k === 'oxyMax' ? st[k] + tr('초') : st[k] + (pct ? '%' : '');
       h += `<div class="taff">${st[k] < 0 ? '' : '+'}${v} ${NAME[k]}</div>`;
     }
     if (d.use) {
-      if (d.use.hp) h += `<div class="taff">생명 ${d.use.hp} 회복</div>`;
-      if (d.use.mp) h += `<div class="taff">마나 ${d.use.mp} 회복</div>`;
-      if (d.use.buff) h += `<div class="taff">${BUFFS[d.use.buff].n} 효과</div>`;
+      if (d.use.hp) h += `<div class="taff">${tr('생명 {hp} 회복', { hp: d.use.hp })}</div>`;
+      if (d.use.mp) h += `<div class="taff">${tr('마나 {mp} 회복', { mp: d.use.mp })}</div>`;
+      if (d.use.buff) h += `<div class="taff">${tr('{buff} 효과', { buff: BUFFS[d.use.buff].n })}</div>`;
     }
     /* 같은 자리에 낀 것과 견줘 증감만 보여 준다. */
     const cmp = this.compareLine(it);
     if (cmp) h += cmp;
     if (d.d) h += `<div class="tdesc">"${d.d}"</div>`;
     if (extra) h += `<div class="thint">${extra}</div>`;
-    else if (d.type === 'tool') h += `<div class="thint">핫바에 두고 좌클릭으로 채굴</div>`;
-    else if (d.type === 'rod') h += `<div class="thint">핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)</div>`;
-    else if (d.type === 'pet') h += `<div class="thint">우클릭으로 펫 칸에 장착 — 두 마리까지 데리고 다닐 수 있다</div>`;
-    else if (d.type === 'station') h += `<div class="thint">핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)</div>`;
-    else if (d.type === 'door') h += `<div class="thint">바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수</div>`;
-    else if (isGear(it)) h += `<div class="thint">우클릭으로 장착</div>`;
-    else if (d.type === 'consum' || d.type === 'summon') h += `<div class="thint">우클릭으로 사용</div>`;
-    else if (d.type === 'machine') h += `<div class="thint">우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정</div>`;
-    else if (d.type === 'seed') h += `<div class="thint">${d.fert ? '자라는 중인 작물에 우클릭' : '갈아 둔 밭 위에 우클릭해 심기'}</div>`;
-    else if (d.hoe) h += `<div class="thint">흙이나 풀에 우클릭해 밭 갈기</div>`;
-    else if (d.scythe) h += `<div class="thint">다 여문 작물을 좌클릭해 거두기 — 다른 연장으로 치면 아무것도 안 나온다</div>`;
+    else if (d.type === 'tool') h += `<div class="thint">${tr('핫바에 두고 좌클릭으로 채굴')}</div>`;
+    else if (d.type === 'rod') h += `<div class="thint">${tr('핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)')}</div>`;
+    else if (d.type === 'pet') h += `<div class="thint">${tr('우클릭으로 펫 칸에 장착 — 두 마리까지 데리고 다닐 수 있다')}</div>`;
+    else if (d.type === 'station') h += `<div class="thint">${tr('핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)')}</div>`;
+    else if (d.type === 'door') h += `<div class="thint">${tr('바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수')}</div>`;
+    else if (isGear(it)) h += `<div class="thint">${tr('우클릭으로 장착')}</div>`;
+    else if (d.type === 'consum' || d.type === 'summon') h += `<div class="thint">${tr('우클릭으로 사용')}</div>`;
+    else if (d.type === 'machine') h += `<div class="thint">${tr('우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정')}</div>`;
+    else if (d.type === 'seed') h += `<div class="thint">${d.fert ? tr('자라는 중인 작물에 우클릭') : tr('갈아 둔 밭 위에 우클릭해 심기')}</div>`;
+    else if (d.hoe) h += `<div class="thint">${tr('흙이나 풀에 우클릭해 밭 갈기')}</div>`;
+    else if (d.scythe) h += `<div class="thint">${tr('다 여문 작물을 좌클릭해 거두기 — 다른 연장으로 치면 아무것도 안 나온다')}</div>`;
     this.tip.show(h, e.clientX, e.clientY);
     this.tipTarget = true;
   },
@@ -1875,7 +1871,7 @@ export const UI = {
     this.typeLine(this.dlg.lines[at], () => {
       if (!this.dlg || this.dlg.i !== at) return;      // 그 사이 창이 바뀌었으면 버린다
       if (last) this.showChoices();
-      else $('#dlg-choices').innerHTML = '<div class="dlg-next"><span class="dlg-next-ic"></span>클릭하여 계속</div>';
+      else $('#dlg-choices').innerHTML = `<div class="dlg-next"><span class="dlg-next-ic"></span>${tr('클릭하여 계속')}</div>`;
     });
   },
   /* 한 겹 더 들어가는 선택지(sub)를 받는다. */
@@ -1890,14 +1886,14 @@ export const UI = {
       b.addEventListener('click', ev => {
         ev.stopPropagation();
         if (c.back) { this.showChoices(); return; }
-        if (c.sub) { this.showChoices(c.sub.concat([{ t: '(돌아간다)', back: 1 }])); return; }
+        if (c.sub) { this.showChoices(c.sub.concat([{ t: tr('(돌아간다)'), back: 1 }])); return; }
         c.fn();
       });
       box.appendChild(b);
     }
     if (list) return;                       // 마치는 단추는 맨 윗겹에만
     const b = document.createElement('button');
-    b.className = 'dchoice meta'; b.textContent = '(대화를 마친다)';
+    b.className = 'dchoice meta'; b.textContent = tr('(대화를 마친다)');
     b.addEventListener('click', ev => { ev.stopPropagation(); this.closeDialogue(); });
     box.appendChild(b);
   },
@@ -1912,9 +1908,9 @@ export const UI = {
     // 장을 끝낼 때는 마지막에 "다음이 궁금해지는 한 줄"을 따로 한 장 더 넘긴다
     if (kind === 'outro' && ch.hook) lines.push('◆  ' + ch.hook);
     if (!lines.length) { if (done) done(); return; }
-    const label = kind === 'outro' ? `${ch.title} — 그 뒤` : `${ch.sub} · ${ch.title}`;
+    const label = kind === 'outro' ? tr('{title} — 그 뒤', { title: ch.title }) : `${ch.sub} · ${ch.title}`;
     this.openLore(label, lines, [{
-      t: kind === 'outro' ? '(다음 이야기로)' : '(계속한다)', quest: 1,
+      t: kind === 'outro' ? tr('(다음 이야기로)') : tr('(계속한다)'), quest: 1,
       fn: () => { this.closeDialogue(); art.classList.remove('show', 'story'); if (done) done(); }
     }]);
     this._storyArt = true;
@@ -1994,8 +1990,8 @@ export const UI = {
       $('#jet-fill').style.width = Math.round((1 - (p.jetHeat || 0)) * 100) + '%';
       jb.classList.toggle('over', !!p.jetOver);
       /* ★ 평상시에는 **숫자만** 쓴다. */
-      $('#jet-text').textContent = p.jetOver ? '과열 — 식는 중'
-        : (p.jetGap > 30 ? '한계 높이' : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`);
+      $('#jet-text').textContent = p.jetOver ? tr('과열 — 식는 중')
+        : (p.jetGap > 30 ? tr('한계 높이') : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`);
     }
     /* 산소 막대 — 물속이거나 아직 덜 찼을 때만 나온다(전하 막대와 같은 방식). */
     const oxy = p.oxygen === undefined ? d.oxyMax : p.oxygen;
@@ -2011,7 +2007,7 @@ export const UI = {
     // 발밑 지형이 아니라 세계 공통 기준선(SURF_BASE)에서 잰다 — 발밑 지형 기준이면 어디를 걷든 "발밑에서 몇 칸 떠 있나"만 재서 늘 비슷한 값(예: 항상 5m)이 나오고
     const ty = Math.floor(p.cy / TS);
     const depth = Math.round((ty - SURF_BASE) * 5);
-    $('#depth-text').textContent = depth > 0 ? `지하 ${depth}m` : `지상 ${-depth}m`;
+    $('#depth-text').textContent = depth > 0 ? tr('지하 {depth}m', { depth }) : tr('지상 {n}m', { n: -depth });
     const hh = Math.floor(G.dayT / 60), mm = Math.floor(G.dayT % 60);
     $('#clock-text').textContent = `${pad2(hh)}:${pad2(mm)}`;
     $('#clock-icon').textContent = '';

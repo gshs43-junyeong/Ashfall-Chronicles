@@ -6,6 +6,7 @@ import { RNG } from '../engine/core/rng.js';
 import { rleDecode, rleEncode } from '../engine/save/rle.js';
 import { sweepLight } from '../engine/tilemap/light.js';
 import { TileMap } from '../engine/tilemap/tilemap.js';
+import { tr } from './lang.js';
 import { BIOMES, CAMP_GX1, CAMP_X0, CAMP_X1, DEEP_Y, GLACIER_X1, HELL_Y, SEA_X1, SHIFT, SKY_Y, SURF_BASE, SX, SY,
   SYB, WH, WORLD_BOT, WSIZE, WSX, WSY, WW, applyWorldSize } from './size.js';
 import { CAVE_TYPES, CHAPTERS, FAULT, FLUID_FLOW, FLUID_KIND, FLUID_OPEN, FLUID_SRC, FLUID_TILE, MERCHANTS, MYSTIC,
@@ -1002,7 +1003,7 @@ export class World extends TileMap {
     for (let y = by; y < by + 10; y++) { this.set(bx - 10, y, T.STEELPLATE); this.set(bx + 9, y, T.STEELPLATE); }
     this.set(bx - 6, by + 2, T.CONDUIT); this.set(bx + 5, by + 2, T.CONDUIT);
     // 관리자는 소환 아이템이 없다 — 내려가서 마주치는 흐름이라 둥지로 둔다
-    this.objects.push({ type: 'lair', boss: 'overseer', ruin: 12, nm: '관리자 격실',
+    this.objects.push({ type: 'lair', boss: 'overseer', ruin: 12, nm: tr('관리자 격실'),
       x: bx * TS, y: (by + 10) * TS - 48, w: 40, h: 48 });
 
     // 설계도 단말 — 세션 2 오프닝의 핵심 수집물
@@ -1031,14 +1032,14 @@ export class World extends TileMap {
     }
 
     const boss = rooms[0], bfy = boss.y + boss.h - 3;
-    this.objects.push({ type: 'lair', boss: 'proliferator', ruin: 10, nm: '증식체의 노심',
+    this.objects.push({ type: 'lair', boss: 'proliferator', ruin: 10, nm: tr('증식체의 노심'),
       x: (boss.x + (boss.w >> 1)) * TS, y: (bfy + 1) * TS - 48, w: 44, h: 48 });
     // 가장 깊은 방이 헤파의 격실 — 가장 큰 방(boss)과 같은 방이 되면 두 보스방이 같은 자리에 겹쳐 버린다(실측: 300개 시드 중 1개꼴).
     let deep = null;
     for (const r of rooms) if (r !== boss && (!deep || r.y > deep.y)) deep = r;
     if (!deep) deep = boss;   // 방이 하나뿐인 극단적 경우의 안전장치
     const dfy = deep.y + deep.h - 3;
-    this.objects.push({ type: 'lair', boss: 'hepha', ruin: 11, nm: '헤파의 격실',
+    this.objects.push({ type: 'lair', boss: 'hepha', ruin: 11, nm: tr('헤파의 격실'),
       x: (deep.x + (deep.w >> 1)) * TS, y: (dfy + 1) * TS - 52, w: 48, h: 52 });
     this.objects.push({ type: 'terminal', x: (deep.x + 3) * TS, y: (dfy) * TS - 40, w: 34, h: 40, term: 4 });
 
@@ -1105,7 +1106,7 @@ export class World extends TileMap {
     for (const r of rooms) if (r.x > last.x) last = r;
     const lfy = last.y + last.h - 3;
     // ruin:15 — 12는 이미 관리자 격실(overseer)이 쓰고 있다.
-    this.objects.push({ type: 'lair', boss: 'archetype', ruin: 15, nm: '비어 있는 받침대',
+    this.objects.push({ type: 'lair', boss: 'archetype', ruin: 15, nm: tr('비어 있는 받침대'),
       x: (last.x + (last.w >> 1)) * TS, y: (lfy + 1) * TS - 56, w: 48, h: 56 });
 
     for (const r of rooms) {
@@ -1173,7 +1174,7 @@ export class World extends TileMap {
     const main = rooms[0], mfy = main.y + main.h - 3;
     for (let x = main.x + 2; x < main.x + main.w - 2; x++)
       for (let y = mfy + 1; y <= mfy + 2; y++) this.set(x, y, T.ALTARSTONE);
-    this.objects.push({ type: 'lair', boss: 'restorer', ruin: 13, nm: '환원 기관',
+    this.objects.push({ type: 'lair', boss: 'restorer', ruin: 13, nm: tr('환원 기관'),
       x: (main.x + (main.w >> 1)) * TS, y: (mfy + 1) * TS - 60, w: 52, h: 60 });
     this.objects.push({ type: 'lorestone', lore: 'citadel',
       x: (main.x + 3) * TS, y: (mfy + 1) * TS - 34, w: 26, h: 34 });
@@ -1222,7 +1223,7 @@ export class World extends TileMap {
     }
 
     const main = rooms[0], mfy = main.y + main.h - 3;
-    this.objects.push({ type: 'lair', boss: 'shaft_maw', ruin: 14, nm: '메워진 막장',
+    this.objects.push({ type: 'lair', boss: 'shaft_maw', ruin: 14, nm: tr('메워진 막장'),
       x: (main.x + (main.w >> 1)) * TS, y: (mfy + 1) * TS - 52, w: 48, h: 52 });
     this.objects.push({ type: 'lorestone', lore: 'shaft',
       x: (main.x + 3) * TS, y: (mfy + 1) * TS - 34, w: 26, h: 34 });
@@ -1273,18 +1274,19 @@ export class World extends TileMap {
     const sorted = items.slice().sort((a, b) => a.tx0 - b.tx0);
     for (let i = 1; i < sorted.length; i++) {
       const a = sorted[i - 1], b = sorted[i];
-      if (b.tx0 <= a.tx1) bad.push(`겹침: ${a.slotKey}(${a.tx0}~${a.tx1}) ↔ ${b.slotKey}(${b.tx0}~${b.tx1})`);
+      if (b.tx0 <= a.tx1) bad.push(tr('겹침: {slotKey}({tx0}~{tx1}) ↔ {slotKey2}({tx02}~{tx12})', { slotKey: a.slotKey, tx0: a.tx0, tx1: a.tx1, slotKey2: b.slotKey, tx02: b.tx0, tx12: b.tx1 }));
     }
     for (const o of items) {
       // 분수대만은 제 물받이(solid) 위에 서는 게 정상이다
       if (o.slotKey === 'fountain') continue;
       for (let x = o.tx0; x <= o.tx1; x++)
-        if (this.solid(x, gy - 1)) bad.push(`막힌 칸 위: ${o.slotKey}가 ${x}칸(벽/기둥) 위에 있음`);
+        if (this.solid(x, gy - 1)) bad.push(tr('막힌 칸 위: {slotKey}가 {x}칸(벽/기둥) 위에 있음', { slotKey: o.slotKey, x }));
     }
     if (plaza) for (const o of items)
       if (o.plaza && (o.tx0 < plaza[0] || o.tx1 > plaza[1]))
-        bad.push(`광장 밖으로 삐져나감: ${o.slotKey}(${o.tx0}~${o.tx1}) vs 광장 ${plaza[0]}~${plaza[1]}`);
-    if (bad.length) console.warn('[여명 마을 배치 문제]\n' + bad.join('\n'));
+        bad.push(tr('광장 밖으로 삐져나감: {slotKey}({tx0}~{tx1}) vs 광장 {plaza}~{plaza2}', { slotKey: o.slotKey, tx0: o.tx0, tx1: o.tx1, plaza: plaza[0], plaza2: plaza[1] }));
+    if (bad.length) console.warn(`${tr('[여명 마을 배치 문제]')}
+` + bad.join('\n'));
     return bad;
   }
 
@@ -3510,7 +3512,7 @@ export class World extends TileMap {
       /* 석판 유적도 바이옴 유적과 같은 규격을 쓴다 — 도면(겉모양) · 묻힌 입구 · 고유 장식 · 고유 방 · 고유 이벤트 — 사연: docs/code-history.md#h121 */
       const st = STORY_RUIN[i] || {};
       const spec = {
-        id: 'story' + i, n: '석판 유적 ' + (i + 1), x: cx, y: y0, w, h, tier: sp.tier,
+        id: 'story' + i, n: `${tr('석판 유적')} ` + (i + 1), x: cx, y: y0, w, h, tier: sp.tier,
         wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10, torch: T.TORCH,
         entryKind: sp.entryKind, plan: st.plan, arch: st.arch,
         decor: st.decor, sig: st.sig, event: st.event, bonus: st.bonus

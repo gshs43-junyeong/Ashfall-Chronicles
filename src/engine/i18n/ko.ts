@@ -1,5 +1,6 @@
 /* ===== engine/i18n/ko.ts — 한국어 문법: 받침에 맞춘 조사 ===== */
-/* 메시지에서는 {이름|을} 처럼 적는다 — '을(를)'처럼 둘 다 적지 않는다. 짝의 어느 쪽을 적어도 같다({이름|를} = {이름|을}). */
+/* 메시지에서는 {이름|을} 처럼 적는다 — '을(를)'처럼 둘 다 적지 않는다. 짝의 어느 쪽을 적어도 같다({이름|를} = {이름|을}).
+   값과 조사 사이에 글자가 끼면(『{이름}』{이름|-이}) 앞에 - 를 붙여 조사만 받는다. */
 
 /** 받침이 있으면 앞엣것 — josa('검', '이', '가') → '이'. 한글이 아니면 뒤엣것. */
 export function josa(word: unknown, withJong: string, noJong: string): string {
@@ -22,8 +23,8 @@ const PAIRS: [string, string][] = [['을', '를'], ['이', '가'], ['은', '는'
 
 /** {값|조사} 훅 — 값 뒤에 알맞은 조사를 붙여 돌려준다. 모르는 조사면 null(형식 오류로 친다). */
 export function koParticle(v: unknown, p: string): string | null {
-  const s = String(v);
-  if (p === '로' || p === '으로') return s + josaRo(s);
-  for (const [a, b] of PAIRS) if (p === a || p === b) return s + josa(s, a, b);
+  const s = String(v), only = p[0] === '-', q = only ? p.slice(1) : p, w = only ? '' : s;
+  if (q === '로' || q === '으로') return w + josaRo(s);
+  for (const [a, b] of PAIRS) if (q === a || q === b) return w + josa(s, a, b);
   return null;
 }

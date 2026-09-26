@@ -1,6 +1,6 @@
 /* ===== data.js — 타일 / 아이템 / 적 / 스킬 / 스토리 ===== */
 import { clamp } from '../engine/core/math.js';
-import { eulreul, iga } from '../engine/i18n/ko.js';
+import { tr } from './lang.js';
 import { BIOMES, DEEP_Y, HELL_Y, SHIFT, SKY_Y } from './size.js';
 
 /* ---------------- 타일 ---------------- */
@@ -2169,7 +2169,7 @@ export const ENEMIES = {
 };
 
 /* ================= 개조 — 세션 2에서 옛 몹이 기계가 되어 돌아온다 ================= */
-export const mobCw = t => (ENEMIES[t] && ENEMIES[t].cw) || '마리';
+export const mobCw = t => (ENEMIES[t] && ENEMIES[t].cw) || tr('마리');
 
 export const MECH_MUL = 1.5;                 // 체력·공격력·방어·보상 모두 원래의 1.5배
 /* ★ 개조된 것에서는 **부품만** 나온다. */
@@ -2201,7 +2201,7 @@ export function isMech(type, chapter) {
 /** 살아 있는 개체의 이름. */
 export function mobName(type, mech) {
   const n = (ENEMIES[type] || {}).n || type;
-  return mech ? '개조된 ' + n : n;
+  return mech ? `${tr('개조된')} ` + n : n;
 }
 
 
@@ -5078,42 +5078,42 @@ export const SIDE_POOL = {
       const t = targets[clamp(ch * 2 + rng.int(0, 1), 0, targets.length - 1)];
       const n = rng.int(5, 9);
       return {
-        title: '마을을 지켜라',
-        desc: `요즘 ${iga(ENEMIES[t].n)} 부쩍 늘었어. ${n}마리만 줄여 주겠니?`,
+        title: tr('마을을 지켜라'),
+        desc: tr('요즘 {enemy|이} 부쩍 늘었어. {n}마리만 줄여 주겠니?', { enemy: ENEMIES[t].n, n }),
         obj: { type: 'kill', target: t, n },
         rw: { gold: 35 + ch * 45, xp: 25 + ch * 35 },
-        doneLine: '덕분에 한숨 돌렸다. 고마워.'
+        doneLine: tr('덕분에 한숨 돌렸다. 고마워.')
       };
     },
     (ch, rng) => {
       const n = rng.int(8, 16);
       return {
-        title: '땔감 모으기',
-        desc: `겨울이 오기 전에 나무 ${n}개만 더 모아 주련?`,
+        title: tr('땔감 모으기'),
+        desc: tr('겨울이 오기 전에 나무 {n}개만 더 모아 주련?', { n }),
         obj: { type: 'collect', item: 'wood', n },
         rw: { gold: 20 + ch * 20, xp: 15 + ch * 20 },
-        doneLine: '따뜻하게 날 수 있겠어. 고맙다.'
+        doneLine: tr('따뜻하게 날 수 있겠어. 고맙다.')
       };
     },
     (ch, rng) => {
       const n = rng.int(20, 32);
       return {
-        title: '무너진 담',
-        desc: `담이 한쪽으로 주저앉았어. 돌 ${n}개면 다시 세울 수 있을 것 같아.`,
+        title: tr('무너진 담'),
+        desc: tr('담이 한쪽으로 주저앉았어. 돌 {n}개면 다시 세울 수 있을 것 같아.', { n }),
         obj: { type: 'collect', item: 'stone', n },
         rw: { gold: 25 + ch * 25, xp: 20 + ch * 25 },
-        doneLine: '담이 섰어. 담이 있으면 안쪽이 생기더라. 그게 마을이지.'
+        doneLine: tr('담이 섰어. 담이 있으면 안쪽이 생기더라. 그게 마을이지.')
       };
     },
     (ch, rng) => {
       const t = chPick(CH_MOB, ch);
       const n = rng.int(6, 10);
       return {
-        title: '돌아오지 않은 사람',
-        desc: `어제 나간 사람이 안 돌아왔어. ${ENEMIES[t].n} ${n}${mobCw(t)}만 걷어 주면 내가 찾으러 나갈 수 있어.`,
+        title: tr('돌아오지 않은 사람'),
+        desc: tr('어제 나간 사람이 안 돌아왔어. {enemy} {n}{mobCw}만 걷어 주면 내가 찾으러 나갈 수 있어.', { enemy: ENEMIES[t].n, n, mobCw: mobCw(t) }),
         obj: { type: 'kill', target: t, n },
         rw: { gold: 45 + ch * 50, xp: 40 + ch * 45 },
-        doneLine: '…찾았어. 다치기만 했더라. 네가 길을 열어 준 덕이야.'
+        doneLine: tr('…찾았어. 다치기만 했더라. 네가 길을 열어 준 덕이야.')
       };
     }
   ],
@@ -5123,11 +5123,11 @@ export const SIDE_POOL = {
       const item = ores[clamp(ch, 0, ores.length - 1)];
       const n = rng.int(6, 12);
       return {
-        title: '광석 배달',
-        desc: `${ITEMS[item].n} ${n}개가 필요해. 가져다 주면 사례하지.`,
+        title: tr('광석 배달'),
+        desc: tr('{item} {n}개가 필요해. 가져다 주면 사례하지.', { item: ITEMS[item].n, n }),
         obj: { type: 'collect', item, n },
         rw: { gold: 40 + ch * 55, xp: 20 + ch * 30 },
-        doneLine: '좋은 광석이군. 이걸로 뭔가 만들 수 있겠어.'
+        doneLine: tr('좋은 광석이군. 이걸로 뭔가 만들 수 있겠어.')
       };
     },
     (ch, rng) => {
@@ -5135,32 +5135,32 @@ export const SIDE_POOL = {
       const item = bars[clamp(ch - 1, 0, bars.length - 1)];
       const n = rng.int(3, 6);
       return {
-        title: '주괴 시험',
-        desc: `내가 정련법을 가르쳐줄 테니, ${ITEMS[item].n} ${n}개를 직접 만들어 와 봐.`,
+        title: tr('주괴 시험'),
+        desc: tr('내가 정련법을 가르쳐줄 테니, {item} {n}개를 직접 만들어 와 봐.', { item: ITEMS[item].n, n }),
         obj: { type: 'collect', item, n },
         rw: { gold: 50 + ch * 60, xp: 30 + ch * 40 },
-        doneLine: '제법인데. 대장장이 소질이 있어.'
+        doneLine: tr('제법인데. 대장장이 소질이 있어.')
       };
     },
     (ch, rng) => {
       const n = rng.int(12, 20);
       return {
-        title: '불에 넣을 것',
-        desc: `화로가 자꾸 식어. 석탄 ${n}개만 있으면 밤새 살려 둘 수 있어.`,
+        title: tr('불에 넣을 것'),
+        desc: tr('화로가 자꾸 식어. 석탄 {n}개만 있으면 밤새 살려 둘 수 있어.', { n }),
         obj: { type: 'collect', item: 'coal', n },
         rw: { gold: 30 + ch * 35, xp: 20 + ch * 25 },
-        doneLine: '밤새 불이 안 꺼졌어. 자다 깨서 확인 안 해도 되겠군.'
+        doneLine: tr('밤새 불이 안 꺼졌어. 자다 깨서 확인 안 해도 되겠군.')
       };
     },
     (ch, rng) => {
       const tile = chPick(CH_ORE, ch);
       const n = rng.int(14, 24);
       return {
-        title: '광맥째로',
-        desc: `${eulreul(TILE_DEF[tile].n)} ${n}번 깨 와. 주워 온 것 말고 네가 깬 걸로.`,
+        title: tr('광맥째로'),
+        desc: tr('{tileDef|을} {n}번 깨 와. 주워 온 것 말고 네가 깬 걸로.', { tileDef: TILE_DEF[tile].n, n }),
         obj: { type: 'mine', tile, n },
         rw: { gold: 45 + ch * 50, xp: 30 + ch * 40 },
-        doneLine: '깬 자리가 고르군. 곡괭이를 아는 손이야.'
+        doneLine: tr('깬 자리가 고르군. 곡괭이를 아는 손이야.')
       };
     }
   ],
@@ -5173,11 +5173,11 @@ export const SIDE_POOL = {
                            : s1[clamp(ch - 1, 0, s1.length - 1)];
       const n = rng.int(5, 10);
       return {
-        title: '마력 재료',
-        desc: `${iga(ITEMS[item].n)} ${n}개 필요해. 마법 재료야.`,
+        title: tr('마력 재료'),
+        desc: tr('{item|이} {n}개 필요해. 마법 재료야.', { item: ITEMS[item].n, n }),
         obj: { type: 'collect', item, n },
         rw: { gold: 35 + ch * 50, xp: 25 + ch * 35 },
-        doneLine: '좋아, 이걸로 주문을 하나 완성할 수 있겠어.'
+        doneLine: tr('좋아, 이걸로 주문을 하나 완성할 수 있겠어.')
       };
     },
     (ch, rng) => {
@@ -5185,33 +5185,33 @@ export const SIDE_POOL = {
       const t = targets[clamp(ch - 2, 0, targets.length - 1)];
       const n = rng.int(4, 7);
       return {
-        title: '마력 파동 조사',
-        desc: `${ENEMIES[t].n}에게서 이상한 마력이 느껴져. ${n}마리만 처리해 줘.`,
+        title: tr('마력 파동 조사'),
+        desc: tr('{enemy}에게서 이상한 마력이 느껴져. {n}마리만 처리해 줘.', { enemy: ENEMIES[t].n, n }),
         obj: { type: 'kill', target: t, n },
         rw: { gold: 45 + ch * 55, xp: 35 + ch * 40 },
-        doneLine: '파동이 잦아들었어. 역시 네 덕분이야.'
+        doneLine: tr('파동이 잦아들었어. 역시 네 덕분이야.')
       };
     },
     (ch, rng) => {
       const tile = chPick(CH_ORE, ch);
       const n = rng.int(10, 18);
       return {
-        title: '별빛이 닿은 자리',
-        desc: `${TILE_DEF[tile].n}에 별빛이 스며 있어. ${n}번만 깨 와 줘. 깨야 보여.`,
+        title: tr('별빛이 닿은 자리'),
+        desc: tr('{tileDef}에 별빛이 스며 있어. {n}번만 깨 와 줘. 깨야 보여.', { tileDef: TILE_DEF[tile].n, n }),
         obj: { type: 'mine', tile, n },
         rw: { gold: 40 + ch * 45, xp: 35 + ch * 45 },
-        doneLine: '역시. 조각이 떨어진 자리부터 빛이 스며들고 있어.'
+        doneLine: tr('역시. 조각이 떨어진 자리부터 빛이 스며들고 있어.')
       };
     },
     (ch, rng) => {
       const item = chPick(CH_MAT, ch);
       const n = rng.int(10, 18);
       return {
-        title: '재우는 데 쓸 것',
-        desc: `${ITEMS[item].n} ${n}개. 조각을 재우는 건 못 하지만, 꿈을 얕게는 만들 수 있어.`,
+        title: tr('재우는 데 쓸 것'),
+        desc: tr('{item} {n}개. 조각을 재우는 건 못 하지만, 꿈을 얕게는 만들 수 있어.', { item: ITEMS[item].n, n }),
         obj: { type: 'collect', item, n },
         rw: { gold: 40 + ch * 50, xp: 35 + ch * 45 },
-        doneLine: '이걸로 하룻밤은 얕게 재울 수 있어. 하룻밤이라도 어디야.'
+        doneLine: tr('이걸로 하룻밤은 얕게 재울 수 있어. 하룻밤이라도 어디야.')
       };
     }
   ],
@@ -5222,10 +5222,10 @@ export const SIDE_POOL = {
       const n = rng.int(6, 12);
       return {
         title: '???',
-        desc: `${eulreul(TILE_DEF[tile].n)} ${n}번 캐 오너라. 이유는… 나중에 말해주마.`,
+        desc: tr('{tileDef|을} {n}번 캐 오너라. 이유는… 나중에 말해주마.', { tileDef: TILE_DEF[tile].n, n }),
         obj: { type: 'mine', tile, n },
         rw: { gold: 30 + ch * 40, xp: 40 + ch * 50 },
-        doneLine: '…역시. 네가 맞았어.'
+        doneLine: tr('…역시. 네가 맞았어.')
       };
     },
     (ch, rng) => {
@@ -5233,22 +5233,22 @@ export const SIDE_POOL = {
       const t = targets[clamp(ch - 1, 0, targets.length - 1)];
       const n = rng.int(5, 9);
       return {
-        title: '오래된 빚',
-        desc: `저 아래 ${ENEMIES[t].n}에게 진 빚이 있다. ${n}마리를 대신 갚아 다오.`,
+        title: tr('오래된 빚'),
+        desc: tr('저 아래 {enemy}에게 진 빚이 있다. {n}마리를 대신 갚아 다오.', { enemy: ENEMIES[t].n, n }),
         obj: { type: 'kill', target: t, n },
         rw: { gold: 40 + ch * 50, xp: 45 + ch * 55 },
-        doneLine: '빚을 갚았군. 이제 좀 편히 잘 수 있겠어.'
+        doneLine: tr('빚을 갚았군. 이제 좀 편히 잘 수 있겠어.')
       };
     },
     (ch, rng) => {
       const item = chPick(CH_MAT, ch);
       const n = rng.int(10, 16);
       return {
-        title: '가져와 보아라',
-        desc: `${ITEMS[item].n} ${n}개를 가져와 보아라. 무엇에 쓰는지는 나중에 말해주마.`,
+        title: tr('가져와 보아라'),
+        desc: tr('{item} {n}개를 가져와 보아라. 무엇에 쓰는지는 나중에 말해주마.', { item: ITEMS[item].n, n }),
         obj: { type: 'collect', item, n },
         rw: { gold: 35 + ch * 45, xp: 45 + ch * 50 },
-        doneLine: '…그래. 아직은 이것으로 되는군. 다음에는 더 있어야 할 게다.'
+        doneLine: tr('…그래. 아직은 이것으로 되는군. 다음에는 더 있어야 할 게다.')
       };
     }
   ],
@@ -5259,21 +5259,21 @@ export const SIDE_POOL = {
       const t = chPick(CH_MOB, ch);
       const n = rng.int(8, 13);
       return {
-        title: '겁을 먹었다',
-        desc: `애들이 우리 밖으로 안 나가려 해. ${ENEMIES[t].n} ${n}${mobCw(t)}만 치워 주면 다시 나올 거야.`,
+        title: tr('겁을 먹었다'),
+        desc: tr('애들이 우리 밖으로 안 나가려 해. {enemy} {n}{mobCw}만 치워 주면 다시 나올 거야.', { enemy: ENEMIES[t].n, n, mobCw: mobCw(t) }),
         obj: { type: 'kill', target: t, n },
         rw: { gold: 70 + ch * 55, xp: 60 + ch * 50 },
-        doneLine: '봐, 벌써 문 앞까지 나왔잖아. 짐승은 사람보다 빨리 잊어.'
+        doneLine: tr('봐, 벌써 문 앞까지 나왔잖아. 짐승은 사람보다 빨리 잊어.')
       };
     },
     (ch, rng) => {
       const n = rng.int(10, 18);
       return {
-        title: '먹일 것',
-        desc: `생고기 ${n}개만. 이 도시엔 풀이 없어서 애들이 고기만 먹어.`,
+        title: tr('먹일 것'),
+        desc: tr('생고기 {n}개만. 이 도시엔 풀이 없어서 애들이 고기만 먹어.', { n }),
         obj: { type: 'collect', item: 'raw_meat', n },
         rw: { gold: 55 + ch * 45, xp: 45 + ch * 40 },
-        doneLine: '오늘은 다 먹였다. 먹인 날은 기분이 좋아.'
+        doneLine: tr('오늘은 다 먹였다. 먹인 날은 기분이 좋아.')
       };
     }
   ],
@@ -5282,21 +5282,21 @@ export const SIDE_POOL = {
       const t = chPick(CH_MOB, ch);
       const n = rng.int(12, 18);
       return {
-        title: '표적',
-        desc: `${ENEMIES[t].n} ${n}${mobCw(t)}. 세어서 와. 몇을 쓰러뜨렸는지 모르는 놈은 제 실력도 모른다.`,
+        title: tr('표적'),
+        desc: tr('{enemy} {n}{mobCw}. 세어서 와. 몇을 쓰러뜨렸는지 모르는 놈은 제 실력도 모른다.', { enemy: ENEMIES[t].n, n, mobCw: mobCw(t) }),
         obj: { type: 'kill', target: t, n },
         rw: { gold: 80 + ch * 60, xp: 90 + ch * 70 },
-        doneLine: '세었군. 이제 네가 뭘 할 수 있는지 너도 안다.'
+        doneLine: tr('세었군. 이제 네가 뭘 할 수 있는지 너도 안다.')
       };
     },
     (ch, rng) => {
       const n = rng.int(6, 12);
       return {
-        title: '무게',
-        desc: `강철 주괴 ${n}개를 지고 와라. 나르는 것도 훈련이다. 무겁게 걸으면 가볍게 싸운다.`,
+        title: tr('무게'),
+        desc: tr('강철 주괴 {n}개를 지고 와라. 나르는 것도 훈련이다. 무겁게 걸으면 가볍게 싸운다.', { n }),
         obj: { type: 'collect', item: 'iron_bar', n },
         rw: { gold: 60 + ch * 50, xp: 80 + ch * 60 },
-        doneLine: '어깨가 내려앉았군. 내일이면 그 자리에 근육이 붙는다.'
+        doneLine: tr('어깨가 내려앉았군. 내일이면 그 자리에 근육이 붙는다.')
       };
     }
   ],
@@ -5304,21 +5304,21 @@ export const SIDE_POOL = {
     (ch, rng) => {
       const n = rng.int(20, 32);
       return {
-        title: '지붕과 바닥',
-        desc: `판자 ${n}장. 방은 많은데 바닥이 꺼진 방이 더 많아.`,
+        title: tr('지붕과 바닥'),
+        desc: tr('판자 {n}장. 방은 많은데 바닥이 꺼진 방이 더 많아.', { n }),
         obj: { type: 'collect', item: 'plank', n },
         rw: { gold: 60 + ch * 45, xp: 45 + ch * 40 },
-        doneLine: '두 방을 더 열었다. 채울 사람은 아직 없지만, 열어는 뒀어.'
+        doneLine: tr('두 방을 더 열었다. 채울 사람은 아직 없지만, 열어는 뒀어.')
       };
     },
     (ch, rng) => {
       const n = rng.int(14, 24);
       return {
-        title: '아궁이',
-        desc: `석탄 ${n}개. 손님한테 찬물을 내놓을 수는 없잖아.`,
+        title: tr('아궁이'),
+        desc: tr('석탄 {n}개. 손님한테 찬물을 내놓을 수는 없잖아.', { n }),
         obj: { type: 'collect', item: 'coal', n },
         rw: { gold: 55 + ch * 45, xp: 40 + ch * 40 },
-        doneLine: '오늘 묵는 사람은 더운물로 씻는다. 그거 하나로 여관이 여관이 돼.'
+        doneLine: tr('오늘 묵는 사람은 더운물로 씻는다. 그거 하나로 여관이 여관이 돼.')
       };
     }
   ],
@@ -5326,22 +5326,22 @@ export const SIDE_POOL = {
     (ch, rng) => {
       const n = rng.int(18, 30);
       return {
-        title: '벼릴 것',
-        desc: `강철판 ${n}개. 도시에서 뜯어 온 걸로 벼리면 이 도시 물건이 되는 거지.`,
+        title: tr('벼릴 것'),
+        desc: tr('강철판 {n}개. 도시에서 뜯어 온 걸로 벼리면 이 도시 물건이 되는 거지.', { n }),
         obj: { type: 'collect', item: 'steel_plate', n },
         rw: { gold: 70 + ch * 55, xp: 50 + ch * 45 },
-        doneLine: '같은 판인데 두들기면 다른 게 돼. 그래서 이 일을 그만 못 둬.'
+        doneLine: tr('같은 판인데 두들기면 다른 게 돼. 그래서 이 일을 그만 못 둬.')
       };
     },
     (ch, rng) => {
       const tile = chPick(CH_ORE, ch);
       const n = rng.int(16, 26);
       return {
-        title: '주워 온 것 말고',
-        desc: `${eulreul(TILE_DEF[tile].n)} ${n}번 깨 와. 주워 온 쇠는 이미 한 번 남의 물건이었잖아.`,
+        title: tr('주워 온 것 말고'),
+        desc: tr('{tileDef|을} {n}번 깨 와. 주워 온 쇠는 이미 한 번 남의 물건이었잖아.', { tileDef: TILE_DEF[tile].n, n }),
         obj: { type: 'mine', tile, n },
         rw: { gold: 75 + ch * 60, xp: 55 + ch * 50 },
-        doneLine: '처음부터 우리 것인 쇠야. 이걸로 만든 건 팔지 말자.'
+        doneLine: tr('처음부터 우리 것인 쇠야. 이걸로 만든 건 팔지 말자.')
       };
     }
   ],
@@ -5349,22 +5349,22 @@ export const SIDE_POOL = {
     (ch, rng) => {
       const n = rng.int(8, 14);
       return {
-        title: '끊긴 선',
-        desc: `동력관 조각 ${n}개. 이 도시 선은 다 끊겨 있는데, 끊긴 자리가 전부 같은 모양이야.`,
+        title: tr('끊긴 선'),
+        desc: tr('동력관 조각 {n}개. 이 도시 선은 다 끊겨 있는데, 끊긴 자리가 전부 같은 모양이야.', { n }),
         obj: { type: 'collect', item: 'conduit_part', n },
         rw: { gold: 75 + ch * 60, xp: 60 + ch * 55 },
-        doneLine: '같은 모양이지? 누가 한 번에 다 끊은 거야. 왜 끊었는지가 다음 문제고.'
+        doneLine: tr('같은 모양이지? 누가 한 번에 다 끊은 거야. 왜 끊었는지가 다음 문제고.')
       };
     },
     (ch, rng) => {
       const t = chPick(CH_MOB, ch);
       const n = rng.int(8, 13);
       return {
-        title: '뜯어 봐야 안다',
-        desc: `${ENEMIES[t].n} ${n}${mobCw(t)}만 부숴 줘. 멀쩡한 건 못 뜯어. 부서진 걸 봐야 어떻게 만들었는지가 보여.`,
+        title: tr('뜯어 봐야 안다'),
+        desc: tr('{enemy} {n}{mobCw}만 부숴 줘. 멀쩡한 건 못 뜯어. 부서진 걸 봐야 어떻게 만들었는지가 보여.', { enemy: ENEMIES[t].n, n, mobCw: mobCw(t) }),
         obj: { type: 'kill', target: t, n },
         rw: { gold: 80 + ch * 65, xp: 70 + ch * 60 },
-        doneLine: '안쪽을 봤어. 사람이 만든 게 아니야. …사람을 보고 만든 거야.'
+        doneLine: tr('안쪽을 봤어. 사람이 만든 게 아니야. …사람을 보고 만든 거야.')
       };
     }
   ]
