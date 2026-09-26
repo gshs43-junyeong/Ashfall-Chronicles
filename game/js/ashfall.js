@@ -1070,6 +1070,76 @@
     };
   }
 
+  // src/engine/tilemap/tilemap.ts
+  var tilemap_exports = {};
+  __export(tilemap_exports, {
+    TileMap: () => TileMap
+  });
+  var TileMap = class {
+    // 한 번이라도 보인 칸 — 지도의 안개
+    constructor(w, h, ts, defs, edge) {
+      this.w = w;
+      this.h = h;
+      this.ts = ts;
+      this.defs = defs;
+      this.edge = edge;
+      this.tiles = new Uint8Array(w * h);
+      this.walls = new Uint8Array(w * h);
+      this.explored = new Uint8Array(w * h);
+    }
+    i(x, y) {
+      return y * this.w + x;
+    }
+    inB(x, y) {
+      return x >= 0 && y >= 0 && x < this.w && y < this.h;
+    }
+    /* ★ inB 를 부르지 말고 경계를 여기서 따진다 — inB 를 거치면 세계 생성(소형 d1)이 3.7 → 4.3초로 느려졌다(이렇게 하면 3.45초). */
+    get(x, y) {
+      const w = this.w;
+      return x >= 0 && y >= 0 && x < w && y < this.h ? this.tiles[y * w + x] : this.edge;
+    }
+    wall(x, y) {
+      return this.inB(x, y) ? this.walls[y * this.w + x] : 0;
+    }
+    /** ★ 타일은 이것으로만 바꾼다 — 게임이 덮어써서 바뀐 칸을 알아챈다(조명·유체·지도). */
+    set(x, y, t) {
+      if (this.inB(x, y)) this.tiles[y * this.w + x] = t;
+    }
+    setWall(x, y, w) {
+      if (this.inB(x, y)) this.walls[y * this.w + x] = w;
+    }
+    solid(x, y) {
+      const d = this.defs[this.get(x, y)];
+      return d.solid === 1;
+    }
+    platform(x, y) {
+      return this.defs[this.get(x, y)].solid === 2;
+    }
+    liquid(x, y) {
+      return !!this.defs[this.get(x, y)].liquid;
+    }
+    /** 사각형(픽셀)이 막힌 칸과 겹치는지 */
+    hitSolid(px, py, w, h) {
+      const TS2 = this.ts;
+      const x0 = Math.floor(px / TS2), x1 = Math.floor((px + w - 0.01) / TS2);
+      const y0 = Math.floor(py / TS2), y1 = Math.floor((py + h - 0.01) / TS2);
+      for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) if (this.solid(x, y)) return true;
+      return false;
+    }
+    /** 발판(위에서만 막힘) 검사: 이전 아랫변이 발판 위에 있었어야 한다 — 걸리면 발판 윗변 y, 아니면 −1 */
+    hitPlatform(px, py, w, h, prevBottom) {
+      const TS2 = this.ts;
+      const x0 = Math.floor(px / TS2), x1 = Math.floor((px + w - 0.01) / TS2);
+      const y0 = Math.floor(py / TS2), y1 = Math.floor((py + h - 0.01) / TS2);
+      for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+        if (!this.platform(x, y)) continue;
+        const top = y * TS2;
+        if (prevBottom <= top + 2 && py + h > top) return top;
+      }
+      return -1;
+    }
+  };
+
   // src/legacy/util.js
   var util_exports = {};
   __export(util_exports, {
@@ -12601,12 +12671,11 @@
     const w = Math.max(6, Math.round(d.w * 0.32));
     return { x: d.dir === -1 ? d.x : d.x + d.w - w, y: d.y, w, h: d.h };
   }
-  var World = class _World {
+  var World = class _World extends TileMap {
     constructor(seed) {
+      super(WW, WH, TS, TILE_DEF, T.BEDROCK);
       this.seed = seed;
       this.rng = new RNG(seed);
-      this.tiles = new Uint8Array(WW * WH);
-      this.walls = new Uint8Array(WW * WH);
       this.surface = new Int16Array(WW);
       this.objects = [];
       this.doors = [];
@@ -12616,7 +12685,6 @@
       this.nets = [];
       this.crops = /* @__PURE__ */ new Set();
       this.crumbled = /* @__PURE__ */ new Map();
-      this.explored = new Uint8Array(WW * WH);
       this.spawnX = 180;
       this.spawnY = 0;
       this.lightBuf = null;
@@ -12625,38 +12693,13 @@
       this.lbw = 0;
       this.lbh = 0;
     }
-    i(x, y) {
-      return y * WW + x;
-    }
-    inB(x, y) {
-      return x >= 0 && y >= 0 && x < WW && y < WH;
-    }
-    get(x, y) {
-      return this.inB(x, y) ? this.tiles[y * WW + x] : T.BEDROCK;
-    }
-    wall(x, y) {
-      return this.inB(x, y) ? this.walls[y * WW + x] : 0;
-    }
     set(x, y, t) {
       if (!this.inB(x, y)) return;
       this.tiles[y * WW + x] = t;
       if (this.fq) this.fluidWake(x, y);
     }
-    setWall(x, y, w) {
-      if (this.inB(x, y)) this.walls[y * WW + x] = w;
-    }
-    solid(x, y) {
-      const d = TILE_DEF[this.get(x, y)];
-      return d.solid === 1;
-    }
-    platform(x, y) {
-      return TILE_DEF[this.get(x, y)].solid === 2;
-    }
     hurtTile(x, y) {
       return TILE_DEF[this.get(x, y)].hurt || 0;
-    }
-    liquid(x, y) {
-      return !!TILE_DEF[this.get(x, y)].liquid;
     }
     /** 사각형이 물에 얼마나 잠겼는지 0~1. */
     liquidIn(px, py, w, h) {
@@ -17693,11 +17736,9 @@
       }
     }
     /* ================= 충돌 ================= */
-    /** 사각형이 고체 타일과 겹치는지 */
+    /** 사각형이 막힌 칸이나 닫힌 문의 판과 겹치는지 */
     hitSolid(px, py, w, h) {
-      const x0 = Math.floor(px / TS), x1 = Math.floor((px + w - 0.01) / TS);
-      const y0 = Math.floor(py / TS), y1 = Math.floor((py + h - 0.01) / TS);
-      for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) if (this.solid(x, y)) return true;
+      if (super.hitSolid(px, py, w, h)) return true;
       for (const d of this.doors) {
         if (!d.closed) continue;
         const e = this.doorEdge(d);
@@ -17713,17 +17754,6 @@
       const d = Object.assign({ type: "door", x, y, w, h, closed: true, dir: dir || -1 }, extra);
       this.objects.push(d);
       this.doors.push(d);
-    }
-    /** 발판(위에서만 막힘) 검사: 이전 하단이 발판 위에 있었어야 함 */
-    hitPlatform(px, py, w, h, prevBottom) {
-      const x0 = Math.floor(px / TS), x1 = Math.floor((px + w - 0.01) / TS);
-      const y0 = Math.floor(py / TS), y1 = Math.floor((py + h - 0.01) / TS);
-      for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
-        if (!this.platform(x, y)) continue;
-        const top = y * TS;
-        if (prevBottom <= top + 2 && py + h > top) return top;
-      }
-      return -1;
     }
     /* ================= 조명 ================= */
     /** 화면 범위 조명 계산. */
@@ -42285,7 +42315,7 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
