@@ -5,8 +5,10 @@ import { mixin } from '../../engine/core/mixin.js';
 import { hashStr } from '../../engine/core/rng.js';
 import { tr } from '../lang.js';
 import { BIOMES, HELL_Y, SURF_BASE, WW } from '../size.js';
-import { BOW_HAND, CIPHER_KIND, CIPHER_WORDS, MYSTIC, RUIN_CARD, RUIN_CIPHER, RUIN_SPEC, STORY_RUIN, T, TILE_DEF,
-  idef } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
+import { BOW_HAND } from '../data/start.js';
+import { CIPHER_KIND, CIPHER_WORDS, MYSTIC, RUIN_CARD, RUIN_CIPHER, RUIN_SPEC, STORY_RUIN } from '../data/ruins.js';
+import { idef } from '../data/values.js';
 import { TS, ZONE_CARD } from '../world.js';
 import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';

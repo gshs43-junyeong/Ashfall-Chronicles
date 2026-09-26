@@ -4,7 +4,8 @@ import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
 import { SHIFT, SX, SY, WH, WORLD_BOT, WW } from '../size.js';
-import { MYSTIC, RUIN_CIPHER, RUIN_HINTS, RUIN_MAP_IN, RUIN_RELIC, RUIN_SPEC, STORY_RUIN, T, TILE_DEF } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
+import { MYSTIC, RUIN_CIPHER, RUIN_HINTS, RUIN_MAP_IN, RUIN_RELIC, RUIN_SPEC, STORY_RUIN } from '../data/ruins.js';
 import { TS, World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 

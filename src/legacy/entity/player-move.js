@@ -4,7 +4,9 @@ import { TAU, aabb, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
 import { WSY } from '../size.js';
-import { SIG_FX, T, TILE_DEF, hitFam, idef } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
+import { hitFam } from '../data/items.js';
+import { SIG_FX, idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { DmgText, Enemy, JET_BURN, JET_COOL_AIR, JET_COOL_GROUND, JET_HIGH_FALL, JET_MAX_UP, JET_RESUME, MAX_FALL,
   Part, Player, SAFE_FALL_VY, itemDamage } from '../entity.js';

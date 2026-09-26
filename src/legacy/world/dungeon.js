@@ -3,7 +3,8 @@ import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { WH, WW } from '../size.js';
-import { RUIN_PLANS, T, TILE_DEF } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
+import { RUIN_PLANS } from '../data/ruins.js';
 import { BoxSet, World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 

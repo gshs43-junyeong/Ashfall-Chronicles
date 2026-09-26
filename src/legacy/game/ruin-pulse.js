@@ -3,8 +3,11 @@ import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT, fmt, tr } from '../lang.js';
 import { WH } from '../size.js';
-import { CAVE_TYPES, ECHO, ENEMIES, ITEMS, PULSE, PULSE_EVENTS, PULSE_RAGE, RUIN_LORE, RUIN_RELIC, RUIN_SPEC,
-  STORY_RUIN, SURVEY_LABEL, SURVEY_TIERS, SURVEY_W, T, TILE_DEF } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
+import { ITEMS } from '../data/items.js';
+import { ENEMIES } from '../data/enemies.js';
+import { CAVE_TYPES, ECHO, PULSE, PULSE_EVENTS, PULSE_RAGE, RUIN_LORE, RUIN_RELIC, RUIN_SPEC, STORY_RUIN,
+  SURVEY_LABEL, SURVEY_TIERS, SURVEY_W } from '../data/ruins.js';
 import { TS } from '../world.js';
 import { Drop, Enemy, Part, makeItem, rollGear } from '../entity.js';
 import { UI } from '../ui.js';

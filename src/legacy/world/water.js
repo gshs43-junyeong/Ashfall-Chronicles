@@ -3,7 +3,8 @@ import { factory as Factory } from '../ctx.js';
 import { clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { HELL_Y, SHIFT, SX, SY, WH, WORLD_BOT, WSX, WSY, WW } from '../size.js';
-import { FLUID_KIND, T, TILE_DEF } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
+import { FLUID_KIND } from '../data/materials.js';
 import { MAT_LAYER, TS, World, inSeaZone } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 

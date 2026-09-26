@@ -2,7 +2,9 @@
 import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { ITEMS, RECIPES, STATION_DESC, STATION_NAME, STATION_UP, VILLAGE } from '../data.js';
+import { ITEMS, STATION_DESC, STATION_NAME, STATION_UP } from '../data/items.js';
+import { RECIPES } from '../data/recipes.js';
+import { VILLAGE } from '../data/start.js';
 import { Art } from '../itemart.js';
 import { makeItem } from '../entity.js';
 import { $, $$, UI } from '../ui.js';

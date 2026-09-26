@@ -3,7 +3,9 @@ import { app as G, ui as UI } from '../ctx.js';
 import { TAU, angleTo, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { BOW_TIP, SIG_FX, SKILLS, SKILL_FX, SKILL_HIT, idef } from '../data.js';
+import { BOW_TIP } from '../data/start.js';
+import { SKILLS } from '../data/skills.js';
+import { SIG_FX, SKILL_FX, SKILL_HIT, idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Enemy, PROJ_STYLE, Part, Player, Proj, Wolf, itemDamage, itemSpeed } from '../entity.js';
 /* entity.js 의 Player 에서 나눈 조각 — 읽히는 순간 Player.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */

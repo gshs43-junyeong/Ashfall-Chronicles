@@ -4,7 +4,8 @@ import { clamp, dist, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
 import { CAMP_GX1, CAMP_X0, DEEP_Y, HELL_Y, SHIFT, SURF_BASE, SX, SY, WH, WORLD_BOT, WSX, WSY, WW } from '../size.js';
-import { CAVE_TYPES, FAULT, T, TILE_DEF } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
+import { CAVE_TYPES, FAULT } from '../data/ruins.js';
 import { CAVE_GH, CAVE_GW, MAT_LAYER, TS, World, inSeaZone } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 

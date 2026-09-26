@@ -1,7 +1,9 @@
 /* ===== game/sound.js — 사운드 · 재질 파편 · 효과음 ===== */
 import { TAU } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
-import { BOSS_DIE, MAT, MAT_DEF, TILE_DEF, mobMat, tileMat } from '../data.js';
+import { TILE_DEF } from '../data.js';
+import { MAT, MAT_DEF, mobMat, tileMat } from '../data/materials.js';
+import { BOSS_DIE } from '../data/skills.js';
 import { TS } from '../world.js';
 import { Part } from '../entity.js';
 import { SFX_GAP, Sfx } from '../music.js';

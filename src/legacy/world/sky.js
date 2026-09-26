@@ -3,7 +3,8 @@ import { factory as Factory } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
 import { BIOMES, SHIFT, SKY_Y, SX, SY, WORLD_BOT, WSX, WW } from '../size.js';
-import { RIG, RUIN_HINTS, T, TILE_DEF } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
+import { RIG, RUIN_HINTS } from '../data/ruins.js';
 import { TS, World, inSeaZone } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 

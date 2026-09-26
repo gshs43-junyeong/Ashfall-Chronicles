@@ -180,16 +180,16 @@
    "game/altar.spawnBoss"
   ],
   "{enemy} {n}{mobCw}. 세어서 와. 몇을 쓰러뜨렸는지 모르는 놈은 제 실력도 모른다.": [
-   "data"
+   "data/quests"
   ],
   "{enemy} {n}{mobCw}만 부숴 줘. 멀쩡한 건 못 뜯어. 부서진 걸 봐야 어떻게 만들었는지가 보여.": [
-   "data"
+   "data/quests"
   ],
   "{enemy} 토벌!": [
    "game/altar.onBossDown"
   ],
   "{enemy}에게서 이상한 마력이 느껴져. {n}마리만 처리해 줘.": [
-   "data"
+   "data/quests"
   ],
   "{e} {e2|이} 지나갔다": [
    "game/spawn.updateEvents"
@@ -225,7 +225,7 @@
    "game/progress.onPickup"
   ],
   "{item|이} {n}개 필요해. 마법 재료야.": [
-   "data"
+   "data/quests"
   ],
   "{item|이} 필요하다": [
    "game/altar.altar"
@@ -234,13 +234,13 @@
    "game/village.enhanceSlot"
   ],
   "{item} {n}개. 조각을 재우는 건 못 하지만, 꿈을 얕게는 만들 수 있어.": [
-   "data"
+   "data/quests"
   ],
   "{item} {n}개가 필요해. 가져다 주면 사례하지.": [
-   "data"
+   "data/quests"
   ],
   "{item} {n}개를 가져와 보아라. 무엇에 쓰는지는 나중에 말해주마.": [
-   "data"
+   "data/quests"
   ],
   "{item} {o}개": [
    "game/village.objLabel"
@@ -334,19 +334,19 @@
    "game/altar.craft"
   ],
   "{tileDef|을} {n}번 깨 와. 주워 온 것 말고 네가 깬 걸로.": [
-   "data"
+   "data/quests"
   ],
   "{tileDef|을} {n}번 깨 와. 주워 온 쇠는 이미 한 번 남의 물건이었잖아.": [
-   "data"
+   "data/quests"
   ],
   "{tileDef|을} {n}번 캐 오너라. 이유는… 나중에 말해주마.": [
-   "data"
+   "data/quests"
   ],
   "{tileDef} {o}번": [
    "game/village.objLabel"
   ],
   "{tileDef}에 별빛이 스며 있어. {n}번만 깨 와 줘. 깨야 보여.": [
-   "data"
+   "data/quests"
   ],
   "{title} — 그 뒤": [
    "ui/dialogue.storyScene"
@@ -448,13 +448,13 @@
    "game/progress.questTargets"
   ],
   "…그래. 아직은 이것으로 되는군. 다음에는 더 있어야 할 게다.": [
-   "data"
+   "data/quests"
   ],
   "…역시. 네가 맞았어.": [
-   "data"
+   "data/quests"
   ],
   "…찾았어. 다치기만 했더라. 네가 길을 열어 준 덕이야.": [
-   "data"
+   "data/quests"
   ],
   "↺ 다시 듣기": [
    "index.html"
@@ -566,7 +566,7 @@
    "index.html"
   ],
   "가져와 보아라": [
-   "data"
+   "data/quests"
   ],
   "가진 금화가 없다": [
    "ui.depositGold"
@@ -590,10 +590,10 @@
    "index.html"
   ],
   "강철 주괴 {n}개를 지고 와라. 나르는 것도 훈련이다. 무겁게 걸으면 가볍게 싸운다.": [
-   "data"
+   "data/quests"
   ],
   "강철판 {n}개. 도시에서 뜯어 온 걸로 벼리면 이 도시 물건이 되는 거지.": [
-   "data"
+   "data/quests"
   ],
   "강화 <b>+{e}</b>": [
    "ui/tip.showTip"
@@ -608,16 +608,16 @@
    "ui.init"
   ],
   "같은 모양이지? 누가 한 번에 다 끊은 거야. 왜 끊었는지가 다음 문제고.": [
-   "data"
+   "data/quests"
   ],
   "같은 판인데 두들기면 다른 게 돼. 그래서 이 일을 그만 못 둬.": [
-   "data"
+   "data/quests"
   ],
   "개발판": [
    "index.html"
   ],
   "개조된": [
-   "data.mobName"
+   "data/enemies.mobName"
   ],
   "거기에 {k|을} 더해야 홈이 물린다.": [
    "game/ruin-map.ruinCipher"
@@ -635,7 +635,7 @@
    "ui/craft.refreshCraft"
   ],
   "겁을 먹었다": [
-   "data"
+   "data/quests"
   ],
   "게임 화면에 띄울 것을 고릅니다. 숨겨도 조작키로 여는 창은 그대로 열립니다.": [
    "index.html"
@@ -644,7 +644,7 @@
    "entity/player-combat.useSkill"
   ],
   "겨울이 오기 전에 나무 {n}개만 더 모아 주련?": [
-   "data"
+   "data/quests"
   ],
   "격노": [
    "ui/quest.renderRuins"
@@ -720,10 +720,10 @@
    "factory.runDrill"
   ],
   "광맥째로": [
-   "data"
+   "data/quests"
   ],
   "광석 배달": [
-   "data"
+   "data/quests"
   ],
   "광장 밖으로 삐져나감: {slotKey}({tx0}~{tx1}) vs 광장 {plaza}~{plaza2}": [
    "world/village.checkDawnLayout"
@@ -799,13 +799,13 @@
    "index.html"
   ],
   "깬 자리가 고르군. 곡괭이를 아는 손이야.": [
-   "data"
+   "data/quests"
   ],
   "꺼 둔 갈래는 화면에 뜨지 않습니다. 죽음 · 실패 알림은 끌 수 없습니다.": [
    "index.html"
   ],
   "끊긴 선": [
-   "data"
+   "data/quests"
   ],
   "나가기": [
    "index.html"
@@ -841,7 +841,7 @@
    "index.html"
   ],
   "내가 정련법을 가르쳐줄 테니, {item} {n}개를 직접 만들어 와 봐.": [
-   "data"
+   "data/quests"
   ],
   "내보내기 실패": [
    "game/save.exportSaves"
@@ -949,10 +949,10 @@
    "index.html"
   ],
   "담이 섰어. 담이 있으면 안쪽이 생기더라. 그게 마을이지.": [
-   "data"
+   "data/quests"
   ],
   "담이 한쪽으로 주저앉았어. 돌 {n}개면 다시 세울 수 있을 것 같아.": [
-   "data"
+   "data/quests"
   ],
   "대기": [
    "factory.tick",
@@ -994,7 +994,7 @@
    "game/act.mine"
   ],
   "덕분에 한숨 돌렸다. 고마워.": [
-   "data"
+   "data/quests"
   ],
   "도구": [
    "ui/tip.showTip"
@@ -1009,14 +1009,14 @@
    "index.html"
   ],
   "돌아오지 않은 사람": [
-   "data"
+   "data/quests"
   ],
   "돌판의 홈": [
    "game/ruin-map.openCodeDoor",
    "index.html"
   ],
   "동력관 조각 {n}개. 이 도시 선은 다 끊겨 있는데, 끊긴 자리가 전부 같은 모양이야.": [
-   "data"
+   "data/quests"
   ],
   "동전을 던지려면 금화 {cost}개가 필요하다.": [
    "game/village.useFountain"
@@ -1028,7 +1028,7 @@
    "game/progress.checkChapter"
   ],
   "두 방을 더 열었다. 채울 사람은 아직 없지만, 열어는 뒀어.": [
-   "data"
+   "data/quests"
   ],
   "둘째": [
    "game/ruin-map.ruinCipher"
@@ -1041,10 +1041,10 @@
    "game/ruin-map.fireRuinEvent"
   ],
   "따뜻하게 날 수 있겠어. 고맙다.": [
-   "data"
+   "data/quests"
   ],
   "땔감 모으기": [
-   "data"
+   "data/quests"
   ],
   "떨어진 별이 대지를 갈랐다. 잿빛이 번지기 전에, 다섯 개의 심장을 되찾아라.": [
    "index.html"
@@ -1056,7 +1056,7 @@
    "ui/tree.lockReason"
   ],
   "뜯어 봐야 안다": [
-   "data"
+   "data/quests"
   ],
   "라이선스": [
    "index.html"
@@ -1093,13 +1093,13 @@
    "ui/tip.compareLine"
   ],
   "마력 재료": [
-   "data"
+   "data/quests"
   ],
   "마력 파동 조사": [
-   "data"
+   "data/quests"
   ],
   "마리": [
-   "data.mobCw"
+   "data/enemies.mobCw"
   ],
   "마법 · 마나": [
    "ui.buildStatAlloc"
@@ -1117,7 +1117,7 @@
    "game/altar.upgradeVillage"
   ],
   "마을을 지켜라": [
-   "data"
+   "data/quests"
   ],
   "마을이 『{spec}』{spec|-이} 되었다": [
    "game/altar.upgradeVillage"
@@ -1173,7 +1173,7 @@
    "game/ruin-pulse.updateCaves"
   ],
   "먹일 것": [
-   "data"
+   "data/quests"
   ],
   "먼저": [
    "ui/tree.lockReason"
@@ -1210,13 +1210,13 @@
    "ui/quest.refreshTracker"
   ],
   "무게": [
-   "data"
+   "data/quests"
   ],
   "무기": [
    "index.html"
   ],
   "무너진 담": [
-   "data"
+   "data/quests"
   ],
   "무너진 벽 너머에 {C|이} 숨어 있었다": [
    "game/meteor.updateQuake"
@@ -1331,7 +1331,7 @@
    "game/act.growCropsDaily"
   ],
   "밤새 불이 안 꺼졌어. 자다 깨서 확인 안 해도 되겠군.": [
-   "data"
+   "data/quests"
   ],
   "방": [
    "ui/quest.renderRuins"
@@ -1394,7 +1394,7 @@
    "game/progress.checkChapter"
   ],
   "벼릴 것": [
-   "data"
+   "data/quests"
   ],
   "벽 너머": [
    "game/progress.checkChapter"
@@ -1412,7 +1412,7 @@
    "game/progress.gainStarOrbit"
   ],
   "별빛이 닿은 자리": [
-   "data"
+   "data/quests"
   ],
   "별이 떨어진 다음 날 아침이다.": [
    "game._newGame"
@@ -1464,7 +1464,7 @@
    "game/village.openSeal"
   ],
   "봐, 벌써 문 앞까지 나왔잖아. 짐승은 사람보다 빨리 잊어.": [
-   "data"
+   "data/quests"
   ],
   "부탁 {activeSideCount}건 진행 중 (J로 확인)": [
    "ui/quest.refreshTracker"
@@ -1505,7 +1505,7 @@
    "game.tick"
   ],
   "불에 넣을 것": [
-   "data"
+   "data/quests"
   ],
   "불이 한꺼번에 꺼졌다": [
    "game/ruin-map.fireRuinEvent"
@@ -1556,7 +1556,7 @@
    "game/act.placeDoor"
   ],
   "빚을 갚았군. 이제 좀 편히 잘 수 있겠어.": [
-   "data"
+   "data/quests"
   ],
   "빼기": [
    "index.html"
@@ -1614,7 +1614,7 @@
    "game/save.renderSlotScreen"
   ],
   "생고기 {n}개만. 이 도시엔 풀이 없어서 애들이 고기만 먹어.": [
-   "data"
+   "data/quests"
   ],
   "생명": [
    "ui/tip.compareLine"
@@ -1644,7 +1644,7 @@
    "game/meteor.meteorImpact"
   ],
   "석탄 {n}개. 손님한테 찬물을 내놓을 수는 없잖아.": [
-   "data"
+   "data/quests"
   ],
   "석판": [
    "game/ruin-pulse.label",
@@ -1681,7 +1681,7 @@
    "game._newGame"
   ],
   "세었군. 이제 네가 뭘 할 수 있는지 너도 안다.": [
-   "data"
+   "data/quests"
   ],
   "셋째": [
    "game/ruin-map.ruinCipher"
@@ -1780,7 +1780,7 @@
    "ui/tip.showTip"
   ],
   "아궁이": [
-   "data"
+   "data/quests"
   ],
   "아직 다 하지 못했다": [
    "game/village.claimBounty"
@@ -1804,25 +1804,25 @@
    "game/altar.useConsumable"
   ],
   "안쪽을 봤어. 사람이 만든 게 아니야. …사람을 보고 만든 거야.": [
-   "data"
+   "data/quests"
   ],
   "알림": [
    "index.html"
   ],
   "애들이 우리 밖으로 안 나가려 해. {enemy} {n}{mobCw}만 치워 주면 다시 나올 거야.": [
-   "data"
+   "data/quests"
   ],
   "액티브": [
    "ui/tree.showSkillTip"
   ],
   "어깨가 내려앉았군. 내일이면 그 자리에 근육이 붙는다.": [
-   "data"
+   "data/quests"
   ],
   "어디선가 유난히 사나운 {mobName}의 기척이 느껴진다": [
    "game/spawn.trySpawn"
   ],
   "어제 나간 사람이 안 돌아왔어. {enemy} {n}{mobCw}만 걷어 주면 내가 찾으러 나갈 수 있어.": [
-   "data"
+   "data/quests"
   ],
   "언어": [
    "index.html"
@@ -1888,7 +1888,7 @@
    "index.html"
   ],
   "역시. 조각이 떨어진 자리부터 빛이 스며들고 있어.": [
-   "data"
+   "data/quests"
   ],
   "연료": [
    "factory.statusColor"
@@ -1905,13 +1905,13 @@
    "ui/tip.showTip"
   ],
   "오늘 묵는 사람은 더운물로 씻는다. 그거 하나로 여관이 여관이 돼.": [
-   "data"
+   "data/quests"
   ],
   "오늘 실은 것을 보자": [
    "game/village.talkExtra"
   ],
   "오늘은 다 먹였다. 먹인 날은 기분이 좋아.": [
-   "data"
+   "data/quests"
   ],
   "오늘은 다 팔렸다. 내일 다시 오라는군.": [
    "ui/shop.refreshChest"
@@ -1920,7 +1920,7 @@
    "game/altar.trainXp"
   ],
   "오래된 빚": [
-   "data"
+   "data/quests"
   ],
   "완료": [
    "ui/craft.refreshTownhall",
@@ -1930,7 +1930,7 @@
    "ui/quest.refreshQuest"
   ],
   "요즘 {enemy|이} 부쩍 늘었어. {n}마리만 줄여 주겠니?": [
-   "data"
+   "data/quests"
   ],
   "용광로": [
    "game/corpse.drawCursor"
@@ -2069,7 +2069,7 @@
    "index.html"
   ],
   "이걸로 하룻밤은 얕게 재울 수 있어. 하룻밤이라도 어디야.": [
-   "data"
+   "data/quests"
   ],
   "이동": [
    "ui.refreshStatSheet"
@@ -2235,13 +2235,13 @@
    "ui/tip.showTip"
   ],
   "재우는 데 쓸 것": [
-   "data"
+   "data/quests"
   ],
   "잿빛이 걷혔다": [
    "game/progress.checkChapter"
   ],
   "저 아래 {enemy}에게 진 빚이 있다. {n}마리를 대신 갚아 다오.": [
-   "data"
+   "data/quests"
   ],
   "저장 내보내기": [
    "index.html"
@@ -2362,7 +2362,7 @@
    "game/corpse.drawCursor"
   ],
   "제법인데. 대장장이 소질이 있어.": [
-   "data"
+   "data/quests"
   ],
   "제작": [
    "index.html"
@@ -2383,10 +2383,10 @@
    "index.html"
   ],
   "좋아, 이걸로 주문을 하나 완성할 수 있겠어.": [
-   "data"
+   "data/quests"
   ],
   "좋은 광석이군. 이걸로 뭔가 만들 수 있겠어.": [
-   "data"
+   "data/quests"
   ],
   "좌클릭": [
    "index.html"
@@ -2395,10 +2395,10 @@
    "ui/tree.showSkillTip"
   ],
   "주괴 시험": [
-   "data"
+   "data/quests"
   ],
   "주워 온 것 말고": [
-   "data"
+   "data/quests"
   ],
   "주인": [
    "game/ruin-pulse.openEcho",
@@ -2441,7 +2441,7 @@
    "index.html"
   ],
   "지붕과 바닥": [
-   "data"
+   "data/quests"
   ],
   "지상 {n}m": [
    "ui/hud.updateHUD"
@@ -2504,7 +2504,7 @@
    "game/fishing.resolveFish"
   ],
   "처음부터 우리 것인 쇠야. 이걸로 만든 건 팔지 말자.": [
-   "data"
+   "data/quests"
   ],
   "천장에 매달아야 한다": [
    "game/act.rightClick"
@@ -2640,7 +2640,7 @@
    "ui/tree.learn"
   ],
   "파동이 잦아들었어. 역시 네 덕분이야.": [
-   "data"
+   "data/quests"
   ],
   "파일에 기록이 없다": [
    "game/save.importSaves"
@@ -2656,7 +2656,7 @@
    "ui/shop.refreshChest"
   ],
   "판자 {n}장. 방은 많은데 바닥이 꺼진 방이 더 많아.": [
-   "data"
+   "data/quests"
   ],
   "패시브": [
    "ui/tree.showSkillTip"
@@ -2681,7 +2681,7 @@
    "game/village.useWaystone"
   ],
   "표적": [
-   "data"
+   "data/quests"
   ],
   "푹 잤다 — 아침이다": [
    "game/village.fn"
@@ -2754,7 +2754,7 @@
    "index.html"
   ],
   "화로가 자꾸 식어. 석탄 {n}개만 있으면 밤새 살려 둘 수 있어.": [
-   "data"
+   "data/quests"
   ],
   "화면 · 소리": [
    "index.html"
