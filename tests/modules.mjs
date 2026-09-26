@@ -1,6 +1,6 @@
 /* 모듈 경계 — 엔진화 계획 §6-4. 소스를 읽기만 한다(브라우저 없음).
    1) 선언 안 된 이름 0 — import 를 빠뜨리면 번들은 되지만 그 줄이 돌 때 터진다. 브라우저·JS 내장 이름만 허용.
-   2) 순환 0 · 엔진(src/engine)은 게임(src/legacy)을 import 하지 않는다 · 게임 모듈끼리는 main.js 의 import 순서가 층 순서
+   2) 순환 0 · 엔진(src/engine)은 게임(src/game)을 import 하지 않는다 · 게임 모듈끼리는 main.js 의 import 순서가 층 순서
       (앞 모듈은 뒤 모듈을 모른다 — 위층 객체는 ctx.js 로 늦게 묶는다).
    3) window.<모듈 이름> 읽기 0 — 디버그 창구(main.js)는 사람·도구용이다. 게임 코드는 import 할 것.
    5) 줄 수 — 코드 1,200 · 표(data/) 2,000 줄 이하.
@@ -16,10 +16,10 @@ const ALLOWED = new Set([...Object.keys(globals.browser), ...Object.keys(globals
 const files = listModules();
 const mods = new Map(files.map(f => [f, readModule(f)]));
 const inEngine = f => f.startsWith(ENGINE + path.sep);
-const MAIN = path.join(LEGACY, 'main.js');
+const MAIN = path.join(LEGACY, 'main.ts');
 
-/* 게임 층 순서 = main.js 가 부르는 src/legacy 모듈 순서, ctx.js 는 그 아래. */
-const LAYER = [path.join(LEGACY, 'ctx.js'), ...mods.get(MAIN).imports.map(i => i.target).filter(t => t.startsWith(LEGACY + path.sep))];
+/* 게임 층 순서 = main.js 가 부르는 src/game 모듈 순서, ctx.js 는 그 아래. */
+const LAYER = [path.join(LEGACY, 'ctx.ts'), ...mods.get(MAIN).imports.map(i => i.target).filter(t => t.startsWith(LEGACY + path.sep))];
 const exported = new Set();
 for (const m of mods.values()) m.exports.forEach(n => exported.add(n));
 
@@ -65,14 +65,14 @@ for (const [f, m] of mods) {
       used.add(p && p.type === 'MemberExpression' && p.object === id && !p.computed ? p.property.name : '(값 그대로)');
     }
     /* 나눈 조각(ui/*.js)은 부모 모듈(ui.js) 이름으로 합쳐 센다 — 쪼개도 계약은 그대로여야 한다 */
-    const key = path.relative(LEGACY, f).split(path.sep).length > 1 ? path.relative(LEGACY, f).split(path.sep)[0] + '.js' : path.basename(f);
+    const key = path.relative(LEGACY, f).split(path.sep).length > 1 ? path.relative(LEGACY, f).split(path.sep)[0] + '.js' : path.basename(f).replace(/\.ts$/, '.js');
     const slot = ((ctxUse[key] ||= {})[s.local.name] ||= []);
     for (const u of used) if (!slot.includes(u)) slot.push(u);
     slot.sort();
   }
 }
 
-/* 줄 수 — 한 파일 한 영역(계획서 §7-1). 표 모듈(src/legacy/data/)은 2,000, 나머지는 1,200. 넘으면 영역을 나눌 것(tools/split*.mjs). */
+/* 줄 수 — 한 파일 한 영역(계획서 §7-1). 표 모듈(src/game/data/)은 2,000, 나머지는 1,200. 넘으면 영역을 나눌 것(tools/split*.mjs). */
 for (const f of files) {
   const n = fs.readFileSync(f, 'utf8').split('\n').length, cap = f.includes(path.sep + 'data' + path.sep) ? 2000 : 1200;
   if (n > cap) err(f, 0, `${n}줄 — 한도 ${cap}줄을 넘는다(영역을 나눌 것)`);

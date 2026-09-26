@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* src/legacy/*.js 의 import 줄을 소스에서 다시 짠다 — 코드를 다른 모듈(엔진 포함)로 옮긴 뒤 한 번 돌린다.
+/* src/game 의 .ts 의 import 줄을 소스에서 다시 짠다 — 코드를 다른 모듈(엔진 포함)로 옮긴 뒤 한 번 돌린다.
    파일마다 풀이 안 된 이름을 모아, 그 이름을 export 하는 모듈에서 가져오게 적는다(ctx.js 줄은 손대지 않는다).
    ★ 위층(main.js 순서에서 뒤) 모듈의 이름이 필요하면 멈춘다 — ctx.js 로 늦게 묶을 일이다.
    사용: node tools/imports.mjs            다시 짜기
@@ -15,7 +15,7 @@ const ALLOWED = new Set([...Object.keys(globals.browser), ...Object.keys(globals
 const CHECK = process.argv.includes('--check');
 const files = listModules();
 const mods = new Map(files.map(f => [f, readModule(f)]));
-const MAIN = path.join(LEGACY, 'main.js'), CTX = path.join(LEGACY, 'ctx.js');
+const MAIN = path.join(LEGACY, 'main.ts'), CTX = path.join(LEGACY, 'ctx.ts');
 const LAYER = [CTX, ...mods.get(MAIN).imports.map(i => i.target).filter(t => t.startsWith(LEGACY + path.sep))];
 const inEngine = f => f.startsWith(ENGINE + path.sep);
 

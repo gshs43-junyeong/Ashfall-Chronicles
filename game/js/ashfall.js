@@ -1,5 +1,5 @@
 'use strict';
-/* Ashfall Chronicles — 자동 생성물(tools/bundle.mjs · esbuild). 손으로 고치지 말 것 — 원본은 src/legacy/ */
+/* Ashfall Chronicles — 자동 생성물(tools/bundle.mjs · esbuild). 손으로 고치지 말 것 — 원본은 src/game/ */
 "use strict";
 (() => {
   var __defProp = Object.defineProperty;
@@ -1719,7 +1719,7 @@
     return target;
   }
 
-  // src/legacy/util.js
+  // src/game/util.ts
   var util_exports = {};
   __export(util_exports, {
     escHtml: () => escHtml,
@@ -1732,7 +1732,7 @@
     return ("" + s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  // src/legacy/lang.js
+  // src/game/lang.ts
   var lang_exports = {};
   __export(lang_exports, {
     FONT: () => FONT,
@@ -1762,7 +1762,7 @@
     return (STACKS[lang] || STACKS.latin) + ",sans-serif";
   }
 
-  // src/legacy/lang.js
+  // src/game/lang.ts
   var LOCALES = typeof globalThis !== "undefined" && globalThis.ASHFALL_LOCALES || {};
   var LANG = typeof globalThis !== "undefined" && globalThis.ASHFALL_LANG || typeof location !== "undefined" && new URLSearchParams(location.search).get("lang") || "ko";
   var LANGS = typeof globalThis !== "undefined" && globalThis.ASHFALL_LANGS || ["ko"];
@@ -1825,7 +1825,7 @@
     location.replace(u.href);
   }
 
-  // src/legacy/size.js
+  // src/game/size.ts
   var size_exports = {};
   __export(size_exports, {
     BIOMES: () => BIOMES,
@@ -1971,7 +1971,7 @@
     }
   }
 
-  // src/legacy/data.js
+  // src/game/data.ts
   var data_exports = {};
   __export(data_exports, {
     MACH_OF_TILE: () => MACH_OF_TILE,
@@ -2674,7 +2674,7 @@
     { n: "의 사냥꾼", s: { crit: 6, ms: 5 } }
   ];
 
-  // src/legacy/data/items.js
+  // src/game/data/items.ts
   var items_exports = {};
   __export(items_exports, {
     HIT_FAM: () => HIT_FAM,
@@ -4759,7 +4759,7 @@
     ]
   };
 
-  // src/legacy/data/recipes.js
+  // src/game/data/recipes.ts
   var recipes_exports = {};
   __export(recipes_exports, {
     FACTORY_GOODS: () => FACTORY_GOODS,
@@ -5443,7 +5443,7 @@
     return PRICE_BASE_MUL * Math.pow(PRICE_TIER_STEP, priceTier(d, id));
   }
 
-  // src/legacy/data/start.js
+  // src/game/data/start.ts
   var start_exports = {};
   __export(start_exports, {
     BOW_HAND: () => BOW_HAND,
@@ -5612,7 +5612,7 @@
     { id: "craft", n: "제작 · 설치", def: 1 }
   ];
 
-  // src/legacy/data/enemies.js
+  // src/game/data/enemies.ts
   var enemies_exports = {};
   __export(enemies_exports, {
     ENEMIES: () => ENEMIES,
@@ -7319,7 +7319,7 @@
     return mech ? `${tr("개조된")} ` + n : n;
   }
 
-  // src/legacy/data/materials.js
+  // src/game/data/materials.ts
   var materials_exports = {};
   __export(materials_exports, {
     DECO_MOUNT: () => DECO_MOUNT,
@@ -7500,7 +7500,7 @@
     return MOB_MAT[type] || "flesh";
   }
 
-  // src/legacy/data/skills.js
+  // src/game/data/skills.ts
   var skills_exports = {};
   __export(skills_exports, {
     BOSS_DIE: () => BOSS_DIE,
@@ -8147,7 +8147,7 @@
     coolant: { n: "냉각", i: "🧴", dur: 360, b: { cdr: 12, ms: 10, mpreg: 20 } }
   };
 
-  // src/legacy/data/ruins.js
+  // src/game/data/ruins.ts
   var ruins_exports = {};
   __export(ruins_exports, {
     CAVE_TYPES: () => CAVE_TYPES,
@@ -8870,7 +8870,7 @@
     }
   };
 
-  // src/legacy/data/npcs.js
+  // src/game/data/npcs.ts
   var npcs_exports = {};
   __export(npcs_exports, {
     DAWN_NPCS: () => DAWN_NPCS,
@@ -10265,7 +10265,7 @@
     }
   };
 
-  // src/legacy/data/pets.js
+  // src/game/data/pets.ts
   var pets_exports = {};
   __export(pets_exports, {
     EGG_POOL: () => EGG_POOL,
@@ -10474,7 +10474,7 @@
     ]
   };
 
-  // src/legacy/data/story.js
+  // src/game/data/story.ts
   var story_exports = {};
   __export(story_exports, {
     CHAPTERS: () => CHAPTERS,
@@ -11367,7 +11367,7 @@
     ]
   };
 
-  // src/legacy/data/quests.js
+  // src/game/data/quests.ts
   var quests_exports = {};
   __export(quests_exports, {
     BOUNTY_BY_ID: () => BOUNTY_BY_ID,
@@ -12131,7 +12131,7 @@
   })();
   var BOUNTY_UNIT = { kill: 10, collect: 22, mine: 18 };
 
-  // src/legacy/data/values.js
+  // src/game/data/values.ts
   var values_exports = {};
   __export(values_exports, {
     ITEM_VAL: () => ITEM_VAL,
@@ -12354,7 +12354,7 @@
     notice: null
   };
 
-  // src/legacy/data/achievements.js
+  // src/game/data/achievements.ts
   var achievements_exports = {};
   __export(achievements_exports, {
     ACHIEVEMENTS: () => ACHIEVEMENTS,
@@ -13174,7 +13174,7 @@
     return false;
   }
 
-  // src/legacy/world.js
+  // src/game/world.ts
   var world_exports = {};
   __export(world_exports, {
     BEACH_W: () => BEACH_W,
@@ -13198,7 +13198,7 @@
     setWorldSize: () => setWorldSize
   });
 
-  // src/legacy/ctx.js
+  // src/game/ctx.ts
   var app = null;
   var ui = null;
   var factory = null;
@@ -13212,7 +13212,7 @@
     factory = v;
   }
 
-  // src/legacy/world.js
+  // src/game/world.ts
   var TS = 22;
   var CAVE_GW = 60, CAVE_GH = 55;
   var MIN_CAVE = 220;
@@ -14133,7 +14133,7 @@
     }
   };
 
-  // src/legacy/world/plants.js
+  // src/game/world/plants.ts
   var plants_exports = {};
   __export(plants_exports, {
     WorldPlants: () => WorldPlants
@@ -14476,7 +14476,7 @@
   };
   mixin(World.prototype, WorldPlants, true);
 
-  // src/legacy/world/village.js
+  // src/game/world/village.ts
   var village_exports = {};
   __export(village_exports, {
     WorldVillage: () => WorldVillage
@@ -15229,7 +15229,7 @@
   };
   mixin(World.prototype, WorldVillage, true);
 
-  // src/legacy/world/sky.js
+  // src/game/world/sky.ts
   var sky_exports = {};
   __export(sky_exports, {
     WorldSky: () => WorldSky
@@ -15705,7 +15705,7 @@
   };
   mixin(World.prototype, WorldSky, true);
 
-  // src/legacy/world/dungeon.js
+  // src/game/world/dungeon.ts
   var dungeon_exports = {};
   __export(dungeon_exports, {
     WorldDungeon: () => WorldDungeon
@@ -16258,7 +16258,7 @@
   };
   mixin(World.prototype, WorldDungeon, true);
 
-  // src/legacy/world/traps.js
+  // src/game/world/traps.ts
   var traps_exports = {};
   __export(traps_exports, {
     WorldTraps: () => WorldTraps
@@ -16585,7 +16585,7 @@
   };
   mixin(World.prototype, WorldTraps, true);
 
-  // src/legacy/world/ruins.js
+  // src/game/world/ruins.ts
   var ruins_exports2 = {};
   __export(ruins_exports2, {
     WorldRuins: () => WorldRuins
@@ -17170,7 +17170,7 @@
   };
   mixin(World.prototype, WorldRuins, true);
 
-  // src/legacy/world/ruin-site.js
+  // src/game/world/ruin-site.ts
   var ruin_site_exports = {};
   __export(ruin_site_exports, {
     WorldRuinSite: () => WorldRuinSite
@@ -17689,7 +17689,7 @@
   };
   mixin(World.prototype, WorldRuinSite, true);
 
-  // src/legacy/world/caves.js
+  // src/game/world/caves.ts
   var caves_exports = {};
   __export(caves_exports, {
     WorldCaves: () => WorldCaves
@@ -18011,7 +18011,7 @@
   };
   mixin(World.prototype, WorldCaves, true);
 
-  // src/legacy/world/sea.js
+  // src/game/world/sea.ts
   var sea_exports = {};
   __export(sea_exports, {
     WorldSea: () => WorldSea
@@ -18485,7 +18485,7 @@
   };
   mixin(World.prototype, WorldSea, true);
 
-  // src/legacy/world/water.js
+  // src/game/world/water.ts
   var water_exports = {};
   __export(water_exports, {
     WorldWater: () => WorldWater
@@ -18921,7 +18921,7 @@
   };
   mixin(World.prototype, WorldWater, true);
 
-  // src/legacy/tileart.js
+  // src/game/tileart.ts
   var tileart_exports = {};
   __export(tileart_exports, {
     ALPHA_TILE: () => ALPHA_TILE,
@@ -19935,7 +19935,7 @@
     }
   };
 
-  // src/legacy/art/tiles/ground.js
+  // src/game/art/tiles/ground.ts
   var ground_exports = {};
   __export(ground_exports, {
     TilePaintGround: () => TilePaintGround
@@ -20273,7 +20273,7 @@
   };
   Object.assign(TILE_PAINT, TilePaintGround);
 
-  // src/legacy/art/tiles/misc.js
+  // src/game/art/tiles/misc.ts
   var misc_exports = {};
   __export(misc_exports, {
     TilePaintMisc: () => TilePaintMisc
@@ -20585,7 +20585,7 @@
   };
   Object.assign(TILE_PAINT, TilePaintMisc);
 
-  // src/legacy/art/tiles/factory.js
+  // src/game/art/tiles/factory.ts
   var factory_exports = {};
   __export(factory_exports, {
     TilePaintFactory: () => TilePaintFactory
@@ -20870,7 +20870,7 @@
   };
   Object.assign(TILE_PAINT, TilePaintFactory);
 
-  // src/legacy/art/tiles/water.js
+  // src/game/art/tiles/water.ts
   var water_exports2 = {};
   __export(water_exports2, {
     TilePaintWater: () => TilePaintWater
@@ -21228,7 +21228,7 @@
   };
   Object.assign(TILE_PAINT, TilePaintWater);
 
-  // src/legacy/art/tiles/village.js
+  // src/game/art/tiles/village.ts
   var village_exports2 = {};
   __export(village_exports2, {
     TilePaintVillage: () => TilePaintVillage
@@ -21617,7 +21617,7 @@
   };
   Object.assign(TILE_PAINT, TilePaintVillage);
 
-  // src/legacy/art/tiles/ruins.js
+  // src/game/art/tiles/ruins.ts
   var ruins_exports3 = {};
   __export(ruins_exports3, {
     TilePaintRuins: () => TilePaintRuins
@@ -21934,7 +21934,7 @@
   };
   Object.assign(TILE_PAINT, TilePaintRuins);
 
-  // src/legacy/art/tiles/cave.js
+  // src/game/art/tiles/cave.ts
   var cave_exports = {};
   __export(cave_exports, {
     TilePaintCave: () => TilePaintCave
@@ -22185,7 +22185,7 @@
   };
   Object.assign(TILE_PAINT, TilePaintCave);
 
-  // src/legacy/itemart.js
+  // src/game/itemart.ts
   var itemart_exports = {};
   __export(itemart_exports, {
     ACH_ART: () => ACH_ART,
@@ -23128,7 +23128,7 @@
     }
   };
 
-  // src/legacy/art/items/glyphs.js
+  // src/game/art/items/glyphs.ts
   var glyphs_exports = {};
   __export(glyphs_exports, {
     ItemPaintGlyphs: () => ItemPaintGlyphs
@@ -23431,7 +23431,7 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintGlyphs);
 
-  // src/legacy/art/items/gear.js
+  // src/game/art/items/gear.ts
   var gear_exports = {};
   __export(gear_exports, {
     ItemPaintGear: () => ItemPaintGear
@@ -23904,7 +23904,7 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintGear);
 
-  // src/legacy/art/items/goods.js
+  // src/game/art/items/goods.ts
   var goods_exports = {};
   __export(goods_exports, {
     ItemPaintGoods: () => ItemPaintGoods
@@ -24263,7 +24263,7 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintGoods);
 
-  // src/legacy/art/items/farm.js
+  // src/game/art/items/farm.ts
   var farm_exports = {};
   __export(farm_exports, {
     ItemPaintFarm: () => ItemPaintFarm
@@ -24835,7 +24835,7 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintFarm);
 
-  // src/legacy/art/items/loot.js
+  // src/game/art/items/loot.ts
   var loot_exports = {};
   __export(loot_exports, {
     ItemPaintLoot: () => ItemPaintLoot
@@ -25259,7 +25259,7 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintLoot);
 
-  // src/legacy/art/items/skills.js
+  // src/game/art/items/skills.ts
   var skills_exports2 = {};
   __export(skills_exports2, {
     ItemPaintSkills: () => ItemPaintSkills
@@ -25913,7 +25913,7 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintSkills);
 
-  // src/legacy/art/items/ui.js
+  // src/game/art/items/ui.ts
   var ui_exports = {};
   __export(ui_exports, {
     ItemPaintUI: () => ItemPaintUI
@@ -26485,7 +26485,7 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintUI);
 
-  // src/legacy/art/items/misc.js
+  // src/game/art/items/misc.ts
   var misc_exports2 = {};
   __export(misc_exports2, {
     ItemPaintMisc: () => ItemPaintMisc
@@ -26734,7 +26734,7 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintMisc);
 
-  // src/legacy/sprites.js
+  // src/game/sprites.ts
   var sprites_exports = {};
   __export(sprites_exports, {
     Sprites: () => Sprites
@@ -26920,7 +26920,7 @@
     }
   };
 
-  // src/legacy/titlebg.js
+  // src/game/titlebg.ts
   var titlebg_exports = {};
   __export(titlebg_exports, {
     TitleBG: () => TitleBG
@@ -27109,7 +27109,7 @@
     }
   };
 
-  // src/legacy/entity.js
+  // src/game/entity.ts
   var entity_exports2 = {};
   __export(entity_exports2, {
     BASE_BAG_SIZE: () => BASE_BAG_SIZE,
@@ -28410,7 +28410,7 @@
     }
   };
 
-  // src/legacy/entity/player-combat.js
+  // src/game/entity/player-combat.ts
   var player_combat_exports = {};
   __export(player_combat_exports, {
     PlayerCombat: () => PlayerCombat
@@ -28842,7 +28842,7 @@
   };
   mixin(Player.prototype, PlayerCombat, true);
 
-  // src/legacy/entity/player-move.js
+  // src/game/entity/player-move.ts
   var player_move_exports = {};
   __export(player_move_exports, {
     PlayerMove: () => PlayerMove
@@ -29130,7 +29130,7 @@
   };
   mixin(Player.prototype, PlayerMove, true);
 
-  // src/legacy/entity/enemy-ai.js
+  // src/game/entity/enemy-ai.ts
   var enemy_ai_exports = {};
   __export(enemy_ai_exports, {
     EnemyAI: () => EnemyAI
@@ -29402,7 +29402,7 @@
   };
   mixin(Enemy.prototype, EnemyAI, true);
 
-  // src/legacy/entity/boss-ai.js
+  // src/game/entity/boss-ai.ts
   var boss_ai_exports = {};
   __export(boss_ai_exports, {
     BossAI: () => BossAI
@@ -29903,14 +29903,14 @@
   };
   mixin(Enemy.prototype, BossAI, true);
 
-  // src/legacy/factory.js
+  // src/game/factory.ts
   var factory_exports2 = {};
   __export(factory_exports2, {
     DIR4: () => DIR4,
     DIR6: () => DIR6,
     DIR_NAME: () => DIR_NAME,
     FAC_TICK: () => FAC_TICK,
-    Factory: () => Factory,
+    Factory: () => Factory11,
     ST_RUN: () => ST_RUN,
     dirTable: () => dirTable
   });
@@ -29935,7 +29935,7 @@
     N_("축전 중"),
     N_("가득 참")
   ]);
-  var Factory = {
+  var Factory11 = {
     /* 벨트 한 칸에 머무는 시간(초) — 물건도 벨트 무늬도 이 속도로 간다(일반 1칸/초 · 고속 2칸/초) */
     DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK },
     ORE_HITS: 20,
@@ -31257,18 +31257,18 @@
       c.restore();
     }
   };
-  bindFactory(Factory);
+  bindFactory(Factory11);
 
-  // src/legacy/ui.js
+  // src/game/ui.ts
   var ui_exports2 = {};
   __export(ui_exports2, {
     $: () => $,
     $$: () => $$,
-    UI: () => UI
+    UI: () => UI5
   });
   var $ = (s) => document.querySelector(s);
   var $$ = (s) => Array.from(document.querySelectorAll(s));
-  var UI = {
+  var UI5 = {
     cursor: null,
     // 집어든 아이템
     cursorEl: null,
@@ -31965,9 +31965,9 @@
       $$("#stat-alloc button").forEach((b) => b.style.opacity = p.statPts > 0 ? 1 : 0.35);
     }
   };
-  bindUI(UI);
+  bindUI(UI5);
 
-  // src/legacy/ui/tree.js
+  // src/game/ui/tree.ts
   var tree_exports = {};
   __export(tree_exports, {
     TreeUIPart: () => TreeUIPart
@@ -32281,9 +32281,9 @@
       }
     }
   };
-  mixin(UI, TreeUIPart);
+  mixin(UI5, TreeUIPart);
 
-  // src/legacy/ui/quest.js
+  // src/game/ui/quest.ts
   var quest_exports = {};
   __export(quest_exports, {
     QuestUIPart: () => QuestUIPart
@@ -32520,9 +32520,9 @@
       $("#qt-body").innerHTML = h;
     }
   };
-  mixin(UI, QuestUIPart);
+  mixin(UI5, QuestUIPart);
 
-  // src/legacy/ui/craft.js
+  // src/game/ui/craft.ts
   var craft_exports = {};
   __export(craft_exports, {
     CraftUIPart: () => CraftUIPart
@@ -32660,9 +32660,9 @@
       });
     }
   };
-  mixin(UI, CraftUIPart);
+  mixin(UI5, CraftUIPart);
 
-  // src/legacy/ui/machine.js
+  // src/game/ui/machine.ts
   var machine_exports = {};
   __export(machine_exports, {
     MachineUIPart: () => MachineUIPart
@@ -32711,7 +32711,7 @@
     machLive(m) {
       const s = MACHINE[m.t], w = app.world;
       const st = $("#mach-st");
-      if (st) st.innerHTML = `<span class="mdot" style="background:${Factory.statusColor(m)}"></span><b>${Factory.stLabel(m)}</b>` + (s.rot ? ` ${tr("· 방향 <b>{dirName}</b>", { dirName: DIR_NAME[m.dir] })}` : "");
+      if (st) st.innerHTML = `<span class="mdot" style="background:${Factory11.statusColor(m)}"></span><b>${Factory11.stLabel(m)}</b>` + (s.rot ? ` ${tr("· 방향 <b>{dirName}</b>", { dirName: DIR_NAME[m.dir] })}` : "");
       const net = $("#mach-net");
       if (net) {
         const n = m.net >= 0 ? w.nets[m.net] : null;
@@ -32759,7 +32759,7 @@
       const m = this.machRef;
       if (!m) return;
       const s = MACHINE[m.t], w = app.world, p = app.player;
-      if (w.netDirty) Factory.buildNets(w);
+      if (w.netDirty) Factory11.buildNets(w);
       const sig = this.machSig(m, p);
       if (!force && sig === this._machSig) {
         this.machLive(m);
@@ -32783,7 +32783,7 @@
       if (s.rot) btns += `<button class="mbtn" data-act="rot">${tr("↻ 방향 돌리기")}</button>`;
       if (s.slots) btns += `<button class="mbtn" data-act="feed">${m.feed ? tr("배출 끄기") : tr("배출 켜기")}</button>`;
       if (m.t === "sorter" && m.f) btns += `<button class="mbtn" data-act="clearf">${tr("필터 해제")}</button>`;
-      if (m.out && Factory.bufTotal(m.out) || m.items && m.items.some(Boolean))
+      if (m.out && Factory11.bufTotal(m.out) || m.items && m.items.some(Boolean))
         btns += `<button class="mbtn" data-act="takeall">${tr("⤓ 전부 가방으로")}</button>`;
       const ic = (id) => `<span class="ri" style="background-image:url(${Art.itemUrl(id)})" title="${ITEMS[id].n}"></span>`;
       let recs = "";
@@ -32826,13 +32826,13 @@
             w.netDirty = true;
             snd = m.on ? "power_on" : "power_off";
           }
-        } else if (a === "rot") Factory.rotate(m);
+        } else if (a === "rot") Factory11.rotate(m);
         else if (a === "feed") m.feed = m.feed ? 0 : 1;
         else if (a === "clearf") m.f = null;
         else if (a === "takeall") {
           let full = false;
           if (m.out) {
-            for (const k of Object.keys(m.out)) if (Factory.playerTake(w, m, "out", k, p) < 1) full = true;
+            for (const k of Object.keys(m.out)) if (Factory11.playerTake(w, m, "out", k, p) < 1) full = true;
           }
           if (m.items) m.items.forEach((it, i) => {
             if (!it) return;
@@ -32847,11 +32847,11 @@
       }));
       const itEl = $("#mg-it");
       if (itEl) press(itEl, () => {
-        if (Factory.takeStalled(m, p)) {
+        if (Factory11.takeStalled(m, p)) {
           this.refreshMachine(true);
           this.refreshBag();
           app.sfx("place");
-        } else this.toast(Factory.stalled(m) ? tr("가방이 가득 찼다") : tr("움직이는 중이다 — 3초 넘게 멈춘 것만 꺼낼 수 있다"), "bad");
+        } else this.toast(Factory11.stalled(m) ? tr("가방이 가득 찼다") : tr("움직이는 중이다 — 3초 넘게 멈춘 것만 꺼낼 수 있다"), "bad");
       });
       const store = $("#mg-store");
       if (store) {
@@ -32882,7 +32882,7 @@
           const id = el.dataset.id;
           this.setIcon(el.querySelector(".ic"), Art.itemUrl(id));
           press(el, () => {
-            if (Factory.playerTake(w, m, which, id, p) <= 0) this.toast(tr("가방이 가득 찼다"), "bad");
+            if (Factory11.playerTake(w, m, which, id, p) <= 0) this.toast(tr("가방이 가득 찼다"), "bad");
             this.refreshMachine(true);
             this.refreshBag();
           });
@@ -32892,7 +32892,7 @@
       }
       const bag = $("#mg-bag");
       const order = p.bag.map((it, i) => i).filter((i) => p.bag[i]);
-      const yes = (i) => m.t === "sorter" || Factory.accepts(m, p.bag[i].id);
+      const yes = (i) => m.t === "sorter" || Factory11.accepts(m, p.bag[i].id);
       order.sort((a2, b2) => (yes(b2) ? 1 : 0) - (yes(a2) ? 1 : 0) || a2 - b2);
       for (const i of order) {
         const it = p.bag[i];
@@ -32909,7 +32909,7 @@
             app.sfx("place");
             return;
           }
-          if (Factory.playerInsert(w, m, i, p) > 0) {
+          if (Factory11.playerInsert(w, m, i, p) > 0) {
             this.refreshMachine(true);
             this.refreshBag();
             app.sfx("place");
@@ -32918,9 +32918,9 @@
       }
     }
   };
-  mixin(UI, MachineUIPart);
+  mixin(UI5, MachineUIPart);
 
-  // src/legacy/ui/shop.js
+  // src/game/ui/shop.ts
   var shop_exports = {};
   __export(shop_exports, {
     ShopUIPart: () => ShopUIPart
@@ -33192,9 +33192,9 @@
       if (!g.children.length) $("#anvil-note").textContent = tr("가방에 두들길 만한 장비가 없다.");
     }
   };
-  mixin(UI, ShopUIPart);
+  mixin(UI5, ShopUIPart);
 
-  // src/legacy/ui/tip.js
+  // src/game/ui/tip.ts
   var tip_exports = {};
   __export(tip_exports, {
     TipUIPart: () => TipUIPart
@@ -33372,9 +33372,9 @@
       this.tipTarget = false;
     }
   };
-  mixin(UI, TipUIPart);
+  mixin(UI5, TipUIPart);
 
-  // src/legacy/ui/dialogue.js
+  // src/game/ui/dialogue.ts
   var dialogue_exports = {};
   __export(dialogue_exports, {
     DialogueUIPart: () => DialogueUIPart
@@ -33586,9 +33586,9 @@
       $("#bb-hp").textContent = `${fmt(Math.ceil(e.hp))} / ${fmt(e.maxHp)}`;
     }
   };
-  mixin(UI, DialogueUIPart);
+  mixin(UI5, DialogueUIPart);
 
-  // src/legacy/ui/hud.js
+  // src/game/ui/hud.ts
   var hud_exports = {};
   __export(hud_exports, {
     HudUIPart: () => HudUIPart
@@ -33725,9 +33725,9 @@
       c.stroke();
     }
   };
-  mixin(UI, HudUIPart);
+  mixin(UI5, HudUIPart);
 
-  // src/legacy/music.js
+  // src/game/music.ts
   var music_exports2 = {};
   __export(music_exports2, {
     AMBIENT_FILES: () => AMBIENT_FILES,
@@ -34080,7 +34080,7 @@
     }
   });
 
-  // src/legacy/game.js
+  // src/game/game.ts
   var game_exports = {};
   __export(game_exports, {
     G: () => G,
@@ -34262,7 +34262,7 @@
       this.resize();
       TileArt.build();
       Art.build();
-      UI.init();
+      UI5.init();
       document.body.classList.add("booting");
       window.__acBooting = 1;
       this.showLoading(tr("불러오는 중…"));
@@ -34273,14 +34273,14 @@
       if (Sprites) {
         Sprites.ready().then(() => {
           this.spritesOn = true;
-          UI.applySpriteOverrides();
+          UI5.applySpriteOverrides();
           for (const name in TILE_SPRITE) TileArt.applySprite(TILE_SPRITE[name], Sprites.img["tile_" + name]);
           TileArt.buildAsh();
           TileArt.markFull();
           if (Sprites.meta && Sprites.meta.items) {
             for (const id in Sprites.meta.items.files) Art.applyItemSprite(id, Sprites.img["item_" + id]);
-            UI.refreshBag();
-            UI.refreshEquip();
+            UI5.refreshBag();
+            UI5.refreshEquip();
           }
           if (typeof TitleBG !== "undefined") TitleBG.useSprites();
         }).catch((e) => {
@@ -34319,8 +34319,8 @@
         if (await this.saveGame()) this.exportSaves();
       };
       const openSettings = () => {
-        UI.setTab("disp");
-        UI.syncSettings();
+        UI5.setTab("disp");
+        UI5.syncSettings();
         $("#settings-screen").classList.add("open");
       };
       $("#btn-settings-title").onclick = openSettings;
@@ -34331,7 +34331,7 @@
         this.scenes.go("title");
         $("#title-screen").style.display = "";
         if (typeof TitleBG !== "undefined") TitleBG.start();
-        UI.bossBar(null);
+        UI5.bossBar(null);
         this.renderSlotScreen();
       };
       $("#btn-respawn").onclick = () => this.respawn();
@@ -34372,7 +34372,7 @@
       this.keys = this.inp.keys;
       this.inp.bindKeyboard({
         // 조작키를 다시 매기는 중이면 그 키를 여기서 삼킨다
-        capture: (e) => !!(UI.captureKey && UI.captureKey(e.code)),
+        capture: (e) => !!(UI5.captureKey && UI5.captureKey(e.code)),
         down: (e) => this.keyDown(e),
         blur: () => {
           this.input.m1 = this.input.m2 = 0;
@@ -34384,7 +34384,7 @@
           if (this.state !== "play") return;
           const p = this.player;
           p.sel = (p.sel + (e.deltaY > 0 ? 1 : -1) + HOTBAR) % HOTBAR;
-          UI.refreshHotbar();
+          UI5.refreshHotbar();
         }
       });
       if (TOUCH)
@@ -34406,7 +34406,7 @@
         addEventListener("resize", lift);
         $$("#skillbar .sk").forEach((el, i) => el.addEventListener("pointerdown", (e) => {
           e.preventDefault();
-          if (this.state === "play" && !UI.dlg && !UI.open) this.player.useSkill(i, this.input.wx, this.input.wy);
+          if (this.state === "play" && !UI5.dlg && !UI5.open) this.player.useSkill(i, this.input.wx, this.input.wy);
         }));
         if (document.fullscreenEnabled) {
           const fs = document.createElement("div");
@@ -34422,7 +34422,7 @@
         }
       }
       $("#dialogue").addEventListener("click", () => {
-        if (UI.dlg && !UI.finishType()) UI.nextLine(false);
+        if (UI5.dlg && !UI5.finishType()) UI5.nextLine(false);
       });
     },
     /** 새로 눌린 키 하나(반복 아님) — 패널 · 저장 · 핫바 · 스킬. */
@@ -34433,25 +34433,25 @@
       }
       const k = e.code;
       if (k === "Escape") {
-        if (UI.open || UI.dlg) {
-          UI.closePanel();
-          UI.closeDialogue();
+        if (UI5.open || UI5.dlg) {
+          UI5.closePanel();
+          UI5.closeDialogue();
         } else this.setPause($("#pause-screen").className !== "open");
       } else if (this.isKey("inv", k)) {
-        UI.togglePanel("inv");
+        UI5.togglePanel("inv");
         e.preventDefault();
       } else if (this.isKey("skills", k)) {
-        UI.togglePanel("skill");
+        UI5.togglePanel("skill");
         e.preventDefault();
       } else if (this.isKey("quest", k)) {
-        UI.togglePanel("quest");
+        UI5.togglePanel("quest");
         e.preventDefault();
       } else if (this.isKey("craft", k)) {
-        UI.craftTab = "hand";
-        UI.togglePanel("craft");
+        UI5.craftTab = "hand";
+        UI5.togglePanel("craft");
         e.preventDefault();
       } else if (this.isKey("map", k)) {
-        UI.openFullmap();
+        UI5.openFullmap();
         e.preventDefault();
       } else if (this.isKey("save", k)) {
         e.preventDefault();
@@ -34459,8 +34459,8 @@
       } else if (k.startsWith("Digit")) {
         const n = +k.slice(5);
         this.player.sel = n === 0 ? 9 : n - 1;
-        UI.refreshHotbar();
-      } else if (!UI.dlg && !UI.open) {
+        UI5.refreshHotbar();
+      } else if (!UI5.dlg && !UI5.open) {
         if (this.isKey("rotate", k)) this.rotatePlace();
         else if (this.isKey("skill1", k)) this.player.useSkill(0, this.input.wx, this.input.wy);
         else if (this.isKey("skill2", k)) this.player.useSkill(1, this.input.wx, this.input.wy);
@@ -34658,13 +34658,13 @@
       this.scenes.go("play");
       this.petEnts = [];
       this.syncPets();
-      UI.refreshBag();
-      UI.refreshEquip();
-      UI.refreshTracker();
-      UI.refreshSkillbar();
-      UI.refreshStatAlloc();
-      UI.chapterCard(CHAPTERS[0]);
-      setTimeout(() => UI.storyScene(CHAPTERS[0], "intro"), 4e3);
+      UI5.refreshBag();
+      UI5.refreshEquip();
+      UI5.refreshTracker();
+      UI5.refreshSkillbar();
+      UI5.refreshStatAlloc();
+      UI5.chapterCard(CHAPTERS[0]);
+      setTimeout(() => UI5.storyScene(CHAPTERS[0], "intro"), 4e3);
       this.toast(tr("별이 떨어진 다음 날 아침이다."));
       this.audioInit();
       this.buildMapAtlas();
@@ -34749,8 +34749,8 @@
         p.vx = p.vy = 0;
         this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-        UI.refreshBag();
-        UI.refreshEquip();
+        UI5.refreshBag();
+        UI5.refreshEquip();
         this.toast(tr("값 확인 자리 — {plv}레벨 · 마을 {n}단계 · 세션 {sess}", { plv, n: VILLAGE.length - 1, sess }), "good");
       }
       if (qs.get("debug") === "sea") {
@@ -34809,8 +34809,8 @@
         p.vx = p.vy = 0;
         this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-        UI.refreshBag();
-        UI.refreshEquip();
+        UI5.refreshBag();
+        UI5.refreshEquip();
         this.toast(tr("세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급"), "good");
       }
       if (qs.get("debug") === "fishfarm") {
@@ -34869,8 +34869,8 @@
           this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
           this.toast(tr("낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭"), "good");
         }
-        UI.refreshBag();
-        UI.refreshEquip();
+        UI5.refreshBag();
+        UI5.refreshEquip();
       }
       if (qs.get("debug") === "ruin") {
         const w = this.world, id = qs.get("id") || "mine";
@@ -34904,7 +34904,7 @@
           this.ruinPulse = { [id]: clamp(+qs.get("pulse") || 0, 0, 100) };
           this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
           this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-          UI.refreshBag();
+          UI5.refreshBag();
         }
       }
       if (qs.get("debug") === "cave") {
@@ -34957,7 +34957,7 @@
           this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
           this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
         }
-        UI.refreshBag();
+        UI5.refreshBag();
       }
       if (qs.get("debug") === "factory") this.buildDebugFactory(qs);
       if (qs.get("debug") === "bomb") {
@@ -35016,7 +35016,7 @@
         for (let dx = 0; dx < 5; dx++) for (let y = gy - 7; y <= gy; y++) w.set(gx - 12 + dx, y, T.STONE);
         for (let x = gx + 56; x <= gx + 68; x++)
           for (let y = gy - 2; y <= gy; y++) w.set(x, y, x < gx + 63 ? T.WATER : T.LAVA);
-        ["belt", "belt", "gen", "battery"].forEach((k, i) => Factory.place(w, gx + 72 + i, gy, k, 0));
+        ["belt", "belt", "gen", "battery"].forEach((k, i) => Factory11.place(w, gx + 72 + i, gy, k, 0));
         for (let i = 0; i < 3; i++)
           this.ents.push(new Enemy(i === 0 ? "reef_crab" : "slime", (gx + 30 + i * 4) * TS, (gy - 3) * TS, this.scale()));
         for (const row of [top + 1, gy - 9, gy])
@@ -35027,8 +35027,8 @@
         p.vx = p.vy = 0;
         this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-        UI.refreshBag();
-        UI.refreshEquip();
+        UI5.refreshBag();
+        UI5.refreshEquip();
         this.toast(tr("폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳"), "good");
       }
     },
@@ -35116,9 +35116,9 @@
         if (this.starGain.t >= this.starGain.dur) this.starGain = null;
       }
       this.tickStarRise(dt);
-      if (this.chapter === 11 && !this.asmRan && this.world && this.world.machines && typeof Factory !== "undefined") {
+      if (this.chapter === 11 && !this.asmRan && this.world && this.world.machines && typeof Factory11 !== "undefined") {
         for (const m of this.world.machines.values())
-          if (m.t === "assembler" && Factory.sat(this.world, m) > 0) {
+          if (m.t === "assembler" && Factory11.sat(this.world, m) > 0) {
             this.asmRan = 1;
             break;
           }
@@ -35175,7 +35175,7 @@
       this.facTimer = (this.facTimer || 0) - dt;
       if (this.facTimer <= 0) {
         this.facTimer = Math.max(this.facTimer + FAC_TICK, -FAC_TICK);
-        Factory.tick(w, this);
+        Factory11.tick(w, this);
       }
       this.trapTimer = (this.trapTimer || 0) - dt;
       if (this.trapTimer <= 0) {
@@ -35263,9 +35263,9 @@
       this.hudTimer = (this.hudTimer || 0) - dt;
       if (this.hudTimer <= 0) {
         this.hudTimer = 0.1;
-        UI.bossBar(this.boss);
-        UI.updateHUD();
-        if (UI.open === "machine") UI.refreshMachine();
+        UI5.bossBar(this.boss);
+        UI5.updateHUD();
+        if (UI5.open === "machine") UI5.refreshMachine();
         this.checkChapter();
       }
       if (this.deathMark) {
@@ -35292,7 +35292,7 @@
           if (back.length) bits.push(tr("물건 {backCount}칸", { backCount: back.length }));
           this.toast(bits.length ? bits.join(" · ") + tr("을 되찾았다") : tr("쓰러졌던 자리로 돌아왔다"), "good");
           if (dropped) this.toast(tr("가방이 차서 일부는 바닥에 떨어졌다"), "info");
-          UI.refreshBag();
+          UI5.refreshBag();
           this.sfx("chapter");
         }
       }
@@ -35466,7 +35466,7 @@
   bindApp(G);
   addEventListener("DOMContentLoaded", () => G.init());
 
-  // src/legacy/game/act.js
+  // src/game/game/act.ts
   var act_exports = {};
   __export(act_exports, {
     ActPart: () => ActPart
@@ -35541,7 +35541,7 @@
         }
         p.mineProg = 0;
         if (MACH_OF_TILE[id]) {
-          const back = Factory.remove(w, tx, ty);
+          const back = Factory11.remove(w, tx, ty);
           let spill = 0;
           if (back) {
             for (const it of back) if (!p.addItem(it)) {
@@ -35550,7 +35550,7 @@
             }
           }
           if (spill) this.toast(tr("가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라"), "bad");
-          UI.refreshBag();
+          UI5.refreshBag();
           this.breakFx(tx, ty, id, 1);
           return;
         }
@@ -35704,14 +35704,14 @@
       it.c--;
       if (it.c <= 0) p.bag[slot] = null;
       this.tally.bomb = (this.tally.bomb || 0) + 1;
-      UI.refreshBag();
+      UI5.refreshBag();
       this.sfx("place");
     },
     /** (tx, ty) 바로 위로 전주 기둥이 내려오는가 — factory.js가 기둥을 그리는 규칙 (전주 칸 아래로 첫 고체를 만날 때까지)과 같은 판정이다. */
     _poleAbove(tx, ty) {
       const w = this.world;
       for (let y = ty - 1; y >= ty - 40 && y > 2; y--) {
-        const m = Factory.at(w, tx, y);
+        const m = Factory11.at(w, tx, y);
         if (m) return m.t === "pole";
         if (w.solid(tx, y)) return false;
       }
@@ -35753,18 +35753,18 @@
       }
       const mtx = Math.floor(this.input.wx / TS), mty = Math.floor(this.input.wy / TS);
       if (dist(p.cx, p.cy, (mtx + 0.5) * TS, (mty + 0.5) * TS) <= TS * 7) {
-        const mac = Factory.at(w, mtx, mty);
+        const mac = Factory11.at(w, mtx, mty);
         if (mac) {
-          if (mac.it && Factory.stalled(mac)) {
+          if (mac.it && Factory11.stalled(mac)) {
             const id = mac.it.id;
-            if (Factory.takeStalled(mac, p)) {
+            if (Factory11.takeStalled(mac, p)) {
               this.toast(tr("{item}{item|을} 벨트에서 집었다", { item: ITEMS[id].n }), "good");
-              UI.refreshBag();
+              UI5.refreshBag();
               this.sfx("place");
             } else this.toast(tr("가방이 가득 찼다"), "bad");
             return;
           }
-          UI.openMachine(mac);
+          UI5.openMachine(mac);
           this.sfx("open");
           return;
         }
@@ -35774,7 +35774,7 @@
             this.toast(tr("채취탑 자리에는 놓을 수 없다"), "bad");
             return;
           }
-          if (!Factory.canPlace(w, mtx, mty)) {
+          if (!Factory11.canPlace(w, mtx, mty)) {
             this.toast(tr("그 자리에는 놓을 수 없다"), "bad");
             return;
           }
@@ -35783,11 +35783,11 @@
             this.toast(tr("누가 서 있는 자리다"), "bad");
             return;
           }
-          const placed = Factory.place(w, mtx, mty, idef(hi).mach, this.placeDirFor(idef(hi).mach));
+          const placed = Factory11.place(w, mtx, mty, idef(hi).mach, this.placeDirFor(idef(hi).mach));
           if (placed && MACHINE[placed.t].proj) placed.own = 1;
           hi.c--;
           if (hi.c <= 0) p.bag[p.sel] = null;
-          UI.refreshBag();
+          UI5.refreshBag();
           this.sfx("place");
           return;
         }
@@ -35832,7 +35832,7 @@
           }
           hi.c--;
           if (hi.c <= 0) p.bag[p.sel] = null;
-          UI.refreshBag();
+          UI5.refreshBag();
           this.sfx("place");
           return;
         }
@@ -35885,7 +35885,7 @@
         w.set(tx, ty, tileId);
         held.c--;
         if (held.c <= 0) p.bag[p.sel] = null;
-        UI.refreshBag();
+        UI5.refreshBag();
         this.sfx("place");
       }
     },
@@ -35910,7 +35910,7 @@
           this.toast(tr("채취탑 자리에는 놓을 수 없다"), "bad");
           return;
         }
-        if (Factory.at(w, xx, yy)) {
+        if (Factory11.at(w, xx, yy)) {
           this.toast(tr("이미 기계가 있다"), "bad");
           return;
         }
@@ -35945,7 +35945,7 @@
       it.c--;
       if (it.c <= 0) p.bag[p.sel] = null;
       for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + 0.5) * TS, (ty + 0.5) * TS, "#d8b06a", -30, 0.5));
-      UI.refreshBag();
+      UI5.refreshBag();
       this.sfx("place");
     },
     /* ================= 문 ================= */
@@ -35966,7 +35966,7 @@
           this.toast(tr("채취탑 자리에는 달 수 없다"), "bad");
           return;
         }
-        if (Factory.at(w, tx, yy)) {
+        if (Factory11.at(w, tx, yy)) {
           this.toast(tr("이미 기계가 있다"), "bad");
           return;
         }
@@ -35993,7 +35993,7 @@
       it.c--;
       if (it.c <= 0) p.bag[p.sel] = null;
       for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + 0.5) * TS, (ty + 0.5) * TS, "#8a6a42", -30, 0.5));
-      UI.refreshBag();
+      UI5.refreshBag();
       this.sfx("place");
     },
     /** 문 회수 — 내가 단 것만. */
@@ -36007,7 +36007,7 @@
       i = w.doors.indexOf(o);
       if (i >= 0) w.doors.splice(i, 1);
       this.matBurst("wood", o.x + o.w / 2, o.y + o.h / 2, 12, { spd: 1.1 });
-      UI.refreshBag();
+      UI5.refreshBag();
       this.sfx("break_wood", this.strokeRate());
       return true;
     },
@@ -36025,14 +36025,14 @@
       if (i >= 0) w.objects.splice(i, 1);
       this.matBurst("wood", o.x + o.w / 2, o.y + o.h / 2, 10, { spd: 1.1 });
       this.matBurst("stone", o.x + o.w / 2, o.y + o.h / 2, 5, { spd: 0.9 });
-      UI.refreshBag();
+      UI5.refreshBag();
       this.sfx("break_wood", this.strokeRate());
       return true;
     }
   };
   mixin(G, ActPart);
 
-  // src/legacy/game/fishing.js
+  // src/game/game/fishing.ts
   var fishing_exports = {};
   __export(fishing_exports, {
     FishingPart: () => FishingPart
@@ -36102,7 +36102,7 @@
     _fishLost(msg) {
       this.player.fish = null;
       this.toast(msg, "bad");
-      UI.refreshBag();
+      UI5.refreshBag();
     },
     /** 줄을 걷는 순간의 물 튀김. */
     fishSplash(f, n) {
@@ -36187,7 +36187,7 @@
           this.sfx("open");
         }
         p.addProf("fish", rare ? 3 : 1);
-        UI.refreshBag();
+        UI5.refreshBag();
         return;
       }
       const s2fish = sessionOf(this.chapter).id >= 2;
@@ -36200,7 +36200,7 @@
       const catchId = this.rng.weighted(table);
       if (catchId === "none") {
         this.toast(baited ? tr("미끼만 사라졌다") : tr("빈 바늘만 올라왔다"), "bad");
-        UI.refreshBag();
+        UI5.refreshBag();
         return;
       }
       const n = flv >= PROF_MAX && this.rng.chance(0.25) ? 2 : 1;
@@ -36209,7 +36209,7 @@
       this.toast(tr("낚았다 — {itemName}{v}", { itemName: itemName(it), v: n > 1 ? " ×" + n : "" }), "good");
       p.addProf("fish", 1);
       this.sfx("open");
-      UI.refreshBag();
+      UI5.refreshBag();
     },
     findObjAt(wx, wy) {
       const tx = Math.floor(wx / TS), ty = Math.floor(wy / TS);
@@ -36246,7 +36246,7 @@
           if (o.bonus2 && ITEMS[o.bonus2]) o.items.push(makeItem(o.bonus2, this.rng.int(2, 4)));
           this.pulseChest(o, tx, ty);
         }
-        UI.openChest(o);
+        UI5.openChest(o);
         this.sfx("open");
         if (o.guard && !o.guarded) {
           o.guarded = true;
@@ -36266,7 +36266,7 @@
         }
       } else if (o.type === "crate") {
         if (!o.items) o.items = new Array(o.slots || 24).fill(null);
-        UI.openStore(o);
+        UI5.openStore(o);
         this.sfx("open");
       } else if (o.type === "lorestone") {
         this.readRuinLore(o);
@@ -36274,8 +36274,8 @@
         const kind = o.type === "forge" ? "forge" : "work";
         this.nearSt[kind] = true;
         this.nearStObj[kind] = o;
-        UI.craftTab = kind;
-        UI.togglePanel("craft");
+        UI5.craftTab = kind;
+        UI5.togglePanel("craft");
       } else if (o.type === "npc") {
         this.talkTo(o.npc);
       } else if (o.type === "altar") {
@@ -36293,16 +36293,16 @@
       } else if (o.type === "mystic") {
         this.useMystic(o);
       } else if (o.type === "vault") {
-        UI.openVault();
+        UI5.openVault();
         this.sfx("open");
       } else if (o.type === "board") {
-        UI.openBoard();
+        UI5.openBoard();
         this.sfx("open");
       } else if (o.type === "reforge") {
-        UI.openReforge();
+        UI5.openReforge();
         this.sfx("open");
       } else if (o.type === "anvil") {
-        UI.openAnvil();
+        UI5.openAnvil();
         this.sfx("open");
       } else if (o.type === "waystone") {
         this.useWaystone();
@@ -36313,7 +36313,7 @@
       } else if (o.type === "lair") {
         this.wakeLair(o);
       } else if (o.type === "townhall") {
-        UI.openTownhall();
+        UI5.openTownhall();
         this.sfx("open");
       } else if (o.type === "terminal") {
         this.readTerminal(o);
@@ -36373,14 +36373,14 @@
       w.set(X0 + 51, gy + 1, T.IRONRICH);
       w.set(X0 + 55, gy + 1, T.GOLDRICH);
       const put = (dx, key, dir, fill) => {
-        const m = Factory.place(w, X0 + dx, Y, key, dir || 0);
+        const m = Factory11.place(w, X0 + dx, Y, key, dir || 0);
         if (!m) return null;
         if (MACHINE[key].proj) {
           m.own = 1;
         }
         if (fill) for (const id in fill) {
-          if (m.items) Factory.insert(w, m, id, fill[id]);
-          else if (m.in) Factory.bufAdd(m.in, id, fill[id]);
+          if (m.items) Factory11.insert(w, m, id, fill[id]);
+          else if (m.in) Factory11.bufAdd(m.in, id, fill[id]);
         }
         return m;
       };
@@ -36465,26 +36465,26 @@
       put(78, "frostjet", 3);
       put(81, "battery", 0, { battery_empty: 4 });
       this.buildDebugTowers(w, AX, BX, gy);
-      Factory.buildNets(w);
+      Factory11.buildNets(w);
       p.x = (X0 - 5) * TS;
       p.y = (gy - 3) * TS;
       p.vx = p.vy = 0;
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
       this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-      UI.refreshBag();
-      UI.refreshEquip();
+      UI5.refreshBag();
+      UI5.refreshEquip();
       this.toast(tr("공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다"), "good");
     },
     /** ?debug=factory 의 여러 층 공장 둘 — A: 3층 금속 공장(광석 → 주괴 → 강철판·전선), B: 지하 탄광이 제 발전기를 먹이는 순환 발전소 + 방어 갑판.
         층 사이는 위로 가는 벨트 기둥, 사람은 오른쪽(A)·왼쪽(B) 발판 사다리로 오간다. */
     buildDebugTowers(w, AX, BX, gy) {
       const P = (x, y, key, dir, fill) => {
-        const m = Factory.place(w, x, y, key, dir || 0);
+        const m = Factory11.place(w, x, y, key, dir || 0);
         if (!m) return null;
         if (MACHINE[key].proj) m.own = 1;
         if (fill) for (const id in fill) {
-          if (m.items) Factory.insert(w, m, id, fill[id]);
-          else if (m.in) Factory.bufAdd(m.in, id, fill[id]);
+          if (m.items) Factory11.insert(w, m, id, fill[id]);
+          else if (m.in) Factory11.bufAdd(m.in, id, fill[id]);
         }
         return m;
       };
@@ -36602,18 +36602,18 @@
           const it = makeItem(give, t.it ? 8 : 1);
           if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it));
           this.toast(tr("{item} 획득", { item: ITEMS[give].n }), "good");
-          UI.closeDialogue();
-          UI.refreshBag();
+          UI5.closeDialogue();
+          UI5.refreshBag();
           this.checkChapter();
         }
       });
-      UI.openLore(t.n, t.lines, choices);
+      UI5.openLore(t.n, t.lines, choices);
       this.sfx("talk");
     }
   };
   mixin(G, FishingPart);
 
-  // src/legacy/game/village.js
+  // src/game/game/village.ts
   var village_exports3 = {};
   __export(village_exports3, {
     VillagePart: () => VillagePart
@@ -36625,18 +36625,18 @@
       const p = this.player, w = this.world;
       const d = w.dawnCity;
       if (!this.villageUnlocked) {
-        UI.openLore(tr("귀환 비석"), [tr("표면의 홈이 잿빛으로 막혀 있다. 아직 이어진 곳이 없다.")], []);
+        UI5.openLore(tr("귀환 비석"), [tr("표면의 홈이 잿빛으로 막혀 있다. 아직 이어진 곳이 없다.")], []);
         return;
       }
       const atDawn = d && Math.abs(p.cx / TS - (d.x0 + d.x1) / 2) < 90;
       const [tx, ty] = atDawn ? [w.spawnX, w.spawnY - 3] : [d.x0 + d.x1 >> 1, d.gy - 3];
       const to = atDawn ? tr("베이스캠프") : tr("여명 마을");
-      UI.openLore(tr("귀환 비석"), [tr("비석에 손을 대면 {to}(으)로 돌아간다.", { to })], [
+      UI5.openLore(tr("귀환 비석"), [tr("비석에 손을 대면 {to}(으)로 돌아간다.", { to })], [
         {
           t: tr("({to}(으)로 이동한다)", { to }),
           quest: 1,
           fn: () => {
-            UI.closeDialogue();
+            UI5.closeDialogue();
             p.x = tx * TS - p.w / 2;
             p.y = ty * TS;
             p.vx = p.vy = 0;
@@ -36662,7 +36662,7 @@
           t: tr("(금화 {cost}개를 던진다)", { cost: fmt(cost) }),
           quest: 1,
           fn: () => {
-            UI.closeDialogue();
+            UI5.closeDialogue();
             p.gold -= cost;
             p.addBuff("wish");
             const mx = o.x + o.w / 2, my = o.y + o.h * 0.55;
@@ -36672,7 +36672,7 @@
           }
         });
       else lines.push(tr("동전을 던지려면 금화 {cost}개가 필요하다.", { cost: fmt(cost) }));
-      UI.openLore(tr("여명의 분수"), lines, choices);
+      UI5.openLore(tr("여명의 분수"), lines, choices);
     },
     /** 여관 — 금화를 내고 아침까지 잔다. */
     innCost() {
@@ -36681,12 +36681,12 @@
     useInn() {
       const p = this.player;
       const cost = this.innCost();
-      UI.openLore(tr("여관"), [tr('하란: "한숨 자고 가. 아침까진 봐 줄게. 🪙 {cost}."', { cost: fmt(cost) })], [
+      UI5.openLore(tr("여관"), [tr('하란: "한숨 자고 가. 아침까진 봐 줄게. 🪙 {cost}."', { cost: fmt(cost) })], [
         {
           t: tr("(🪙 {cost} 내고 잔다)", { cost: fmt(cost) }),
           quest: 1,
           fn: () => {
-            UI.closeDialogue();
+            UI5.closeDialogue();
             if (p.gold < cost) {
               this.toast(tr("금화가 부족하다"), "bad");
               return;
@@ -36844,8 +36844,8 @@
         this.bountyNext = (this.bountyNext || []).concat(b.next);
       }
       this.toast(tr("의뢰 완료: {title} — 경험치 {xp} · 금화 {gold}", { title: b.title, xp: fmt(pay.xp), gold: fmt(pay.gold) }), "good");
-      UI.refreshBoard();
-      UI.refreshBag();
+      UI5.refreshBoard();
+      UI5.refreshBag();
       this.sfx("manycoins");
     },
     /* ---- 강화: 장비 수치를 한 단계씩 올린다 (여명 교역지 4단계, 강화 모루) ---- */
@@ -36900,9 +36900,9 @@
         for (let k = 0; k < 22; k++) this.parts.push(new Part(p.cx, p.cy, k % 2 ? "#c8443a" : "#6a6a74", -40, 0.8));
         this.shake = Math.max(this.shake, 6);
         p.recalc();
-        UI.refreshAnvil();
-        UI.refreshBag();
-        UI.refreshEquip();
+        UI5.refreshAnvil();
+        UI5.refreshBag();
+        UI5.refreshEquip();
         this.sfx("damage");
         return;
       }
@@ -36910,8 +36910,8 @@
         this.toast(tr("{itemName} — 결이 어긋났다. 단계는 그대로다", { itemName: itemName(it) }), "bad");
         for (let k = 0; k < 12; k++) this.parts.push(new Part(p.cx, p.cy, "#8a8a96", -30, 0.6));
         this.shake = Math.max(this.shake, 3);
-        UI.refreshAnvil();
-        UI.refreshBag();
+        UI5.refreshAnvil();
+        UI5.refreshBag();
         this.sfx("damage");
         return;
       }
@@ -36919,9 +36919,9 @@
       this.toast(tr("{itemName} — 한 겹 더 두들겼다", { itemName: itemName(it) }), "good");
       for (let k = 0; k < 18; k++) this.parts.push(new Part(p.cx, p.cy, "#ff9a3a", -50, 0.7));
       p.recalc();
-      UI.refreshAnvil();
-      UI.refreshBag();
-      UI.refreshEquip();
+      UI5.refreshAnvil();
+      UI5.refreshBag();
+      UI5.refreshEquip();
       this.sfx("craft");
     },
     /* ---- 재련: 금화를 내고 장비의 접사를 다시 굴린다 ---- */
@@ -36944,8 +36944,8 @@
       fresh.c = it.c;
       p.bag[i] = fresh;
       this.toast(tr("{itemName} — 다시 벼렸다", { itemName: itemName(fresh) }), fresh.r > it.r ? "good" : "");
-      UI.refreshReforge();
-      UI.refreshBag();
+      UI5.refreshReforge();
+      UI5.refreshBag();
       this.sfx("craft");
     },
     /** 유적 석판 — 로어를 읽고 룬 조각을 얻는다 (1회) */
@@ -36962,12 +36962,12 @@
           const it = makeItem("rune_frag", 1);
           if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it));
           this.toast(tr("룬 조각 획득"), "good");
-          UI.closeDialogue();
-          UI.refreshBag();
-          UI.refreshTracker();
+          UI5.closeDialogue();
+          UI5.refreshBag();
+          UI5.refreshTracker();
         }
       });
-      UI.openLore(t.n, t.lines, choices);
+      UI5.openLore(t.n, t.lines, choices);
       this.sfx("open");
     },
     /** 유적 비문 — 본편이 아직 말하지 않은 것을 유적마다 한 조각씩 흘린다 */
@@ -36976,7 +36976,7 @@
         const hs = RUIN_HINTS[o.lore];
         const h = hs && hs[o.hint];
         if (!h) return;
-        UI.openLore(h[0], h[1], []);
+        UI5.openLore(h[0], h[1], []);
         this.sfx("open");
         return;
       }
@@ -37000,11 +37000,11 @@
             if (!p.addItem(seal)) this.drops.push(new Drop(p.cx, p.cy, seal));
             this.toast(tr("여섯 유적을 모두 뒤졌다 — 탐굴자의 인장을 얻었다"), "good");
           }
-          UI.closeDialogue();
-          UI.refreshBag();
+          UI5.closeDialogue();
+          UI5.refreshBag();
         }
       });
-      UI.openLore(t.n, t.lines, choices);
+      UI5.openLore(t.n, t.lines, choices);
       this.sfx("open");
     },
     /** 봉인문 — 유적의 열쇠로 연다 */
@@ -37017,7 +37017,7 @@
       const atelier = o.gate === "atelier";
       const keyId = o.key || "ruin_key";
       if (p.countItem(keyId) <= 0) {
-        UI.openLore(atelier ? tr("설계실 봉인") : tr("봉인문"), atelier ? [
+        UI5.openLore(atelier ? tr("설계실 봉인") : tr("봉인문"), atelier ? [
           tr("벽에 이음매가 없다. 문이 아니라, 문이었던 적이 없는 벽이다."),
           tr("가운데에 손바닥만 한 홈이 하나 파여 있다 — 안쪽에서 만든 것만 맞는 크기다."),
           tr("『이 벽은 밖에서 열리지 않습니다.』")
@@ -37046,7 +37046,7 @@
         this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, atelier ? "#ffe8a0" : "#a06fff", -30, 1.2));
       this.shake = 12;
       this.toast(tr("봉인이 풀렸다"), "good");
-      UI.refreshBag();
+      UI5.refreshBag();
       this.sfx("chapter");
     },
     /* ================= NPC =================
@@ -37111,44 +37111,44 @@
       if (!(pick && pick.re)) return rest;
       const re = pick.re;
       return [{ t: re.t, say: 1, fn: () => {
-        UI.closeDialogue();
+        UI5.closeDialogue();
         this.talkAnswer(id, re, rest);
       } }].concat(rest);
     },
     talkAnswer(id, re, rest) {
       const lines = Array.isArray(re.s) ? re.s.slice() : [re.s];
-      UI.openDialogue(id, lines, rest);
+      UI5.openDialogue(id, lines, rest);
       this.sfx("talk");
     },
     talkExtra(id) {
       const cs = [];
       if (NPCS[id].shop) cs.push({ t: tr("물건을 보여 달라"), fn: () => {
-        UI.closeDialogue();
-        UI.openShop(id);
+        UI5.closeDialogue();
+        UI5.openShop(id);
       } });
       if (id === "trainer") {
         cs.push({ t: tr("스탯 재분배 · 🪙 {respecCost}", { respecCost: fmt(this.respecCost()) }), fn: () => {
-          UI.closeDialogue();
+          UI5.closeDialogue();
           this.respecStats();
         } });
         cs.push({ t: tr("수련 · 🪙 {trainCost} · 오늘 {trainedToday}/5", { trainCost: fmt(this.trainCost()), trainedToday: this.trainedToday }), fn: () => {
-          UI.closeDialogue();
+          UI5.closeDialogue();
           this.trainXp();
         } });
       } else if (id === "haran") {
         cs.push({ t: tr("방을 잡는다"), fn: () => {
-          UI.closeDialogue();
+          UI5.closeDialogue();
           this.useInn();
         } });
       } else if (id === "seira") {
         cs.push({ t: tr("장비를 다시 벼려 달라"), fn: () => {
-          UI.closeDialogue();
-          UI.openReforge();
+          UI5.closeDialogue();
+          UI5.openReforge();
         } });
       } else if (NPCS[id].dynamicShop) {
         cs.push({ t: tr("오늘 실은 것을 보자"), fn: () => {
-          UI.closeDialogue();
-          UI.openShop(id);
+          UI5.closeDialogue();
+          UI5.openShop(id);
         } });
       }
       return cs.length > 1 ? [{ t: tr("볼일이 있다"), sub: cs }] : cs;
@@ -37171,8 +37171,8 @@
       if (!lines.length) lines.push(story[story.length - 1]);
       const rest = [];
       if (!fresh) rest.push({ t: tr("다시 듣기"), replay: 1, fn: () => {
-        UI.closeDialogue();
-        UI.openDialogue(id, story.slice(), rest);
+        UI5.closeDialogue();
+        UI5.openDialogue(id, story.slice(), rest);
         this.sfx("talk");
       } });
       rest.push(...this.talkExtra(id));
@@ -37180,18 +37180,18 @@
         t: this.sideActive[id] ? tr("의뢰에 대해 묻는다") : tr("부탁할 일이 있는지 묻는다"),
         quest: 1,
         fn: () => {
-          UI.closeDialogue();
+          UI5.closeDialogue();
           this.sideTalk(id);
         }
       });
       rest.push({ t: tr("지금 무엇을 해야 하지?"), quest: 1, fn: () => {
-        UI.closeDialogue();
+        UI5.closeDialogue();
         this.tellQuest();
       } });
       if (id === "elara" && this.chapter === 0) rest.push({ t: tr("(여정을 시작한다)"), quest: 1, fn: () => {
-        UI.closeDialogue();
+        UI5.closeDialogue();
       } });
-      UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
+      UI5.openDialogue(id, lines, this.talkMenu(id, pick, rest));
       this.sfx("talk");
     },
     /** 그 사람이 이 장에 할 이야기. */
@@ -37222,23 +37222,23 @@
       if (!lines.length) lines.push(story ? story[story.length - 1] : d.line);
       const rest = this.talkExtra(id);
       if (story && !fresh) rest.push({ t: tr("다시 듣기"), replay: 1, fn: () => {
-        UI.closeDialogue();
-        UI.openDialogue(id, story.slice(), rest);
+        UI5.closeDialogue();
+        UI5.openDialogue(id, story.slice(), rest);
         this.sfx("talk");
       } });
       if (SIDE_POOL[id]) rest.push({
         t: this.sideActive[id] ? tr("맡은 일에 대해 묻는다") : tr("도울 일이 있는지 묻는다"),
         quest: 1,
         fn: () => {
-          UI.closeDialogue();
+          UI5.closeDialogue();
           this.sideTalk(id);
         }
       });
       rest.push({ t: tr("지금 무엇을 해야 하지?"), quest: 1, fn: () => {
-        UI.closeDialogue();
+        UI5.closeDialogue();
         this.tellQuest();
       } });
-      UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
+      UI5.openDialogue(id, lines, this.talkMenu(id, pick, rest));
       this.sfx("talk");
     },
     /* ---- 사이드 퀘스트 ---- */
@@ -37250,12 +37250,12 @@
       if (active) {
         const p = this.sideProgress(active);
         if (p.done) {
-          UI.openDialogue(npcId, [active.doneLine], [{ t: tr("(보상을 받는다)"), quest: 1, fn: () => {
+          UI5.openDialogue(npcId, [active.doneLine], [{ t: tr("(보상을 받는다)"), quest: 1, fn: () => {
             this.completeSideQuest(npcId);
-            UI.closeDialogue();
+            UI5.closeDialogue();
           } }]);
         } else {
-          UI.openDialogue(npcId, [`${active.desc}  (${p.cur}/${p.max})`], []);
+          UI5.openDialogue(npcId, [`${active.desc}  (${p.cur}/${p.max})`], []);
         }
         return;
       }
@@ -37263,19 +37263,19 @@
       if (!pool) return;
       const tpl = pool[this.rng.int(0, pool.length - 1)](this.chapter, this.rng);
       const pay = this.sidePay(tpl);
-      UI.openDialogue(npcId, [tr("{desc}\n(보상은 🪙 {gold} · 경험치 {xp})", { desc: tpl.desc, gold: fmt(pay.gold), xp: fmt(pay.xp) })], [
+      UI5.openDialogue(npcId, [tr("{desc}\n(보상은 🪙 {gold} · 경험치 {xp})", { desc: tpl.desc, gold: fmt(pay.gold), xp: fmt(pay.xp) })], [
         { t: tr("(수락한다)"), quest: 1, fn: () => {
           this.acceptSideQuest(npcId, tpl);
-          UI.closeDialogue();
+          UI5.closeDialogue();
         } },
-        { t: tr("(다음에 하겠다)"), fn: () => UI.closeDialogue() }
+        { t: tr("(다음에 하겠다)"), fn: () => UI5.closeDialogue() }
       ]);
     },
     acceptSideQuest(npcId, tpl) {
       this.sideActive[npcId] = Object.assign({}, tpl, { start: this.objStart(tpl.obj) });
       this.toast(tr("부탁을 맡았다: {title}", { title: tpl.title }), "good");
-      UI.refreshQuest();
-      UI.refreshTracker();
+      UI5.refreshQuest();
+      UI5.refreshTracker();
     },
     completeSideQuest(npcId) {
       const sq = this.sideActive[npcId];
@@ -37290,9 +37290,9 @@
       this.sideDone[npcId] = (this.sideDone[npcId] || 0) + 1;
       delete this.sideActive[npcId];
       this.toast(tr("부탁 완료: {title} — 경험치 {xp} · 금화 {gold}", { title: sq.title, xp: fmt(pay.xp), gold: fmt(pay.gold) }), "good");
-      UI.refreshQuest();
-      UI.refreshTracker();
-      UI.refreshBag();
+      UI5.refreshQuest();
+      UI5.refreshTracker();
+      UI5.refreshBag();
       this.sfx("manycoins");
     },
     tellQuest() {
@@ -37309,7 +37309,7 @@
         const pick = st.basics.find((b) => !b.p.done && st.missing.includes(b.o.verb)) || st.basics.find((b) => !b.p.done);
         this.toast(tr("{session} · 준비 {done}/{need}", { session, done: st.done, need: st.need }) + (pick ? ` · ${pick.o.t} (${pick.p.label || pick.p.cur + "/" + pick.p.max})` : ""));
       }
-      UI.togglePanel("quest");
+      UI5.togglePanel("quest");
     },
     /* ---- 경제: 화폐 가치와 품목별 시세가 하루 단위로 변동한다 ---- */
     updateEconomy() {
@@ -37385,8 +37385,8 @@
       p.gold -= cost;
       stock.splice(slotIdx, 1);
       this.toast(tr("{item} 구매", { item: ITEMS[row.id].n }), "good");
-      UI.refreshChest();
-      UI.refreshBag();
+      UI5.refreshChest();
+      UI5.refreshBag();
       this.sfx("coin");
       this.tradeDone();
     },
@@ -37437,8 +37437,8 @@
       }
       p.gold -= cost;
       this.toast(tr("{item} 구매", { item: ITEMS[id].n }), "good");
-      UI.refreshChest();
-      UI.refreshBag();
+      UI5.refreshChest();
+      UI5.refreshBag();
       this.sfx("coin");
       this.tradeDone();
     },
@@ -37460,7 +37460,7 @@
       if (this.bossGated(o.boss)) return;
       const spec = RUIN_SPEC[o.ruin];
       const name = o.nm || (spec ? spec.n : tr("둥지"));
-      UI.openLore(name, [
+      UI5.openLore(name, [
         tr("무언가가 이 자리에서 아주 오래 기다렸다."),
         tr("건드리면 깨어난다.")
       ], [
@@ -37468,18 +37468,18 @@
           t: tr("(깨운다)"),
           quest: 1,
           fn: () => {
-            UI.closeDialogue();
+            UI5.closeDialogue();
             this.pendingLair = o.ruin;
             this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 70);
           }
         },
-        { t: tr("(그냥 둔다)"), fn: () => UI.closeDialogue() }
+        { t: tr("(그냥 둔다)"), fn: () => UI5.closeDialogue() }
       ]);
     }
   };
   mixin(G, VillagePart);
 
-  // src/legacy/game/altar.js
+  // src/game/game/altar.ts
   var altar_exports = {};
   __export(altar_exports, {
     AltarPart: () => AltarPart
@@ -37513,7 +37513,7 @@
       }
       p.removeItem(need, 1);
       this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 60);
-      UI.refreshBag();
+      UI5.refreshBag();
     },
     useSummon(slot) {
       const p = this.player, it = p.bag[slot];
@@ -37542,7 +37542,7 @@
       }
       p.removeItem(it.id, 1);
       this.spawnBoss(bossId, p.cx + 160 * (p.facing || 1), p.cy - 90);
-      UI.refreshBag();
+      UI5.refreshBag();
     },
     spawnBoss(id, x, y) {
       const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
@@ -37561,7 +37561,7 @@
         this.pendingLair = null;
       }
       this.toast(tr("{enemy} 토벌!", { enemy: ENEMIES[id].n }), "good");
-      UI.bossBar(null);
+      UI5.bossBar(null);
     },
     /* 몹의 세기는 **스토리 진행(장)만** 따라간다. */
     scale() {
@@ -37578,7 +37578,7 @@
         this.hatchEgg(d.use.egg);
         it.c--;
         if (it.c <= 0) p.bag[slot] = null;
-        UI.refreshBag();
+        UI5.refreshBag();
         this.sfx("hatch");
         return;
       }
@@ -37590,7 +37590,7 @@
         p.addPetXp(d.use.petXp);
         it.c--;
         if (it.c <= 0) p.bag[slot] = null;
-        UI.refreshBag();
+        UI5.refreshBag();
         this.sfx("drink");
         return;
       }
@@ -37603,7 +37603,7 @@
         this.toast(d.use.pulse < 0 ? tr("유적의 맥박이 가라앉는다") : tr("유적이 북소리에 뒤척인다"), d.use.pulse < 0 ? "good" : "bad");
         it.c--;
         if (it.c <= 0) p.bag[slot] = null;
-        UI.refreshBag();
+        UI5.refreshBag();
         this.sfx(d.use.pulse < 0 ? "drink" : "chapter");
         return;
       }
@@ -37622,7 +37622,7 @@
       }
       it.c--;
       if (it.c <= 0) p.bag[slot] = null;
-      UI.refreshBag();
+      UI5.refreshBag();
       this.sfx("drink");
     },
     /* ================= 판매 ================= */
@@ -37643,8 +37643,8 @@
       p.gold += price;
       this.toast(tr("{itemName} 판매 — 🪙 {price}", { itemName: itemName(it), price: fmt(price) }), "good");
       p.bag[slot] = null;
-      UI.refreshBag();
-      UI.refreshChest();
+      UI5.refreshBag();
+      UI5.refreshChest();
       this.sfx("coin");
       this.tradeDone();
     },
@@ -37655,8 +37655,8 @@
       const it = makeItem("pet_" + id, 1);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
       this.toast(tr("{pet|을} 얻었다! (장비창의 펫 칸에 끼울 수 있다)", { pet: PETS[id].n }), "good");
-      UI.refreshBag();
-      UI.refreshChest();
+      UI5.refreshBag();
+      UI5.refreshChest();
     },
     /** 장비창의 펫 슬롯을 실제로 따라다니는 펫 인스턴스와 맞춘다. */
     syncPets() {
@@ -37699,8 +37699,8 @@
       p.base = { str: 5, dex: 5, int: 5, vit: 5 };
       p.recalc();
       this.toast(tr("스탯을 초기화했다. 능력 창에서 다시 분배하라"), "good");
-      UI.refreshStatAlloc();
-      UI.refreshStatSheet();
+      UI5.refreshStatAlloc();
+      UI5.refreshStatSheet();
     },
     trainCost() {
       return Math.round((40 + this.trainedToday * 60) * this.costMul());
@@ -37762,8 +37762,8 @@
       }
       this.toast(tr("마을이 『{spec}』{spec|-이} 되었다", { spec: spec.n }), "good");
       for (let i = 0; i < 40; i++) this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 200, p.cy, "#ffe08a", -70, 1.2));
-      UI.chapterCard({ sub: tr("마을 개선"), title: spec.n, line: spec.d });
-      UI.refreshBag();
+      UI5.chapterCard({ sub: tr("마을 개선"), title: spec.n, line: spec.d });
+      UI5.refreshBag();
       this.sfx("chapter");
     },
     /* 마을 단계가 주는 혜택 — 여러 곳에서 쓰이므로 한군데 모아 둔다 */
@@ -37802,8 +37802,8 @@
       const nm = STATION_NAME[kind][lv + 1];
       this.toast(tr("{nm|으로} 개조했다", { nm }), "good");
       for (let i = 0; i < 22; i++) this.parts.push(new Part(p.cx, p.cy, kind === "forge" ? "#ff9a3a" : "#d8b06a", -50, 0.8));
-      UI.refreshCraft();
-      UI.refreshBag();
+      UI5.refreshCraft();
+      UI5.refreshBag();
       this.sfx("craft");
     },
     craft(i) {
@@ -37832,8 +37832,8 @@
       this.crafted[r.out] = (this.crafted[r.out] || 0) + 1;
       this.checkAch();
       this.toast(tr("{item} 제작 완료", { item: ITEMS[r.out].n }), "good");
-      UI.refreshCraft();
-      UI.refreshBag();
+      UI5.refreshCraft();
+      UI5.refreshBag();
       this.sfx("craft");
     },
     /* ================= 광역 피해 ================= */
@@ -37925,7 +37925,7 @@
   };
   mixin(G, AltarPart);
 
-  // src/legacy/game/spawn.js
+  // src/game/game/spawn.ts
   var spawn_exports = {};
   __export(spawn_exports, {
     SpawnPart: () => SpawnPart
@@ -38143,24 +38143,24 @@
         return;
       }
       const mtx = Math.floor(this.input.wx / TS), mty = Math.floor(this.input.wy / TS);
-      const mac = Factory.at(w, mtx, mty);
-      if (mac && dist(p.cx, p.cy, (mtx + 0.5) * TS, (mty + 0.5) * TS) <= TS * 7 && Factory.rotate(mac)) {
+      const mac = Factory11.at(w, mtx, mty);
+      if (mac && dist(p.cx, p.cy, (mtx + 0.5) * TS, (mty + 0.5) * TS) <= TS * 7 && Factory11.rotate(mac)) {
         this.sfx("place");
-        if (UI.open === "machine" && UI.machRef === mac) UI.refreshMachine(true);
+        if (UI5.open === "machine" && UI5.machRef === mac) UI5.refreshMachine(true);
       }
     },
     /** 기계를 들고 있으면 커서 칸에 반투명 미리보기 + 방향 화살표. 못 놓는 자리는 붉게. */
     drawPlaceGhost(c, camX, camY) {
       const p = this.player, w = this.world, hi = p && p.held();
-      if (!hi || idef(hi).type !== "machine" || UI.open) return;
+      if (!hi || idef(hi).type !== "machine" || UI5.open) return;
       const key = idef(hi).mach, s = MACHINE[key];
       const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
-      if (Factory.at(w, tx, ty) || dist(p.cx, p.cy, (tx + 0.5) * TS, (ty + 0.5) * TS) > TS * 7) return;
+      if (Factory11.at(w, tx, ty) || dist(p.cx, p.cy, (tx + 0.5) * TS, (ty + 0.5) * TS) > TS * 7) return;
       const sx = tx * TS - camX, sy = ty * TS - camY;
-      const ok = Factory.canPlace(w, tx, ty) && !w.inRig(tx, ty);
+      const ok = Factory11.canPlace(w, tx, ty) && !w.inRig(tx, ty);
       c.save();
       c.globalAlpha = 0.45;
-      if (key === "belt" || key === "belt_fast") Factory.drawBelt(c, sx, sy, key, this.placeDirFor(key), 0);
+      if (key === "belt" || key === "belt_fast") Factory11.drawBelt(c, sx, sy, key, this.placeDirFor(key), 0);
       else TileArt.draw(c, s.tile, 0, sx, sy);
       c.globalAlpha = 1;
       c.strokeStyle = ok ? "rgba(160,230,140,.9)" : "rgba(230,90,70,.9)";
@@ -38202,14 +38202,14 @@
     useRig(o) {
       const done = this.chapter >= SESSIONS[2].ch0;
       if (!done) {
-        UI.openLore(tr("채취탑"), this.rigOn(o) ? [tr("공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다."), tr("공창이 멈추기 전에는 손댈 엄두가 안 난다.")] : [tr("녹슨 채취탑이다. 리벳 틈마다 재가 쌓여 있다."), tr("누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.")], []);
+        UI5.openLore(tr("채취탑"), this.rigOn(o) ? [tr("공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다."), tr("공창이 멈추기 전에는 손댈 엄두가 안 난다.")] : [tr("녹슨 채취탑이다. 리벳 틈마다 재가 쌓여 있다."), tr("누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.")], []);
         this.sfx("open");
         return;
       }
-      UI.openLore(tr("멈춘 채취탑"), [tr("공창이 멈춘 뒤로 이 탑도 더는 돌지 않는다."), tr("볼트를 풀면 강철판과 톱니, 모터까지 건질 수 있겠다.")], [{
+      UI5.openLore(tr("멈춘 채취탑"), [tr("공창이 멈춘 뒤로 이 탑도 더는 돌지 않는다."), tr("볼트를 풀면 강철판과 톱니, 모터까지 건질 수 있겠다.")], [{
         t: tr("채취탑을 해체한다"),
         fn: () => {
-          UI.closeDialogue();
+          UI5.closeDialogue();
           o.gone = 1;
           const cx = o.tx * TS + TS / 2, cy = (o.ty - 3) * TS;
           for (const [id, n] of RIG.parts) this.drops.push(new Drop(cx + (Math.random() - 0.5) * 60, cy, makeItem(id, n)));
@@ -38614,7 +38614,7 @@
   };
   mixin(G, SpawnPart);
 
-  // src/legacy/game/progress.js
+  // src/game/game/progress.ts
   var progress_exports = {};
   __export(progress_exports, {
     ProgressPart: () => ProgressPart
@@ -38693,7 +38693,7 @@
       if (!m) return 0;
       if (!o.stop) return 1;
       if (!this.asmRan) return 1;
-      return typeof Factory !== "undefined" && Factory.sat(w, m) > 0 ? 2 : 3;
+      return typeof Factory11 !== "undefined" && Factory11.sat(w, m) > 0 ? 2 : 3;
     },
     /** 이 장이 지금 어디까지 왔는가 — 화면도 판정도 전부 이걸 본다 */
     chapterState(ch) {
@@ -38727,7 +38727,7 @@
       const ch = CHAPTERS[this.chapter];
       if (!ch) return;
       if (!this.chapterState(ch).complete) {
-        UI.refreshTracker();
+        UI5.refreshTracker();
         return;
       }
       const p = this.player;
@@ -38741,7 +38741,7 @@
       const starShow = this.gainStarOrbit(ch.id) || 0;
       this.chapter++;
       this.checkAch();
-      UI.refreshBag();
+      UI5.refreshBag();
       let delay = Math.max(1400, starShow);
       if (ch.id === 8 && !this.villageUnlocked) {
         this.villageUnlocked = true;
@@ -38749,7 +38749,7 @@
         this.rollBounties();
         const villageAt = starShow + 600;
         setTimeout(() => {
-          UI.chapterCard({ sub: "", title: tr("여명 마을"), line: tr("잿빛이 걷혔다") });
+          UI5.chapterCard({ sub: "", title: tr("여명 마을"), line: tr("잿빛이 걷혔다") });
           this.toast(tr("동쪽 숲에 묻혀 있던 도시가 드러났다."), "good");
           setTimeout(() => this.toast(tr("베이스캠프의 귀환 비석으로 여명 마을에 갈 수 있다."), "good"), 2400);
         }, villageAt);
@@ -38757,18 +38757,18 @@
       }
       const next = CHAPTERS[this.chapter];
       setTimeout(() => {
-        UI.storyScene(ch, "outro", () => {
+        UI5.storyScene(ch, "outro", () => {
           if (next) {
-            UI.chapterCard(next);
-            setTimeout(() => UI.storyScene(next, "intro"), 4e3);
+            UI5.chapterCard(next);
+            setTimeout(() => UI5.storyScene(next, "intro"), 4e3);
           } else {
-            UI.chapterCard({ sub: tr("이야기는 계속된다"), title: tr("벽 너머"), line: tr("— 여기까지가 지금까지 쓰인 이야기다 —") });
+            UI5.chapterCard({ sub: tr("이야기는 계속된다"), title: tr("벽 너머"), line: tr("— 여기까지가 지금까지 쓰인 이야기다 —") });
             this.toast(tr("아직 열리지 않은 장이 남아 있다. 그때까지 이 세계는 당신 것이다."), "good");
           }
         });
       }, delay);
-      UI.refreshTracker();
-      UI.refreshQuest();
+      UI5.refreshTracker();
+      UI5.refreshQuest();
       this.sfx("story");
       if (ch.rw.gold) this.pending.push({ t: 0.45, fn: () => this.sfx("manycoins") });
     },
@@ -38797,7 +38797,7 @@
       for (let i = 0; i < 24; i++)
         this.parts.push(new Part(this.player.cx, this.player.cy, "#ffe08a", -80, 1));
       this.sfx("ach");
-      if (UI.open === "quest") UI.refreshQuest();
+      if (UI5.open === "quest") UI5.refreshQuest();
     },
     /** 이벤트 중 처치 보상 배수 (경험치·금화) */
     killMult() {
@@ -38806,7 +38806,7 @@
     },
     onPickup(it) {
       if (it && idef(it).type !== "block" && idef(it).type !== "mat") this.toast(tr("{itemName} 획득", { itemName: itemName(it) }), "good");
-      UI.refreshBag();
+      UI5.refreshBag();
     },
     /** 세션 1 의 진행 표시. */
     /* ================= 별이 하늘로 돌아간다 (세션 1 종장) ================= */
@@ -38892,7 +38892,7 @@
     onLevelUp(lv) {
       this.toast(tr("레벨 {lv} 달성! 스탯 +3, 특성 +1", { lv }), "good");
       for (let i = 0; i < 30; i++) this.parts.push(new Part(this.player.cx, this.player.cy, "#ffe08a", -80, 0.9));
-      UI.refreshStatAlloc();
+      UI5.refreshStatAlloc();
       this.sfx("level");
     },
     /** 생활 숙련이 한 단계 올랐다. */
@@ -38906,8 +38906,8 @@
       for (let i = 0; i < (perk ? 26 : 12); i++)
         this.parts.push(new Part(p.cx, p.cy, P.c, -70, 0.8));
       this.sfx(perk ? "level" : "learn");
-      if (perk) UI.chapterCard({ sub: tr("{P} 숙련 {lv}", { P: P.n, lv }), title: perk[1], line: perk[2] });
-      if (UI.open === "skill") UI.refreshProf();
+      if (perk) UI5.chapterCard({ sub: tr("{P} 숙련 {lv}", { P: P.n, lv }), title: perk[1], line: perk[2] });
+      if (UI5.open === "skill") UI5.refreshProf();
     },
     onDeath(cause) {
       if (this.state !== "play") return;
@@ -38930,7 +38930,7 @@
           lostItems.push(p.bag[k]);
           p.bag[k] = null;
         }
-        UI.refreshBag();
+        UI5.refreshBag();
       }
       this.deathMark = {
         x: p.cx,
@@ -38967,7 +38967,7 @@
       }
       this.pendingLair = null;
       this.pendingEcho = null;
-      UI.bossBar(null);
+      UI5.bossBar(null);
     },
     /* ---- 길잡이 ---- */
     questTargets() {
@@ -39131,7 +39131,7 @@
     setPause(on) {
       this.scenes.set("pause", on);
       $("#pause-screen").classList.toggle("open", on);
-      if (on) UI.syncSettings();
+      if (on) UI5.syncSettings();
     },
     /* 설정에서 끈 갈래는 띄우지 않는다. */
     toast(m, k) {
@@ -39139,12 +39139,12 @@
         const n = this.settings && this.settings.notice;
         if (n && n[k] === 0) return;
       }
-      UI.toast(m, k);
+      UI5.toast(m, k);
     }
   };
   mixin(G, ProgressPart);
 
-  // src/legacy/game/save.js
+  // src/game/game/save.ts
   var save_exports = {};
   __export(save_exports, {
     SavePart: () => SavePart
@@ -39300,7 +39300,7 @@
         if (d.settings) {
           localStorage.setItem(SET_KEY, d.settings);
           this.loadSettings();
-          UI.syncSettings();
+          UI5.syncSettings();
         }
         if (!n) {
           this.toast(tr("파일에 기록이 없다"), "bad");
@@ -39496,12 +39496,12 @@
         this.scenes.close("pause");
         this.petEnts = [];
         this.syncPets();
-        UI.refreshBag();
-        UI.refreshEquip();
-        UI.refreshTracker();
-        UI.refreshSkillbar();
-        UI.refreshStatAlloc();
-        UI.refreshSkillSlots();
+        UI5.refreshBag();
+        UI5.refreshEquip();
+        UI5.refreshTracker();
+        UI5.refreshSkillbar();
+        UI5.refreshStatAlloc();
+        UI5.refreshSkillSlots();
         this.toast(tr("여정을 이어간다"), "good");
         this.audioInit();
         this.buildMapAtlas();
@@ -39633,7 +39633,7 @@
         setTimeout(() => this.fillIcons(root), 200);
         return;
       }
-      root.querySelectorAll("[data-ui-icon]").forEach((el) => UI.setIcon(el, Art.uiUrl(el.dataset.uiIcon)));
+      root.querySelectorAll("[data-ui-icon]").forEach((el) => UI5.setIcon(el, Art.uiUrl(el.dataset.uiIcon)));
     },
     showNewGameForm(slot) {
       const box = $("#newgame-box");
@@ -39752,7 +39752,7 @@
         this._viewApplied = vq;
         this.resize();
       }
-      UI.syncSettings();
+      UI5.syncSettings();
     },
     setOpt(k, v) {
       this.settings[k] = v;
@@ -39762,7 +39762,7 @@
   };
   mixin(G, SavePart);
 
-  // src/legacy/game/sound.js
+  // src/game/game/sound.ts
   var sound_exports = {};
   __export(sound_exports, {
     SoundPart: () => SoundPart
@@ -40068,7 +40068,7 @@
   };
   mixin(G, SoundPart);
 
-  // src/legacy/game/render.js
+  // src/game/game/render.ts
   var render_exports = {};
   __export(render_exports, {
     RenderPart: () => RenderPart
@@ -40186,7 +40186,7 @@
     /** 렌더 단계 — 기계 몸체 · 벨트 위 물건 · 놓을 자리 */
     rMachines(f) {
       const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
-      Factory.render(c, w, camX, camY, tx0, ty0, tx1, ty1, this.time);
+      Factory11.render(c, w, camX, camY, tx0, ty0, tx1, ty1, this.time);
       this.drawPlaceGhost(c, camX, camY);
     },
     /** 렌더 단계 — 설치물 · NPC */
@@ -40995,7 +40995,7 @@
   };
   mixin(G, RenderPart);
 
-  // src/legacy/game/render-far.js
+  // src/game/game/render-far.ts
   var render_far_exports = {};
   __export(render_far_exports, {
     RenderFarPart: () => RenderFarPart
@@ -41971,7 +41971,7 @@
   };
   mixin(G, RenderFarPart);
 
-  // src/legacy/game/render-fx.js
+  // src/game/game/render-fx.ts
   var render_fx_exports = {};
   __export(render_fx_exports, {
     RenderFxPart: () => RenderFxPart
@@ -42253,7 +42253,7 @@
   };
   mixin(G, RenderFxPart);
 
-  // src/legacy/game/ruin-pulse.js
+  // src/game/game/ruin-pulse.ts
   var ruin_pulse_exports = {};
   __export(ruin_pulse_exports, {
     RuinPulsePart: () => RuinPulsePart
@@ -42561,7 +42561,7 @@
       this.toast(tr("{E} — 해냈다 · 금화 {gold}{v}", { E: E.n, gold: fmt(gold), v: calm ? ` ${tr("· 맥박 -")}` + calm : "" }), "good");
       this.sfx("chapter");
       this.checkSurvey(ev.id);
-      UI.refreshBag();
+      UI5.refreshBag();
     },
     /** 사건 표지 — 공명석 · 표식된 것 · 탐욕의 상자. */
     drawPulseEvent(c) {
@@ -42684,7 +42684,7 @@
       this.ruinPulse = this.ruinPulse || {};
       this.ruinPulse[spec.id] = echo ? Math.min(this.pulseOf(spec.id), PULSE.stages[2].at) : 0;
       this.checkSurvey(spec.id);
-      UI.refreshBag();
+      UI5.refreshBag();
     },
     /* ---- 탐사 기록 ---- */
     surveyOf(id) {
@@ -42820,8 +42820,8 @@
         this.sfx("chapter");
       }
       this.checkAch();
-      UI.refreshBag();
-      if (UI.questTab === "ruins") UI.refreshQuest();
+      UI5.refreshBag();
+      if (UI5.questTab === "ruins") UI5.refreshQuest();
     },
     /* ---- 메아리 시련 ---- */
     openEcho(o) {
@@ -42842,7 +42842,7 @@
       ];
       if (st < ECHO.needStage) {
         lines.push("", tr("유적이 잠들어 있다 — 맥박이 「{stages}」에 닿아야 메아리가 대답한다.", { stages: PULSE.stages[ECHO.needStage].n }));
-        UI.openLore(tr("{spec} — 빈 둥지", { spec: spec.n }), lines, [{ t: tr("(물러난다)"), fn: () => UI.closeDialogue() }]);
+        UI5.openLore(tr("{spec} — 빈 둥지", { spec: spec.n }), lines, [{ t: tr("(물러난다)"), fn: () => UI5.closeDialogue() }]);
         this.sfx("open");
         return;
       }
@@ -42853,12 +42853,12 @@
         t: tr("(메아리를 부른다 — {lv}단계{v})", { lv, v: lv > best ? ` ${tr("· 처음")}` : ` ${tr("· 다시")}` }),
         quest: 1,
         fn: () => {
-          UI.closeDialogue();
+          UI5.closeDialogue();
           this.summonEcho(o, spec, lv);
         }
       });
-      choices.push({ t: tr("(그냥 둔다)"), fn: () => UI.closeDialogue() });
-      UI.openLore(tr("{spec} — 메아리", { spec: spec.n }), lines, choices);
+      choices.push({ t: tr("(그냥 둔다)"), fn: () => UI5.closeDialogue() });
+      UI5.openLore(tr("{spec} — 메아리", { spec: spec.n }), lines, choices);
       this.sfx("open");
     },
     summonEcho(o, spec, lv) {
@@ -43072,7 +43072,7 @@
   };
   mixin(G, RuinPulsePart);
 
-  // src/legacy/game/meteor.js
+  // src/game/game/meteor.ts
   var meteor_exports = {};
   __export(meteor_exports, {
     MeteorPart: () => MeteorPart
@@ -43472,7 +43472,7 @@
   };
   mixin(G, MeteorPart);
 
-  // src/legacy/game/ruin-map.js
+  // src/game/game/ruin-map.ts
   var ruin_map_exports = {};
   __export(ruin_map_exports, {
     RuinMapPart: () => RuinMapPart
@@ -43500,7 +43500,7 @@
       const spec = RUIN_SPEC.find((s) => s.id === d.ruin);
       this.toast(tr("{v}의 자리를 알았다 — 나침반을 보라", { v: spec ? spec.n : tr("유적") }), "good");
       this.sfx("chapter");
-      UI.refreshBag();
+      UI5.refreshBag();
     },
     /** 그 유적에만 있는 방을 밟으면 한 번 터지는 일. */
     checkRuinEvent() {
@@ -43573,7 +43573,7 @@
       if (!m) return;
       const p = this.player;
       if (o.used) {
-        UI.openLore(m.n, [tr("한 번 쓰고 나면 아무 일도 일어나지 않는다.")], []);
+        UI5.openLore(m.n, [tr("한 번 쓰고 나면 아무 일도 일어나지 않는다.")], []);
         this.sfx("open");
         return;
       }
@@ -43584,7 +43584,7 @@
         fn: () => {
           if (!afford) {
             this.toast(tr("금화가 모자란다"), "bad");
-            UI.closeDialogue();
+            UI5.closeDialogue();
             return;
           }
           if (m.cost) p.gold -= m.cost;
@@ -43600,12 +43600,12 @@
           this.shake = 8;
           this.toast(m.got, "good");
           this.sfx("chapter");
-          UI.closeDialogue();
-          UI.refreshBag();
-          UI.updateHUD();
+          UI5.closeDialogue();
+          UI5.refreshBag();
+          UI5.updateHUD();
         }
       });
-      UI.openLore(m.n, m.lines, choices);
+      UI5.openLore(m.n, m.lines, choices);
       this.sfx("open");
     },
     /** 그 유적의 자물쇠 — 갈래 · 답 · 문에 새겨진 것 · 쪽지 셋. */
@@ -43668,7 +43668,7 @@
       const seen = Object.keys(this.cipherSeen[o.ruin]).length;
       const lines = nt[1].slice();
       lines.push("", tr("— 이 유적에서 찾은 쪽지 {seen}/3", { seen }));
-      UI.openLore(nt[0], lines, []);
+      UI5.openLore(nt[0], lines, []);
       this.sfx("open");
     },
     /** ★ 암호는 게임 안 창(#code-screen)으로 받는다. */
@@ -43785,7 +43785,7 @@
       const spec = RUIN_SPEC.find((s) => s.id === r.id);
       const st = /^story(\d)$/.exec(r.id);
       const name = spec ? spec.n : st && STORY_RUIN[+st[1]] && STORY_RUIN[+st[1]].n || tr("이름 없는 유적");
-      if (card) UI.chapterCard({ sub: card.sub, title: name, line: card.line });
+      if (card) UI5.chapterCard({ sub: card.sub, title: name, line: card.line });
       this.sfx("chapter");
     },
     /** 바이옴에 처음 들어섰을 때 — 그 땅이 어떤 곳인지 한 번 알린다. */
@@ -43817,7 +43817,7 @@
       this._cardAt = this._cardAt || {};
       if (this.time - (this._cardAt[id] || -1e9) < 90) return;
       this._cardAt[id] = this.time;
-      UI.chapterCard({ sub: z ? z.sub : b.card.sub, title: z ? z.n : b.n, line: card.line });
+      UI5.chapterCard({ sub: z ? z.sub : b.card.sub, title: z ? z.n : b.n, line: card.line });
     },
     /** 그 땅의 공기색. */
     biomeAir(camX, camY) {
@@ -44031,7 +44031,7 @@
   };
   mixin(G, RuinMapPart);
 
-  // src/legacy/game/corpse.js
+  // src/game/game/corpse.ts
   var corpse_exports = {};
   __export(corpse_exports, {
     CorpsePart: () => CorpsePart
@@ -44689,7 +44689,7 @@
   };
   mixin(G, CorpsePart);
 
-  // src/legacy/main.js
+  // src/game/main.ts
   var DATA = Object.fromEntries(Object.entries(Object.assign({}, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports)).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
   if (!I18N.isSource) {
     I18N.applyTables(Object.assign({}, size_exports, DATA, world_exports, factory_exports2));

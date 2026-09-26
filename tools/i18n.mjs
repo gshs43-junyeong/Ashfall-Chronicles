@@ -1,8 +1,8 @@
 /* tools/i18n.mjs — 번역 도구
      node tools/i18n.mjs wrap <파일…>     코드의 한국어 문구를 tr('원문', { 값 }) 으로 감싼다
      node tools/i18n.mjs scan              아직 안 감싼 한국어 문구(함수 안) — 남으면 1
-     node tools/i18n.mjs extract [--check] 원문 목록 src/legacy/locales/source.json 을 새로 쓴다(--check 는 어긋나면 1)
-     node tools/i18n.mjs build [--check]   번역 묶음 src/legacy/locales/<lang>.json → game/locales/<lang>.js + list.js
+     node tools/i18n.mjs extract [--check] 원문 목록 src/game/locales/source.json 을 새로 쓴다(--check 는 어긋나면 1)
+     node tools/i18n.mjs build [--check]   번역 묶음 src/game/locales/<lang>.json → game/locales/<lang>.js + list.js
      node tools/i18n.mjs check             언어마다 빠진 열쇠 · 원문에 없는 열쇠 · 자리표 · 태그 · 남은 한글 · 형식
      node tools/i18n.mjs sheet <lang>      검수 시트 tools/i18n-review/<lang>.csv
      node tools/i18n.mjs merge <lang> <csv> 검수본을 받아 넣는다(열쇠 기준 · 자리표 검사)
@@ -20,7 +20,7 @@ const HANGUL = /[가-힣ㄱ-ㆎ]/;
 const SOURCE_JSON = path.join(LEGACY, 'locales', 'source.json');
 
 /** 게임 쪽 .js 전부(하위 폴더 포함) — LEGACY 기준 상대 경로, 정렬 */
-const gameFiles = () => listModules().filter(f => f.startsWith(LEGACY + path.sep) && f.endsWith('.js')).map(f => path.relative(LEGACY, f).split(path.sep).join('/')).sort();
+const gameFiles = () => listModules().filter(f => f.startsWith(LEGACY + path.sep) && f.endsWith('.ts')).map(f => path.relative(LEGACY, f).split(path.sep).join('/')).sort();
 
 /* 엔진 형식기를 그대로 불러 쓴다(자리 확인이 게임과 같은 계산을 하도록) */
 const eng = await (async () => {
@@ -283,13 +283,13 @@ function scanFile(file) {
 }
 
 /** data.js 에서 나눈 표 모듈(main.js 가 DATA 로 합치는 것과 같은 목록) */
-const DATA_PARTS = () => fs.readdirSync(path.join(LEGACY, 'data')).filter(f => f.endsWith('.js')).sort().map(f => 'data/' + f);
+const DATA_PARTS = () => fs.readdirSync(path.join(LEGACY, 'data')).filter(f => f.endsWith('.ts')).sort().map(f => 'data/' + f);
 /** 표 원문 — 경로('ITEMS.wood.n') → 글. ★ 뿌리 순서는 main.js 의 applyTables 와 같다(size · 이름 순 DATA · world · factory). */
 function tables() {
   const r = esbuild.buildSync({
-    stdin: { contents: `import * as size from './src/legacy/size.js'; import * as data from './src/legacy/data.js';
-      ${DATA_PARTS().map((f, i) => `import * as dp${i} from './src/legacy/${f}';`).join(' ')}
-      import * as world from './src/legacy/world.js'; import * as factory from './src/legacy/factory.js';
+    stdin: { contents: `import * as size from './src/game/size.ts'; import * as data from './src/game/data.ts';
+      ${DATA_PARTS().map((f, i) => `import * as dp${i} from './src/game/${f}';`).join(' ')}
+      import * as world from './src/game/world.ts'; import * as factory from './src/game/factory.ts';
       import { collectTables } from './src/engine/i18n/i18n.ts';
       const DATA = Object.fromEntries(Object.entries(Object.assign({}, data, ${DATA_PARTS().map((f, i) => 'dp' + i).join(', ')})).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
       export default collectTables(Object.assign({}, size, DATA, world, factory), s => /[\\uAC00-\\uD7A3]/.test(s));`, resolveDir: ROOT, loader: 'js' },
@@ -317,7 +317,7 @@ function extract() {
         else if (p.type === 'FunctionDeclaration' && p.id) where = p.id.name;
         else if (p.type === 'VariableDeclarator' && p.init && /Function/.test(p.init.type) && p.id.name) where = p.id.name;
       }
-      const at = f.replace(/\.js$/, '') + (where ? '.' + where : '');
+      const at = f.replace(/\.ts$/, '') + (where ? '.' + where : '');
       (msgs[a.value] = msgs[a.value] || []).includes(at) || msgs[a.value].push(at);
     });
   }
@@ -339,7 +339,7 @@ function extract() {
     msgs: sorted, tables: tables() }, null, 1) + '\n';
 }
 
-/* ---- 번역 묶음: src/legacy/locales/<lang>.json = { msgs: {원문: 번역}, tables: {경로: 번역} } ---- */
+/* ---- 번역 묶음: src/game/locales/<lang>.json = { msgs: {원문: 번역}, tables: {경로: 번역} } ---- */
 const LOC = path.join(LEGACY, 'locales');
 const OUT = path.join(ROOT, 'game/locales');
 const ORDER = ['ko', 'en', 'ja', 'zh-Hans', 'de', 'es'];
@@ -355,7 +355,7 @@ function buildFiles() {
   const ls = langs();
   files['list.js'] = '/* tools/i18n.mjs build 가 만든다 — 손으로 고치지 말 것. 실려 있는 언어(원본 ko 가 맨 앞) */\n' +
     'window.ASHFALL_LANGS = ' + JSON.stringify(['ko', ...ls]) + ';\n';
-  for (const l of ls) files[l + '.js'] = '/* tools/i18n.mjs build 가 만든다 — 손으로 고치지 말 것. 원본은 src/legacy/locales/' + l + '.json */\n' +
+  for (const l of ls) files[l + '.js'] = '/* tools/i18n.mjs build 가 만든다 — 손으로 고치지 말 것. 원본은 src/game/locales/' + l + '.json */\n' +
     '(window.ASHFALL_LOCALES = window.ASHFALL_LOCALES || {})[' + JSON.stringify(l) + '] = ' + JSON.stringify(readLoc(l)) + ';\n';
   return files;
 }

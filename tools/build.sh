@@ -18,7 +18,7 @@ for CAND in python3 python "py -3"; do
 done
 [ -n "$PY" ] || { echo "동작하는 Python 3 을 찾지 못했습니다."; exit 1; }
 
-# 게임 코드는 src/legacy/ 가 원본이고 game/js/ashfall.js 는 그 번들이다. 둘이 어긋난 채 zip 을 내면
+# 게임 코드는 src/game/ 가 원본이고 game/js/ashfall.js 는 그 번들이다. 둘이 어긋난 채 zip 을 내면
 # 고친 것이 빠진 판이 나간다 — 커밋된 번들이 소스와 같을 때만 묶는다.
 if command -v node >/dev/null 2>&1 && [ -d "$ROOT/node_modules/esbuild" ]; then
   node "$ROOT/tools/bundle.mjs" --check || { echo "번들이 소스와 다릅니다 — node tools/bundle.mjs 후 커밋하세요"; exit 1; }

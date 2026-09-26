@@ -1,7 +1,7 @@
 # CLAUDE.md — 이 저장소에서 일하는 AI를 위한 안내
 
 Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다. 코드의 **원본은 `src/`** — 게임 쪽
-`src/legacy/*.js`(ES 모듈)와 게임을 모르는 엔진 `src/engine/**/*.ts`(TypeScript strict)이고, `tools/bundle.mjs`(esbuild)가 `main.js` 에서 import 를 따라
+`src/game/**/*.ts`(ES 모듈 · 아직 `@ts-nocheck` — 표 모양부터 차례로 타입을 입힌다)와 게임을 모르는 엔진 `src/engine/**/*.ts`(TypeScript strict)이고, `tools/bundle.mjs`(esbuild)가 `main.ts` 에서 import 를 따라
 `game/js/ashfall.js` 하나(클래식 스크립트 · IIFE)로 묶는다 — file:// 에서도 돈다. 처음 한 번 `npm ci`, 그다음 **`npm run dev`
 를 켜 두면 고치고 새로고침하는 흐름 그대로다**(소스를 고치면 번들이 다시 만들어진다).
 번들은 커밋한다 — `game/` 만 받아도 빌드 없이 돈다. **소스를 고쳤으면 번들도 같이 커밋할 것**
@@ -26,7 +26,7 @@ Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다.
 - 번호를 **재사용하지 않는다.** 쓰지 않게 된 타일도 자리를 비워 두고 놔둔다.
 
 > 실제 사고: 두 갈래에서 각자 125번부터 붙이다가 정면으로 부딪혀, 나중 것을
-> 155~171로 통째로 밀어야 했다(커밋 2b2f91f). 먼저 `grep -n 'SPOREVENT\|TIDESTONE' src/legacy/data.js`
+> 155~171로 통째로 밀어야 했다(커밋 2b2f91f). 먼저 `grep -n 'SPOREVENT\|TIDESTONE' src/game/data.ts`
 > 로 **현재 최대 번호를 확인하고 시작할 것.**
 
 ### 1-2. 타일은 `world.set()`으로만 바꾼다
@@ -104,18 +104,18 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | 경로 | 내용 |
 |---|---|
 | `game/` | 실행 폴더. 이 폴더만 정적 서버에 올리면 그대로 돈다(`js/ashfall.js` 는 **산출물**) |
-| `src/legacy/size.js` | 세계 크기 — `SHIFT`·`SX`/`SY`·치수 `let`·바이옴 경계. `let` 은 여기서만 고쳐 쓴다 |
-| `src/legacy/data.js` + `data/*.js` | 표만 있는 곳 — `data.js` 는 타일·희귀도, `data/` 에 아이템 · 제작법 · 적 · 재질 · 스킬 · 유적 · 업적 · NPC·대사 · 펫 · 장·이야기 · 부탁·의뢰 · 물건값 |
-| `src/legacy/world.js` + `world/*.js` | `World`(생성자 · generate · 충돌 · 조명 · 유체 · 저장) + 생성 조각(나무 · 마을 · 하늘 섬 · 던전 · 함정 · 유적 · 동굴 · 바다 · 물) |
-| `src/legacy/game.js` + `game/*.js` | `G` 뼈대(초기화 · 입력 · 게임 시작 · 루프) + 조각 15개(채굴·설치 · 낚시 · 마을 · 제단 · 스폰 · 진행 · 저장 · 소리 · 렌더 셋 · 유적 맥박 · 운석 · 유적 지도 · 시체) |
-| `src/legacy/entity.js` + `entity/*.js` | 아이템 인스턴스 · `Ent`·`Player`·`Enemy`·투사체 · 조각(플레이어 공격·움직임 · 적 AI · 보스 AI) |
-| `src/legacy/tileart.js` · `itemart.js` + `art/tiles` · `art/items` | 절차 생성 그림 — 갈래마다 그리는 법은 `TILE_PAINT` · `ITEM_PAINT` 표(조각 파일이 채운다) |
-| `src/legacy/ui.js` + `ui/*.js` · `music.js` · `factory.js` · `titlebg.js` · `util.js` · `sprites.js` | UI 뼈대 + 창 조각(특성 · 퀘스트 · 제작 · 기계 · 상점 · 툴팁 · 대화 · HUD) · 그 이름대로 |
-| `src/legacy/main.js` · `ctx.js` | 묶는 입구(모듈 순서 · 디버그 창구 · 다른 언어면 표·HTML 덮기) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
-| `src/legacy/lang.js` · `locales/` | 번역 창구 `tr` · `N_` · `fmt` · `FONT` · `LANG` · 원문 목록 `locales/source.json`(`extract` 산출물) · 번역 `locales/<lang>.json` · 용어집 `glossary.csv` |
+| `src/game/size.ts` | 세계 크기 — `SHIFT`·`SX`/`SY`·치수 `let`·바이옴 경계. `let` 은 여기서만 고쳐 쓴다 |
+| `src/game/data.ts` + `data/*.ts` | 표만 있는 곳 — `data.ts` 는 타일·희귀도, `data/` 에 아이템 · 제작법 · 적 · 재질 · 스킬 · 유적 · 업적 · NPC·대사 · 펫 · 장·이야기 · 부탁·의뢰 · 물건값 |
+| `src/game/world.ts` + `world/*.ts` | `World`(생성자 · generate · 충돌 · 조명 · 유체 · 저장) + 생성 조각(나무 · 마을 · 하늘 섬 · 던전 · 함정 · 유적 · 동굴 · 바다 · 물) |
+| `src/game/game.ts` + `game/*.ts` | `G` 뼈대(초기화 · 입력 · 게임 시작 · 루프) + 조각 15개(채굴·설치 · 낚시 · 마을 · 제단 · 스폰 · 진행 · 저장 · 소리 · 렌더 셋 · 유적 맥박 · 운석 · 유적 지도 · 시체) |
+| `src/game/entity.ts` + `entity/*.ts` | 아이템 인스턴스 · `Ent`·`Player`·`Enemy`·투사체 · 조각(플레이어 공격·움직임 · 적 AI · 보스 AI) |
+| `src/game/tileart.ts` · `itemart.ts` + `art/tiles` · `art/items` | 절차 생성 그림 — 갈래마다 그리는 법은 `TILE_PAINT` · `ITEM_PAINT` 표(조각 파일이 채운다) |
+| `src/game/ui.ts` + `ui/*.ts` · `music.ts` · `factory.ts` · `titlebg.ts` · `util.ts` · `sprites.ts` | UI 뼈대 + 창 조각(특성 · 퀘스트 · 제작 · 기계 · 상점 · 툴팁 · 대화 · HUD) · 그 이름대로 |
+| `src/game/main.ts` · `ctx.ts` | 묶는 입구(모듈 순서 · 디버그 창구 · 다른 언어면 표·HTML 덮기) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
+| `src/game/lang.ts` · `locales/` | 번역 창구 `tr` · `N_` · `fmt` · `FONT` · `LANG` · 원문 목록 `locales/source.json`(`extract` 산출물) · 번역 `locales/<lang>.json` · 용어집 `glossary.csv` |
 | `game/locales/` | `<script>` 로 싣는 번역 묶음과 언어 목록 — `node tools/i18n.mjs build` 산출물(손으로 고치지 말 것). 언어는 index.html 이 번들보다 먼저 고른다(`?lang=` → 설정 → 브라우저 언어 → ko) |
 | `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기) · `input`(키·액션 매핑 · 마우스 · 터치 뼈대) · `tilemap`(`TileMap` — `World extends TileMap` · 빛 퍼뜨리기) · `render`(파이프라인 단계 · 아틀라스 굽기 · 연결 타일 틀) · `i18n`(tr · ICU 부분집합 · 한국어 조사 · 표 덮기) · `entity`(`Entity` — `Ent extends Entity` · 칸 충돌 이동 조각) · `scene`(씬 스택 — `G.state`·`paused`·`uiOpen` 은 접근자) · `ui`(패널 · 툴팁 · 슬롯 칸). 게임 고유값은 `create*({…})` 설정으로 받는다 |
-| `tools/imports.mjs` | 코드를 옮긴 뒤 `src/legacy` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
+| `tools/imports.mjs` | 코드를 옮긴 뒤 `src/game` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
 | `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/` |
 | `game/assets/manifest.json` | **애셋 원본 목록** |
@@ -124,7 +124,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `tools/` | zip 빌드·애셋을 굽고 재는 파이썬 도구들 |
 | `docs/` | 변경 사항 · 세션 규약 · 코드의 사연(`code-history.md`) · 배포 캐시 · 시스템 요구사항 |
 
-> **리포가 원본이다.** 게임 코드는 `src/legacy/` 에서 고친다 — `game/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
+> **리포가 원본이다.** 게임 코드는 `src/game/` 에서 고친다 — `game/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
 
 읽는 순서(`main.js` 의 import 순서 = 층): `sprites-manifest`(번들 밖, 먼저) →
 `ctx → util → lang → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
@@ -133,7 +133,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 - **한 파일 한 영역 — 코드 1,200줄 · 표(data/) 2,000줄 이하.** 큰 객체(`G` · `UI` · 클래스)는 조각 모듈로 나눠 `mixin(대상, 조각)` 으로
   붙인다(조각은 부모 다음 층에서 읽히며 스스로 붙는다 — 부모는 조각을 import 하지 않는다). 나눌 때는 도구로: `tools/split.mjs`(객체·클래스 절) ·
   `tools/split-switch.mjs`(거대 switch → 갈래 표) · `tools/split-top.mjs`(최상위 표) — 모두 글자 그대로 옮기고 이어 붙이면 원래와 같은지 확인한다.
-- **엔진(`src/engine`)은 게임(`src/legacy`)을 import 하지 않는다.** 게임 고유값(키 이름·곡 표·DB 이름…)은 `createSaveStore({…})`·`createMusic({…})`
+- **엔진(`src/engine`)은 게임(`src/game`)을 import 하지 않는다.** 게임 고유값(키 이름·곡 표·DB 이름…)은 `createSaveStore({…})`·`createMusic({…})`
   처럼 설정으로 넘긴다. 엔진은 `.ts`(strict, `npm run typecheck`)이고 클래스 필드는 `declare` 로 적는다(필드 정의 의미가 바뀌지 않게).
 - **앞 모듈은 뒤 모듈을 import 하지 않는다**(순환 0). `data.js`의 상수를 `world.js`가 쓰므로 **`data.js`가 먼저**다. 둘 다 쓰는 세계
   치수(`SHIFT`·`WW`·`DEEP_Y`·`BIOMES` …)는 그래서 `size.js` 에 있다. 아래층이 위층 객체(`G`·`UI`·`Factory`)를 써야 하면
@@ -227,7 +227,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 1. **월드 생성 회귀** — 노드에서 여러 시드를 돌려 예외·누락을 먼저 잡는다.
    `World`를 만들고 `generate()`를 부른 뒤 `w.ruins`·타일 히스토그램을 찍어
    보면 "유적이 안 생겼다" 같은 것이 바로 드러난다.
-2. **문법 · 타입 · 모듈** — `npm run test:syntax` (src/legacy · 번들 · 매니페스트를 `node --check`, 번들이 소스와 같은지) ·
+2. **문법 · 타입 · 모듈** — `npm run test:syntax` (src/game 은 esbuild 로 · 번들 · 매니페스트는 `node --check`, 번들이 소스와 같은지) ·
    `npm run typecheck` (엔진 TS) · `npm run test:modules` (import 빠뜨림 · 순환·역방향·엔진→게임 · window 창구 읽기 · ctx 계약 · import 줄).
 3. **브라우저** — 정적 서버를 띄우고 실제로 본다. 콘솔 오류 0을 확인하고,
    `?debug=village&sess=3&plv=45` 같은 바로가기로 해당 구역까지 간다.
@@ -294,7 +294,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-26)
 
-- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집까지(용어집 Grok 검수 대기 — 검수 뒤 en → ja·zh-Hans·de·es 번역), P9 모바일 끝. 다음은 **P10 게임 코드 쪼개기 + TS**(src/legacy 의 긴 파일을 `src/game/<영역>/*.ts` 로 — 계획서 §7-1), 그다음 P11 Docker · P12 마무리.
+- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영)까지 — P10 뒤 en → ja·zh-Hans·de·es 번역, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 진행 중 — 쪼개기(파일당 1,200줄 · 표 2,000줄)와 `src/game/**/*.ts` 로 옮기기 끝, 타입 입히기(`@ts-nocheck` 떼기) 남음(계획서 §7-1). 그다음 P11 Docker · P12 마무리.
   **화질**(설정 · game.js `QUALITY`): 자동 = 폰 절약(픽셀 밀도 1 · 입자 300) · 태블릿 보통(1.5 · 600) · 컴퓨터 높음(2 · 900). 렌더 단계별 시간은 `G.pipe.profile(true)` → `G.pipe.stats()`. 도중에 찾은 버그는 계획서 §9-1 에 모아 P12 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
