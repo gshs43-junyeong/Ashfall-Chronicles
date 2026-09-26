@@ -1,8 +1,10 @@
 /* ===== game.js — 루프 / 입력 / 렌더 / 진행 ===== */
 import { bindApp } from './ctx.js';
 import { mixHex, shade } from '../engine/core/color.js';
+import { startLoop } from '../engine/core/loop.js';
 import { TAU, aabb, angleTo, clamp, dist, dist2, inv, lerp } from '../engine/core/math.js';
 import { RNG, hashStr, tileHash } from '../engine/core/rng.js';
+import { fitCanvas } from '../engine/platform/viewport.js';
 import { makeSigner } from '../engine/save/seal.js';
 import { createSaveStore } from '../engine/save/store.js';
 import { upgrade } from '../engine/save/upgrade.js';
@@ -182,19 +184,15 @@ export const G = {
       UI.bossBar(null); this.renderSlotScreen();
     };
     $('#btn-respawn').onclick = () => this.respawn();
-    requestAnimationFrame(t => this.loop(t));
+    startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
   },
   /** 설정의 시야 배율. */
   viewZoom() { return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6); },
 
   resize() {
-    const dpr = Math.min(2, devicePixelRatio || 1);
-    const z = this.viewZoom();
-    this.cv.width = innerWidth * dpr; this.cv.height = innerHeight * dpr;
-    /* W·H 는 이제 화면 픽셀이 아니라 **월드 좌표계로 본 시야 크기**다. */
-    this.W = innerWidth / z; this.H = innerHeight / z;
-    this.ctx.setTransform(dpr * z, 0, 0, dpr * z, 0, 0);
-    this.ctx.imageSmoothingEnabled = false;
+    /* W·H 는 화면 픽셀이 아니라 **월드 좌표계로 본 시야 크기**다. */
+    const v = fitCanvas(this.cv, this.ctx, this.viewZoom());
+    this.W = v.W; this.H = v.H;
   },
 
   /* ================= 입력 ================= */
@@ -669,12 +667,8 @@ export const G = {
   },
 
   /* ================= 루프 ================= */
-  loop(t) {
-    requestAnimationFrame(t2 => this.loop(t2));
-    const now = t / 1000;
-    const rawDt = now - (this.last || now);
-    let dt = Math.min(0.033, rawDt);
-    this.last = now;
+  /** 한 프레임 — dt 는 0.033초로 자른 것, rawDt 는 실제로 흐른 시간(engine/core/loop.js). */
+  frame(dt, rawDt) {
     if (this.state === 'play' && !this.paused) { this.update(dt); }
     if (this.state === 'play') this.render();
     // 배경음악은 일시정지/타이틀과 무관하게 항상 갱신해야 크로스페이드가 끊기지 않는다.
