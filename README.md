@@ -154,7 +154,7 @@ xattr -dr com.apple.quarantine AshfallChronicles-1.1.0/   # 받은 판 번호로
 | 무엇 | 어디 | 어디서 왔나 |
 |---|---|---|
 | 배경 음악 13곡 | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
-| 효과음 87개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 효과음 92개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 
 이 둘은 바깥 서비스에서 만든 것이라 여기서 MIT 로 다시 내어 줄 권한이 없습니다.
 게임을 받아 즐기는 데에는 아무 제한이 없지만, **소리 파일만 따로 떼어다 쓰려면**
