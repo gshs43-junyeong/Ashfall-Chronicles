@@ -286,6 +286,7 @@ const ISPEC = {
   m_belt: { k: 'machine', tile: T.M_BELT },
   m_drill: { k: 'machine', tile: T.M_DRILL },
   m_drill_e: { k: 'machine', tile: T.M_DRILL_E, glow: '#4a8ab0' },
+  m_drill_x: { k: 'machine', tile: T.M_DRILL_X, glow: '#8fe0ff' },
   m_pump: { k: 'machine', tile: T.M_PUMP },
   m_smelter: { k: 'machine', tile: T.M_SMELTER },
   m_press: { k: 'machine', tile: T.M_PRESS },

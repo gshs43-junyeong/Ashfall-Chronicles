@@ -110,7 +110,9 @@ const T = {
   /* --- 운석 구덩이 — 운석 덩이 · 그 위에 자란 별빛 수정 · 열에 녹아 굳은 바닥돌 --- */
   METEORITE: 188, STARCRYSTAL: 189, FUSEDROCK: 190,
   /* --- 광상 — 광맥 한가운데 드물게 뭉친 덩이. 곡괭이는 몇 개, 공장 드릴은 끝없이 --- */
-  COALRICH: 191, COPPERRICH: 192, IRONRICH: 193, LEADRICH: 194, GOLDRICH: 195, MYTHRILRICH: 196
+  COALRICH: 191, COPPERRICH: 192, IRONRICH: 193, LEADRICH: 194, GOLDRICH: 195, MYTHRILRICH: 196,
+  /* --- 심층 드릴 — 전동 드릴 윗단(채굴 등급 5) --- */
+  M_DRILL_X: 197
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -363,7 +365,8 @@ const TILE_DEF = [
   { n: '철 광상', c: '#b4a898', solid: 1, hard: 2, drop: 'iron_ore', dropN: [4, 7], ore: 1, rich: 1 },
   { n: '납 광상', c: '#9494ac', solid: 1, hard: 2, drop: 'lead_ore', dropN: [4, 7], ore: 1, rich: 1 },
   { n: '금 광상', c: '#f0c848', solid: 1, hard: 3, drop: 'gold_ore', dropN: [3, 6], ore: 1, rich: 1 },
-  { n: '미스릴 광상', c: '#5ac8ba', solid: 1, hard: 3, drop: 'mythril_ore', dropN: [3, 5], ore: 1, rich: 1 }
+  { n: '미스릴 광상', c: '#5ac8ba', solid: 1, hard: 3, drop: 'mythril_ore', dropN: [3, 5], ore: 1, rich: 1 },
+  { n: '심층 드릴', c: '#3a6a8a', solid: 1, hard: 5, drop: 'm_drill_x', mach: 'drill_x' }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -384,7 +387,7 @@ const TILE_SPRITE = {
   coal: T.COAL, lead: T.LEAD, oilshale: T.OILSHALE,
   icebrick: T.ICEBRICK, sandbrick: T.SANDBRICK, minewood: T.MINEWOOD,
   m_dart: T.M_DART, m_flame: T.M_FLAME, m_frost: T.M_FROST,
-  m_pressor: T.M_PRESSOR, m_desal: T.M_DESAL, m_belt_f: T.M_BELT_F, m_battery_hi: T.M_BATTERY_HI,
+  m_pressor: T.M_PRESSOR, m_desal: T.M_DESAL, m_belt_f: T.M_BELT_F, m_battery_hi: T.M_BATTERY_HI, m_drill_x: T.M_DRILL_X,
   junglegrass: T.JUNGLEGRASS, mud: T.MUD, jungleleaf: T.JUNGLELEAF, fern: T.FERN, orchid: T.ORCHID,
   glowmoss: T.GLOWMOSS, sporestone: T.SPORESTONE, glowcap: T.GLOWCAP, glowleaf: T.GLOWLEAF, lily: T.LILY, airpocket: T.AIRPOCKET, roomair: T.ROOMAIR,
   palmwood: T.PALMWOOD, palmleaf: T.PALMLEAF, coconut: T.COCONUT, seawater: T.SEAWATER,
@@ -936,6 +939,7 @@ const ITEMS = {
   m_desal:    { n: '염수 증류기', i: '💧', type: 'machine', mach: 'desal', stack: 99 },
   m_belt_f:   { n: '고속 컨베이어 벨트', i: '⏩', type: 'machine', mach: 'belt_fast', stack: 999 },
   m_battery_hi:{ n: '강화 축전지', i: '🔋', type: 'machine', mach: 'battery_hi', stack: 99 },
+  m_drill_x:  { n: '심층 드릴', i: '⛏', type: 'machine', mach: 'drill_x', stack: 99 },
   /* 미니보스 전리품 */
   frozen_core:{ n: '얼어붙은 핵', i: '🔷', type: 'mat', stack: 99 },
   sun_disc:   { n: '태양 원반', i: '🌞', type: 'mat', stack: 99 },
@@ -1313,6 +1317,7 @@ const RECIPES = [
   { out: 'm_desal', n: 1, need: { abyss_core: 1, machine_frame: 1, pressure_plate_m: 10 , tide_bar: 3}, station: 'work', lv: 4 },
   { out: 'm_belt_f', n: 8, need: { steel_plate: 4, motor: 1, rope_kelp: 2 }, station: 'work', lv: 4 },
   { out: 'm_battery_hi', n: 1, need: { abyss_core: 1, battery_cell: 6, circuit: 8, steel_plate: 12 , glacium_bar: 4}, station: 'work', lv: 4 },
+  { out: 'm_drill_x', n: 1, need: { m_drill_e: 1, abyss_core: 2, pressure_plate_m: 8, glacium_bar: 6, tide_bar: 4 }, station: 'work', lv: 4 },
   /* 4단계 전용 특별 장비 — 전부 심해 노심이 든다 */
   { out: 'bag_abyss', n: 1, need: { rope_kelp: 12, pressure_plate_m: 8, abyss_pearl: 2, spider_silk: 20 }, station: 'work', lv: 4 },
   /* 세션 3 광물 — 제련은 4단계 노(가압 제련로)라야 된다. */
@@ -1580,6 +1585,10 @@ const MACHINE = {
   drill_e: {
     n: '전동 드릴', tile: T.M_DRILL_E, item: 'm_drill_e', power: 22, rot: 1, mine: 3, cycle: 9, range: 7, cap: 60,
     d: '전력으로 도는 드릴. 기계식보다 세 배 빠르고 반경도 넓다(채굴 등급 3 — 영혼석·지옥석·에테르·동력석·운석과 금·미스릴 광상까지). 등급 4 넘는 것(세션 3 광석·유적 유리)은 못 캔다.'
+  },
+  drill_x: {
+    n: '심층 드릴', tile: T.M_DRILL_X, item: 'm_drill_x', power: 40, rot: 1, mine: 5, cycle: 6, range: 8, cap: 80,
+    d: '가압판으로 감싼 전동 드릴의 윗단. 채굴 등급 5 — 빙정석·조수석 같은 세션 3 광석과 노심·설계 유리까지 캔다. 전동 드릴보다 빠르고 반경이 넓지만 전기를 두 배 가까이 먹는다.'
   },
   pump: {
     n: '시추 펌프', tile: T.M_PUMP, item: 'm_pump', power: 16, rot: 1, cycle: 14, range: 4, cap: 60,
@@ -2245,7 +2254,7 @@ const TILE_MAT = (() => {
     + 'SPIKE SPARKCOIL GRINDER DART_L DART_R LAMPPOST MINELAMP TOOLPILE '
     + 'M_BELT M_DRILL M_DRILL_E M_PUMP M_SMELTER M_PRESS M_REFINERY M_ASSEMBLER M_CRATE '
     + 'M_GEN M_BATTERY M_POLE M_SORTER M_TURRET M_TRAP M_SWITCH M_WINDMILL M_MILL M_OVEN '
-    + 'M_DART M_FLAME M_FROST');
+    + 'M_DART M_FLAME M_FROST M_DRILL_X');
   put('glass', 'CRYSTAL AETHER POWERSTONE SOULSTONE COREGLASS DRAFTGLASS ORBITCORE WINDOW');
   put('ember', 'LAVA HELLSTONE FLAMEVENT');
   put('bone', 'BONEHEAP');

@@ -283,7 +283,7 @@ const Factory = {
       const s = MACHINE[m.t];
       if (!m.on && m.t !== 'switch') { m.st = '정지'; m.act = 0; continue; }
       switch (m.t) {
-        case 'drill': case 'drill_e': this.runDrill(w, m, s); break;
+        case 'drill': case 'drill_e': case 'drill_x': this.runDrill(w, m, s); break;
         case 'pump': this.runPump(w, m, s); break;
         case 'turret': this.runTurret(w, m, s, G); break;
         case 'trap': this.runTrap(w, m, s, G); break;
@@ -398,7 +398,7 @@ const Factory = {
     return true;
   },
 
-  SHAKE: { drill: 1, drill_e: 1.3, press: 0.6, pressor: 0.8, gen: 0.5, pump: 0.4, mill: 0.5 },   // 일할 때 몸체 떨림(px)
+  SHAKE: { drill: 1, drill_e: 1.3, drill_x: 1.6, press: 0.6, pressor: 0.8, gen: 0.5, pump: 0.4, mill: 0.5 },   // 일할 때 몸체 떨림(px)
 
   /** 일하는 모습 — 기계마다 한 가지 움직임. 일하지 않으면(act 0) 그리지 않는다. */
   drawWork(c, w, m, sx, sy, time, camX, camY) {
@@ -406,9 +406,9 @@ const Factory = {
     const cx = sx + TS / 2, cy = sy + TS / 2, t = time + m.x * 0.37;
     c.save();
     switch (m.t) {
-      case 'drill': case 'drill_e': {
+      case 'drill': case 'drill_e': case 'drill_x': {
         if (!m.tgt) break;
-        const elec = m.t === 'drill_e';
+        const elec = m.t !== 'drill';
         const gx = (m.tgt[0] + .5) * TS - camX, gy = (m.tgt[1] + .5) * TS - camY;
         const ang = Math.atan2(gy - cy, gx - cx);
         // 어느 광맥을 캐는지 — 옅은 점선이 흘러간다
@@ -501,6 +501,25 @@ const Factory = {
       }
     }
     c.restore();
+  },
+
+  /** 포탑 — 받침대는 타일 그림에서 잘라 쓰고, 머리·총열은 조준 방향(m.aim)으로 돌린다. 쏘면(fx) 총열이 뒤로 밀린다. */
+  drawTurret(c, m, sx, sy, v) {
+    c.drawImage(TileArt.atlas, v * TS, T.M_TURRET * TS + TS - 8, TS, 8, sx, sy + TS - 8, TS, 8);
+    const want = m.aim !== undefined ? m.aim : -Math.PI / 2;
+    if (m.aimV === undefined) m.aimV = want;
+    let d = ((want - m.aimV + Math.PI * 3) % TAU) - Math.PI;                 // 가까운 쪽으로
+    m.aimV += d * 0.18;
+    const hx = sx + TS / 2, hy = sy + 11, base = '#55555f', kick = m.fx > 0 ? 2 : 0;
+    c.save();
+    c.translate(hx, hy); c.rotate(m.aimV);
+    c.fillStyle = '#1e1e26'; c.fillRect(2 - kick, -2, 10, 4);                // 총열
+    c.fillStyle = '#8a8e99'; c.fillRect(2 - kick, -2, 10, 1.4);
+    c.fillStyle = '#d8dce4'; c.fillRect(11 - kick, -3, 2.5, 6);             // 총구
+    c.restore();
+    c.fillStyle = shade(base, 1.7); c.beginPath(); c.arc(hx, hy, 6.5, 0, TAU); c.fill();   // 머리(총열 위에 — 뿌리를 덮는다)
+    c.fillStyle = shade(base, 1.1); c.beginPath(); c.arc(hx + Math.cos(m.aimV), hy + 1 + Math.sin(m.aimV) * .5, 4.6, 0, TAU); c.fill();
+    c.fillStyle = '#e0563c'; c.fillRect(Math.round(hx - Math.cos(m.aimV) * 3) - 1, Math.round(hy - Math.sin(m.aimV) * 3) - 1, 2.5, 2.5);   // 조준등
   },
 
   /** 캔 순간 — 광맥에서 파편이 튀고, 가까우면 땅이 조금 울린다(멀면 안 뿌린다) */
@@ -636,18 +655,20 @@ const Factory = {
     if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; }
     if (!(m.in[s.ammo] > 0)) { m.st = '탄약 없음'; m.act = 0; return; }
     m.act = 1;
-    m.cd -= step;
-    if (m.cd > 0) { m.st = '경계'; return; }
-    const cx = m.x * TS + TS / 2, cy = m.y * TS + TS / 2;
+    /* 목표는 장전 중에도 찾는다 — 총열(m.aim)이 적을 따라 돌고, 쏠 때는 이미 그쪽을 보고 있다 */
+    const cx = m.x * TS + TS / 2, cy = m.y * TS + 11;
     let tgt = null, bd = s.range * s.range;
     for (const e of G.ents) {
       if (!(e instanceof Enemy) || e.dead) continue;
       const d = dist2(cx, cy, e.cx, e.cy);
       if (d < bd) { bd = d; tgt = e; }
     }
+    if (tgt) m.aim = angleTo(cx, cy, tgt.cx, tgt.cy);
+    m.cd -= step;
+    if (m.cd > 0) { m.st = '경계'; return; }
     if (!tgt) { m.cd = 0; m.st = '경계'; return; }
     this.bufTake(m.in, s.ammo, 1);
-    const ang = angleTo(cx, cy, tgt.cx, tgt.cy);
+    const ang = m.aim;
     const dmg = s.dmg * (1 + G.player.level * 0.05);
     // 포탑은 몸이 있는 칸이라 한가운데서 쏘면 제 칸에 부딪혀 사라진다 — 총구(칸 반지름 + 3px) 밖에서 낸다
     const mz = TS / 2 + 3;
@@ -808,7 +829,8 @@ const Factory = {
           const busy = m.on && m.act && this.SHAKE[m.t];
           const jx = busy ? Math.round(Math.sin(time * 53 + tx) * this.SHAKE[m.t]) : 0;
           const jy = busy && m.hitT !== undefined && time - m.hitT < 0.09 ? 1 : 0;   // 드릴이 한 번 캘 때마다 쿵
-          TileArt.draw(c, s.tile, (tileHash(tx, ty) * TileArt.V) | 0, sx + jx, sy + jy);
+          if (m.t === 'turret') this.drawTurret(c, m, sx, sy, (tileHash(tx, ty) * TileArt.V) | 0);
+          else TileArt.draw(c, s.tile, (tileHash(tx, ty) * TileArt.V) | 0, sx + jx, sy + jy);
           this.drawWork(c, w, m, sx, sy, time, camX, camY);
         }
 
@@ -920,7 +942,10 @@ const Factory = {
           m.fx -= 0.35;
           c.globalAlpha = clamp(m.fx / 3, 0, 1) * 0.8;
           c.fillStyle = m.t === 'trap' ? '#9fd8ff' : '#ffd86a';
-          c.fillRect(sx - 2, sy - 2, TS + 4, TS + 4);
+          if (m.t === 'turret' && m.aimV !== undefined) {           // 총구 끝에서 터진다
+            const mx = sx + TS / 2 + Math.cos(m.aimV) * 15, my = sy + 11 + Math.sin(m.aimV) * 15;
+            c.beginPath(); c.arc(mx, my, 2 + m.fx * 1.3, 0, TAU); c.fill();
+          } else c.fillRect(sx - 2, sy - 2, TS + 4, TS + 4);
           c.globalAlpha = 1;
         }
       }

@@ -73,6 +73,7 @@ ART[T.OILSHALE] = { k: 'oilshale', c: '#3b352c' };
 ART[T.M_BELT] = { k: 'mk_belt', c: '#6a6a74', a: 1 };
 ART[T.M_DRILL] = { k: 'mk_drill', c: '#8a6a3a', a: 1 };
 ART[T.M_DRILL_E] = { k: 'mk_drill', c: '#4a8ab0', a: 1 };
+ART[T.M_DRILL_X] = { k: 'mk_drill', c: '#3a5a7a', a: 1, deep: 1 };
 ART[T.M_PUMP] = { k: 'mk_pump', c: '#5a5040', a: 1 };
 ART[T.M_SMELTER] = { k: 'mk_furnace', c: '#7a4a30', a: 1 };
 ART[T.M_PRESS] = { k: 'mk_press', c: '#8a8a98', a: 1 };

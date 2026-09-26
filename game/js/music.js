@@ -179,7 +179,9 @@ const SFX_FAM = {
 
   /* ★ 몹·보스가 쏘는 소리. */
   efire_phys:  ['bow', .82, .5],
-  efire_magic: ['magic', .80, .5]
+  efire_magic: ['magic', .80, .5],
+  /* 업적 — 장 넘김(chapter)과 같은 소리를 조금 작게. 따로 두어야 업적만 줄일 수 있다 */
+  ach: ['chapter', 1, .7]
 };
 
 /* 키별 최소 간격(초). */
@@ -206,7 +208,8 @@ const SFX_GAP = {
   step: 0.12
 };
 /* 키별 음량 배수 — 공장 상시음은 전투음보다 한참 작게 깔린다 */
-const SFX_VOL = { step: 0.5, jump: 0.24, jump2: 0.27, belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7,
+const SFX_VOL = { step: 0.5, jump: 0.24, jump2: 0.27, level: 0.75, place: 2, sk_heal: 1.8, sk_shield: 1.8, splash: 1.8,   // 최대 0.1~0.19 로 거의 안 들렸다
+  belt: 0.3, drill: 0.45, smelt: 0.5, cook: 0.55, turret: 0.6, zap: 0.7,
   bubble: 0.5, detector: 0.45, ore_hit: 0.7, drown: 0.85, boom_small: 0.9, boom_big: 1,
   /* 별 조각 셋은 다른 효과음보다 길어서(0.9~1.5초) 같은 크기로 두면 그 동안 다른 소리를 전부 덮는다. */
   star_gain: 0.7, star_merge: 0.85, star_rise: 0.9,
@@ -215,7 +218,12 @@ const SFX_VOL = { step: 0.5, jump: 0.24, jump2: 0.27, belt: 0.3, drill: 0.45, sm
   hit_fire: 0.6, hit_frost: 0.6, hit_soul: 0.6, hit_arcane: 0.6 };
 /* 키별 재생 시작 지점(초). */
 /* jump 은 앞 0.15초가 무음이라 누른 뒤 늦게 들렸다(실측: 50ms 창 봉우리 200ms) · jump2 는 0.1초에 걸쳐 차오른다. */
-const SFX_START = { hatch: 1.60, jump: 0.12, jump2: 0.08 };
+/* 파일 앞 무음(실측, 최대의 10% 가 처음 넘는 곳) — 곡괭이가 닿은 뒤 0.14~0.2초 늦게 들려 손맛이 빠졌다.
+   빌려 쓰는 키(hit_stone → mat_stone)는 파일 이름으로 찾는다. */
+const SFX_START = { hatch: 1.60, jump: 0.12, jump2: 0.08,
+  mine: 0.19, mat_stone: 0.13, ore_hit: 0.16, open: 0.12, hit_blunt: 0.13, power_on: 0.06,
+  swing: 0.15, hit_crit: 0.14, sk_guard: 0.13, sk_whirl: 0.12, drown: 0.11, sk_charge: 0.1, sk_slash: 0.08,
+  mat_plant: 0.08, mat_flesh: 0.08 };
 
 const Sfx = {
   vol: 0.5,
@@ -244,10 +252,10 @@ const Sfx = {
   /** vol — 이 한 번만 음량을 더 줄이거나 키우는 배수(기본 1). */
   play(kind, rate, vol) {
     /* 제 이름의 파일이 없으면 **같은 결의 한 벌**을 대신 튼다(SFX_FAM). */
-    let pool = this.voices[kind], fr = 1, fg = 1;
+    let pool = this.voices[kind], fr = 1, fg = 1, file = kind;
     if (!pool) {
       const f = SFX_FAM[kind];
-      if (f && this.voices[f[0]]) { pool = this.voices[f[0]]; fr = f[1]; fg = f[2]; }
+      if (f && this.voices[f[0]]) { pool = this.voices[f[0]]; fr = f[1]; fg = f[2]; file = f[0]; }
     }
     if (!pool) return false;
     const now = performance.now() / 1000;
@@ -260,7 +268,7 @@ const Sfx = {
     a.volume = Math.min(1, this.vol * (SFX_VOL[kind] === undefined ? 1 : SFX_VOL[kind]) * fg * (vol === undefined ? 1 : vol));
     /* ★ 한 획마다 음높이를 흔든다. */
     a.playbackRate = (rate || 1) * fr;
-    try { a.currentTime = SFX_START[kind] || 0; } catch (e) { }
+    try { a.currentTime = SFX_START[kind] !== undefined ? SFX_START[kind] : (SFX_START[file] || 0); } catch (e) { }
     a.play().catch(() => { });
     return true;
   }
