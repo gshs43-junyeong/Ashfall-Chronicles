@@ -1,6 +1,9 @@
 /* ===== ui.js — DOM 인터페이스 ===== */
 import { app as G, bindUI } from './ctx.js';
 import { TAU, clamp } from '../engine/core/math.js';
+import { createPanels } from '../engine/ui/panels.js';
+import { makeSlot, paintSlot, setIcon } from '../engine/ui/slots.js';
+import { createTooltip } from '../engine/ui/tooltip.js';
 import { eulreul, fmt, iga, josaRo, pad2 } from './util.js';
 import { SURF_BASE, WH, WW } from './size.js';
 import { ACHIEVEMENTS, ACH_CAT, ACH_TIER, BOSS_TIER, BRANCHES, BUFFS, CHAPTERS, ECHO, FUEL, ITEMS, KEY_ACTIONS,
@@ -22,7 +25,7 @@ export const UI = {
   cursorEl: null,
 
   /** 요소에 스프라이트를 배경으로 넣는다 (이모지 대신) */
-  setIcon(el, url) { if (el) el.style.backgroundImage = url ? `url(${url})` : ''; },
+  setIcon(el, url) { setIcon(el, url); },
 
   /* 손그림 애셋이 로드되면 코드 생성분 위에 덮어쓴다 */
   npcArt: null,
@@ -42,7 +45,9 @@ export const UI = {
     if (this.npcArt && this.npcArt[id]) return Sprites.url(`assets/npc/portrait_${this.npcArt[id]}.png`);
     return Art.npcUrl(id);
   },
-  open: null,          // 열린 패널 id
+  panels: createPanels(id => $('#panel-' + id)),
+  get open() { return this.panels.current; },   // 열린 패널 id
+  tip: null,           // 툴팁(init 에서 만든다)
   chestRef: null, storeRef: null,
   shopRef: null,
   dlg: null,
@@ -53,6 +58,7 @@ export const UI = {
       'background-repeat:no-repeat;background-position:center;background-size:contain;image-rendering:pixelated;' +
       'filter:drop-shadow(0 2px 5px #000c);font-size:11px;color:#fff;text-align:right;line-height:52px';
     document.body.appendChild(this.cursorEl);
+    this.tip = createTooltip($('#tooltip'));
 
     document.addEventListener('mousemove', e => {
       this.mx = e.clientX; this.my = e.clientY;
@@ -269,9 +275,8 @@ export const UI = {
 
   /** 아이템이 아닌 순수 텍스트 툴팁(휴지통 안내 등) */
   tipText(title, desc, e) {
-    const t = $('#tooltip');
-    t.innerHTML = `<div class="tname c0">${title}</div><div class="tdesc">${desc}</div>`;
-    t.style.display = 'block'; this.tipTarget = true; this.placeTip(e.clientX, e.clientY);
+    this.tip.show(`<div class="tname c0">${title}</div><div class="tdesc">${desc}</div>`, e.clientX, e.clientY);
+    this.tipTarget = true;
   },
 
   /* ---------------- 토스트 ---------------- */
@@ -290,7 +295,7 @@ export const UI = {
     this.closePanel();
     const el = $('#panel-' + id);
     if (!el) return;
-    el.classList.add('open'); this.open = id;
+    this.panels.show(id);
     G.uiOpen = true;
     if (id === 'inv') { this.refreshBag(); this.refreshEquip(); this.refreshStatSheet(); }
     if (id === 'skill') { this.setSkillTab(this.skillTab || 'tree'); this.refreshTree(); this.refreshSkillSlots(); this.refreshProf(); }
@@ -299,8 +304,8 @@ export const UI = {
     this.refreshTabBar();
   },
   closePanel() {
-    if (this.open) { const el = $('#panel-' + this.open); if (el) el.classList.remove('open'); }
-    this.open = null; G.uiOpen = false; this.hideTip();
+    this.panels.hide();
+    G.uiOpen = false; this.hideTip();
     if (this.cursor) { G.player.addItem(this.cursor); this.setCursor(null); }
     this.chestRef = null; this.shopRef = null; this.machRef = null; this.storeRef = null;
     this.refreshTabBar();
@@ -309,39 +314,26 @@ export const UI = {
   /* ---------------- 핫바 ---------------- */
   buildHotbar() {
     const hb = $('#hotbar'); hb.innerHTML = '';
-    for (let i = 0; i < HOTBAR; i++) {
-      const d = document.createElement('div');
-      d.className = 'slot'; d.dataset.bag = i;
-      d.innerHTML = `<span class="num">${(i + 1) % 10}</span><span class="ic"></span><span class="cnt"></span>`;
-      d.addEventListener('mousedown', e => { e.preventDefault(); G.player.sel = i; this.refreshHotbar(); });
-      d.addEventListener('mouseenter', e => this.showTip(G.player.bag[i], e));
-      d.addEventListener('mouseleave', () => this.hideTip());
-      hb.appendChild(d);
-    }
+    for (let i = 0; i < HOTBAR; i++)
+      makeSlot('slot', { data: { bag: i }, html: `<span class="num">${(i + 1) % 10}</span><span class="ic"></span><span class="cnt"></span>`,
+        down: () => { G.player.sel = i; this.refreshHotbar(); },
+        enter: e => this.showTip(G.player.bag[i], e), leave: () => this.hideTip() }, hb);
   },
   refreshHotbar() {
     const p = G.player;
     $$('#hotbar .slot').forEach((el, i) => {
       const it = p.bag[i];
-      el.className = 'slot' + (i === p.sel ? ' sel' : '') + (it ? ' r' + it.r : '');
-      this.setIcon(el.querySelector('.ic'), it ? Art.itemUrl(it.id) : '');
-      el.querySelector('.cnt').textContent = it && it.c > 1 ? it.c : '';
+      paintSlot(el, 'slot' + (i === p.sel ? ' sel' : '') + (it ? ' r' + it.r : ''), it ? Art.itemUrl(it.id) : '', it && it.c > 1 ? it.c : '');
     });
   },
 
   /* ---------------- 가방 ---------------- */
   buildBagSlots() {
     const g = $('#bag-grid'); g.innerHTML = '';
-    for (let i = 0; i < MAX_BAG_SIZE; i++) {
-      const d = document.createElement('div');
-      d.className = 'slot' + (i < HOTBAR ? ' hb-slot' : ''); d.dataset.bag = i;
-      d.innerHTML = `<span class="ic"></span><span class="cnt"></span>`;
-      d.addEventListener('mousedown', e => { e.preventDefault(); this.bagClick(i, e.button, e.shiftKey, e.ctrlKey || e.metaKey); });
-      d.addEventListener('contextmenu', e => e.preventDefault());
-      d.addEventListener('mouseenter', e => this.showTip(G.player.bag[i], e));
-      d.addEventListener('mouseleave', () => this.hideTip());
-      g.appendChild(d);
-    }
+    for (let i = 0; i < MAX_BAG_SIZE; i++)
+      makeSlot('slot' + (i < HOTBAR ? ' hb-slot' : ''), { data: { bag: i }, html: `<span class="ic"></span><span class="cnt"></span>`,
+        down: e => this.bagClick(i, e.button, e.shiftKey, e.ctrlKey || e.metaKey), noMenu: true,
+        enter: e => this.showTip(G.player.bag[i], e), leave: () => this.hideTip() }, g);
   },
   refreshBag() {
     // 손그림 스프라이트가 비동기로 도착하면 새 게임 전에도 이 함수가 호출될 수 있다.
@@ -350,9 +342,8 @@ export const UI = {
     $$('#bag-grid .slot').forEach((el, i) => {
       if (i >= cap) { el.classList.add('locked'); this.setIcon(el.querySelector('.ic'), ''); el.querySelector('.cnt').textContent = ''; return; }
       const it = p.bag[i];
-      el.className = 'slot' + (i < HOTBAR ? ' hb-slot' : '') + (it ? ' r' + it.r : '') + (it && it.lk ? ' is-locked' : '');
-      this.setIcon(el.querySelector('.ic'), it ? Art.itemUrl(it.id) : '');
-      el.querySelector('.cnt').textContent = it && it.c > 1 ? it.c : '';
+      paintSlot(el, 'slot' + (i < HOTBAR ? ' hb-slot' : '') + (it ? ' r' + it.r : '') + (it && it.lk ? ' is-locked' : ''),
+        it ? Art.itemUrl(it.id) : '', it && it.c > 1 ? it.c : '');
     });
     this.refreshHotbar();
   },
@@ -703,9 +694,8 @@ export const UI = {
     else if (rank >= sk.max) h += `<div class="tdim">최대 랭크</div>`;
     else if (p.skillPts <= 0) h += `<div class="tbad">특성 포인트가 없다</div>`;
     else h += `<div class="tgood">좌클릭으로 습득${sk.type === 'active' ? ' · 우클릭으로 슬롯 등록' : ''}</div>`;
-    const t = $('#tooltip');
-    t.innerHTML = h; t.style.display = 'block'; this.tipTarget = true;
-    this.placeTip(e.clientX, e.clientY);
+    this.tip.show(h, e.clientX, e.clientY);
+    this.tipTarget = true;
   },
 
   refreshTree() {
@@ -1219,7 +1209,7 @@ export const UI = {
   /* ---------------- 마을 회관 ---------------- */
   openTownhall() {
     this.closePanel();
-    $('#panel-town').classList.add('open'); this.open = 'town'; G.uiOpen = true;
+    this.panels.show('town'); G.uiOpen = true;
     this.refreshTownhall();
   },
   refreshTownhall() {
@@ -1253,7 +1243,7 @@ export const UI = {
   openMachine(m) {
     this.closePanel();
     this.machRef = m; this._machSig = null;
-    $('#panel-machine').classList.add('open'); this.open = 'machine'; G.uiOpen = true;
+    this.panels.show('machine'); G.uiOpen = true;
     this.refreshMachine(true);
   },
   /** id별 개수 묶음을 클릭 가능한 칸으로 */
@@ -1412,17 +1402,13 @@ export const UI = {
     const store = $('#mg-store');
     if (store) {
       m.items.forEach((it, i) => {
-        const d = document.createElement('div');
-        d.className = 'slot' + (it ? ' r' + it.r : ''); d.dataset.i = i;
-        if (it) { d.innerHTML = `<span class="ic"></span><span class="cnt">${it.c > 1 ? it.c : ''}</span>`; this.setIcon(d.querySelector('.ic'), Art.itemUrl(it.id)); }
+        const d = makeSlot('slot' + (it ? ' r' + it.r : ''), { data: { i }, fill: it ? { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' } : undefined,
+          enter: e => this.showTip(it, e), leave: () => this.hideTip() }, store);
         press(d, () => {
           if (!it) return;
           if (p.addItem(it)) { m.items[i] = null; this.refreshMachine(true); this.refreshBag(); }
           else { this.toast('가방이 가득 찼다', 'bad'); this.refreshMachine(true); }
         });
-        d.addEventListener('mouseenter', e => this.showTip(it, e));
-        d.addEventListener('mouseleave', () => this.hideTip());
-        store.appendChild(d);
       });
     }
     for (const [sel, which] of [['#mg-in', 'in'], ['#mg-out', 'out']]) {
@@ -1444,18 +1430,13 @@ export const UI = {
     order.sort((a2, b2) => (yes(b2) ? 1 : 0) - (yes(a2) ? 1 : 0) || a2 - b2);   // 받는 것을 앞으로
     for (const i of order) {
       const it = p.bag[i];
-      const d = document.createElement('div');
-      d.className = 'slot r' + it.r + (yes(i) ? '' : ' no'); d.dataset.i = i;
-      d.innerHTML = `<span class="ic"></span><span class="cnt">${it.c > 1 ? it.c : ''}</span>`;
-      this.setIcon(d.querySelector('.ic'), Art.itemUrl(it.id));
+      const d = makeSlot('slot r' + it.r + (yes(i) ? '' : ' no'), { data: { i }, fill: { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' },
+        enter: e => this.showTip(it, e), leave: () => this.hideTip() }, bag);
       press(d, () => {
         if (m.t === 'sorter') { m.f = it.id; this.refreshMachine(true); G.sfx('place'); return; }
         if (Factory.playerInsert(w, m, i, p) > 0) { this.refreshMachine(true); this.refreshBag(); G.sfx('place'); }
         else this.toast(yes(i) ? (m.on ? '더 들어갈 자리가 없다' : '멈춘 기계에는 넣을 수 없다') : '이 기계가 받지 않는 물건이다', 'bad');
       });
-      d.addEventListener('mouseenter', e => this.showTip(it, e));
-      d.addEventListener('mouseleave', () => this.hideTip());
-      bag.appendChild(d);
     }
   },
 
@@ -1464,7 +1445,7 @@ export const UI = {
     this.closePanel();
     this.chestRef = obj; this.shopRef = null;
     $('#chest-title').textContent = '상자';
-    $('#panel-chest').classList.add('open'); this.open = 'chest'; G.uiOpen = true;
+    this.panels.show('chest'); G.uiOpen = true;
     this.refreshChest();
   },
   openShop(npcId) {
@@ -1480,7 +1461,7 @@ export const UI = {
     }
     toggle.style.display = '';
     toggle.textContent = '판매하기 ▸';
-    $('#panel-chest').classList.add('open'); this.open = 'chest'; G.uiOpen = true;
+    this.panels.show('chest'); G.uiOpen = true;
     this.refreshChest();
   },
   shopTitle() {
@@ -1498,14 +1479,8 @@ export const UI = {
         p.bag.forEach((it, i) => {
           if (!it) return;
           const price = Math.round(G.price(it) * 0.5);
-          const d = document.createElement('div');
-          d.className = 'slot' + (it.r ? ' r' + it.r : '');
-          d.innerHTML = `<span class="ic"></span><span class="cnt">${it.c > 1 ? it.c : ''}</span>`;
-          this.setIcon(d.querySelector('.ic'), Art.itemUrl(it.id));
-          d.addEventListener('click', () => G.sellItem(i));
-          d.addEventListener('mouseenter', e => this.showTip(it, e, `판매가 🪙 ${price}`));
-          d.addEventListener('mouseleave', () => this.hideTip());
-          g.appendChild(d);
+          makeSlot('slot' + (it.r ? ' r' + it.r : ''), { fill: { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' },
+            click: () => G.sellItem(i), enter: e => this.showTip(it, e, `판매가 🪙 ${price}`), leave: () => this.hideTip() }, g);
         });
         $('#chest-title').textContent = this.shopTitle();
         return;
@@ -1522,15 +1497,8 @@ export const UI = {
         stock.forEach((row, i) => {
           const it = makeItem(row.id, row.c, 0);
           const price = G.buyPrice(it, m.markup);
-          const d = document.createElement('div');
-          d.className = 'slot';
-          d.innerHTML = `<span class="ic"></span><span class="cnt">${price}</span>` +
-            (row.c > 1 ? `<span class="num">×${row.c}</span>` : '');
-          this.setIcon(d.querySelector('.ic'), Art.itemUrl(row.id));
-          d.addEventListener('click', () => G.buyStock(npc, i));
-          d.addEventListener('mouseenter', e => this.showTip(it, e, `가격 🪙 ${price} · 오늘 재고 ${row.c}개`));
-          d.addEventListener('mouseleave', () => this.hideTip());
-          g.appendChild(d);
+          makeSlot('slot', { fill: { icon: Art.itemUrl(row.id), count: price, extra: row.c > 1 ? `<span class="num">×${row.c}</span>` : '' },
+            click: () => G.buyStock(npc, i), enter: e => this.showTip(it, e, `가격 🪙 ${price} · 오늘 재고 ${row.c}개`), leave: () => this.hideTip() }, g);
         });
         $('#chest-title').textContent = this.shopTitle();
         return;
@@ -1539,14 +1507,8 @@ export const UI = {
       list.forEach(id => {
         const it = makeItem(id, G.shopBundle(id), 0);
         const price = G.buyPrice(it, 1, this.shopRef);
-        const d = document.createElement('div');
-        d.className = 'slot';
-        d.innerHTML = `<span class="ic"></span><span class="cnt">${price}</span>`;
-        this.setIcon(d.querySelector('.ic'), Art.itemUrl(id));
-        d.addEventListener('click', () => G.buy(id, this.shopRef));
-        d.addEventListener('mouseenter', e => this.showTip(it, e, `가격 🪙 ${price}`));
-        d.addEventListener('mouseleave', () => this.hideTip());
-        g.appendChild(d);
+        makeSlot('slot', { fill: { icon: Art.itemUrl(id), count: price },
+          click: () => G.buy(id, this.shopRef), enter: e => this.showTip(it, e, `가격 🪙 ${price}`), leave: () => this.hideTip() }, g);
       });
       $('#chest-title').textContent = this.shopTitle();
       return;
@@ -1554,20 +1516,13 @@ export const UI = {
     if (toggle) toggle.style.display = 'none';
     const c = this.chestRef; if (!c) return;
     (c.items || []).forEach((it, i) => {
-      const d = document.createElement('div');
-      d.className = 'slot' + (it ? ' r' + it.r : '');
-      if (it) {
-        d.innerHTML = `<span class="ic"></span><span class="cnt">${it.c > 1 ? it.c : ''}</span>`;
-        this.setIcon(d.querySelector('.ic'), Art.itemUrl(it.id));
-      }
-      d.addEventListener('click', () => {
-        if (!it) return;
-        if (G.player.addItem(it)) { c.items[i] = null; G.onPickup(it); this.refreshChest(); this.refreshBag(); }
-        else this.toast('가방이 가득 찼다', 'bad');
-      });
-      d.addEventListener('mouseenter', e => this.showTip(it, e));
-      d.addEventListener('mouseleave', () => this.hideTip());
-      g.appendChild(d);
+      makeSlot('slot' + (it ? ' r' + it.r : ''), { fill: it ? { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' } : undefined,
+        click: () => {
+          if (!it) return;
+          if (G.player.addItem(it)) { c.items[i] = null; G.onPickup(it); this.refreshChest(); this.refreshBag(); }
+          else this.toast('가방이 가득 찼다', 'bad');
+        },
+        enter: e => this.showTip(it, e), leave: () => this.hideTip() }, g);
     });
   },
 
@@ -1577,14 +1532,14 @@ export const UI = {
   openVault() {
     this.closePanel();
     this.storeRef = null;
-    $('#panel-vault').classList.add('open'); this.open = 'vault'; G.uiOpen = true;
+    this.panels.show('vault'); G.uiOpen = true;
     this.refreshVault();
   },
   /** 플레이어가 놓은 저장 상자 — 마을 보관고와 같은 두 칸짜리 화면을 그대로 쓴다. */
   openStore(obj) {
     this.closePanel();
     this.storeRef = obj;
-    $('#panel-vault').classList.add('open'); this.open = 'vault'; G.uiOpen = true;
+    this.panels.show('vault'); G.uiOpen = true;
     this.refreshVault();
   },
   refreshVault() {
@@ -1600,18 +1555,8 @@ export const UI = {
     }
     const fill = (host, arr, onClick) => {
       host.innerHTML = '';
-      arr.forEach((it, i) => {
-        const d = document.createElement('div');
-        d.className = 'slot' + (it ? ' r' + it.r : '');
-        if (it) {
-          d.innerHTML = `<span class="ic"></span><span class="cnt">${it.c > 1 ? it.c : ''}</span>`;
-          this.setIcon(d.querySelector('.ic'), Art.itemUrl(it.id));
-        }
-        d.addEventListener('click', () => onClick(i));
-        d.addEventListener('mouseenter', e => this.showTip(it, e));
-        d.addEventListener('mouseleave', () => this.hideTip());
-        host.appendChild(d);
-      });
+      arr.forEach((it, i) => makeSlot('slot' + (it ? ' r' + it.r : ''), { fill: it ? { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' } : undefined,
+        click: () => onClick(i), enter: e => this.showTip(it, e), leave: () => this.hideTip() }, host));
     };
     fill($('#vault-grid'), store, i => {
       const it = store[i]; if (!it) return;
@@ -1631,7 +1576,7 @@ export const UI = {
   openBoard() {
     this.closePanel();
     if (!G.bounties || !G.bounties.length) G.rollBounties();
-    $('#panel-board').classList.add('open'); this.open = 'board'; G.uiOpen = true;
+    this.panels.show('board'); G.uiOpen = true;
     this.refreshBoard();
   },
   refreshBoard() {
@@ -1670,7 +1615,7 @@ export const UI = {
   /** 재련대 — 금화를 내고 장비 접사를 다시 굴린다 */
   openReforge() {
     this.closePanel();
-    $('#panel-reforge').classList.add('open'); this.open = 'reforge'; G.uiOpen = true;
+    this.panels.show('reforge'); G.uiOpen = true;
     this.refreshReforge();
   },
   refreshReforge() {
@@ -1680,14 +1625,8 @@ export const UI = {
     G.player.bag.forEach((it, i) => {
       if (!it || !isGear(it)) return;
       const cost = G.reforgeCost(it);
-      const d = document.createElement('div');
-      d.className = 'slot r' + it.r;
-      d.innerHTML = `<span class="ic"></span><span class="cnt">${fmt(cost)}</span>`;
-      this.setIcon(d.querySelector('.ic'), Art.itemUrl(it.id));
-      d.addEventListener('click', () => G.reforgeSlot(i));
-      d.addEventListener('mouseenter', e => this.showTip(it, e, `재련 비용 🪙 ${fmt(cost)}`));
-      d.addEventListener('mouseleave', () => this.hideTip());
-      g.appendChild(d);
+      makeSlot('slot r' + it.r, { fill: { icon: Art.itemUrl(it.id), count: fmt(cost) },
+        click: () => G.reforgeSlot(i), enter: e => this.showTip(it, e, `재련 비용 🪙 ${fmt(cost)}`), leave: () => this.hideTip() }, g);
     });
     if (!g.children.length) $('#reforge-note').textContent = '가방에 다시 벼릴 만한 장비가 없다.';
   },
@@ -1695,7 +1634,7 @@ export const UI = {
   /** 강화 모루 — 금화와 재료를 내고 장비 수치를 한 단계 올린다 */
   openAnvil() {
     this.closePanel();
-    $('#panel-anvil').classList.add('open'); this.open = 'anvil'; G.uiOpen = true;
+    this.panels.show('anvil'); G.uiOpen = true;
     this.refreshAnvil();
   },
   refreshAnvil() {
@@ -1711,16 +1650,12 @@ export const UI = {
       const cost = G.enhCost(it), mat = G.enhMat(e);
       const fail = Math.round(G.enhFail(e) * 100), brk = Math.round(G.enhBreak(e) * 100);
       const risk = (fail ? ` · 실패 ${fail}%` : '') + (brk ? ` · 파괴 ${brk}%` : '');
-      const el = document.createElement('div');
-      el.className = 'slot r' + it.r + (max ? ' dim' : '');
-      el.innerHTML = `<span class="ic"></span><span class="cnt">${max ? 'MAX' : '+' + (e + 1)}</span>`;
-      this.setIcon(el.querySelector('.ic'), Art.itemUrl(it.id));
-      if (!max) el.addEventListener('click', () => G.enhanceSlot(i));
-      el.addEventListener('mouseenter', ev => this.showTip(it, ev, max
-        ? '더 두들길 데가 없다'
-        : `+${e} → +${e + 1} · 🪙 ${fmt(cost)} · ${ITEMS[mat.id].n} ${mat.n}개` + risk));
-      el.addEventListener('mouseleave', () => this.hideTip());
-      g.appendChild(el);
+      makeSlot('slot r' + it.r + (max ? ' dim' : ''), { fill: { icon: Art.itemUrl(it.id), count: max ? 'MAX' : '+' + (e + 1) },
+        click: max ? undefined : () => G.enhanceSlot(i),
+        enter: ev => this.showTip(it, ev, max
+          ? '더 두들길 데가 없다'
+          : `+${e} → +${e + 1} · 🪙 ${fmt(cost)} · ${ITEMS[mat.id].n} ${mat.n}개` + risk),
+        leave: () => this.hideTip() }, g);
     });
     if (!g.children.length) $('#anvil-note').textContent = '가방에 두들길 만한 장비가 없다.';
   },
@@ -1770,7 +1705,6 @@ export const UI = {
   showTip(it, e, extra) {
     if (!it) { this.hideTip(); return; }
     const d = idef(it), st = itemStats(it);
-    const t = $('#tooltip');
     let h = `<div class="thead"><span class="tip-ic" style="background-image:url(${Art.itemUrl(it.id)})"></span>` +
       `<span class="tname c${it.r}">${itemName(it)}</span></div>`;
     const typeName = d.type === 'weapon' ? ({ melee: '근접 무기', ranged: '원거리 무기', magic: '마법 무기' })[d.wc]
@@ -1864,18 +1798,11 @@ export const UI = {
     else if (d.type === 'seed') h += `<div class="thint">${d.fert ? '자라는 중인 작물에 우클릭' : '갈아 둔 밭 위에 우클릭해 심기'}</div>`;
     else if (d.hoe) h += `<div class="thint">흙이나 풀에 우클릭해 밭 갈기</div>`;
     else if (d.scythe) h += `<div class="thint">다 여문 작물을 좌클릭해 거두기 — 다른 연장으로 치면 아무것도 안 나온다</div>`;
-    t.innerHTML = h; t.style.display = 'block';
+    this.tip.show(h, e.clientX, e.clientY);
     this.tipTarget = true;
-    this.placeTip(e.clientX, e.clientY);
   },
-  placeTip(x, y) {
-    const t = $('#tooltip');
-    let lx = x + 18, ly = y + 14;
-    if (lx + 280 > innerWidth) lx = x - 288;
-    if (ly + t.offsetHeight > innerHeight) ly = innerHeight - t.offsetHeight - 8;
-    t.style.left = lx + 'px'; t.style.top = Math.max(4, ly) + 'px';
-  },
-  hideTip() { $('#tooltip').style.display = 'none'; this.tipTarget = false; },
+  placeTip(x, y) { this.tip.place(x, y); },
+  hideTip() { this.tip.hide(); this.tipTarget = false; },
 
   /* ---------------- 대화 ---------------- */
   /** '다시 듣기'는 이름 옆 작은 단추로 뺀다 (없으면 감춘다) */
