@@ -197,6 +197,7 @@ const SaveStore = {
 const SET_KEY = 'ashfall_settings';
 /* 설정 기본값. */
 const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1,
+  hud_tabbar: 1, hud_quest: 1, hud_buffs: 1, hud_clock: 1, hud_hotbar: 1,   // 화면 구성 — 끄면 body 에 hide-* 를 단다
   dlgtype: 1,          // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
   view: 100, keys: null, notice: null };
 // 완전한 암흑(0)은 지도에 남기지 않는다.
@@ -285,7 +286,7 @@ const G = {
     $('#btn-save').onclick = () => this.saveGame();
     /* 저장하기의 선택지 — 먼저 저장하고 그 결과를 파일로 내보낸다. */
     $('#btn-save-export').onclick = async () => { if (await this.saveGame()) this.exportSaves(); };
-    const openSettings = () => { UI.syncSettings(); $('#settings-screen').classList.add('open'); };
+    const openSettings = () => { UI.setTab('disp'); UI.syncSettings(); $('#settings-screen').classList.add('open'); };
     $('#btn-settings-title').onclick = openSettings;
     $('#btn-settings-pause').onclick = openSettings;
     $('#btn-settings-close').onclick = () => $('#settings-screen').classList.remove('open');
@@ -4700,6 +4701,9 @@ const G = {
     if (window.Sfx) Sfx.vol = s.sfx / 100;
     if (window.Ambient) Ambient.vol = 0.45 * (s.sfx / 100);
     const mm = $('#minimap'); if (mm) mm.style.display = s.minimap ? '' : 'none';
+    /* ★ 퀘스트 추적은 ui.js 가 style.display 를 직접 켜고 끄므로, 숨김은 body 클래스(!important)로 건다 */
+    for (const k of ['tabbar', 'quest', 'buffs', 'clock', 'hotbar'])
+      document.body.classList.toggle('hide-' + k, !s['hud_' + k]);
     // 시야 배율은 캔버스 변환에 들어가므로 값이 바뀌면 다시 잡아 준다
     if (this._viewApplied !== s.view) { this._viewApplied = s.view; this.resize(); }
     UI.syncSettings();

@@ -110,7 +110,9 @@ const UI = {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('input', () => G.setOpt(key, +el.value));
     }
-    for (const [key, id] of [['dmgnum', 'set-dmgnum'], ['minimap', 'set-minimap'], ['dlgtype', 'set-dlgtype']]) {
+    for (const [key, id] of [['dmgnum', 'set-dmgnum'], ['minimap', 'set-minimap'], ['dlgtype', 'set-dlgtype'],
+      ['hud_tabbar', 'set-hud-tabbar'], ['hud_quest', 'set-hud-quest'], ['hud_buffs', 'set-hud-buffs'],
+      ['hud_clock', 'set-hud-clock'], ['hud_hotbar', 'set-hud-hotbar']]) {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('change', () => G.setOpt(key, el.checked ? 1 : 0));
     }
@@ -239,7 +241,6 @@ const UI = {
   },
   /** G.settings → 화면 (열 때와 값이 바뀔 때마다) */
   syncSettings() {
-    this.setTab('disp');                       // 열 때는 늘 첫 갈래부터
     const s = G.settings; if (!s) return;
     const set = (id, v) => { const el = $('#' + id); if (el) el.value = v; };
     const txt = (id, v) => { const el = $('#' + id); if (el) el.textContent = v + '%'; };
@@ -248,6 +249,7 @@ const UI = {
     set('set-sfx', s.sfx); txt('set-sfx-v', s.sfx);
     set('set-shake', s.shake); txt('set-shake-v', s.shake);
     chk('set-dmgnum', s.dmgnum); chk('set-minimap', s.minimap);
+    for (const k of ['tabbar', 'quest', 'buffs', 'clock', 'hotbar']) chk('set-hud-' + k, s['hud_' + k]);
     chk('set-dlgtype', s.dlgtype === undefined ? 1 : s.dlgtype);
     set('set-view', s.view); txt('set-view-v', s.view);
   },

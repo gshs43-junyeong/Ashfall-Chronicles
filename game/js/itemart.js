@@ -593,7 +593,9 @@ const UISPEC = {
   ng_name: { k: 'ng', g: 'quill' }, ng_seed: { k: 'ng', g: 'seed' },
   ng_start: { k: 'ng', g: 'play' }, ng_cancel: { k: 'ng', g: 'cross' }, ng_new: { k: 'ng', g: 'compass' },
   t_single: { k: 'ng', g: 'sword' }, t_settings: { k: 'ng', g: 'gear' }, t_credits: { k: 'ng', g: 'scroll' },
-  t_quit: { k: 'ng', g: 'door' }
+  t_quit: { k: 'ng', g: 'door' },
+  u_resume: { k: 'ng', g: 'play' }, u_save: { k: 'ng', g: 'disk' }, u_export: { k: 'ng', g: 'export' }, u_title: { k: 'ng', g: 'home' },
+  s_disp: { k: 'ng', g: 'speaker' }, s_noti: { k: 'ng', g: 'bell' }, s_keys: { k: 'ng', g: 'keys' }, s_hud: { k: 'ng', g: 'layout' }
 };
 /* 펫 생김새 — 색은 PETS의 c를 그대로 쓰고, 여기서는 실루엣만 고른다. */
 const PET_FORM = {
@@ -2689,6 +2691,39 @@ const Art = {
             poly([[13, 9], [17, 9], [17, 30], [13, 28]], G2);
             circ(15, 19, 1.1, DK);
             stroke('#e8dcc0', 2, () => { g.moveTo(22, 16); g.lineTo(29, 16); g.moveTo(26, 13); g.lineTo(29, 16); g.lineTo(26, 19); });
+            break;
+          case 'disk':                                     // 저장 — 디스켓
+            P(5, 5, 22, 22, G2); P(5, 5, 22, 1.4, G1);
+            P(10, 5, 12, 8, '#d8dce4'); P(18, 6.5, 2.4, 5, '#5a6470');
+            P(8, 17, 16, 10, '#e8dcc0'); for (let i = 0; i < 2; i++) P(10, 20 + i * 3, 12, 1.2, '#8c7651');
+            break;
+          case 'export':                                   // 내보내기 — 상자에서 나가는 화살
+            P(5, 12, 16, 16, G2); P(7, 14, 12, 12, '#2a2218');
+            stroke('#e8dcc0', 2.6, () => { g.moveTo(12, 20); g.lineTo(25, 7); });
+            poly([[27, 4], [27, 13], [18, 4]], '#e8dcc0');
+            break;
+          case 'home':                                     // 타이틀로 — 집
+            poly([[16, 4], [29, 15], [3, 15]], G2); poly([[16, 4], [16, 15], [3, 15]], G1);
+            P(6, 15, 20, 13, G2); P(6, 15, 10, 13, G1); P(13, 19, 6, 9, '#2a2218');
+            break;
+          case 'speaker':                                  // 화면 · 소리 — 확성기와 물결
+            P(4, 12, 6, 8, G1); poly([[10, 12], [17, 6], [17, 26], [10, 20]], G2);
+            for (const r of [5, 9]) stroke(G1, 1.8, () => { g.arc(18, 16, r, -0.8, 0.8); });
+            break;
+          case 'bell':                                     // 알림 — 종
+            poly([[16, 4], [23, 10], [24, 21], [27, 24], [5, 24], [8, 21], [9, 10]], G2);
+            poly([[16, 4], [16, 24], [5, 24], [8, 21], [9, 10]], G1);
+            circ(16, 27, 2.6, G2); circ(16, 4, 1.8, G1);
+            break;
+          case 'keys':                                     // 조작 — 자판
+            P(3, 9, 26, 15, G2); P(3, 9, 26, 1.4, G1);
+            for (let r = 0; r < 2; r++) for (let i = 0; i < 5; i++) P(5.5 + i * 4.6, 12 + r * 4.2, 3.4, 3, '#e8dcc0');
+            P(9, 20.5, 14, 2.4, '#e8dcc0');
+            break;
+          case 'layout':                                   // 화면 구성 — 창 안의 칸 배치
+            P(3, 5, 26, 22, G2); P(5, 7, 22, 18, '#2a2218');
+            P(6, 8, 8, 3, G1); P(20, 8, 6, 5, '#7fb0d0'); P(21, 15, 5, 7, G1);
+            for (let i = 0; i < 4; i++) P(9 + i * 3.4, 22, 2.6, 2.4, '#e8dcc0');
             break;
         }
         break;
