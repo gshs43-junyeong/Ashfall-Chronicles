@@ -864,6 +864,84 @@
     return { W, H };
   }
 
+  // src/engine/input/actions.ts
+  var actions_exports = {};
+  __export(actions_exports, {
+    createInput: () => createInput
+  });
+  function createInput({ actions, custom }) {
+    const keys = {};
+    const virt = {};
+    const input = {
+      keys,
+      virt,
+      /** 이 액션에 걸린 키 목록. */
+      keysFor(id) {
+        const c = custom(), mine = c && c[id];
+        if (mine && mine.length) return mine;
+        const a = actions.find((k) => k.id === id);
+        return a ? a.def : [];
+      },
+      /** 지금 눌려 있는가(키 또는 가상 입력) */
+      held(id) {
+        return !!virt[id] || input.keysFor(id).some((c) => keys[c]);
+      },
+      /** 방금 눌린 code 가 이 액션인가 */
+      isKey(id, code) {
+        return input.keysFor(id).indexOf(code) >= 0;
+      },
+      /** 창에 키보드를 건다. */
+      bindKeyboard(hooks) {
+        addEventListener("keydown", (e) => {
+          if (e.repeat) {
+            keys[e.code] = 1;
+            return;
+          }
+          if (hooks.capture && hooks.capture(e)) {
+            e.preventDefault();
+            return;
+          }
+          keys[e.code] = 1;
+          if (hooks.down) hooks.down(e);
+        });
+        addEventListener("keyup", (e) => {
+          keys[e.code] = 0;
+        });
+        addEventListener("blur", () => {
+          for (const k in keys) keys[k] = 0;
+          if (hooks.blur) hooks.blur();
+        });
+      }
+    };
+    return input;
+  }
+
+  // src/engine/input/pointer.ts
+  var pointer_exports = {};
+  __export(pointer_exports, {
+    bindPointer: () => bindPointer
+  });
+  function bindPointer(cv, st, hooks) {
+    cv.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      if (e.button === 0) st.m1 = 1;
+      if (e.button === 2) st.m2 = 1;
+      if (e.button === 2 && hooks.rightDown) hooks.rightDown();
+    });
+    addEventListener("mouseup", (e) => {
+      if (e.button === 0) st.m1 = 0;
+      if (e.button === 2) st.m2 = 0;
+    });
+    addEventListener("mousemove", (e) => {
+      st.mx = e.clientX;
+      st.my = e.clientY;
+    });
+    cv.addEventListener("contextmenu", (e) => e.preventDefault());
+    cv.addEventListener("wheel", (e) => {
+      if (hooks.wheel) hooks.wheel(e);
+    }, { passive: true });
+  }
+
   // src/legacy/util.js
   var util_exports = {};
   __export(util_exports, {
@@ -31960,107 +32038,85 @@
       this.H = v.H;
     },
     /* ================= 입력 ================= */
+    /** 키 · 액션(engine/input) — 액션 표는 data.js KEY_ACTIONS, 다시 매긴 키는 설정. */
+    inp: createInput({ actions: KEY_ACTIONS, custom: () => G.settings && G.settings.keys }),
     /** 이 액션에 걸린 키 목록. */
     keysFor(id) {
-      const custom = this.settings && this.settings.keys && this.settings.keys[id];
-      if (custom && custom.length) return custom;
-      const a = KEY_ACTIONS.find((k) => k.id === id);
-      return a ? a.def : [];
+      return this.inp.keysFor(id);
     },
     /** 지금 눌려 있는가 */
     held(id) {
-      const K = this.keys;
-      return this.keysFor(id).some((c) => K[c]);
+      return this.inp.held(id);
     },
     /** 방금 눌린 code 가 이 액션인가 */
     isKey(id, code) {
-      return this.keysFor(id).indexOf(code) >= 0;
+      return this.inp.isKey(id, code);
     },
     bindInput() {
-      const K = {};
-      this.keys = K;
-      addEventListener("keydown", (e) => {
-        if (e.repeat) {
-          K[e.code] = 1;
-          return;
+      this.keys = this.inp.keys;
+      this.inp.bindKeyboard({
+        // 조작키를 다시 매기는 중이면 그 키를 여기서 삼킨다
+        capture: (e) => !!(UI.captureKey && UI.captureKey(e.code)),
+        down: (e) => this.keyDown(e),
+        blur: () => {
+          this.input.m1 = this.input.m2 = 0;
         }
-        if (UI.captureKey && UI.captureKey(e.code)) {
-          e.preventDefault();
-          return;
-        }
-        K[e.code] = 1;
-        if (this.state !== "play") {
-          if (e.code === "Escape" && this.closeTopModal()) e.preventDefault();
-          return;
-        }
-        const k = e.code;
-        if (k === "Escape") {
-          if (UI.open || UI.dlg) {
-            UI.closePanel();
-            UI.closeDialogue();
-          } else this.setPause($("#pause-screen").className !== "open");
-        } else if (this.isKey("inv", k)) {
-          UI.togglePanel("inv");
-          e.preventDefault();
-        } else if (this.isKey("skills", k)) {
-          UI.togglePanel("skill");
-          e.preventDefault();
-        } else if (this.isKey("quest", k)) {
-          UI.togglePanel("quest");
-          e.preventDefault();
-        } else if (this.isKey("craft", k)) {
-          UI.craftTab = "hand";
-          UI.togglePanel("craft");
-          e.preventDefault();
-        } else if (this.isKey("map", k)) {
-          UI.openFullmap();
-          e.preventDefault();
-        } else if (this.isKey("save", k)) {
-          e.preventDefault();
-          this.saveGame();
-        } else if (k.startsWith("Digit")) {
-          const n = +k.slice(5);
-          this.player.sel = n === 0 ? 9 : n - 1;
+      });
+      bindPointer(this.cv, this.input, {
+        rightDown: () => this.rightClick(),
+        wheel: (e) => {
+          if (this.state !== "play") return;
+          const p = this.player;
+          p.sel = (p.sel + (e.deltaY > 0 ? 1 : -1) + HOTBAR) % HOTBAR;
           UI.refreshHotbar();
-        } else if (!UI.dlg && !UI.open) {
-          if (this.isKey("rotate", k)) this.rotatePlace();
-          else if (this.isKey("skill1", k)) this.player.useSkill(0, this.input.wx, this.input.wy);
-          else if (this.isKey("skill2", k)) this.player.useSkill(1, this.input.wx, this.input.wy);
-          else if (this.isKey("skill3", k)) this.player.useSkill(2, this.input.wx, this.input.wy);
-          else if (this.isKey("skill4", k)) this.player.useSkill(3, this.input.wx, this.input.wy);
         }
       });
-      addEventListener("keyup", (e) => {
-        K[e.code] = 0;
-      });
-      addEventListener("blur", () => {
-        for (const k in K) K[k] = 0;
-        this.input.m1 = this.input.m2 = 0;
-      });
-      this.cv.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        if (e.button === 0) this.input.m1 = 1;
-        if (e.button === 2) this.input.m2 = 1;
-        if (e.button === 2) this.rightClick();
-      });
-      addEventListener("mouseup", (e) => {
-        if (e.button === 0) this.input.m1 = 0;
-        if (e.button === 2) this.input.m2 = 0;
-      });
-      addEventListener("mousemove", (e) => {
-        this.input.mx = e.clientX;
-        this.input.my = e.clientY;
-      });
-      this.cv.addEventListener("contextmenu", (e) => e.preventDefault());
-      this.cv.addEventListener("wheel", (e) => {
-        if (this.state !== "play") return;
-        const p = this.player;
-        p.sel = (p.sel + (e.deltaY > 0 ? 1 : -1) + HOTBAR) % HOTBAR;
-        UI.refreshHotbar();
-      }, { passive: true });
       $("#dialogue").addEventListener("click", () => {
         if (UI.dlg && !UI.finishType()) UI.nextLine(false);
       });
+    },
+    /** 새로 눌린 키 하나(반복 아님) — 패널 · 저장 · 핫바 · 스킬. */
+    keyDown(e) {
+      if (this.state !== "play") {
+        if (e.code === "Escape" && this.closeTopModal()) e.preventDefault();
+        return;
+      }
+      const k = e.code;
+      if (k === "Escape") {
+        if (UI.open || UI.dlg) {
+          UI.closePanel();
+          UI.closeDialogue();
+        } else this.setPause($("#pause-screen").className !== "open");
+      } else if (this.isKey("inv", k)) {
+        UI.togglePanel("inv");
+        e.preventDefault();
+      } else if (this.isKey("skills", k)) {
+        UI.togglePanel("skill");
+        e.preventDefault();
+      } else if (this.isKey("quest", k)) {
+        UI.togglePanel("quest");
+        e.preventDefault();
+      } else if (this.isKey("craft", k)) {
+        UI.craftTab = "hand";
+        UI.togglePanel("craft");
+        e.preventDefault();
+      } else if (this.isKey("map", k)) {
+        UI.openFullmap();
+        e.preventDefault();
+      } else if (this.isKey("save", k)) {
+        e.preventDefault();
+        this.saveGame();
+      } else if (k.startsWith("Digit")) {
+        const n = +k.slice(5);
+        this.player.sel = n === 0 ? 9 : n - 1;
+        UI.refreshHotbar();
+      } else if (!UI.dlg && !UI.open) {
+        if (this.isKey("rotate", k)) this.rotatePlace();
+        else if (this.isKey("skill1", k)) this.player.useSkill(0, this.input.wx, this.input.wy);
+        else if (this.isKey("skill2", k)) this.player.useSkill(1, this.input.wx, this.input.wy);
+        else if (this.isKey("skill3", k)) this.player.useSkill(2, this.input.wx, this.input.wy);
+        else if (this.isKey("skill4", k)) this.player.useSkill(3, this.input.wx, this.input.wy);
+      }
     },
     readInput() {
       const I = this.input;
@@ -42084,7 +42140,7 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
