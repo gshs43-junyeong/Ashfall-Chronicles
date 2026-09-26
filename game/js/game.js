@@ -448,7 +448,7 @@ const G = {
   newGame(seedStr, slot, name, charId, mode, size) {
     const seed = seedStr || ('' + Math.floor(Math.random() * 1e9));
     this.currentSlot = slot;
-    this.showLoading(size && size !== 's' ? `${WORLD_SIZES[size].n} 세계를 빚는 중… 조금 오래 걸린다` : '세계를 빚는 중…');
+    this.showLoading('세계를 빚는 중…');           // 크기와 상관없이 같은 문구
     // 다음 프레임에 생성해서 로딩 화면이 먼저 그려지게 한다
     setTimeout(() => { try { this._newGame(seed, name, charId, mode, size); } finally { this.hideLoading(); } }, 40);
   },
