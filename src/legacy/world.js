@@ -4,6 +4,7 @@ import { aabb, clamp, dist, inv, lerp } from '../engine/core/math.js';
 import { makeNoise1D, makeNoise2D } from '../engine/core/noise.js';
 import { RNG } from '../engine/core/rng.js';
 import { rleDecode, rleEncode } from '../engine/save/rle.js';
+import { sweepLight } from '../engine/tilemap/light.js';
 import { TileMap } from '../engine/tilemap/tilemap.js';
 import { BIOMES, CAMP_GX1, CAMP_X0, CAMP_X1, DEEP_Y, GLACIER_X1, HELL_Y, SEA_X1, SHIFT, SKY_Y, SURF_BASE, SX, SY,
   SYB, WH, WORLD_BOT, WSIZE, WSX, WSY, WW, applyWorldSize } from './size.js';
@@ -4980,23 +4981,7 @@ export class World extends TileMap {
       if (t === T.SEAWATER) return 0.42;
       return 0.92;
     };
-    // 4방향 스윕 x2
-    for (let pass = 0; pass < 2; pass++) {
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-        const k = y * w + x;
-        let v = L[k];
-        if (x > 0) v = Math.max(v, L[k - 1] - dec(x0 + x, y0 + y));
-        if (y > 0) v = Math.max(v, L[k - w] - dec(x0 + x, y0 + y));
-        L[k] = v;
-      }
-      for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
-        const k = y * w + x;
-        let v = L[k];
-        if (x < w - 1) v = Math.max(v, L[k + 1] - dec(x0 + x, y0 + y));
-        if (y < h - 1) v = Math.max(v, L[k + w] - dec(x0 + x, y0 + y));
-        L[k] = v;
-      }
-    }
+    sweepLight(L, w, h, x0, y0, 2, dec);                // 4방향 스윕 x2(engine/tilemap/light)
     this.lbx = x0; this.lby = y0; this.lbw = w; this.lbh = h;
   }
   lightAt(x, y) {
