@@ -137,6 +137,8 @@ export const UI = {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('change', () => G.setOpt(key, el.checked ? 1 : 0));
     }
+    const ql = $('#set-quality');
+    if (ql) ql.addEventListener('change', () => G.setOpt('quality', ql.value));
     const view = $('#set-view');
     if (view) view.addEventListener('input', () => G.setOpt('view', +view.value));
     /* 언어 — 둘 이상 실렸을 때만 보인다. 글·표는 켤 때 정해지므로 게임 중이면 다음에 켤 때부터 */
@@ -285,6 +287,7 @@ export const UI = {
     for (const k of ['tabbar', 'quest', 'buffs', 'clock', 'hotbar']) chk('set-hud-' + k, s['hud_' + k]);
     chk('set-dlgtype', s.dlgtype === undefined ? 1 : s.dlgtype);
     set('set-view', s.view); txt('set-view-v', s.view);
+    set('set-quality', s.quality || 'auto');
     set('set-uiscale', s.uiscale || 100); txt('set-uiscale-v', s.uiscale || 100);
   },
 

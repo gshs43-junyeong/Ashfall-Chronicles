@@ -97,6 +97,9 @@ export const SET_KEY = 'ashfall_settings';
 // 완전한 암흑(0)은 지도에 남기지 않는다.
 export const MAP_REVEAL_LIGHT = 1;
 
+/** 화질 — 픽셀 밀도 상한 · 입자 상한. ★ 헤드리스 폰 흉내에서 밀도 1.5 → 1 로 프레임이 10.8 → 21.2 로 두 배였다(JS 시간은 같음 — 막히는 곳은 화면 합성) */
+export const QUALITY = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 300 } };
+
 /** 터치 기기인가 — ?touch=1 / 0 이 먼저, 아니면 손가락이 주 포인터인 기기(폰 · 태블릿) */
 export const TOUCH = (() => {
   const q = new URLSearchParams(location.search).get('touch');
@@ -213,12 +216,18 @@ export const G = {
     this.buildPipeline();
     startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
   },
+  /** 화질 — 자동이면 폰 절약 · 태블릿 보통 · 컴퓨터 높음 */
+  quality() {
+    const q = (this.settings && this.settings.quality) || 'auto';
+    if (QUALITY[q]) return q;
+    return !TOUCH ? 'high' : Math.min(screen.width, screen.height) <= 540 ? 'low' : 'mid';
+  },
   /** 설정의 시야 배율. */
   viewZoom() { return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6); },
 
   resize() {
     /* W·H 는 화면 픽셀이 아니라 **월드 좌표계로 본 시야 크기**다. */
-    const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), TOUCH ? 1.5 : 2);   // 폰은 발열·배터리로 픽셀 밀도를 조금 낮춘다
+    const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), QUALITY[this.quality()].dpr);
     this.W = v.W; this.H = v.H;
   },
 
@@ -844,7 +853,8 @@ export const G = {
     for (let i = this.parts.length - 1; i >= 0; i--) if (!this.parts[i].update(dt)) this.parts.splice(i, 1);
     this.walkDust(p);
     /* ★ 잰 최고치는 257개라 PART_CAP(900)에 정상 전투로는 닿지 않지만, 난간이 없으면 언젠가 프레임으로 값을 치른다. */
-    if (this.parts.length > PART_CAP) this.parts.splice(0, this.parts.length - PART_CAP);
+    const cap = QUALITY[this.quality()].parts;
+    if (this.parts.length > cap) this.parts.splice(0, this.parts.length - cap);
     for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
     for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
     for (let i = this.pending.length - 1; i >= 0; i--) { this.pending[i].t -= dt; if (this.pending[i].t <= 0) { this.pending[i].fn(); this.pending.splice(i, 1); } }
@@ -4630,7 +4640,8 @@ export const G = {
       document.body.classList.toggle('hide-' + k, !s['hud_' + k]);
     document.documentElement.style.setProperty('--ui-scale', String((s.uiscale || 100) / 100));
     // 시야 배율은 캔버스 변환에 들어가므로 값이 바뀌면 다시 잡아 준다
-    if (this._viewApplied !== s.view) { this._viewApplied = s.view; this.resize(); }
+    const vq = s.view + '/' + this.quality();
+    if (this._viewApplied !== vq) { this._viewApplied = vq; this.resize(); }
     UI.syncSettings();
   },
   setOpt(k, v) {
