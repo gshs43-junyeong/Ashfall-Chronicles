@@ -229,6 +229,7 @@ export const G = {
     if (new URLSearchParams(location.search).get('touch') === '1')
       this.touch = mountTouch({ input: this.inp, ptr: this.input, surface: this.cv, rightDown: () => this.rightClick(),
         buttons: [{ id: 'jump', label: '점프' }, { id: 'dash', label: '대시' }], altLabel: '사용' });
+    if (this.touch) document.body.classList.add('touch');   // 낮은 화면에선 미니맵·퀘스트 창을 숨긴다(style.css)
     if (this.touch) {         // 오른쪽 단추가 탭 단추 줄(패널을 여는 유일한 길)을 가리지 않게 그 윗변 위로 올린다 — 좁은 화면에선 줄이 핫바 위에 있다
       const lift = () => { const bar = $('#tabbar'), r = bar && bar.getBoundingClientRect();
         this.touch.el.style.setProperty('--ti-bottom', (r && r.height ? innerHeight - r.top + 14 : 24) + 'px'); };

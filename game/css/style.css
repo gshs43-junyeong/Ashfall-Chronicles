@@ -1195,6 +1195,10 @@ body.booting #title-screen{visibility:hidden}
 /* 화면 구성(설정) — 끈 것은 숨긴다. 퀘스트 추적은 ui.js 가 display 를 직접 만지므로 !important */
 body.hide-tabbar #tabbar,body.hide-quest #quest-tracker,body.hide-buffs #buffs,
 body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
+/* 터치 조작(?touch=1)을 켠 낮은 화면(폰 가로) — 오른쪽 단추가 미니맵·퀘스트 창과 겹친다. 둘은 탭 단추 줄의 '지도'·'일지'로 본다. */
+@media (max-height:540px){
+  body.touch #minimap,body.touch #quest-tracker{display:none!important}
+}
 .ps-ic{display:inline-block;width:26px;height:26px;margin-right:10px;vertical-align:-5px;
   background-size:contain;background-repeat:no-repeat;image-rendering:pixelated}
 .set-title .ps-ic{width:16px;height:16px;margin-right:6px;vertical-align:-3px}

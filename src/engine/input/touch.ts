@@ -32,6 +32,12 @@ const CSS = `
 #touchpad .ti-btn.on,#touchpad .ti-alt.on{background:rgba(255,255,255,.35)}
 #touchpad .ti-alt{position:absolute;right:24px;bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;
   font:600 13px system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);pointer-events:auto;touch-action:none}
+@media (max-height:540px){
+  #touchpad .ti-stick{left:16px;bottom:16px;transform:scale(.8);transform-origin:left bottom}
+  #touchpad .ti-btns{right:16px;gap:10px}
+  #touchpad .ti-btn{width:52px;height:52px;font-size:13px}
+  #touchpad .ti-alt{right:16px;bottom:calc(var(--ti-bottom) + 66px);width:56px;height:34px;font-size:12px}
+}
 `;
 
 /** 터치 조작을 붙인다. 떼어 낼 때는 돌려준 destroy(). */
