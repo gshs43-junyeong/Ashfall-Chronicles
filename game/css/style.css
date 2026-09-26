@@ -1191,3 +1191,12 @@ body.booting #title-screen{visibility:hidden}
 .ng-mode .ui-ic{width:24px;height:24px;vertical-align:middle}
 .ng-fields label .ui-ic{width:14px;height:14px;margin-right:4px;vertical-align:-2px}
 #title-screen button .ui-ic{width:20px;height:20px;vertical-align:-5px}
+
+/* 화면 구성(설정) — 끈 것은 숨긴다. 퀘스트 추적은 ui.js 가 display 를 직접 만지므로 !important */
+body.hide-tabbar #tabbar,body.hide-quest #quest-tracker,body.hide-buffs #buffs,
+body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
+.ps-ic{display:inline-block;width:26px;height:26px;margin-right:10px;vertical-align:-5px;
+  background-size:contain;background-repeat:no-repeat;image-rendering:pixelated}
+.set-title .ps-ic{width:16px;height:16px;margin-right:6px;vertical-align:-3px}
+.ps-inner .ps-menu .ui-ic{width:18px;height:18px;margin-right:8px;vertical-align:-4px}
+.set-tabs .set-tab .ui-ic{width:15px;height:15px;margin-right:4px;vertical-align:-3px}
