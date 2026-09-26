@@ -32081,6 +32081,55 @@
     slotKey: () => slotKey,
     upgradeSave: () => upgradeSave
   });
+
+  // src/engine/scene/scenes.ts
+  function createScenes({ scenes, layers, start }) {
+    let cur = start;
+    const stack = [];
+    const any = (k) => stack.some((l) => layers[l][k]);
+    const open = (l) => {
+      if (!stack.includes(l)) stack.push(l);
+    };
+    const close = (l) => {
+      const i = stack.indexOf(l);
+      if (i >= 0) stack.splice(i, 1);
+    };
+    return {
+      get current() {
+        return cur;
+      },
+      /** 바닥 씬을 바꾼다 — 얹힌 겹은 그대로 둔다(걷는 것은 부르는 쪽이 정한다) */
+      go(s) {
+        cur = s;
+      },
+      open,
+      close,
+      set(l, on) {
+        if (on) open(l);
+        else close(l);
+      },
+      has(l) {
+        return stack.includes(l);
+      },
+      top() {
+        return stack[stack.length - 1];
+      },
+      paused() {
+        return any("pause");
+      },
+      inputBlocked() {
+        return any("input");
+      },
+      /** 한 프레임 — 멈춤 겹이 없으면 갱신, 그리고 그리기 */
+      frame(dt) {
+        const s = scenes[cur];
+        if (s.update && !any("pause")) s.update(dt);
+        if (s.render) s.render();
+      }
+    };
+  }
+
+  // src/legacy/game.js
   var SAVE_KEY = "ashfall_save_v3";
   var SAVE_SLOTS = 3;
   var SAVE_UPGRADES = [
@@ -32168,7 +32217,6 @@
     W: 0,
     H: 0,
     cam: { x: 0, y: 0 },
-    state: "title",
     world: null,
     player: null,
     rng: new RNG(1),
@@ -32182,7 +32230,26 @@
     time: 0,
     dayT: 6 * 60,
     shake: 0,
-    uiOpen: false,
+    /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
+       ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
+    scenes: createScenes({
+      scenes: { title: {}, play: { update: (dt) => G.update(dt), render: () => G.render() } },
+      layers: { pause: { pause: true }, ui: { input: true } },
+      start: "title"
+    }),
+    get state() {
+      return this.scenes.current;
+    },
+    get paused() {
+      return this.scenes.has("pause");
+    },
+    get uiOpen() {
+      return this.scenes.has("ui");
+    },
+    set uiOpen(on) {
+      this.scenes.set("ui", on);
+    },
+    // ui.js 의 패널·대화가 연다
     mode: "normal",
     // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
     chapter: 0,
@@ -32282,7 +32349,7 @@
       $("#btn-settings-close").onclick = () => $("#settings-screen").classList.remove("open");
       $("#btn-title").onclick = () => {
         this.setPause(false);
-        this.state = "title";
+        this.scenes.go("title");
         $("#title-screen").style.display = "";
         if (typeof TitleBG !== "undefined") TitleBG.start();
         UI.bossBar(null);
@@ -32535,7 +32602,7 @@
       this.boss = null;
       this.talked = {};
       this.crafted = {};
-      this.paused = false;
+      this.scenes.close("pause");
       this.talkSeq = {};
       this.storyHeard = {};
       this.villageSeen = {};
@@ -32587,7 +32654,7 @@
       $("#title-screen").style.display = "none";
       if (typeof TitleBG !== "undefined") TitleBG.stop();
       this.closeAllModals();
-      this.state = "play";
+      this.scenes.go("play");
       this.petEnts = [];
       this.syncPets();
       UI.refreshBag();
@@ -32967,10 +33034,7 @@
     /* ================= 루프 ================= */
     /** 한 프레임 — dt 는 0.033초로 자른 것, rawDt 는 실제로 흐른 시간(engine/core/loop.js). */
     frame(dt, rawDt) {
-      if (this.state === "play" && !this.paused) {
-        this.update(dt);
-      }
-      if (this.state === "play") this.render();
+      this.scenes.frame(dt);
       if (Music) {
         Music.update(Math.min(rawDt, 3));
         Music.play(this.pickBgm());
@@ -36827,7 +36891,7 @@
         $("#death-line").textContent = "불가능 모드였다. 이 슬롯의 기록이 지워졌다.";
         $("#death-screen").classList.add("open");
         $("#death-screen").classList.add("wipe");
-        this.paused = true;
+        this.scenes.open("pause");
         this.sfx("death");
         return;
       }
@@ -36836,7 +36900,7 @@
       parts.push("쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.");
       $("#death-line").textContent = parts.join(" ");
       $("#death-screen").classList.add("open");
-      this.paused = true;
+      this.scenes.open("pause");
       this.sfx("death");
     },
     /** 쓰러지면 싸움은 없던 일 — 깨운 보스는 조용히 사라지고(처치 아님 · 보상 없음) 제단·둥지·메아리는 다시 깨울 수 있다. */
@@ -37006,10 +37070,10 @@
       if (this.pulseEvent) this.endPulseEvent(false);
       this.rocks = [];
       $("#death-screen").classList.remove("open");
-      this.paused = false;
+      this.scenes.close("pause");
     },
     setPause(on) {
-      this.paused = on;
+      this.scenes.set("pause", on);
       $("#pause-screen").classList.toggle("open", on);
       if (on) UI.syncSettings();
     },
@@ -37363,8 +37427,8 @@
         $("#title-screen").style.display = "none";
         if (typeof TitleBG !== "undefined") TitleBG.stop();
         this.closeAllModals();
-        this.state = "play";
-        this.paused = false;
+        this.scenes.go("play");
+        this.scenes.close("pause");
         this.petEnts = [];
         this.syncPets();
         UI.refreshBag();
@@ -41508,7 +41572,7 @@
       inp.setAttribute("inputmode", c && !c.numeric ? "text" : "numeric");
       this.codeDoor = o;
       this.openModal("#code-screen");
-      this.uiOpen = true;
+      this.scenes.open("ui");
       setTimeout(() => inp.focus(), 30);
       this.sfx("open");
       if (el.dataset.bound) return;
@@ -41536,7 +41600,7 @@
     closeCodeDoor() {
       this.closeModal("#code-screen");
       this.codeDoor = null;
-      this.uiOpen = false;
+      this.scenes.close("ui");
     },
     /** 넣은 것을 맞춰 본다 — 자물쇠 갈래와 상관없이 여기 한 군데서 본다 */
     tryCodeDoor() {

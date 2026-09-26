@@ -12,6 +12,7 @@ import { createPipeline, tileView } from '../engine/render/pipeline.js';
 import { makeSigner } from '../engine/save/seal.js';
 import { createSaveStore } from '../engine/save/store.js';
 import { upgrade } from '../engine/save/upgrade.js';
+import { createScenes } from '../engine/scene/scenes.js';
 import { escHtml, eulreul, fmt, iga, josa, josaRo } from './util.js';
 import { BIOMES, CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SKY_Y, SURF_BASE, SY, WH, WORLD_BOT, WORLD_SIZES, WSIZE, WSY, WW } from './size.js';
 import { ACHIEVEMENTS, BOSS_DIE, BOUNTY_BY_ID, BOUNTY_POOL, BOUNTY_UNIT, BOW_HAND, CAVE_TYPES, CHAPTERS, CHARACTERS,
@@ -98,10 +99,20 @@ export const MAP_REVEAL_LIGHT = 1;
 export const G = {
   cv: null, ctx: null, mm: null, mmx: null,
   W: 0, H: 0, cam: { x: 0, y: 0 },
-  state: 'title',
   world: null, player: null, rng: new RNG(1),
   ents: [], projs: [], parts: [], texts: [], drops: [], pending: [], corpses: [],
-  time: 0, dayT: 6 * 60, shake: 0, uiOpen: false,
+  time: 0, dayT: 6 * 60, shake: 0,
+  /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
+     ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
+  scenes: createScenes({
+    scenes: { title: {}, play: { update: dt => G.update(dt), render: () => G.render() } },
+    layers: { pause: { pause: true }, ui: { input: true } },
+    start: 'title'
+  }),
+  get state() { return this.scenes.current; },
+  get paused() { return this.scenes.has('pause'); },
+  get uiOpen() { return this.scenes.has('ui'); },
+  set uiOpen(on) { this.scenes.set('ui', on); },     // ui.js 의 패널·대화가 연다
   mode: 'normal',        // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
   chapter: 0, boss: null,
   /* 제작 시설: nearSt는 지금 어떤 시설 앞에 서 있는가. */
@@ -183,7 +194,7 @@ export const G = {
     $('#btn-settings-pause').onclick = openSettings;
     $('#btn-settings-close').onclick = () => $('#settings-screen').classList.remove('open');
     $('#btn-title').onclick = () => {
-      this.setPause(false); this.state = 'title'; $('#title-screen').style.display = '';
+      this.setPause(false); this.scenes.go('title'); $('#title-screen').style.display = '';
       if (typeof TitleBG !== 'undefined') TitleBG.start();
       UI.bossBar(null); this.renderSlotScreen();
     };
@@ -367,7 +378,7 @@ export const G = {
     this.rings = []; this.bolts = []; this.warns = []; this.sigs = []; this.edge = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
-    this.talked = {}; this.crafted = {}; this.paused = false;
+    this.talked = {}; this.crafted = {}; this.scenes.close('pause');
     /* 대화 — 상황 대사의 순번 · 장 이야기를 들은 기록 · 마을 단계를 들은 기록 */
     this.talkSeq = {}; this.storyHeard = {}; this.villageSeen = {};
     this.sideActive = {}; this.sideDone = {}; this.tabletsRead = {}; this.termsRead = {}; this.loreRead = {};
@@ -386,7 +397,7 @@ export const G = {
     $('#title-screen').style.display = 'none';
     if (typeof TitleBG !== 'undefined') TitleBG.stop();   // 화면 밖이면 프레임을 낭비하지 않는다
     this.closeAllModals();
-    this.state = 'play';
+    this.scenes.go('play');
     this.petEnts = []; this.syncPets();
     UI.refreshBag(); UI.refreshEquip(); UI.refreshTracker(); UI.refreshSkillbar(); UI.refreshStatAlloc();
     UI.chapterCard(CHAPTERS[0]);
@@ -675,8 +686,7 @@ export const G = {
   /* ================= 루프 ================= */
   /** 한 프레임 — dt 는 0.033초로 자른 것, rawDt 는 실제로 흐른 시간(engine/core/loop.js). */
   frame(dt, rawDt) {
-    if (this.state === 'play' && !this.paused) { this.update(dt); }
-    if (this.state === 'play') this.render();
+    this.scenes.frame(dt);
     // 배경음악은 일시정지/타이틀과 무관하게 항상 갱신해야 크로스페이드가 끊기지 않는다.
     if (Music) { Music.update(Math.min(rawDt, 3)); Music.play(this.pickBgm()); }
     /* 이어지는 효과음 — 매 프레임 "지금 나야 하는가"만 넘긴다. */
@@ -4032,7 +4042,7 @@ export const G = {
       $('#death-line').textContent = '불가능 모드였다. 이 슬롯의 기록이 지워졌다.';
       $('#death-screen').classList.add('open');
       $('#death-screen').classList.add('wipe');
-      this.paused = true;
+      this.scenes.open('pause');
       this.sfx('death');
       return;
     }
@@ -4041,7 +4051,7 @@ export const G = {
     parts.push('쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.');
     $('#death-line').textContent = parts.join(' ');
     $('#death-screen').classList.add('open');
-    this.paused = true;
+    this.scenes.open('pause');
     this.sfx('death');
   },
 
@@ -4173,10 +4183,10 @@ export const G = {
     if (this.pulseEvent) this.endPulseEvent(false);   // 쓰러지면 사건도 놓친 것이다
     this.rocks = [];
     $('#death-screen').classList.remove('open');
-    this.paused = false;
+    this.scenes.close('pause');
   },
   setPause(on) {
-    this.paused = on;
+    this.scenes.set('pause', on);
     $('#pause-screen').classList.toggle('open', on);
     if (on) UI.syncSettings();      // 열 때마다 현재 값으로 맞춘다
   },
@@ -4384,7 +4394,7 @@ export const G = {
       $('#title-screen').style.display = 'none';
     if (typeof TitleBG !== 'undefined') TitleBG.stop();   // 화면 밖이면 프레임을 낭비하지 않는다
       this.closeAllModals();
-      this.state = 'play'; this.paused = false;
+      this.scenes.go('play'); this.scenes.close('pause');
       this.petEnts = []; this.syncPets();
       UI.refreshBag(); UI.refreshEquip(); UI.refreshTracker(); UI.refreshSkillbar(); UI.refreshStatAlloc(); UI.refreshSkillSlots();
       this.toast('여정을 이어간다', 'good');
@@ -7873,7 +7883,7 @@ export const G = {
     inp.setAttribute('inputmode', c && !c.numeric ? 'text' : 'numeric');
     this.codeDoor = o;
     this.openModal('#code-screen');
-    this.uiOpen = true;
+    this.scenes.open('ui');
     setTimeout(() => inp.focus(), 30);
     this.sfx('open');
     if (el.dataset.bound) return;              // 배선은 한 번만
@@ -7901,7 +7911,7 @@ export const G = {
   closeCodeDoor() {
     this.closeModal('#code-screen');
     this.codeDoor = null;
-    this.uiOpen = false;
+    this.scenes.close('ui');
   },
 
   /** 넣은 것을 맞춰 본다 — 자물쇠 갈래와 상관없이 여기 한 군데서 본다 */
