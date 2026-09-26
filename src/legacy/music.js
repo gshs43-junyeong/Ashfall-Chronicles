@@ -1,5 +1,5 @@
 /* ===== music.js — 배경음악: 상황별 자동 전환 + 무한 반복 + 부드러운 크로스페이드 ===== */
-import { clamp, lerp } from './util.js';
+import { clamp, lerp } from '../engine/core/math.js';
 import { WW } from './size.js';
 import { TS } from './world.js';
 

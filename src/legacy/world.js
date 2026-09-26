@@ -1,6 +1,9 @@
 /* ===== world.js — 세계 생성 / 충돌 / 조명 ===== */
 import { factory as Factory } from './ctx.js';
-import { RNG, aabb, clamp, dist, inv, lerp, makeNoise1D, makeNoise2D, rleDecode, rleEncode } from './util.js';
+import { aabb, clamp, dist, inv, lerp } from '../engine/core/math.js';
+import { makeNoise1D, makeNoise2D } from '../engine/core/noise.js';
+import { RNG } from '../engine/core/rng.js';
+import { rleDecode, rleEncode } from '../engine/save/rle.js';
 import { BIOMES, CAMP_GX1, CAMP_X0, CAMP_X1, DEEP_Y, GLACIER_X1, HELL_Y, SEA_X1, SHIFT, SKY_Y, SURF_BASE, SX, SY,
   SYB, WH, WORLD_BOT, WSIZE, WSX, WSY, WW, applyWorldSize } from './size.js';
 import { CAVE_TYPES, CHAPTERS, FAULT, FLUID_FLOW, FLUID_KIND, FLUID_OPEN, FLUID_SRC, FLUID_TILE, MERCHANTS, MYSTIC,

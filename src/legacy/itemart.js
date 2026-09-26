@@ -1,5 +1,7 @@
 /* ===== itemart.js — 절차적 아이템/스킬/UI 스프라이트 ===== */
-import { RNG, TAU, clamp, shade } from './util.js';
+import { shade } from '../engine/core/color.js';
+import { TAU, clamp } from '../engine/core/math.js';
+import { RNG } from '../engine/core/rng.js';
 import { ITEMS, PETS, T, TILE_DEF } from './data.js';
 import { TS } from './world.js';
 import { TileArt } from './tileart.js';

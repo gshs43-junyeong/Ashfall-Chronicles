@@ -1,6 +1,7 @@
 /* ===== entity.js — 아이템 인스턴스 / 플레이어 / 적 / 투사체 ===== */
 import { app as G, ui as UI } from './ctx.js';
-import { TAU, aabb, angleTo, clamp, dist, dist2, fmt, lerp } from './util.js';
+import { TAU, aabb, angleTo, clamp, dist, dist2, lerp } from '../engine/core/math.js';
+import { fmt } from './util.js';
 import { SEA_X1, WH, WSY, WW } from './size.js';
 import { BOSS_LINES, BOSS_SURGE, BOW_TIP, BUFFS, CELL_CHARGE, ENEMIES, HIT_FX, ITEMS, MACH_OF_TILE, MECH_PART,
   MULTI_FALLOFF, PETS, PET_LV_MAX, PET_XP_SHARE, PREFIX, PROF_MAX, RARITY_MULT, SIG_FX, SKILLS, SKILL_FX, SKILL_HIT,

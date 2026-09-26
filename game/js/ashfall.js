@@ -1,5 +1,6 @@
 'use strict';
 /* Ashfall Chronicles — 자동 생성물(tools/bundle.mjs · esbuild). 손으로 고치지 말 것 — 원본은 src/legacy/ */
+"use strict";
 (() => {
   var __defProp = Object.defineProperty;
   var __export = (target, all) => {
@@ -7,42 +8,43 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
-  // src/legacy/util.js
-  var util_exports = {};
-  __export(util_exports, {
-    RLE_MAX: () => RLE_MAX,
-    RLE_N: () => RLE_N,
-    RLE_V: () => RLE_V,
-    RNG: () => RNG,
+  // src/engine/core/math.js
+  var math_exports = {};
+  __export(math_exports, {
     TAU: () => TAU,
     aabb: () => aabb,
     angleTo: () => angleTo,
     clamp: () => clamp,
     dist: () => dist,
     dist2: () => dist2,
-    escHtml: () => escHtml,
-    eulreul: () => eulreul,
-    eunneun: () => eunneun,
-    fmt: () => fmt,
-    hashStr: () => hashStr,
-    iga: () => iga,
     inv: () => inv,
-    josa: () => josa,
-    josaRo: () => josaRo,
-    lerp: () => lerp,
-    makeNoise1D: () => makeNoise1D,
-    makeNoise2D: () => makeNoise2D,
-    mixHex: () => mixHex,
-    pad2: () => pad2,
-    rleDecode: () => rleDecode,
-    rleEncode: () => rleEncode,
-    shade: () => shade,
-    tileHash: () => tileHash
+    lerp: () => lerp
   });
   var clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   var lerp = (a, b, t) => a + (b - a) * t;
   var inv = (a, b, v) => (v - a) / (b - a || 1);
   var TAU = Math.PI * 2;
+  function aabb(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+  function dist2(ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay;
+    return dx * dx + dy * dy;
+  }
+  function dist(ax, ay, bx, by) {
+    return Math.sqrt(dist2(ax, ay, bx, by));
+  }
+  function angleTo(ax, ay, bx, by) {
+    return Math.atan2(by - ay, bx - ax);
+  }
+
+  // src/engine/core/rng.js
+  var rng_exports = {};
+  __export(rng_exports, {
+    RNG: () => RNG,
+    hashStr: () => hashStr,
+    tileHash: () => tileHash
+  });
   function hashStr(s) {
     let h = 2166136261 >>> 0;
     for (let i = 0; i < s.length; i++) {
@@ -86,6 +88,19 @@
       return pairs[pairs.length - 1][0];
     }
   };
+  function tileHash(x, y) {
+    let h = x * 73856093 ^ y * 19349663;
+    h = (h ^ h >>> 13) >>> 0;
+    h = Math.imul(h, 1274126177) >>> 0;
+    return (h >>> 8) / 16777216;
+  }
+
+  // src/engine/core/noise.js
+  var noise_exports = {};
+  __export(noise_exports, {
+    makeNoise1D: () => makeNoise1D,
+    makeNoise2D: () => makeNoise2D
+  });
   function makeNoise1D(rng, octaves = 4) {
     const tables = [];
     for (let o = 0; o < octaves; o++) {
@@ -150,51 +165,13 @@
       return sum / max;
     };
   }
-  function aabb(a, b) {
-    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-  }
-  function dist2(ax, ay, bx, by) {
-    const dx = bx - ax, dy = by - ay;
-    return dx * dx + dy * dy;
-  }
-  function dist(ax, ay, bx, by) {
-    return Math.sqrt(dist2(ax, ay, bx, by));
-  }
-  function angleTo(ax, ay, bx, by) {
-    return Math.atan2(by - ay, bx - ax);
-  }
-  function josaRo(word) {
-    const ch = word.charCodeAt(word.length - 1) - 44032;
-    if (ch < 0 || ch > 11171) return "로";
-    const jong = ch % 28;
-    return jong === 0 || jong === 8 ? "로" : "으로";
-  }
-  function josa(word, withJong, noJong) {
-    const s = String(word), ch = s.charCodeAt(s.length - 1) - 44032;
-    if (ch < 0 || ch > 11171) return noJong;
-    return ch % 28 ? withJong : noJong;
-  }
-  var iga = (w) => w + josa(w, "이", "가");
-  var eulreul = (w) => w + josa(w, "을", "를");
-  var eunneun = (w) => w + josa(w, "은", "는");
-  function fmt(n) {
-    const v = Math.round(n);
-    const a = Math.abs(v);
-    if (a < 1e6) return v.toLocaleString("ko-KR");
-    let d = 1e6, u = "M";
-    if (a >= 1e9 || Math.abs(v / 1e6).toFixed(2) >= 1e3) {
-      d = 1e9;
-      u = "B";
-    }
-    const t = (v / d).toFixed(2).replace(/\.?0+$/, "");
-    return t + u;
-  }
-  function pad2(n) {
-    return n < 10 ? "0" + n : "" + n;
-  }
-  function escHtml(s) {
-    return ("" + s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  }
+
+  // src/engine/core/color.js
+  var color_exports = {};
+  __export(color_exports, {
+    mixHex: () => mixHex,
+    shade: () => shade
+  });
   function shade(hex, amt) {
     const n = parseInt(hex.slice(1), 16);
     let r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255;
@@ -210,12 +187,16 @@
     const bl = Math.round(lerp(a & 255, b & 255, t));
     return "#" + (r << 16 | g << 8 | bl).toString(16).padStart(6, "0");
   }
-  function tileHash(x, y) {
-    let h = x * 73856093 ^ y * 19349663;
-    h = (h ^ h >>> 13) >>> 0;
-    h = Math.imul(h, 1274126177) >>> 0;
-    return (h >>> 8) / 16777216;
-  }
+
+  // src/engine/save/rle.js
+  var rle_exports = {};
+  __export(rle_exports, {
+    RLE_MAX: () => RLE_MAX,
+    RLE_N: () => RLE_N,
+    RLE_V: () => RLE_V,
+    rleDecode: () => rleDecode,
+    rleEncode: () => rleEncode
+  });
   var RLE_V = 256, RLE_N = 4096, RLE_MAX = 28671;
   function rleEncode(arr) {
     const out = ["r1"];
@@ -255,6 +236,51 @@
       for (let k = 0; k < n && i < len; k++) out[i++] = v;
     }
     return out;
+  }
+
+  // src/legacy/util.js
+  var util_exports = {};
+  __export(util_exports, {
+    escHtml: () => escHtml,
+    eulreul: () => eulreul,
+    eunneun: () => eunneun,
+    fmt: () => fmt,
+    iga: () => iga,
+    josa: () => josa,
+    josaRo: () => josaRo,
+    pad2: () => pad2
+  });
+  function josaRo(word) {
+    const ch = word.charCodeAt(word.length - 1) - 44032;
+    if (ch < 0 || ch > 11171) return "로";
+    const jong = ch % 28;
+    return jong === 0 || jong === 8 ? "로" : "으로";
+  }
+  function josa(word, withJong, noJong) {
+    const s = String(word), ch = s.charCodeAt(s.length - 1) - 44032;
+    if (ch < 0 || ch > 11171) return noJong;
+    return ch % 28 ? withJong : noJong;
+  }
+  var iga = (w) => w + josa(w, "이", "가");
+  var eulreul = (w) => w + josa(w, "을", "를");
+  var eunneun = (w) => w + josa(w, "은", "는");
+  function fmt(n) {
+    const v = Math.round(n);
+    const a = Math.abs(v);
+    if (a < 1e6) return v.toLocaleString("ko-KR");
+    let d = 1e6, u = "M";
+    if (a >= 1e9 || Math.abs(v / 1e6).toFixed(2) >= 1e3) {
+      d = 1e9;
+      u = "B";
+    }
+    const t = (v / d).toFixed(2).replace(/\.?0+$/, "");
+    return t + u;
+  }
+  function pad2(n) {
+    return n < 10 ? "0" + n : "" + n;
+  }
+  function escHtml(s) {
+    return ("" + s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
   // src/legacy/size.js
@@ -41944,7 +41970,7 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
