@@ -10,6 +10,8 @@ function dirTable(t) { return (t === 'belt' || t === 'belt_fast') ? DIR6 : DIR4;
 const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위', '오른쪽 위', '왼쪽 위'];   // 뒤 둘은 벨트 대각선
 
 const Factory = {
+  /* 벨트 한 칸에 머무는 시간(초) — 물건도 벨트 무늬도 이 속도로 간다(일반 1칸/초 · 고속 2칸/초) */
+  DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK },
   CHARGE_TICK: 6,          // 플레이어 전주 충전 — 한 틱(0.125초)에 6 = 초당 48
 
   /* ================= 조회 / 설치 / 철거 ================= */
@@ -194,12 +196,9 @@ const Factory = {
     const t = this.at(w, m.x + dx, m.y + dy);
     if (!t) return false;
     if (this.insert(w, t, id, 1) <= 0) return false;
-    /* 벨트 위 물건은 어디서 언제 왔는지 적어 두고 render 가 한 틱에 걸쳐 미끄러뜨린다 — 칸 가운데서 칸 가운데로
-       뚝뚝 끊겨 보였다. 고속 벨트가 한 틱에 두 칸을 가면 출발점을 이어받아 두 칸을 한 번에 미끄러진다. */
-    if (t.it) {
-      const same = m.it && m.it.t0 === this.now;
-      t.it.fx = same ? m.it.fx : m.x; t.it.fy = same ? m.it.fy : m.y; t.it.t0 = this.now;
-    }
+    /* 벨트 위 물건은 어디서 언제 왔는지 적어 두고 render 가 머무는 시간(DWELL)에 걸쳐 미끄러뜨린다 —
+       tick 도 그 시간이 지나야 다음 칸으로 넘긴다. 그림과 물류가 같은 시계를 본다. */
+    if (t.it) { t.it.fx = m.x; t.it.fy = m.y; t.it.t0 = this.now; }
     return true;
   },
 
@@ -299,13 +298,10 @@ const Factory = {
     }
 
     /* ---- 3. 물류 ---- */
-    /* 고속 벨트는 한 틱에 **두 칸**을 간다 — 물류 패스를 한 번 더 돌리되, 두 번째 패스에서는 고속 벨트만 본다. */
-    for (let pass = 0; pass < 2; pass++) {
-    if (pass) for (const m of ms.values()) if (m.t === 'belt_fast') m.just = 0;
     for (const m of ms.values()) {                       // 벨트 · 분류기 먼저
-      if (pass && m.t !== 'belt_fast') continue;
       if (m.t === 'belt' || m.t === 'belt_fast') {
         if (!m.it || m.just) continue;
+        if (m.it.t0 !== undefined && this.now - m.it.t0 < this.DWELL[m.t] - 0.01) continue;   // 아직 칸을 건너는 중
         if (this.pushTo(w, m, m.dir, m.it.id)) { m.it = null; G.sfxAt('belt', m.x, m.y); }
       } else if (m.t === 'sorter') {
         if (!m.it || m.just) continue;
@@ -314,7 +310,6 @@ const Factory = {
         m.st = match ? '통과' : '분기';
         if (this.pushTo(w, m, match ? m.dir : (m.dir + 1) & 3, m.it.id)) m.it = null;
       }
-    }
     }
     for (const m of ms.values()) {                       // 기계 출력 배출
       /* 앞이 받는 것을 찾을 때까지 차례로 — 첫 것만 보면 안 받는 출력(밀링기의 거름 → 화덕)이 줄을 영영 막았다 */
@@ -655,43 +650,43 @@ const Factory = {
           c.beginPath(); c.arc(hx, hy, 3, 0, TAU); c.fill();
         }
 
-        /* 벨트 몸통은 타일 그림이 **가로 한 방향**뿐이다(mk_belt). */
-        if ((m.t === 'belt' || m.t === 'belt_fast') && m.dir !== 0 && m.dir !== 2) {
-          const ang = m.dir === 1 ? Math.PI / 2 : m.dir === 3 ? -Math.PI / 2
-            : m.dir === 4 ? -Math.PI / 4 : -Math.PI * 3 / 4;
+        /* 벨트 몸통은 방향과 상관없이 여기서 그린다 — 마디가 물건과 **같은 속도**(1/DWELL 칸/초)로 흐른다.
+           타일 그림(mk_belt)은 멈춘 마디라, 위에 덮지 않으면 벨트와 물건이 서로 다른 빠르기로 보였다. */
+        if (m.t === 'belt' || m.t === 'belt_fast') {
+          const fast = m.t === 'belt_fast';
+          const ang = [0, Math.PI / 2, Math.PI, -Math.PI / 2, -Math.PI / 4, -Math.PI * 3 / 4][m.dir] || 0;
+          const run = m.on ? (time / this.DWELL[m.t]) % 1 : 0;       // 한 칸을 가는 동안 0 → 1
+          const L = m.dir >= 4 ? TS * Math.SQRT2 : TS;               // 대각선은 한 칸이 √2 배 — 마디도 그만큼 간다
           c.save();
           c.translate(sx + TS / 2, sy + TS / 2);
           c.rotate(ang);
-          c.fillStyle = '#2e3238'; c.fillRect(-TS / 2, -5, TS, 10);        // 띠
-          c.fillStyle = '#4a5058'; c.fillRect(-TS / 2, -5, TS, 2);
-          c.fillStyle = '#20242a'; c.fillRect(-TS / 2, 3, TS, 2);
-          for (let k = -TS / 2 + 1; k < TS / 2; k += 4)                    // 마디
-            { c.fillStyle = '#3c424a'; c.fillRect(k, -3, 2, 6); }
+          c.beginPath(); c.rect(-L / 2, -6, L, 12); c.clip();
+          c.fillStyle = fast ? '#3a4450' : '#2e3238'; c.fillRect(-L / 2, -5, L, 10);   // 띠
+          c.fillStyle = fast ? '#6a7a8a' : '#4a5058'; c.fillRect(-L / 2, -5, L, 2);
+          c.fillStyle = '#20242a'; c.fillRect(-L / 2, 3, L, 2);
+          /* 마디 간격은 칸 길이를 나눠 떨어지게(L/5) — 옆 칸 마디와 이어져 한 줄로 흐른다 */
+          const gap = L / 5, off = run * L;
+          c.fillStyle = fast ? '#56626e' : '#3c424a';
+          for (let k = -L / 2 - gap + (off % gap); k < L / 2; k += gap) c.fillRect(k, -3, 2, 6);
           c.restore();
-        }
-        // 방향 표시 — 벨트는 흐르는 화살표, 나머지는 배출구 삼각형
-        if (s.rot) {
+          // 흐르는 점 — 한 칸을 DWELL 초에 건넌다
           const [dx, dy] = dirTable(m.t)[m.dir] || DIR4[m.dir & 3];
-          if (m.t === 'belt' || m.t === 'belt_fast') {
-            // 고속 벨트는 화살표가 두 배로 빨리 흐른다 — 보기만 해도 구분된다
-            const ph = (time * (m.t === 'belt_fast' ? 6.4 : 3.2)) % 1;
-            c.fillStyle = 'rgba(226,238,255,.55)';
-            for (let k = 0; k < 2; k++) {
-              const t2 = (ph + k * 0.5) % 1;
-              const px = sx + TS / 2 + dx * (t2 - 0.5) * TS, py = sy + TS / 2 + dy * (t2 - 0.5) * TS;
-              c.fillRect(px - 1.5, py - 1.5, 3, 3);
-            }
-          } else {
-            c.fillStyle = 'rgba(255,214,120,.85)';
-            c.fillRect(sx + TS / 2 + dx * 8 - 2, sy + TS / 2 + dy * 8 - 2, 4, 4);
+          c.fillStyle = 'rgba(226,238,255,.55)';
+          for (let k = 0; k < 2; k++) {
+            const t2 = (run + k * 0.5) % 1;
+            c.fillRect(sx + TS / 2 + dx * (t2 - 0.5) * TS - 1.5, sy + TS / 2 + dy * (t2 - 0.5) * TS - 1.5, 3, 3);
           }
+        } else if (s.rot) {                                          // 나머지는 배출구 삼각형
+          const [dx, dy] = DIR4[m.dir & 3];
+          c.fillStyle = 'rgba(255,214,120,.85)';
+          c.fillRect(sx + TS / 2 + dx * 8 - 2, sy + TS / 2 + dy * 8 - 2, 4, 4);
         }
 
         // 벨트/분류기가 물고 있는 아이템 — 들어온 칸에서 지금 칸까지 한 틱에 걸쳐 미끄러진다(pushTo)
         if (m.it) {
           let ix = sx, iy = sy;
           if (m.it.t0 !== undefined) {
-            const k = clamp((time - m.it.t0) / FAC_TICK, 0, 1);
+            const k = clamp((time - m.it.t0) / (this.DWELL[m.t] || FAC_TICK), 0, 1);
             ix = (m.it.fx + (m.x - m.it.fx) * k) * TS - camX; iy = (m.it.fy + (m.y - m.it.fy) * k) * TS - camY;
           }
           Art.drawItem(c, m.it.id, Math.round(ix) + 4, Math.round(iy) + 3, 14);

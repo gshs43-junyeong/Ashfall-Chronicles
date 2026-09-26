@@ -175,22 +175,22 @@ const TILE_DEF = [
   { n: '납 광맥', c: '#7d7d90', solid: 1, hard: 1, drop: 'lead_ore', ore: 1 },
   { n: '유혈암', c: '#3b352c', solid: 1, hard: 2, drop: 'crude_oil', ore: 1 },
   /* --- 공장 기계 --- */
-  { n: '컨베이어 벨트', c: '#6a6a74', solid: 0, hard: 0, drop: 'm_belt', mach: 'belt' },
-  { n: '기계식 드릴', c: '#8a6a3a', solid: 1, hard: 0, drop: 'm_drill', mach: 'drill' },
-  { n: '전동 드릴', c: '#4a8ab0', solid: 1, hard: 0, drop: 'm_drill_e', mach: 'drill_e' },
-  { n: '시추 펌프', c: '#5a5040', solid: 1, hard: 0, drop: 'm_pump', mach: 'pump' },
-  { n: '자동 용광로', c: '#7a4a30', solid: 1, hard: 0, drop: 'm_smelter', mach: 'smelter' },
-  { n: '압축기', c: '#6a6a74', solid: 1, hard: 0, drop: 'm_press', mach: 'press' },
-  { n: '정제기', c: '#4a5a4a', solid: 1, hard: 0, drop: 'm_refinery', mach: 'refinery' },
-  { n: '조립기', c: '#5a6a8a', solid: 1, hard: 0, drop: 'm_assembler', mach: 'assembler' },
-  { n: '수집 상자', c: '#8a6a3a', solid: 1, hard: 0, drop: 'm_crate', mach: 'crate' },
-  { n: '화력 발전기', c: '#7a5a3a', solid: 1, hard: 0, drop: 'm_gen', mach: 'gen', light: 5 },
-  { n: '축전지', c: '#4a7a6a', solid: 1, hard: 0, drop: 'm_battery', mach: 'battery', light: 4 },
-  { n: '전주', c: '#7a6a4a', solid: 1, hard: 0, drop: 'm_pole', mach: 'pole' },
-  { n: '분류기', c: '#8a7a4a', solid: 1, hard: 0, drop: 'm_sorter', mach: 'sorter' },
-  { n: '자동 포탑', c: '#6a6a74', solid: 1, hard: 0, drop: 'm_turret', mach: 'turret' },
-  { n: '전격 함정', c: '#4a6a8a', solid: 1, hard: 0, drop: 'm_trap', mach: 'trap' },
-  { n: '정지 스위치', c: '#a03a30', solid: 1, hard: 0, drop: 'm_switch', mach: 'switch', light: 3 },
+  { n: '컨베이어 벨트', c: '#6a6a74', solid: 0, hard: 1, drop: 'm_belt', mach: 'belt' },
+  { n: '기계식 드릴', c: '#8a6a3a', solid: 1, hard: 2, drop: 'm_drill', mach: 'drill' },
+  { n: '전동 드릴', c: '#4a8ab0', solid: 1, hard: 3, drop: 'm_drill_e', mach: 'drill_e' },
+  { n: '시추 펌프', c: '#5a5040', solid: 1, hard: 2, drop: 'm_pump', mach: 'pump' },
+  { n: '자동 용광로', c: '#7a4a30', solid: 1, hard: 2, drop: 'm_smelter', mach: 'smelter' },
+  { n: '압축기', c: '#6a6a74', solid: 1, hard: 2, drop: 'm_press', mach: 'press' },
+  { n: '정제기', c: '#4a5a4a', solid: 1, hard: 3, drop: 'm_refinery', mach: 'refinery' },
+  { n: '조립기', c: '#5a6a8a', solid: 1, hard: 3, drop: 'm_assembler', mach: 'assembler' },
+  { n: '수집 상자', c: '#8a6a3a', solid: 1, hard: 1, drop: 'm_crate', mach: 'crate' },
+  { n: '화력 발전기', c: '#7a5a3a', solid: 1, hard: 2, drop: 'm_gen', mach: 'gen', light: 5 },
+  { n: '축전지', c: '#4a7a6a', solid: 1, hard: 2, drop: 'm_battery', mach: 'battery', light: 4 },
+  { n: '전주', c: '#7a6a4a', solid: 1, hard: 1, drop: 'm_pole', mach: 'pole' },
+  { n: '분류기', c: '#8a7a4a', solid: 1, hard: 2, drop: 'm_sorter', mach: 'sorter' },
+  { n: '자동 포탑', c: '#6a6a74', solid: 1, hard: 3, drop: 'm_turret', mach: 'turret' },
+  { n: '전격 함정', c: '#4a6a8a', solid: 1, hard: 2, drop: 'm_trap', mach: 'trap' },
+  { n: '정지 스위치', c: '#a03a30', solid: 1, hard: 2, drop: 'm_switch', mach: 'switch', light: 3 },
   /* --- 마을 건축 --- */
   { n: '초가지붕', c: '#c8a860', solid: 1, hard: 0, drop: 'thatch' },
   { n: '기와지붕', c: '#8a4a3a', solid: 1, hard: 1, drop: 'rooftile' },
@@ -218,9 +218,9 @@ const TILE_DEF = [
   { n: '잿버섯 (여무는 중)', c: '#b06a54', solid: 0, hard: 0, drop: 'seed_ashcap', crop: { next: T.CAP3 } },
   { n: '잿버섯', c: '#e0402c', solid: 0, hard: 0, drop: 'mushroom', crop: { ripe: 1, seed: 'seed_ashcap' } },
   /* --- 마을 기계 --- */
-  { n: '풍차', c: '#c8bca0', solid: 1, hard: 0, drop: 'm_windmill', mach: 'windmill' },
-  { n: '밀링기', c: '#8a7a5a', solid: 1, hard: 0, drop: 'm_mill', mach: 'mill' },
-  { n: '화덕', c: '#9a6a4a', solid: 1, hard: 0, drop: 'm_oven', mach: 'oven', light: 6 },
+  { n: '풍차', c: '#c8bca0', solid: 1, hard: 2, drop: 'm_windmill', mach: 'windmill' },
+  { n: '밀링기', c: '#8a7a5a', solid: 1, hard: 2, drop: 'm_mill', mach: 'mill' },
+  { n: '화덕', c: '#9a6a4a', solid: 1, hard: 2, drop: 'm_oven', mach: 'oven', light: 6 },
   /* --- 울림 정글 --- */
   { n: '정글 풀', c: '#3f7a34', solid: 1, hard: 0, drop: 'mud' },
   { n: '진흙', c: '#4a3a26', solid: 1, hard: 0, drop: 'mud' },
@@ -237,9 +237,9 @@ const TILE_DEF = [
   { n: '사암 벽돌', c: '#c8a468', solid: 1, hard: 2, drop: 'sandbrick' },
   { n: '갱목', c: '#6a4a2a', solid: 1, hard: 1, drop: 'plank' },
   /* --- 유적 함정 (기계 체계에 얹어 방향·저장·철거를 공짜로 쓴다) --- */
-  { n: '화살 발사기', c: '#7a6a5a', solid: 1, hard: 0, drop: 'm_dart', mach: 'dart' },
-  { n: '화염 분사구', c: '#9a5a3a', solid: 1, hard: 0, drop: 'm_flame', mach: 'flamejet', light: 4 },
-  { n: '서리 분사구', c: '#6a9ab0', solid: 1, hard: 0, drop: 'm_frost', mach: 'frostjet' },
+  { n: '화살 발사기', c: '#7a6a5a', solid: 1, hard: 1, drop: 'm_dart', mach: 'dart' },
+  { n: '화염 분사구', c: '#9a5a3a', solid: 1, hard: 2, drop: 'm_flame', mach: 'flamejet', light: 4 },
+  { n: '서리 분사구', c: '#6a9ab0', solid: 1, hard: 2, drop: 'm_frost', mach: 'frostjet' },
   /* --- 고대 유적 함정 --- */
   { n: '화살 구멍 (왼쪽)', c: '#4a4238', solid: 1, hard: 2, drop: 'stone', tdart: -1 },
   { n: '화살 구멍 (오른쪽)', c: '#4a4238', solid: 1, hard: 2, drop: 'stone', tdart: 1 },
@@ -303,10 +303,10 @@ const TILE_DEF = [
   // 바닷물 — 호수 물(#2f6f9f)보다 짙고 푸르다.
   { n: '바닷물', c: '#12496e', solid: 0, hard: 99, liquid: 1, sea: 1 },
   // 4단계 설비 — 다른 기계 타일과 같은 규격(단단함 1, 곡괭이 등급 무관하게 회수). mach 가 없으면 캐도 기계가 남는다(유령 기계)
-  { n: '가압기', c: '#4a5a6a', solid: 1, hard: 1, drop: 'm_pressor', mach: 'pressor' },
-  { n: '염수 증류기', c: '#3a6a7a', solid: 1, hard: 1, drop: 'm_desal', mach: 'desal' },
-  { n: '고속 컨베이어 벨트', c: '#8a9aa8', solid: 0, hard: 1, drop: 'm_belt_f', mach: 'belt_fast' },
-  { n: '강화 축전지', c: '#4a9a8a', solid: 1, hard: 1, drop: 'm_battery_hi', mach: 'battery_hi' },
+  { n: '가압기', c: '#4a5a6a', solid: 1, hard: 4, drop: 'm_pressor', mach: 'pressor' },
+  { n: '염수 증류기', c: '#3a6a7a', solid: 1, hard: 4, drop: 'm_desal', mach: 'desal' },
+  { n: '고속 컨베이어 벨트', c: '#8a9aa8', solid: 0, hard: 4, drop: 'm_belt_f', mach: 'belt_fast' },
+  { n: '강화 축전지', c: '#4a9a8a', solid: 1, hard: 4, drop: 'm_battery_hi', mach: 'battery_hi' },
   /* 염수 분출구 — 위로 짠물을 뿜는다. */
   { n: '염수 분출구', c: '#2a6a7a', solid: 1, hard: 2, drop: 'stone', tbrine: 1 },
   /* 촉발 지뢰 — 밟으면 터진다. */
@@ -1546,7 +1546,7 @@ const FUEL = { wood: 16, plank: 20, ash: 8, coal: 90, fuel_brick: 560, crude_oil
 const MACHINE = {
   belt: {
     n: '컨베이어 벨트', tile: T.M_BELT, item: 'm_belt', rot: 1,
-    d: '틱마다 아이템을 한 칸씩 앞으로 민다. 동력이 필요 없다. 앞이 막히면 그 자리에서 기다린다.'
+    d: '아이템을 1초에 한 칸씩 앞으로 나른다. 동력이 필요 없다. 앞이 막히면 그 자리에서 기다린다.'
   },
   pole: {
     n: '전주', tile: T.M_POLE, item: 'm_pole', reach: 5,
@@ -1632,7 +1632,7 @@ const MACHINE = {
   },
   belt_fast: {
     n: '고속 컨베이어 벨트', tile: T.M_BELT_F, item: 'm_belt_f', rot: 1, fast: 1,
-    d: '한 틱에 두 칸을 민다. 일반 벨트와 섞어 깔아도 되고, 병목이 생기는 구간만 갈아 끼워도 된다.'
+    d: '1초에 두 칸을 나른다. 일반 벨트와 섞어 깔아도 되고, 병목이 생기는 구간만 갈아 끼워도 된다.'
   },
   battery_hi: {
     n: '강화 축전지', tile: T.M_BATTERY_HI, item: 'm_battery_hi', store: 14000, proc: 'battery', power: 6, cap: 60,
