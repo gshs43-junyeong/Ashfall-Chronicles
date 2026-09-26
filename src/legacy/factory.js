@@ -1,6 +1,8 @@
 /* ===== factory.js — 공장: 기계 / 전력망 / 물류 ===== */
 import { app as G, bindFactory } from './ctx.js';
-import { TAU, aabb, angleTo, clamp, dist2, shade, tileHash } from './util.js';
+import { shade } from '../engine/core/color.js';
+import { TAU, aabb, angleTo, clamp, dist2 } from '../engine/core/math.js';
+import { tileHash } from '../engine/core/rng.js';
 import { WH, WW } from './size.js';
 import { FUEL, ITEMS, MACHINE, MRECIPES, T, TILE_DEF } from './data.js';
 import { TS } from './world.js';

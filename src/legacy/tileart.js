@@ -1,5 +1,7 @@
 /* ===== tileart.js — 절차적 타일 텍스처 아틀라스 ===== */
-import { RNG, TAU, clamp, lerp, shade, tileHash } from './util.js';
+import { shade } from '../engine/core/color.js';
+import { TAU, clamp, lerp } from '../engine/core/math.js';
+import { RNG, tileHash } from '../engine/core/rng.js';
 import { WW } from './size.js';
 import { CAVE_TYPES, FLUID_KIND, MACH_OF_TILE, T, TILE_DEF, WALL_COLOR } from './data.js';
 import { TS } from './world.js';

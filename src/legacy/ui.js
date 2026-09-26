@@ -1,6 +1,7 @@
 /* ===== ui.js — DOM 인터페이스 ===== */
 import { app as G, bindUI } from './ctx.js';
-import { TAU, clamp, eulreul, fmt, iga, josaRo, pad2 } from './util.js';
+import { TAU, clamp } from '../engine/core/math.js';
+import { eulreul, fmt, iga, josaRo, pad2 } from './util.js';
 import { SURF_BASE, WH, WW } from './size.js';
 import { ACHIEVEMENTS, ACH_CAT, ACH_TIER, BOSS_TIER, BRANCHES, BUFFS, CHAPTERS, ECHO, FUEL, ITEMS, KEY_ACTIONS,
   MACHINE, MRECIPES, MULTI_FALLOFF, NOTICE_KINDS, NPCS, PETS, PET_LV_MAX, PROFS, PROF_MAX, PULSE, RARITY,
