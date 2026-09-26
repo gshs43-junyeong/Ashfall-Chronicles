@@ -8,6 +8,7 @@ import { createInput } from '../engine/input/actions.js';
 import { bindPointer } from '../engine/input/pointer.js';
 import { mountTouch } from '../engine/input/touch.js';
 import { fitCanvas } from '../engine/platform/viewport.js';
+import { createPipeline, tileView } from '../engine/render/pipeline.js';
 import { makeSigner } from '../engine/save/seal.js';
 import { createSaveStore } from '../engine/save/store.js';
 import { upgrade } from '../engine/save/upgrade.js';
@@ -187,6 +188,7 @@ export const G = {
       UI.bossBar(null); this.renderSlotScreen();
     };
     $('#btn-respawn').onclick = () => this.respawn();
+    this.buildPipeline();
     startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
   },
   /** 설정의 시야 배율. */
@@ -4813,18 +4815,41 @@ export const G = {
 
 
   /* ================= 렌더 ================= */
+  /** 한 프레임 그리기 — 카메라·흔들림과 보이는 칸 범위만 정하고, 나머지는 렌더 단계가 순서대로 그린다(buildPipeline). */
   render() {
     const c = this.ctx, w = this.world, p = this.player;
     const shk = this.shake * (this.settings ? this.settings.shake / 100 : 1);
     const shX = (Math.random() - 0.5) * shk, shY = (Math.random() - 0.5) * shk;
     const camX = Math.round(this.cam.x + shX), camY = Math.round(this.cam.y + shY);
 
-    // ---- 하늘 ----
     const dayF = this.dayFactor();
+    const f = { c, w, p, camX, camY, dayF, ...tileView(camX, camY, this.W, this.H, TS) };
+    this.pipe.run(f);
+  },
+  /** 렌더 단계 — 순서가 곧 겹침 순서다(엔진 render/pipeline). */
+  buildPipeline() {
+    this.pipe = createPipeline(['sky', 'light', 'far', 'tiles', 'machines', 'objects', 'ground', 'drops', 'actors', 'lighting', 'fx', 'screen']);
+    this.pipe.add('sky', f => this.rSky(f));
+    this.pipe.add('light', f => this.rLightCalc(f));
+    this.pipe.add('far', f => this.rFar(f));
+    this.pipe.add('tiles', f => this.rTiles(f));
+    this.pipe.add('machines', f => this.rMachines(f));
+    this.pipe.add('objects', f => this.rObjects(f));
+    this.pipe.add('ground', f => this.rGround(f));
+    this.pipe.add('drops', f => this.rDrops(f));
+    this.pipe.add('actors', f => this.rActors(f));
+    this.pipe.add('lighting', f => this.rLightOverlay(f));
+    this.pipe.add('fx', f => this.rFx(f));
+    this.pipe.add('screen', f => this.rScreen(f));
+  },
+  /** 렌더 단계 — 하늘 */
+  rSky(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     this.drawSky(c, dayF, camX, camY);
-
-    const tx0 = Math.floor(camX / TS), tx1 = Math.ceil((camX + this.W) / TS);
-    const ty0 = Math.floor(camY / TS), ty1 = Math.ceil((camY + this.H) / TS);
+  },
+  /** 렌더 단계 — 화면 범위 조명 계산 */
+  rLightCalc(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     const dayLight = lerp(3.0, 15, dayF);
     // 발광 물약 — lit/lit_greater 버프가 있으면 미광 반경을 넓힌다 — 사연: docs/code-history.md#h60
     const litR = p.buffs.some(b => b.id === 'lit_greater') ? 9.5
@@ -4832,13 +4857,19 @@ export const G = {
       : p.buffs.some(b => b.id === 'lantern') ? 6.0 : 4.6;
     w.computeLight(tx0, ty0, tx1, ty1, dayLight,
       [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]]);   // 플레이어 미광
-
+  },
+  /** 렌더 단계 — 원경 · 채취탑 */
+  rFar(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 배경 지형 ----
     this.drawParallax(c, camX, camY, dayF);
 
     /* ---- 채취탑 ---- */
     this.drawRigs(c, camX, camY);
-
+  },
+  /** 렌더 단계 — 타일 · 벽지 */
+  rTiles(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 타일 (절차적 텍스처 아틀라스) ----
     const VA = TileArt.V;
     const ashF = this.ashF(), ashOn = ashF > 0.02 && TileArt.ashAtlas;
@@ -4889,11 +4920,17 @@ export const G = {
         }
       }
     }
-
+  },
+  /** 렌더 단계 — 기계 몸체 · 벨트 위 물건 · 놓을 자리 */
+  rMachines(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 기계 오버레이 (방향 · 벨트 위 아이템 · 진행/연료 · 상태등) ----
     Factory.render(c, w, camX, camY, tx0, ty0, tx1, ty1, this.time);
     this.drawPlaceGhost(c, camX, camY);
-
+  },
+  /** 렌더 단계 — 설치물 · NPC */
+  rObjects(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 오브젝트 ----
     for (const o of w.objects) {
       if (o.type === 'rig') continue;           // 채취탑은 drawRigs 가 지형 뒤에 따로 그린다
@@ -5016,10 +5053,16 @@ export const G = {
       }
       c.restore();
     }
-
+  },
+  /** 렌더 단계 — 스킬의 바닥 연출 */
+  rGround(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 특별한 스킬의 바닥 연출 ----
     this.drawSigGround(c, camX, camY);
-
+  },
+  /** 렌더 단계 — 시체 · 떨어진 물건 */
+  rDrops(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 드롭 ----
     c.textAlign = 'center'; c.textBaseline = 'middle';
     /* ---- 시체 ---- */
@@ -5032,7 +5075,10 @@ export const G = {
       Art.drawItem(c, d.item.id, sx - 11, sy - 11, 22);
       c.globalAlpha = 1;
     }
-
+  },
+  /** 렌더 단계 — 몹 · 비석 · 플레이어 · 펫 */
+  rActors(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 적 ----
     for (const e of this.ents) {
       const sx = e.x - camX, sy = e.y - camY;
@@ -5073,7 +5119,10 @@ export const G = {
     this.drawWhirlArc(c, p, camX, camY);
     // ---- 떨어지는 별 ----
     this.drawSigSky(c, camX, camY);
-
+  },
+  /** 렌더 단계 — 어둠 · 빛 색 · 공기색 · 유적 여운 */
+  rLightOverlay(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 조명 (부드러운 그라디언트 오버레이) ----
     this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
     this.drawGlow(c, camX, camY, tx0, ty0, tx1, ty1);   // 빛 색 — 어둠 위에 더한다
@@ -5100,7 +5149,10 @@ export const G = {
       c.restore();
     }
     this.drawCaves(c, camX, camY);
-
+  },
+  /** 렌더 단계 — 폭발 · 투사체 · 링 · 번개 · 입자 · 피해 숫자 */
+  rFx(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 폭발/타격 이펙트 ----
     if (this.bursts) for (let i = this.bursts.length - 1; i >= 0; i--) {
       const b = this.bursts[i];
@@ -5255,7 +5307,10 @@ export const G = {
       if (t.crit) { c.font = '10px sans-serif'; c.fillStyle = '#ffd24a'; c.fillText('치명', t.x - camX, t.y - camY - 15); }
     }
     c.globalAlpha = 1;
-
+  },
+  /** 렌더 단계 — 조준 · 비 · 비네트 · 길잡이 */
+  rScreen(f) {
+    const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 조준/채굴 표시 ----
     this.drawCursor(c, camX, camY);
 

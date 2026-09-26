@@ -19,6 +19,7 @@ import * as e_actions from '../engine/input/actions.js';
 import * as e_pointer from '../engine/input/pointer.js';
 import * as e_touch from '../engine/input/touch.js';
 import * as e_tilemap from '../engine/tilemap/tilemap.js';
+import * as e_pipeline from '../engine/render/pipeline.js';
 import * as util from './util.js';
 import * as size from './size.js';
 import * as data from './data.js';
@@ -36,7 +37,7 @@ import * as game from './game.js';
 /* 디버그 창구 — 콘솔·?debug 도구·tests·tools/*.py 가 예전처럼 G · World · T · WW … 를 이름으로 읽는다.
    ★ 읽기 전용이고 살아 있는 값이다(WW 는 setWorldSize 뒤에 바뀐 값). 게임 코드는 이것을 읽지 말고 import 할 것.
    브라우저가 이미 가진 이름은 덮지 않는다. */
-for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, util, size, data, world, tileart, itemart, sprites, titlebg, entity, factory, ui, music, game]) {
+for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_pipeline, util, size, data, world, tileart, itemart, sprites, titlebg, entity, factory, ui, music, game]) {
   for (const k of Object.keys(m)) {
     if (k in window) continue;
     Object.defineProperty(window, k, { get: () => m[k], configurable: true });

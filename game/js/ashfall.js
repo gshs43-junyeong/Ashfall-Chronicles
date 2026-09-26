@@ -1146,6 +1146,34 @@
     }
   };
 
+  // src/engine/render/pipeline.ts
+  var pipeline_exports = {};
+  __export(pipeline_exports, {
+    createPipeline: () => createPipeline,
+    tileView: () => tileView
+  });
+  function createPipeline(names) {
+    const stages = names.map((name) => ({ name, fns: [] }));
+    return {
+      /** 그 단계 끝에 그리기 함수를 하나 건다 — 없는 단계 이름이면 바로 알린다(조용히 안 그려지는 것을 막는다). */
+      add(name, fn) {
+        const s = stages.find((x) => x.name === name);
+        if (!s) throw new Error("렌더 단계가 없다: " + name);
+        s.fns.push(fn);
+      },
+      /** 한 프레임 — 단계 순서대로 전부 */
+      run(frame) {
+        for (const s of stages) for (const fn of s.fns) fn(frame);
+      },
+      names() {
+        return stages.map((s) => s.name);
+      }
+    };
+  }
+  function tileView(camX, camY, W, H, ts) {
+    return { tx0: Math.floor(camX / ts), tx1: Math.ceil((camX + W) / ts), ty0: Math.floor(camY / ts), ty1: Math.ceil((camY + H) / ts) };
+  }
+
   // src/legacy/util.js
   var util_exports = {};
   __export(util_exports, {
@@ -32190,6 +32218,7 @@
         this.renderSlotScreen();
       };
       $("#btn-respawn").onclick = () => this.respawn();
+      this.buildPipeline();
       startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
     },
     /** 설정의 시야 배율. */
@@ -37825,15 +37854,40 @@
       src.stop(t + 0.3);
     },
     /* ================= 렌더 ================= */
+    /** 한 프레임 그리기 — 카메라·흔들림과 보이는 칸 범위만 정하고, 나머지는 렌더 단계가 순서대로 그린다(buildPipeline). */
     render() {
       const c = this.ctx, w = this.world, p = this.player;
       const shk = this.shake * (this.settings ? this.settings.shake / 100 : 1);
       const shX = (Math.random() - 0.5) * shk, shY = (Math.random() - 0.5) * shk;
       const camX = Math.round(this.cam.x + shX), camY = Math.round(this.cam.y + shY);
       const dayF = this.dayFactor();
+      const f = { c, w, p, camX, camY, dayF, ...tileView(camX, camY, this.W, this.H, TS) };
+      this.pipe.run(f);
+    },
+    /** 렌더 단계 — 순서가 곧 겹침 순서다(엔진 render/pipeline). */
+    buildPipeline() {
+      this.pipe = createPipeline(["sky", "light", "far", "tiles", "machines", "objects", "ground", "drops", "actors", "lighting", "fx", "screen"]);
+      this.pipe.add("sky", (f) => this.rSky(f));
+      this.pipe.add("light", (f) => this.rLightCalc(f));
+      this.pipe.add("far", (f) => this.rFar(f));
+      this.pipe.add("tiles", (f) => this.rTiles(f));
+      this.pipe.add("machines", (f) => this.rMachines(f));
+      this.pipe.add("objects", (f) => this.rObjects(f));
+      this.pipe.add("ground", (f) => this.rGround(f));
+      this.pipe.add("drops", (f) => this.rDrops(f));
+      this.pipe.add("actors", (f) => this.rActors(f));
+      this.pipe.add("lighting", (f) => this.rLightOverlay(f));
+      this.pipe.add("fx", (f) => this.rFx(f));
+      this.pipe.add("screen", (f) => this.rScreen(f));
+    },
+    /** 렌더 단계 — 하늘 */
+    rSky(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       this.drawSky(c, dayF, camX, camY);
-      const tx0 = Math.floor(camX / TS), tx1 = Math.ceil((camX + this.W) / TS);
-      const ty0 = Math.floor(camY / TS), ty1 = Math.ceil((camY + this.H) / TS);
+    },
+    /** 렌더 단계 — 화면 범위 조명 계산 */
+    rLightCalc(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       const dayLight = lerp(3, 15, dayF);
       const litR = p.buffs.some((b) => b.id === "lit_greater") ? 9.5 : p.buffs.some((b) => b.id === "lit") ? 6.8 : p.buffs.some((b) => b.id === "lantern") ? 6 : 4.6;
       w.computeLight(
@@ -37844,8 +37898,16 @@
         dayLight,
         [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]]
       );
+    },
+    /** 렌더 단계 — 원경 · 채취탑 */
+    rFar(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       this.drawParallax(c, camX, camY, dayF);
       this.drawRigs(c, camX, camY);
+    },
+    /** 렌더 단계 — 타일 · 벽지 */
+    rTiles(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       const VA = TileArt.V;
       const ashF = this.ashF(), ashOn = ashF > 0.02 && TileArt.ashAtlas;
       const eyeX = Math.floor(p.cx / TS), eyeY = Math.floor((p.y + 8) / TS);
@@ -37899,19 +37961,27 @@
           }
         }
       }
+    },
+    /** 렌더 단계 — 기계 몸체 · 벨트 위 물건 · 놓을 자리 */
+    rMachines(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       Factory.render(c, w, camX, camY, tx0, ty0, tx1, ty1, this.time);
       this.drawPlaceGhost(c, camX, camY);
+    },
+    /** 렌더 단계 — 설치물 · NPC */
+    rObjects(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       for (const o of w.objects) {
         if (o.type === "rig") continue;
         const sx = o.x - camX, sy = o.y - camY;
         if (sx < -120 || sx > this.W + 120 || sy < -140 || sy > this.H + 140) continue;
-        const f = 1;
+        const f2 = 1;
         c.save();
         c.globalAlpha = 1;
         if (o.type === "chest" || o.type === "crate") {
           const gold = o.gold || o.type === "chest" && o.tier >= 6;
-          const body = shade(gold ? "#8a6a1a" : "#7a5326", f);
-          const band = shade(gold ? "#ffd85a" : "#c8a04a", f);
+          const body = shade(gold ? "#8a6a1a" : "#7a5326", f2);
+          const band = shade(gold ? "#ffd85a" : "#c8a04a", f2);
           if (gold) {
             c.globalAlpha = 0.3 + Math.sin(this.time * 3) * 0.16;
             c.fillStyle = "#ffe58a";
@@ -37922,32 +37992,32 @@
           }
           c.fillStyle = body;
           c.fillRect(sx, sy + 3, o.w, o.h - 3);
-          c.fillStyle = shade(gold ? "#a8841f" : "#96683a", f);
+          c.fillStyle = shade(gold ? "#a8841f" : "#96683a", f2);
           c.fillRect(sx, sy, o.w, 5);
           c.fillStyle = band;
           c.fillRect(sx, sy + 4, o.w, 2);
           c.fillStyle = band;
           c.fillRect(sx + o.w / 2 - 2, sy + 3, 4, 5);
-          c.strokeStyle = shade(gold ? "#e8b830" : "#3a2610", f);
+          c.strokeStyle = shade(gold ? "#e8b830" : "#3a2610", f2);
           c.strokeRect(sx + 0.5, sy + 0.5, o.w - 1, o.h - 1);
         } else if (o.type === "workbench") {
           if (!(this.spritesOn && Sprites.drawObj(c, "obj_workbench_lv" + (o.lv || 1), sx, sy, o.w, o.h))) {
-            c.fillStyle = shade("#9c7a4a", f);
+            c.fillStyle = shade("#9c7a4a", f2);
             c.fillRect(sx, sy, o.w, 3);
-            c.fillStyle = shade("#7a5734", f);
+            c.fillStyle = shade("#7a5734", f2);
             c.fillRect(sx, sy + 3, o.w, 3);
             c.fillRect(sx + 2, sy + 6, 4, o.h - 6);
             c.fillRect(sx + o.w - 6, sy + 6, 4, o.h - 6);
-            c.fillStyle = shade("#5c4026", f);
+            c.fillStyle = shade("#5c4026", f2);
             c.fillRect(sx + 2, sy + o.h - 4, o.w - 4, 2);
           }
         } else if (o.type === "forge") {
           if (!(this.spritesOn && Sprites.drawObj(c, "obj_forge_lv" + (o.lv || 1), sx, sy, o.w, o.h))) {
-            c.fillStyle = shade("#4a4a52", f);
+            c.fillStyle = shade("#4a4a52", f2);
             c.fillRect(sx, sy + 3, o.w, o.h - 3);
-            c.fillStyle = shade("#33333a", f);
+            c.fillStyle = shade("#33333a", f2);
             c.fillRect(sx, sy, o.w, 4);
-            c.fillStyle = shade("#5c5c66", f);
+            c.fillStyle = shade("#5c5c66", f2);
             c.fillRect(sx + 1, sy + 5, o.w - 2, 2);
             c.fillStyle = "#ff8a3a";
             c.globalAlpha = 0.8 + Math.sin(this.time * 6) * 0.18;
@@ -37955,12 +38025,12 @@
             c.globalAlpha = 1;
           }
         } else if (o.type === "altar") {
-          this.drawAltar(c, o, sx, sy, Math.max(f, 0.5));
+          this.drawAltar(c, o, sx, sy, Math.max(f2, 0.5));
         } else if (o.type === "lorestone") {
           const done = o.hint !== void 0 || this.loreRead && this.loreRead[o.lore];
-          c.fillStyle = shade("#4a4438", f);
+          c.fillStyle = shade("#4a4438", f2);
           c.fillRect(sx, sy + 5, o.w, o.h - 5);
-          c.fillStyle = shade("#5d5648", f);
+          c.fillStyle = shade("#5d5648", f2);
           c.fillRect(sx - 2, sy, o.w + 4, 8);
           c.fillStyle = done ? "#4a5f7a" : "#e8d8a0";
           c.globalAlpha = done ? 0.5 : 0.55 + Math.sin(this.time * 2.2) * 0.3;
@@ -38024,13 +38094,13 @@
           }
         } else if (o.type === "ciphernote") {
           const read = (this.cipherSeen || {})[o.ruin] && (this.cipherSeen[o.ruin] || {})[o.idx];
-          c.fillStyle = shade("#3a3226", f);
+          c.fillStyle = shade("#3a3226", f2);
           c.fillRect(sx - 1, sy - 1, o.w + 2, o.h + 2);
-          c.fillStyle = shade(read ? "#9a9078" : "#cfc6a8", f);
+          c.fillStyle = shade(read ? "#9a9078" : "#cfc6a8", f2);
           c.fillRect(sx, sy, o.w, o.h);
-          c.fillStyle = shade("#7a6f56", f);
+          c.fillStyle = shade("#7a6f56", f2);
           for (let i = 1; i < 5; i++) c.fillRect(sx + 3, sy + 3 + i * 4, o.w - 6, 1);
-          c.fillStyle = shade("#5a5142", f);
+          c.fillStyle = shade("#5a5142", f2);
           c.fillRect(sx + o.w / 2 - 1, sy + 1, 2, 2);
           if (!read) {
             c.globalAlpha = 0.35 + Math.sin(this.time * 2.6 + o.idx) * 0.3;
@@ -38039,13 +38109,21 @@
             c.globalAlpha = 1;
           }
         } else if (o.type === "npc") {
-          this.drawNpc(c, o, sx, sy, f);
+          this.drawNpc(c, o, sx, sy, f2);
         } else {
-          this.drawFacility(c, o, sx, sy, f);
+          this.drawFacility(c, o, sx, sy, f2);
         }
         c.restore();
       }
+    },
+    /** 렌더 단계 — 스킬의 바닥 연출 */
+    rGround(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       this.drawSigGround(c, camX, camY);
+    },
+    /** 렌더 단계 — 시체 · 떨어진 물건 */
+    rDrops(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       c.textAlign = "center";
       c.textBaseline = "middle";
       this.drawCorpses(c, camX, camY);
@@ -38056,6 +38134,10 @@
         Art.drawItem(c, d.item.id, sx - 11, sy - 11, 22);
         c.globalAlpha = 1;
       }
+    },
+    /** 렌더 단계 — 몹 · 비석 · 플레이어 · 펫 */
+    rActors(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       for (const e of this.ents) {
         const sx = e.x - camX, sy = e.y - camY;
         if (sx < -200 || sx > this.W + 200 || sy < -200 || sy > this.H + 200) continue;
@@ -38094,6 +38176,10 @@
       for (const pet of this.petEnts || []) if (pet) this.drawPet(c, pet, camX, camY);
       this.drawWhirlArc(c, p, camX, camY);
       this.drawSigSky(c, camX, camY);
+    },
+    /** 렌더 단계 — 어둠 · 빛 색 · 공기색 · 유적 여운 */
+    rLightOverlay(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
       this.drawGlow(c, camX, camY, tx0, ty0, tx1, ty1);
       this.drawLairGlow(c, camX, camY);
@@ -38116,6 +38202,10 @@
         c.restore();
       }
       this.drawCaves(c, camX, camY);
+    },
+    /** 렌더 단계 — 폭발 · 투사체 · 링 · 번개 · 입자 · 피해 숫자 */
+    rFx(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       if (this.bursts) for (let i = this.bursts.length - 1; i >= 0; i--) {
         const b = this.bursts[i];
         b.t += 1 / 60;
@@ -38329,6 +38419,10 @@
         }
       }
       c.globalAlpha = 1;
+    },
+    /** 렌더 단계 — 조준 · 비 · 비네트 · 길잡이 */
+    rScreen(f) {
+      const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       this.drawCursor(c, camX, camY);
       if (camY < SURF_BASE * TS + 400) this.drawRain(c);
       const vg = c.createRadialGradient(this.W / 2, this.H / 2, Math.min(this.W, this.H) * 0.38, this.W / 2, this.H / 2, Math.max(this.W, this.H) * 0.78);
@@ -42322,7 +42416,7 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, pipeline_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
