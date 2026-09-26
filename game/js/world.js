@@ -15,7 +15,7 @@ let SKY_Y = 40;             // 하늘 섬 구역 (이보다 위)
 const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buildCaveZones)
 /* 이보다 작고 고립된(지상과 안 통하는) 공동은 동굴로 치지 않고 메운다(타일 수). */
 const MIN_CAVE = 220;
-let CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1100 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
+let CAMP_X0 = 1000 + SHIFT, CAMP_X1 = 1066 + SHIFT;   // 베이스캠프 — 잿빛 숲 (zoneAt에서도 참조)
 
 /* 세션 3 — 왼쪽으로 갈수록 가라앉은 바다 · 빙하 지대 · 서리 지대 순으로 나온다 — 사연: docs/code-history.md#h101 */
 let SEA_X1 = 430;            // 가라앉은 바다 — 여기부터 왼쪽이 물
@@ -62,7 +62,8 @@ function setWorldSize(key) {
   WSX = WSY = WORLD_SIZES[WSIZE].k;
   WW = SX(5000); WH = SY(720);
   WORLD_BOT = SY(480); SURF_BASE = SY(70); HELL_Y = SY(390); DEEP_Y = SY(280); SKY_Y = SY(40);
-  CAMP_X0 = SX(1050 + SHIFT) - 50; CAMP_X1 = CAMP_X0 + 100;
+  /* 오두막 셋 x0+2~49 · 광장 가운데 x0+50(±12) — 오른쪽 끝은 광장 횃불(x0+59) 바로 밖. 100 이던 동안 오른쪽 55칸이 빈 안전 지대였다. */
+  CAMP_X0 = SX(1050 + SHIFT) - 50; CAMP_X1 = CAMP_X0 + 66;
   SEA_X1 = SX(430); GLACIER_X1 = SX(SHIFT);
   for (const b of BIOMES) { b.x0 = b.bx0 === 0 ? 0 : SX(b.bx0); b.x1 = b.bx1 >= 5000 ? WW : SX(b.bx1); }
   for (const r of RUIN_SPEC) {
@@ -383,7 +384,7 @@ class World {
     }
     // 마을 부지 평탄화
     const vx0 = CAMP_X0, vx1 = CAMP_X1;    // 베이스캠프 — 잿빛 숲
-    let vh = this.surface[(vx0 + vx1) >> 1];
+    let vh = this.surface[vx0 + 50];
     for (let x = vx0 - 12; x < vx1 + 12; x++) {
       const t = clamp(inv(vx0 - 12, vx0, x), 0, 1) * clamp(inv(vx1 + 12, vx1, x), 0, 1);
       this.surface[x] = Math.round(lerp(this.surface[x], vh, Math.min(1, t * 1.6)));
@@ -596,7 +597,7 @@ class World {
     this.faults = (this.faults || []).filter(f => this.get(f.x, f.y) === T.FAULTSTONE);
     this.placeRichOres();        // 광상 — 제 난수, 광맥 칸만 바꾼다
 
-    this.spawnX = (vx0 + vx1) >> 1;
+    this.spawnX = vx0 + 50;                  // 광장 가운데
     this.spawnY = vh - 3;
     this.fitObjects();
     this.placeRigs(true);        // 채취탑 자리 — 물건을 다 맞춘 뒤(지면·유적이 확정된 뒤)
@@ -954,7 +955,7 @@ class World {
       this.objects.push({ type: 'npc', npc: h.npc, x: (bx + h.w / 2) * TS, y: gy * TS - 44, w: 22, h: 44 });
     }
     // 광장 — 작업대/용광로는 플레이어가 직접 만들어 놓는 것과 **같은 크기**(OBJ_SIZE)를 쓴다 — 사연: docs/code-history.md#h106
-    const cx = (x0 + x1) >> 1;
+    const cx = x0 + 50;                      // 오두막 바로 오른쪽 — x1 과 묶지 않는다(캠프 폭을 바꿔도 오두막과 안 겹치게)
     const wbS = OBJ_SIZE.workbench, fgS = OBJ_SIZE.forge;
     this.objects.push({ type: 'workbench', x: (cx - 4) * TS, y: gy * TS - wbS.h, w: wbS.w, h: wbS.h, lv: 1 });
     this.objects.push({ type: 'forge', x: (cx + 3) * TS, y: gy * TS - fgS.h, w: fgS.w, h: fgS.h, lv: 1 });
@@ -3770,7 +3771,7 @@ class World {
     this.clearBox(cx2 - 16, sy2 - 15, 32, 15);
     for (let x = cx2 - 16; x < cx2 + 16; x++) { this.set(x, sy2, T.BRICK); this.set(x, sy2 + 1, T.BRICK); }
     this.objects.push({ type: 'altar', boss: 'frost_witch', x: cx2 * TS, y: sy2 * TS - 44, w: 40, h: 44 });
-    // 슬라임 제단 (마을 근처 언덕) — 베이스캠프(vx0..vx1 = 1000..1100, 여유폭 포함 984..1115)와 겹치지 않도록 서쪽으로 충분히 떨어뜨려 둔다
+    // 슬라임 제단 (마을 근처 언덕) — 베이스캠프(vx0..vx1 = 1000..1066, 여유폭 포함 984..1082)와 겹치지 않도록 서쪽으로 충분히 떨어뜨려 둔다
     const cx3 = SX(800 + SHIFT), sy3 = this.surface[cx3];
     this.clearBox(cx3 - 14, sy3 - 13, 28, 13);
     for (let x = cx3 - 14; x < cx3 + 14; x++) { this.set(x, sy3, T.STONE); this.set(x, sy3 + 1, T.STONE); }

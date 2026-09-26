@@ -9,7 +9,8 @@ const BGM = {
   // mp3 원본은 용량이 커서(5~11MB) AAC(m4a)로 다시 구웠다 — 브라우저 재생엔 문제없다.
   title:   'assets/audio/falling_stars.m4a',        // 타이틀 화면
   normal:  'assets/audio/stars_of_despair.m4a',     // 평상시
-  tense:   'assets/audio/clockwork_hollow.m4a',     // 밤 · 어두움 · 저체력 · 비
+  tense:   'assets/audio/clockwork_hollow.m4a',     // 밤 · 어두움 · 저체력 · 비 말고 날씨(붉은 달·모래 폭풍·포자)
+  rain:    'assets/audio/lonely_rain.m4a',          // 비(눈) 올 때만 (2:59)
   boss:    'assets/audio/bitcrusher_colossus.m4a',  // 보스전
   village: 'assets/audio/victorys_chiptune.m4a',    // 베이스캠프 · 여명 마을
   east:     'assets/audio/broken_quest.m4a',        // 버섯 골짜기 · 부패한 땅 (마을 동쪽)
@@ -26,7 +27,7 @@ const BGM = {
 };
 
 /* 파일이 아직 없는 곡은 여기 적힌 곡으로 대신한다. */
-const BGM_FALLBACK = { east: 'normal', catacomb: 'tense', sky: 'normal',
+const BGM_FALLBACK = { east: 'normal', catacomb: 'tense', sky: 'normal', rain: 'tense',
   /* 바다 곡이 없으면 평상시 곡, 심해 곡이 없으면 바다 곡 → 결국 평상시 곡으로 내려간다. */
   sea: 'normal', seadeep: 'sea',
   // 종장 두 곡이 없으면 보스 곡, 마지막 음이 없으면 긴장 곡으로 내려간다
