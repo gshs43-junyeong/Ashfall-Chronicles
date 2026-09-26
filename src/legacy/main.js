@@ -38,7 +38,24 @@ import * as size from './size.js';
 import * as data from './data.js';
 import * as world from './world.js';
 import * as tileart from './tileart.js';
+/* tileart.js TileArt.paint 의 질감 갈래 — 읽히는 순간 TILE_PAINT 에 붙는다 */
+import * as tp_ground from './art/tiles/ground.js';
+import * as tp_misc from './art/tiles/misc.js';
+import * as tp_factory from './art/tiles/factory.js';
+import * as tp_water from './art/tiles/water.js';
+import * as tp_village from './art/tiles/village.js';
+import * as tp_ruins from './art/tiles/ruins.js';
+import * as tp_cave from './art/tiles/cave.js';
 import * as itemart from './itemart.js';
+/* itemart.js Art.paint 의 그림 갈래 — 읽히는 순간 ITEM_PAINT 에 붙는다 */
+import * as ip_glyphs from './art/items/glyphs.js';
+import * as ip_gear from './art/items/gear.js';
+import * as ip_goods from './art/items/goods.js';
+import * as ip_farm from './art/items/farm.js';
+import * as ip_loot from './art/items/loot.js';
+import * as ip_skills from './art/items/skills.js';
+import * as ip_ui from './art/items/ui.js';
+import * as ip_misc from './art/items/misc.js';
 import * as sprites from './sprites.js';
 import * as titlebg from './titlebg.js';
 import * as entity from './entity.js';
@@ -84,7 +101,7 @@ if (!lang.I18N.isSource) {
 /* 디버그 창구 — 콘솔·?debug 도구·tests·tools/*.py 가 예전처럼 G · World · T · WW … 를 이름으로 읽는다.
    ★ 읽기 전용이고 살아 있는 값이다(WW 는 setWorldSize 뒤에 바뀐 값). 게임 코드는 이것을 읽지 말고 import 할 것.
    브라우저가 이미 가진 이름은 덮지 않는다. */
-for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, world, tileart, itemart, sprites, titlebg, entity, factory, ui, u_tree, u_quest, u_craft, u_machine, u_shop, u_tip, u_dialogue, u_hud, music, game, g_act, g_fishing, g_village, g_altar, g_spawn, g_progress, g_save, g_sound, g_render, g_render_far, g_render_fx, g_ruin_pulse, g_meteor, g_ruin_map, g_corpse]) {
+for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, world, tileart, tp_ground, tp_misc, tp_factory, tp_water, tp_village, tp_ruins, tp_cave, itemart, ip_glyphs, ip_gear, ip_goods, ip_farm, ip_loot, ip_skills, ip_ui, ip_misc, sprites, titlebg, entity, factory, ui, u_tree, u_quest, u_craft, u_machine, u_shop, u_tip, u_dialogue, u_hud, music, game, g_act, g_fishing, g_village, g_altar, g_spawn, g_progress, g_save, g_sound, g_render, g_render_far, g_render_fx, g_ruin_pulse, g_meteor, g_ruin_map, g_corpse]) {
   for (const k of Object.keys(m)) {
     if (k in window) continue;
     Object.defineProperty(window, k, { get: () => m[k], configurable: true });
