@@ -831,6 +831,38 @@
     };
   }
 
+  // src/engine/core/loop.js
+  var loop_exports = {};
+  __export(loop_exports, {
+    startLoop: () => startLoop
+  });
+  function startLoop(frame, maxDt) {
+    let last = 0;
+    const tick = (t) => {
+      requestAnimationFrame(tick);
+      const now = t / 1e3;
+      const rawDt = now - (last || now);
+      last = now;
+      frame(Math.min(maxDt, rawDt), rawDt);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  // src/engine/platform/viewport.js
+  var viewport_exports = {};
+  __export(viewport_exports, {
+    fitCanvas: () => fitCanvas
+  });
+  function fitCanvas(cv, ctx, zoom, dprMax = 2) {
+    const dpr = Math.min(dprMax, devicePixelRatio || 1);
+    cv.width = innerWidth * dpr;
+    cv.height = innerHeight * dpr;
+    const W = innerWidth / zoom, H = innerHeight / zoom;
+    ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    return { W, H };
+  }
+
   // src/legacy/util.js
   var util_exports = {};
   __export(util_exports, {
@@ -31915,21 +31947,16 @@
         this.renderSlotScreen();
       };
       $("#btn-respawn").onclick = () => this.respawn();
-      requestAnimationFrame((t) => this.loop(t));
+      startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
     },
     /** 설정의 시야 배율. */
     viewZoom() {
       return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6);
     },
     resize() {
-      const dpr = Math.min(2, devicePixelRatio || 1);
-      const z = this.viewZoom();
-      this.cv.width = innerWidth * dpr;
-      this.cv.height = innerHeight * dpr;
-      this.W = innerWidth / z;
-      this.H = innerHeight / z;
-      this.ctx.setTransform(dpr * z, 0, 0, dpr * z, 0, 0);
-      this.ctx.imageSmoothingEnabled = false;
+      const v = fitCanvas(this.cv, this.ctx, this.viewZoom());
+      this.W = v.W;
+      this.H = v.H;
     },
     /* ================= 입력 ================= */
     /** 이 액션에 걸린 키 목록. */
@@ -32599,12 +32626,8 @@
       }
     },
     /* ================= 루프 ================= */
-    loop(t) {
-      requestAnimationFrame((t2) => this.loop(t2));
-      const now = t / 1e3;
-      const rawDt = now - (this.last || now);
-      let dt = Math.min(0.033, rawDt);
-      this.last = now;
+    /** 한 프레임 — dt 는 0.033초로 자른 것, rawDt 는 실제로 흐른 시간(engine/core/loop.js). */
+    frame(dt, rawDt) {
       if (this.state === "play" && !this.paused) {
         this.update(dt);
       }
@@ -42060,7 +42083,7 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
