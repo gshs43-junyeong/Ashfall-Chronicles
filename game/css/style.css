@@ -37,6 +37,20 @@ button{
 
 /* ================= HUD ================= */
 #hud{position:absolute;inset:0;pointer-events:none;font-size:13px}
+/* UI 크기(설정 --ui-scale) · 안전 영역(노치) — 둘 다 기본값이면 예전 그대로. 툴팁은 커서 좌표로 자리를 잡아 zoom 에서 뺀다. */
+:root{--ui-scale:1}
+#hud{zoom:var(--ui-scale);inset:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
+.panel,#dialogue,.modal-box,.settings,#toasts{zoom:var(--ui-scale)}
+/* 폰을 세로로 들면 — 가로 화면만 맞춘다(계획 §8-6) */
+#rotate-hint{display:none;position:fixed;inset:0;z-index:500;background:#07080cf2;color:#e8dcc0;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:17px}
+#rotate-hint .rh-ic{font-size:54px;animation:rh-turn 2.4s ease-in-out infinite}
+@keyframes rh-turn{0%,40%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+@media (orientation:portrait) and (max-width:600px){body.touch #rotate-hint{display:flex}body.touch #touchpad{display:none}}
+/* 터치: 스킬 칸을 손가락으로 쓴다 · 누를 곳은 44px 이상 */
+body.touch #skillbar{pointer-events:auto}
+body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
+#touchpad .ti-fs{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:32px;border-radius:8px;
+  display:grid;place-items:center;font:16px system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);pointer-events:auto}
 #hud-left{position:absolute;left:14px;top:12px;width:280px}
 .orb-row{background:linear-gradient(#14130fee,#0c0b09ee);border:1px solid var(--frame);
   border-radius:5px;padding:10px 11px 9px;box-shadow:0 4px 18px #000b,inset 0 0 0 1px #00000050;

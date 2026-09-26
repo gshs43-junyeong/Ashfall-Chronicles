@@ -126,7 +126,7 @@ export const UI = {
   },
   /* ---------------- 설정 (일시정지 화면) ---------------- */
   bindSettings() {
-    const num = [['music', 'set-music', '%'], ['sfx', 'set-sfx', '%'], ['shake', 'set-shake', '%']];
+    const num = [['music', 'set-music', '%'], ['sfx', 'set-sfx', '%'], ['shake', 'set-shake', '%'], ['uiscale', 'set-uiscale', '%']];
     for (const [key, id] of num) {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('input', () => G.setOpt(key, +el.value));
@@ -285,6 +285,7 @@ export const UI = {
     for (const k of ['tabbar', 'quest', 'buffs', 'clock', 'hotbar']) chk('set-hud-' + k, s['hud_' + k]);
     chk('set-dlgtype', s.dlgtype === undefined ? 1 : s.dlgtype);
     set('set-view', s.view); txt('set-view-v', s.view);
+    set('set-uiscale', s.uiscale || 100); txt('set-uiscale-v', s.uiscale || 100);
   },
 
   /** 아이템이 아닌 순수 텍스트 툴팁(휴지통 안내 등) */
