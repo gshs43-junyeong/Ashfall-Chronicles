@@ -900,7 +900,7 @@ const UI = {
               const must = (ch.require || []).includes(b.o.verb);
               h += `<div class="obj ${b.p.done ? 'ok' : ''}${must ? ' must' : ''}">` +
                 `${b.p.done ? '✔' : '◆'} ${must ? '<span class="objreq">필수</span> ' : ''}${b.o.t}` +
-                `<span class="obj-task">${b.o.task || ''} <b>${b.p.cur}/${b.p.max}</b></span></div>`;
+                `<span class="obj-task">${b.o.task || ''} <b>${b.p.label || b.p.cur + '/' + b.p.max}</b></span></div>`;
             }
             if (st.goal) {
               const gp = st.goal.p, go = st.goal.o;
@@ -1083,7 +1083,7 @@ const UI = {
           h += `<div class="qt-pick${b.p.done ? ' done' : ''}${must ? ' must' : ''}">` +
             `<span class="qt-line">${b.p.done ? '✔' : '·'} ` +
             (must ? '<span class="qt-must">필수</span> ' : '') + `${b.o.t}</span>` +
-            `<span class="qt-task">${b.o.task || ''} <b>${b.p.cur}/${b.p.max}</b></span></div>`;
+            `<span class="qt-task">${b.o.task || ''} <b>${b.p.label || b.p.cur + '/' + b.p.max}</b></span></div>`;
         }
         h += '</div>';
       }

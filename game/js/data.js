@@ -4199,7 +4199,7 @@ const EGG_POOL = {
 
 /* ---------------- 스토리 ---------------- */
 /* obj types: kill(target,n) / mine(tile,n) / collect(item,n) / talk(npc) / depth(y) / boss(target) /
-   craft(item) / */
+   craft(item) / and(parts — 이어서 하는 일: 모으고 → 만들기. 전부 끝나야 한 칸) */
 const CHAPTERS = [
   {
     id: 0, title: '떨어진 별', sub: '서 장', art: 'chapter_0_fallen_star',
@@ -4210,9 +4210,10 @@ const CHAPTERS = [
       '그것은 다섯 갈래 빛으로 부서져 흩어졌고, 그중 한 조각의 빛이 네 오른손에 박혔다.\n' +
       '눈을 떴을 때 세계는 색을 잃어가고 있었다. 사람들은 그것을 잿빛이라 불렀다.',
     basics: [
-      { type: 'collect', item: 'wood', n: 10, t: '불을 피울 것부터', task: '나무 10개', verb: 'gather' },
-      { type: 'craft', item: 'plank', t: '무너진 것을 다시 세우려면', task: '판자 만들기', verb: 'craft' },
-      { type: 'kill', target: 'slime', n: 3, t: '잿빛이 걸어 다니는 것을 처음 본다', task: '잿빛 슬라임 3마리', verb: 'kill' }
+      { type: 'and', parts: [{ type: 'collect', item: 'wood', n: 10 }, { type: 'craft', item: 'plank' }],
+        t: '무너진 것을 다시 세우려면', task: '나무 10개 → 판자 만들기', verb: 'craft' },
+      { type: 'kill', target: 'slime', n: 3, t: '잿빛이 걸어 다니는 것을 처음 본다', task: '잿빛 슬라임 3마리', verb: 'kill' },
+      { type: 'collect', item: 'stone', n: 20, t: '바람을 막을 벽 한 줄', task: '돌 20개', verb: 'gather' }
     ],
     needBasics: 2,
     require: [],
@@ -4233,9 +4234,9 @@ const CHAPTERS = [
       '첫 번째 조각은 캠프 동쪽 늪에 떨어졌다. 그것은 혼자이지 않기를 꿈꿨고,\n' +
       '그래서 끝없이 갈라지기 시작했다.',
     basics: [
-      { type: 'mine', tile: T.COPPER, n: 12, t: '땅속에는 아직 색이 남아 있다', task: '구리 광맥 12번', verb: 'dig' },
+      { type: 'and', parts: [{ type: 'mine', tile: T.COPPER, n: 12 }, { type: 'craft', item: 'sword_copper' }],
+        t: '맨손으로는 안 된다', task: '구리 광맥 12번 → 구리 장검 벼리기', verb: 'dig' },
       { type: 'kill', target: 'slime', n: 8, t: '하나가 둘이 되기 전에', task: '갈라진 것 8마리', verb: 'kill' },
-      { type: 'craft', item: 'sword_copper', t: '맨손으로는 안 된다', task: '구리 장검 벼리기', verb: 'craft' },
       { type: 'explore', ruin: 'mine', t: '사람들이 두고 간 갱도', task: '버려진 광산 탐험', verb: 'explore' }
     ],
     needBasics: 2,
@@ -4362,13 +4363,13 @@ const CHAPTERS = [
       '최초의 파수꾼은 적을 막으려고 만들어진 게 아니다.\n' +
       '다음 사람이 같은 방법을 쓰지 못하게 하려고 만들어졌다.',
     basics: [
-      { type: 'collect', item: 'rune_frag', n: 3, t: '석판 셋이 한 문장을 나눠 적었다', task: '룬 조각 3개', verb: 'gather' },
-      { type: 'craft', item: 'ruin_key', t: '문은 안에서 만든 것으로만 열린다', task: '유적의 열쇠 벼리기', verb: 'craft' },
+      { type: 'and', parts: [{ type: 'collect', item: 'rune_frag', n: 3 }, { type: 'craft', item: 'ruin_key' }],
+        t: '석판 셋이 나눠 적은 문장으로 문을 연다', task: '룬 조각 3개 → 유적의 열쇠 벼리기', verb: 'craft' },
       { type: 'kill', target: 'ruin_guard', n: 8, t: '아직도 명령을 지키고 있다', task: '유적 수호병 8기', verb: 'kill' },
       { type: 'kill', target: 'archivist', n: 6, t: '읽던 것을 놓지 못한 사람들', task: '잊힌 사서 6명', verb: 'kill' }
     ],
     needBasics: 3,
-    require: ['gather', 'craft'],
+    require: ['craft'],
     goal: { type: 'boss', target: 'first_keeper', t: '먼저 왔던 이들의 마지막 문장', task: '최초의 파수꾼 토벌', verb: 'boss' },
     rw: { xp: 90000, gold: 40000, items: [['charm_rune', 1], ['star_heart', 2]] },
     outro: '파수꾼이 멈추자 유적의 불이 하나씩 꺼졌다.\n' +
@@ -4387,9 +4388,11 @@ const CHAPTERS = [
       '엘라라가 물었다. "그게 오면 어쩔 건데."\n' +
       '보린이 대신 답했다. "여기서 끝내야지. 다음 사람한테 넘기지 말고."',
     basics: [
-      { type: 'collect', item: 'star_heart', n: 5, t: '다섯 조각을 한자리에', task: '별의 심장 5개', verb: 'gather' },
-      { type: 'craft', item: 'star_whole', t: '부서진 것을 되맞춘다', task: '되맞춘 별 만들기', verb: 'craft' },
-      { type: 'craft', item: 'sum_pursuer', t: '이번에는 우리가 부른다', task: '별의 부름 만들기', verb: 'craft' }
+      { type: 'and', parts: [{ type: 'collect', item: 'star_heart', n: 5 }, { type: 'craft', item: 'star_whole' },
+                             { type: 'craft', item: 'sum_pursuer' }],
+        t: '다섯 조각을 되맞춰, 이번에는 우리가 부른다', task: '별의 심장 5개 → 되맞춘 별 → 별의 부름', verb: 'craft' },
+      { type: 'kill', target: 'wraith', n: 12, t: '별 냄새를 맡고 올라온 것들', task: '심연의 망령 12마리', verb: 'kill' },
+      { type: 'kill', target: 'sky_sentry', n: 10, t: '하늘도 조각을 지키고 있었다', task: '하늘 파수꾼 10기', verb: 'kill' }
     ],
     needBasics: 2,
     require: ['craft'],
@@ -4519,8 +4522,9 @@ const CHAPTERS = [
       '보린이 망치를 내려놓았다. "…이건 부수는 게 아닌 것 같은데."\n' +
       '케이드: "부수는 거 아니야. 이번엔 우리가 남아 있잖아."',
     basics: [
-      { type: 'craft', item: 'stop_core', t: '『멈춰라』 하나만 크게 적었다', task: '정지 핵 만들기', verb: 'craft' },
-      { type: 'collect', item: 'core_shard', n: 45, t: '핵을 채울 것', task: '노심 파편 45개', verb: 'gather' },
+      { type: 'and', parts: [{ type: 'collect', item: 'core_shard', n: 45 }, { type: 'craft', item: 'stop_core' }],
+        t: '『멈춰라』 하나만 크게 적었다', task: '노심 파편 45개 → 정지 핵 만들기', verb: 'craft' },
+      { type: 'collect', item: 'circuit', n: 30, t: '끊어진 회로를 다시 잇는다', task: '회로 30개', verb: 'gather' },
       { type: 'kill', target: 'coreling', n: 12, t: '떨어져 나온 것도 멈추지 않는다', task: '노심 파편체 12기', verb: 'kill' },
       { type: 'kill', target: 'weldarm', n: 8, t: '고치던 팔이 붙잡는다', task: '용접 팔 8기', verb: 'kill' }
     ],
@@ -4596,12 +4600,15 @@ const CHAPTERS = [
       '그리고 얼음이 끝나는 곳에서, 물이 시작됐다.\n\n' +
       '수면 아래로 무언가 줄지어 서 있는 것이 비친다. 굴뚝 같기도 하고, 탑 같기도 하다.\n' +
       '케이드가 오래 들여다보다 말했다. "저거 도시야."',
-    obj: [
-      { type: 'depth', y: 120, t: '수면 아래로 내려가 보기' },
-      { type: 'collect', item: 'kelp', n: 30, t: '해초 30개 수집' },
-      { type: 'kill', target: 'reef_crab', n: 12, t: '암초 게 12기 처치' },
-      { type: 'craft', item: 'tank_air', t: '휴대용 산소통 제작' }
+    basics: [
+      { type: 'depth', y: 120, t: '수면 아래로 내려가 본다', task: '깊은 물 밑까지', verb: 'depth' },
+      { type: 'and', parts: [{ type: 'collect', item: 'kelp', n: 30 }, { type: 'craft', item: 'tank_air' }],
+        t: '숨을 물 밑까지 가져간다', task: '해초 30개 → 휴대용 산소통', verb: 'craft' },
+      { type: 'kill', target: 'reef_crab', n: 12, t: '물가를 차지한 것들', task: '암초 게 12기', verb: 'kill' },
+      { type: 'collect', item: 'sea_salt', n: 30, t: '바닷물이 남긴 것', task: '바다 소금 30개', verb: 'gather' }
     ],
+    needBasics: 3,
+    require: ['craft'],
     rw: { xp: 5200000, gold: 2000000, items: [['tank_air', 1], ['jelly_lamp', 20]] },
     outro: '숨이 먼저 떨어진다. 물은 사람을 밀어내지 않고, 그냥 기다린다.\n\n' +
       '통 하나를 등에 메고서야 겨우 지붕 하나를 만져 봤다. 기와가 아니라 판이었다.\n' +
@@ -4620,12 +4627,14 @@ const CHAPTERS = [
       '누가 살던 곳이다. 도망친 흔적이 아니라, 하루가 그대로 멈춘 흔적이다.\n\n' +
       '엘라라: "왜 아무도 안 나갔지?"\n' +
       '케이드: "나갈 데가 없었겠지. 위가 이미 잿더미였으면."',
-    obj: [
-      { type: 'kill', target: 'reef_shark', n: 16, t: '암초 상어 16기 처치' },
-      { type: 'kill', target: 'deep_octopus', n: 10, t: '심해 문어 10기 처치' },
-      { type: 'collect', item: 'abyss_pearl', n: 8, t: '심연 진주 8개 수집' },
-      { type: 'craft', item: 'abyss_core', t: '심해 노심 제작' }
+    basics: [
+      { type: 'kill', target: 'reef_shark', n: 16, t: '빛을 보고 모여드는 것', task: '암초 상어 16기', verb: 'kill' },
+      { type: 'kill', target: 'deep_octopus', n: 10, t: '바위 틈에서 팔을 뻗는 것', task: '심해 문어 10기', verb: 'kill' },
+      { type: 'and', parts: [{ type: 'collect', item: 'abyss_pearl', n: 8 }, { type: 'craft', item: 'abyss_core' }],
+        t: '진주와 내압판을 눌러 굳힌다', task: '심연 진주 8개 → 심해 노심', verb: 'craft' }
     ],
+    needBasics: 3,
+    require: ['craft'],
     rw: { xp: 8000000, gold: 3200000, items: [['abyss_core', 2], ['ring_pearl', 1]] },
     outro: '노심을 눌러 굳히는 데 진주 두 개가 들어갔다. 값이 비싸다는 뜻이 아니라,\n' +
       '그만큼 깊이 내려갔다 왔다는 뜻이다.\n\n' +
@@ -4645,11 +4654,14 @@ const CHAPTERS = [
       '미라가 뒤로 물러서며 말했다. "…파수꾼이야. 또."\n' +
       '엘라라: "이번엔 뭘 지키는데."\n\n' +
       '보린이 조용히 대답했다. "지키는 게 아닐지도 몰라. 여기 남은 게 저것뿐인 걸 수도 있지."',
-    obj: [
-      { type: 'kill', target: 'abyss_angler', n: 14, t: '심연 초롱아귀 14기 처치' },
-      { type: 'craft', item: 'sum_tide', t: '가라앉은 종 제작' },
-      { type: 'boss', target: 'tide_warden', t: '조수의 파수꾼과의 결전' }
+    basics: [
+      { type: 'kill', target: 'abyss_angler', n: 14, t: '가장 깊은 골의 불빛', task: '심연 초롱아귀 14기', verb: 'kill' },
+      { type: 'craft', item: 'sum_tide', t: '물이 대신 대답하게 한다', task: '가라앉은 종 만들기', verb: 'craft' },
+      { type: 'collect', item: 'tide_bar', n: 10, t: '조수가 벼린 쇠', task: '조수 주괴 10개', verb: 'gather' }
     ],
+    needBasics: 2,
+    require: ['craft'],
+    goal: { type: 'boss', target: 'tide_warden', t: '조수의 파수꾼과 마주 선다', task: '조수의 파수꾼 토벌', verb: 'boss' },
     rw: { xp: 14000000, gold: 5600000, items: [['tide_heart', 1], ['hammer_tide', 1], ['chest_abyss', 1]] },
     outro: '파수꾼은 싸우는 내내 한 번도 물 밖으로 나오려 하지 않았다.\n' +
       '나올 수 없어서가 아니라, 나갈 생각이 아예 없어서.\n\n' +

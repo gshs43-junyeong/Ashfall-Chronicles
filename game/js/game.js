@@ -2724,7 +2724,7 @@ const G = {
       // 아직 준비 중이면 고유 동사 쪽을 먼저 알려 준다 — 그게 이 장의 이야기다
       const pick = st.basics.find(b => !b.p.done && st.missing.includes(b.o.verb))
                 || st.basics.find(b => !b.p.done);
-      this.toast(`${session} · 준비 ${st.done}/${st.need}` + (pick ? ` · ${pick.o.t} (${pick.p.cur}/${pick.p.max})` : ''));
+      this.toast(`${session} · 준비 ${st.done}/${st.need}` + (pick ? ` · ${pick.o.t} (${pick.p.label || pick.p.cur + "/" + pick.p.max})` : ''));
     }
     UI.togglePanel('quest');
   },
@@ -3853,7 +3853,7 @@ const G = {
   /* 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은 목록에 없거나 있어도 순서가 강제됐다 — 사연: docs/code-history.md#h54 */
   objProgress(o) {
     const p = this.player;
-    let cur = 0, max = 1;
+    let cur = 0, max = 1, label = null;
     switch (o.type) {
       case 'kill': cur = p.kills[o.target] || 0; max = o.n; break;
       case 'mine': cur = p.mined[o.tile] || 0; max = o.n; break;
@@ -3874,8 +3874,18 @@ const G = {
         break;
       /* 세우고 · 물리고 · 끊기. */
       case 'place': cur = this.placeProgress(o); max = o.stop ? 3 : 1; break;
+      /* 이어서 하는 일(모으고 → 만들기) — 칸마다 단위가 달라 숫자를 더하지 않고 끝낸 칸을 센다. 앞 칸이 덜 됐으면 뒤 칸이 됐어도 못 넘긴다. */
+      case 'and': {
+        const ps = o.parts.map(q => this.objProgress(q));
+        max = ps.length;
+        cur = ps.findIndex(q => !q.done);
+        if (cur < 0) cur = max;
+        // 지금 칸의 진행을 함께 보인다 — '1/2' 만으로는 나무를 몇 개 더 모아야 하는지 모른다
+        else label = `${cur + 1}/${max}단계` + (ps[cur].max > 1 ? ` · ${ps[cur].cur}/${ps[cur].max}` : '');
+        break;
+      }
     }
-    return { cur: Math.min(cur, max), max, done: cur >= max };
+    return { cur: Math.min(cur, max), max, done: cur >= max, label };
   },
 
   /** 조립기: 놓았나(1) · 동력이 돈 적 있나(2) · 지금 멈춰 있나(3) */
@@ -4170,7 +4180,8 @@ const G = {
     if (!ch || !w) return out;
     /* 나침반 — 준비 중에는 basics 를, 자격을 갖춘 뒤에는 결전만 가리킨다 — 사연: docs/code-history.md#h56 */
     const stt = this.chapterState(ch);
-    const aim = stt.ready ? (stt.goal ? [stt.goal.o] : []) : stt.basics.filter(b => !b.p.done).map(b => b.o);
+    const aim = (stt.ready ? (stt.goal ? [stt.goal.o] : []) : stt.basics.filter(b => !b.p.done).map(b => b.o))
+      .flatMap(o => o.type === 'and' ? o.parts : [o]);
     aim.forEach((o) => {
       if (this.objProgress(o).done) return;
       if (o.type === 'boss') {
