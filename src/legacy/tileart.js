@@ -3,6 +3,7 @@ import { shade } from '../engine/core/color.js';
 import { TAU, clamp, lerp } from '../engine/core/math.js';
 import { RNG, tileHash } from '../engine/core/rng.js';
 import { bakeAtlas, blitCell, cacheGet } from '../engine/render/atlas.js';
+import { createConnTiles } from '../engine/render/conn.js';
 import { WW } from './size.js';
 import { CAVE_TYPES, FLUID_KIND, MACH_OF_TILE, T, TILE_DEF, WALL_COLOR } from './data.js';
 import { TS } from './world.js';
@@ -270,6 +271,10 @@ export const TileArt = {
       (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, g, ox, oy, WALL_COLOR[i], rng);
     });
 
+    /* 이웃을 보고 그리는 타일 — ① BODY_ONLY 는 엔진 규칙, ② CONN 은 번호마다 그리는 법(_connDraws) */
+    this.conn = createConnTiles({ ts: TS, bodyOnly: BODY_ONLY, solid: id => TILE_DEF[id].solid === 1 });
+    const draws = this._connDraws();
+    for (const id in CONN) if (draws[id]) this.conn.add(+id, draws[id]);
     this.buildAsh();
     this.markFull();
     this.ready = true;
@@ -491,68 +496,65 @@ export const TileArt = {
     const t = 0.35, g = '#5d5d63';
     return (this._mc[c] = '#' + [1, 3, 5].map(i => Math.round(parseInt(c.slice(i, i + 2), 16) * (1 - t) + parseInt(g.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join(''));
   },
-  /** ①② 를 그린다. */
-  drawConn(c, w, id, tx, ty, sx, sy, v) {
-    if (BODY_ONLY[id]) {
-      if (TILE_DEF[w.get(tx, ty - 1)].solid !== 1) return false;   // 위가 트였으면 평소대로
-      const h = TS >> 1, oy = id * TS + TS - h;
-      c.drawImage(this.atlas, v * TS, oy, TS, h, sx, sy, TS, h);
-      c.drawImage(this.atlas, v * TS, oy, TS, h, sx, sy + h, TS, TS - h);
-      return true;
-    }
-    if (!CONN[id]) return false;
-    if (id === T.WOOD) { c.drawImage(this._trunkTile(w, tx, ty), sx, sy); return true; }
-    if (id === T.PALMWOOD) { c.drawImage(this._palmTile(w, tx, ty), sx, sy); return true; }
-    if (id === T.PALMLEAF) { c.drawImage(this._palmLeafTile(w, tx, ty), sx, sy); return true; }
-    const mc = this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, WW - 1)).id] || '#6f9a4a');
-    if (id === T.MOSSSTONE) {
-      this.draw(c, T.STONE, v, sx, sy);
-      c.drawImage(this._mossTile(w, tx, ty, mc), sx, sy);
-      return true;
-    }
-    if (id === T.PINELEAF) {
-      /* 윗칸이 트였으면(공기·비고체이고 같은 솔잎이 아님) 눈을 얹는다 — 톱니 원뿔 층마다 넓은 줄의 윗면이 트여 있어 층층이 눈이 쌓인 것처럼 보인다. */
-      this.draw(c, id, v, sx, sy);
-      const up = w.get(tx, ty - 1);
-      if (up !== T.PINELEAF && up !== T.WOOD && TILE_DEF[up].solid !== 1) {
-        c.fillStyle = '#dfe8f0'; c.fillRect(sx, sy, TS, 3);
-        c.fillStyle = '#f4f8fb'; c.fillRect(sx + 1, sy, TS - 2, 1);
-        c.fillStyle = '#a8b8c8';
-        for (let x = 0; x < TS; x++) {
-          const d = (tileHash(tx * TS + x, ty) * 4) | 0;
-          if (d) { c.fillStyle = '#dfe8f0'; c.fillRect(sx + x, sy + 3, 1, d - 1); }
-          c.fillStyle = '#a8b8c8'; c.fillRect(sx + x, sy + 2 + d, 1, 1);
-        }
-      }
-      return true;
-    }
-    if (id === T.HANGMOSS) {
-      // 이어진 줄의 맨 위(붙은 칸)와 길이를 잰다 — 가닥이 여러 칸을 건너 한 줄로 이어지게
-      let top = ty, bot = ty;
-      while (top > ty - 8 && w.get(tx, top - 1) === T.HANGMOSS) top--;
-      while (bot < ty + 8 && w.get(tx, bot + 1) === T.HANGMOSS) bot++;
-      const run = (bot - top + 1) * TS, y0 = (ty - top) * TS;
-      const dk = shade(mc, .72), lt = shade(mc, 1.15);
-      if (ty === top) { c.fillStyle = dk; c.fillRect(sx, sy, TS, 2); }
-      for (let j = 0; j < 7; j++) {
-        const fx = 1 + j * 3, len = run * (0.45 + 0.55 * tileHash(tx * 7 + j, top));
-        const a0 = y0, a1 = Math.min(y0 + TS, len);
-        if (a1 <= a0) continue;
-        c.fillStyle = j % 2 ? mc : dk;
-        c.fillRect(sx + fx, sy + (a0 - y0), 2, a1 - a0);
-        if (a1 < y0 + TS && a1 === len) { c.fillStyle = lt; c.fillRect(sx + fx, sy + (a1 - y0) - 1, 2, 1); }
-      }
-      return true;
-    }
-    if (id === T.STALACTITE || id === T.STALAGMITE) {
+  /** ①② 를 그린다 — 틀(위가 막히면 몸통만 · 번호별 그리기 찾기)은 엔진 render/conn, 번호별 그리는 법은 _connDraws. */
+  drawConn(c, w, id, tx, ty, sx, sy, v) { return this.conn.draw(c, this.atlas, w, id, tx, ty, sx, sy, v); },
+  /** ② 이웃을 보고 통째로 그리는 타일마다 그리는 법 — build() 가 엔진 틀에 건다. */
+  _connDraws() {
+    const mossOf = (w, tx) => this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, WW - 1)).id] || '#6f9a4a');
+    const drip = (c, w, id, tx, ty, sx, sy) => {
       const up = id === T.STALAGMITE;
       let i = 0, n = 1;                                    // i: 붙은 쪽에서 몇 번째 칸, n: 줄 길이
       if (!up) { while (i < 6 && w.get(tx, ty - i - 1) === id) i++; n = i + 1; while (n < 8 && w.get(tx, ty - i + n) === id) n++; }
       else { while (i < 6 && w.get(tx, ty + i + 1) === id) i++; n = i + 1; while (n < 8 && w.get(tx, ty + i - n) === id) n++; }
       c.drawImage(this._drip(id, i, n), sx, sy);
       return true;
-    }
-    return false;
+    };
+    return {
+      [T.WOOD]: (c, w, id, tx, ty, sx, sy) => { c.drawImage(this._trunkTile(w, tx, ty), sx, sy); return true; },
+      [T.PALMWOOD]: (c, w, id, tx, ty, sx, sy) => { c.drawImage(this._palmTile(w, tx, ty), sx, sy); return true; },
+      [T.PALMLEAF]: (c, w, id, tx, ty, sx, sy) => { c.drawImage(this._palmLeafTile(w, tx, ty), sx, sy); return true; },
+      [T.MOSSSTONE]: (c, w, id, tx, ty, sx, sy, v) => {
+        this.draw(c, T.STONE, v, sx, sy);
+        c.drawImage(this._mossTile(w, tx, ty, mossOf(w, tx)), sx, sy);
+        return true;
+      },
+      [T.PINELEAF]: (c, w, id, tx, ty, sx, sy, v) => {
+        /* 윗칸이 트였으면(공기·비고체이고 같은 솔잎이 아님) 눈을 얹는다 — 톱니 원뿔 층마다 넓은 줄의 윗면이 트여 있어 층층이 눈이 쌓인 것처럼 보인다. */
+        this.draw(c, id, v, sx, sy);
+        const up = w.get(tx, ty - 1);
+        if (up !== T.PINELEAF && up !== T.WOOD && TILE_DEF[up].solid !== 1) {
+          c.fillStyle = '#dfe8f0'; c.fillRect(sx, sy, TS, 3);
+          c.fillStyle = '#f4f8fb'; c.fillRect(sx + 1, sy, TS - 2, 1);
+          c.fillStyle = '#a8b8c8';
+          for (let x = 0; x < TS; x++) {
+            const d = (tileHash(tx * TS + x, ty) * 4) | 0;
+            if (d) { c.fillStyle = '#dfe8f0'; c.fillRect(sx + x, sy + 3, 1, d - 1); }
+            c.fillStyle = '#a8b8c8'; c.fillRect(sx + x, sy + 2 + d, 1, 1);
+          }
+        }
+        return true;
+      },
+      [T.HANGMOSS]: (c, w, id, tx, ty, sx, sy) => {
+        const mc = mossOf(w, tx);
+        // 이어진 줄의 맨 위(붙은 칸)와 길이를 잰다 — 가닥이 여러 칸을 건너 한 줄로 이어지게
+        let top = ty, bot = ty;
+        while (top > ty - 8 && w.get(tx, top - 1) === T.HANGMOSS) top--;
+        while (bot < ty + 8 && w.get(tx, bot + 1) === T.HANGMOSS) bot++;
+        const run = (bot - top + 1) * TS, y0 = (ty - top) * TS;
+        const dk = shade(mc, .72), lt = shade(mc, 1.15);
+        if (ty === top) { c.fillStyle = dk; c.fillRect(sx, sy, TS, 2); }
+        for (let j = 0; j < 7; j++) {
+          const fx = 1 + j * 3, len = run * (0.45 + 0.55 * tileHash(tx * 7 + j, top));
+          const a0 = y0, a1 = Math.min(y0 + TS, len);
+          if (a1 <= a0) continue;
+          c.fillStyle = j % 2 ? mc : dk;
+          c.fillRect(sx + fx, sy + (a0 - y0), 2, a1 - a0);
+          if (a1 < y0 + TS && a1 === len) { c.fillStyle = lt; c.fillRect(sx + fx, sy + (a1 - y0) - 1, 2, 1); }
+        }
+        return true;
+      },
+      [T.STALACTITE]: drip, [T.STALAGMITE]: drip
+    };
   },
   /** 칸 캐시 — 열쇠가 같으면 다시 그리지 않는다 */
   _cache(name, key, make) { return cacheGet(this[name] = this[name] || new Map(), key, make); },
