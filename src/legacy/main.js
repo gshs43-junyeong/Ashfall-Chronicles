@@ -31,6 +31,7 @@ import * as e_slots from '../engine/ui/slots.js';
 import * as e_ko from '../engine/i18n/ko.js';
 import * as e_format from '../engine/i18n/format.js';
 import * as e_i18n from '../engine/i18n/i18n.js';
+import * as e_mixin from '../engine/core/mixin.js';
 import * as util from './util.js';
 import * as lang from './lang.js';
 import * as size from './size.js';
@@ -45,6 +46,22 @@ import * as factory from './factory.js';
 import * as ui from './ui.js';
 import * as music from './music.js';
 import * as game from './game.js';
+/* game.js 의 G 를 영역별로 나눈 조각 — 읽히는 순간 G 에 붙는다(순서는 원래 소스 순서) */
+import * as g_act from './game/act.js';
+import * as g_fishing from './game/fishing.js';
+import * as g_village from './game/village.js';
+import * as g_altar from './game/altar.js';
+import * as g_spawn from './game/spawn.js';
+import * as g_progress from './game/progress.js';
+import * as g_save from './game/save.js';
+import * as g_sound from './game/sound.js';
+import * as g_render from './game/render.js';
+import * as g_render_far from './game/render-far.js';
+import * as g_render_fx from './game/render-fx.js';
+import * as g_ruin_pulse from './game/ruin-pulse.js';
+import * as g_meteor from './game/meteor.js';
+import * as g_ruin_map from './game/ruin-map.js';
+import * as g_corpse from './game/corpse.js';
 
 /* 원본 언어(ko)가 아니면 — 표(아이템 이름 따위)를 그 언어로 덮고 정적 HTML 글을 옮긴다.
    ★ 게임이 켜지기(DOMContentLoaded → G.init) 전, 표를 읽는 누구보다 먼저여야 한다. 표 경로의 뿌리 순서는
@@ -58,7 +75,7 @@ if (!lang.I18N.isSource) {
 /* 디버그 창구 — 콘솔·?debug 도구·tests·tools/*.py 가 예전처럼 G · World · T · WW … 를 이름으로 읽는다.
    ★ 읽기 전용이고 살아 있는 값이다(WW 는 setWorldSize 뒤에 바뀐 값). 게임 코드는 이것을 읽지 말고 import 할 것.
    브라우저가 이미 가진 이름은 덮지 않는다. */
-for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, util, lang, size, data, world, tileart, itemart, sprites, titlebg, entity, factory, ui, music, game]) {
+for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, world, tileart, itemart, sprites, titlebg, entity, factory, ui, music, game, g_act, g_fishing, g_village, g_altar, g_spawn, g_progress, g_save, g_sound, g_render, g_render_far, g_render_fx, g_ruin_pulse, g_meteor, g_ruin_map, g_corpse]) {
   for (const k of Object.keys(m)) {
     if (k in window) continue;
     Object.defineProperty(window, k, { get: () => m[k], configurable: true });

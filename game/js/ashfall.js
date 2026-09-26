@@ -1704,6 +1704,21 @@
     return out;
   }
 
+  // src/engine/core/mixin.ts
+  var mixin_exports = {};
+  __export(mixin_exports, {
+    mixin: () => mixin
+  });
+  function mixin(target, part, classLike = false) {
+    const d = Object.getOwnPropertyDescriptors(part);
+    for (const k of Object.keys(d)) {
+      if (Object.prototype.hasOwnProperty.call(target, k)) throw new Error("mixin: 이미 있는 이름 " + k);
+      if (classLike) d[k].enumerable = false;
+    }
+    Object.defineProperties(target, d);
+    return target;
+  }
+
   // src/legacy/util.js
   var util_exports = {};
   __export(util_exports, {
@@ -33852,7 +33867,17 @@
         }
         if (Math.random() < 0.2) this.sfxAt("hit_metal", x, y, this.strokeRate());
       }
-    },
+    }
+  };
+  bindApp(G);
+  addEventListener("DOMContentLoaded", () => G.init());
+
+  // src/legacy/game/act.js
+  var act_exports = {};
+  __export(act_exports, {
+    ActPart: () => ActPart
+  });
+  var ActPart = {
     /* ================= 좌클릭: 채굴 또는 공격 ================= */
     leftHold(dt) {
       const p = this.player, w = this.world;
@@ -34409,7 +34434,16 @@
       UI.refreshBag();
       this.sfx("break_wood", this.strokeRate());
       return true;
-    },
+    }
+  };
+  mixin(G, ActPart);
+
+  // src/legacy/game/fishing.js
+  var fishing_exports = {};
+  __export(fishing_exports, {
+    FishingPart: () => FishingPart
+  });
+  var FishingPart = {
     /* ================= 낚시 ================= */
     tryFish() {
       const p = this.player, w = this.world;
@@ -34981,7 +35015,16 @@
       });
       UI.openLore(t.n, t.lines, choices);
       this.sfx("talk");
-    },
+    }
+  };
+  mixin(G, FishingPart);
+
+  // src/legacy/game/village.js
+  var village_exports = {};
+  __export(village_exports, {
+    VillagePart: () => VillagePart
+  });
+  var VillagePart = {
     /* ================= 여명 마을 시설 ================= */
     /** 귀환 비석 — 베이스캠프 ↔ 여명 마을 왕복 */
     useWaystone() {
@@ -35838,7 +35881,16 @@
         },
         { t: tr("(그냥 둔다)"), fn: () => UI.closeDialogue() }
       ]);
-    },
+    }
+  };
+  mixin(G, VillagePart);
+
+  // src/legacy/game/altar.js
+  var altar_exports = {};
+  __export(altar_exports, {
+    AltarPart: () => AltarPart
+  });
+  var AltarPart = {
     /* ================= 제단 / 보스 ================= */
     /** 이 장의 결전 보스인데 아직 자격이 없으면 막는다 — 소환 아이템만으로 깨울 수 있으면 장 목표를 통째로 건너뛴다. */
     bossGated(bossId) {
@@ -36275,7 +36327,16 @@
     /** '화면 효과' 설정(0~150%)을 1을 넘지 않게 돌려준다 — 0%면 화면을 덮는 연출이 없다 */
     fxScale() {
       return Math.min(1, (this.settings ? this.settings.shake : 100) / 100);
-    },
+    }
+  };
+  mixin(G, AltarPart);
+
+  // src/legacy/game/spawn.js
+  var spawn_exports = {};
+  __export(spawn_exports, {
+    SpawnPart: () => SpawnPart
+  });
+  var SpawnPart = {
     /* ================= 스폰 ================= */
     /* 개조가 걸리는 구역 — 세션 1 바이옴의 지층들. */
     MECH_ZONE: { surface: 1, cave: 1, deep: 1, corrupt: 1, ice: 1, hell: 1, jungle: 1, glowfen: 1 },
@@ -36955,7 +37016,16 @@
         this.ents.push(e);
         return;
       }
-    },
+    }
+  };
+  mixin(G, SpawnPart);
+
+  // src/legacy/game/progress.js
+  var progress_exports = {};
+  __export(progress_exports, {
+    ProgressPart: () => ProgressPart
+  });
+  var ProgressPart = {
     /* ================= 진행 ================= */
     /* 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은 목록에 없거나 있어도 순서가 강제됐다 — 사연: docs/code-history.md#h54 */
     objProgress(o) {
@@ -37476,7 +37546,16 @@
         if (n && n[k] === 0) return;
       }
       UI.toast(m, k);
-    },
+    }
+  };
+  mixin(G, ProgressPart);
+
+  // src/legacy/game/save.js
+  var save_exports = {};
+  __export(save_exports, {
+    SavePart: () => SavePart
+  });
+  var SavePart = {
     /* ================= 저장 ================= */
     /** 저장이 끝나면 true. */
     async saveGame() {
@@ -38085,7 +38164,16 @@
       this.settings[k] = v;
       this.applySettings();
       this.saveSettings();
-    },
+    }
+  };
+  mixin(G, SavePart);
+
+  // src/legacy/game/sound.js
+  var sound_exports = {};
+  __export(sound_exports, {
+    SoundPart: () => SoundPart
+  });
+  var SoundPart = {
     /* ================= 사운드 ================= */
     audioInit() {
       if (this.ac) return;
@@ -38382,7 +38470,16 @@
       ng.connect(ac.destination);
       src.start(t);
       src.stop(t + 0.3);
-    },
+    }
+  };
+  mixin(G, SoundPart);
+
+  // src/legacy/game/render.js
+  var render_exports = {};
+  __export(render_exports, {
+    RenderPart: () => RenderPart
+  });
+  var RenderPart = {
     /* ================= 렌더 ================= */
     /** 한 프레임 그리기 — 카메라·흔들림과 보이는 칸 범위만 정하고, 나머지는 렌더 단계가 순서대로 그린다(buildPipeline). */
     render() {
@@ -39300,7 +39397,16 @@
       g.putImageData(d, 0, 0);
       this._fbg = { key, cv, f: af };
       return cv;
-    },
+    }
+  };
+  mixin(G, RenderPart);
+
+  // src/legacy/game/render-far.js
+  var render_far_exports = {};
+  __export(render_far_exports, {
+    RenderFarPart: () => RenderFarPart
+  });
+  var RenderFarPart = {
     /** 손그림 원경 — 두 겹으로 무한 스크롤. */
     /* ================= 원경을 불투명하게 ================= */
     tintBg(src, slot, ck, haze, hazeAmt, darkAmt) {
@@ -40267,7 +40373,16 @@
       }
       Art.draw(c, "p:" + pet.id, sx - S / 2, sy - S / 2, S);
       c.restore();
-    },
+    }
+  };
+  mixin(G, RenderFarPart);
+
+  // src/legacy/game/render-fx.js
+  var render_fx_exports = {};
+  __export(render_fx_exports, {
+    RenderFxPart: () => RenderFxPart
+  });
+  var RenderFxPart = {
     /* ================= 특별한 스킬의 고유 연출 ================= */
     drawSigGround(c, camX, camY) {
       if (!this.sigs || !this.sigs.length) return;
@@ -40540,7 +40655,16 @@
       c.drawImage(im, fr * fw * S, 0, fw * S, fh * S, -ccx, -ccy, fw, fh);
       c.restore();
       return true;
-    },
+    }
+  };
+  mixin(G, RenderFxPart);
+
+  // src/legacy/game/ruin-pulse.js
+  var ruin_pulse_exports = {};
+  __export(ruin_pulse_exports, {
+    RuinPulsePart: () => RuinPulsePart
+  });
+  var RuinPulsePart = {
     /** 장착 무기 + 스윙 궤적 + 채널링 링 (두 렌더 경로가 공유) */
     /* ================= 유적의 맥박 · 탐사 기록 · 메아리 시련 ================= */
     /** 그 자리의 바이옴 유적 — { r, spec, idx, id } 또는 null. */
@@ -41350,7 +41474,16 @@
           this.rocks.splice(i, 1);
         }
       }
-    },
+    }
+  };
+  mixin(G, RuinPulsePart);
+
+  // src/legacy/game/meteor.js
+  var meteor_exports = {};
+  __export(meteor_exports, {
+    MeteorPart: () => MeteorPart
+  });
+  var MeteorPart = {
     /* ================= 운석 ================= */
     METEOR: { chance: 18e-4, fall: 5.2, fg: 1.2, rMin: 5, rMax: 8 },
     /** 떨어져도 되는 자리인가 — 구덩이 상자(좌우 R+3, 위 18 · 아래 R+2) 안에 지은 것이 하나도 없어야 한다 */
@@ -41741,7 +41874,16 @@
         c.fillRect(0, 0, this.W, this.H);
         c.restore();
       }
-    },
+    }
+  };
+  mixin(G, MeteorPart);
+
+  // src/legacy/game/ruin-map.js
+  var ruin_map_exports = {};
+  __export(ruin_map_exports, {
+    RuinMapPart: () => RuinMapPart
+  });
+  var RuinMapPart = {
     /* ================= 유적 — 지도 · 고유 이벤트 · 암호문 ================= */
     /** 위치 지도를 편다. */
     useRuinMap(slot) {
@@ -42291,7 +42433,16 @@
       }
       c.restore();
       this.drawEnemyOverlay(c, e, sx, sy, dy, null, dx);
-    },
+    }
+  };
+  mixin(G, RuinMapPart);
+
+  // src/legacy/game/corpse.js
+  var corpse_exports = {};
+  __export(corpse_exports, {
+    CorpsePart: () => CorpsePart
+  });
+  var CorpsePart = {
     /* ================= 시체 ================= */
     CORPSE_MAX: 24,
     addCorpse(e) {
@@ -42942,8 +43093,7 @@
       c.strokeRect(0.5, 0.5, MW - 1, MH - 1);
     }
   };
-  bindApp(G);
-  addEventListener("DOMContentLoaded", () => G.init());
+  mixin(G, CorpsePart);
 
   // src/legacy/main.js
   if (!I18N.isSource) {
@@ -42951,7 +43101,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports2, factory_exports, ui_exports, music_exports2, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports2, factory_exports, ui_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
