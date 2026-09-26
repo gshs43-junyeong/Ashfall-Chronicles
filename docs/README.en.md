@@ -82,6 +82,7 @@ Progress lives in the browser (IndexedDB, gzip-compressed; `localStorage` where 
 |---|---|
 | `game/` | Playable runtime folder (serve it as-is). `game/js/ashfall.js` is a generated bundle. |
 | `src/legacy/*.js` | **Game source** — ES modules. `tools/bundle.mjs` (esbuild) bundles them from `main.js` into `game/js/ashfall.js`, a single classic script that also runs from `file://`. |
+| `src/engine/` | Game-agnostic engine in TypeScript (strict): core math/RNG/noise/loop, save store (IndexedDB + gzip + signature, upgrade chain), audio (music/SFX/ambient), asset loading, viewport. The game passes its own tables and names in through `create*({...})` configs; the engine never imports game code. |
 | `src/legacy/data.js` | Content tables: chapters, dialogue, items, enemies, objectives, and balancing data. |
 | `src/legacy/world.js` | World generation, terrain, biome, and dungeon logic. |
 | `src/legacy/entity.js` | Player, enemy, boss, combat, and interaction behavior. |
