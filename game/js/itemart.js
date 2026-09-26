@@ -47,7 +47,7 @@ const ISPEC = {
   knot_angler: { k: 'amulet', c: '#c8b08a', gem: '#5fc4c4' },
   /* 물에서만 나오는 무기·장신구 열둘 (세션마다 여섯) — 기존 그림에 색만 갈아 끼운다. */
   /* ★ 칸 이름을 그림 쪽이 쓰는 것과 맞춰야 한다 — staff 는 head + style('orb'|'crystal'|'claw'), bow 는 c + s(시위 색)다. */
-  spear_tide: { k: 'spear', c: '#7fc8d8', glow: '#a8e8f0' },
+  spear_river: { k: 'spear', c: '#7fc8d8', glow: '#a8e8f0' },
   bow_reed: { k: 'bow', c: '#a8b878', s: '#e8e0c0' },
   staff_current: { k: 'staff', c: '#5a7a6a', head: '#9fe0ff', style: 'crystal', glow: '#9fe0ff' },
   harpoon_cool: { k: 'spear', c: '#8fd0e0', glow: '#bfeaf5' },
@@ -55,7 +55,7 @@ const ISPEC = {
   staff_deluge: { k: 'staff', c: '#2e4458', head: '#7fe0ff', style: 'claw', glow: '#7fe0ff' },
   charm_float: { k: 'sigil', c: '#e8c86a', glow: '#ffe08a' },
   ring_ripple: { k: 'ring', c: '#8fb8c8', gem: '#7fd8e8' },
-  amul_scale: { k: 'amulet', c: '#7fc8b0', gem: '#a8e8d0' },
+  amul_river: { k: 'amulet', c: '#7fc8b0', gem: '#a8e8d0' },
   charm_conden: { k: 'sigil', c: '#6fd8e0', glow: '#9fe8ff' },
   ring_sluice: { k: 'ring', c: '#8a8a96', gem: '#5fa8c8' },
   amul_undertow: { k: 'amulet', c: '#4a6a8a', gem: '#7f9fd8' },
@@ -75,7 +75,7 @@ const ISPEC = {
   chest_cloth: { k: 'chest', c: '#9c8a68', soft: 1 },
   chest_copper: { k: 'chest', c: '#c0762f' },
   chest_iron: { k: 'chest', c: '#b8bcc4' },
-  chest_scale: { k: 'chest', c: '#7fc8b0', glow: '#a8e8d0' },
+  chest_river: { k: 'chest', c: '#7fc8b0', glow: '#a8e8d0' },
   chest_mythril: { k: 'chest', c: '#5fd0c0', glow: '#5fd0c0' },
   chest_soul: { k: 'chest', c: '#c9a9ff', glow: '#c49fff' },
   boots_cloth: { k: 'boots', c: '#9c8a68', soft: 1 },

@@ -518,7 +518,7 @@ const ITEMS = {
                   d: '누가 언제 묶었는지 모른다. 풀리지도 않고, 끊기지도 않는다.' , lvReq: 1 },
 
   /* ---- 물에서만 나오는 무기 여섯 (세션마다 셋) ---- */
-  spear_tide:    { n: '물살 작살', i: '🔱', type: 'weapon', wc: 'melee', dmg: 46, spd: 2.8, kb: 4, reach: 62, tier: 3,
+  spear_river:    { n: '물살 작살', i: '🔱', type: 'weapon', wc: 'melee', dmg: 46, spd: 2.8, kb: 4, reach: 62, tier: 3,
                    d: '물속에서 던지라고 만든 것이라 유난히 길다. 뭍에서도 잘 든다.' },
   bow_reed:      { n: '갈대 활', i: '🏹', type: 'weapon', wc: 'ranged', dmg: 36, spd: 2.8, kb: 2, tier: 3, proj: 'arrow',
                    d: '물가에서 자란 갈대는 잘 휘고 잘 돌아온다.' },
@@ -539,7 +539,7 @@ const ITEMS = {
                    d: '가라앉지 않는다. 차고 있으면 발도 그렇게 된다.' , lvReq: 8 },
   ring_ripple:   { n: '물결 반지', i: '💍', type: 'acc', b: { cdr: 10, mp: 40, int: 4 },
                    d: '한 번 던지면 끝까지 퍼진다. 되돌아오지도 않는다.' , lvReq: 8 },
-  amul_scale:    { n: '비늘 목걸이', i: '📿', type: 'acc', b: { def: 12, hp: 50, frost: 1 },
+  amul_river:    { n: '비늘 목걸이', i: '📿', type: 'acc', b: { def: 12, hp: 50, frost: 1 },
                    d: '물비늘을 겹쳐 꿰었다. 찬 것이 잘 튕겨 나간다.' , lvReq: 10 },
   charm_conden:  { n: '응축기', i: '💧', type: 'acc', b: { charge: 140, cdr: 12, int: 8 },
                    d: '공창의 냉각탑에서 떼어 온 것. 아직도 안쪽에 물이 맺힌다.' , lvReq: 30 },
@@ -559,7 +559,7 @@ const ITEMS = {
   chest_iron:  { n: '강철 판금', i: '🦺', type: 'armor', slot: 'chest', def: 13, b: { hp: 30, def: 3 } , lvReq: 12 },
   boots_iron:  { n: '강철 정강이받이', i: '🥾', type: 'armor', slot: 'boots', def: 7, b: { ms: 5, vit: 2 } , lvReq: 12 },
   /* 낚시로만 모을 수 있는 물비늘을 겹쳐 꿰맨 갑옷. */
-  chest_scale: { n: '물비늘 갑옷', i: '🐚', type: 'armor', slot: 'chest', def: 11, b: { hp: 24, ms: 12, dex: 4 },
+  chest_river: { n: '물비늘 갑옷', i: '🐚', type: 'armor', slot: 'chest', def: 11, b: { hp: 24, ms: 12, dex: 4 },
                  d: '물에 젖지 않는다. 물에서 건진 것으로 지었으니 당연한 일인지도 모른다.' , lvReq: 12 },
   helm_mythril:{ n: '미스릴 투구', i: '👑', type: 'armor', slot: 'helm', def: 16, b: { mp: 30, int: 4, cdr: 6 } , lvReq: 20 },
   chest_mythril:{ n: '미스릴 흉갑', i: '🛡', type: 'armor', slot: 'chest', def: 22, b: { hp: 55, allStat: 3 } , lvReq: 20 },
@@ -1514,7 +1514,7 @@ const RECIPES = [
   /* 물에서만 나오는 것의 쓸모 — 낚시가 "팔 것만 나오는 일"로 끝나지 않게 */
   { out: 'battery_empty', n: 1, need: { drowned_cell: 2, wire: 2 }, station: 'work', lv: 2 },
   { out: 'rivet', n: 12, need: { rust_sinker: 2 }, station: 'work', lv: 2 },
-  { out: 'chest_scale', n: 1, need: { river_scale: 14, tide_pearl: 4, spider_silk: 10 }, station: 'forge' },
+  { out: 'chest_river', n: 1, need: { river_scale: 14, tide_pearl: 4, spider_silk: 10 }, station: 'forge' },
 
   /* ========== 바이옴 ========== */
   { out: 'potion_glow', n: 2, need: { glowcap: 2, crystal: 1 }, station: 'work' },
@@ -5595,8 +5595,8 @@ const ORE_TIER = {
 
 const ITEM_VAL = (() => {
   const V = {}, step = t => VAL_0 * Math.pow(VAL_R, t);
-  const made = {};
-  for (const r of RECIPES) if (!made[r.out]) made[r.out] = r;
+  const made = {}, recipesOf = {};
+  for (const r of RECIPES) { if (!made[r.out]) made[r.out] = r; (recipesOf[r.out] = recipesOf[r.out] || []).push(r); }
 
   for (const id in ITEMS) if (ITEMS[id].price) V[id] = ITEMS[id].price;
 
@@ -5637,9 +5637,16 @@ const ITEM_VAL = (() => {
     const r = made[id];
     if (!r || dep > 14 || busy[id]) return (V[id] = step(0));
     busy[id] = 1;
-    let c = 0;
-    for (const k in r.need) c += cost(k, dep + 1) * r.need[k];
-    return (V[id] = c * (GEARY[(ITEMS[id] || {}).type] ? VAL_GEAR : VAL_CRAFT) / (r.n || 1));
+    /* ★ 만드는 법이 여럿이면 **가장 싼 법**으로 값을 매긴다 — 첫 제작법만 보면 싼 대체법(불씨꼬투리 → 압축 연료 8.9배,
+       약초 → 치유 물약 5.5배)으로 만들어 비싼 값에 파는 금화 샘이 생겼다. */
+    let best = Infinity;
+    for (const r2 of (recipesOf[id] || [r])) {
+      let c = 0, bad = false;
+      for (const k in r2.need) { if (busy[k]) { bad = true; break; } c += cost(k, dep + 1) * r2.need[k]; }
+      if (!bad) best = Math.min(best, c / (r2.n || 1));
+    }
+    if (!isFinite(best)) { let c = 0; for (const k in r.need) c += cost(k, dep + 1) * r.need[k]; best = c / (r.n || 1); }
+    return (V[id] = best * (GEARY[(ITEMS[id] || {}).type] ? VAL_GEAR : VAL_CRAFT));
   };
   for (const r of RECIPES) cost(r.out, 0);
 
