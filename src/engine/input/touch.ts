@@ -1,6 +1,6 @@
 /* ===== engine/input/touch.ts — 터치 조작 뼈대: 가상 스틱 · 단추 · 화면 탭 ===== */
 /* ★ 게임은 입력 장치를 모른다 — 스틱·단추는 액션 칸(input.virt)을 켜고, 탭은 마우스와 같은 칸(ptr: mx·my·m1·m2)에 적는다.
-   모양은 뼈대다(인라인 스타일 한 벌). 크기·배치·안전 영역은 P9 에서 다듬는다.
+   모양은 인라인 스타일 한 벌 — 안전 영역(노치)만큼 안으로 들인다.
    오른쪽 단추 높이는 CSS 변수 --ti-bottom — 게임이 제 HUD(단추 줄 등)를 비켜 올린다. */
 import type { Input } from './actions.js';
 import type { PointerState } from './pointer.js';
@@ -23,20 +23,20 @@ const DEAD = 18;             // 이 안쪽은 안 민 것으로 친다
 
 const CSS = `
 #touchpad{--ti-bottom:24px;position:fixed;inset:0;pointer-events:none;z-index:40;user-select:none;-webkit-user-select:none}
-#touchpad .ti-stick{position:absolute;left:24px;bottom:24px;width:${STICK_R * 2 + 40}px;height:${STICK_R * 2 + 40}px;pointer-events:auto;touch-action:none}
+#touchpad .ti-stick{position:absolute;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));width:${STICK_R * 2 + 40}px;height:${STICK_R * 2 + 40}px;pointer-events:auto;touch-action:none}
 #touchpad .ti-base{position:absolute;inset:20px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25)}
 #touchpad .ti-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(255,255,255,.35)}
-#touchpad .ti-btns{position:absolute;right:24px;bottom:var(--ti-bottom);display:flex;gap:14px;pointer-events:auto}
+#touchpad .ti-btns{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:var(--ti-bottom);display:flex;gap:14px;pointer-events:auto}
 #touchpad .ti-btn{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font:600 15px system-ui,sans-serif;color:#fff;
   background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);touch-action:none}
 #touchpad .ti-btn.on,#touchpad .ti-alt.on{background:rgba(255,255,255,.35)}
-#touchpad .ti-alt{position:absolute;right:24px;bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;
+#touchpad .ti-alt{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;
   font:600 13px system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);pointer-events:auto;touch-action:none}
 @media (max-height:540px){
-  #touchpad .ti-stick{left:16px;bottom:16px;transform:scale(.8);transform-origin:left bottom}
-  #touchpad .ti-btns{right:16px;gap:10px}
+  #touchpad .ti-stick{left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:scale(.8);transform-origin:left bottom}
+  #touchpad .ti-btns{right:calc(16px + env(safe-area-inset-right,0px));gap:10px}
   #touchpad .ti-btn{width:52px;height:52px;font-size:13px}
-  #touchpad .ti-alt{right:16px;bottom:calc(var(--ti-bottom) + 66px);width:56px;height:34px;font-size:12px}
+  #touchpad .ti-alt{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 66px);width:56px;height:34px;font-size:12px}
 }
 `;
 

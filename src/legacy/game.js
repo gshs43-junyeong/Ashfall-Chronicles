@@ -32,7 +32,7 @@ import { TitleBG } from './titlebg.js';
 import { Bomb, Drop, Enemy, Guard, HOTBAR, PROJ_FX, PROJ_STYLE, Part, Pet, Player, Proj, VAULT_SIZE, Wolf,
   equipReqLv, isGear, itemName, makeItem, rollChest, rollGear } from './entity.js';
 import { DIR_NAME, FAC_TICK, Factory, dirTable } from './factory.js';
-import { $, UI } from './ui.js';
+import { $, $$, UI } from './ui.js';
 import { Ambient, Music, SFX_GAP, Sfx, SfxLoop } from './music.js';
 
 export const SAVE_KEY = 'ashfall_save_v3';   // v1: 640×232 · v2: 2800×480 — 세계 폭이 바뀌면 호환 불가
@@ -96,6 +96,13 @@ export const SaveStore = createSaveStore({ dbName: 'ashfall', slots: SAVE_SLOTS,
 export const SET_KEY = 'ashfall_settings';
 // 완전한 암흑(0)은 지도에 남기지 않는다.
 export const MAP_REVEAL_LIGHT = 1;
+
+/** 터치 기기인가 — ?touch=1 / 0 이 먼저, 아니면 손가락이 주 포인터인 기기(폰 · 태블릿) */
+export const TOUCH = (() => {
+  const q = new URLSearchParams(location.search).get('touch');
+  if (q === '1' || q === '0') return q === '1';
+  return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+})();
 
 /** 이름을 비워 둔 모험가 — 세이브에는 원문으로 남기고 보일 때 옮긴다(언어를 바꿔도 따라온다) */
 export const NONAME = N_('이름 없는 모험가');
@@ -211,7 +218,7 @@ export const G = {
 
   resize() {
     /* W·H 는 화면 픽셀이 아니라 **월드 좌표계로 본 시야 크기**다. */
-    const v = fitCanvas(this.cv, this.ctx, this.viewZoom());
+    const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), TOUCH ? 1.5 : 2);   // 폰은 발열·배터리로 픽셀 밀도를 조금 낮춘다
     this.W = v.W; this.H = v.H;
   },
 
@@ -242,8 +249,8 @@ export const G = {
         UI.refreshHotbar();
       }
     });
-    /* 터치 조작 뼈대 — 아직은 ?touch=1 일 때만 켠다(모바일 완성은 엔진화 P9). */
-    if (new URLSearchParams(location.search).get('touch') === '1')
+    /* 터치 조작 — 손가락이 주 포인터인 기기면 켠다(?touch=1 / 0 으로 강제) */
+    if (TOUCH)
       this.touch = mountTouch({ input: this.inp, ptr: this.input, surface: this.cv, rightDown: () => this.rightClick(),
         buttons: [{ id: 'jump', label: tr('점프') }, { id: 'dash', label: tr('대시') }], altLabel: tr('사용') });
     if (this.touch) document.body.classList.add('touch');   // 낮은 화면에선 미니맵·퀘스트 창을 숨긴다(style.css)
@@ -251,6 +258,20 @@ export const G = {
       const lift = () => { const bar = $('#tabbar'), r = bar && bar.getBoundingClientRect();
         this.touch.el.style.setProperty('--ti-bottom', (r && r.height ? innerHeight - r.top + 14 : 24) + 'px'); };
       lift(); addEventListener('resize', lift);
+      /* 스킬 칸을 누르면 그 스킬 — 겨누는 곳은 마지막으로 짚은 자리 */
+      $$('#skillbar .sk').forEach((el, i) => el.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        if (this.state === 'play' && !UI.dlg && !UI.open) this.player.useSkill(i, this.input.wx, this.input.wy);
+      }));
+      /* 전체 화면(안드로이드 · 태블릿) — 아이폰 사파리는 요소 전체 화면이 없어 단추를 안 둔다 */
+      if (document.fullscreenEnabled) {
+        const fs = document.createElement('div'); fs.className = 'ti-fs'; fs.textContent = '⛶';
+        fs.addEventListener('pointerdown', e => {
+          e.preventDefault();
+          if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => { });
+        });
+        this.touch.el.appendChild(fs);
+      }
     }
     /* 타자가 도는 중이면 넘기지 말고 그 자리에서 끝까지 펼친다 — 한 번 누른 것이 "다 읽었다"가 아니라 "빨리 보여 달라"인 경우가 훨씬 많다 */
     $('#dialogue').addEventListener('click', () => { if (UI.dlg && !UI.finishType()) UI.nextLine(false); });
@@ -4590,6 +4611,8 @@ export const G = {
     let v = {};
     try { v = JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch (e) { }
     this.settings = Object.assign({}, SET_DEFAULT, v);
+    /* 낮은 폰 화면은 처음부터 UI 를 작게 — 한 번 고른 값은 그대로 둔다 */
+    if (v.uiscale === undefined && TOUCH && Math.min(innerWidth, innerHeight) <= 540) this.settings.uiscale = 80;
     this.applySettings();
   },
   saveSettings() {
@@ -4605,6 +4628,7 @@ export const G = {
     /* ★ 퀘스트 추적은 ui.js 가 style.display 를 직접 켜고 끄므로, 숨김은 body 클래스(!important)로 건다 */
     for (const k of ['tabbar', 'quest', 'buffs', 'clock', 'hotbar'])
       document.body.classList.toggle('hide-' + k, !s['hud_' + k]);
+    document.documentElement.style.setProperty('--ui-scale', String((s.uiscale || 100) / 100));
     // 시야 배율은 캔버스 변환에 들어가므로 값이 바뀌면 다시 잡아 준다
     if (this._viewApplied !== s.view) { this._viewApplied = s.view; this.resize(); }
     UI.syncSettings();

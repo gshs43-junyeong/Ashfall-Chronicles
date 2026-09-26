@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Ashfall Chronicles — 별이 잠든 땅</title>
 <script>
 /* ★ 주소가 폴더 이름으로 끝나면(/play — 배포는 trailingSlash:false 라 /play/ 를 /play 로 돌린다)
@@ -20,6 +20,7 @@
 </head>
 <body>
 
+<div id="rotate-hint"><div class="rh-ic">⟳</div><p>가로로 돌려 주세요</p></div>
 <div id="app">
   <canvas id="game"></canvas>
 
@@ -481,6 +482,8 @@
         </section>
 
         <section class="set-pane" data-pane="hud">
+          <label class="set-row"><span>UI 크기</span>
+            <input type="range" id="set-uiscale" min="70" max="130" step="5"><b id="set-uiscale-v">100%</b></label>
           <p class="set-note">게임 화면에 띄울 것을 고릅니다. 숨겨도 조작키로 여는 창은 그대로 열립니다.</p>
           <div class="set-grid">
             <label class="set-row chk"><span>창 탭 단추</span><input type="checkbox" id="set-hud-tabbar"></label>

@@ -143,6 +143,9 @@
   "Shift(왼)": [
    "ui.keyLabel"
   ],
+  "UI 크기": [
+   "index.html"
+  ],
   "[{stationName} 필요]": [
    "ui.refreshCraft"
   ],
@@ -516,6 +519,9 @@
   "가득 참": [
    "factory",
    "factory.runProc"
+  ],
+  "가로로 돌려 주세요": [
+   "index.html"
   ],
   "가방": [
    "ui.showTip",

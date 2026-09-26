@@ -951,20 +951,20 @@
   var DEAD = 18;
   var CSS = `
 #touchpad{--ti-bottom:24px;position:fixed;inset:0;pointer-events:none;z-index:40;user-select:none;-webkit-user-select:none}
-#touchpad .ti-stick{position:absolute;left:24px;bottom:24px;width:${STICK_R * 2 + 40}px;height:${STICK_R * 2 + 40}px;pointer-events:auto;touch-action:none}
+#touchpad .ti-stick{position:absolute;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));width:${STICK_R * 2 + 40}px;height:${STICK_R * 2 + 40}px;pointer-events:auto;touch-action:none}
 #touchpad .ti-base{position:absolute;inset:20px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25)}
 #touchpad .ti-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(255,255,255,.35)}
-#touchpad .ti-btns{position:absolute;right:24px;bottom:var(--ti-bottom);display:flex;gap:14px;pointer-events:auto}
+#touchpad .ti-btns{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:var(--ti-bottom);display:flex;gap:14px;pointer-events:auto}
 #touchpad .ti-btn{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font:600 15px system-ui,sans-serif;color:#fff;
   background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);touch-action:none}
 #touchpad .ti-btn.on,#touchpad .ti-alt.on{background:rgba(255,255,255,.35)}
-#touchpad .ti-alt{position:absolute;right:24px;bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;
+#touchpad .ti-alt{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;
   font:600 13px system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);pointer-events:auto;touch-action:none}
 @media (max-height:540px){
-  #touchpad .ti-stick{left:16px;bottom:16px;transform:scale(.8);transform-origin:left bottom}
-  #touchpad .ti-btns{right:16px;gap:10px}
+  #touchpad .ti-stick{left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:scale(.8);transform-origin:left bottom}
+  #touchpad .ti-btns{right:calc(16px + env(safe-area-inset-right,0px));gap:10px}
   #touchpad .ti-btn{width:52px;height:52px;font-size:13px}
-  #touchpad .ti-alt{right:16px;bottom:calc(var(--ti-bottom) + 66px);width:56px;height:34px;font-size:12px}
+  #touchpad .ti-alt{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 66px);width:56px;height:34px;font-size:12px}
 }
 `;
   function mountTouch({ input, ptr, surface, buttons, altLabel, rightDown }) {
@@ -13068,6 +13068,7 @@
     dlgtype: 1,
     // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
     view: 100,
+    uiscale: 100,
     keys: null,
     notice: null
   };
@@ -29834,7 +29835,7 @@
     },
     /* ---------------- 설정 (일시정지 화면) ---------------- */
     bindSettings() {
-      const num = [["music", "set-music", "%"], ["sfx", "set-sfx", "%"], ["shake", "set-shake", "%"]];
+      const num = [["music", "set-music", "%"], ["sfx", "set-sfx", "%"], ["shake", "set-shake", "%"], ["uiscale", "set-uiscale", "%"]];
       for (const [key, id] of num) {
         const el = $("#" + id);
         if (!el) continue;
@@ -30034,6 +30035,8 @@
       chk("set-dlgtype", s.dlgtype === void 0 ? 1 : s.dlgtype);
       set("set-view", s.view);
       txt("set-view-v", s.view);
+      set("set-uiscale", s.uiscale || 100);
+      txt("set-uiscale-v", s.uiscale || 100);
     },
     /** 아이템이 아닌 순수 텍스트 툴팁(휴지통 안내 등) */
     tipText(title, desc, e) {
@@ -32457,6 +32460,7 @@
     SAVE_VERSION: () => SAVE_VERSION,
     SET_KEY: () => SET_KEY,
     SaveStore: () => SaveStore,
+    TOUCH: () => TOUCH,
     saveHead: () => saveHead,
     saveSealOk: () => saveSealOk,
     saveSign: () => saveSign,
@@ -32543,6 +32547,11 @@
   });
   var SET_KEY = "ashfall_settings";
   var MAP_REVEAL_LIGHT = 1;
+  var TOUCH = (() => {
+    const q = new URLSearchParams(location.search).get("touch");
+    if (q === "1" || q === "0") return q === "1";
+    return typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+  })();
   var NONAME = N_("이름 없는 모험가");
   var G = {
     cv: null,
@@ -32699,7 +32708,7 @@
       return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6);
     },
     resize() {
-      const v = fitCanvas(this.cv, this.ctx, this.viewZoom());
+      const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), TOUCH ? 1.5 : 2);
       this.W = v.W;
       this.H = v.H;
     },
@@ -32737,7 +32746,7 @@
           UI.refreshHotbar();
         }
       });
-      if (new URLSearchParams(location.search).get("touch") === "1")
+      if (TOUCH)
         this.touch = mountTouch({
           input: this.inp,
           ptr: this.input,
@@ -32754,6 +32763,22 @@
         };
         lift();
         addEventListener("resize", lift);
+        $$("#skillbar .sk").forEach((el, i) => el.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          if (this.state === "play" && !UI.dlg && !UI.open) this.player.useSkill(i, this.input.wx, this.input.wy);
+        }));
+        if (document.fullscreenEnabled) {
+          const fs = document.createElement("div");
+          fs.className = "ti-fs";
+          fs.textContent = "⛶";
+          fs.addEventListener("pointerdown", (e) => {
+            e.preventDefault();
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen().catch(() => {
+            });
+          });
+          this.touch.el.appendChild(fs);
+        }
       }
       $("#dialogue").addEventListener("click", () => {
         if (UI.dlg && !UI.finishType()) UI.nextLine(false);
@@ -37996,6 +38021,7 @@
       } catch (e) {
       }
       this.settings = Object.assign({}, SET_DEFAULT, v);
+      if (v.uiscale === void 0 && TOUCH && Math.min(innerWidth, innerHeight) <= 540) this.settings.uiscale = 80;
       this.applySettings();
     },
     saveSettings() {
@@ -38014,6 +38040,7 @@
       if (mm) mm.style.display = s.minimap ? "" : "none";
       for (const k of ["tabbar", "quest", "buffs", "clock", "hotbar"])
         document.body.classList.toggle("hide-" + k, !s["hud_" + k]);
+      document.documentElement.style.setProperty("--ui-scale", String((s.uiscale || 100) / 100));
       if (this._viewApplied !== s.view) {
         this._viewApplied = s.view;
         this.resize();
