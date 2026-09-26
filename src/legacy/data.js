@@ -2,20 +2,6 @@
 'use strict';
 
 /* ---------------- 타일 ---------------- */
-/* 세계를 4200 → 5000칸으로 넓히면서 늘린 800칸을 전부 **왼쪽**에 붙였다(세션 3의 가라앉은 바다 · 빙하 지대). */
-const SHIFT = 800;
-
-/* ---------------- 세계 크기 ---------------- */
-const WORLD_SIZES = {
-  s: { n: '소형', k: 1, d: '지금까지의 세계. 5000×720칸.' },
-  m: { n: '중형', k: 1.5, d: '가로·세로 1.5배(7500×1080칸). 바이옴이 넓고 땅속이 깊다. 만드는 데 두 배 남짓 걸린다.' },
-  l: { n: '대형', k: 2, d: '가로·세로 2배(10000×1440칸). 오래 걸어야 하는 세계. 만드는 데 네 배 남짓 걸린다.' }
-};
-let WSIZE = 's', WSX = 1, WSY = 1;
-const SX = x => Math.round(x * WSX);
-const SY = y => y >= 70 ? Math.round(y * WSY) : y + Math.round(70 * (WSY - 1));
-const SYB = y => y + Math.round(720 * WSY) - 720;
-
 const T = {
   AIR: 0, DIRT: 1, GRASS: 2, STONE: 3, SAND: 4, SANDSTONE: 5, SNOW: 6, ICE: 7,
   WOOD: 8, LEAF: 9, EBONSTONE: 10, CORRUPTGRASS: 11, ASH: 12, OBSIDIAN: 13,
@@ -5751,3 +5737,12 @@ const SIG_FX = {
 };
 /* 입자 전체 상한. */
 const PART_CAP = 900;
+
+/* 아이템 인스턴스 → 정의. */
+function idef(it) { return ITEMS[it.id]; }
+
+/* 설정 기본값. */
+const SET_DEFAULT = { music: 40, sfx: 50, shake: 100, dmgnum: 1, minimap: 1,
+  hud_tabbar: 1, hud_quest: 1, hud_buffs: 1, hud_clock: 1, hud_hotbar: 1,   // 화면 구성 — 끄면 body 에 hide-* 를 단다
+  dlgtype: 1,          // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
+  view: 100, keys: null, notice: null };

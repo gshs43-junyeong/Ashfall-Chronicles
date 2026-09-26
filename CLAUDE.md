@@ -1,7 +1,7 @@
 # CLAUDE.md — 이 저장소에서 일하는 AI를 위한 안내
 
 Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다. 게임 코드의 **원본은
-`src/legacy/*.js` 열두 개**이고, `tools/bundle.mjs` 가 읽는 순서대로 이어 붙여 `game/js/ashfall.js`
+`src/legacy/*.js` 열세 개**이고, `tools/bundle.mjs` 가 읽는 순서대로 이어 붙여 `game/js/ashfall.js`
 하나로 만든다(감싸지 않는다 — 전역 공유 그대로. 트랜스파일러·게임 의존성은 없다). **`npm run dev`
 를 켜 두면 고치고 새로고침하는 흐름 그대로다**(소스를 고치면 번들이 다시 만들어진다).
 번들은 커밋한다 — `game/` 만 받아도 빌드 없이 돈다. **소스를 고쳤으면 번들도 같이 커밋할 것**
@@ -52,7 +52,7 @@ v1.1에서 세계를 4200 → 5000으로 늘리며 **늘린 800칸을 전부 왼
 그래서 예전 세계는 통째로 오른쪽으로 800칸 밀렸다.
 
 ```js
-const SHIFT = 800;   // data.js — world.js보다 먼저 읽혀야 해서 여기 있다
+const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보다 먼저 읽힌다
 ```
 
 **세계 x를 새로 하드코딩할 때는 거의 항상 `+ SHIFT`가 필요하다.** 붙이지 않으면
@@ -85,7 +85,7 @@ const SHIFT = 800;   // data.js — world.js보다 먼저 읽혀야 해서 여�
 
 ### 1-7. 세계 크기 — 좌표는 소형 기준으로 적고 `SX`/`SY`로 옮긴다
 
-세계는 소형(5000×720) · 중형(1.5배) · 대형(2배)이다(data.js `WORLD_SIZES`, world.js `setWorldSize`).
+세계는 소형(5000×720) · 중형(1.5배) · 대형(2배)이다(size.js `WORLD_SIZES`·`applyWorldSize`, world.js `setWorldSize`).
 `WW`·`WH`·`WORLD_BOT`·`SURF_BASE`·`HELL_Y`·`DEEP_Y`·`SKY_Y`·`CAMP_X0/1`·`SEA_X1`·`GLACIER_X1`·바이옴 경계·
 `RUIN_SPEC` 좌표·깊이 목표는 **`let`이고 크기마다 다시 계산된다** — 파일 맨 위에서 이 값으로 다른
 상수를 만들어 두면 소형 값에 얼어붙는다.
@@ -104,6 +104,7 @@ const SHIFT = 800;   // data.js — world.js보다 먼저 읽혀야 해서 여�
 | 경로 | 내용 |
 |---|---|
 | `game/` | 실행 폴더. 이 폴더만 정적 서버에 올리면 그대로 돈다(`js/ashfall.js` 는 **산출물**) |
+| `src/legacy/size.js` | 세계 크기 — `SHIFT`·`SX`/`SY`·치수 `let`·바이옴 경계. `let` 은 여기서만 고쳐 쓴다 |
 | `src/legacy/data.js` | 타일·아이템·몹·제작법·챕터·업적 — **표만 있는 곳** (5,700줄) |
 | `src/legacy/world.js` | 결정론적 월드 생성 · 직렬화 · 마을/유적/바다 (5,300줄) |
 | `src/legacy/game.js` | 게임 루프 · 입력 · 그리기 · 세이브 (8,800줄) |
@@ -121,10 +122,10 @@ const SHIFT = 800;   // data.js — world.js보다 먼저 읽혀야 해서 여�
 > **리포가 원본이다.** 게임 코드는 `src/legacy/` 에서 고친다 — `game/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
 
 읽는 순서(`tools/bundle.mjs` 의 `ORDER`): `sprites-manifest`(번들 밖, 먼저) →
-`util → data → world → tileart → itemart → titlebg → sprites → entity → factory → ui → music → game`
+`util → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
 
-`data.js`의 상수를 `world.js`가 쓰므로 **`data.js`가 먼저**다. `SHIFT`가
-world.js가 아니라 data.js에 있는 것도 그래서다.
+앞 파일은 뒤 파일을 모른다 — `data.js`의 상수를 `world.js`가 쓰므로 **`data.js`가 먼저**다. 둘 다 쓰는 세계 치수(`SHIFT`·`WW`·`DEEP_Y`·`BIOMES` …)는
+그래서 `size.js` 에 있다.
 
 ---
 

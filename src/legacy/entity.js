@@ -22,7 +22,6 @@ function makeItem(id, count = 1, rarity = 0, affixes = null) {
   if (affixes && affixes.length) it.a = affixes;
   return it;
 }
-function idef(it) { return ITEMS[it.id]; }
 function maxStack(it) { return idef(it).stack || 1; }
 function isGear(it) { const t = idef(it).type; return t === 'weapon' || t === 'armor' || t === 'acc' || t === 'tool' || t === 'bag' || t === 'pet'; }
 /* 장비 최소 착용 레벨. */
