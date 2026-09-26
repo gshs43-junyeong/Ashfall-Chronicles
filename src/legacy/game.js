@@ -4,7 +4,6 @@ import { mixHex, shade } from '../engine/core/color.js';
 import { startLoop } from '../engine/core/loop.js';
 import { TAU, aabb, angleTo, clamp, dist, dist2, inv, lerp } from '../engine/core/math.js';
 import { RNG, hashStr, tileHash } from '../engine/core/rng.js';
-import { eulreul, iga, josa, josaRo } from '../engine/i18n/ko.js';
 import { createInput } from '../engine/input/actions.js';
 import { bindPointer } from '../engine/input/pointer.js';
 import { mountTouch } from '../engine/input/touch.js';
@@ -15,6 +14,7 @@ import { createSaveStore } from '../engine/save/store.js';
 import { upgrade } from '../engine/save/upgrade.js';
 import { createScenes } from '../engine/scene/scenes.js';
 import { escHtml, fmt } from './util.js';
+import { tr } from './lang.js';
 import { BIOMES, CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SKY_Y, SURF_BASE, SY, WH, WORLD_BOT, WORLD_SIZES, WSIZE, WSY, WW } from './size.js';
 import { ACHIEVEMENTS, BOSS_DIE, BOUNTY_BY_ID, BOUNTY_POOL, BOUNTY_UNIT, BOW_HAND, CAVE_TYPES, CHAPTERS, CHARACTERS,
   CHAR_OF, CIPHER_KIND, CIPHER_WORDS, DAWN_NPCS, DECO_MOUNT, DECO_OF, DIALOGUE, ECHO, EGG_POOL, ENEMIES, EVENTS,
@@ -86,7 +86,7 @@ export function saveSealOk(raw, d, sig) {
 }
 /** 슬롯 목록에 띄울 요약 — 본문을 열지 않고 목록을 그리려고 따로 적는다 */
 export function saveHead(d) {
-  return { name: d.name || '이름 없는 모험가', level: d.p ? d.p.level : 1, chapter: d.chapter,
+  return { name: d.name || tr('이름 없는 모험가'), level: d.p ? d.p.level : 1, chapter: d.chapter,
     size: (d.world && d.world.size) || 's', savedAt: d.savedAt };
 }
 
@@ -140,7 +140,7 @@ export const G = {
     /* 그림이 다 붙은 다음에 타이틀을 연다 — 안 그러면 배경 없는 맨 글자가 먼저 보이고 몇 초 뒤에 그림이 툭 얹힌다. */
     document.body.classList.add('booting');
     window.__acBooting = 1;                   // 로딩 화면은 이제 이쪽이 맡는다 (index.html 참고)
-    this.showLoading('불러오는 중…');
+    this.showLoading(tr('불러오는 중…'));
     /* ★ 타이틀 배경은 여기서 바로 돌린다. */
     if (typeof TitleBG !== 'undefined') { TitleBG.init(); TitleBG.start(); }
     // 손그림 애셋은 비동기로 붙인다 — 실패해도 절차 생성 렌더로 계속 동작
@@ -242,7 +242,7 @@ export const G = {
     /* 터치 조작 뼈대 — 아직은 ?touch=1 일 때만 켠다(모바일 완성은 엔진화 P9). */
     if (new URLSearchParams(location.search).get('touch') === '1')
       this.touch = mountTouch({ input: this.inp, ptr: this.input, surface: this.cv, rightDown: () => this.rightClick(),
-        buttons: [{ id: 'jump', label: '점프' }, { id: 'dash', label: '대시' }], altLabel: '사용' });
+        buttons: [{ id: 'jump', label: tr('점프') }, { id: 'dash', label: tr('대시') }], altLabel: tr('사용') });
     if (this.touch) document.body.classList.add('touch');   // 낮은 화면에선 미니맵·퀘스트 창을 숨긴다(style.css)
     if (this.touch) {         // 오른쪽 단추가 탭 단추 줄(패널을 여는 유일한 길)을 가리지 않게 그 윗변 위로 올린다 — 좁은 화면에선 줄이 핫바 위에 있다
       const lift = () => { const bar = $('#tabbar'), r = bar && bar.getBoundingClientRect();
@@ -323,7 +323,7 @@ export const G = {
         console.warn(`[부팅] 타이틀 그림 ${got}/${NEED} 에서 더 안 온다 — 그대로 연다`);
         this.bootDone(); return;
       }
-      this.showLoading(`불러오는 중… ${got}/${NEED}`);
+      this.showLoading(tr('불러오는 중… {got}/{need}', { got, need: NEED }));
       setTimeout(tick, 120);
     };
     tick();
@@ -350,7 +350,7 @@ export const G = {
   newGame(seedStr, slot, name, charId, mode, size) {
     const seed = seedStr || ('' + Math.floor(Math.random() * 1e9));
     this.currentSlot = slot;
-    this.showLoading('세계를 빚는 중…');           // 크기와 상관없이 같은 문구
+    this.showLoading(tr('세계를 빚는 중…'));           // 크기와 상관없이 같은 문구
     // 다음 프레임에 생성해서 로딩 화면이 먼저 그려지게 한다
     setTimeout(() => { try { this._newGame(seed, name, charId, mode, size); } finally { this.hideLoading(); } }, 40);
   },
@@ -363,7 +363,7 @@ export const G = {
     this._rigs = null; this._fbg = null;   // 세계가 바뀌었으니 자리·원경 캐시를 버린다
     this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
     const p = this.player;
-    p.name = (name || '').trim().slice(0, 12) || '이름 없는 모험가';
+    p.name = (name || '').trim().slice(0, 12) || tr('이름 없는 모험가');
     /* 난이도와 캐릭터는 새 게임에서 한 번 정하고 끝이다 — 설정에서 못 바꾼다. */
     this.mode = MODE_OF(mode).id;
     const ch = CHAR_OF(charId);
@@ -403,7 +403,7 @@ export const G = {
     UI.refreshBag(); UI.refreshEquip(); UI.refreshTracker(); UI.refreshSkillbar(); UI.refreshStatAlloc();
     UI.chapterCard(CHAPTERS[0]);
     setTimeout(() => UI.storyScene(CHAPTERS[0], 'intro'), 4000);   // 서장 도입부를 실제로 읽힌다
-    this.toast('별이 떨어진 다음 날 아침이다.');
+    this.toast(tr('별이 떨어진 다음 날 아침이다.'));
     this.audioInit();
     this.buildMapAtlas();
     // 디버그 바로가기 — 주소 끝에 ?debug=village를 붙이고 "새로운 여정"을 누르면 종장을 안 깨도 여명 마을이 바로 열리고 그 앞에서 시작한다.
@@ -464,7 +464,7 @@ export const G = {
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
       this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
       UI.refreshBag(); UI.refreshEquip();
-      this.toast(`값 확인 자리 — ${plv}레벨 · 마을 ${VILLAGE.length - 1}단계 · 세션 ${sess}`, 'good');
+      this.toast(tr('값 확인 자리 — {plv}레벨 · 마을 {n}단계 · 세션 {sess}', { plv, n: VILLAGE.length - 1, sess }), 'good');
     }
 
     /* ?debug=sea — 세션 3 확인 자리. */
@@ -497,7 +497,7 @@ export const G = {
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
       this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
       UI.refreshBag(); UI.refreshEquip();
-      this.toast('세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급', 'good');
+      this.toast(tr('세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급'), 'good');
     }
 
     /* ?debug=fishfarm — 낚시·농사만 확인하는 자리. */
@@ -546,7 +546,7 @@ export const G = {
         p.vx = p.vy = 0;
         this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-        this.toast('낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭', 'good');
+        this.toast(tr('낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭'), 'good');
       }
       UI.refreshBag(); UI.refreshEquip();
     }
@@ -680,7 +680,7 @@ export const G = {
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
       this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
       UI.refreshBag(); UI.refreshEquip();
-      this.toast('폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳', 'good');
+      this.toast(tr('폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳'), 'good');
     }
   },
 
@@ -932,7 +932,7 @@ export const G = {
       const now = this.dayCount * 1440 + this.dayT;
       if (now - (dm.at || 0) >= 720) {          // 12시간 = 720분
         this.deathMark = null;
-        this.toast('비석이 잿빛에 삼켜졌다', 'bad');
+        this.toast(tr('비석이 잿빛에 삼켜졌다'), 'bad');
       } else if (dist(p.cx, p.cy, dm.x, dm.y) < 70) {
         const gxp = Math.floor((dm.xp || 0) / 2), ggold = Math.floor((dm.gold || 0) / 2);
         if (gxp) p.addXp(gxp);
@@ -943,11 +943,11 @@ export const G = {
         this.deathMark = null;
         for (let i = 0; i < 18; i++) this.parts.push(new Part(p.cx, p.cy - 10, '#ffe08a', -90, 1));
         const bits = [];
-        if (gxp) bits.push(`경험치 ${fmt(gxp)}`);
-        if (ggold) bits.push(`금화 ${fmt(ggold)}`);
-        if (back.length) bits.push(`물건 ${back.length}칸`);
-        this.toast(bits.length ? bits.join(' · ') + '을 되찾았다' : '쓰러졌던 자리로 돌아왔다', 'good');
-        if (dropped) this.toast('가방이 차서 일부는 바닥에 떨어졌다', 'info');
+        if (gxp) bits.push(tr('경험치 {gxp}', { gxp: fmt(gxp) }));
+        if (ggold) bits.push(tr('금화 {ggold}', { ggold: fmt(ggold) }));
+        if (back.length) bits.push(tr('물건 {backCount}칸', { backCount: back.length }));
+        this.toast(bits.length ? bits.join(' · ') + tr('을 되찾았다') : tr('쓰러졌던 자리로 돌아왔다'), 'good');
+        if (dropped) this.toast(tr('가방이 차서 일부는 바닥에 떨어졌다'), 'info');
         UI.refreshBag();
         this.sfx('chapter');
       }
@@ -1016,7 +1016,7 @@ export const G = {
             if (aabb(r, p.rect()) && p.iframe <= 0) {
               p.hurt(16 + this.player.level * 0.6);
               p.oxygen = Math.max(0, (p.oxygen === undefined ? p.d.oxyMax : p.oxygen) - 5);
-              this.toast('짠물이 폐를 채운다 — 숨이 줄었다', 'bad');
+              this.toast(tr('짠물이 폐를 채운다 — 숨이 줄었다'), 'bad');
             }
             for (const e of this.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) e.hurt(24, false, null, 0);
           }
@@ -1136,7 +1136,7 @@ export const G = {
     if (id === T.AIR || !def.drop) { p.mineTx = -1; return; }
     if (def.hard > (tool.power || 1) + (def.tree ? 2 : 0)) {
       p.mineTx = -1;
-      if (!this._pickWarn || this.time - this._pickWarn > 1.5) { this._pickWarn = this.time; this.toast('더 좋은 곡괭이가 필요하다', 'bad'); }
+      if (!this._pickWarn || this.time - this._pickWarn > 1.5) { this._pickWarn = this.time; this.toast(tr('더 좋은 곡괭이가 필요하다'), 'bad'); }
       return;
     }
     if (p.mineTx !== tx || p.mineTy !== ty) { p.mineTx = tx; p.mineTy = ty; p.mineProg = 0; p.mineBeat = 0; }
@@ -1152,7 +1152,7 @@ export const G = {
       // 동력 곡괭이는 한 칸 캘 때마다 전하를 먹는다
       if (tool.pw && !p.useCharge(tool.pw)) {
         p.mineProg = 0;
-        if (!this._pwWarn || this.time - this._pwWarn > 1.5) { this._pwWarn = this.time; this.toast('전하가 없다 — 충전된 배터리가 필요하다', 'bad'); }
+        if (!this._pwWarn || this.time - this._pwWarn > 1.5) { this._pwWarn = this.time; this.toast(tr('전하가 없다 — 충전된 배터리가 필요하다'), 'bad'); }
         return;
       }
       p.mineProg = 0;
@@ -1162,7 +1162,7 @@ export const G = {
         const back = Factory.remove(w, tx, ty);
         let spill = 0;
         if (back) for (const it of back) if (!p.addItem(it)) { this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it)); spill++; }
-        if (spill) this.toast('가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라', 'bad');
+        if (spill) this.toast(tr('가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라'), 'bad');
         UI.refreshBag();
         this.breakFx(tx, ty, id, 1);           // 쇠 파편 + 불티 + 기계가 꺼지는 소리
         return;
@@ -1181,7 +1181,7 @@ export const G = {
         this.matBurst('plant', (tx + .5) * TS, (ty + .5) * TS, 12, { spd: 1.1, vy: -40 });
         if (!this._scytheWarn || this.time - this._scytheWarn > 2.5) {
           this._scytheWarn = this.time;
-          this.toast('낫 없이 거두면 다 으스러진다 — 낫이 필요하다', 'bad');
+          this.toast(tr('낫 없이 거두면 다 으스러진다 — 낫이 필요하다'), 'bad');
         }
         this.sfx('break_plant', this.strokeRate());
         return;
@@ -1212,7 +1212,7 @@ export const G = {
       grew += g.grew.length; ripe += g.ripe.length;
     }
     if (grew + ripe > 0 && this.everPlanted) {
-      this.toast(`밤새 밭이 자랐다 — ${grew + ripe}칸${ripe ? ` · ${ripe}칸은 다 여물었다` : ''}`, 'good');
+      this.toast(tr('밤새 밭이 자랐다 — {n}칸{v}', { n: grew + ripe, v: ripe ? ` ${tr('· {ripe}칸은 다 여물었다', { ripe })}` : '' }), 'good');
       // 화면 안에 밭이 있으면 티를 낸다
       for (const k of w.crops) {
         const x = k % WW, y = (k / WW) | 0;
@@ -1380,21 +1380,21 @@ export const G = {
         // 벨트 위에서 멈춰 버린 물건(3초+)은 창을 열지 않고 바로 집는다
         if (mac.it && Factory.stalled(mac)) {
           const id = mac.it.id;
-          if (Factory.takeStalled(mac, p)) { this.toast(`${ITEMS[id].n}${eulreul(ITEMS[id].n)} 벨트에서 집었다`, 'good'); UI.refreshBag(); this.sfx('place'); }
-          else this.toast('가방이 가득 찼다', 'bad');
+          if (Factory.takeStalled(mac, p)) { this.toast(tr('{item}{item|을} 벨트에서 집었다', { item: ITEMS[id].n }), 'good'); UI.refreshBag(); this.sfx('place'); }
+          else this.toast(tr('가방이 가득 찼다'), 'bad');
           return;
         }
         UI.openMachine(mac); this.sfx('open'); return;
       }
       const hi = p.held();
       if (hi && idef(hi).type === 'machine') {
-        if (w.inRig(mtx, mty)) { this.toast('채취탑 자리에는 놓을 수 없다', 'bad'); return; }
-        if (!Factory.canPlace(w, mtx, mty)) { this.toast('그 자리에는 놓을 수 없다', 'bad'); return; }
+        if (w.inRig(mtx, mty)) { this.toast(tr('채취탑 자리에는 놓을 수 없다'), 'bad'); return; }
+        if (!Factory.canPlace(w, mtx, mty)) { this.toast(tr('그 자리에는 놓을 수 없다'), 'bad'); return; }
         // 벨트 말고는 몸이 있는 기계다 — 제 몸이나 몹이 선 칸에 놓으면 그 안에 낀다
         const cell = { x: mtx * TS, y: mty * TS, w: TS, h: TS };
         if (TILE_DEF[MACHINE[idef(hi).mach].tile].solid === 1 &&
             (aabb(cell, p.rect()) || this.ents.some(e => !e.dead && aabb(cell, e.rect())))) {
-          this.toast('누가 서 있는 자리다', 'bad'); return;
+          this.toast(tr('누가 서 있는 자리다'), 'bad'); return;
         }
         const placed = Factory.place(w, mtx, mty, idef(hi).mach, this.placeDirFor(idef(hi).mach));
         // 발사형 함정은 누가 놓았는지에 따라 편이 갈린다 — 내가 놓은 건 적을 쏜다
@@ -1410,24 +1410,24 @@ export const G = {
       const hd = hi && idef(hi);
       if (hd && hd.hoe) {
         const t = w.get(mtx, mty);
-        if (w.inRig(mtx, mty - 1)) { this.toast('채취탑 자리다', 'bad'); return; }
+        if (w.inRig(mtx, mty - 1)) { this.toast(tr('채취탑 자리다'), 'bad'); return; }
         /* 전주 기둥이 내려오는 열은 갈 수 없다. */
-        if (this._poleAbove(mtx, mty)) { this.toast('전신주 기둥이 지나가는 자리다', 'bad'); return; }
+        if (this._poleAbove(mtx, mty)) { this.toast(tr('전신주 기둥이 지나가는 자리다'), 'bad'); return; }
         if ((t === T.DIRT || t === T.GRASS || t === T.SNOW || t === T.CORRUPTGRASS) && w.get(mtx, mty - 1) === T.AIR) {
           w.set(mtx, mty, T.FARMLAND);
           for (let i = 0; i < 5; i++) this.parts.push(new Part((mtx + .5) * TS, mty * TS, '#6b4a2f'));
           this.sfx('hoe');
-        } else this.toast('흙이나 풀 위에서만 밭을 갈 수 있다', 'bad');
+        } else this.toast(tr('흙이나 풀 위에서만 밭을 갈 수 있다'), 'bad');
         return;
       }
       if (hd && hd.type === 'seed') {
         if (hd.fert) {                               // 퇴비 — 자라는 중인 작물을 한 단계 밀어 준다
-          if (!w.forceGrow(mtx, mty)) { this.toast('다 자란 작물에는 쓸 수 없다', 'bad'); return; }
+          if (!w.forceGrow(mtx, mty)) { this.toast(tr('다 자란 작물에는 쓸 수 없다'), 'bad'); return; }
           for (let i = 0; i < 8; i++) this.parts.push(new Part((mtx + .5) * TS, (mty + .5) * TS, '#8fd06a', -40));
         } else {
           // 전주 기둥이 지나가는 열에는 심지 않는다 — 괭이와 같은 이유(그림이 겹친다)
-          if (this._poleAbove(mtx, mty + 1)) { this.toast('전신주 기둥이 지나가는 자리다', 'bad'); return; }
-          if (!w.plantSeed(mtx, mty, hi.id)) { this.toast('갈아 둔 밭 위에만 심을 수 있다', 'bad'); return; }
+          if (this._poleAbove(mtx, mty + 1)) { this.toast(tr('전신주 기둥이 지나가는 자리다'), 'bad'); return; }
+          if (!w.plantSeed(mtx, mty, hi.id)) { this.toast(tr('갈아 둔 밭 위에만 심을 수 있다'), 'bad'); return; }
           this.everPlanted = 1;   // 마을에 원래 있던 장식 밭 때문에 매일 알림이 뜨지 않게
         }
         hi.c--; if (hi.c <= 0) p.bag[p.sel] = null;
@@ -1454,24 +1454,24 @@ export const G = {
       const near = w.get(tx - 1, ty) || w.get(tx + 1, ty) || w.get(tx, ty - 1) || w.get(tx, ty + 1) || w.wall(tx, ty);
       if (!near) return;
       /* 잠긴 골방 안에는 아무것도 못 놓는다 — 안에 발판을 놓아 밖에서 타고 넘거나, 문틀 옆에 블록을 끼워 판정을 흔드는 길을 막는다. */
-      if (w.inLockedVault(tx, ty)) { this.toast('잠긴 골방 안에는 놓을 수 없다', 'bad'); return; }
-      if (w.inRig(tx, ty)) { this.toast('채취탑 자리에는 놓을 수 없다', 'bad'); return; }
+      if (w.inLockedVault(tx, ty)) { this.toast(tr('잠긴 골방 안에는 놓을 수 없다'), 'bad'); return; }
+      if (w.inRig(tx, ty)) { this.toast(tr('채취탑 자리에는 놓을 수 없다'), 'bad'); return; }
       const tileId = idef(held).tile;
       if (TILE_DEF[tileId].solid === 1 && aabb({ x: tx * TS, y: ty * TS, w: TS, h: TS }, p.rect())) return;
       // 장식은 기댈 데가 있어야 한다(data.js DECO_MOUNT) — 같은 장식끼리는 이어 붙는다
       const mount = DECO_MOUNT[tileId];
       if (mount === 'water') {
         if (cur !== T.WATER || TILE_DEF[w.get(tx, ty + 1)].solid !== 1) {
-          this.toast('고인 물속 바닥에만 놓을 수 있다', 'bad');
+          this.toast(tr('고인 물속 바닥에만 놓을 수 있다'), 'bad');
           return;
         }
       } else if (mount && FLUID_KIND[cur]) {
-        this.toast('물속에는 놓을 수 없다', 'bad');
+        this.toast(tr('물속에는 놓을 수 없다'), 'bad');
         return;
       } else if (mount) {
         const by = mount === 'floor' ? ty + 1 : ty - 1, bt = w.get(tx, by);
         if (TILE_DEF[bt].solid !== 1 && bt !== tileId) {
-          this.toast(mount === 'floor' ? '단단한 바닥 위에만 놓을 수 있다' : '천장에 매달아야 한다', 'bad');
+          this.toast(mount === 'floor' ? tr('단단한 바닥 위에만 놓을 수 있다') : tr('천장에 매달아야 한다'), 'bad');
           return;
         }
       }
@@ -1485,22 +1485,22 @@ export const G = {
   placeStation(tx, ty) {
     const p = this.player, w = this.world;
     const it = p.held(), d = idef(it);
-    if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast('너무 멀다', 'bad'); return; }
+    if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast(tr('너무 멀다'), 'bad'); return; }
     const s = OBJ_SIZE[d.obj];
     const tw = s.tw || 1, th = s.th || 1;
     const x0 = tx, y0 = ty - th + 1;   // 발자국 좌상단
     for (let yy = y0; yy <= ty; yy++) for (let xx = x0; xx < x0 + tw; xx++) {
-      if (w.get(xx, yy) !== T.AIR) { this.toast('빈 자리에만 놓을 수 있다', 'bad'); return; }
-      if (w.inRig(xx, yy)) { this.toast('채취탑 자리에는 놓을 수 없다', 'bad'); return; }
-      if (Factory.at(w, xx, yy)) { this.toast('이미 기계가 있다', 'bad'); return; }
+      if (w.get(xx, yy) !== T.AIR) { this.toast(tr('빈 자리에만 놓을 수 있다'), 'bad'); return; }
+      if (w.inRig(xx, yy)) { this.toast(tr('채취탑 자리에는 놓을 수 없다'), 'bad'); return; }
+      if (Factory.at(w, xx, yy)) { this.toast(tr('이미 기계가 있다'), 'bad'); return; }
     }
     for (let xx = x0; xx < x0 + tw; xx++)
-      if (!w.solid(xx, ty + 1)) { this.toast('바닥이 있어야 놓을 수 있다', 'bad'); return; }
+      if (!w.solid(xx, ty + 1)) { this.toast(tr('바닥이 있어야 놓을 수 있다'), 'bad'); return; }
     // 이미 다른 설치물·NPC가 그 자리를 쓰고 있는지 — 발자국 전체(px)로 검사한다
     const box = { x: x0 * TS, y: y0 * TS, w: tw * TS, h: th * TS };
     for (const o of w.objects) {
       if (!OBJ_SIZE[o.type] && o.type !== 'npc') continue;
-      if (aabb(box, { x: o.x, y: o.y, w: o.w, h: o.h })) { this.toast('그 자리에는 놓을 수 없다', 'bad'); return; }
+      if (aabb(box, { x: o.x, y: o.y, w: o.w, h: o.h })) { this.toast(tr('그 자리에는 놓을 수 없다'), 'bad'); return; }
     }
     const o = {
       type: d.obj, placed: 1,
@@ -1517,19 +1517,19 @@ export const G = {
   placeDoor(tx, ty) {
     const p = this.player, w = this.world;
     const it = p.held();
-    if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast('너무 멀다', 'bad'); return; }
+    if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast(tr('너무 멀다'), 'bad'); return; }
     const y0 = ty - 1;                       // 겨눈 칸이 문의 **아랫칸** — 위로 한 칸 더 선다
     for (let yy = y0; yy <= ty; yy++) {
-      if (w.get(tx, yy) !== T.AIR) { this.toast('빈 자리에만 달 수 있다', 'bad'); return; }
-      if (w.inRig(tx, yy)) { this.toast('채취탑 자리에는 달 수 없다', 'bad'); return; }
-      if (Factory.at(w, tx, yy)) { this.toast('이미 기계가 있다', 'bad'); return; }
+      if (w.get(tx, yy) !== T.AIR) { this.toast(tr('빈 자리에만 달 수 있다'), 'bad'); return; }
+      if (w.inRig(tx, yy)) { this.toast(tr('채취탑 자리에는 달 수 없다'), 'bad'); return; }
+      if (Factory.at(w, tx, yy)) { this.toast(tr('이미 기계가 있다'), 'bad'); return; }
     }
-    if (!w.solid(tx, ty + 1)) { this.toast('바닥이 있어야 문을 단다', 'bad'); return; }
-    if (w.inLockedVault(tx, ty)) { this.toast('잠긴 골방 안에는 놓을 수 없다', 'bad'); return; }
+    if (!w.solid(tx, ty + 1)) { this.toast(tr('바닥이 있어야 문을 단다'), 'bad'); return; }
+    if (w.inLockedVault(tx, ty)) { this.toast(tr('잠긴 골방 안에는 놓을 수 없다'), 'bad'); return; }
     const box = { x: tx * TS, y: y0 * TS, w: TS, h: TS * 2 };
     for (const o of w.objects) {
       if (!OBJ_SIZE[o.type] && o.type !== 'npc' && o.type !== 'door') continue;
-      if (aabb(box, { x: o.x, y: o.y, w: o.w, h: o.h })) { this.toast('그 자리에는 놓을 수 없다', 'bad'); return; }
+      if (aabb(box, { x: o.x, y: o.y, w: o.w, h: o.h })) { this.toast(tr('그 자리에는 놓을 수 없다'), 'bad'); return; }
     }
     /* 문틀 안에 서 있는 채로 달면 닫힌 문에 갇힌다 — 그때만 열어 둔 채로 세운다. */
     const dir = p.facing >= 0 ? 1 : -1;
@@ -1578,14 +1578,14 @@ export const G = {
     if (p.fish) {
       // 이미 드리운 줄 — 입질 중이면 즉시 챔질(보너스), 대기 중이면 거둔다
       if (p.fish.biting) { this.resolveFish('reel'); }
-      else { this.fishSplash(p.fish, 3); p.fish = null; this.toast('낚싯줄을 거두었다'); }
+      else { this.fishSplash(p.fish, 3); p.fish = null; this.toast(tr('낚싯줄을 거두었다')); }
       return;
     }
     const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
-    if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast('너무 멀다', 'bad'); return; }
+    if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast(tr('너무 멀다'), 'bad'); return; }
     const t = w.get(tx, ty);
     // 타일 번호를 하나씩 세지 않고 liquid 표시로 본다 — 바닷물·수련칸이 늘 때마다 빠뜨렸다
-    if (!TILE_DEF[t].liquid) { this.toast('물 위에 던져야 한다', 'bad'); return; }
+    if (!TILE_DEF[t].liquid) { this.toast(tr('물 위에 던져야 한다'), 'bad'); return; }
     // 이 물이 특별히 매긴 웅덩이(정글 폭포호 등)에 속하면 rareMul을 물려받는다 — 없으면 1(보정 없음).
     let rareMul = 1;
     for (const pl of (w.pools || [])) {
@@ -1598,7 +1598,7 @@ export const G = {
     p.fish = { tx, ty, t: wait, biting: false, bite: 0, rodId: p.held().id, rareMul };
     for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, ty * TS, '#cfe8ff', -20, .5));
     this.sfx('splash');
-    this.toast('낚싯줄을 드리웠다');
+    this.toast(tr('낚싯줄을 드리웠다'));
   },
   updateFishing(dt) {
     const p = this.player;
@@ -1612,7 +1612,7 @@ export const G = {
       if (f.t <= 0) {
         // 3레벨 '가벼운 손목' — 챌 수 있는 창이 1.0초에서 1.6초로 늘어난다
         f.biting = true; f.bite = f.biteMax = p.profLv('fish') >= 3 ? 1.6 : 1.0;
-        this.toast('손끝이 흔들린다!', 'good');
+        this.toast(tr('손끝이 흔들린다!'), 'good');
         for (let i = 0; i < 10; i++) this.parts.push(new Part((f.tx + .5) * TS, f.ty * TS, '#ffe08a', -30, .6));
       }
     } else {
@@ -1655,8 +1655,8 @@ export const G = {
     const miss = clamp(missBase - (rod.fishBonus || 0) * 0.5 - (baited ? 0.05 : 0), 0.04, 0.75);
     if (this.rng.chance(miss)) {
       this._fishLost(quality === 'reel'
-        ? this.rng.chance(0.5) ? '챘지만 바늘이 빠졌다' : '줄이 끊겼다'
-        : '입질을 흘렸다 — 미끼만 털렸다');
+        ? this.rng.chance(0.5) ? tr('챘지만 바늘이 빠졌다') : tr('줄이 끊겼다')
+        : tr('입질을 흘렸다 — 미끼만 털렸다'));
       return;
     }
 
@@ -1707,12 +1707,12 @@ export const G = {
         || ['knot_angler', 'sunken_coin', 'tide_pearl'].includes(catchId);
       if (rare) {
         // 이런 건 한 번 낚으면 기억에 남아야 한다
-        this.toast(`물속에서 무언가 딸려 올라왔다 — ${itemName(it)}`, 'good');
+        this.toast(tr('물속에서 무언가 딸려 올라왔다 — {itemName}', { itemName: itemName(it) }), 'good');
         this.burst(p.cx, p.cy - 4, 'stargain', 52, 2.0);
         this.ringFx(p.cx, p.cy, 60, '#7fc8e8', .5);
         this.sfx('level');
       } else {
-        this.toast(`뭔가 걸렸다 — ${itemName(it)}${n > 1 ? ' ×' + n : ''}`, 'good');
+        this.toast(tr('뭔가 걸렸다 — {itemName}{v}', { itemName: itemName(it), v: n > 1 ? ' ×' + n : '' }), 'good');
         this.sfx('open');
       }
       p.addProf('fish', rare ? 3 : 1);          // 빈 바늘보다 건진 쪽이 더 는다
@@ -1729,12 +1729,12 @@ export const G = {
       ['fish_deep', ((s2fish ? 15 : 7) + fishBonus * 30) * (flv >= 6 ? 2.2 : 1)]
     ];
     const catchId = this.rng.weighted(table);
-    if (catchId === 'none') { this.toast(baited ? '미끼만 사라졌다' : '빈 바늘만 올라왔다', 'bad'); UI.refreshBag(); return; }
+    if (catchId === 'none') { this.toast(baited ? tr('미끼만 사라졌다') : tr('빈 바늘만 올라왔다'), 'bad'); UI.refreshBag(); return; }
     // 10레벨 '물때를 안다' — 가끔 한 마리가 더 딸려 온다
     const n = (flv >= PROF_MAX && this.rng.chance(0.25)) ? 2 : 1;
     const it = makeItem(catchId, n);
     if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-    this.toast(`낚았다 — ${itemName(it)}${n > 1 ? ' ×' + n : ''}`, 'good');
+    this.toast(tr('낚았다 — {itemName}{v}', { itemName: itemName(it), v: n > 1 ? ' ×' + n : '' }), 'good');
     p.addProf('fish', 1);                      // 빈 바늘보다 건진 쪽이 더 는다
     this.sfx('open');
     UI.refreshBag();
@@ -1759,7 +1759,7 @@ export const G = {
     if (o.type === 'chest') {
       /* ★ 암호 골방의 상자는 그 유적의 암호문이 풀린 뒤에만 열린다. */
       if (o.codeRuin && !this.ruinCodeDone(o.codeRuin)) {
-        this.toast('상자에 손이 닿지 않는다 — 골방 문을 먼저 열어야 한다', 'bad');
+        this.toast(tr('상자에 손이 닿지 않는다 — 골방 문을 먼저 열어야 한다'), 'bad');
         return;
       }
       if (!o.items) {
@@ -1770,7 +1770,7 @@ export const G = {
         if (o.relic && ITEMS[o.relic]) {
           const relic = makeItem(o.relic, 1);
           o.items.unshift(relic);
-          this.toast(`${itemName(relic)} — 이 유적의 것`, 'good');
+          this.toast(tr('{itemName} — 이 유적의 것', { itemName: itemName(relic) }), 'good');
         }
         // 다른 유적의 위치 지도 — 입구 없는 유적으로 이어지는 사슬
         if (o.ruinmap && ITEMS[o.ruinmap]) o.items.unshift(makeItem(o.ruinmap, 1));
@@ -1789,14 +1789,14 @@ export const G = {
           const e = new Enemy(o.guard.t, o.x + (i - n / 2) * 34, o.y - 40, this.scale());
           this.ents.push(e);
         }
-        this.toast('상자를 열자 무언가 깨어났다', 'bad');
+        this.toast(tr('상자를 열자 무언가 깨어났다'), 'bad');
         this.shake = 10;
       }
       /* 보스가 달린 상자 — 잡몹 지킴이(o.guard)와 달리 하나가 제대로 깨어난다. */
       if (o.boss && !o.woke) {
         o.woke = 1;
         this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 80);
-        this.toast('상자를 열자 섬이 흔들렸다', 'bad');
+        this.toast(tr('상자를 열자 섬이 흔들렸다'), 'bad');
         this.shake = 20;
       }
     } else if (o.type === 'crate') {
@@ -1848,7 +1848,7 @@ export const G = {
     } else if (o.type === 'door') {
       /* 닫을 때 문틀 안에 누가 서 있으면 닫히지 않는다 — 닫힌 문은 길을 막으므로 제자리에서 닫으면 제 몸이 벽에 낀다(빠져나갈 길이 없다). */
       if (!o.closed && aabb(this.world.doorEdge(o), this.player.rect())) {
-        this.toast('문틀에서 비켜야 닫힌다', 'bad'); return;
+        this.toast(tr('문틀에서 비켜야 닫힌다'), 'bad'); return;
       }
       o.closed = !o.closed;
       this.sfx(o.closed ? 'door_shut' : 'door_open');
@@ -1950,7 +1950,7 @@ export const G = {
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
     this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
     UI.refreshBag(); UI.refreshEquip();
-    this.toast('공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다', 'good');
+    this.toast(tr('공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다'), 'good');
   },
 
   /** ?debug=factory 의 여러 층 공장 둘 — A: 3층 금속 공장(광석 → 주괴 → 강철판·전선), B: 지하 탄광이 제 발전기를 먹이는 순환 발전소 + 방어 갑판.
@@ -2040,11 +2040,11 @@ export const G = {
     const choices = [];
     const give = t.it || 'blueprint_frag';
     if (first) choices.push({
-      t: `(${eulreul(ITEMS[give].n)} 뽑아낸다)`, quest: 1, fn: () => {
+      t: tr('({item|을} 뽑아낸다)', { item: ITEMS[give].n }), quest: 1, fn: () => {
         this.termsRead[o.term] = true;
         const it = makeItem(give, t.it ? 8 : 1);
         if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it));
-        this.toast(`${ITEMS[give].n} 획득`, 'good');
+        this.toast(tr('{item} 획득', { item: ITEMS[give].n }), 'good');
         UI.closeDialogue(); UI.refreshBag(); this.checkChapter();
       }
     });
@@ -2059,22 +2059,22 @@ export const G = {
     const p = this.player, w = this.world;
     const d = w.dawnCity;
     if (!this.villageUnlocked) {
-      UI.openLore('귀환 비석', ['표면의 홈이 잿빛으로 막혀 있다. 아직 이어진 곳이 없다.'], []);
+      UI.openLore(tr('귀환 비석'), [tr('표면의 홈이 잿빛으로 막혀 있다. 아직 이어진 곳이 없다.')], []);
       return;
     }
     const atDawn = d && Math.abs(p.cx / TS - (d.x0 + d.x1) / 2) < 90;
     const [tx, ty] = atDawn ? [w.spawnX, w.spawnY - 3]
       : [(d.x0 + d.x1) >> 1, d.gy - 3];
-    const to = atDawn ? '베이스캠프' : '여명 마을';
-    UI.openLore('귀환 비석', [`비석에 손을 대면 ${to}(으)로 돌아간다.`], [
+    const to = atDawn ? tr('베이스캠프') : tr('여명 마을');
+    UI.openLore(tr('귀환 비석'), [tr('비석에 손을 대면 {to}(으)로 돌아간다.', { to })], [
       {
-        t: `(${to}(으)로 이동한다)`, quest: 1, fn: () => {
+        t: tr('({to}(으)로 이동한다)', { to }), quest: 1, fn: () => {
           UI.closeDialogue();
           p.x = tx * TS - p.w / 2; p.y = ty * TS; p.vx = p.vy = 0;
           this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
           this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
           for (let i = 0; i < 30; i++) this.parts.push(new Part(p.cx, p.cy, '#9fe8dc', -60, 1.1));
-          this.toast(`${to}에 도착했다`, 'good');
+          this.toast(tr('{to}에 도착했다', { to }), 'good');
           this.sfx('chapter');
         }
       }
@@ -2085,22 +2085,22 @@ export const G = {
   wishCost() { return Math.round(25 + this.player.level * 7); },
   useFountain(o) {
     const p = this.player, cost = this.wishCost();
-    const lines = ['물속에 동전이 여럿 가라앉아 있다. 오래된 것도, 어제 것도 있다.'];
+    const lines = [tr('물속에 동전이 여럿 가라앉아 있다. 오래된 것도, 어제 것도 있다.')];
     const choices = [];
     if (p.gold >= cost)
       choices.push({
-        t: `(금화 ${fmt(cost)}개를 던진다)`, quest: 1, fn: () => {
+        t: tr('(금화 {cost}개를 던진다)', { cost: fmt(cost) }), quest: 1, fn: () => {
           UI.closeDialogue();
           p.gold -= cost;
           p.addBuff('wish');
           const mx = o.x + o.w / 2, my = o.y + o.h * 0.55;
           for (let i = 0; i < 16; i++) this.parts.push(new Part(mx, my, '#ffd85a', -40, 0.9));
-          this.toast('분수의 축복 — 잠시 운이 따른다', 'good');
+          this.toast(tr('분수의 축복 — 잠시 운이 따른다'), 'good');
           this.sfx('coin');
         }
       });
-    else lines.push(`동전을 던지려면 금화 ${fmt(cost)}개가 필요하다.`);
-    UI.openLore('여명의 분수', lines, choices);
+    else lines.push(tr('동전을 던지려면 금화 {cost}개가 필요하다.', { cost: fmt(cost) }));
+    UI.openLore(tr('여명의 분수'), lines, choices);
   },
 
   /** 여관 — 금화를 내고 아침까지 잔다. */
@@ -2108,17 +2108,17 @@ export const G = {
   useInn() {
     const p = this.player;
     const cost = this.innCost();
-    UI.openLore('여관', [`하란: "한숨 자고 가. 아침까진 봐 줄게. 🪙 ${fmt(cost)}."`], [
+    UI.openLore(tr('여관'), [tr('하란: "한숨 자고 가. 아침까진 봐 줄게. 🪙 {cost}."', { cost: fmt(cost) })], [
       {
-        t: `(🪙 ${fmt(cost)} 내고 잔다)`, quest: 1, fn: () => {
+        t: tr('(🪙 {cost} 내고 잔다)', { cost: fmt(cost) }), quest: 1, fn: () => {
           UI.closeDialogue();
-          if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
+          if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
           p.gold -= cost;
           this.dayT = 6 * 60; this.dayCount++; this.trainedToday = 0;
           this.updateEconomy(); this.rollBounties();
           p.hp = p.d.maxHp; p.mp = p.d.maxMp;
           p.addBuff('rested');
-          this.toast('푹 잤다 — 아침이다', 'good');
+          this.toast(tr('푹 잤다 — 아침이다'), 'good');
           this.sfx('level');
           this.tally = this.tally || {};
           this.tally.inn = (this.tally.inn || 0) + 1;
@@ -2185,8 +2185,8 @@ export const G = {
   /** 목표를 한 줄로 — "무덤지기 12마리" */
   objLabel(o) {
     if (o.type === 'kill') return `${ENEMIES[o.target].n} ${o.n}${mobCw(o.target)}`;
-    if (o.type === 'collect') return `${ITEMS[o.item].n} ${o.n}개`;
-    if (o.type === 'mine') return `${TILE_DEF[o.tile].n} ${o.n}번`;
+    if (o.type === 'collect') return tr('{item} {o}개', { item: ITEMS[o.item].n, o: o.n });
+    if (o.type === 'mine') return tr('{tileDef} {o}번', { tileDef: TILE_DEF[o.tile].n, o: o.n });
     return '';
   },
 
@@ -2229,7 +2229,7 @@ export const G = {
   },
   claimBounty(i) {
     const b = this.bounties[i]; if (!b || b.done) return;
-    if (!this.bountyProgress(b).done) { this.toast('아직 다 하지 못했다', 'bad'); return; }
+    if (!this.bountyProgress(b).done) { this.toast(tr('아직 다 하지 못했다'), 'bad'); return; }
     const p = this.player, pay = this.bountyPay(b);
     b.done = 1; b.paid = pay;          // 떼어 간 뒤에도 종이에 받은 값이 남는다
     p.addXp(pay.xp); p.gold += pay.gold;
@@ -2241,7 +2241,7 @@ export const G = {
     if (b.next && !(this.bountyNext || []).includes(b.next)) {
       this.bountyNext = (this.bountyNext || []).concat(b.next);
     }
-    this.toast(`의뢰 완료: ${b.title} — 경험치 ${fmt(pay.xp)} · 금화 ${fmt(pay.gold)}`, 'good');
+    this.toast(tr('의뢰 완료: {title} — 경험치 {xp} · 금화 {gold}', { title: b.title, xp: fmt(pay.xp), gold: fmt(pay.gold) }), 'good');
     UI.refreshBoard(); UI.refreshBag(); this.sfx('manycoins');
   },
 
@@ -2264,19 +2264,19 @@ export const G = {
   },
   enhanceSlot(i) {
     const p = this.player, it = p.bag[i];
-    if (!it || !isGear(it)) { this.toast('장비만 강화할 수 있다', 'bad'); return; }
+    if (!it || !isGear(it)) { this.toast(tr('장비만 강화할 수 있다'), 'bad'); return; }
     const d = idef(it);
-    if (!d.dmg && !d.def) { this.toast('공격력도 방어력도 없는 것은 벼릴 데가 없다', 'bad'); return; }
+    if (!d.dmg && !d.def) { this.toast(tr('공격력도 방어력도 없는 것은 벼릴 데가 없다'), 'bad'); return; }
     const e = it.e || 0;
-    if (e >= this.ENH_MAX) { this.toast('더 두들길 데가 없다', 'bad'); return; }
+    if (e >= this.ENH_MAX) { this.toast(tr('더 두들길 데가 없다'), 'bad'); return; }
     const cost = this.enhCost(it), mat = this.enhMat(e);
-    if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
-    if (!p.hasAll({ [mat.id]: mat.n })) { this.toast(`${ITEMS[mat.id].n} ${mat.n}개가 필요하다`, 'bad'); return; }
+    if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
+    if (!p.hasAll({ [mat.id]: mat.n })) { this.toast(tr('{item} {mat}개가 필요하다', { item: ITEMS[mat.id].n, mat: mat.n }), 'bad'); return; }
     p.gold -= cost; p.removeItem(mat.id, mat.n);
     const roll = Math.random(), brk = this.enhBreak(e);
     if (roll < brk) {
       it.e = e - 1;
-      this.toast(`${itemName(it)} — 쇠가 갈라졌다. 한 단계 떨어진다 (+${e} → +${e - 1})`, 'bad');
+      this.toast(tr('{itemName} — 쇠가 갈라졌다. 한 단계 떨어진다 (+{e} → +{n})', { itemName: itemName(it), e, n: e - 1 }), 'bad');
       for (let k = 0; k < 22; k++) this.parts.push(new Part(p.cx, p.cy, k % 2 ? '#c8443a' : '#6a6a74', -40, 0.8));
       this.shake = Math.max(this.shake, 6);
       p.recalc();
@@ -2284,14 +2284,14 @@ export const G = {
       return;
     }
     if (roll < brk + this.enhFail(e)) {
-      this.toast(`${itemName(it)} — 결이 어긋났다. 단계는 그대로다`, 'bad');
+      this.toast(tr('{itemName} — 결이 어긋났다. 단계는 그대로다', { itemName: itemName(it) }), 'bad');
       for (let k = 0; k < 12; k++) this.parts.push(new Part(p.cx, p.cy, '#8a8a96', -30, 0.6));
       this.shake = Math.max(this.shake, 3);
       UI.refreshAnvil(); UI.refreshBag(); this.sfx('damage');
       return;
     }
     it.e = e + 1;
-    this.toast(`${itemName(it)} — 한 겹 더 두들겼다`, 'good');
+    this.toast(tr('{itemName} — 한 겹 더 두들겼다', { itemName: itemName(it) }), 'good');
     for (let k = 0; k < 18; k++) this.parts.push(new Part(p.cx, p.cy, '#ff9a3a', -50, 0.7));
     p.recalc();
     UI.refreshAnvil(); UI.refreshBag(); UI.refreshEquip(); this.sfx('craft');
@@ -2301,14 +2301,14 @@ export const G = {
   reforgeCost(it) { return Math.round((this.price(it) * 0.8 + 120 * this.costMul()) * (this.villageLv() >= 3 ? 0.75 : 1)); },
   reforgeSlot(i) {
     const p = this.player, it = p.bag[i];
-    if (!it || !isGear(it)) { this.toast('장비만 재련할 수 있다', 'bad'); return; }
+    if (!it || !isGear(it)) { this.toast(tr('장비만 재련할 수 있다'), 'bad'); return; }
     const cost = this.reforgeCost(it);
-    if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
+    if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
     p.gold -= cost;
     const fresh = rollGear(it.id, this.rng, Math.max(1, it.r));
     fresh.c = it.c;
     p.bag[i] = fresh;
-    this.toast(`${itemName(fresh)} — 다시 벼렸다`, fresh.r > it.r ? 'good' : '');
+    this.toast(tr('{itemName} — 다시 벼렸다', { itemName: itemName(fresh) }), fresh.r > it.r ? 'good' : '');
     UI.refreshReforge(); UI.refreshBag(); this.sfx('craft');
   },
 
@@ -2319,11 +2319,11 @@ export const G = {
     const first = !this.tabletsRead[o.tablet];
     const choices = [];
     if (first) choices.push({
-      t: '(룬 조각을 떼어낸다)', quest: 1, fn: () => {
+      t: tr('(룬 조각을 떼어낸다)'), quest: 1, fn: () => {
         this.tabletsRead[o.tablet] = true;
         const it = makeItem('rune_frag', 1);
         if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it));
-        this.toast('룬 조각 획득', 'good');
+        this.toast(tr('룬 조각 획득'), 'good');
         UI.closeDialogue(); UI.refreshBag(); UI.refreshTracker();
       }
     });
@@ -2349,18 +2349,18 @@ export const G = {
     const first = !this.loreRead[o.lore];
     const choices = [];
     if (first) choices.push({
-      t: '(비문을 옮겨 적는다)', quest: 1, fn: () => {
+      t: tr('(비문을 옮겨 적는다)'), quest: 1, fn: () => {
         this.loreRead[o.lore] = true;
         const p = this.player;
         p.addXp(Math.round(600 * this.scale()));
         const it = makeItem('aether_shard', 3);
         if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-        this.toast('비문을 옮겨 적었다 — 여정의 기록에 남는다', 'good');
+        this.toast(tr('비문을 옮겨 적었다 — 여정의 기록에 남는다'), 'good');
         // 여섯 유적의 비문을 모두 옮겨 적으면 — 탐굴자의 인장은 그런 자에게만 맞는 크기다
         if (Object.keys(RUIN_LORE).every(k => this.loreRead[k])) {
           const seal = rollGear('charm_delver', this.rng, 3);
           if (!p.addItem(seal)) this.drops.push(new Drop(p.cx, p.cy, seal));
-          this.toast('여섯 유적을 모두 뒤졌다 — 탐굴자의 인장을 얻었다', 'good');
+          this.toast(tr('여섯 유적을 모두 뒤졌다 — 탐굴자의 인장을 얻었다'), 'good');
         }
         UI.closeDialogue(); UI.refreshBag();
       }
@@ -2372,17 +2372,17 @@ export const G = {
   /** 봉인문 — 유적의 열쇠로 연다 */
   openSeal(o) {
     const p = this.player, w = this.world;
-    if (o.opened) { this.toast('이미 열려 있다'); return; }
+    if (o.opened) { this.toast(tr('이미 열려 있다')); return; }
     // 봉인문은 두 곳에 있다 — 심층 봉인실(유적의 열쇠)과 설계실(설계실의 인장).
     const atelier = o.gate === 'atelier';
     const keyId = o.key || 'ruin_key';
     if (p.countItem(keyId) <= 0) {
-      UI.openLore(atelier ? '설계실 봉인' : '봉인문', atelier
-        ? ['벽에 이음매가 없다. 문이 아니라, 문이었던 적이 없는 벽이다.',
-           '가운데에 손바닥만 한 홈이 하나 파여 있다 — 안쪽에서 만든 것만 맞는 크기다.',
-           '『이 벽은 밖에서 열리지 않습니다.』']
-        : ['문에는 손잡이가 없다. 대신 세 개의 홈이 파여 있다.',
-           '『세 석판을 모두 읽은 자만이 이 문을 연다.』'], []);
+      UI.openLore(atelier ? tr('설계실 봉인') : tr('봉인문'), atelier
+        ? [tr('벽에 이음매가 없다. 문이 아니라, 문이었던 적이 없는 벽이다.'),
+           tr('가운데에 손바닥만 한 홈이 하나 파여 있다 — 안쪽에서 만든 것만 맞는 크기다.'),
+           tr('『이 벽은 밖에서 열리지 않습니다.』')]
+        : [tr('문에는 손잡이가 없다. 대신 세 개의 홈이 파여 있다.'),
+           tr('『세 석판을 모두 읽은 자만이 이 문을 연다.』')], []);
       return;
     }
     p.removeItem(keyId, 1);
@@ -2397,7 +2397,7 @@ export const G = {
     for (let i = 0; i < 40; i++)
       this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, atelier ? '#ffe8a0' : '#a06fff', -30, 1.2));
     this.shake = 12;
-    this.toast('봉인이 풀렸다', 'good');
+    this.toast(tr('봉인이 풀렸다'), 'good');
     UI.refreshBag(); this.sfx('chapter');
   },
 
@@ -2474,19 +2474,19 @@ export const G = {
 
   talkExtra(id) {
     const cs = [];
-    if (NPCS[id].shop) cs.push({ t: '물건을 보여 달라', fn: () => { UI.closeDialogue(); UI.openShop(id); } });
+    if (NPCS[id].shop) cs.push({ t: tr('물건을 보여 달라'), fn: () => { UI.closeDialogue(); UI.openShop(id); } });
     if (id === 'trainer') {
-      cs.push({ t: `스탯 재분배 · 🪙 ${fmt(this.respecCost())}`, fn: () => { UI.closeDialogue(); this.respecStats(); } });
-      cs.push({ t: `수련 · 🪙 ${fmt(this.trainCost())} · 오늘 ${this.trainedToday}/5`, fn: () => { UI.closeDialogue(); this.trainXp(); } });
+      cs.push({ t: tr('스탯 재분배 · 🪙 {respecCost}', { respecCost: fmt(this.respecCost()) }), fn: () => { UI.closeDialogue(); this.respecStats(); } });
+      cs.push({ t: tr('수련 · 🪙 {trainCost} · 오늘 {trainedToday}/5', { trainCost: fmt(this.trainCost()), trainedToday: this.trainedToday }), fn: () => { UI.closeDialogue(); this.trainXp(); } });
     } else if (id === 'haran') {
-      cs.push({ t: '방을 잡는다', fn: () => { UI.closeDialogue(); this.useInn(); } });
+      cs.push({ t: tr('방을 잡는다'), fn: () => { UI.closeDialogue(); this.useInn(); } });
     } else if (id === 'seira') {
-      cs.push({ t: '장비를 다시 벼려 달라', fn: () => { UI.closeDialogue(); UI.openReforge(); } });
+      cs.push({ t: tr('장비를 다시 벼려 달라'), fn: () => { UI.closeDialogue(); UI.openReforge(); } });
     } else if (NPCS[id].dynamicShop) {
-      cs.push({ t: '오늘 실은 것을 보자', fn: () => { UI.closeDialogue(); UI.openShop(id); } });
+      cs.push({ t: tr('오늘 실은 것을 보자'), fn: () => { UI.closeDialogue(); UI.openShop(id); } });
     }
     /* 하나뿐이면 묶지 않는다(한 줄을 두 번 누르게 만드는 꼴이다). */
-    return cs.length > 1 ? [{ t: '볼일이 있다', sub: cs }] : cs;
+    return cs.length > 1 ? [{ t: tr('볼일이 있다'), sub: cs }] : cs;
   },
 
   talkTo(id) {
@@ -2508,18 +2508,18 @@ export const G = {
 
     const rest = [];
     /* 이야기를 이미 들은 뒤에는 다시 듣는 길을 남겨 둔다 — 놓친 줄이 있을 수 있으니까 */
-    if (!fresh) rest.push({ t: '다시 듣기', replay: 1, fn: () => {
+    if (!fresh) rest.push({ t: tr('다시 듣기'), replay: 1, fn: () => {
       UI.closeDialogue();
       UI.openDialogue(id, story.slice(), rest);
       this.sfx('talk');
     } });
     rest.push(...this.talkExtra(id));
     if (SIDE_POOL[id]) rest.push({
-      t: this.sideActive[id] ? '의뢰에 대해 묻는다' : '부탁할 일이 있는지 묻는다',
+      t: this.sideActive[id] ? tr('의뢰에 대해 묻는다') : tr('부탁할 일이 있는지 묻는다'),
       quest: 1, fn: () => { UI.closeDialogue(); this.sideTalk(id); }
     });
-    rest.push({ t: '지금 무엇을 해야 하지?', quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
-    if (id === 'elara' && this.chapter === 0) rest.push({ t: '(여정을 시작한다)', quest: 1, fn: () => { UI.closeDialogue(); } });
+    rest.push({ t: tr('지금 무엇을 해야 하지?'), quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
+    if (id === 'elara' && this.chapter === 0) rest.push({ t: tr('(여정을 시작한다)'), quest: 1, fn: () => { UI.closeDialogue(); } });
     UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
     this.sfx('talk');
   },
@@ -2554,18 +2554,18 @@ export const G = {
     if (vt && vt[lv] && this.villageSeen[id] !== lv) { lines.push(vt[lv]); this.villageSeen[id] = lv; }
     if (!lines.length) lines.push(story ? story[story.length - 1] : d.line);
     const rest = this.talkExtra(id);
-    if (story && !fresh) rest.push({ t: '다시 듣기', replay: 1, fn: () => {
+    if (story && !fresh) rest.push({ t: tr('다시 듣기'), replay: 1, fn: () => {
       UI.closeDialogue();
       UI.openDialogue(id, story.slice(), rest);
       this.sfx('talk');
     } });
     /* 마을 주민에게도 부탁을 받는다 — 이 다섯에게만 부탁이 없으면 도시가 사람이 사는 곳이 아니라 상점가로 보인다. */
     if (SIDE_POOL[id]) rest.push({
-      t: this.sideActive[id] ? '맡은 일에 대해 묻는다' : '도울 일이 있는지 묻는다',
+      t: this.sideActive[id] ? tr('맡은 일에 대해 묻는다') : tr('도울 일이 있는지 묻는다'),
       quest: 1, fn: () => { UI.closeDialogue(); this.sideTalk(id); }
     });
     /* 마을 주민에게도 길을 물을 수 있다 — 세션 2는 대부분의 시간을 여기서 보낸다. */
-    rest.push({ t: '지금 무엇을 해야 하지?', quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
+    rest.push({ t: tr('지금 무엇을 해야 하지?'), quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
     UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
     this.sfx('talk');
   },
@@ -2577,7 +2577,7 @@ export const G = {
     if (active) {
       const p = this.sideProgress(active);
       if (p.done) {
-        UI.openDialogue(npcId, [active.doneLine], [{ t: '(보상을 받는다)', quest: 1, fn: () => { this.completeSideQuest(npcId); UI.closeDialogue(); } }]);
+        UI.openDialogue(npcId, [active.doneLine], [{ t: tr('(보상을 받는다)'), quest: 1, fn: () => { this.completeSideQuest(npcId); UI.closeDialogue(); } }]);
       } else {
         UI.openDialogue(npcId, [`${active.desc}  (${p.cur}/${p.max})`], []);
       }
@@ -2588,14 +2588,14 @@ export const G = {
     const tpl = pool[this.rng.int(0, pool.length - 1)](this.chapter, this.rng);
     /* 값을 먼저 알려 준다 — 고를 수 있는 것이 "한다·안 한다"뿐이라 값을 모르면 고를 수가 없다. */
     const pay = this.sidePay(tpl);
-    UI.openDialogue(npcId, [`${tpl.desc}\n(보상은 🪙 ${fmt(pay.gold)} · 경험치 ${fmt(pay.xp)})`], [
-      { t: '(수락한다)', quest: 1, fn: () => { this.acceptSideQuest(npcId, tpl); UI.closeDialogue(); } },
-      { t: '(다음에 하겠다)', fn: () => UI.closeDialogue() }
+    UI.openDialogue(npcId, [tr('{desc}\n(보상은 🪙 {gold} · 경험치 {xp})', { desc: tpl.desc, gold: fmt(pay.gold), xp: fmt(pay.xp) })], [
+      { t: tr('(수락한다)'), quest: 1, fn: () => { this.acceptSideQuest(npcId, tpl); UI.closeDialogue(); } },
+      { t: tr('(다음에 하겠다)'), fn: () => UI.closeDialogue() }
     ]);
   },
   acceptSideQuest(npcId, tpl) {
     this.sideActive[npcId] = Object.assign({}, tpl, { start: this.objStart(tpl.obj) });
-    this.toast(`부탁을 맡았다: ${tpl.title}`, 'good');
+    this.toast(tr('부탁을 맡았다: {title}', { title: tpl.title }), 'good');
     UI.refreshQuest(); UI.refreshTracker();
   },
   completeSideQuest(npcId) {
@@ -2608,22 +2608,22 @@ export const G = {
     }
     this.sideDone[npcId] = (this.sideDone[npcId] || 0) + 1;
     delete this.sideActive[npcId];
-    this.toast(`부탁 완료: ${sq.title} — 경험치 ${fmt(pay.xp)} · 금화 ${fmt(pay.gold)}`, 'good');
+    this.toast(tr('부탁 완료: {title} — 경험치 {xp} · 금화 {gold}', { title: sq.title, xp: fmt(pay.xp), gold: fmt(pay.gold) }), 'good');
     UI.refreshQuest(); UI.refreshTracker(); UI.refreshBag();
     this.sfx('manycoins');
   },
   tellQuest() {
     const ch = CHAPTERS[this.chapter];
-    if (!ch) { this.toast('모든 여정이 끝났다.'); return; }
+    if (!ch) { this.toast(tr('모든 여정이 끝났다.')); return; }
     const st = this.chapterState(ch);
     const session = sessionOf(this.chapter).n;
-    if (st.complete) this.toast('할 일은 모두 끝냈다.');
-    else if (st.ready) this.toast(`${session} · 목표 — ${st.goal ? st.goal.o.t : '이 장의 마지막'}`);
+    if (st.complete) this.toast(tr('할 일은 모두 끝냈다.'));
+    else if (st.ready) this.toast(tr('{session} · 목표 — {v}', { session, v: st.goal ? st.goal.o.t : tr('이 장의 마지막') }));
     else {
       // 아직 준비 중이면 고유 동사 쪽을 먼저 알려 준다 — 그게 이 장의 이야기다
       const pick = st.basics.find(b => !b.p.done && st.missing.includes(b.o.verb))
                 || st.basics.find(b => !b.p.done);
-      this.toast(`${session} · 준비 ${st.done}/${st.need}` + (pick ? ` · ${pick.o.t} (${pick.p.label || pick.p.cur + "/" + pick.p.max})` : ''));
+      this.toast(tr('{session} · 준비 {done}/{need}', { session, done: st.done, need: st.need }) + (pick ? ` · ${pick.o.t} (${pick.p.label || pick.p.cur + "/" + pick.p.max})` : ''));
     }
     UI.togglePanel('quest');
   },
@@ -2690,11 +2690,11 @@ export const G = {
     const row = stock[slotIdx]; if (!row || !m) return;
     const it = makeItem(row.id, row.c, 0);
     const cost = this.buyPrice(it, m.markup);
-    if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
-    if (!p.addItem(it)) { this.toast('가방이 가득 찼다', 'bad'); return; }
+    if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
+    if (!p.addItem(it)) { this.toast(tr('가방이 가득 찼다'), 'bad'); return; }
     p.gold -= cost;
     stock.splice(slotIdx, 1);            // 하나뿐인 재고다 — 사면 그날은 끝
-    this.toast(`${ITEMS[row.id].n} 구매`, 'good');
+    this.toast(tr('{item} 구매', { item: ITEMS[row.id].n }), 'good');
     UI.refreshChest(); UI.refreshBag(); this.sfx('coin');
     this.tradeDone();
   },
@@ -2736,10 +2736,10 @@ export const G = {
     const p = this.player;
     const it = makeItem(id, this.shopBundle(id), 0);
     const cost = this.buyPrice(it, 1, npc);
-    if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
-    if (!p.addItem(it)) { this.toast('가방이 가득 찼다', 'bad'); return; }
+    if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
+    if (!p.addItem(it)) { this.toast(tr('가방이 가득 찼다'), 'bad'); return; }
     p.gold -= cost;
-    this.toast(`${ITEMS[id].n} 구매`, 'good');
+    this.toast(tr('{item} 구매', { item: ITEMS[id].n }), 'good');
     UI.refreshChest(); UI.refreshBag(); this.sfx('coin');
     this.tradeDone();
   },
@@ -2749,24 +2749,24 @@ export const G = {
     this.lairs = this.lairs || {};
     // 바이옴 유적의 빈 둥지는 메아리 시련 자리다(RUIN_SPEC 의 여섯만 — 나머지 둥지는 그대로 빈다)
     if (this.lairs[o.ruin] && RUIN_SPEC[o.ruin] && RUIN_SPEC[o.ruin].id) { this.openEcho(o); return; }
-    if (this.lairs[o.ruin]) { this.toast('이미 비어 있다'); return; }
-    if (this.boss) { this.toast('이미 무언가가 깨어 있다', 'bad'); return; }
+    if (this.lairs[o.ruin]) { this.toast(tr('이미 비어 있다')); return; }
+    if (this.boss) { this.toast(tr('이미 무언가가 깨어 있다'), 'bad'); return; }
     if (this.bossGated(o.boss)) return;
     const spec = RUIN_SPEC[o.ruin];
-    const name = o.nm || (spec ? spec.n : '둥지');
+    const name = o.nm || (spec ? spec.n : tr('둥지'));
     UI.openLore(name, [
-      '무언가가 이 자리에서 아주 오래 기다렸다.',
-      '건드리면 깨어난다.'
+      tr('무언가가 이 자리에서 아주 오래 기다렸다.'),
+      tr('건드리면 깨어난다.')
     ], [
       {
-        t: '(깨운다)', quest: 1, fn: () => {
+        t: tr('(깨운다)'), quest: 1, fn: () => {
           UI.closeDialogue();
           // 어느 둥지를 깨웠는지 기억해 둔다 — 잡으면 그 둥지를 비운 것으로 남긴다
           this.pendingLair = o.ruin;
           this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 70);
         }
       },
-      { t: '(그냥 둔다)', fn: () => UI.closeDialogue() }
+      { t: tr('(그냥 둔다)'), fn: () => UI.closeDialogue() }
     ]);
   },
 
@@ -2783,11 +2783,11 @@ export const G = {
   altar(o) {
     const p = this.player;
     const need = Object.keys(ITEMS).find(k => ITEMS[k].boss === o.boss);
-    if (this.boss) { this.toast('이미 무언가가 깨어 있다', 'bad'); return; }
+    if (this.boss) { this.toast(tr('이미 무언가가 깨어 있다'), 'bad'); return; }
     if (this.bossGated(o.boss)) return;
     // 소환 아이템이 아예 없는 보스라면 제단이 아니라 둥지로 다뤄야 한다 — 사연: docs/code-history.md#h47
-    if (!need) { this.wakeLair({ boss: o.boss, ruin: 12, nm: '제단', x: o.x, y: o.y, w: o.w, h: o.h }); return; }
-    if (p.countItem(need) <= 0) { this.toast(`${iga(ITEMS[need].n)} 필요하다`, 'bad'); return; }
+    if (!need) { this.wakeLair({ boss: o.boss, ruin: 12, nm: tr('제단'), x: o.x, y: o.y, w: o.w, h: o.h }); return; }
+    if (p.countItem(need) <= 0) { this.toast(tr('{item|이} 필요하다', { item: ITEMS[need].n }), 'bad'); return; }
     p.removeItem(need, 1);
     this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 60);
     UI.refreshBag();
@@ -2795,7 +2795,7 @@ export const G = {
   useSummon(slot) {
     const p = this.player, it = p.bag[slot];
     const bossId = idef(it).boss;
-    if (this.boss) { this.toast('이미 무언가가 깨어 있다', 'bad'); return; }
+    if (this.boss) { this.toast(tr('이미 무언가가 깨어 있다'), 'bad'); return; }
     if (this.bossGated(bossId)) return;
     const zone = this.world.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
     const req = {
@@ -2804,7 +2804,7 @@ export const G = {
       pursuer: ['surface'],  // 하늘이 트인 지상에서만 — 숨는 대신 위치를 알려주는 의식이다
       overseer: ['works']
     }[bossId];
-    if (req && !req.includes(zone)) { this.toast('여기서는 반응하지 않는다', 'bad'); return; }
+    if (req && !req.includes(zone)) { this.toast(tr('여기서는 반응하지 않는다'), 'bad'); return; }
     p.removeItem(it.id, 1);
     this.spawnBoss(bossId, p.cx + 160 * (p.facing || 1), p.cy - 90);
     UI.refreshBag();
@@ -2813,7 +2813,7 @@ export const G = {
     /* 스토리 보스는 수치를 고정한다. */
     const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
     this.ents.push(e); this.boss = e;
-    this.toast(`${iga(ENEMIES[id].n)} 깨어났다!`, 'bad');
+    this.toast(tr('{enemy|이} 깨어났다!', { enemy: ENEMIES[id].n }), 'bad');
     this.shake = 16;
     // 등장 효과음을 따로 두지 않고 보스 브금이 바로 치고 들어오게 한다
     if (Music) Music.play('boss', true);
@@ -2827,7 +2827,7 @@ export const G = {
       this.lairs[this.pendingLair] = 1;
       this.pendingLair = null;
     }
-    this.toast(`${ENEMIES[id].n} 토벌!`, 'good');
+    this.toast(tr('{enemy} 토벌!', { enemy: ENEMIES[id].n }), 'good');
     UI.bossBar(null);
   },
   /* 몹의 세기는 **스토리 진행(장)만** 따라간다. */
@@ -2841,7 +2841,7 @@ export const G = {
     if (d.use.egg) { this.hatchEgg(d.use.egg); it.c--; if (it.c <= 0) p.bag[slot] = null; UI.refreshBag(); this.sfx('hatch'); return; }
     /* 펫 사탕 — 낀 펫이 없으면 그냥 사라지므로, 쓰기 전에 막아 준다 */
     if (d.use.petXp) {
-      if (!p.equip.pet1 && !p.equip.pet2) { this.toast('펫을 끼고 있어야 준다', 'bad'); return; }
+      if (!p.equip.pet1 && !p.equip.pet2) { this.toast(tr('펫을 끼고 있어야 준다'), 'bad'); return; }
       p.addPetXp(d.use.petXp);
       it.c--; if (it.c <= 0) p.bag[slot] = null;
       UI.refreshBag(); this.sfx('drink'); return;
@@ -2849,14 +2849,14 @@ export const G = {
     // instant(치유·마나 물약)는 공유 재사용 대기시간을 아예 안 걸고 안 본다 — 음식·물고기 등 나머지 회복 소비품끼리는 여전히 potionCd를 공유한다
     /* 맥박을 움직이는 것(고요의 물약 · 맥박 북) — 유적 밖에서는 쓰지 않고 그대로 둔다 */
     if (d.use.pulse) {
-      if (!this.pulseHere) { this.toast('유적 안에서만 듣는다', 'bad'); return; }
+      if (!this.pulseHere) { this.toast(tr('유적 안에서만 듣는다'), 'bad'); return; }
       this.addPulse(this.pulseHere, d.use.pulse, true);
-      this.toast(d.use.pulse < 0 ? '유적의 맥박이 가라앉는다' : '유적이 북소리에 뒤척인다', d.use.pulse < 0 ? 'good' : 'bad');
+      this.toast(d.use.pulse < 0 ? tr('유적의 맥박이 가라앉는다') : tr('유적이 북소리에 뒤척인다'), d.use.pulse < 0 ? 'good' : 'bad');
       it.c--; if (it.c <= 0) p.bag[slot] = null;
       UI.refreshBag(); this.sfx(d.use.pulse < 0 ? 'drink' : 'chapter');
       return;
     }
-    if (!d.instant && p.potionCd > 0 && d.use.hp) { this.toast('아직 회복할 수 없다', 'bad'); return; }
+    if (!d.instant && p.potionCd > 0 && d.use.hp) { this.toast(tr('아직 회복할 수 없다'), 'bad'); return; }
     if (d.use.hp) { p.heal(d.use.hp); if (!d.instant) p.potionCd = d.cd || 10; }
     if (d.use.mp) p.mp = Math.min(p.d.maxMp, p.mp + d.use.mp);
     if (d.use.buff) {
@@ -2878,10 +2878,10 @@ export const G = {
   sellItem(slot) {
     const p = this.player, it = p.bag[slot];
     if (!it) return;
-    if (it.lk) { this.toast('잠긴 물건은 팔 수 없다 (Ctrl+좌클릭으로 해제)', 'bad'); return; }
+    if (it.lk) { this.toast(tr('잠긴 물건은 팔 수 없다 (Ctrl+좌클릭으로 해제)'), 'bad'); return; }
     const price = Math.round(this.price(it) * 0.5 * this.villageTrade());
     p.gold += price;
-    this.toast(`${itemName(it)} 판매 — 🪙 ${fmt(price)}`, 'good');
+    this.toast(tr('{itemName} 판매 — 🪙 {price}', { itemName: itemName(it), price: fmt(price) }), 'good');
     p.bag[slot] = null;
     UI.refreshBag(); UI.refreshChest(); this.sfx('coin');
     this.tradeDone();
@@ -2893,7 +2893,7 @@ export const G = {
     const id = this.rng.weighted(EGG_POOL[tier]);
     const it = makeItem('pet_' + id, 1);
     if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-    this.toast(`${eulreul(PETS[id].n)} 얻었다! (장비창의 펫 칸에 끼울 수 있다)`, 'good');
+    this.toast(tr('{pet|을} 얻었다! (장비창의 펫 칸에 끼울 수 있다)', { pet: PETS[id].n }), 'good');
     UI.refreshBag(); UI.refreshChest();
   },
   /** 장비창의 펫 슬롯을 실제로 따라다니는 펫 인스턴스와 맞춘다. */
@@ -2920,25 +2920,25 @@ export const G = {
   respecStats() {
     const p = this.player;
     const cost = this.respecCost();
-    if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
+    if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
     p.gold -= cost;
     const spent = (p.base.str - 5) + (p.base.dex - 5) + (p.base.int - 5) + (p.base.vit - 5);
     p.statPts += spent;
     p.base = { str: 5, dex: 5, int: 5, vit: 5 };
     p.recalc();
-    this.toast('스탯을 초기화했다. 능력 창에서 다시 분배하라', 'good');
+    this.toast(tr('스탯을 초기화했다. 능력 창에서 다시 분배하라'), 'good');
     UI.refreshStatAlloc(); UI.refreshStatSheet();
   },
   trainCost() { return Math.round((40 + this.trainedToday * 60) * this.costMul()); },
   trainXp() {
     const p = this.player;
-    if (this.trainedToday >= 5) { this.toast('오늘은 더 가르칠 게 없다고 한다', 'bad'); return; }
+    if (this.trainedToday >= 5) { this.toast(tr('오늘은 더 가르칠 게 없다고 한다'), 'bad'); return; }
     const cost = this.trainCost();
-    if (p.gold < cost) { this.toast('금화가 부족하다', 'bad'); return; }
+    if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
     p.gold -= cost; this.trainedToday++;
     const xp = Math.round(p.xpNext * 0.18);
     p.addXp(xp);
-    this.toast(`수련으로 경험치 +${fmt(xp)}`, 'good');
+    this.toast(tr('수련으로 경험치 +{xp}', { xp: fmt(xp) }), 'good');
   },
   /* ================= 마을 개선 ================= */
   villageLv() {
@@ -2955,21 +2955,21 @@ export const G = {
   },
   upgradeVillage() {
     const lv = this.villageLv();
-    if (!lv) { this.toast('아직 마을이 없다', 'bad'); return; }
-    if (lv >= VILLAGE.length - 1) { this.toast('더 올릴 단계가 없다', 'bad'); return; }
+    if (!lv) { this.toast(tr('아직 마을이 없다'), 'bad'); return; }
+    if (lv >= VILLAGE.length - 1) { this.toast(tr('더 올릴 단계가 없다'), 'bad'); return; }
     const spec = VILLAGE[lv + 1], p = this.player;
-    if (!p.hasAll(spec.need)) { this.toast('재료가 부족하다', 'bad'); return; }
+    if (!p.hasAll(spec.need)) { this.toast(tr('재료가 부족하다'), 'bad'); return; }
     for (const k in spec.need) p.removeItem(k, spec.need[k]);
     this.world.upgradeVillage(lv + 1);
     while (this.vault.length < this.vaultCap()) this.vault.push(null);
     // 밭을 내주는 단계 — 연장과 씨앗을 바로 쥐여 준다(밭 한가운데 상자는 뜬금없어 보였다). 가방이 차면 발밑에
     if (lv + 1 === 2) {
       for (const [id, n] of FARM_KIT) { const it = makeItem(id, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); }
-      this.toast('마을 서쪽에 밭을 내주었다 — 괭이·낫·씨앗을 받았다', 'good');
+      this.toast(tr('마을 서쪽에 밭을 내주었다 — 괭이·낫·씨앗을 받았다'), 'good');
     }
-    this.toast(`마을이 『${spec.n}』${josa(spec.n, '이', '가')} 되었다`, 'good');
+    this.toast(tr('마을이 『{spec}』{spec|-이} 되었다', { spec: spec.n }), 'good');
     for (let i = 0; i < 40; i++) this.parts.push(new Part(p.cx + (Math.random() - .5) * 200, p.cy, '#ffe08a', -70, 1.2));
-    UI.chapterCard({ sub: '마을 개선', title: spec.n, line: spec.d });
+    UI.chapterCard({ sub: tr('마을 개선'), title: spec.n, line: spec.d });
     UI.refreshBag(); this.sfx('chapter');
   },
   /* 마을 단계가 주는 혜택 — 여러 곳에서 쓰이므로 한군데 모아 둔다 */
@@ -2985,15 +2985,15 @@ export const G = {
   /** 시설 개조. */
   upgradeStation(kind) {
     const o = this.nearStObj[kind];
-    if (!o) { this.toast(`${STATION_NAME[kind][1]} 앞에서만 개조할 수 있다`, 'bad'); return; }
+    if (!o) { this.toast(tr('{stationName} 앞에서만 개조할 수 있다', { stationName: STATION_NAME[kind][1] }), 'bad'); return; }
     const lv = o.lv || 1;
-    if (lv >= STATION_UP[kind].length) { this.toast('더 손볼 데가 없다', 'bad'); return; }
+    if (lv >= STATION_UP[kind].length) { this.toast(tr('더 손볼 데가 없다'), 'bad'); return; }
     const up = STATION_UP[kind][lv], p = this.player;
-    if (!p.hasAll(up.need)) { this.toast('재료가 부족하다', 'bad'); return; }
+    if (!p.hasAll(up.need)) { this.toast(tr('재료가 부족하다'), 'bad'); return; }
     for (const k in up.need) p.removeItem(k, up.need[k]);
     o.lv = lv + 1;
     const nm = STATION_NAME[kind][lv + 1];
-    this.toast(`${nm}${josaRo(nm)} 개조했다`, 'good');
+    this.toast(tr('{nm|으로} 개조했다', { nm }), 'good');
     for (let i = 0; i < 22; i++) this.parts.push(new Part(p.cx, p.cy, kind === 'forge' ? '#ff9a3a' : '#d8b06a', -50, 0.8));
     UI.refreshCraft(); UI.refreshBag(); this.sfx('craft');
   },
@@ -3001,13 +3001,13 @@ export const G = {
     const r = RECIPES[i], p = this.player;
     const st = r.station ? this.nearStObj[r.station] : null;
     if (r.station && !st) {
-      this.toast(`${STATION_NAME[r.station][1]} 앞에서만 만들 수 있다`, 'bad'); return;
+      this.toast(tr('{stationName} 앞에서만 만들 수 있다', { stationName: STATION_NAME[r.station][1] }), 'bad'); return;
     }
     if (r.station && (st.lv || 1) < (r.lv || 1)) {
       const nm = STATION_NAME[r.station][r.lv];
-      this.toast(`${nm}${josaRo(nm)} 개조해야 만들 수 있다`, 'bad'); return;
+      this.toast(tr('{nm|으로} 개조해야 만들 수 있다', { nm }), 'bad'); return;
     }
-    if (!p.hasAll(r.need)) { this.toast('재료가 부족하다', 'bad'); return; }
+    if (!p.hasAll(r.need)) { this.toast(tr('재료가 부족하다'), 'bad'); return; }
     for (const k in r.need) p.removeItem(k, r.need[k]);
     const out = isGear(makeItem(r.out)) ? rollGear(r.out, this.rng, 1) : makeItem(r.out, r.n);
     if (out.c !== undefined && !isGear(out)) out.c = r.n;
@@ -3015,7 +3015,7 @@ export const G = {
     this.crafted = this.crafted || {};
     this.crafted[r.out] = (this.crafted[r.out] || 0) + 1;
     this.checkAch();
-    this.toast(`${ITEMS[r.out].n} 제작 완료`, 'good');
+    this.toast(tr('{item} 제작 완료', { item: ITEMS[r.out].n }), 'good');
     UI.refreshCraft(); UI.refreshBag(); this.sfx('craft');
   },
 
@@ -3178,7 +3178,7 @@ export const G = {
       // 국면이 끝나면 이벤트도 끝난다.
       const e = EVENTS[this.event.id];
       if ((e.night && !night) || (e.day && night) || (e.dur && this.event.t >= e.dur)) {
-        this.toast(`${e.i} ${iga(e.n)} 지나갔다`);
+        this.toast(tr('{e} {e2|이} 지나갔다', { e: e.i, e2: e.n }));
         this.event = null;
       }
       return;
@@ -3296,10 +3296,10 @@ export const G = {
     const p = this.player, w = this.world, hi = p.held();
     const key = hi && idef(hi).type === 'machine' ? idef(hi).mach : null;
     if (key) {
-      if (!MACHINE[key].rot) { this.toast('방향이 없는 기계다', 'info'); return; }
+      if (!MACHINE[key].rot) { this.toast(tr('방향이 없는 기계다'), 'info'); return; }
       const n = dirTable(key).length, cur = this.placeDir != null && this.placeDir < n ? this.placeDir : -1;
       this.placeDir = cur + 1 >= n ? null : cur + 1;
-      this.toast('놓을 방향 — ' + (this.placeDir == null ? '보는 쪽' : DIR_NAME[this.placeDir]), 'craft');
+      this.toast(`${tr('놓을 방향 —')} ` + (this.placeDir == null ? tr('보는 쪽') : DIR_NAME[this.placeDir]), 'craft');
       this.sfx('place');
       return;
     }
@@ -3356,14 +3356,14 @@ export const G = {
   useRig(o) {
     const done = this.chapter >= SESSIONS[2].ch0;
     if (!done) {
-      UI.openLore('채취탑', this.rigOn(o)
-        ? ['공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다.', '공창이 멈추기 전에는 손댈 엄두가 안 난다.']
-        : ['녹슨 채취탑이다. 리벳 틈마다 재가 쌓여 있다.', '누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.'], []);
+      UI.openLore(tr('채취탑'), this.rigOn(o)
+        ? [tr('공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다.'), tr('공창이 멈추기 전에는 손댈 엄두가 안 난다.')]
+        : [tr('녹슨 채취탑이다. 리벳 틈마다 재가 쌓여 있다.'), tr('누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.')], []);
       this.sfx('open');
       return;
     }
-    UI.openLore('멈춘 채취탑', ['공창이 멈춘 뒤로 이 탑도 더는 돌지 않는다.', '볼트를 풀면 강철판과 톱니, 모터까지 건질 수 있겠다.'], [{
-      t: '채취탑을 해체한다', fn: () => {
+    UI.openLore(tr('멈춘 채취탑'), [tr('공창이 멈춘 뒤로 이 탑도 더는 돌지 않는다.'), tr('볼트를 풀면 강철판과 톱니, 모터까지 건질 수 있겠다.')], [{
+      t: tr('채취탑을 해체한다'), fn: () => {
         UI.closeDialogue();
         o.gone = 1;
         const cx = o.tx * TS + TS / 2, cy = (o.ty - 3) * TS;
@@ -3371,7 +3371,7 @@ export const G = {
         this.matBurst('metal', cx, cy, 30, { spd: 1.4 });
         this.shake = 10;
         this.sfx('break_machine');
-        this.toast('채취탑을 해체했다 — 부품이 쏟아졌다', 'good');
+        this.toast(tr('채취탑을 해체했다 — 부품이 쏟아졌다'), 'good');
       }
     }]);
     this.sfx('open');
@@ -3741,7 +3741,7 @@ export const G = {
         e.maxHp = Math.round(e.maxHp * 2.6); e.hp = e.maxHp;
         e.dmg *= 1.8; e.armor += 14; e.xp = Math.round(e.xp * 4); e.gold = Math.round(e.gold * 4);
         e.elite = true;
-        this.toast(`어디선가 유난히 사나운 ${mobName(type, e.mech)}의 기척이 느껴진다`, 'bad');
+        this.toast(tr('어디선가 유난히 사나운 {mobName}의 기척이 느껴진다', { mobName: mobName(type, e.mech) }), 'bad');
       }
       this.ents.push(e);
       return;
@@ -3780,7 +3780,7 @@ export const G = {
         cur = ps.findIndex(q => !q.done);
         if (cur < 0) cur = max;
         // 지금 칸의 진행을 함께 보인다 — '1/2' 만으로는 나무를 몇 개 더 모아야 하는지 모른다
-        else label = `${cur + 1}/${max}단계` + (ps[cur].max > 1 ? ` · ${ps[cur].cur}/${ps[cur].max}` : '');
+        else label = tr('{n}/{max}단계', { n: cur + 1, max }) + (ps[cur].max > 1 ? ` · ${ps[cur].cur}/${ps[cur].max}` : '');
         break;
       }
     }
@@ -3820,9 +3820,9 @@ export const G = {
     if (!ch || st.ready) return '';
     if (st.missing.length) {
       const b = (ch.basics || []).find(o => o.verb === st.missing[0]);
-      return '아직 자격이 없다 — ' + (b ? b.t : '이 장의 일이 남았다');
+      return `${tr('아직 자격이 없다 —')} ` + (b ? b.t : tr('이 장의 일이 남았다'));
     }
-    return `아직 자격이 없다 — 준비 ${st.done}/${st.need}`;
+    return tr('아직 자격이 없다 — 준비 {done}/{need}', { done: st.done, need: st.need });
   },
 
   checkChapter() {
@@ -3836,7 +3836,7 @@ export const G = {
       const it = ITEMS[id].stack > 1 ? makeItem(id, n) : rollGear(id, this.rng, 2);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
     }
-    this.toast(`『${ch.title}』 완료 — 경험치 ${fmt(ch.rw.xp)} · 금화 ${fmt(ch.rw.gold)}`, 'good');
+    this.toast(tr('『{title}』 완료 — 경험치 {xp} · 금화 {gold}', { title: ch.title, xp: fmt(ch.rw.xp), gold: fmt(ch.rw.gold) }), 'good');
     /* 별 연출이 얼마나 걸리는지 되받는다. */
     const starShow = this.gainStarOrbit(ch.id) || 0;
     this.chapter++;
@@ -3853,9 +3853,9 @@ export const G = {
       // 별이 하늘로 다 올라간 다음에 마을이 드러난다
       const villageAt = starShow + 600;
       setTimeout(() => {
-        UI.chapterCard({ sub: '', title: '여명 마을', line: '잿빛이 걷혔다' });
-        this.toast('동쪽 숲에 묻혀 있던 도시가 드러났다.', 'good');
-        setTimeout(() => this.toast('베이스캠프의 귀환 비석으로 여명 마을에 갈 수 있다.', 'good'), 2400);
+        UI.chapterCard({ sub: '', title: tr('여명 마을'), line: tr('잿빛이 걷혔다') });
+        this.toast(tr('동쪽 숲에 묻혀 있던 도시가 드러났다.'), 'good');
+        setTimeout(() => this.toast(tr('베이스캠프의 귀환 비석으로 여명 마을에 갈 수 있다.'), 'good'), 2400);
       }, villageAt);
       delay = villageAt + 4600;              // 마을 연출이 끝난 뒤에 뒷이야기
     }
@@ -3869,8 +3869,8 @@ export const G = {
           setTimeout(() => UI.storyScene(next, 'intro'), 4000);
         } else {
           // 이야기는 끝난 게 아니라 "여기까지 쓰였다". 뒤로 계속 이어붙일 자리를 남겨 둔다
-          UI.chapterCard({ sub: '이야기는 계속된다', title: '벽 너머', line: '— 여기까지가 지금까지 쓰인 이야기다 —' });
-          this.toast('아직 열리지 않은 장이 남아 있다. 그때까지 이 세계는 당신 것이다.', 'good');
+          UI.chapterCard({ sub: tr('이야기는 계속된다'), title: tr('벽 너머'), line: tr('— 여기까지가 지금까지 쓰인 이야기다 —') });
+          this.toast(tr('아직 열리지 않은 장이 남아 있다. 그때까지 이 세계는 당신 것이다.'), 'good');
         }
       });
     }, delay);
@@ -3896,7 +3896,7 @@ export const G = {
     }
   },
   onAchieved(a) {
-    this.toast(`업적 달성 — ${a.n}`, 'good');
+    this.toast(tr('업적 달성 — {a}', { a: a.n }), 'good');
     for (let i = 0; i < 24; i++)
       this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 1.0));
     this.sfx('ach');
@@ -3908,7 +3908,7 @@ export const G = {
     return ev ? ev.rw : 1;
   },
   onPickup(it) {
-    if (it && idef(it).type !== 'block' && idef(it).type !== 'mat') this.toast(`${itemName(it)} 획득`, 'good');
+    if (it && idef(it).type !== 'block' && idef(it).type !== 'mat') this.toast(tr('{itemName} 획득', { itemName: itemName(it) }), 'good');
     UI.refreshBag();
   },
   /** 세션 1 의 진행 표시. */
@@ -3964,7 +3964,7 @@ export const G = {
         this.burst(q.cx + 30, q.cy - 8, 'stargain', 46, this.STAR_GAIN * 0.8);
         this.sfx('star_gain');
       }, 700);
-      setTimeout(() => this.toast(`별 조각이 하나 더 곁에 남았다 — ${p.starOrbits}/5`, 'good'),
+      setTimeout(() => this.toast(tr('별 조각이 하나 더 곁에 남았다 — {starOrbits}/5', { starOrbits: p.starOrbits }), 'good'),
                  this.STAR_GAIN * 1000 - 600);
       if (id === 5) {
         // 다섯이 한 점으로 모였다가 다시 퍼진다.
@@ -3981,7 +3981,7 @@ export const G = {
     } else if (id === 8) {
       /* 세션 1 의 끝 — 조각이 곁을 떠나 하늘로 돌아간다. */
       setTimeout(() => this.startStarRise(), 700);
-      setTimeout(() => this.toast('다섯 조각이 곁을 떠나 하늘로 돌아갔다', 'good'),
+      setTimeout(() => this.toast(tr('다섯 조각이 곁을 떠나 하늘로 돌아갔다'), 'good'),
                  700 + (this.STAR_GATHER + this.STAR_RISE) * 1000 + 200);
       return 700 + (this.STAR_GATHER + this.STAR_RISE) * 1000 + 1200;
     }
@@ -3989,7 +3989,7 @@ export const G = {
   },
 
   onLevelUp(lv) {
-    this.toast(`레벨 ${lv} 달성! 스탯 +3, 특성 +1`, 'good');
+    this.toast(tr('레벨 {lv} 달성! 스탯 +3, 특성 +1', { lv }), 'good');
     for (let i = 0; i < 30; i++) this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 0.9));
     UI.refreshStatAlloc(); this.sfx('level');
   },
@@ -3998,13 +3998,13 @@ export const G = {
   onProfUp(kind, lv) {
     const P = PROFS[kind]; if (!P) return;
     const perk = P.perks.find(([at]) => at === lv);
-    this.toast(`${P.i} ${P.n} 숙련 ${lv}${perk ? ` — ${perk[1]}` : ''}`, 'good');
+    this.toast(tr('{P} {P2} 숙련 {lv}{v}', { P: P.i, P2: P.n, lv, v: perk ? ` — ${perk[1]}` : '' }), 'good');
     const p = this.player;
     this.ringFx(p.cx, p.cy, perk ? 74 : 46, P.c, perk ? .55 : .35);
     for (let i = 0; i < (perk ? 26 : 12); i++)
       this.parts.push(new Part(p.cx, p.cy, P.c, -70, .8));
     this.sfx(perk ? 'level' : 'learn');
-    if (perk) UI.chapterCard({ sub: `${P.n} 숙련 ${lv}`, title: perk[1], line: perk[2] });
+    if (perk) UI.chapterCard({ sub: tr('{P} 숙련 {lv}', { P: P.n, lv }), title: perk[1], line: perk[2] });
     if (UI.open === 'skill') UI.refreshProf();
   },
   onDeath(cause) {
@@ -4040,16 +4040,16 @@ export const G = {
       // 불가능 모드 — 이 슬롯의 기록을 지운다.
       this.deathMark = null;
       if (this.currentSlot !== null) SaveStore.remove(this.currentSlot).catch(e => console.error(e));
-      $('#death-line').textContent = '불가능 모드였다. 이 슬롯의 기록이 지워졌다.';
+      $('#death-line').textContent = tr('불가능 모드였다. 이 슬롯의 기록이 지워졌다.');
       $('#death-screen').classList.add('open');
       $('#death-screen').classList.add('wipe');
       this.scenes.open('pause');
       this.sfx('death');
       return;
     }
-    const parts = [`경험치 ${fmt(lostXp)}, 금화 ${fmt(lostG)}개를 잃었다.`];
-    if (lostItems.length) parts.push(`가방에서 ${lostItems.length}칸이 떨어졌다.`);
-    parts.push('쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.');
+    const parts = [tr('경험치 {lostXp}, 금화 {lostG}개를 잃었다.', { lostXp: fmt(lostXp), lostG: fmt(lostG) })];
+    if (lostItems.length) parts.push(tr('가방에서 {lostItemsCount}칸이 떨어졌다.', { lostItemsCount: lostItems.length }));
+    parts.push(tr('쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.'));
     $('#death-line').textContent = parts.join(' ');
     $('#death-screen').classList.add('open');
     this.scenes.open('pause');
@@ -4067,14 +4067,14 @@ export const G = {
   questTargets() {
     const w = this.world, ch = CHAPTERS[this.chapter];
     const out = [];
-    if (this.deathMark) out.push({ x: this.deathMark.x, y: this.deathMark.y, k: 'death', t: '쓰러진 자리' });
+    if (this.deathMark) out.push({ x: this.deathMark.x, y: this.deathMark.y, k: 'death', t: tr('쓰러진 자리') });
     /* 지도를 편 유적 — 입구가 없어 지도 없이는 못 찾는 곳이라, 표시가 곧 길이다. */
     for (const id in (this.ruinMarks || {})) {
       if (this.seenRuins && this.seenRuins[id]) continue;
       const r = w && w.ruins && w.ruins.find(q => q.id === id);
       if (!r) continue;
       const sp = RUIN_SPEC.find(q => q.id === id);
-      out.push({ x: (r.x + 0.5) * TS, y: r.y * TS, k: 'ruin', t: (sp ? sp.n : '유적') + ' — 지도의 자리' });
+      out.push({ x: (r.x + 0.5) * TS, y: r.y * TS, k: 'ruin', t: (sp ? sp.n : tr('유적')) + ` ${tr('— 지도의 자리')}` });
     }
     if (!ch || !w) return out;
     /* 나침반 — 준비 중에는 basics 를, 자격을 갖춘 뒤에는 결전만 가리킨다 — 사연: docs/code-history.md#h56 */
@@ -4204,7 +4204,7 @@ export const G = {
   /** 저장이 끝나면 true. */
   async saveGame() {
     if (this.currentSlot === null) return false;   // 타이틀에서 슬롯을 거치지 않고는 저장할 수 없다
-    if (this._saving) { this.toast('저장하는 중이다', 'info'); return false; }
+    if (this._saving) { this.toast(tr('저장하는 중이다'), 'info'); return false; }
     this._saving = true;
     try {
       const p = this.player;
@@ -4234,10 +4234,10 @@ export const G = {
       };
       data.sealed = 1;                                 // 서명이 있는 기록이라는 표시
       await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
-      this.toast('저장했다', 'good');
+      this.toast(tr('저장했다'), 'good');
       return true;
     } catch (e) {
-      this.toast(e && e.name === 'QuotaExceededError' ? '저장 실패: 용량 초과' : '저장 실패', 'bad'); console.error(e);
+      this.toast(e && e.name === 'QuotaExceededError' ? tr('저장 실패: 용량 초과') : tr('저장 실패'), 'bad'); console.error(e);
       return false;
     } finally { this._saving = false; }
   },
@@ -4253,22 +4253,22 @@ export const G = {
       }
       const st = localStorage.getItem(SET_KEY);
       if (st) out.settings = st;
-      if (!n) { this.toast('내보낼 기록이 없다', 'bad'); return; }
+      if (!n) { this.toast(tr('내보낼 기록이 없다'), 'bad'); return; }
       const blob = new Blob([JSON.stringify(out)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = `ashfall-save-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a); a.click();
       setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-      this.toast(`${n}칸을 파일로 내보냈다`, 'good');
-    } catch (e) { this.toast('내보내기 실패', 'bad'); console.error(e); }
+      this.toast(tr('{n}칸을 파일로 내보냈다', { n }), 'good');
+    } catch (e) { this.toast(tr('내보내기 실패'), 'bad'); console.error(e); }
   },
   /** 내보낸 파일을 되돌린다. */
   async importSaves(text) {
     try {
       const d = JSON.parse(text);
-      if (!d || d.app !== 'ashfall' || !d.slots) { this.toast('이 게임의 저장 파일이 아니다', 'bad'); return; }
-      if (d.key && d.key !== SAVE_KEY) { this.toast('이전 판의 저장이라 열 수 없다', 'bad'); return; }
+      if (!d || d.app !== 'ashfall' || !d.slots) { this.toast(tr('이 게임의 저장 파일이 아니다'), 'bad'); return; }
+      if (d.key && d.key !== SAVE_KEY) { this.toast(tr('이전 판의 저장이라 열 수 없다'), 'bad'); return; }
       let n = 0;
       // 되돌린 기록도 이 기계에서 다시 봉인한다 — 안 그러면 봉인된 파일이 안 열린다
       for (const k in d.slots) {
@@ -4278,26 +4278,26 @@ export const G = {
         n++;
       }
       if (d.settings) { localStorage.setItem(SET_KEY, d.settings); this.loadSettings(); UI.syncSettings(); }
-      if (!n) { this.toast('파일에 기록이 없다', 'bad'); return; }
-      this.toast(`${n}칸을 되돌렸다 — 이어하기에서 고르면 된다`, 'good');
+      if (!n) { this.toast(tr('파일에 기록이 없다'), 'bad'); return; }
+      this.toast(tr('{n}칸을 되돌렸다 — 이어하기에서 고르면 된다', { n }), 'good');
       this.renderSlotScreen();
-    } catch (e) { this.toast('저장 파일을 읽지 못했다', 'bad'); console.error(e); }
+    } catch (e) { this.toast(tr('저장 파일을 읽지 못했다'), 'bad'); console.error(e); }
   },
 
   async loadGame(slot) {
     let rec = null;
     try { rec = await SaveStore.get(slot); } catch (e) { console.error(e); }
-    if (!rec) { this.toast('저장된 기록이 없다', 'bad'); return; }
+    if (!rec) { this.toast(tr('저장된 기록이 없다'), 'bad'); return; }
     const raw = rec.raw;
     /* 손댄 기록은 열지 않는다. */
     let head = null;
     try { head = JSON.parse(raw); } catch (e) { }
     if (!saveSealOk(raw, head, rec.sig)) {
-      this.toast('이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다', 'bad');
+      this.toast(tr('이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다'), 'bad');
       return;
     }
     this.currentSlot = slot;
-    this.showLoading('기록을 불러오는 중…');
+    this.showLoading(tr('기록을 불러오는 중…'));
     setTimeout(() => { try { this._loadGame(raw); } finally { this.hideLoading(); } }, 40);
   },
   _loadGame(raw) {
@@ -4311,7 +4311,7 @@ export const G = {
       setWorldSize((d.world && d.world.size) || 's');
       if (d.world && ((d.world.ww && d.world.ww !== WW) || (d.world.wh && d.world.wh !== WH))) {
         setWorldSize(prevSize);
-        this.toast(`이전 크기(${d.world.ww}×${d.world.wh || '?'})의 세계라 열 수 없다 — 새로 시작해야 한다`, 'bad');
+        this.toast(tr('이전 크기({ww}×{v})의 세계라 열 수 없다 — 새로 시작해야 한다', { ww: d.world.ww, v: d.world.wh || '?' }), 'bad');
         return;
       }
       this.world = World.deserialize(d.world);
@@ -4320,7 +4320,7 @@ export const G = {
       this.world.placeRigs(true);            // 채취탑이 object 가 되기 전 세이브 — 지금 지면으로 한 번 골라 세운다
       this.rng = new RNG(d.world.seed + '_g');
       const p = new Player(d.p.x, d.p.y);
-      p.name = d.name || '이름 없는 모험가';
+      p.name = d.name || tr('이름 없는 모험가');
       Object.assign(p, {
         level: d.p.level, xp: d.p.xp, xpNext: d.p.xpNext, statPts: d.p.statPts, skillPts: d.p.skillPts,
         base: d.p.base, gold: d.p.gold, bag: d.p.bag, equip: d.p.equip, sel: d.p.sel,
@@ -4398,10 +4398,10 @@ export const G = {
       this.scenes.go('play'); this.scenes.close('pause');
       this.petEnts = []; this.syncPets();
       UI.refreshBag(); UI.refreshEquip(); UI.refreshTracker(); UI.refreshSkillbar(); UI.refreshStatAlloc(); UI.refreshSkillSlots();
-      this.toast('여정을 이어간다', 'good');
+      this.toast(tr('여정을 이어간다'), 'good');
       this.audioInit();
       this.buildMapAtlas();
-    } catch (e) { this.toast('불러오기 실패', 'bad'); console.error(e); }
+    } catch (e) { this.toast(tr('불러오기 실패'), 'bad'); console.error(e); }
   },
 
   /* ================= 세이브 슬롯 ================= */
@@ -4411,7 +4411,7 @@ export const G = {
     if (!legacy || localStorage.getItem(slotKey(0))) return;
     try {
       const d = JSON.parse(legacy);
-      d.name = d.name || '이름 없는 모험가';
+      d.name = d.name || tr('이름 없는 모험가');
       d.savedAt = d.savedAt || Date.now();
       d.sealed = 1;
       const text = JSON.stringify(d);
@@ -4421,8 +4421,8 @@ export const G = {
     } catch (e) { console.error(e); }
   },
   async deleteSlot(i) {
-    if (!confirm('이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.')) return;
-    try { await SaveStore.remove(i); } catch (e) { this.toast('삭제하지 못했다', 'bad'); console.error(e); }
+    if (!confirm(tr('이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.'))) return;
+    try { await SaveStore.remove(i); } catch (e) { this.toast(tr('삭제하지 못했다'), 'bad'); console.error(e); }
     this.renderSlotScreen();
   },
   /** 타이틀 화면의 슬롯 목록을 새로 그린다. */
@@ -4433,8 +4433,8 @@ export const G = {
     box.innerHTML = slots.map((s, i) => {
       if (!s) {
         return `<div class="slot-card empty" data-slot="${i}">
-          <div class="slot-empty-label">빈 슬롯</div>
-          <button class="slot-new-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_new"></span>새로운 여정</button>
+          <div class="slot-empty-label">${tr('빈 슬롯')}</div>
+          <button class="slot-new-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_new"></span>${tr('새로운 여정')}</button>
         </div>`;
       }
       const when = s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
@@ -4442,11 +4442,11 @@ export const G = {
       return `<div class="slot-card filled${s.bad ? ' tampered' : ''}" data-slot="${i}">
         <div class="slot-info">
           <div class="slot-name">${escHtml(s.name)}</div>
-          <div class="slot-meta">${s.bad ? '저장한 뒤에 바뀐 기록 — 열 수 없다' : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
+          <div class="slot-meta">${s.bad ? tr('저장한 뒤에 바뀐 기록 — 열 수 없다') : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
         </div>
         <div class="slot-actions">
-          <button class="slot-load-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_start"></span>이어하기</button>
-          <button class="slot-del-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="trash"></span>삭제</button>
+          <button class="slot-load-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_start"></span>${tr('이어하기')}</button>
+          <button class="slot-del-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="trash"></span>${tr('삭제')}</button>
         </div>
       </div>`;
     }).join('');
@@ -4497,14 +4497,14 @@ export const G = {
     let ci = 0, mi = 0, sz = 's';
     const kit = ch => {
       const nameOf = id => (ITEMS[id] && ITEMS[id].n) || id;
-      const parts = [ch.weapon ? `<b>${escHtml(nameOf(ch.weapon))}</b>` : '<b>맨손</b>'];
+      const parts = [ch.weapon ? `<b>${escHtml(nameOf(ch.weapon))}</b>` : tr('<b>맨손</b>')];
       (ch.bag || []).forEach(([id, n]) => parts.push(`${escHtml(nameOf(id))} ×${n}`));
-      if (ch.gold) parts.push(`금화 ${ch.gold}`);
+      if (ch.gold) parts.push(tr('금화 {gold}', { gold: ch.gold }));
       return parts.join(' · ');
     };
     const sheet = ch => Sprites.url(`assets/char/player_${ch.id}.png`);
     box.innerHTML = `
-      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>캐릭터</div>
+      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>${tr('캐릭터')}</div>
       <div class="ng-chars">${CHARACTERS.map((ch, i) => `
         <button class="ng-char${i ? '' : ' on'}" data-i="${i}">
           <span class="por" style="background-image:url(${sheet(ch)})"></span>
@@ -4521,23 +4521,23 @@ export const G = {
         </div>
       </div>
 
-      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_mode"></span>난이도</div>
+      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_mode"></span>${tr('난이도')}</div>
       <div class="ng-modes" id="ng-modes">${MODES.map((m, i) => `
         <button class="ng-mode${i ? '' : ' on'}" data-i="${i}" style="--mc:${m.c}"><span class="ui-ic" data-ui-icon="mode_${m.id}"></span>${escHtml(m.n)}</button>`).join('')}</div>
       <p class="ng-mdesc" id="ng-mdesc">${escHtml(MODES[0].d)}</p>
 
-      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_world"></span>세계 크기</div>
+      <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_world"></span>${tr('세계 크기')}</div>
       <div class="ng-modes" id="ng-sizes">${Object.keys(WORLD_SIZES).map(k => `
         <button class="ng-mode${k === 's' ? ' on' : ''}" data-k="${k}" style="--mc:#8fb8d8"><span class="ui-ic" data-ui-icon="size_${k}"></span>${escHtml(WORLD_SIZES[k].n)}</button>`).join('')}</div>
       <p class="ng-mdesc" id="ng-sdesc">${escHtml(WORLD_SIZES.s.d)}</p>
 
       <div class="ng-fields">
-        <label><span class="ui-ic" data-ui-icon="ng_name"></span>이름<input class="ng-name-input" placeholder="이름 없는 모험가" maxlength="12"></label>
-        <label><span class="ui-ic" data-ui-icon="ng_seed"></span>세계 씨앗<input class="ng-seed-input" placeholder="비워두면 무작위"></label>
+        <label><span class="ui-ic" data-ui-icon="ng_name"></span>${tr('이름')}<input class="ng-name-input" placeholder="${tr('이름 없는 모험가')}" maxlength="12"></label>
+        <label><span class="ui-ic" data-ui-icon="ng_seed"></span>${tr('세계 씨앗')}<input class="ng-seed-input" placeholder="${tr('비워두면 무작위')}"></label>
       </div>
       <div class="ng-btns">
-        <button class="ng-start"><span class="ui-ic" data-ui-icon="ng_start"></span>시작</button>
-        <button class="ng-cancel"><span class="ui-ic" data-ui-icon="ng_cancel"></span>취소</button>
+        <button class="ng-start"><span class="ui-ic" data-ui-icon="ng_start"></span>${tr('시작')}</button>
+        <button class="ng-cancel"><span class="ui-ic" data-ui-icon="ng_cancel"></span>${tr('취소')}</button>
       </div>`;
     this.fillIcons(box);
 
@@ -4547,7 +4547,7 @@ export const G = {
       $('#ng-name').textContent = ch.n;
       $('#ng-desc').textContent = ch.d;
       $('#ng-story').textContent = ch.story;
-      $('#ng-stats').innerHTML = [['힘', 'str'], ['민첩', 'dex'], ['지능', 'int'], ['체력', 'vit']]
+      $('#ng-stats').innerHTML = [[tr('힘'), 'str'], [tr('민첩'), 'dex'], [tr('지능'), 'int'], [tr('체력'), 'vit']]
         .map(([n, k]) => `<span>${n} <b>${ch.base[k]}</b></span>`).join('');
       $('#ng-kit').innerHTML = kit(ch);
     };
@@ -4573,7 +4573,7 @@ export const G = {
       const seed = box.querySelector('.ng-seed-input').value.trim();
       // 되돌릴 수 없는 선택이라 불가능 모드만 한 번 더 묻는다
       if (MODES[mi].id === 'impossible' &&
-          !confirm('불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?')) return;
+          !confirm(tr('불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?'))) return;
       this.closeModal('#newgame-screen');
       this.closeModal('#slots-screen');
       this.newGame(seed, slot, name, CHARACTERS[ci].id, MODES[mi].id, sz);
@@ -5315,7 +5315,7 @@ export const G = {
       c.font = (t.crit ? 'bold 19px' : '14px') + ' "Pretendard",sans-serif';
       c.fillStyle = '#000'; c.fillText(t.v, t.x - camX + 1, t.y - camY + 1);
       c.fillStyle = t.c; c.fillText(t.v, t.x - camX, t.y - camY);
-      if (t.crit) { c.font = '10px sans-serif'; c.fillStyle = '#ffd24a'; c.fillText('치명', t.x - camX, t.y - camY - 15); }
+      if (t.crit) { c.font = '10px sans-serif'; c.fillStyle = '#ffd24a'; c.fillText(tr('치명'), t.x - camX, t.y - camY - 15); }
     }
     c.globalAlpha = 1;
   },
@@ -6707,9 +6707,9 @@ export const G = {
       this.tally = this.tally || {};
       if (!this.tally.pulseHint) {
         this.tally.pulseHint = 1;
-        this.toast('유적이 당신을 알아챘다 — 머물수록 · 상자를 열수록 깨어나고, 쓰러뜨릴수록 가라앉는다', 'bad');
+        this.toast(tr('유적이 당신을 알아챘다 — 머물수록 · 상자를 열수록 깨어나고, 쓰러뜨릴수록 가라앉는다'), 'bad');
       }
-      this.toast(`유적의 맥박 — ${S.n}`, 'bad');
+      this.toast(tr('유적의 맥박 — {S}', { S: S.n }), 'bad');
       this.shake = Math.max(this.shake || 0, 4 + s1 * 3);
       this.sfx('chapter');
       this._waveT = PULSE.wave[s1];
@@ -6717,7 +6717,7 @@ export const G = {
       /* 이미 벌어진 사건이 있으면 그것부터 끝내게 둔다(겹치면 둘 다 못 한다). */
       if (!this.pulseEvent && this.pulseHere === id) this.startPulseEvent(id, s1);
     } else if (this.pulseHere === id && s1 === 0) {
-      this.toast('유적이 다시 잠든다', 'good');
+      this.toast(tr('유적이 다시 잠든다'), 'good');
     }
   },
 
@@ -6866,7 +6866,7 @@ export const G = {
           this.sfx('coin');
           for (let q = 0; q < 24; q++) this.parts.push(new Part(s.x, s.y - 14, '#8fe0ff', -50, 1));
           const left = ev.stones.filter(q => !q.got).length;
-          if (left) this.toast(`공명석 — ${3 - left}/3`, 'good');
+          if (left) this.toast(tr('공명석 — {n}/3', { n: 3 - left }), 'good');
         }
       if (ev.stones.every(q => q.got)) { this.endPulseEvent(true); return; }
     } else if (ev.k === 'greed') {
@@ -6876,7 +6876,7 @@ export const G = {
       if (ev.wave < 3 && ev.waveT <= 0) {
         ev.wave++; ev.waveT = 15;
         ev.mobs.push(...this.spawnRuinMobs(here, 1 + ev.stage + (ev.wave === 3 ? 1 : 0)));
-        this.toast(`포위 — ${ev.wave}/3 무리`, 'bad');
+        this.toast(tr('포위 — {wave}/3 무리', { wave: ev.wave }), 'bad');
       }
       if (ev.wave >= 3 && ev.mobs.every(e => e.dead)) { this.endPulseEvent(true); return; }
     }
@@ -6900,7 +6900,7 @@ export const G = {
     }
     if (!ok) {
       this.addPulse(ev.id, 15);
-      this.toast(`${E.n} — 놓쳤다. 유적이 더 깨어난다`, 'bad');
+      this.toast(tr('{E} — 놓쳤다. 유적이 더 깨어난다', { E: E.n }), 'bad');
       this.sfx('mine');
       return;
     }
@@ -6915,7 +6915,7 @@ export const G = {
     if (st >= 2) give(makeItem('pulse_shard', st - 1));
     const calm = { hunt: 15, stones: 35, greed: 0, siege: 25 }[ev.k];
     if (calm) this.addPulse(ev.id, -calm);
-    this.toast(`${E.n} — 해냈다 · 금화 ${fmt(gold)}${calm ? ' · 맥박 -' + calm : ''}`, 'good');
+    this.toast(tr('{E} — 해냈다 · 금화 {gold}{v}', { E: E.n, gold: fmt(gold), v: calm ? ` ${tr('· 맥박 -')}` + calm : '' }), 'good');
     this.sfx('chapter');
     this.checkSurvey(ev.id);
     UI.refreshBag();
@@ -6989,7 +6989,7 @@ export const G = {
     if (up >= 1 && here.spec.bonus && ITEMS[here.spec.bonus]) o.items.push(makeItem(here.spec.bonus, 1 + up));
     if (up >= 2 && here.spec.bonus2 && ITEMS[here.spec.bonus2]) o.items.push(makeItem(here.spec.bonus2, up));
     if (up >= 3) o.items.push(makeItem('pulse_shard', (big ? 2 : 1) + (up >= 4 ? 1 : 0)));
-    if (up > 0) this.toast(`맥박이 뛰는 상자 — ${PULSE.stages[st].n}의 덤`, 'good');
+    if (up > 0) this.toast(tr('맥박이 뛰는 상자 — {stages}의 덤', { stages: PULSE.stages[st].n }), 'good');
     this.addPulse(here.id, big ? PULSE.vault : PULSE.chest);
   },
 
@@ -7006,7 +7006,7 @@ export const G = {
     else if (st >= 3) {
       // 격노를 들고 주인을 쓰러뜨렸다 — 그 값을 따로 친다
       give(makeItem('pulse_shard', 3));
-      this.toast('격노 속에서 주인을 쓰러뜨렸다 — 맥박 결정 셋', 'good');
+      this.toast(tr('격노 속에서 주인을 쓰러뜨렸다 — 맥박 결정 셋'), 'good');
     }
     /* 주인이 쓰러지면 유적이 잠잠해진다. */
     this.ruinPulse = this.ruinPulse || {};
@@ -7089,11 +7089,11 @@ export const G = {
         tier = T0; next = i > 0 ? SURVEY_TIERS[i - 1] : null; break;
       }
     }
-    const label = k => (story && k === 'boss') ? '석판' : SURVEY_LABEL[k];
+    const label = k => (story && k === 'boss') ? tr('석판') : SURVEY_LABEL[k];
     if (next) missing = Object.keys(next.need).filter(k => !meets(k, next.need[k])).map(k => {
       const v = next.need[k], q = part[k];
-      if (k === 'rooms' || k === 'chests') return `${label(k)} ${Math.round(v * 100)}% (지금 ${Math.floor(q[0] / q[1] * 100)}%)`;
-      if (k === 'events' || k === 'kinds' || k === 'echo') return `${label(k)} ${v} (지금 ${q[0]})`;
+      if (k === 'rooms' || k === 'chests') return tr('{label} {n}% (지금 {n2}%)', { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
+      if (k === 'events' || k === 'kinds' || k === 'echo') return tr('{label} {v} (지금 {q})', { label: label(k), v, q: q[0] });
       return label(k);
     });
     return { score, rank: tier.r, col: tier.c, next: next && next.r, missing, part, sv, story,
@@ -7109,19 +7109,19 @@ export const G = {
     const firstTime = !sv.best;
     sv.best = sc.rank;
     if (firstTime && sc.rank === 'D') return;      // 막 들어온 것 — 알릴 만한 일이 아니다
-    this.toast(`탐사 기록 ${sc.rank} — ${spec.n} (진행 ${sc.score}%)`, 'good');
+    this.toast(tr('탐사 기록 {rank} — {spec} (진행 {score}%)', { rank: sc.rank, spec: spec.n, score: sc.score }), 'good');
     if ((sc.rank === 'A' || sc.rank === 'S') && !sv.a) {
       sv.a = 1;
       const gold = 1200 * (spec.rank || 3);
       p.gold += gold;
       give(makeItem('pulse_shard', 3));
-      this.toast(`${eulreul(spec.n)} 거의 다 봤다 — 금화 ${fmt(gold)} · 맥박 결정 셋`, 'good');
+      this.toast(tr('{spec|을} 거의 다 봤다 — 금화 {gold} · 맥박 결정 셋', { spec: spec.n, gold: fmt(gold) }), 'good');
       this.sfx('manycoins');
     }
     if (sc.rank === 'S' && !sv.s) {
       sv.s = 1;
       const sid = 'seal_' + id;
-      if (ITEMS[sid]) { give(makeItem(sid, 1)); this.toast(`샅샅이 뒤졌다 — ${ITEMS[sid].n}`, 'good'); }
+      if (ITEMS[sid]) { give(makeItem(sid, 1)); this.toast(tr('샅샅이 뒤졌다 — {item}', { item: ITEMS[sid].n }), 'good'); }
       this.shake = 8; this.sfx('chapter');
     }
     this.checkAch();
@@ -7132,19 +7132,19 @@ export const G = {
   /* ---- 메아리 시련 ---- */
   openEcho(o) {
     const spec = RUIN_SPEC[o.ruin];
-    if (this.boss) { this.toast('이미 무언가가 깨어 있다', 'bad'); return; }
+    if (this.boss) { this.toast(tr('이미 무언가가 깨어 있다'), 'bad'); return; }
     const sv = this.surveyOf(spec.id);
     const best = sv.echo || 0, next = Math.min(ECHO.max, best + 1);
     const st = this.pulseStage(this.pulseOf(spec.id));
-    const bn = ENEMIES[spec.boss] ? ENEMIES[spec.boss].n : '주인';
-    const lines = ['주인은 쓰러졌지만, 둥지는 아직 그 모양을 기억한다.',
-                   '유적이 깨어 있으면 그 기억이 다시 일어선다.', '',
-                   `넘긴 메아리 ${best} / ${ECHO.max}` +
-                   (best < ECHO.max ? ` · 다음 ${next}단계 — ${bn} 체력·공격 ×${ECHO.mul(next).toFixed(2)}` +
-                     (next > 1 ? ` · 호위 ${next - 1}` : '') : ' · 끝까지 넘겼다')];
+    const bn = ENEMIES[spec.boss] ? ENEMIES[spec.boss].n : tr('주인');
+    const lines = [tr('주인은 쓰러졌지만, 둥지는 아직 그 모양을 기억한다.'),
+                   tr('유적이 깨어 있으면 그 기억이 다시 일어선다.'), '',
+                   tr('넘긴 메아리 {best} / {max}', { best, max: ECHO.max }) +
+                   (best < ECHO.max ? ` ${tr('· 다음 {next}단계 — {bn} 체력·공격 ×{mul}', { next, bn, mul: ECHO.mul(next).toFixed(2) })}` +
+                     (next > 1 ? ` ${tr('· 호위 {n}', { n: next - 1 })}` : '') : ` ${tr('· 끝까지 넘겼다')}`)];
     if (st < ECHO.needStage) {
-      lines.push('', `유적이 잠들어 있다 — 맥박이 「${PULSE.stages[ECHO.needStage].n}」에 닿아야 메아리가 대답한다.`);
-      UI.openLore(`${spec.n} — 빈 둥지`, lines, [{ t: '(물러난다)', fn: () => UI.closeDialogue() }]);
+      lines.push('', tr('유적이 잠들어 있다 — 맥박이 「{stages}」에 닿아야 메아리가 대답한다.', { stages: PULSE.stages[ECHO.needStage].n }));
+      UI.openLore(tr('{spec} — 빈 둥지', { spec: spec.n }), lines, [{ t: tr('(물러난다)'), fn: () => UI.closeDialogue() }]);
       this.sfx('open');
       return;
     }
@@ -7152,11 +7152,11 @@ export const G = {
     const lvs = best < ECHO.max ? [next] : [];
     if (best >= 1) lvs.push(best);
     for (const lv of lvs) choices.push({
-      t: `(메아리를 부른다 — ${lv}단계${lv > best ? ' · 처음' : ' · 다시'})`, quest: 1,
+      t: tr('(메아리를 부른다 — {lv}단계{v})', { lv, v: lv > best ? ` ${tr('· 처음')}` : ` ${tr('· 다시')}` }), quest: 1,
       fn: () => { UI.closeDialogue(); this.summonEcho(o, spec, lv); }
     });
-    choices.push({ t: '(그냥 둔다)', fn: () => UI.closeDialogue() });
-    UI.openLore(`${spec.n} — 메아리`, lines, choices);
+    choices.push({ t: tr('(그냥 둔다)'), fn: () => UI.closeDialogue() });
+    UI.openLore(tr('{spec} — 메아리', { spec: spec.n }), lines, choices);
     this.sfx('open');
   },
   summonEcho(o, spec, lv) {
@@ -7173,7 +7173,7 @@ export const G = {
     }
     const here = this.pulseRuinAt(Math.floor((o.x + o.w / 2) / TS), Math.floor(o.y / TS));
     if (here && lv > 1) this.spawnRuinMobs(here, lv - 1);
-    this.toast(`메아리 ${lv}단계`, 'bad');
+    this.toast(tr('메아리 {lv}단계', { lv }), 'bad');
   },
   echoReward(spec, lv) {
     const p = this.player, sv = this.surveyOf(spec.id);
@@ -7190,9 +7190,9 @@ export const G = {
     const relic = RUIN_RELIC[spec.id];
     if (first && lv === ECHO.max && relic && ITEMS[relic]) {
       give(rollGear(relic, this.rng, 3));
-      this.toast(`마지막 메아리가 흩어졌다 — ${ITEMS[relic].n}`, 'good');
+      this.toast(tr('마지막 메아리가 흩어졌다 — {item}', { item: ITEMS[relic].n }), 'good');
     }
-    this.toast(`메아리 ${lv}단계를 넘겼다 — 금화 ${fmt(gold)}`, 'good');
+    this.toast(tr('메아리 {lv}단계를 넘겼다 — 금화 {gold}', { lv, gold: fmt(gold) }), 'good');
     this.sfx('manycoins');
     this.checkAch();
   },
@@ -7224,7 +7224,7 @@ export const G = {
     c.fillStyle = 'rgba(0,0,0,0.6)';
     for (const s of PULSE.stages) if (s.at > 0) c.fillRect(bx + Math.round(bw * s.at / 100), by, 1, 5);
     c.font = '600 11px "Pretendard",sans-serif'; c.textBaseline = 'middle'; c.textAlign = 'left';
-    c.fillStyle = '#e8e0d0'; c.fillText('유적의 맥박', bx, y + 10);
+    c.fillStyle = '#e8e0d0'; c.fillText(tr('유적의 맥박'), bx, y + 10);
     c.textAlign = 'right'; c.fillStyle = S.c; c.fillText(S.n, bx + bw, y + 10);
     // 사건 — 막대 바로 아래에 이름 · 진행 · 남은 시간
     const ev = this.pulseEvent;
@@ -7233,8 +7233,8 @@ export const G = {
       let prog = '';
       if (ev.k === 'stones') prog = `${ev.stones.filter(q => q.got).length}/3`;
       else if (ev.k === 'hunt') prog = `${ev.marks.filter(e => e.dead).length}/${ev.marks.length}`;
-      else if (ev.k === 'siege') prog = `${ev.wave}/3 무리`;
-      else if (ev.k === 'greed') prog = '상자';
+      else if (ev.k === 'siege') prog = tr('{wave}/3 무리', { wave: ev.wave });
+      else if (ev.k === 'greed') prog = tr('상자');
       const ey = y + 32;
       c.fillStyle = 'rgba(12,9,16,0.72)'; c.fillRect(x, ey, Wd, 24);
       c.fillStyle = 'rgba(255,255,255,0.10)'; c.fillRect(x + 8, ey + 19, Wd - 16, 2);
@@ -7242,7 +7242,7 @@ export const G = {
       c.fillRect(x + 8, ey + 19, Math.max(0, (Wd - 16) * ev.t / ev.max), 2);
       c.textAlign = 'left'; c.fillStyle = '#e8dcc0'; c.fillText(`${E.i} ${E.n}  ${prog}`, x + 8, ey + 9);
       c.textAlign = 'right'; c.fillStyle = ev.t < 10 ? '#ff6a5a' : '#bdb49a';
-      c.fillText(`${Math.max(0, Math.ceil(ev.t))}초`, x + Wd - 8, ey + 9);
+      c.fillText(tr('{n}초', { n: Math.max(0, Math.ceil(ev.t)) }), x + Wd - 8, ey + 9);
     }
     c.restore();
     this.drawPulseEvent(c);
@@ -7306,7 +7306,7 @@ export const G = {
         this.rocks.push({ x: (x + .5) * TS, y: (y + .5) * TS, vy: 0, t: 0.7, dmg: 14 + p.level * 0.9, kind: 'drip' });
         this._dripCd = 5;
         this.tally = this.tally || {};
-        if (!this.tally.dripHint) { this.tally.dripHint = 1; this.toast('머리 위 종유석이 흔들린다 — 비켜라!', 'bad'); }
+        if (!this.tally.dripHint) { this.tally.dripHint = 1; this.toast(tr('머리 위 종유석이 흔들린다 — 비켜라!'), 'bad'); }
         break;
       }
     }
@@ -7382,7 +7382,7 @@ export const G = {
     if (x < 0) return false;                                  // 떨어질 데가 없다 — 이번엔 지나간다
     const p = this.player, pd = x - Math.floor(p.cx / TS);
     this.meteor = { t: 0, x, y: w.surface[x], R, dir: pd >= 0 ? 1 : -1, hit: false, quake: 0, amp: 0 };
-    this.toast('☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!', 'bad');
+    this.toast(tr('☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!'), 'bad');
     this.sfx('boss');
     return true;
   },
@@ -7431,13 +7431,13 @@ export const G = {
     const qx = clamp(bx, p.x, p.x + p.w), qy = clamp(by, p.y, p.y + p.h);
     if (Math.hypot(qx - bx, qy - by) < (R + 1) * TS && this.state === 'play') {
       p.hp = 0;
-      this.toast('☄ 운석에 맞았다.', 'bad');
+      this.toast(tr('☄ 운석에 맞았다.'), 'bad');
       this.onDeath('meteor');
       return;
     }
     const dx = cx - Math.floor(ptx);
-    const where = dist < 40 ? '바로 곁에' : `${dx >= 0 ? '동쪽' : '서쪽'}으로 ${Math.abs(dx)}칸 떨어진 곳에`;
-    this.toast(`☄ 운석이 ${where} 떨어졌다. 땅이 울린다.`, 'bad');
+    const where = dist < 40 ? tr('바로 곁에') : tr('{v}으로 {dx}칸 떨어진 곳에', { v: dx >= 0 ? tr('동쪽') : tr('서쪽'), dx: Math.abs(dx) });
+    this.toast(tr('☄ 운석이 {where} 떨어졌다. 땅이 울린다.', { where }), 'bad');
   },
 
   /** 운석 구덩이 — 있는 타일로만. */
@@ -7609,7 +7609,7 @@ export const G = {
     f.done = 1;
     cells.sort((a, b) => Math.hypot(a[0] - tx, a[1] - ty) - Math.hypot(b[0] - tx, b[1] - ty));
     this.quake = { f, cells, t: 0, i: 0, old };
-    this.toast('자갈이 무너지자 땅이 울린다 — 물러서라!', 'bad');
+    this.toast(tr('자갈이 무너지자 땅이 울린다 — 물러서라!'), 'bad');
     this.shake = 22;
     this.sfx('sk_quake');
   },
@@ -7662,7 +7662,7 @@ export const G = {
     }
     this.tally = this.tally || {};
     this.tally.faults = (this.tally.faults || 0) + 1;
-    this.toast(`무너진 벽 너머에 ${iga(C.n)} 숨어 있었다`, 'good');
+    this.toast(tr('무너진 벽 너머에 {C|이} 숨어 있었다', { C: C.n }), 'good');
     this.sfx('chapter');
     this.checkAch();
   },
@@ -7697,12 +7697,12 @@ export const G = {
     const d = it && idef(it); if (!d || d.type !== 'map') return;
     if (!this.ruinMarks) this.ruinMarks = {};
     const r = this.world.ruins.find(q => q.id === d.ruin);
-    if (!r) { this.toast('여기서는 쓸 수 없다', 'bad'); return; }
-    if (this.ruinMarks[d.ruin]) { this.toast('이미 자리를 안다'); return; }
+    if (!r) { this.toast(tr('여기서는 쓸 수 없다'), 'bad'); return; }
+    if (this.ruinMarks[d.ruin]) { this.toast(tr('이미 자리를 안다')); return; }
     this.ruinMarks[d.ruin] = 1;
     it.c--; if (it.c <= 0) p.bag[slot] = null;
     const spec = RUIN_SPEC.find(s => s.id === d.ruin);
-    this.toast(`${spec ? spec.n : '유적'}의 자리를 알았다 — 나침반을 보라`, 'good');
+    this.toast(tr('{v}의 자리를 알았다 — 나침반을 보라', { v: spec ? spec.n : tr('유적') }), 'good');
     this.sfx('chapter');
     UI.refreshBag();
   },
@@ -7741,11 +7741,11 @@ export const G = {
       /* 불이 꺼진다 — 화면이 한동안 어두워지고 서리 것들이 몰려온다. */
       this.ruinDark = 16;
       this.shake = 10; this.sfx('chapter');
-      this.toast('불이 한꺼번에 꺼졌다', 'bad');
+      this.toast(tr('불이 한꺼번에 꺼졌다'), 'bad');
       this._ruinSpawn(e.ruin, 5, 150);
     } else if (e.ev === 'swarm') {
       this.shake = 14; this.sfx('chapter');
-      this.toast('둥지가 깨어났다', 'bad');
+      this.toast(tr('둥지가 깨어났다'), 'bad');
       this._ruinSpawn(e.ruin, 8, 170);
     } else if (e.ev === 'collapse') {
       /* 갱도가 무너진다 — 발밑 바닥이 부서지는 바닥으로 바뀌고 천장에서 돌이 떨어진다 */
@@ -7754,7 +7754,7 @@ export const G = {
       for (let x = tx - 8; x <= tx + 8; x++)
         if (TILE_DEF[w.get(x, ty)].solid === 1) w.set(x, ty, T.CRUMBLE);
       this.shake = 18; this.sfx('chapter');
-      this.toast('발밑이 내려앉는다', 'bad');
+      this.toast(tr('발밑이 내려앉는다'), 'bad');
       for (let i = 0; i < 40; i++)
         this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 260, p.cy - 90, '#6a5a48', 40, 1.1));
       this._ruinSpawn(e.ruin, 3, 190);
@@ -7762,12 +7762,12 @@ export const G = {
       /* 홀씨가 터진다 — 한동안 독에 잠기고 굴의 것들이 깨어난다 */
       this.ruinSpore = 9;                     // 이 동안 홀씨에 잠긴다 (update 가 깎으며 물린다)
       this.shake = 8; this.sfx('chapter');
-      this.toast('홀씨가 한꺼번에 터졌다', 'bad');
+      this.toast(tr('홀씨가 한꺼번에 터졌다'), 'bad');
       this._ruinSpawn(e.ruin, 5, 150);
     } else if (e.ev === 'password') {
       // 무엇을 맞춰야 하는지는 그 유적의 자물쇠 갈래를 따라간다(숫자 · 글자 · 풀어 읽기)
       const c = this.ruinCipher(e.ruin), K = c && CIPHER_KIND[c.kind];
-      this.toast(K ? `벽 너머에 빈 곳이 있다 — ${K.n}이다` : '벽 너머에 빈 곳이 있다');
+      this.toast(K ? tr('벽 너머에 빈 곳이 있다 — {K}이다', { K: K.n }) : tr('벽 너머에 빈 곳이 있다'));
       this.sfx('open');
     }
   },
@@ -7776,13 +7776,13 @@ export const G = {
   useMystic(o) {
     const m = MYSTIC[o.mk]; if (!m) return;
     const p = this.player;
-    if (o.used) { UI.openLore(m.n, ['한 번 쓰고 나면 아무 일도 일어나지 않는다.'], []); this.sfx('open'); return; }
+    if (o.used) { UI.openLore(m.n, [tr('한 번 쓰고 나면 아무 일도 일어나지 않는다.')], []); this.sfx('open'); return; }
     const choices = [];
     const afford = !m.cost || p.gold >= m.cost;
     choices.push({
-      t: m.ask + (afford ? '' : ' (금화가 모자란다)'),
+      t: m.ask + (afford ? '' : ` ${tr('(금화가 모자란다)')}`),
       fn: () => {
-        if (!afford) { this.toast('금화가 모자란다', 'bad'); UI.closeDialogue(); return; }
+        if (!afford) { this.toast(tr('금화가 모자란다'), 'bad'); UI.closeDialogue(); return; }
         if (m.cost) p.gold -= m.cost;
         o.used = 1;
         p.addBuff(m.buff);
@@ -7810,19 +7810,19 @@ export const G = {
     const h = hashStr(ck);
     const K = CIPHER_KIND[kind];
     let ans = '', shown = '', notes = [];
-    const ord = ['첫', '둘째', '셋째'];
+    const ord = [tr('첫'), tr('둘째'), tr('셋째')];
     if (kind === 'digits') {
       ans = String(100 + (h % 900));
       notes = ord.map((o, i) =>
-        [`${o} 홈`, ['여기 새긴 것은 문을 여는 수의 한 자리다.',
-                     '나머지는 다른 방에 나누어 적었다 — 한 사람이 다 알면 안 되었으므로.',
-                     '', `『${o} 자리는 ${ans[i]}』`]]);
+        [tr('{o} 홈', { o }), [tr('여기 새긴 것은 문을 여는 수의 한 자리다.'),
+                     tr('나머지는 다른 방에 나누어 적었다 — 한 사람이 다 알면 안 되었으므로.'),
+                     '', tr('『{o} 자리는 {ans}』', { o, ans: ans[i] })]]);
     } else if (kind === 'word') {
       ans = CIPHER_WORDS[h % CIPHER_WORDS.length];
       notes = ord.map((o, i) =>
-        [`${o} 글자`, ['문을 여는 것은 수가 아니라 말이다. 세 글자짜리 말.',
-                      '우리는 그 말을 셋으로 끊어 서로 다른 방에 두었다.',
-                      '', `『${o} 글자는 ${ans[i]}』`]]);
+        [tr('{o} 글자', { o }), [tr('문을 여는 것은 수가 아니라 말이다. 세 글자짜리 말.'),
+                      tr('우리는 그 말을 셋으로 끊어 서로 다른 방에 두었다.'),
+                      '', tr('『{o} 글자는 {ans}』', { o, ans: ans[i] })]]);
     } else {
       /* 풀어 읽기 — 문에 새긴 수를 뒤에서부터 읽고 거기에 한 자리 수를 더한다. */
       const base = 141 + (h % 850);              // 141~990
@@ -7830,13 +7830,13 @@ export const G = {
       ans = String(base + k);                    // 142~999 — 반드시 세 자리
       shown = String(base).split('').reverse().join('');
       notes = [
-        ['거짓으로 새긴 것', ['문설주의 수를 곧이곧대로 넣지 마라.',
-                             '여기 사람들은 무엇이든 거꾸로 적는 버릇이 있었다.']],
-        ['읽는 법', ['새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다.',
-                    '그러면 우리가 원래 적으려 한 수가 나온다.']],
-        ['마지막 한 걸음', ['거꾸로 읽어 낸 수가 아직 답은 아니다.',
-                          `거기에 ${eulreul(String(k))} 더해야 홈이 물린다.`,
-                          '문지기가 하루에 한 번씩 더하던 수다.']]
+        [tr('거짓으로 새긴 것'), [tr('문설주의 수를 곧이곧대로 넣지 마라.'),
+                             tr('여기 사람들은 무엇이든 거꾸로 적는 버릇이 있었다.')]],
+        [tr('읽는 법'), [tr('새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다.'),
+                    tr('그러면 우리가 원래 적으려 한 수가 나온다.')]],
+        [tr('마지막 한 걸음'), [tr('거꾸로 읽어 낸 수가 아직 답은 아니다.'),
+                          tr('거기에 {k|을} 더해야 홈이 물린다.', { k: String(k) }),
+                          tr('문지기가 하루에 한 번씩 더하던 수다.')]]
       ];
     }
     return (this._cipherCache[ck] = { id, kind, ans, shown, notes, len: K.len, numeric: K.numeric });
@@ -7851,7 +7851,7 @@ export const G = {
     (this.cipherSeen[o.ruin] = this.cipherSeen[o.ruin] || {})[o.idx] = 1;
     const seen = Object.keys(this.cipherSeen[o.ruin]).length;
     const lines = nt[1].slice();
-    lines.push('', `— 이 유적에서 찾은 쪽지 ${seen}/3`);
+    lines.push('', tr('— 이 유적에서 찾은 쪽지 {seen}/3', { seen }));
     UI.openLore(nt[0], lines, []);
     this.sfx('open');
   },
@@ -7865,19 +7865,19 @@ export const G = {
   },
 
   openCodeDoor(o) {
-    if (o.opened) { this.toast('이미 열려 있다'); return; }
+    if (o.opened) { this.toast(tr('이미 열려 있다')); return; }
     const el = $('#code-screen'), inp = $('#code-input'), msg = $('#code-msg');
     const c = this.ruinCipher(o.ruin);
     const K = c ? CIPHER_KIND[c.kind] : null;
     inp.value = ''; msg.textContent = ''; msg.classList.remove('ok');
     /* 자물쇠 갈래마다 문에 적힌 것이 다르다 — 숫자 홈인지 글자 홈인지, 문설주에 새겨진 수가 있는지. */
-    $('#code-title').textContent = K ? K.n : '돌판의 홈';
-    $('#code-door').textContent = K ? K.door : '홈이 셋.';
+    $('#code-title').textContent = K ? K.n : tr('돌판의 홈');
+    $('#code-door').textContent = K ? K.door : tr('홈이 셋.');
     const seen = ((this.cipherSeen || {})[o.ruin]) || {};
     $('#code-hint').textContent =
-      `유적 안에 흩어진 쪽지 셋이 답을 나눠 들고 있다 (찾은 것 ${Object.keys(seen).length}/3)`;
+      tr('유적 안에 흩어진 쪽지 셋이 답을 나눠 들고 있다 (찾은 것 {keysCount}/3)', { keysCount: Object.keys(seen).length });
     const carved = $('#code-carved');
-    if (c && c.shown) { carved.hidden = false; carved.textContent = `문설주에 새긴 것 — ${c.shown}`; }
+    if (c && c.shown) { carved.hidden = false; carved.textContent = tr('문설주에 새긴 것 — {shown}', { shown: c.shown }); }
     else carved.hidden = true;
     inp.maxLength = c ? c.len : 3;
     inp.placeholder = c && !c.numeric ? '○○○' : '000';
@@ -7922,28 +7922,28 @@ export const G = {
     const c = this.ruinCipher(o.ruin);
     const K = c ? CIPHER_KIND[c.kind] : null;
     const got = inp.value.replace(/\s/g, '');
-    if (!c) { msg.textContent = '이 문은 여기서 열 수 없다'; return; }
+    if (!c) { msg.textContent = tr('이 문은 여기서 열 수 없다'); return; }
     if (got.length < c.len) {
       msg.classList.remove('ok');
-      msg.textContent = `${eulreul(K.ask)} 다 넣어야 한다`;
+      msg.textContent = tr('{ask|을} 다 넣어야 한다', { ask: K.ask });
       return;
     }
     if (got !== c.ans) {
       msg.classList.remove('ok');
-      msg.textContent = '맞지 않는다 — 홈이 그대로다';
+      msg.textContent = tr('맞지 않는다 — 홈이 그대로다');
       inp.value = ''; inp.focus();
       this.sfx('mine');
       return;
     }
     msg.classList.add('ok');
-    msg.textContent = '맞물리는 소리가 났다';
+    msg.textContent = tr('맞물리는 소리가 났다');
     o.opened = true;
     if (w.openVaultAt) w.openVaultAt(o.dx, o.dy);   // 다시 봉하지 않게 표시
     w.openCodeDoorway(o.dx, o.dy);                  // 껍질 두 겹을 다 뚫는다 (world.js 의 ★)
     for (let i = 0; i < 30; i++)
       this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#ffe08a', -30, 1.1));
     this.shake = 10;
-    this.toast('맞물리는 소리가 났다', 'good');
+    this.toast(tr('맞물리는 소리가 났다'), 'good');
     this.sfx('chapter');
     setTimeout(() => this.closeCodeDoor(), 700);
   },
@@ -7965,7 +7965,7 @@ export const G = {
     // 석판 유적 셋은 RUIN_SPEC 에 없다 — STORY_RUIN 에서 이름을 가져온다
     const st = /^story(\d)$/.exec(r.id);
     const name = spec ? spec.n
-      : (st && STORY_RUIN[+st[1]] && STORY_RUIN[+st[1]].n) || '이름 없는 유적';
+      : (st && STORY_RUIN[+st[1]] && STORY_RUIN[+st[1]].n) || tr('이름 없는 유적');
     if (card) UI.chapterCard({ sub: card.sub, title: name, line: card.line });
     this.sfx('chapter');
   },
@@ -8634,15 +8634,15 @@ export const G = {
         c.strokeStyle = 'rgba(216,169,75,.8)'; c.lineWidth = 1.5;
         c.strokeRect(o.x - camX - 2.5, o.y - camY - 2.5, o.w + 5, o.h + 5);
         c.lineWidth = 1;
-        const label = o.type === 'door' ? (o.closed ? '문 열기' : '문 닫기') : {
-          chest: '상자 열기', workbench: '작업대', forge: '용광로', npc: '대화', altar: '제단',
-          vault: '보관고', board: '의뢰 게시판', reforge: '재련대', waystone: '귀환 비석', inn: '여관',
-          terminal: '단말 읽기', lorestone: '비문 읽기', tablet: '석판 읽기', lair: '둥지', seal: '봉인문',
-          ciphernote: '쪽지 읽기', codedoor: '잠긴 홈'
+        const label = o.type === 'door' ? (o.closed ? tr('문 열기') : tr('문 닫기')) : {
+          chest: tr('상자 열기'), workbench: tr('작업대'), forge: tr('용광로'), npc: tr('대화'), altar: tr('제단'),
+          vault: tr('보관고'), board: tr('의뢰 게시판'), reforge: tr('재련대'), waystone: tr('귀환 비석'), inn: tr('여관'),
+          terminal: tr('단말 읽기'), lorestone: tr('비문 읽기'), tablet: tr('석판 읽기'), lair: tr('둥지'), seal: tr('봉인문'),
+          ciphernote: tr('쪽지 읽기'), codedoor: tr('잠긴 홈')
         }[o.type];
         if (label) {
           c.fillStyle = '#e8dcc0'; c.font = '11px "Pretendard",sans-serif'; c.textAlign = 'center';
-          c.fillText(label + ' (우클릭)', o.x - camX + o.w / 2, o.y - camY - 12);
+          c.fillText(label + ` ${tr('(우클릭)')}`, o.x - camX + o.w / 2, o.y - camY - 12);
         }
       }
     }

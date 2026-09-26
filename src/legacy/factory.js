@@ -3,6 +3,7 @@ import { app as G, bindFactory } from './ctx.js';
 import { shade } from '../engine/core/color.js';
 import { TAU, aabb, angleTo, clamp, dist2 } from '../engine/core/math.js';
 import { tileHash } from '../engine/core/rng.js';
+import { N_, tr } from './lang.js';
 import { WH, WW } from './size.js';
 import { FUEL, ITEMS, MACHINE, MRECIPES, T, TILE_DEF } from './data.js';
 import { TS } from './world.js';
@@ -17,6 +18,10 @@ export const DIR6 = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, -1], [-1, -1]];   // 
 /** 이 기계가 쓰는 방향표. */
 export function dirTable(t) { return (t === 'belt' || t === 'belt_fast') ? DIR6 : DIR4; }
 export const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위', '오른쪽 위', '왼쪽 위'];   // 뒤 둘은 벨트 대각선
+
+/** 초록 점(일하는 중)인 상태 */
+export const ST_RUN = new Set([N_('가동'), N_('채굴 중'), N_('시추 중'), N_('이송'), N_('사격'), N_('방전'), N_('통과'), N_('분기'),
+  N_('배출 중'), N_('가동 중'), N_('축전 중'), N_('가득 참')]);
 
 export const Factory = {
   /* 벨트 한 칸에 머무는 시간(초) — 물건도 벨트 무늬도 이 속도로 간다(일반 1칸/초 · 고속 2칸/초) */
@@ -247,23 +252,23 @@ export const Factory = {
       const s = MACHINE[m.t];
       if (!s.gen) continue;
       const n = m.net >= 0 ? nets[m.net] : null;
-      if (!m.on) { m.st = '정지'; continue; }
-      if (!n) { m.st = '망 없음'; continue; }
-      if (n.off) { m.st = '전면 정지'; continue; }
+      if (!m.on) { m.st = N_('정지'); continue; }
+      if (!n) { m.st = N_('망 없음'); continue; }
+      if (n.off) { m.st = N_('전면 정지'); continue; }
       if (s.sky) {
         // 풍차: 연료 대신 트인 하늘이 필요하다.
         let clear = true;
         for (let k = 1; k <= s.sky; k++) if (this.blocksWind(w, m.x, m.y - k)) { clear = false; break; }
-        if (!clear) { m.st = '바람 막힘'; continue; }
-        n.gen += s.gen; m.st = '회전 중';
+        if (!clear) { m.st = N_('바람 막힘'); continue; }
+        n.gen += s.gen; m.st = N_('회전 중');
         continue;
       }
-      if (n.dem <= 0 && n.e >= n.emax) { m.st = '대기'; continue; }   // 쓸 데가 없으면 연료를 아낀다
+      if (n.dem <= 0 && n.e >= n.emax) { m.st = N_('대기'); continue; }   // 쓸 데가 없으면 연료를 아낀다
       if (m.fuel <= 0) {
         for (const k in m.in) { if (!FUEL[k]) continue; this.bufTake(m.in, k, 1); m.fuel = m.fmax = FUEL[k]; break; }
       }
-      if (m.fuel > 0) { m.fuel--; n.gen += s.gen; m.st = '가동'; }
-      else m.st = '연료 없음';
+      if (m.fuel > 0) { m.fuel--; n.gen += s.gen; m.st = N_('가동'); }
+      else m.st = N_('연료 없음');
     }
     for (const n of nets) {
       if (n.gen >= n.dem) { n.sat = 1; n.sur = n.gen - n.dem; n.drawn = 0; }
@@ -290,18 +295,18 @@ export const Factory = {
     for (const m of ms.values()) {
       m.just = 0;
       const s = MACHINE[m.t];
-      if (!m.on && m.t !== 'switch') { m.st = '정지'; m.act = 0; continue; }
+      if (!m.on && m.t !== 'switch') { m.st = N_('정지'); m.act = 0; continue; }
       switch (m.t) {
         case 'drill': case 'drill_e': case 'drill_x': this.runDrill(w, m, s); break;
         case 'pump': this.runPump(w, m, s); break;
         case 'turret': this.runTurret(w, m, s, G); break;
         case 'trap': this.runTrap(w, m, s, G); break;
         case 'dart': case 'flamejet': case 'frostjet': this.runShooter(w, m, s, G); break;
-        case 'switch': m.st = m.on ? '가동 중' : '전면 정지'; m.act = 0; break;
-        case 'belt': case 'belt_fast': m.st = m.it ? '이송' : '대기'; m.act = 0; break;
+        case 'switch': m.st = m.on ? N_('가동 중') : N_('전면 정지'); m.act = 0; break;
+        case 'belt': case 'belt_fast': m.st = m.it ? N_('이송') : N_('대기'); m.act = 0; break;
         case 'sorter': m.act = m.it ? 1 : 0; break;
-        case 'pole': m.st = m.net >= 0 ? '망 #' + (m.net + 1) : '—'; m.act = 0; break;
-        case 'crate': m.st = m.feed ? '배출 중' : '보관'; m.act = 0; break;
+        case 'pole': m.st = m.net >= 0 ? N_('망 #{n}') : '—'; m.act = 0; break;
+        case 'crate': m.st = m.feed ? N_('배출 중') : N_('보관'); m.act = 0; break;
         case 'gen': case 'windmill': break;   // 전력 정산에서 이미 처리했다
         default: if (s.proc) this.runProc(w, m, s); break;
       }
@@ -319,9 +324,9 @@ export const Factory = {
           if (this.pushTo(w, m, m.dir, m.it.id)) { m.it = null; moved++; if (!pass) G.sfxAt('belt', m.x, m.y); }
         } else if (m.t === 'sorter') {
           if (!m.it || m.just) continue;
-          if (this.sat(w, m) <= 0) { m.st = '전력 없음'; continue; }
+          if (this.sat(w, m) <= 0) { m.st = N_('전력 없음'); continue; }
           const match = !m.f || m.f === m.it.id;
-          m.st = match ? '통과' : '분기';
+          m.st = match ? N_('통과') : N_('분기');
           if (this.pushTo(w, m, match ? m.dir : (m.dir + 1) & 3, m.it.id)) { m.it = null; moved++; }
         }
       }
@@ -371,23 +376,23 @@ export const Factory = {
         if (ok) { pick = i; break; }
       }
       // 축전지는 방전 배터리가 없을 때가 평상시다 — '재료 없음' 이 아니라 전기를 담고 있다고 보인다
-      if (pick < 0) { m.st = s.store ? (m.e >= s.store ? '가득 참' : '축전 중') : '재료 없음'; m.prog = 0; m.act = 0; return; }
+      if (pick < 0) { m.st = s.store ? (m.e >= s.store ? N_('가득 참') : N_('축전 중')) : N_('재료 없음'); m.prog = 0; m.act = 0; return; }
       const r = MRECIPES[pick];
-      if (this.outFull(m, r, cap)) { m.st = '출력 가득'; m.act = 0; return; }
+      if (this.outFull(m, r, cap)) { m.st = N_('출력 가득'); m.act = 0; return; }
       for (const k in r.in) this.bufTake(m.in, k, r.in[k]);   // 착수 시점에 재료를 잡아 둔다
       m.rec = pick; m.prog = 0;
     }
     const r = MRECIPES[m.rec];
     /* ★ 연료를 태우기 **전에** 출구를 본다 — 뒤에서 보면 막힌 채 매 틱 연료만 탔다(용광로 50초에 석탄 5개) */
-    if (m.prog >= r.t && this.outFull(m, r, cap)) { m.st = '출력 가득'; m.act = 0; return; }
+    if (m.prog >= r.t && this.outFull(m, r, cap)) { m.st = N_('출력 가득'); m.act = 0; return; }
     let step = 1;
-    if (s.fuelIn) { if (!this.burn(m)) { m.st = '연료 없음'; return; } }
+    if (s.fuelIn) { if (!this.burn(m)) { m.st = N_('연료 없음'); return; } }
     // 전력이 끊겼을 때 act를 내리면 안 된다 — 수요가 사라져 sat이 1로 돌아가고, 그러면 발전기 없이도 한 틱씩 공짜로 도는 톱니 현상이 생긴다
-    else { step = this.sat(w, m); if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; } }
+    else { step = this.sat(w, m); if (step <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); return; } }
     m.act = 1;
-    if (m.prog < r.t) { m.prog += step; m.st = '가동'; if (s.fuelIn && Math.random() < 0.18) this.puff(m); }
+    if (m.prog < r.t) { m.prog += step; m.st = N_('가동'); if (s.fuelIn && Math.random() < 0.18) this.puff(m); }
     if (m.prog < r.t) return;
-    if (this.outFull(m, r, cap)) { m.st = '출력 가득'; m.act = 0; return; }
+    if (this.outFull(m, r, cap)) { m.st = N_('출력 가득'); m.act = 0; return; }
     for (const k in r.out) this.bufAdd(m.out, k, r.out[k]);
     m.prog = 0; m.rec = -1;
     G.sfxAt(m.t === 'oven' ? 'cook' : 'smelt', m.x, m.y);
@@ -610,12 +615,12 @@ export const Factory = {
   /* ---- 드릴: 반경 안의 광맥을 실제로 캐낸다 (캐낸 자리는 사라진다) ---- */
   runDrill(w, m, s) {
     let step = 1;
-    if (s.fuelIn) { if (!this.burn(m)) { m.st = '연료 없음'; return; } }
-    else { step = this.sat(w, m); if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; } }
-    if (this.bufTotal(m.out) >= (s.cap || 40)) { m.st = '출력 가득'; m.act = 0; return; }
+    if (s.fuelIn) { if (!this.burn(m)) { m.st = N_('연료 없음'); return; } }
+    else { step = this.sat(w, m); if (step <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); return; } }
+    if (this.bufTotal(m.out) >= (s.cap || 40)) { m.st = N_('출력 가득'); m.act = 0; return; }
     m.act = 1;
     m.cd -= step;
-    if (m.cd > 0) { m.st = '채굴 중'; return; }
+    if (m.cd > 0) { m.st = N_('채굴 중'); return; }
     const R = s.range;
     let best = null, bestD = 1e9;
     for (let dx = -R; dx <= R; dx++) for (let dy = -R; dy <= R; dy++) {
@@ -625,7 +630,7 @@ export const Factory = {
       const d = dx * dx + dy * dy;
       if (d < bestD) { bestD = d; best = [tx, ty, def.drop]; }
     }
-    if (!best) { m.cd = 0; m.st = '광맥 없음'; m.act = 0; m.tgt = null; return; }
+    if (!best) { m.cd = 0; m.st = N_('광맥 없음'); m.act = 0; m.tgt = null; return; }
     /* 광맥 한 칸 = 20~29번(칸마다 고정). 광상(rich)은 줄지 않는다 — 곡괭이로 캐면 몇 개에 그친다 */
     const [bx, by] = best, k = by * WW + bx;
     this.drillFx(bx, by, TILE_DEF[w.get(bx, by)].c);
@@ -636,33 +641,33 @@ export const Factory = {
     m.tgt = [bx, by]; m.hitT = G.time;
     this.bufAdd(m.out, best[2], 1);
     m.cd = s.cycle;
-    m.st = '채굴 중';
+    m.st = N_('채굴 중');
     G.sfxAt('drill', m.x, m.y);
   },
 
   /* ---- 시추 펌프: 유혈암을 소모하지 않는다. 마르지 않는 대신 느리다 ---- */
   runPump(w, m, s) {
     const step = this.sat(w, m);
-    if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; }
-    if (this.bufTotal(m.out) >= (s.cap || 40)) { m.st = '출력 가득'; m.act = 0; return; }
+    if (step <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); return; }
+    if (this.bufTotal(m.out) >= (s.cap || 40)) { m.st = N_('출력 가득'); m.act = 0; return; }
     let found = false;
     const R = s.range;
     for (let dx = -R; dx <= R && !found; dx++) for (let dy = -R; dy <= R; dy++)
       if (w.get(m.x + dx, m.y + dy) === T.OILSHALE) { found = true; break; }
-    if (!found) { m.st = '유혈암 없음'; m.act = 0; return; }
+    if (!found) { m.st = N_('유혈암 없음'); m.act = 0; return; }
     m.act = 1;
     m.cd -= step;
-    if (m.cd > 0) { m.st = '시추 중'; return; }
+    if (m.cd > 0) { m.st = N_('시추 중'); return; }
     this.bufAdd(m.out, 'crude_oil', 1);
     m.cd = s.cycle;
-    m.st = '시추 중';
+    m.st = N_('시추 중');
   },
 
   /* ---- 자동 포탑 ---- */
   runTurret(w, m, s, G) {
     const step = this.sat(w, m);
-    if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; }
-    if (!(m.in[s.ammo] > 0)) { m.st = '탄약 없음'; m.act = 0; return; }
+    if (step <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); return; }
+    if (!(m.in[s.ammo] > 0)) { m.st = N_('탄약 없음'); m.act = 0; return; }
     m.act = 1;
     /* 목표는 장전 중에도 찾는다 — 총열(m.aim)이 적을 따라 돌고, 쏠 때는 이미 그쪽을 보고 있다 */
     const cx = m.x * TS + TS / 2, cy = m.y * TS + 11;
@@ -674,8 +679,8 @@ export const Factory = {
     }
     if (tgt) m.aim = angleTo(cx, cy, tgt.cx, tgt.cy);
     m.cd -= step;
-    if (m.cd > 0) { m.st = '경계'; return; }
-    if (!tgt) { m.cd = 0; m.st = '경계'; return; }
+    if (m.cd > 0) { m.st = N_('경계'); return; }
+    if (!tgt) { m.cd = 0; m.st = N_('경계'); return; }
     this.bufTake(m.in, s.ammo, 1);
     const ang = m.aim;
     const dmg = s.dmg * (1 + G.player.level * 0.05);
@@ -684,7 +689,7 @@ export const Factory = {
     const p = new Proj(mx, my, Math.cos(ang) * 1150, Math.sin(ang) * 1150, dmg, 'player', 'bullet');
     G.projs.push(p);
     m.cd = s.cycle;
-    m.st = '사격';
+    m.st = N_('사격');
     m.fx = 3;
     /* 탄피 · 총구 연기 · 가까우면 짧은 울림 — 포탑이 쏘는 게 몸으로 느껴지게(화면 밖은 안 뿌린다) */
     const pl = G.player, d = pl ? Math.hypot(cx - pl.cx, cy - pl.cy) : 1e9;
@@ -701,7 +706,7 @@ export const Factory = {
   /* ---- 발사형 함정 (화살·화염·서리) ---- */
   runShooter(w, m, s, G) {
     m.cd -= 1;
-    if (m.cd > 0) { m.st = '장전 중'; m.act = 0; return; }
+    if (m.cd > 0) { m.st = N_('장전 중'); m.act = 0; return; }
     const [dx, dy] = DIR4[m.dir];
     const cx = m.x * TS + TS / 2, cy = m.y * TS + TS / 2;
     // 정면 일직선에 목표가 들어왔는지 본다.
@@ -715,7 +720,7 @@ export const Factory = {
       } else if (aabb(r, G.player.rect())) tgt = G.player;
       if (tgt) break;
     }
-    if (!tgt) { m.st = '대기'; m.act = 0; return; }
+    if (!tgt) { m.st = N_('대기'); m.act = 0; return; }
     m.act = 1;
     const ang = Math.atan2(dy, dx);
     const dmg = s.dmg * (1 + G.player.level * 0.03);
@@ -725,7 +730,7 @@ export const Factory = {
     if (s.slow) pr.frost = 1;
     G.projs.push(pr);
     m.cd = s.cycle;
-    m.st = '발사';
+    m.st = N_('발사');
     m.fx = 2;
     G.sfxAt(s.proj === 'fire' ? 'zap' : 'turret', m.x, m.y);
   },
@@ -736,10 +741,10 @@ export const Factory = {
     /* ★ 세계가 지은 함정(gen, 유적 공장)은 망 없이 돌고 **올라선 누구든** 지진다 — 망을 찾으면 영영 꺼져 있었다 */
     if (m.gen && !m.own) return this.runWildTrap(w, m, r, G);
     const step = this.sat(w, m);
-    if (step <= 0) { m.st = m.net < 0 ? '망 없음' : '전력 없음'; return; }
+    if (step <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); return; }
     m.act = 1;
     m.cd -= step;
-    if (m.cd > 0) { m.st = '대기'; return; }
+    if (m.cd > 0) { m.st = N_('대기'); return; }
     let hit = 0;
     for (const e of G.ents) {
       if (!(e instanceof Enemy) || e.dead) continue;
@@ -747,7 +752,7 @@ export const Factory = {
       e.hurt(s.dmg * (1 + G.player.level * 0.04), false, G.player, 2);
       hit++;
     }
-    m.st = hit ? '방전' : '대기';
+    m.st = hit ? N_('방전') : N_('대기');
     if (hit) { m.cd = 4; m.fx = 3; G.sfxAt('zap', m.x, m.y); } else m.cd = 1;
   },
   /** 유적 함정 — 밟으면 0.5초 불꽃으로 알리고 그때도 위에 있으면 방전, 2초 쉰다. */
@@ -755,17 +760,17 @@ export const Factory = {
     const p = G.player, on = !p.dead && aabb(r, p.rect());
     let foe = false;
     for (const e of G.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) { foe = true; break; }
-    if (m.cd > 0) { m.cd--; m.st = '식는 중'; m.act = 0; return; }
+    if (m.cd > 0) { m.cd--; m.st = N_('식는 중'); m.act = 0; return; }
     if (!m.arm) {
-      if (!on && !foe) { m.st = '대기'; m.act = 0; return; }
+      if (!on && !foe) { m.st = N_('대기'); m.act = 0; return; }
       m.arm = 4;
     }
-    m.act = 1; m.st = '충전';
+    m.act = 1; m.st = N_('충전');
     if (--m.arm > 0) {
       for (let i = 0; i < 2; i++) G.parts.push(new Part((m.x + Math.random()) * TS, m.y * TS - 1, '#9fd8ff', -40, .25));
       return;
     }
-    m.arm = 0; m.cd = 16; m.fx = 3; m.st = '방전';
+    m.arm = 0; m.cd = 16; m.fx = 3; m.st = N_('방전');
     if (on && p.iframe <= 0) p.hurt(26 + p.level * 1.1);
     for (const e of G.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) e.hurt(34, false, null, 0);
     G.sfxAt('zap', m.x, m.y);
@@ -807,11 +812,12 @@ export const Factory = {
   statusColor(m) {
     const st = m.st || '';
     if (!m.on) return '#8a8a92';
-    if (st === '가동' || st === '채굴 중' || st === '시추 중' || st === '이송' || st === '사격' ||
-        st === '방전' || st === '통과' || st === '분기' || st === '배출 중' || st === '가동 중' || st === '축전 중' || st === '가득 참') return '#5fc45f';
-    if (st.indexOf('전력') >= 0 || st.indexOf('연료') >= 0 || st.indexOf('망') === 0 || st === '전면 정지') return '#e0563c';
+    if (ST_RUN.has(st)) return '#5fc45f';
+    if (st.indexOf(N_('전력')) >= 0 || st.indexOf(N_('연료')) >= 0 || st.indexOf(N_('망')) === 0 || st === N_('전면 정지')) return '#e0563c';
     return '#e0b23c';
   },
+  /** 기계 창에 보일 상태 글 — m.st 는 원문 그대로 두고(색 판정 · 세이브) 보일 때 옮긴다 */
+  stLabel(m) { return tr(m.st || N_('대기'), { n: m.net + 1 }); },
 
   /* ================= 렌더 ================= */
   render(c, w, camX, camY, tx0, ty0, tx1, ty1, time) {

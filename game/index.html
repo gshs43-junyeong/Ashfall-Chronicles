@@ -333,7 +333,7 @@
        틀린 것인지 셋을 구별할 수가 없었다. 이제 이 일곱 자만 보면 된다. */
     addEventListener('DOMContentLoaded', function () {
       var el = document.querySelector('.ts-version');
-      if (el) el.textContent = el.textContent.trim() + ' · ' + (dev ? '개발판' : mine.slice(0, 7));
+      if (el) el.textContent = el.textContent.trim() + ' · ' + (dev ? (window.tr ? tr('개발판') : '개발판') : mine.slice(0, 7));
     });
     if (dev) return;                                          // 치환 전(개발 중 · zip)
     if (!/^https?:$/.test(location.protocol)) return;         // file:// 은 물어볼 데가 없다

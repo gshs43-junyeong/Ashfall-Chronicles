@@ -3,6 +3,7 @@ import { app as G, ui as UI } from './ctx.js';
 import { TAU, aabb, angleTo, clamp, dist, dist2, lerp } from '../engine/core/math.js';
 import { Entity } from '../engine/entity/entity.js';
 import { fmt } from './util.js';
+import { tr } from './lang.js';
 import { SEA_X1, WH, WSY, WW } from './size.js';
 import { BOSS_LINES, BOSS_SURGE, BOW_TIP, BUFFS, CELL_CHARGE, ENEMIES, HIT_FX, ITEMS, MACH_OF_TILE, MECH_PART,
   MULTI_FALLOFF, PETS, PET_LV_MAX, PET_XP_SHARE, PREFIX, PROF_MAX, RARITY_MULT, SIG_FX, SKILLS, SKILL_FX, SKILL_HIT,
@@ -253,7 +254,7 @@ export class Player extends Ent {
     if (!this.removeItem('battery_cell', 1)) return false;
     this.charge = Math.min(this.d.maxCharge, this.charge + CELL_CHARGE);
     if (!this.addItem(makeItem('battery_empty', 1))) G.drops.push(new Drop(this.cx, this.cy, makeItem('battery_empty', 1)));
-    G.toast('배터리를 갈아 끼웠다');
+    G.toast(tr('배터리를 갈아 끼웠다'));
     UI.refreshBag();
     if (this.charge < n) return false;
     this.charge -= n;
@@ -355,7 +356,7 @@ export class Player extends Ent {
       it.lv = it.lv || 1; it.xp = (it.xp || 0) + n;
       while (it.lv < PET_LV_MAX && it.xp >= petXpNext(it.lv)) {
         it.xp -= petXpNext(it.lv); it.lv++; up = true;
-        G.toast(`${idef(it).n} — ${it.lv}레벨이 되었다`, 'good');
+        G.toast(tr('{idef} — {lv}레벨이 되었다', { idef: idef(it).n, lv: it.lv }), 'good');
       }
       if (it.lv >= PET_LV_MAX) it.xp = 0;
     }
@@ -415,7 +416,7 @@ export class Player extends Ent {
       for (let i = 0; i < 30; i++) G.parts.push(new Part(this.cx, this.cy, '#e05a6a', -110, .9));
       // 테두리만 한 번 물든다 — 가운데는 비워 둔다.
       G.edgeFx('200,46,58', SIG_FX.undying.t);
-      G.shake = 14; G.toast('불굴 — 아직 쓰러지지 않는다', 'good');
+      G.shake = 14; G.toast(tr('불굴 — 아직 쓰러지지 않는다'), 'good');
     }
     if (this.hp <= 0) { this.hp = 0; G.onDeath(); }
     this.recalc();
@@ -448,7 +449,7 @@ export class Player extends Ent {
     const d = idef(w);
     if (d.type === 'tool') return this.punch(mx, my);
     if (d.pw && !this.useCharge(d.pw)) {
-      G.toast('전하가 없다 — 충전된 배터리가 필요하다', 'bad');
+      G.toast(tr('전하가 없다 — 충전된 배터리가 필요하다'), 'bad');
       this.atkTimer = 0.3; return;
     }
     const ang = angleTo(this.cx, this.cy, mx, my);
@@ -475,7 +476,7 @@ export class Player extends Ent {
       G.sfx('bow');
     } else if (d.wc === 'magic') {
       const cost = d.mana || 5;
-      if (this.mp < cost) { G.toast('마나가 부족하다', 'bad'); this.atkTimer = 0.2; return; }
+      if (this.mp < cost) { G.toast(tr('마나가 부족하다'), 'bad'); this.atkTimer = 0.2; return; }
       this.mp -= cost;
       const n = d.multi || 1;
       this.volley = (Player._vol = (Player._vol || 0) + 1);
@@ -551,7 +552,7 @@ export class Player extends Ent {
     if (!r || sk.type !== 'active') return;
     /* 못 쓰는 것을 눌렀을 때도 **대답은 한다.** — 사연: docs/code-history.md#h28 */
     if ((this.cd[id] || 0) > 0) { G.skillDeny(i); return; }
-    if (this.mp < sk.mana) { G.skillDeny(i, '마나가 부족하다'); return; }
+    if (this.mp < sk.mana) { G.skillDeny(i, tr('마나가 부족하다')); return; }
     this.mp -= sk.mana;
     this.cd[id] = sk.cd * (1 - this.d.cdr / 100);
     const w = this.weapon();
@@ -701,7 +702,7 @@ export class Player extends Ent {
           const d2 = dist(mx, my, e.cx, e.cy);
           if (d2 < bd) { bd = d2; best = e; }
         }
-        if (!best) { this.cd[id] = 1; this.mp += sk.mana; G.toast('겨눈 곳에 적이 없다', 'bad'); return; }
+        if (!best) { this.cd[id] = 1; this.mp += sk.mana; G.toast(tr('겨눈 곳에 적이 없다'), 'bad'); return; }
         best.markT = 10; best.markAmt = sk.v(r) / 100;
         G.ringFx(best.cx, best.cy, best.w + 26, '#e8d05a', .5);
         for (let k = 0; k < 12; k++) G.parts.push(new Part(best.cx, best.y, '#e8d05a', -60, .7));
@@ -715,7 +716,7 @@ export class Player extends Ent {
           const a = Math.random() * TAU;
           G.parts.push(new Part(this.cx + Math.cos(a) * 30, this.cy + Math.sin(a) * 34, '#6fb8ff', -40, .8));
         }
-        G.toast(`방벽 ${this.shield}`, 'good');
+        G.toast(tr('방벽 {shield}', { shield: this.shield }), 'good');
         break;
       }
       case 's_chain': {
@@ -750,7 +751,7 @@ export class Player extends Ent {
           if (G.world.hitSolid(this.x + cs * t, this.y + sn * t, this.w, this.h)) break;
           reach = t;
         }
-        if (reach < TS) { this.cd[id] = 1; this.mp += sk.mana; G.toast('그쪽은 막혀 있다', 'bad'); return; }
+        if (reach < TS) { this.cd[id] = 1; this.mp += sk.mana; G.toast(tr('그쪽은 막혀 있다'), 'bad'); return; }
         const ox = this.cx, oy = this.cy;
         this.x += cs * reach; this.y += sn * reach;
         this.vy = Math.min(this.vy, 0);
@@ -971,7 +972,7 @@ export class Player extends Ent {
         if (Math.random() < dt * 30)
           G.parts.push(new Part(this.cx + (Math.random() - .5) * 10, this.y + this.h,
                                 tooHigh ? '#8a7a6a' : '#ffb04a', 60, 0.35));
-        if (tooHigh) this.jetNote('여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다');
+        if (tooHigh) this.jetNote(tr('여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다'));
       }
     } else { this.jetT = 0; this.jetOk = undefined; }
     /* 열 — **밀어 올릴 때만** 오른다. */
@@ -980,7 +981,7 @@ export class Player extends Ent {
         this.jetHeat = Math.min(1, (this.jetHeat || 0) + dt / JET_BURN);
         if (this.jetHeat >= 1 && !this.jetOver) {
           this.jetOver = true; this.jetting = false;
-          this.jetNote('추진기가 과열됐다 — 식을 때까지 꺼진다', 'bad');
+          this.jetNote(tr('추진기가 과열됐다 — 식을 때까지 꺼진다'), 'bad');
           G.sfx('power_off');
           for (let i = 0; i < 10; i++)
             G.parts.push(new Part(this.cx + (Math.random() - .5) * 12, this.y + this.h, '#6a6a72', -10, .6));
@@ -1219,7 +1220,7 @@ export class Enemy extends Ent {
   breakSurge() {
     this.sgT = 0; this.sgCd = (BOSS_SURGE[this.type] || {}).cd || 14;
     this.sgStun = 1.4;
-    G.toast('모으던 것이 흩어졌다', 'good');
+    G.toast(tr('모으던 것이 흩어졌다'), 'good');
     G.sfx('sk_deny'); G.shake = Math.max(G.shake, 10);
     for (let i = 0; i < 20; i++)
       G.parts.push(new Part(this.cx, this.cy, '#c8c0a8', -40, .7, { spd: 1.4 }));
@@ -1240,13 +1241,13 @@ export class Enemy extends Ent {
     if (this.dead) return;
     /* 페이즈가 넘어가는 0.8초 동안은 피해가 들어가지 않는다. */
     if (this.phaseInv > 0) {
-      G.texts.push(new DmgText(this.cx, this.y - 4, '전환 중', '#9fd4ff', 0));
+      G.texts.push(new DmgText(this.cx, this.y - 4, tr('전환 중'), '#9fd4ff', 0));
       return;
     }
     /* 굳어 있을 때(guard) — 약점이 드러나기 전에는 거의 통하지 않는다. */
     if (this.guard) {
       amount *= 0.12;
-      if (Math.random() < 0.5) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, '막혔다', '#8d8874', 0));
+      if (Math.random() < 0.5) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, tr('막혔다'), '#8d8874', 0));
     }
     const red = this.armor / (this.armor + 70);
     // 사냥꾼의 표식 — 출처를 가리지 않는다.
@@ -1475,7 +1476,7 @@ export class Enemy extends Ent {
       e.spd = 0;                               // 받침대다. 쫓아오지 않는다
       G.ents.push(e);
     }
-    G.toast('받침대 넷이 그것을 붙들고 있다', 'bad');
+    G.toast(tr('받침대 넷이 그것을 붙들고 있다'), 'bad');
   }
 
   /* 서리 마녀 2페이즈 — 발밑에 설 수 있는 자리를 만들어 준다. */
@@ -1487,7 +1488,7 @@ export class Enemy extends Ent {
         if (world.solid(tx, y + 1) && world.get(tx, y) === T.AIR) { world.set(tx, y, T.TORCH); break; }
       }
     }
-    G.toast('바닥이 언다 — 불 옆에 서라', 'bad');
+    G.toast(tr('바닥이 언다 — 불 옆에 서라'), 'bad');
   }
 
   /** 매 프레임 도는 약점·장판 규칙. */
@@ -1803,7 +1804,7 @@ export class Enemy extends Ent {
         // 갈라진 것이 다 없어지면 핵이 드러난다 — 그때만 제대로 들어간다
         const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'splitter')).length;
         const open = kids === 0;
-        if (open && this.guard) { this.guard = 0; G.toast('핵이 드러났다', 'good'); }
+        if (open && this.guard) { this.guard = 0; G.toast(tr('핵이 드러났다'), 'good'); }
         else if (!open && !this.guard) this.guard = 1;
       }
       if (this.atkCd <= 0 && dd < 320) {
@@ -1819,7 +1820,7 @@ export class Enemy extends Ent {
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 3;
         this.stateT = 3.0 - this.pf * 0.8;
-        if (this.state === 0) G.toast('관리자가 명령을 내린다', 'bad');
+        if (this.state === 0) G.toast(tr('관리자가 명령을 내린다'), 'bad');
       }
       if (this.state === 0) {                    // 명령 — 바닥에서 압착기가 솟는다
         this.vx *= 0.9;
@@ -1879,7 +1880,7 @@ export class Enemy extends Ent {
         if (held && held.id === 'stop_core' && dd < 90) {
           this.stopT = (this.stopT || 0) + dt;
           for (let i = 0; i < 2; i++) G.parts.push(new Part(this.cx, this.cy, '#9fd4ff', -40, .5));
-          if (this.stopT > 1.2) { this.guard = 0; G.toast('정지 핵이 물렸다 — 지금이다', 'good'); G.shake = 12; }
+          if (this.stopT > 1.2) { this.guard = 0; G.toast(tr('정지 핵이 물렸다 — 지금이다'), 'good'); G.shake = 12; }
         } else this.stopT = 0;
       }
       this.move(dt, world);
@@ -1907,7 +1908,7 @@ export class Enemy extends Ent {
       if (this.lastPh() && this.guard) {
         // 받침대(제단석)를 다 깨면 열린다.
         const ped = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === 'draft_form').length;
-        if (!ped) { this.guard = 0; G.toast('받침대가 무너졌다', 'good'); }
+        if (!ped) { this.guard = 0; G.toast(tr('받침대가 무너졌다'), 'good'); }
       }
       this.move(dt, world);
 
@@ -2288,7 +2289,7 @@ export class Bomb extends Proj {
     const tx = Math.floor(this.cx / TS), ty = Math.floor(this.cy / TS);
     const zone = world.zoneAt(tx, ty);
     if (zone === 'village' || zone === 'camp') {           // 안전 지대는 안 부순다
-      G.toast('여기서는 터뜨려도 아무것도 부서지지 않는다', 'bad');
+      G.toast(tr('여기서는 터뜨려도 아무것도 부서지지 않는다'), 'bad');
       return;
     }
     for (let dy = -R; dy <= R; dy++)

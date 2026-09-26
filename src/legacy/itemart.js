@@ -2,6 +2,7 @@
 import { shade } from '../engine/core/color.js';
 import { TAU, clamp } from '../engine/core/math.js';
 import { RNG } from '../engine/core/rng.js';
+import { tr } from './lang.js';
 import { ITEMS, PETS, T, TILE_DEF } from './data.js';
 import { TS } from './world.js';
 import { TileArt } from './tileart.js';
@@ -703,7 +704,7 @@ export const Art = {
       try {
         this.paint(g, spec, rng);
       } catch (e) {
-        console.warn('[아이콘] ' + key + ' 를 그리지 못했습니다:', e && e.message);
+        console.warn(`${tr('[아이콘]')} ` + key + ` ${tr('를 그리지 못했습니다:')}`, e && e.message);
       }
       g.restore();
       // 펫은 형태(네발·새·정령…)마다 그림이 칸 안에서 치우쳐 있어서, 슬롯에 나란히 놓으면 저마다 다른 높이로 떠 보인다.
