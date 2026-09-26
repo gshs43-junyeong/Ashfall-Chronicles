@@ -4122,7 +4122,7 @@ const G = {
     this.endBossFight();
     const lostXp = Math.floor(p.xp * 0.15), lostG = Math.floor(p.gold * 0.4);
     p.xp -= lostXp; p.gold -= lostG;
-    // 죽은 자리를 남긴다 — 세계가 4200타일이라 "어디서 죽었더라"를 기억으로 버티기 어렵다.
+    // 죽은 자리를 남긴다 — 세계가 5000타일이 넘어 "어디서 죽었더라"를 기억으로 버티기 어렵다.
     /* 하드는 가방의 절반까지 비석에 함께 담는다. */
     const md = MODE_OF(this.mode);
     let lostItems = [];
@@ -5649,7 +5649,20 @@ const G = {
     } else {
       g.drawImage(im, 0, 0);
     }
-    const d = g.getImageData(0, 0, cv.width, cv.height), px = d.data;
+    /* ★ zip 을 file:// 로 열면 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽힌다 — getImageData 가 매 프레임 SecurityError 를
+       던져 숲 원경이 안 그려졌다(20초에 740번). 그때는 픽셀을 못 읽으니 filter 로 채도만 빼서 비슷하게 만든다. */
+    let d = null;
+    if (!this._fbgTaint) { try { d = g.getImageData(0, 0, cv.width, cv.height); } catch (e) { this._fbgTaint = true; } }
+    if (!d) {
+      g.clearRect(0, 0, cv.width, cv.height);
+      g.filter = `saturate(${Math.max(0.25, af).toFixed(2)}) hue-rotate(${Math.round((1 - af) * 18)}deg) brightness(${(1 + af * 0.06).toFixed(2)})`;
+      g.drawImage(ok ? sparse : im, 0, 0);
+      if (ok) { g.globalAlpha = 1 - t; g.drawImage(dense, 0, 0); g.globalAlpha = 1; }
+      g.filter = 'none';
+      this._fbg = { key, cv, f: af };
+      return cv;
+    }
+    const px = d.data;
     for (let i = 0; i < px.length; i += 4) {
       if (!px[i + 3]) continue;
       /* 밝기는 그대로 두고 색만 숲으로 되돌린다. */

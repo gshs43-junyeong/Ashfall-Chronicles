@@ -247,8 +247,11 @@ bash tools/build.sh 1.1.0        # dist/ 에 Windows·macOS zip + SHA256SUMS
 bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트 검사
 ```
 
-- **캐시 무효화**: `game/index.html`의 `?v=NNN`이 **16곳**에 있다. 배포할 때
-  한 번에 전부 올린다. 개발 중에는 올리지 않는다.
+- **캐시 무효화**: `game/index.html`의 `?v=NNN`이 **14곳**에 있다(v1.1.0 = 255). zip 을 낼 때
+  한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
+- **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
+  PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.
+- `tools/build.sh` 는 재현 가능한 zip 을 만든다(두 번 빌드해 해시가 같다) — 다운로드 페이지 `HASHES` 는 그 앞 8자리.
 - **버전 문자열**이 박힌 곳: `game/index.html`(타이틀 표시) · `README.md` ·
   `site/download/index.html` · `tools/build.sh` 인자 · `docs/*`.
 - zip은 커밋하지 않는다(`.gitignore`). 태그를 push하면 Actions가 만들어 Release에
@@ -258,10 +261,17 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ---
 
-## 8. 지금 상태 (2026-09-24)
+## 8. 지금 상태 (2026-09-26)
 
-- `main` = v1.1 통합 완료. 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
-  들어가 있고, 업적은 75개다.
+- **v1.1.0 출시**(태그 `v1.1.0`). 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
+  들어가 있고, 업적은 75개다. v1.0.x 세이브는 세계 폭이 달라 열리지 않는다(릴리스 노트·다운로드 페이지에 알림).
+- 세이브는 v10 — `world.sea`(바다 수면)를 저장한다. 빠졌던 동안 불러온 세계에서 바다 물고기 생성이 터졌다; sea 없는
+  세이브는 `World.deserialize` 가 타일에서 다시 잰다. **생성 때 `this.X =` 로 만든 필드를 런타임이 읽으면 serialize 에도 넣을 것.**
+- **베이스캠프**: 구역(`CAMP_X1` = X0+66 — 안전 지대·곡·원경)과 생성 발자국(`CAMP_GX1` = X0+100 — 평탄화·나무·물·자갈 제외)이 따로다.
+  발자국을 줄이면 지형·난수가 밀려 유적이 끊긴다(d3 석판 유적 1 이 방 3/16). 광장·출발점은 x0+50.
+- **ITEMS 키는 두 번 적지 말 것** — 객체 리터럴은 뒤엣것이 조용히 덮는다(세션 1 낚시가 세션 3 삼지창을 줬다). 물건값(`ITEM_VAL`)은
+  제작법이 여럿이면 가장 싼 것으로 매긴다.
+- 배경음악: 비 = `rain`(lonely_rain), 그 밖의 날씨·밤·어둠·저체력 = `tense`(clockwork).
 - 유적 입구는 **벽돌로 두른 복도**다(`_buildPassage` — 계단·복도·층계참·계단실). 피라미드는
   삼각형(plan `'tri'`)이고 빗면에 문이 난다. 유적을 건드렸으면 `tools/ruindiag.py`
   (걸어서 오가는가)와 `tools/entdiag.py`(입구 발판이 어디서 왔나)를 여러 씨앗으로 돌릴 것.
