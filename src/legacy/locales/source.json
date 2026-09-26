@@ -641,7 +641,7 @@
    "index.html"
   ],
   "겨눈 곳에 적이 없다": [
-   "entity.useSkill"
+   "entity/player-combat.useSkill"
   ],
   "겨울이 오기 전에 나무 {n}개만 더 모아 주련?": [
    "data"
@@ -714,7 +714,7 @@
    "world/village.buildWorks"
   ],
   "관리자가 명령을 내린다": [
-   "entity.bossAI"
+   "entity/boss-ai.bossAI"
   ],
   "광맥 없음": [
    "factory.runDrill"
@@ -747,7 +747,7 @@
    "index.html"
   ],
   "그쪽은 막혀 있다": [
-   "entity.useSkill"
+   "entity/player-combat.useSkill"
   ],
   "근접 무기": [
    "ui/tip.showTip"
@@ -1086,8 +1086,8 @@
    "ui/tip.showTip"
   ],
   "마나가 부족하다": [
-   "entity.doAttack",
-   "entity.useSkill"
+   "entity/player-combat.doAttack",
+   "entity/player-combat.useSkill"
   ],
   "마나재생": [
    "ui/tip.compareLine"
@@ -1298,7 +1298,7 @@
    "ui/tip.showTip"
   ],
   "바닥이 언다 — 불 옆에 서라": [
-   "entity.layHeat"
+   "entity/enemy-ai.layHeat"
   ],
   "바닥이 있어야 놓을 수 있다": [
    "game/act.placeStation"
@@ -1313,10 +1313,10 @@
    "game/meteor.meteorImpact"
   ],
   "받침대 넷이 그것을 붙들고 있다": [
-   "entity.raisePedestals"
+   "entity/enemy-ai.raisePedestals"
   ],
   "받침대가 무너졌다": [
-   "entity.bossAI"
+   "entity/boss-ai.bossAI"
   ],
   "발밑이 내려앉는다": [
    "game/ruin-map.fireRuinEvent"
@@ -1337,7 +1337,7 @@
    "ui/quest.renderRuins"
   ],
   "방벽 {shield}": [
-   "entity.useSkill"
+   "entity/player-combat.useSkill"
   ],
   "방어": [
    "ui.refreshStatSheet",
@@ -1850,7 +1850,7 @@
    "game/ruin-map.ruinCipher"
   ],
   "여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다": [
-   "entity.update"
+   "entity/player-move.update"
   ],
   "여기서 만들 수 있는 것이 아직 없다.": [
    "ui/craft.refreshCraft"
@@ -2326,7 +2326,7 @@
    "ui/tip.showTip"
   ],
   "전하가 없다 — 충전된 배터리가 필요하다": [
-   "entity.doAttack",
+   "entity/player-combat.doAttack",
    "game/act.mine"
   ],
   "전환 중": [
@@ -2355,7 +2355,7 @@
    "ui/machine.machLive"
   ],
   "정지 핵이 물렸다 — 지금이다": [
-   "entity.bossAI"
+   "entity/boss-ai.bossAI"
   ],
   "제단": [
    "game/altar.altar",
@@ -2538,7 +2538,7 @@
    "ui/tip.showTip"
   ],
   "추진기가 과열됐다 — 식을 때까지 꺼진다": [
-   "entity.update"
+   "entity/player-move.update"
   ],
   "축전 <b>{store}</b>": [
    "ui/tip.showTip"
@@ -2739,7 +2739,7 @@
    "index.html"
   ],
   "핵이 드러났다": [
-   "entity.bossAI"
+   "entity/boss-ai.bossAI"
   ],
   "헤파의 격실": [
    "world/village.buildRunaway"

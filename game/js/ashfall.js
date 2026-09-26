@@ -27242,7 +27242,7 @@
       this.keepIn(TS, WW * TS - TS, WH * TS);
     }
   };
-  var Player = class _Player extends Ent {
+  var Player = class extends Ent {
     constructor(x, y) {
       super(x, y, 20, 40);
       this.name = "";
@@ -27623,710 +27623,8 @@
       this.hp = Math.min(this.d.maxHp, this.hp + n);
       if (this.hp > before) app.texts.push(new DmgText(this.cx, this.y, Math.round(this.hp - before), "#7fe07f", 0));
     }
-    /* ---- 공격 ---- */
-    attackReady() {
-      return this.atkTimer <= 0;
-    }
-    doAttack(mx, my) {
-      const w = this.weapon();
-      if (!w) return this.punch(mx, my);
-      const d = idef(w);
-      if (d.type === "tool") return this.punch(mx, my);
-      if (d.pw && !this.useCharge(d.pw)) {
-        app.toast(tr("전하가 없다 — 충전된 배터리가 필요하다"), "bad");
-        this.atkTimer = 0.3;
-        return;
-      }
-      const ang = angleTo(this.cx, this.cy, mx, my);
-      this.facing = Math.cos(ang) >= 0 ? 1 : -1;
-      this.atkTimer = 1 / itemSpeed(w) / (1 + this.d.spdP);
-      const base = itemDamage(w);
-      if (d.wc === "melee") {
-        this.swing = 0.24;
-        this.swingDir = this.facing;
-        this.swingAng = ang;
-        this.swingHit = /* @__PURE__ */ new Set();
-        this.swingReach = (d.reach || 42) + this.w / 2;
-        app.sfx("swing");
-      } else if (d.wc === "ranged") {
-        const n = d.multi || 1;
-        this.volley = _Player._vol = (_Player._vol || 0) + 1;
-        for (let i = 0; i < n; i++) {
-          const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.09 : 0);
-          this.fireProj(d.proj || "arrow", a, base, "dex", BOW_TIP);
-        }
-        if (this.skills.s_tempest && Math.random() < 0.3) {
-          this.fireProj(d.proj || "arrow", ang + (Math.random() - 0.5) * 0.12, base, "dex", BOW_TIP);
-          for (let k = 0; k < 4; k++) app.parts.push(new Part(this.cx, this.cy - 4, "#8fe0c8", -30, 0.3));
-        }
-        app.sfx("bow");
-      } else if (d.wc === "magic") {
-        const cost = d.mana || 5;
-        if (this.mp < cost) {
-          app.toast(tr("마나가 부족하다"), "bad");
-          this.atkTimer = 0.2;
-          return;
-        }
-        this.mp -= cost;
-        const n = d.multi || 1;
-        this.volley = _Player._vol = (_Player._vol || 0) + 1;
-        const pt = d.proj || "bolt";
-        for (let i = 0; i < n; i++) {
-          const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.07 : 0);
-          this.fireProj(pt, a, base, "int");
-        }
-        {
-          const st = PROJ_STYLE[pt] || PROJ_STYLE.bolt;
-          const mx2 = this.cx + Math.cos(ang) * 16, my2 = this.cy - 4 + Math.sin(ang) * 16;
-          app.ringFx(mx2, my2, 13, st.c, 0.18);
-          for (let i = 0; i < 5; i++) app.parts.push(new Part(mx2, my2, st.c, -10, 0.3));
-        }
-        app.sfx("magic");
-      }
-    }
-    punch(mx, my) {
-      const w = this.weapon();
-      const dmg = w ? itemDamage(w) : 4;
-      const ang = angleTo(this.cx, this.cy, mx, my);
-      this.facing = Math.cos(ang) >= 0 ? 1 : -1;
-      this.atkTimer = 1 / (w ? itemSpeed(w) : 2.4);
-      this.swing = 0.2;
-      this.swingDir = this.facing;
-      this.swingAng = ang;
-      this.swingHit = /* @__PURE__ */ new Set();
-      this.swingReach = 34 + this.w / 2;
-      this._punchDmg = dmg;
-    }
-    scaleDmg(base, kind) {
-      const d = this.d;
-      let m = 1 + d.dmgP;
-      if (kind === "str") m *= 1 + d.str * 0.021;
-      else if (kind === "dex") m *= 1 + d.dex * 0.021;
-      else if (kind === "int") m *= (1 + d.int * 0.023) * (1 + d.magicP / 100);
-      return base * m;
-    }
-    rollCrit() {
-      const c = this.d.crit / 100;
-      return Math.random() < c;
-    }
-    fireProj(type, ang, base, kind, off) {
-      const dmg = this.scaleDmg(base, kind);
-      const crit = this.rollCrit();
-      const spd = type === "arrow" ? 760 : type === "star" ? 900 : 560;
-      let ox = 0, oy = -4;
-      if (off) {
-        const cs = Math.cos(ang), sn = Math.sin(ang);
-        let reach = 0;
-        for (let t = TS / 2; t <= off; t += TS / 2) {
-          if (app.world.solid(Math.floor((this.cx + cs * t) / TS), Math.floor((this.cy + sn * t) / TS))) break;
-          reach = t;
-        }
-        if (reach >= off - TS / 2) reach = off;
-        if (reach > 0) {
-          ox = cs * reach;
-          oy = sn * reach;
-        }
-      }
-      const p = new Proj(this.cx + ox, this.cy + oy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), "player", type);
-      p.crit = crit;
-      p.vol = this.volley;
-      if (this.d.fire) p.fire = this.d.fire;
-      if (this.d.frost) p.frost = this.d.frost;
-      if (this.d.poison) p.poison = this.d.poison;
-      if (type === "arrow" || type === "star") p.grav = type === "arrow" ? 170 : 60;
-      if (type === "void" || type === "star") p.pierce = 2;
-      app.projs.push(p);
-    }
-    /* ---- 스킬 ---- */
-    useSkill(i, mx, my) {
-      const id = this.slots[i];
-      if (!id) return;
-      const sk = SKILLS[id], r = this.skills[id] || 0;
-      if (!r || sk.type !== "active") return;
-      if ((this.cd[id] || 0) > 0) {
-        app.skillDeny(i);
-        return;
-      }
-      if (this.mp < sk.mana) {
-        app.skillDeny(i, tr("마나가 부족하다"));
-        return;
-      }
-      this.mp -= sk.mana;
-      this.cd[id] = sk.cd * (1 - this.d.cdr / 100);
-      const w = this.weapon();
-      const wdmg = w && idef(w).dmg ? itemDamage(w) : 10;
-      const ang = angleTo(this.cx, this.cy, mx, my);
-      switch (id) {
-        case "s_cleave": {
-          const dmg = this.scaleDmg(wdmg * sk.v(r) / 100, "str");
-          app.aoe(this.cx, this.cy, 108, dmg, 6, "#ffb24a");
-          break;
-        }
-        case "s_charge": {
-          this.vx = Math.cos(ang) * 900;
-          this.vy = -180;
-          this.iframe = Math.max(this.iframe, 0.35);
-          this.chargeDmg = this.scaleDmg(wdmg * sk.v(r) / 100, "str");
-          this.chargeT = 0.35;
-          this.chargeHit = /* @__PURE__ */ new Set();
-          break;
-        }
-        case "s_whirl": {
-          this.channel = { id, t: 2.5, tick: 0, dmg: this.scaleDmg(wdmg * sk.v(r) / 100, "str") };
-          break;
-        }
-        case "s_volley": {
-          const n = sk.v(r);
-          for (let i2 = 0; i2 < n; i2++) {
-            const a = ang + (i2 - (n - 1) / 2) * 0.14;
-            this.fireProj("arrow", a, wdmg * 0.7, "dex");
-          }
-          break;
-        }
-        case "s_rain": {
-          const n = sk.v(r);
-          app.bandFx(mx, my, 130, n * 0.07 + 0.45, "#9fe07a");
-          for (let i2 = 0; i2 < n; i2++) {
-            app.pending.push({
-              t: i2 * 0.07,
-              fn: () => {
-                const px = mx + (Math.random() - 0.5) * 260;
-                const p = new Proj(px, my - 420 - Math.random() * 80, (Math.random() - 0.5) * 60, 820, this.scaleDmg(wdmg * 0.6, "dex"), "player", "star");
-                p.grav = 260;
-                app.projs.push(p);
-              }
-            });
-          }
-          break;
-        }
-        case "s_fireball": {
-          const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 620, Math.sin(ang) * 620, this.scaleDmg(sk.v(r) + this.d.int * 1.6, "int"), "player", "fire");
-          p.explode = 70;
-          p.fire = 2;
-          app.projs.push(p);
-          break;
-        }
-        case "s_heal": {
-          this.heal(this.d.maxHp * sk.v(r) / 100);
-          this.addBuff("well", 5);
-          for (let k = 0; k < 18; k++) app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 30, this.cy + (Math.random() - 0.5) * 40, "#9ff09f", -60));
-          break;
-        }
-        case "s_nova": {
-          app.aoe(this.cx, this.cy, 160, this.scaleDmg(sk.v(r) + this.d.int * 1.1, "int"), 4, "#9fe0ff", "frost");
-          for (let k = 0; k < 26; k++) {
-            const a = Math.random() * TAU;
-            app.parts.push(new Part(this.cx + Math.cos(a) * 60, this.cy + Math.sin(a) * 60, "#9fe0ff"));
-          }
-          break;
-        }
-        case "s_wolf": {
-          for (let k = 0; k < sk.v(r); k++) {
-            const wx = this.cx + (k - 1) * 26;
-            app.ents.push(new Wolf(wx, this.cy, this));
-            app.sigilFx(wx, this.y + this.h - 6, 22, "#c8b88a");
-            for (let j = 0; j < SIG_FX.wolf.n; j++)
-              app.parts.push(new Part(wx + (Math.random() - 0.5) * 26, this.y + this.h - 8, "#c8b88a", -70, 0.8));
-          }
-          break;
-        }
-        /* ===== 특성 ===== */
-        case "s_guard": {
-          this.addBuff("bulwark", sk.v(r));
-          app.ringFx(this.cx, this.cy, 52, "#d8a05a", 0.45);
-          for (let k = 0; k < 16; k++) {
-            const a = Math.random() * TAU;
-            app.parts.push(new Part(this.cx + Math.cos(a) * 22, this.cy + Math.sin(a) * 26, "#d8a05a", -30, 0.7));
-          }
-          break;
-        }
-        case "s_quake": {
-          const dmg = this.scaleDmg(wdmg * sk.v(r) / 100, "str");
-          const foot = this.y + this.h;
-          for (const dir of [-1, 1]) {
-            for (let step = 0; step < 5; step++) {
-              app.pending.push({
-                t: step * 0.05,
-                fn: () => {
-                  const x = this.cx + dir * (34 + step * 34);
-                  app.aoe(x, foot - 14, 40, dmg / 2, 5, "#c8845a", "frost");
-                  for (let k = 0; k < 4; k++)
-                    app.parts.push(new Part(x + (Math.random() - 0.5) * 24, foot - 4, "#c8845a", -180, 0.5));
-                }
-              });
-            }
-          }
-          app.aoe(this.cx, foot - 14, 60, dmg, 7, "#c8845a", "frost");
-          break;
-        }
-        case "s_warcry": {
-          const dur = sk.v(r);
-          this.addBuff("warcry", dur);
-          this.addBuff("iron", dur);
-          for (const e of app.ents) {
-            if (!(e instanceof Enemy) || e.dead) continue;
-            if (dist(this.cx, this.cy, e.cx, e.cy) > 190) continue;
-            if (!e.boss) {
-              e.vx += Math.sign(e.cx - this.cx) * 320;
-              e.vy = -180;
-            }
-            e.slow(0.3, 3);
-          }
-          app.ringFx(this.cx, this.cy, 190, "#e8a04a", 0.5);
-          app.ringFx(this.cx, this.cy, 120, "#ffd88a", 0.35);
-          break;
-        }
-        case "s_pierce": {
-          const p = new Proj(
-            this.cx,
-            this.cy - 4,
-            Math.cos(ang) * 900,
-            Math.sin(ang) * 900,
-            this.scaleDmg(wdmg * sk.v(r) / 100, "dex") * (this.rollCrit() ? 1 + this.d.critD / 100 : 1),
-            "player",
-            "star"
-          );
-          p.pierce = 6;
-          p.grav = 0;
-          app.projs.push(p);
-          for (let k = 0; k < 8; k++) app.parts.push(new Part(this.cx, this.cy - 4, "#9fe07a", -20, 0.35));
-          break;
-        }
-        case "s_smoke": {
-          this.iframe = Math.max(this.iframe, 0.8 + r * 0.15);
-          this.addBuff("smokescreen", sk.v(r));
-          for (const e of app.ents) {
-            if (!(e instanceof Enemy) || e.dead) continue;
-            if (dist(this.cx, this.cy, e.cx, e.cy) < 150) e.slow(0.4, 4);
-          }
-          for (let k = 0; k < 34; k++) {
-            const a = Math.random() * TAU, d2 = Math.random() * 60;
-            app.parts.push(new Part(this.cx + Math.cos(a) * d2, this.cy + Math.sin(a) * d2, "#b8c8b0", -50, 1.1));
-          }
-          app.ringFx(this.cx, this.cy, 150, "#b8c8b0", 0.4);
-          break;
-        }
-        case "s_mark": {
-          let best = null, bd = 260;
-          for (const e of app.ents) {
-            if (!(e instanceof Enemy) || e.dead) continue;
-            const d2 = dist(mx, my, e.cx, e.cy);
-            if (d2 < bd) {
-              bd = d2;
-              best = e;
-            }
-          }
-          if (!best) {
-            this.cd[id] = 1;
-            this.mp += sk.mana;
-            app.toast(tr("겨눈 곳에 적이 없다"), "bad");
-            return;
-          }
-          best.markT = 10;
-          best.markAmt = sk.v(r) / 100;
-          app.ringFx(best.cx, best.cy, best.w + 26, "#e8d05a", 0.5);
-          for (let k = 0; k < 12; k++) app.parts.push(new Part(best.cx, best.y, "#e8d05a", -60, 0.7));
-          break;
-        }
-        case "s_barrier": {
-          this.shieldMax = this.shield = Math.round(sk.v(r) + this.d.int * 3.2);
-          this.shieldT = 20;
-          app.ringFx(this.cx, this.cy, 48, "#6fb8ff", 0.5);
-          for (let k = 0; k < 20; k++) {
-            const a = Math.random() * TAU;
-            app.parts.push(new Part(this.cx + Math.cos(a) * 30, this.cy + Math.sin(a) * 34, "#6fb8ff", -40, 0.8));
-          }
-          app.toast(tr("방벽 {shield}", { shield: this.shield }), "good");
-          break;
-        }
-        case "s_chain": {
-          const hops = sk.v(r);
-          const base = this.scaleDmg(60 + this.d.int * 2.4, "int");
-          const hit = /* @__PURE__ */ new Set();
-          let fx2 = this.cx, fy = this.cy - 4, power = base;
-          for (let h = 0; h < hops; h++) {
-            let best = null, bd = h === 0 ? 420 : 200;
-            for (const e of app.ents) {
-              if (!(e instanceof Enemy) || e.dead || hit.has(e)) continue;
-              const d2 = h === 0 ? dist(mx, my, e.cx, e.cy) : dist(fx2, fy, e.cx, e.cy);
-              if (d2 < bd) {
-                bd = d2;
-                best = e;
-              }
-            }
-            if (!best) break;
-            hit.add(best);
-            app.boltFx(fx2, fy, best.cx, best.cy, "#ffe86a");
-            const crit = this.rollCrit();
-            best.hurt(power * (crit ? 1 + this.d.critD / 100 : 1), crit, this, 2);
-            best.slow(0.25, 1.5);
-            fx2 = best.cx;
-            fy = best.cy;
-            power *= 0.75;
-          }
-          if (!hit.size) {
-            app.boltFx(this.cx, this.cy - 4, mx, my, "#ffe86a");
-          }
-          break;
-        }
-        case "s_blink": {
-          const maxD = 190, cs = Math.cos(ang), sn = Math.sin(ang);
-          let reach = 0;
-          for (let t = TS / 2; t <= maxD; t += TS / 2) {
-            if (app.world.hitSolid(this.x + cs * t, this.y + sn * t, this.w, this.h)) break;
-            reach = t;
-          }
-          if (reach < TS) {
-            this.cd[id] = 1;
-            this.mp += sk.mana;
-            app.toast(tr("그쪽은 막혀 있다"), "bad");
-            return;
-          }
-          const ox = this.cx, oy = this.cy;
-          this.x += cs * reach;
-          this.y += sn * reach;
-          this.vy = Math.min(this.vy, 0);
-          this.iframe = Math.max(this.iframe, 0.25);
-          app.aoe(ox, oy, 78, this.scaleDmg(sk.v(r) + this.d.int * 1.4, "int"), 4, "#c08fff");
-          for (let k = 0; k < 18; k++) {
-            app.parts.push(new Part(ox + (Math.random() - 0.5) * 24, oy + (Math.random() - 0.5) * 34, "#c08fff", -40, 0.7));
-            app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 24, this.cy + (Math.random() - 0.5) * 34, "#c08fff", -40, 0.7));
-          }
-          app.boltFx(ox, oy, this.cx, this.cy, "#c08fff");
-          break;
-        }
-        case "s_meteor": {
-          const tx = mx, ty = my;
-          app.warnFx(tx, ty, 150, 0.9, "#ffb04a");
-          app.fallFx(tx, ty, 0.9, "#ffd07a");
-          app.pending.push({
-            t: 0.9,
-            fn: () => {
-              const dmg = this.scaleDmg(340 + this.d.int * 6.5, "int");
-              app.aoe(tx, ty, 150, dmg, 12, "#ffb04a");
-              for (const e of app.ents) if (e instanceof Enemy && !e.dead && dist(tx, ty, e.cx, e.cy) < 150) e.addDot("fire", dmg * 0.06, 5);
-              app.ringFx(tx, ty, 150, "#ffb04a", 0.55);
-              app.ringFx(tx, ty, 90, "#fff0c0", 0.4);
-              for (let k = 0; k < 46; k++) {
-                const a = Math.random() * TAU, d2 = Math.random() * 140;
-                app.parts.push(new Part(tx + Math.cos(a) * d2, ty + Math.sin(a) * d2, k % 3 ? "#ffb04a" : "#fff0c0", -150, 1));
-              }
-              app.flashFx(tx, ty, 230, "#fff0c0");
-              const h = SKILL_HIT.meteor;
-              app.shake = Math.max(app.shake, h.k);
-              app.hitStop(h.st);
-              app.sfx(h.s);
-            }
-          });
-          break;
-        }
-      }
-      const fx = SKILL_FX[id] || {};
-      if (fx.c) app.ringFx(this.cx, this.cy, fx.r || 44, fx.c, 0.26);
-      if (fx.k) app.shake = Math.max(app.shake, fx.k);
-      if (fx.st) app.hitStop(fx.st);
-      app.sfx(fx.s || "skill");
-    }
-    /* ---- 물가로 기어오르기 ---- */
-    climbOut(world, dir) {
-      if (!world || !dir) return false;
-      const step = Math.sign(dir) * (this.w * 0.75 + 2);
-      for (let up = 0; up <= 2; up++) {
-        const nx = this.x + step, ny = this.y - up * TS;
-        if (world.hitSolid(nx, ny, this.w, this.h)) continue;
-        if (!world.hitSolid(nx, ny + 3, this.w, this.h)) continue;
-        this.x = nx;
-        this.y = ny;
-        this.vy = -190;
-        this.vx = Math.sign(dir) * 90;
-        this.submerged = 0;
-        this.swimming = false;
-        for (let i = 0; i < 6; i++) app.parts.push(new Part(this.cx, this.y + this.h, "#bfe4ff", -40, 0.5));
-        return true;
-      }
-      return false;
-    }
-    /* ---- 산소 ---- */
-    updateOxygen(dt, world) {
-      const max = this.d.oxyMax;
-      if (this.oxygen === void 0 || this.oxygen > max) this.oxygen = max;
-      const hx = Math.floor(this.cx / TS), hy = Math.floor((this.y + 4) / TS);
-      const ht = world.get(hx, hy);
-      let under = !!TILE_DEF[ht].liquid;
-      if (under && world.get(hx, hy - 1) === T.AIR && app.surfacePx) under = this.y + 4 > app.surfacePx(this.cx / TS, hy);
-      this.headUnder = under;
-      if (under) {
-        const lv = world.sea ? world.sea.level : null;
-        const deep = lv === null ? 1 : clamp(1 + Math.max(0, this.cy / TS - lv) / (90 * WSY), 1, 4);
-        this.oxygen = Math.max(0, this.oxygen - dt * deep);
-        this.oxyPressure = deep;
-        if (this.oxygen <= 0) {
-          this.drownT = (this.drownT || 0) + dt;
-          if (this.drownT >= 1) {
-            this.drownT -= 1;
-            const dmg = Math.max(4, Math.round(this.d.maxHp * 0.06));
-            this.hp -= dmg;
-            this.flash = 0.25;
-            app.texts.push(new DmgText(this.cx, this.y, dmg, "#ff6b6b", 0));
-            app.sfx("drown");
-            for (let i = 0; i < 8; i++) app.parts.push(new Part(this.cx, this.y + 6, "#bfe4ff", -50, 0.6));
-            if (this.hp <= 0) {
-              this.hp = 0;
-              app.onDeath("drown");
-            }
-          }
-        }
-        if (Math.random() < dt * (1.5 + (1 - this.oxygen / max) * 5)) {
-          app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 10, this.y + 4, "#dff2ff", -60, 0.8));
-          app.sfx("bubble");
-        }
-      } else {
-        this.drownT = 0;
-        this.oxygen = Math.min(max, this.oxygen + dt * 6 * (this.d.oxyReg || 1));
-      }
-    }
-    /* ---- 업데이트 ---- */
-    update(dt, world, input) {
-      const d = this.d;
-      this.atkTimer -= dt;
-      this.swing -= dt;
-      this.dashCd -= dt;
-      this.iframe -= dt;
-      this.hurtCd -= dt;
-      this.flash -= dt;
-      this.potionCd -= dt;
-      if (this.chargeT > 0) this.chargeT -= dt;
-      if (this.undyingCd > 0) this.undyingCd = Math.max(0, this.undyingCd - dt);
-      if (this.shieldT > 0) {
-        this.shieldT -= dt;
-        if (this.shieldT <= 0) {
-          this.shieldT = 0;
-          this.shield = 0;
-        }
-      }
-      for (const k in this.cd) if (this.cd[k] > 0) this.cd[k] = Math.max(0, this.cd[k] - dt);
-      for (let i = this.buffs.length - 1; i >= 0; i--) {
-        this.buffs[i].t -= dt;
-        if (this.buffs[i].t <= 0) {
-          this.buffs.splice(i, 1);
-          this.recalc();
-        }
-      }
-      this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
-      if (this.hurtCd <= 0) this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
-      const sub = this.submerged || 0;
-      const wasSwim = this.swimming;
-      this.swimming = this.swimming ? sub > 0.25 : sub > 0.35;
-      if (this.swimming !== wasSwim && app.sfx) app.sfx("splash");
-      this.updateOxygen(dt, world);
-      const acc = this.onGround ? 2400 : 1500;
-      let want = 0;
-      if (input.left) want -= 1;
-      if (input.right) want += 1;
-      if (this.channel) want *= 0.4;
-      if (this.swimming) {
-        if (want !== 0 && (!this.swing || !this.channel)) this.facing = Math.sign(want);
-      } else if (want !== 0) {
-        this.vx += want * acc * dt;
-        this.vx = clamp(this.vx, -d.ms * (this.dashV > 0 ? 3 : 1), d.ms * (this.dashV > 0 ? 3 : 1));
-        if (!this.swing || !this.channel) this.facing = want;
-      } else {
-        const fr = this.onGround ? 2600 : 700;
-        if (Math.abs(this.vx) < fr * dt) this.vx = 0;
-        else this.vx -= Math.sign(this.vx) * fr * dt;
-      }
-      this.dashV = Math.max(0, this.dashV - dt);
-      const inWater = this.swimming;
-      if (inWater && !this.wasInWater) app.sfx("splash");
-      this.wasInWater = inWater;
-      if (this.onGround || inWater) this.jumpsLeft = d.jumps;
-      if (!inWater) {
-        this.floating = false;
-        this.swimMove = false;
-      }
-      if (inWater) {
-        this.floating = false;
-        if (!input.jump && !input.down) {
-          const hx = this.cx / TS, sr = world.surfaceRow(Math.floor(hx), Math.floor((this.y + 6) / TS) + 1, 3);
-          if (sr >= 0 && app.surfacePx) {
-            this.floating = true;
-            const want2 = app.surfacePx(hx, sr) - 14;
-            this.vy = lerp(this.vy, clamp((want2 - this.y) * 6, -160, 160), dt * 6);
-          }
-        }
-        const climbed = input.jump && !this.jumpHeld && this.climbOut(world, want || this.facing);
-        let ix = want, iy = (input.down ? 1 : 0) - (input.jump ? 1 : 0);
-        if (this.floating && iy < 0) iy = 0;
-        const mag = Math.hypot(ix, iy);
-        if (mag) {
-          ix /= mag;
-          iy /= mag;
-        }
-        this.swimPh = ((this.swimPh || 0) + dt * (mag ? 1.5 : 0.35)) % 1;
-        const beat = 0.35 + 0.65 * Math.max(0, Math.sin(this.swimPh * TAU));
-        const T2 = 1350 * beat;
-        this.vx += ix * T2 * dt;
-        this.vy += iy * T2 * dt;
-        const vref = d.ms * 0.75;
-        const sp = Math.hypot(this.vx, this.vy);
-        const drag = Math.min(0.9, (0.6 + 2.4 * sp / vref) * dt);
-        this.vx -= this.vx * drag;
-        this.vy -= this.vy * drag;
-        if (this.floating && input.jump && !this.jumpHeld && !climbed) {
-          this.vy = -430;
-          this.floating = false;
-          for (let i = 0; i < 10; i++) app.parts.push(new Part(this.cx, this.y + this.h * 0.6, "#dff2ff", -120, 0.5));
-          app.sfx("splash");
-        }
-        this.swimMove = mag > 0 || sp > 60;
-        this.jumpHeld = !!input.jump;
-        if (input.jump && Math.random() < dt * 10)
-          app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 14, this.y + this.h * 0.3, "#bfe4ff", -30, 0.5));
-      } else {
-        if (input.jump && !this.jumpHeld && this.jumpsLeft > 0) {
-          app.sfx(this.onGround ? "jump" : "jump2", 0.94 + Math.random() * 0.12);
-          this.vy = -620;
-          this.jumpsLeft--;
-          this.jumpHeld = true;
-          if (!this.onGround) for (let i = 0; i < 8; i++) app.parts.push(new Part(this.cx, this.y + this.h, "#cfe8ff"));
-        }
-        if (!input.jump) this.jumpHeld = false;
-        if (this.vy < 0 && !input.jump) this.vy += 1400 * dt;
-      }
-      this.jetting = false;
-      this.jetGap = d.jet ? this.groundGap(world) : 0;
-      const room = d.jet ? clamp((JET_MAX_UP + 1 - this.jetGap) / 4, 0, 1) : 1;
-      const tooHigh = d.jet && this.jetGap >= JET_MAX_UP;
-      if (d.jet && input.jump && !this.onGround && !inWater && !this.jetOver) {
-        if (this.jetOk === void 0) {
-          this.jetT = 0;
-          this.jetOk = this.useCharge(6);
-        } else {
-          this.jetT = (this.jetT || 0) + dt;
-          if (this.jetT >= 0.25) {
-            this.jetT -= 0.25;
-            this.jetOk = this.useCharge(6);
-          }
-        }
-        if (this.jetOk) {
-          const cap = -330 * room + JET_HIGH_FALL * (1 - room);
-          if (this.vy > cap) this.vy = Math.max(this.vy - 2400 * dt, cap);
-          this.jetting = true;
-          if (Math.random() < dt * 30)
-            app.parts.push(new Part(
-              this.cx + (Math.random() - 0.5) * 10,
-              this.y + this.h,
-              tooHigh ? "#8a7a6a" : "#ffb04a",
-              60,
-              0.35
-            ));
-          if (tooHigh) this.jetNote(tr("여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다"));
-        }
-      } else {
-        this.jetT = 0;
-        this.jetOk = void 0;
-      }
-      if (d.jet) {
-        if (this.jetting && !tooHigh) {
-          this.jetHeat = Math.min(1, (this.jetHeat || 0) + dt / JET_BURN);
-          if (this.jetHeat >= 1 && !this.jetOver) {
-            this.jetOver = true;
-            this.jetting = false;
-            this.jetNote(tr("추진기가 과열됐다 — 식을 때까지 꺼진다"), "bad");
-            app.sfx("power_off");
-            for (let i = 0; i < 10; i++)
-              app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 12, this.y + this.h, "#6a6a72", -10, 0.6));
-          }
-        } else if (this.jetHeat > 0) {
-          this.jetHeat = Math.max(0, this.jetHeat - dt / (this.onGround ? JET_COOL_GROUND : JET_COOL_AIR));
-          if (this.jetOver && this.jetHeat <= JET_RESUME) this.jetOver = false;
-        }
-      } else {
-        this.jetHeat = 0;
-        this.jetOver = false;
-      }
-      this.gliding = false;
-      if (d.glide && !this.jetting && input.jump && this.vy > 60 && !this.onGround && this.jumpsLeft <= 0) {
-        this.vy = Math.min(this.vy, 110);
-        this.gliding = true;
-        if (Math.random() < dt * 14) app.parts.push(new Part(this.cx, this.y + this.h, "#dfe9f5", -20, 0.4));
-      }
-      if (input.dash && this.dashCd <= 0) {
-        const dir = want !== 0 ? want : this.facing;
-        this.vx = dir * 720;
-        this.dashV = 0.22;
-        this.iframe = d.dashI / 1e3;
-        this.dashCd = d.dashCd;
-        for (let i = 0; i < 12; i++) app.parts.push(new Part(this.cx, this.cy, "#cfd8ff"));
-        app.sfx("dash");
-      }
-      const wasOnGround = this.onGround, fallVy = this.vy;
-      this.move(dt, world, { dropThrough: !!input.down, gravMul: this.floating ? 0 : this.swimming ? 0.3 : void 0 });
-      if (!wasOnGround && this.onGround && !this.gliding && !this.jetting && (this.submerged || 0) <= 0.2) {
-        const bt = world.get(Math.floor(this.cx / TS), Math.floor((this.y + this.h + 2) / TS));
-        if (fallVy > SAFE_FALL_VY && this.iframe <= 0 && !TILE_DEF[bt].soft) {
-          const dmg = Math.round((fallVy - SAFE_FALL_VY) / (MAX_FALL - SAFE_FALL_VY) * 55);
-          if (dmg > 0) {
-            this.hurt(dmg);
-            this.hurtCd = Math.max(this.hurtCd, 0.4);
-          }
-        }
-      }
-      if (this.chargeT > 0) {
-        for (const e of app.ents) {
-          if (!(e instanceof Enemy) || e.dead || this.chargeHit.has(e)) continue;
-          if (aabb(this.rect(), e.rect())) {
-            this.chargeHit.add(e);
-            e.hurt(this.chargeDmg, this.rollCrit(), this, 14, hitFam(this.weapon()));
-          }
-        }
-      }
-      if (this.channel) {
-        this.channel.t -= dt;
-        this.channel.tick -= dt;
-        if (this.channel.tick <= 0) {
-          this.channel.tick = 0.28;
-          app.aoe(this.cx, this.cy, 96, this.channel.dmg * 0.28, 3, "#ffcf6a");
-          app.sfx("sk_whirl", app.strokeRate());
-          app.shake = Math.max(app.shake, 3);
-          const foot = this.y + this.h;
-          for (let k = 0; k < SIG_FX.whirl.n; k++)
-            app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 70, foot - 4, "#c8a878", -40, 0.5));
-        }
-        if (this.channel.t <= 0) this.channel = null;
-      }
-      if (this.swing > 0 && this.swingHit) {
-        const reach = this.swingReach;
-        const w = this.weapon();
-        const base = w && idef(w).dmg && idef(w).type === "weapon" && idef(w).wc === "melee" ? itemDamage(w) : this._punchDmg || 4;
-        const kb = w ? idef(w).kb || 3 : 2;
-        for (const e of app.ents) {
-          if (!(e instanceof Enemy) || e.dead || this.swingHit.has(e)) continue;
-          const dx = e.cx - this.cx, dy = e.cy - this.cy;
-          if (dx * dx + dy * dy > (reach + e.w / 2) * (reach + e.w / 2)) continue;
-          if (Math.sign(dx) !== this.swingDir && Math.abs(dx) > 8) continue;
-          if (Math.abs(dy) > reach * 0.85) continue;
-          this.swingHit.add(e);
-          const crit = this.rollCrit();
-          e.hurt(this.scaleDmg(base, "str"), crit, this, kb, hitFam(w));
-          if (this.d.fire) e.addDot("burn", this.scaleDmg(base, "str") * 0.12 * this.d.fire, 4);
-          if (this.d.frost) e.slow(0.45, 2.5);
-          if (this.d.poison) e.addDot("poison", this.scaleDmg(base, "str") * 0.13 * this.d.poison, 5);
-        }
-      }
-      const tx = Math.floor(this.cx / TS), ty = Math.floor(this.cy / TS);
-      const hurt = world.hurtInRect(this.x, this.y, this.w, this.h);
-      if (hurt && this.iframe <= 0) {
-        this.hurt(hurt);
-        this.hurtCd = 3;
-      }
-      const d0 = this.deepest, h0 = this.highest;
-      this.deepest = Math.max(this.deepest, ty);
-      this.highest = Math.min(this.highest === void 0 ? ty : this.highest, ty);
-      if (app.checkAch && (this.deepest !== d0 || this.highest !== h0)) app.checkAch();
-    }
   };
-  var Enemy = class _Enemy extends Ent {
+  var Enemy = class extends Ent {
     constructor(type, x, y, scale = 1) {
       const d = ENEMIES[type];
       super(x, y, d.w, d.h);
@@ -28575,761 +27873,6 @@
       if (p.skills.s_hunter) p.addBuff("swift_kill", 3);
       app.onKill(this.type);
       app.sfx(this.boss ? "bossdie" : "die");
-    }
-    update(dt, world, player) {
-      this.atkPose -= dt;
-      this.flash -= dt;
-      this.atkCd -= dt;
-      this.jumpCd -= dt;
-      this.hitCd -= dt;
-      if (this.slowT > 0) {
-        this.slowT -= dt;
-        if (this.slowT <= 0) this.slowF = 1;
-      }
-      if (this.markT > 0) {
-        this.markT -= dt;
-        if (this.markT > 0 && Math.random() < dt * 5)
-          app.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w, this.y - 6, "#e8d05a", -24, 0.5));
-      }
-      for (let i = this.dots.length - 1; i >= 0; i--) {
-        const d = this.dots[i];
-        d.t -= dt;
-        this.hp -= d.dps * dt;
-        if (Math.random() < dt * 6) app.parts.push(new Part(this.cx, this.cy, d.kind === "burn" ? "#ff8a3a" : d.kind === "poison" ? "#8fd06a" : "#9fe0ff"));
-        if (d.t <= 0) this.dots.splice(i, 1);
-      }
-      if (this.hp <= 0) {
-        this.die(null);
-        return;
-      }
-      const dx = player.cx - this.cx, dy = player.cy - this.cy;
-      const dd = Math.hypot(dx, dy);
-      this.facing = dx >= 0 ? 1 : -1;
-      const AI = this.def.ai;
-      const sp = this.spd * this.slowF;
-      if (AI === "walker" || AI === "jumper" || AI === "archer") {
-        const range = this.def.range || 0;
-        if (AI === "archer" && dd < range * 0.55) this.vx = -Math.sign(dx) * sp;
-        else if (dd < this.aggro) this.vx = Math.sign(dx) * sp * (AI === "jumper" && !this.onGround ? 1.4 : 1);
-        else this.vx *= 0.9;
-        if (AI === "jumper" && this.onGround && this.jumpCd <= 0 && dd < Math.min(480, this.aggro)) {
-          this.vy = -430;
-          this.jumpCd = 1.1 + Math.random() * 0.6;
-        }
-        if (this.hitWall && this.onGround && this.jumpCd <= 0) {
-          this.vy = -420;
-          this.jumpCd = 0.6;
-        }
-        if (AI === "archer" && this.atkCd <= 0 && dd < Math.min(range, this.aggro) && Math.abs(dy) < 180) {
-          this.atkCd = 1.8 + Math.random() * 0.6;
-          this.atkPose = 0.26;
-          const a = angleTo(this.cx, this.cy, player.cx, player.cy - 6);
-          const p = new Proj(this.cx, this.cy, Math.cos(a) * 460, Math.sin(a) * 460, this.dmg, "enemy", this.def.proj || "arrow");
-          p.grav = 220;
-          app.projs.push(p);
-        }
-        this.move(dt, world);
-      } else if (AI === "flyer") {
-        this.think -= dt;
-        if (this.think <= 0) {
-          this.think = 0.5 + Math.random() * 0.5;
-          this.wob = (Math.random() - 0.5) * 90;
-        }
-        if (dd < this.aggro) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * sp, dt * 3);
-          this.vy = lerp(this.vy, dy / (dd || 1) * sp + (this.wob || 0), dt * 3);
-        } else {
-          this.vx *= 0.98;
-          this.vy = lerp(this.vy, Math.sin(app.time * 2) * 30, dt * 2);
-        }
-        this.move(dt, world, { gravMul: 0 });
-      } else if (AI === "caster") {
-        const range = this.def.range || 300;
-        this.think -= dt;
-        if (dd > this.aggro) {
-          this.vx *= 0.95;
-          this.vy = lerp(this.vy, Math.sin(app.time * 3 + this.x) * 40, dt * 2);
-        } else if (dd > range * 0.8) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * sp, dt * 3);
-          this.vy = lerp(this.vy, dy / (dd || 1) * sp, dt * 3);
-        } else if (dd < range * 0.4) {
-          this.vx = lerp(this.vx, -(dx / (dd || 1)) * sp, dt * 3);
-          this.vy = lerp(this.vy, -(dy / (dd || 1)) * sp, dt * 3);
-        } else {
-          this.vx *= 0.95;
-          this.vy = lerp(this.vy, Math.sin(app.time * 3 + this.x) * 40, dt * 2);
-        }
-        if (this.atkCd <= 0 && dd < Math.min(range, this.aggro)) {
-          this.atkCd = 2 + Math.random() * 0.8;
-          this.atkPose = 0.26;
-          const a = angleTo(this.cx, this.cy, player.cx, player.cy);
-          const kind = this.def.proj || (this.type === "frostling" ? "frost" : this.type === "imp" ? "fire" : "dark");
-          app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 320, Math.sin(a) * 320, this.dmg, "enemy", kind));
-        }
-        this.move(dt, world, { gravMul: 0 });
-      } else if (AI === "critter") {
-        if (this.fleeT > 0) {
-          this.fleeT -= dt;
-          this.vx = -Math.sign(dx || 1) * sp * 1.8;
-        } else {
-          this.think -= dt;
-          if (this.think <= 0) {
-            this.think = 1.2 + Math.random() * 2.2;
-            this.wDir = Math.random() < 0.35 ? 0 : Math.random() < 0.5 ? -1 : 1;
-          }
-          this.vx = lerp(this.vx, this.wDir * sp * 0.5, dt * 2);
-        }
-        if (this.onGround && this.hitWall && this.jumpCd <= 0) {
-          this.vy = -300;
-          this.jumpCd = 0.5;
-        }
-        this.move(dt, world);
-      } else if (AI === "swimmer") {
-        const wet = (x, y) => world.liquid(Math.floor(x / TS), Math.floor(y / TS));
-        this.think -= dt;
-        if (this.think <= 0) {
-          this.think = 0.7 + Math.random() * 1.1;
-          this.wob = (Math.random() - 0.5) * 70;
-        }
-        const chase = !this.def.passive && dd < this.aggro;
-        if (chase) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * sp, dt * 2.6);
-          this.vy = lerp(this.vy, dy / (dd || 1) * sp + (this.wob || 0) * 0.3, dt * 2.6);
-        } else {
-          this.vx = lerp(this.vx, (this.wDir || 0) * sp * 0.45, dt * 1.6);
-          this.vy = lerp(this.vy, (this.wob || 0) * 0.5, dt * 1.6);
-          if (this.jumpCd <= 0) {
-            this.jumpCd = 1.4 + Math.random() * 1.6;
-            this.wDir = Math.random() < 0.5 ? -1 : 1;
-          }
-        }
-        const lookX = this.cx + Math.sign(this.vx) * (this.w / 2 + 4);
-        const lookY = this.cy + Math.sign(this.vy) * (this.h / 2 + 4);
-        if (this.vx !== 0 && !wet(lookX, this.cy)) {
-          this.vx *= -0.5;
-          this.wDir = -(this.wDir || 1);
-        }
-        if (this.vy !== 0 && !wet(this.cx, lookY)) this.vy *= -0.5;
-        this.move(dt, world, { gravMul: 0, aquatic: 1 });
-      } else if (AI === "flotsam") {
-        if (this.drift === void 0) this.drift = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 10);
-        const hx = this.cx / TS;
-        const sr = world.surfaceRow(Math.floor(hx), Math.floor((this.y + this.h * 0.8) / TS), 4);
-        if (sr >= 0 && app.surfacePx) {
-          const want = app.surfacePx(hx, sr) - this.h * 0.55;
-          this.vy = lerp(this.vy, (want - this.y) * 5, dt * 6);
-        } else this.vy = Math.min(this.vy + 900 * dt, 400);
-        const ahead = Math.floor((this.cx + Math.sign(this.drift) * (this.w / 2 + 6)) / TS);
-        if (this.hitWall || !world.liquid(ahead, sr >= 0 ? sr : Math.floor(this.cy / TS)) || ahead >= SEA_X1 - 2) this.drift = -this.drift;
-        this.vx = lerp(this.vx, this.drift, dt * 1.2);
-        if (sr >= 0 && app.surfacePx) this.tilt = Math.atan2(app.surfacePx(hx + 0.6, sr) - app.surfacePx(hx - 0.6, sr), TS * 1.2);
-        this.move(dt, world, { gravMul: 0, aquatic: 1 });
-      } else {
-        this.bossAI(dt, world, player, dx, dy, dd);
-      }
-      if (!this.def.passive && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
-        player.hurt(this.dmg * (this.boss ? 1 : 0.9), this.cx);
-        this.hitCd = 0.7;
-        this.atkPose = 0.22;
-      }
-    }
-    /* ---- 페이즈가 바뀌는 순간 ---- */
-    onPhaseChange(ph, world, p) {
-      this.phaseInv = 0.8;
-      this.guard = 0;
-      app.shake = Math.max(app.shake, 11);
-      for (let i = 0; i < 26; i++) {
-        app.parts.push(new Part(
-          this.cx + (Math.random() - 0.5) * this.w,
-          this.cy + (Math.random() - 0.5) * this.h,
-          i % 3 ? this.def.c : "#ffe08a",
-          -120,
-          0.9
-        ));
-      }
-      app.ringFx(this.cx, this.cy, Math.max(this.w, this.h) * 1.6, "#ffe08a", 0.55);
-      app.sfxAt("chapter", this.cx / TS, this.cy / TS);
-      const line = (BOSS_LINES[this.type] || {})[ph];
-      if (line) app.bossLine(this.def.n, line);
-      const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
-      switch (this.def.ai) {
-        case "b_slime":
-          if (ph >= lock) {
-            this.guard = 1;
-            this.openT = 0;
-          }
-          break;
-        case "b_witch":
-          if (ph >= lock) {
-            this.iceFloor = 1;
-            this.layHeat(world, p);
-          }
-          break;
-        case "b_prolif":
-          if (ph >= lock) this.guard = 1;
-          break;
-        // 핵만 약점
-        case "b_hepha":
-          if (ph >= lock) this.guard = 1;
-          break;
-        // 정지 핵을 써야 열린다
-        case "b_arche":
-          if (ph >= lock) {
-            this.guard = 1;
-            this.raisePedestals();
-          }
-          break;
-        case "b_overseer":
-          if (ph >= 1) this.term = 0;
-          break;
-      }
-    }
-    /** 원형 2페이즈 — 받침대 넷. */
-    raisePedestals() {
-      for (const e of app.ents) if (e.pedestal && !e.dead) {
-        e.dead = true;
-        e.hp = 0;
-      }
-      for (let i = 0; i < 4; i++) {
-        const e = new _Enemy("draft_form", this.cx + (i - 1.5) * 96, this.cy - 10, 1);
-        e.pedestal = 1;
-        e.maxHp = Math.round(e.maxHp * 0.35);
-        e.hp = e.maxHp;
-        e.spd = 0;
-        app.ents.push(e);
-      }
-      app.toast(tr("받침대 넷이 그것을 붙들고 있다"), "bad");
-    }
-    /* 서리 마녀 2페이즈 — 발밑에 설 수 있는 자리를 만들어 준다. */
-    layHeat(world, p) {
-      const fy = Math.floor((this.y + this.h + 4) / TS);
-      for (const off of [-9, 0, 9]) {
-        const tx = Math.floor(this.cx / TS) + off;
-        for (let y = fy; y < fy + 4; y++) {
-          if (world.solid(tx, y + 1) && world.get(tx, y) === T.AIR) {
-            world.set(tx, y, T.TORCH);
-            break;
-          }
-        }
-      }
-      app.toast(tr("바닥이 언다 — 불 옆에 서라"), "bad");
-    }
-    /** 매 프레임 도는 약점·장판 규칙. */
-    tickWeak(dt, world, p) {
-      if (this.openT > 0) {
-        this.openT -= dt;
-        if (this.openT <= 0) this.guard = 1;
-      }
-      if (!this.iceFloor) return;
-      this.iceCd = (this.iceCd || 0) - dt;
-      if (this.iceCd > 0) return;
-      this.iceCd = 0.5;
-      const tx = Math.floor(p.cx / TS), ty = Math.floor((p.y + p.h - 2) / TS);
-      let warm = false;
-      for (let x = tx - 2; x <= tx + 2 && !warm; x++)
-        for (let y = ty - 2; y <= ty + 2; y++) {
-          const t = world.get(x, y);
-          if (t === T.TORCH || t === T.LAVA) {
-            warm = true;
-            break;
-          }
-        }
-      if (warm) return;
-      p.addBuff("frostbite", 1.2);
-      p.hurt(this.dmg * 0.18);
-      for (let i = 0; i < 4; i++) app.parts.push(new Part(p.cx, p.cy, "#9fe0ff", -30, 0.5));
-    }
-    /* ---- 보스 AI ---- */
-    bossAI(dt, world, p, dx, dy, dd) {
-      const AI = this.def.ai;
-      this.stateT -= dt;
-      const hpr = this.hp / this.maxHp;
-      const nph = this.phases;
-      this.phase = Math.min(nph - 1, Math.floor((1 - hpr) * nph));
-      this.pf = nph > 1 ? this.phase / (nph - 1) : 0;
-      if (this.phase > this.lastPhase) {
-        this.lastPhase = this.phase;
-        this.phaseT = 0.7;
-        this.onPhaseChange(this.phase, world, p);
-      }
-      this.phaseT = (this.phaseT || 0) - dt;
-      if (this.phaseInv > 0) this.phaseInv -= dt;
-      this.tickWeak(dt, world, p);
-      if (this.tickSurge(dt, world, p)) {
-        this.stateT += dt;
-        return;
-      }
-      if (AI === "b_slime") {
-        if (this.onGround) {
-          this.vx *= 0.86;
-          if (this.lastPh() && this.landT !== 1) {
-            this.landT = 1;
-            this.guard = 0;
-            this.openT = 0.9;
-            app.ringFx(this.cx, this.cy, this.w * 0.9, "#9fe0ff", 0.4);
-          }
-          if (this.jumpCd <= 0) {
-            this.landT = 0;
-            this.jumpCd = this.lastPh() ? 2.2 : 1.5 - this.pf * 0.7;
-            this.vy = -680 - this.pf * 120;
-            this.vx = Math.sign(dx) * (200 + this.pf * 140);
-            if (Math.random() < 0.35 + this.pf * 0.4) {
-              for (let i = 0; i < 2 + this.pf * 2; i++) {
-                const e = new _Enemy("slime", this.cx + (Math.random() - 0.5) * 60, this.y, app.scale());
-                e.vy = -300;
-                app.ents.push(e);
-              }
-            }
-          }
-        }
-        this.move(dt, world);
-      } else if (AI === "b_bone") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 3;
-          this.stateT = this.state === 1 ? 2.2 : 2.6;
-          if (this.state === 2) for (let i = 0; i < 2 + this.pf * 2; i++) app.ents.push(new _Enemy(Math.random() < 0.5 ? "skeleton" : "archer", this.cx + (Math.random() - 0.5) * 200, this.cy - 30, app.scale()));
-        }
-        if (this.state === 0) {
-          this.vx = lerp(this.vx, Math.sign(dx) * this.spd, dt * 3);
-          this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.6, dt * 3);
-        } else if (this.state === 1) {
-          this.vx *= 0.94;
-          this.vy = lerp(this.vy, -20, dt * 2);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.35 - this.pf * 0.12;
-            const a = angleTo(this.cx, this.cy, p.cx, p.cy) + (Math.random() - 0.5) * 0.4;
-            app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 470, Math.sin(a) * 470, this.dmg * 0.7, "enemy", "bone"));
-          }
-        } else {
-          this.vx *= 0.9;
-          this.vy *= 0.9;
-        }
-        this.move(dt, world, { gravMul: 0 });
-      } else if (AI === "b_heart") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 3;
-          this.stateT = this.state === 0 ? 3.2 : this.state === 1 ? 1.6 : 2.4;
-          if (this.state === 1) {
-            this.dashA = angleTo(this.cx, this.cy, p.cx, p.cy);
-          }
-          if (this.state === 2) for (let i = 0; i < 1 + this.pf * 2; i++) app.ents.push(new _Enemy("shadoweye", this.cx + (Math.random() - 0.5) * 220, this.cy, app.scale()));
-        }
-        if (this.state === 0) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 0.7, dt * 2);
-          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 0.7, dt * 2);
-          if (this.atkCd <= 0) {
-            this.atkCd = 1.1 - this.pf * 0.5;
-            const n = 8 + this.pf * 8;
-            for (let i = 0; i < n; i++) {
-              const a = i / n * TAU + app.time;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 280, Math.sin(a) * 280, this.dmg * 0.55, "enemy", "dark"));
-            }
-          }
-        } else if (this.state === 1) {
-          this.vx = Math.cos(this.dashA) * this.spd * 3.4;
-          this.vy = Math.sin(this.dashA) * this.spd * 3.4;
-        } else {
-          this.vx *= 0.92;
-          this.vy *= 0.92;
-        }
-        this.move(dt, world, { gravMul: 0 });
-      } else if (AI === "b_witch") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 4;
-          this.stateT = 2.4;
-          if (this.state === 0) {
-            const a = Math.random() * TAU, r = 200;
-            this.x = clamp(p.cx + Math.cos(a) * r, TS * 2, WW * TS - TS * 3);
-            this.y = p.cy + Math.sin(a) * r - 60;
-            for (let i = 0; i < 24; i++) app.parts.push(new Part(this.cx, this.cy, "#a8dcf0"));
-          }
-          if (this.state === 2) {
-            for (let i = 0; i < 1 + this.pf * 2; i++) app.ents.push(new _Enemy("frostling", this.cx + (Math.random() - 0.5) * 240, this.cy, app.scale()));
-          }
-        }
-        if (this.state === 1) {
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.45 - this.pf * 0.2;
-            const n = 3 + this.pf * 2;
-            const base = angleTo(this.cx, this.cy, p.cx, p.cy);
-            for (let i = 0; i < n; i++) {
-              const a = base + (i - (n - 1) / 2) * 0.22;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 420, Math.sin(a) * 420, this.dmg * 0.6, "enemy", "frost"));
-            }
-          }
-        } else if (this.state === 3) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 1.4, dt * 3);
-          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 1.4, dt * 3);
-          if (this.atkCd <= 0) {
-            this.atkCd = 1.4;
-            for (let i = 0; i < 12; i++) {
-              const a = i / 12 * TAU;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 240, Math.sin(a) * 240, this.dmg * 0.5, "enemy", "frost"));
-            }
-          }
-        } else {
-          this.vx *= 0.9;
-          this.vy = lerp(this.vy, Math.sin(app.time * 2) * 30, dt * 2);
-        }
-        this.move(dt, world, { gravMul: 0 });
-      } else if (AI === "b_void") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 4;
-          this.stateT = 2.6 - this.pf * 0.6;
-          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++) app.ents.push(new _Enemy("wraith", this.cx + (Math.random() - 0.5) * 320, this.cy, app.scale()));
-        }
-        if (this.state === 0) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 0.6, dt * 2);
-          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 0.6, dt * 2);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.16;
-            const a = app.time * 5;
-            for (let k = 0; k < 3; k++)
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a + k * TAU / 3) * 300, Math.sin(a + k * TAU / 3) * 300, this.dmg * 0.45, "enemy", "void"));
-          }
-        } else if (this.state === 1) {
-          this.vx *= 0.9;
-          this.vy *= 0.9;
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.5;
-            const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-            for (let i = -2; i <= 2; i++) {
-              const pr = new Proj(this.cx, this.cy, Math.cos(a + i * 0.13) * 520, Math.sin(a + i * 0.13) * 520, this.dmg * 0.55, "enemy", "void");
-              app.projs.push(pr);
-            }
-          }
-        } else if (this.state === 2) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 3, dt * 4);
-          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 3, dt * 4);
-        } else {
-          this.vx *= 0.92;
-          this.vy *= 0.92;
-        }
-        this.move(dt, world, { gravMul: 0 });
-      } else if (AI === "b_storm") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 4;
-          this.stateT = this.state === 1 ? 1.5 : 2.4 - this.pf * 0.5;
-          if (this.state === 1) this.dashA = angleTo(this.cx, this.cy, p.cx, p.cy);
-          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
-            app.ents.push(new _Enemy(Math.random() < 0.5 ? "gale" : "sky_sentry", this.cx + (Math.random() - 0.5) * 300, this.cy, app.scale()));
-        }
-        if (this.state === 0) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 0.7, dt * 2);
-          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 0.7, dt * 2);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.22;
-            const n = 5 + this.pf * 4, base = app.time * 4;
-            for (let i = 0; i < n; i++) {
-              const a = base + i / n * TAU;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 330, Math.sin(a) * 330, this.dmg * 0.42, "enemy", "wind"));
-            }
-          }
-        } else if (this.state === 1) {
-          this.vx = Math.cos(this.dashA) * this.spd * 3.6;
-          this.vy = Math.sin(this.dashA) * this.spd * 3.6;
-        } else if (this.state === 2) {
-          this.vx *= 0.9;
-          this.vy = lerp(this.vy, -30, dt * 2);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.5 - this.pf * 0.2;
-            for (let i = 0; i < 3 + this.pf * 2; i++) {
-              const px2 = p.cx + (Math.random() - 0.5) * 340;
-              app.pending.push({
-                t: i * 0.06,
-                fn: () => {
-                  const pr = new Proj(px2, p.cy - 420, 0, 780, this.dmg * 0.5, "enemy", "bolt");
-                  app.projs.push(pr);
-                }
-              });
-            }
-          }
-        } else {
-          this.vx *= 0.92;
-          this.vy *= 0.92;
-        }
-        this.move(dt, world, { gravMul: 0 });
-      } else if (AI === "b_keeper") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 4;
-          this.stateT = 2.8 - this.pf * 0.6;
-          if (this.state === 3) for (let i = 0; i < 1 + this.pf * 2; i++)
-            app.ents.push(new _Enemy(this.def.minion || "ruin_guard", this.cx + (Math.random() - 0.5) * 260, this.cy - 20, app.scale()));
-        }
-        if (this.state === 0) {
-          this.vx *= 0.86;
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.9 - this.pf * 0.36;
-            const base = angleTo(this.cx, this.cy, p.cx, p.cy);
-            const n = 5 + this.pf * 4;
-            for (let i = 0; i < n; i++) {
-              const a = base + (i - (n - 1) / 2) * 0.17;
-              const pr = new Proj(this.cx, this.cy, Math.cos(a) * 460, Math.sin(a) * 460, this.dmg * 0.5, "enemy", "rune");
-              app.projs.push(pr);
-            }
-          }
-        } else if (this.state === 1) {
-          this.vx = lerp(this.vx, Math.sign(dx) * this.spd, dt * 3);
-          if (this.onGround && (dy < -40 || this.hitWall)) this.vy = -560;
-        } else if (this.state === 2) {
-          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 2.6, dt * 4);
-          if (this.onGround && this.atkCd <= 0) {
-            this.atkCd = 0.7;
-            app.shake = Math.max(app.shake, 10);
-            for (let i = 0; i < 8; i++) {
-              const a = -Math.PI * (0.15 + Math.random() * 0.7);
-              app.projs.push(new Proj(this.cx, this.cy + this.h / 2, Math.cos(a) * 260, Math.sin(a) * 260, this.dmg * 0.4, "enemy", "bone"));
-            }
-          }
-        } else this.vx *= 0.9;
-        this.move(dt, world);
-      } else if (AI === "b_pursuer") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 4;
-          this.stateT = 3 - this.pf * 0.8;
-          if (this.state === 1) {
-            this.x = clamp(p.cx + (Math.random() < 0.5 ? -170 : 170), TS * 3, WW * TS - TS * 3) - this.w / 2;
-            this.y = p.cy - this.h;
-            app.shake = Math.max(app.shake, 12);
-            for (let i = 0; i < 26; i++) app.parts.push(new Part(this.cx, this.cy, "#a06fff", -40, 1.1));
-          }
-          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
-            app.ents.push(new _Enemy(this.def.minion || "wraith", this.cx + (Math.random() - 0.5) * 300, this.cy - 30, app.scale()));
-        }
-        if (this.state === 0) {
-          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.5, dt * 2);
-          this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.4, dt * 2);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.28 - this.pf * 0.1;
-            this.spin = (this.spin || 0) + 0.55;
-            const n = 3 + this.pf * 2;
-            for (let i = 0; i < n; i++) {
-              const a = this.spin + i * TAU / n;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 330, Math.sin(a) * 330, this.dmg * 0.42, "enemy", "void"));
-            }
-          }
-        } else if (this.state === 1) {
-          const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-          this.vx = lerp(this.vx, Math.cos(a) * this.spd * 2.4, dt * 5);
-          this.vy = lerp(this.vy, Math.sin(a) * this.spd * 2.4, dt * 5);
-          if (this.atkCd <= 0) {
-            this.atkCd = 1.1;
-            const n = 10 + this.pf * 8;
-            for (let k = 0; k < n; k++) {
-              const ang = k * TAU / n;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(ang) * 250, Math.sin(ang) * 250, this.dmg * 0.38, "enemy", "dark"));
-            }
-          }
-        } else if (this.state === 2) {
-          this.vx = lerp(this.vx, 0, dt * 3);
-          this.vy = lerp(this.vy, -30, dt * 3);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.16 - this.pf * 0.06;
-            const px = p.cx + (Math.random() - 0.5) * 620;
-            app.projs.push(new Proj(px, this.cy - 260, (Math.random() - 0.5) * 40, 420, this.dmg * 0.34, "enemy", "bone"));
-          }
-        } else {
-          this.vx *= 0.9;
-          this.vy *= 0.9;
-        }
-        this.move(dt, world, { gravMul: 0 });
-      } else if (AI === "b_prolif") {
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.35, dt * 2);
-        if (this.stateT <= 0) {
-          this.stateT = 2.4 - this.pf * 0.8;
-          const kids = app.ents.filter((e) => e instanceof _Enemy && !e.dead && e.type === (this.def.minion || "splitter")).length;
-          if (kids < 3 + this.pf * 2) {
-            const n = 1 + this.pf * 2;
-            for (let i = 0; i < n; i++) {
-              const e = new _Enemy(
-                this.def.minion || "splitter",
-                this.cx + (i - (n - 1) / 2) * 46,
-                this.cy,
-                app.scale()
-              );
-              e.vy = -220;
-              e.vx = (i - (n - 1) / 2) * 90;
-              app.ents.push(e);
-            }
-            app.ringFx(this.cx, this.cy, this.w, "#9a8a76", 0.4);
-          }
-        }
-        if (this.lastPh()) {
-          const kids = app.ents.filter((e) => e instanceof _Enemy && !e.dead && e.type === (this.def.minion || "splitter")).length;
-          const open = kids === 0;
-          if (open && this.guard) {
-            this.guard = 0;
-            app.toast(tr("핵이 드러났다"), "good");
-          } else if (!open && !this.guard) this.guard = 1;
-        }
-        if (this.atkCd <= 0 && dd < 320) {
-          this.atkCd = 1.4;
-          const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-          app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 340, Math.sin(a) * 340, this.dmg * 0.5, "enemy", "bolt"));
-        }
-        this.move(dt, world);
-      } else if (AI === "b_overseer") {
-        this.term = (this.term || 0) + dt;
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 3;
-          this.stateT = 3 - this.pf * 0.8;
-          if (this.state === 0) app.toast(tr("관리자가 명령을 내린다"), "bad");
-        }
-        if (this.state === 0) {
-          this.vx *= 0.9;
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.55 - this.pf * 0.16;
-            const fx = p.cx + (Math.random() - 0.5) * 260;
-            app.warnFx(fx, p.cy + 20, 34, 0.6, "#c8843a");
-            app.pending.push({ t: 0.6, fn: () => {
-              app.aoe(fx, p.cy + 20, 40, this.dmg * 0.6, 6, "#c8843a");
-              for (let k = 0; k < 8; k++) app.parts.push(new Part(fx, p.cy + 20, "#c8843a", -160, 0.6));
-            } });
-          }
-        } else if (this.state === 1) {
-          this.vx = lerp(this.vx, -Math.sign(dx) * this.spd * 0.9, dt * 3);
-        } else {
-          this.vx *= 0.92;
-          if (this.atkCd <= 0) {
-            this.atkCd = 1.6;
-            const kids = app.ents.filter((e) => e instanceof _Enemy && !e.dead && e.type === (this.def.minion || "riveter")).length;
-            if (kids < 3) app.ents.push(new _Enemy(
-              this.def.minion || "riveter",
-              this.cx + (Math.random() - 0.5) * 220,
-              this.cy - 20,
-              app.scale()
-            ));
-          }
-        }
-        this.move(dt, world);
-      } else if (AI === "b_hepha") {
-        this.vx *= 0.88;
-        if (dd < 420) p.vx += Math.sign(this.cx - p.cx) * 150 * dt;
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 3;
-          this.stateT = 2.6 - this.pf * 0.7;
-        }
-        if (this.state === 0) {
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.9 - this.pf * 0.3;
-            for (const dir of [-1, 1]) for (let k = 0; k < 4; k++) {
-              const x = this.cx + dir * (50 + k * 44);
-              app.pending.push({ t: k * 0.06, fn: () => {
-                app.aoe(x, this.y + this.h - 12, 34, this.dmg * 0.45, 5, "#c8a05a");
-                for (let i = 0; i < 3; i++) app.parts.push(new Part(x, this.y + this.h - 6, "#c8a05a", -140, 0.5));
-              } });
-            }
-          }
-        } else if (this.state === 1) {
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.4;
-            const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.4;
-            const pr = new Proj(this.cx, this.cy - 20, Math.cos(a) * 320, Math.sin(a) * 420, this.dmg * 0.4, "enemy", "fire");
-            pr.grav = 300;
-            app.projs.push(pr);
-          }
-        }
-        if (this.lastPh() && this.guard) {
-          const held = p.held();
-          if (held && held.id === "stop_core" && dd < 90) {
-            this.stopT = (this.stopT || 0) + dt;
-            for (let i = 0; i < 2; i++) app.parts.push(new Part(this.cx, this.cy, "#9fd4ff", -40, 0.5));
-            if (this.stopT > 1.2) {
-              this.guard = 0;
-              app.toast(tr("정지 핵이 물렸다 — 지금이다"), "good");
-              app.shake = 12;
-            }
-          } else this.stopT = 0;
-        }
-        this.move(dt, world);
-      } else if (AI === "b_arche") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 3;
-          this.stateT = this.state === 1 ? 1.5 : 2.2;
-          if (this.state === 1) {
-            this.combo = 0;
-            this.atkCd = 0.2;
-          }
-        }
-        if (this.state === 1) {
-          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 2.2, dt * 6);
-          if (this.atkCd <= 0 && this.combo < 3) {
-            this.combo++;
-            this.atkCd = 0.42;
-            app.aoe(this.cx + Math.sign(dx) * 44, this.cy, 52, this.dmg * 0.8, 7, "#e8dcc0");
-            app.shake = Math.max(app.shake, 6);
-          }
-        } else if (this.state === 0) {
-          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.6, dt * 3);
-          if (this.onGround && dy < -50) this.vy = -580;
-        } else {
-          this.vx *= 0.86;
-        }
-        if (this.lastPh() && this.guard) {
-          const ped = app.ents.filter((e) => e instanceof _Enemy && !e.dead && e.type === "draft_form").length;
-          if (!ped) {
-            this.guard = 0;
-            app.toast(tr("받침대가 무너졌다"), "good");
-          }
-        }
-        this.move(dt, world);
-      } else if (AI === "b_restorer") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 4;
-          this.stateT = 2.6 - this.pf * 0.7;
-          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
-            app.ents.push(new _Enemy(this.def.minion || "orbit_sentry", this.cx + (Math.random() - 0.5) * 320, this.cy - 20, app.scale()));
-        }
-        this.unmakeCd = (this.unmakeCd || 0) - dt;
-        if (this.unmakeCd <= 0) {
-          this.unmakeCd = 0.3 - this.pf * 0.14;
-          const R = 6 + this.pf * 6;
-          const bx = Math.floor(this.cx / TS), by = Math.floor(this.cy / TS);
-          for (let k = 0; k < 5 + this.pf * 6; k++) {
-            const a = Math.random() * TAU, r = Math.random() * R;
-            const tx = bx + Math.round(Math.cos(a) * r), ty = by + Math.round(Math.sin(a) * r);
-            if (tx < 2 || ty < 2 || tx >= WW - 2 || ty >= WH - 2) continue;
-            const t = world.get(tx, ty);
-            if (t === T.AIR || t === T.BEDROCK || t === T.ALTARSTONE) continue;
-            world.set(tx, ty, T.AIR);
-            if (Math.random() < 0.5) app.parts.push(new Part(tx * TS + 11, ty * TS + 11, "#a8c8e8", -20, 0.8));
-          }
-        }
-        if (this.state === 0) {
-          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.5, dt * 2);
-          this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.4, dt * 2);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.24 - this.pf * 0.08;
-            this.spin = (this.spin || 0) + 0.42;
-            const n = 4 + this.pf * 4;
-            for (let i = 0; i < n; i++) {
-              const a = this.spin + i * TAU / n;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 360, Math.sin(a) * 360, this.dmg * 0.36, "enemy", "star"));
-            }
-          }
-        } else if (this.state === 1) {
-          const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-          this.vx = lerp(this.vx, Math.cos(a) * this.spd * 1.8, dt * 4);
-          this.vy = lerp(this.vy, Math.sin(a) * this.spd * 1.8, dt * 4);
-          if (dd < 420) p.vy -= 320 * dt;
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.9;
-            app.shake = Math.max(app.shake, 8);
-          }
-        } else if (this.state === 2) {
-          this.vx = lerp(this.vx, 0, dt * 3);
-          this.vy = lerp(this.vy, -40, dt * 3);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.14 - this.pf * 0.06;
-            const px = p.cx + (Math.random() - 0.5) * 700;
-            app.projs.push(new Proj(px, this.cy - 280, (Math.random() - 0.5) * 50, 460, this.dmg * 0.3, "enemy", "star"));
-          }
-        } else {
-          this.vx *= 0.9;
-          this.vy *= 0.9;
-        }
-        this.move(dt, world, { gravMul: 0 });
-      }
     }
   };
   var Guard = class extends Ent {
@@ -29801,6 +28344,1499 @@
       }
     }
   };
+
+  // src/legacy/entity/player-combat.js
+  var player_combat_exports = {};
+  __export(player_combat_exports, {
+    PlayerCombat: () => PlayerCombat
+  });
+  var PlayerCombat = {
+    /* ---- 공격 ---- */
+    attackReady() {
+      return this.atkTimer <= 0;
+    },
+    doAttack(mx, my) {
+      const w = this.weapon();
+      if (!w) return this.punch(mx, my);
+      const d = idef(w);
+      if (d.type === "tool") return this.punch(mx, my);
+      if (d.pw && !this.useCharge(d.pw)) {
+        app.toast(tr("전하가 없다 — 충전된 배터리가 필요하다"), "bad");
+        this.atkTimer = 0.3;
+        return;
+      }
+      const ang = angleTo(this.cx, this.cy, mx, my);
+      this.facing = Math.cos(ang) >= 0 ? 1 : -1;
+      this.atkTimer = 1 / itemSpeed(w) / (1 + this.d.spdP);
+      const base = itemDamage(w);
+      if (d.wc === "melee") {
+        this.swing = 0.24;
+        this.swingDir = this.facing;
+        this.swingAng = ang;
+        this.swingHit = /* @__PURE__ */ new Set();
+        this.swingReach = (d.reach || 42) + this.w / 2;
+        app.sfx("swing");
+      } else if (d.wc === "ranged") {
+        const n = d.multi || 1;
+        this.volley = Player._vol = (Player._vol || 0) + 1;
+        for (let i = 0; i < n; i++) {
+          const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.09 : 0);
+          this.fireProj(d.proj || "arrow", a, base, "dex", BOW_TIP);
+        }
+        if (this.skills.s_tempest && Math.random() < 0.3) {
+          this.fireProj(d.proj || "arrow", ang + (Math.random() - 0.5) * 0.12, base, "dex", BOW_TIP);
+          for (let k = 0; k < 4; k++) app.parts.push(new Part(this.cx, this.cy - 4, "#8fe0c8", -30, 0.3));
+        }
+        app.sfx("bow");
+      } else if (d.wc === "magic") {
+        const cost = d.mana || 5;
+        if (this.mp < cost) {
+          app.toast(tr("마나가 부족하다"), "bad");
+          this.atkTimer = 0.2;
+          return;
+        }
+        this.mp -= cost;
+        const n = d.multi || 1;
+        this.volley = Player._vol = (Player._vol || 0) + 1;
+        const pt = d.proj || "bolt";
+        for (let i = 0; i < n; i++) {
+          const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.07 : 0);
+          this.fireProj(pt, a, base, "int");
+        }
+        {
+          const st = PROJ_STYLE[pt] || PROJ_STYLE.bolt;
+          const mx2 = this.cx + Math.cos(ang) * 16, my2 = this.cy - 4 + Math.sin(ang) * 16;
+          app.ringFx(mx2, my2, 13, st.c, 0.18);
+          for (let i = 0; i < 5; i++) app.parts.push(new Part(mx2, my2, st.c, -10, 0.3));
+        }
+        app.sfx("magic");
+      }
+    },
+    punch(mx, my) {
+      const w = this.weapon();
+      const dmg = w ? itemDamage(w) : 4;
+      const ang = angleTo(this.cx, this.cy, mx, my);
+      this.facing = Math.cos(ang) >= 0 ? 1 : -1;
+      this.atkTimer = 1 / (w ? itemSpeed(w) : 2.4);
+      this.swing = 0.2;
+      this.swingDir = this.facing;
+      this.swingAng = ang;
+      this.swingHit = /* @__PURE__ */ new Set();
+      this.swingReach = 34 + this.w / 2;
+      this._punchDmg = dmg;
+    },
+    scaleDmg(base, kind) {
+      const d = this.d;
+      let m = 1 + d.dmgP;
+      if (kind === "str") m *= 1 + d.str * 0.021;
+      else if (kind === "dex") m *= 1 + d.dex * 0.021;
+      else if (kind === "int") m *= (1 + d.int * 0.023) * (1 + d.magicP / 100);
+      return base * m;
+    },
+    rollCrit() {
+      const c = this.d.crit / 100;
+      return Math.random() < c;
+    },
+    fireProj(type, ang, base, kind, off) {
+      const dmg = this.scaleDmg(base, kind);
+      const crit = this.rollCrit();
+      const spd = type === "arrow" ? 760 : type === "star" ? 900 : 560;
+      let ox = 0, oy = -4;
+      if (off) {
+        const cs = Math.cos(ang), sn = Math.sin(ang);
+        let reach = 0;
+        for (let t = TS / 2; t <= off; t += TS / 2) {
+          if (app.world.solid(Math.floor((this.cx + cs * t) / TS), Math.floor((this.cy + sn * t) / TS))) break;
+          reach = t;
+        }
+        if (reach >= off - TS / 2) reach = off;
+        if (reach > 0) {
+          ox = cs * reach;
+          oy = sn * reach;
+        }
+      }
+      const p = new Proj(this.cx + ox, this.cy + oy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), "player", type);
+      p.crit = crit;
+      p.vol = this.volley;
+      if (this.d.fire) p.fire = this.d.fire;
+      if (this.d.frost) p.frost = this.d.frost;
+      if (this.d.poison) p.poison = this.d.poison;
+      if (type === "arrow" || type === "star") p.grav = type === "arrow" ? 170 : 60;
+      if (type === "void" || type === "star") p.pierce = 2;
+      app.projs.push(p);
+    },
+    /* ---- 스킬 ---- */
+    useSkill(i, mx, my) {
+      const id = this.slots[i];
+      if (!id) return;
+      const sk = SKILLS[id], r = this.skills[id] || 0;
+      if (!r || sk.type !== "active") return;
+      if ((this.cd[id] || 0) > 0) {
+        app.skillDeny(i);
+        return;
+      }
+      if (this.mp < sk.mana) {
+        app.skillDeny(i, tr("마나가 부족하다"));
+        return;
+      }
+      this.mp -= sk.mana;
+      this.cd[id] = sk.cd * (1 - this.d.cdr / 100);
+      const w = this.weapon();
+      const wdmg = w && idef(w).dmg ? itemDamage(w) : 10;
+      const ang = angleTo(this.cx, this.cy, mx, my);
+      switch (id) {
+        case "s_cleave": {
+          const dmg = this.scaleDmg(wdmg * sk.v(r) / 100, "str");
+          app.aoe(this.cx, this.cy, 108, dmg, 6, "#ffb24a");
+          break;
+        }
+        case "s_charge": {
+          this.vx = Math.cos(ang) * 900;
+          this.vy = -180;
+          this.iframe = Math.max(this.iframe, 0.35);
+          this.chargeDmg = this.scaleDmg(wdmg * sk.v(r) / 100, "str");
+          this.chargeT = 0.35;
+          this.chargeHit = /* @__PURE__ */ new Set();
+          break;
+        }
+        case "s_whirl": {
+          this.channel = { id, t: 2.5, tick: 0, dmg: this.scaleDmg(wdmg * sk.v(r) / 100, "str") };
+          break;
+        }
+        case "s_volley": {
+          const n = sk.v(r);
+          for (let i2 = 0; i2 < n; i2++) {
+            const a = ang + (i2 - (n - 1) / 2) * 0.14;
+            this.fireProj("arrow", a, wdmg * 0.7, "dex");
+          }
+          break;
+        }
+        case "s_rain": {
+          const n = sk.v(r);
+          app.bandFx(mx, my, 130, n * 0.07 + 0.45, "#9fe07a");
+          for (let i2 = 0; i2 < n; i2++) {
+            app.pending.push({
+              t: i2 * 0.07,
+              fn: () => {
+                const px = mx + (Math.random() - 0.5) * 260;
+                const p = new Proj(px, my - 420 - Math.random() * 80, (Math.random() - 0.5) * 60, 820, this.scaleDmg(wdmg * 0.6, "dex"), "player", "star");
+                p.grav = 260;
+                app.projs.push(p);
+              }
+            });
+          }
+          break;
+        }
+        case "s_fireball": {
+          const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 620, Math.sin(ang) * 620, this.scaleDmg(sk.v(r) + this.d.int * 1.6, "int"), "player", "fire");
+          p.explode = 70;
+          p.fire = 2;
+          app.projs.push(p);
+          break;
+        }
+        case "s_heal": {
+          this.heal(this.d.maxHp * sk.v(r) / 100);
+          this.addBuff("well", 5);
+          for (let k = 0; k < 18; k++) app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 30, this.cy + (Math.random() - 0.5) * 40, "#9ff09f", -60));
+          break;
+        }
+        case "s_nova": {
+          app.aoe(this.cx, this.cy, 160, this.scaleDmg(sk.v(r) + this.d.int * 1.1, "int"), 4, "#9fe0ff", "frost");
+          for (let k = 0; k < 26; k++) {
+            const a = Math.random() * TAU;
+            app.parts.push(new Part(this.cx + Math.cos(a) * 60, this.cy + Math.sin(a) * 60, "#9fe0ff"));
+          }
+          break;
+        }
+        case "s_wolf": {
+          for (let k = 0; k < sk.v(r); k++) {
+            const wx = this.cx + (k - 1) * 26;
+            app.ents.push(new Wolf(wx, this.cy, this));
+            app.sigilFx(wx, this.y + this.h - 6, 22, "#c8b88a");
+            for (let j = 0; j < SIG_FX.wolf.n; j++)
+              app.parts.push(new Part(wx + (Math.random() - 0.5) * 26, this.y + this.h - 8, "#c8b88a", -70, 0.8));
+          }
+          break;
+        }
+        /* ===== 특성 ===== */
+        case "s_guard": {
+          this.addBuff("bulwark", sk.v(r));
+          app.ringFx(this.cx, this.cy, 52, "#d8a05a", 0.45);
+          for (let k = 0; k < 16; k++) {
+            const a = Math.random() * TAU;
+            app.parts.push(new Part(this.cx + Math.cos(a) * 22, this.cy + Math.sin(a) * 26, "#d8a05a", -30, 0.7));
+          }
+          break;
+        }
+        case "s_quake": {
+          const dmg = this.scaleDmg(wdmg * sk.v(r) / 100, "str");
+          const foot = this.y + this.h;
+          for (const dir of [-1, 1]) {
+            for (let step = 0; step < 5; step++) {
+              app.pending.push({
+                t: step * 0.05,
+                fn: () => {
+                  const x = this.cx + dir * (34 + step * 34);
+                  app.aoe(x, foot - 14, 40, dmg / 2, 5, "#c8845a", "frost");
+                  for (let k = 0; k < 4; k++)
+                    app.parts.push(new Part(x + (Math.random() - 0.5) * 24, foot - 4, "#c8845a", -180, 0.5));
+                }
+              });
+            }
+          }
+          app.aoe(this.cx, foot - 14, 60, dmg, 7, "#c8845a", "frost");
+          break;
+        }
+        case "s_warcry": {
+          const dur = sk.v(r);
+          this.addBuff("warcry", dur);
+          this.addBuff("iron", dur);
+          for (const e of app.ents) {
+            if (!(e instanceof Enemy) || e.dead) continue;
+            if (dist(this.cx, this.cy, e.cx, e.cy) > 190) continue;
+            if (!e.boss) {
+              e.vx += Math.sign(e.cx - this.cx) * 320;
+              e.vy = -180;
+            }
+            e.slow(0.3, 3);
+          }
+          app.ringFx(this.cx, this.cy, 190, "#e8a04a", 0.5);
+          app.ringFx(this.cx, this.cy, 120, "#ffd88a", 0.35);
+          break;
+        }
+        case "s_pierce": {
+          const p = new Proj(
+            this.cx,
+            this.cy - 4,
+            Math.cos(ang) * 900,
+            Math.sin(ang) * 900,
+            this.scaleDmg(wdmg * sk.v(r) / 100, "dex") * (this.rollCrit() ? 1 + this.d.critD / 100 : 1),
+            "player",
+            "star"
+          );
+          p.pierce = 6;
+          p.grav = 0;
+          app.projs.push(p);
+          for (let k = 0; k < 8; k++) app.parts.push(new Part(this.cx, this.cy - 4, "#9fe07a", -20, 0.35));
+          break;
+        }
+        case "s_smoke": {
+          this.iframe = Math.max(this.iframe, 0.8 + r * 0.15);
+          this.addBuff("smokescreen", sk.v(r));
+          for (const e of app.ents) {
+            if (!(e instanceof Enemy) || e.dead) continue;
+            if (dist(this.cx, this.cy, e.cx, e.cy) < 150) e.slow(0.4, 4);
+          }
+          for (let k = 0; k < 34; k++) {
+            const a = Math.random() * TAU, d2 = Math.random() * 60;
+            app.parts.push(new Part(this.cx + Math.cos(a) * d2, this.cy + Math.sin(a) * d2, "#b8c8b0", -50, 1.1));
+          }
+          app.ringFx(this.cx, this.cy, 150, "#b8c8b0", 0.4);
+          break;
+        }
+        case "s_mark": {
+          let best = null, bd = 260;
+          for (const e of app.ents) {
+            if (!(e instanceof Enemy) || e.dead) continue;
+            const d2 = dist(mx, my, e.cx, e.cy);
+            if (d2 < bd) {
+              bd = d2;
+              best = e;
+            }
+          }
+          if (!best) {
+            this.cd[id] = 1;
+            this.mp += sk.mana;
+            app.toast(tr("겨눈 곳에 적이 없다"), "bad");
+            return;
+          }
+          best.markT = 10;
+          best.markAmt = sk.v(r) / 100;
+          app.ringFx(best.cx, best.cy, best.w + 26, "#e8d05a", 0.5);
+          for (let k = 0; k < 12; k++) app.parts.push(new Part(best.cx, best.y, "#e8d05a", -60, 0.7));
+          break;
+        }
+        case "s_barrier": {
+          this.shieldMax = this.shield = Math.round(sk.v(r) + this.d.int * 3.2);
+          this.shieldT = 20;
+          app.ringFx(this.cx, this.cy, 48, "#6fb8ff", 0.5);
+          for (let k = 0; k < 20; k++) {
+            const a = Math.random() * TAU;
+            app.parts.push(new Part(this.cx + Math.cos(a) * 30, this.cy + Math.sin(a) * 34, "#6fb8ff", -40, 0.8));
+          }
+          app.toast(tr("방벽 {shield}", { shield: this.shield }), "good");
+          break;
+        }
+        case "s_chain": {
+          const hops = sk.v(r);
+          const base = this.scaleDmg(60 + this.d.int * 2.4, "int");
+          const hit = /* @__PURE__ */ new Set();
+          let fx2 = this.cx, fy = this.cy - 4, power = base;
+          for (let h = 0; h < hops; h++) {
+            let best = null, bd = h === 0 ? 420 : 200;
+            for (const e of app.ents) {
+              if (!(e instanceof Enemy) || e.dead || hit.has(e)) continue;
+              const d2 = h === 0 ? dist(mx, my, e.cx, e.cy) : dist(fx2, fy, e.cx, e.cy);
+              if (d2 < bd) {
+                bd = d2;
+                best = e;
+              }
+            }
+            if (!best) break;
+            hit.add(best);
+            app.boltFx(fx2, fy, best.cx, best.cy, "#ffe86a");
+            const crit = this.rollCrit();
+            best.hurt(power * (crit ? 1 + this.d.critD / 100 : 1), crit, this, 2);
+            best.slow(0.25, 1.5);
+            fx2 = best.cx;
+            fy = best.cy;
+            power *= 0.75;
+          }
+          if (!hit.size) {
+            app.boltFx(this.cx, this.cy - 4, mx, my, "#ffe86a");
+          }
+          break;
+        }
+        case "s_blink": {
+          const maxD = 190, cs = Math.cos(ang), sn = Math.sin(ang);
+          let reach = 0;
+          for (let t = TS / 2; t <= maxD; t += TS / 2) {
+            if (app.world.hitSolid(this.x + cs * t, this.y + sn * t, this.w, this.h)) break;
+            reach = t;
+          }
+          if (reach < TS) {
+            this.cd[id] = 1;
+            this.mp += sk.mana;
+            app.toast(tr("그쪽은 막혀 있다"), "bad");
+            return;
+          }
+          const ox = this.cx, oy = this.cy;
+          this.x += cs * reach;
+          this.y += sn * reach;
+          this.vy = Math.min(this.vy, 0);
+          this.iframe = Math.max(this.iframe, 0.25);
+          app.aoe(ox, oy, 78, this.scaleDmg(sk.v(r) + this.d.int * 1.4, "int"), 4, "#c08fff");
+          for (let k = 0; k < 18; k++) {
+            app.parts.push(new Part(ox + (Math.random() - 0.5) * 24, oy + (Math.random() - 0.5) * 34, "#c08fff", -40, 0.7));
+            app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 24, this.cy + (Math.random() - 0.5) * 34, "#c08fff", -40, 0.7));
+          }
+          app.boltFx(ox, oy, this.cx, this.cy, "#c08fff");
+          break;
+        }
+        case "s_meteor": {
+          const tx = mx, ty = my;
+          app.warnFx(tx, ty, 150, 0.9, "#ffb04a");
+          app.fallFx(tx, ty, 0.9, "#ffd07a");
+          app.pending.push({
+            t: 0.9,
+            fn: () => {
+              const dmg = this.scaleDmg(340 + this.d.int * 6.5, "int");
+              app.aoe(tx, ty, 150, dmg, 12, "#ffb04a");
+              for (const e of app.ents) if (e instanceof Enemy && !e.dead && dist(tx, ty, e.cx, e.cy) < 150) e.addDot("fire", dmg * 0.06, 5);
+              app.ringFx(tx, ty, 150, "#ffb04a", 0.55);
+              app.ringFx(tx, ty, 90, "#fff0c0", 0.4);
+              for (let k = 0; k < 46; k++) {
+                const a = Math.random() * TAU, d2 = Math.random() * 140;
+                app.parts.push(new Part(tx + Math.cos(a) * d2, ty + Math.sin(a) * d2, k % 3 ? "#ffb04a" : "#fff0c0", -150, 1));
+              }
+              app.flashFx(tx, ty, 230, "#fff0c0");
+              const h = SKILL_HIT.meteor;
+              app.shake = Math.max(app.shake, h.k);
+              app.hitStop(h.st);
+              app.sfx(h.s);
+            }
+          });
+          break;
+        }
+      }
+      const fx = SKILL_FX[id] || {};
+      if (fx.c) app.ringFx(this.cx, this.cy, fx.r || 44, fx.c, 0.26);
+      if (fx.k) app.shake = Math.max(app.shake, fx.k);
+      if (fx.st) app.hitStop(fx.st);
+      app.sfx(fx.s || "skill");
+    },
+    /* ---- 물가로 기어오르기 ---- */
+    climbOut(world, dir) {
+      if (!world || !dir) return false;
+      const step = Math.sign(dir) * (this.w * 0.75 + 2);
+      for (let up = 0; up <= 2; up++) {
+        const nx = this.x + step, ny = this.y - up * TS;
+        if (world.hitSolid(nx, ny, this.w, this.h)) continue;
+        if (!world.hitSolid(nx, ny + 3, this.w, this.h)) continue;
+        this.x = nx;
+        this.y = ny;
+        this.vy = -190;
+        this.vx = Math.sign(dir) * 90;
+        this.submerged = 0;
+        this.swimming = false;
+        for (let i = 0; i < 6; i++) app.parts.push(new Part(this.cx, this.y + this.h, "#bfe4ff", -40, 0.5));
+        return true;
+      }
+      return false;
+    }
+  };
+  mixin(Player.prototype, PlayerCombat, true);
+
+  // src/legacy/entity/player-move.js
+  var player_move_exports = {};
+  __export(player_move_exports, {
+    PlayerMove: () => PlayerMove
+  });
+  var PlayerMove = {
+    /* ---- 산소 ---- */
+    updateOxygen(dt, world) {
+      const max = this.d.oxyMax;
+      if (this.oxygen === void 0 || this.oxygen > max) this.oxygen = max;
+      const hx = Math.floor(this.cx / TS), hy = Math.floor((this.y + 4) / TS);
+      const ht = world.get(hx, hy);
+      let under = !!TILE_DEF[ht].liquid;
+      if (under && world.get(hx, hy - 1) === T.AIR && app.surfacePx) under = this.y + 4 > app.surfacePx(this.cx / TS, hy);
+      this.headUnder = under;
+      if (under) {
+        const lv = world.sea ? world.sea.level : null;
+        const deep = lv === null ? 1 : clamp(1 + Math.max(0, this.cy / TS - lv) / (90 * WSY), 1, 4);
+        this.oxygen = Math.max(0, this.oxygen - dt * deep);
+        this.oxyPressure = deep;
+        if (this.oxygen <= 0) {
+          this.drownT = (this.drownT || 0) + dt;
+          if (this.drownT >= 1) {
+            this.drownT -= 1;
+            const dmg = Math.max(4, Math.round(this.d.maxHp * 0.06));
+            this.hp -= dmg;
+            this.flash = 0.25;
+            app.texts.push(new DmgText(this.cx, this.y, dmg, "#ff6b6b", 0));
+            app.sfx("drown");
+            for (let i = 0; i < 8; i++) app.parts.push(new Part(this.cx, this.y + 6, "#bfe4ff", -50, 0.6));
+            if (this.hp <= 0) {
+              this.hp = 0;
+              app.onDeath("drown");
+            }
+          }
+        }
+        if (Math.random() < dt * (1.5 + (1 - this.oxygen / max) * 5)) {
+          app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 10, this.y + 4, "#dff2ff", -60, 0.8));
+          app.sfx("bubble");
+        }
+      } else {
+        this.drownT = 0;
+        this.oxygen = Math.min(max, this.oxygen + dt * 6 * (this.d.oxyReg || 1));
+      }
+    },
+    /* ---- 업데이트 ---- */
+    update(dt, world, input) {
+      const d = this.d;
+      this.atkTimer -= dt;
+      this.swing -= dt;
+      this.dashCd -= dt;
+      this.iframe -= dt;
+      this.hurtCd -= dt;
+      this.flash -= dt;
+      this.potionCd -= dt;
+      if (this.chargeT > 0) this.chargeT -= dt;
+      if (this.undyingCd > 0) this.undyingCd = Math.max(0, this.undyingCd - dt);
+      if (this.shieldT > 0) {
+        this.shieldT -= dt;
+        if (this.shieldT <= 0) {
+          this.shieldT = 0;
+          this.shield = 0;
+        }
+      }
+      for (const k in this.cd) if (this.cd[k] > 0) this.cd[k] = Math.max(0, this.cd[k] - dt);
+      for (let i = this.buffs.length - 1; i >= 0; i--) {
+        this.buffs[i].t -= dt;
+        if (this.buffs[i].t <= 0) {
+          this.buffs.splice(i, 1);
+          this.recalc();
+        }
+      }
+      this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
+      if (this.hurtCd <= 0) this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
+      const sub = this.submerged || 0;
+      const wasSwim = this.swimming;
+      this.swimming = this.swimming ? sub > 0.25 : sub > 0.35;
+      if (this.swimming !== wasSwim && app.sfx) app.sfx("splash");
+      this.updateOxygen(dt, world);
+      const acc = this.onGround ? 2400 : 1500;
+      let want = 0;
+      if (input.left) want -= 1;
+      if (input.right) want += 1;
+      if (this.channel) want *= 0.4;
+      if (this.swimming) {
+        if (want !== 0 && (!this.swing || !this.channel)) this.facing = Math.sign(want);
+      } else if (want !== 0) {
+        this.vx += want * acc * dt;
+        this.vx = clamp(this.vx, -d.ms * (this.dashV > 0 ? 3 : 1), d.ms * (this.dashV > 0 ? 3 : 1));
+        if (!this.swing || !this.channel) this.facing = want;
+      } else {
+        const fr = this.onGround ? 2600 : 700;
+        if (Math.abs(this.vx) < fr * dt) this.vx = 0;
+        else this.vx -= Math.sign(this.vx) * fr * dt;
+      }
+      this.dashV = Math.max(0, this.dashV - dt);
+      const inWater = this.swimming;
+      if (inWater && !this.wasInWater) app.sfx("splash");
+      this.wasInWater = inWater;
+      if (this.onGround || inWater) this.jumpsLeft = d.jumps;
+      if (!inWater) {
+        this.floating = false;
+        this.swimMove = false;
+      }
+      if (inWater) {
+        this.floating = false;
+        if (!input.jump && !input.down) {
+          const hx = this.cx / TS, sr = world.surfaceRow(Math.floor(hx), Math.floor((this.y + 6) / TS) + 1, 3);
+          if (sr >= 0 && app.surfacePx) {
+            this.floating = true;
+            const want2 = app.surfacePx(hx, sr) - 14;
+            this.vy = lerp(this.vy, clamp((want2 - this.y) * 6, -160, 160), dt * 6);
+          }
+        }
+        const climbed = input.jump && !this.jumpHeld && this.climbOut(world, want || this.facing);
+        let ix = want, iy = (input.down ? 1 : 0) - (input.jump ? 1 : 0);
+        if (this.floating && iy < 0) iy = 0;
+        const mag = Math.hypot(ix, iy);
+        if (mag) {
+          ix /= mag;
+          iy /= mag;
+        }
+        this.swimPh = ((this.swimPh || 0) + dt * (mag ? 1.5 : 0.35)) % 1;
+        const beat = 0.35 + 0.65 * Math.max(0, Math.sin(this.swimPh * TAU));
+        const T2 = 1350 * beat;
+        this.vx += ix * T2 * dt;
+        this.vy += iy * T2 * dt;
+        const vref = d.ms * 0.75;
+        const sp = Math.hypot(this.vx, this.vy);
+        const drag = Math.min(0.9, (0.6 + 2.4 * sp / vref) * dt);
+        this.vx -= this.vx * drag;
+        this.vy -= this.vy * drag;
+        if (this.floating && input.jump && !this.jumpHeld && !climbed) {
+          this.vy = -430;
+          this.floating = false;
+          for (let i = 0; i < 10; i++) app.parts.push(new Part(this.cx, this.y + this.h * 0.6, "#dff2ff", -120, 0.5));
+          app.sfx("splash");
+        }
+        this.swimMove = mag > 0 || sp > 60;
+        this.jumpHeld = !!input.jump;
+        if (input.jump && Math.random() < dt * 10)
+          app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 14, this.y + this.h * 0.3, "#bfe4ff", -30, 0.5));
+      } else {
+        if (input.jump && !this.jumpHeld && this.jumpsLeft > 0) {
+          app.sfx(this.onGround ? "jump" : "jump2", 0.94 + Math.random() * 0.12);
+          this.vy = -620;
+          this.jumpsLeft--;
+          this.jumpHeld = true;
+          if (!this.onGround) for (let i = 0; i < 8; i++) app.parts.push(new Part(this.cx, this.y + this.h, "#cfe8ff"));
+        }
+        if (!input.jump) this.jumpHeld = false;
+        if (this.vy < 0 && !input.jump) this.vy += 1400 * dt;
+      }
+      this.jetting = false;
+      this.jetGap = d.jet ? this.groundGap(world) : 0;
+      const room = d.jet ? clamp((JET_MAX_UP + 1 - this.jetGap) / 4, 0, 1) : 1;
+      const tooHigh = d.jet && this.jetGap >= JET_MAX_UP;
+      if (d.jet && input.jump && !this.onGround && !inWater && !this.jetOver) {
+        if (this.jetOk === void 0) {
+          this.jetT = 0;
+          this.jetOk = this.useCharge(6);
+        } else {
+          this.jetT = (this.jetT || 0) + dt;
+          if (this.jetT >= 0.25) {
+            this.jetT -= 0.25;
+            this.jetOk = this.useCharge(6);
+          }
+        }
+        if (this.jetOk) {
+          const cap = -330 * room + JET_HIGH_FALL * (1 - room);
+          if (this.vy > cap) this.vy = Math.max(this.vy - 2400 * dt, cap);
+          this.jetting = true;
+          if (Math.random() < dt * 30)
+            app.parts.push(new Part(
+              this.cx + (Math.random() - 0.5) * 10,
+              this.y + this.h,
+              tooHigh ? "#8a7a6a" : "#ffb04a",
+              60,
+              0.35
+            ));
+          if (tooHigh) this.jetNote(tr("여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다"));
+        }
+      } else {
+        this.jetT = 0;
+        this.jetOk = void 0;
+      }
+      if (d.jet) {
+        if (this.jetting && !tooHigh) {
+          this.jetHeat = Math.min(1, (this.jetHeat || 0) + dt / JET_BURN);
+          if (this.jetHeat >= 1 && !this.jetOver) {
+            this.jetOver = true;
+            this.jetting = false;
+            this.jetNote(tr("추진기가 과열됐다 — 식을 때까지 꺼진다"), "bad");
+            app.sfx("power_off");
+            for (let i = 0; i < 10; i++)
+              app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 12, this.y + this.h, "#6a6a72", -10, 0.6));
+          }
+        } else if (this.jetHeat > 0) {
+          this.jetHeat = Math.max(0, this.jetHeat - dt / (this.onGround ? JET_COOL_GROUND : JET_COOL_AIR));
+          if (this.jetOver && this.jetHeat <= JET_RESUME) this.jetOver = false;
+        }
+      } else {
+        this.jetHeat = 0;
+        this.jetOver = false;
+      }
+      this.gliding = false;
+      if (d.glide && !this.jetting && input.jump && this.vy > 60 && !this.onGround && this.jumpsLeft <= 0) {
+        this.vy = Math.min(this.vy, 110);
+        this.gliding = true;
+        if (Math.random() < dt * 14) app.parts.push(new Part(this.cx, this.y + this.h, "#dfe9f5", -20, 0.4));
+      }
+      if (input.dash && this.dashCd <= 0) {
+        const dir = want !== 0 ? want : this.facing;
+        this.vx = dir * 720;
+        this.dashV = 0.22;
+        this.iframe = d.dashI / 1e3;
+        this.dashCd = d.dashCd;
+        for (let i = 0; i < 12; i++) app.parts.push(new Part(this.cx, this.cy, "#cfd8ff"));
+        app.sfx("dash");
+      }
+      const wasOnGround = this.onGround, fallVy = this.vy;
+      this.move(dt, world, { dropThrough: !!input.down, gravMul: this.floating ? 0 : this.swimming ? 0.3 : void 0 });
+      if (!wasOnGround && this.onGround && !this.gliding && !this.jetting && (this.submerged || 0) <= 0.2) {
+        const bt = world.get(Math.floor(this.cx / TS), Math.floor((this.y + this.h + 2) / TS));
+        if (fallVy > SAFE_FALL_VY && this.iframe <= 0 && !TILE_DEF[bt].soft) {
+          const dmg = Math.round((fallVy - SAFE_FALL_VY) / (MAX_FALL - SAFE_FALL_VY) * 55);
+          if (dmg > 0) {
+            this.hurt(dmg);
+            this.hurtCd = Math.max(this.hurtCd, 0.4);
+          }
+        }
+      }
+      if (this.chargeT > 0) {
+        for (const e of app.ents) {
+          if (!(e instanceof Enemy) || e.dead || this.chargeHit.has(e)) continue;
+          if (aabb(this.rect(), e.rect())) {
+            this.chargeHit.add(e);
+            e.hurt(this.chargeDmg, this.rollCrit(), this, 14, hitFam(this.weapon()));
+          }
+        }
+      }
+      if (this.channel) {
+        this.channel.t -= dt;
+        this.channel.tick -= dt;
+        if (this.channel.tick <= 0) {
+          this.channel.tick = 0.28;
+          app.aoe(this.cx, this.cy, 96, this.channel.dmg * 0.28, 3, "#ffcf6a");
+          app.sfx("sk_whirl", app.strokeRate());
+          app.shake = Math.max(app.shake, 3);
+          const foot = this.y + this.h;
+          for (let k = 0; k < SIG_FX.whirl.n; k++)
+            app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 70, foot - 4, "#c8a878", -40, 0.5));
+        }
+        if (this.channel.t <= 0) this.channel = null;
+      }
+      if (this.swing > 0 && this.swingHit) {
+        const reach = this.swingReach;
+        const w = this.weapon();
+        const base = w && idef(w).dmg && idef(w).type === "weapon" && idef(w).wc === "melee" ? itemDamage(w) : this._punchDmg || 4;
+        const kb = w ? idef(w).kb || 3 : 2;
+        for (const e of app.ents) {
+          if (!(e instanceof Enemy) || e.dead || this.swingHit.has(e)) continue;
+          const dx = e.cx - this.cx, dy = e.cy - this.cy;
+          if (dx * dx + dy * dy > (reach + e.w / 2) * (reach + e.w / 2)) continue;
+          if (Math.sign(dx) !== this.swingDir && Math.abs(dx) > 8) continue;
+          if (Math.abs(dy) > reach * 0.85) continue;
+          this.swingHit.add(e);
+          const crit = this.rollCrit();
+          e.hurt(this.scaleDmg(base, "str"), crit, this, kb, hitFam(w));
+          if (this.d.fire) e.addDot("burn", this.scaleDmg(base, "str") * 0.12 * this.d.fire, 4);
+          if (this.d.frost) e.slow(0.45, 2.5);
+          if (this.d.poison) e.addDot("poison", this.scaleDmg(base, "str") * 0.13 * this.d.poison, 5);
+        }
+      }
+      const tx = Math.floor(this.cx / TS), ty = Math.floor(this.cy / TS);
+      const hurt = world.hurtInRect(this.x, this.y, this.w, this.h);
+      if (hurt && this.iframe <= 0) {
+        this.hurt(hurt);
+        this.hurtCd = 3;
+      }
+      const d0 = this.deepest, h0 = this.highest;
+      this.deepest = Math.max(this.deepest, ty);
+      this.highest = Math.min(this.highest === void 0 ? ty : this.highest, ty);
+      if (app.checkAch && (this.deepest !== d0 || this.highest !== h0)) app.checkAch();
+    }
+  };
+  mixin(Player.prototype, PlayerMove, true);
+
+  // src/legacy/entity/enemy-ai.js
+  var enemy_ai_exports = {};
+  __export(enemy_ai_exports, {
+    EnemyAI: () => EnemyAI
+  });
+  var EnemyAI = {
+    update(dt, world, player) {
+      this.atkPose -= dt;
+      this.flash -= dt;
+      this.atkCd -= dt;
+      this.jumpCd -= dt;
+      this.hitCd -= dt;
+      if (this.slowT > 0) {
+        this.slowT -= dt;
+        if (this.slowT <= 0) this.slowF = 1;
+      }
+      if (this.markT > 0) {
+        this.markT -= dt;
+        if (this.markT > 0 && Math.random() < dt * 5)
+          app.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w, this.y - 6, "#e8d05a", -24, 0.5));
+      }
+      for (let i = this.dots.length - 1; i >= 0; i--) {
+        const d = this.dots[i];
+        d.t -= dt;
+        this.hp -= d.dps * dt;
+        if (Math.random() < dt * 6) app.parts.push(new Part(this.cx, this.cy, d.kind === "burn" ? "#ff8a3a" : d.kind === "poison" ? "#8fd06a" : "#9fe0ff"));
+        if (d.t <= 0) this.dots.splice(i, 1);
+      }
+      if (this.hp <= 0) {
+        this.die(null);
+        return;
+      }
+      const dx = player.cx - this.cx, dy = player.cy - this.cy;
+      const dd = Math.hypot(dx, dy);
+      this.facing = dx >= 0 ? 1 : -1;
+      const AI = this.def.ai;
+      const sp = this.spd * this.slowF;
+      if (AI === "walker" || AI === "jumper" || AI === "archer") {
+        const range = this.def.range || 0;
+        if (AI === "archer" && dd < range * 0.55) this.vx = -Math.sign(dx) * sp;
+        else if (dd < this.aggro) this.vx = Math.sign(dx) * sp * (AI === "jumper" && !this.onGround ? 1.4 : 1);
+        else this.vx *= 0.9;
+        if (AI === "jumper" && this.onGround && this.jumpCd <= 0 && dd < Math.min(480, this.aggro)) {
+          this.vy = -430;
+          this.jumpCd = 1.1 + Math.random() * 0.6;
+        }
+        if (this.hitWall && this.onGround && this.jumpCd <= 0) {
+          this.vy = -420;
+          this.jumpCd = 0.6;
+        }
+        if (AI === "archer" && this.atkCd <= 0 && dd < Math.min(range, this.aggro) && Math.abs(dy) < 180) {
+          this.atkCd = 1.8 + Math.random() * 0.6;
+          this.atkPose = 0.26;
+          const a = angleTo(this.cx, this.cy, player.cx, player.cy - 6);
+          const p = new Proj(this.cx, this.cy, Math.cos(a) * 460, Math.sin(a) * 460, this.dmg, "enemy", this.def.proj || "arrow");
+          p.grav = 220;
+          app.projs.push(p);
+        }
+        this.move(dt, world);
+      } else if (AI === "flyer") {
+        this.think -= dt;
+        if (this.think <= 0) {
+          this.think = 0.5 + Math.random() * 0.5;
+          this.wob = (Math.random() - 0.5) * 90;
+        }
+        if (dd < this.aggro) {
+          this.vx = lerp(this.vx, dx / (dd || 1) * sp, dt * 3);
+          this.vy = lerp(this.vy, dy / (dd || 1) * sp + (this.wob || 0), dt * 3);
+        } else {
+          this.vx *= 0.98;
+          this.vy = lerp(this.vy, Math.sin(app.time * 2) * 30, dt * 2);
+        }
+        this.move(dt, world, { gravMul: 0 });
+      } else if (AI === "caster") {
+        const range = this.def.range || 300;
+        this.think -= dt;
+        if (dd > this.aggro) {
+          this.vx *= 0.95;
+          this.vy = lerp(this.vy, Math.sin(app.time * 3 + this.x) * 40, dt * 2);
+        } else if (dd > range * 0.8) {
+          this.vx = lerp(this.vx, dx / (dd || 1) * sp, dt * 3);
+          this.vy = lerp(this.vy, dy / (dd || 1) * sp, dt * 3);
+        } else if (dd < range * 0.4) {
+          this.vx = lerp(this.vx, -(dx / (dd || 1)) * sp, dt * 3);
+          this.vy = lerp(this.vy, -(dy / (dd || 1)) * sp, dt * 3);
+        } else {
+          this.vx *= 0.95;
+          this.vy = lerp(this.vy, Math.sin(app.time * 3 + this.x) * 40, dt * 2);
+        }
+        if (this.atkCd <= 0 && dd < Math.min(range, this.aggro)) {
+          this.atkCd = 2 + Math.random() * 0.8;
+          this.atkPose = 0.26;
+          const a = angleTo(this.cx, this.cy, player.cx, player.cy);
+          const kind = this.def.proj || (this.type === "frostling" ? "frost" : this.type === "imp" ? "fire" : "dark");
+          app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 320, Math.sin(a) * 320, this.dmg, "enemy", kind));
+        }
+        this.move(dt, world, { gravMul: 0 });
+      } else if (AI === "critter") {
+        if (this.fleeT > 0) {
+          this.fleeT -= dt;
+          this.vx = -Math.sign(dx || 1) * sp * 1.8;
+        } else {
+          this.think -= dt;
+          if (this.think <= 0) {
+            this.think = 1.2 + Math.random() * 2.2;
+            this.wDir = Math.random() < 0.35 ? 0 : Math.random() < 0.5 ? -1 : 1;
+          }
+          this.vx = lerp(this.vx, this.wDir * sp * 0.5, dt * 2);
+        }
+        if (this.onGround && this.hitWall && this.jumpCd <= 0) {
+          this.vy = -300;
+          this.jumpCd = 0.5;
+        }
+        this.move(dt, world);
+      } else if (AI === "swimmer") {
+        const wet = (x, y) => world.liquid(Math.floor(x / TS), Math.floor(y / TS));
+        this.think -= dt;
+        if (this.think <= 0) {
+          this.think = 0.7 + Math.random() * 1.1;
+          this.wob = (Math.random() - 0.5) * 70;
+        }
+        const chase = !this.def.passive && dd < this.aggro;
+        if (chase) {
+          this.vx = lerp(this.vx, dx / (dd || 1) * sp, dt * 2.6);
+          this.vy = lerp(this.vy, dy / (dd || 1) * sp + (this.wob || 0) * 0.3, dt * 2.6);
+        } else {
+          this.vx = lerp(this.vx, (this.wDir || 0) * sp * 0.45, dt * 1.6);
+          this.vy = lerp(this.vy, (this.wob || 0) * 0.5, dt * 1.6);
+          if (this.jumpCd <= 0) {
+            this.jumpCd = 1.4 + Math.random() * 1.6;
+            this.wDir = Math.random() < 0.5 ? -1 : 1;
+          }
+        }
+        const lookX = this.cx + Math.sign(this.vx) * (this.w / 2 + 4);
+        const lookY = this.cy + Math.sign(this.vy) * (this.h / 2 + 4);
+        if (this.vx !== 0 && !wet(lookX, this.cy)) {
+          this.vx *= -0.5;
+          this.wDir = -(this.wDir || 1);
+        }
+        if (this.vy !== 0 && !wet(this.cx, lookY)) this.vy *= -0.5;
+        this.move(dt, world, { gravMul: 0, aquatic: 1 });
+      } else if (AI === "flotsam") {
+        if (this.drift === void 0) this.drift = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 10);
+        const hx = this.cx / TS;
+        const sr = world.surfaceRow(Math.floor(hx), Math.floor((this.y + this.h * 0.8) / TS), 4);
+        if (sr >= 0 && app.surfacePx) {
+          const want = app.surfacePx(hx, sr) - this.h * 0.55;
+          this.vy = lerp(this.vy, (want - this.y) * 5, dt * 6);
+        } else this.vy = Math.min(this.vy + 900 * dt, 400);
+        const ahead = Math.floor((this.cx + Math.sign(this.drift) * (this.w / 2 + 6)) / TS);
+        if (this.hitWall || !world.liquid(ahead, sr >= 0 ? sr : Math.floor(this.cy / TS)) || ahead >= SEA_X1 - 2) this.drift = -this.drift;
+        this.vx = lerp(this.vx, this.drift, dt * 1.2);
+        if (sr >= 0 && app.surfacePx) this.tilt = Math.atan2(app.surfacePx(hx + 0.6, sr) - app.surfacePx(hx - 0.6, sr), TS * 1.2);
+        this.move(dt, world, { gravMul: 0, aquatic: 1 });
+      } else {
+        this.bossAI(dt, world, player, dx, dy, dd);
+      }
+      if (!this.def.passive && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
+        player.hurt(this.dmg * (this.boss ? 1 : 0.9), this.cx);
+        this.hitCd = 0.7;
+        this.atkPose = 0.22;
+      }
+    },
+    /* ---- 페이즈가 바뀌는 순간 ---- */
+    onPhaseChange(ph, world, p) {
+      this.phaseInv = 0.8;
+      this.guard = 0;
+      app.shake = Math.max(app.shake, 11);
+      for (let i = 0; i < 26; i++) {
+        app.parts.push(new Part(
+          this.cx + (Math.random() - 0.5) * this.w,
+          this.cy + (Math.random() - 0.5) * this.h,
+          i % 3 ? this.def.c : "#ffe08a",
+          -120,
+          0.9
+        ));
+      }
+      app.ringFx(this.cx, this.cy, Math.max(this.w, this.h) * 1.6, "#ffe08a", 0.55);
+      app.sfxAt("chapter", this.cx / TS, this.cy / TS);
+      const line = (BOSS_LINES[this.type] || {})[ph];
+      if (line) app.bossLine(this.def.n, line);
+      const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
+      switch (this.def.ai) {
+        case "b_slime":
+          if (ph >= lock) {
+            this.guard = 1;
+            this.openT = 0;
+          }
+          break;
+        case "b_witch":
+          if (ph >= lock) {
+            this.iceFloor = 1;
+            this.layHeat(world, p);
+          }
+          break;
+        case "b_prolif":
+          if (ph >= lock) this.guard = 1;
+          break;
+        // 핵만 약점
+        case "b_hepha":
+          if (ph >= lock) this.guard = 1;
+          break;
+        // 정지 핵을 써야 열린다
+        case "b_arche":
+          if (ph >= lock) {
+            this.guard = 1;
+            this.raisePedestals();
+          }
+          break;
+        case "b_overseer":
+          if (ph >= 1) this.term = 0;
+          break;
+      }
+    },
+    /** 원형 2페이즈 — 받침대 넷. */
+    raisePedestals() {
+      for (const e of app.ents) if (e.pedestal && !e.dead) {
+        e.dead = true;
+        e.hp = 0;
+      }
+      for (let i = 0; i < 4; i++) {
+        const e = new Enemy("draft_form", this.cx + (i - 1.5) * 96, this.cy - 10, 1);
+        e.pedestal = 1;
+        e.maxHp = Math.round(e.maxHp * 0.35);
+        e.hp = e.maxHp;
+        e.spd = 0;
+        app.ents.push(e);
+      }
+      app.toast(tr("받침대 넷이 그것을 붙들고 있다"), "bad");
+    },
+    /* 서리 마녀 2페이즈 — 발밑에 설 수 있는 자리를 만들어 준다. */
+    layHeat(world, p) {
+      const fy = Math.floor((this.y + this.h + 4) / TS);
+      for (const off of [-9, 0, 9]) {
+        const tx = Math.floor(this.cx / TS) + off;
+        for (let y = fy; y < fy + 4; y++) {
+          if (world.solid(tx, y + 1) && world.get(tx, y) === T.AIR) {
+            world.set(tx, y, T.TORCH);
+            break;
+          }
+        }
+      }
+      app.toast(tr("바닥이 언다 — 불 옆에 서라"), "bad");
+    },
+    /** 매 프레임 도는 약점·장판 규칙. */
+    tickWeak(dt, world, p) {
+      if (this.openT > 0) {
+        this.openT -= dt;
+        if (this.openT <= 0) this.guard = 1;
+      }
+      if (!this.iceFloor) return;
+      this.iceCd = (this.iceCd || 0) - dt;
+      if (this.iceCd > 0) return;
+      this.iceCd = 0.5;
+      const tx = Math.floor(p.cx / TS), ty = Math.floor((p.y + p.h - 2) / TS);
+      let warm = false;
+      for (let x = tx - 2; x <= tx + 2 && !warm; x++)
+        for (let y = ty - 2; y <= ty + 2; y++) {
+          const t = world.get(x, y);
+          if (t === T.TORCH || t === T.LAVA) {
+            warm = true;
+            break;
+          }
+        }
+      if (warm) return;
+      p.addBuff("frostbite", 1.2);
+      p.hurt(this.dmg * 0.18);
+      for (let i = 0; i < 4; i++) app.parts.push(new Part(p.cx, p.cy, "#9fe0ff", -30, 0.5));
+    }
+  };
+  mixin(Enemy.prototype, EnemyAI, true);
+
+  // src/legacy/entity/boss-ai.js
+  var boss_ai_exports = {};
+  __export(boss_ai_exports, {
+    BossAI: () => BossAI
+  });
+  var BossAI = {
+    /* ---- 보스 AI ---- */
+    bossAI(dt, world, p, dx, dy, dd) {
+      const AI = this.def.ai;
+      this.stateT -= dt;
+      const hpr = this.hp / this.maxHp;
+      const nph = this.phases;
+      this.phase = Math.min(nph - 1, Math.floor((1 - hpr) * nph));
+      this.pf = nph > 1 ? this.phase / (nph - 1) : 0;
+      if (this.phase > this.lastPhase) {
+        this.lastPhase = this.phase;
+        this.phaseT = 0.7;
+        this.onPhaseChange(this.phase, world, p);
+      }
+      this.phaseT = (this.phaseT || 0) - dt;
+      if (this.phaseInv > 0) this.phaseInv -= dt;
+      this.tickWeak(dt, world, p);
+      if (this.tickSurge(dt, world, p)) {
+        this.stateT += dt;
+        return;
+      }
+      if (AI === "b_slime") {
+        if (this.onGround) {
+          this.vx *= 0.86;
+          if (this.lastPh() && this.landT !== 1) {
+            this.landT = 1;
+            this.guard = 0;
+            this.openT = 0.9;
+            app.ringFx(this.cx, this.cy, this.w * 0.9, "#9fe0ff", 0.4);
+          }
+          if (this.jumpCd <= 0) {
+            this.landT = 0;
+            this.jumpCd = this.lastPh() ? 2.2 : 1.5 - this.pf * 0.7;
+            this.vy = -680 - this.pf * 120;
+            this.vx = Math.sign(dx) * (200 + this.pf * 140);
+            if (Math.random() < 0.35 + this.pf * 0.4) {
+              for (let i = 0; i < 2 + this.pf * 2; i++) {
+                const e = new Enemy("slime", this.cx + (Math.random() - 0.5) * 60, this.y, app.scale());
+                e.vy = -300;
+                app.ents.push(e);
+              }
+            }
+          }
+        }
+        this.move(dt, world);
+      } else if (AI === "b_bone") {
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 3;
+          this.stateT = this.state === 1 ? 2.2 : 2.6;
+          if (this.state === 2) for (let i = 0; i < 2 + this.pf * 2; i++) app.ents.push(new Enemy(Math.random() < 0.5 ? "skeleton" : "archer", this.cx + (Math.random() - 0.5) * 200, this.cy - 30, app.scale()));
+        }
+        if (this.state === 0) {
+          this.vx = lerp(this.vx, Math.sign(dx) * this.spd, dt * 3);
+          this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.6, dt * 3);
+        } else if (this.state === 1) {
+          this.vx *= 0.94;
+          this.vy = lerp(this.vy, -20, dt * 2);
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.35 - this.pf * 0.12;
+            const a = angleTo(this.cx, this.cy, p.cx, p.cy) + (Math.random() - 0.5) * 0.4;
+            app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 470, Math.sin(a) * 470, this.dmg * 0.7, "enemy", "bone"));
+          }
+        } else {
+          this.vx *= 0.9;
+          this.vy *= 0.9;
+        }
+        this.move(dt, world, { gravMul: 0 });
+      } else if (AI === "b_heart") {
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 3;
+          this.stateT = this.state === 0 ? 3.2 : this.state === 1 ? 1.6 : 2.4;
+          if (this.state === 1) {
+            this.dashA = angleTo(this.cx, this.cy, p.cx, p.cy);
+          }
+          if (this.state === 2) for (let i = 0; i < 1 + this.pf * 2; i++) app.ents.push(new Enemy("shadoweye", this.cx + (Math.random() - 0.5) * 220, this.cy, app.scale()));
+        }
+        if (this.state === 0) {
+          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 0.7, dt * 2);
+          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 0.7, dt * 2);
+          if (this.atkCd <= 0) {
+            this.atkCd = 1.1 - this.pf * 0.5;
+            const n = 8 + this.pf * 8;
+            for (let i = 0; i < n; i++) {
+              const a = i / n * TAU + app.time;
+              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 280, Math.sin(a) * 280, this.dmg * 0.55, "enemy", "dark"));
+            }
+          }
+        } else if (this.state === 1) {
+          this.vx = Math.cos(this.dashA) * this.spd * 3.4;
+          this.vy = Math.sin(this.dashA) * this.spd * 3.4;
+        } else {
+          this.vx *= 0.92;
+          this.vy *= 0.92;
+        }
+        this.move(dt, world, { gravMul: 0 });
+      } else if (AI === "b_witch") {
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 4;
+          this.stateT = 2.4;
+          if (this.state === 0) {
+            const a = Math.random() * TAU, r = 200;
+            this.x = clamp(p.cx + Math.cos(a) * r, TS * 2, WW * TS - TS * 3);
+            this.y = p.cy + Math.sin(a) * r - 60;
+            for (let i = 0; i < 24; i++) app.parts.push(new Part(this.cx, this.cy, "#a8dcf0"));
+          }
+          if (this.state === 2) {
+            for (let i = 0; i < 1 + this.pf * 2; i++) app.ents.push(new Enemy("frostling", this.cx + (Math.random() - 0.5) * 240, this.cy, app.scale()));
+          }
+        }
+        if (this.state === 1) {
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.45 - this.pf * 0.2;
+            const n = 3 + this.pf * 2;
+            const base = angleTo(this.cx, this.cy, p.cx, p.cy);
+            for (let i = 0; i < n; i++) {
+              const a = base + (i - (n - 1) / 2) * 0.22;
+              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 420, Math.sin(a) * 420, this.dmg * 0.6, "enemy", "frost"));
+            }
+          }
+        } else if (this.state === 3) {
+          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 1.4, dt * 3);
+          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 1.4, dt * 3);
+          if (this.atkCd <= 0) {
+            this.atkCd = 1.4;
+            for (let i = 0; i < 12; i++) {
+              const a = i / 12 * TAU;
+              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 240, Math.sin(a) * 240, this.dmg * 0.5, "enemy", "frost"));
+            }
+          }
+        } else {
+          this.vx *= 0.9;
+          this.vy = lerp(this.vy, Math.sin(app.time * 2) * 30, dt * 2);
+        }
+        this.move(dt, world, { gravMul: 0 });
+      } else if (AI === "b_void") {
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 4;
+          this.stateT = 2.6 - this.pf * 0.6;
+          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++) app.ents.push(new Enemy("wraith", this.cx + (Math.random() - 0.5) * 320, this.cy, app.scale()));
+        }
+        if (this.state === 0) {
+          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 0.6, dt * 2);
+          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 0.6, dt * 2);
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.16;
+            const a = app.time * 5;
+            for (let k = 0; k < 3; k++)
+              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a + k * TAU / 3) * 300, Math.sin(a + k * TAU / 3) * 300, this.dmg * 0.45, "enemy", "void"));
+          }
+        } else if (this.state === 1) {
+          this.vx *= 0.9;
+          this.vy *= 0.9;
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.5;
+            const a = angleTo(this.cx, this.cy, p.cx, p.cy);
+            for (let i = -2; i <= 2; i++) {
+              const pr = new Proj(this.cx, this.cy, Math.cos(a + i * 0.13) * 520, Math.sin(a + i * 0.13) * 520, this.dmg * 0.55, "enemy", "void");
+              app.projs.push(pr);
+            }
+          }
+        } else if (this.state === 2) {
+          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 3, dt * 4);
+          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 3, dt * 4);
+        } else {
+          this.vx *= 0.92;
+          this.vy *= 0.92;
+        }
+        this.move(dt, world, { gravMul: 0 });
+      } else if (AI === "b_storm") {
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 4;
+          this.stateT = this.state === 1 ? 1.5 : 2.4 - this.pf * 0.5;
+          if (this.state === 1) this.dashA = angleTo(this.cx, this.cy, p.cx, p.cy);
+          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
+            app.ents.push(new Enemy(Math.random() < 0.5 ? "gale" : "sky_sentry", this.cx + (Math.random() - 0.5) * 300, this.cy, app.scale()));
+        }
+        if (this.state === 0) {
+          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 0.7, dt * 2);
+          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 0.7, dt * 2);
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.22;
+            const n = 5 + this.pf * 4, base = app.time * 4;
+            for (let i = 0; i < n; i++) {
+              const a = base + i / n * TAU;
+              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 330, Math.sin(a) * 330, this.dmg * 0.42, "enemy", "wind"));
+            }
+          }
+        } else if (this.state === 1) {
+          this.vx = Math.cos(this.dashA) * this.spd * 3.6;
+          this.vy = Math.sin(this.dashA) * this.spd * 3.6;
+        } else if (this.state === 2) {
+          this.vx *= 0.9;
+          this.vy = lerp(this.vy, -30, dt * 2);
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.5 - this.pf * 0.2;
+            for (let i = 0; i < 3 + this.pf * 2; i++) {
+              const px2 = p.cx + (Math.random() - 0.5) * 340;
+              app.pending.push({
+                t: i * 0.06,
+                fn: () => {
+                  const pr = new Proj(px2, p.cy - 420, 0, 780, this.dmg * 0.5, "enemy", "bolt");
+                  app.projs.push(pr);
+                }
+              });
+            }
+          }
+        } else {
+          this.vx *= 0.92;
+          this.vy *= 0.92;
+        }
+        this.move(dt, world, { gravMul: 0 });
+      } else if (AI === "b_keeper") {
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 4;
+          this.stateT = 2.8 - this.pf * 0.6;
+          if (this.state === 3) for (let i = 0; i < 1 + this.pf * 2; i++)
+            app.ents.push(new Enemy(this.def.minion || "ruin_guard", this.cx + (Math.random() - 0.5) * 260, this.cy - 20, app.scale()));
+        }
+        if (this.state === 0) {
+          this.vx *= 0.86;
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.9 - this.pf * 0.36;
+            const base = angleTo(this.cx, this.cy, p.cx, p.cy);
+            const n = 5 + this.pf * 4;
+            for (let i = 0; i < n; i++) {
+              const a = base + (i - (n - 1) / 2) * 0.17;
+              const pr = new Proj(this.cx, this.cy, Math.cos(a) * 460, Math.sin(a) * 460, this.dmg * 0.5, "enemy", "rune");
+              app.projs.push(pr);
+            }
+          }
+        } else if (this.state === 1) {
+          this.vx = lerp(this.vx, Math.sign(dx) * this.spd, dt * 3);
+          if (this.onGround && (dy < -40 || this.hitWall)) this.vy = -560;
+        } else if (this.state === 2) {
+          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 2.6, dt * 4);
+          if (this.onGround && this.atkCd <= 0) {
+            this.atkCd = 0.7;
+            app.shake = Math.max(app.shake, 10);
+            for (let i = 0; i < 8; i++) {
+              const a = -Math.PI * (0.15 + Math.random() * 0.7);
+              app.projs.push(new Proj(this.cx, this.cy + this.h / 2, Math.cos(a) * 260, Math.sin(a) * 260, this.dmg * 0.4, "enemy", "bone"));
+            }
+          }
+        } else this.vx *= 0.9;
+        this.move(dt, world);
+      } else if (AI === "b_pursuer") {
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 4;
+          this.stateT = 3 - this.pf * 0.8;
+          if (this.state === 1) {
+            this.x = clamp(p.cx + (Math.random() < 0.5 ? -170 : 170), TS * 3, WW * TS - TS * 3) - this.w / 2;
+            this.y = p.cy - this.h;
+            app.shake = Math.max(app.shake, 12);
+            for (let i = 0; i < 26; i++) app.parts.push(new Part(this.cx, this.cy, "#a06fff", -40, 1.1));
+          }
+          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
+            app.ents.push(new Enemy(this.def.minion || "wraith", this.cx + (Math.random() - 0.5) * 300, this.cy - 30, app.scale()));
+        }
+        if (this.state === 0) {
+          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.5, dt * 2);
+          this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.4, dt * 2);
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.28 - this.pf * 0.1;
+            this.spin = (this.spin || 0) + 0.55;
+            const n = 3 + this.pf * 2;
+            for (let i = 0; i < n; i++) {
+              const a = this.spin + i * TAU / n;
+              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 330, Math.sin(a) * 330, this.dmg * 0.42, "enemy", "void"));
+            }
+          }
+        } else if (this.state === 1) {
+          const a = angleTo(this.cx, this.cy, p.cx, p.cy);
+          this.vx = lerp(this.vx, Math.cos(a) * this.spd * 2.4, dt * 5);
+          this.vy = lerp(this.vy, Math.sin(a) * this.spd * 2.4, dt * 5);
+          if (this.atkCd <= 0) {
+            this.atkCd = 1.1;
+            const n = 10 + this.pf * 8;
+            for (let k = 0; k < n; k++) {
+              const ang = k * TAU / n;
+              app.projs.push(new Proj(this.cx, this.cy, Math.cos(ang) * 250, Math.sin(ang) * 250, this.dmg * 0.38, "enemy", "dark"));
+            }
+          }
+        } else if (this.state === 2) {
+          this.vx = lerp(this.vx, 0, dt * 3);
+          this.vy = lerp(this.vy, -30, dt * 3);
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.16 - this.pf * 0.06;
+            const px = p.cx + (Math.random() - 0.5) * 620;
+            app.projs.push(new Proj(px, this.cy - 260, (Math.random() - 0.5) * 40, 420, this.dmg * 0.34, "enemy", "bone"));
+          }
+        } else {
+          this.vx *= 0.9;
+          this.vy *= 0.9;
+        }
+        this.move(dt, world, { gravMul: 0 });
+      } else if (AI === "b_prolif") {
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.35, dt * 2);
+        if (this.stateT <= 0) {
+          this.stateT = 2.4 - this.pf * 0.8;
+          const kids = app.ents.filter((e) => e instanceof Enemy && !e.dead && e.type === (this.def.minion || "splitter")).length;
+          if (kids < 3 + this.pf * 2) {
+            const n = 1 + this.pf * 2;
+            for (let i = 0; i < n; i++) {
+              const e = new Enemy(
+                this.def.minion || "splitter",
+                this.cx + (i - (n - 1) / 2) * 46,
+                this.cy,
+                app.scale()
+              );
+              e.vy = -220;
+              e.vx = (i - (n - 1) / 2) * 90;
+              app.ents.push(e);
+            }
+            app.ringFx(this.cx, this.cy, this.w, "#9a8a76", 0.4);
+          }
+        }
+        if (this.lastPh()) {
+          const kids = app.ents.filter((e) => e instanceof Enemy && !e.dead && e.type === (this.def.minion || "splitter")).length;
+          const open = kids === 0;
+          if (open && this.guard) {
+            this.guard = 0;
+            app.toast(tr("핵이 드러났다"), "good");
+          } else if (!open && !this.guard) this.guard = 1;
+        }
+        if (this.atkCd <= 0 && dd < 320) {
+          this.atkCd = 1.4;
+          const a = angleTo(this.cx, this.cy, p.cx, p.cy);
+          app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 340, Math.sin(a) * 340, this.dmg * 0.5, "enemy", "bolt"));
+        }
+        this.move(dt, world);
+      } else if (AI === "b_overseer") {
+        this.term = (this.term || 0) + dt;
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 3;
+          this.stateT = 3 - this.pf * 0.8;
+          if (this.state === 0) app.toast(tr("관리자가 명령을 내린다"), "bad");
+        }
+        if (this.state === 0) {
+          this.vx *= 0.9;
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.55 - this.pf * 0.16;
+            const fx = p.cx + (Math.random() - 0.5) * 260;
+            app.warnFx(fx, p.cy + 20, 34, 0.6, "#c8843a");
+            app.pending.push({ t: 0.6, fn: () => {
+              app.aoe(fx, p.cy + 20, 40, this.dmg * 0.6, 6, "#c8843a");
+              for (let k = 0; k < 8; k++) app.parts.push(new Part(fx, p.cy + 20, "#c8843a", -160, 0.6));
+            } });
+          }
+        } else if (this.state === 1) {
+          this.vx = lerp(this.vx, -Math.sign(dx) * this.spd * 0.9, dt * 3);
+        } else {
+          this.vx *= 0.92;
+          if (this.atkCd <= 0) {
+            this.atkCd = 1.6;
+            const kids = app.ents.filter((e) => e instanceof Enemy && !e.dead && e.type === (this.def.minion || "riveter")).length;
+            if (kids < 3) app.ents.push(new Enemy(
+              this.def.minion || "riveter",
+              this.cx + (Math.random() - 0.5) * 220,
+              this.cy - 20,
+              app.scale()
+            ));
+          }
+        }
+        this.move(dt, world);
+      } else if (AI === "b_hepha") {
+        this.vx *= 0.88;
+        if (dd < 420) p.vx += Math.sign(this.cx - p.cx) * 150 * dt;
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 3;
+          this.stateT = 2.6 - this.pf * 0.7;
+        }
+        if (this.state === 0) {
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.9 - this.pf * 0.3;
+            for (const dir of [-1, 1]) for (let k = 0; k < 4; k++) {
+              const x = this.cx + dir * (50 + k * 44);
+              app.pending.push({ t: k * 0.06, fn: () => {
+                app.aoe(x, this.y + this.h - 12, 34, this.dmg * 0.45, 5, "#c8a05a");
+                for (let i = 0; i < 3; i++) app.parts.push(new Part(x, this.y + this.h - 6, "#c8a05a", -140, 0.5));
+              } });
+            }
+          }
+        } else if (this.state === 1) {
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.4;
+            const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.4;
+            const pr = new Proj(this.cx, this.cy - 20, Math.cos(a) * 320, Math.sin(a) * 420, this.dmg * 0.4, "enemy", "fire");
+            pr.grav = 300;
+            app.projs.push(pr);
+          }
+        }
+        if (this.lastPh() && this.guard) {
+          const held = p.held();
+          if (held && held.id === "stop_core" && dd < 90) {
+            this.stopT = (this.stopT || 0) + dt;
+            for (let i = 0; i < 2; i++) app.parts.push(new Part(this.cx, this.cy, "#9fd4ff", -40, 0.5));
+            if (this.stopT > 1.2) {
+              this.guard = 0;
+              app.toast(tr("정지 핵이 물렸다 — 지금이다"), "good");
+              app.shake = 12;
+            }
+          } else this.stopT = 0;
+        }
+        this.move(dt, world);
+      } else if (AI === "b_arche") {
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 3;
+          this.stateT = this.state === 1 ? 1.5 : 2.2;
+          if (this.state === 1) {
+            this.combo = 0;
+            this.atkCd = 0.2;
+          }
+        }
+        if (this.state === 1) {
+          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 2.2, dt * 6);
+          if (this.atkCd <= 0 && this.combo < 3) {
+            this.combo++;
+            this.atkCd = 0.42;
+            app.aoe(this.cx + Math.sign(dx) * 44, this.cy, 52, this.dmg * 0.8, 7, "#e8dcc0");
+            app.shake = Math.max(app.shake, 6);
+          }
+        } else if (this.state === 0) {
+          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.6, dt * 3);
+          if (this.onGround && dy < -50) this.vy = -580;
+        } else {
+          this.vx *= 0.86;
+        }
+        if (this.lastPh() && this.guard) {
+          const ped = app.ents.filter((e) => e instanceof Enemy && !e.dead && e.type === "draft_form").length;
+          if (!ped) {
+            this.guard = 0;
+            app.toast(tr("받침대가 무너졌다"), "good");
+          }
+        }
+        this.move(dt, world);
+      } else if (AI === "b_restorer") {
+        if (this.stateT <= 0) {
+          this.state = (this.state + 1) % 4;
+          this.stateT = 2.6 - this.pf * 0.7;
+          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
+            app.ents.push(new Enemy(this.def.minion || "orbit_sentry", this.cx + (Math.random() - 0.5) * 320, this.cy - 20, app.scale()));
+        }
+        this.unmakeCd = (this.unmakeCd || 0) - dt;
+        if (this.unmakeCd <= 0) {
+          this.unmakeCd = 0.3 - this.pf * 0.14;
+          const R = 6 + this.pf * 6;
+          const bx = Math.floor(this.cx / TS), by = Math.floor(this.cy / TS);
+          for (let k = 0; k < 5 + this.pf * 6; k++) {
+            const a = Math.random() * TAU, r = Math.random() * R;
+            const tx = bx + Math.round(Math.cos(a) * r), ty = by + Math.round(Math.sin(a) * r);
+            if (tx < 2 || ty < 2 || tx >= WW - 2 || ty >= WH - 2) continue;
+            const t = world.get(tx, ty);
+            if (t === T.AIR || t === T.BEDROCK || t === T.ALTARSTONE) continue;
+            world.set(tx, ty, T.AIR);
+            if (Math.random() < 0.5) app.parts.push(new Part(tx * TS + 11, ty * TS + 11, "#a8c8e8", -20, 0.8));
+          }
+        }
+        if (this.state === 0) {
+          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.5, dt * 2);
+          this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.4, dt * 2);
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.24 - this.pf * 0.08;
+            this.spin = (this.spin || 0) + 0.42;
+            const n = 4 + this.pf * 4;
+            for (let i = 0; i < n; i++) {
+              const a = this.spin + i * TAU / n;
+              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 360, Math.sin(a) * 360, this.dmg * 0.36, "enemy", "star"));
+            }
+          }
+        } else if (this.state === 1) {
+          const a = angleTo(this.cx, this.cy, p.cx, p.cy);
+          this.vx = lerp(this.vx, Math.cos(a) * this.spd * 1.8, dt * 4);
+          this.vy = lerp(this.vy, Math.sin(a) * this.spd * 1.8, dt * 4);
+          if (dd < 420) p.vy -= 320 * dt;
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.9;
+            app.shake = Math.max(app.shake, 8);
+          }
+        } else if (this.state === 2) {
+          this.vx = lerp(this.vx, 0, dt * 3);
+          this.vy = lerp(this.vy, -40, dt * 3);
+          if (this.atkCd <= 0) {
+            this.atkCd = 0.14 - this.pf * 0.06;
+            const px = p.cx + (Math.random() - 0.5) * 700;
+            app.projs.push(new Proj(px, this.cy - 280, (Math.random() - 0.5) * 50, 460, this.dmg * 0.3, "enemy", "star"));
+          }
+        } else {
+          this.vx *= 0.9;
+          this.vy *= 0.9;
+        }
+        this.move(dt, world, { gravMul: 0 });
+      }
+    }
+  };
+  mixin(Enemy.prototype, BossAI, true);
 
   // src/legacy/factory.js
   var factory_exports2 = {};
@@ -44594,7 +44630,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports2, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports2, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
