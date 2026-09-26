@@ -23,6 +23,11 @@ const LEFTOVER = () => {
     const t = n.data.trim();
     if (/[\uAC00-\uD7A3]/.test(t)) out.set(t.slice(0, 60), (el.id ? '#' + el.id : el.className ? '.' + String(el.className).split(' ')[0] : el.nodeName));
   }
+  /* CSS 가 글을 넣는 자리(::before · ::after 의 content)도 본다 — 소스 검사가 못 잡는다 */
+  for (const el of document.body.querySelectorAll('*')) {
+    if (!el.getClientRects().length) continue;
+    for (const ps of ['::before', '::after']) { const c = getComputedStyle(el, ps).content; if (c && /[\uAC00-\uD7A3]/.test(c)) out.set(c.slice(0, 60), ps); }
+  }
   for (const el of document.querySelectorAll('[placeholder],[title]'))
     for (const a of ['placeholder', 'title']) { const v = el.getAttribute(a); if (v && /[\uAC00-\uD7A3]/.test(v) && el.getClientRects().length) out.set(v.slice(0, 60), a); }
   return [...out].map(([t, w]) => `${w} "${t}"`);

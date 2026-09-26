@@ -12,7 +12,7 @@ const { srv, url } = await serve();
 const b = await browser();
 const page = await b.newPage();
 const errs = collectErrors(page);
-await page.goto(url + '/index.html');
+await page.goto(url + '/index.html?lang=ko');   // ★ 원본 언어로 — 생성 때 물건(비석·표지)에 박히는 글이 언어를 따른다
 await page.waitForFunction(() => typeof World === 'function' && typeof setWorldSize === 'function');
 
 const got = {};

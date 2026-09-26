@@ -32314,7 +32314,7 @@
         const state = done2 ? "done" : isCurrent ? "cur" : "locked";
         const classes = ["session-tab", state];
         if (isSelected) classes.push("is-selected");
-        return `<button type="button" class="${classes.join(" ")}" data-session="${s.key}"><strong>${s.label}</strong><span>${s.title}</span></button>`;
+        return `<button type="button" class="${classes.join(" ")}" data-session="${s.key}" data-cur="${tr("진행 중")}" data-done="${tr("완료")}"><strong>${s.label}</strong><span>${s.title}</span></button>`;
       }).join("") + "</div>";
       const chapterBlock = sessions.find((s) => s.key === selectedSession);
       if (chapterBlock) {
@@ -43751,7 +43751,7 @@
         msg.textContent = tr("{ask|을} 다 넣어야 한다", { ask: K.ask });
         return;
       }
-      if (got !== c.ans) {
+      if (got.toLowerCase() !== c.ans.toLowerCase()) {
         msg.classList.remove("ok");
         msg.textContent = tr("맞지 않는다 — 홈이 그대로다");
         inp.value = "";
