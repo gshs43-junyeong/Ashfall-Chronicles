@@ -6837,8 +6837,17 @@ const G = {
         .map(r => ({ r, d: Math.hypot(r.x + r.w / 2 - ptx, r.y + r.h / 2 - pty) }))
         .filter(q => q.d > 8).sort((a, b) => a.d - b.d).slice(0, 7);
       for (let i = rooms.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rooms[i], rooms[j]] = [rooms[j], rooms[i]]; }
-      ev.stones = rooms.slice(0, 3).map(q => ({
-        x: (q.r.x + (q.r.w >> 1) + 0.5) * TS, y: (q.r.y + q.r.h - 3) * TS, got: false }));
+      /* ★ 방 바닥 높이는 방마다 다르다 — 고정 높이(r.y+r.h-3)에 두면 발판 없는 허공에 떠 손이 안 닿았다(3씨앗 27유적 중 6).
+         가운데에서 가까운 **설 수 있는 칸**의 발 높이에 둔다. */
+      const w = this.world, standY = r => {
+        const cx = r.x + (r.w >> 1);
+        for (let d = 0; d < r.w >> 1; d++) for (const x of [cx + d, cx - d])
+          for (let y = r.y + r.h - 2; y > r.y; y--)
+            if (!w.solid(x, y) && !w.solid(x, y - 1) && TILE_DEF[w.get(x, y + 1)].solid) return [x, y + 1];
+        return null;
+      };
+      ev.stones = rooms.map(q => standY(q.r)).filter(Boolean).slice(0, 3)
+        .map(([x, y]) => ({ x: (x + 0.5) * TS, y: y * TS, got: false }));
       if (ev.stones.length < 3) return;
     } else if (k === 'greed') {
       const at = this.pulseSpot(here, 4, 12);
@@ -7059,7 +7068,8 @@ const G = {
       const x0 = r.x - r.w / 2, x1 = r.x + r.w / 2, y0 = r.y - r.h / 2, y1 = r.y + r.h / 2;
       for (const o of w.objects) {
         if (o.type === 'codedoor' && o.ruin === id) code = [o.opened ? 1 : 0, 1];
-        if (o.type !== 'chest' || o.greed) continue;         // 탐욕의 상자는 사건의 몫이다
+        // 탐욕의 상자는 사건의 몫, 동굴 상자(cave)는 둘레 사각형에 걸린 바깥 굴의 것이다
+        if (o.type !== 'chest' || o.greed || o.cave) continue;
         const ox = o.x / TS, oy = o.y / TS;
         if (ox > x0 && ox < x1 && oy > y0 && oy < y1) { chests++; if (o.items) opened++; }
       }
