@@ -1029,7 +1029,7 @@ const UI = {
       if (!list.length) continue;
       const n = list.filter(a => got[a.id]).length;
       h += `<div class="ach-head">${ACH_CAT[cat]} <span>${n}/${list.length}</span></div>`;
-      /* ★ 난이도로 다시 줄 세우지 않는다. */
+      /* ★ 여기서 다시 줄 세우지 않는다 — data.js 가 ACHIEVEMENTS 를 품(ACH_LV) 순으로 이미 정렬해 둔다. */
       for (const a of list) {
         const on = !!got[a.id];
         const [tn, tc] = ACH_TIER[a.t] || ACH_TIER.mid;
