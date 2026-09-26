@@ -18775,6 +18775,7 @@
     CONN: () => CONN,
     LEAF_TWIG: () => LEAF_TWIG,
     MOSS_COL: () => MOSS_COL,
+    TILE_PAINT: () => TILE_PAINT,
     TOP_SKIP: () => TOP_SKIP,
     TileArt: () => TileArt,
     WOOD_WALL: () => WOOD_WALL
@@ -18980,6 +18981,7 @@
   var CONN = {};
   for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS, T.SNOW, T.ICE]) BODY_ONLY[id] = 1;
   for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
+  var TILE_PAINT = {};
   var TileArt = {
     /* 타일마다 아틀라스에 미리 그려 두는 칸 수. */
     V: 6,
@@ -19734,13 +19736,69 @@
       const R = (x, y, w, h, c) => this._r(g, ox, oy, x, y, w, h, c);
       const base = s.c;
       const dk = shade(base, 0.74), dk2 = shade(base, 0.54), lt = shade(base, 1.18), lt2 = shade(base, 1.4);
-      switch (s.k) {
-        case "soil":
-          this._fill(g, ox, oy, base);
-          for (let i = 0; i < 11; i++) R(rng.range(-1, TS - 3), rng.range(-1, TS - 3), rng.range(2, 6), rng.range(2, 4), rng.chance(0.5) ? dk : lt);
-          this._speck(g, ox, oy, rng, 26, dk2, lt);
-          break;
-        case "grass": {
+      const paint = TILE_PAINT[s.k];
+      if (paint) paint.call(this, { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 });
+    },
+    /** 기계 공통 뼈대 — 강철 상자에 볼트 네 개 */
+    _mkBody(g, ox, oy, base, R) {
+      const dk = shade(base, 0.62), lt = shade(base, 1.3);
+      R(1, 2, TS - 2, TS - 3, base);
+      R(1, 2, TS - 2, 2, lt);
+      R(1, TS - 3, TS - 2, 2, dk);
+      R(1, 2, 2, TS - 3, shade(base, 1.12));
+      R(TS - 3, 2, 2, TS - 3, dk);
+      for (const [bx, by] of [[3, 4], [TS - 6, 4], [3, TS - 7], [TS - 6, TS - 7]]) R(bx, by, 2, 2, shade(base, 0.45));
+    },
+    /* 나무 판자 벽지. */
+    paintWoodWall(g, ox, oy, col, rng) {
+      const base = shade(col, 0.62), dk = shade(col, 0.4), lt = shade(col, 0.82);
+      this._fill(g, ox, oy, base);
+      let x = rng.int(0, 3);
+      while (x < TS) {
+        const w = rng.int(4, 7);
+        this._r(g, ox, oy, x, 0, w, TS, rng.chance(0.5) ? shade(col, 0.68) : shade(col, 0.56));
+        this._r(g, ox, oy, x + w - 1, 0, 1, TS, dk);
+        for (let k = 0; k < 2; k++)
+          this._r(g, ox, oy, x + rng.int(1, Math.max(1, w - 2)), rng.int(1, TS - 3), 1, rng.int(2, 5), dk);
+        if (rng.chance(0.3)) this._r(g, ox, oy, x + 1, rng.int(2, TS - 3), 1, 1, lt);
+        x += w;
+      }
+      g.globalAlpha = 0.16;
+      this._r(g, ox, oy, 0, 0, TS, 2, "#000");
+      g.globalAlpha = 1;
+    },
+    paintWall(g, ox, oy, col, rng) {
+      const base = shade(col, 0.66), dk = shade(col, 0.44), lt = shade(col, 0.86);
+      this._fill(g, ox, oy, base);
+      for (let i = 0; i < 9; i++)
+        this._r(g, ox, oy, rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? dk : lt);
+      this._speck(g, ox, oy, rng, 24, dk, lt);
+      g.globalAlpha = 0.16;
+      this._r(g, ox, oy, 0, 0, TS, 2, "#000");
+      this._r(g, ox, oy, 0, 0, 2, TS, "#000");
+      g.globalAlpha = 1;
+    }
+  };
+
+  // src/legacy/art/tiles/ground.js
+  var ground_exports = {};
+  __export(ground_exports, {
+    TilePaintGround: () => TilePaintGround
+  });
+  var TilePaintGround = {
+    soil(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 11; i++) R(rng.range(-1, TS - 3), rng.range(-1, TS - 3), rng.range(2, 6), rng.range(2, 4), rng.chance(0.5) ? dk : lt);
+        this._speck(g, ox, oy, rng, 26, dk2, lt);
+        return;
+      }
+    },
+    grass(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 9; i++) R(rng.range(-1, TS - 3), rng.range(4, TS - 3), rng.range(2, 6), rng.range(2, 4), rng.chance(0.5) ? dk : lt);
           this._speck(g, ox, oy, rng, 18, dk2, lt);
@@ -19752,30 +19810,43 @@
             R(x, 0, 1, rng.chance(0.6) ? 2 : 1, g2);
             R(x, h - 1, 1, 1, g3);
           }
-          break;
+          return;
         }
-        case "rock":
-          this._fill(g, ox, oy, base);
-          for (let i = 0; i < 7; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 10), rng.range(3, 7), rng.chance(0.5) ? lt : dk);
-          for (let i = 0; i < 3; i++) {
-            let x = rng.range(2, TS - 2), y = rng.range(-2, 6);
-            for (let k = 0; k < rng.int(5, 12); k++) {
-              R(x, y, 1, 1, dk2);
-              x += rng.range(-1.2, 1.2);
-              y += rng.range(0.7, 1.7);
-            }
+      }
+    },
+    rock(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 7; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 10), rng.range(3, 7), rng.chance(0.5) ? lt : dk);
+        for (let i = 0; i < 3; i++) {
+          let x = rng.range(2, TS - 2), y = rng.range(-2, 6);
+          for (let k = 0; k < rng.int(5, 12); k++) {
+            R(x, y, 1, 1, dk2);
+            x += rng.range(-1.2, 1.2);
+            y += rng.range(0.7, 1.7);
           }
-          this._speck(g, ox, oy, rng, 20, dk2, lt2);
-          break;
-        case "sand":
-          this._fill(g, ox, oy, base);
-          this._speck(g, ox, oy, rng, 76, dk, lt);
-          for (let i = 0; i < 3; i++) {
-            const y = rng.range(2, TS - 3);
-            for (let x = 0; x < TS; x++) if (rng.chance(0.55)) R(x, y + Math.sin(x * 0.55 + i) * 0.9, 1, 1, dk);
-          }
-          break;
-        case "strata": {
+        }
+        this._speck(g, ox, oy, rng, 20, dk2, lt2);
+        return;
+      }
+    },
+    sand(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, base);
+        this._speck(g, ox, oy, rng, 76, dk, lt);
+        for (let i = 0; i < 3; i++) {
+          const y = rng.range(2, TS - 3);
+          for (let x = 0; x < TS; x++) if (rng.chance(0.55)) R(x, y + Math.sin(x * 0.55 + i) * 0.9, 1, 1, dk);
+        }
+        return;
+      }
+    },
+    strata(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           let y = rng.range(-3, 0);
           while (y < TS) {
@@ -19785,30 +19856,43 @@
           }
           for (let i = 0; i < 4; i++) R(0, rng.range(0, TS), TS, 1, dk2);
           this._speck(g, ox, oy, rng, 22, dk2, lt2);
-          break;
+          return;
         }
-        case "snow":
-          this._fill(g, ox, oy, base);
-          this._speck(g, ox, oy, rng, 44, shade(base, 0.88), "#ffffff");
-          R(0, 0, TS, 2, "#ffffff");
-          for (let i = 0; i < 4; i++) R(rng.range(0, TS - 4), rng.range(3, TS - 2), rng.range(2, 5), 1, shade(base, 0.82));
-          break;
-        case "ice":
-          this._fill(g, ox, oy, base);
-          for (let i = 0; i < 4; i++) {
-            const x = rng.range(-6, TS), len = rng.range(6, 14), st = rng.range(0, TS - 4);
-            for (let k = 0; k < len; k++) R(x + k, st + k, 1, 1, rng.chance(0.6) ? lt2 : lt);
+      }
+    },
+    snow(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, base);
+        this._speck(g, ox, oy, rng, 44, shade(base, 0.88), "#ffffff");
+        R(0, 0, TS, 2, "#ffffff");
+        for (let i = 0; i < 4; i++) R(rng.range(0, TS - 4), rng.range(3, TS - 2), rng.range(2, 5), 1, shade(base, 0.82));
+        return;
+      }
+    },
+    ice(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 4; i++) {
+          const x = rng.range(-6, TS), len = rng.range(6, 14), st = rng.range(0, TS - 4);
+          for (let k = 0; k < len; k++) R(x + k, st + k, 1, 1, rng.chance(0.6) ? lt2 : lt);
+        }
+        for (let i = 0; i < 2; i++) {
+          let x = rng.range(3, TS - 3);
+          for (let y = 0; y < TS; y++) {
+            R(x, y, 1, 1, dk);
+            x += rng.range(-0.8, 0.8);
           }
-          for (let i = 0; i < 2; i++) {
-            let x = rng.range(3, TS - 3);
-            for (let y = 0; y < TS; y++) {
-              R(x, y, 1, 1, dk);
-              x += rng.range(-0.8, 0.8);
-            }
-          }
-          R(0, 0, TS, 1, lt2);
-          break;
-        case "trunk": {
+        }
+        R(0, 0, TS, 1, lt2);
+        return;
+      }
+    },
+    trunk(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const w = 16, x0 = Math.round((TS - w) / 2);
           R(x0, 0, w, TS, base);
           R(x0, 0, 2, TS, lt);
@@ -19822,9 +19906,14 @@
             R(kx, ky, 5, 4, dk2);
             R(kx + 1, ky + 1, 3, 2, dk);
           }
-          break;
+          return;
         }
-        case "pine": {
+      }
+    },
+    pine(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const c1 = base, c2 = shade(base, 1.3), c3 = shade(base, 0.72), c4 = shade(base, 0.52);
           const lr = new RNG("pine-" + seed);
           const Rc = (x, y, w, h, col) => {
@@ -19844,9 +19933,14 @@
             }
           }
           for (let i = 0; i < 6; i++) R(lr.range(1, TS - 2), lr.range(1, TS - 2), 1, 1, c2);
-          break;
+          return;
         }
-        case "leaf": {
+      }
+    },
+    leaf(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const c1 = base, c2 = shade(base, 1.32), c3 = shade(base, 0.66);
           const tw = s.tw || shade(base, 0.4), tw2 = shade(tw, 1.4);
           const M = TS / 2 - 1;
@@ -19908,31 +20002,44 @@
             g.fill();
             g.globalAlpha = 1;
           }
-          break;
+          return;
         }
-        case "ebon":
-          this._fill(g, ox, oy, base);
-          for (let i = 0; i < 6; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
-          for (let i = 0; i < 3; i++) {
-            let x = rng.range(0, TS);
-            for (let y = 0; y < TS; y++) {
-              R(x, y, rng.chance(0.3) ? 2 : 1, 1, dk2);
-              x += rng.range(-1.5, 1.5);
-            }
+      }
+    },
+    ebon(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 6; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
+        for (let i = 0; i < 3; i++) {
+          let x = rng.range(0, TS);
+          for (let y = 0; y < TS; y++) {
+            R(x, y, rng.chance(0.3) ? 2 : 1, 1, dk2);
+            x += rng.range(-1.5, 1.5);
           }
-          for (let i = 0; i < 5; i++) R(rng.range(1, TS - 3), rng.range(1, TS - 3), 2, 2, "#7d5aa8");
-          this._speck(g, ox, oy, rng, 14, dk2, "#6a4a92");
-          break;
-        case "glass":
-          this._fill(g, ox, oy, base);
-          for (let i = 0; i < 5; i++) {
-            const x = rng.range(0, TS - 6), y = rng.range(0, TS - 6), len = rng.range(4, 10);
-            for (let k = 0; k < len; k++) R(x + k, y + k, 1, 1, k < len / 2 ? lt2 : lt);
-          }
-          for (let i = 0; i < 4; i++) R(rng.range(0, TS - 4), rng.range(0, TS - 4), rng.range(2, 5), rng.range(2, 4), dk2);
-          R(0, 0, TS, 1, lt);
-          break;
-        case "ore": {
+        }
+        for (let i = 0; i < 5; i++) R(rng.range(1, TS - 3), rng.range(1, TS - 3), 2, 2, "#7d5aa8");
+        this._speck(g, ox, oy, rng, 14, dk2, "#6a4a92");
+        return;
+      }
+    },
+    glass(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 5; i++) {
+          const x = rng.range(0, TS - 6), y = rng.range(0, TS - 6), len = rng.range(4, 10);
+          for (let k = 0; k < len; k++) R(x + k, y + k, 1, 1, k < len / 2 ? lt2 : lt);
+        }
+        for (let i = 0; i < 4; i++) R(rng.range(0, TS - 4), rng.range(0, TS - 4), rng.range(2, 5), rng.range(2, 4), dk2);
+        R(0, 0, TS, 1, lt);
+        return;
+      }
+    },
+    ore(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 6; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
           this._speck(g, ox, oy, rng, 16, dk2, lt2);
@@ -19956,9 +20063,14 @@
             g.fillRect(ox, oy, TS, TS);
             g.globalAlpha = 1;
           }
-          break;
+          return;
         }
-        case "plank": {
+      }
+    },
+    plank(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const rows = 3, hgt = TS / rows;
           for (let i = 0; i < rows; i++) {
             const y = i * hgt;
@@ -19969,9 +20081,14 @@
             R(jx, y + 1, 1, hgt - 2, dk);
             for (let k = 0; k < 3; k++) R(rng.range(0, TS - 4), y + rng.range(1, hgt - 2), rng.range(2, 6), 1, dk);
           }
-          break;
+          return;
         }
-        case "brick": {
+      }
+    },
+    brick(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, shade(base, 0.55));
           const bh = TS / 3, bw = TS / 2;
           for (let row = 0; row < 3; row++) {
@@ -19983,23 +20100,45 @@
               R(bx + 1, y + bh - 2, bw - 2, 1, shade(col, 0.78));
             }
           }
-          break;
+          return;
         }
-        case "torch":
-          R(TS / 2 - 2, TS * 0.34, 4, TS * 0.64, "#6a4a28");
-          R(TS / 2 - 2, TS * 0.34, 1, TS * 0.64, "#8f6740");
-          R(TS / 2 - 3, TS * 0.14, 6, 8, "#e06a16");
-          R(TS / 2 - 2, TS * 0.09, 4, 8, "#f7a92c");
-          R(TS / 2 - 1, TS * 0.06, 2, 6, "#ffe98c");
-          break;
-        case "platform":
-          R(0, 0, TS, 7, base);
-          R(0, 0, TS, 1, shade(base, 1.3));
-          R(0, 6, TS, 1, shade(base, 0.55));
-          R(rng.range(4, TS - 6), 1, 1, 5, shade(base, 0.68));
-          R(rng.range(4, TS - 6), 1, 1, 5, shade(base, 0.68));
-          break;
-        case "spike": {
+      }
+    },
+    torch(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        R(TS / 2 - 2, TS * 0.34, 4, TS * 0.64, "#6a4a28");
+        R(TS / 2 - 2, TS * 0.34, 1, TS * 0.64, "#8f6740");
+        R(TS / 2 - 3, TS * 0.14, 6, 8, "#e06a16");
+        R(TS / 2 - 2, TS * 0.09, 4, 8, "#f7a92c");
+        R(TS / 2 - 1, TS * 0.06, 2, 6, "#ffe98c");
+        return;
+      }
+    }
+  };
+  Object.assign(TILE_PAINT, TilePaintGround);
+
+  // src/legacy/art/tiles/misc.js
+  var misc_exports = {};
+  __export(misc_exports, {
+    TilePaintMisc: () => TilePaintMisc
+  });
+  var TilePaintMisc = {
+    platform(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        R(0, 0, TS, 7, base);
+        R(0, 0, TS, 1, shade(base, 1.3));
+        R(0, 6, TS, 1, shade(base, 0.55));
+        R(rng.range(4, TS - 6), 1, 1, 5, shade(base, 0.68));
+        R(rng.range(4, TS - 6), 1, 1, 5, shade(base, 0.68));
+        return;
+      }
+    },
+    spike(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           for (let i = 0; i < 3; i++) {
             const bx = ox + 2 + i * 6 + rng.range(-1, 1);
             g.fillStyle = shade(base, 1.15);
@@ -20010,9 +20149,14 @@
             g.closePath();
             g.fill();
           }
-          break;
+          return;
         }
-        case "flower": {
+      }
+    },
+    flower(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const fx = ox + TS / 2 + rng.range(-3, 3), fy = oy + TS - 7;
           g.strokeStyle = shade("#4a7a34", 0.8);
           g.lineWidth = 1.4;
@@ -20030,9 +20174,14 @@
           g.beginPath();
           g.arc(fx, fy, 1.4, 0, TAU);
           g.fill();
-          break;
+          return;
         }
-        case "weed": {
+      }
+    },
+    weed(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           for (let i = 0; i < 3; i++) {
             const bx = ox + 3 + i * 6 + rng.range(-1, 1), h = rng.int(5, 10);
             g.strokeStyle = shade(base, 0.9 + i * 0.15);
@@ -20042,9 +20191,14 @@
             g.quadraticCurveTo(bx + rng.range(-2, 2), oy + TS - h * 0.6, bx + rng.range(-1, 1), oy + TS - h);
             g.stroke();
           }
-          break;
+          return;
         }
-        case "cactusblock": {
+      }
+    },
+    cactusblock(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const w = 15, x0 = Math.round((TS - w) / 2);
           R(x0, 0, w, TS, base);
           R(x0, 0, 2, TS, lt);
@@ -20057,9 +20211,14 @@
             R(x0 - 1, y, 1, 1, "#e8dcc0");
             R(x0 + w, y + rng.int(0, 2), 1, 1, "#e8dcc0");
           }
-          break;
+          return;
         }
-        case "cactustile": {
+      }
+    },
+    cactustile(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const cx = ox + TS / 2 + rng.range(-2, 2), h = rng.int(9, 14);
           g.fillStyle = base;
           g.fillRect(cx - 2, oy + TS - h, 4, h);
@@ -20067,9 +20226,14 @@
           if (rng.chance(0.6)) g.fillRect(cx + 2, oy + TS - h * 0.7, 3, h * 0.45);
           g.fillStyle = shade(base, 1.3);
           g.fillRect(cx - 2, oy + TS - h, 1, h);
-          break;
+          return;
         }
-        case "mushroomtile": {
+      }
+    },
+    mushroomtile(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const specs = [[ox + TS / 2 + 1, 10, 6, 4.4], [ox + 7 + rng.range(-1, 1), 6, 3.4, 2.6]];
           for (const [bx, h, capW, capH] of specs) {
             g.fillStyle = "#e8dcc0";
@@ -20086,19 +20250,29 @@
             g.arc(bx + capW * 0.3, oy + TS - h - capH * 0.1, 0.8, 0, TAU);
             g.fill();
           }
-          break;
+          return;
         }
-        case "vine": {
+      }
+    },
+    vine(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           let x = TS / 2;
           for (let y = 0; y < TS; y++) {
             x = clamp(x + rng.range(-0.7, 0.7), 3, TS - 5);
             R(x, y, 2, 1, base);
             if (rng.chance(0.16)) R(x + (rng.chance(0.5) ? -3 : 2), y, 3, 2, shade(base, 1.25));
           }
-          break;
+          return;
         }
-        /* ---------- 설계 유리 ---------- */
-        case "draftglass": {
+      }
+    },
+    /* ---------- 설계 유리 ---------- */
+    draftglass(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, shade(base, 0.28));
           g.save();
           g.globalAlpha = 0.5;
@@ -20116,9 +20290,14 @@
           }
           for (let i = 0; i < 3; i++) R(rng.range(1, TS - 2), rng.range(1, TS - 2), 2, 2, "#eaffff");
           g.restore();
-          break;
+          return;
         }
-        case "crystal": {
+      }
+    },
+    crystal(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, shade(base, 0.42));
           for (let i = 0; i < 4; i++) {
             const x = rng.range(0, TS - 8), y = rng.range(0, TS - 9);
@@ -20133,9 +20312,14 @@
             g.fill();
             R(x + w / 2 - 1, y + 1, 1, h * 0.42, shade(base, 1.5));
           }
-          break;
+          return;
         }
-        case "cloud": {
+      }
+    },
+    cloud(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 7; i++) {
             const x = rng.range(-2, TS - 4), y = rng.range(-2, TS - 4), r = rng.range(3, 7);
@@ -20146,17 +20330,27 @@
           }
           R(0, 0, TS, 2, "#ffffff");
           R(0, TS - 3, TS, 3, shade(base, 0.82));
-          break;
+          return;
         }
-        case "ruintile": {
+      }
+    },
+    ruintile(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           R(0, 0, TS, 1.4, lt);
           R(0, TS - 2, TS, 2, dk2);
           R(TS / 2 - 0.7, 0, 1.4, TS, dk);
           for (let i = 0; i < 10; i++) this._r(g, ox, oy, rng.range(0, TS - 1), rng.range(0, TS - 1), 1, 1, rng.chance(0.5) ? dk2 : lt);
-          break;
+          return;
         }
-        case "runestone": {
+      }
+    },
+    runestone(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 5; i++) R(rng.range(-1, TS - 4), rng.range(-1, TS - 4), rng.range(4, 8), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
           const gl = "#9fe8d8";
@@ -20168,9 +20362,14 @@
           g.fillStyle = gl;
           g.fillRect(ox, oy, TS, TS);
           g.globalAlpha = 1;
-          break;
+          return;
         }
-        case "seal": {
+      }
+    },
+    seal(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 6; i++) R(rng.range(-1, TS - 3), rng.range(-1, TS - 3), rng.range(4, 8), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
           g.strokeStyle = "#8a7fc0";
@@ -20184,10 +20383,15 @@
           g.fillStyle = "#a06fff";
           g.fillRect(ox, oy, TS, TS);
           g.globalAlpha = 1;
-          break;
+          return;
         }
-        /* ---------- 동굴 물 ---------- */
-        case "water": {
+      }
+    },
+    /* ---------- 동굴 물 ---------- */
+    water(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           g.save();
           g.globalAlpha = s.fall ? 0.5 : 0.62;
           this._fill(g, ox, oy, base);
@@ -20209,16 +20413,34 @@
             this._speck(g, ox, oy, rng, 8, lt, dk);
           }
           g.restore();
-          break;
+          return;
         }
-        case "lava":
-          this._fill(g, ox, oy, base);
-          for (let i = 0; i < 8; i++) R(rng.range(-1, TS - 3), rng.range(-1, TS - 3), rng.range(3, 8), rng.range(2, 5), rng.chance(0.5) ? shade(base, 1.32) : shade(base, 0.72));
-          R(0, 0, TS, 2, shade(base, 1.5));
-          this._speck(g, ox, oy, rng, 14, "#ffd27a", shade(base, 0.6));
-          break;
-        /* ---------- 유혈암 ---------- */
-        case "oilshale": {
+      }
+    },
+    lava(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 8; i++) R(rng.range(-1, TS - 3), rng.range(-1, TS - 3), rng.range(3, 8), rng.range(2, 5), rng.chance(0.5) ? shade(base, 1.32) : shade(base, 0.72));
+        R(0, 0, TS, 2, shade(base, 1.5));
+        this._speck(g, ox, oy, rng, 14, "#ffd27a", shade(base, 0.6));
+        return;
+      }
+    }
+  };
+  Object.assign(TILE_PAINT, TilePaintMisc);
+
+  // src/legacy/art/tiles/factory.js
+  var factory_exports = {};
+  __export(factory_exports, {
+    TilePaintFactory: () => TilePaintFactory
+  });
+  var TilePaintFactory = {
+    /* ---------- 유혈암 ---------- */
+    oilshale(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           let y = rng.range(-3, 0);
           while (y < TS) {
@@ -20232,44 +20454,69 @@
             R(x + 1, yy, 1, 1, rng.chance(0.5) ? "#5a7f6a" : "#7a6a8a");
           }
           this._speck(g, ox, oy, rng, 12, "#12100c", "#6a6050");
-          break;
+          return;
         }
-        /* ---------- 기계 ---------- */
-        case "mk_belt": {
+      }
+    },
+    /* ---------- 기계 ---------- */
+    mk_belt(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(0, 6, TS, TS - 10, dk2);
           R(0, 6, TS, 2, lt);
           R(0, TS - 5, TS, 1, shade(base, 0.4));
           for (let x = 1; x < TS; x += 4) R(x, 8, 2, TS - 14, shade(base, 0.92));
           R(0, 5, 2, TS - 8, shade(base, 0.6));
           R(TS - 2, 5, 2, TS - 8, shade(base, 0.6));
-          break;
+          return;
         }
-        case "mk_drill": {
+      }
+    },
+    mk_drill(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           R(7, 3, 8, 4, shade(base, 1.45));
           for (let k = 0; k < 3; k++) R(8 + k * 2, 8 + k, 2, TS - 11 - k * 2, "#c8ccd4");
           R(9, TS - 4, 4, 2, "#8a8e96");
-          break;
+          return;
         }
-        case "mk_pump": {
+      }
+    },
+    mk_pump(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           R(4, 4, 3, TS - 8, shade(base, 0.5));
           R(15, 4, 3, TS - 8, shade(base, 0.5));
           R(4, 8, 14, 3, "#2a2620");
           R(9, 10, 4, TS - 13, "#3a352c");
           R(7, TS - 5, 8, 3, shade(base, 1.3));
-          break;
+          return;
         }
-        case "mk_furnace": {
+      }
+    },
+    mk_furnace(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           R(5, 9, 12, 8, "#1e1a16");
           R(6, 12, 10, 5, "#e8842a");
           R(7, 14, 8, 3, "#ffcf6a");
           R(6, 3, 4, 4, shade(base, 0.5));
           R(13, 3, 4, 4, shade(base, 0.5));
-          break;
+          return;
         }
-        case "mk_gen": {
+      }
+    },
+    mk_gen(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           R(3, 12, 9, 7, "#1e1a16");
           R(4, 15, 7, 4, "#e8842a");
@@ -20288,9 +20535,14 @@
           }
           R(4, 2, 4, 4, shade(base, 0.45));
           R(12, 3, 7, 2, "#4a4a54");
-          break;
+          return;
         }
-        case "mk_press": {
+      }
+    },
+    mk_press(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           R(2, 2, 18, 6, "#2e2e38");
           R(2, 2, 18, 1.5, "#9aa0ad");
@@ -20300,9 +20552,14 @@
           R(2, TS - 8, 18, 1.5, "#9aa0ad");
           R(4, 12, 2, 5, "#12121a");
           R(16, 12, 2, 5, "#12121a");
-          break;
+          return;
         }
-        case "mk_tank": {
+      }
+    },
+    mk_tank(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           g.fillStyle = shade(base, 1.35);
           g.beginPath();
@@ -20313,9 +20570,14 @@
           g.ellipse(ox + TS / 2, oy + 13, 5, 5, 0, 0, TAU);
           g.fill();
           R(TS / 2 - 1, 2, 2, 4, shade(base, 0.5));
-          break;
+          return;
         }
-        case "mk_gear": {
+      }
+    },
+    mk_gear(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           const cx = ox + TS / 2, cy = oy + TS / 2;
           g.fillStyle = shade(base, 1.5);
@@ -20330,16 +20592,26 @@
             const a = k * TAU / 6;
             R(TS / 2 + Math.cos(a) * 8 - 1.5, TS / 2 + Math.sin(a) * 8 - 1.5, 3, 3, shade(base, 1.5));
           }
-          break;
+          return;
         }
-        case "mk_crate": {
+      }
+    },
+    mk_crate(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           R(4, 3, TS - 8, 5, "#1e1a16");
           R(5, 4, TS - 10, 3, shade(base, 0.5));
           for (let k = 0; k < 3; k++) R(4 + k * 5, TS - 8, 3, 4, shade(base, 1.35));
-          break;
+          return;
         }
-        case "mk_battery": {
+      }
+    },
+    mk_battery(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           R(6, 2, 4, 2, shade(base, 1.5));
           R(13, 2, 4, 2, shade(base, 1.5));
@@ -20347,9 +20619,14 @@
           R(5, 6, 13, 3, "#6fe0c0");
           R(5, 10, 13, 3, shade("#6fe0c0", 0.55));
           R(5, 14, 13, 3, shade("#6fe0c0", 0.3));
-          break;
+          return;
         }
-        case "mk_pole": {
+      }
+    },
+    mk_pole(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(TS / 2 - 2, 2, 4, TS - 3, base);
           R(TS / 2 - 2, 2, 1.5, TS - 3, lt);
           R(2, 4, TS - 4, 2, shade(base, 1.25));
@@ -20357,17 +20634,27 @@
           R(TS - 5, 3, 2, 4, "#4a4a52");
           R(2, 9, TS - 4, 1, shade(base, 0.6));
           R(TS / 2 - 4, 9, 2, 2, "#8fd8ff");
-          break;
+          return;
         }
-        case "mk_sorter": {
+      }
+    },
+    mk_sorter(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           R(3, 9, 16, 4, "#2a2620");
           R(4, 10, 6, 2, "#8fd8ff");
           R(12, 10, 6, 2, "#e0a03c");
           R(11, 5, 2, 12, shade(base, 1.5));
-          break;
+          return;
         }
-        case "mk_turret": {
+      }
+    },
+    mk_turret(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(2, TS - 8, 18, 6, shade(base, 0.8));
           R(2, TS - 8, 18, 1.5, shade(base, 1.5));
           R(4, TS - 3, 3, 3, "#22222a");
@@ -20384,37 +20671,60 @@
           R(TS / 2 - 2, 0, 1.4, 12, "#8a8e99");
           R(TS / 2 - 3, 0, 6, 2.5, "#d8dce4");
           R(TS / 2 - 6, 9, 2.5, 2.5, "#e0563c");
-          break;
+          return;
         }
-        case "mk_trap": {
+      }
+    },
+    mk_trap(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(0, TS - 8, TS, 8, shade(base, 0.55));
           R(0, TS - 8, TS, 2, lt);
           for (let x = 2; x < TS - 2; x += 5) R(x, TS - 12, 2, 5, "#c8ccd4");
           R(3, TS - 14, 2, 3, "#9fd8ff");
           R(13, TS - 15, 2, 4, "#9fd8ff");
-          break;
+          return;
         }
-        /* ---------- 정글 / 버섯 골짜기 ---------- */
-        case "mud":
-          this._fill(g, ox, oy, dk);
-          for (let i = 0; i < 9; i++)
-            R(rng.range(-1, TS - 3), rng.range(-1, TS - 3), rng.range(3, 8), rng.range(2, 5), rng.chance(0.5) ? dk2 : base);
-          for (let i = 0; i < 4; i++) {
-            const x = rng.range(1, TS - 5), y = rng.range(1, TS - 3);
-            R(x, y, rng.range(3, 5), 1.4, lt2);
-            R(x, y + 1.4, rng.range(2, 4), 1, lt);
+      }
+    },
+    /* ---------- 정글 / 버섯 골짜기 ---------- */
+    mud(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, dk);
+        for (let i = 0; i < 9; i++)
+          R(rng.range(-1, TS - 3), rng.range(-1, TS - 3), rng.range(3, 8), rng.range(2, 5), rng.chance(0.5) ? dk2 : base);
+        for (let i = 0; i < 4; i++) {
+          const x = rng.range(1, TS - 5), y = rng.range(1, TS - 3);
+          R(x, y, rng.range(3, 5), 1.4, lt2);
+          R(x, y + 1.4, rng.range(2, 4), 1, lt);
+        }
+        for (let i = 0; i < 2; i++) {
+          let rx = rng.range(2, TS - 2), ry = rng.range(0, 4);
+          for (let k = 0; k < rng.int(4, 9); k++) {
+            R(rx, ry, 1, 1, "#2f5a28");
+            rx += rng.range(-1, 1);
+            ry += rng.range(0.7, 1.6);
           }
-          for (let i = 0; i < 2; i++) {
-            let rx = rng.range(2, TS - 2), ry = rng.range(0, 4);
-            for (let k = 0; k < rng.int(4, 9); k++) {
-              R(rx, ry, 1, 1, "#2f5a28");
-              rx += rng.range(-1, 1);
-              ry += rng.range(0.7, 1.6);
-            }
-          }
-          this._speck(g, ox, oy, rng, 22, "#241a10", lt);
-          break;
-        case "fern": {
+        }
+        this._speck(g, ox, oy, rng, 22, "#241a10", lt);
+        return;
+      }
+    }
+  };
+  Object.assign(TILE_PAINT, TilePaintFactory);
+
+  // src/legacy/art/tiles/water.js
+  var water_exports = {};
+  __export(water_exports, {
+    TilePaintWater: () => TilePaintWater
+  });
+  var TilePaintWater = {
+    fern(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           for (let i = 0; i < 5; i++) {
             const a = -Math.PI / 2 + (i - 2) * 0.42 + rng.range(-0.1, 0.1);
             const len = rng.range(8, 14), bx = TS / 2 + rng.range(-3, 3);
@@ -20428,9 +20738,14 @@
               }
             }
           }
-          break;
+          return;
         }
-        case "orchid": {
+      }
+    },
+    orchid(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const stem = "#3f7a34";
           R(TS / 2 - 1, TS - 10, 2, 10, stem);
           R(TS / 2 - 4, TS - 6, 3, 1.4, stem);
@@ -20447,9 +20762,14 @@
           g.beginPath();
           g.arc(ox + cx, oy + cy, 1.7, 0, TAU);
           g.fill();
-          break;
+          return;
         }
-        case "kelpplant": {
+      }
+    },
+    kelpplant(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const sway = rng.range(-2.5, 2.5);
           for (let k = 0; k < 3; k++) {
             const bx = 5 + k * 6 + rng.range(-1, 1);
@@ -20464,9 +20784,14 @@
           }
           g.lineWidth = 1;
           g.lineCap = "butt";
-          break;
+          return;
         }
-        case "seashell": {
+      }
+    },
+    seashell(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const cx = ox + TS / 2 + rng.range(-4, 4), by = oy + TS - 1;
           const r = rng.range(4.5, 6.5);
           g.fillStyle = "#2b2419";
@@ -20491,17 +20816,27 @@
           }
           g.fillStyle = shade(base, 1.3);
           g.fillRect(cx - r * 0.45, by - r * 0.75, r * 0.9, 1.2);
-          break;
+          return;
         }
-        case "tripmine": {
+      }
+    },
+    tripmine(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(0, TS - 8, TS, 8, shade(base, 0.7));
           R(2, TS - 9, TS - 4, 3, base);
           R(TS / 2 - 4, TS - 11, 8, 3, shade(base, 1.3));
           R(TS / 2 - 1, TS - 12, 2, 2, "#e0563c");
           for (let k = 0; k < 3; k++) R(3 + k * 6, TS - 4, 2, 2, shade(base, 0.5));
-          break;
+          return;
         }
-        case "airpocket": {
+      }
+    },
+    airpocket(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this.paint(g, ox, oy, ART[T.WATER], rng);
           R(0, 0, TS, TS, "rgba(200,232,255,.045)");
           R(0, 0, TS, 2, "rgba(216,242,255,.09)");
@@ -20509,18 +20844,28 @@
             const bx = rng.int(2, TS - 4), by = rng.int(3, TS - 4);
             R(bx, by, 2, 2, "rgba(226,244,255,.20)");
           }
-          break;
+          return;
         }
-        case "palmwood": {
+      }
+    },
+    palmwood(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const w = 9, x0 = Math.round((TS - w) / 2);
           R(x0, 0, w, TS, base);
           R(x0, 0, 2, TS, lt);
           R(x0 + w - 2, 0, 2, TS, dk);
           for (let y = rng.range(0, 3); y < TS; y += rng.int(4, 6))
             R(x0, y, w, 1.5, dk2);
-          break;
+          return;
         }
-        case "palmleaf": {
+      }
+    },
+    palmleaf(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const lt22 = shade(base, 1.32), dk3 = shade(base, 0.58);
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 5; i++) {
@@ -20539,9 +20884,14 @@
           }
           g.clearRect(ox, oy, 2, 2);
           g.clearRect(ox + TS - 2, oy, 2, 2);
-          break;
+          return;
         }
-        case "coconut": {
+      }
+    },
+    coconut(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           for (const [dx, dy, r] of [[-3.5, 1, 3.4], [3.5, 0, 3.4], [0, 4, 3]]) {
             const cx = TS / 2 + dx, cy = TS / 2 + dy;
             g.fillStyle = base;
@@ -20555,13 +20905,23 @@
             g.fillStyle = shade(base, 0.58);
             R(cx - 1, cy - r, 2, 1.5, shade(base, 0.58));
           }
-          break;
+          return;
         }
-        case "roomair": {
+      }
+    },
+    roomair(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           if (rng.chance(0.35)) R(rng.int(3, TS - 4), rng.int(3, TS - 4), 1, 1, "rgba(255,226,170,.13)");
-          break;
+          return;
         }
-        case "lily": {
+      }
+    },
+    lily(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const cx = TS / 2, cy = 3.5;
           const rx = TS / 2 - 0.5, ry = 3;
           g.fillStyle = base;
@@ -20605,9 +20965,14 @@
           g.beginPath();
           g.arc(fx, fy, 0.9, 0, TAU);
           g.fill();
-          break;
+          return;
         }
-        case "spring": {
+      }
+    },
+    spring(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this.paint(g, ox, oy, ART[T.STONE], rng);
           g.globalAlpha = 0.45;
           R(0, 0, TS, TS, "#2a4a5a");
@@ -20619,9 +20984,14 @@
           for (let k = 0; k < 4; k++) R(rng.range(2, TS - 3), rng.range(4, TS - 2), 1, rng.range(2, 4), "#8fd0f0");
           g.globalAlpha = 1;
           R(cx0, TS - 2, 2, 2, "#bfe8ff");
-          break;
+          return;
         }
-        case "cattail": {
+      }
+    },
+    cattail(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           for (let k = 0; k < 4; k++) {
             const bx = 4 + k * 4.5 + rng.range(-1, 1), h = rng.range(12, TS - 1), lean = rng.range(-1.5, 1.5);
             g.strokeStyle = k % 2 ? lt : base;
@@ -20643,9 +21013,14 @@
               g.stroke();
             }
           }
-          break;
+          return;
         }
-        case "pondweed": {
+      }
+    },
+    pondweed(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const sway = rng.range(-2, 2);
           for (let k = 0; k < 5; k++) {
             const bx = 3 + k * 4 + rng.range(-1, 1), h = rng.range(7, 15);
@@ -20658,9 +21033,14 @@
             g.fillStyle = k % 2 ? base : lt;
             for (let j = 1; j < 3; j++) g.fillRect(ox + bx + sway * j * 0.5, oy + TS - h * j / 3, 2, 1);
           }
-          break;
+          return;
         }
-        case "pebbles": {
+      }
+    },
+    pebbles(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           for (let k = 0; k < 5; k++) {
             const px = rng.range(3, TS - 4), rx = rng.range(1.8, 3.4), ry = rx * rng.range(0.55, 0.75);
             const c = [base, lt, dk, "#b8b0a4", "#7f8a8c"][k];
@@ -20671,20 +21051,38 @@
             g.fillStyle = "rgba(255,255,255,.25)";
             g.fillRect(ox + px - rx * 0.4, oy + TS - ry * 1.6, 1.5, 1);
           }
-          break;
+          return;
         }
-        case "sporestone":
-          this._fill(g, ox, oy, base);
-          for (let i = 0; i < 7; i++)
-            R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
-          for (let i = 0; i < 6; i++) {
-            const x = rng.range(1, TS - 3), y = rng.range(1, TS - 3);
-            R(x, y, 2, 2, "#4a8a78");
-            R(x, y, 1, 1, "#7fd0b8");
-          }
-          this._speck(g, ox, oy, rng, 16, dk2, lt2);
-          break;
-        case "glowcap": {
+      }
+    },
+    sporestone(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        this._fill(g, ox, oy, base);
+        for (let i = 0; i < 7; i++)
+          R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
+        for (let i = 0; i < 6; i++) {
+          const x = rng.range(1, TS - 3), y = rng.range(1, TS - 3);
+          R(x, y, 2, 2, "#4a8a78");
+          R(x, y, 1, 1, "#7fd0b8");
+        }
+        this._speck(g, ox, oy, rng, 16, dk2, lt2);
+        return;
+      }
+    }
+  };
+  Object.assign(TILE_PAINT, TilePaintWater);
+
+  // src/legacy/art/tiles/village.js
+  var village_exports = {};
+  __export(village_exports, {
+    TilePaintVillage: () => TilePaintVillage
+  });
+  var TilePaintVillage = {
+    glowcap(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const specs = [[TS / 2 + rng.range(-1, 1), 12, 7, 5], [7 + rng.range(-1, 1), 7, 4, 3]];
           for (const [bx, h, capW, capH] of specs) {
             R(bx - 1.6, TS - h, 3.2, h, "#dff0e8");
@@ -20704,10 +21102,15 @@
           g.arc(ox + TS / 2, oy + TS - 12, 10, 0, TAU);
           g.fill();
           g.globalAlpha = 1;
-          break;
+          return;
         }
-        /* ---------- 마을 건축 ---------- */
-        case "thatch": {
+      }
+    },
+    /* ---------- 마을 건축 ---------- */
+    thatch(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, dk);
           for (let i = 0; i < 40; i++) {
             const x = rng.range(-3, TS), y = rng.range(0, TS - 2);
@@ -20717,9 +21120,14 @@
           }
           R(0, 0, TS, 2, lt2);
           R(0, TS - 2, TS, 2, shade(base, 0.55));
-          break;
+          return;
         }
-        case "rooftile": {
+      }
+    },
+    rooftile(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, dk2);
           for (let row = 0; row < 3; row++) {
             const y = row * 7.5 - 1, off = row % 2 ? 4 : 0;
@@ -20730,9 +21138,14 @@
               R(x + off + 1, y + 6, 5, 1, shade(base, 0.62));
             }
           }
-          break;
+          return;
         }
-        case "timber": {
+      }
+    },
+    timber(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           this._speck(g, ox, oy, rng, 20, shade(base, 0.9), lt2);
           const w2 = s.g, wl = shade(w2, 1.25), wd = shade(w2, 0.7);
@@ -20745,9 +21158,14 @@
           R(TS - 3, 0, 3, TS, w2);
           R(TS - 1, 0, 1, TS, wd);
           for (let k = 0; k < TS; k++) R(3 + k * 0.72, 3 + k * 0.72, 2, 2, w2);
-          break;
+          return;
         }
-        case "ashlar": {
+      }
+    },
+    ashlar(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           const rows = [[0, 11], [11, 11]];
           for (const [y, h] of rows) {
@@ -20759,9 +21177,14 @@
             }
           }
           this._speck(g, ox, oy, rng, 16, dk2, lt2);
-          break;
+          return;
         }
-        case "battlement": {
+      }
+    },
+    battlement(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(0, 8, TS, TS - 8, base);
           R(0, 8, TS, 1.5, lt2);
           R(0, TS - 2, TS, 2, dk2);
@@ -20772,9 +21195,14 @@
           R(7, 0, 1.5, 9, dk2);
           R(TS - 8, 0, 1.5, 9, dk2);
           this._speck(g, ox, oy, rng, 14, dk2, lt);
-          break;
+          return;
         }
-        case "windowtile": {
+      }
+    },
+    windowtile(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const fr = "#6a4a2a", frl = shade(fr, 1.3);
           R(0, 0, TS, TS, fr);
           R(0, 0, TS, 1.5, frl);
@@ -20786,9 +21214,14 @@
           R(2, TS / 2 - 1, TS - 4, 2, fr);
           R(4, 4, 5, 5, lt2);
           R(TS - 8, TS - 9, 3, 4, shade(base, 1.2));
-          break;
+          return;
         }
-        case "fencetile": {
+      }
+    },
+    fencetile(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(2, 6, 3, TS - 6, base);
           R(TS - 5, 6, 3, TS - 6, base);
           R(2, 6, 1, TS - 6, lt);
@@ -20799,9 +21232,14 @@
           R(0, 15, TS, 1, lt);
           R(2, 5, 3, 1.5, lt2);
           R(TS - 5, 5, 3, 1.5, lt2);
-          break;
+          return;
         }
-        case "lamppost": {
+      }
+    },
+    lamppost(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const pole = "#4a4a52";
           R(TS / 2 - 1.5, 8, 3, TS - 8, pole);
           R(TS / 2 - 1.5, 8, 1, TS - 8, shade(pole, 1.5));
@@ -20816,9 +21254,14 @@
           g.arc(ox + TS / 2, oy + 6, 9, 0, TAU);
           g.fill();
           g.globalAlpha = 1;
-          break;
+          return;
         }
-        case "bannertile": {
+      }
+    },
+    bannertile(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(1, 0, TS - 2, 2.5, "#6a4a2a");
           R(4, 2, TS - 8, TS - 6, base);
           R(4, 2, 2, TS - 6, lt);
@@ -20827,9 +21270,14 @@
           R(TS - 9, TS - 4, 5, 2, base);
           R(TS / 2 - 3, 6, 6, 6, "#e8d8a0");
           R(TS / 2 - 1, 4, 2, 10, "#e8d8a0");
-          break;
+          return;
         }
-        case "hay": {
+      }
+    },
+    hay(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 30; i++) {
             const x = rng.range(0, TS - 5), y = rng.range(0, TS - 1);
@@ -20838,9 +21286,14 @@
           R(0, 2, TS, 1.5, "#8a6a2a");
           R(0, TS - 5, TS, 1.5, "#8a6a2a");
           R(0, 0, TS, 1.5, lt2);
-          break;
+          return;
         }
-        case "sandbagtile": {
+      }
+    },
+    sandbagtile(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, dk2);
           for (const [x, y, w2] of [[-2, 0, 13], [10, 0, 13], [3, 8, 13], [-4, 15, 13], [12, 15, 13]]) {
             g.fillStyle = rng.chance(0.5) ? base : lt;
@@ -20850,10 +21303,15 @@
             R(x + 1, y + 1, w2 - 3, 1.4, lt2);
             R(x + w2 / 2 - 0.7, y, 1.4, 8, shade(base, 0.7));
           }
-          break;
+          return;
         }
-        /* ---------- 농업 ---------- */
-        case "farmland": {
+      }
+    },
+    /* ---------- 농업 ---------- */
+    farmland(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, dk);
           for (let i = 0; i < 12; i++)
             R(rng.range(-1, TS - 3), rng.range(4, TS - 3), rng.range(3, 7), rng.range(2, 4), rng.chance(0.5) ? base : dk2);
@@ -20866,9 +21324,14 @@
           }
           R(0, 0, TS, 1.2, lt2);
           this._speck(g, ox, oy, rng, 8, "#3a2a16", lt);
-          break;
+          return;
         }
-        case "crop": {
+      }
+    },
+    crop(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const st = s.st, kind = s.kind;
           const stalk = st === 3 ? shade(base, 0.68) : shade(base, 0.88);
           const n = [2, 3, 3, 4][st];
@@ -20940,10 +21403,15 @@
               R(tx + 2.4, ty + 1.4, 1.2, 1.2, "#fff2d8");
             }
           }
-          break;
+          return;
         }
-        /* ---------- 마을 기계 ---------- */
-        case "mk_windmill": {
+      }
+    },
+    /* ---------- 마을 기계 ---------- */
+    mk_windmill(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(TS / 2 - 4, 9, 8, TS - 9, base);
           R(TS / 2 - 4, 9, 2, TS - 9, lt2);
           R(TS / 2 + 2, 9, 2, TS - 9, dk);
@@ -20961,9 +21429,14 @@
           g.beginPath();
           g.arc(ox + TS / 2, oy + 7, 2, 0, TAU);
           g.fill();
-          break;
+          return;
         }
-        case "mk_mill": {
+      }
+    },
+    mk_mill(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           g.fillStyle = "#7a7a82";
           g.beginPath();
@@ -20982,9 +21455,23 @@
             R(TS / 2 + Math.cos(a) * 3.4 - 0.6, 10 + Math.sin(a) * 3.4 - 0.6, 1.2, 1.2, "#6a6a72");
           }
           R(4, TS - 5, TS - 8, 3, "#e8dcc0");
-          break;
+          return;
         }
-        case "mk_oven": {
+      }
+    }
+  };
+  Object.assign(TILE_PAINT, TilePaintVillage);
+
+  // src/legacy/art/tiles/ruins.js
+  var ruins_exports = {};
+  __export(ruins_exports, {
+    TilePaintRuins: () => TilePaintRuins
+  });
+  var TilePaintRuins = {
+    mk_oven(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(1, TS - 5, TS - 2, 5, shade(base, 0.6));
           g.fillStyle = base;
           g.beginPath();
@@ -21005,9 +21492,14 @@
           g.fill();
           R(TS / 2 - 1.6, TS - 8, 3.2, 3, "#ffcf6a");
           R(TS - 6, 0, 4, 6, shade(base, 0.7));
-          break;
+          return;
         }
-        case "darthole": {
+      }
+    },
+    darthole(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 6; i++) R(rng.range(-1, TS - 3), rng.range(-1, TS - 3), rng.range(3, 7), rng.range(2, 5), rng.chance(0.5) ? lt : dk);
           const side = s.d > 0 ? TS - 7 : 2;
@@ -21017,18 +21509,28 @@
           }
           R(s.d > 0 ? TS - 2 : 0, 0, 2, TS, dk2);
           this._speck(g, ox, oy, rng, 12, dk2, lt);
-          break;
+          return;
         }
-        case "flamevent": {
+      }
+    },
+    flamevent(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, dk);
           for (let i = 0; i < 5; i++) R(rng.range(0, TS - 4), rng.range(3, TS - 3), rng.range(3, 6), rng.range(2, 4), rng.chance(0.5) ? base : dk2);
           R(3, 0, TS - 6, 4, "#1a1410");
           for (let k = 0; k < 3; k++) R(4 + k * 5, 0, 3, 3, "#e8842a");
           R(3, 3, TS - 6, 1.4, shade(base, 1.4));
           this._speck(g, ox, oy, rng, 10, "#2a1a10", "#c86a2a");
-          break;
+          return;
         }
-        case "crumble": {
+      }
+    },
+    crumble(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 6; i++) R(rng.range(-1, TS - 3), rng.range(-1, TS - 3), rng.range(3, 7), rng.range(2, 4), rng.chance(0.5) ? lt : dk);
           for (let i = 0; i < 4; i++) {
@@ -21041,9 +21543,14 @@
           }
           R(0, 0, TS, 1.4, lt2);
           R(0, TS - 2, TS, 2, dk2);
-          break;
+          return;
         }
-        case "slag": {
+      }
+    },
+    slag(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 7; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
           for (let i = 0; i < 3; i++) {
@@ -21055,9 +21562,14 @@
           }
           for (let i = 0; i < 3; i++) R(rng.range(1, TS - 3), rng.range(1, TS - 3), 2, 2, "#c8763a");
           this._speck(g, ox, oy, rng, 14, dk2, "#8a6a4a");
-          break;
+          return;
         }
-        case "mk_dart": {
+      }
+    },
+    mk_dart(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           R(2, 5, 18, 12, shade(base, 0.5));
           for (let k = 0; k < 3; k++) {
@@ -21066,9 +21578,14 @@
           }
           R(1, 3, 20, 2, shade(base, 1.35));
           R(1, TS - 5, 20, 2, shade(base, 0.45));
-          break;
+          return;
         }
-        case "mk_jet": {
+      }
+    },
+    mk_jet(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._mkBody(g, ox, oy, base, R);
           g.fillStyle = "#1a1610";
           g.beginPath();
@@ -21086,9 +21603,14 @@
             const a = k * TAU / 4 + 0.4;
             R(TS / 2 + Math.cos(a) * 8 - 1.5, TS / 2 + Math.sin(a) * 8 - 1.5, 3, 3, shade(base, 0.5));
           }
-          break;
+          return;
         }
-        case "mk_switch": {
+      }
+    },
+    mk_switch(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(3, 4, TS - 6, TS - 8, shade("#3a3a44", 1));
           R(3, 4, TS - 6, 2, "#5a5a66");
           g.fillStyle = base;
@@ -21099,10 +21621,15 @@
           g.beginPath();
           g.arc(ox + TS / 2 - 1, oy + TS / 2 - 1, 2.4, 0, TAU);
           g.fill();
-          break;
+          return;
         }
-        /* ---------- 유적 고유 장식 열 ---------- */
-        case "banner_ice": {
+      }
+    },
+    /* ---------- 유적 고유 장식 열 ---------- */
+    banner_ice(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(4, 0, TS - 8, 2, shade(base, 0.6));
           R(5, 2, TS - 10, TS - 10, base);
           R(5, 2, 2, TS - 10, lt);
@@ -21112,9 +21639,14 @@
             if (x >> 1 & 1) R(x, TS - 8, 2, 2, x < TS / 2 ? lt : dk);
           R(6, TS - 6, 1, 2, lt2);
           R(TS - 9, TS - 7, 1, 2, lt2);
-          break;
+          return;
         }
-        case "glyph": {
+      }
+    },
+    glyph(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const warm = s.warm;
           this._fill(g, ox, oy, dk);
           this._speck(g, ox, oy, rng, 16, dk2, base);
@@ -21133,9 +21665,14 @@
             R(5, 5, 1, 1, "#ffffff");
             R(12, 11, 1, 1, "#ffffff");
           }
-          break;
+          return;
         }
-        case "canopic": {
+      }
+    },
+    canopic(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(8, 1, 6, 2, shade(base, 0.74));
           R(9, 3, 4, 2, base);
           R(6, 5, TS - 12, 3, base);
@@ -21145,9 +21682,14 @@
           R(7, 12, TS - 14, 2, dk2);
           R(9, 15, 1, 3, dk2);
           R(12, 15, 1, 3, dk2);
-          break;
+          return;
         }
-        case "minelamp": {
+      }
+    },
+    minelamp(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(TS / 2 - 1, 0, 2, 4, "#4a4038");
           R(7, 4, TS - 14, 2, "#6a5c4a");
           R(6, 6, TS - 12, 2, "#5a5048");
@@ -21155,9 +21697,14 @@
           R(8, 9, TS - 16, 5, lt2);
           R(9, 10, 2, 3, "#fff6e0");
           R(6, 15, TS - 12, 2, "#5a5048");
-          break;
+          return;
         }
-        case "toolpile": {
+      }
+    },
+    toolpile(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(3, TS - 4, TS - 6, 3, shade(base, 0.58));
           R(4, TS - 9, 12, 2, base);
           R(3, TS - 11, 4, 3, shade("#8a8478", 1));
@@ -21165,9 +21712,14 @@
           R(7, TS - 16, 6, 2, shade("#8a8478", 0.9));
           R(13, TS - 7, 6, 2, dk);
           R(16, TS - 10, 2, 3, shade("#8a8478", 0.8));
-          break;
+          return;
         }
-        case "sac": {
+      }
+    },
+    sac(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(TS / 2 - 1, 0, 2, 3, shade(base, 0.6));
           R(7, 3, TS - 14, 4, shade(base, 0.86));
           R(5, 6, TS - 10, 9, base);
@@ -21178,9 +21730,14 @@
           R(9, 13, 3, 2, lt2);
           R(9, 9, 1, 1, "#ffd0f0");
           R(13, 11, 1, 1, "#ffd0f0");
-          break;
+          return;
         }
-        case "boneheap": {
+      }
+    },
+    boneheap(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(2, TS - 5, TS - 4, 4, shade(base, 0.5));
           for (const [bx, by, bw] of [[3, TS - 8, 9], [11, TS - 10, 7], [6, TS - 12, 6]]) {
             R(bx, by, bw, 2, base);
@@ -21190,9 +21747,14 @@
           R(14, TS - 7, 5, 5, base);
           R(15, TS - 5, 2, 2, dk2);
           R(18, TS - 5, 1, 2, dk2);
-          break;
+          return;
         }
-        case "sporevent": {
+      }
+    },
+    sporevent(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, dk);
           this._speck(g, ox, oy, rng, 18, dk2, base);
           g.fillStyle = "#1a1f1c";
@@ -21210,9 +21772,23 @@
           }
           R(TS / 2 - 2, TS / 2 - 4, 2, 2, lt2);
           R(TS / 2 + 2, TS / 2 - 6, 1, 1, lt2);
-          break;
+          return;
         }
-        case "mossrock": {
+      }
+    }
+  };
+  Object.assign(TILE_PAINT, TilePaintRuins);
+
+  // src/legacy/art/tiles/cave.js
+  var cave_exports = {};
+  __export(cave_exports, {
+    TilePaintCave: () => TilePaintCave
+  });
+  var TilePaintCave = {
+    mossrock(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 6; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
           this._speck(g, ox, oy, rng, 14, dk2, lt2);
@@ -21228,9 +21804,14 @@
             R(x, 0, 1, 1, m2);
             R(x, h - 1, 1, 1, m3);
           }
-          break;
+          return;
         }
-        case "hangmoss": {
+      }
+    },
+    hangmoss(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(0, 0, TS, 2, shade(base, 0.7));
           for (let x = 0; x < TS; x += 2) {
             const len = rng.int(6, TS - 1);
@@ -21238,9 +21819,14 @@
             R(x + (rng.chance(0.5) ? 0 : 1), 1 + len * 0.55, 1, len * 0.45, shade(base, 0.8));
             if (rng.chance(0.4)) R(x, 2, 1, 2, lt2);
           }
-          break;
+          return;
         }
-        case "dripstone": {
+      }
+    },
+    dripstone(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const up = !!s.up;
           for (let y = 0; y < TS; y++) {
             const t = up ? (TS - y) / TS : (y + 1) / TS;
@@ -21250,9 +21836,14 @@
             R(TS / 2 - w / 2, y, Math.max(1, w * 0.25), 1, lt2);
           }
           if (!up) R(TS / 2 - 0.5, TS - 2, 1, 2, "#9fd0e8");
-          break;
+          return;
         }
-        case "geode": {
+      }
+    },
+    geode(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           const cols = [base, lt, lt2, shade(base, 0.8)];
           for (const [bx, h, w, lean] of [[6, 14, 5, -1.5], [12, 19, 6, 0.5], [17, 11, 4, 2]]) {
             g.fillStyle = cols[rng.int(0, 3)];
@@ -21272,9 +21863,14 @@
           g.arc(ox + TS / 2, oy + TS - 8, 10, 0, TAU);
           g.fill();
           g.globalAlpha = 1;
-          break;
+          return;
         }
-        case "fault": {
+      }
+    },
+    fault(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 7; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
           for (let i = 0; i < 9; i++) {
@@ -21293,9 +21889,14 @@
               y += 1.2;
             }
           }
-          break;
+          return;
         }
-        case "meteorite": {
+      }
+    },
+    meteorite(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 5; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
           for (let i = 0; i < 4; i++) {
@@ -21325,9 +21926,14 @@
             }
           }
           this._speck(g, ox, oy, rng, 10, dk2, lt2);
-          break;
+          return;
         }
-        case "starcrystal": {
+      }
+    },
+    starcrystal(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           g.globalAlpha = 0.2;
           g.fillStyle = lt2;
           g.beginPath();
@@ -21364,9 +21970,14 @@
             R(bx + lean - 0.5, TS - h - 1.5, 1, 3, "#fffbe8");
           }
           R(0, TS - 2, TS, 2, "#2e2a2e");
-          break;
+          return;
         }
-        case "fused": {
+      }
+    },
+    fused(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 4; i++) {
             let x = rng.range(0, TS - 4), y = rng.range(1, TS - 2);
@@ -21384,16 +21995,26 @@
           R(rng.range(2, 8), rng.range(2, 6), rng.range(5, 9), 1, "#6a6070");
           R(rng.range(10, 16), rng.range(12, 18), rng.range(3, 6), 1, "#5a5060");
           if (v === 1) R(rng.range(3, TS - 5), rng.range(3, TS - 5), 2, 1, "#c85a2a");
-          break;
+          return;
         }
-        case "granite": {
+      }
+    },
+    granite(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           this._fill(g, ox, oy, base);
           for (let i = 0; i < 5; i++) R(rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 8), rng.range(3, 6), rng.chance(0.5) ? lt : dk);
           for (let i = 0; i < 22; i++) R(rng.range(0, TS - 2), rng.range(0, TS - 2), 2, 2, rng.chance(0.5) ? "#d8c8c0" : "#2a2224");
           this._speck(g, ox, oy, rng, 16, dk2, lt2);
-          break;
+          return;
         }
-        case "hyphae": {
+      }
+    },
+    hyphae(H) {
+      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
+      {
+        {
           R(0, 0, TS, 2, shade(base, 0.62));
           for (let x = 1; x < TS; x += 3) {
             const len = 6 + x * 7 % 11;
@@ -21402,50 +22023,12 @@
             if (len > 12) R(x, 2 + len, 1, 1, lt2);
           }
           for (const [bx, by] of [[4, 7], [13, 10], [8, 14]]) R(bx, by, 2, 2, lt2);
-          break;
+          return;
         }
       }
-    },
-    /** 기계 공통 뼈대 — 강철 상자에 볼트 네 개 */
-    _mkBody(g, ox, oy, base, R) {
-      const dk = shade(base, 0.62), lt = shade(base, 1.3);
-      R(1, 2, TS - 2, TS - 3, base);
-      R(1, 2, TS - 2, 2, lt);
-      R(1, TS - 3, TS - 2, 2, dk);
-      R(1, 2, 2, TS - 3, shade(base, 1.12));
-      R(TS - 3, 2, 2, TS - 3, dk);
-      for (const [bx, by] of [[3, 4], [TS - 6, 4], [3, TS - 7], [TS - 6, TS - 7]]) R(bx, by, 2, 2, shade(base, 0.45));
-    },
-    /* 나무 판자 벽지. */
-    paintWoodWall(g, ox, oy, col, rng) {
-      const base = shade(col, 0.62), dk = shade(col, 0.4), lt = shade(col, 0.82);
-      this._fill(g, ox, oy, base);
-      let x = rng.int(0, 3);
-      while (x < TS) {
-        const w = rng.int(4, 7);
-        this._r(g, ox, oy, x, 0, w, TS, rng.chance(0.5) ? shade(col, 0.68) : shade(col, 0.56));
-        this._r(g, ox, oy, x + w - 1, 0, 1, TS, dk);
-        for (let k = 0; k < 2; k++)
-          this._r(g, ox, oy, x + rng.int(1, Math.max(1, w - 2)), rng.int(1, TS - 3), 1, rng.int(2, 5), dk);
-        if (rng.chance(0.3)) this._r(g, ox, oy, x + 1, rng.int(2, TS - 3), 1, 1, lt);
-        x += w;
-      }
-      g.globalAlpha = 0.16;
-      this._r(g, ox, oy, 0, 0, TS, 2, "#000");
-      g.globalAlpha = 1;
-    },
-    paintWall(g, ox, oy, col, rng) {
-      const base = shade(col, 0.66), dk = shade(col, 0.44), lt = shade(col, 0.86);
-      this._fill(g, ox, oy, base);
-      for (let i = 0; i < 9; i++)
-        this._r(g, ox, oy, rng.range(-2, TS - 3), rng.range(-2, TS - 3), rng.range(4, 9), rng.range(3, 6), rng.chance(0.5) ? dk : lt);
-      this._speck(g, ox, oy, rng, 24, dk, lt);
-      g.globalAlpha = 0.16;
-      this._r(g, ox, oy, 0, 0, TS, 2, "#000");
-      this._r(g, ox, oy, 0, 0, 2, TS, "#000");
-      g.globalAlpha = 1;
     }
   };
+  Object.assign(TILE_PAINT, TilePaintCave);
 
   // src/legacy/itemart.js
   var itemart_exports = {};
@@ -21455,6 +22038,7 @@
     BFSPEC: () => BFSPEC,
     GLSPEC: () => GLSPEC,
     ISPEC: () => ISPEC,
+    ITEM_PAINT: () => ITEM_PAINT,
     NPCSPEC: () => NPCSPEC,
     PET_FORM: () => PET_FORM,
     S32: () => S32,
@@ -22193,6 +22777,7 @@
     a_play100h: "g:clock3",
     a_level100: "g:star"
   };
+  var ITEM_PAINT = {};
   var Art = {
     atlas: null,
     cells: {},
@@ -22383,9 +22968,21 @@
         g.fill();
         g.restore();
       };
-      switch (s.k) {
-        /* ---------- 업적 글리프 ---------- */
-        case "gl": {
+      const paint = ITEM_PAINT[s.k];
+      if (paint) paint.call(this, { g, s, rng, P, poly, circ, ell, stroke, glow });
+    }
+  };
+
+  // src/legacy/art/items/glyphs.js
+  var glyphs_exports = {};
+  __export(glyphs_exports, {
+    ItemPaintGlyphs: () => ItemPaintGlyphs
+  });
+  var ItemPaintGlyphs = {
+    gl(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const G1 = "#e8dcc0", G2 = "#c8a058", DK = "#4a4238", RD = "#d05a4a", GR = "#6fbf5a";
           const BL = "#6fa8d8", PL = "#b17fe0";
           switch (s.g) {
@@ -22672,10 +23269,24 @@
                 [12.5, 12.5]
               ], G2);
           }
-          break;
+          return;
         }
-        /* ---------- 무기 ---------- */
-        case "sword": {
+      }
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintGlyphs);
+
+  // src/legacy/art/items/gear.js
+  var gear_exports = {};
+  __export(gear_exports, {
+    ItemPaintGear: () => ItemPaintGear
+  });
+  var ItemPaintGear = {
+    /* ---------- 무기 ---------- */
+    sword(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const bw = s.w, base = s.c, lt = sh2(base, 1.3), dk = sh2(base, 0.68);
           if (s.glow) glow(16, 11, 11, s.glow, 0.22);
           poly([[16, 1], [16 + bw, 8], [16 + bw - 0.5, 20], [16 - bw + 0.5, 20], [16 - bw, 8]], base);
@@ -22696,9 +23307,14 @@
           P(14, 26.5, 4, 1, sh2(s.grip, 0.55));
           circ(16, 29.6, 2.3, gd);
           circ(15.4, 29, 0.8, sh2(gd, 1.4));
-          break;
+          return;
         }
-        case "scythe": {
+      }
+    },
+    scythe(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           if (s.glow) glow(14, 14, 13, s.glow, 0.22);
           g.fillStyle = s.c;
           g.beginPath();
@@ -22721,9 +23337,14 @@
             g.lineTo(18.7, 8.6);
           });
           circ(20, 7.6, 2.4, sh2(s.shaft, 2));
-          break;
+          return;
         }
-        case "bow": {
+      }
+    },
+    bow(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           if (s.glow) glow(14, 16, 13, s.glow, 0.2);
           const a = 1, cxx = 23, r = 15;
           stroke(s.c, 3.4, () => {
@@ -22747,9 +23368,14 @@
           });
           poly([[30, 16], [25, 13.4], [25, 18.6]], "#d0d4dc");
           poly([[ex - 1, 16], [ex + 4, 12.8], [ex + 4, 19.2]], sh2(s.c, 1.5));
-          break;
+          return;
         }
-        case "staff": {
+      }
+    },
+    staff(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const hd = s.head;
           if (s.glow) glow(19, 8, 11, s.glow, 0.26);
           stroke(s.c, 3, () => {
@@ -22784,9 +23410,14 @@
               g.arc(19, 8, 6.4, 2.2, 4.6);
             });
           }
-          break;
+          return;
         }
-        case "spear": {
+      }
+    },
+    spear(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.7);
           if (s.glow) glow(16, 10, 11, s.glow, 0.22);
           stroke("#6a4a28", 2.6, () => {
@@ -22802,10 +23433,15 @@
           poly([[16, 1], [18, 8], [16, 9]], lt);
           poly([[16, 10], [22, 13], [16, 12]], sh2(c, 0.85));
           poly([[16, 10], [10, 13], [16, 12]], sh2(c, 0.85));
-          break;
+          return;
         }
-        /* ---------- 낚싯대: 대각선 장대 + 늘어진 줄과 찌 ---------- */
-        case "fishrod": {
+      }
+    },
+    /* ---------- 낚싯대: 대각선 장대 + 늘어진 줄과 찌 ---------- */
+    fishrod(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           stroke("#6a4a28", 2.2, () => {
             g.moveTo(5, 29);
@@ -22821,10 +23457,15 @@
           });
           circ(17, 22, 1.6, c);
           if (s.glow) glow(27, 4, 6, s.glow, 0.3);
-          break;
+          return;
         }
-        /* ---------- 물고기: 타원 몸통 + 꼬리 삼각형 ---------- */
-        case "fishitem": {
+      }
+    },
+    /* ---------- 물고기: 타원 몸통 + 꼬리 삼각형 ---------- */
+    fishitem(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.7);
           ell(15, 17, 9, 5.4, c);
           ell(13, 15, 4, 2.2, lt);
@@ -22832,9 +23473,14 @@
           poly([[6.5, 17], [2, 14], [2, 20]], dk);
           circ(9, 15.5, 1, "#1a1a1a");
           if (s.glow) glow(15, 17, 10, s.glow, 0.25);
-          break;
+          return;
         }
-        case "pick": {
+      }
+    },
+    pick(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.4);
           if (s.glow) glow(16, 13, 13, s.glow, 0.2);
           stroke("#6a4a28", 3.4, () => {
@@ -22855,9 +23501,14 @@
           poly([[28.4, 14.2], [31, 17.6], [26, 17.4]], sh2(c, 0.78));
           P(13.4, 10.6, 5.2, 5.4, sh2(c, 0.82));
           P(13.4, 10.6, 5.2, 1.4, lt);
-          break;
+          return;
         }
-        case "axe": {
+      }
+    },
+    axe(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.72);
           stroke("#6a4a28", 3.4, () => {
             g.moveTo(20, 30);
@@ -22893,10 +23544,15 @@
             g.moveTo(19.5, 23);
             g.quadraticCurveTo(15.5, 15, 19.5, 7);
           });
-          break;
+          return;
         }
-        /* ---------- 방어구 ---------- */
-        case "helm": {
+      }
+    },
+    /* ---------- 방어구 ---------- */
+    helm(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
           if (s.glow) glow(16, 15, 12, s.glow, 0.18);
           if (s.crest) {
@@ -22922,9 +23578,14 @@
             P(6, 21, 20, 1.6, dk);
           }
           P(6, 16, 20, 1, sh2(c, 1.5));
-          break;
+          return;
         }
-        case "chest": {
+      }
+    },
+    chest(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
           if (s.glow) glow(16, 17, 13, s.glow, 0.18);
           poly([[9, 8], [23, 8], [25, 14], [23, 27], [9, 27], [7, 14]], c);
@@ -22942,9 +23603,14 @@
             P(8, 17, 16, 1.4, dk);
             P(8, 22, 16, 1.4, dk);
           }
-          break;
+          return;
         }
-        case "boots": {
+      }
+    },
+    boots(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.6);
           if (s.glow) glow(16, 18, 12, s.glow, 0.18);
           const boot = (bx) => {
@@ -22955,10 +23621,15 @@
           };
           boot(2);
           boot(17);
-          break;
+          return;
         }
-        /* ---------- 장신구 ---------- */
-        case "ring": {
+      }
+    },
+    /* ---------- 장신구 ---------- */
+    ring(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           stroke(s.c, 3.4, () => {
             g.arc(16, 20, 8, 0, TAU);
           });
@@ -22968,9 +23639,14 @@
           poly([[16, 4], [21, 9.5], [16, 15], [11, 9.5]], s.gem);
           poly([[16, 4], [16, 15], [11, 9.5]], sh2(s.gem, 1.45));
           P(14.6, 7, 1.4, 1.4, "#ffffff");
-          break;
+          return;
         }
-        case "amulet": {
+      }
+    },
+    amulet(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           stroke(s.c, 1.6, () => {
             g.arc(16, 15, 10, Math.PI * 1.15, Math.PI * 1.85);
           });
@@ -22996,9 +23672,14 @@
             circ(14.2, 23, 1.6, sh2(s.gem, 1.5));
           }
           P(14.8, 16.5, 2.4, 2.4, sh2(s.c, 1.2));
-          break;
+          return;
         }
-        case "cloud": {
+      }
+    },
+    cloud(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 12, "#cfe8ff", 0.18);
           circ(11, 18, 6, "#e0ecfa");
           circ(20, 18, 7, "#e0ecfa");
@@ -23013,9 +23694,14 @@
             g.moveTo(21, 25);
             g.lineTo(23, 29);
           });
-          break;
+          return;
         }
-        case "sigil": {
+      }
+    },
+    sigil(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 11, s.c, 0.18);
           stroke(sh2(s.c, 0.7), 2, () => {
             g.arc(16, 16, 10, 0, TAU);
@@ -23028,9 +23714,14 @@
           g.closePath();
           g.fill();
           circ(14, 16, 1.8, sh2(s.c, 1.6));
-          break;
+          return;
         }
-        case "star": {
+      }
+    },
+    star(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const R = s.big ? 13 : 11, r = R * 0.42;
           if (s.glow) glow(16, 16, R + 3, s.glow, 0.3);
           g.fillStyle = s.c;
@@ -23051,10 +23742,24 @@
           }
           g.closePath();
           g.fill();
-          break;
+          return;
         }
-        /* ---------- 소비 ---------- */
-        case "potion": {
+      }
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintGear);
+
+  // src/legacy/art/items/goods.js
+  var goods_exports = {};
+  __export(goods_exports, {
+    ItemPaintGoods: () => ItemPaintGoods
+  });
+  var ItemPaintGoods = {
+    /* ---------- 소비 ---------- */
+    potion(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const liq = s.c;
           const scale = s.sz === "sm" ? 0.72 : s.sz === "lg" ? 1.22 : 1;
           if (scale !== 1) {
@@ -23086,9 +23791,14 @@
           }
           if (s.sz === "lg") P(9, 19, 14, 2, "rgba(0,0,0,.18)");
           if (scale !== 1) g.restore();
-          break;
+          return;
         }
-        case "stew": {
+      }
+    },
+    stew(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           g.fillStyle = "#8a6a4a";
           g.beginPath();
           g.moveTo(4, 15);
@@ -23110,10 +23820,15 @@
             g.moveTo(19, 9);
             g.quadraticCurveTo(21, 6, 19, 3);
           });
-          break;
+          return;
         }
-        /* ---------- 재료 ---------- */
-        case "log": {
+      }
+    },
+    /* ---------- 재료 ---------- */
+    log(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.25), dk = sh2(c, 0.7);
           P(7, 10, 20, 13, c);
           P(7, 10, 20, 2.4, lt);
@@ -23122,34 +23837,54 @@
           ell(7, 16.5, 3.2, 6.5, sh2(c, 1.15));
           ell(7, 16.5, 2.1, 4.3, sh2(c, 0.85));
           ell(7, 16.5, 1, 2, sh2(c, 1.3));
-          break;
+          return;
         }
-        /* 장식 아이템 — 타일 그림을 테두리 없이 그대로 키운다. */
-        case "deco": {
+      }
+    },
+    /* 장식 아이템 — 타일 그림을 테두리 없이 그대로 키운다. */
+    deco(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 3, 3, 26, 26);
           else P(8, 8, 16, 16, TILE_DEF[s.tile].c || "#666");
-          break;
+          return;
         }
-        case "block": {
+      }
+    },
+    block(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 4, 5, 24, 24);
           else P(4, 5, 24, 24, TILE_DEF[s.tile].c || "#666");
           P(4, 5, 24, 2, "rgba(255,255,255,.22)");
           P(4, 27, 24, 2, "rgba(0,0,0,.3)");
           P(26, 5, 2, 24, "rgba(0,0,0,.22)");
-          break;
+          return;
         }
-        /* ---------- 기계 ---------- */
-        case "machine": {
+      }
+    },
+    /* ---------- 기계 ---------- */
+    machine(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           if (s.glow) glow(16, 15, 13, s.glow, 0.24);
           P(4, 26, 24, 3, "#3a3a44");
           P(4, 26, 24, 1, "#5a5a66");
           if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 5, 4, 22, 22);
           else P(5, 4, 22, 22, TILE_DEF[s.tile].c || "#666");
           P(3, 28, 26, 2, "rgba(0,0,0,.35)");
-          break;
+          return;
         }
-        /* ---------- 자원 · 부품 ---------- */
-        case "barrel": {
+      }
+    },
+    /* ---------- 자원 · 부품 ---------- */
+    barrel(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
           P(7, 7, 18, 21, c);
           P(7, 7, 2.4, 21, lt);
@@ -23159,9 +23894,14 @@
           P(7, 12, 18, 2, dk);
           P(7, 21, 18, 2, dk);
           P(11, 16, 10, 4, s.fluid);
-          break;
+          return;
         }
-        case "bomb": {
+      }
+    },
+    bomb(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           circ(15, 20, 9, sh2(c, 0.7));
           circ(15, 20, 8, c);
@@ -23173,18 +23913,28 @@
           });
           circ(24, 3, 2, "#ffd24a");
           if (s.glow) glow(24, 3, 7, s.glow, 0.3);
-          break;
+          return;
         }
-        case "pellet": {
+      }
+    },
+    pellet(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           for (const [x, y, r] of [[12, 14, 4.4], [21, 12, 3.8], [17, 21, 4.6], [10, 22, 3.4], [23, 20, 3.2]]) {
             circ(x, y, r, c);
             circ(x - r * 0.3, y - r * 0.35, r * 0.38, sh2(c, 1.25));
             circ(x + r * 0.35, y + r * 0.4, r * 0.3, sh2(c, 0.7));
           }
-          break;
+          return;
         }
-        case "fuelbrick": {
+      }
+    },
+    fuelbrick(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.6);
           poly([[5, 12], [27, 12], [27, 25], [5, 25]], c);
           poly([[5, 12], [27, 12], [24, 8], [8, 8]], lt);
@@ -23192,9 +23942,14 @@
           for (let i = 0; i < 3; i++) P(8 + i * 7, 14, 4, 7, sh2(c, 0.78));
           P(9, 15, 2, 2, "#e8842a");
           P(23, 18, 2, 2, "#e8842a");
-          break;
+          return;
         }
-        case "wire": {
+      }
+    },
+    wire(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35);
           for (let i = 0; i < 3; i++) {
             const y = 9 + i * 6;
@@ -23207,9 +23962,14 @@
               g.bezierCurveTo(12, y - 4.8, 20, y + 3.2, 27, y - 0.8);
             });
           }
-          break;
+          return;
         }
-        case "circuit": {
+      }
+    },
+    circuit(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, tr2 = s.trace;
           P(5, 6, 22, 21, sh2(c, 0.72));
           P(5, 6, 22, 2, sh2(c, 1.3));
@@ -23228,9 +23988,14 @@
           for (const [x, y] of [[9, 10], [18, 24], [23, 10], [14, 14]]) circ(x, y, 1.5, tr2);
           P(19, 13, 6, 6, "#1a1a1f");
           P(20, 14, 4, 4, "#33333d");
-          break;
+          return;
         }
-        case "motor": {
+      }
+    },
+    motor(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.32), dk = sh2(c, 0.62);
           P(8, 9, 16, 15, c);
           P(8, 9, 16, 2, lt);
@@ -23240,9 +24005,14 @@
           P(3, 14, 5, 5, sh2(c, 0.8));
           circ(16, 16.5, 3, sh2(c, 1.5));
           circ(16, 16.5, 1.2, dk);
-          break;
+          return;
         }
-        case "frame": {
+      }
+    },
+    frame(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.55), dk2 = sh2(c, 0.35);
           const off = 5;
           P(9, 4, 19, 3, dk);
@@ -23263,9 +24033,14 @@
           P(19.6, 9, 3.4, 20, c);
           P(21.8, 9, 1.2, 20, dk);
           for (const [x, y] of [[5.7, 10.7], [21.3, 10.7], [5.7, 26.7], [21.3, 26.7]]) circ(x, y, 1.4, dk2);
-          break;
+          return;
         }
-        case "cell": {
+      }
+    },
+    cell(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           if (s.glow && s.fill) glow(16, 17, 12, s.glow, 0.26);
           P(13, 3, 6, 3, "#8a8a96");
@@ -23285,9 +24060,14 @@
               g.lineTo(12, 19);
             });
           }
-          break;
+          return;
         }
-        case "rivet": {
+      }
+    },
+    rivet(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.65);
           for (const [x, y] of [[10, 8], [21, 13], [12, 21]]) {
             ell(x, y, 4.2, 2.2, lt);
@@ -23295,9 +24075,14 @@
             P(x - 1.6, y, 1.2, 9, lt);
             poly([[x - 1.6, y + 9], [x + 1.6, y + 9], [x, y + 12]], dk);
           }
-          break;
+          return;
         }
-        case "sawblade": {
+      }
+    },
+    sawblade(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, dk = sh2(c, 0.6);
           if (s.glow) glow(16, 16, 13, s.glow, 0.22);
           for (let k = 0; k < 12; k++) {
@@ -23316,19 +24101,38 @@
             const a = k * TAU / 4 + 0.4;
             circ(16 + Math.cos(a) * 6.6, 16 + Math.sin(a) * 6.6, 1.2, dk);
           }
-          break;
+          return;
         }
-        /* ---------- 농업 ---------- */
-        case "hoe": {
+      }
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintGoods);
+
+  // src/legacy/art/items/farm.js
+  var farm_exports = {};
+  __export(farm_exports, {
+    ItemPaintFarm: () => ItemPaintFarm
+  });
+  var ItemPaintFarm = {
+    /* ---------- 농업 ---------- */
+    hoe(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.65);
           P(17, 4, 3, 22, "#6a4a28");
           P(17, 4, 1.2, 22, "#8f6740");
           poly([[6, 5], [19, 5], [19, 9], [10, 9], [10, 13], [6, 13]], c);
           poly([[6, 5], [19, 5], [19, 6.4], [7.4, 6.4]], lt);
           P(7, 11, 3, 2, dk);
-          break;
+          return;
         }
-        case "seed": {
+      }
+    },
+    seed(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           P(6, 12, 20, 14, "#7a5a3a");
           P(6, 12, 20, 2, "#9a7a52");
@@ -23338,9 +24142,14 @@
             ell(x, y, 2.6, 1.8, c);
             ell(x - 0.7, y - 0.5, 1, 0.8, sh2(c, 1.4));
           }
-          break;
+          return;
         }
-        case "wheatitem": {
+      }
+    },
+    wheatitem(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.7);
           for (const [x, tilt] of [[11, -0.16], [21, 0.16], [16, 0]]) {
             stroke(dk, 1.8, () => {
@@ -23354,9 +24163,14 @@
             }
             P(x - 1 - tilt * 4, 7, 2, 5, dk);
           }
-          break;
+          return;
         }
-        case "rootitem": {
+      }
+    },
+    rootitem(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           if (s.glow) glow(16, 20, 11, s.glow, 0.24);
           poly([[16, 30], [11, 16], [16, 11], [21, 16]], c);
@@ -23370,9 +24184,14 @@
             ], "#5fa85a");
           }
           P(15, 8, 2, 5, "#4a8a48");
-          break;
+          return;
         }
-        case "flouritem": {
+      }
+    },
+    flouritem(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, dk = sh2(c, 0.72);
           P(8, 9, 16, 20, "#d8cbaa");
           poly([[8, 9], [24, 9], [21, 5], [11, 5]], "#c8bb9a");
@@ -23380,9 +24199,14 @@
           P(11, 3, 10, 3, "#b8ab8a");
           P(11, 14, 10, 8, sh2("#d8cbaa", 0.84));
           for (let i = 0; i < 12; i++) P(9 + i * 7 % 14, 24 + i % 3, 2, 1, c);
-          break;
+          return;
         }
-        case "compost": {
+      }
+    },
+    compost(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           for (const [x, y, r] of [[12, 20, 6], [20, 19, 5.5], [16, 24, 5]]) {
             circ(x, y, r, c);
@@ -23396,10 +24220,15 @@
           }
           circ(14, 19, 1.2, "#6a8a4a");
           circ(19, 22, 1, "#6a8a4a");
-          break;
+          return;
         }
-        /* ---------- 음식 ---------- */
-        case "bread": {
+      }
+    },
+    /* ---------- 음식 ---------- */
+    bread(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.28), dk = sh2(c, 0.68);
           ell(16, 19, 12, 8.5, c);
           ell(16, 17, 11, 7, lt);
@@ -23409,9 +24238,14 @@
               g.lineTo(13 + k * 5, 11);
             });
           ell(16, 26, 11, 3, dk);
-          break;
+          return;
         }
-        case "pie": {
+      }
+    },
+    pie(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.66);
           ell(16, 25, 13, 4, dk);
           poly([[3, 25], [29, 25], [26, 14], [6, 14]], c);
@@ -23419,9 +24253,14 @@
           poly([[3, 25], [29, 25], [29, 22], [3, 22]], lt);
           for (let k = 0; k < 4; k++) P(7 + k * 5, 14, 2.4, 8, lt);
           ell(16, 13, 10, 3, lt);
-          break;
+          return;
         }
-        case "bowl": {
+      }
+    },
+    bowl(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.66);
           ell(16, 18, 12, 4, s.soup);
           ell(16, 17, 10, 3, sh2(s.soup, 1.25));
@@ -23437,9 +24276,14 @@
             g.moveTo(20, 13);
             g.bezierCurveTo(22, 9, 18, 8, 20, 5);
           });
-          break;
+          return;
         }
-        case "teacup": {
+      }
+    },
+    teacup(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, dk = sh2(c, 0.7);
           ell(16, 27, 11, 3, dk);
           poly([[8, 13], [24, 13], [21, 25], [11, 25]], c);
@@ -23452,18 +24296,28 @@
             g.moveTo(15, 9);
             g.bezierCurveTo(17, 6, 13, 5, 15, 2);
           });
-          break;
+          return;
         }
-        case "jelly": {
+      }
+    },
+    jelly(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.68);
           poly([[7, 27], [25, 27], [22, 10], [10, 10]], c);
           poly([[10, 10], [22, 10], [21, 14], [11, 14]], lt);
           poly([[7, 27], [25, 27], [24, 24], [8, 24]], dk);
           ell(16, 10, 6, 2.4, lt);
           P(12, 15, 2.4, 8, sh2(c, 1.6));
-          break;
+          return;
         }
-        case "feast": {
+      }
+    },
+    feast(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           if (s.glow) glow(16, 18, 13, s.glow, 0.26);
           P(3, 22, 26, 6, "#8a6a44");
@@ -23476,9 +24330,14 @@
           ell(17, 12, 2.4, 1.6, "#d8734c");
           P(16.4, 6, 1.2, 6, "#c8c8d0");
           ell(17, 6, 1.6, 2.4, "#ffd88a");
-          break;
+          return;
         }
-        case "stopcore": {
+      }
+    },
+    stopcore(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 13, c, 0.22);
           P(6, 6, 20, 20, "#2a2620");
@@ -23487,9 +24346,14 @@
           poly([[12, 7], [20, 7], [25, 12], [25, 20], [20, 25], [12, 25], [7, 20], [7, 12]], sh2(c, 1.25));
           P(10, 14, 12, 4, "#f0e0d0");
           for (const [x, y] of [[9, 9], [21, 9], [9, 21], [21, 21]]) circ(x, y, 1.3, "#3a2622");
-          break;
+          return;
         }
-        case "railgun": {
+      }
+    },
+    railgun(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.6);
           if (s.glow) glow(24, 12, 11, s.glow, 0.26);
           P(4, 16, 22, 6, c);
@@ -23501,9 +24365,14 @@
           P(26, 13, 3, 6, s.glow || "#9fd8ff");
           poly([[6, 22], [12, 22], [10, 29], [5, 29]], sh2(c, 0.78));
           P(14, 22, 3, 4, dk);
-          break;
+          return;
         }
-        case "torchitem": {
+      }
+    },
+    torchitem(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 9, 9, "#ffb24a", 0.3);
           P(14, 13, 4, 17, "#6a4a28");
           P(14, 13, 1.4, 17, "#8f6740");
@@ -23522,17 +24391,27 @@
           g.closePath();
           g.fill();
           ell(16, 10, 1.6, 2.6, "#ffe98c");
-          break;
+          return;
         }
-        case "platformitem": {
+      }
+    },
+    platformitem(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           P(3, 12, 26, 6, "#8a6640");
           P(3, 12, 26, 1.4, "#b08a58");
           P(3, 16.6, 26, 1.4, "#5a4028");
           P(9, 18, 2.4, 8, "#6a4a28");
           P(21, 18, 2.4, 8, "#6a4a28");
-          break;
+          return;
         }
-        case "ore": {
+      }
+    },
+    ore(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           if (s.glow) glow(16, 17, 12, c, 0.22);
           poly([[8, 12], [13, 6], [21, 7], [26, 14], [23, 24], [12, 25], [6, 19]], "#5d5d63");
@@ -23543,9 +24422,14 @@
             P(x, y, w - 1, 1.2, sh2(c, 1.45));
             P(x + 1, y + h - 1, w - 1, 1, sh2(c, 0.6));
           }
-          break;
+          return;
         }
-        case "meteorite": {
+      }
+    },
+    meteorite(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 17, 12, "#ff7a3a", 0.12);
           poly([[7, 13], [12, 7], [20, 6], [26, 11], [27, 19], [22, 26], [12, 26], [6, 20]], c);
@@ -23562,9 +24446,14 @@
           P(16, 22, 1, 1, "#ff7a3a");
           P(17, 22, 1, 1, "#ffb070");
           P(18, 21, 1, 1, "#ff7a3a");
-          break;
+          return;
         }
-        case "bar": {
+      }
+    },
+    bar(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
           if (s.glow) glow(16, 18, 12, c, 0.2);
           poly([[5, 21], [27, 21], [24, 28], [8, 28]], c);
@@ -23573,35 +24462,55 @@
           poly([[9, 12.5], [23, 12.5], [21, 18.5], [11, 18.5]], c);
           poly([[9, 12.5], [23, 12.5], [21.8, 10.5], [10.2, 10.5]], lt);
           P(12, 15, 8, 1.2, dk);
-          break;
+          return;
         }
-        case "rock": {
+      }
+    },
+    rock(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           poly([[8, 11], [14, 5], [23, 8], [26, 17], [20, 26], [10, 24], [5, 16]], c);
           poly([[8, 11], [14, 5], [23, 8], [18, 15], [10, 17]], sh2(c, 1.3));
           poly([[20, 26], [26, 17], [22, 16], [17, 24]], sh2(c, 0.7));
           P(12, 13, 2, 2, sh2(c, 1.5));
           P(19, 19, 2, 2, sh2(c, 1.5));
-          break;
+          return;
         }
-        case "shard": {
+      }
+    },
+    shard(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           if (s.glow) glow(16, 16, 12, c, 0.28);
           poly([[16, 2], [23, 13], [18, 30], [12, 26], [9, 12]], c);
           poly([[16, 2], [16, 30], [12, 26], [9, 12]], sh2(c, 1.4));
           P(15, 6, 1.6, 16, sh2(c, 1.75));
-          break;
+          return;
         }
-        case "crystal": {
+      }
+    },
+    crystal(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           if (s.glow) glow(16, 17, 13, c, 0.26);
           poly([[16, 3], [24, 11], [24, 24], [16, 30], [8, 24], [8, 11]], c);
           poly([[16, 3], [16, 30], [8, 24], [8, 11]], sh2(c, 1.35));
           poly([[16, 3], [24, 11], [16, 15], [8, 11]], sh2(c, 1.6));
           P(12, 14, 1.6, 9, sh2(c, 1.8));
-          break;
+          return;
         }
-        case "gel": {
+      }
+    },
+    gel(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           g.fillStyle = c;
           g.beginPath();
@@ -23621,9 +24530,14 @@
           g.fill();
           ell(11.5, 14.5, 3, 2, "rgba(255,255,255,.55)");
           circ(21, 21, 1.6, sh2(c, 0.7));
-          break;
+          return;
         }
-        case "bone": {
+      }
+    },
+    bone(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = "#e8e2cd", d = "#bdb59c";
           P(13, 9, 6, 15, c);
           circ(11, 9, 4, c);
@@ -23633,9 +24547,14 @@
           P(13, 9, 2, 15, "#f5f1e4");
           circ(21, 9, 2, d);
           circ(21, 24, 2, d);
-          break;
+          return;
         }
-        case "egg": {
+      }
+    },
+    egg(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           if (s.glow) glow(16, 18, 13, s.glow, 0.32);
           ell(16, 19, 8.5, 11.5, c);
@@ -23644,9 +24563,14 @@
           circ(19, 15, 1.1, sh2(c, 0.6));
           circ(18, 23, 1.3, sh2(c, 0.6));
           circ(12.5, 24, 1, sh2(c, 0.6));
-          break;
+          return;
         }
-        case "detector": {
+      }
+    },
+    detector(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, dk = sh2(c, 0.5), lt = sh2(c, 1.3);
           g.fillStyle = dk;
           g.fillRect(10, 17, 12, 12);
@@ -23672,9 +24596,14 @@
           g.fill();
           circ(16, 6.5, 1.6, lt);
           glow(16, 6.5, 8, c, 0.3);
-          break;
+          return;
         }
-        case "coconut_i": {
+      }
+    },
+    coconut_i(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, husk = sh2(c, 0.72), meat = "#f0e8d8";
           circ(16, 17, 11, husk);
           for (let i = 0; i < 26; i++) {
@@ -23686,9 +24615,14 @@
           circ(16, 17, 5.4, sh2("#cfc4ae", 1));
           for (const [dx, dy] of [[-2.6, -1.6], [2.6, -1.6], [0, 2.6]])
             circ(16 + dx, 17 + dy, 1.15, sh2(c, 0.5));
-          break;
+          return;
         }
-        case "candy": {
+      }
+    },
+    candy(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.62);
           g.fillStyle = dk;
           g.beginPath();
@@ -23712,9 +24646,14 @@
           g.stroke();
           g.lineWidth = 1;
           circ(13.6, 13.4, 1.8, sh2(c, 1.6));
-          break;
+          return;
         }
-        case "wisp": {
+      }
+    },
+    wisp(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 13, c, 0.3);
           g.fillStyle = c;
@@ -23734,10 +24673,24 @@
           circ(16, 15, 2.2, "#ffffff");
           circ(23, 8, 1.4, c);
           circ(9, 22, 1.2, c);
-          break;
+          return;
         }
-        /* ---------- 소환 ---------- */
-        case "crown": {
+      }
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintFarm);
+
+  // src/legacy/art/items/loot.js
+  var loot_exports = {};
+  __export(loot_exports, {
+    ItemPaintLoot: () => ItemPaintLoot
+  });
+  var ItemPaintLoot = {
+    /* ---------- 소환 ---------- */
+    crown(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           if (s.glow) glow(16, 16, 12, s.glow, 0.24);
           poly([[5, 24], [5, 12], [10, 17], [16, 8], [22, 17], [27, 12], [27, 24]], c);
@@ -23747,9 +24700,14 @@
           circ(16, 12, 2.2, s.gem);
           circ(8, 15, 1.6, s.gem);
           circ(24, 15, 1.6, s.gem);
-          break;
+          return;
         }
-        case "skull": {
+      }
+    },
+    skull(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = "#e8e2cd";
           circ(16, 14, 10, c);
           P(9, 18, 14, 7, c);
@@ -23763,9 +24721,14 @@
           P(15.3, 25.5, 1.4, 3.5, "#1a1620");
           P(18.6, 25.5, 1.4, 3.5, "#1a1620");
           circ(12, 9, 3, "#f5f1e4");
-          break;
+          return;
         }
-        case "heart": {
+      }
+    },
+    heart(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 17, 13, c, 0.24);
           g.fillStyle = c;
@@ -23786,9 +24749,14 @@
             g.moveTo(16, 13);
             g.lineTo(16, 24);
           });
-          break;
+          return;
         }
-        case "drop": {
+      }
+    },
+    drop(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           if (s.glow) glow(16, 18, 13, s.glow, 0.3);
           g.fillStyle = c;
@@ -23806,9 +24774,14 @@
           g.closePath();
           g.fill();
           ell(13, 19, 2, 3, "rgba(255,255,255,.55)");
-          break;
+          return;
         }
-        case "sack": {
+      }
+    },
+    sack(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.65);
           if (s.glow) glow(16, 18, 12, s.glow, 0.2);
           g.fillStyle = c;
@@ -23838,9 +24811,14 @@
             g.quadraticCurveTo(26, 4, 20, 2);
           });
           P(14, 15, 4, 3, s.strap);
-          break;
+          return;
         }
-        case "hammer": {
+      }
+    },
+    hammer(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.68);
           if (s.glow) glow(16, 11, 13, s.glow, 0.24);
           stroke("#6a4a28", 3.6, () => {
@@ -23857,10 +24835,15 @@
           P(5, 5, 3, 12, sh2(c, 1.15));
           P(24, 5, 3, 12, dk);
           for (let i = 0; i < 5; i++) P(rng.range(7, 24), rng.range(7, 14), 2, 2, rng.chance(0.5) ? lt : dk);
-          break;
+          return;
         }
-        /* ---------- 2부 전용 ---------- */
-        case "feather": {
+      }
+    },
+    /* ---------- 2부 전용 ---------- */
+    feather(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, dk = sh2(c, 0.72), lt = sh2(c, 1.12);
           glow(16, 16, 12, c, 0.18);
           stroke(sh2(c, 0.55), 1.6, () => {
@@ -23880,10 +24863,15 @@
               g.lineTo(x + len * 0.8, y + len * 0.3);
             });
           }
-          break;
+          return;
         }
-        /* 나뭇잎 — 나무마다 모양이 다르다(sh). */
-        case "leafitem": {
+      }
+    },
+    /* 나뭇잎 — 나무마다 모양이 다르다(sh). */
+    leafitem(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, dk = sh2(c, 0.62), lt = sh2(c, 1.22), stem = s.st || sh2(c, 0.5);
           const blade = (pts) => {
             poly(pts, dk);
@@ -23978,9 +24966,14 @@
               g.quadraticCurveTo(13, 11, 21, 7);
             });
           }
-          break;
+          return;
         }
-        case "wildflower": {
+      }
+    },
+    wildflower(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           stroke("#4a7a34", 2, () => {
             g.moveTo(16, 28);
@@ -23989,9 +24982,14 @@
           P(14, 22, 2, 5, sh2("#4a7a34", 0.8));
           for (const [dx, dy] of [[0, -4], [4, 0], [0, 4], [-4, 0]]) circ(16 + dx, 13 + dy, 3.2, c);
           circ(16, 13, 2, "#ffe58a");
-          break;
+          return;
         }
-        case "weed_icon": {
+      }
+    },
+    weed_icon(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           for (let i = 0; i < 4; i++) {
             const bx = 8 + i * 5, h = 10 + i % 2 * 6;
             stroke(sh2(s.c, 0.8 + i * 0.1), 2.2, () => {
@@ -23999,18 +24997,28 @@
               g.quadraticCurveTo(bx + 3, 28 - h * 0.6, bx - 2, 28 - h);
             });
           }
-          break;
+          return;
         }
-        case "cactus": {
+      }
+    },
+    cactus(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           P(13, 8, 6, 20, c);
           P(6, 14, 5, 10, c);
           P(21, 12, 5, 12, c);
           P(13, 8, 2, 20, sh2(c, 1.3));
           for (let i = 0; i < 5; i++) circ(13 + i % 2 * 6, 10 + i * 4, 0.8, "#e8dcc0");
-          break;
+          return;
         }
-        case "mushroom": {
+      }
+    },
+    mushroom(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           P(14, 16, 4, 12, "#e8dcc0");
           g.fillStyle = c;
@@ -24020,9 +25028,14 @@
           circ(11, 11, 1.4, "#fff");
           circ(19, 10, 1.6, "#fff");
           circ(16, 8, 1.2, "#fff");
-          break;
+          return;
         }
-        case "runefrag": {
+      }
+    },
+    runefrag(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 11, c, 0.2);
           poly([[16, 3], [26, 12], [21, 27], [10, 25], [6, 11]], sh2(c, 0.8));
@@ -24031,9 +25044,14 @@
           P(12, 10, 1.6, 10, gl);
           P(12, 10, 7, 1.6, gl);
           P(12, 15, 5, 1.6, gl);
-          break;
+          return;
         }
-        case "key": {
+      }
+    },
+    key(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.7);
           if (s.glow) glow(16, 16, 12, s.glow, 0.22);
           stroke(dk, 4.4, () => {
@@ -24049,9 +25067,14 @@
           P(14.6, 14, 1, 15, lt);
           P(17.4, 22, 4.4, 2.4, c);
           P(17.4, 26, 3.2, 2.4, c);
-          break;
+          return;
         }
-        case "horn": {
+      }
+    },
+    horn(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
           g.fillStyle = c;
           g.beginPath();
@@ -24074,10 +25097,24 @@
             g.moveTo(10, 21);
             g.lineTo(13, 24);
           });
-          break;
+          return;
         }
-        /* ---------- 스킬 아이콘 ---------- */
-        case "slash": {
+      }
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintLoot);
+
+  // src/legacy/art/items/skills.js
+  var skills_exports = {};
+  __export(skills_exports, {
+    ItemPaintSkills: () => ItemPaintSkills
+  });
+  var ItemPaintSkills = {
+    /* ---------- 스킬 아이콘 ---------- */
+    slash(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           stroke(c, 4, () => {
             g.arc(16, 18, 11, -2.5, -0.3);
@@ -24089,17 +25126,27 @@
             g.arc(16, 22, 9, -2.4, -0.5);
           });
           poly([[27, 15], [30, 10], [25, 12]], sh2(c, 1.4));
-          break;
+          return;
         }
-        case "shield": {
+      }
+    },
+    shield(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           poly([[16, 3], [27, 8], [26, 20], [16, 29], [6, 20], [5, 8]], c);
           poly([[16, 3], [16, 29], [6, 20], [5, 8]], sh2(c, 1.3));
           poly([[16, 8], [22, 11], [21, 19], [16, 24], [11, 19], [10, 11]], sh2(c, 0.65));
           P(15.2, 10, 1.6, 12, sh2(c, 1.6));
-          break;
+          return;
         }
-        case "impact": {
+      }
+    },
+    impact(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 12, c, 0.22);
           g.fillStyle = c;
@@ -24113,9 +25160,14 @@
           g.fill();
           circ(16, 16, 5, sh2(c, 1.45));
           circ(16, 16, 2.2, "#ffffff");
-          break;
+          return;
         }
-        case "blood": {
+      }
+    },
+    blood(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           g.fillStyle = c;
           g.beginPath();
@@ -24132,9 +25184,14 @@
           g.closePath();
           g.fill();
           ell(13, 20, 1.8, 2.6, "rgba(255,255,255,.45)");
-          break;
+          return;
         }
-        case "whirl": {
+      }
+    },
+    whirl(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           for (let i = 0; i < 3; i++) {
             const a0 = i * TAU / 3;
@@ -24143,9 +25200,14 @@
             });
           }
           circ(16, 16, 2.6, sh2(c, 1.5));
-          break;
+          return;
         }
-        case "titan": {
+      }
+    },
+    titan(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           poly([[8, 10], [24, 10], [26, 28], [6, 28]], c);
           poly([[8, 10], [16, 10], [16, 28], [6, 28]], sh2(c, 1.25));
@@ -24153,9 +25215,14 @@
           circ(12, 17, 2, sh2(c, 0.55));
           circ(20, 17, 2, sh2(c, 0.55));
           P(11, 23, 10, 1.6, sh2(c, 0.55));
-          break;
+          return;
         }
-        case "dash": {
+      }
+    },
+    dash(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           for (let i = 0; i < 3; i++) {
             const y = 10 + i * 6, w = 16 - i * 3;
@@ -24163,9 +25230,14 @@
           }
           poly([[20, 6], [30, 16], [20, 26], [20, 20], [24, 16], [20, 12]], c);
           poly([[20, 6], [30, 16], [24, 16], [20, 12]], sh2(c, 1.35));
-          break;
+          return;
         }
-        case "target": {
+      }
+    },
+    target(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           stroke(c, 2.4, () => {
             g.arc(16, 16, 11, 0, TAU);
@@ -24190,9 +25262,14 @@
             g.moveTo(26, 16);
             g.lineTo(31, 16);
           });
-          break;
+          return;
         }
-        case "volley": {
+      }
+    },
+    volley(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           for (let i = -1; i <= 1; i++) {
             const a = -0.5 + i * 0.42;
@@ -24203,9 +25280,14 @@
             });
             poly([[x1, y1], [x1 - 4.5, y1 + 1], [x1 - 3, y1 + 4]], sh2(c, 1.35));
           }
-          break;
+          return;
         }
-        case "wind": {
+      }
+    },
+    wind(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           stroke(c, 2.4, () => {
             g.moveTo(3, 11);
@@ -24221,9 +25303,14 @@
             g.moveTo(3, 25);
             g.lineTo(16, 25);
           });
-          break;
+          return;
         }
-        case "rain": {
+      }
+    },
+    rain(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           for (let i = 0; i < 3; i++) {
             const x = 7 + i * 9, y0 = 2 + i % 2 * 4;
@@ -24234,9 +25321,14 @@
             poly([[x, y0 + 18], [x - 3.2, y0 + 13], [x + 3.2, y0 + 13]], sh2(c, 1.35));
           }
           glow(16, 28, 8, c, 0.22);
-          break;
+          return;
         }
-        case "eye": {
+      }
+    },
+    eye(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           g.fillStyle = "#f2ece0";
           g.beginPath();
@@ -24252,9 +25344,14 @@
             g.moveTo(2, 16);
             g.quadraticCurveTo(16, 4, 30, 16);
           });
-          break;
+          return;
         }
-        case "flame": {
+      }
+    },
+    flame(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 18, 12, c, 0.26);
           g.fillStyle = sh2(c, 0.8);
@@ -24274,9 +25371,14 @@
           g.closePath();
           g.fill();
           ell(16, 22, 3.4, 4.4, "#ffe98c");
-          break;
+          return;
         }
-        case "book": {
+      }
+    },
+    book(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           poly([[3, 8], [15, 6], [15, 26], [3, 27]], c);
           poly([[29, 8], [17, 6], [17, 26], [29, 27]], sh2(c, 0.78));
@@ -24286,9 +25388,14 @@
             P(19, 12 + i * 4, 8, 1.2, sh2(c, 1.3));
           }
           glow(16, 8, 7, "#ffe08a", 0.28);
-          break;
+          return;
         }
-        case "heal": {
+      }
+    },
+    heal(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 13, c, 0.28);
           P(13, 5, 6, 22, c);
@@ -24297,9 +25404,14 @@
           P(5, 14.2, 22, 1.8, sh2(c, 1.4));
           circ(26, 6, 2, "#ffffff");
           circ(6, 25, 1.5, "#ffffff");
-          break;
+          return;
         }
-        case "snow": {
+      }
+    },
+    snow(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 12, c, 0.24);
           for (let i = 0; i < 3; i++) {
@@ -24322,9 +25434,14 @@
             }
           }
           circ(16, 16, 2.4, "#ffffff");
-          break;
+          return;
         }
-        case "wolf": {
+      }
+    },
+    wolf(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 17, 12, c, 0.2);
           poly([[6, 12], [8, 3], [13, 9]], c);
@@ -24334,9 +25451,14 @@
           circ(12, 17, 1.8, "#1a2230");
           circ(20, 17, 1.8, "#1a2230");
           poly([[16, 22], [18.4, 25], [13.6, 25]], "#1a2230");
-          break;
+          return;
         }
-        case "rune": {
+      }
+    },
+    rune(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 13, c, 0.26);
           stroke(c, 2, () => {
@@ -24351,10 +25473,15 @@
           }
           poly([[16, 8], [21, 16], [16, 24], [11, 16]], sh2(c, 1.3));
           circ(16, 16, 2, "#ffffff");
-          break;
+          return;
         }
-        /* ---------- 스킬 아이콘 ---------- */
-        case "bulwark": {
+      }
+    },
+    /* ---------- 스킬 아이콘 ---------- */
+    bulwark(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 18, 12, c, 0.18);
           for (let r = 0; r < 3; r++) {
@@ -24366,9 +25493,14 @@
             g.moveTo(6, 10.4);
             g.lineTo(26, 10.4);
           });
-          break;
+          return;
         }
-        case "quake": {
+      }
+    },
+    quake(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           P(2, 20, 28, 3, sh2(c, 0.68));
           poly([[16, 30], [12, 21], [15, 21], [13, 14], [20, 22], [17, 22], [19, 30]], sh2(c, 1.4));
@@ -24382,9 +25514,14 @@
             g.moveTo(29, 26);
             g.lineTo(23, 24);
           });
-          break;
+          return;
         }
-        case "shout": {
+      }
+    },
+    shout(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(11, 16, 11, c, 0.2);
           poly([[4, 10], [12, 10], [12, 22], [4, 22]], sh2(c, 0.7));
@@ -24393,9 +25530,14 @@
             stroke(sh2(c, 1 + i * 0.18), 2 - i * 0.3, () => {
               g.arc(17, 16, 5 + i * 5, -0.85, 0.85);
             });
-          break;
+          return;
         }
-        case "lifebeat": {
+      }
+    },
+    lifebeat(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 12, c, 0.24);
           g.fillStyle = c;
@@ -24416,9 +25558,14 @@
             g.lineTo(21.5, 17);
             g.lineTo(28, 17);
           });
-          break;
+          return;
         }
-        case "pierce": {
+      }
+    },
+    pierce(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           stroke(sh2(c, 0.55), 1.6, () => {
             g.arc(19, 16, 8.5, 0, TAU);
@@ -24439,9 +25586,14 @@
             g.moveTo(6, 27);
             g.lineTo(9, 23);
           });
-          break;
+          return;
         }
-        case "smoke": {
+      }
+    },
+    smoke(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 13, 12, c, 0.16);
           ell(11, 12, 6, 4.6, sh2(c, 0.9));
@@ -24451,9 +25603,14 @@
           P(13, 21, 6, 8, sh2(c, 0.5));
           P(13, 21, 6, 2, sh2(c, 1.3));
           P(12, 28.4, 8, 2, sh2(c, 0.42));
-          break;
+          return;
         }
-        case "mark": {
+      }
+    },
+    mark(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 12, 11, c, 0.24);
           poly([[16, 20], [8, 5], [24, 5]], c);
@@ -24462,9 +25619,14 @@
             g.arc(16, 25, 6, -2.9, -0.25);
           });
           P(15.2, 22, 1.6, 8, sh2(c, 0.65));
-          break;
+          return;
         }
-        case "tempest": {
+      }
+    },
+    tempest(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           stroke(c, 2.2, () => {
             g.arc(9, 16, 10, -1.15, 1.15);
@@ -24481,9 +25643,14 @@
             });
             poly([[30, y0 + t * 5], [25, y0 + t * 1.6], [25.6, y0 + t * 6.4]], sh2(c, 1.4));
           }
-          break;
+          return;
         }
-        case "barrier": {
+      }
+    },
+    barrier(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 13, c, 0.26);
           const hex = (r) => {
@@ -24511,9 +25678,14 @@
             const a = -Math.PI / 2 + i * TAU / 6;
             circ(16 + Math.cos(a) * 13, 16 + Math.sin(a) * 13, 1.7, "#ffffff");
           }
-          break;
+          return;
         }
-        case "chain": {
+      }
+    },
+    chain(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(16, 16, 13, c, 0.3);
           poly([[15, 2], [7, 16], [13, 16], [10, 30], [21, 13], [15, 13]], c);
@@ -24531,9 +25703,14 @@
             g.moveTo(4, 8);
             g.lineTo(7, 11);
           });
-          break;
+          return;
         }
-        case "blink": {
+      }
+    },
+    blink(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(22, 16, 12, c, 0.24);
           g.globalAlpha = 0.38;
@@ -24546,9 +25723,14 @@
             g.moveTo(13, 16.5);
             g.lineTo(18, 16.5);
           });
-          break;
+          return;
         }
-        case "meteor": {
+      }
+    },
+    meteor(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c;
           glow(20, 11, 13, c, 0.32);
           stroke(sh2(c, 0.62), 3.4, () => {
@@ -24569,10 +25751,24 @@
           g.closePath();
           g.fill();
           circ(21, 11, 3.4, "#fff2c8");
-          break;
+          return;
         }
-        /* ---------- UI ---------- */
-        case "sun": {
+      }
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintSkills);
+
+  // src/legacy/art/items/ui.js
+  var ui_exports = {};
+  __export(ui_exports, {
+    ItemPaintUI: () => ItemPaintUI
+  });
+  var ItemPaintUI = {
+    /* ---------- UI ---------- */
+    sun(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 13, "#ffe9a8", 0.3);
           circ(16, 16, 8, "#ffdf80");
           circ(16, 16, 6, "#fff0c0");
@@ -24583,9 +25779,14 @@
               g.lineTo(16 + Math.cos(a) * 14, 16 + Math.sin(a) * 14);
             });
           }
-          break;
+          return;
         }
-        case "moon": {
+      }
+    },
+    moon(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 12, "#dfe8f5", 0.2);
           circ(15, 16, 10, "#dfe8f5");
           circ(20, 13, 9, "rgba(0,0,0,0)");
@@ -24594,18 +25795,28 @@
           g.globalCompositeOperation = "source-over";
           circ(11, 19, 1.8, "#c2cddd");
           circ(14, 12, 1.3, "#c2cddd");
-          break;
+          return;
         }
-        case "coin": {
+      }
+    },
+    coin(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           circ(16, 16, 11, "#c8952a");
           circ(16, 16, 9, "#e8c04a");
           circ(16, 16, 6.5, "#d8a93a");
           P(14.6, 10, 2.8, 12, "#f5deA0");
           P(11, 14.6, 10, 2.8, "#f5dea0");
           ell(12, 11, 2.6, 1.6, "rgba(255,255,255,.45)");
-          break;
+          return;
         }
-        case "chat": {
+      }
+    },
+    chat(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           g.fillStyle = "#e8dcc0";
           g.beginPath();
           g.moveTo(5, 6);
@@ -24620,26 +25831,41 @@
           circ(11, 13.5, 1.8, "#4a4438");
           circ(16, 13.5, 1.8, "#4a4438");
           circ(21, 13.5, 1.8, "#4a4438");
-          break;
+          return;
         }
-        case "bagui": {
+      }
+    },
+    bagui(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 17, 12, "#d8a94b", 0.13);
           poly([[8, 12], [24, 12], [26, 27], [6, 27]], "#8c7651");
           poly([[8, 12], [16, 12], [16, 27], [6, 27]], "#c8aa70");
           poly([[6, 12], [10, 6], [22, 6], [26, 12]], "#5c4930");
           P(13, 17, 6, 5, "#5c4930");
-          break;
+          return;
         }
-        /* ---- 탭 아이콘 — 금빛(#c8aa70) 밝은 면 · 가죽빛(#8c7651) 그늘 · 짙은 갈색(#5c4930) 선, 은은한 금빛 번짐 ---- */
-        case "pskill": {
+      }
+    },
+    /* ---- 탭 아이콘 — 금빛(#c8aa70) 밝은 면 · 가죽빛(#8c7651) 그늘 · 짙은 갈색(#5c4930) 선, 은은한 금빛 번짐 ---- */
+    pskill(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 13, "#d8a94b", 0.16);
           poly([[16, 3], [19.5, 12.5], [29, 16], [19.5, 19.5], [16, 29], [12.5, 19.5], [3, 16], [12.5, 12.5]], "#8c7651");
           poly([[16, 3], [19.5, 12.5], [16, 16], [12.5, 12.5]], "#e8cf8e");
           poly([[3, 16], [12.5, 12.5], [16, 16], [12.5, 19.5]], "#c8aa70");
           circ(16, 16, 3, "#fff0c0");
-          break;
+          return;
         }
-        case "pquest": {
+      }
+    },
+    pquest(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 17, 12, "#d8a94b", 0.13);
           poly([[4, 9], [16, 11], [16, 27], [4, 25]], "#c8aa70");
           poly([[28, 9], [16, 11], [16, 27], [28, 25]], "#e0c890");
@@ -24649,9 +25875,14 @@
             P(18.5, 14 + i * 3, 7, 1.2, "#a88a5a");
           }
           poly([[22, 9.5], [25, 9.2], [25, 18], [23.5, 16.5], [22, 18]], "#b8483c");
-          break;
+          return;
         }
-        case "pcraft": {
+      }
+    },
+    pcraft(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 12, "#d8a94b", 0.13);
           stroke("#5c4930", 3, () => {
             g.moveTo(8, 26);
@@ -24665,9 +25896,14 @@
           });
           poly([[6, 8], [12, 5], [15, 12], [9, 15]], "#9fb0bc");
           for (let i = 0; i < 3; i++) P(6.5 + i * 2.2, 13.5 - i * 1.1, 1.3, 1.3, "#5d7892");
-          break;
+          return;
         }
-        case "pchest": {
+      }
+    },
+    pchest(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 17, 12, "#d8a94b", 0.12);
           P(5, 14, 22, 13, "#8c7651");
           P(5, 14, 11, 13, "#a88a5a");
@@ -24677,9 +25913,14 @@
           P(21, 8, 2, 19, "#5c4930");
           P(14, 15, 4, 5, "#e8cf8e");
           P(15.2, 17, 1.6, 2, "#5c4930");
-          break;
+          return;
         }
-        case "pvault": {
+      }
+    },
+    pvault(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 12, "#d8a94b", 0.12);
           P(5, 6, 22, 21, "#5c4930");
           P(6.5, 7.5, 19, 18, "#8c7651");
@@ -24692,9 +25933,14 @@
           }
           P(8, 27, 3, 2, "#5c4930");
           P(21, 27, 3, 2, "#5c4930");
-          break;
+          return;
         }
-        case "pboard": {
+      }
+    },
+    pboard(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 12, "#d8a94b", 0.12);
           P(7, 6, 2.5, 23, "#5c4930");
           P(22.5, 6, 2.5, 23, "#5c4930");
@@ -24705,9 +25951,14 @@
           circ(10.5, 9.5, 1, "#b8483c");
           circ(19.5, 9, 1, "#b8483c");
           circ(19.5, 16, 1, "#b8483c");
-          break;
+          return;
         }
-        case "ptown": {
+      }
+    },
+    ptown(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 17, 12, "#d8a94b", 0.13);
           P(7, 15, 18, 12, "#8c7651");
           P(7, 15, 9, 12, "#a88a5a");
@@ -24716,9 +25967,14 @@
           P(21, 7, 3, 6, "#5c4930");
           P(10, 18, 4, 4, "#ffd98a");
           P(18, 19, 4, 8, "#5c4930");
-          break;
+          return;
         }
-        case "pmach": {
+      }
+    },
+    pmach(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 12, "#d8a94b", 0.12);
           for (let i = 0; i < 8; i++) {
             const a = i * Math.PI / 4;
@@ -24733,18 +25989,28 @@
           circ(16, 16, 8.5, "#c8aa70");
           circ(16, 16, 4, "#5c4930");
           circ(16, 16, 2, "#e8cf8e");
-          break;
+          return;
         }
-        case "preforge": {
+      }
+    },
+    preforge(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 15, 12, "#ff9a50", 0.2);
           poly([[16, 3], [22, 12], [21, 19], [11, 19], [10, 12]], "#e0561c");
           poly([[16, 8], [19, 14], [18, 19], [14, 19], [13, 14]], "#ffb24a");
           poly([[16, 12], [17.5, 16], [16, 19], [14.5, 16]], "#fff0c0");
           P(7, 20, 18, 3, "#8c7651");
           P(10, 23, 12, 5, "#5c4930");
-          break;
+          return;
         }
-        case "panvil": {
+      }
+    },
+    panvil(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 18, 12, "#d8a94b", 0.13);
           poly([[5, 12], [24, 12], [27, 15], [22, 17], [9, 17]], "#9fb0bc");
           poly([[5, 12], [24, 12], [24, 14], [7, 14]], "#d8e0e8");
@@ -24753,9 +26019,14 @@
           circ(22, 7, 1.2, "#ffb24a");
           circ(18, 5, 0.9, "#ffd98a");
           circ(25, 9, 0.8, "#ffd98a");
-          break;
+          return;
         }
-        case "pmap": {
+      }
+    },
+    pmap(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 12, "#d8a94b", 0.12);
           poly([[4, 8], [12, 6], [20, 8], [28, 6], [28, 25], [20, 27], [12, 25], [4, 27]], "#c8aa70");
           poly([[12, 6], [20, 8], [20, 27], [12, 25]], "#a88a5a");
@@ -24766,9 +26037,14 @@
             g.moveTo(26, 10);
             g.lineTo(22, 14);
           });
-          break;
+          return;
         }
-        case "ng": {
+      }
+    },
+    ng(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const G1 = "#c8aa70", G2 = "#8c7651", DK = "#5c4930", c = s.c || G1;
           glow(16, 16, 12, s.c || "#d8a94b", 0.14);
           switch (s.g) {
@@ -24986,25 +26262,40 @@
               for (let i = 0; i < 4; i++) P(9 + i * 3.4, 22, 2.6, 2.4, "#e8dcc0");
               break;
           }
-          break;
+          return;
         }
-        case "pmenu": {
+      }
+    },
+    pmenu(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 12, "#d8a94b", 0.12);
           for (let i = 0; i < 3; i++) {
             P(7, 9 + i * 6, 18, 3, "#8c7651");
             P(7, 9 + i * 6, 18, 1.4, "#c8aa70");
           }
-          break;
+          return;
         }
-        case "statui": {
+      }
+    },
+    statui(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 17, 12, "#d8a94b", 0.13);
           P(7, 19, 5, 9, "#8c7651");
           P(13.5, 13, 5, 15, "#c8aa70");
           P(20, 8, 5, 20, "#8c7651");
           P(6, 27.5, 20, 1.6, "#5c4930");
-          break;
+          return;
         }
-        case "equipui": {
+      }
+    },
+    equipui(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           glow(16, 16, 13, "#d8a94b", 0.15);
           poly([[9, 8], [23, 8], [26, 14], [23, 27], [9, 27], [6, 14]], "#8c7651");
           poly([[9, 8], [16, 8], [16, 27], [9, 27], [6, 14]], "#c8aa70");
@@ -25014,9 +26305,14 @@
           poly([[20, 6], [23.8, 8.3], [23.8, 19.8], [20, 17]], "#9fc4dc");
           P(21.5, 10, 1.5, 7, "#e8dcc0");
           P(19, 12.5, 6.5, 1.5, "#e8dcc0");
-          break;
+          return;
         }
-        case "trashui": {
+      }
+    },
+    trashui(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           P(8, 10, 16, 18, "#6d4b47");
           P(9.5, 11, 13, 16, "#9b6156");
           P(7, 7, 18, 4, "#b87466");
@@ -25027,10 +26323,24 @@
           P(17, 13, 2, 10, "#5a3935");
           P(21, 13, 1.5, 10, "#5a3935");
           P(10.5, 11.5, 2, 1.5, "#e6a28e");
-          break;
+          return;
         }
-        /* ---------- 장비 칸 실루엣 ---------- */
-        case "slotic": {
+      }
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintUI);
+
+  // src/legacy/art/items/misc.js
+  var misc_exports2 = {};
+  __export(misc_exports2, {
+    ItemPaintMisc: () => ItemPaintMisc
+  });
+  var ItemPaintMisc = {
+    /* ---------- 장비 칸 실루엣 ---------- */
+    slotic(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = "#6a6250", l = "#8e8672";
           switch (s.m) {
             case "weapon":
@@ -25096,10 +26406,15 @@
                 circ(tx, ty, r, l);
               break;
           }
-          break;
+          return;
         }
-        /* ---------- 손으로 놓는 설치물 ---------- */
-        case "stationic": {
+      }
+    },
+    /* ---------- 손으로 놓는 설치물 ---------- */
+    stationic(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           if (s.m === "work") {
             P(3, 9, 26, 4, "#9c7a4a");
             P(3, 13, 26, 3, "#7a5734");
@@ -25121,10 +26436,15 @@
             P(13, 10, 6, 7, gold ? "#ffd85a" : "#c8a04a");
             P(14.5, 13, 3, 3, "#3a2610");
           }
-          break;
+          return;
         }
-        /* ---------- 문 ---------- */
-        case "doorit": {
+      }
+    },
+    /* ---------- 문 ---------- */
+    doorit(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           P(4, 2, 24, 28, "#3a2610");
           P(5.5, 3.5, 21, 25, "#6f4c2c");
           for (let i = 0; i < 4; i++) P(9.5 + i * 4.2, 3.5, 1, 25, "#4a3018");
@@ -25134,10 +26454,15 @@
           P(6.5, 20.4, 4.5, 2.8, "#8a8a94");
           P(21, 14, 3.4, 5, "#d8a94b");
           P(22.1, 15.6, 1.4, 2, "#3a2610");
-          break;
+          return;
         }
-        /* ---------- 펫 ---------- */
-        case "pet": {
+      }
+    },
+    /* ---------- 펫 ---------- */
+    pet(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const c = s.c, dark = sh2(c, 0.62), lite = sh2(c, 1.3);
           const eye = "#1a1a22";
           if (s.r === 2) glow(16, 17, 13, c, 0.22);
@@ -25207,10 +26532,15 @@
               });
               break;
           }
-          break;
+          return;
         }
-        /* ---------- NPC 초상 ---------- */
-        case "npc": {
+      }
+    },
+    /* ---------- NPC 초상 ---------- */
+    npc(H) {
+      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      {
+        {
           const p = s.p;
           P(4, 24, 24, 8, p.cloth);
           P(4, 24, 24, 1.6, sh2(p.cloth, 1.3));
@@ -25242,11 +26572,12 @@
             g.fill();
             P(9, 20, 14, 4, p.hair);
           } else P(14, 20.5, 4, 1.2, sh2(p.skin, 0.72));
-          break;
+          return;
         }
       }
     }
   };
+  Object.assign(ITEM_PAINT, ItemPaintMisc);
 
   // src/legacy/sprites.js
   var sprites_exports = {};
@@ -28382,8 +29713,8 @@
   };
 
   // src/legacy/factory.js
-  var factory_exports = {};
-  __export(factory_exports, {
+  var factory_exports2 = {};
+  __export(factory_exports2, {
     DIR4: () => DIR4,
     DIR6: () => DIR6,
     DIR_NAME: () => DIR_NAME,
@@ -29738,8 +31069,8 @@
   bindFactory(Factory);
 
   // src/legacy/ui.js
-  var ui_exports = {};
-  __export(ui_exports, {
+  var ui_exports2 = {};
+  __export(ui_exports2, {
     $: () => $,
     $$: () => $$,
     UI: () => UI
@@ -35092,8 +36423,8 @@
   mixin(G, FishingPart);
 
   // src/legacy/game/village.js
-  var village_exports = {};
-  __export(village_exports, {
+  var village_exports2 = {};
+  __export(village_exports2, {
     VillagePart: () => VillagePart
   });
   var VillagePart = {
@@ -43169,11 +44500,11 @@
 
   // src/legacy/main.js
   if (!I18N.isSource) {
-    I18N.applyTables(Object.assign({}, size_exports, data_exports, world_exports, factory_exports));
+    I18N.applyTables(Object.assign({}, size_exports, data_exports, world_exports, factory_exports2));
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports2, factory_exports, ui_exports, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports, village_exports, ruins_exports, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports2, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
