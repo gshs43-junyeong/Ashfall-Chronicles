@@ -4953,13 +4953,17 @@ const G = {
     // ---- 타일 (절차적 텍스처 아틀라스) ----
     const VA = TileArt.V;
     const ashF = this.ashF(), ashOn = ashF > 0.02 && TileArt.ashAtlas;
+    const eyeX = Math.floor(p.cx / TS), eyeY = Math.floor((p.y + 8) / TS);
+    this._mapTick = ((this._mapTick || 0) + 1) & 3;
     for (let ty = ty0; ty <= ty1; ty++) {
       for (let tx = tx0; tx <= tx1; tx++) {
         if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) continue;
         const k = ty * WW + tx;
         const id = w.tiles[k], wl = w.walls[k];
-        // 화면에 들어왔다고 곧바로 지도에 남기지 않는다.
-        if (w.lightAt(tx, ty) >= MAP_REVEAL_LIGHT) {
+        /* 화면에 들어왔다고 곧바로 지도에 남기지 않는다 — 밝고, **눈에서 보이는** 칸만. 빛만 보면 수정·발광 이끼가 비추는
+           바위 너머 굴이 가 보지도 않았는데 지도에 떴다. 안 보인 칸은 네 프레임에 한 번만 다시 잰다. */
+        if (w.lightAt(tx, ty) >= MAP_REVEAL_LIGHT &&
+            (w.explored[k] || (((tx + ty + this._mapTick) & 3) === 0 && this.seesTile(eyeX, eyeY, tx, ty)))) {
           w.explored[k] = 1;
           this.mapAtlasX.fillStyle = this.mapColorAt(tx, ty, id, wl);
           this.mapAtlasX.fillRect(tx, ty, 1, 1);
@@ -8688,6 +8692,15 @@ const G = {
     if (id === T.AIR) return wl ? '#20202c' : '#141620';
     const d = TILE_DEF[id];
     return d.ore ? d.c : shade(d.c || '#333', 0.65);
+  },
+  /** 눈(ex, ey)에서 칸(tx, ty)이 보이는가 — 가는 길이 트여 있어야 하고, 과녁 앞 세 칸 안의 바위만 봐준다(벽 두께가 지도에 남게). */
+  seesTile(ex, ey, tx, ty) {
+    const w = this.world, dx = tx - ex, dy = ty - ey, n = Math.max(Math.abs(dx), Math.abs(dy));
+    for (let i = 1; i < n - 3; i++) {
+      const x = Math.round(ex + dx * i / n), y = Math.round(ey + dy * i / n);
+      if (TILE_DEF[w.get(x, y)].solid === 1) return false;
+    }
+    return true;
   },
   /** 세이브를 막 불러왔을 때(또는 새 게임 시작 시) explored 비트로부터 축소 지도를 다시 칠한다. */
   /** 축소 지도 캔버스를 지금 세계 크기(WW×WH)에 맞춘다 — 세계 크기가 바뀌면 다시 만든다. */
