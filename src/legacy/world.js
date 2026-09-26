@@ -4,6 +4,7 @@ import { aabb, clamp, dist, inv, lerp } from '../engine/core/math.js';
 import { makeNoise1D, makeNoise2D } from '../engine/core/noise.js';
 import { RNG } from '../engine/core/rng.js';
 import { rleDecode, rleEncode } from '../engine/save/rle.js';
+import { TileMap } from '../engine/tilemap/tilemap.js';
 import { BIOMES, CAMP_GX1, CAMP_X0, CAMP_X1, DEEP_Y, GLACIER_X1, HELL_Y, SEA_X1, SHIFT, SKY_Y, SURF_BASE, SX, SY,
   SYB, WH, WORLD_BOT, WSIZE, WSX, WSY, WW, applyWorldSize } from './size.js';
 import { CAVE_TYPES, CHAPTERS, FAULT, FLUID_FLOW, FLUID_KIND, FLUID_OPEN, FLUID_SRC, FLUID_TILE, MERCHANTS, MYSTIC,
@@ -147,12 +148,12 @@ export function doorEdge(d) {
   return { x: d.dir === -1 ? d.x : d.x + d.w - w, y: d.y, w, h: d.h };
 }
 
-export class World {
+/** Ashfall 세계 — 타일맵(engine/tilemap) 위에 생성기 · 마을 · 유적 · 바다 · 유체 · 조명 규칙을 얹는다(엔진화 계획 §8-4 상속). */
+export class World extends TileMap {
   constructor(seed) {
+    super(WW, WH, TS, TILE_DEF, T.BEDROCK);   // 타일 · 벽지 · 탐험 배열, 경계 밖 = 기반암
     this.seed = seed;
     this.rng = new RNG(seed);
-    this.tiles = new Uint8Array(WW * WH);
-    this.walls = new Uint8Array(WW * WH);
     this.surface = new Int16Array(WW);
     this.objects = [];          // 작업대/용광로/상자/NPC/제단
     this.doors = [];            // objects의 부분집합(같은 참조) — 충돌 판정을 빠르게 하려고 따로 캐싱
@@ -165,27 +166,17 @@ export class World {
     this.crops = new Set();
     /* 부서진 바닥이 되돌아올 시각. */
     this.crumbled = new Map();
-    /* 화면에 실제로 그려진 적이 있는 타일만 1로 표시한다 — 미니맵·전체 지도의 안개 기준. */
-    this.explored = new Uint8Array(WW * WH);
     this.spawnX = 180; this.spawnY = 0;
     this.lightBuf = null; this.lbx = 0; this.lby = 0; this.lbw = 0; this.lbh = 0;
   }
 
-  i(x, y) { return y * WW + x; }
-  inB(x, y) { return x >= 0 && y >= 0 && x < WW && y < WH; }
-  get(x, y) { return this.inB(x, y) ? this.tiles[y * WW + x] : T.BEDROCK; }
-  wall(x, y) { return this.inB(x, y) ? this.walls[y * WW + x] : 0; }
   set(x, y, t) {
     if (!this.inB(x, y)) return;
     this.tiles[y * WW + x] = t;
     /* 유체가 켜진 뒤(생성·불러오기 끝)에만 — 바뀐 칸과 그 네 이웃을 흐름 검사 줄에 세운다. */
     if (this.fq) this.fluidWake(x, y);
   }
-  setWall(x, y, w) { if (this.inB(x, y)) this.walls[y * WW + x] = w; }
-  solid(x, y) { const d = TILE_DEF[this.get(x, y)]; return d.solid === 1; }
-  platform(x, y) { return TILE_DEF[this.get(x, y)].solid === 2; }
   hurtTile(x, y) { return TILE_DEF[this.get(x, y)].hurt || 0; }
-  liquid(x, y) { return !!TILE_DEF[this.get(x, y)].liquid; }
   /** 사각형이 물에 얼마나 잠겼는지 0~1. */
   liquidIn(px, py, w, h) {
     const x0 = Math.floor(px / TS), x1 = Math.floor((px + w - 0.01) / TS);
@@ -4930,11 +4921,9 @@ export class World {
   }
 
   /* ================= 충돌 ================= */
-  /** 사각형이 고체 타일과 겹치는지 */
+  /** 사각형이 막힌 칸이나 닫힌 문의 판과 겹치는지 */
   hitSolid(px, py, w, h) {
-    const x0 = Math.floor(px / TS), x1 = Math.floor((px + w - 0.01) / TS);
-    const y0 = Math.floor(py / TS), y1 = Math.floor((py + h - 0.01) / TS);
-    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) if (this.solid(x, y)) return true;
+    if (super.hitSolid(px, py, w, h)) return true;
     for (const d of this.doors) {
       if (!d.closed) continue;
       const e = this.doorEdge(d);
@@ -4947,17 +4936,6 @@ export class World {
   pushDoor(x, y, w, h, dir, extra) {
     const d = Object.assign({ type: 'door', x, y, w, h, closed: true, dir: dir || -1 }, extra);
     this.objects.push(d); this.doors.push(d);
-  }
-  /** 발판(위에서만 막힘) 검사: 이전 하단이 발판 위에 있었어야 함 */
-  hitPlatform(px, py, w, h, prevBottom) {
-    const x0 = Math.floor(px / TS), x1 = Math.floor((px + w - 0.01) / TS);
-    const y0 = Math.floor(py / TS), y1 = Math.floor((py + h - 0.01) / TS);
-    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
-      if (!this.platform(x, y)) continue;
-      const top = y * TS;
-      if (prevBottom <= top + 2 && py + h > top) return top;
-    }
-    return -1;
   }
 
   /* ================= 조명 ================= */
