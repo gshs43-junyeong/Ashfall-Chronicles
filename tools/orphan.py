@@ -40,10 +40,11 @@ MANIFEST = os.path.join(ASSETS, 'manifest.json')
 
 def game_source():
     src = ''
-    js = os.path.join(ROOT, 'src', 'legacy')   # 원본 — game/js/ashfall.js 는 주석이 빠지고 따옴표가 바뀐 산출물
-    for f in sorted(os.listdir(js)):
-        if f.endswith('.js'):
-            src += open(os.path.join(js, f), encoding='utf-8').read()
+    js = os.path.join(ROOT, 'src', 'game')   # 원본 — game/js/ashfall.js 는 주석이 빠지고 따옴표가 바뀐 산출물
+    for d, _, fs in sorted(os.walk(js)):
+        for f in sorted(fs):
+            if f.endswith('.ts'):
+                src += open(os.path.join(d, f), encoding='utf-8').read()
     return src
 
 

@@ -5,7 +5,7 @@
 import { serve, browser, DETERMINISM, collectErrors, boot, fail, ok, readJSON, ROOT } from './lib.mjs';
 import path from 'node:path';
 
-const src = readJSON(path.join(ROOT, 'src/legacy/locales/source.json'));
+const src = readJSON(path.join(ROOT, 'src/game/locales/source.json'));
 /* 한글 한 글자마다 Ж — 자리표 { } 안(조사 훅 이름)은 그대로. 화면에 한글이 하나라도 남으면 옮기지 못한 글이다. */
 const pseudo = s => { let d = 0, o = ''; for (const c of s) { if (c === '{') d++; else if (c === '}') d--; o += !d && /[\uAC00-\uD7A3]/.test(c) ? 'Ж' : c; } return o; };
 const XX = { msgs: {}, tables: {} };

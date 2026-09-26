@@ -1,4 +1,4 @@
-/* src/ 의 모듈(엔진 .ts·.js + 게임 src/legacy/*.js)을 읽어 export · import · 풀이 안 된 이름을 잰다.
+/* src/ 의 모듈(엔진 src/engine · 게임 src/game — 모두 .ts)을 읽어 export · import · 풀이 안 된 이름을 잰다.
    tests/modules.mjs(경계 검사)와 tools/imports.mjs(import 줄 다시 짜기)가 같이 쓴다.
    ★ .ts 는 esbuild 로 타입만 벗겨 읽는다 — 타입 전용 import 는 거기서 사라지므로 그래프는 원문에서 따로 뽑는다. */
 import fs from 'node:fs';
@@ -10,7 +10,7 @@ import * as esbuild from 'esbuild';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const SRC = path.join(ROOT, 'src');
-export const LEGACY = path.join(SRC, 'legacy');
+export const LEGACY = path.join(SRC, 'game');   // 게임 소스(예전 이름 legacy 를 변수에 남겼다)
 export const ENGINE = path.join(SRC, 'engine');
 export const rel = f => path.relative(SRC, f).split(path.sep).join('/');
 

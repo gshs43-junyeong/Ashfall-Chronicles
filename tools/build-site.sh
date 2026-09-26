@@ -48,7 +48,7 @@ else
 fi
 
 # ---- 게임 코드 번들 -------------------------------------------------------------
-# src/legacy/ 가 원본이고 game/js/ashfall.js 는 산출물(커밋돼 있다). 여기서 다시 만들어
+# src/game/ 가 원본이고 game/js/ashfall.js 는 산출물(커밋돼 있다). 여기서 다시 만들어
 # 소스만 고치고 번들을 안 올린 커밋도 배포판에는 반영되게 한다. 실패하면 커밋된 번들을 쓴다.
 if command -v node >/dev/null 2>&1; then
   node "$ROOT/tools/bundle.mjs" || warn "번들 만들기 실패 — 커밋된 game/js/ashfall.js 를 그대로 씁니다"
@@ -64,7 +64,7 @@ cp -R "$ROOT/game/." "$ROOT/site/play/" || { echo "game/ 복사 실패" >&2; exi
 # ---- ?v= 를 이 배포의 값으로 -------------------------------------------------
 # html 의 <script src="js/ashfall.js?v=185"> 를 전부 ?v=<해시> 로 바꾼다.
 # 번들 안의 Sprites 는 자기 <script> 태그의 물음표 뒤를 그대로 물려받아 그림 URL 에도
-# 붙이므로(src/legacy/sprites.js 의 _ver), 이 한 줄로 스크립트·CSS·그림이 한꺼번에 따라온다.
+# 붙이므로(src/game/sprites.ts 의 _ver), 이 한 줄로 스크립트·CSS·그림이 한꺼번에 따라온다.
 # sed 만 쓴다(perl 은 없을 수 있다). sed -i 는 GNU/BSD 문법이 갈리므로 임시 파일로 돈다.
 #
 # ★★ 범위는 site/ **전체** 다. 예전에는 site/play 만 찍었다 — 그래서 게임(/play)은
