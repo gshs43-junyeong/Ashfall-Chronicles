@@ -28,7 +28,9 @@ const SAVE_UPGRADES = [
   /* v6 → v7 — 동굴 갈래(world.caveGrid)와 금 간 자갈(world.faults). */
   (d) => { if (d.world) { if (d.world.caveGrid === undefined) d.world.caveGrid = null; if (!d.world.faults) d.world.faults = []; } },
   /* v7 → v8 — 세계 크기(world.size: 's' 소형 · 'm' 중형 · 'l' 대형). */
-  (d) => { if (d.world && !d.world.size) d.world.size = 's'; }
+  (d) => { if (d.world && !d.world.size) d.world.size = 's'; },
+  /* v8 → v9 — 드릴이 광맥 칸마다 더 캘 수 있는 횟수(world.oreHits). */
+  (d) => { if (d.world && !d.world.oreHits) d.world.oreHits = {}; }
 ];
 const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 
@@ -1360,7 +1362,7 @@ const G = {
     const d = TILE_DEF[id];
     let out = d.drop;
     if (d.leafDrop) { const r = this.rng.weighted(d.leafDrop); out = r === 'none' ? null : r; }
-    if (out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(out, 1)));
+    if (out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(out, d.dropN && out === d.drop ? this.rng.int(d.dropN[0], d.dropN[1]) : 1)));
     // 장식이면 그 장식도 하나 — 옮겨 놓을 수 있게(data.js 의 deco 절).
     const deco = DECO_OF[id];
     if (deco && deco !== out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(deco, 1)));
@@ -1993,6 +1995,8 @@ const G = {
     [T.IRON, T.COPPER, T.COAL, T.GOLD, T.IRON, T.LEAD, T.COPPER, T.IRON, T.COAL].forEach((t, i) => {
       for (let y = gy + 1; y <= gy + 3; y++) w.set(X0 + 50 + i, y, t);
     });
+    // 드릴 바로 밑은 광상 — 줄지 않고 계속 나오는 모습을 보인다(기계식 = 철, 전동 = 금 · 등급 3)
+    w.set(X0 + 51, gy + 1, T.IRONRICH); w.set(X0 + 55, gy + 1, T.GOLDRICH);
 
     const put = (dx, key, dir, fill) => {
       const m = Factory.place(w, X0 + dx, Y, key, dir || 0);
@@ -2110,6 +2114,7 @@ const G = {
       for (let y = gy + 1; y <= B0; y++) if (x > BX && x < BX + 23) w.setWall(x, y, 6);
     }
     for (let x = BX + 1; x <= BX + 16; x++) for (let y = gy + 6; y <= gy + 8; y++) w.set(x, y, T.COAL);
+    w.set(BX + 4, gy + 6, T.COALRICH);                 // 드릴 바로 밑은 광상 — 공장 B 가 연료를 끝없이 댄다
     for (const x of [BX + 2, BX + 3]) w.set(x, gy + 2, T.PLATFORM);
     for (let x = BX + 5; x < BX + 23; x += 6) w.set(x, gy + 1, T.TORCH);
     P(BX + 4, B0, 'drill_e'); for (let x = BX + 5; x <= BX + 8; x++) P(x, B0, 'belt');
@@ -3653,35 +3658,41 @@ const G = {
     const inSafeZone = zone === 'village' || zone === 'camp';
     const raining = isRain && (this.eventActive() || inSafeZone);
     // 얼음 지형에서는 같은 비 이벤트가 눈으로 보여야 자연스럽다
-    const snowing = raining && zone === 'ice';
+    const snowing = !!(raining && zone === 'ice');     // ★ !! — 비가 그치면 null 이 되어 '눈↔비 바뀜'으로 읽혀 빗줄기가 한꺼번에 지워졌다
     if (snowing !== !!this.snowMode) { this.snowMode = snowing; this.rainDrops = null; }
     this.rainT = clamp((this.rainT || 0) + (raining ? 1 : -1) * dt / 2.5, 0, 1);
-    if (this.rainT <= 0) { this.rainDrops = null; return; }
+    /* ★ 빗줄기는 세계에 붙어 있다 — 카메라가 움직인 만큼 반대로 민다. 화면에 붙여 두면 떨어지거나 뛸 때
+       세계에 비해 비가 갑자기 빨라졌다 느려졌다 했다. 켜고 끄기는 **위에서 새로 날 때만**(d.on) 바꿔
+       비가 위에서부터 들어오고 빠져나간다 — 한꺼번에 깔고 투명도만 올리면 화면 전체에 쫘르륵 쏟아졌다. */
+    const cam = this.cam, pc = this._rainCam;
+    let mx = pc ? cam.x - pc.x : 0, my = pc ? cam.y - pc.y : 0;
+    if (Math.abs(mx) > this.W || Math.abs(my) > this.H) mx = my = 0;       // 순간이동 · 불러오기
+    this._rainCam = { x: cam.x, y: cam.y };
+    if (this.rainT <= 0 && (!this.rainDrops || !this.rainDrops.some(d => d.on))) { this.rainDrops = null; return; }
+    const W = this.W || 1280, H = this.H || 720;
     if (!this.rainDrops) {
       this.rainDrops = [];
       const n = this.snowMode ? 110 : 160;
       for (let i = 0; i < n; i++) this.rainDrops.push(this.snowMode ? {
-        x: Math.random() * (this.W || 1280), y: Math.random() * (this.H || 720),
+        x: Math.random() * W, y: Math.random() * H, k: i / n, on: false,
         r: 1.5 + Math.random() * 2, spd: 40 + Math.random() * 50,
         drift: Math.random() * TAU, sway: 20 + Math.random() * 30
       } : {
-        x: Math.random() * (this.W || 1280), y: Math.random() * (this.H || 720),
+        x: Math.random() * W, y: Math.random() * H, k: i / n, on: false,
         len: 10 + Math.random() * 14, spd: 480 + Math.random() * 260
       });
     }
-    if (this.snowMode) {
-      for (const d of this.rainDrops) {
-        d.y += d.spd * dt; d.drift += dt * 1.4;
-        d.x += Math.sin(d.drift) * d.sway * dt;
-        if (d.y > this.H) { d.y = -10; d.x = Math.random() * this.W; }
-        if (d.x < -20) d.x = this.W + 20; else if (d.x > this.W + 20) d.x = -20;
+    const top = d => { d.y -= H + 40; d.x = Math.random() * W; d.on = d.k < this.rainT; };
+    for (const d of this.rainDrops) {
+      if (this.snowMode) {
+        d.y += d.spd * dt - my; d.drift += dt * 1.4;
+        d.x += Math.sin(d.drift) * d.sway * dt - mx;
+      } else {
+        d.y += d.spd * dt - my; d.x -= d.spd * 0.15 * dt + mx;
       }
-    } else {
-      for (const d of this.rainDrops) {
-        d.y += d.spd * dt; d.x -= d.spd * 0.15 * dt;
-        if (d.y > this.H) { d.y = -20; d.x = Math.random() * this.W; }
-        if (d.x < -20) d.x = this.W + 20;
-      }
+      if (d.y > H) top(d);
+      else if (d.y < -40) d.y += H + 40;
+      if (d.x < -20) d.x += W + 40; else if (d.x > W + 20) d.x -= W + 40;
     }
   },
 
@@ -4924,8 +4935,8 @@ const G = {
         /* 바다 수면 — 타일을 통째로 칠하지 않고 **파도 높이만큼만** 채운다. */
         if (id === T.SEAWATER && w.tiles[k - WW] === T.AIR) { this.drawWave(c, tx, ty, sx, sy, wl); continue; }
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
-        // 벨트는 Factory.drawBelt 가 방향·흐름대로 다시 그린다 — 아틀라스의 멈춘 가로 벨트가 밑에 비치면 안 된다
-        if ((id === T.M_BELT || id === T.M_BELT_F) && w.machines.has(k)) continue;
+        // 기계 몸체는 Factory.render 가 그린다(떨림·동작) — 여기서도 그리면 흔들 때 두 겹으로 보인다
+        if (MACH_OF_TILE[id] && w.machines.has(k)) continue;
         // 흐르는 액체 — 수위만큼만 (world.js '유체' 절)
         if (FLUID_FLOW[id]) { this.drawFlow(c, w, id, k, tx, ty, sx, sy); continue; }
         if (id === T.FALLS) { this.drawFallsTile(c, tx, ty, sx, sy); continue; }
@@ -5511,19 +5522,19 @@ const G = {
   },
   /** 빗줄기. */
   drawRain(c) {
-    if (!this.rainDrops || !this.rainT) return;
+    if (!this.rainDrops) return;
     if (this.snowMode) {
-      c.globalAlpha = Math.min(1, this.rainT) * 0.85;
+      c.globalAlpha = 0.85;
       c.fillStyle = '#f0f6ff';
-      for (const d of this.rainDrops) { c.beginPath(); c.arc(d.x, d.y, d.r, 0, TAU); c.fill(); }
+      for (const d of this.rainDrops) if (d.on) { c.beginPath(); c.arc(d.x, d.y, d.r, 0, TAU); c.fill(); }
       c.globalAlpha = 1;
       return;
     }
-    c.globalAlpha = Math.min(1, this.rainT) * 0.55;
+    c.globalAlpha = 0.55;
     c.strokeStyle = '#bcd0e0';
     c.lineWidth = 1.4;
     c.beginPath();
-    for (const d of this.rainDrops) { c.moveTo(d.x, d.y); c.lineTo(d.x - 5, d.y + d.len); }
+    for (const d of this.rainDrops) if (d.on) { c.moveTo(d.x, d.y); c.lineTo(d.x - 5, d.y + d.len); }
     c.stroke();
     c.globalAlpha = 1;
   },

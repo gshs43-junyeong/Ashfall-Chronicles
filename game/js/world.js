@@ -199,6 +199,7 @@ class World {
     this.doors = [];            // objects의 부분집합(같은 참조) — 충돌 판정을 빠르게 하려고 따로 캐싱
     /* 공장 기계. */
     this.machines = new Map();
+    this.oreHits = {};          // 칸 → 드릴이 더 캘 수 있는 횟수(처음 캘 때 매긴다)
     this.netDirty = true;       // 전력망을 다시 계산해야 하는가 (기계 설치/철거 시 켜진다)
     this.nets = [];
     /* 심어 둔 작물의 타일 인덱스. */
@@ -593,6 +594,7 @@ class World {
     this.springFalls();          // 샘 없는 폭포(정글 절벽)에 샘을 단다 — 유체를 켜기 전에
     /* 뒷공사(상자·제단·통행 보수)가 자갈 칸을 덮어쓴 자리는 목록에서 뺀다 — 남겨 두면 아무것도 없는 벽을 캤을 때 무너질 자리를 찾다가 엉뚱한 곳이 열린다 */
     this.faults = (this.faults || []).filter(f => this.get(f.x, f.y) === T.FAULTSTONE);
+    this.placeRichOres();        // 광상 — 제 난수, 광맥 칸만 바꾼다
 
     this.spawnX = (vx0 + vx1) >> 1;
     this.spawnY = vh - 3;
@@ -1762,6 +1764,24 @@ class World {
           this.set(x, y, T.AIR);
       }
   }
+  /** 광맥 몇 칸을 광상으로 — 아주 드물게(광맥 칸의 0.15%, 곁에 한 칸 더 · 소형 d1 실측 240칸 안팎). ★ 제 난수(seed+'_rich')만 쓴다 —
+      본 난수를 뽑으면 뒤따르는 생성이 씨앗마다 바뀐다. */
+  placeRichOres() {
+    const r = new RNG(this.seed + '_rich');
+    const RICH = { [T.COAL]: T.COALRICH, [T.COPPER]: T.COPPERRICH, [T.IRON]: T.IRONRICH, [T.LEAD]: T.LEADRICH,
+      [T.GOLD]: T.GOLDRICH, [T.MYTHRIL]: T.MYTHRILRICH };
+    let n = 0;
+    for (let y = 1; y < WORLD_BOT; y++)
+      for (let x = 1; x < WW - 1; x++) {
+        const t = this.tiles[y * WW + x], rt = RICH[t];
+        if (!rt || !r.chance(0.0015)) continue;
+        this.set(x, y, rt); n++;
+        const [dx, dy] = [[1, 0], [-1, 0], [0, 1], [0, -1]][r.int(0, 3)];
+        if (this.get(x + dx, y + dy) === t && r.chance(0.6)) { this.set(x + dx, y + dy, rt); n++; }
+      }
+    this.richCount = n;
+  }
+
   /** 채취탑이 그려진 칸인가 — 플레이어가 아무것도 못 놓는다(해체한 탑은 빼고). */
   inRig(x, y) {
     for (const o of this.objects) {
@@ -5262,7 +5282,7 @@ class World {
       dungeon: this.dungeon, ruins: this.ruins, sealRoom: this.sealRoom,
       skyIslands: this.skyIslands, skyGate: this.skyGate, giantTree: this.giantTree,
       caverns: this.caverns, pools: this.pools, lavaPools: this.lavaPools, falls: this.falls,
-      caveGrid: this.caveGrid ? Array.from(this.caveGrid) : null, faults: this.faults || [],
+      caveGrid: this.caveGrid ? Array.from(this.caveGrid) : null, faults: this.faults || [], oreHits: this.oreHits || {},
       explored: rleEncode(this.explored)
     };
   }
@@ -5297,6 +5317,7 @@ class World {
     // 동굴 갈래 도입 전 세이브 — 갈래가 없으면 모든 굴이 plain 이고, 무너질 자갈도 없다
     w.caveGrid = d.caveGrid ? Uint8Array.from(d.caveGrid) : null;
     w.faults = d.faults || [];
+    w.oreHits = d.oreHits || {};
     // 유체 — 샘 없는 옛 폭포에 샘을 달아 주고 켠다(springFalls 의 ★)
     w.springFalls();
     w.fluidInit();

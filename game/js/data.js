@@ -108,7 +108,9 @@ const T = {
   /* --- 눈 지대 소나무 잎 — 기둥은 여느 나무처럼 WOOD 다 --- */
   PINELEAF: 187,
   /* --- 운석 구덩이 — 운석 덩이 · 그 위에 자란 별빛 수정 · 열에 녹아 굳은 바닥돌 --- */
-  METEORITE: 188, STARCRYSTAL: 189, FUSEDROCK: 190
+  METEORITE: 188, STARCRYSTAL: 189, FUSEDROCK: 190,
+  /* --- 광상 — 광맥 한가운데 드물게 뭉친 덩이. 곡괭이는 몇 개, 공장 드릴은 끝없이 --- */
+  COALRICH: 191, COPPERRICH: 192, IRONRICH: 193, LEADRICH: 194, GOLDRICH: 195, MYTHRILRICH: 196
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -354,7 +356,14 @@ const TILE_DEF = [
   /* --- 운석 구덩이(game.js carveCrater) — 세계 생성에는 없고 운석이 떨어질 때만 생긴다 --- */
   { n: '운석', c: '#3a3436', solid: 1, hard: 3, drop: 'meteorite', ore: 1 },
   { n: '별빛 수정', c: '#ffe6a8', solid: 0, hard: 2, drop: 'star_crystal', a: 1 },
-  { n: '녹아 굳은 돌', c: '#2e2a2e', solid: 1, hard: 2, drop: 'stone' }
+  { n: '녹아 굳은 돌', c: '#2e2a2e', solid: 1, hard: 2, drop: 'stone' },
+  /* rich: 공장 드릴로는 줄지 않는다(factory.js runDrill) · dropN: 곡괭이로 캐면 나오는 개수 · 등급은 원래 광맥 +1 */
+  { n: '석탄 광상', c: '#1c1b22', solid: 1, hard: 2, drop: 'coal', dropN: [5, 8], ore: 1, rich: 1 },
+  { n: '구리 광상', c: '#c8743a', solid: 1, hard: 2, drop: 'copper_ore', dropN: [4, 7], ore: 1, rich: 1 },
+  { n: '철 광상', c: '#b4a898', solid: 1, hard: 2, drop: 'iron_ore', dropN: [4, 7], ore: 1, rich: 1 },
+  { n: '납 광상', c: '#9494ac', solid: 1, hard: 2, drop: 'lead_ore', dropN: [4, 7], ore: 1, rich: 1 },
+  { n: '금 광상', c: '#f0c848', solid: 1, hard: 3, drop: 'gold_ore', dropN: [3, 6], ore: 1, rich: 1 },
+  { n: '미스릴 광상', c: '#5ac8ba', solid: 1, hard: 3, drop: 'mythril_ore', dropN: [3, 5], ore: 1, rich: 1 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -1566,11 +1575,11 @@ const MACHINE = {
   },
   drill: {
     n: '기계식 드릴', tile: T.M_DRILL, item: 'm_drill', fuelIn: 1, rot: 1, mine: 2, cycle: 26, range: 5, cap: 40,
-    d: '연료를 태워 반경 5칸의 광맥을 스스로 캔다. 캔 광석은 앞쪽으로 내보낸다. 미스릴 위쪽은 못 캔다.'
+    d: '연료를 태워 반경 5칸의 광맥을 스스로 캔다(채굴 등급 2 — 석탄·구리·철·납·금·미스릴·유혈암). 광맥 한 칸에서 스무 번 넘게 캐고, 광상은 마르지 않는다.'
   },
   drill_e: {
-    n: '전동 드릴', tile: T.M_DRILL_E, item: 'm_drill_e', power: 22, rot: 1, mine: 4, cycle: 9, range: 7, cap: 60,
-    d: '전력으로 도는 드릴. 기계식보다 세 배 빠르고 반경도 넓으며, 기반암 말고는 전부 캔다.'
+    n: '전동 드릴', tile: T.M_DRILL_E, item: 'm_drill_e', power: 22, rot: 1, mine: 3, cycle: 9, range: 7, cap: 60,
+    d: '전력으로 도는 드릴. 기계식보다 세 배 빠르고 반경도 넓다(채굴 등급 3 — 영혼석·지옥석·에테르·동력석·운석과 금·미스릴 광상까지). 등급 4 넘는 것(세션 3 광석·유적 유리)은 못 캔다.'
   },
   pump: {
     n: '시추 펌프', tile: T.M_PUMP, item: 'm_pump', power: 16, rot: 1, cycle: 14, range: 4, cap: 60,
@@ -2243,7 +2252,8 @@ const TILE_MAT = (() => {
   put('stone', 'MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE');
   put('plant', 'HANGMOSS');
   put('glass', 'GEODE STARCRYSTAL FUSEDROCK');
-  put('metal', 'METEORITE');
+  put('metal', 'METEORITE COPPERRICH IRONRICH LEADRICH GOLDRICH MYTHRILRICH');
+  put('stone', 'COALRICH');
   put('flesh', 'BLIGHTSAC');
   put('void', 'CORRUPTGRASS');
   return m;
