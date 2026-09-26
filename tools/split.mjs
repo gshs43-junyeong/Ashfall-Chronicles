@@ -48,7 +48,9 @@ if (src.slice(0, bounds[0][0]) + parts.join('') + src.slice(closeAt) !== src) th
 for (const [k, g] of spec.groups.entries()) {
   if (spec.kind === 'class' && /\bsuper\b/.test(parts[k])) throw new Error(g.part + ': super 를 쓰는 메서드가 들어 있다');
   const target = spec.kind === 'class' ? spec.name + '.prototype' : spec.name;
-  const text = `/* ===== ${g.file} — ${g.title} ===== */\n` +
+  /* 원래 파일이 ctx.js 로 늦게 묶은 이름(G · UI · Factory)을 쓰면 조각도 같은 줄을 가진다(경로만 한 층 위로) */
+  const ctxLine = (src.match(/^import \{[^}]*\} from '\.\/ctx\.js';$/m) || [''])[0].replace("'./ctx.js'", "'../ctx.js'");
+  const text = `/* ===== ${g.file} — ${g.title} ===== */\n` + (ctxLine ? ctxLine + '\n' : '') +
     `/* ${spec.file} 의 ${spec.name} 에서 나눈 조각 — 읽히는 순간 ${target} 에 붙는다(main.js 가 ${spec.file} 다음에 읽는다). */\n\n` +
     `export const ${g.part} = {\n${spec.kind === 'class' ? classPart(k) : parts[k]}};\n` +
     `mixin(${target}, ${g.part}${spec.kind === 'class' ? ', true' : ''});\n`;

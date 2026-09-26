@@ -44,6 +44,15 @@ import * as titlebg from './titlebg.js';
 import * as entity from './entity.js';
 import * as factory from './factory.js';
 import * as ui from './ui.js';
+/* ui.js 의 UI 를 나눈 조각 */
+import * as u_tree from './ui/tree.js';
+import * as u_quest from './ui/quest.js';
+import * as u_craft from './ui/craft.js';
+import * as u_machine from './ui/machine.js';
+import * as u_shop from './ui/shop.js';
+import * as u_tip from './ui/tip.js';
+import * as u_dialogue from './ui/dialogue.js';
+import * as u_hud from './ui/hud.js';
 import * as music from './music.js';
 import * as game from './game.js';
 /* game.js 의 G 를 영역별로 나눈 조각 — 읽히는 순간 G 에 붙는다(순서는 원래 소스 순서) */
@@ -75,7 +84,7 @@ if (!lang.I18N.isSource) {
 /* 디버그 창구 — 콘솔·?debug 도구·tests·tools/*.py 가 예전처럼 G · World · T · WW … 를 이름으로 읽는다.
    ★ 읽기 전용이고 살아 있는 값이다(WW 는 setWorldSize 뒤에 바뀐 값). 게임 코드는 이것을 읽지 말고 import 할 것.
    브라우저가 이미 가진 이름은 덮지 않는다. */
-for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, world, tileart, itemart, sprites, titlebg, entity, factory, ui, music, game, g_act, g_fishing, g_village, g_altar, g_spawn, g_progress, g_save, g_sound, g_render, g_render_far, g_render_fx, g_ruin_pulse, g_meteor, g_ruin_map, g_corpse]) {
+for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, world, tileart, itemart, sprites, titlebg, entity, factory, ui, u_tree, u_quest, u_craft, u_machine, u_shop, u_tip, u_dialogue, u_hud, music, game, g_act, g_fishing, g_village, g_altar, g_spawn, g_progress, g_save, g_sound, g_render, g_render_far, g_render_fx, g_ruin_pulse, g_meteor, g_ruin_map, g_corpse]) {
   for (const k of Object.keys(m)) {
     if (k in window) continue;
     Object.defineProperty(window, k, { get: () => m[k], configurable: true });

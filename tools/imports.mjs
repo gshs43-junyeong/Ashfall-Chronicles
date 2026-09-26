@@ -36,7 +36,7 @@ for (const f of LAYER) {
   const src = fs.readFileSync(f, 'utf8');
   const ast = acorn.parse(src, { ecmaVersion: 'latest', sourceType: 'module', ranges: true });
   const imps = ast.body.filter(n => n.type === 'ImportDeclaration');
-  const keep = imps.filter(n => n.source.value === './ctx.js').map(n => src.slice(n.start, n.end));
+  const keep = imps.filter(n => /(^|\/)ctx\.js$/.test(n.source.value)).map(n => src.slice(n.start, n.end));
   // import 를 다 걷어 낸 몸통(ctx 줄은 남겨 둬야 G·UI 가 풀린다)
   let body = src, insertAt = null;
   for (const n of [...imps].reverse()) {

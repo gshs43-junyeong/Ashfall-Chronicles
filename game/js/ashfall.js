@@ -30441,7 +30441,16 @@
         el.textContent = p.base[el.dataset.s] + " (" + p.d[el.dataset.s] + ")";
       });
       $$("#stat-alloc button").forEach((b) => b.style.opacity = p.statPts > 0 ? 1 : 0.35);
-    },
+    }
+  };
+  bindUI(UI);
+
+  // src/legacy/ui/tree.js
+  var tree_exports = {};
+  __export(tree_exports, {
+    TreeUIPart: () => TreeUIPart
+  });
+  var TreeUIPart = {
     /* ---------------- 특성 트리 ---------------- */
     /* ★ 세 갈래를 **한 판**에 그린다 — 사연: docs/code-history.md#h90 */
     TREE_TOP: 14,
@@ -30748,7 +30757,16 @@
         el.querySelector(".plin").innerHTML = P.lin.map(([n, f]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join("");
         el.querySelector(".pperks").innerHTML = P.perks.map(([at, n, dsc]) => `<div class="perk${pr.lv >= at ? " on" : ""}"><span class="pk">Lv ${at}</span><span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>`).join("");
       }
-    },
+    }
+  };
+  mixin(UI, TreeUIPart);
+
+  // src/legacy/ui/quest.js
+  var quest_exports = {};
+  __export(quest_exports, {
+    QuestUIPart: () => QuestUIPart
+  });
+  var QuestUIPart = {
     /* ---------------- 퀘스트 ---------------- */
     questTab: "journey",
     // 'journey' | 'ach' | 'ruins'
@@ -30978,7 +30996,16 @@
       }
       $("#quest-tracker").style.display = "";
       $("#qt-body").innerHTML = h;
-    },
+    }
+  };
+  mixin(UI, QuestUIPart);
+
+  // src/legacy/ui/craft.js
+  var craft_exports = {};
+  __export(craft_exports, {
+    CraftUIPart: () => CraftUIPart
+  });
+  var CraftUIPart = {
     /* ---------------- 제작 ---------------- */
     craftTab: "work",
     /* null이면 **지금 진행 중인 세션**을 연다 — 사연: docs/code-history.md#h97 */
@@ -31109,7 +31136,16 @@
         app.upgradeVillage();
         this.refreshTownhall();
       });
-    },
+    }
+  };
+  mixin(UI, CraftUIPart);
+
+  // src/legacy/ui/machine.js
+  var machine_exports = {};
+  __export(machine_exports, {
+    MachineUIPart: () => MachineUIPart
+  });
+  var MachineUIPart = {
     /* ---------------- 기계 ---------------- */
     openMachine(m) {
       this.closePanel();
@@ -31358,7 +31394,16 @@
           } else this.toast(yes(i) ? m.on ? tr("더 들어갈 자리가 없다") : tr("멈춘 기계에는 넣을 수 없다") : tr("이 기계가 받지 않는 물건이다"), "bad");
         });
       }
-    },
+    }
+  };
+  mixin(UI, MachineUIPart);
+
+  // src/legacy/ui/shop.js
+  var shop_exports = {};
+  __export(shop_exports, {
+    ShopUIPart: () => ShopUIPart
+  });
+  var ShopUIPart = {
     /* ---------------- 상자 / 상점 ---------------- */
     openChest(obj) {
       this.closePanel();
@@ -31623,7 +31668,16 @@
         }, g);
       });
       if (!g.children.length) $("#anvil-note").textContent = tr("가방에 두들길 만한 장비가 없다.");
-    },
+    }
+  };
+  mixin(UI, ShopUIPart);
+
+  // src/legacy/ui/tip.js
+  var tip_exports = {};
+  __export(tip_exports, {
+    TipUIPart: () => TipUIPart
+  });
+  var TipUIPart = {
     /* 펫 목록 패널은 없다 — 펫이 인벤토리 아이템이라, 가방에서 바로 장비창의 펫 칸으로 끼우면 된다(다른 장비와 똑같은 조작). */
     /* ---------------- 툴팁 ---------------- */
     /** 같은 자리에 차고 있는 장비와 견준 한 줄. */
@@ -31794,7 +31848,16 @@
     hideTip() {
       this.tip.hide();
       this.tipTarget = false;
-    },
+    }
+  };
+  mixin(UI, TipUIPart);
+
+  // src/legacy/ui/dialogue.js
+  var dialogue_exports = {};
+  __export(dialogue_exports, {
+    DialogueUIPart: () => DialogueUIPart
+  });
+  var DialogueUIPart = {
     /* ---------------- 대화 ---------------- */
     /** '다시 듣기'는 이름 옆 작은 단추로 뺀다 (없으면 감춘다) */
     setReplay(c) {
@@ -31999,7 +32062,16 @@
       $("#bb-fill").style.width = r * 100 + "%";
       $("#bb-ghost").style.width = r * 100 + "%";
       $("#bb-hp").textContent = `${fmt(Math.ceil(e.hp))} / ${fmt(e.maxHp)}`;
-    },
+    }
+  };
+  mixin(UI, DialogueUIPart);
+
+  // src/legacy/ui/hud.js
+  var hud_exports = {};
+  __export(hud_exports, {
+    HudUIPart: () => HudUIPart
+  });
+  var HudUIPart = {
     /* ---------------- HUD ---------------- */
     updateHUD() {
       const p = app.player, d = p.d;
@@ -32131,7 +32203,7 @@
       c.stroke();
     }
   };
-  bindUI(UI);
+  mixin(UI, HudUIPart);
 
   // src/legacy/music.js
   var music_exports2 = {};
@@ -43101,7 +43173,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports2, factory_exports, ui_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports2, factory_exports, ui_exports, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
