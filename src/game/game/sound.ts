@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/sound.js — 사운드 · 재질 파편 · 효과음 ===== */
 import { TAU } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -11,7 +10,7 @@ import { SFX_GAP, Sfx } from '../music.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const SoundPart = {
+export const SoundPart: Bag = {
 
   /* ================= 사운드 ================= */
   audioInit() {

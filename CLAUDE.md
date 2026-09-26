@@ -1,7 +1,7 @@
 # CLAUDE.md — 이 저장소에서 일하는 AI를 위한 안내
 
 Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다. 코드의 **원본은 `src/`** — 게임 쪽
-`src/game/**/*.ts`(ES 모듈 · 아직 `@ts-nocheck` — 표 모양부터 차례로 타입을 입힌다)와 게임을 모르는 엔진 `src/engine/**/*.ts`(TypeScript strict)이고, `tools/bundle.mjs`(esbuild)가 `main.ts` 에서 import 를 따라
+`src/game/**/*.ts`(ES 모듈 · 느슨한 TS — 표 모양은 `types.d.ts`, 큰 객체는 아직 `Bag`)와 게임을 모르는 엔진 `src/engine/**/*.ts`(TypeScript strict)이고, `tools/bundle.mjs`(esbuild)가 `main.ts` 에서 import 를 따라
 `game/js/ashfall.js` 하나(클래식 스크립트 · IIFE)로 묶는다 — file:// 에서도 돈다. 처음 한 번 `npm ci`, 그다음 **`npm run dev`
 를 켜 두면 고치고 새로고침하는 흐름 그대로다**(소스를 고치면 번들이 다시 만들어진다).
 번들은 커밋한다 — `game/` 만 받아도 빌드 없이 돈다. **소스를 고쳤으면 번들도 같이 커밋할 것**
@@ -133,6 +133,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 - **한 파일 한 영역 — 코드 1,200줄 · 표(data/) 2,000줄 이하.** 큰 객체(`G` · `UI` · 클래스)는 조각 모듈로 나눠 `mixin(대상, 조각)` 으로
   붙인다(조각은 부모 다음 층에서 읽히며 스스로 붙는다 — 부모는 조각을 import 하지 않는다). 나눌 때는 도구로: `tools/split.mjs`(객체·클래스 절) ·
   `tools/split-switch.mjs`(거대 switch → 갈래 표) · `tools/split-top.mjs`(최상위 표) — 모두 글자 그대로 옮기고 이어 붙이면 원래와 같은지 확인한다.
+- **새 표에는 `types.d.ts` 의 타입을 단다**(`export const X: Record<string, ItemDef> = {`) · 클래스에 새 필드를 만들면 그 클래스 맨 위 `declare` 묶음에 더한다(안 그러면 typecheck 가 멈춘다) — 타입만이라 번들에 안 들어간다.
 - **엔진(`src/engine`)은 게임(`src/game`)을 import 하지 않는다.** 게임 고유값(키 이름·곡 표·DB 이름…)은 `createSaveStore({…})`·`createMusic({…})`
   처럼 설정으로 넘긴다. 엔진은 `.ts`(strict, `npm run typecheck`)이고 클래스 필드는 `declare` 로 적는다(필드 정의 의미가 바뀌지 않게).
 - **앞 모듈은 뒤 모듈을 import 하지 않는다**(순환 0). `data.js`의 상수를 `world.js`가 쓰므로 **`data.js`가 먼저**다. 둘 다 쓰는 세계
@@ -294,7 +295,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-26)
 
-- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영)까지 — P10 뒤 en → ja·zh-Hans·de·es 번역, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 진행 중 — 쪼개기(파일당 1,200줄 · 표 2,000줄)와 `src/game/**/*.ts` 로 옮기기 끝, 타입 입히기(`@ts-nocheck` 떼기) 남음(계획서 §7-1). 그다음 P11 Docker · P12 마무리.
+- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영)까지 — P10 뒤 en → ja·zh-Hans·de·es 번역, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 진행 중 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입 첫 단계(`@ts-nocheck` 0, 표 타입 `types.d.ts`) 끝 — `any` 좁히기는 차례로(계획서 §7-1). 그다음 P11 Docker · P12 마무리.
   **화질**(설정 · game.js `QUALITY`): 자동 = 폰 절약(픽셀 밀도 1 · 입자 300) · 태블릿 보통(1.5 · 600) · 컴퓨터 높음(2 · 900). 렌더 단계별 시간은 `G.pipe.profile(true)` → `G.pipe.stats()`. 도중에 찾은 버그는 계획서 §9-1 에 모아 P12 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).

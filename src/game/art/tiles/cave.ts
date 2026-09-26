@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== art/tiles/cave.js — 동굴 — 이끼 · 종유 · 수정 · 금 간 자갈 · 운석 · 석회암·화강암 · 균사 ===== */
 import { shade } from '../../../engine/core/color.js';
 import { TAU, clamp } from '../../../engine/core/math.js';
@@ -6,7 +5,7 @@ import { TS } from '../../world.js';
 import { TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
-export const TilePaintCave = {
+export const TilePaintCave: Bag = {
   mossrock(H) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {            // 이끼 낀 바위 — 돌결 위에 이끼가 얼룩지고 윗면이 두툼하다

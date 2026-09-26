@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* js/titlebg.js — 타이틀 화면 배경. */
 import { Sprites } from './sprites.js';
 export const TitleBG = {

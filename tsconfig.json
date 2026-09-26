@@ -1,5 +1,5 @@
 {
-  "//": "타입 검사만 한다(noEmit) — 묶기는 esbuild 가 한다. 엔진(src/engine)은 strict. 게임(src/game)은 파일마다 @ts-nocheck 를 떼며 차례로 타입을 입힌다.",
+  "//": "타입 검사만 한다(noEmit) — 묶기는 esbuild 가 한다. 엔진(src/engine)만 strict. 게임(src/game)은 tsconfig.game.json(느슨하게)이 본다.",
   "compilerOptions": {
     "target": "es2022",
     "module": "esnext",
@@ -13,5 +13,5 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
   },
-  "include": ["src/engine/**/*.ts", "src/game/**/*.ts"]
+  "include": ["src/engine/**/*.ts"]
 }

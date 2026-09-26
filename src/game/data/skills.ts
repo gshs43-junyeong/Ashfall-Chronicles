@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/skills.js — 보스 · 스킬 · 특성 갈래 · 숙련 · 버프 ===== */
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
 
@@ -58,7 +57,7 @@ export const BOSS_SURGE = {
 export const SURGE_FLY = { b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
 
 /* ---------------- 스킬 / 특성 ---------------- */
-export const SKILLS = {
+export const SKILLS: Record<string, SkillDef> = {
   /* ===== 검투사 — 붙어서 버티고 밀어붙인다 ===== */
   s_cleave:   { n: '광폭 베기', i: '🌀', br: 'blade', tier: 0, col: 0.5, max: 3, type: 'active', mana: 12, cd: 6,
                 d: '주변을 원형으로 베어 무기 피해의 %d%%를 준다.', v: r => 130 + r * 45 },
@@ -243,7 +242,7 @@ export const BOSS_LINES = {
 };
 
 /* ---------------- 버프 ---------------- */
-export const BUFFS = {
+export const BUFFS: Record<string, BuffDef> = {
   rage: { n: '분노', i: '😤', dur: 180, b: { dmgP: 0.20 } },
   rage_greater: { n: '상급 분노', i: '😤', dur: 240, b: { dmgP: 0.32 } },
   iron: { n: '무쇠 피부', i: '🪨', dur: 180, b: { def: 12 } },

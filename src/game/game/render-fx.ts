@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/render-fx.js — 스킬 고유 연출 · 별 조각 궤도 ===== */
 import { shade } from '../../engine/core/color.js';
 import { TAU, clamp } from '../../engine/core/math.js';
@@ -9,7 +8,7 @@ import { Sprites } from '../sprites.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const RenderFxPart = {
+export const RenderFxPart: Bag = {
 
   /* ================= 특별한 스킬의 고유 연출 ================= */
   drawSigGround(c, camX, camY) {

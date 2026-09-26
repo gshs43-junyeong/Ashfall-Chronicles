@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== art/tiles/ruins.js — 화덕 · 유적 함정(다트·화염구·무너짐·분사·스위치) · 광재 · 얼음 깃발 · 유적 장식 ===== */
 import { shade } from '../../../engine/core/color.js';
 import { TAU } from '../../../engine/core/math.js';
@@ -6,7 +5,7 @@ import { TS } from '../../world.js';
 import { TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
-export const TilePaintRuins = {
+export const TilePaintRuins: Bag = {
   mk_oven(H) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {

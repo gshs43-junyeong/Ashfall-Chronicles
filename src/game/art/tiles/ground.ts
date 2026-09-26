@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== art/tiles/ground.js — 땅 · 바위 · 눈·얼음 · 나무·잎 · 광석 · 판자·벽돌 · 횃불 ===== */
 import { shade } from '../../../engine/core/color.js';
 import { TAU, clamp } from '../../../engine/core/math.js';
@@ -7,7 +6,7 @@ import { TS } from '../../world.js';
 import { TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
-export const TilePaintGround = {
+export const TilePaintGround: Bag = {
   soil(H) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
@@ -173,7 +172,7 @@ export const TilePaintGround = {
         for (let i = 0; i < 10; i++) R(lr.range(1, TS - 2), lr.range(1, TS - 2), 1, 1, c2);
 
         /* 위에 그려야 "이 잎이 저 줄기에 달려 있다"가 눈으로 읽힌다 — 사연: docs/code-history.md#h85 */
-        const twig = s.noTwig ? () => {} : (x0, y0, x1, y1, th, col) => {
+        const twig = s.noTwig ? () => {} : (x0, y0, x1, y1, th, col?) => {
           const k = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
           for (let i = 0; i <= k; i++) {
             const t = i / k;

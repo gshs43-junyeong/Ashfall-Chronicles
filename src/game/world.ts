@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== world.js — 세계 생성 / 충돌 / 조명 ===== */
 import { factory as Factory } from './ctx.js';
 import { clamp, dist, inv, lerp } from '../engine/core/math.js';
@@ -124,6 +123,9 @@ export const DAWN_WALL = { leftOff: -16, rightOff: 15, gateH: 3, towerH: 14,
 /** 유적 통행 검사(_standSet)가 쓰는 칸 집합 — Set 과 같은 쓰임(has · add · size · 순회)을 상자 크기의 Uint8Array 로 한다 — 사연:
    docs/code-history.md#h104 */
 export class BoxSet {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare bh: any; declare bw: any; declare list: any; declare m: any; declare out: any; declare x0: any; declare y0: any;
+
   constructor(box, pad) {
     this.x0 = box[0] - pad; this.y0 = box[1] - pad;
     this.bw = box[2] - box[0] + 1 + pad * 2; this.bh = box[3] - box[1] + 1 + pad * 2;
@@ -154,6 +156,28 @@ export function doorEdge(d) {
 
 /** Ashfall 세계 — 타일맵(engine/tilemap) 위에 생성기 · 마을 · 유적 · 바다 · 유체 · 조명 규칙을 얹는다(엔진화 계획 §8-4 상속). */
 export class World extends TileMap {
+  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare _ensureWalkable: any; declare _walkJobs: any; declare atelier: any; declare beach: any; declare breakLongRuns: any;
+  declare buildAltars: any; declare buildAtelier: any; declare buildCaveZones: any; declare buildCaverns: any;
+  declare buildCitadel: any; declare buildDawnCity: any; declare buildDeepShaft: any; declare buildDungeon: any;
+  declare buildJungleFalls: any; declare buildRuinCaches: any; declare buildRuins: any; declare buildRunaway: any;
+  declare buildSea: any; declare buildSkyIslands: any; declare buildVillage: any; declare buildWorks: any;
+  declare cactusPlant: any; declare caveGrid: any; declare caverns: any; declare citadel: any; declare crops: any;
+  declare crumbled: any; declare dawnCity: any; declare dawnY: any; declare decoratePonds: any; declare decorateWater: any;
+  declare deepShaft: any; declare doors: any; declare dungeon: any; declare ensureEntranceTraps: any; declare fAcc: any;
+  declare falls: any; declare faults: any; declare fillMossCorners: any; declare fitObjects: any; declare floodCaves: any;
+  declare floodHell: any; declare flv: any; declare fmark: any; declare fq: any; declare giantTree: any; declare glowStalk: any;
+  declare inAtelier: any; declare inCitadel: any; declare inDeepShaft: any; declare inRuin: any; declare inRunaway: any;
+  declare inWorks: any; declare jungleTree: any; declare lavaPools: any; declare lbh: any; declare lbw: any; declare lbx: any;
+  declare lby: any; declare lightBuf: any; declare machines: any; declare matId: any; declare netDirty: any; declare nets: any;
+  declare objects: any; declare openCodeDoorway: any; declare oreHits: any; declare pineTree: any; declare placeRichOres: any;
+  declare placeRigs: any; declare pools: any; declare pruneSmallCaves: any; declare restoreSealRoom: any; declare rng: any;
+  declare ruinAt: any; declare ruinEvents: any; declare ruinSites: any; declare ruins: any; declare runaway: any;
+  declare scatterChests: any; declare sea: any; declare seaLevel: any; declare sealCipherVaults: any; declare sealLiquids: any;
+  declare sealRoom: any; declare seed: any; declare shoreY: any; declare skyGate: any; declare skyIslands: any;
+  declare spawnX: any; declare spawnY: any; declare surface: any; declare sweepFloatingDecor: any; declare sweepPockets: any;
+  declare tree: any; declare villageY: any; declare works: any;
+
   constructor(seed) {
     super(WW, WH, TS, TILE_DEF, T.BEDROCK);   // 타일 · 벽지 · 탐험 배열, 경계 밖 = 기반암
     this.seed = seed;
@@ -687,7 +711,7 @@ export class World extends TileMap {
       if (r) out.push(r);
     }
     // 다 재고 나서 한꺼번에 바꾼다 — 재는 도중에 바꾸면 줄 순서에 따라 한쪽으로만 번진다
-    const cols = new Set();
+    const cols = new Set<number>();
     for (const [k, t, lv] of out) {
       const x = k % WW, y = (k / WW) | 0;
       if (this.tiles[k] !== t) this.set(x, y, t);

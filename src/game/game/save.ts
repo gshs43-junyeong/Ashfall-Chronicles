@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/save.js — 저장 · 내보내기 · 세이브 슬롯 · 설정 ===== */
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -21,7 +20,7 @@ import { G, NONAME, SAVE_KEY, SAVE_SLOTS, SAVE_VERSION, SET_KEY, SaveStore, TOUC
   sigKey, slotKey, upgradeSave } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const SavePart = {
+export const SavePart: Bag = {
 
   /* ================= 저장 ================= */
   /** 저장이 끝나면 true. */
@@ -31,7 +30,7 @@ export const SavePart = {
     this._saving = true;
     try {
       const p = this.player;
-      const data = {
+      const data: Bag = {
         v: SAVE_VERSION, name: p.name, savedAt: Date.now(),
         world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
         talked: this.talked, crafted: this.crafted,
@@ -68,7 +67,7 @@ export const SavePart = {
   /* 파일은 슬롯 번호(0부터)를 열쇠로 본문 글자열을 담는다 — 저장소가 바뀌어도 파일 모양은 그대로다. */
   async exportSaves() {
     try {
-      const out = { app: 'ashfall', key: SAVE_KEY, at: new Date().toISOString(), slots: {} };
+      const out: Bag = { app: 'ashfall', key: SAVE_KEY, at: new Date().toISOString(), slots: {} };
       let n = 0;
       for (let i = 0; i < SAVE_SLOTS; i++) {
         const rec = await SaveStore.get(i);
@@ -407,7 +406,7 @@ export const SavePart = {
 
   /* ================= 설정 ================= */
   loadSettings() {
-    let v = {};
+    let v: Bag = {};
     try { v = JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch (e) { }
     this.settings = Object.assign({}, SET_DEFAULT, v);
     /* 낮은 폰 화면은 처음부터 UI 를 작게 — 한 번 고른 값은 그대로 둔다 */

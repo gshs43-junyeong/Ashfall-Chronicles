@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/recipes.js — 제작법 · 연료 · 공장 기계 · 기계 제작법 · 물건값 단계 ===== */
 import { clamp } from '../../engine/core/math.js';
 import { T } from '../data.js';
@@ -6,7 +5,7 @@ import { T } from '../data.js';
 
 /* ---------------- 제작법 ---------------- */
 // need: {아이템:수량}, station: null(어디서나) / 'work'(작업대) / 'forge'(용광로) lv: 그 시설의 필요 승급 단계 (없으면 1).
-export const RECIPES = [
+export const RECIPES: RecipeDef[] = [
   { out: 'plank', n: 4, need: { wood: 1 } },
   { out: 'torch', n: 5, need: { wood: 1 } },
   { out: 'platform', n: 4, need: { wood: 1 } },
@@ -293,7 +292,7 @@ export const RECIPES = [
 export const FUEL = { wood: 16, plank: 20, ash: 8, coal: 90, fuel_brick: 560, crude_oil: 150, refined_oil: 640 };
 
 /* ---------------- 기계 ---------------- */
-export const MACHINE = {
+export const MACHINE: Record<string, MachineDef> = {
   belt: {
     n: '컨베이어 벨트', tile: T.M_BELT, item: 'm_belt', rot: 1,
     d: '아이템을 1초에 한 칸씩 앞으로 나른다. 동력이 필요 없다. 앞이 막히면 그 자리에서 기다린다.'

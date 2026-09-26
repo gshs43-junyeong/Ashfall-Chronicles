@@ -1,10 +1,9 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/pets.js — 펫 · 레벨 배율 · 알 ===== */
 import { ITEMS } from './items.js';
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
 
 /* ---------------- 펫 ---------------- */
-export const PETS = {
+export const PETS: Record<string, PetDef> = {
   /* --- 공통 --- */
   ember_squirrel: { n: '잿불 다람쥐', i: '🐿', r: 0, c: '#c8703a', b: { ms: 8 },
     atk: { k: 'proj', proj: 'fire', dmg: 55, cd: 1.6, range: 240, spd: 380 },

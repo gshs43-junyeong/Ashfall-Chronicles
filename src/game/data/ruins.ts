@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/ruins.js — 유적 · 맥박 · 탐사 · 메아리 · 동굴 갈래 · 암호 · 비문 · 사건 ===== */
 import { SHIFT } from '../size.js';
 import { T } from '../data.js';
@@ -7,7 +6,7 @@ import { T } from '../data.js';
 /* ---------------- 바이옴 유적 ---------------- */
 /* traps 값은 기계 키가 아니라 타일 함정 종류다 — 'dart'(화살 구멍) · 'vent'(불길 분출구) · 'crumble'(부서지는 바닥). */
 /* 난이도 등급(rank) — 기준은 "플레이어가 실제로 언제 여기 닿는가"다. */
-export const RUIN_SPEC = [
+export const RUIN_SPEC: RuinDef[] = [
   {
     id: 'ice', n: '얼음 던전', x: 300 + SHIFT, y: 150, w: 88, h: 50,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
@@ -119,7 +118,7 @@ export const RUIN_PLANS = {
 
 /* 스토리 유적 셋(석판)의 도면·입구·고유 요소. */
 /* 석판 유적 셋도 같은 규칙이다 — rooms 가 목표 방 수, bsp 가 [깊이, 최소 가로, 최소 세로]. */
-export const STORY_RUIN = [
+export const STORY_RUIN: RuinDef[] = [
   { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', rooms: 12, bsp: [5, 10, 7], decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
   { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 14, bsp: [5, 10, 7], decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
   { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 18, bsp: [5, 10, 7], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
@@ -378,11 +377,11 @@ export const RUIN_LORE = {
 /* 충전된 배터리 한 개가 채우는 전하 — 최대 전하(부적으로 늘어남)와 무관하게 같다 */
 export const CELL_CHARGE = 200;
 
-export const RIG = { in: [['forest', 2], ['forest2', 1]], edge: 40, leg: 2, half: 1, tall: 6, stack: 8,
+export const RIG: Bag = { in: [['forest', 2], ['forest2', 1]], edge: 40, leg: 2, half: 1, tall: 6, stack: 8,
   parts: [['steel_plate', 10], ['gear_basic', 8], ['iron_bar', 12], ['wire', 12], ['motor', 2], ['circuit', 3], ['machine_frame', 1]] };
 
 /* 마을 2단계(밭이 생기는 때)에 가방으로 주는 연장·씨앗 한 벌 */
-export const FARM_KIT = [['hoe_iron', 1], ['scythe_iron', 1], ['seed_wheat', 12], ['seed_starroot', 8], ['seed_ashcap', 6], ['fertilizer', 6]];
+export const FARM_KIT: [string, number][] = [['hoe_iron', 1], ['scythe_iron', 1], ['seed_wheat', 12], ['seed_starroot', 8], ['seed_ashcap', 6], ['fertilizer', 6]];
 
 export const RUIN_HINTS = {
   ice: [

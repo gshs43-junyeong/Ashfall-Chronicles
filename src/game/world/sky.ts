@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== world/sky.js — 던전 틀 · 하늘 섬 · 폭풍 제단 · 채취탑 · 광상 ===== */
 import { factory as Factory } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -9,7 +8,7 @@ import { RIG, RUIN_HINTS } from '../data/ruins.js';
 import { TS, World, inSeaZone } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
-export const WorldSky = {
+export const WorldSky: Bag & ThisType<World> = {
 
   /* ---- 지하 묘실 ---- */
   buildDungeon(rng, n2) {
@@ -251,7 +250,7 @@ export const WorldSky = {
       for (let t = 0; t < tries; t++) {
         const cx = r.int(40 + rw, WW - 40 - rw), cy = band();
         if (inSeaZone(cx - rw) || inSeaZone(cx + rw)) continue;
-        const box = [cx - rw - 5, cy - 13, cx + rw + 5, cy + rh + 6];
+        const box: [number, number, number, number] = [cx - rw - 5, cy - 13, cx + rw + 5, cy + rh + 6];
         if (hit(...box)) continue;
         occ.push(box);
         return { cx, cy };

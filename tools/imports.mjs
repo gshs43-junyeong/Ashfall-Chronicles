@@ -9,7 +9,7 @@ import path from 'node:path';
 import * as acorn from 'acorn';
 import * as escope from 'eslint-scope';
 import globals from 'globals';
-import { LEGACY, ENGINE, listModules, readModule, specFor, rel } from './srcmods.mjs';
+import { LEGACY, ENGINE, listModules, readModule, specFor, rel, stripTypes } from './srcmods.mjs';
 
 const ALLOWED = new Set([...Object.keys(globals.browser), ...Object.keys(globals.builtin)]);
 const CHECK = process.argv.includes('--check');
@@ -34,7 +34,7 @@ let changed = 0, bad = 0;
 for (const f of LAYER) {
   if (f === CTX) continue;
   const src = fs.readFileSync(f, 'utf8');
-  const ast = acorn.parse(src, { ecmaVersion: 'latest', sourceType: 'module', ranges: true });
+  const ast = acorn.parse(stripTypes(src), { ecmaVersion: 'latest', sourceType: 'module', ranges: true });
   const imps = ast.body.filter(n => n.type === 'ImportDeclaration');
   const keep = imps.filter(n => /(^|\/)ctx\.js$/.test(n.source.value)).map(n => src.slice(n.start, n.end));
   // import 를 다 걷어 낸 몸통(ctx 줄은 남겨 둬야 G·UI 가 풀린다)
@@ -46,7 +46,7 @@ for (const f of LAYER) {
   }
   if (insertAt === null) insertAt = src.indexOf('\n', src.indexOf('*/')) + 1;   // 첫 주석(파일 머리) 다음 줄
   const probe = body.slice(0, insertAt) + keep.map(k => k + '\n').join('') + body.slice(insertAt);
-  const past = acorn.parse(probe, { ecmaVersion: 'latest', sourceType: 'module', ranges: true });
+  const past = acorn.parse(stripTypes(probe), { ecmaVersion: 'latest', sourceType: 'module', ranges: true });
   const sm = escope.analyze(past, { ecmaVersion: 2022, sourceType: 'module' });
   const need = new Map();   // 모듈 → Set(이름)
   for (const r of sm.globalScope.through) {

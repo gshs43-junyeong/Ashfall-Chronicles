@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/story.js — 장 · 세션 · 단말기 · 석판 · 대화 ===== */
 import { T } from '../data.js';
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
@@ -6,7 +5,7 @@ import { T } from '../data.js';
 /* ---------------- 스토리 ---------------- */
 /* obj types: kill(target,n) / mine(tile,n) / collect(item,n) / talk(npc) / depth(y) / boss(target) /
    craft(item) / and(parts — 이어서 하는 일: 모으고 → 만들기. 전부 끝나야 한 칸) */
-export const CHAPTERS = [
+export const CHAPTERS: ChapterDef[] = [
   {
     id: 0, title: '떨어진 별', sub: '서 장', art: 'chapter_0_fallen_star',
     line: '별이 부서진 밤',
@@ -525,7 +524,7 @@ export const CHAPTER_HOOK = {
 for (const ch of CHAPTERS) if (CHAPTER_HOOK[ch.id]) ch.hook = CHAPTER_HOOK[ch.id];
 
 /* 지하 공창의 단말 — 세션 2 오프닝의 로어. */
-export const TERMINALS = [
+export const TERMINALS: Bag[] = [
   {
     id: 0, n: '첫 번째 단말',
     lines: [

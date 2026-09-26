@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== factory.js — 공장: 기계 / 전력망 / 물류 ===== */
 import { app as G, bindFactory } from './ctx.js';
 import { shade } from '../engine/core/color.js';
@@ -26,7 +25,7 @@ export const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위', '오른쪽 위'
 export const ST_RUN = new Set([N_('가동'), N_('채굴 중'), N_('시추 중'), N_('이송'), N_('사격'), N_('방전'), N_('통과'), N_('분기'),
   N_('배출 중'), N_('가동 중'), N_('축전 중'), N_('가득 참')]);
 
-export const Factory = {
+export const Factory: Bag = {
   /* 벨트 한 칸에 머무는 시간(초) — 물건도 벨트 무늬도 이 속도로 간다(일반 1칸/초 · 고속 2칸/초) */
   DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK },
   ORE_HITS: 20,            // 드릴이 광맥 한 칸에서 캐는 최소 횟수
@@ -49,7 +48,7 @@ export const Factory = {
   place(w, tx, ty, key, dir, gen) {
     const s = MACHINE[key];
     if (!s || !this.canPlace(w, tx, ty)) return null;
-    const m = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: '' };
+    const m: Bag = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: '' };
     if (gen) m.gen = 1;
     if (key === 'belt' || key === 'belt_fast' || key === 'sorter') m.it = null;    // 물고 있는 아이템 1개
     if (key === 'sorter') m.f = null;                       // 통과시킬 아이템 id

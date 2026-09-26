@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== tileart.js — 절차적 타일 텍스처 아틀라스 ===== */
 import { shade } from '../engine/core/color.js';
 import { clamp, lerp } from '../engine/core/math.js';
@@ -239,7 +238,7 @@ for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.PINELEA
 /** 질감 갈래(ART[id].k) → 그리는 법 — art/tiles/*.js 가 채운다. this 는 TileArt, H 는 paint 의 인자·도우미 */
 export const TILE_PAINT = {};
 
-export const TileArt = {
+export const TileArt: Bag = {
   /* 타일마다 아틀라스에 미리 그려 두는 칸 수. */
   V: 6,
   atlas: null, wallAtlas: null, ready: false,
@@ -420,7 +419,7 @@ export const TileArt = {
           }
       }
     };
-    const twig = (id) => {
+    const twig = (id): [number, number, number] => {
       const t = ART[id].tw || '#000000';
       return [parseInt(t.slice(1, 3), 16), parseInt(t.slice(3, 5), 16), parseInt(t.slice(5, 7), 16)];
     };

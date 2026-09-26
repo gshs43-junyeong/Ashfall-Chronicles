@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== world/water.js — 굴 물 · 지옥 · 정글 폭포 · 물가 장식 · 이끼 모서리 · 상자 ===== */
 import { factory as Factory } from '../ctx.js';
 import { clamp, lerp } from '../../engine/core/math.js';
@@ -9,7 +8,7 @@ import { FLUID_KIND } from '../data/materials.js';
 import { MAT_LAYER, TS, World, inSeaZone } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
-export const WorldWater = {
+export const WorldWater: Bag & ThisType<World> = {
 
   floodCaves(rng) {
     // 바다(buildSea)가 먼저 등록해 둔 웅덩이는 살린다 — 여기서 통째로 비우면 수중 몹이 바다에 안 나온다

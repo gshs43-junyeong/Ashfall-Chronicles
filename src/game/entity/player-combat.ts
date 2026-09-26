@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== entity/player-combat.js — 플레이어 — 공격 · 스킬 ===== */
 import { app as G, ui as UI } from '../ctx.js';
 import { TAU, angleTo, dist } from '../../engine/core/math.js';
@@ -11,7 +10,7 @@ import { TS } from '../world.js';
 import { Enemy, PROJ_STYLE, Part, Player, Proj, Wolf, itemDamage, itemSpeed } from '../entity.js';
 /* entity.js 의 Player 에서 나눈 조각 — 읽히는 순간 Player.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
-export const PlayerCombat = {
+export const PlayerCombat: Bag & ThisType<Player> = {
 
   /* ---- 공격 ---- */
   attackReady() { return this.atkTimer <= 0; },

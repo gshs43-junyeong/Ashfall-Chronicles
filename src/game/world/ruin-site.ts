@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== world/ruin-site.js — 유적 자리 · 유적 짓기 · 봉인실 · 제단 ===== */
 import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
@@ -10,7 +9,7 @@ import { MYSTIC, RUIN_CIPHER, RUIN_HINTS, RUIN_MAP_IN, RUIN_RELIC, RUIN_SPEC, ST
 import { TS, World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
-export const WorldRuinSite = {
+export const WorldRuinSite: Bag & ThisType<World> = {
 
   buildRuinSite(spec, idx, rng) {
     const y0 = spec.y, x0 = spec.x - (spec.w >> 1);
@@ -24,7 +23,7 @@ export const WorldRuinSite = {
     });
     rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
     const boss = rooms[0];                                   // 가장 넓은 방이 보스방
-    const site = { id: spec.id, n: spec.n, x: spec.x, y: y0 + (spec.h >> 1), w: spec.w, h: spec.h, rooms, idx };
+    const site: Bag = { id: spec.id, n: spec.n, x: spec.x, y: y0 + (spec.h >> 1), w: spec.w, h: spec.h, rooms, idx };
 
     this._ruinCtx = { x0, y0, w: spec.w, rooms };             // 입구가 옆문을 낼 방을 고른다
     const ex = this.carveRuinEntrance(spec, x0, y0, rng);
@@ -213,7 +212,7 @@ export const WorldRuinSite = {
       const cx = sp.x, cy = sp.y, w = sp.w, h = sp.h;
       const x0 = cx - (w >> 1), y0 = cy - (h >> 1);
       /* 석판 유적도 바이옴 유적과 같은 규격을 쓴다 — 도면(겉모양) · 묻힌 입구 · 고유 장식 · 고유 방 · 고유 이벤트 — 사연: docs/code-history.md#h121 */
-      const st = STORY_RUIN[i] || {};
+      const st: Bag = STORY_RUIN[i] || {};
       const spec = {
         id: 'story' + i, n: `${tr('석판 유적')} ` + (i + 1), x: cx, y: y0, w, h, tier: sp.tier,
         wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10, torch: T.TORCH,

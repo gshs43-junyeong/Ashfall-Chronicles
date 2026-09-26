@@ -1,7 +1,6 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== sprites.js — 손그림 애셋 로더(매니페스트 · 발 여백) — 없어도 절차 생성 그림으로 돈다 ===== */
 import { ASSET_VER, imageJob, measurePad } from '../engine/assets/image.js';
-export const Sprites = {
+export const Sprites: Bag = {
   base: 'assets/',
   scale: 4,           // 시트가 4배로 구워져 있다
   gap: 0,             // 문자 시트는 간격 0, 보스/이펙트 시트는 4

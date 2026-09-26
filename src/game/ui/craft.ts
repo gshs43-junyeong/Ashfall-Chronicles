@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== ui/craft.js — 제작 · 마을 회관 ===== */
 import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -11,7 +10,7 @@ import { makeItem } from '../entity.js';
 import { $, $$, UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
 
-export const CraftUIPart = {
+export const CraftUIPart: Bag = {
 
   /* ---------------- 제작 ---------------- */
   craftTab: 'work',

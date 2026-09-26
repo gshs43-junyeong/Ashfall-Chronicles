@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/fishing.js — 낚시 ===== */
 import { aabb, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -18,7 +17,7 @@ import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const FishingPart = {
+export const FishingPart: Bag = {
 
   /* ================= 낚시 ================= */
   tryFish() {
@@ -86,7 +85,7 @@ export const FishingPart = {
   resolveFish(quality) {
     const p = this.player;
     if (!p.fish) return;
-    const rod = ITEMS[p.fish.rodId] || {};
+    const rod: Bag = ITEMS[p.fish.rodId] || {};
     const rareMul = p.fish.rareMul === undefined ? 1 : p.fish.rareMul;
     const baited = p.removeItem('raw_meat', 1);
     /* 낚시 숙련 — 상위 어종 확률과 "잡것" 확률을 함께 밀어 올린다. */
@@ -346,7 +345,7 @@ export const FishingPart = {
     // 드릴 바로 밑은 광상 — 줄지 않고 계속 나오는 모습을 보인다(기계식 = 철, 전동 = 금 · 등급 3)
     w.set(X0 + 51, gy + 1, T.IRONRICH); w.set(X0 + 55, gy + 1, T.GOLDRICH);
 
-    const put = (dx, key, dir, fill) => {
+    const put = (dx, key, dir?, fill?) => {
       const m = Factory.place(w, X0 + dx, Y, key, dir || 0);
       if (!m) return null;
       if (MACHINE[key].proj) { m.own = 1; }
@@ -405,7 +404,7 @@ export const FishingPart = {
   /** ?debug=factory 의 여러 층 공장 둘 — A: 3층 금속 공장(광석 → 주괴 → 강철판·전선), B: 지하 탄광이 제 발전기를 먹이는 순환 발전소 + 방어 갑판.
       층 사이는 위로 가는 벨트 기둥, 사람은 오른쪽(A)·왼쪽(B) 발판 사다리로 오간다. */
   buildDebugTowers(w, AX, BX, gy) {
-    const P = (x, y, key, dir, fill) => {
+    const P = (x, y, key, dir?, fill?) => {
       const m = Factory.place(w, x, y, key, dir || 0);
       if (!m) return null;
       if (MACHINE[key].proj) m.own = 1;

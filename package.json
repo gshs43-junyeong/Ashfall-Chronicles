@@ -11,7 +11,7 @@
     "test:syntax": "node tests/syntax.mjs",
     "test:modules": "node tests/modules.mjs && node tools/imports.mjs --check",
     "test:i18n": "node tests/i18n.mjs",
-    "typecheck": "tsc -p .",
+    "typecheck": "tsc -p . && tsc -p tsconfig.game.json",
     "test:manifest": "python3 tools/sync-manifest.py --check",
     "test:gen": "node tests/gen-hash.mjs",
     "test:play": "node tests/play.mjs",

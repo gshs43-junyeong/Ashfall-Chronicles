@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game/ruin-pulse.js — 유적의 맥박 · 탐사 기록 · 메아리 시련 ===== */
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
@@ -15,7 +14,7 @@ import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const RuinPulsePart = {
+export const RuinPulsePart: Bag = {
 
   /** 장착 무기 + 스윙 궤적 + 채널링 링 (두 렌더 경로가 공유) */
   /* ================= 유적의 맥박 · 탐사 기록 · 메아리 시련 ================= */
@@ -168,7 +167,7 @@ export const RuinPulsePart = {
     if (!pool.length && !force) return;
     const k = force || pool[Math.floor(Math.random() * pool.length)];
     const E = PULSE_EVENTS[k];
-    const ev = { id, k, stage, t: E.t, max: E.t };
+    const ev: Bag = { id, k, stage, t: E.t, max: E.t };
     if (k === 'hunt') {
       // 격노면 둘 — 주인의 전령이다.
       ev.marks = this.spawnRuinMobs(here, stage >= 3 ? 2 : 1, 1.2);
@@ -409,7 +408,7 @@ export const RuinPulsePart = {
     const site = (w.ruinSites || []).find(s => s.id === id);
     const r = (w.ruins || []).find(q => q.id === id);
     const idx = RUIN_SPEC.findIndex(s => s.id === id);
-    const part = {};
+    const part: Bag = {};
     const nRooms = site ? site.rooms.length : 0;
     part.rooms = nRooms ? [Object.keys(sv.rooms || {}).length, nRooms] : null;
     let chests = 0, opened = 0, code = null;

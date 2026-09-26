@@ -1,9 +1,8 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== data/npcs.js — NPC · 상인 · 마을 대화 · 대사 ===== */
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
 
 /* ---------------- NPC ---------------- */
-export const NPCS = {
+export const NPCS: Record<string, NpcDef> = {
   elara:  { n: '엘라라', i: '🧝‍♀️', c: '#c8a06a', role: '캠프 관리인', art: 'elara' },
   /* disc — 이 사람에게 살 때 붙는 할인. */
   borin:  { n: '보린', i: '🧔', c: '#8a6a4a', role: '대장장이', disc: 0.4, shop: ['pick_iron', 'sword_iron', 'helm_iron', 'potion_hp_small', 'potion_iron', 'torch', 'band_worn'], art: 'borin' },

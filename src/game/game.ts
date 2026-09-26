@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== game.js — 루프 / 입력 / 렌더 / 진행 ===== */
 import { bindApp } from './ctx.js';
 import { startLoop } from '../engine/core/loop.js';
@@ -105,7 +104,7 @@ export const TOUCH = (() => {
 /** 이름을 비워 둔 모험가 — 세이브에는 원문으로 남기고 보일 때 옮긴다(언어를 바꿔도 따라온다) */
 export const NONAME = N_('이름 없는 모험가');
 
-export const G = {
+export const G: Bag = {
   cv: null, ctx: null, mm: null, mmx: null,
   W: 0, H: 0, cam: { x: 0, y: 0 },
   world: null, player: null, rng: new RNG(1),

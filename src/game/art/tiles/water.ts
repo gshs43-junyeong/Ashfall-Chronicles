@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== art/tiles/water.js — 고사리·난초 · 바다(해초·조개·기뢰·공기) · 야자 · 방 공기 · 연못가(수련·샘·부들·물풀·조약돌) · 포자돌 ===== */
 import { shade } from '../../../engine/core/color.js';
 import { TAU } from '../../../engine/core/math.js';
@@ -7,7 +6,7 @@ import { TS } from '../../world.js';
 import { ART, TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
-export const TilePaintWater = {
+export const TilePaintWater: Bag = {
   fern(H) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {

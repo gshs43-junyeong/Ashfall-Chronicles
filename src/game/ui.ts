@@ -1,4 +1,3 @@
-// @ts-nocheck — 타입은 표 모양부터 차례로 입힌다(계획서 §7-1 3단계)
 /* ===== ui.js — DOM 인터페이스 ===== */
 import { app as G, bindUI } from './ctx.js';
 import { createPanels } from '../engine/ui/panels.js';
@@ -16,7 +15,7 @@ import { HOTBAR, MAX_BAG_SIZE, equipReqLv, isGear, itemDamage, itemName, maxStac
 export const $ = (s) => document.querySelector(s);
 export const $$ = (s) => Array.from(document.querySelectorAll(s));
 
-export const UI = {
+export const UI: Bag = {
   cursor: null,        // 집어든 아이템
   cursorEl: null,
 
@@ -152,7 +151,7 @@ export const UI = {
     this.buildKeys();
 
     /* 갈래 전환. */
-    const tabs = document.querySelectorAll('.set-tab');
+    const tabs = document.querySelectorAll<HTMLElement>('.set-tab');
     tabs.forEach(t => t.addEventListener('click', () => this.setTab(t.dataset.tab)));
 
     const kr = $('#set-keys-reset');
@@ -188,8 +187,8 @@ export const UI = {
 
   /** 설정 갈래를 고른다 (disp · noti · keys) */
   setTab(id) {
-    document.querySelectorAll('.set-tab').forEach(t => t.classList.toggle('on', t.dataset.tab === id));
-    document.querySelectorAll('.set-pane').forEach(p => p.classList.toggle('on', p.dataset.pane === id));
+    document.querySelectorAll<HTMLElement>('.set-tab').forEach(t => t.classList.toggle('on', t.dataset.tab === id));
+    document.querySelectorAll<HTMLElement>('.set-pane').forEach(p => p.classList.toggle('on', p.dataset.pane === id));
     const body = $('.set-body'); if (body) body.scrollTop = 0;
   },
 
