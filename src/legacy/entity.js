@@ -1,6 +1,7 @@
 /* ===== entity.js — 아이템 인스턴스 / 플레이어 / 적 / 투사체 ===== */
 import { app as G, ui as UI } from './ctx.js';
 import { TAU, aabb, angleTo, clamp, dist, dist2, lerp } from '../engine/core/math.js';
+import { Entity } from '../engine/entity/entity.js';
 import { fmt } from './util.js';
 import { SEA_X1, WH, WSY, WW } from './size.js';
 import { BOSS_LINES, BOSS_SURGE, BOW_TIP, BUFFS, CELL_CHARGE, ENEMIES, HIT_FX, ITEMS, MACH_OF_TILE, MECH_PART,
@@ -127,33 +128,16 @@ export function rollChest(tier, rng, source) {
 }
 
 /* ================= 기본 엔티티 ================= */
-export class Ent {
-  constructor(x, y, w, h) { this.x = x; this.y = y; this.w = w; this.h = h; this.vx = 0; this.vy = 0; this.dead = false; this.onGround = false; }
-  get cx() { return this.x + this.w / 2; }
-  get cy() { return this.y + this.h / 2; }
-  rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
-
+/* 칸 충돌 이동은 엔진(Entity)이 하고, 물(부력·끌림·물살·폭포)과 계단 높이는 여기서 끼운다. */
+export class Ent extends Entity {
   /** 타일 충돌을 포함한 이동 */
   move(dt, world, opts = {}) {
     const prevBottom = this.y + this.h;
     // 물 — 잠긴 비율만큼 중력과 낙하 상한이 줄고, 좌우로도 끈적해진다.
     const liq = opts.aquatic ? { f: 0, flow: 0, cur: 0 } : world.liquidIn(this.x, this.y, this.w, this.h);
     this.submerged = liq.f;
-    /* X — 흐르는 물살은 속도가 아니라 **떠밀림**으로 더한다. */
-    let nx = this.x + (this.vx + (liq.cur || 0) * 70) * dt;
-    if (world.hitSolid(nx, this.y, this.w, this.h)) {
-      // 한 칸 계단 오르기
-      let stepped = false;
-      if (this.onGround && !opts.noStep && !world.hitSolid(nx, this.y - TS * 0.75, this.w, this.h)) {
-        this.y -= TS * 0.75; nx = this.x + this.vx * dt; stepped = true;
-      }
-      if (!stepped || world.hitSolid(nx, this.y, this.w, this.h)) {
-        const dir = Math.sign(this.vx);
-        while (!world.hitSolid(this.x + dir, this.y, this.w, this.h) && Math.abs(this.x - nx) > 1) this.x += dir;
-        this.vx = 0; nx = this.x; this.hitWall = true;
-      }
-    } else this.hitWall = false;
-    this.x = nx;
+    /* X — 흐르는 물살은 속도가 아니라 **떠밀림**으로 더한다. 계단을 오른 뒤에는 물살 없이 다시 간다. */
+    this.moveX(world, this.x + (this.vx + (liq.cur || 0) * 70) * dt, opts.noStep ? 0 : TS * 0.75, this.x + this.vx * dt);
 
     // Y
     let gm = opts.gravMul === undefined ? 1 : opts.gravMul;
@@ -166,21 +150,9 @@ export class Ent {
       if (this.vy > 0) this.vy -= this.vy * drag;
       if (liq.flow) this.vy += 620 * liq.f * dt;    // 폭포는 아래로 밀어낸다
     }
-    this.vy = clamp(this.vy + GRAV * gm * dt, -2000, cap);
-    let ny = this.y + this.vy * dt;
-    this.onGround = false;
-    if (world.hitSolid(this.x, ny, this.w, this.h)) {
-      const dir = Math.sign(this.vy);
-      while (!world.hitSolid(this.x, this.y + dir, this.w, this.h) && Math.abs(this.y - ny) > 1) this.y += dir;
-      if (this.vy > 0) this.onGround = true;
-      this.vy = 0; ny = this.y;
-    } else if (this.vy >= 0 && !opts.dropThrough) {
-      const top = world.hitPlatform(this.x, ny, this.w, this.h, prevBottom);
-      if (top >= 0) { ny = top - this.h; this.vy = 0; this.onGround = true; }
-    }
-    this.y = ny;
-    this.x = clamp(this.x, TS, WW * TS - TS - this.w);
-    if (this.y > WH * TS) { this.y = WH * TS; this.vy = 0; }
+    this.fall(dt, GRAV * gm, -2000, cap);
+    this.moveY(world, this.y + this.vy * dt, prevBottom, !opts.dropThrough);
+    this.keepIn(TS, WW * TS - TS, WH * TS);
   }
 }
 
