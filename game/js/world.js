@@ -5285,7 +5285,7 @@ class World {
       atelier: this.atelier, citadel: this.citadel, deepShaft: this.deepShaft,
       dungeon: this.dungeon, ruins: this.ruins, sealRoom: this.sealRoom,
       skyIslands: this.skyIslands, skyGate: this.skyGate, giantTree: this.giantTree,
-      caverns: this.caverns, pools: this.pools, lavaPools: this.lavaPools, falls: this.falls,
+      caverns: this.caverns, pools: this.pools, lavaPools: this.lavaPools, falls: this.falls, sea: this.sea || null,
       caveGrid: this.caveGrid ? Array.from(this.caveGrid) : null, faults: this.faults || [], oreHits: this.oreHits || {},
       explored: rleEncode(this.explored)
     };
@@ -5318,6 +5318,21 @@ class World {
     // 물이 생기기 전의 세이브에는 이 둘이 없다 — 타일에는 이미 물이 없으니 빈 배열이 맞다
     w.caverns = d.caverns || []; w.pools = d.pools || []; w.lavaPools = d.lavaPools || [];
     w.falls = d.falls || [];   // 폭포 앰비언트 도입 전 세이브 — 빈 배열이면 그냥 조용할 뿐, 안전하다
+    /* ★ 바다 수면(sea.level)은 물고기 표·부유물·파도 타기가 읽는다 — 저장이 빠졌던 동안 불러온 세계에서 바다 물고기 생성이 터졌다.
+       그 세이브는 타일에서 다시 잰다: 왼쪽 끝 기둥의 첫 바닷물 칸이 수면, 그 줄을 따라 바닷물이 이어지는 끝이 물가. */
+    w.sea = d.sea || null;
+    if (!w.sea) {
+      let lv = -1;
+      for (let y = 1; y < WH && lv < 0; y++) if (w.tiles[y * WW + 5] === T.SEAWATER) lv = y;
+      if (lv > 0) {
+        let x1 = 5;                            // 섬이 수면 줄을 끊으므로 40칸 안의 틈은 건너뛴다
+        for (let x = 6, gap = 0; x < WW && gap < 40; x++) {
+          if (w.tiles[lv * WW + x] === T.SEAWATER || w.tiles[(lv + 1) * WW + x] === T.SEAWATER) { x1 = x; gap = 0; } else gap++;
+        }
+        w.sea = { x1, level: lv, floor: null };
+      }
+    }
+    if (w.sea) { w.seaLevel = w.sea.level; w.shoreY = w.sea.level + 2; }
     // 동굴 갈래 도입 전 세이브 — 갈래가 없으면 모든 굴이 plain 이고, 무너질 자갈도 없다
     w.caveGrid = d.caveGrid ? Uint8Array.from(d.caveGrid) : null;
     w.faults = d.faults || [];

@@ -30,7 +30,9 @@ const SAVE_UPGRADES = [
   /* v7 → v8 — 세계 크기(world.size: 's' 소형 · 'm' 중형 · 'l' 대형). */
   (d) => { if (d.world && !d.world.size) d.world.size = 's'; },
   /* v8 → v9 — 드릴이 광맥 칸마다 더 캘 수 있는 횟수(world.oreHits). */
-  (d) => { if (d.world && !d.world.oreHits) d.world.oreHits = {}; }
+  (d) => { if (d.world && !d.world.oreHits) d.world.oreHits = {}; },
+  /* v9 → v10 — 바다 수면(world.sea). 없으면 World.deserialize 가 타일에서 다시 잰다(null 로 두면 그쪽이 채운다). */
+  (d) => { if (d.world && d.world.sea === undefined) d.world.sea = null; }
 ];
 const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 
