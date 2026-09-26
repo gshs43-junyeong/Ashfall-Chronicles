@@ -41,7 +41,7 @@ export const QuestUIPart: Bag = {
       const state = done ? 'done' : isCurrent ? 'cur' : 'locked';
       const classes = ['session-tab', state];
       if (isSelected) classes.push('is-selected');
-      return `<button type="button" class="${classes.join(' ')}" data-session="${s.key}"><strong>${s.label}</strong><span>${s.title}</span></button>`;
+      return `<button type="button" class="${classes.join(' ')}" data-session="${s.key}" data-cur="${tr('진행 중')}" data-done="${tr('완료')}"><strong>${s.label}</strong><span>${s.title}</span></button>`;
     }).join('') + '</div>';
 
     const chapterBlock = sessions.find(s => s.key === selectedSession);

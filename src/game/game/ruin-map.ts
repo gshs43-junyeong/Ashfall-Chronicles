@@ -258,7 +258,7 @@ export const RuinMapPart: Bag = {
       msg.textContent = tr('{ask|을} 다 넣어야 한다', { ask: K.ask });
       return;
     }
-    if (got !== c.ans) {
+    if (got.toLowerCase() !== c.ans.toLowerCase()) {   // 라틴 글자 답(ASH)은 대소문자를 가리지 않는다
       msg.classList.remove('ok');
       msg.textContent = tr('맞지 않는다 — 홈이 그대로다');
       inp.value = ''; inp.focus();

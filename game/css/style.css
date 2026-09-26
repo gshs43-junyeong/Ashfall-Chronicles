@@ -415,7 +415,7 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 .session-tab.is-selected span{color:#8d8570}
 /* 기존: .session-tab.is-selected::after { ... }  →  아래로 변경 */
 .session-tab.is-current::after{
-  content:"진행 중";
+  content:attr(data-cur);             /* 글은 quest.ts 가 tr 로 넣는다(다른 언어) */
   position:absolute;
   top:6px;
   right:8px;
@@ -429,7 +429,7 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 /* 다 지난 세션은 같은 자리에 초록 '완료'. '진행 중'과 자리를 나눠 쓰지만 겹칠 일은
    없다 — 진행 중인 세션은 정의상 아직 done이 아니기 때문이다(done ? 'done' : ...). */
 .session-tab.done::after{
-  content:"완료";
+  content:attr(data-done);
   position:absolute;
   top:6px;
   right:8px;
