@@ -942,6 +942,134 @@
     }, { passive: true });
   }
 
+  // src/engine/input/touch.ts
+  var touch_exports = {};
+  __export(touch_exports, {
+    mountTouch: () => mountTouch
+  });
+  var STICK_R = 56;
+  var DEAD = 18;
+  var CSS = `
+#touchpad{--ti-bottom:24px;position:fixed;inset:0;pointer-events:none;z-index:40;user-select:none;-webkit-user-select:none}
+#touchpad .ti-stick{position:absolute;left:24px;bottom:24px;width:${STICK_R * 2 + 40}px;height:${STICK_R * 2 + 40}px;pointer-events:auto;touch-action:none}
+#touchpad .ti-base{position:absolute;inset:20px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25)}
+#touchpad .ti-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(255,255,255,.35)}
+#touchpad .ti-btns{position:absolute;right:24px;bottom:var(--ti-bottom);display:flex;gap:14px;pointer-events:auto}
+#touchpad .ti-btn{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font:600 15px system-ui,sans-serif;color:#fff;
+  background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);touch-action:none}
+#touchpad .ti-btn.on,#touchpad .ti-alt.on{background:rgba(255,255,255,.35)}
+#touchpad .ti-alt{position:absolute;right:24px;bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;
+  font:600 13px system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);pointer-events:auto;touch-action:none}
+`;
+  function mountTouch({ input, ptr, surface, buttons, altLabel, rightDown }) {
+    const st = document.createElement("style");
+    st.textContent = CSS;
+    document.head.appendChild(st);
+    const el = document.createElement("div");
+    el.id = "touchpad";
+    el.innerHTML = '<div class="ti-stick"><div class="ti-base"></div><div class="ti-knob"></div></div><div class="ti-btns"></div><div class="ti-alt"></div>';
+    document.body.appendChild(el);
+    const stick = el.querySelector(".ti-stick"), knob = el.querySelector(".ti-knob");
+    const V = input.virt;
+    const off = [];
+    const on = (t, type, fn) => {
+      t.addEventListener(type, fn);
+      off.push(() => t.removeEventListener(type, fn));
+    };
+    let sid = -1, cx = 0, cy = 0;
+    const setStick = (dx, dy) => {
+      const d = Math.hypot(dx, dy), k = d > STICK_R ? STICK_R / d : 1;
+      knob.style.transform = `translate(${dx * k}px,${dy * k}px)`;
+      V.left = dx < -DEAD ? 1 : 0;
+      V.right = dx > DEAD ? 1 : 0;
+      V.down = dy > DEAD * 1.6 ? 1 : 0;
+    };
+    on(stick, "pointerdown", (e) => {
+      e.preventDefault();
+      sid = e.pointerId;
+      stick.setPointerCapture(sid);
+      const r = stick.getBoundingClientRect();
+      cx = r.left + r.width / 2;
+      cy = r.top + r.height / 2;
+      setStick(e.clientX - cx, e.clientY - cy);
+    });
+    on(stick, "pointermove", (e) => {
+      if (e.pointerId === sid) setStick(e.clientX - cx, e.clientY - cy);
+    });
+    const stickUp = (e) => {
+      if (e.pointerId !== sid) return;
+      sid = -1;
+      setStick(0, 0);
+    };
+    on(stick, "pointerup", stickUp);
+    on(stick, "pointercancel", stickUp);
+    const box = el.querySelector(".ti-btns");
+    for (const b of buttons) {
+      const btn = document.createElement("div");
+      btn.className = "ti-btn";
+      btn.dataset.id = b.id;
+      btn.textContent = b.label;
+      box.appendChild(btn);
+      on(btn, "pointerdown", (e) => {
+        e.preventDefault();
+        btn.setPointerCapture(e.pointerId);
+        V[b.id] = 1;
+        btn.classList.add("on");
+      });
+      const up = () => {
+        V[b.id] = 0;
+        btn.classList.remove("on");
+      };
+      on(btn, "pointerup", up);
+      on(btn, "pointercancel", up);
+    }
+    const alt = el.querySelector(".ti-alt");
+    alt.textContent = altLabel;
+    let altOn = false;
+    on(alt, "pointerdown", (e) => {
+      e.preventDefault();
+      altOn = !altOn;
+      alt.classList.toggle("on", altOn);
+    });
+    let tid = -1;
+    on(surface, "pointerdown", (e) => {
+      if (e.pointerType === "mouse" || tid >= 0) return;
+      e.preventDefault();
+      tid = e.pointerId;
+      ptr.mx = e.clientX;
+      ptr.my = e.clientY;
+      if (altOn) {
+        ptr.m2 = 1;
+        if (rightDown) rightDown();
+      } else ptr.m1 = 1;
+    });
+    on(surface, "pointermove", (e) => {
+      if (e.pointerId === tid) {
+        ptr.mx = e.clientX;
+        ptr.my = e.clientY;
+      }
+    });
+    const tapUp = (e) => {
+      if (e.pointerId !== tid) return;
+      tid = -1;
+      ptr.m1 = 0;
+      ptr.m2 = 0;
+    };
+    on(surface, "pointerup", tapUp);
+    on(surface, "pointercancel", tapUp);
+    surface.style.touchAction = "none";
+    return {
+      el,
+      destroy() {
+        off.forEach((f) => f());
+        el.remove();
+        st.remove();
+        for (const b of buttons) V[b.id] = 0;
+        V.left = V.right = V.down = 0;
+      }
+    };
+  }
+
   // src/legacy/util.js
   var util_exports = {};
   __export(util_exports, {
@@ -32071,6 +32199,23 @@
           UI.refreshHotbar();
         }
       });
+      if (new URLSearchParams(location.search).get("touch") === "1")
+        this.touch = mountTouch({
+          input: this.inp,
+          ptr: this.input,
+          surface: this.cv,
+          rightDown: () => this.rightClick(),
+          buttons: [{ id: "jump", label: "점프" }, { id: "dash", label: "대시" }],
+          altLabel: "사용"
+        });
+      if (this.touch) {
+        const lift = () => {
+          const bar = $("#tabbar"), r = bar && bar.getBoundingClientRect();
+          this.touch.el.style.setProperty("--ti-bottom", (r && r.height ? innerHeight - r.top + 14 : 24) + "px");
+        };
+        lift();
+        addEventListener("resize", lift);
+      }
       $("#dialogue").addEventListener("click", () => {
         if (UI.dlg && !UI.finishType()) UI.nextLine(false);
       });
@@ -42140,7 +42285,7 @@
   addEventListener("DOMContentLoaded", () => G.init());
 
   // src/legacy/main.js
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, util_exports, size_exports, data_exports, world_exports, tileart_exports, itemart_exports, sprites_exports, titlebg_exports, entity_exports, factory_exports, ui_exports, music_exports2, game_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
