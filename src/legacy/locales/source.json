@@ -153,7 +153,7 @@
    "itemart.build"
   ],
   "[여명 마을 배치 문제]": [
-   "world.checkDawnLayout"
+   "world/village.checkDawnLayout"
   ],
   "{E} — 놓쳤다. 유적이 더 깨어난다": [
    "game/ruin-pulse.endPulseEvent"
@@ -653,7 +653,7 @@
    "game/ruin-pulse.pulseBossDown"
   ],
   "겹침: {slotKey}({tx0}~{tx1}) ↔ {slotKey2}({tx02}~{tx12})": [
-   "world.checkDawnLayout"
+   "world/village.checkDawnLayout"
   ],
   "경계": [
    "factory.runTurret"
@@ -711,7 +711,7 @@
    "ui/hud.updateHUD"
   ],
   "관리자 격실": [
-   "world.buildWorks"
+   "world/village.buildWorks"
   ],
   "관리자가 명령을 내린다": [
    "entity.bossAI"
@@ -726,7 +726,7 @@
    "data"
   ],
   "광장 밖으로 삐져나감: {slotKey}({tx0}~{tx1}) vs 광장 {plaza}~{plaza2}": [
-   "world.checkDawnLayout"
+   "world/village.checkDawnLayout"
   ],
   "귀환 비석": [
    "game/corpse.drawCursor",
@@ -1132,7 +1132,7 @@
    "entity.hurt"
   ],
   "막힌 칸 위: {slotKey}가 {x}칸(벽/기둥) 위에 있음": [
-   "world.checkDawnLayout"
+   "world/village.checkDawnLayout"
   ],
   "만드는 것": [
    "ui/machine.refreshMachine"
@@ -1197,7 +1197,7 @@
    "game/ruin-pulse.echoReward"
   ],
   "메워진 막장": [
-   "world.buildDeepShaft"
+   "world/village.buildDeepShaft"
   ],
   "모든 여정이 끝났다.": [
    "game/village.tellQuest"
@@ -1532,7 +1532,7 @@
    "game.update"
   ],
   "비어 있는 받침대": [
-   "world.buildAtelier"
+   "world/village.buildAtelier"
   ],
   "비어 있음": [
    "ui/machine.bufGrid"
@@ -1651,7 +1651,7 @@
    "ui/quest.renderRuins"
   ],
   "석판 유적": [
-   "world.buildRuins"
+   "world/ruin-site.buildRuins"
   ],
   "석판 읽기": [
    "game/corpse.drawCursor"
@@ -2415,7 +2415,7 @@
    "game/fishing.resolveFish"
   ],
   "증식체의 노심": [
-   "world.buildRunaway"
+   "world/village.buildRunaway"
   ],
   "지금 낀 것과 비교": [
    "ui/tip.compareLine"
@@ -2742,7 +2742,7 @@
    "entity.bossAI"
   ],
   "헤파의 격실": [
-   "world.buildRunaway"
+   "world/village.buildRunaway"
   ],
   "홀씨가 한꺼번에 터졌다": [
    "game/ruin-map.fireRuinEvent"
@@ -2775,7 +2775,7 @@
    "index.html"
   ],
   "환원 기관": [
-   "world.buildCitadel"
+   "world/village.buildCitadel"
   ],
   "황금 저장 상자": [
    "ui/shop.refreshVault"

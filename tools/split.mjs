@@ -28,13 +28,16 @@ const starts = items.map((it, i) => i === 0 ? lineAfter(body.start) : lineAfter(
 const closeAt = lineAfter(items[items.length - 1].end);
 if (spec.kind === 'class' && items.some(m => /\bsuper\b/.test(src.slice(m.start, m.end)))) console.log('※ super 를 쓰는 메서드는 조각으로 옮기면 안 된다 — 그런 절은 원래 자리에 남길 것');
 const firstAt = spec.groups.map(g => {
-  const i = items.findIndex((it, k) => src.slice(starts[k], it.start).includes(g.marker));
-  if (i < 0) throw new Error('표시를 못 찾았다: ' + g.marker);
+  const i = g.method ? items.findIndex(it => it.key && (it.key.name || it.key.value) === g.method)
+    : items.findIndex((it, k) => src.slice(starts[k], it.start).includes(g.marker));
+  if (i < 0) throw new Error('표시를 못 찾았다: ' + (g.method || g.marker));
   return i;
 });
-for (let k = 1; k < firstAt.length; k++) if (firstAt[k] <= firstAt[k - 1]) throw new Error('조각 순서가 소스 순서와 다르다: ' + spec.groups[k].marker);
+for (let k = 1; k < firstAt.length; k++) if (firstAt[k] <= firstAt[k - 1]) throw new Error('조각 순서가 소스 순서와 다르다: ' + (spec.groups[k].method || spec.groups[k].marker));
 const bounds = firstAt.map((i, k) => [starts[i], k + 1 < firstAt.length ? starts[firstAt[k + 1]] : closeAt]);
-const core = src.slice(0, bounds[0][0]) + src.slice(closeAt);
+/* stay 인 구간은 옮기지 않고 원래 자리(몸통 끝)에 남긴다 — super 를 쓰는 메서드처럼 떼면 안 되는 것 */
+const parts = bounds.map(([a, b]) => src.slice(a, b));
+const core = src.slice(0, bounds[0][0]) + spec.groups.map((g, k) => g.stay ? parts[k] : '').join('') + src.slice(closeAt);
 /* 클래스 몸통에는 쉼표가 없다 — 객체 리터럴로 옮길 때 메서드마다 끝에 쉼표를 단다(그 밖의 글은 그대로) */
 function classPart(k) {
   const [a, b] = bounds[k];
@@ -42,10 +45,10 @@ function classPart(k) {
   for (const m of items) if (m.start >= a && m.end <= b) { out += src.slice(at, m.end) + ','; at = m.end; }
   return out + src.slice(at, b);
 }
-const parts = bounds.map(([a, b]) => src.slice(a, b));
 /* 확인 — 이어 붙이면 원래 글 */
 if (src.slice(0, bounds[0][0]) + parts.join('') + src.slice(closeAt) !== src) throw new Error('이어 붙인 글이 원래와 다르다');
 for (const [k, g] of spec.groups.entries()) {
+  if (g.stay) { console.log(`· ${g.method || g.marker} 부터 ${k + 1 < spec.groups.length ? '다음 조각 앞' : '끝'}까지 제자리`); continue; }
   if (spec.kind === 'class' && /\bsuper\b/.test(parts[k])) throw new Error(g.part + ': super 를 쓰는 메서드가 들어 있다');
   const target = spec.kind === 'class' ? spec.name + '.prototype' : spec.name;
   /* 원래 파일이 ctx.js 로 늦게 묶은 이름(G · UI · Factory)을 쓰면 조각도 같은 줄을 가진다(경로만 한 층 위로) */
