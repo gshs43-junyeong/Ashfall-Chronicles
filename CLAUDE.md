@@ -291,8 +291,8 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-26)
 
-- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집까지(용어집 Grok 검수 대기 — 검수 뒤 en → ja·zh-Hans·de·es 번역), P9 모바일 끝. 다음은 P10(Docker).
-  **화질**(설정 · game.js `QUALITY`): 자동 = 폰 절약(픽셀 밀도 1 · 입자 300) · 태블릿 보통(1.5 · 600) · 컴퓨터 높음(2 · 900). 렌더 단계별 시간은 `G.pipe.profile(true)` → `G.pipe.stats()`. 도중에 찾은 버그는 계획서 §9-1 에 모아 P11 뒤에 고친다.
+- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집까지(용어집 Grok 검수 대기 — 검수 뒤 en → ja·zh-Hans·de·es 번역), P9 모바일 끝. 다음은 **P10 게임 코드 쪼개기 + TS**(src/legacy 의 긴 파일을 `src/game/<영역>/*.ts` 로 — 계획서 §7-1), 그다음 P11 Docker · P12 마무리.
+  **화질**(설정 · game.js `QUALITY`): 자동 = 폰 절약(픽셀 밀도 1 · 입자 300) · 태블릿 보통(1.5 · 600) · 컴퓨터 높음(2 · 900). 렌더 단계별 시간은 `G.pipe.profile(true)` → `G.pipe.stats()`. 도중에 찾은 버그는 계획서 §9-1 에 모아 P12 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
   도중에 찾은 버그·새 기능 요청은 계획서 §9-1 에 모아 두고 **v1.1.1 이 끝난 뒤** 한꺼번에 한다(사용자 결정).
