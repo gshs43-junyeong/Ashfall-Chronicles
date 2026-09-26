@@ -282,13 +282,17 @@ function scanFile(file) {
   return left;
 }
 
-/** 표 원문 — 경로('ITEMS.wood.n') → 글. ★ 뿌리 순서는 main.js 의 applyTables 와 같다(size · data · world · factory). */
+/** data.js 에서 나눈 표 모듈(main.js 가 DATA 로 합치는 것과 같은 목록) */
+const DATA_PARTS = () => fs.readdirSync(path.join(LEGACY, 'data')).filter(f => f.endsWith('.js')).sort().map(f => 'data/' + f);
+/** 표 원문 — 경로('ITEMS.wood.n') → 글. ★ 뿌리 순서는 main.js 의 applyTables 와 같다(size · 이름 순 DATA · world · factory). */
 function tables() {
   const r = esbuild.buildSync({
     stdin: { contents: `import * as size from './src/legacy/size.js'; import * as data from './src/legacy/data.js';
+      ${DATA_PARTS().map((f, i) => `import * as dp${i} from './src/legacy/${f}';`).join(' ')}
       import * as world from './src/legacy/world.js'; import * as factory from './src/legacy/factory.js';
       import { collectTables } from './src/engine/i18n/i18n.ts';
-      export default collectTables(Object.assign({}, size, data, world, factory), s => /[\\uAC00-\\uD7A3]/.test(s));`, resolveDir: ROOT, loader: 'js' },
+      const DATA = Object.fromEntries(Object.entries(Object.assign({}, data, ${DATA_PARTS().map((f, i) => 'dp' + i).join(', ')})).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
+      export default collectTables(Object.assign({}, size, DATA, world, factory), s => /[\\uAC00-\\uD7A3]/.test(s));`, resolveDir: ROOT, loader: 'js' },
     bundle: true, format: 'esm', platform: 'node', write: false, logLevel: 'silent'
   });
   const f = path.join(ROOT, 'tests/out/.i18n-tables.mjs');

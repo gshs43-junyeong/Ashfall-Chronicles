@@ -8,7 +8,11 @@ import { sweepLight } from '../engine/tilemap/light.js';
 import { TileMap } from '../engine/tilemap/tilemap.js';
 import { BIOMES, CAMP_GX1, CAMP_X0, CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SHIFT, SKY_Y, SURF_BASE, SX, SY, SYB, WH,
   WORLD_BOT, WSIZE, WSX, WSY, WW, applyWorldSize } from './size.js';
-import { CHAPTERS, FLUID_FLOW, FLUID_KIND, FLUID_OPEN, FLUID_SRC, FLUID_TILE, OBJ_SIZE, RUIN_SPEC, T, TILE_DEF } from './data.js';
+import { T, TILE_DEF } from './data.js';
+import { OBJ_SIZE } from './data/items.js';
+import { FLUID_FLOW, FLUID_KIND, FLUID_OPEN, FLUID_SRC, FLUID_TILE } from './data/materials.js';
+import { RUIN_SPEC } from './data/ruins.js';
+import { CHAPTERS } from './data/story.js';
 
 export const TS = 22;              // 타일 픽셀 크기
 export const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buildCaveZones)

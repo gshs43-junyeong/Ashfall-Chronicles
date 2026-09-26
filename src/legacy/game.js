@@ -13,8 +13,12 @@ import { upgrade } from '../engine/save/upgrade.js';
 import { createScenes } from '../engine/scene/scenes.js';
 import { N_, fmt, tr } from './lang.js';
 import { CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SKY_Y, WH, WW } from './size.js';
-import { CAVE_TYPES, CHAPTERS, CHAR_OF, ITEMS, KEY_ACTIONS, MODE_OF, PART_CAP, RUIN_SPEC, SESSIONS, T, TILE_DEF,
-  TILE_SPRITE, VILLAGE, idef } from './data.js';
+import { T, TILE_DEF, TILE_SPRITE } from './data.js';
+import { ITEMS } from './data/items.js';
+import { CHAR_OF, KEY_ACTIONS, MODE_OF, VILLAGE } from './data/start.js';
+import { CAVE_TYPES, RUIN_SPEC } from './data/ruins.js';
+import { CHAPTERS, SESSIONS } from './data/story.js';
+import { PART_CAP, idef } from './data/values.js';
 import { DAWN_WALL, TS, World, setWorldSize } from './world.js';
 import { TileArt } from './tileart.js';
 import { Art } from './itemart.js';

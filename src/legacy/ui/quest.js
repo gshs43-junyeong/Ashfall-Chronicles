@@ -2,8 +2,12 @@
 import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { fmt, tr } from '../lang.js';
-import { ACHIEVEMENTS, ACH_CAT, ACH_TIER, CHAPTERS, ECHO, ITEMS, NPCS, PULSE, RUIN_SPEC, SESSIONS, SIDE_POOL,
-  STORY_RUIN, achHidden, chaptersOf, sessionOf } from '../data.js';
+import { ITEMS } from '../data/items.js';
+import { ECHO, PULSE, RUIN_SPEC, STORY_RUIN } from '../data/ruins.js';
+import { NPCS } from '../data/npcs.js';
+import { CHAPTERS, SESSIONS, chaptersOf, sessionOf } from '../data/story.js';
+import { SIDE_POOL } from '../data/quests.js';
+import { ACHIEVEMENTS, ACH_CAT, ACH_TIER, achHidden } from '../data/achievements.js';
 import { Art } from '../itemart.js';
 import { $, $$, UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */

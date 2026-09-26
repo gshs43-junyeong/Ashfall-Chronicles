@@ -2,8 +2,15 @@
 import { dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { fmt, tr } from '../lang.js';
-import { CHAPTERS, EGG_POOL, ENEMIES, FARM_KIT, ITEMS, MODE_OF, PETS, RECIPES, SIG_FX, STATION_NAME, STATION_UP,
-  STORY_BOSSES, VILLAGE, idef, sessionOf } from '../data.js';
+import { ITEMS, STATION_NAME, STATION_UP } from '../data/items.js';
+import { RECIPES } from '../data/recipes.js';
+import { MODE_OF, VILLAGE } from '../data/start.js';
+import { ENEMIES } from '../data/enemies.js';
+import { STORY_BOSSES } from '../data/skills.js';
+import { FARM_KIT } from '../data/ruins.js';
+import { EGG_POOL, PETS } from '../data/pets.js';
+import { CHAPTERS, sessionOf } from '../data/story.js';
+import { SIG_FX, idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Drop, Enemy, Part, Pet, VAULT_SIZE, isGear, itemName, makeItem, rollGear } from '../entity.js';
 import { UI } from '../ui.js';

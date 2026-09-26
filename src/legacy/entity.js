@@ -4,9 +4,13 @@ import { TAU, aabb, angleTo, clamp, dist, dist2, lerp } from '../engine/core/mat
 import { Entity } from '../engine/entity/entity.js';
 import { fmt, tr } from './lang.js';
 import { WH, WW } from './size.js';
-import { BOSS_SURGE, BUFFS, CELL_CHARGE, ENEMIES, HIT_FX, ITEMS, MACH_OF_TILE, MECH_PART, MULTI_FALLOFF, PETS,
-  PET_LV_MAX, PET_XP_SHARE, PREFIX, PROF_MAX, RARITY_MULT, SIG_FX, SKILLS, SUFFIX, SURGE_FLY, T, TILE_DEF,
-  WEAPON_TIER_LV, idef, levelMult, petAtkMul, petDmgScale, petLvMul, petXpNext, profNeed } from './data.js';
+import { MACH_OF_TILE, PREFIX, RARITY_MULT, SUFFIX, T, TILE_DEF, WEAPON_TIER_LV } from './data.js';
+import { HIT_FX, ITEMS, MULTI_FALLOFF } from './data/items.js';
+import { ENEMIES, MECH_PART } from './data/enemies.js';
+import { BOSS_SURGE, BUFFS, PROF_MAX, SKILLS, SURGE_FLY, profNeed } from './data/skills.js';
+import { CELL_CHARGE } from './data/ruins.js';
+import { PETS, PET_LV_MAX, PET_XP_SHARE, levelMult, petAtkMul, petDmgScale, petLvMul, petXpNext } from './data/pets.js';
+import { SIG_FX, idef } from './data/values.js';
 import { TS } from './world.js';
 
 export const GRAV = 2000, MAX_FALL = 1250;

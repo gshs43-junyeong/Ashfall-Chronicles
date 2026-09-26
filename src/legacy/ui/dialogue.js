@@ -2,7 +2,8 @@
 import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { fmt, tr } from '../lang.js';
-import { BOSS_TIER, NPCS } from '../data.js';
+import { BOSS_TIER } from '../data/skills.js';
+import { NPCS } from '../data/npcs.js';
 import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';
 import { $, UI } from '../ui.js';

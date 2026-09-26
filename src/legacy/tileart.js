@@ -5,7 +5,9 @@ import { RNG, tileHash } from '../engine/core/rng.js';
 import { bakeAtlas, blitCell, cacheGet } from '../engine/render/atlas.js';
 import { createConnTiles } from '../engine/render/conn.js';
 import { WW } from './size.js';
-import { CAVE_TYPES, FLUID_KIND, MACH_OF_TILE, T, TILE_DEF, WALL_COLOR } from './data.js';
+import { MACH_OF_TILE, T, TILE_DEF, WALL_COLOR } from './data.js';
+import { FLUID_KIND } from './data/materials.js';
+import { CAVE_TYPES } from './data/ruins.js';
 import { TS } from './world.js';
 
 /* 배경이 비쳐야 하는 타일 (나무·잎·횃불·발판·덩굴) */

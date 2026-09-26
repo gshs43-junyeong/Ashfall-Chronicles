@@ -1974,176 +1974,18 @@
   // src/legacy/data.js
   var data_exports = {};
   __export(data_exports, {
-    ACHIEVEMENTS: () => ACHIEVEMENTS,
-    ACH_CAT: () => ACH_CAT,
-    ACH_FOODS: () => ACH_FOODS,
-    ACH_LV: () => ACH_LV,
-    ACH_SEA_MOBS: () => ACH_SEA_MOBS,
-    ACH_TIER: () => ACH_TIER,
-    BOSS_DIE: () => BOSS_DIE,
-    BOSS_LINES: () => BOSS_LINES,
-    BOSS_SURGE: () => BOSS_SURGE,
-    BOSS_TIER: () => BOSS_TIER,
-    BOUNTY_BY_ID: () => BOUNTY_BY_ID,
-    BOUNTY_POOL: () => BOUNTY_POOL,
-    BOUNTY_UNIT: () => BOUNTY_UNIT,
-    BOW_HAND: () => BOW_HAND,
-    BOW_TIP: () => BOW_TIP,
-    BRANCHES: () => BRANCHES,
-    BUFFS: () => BUFFS,
-    CAVE_TYPES: () => CAVE_TYPES,
-    CELL_CHARGE: () => CELL_CHARGE,
-    CHAPTERS: () => CHAPTERS,
-    CHAPTER_HOOK: () => CHAPTER_HOOK,
-    CHARACTERS: () => CHARACTERS,
-    CHAR_OF: () => CHAR_OF,
-    CH_MAT: () => CH_MAT,
-    CH_MOB: () => CH_MOB,
-    CH_ORE: () => CH_ORE,
-    CIPHER_KIND: () => CIPHER_KIND,
-    CIPHER_WORDS: () => CIPHER_WORDS,
-    DAWN_NPCS: () => DAWN_NPCS,
-    DECO_MOUNT: () => DECO_MOUNT,
-    DECO_OF: () => DECO_OF,
-    DIALOGUE: () => DIALOGUE,
-    ECHO: () => ECHO,
-    EGG_POOL: () => EGG_POOL,
-    ENEMIES: () => ENEMIES,
-    EVENTS: () => EVENTS,
-    FACTORY_GOODS: () => FACTORY_GOODS,
-    FACTORY_LINES: () => FACTORY_LINES,
-    FACTORY_PRICE_MUL: () => FACTORY_PRICE_MUL,
-    FARM_KIT: () => FARM_KIT,
-    FAULT: () => FAULT,
-    FLUID_FLOW: () => FLUID_FLOW,
-    FLUID_KIND: () => FLUID_KIND,
-    FLUID_OPEN: () => FLUID_OPEN,
-    FLUID_SRC: () => FLUID_SRC,
-    FLUID_TILE: () => FLUID_TILE,
-    FLUID_WASH: () => FLUID_WASH,
-    FUEL: () => FUEL,
-    HIT_FAM: () => HIT_FAM,
-    HIT_FX: () => HIT_FX,
-    ITEMS: () => ITEMS,
-    ITEM_VAL: () => ITEM_VAL,
-    KEY_ACTIONS: () => KEY_ACTIONS,
-    LEAVE_OF: () => LEAVE_OF,
-    LIGHT_SPEC: () => LIGHT_SPEC,
-    LV_SCALE_BASE: () => LV_SCALE_BASE,
-    MACHINE: () => MACHINE,
     MACH_OF_TILE: () => MACH_OF_TILE,
-    MAT: () => MAT,
-    MAT_DEF: () => MAT_DEF,
-    MAT_TIER: () => MAT_TIER,
-    MECH_CH0: () => MECH_CH0,
-    MECH_CH1: () => MECH_CH1,
-    MECH_MUL: () => MECH_MUL,
-    MECH_ORDER: () => MECH_ORDER,
-    MECH_PART: () => MECH_PART,
-    MERCHANTS: () => MERCHANTS,
-    MOB_MAT: () => MOB_MAT,
-    MODES: () => MODES,
-    MODE_OF: () => MODE_OF,
-    MRECIPES: () => MRECIPES,
-    MULTI_FALLOFF: () => MULTI_FALLOFF,
-    MYSTIC: () => MYSTIC,
-    NOTICE_KINDS: () => NOTICE_KINDS,
-    NPCS: () => NPCS,
-    OBJ_SIZE: () => OBJ_SIZE,
-    ORE_TIER: () => ORE_TIER,
-    PART_CAP: () => PART_CAP,
-    PETS: () => PETS,
-    PET_LV_MAX: () => PET_LV_MAX,
-    PET_XP_SHARE: () => PET_XP_SHARE,
     PREFIX: () => PREFIX,
-    PRICE_BASE_MUL: () => PRICE_BASE_MUL,
-    PRICE_MUL: () => PRICE_MUL,
-    PRICE_MUL_DEFAULT: () => PRICE_MUL_DEFAULT,
-    PRICE_TIER_STEP: () => PRICE_TIER_STEP,
-    PROFS: () => PROFS,
-    PROF_MAX: () => PROF_MAX,
-    PULSE: () => PULSE,
-    PULSE_EVENTS: () => PULSE_EVENTS,
-    PULSE_RAGE: () => PULSE_RAGE,
     RARITY: () => RARITY,
     RARITY_COLOR: () => RARITY_COLOR,
     RARITY_MULT: () => RARITY_MULT,
-    RECIPES: () => RECIPES,
-    RIG: () => RIG,
-    RUIN_CARD: () => RUIN_CARD,
-    RUIN_CIPHER: () => RUIN_CIPHER,
-    RUIN_HINTS: () => RUIN_HINTS,
-    RUIN_LOOT: () => RUIN_LOOT,
-    RUIN_LORE: () => RUIN_LORE,
-    RUIN_MAP_IN: () => RUIN_MAP_IN,
-    RUIN_PLANS: () => RUIN_PLANS,
-    RUIN_RELIC: () => RUIN_RELIC,
-    RUIN_SPEC: () => RUIN_SPEC,
     SEED_TILE: () => SEED_TILE,
-    SESSIONS: () => SESSIONS,
-    SET_DEFAULT: () => SET_DEFAULT,
-    SHOP_DENY: () => SHOP_DENY,
-    SIDE_POOL: () => SIDE_POOL,
-    SIG_FX: () => SIG_FX,
-    SKILLS: () => SKILLS,
-    SKILL_FX: () => SKILL_FX,
-    SKILL_HIT: () => SKILL_HIT,
-    STATION_DESC: () => STATION_DESC,
-    STATION_NAME: () => STATION_NAME,
-    STATION_UP: () => STATION_UP,
-    STORY_BOSSES: () => STORY_BOSSES,
-    STORY_RUIN: () => STORY_RUIN,
     SUFFIX: () => SUFFIX,
-    SURGE_FLY: () => SURGE_FLY,
-    SURVEY_LABEL: () => SURVEY_LABEL,
-    SURVEY_TIERS: () => SURVEY_TIERS,
-    SURVEY_W: () => SURVEY_W,
     T: () => T,
-    TABLETS: () => TABLETS,
-    TALK: () => TALK,
-    TALK_MOODS: () => TALK_MOODS,
-    TERMINALS: () => TERMINALS,
-    TIER_REQ: () => TIER_REQ,
     TILE_DEF: () => TILE_DEF,
-    TILE_MAT: () => TILE_MAT,
     TILE_SPRITE: () => TILE_SPRITE,
-    VAL_0: () => VAL_0,
-    VAL_CAP: () => VAL_CAP,
-    VAL_CRAFT: () => VAL_CRAFT,
-    VAL_GEAR: () => VAL_GEAR,
-    VAL_MIN: () => VAL_MIN,
-    VAL_R: () => VAL_R,
-    VAL_SHARE: () => VAL_SHARE,
-    VILLAGE: () => VILLAGE,
-    VILLAGE_TALK: () => VILLAGE_TALK,
     WALL_COLOR: () => WALL_COLOR,
-    WEAPON_TIER_LV: () => WEAPON_TIER_LV,
-    achAnyItem: () => achAnyItem,
-    achCount: () => achCount,
-    achEquip: () => achEquip,
-    achHidden: () => achHidden,
-    achMach: () => achMach,
-    achSum: () => achSum,
-    bloodMult: () => bloodMult,
-    chPick: () => chPick,
-    chaptersOf: () => chaptersOf,
-    hitFam: () => hitFam,
-    idef: () => idef,
-    isMech: () => isMech,
-    levelMult: () => levelMult,
-    mechCount: () => mechCount,
-    mobCw: () => mobCw,
-    mobMat: () => mobMat,
-    mobName: () => mobName,
-    petAtkMul: () => petAtkMul,
-    petDmgScale: () => petDmgScale,
-    petLvMul: () => petLvMul,
-    petXpNext: () => petXpNext,
-    priceTier: () => priceTier,
-    priceTierMulOf: () => priceTierMulOf,
-    profNeed: () => profNeed,
-    sessionOf: () => sessionOf,
-    tileMat: () => tileMat
+    WEAPON_TIER_LV: () => WEAPON_TIER_LV
   });
   var T = {
     AIR: 0,
@@ -2831,6 +2673,21 @@
     { n: "의 별빛", s: { allStat: 3 } },
     { n: "의 사냥꾼", s: { crit: 6, ms: 5 } }
   ];
+
+  // src/legacy/data/items.js
+  var items_exports = {};
+  __export(items_exports, {
+    HIT_FAM: () => HIT_FAM,
+    HIT_FX: () => HIT_FX,
+    ITEMS: () => ITEMS,
+    MULTI_FALLOFF: () => MULTI_FALLOFF,
+    OBJ_SIZE: () => OBJ_SIZE,
+    RUIN_LOOT: () => RUIN_LOOT,
+    STATION_DESC: () => STATION_DESC,
+    STATION_NAME: () => STATION_NAME,
+    STATION_UP: () => STATION_UP,
+    hitFam: () => hitFam
+  });
   var ITEMS = {
     /* --- 근접 --- */
     sword_wood: { n: "금 간 목검", i: "🗡", type: "weapon", wc: "melee", dmg: 9, spd: 2.2, kb: 3, reach: 40, tier: 0, d: "아버지의 창고 구석에서 찾아낸 연습용 검." },
@@ -4901,6 +4758,25 @@
       { need: { machine_frame: 8, abyss_core: 5, sea_salt: 40, mythril_bar: 12 } }
     ]
   };
+
+  // src/legacy/data/recipes.js
+  var recipes_exports = {};
+  __export(recipes_exports, {
+    FACTORY_GOODS: () => FACTORY_GOODS,
+    FACTORY_LINES: () => FACTORY_LINES,
+    FACTORY_PRICE_MUL: () => FACTORY_PRICE_MUL,
+    FUEL: () => FUEL,
+    MACHINE: () => MACHINE,
+    MAT_TIER: () => MAT_TIER,
+    MRECIPES: () => MRECIPES,
+    PRICE_BASE_MUL: () => PRICE_BASE_MUL,
+    PRICE_MUL: () => PRICE_MUL,
+    PRICE_MUL_DEFAULT: () => PRICE_MUL_DEFAULT,
+    PRICE_TIER_STEP: () => PRICE_TIER_STEP,
+    RECIPES: () => RECIPES,
+    priceTier: () => priceTier,
+    priceTierMulOf: () => priceTierMulOf
+  });
   var RECIPES = [
     { out: "plank", n: 4, need: { wood: 1 } },
     { out: "torch", n: 5, need: { wood: 1 } },
@@ -5566,6 +5442,20 @@
   function priceTierMulOf(d, id) {
     return PRICE_BASE_MUL * Math.pow(PRICE_TIER_STEP, priceTier(d, id));
   }
+
+  // src/legacy/data/start.js
+  var start_exports = {};
+  __export(start_exports, {
+    BOW_HAND: () => BOW_HAND,
+    BOW_TIP: () => BOW_TIP,
+    CHARACTERS: () => CHARACTERS,
+    CHAR_OF: () => CHAR_OF,
+    KEY_ACTIONS: () => KEY_ACTIONS,
+    MODES: () => MODES,
+    MODE_OF: () => MODE_OF,
+    NOTICE_KINDS: () => NOTICE_KINDS,
+    VILLAGE: () => VILLAGE
+  });
   var VILLAGE = [
     null,
     {
@@ -5721,6 +5611,21 @@
     { id: "quest", n: "목표 진행", def: 1 },
     { id: "craft", n: "제작 · 설치", def: 1 }
   ];
+
+  // src/legacy/data/enemies.js
+  var enemies_exports = {};
+  __export(enemies_exports, {
+    ENEMIES: () => ENEMIES,
+    MECH_CH0: () => MECH_CH0,
+    MECH_CH1: () => MECH_CH1,
+    MECH_MUL: () => MECH_MUL,
+    MECH_ORDER: () => MECH_ORDER,
+    MECH_PART: () => MECH_PART,
+    isMech: () => isMech,
+    mechCount: () => mechCount,
+    mobCw: () => mobCw,
+    mobName: () => mobName
+  });
   var ENEMIES = {
     /* --- 순한 동물: 적대하지 않고 어슬렁거리다 맞으면 도망친다. 잡으면 생고기를 준다 --- */
     rabbit: {
@@ -7413,6 +7318,27 @@
     const n = (ENEMIES[type] || {}).n || type;
     return mech ? `${tr("개조된")} ` + n : n;
   }
+
+  // src/legacy/data/materials.js
+  var materials_exports = {};
+  __export(materials_exports, {
+    DECO_MOUNT: () => DECO_MOUNT,
+    DECO_OF: () => DECO_OF,
+    FLUID_FLOW: () => FLUID_FLOW,
+    FLUID_KIND: () => FLUID_KIND,
+    FLUID_OPEN: () => FLUID_OPEN,
+    FLUID_SRC: () => FLUID_SRC,
+    FLUID_TILE: () => FLUID_TILE,
+    FLUID_WASH: () => FLUID_WASH,
+    LEAVE_OF: () => LEAVE_OF,
+    LIGHT_SPEC: () => LIGHT_SPEC,
+    MAT: () => MAT,
+    MAT_DEF: () => MAT_DEF,
+    MOB_MAT: () => MOB_MAT,
+    TILE_MAT: () => TILE_MAT,
+    mobMat: () => mobMat,
+    tileMat: () => tileMat
+  });
   var MAT = {
     stone: { c: ["#9a9aa0", "#6a6a70", "#4a4a50"], n: 9, g: 1, life: 0.5, sq: 1, hit: "hit_stone", brk: "break_stone" },
     dirt: { c: ["#8a6a44", "#5d4429", "#40301d"], n: 8, g: 1.25, life: 0.36, sq: 1, hit: "hit_stone", brk: "break_dirt" },
@@ -7573,6 +7499,24 @@
     if (mech) return "metal";
     return MOB_MAT[type] || "flesh";
   }
+
+  // src/legacy/data/skills.js
+  var skills_exports = {};
+  __export(skills_exports, {
+    BOSS_DIE: () => BOSS_DIE,
+    BOSS_LINES: () => BOSS_LINES,
+    BOSS_SURGE: () => BOSS_SURGE,
+    BOSS_TIER: () => BOSS_TIER,
+    BRANCHES: () => BRANCHES,
+    BUFFS: () => BUFFS,
+    PROFS: () => PROFS,
+    PROF_MAX: () => PROF_MAX,
+    SKILLS: () => SKILLS,
+    STORY_BOSSES: () => STORY_BOSSES,
+    SURGE_FLY: () => SURGE_FLY,
+    TIER_REQ: () => TIER_REQ,
+    profNeed: () => profNeed
+  });
   var BOSS_DIE = {
     /* --- 세션 1 --- */
     king_slime: { mat: "gel", n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: "gel", n2: 34, at: 0.22, shake: 20 },
@@ -8202,6 +8146,36 @@
     lantern: { n: "등불", i: "🏮", dur: 420, b: { vit: 5, hpreg: 1.2 } },
     coolant: { n: "냉각", i: "🧴", dur: 360, b: { cdr: 12, ms: 10, mpreg: 20 } }
   };
+
+  // src/legacy/data/ruins.js
+  var ruins_exports = {};
+  __export(ruins_exports, {
+    CAVE_TYPES: () => CAVE_TYPES,
+    CELL_CHARGE: () => CELL_CHARGE,
+    CIPHER_KIND: () => CIPHER_KIND,
+    CIPHER_WORDS: () => CIPHER_WORDS,
+    ECHO: () => ECHO,
+    EVENTS: () => EVENTS,
+    FARM_KIT: () => FARM_KIT,
+    FAULT: () => FAULT,
+    MYSTIC: () => MYSTIC,
+    PULSE: () => PULSE,
+    PULSE_EVENTS: () => PULSE_EVENTS,
+    PULSE_RAGE: () => PULSE_RAGE,
+    RIG: () => RIG,
+    RUIN_CARD: () => RUIN_CARD,
+    RUIN_CIPHER: () => RUIN_CIPHER,
+    RUIN_HINTS: () => RUIN_HINTS,
+    RUIN_LORE: () => RUIN_LORE,
+    RUIN_MAP_IN: () => RUIN_MAP_IN,
+    RUIN_PLANS: () => RUIN_PLANS,
+    RUIN_RELIC: () => RUIN_RELIC,
+    RUIN_SPEC: () => RUIN_SPEC,
+    STORY_RUIN: () => STORY_RUIN,
+    SURVEY_LABEL: () => SURVEY_LABEL,
+    SURVEY_TIERS: () => SURVEY_TIERS,
+    SURVEY_W: () => SURVEY_W
+  });
   var RUIN_SPEC = [
     {
       id: "ice",
@@ -8895,809 +8869,18 @@
       // 낮/밤 구분이 없어서, 대신 4분(실시간) 뒤에 스스로 갠다
     }
   };
-  var ACH_CAT = {
-    story: "여정",
-    farm: "농사",
-    auto: "자동화",
-    gather: "손재주",
-    explore: "탐험",
-    hunt: "토벌",
-    life: "살림",
-    odd: "별난 것"
-  };
-  var ACH_TIER = { easy: ["쉬움", "#6fbf5a"], mid: ["중간", "#d8b048"], hard: ["어려움", "#d05a4a"] };
-  function achHidden(a) {
-    return !!a.h || a.t === "hard";
-  }
-  var ACHIEVEMENTS = [
-    // ---------------- 여정 (스토리) ----------------
-    {
-      id: "a_ch1",
-      cat: "story",
-      i: "✦",
-      n: "첫 조각",
-      d: "제 1 장이 끝났다.",
-      check: (g) => g.chapter >= 2
-    },
-    {
-      id: "a_village",
-      cat: "story",
-      i: "🏚",
-      n: "되살아난 마을",
-      d: "여명 마을에 다시 불이 켜졌다.",
-      check: (g) => !!g.villageUnlocked
-    },
-    {
-      id: "a_session2",
-      cat: "story",
-      i: "🧱",
-      n: "벽 너머",
-      d: "벽 너머로 넘어갔다.",
-      check: (g) => g.chapter >= SESSIONS[1].ch0
-    },
-    {
-      id: "a_session3",
-      cat: "story",
-      i: "🌊",
-      n: "가라앉은 쪽",
-      d: "물이 지운 쪽으로 내려갔다.",
-      check: (g) => g.chapter >= SESSIONS[2].ch0
-    },
-    {
-      id: "a_first_boss",
-      cat: "story",
-      i: "👑",
-      n: "처음 넘어뜨린 것",
-      d: "처음으로 큰 것을 넘어뜨렸다.",
-      check: (g) => Object.keys(g.player.bossKilled || {}).length >= 1
-    },
-    {
-      id: "a_five_hearts",
-      cat: "story",
-      i: "💠",
-      n: "다섯 심장",
-      d: "별을 쫓아온 것이 멈췄다.",
-      check: (g) => !!g.player.bossKilled.pursuer
-    },
-    {
-      id: "a_story_bosses",
-      cat: "story",
-      i: "⚔",
-      n: "이야기를 끝까지",
-      d: "이야기에 나온 것들이 모두 쓰러졌다.",
-      check: (g) => [
-        "king_slime",
-        "bone_lord",
-        "corrupt_heart",
-        "frost_witch",
-        "void_king",
-        "storm_warden",
-        "first_keeper",
-        "pursuer",
-        "overseer",
-        "proliferator",
-        "hepha",
-        "archetype",
-        "tide_warden"
-      ].every((k) => g.player.bossKilled[k])
-    },
-    /* 세션 3 의 종장. */
-    {
-      id: "a_tide",
-      cat: "story",
-      i: "🔔",
-      n: "가라앉은 종",
-      d: "물 밑에서 울리던 것이 멈췄다.",
-      check: (g) => !!g.player.bossKilled.tide_warden
-    },
-    {
-      id: "a_three_ends",
-      cat: "story",
-      i: "🌗",
-      n: "세 번의 끝",
-      d: "세 번의 결전을 모두 끝냈다.",
-      check: (g) => ["pursuer", "archetype", "tide_warden"].every((k) => g.player.bossKilled[k])
-    },
-    {
-      id: "a_all_bosses",
-      h: 1,
-      cat: "story",
-      i: "🏆",
-      n: "남김없이",
-      d: "이름이 붙은 것은 하나도 남지 않았다.",
-      check: (g) => [
-        "king_slime",
-        "bone_lord",
-        "corrupt_heart",
-        "frost_witch",
-        "void_king",
-        "storm_warden",
-        "first_keeper",
-        "pursuer",
-        "overseer",
-        "proliferator",
-        "hepha",
-        "archetype",
-        "tide_warden",
-        "mine_horror",
-        "ice_warden",
-        "sand_guardian",
-        "spore_queen",
-        "blight_maw",
-        "drowned_keeper",
-        "restorer",
-        "shaft_maw"
-      ].every((k) => g.player.bossKilled[k])
-    },
-    // ---------------- 농사 ----------------
-    {
-      id: "a_first_crop",
-      cat: "farm",
-      i: "🌱",
-      n: "첫 이랑",
-      d: "처음 심은 것을 거뒀다.",
-      check: (g) => ["wheat", "starroot", "ashcap"].some((k) => (g.player.gathered[k] || 0) >= 1)
-    },
-    {
-      id: "a_first_cook",
-      cat: "farm",
-      i: "🍞",
-      n: "첫 끼니",
-      d: "불 위에 처음 냄비를 올렸다.",
-      check: (g) => achCount(ACH_FOODS, (k) => (g.crafted || {})[k]) >= 1
-    },
-    {
-      id: "a_harvest",
-      cat: "farm",
-      i: "🌾",
-      n: "첫 곳간",
-      d: "곳간에 밀 100개가 쌓였다.",
-      check: (g) => (g.player.gathered.wheat || 0) >= 100
-    },
-    {
-      id: "a_three_crops",
-      cat: "farm",
-      i: "🧺",
-      n: "세 이랑",
-      d: "밀·별무·잿버섯이 50개씩 쌓였다.",
-      check: (g) => ["wheat", "starroot", "ashcap"].every((k) => (g.player.gathered[k] || 0) >= 50)
-    },
-    {
-      id: "a_cook",
-      cat: "farm",
-      i: "🍲",
-      n: "부엌을 아는 사람",
-      d: "여섯 가지 요리를 할 줄 알게 됐다.",
-      check: (g) => achCount(ACH_FOODS, (k) => (g.crafted || {})[k]) >= 6
-    },
-    {
-      id: "a_feast",
-      cat: "farm",
-      i: "🥘",
-      n: "잔칫상",
-      d: "가장 손이 많이 가는 상을 차렸다.",
-      check: (g) => !!(g.crafted || {}).food_feast
-    },
-    {
-      id: "a_farm_1000",
-      cat: "farm",
-      i: "🚜",
-      n: "들판을 통째로",
-      d: "땅에서 거둔 것이 1,000개를 넘었다.",
-      check: (g) => ["wheat", "starroot", "ashcap"].reduce((a, k) => a + (g.player.gathered[k] || 0), 0) >= 1e3
-    },
-    // ---------------- 자동화 ----------------
-    {
-      id: "a_first_mach",
-      cat: "auto",
-      i: "🔧",
-      n: "처음 놓은 기계",
-      d: "처음으로 기계 하나를 세웠다.",
-      check: (g) => achMach(g) >= 1
-    },
-    {
-      id: "a_power",
-      cat: "auto",
-      i: "🔌",
-      n: "전기를 끌어오다",
-      d: "발전기와 축전지와 전주가 다 섰다.",
-      check: (g) => ["m_gen", "m_battery", "m_pole"].every((k) => (g.crafted || {})[k])
-    },
-    {
-      id: "a_first_line",
-      cat: "auto",
-      i: "⚙",
-      n: "스스로 도는 것",
-      d: "기계 스무 대가 저 혼자 돌고 있다.",
-      check: (g) => achMach(g) >= 20
-    },
-    {
-      id: "a_smart",
-      cat: "auto",
-      i: "🤖",
-      n: "기계를 만드는 기계",
-      d: "조립기·제련기·압착기·정제기가 한 줄에 섰다.",
-      check: (g) => ["m_assembler", "m_smelter", "m_press", "m_refinery"].every((k) => (g.crafted || {})[k])
-    },
-    {
-      id: "a_lv4_mach",
-      cat: "auto",
-      i: "🔩",
-      n: "가압 설비",
-      d: "가압 설비 넷을 다 갖췄다.",
-      check: (g) => ["m_pressor", "m_desal", "m_belt_f", "m_battery_hi"].every((k) => (g.crafted || {})[k])
-    },
-    {
-      id: "a_factory",
-      cat: "auto",
-      i: "🏭",
-      n: "공장",
-      d: "기계 여든 대가 돈다. 이쯤 되면 공장이다.",
-      check: (g) => achMach(g) >= 80
-    },
-    /* crafted는 **제작 횟수**를 센다(한 번에 8개가 나와도 1). */
-    {
-      id: "a_belt",
-      cat: "auto",
-      i: "➡",
-      n: "길게 잇다",
-      d: "벨트 200개가 깔렸다.",
-      check: (g) => (g.player.gathered.m_belt || 0) + (g.player.gathered.m_belt_f || 0) >= 200
-    },
-    // ---------------- 손재주 ----------------
-    {
-      id: "a_first_pick",
-      cat: "gather",
-      i: "⛏",
-      n: "연장부터",
-      d: "연장부터 하나 만들었다.",
-      check: (g) => ["pick_copper", "pick_iron", "pick_steel", "pick_mythril", "pick_abyss"].some((k) => (g.crafted || {})[k])
-    },
-    {
-      id: "a_wood_200",
-      cat: "gather",
-      i: "🪵",
-      n: "나무꾼",
-      d: "나무 200개를 베어 왔다.",
-      check: (g) => (g.player.gathered.wood || 0) >= 200
-    },
-    {
-      id: "a_first_fish",
-      cat: "gather",
-      i: "🐟",
-      n: "첫 손맛",
-      d: "처음으로 하나 걸렸다.",
-      check: (g) => ["fish_common", "fish_silver", "fish_deep"].some((k) => (g.player.gathered[k] || 0) >= 1)
-    },
-    {
-      id: "a_gunpowder",
-      cat: "gather",
-      i: "💥",
-      n: "터지는 것",
-      d: "화약을 개어 봤다.",
-      check: (g) => !!(g.crafted || {}).gunpowder
-    },
-    {
-      id: "a_fish",
-      cat: "gather",
-      i: "🎣",
-      n: "물가에 오래 앉아",
-      d: "세 종류를 서른 마리씩 낚을 때까지 물가에 앉아 있었다.",
-      check: (g) => ["fish_common", "fish_silver", "fish_deep"].every((k) => (g.player.gathered[k] || 0) >= 30)
-    },
-    {
-      id: "a_abyss_gear",
-      cat: "gather",
-      i: "🔱",
-      n: "심해에서 온 것",
-      d: "심해에서 난 것으로 벼린 장비를 들었다.",
-      check: (g) => [
-        "spear_tide",
-        "blade_shark",
-        "bow_harpoon",
-        "orb_abyss",
-        "hammer_tide",
-        "gun_harpoon",
-        "tome_abyss",
-        "pick_abyss"
-      ].some((k) => (g.crafted || {})[k])
-    },
-    {
-      id: "a_glacium",
-      cat: "gather",
-      i: "🔷",
-      n: "빙정",
-      d: "빙정석 200덩이를 깨 왔다.",
-      check: (g) => (g.player.mined[T.GLACIUM] || 0) >= 200
-    },
-    {
-      id: "a_abyss_core",
-      cat: "gather",
-      i: "💠",
-      n: "심해 노심",
-      d: "4단계 설비의 심장을 손으로 굳혀 냈다.",
-      check: (g) => !!(g.crafted || {}).abyss_core
-    },
-    {
-      id: "a_mine_2000",
-      cat: "gather",
-      i: "🪓",
-      n: "파고 또 파고",
-      d: "곡괭이가 2,000번 땅을 물었다.",
-      check: (g) => achSum(g.player.mined) >= 2e3
-    },
-    {
-      id: "a_enh10",
-      cat: "gather",
-      i: "🔨",
-      n: "열 겹",
-      d: "모루 위에서 열 번을 견딘 물건이 있다.",
-      check: (g) => achAnyItem(g, (it) => (it.e || 0) >= 10)
-    },
-    {
-      id: "a_mine_20000",
-      h: 1,
-      cat: "gather",
-      i: "🕳",
-      n: "땅을 뒤집다",
-      d: "20,000번. 땅을 통째로 뒤집었다.",
-      check: (g) => achSum(g.player.mined) >= 2e4
-    },
-    // ---------------- 탐험 ----------------
-    {
-      id: "a_cave",
-      cat: "explore",
-      i: "🕯",
-      n: "첫 동굴",
-      d: "지하 60칸 아래를 봤다.",
-      check: (g) => g.player.deepest >= 120
-    },
-    {
-      id: "a_deep",
-      cat: "explore",
-      i: "⬇",
-      n: "심층",
-      d: "심층까지 내려갔다.",
-      check: (g) => g.player.deepest >= DEEP_Y
-    },
-    {
-      id: "a_hell",
-      cat: "explore",
-      i: "🔥",
-      n: "가장 아래",
-      d: "가장 아래에 발을 디뎠다.",
-      check: (g) => g.player.deepest >= HELL_Y
-    },
-    {
-      id: "a_sky",
-      cat: "explore",
-      i: "☁",
-      n: "구름 위",
-      d: "구름 위에 올라섰다.",
-      check: (g) => g.player.highest !== void 0 && g.player.highest <= SKY_Y
-    },
-    {
-      id: "a_lore",
-      cat: "explore",
-      i: "🪨",
-      n: "읽은 사람",
-      d: "유적 석판 셋을 다 읽었다.",
-      check: (g) => Object.keys(g.tabletsRead || {}).length >= 3
-    },
-    {
-      id: "a_seafloor",
-      cat: "explore",
-      i: "🐙",
-      n: "숨이 닿지 않는 곳",
-      d: "숨이 닿지 않는 바닥까지 내려갔다.",
-      check: (g) => g.player.deepest >= 690
-    },
-    /* 세션 3 이 땅을 둘(바다·빙하) 늘려 BIOMES 가 아홉이 됐고, '아홉 땅'은 그 표를 그대로 읽는다 — 땅이 더 늘어도 조건이 저절로 따라간다. */
-    {
-      id: "a_glacier",
-      cat: "explore",
-      i: "❄",
-      n: "갈라지는 땅",
-      d: "빙하 지대에 발을 디뎠다.",
-      check: (g) => !!(g.seenBiomes || {}).glacier
-    },
-    {
-      id: "a_all_zones",
-      cat: "explore",
-      i: "🗺",
-      n: "아홉 땅",
-      d: "아홉 땅에 모두 발자국을 남겼다.",
-      check: (g) => BIOMES.every((b) => (g.seenBiomes || {})[b.id])
-    },
-    /* 유적의 맥박 · 탐사 기록 — survey 는 세이브에 담긴다(SAVE_UPGRADES v6). */
-    {
-      id: "a_pulse_rage",
-      cat: "explore",
-      i: "💓",
-      n: "격노를 견딘 자",
-      d: "유적의 맥박이 격노에 닿았다.",
-      check: (g) => Object.values(g.survey || {}).some((s) => (s.peak || 0) >= 3)
-    },
-    {
-      id: "a_survey_s",
-      cat: "explore",
-      i: "🏅",
-      n: "샅샅이",
-      d: "유적 하나를 탐사 기록 S로 남겼다.",
-      check: (g) => Object.values(g.survey || {}).some((s) => !!s.s)
-    },
-    /* 동굴 — tally.faults(무너뜨린 자갈 수) · tally.caves(들어가 본 갈래). */
-    {
-      id: "a_fault",
-      cat: "explore",
-      i: "🪨",
-      n: "무너뜨린 사람",
-      d: "금 간 자갈 셋을 무너뜨려 숨은 동굴을 열었다.",
-      check: (g) => ((g.tally || {}).faults || 0) >= 3
-    },
-    {
-      id: "a_cave_kinds",
-      cat: "explore",
-      i: "🦇",
-      n: "땅속의 네 얼굴",
-      d: "이끼 굴 · 종유 동굴 · 수정 동굴 · 독기 굴에 모두 들어가 봤다.",
-      check: (g) => ["moss", "drip", "geode", "fume"].every((k) => ((g.tally || {}).caves || {})[k])
-    },
-    {
-      id: "a_yunseul",
-      h: 1,
-      cat: "explore",
-      i: "🫧",
-      n: "물속의 집",
-      d: "아무도 말해 주지 않은 사람을 만났다.",
-      check: (g) => !!(g.talked || {}).yunseul
-    },
-    // ---------------- 토벌 ----------------
-    {
-      id: "a_kill_50",
-      cat: "hunt",
-      i: "🗡",
-      n: "쉰 번",
-      d: "쉰 마리를 넘어뜨렸다.",
-      check: (g) => achSum(g.player.kills) >= 50
-    },
-    {
-      id: "a_kill_300",
-      cat: "hunt",
-      i: "💀",
-      n: "삼백 번",
-      d: "삼백 마리를 넘어뜨렸다.",
-      check: (g) => achSum(g.player.kills) >= 300
-    },
-    {
-      id: "a_bloodmoon",
-      cat: "hunt",
-      i: "🌑",
-      n: "붉은 밤을 견딘 자",
-      d: "붉은 달에 나오는 것 쉰 마리를 견뎌 냈다.",
-      check: (g) => (g.player.kills.crimson_howler || 0) + (g.player.kills.crimson_eye || 0) >= 50
-    },
-    {
-      id: "a_ruin_bosses",
-      cat: "hunt",
-      i: "🗝",
-      n: "유적을 비운 자",
-      d: "유적 다섯이 비었다.",
-      check: (g) => ["mine_horror", "ice_warden", "sand_guardian", "spore_queen", "blight_maw"].every((k) => g.player.bossKilled[k])
-    },
-    /* 상자를 여는 것만으로는 안 준다 — **잡아야** 준다. */
-    {
-      id: "a_isle",
-      cat: "hunt",
-      i: "🏝",
-      n: "섬을 내려놓게 하다",
-      d: "섬을 붙들고 있던 것이 손을 놓았다.",
-      check: (g) => !!g.player.bossKilled.isle_keeper
-    },
-    {
-      id: "a_deepsea",
-      cat: "hunt",
-      i: "🦈",
-      n: "물속의 것들",
-      d: "바다에서 나는 다섯 종을 모두 만났다.",
-      check: (g) => ACH_SEA_MOBS.every((k) => (g.player.kills[k] || 0) >= 1)
-    },
-    {
-      id: "a_drowned_keeper",
-      cat: "hunt",
-      i: "⚓",
-      n: "가라앉은 지킴이",
-      d: "물이 삼킨 유적 끝의 것이 쓰러졌다.",
-      check: (g) => !!g.player.bossKilled.drowned_keeper
-    },
-    {
-      id: "a_secret_bosses",
-      h: 1,
-      cat: "hunt",
-      i: "🕳",
-      n: "아무도 시키지 않은 일",
-      d: "아무도 시키지 않은 둘을 끝냈다.",
-      check: (g) => !!(g.player.bossKilled.restorer && g.player.bossKilled.shaft_maw)
-    },
-    {
-      id: "a_echo5",
-      cat: "hunt",
-      i: "🌀",
-      n: "마지막 메아리",
-      d: "메아리 시련 다섯째 단계를 넘겼다.",
-      check: (g) => Object.values(g.survey || {}).some((s) => (s.echo || 0) >= 5)
-    },
-    {
-      id: "a_kill_3000",
-      cat: "hunt",
-      i: "☠",
-      n: "삼천 번",
-      d: "삼천 마리를 넘어뜨렸다.",
-      check: (g) => achSum(g.player.kills) >= 3e3
-    },
-    // ---------------- 살림 ----------------
-    {
-      id: "a_inn",
-      cat: "life",
-      i: "🛏",
-      n: "하룻밤",
-      d: "여관에서 하룻밤 잤다.",
-      check: (g) => ((g.tally || {}).inn || 0) >= 1
-    },
-    {
-      id: "a_village4",
-      cat: "life",
-      i: "🏘",
-      n: "여명 교역지",
-      d: "마을이 교역지가 됐다.",
-      check: (g) => g.villageLv() >= 4
-    },
-    {
-      id: "a_side10",
-      cat: "life",
-      i: "📜",
-      n: "부탁받는 사람",
-      d: "부탁 열 건을 들어줬다.",
-      check: (g) => achSum(g.sideDone) >= 10
-    },
-    {
-      id: "a_day50",
-      cat: "life",
-      i: "🌅",
-      n: "오십 일",
-      d: "쉰 번째 아침이 왔다.",
-      check: (g) => g.dayCount >= 50
-    },
-    {
-      id: "a_gold",
-      cat: "life",
-      i: "🪙",
-      n: "금고가 무겁다",
-      d: "금화 100만이 쌓였다.",
-      check: (g) => g.player.gold >= 1e6
-    },
-    {
-      id: "a_pet_max",
-      cat: "life",
-      i: "🐾",
-      n: "끝까지 키운 것",
-      d: "한 마리를 끝까지 키웠다.",
-      check: (g) => achAnyItem(g, (it) => idef(it).type === "pet" && (it.lv || 1) >= PET_LV_MAX)
-    },
-    {
-      id: "a_gold10m",
-      h: 1,
-      cat: "life",
-      i: "💰",
-      n: "쓸 데가 없다",
-      d: "금화 1,000만. 쓸 데가 없다.",
-      check: (g) => g.player.gold >= 1e7
-    },
-    // ---------------- 별난 것 ----------------
-    {
-      id: "a_trade1",
-      cat: "odd",
-      i: "🤝",
-      n: "첫 거래",
-      d: "상인과 처음 물건을 주고받았다.",
-      check: (g) => ((g.tally || {}).trade || 0) >= 1
-    },
-    {
-      id: "a_play1h",
-      cat: "odd",
-      i: "⏳",
-      n: "한 시간",
-      d: "한 시간이 지났다.",
-      check: (g) => ((g.tally || {}).play || 0) >= 3600
-    },
-    {
-      id: "a_drown",
-      cat: "odd",
-      i: "🫁",
-      n: "숨이 먼저 다했다",
-      d: "물속에서 숨이 먼저 다했다.",
-      check: (g) => ((g.tally || {}).drown || 0) >= 1
-    },
-    {
-      id: "a_trade100",
-      cat: "odd",
-      i: "🧾",
-      n: "단골",
-      d: "거래 백 건. 이제 단골이다.",
-      check: (g) => ((g.tally || {}).trade || 0) >= 100
-    },
-    {
-      id: "a_play10h",
-      cat: "odd",
-      i: "🕰",
-      n: "열 시간",
-      d: "열 시간이 지났다.",
-      check: (g) => ((g.tally || {}).play || 0) >= 36e3
-    },
-    {
-      id: "a_die20",
-      cat: "odd",
-      i: "⚰",
-      n: "그래도 다시",
-      d: "스무 번 쓰러지고 스무 번 일어났다.",
-      check: (g) => ((g.tally || {}).deaths || 0) >= 20
-    },
-    /* 터뜨린 횟수는 세이브에 없던 값이라 tally 에 센다(gathered 는 **만든** 수라 쟁여 두기만 해도 오른다 — "터뜨려 봤다"와는 다른 이야기다). */
-    {
-      id: "a_bomb",
-      cat: "odd",
-      i: "💣",
-      n: "터뜨려 본 사람",
-      d: "폭탄을 서른 번 터뜨렸다.",
-      check: (g) => ((g.tally || {}).bomb || 0) >= 30
-    },
-    {
-      id: "a_detector",
-      cat: "odd",
-      i: "📡",
-      n: "두 개의 눈",
-      d: "광맥을 보는 눈과 움직이는 것을 보는 눈을 둘 다 만들었다.",
-      check: (g) => ["det_metal", "det_mob"].every((k) => (g.crafted || {})[k])
-    },
-    {
-      id: "a_play100h",
-      h: 1,
-      cat: "odd",
-      i: "🌌",
-      n: "백 시간",
-      d: "백 시간이 지났다.",
-      check: (g) => ((g.tally || {}).play || 0) >= 36e4
-    },
-    {
-      id: "a_level100",
-      cat: "odd",
-      i: "⭐",
-      n: "백 번째 아침",
-      d: "레벨 100에 닿았다.",
-      check: (g) => g.player.level >= 100
-    }
-  ];
-  var ACH_LV = {
-    a_ch1: 1,
-    a_first_boss: 1,
-    a_village: 5,
-    a_five_hearts: 5,
-    a_session2: 5,
-    a_session3: 7,
-    a_tide: 8,
-    a_three_ends: 8,
-    a_story_bosses: 9,
-    a_all_bosses: 10,
-    a_first_crop: 2,
-    a_first_cook: 2,
-    a_harvest: 4,
-    a_three_crops: 5,
-    a_cook: 5,
-    a_feast: 7,
-    a_farm_1000: 8,
-    a_first_mach: 4,
-    a_power: 5,
-    a_first_line: 6,
-    a_smart: 7,
-    a_belt: 7,
-    a_lv4_mach: 8,
-    a_factory: 8,
-    a_first_pick: 1,
-    a_wood_200: 2,
-    a_first_fish: 2,
-    a_gunpowder: 3,
-    a_mine_2000: 4,
-    a_fish: 5,
-    a_glacium: 7,
-    a_abyss_core: 7,
-    a_abyss_gear: 8,
-    a_enh10: 8,
-    a_mine_20000: 9,
-    a_cave: 1,
-    a_glacier: 2,
-    a_deep: 4,
-    a_sky: 4,
-    a_fault: 4,
-    a_cave_kinds: 4,
-    a_pulse_rage: 4,
-    a_hell: 5,
-    a_lore: 5,
-    a_all_zones: 6,
-    a_yunseul: 7,
-    a_seafloor: 8,
-    a_survey_s: 8,
-    a_kill_50: 1,
-    a_kill_300: 3,
-    a_bloodmoon: 5,
-    a_deepsea: 6,
-    a_ruin_bosses: 7,
-    a_isle: 7,
-    a_kill_3000: 7,
-    a_drowned_keeper: 8,
-    a_echo5: 9,
-    a_secret_bosses: 9,
-    a_inn: 4,
-    a_side10: 5,
-    a_day50: 6,
-    a_village4: 6,
-    a_gold: 6,
-    a_pet_max: 8,
-    a_gold10m: 9,
-    a_drown: 1,
-    a_trade1: 2,
-    a_play1h: 2,
-    a_bomb: 3,
-    a_die20: 4,
-    a_trade100: 5,
-    a_detector: 5,
-    a_play10h: 6,
-    a_level100: 7,
-    a_play100h: 10
-  };
-  for (const a of ACHIEVEMENTS) {
-    a.lv = ACH_LV[a.id] || 5;
-    a.t = a.lv <= 3 ? "easy" : a.lv <= 6 ? "mid" : "hard";
-  }
-  ACHIEVEMENTS.sort((a, b) => a.lv - b.lv);
-  var ACH_FOODS = [
-    "food_bread",
-    "food_stew",
-    "food_soup",
-    "food_pie",
-    "food_curry",
-    "food_jelly",
-    "food_mstew",
-    "food_tea",
-    "food_feast"
-  ];
-  var ACH_SEA_MOBS = ["reef_crab", "lantern_jelly", "reef_shark", "deep_octopus", "abyss_angler"];
-  function achSum(o) {
-    let n = 0;
-    for (const k in o || {}) n += o[k] | 0;
-    return n;
-  }
-  function achCount(list, fn) {
-    let n = 0;
-    for (const k of list) if (fn(k)) n++;
-    return n;
-  }
-  function achMach(g) {
-    if (!g.world || !g.world.machines) return 0;
-    let n = 0;
-    for (const m of g.world.machines.values()) if (!m.gen) n++;
-    return n;
-  }
-  function achEquip(g, fn) {
-    const eq = g.player.equip;
-    for (const k in eq) if (eq[k] && fn(eq[k])) return true;
-    return false;
-  }
-  function achAnyItem(g, fn) {
-    if (achEquip(g, fn)) return true;
-    for (const it of g.player.bag) if (it && fn(it)) return true;
-    for (const it of g.vault || []) if (it && fn(it)) return true;
-    return false;
-  }
+
+  // src/legacy/data/npcs.js
+  var npcs_exports = {};
+  __export(npcs_exports, {
+    DAWN_NPCS: () => DAWN_NPCS,
+    MERCHANTS: () => MERCHANTS,
+    NPCS: () => NPCS,
+    SHOP_DENY: () => SHOP_DENY,
+    TALK: () => TALK,
+    TALK_MOODS: () => TALK_MOODS,
+    VILLAGE_TALK: () => VILLAGE_TALK
+  });
   var NPCS = {
     elara: { n: "엘라라", i: "🧝‍♀️", c: "#c8a06a", role: "캠프 관리인", art: "elara" },
     /* disc — 이 사람에게 살 때 붙는 할인. */
@@ -11081,6 +10264,22 @@
       }
     }
   };
+
+  // src/legacy/data/pets.js
+  var pets_exports = {};
+  __export(pets_exports, {
+    EGG_POOL: () => EGG_POOL,
+    LV_SCALE_BASE: () => LV_SCALE_BASE,
+    PETS: () => PETS,
+    PET_LV_MAX: () => PET_LV_MAX,
+    PET_XP_SHARE: () => PET_XP_SHARE,
+    bloodMult: () => bloodMult,
+    levelMult: () => levelMult,
+    petAtkMul: () => petAtkMul,
+    petDmgScale: () => petDmgScale,
+    petLvMul: () => petLvMul,
+    petXpNext: () => petXpNext
+  });
   var PETS = {
     /* --- 공통 --- */
     ember_squirrel: {
@@ -11274,6 +10473,19 @@
       ["storm_falcon", 11]
     ]
   };
+
+  // src/legacy/data/story.js
+  var story_exports = {};
+  __export(story_exports, {
+    CHAPTERS: () => CHAPTERS,
+    CHAPTER_HOOK: () => CHAPTER_HOOK,
+    DIALOGUE: () => DIALOGUE,
+    SESSIONS: () => SESSIONS,
+    TABLETS: () => TABLETS,
+    TERMINALS: () => TERMINALS,
+    chaptersOf: () => chaptersOf,
+    sessionOf: () => sessionOf
+  });
   var CHAPTERS = [
     {
       id: 0,
@@ -12154,6 +11366,19 @@
       ]
     ]
   };
+
+  // src/legacy/data/quests.js
+  var quests_exports = {};
+  __export(quests_exports, {
+    BOUNTY_BY_ID: () => BOUNTY_BY_ID,
+    BOUNTY_POOL: () => BOUNTY_POOL,
+    BOUNTY_UNIT: () => BOUNTY_UNIT,
+    CH_MAT: () => CH_MAT,
+    CH_MOB: () => CH_MOB,
+    CH_ORE: () => CH_ORE,
+    SIDE_POOL: () => SIDE_POOL,
+    chPick: () => chPick
+  });
   var SIDE_POOL = {
     elara: [
       (ch, rng) => {
@@ -12905,6 +12130,26 @@
     return m;
   })();
   var BOUNTY_UNIT = { kill: 10, collect: 22, mine: 18 };
+
+  // src/legacy/data/values.js
+  var values_exports = {};
+  __export(values_exports, {
+    ITEM_VAL: () => ITEM_VAL,
+    ORE_TIER: () => ORE_TIER,
+    PART_CAP: () => PART_CAP,
+    SET_DEFAULT: () => SET_DEFAULT,
+    SIG_FX: () => SIG_FX,
+    SKILL_FX: () => SKILL_FX,
+    SKILL_HIT: () => SKILL_HIT,
+    VAL_0: () => VAL_0,
+    VAL_CAP: () => VAL_CAP,
+    VAL_CRAFT: () => VAL_CRAFT,
+    VAL_GEAR: () => VAL_GEAR,
+    VAL_MIN: () => VAL_MIN,
+    VAL_R: () => VAL_R,
+    VAL_SHARE: () => VAL_SHARE,
+    idef: () => idef
+  });
   var VAL_R = 1.55;
   var VAL_0 = 3.3;
   var VAL_SHARE = 0.5;
@@ -13108,6 +12353,826 @@
     keys: null,
     notice: null
   };
+
+  // src/legacy/data/achievements.js
+  var achievements_exports = {};
+  __export(achievements_exports, {
+    ACHIEVEMENTS: () => ACHIEVEMENTS,
+    ACH_CAT: () => ACH_CAT,
+    ACH_FOODS: () => ACH_FOODS,
+    ACH_LV: () => ACH_LV,
+    ACH_SEA_MOBS: () => ACH_SEA_MOBS,
+    ACH_TIER: () => ACH_TIER,
+    achAnyItem: () => achAnyItem,
+    achCount: () => achCount,
+    achEquip: () => achEquip,
+    achHidden: () => achHidden,
+    achMach: () => achMach,
+    achSum: () => achSum
+  });
+  var ACH_CAT = {
+    story: "여정",
+    farm: "농사",
+    auto: "자동화",
+    gather: "손재주",
+    explore: "탐험",
+    hunt: "토벌",
+    life: "살림",
+    odd: "별난 것"
+  };
+  var ACH_TIER = { easy: ["쉬움", "#6fbf5a"], mid: ["중간", "#d8b048"], hard: ["어려움", "#d05a4a"] };
+  function achHidden(a) {
+    return !!a.h || a.t === "hard";
+  }
+  var ACHIEVEMENTS = [
+    // ---------------- 여정 (스토리) ----------------
+    {
+      id: "a_ch1",
+      cat: "story",
+      i: "✦",
+      n: "첫 조각",
+      d: "제 1 장이 끝났다.",
+      check: (g) => g.chapter >= 2
+    },
+    {
+      id: "a_village",
+      cat: "story",
+      i: "🏚",
+      n: "되살아난 마을",
+      d: "여명 마을에 다시 불이 켜졌다.",
+      check: (g) => !!g.villageUnlocked
+    },
+    {
+      id: "a_session2",
+      cat: "story",
+      i: "🧱",
+      n: "벽 너머",
+      d: "벽 너머로 넘어갔다.",
+      check: (g) => g.chapter >= SESSIONS[1].ch0
+    },
+    {
+      id: "a_session3",
+      cat: "story",
+      i: "🌊",
+      n: "가라앉은 쪽",
+      d: "물이 지운 쪽으로 내려갔다.",
+      check: (g) => g.chapter >= SESSIONS[2].ch0
+    },
+    {
+      id: "a_first_boss",
+      cat: "story",
+      i: "👑",
+      n: "처음 넘어뜨린 것",
+      d: "처음으로 큰 것을 넘어뜨렸다.",
+      check: (g) => Object.keys(g.player.bossKilled || {}).length >= 1
+    },
+    {
+      id: "a_five_hearts",
+      cat: "story",
+      i: "💠",
+      n: "다섯 심장",
+      d: "별을 쫓아온 것이 멈췄다.",
+      check: (g) => !!g.player.bossKilled.pursuer
+    },
+    {
+      id: "a_story_bosses",
+      cat: "story",
+      i: "⚔",
+      n: "이야기를 끝까지",
+      d: "이야기에 나온 것들이 모두 쓰러졌다.",
+      check: (g) => [
+        "king_slime",
+        "bone_lord",
+        "corrupt_heart",
+        "frost_witch",
+        "void_king",
+        "storm_warden",
+        "first_keeper",
+        "pursuer",
+        "overseer",
+        "proliferator",
+        "hepha",
+        "archetype",
+        "tide_warden"
+      ].every((k) => g.player.bossKilled[k])
+    },
+    /* 세션 3 의 종장. */
+    {
+      id: "a_tide",
+      cat: "story",
+      i: "🔔",
+      n: "가라앉은 종",
+      d: "물 밑에서 울리던 것이 멈췄다.",
+      check: (g) => !!g.player.bossKilled.tide_warden
+    },
+    {
+      id: "a_three_ends",
+      cat: "story",
+      i: "🌗",
+      n: "세 번의 끝",
+      d: "세 번의 결전을 모두 끝냈다.",
+      check: (g) => ["pursuer", "archetype", "tide_warden"].every((k) => g.player.bossKilled[k])
+    },
+    {
+      id: "a_all_bosses",
+      h: 1,
+      cat: "story",
+      i: "🏆",
+      n: "남김없이",
+      d: "이름이 붙은 것은 하나도 남지 않았다.",
+      check: (g) => [
+        "king_slime",
+        "bone_lord",
+        "corrupt_heart",
+        "frost_witch",
+        "void_king",
+        "storm_warden",
+        "first_keeper",
+        "pursuer",
+        "overseer",
+        "proliferator",
+        "hepha",
+        "archetype",
+        "tide_warden",
+        "mine_horror",
+        "ice_warden",
+        "sand_guardian",
+        "spore_queen",
+        "blight_maw",
+        "drowned_keeper",
+        "restorer",
+        "shaft_maw"
+      ].every((k) => g.player.bossKilled[k])
+    },
+    // ---------------- 농사 ----------------
+    {
+      id: "a_first_crop",
+      cat: "farm",
+      i: "🌱",
+      n: "첫 이랑",
+      d: "처음 심은 것을 거뒀다.",
+      check: (g) => ["wheat", "starroot", "ashcap"].some((k) => (g.player.gathered[k] || 0) >= 1)
+    },
+    {
+      id: "a_first_cook",
+      cat: "farm",
+      i: "🍞",
+      n: "첫 끼니",
+      d: "불 위에 처음 냄비를 올렸다.",
+      check: (g) => achCount(ACH_FOODS, (k) => (g.crafted || {})[k]) >= 1
+    },
+    {
+      id: "a_harvest",
+      cat: "farm",
+      i: "🌾",
+      n: "첫 곳간",
+      d: "곳간에 밀 100개가 쌓였다.",
+      check: (g) => (g.player.gathered.wheat || 0) >= 100
+    },
+    {
+      id: "a_three_crops",
+      cat: "farm",
+      i: "🧺",
+      n: "세 이랑",
+      d: "밀·별무·잿버섯이 50개씩 쌓였다.",
+      check: (g) => ["wheat", "starroot", "ashcap"].every((k) => (g.player.gathered[k] || 0) >= 50)
+    },
+    {
+      id: "a_cook",
+      cat: "farm",
+      i: "🍲",
+      n: "부엌을 아는 사람",
+      d: "여섯 가지 요리를 할 줄 알게 됐다.",
+      check: (g) => achCount(ACH_FOODS, (k) => (g.crafted || {})[k]) >= 6
+    },
+    {
+      id: "a_feast",
+      cat: "farm",
+      i: "🥘",
+      n: "잔칫상",
+      d: "가장 손이 많이 가는 상을 차렸다.",
+      check: (g) => !!(g.crafted || {}).food_feast
+    },
+    {
+      id: "a_farm_1000",
+      cat: "farm",
+      i: "🚜",
+      n: "들판을 통째로",
+      d: "땅에서 거둔 것이 1,000개를 넘었다.",
+      check: (g) => ["wheat", "starroot", "ashcap"].reduce((a, k) => a + (g.player.gathered[k] || 0), 0) >= 1e3
+    },
+    // ---------------- 자동화 ----------------
+    {
+      id: "a_first_mach",
+      cat: "auto",
+      i: "🔧",
+      n: "처음 놓은 기계",
+      d: "처음으로 기계 하나를 세웠다.",
+      check: (g) => achMach(g) >= 1
+    },
+    {
+      id: "a_power",
+      cat: "auto",
+      i: "🔌",
+      n: "전기를 끌어오다",
+      d: "발전기와 축전지와 전주가 다 섰다.",
+      check: (g) => ["m_gen", "m_battery", "m_pole"].every((k) => (g.crafted || {})[k])
+    },
+    {
+      id: "a_first_line",
+      cat: "auto",
+      i: "⚙",
+      n: "스스로 도는 것",
+      d: "기계 스무 대가 저 혼자 돌고 있다.",
+      check: (g) => achMach(g) >= 20
+    },
+    {
+      id: "a_smart",
+      cat: "auto",
+      i: "🤖",
+      n: "기계를 만드는 기계",
+      d: "조립기·제련기·압착기·정제기가 한 줄에 섰다.",
+      check: (g) => ["m_assembler", "m_smelter", "m_press", "m_refinery"].every((k) => (g.crafted || {})[k])
+    },
+    {
+      id: "a_lv4_mach",
+      cat: "auto",
+      i: "🔩",
+      n: "가압 설비",
+      d: "가압 설비 넷을 다 갖췄다.",
+      check: (g) => ["m_pressor", "m_desal", "m_belt_f", "m_battery_hi"].every((k) => (g.crafted || {})[k])
+    },
+    {
+      id: "a_factory",
+      cat: "auto",
+      i: "🏭",
+      n: "공장",
+      d: "기계 여든 대가 돈다. 이쯤 되면 공장이다.",
+      check: (g) => achMach(g) >= 80
+    },
+    /* crafted는 **제작 횟수**를 센다(한 번에 8개가 나와도 1). */
+    {
+      id: "a_belt",
+      cat: "auto",
+      i: "➡",
+      n: "길게 잇다",
+      d: "벨트 200개가 깔렸다.",
+      check: (g) => (g.player.gathered.m_belt || 0) + (g.player.gathered.m_belt_f || 0) >= 200
+    },
+    // ---------------- 손재주 ----------------
+    {
+      id: "a_first_pick",
+      cat: "gather",
+      i: "⛏",
+      n: "연장부터",
+      d: "연장부터 하나 만들었다.",
+      check: (g) => ["pick_copper", "pick_iron", "pick_steel", "pick_mythril", "pick_abyss"].some((k) => (g.crafted || {})[k])
+    },
+    {
+      id: "a_wood_200",
+      cat: "gather",
+      i: "🪵",
+      n: "나무꾼",
+      d: "나무 200개를 베어 왔다.",
+      check: (g) => (g.player.gathered.wood || 0) >= 200
+    },
+    {
+      id: "a_first_fish",
+      cat: "gather",
+      i: "🐟",
+      n: "첫 손맛",
+      d: "처음으로 하나 걸렸다.",
+      check: (g) => ["fish_common", "fish_silver", "fish_deep"].some((k) => (g.player.gathered[k] || 0) >= 1)
+    },
+    {
+      id: "a_gunpowder",
+      cat: "gather",
+      i: "💥",
+      n: "터지는 것",
+      d: "화약을 개어 봤다.",
+      check: (g) => !!(g.crafted || {}).gunpowder
+    },
+    {
+      id: "a_fish",
+      cat: "gather",
+      i: "🎣",
+      n: "물가에 오래 앉아",
+      d: "세 종류를 서른 마리씩 낚을 때까지 물가에 앉아 있었다.",
+      check: (g) => ["fish_common", "fish_silver", "fish_deep"].every((k) => (g.player.gathered[k] || 0) >= 30)
+    },
+    {
+      id: "a_abyss_gear",
+      cat: "gather",
+      i: "🔱",
+      n: "심해에서 온 것",
+      d: "심해에서 난 것으로 벼린 장비를 들었다.",
+      check: (g) => [
+        "spear_tide",
+        "blade_shark",
+        "bow_harpoon",
+        "orb_abyss",
+        "hammer_tide",
+        "gun_harpoon",
+        "tome_abyss",
+        "pick_abyss"
+      ].some((k) => (g.crafted || {})[k])
+    },
+    {
+      id: "a_glacium",
+      cat: "gather",
+      i: "🔷",
+      n: "빙정",
+      d: "빙정석 200덩이를 깨 왔다.",
+      check: (g) => (g.player.mined[T.GLACIUM] || 0) >= 200
+    },
+    {
+      id: "a_abyss_core",
+      cat: "gather",
+      i: "💠",
+      n: "심해 노심",
+      d: "4단계 설비의 심장을 손으로 굳혀 냈다.",
+      check: (g) => !!(g.crafted || {}).abyss_core
+    },
+    {
+      id: "a_mine_2000",
+      cat: "gather",
+      i: "🪓",
+      n: "파고 또 파고",
+      d: "곡괭이가 2,000번 땅을 물었다.",
+      check: (g) => achSum(g.player.mined) >= 2e3
+    },
+    {
+      id: "a_enh10",
+      cat: "gather",
+      i: "🔨",
+      n: "열 겹",
+      d: "모루 위에서 열 번을 견딘 물건이 있다.",
+      check: (g) => achAnyItem(g, (it) => (it.e || 0) >= 10)
+    },
+    {
+      id: "a_mine_20000",
+      h: 1,
+      cat: "gather",
+      i: "🕳",
+      n: "땅을 뒤집다",
+      d: "20,000번. 땅을 통째로 뒤집었다.",
+      check: (g) => achSum(g.player.mined) >= 2e4
+    },
+    // ---------------- 탐험 ----------------
+    {
+      id: "a_cave",
+      cat: "explore",
+      i: "🕯",
+      n: "첫 동굴",
+      d: "지하 60칸 아래를 봤다.",
+      check: (g) => g.player.deepest >= 120
+    },
+    {
+      id: "a_deep",
+      cat: "explore",
+      i: "⬇",
+      n: "심층",
+      d: "심층까지 내려갔다.",
+      check: (g) => g.player.deepest >= DEEP_Y
+    },
+    {
+      id: "a_hell",
+      cat: "explore",
+      i: "🔥",
+      n: "가장 아래",
+      d: "가장 아래에 발을 디뎠다.",
+      check: (g) => g.player.deepest >= HELL_Y
+    },
+    {
+      id: "a_sky",
+      cat: "explore",
+      i: "☁",
+      n: "구름 위",
+      d: "구름 위에 올라섰다.",
+      check: (g) => g.player.highest !== void 0 && g.player.highest <= SKY_Y
+    },
+    {
+      id: "a_lore",
+      cat: "explore",
+      i: "🪨",
+      n: "읽은 사람",
+      d: "유적 석판 셋을 다 읽었다.",
+      check: (g) => Object.keys(g.tabletsRead || {}).length >= 3
+    },
+    {
+      id: "a_seafloor",
+      cat: "explore",
+      i: "🐙",
+      n: "숨이 닿지 않는 곳",
+      d: "숨이 닿지 않는 바닥까지 내려갔다.",
+      check: (g) => g.player.deepest >= 690
+    },
+    /* 세션 3 이 땅을 둘(바다·빙하) 늘려 BIOMES 가 아홉이 됐고, '아홉 땅'은 그 표를 그대로 읽는다 — 땅이 더 늘어도 조건이 저절로 따라간다. */
+    {
+      id: "a_glacier",
+      cat: "explore",
+      i: "❄",
+      n: "갈라지는 땅",
+      d: "빙하 지대에 발을 디뎠다.",
+      check: (g) => !!(g.seenBiomes || {}).glacier
+    },
+    {
+      id: "a_all_zones",
+      cat: "explore",
+      i: "🗺",
+      n: "아홉 땅",
+      d: "아홉 땅에 모두 발자국을 남겼다.",
+      check: (g) => BIOMES.every((b) => (g.seenBiomes || {})[b.id])
+    },
+    /* 유적의 맥박 · 탐사 기록 — survey 는 세이브에 담긴다(SAVE_UPGRADES v6). */
+    {
+      id: "a_pulse_rage",
+      cat: "explore",
+      i: "💓",
+      n: "격노를 견딘 자",
+      d: "유적의 맥박이 격노에 닿았다.",
+      check: (g) => Object.values(g.survey || {}).some((s) => (s.peak || 0) >= 3)
+    },
+    {
+      id: "a_survey_s",
+      cat: "explore",
+      i: "🏅",
+      n: "샅샅이",
+      d: "유적 하나를 탐사 기록 S로 남겼다.",
+      check: (g) => Object.values(g.survey || {}).some((s) => !!s.s)
+    },
+    /* 동굴 — tally.faults(무너뜨린 자갈 수) · tally.caves(들어가 본 갈래). */
+    {
+      id: "a_fault",
+      cat: "explore",
+      i: "🪨",
+      n: "무너뜨린 사람",
+      d: "금 간 자갈 셋을 무너뜨려 숨은 동굴을 열었다.",
+      check: (g) => ((g.tally || {}).faults || 0) >= 3
+    },
+    {
+      id: "a_cave_kinds",
+      cat: "explore",
+      i: "🦇",
+      n: "땅속의 네 얼굴",
+      d: "이끼 굴 · 종유 동굴 · 수정 동굴 · 독기 굴에 모두 들어가 봤다.",
+      check: (g) => ["moss", "drip", "geode", "fume"].every((k) => ((g.tally || {}).caves || {})[k])
+    },
+    {
+      id: "a_yunseul",
+      h: 1,
+      cat: "explore",
+      i: "🫧",
+      n: "물속의 집",
+      d: "아무도 말해 주지 않은 사람을 만났다.",
+      check: (g) => !!(g.talked || {}).yunseul
+    },
+    // ---------------- 토벌 ----------------
+    {
+      id: "a_kill_50",
+      cat: "hunt",
+      i: "🗡",
+      n: "쉰 번",
+      d: "쉰 마리를 넘어뜨렸다.",
+      check: (g) => achSum(g.player.kills) >= 50
+    },
+    {
+      id: "a_kill_300",
+      cat: "hunt",
+      i: "💀",
+      n: "삼백 번",
+      d: "삼백 마리를 넘어뜨렸다.",
+      check: (g) => achSum(g.player.kills) >= 300
+    },
+    {
+      id: "a_bloodmoon",
+      cat: "hunt",
+      i: "🌑",
+      n: "붉은 밤을 견딘 자",
+      d: "붉은 달에 나오는 것 쉰 마리를 견뎌 냈다.",
+      check: (g) => (g.player.kills.crimson_howler || 0) + (g.player.kills.crimson_eye || 0) >= 50
+    },
+    {
+      id: "a_ruin_bosses",
+      cat: "hunt",
+      i: "🗝",
+      n: "유적을 비운 자",
+      d: "유적 다섯이 비었다.",
+      check: (g) => ["mine_horror", "ice_warden", "sand_guardian", "spore_queen", "blight_maw"].every((k) => g.player.bossKilled[k])
+    },
+    /* 상자를 여는 것만으로는 안 준다 — **잡아야** 준다. */
+    {
+      id: "a_isle",
+      cat: "hunt",
+      i: "🏝",
+      n: "섬을 내려놓게 하다",
+      d: "섬을 붙들고 있던 것이 손을 놓았다.",
+      check: (g) => !!g.player.bossKilled.isle_keeper
+    },
+    {
+      id: "a_deepsea",
+      cat: "hunt",
+      i: "🦈",
+      n: "물속의 것들",
+      d: "바다에서 나는 다섯 종을 모두 만났다.",
+      check: (g) => ACH_SEA_MOBS.every((k) => (g.player.kills[k] || 0) >= 1)
+    },
+    {
+      id: "a_drowned_keeper",
+      cat: "hunt",
+      i: "⚓",
+      n: "가라앉은 지킴이",
+      d: "물이 삼킨 유적 끝의 것이 쓰러졌다.",
+      check: (g) => !!g.player.bossKilled.drowned_keeper
+    },
+    {
+      id: "a_secret_bosses",
+      h: 1,
+      cat: "hunt",
+      i: "🕳",
+      n: "아무도 시키지 않은 일",
+      d: "아무도 시키지 않은 둘을 끝냈다.",
+      check: (g) => !!(g.player.bossKilled.restorer && g.player.bossKilled.shaft_maw)
+    },
+    {
+      id: "a_echo5",
+      cat: "hunt",
+      i: "🌀",
+      n: "마지막 메아리",
+      d: "메아리 시련 다섯째 단계를 넘겼다.",
+      check: (g) => Object.values(g.survey || {}).some((s) => (s.echo || 0) >= 5)
+    },
+    {
+      id: "a_kill_3000",
+      cat: "hunt",
+      i: "☠",
+      n: "삼천 번",
+      d: "삼천 마리를 넘어뜨렸다.",
+      check: (g) => achSum(g.player.kills) >= 3e3
+    },
+    // ---------------- 살림 ----------------
+    {
+      id: "a_inn",
+      cat: "life",
+      i: "🛏",
+      n: "하룻밤",
+      d: "여관에서 하룻밤 잤다.",
+      check: (g) => ((g.tally || {}).inn || 0) >= 1
+    },
+    {
+      id: "a_village4",
+      cat: "life",
+      i: "🏘",
+      n: "여명 교역지",
+      d: "마을이 교역지가 됐다.",
+      check: (g) => g.villageLv() >= 4
+    },
+    {
+      id: "a_side10",
+      cat: "life",
+      i: "📜",
+      n: "부탁받는 사람",
+      d: "부탁 열 건을 들어줬다.",
+      check: (g) => achSum(g.sideDone) >= 10
+    },
+    {
+      id: "a_day50",
+      cat: "life",
+      i: "🌅",
+      n: "오십 일",
+      d: "쉰 번째 아침이 왔다.",
+      check: (g) => g.dayCount >= 50
+    },
+    {
+      id: "a_gold",
+      cat: "life",
+      i: "🪙",
+      n: "금고가 무겁다",
+      d: "금화 100만이 쌓였다.",
+      check: (g) => g.player.gold >= 1e6
+    },
+    {
+      id: "a_pet_max",
+      cat: "life",
+      i: "🐾",
+      n: "끝까지 키운 것",
+      d: "한 마리를 끝까지 키웠다.",
+      check: (g) => achAnyItem(g, (it) => idef(it).type === "pet" && (it.lv || 1) >= PET_LV_MAX)
+    },
+    {
+      id: "a_gold10m",
+      h: 1,
+      cat: "life",
+      i: "💰",
+      n: "쓸 데가 없다",
+      d: "금화 1,000만. 쓸 데가 없다.",
+      check: (g) => g.player.gold >= 1e7
+    },
+    // ---------------- 별난 것 ----------------
+    {
+      id: "a_trade1",
+      cat: "odd",
+      i: "🤝",
+      n: "첫 거래",
+      d: "상인과 처음 물건을 주고받았다.",
+      check: (g) => ((g.tally || {}).trade || 0) >= 1
+    },
+    {
+      id: "a_play1h",
+      cat: "odd",
+      i: "⏳",
+      n: "한 시간",
+      d: "한 시간이 지났다.",
+      check: (g) => ((g.tally || {}).play || 0) >= 3600
+    },
+    {
+      id: "a_drown",
+      cat: "odd",
+      i: "🫁",
+      n: "숨이 먼저 다했다",
+      d: "물속에서 숨이 먼저 다했다.",
+      check: (g) => ((g.tally || {}).drown || 0) >= 1
+    },
+    {
+      id: "a_trade100",
+      cat: "odd",
+      i: "🧾",
+      n: "단골",
+      d: "거래 백 건. 이제 단골이다.",
+      check: (g) => ((g.tally || {}).trade || 0) >= 100
+    },
+    {
+      id: "a_play10h",
+      cat: "odd",
+      i: "🕰",
+      n: "열 시간",
+      d: "열 시간이 지났다.",
+      check: (g) => ((g.tally || {}).play || 0) >= 36e3
+    },
+    {
+      id: "a_die20",
+      cat: "odd",
+      i: "⚰",
+      n: "그래도 다시",
+      d: "스무 번 쓰러지고 스무 번 일어났다.",
+      check: (g) => ((g.tally || {}).deaths || 0) >= 20
+    },
+    /* 터뜨린 횟수는 세이브에 없던 값이라 tally 에 센다(gathered 는 **만든** 수라 쟁여 두기만 해도 오른다 — "터뜨려 봤다"와는 다른 이야기다). */
+    {
+      id: "a_bomb",
+      cat: "odd",
+      i: "💣",
+      n: "터뜨려 본 사람",
+      d: "폭탄을 서른 번 터뜨렸다.",
+      check: (g) => ((g.tally || {}).bomb || 0) >= 30
+    },
+    {
+      id: "a_detector",
+      cat: "odd",
+      i: "📡",
+      n: "두 개의 눈",
+      d: "광맥을 보는 눈과 움직이는 것을 보는 눈을 둘 다 만들었다.",
+      check: (g) => ["det_metal", "det_mob"].every((k) => (g.crafted || {})[k])
+    },
+    {
+      id: "a_play100h",
+      h: 1,
+      cat: "odd",
+      i: "🌌",
+      n: "백 시간",
+      d: "백 시간이 지났다.",
+      check: (g) => ((g.tally || {}).play || 0) >= 36e4
+    },
+    {
+      id: "a_level100",
+      cat: "odd",
+      i: "⭐",
+      n: "백 번째 아침",
+      d: "레벨 100에 닿았다.",
+      check: (g) => g.player.level >= 100
+    }
+  ];
+  var ACH_LV = {
+    a_ch1: 1,
+    a_first_boss: 1,
+    a_village: 5,
+    a_five_hearts: 5,
+    a_session2: 5,
+    a_session3: 7,
+    a_tide: 8,
+    a_three_ends: 8,
+    a_story_bosses: 9,
+    a_all_bosses: 10,
+    a_first_crop: 2,
+    a_first_cook: 2,
+    a_harvest: 4,
+    a_three_crops: 5,
+    a_cook: 5,
+    a_feast: 7,
+    a_farm_1000: 8,
+    a_first_mach: 4,
+    a_power: 5,
+    a_first_line: 6,
+    a_smart: 7,
+    a_belt: 7,
+    a_lv4_mach: 8,
+    a_factory: 8,
+    a_first_pick: 1,
+    a_wood_200: 2,
+    a_first_fish: 2,
+    a_gunpowder: 3,
+    a_mine_2000: 4,
+    a_fish: 5,
+    a_glacium: 7,
+    a_abyss_core: 7,
+    a_abyss_gear: 8,
+    a_enh10: 8,
+    a_mine_20000: 9,
+    a_cave: 1,
+    a_glacier: 2,
+    a_deep: 4,
+    a_sky: 4,
+    a_fault: 4,
+    a_cave_kinds: 4,
+    a_pulse_rage: 4,
+    a_hell: 5,
+    a_lore: 5,
+    a_all_zones: 6,
+    a_yunseul: 7,
+    a_seafloor: 8,
+    a_survey_s: 8,
+    a_kill_50: 1,
+    a_kill_300: 3,
+    a_bloodmoon: 5,
+    a_deepsea: 6,
+    a_ruin_bosses: 7,
+    a_isle: 7,
+    a_kill_3000: 7,
+    a_drowned_keeper: 8,
+    a_echo5: 9,
+    a_secret_bosses: 9,
+    a_inn: 4,
+    a_side10: 5,
+    a_day50: 6,
+    a_village4: 6,
+    a_gold: 6,
+    a_pet_max: 8,
+    a_gold10m: 9,
+    a_drown: 1,
+    a_trade1: 2,
+    a_play1h: 2,
+    a_bomb: 3,
+    a_die20: 4,
+    a_trade100: 5,
+    a_detector: 5,
+    a_play10h: 6,
+    a_level100: 7,
+    a_play100h: 10
+  };
+  for (const a of ACHIEVEMENTS) {
+    a.lv = ACH_LV[a.id] || 5;
+    a.t = a.lv <= 3 ? "easy" : a.lv <= 6 ? "mid" : "hard";
+  }
+  ACHIEVEMENTS.sort((a, b) => a.lv - b.lv);
+  var ACH_FOODS = [
+    "food_bread",
+    "food_stew",
+    "food_soup",
+    "food_pie",
+    "food_curry",
+    "food_jelly",
+    "food_mstew",
+    "food_tea",
+    "food_feast"
+  ];
+  var ACH_SEA_MOBS = ["reef_crab", "lantern_jelly", "reef_shark", "deep_octopus", "abyss_angler"];
+  function achSum(o) {
+    let n = 0;
+    for (const k in o || {}) n += o[k] | 0;
+    return n;
+  }
+  function achCount(list, fn) {
+    let n = 0;
+    for (const k of list) if (fn(k)) n++;
+    return n;
+  }
+  function achMach(g) {
+    if (!g.world || !g.world.machines) return 0;
+    let n = 0;
+    for (const m of g.world.machines.values()) if (!m.gen) n++;
+    return n;
+  }
+  function achEquip(g, fn) {
+    const eq = g.player.equip;
+    for (const k in eq) if (eq[k] && fn(eq[k])) return true;
+    return false;
+  }
+  function achAnyItem(g, fn) {
+    if (achEquip(g, fn)) return true;
+    for (const it of g.player.bag) if (it && fn(it)) return true;
+    for (const it of g.vault || []) if (it && fn(it)) return true;
+    return false;
+  }
 
   // src/legacy/world.js
   var world_exports = {};
@@ -16521,8 +16586,8 @@
   mixin(World.prototype, WorldTraps, true);
 
   // src/legacy/world/ruins.js
-  var ruins_exports = {};
-  __export(ruins_exports, {
+  var ruins_exports2 = {};
+  __export(ruins_exports2, {
     WorldRuins: () => WorldRuins
   });
   var WorldRuins = {
@@ -21553,8 +21618,8 @@
   Object.assign(TILE_PAINT, TilePaintVillage);
 
   // src/legacy/art/tiles/ruins.js
-  var ruins_exports2 = {};
-  __export(ruins_exports2, {
+  var ruins_exports3 = {};
+  __export(ruins_exports3, {
     TilePaintRuins: () => TilePaintRuins
   });
   var TilePaintRuins = {
@@ -25195,8 +25260,8 @@
   Object.assign(ITEM_PAINT, ItemPaintLoot);
 
   // src/legacy/art/items/skills.js
-  var skills_exports = {};
-  __export(skills_exports, {
+  var skills_exports2 = {};
+  __export(skills_exports2, {
     ItemPaintSkills: () => ItemPaintSkills
   });
   var ItemPaintSkills = {
@@ -44625,12 +44690,13 @@
   mixin(G, CorpsePart);
 
   // src/legacy/main.js
+  var DATA = Object.fromEntries(Object.entries(Object.assign({}, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports)).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
   if (!I18N.isSource) {
-    I18N.applyTables(Object.assign({}, size_exports, data_exports, world_exports, factory_exports2));
+    I18N.applyTables(Object.assign({}, size_exports, DATA, world_exports, factory_exports2));
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports2, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

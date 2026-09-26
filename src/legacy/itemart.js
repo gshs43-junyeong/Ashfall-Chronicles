@@ -3,7 +3,9 @@ import { shade } from '../engine/core/color.js';
 import { TAU, clamp } from '../engine/core/math.js';
 import { RNG } from '../engine/core/rng.js';
 import { tr } from './lang.js';
-import { ITEMS, PETS, T } from './data.js';
+import { T } from './data.js';
+import { ITEMS } from './data/items.js';
+import { PETS } from './data/pets.js';
 
 export const S32 = 32;
 export const sh2 = (c, m) => shade(c, m);

@@ -3,7 +3,7 @@ import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { eulreul } from '../../engine/i18n/ko.js';
 import { tr } from '../lang.js';
-import { BRANCHES, PROFS, PROF_MAX, SKILLS, TIER_REQ, profNeed } from '../data.js';
+import { BRANCHES, PROFS, PROF_MAX, SKILLS, TIER_REQ, profNeed } from '../data/skills.js';
 import { Art } from '../itemart.js';
 import { $, $$, UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */

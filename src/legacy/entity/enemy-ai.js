@@ -4,7 +4,8 @@ import { aabb, angleTo, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
 import { SEA_X1 } from '../size.js';
-import { BOSS_LINES, T } from '../data.js';
+import { T } from '../data.js';
+import { BOSS_LINES } from '../data/skills.js';
 import { TS } from '../world.js';
 import { Enemy, Part, Proj } from '../entity.js';
 /* entity.js 의 Enemy 에서 나눈 조각 — 읽히는 순간 Enemy.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */

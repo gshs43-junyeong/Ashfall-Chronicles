@@ -3,8 +3,12 @@ import { aabb, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
 import { WW } from '../size.js';
-import { DECO_MOUNT, DECO_OF, FLUID_KIND, ITEMS, LEAVE_OF, MACHINE, MACH_OF_TILE, OBJ_SIZE, PROF_MAX, T, TILE_DEF,
-  idef } from '../data.js';
+import { MACH_OF_TILE, T, TILE_DEF } from '../data.js';
+import { ITEMS, OBJ_SIZE } from '../data/items.js';
+import { MACHINE } from '../data/recipes.js';
+import { DECO_MOUNT, DECO_OF, FLUID_KIND, LEAVE_OF } from '../data/materials.js';
+import { PROF_MAX } from '../data/skills.js';
+import { idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Bomb, Drop, Part, makeItem } from '../entity.js';
 import { Factory } from '../factory.js';

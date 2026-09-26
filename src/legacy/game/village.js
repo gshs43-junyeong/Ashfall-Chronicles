@@ -4,9 +4,14 @@ import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
 import { fmt, tr } from '../lang.js';
 import { WH, WW } from '../size.js';
-import { BOUNTY_BY_ID, BOUNTY_POOL, BOUNTY_UNIT, CHAPTERS, DAWN_NPCS, DIALOGUE, ENEMIES, ITEMS, ITEM_VAL, MERCHANTS,
-  NPCS, RARITY_MULT, RUIN_HINTS, RUIN_LORE, RUIN_SPEC, SHOP_DENY, SIDE_POOL, T, TABLETS, TALK, TALK_MOODS, TILE_DEF,
-  VILLAGE_TALK, idef, mobCw, sessionOf } from '../data.js';
+import { RARITY_MULT, T, TILE_DEF } from '../data.js';
+import { ITEMS } from '../data/items.js';
+import { ENEMIES, mobCw } from '../data/enemies.js';
+import { RUIN_HINTS, RUIN_LORE, RUIN_SPEC } from '../data/ruins.js';
+import { DAWN_NPCS, MERCHANTS, NPCS, SHOP_DENY, TALK, TALK_MOODS, VILLAGE_TALK } from '../data/npcs.js';
+import { CHAPTERS, DIALOGUE, TABLETS, sessionOf } from '../data/story.js';
+import { BOUNTY_BY_ID, BOUNTY_POOL, BOUNTY_UNIT, SIDE_POOL } from '../data/quests.js';
+import { ITEM_VAL, idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Drop, Part, equipReqLv, isGear, itemName, makeItem, rollGear } from '../entity.js';
 import { UI } from '../ui.js';

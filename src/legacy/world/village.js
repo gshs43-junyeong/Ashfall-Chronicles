@@ -5,7 +5,9 @@ import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
 import { tr } from '../lang.js';
 import { CAMP_X1, HELL_Y, SHIFT, SKY_Y, SX, SY, WORLD_BOT, WW } from '../size.js';
-import { MERCHANTS, OBJ_SIZE, T, TILE_DEF } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
+import { OBJ_SIZE } from '../data/items.js';
+import { MERCHANTS } from '../data/npcs.js';
 import { DAWN_BUILDINGS, DAWN_INSIDE, DAWN_OBJ, DAWN_PLAZA, DAWN_WALL, TS, World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
