@@ -1,11 +1,11 @@
 /* ===== sprites.js — 손그림 애셋 로더(매니페스트 · 발 여백) — 없어도 절차 생성 그림으로 돈다 ===== */
+import { ASSET_VER, imageJob, measurePad } from '../engine/assets/image.js';
 export const Sprites = {
   base: 'assets/',
   scale: 4,           // 시트가 4배로 구워져 있다
   gap: 0,             // 문자 시트는 간격 0, 보스/이펙트 시트는 4
   img: {}, meta: null, loaded: 0, total: 0,
-  // index.html의 <script src=".../sprites.js?v=NNN">에서 버전을 그대로 물려받는다.
-  _ver: (document.currentScript && document.currentScript.src.split('?')[1]) || '',
+  _ver: ASSET_VER,
   /** CSS·DOM 에서 그림을 부를 때도 같은 ?v= 를 붙인다 — 배포는 /play/assets/*.png 를 1년 immutable 로 캐시해서,
       ?v= 없는 주소는 시트를 다시 구워도 옛 그림이 나온다(옛 32칸 시트가 36칸 자리로 늘어나 뚱뚱해 보였다). */
   url(path) { return path + (this._ver ? '?' + this._ver : ''); },
@@ -17,10 +17,7 @@ export const Sprites = {
       this.meta = await (await fetch(this.base + 'manifest.json', { cache: 'no-cache' })).json();
     }
     const jobs = [];
-    const add = (key, file) => jobs.push(new Promise(res => {
-      const im = new Image(); im.onload = im.onerror = () => res();
-      im.src = this.base + file + (this._ver ? '?' + this._ver : ''); this.img[key] = im;
-    }));
+    const add = (key, file) => jobs.push(imageJob(this.base + file + (this._ver ? '?' + this._ver : ''), im => { this.img[key] = im; }));
     const C = this.meta.characters.sheets, B = this.meta.bosses.sheets;
     for (const k in C) add(k, C[k].file);
     for (const k in B) add(k, B[k].file);
@@ -70,28 +67,9 @@ export const Sprites = {
     return this;
   },
 
-  /** 시트 프레임 0의 알파 채널을 한 번 훑어 두 가지를 잰다. */
-  _measurePad(im, m) {
-    const S = this.scale, fw = m.frameW * S, fh = m.frameH * S;
-    const cv = document.createElement('canvas'); cv.width = fw; cv.height = fh;
-    const ctx = cv.getContext('2d');
-    ctx.drawImage(im, 0, 0, fw, fh, 0, 0, fw, fh);
-    const data = ctx.getImageData(0, 0, fw, fh).data;
-    let bottom = -1, left = fw, right = -1;
-    for (let y = 0; y < fh; y++) {
-      for (let x = 0; x < fw; x++) {
-        if (data[(y * fw + x) * 4 + 3] <= 10) continue;
-        if (y > bottom) bottom = y;
-        if (x < left) left = x;
-        if (x > right) right = x;
-      }
-    }
-    if (bottom < 0) return { foot: 0, side: 0 };
-    return {
-      foot: m.frameH - (bottom / S) - 1,
-      side: ((left + right + 1) / 2 - fw / 2) / S
-    };
-  },
+  /** 시트 프레임 0의 알파 채널을 한 번 훑어 두 가지를 잰다(engine/assets/image.js). */
+  _measurePad(im, m) { return measurePad(im, m.frameW, m.frameH, this.scale); },
+
 
   /* ================= 개조 시트 ================= */
   mechSheet(key) {
