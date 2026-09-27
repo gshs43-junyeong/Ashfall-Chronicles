@@ -14,7 +14,7 @@ from mklogo import logo
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 W, H = 1920, 1080
-MET = (1180, -30)            # 떨어지는 별 그림의 왼쪽 위 — 섬 위 하늘(장면을 바꾸면 같이 옮길 것)
+MET_HEAD, MET_ANG = (1800, 380), 52   # 별 머리 자리 · 기울기 — 섬 오른쪽 빈 하늘, 꼬리는 화면 밖(장면을 바꾸면 같이 옮길 것)
 
 
 def radial(w, h, cx, cy, r, col, amax):
@@ -40,9 +40,13 @@ def main():
     # 떨어지는 별 — 오른쪽 위에서 왼쪽 아래로. 게임 그림(sky_meteor_near, 머리가 오른쪽)을 뒤집어 기울인다
     met = Image.open(os.path.join(ROOT, 'game', 'assets', 'bg', 'sky_meteor_near.png')).convert('RGBA')
     met = met.resize((met.width * 2, met.height * 2), Image.NEAREST).transpose(Image.FLIP_LEFT_RIGHT)
-    met = met.rotate(24, resample=Image.BICUBIC, expand=True)
-    mx, my = MET
-    hx, hy = mx + met.width * .1, my + met.height * .78          # 머리 자리(대략)
+    w0, h0 = met.size
+    met = met.rotate(MET_ANG, resample=Image.BICUBIC, expand=True)
+    t = math.radians(MET_ANG)                                    # 머리(뒤집은 그림의 왼쪽 끝)가 돌아간 자리
+    ox, oy = w0 * .06 - w0 / 2, h0 * .5 - h0 / 2
+    hx0, hy0 = met.width / 2 + ox * math.cos(t) + oy * math.sin(t), met.height / 2 - ox * math.sin(t) + oy * math.cos(t)
+    mx, my = MET_HEAD[0] - hx0, MET_HEAD[1] - hy0
+    hx, hy = MET_HEAD
     im.alpha_composite(radial(W, H, hx, hy, 300, (255, 190, 110), 80))
     im.alpha_composite(met, (int(mx), int(my)))
 
