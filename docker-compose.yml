@@ -1,0 +1,41 @@
+# docker compose up dev    — 소스를 걸어 두고 번들을 다시 만들며 game/ 을 띄운다 → http://localhost:8000/index.html
+# docker compose up game   — 지금 소스로 만든 게임만(nginx)                       → http://localhost:8001
+# docker compose up site   — 배포 사이트와 같은 모양(/home · /download · /play)     → http://localhost:8002
+# docker compose run --rm check — 회귀 검사 한 벌(npm run check)
+# TLS 를 가로채는 프록시 뒤라면 CA 를 준다: CA_CERT=/path/to/ca.crt docker compose build (없으면 /dev/null — 그냥 지나간다)
+x-build-secrets: &secrets
+  secrets: [ca]
+services:
+  dev:
+    build: { context: ., target: deps, <<: *secrets }
+    working_dir: /app
+    command: npm run dev
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8000"
+    ports: ["8000:8000"]
+    volumes:
+      - .:/app
+      # node_modules 는 컨테이너 것을 쓴다 — 호스트 것(다른 OS 의 esbuild 바이너리)이 덮지 않게
+      - node_modules:/app/node_modules
+
+  game:
+    build: { context: ., target: game, <<: *secrets }
+    ports: ["8001:80"]
+
+  site:
+    build: { context: ., target: site, <<: *secrets }
+    ports: ["8002:80"]
+
+  check:
+    build: { context: ., target: check, <<: *secrets }
+    # 실패 때 남는 비교 그림을 호스트에서 본다
+    volumes:
+      - ./tests/out:/app/tests/out
+
+volumes:
+  node_modules:
+
+secrets:
+  ca:
+    file: ${CA_CERT:-/dev/null}
