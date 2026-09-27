@@ -123,7 +123,10 @@ export const KEY_ACTIONS = [
   { id: 'quest', n: '일지', def: ['KeyJ'] },
   { id: 'craft', n: '제작', def: ['KeyH'] },
   { id: 'map', n: '지도', def: ['KeyM'] },
-  { id: 'save', n: '저장', def: ['F5'] }
+  { id: 'save', n: '저장', def: ['F5'] },
+  /* ★ 새 액션은 맨 끝에 — 번역 열쇠가 번호(KEY_ACTIONS.16.n)라 가운데 끼우면 뒤 이름이 한 칸씩 밀린다 */
+  { id: 'util1', n: '유틸리티 (왼쪽 칸)', def: ['KeyZ'] },
+  { id: 'util2', n: '유틸리티 (오른쪽 칸)', def: ['KeyX'] }
 ];
 
 /* ---------------- 알림 갈래 ---------------- */
