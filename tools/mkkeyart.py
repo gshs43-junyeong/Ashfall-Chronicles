@@ -14,6 +14,7 @@ from mklogo import logo
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 W, H = 1920, 1080
+MET = (1180, -30)            # 떨어지는 별 그림의 왼쪽 위 — 섬 위 하늘(장면을 바꾸면 같이 옮길 것)
 
 
 def radial(w, h, cx, cy, r, col, amax):
@@ -36,12 +37,14 @@ def main():
     im = Image.open(src).convert('RGBA').resize((W, H), Image.NEAREST)
     im = ImageEnhance.Contrast(im).enhance(1.08)
 
-    # 떨어지는 별 — 오른쪽 위에서 섬 너머로. 게임 그림(sky_meteor_near)을 2배로, 둘레에 빛
+    # 떨어지는 별 — 오른쪽 위에서 왼쪽 아래로. 게임 그림(sky_meteor_near, 머리가 오른쪽)을 뒤집어 기울인다
     met = Image.open(os.path.join(ROOT, 'game', 'assets', 'bg', 'sky_meteor_near.png')).convert('RGBA')
-    met = met.resize((met.width * 2, met.height * 2), Image.NEAREST)
-    mx, my = int(W * .60), int(H * .06)
-    im.alpha_composite(radial(W, H, mx + met.width * .2, my + met.height * .7, 360, (255, 190, 110), 90))
-    im.alpha_composite(met, (mx, my))
+    met = met.resize((met.width * 2, met.height * 2), Image.NEAREST).transpose(Image.FLIP_LEFT_RIGHT)
+    met = met.rotate(24, resample=Image.BICUBIC, expand=True)
+    mx, my = MET
+    hx, hy = mx + met.width * .1, my + met.height * .78          # 머리 자리(대략)
+    im.alpha_composite(radial(W, H, hx, hy, 300, (255, 190, 110), 80))
+    im.alpha_composite(met, (int(mx), int(my)))
 
     # 가장자리 어둠 — 로고 쪽(왼쪽 위)과 아래를 조금 더
     vig = Image.new('L', (W // 4, H // 4), 0); V = vig.load()
@@ -55,11 +58,11 @@ def main():
     dark = Image.new('RGBA', (W, H), (10, 7, 14, 255)); dark.putalpha(vig)
     im.alpha_composite(dark)
 
-    # 로고 — 왼쪽 위 하늘. 칸 크기 13 으로 새로 찍는다(글자 높이 ≈ 117px)
-    lg = logo(13)
+    # 로고 — 왼쪽 위 하늘. 칸 크기 11 로 새로 찍는다(섬에 안 걸리게)
+    lg = logo(11)
     sh = Image.new('RGBA', lg.size, (0, 0, 0, 0)); sh.putalpha(lg.split()[3].point(lambda v: int(v * .55)))
     sh = sh.filter(ImageFilter.GaussianBlur(14))
-    lx, ly = 90, 70
+    lx, ly = 70, 60
     im.alpha_composite(sh, (lx + 6, ly + 12))
     im.alpha_composite(lg, (lx, ly))
 
