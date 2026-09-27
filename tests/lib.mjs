@@ -94,6 +94,12 @@ export async function newGame(page, { seed = 'd1', size = 's', char = 'wanderer'
   await page.evaluate(() => { if (window.UI && UI.dlg) UI.closeDialogue(); });
 }
 
+/* 새 게임 4초 뒤(진짜 setTimeout — 가짜 시계 밖) 서장 이야기 창이 뜬다. 생성이 빠른 기기에선 검사 도중에 떠서
+   uiOpen 이 입력을 막았다(캐기·놓기·터치 점프 실패). 뜰 때까지 기다렸다 닫는다 — rAF 는 손으로 돌리니 polling 으로. */
+export async function settleIntro(page) {
+  await page.waitForFunction(() => UI.dlg, null, { polling: 100, timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => { if (UI.dlg) UI.closeDialogue(); });
+}
 export function writeJSON(f, v) { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(v, null, 2) + '\n'); }
 export function readJSON(f) { return JSON.parse(fs.readFileSync(f, 'utf8')); }
 export function fail(msg) { console.error('✗ ' + msg); process.exitCode = 1; }

@@ -2,7 +2,7 @@
    새 게임 → 걷기 · 점프 → 곡괭이로 캐기 → 횃불 놓기 → 문 열고 닫기 → 저장 → 불러오기 → 위치·가방·타일 대조,
    그리고 ?debug=factory 를 12초 돌려 공장이 움직이는지, ?touch=1 터치 뼈대(스틱 · 점프 단추 · 탭해서 캐기 · '사용' 전환 탭 = 우클릭).
    콘솔 오류는 0 이어야 한다. */
-import { serve, browser, DETERMINISM, collectErrors, boot, newGame, fail, ok } from './lib.mjs';
+import { serve, browser, DETERMINISM, collectErrors, boot, newGame, fail, ok, settleIntro } from './lib.mjs';
 
 const { srv, url } = await serve();
 const b = await browser();
@@ -36,6 +36,7 @@ async function hold(page, key, frames) {
   await boot(page, url + '/index.html');
   await newGame(page, { seed: 'd1', size: 's' });
   await page.evaluate(HELPERS);
+  await settleIntro(page);
   await page.evaluate(() => { G.player.iframe = 1e9; __step(30); if (UI.dlg) UI.closeDialogue(); });
 
   const x0 = await page.evaluate(() => G.player.x);
@@ -132,6 +133,7 @@ async function hold(page, key, frames) {
   await boot(page, url + '/index.html?touch=1');
   await newGame(page, { seed: 'd1', size: 's' });
   await page.evaluate(HELPERS);
+  await settleIntro(page);
   await page.evaluate(() => { G.player.iframe = 1e9; __step(30); if (UI.dlg) UI.closeDialogue(); __step(5);
     window.__rc = 0; const o = G.rightClick; G.rightClick = function () { window.__rc++; return o.apply(this, arguments); }; });
   const cdp = await ctx.newCDPSession(page);
