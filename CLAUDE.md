@@ -286,6 +286,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - `tools/build.sh` 는 재현 가능한 zip 을 만든다(두 번 빌드해 해시가 같다) — 다운로드 페이지 `HASHES` 는 그 앞 8자리.
 - **버전 문자열**이 박힌 곳: `game/index.html`(타이틀 표시) · `README.md` ·
   `site/download/index.html` · `tools/build.sh` 인자 · `docs/*`.
+- **커밋 메시지는 영어로 쓴다**(사용자 결정 2026-09-27). 코드 주석·문서는 그대로 한국어.
 - zip은 커밋하지 않는다(`.gitignore`). 태그를 push하면 Actions가 만들어 Release에
   붙인다.
 - `WW`/`WH`가 바뀐 판은 **세이브 호환이 깨진다.** 릴리스 노트와 다운로드
