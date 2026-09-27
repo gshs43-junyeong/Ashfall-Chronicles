@@ -25,7 +25,9 @@ export function serve(dir = GAME) {
     res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
     fs.createReadStream(f).pipe(res);
   });
-  return new Promise(r => srv.listen(+process.env.PORT || 0, '127.0.0.1', () => r({ srv, url: `http://127.0.0.1:${srv.address().port}` })));
+  /* HOST — 컨테이너(Docker)에서는 0.0.0.0 이어야 밖에서 들어온다. 주소 표시는 늘 127.0.0.1 로(브라우저가 여는 쪽). */
+  const host = process.env.HOST || '127.0.0.1';
+  return new Promise(r => srv.listen(+process.env.PORT || 0, host, () => r({ srv, url: `http://127.0.0.1:${srv.address().port}` })));
 }
 
 /* Playwright 가 제 판의 브라우저를 못 찾으면(내려받기를 막은 환경) PW_CHROMIUM 이나 설치된 크로미움으로 띄운다. */

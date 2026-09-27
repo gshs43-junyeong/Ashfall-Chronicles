@@ -10,7 +10,10 @@ import { serve, browser, DETERMINISM, collectErrors, boot, newGame, BASE, OUT, U
 
 if (process.env.SKIP_SHOTS) { console.log('- 스크린샷 대조 건너뜀(SKIP_SHOTS)'); process.exit(0); }
 
-const DIR = path.join(BASE, 'shots');
+/* SHOTS_SET — 환경마다 기준 그림 한 벌. Docker 검사 이미지는 제 글꼴로 따로 찍은 'shots-docker' 를 본다(SHOTS_SET=docker).
+   다시 찍기: docker compose run --rm -v ./tests/baseline:/app/tests/baseline check node tests/shots.mjs --update */
+const SET = process.env.SHOTS_SET ? 'shots-' + process.env.SHOTS_SET.replace(/[^a-z0-9-]/gi, '') : 'shots';
+const DIR = path.join(BASE, SET);
 const TOL = 0.004;                               // 달라도 되는 화소 비율(0.4%) — 글자 안티에일리어싱 정도
 const ONLY = process.env.SHOTS_ONLY ? process.env.SHOTS_ONLY.split(',') : null;   // 몇 장만: SHOTS_ONLY=title,start
 const CASES = [

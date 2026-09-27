@@ -44,6 +44,7 @@
 | `LICENSE` · `NOTICE.md` | MIT 본문과, **거기서 빠지는 두 폴더**(음악·효과음)에 대한 설명 |
 | `tools/` | 배포용 zip 빌드 스크립트, 애셋을 굽고 재는 파이썬 도구들 |
 | `.github/workflows/` | Release 자동 첨부, Pages 자동 배포 |
+| `Dockerfile` · `docker-compose.yml` · `docker/` | 컨테이너로 묶기 · 검사 · 서빙(아래 「개발 · Docker」) |
 
 **`game/` 만이 원본입니다.** `site/play/` 는 빌드 산출물이고 `.gitignore` 되어
 있습니다 — 거기를 고치면 다음 빌드에 날아갑니다.
@@ -106,6 +107,33 @@ bash tools/build.sh 1.1.0
 ```bash
 xattr -dr com.apple.quarantine AshfallChronicles-1.1.0/   # 받은 판 번호로
 ```
+
+
+---
+
+## 개발 · Docker
+
+코드 원본은 `src/`(TypeScript)이고 `game/js/ashfall.js` 는 그것을 묶은 **산출물**입니다(커밋됨 — `game/` 만 받아도 빌드 없이 돕니다).
+
+```bash
+npm ci            # 처음 한 번
+npm run dev       # 소스를 고치면 번들을 다시 만들고 game/ 을 띄웁니다
+npm run check     # 회귀 검사 한 벌(문법 · 타입 · 모듈 · 번역 · 생성 해시 · 동작 · 스크린샷)
+```
+
+Node 없이 **Docker 만으로**도 같은 일을 합니다:
+
+| 명령 | 하는 일 |
+|---|---|
+| `docker compose up dev` | 소스를 걸어 두고 고치면 다시 묶으며 게임을 띄웁니다 → http://localhost:8000/index.html |
+| `docker compose up game` | 지금 소스로 만든 게임만 nginx 로 → http://localhost:8001 |
+| `docker compose up site` | 배포 사이트와 같은 모양(`/home` · `/download` · `/play`, `vercel.json` 의 되돌려 보내기·캐시 규칙) → http://localhost:8002 |
+| `docker compose run --rm check` | 회귀 검사 한 벌을 Playwright 공식 이미지 안에서 |
+
+- 이미지 안에서 만든 번들은 저장소로 돌아오지 않습니다 — **커밋할 번들은 늘 `npm run build`** 로 만드세요(`dev` 는 소스를 걸어 두므로 예외).
+- 회사·학교 프록시처럼 TLS 를 가로채는 망이라 `npm ci` 가 인증서 오류를 내면 그 CA 를 넘기세요:
+  `CA_CERT=/path/to/ca.crt docker compose build` (또는 `docker build --secret id=ca,src=/path/to/ca.crt …`).
+- 기존 방식(`index.html` 더블클릭 · `python3 -m http.server` · Vercel)은 그대로입니다.
 
 ---
 
