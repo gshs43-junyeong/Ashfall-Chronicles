@@ -295,7 +295,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-26)
 
-- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) 4,020개 끝** — 남은 것 zh-Hans·de·es, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 진행 중 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입 첫 단계(`@ts-nocheck` 0, 표 타입 `types.d.ts`) 끝 — `any` 좁히기는 차례로(계획서 §7-1). 그다음 P11 Docker · P12 마무리.
+- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) · 중국어 간체(zh-Hans) 4,020개 끝** — 남은 것 de·es · 사이트(site/) 번역, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 진행 중 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입 첫 단계(`@ts-nocheck` 0, 표 타입 `types.d.ts`) 끝 — `any` 좁히기는 차례로(계획서 §7-1). 그다음 P11 Docker · P12 마무리.
   **화질**(설정 · game.js `QUALITY`): 자동 = 폰 절약(픽셀 밀도 1 · 입자 300) · 태블릿 보통(1.5 · 600) · 컴퓨터 높음(2 · 900). 렌더 단계별 시간은 `G.pipe.profile(true)` → `G.pipe.stats()`. 도중에 찾은 버그는 계획서 §9-1 에 모아 P12 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
