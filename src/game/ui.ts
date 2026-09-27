@@ -522,6 +522,29 @@ export const UI: Bag = {
       d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span><span class="cdnum"></span>`;
       bar.appendChild(d);
     }
+    /* 유틸리티 칸 둘 — 도구를 끼웠을 때만 보인다. 키 글자는 지금 걸린 키(설정에서 바꾸면 따라간다). 터치는 칸을 누른다 */
+    for (let i = 0; i < 2; i++) {
+      const d = document.createElement('div');
+      d.className = 'usl'; d.hidden = true;
+      d.innerHTML = `<span class="key"></span><span class="ic"></span><span class="cdnum"></span>`;
+      d.addEventListener('pointerdown', e => { e.preventDefault(); G.useUtil(i); });
+      bar.appendChild(d);
+    }
+  },
+  refreshUtilbar() {
+    const p = G.player;
+    $$('#skillbar .usl').forEach((el, i) => {
+      const it = p.equip['util' + (i + 1)], d = it && idef(it);
+      el.hidden = !it;
+      if (!it) return;
+      if (el.dataset.id !== it.id) { el.dataset.id = it.id; this.setIcon(el.querySelector('.ic'), Art.itemUrl(it.id)); }
+      const k = G.keysFor('util' + (i + 1))[0];
+      el.querySelector('.key').textContent = d.act && k ? this.keyLabel(k) : '';
+      const left = d.act ? G.utilLeft(i) : 0;
+      el.classList.toggle('passive', !d.act);
+      el.querySelector('.cdnum').textContent = left > 0 ? (left > 1 ? String(Math.ceil(left)) : left.toFixed(1)) : '';
+      el.style.filter = left > 0 ? 'grayscale(1) brightness(.55)' : '';
+    });
   },
   refreshSkillbar() {
     const p = G.player;
@@ -534,6 +557,7 @@ export const UI: Bag = {
       el.querySelector('.cdnum').textContent = cd > 0 ? (cd > 1 ? Math.ceil(cd) : cd.toFixed(1)) : '';
       el.style.filter = cd > 0 ? 'grayscale(1) brightness(.55)' : (p.mp < sk.mana ? 'hue-rotate(0) brightness(.7)' : '');
     });
+    this.refreshUtilbar();
   },
 
   /* ---------------- 스탯 분배 ---------------- */

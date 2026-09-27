@@ -47,6 +47,7 @@ export const RenderPart: Bag = {
     this.pipe.add('actors', f => this.rActors(f));
     this.pipe.add('lighting', f => this.rLightOverlay(f));
     this.pipe.add('fx', f => this.rFx(f));
+    this.pipe.add('fx', f => this.rUtil(f));           // 탐지 파동(game/utility)
     this.pipe.add('screen', f => this.rScreen(f));
   },
   /** 렌더 단계 — 하늘 */

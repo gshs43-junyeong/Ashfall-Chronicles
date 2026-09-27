@@ -52,7 +52,7 @@ export const ITEMS: Record<string, ItemDef> = {
   /* 산소통 — 잠수 시간을 늘린다. */
   /* 산소통 — **유틸리티 칸(util)** 에 낀다. */
   tank_air:    { n: '휴대용 산소통', i: '🫧', type: 'util', b: { oxyMax: 14, ms: -2 },
-                 d: '등에 메는 낡은 통. 숨을 오래 참게 해 주지만 물살을 조금 더 탄다.', lvReq: 8 },
+                 d: '등에 메는 낡은 통. 숨을 오래 참게 해 주지만 조금 무겁다.', lvReq: 8 },
   tank_deep:   { n: '심해용 산소통', i: '🫧', type: 'util', b: { oxyMax: 32, def: 6 },
                  d: '깊은 곳에서도 견디도록 겹으로 두른 통. 휴대용 통을 뜯어 다시 감았다.', lvReq: 20 },
   tank_abyss:  { n: '심연용 산소통', i: '🫧', type: 'util', b: { oxyMax: 64, def: 12, oxyReg: 1 },
@@ -182,10 +182,10 @@ export const ITEMS: Record<string, ItemDef> = {
   star_crystal: { n: '별빛 수정', i: '✨', type: 'mat', stack: 999, price: 320,
     d: '운석이 떨어진 자리에만 자란다. 밤이 되면 더 밝아진다.' },
   /* --- 유틸리티 탐지기 둘 --- */
-  det_metal:   { n: '금속 탐지기', i: '📡', type: 'util', det: 'ore', b: { ms: -3 },
-    d: '가까운 광맥이 지도에 비친다. 반경 30칸. 들고 다니면 조금 무겁다.' },
-  det_mob:     { n: '몬스터 탐지기', i: '📡', type: 'util', det: 'mob', b: { ms: -3 },
-    d: '가까운 것들이 지도에 비친다. 반경 30칸. 보고 싶지 않은 것까지 보인다.' },
+  det_metal:   { n: '금속 탐지기', i: '📡', type: 'util', det: 'ore', act: 'scan', b: { ms: -3 },
+    d: '가까운 광맥이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머 광맥이 화면에도 드러난다. 들고 다니면 조금 무겁다.' },
+  det_mob:     { n: '몬스터 탐지기', i: '📡', type: 'util', det: 'mob', act: 'scan', b: { ms: -3 },
+    d: '가까운 것들이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머의 몬스터가 화면에도 드러난다. 보고 싶지 않은 것까지 보인다.' },
   coconut:     { n: '코코넛', i: '🥥', type: 'consum', use: { hp: 90, buff: 'fed_coconut' }, cd: 8, price: 90, stack: 99,
     d: '단단한 껍질 안에 물이 차 있다. 섬에서만 난다.' },
   pet_candy:   { n: '펫 사탕', i: '🍬', type: 'consum', use: { petXp: 1200 }, price: 6000, fixed: 1, stack: 99, instant: 1, d: '주머니에 넣어 두면 녀석들이 먼저 안다.' },

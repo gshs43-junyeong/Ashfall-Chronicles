@@ -245,6 +245,9 @@
   "{item} {o}개": [
    "game/village.objLabel"
   ],
+  "{item} — 끼워 두면 저절로 쓰인다": [
+   "game/utility.useUtil"
+  ],
   "{item} 구매": [
    "game/village.buyStock",
    "game/village.buy"
@@ -2015,6 +2018,9 @@
   "유틸리티": [
    "index.html"
   ],
+  "유틸리티 칸이 비어 있다": [
+   "game/utility.useUtil"
+  ],
   "유혈암 없음": [
    "factory.runPump"
   ],
@@ -2615,6 +2621,12 @@
   ],
   "탐사 기록 {rank} — {spec} (진행 {score}%)": [
    "game/ruin-pulse.checkSurvey"
+  ],
+  "탐지 파동 — 광맥 {n}칸": [
+   "game/utility.scanPulse"
+  ],
+  "탐지 파동 — 움직이는 것 {n}": [
+   "game/utility.scanPulse"
   ],
   "통과": [
    "factory",
@@ -3921,7 +3933,7 @@
   "ITEMS.fish_deep.n": "심해어",
   "ITEMS.fish_deep.d": "이런 깊이에 살 리 없는 눈을 하고 있다.",
   "ITEMS.tank_air.n": "휴대용 산소통",
-  "ITEMS.tank_air.d": "등에 메는 낡은 통. 숨을 오래 참게 해 주지만 물살을 조금 더 탄다.",
+  "ITEMS.tank_air.d": "등에 메는 낡은 통. 숨을 오래 참게 해 주지만 조금 무겁다.",
   "ITEMS.tank_deep.n": "심해용 산소통",
   "ITEMS.tank_deep.d": "깊은 곳에서도 견디도록 겹으로 두른 통. 휴대용 통을 뜯어 다시 감았다.",
   "ITEMS.tank_abyss.n": "심연용 산소통",
@@ -4049,9 +4061,9 @@
   "ITEMS.star_crystal.n": "별빛 수정",
   "ITEMS.star_crystal.d": "운석이 떨어진 자리에만 자란다. 밤이 되면 더 밝아진다.",
   "ITEMS.det_metal.n": "금속 탐지기",
-  "ITEMS.det_metal.d": "가까운 광맥이 지도에 비친다. 반경 30칸. 들고 다니면 조금 무겁다.",
+  "ITEMS.det_metal.d": "가까운 광맥이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머 광맥이 화면에도 드러난다. 들고 다니면 조금 무겁다.",
   "ITEMS.det_mob.n": "몬스터 탐지기",
-  "ITEMS.det_mob.d": "가까운 것들이 지도에 비친다. 반경 30칸. 보고 싶지 않은 것까지 보인다.",
+  "ITEMS.det_mob.d": "가까운 것들이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머의 몬스터가 화면에도 드러난다. 보고 싶지 않은 것까지 보인다.",
   "ITEMS.coconut.n": "코코넛",
   "ITEMS.coconut.d": "단단한 껍질 안에 물이 차 있다. 섬에서만 난다.",
   "ITEMS.pet_candy.n": "펫 사탕",
@@ -4697,6 +4709,8 @@
   "KEY_ACTIONS.13.n": "제작",
   "KEY_ACTIONS.14.n": "지도",
   "KEY_ACTIONS.15.n": "저장",
+  "KEY_ACTIONS.16.n": "유틸리티 (왼쪽 칸)",
+  "KEY_ACTIONS.17.n": "유틸리티 (오른쪽 칸)",
   "MACHINE.belt.n": "컨베이어 벨트",
   "MACHINE.belt.d": "아이템을 1초에 한 칸씩 앞으로 나른다. 동력이 필요 없다. 앞이 막히면 그 자리에서 기다린다.",
   "MACHINE.pole.n": "전주",
