@@ -113,7 +113,7 @@ export const G: Bag = {
   /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
      ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
   scenes: createScenes({
-    scenes: { title: {}, play: { update: dt => G.update(dt), render: () => G.render() } },
+    scenes: { title: {}, play: { update: dt => G.update(dt), render: () => { G.syncCtl(); G.render(); } } },
     layers: { pause: { pause: true }, ui: { input: true } },
     start: 'title'
   }),
@@ -121,6 +121,12 @@ export const G: Bag = {
   get paused() { return this.scenes.has('pause'); },
   get uiOpen() { return this.scenes.has('ui'); },
   set uiOpen(on) { this.scenes.set('ui', on); },     // ui.js 의 패널·대화가 연다
+  /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
+  _ctlOff: false,
+  syncCtl() {
+    const off = this.uiOpen || this.paused || !!(this.player && this.player.hp <= 0);
+    if (off !== this._ctlOff) { this._ctlOff = off; document.body.classList.toggle('ctl-off', off); }
+  },
   mode: 'normal',        // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
   chapter: 0, boss: null,
   /* 제작 시설: nearSt는 지금 어떤 시설 앞에 서 있는가. */
@@ -304,6 +310,8 @@ export const G: Bag = {
       else if (this.isKey('skill2', k)) this.player.useSkill(1, this.input.wx, this.input.wy);
       else if (this.isKey('skill3', k)) this.player.useSkill(2, this.input.wx, this.input.wy);
       else if (this.isKey('skill4', k)) this.player.useSkill(3, this.input.wx, this.input.wy);
+      else if (this.isKey('util1', k)) this.useUtil(0);
+      else if (this.isKey('util2', k)) this.useUtil(1);
     }
   },
   readInput() {

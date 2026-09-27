@@ -48,6 +48,7 @@ button{
 @media (orientation:portrait) and (max-width:600px){body.touch #rotate-hint{display:flex}body.touch #touchpad{display:none}}
 /* 터치: 스킬 칸을 손가락으로 쓴다 · 누를 곳은 44px 이상 */
 body.touch #skillbar{pointer-events:auto}
+body.ctl-off #touchpad .ti-stick,body.ctl-off #touchpad .ti-btns,body.ctl-off #touchpad .ti-alt{visibility:hidden}
 body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 #touchpad .ti-fs{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:32px;border-radius:8px;
   display:grid;place-items:center;font:16px system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);pointer-events:auto}
@@ -179,6 +180,16 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 .sk .cdmask{position:absolute;inset:0;background:#000a;border-radius:3px}
 .sk .cdnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;text-shadow:0 1px 3px #000}
 .sk.empty{opacity:.3}
+/* 유틸리티 칸(Z · X) — 스킬 칸과 같은 판, 사이를 조금 띄운다. 산소통처럼 저절로 쓰이는 도구는 키 없이 흐리게 */
+.usl{width:46px;height:46px;border:1px solid #4d6b73;background:#0f1416d8;border-radius:4px;position:relative;display:flex;align-items:center;justify-content:center}
+#skillbar .sk + .usl{margin-left:12px}
+.usl[hidden]{display:none}
+.usl .key{position:absolute;top:-1px;left:3px;font-size:9px;color:#8fb6bf}
+.usl .cdnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;text-shadow:0 1px 3px #000}
+.usl .ic{width:34px;height:34px;background-size:contain;background-repeat:no-repeat;background-position:center}
+.usl.passive{opacity:.55}
+.usl.deny{animation:sk-deny .17s ease-out}
+body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 .sk.ready{border-color:#6a6045}
 
 .slot{width:46px;height:46px;border:1px solid var(--frame);background:#12110ed8;border-radius:3px;position:relative;
@@ -204,7 +215,7 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 .panel.fullmap.open{display:flex;flex-direction:column}
 .panel.fullmap header{flex:0 0 auto}
 #fullmap-wrap{position:relative;flex:1 1 auto;min-height:0;background:#050609}
-#fullmap-canvas{display:block;width:100%;height:100%;cursor:grab;image-rendering:pixelated}
+#fullmap-canvas{display:block;width:100%;height:100%;cursor:grab}
 #fullmap-canvas:active{cursor:grabbing}
 #fullmap-hint{position:absolute;left:10px;bottom:8px;font-size:11px;color:#8a8470;
   background:#000a;padding:4px 9px;border-radius:3px;pointer-events:none}
@@ -230,7 +241,7 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 /* 소지품 열은 칸 폭(10칸 505px)에 딱 맞춘다.
    flex:1 1 auto로 두면 열 상자만 남는 폭을 다 먹어서, 마지막 칸과 능력치 사이가
    왼쪽 틈(18px)보다 훨씬 벌어졌다 — 눈에는 그게 "간격이 다르다"로 보인다. */
-.bag-col{flex:0 0 auto}
+.bag-col{flex:0 0 auto;width:min-content}   /* 폭은 칸 격자가 정한다 — 제목 옆 안내 글이 길면(독일어) 열을 넓히지 말고 접는다. 폰에서 능력치 칸이 창 밖으로 밀렸다 */
 #bag-grid{width:max-content}
 /* 가방 창만 넓힌다 — 장비(116) + 소지품(10칸 505) + 능력치(128) + 여백/틈이 817px라
    기본 패널 폭 720px에서는 능력치 열이 삐져나와 소지품 칸 위에 겹쳐 찍혔다. */
@@ -272,13 +283,14 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 .skill-top{padding:14px 16px;border-bottom:1px solid var(--frame)}
 .pts{font-size:12px;color:var(--dim);margin-bottom:10px}
 .pts b{color:var(--gold);font-size:14px}
-#stat-alloc{display:flex;gap:8px;flex-wrap:wrap}
+/* 네 칸을 한 줄에 — 언어마다 글 길이가 달라 flex-wrap 이면 독일어·일본어에서 넷째 칸만 다음 줄로 떨어졌다. 설명은 칸 안에서 두 줄까지 접는다 */
+#stat-alloc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .stat-chip{display:flex;align-items:center;gap:8px;background:#13120d;border:1px solid var(--frame);
-  padding:6px 10px;border-radius:3px;font-size:12px}
-.stat-chip .sname{color:#d8d2be;min-width:78px}
+  padding:6px 10px;border-radius:3px;font-size:12px;min-width:0}
+.stat-chip .sname{color:#d8d2be;min-width:2.6em}
 .stat-chip .snum{color:#fff;font-weight:600;min-width:22px;text-align:right}
 .stat-chip button{padding:1px 8px;font-size:12px;line-height:1.4}
-.stat-chip .sdesc{font-size:10.5px;color:#6f6b5c}
+.stat-chip .sdesc{font-size:10.5px;color:#6f6b5c;flex:1;min-width:0;line-height:1.25}
 
 /* ===== 특성 트리 (v1.1) =====
    예전에는 분기마다 여섯 줄을 세로로 쌓은 목록이었다. 이제 4단 × 3열의 판이고,
@@ -553,7 +565,7 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 .mrec b{margin:0 5px;color:#6a6656}
 .mrec small{margin-right:4px;color:var(--ink)}
 .mrec em{margin-left:auto;font-style:normal;color:#6a6656}
-.ri{width:18px;height:18px;display:inline-block;background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated}
+.ri{width:18px;height:18px;display:inline-block;background-size:contain;background-repeat:no-repeat;background-position:center}
 #mg-bag .slot.no{opacity:.35}
 
 #chest-grid{padding:16px;display:grid;grid-template-columns:repeat(8,46px);gap:5px}
@@ -756,16 +768,9 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 #pause-screen.open,#death-screen.open{display:flex}
 .ts-inner{text-align:center;max-width:600px;padding:20px}
 .ts-sub{font-size:12px;letter-spacing:.42em;color:var(--gold);margin-bottom:14px;opacity:.9}
-/* ---- 16비트 로고 ----
-   외곽선을 여러 겹 그림자로 찍어 도트 로고처럼 두껍게 세운다. 폰트 파일을 새로 받지
-   않고(외부 의존 없이) 두께·자간·계단식 그림자만으로 그 시절 타이틀 느낌을 낸다. */
-.ts-inner h1{font-size:64px;font-weight:900;letter-spacing:.08em;line-height:.94;margin-bottom:20px;
-  color:#ffd98a;
-  -webkit-text-stroke:3px #2a1c10;paint-order:stroke fill;
-  text-shadow:0 4px 0 #7a4a18, 0 8px 0 #3d2409, 0 10px 0 #1a1208, 0 0 42px #d8a94b55}
-.ts-inner h1 .ts-h1b{display:block;font-size:.5em;letter-spacing:.34em;color:#e8e0cc;
-  -webkit-text-stroke:2.5px #2a1c10;
-  text-shadow:0 3px 0 #5a5348, 0 6px 0 #2a2620, 0 0 30px #ffffff33;margin-top:6px}
+/* ---- 로고 — tools/mklogo.py 가 굽는 픽셀 그림(글꼴 파일 없이 어느 언어에서나 같은 모양) ---- */
+.ts-inner h1{margin:0 auto 18px;line-height:0}
+.ts-logo{width:556px;max-width:88vw;height:auto}
 .ts-tag{font-size:13px;color:#8d8774;line-height:1.9;margin-bottom:34px}
 .ts-menu{display:flex;flex-direction:column;gap:9px;width:230px;margin:0 auto}
 .ts-menu button{padding:11px}
@@ -854,9 +859,9 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 .set-pane{display:none}
 .set-pane.on{display:block}
 /* 알림 갈래와 조작키는 항목이 많다 — 두 칸으로 접어 세로를 절반으로 줄인다 */
-.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px}
-.set-grid .set-row{margin-bottom:5px}
-.set-grid .set-row span{width:auto;flex:1 1 auto}
+.set-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 16px}   /* minmax(0,…) — 긴 이름(독일어)이 오른쪽 열을 창 밖으로 밀었다 */
+.set-grid .set-row{margin-bottom:5px;min-width:0}
+.set-grid .set-row span{width:auto;flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
 .set-grid .set-row.chk{justify-content:space-between}
 .set-row{display:flex;align-items:center;gap:9px;font-size:12px;color:#a49e88;
   margin-bottom:9px;cursor:pointer}
@@ -925,10 +930,8 @@ body.sprites-on #game.mining{cursor:url(../assets/ui/cursor_pick.png) 3 29, poin
 #loading.open{display:flex}
 #loading.fade{opacity:0;pointer-events:none}
 .ld-inner{text-align:center;position:relative;z-index:1}
-.ld-mark{font-size:22px;font-weight:900;letter-spacing:.22em;color:#e8c98a;margin-bottom:26px;
-  text-shadow:0 2px 0 #3d2409,0 0 30px #d8a94b44}
-.ld-mark span{display:block;font-size:.52em;letter-spacing:.34em;color:#a9a292;
-  font-weight:600;margin-top:5px;text-shadow:none}
+.ld-mark{margin-bottom:22px;line-height:0}
+.ld-mark img{width:302px;max-width:70vw;height:auto}
 .ld-spin{width:34px;height:34px;margin:0 auto 16px;border:2px solid #2b2818;border-top-color:var(--gold);
   border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -1033,7 +1036,7 @@ body.booting #title-screen{visibility:hidden}
   #prof-wrap{grid-template-columns:1fr}
   #craft-list{grid-template-columns:1fr}
   #quest-tracker{width:190px;font-size:11px}
-  .ts-inner h1{font-size:40px}
+  .ts-logo{width:390px}
   #hotbar .slot,.sk{width:42px;height:42px;font-size:19px}
   #skillbar{bottom:74px}
   /* 좁은 화면에서는 등급별 폭을 vw 로만 가른다 — 등급 규칙(t-*)이 여기 뒤에 오므로
@@ -1076,7 +1079,7 @@ body.booting #title-screen{visibility:hidden}
    ★ tools/mkplayer.py 가 망토 자락 자리까지 칸을 넓혀 36×46(4배 144×184)이다.
    서 있는 장은 망토 쪽(왼쪽)으로 치우쳐(몸 20~108 / 144) 두 칸 오른쪽으로 민다. */
 .ng-char .por{width:72px;height:92px;background-size:936px 92px;background-position:4px 0;
-  background-repeat:no-repeat;image-rendering:pixelated}
+  background-repeat:no-repeat}
 .ng-detail{display:flex;gap:15px;margin-top:11px;padding:13px 14px;
   border:1px solid var(--frame2);border-radius:4px;background:#0b0a07a0}
 .ng-detail .por-big{flex:none;width:144px;height:184px;background-size:1872px 184px;
@@ -1115,7 +1118,7 @@ body.booting #title-screen{visibility:hidden}
   border-top:1px solid var(--frame2);padding-top:12px}
 .set-note{font-size:11px;color:var(--dim);line-height:1.6;margin:2px 0 8px}
 .set-row.key{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:3px 0}
-.keybtn{min-width:132px;padding:5px 10px;font-size:11.5px;font-family:inherit}
+.keybtn{flex:0 1 132px;min-width:88px;padding:5px 8px;font-size:11.5px;font-family:inherit;white-space:normal;overflow-wrap:anywhere}
 .keybtn.waiting{border-color:var(--gold);color:var(--gold)}
 
 /* 불가능 모드로 기록이 지워진 사망 화면 — 부활 버튼이 의미 없으므로 감춘다 */
@@ -1156,12 +1159,12 @@ body.booting #title-screen{visibility:hidden}
 .ach.on{background:#221d13;border-color:#5a4a2a}
 .ach.off{opacity:.55}
 .ach-ic{width:24px;height:24px;flex:0 0 24px;background-size:contain;
-  background-repeat:no-repeat;background-position:center;image-rendering:pixelated}
+  background-repeat:no-repeat;background-position:center}
 .ach.off .ach-ic{filter:grayscale(.85) brightness(.72)}
 .ach-txt{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
 .ach-txt b{font-size:12.5px;color:#e8dcc0;font-weight:600}
 .ach.off .ach-txt b{color:#8a8271}
-.ach-txt b,.ach-txt i{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ach-txt b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* 설명은 접는다 — 긴 언어(스페인어)에서 말줄임으로 잘렸다 */
 .ach-txt i{font-style:normal;font-size:11px;color:#8a8271;line-height:1.4}
 .ach-when{font-size:10.5px;color:#6a6250;flex:0 0 72px;text-align:right}
 
@@ -1222,7 +1225,7 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
   body.touch #minimap,body.touch #quest-tracker{display:none!important}
 }
 .ps-ic{display:inline-block;width:26px;height:26px;margin-right:10px;vertical-align:-5px;
-  background-size:contain;background-repeat:no-repeat;image-rendering:pixelated}
+  background-size:contain;background-repeat:no-repeat}
 .set-title .ps-ic{width:16px;height:16px;margin-right:6px;vertical-align:-3px}
 .ps-inner .ps-menu .ui-ic{width:18px;height:18px;margin-right:8px;vertical-align:-4px}
 .set-tabs .set-tab .ui-ic{width:15px;height:15px;margin-right:4px;vertical-align:-3px}
