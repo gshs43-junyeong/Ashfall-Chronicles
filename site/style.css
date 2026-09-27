@@ -74,7 +74,7 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
   color:var(--bone);text-decoration:none;letter-spacing:-.01em;
   display:flex;align-items:center;gap:9px;white-space:nowrap;
 }
-.nav-brand .spark{width:7px;height:7px;background:var(--ember);flex:none;}
+.nav-brand .brand-logo{height:40px;width:auto;display:block;}
 .nav-links{display:flex;gap:4px;margin-left:auto;align-items:center;}
 .nav-links a{
   font-size:.88rem;font-weight:600;color:var(--bone-faint);
