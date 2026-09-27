@@ -27,10 +27,10 @@ const CSS = `
 #touchpad .ti-base{position:absolute;inset:20px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25)}
 #touchpad .ti-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(255,255,255,.35)}
 #touchpad .ti-btns{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:var(--ti-bottom);display:flex;gap:14px;pointer-events:auto}
-#touchpad .ti-btn{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font:600 15px system-ui,sans-serif;color:#fff;
+#touchpad .ti-btn{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;white-space:nowrap;overflow:hidden;font:600 15px system-ui,sans-serif;color:#fff;
   background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);touch-action:none}
 #touchpad .ti-btn.on,#touchpad .ti-alt.on{background:rgba(255,255,255,.35)}
-#touchpad .ti-alt{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;
+#touchpad .ti-alt{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;white-space:nowrap;overflow:hidden;
   font:600 13px system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);pointer-events:auto;touch-action:none}
 @media (max-height:540px){
   #touchpad .ti-stick{left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:scale(.8);transform-origin:left bottom}
@@ -84,6 +84,13 @@ export function mountTouch({ input, ptr, surface, buttons, altLabel, rightDown }
   const alt = el.querySelector('.ti-alt') as HTMLElement; alt.textContent = altLabel;
   let altOn = false;
   on(alt, 'pointerdown', e => { e.preventDefault(); altOn = !altOn; alt.classList.toggle('on', altOn); });
+
+  /* ---- 글자 맞추기 — 동그란 단추 안에서 두 줄로 꺾이지 않게(일본어 'ジャンプ'가 'ジャン/プ'로 꺾였다) ---- */
+  const labels = [...box.querySelectorAll('.ti-btn'), alt] as HTMLElement[];
+  const fit = () => { for (const l of labels) { l.style.fontSize = ''; let px = parseFloat(getComputedStyle(l).fontSize);
+    while (px > 9 && l.scrollWidth > l.clientWidth - 6) { px -= 1; l.style.fontSize = px + 'px'; } } };
+  fit(); requestAnimationFrame(fit);
+  const onResize = () => fit(); addEventListener('resize', onResize); off.push(() => removeEventListener('resize', onResize));
 
   /* ---- 화면: 탭한 자리를 겨눠 누르는 동안 왼쪽 단추(캐기·공격) — 전환이 켜져 있으면 오른쪽 단추 ---- */
   let tid = -1;

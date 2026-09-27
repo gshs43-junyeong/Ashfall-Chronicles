@@ -955,10 +955,10 @@
 #touchpad .ti-base{position:absolute;inset:20px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25)}
 #touchpad .ti-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(255,255,255,.35)}
 #touchpad .ti-btns{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:var(--ti-bottom);display:flex;gap:14px;pointer-events:auto}
-#touchpad .ti-btn{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font:600 15px system-ui,sans-serif;color:#fff;
+#touchpad .ti-btn{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;white-space:nowrap;overflow:hidden;font:600 15px system-ui,sans-serif;color:#fff;
   background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);touch-action:none}
 #touchpad .ti-btn.on,#touchpad .ti-alt.on{background:rgba(255,255,255,.35)}
-#touchpad .ti-alt{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;
+#touchpad .ti-alt{position:absolute;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 84px);width:64px;height:40px;border-radius:12px;display:grid;place-items:center;white-space:nowrap;overflow:hidden;
   font:600 13px system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);pointer-events:auto;touch-action:none}
 @media (max-height:540px){
   #touchpad .ti-stick{left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:scale(.8);transform-origin:left bottom}
@@ -1037,6 +1037,22 @@
       altOn = !altOn;
       alt.classList.toggle("on", altOn);
     });
+    const labels = [...box.querySelectorAll(".ti-btn"), alt];
+    const fit = () => {
+      for (const l of labels) {
+        l.style.fontSize = "";
+        let px = parseFloat(getComputedStyle(l).fontSize);
+        while (px > 9 && l.scrollWidth > l.clientWidth - 6) {
+          px -= 1;
+          l.style.fontSize = px + "px";
+        }
+      }
+    };
+    fit();
+    requestAnimationFrame(fit);
+    const onResize = () => fit();
+    addEventListener("resize", onResize);
+    off.push(() => removeEventListener("resize", onResize));
     let tid = -1;
     on(surface, "pointerdown", (e) => {
       if (e.pointerType === "mouse" || tid >= 0) return;
@@ -2773,7 +2789,7 @@
       i: "🫧",
       type: "util",
       b: { oxyMax: 14, ms: -2 },
-      d: "등에 메는 낡은 통. 숨을 오래 참게 해 주지만 물살을 조금 더 탄다.",
+      d: "등에 메는 낡은 통. 숨을 오래 참게 해 주지만 조금 무겁다.",
       lvReq: 8
     },
     tank_deep: {
@@ -3134,16 +3150,18 @@
       i: "📡",
       type: "util",
       det: "ore",
+      act: "scan",
       b: { ms: -3 },
-      d: "가까운 광맥이 지도에 비친다. 반경 30칸. 들고 다니면 조금 무겁다."
+      d: "가까운 광맥이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머 광맥이 화면에도 드러난다. 들고 다니면 조금 무겁다."
     },
     det_mob: {
       n: "몬스터 탐지기",
       i: "📡",
       type: "util",
       det: "mob",
+      act: "scan",
       b: { ms: -3 },
-      d: "가까운 것들이 지도에 비친다. 반경 30칸. 보고 싶지 않은 것까지 보인다."
+      d: "가까운 것들이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머의 몬스터가 화면에도 드러난다. 보고 싶지 않은 것까지 보인다."
     },
     coconut: {
       n: "코코넛",
@@ -5603,7 +5621,10 @@
     { id: "quest", n: "일지", def: ["KeyJ"] },
     { id: "craft", n: "제작", def: ["KeyH"] },
     { id: "map", n: "지도", def: ["KeyM"] },
-    { id: "save", n: "저장", def: ["F5"] }
+    { id: "save", n: "저장", def: ["F5"] },
+    /* ★ 새 액션은 맨 끝에 — 번역 열쇠가 번호(KEY_ACTIONS.16.n)라 가운데 끼우면 뒤 이름이 한 칸씩 밀린다 */
+    { id: "util1", n: "유틸리티 (왼쪽 칸)", def: ["KeyZ"] },
+    { id: "util2", n: "유틸리티 (오른쪽 칸)", def: ["KeyX"] }
   ];
   var NOTICE_KINDS = [
     { id: "good", n: "획득 · 성공", def: 1 },
@@ -31916,6 +31937,35 @@
         d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span><span class="cdnum"></span>`;
         bar.appendChild(d);
       }
+      for (let i = 0; i < 2; i++) {
+        const d = document.createElement("div");
+        d.className = "usl";
+        d.hidden = true;
+        d.innerHTML = `<span class="key"></span><span class="ic"></span><span class="cdnum"></span>`;
+        d.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          app.useUtil(i);
+        });
+        bar.appendChild(d);
+      }
+    },
+    refreshUtilbar() {
+      const p = app.player;
+      $$("#skillbar .usl").forEach((el, i) => {
+        const it = p.equip["util" + (i + 1)], d = it && idef(it);
+        el.hidden = !it;
+        if (!it) return;
+        if (el.dataset.id !== it.id) {
+          el.dataset.id = it.id;
+          this.setIcon(el.querySelector(".ic"), Art.itemUrl(it.id));
+        }
+        const k = app.keysFor("util" + (i + 1))[0];
+        el.querySelector(".key").textContent = d.act && k ? this.keyLabel(k) : "";
+        const left = d.act ? app.utilLeft(i) : 0;
+        el.classList.toggle("passive", !d.act);
+        el.querySelector(".cdnum").textContent = left > 0 ? left > 1 ? String(Math.ceil(left)) : left.toFixed(1) : "";
+        el.style.filter = left > 0 ? "grayscale(1) brightness(.55)" : "";
+      });
     },
     refreshSkillbar() {
       const p = app.player;
@@ -31933,6 +31983,7 @@
         el.querySelector(".cdnum").textContent = cd > 0 ? cd > 1 ? Math.ceil(cd) : cd.toFixed(1) : "";
         el.style.filter = cd > 0 ? "grayscale(1) brightness(.55)" : p.mp < sk.mana ? "hue-rotate(0) brightness(.7)" : "";
       });
+      this.refreshUtilbar();
     },
     /* ---------------- 스탯 분배 ---------------- */
     buildStatAlloc() {
@@ -34212,7 +34263,10 @@
     /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
        ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
     scenes: createScenes({
-      scenes: { title: {}, play: { update: (dt) => G.update(dt), render: () => G.render() } },
+      scenes: { title: {}, play: { update: (dt) => G.update(dt), render: () => {
+        G.syncCtl();
+        G.render();
+      } } },
       layers: { pause: { pause: true }, ui: { input: true } },
       start: "title"
     }),
@@ -34229,6 +34283,15 @@
       this.scenes.set("ui", on);
     },
     // ui.js 의 패널·대화가 연다
+    /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
+    _ctlOff: false,
+    syncCtl() {
+      const off = this.uiOpen || this.paused || !!(this.player && this.player.hp <= 0);
+      if (off !== this._ctlOff) {
+        this._ctlOff = off;
+        document.body.classList.toggle("ctl-off", off);
+      }
+    },
     mode: "normal",
     // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
     chapter: 0,
@@ -34466,6 +34529,8 @@
         else if (this.isKey("skill2", k)) this.player.useSkill(1, this.input.wx, this.input.wy);
         else if (this.isKey("skill3", k)) this.player.useSkill(2, this.input.wx, this.input.wy);
         else if (this.isKey("skill4", k)) this.player.useSkill(3, this.input.wx, this.input.wy);
+        else if (this.isKey("util1", k)) this.useUtil(0);
+        else if (this.isKey("util2", k)) this.useUtil(1);
       }
     },
     readInput() {
@@ -40100,6 +40165,7 @@
       this.pipe.add("actors", (f) => this.rActors(f));
       this.pipe.add("lighting", (f) => this.rLightOverlay(f));
       this.pipe.add("fx", (f) => this.rFx(f));
+      this.pipe.add("fx", (f) => this.rUtil(f));
       this.pipe.add("screen", (f) => this.rScreen(f));
     },
     /** 렌더 단계 — 하늘 */
@@ -44690,6 +44756,138 @@
   };
   mixin(G, CorpsePart);
 
+  // src/game/game/utility.ts
+  var utility_exports = {};
+  __export(utility_exports, {
+    UtilityPart: () => UtilityPart
+  });
+  var UtilityPart = {
+    /* 탐지 파동 — 반경 DET_R 칸을 훑어 벽 너머 광맥·몬스터를 SCAN_T 초 동안 화면에 비춘다. 미니맵에 늘 비치는 것(corpse.ts)은 그대로.
+       ★ 파동이 없던 때는 미니맵을 끄면 탐지기가 하는 일이 없었다 — 화면 표시가 탐지기의 본업이다. */
+    SCAN_T: 10,
+    SCAN_CD: 8,
+    SCAN_GROW: 0.9,
+    utilReady: null,
+    // 칸마다 다시 쓸 수 있는 G.time
+    scans: null,
+    /** 유틸리티 칸 i(0 = 왼쪽 · 1 = 오른쪽)의 도구를 쓴다 — 키(util1·util2)와 터치 칸이 부른다 */
+    useUtil(i) {
+      const p = this.player;
+      if (!p || this.state !== "play" || UI5.dlg || UI5.open) return;
+      const it = p.equip["util" + (i + 1)];
+      if (!it) {
+        this.utilDeny(i);
+        this.toast(tr("유틸리티 칸이 비어 있다"), "bad");
+        return;
+      }
+      const d = idef(it);
+      if (!d.act) {
+        this.toast(tr("{item} — 끼워 두면 저절로 쓰인다", { item: d.n }), "info");
+        return;
+      }
+      this.utilReady = this.utilReady || [0, 0];
+      if (this.time < this.utilReady[i]) {
+        this.utilDeny(i);
+        return;
+      }
+      if (d.act === "scan") this.scanPulse(d.det, i);
+    },
+    /** 다시 쓸 때까지 남은 초 */
+    utilLeft(i) {
+      return Math.max(0, ((this.utilReady || [0, 0])[i] || 0) - this.time);
+    },
+    utilDeny(i) {
+      this.sfx("sk_deny");
+      const el = document.querySelectorAll("#skillbar .usl")[i];
+      if (el) {
+        el.classList.remove("deny");
+        void el.offsetWidth;
+        el.classList.add("deny");
+      }
+    },
+    scanPulse(kind, i) {
+      const p = this.player, w = this.world, R = this.DET_R, R2 = R * R;
+      const px = Math.floor(p.cx / TS), py = Math.floor(p.cy / TS);
+      const hits = [];
+      if (kind === "ore") {
+        for (let y = Math.max(0, py - R); y <= Math.min(WH - 1, py + R); y++)
+          for (let x = Math.max(0, px - R); x <= Math.min(WW - 1, px + R); x++) {
+            const dx = x - px, dy = y - py;
+            if (dx * dx + dy * dy > R2) continue;
+            const td = TILE_DEF[w.tiles[y * WW + x]];
+            if (td && td.ore) hits.push({ x, y, c: td.c, r: Math.sqrt(dx * dx + dy * dy) });
+          }
+      } else {
+        for (const e of this.ents) {
+          if (!(e instanceof Enemy) || e.dead) continue;
+          const dx = e.cx / TS - px, dy = e.cy / TS - py;
+          if (dx * dx + dy * dy <= R2) hits.push({ e, r: Math.sqrt(dx * dx + dy * dy) });
+        }
+      }
+      this.scans = (this.scans || []).filter((s) => s.kind !== kind);
+      this.scans.push({ kind, t0: this.time, x: p.cx, y: p.cy, hits });
+      this.utilReady[i] = this.time + this.SCAN_CD;
+      this.sfx("detector");
+      this.toast(kind === "ore" ? tr("탐지 파동 — 광맥 {n}칸", { n: hits.length }) : tr("탐지 파동 — 움직이는 것 {n}", { n: hits.length }), "info");
+    },
+    /** 렌더 단계(fx) — 조명 뒤라 어둠 속에서도 보인다 */
+    rUtil(f) {
+      if (!this.scans || !this.scans.length) return;
+      const { c, camX, camY } = f, R = this.DET_R * TS, w = this.world;
+      this.scans = this.scans.filter((s) => this.time - s.t0 < this.SCAN_T);
+      const pulse = 0.65 + 0.35 * Math.sin(this.time * 6);
+      for (const s of this.scans) {
+        const age = this.time - s.t0, col = s.kind === "ore" ? "111,227,255" : "255,107,107";
+        const front = Math.min(1, age / this.SCAN_GROW) * R;
+        const fade = Math.min(1, (this.SCAN_T - age) / 2);
+        c.save();
+        const ringA = 1 - age / (this.SCAN_GROW + 0.4);
+        if (ringA > 0) {
+          c.beginPath();
+          c.arc(s.x - camX, s.y - camY, Math.max(4, front), 0, TAU);
+          c.strokeStyle = `rgba(${col},${0.16 * ringA})`;
+          c.lineWidth = 14;
+          c.stroke();
+          c.strokeStyle = `rgba(${col},${0.6 * ringA})`;
+          c.lineWidth = 2.5;
+          c.stroke();
+        }
+        for (const h of s.hits) {
+          if (h.r * TS > front) continue;
+          if (h.e) {
+            const e = h.e;
+            if (e.dead) continue;
+            const x = e.x - camX, y = e.y - camY, ew = e.w, eh = e.h, k = 6;
+            if (x + ew < -20 || y + eh < -20 || x > this.W + 20 || y > this.H + 20) continue;
+            c.strokeStyle = `rgba(${col},${0.95 * fade * pulse})`;
+            c.lineWidth = 2;
+            c.beginPath();
+            for (const [ax, ay, sx, sy] of [[x - 3, y - 3, 1, 1], [x + ew + 3, y - 3, -1, 1], [x - 3, y + eh + 3, 1, -1], [x + ew + 3, y + eh + 3, -1, -1]]) {
+              c.moveTo(ax, ay + sy * k);
+              c.lineTo(ax, ay);
+              c.lineTo(ax + sx * k, ay);
+            }
+            c.stroke();
+          } else {
+            const x = h.x * TS - camX, y = h.y * TS - camY;
+            if (x < -TS || y < -TS || x > this.W || y > this.H) continue;
+            if (!TILE_DEF[w.tiles[h.y * WW + h.x]].ore) continue;
+            c.globalAlpha = 0.3 * fade * pulse;
+            c.fillStyle = h.c;
+            c.fillRect(x, y, TS, TS);
+            c.globalAlpha = 0.9 * fade * pulse;
+            c.strokeStyle = h.c;
+            c.lineWidth = 1.5;
+            c.strokeRect(x + 1, y + 1, TS - 2, TS - 2);
+            c.globalAlpha = 1;
+          }
+        }
+        c.restore();
+      }
+    }
+  };
+  mixin(G, UtilityPart);
+
   // src/game/main.ts
   var DATA = Object.fromEntries(Object.entries(Object.assign({}, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports)).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
   if (!I18N.isSource) {
@@ -44697,7 +44895,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports, utility_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
