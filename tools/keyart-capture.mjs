@@ -1,6 +1,7 @@
 /* 대표 그림(tools/mkkeyart.py)에 쓸 게임 장면을 찍는다 — 헤드리스 브라우저로 새 게임을 열고 하늘 섬 · 지표 · 땅속이 한 화면에
    들어오게 시야를 넓힌 뒤 UI 를 걷어 캔버스만 찍는다.
      node tools/keyart-capture.mjs [출력 폴더] [섬 번호…]   (VIEW=100 시야 % · DAY=1090 하루 중 분 · CY=12 섬 위 하늘 칸)
+   지금 대표 그림 장면: VIEW=90 CY=19 node tools/keyart-capture.mjs tools/art/keyart 6
    ★ 결정론 장치(tests/lib.mjs)로 찍어 같은 씨앗이면 같은 그림이 나온다. */
 import fs from 'node:fs';
 import path from 'node:path';
