@@ -417,33 +417,72 @@ def fix_frames(g, w):
     return g
 
 
-# ★ 가슴 끈(방랑자 #3f2e20, 1칸 사선)만 걸을 때 처진다 — 원본 그림은 끈이 곧은 사선째 몸과 같이 오르내리기만 해서
-#   흔들려 보이지 않았다. 몸이 내려앉는 장(3·5번)에서 어깨·허리띠 끝은 두고 가운데 토막을 왼쪽(아래로 처지는 쪽)으로 1칸.
-#   끈 칸과 그 옆 옷 칸만 바꾼다 — 그 밖의 픽셀을 건드리지 말 것(사용자 허락 범위 2026-09-28). 다섯 캐릭터는 몸 모양이
-#   같아 방랑자에서 잰 자리를 쓰되, 그 자리에 끈이 없는 캐릭터는 건너뛴다.
-STRAP_SAG = {3: -1, 5: -1}
-STRAP, SHIRT, BELT = '3f2e20', {'5f584f', '736d65', '8d909a'}, 'd8a94b'
+# ★ 가슴 끈(방랑자 #3f2e20, 1칸 사선)은 **걸어도 흔들리지 않는다** — 원본 그림은 걷기 2·3·4번 장만 끈이 2칸 오른쪽(또는
+#   1칸 아래)에 그려져 걸을 때 좌우로 튀었다. 서기·걷기 여섯 장 모두 0번 장의 모양을 목도리 높이에 맞춰 건다.
+#   끈 칸과 그 자리 옷 칸만 바꾼다(사용자 허락 범위 2026-09-28). 다섯 캐릭터는 몸 모양이 같아 방랑자에서 잰 자리를 쓰되,
+#   그 자리에 끈이 없는 캐릭터(방랑자 말고 넷)는 건너뛴다.
+STRAP, SHIRT = '3f2e20', {'5f584f', '736d65', '8d909a'}
+STRAP_FRAMES = range(6)
 
 
-def strap_sway(g, w):
-    for f, a in STRAP_SAG.items():
-        cells = [(y, x) for y in range(12, 24) for x in range(4, 15) if w[f][y][x][3] and hx(w[f][y][x]) == STRAP]
-        y0 = min(y for y, _ in cells)
-        yb = next(y for y in range(y0, OH) if any(hx(w[f][y][x]) == BELT for x in range(OW) if w[f][y][x][3]))
-        src = [row[:] for row in g[f]]
-        own = {src[y][x] for y, x in cells}
-        if len(own) != 1 or own & {src[y][x + dx] for y, x in cells for dx in (-1, 1)}:
-            continue   # 이 캐릭터엔 끈이 없다(그 자리가 옷 색) — 방랑자만 끈이 있다
-        for y, x in cells:
-            if y >= yb:
+def strap_fix(g, w):
+    scarf = lambda fr: min(y for y in range(OH) for x in range(OW) if fr[y][x][3] and hx(fr[y][x]) == '9c463f')
+    cells = lambda fr: [(y, x) for y in range(10, 26) for x in range(2, 16) if fr[y][x][3] and hx(fr[y][x]) == STRAP]
+    s0 = scarf(w[0])
+    shape = [(y - s0, x) for y, x in cells(w[0])]
+    for f in STRAP_FRAMES:
+        old, dy = cells(w[f]), scarf(w[f]) - s0
+        own = {g[f][y][x] for y, x in old}
+        if len(own) != 1 or own & {g[f][y][x + d] for y, x in old for d in (-1, 1)}:
+            continue   # 이 캐릭터엔 끈이 없다(그 자리가 옷 색)
+        strap = next(iter(own))
+        want = {(y + s0 + dy, x) for y, x in shape}
+        for y, x in old:
+            if (y, x) in want:
                 continue
-            d = round(a * math.sin(math.pi * (y - y0) / (yb - y0)))
-            if not d or hx(w[f][y][x + d]) not in SHIRT or hx(w[f][y][x - d]) not in SHIRT:
-                continue
-            g[f][y][x + d] = src[y][x]
-            g[f][y][x] = src[y][x - d]
+            nb = [w[f][y][x + d] for d in (-1, 1)] + [w[f][y + d][x] for d in (-1, 1)]
+            k = next((i for i, q in enumerate(nb) if q[3] and hx(q) in SHIRT), None)
+            if k is not None:
+                g[f][y][x] = [g[f][y][x - 1], g[f][y][x + 1], g[f][y - 1][x], g[f][y + 1][x]][k]
+        for y, x in want:
+            if w[f][y][x][3] and hx(w[f][y][x]) in SHIRT:
+                g[f][y][x] = strap
     return g
 
+
+# ★ 걷기 3번째 장(4번)의 뒷팔은 원본에서 몸통과 떨어진 세로 소매 덩어리였고(사이로 배경이 비쳤다) 망토도 팔 위아래로
+#   끊겨 윤곽선으로 닫혀 있었다. 팔을 몸통 뒤 가장자리에서 손(원본 손 칸 그대로)까지 비스듬히 잇고, 망토는 팔 뒤로
+#   어깨에서 밑단까지 이어 칠한다(주름 색은 바로 아래 망토의 같은 열 색, 팔에 붙은 칸은 가장 어두운 색 = 그늘).
+#   칸 번호는 36×46 칸 기준(다섯 캐릭터 몸 모양이 같다).
+BACKARM_FRAME = 4
+BACKARM = {21: (10, 11), 22: (8, 10), 23: (8, 10), 24: (7, 10), 25: (7, 9), 26: (7, 9), 27: (6, 9)}
+CAPE_L = {20: 8, 21: 8, 22: 8, 23: 7, 24: 7, 25: 7, 26: 7, 27: 6, 28: 6, 29: 6, 30: 6}
+HAND_ROWS = (28, 29, 30)                                # 원본 손·소맷부리 칸은 그대로 둔다
+
+
+def back_arm(c, pal):
+    OUTC = outline_color(c)
+    tr = (0, 0, 0, 0)
+    sleeve = c[24][7]
+    capec = set(pal)
+    colc = {x: c[33][x] for x in range(4, 13)}          # 팔 아래 망토의 열마다 색(주름)
+    for y, cl in CAPE_L.items():
+        te = next(x for x in range(10, FW) if c[y][x][3] and c[y][x] != OUTC and c[y][x] not in capec and c[y][x] != sleeve)
+        hand = {x for x in range(4, te) if y in HAND_ROWS and c[y][x][3] and c[y][x] != OUTC and c[y][x] not in capec}
+        arm = set(range(BACKARM[y][0], min(te, BACKARM[y][1] + 1))) if y in BACKARM else set()
+        left = min(arm | hand | {cl}) - 1
+        for x in range(3, te):
+            if x in hand:
+                continue
+            if x in arm:
+                c[y][x] = sleeve
+            elif x >= cl:
+                c[y][x] = pal[0] if (x - 1 in arm or x - 1 in hand) else colc.get(x, pal[1])
+            elif x == left:
+                c[y][x] = OUTC
+            else:
+                c[y][x] = tr
+    return c
 
 def main():
     man_p = os.path.join(ROOT, 'manifest.json')
@@ -453,9 +492,10 @@ def main():
     for cid in IDS:
         key = 'player_' + cid
         wsrc = frames_of(os.path.join(SRC, 'player_wanderer.png'))
-        src = strap_sway(fix_frames(frames_of(os.path.join(SRC, key + '.png')), wsrc), wsrc)
+        src = strap_fix(fix_frames(frames_of(os.path.join(SRC, key + '.png')), wsrc), wsrc)
         pal, pal12 = cape_palettes(wsrc, src)
         frames = [drape(rebuild(g), i, pal12 if i == 12 else pal, 900 if i == 12 else None) for i, g in enumerate(src)]
+        frames[BACKARM_FRAME] = back_arm(frames[BACKARM_FRAME], pal)
         if cid == 'wanderer':
             hs = [FIXED.get(i) or hand_of(c, i in HIGH) for i, c in enumerate(frames)]
             # 피격(붉게 물든 장)처럼 살색이 안 잡히는 장은 첫 장의 손을 쓴다
