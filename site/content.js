@@ -24,6 +24,8 @@
   var REVEAL_CHAPTERS = 8;
   var REVEAL_BOSSES = 7;
   var MASK = '???';
+  /* 번역 — site/i18n.js 가 먼저 실린다. 없으면(파일만 떼어 볼 때) 원문 그대로 */
+  var I = window.SiteI18n, T = I ? I.t : function (s) { return s; };
 
   /* [id, 장 표기, 제목, 한 줄, 배경 파일] */
   var CHAPTERS = [
@@ -94,9 +96,9 @@
 
       var body = el('div', 'ch-body');
       body.append(
-        el('span', 'ch-sub', c[1]),                       /* 몇 장인지는 가리지 않는다 */
-        el('h3', 'ch-title', locked ? MASK : c[2]),
-        el('p', 'ch-line', locked ? '' : c[3])
+        el('span', 'ch-sub', T(c[1])),                       /* 몇 장인지는 가리지 않는다 */
+        el('h3', 'ch-title', locked ? MASK : T(c[2])),
+        el('p', 'ch-line', locked ? '' : T(c[3]))
       );
 
       card.append(art, body);
@@ -147,15 +149,15 @@
       var art = el('div', 'boss-art');
       var canvas = document.createElement('canvas');
       canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', locked ? '아직 만나지 않은 보스' : b[1]);
+      canvas.setAttribute('aria-label', locked ? T('아직 만나지 않은 보스') : T(b[1]));
       art.appendChild(canvas);
       drawFirstFrame(canvas, b[0], b[4], b[5], locked);
 
       /* 잠긴 보스는 체력도 숨긴다 — 숫자가 곧 순서와 규모를 알려 준다. */
       var meta = el('span', 'boss-ch',
-        locked ? MASK : b[2] + ' · ' + b[3].toLocaleString('ko-KR') + ' HP');
+        locked ? MASK : T(b[2]) + ' · ' + (I ? I.num(b[3]) : b[3].toLocaleString('ko-KR')) + ' HP');
 
-      card.append(art, el('h3', 'boss-name', locked ? MASK : b[1]), meta);
+      card.append(art, el('h3', 'boss-name', locked ? MASK : T(b[1])), meta);
       bossGrid.appendChild(card);
     });
   }

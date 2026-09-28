@@ -138,6 +138,8 @@
     ['지하 공창',    'parallax_works',     0, '#1e1c26', '#4e4b5c', 1.45],
     ['지하 심층',    'parallax_hell',    108, '#2a100b', '#8a3418', 1.15]
   ];
+  /* 이름은 처음에 한 번 옮겨 둔다 — 띠가 돌며 다 보여 주기 전에도 번역 추출(tools/site-i18n.mjs)이 전부 보게 */
+  if (window.SiteI18n) REGIONS.forEach(function (r) { r[0] = SiteI18n.t(r[0]); });
 
   var HOLD = 4.2;      /* 한 지역을 보여 주는 시간(초) */
   var FADE = 1.1;      /* 겹쳐 넘어가는 시간(초) */
