@@ -112,7 +112,7 @@ html:lang(zh-Hans) body,html:lang(zh-Hans) h1,html:lang(zh-Hans) h2,html:lang(zh
   position:relative;
   min-height:min(76vh,620px);
   display:flex;flex-direction:column;justify-content:flex-end;
-  padding:120px 0 68px;
+  padding-top:120px;padding-bottom:68px;   /* 옆 여백은 .wrap-wide 의 22px — 0 으로 덮으면 글이 화면 끝·다른 절보다 왼쪽에 붙는다 */
 }
 /* 글을 읽히게 하는 그늘. 글은 왼쪽에만 있으므로 왼쪽에서만 짙고 오른쪽은 놓아 준다 —
    넓게 퍼뜨리면 오른쪽에서 걷는 플레이어까지 함께 어두워진다. */
@@ -498,7 +498,7 @@ html.anim .reveal.in{opacity:1;transform:none;}
 
 @media (max-width:760px){
   section{padding:64px 0;}
-  .hero-inner{min-height:auto;padding:92px 0 52px;}
+  .hero-inner{min-height:auto;padding-top:92px;padding-bottom:52px;}
   .stage,.stage-bar{display:none;}
   .stage-mobile{display:block;}
   .nav-links a{padding:7px 10px;font-size:.84rem;}
