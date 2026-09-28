@@ -194,22 +194,57 @@ export const WorldSky: Bag & ThisType<World> = {
           this.set(x, y, T.AIR);
       }
   },
-  /** 광맥 몇 칸을 광상으로 — 아주 드물게(광맥 칸의 0.15%, 곁에 한 칸 더 · 소형 d1 실측 240칸 안팎). ★ 제 난수(seed+'_rich')만 쓴다 —
-      본 난수를 뽑으면 뒤따르는 생성이 씨앗마다 바뀐다. */
+  /** 광상 — 같은 종류 광맥 덩어리(4방향) 중 종류마다 큰 것 상위 `RICH_TOP`(20칸 이상)만 골라, 가장자리에서 가장 먼 칸과
+      그 곁 1~2칸을 광상으로. 한가운데라 광맥을 파고 들어가야 닿는다(소형 d1 실측 100곳 안팎). 덩어리 수가 넓이를 따르니
+      크기 배수는 따로 안 곱한다. ★ 제 난수(seed+'_rich')만 쓴다 — 본 난수를 뽑으면 뒤따르는 생성이 씨앗마다 바뀐다. */
   placeRichOres() {
     const r = new RNG(this.seed + '_rich');
     const RICH = { [T.COAL]: T.COALRICH, [T.COPPER]: T.COPPERRICH, [T.IRON]: T.IRONRICH, [T.LEAD]: T.LEADRICH,
       [T.GOLD]: T.GOLDRICH, [T.MYTHRIL]: T.MYTHRILRICH };
-    let n = 0;
-    for (let y = 1; y < WORLD_BOT; y++)
-      for (let x = 1; x < WW - 1; x++) {
-        const t = this.tiles[y * WW + x], rt = RICH[t];
-        if (!rt || !r.chance(0.0015)) continue;
-        this.set(x, y, rt); n++;
-        const [dx, dy] = [[1, 0], [-1, 0], [0, 1], [0, -1]][r.int(0, 3)];
-        if (this.get(x + dx, y + dy) === t && r.chance(0.6)) { this.set(x + dx, y + dy, rt); n++; }
+    const RICH_TOP = 0.016, MIN = 20, tl = this.tiles, seen = new Uint8Array(WW * WORLD_BOT);
+    const ok = (i, t) => { const x = i % WW; return x > 0 && x < WW - 1 && i >= WW && i < WW * WORLD_BOT && tl[i] === t; };
+    const flood = (i0, t, mk) => {   // 덩어리 칸 목록 — 덩어리끼리 안 겹쳐 두 번째 훑기는 표시만 바꾸면 된다
+      const st = [i0], cells = []; seen[i0] = mk;
+      while (st.length) {
+        const i = st.pop(); cells.push(i);
+        for (const j of [i + 1, i - 1, i + WW, i - WW]) if (seen[j] !== mk && ok(j, t)) { seen[j] = mk; st.push(j); }
       }
-    this.richCount = n;
+      return cells;
+    };
+    const found = {};   // 종류 → [[크기, 첫 칸]]
+    for (let i = WW; i < WW * WORLD_BOT; i++) {
+      const t = tl[i]; if (!RICH[t] || seen[i] || !ok(i, t)) continue;
+      const n = flood(i, t, 1).length;
+      (found[t] ||= []).push([n, i]);
+    }
+    let n = 0, sites = 0;
+    for (const t of Object.keys(found).map(Number).sort((a, b) => a - b)) {
+      const list = found[t].sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+      const take = Math.round(list.length * RICH_TOP);
+      for (let k = 0; k < take && list[k][0] >= MIN; k++) {
+        const cells = flood(list[k][1], t, 2), dist = new Map();
+        let q = cells.filter(i => [i + 1, i - 1, i + WW, i - WW].some(j => !ok(j, t)));
+        for (const i of q) dist.set(i, 0);
+        while (q.length) {   // 가장자리에서 안으로 한 겹씩
+          const nq = [];
+          for (const i of q) for (const j of [i + 1, i - 1, i + WW, i - WW])
+            if (ok(j, t) && !dist.has(j)) { dist.set(j, dist.get(i) + 1); nq.push(j); }
+          q = nq;
+        }
+        const far = Math.max(...cells.map(i => dist.get(i)));
+        const core = cells.filter(i => dist.get(i) === far).sort((a, b) => a - b);
+        const c = core[r.int(0, core.length - 1)], put = [c], want = r.int(1, 2);
+        for (let m = 0; m < want; m++) {   // 곁 칸은 안쪽(거리 큰 것)부터
+          const nb = put.flatMap(i => [i + 1, i - 1, i + WW, i - WW]).filter(j => ok(j, t) && !put.includes(j));
+          if (!nb.length) break;
+          const best = Math.max(...nb.map(j => dist.get(j))), pick = [...new Set(nb.filter(j => dist.get(j) === best))].sort((a, b) => a - b);
+          put.push(pick[r.int(0, pick.length - 1)]);
+        }
+        for (const i of put) { this.set(i % WW, (i / WW) | 0, RICH[t]); n++; }
+        sites++;
+      }
+    }
+    this.richCount = n; this.richSites = sites;
   },
 
   /** 채취탑이 그려진 칸인가 — 플레이어가 아무것도 못 놓는다(해체한 탑은 빼고). */
