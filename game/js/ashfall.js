@@ -8896,6 +8896,8 @@
   __export(npcs_exports, {
     DAWN_NPCS: () => DAWN_NPCS,
     MERCHANTS: () => MERCHANTS,
+    NAME_CALL: () => NAME_CALL,
+    NAME_CALL_P: () => NAME_CALL_P,
     NPCS: () => NPCS,
     SHOP_DENY: () => SHOP_DENY,
     TALK: () => TALK,
@@ -9189,6 +9191,18 @@
       "서쪽에 울타리 친 땅 봤어? 흙은 골라 뒀는데 아무도 안 갈았어. 괭이 든 사람 기다리는 중이지.",
       "포탑 두 기, 대갈못만 채워 두면 알아서 쏜다. 채우는 건 자네 몫이고."
     ]
+  };
+  var NAME_CALL_P = 0.3;
+  var NAME_CALL = {
+    elara: ["{name}, 왔구나.", "어서 와, {name}. 얼굴 보니 됐다.", "{name}. 오늘은 늦지 않았네."],
+    borin: ["왔나, {name}.", "{name}, 연장은 잘 쓰고 있나.", "또 왔군, {name}. 이번엔 뭘 부러뜨렸어."],
+    mira: ["{name}. 네 이름에서 재 냄새가 나.", "어서 와, {name}. 조각은 아직 따뜻해.", "{name}, 오늘 별은 조용해."],
+    old: ["{name}… 그래, 그 이름이었지.", "왔는가, {name}.", "{name}. 이름을 기억해 두는 건 늙은이 몫이야."],
+    tamer: ["{name}! 애들이 먼저 알아보더라.", "왔어, {name}? 알 좀 같이 봐 줄래?", "{name}, 오늘은 누굴 데려왔어?"],
+    trainer: ["{name}. 자세부터.", "왔나, {name}. 쉬었으면 굴러라.", "{name}, 어제보다 나아졌나."],
+    haran: ["{name}! 방 비워 뒀어.", "어이, {name}. 한잔할 시간은 없겠지.", "{name}, 오늘 소문은 전부 네 얘기더라."],
+    seira: ["{name}. 이번엔 뭘 벼릴까.", "왔네, {name}. 운은 챙겨 왔어?", "{name}, 손에 쥔 거 보여 줘."],
+    kade: ["{name}, 마침 잘 왔네.", "왔는가, {name}. 기계가 또 이상한 소리를 내.", "{name}. 오늘은 무슨 부품을 들고 왔나."]
   };
   var TALK_MOODS = [
     { id: "grave", when: (c) => c.grave },
@@ -37278,6 +37292,16 @@
         re: b.re && b.re.length ? b.re[t % b.re.length] : null
       };
     },
+    /** 가끔 모험가를 이름으로 부른다(NAME_CALL_P) — 이름을 비웠으면 캐릭터 이름. 부르는 말은 순번으로 돈다. */
+    nameCall(id) {
+      const a = NAME_CALL[id];
+      if (!a || Math.random() >= NAME_CALL_P) return null;
+      this.talkSeq = this.talkSeq || {};
+      const k = id + "|name", t = this.talkSeq[k] || 0;
+      this.talkSeq[k] = (t + 1) % 2520;
+      const p = this.player, name = p.name && p.name !== NONAME ? p.name : CHAR_OF(p.charId).n;
+      return tr(a[t % a.length], { name });
+    },
     /** 대화창 아래의 선택지 = [상황 대답] + 늘 있는 것들(rest).
         대답을 고르면 대꾸를 보여 주고 rest 로 돌아온다 — 대답 한 번 했다고
         가게나 의뢰가 사라지면 안 되니까. */
@@ -37341,6 +37365,8 @@
       this.storyHeard[id] = this.chapter;
       const pick = first && this.chapter === 0 ? null : this.talkPick(id);
       const lines = fresh ? story.slice() : [];
+      const call = pick && !fresh ? this.nameCall(id) : null;
+      if (call) lines.push(call);
       if (pick) lines.push(pick.say);
       if (!lines.length) lines.push(story[story.length - 1]);
       const rest = [];
@@ -37386,6 +37412,8 @@
       const lines = [];
       if (first) lines.push(d.line);
       if (fresh) lines.push(...story);
+      const call = pick ? this.nameCall(id) : null;
+      if (call) lines.push(call);
       if (pick) lines.push(pick.say);
       this.villageSeen = this.villageSeen || {};
       const lv = this.villageLv(), vt = VILLAGE_TALK[id];
