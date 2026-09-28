@@ -497,6 +497,18 @@ def fill_arm_gap(c, pal):
         for x in range(x0, te):
             if not c[y][x][3] or c[y][x] == OUTC:
                 c[y][x] = pal[0] if arm and x == x0 else colc.get(x, pal[1])
+    # 어깨 잇기 — 윗팔(원본 22줄 7·9열의 옷색 둘)을 20~22줄, 소매색을 23~25줄에서 몸통 왼끝까지 칠해 팔이 몸에 붙게 한다.
+    # 망토만 채우면 팔이 몸통과 떨어져 떠 보였다(사용자 지적 2026-09-28). 몸통 쪽 칸은 그늘색.
+    lit, shade = c[22][7], c[22][9]
+    for y in (20, 21, 22):
+        te = next(x for x in range(10, FW - 2) if all(body(c[y][x + k]) for k in range(3)))
+        for x in range(10, te):
+            c[y][x] = shade if x == te - 1 else lit
+    sleeve = c[24][7]
+    for y in (23, 24, 25):                              # 윗팔(어깨~팔꿈치)은 몸통에 붙는다 — 망토는 팔꿈치 아래로만
+        te = next(x for x in range(10, FW - 2) if all(body(c[y][x + k]) for k in range(3)))
+        for x in range(10, te):
+            c[y][x] = sleeve
     return c
 
 def main():
