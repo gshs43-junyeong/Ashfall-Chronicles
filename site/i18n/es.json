@@ -222,7 +222,6 @@
  "손을 떼도 돌아간다": "Sigue en marcha cuando sueltas",
  "수집": "Recolección",
  "스물세 종": "Veintitrés",
- "슬롯당 955 KB ~ 2 MB. 브라우저가 주는 자리는 약 4 MB 라, 슬롯 셋을 끝까지 채우면 한도에 닿을 수 있습니다(그때는 「저장 실패」가 뜹니다 — 설정의 <strong>저장 내보내기</strong>로 빼 두세요)": "De 955 KB a 2 MB por espacio. Los navegadores dan unos 4 MB, así que llenar los tres espacios hasta el final puede tocar el límite (entonces aparecerá «Error al guardar»: sácalas con <strong>Exportar partidas</strong> en Ajustes)",
  "시스템 요구사항": "Requisitos del sistema",
  "실제 화면": "Pantallas reales",
  "실행 방법": "Cómo ejecutarlo",
@@ -306,5 +305,7 @@
  "확인할 것": "Qué comprobar",
  "횃불로 밝힌 지하 동굴, 수정 광맥과 고인 물웅덩이": "Una cueva subterránea iluminada por antorchas, con vetas de cristal y charcos de agua",
  "회피 대시 (무적 프레임)": "Esquiva rápida (fotogramas de invulnerabilidad)",
- "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "Encontrar los fragmentos dispersos y dormirlos, o despertarlos: esa es tu tarea."
+ "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "Encontrar los fragmentos dispersos y dormirlos, o despertarlos: esa es tu tarea.",
+ "v1.1.0 — 벽 너머와 물이 지운 쪽": "v1.1.0 — Tras el muro y donde el agua borró",
+ "슬롯당 압축해서 약 0.3 MB(소형 세계) · 0.6 MB(중형) · 1 MB(대형) — 탐험할수록 조금씩 늡니다. 브라우저의 <code>IndexedDB</code> 에 담겨 자리가 넉넉하고, 그것을 못 쓰는 브라우저에서만 약 5 MB 인 저장 공간으로 떨어집니다(그때 「저장 실패」가 뜨면 설정의 <strong>저장 내보내기</strong>로 빼 두세요)": "Unos 0,3 MB (mundo pequeño) · 0,6 MB (mediano) · 1 MB (grande) por espacio, comprimidos; crece un poco a medida que exploras. Las partidas se guardan en el <code>IndexedDB</code> del navegador, que tiene espacio de sobra; solo los navegadores que no pueden usarlo pasan a un almacenamiento de unos 5 MB (si ahí aparece «Error al guardar», sácalas con <strong>Exportar partidas</strong> en Ajustes)"
 }
