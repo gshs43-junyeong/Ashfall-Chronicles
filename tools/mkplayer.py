@@ -417,6 +417,35 @@ def fix_frames(g, w):
     return g
 
 
+# ★ 사냥꾼이 등에 멘 활 윗가지(원본 #ded6bd · #a89c80 · #9f9a91, 옅은 회베이지)는 밝은 하늘·배경과 색이 비슷해 눈으로 보면 투명한 틈처럼
+#   보였다. 등 쪽(원본 0~7열 · 25줄 위)의 그 색만 명암 순서대로 짙은 황갈색으로 바꾼다 — 활 모양은 그대로(사용자 요청 2026-09-28).
+GEAR_RECOLOR = {'ranger': {'ded6bd': (0x9a, 0x6b, 0x35, 255), 'a89c80': (0x80, 0x57, 0x2b, 255), '9f9a91': (0x6c, 0x4a, 0x26, 255)}}
+# 사냥꾼은 원본에서 활과 몸통 사이가 망토색이었는데, drape 가 옛 망토색을 걷고 새 망토를 활 바깥에만 그려 그 사이(9~12열 ·
+# 15~28줄)가 투명으로 남았다(배경이 비쳤다). 그 장들에서 양옆이 막힌 빈 칸만 망토색으로 채운다.
+GEAR_GAP = {'ranger': (0, 1, 4, 5, 10)}
+
+
+def fill_gear_gap(c, cid, f, pal):
+    if f not in GEAR_GAP.get(cid, ()):
+        return c
+    for y in range(15, 29):
+        for x in range(9, 13):
+            if not c[y][x][3] and any(c[y][k][3] for k in range(x)) and any(c[y][k][3] for k in range(x + 1, FW)):
+                c[y][x] = pal[1]
+    return c
+
+
+def recolor_gear(g, cid):
+    rc = GEAR_RECOLOR.get(cid)
+    if not rc:
+        return g
+    for fr in g:
+        for y in range(26):
+            for x in range(8):
+                if fr[y][x][3] and hx(fr[y][x]) in rc:
+                    fr[y][x] = rc[hx(fr[y][x])]
+    return g
+
 # ★ 가슴 끈(방랑자 #3f2e20, 1칸 사선)은 **걸어도 흔들리지 않는다** — 원본 그림은 걷기 2·3·4번 장만 끈이 2칸 오른쪽(또는
 #   1칸 아래)에 그려져 걸을 때 좌우로 튀었다. 서기·걷기 여섯 장 모두 0번 장의 모양을 목도리 높이에 맞춰 건다.
 #   끈 칸과 그 자리 옷 칸만 바꾼다(사용자 허락 범위 2026-09-28). 다섯 캐릭터는 몸 모양이 같아 방랑자에서 잰 자리를 쓰되,
@@ -450,38 +479,24 @@ def strap_fix(g, w):
     return g
 
 
-# ★ 걷기 3번째 장(4번)의 뒷팔은 원본에서 몸통과 떨어진 세로 소매 덩어리였고(사이로 배경이 비쳤다) 망토도 팔 위아래로
-#   끊겨 윤곽선으로 닫혀 있었다. 팔을 몸통 뒤 가장자리에서 손(원본 손 칸 그대로)까지 비스듬히 잇고, 망토는 팔 뒤로
-#   어깨에서 밑단까지 이어 칠한다(주름 색은 바로 아래 망토의 같은 열 색, 팔에 붙은 칸은 가장 어두운 색 = 그늘).
-#   칸 번호는 36×46 칸 기준(다섯 캐릭터 몸 모양이 같다).
-BACKARM_FRAME = 4
-BACKARM = {21: (10, 11), 22: (8, 10), 23: (8, 10), 24: (7, 10), 25: (7, 9), 26: (7, 9), 27: (6, 9)}
-CAPE_L = {20: 8, 21: 8, 22: 8, 23: 7, 24: 7, 25: 7, 26: 7, 27: 6, 28: 6, 29: 6, 30: 6}
-HAND_ROWS = (28, 29, 30)                                # 원본 손·소맷부리 칸은 그대로 둔다
+# ★ 걷기 3번째 장(4번)은 뒤로 흔든 왼팔과 몸통 사이가 비어 배경이 비쳤고, 망토도 그 틈에서 윤곽선으로 끊겨 있었다.
+#   팔 모양은 원본 그대로 두고, 20~30줄에서 팔(또는 손) 오른끝과 몸통 사이의 빈 칸·윤곽선 칸만 망토로 채운다
+#   (주름 색은 팔 아래 망토의 같은 열 색, 팔에 붙은 칸은 가장 어두운 색 = 그늘). 칸 번호는 36×46 기준.
+GAP_FRAME, GAP_ROWS = 4, range(20, 31)
 
 
-def back_arm(c, pal):
+def fill_arm_gap(c, pal):
     OUTC = outline_color(c)
-    tr = (0, 0, 0, 0)
-    sleeve = c[24][7]
     capec = set(pal)
     colc = {x: c[33][x] for x in range(4, 13)}          # 팔 아래 망토의 열마다 색(주름)
-    for y, cl in CAPE_L.items():
-        te = next(x for x in range(10, FW) if c[y][x][3] and c[y][x] != OUTC and c[y][x] not in capec and c[y][x] != sleeve)
-        hand = {x for x in range(4, te) if y in HAND_ROWS and c[y][x][3] and c[y][x] != OUTC and c[y][x] not in capec}
-        arm = set(range(BACKARM[y][0], min(te, BACKARM[y][1] + 1))) if y in BACKARM else set()
-        left = min(arm | hand | {cl}) - 1
-        for x in range(3, te):
-            if x in hand:
-                continue
-            if x in arm:
-                c[y][x] = sleeve
-            elif x >= cl:
-                c[y][x] = pal[0] if (x - 1 in arm or x - 1 in hand) else colc.get(x, pal[1])
-            elif x == left:
-                c[y][x] = OUTC
-            else:
-                c[y][x] = tr
+    body = lambda p: p[3] and p != OUTC and p not in capec
+    for y in GAP_ROWS:
+        te = next(x for x in range(10, FW - 2) if all(body(c[y][x + k]) for k in range(3)))   # 몸통 왼끝
+        arm = [x for x in range(3, te) if body(c[y][x])]
+        x0 = (max(arm) + 1) if arm else next((x for x in range(3, te) if c[y][x] in capec), te)
+        for x in range(x0, te):
+            if not c[y][x][3] or c[y][x] == OUTC:
+                c[y][x] = pal[0] if arm and x == x0 else colc.get(x, pal[1])
     return c
 
 def main():
@@ -492,10 +507,11 @@ def main():
     for cid in IDS:
         key = 'player_' + cid
         wsrc = frames_of(os.path.join(SRC, 'player_wanderer.png'))
-        src = strap_fix(fix_frames(frames_of(os.path.join(SRC, key + '.png')), wsrc), wsrc)
+        src = recolor_gear(strap_fix(fix_frames(frames_of(os.path.join(SRC, key + '.png')), wsrc), wsrc), cid)
         pal, pal12 = cape_palettes(wsrc, src)
         frames = [drape(rebuild(g), i, pal12 if i == 12 else pal, 900 if i == 12 else None) for i, g in enumerate(src)]
-        frames[BACKARM_FRAME] = back_arm(frames[BACKARM_FRAME], pal)
+        frames[GAP_FRAME] = fill_arm_gap(frames[GAP_FRAME], pal)
+        frames = [fill_gear_gap(c, cid, i, pal) for i, c in enumerate(frames)]
         if cid == 'wanderer':
             hs = [FIXED.get(i) or hand_of(c, i in HIGH) for i, c in enumerate(frames)]
             # 피격(붉게 물든 장)처럼 살색이 안 잡히는 장은 첫 장의 손을 쓴다
