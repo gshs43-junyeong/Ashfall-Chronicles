@@ -242,8 +242,25 @@ export const SavePart: Bag = {
       localStorage.removeItem(SAVE_KEY);
     } catch (e) { console.error(e); }
   },
+  /** 게임 안 확인 창 — 확인이면 true. Esc·바깥 누르기는 취소, Enter 는 확인. 브라우저 confirm 은 게임 화면 밖에 떴다. */
+  askConfirm(msg, ok) {
+    return new Promise(res => {
+      const el = $('#confirm-screen'), okB = $('#btn-confirm-ok'), noB = $('#btn-confirm-cancel');
+      $('#confirm-msg').textContent = msg;
+      okB.textContent = ok || tr('확인'); noB.textContent = tr('취소');
+      const key = e => {
+        if (e.key !== 'Escape' && e.key !== 'Enter') return;
+        e.preventDefault(); e.stopPropagation(); done(e.key === 'Enter');
+      };
+      const done = v => { el.classList.remove('open'); removeEventListener('keydown', key, true); res(v); };
+      okB.onclick = () => done(true); noB.onclick = () => done(false);
+      el.onclick = e => { if (e.target === el) done(false); };
+      addEventListener('keydown', key, true);         // 캡처 — 게임 키(Esc = 멈춤)보다 먼저 받는다
+      el.classList.add('open'); noB.focus();          // 되돌릴 수 없는 일이라 기본 초점은 취소
+    });
+  },
   async deleteSlot(i) {
-    if (!confirm(tr('이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.'))) return;
+    if (!await this.askConfirm(tr('이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.'), tr('삭제'))) return;
     try { await SaveStore.remove(i); } catch (e) { this.toast(tr('삭제하지 못했다'), 'bad'); console.error(e); }
     this.renderSlotScreen();
   },
@@ -390,12 +407,12 @@ export const SavePart: Bag = {
       box.querySelectorAll('#ng-sizes .ng-mode').forEach(x => x.classList.toggle('on', x === b));
       $('#ng-sdesc').textContent = WORLD_SIZES[sz].d;
     });
-    box.querySelector('.ng-start').onclick = () => {
+    box.querySelector('.ng-start').onclick = async () => {
       const name = box.querySelector('.ng-name-input').value;
       const seed = box.querySelector('.ng-seed-input').value.trim();
       // 되돌릴 수 없는 선택이라 불가능 모드만 한 번 더 묻는다
       if (MODES[mi].id === 'impossible' &&
-          !confirm(tr('불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?'))) return;
+          !await this.askConfirm(tr('불가능 모드입니다.\n한 번 죽으면 이 슬롯의 기록이 지워집니다. 시작할까요?'), tr('시작'))) return;
       this.closeModal('#newgame-screen');
       this.closeModal('#slots-screen');
       this.newGame(seed, slot, name, CHARACTERS[ci].id, MODES[mi].id, sz);

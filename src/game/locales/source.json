@@ -1582,6 +1582,7 @@
    "game.bindInput"
   ],
   "삭제": [
+   "game/save.deleteSlot",
    "game/save.renderSlotScreen"
   ],
   "삭제하지 못했다": [
@@ -2566,6 +2567,7 @@
    "factory.runWildTrap"
   ],
   "취소": [
+   "game/save.askConfirm",
    "game/save.showNewGameForm"
   ],
   "치명": [
@@ -2786,6 +2788,9 @@
   ],
   "화질": [
    "index.html"
+  ],
+  "확인": [
+   "game/save.askConfirm"
   ],
   "환원 기관": [
    "world/village.buildCitadel"
