@@ -24,7 +24,7 @@ import { TileArt } from './tileart.js';
 import { Art } from './itemart.js';
 import { Sprites } from './sprites.js';
 import { TitleBG } from './titlebg.js';
-import { Bomb, Drop, Enemy, Guard, HOTBAR, Part, Player, Proj, VAULT_SIZE, makeItem } from './entity.js';
+import { Bomb, Drop, Enemy, Guard, HOTBAR, Part, Player, Proj, VAULT_SIZE, affixIndex, makeItem } from './entity.js';
 import { FAC_TICK, Factory } from './factory.js';
 import { $, $$, UI } from './ui.js';
 import { Ambient, Music, SfxLoop } from './music.js';
@@ -60,7 +60,22 @@ export const SAVE_UPGRADES = [
   /* v8 → v9 — 드릴이 광맥 칸마다 더 캘 수 있는 횟수(world.oreHits). */
   (d) => { if (d.world && !d.world.oreHits) d.world.oreHits = {}; },
   /* v9 → v10 — 바다 수면(world.sea). 없으면 World.deserialize 가 타일에서 다시 잰다(null 로 두면 그쪽이 채운다). */
-  (d) => { if (d.world && d.world.sea === undefined) d.world.sea = null; }
+  (d) => { if (d.world && d.world.sea === undefined) d.world.sea = null; },
+  /* v10 → v11 — 장비 접사를 글자({n, s}) 대신 표 번호({k, i})로. 아이템이 가방·장비·금고·상자·기계 어디에나 있어 통째로 훑는다. */
+  (d) => {
+    const seen = new Set();
+    (function walk(o) {
+      if (!o || typeof o !== 'object' || seen.has(o)) return;
+      seen.add(o);
+      if (Array.isArray(o.a) && typeof o.id === 'string') {
+        for (const a of o.a) if (a && (a.k === 'p' || a.k === 's') && a.i === undefined) {
+          const i = affixIndex(a);
+          if (i >= 0) { a.i = i; delete a.n; delete a.s; }
+        }
+      }
+      for (const k in o) { const v = o[k]; if (v && typeof v === 'object') walk(v); }
+    })(d);
+  }
 ];
 export const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 
