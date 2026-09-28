@@ -525,7 +525,7 @@ export const RuinMapPart: Bag = {
       c.beginPath(); c.arc(sx + e.w / 2, sy + e.h * 0.5, 9, 0, TAU); c.fill();
       c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
     }
-    if (!(this.spritesOn && Sprites.drawObj(c, 'obj_' + e.type, sx + dx, sy - dy, w, h))) {
+    if (!(this.spritesOn && Sprites.drawObj(c, 'obj_' + e.type, sx + dx, sy - dy, w, h, this.time))) {
       c.fillStyle = e.def.c; c.fillRect(sx, sy, e.w, e.h);
     }
     c.restore();

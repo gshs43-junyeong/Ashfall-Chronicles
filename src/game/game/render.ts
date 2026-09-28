@@ -166,7 +166,7 @@ export const RenderPart: Bag = {
         c.strokeRect(sx + .5, sy + .5, o.w - 1, o.h - 1);
       } else if (o.type === 'workbench') {
         // 손그림(레벨별 obj_workbench_lvN)이 있으면 그걸 쓰고, 없으면 절차 생성으로 폴백.
-        if (!(this.spritesOn && Sprites.drawObj(c, 'obj_workbench_lv' + (o.lv || 1), sx, sy, o.w, o.h))) {
+        if (!(this.spritesOn && Sprites.drawObj(c, 'obj_workbench_lv' + (o.lv || 1), sx, sy, o.w, o.h, this.time))) {
           // 상판 + 다리 두 개.
           c.fillStyle = shade('#9c7a4a', f); c.fillRect(sx, sy, o.w, 3);
           c.fillStyle = shade('#7a5734', f); c.fillRect(sx, sy + 3, o.w, 3);
@@ -175,7 +175,7 @@ export const RenderPart: Bag = {
           c.fillStyle = shade('#5c4026', f); c.fillRect(sx + 2, sy + o.h - 4, o.w - 4, 2);  // 아래 가로대
         }
       } else if (o.type === 'forge') {
-        if (!(this.spritesOn && Sprites.drawObj(c, 'obj_forge_lv' + (o.lv || 1), sx, sy, o.w, o.h))) {
+        if (!(this.spritesOn && Sprites.drawObj(c, 'obj_forge_lv' + (o.lv || 1), sx, sy, o.w, o.h, this.time))) {
           // 꽉 찬 돌 몸통 + 아래쪽 불구멍.
           c.fillStyle = shade('#4a4a52', f); c.fillRect(sx, sy + 3, o.w, o.h - 3);
           c.fillStyle = shade('#33333a', f); c.fillRect(sx, sy, o.w, 4);                    // 굴뚝 갓

@@ -34,9 +34,9 @@ export const VillagePart: Bag = {
     const [tx, ty] = atDawn ? [w.spawnX, w.spawnY - 3]
       : [(d.x0 + d.x1) >> 1, d.gy - 3];
     const to = atDawn ? tr('베이스캠프') : tr('여명 마을');
-    UI.openLore(tr('귀환 비석'), [tr('비석에 손을 대면 {to}(으)로 돌아간다.', { to })], [
+    UI.openLore(tr('귀환 비석'), [tr('비석에 손을 대면 {to|로} 돌아간다.', { to })], [
       {
-        t: tr('({to}(으)로 이동한다)', { to }), quest: 1, fn: () => {
+        t: tr('({to|로} 이동한다)', { to }), quest: 1, fn: () => {
           UI.closeDialogue();
           p.x = tx * TS - p.w / 2; p.y = ty * TS; p.vx = p.vy = 0;
           this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);

@@ -157,14 +157,13 @@ export const Sprites: Bag = {
     return true;
   },
 
-  /* 시설물을 게임 좌표(x,y)에 w×h 크기로 그린다. */
-  drawObj(c, key, x, y, w, h) {
+  /* 시설물을 게임 좌표(x,y)에 w×h 크기로 그린다. t = 게임 시각(두 장짜리 그림을 넘긴다) */
+  drawObj(c, key, x, y, w, h, t = 0) {
     const im = this.img[key]; if (!im || !im.width) return false;
     const want = w / h;
     const frames = Math.abs(im.width / im.height - want) < 0.03 ? 1
       : Math.abs(im.width / 2 / im.height - want) < 0.03 ? 2 : 1;
     const fw = im.width / frames;
-    const t = 0;                     // 두 장짜리도 첫 장만 — 사연: docs/code-history.md#h140
     const fr = frames > 1 ? (((t * 3.5) | 0) % frames) : 0;
     c.save();
     c.imageSmoothingEnabled = false;

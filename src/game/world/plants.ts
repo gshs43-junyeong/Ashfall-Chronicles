@@ -1,5 +1,5 @@
 /* ===== world/plants.js — 물건 맞추기 · 나무 · 굴 메우기 · 농업 · 풀꽃 ===== */
-import { factory as Factory } from '../ctx.js';
+import { app as G, factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { HELL_Y, WH, WORLD_BOT, WW } from '../size.js';
@@ -260,7 +260,8 @@ export const WorldPlants: Bag & ThisType<World> = {
       const x = k % WW, y = (k / WW) | 0;
       if (this.tiles[k] === T.CRUMBLE) {
         this.tiles[k] = T.AIR;
-        this.crumbled.set(k, 9);                               // 9초 뒤 제자리로 · 먼지 없음(사연 #h140)
+        this.crumbled.set(k, 9);                               // 9초 뒤 제자리로
+        if (G.world === this) G.breakFx(x, y, T.CRUMBLE);      // 무너지는 먼지 · 소리
       } else {
         // 그 자리에 누가 서 있으면 끼이므로, 비어 있을 때만 되돌린다
         if (!this.hitSolid(x * TS, y * TS, TS, TS)) this.tiles[k] = T.CRUMBLE;
