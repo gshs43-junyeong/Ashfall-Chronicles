@@ -12,6 +12,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
 <link rel="stylesheet" href="../style.css?v=dev">
+<!-- 언어 — 먼저 골라 그 언어 묶음만 싣는다(게임과 같은 규칙 · 같은 열쇠 ashfall.lang). 글은 아래 SiteI18n.apply() 가 옮긴다 -->
+<script src="../i18n.js?v=dev"></script>
 </head>
 <body>
 
@@ -356,6 +358,7 @@ bash launch.sh</code></pre>
   </div>
 </footer>
 
+<script>SiteI18n.apply();</script>
 <script>
 (function () {
   'use strict';

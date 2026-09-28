@@ -89,6 +89,15 @@ section{padding:88px 0;border-top:1px solid var(--line-soft);}
   margin-left:10px;white-space:nowrap;transition:background .16s;
 }
 .nav-cta:hover{background:#ff8a63;color:#1a0d07;}
+/* 언어 고르기 — site/i18n.js 가 나브 끝에 붙인다 */
+.lang-pick{
+  font:600 .78rem "IBM Plex Sans KR",system-ui,sans-serif;color:var(--bone-dim);
+  background:transparent;border:1px solid var(--line-soft);padding:5px 6px;cursor:pointer;
+}
+.lang-pick option{background:#1a1512;color:var(--bone);}
+/* 일본어 · 중국어는 이 사이트가 받는 글꼴(한글 · 라틴)에 글자가 없다 — 기기 글꼴로(게임과 같은 목록) */
+html:lang(ja) body,html:lang(ja) h1,html:lang(ja) h2,html:lang(ja) h3{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Meiryo","Noto Sans JP","Noto Sans CJK JP",sans-serif;line-break:strict}
+html:lang(zh-Hans) body,html:lang(zh-Hans) h1,html:lang(zh-Hans) h2,html:lang(zh-Hans) h3{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC",sans-serif;line-break:strict}
 
 /* ================= 히어로 ================= */
 .hero{position:relative;border-top:none;padding:0;overflow:hidden;}

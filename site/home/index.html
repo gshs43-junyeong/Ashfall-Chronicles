@@ -18,6 +18,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
 <link rel="stylesheet" href="../style.css?v=dev">
+<!-- 언어 — 먼저 골라 그 언어 묶음만 싣는다(게임과 같은 규칙 · 같은 열쇠 ashfall.lang). 글은 아래 SiteI18n.apply() 가 옮긴다 -->
+<script src="../i18n.js?v=dev"></script>
 </head>
 <body>
 
@@ -316,7 +318,7 @@
          코드인지 구별할 방법이 아예 없었다. 이제 이 일곱 자로 확인한다.
          634fa86e28ad 는 tools/build-site.sh 가 배포 때 커밋 해시로 바꾼다. -->
     <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.1.0</span>
-       <span class="mono site-build" id="siteBuild">__AC_BUILD__</span></p>
+       <span class="mono site-build" id="siteBuild" data-nt>__AC_BUILD__</span></p>
     <p class="foot-credit">음악 <a href="https://suno.com" target="_blank" rel="noopener">Suno</a>
        · 효과음 <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a>
        (https://elevenlabs.io)</p>
@@ -332,6 +334,7 @@
   </div>
 </footer>
 
+<script>SiteI18n.apply();</script>
 <script src="../hero.js?v=dev"></script>
 <script src="../showcase.js?v=dev"></script>
 <script src="../content.js?v=dev"></script>
@@ -379,7 +382,7 @@
 
   function syncFs() {
     var on = fsElement() === stage;
-    if (fsLabel) fsLabel.textContent = on ? '전체 화면 나가기' : '전체 화면';
+    if (fsLabel) fsLabel.textContent = on ? SiteI18n.t('전체 화면 나가기') : SiteI18n.t('전체 화면');
     if (fsBtn) fsBtn.setAttribute('aria-pressed', String(on));
     /* 들어가고 나올 때마다 초점을 게임으로 돌려준다 — 버튼에 초점이 남아 있으면
      * 키 입력이 게임까지 가지 않고 스페이스가 버튼을 누른다. */
@@ -393,8 +396,8 @@
   if (cover && stage) {
     cover.addEventListener('click', function () {
       frame = document.createElement('iframe');
-      frame.src = '../play/index.html?v=dev';
-      frame.title = 'Ashfall Chronicles — 별이 잠든 땅';
+      frame.src = '../play/index.html?v=dev&lang=' + SiteI18n.lang;   // 사이트에서 고른 언어로 게임도 연다
+      frame.title = SiteI18n.t('Ashfall Chronicles — 별이 잠든 땅');
       frame.allow = 'autoplay; fullscreen';
       stage.appendChild(frame);
       cover.remove();
