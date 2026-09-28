@@ -6,16 +6,17 @@ import { fmt, tr } from '../lang.js';
 import { WH, WW } from '../size.js';
 import { RARITY_MULT, T, TILE_DEF } from '../data.js';
 import { ITEMS } from '../data/items.js';
+import { CHAR_OF } from '../data/start.js';
 import { ENEMIES, mobCw } from '../data/enemies.js';
 import { RUIN_HINTS, RUIN_LORE, RUIN_SPEC } from '../data/ruins.js';
-import { DAWN_NPCS, MERCHANTS, NPCS, SHOP_DENY, TALK, TALK_MOODS, VILLAGE_TALK } from '../data/npcs.js';
+import { DAWN_NPCS, MERCHANTS, NAME_CALL, NAME_CALL_P, NPCS, SHOP_DENY, TALK, TALK_MOODS, VILLAGE_TALK } from '../data/npcs.js';
 import { CHAPTERS, DIALOGUE, TABLETS, sessionOf } from '../data/story.js';
 import { BOUNTY_BY_ID, BOUNTY_POOL, BOUNTY_UNIT, SIDE_POOL } from '../data/quests.js';
 import { ITEM_VAL, idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Drop, Part, equipReqLv, isGear, itemName, makeItem, rollGear } from '../entity.js';
 import { UI } from '../ui.js';
-import { G } from '../game.js';
+import { G, NONAME } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const VillagePart: Bag = {
@@ -425,6 +426,17 @@ export const VillagePart: Bag = {
     };
   },
 
+  /** 가끔 모험가를 이름으로 부른다(NAME_CALL_P) — 이름을 비웠으면 캐릭터 이름. 부르는 말은 순번으로 돈다. */
+  nameCall(id) {
+    const a = NAME_CALL[id];
+    if (!a || Math.random() >= NAME_CALL_P) return null;
+    this.talkSeq = this.talkSeq || {};
+    const k = id + '|name', t = this.talkSeq[k] || 0;
+    this.talkSeq[k] = (t + 1) % 2520;
+    const p = this.player, name = p.name && p.name !== NONAME ? p.name : CHAR_OF(p.charId).n;
+    return tr(a[t % a.length], { name });
+  },
+
   /** 대화창 아래의 선택지 = [상황 대답] + 늘 있는 것들(rest).
       대답을 고르면 대꾸를 보여 주고 rest 로 돌아온다 — 대답 한 번 했다고
       가게나 의뢰가 사라지면 안 되니까. */
@@ -471,6 +483,8 @@ export const VillagePart: Bag = {
     /* 첫 대면에는 상황 한 줄을 붙이지 않는다 — 인사보다 먼저 날씨 얘기를 꺼내는 사람은 없다. */
     const pick = (first && this.chapter === 0) ? null : this.talkPick(id);
     const lines = fresh ? story.slice() : [];
+    const call = pick && !fresh ? this.nameCall(id) : null;
+    if (call) lines.push(call);
     if (pick) lines.push(pick.say);
     if (!lines.length) lines.push(story[story.length - 1]);
 
@@ -515,6 +529,8 @@ export const VillagePart: Bag = {
     const lines = [];
     if (first) lines.push(d.line);
     if (fresh) lines.push(...story);
+    const call = pick ? this.nameCall(id) : null;
+    if (call) lines.push(call);
     if (pick) lines.push(pick.say);
     /* 마을이 한 단계 자랐으면 그 사실을 한 번 알려 준다 — 매번이 아니라 바뀐 그때. */
     this.villageSeen = this.villageSeen || {};
