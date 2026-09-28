@@ -40800,8 +40800,8 @@
         if (zone === "village" || zone === "camp") ev = this.eventSpec();
       }
       const skyDy = clamp((camY + this.H / 2 - surfPx) * 0.05, -this.H * 0.3, this.H * 0.3);
-      const sunU = this.skyArc(1), sunUp = Math.sin(Math.PI * sunU), sunX = this.W / 2 + Math.cos(Math.PI * sunU) * this.W * 0.42;
-      const gold = clamp(1 - Math.abs(sunUp - 0.02) / 0.32, 0, 1) * (ev ? 0.4 : 1);
+      const sunU = this.skyArc(1), sunUp = Math.sin(Math.PI * sunU), sunX = this.skyX(sunU), sunY = this.skyY(sunU, skyDy);
+      const gold = clamp(1 - Math.abs(sunUp - 0.02) / 0.32, 0, 1) * (ev ? 0.4 : 1) * (1 - 0.7 * clamp((this.rainT || 0) * 1.4, 0, 1));
       if (ev) {
         top = mixHex(top, ev.tint, ev.tintAmt);
         bot = mixHex(bot, ev.tint, ev.tintAmt * 0.7);
@@ -40813,7 +40813,12 @@
         bot = mixHex(bot, "#f3a45a", gold * 0.85);
       }
       this.skyHaze = bot;
-      if (camY < surfPx + 400) {
+      let skyLow = surfPx + 400;
+      if (this.world) {
+        const sf = this.world.surface, x0 = Math.max(0, Math.floor(camX / TS)), x1 = Math.min(sf.length - 1, Math.ceil((camX + this.W) / TS));
+        for (let x = x0; x <= x1; x++) if (sf[x] * TS + 60 > skyLow) skyLow = sf[x] * TS + 60;
+      }
+      if (camY < skyLow) {
         const g = c.createLinearGradient(0, 0, 0, this.H);
         g.addColorStop(0, top);
         g.addColorStop(0.42, mid);
@@ -40822,7 +40827,7 @@
         c.fillStyle = g;
         c.fillRect(0, 0, this.W, this.H);
         if (gold > 0.02) {
-          const hy = this.H * 0.5 - skyDy;
+          const hy = sunY;
           const hg = c.createRadialGradient(sunX, hy, 0, sunX, hy, this.W * 0.8);
           hg.addColorStop(0, `rgba(255,176,96,${0.6 * gold})`);
           hg.addColorStop(0.4, `rgba(240,130,110,${0.25 * gold})`);
@@ -40840,12 +40845,12 @@
           }
           c.globalAlpha = 1;
         }
+        const veil = 1 - 0.92 * clamp((this.rainT || 0) * 1.4, 0, 1);
         for (const sun of [1, 0]) {
           const u = sun ? sunU : this.skyArc(0), up = Math.sin(Math.PI * u);
-          const al = clamp((up + 0.04) / 0.16, 0, 1);
-          if (al <= 0) continue;
-          const bx = this.W / 2 + Math.cos(Math.PI * u) * this.W * 0.42;
-          const by = this.H * 0.52 - (up > 0 ? Math.sqrt(up) : up) * this.H * 0.4 - skyDy;
+          const al = clamp((up + 0.04) / 0.16, 0, 1) * veil;
+          if (al <= 0.01) continue;
+          const bx = this.skyX(u), by = this.skyY(u, skyDy);
           if (sun) this.drawSun(c, bx, by, al, gold);
           else this.drawMoon(c, bx, by, al);
         }
@@ -40869,6 +40874,15 @@
       const RISE = 330, SET = 1110;
       const t0 = sun ? RISE : SET, dur = sun ? SET - RISE : 1440 - SET + RISE, off = (1440 - dur) / 2;
       return (((this.dayT - t0 + off) % 1440 + 1440) % 1440 - off) / dur;
+    },
+    /** 해·달의 화면 자리 — u 0 = 오른쪽(동) → 1 = 왼쪽(서). 노을 빛도 같은 값을 쓴다. */
+    skyX(u) {
+      return this.W / 2 + Math.cos(Math.PI * u) * this.W * 0.42;
+    },
+    /* 높이는 √up — 선형이면 아침·저녁 내내 숲 원경(화면 0.15~0.5) 뒤에 숨어 한낮에만 보였다 */
+    skyY(u, skyDy) {
+      const up = Math.sin(Math.PI * u);
+      return this.H * 0.52 - (up > 0 ? Math.sqrt(up) : up) * this.H * 0.4 - skyDy;
     },
     /** 해 — 넓은 햇무리 · 안쪽 광채 · 원반. */
     drawSun(c, x, y, al, gold) {

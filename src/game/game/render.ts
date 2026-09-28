@@ -572,8 +572,8 @@ export const RenderPart: Bag = {
     /* ---- 노을 ---- */
     /* 땅 위에 설 때 0 — camY 그대로 쓰면 지표 깊이(수천 px)만큼 해가 화면 밖으로 밀려 한낮 해가 잘렸다 */
     const skyDy = clamp((camY + this.H / 2 - surfPx) * .05, -this.H * .3, this.H * .3);
-    const sunU = this.skyArc(1), sunUp = Math.sin(Math.PI * sunU), sunX = this.W / 2 + Math.cos(Math.PI * sunU) * this.W * .42;
-    const gold = clamp(1 - Math.abs(sunUp - 0.02) / 0.32, 0, 1) * (ev ? 0.4 : 1);
+    const sunU = this.skyArc(1), sunUp = Math.sin(Math.PI * sunU), sunX = this.skyX(sunU), sunY = this.skyY(sunU, skyDy);
+    const gold = clamp(1 - Math.abs(sunUp - 0.02) / 0.32, 0, 1) * (ev ? 0.4 : 1) * (1 - 0.7 * clamp((this.rainT || 0) * 1.4, 0, 1));
     if (ev) { top = mixHex(top, ev.tint, ev.tintAmt); bot = mixHex(bot, ev.tint, ev.tintAmt * 0.7); }
     let mid = mixHex(top, bot, 0.55);
     if (gold > 0) {
@@ -583,15 +583,22 @@ export const RenderPart: Bag = {
     }
     /* 원경이 "멀어 보이는" 색으로 쓸 지금의 하늘색. */
     this.skyHaze = bot;
-    if (camY < surfPx + 400) {
+    /* 하늘을 그릴지 — 화면에 걸친 칸 중 **가장 낮은 지표**보다 카메라 위가 높으면 어딘가에 하늘이 보인다.
+       ★ SURF_BASE 만 보면 골짜기·바닷가에서 하늘이 보이는데도 해가 뚝 끊겼다(계획서 §9-1 #10). */
+    let skyLow = surfPx + 400;
+    if (this.world) {
+      const sf = this.world.surface, x0 = Math.max(0, Math.floor(camX / TS)), x1 = Math.min(sf.length - 1, Math.ceil((camX + this.W) / TS));
+      for (let x = x0; x <= x1; x++) if (sf[x] * TS + 60 > skyLow) skyLow = sf[x] * TS + 60;
+    }
+    if (camY < skyLow) {
       const g = c.createLinearGradient(0, 0, 0, this.H);
       // 가장 따뜻한 띠(bot)가 원경 능선 높이(화면 0.5~0.8)에 오게 — 화면 맨 아래는 어차피 땅이다
       g.addColorStop(0, top); g.addColorStop(0.42, mid); g.addColorStop(0.78, bot); g.addColorStop(1, bot);
       c.fillStyle = g; c.fillRect(0, 0, this.W, this.H);
       // 해 쪽 지평선이 더 달아오른다 — 노을은 하늘 전체가 아니라 해가 있는 쪽이 짙다
       if (gold > 0.02) {
-        /* ★ 달아오른 자리는 해보다 **위**(화면 0.5)에 둔다. */
-        const hy = this.H * .5 - skyDy;
+        /* 달아오른 자리는 해와 같은 자리에서 — 따로 적으면 해가 오를 때 노을 빛이 해 밑에 떨어져 남았다(§9-1 #9) */
+        const hy = sunY;
         const hg = c.createRadialGradient(sunX, hy, 0, sunX, hy, this.W * .8);
         hg.addColorStop(0, `rgba(255,176,96,${0.6 * gold})`);
         hg.addColorStop(0.4, `rgba(240,130,110,${0.25 * gold})`);
@@ -610,13 +617,13 @@ export const RenderPart: Bag = {
         c.globalAlpha = 1;
       }
       /* ---- 해와 달 ---- */
+      /* 비·폭풍에는 먹구름이 해·달을 가린다 — 비가 오는데 해가 쨍했다(§9-1 #11) */
+      const veil = 1 - 0.92 * clamp((this.rainT || 0) * 1.4, 0, 1);
       for (const sun of [1, 0]) {
         const u = sun ? sunU : this.skyArc(0), up = Math.sin(Math.PI * u);
-        const al = clamp((up + 0.04) / 0.16, 0, 1);       // 지평선 조금 아래까지 — 원경 뒤로 넘어간다
-        if (al <= 0) continue;
-        const bx = this.W / 2 + Math.cos(Math.PI * u) * this.W * .42;   // u 0 = 오른쪽(동) → 1 = 왼쪽(서)
-        /* 높이는 √up — 선형이면 아침·저녁 내내 숲 원경(화면 0.15~0.5) 뒤에 숨어 한낮에만 보였다 */
-        const by = this.H * .52 - (up > 0 ? Math.sqrt(up) : up) * this.H * .40 - skyDy;
+        const al = clamp((up + 0.04) / 0.16, 0, 1) * veil;   // 지평선 조금 아래까지 — 원경 뒤로 넘어간다
+        if (al <= 0.01) continue;
+        const bx = this.skyX(u), by = this.skyY(u, skyDy);
         if (sun) this.drawSun(c, bx, by, al, gold);
         else this.drawMoon(c, bx, by, al);
       }
@@ -642,6 +649,10 @@ export const RenderPart: Bag = {
     const t0 = sun ? RISE : SET, dur = sun ? SET - RISE : 1440 - SET + RISE, off = (1440 - dur) / 2;
     return ((((this.dayT - t0 + off) % 1440) + 1440) % 1440 - off) / dur;
   },
+  /** 해·달의 화면 자리 — u 0 = 오른쪽(동) → 1 = 왼쪽(서). 노을 빛도 같은 값을 쓴다. */
+  skyX(u) { return this.W / 2 + Math.cos(Math.PI * u) * this.W * .42; },
+  /* 높이는 √up — 선형이면 아침·저녁 내내 숲 원경(화면 0.15~0.5) 뒤에 숨어 한낮에만 보였다 */
+  skyY(u, skyDy) { const up = Math.sin(Math.PI * u); return this.H * .52 - (up > 0 ? Math.sqrt(up) : up) * this.H * .40 - skyDy; },
   /** 해 — 넓은 햇무리 · 안쪽 광채 · 원반. */
   drawSun(c, x, y, al, gold) {
     const r = 22 * (1 + gold * 0.35);
