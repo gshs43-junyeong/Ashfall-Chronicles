@@ -27164,6 +27164,8 @@
     SAFE_FALL_VY: () => SAFE_FALL_VY,
     VAULT_SIZE: () => VAULT_SIZE,
     Wolf: () => Wolf,
+    affixIndex: () => affixIndex,
+    affixOf: () => affixOf,
     enhMul: () => enhMul,
     equipReqLv: () => equipReqLv,
     isGear: () => isGear,
@@ -27212,6 +27214,16 @@
     if (d.tier !== void 0) return d.tier * 4;
     return 1;
   }
+  function affixOf(a) {
+    const t = a.k === "p" ? PREFIX : SUFFIX;
+    return a.i !== void 0 && t[a.i] ? t[a.i] : a;
+  }
+  function affixIndex(a) {
+    const t = a.k === "p" ? PREFIX : SUFFIX, js = JSON.stringify(a.s || {});
+    let i = t.findIndex((x) => JSON.stringify(x.s) === js);
+    if (i < 0) i = t.findIndex((x) => x.n === a.n);
+    return i;
+  }
   function itemStats(it) {
     const d = idef(it), s = Object.assign({}, d.b || {});
     const add = (o) => {
@@ -27221,7 +27233,7 @@
     if (d.fire) add({ fire: d.fire });
     if (d.frost) add({ frost: d.frost });
     if (d.poison) add({ poison: d.poison });
-    if (it.a) for (const a of it.a) add(a.s);
+    if (it.a) for (const a of it.a) add(affixOf(a).s);
     if (d.type === "pet" && (it.lv || 1) > 1) {
       const m2 = petLvMul(it.lv);
       for (const k in s) s[k] *= m2;
@@ -27244,8 +27256,8 @@
     let n = d.n;
     if (it.a) {
       const pre = it.a.filter((a) => a.k === "p"), suf = it.a.filter((a) => a.k === "s");
-      if (pre.length) n = pre[0].n + " " + n;
-      if (suf.length) n = n + suf[0].n;
+      if (pre.length) n = affixOf(pre[0]).n + " " + n;
+      if (suf.length) n = n + affixOf(suf[0]).n;
     }
     if (it.e) n += " +" + it.e;
     return n;
@@ -27272,11 +27284,11 @@
       const a = [];
       if (rng.chance(0.35 + r * 0.12)) {
         const p = rng.pick(PREFIX);
-        a.push({ k: "p", n: p.n, s: p.s });
+        a.push({ k: "p", i: PREFIX.indexOf(p) });
       }
       if (rng.chance(0.22 + r * 0.12)) {
         const s = rng.pick(SUFFIX);
-        a.push({ k: "s", n: s.n, s: s.s });
+        a.push({ k: "s", i: SUFFIX.indexOf(s) });
       }
       if (a.length) it.a = a;
     }
@@ -34201,6 +34213,28 @@
     /* v9 → v10 — 바다 수면(world.sea). 없으면 World.deserialize 가 타일에서 다시 잰다(null 로 두면 그쪽이 채운다). */
     (d) => {
       if (d.world && d.world.sea === void 0) d.world.sea = null;
+    },
+    /* v10 → v11 — 장비 접사를 글자({n, s}) 대신 표 번호({k, i})로. 아이템이 가방·장비·금고·상자·기계 어디에나 있어 통째로 훑는다. */
+    (d) => {
+      const seen = /* @__PURE__ */ new Set();
+      (function walk(o) {
+        if (!o || typeof o !== "object" || seen.has(o)) return;
+        seen.add(o);
+        if (Array.isArray(o.a) && typeof o.id === "string") {
+          for (const a of o.a) if (a && (a.k === "p" || a.k === "s") && a.i === void 0) {
+            const i = affixIndex(a);
+            if (i >= 0) {
+              a.i = i;
+              delete a.n;
+              delete a.s;
+            }
+          }
+        }
+        for (const k in o) {
+          const v = o[k];
+          if (v && typeof v === "object") walk(v);
+        }
+      })(d);
     }
   ];
   var SAVE_VERSION = SAVE_UPGRADES.length + 1;

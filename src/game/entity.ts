@@ -47,6 +47,17 @@ export function equipReqLv(id) {
   return 1;
 }
 
+/** 접사 한 칸의 표 항목 — ★ 아이템에는 번호(i)만 저장한다: 이름을 글자째 두면 한국어로 만든 장비를
+    다른 언어로 열 때 접사만 한국어로 남았다. 번호가 없는 옛 항목({n, s})은 그대로 쓴다. */
+export function affixOf(a) { const t = a.k === 'p' ? PREFIX : SUFFIX; return a.i !== undefined && t[a.i] ? t[a.i] : a; }
+/** 옛 접사({n, s})의 표 번호 — 능력치가 접사마다 다르니 능력치로, 안 되면 이름으로 찾는다(세이브 판올림) */
+export function affixIndex(a) {
+  const t = a.k === 'p' ? PREFIX : SUFFIX, js = JSON.stringify(a.s || {});
+  let i = t.findIndex(x => JSON.stringify(x.s) === js);
+  if (i < 0) i = t.findIndex(x => x.n === a.n);
+  return i;
+}
+
 /** 접사 + 희귀도가 반영된 종합 스탯 */
 export function itemStats(it) {
   const d = idef(it), s = Object.assign({}, d.b || {});
@@ -55,7 +66,7 @@ export function itemStats(it) {
   if (d.fire) add({ fire: d.fire });
   if (d.frost) add({ frost: d.frost });
   if (d.poison) add({ poison: d.poison });
-  if (it.a) for (const a of it.a) add(a.s);
+  if (it.a) for (const a of it.a) add(affixOf(a).s);
   // 펫 레벨은 패시브를 통째로 키운다 — 펫이 자라는 감각이 여기서 나온다
   if (d.type === 'pet' && (it.lv || 1) > 1) { const m = petLvMul(it.lv); for (const k in s) s[k] *= m; }
   // 희귀도는 방어구/장신구 부가 스탯도 함께 올린다
@@ -69,8 +80,8 @@ export function itemName(it) {
   let n = d.n;
   if (it.a) {
     const pre = it.a.filter(a => a.k === 'p'), suf = it.a.filter(a => a.k === 's');
-    if (pre.length) n = pre[0].n + ' ' + n;
-    if (suf.length) n = n + suf[0].n;
+    if (pre.length) n = affixOf(pre[0]).n + ' ' + n;
+    if (suf.length) n = n + affixOf(suf[0]).n;
   }
   if (it.e) n += ' +' + it.e;
   return n;
@@ -96,8 +107,8 @@ export function rollGear(id, rng, luckTier = 0) {
   const it = makeItem(id, 1, r);
   if (isGear(it) && r > 0) {
     const a = [];
-    if (rng.chance(0.35 + r * 0.12)) { const p = rng.pick(PREFIX); a.push({ k: 'p', n: p.n, s: p.s }); }
-    if (rng.chance(0.22 + r * 0.12)) { const s = rng.pick(SUFFIX); a.push({ k: 's', n: s.n, s: s.s }); }
+    if (rng.chance(0.35 + r * 0.12)) { const p = rng.pick(PREFIX); a.push({ k: 'p', i: PREFIX.indexOf(p) }); }
+    if (rng.chance(0.22 + r * 0.12)) { const s = rng.pick(SUFFIX); a.push({ k: 's', i: SUFFIX.indexOf(s) }); }
     if (a.length) it.a = a;
   }
   return it;
