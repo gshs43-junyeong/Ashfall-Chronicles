@@ -897,7 +897,8 @@
   "🪙 {gold} · 경험치 {xp}": "🪙 {gold} · {xp} EP",
   "{item|을} 벨트에서 집었다": "{item} vom Band genommen",
   "비석에 손을 대면 {to|로} 돌아간다.": "Berührst du den Stein, kehrst du nach {to} zurück.",
-  "({to|로} 이동한다)": "(Nach {to} reisen)"
+  "({to|로} 이동한다)": "(Nach {to} reisen)",
+  "확인": "OK"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
