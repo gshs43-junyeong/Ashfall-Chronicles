@@ -222,7 +222,6 @@
  "손을 떼도 돌아간다": "Es läuft weiter, wenn du loslässt",
  "수집": "Sammeln",
  "스물세 종": "Dreiundzwanzig",
- "슬롯당 955 KB ~ 2 MB. 브라우저가 주는 자리는 약 4 MB 라, 슬롯 셋을 끝까지 채우면 한도에 닿을 수 있습니다(그때는 「저장 실패」가 뜹니다 — 설정의 <strong>저장 내보내기</strong>로 빼 두세요)": "955 KB – 2 MB pro Slot. Browser geben etwa 4 MB her, drei volle Slots können also an die Grenze stoßen (dann erscheint „Speichern fehlgeschlagen“ — sichere sie über <strong>Spielstände exportieren</strong> in den Einstellungen)",
  "시스템 요구사항": "Systemanforderungen",
  "실제 화면": "Echte Bilder",
  "실행 방법": "So startest du",
@@ -306,5 +305,7 @@
  "확인할 것": "Was zu prüfen ist",
  "횃불로 밝힌 지하 동굴, 수정 광맥과 고인 물웅덩이": "Eine fackelbeleuchtete Höhle mit Kristalladern und stehenden Pfützen",
  "회피 대시 (무적 프레임)": "Ausweichsprint (Unverwundbarkeitsframes)",
- "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "Die verstreuten Splitter finden und schlafen legen oder wecken — das ist deine Aufgabe."
+ "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "Die verstreuten Splitter finden und schlafen legen oder wecken — das ist deine Aufgabe.",
+ "v1.1.0 — 벽 너머와 물이 지운 쪽": "v1.1.0 — Jenseits der Mauer und wo das Wasser tilgte",
+ "슬롯당 압축해서 약 0.3 MB(소형 세계) · 0.6 MB(중형) · 1 MB(대형) — 탐험할수록 조금씩 늡니다. 브라우저의 <code>IndexedDB</code> 에 담겨 자리가 넉넉하고, 그것을 못 쓰는 브라우저에서만 약 5 MB 인 저장 공간으로 떨어집니다(그때 「저장 실패」가 뜨면 설정의 <strong>저장 내보내기</strong>로 빼 두세요)": "Komprimiert etwa 0,3 MB (kleine Welt) · 0,6 MB (mittel) · 1 MB (groß) pro Slot — mit dem Erkunden wächst es etwas. Spielstände liegen in der <code>IndexedDB</code> des Browsers, die reichlich Platz hat; nur Browser ohne sie weichen auf einen Speicher von etwa 5 MB aus (erscheint dort „Speichern fehlgeschlagen“, sichere sie über <strong>Spielstände exportieren</strong> in den Einstellungen)"
 }
