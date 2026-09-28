@@ -292,7 +292,7 @@ export const ActPart: Bag = {
         // 벨트 위에서 멈춰 버린 물건(3초+)은 창을 열지 않고 바로 집는다
         if (mac.it && Factory.stalled(mac)) {
           const id = mac.it.id;
-          if (Factory.takeStalled(mac, p)) { this.toast(tr('{item}{item|을} 벨트에서 집었다', { item: ITEMS[id].n }), 'good'); UI.refreshBag(); this.sfx('place'); }
+          if (Factory.takeStalled(mac, p)) { this.toast(tr('{item|을} 벨트에서 집었다', { item: ITEMS[id].n }), 'good'); UI.refreshBag(); this.sfx('place'); }
           else this.toast(tr('가방이 가득 찼다'), 'bad');
           return;
         }

@@ -7,7 +7,7 @@
   "({item|을} 뽑아낸다)": [
    "game/fishing.readTerminal"
   ],
-  "({to}(으)로 이동한다)": [
+  "({to|로} 이동한다)": [
    "game/village.useWaystone"
   ],
   "(계속한다)": [
@@ -224,6 +224,9 @@
   "{itemName} 획득": [
    "game/progress.onPickup"
   ],
+  "{item|을} 벨트에서 집었다": [
+   "game/act.rightClick"
+  ],
   "{item|이} {n}개 필요해. 마법 재료야.": [
    "data/quests"
   ],
@@ -257,9 +260,6 @@
   ],
   "{item} 획득": [
    "game/fishing.fn"
-  ],
-  "{item}{item|을} 벨트에서 집었다": [
-   "game/act.rightClick"
   ],
   "{kind} · {rank}/{max} 랭크": [
    "ui/tree.showSkillTip"
@@ -1068,6 +1068,7 @@
    "ui/tip.showTip"
   ],
   "레벨 {equipReqLv} 필요": [
+   "entity.equipFrom",
    "ui.buildEquipSlots"
   ],
   "레벨 {lv} 달성! 스탯 +3, 특성 +1": [
@@ -1528,7 +1529,7 @@
   "비문을 옮겨 적었다 — 여정의 기록에 남는다": [
    "game/village.fn"
   ],
-  "비석에 손을 대면 {to}(으)로 돌아간다.": [
+  "비석에 손을 대면 {to|로} 돌아간다.": [
    "game/village.useWaystone"
   ],
   "비석이 잿빛에 삼켜졌다": [

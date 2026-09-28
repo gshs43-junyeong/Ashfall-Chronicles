@@ -344,7 +344,7 @@ export class Player extends Ent {
   equipFrom(slotIdx) {
     const it = this.bag[slotIdx]; if (!it) return;
     const d = idef(it);
-    if (this.level < equipReqLv(it.id)) return false;   // 알림 없음 — 사연: docs/code-history.md#h140
+    if (this.level < equipReqLv(it.id)) { G.toast(tr('레벨 {equipReqLv} 필요', { equipReqLv: equipReqLv(it.id) }), 'bad'); return false; }
     let key = null;
     if (d.type === 'weapon') key = 'weapon';
     else if (d.type === 'armor') key = d.slot;

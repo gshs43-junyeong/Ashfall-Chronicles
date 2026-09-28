@@ -621,7 +621,7 @@ export const RenderFarPart: Bag = {
     if (o.type === 'door') { this.drawDoor(c, o, sx, sy, f); return; }
     if (o.type === 'furniture') {
       // 집이 실제로 들어갈 수 있는 방이 아니라 벽지(setWall) 위에 얹힌 얇은 장식이다 — 그래도 아무것도 없으면 벽지만 밋밋하게 보여서, 문·창 옆에 살림살이 실루엣을 둔다.
-      if (o.kind === 'shelf' && this.spritesOn && Sprites.drawObj(c, 'obj_shelf', sx, sy, o.w, o.h)) return;
+      if (o.kind === 'shelf' && this.spritesOn && Sprites.drawObj(c, 'obj_shelf', sx, sy, o.w, o.h, this.time)) return;
       if (o.kind === 'shelf') {
         c.fillStyle = shade('#5a3c22', f); c.fillRect(sx, sy, o.w, o.h);
         c.fillStyle = shade('#3a2610', f);
@@ -675,7 +675,7 @@ export const RenderFarPart: Bag = {
       const variant = o.type === 'waystone' ? (this.villageUnlocked ? '' : '_off')
         : o.type === 'terminal' ? (this.termsRead && this.termsRead[o.term] ? '_read' : '')
         : '';
-      if (Sprites.drawObj(c, 'obj_' + o.type + variant, sx, sy, o.w, o.h)) return;
+      if (Sprites.drawObj(c, 'obj_' + o.type + variant, sx, sy, o.w, o.h, this.time)) return;
     }
     if (o.type === 'vault') {
       c.fillStyle = shade('#4a4a56', f); c.fillRect(sx, sy, o.w, o.h);
@@ -698,7 +698,7 @@ export const RenderFarPart: Bag = {
       c.fillStyle = shade('#8a8a96', f); c.fillRect(sx + o.w / 2 - 3, sy, 6, 12);
     } else if (o.type === 'anvil') {
       /* 강화 모루 — 재련대(붉게 달아오른 화덕)와 한눈에 구분되어야 한다 — 사연: docs/code-history.md#h68 */
-      if (Sprites.drawObj(c, 'obj_anvil', sx, sy, o.w, o.h)) return;
+      if (Sprites.drawObj(c, 'obj_anvil', sx, sy, o.w, o.h, this.time)) return;
       const W = o.w, H = o.h;
       const hb = Math.abs(Math.sin(t * 3.4));                     // 망치질 — 위아래로
       c.fillStyle = shade('#4a3a26', f);                          // 나무 그루터기

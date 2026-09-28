@@ -2,7 +2,6 @@
  "msgs": {
   "(3초 넘게 멈춘 물건은 클릭해서 가방으로)": "(Über 3 s steckengebliebene Gegenstände: anklicken, um sie in die Tasche zu legen)",
   "({item|을} 뽑아낸다)": "({item} entnehmen)",
-  "({to}(으)로 이동한다)": "(Nach {to} reisen)",
   "(계속한다)": "(Weiter)",
   "(공격·방어 +{n}%p)": "(Angriff·Verteidigung +{n} Pp.)",
   "(그냥 둔다)": "(In Ruhe lassen)",
@@ -85,7 +84,6 @@
   "{item} 구매": "{item} kaufen",
   "{item} 제작 완료": "{item} hergestellt",
   "{item} 획득": "{item} erhalten",
-  "{item}{item|을} 벨트에서 집었다": "{item} vom Band genommen",
   "{kind} · {rank}/{max} 랭크": "{kind} · Rang {rank}/{max}",
   "{label|이} 가득 찼다": "{label} ist voll",
   "{label} {n}% (지금 {n2}%)": "{label} {n}% (jetzt {n2}%)",
@@ -490,7 +488,6 @@
   "비문": "Inschriften",
   "비문 읽기": "Inschrift lesen",
   "비문을 옮겨 적었다 — 여정의 기록에 남는다": "Inschrift abgeschrieben — sie steht nun im Reisebuch",
-  "비석에 손을 대면 {to}(으)로 돌아간다.": "Berührst du den Stein, kehrst du nach {to} zurück.",
   "비석이 잿빛에 삼켜졌다": "Der Stein wurde von Asche verschlungen",
   "비어 있는 받침대": "Leerer Sockel",
   "비어 있음": "Leer",
@@ -897,7 +894,10 @@
   "흙이나 풀에 우클릭해 밭 갈기": "Rechtsklick auf Erde oder Gras bestellt ein Feld",
   "흡혈": "Lebensraub",
   "힘": "STÄ",
-  "🪙 {gold} · 경험치 {xp}": "🪙 {gold} · {xp} EP"
+  "🪙 {gold} · 경험치 {xp}": "🪙 {gold} · {xp} EP",
+  "{item|을} 벨트에서 집었다": "{item} vom Band genommen",
+  "비석에 손을 대면 {to|로} 돌아간다.": "Berührst du den Stein, kehrst du nach {to} zurück.",
+  "({to|로} 이동한다)": "(Nach {to} reisen)"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

@@ -128,6 +128,10 @@
     ]
   },
   "world.js": {
+    "G": [
+      "breakFx",
+      "world"
+    ],
     "Factory": [
       "(값 그대로)",
       "canPlace",

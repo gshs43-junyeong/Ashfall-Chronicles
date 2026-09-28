@@ -165,8 +165,7 @@ export const AltarPart: Bag = {
 
   /* ================= 훈련소 ================= */
   /* 세션이 넘어가면 금화가 도는 규모 자체가 달라진다(세션 2에서 상자·판매 수입이 크게 뛴다). */
-  // @ts-expect-error sessionOf 는 세션 객체를 준다 — 배율이 늘 1(계획서 §9-1 #16, v1.1.1 뒤에 고친다)
-  costMul() { return [1, 1, 3.2, 7][sessionOf(this.chapter)] || 1; },
+  costMul() { return [1, 1, 3.2, 7][sessionOf(this.chapter).id] || 1; },   // ★ .id — 세션 객체를 넣으면 늘 1이었다
   respecCost() { return Math.round((60 + this.player.level * 25) * this.costMul()); },
   respecStats() {
     const p = this.player;

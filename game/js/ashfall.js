@@ -14436,6 +14436,7 @@
         if (this.tiles[k] === T.CRUMBLE) {
           this.tiles[k] = T.AIR;
           this.crumbled.set(k, 9);
+          if (app.world === this) app.breakFx(x, y, T.CRUMBLE);
         } else {
           if (!this.hitSolid(x * TS, y * TS, TS, TS)) this.tiles[k] = T.CRUMBLE;
           this.crumbled.delete(k);
@@ -26908,14 +26909,13 @@
       c.imageSmoothingEnabled = prev;
       return true;
     },
-    /* 시설물을 게임 좌표(x,y)에 w×h 크기로 그린다. */
-    drawObj(c, key, x, y, w, h) {
+    /* 시설물을 게임 좌표(x,y)에 w×h 크기로 그린다. t = 게임 시각(두 장짜리 그림을 넘긴다) */
+    drawObj(c, key, x, y, w, h, t = 0) {
       const im = this.img[key];
       if (!im || !im.width) return false;
       const want = w / h;
       const frames = Math.abs(im.width / im.height - want) < 0.03 ? 1 : Math.abs(im.width / 2 / im.height - want) < 0.03 ? 2 : 1;
       const fw = im.width / frames;
-      const t = 0;
       const fr = frames > 1 ? (t * 3.5 | 0) % frames : 0;
       c.save();
       c.imageSmoothingEnabled = false;
@@ -27565,7 +27565,10 @@
       const it = this.bag[slotIdx];
       if (!it) return;
       const d = idef(it);
-      if (this.level < equipReqLv(it.id)) return false;
+      if (this.level < equipReqLv(it.id)) {
+        app.toast(tr("레벨 {equipReqLv} 필요", { equipReqLv: equipReqLv(it.id) }), "bad");
+        return false;
+      }
       let key = null;
       if (d.type === "weapon") key = "weapon";
       else if (d.type === "armor") key = d.slot;
@@ -35823,7 +35826,7 @@
           if (mac.it && Factory11.stalled(mac)) {
             const id = mac.it.id;
             if (Factory11.takeStalled(mac, p)) {
-              this.toast(tr("{item}{item|을} 벨트에서 집었다", { item: ITEMS[id].n }), "good");
+              this.toast(tr("{item|을} 벨트에서 집었다", { item: ITEMS[id].n }), "good");
               UI5.refreshBag();
               this.sfx("place");
             } else this.toast(tr("가방이 가득 찼다"), "bad");
@@ -36696,9 +36699,9 @@
       const atDawn = d && Math.abs(p.cx / TS - (d.x0 + d.x1) / 2) < 90;
       const [tx, ty] = atDawn ? [w.spawnX, w.spawnY - 3] : [d.x0 + d.x1 >> 1, d.gy - 3];
       const to = atDawn ? tr("베이스캠프") : tr("여명 마을");
-      UI5.openLore(tr("귀환 비석"), [tr("비석에 손을 대면 {to}(으)로 돌아간다.", { to })], [
+      UI5.openLore(tr("귀환 비석"), [tr("비석에 손을 대면 {to|로} 돌아간다.", { to })], [
         {
-          t: tr("({to}(으)로 이동한다)", { to }),
+          t: tr("({to|로} 이동한다)", { to }),
           quest: 1,
           fn: () => {
             UI5.closeDialogue();
@@ -37745,10 +37748,10 @@
     },
     /* ================= 훈련소 ================= */
     /* 세션이 넘어가면 금화가 도는 규모 자체가 달라진다(세션 2에서 상자·판매 수입이 크게 뛴다). */
-    // @ts-expect-error sessionOf 는 세션 객체를 준다 — 배율이 늘 1(계획서 §9-1 #16, v1.1.1 뒤에 고친다)
     costMul() {
-      return [1, 1, 3.2, 7][sessionOf(this.chapter)] || 1;
+      return [1, 1, 3.2, 7][sessionOf(this.chapter).id] || 1;
     },
+    // ★ .id — 세션 객체를 넣으면 늘 1이었다
     respecCost() {
       return Math.round((60 + this.player.level * 25) * this.costMul());
     },
@@ -40289,7 +40292,7 @@
           c.strokeStyle = shade(gold ? "#e8b830" : "#3a2610", f2);
           c.strokeRect(sx + 0.5, sy + 0.5, o.w - 1, o.h - 1);
         } else if (o.type === "workbench") {
-          if (!(this.spritesOn && Sprites.drawObj(c, "obj_workbench_lv" + (o.lv || 1), sx, sy, o.w, o.h))) {
+          if (!(this.spritesOn && Sprites.drawObj(c, "obj_workbench_lv" + (o.lv || 1), sx, sy, o.w, o.h, this.time))) {
             c.fillStyle = shade("#9c7a4a", f2);
             c.fillRect(sx, sy, o.w, 3);
             c.fillStyle = shade("#7a5734", f2);
@@ -40300,7 +40303,7 @@
             c.fillRect(sx + 2, sy + o.h - 4, o.w - 4, 2);
           }
         } else if (o.type === "forge") {
-          if (!(this.spritesOn && Sprites.drawObj(c, "obj_forge_lv" + (o.lv || 1), sx, sy, o.w, o.h))) {
+          if (!(this.spritesOn && Sprites.drawObj(c, "obj_forge_lv" + (o.lv || 1), sx, sy, o.w, o.h, this.time))) {
             c.fillStyle = shade("#4a4a52", f2);
             c.fillRect(sx, sy + 3, o.w, o.h - 3);
             c.fillStyle = shade("#33333a", f2);
@@ -41802,7 +41805,7 @@
         return;
       }
       if (o.type === "furniture") {
-        if (o.kind === "shelf" && this.spritesOn && Sprites.drawObj(c, "obj_shelf", sx, sy, o.w, o.h)) return;
+        if (o.kind === "shelf" && this.spritesOn && Sprites.drawObj(c, "obj_shelf", sx, sy, o.w, o.h, this.time)) return;
         if (o.kind === "shelf") {
           c.fillStyle = shade("#5a3c22", f);
           c.fillRect(sx, sy, o.w, o.h);
@@ -41862,7 +41865,7 @@
       }
       if (this.spritesOn) {
         const variant = o.type === "waystone" ? this.villageUnlocked ? "" : "_off" : o.type === "terminal" ? this.termsRead && this.termsRead[o.term] ? "_read" : "" : "";
-        if (Sprites.drawObj(c, "obj_" + o.type + variant, sx, sy, o.w, o.h)) return;
+        if (Sprites.drawObj(c, "obj_" + o.type + variant, sx, sy, o.w, o.h, this.time)) return;
       }
       if (o.type === "vault") {
         c.fillStyle = shade("#4a4a56", f);
@@ -41896,7 +41899,7 @@
         c.fillStyle = shade("#8a8a96", f);
         c.fillRect(sx + o.w / 2 - 3, sy, 6, 12);
       } else if (o.type === "anvil") {
-        if (Sprites.drawObj(c, "obj_anvil", sx, sy, o.w, o.h)) return;
+        if (Sprites.drawObj(c, "obj_anvil", sx, sy, o.w, o.h, this.time)) return;
         const W = o.w, H = o.h;
         const hb = Math.abs(Math.sin(t * 3.4));
         c.fillStyle = shade("#4a3a26", f);
@@ -44088,7 +44091,7 @@
         c.globalCompositeOperation = "source-over";
         c.globalAlpha = 1;
       }
-      if (!(this.spritesOn && Sprites.drawObj(c, "obj_" + e.type, sx + dx, sy - dy, w, h))) {
+      if (!(this.spritesOn && Sprites.drawObj(c, "obj_" + e.type, sx + dx, sy - dy, w, h, this.time))) {
         c.fillStyle = e.def.c;
         c.fillRect(sx, sy, e.w, e.h);
       }
