@@ -314,7 +314,7 @@ export const ProgressPart: Bag = {
       $('#death-line').textContent = tr('불가능 모드였다. 이 슬롯의 기록이 지워졌다.');
       $('#death-screen').classList.add('open');
       $('#death-screen').classList.add('wipe');
-      this.scenes.open('pause');
+      this.scenes.open('death');
       this.sfx('death');
       return;
     }
@@ -323,7 +323,7 @@ export const ProgressPart: Bag = {
     parts.push(tr('쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.'));
     $('#death-line').textContent = parts.join(' ');
     $('#death-screen').classList.add('open');
-    this.scenes.open('pause');
+    this.scenes.open('death');
     this.sfx('death');
   },
 
@@ -455,7 +455,7 @@ export const ProgressPart: Bag = {
     if (this.pulseEvent) this.endPulseEvent(false);   // 쓰러지면 사건도 놓친 것이다
     this.rocks = [];
     $('#death-screen').classList.remove('open');
-    this.scenes.close('pause');
+    this.scenes.close('death');
   },
   setPause(on) {
     this.scenes.set('pause', on);

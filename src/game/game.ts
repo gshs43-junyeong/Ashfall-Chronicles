@@ -114,11 +114,11 @@ export const G: Bag = {
      ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
   scenes: createScenes({
     scenes: { title: {}, play: { update: dt => G.update(dt), render: () => { G.syncCtl(); G.render(); } } },
-    layers: { pause: { pause: true }, ui: { input: true } },
+    layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true } },   // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
     start: 'title'
   }),
   get state() { return this.scenes.current; },
-  get paused() { return this.scenes.has('pause'); },
+  get paused() { return this.scenes.paused(); },
   get uiOpen() { return this.scenes.has('ui'); },
   set uiOpen(on) { this.scenes.set('ui', on); },     // ui.js 의 패널·대화가 연다
   /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
@@ -414,7 +414,7 @@ export const G: Bag = {
     this.rings = []; this.bolts = []; this.warns = []; this.sigs = []; this.edge = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
-    this.talked = {}; this.crafted = {}; this.scenes.close('pause');
+    this.talked = {}; this.crafted = {}; this.scenes.close('pause'); this.scenes.close('death');
     /* 대화 — 상황 대사의 순번 · 장 이야기를 들은 기록 · 마을 단계를 들은 기록 */
     this.talkSeq = {}; this.storyHeard = {}; this.villageSeen = {};
     this.sideActive = {}; this.sideDone = {}; this.tabletsRead = {}; this.termsRead = {}; this.loreRead = {};
@@ -728,7 +728,8 @@ export const G: Bag = {
     /* 이어지는 효과음 — 매 프레임 "지금 나야 하는가"만 넘긴다. */
     if (SfxLoop) {
       const pl = this.player, playing = this.state === 'play' && !this.paused;
-      const swim = playing && pl && (pl.swimming || pl.submerged > 0.5);
+      /* 헤엄 소리는 물속에서 **움직일 때만** — 가만히 떠 있어도 팔 젓는 소리가 났다 */
+      const swim = playing && pl && (pl.swimming || pl.submerged > 0.5) && !!pl.swimMove;
       const fuse = playing && this.projs.some(q => q instanceof Bomb);
       SfxLoop.set('swim', swim);
       SfxLoop.set('fuse', fuse);

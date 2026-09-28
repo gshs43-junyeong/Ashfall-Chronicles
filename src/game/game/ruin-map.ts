@@ -215,7 +215,7 @@ export const RuinMapPart: Bag = {
     this.codeDoor = o;
     this.openModal('#code-screen');
     this.scenes.open('ui');
-    setTimeout(() => inp.focus(), 30);
+    setTimeout(() => { if (this.codeDoor === o) inp.focus(); }, 30);   // ★ 그새 닫혔으면 포커스를 가져가지 않는다(Esc·조작키를 먹었다)
     this.sfx('open');
     if (el.dataset.bound) return;              // 배선은 한 번만
     el.dataset.bound = '1';
@@ -240,6 +240,7 @@ export const RuinMapPart: Bag = {
   },
 
   closeCodeDoor() {
+    $('#code-input').blur();
     this.closeModal('#code-screen');
     this.codeDoor = null;
     this.scenes.close('ui');
