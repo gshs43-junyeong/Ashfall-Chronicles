@@ -426,7 +426,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - **드릴과 광상**: 공장 드릴 채굴 등급은 `MACHINE.mine`(기계식 2 · 전동 3 · 심층 5 — 세션 3 광석·유적 유리는 심층 드릴만). 심층 드릴 그림은
   `python3 tools/mkdeepdrill.py`(전동 드릴 PNG 를 청록·가압판으로) → sync. 광맥 한 칸은
   드릴로 20~29번(`Factory.ORE_HITS` + 칸 해시, 남은 수는 `world.oreHits` — 세이브 v9) 캔 뒤 사라진다. **광상**(`TILE_DEF.rich`, 191~196)은
-  드릴로는 줄지 않고 곡괭이로는 `dropN` 개(원래 광맥 등급 +1). 생성 끝 `placeRichOres`(제 난수 `seed+'_rich'`, 광맥 칸의 0.15% · 소형 약 250칸).
+  드릴로는 줄지 않고 곡괭이로는 `dropN` 개(원래 광맥 등급 +1). 생성 끝 `placeRichOres`(제 난수 `seed+'_rich'`) — 종류마다 큰 광맥 덩어리 상위 1.6%(20칸 이상)의 한가운데(가장자리에서 가장 먼 칸)에 2~3칸 · 소형 약 100곳 250칸.
 - **기계 몸체**는 타일 그리기가 건너뛰고 `Factory.render` 가 그린다 — 일할 때 떨림(`SHAKE`)과 `drawWork`(드릴 나사 비트·광맥까지 점선·금 ·
   불빛 · 피스톤 · 팔 · 거품 · 흔들대 · 톱니 · 충전 화살). 파편·연기는 틱에서(`drillFx` · `puff`, 플레이어 900px 안만).
 - **비**(game.js `updateWeather`): 빗줄기는 세계에 붙어 카메라 이동만큼 반대로 밀리고, 켜고 끄기는 화면 위에서 새로 날 때만(`d.on`) —
