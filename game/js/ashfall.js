@@ -22213,6 +22213,7 @@
     ACH_ART: () => ACH_ART,
     Art: () => Art,
     BFSPEC: () => BFSPEC,
+    BUFF_ART: () => BUFF_ART,
     GLSPEC: () => GLSPEC,
     ISPEC: () => ISPEC,
     ITEM_PAINT: () => ITEM_PAINT,
@@ -22760,6 +22761,18 @@
     wish: { k: "coin", c: "#ffd85a" }
     // 분수대에 던진 금화
   };
+  var BUFF_ART = {
+    bulwark: "s:s_guard",
+    smokescreen: "s:s_smoke",
+    warcry: "s:s_warcry",
+    rested: "u:moon",
+    starlit: "g:star",
+    echoed: "s:s_arch",
+    weighed: "s:s_mark",
+    windborne: "s:s_swift",
+    pulse_ward: "s:s_barrier",
+    pulse_fury: "s:s_bloodlust"
+  };
   var UISPEC = {
     sun: { k: "sun" },
     moon: { k: "moon" },
@@ -23074,7 +23087,17 @@
       return this.url("s:" + id);
     },
     buffUrl(id) {
-      return this.url("b:" + id);
+      if (this.cells["b:" + id]) return this.url("b:" + id);
+      if (BUFF_ART[id] && this.cells[BUFF_ART[id]]) return this.url(BUFF_ART[id]);
+      if (!this._buffItem) {
+        this._buffItem = {};
+        for (const k in ITEMS) {
+          const u = ITEMS[k].use;
+          if (u && u.buff && !this._buffItem[u.buff]) this._buffItem[u.buff] = k;
+        }
+      }
+      const it = this._buffItem[id];
+      return it ? this.url("i:" + it) : this.url("u:coin");
     },
     uiUrl(id) {
       return this.url("u:" + id);

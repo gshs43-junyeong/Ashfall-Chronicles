@@ -573,6 +573,13 @@ export const BFSPEC = {
   swift_kill: { k: 'wind', c: '#9fe0c0' },
   wish: { k: 'coin', c: '#ffd85a' }        // 분수대에 던진 금화
 };
+/* 제 그림(BFSPEC)이 없는 버프가 빌려 쓰는 그림 — 없으면 HUD 에 빈 칸만 떴다(32개 중 25개).
+   음식·물약처럼 아이템이 거는 버프는 그 아이템 그림을 저절로 쓰고(buffUrl), 나머지만 여기 적는다. */
+export const BUFF_ART = {
+  bulwark: 's:s_guard', smokescreen: 's:s_smoke', warcry: 's:s_warcry',
+  rested: 'u:moon', starlit: 'g:star', echoed: 's:s_arch', weighed: 's:s_mark', windborne: 's:s_swift',
+  pulse_ward: 's:s_barrier', pulse_fury: 's:s_bloodlust'
+};
 export const UISPEC = {
   sun: { k: 'sun' }, moon: { k: 'moon' }, coin: { k: 'coin' }, chat: { k: 'chat' },
   equip: { k: 'equipui' }, trash: { k: 'trashui' },
@@ -786,7 +793,16 @@ export const Art: Bag = {
   },
   itemUrl(id) { return this.url('i:' + id); },
   skillUrl(id) { return this.url('s:' + id); },
-  buffUrl(id) { return this.url('b:' + id); },
+  buffUrl(id) {
+    if (this.cells['b:' + id]) return this.url('b:' + id);
+    if (BUFF_ART[id] && this.cells[BUFF_ART[id]]) return this.url(BUFF_ART[id]);
+    if (!this._buffItem) {                       // 버프 → 그것을 거는 아이템(처음 한 번만 잰다)
+      this._buffItem = {};
+      for (const k in ITEMS) { const u = ITEMS[k].use; if (u && u.buff && !this._buffItem[u.buff]) this._buffItem[u.buff] = k; }
+    }
+    const it = this._buffItem[id];
+    return it ? this.url('i:' + it) : this.url('u:coin');
+  },
   uiUrl(id) { return this.url('u:' + id); },
   /** 업적 아이콘 — 아이템 그림이든 새로 그린 것이든 키 하나로 받는다 */
   achUrl(id) { return this.url(ACH_ART[id] || 'g:star'); },
