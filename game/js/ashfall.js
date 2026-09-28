@@ -34270,14 +34270,15 @@
         G.syncCtl();
         G.render();
       } } },
-      layers: { pause: { pause: true }, ui: { input: true } },
+      layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true } },
+      // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
       start: "title"
     }),
     get state() {
       return this.scenes.current;
     },
     get paused() {
-      return this.scenes.has("pause");
+      return this.scenes.paused();
     },
     get uiOpen() {
       return this.scenes.has("ui");
@@ -34672,6 +34673,7 @@
       this.talked = {};
       this.crafted = {};
       this.scenes.close("pause");
+      this.scenes.close("death");
       this.talkSeq = {};
       this.storyHeard = {};
       this.villageSeen = {};
@@ -35110,7 +35112,7 @@
       }
       if (SfxLoop) {
         const pl = this.player, playing = this.state === "play" && !this.paused;
-        const swim = playing && pl && (pl.swimming || pl.submerged > 0.5);
+        const swim = playing && pl && (pl.swimming || pl.submerged > 0.5) && !!pl.swimMove;
         const fuse = playing && this.projs.some((q) => q instanceof Bomb);
         SfxLoop.set("swim", swim);
         SfxLoop.set("fuse", fuse);
@@ -39016,7 +39018,7 @@
         $("#death-line").textContent = tr("불가능 모드였다. 이 슬롯의 기록이 지워졌다.");
         $("#death-screen").classList.add("open");
         $("#death-screen").classList.add("wipe");
-        this.scenes.open("pause");
+        this.scenes.open("death");
         this.sfx("death");
         return;
       }
@@ -39025,7 +39027,7 @@
       parts.push(tr("쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다."));
       $("#death-line").textContent = parts.join(" ");
       $("#death-screen").classList.add("open");
-      this.scenes.open("pause");
+      this.scenes.open("death");
       this.sfx("death");
     },
     /** 쓰러지면 싸움은 없던 일 — 깨운 보스는 조용히 사라지고(처치 아님 · 보상 없음) 제단·둥지·메아리는 다시 깨울 수 있다. */
@@ -39195,7 +39197,7 @@
       if (this.pulseEvent) this.endPulseEvent(false);
       this.rocks = [];
       $("#death-screen").classList.remove("open");
-      this.scenes.close("pause");
+      this.scenes.close("death");
     },
     setPause(on) {
       this.scenes.set("pause", on);
@@ -39563,6 +39565,7 @@
         this.closeAllModals();
         this.scenes.go("play");
         this.scenes.close("pause");
+        this.scenes.close("death");
         this.petEnts = [];
         this.syncPets();
         UI5.refreshBag();
@@ -43774,7 +43777,9 @@
       this.codeDoor = o;
       this.openModal("#code-screen");
       this.scenes.open("ui");
-      setTimeout(() => inp.focus(), 30);
+      setTimeout(() => {
+        if (this.codeDoor === o) inp.focus();
+      }, 30);
       this.sfx("open");
       if (el.dataset.bound) return;
       el.dataset.bound = "1";
@@ -43799,6 +43804,7 @@
       };
     },
     closeCodeDoor() {
+      $("#code-input").blur();
       this.closeModal("#code-screen");
       this.codeDoor = null;
       this.scenes.close("ui");
