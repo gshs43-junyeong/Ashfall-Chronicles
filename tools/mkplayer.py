@@ -545,6 +545,47 @@ def fill_arm_gap(c, pal):
             c[y][x0 - 1] = OUTC
     return c
 
+# ★ 테두리에서 닿지 않는 속 빈 칸(몸 윤곽 안의 구멍 — 공격 장 뒷팔과 몸통 사이 9~10열 24~29줄 따위)은 배경이 비쳐 팔이
+#   끊겨 보였다(사용자 지적). 몸 뒤는 늘 망토라 망토색으로 메운다(몸에 붙은 칸은 그늘). 다리 사이 틈(11~15열 · 31줄 아래에만
+#   있는 구멍)은 그림이 그런 것이라 그대로 둔다.
+def fill_holes(c, pal):
+    from collections import deque
+    OUTC = outline_color(c)
+    capec = set(pal)
+    out = [[False] * FW for _ in range(FH)]
+    q = deque((x, y) for y in range(FH) for x in range(FW)
+              if (x in (0, FW - 1) or y in (0, FH - 1)) and not c[y][x][3])
+    for x, y in q:
+        out[y][x] = True
+    while q:
+        x, y = q.popleft()
+        for a, b in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= a < FW and 0 <= b < FH and not c[b][a][3] and not out[b][a]:
+                out[b][a] = True
+                q.append((a, b))
+    seen = set()
+    for y in range(FH):
+        for x in range(FW):
+            if c[y][x][3] or out[y][x] or (x, y) in seen:
+                continue
+            comp, q = [], deque([(x, y)])
+            seen.add((x, y))
+            while q:
+                a, b = q.popleft()
+                comp.append((a, b))
+                for u, v in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)):
+                    if not c[v][u][3] and (u, v) not in seen:
+                        seen.add((u, v))
+                        q.append((u, v))
+            if all(11 <= a <= 15 and b >= 31 for a, b in comp):
+                continue                                # 다리 사이
+            body = lambda p: p[3] and p != OUTC and p not in capec
+            for a, b in comp:
+                near = any(body(c[v][u]) for u, v in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)))
+                c[b][a] = pal[0] if near else pal[1]
+    return c
+
+
 def main():
     man_p = os.path.join(ROOT, 'manifest.json')
     man = json.load(open(man_p, encoding='utf-8'))
@@ -560,6 +601,7 @@ def main():
         frames[GAP_FRAME] = fill_arm_gap(frames[GAP_FRAME], pal)
         frames = [fill_gear_gap(c, cid, i, pal) for i, c in enumerate(frames)]
         frames = [fill_slits(c) if i in SLIT_FRAMES else c for i, c in enumerate(frames)]
+        frames = [fill_holes(c, pal12 if i == 12 else pal) for i, c in enumerate(frames)]
         if cid == 'wanderer':
             hs = [FIXED.get(i) or hand_of(c, i in HIGH) for i, c in enumerate(frames)]
             # 피격(붉게 물든 장)처럼 살색이 안 잡히는 장은 첫 장의 손을 쓴다
