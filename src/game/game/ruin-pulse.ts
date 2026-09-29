@@ -275,7 +275,7 @@ export const RuinPulsePart: Bag = {
     (sv.evk = sv.evk || {})[ev.k] = 1;
     const gold = 120 * rank * st;
     p.gold += gold;
-    p.addXp(Math.round(400 * st * this.scale()));
+    p.addXp(Math.round(p.xpNext * 0.15 * st));          // 레벨 곡선을 따른다 — 사연: docs/code-history.md#h44
     if (spec && spec.bonus2 && ITEMS[spec.bonus2] && ev.k !== 'greed') give(makeItem(spec.bonus2, 1 + st));
     if (st >= 2) give(makeItem('pulse_shard', st - 1));
     const calm = { hunt: 15, stones: 35, greed: 0, siege: 25 }[ev.k];
@@ -548,7 +548,7 @@ export const RuinPulsePart: Bag = {
     const k = this.hasSeal('abyss') ? 1.5 : 1;
     const gold = Math.round(350 * lv * (spec.rank || 3) * k * (first ? 1.5 : 1));
     p.gold += gold;
-    p.addXp(Math.round(1200 * lv * this.scale() * k));
+    p.addXp(Math.round(p.xpNext * 0.25 * lv * k));   // 되풀이할 수 있어 한 번에 한 레벨 남짓까지만
     give(makeItem('pulse_shard', Math.round((lv + 1) * k)));
     if (spec.bonus2 && ITEMS[spec.bonus2]) give(makeItem(spec.bonus2, Math.round(2 * lv * k)));
     // 마지막 단계를 처음 넘기면 그 유적의 유물을 한 번 더 — 이번엔 잘 벼린 것으로

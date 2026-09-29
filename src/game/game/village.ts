@@ -321,7 +321,7 @@ export const VillagePart: Bag = {
       t: tr('(비문을 옮겨 적는다)'), quest: 1, fn: () => {
         this.loreRead[o.lore] = true;
         const p = this.player;
-        p.addXp(Math.round(600 * this.scale()));
+        p.addXp(Math.round(p.xpNext * 0.4));
         const it = makeItem('aether_shard', 3);
         if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
         this.toast(tr('비문을 옮겨 적었다 — 여정의 기록에 남는다'), 'good');
