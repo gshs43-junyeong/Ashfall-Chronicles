@@ -66,7 +66,11 @@ export const MERCHANTS = [
       { id: 'potion_str', w: 7, max: 3 },
       // 잠수 소모품 — 숨이 곧 자원인 곳이라 이게 값을 한다
       { id: 'jelly_lamp', w: 8, max: 6 }, { id: 'abyss_pearl', w: 5, max: 3 },
-      { id: 'pressure_plate_m', w: 6, max: 6 }, { id: 'rope_kelp', w: 6, max: 8 }
+      { id: 'pressure_plate_m', w: 6, max: 6 }, { id: 'rope_kelp', w: 6, max: 8 },
+      // 드래곤 알 넷 · 첫 먹이 — 가라앉은 도시가 품고 있던 것
+      { id: 'egg_dragon_fire', w: 2, max: 1 }, { id: 'egg_dragon_earth', w: 2, max: 1 },
+      { id: 'egg_dragon_storm', w: 2, max: 1 }, { id: 'egg_dragon_dark', w: 2, max: 1 },
+      { id: 'dragon_treat_1', w: 5, max: 3 }
     ]
   },
   {

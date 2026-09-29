@@ -7,6 +7,7 @@ import { BIOMES, HELL_Y, SURF_BASE, WH, WW } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { ENEMIES } from '../data/enemies.js';
 import { FLUID_FLOW, FLUID_KIND } from '../data/materials.js';
+import { dragonStage } from '../data/pets.js';
 import { TS, doorEdge } from '../world.js';
 import { ART, TileArt } from '../tileart.js';
 import { Art } from '../itemart.js';
@@ -795,10 +796,13 @@ export const RenderFarPart: Bag = {
     // 공격 직후 잠깐 밝게 — 뭘 하고 있는지 눈에 보이게
     if (pet.flash > 0) { c.shadowColor = pet.def.c; c.shadowBlur = 10; }
     /* 손그림 시트가 있으면 그쪽을 쓴다. */
-    const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets['pet_' + pet.id];
+    /* 드래곤은 단계마다 시트가 따로다(pet_<id>_s<단계>) — 날갯짓 flap 장을 초당 9장으로 돌고, 공격 직후엔 숨결 장 */
+    const key = pet.def.dragon ? `pet_${pet.id}_s${dragonStage(pet.lvOf(this.player))}` : 'pet_' + pet.id;
+    const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets[key];
     if (sheet) {
-      const fr = pet.flash > 0 ? 2 : (Math.floor(this.time * 3 + pet.slot) % 2);
-      if (Sprites.draw(c, 'pet_' + pet.id, fr, sx - sheet.frameW / 2, sy - sheet.frameH / 2, pet.facing < 0)) {
+      const fr = sheet.flap ? (pet.flash > 0 ? sheet.flap : Math.floor(this.time * 9 + pet.slot * 2) % sheet.flap)
+        : pet.flash > 0 ? 2 : (Math.floor(this.time * 3 + pet.slot) % 2);
+      if (Sprites.draw(c, key, fr, sx - sheet.frameW / 2, sy - sheet.frameH / 2, pet.facing < 0)) {
         c.restore(); return;
       }
     }

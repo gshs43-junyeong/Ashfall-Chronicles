@@ -42,7 +42,20 @@ export const PETS: Record<string, PetDef> = {
     d: '들여다보면 이쪽이 먼저 눈을 피하게 된다.' },
   storm_falcon:   { n: '뇌운 매', i: '🦅', r: 2, c: '#bcd8f0', b: { ms: 11, crit: 9 },
     atk: { k: 'proj', proj: 'bolt', dmg: 140, cd: 1.05, range: 340, spd: 560 },
-    d: '내려꽂힐 때 소리가 한 박자 늦게 온다.' }
+    d: '내려꽂힐 때 소리가 한 박자 늦게 온다.' },
+  /* --- 드래곤 — 윤슬의 알에서 나온다. 레벨 30까지 자라며 10·20·30 에서 그 단계 먹이를 먹어야 진화한다(DRAGON_*) --- */
+  dragon_fire:  { n: '불의 드래곤', i: '🐉', r: 2, c: '#e0603c', dragon: 'fire', b: { dmgP: 0.06 },
+    atk: { k: 'proj', proj: 'fire', dmg: 120, cd: 1.5, range: 300, spd: 420 },
+    d: '알 껍데기를 스스로 녹이고 나왔다. 자랄수록 숨결이 길어진다.' },
+  dragon_earth: { n: '흙의 드래곤', i: '🐉', r: 2, c: '#9a8a5a', dragon: 'earth', b: { def: 18, hp: 90 },
+    atk: { k: 'proj', proj: 'rune', dmg: 135, cd: 1.7, range: 260, spd: 360 },
+    d: '등의 비늘이 바위처럼 겹친다. 서두르는 법이 없다.' },
+  dragon_storm: { n: '전기의 드래곤', i: '🐉', r: 2, c: '#6cb4e4', dragon: 'storm', b: { ms: 6, crit: 5 },
+    atk: { k: 'proj', proj: 'bolt', dmg: 105, cd: 1.2, range: 330, spd: 560 },
+    d: '날개를 털 때마다 날개 끝에서 불똥이 튄다.' },
+  dragon_dark:  { n: '암흑의 드래곤', i: '🐉', r: 2, c: '#7e5ea6', dragon: 'dark', b: { lifesteal: 3, critD: 14 },
+    atk: { k: 'proj', proj: 'void', dmg: 125, cd: 1.45, range: 320, spd: 400 },
+    d: '그림자 속에 있어도 눈만은 또렷이 빛난다.' }
 };
 /* 펫 피해 배율 — 위 기준 피해는 "펫을 처음 손에 넣는 레벨 80 언저리"에서의 값이다. */
 /* 레벨 배수 — 세계의 기본 규칙(몹은 레벨을 안 탄다)에서 **일부러 뺀 것들**만 쓴다 — 사연: docs/code-history.md#h19 */
@@ -56,7 +69,18 @@ export function petDmgScale(level) { return Math.max(0.45, 0.07 + level * 0.0116
 export const PET_LV_MAX = 10;
 export function petLvMul(lv) { return 1 + 0.12 * ((lv || 1) - 1); }   // 패시브 b 배수
 export function petAtkMul(lv) { return 1 + 0.06 * ((lv || 1) - 1); }  // 자동 공격 배수
-export function petXpNext(lv) { return Math.round(600 * Math.pow(1.6, (lv || 1) - 1)); }
+export function petXpNext(lv, id?) {
+  if (id && PETS[id] && PETS[id].dragon) return Math.round(400 * Math.pow(1.18, (lv || 1) - 1));   // 드래곤은 30까지 — 완만하게
+  return Math.round(600 * Math.pow(1.6, (lv || 1) - 1));
+}
+
+/* ---------------- 드래곤 ---------------- */
+export const DRAGON_LV_MAX = 30;
+export const DRAGON_GATES = [10, 20, 30];                   // 이 레벨로 오르려면 그 단계 먹이를 먹어야 한다
+export const DRAGON_FOOD = ['dragon_treat_1', 'dragon_treat_2', 'dragon_treat_3'];
+export const DRAGON_STAGE_N = ['새끼', '어린 용', '성룡', '고룡'];
+export const dragonStage = lv => (lv || 1) >= 30 ? 3 : (lv || 1) >= 20 ? 2 : (lv || 1) >= 10 ? 1 : 0;
+export const petMaxLv = id => (PETS[id] && PETS[id].dragon) ? DRAGON_LV_MAX : PET_LV_MAX;
 /* 처치 경험치의 이 비율만큼 낀 펫에게 들어간다. */
 export const PET_XP_SHARE = 0.08;
 /* 펫 아이템 — PETS를 단일 출처로 삼아 ITEMS 항목을 자동으로 만든다. */
@@ -65,7 +89,7 @@ for (const id in PETS) {
   ITEMS['pet_' + id] = {
     n: pt.n, i: pt.i, type: 'pet', pet: id, b: pt.b, stack: 1,
     // 최소 레벨·값어치도 세션 2 기준 — 마을에 막 닿으면 공통·희귀는 바로 쓸 수 있고 영웅은 조금 더 키운 뒤에 붙는다(레벨 100).
-    lvReq: [60, 80, 100][pt.r], price: [9000, 34000, 95000][pt.r], d: pt.d
+    lvReq: pt.dragon ? 40 : [60, 80, 100][pt.r], price: pt.dragon ? 70000 : [9000, 34000, 95000][pt.r], d: pt.d
   };
 }
 /* 등급별 알 뽑기 확률 [펫 키, 가중치] — 공통(0)·희귀(1)·영웅(2) */

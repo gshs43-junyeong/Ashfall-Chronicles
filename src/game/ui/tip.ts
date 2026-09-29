@@ -4,10 +4,10 @@ import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { fmt, tr } from '../lang.js';
 import { RARITY, RARITY_MULT } from '../data.js';
-import { MULTI_FALLOFF } from '../data/items.js';
+import { ITEMS, MULTI_FALLOFF } from '../data/items.js';
 import { MACHINE } from '../data/recipes.js';
 import { BUFFS } from '../data/skills.js';
-import { PETS, PET_LV_MAX, petAtkMul, petLvMul, petXpNext } from '../data/pets.js';
+import { DRAGON_FOOD, DRAGON_GATES, DRAGON_STAGE_N, PETS, dragonStage, petAtkMul, petLvMul, petMaxLv, petXpNext } from '../data/pets.js';
 import { idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Art } from '../itemart.js';
@@ -86,14 +86,17 @@ export const TipUIPart: Bag = {
     if (it.e) h += `<div class="tstat">${tr('강화 <b>+{e}</b>', { e: it.e })} <span class="thint">${tr('(공격·방어 +{n}%p)', { n: it.e * 5 })}</span></div>`;
     /* 펫은 레벨이 곧 값어치다 — 패시브가 통째로 커지므로 지금 몇 레벨이고 다음까지 얼마나 남았는지가 한눈에 보여야 한다. */
     if (d.type === 'pet') {
-      const lv = it.lv || 1, max = lv >= PET_LV_MAX;
-      h += `<div class="tstat">${tr('레벨 <b>{lv}</b> / {petLvMax}', { lv, petLvMax: PET_LV_MAX })}` +
+      const pid = d.pet, lvMax = petMaxLv(pid), dragon = PETS[pid] && PETS[pid].dragon;
+      const lv = it.lv || 1, max = lv >= lvMax;
+      if (dragon) h += `<div class="tstat">${tr('단계 <b>{stage}</b>', { stage: tr(DRAGON_STAGE_N[dragonStage(lv)]) })}</div>`;
+      h += `<div class="tstat">${tr('레벨 <b>{lv}</b> / {petLvMax}', { lv, petLvMax: lvMax })}` +
         (max ? ` <span class="thint">${tr('(끝까지 키웠다)')}</span>` : ` <span class="thint">${tr('패시브 ×{petLvMul} · 공격 ×{petAtkMul}', { petLvMul: petLvMul(lv).toFixed(2), petAtkMul: petAtkMul(lv).toFixed(2) })}</span>`) +
         `</div>`;
       if (!max) {
-        const need = petXpNext(lv), cur = it.xp || 0;
+        const need = petXpNext(lv, pid), cur = it.xp || 0;
         h += `<div class="petxp"><i style="width:${Math.round(clamp(cur / need, 0, 1) * 100)}%"></i></div>` +
-          `<div class="thint">${tr('다음 레벨까지 {n}', { n: fmt(need - cur) })}</div>`;
+          (it.hungry ? `<div class="thint">${tr('진화를 기다린다 — {food|을} 먹여야 한다', { food: ITEMS[DRAGON_FOOD[DRAGON_GATES.indexOf(lv + 1)]].n })}</div>`
+            : `<div class="thint">${tr('다음 레벨까지 {n}', { n: fmt(need - cur) })}</div>`);
       }
     }
     if (d.power) h += `<div class="tstat">${tr('채굴 등급 <b>{power}</b>', { power: d.power })}</div>`;

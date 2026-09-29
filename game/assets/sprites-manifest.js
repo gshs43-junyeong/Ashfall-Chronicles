@@ -1562,6 +1562,118 @@ window.SPRITE_MANIFEST = {
         "frameW": 30,
         "frameH": 44,
         "count": 7
+      },
+      "pet_dragon_fire_s0": {
+        "file": "char/pet_dragon_fire_s0.png",
+        "frameW": 35,
+        "frameH": 21,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_earth_s0": {
+        "file": "char/pet_dragon_earth_s0.png",
+        "frameW": 35,
+        "frameH": 21,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_storm_s0": {
+        "file": "char/pet_dragon_storm_s0.png",
+        "frameW": 35,
+        "frameH": 21,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_dark_s0": {
+        "file": "char/pet_dragon_dark_s0.png",
+        "frameW": 35,
+        "frameH": 21,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_fire_s1": {
+        "file": "char/pet_dragon_fire_s1.png",
+        "frameW": 41,
+        "frameH": 25,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_earth_s1": {
+        "file": "char/pet_dragon_earth_s1.png",
+        "frameW": 41,
+        "frameH": 25,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_storm_s1": {
+        "file": "char/pet_dragon_storm_s1.png",
+        "frameW": 41,
+        "frameH": 25,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_dark_s1": {
+        "file": "char/pet_dragon_dark_s1.png",
+        "frameW": 41,
+        "frameH": 25,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_fire_s2": {
+        "file": "char/pet_dragon_fire_s2.png",
+        "frameW": 48,
+        "frameH": 31,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_earth_s2": {
+        "file": "char/pet_dragon_earth_s2.png",
+        "frameW": 48,
+        "frameH": 31,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_storm_s2": {
+        "file": "char/pet_dragon_storm_s2.png",
+        "frameW": 48,
+        "frameH": 31,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_dark_s2": {
+        "file": "char/pet_dragon_dark_s2.png",
+        "frameW": 48,
+        "frameH": 31,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_fire_s3": {
+        "file": "char/pet_dragon_fire_s3.png",
+        "frameW": 57,
+        "frameH": 41,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_earth_s3": {
+        "file": "char/pet_dragon_earth_s3.png",
+        "frameW": 57,
+        "frameH": 41,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_storm_s3": {
+        "file": "char/pet_dragon_storm_s3.png",
+        "frameW": 57,
+        "frameH": 41,
+        "count": 7,
+        "flap": 6
+      },
+      "pet_dragon_dark_s3": {
+        "file": "char/pet_dragon_dark_s3.png",
+        "frameW": 57,
+        "frameH": 41,
+        "count": 7,
+        "flap": 6
       }
     }
   },

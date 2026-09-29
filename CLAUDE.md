@@ -429,6 +429,12 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   물 양동이는 빈 칸에 부으면 물 한 칸. 스프링클러(기계 `sprinkler`, 물이 있을 때만 전력 3 — 전력이 없으면 그날 안 준다)는 물 양동이를 받아 아침마다 좌우 25·위아래 6칸의 밭을 가까운 것부터
   500칸까지 적시고(양동이 하나 50칸, 이미 사흘 뒤까지 젖은 밭은 건너뜀) 빈 양동이를 출구 칸에 쌓는다(`Factory.sprinkle`). 젖은 밭은 흙이 짙다(`rFarmWet`).
   물은 점 입자가 아니라 **가는 물줄기**(`streak` · `rStreaks` — objects 단계, 인물 뒤 반투명): 물뿌리개 줄 때·뜰 때, 전력과 물이 있는 스프링클러는 아침 5~9시에 뿜는다.
+- **드래곤**(data/pets.ts `dragon_*` · `DRAGON_*` · game/altar.ts `feedDragon` · entity.ts `addPetXp`): 윤슬이 알 넷(불·흙·전기·암흑)을 판다 — 깨면 그 드래곤(1레벨).
+  30레벨까지(`petXpNext(lv, id)` 는 드래곤만 완만한 곡선), 10·20·30 레벨로 오를 때는 경험치가 가득 찬 채 멈추고(`it.hungry`) 그 단계 먹이
+  (`DRAGON_FOOD` — 용의 첫 먹이 · 폭풍 호박 심장 · 별똥 심장, 폭풍 호박·구름 진주·운석·별빛 수정이 재료)를 먹어야 넘는다. 단계 `dragonStage` 0~3(새끼·어린 용·성룡·고룡).
+  그림은 `python3 tools/mkdragons.py` 가 굽는다(`char/pet_dragon_<속성>_s<단계>.png` — 날갯짓 6장 + 숨결 1장, 매니페스트 `flap`) → sync. 날개는 몸통 축을 도는
+  막이라 위아래 길이만 sin(각)으로 바뀐다(수평이면 날을 본다) · 가까운 날개는 따로 한 겹이라 몸 위에서 가장자리 선이 그어진다 · **칸 크기는 모든 장의 그림
+  범위 + 여백 2칸으로 잰다**(`layout`) · `check` 가 테두리에 칠한 칸이 있으면 멈춘다(잘림 방지). `drawPet` 은 단계 시트를 골라 초당 9장으로 날갯짓한다.
 - **하늘 섬**(world.js `buildSkyIslands` → `buildSkyTemple` · `buildSkyExtras`): 원래 섬 서른둘(섬마다 상자)에 더해 **제 난수**(`seed+'_sky'`)로
   큰 섬(속 빈 굴 `skyGrotto` + 윗면 하나) · 보통 섬(`skyFeature` — 샘 연못 · 바람의 사당 `MYSTIC.gale`(공중 점프 +1) · 별똥 자리(운석·별빛 수정) ·
   지킴이 상자 · 하늘 밭(여문 서리쑥·뼈꽃 — 낫으로 씨앗) · 무너진 열주(비문 `RUIN_HINTS.sky`)) · 조각 섬 · 구름 섬(소형 합 78개).

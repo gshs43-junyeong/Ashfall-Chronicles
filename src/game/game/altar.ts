@@ -8,7 +8,7 @@ import { MODE_OF, VILLAGE } from '../data/start.js';
 import { ENEMIES } from '../data/enemies.js';
 import { STORY_BOSSES } from '../data/skills.js';
 import { FARM_KIT } from '../data/ruins.js';
-import { EGG_POOL, PETS } from '../data/pets.js';
+import { DRAGON_GATES, DRAGON_STAGE_N, EGG_POOL, PETS, dragonStage } from '../data/pets.js';
 import { CHAPTERS, sessionOf } from '../data/story.js';
 import { SIG_FX, idef } from '../data/values.js';
 import { TS } from '../world.js';
@@ -89,6 +89,7 @@ export const AltarPart: Bag = {
   useConsumable(slot) {
     const p = this.player, it = p.bag[slot], d = idef(it);
     if (d.use.egg) { this.hatchEgg(d.use.egg); it.c--; if (it.c <= 0) p.bag[slot] = null; UI.refreshBag(); this.sfx('hatch'); return; }
+    if (d.use.dragonFeed) { this.feedDragon(slot, d.use.dragonFeed); return; }
     /* 펫 사탕 — 낀 펫이 없으면 그냥 사라지므로, 쓰기 전에 막아 준다 */
     if (d.use.petXp) {
       if (!p.equip.pet1 && !p.equip.pet2) { this.toast(tr('펫을 끼고 있어야 준다'), 'bad'); return; }
@@ -140,11 +141,32 @@ export const AltarPart: Bag = {
   /* ================= 펫 ================= */
   hatchEgg(tier) {
     const p = this.player;
-    const id = this.rng.weighted(EGG_POOL[tier]);
+    const id = PETS[tier] ? tier : this.rng.weighted(EGG_POOL[tier]);   // 드래곤 알은 그 드래곤
     const it = makeItem('pet_' + id, 1);
+    it.lv = 1;
     if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
     this.toast(tr('{pet|을} 얻었다! (장비창의 펫 칸에 끼울 수 있다)', { pet: PETS[id].n }), 'good');
     UI.refreshBag(); UI.refreshChest();
+  },
+  /** 드래곤 진화 먹이 — 문턱에서 기다리는(경험치가 다 찬) 드래곤만 먹는다. 먹으면 한 레벨 올라 다음 단계로. */
+  feedDragon(slot, stage) {
+    const p = this.player, it = p.bag[slot];
+    const gate = DRAGON_GATES[stage - 1];
+    let fed = null, near = null;
+    for (const k of ['pet1', 'pet2']) {
+      const pe = p.equip[k];
+      if (!pe || !PETS[idef(pe).pet] || !PETS[idef(pe).pet].dragon) continue;
+      if ((pe.lv || 1) === gate - 1 && pe.hungry) { fed = pe; break; }
+      if ((pe.lv || 1) === gate - 1) near = pe;
+    }
+    if (!fed) {
+      this.toast(near ? tr('아직 경험치가 덜 찼다 — 다 차면 먹는다') : tr('이 먹이를 먹을 드래곤이 없다 — {lv}레벨에서 경험치가 다 찬 드래곤이 먹는다', { lv: gate - 1 }), 'bad');
+      return;
+    }
+    fed.lv = gate; fed.xp = 0; fed.hungry = 0;
+    it.c--; if (it.c <= 0) p.bag[slot] = null;
+    this.toast(tr('{pet|이} {stage|로} 자랐다!', { pet: idef(fed).n, stage: tr(DRAGON_STAGE_N[dragonStage(gate)]) }), 'good');
+    p.recalc(); UI.refreshEquip(); UI.refreshBag(); this.sfx('level');
   },
   /** 장비창의 펫 슬롯을 실제로 따라다니는 펫 인스턴스와 맞춘다. */
   syncPets() {

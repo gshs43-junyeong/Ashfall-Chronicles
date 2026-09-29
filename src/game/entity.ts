@@ -9,7 +9,8 @@ import { HIT_FX, ITEMS, MULTI_FALLOFF } from './data/items.js';
 import { ENEMIES, MECH_PART } from './data/enemies.js';
 import { BOSS_SURGE, BUFFS, PROF_MAX, SKILLS, SURGE_FLY, profNeed } from './data/skills.js';
 import { CELL_CHARGE } from './data/ruins.js';
-import { PETS, PET_LV_MAX, PET_XP_SHARE, levelMult, petAtkMul, petDmgScale, petLvMul, petXpNext } from './data/pets.js';
+import { DRAGON_FOOD, DRAGON_GATES, PETS, PET_XP_SHARE, dragonStage, levelMult, petAtkMul, petDmgScale, petLvMul,
+  petMaxLv, petXpNext } from './data/pets.js';
 import { SIG_FX, idef } from './data/values.js';
 import { TS } from './world.js';
 
@@ -383,11 +384,22 @@ export class Player extends Ent {
       const it = this.equip[k];
       if (!it || idef(it).type !== 'pet') continue;
       it.lv = it.lv || 1; it.xp = (it.xp || 0) + n;
-      while (it.lv < PET_LV_MAX && it.xp >= petXpNext(it.lv)) {
-        it.xp -= petXpNext(it.lv); it.lv++; up = true;
+      const pid = idef(it).pet, max = petMaxLv(pid), dragon = PETS[pid] && PETS[pid].dragon;
+      while (it.lv < max && it.xp >= petXpNext(it.lv, pid)) {
+        /* 드래곤 진화 문턱 — 경험치가 가득 찬 채로 기다리고, 그 단계 먹이를 먹어야 넘는다(G.feedDragon) */
+        if (dragon && DRAGON_GATES.includes(it.lv + 1)) {
+          it.xp = petXpNext(it.lv, pid);
+          if (!it.hungry) {
+            it.hungry = 1;
+            const food = DRAGON_FOOD[DRAGON_GATES.indexOf(it.lv + 1)];
+            G.toast(tr('{idef|이} 진화를 기다린다 — {food|을} 먹이자', { idef: idef(it).n, food: ITEMS[food].n }), 'good');
+          }
+          break;
+        }
+        it.xp -= petXpNext(it.lv, pid); it.lv++; up = true;
         G.toast(tr('{idef} — {lv}레벨이 되었다', { idef: idef(it).n, lv: it.lv }), 'good');
       }
-      if (it.lv >= PET_LV_MAX) it.xp = 0;
+      if (it.lv >= max) it.xp = 0;
     }
     if (up) { this.recalc(); UI.refreshEquip(); G.sfx('level'); }
   }
@@ -820,7 +832,8 @@ export class Pet {
   /** 플레이어 기준 떠 있을 자리 — 슬롯마다 반대쪽 어깨 뒤에 선다 */
   anchor(p) {
     const side = this.slot === 0 ? -1 : 1;
-    return [p.cx - p.facing * side * 26, p.cy - 16 + Math.sin(this.t * 2.2 + this.slot) * 4];
+    const ex = this.def.dragon ? [0, 4, 10, 16][dragonStage(this.lvOf(p))] : 0;   // 큰 드래곤은 조금 더 떨어져 뜬다
+    return [p.cx - p.facing * side * (26 + ex), p.cy - 16 - ex * 0.6 + Math.sin(this.t * 2.2 + this.slot) * 4];
   }
   update(dt, p) {
     this.t += dt;
