@@ -1,4 +1,5 @@
-<!-- 애셋 모션 점검판 — 저장소 뿌리에서 서버를 띄우고 /tools/motion.html 로 연다.
+<!-- 애셋 모션 점검판 — 지금은 **드래곤 펫 시트만** 띄운다(tools/mkdragons.py 산출물 · 사용자 요청 2026-09-29).
+     저장소 뿌리에서 서버를 띄우고 /tools/motion.html 로 연다.
 
        cd /home/user/Ashfall-Chronicles && python3 -m http.server 8800
        → http://127.0.0.1:8800/tools/motion.html
@@ -6,7 +7,7 @@
      걷기·공격·죽음을 실제로 움직여 보여 주고, 칸마다 자동 검사 결과를 같이 띄운다.
      고칠지 말지는 사람이 보고 정한다 — 이 판은 "어디가 이상한가"만 짚어 준다. -->
 <meta charset="utf-8">
-<title>애셋 모션 점검판</title>
+<title>드래곤 모션 점검판</title>
 <script src="../game/assets/sprites-manifest.js"></script>
 <script>FIXED_URL = "fixed.json";</script>
 <style>
@@ -65,19 +66,9 @@ canvas{image-rendering:pixelated;display:block;border-radius:2px}
 </style>
 
 <header>
-  <h1>애셋 모션 점검판 — 걷기 · 공격 · 죽음</h1>
+  <h1>드래곤 모션 점검판 — 날갯짓 · 숨결</h1>
   <div class="row">
-    <input type="search" id="q" placeholder="이름으로 거르기 (예: golem, pet_)">
-    <label>무리
-      <select id="grp">
-        <option value="mob">몹</option>
-        <option value="pet">펫</option>
-        <option value="npc">NPC</option>
-        <option value="player">플레이어</option>
-        <option value="boss">보스</option>
-        <option value="all">전부</option>
-      </select>
-    </label>
+    <input type="search" id="q" placeholder="이름으로 거르기 (예: fire, _s3)">
     <label>배율 <input type="range" id="zoom" min="2" max="10" value="5"><b id="zv">5×</b></label>
     <label>속도 <input type="range" id="spd" min="1" max="12" value="5"><b id="sv">5</b></label>
     <label>바탕
@@ -101,8 +92,8 @@ canvas{image-rendering:pixelated;display:block;border-radius:2px}
   </div>
 </header>
 <div class="legend">
-  <b>칸 번호</b> 몹 idle1 · idle2 · move1 · move2 · atk · death1 · death2 &nbsp;·&nbsp;
-  보스는 <b>마디마다 서기 두 칸</b>이 이어지고 <b>맨 뒤가 죽음</b>입니다(공격 칸이 없습니다) &nbsp;|&nbsp;
+  <b>칸 번호</b> 날갯짓 1~6(올림 → 수평 → 내림 → 다시 올림) · 7 숨결 &nbsp;·&nbsp;
+  <b>이름</b> pet_dragon_&lt;속성&gt;_s&lt;단계&gt; — 단계 0 새끼 · 1 어린 용 · 2 성룡 · 3 고룡 &nbsp;·&nbsp; 게임 속도는 초당 9장(속도 5) &nbsp;|&nbsp;
   <b>자동 검사</b> 칸 가장자리에 닿음 · 반투명 픽셀(배경이 구워진 자국) · 떨어져 나온 덩어리 ·
   다른 칸과 똑같음(움직임 없음) &nbsp;|&nbsp;
   <b>표시</b> <span class="tag fix">수정됨</span> 결함을 고친 것(무엇을 고쳤는지 카드 아래에 적혀 있습니다) ·
@@ -145,12 +136,15 @@ function group(n, sec){
   return 'mob';
 }
 
+/* 드래곤만 — 속성 순(불 · 흙 · 전기 · 암흑) 다음 단계 순. */
+const ELEM_ORDER = ['fire','earth','storm','dark'];
 const SHEETS = [];
-for (const sec of ['characters','bosses']){
-  const box = M[sec] && M[sec].sheets; if (!box) continue;
-  for (const n in box) SHEETS.push({ name:n, sec, g:group(n,sec), m:box[n] });
+{
+  const box = (M.characters && M.characters.sheets) || {};
+  for (const n in box) if (n.startsWith('pet_dragon_')) SHEETS.push({ name:n, sec:'characters', g:'dragon', m:box[n] });
 }
-SHEETS.sort((a,b)=>a.name.localeCompare(b.name));
+const ord = n => { const [, , el, st] = n.split('_'); return ELEM_ORDER.indexOf(el) * 10 + (+st.slice(1)); };
+SHEETS.sort((a,b)=>ord(a.name) - ord(b.name));
 
 /* ---- 시트 하나를 읽어 칸마다 검사한다 ---------------------------------- */
 function analyse(img, m){
@@ -215,7 +209,7 @@ function analyse(img, m){
 
 /* ---- 카드 ------------------------------------------------------------- */
 const out = document.getElementById('out');
-const state = { zoom:5, speed:5, bg:'check', border:true, playing:true, only:false, q:'', g:'mob', fix:'all' };
+const state = { zoom:5, speed:5, bg:'check', border:true, playing:true, only:false, q:'', g:'all', fix:'all' };
 const cards = [];
 
 function paintBg(c, w, h){
@@ -235,7 +229,9 @@ function makeCard(sheet, img, info){
   const isBoss = sheet.sec === 'bosses';
   const petLike = g === 'pet';
   const bp = isBoss ? bossPlan(m) : null;
-  const lbl = bp ? bp.names : (petLike ? PET_NAMES : NAMES);
+  const flap = m.flap || 0;
+  const lbl = flap ? [...Array.from({length:flap}, (_,i)=>'날갯짓'+(i+1)), '숨결']
+    : bp ? bp.names : (petLike ? PET_NAMES : NAMES);
 
   /* 빨강(문제)과 회색(참고)을 가른다.
      ★ "변에 닿음"은 **참고**다 — 몹 시트 103장 중 75장이 어딘가 변에 닿아 있다.
@@ -271,7 +267,9 @@ function makeCard(sheet, img, info){
 
   // ---- 움직이는 미리보기 셋
   const body = el.querySelector('.body');
-  const mots = bp ? bp.mots
+  const all = Array.from({length:cnt}, (_,i)=>i);
+  const mots = flap ? [['날갯짓', all.slice(0, flap)], ['숨결', [flap]], ['날갯짓 → 숨결', all.concat([flap, flap])]]
+    : bp ? bp.mots
     : petLike
     ? [['서기',[0,1]], ['공격',[2]], ['죽음',null]]
     : [['걷기',[2,3]], ['공격',[4]], ['죽음',[5,6]]];
@@ -311,8 +309,9 @@ function makeCard(sheet, img, info){
   function draw(t){
     const z = fit(state.zoom, 130), w = fw*z, h = fh*z;
     for (const a of anim){
+      const fps = flap ? 9 * state.speed / 5 : state.speed / 3;   // 날갯짓은 게임처럼 초당 9장(속도 5)
       const step = a.list.length > 1
-        ? a.list[Math.floor(t*state.speed/3) % a.list.length]
+        ? a.list[Math.floor(t*fps) % a.list.length]
         : a.list[0];
       const c = a.cv.getContext('2d');
       a.cv.width = w; a.cv.height = h;
@@ -332,6 +331,7 @@ function makeCard(sheet, img, info){
     }
   }
   cards.push({ el, draw, name, g, flag: problems.length>0, done: !!done });
+  el._flap = flap;
   out.appendChild(el);
 }
 
@@ -345,9 +345,9 @@ for (const sheet of SHEETS){
   img.onload = () => {
     try { makeCard(sheet, img, analyse(img, sheet.m)); }
     catch(e){ console.warn(sheet.name, e); }
-    if (--pending === 0) { applyFilter(); }
+    if (--pending === 0) { cards.sort((a,b)=>ord(a.name)-ord(b.name)); for (const c of cards) out.appendChild(c.el); applyFilter(); }
   };
-  img.onerror = () => { if (--pending === 0) applyFilter(); };
+  img.onerror = () => { if (--pending === 0) { cards.sort((a,b)=>ord(a.name)-ord(b.name)); for (const c of cards) out.appendChild(c.el); applyFilter(); } };
   img.src = '../game/assets/' + sheet.m.file;
 }
 }
@@ -378,7 +378,6 @@ function applyFilter(){
 
 const $ = s => document.querySelector(s);
 $('#q').addEventListener('input', e => { state.q = e.target.value; applyFilter(); });
-$('#grp').addEventListener('change', e => { state.g = e.target.value; applyFilter(); });
 $('#zoom').addEventListener('input', e => { state.zoom = +e.target.value; $('#zv').textContent = state.zoom+'×'; });
 $('#spd').addEventListener('input', e => { state.speed = +e.target.value; $('#sv').textContent = state.speed; });
 $('#bg').addEventListener('change', e => { state.bg = e.target.value; });
