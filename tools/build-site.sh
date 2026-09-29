@@ -95,7 +95,7 @@ LEFT="$(grep -rhoE '\?v=[A-Za-z0-9_.-]+' "$ROOT/site" --include='*.html' 2>/dev/
 grep -rq '__AC_BUILD__' "$ROOT/site" --include='*.html' 2>/dev/null \
   && warn "__AC_BUILD__ 가 남아 있습니다 — 판 번호가 화면에 안 뜹니다"
 # 사이트 제 파일이 정말로 판을 달고 나가는지 — 이게 빠지면 /home 은 또 굳는다
-for want in hero.js showcase.js content.js style.css i18n.js; do   # i18n.js 는 제 판을 번역 묶음(i18n/<언어>.js)에도 붙인다
+for want in hero.js showcase.js content.js decor.js style.css i18n.js; do   # i18n.js 는 제 판을 번역 묶음(i18n/<언어>.js)에도 붙인다
   grep -q "$want?v=$BUILD" "$ROOT/site/home/index.html" 2>/dev/null \
     || warn "site/home/index.html 의 $want 에 판이 안 붙었습니다 — 캐시가 안 끊깁니다"
 done

@@ -278,13 +278,6 @@ html:lang(zh-Hans) body,html:lang(zh-Hans) h1,html:lang(zh-Hans) h2,html:lang(zh
 .ch--locked .ch-line{color:var(--bone-faint);font-style:normal;opacity:.75;}
 .ch--locked .ch-sub{color:var(--bone-faint);}
 
-/* ================= 기능 ================= */
-.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:32px;}
-.feat{background:var(--soot);padding:24px;}
-.feat h3{margin-bottom:7px;}
-.feat p{font-size:.89rem;color:var(--bone-dim);}
-.feat .n{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--ember);letter-spacing:.1em;display:block;margin-bottom:11px;}
-
 /* ================= 챕터 ================= */
 .chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:14px;margin-top:32px;}
 .ch{border:1px solid var(--line);background:var(--soot);overflow:hidden;display:flex;flex-direction:column;}
@@ -318,27 +311,44 @@ html:lang(zh-Hans) body,html:lang(zh-Hans) h1,html:lang(zh-Hans) h2,html:lang(zh
 .stage-fine{margin-top:16px;font-size:.82rem;color:var(--bone-faint);}
 .stage-fine a{color:var(--bone-dim);}
 
-/* ================= 스크린샷 ================= */
-/* 픽셀아트 게임에서 가장 강한 카드는 화면 그 자체다. 글과 숫자보다 앞에 둔다. */
-.shots{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
-  gap:18px;margin-top:32px;
+/* ================= 마을 사람들의 소개 ================= */
+/* 장면 한 장 + 그곳을 아는 사람의 말. 넓은 화면에선 그림과 말이 번갈아 좌우로, 좁으면 위아래로. */
+.tour{display:flex;flex-direction:column;gap:56px;margin-top:40px;}
+.stop{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:32px;align-items:center;}
+.stop:nth-child(even){grid-template-columns:minmax(0,1fr) minmax(0,1.55fr);}
+.stop:nth-child(even) .stop-shot{order:2;}
+.stop-shot{margin:0;border:1px solid var(--line);background:#000;}
+.stop-shot img{width:100%;height:auto;display:block;}
+.stop-talk{display:flex;flex-direction:column;gap:14px;}
+.who{display:flex;align-items:center;gap:14px;}
+.who img{width:72px;height:72px;border:1px solid var(--line);background:var(--soot-2);flex:none;}
+.who p{display:flex;flex-direction:column;line-height:1.35;}
+.who b{font-family:Hahmlet,serif;font-size:1.08rem;}
+.who span{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.08em;color:var(--star);}
+/* 말풍선 — 꼬리는 초상 쪽(위)으로 */
+.say{
+  position:relative;background:var(--soot);border:1px solid var(--line);
+  padding:16px 18px;color:var(--bone-dim);font-size:.93rem;
 }
-.shot{margin:0;border:1px solid var(--line);background:var(--soot);}
-.shot img{
-  display:block;width:100%;height:auto;
-  image-rendering:pixelated;   /* 축소본이라도 픽셀 경계를 뭉개지 않는다 */
-  border-bottom:1px solid var(--line);
+.say::before{
+  content:"";position:absolute;left:26px;top:-7px;width:12px;height:12px;
+  background:var(--soot);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg);
 }
-.shot figcaption{
-  padding:10px 14px 11px;font-size:.82rem;color:var(--bone-dim);
-  display:flex;align-items:center;gap:9px;
+.tags{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;}
+.tags li{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.06em;color:var(--ember);border:1px solid var(--ember-deep);padding:3px 9px;}
+@media (max-width:860px){
+  .stop,.stop:nth-child(even){grid-template-columns:1fr;gap:18px;}
+  .stop:nth-child(even) .stop-shot{order:0;}
 }
-.shot figcaption::before{
-  content:"";width:5px;height:5px;background:var(--ember);flex:none;
-}
-/* 첫 장은 한 칸을 통째로 써서 크게 — 위에서 게임을 켜지 않은 사람도 여기서 한 번은 크게 본다 */
-.shots .shot:first-child{grid-column:1 / -1;}
+
+/* ---- 배경 장식 — 게임 아이템 그림(decor.js) ---- */
+/* 읽는 글 뒤에 옅게 깐다. 글자와 겹치지 않도록 절 양옆 여백 띠에만 놓고, 좁은 화면에선 뺀다. */
+.decor{position:relative;overflow:hidden;}
+.decor > .wrap,.decor > .wrap-wide{position:relative;z-index:1;}
+.decor-layer{position:absolute;inset:0;pointer-events:none;z-index:0;}
+.decor-layer img{position:absolute;image-rendering:pixelated;opacity:.16;animation:drift 9s ease-in-out infinite alternate;}
+@keyframes drift{from{transform:translateY(-6px) rotate(-4deg);}to{transform:translateY(6px) rotate(4deg);}}
+@media (max-width:1320px){.decor-layer{display:none;}}
 
 /* ---- 전체 화면 ---- */
 /* 무대 아래 줄. 게임이 시작되기 전에는 JS 가 hidden 으로 접어 둔다. */
