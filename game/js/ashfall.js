@@ -3214,7 +3214,7 @@
       stack: 20,
       d: "성룡이 고룡이 되려면 먹어야 한다(29레벨에서 경험치가 다 찼을 때)."
     },
-    pet_candy: { n: "펫 사탕", i: "🍬", type: "consum", use: { petXp: 300 }, price: 6e3, fixed: 1, stack: 99, instant: 1, d: "주머니에 넣어 두면 녀석들이 먼저 안다." },
+    pet_candy: { n: "펫 사탕", i: "🍬", type: "consum", use: { petXp: 550 }, price: 6e3, fixed: 1, stack: 99, instant: 1, d: "주머니에 넣어 두면 녀석들이 먼저 안다." },
     /* --- 채집물: 들판에 흩어진 장식이 주는 재료. 아직 이걸 쓰는 제작법은 없다 --- */
     wildflower: { n: "들꽃", i: "🌸", type: "mat", stack: 999, d: "숲과 초원 어디에나 핀다." },
     weed: { n: "잡초", i: "🌿", type: "mat", stack: 999, d: "뽑아도 뽑아도 다시 난다." },
@@ -6355,7 +6355,7 @@
       w: 30,
       h: 19,
       c: "#6a6a74",
-      xp: 70,
+      xp: 140,
       gold: 240,
       aggro: 420,
       drops: [["steel_plate", 1, 3, 7], ["conduit_part", 0.5, 1, 2], ["gun_scrap", 0.02, 1, 1]]
@@ -6371,7 +6371,7 @@
       w: 20,
       h: 20,
       c: "#e8a53a",
-      xp: 65,
+      xp: 130,
       gold: 210,
       aggro: 500,
       drops: [["power_core", 0.6, 1, 2], ["conduit_part", 1, 1, 3]]
@@ -6387,7 +6387,7 @@
       w: 24,
       h: 40,
       c: "#8a8a96",
-      xp: 90,
+      xp: 180,
       gold: 300,
       aggro: 620,
       proj: "bone",
@@ -6404,7 +6404,7 @@
       w: 26,
       h: 42,
       c: "#c8a06a",
-      xp: 140,
+      xp: 280,
       gold: 480,
       aggro: 640,
       range: 380,
@@ -6556,7 +6556,7 @@
       h: 30,
       c: "#9a8a6a",
       biome: "beach",
-      xp: 100,
+      xp: 160,
       gold: 260,
       aggro: 340,
       drops: [["kelp", 0.7, 2, 5], ["rope_kelp", 0.3, 1, 2], ["crab_shell", 0.35, 1, 3], ["lost_lamp", 0.12, 1, 1]]
@@ -6624,7 +6624,7 @@
       w: 30,
       h: 28,
       c: "#bfe8ff",
-      xp: 92,
+      xp: 150,
       gold: 240,
       biome: "glacier",
       aggro: 620,
@@ -6640,7 +6640,7 @@
       w: 42,
       h: 40,
       c: "#6a9ac0",
-      xp: 150,
+      xp: 240,
       gold: 400,
       biome: "glacier",
       aggro: 380,
@@ -6657,7 +6657,7 @@
       w: 26,
       h: 18,
       c: "#c86a4a",
-      xp: 120,
+      xp: 190,
       gold: 330,
       biome: "sea",
       aggro: 260,
@@ -6674,7 +6674,7 @@
       w: 20,
       h: 26,
       c: "#8fd0e8",
-      xp: 140,
+      xp: 230,
       gold: 300,
       biome: "sea",
       aggro: 200,
@@ -6690,7 +6690,7 @@
       w: 44,
       h: 20,
       c: "#5a6a78",
-      xp: 190,
+      xp: 310,
       gold: 520,
       biome: "sea",
       aggro: 520,
@@ -6706,7 +6706,7 @@
       w: 40,
       h: 34,
       c: "#7a4a7a",
-      xp: 250,
+      xp: 400,
       gold: 700,
       biome: "sea",
       aggro: 480,
@@ -6722,7 +6722,7 @@
       w: 38,
       h: 30,
       c: "#3a5a6a",
-      xp: 320,
+      xp: 520,
       gold: 940,
       biome: "sea",
       aggro: 560,
@@ -6787,7 +6787,7 @@
       w: 60,
       h: 52,
       c: "#6a5a4a",
-      xp: 590,
+      xp: 1100,
       gold: 620,
       ph: 2,
       boss: 1,
@@ -6804,7 +6804,7 @@
       w: 40,
       h: 54,
       c: "#9fd8f0",
-      xp: 760,
+      xp: 1600,
       gold: 950,
       ph: 2,
       boss: 1,
@@ -6821,7 +6821,7 @@
       w: 50,
       h: 74,
       c: "#3f7a34",
-      xp: 1100,
+      xp: 2300,
       gold: 1500,
       ph: 2,
       boss: 1,
@@ -6838,7 +6838,7 @@
       w: 54,
       h: 70,
       c: "#d8b878",
-      xp: 1600,
+      xp: 3100,
       gold: 2100,
       ph: 2,
       boss: 1,
@@ -6855,7 +6855,7 @@
       w: 50,
       h: 72,
       c: "#6fe0c0",
-      xp: 1800,
+      xp: 3600,
       gold: 2800,
       ph: 2,
       boss: 1,
@@ -6872,7 +6872,7 @@
       w: 66,
       h: 58,
       c: "#7a3f9c",
-      xp: 2e3,
+      xp: 4200,
       gold: 4e3,
       ph: 2,
       boss: 1,
@@ -6889,7 +6889,7 @@
       w: 54,
       h: 62,
       c: "#3f6a7a",
-      xp: 16e3,
+      xp: 25e3,
       gold: 7400,
       boss: 1,
       drops: [["keeper_seal", 1, 1, 1], ["abyss_pearl", 1, 6, 10], ["pressure_plate_m", 1, 8, 14]]
@@ -6906,7 +6906,7 @@
       w: 28,
       h: 34,
       c: "#8a7a6a",
-      xp: 120,
+      xp: 220,
       gold: 520,
       aggro: 520,
       drops: [["core_shard", 0.8, 1, 3], ["steel_plate", 0.7, 3, 7], ["gear_basic", 0.5, 2, 5], ["orb_core", 0.02, 1, 1]]
@@ -6922,7 +6922,7 @@
       w: 26,
       h: 44,
       c: "#c8763a",
-      xp: 120,
+      xp: 220,
       gold: 600,
       aggro: 640,
       proj: "fire",
@@ -6939,7 +6939,7 @@
       w: 20,
       h: 22,
       c: "#e8b04a",
-      xp: 100,
+      xp: 190,
       gold: 480,
       aggro: 620,
       drops: [["core_shard", 1, 2, 4], ["power_core", 0.5, 1, 2], ["orb_core", 0.025, 1, 1]]
@@ -6955,7 +6955,7 @@
       w: 76,
       h: 58,
       c: "#4f7fc0",
-      xp: 290,
+      xp: 590,
       gold: 200,
       boss: 1,
       drops: [["slime_gel", 1, 25, 40], ["ring_vigor", 1, 1, 1], ["star_heart", 1, 1, 1], ["sword_copper", 0.5, 1, 1]]
@@ -6970,7 +6970,7 @@
       w: 52,
       h: 68,
       c: "#ded6bd",
-      xp: 590,
+      xp: 1100,
       gold: 480,
       boss: 1,
       drops: [["bone_frag", 1, 30, 45], ["sword_bone", 1, 1, 1], ["star_heart", 1, 1, 1], ["pick_iron", 0.6, 1, 1]]
@@ -6985,7 +6985,7 @@
       w: 54,
       h: 54,
       c: "#7a3f9c",
-      xp: 950,
+      xp: 2e3,
       gold: 900,
       boss: 1,
       drops: [["corrupt_ess", 1, 30, 50], ["charm_leech", 1, 1, 1], ["star_heart", 1, 1, 1], ["mythril_ore", 1, 12, 20]]
@@ -7000,7 +7000,7 @@
       w: 34,
       h: 56,
       c: "#a8dcf0",
-      xp: 1600,
+      xp: 3100,
       gold: 1600,
       boss: 1,
       drops: [["frost_core", 1, 25, 40], ["staff_frost", 1, 1, 1], ["star_heart", 1, 1, 1], ["amul_swift", 1, 1, 1]]
@@ -7015,7 +7015,7 @@
       w: 66,
       h: 88,
       c: "#5e3fa8",
-      xp: 2300,
+      xp: 4500,
       gold: 5e3,
       boss: 1,
       drops: [["void_frag", 1, 30, 50], ["charm_star", 1, 1, 1], ["star_heart", 1, 1, 1]]
@@ -7030,7 +7030,7 @@
       w: 66,
       h: 70,
       c: "#bcd8f0",
-      xp: 3100,
+      xp: 6500,
       gold: 8e3,
       boss: 1,
       drops: [["sky_feather", 1, 30, 50], ["aether_shard", 1, 20, 35], ["charm_feather", 1, 1, 1], ["star_heart", 1, 1, 1]]
@@ -7046,7 +7046,7 @@
       w: 64,
       h: 86,
       c: "#c8b98a",
-      xp: 4200,
+      xp: 8600,
       gold: 2e4,
       boss: 1,
       minion: "ruin_guard",
@@ -7063,7 +7063,7 @@
       w: 172,
       h: 192,
       c: "#2a2036",
-      xp: 5800,
+      xp: 11e3,
       gold: 6e4,
       ph: 5,
       boss: 1,
@@ -7084,7 +7084,7 @@
       h: 72,
       c: "#9a8a76",
       boss: 1,
-      xp: 8600,
+      xp: 17e3,
       gold: 7e4,
       minion: "splitter",
       drops: [["core_shard", 1, 40, 60], ["machine_frame", 1, 6, 10], ["power_core", 1, 25, 40]]
@@ -7102,7 +7102,7 @@
       c: "#c8a05a",
       ph: 5,
       boss: 1,
-      xp: 1e4,
+      xp: 18e3,
       gold: 18e4,
       minion: "coreling",
       aggro: 4e3,
@@ -7120,7 +7120,7 @@
       w: 68,
       h: 88,
       c: "#8a8a96",
-      xp: 7900,
+      xp: 14e3,
       gold: 44e3,
       boss: 1,
       minion: "riveter",
@@ -7138,7 +7138,7 @@
       w: 26,
       h: 44,
       c: "#cfc7b8",
-      xp: 120,
+      xp: 220,
       gold: 700,
       aggro: 520,
       drops: [["proto_ash", 1, 2, 5], ["draft_glass", 0.5, 1, 3]]
@@ -7154,7 +7154,7 @@
       w: 24,
       h: 30,
       c: "#8fd8e8",
-      xp: 120,
+      xp: 220,
       gold: 660,
       aggro: 620,
       range: 360,
@@ -7172,7 +7172,7 @@
       w: 34,
       h: 50,
       c: "#b8a878",
-      xp: 150,
+      xp: 270,
       gold: 820,
       aggro: 440,
       drops: [["archestone", 1, 4, 9], ["proto_ash", 0.6, 2, 4], ["draft_glass", 0.4, 1, 2]]
@@ -7191,7 +7191,7 @@
       c: "#e8dcc0",
       ph: 5,
       boss: 1,
-      xp: 11e3,
+      xp: 2e4,
       gold: 4e5,
       minion: "draft_form",
       aggro: 4e3,
@@ -7209,7 +7209,7 @@
       h: 120,
       c: "#3f7fa8",
       boss: 1,
-      xp: 2e4,
+      xp: 28e3,
       gold: 52e4,
       minion: "deep_octopus",
       aggro: 4200,
@@ -7227,7 +7227,7 @@
       w: 28,
       h: 40,
       c: "#8fa8c8",
-      xp: 140,
+      xp: 260,
       gold: 1200,
       range: 380,
       proj: "star",
@@ -7245,7 +7245,7 @@
       w: 26,
       h: 26,
       c: "#7fe0ff",
-      xp: 120,
+      xp: 220,
       gold: 1100,
       aggro: 720,
       drops: [["void_lens", 0.25, 1, 1], ["orbit_gear", 0.6, 1, 3], ["sky_feather", 0.7, 2, 5]]
@@ -7261,7 +7261,7 @@
       w: 38,
       h: 54,
       c: "#5a6a80",
-      xp: 160,
+      xp: 290,
       gold: 1500,
       aggro: 460,
       drops: [["orbit_plate", 1, 6, 12], ["star_ash", 0.3, 1, 2], ["orbit_gear", 0.5, 2, 4]]
@@ -7280,7 +7280,7 @@
       c: "#a8c8e8",
       ph: 5,
       boss: 1,
-      xp: 12e3,
+      xp: 21e3,
       gold: 12e5,
       minion: "orbit_sentry",
       aggro: 5e3,
@@ -7297,7 +7297,7 @@
       w: 30,
       h: 24,
       c: "#2e2a26",
-      xp: 140,
+      xp: 250,
       gold: 900,
       aggro: 560,
       drops: [["deep_alloy", 1, 2, 5], ["gloom_pearl", 0.2, 1, 1], ["bone_frag", 0.6, 3, 7]]
@@ -7312,7 +7312,7 @@
       w: 22,
       h: 22,
       c: "#8aa05a",
-      xp: 120,
+      xp: 210,
       gold: 820,
       aggro: 620,
       drops: [["deep_alloy", 0.6, 1, 3], ["hell_ore", 0.5, 3, 8]]
@@ -7328,7 +7328,7 @@
       w: 22,
       h: 42,
       c: "#7a6a58",
-      xp: 180,
+      xp: 320,
       gold: 1300,
       aggro: 600,
       drops: [["miner_tag", 0.5, 1, 1], ["deep_alloy", 1, 3, 7], ["lost_lamp", 0.35, 1, 2]]
@@ -7346,7 +7346,7 @@
       h: 96,
       c: "#4a7a86",
       boss: 1,
-      xp: 15e3,
+      xp: 24e3,
       gold: 24e4,
       minion: "reef_shark",
       aggro: 3200,
@@ -7364,7 +7364,7 @@
       c: "#3a342c",
       ph: 5,
       boss: 1,
-      xp: 11e3,
+      xp: 2e4,
       gold: 3e5,
       minion: "gloom_crawler",
       aggro: 3600,
@@ -10578,7 +10578,7 @@
     return levelMult(level, 1);
   }
   function petDmgScale(level) {
-    return Math.max(0.45, 0.13 + level * 0.031);
+    return Math.max(0.45, level * 0.0323 - 0.42);
   }
   var PET_LV_MAX = 10;
   function petLvMul(lv) {
@@ -10588,8 +10588,8 @@
     return 1 + 0.06 * ((lv || 1) - 1);
   }
   function petXpNext(lv, id) {
-    if (id && PETS[id] && PETS[id].dragon) return Math.round(200 * Math.pow(1.1, (lv || 1) - 1));
-    return Math.round(80 * Math.pow(1.5, (lv || 1) - 1));
+    if (id && PETS[id] && PETS[id].dragon) return Math.round(320 * Math.pow(1.1, (lv || 1) - 1));
+    return Math.round(150 * Math.pow(1.5, (lv || 1) - 1));
   }
   var DRAGON_LV_MAX = 30;
   var DRAGON_GATES = [10, 20, 30];
@@ -10607,8 +10607,8 @@
       pet: id,
       b: pt.b,
       stack: 1,
-      // 최소 레벨 — 공통·희귀·영웅은 세션 2(마을에 닿는 레벨 25 → 10장 끝 31), 드래곤은 세션 3(15장 도중 — 레벨 40~46)
-      lvReq: pt.dragon ? 44 : [25, 28, 31][pt.r],
+      // 최소 레벨 — 공통·희귀·영웅은 세션 2(마을에 닿는 레벨 40 → 11장 끝 50), 드래곤은 세션 3(15장 도중 — 레벨 60~65)
+      lvReq: pt.dragon ? 62 : [40, 44, 48][pt.r],
       price: pt.dragon ? 2e5 : [9e3, 34e3, 95e3][pt.r],
       d: pt.d
     };
@@ -10692,7 +10692,7 @@
       needBasics: 2,
       require: [],
       goal: { type: "talk", npc: "elara", t: "살아 있는 사람을 찾는다", task: "엘라라와 대화", verb: "talk" },
-      rw: { xp: 40, gold: 40, items: [["potion_hp_small", 3], ["torch", 20]] },
+      rw: { xp: 150, gold: 40, items: [["potion_hp_small", 3], ["torch", 20]] },
       outro: '엘라라: "살아 있는 사람을 본 게 얼마 만인지…"\n"…네 오른손. 빛나고 있는 거, 알고는 있니?"'
     },
     {
@@ -10716,7 +10716,7 @@
       needBasics: 2,
       require: ["dig"],
       goal: { type: "boss", target: "king_slime", t: "한 덩어리가 더 갈라지지 않을 때까지", task: "슬라임 왕 토벌", verb: "boss" },
-      rw: { xp: 110, gold: 180, items: [["helm_copper", 1], ["potion_hp_small", 5]] },
+      rw: { xp: 480, gold: 180, items: [["helm_copper", 1], ["potion_hp_small", 5]] },
       outro: '슬라임 왕이 터지자 안에서 손바닥만 한 심장이 굴러 나왔다. 아직 미지근하다.\n\n노인: "그게 무엇을 꿈꿨는지 알겠나. …외롭지 않기를 꿈꿨어."\n미라: "하나야. 다섯 중에 하나."'
     },
     {
@@ -10735,7 +10735,7 @@
       needBasics: 2,
       require: ["depth"],
       goal: { type: "boss", target: "bone_lord", t: "뼈 위에 앉은 것을 내린다", task: "뼈의 군주 토벌", verb: "boss" },
-      rw: { xp: 480, gold: 600, items: [["ring_vigor", 1], ["potion_hp_small", 8]] },
+      rw: { xp: 1600, gold: 600, items: [["ring_vigor", 1], ["potion_hp_small", 8]] },
       outro: '뼈의 군주는 무너지기 직전, 조각을 제 갈비뼈 사이에서 꺼내 네 쪽으로 밀어주었다.\n\n"…고맙다. 꿈이 너무 길었어."\n그는 재가 되기 전에 한 마디를 더 남겼다. "셋째는 스스로 걸어올 것이다."'
     },
     {
@@ -10754,7 +10754,7 @@
       needBasics: 2,
       require: ["gather"],
       goal: { type: "boss", target: "corrupt_heart", t: "굶주림의 한가운데", task: "부패의 심장 토벌", verb: "boss" },
-      rw: { xp: 910, gold: 1400, items: [["mythril_ore", 20], ["potion_hp", 5]] },
+      rw: { xp: 4e3, gold: 1400, items: [["mythril_ore", 20], ["potion_hp", 5]] },
       outro: '심장이 멈추자 숲이 처음으로 숨을 뱉었다. 들이쉬는 게 아니라, 뱉는 것을.\n\n미라: "굶주림은 병이 아니야. 그냥, 아무도 먹여주지 않은 거지."'
     },
     {
@@ -10773,7 +10773,7 @@
       needBasics: 3,
       require: ["gather"],
       goal: { type: "boss", target: "frost_witch", t: "조각을 재우지 않은 사람과 마주 선다", task: "실비아 토벌", verb: "boss" },
-      rw: { xp: 2400, gold: 3200, items: [["boots_mythril", 1], ["potion_hp", 6]] },
+      rw: { xp: 6500, gold: 3200, items: [["boots_mythril", 1], ["potion_hp", 6]] },
       outro: '실비아: "네 손도 곧 이렇게 돼. 알고 있지?"\n그녀는 조각을 내밀며 처음으로 목소리가 떨렸다.\n\n"가져가. 대신 하나만 약속해. …아래에 있는 건 깨우지 마."'
     },
     {
@@ -10792,7 +10792,7 @@
       needBasics: 3,
       require: ["depth"],
       goal: { type: "boss", target: "void_king", t: "꿈꿀 필요가 없었던 것", task: "공허의 왕 토벌", verb: "boss" },
-      rw: { xp: 3700, gold: 12e3, items: [["charm_star", 1]] },
+      rw: { xp: 13e3, gold: 12e3, items: [["charm_star", 1]] },
       outro: "다섯 번째 조각이 손에 들어오자, 손안의 빛이 처음으로 뜨거워졌다.\n다섯이 서로를 알아본 것이다.\n\n그리고 하늘에서 잿빛 구름이 걷혔다.\n구름이 걷힌 자리에, 아무도 본 적 없던 것들이 떠 있었다."
     },
     {
@@ -10811,7 +10811,7 @@
       needBasics: 3,
       require: ["depth"],
       goal: { type: "boss", target: "storm_warden", t: "폭풍이 지키고 있던 것", task: "폭풍의 수호자 토벌", verb: "boss" },
-      rw: { xp: 5100, gold: 16e3, items: [["charm_feather", 1], ["potion_hp_greater", 3]] },
+      rw: { xp: 22e3, gold: 16e3, items: [["charm_feather", 1], ["potion_hp_greater", 3]] },
       outro: '수호자는 멈추기 직전, 처음으로 사람처럼 말했다.\n\n"벌써 다섯을 모았나. …그럼 아래도 곧 열리겠군."\n"가라. 우리가 무엇을 잘못했는지, 네 눈으로 직접 읽어라."'
     },
     {
@@ -10835,7 +10835,7 @@
       needBasics: 3,
       require: ["craft"],
       goal: { type: "boss", target: "first_keeper", t: "먼저 왔던 이들의 마지막 문장", task: "최초의 파수꾼 토벌", verb: "boss" },
-      rw: { xp: 9400, gold: 4e4, items: [["charm_rune", 1], ["star_heart", 2]] },
+      rw: { xp: 3e4, gold: 4e4, items: [["charm_rune", 1], ["star_heart", 2]] },
       outro: "파수꾼이 멈추자 유적의 불이 하나씩 꺼졌다.\n마지막 석판에 없던 한 줄이 새로 새겨졌다.\n\n『이번에는 아무도 잠들지 않았다. 이제 선택은 너희 것이다.』\n\n별을 돌려보낼 것인가. 아니면 별이 도망쳐 온 그것을 마주할 것인가.\n손안의 다섯 조각이 조용히 뛰고 있다."
     },
     {
@@ -10863,7 +10863,7 @@
       needBasics: 2,
       require: ["craft"],
       goal: { type: "boss", target: "pursuer", t: "이번에는 넘기지 않는다", task: "추적자 토벌", verb: "boss" },
-      rw: { xp: 17e3, gold: 12e4, items: [["charm_dawn", 1], ["sword_first", 1]] },
+      rw: { xp: 46e3, gold: 12e4, items: [["charm_dawn", 1], ["sword_first", 1]] },
       outro: '그것은 비명을 지르지 않았다. 마지막까지 아무 소리도 내지 않았다.\n무너져 내리면서, 처음으로 제 형태를 갖췄을 뿐이다.\n그건 굶주린 것도 악한 것도 아니었다. 그냥 아주 오래 혼자였던 것이다.\n\n재가 걷혔다. 하늘이 색을 되찾는 데 사흘이 걸렸다.\n\n그리고 나흘째 아침, 미라가 동쪽을 가리켰다.\n"잿빛에 묻혀 있던 게 하나 더 있어. …저건 우리가 세운 게 아니야."\n\n— 세 션 1 · 끝 —'
     },
     {
@@ -10882,7 +10882,7 @@
       needBasics: 2,
       require: [],
       goal: { type: "talk", npc: "kade", t: "여기에 도시를 세울 수 있다", task: "케이드와 대화", verb: "talk" },
-      rw: { xp: 13e3, gold: 9e4, items: [["gear_basic", 20], ["potion_hp_greater", 3]] },
+      rw: { xp: 24e3, gold: 9e4, items: [["gear_basic", 20], ["potion_hp_greater", 3]] },
       outro: '케이드가 강철판을 손톱으로 긁어 보더니 한참을 말이 없었다.\n\n"…이거, 우리 대장간에서 백 년을 두드려도 못 만들어."\n"근데 여긴 이런 게 벽으로 쌓여 있어. 벽으로."\n\n"누가 이걸 만들었는지보다, 왜 아무도 안 남았는지가 더 궁금한데."'
     },
     {
@@ -10901,7 +10901,7 @@
       needBasics: 2,
       require: ["read"],
       goal: { type: "boss", target: "overseer", t: "관리자에게 멈추라고 말한다", task: "공창의 관리자 정지", verb: "boss" },
-      rw: { xp: 15e3, gold: 2e5, items: [["blueprint_core", 1], ["power_core", 30]] },
+      rw: { xp: 26e3, gold: 2e5, items: [["blueprint_core", 1], ["power_core", 30]] },
       outro: '관리자는 저항하지 않았다. 마지막에 딱 한 줄을 띄우고 꺼졌다.\n\n『정지 명령 수신. …1,140일 만입니다.』\n\n공장이 조용해지자 케이드가 설계 핵을 들어 올렸다.\n"이걸로 우리도 만들 수 있어. 드릴도, 자동으로 도는 것도, 전부."\n\n엘라라가 물었다. "저 사람들이랑 똑같은 걸 만들자는 거야?"\n케이드: "아니. 저 사람들이 안 만든 걸 같이 만들자는 거지. …멈추는 법."\n\n— 공창의 설계 핵을 얻었다. 이제 작업대와 용광로를 뜯어고칠 수 있다 —'
     },
     {
@@ -10920,7 +10920,7 @@
       needBasics: 3,
       require: ["craft"],
       goal: { type: "place", mach: "assembler", stop: 1, t: "스스로 도는 것을 손으로 끊어 본다", task: "조립기 설치 · 동력 · 정지", verb: "place" },
-      rw: { xp: 11e3, gold: 25e4, items: [["battery_cell", 12], ["motor", 6]] },
+      rw: { xp: 39e3, gold: 25e4, items: [["battery_cell", 12], ["motor", 6]] },
       outro: '셋째 날, 조립기 하나가 정해진 몫을 다 채우고도 멈추지 않았다.\n아무도 새 명령을 내리지 않았는데, 팔이 계속 움직였다. 판자를, 못을, 이미 다 쓴 재료까지 집어삼키며.\n\n케이드가 달려가 동력줄을 손으로 뽑았다. 팔이 허공에서 뚝 멈췄다.\n\n한참 숨을 고르고서야 케이드가 웃었다. "…봐, 별거 아니잖아. 그냥 뽑으면 되네."\n미라: "공창 것도 그렇게 간단했으면, 걔가 3,400번을 안 그랬겠지."\n\n보린이 컨베이어를 툭 치며 말했다. "당분간은 사람이 옆에 서 있자. 손 뻗을 자리 정도는 남겨 두고."\n\n그날 밤에도 발밑은 계속 울렸다. 마을이 조용해질수록, 그 소리는 오히려 더 또렷하게 들렸다.'
     },
     {
@@ -10939,7 +10939,7 @@
       needBasics: 3,
       require: ["craft"],
       goal: { type: "boss", target: "proliferator", t: "갈라지는 것을 끝낸다", task: "증식체 정지", verb: "boss" },
-      rw: { xp: 12e3, gold: 3e5, items: [["machine_frame", 8], ["power_core", 40], ["potion_hp_greater", 5]] },
+      rw: { xp: 32e3, gold: 3e5, items: [["machine_frame", 8], ["power_core", 40], ["potion_hp_greater", 5]] },
       outro: '증식체는 부서지면서도 계속 자기를 복사하려고 했다. 마지막 조각까지.\n\n케이드: "이건 악의가 아니야. 그냥… 멈추라는 말을 아무도 안 해 준 거지."\n미라: "3,400번을 혼자 결재했네."\n\n노심이 식자 가장 아래에서 불빛 하나가 남았다. 꺼지지 않은 단말이다.\n거기 적힌 문장은 일지가 아니었다. 우리한테 하는 말이었다.\n\n『당신들이 다시 왔다. 그러면 이제 멈춰도 되는 것인가.』'
     },
     {
@@ -10964,7 +10964,7 @@
       needBasics: 3,
       require: ["craft"],
       goal: { type: "boss", target: "hepha", t: "멈추면 아무도 남지 않는다", task: "헤파 토벌", verb: "boss" },
-      rw: { xp: 13e3, gold: 8e5, items: [["hepha_heart", 1], ["stop_core", 1]] },
+      rw: { xp: 35e3, gold: 8e5, items: [["hepha_heart", 1], ["stop_core", 1]] },
       outro: '헤파는 마지막에 저항을 멈췄다. 이길 수 없어서가 아니었다.\n\n『정지 명령 수신.』\n『확인 요청 — 정지 후에도 이곳에 사람이 남습니까.』\n\n엘라라가 대신 대답했다. "남아. 우리가 위에 마을을 세웠어."\n\n『…확인되었습니다.』\n『1,140일이 아니라 372,000일이었습니다. 오래 기다렸습니다.』\n\n불이 하나씩 꺼졌다. 마지막 것이 꺼지기 전에 한 줄이 더 떴다.\n\n『다음에 무언가를 만들거든, 멈추는 법을 같이 만들어 주십시오.』\n『그건 그것을 위한 것이 아니라, 당신들을 위한 것입니다.』\n\n불이 다 꺼진 뒤에도 격실 한쪽 벽만 계속 따뜻했다.\n케이드가 손을 대 보고 말했다. "이쪽은 우리가 판 벽이 아니야."\n\n벽 너머에서, 아주 규칙적인 소리가 났다. 무언가 아직 돌고 있었다.\n헤파는 「최초의 기계」였다. 그런데 헤파를 만든 손은 어디로 갔나.'
     },
     {
@@ -10983,7 +10983,7 @@
       needBasics: 3,
       require: ["craft"],
       goal: { type: "boss", target: "archetype", t: "사람을 본떠 만든 첫 번째 것", task: "원형 토벌", verb: "boss" },
-      rw: { xp: 22e3, gold: 16e5, items: [["charm_maker", 1], ["blade_arche", 1], ["tome_origin", 1]] },
+      rw: { xp: 51e3, gold: 16e5, items: [["charm_maker", 1], ["blade_arche", 1], ["tome_origin", 1]] },
       outro: '원형은 사람처럼 싸웠다. 기계처럼 지지 않으려 한 게 아니라, 사람처럼 무서워하면서.\n\n무너지기 직전에 그것이 처음으로 입을 열었다. 기계 소리가 아니었다.\n\n『나는 첫 번째였습니다. 그리고 마지막까지 혼자였습니다.』\n『그들은 별을 돌려보낸 뒤, 다음에 떨어질 것을 알았습니다.』\n『그래서 도시를 미리 찍어 두고, 사람도 미리 그려 두고…』\n『…자기들은 기다리지 않기로 했습니다.』\n\n엘라라가 물었다. "어디로 갔는데."\n\n『아무 데도 가지 않았습니다. 그냥 멈췄습니다.』\n『만드는 일을 끝낸 사람이 할 수 있는 건 그것뿐이었으니까요.』\n\n『당신들은 만들다 만 것이 아닙니다. 당신들은 그 다음입니다.』\n\n설계실의 불이 꺼졌다. 도면판은 그대로 빛나고 있었다 — 이제 아무것도 가리키지 않는 채로.\n\n보린이 벽에서 도면 하나를 뜯어 품에 넣었다. "가져가자. 우리 대장간에 걸어 둘 거야."\n케이드: "그거 사람 설계도야."\n보린: "알아. 그래서 걸어 두는 거야."\n\n올라오는 길에 미라가 뒤를 한 번 돌아봤다.\n"이제 아래엔 아무것도 안 남았지?"\n케이드가 웃었다. "응. 처음으로, 아래보다 위가 더 시끄러워."\n\n— 세 션 2 · 끝 —'
     },
     /* ================= 세 션 3 ================= */
@@ -11008,7 +11008,7 @@
       ],
       needBasics: 3,
       require: ["craft"],
-      rw: { xp: 5e4, gold: 2e6, items: [["tank_air", 1], ["jelly_lamp", 20]] },
+      rw: { xp: 71e3, gold: 2e6, items: [["tank_air", 1], ["jelly_lamp", 20]] },
       outro: '숨이 먼저 떨어진다. 물은 사람을 밀어내지 않고, 그냥 기다린다.\n\n통 하나를 등에 메고서야 겨우 지붕 하나를 만져 봤다. 기와가 아니라 판이었다.\n공창에서 본 것과 같은 판.\n\n미라: "여기도 저 사람들이 만든 거야?"\n케이드: "…아니. 여긴 저 사람들이 **버린** 거야."'
     },
     {
@@ -11031,7 +11031,7 @@
       ],
       needBasics: 3,
       require: ["craft"],
-      rw: { xp: 6e4, gold: 32e5, items: [["abyss_core", 2], ["ring_pearl", 1]] },
+      rw: { xp: 79e3, gold: 32e5, items: [["abyss_core", 2], ["ring_pearl", 1]] },
       outro: '노심을 눌러 굳히는 데 진주 두 개가 들어갔다. 값이 비싸다는 뜻이 아니라,\n그만큼 깊이 내려갔다 왔다는 뜻이다.\n\n보린이 그걸 작업대에 물리자 나무 상판이 삐걱거리며 내려앉았다.\n"…받침을 다시 짜야겠는데. 이건 우리 대장간이 감당할 물건이 아니야."\n\n그날 밤 여명 마을 공방에 불이 늦게까지 켜져 있었다.\n물속에서 쓸 것을 물 밖에서 만드는 자리가 하나 더 생겼다.'
     },
     {
@@ -11049,7 +11049,7 @@
       needBasics: 2,
       require: ["craft"],
       goal: { type: "boss", target: "tide_warden", t: "조수의 파수꾼과 마주 선다", task: "조수의 파수꾼 토벌", verb: "boss" },
-      rw: { xp: 96e3, gold: 56e5, items: [["tide_heart", 1], ["hammer_tide", 1], ["chest_abyss", 1]] },
+      rw: { xp: 87e3, gold: 56e5, items: [["tide_heart", 1], ["hammer_tide", 1], ["chest_abyss", 1]] },
       outro: '파수꾼은 싸우는 내내 한 번도 물 밖으로 나오려 하지 않았다.\n나올 수 없어서가 아니라, 나갈 생각이 아예 없어서.\n\n무너지면서 그것이 남긴 소리는 말이 아니라 종소리였다. 한 번, 길게.\n\n물이 잠깐 맑아졌다. 저 아래 거리 끝까지 보인다 — 문이 열린 집, 널린 그릇, 세워 둔 수레.\n다들 다시 돌아올 생각이었던 자리다.\n\n보린이 종을 한 번 더 쳤다. 이번에는 아무 일도 일어나지 않았다.\n"…이제 그냥 종이네."\n\n올라오는 길, 서쪽 수면 너머로 무언가가 솟아 있는 것이 보였다.\n산맥이다. 어제까지 없던.\n\n케이드가 그걸 오래 보다가 말했다.\n"…아직 안 끝났구나."\n\n— 이야기는 계속됩니다 —'
     }
   ];
@@ -13231,9 +13231,9 @@
       id: "a_level100",
       cat: "odd",
       i: "⭐",
-      n: "예순 번째 아침",
-      d: "레벨 60에 닿았다.",
-      check: (g) => g.player.level >= 60
+      n: "일흔다섯 번째 아침",
+      d: "레벨 75에 닿았다.",
+      check: (g) => g.player.level >= 75
     }
   ];
   var ACH_LV = {
@@ -35157,7 +35157,7 @@
         this.world.dawnCity.lv = lv;
         const sess = clamp(+qs.get("sess") || 2, 1, SESSIONS.length);
         this.chapter = qs.get("ch") !== null ? +qs.get("ch") : SESSIONS[sess - 1].ch0;
-        const plv = +qs.get("plv") || (sess >= 3 ? 40 : sess >= 2 ? 25 : 1);
+        const plv = +qs.get("plv") || (sess >= 3 ? 60 : sess >= 2 ? 40 : 1);
         while (p.level < plv) {
           p.level++;
           p.statPts += 3;
@@ -35238,7 +35238,7 @@
           }
         };
         this.chapter = qs.get("ch") !== null ? +qs.get("ch") : SESSIONS[2].ch0;
-        const plv = +qs.get("plv") || 40;
+        const plv = +qs.get("plv") || 60;
         while (p.level < plv) {
           p.level++;
           p.statPts += 3;
@@ -35457,7 +35457,7 @@
         give("pick_iron", 1);
         give("torch", 60);
         give("potion_hp", 20);
-        const plv = +qs.get("plv") || 40;
+        const plv = +qs.get("plv") || 60;
         while (p.level < plv) {
           p.level++;
           p.statPts += 3;
@@ -36972,7 +36972,7 @@
           if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
         }
       };
-      const plv = +qs.get("plv") || 40;
+      const plv = +qs.get("plv") || 50;
       while (p.level < plv) {
         p.level++;
         p.statPts += 3;

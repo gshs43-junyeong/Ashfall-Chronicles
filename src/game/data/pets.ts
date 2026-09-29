@@ -58,21 +58,21 @@ export const PETS: Record<string, PetDef> = {
     atk: { k: 'proj', proj: 'void', dmg: 145, cd: 1.45, range: 320, spd: 400 },
     d: '그림자 속에 있어도 눈만은 또렷이 빛난다.' }
 };
-/* 펫 피해 배율 — 위 기준 피해는 "펫을 처음 손에 넣는 레벨 28 언저리(세션 2 초입)"에서의 값이다. 레벨 60(세션 3 끝)에 2배. */
+/* 펫 피해 배율 — 위 기준 피해는 "펫을 처음 손에 넣는 레벨 44 언저리(세션 2 초입)"에서의 값이다. 레벨 75(세션 3 끝)에 2배. */
 /* 레벨 배수 — 세계의 기본 규칙(몹은 레벨을 안 탄다)에서 **일부러 뺀 것들**만 쓴다 — 사연: docs/code-history.md#h19 */
 export const LV_SCALE_BASE = 2.5;
 export function levelMult(level, pow) { return Math.pow(LV_SCALE_BASE, Math.max(0, level) / 50 * (pow || 1)); }
 export function bloodMult(level) { return levelMult(level, 1); }
 
-export function petDmgScale(level) { return Math.max(0.45, 0.13 + level * 0.031); }
+export function petDmgScale(level) { return Math.max(0.45, level * 0.0323 - 0.42); }
 
 /* ---------------- 펫 레벨 ---------------- */
 export const PET_LV_MAX = 10;
 export function petLvMul(lv) { return 1 + 0.12 * ((lv || 1) - 1); }   // 패시브 b 배수
 export function petAtkMul(lv) { return 1 + 0.06 * ((lv || 1) - 1); }  // 자동 공격 배수
 export function petXpNext(lv, id?) {
-  if (id && PETS[id] && PETS[id].dragon) return Math.round(200 * Math.pow(1.1, (lv || 1) - 1));   // 드래곤은 30까지 — 완만하게(합 3만 ≈ 세션 3 처치 900마리)
-  return Math.round(80 * Math.pow(1.5, (lv || 1) - 1));    // 10레벨까지 합 6천 ≈ 세션 2 처치 330마리
+  if (id && PETS[id] && PETS[id].dragon) return Math.round(320 * Math.pow(1.1, (lv || 1) - 1));   // 드래곤은 30까지 — 완만하게(합 4.7만 ≈ 세션 3 처치 900마리)
+  return Math.round(150 * Math.pow(1.5, (lv || 1) - 1));   // 10레벨까지 합 1.1만 ≈ 세션 2 처치 330마리
 }
 
 /* ---------------- 드래곤 ---------------- */
@@ -89,8 +89,8 @@ for (const id in PETS) {
   const pt = PETS[id];
   ITEMS['pet_' + id] = {
     n: pt.n, i: pt.i, type: 'pet', pet: id, b: pt.b, stack: 1,
-    // 최소 레벨 — 공통·희귀·영웅은 세션 2(마을에 닿는 레벨 25 → 10장 끝 31), 드래곤은 세션 3(15장 도중 — 레벨 40~46)
-    lvReq: pt.dragon ? 44 : [25, 28, 31][pt.r], price: pt.dragon ? 200000 : [9000, 34000, 95000][pt.r], d: pt.d
+    // 최소 레벨 — 공통·희귀·영웅은 세션 2(마을에 닿는 레벨 40 → 11장 끝 50), 드래곤은 세션 3(15장 도중 — 레벨 60~65)
+    lvReq: pt.dragon ? 62 : [40, 44, 48][pt.r], price: pt.dragon ? 200000 : [9000, 34000, 95000][pt.r], d: pt.d
   };
 }
 /* 등급별 알 뽑기 확률 [펫 키, 가중치] — 공통(0)·희귀(1)·영웅(2) */

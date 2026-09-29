@@ -196,8 +196,8 @@ export const ACHIEVEMENTS: AchDef[] = [
     check: g => ['det_metal', 'det_mob'].every(k => (g.crafted || {})[k]) },
   { id: 'a_play100h', h: 1, cat: 'odd', i: '🌌', n: '백 시간', d: '백 시간이 지났다.',
     check: g => ((g.tally || {}).play || 0) >= 360000 },
-  { id: 'a_level100', cat: 'odd', i: '⭐', n: '예순 번째 아침', d: '레벨 60에 닿았다.',
-    check: g => g.player.level >= 60 }
+  { id: 'a_level100', cat: 'odd', i: '⭐', n: '일흔다섯 번째 아침', d: '레벨 75에 닿았다.',
+    check: g => g.player.level >= 75 }
 ];
 /* 업적의 품 — 1(시작하자마자) ~ 10(끝까지 파고든 사람). 닿을 수 있게 되는 때(몇 장 · 어느 세션)와 거기서 드는 시간으로 매겼다.
    ★ 난이도(t)는 손으로 적지 않는다 — 여기 점수에서 나온다(≤3 쉬움 · ≤6 중간 · 7↑ 어려움). 새 업적은 점수만 더할 것. */

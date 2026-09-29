@@ -199,7 +199,7 @@ export const ITEMS: Record<string, ItemDef> = {
                     d: '어린 용이 성룡이 되려면 먹어야 한다(19레벨에서 경험치가 다 찼을 때).' },
   dragon_treat_3: { n: '별똥 심장', i: '💠', type: 'consum', use: { dragonFeed: 3 }, stack: 20,
                     d: '성룡이 고룡이 되려면 먹어야 한다(29레벨에서 경험치가 다 찼을 때).' },
-  pet_candy:   { n: '펫 사탕', i: '🍬', type: 'consum', use: { petXp: 300 }, price: 6000, fixed: 1, stack: 99, instant: 1, d: '주머니에 넣어 두면 녀석들이 먼저 안다.' },
+  pet_candy:   { n: '펫 사탕', i: '🍬', type: 'consum', use: { petXp: 550 }, price: 6000, fixed: 1, stack: 99, instant: 1, d: '주머니에 넣어 두면 녀석들이 먼저 안다.' },
 
   /* --- 채집물: 들판에 흩어진 장식이 주는 재료. 아직 이걸 쓰는 제작법은 없다 --- */
   wildflower:   { n: '들꽃', i: '🌸', type: 'mat', stack: 999, d: '숲과 초원 어디에나 핀다.' },

@@ -480,7 +480,7 @@ export const G: Bag = {
       /* 스토리 진행도 함께 맞춘다 — 여명 마을은 종장(세션 2)을 지나야 열리는 곳이라, 챕터를 0(세션 1)에 둔 채 마을만 열면 세계가 앞뒤가 안 맞는다. */
       const sess = clamp(+qs.get('sess') || 2, 1, SESSIONS.length);
       this.chapter = qs.get('ch') !== null ? +qs.get('ch') : SESSIONS[sess - 1].ch0;
-      const plv = +qs.get('plv') || (sess >= 3 ? 40 : sess >= 2 ? 25 : 1);
+      const plv = +qs.get('plv') || (sess >= 3 ? 60 : sess >= 2 ? 40 : 1);
       while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
       p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
       p.gold = +qs.get('gold') || 20000;
@@ -534,7 +534,7 @@ export const G: Bag = {
         }
       };
       this.chapter = qs.get('ch') !== null ? +qs.get('ch') : SESSIONS[2].ch0;
-      const plv = +qs.get('plv') || 40;
+      const plv = +qs.get('plv') || 60;
       while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
       p.gold = +qs.get('gold') || 300000;
       // 숨 계단 · 심해 장비 · 불빛 · 채굴
@@ -684,7 +684,7 @@ export const G: Bag = {
       give('sulfur', 99); give('sea_salt', 99); give('coal', 99); give('gunpowder', 99);
       give('iron_bar', 40); give('steel_plate', 30); give('rope_kelp', 40); give('pressure_plate_m', 20);
       give('station_work', 3); give('pick_iron', 1); give('torch', 60); give('potion_hp', 20);
-      const plv = +qs.get('plv') || 40;
+      const plv = +qs.get('plv') || 60;
       while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
       p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
       p.gold = +qs.get('gold') || 200000;
