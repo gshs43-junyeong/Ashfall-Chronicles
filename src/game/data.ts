@@ -360,7 +360,7 @@ export const TILE_DEF: TileDef[] = [
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
 /* 밭 물 — 물가(FARM_WET_R 칸 안에 민물·바닷물) 밭은 늘 젖어 있고, 그 밖의 밭은 물을 주면 FARM_WET_DAYS 번의 아침 동안 젖는다. */
 export const FARM_WET_R = 5, FARM_WET_DAYS = 3;
-/* 스프링클러 — 좌우 칸 · 위아래 칸 · 한 대가 맡는 밭 최대 칸 · 양동이 하나로 물 주는 칸. */
+/* 스프링클러 — 좌우 칸 · 위아래 칸 · 한 대가 맡는 밭 최대 칸 · 양동이 하나로 물 주는 칸(전력 3, 물이 있을 때만). */
 export const SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
 export const SEED_TILE = {
   seed_wheat: T.WHEAT0, seed_starroot: T.ROOT0, seed_ashcap: T.CAP0,

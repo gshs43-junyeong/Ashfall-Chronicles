@@ -4074,7 +4074,7 @@
   "ITEMS.water_bucket.d": "Agua para un aspersor. Haz clic derecho en una casilla vacía para verterla como una casilla de agua.",
   "ITEMS.m_sprinkler.n": "Aspersor",
   "MACHINE.sprinkler.n": "Aspersor",
-  "MACHINE.sprinkler.d": "Cárgalo con cubos de agua y cada mañana riega las parcelas más cercanas a su alrededor (25 casillas a cada lado, 6 arriba y abajo), hasta 500. Un cubo alcanza para 50 parcelas. No necesita energía.",
+  "MACHINE.sprinkler.d": "Cárgalo con cubos de agua y cada mañana riega las parcelas más cercanas a su alrededor (25 casillas a cada lado, 6 arriba y abajo), hasta 500. Un cubo alcanza para 50 parcelas. Mientras tiene agua consume un poco de energía (3) — sin energía no riega.",
   "TILE_DEF.198.n": "Aspersor"
  }
 }

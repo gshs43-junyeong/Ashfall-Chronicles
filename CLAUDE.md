@@ -426,8 +426,9 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - **밭 물**(world/plants.ts `isWet`·`waterFarm`·`nearWater` · game/act.ts `growCropsDaily`): 작물은 **젖은 밭에서만** 아침에 자란다. 젖음 = `world.wet[밭 칸] >= 그날`
   (물 주면 `FARM_WET_DAYS` 3번의 아침) 또는 `FARM_WET_R` 5칸 안에 민물·바닷물. 비 오는 아침은 하늘이 트인 밭을 적신다(`rainWater`). 물뿌리개(`watering_can`,
   아이템 `it.w` 에 남은 물 · 20번)는 물 칸 우클릭 = 채우기, 밭·작물 우클릭 = 주기. 양동이(`bucket`)는 물 칸을 **통째로** 떠 그 칸이 사라진다(`DRAWABLE`),
-  물 양동이는 빈 칸에 부으면 물 한 칸. 스프링클러(기계 `sprinkler`, 동력 없음)는 물 양동이를 받아 아침마다 좌우 25·위아래 6칸의 밭을 가까운 것부터
+  물 양동이는 빈 칸에 부으면 물 한 칸. 스프링클러(기계 `sprinkler`, 물이 있을 때만 전력 3 — 전력이 없으면 그날 안 준다)는 물 양동이를 받아 아침마다 좌우 25·위아래 6칸의 밭을 가까운 것부터
   500칸까지 적시고(양동이 하나 50칸, 이미 사흘 뒤까지 젖은 밭은 건너뜀) 빈 양동이를 출구 칸에 쌓는다(`Factory.sprinkle`). 젖은 밭은 흙이 짙다(`rFarmWet`).
+  물은 점 입자가 아니라 **가는 물줄기**(`streak` · `rStreaks` — objects 단계, 인물 뒤 반투명): 물뿌리개 줄 때·뜰 때, 전력과 물이 있는 스프링클러는 아침 5~9시에 뿜는다.
 - **하늘 섬**(world.js `buildSkyIslands` → `buildSkyTemple` · `buildSkyExtras`): 원래 섬 서른둘(섬마다 상자)에 더해 **제 난수**(`seed+'_sky'`)로
   큰 섬(속 빈 굴 `skyGrotto` + 윗면 하나) · 보통 섬(`skyFeature` — 샘 연못 · 바람의 사당 `MYSTIC.gale`(공중 점프 +1) · 별똥 자리(운석·별빛 수정) ·
   지킴이 상자 · 하늘 밭(여문 서리쑥·뼈꽃 — 낫으로 씨앗) · 무너진 열주(비문 `RUIN_HINTS.sky`)) · 조각 섬 · 구름 섬(소형 합 78개).

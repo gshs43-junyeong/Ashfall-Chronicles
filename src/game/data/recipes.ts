@@ -401,8 +401,8 @@ export const MACHINE: Record<string, MachineDef> = {
     d: '연료 없이 도는 대신, 위로 14칸이 하늘까지 트여 있어야 한다. 마을 지붕 위가 제자리다.'
   },
   sprinkler: {
-    n: '스프링클러', tile: T.M_SPRINKLER, item: 'm_sprinkler', ammo: 'water_bucket', cap: 20, wetR: SPRINKLE_R, wetMax: SPRINKLE_MAX,
-    d: '물 양동이를 넣어 두면 아침마다 둘레(좌우 25칸 · 위아래 6칸)의 밭 가운데 가까운 것부터 500칸까지 물을 준다. 양동이 하나가 50칸. 동력은 필요 없다.'
+    n: '스프링클러', tile: T.M_SPRINKLER, item: 'm_sprinkler', ammo: 'water_bucket', cap: 20, power: 3, wetR: SPRINKLE_R, wetMax: SPRINKLE_MAX,
+    d: '물 양동이를 넣어 두면 아침마다 둘레(좌우 25칸 · 위아래 6칸)의 밭 가운데 가까운 것부터 500칸까지 물을 준다. 양동이 하나가 50칸. 물이 들어 있는 동안 전력을 조금(3) 쓴다 — 전력이 없으면 물을 주지 않는다.'
   },
   mill: {
     n: '밀링기', tile: T.M_MILL, item: 'm_mill', power: 12, rot: 1, proc: 'mill', cap: 40,
