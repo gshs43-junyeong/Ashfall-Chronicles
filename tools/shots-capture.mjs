@@ -18,11 +18,13 @@ const SCENES = [
     G.spawnBoss('mine_horror', p.cx + 260, p.cy - 60);
     p.face = 1;
   } },
-  { id: 'factory', q: 'debug=factory', steps: 240, set: () => {
-    const w = G.world, p = G.player, TS = 22, ms = [...w.machines.values()];
-    const xs = ms.map(m => m.x).sort((a, b) => a - b), mx = xs[Math.floor(xs.length * 0.3)];
-    const m = ms.find(m => m.x === mx);
-    p.x = mx * TS; p.y = (m.y - 3) * TS; p.vx = p.vy = 0; G.dayT = 11 * 60;
+  { id: 'factory', q: 'debug=factory', steps: 900, view: 115, set: () => {
+    /* 기계 한 줄이 아니라 그 오른쪽의 여러 층 공장 둘(buildDebugTowers) — 지면보다 높은 기계들의 가운데에 선다 */
+    const w = G.world, p = G.player, TS = 22, gy = Math.floor((p.y + p.h) / TS);
+    const up = [...w.machines.values()].filter(m => m.y < gy - 3);
+    const x0 = Math.min(...up.map(m => m.x)), x1 = Math.max(...up.map(m => m.x));
+    p.x = ((x0 + x1) / 2 - 6) * TS; p.y = (gy - 9) * TS; p.vx = p.vy = 0; p.face = 1;   // 2층 바닥 — 카메라가 땅속을 덜 비춘다
+    G.dayT = 16 * 60 + 30;
   } },
   { id: 'sea', q: 'debug=sea', steps: 60, set: () => {
     const w = G.world, p = G.player, TS = 22;
@@ -63,7 +65,7 @@ for (const s of SCENES) {
   await page.waitForTimeout(4800);
   await page.evaluate(() => { G.player.iframe = 1e9; for (let i = 0; i < 3; i++) { if (UI.dlg) UI.closeDialogue(); __step(30); } });
   await page.addStyleTag({ content: '#chapter-card,#toasts,#cc-art{visibility:hidden!important}' });
-  await page.evaluate(v => { G.settings.view = v; G.resize(); }, +(process.env.VIEW || 150));
+  await page.evaluate(v => { G.settings.view = v; G.resize(); }, s.view || +(process.env.VIEW || 150));
   await page.evaluate(s.set);
   if (s.wait === 'meteor') {
     for (let i = 0; i < 400; i++) { if (await page.evaluate(() => { __step(1); return !!(G.meteor && G.meteor.t > 3.2); })) break; }
