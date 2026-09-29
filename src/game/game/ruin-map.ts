@@ -117,7 +117,7 @@ export const RuinMapPart: Bag = {
         o.used = 1;
         p.addBuff(m.buff);
         if (m.heal) { p.hp = p.d.maxHp; p.mp = p.d.maxMp; }
-        p.addXp(Math.round(900 * this.scale()));
+        p.addXp(Math.round(p.xpNext * 0.3));
         for (let i = 0; i < 44; i++)
           this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#bfe8ff', -34, 1.3));
         this.shake = 8;

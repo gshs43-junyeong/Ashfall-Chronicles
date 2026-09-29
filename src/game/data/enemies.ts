@@ -96,13 +96,13 @@ export const ENEMIES: Record<string, EnemyDef> = {
                 drops: [['blight_spawn', .7, 1, 3], ['corrupt_ess', .5, 1, 3], ['soul_shard', .3, 1, 2]] },
 
   /* --- 지하 공창 --- */
-  scrapcrawler: { n: '고철 기어다니개', cw: '기', hp: 900, dmg: 62, def: 30, spd: 92, ai: 'walker', w: 30, h: 19, c: '#6a6a74', xp: 900, gold: 240, aggro: 420,
+  scrapcrawler: { n: '고철 기어다니개', cw: '기', hp: 900, dmg: 62, def: 30, spd: 92, ai: 'walker', w: 30, h: 19, c: '#6a6a74', xp: 70, gold: 240, aggro: 420,
                  drops: [['steel_plate', 1, 3, 7], ['conduit_part', .5, 1, 2], ['gun_scrap', .02, 1, 1]] },
-  sparkwisp:    { n: '불티 정령', cw: '기', hp: 620, dmg: 55, def: 18, spd: 168, ai: 'flyer', w: 20, h: 20, c: '#e8a53a', xp: 820, gold: 210, aggro: 500,
+  sparkwisp:    { n: '불티 정령', cw: '기', hp: 620, dmg: 55, def: 18, spd: 168, ai: 'flyer', w: 20, h: 20, c: '#e8a53a', xp: 65, gold: 210, aggro: 500,
                  drops: [['power_core', .6, 1, 2], ['conduit_part', 1, 1, 3]] },
-  riveter:      { n: '대갈못 사수', cw: '기', hp: 1150, dmg: 74, def: 34, spd: 74, ai: 'archer', w: 24, h: 40, c: '#8a8a96', xp: 1150, gold: 300, aggro: 620, proj: 'bone',
+  riveter:      { n: '대갈못 사수', cw: '기', hp: 1150, dmg: 74, def: 34, spd: 74, ai: 'archer', w: 24, h: 40, c: '#8a8a96', xp: 90, gold: 300, aggro: 620, proj: 'bone',
                  drops: [['steel_plate', 1, 4, 9], ['iron_bar', .6, 2, 4], ['gun_scrap', .025, 1, 1]] },
-  foreman:      { n: '옛 십장', cw: '기', hp: 1900, dmg: 88, def: 44, spd: 88, ai: 'caster', w: 26, h: 42, c: '#c8a06a', xp: 1700, gold: 480, aggro: 640, range: 380, proj: 'rune',
+  foreman:      { n: '옛 십장', cw: '기', hp: 1900, dmg: 88, def: 44, spd: 88, ai: 'caster', w: 26, h: 42, c: '#c8a06a', xp: 140, gold: 480, aggro: 640, range: 380, proj: 'rune',
                  drops: [['power_core', 1, 2, 4], ['steel_plate', 1, 5, 10], ['blueprint_frag', .4, 1, 1]] },
 
   /* --- 울림 정글 --- */
@@ -128,7 +128,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   /* === 세션 3 몹 세기 기준 === */
 
   /* --- 해변 (지상, 물가) --- */
-  driftling:  { n: '표류물 더미', hp: 1400, dmg: 96, def: 48, spd: 62, ai: 'walker', w: 32, h: 30, c: '#9a8a6a', biome: 'beach', xp: 620, gold: 260, aggro: 340,
+  driftling:  { n: '표류물 더미', hp: 1400, dmg: 96, def: 48, spd: 62, ai: 'walker', w: 32, h: 30, c: '#9a8a6a', biome: 'beach', xp: 100, gold: 260, aggro: 340,
                 drops: [['kelp', .7, 2, 5], ['rope_kelp', .3, 1, 2], ['crab_shell', .35, 1, 3], ['lost_lamp', .12, 1, 1]] },
 
   /* --- 바다 부유물 (ai 'flotsam') --- */
@@ -140,21 +140,21 @@ export const ENEMIES: Record<string, EnemyDef> = {
                 drops: [['sea_salt', .7, 2, 4], ['rope_kelp', .6, 2, 4], ['shark_tooth', .35, 1, 2], ['ink_sac', .3, 1, 2], ['lost_lamp', .15, 1, 1], ['mariner_compass', .02, 1, 1]] },
 
   /* --- 빙하 지대 (지상) --- */
-  glacier_stalker:{ n: '빙하 추적자', hp: 1250, dmg: 92, def: 36, spd: 152, ai: 'jumper', w: 30, h: 28, c: '#bfe8ff', xp: 560, gold: 240, biome: 'glacier', aggro: 620,
+  glacier_stalker:{ n: '빙하 추적자', hp: 1250, dmg: 92, def: 36, spd: 152, ai: 'jumper', w: 30, h: 28, c: '#bfe8ff', xp: 92, gold: 240, biome: 'glacier', aggro: 620,
                 drops: [['ice_shard', .7, 3, 6], ['frost_core', .35, 1, 2], ['raw_meat', .4, 1, 2]] },
-  crevasse_maw: { n: '크레바스 아가리', hp: 2100, dmg: 116, def: 74, spd: 44, ai: 'walker', w: 42, h: 40, c: '#6a9ac0', xp: 900, gold: 400, biome: 'glacier', aggro: 380,
+  crevasse_maw: { n: '크레바스 아가리', hp: 2100, dmg: 116, def: 74, spd: 44, ai: 'walker', w: 42, h: 40, c: '#6a9ac0', xp: 150, gold: 400, biome: 'glacier', aggro: 380,
                 drops: [['ice_shard', .8, 6, 12], ['frost_core', .5, 2, 4], ['crystal', .3, 1, 3]] },
 
   /* --- 가라앉은 바다 --- */
-  reef_crab:  { n: '암초 게', hp: 1600, dmg: 100, def: 78, spd: 54, ai: 'swimmer', w: 26, h: 18, c: '#c86a4a', xp: 760, gold: 330, biome: 'sea', aggro: 260,
+  reef_crab:  { n: '암초 게', hp: 1600, dmg: 100, def: 78, spd: 54, ai: 'swimmer', w: 26, h: 18, c: '#c86a4a', xp: 120, gold: 330, biome: 'sea', aggro: 260,
                 drops: [['crab_shell', .65, 1, 3], ['raw_meat', .4, 1, 2]] },
-  lantern_jelly:{ n: '초롱해파리', hp: 1100, dmg: 112, def: 20, spd: 46, ai: 'swimmer', passive: 1, w: 20, h: 26, c: '#8fd0e8', xp: 820, gold: 300, biome: 'sea', aggro: 200,
+  lantern_jelly:{ n: '초롱해파리', hp: 1100, dmg: 112, def: 20, spd: 46, ai: 'swimmer', passive: 1, w: 20, h: 26, c: '#8fd0e8', xp: 140, gold: 300, biome: 'sea', aggro: 200,
                 drops: [['jelly_lamp', .5, 1, 2], ['aether_shard', .3, 1, 2]] },
-  reef_shark: { n: '암초 상어', hp: 2200, dmg: 128, def: 52, spd: 168, ai: 'swimmer', w: 44, h: 20, c: '#5a6a78', xp: 1150, gold: 520, biome: 'sea', aggro: 520,
+  reef_shark: { n: '암초 상어', hp: 2200, dmg: 128, def: 52, spd: 168, ai: 'swimmer', w: 44, h: 20, c: '#5a6a78', xp: 190, gold: 520, biome: 'sea', aggro: 520,
                 drops: [['shark_tooth', .7, 1, 3], ['raw_meat', .6, 1, 3]] },
-  deep_octopus:{ n: '심해 문어', hp: 2900, dmg: 146, def: 84, spd: 96, ai: 'swimmer', w: 40, h: 34, c: '#7a4a7a', xp: 1500, gold: 700, biome: 'sea', aggro: 480,
+  deep_octopus:{ n: '심해 문어', hp: 2900, dmg: 146, def: 84, spd: 96, ai: 'swimmer', w: 40, h: 34, c: '#7a4a7a', xp: 250, gold: 700, biome: 'sea', aggro: 480,
                 drops: [['ink_sac', .7, 1, 3], ['abyss_pearl', .22, 1, 1]] },
-  abyss_angler:{ n: '심연 초롱아귀', hp: 3600, dmg: 168, def: 96, spd: 78, ai: 'swimmer', w: 38, h: 30, c: '#3a5a6a', xp: 1950, gold: 940, biome: 'sea', aggro: 560,
+  abyss_angler:{ n: '심연 초롱아귀', hp: 3600, dmg: 168, def: 96, spd: 78, ai: 'swimmer', w: 38, h: 30, c: '#3a5a6a', xp: 320, gold: 940, biome: 'sea', aggro: 560,
                 drops: [['jelly_lamp', .6, 1, 3], ['abyss_pearl', .35, 1, 2], ['soul_shard', .3, 1, 2]] },
   drowned_hand:{ n: '가라앉은 손', hp: 260, dmg: 46, def: 18, spd: 88, ai: 'swimmer', w: 24, h: 32, c: '#6a7a86', xp: 120, gold: 62, aggro: 340,
                 drops: [['bone_frag', .7, 2, 4], ['lost_lamp', .3, 1, 1], ['soul_shard', .25, 1, 2]] },
@@ -167,118 +167,118 @@ export const ENEMIES: Record<string, EnemyDef> = {
   /* --- 유적 미니보스 --- */
   /* 이제 갱도(rank 1)와 부패(rank 6)가 체력 4배 · 공격력 3배 가까이 차이 난다 — 사연: docs/code-history.md#h9 */
   /* rank 1 — 베이스캠프 옆. */
-  mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_slime', w: 60, h: 52, c: '#6a5a4a', xp: 1500, gold: 620, ph: 2, boss: 1,
+  mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_slime', w: 60, h: 52, c: '#6a5a4a', xp: 590, gold: 620, ph: 2, boss: 1,
                  drops: [['rust_gear', 1, 2, 3], ['iron_ore', 1, 20, 30], ['lost_lamp', 1, 1, 2], ['foreman_tag', 1, 1, 1]] },
   /* rank 2 */
-  ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_witch', w: 40, h: 54, c: '#9fd8f0', xp: 2300, gold: 950, ph: 2, boss: 1,
+  ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_witch', w: 40, h: 54, c: '#9fd8f0', xp: 760, gold: 950, ph: 2, boss: 1,
                  drops: [['frozen_core', 1, 2, 3], ['frost_core', 1, 8, 14], ['ice_shard', 1, 20, 30], ['warden_seal', 1, 1, 1]] },
   /* rank 3 */
-  vine_lord:    { n: '덩굴 군주', hp: 4100, dmg: 74, def: 34, spd: 80, ai: 'b_bone', w: 50, h: 74, c: '#3f7a34', xp: 3400, gold: 1500, ph: 2, boss: 1,
+  vine_lord:    { n: '덩굴 군주', hp: 4100, dmg: 74, def: 34, spd: 80, ai: 'b_bone', w: 50, h: 74, c: '#3f7a34', xp: 1100, gold: 1500, ph: 2, boss: 1,
                  drops: [['heartwood', 1, 2, 3], ['vine_coil', 1, 12, 20], ['orchid', 1, 8, 14]] },
   /* rank 4 — 함정이 가장 촘촘한 유적의 주인 */
-  sand_guardian:{ n: '모래 파수꾼', hp: 5600, dmg: 92, def: 46, spd: 66, ai: 'b_bone', w: 54, h: 70, c: '#d8b878', xp: 4800, gold: 2100, ph: 2, boss: 1,
+  sand_guardian:{ n: '모래 파수꾼', hp: 5600, dmg: 92, def: 46, spd: 66, ai: 'b_bone', w: 54, h: 70, c: '#d8b878', xp: 1600, gold: 2100, ph: 2, boss: 1,
                  drops: [['sun_disc', 1, 2, 3], ['gold_ore', 1, 15, 25], ['venom_sting', 1, 6, 10], ['caged_sun', 1, 1, 1]] },
   /* rank 5 — 입구가 없는 굴. */
-  spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 50, h: 72, c: '#6fe0c0', xp: 6400, gold: 2800, ph: 2, boss: 1,
+  spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 50, h: 72, c: '#6fe0c0', xp: 1800, gold: 2800, ph: 2, boss: 1,
                  drops: [['queen_spore', 1, 2, 3], ['spore_sac', 1, 12, 20], ['glowcap', 1, 15, 25], ['cap_signet', 1, 1, 1]] },
   /* rank 6 — 동쪽 끝, 가장 깊은 곳 */
-  blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 66, h: 58, c: '#7a3f9c', xp: 9000, gold: 4000, ph: 2, boss: 1,
+  blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 66, h: 58, c: '#7a3f9c', xp: 2000, gold: 4000, ph: 2, boss: 1,
                  drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18], ['nest_crown', 1, 1, 1]] },
 
   /* ★ 다른 보스 열여섯은 전부 0.49~1.12배다 — 보스는 한 대가 센 것이 아니라 체력과 마디로 버티는 것이 이 게임의 규칙이다. */
-  drowned_keeper:{ n: '가라앉은 지킴이', hp: 18000, dmg: 290, def: 110, spd: 84, ai: 'b_keeper', w: 54, h: 62, c: '#3f6a7a', xp: 17000, gold: 7400, boss: 1,
+  drowned_keeper:{ n: '가라앉은 지킴이', hp: 18000, dmg: 290, def: 110, spd: 84, ai: 'b_keeper', w: 54, h: 62, c: '#3f6a7a', xp: 16000, gold: 7400, boss: 1,
                  drops: [['keeper_seal', 1, 1, 1], ['abyss_pearl', 1, 6, 10], ['pressure_plate_m', 1, 8, 14]] },
 
   /* --- 폭주로 --- */
-  splitter:   { n: '증식 기계', cw: '기', hp: 1500, dmg: 84, def: 40, spd: 84, ai: 'walker', w: 28, h: 34, c: '#8a7a6a', xp: 2600, gold: 520, aggro: 520,
+  splitter:   { n: '증식 기계', cw: '기', hp: 1500, dmg: 84, def: 40, spd: 84, ai: 'walker', w: 28, h: 34, c: '#8a7a6a', xp: 120, gold: 520, aggro: 520,
                 drops: [['core_shard', .8, 1, 3], ['steel_plate', .7, 3, 7], ['gear_basic', .5, 2, 5], ['orb_core', .02, 1, 1]] },
-  weldarm:    { n: '용접 팔', cw: '기', hp: 1800, dmg: 92, def: 46, spd: 64, ai: 'archer', w: 26, h: 44, c: '#c8763a', xp: 2900, gold: 600, aggro: 640, proj: 'fire',
+  weldarm:    { n: '용접 팔', cw: '기', hp: 1800, dmg: 92, def: 46, spd: 64, ai: 'archer', w: 26, h: 44, c: '#c8763a', xp: 120, gold: 600, aggro: 640, proj: 'fire',
                 drops: [['core_shard', .8, 1, 3], ['conduit_part', .6, 2, 4], ['refined_oil', .4, 2, 5]] },
-  coreling:   { n: '노심 파편체', cw: '기', hp: 1200, dmg: 76, def: 26, spd: 176, ai: 'flyer', w: 20, h: 22, c: '#e8b04a', xp: 2400, gold: 480, aggro: 620,
+  coreling:   { n: '노심 파편체', cw: '기', hp: 1200, dmg: 76, def: 26, spd: 176, ai: 'flyer', w: 20, h: 22, c: '#e8b04a', xp: 100, gold: 480, aggro: 620,
                 drops: [['core_shard', 1, 2, 4], ['power_core', .5, 1, 2], ['orb_core', .025, 1, 1]] },
 
   /* --- 보스 --- */
-  king_slime:  { n: '슬라임 왕', hp: 900, dmg: 24, def: 6, spd: 60, ai: 'b_slime', w: 76, h: 58, c: '#4f7fc0', xp: 420, gold: 200, boss: 1,
+  king_slime:  { n: '슬라임 왕', hp: 900, dmg: 24, def: 6, spd: 60, ai: 'b_slime', w: 76, h: 58, c: '#4f7fc0', xp: 290, gold: 200, boss: 1,
                  drops: [['slime_gel', 1, 25, 40], ['ring_vigor', 1, 1, 1], ['star_heart', 1, 1, 1], ['sword_copper', .5, 1, 1]] },
-  bone_lord:   { n: '뼈의 군주', hp: 2000, dmg: 36, def: 14, spd: 70, ai: 'b_bone', w: 52, h: 68, c: '#ded6bd', xp: 900, gold: 480, boss: 1,
+  bone_lord:   { n: '뼈의 군주', hp: 2000, dmg: 36, def: 14, spd: 70, ai: 'b_bone', w: 52, h: 68, c: '#ded6bd', xp: 590, gold: 480, boss: 1,
                  drops: [['bone_frag', 1, 30, 45], ['sword_bone', 1, 1, 1], ['star_heart', 1, 1, 1], ['pick_iron', .6, 1, 1]] },
-  corrupt_heart:{ n: '부패의 심장', hp: 3600, dmg: 48, def: 18, spd: 105, ai: 'b_heart', w: 54, h: 54, c: '#7a3f9c', xp: 1700, gold: 900, boss: 1,
+  corrupt_heart:{ n: '부패의 심장', hp: 3600, dmg: 48, def: 18, spd: 105, ai: 'b_heart', w: 54, h: 54, c: '#7a3f9c', xp: 950, gold: 900, boss: 1,
                  drops: [['corrupt_ess', 1, 30, 50], ['charm_leech', 1, 1, 1], ['star_heart', 1, 1, 1], ['mythril_ore', 1, 12, 20]] },
-  frost_witch: { n: '서리 마녀 실비아', hp: 5600, dmg: 67, def: 24, spd: 90, ai: 'b_witch', w: 34, h: 56, c: '#a8dcf0', xp: 3000, gold: 1600, boss: 1,
+  frost_witch: { n: '서리 마녀 실비아', hp: 5600, dmg: 67, def: 24, spd: 90, ai: 'b_witch', w: 34, h: 56, c: '#a8dcf0', xp: 1600, gold: 1600, boss: 1,
                  drops: [['frost_core', 1, 25, 40], ['staff_frost', 1, 1, 1], ['star_heart', 1, 1, 1], ['amul_swift', 1, 1, 1]] },
-  void_king:   { n: '공허의 왕', hp: 12000, dmg: 82, def: 32, spd: 110, ai: 'b_void', w: 66, h: 88, c: '#5e3fa8', xp: 9000, gold: 5000, boss: 1,
+  void_king:   { n: '공허의 왕', hp: 12000, dmg: 82, def: 32, spd: 110, ai: 'b_void', w: 66, h: 88, c: '#5e3fa8', xp: 2300, gold: 5000, boss: 1,
                  drops: [['void_frag', 1, 30, 50], ['charm_star', 1, 1, 1], ['star_heart', 1, 1, 1]] },
 
-  storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 117, def: 38, spd: 150, ai: 'b_storm', w: 66, h: 70, c: '#bcd8f0', xp: 16000, gold: 8000, boss: 1,
+  storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 117, def: 38, spd: 150, ai: 'b_storm', w: 66, h: 70, c: '#bcd8f0', xp: 3100, gold: 8000, boss: 1,
                  drops: [['sky_feather', 1, 30, 50], ['aether_shard', 1, 20, 35], ['charm_feather', 1, 1, 1], ['star_heart', 1, 1, 1]] },
-  first_keeper: { n: '최초의 파수꾼', cw: '기', hp: 20000, dmg: 120, def: 52, spd: 96, ai: 'b_keeper', w: 64, h: 86, c: '#c8b98a', xp: 40000, gold: 20000, boss: 1,
+  first_keeper: { n: '최초의 파수꾼', cw: '기', hp: 20000, dmg: 120, def: 52, spd: 96, ai: 'b_keeper', w: 64, h: 86, c: '#c8b98a', xp: 4200, gold: 20000, boss: 1,
                  minion: 'ruin_guard',
                  drops: [['aether_shard', 1, 40, 60], ['ruin_brick', 1, 40, 70], ['charm_rune', 1, 1, 1], ['star_heart', 1, 2, 2]] },
 
   /* 종장 — 별이 도망쳐 온 그것 */
-  pursuer:      { n: '별을 쫓아온 것', hp: 42000, dmg: 165, def: 68, spd: 128, ai: 'b_pursuer', w: 172, h: 192, c: '#2a2036', xp: 120000, gold: 60000, ph: 5, boss: 1,
+  pursuer:      { n: '별을 쫓아온 것', hp: 42000, dmg: 165, def: 68, spd: 128, ai: 'b_pursuer', w: 172, h: 192, c: '#2a2036', xp: 5800, gold: 60000, ph: 5, boss: 1,
                  minion: 'wraith', aggro: 4000,
                  drops: [['void_frag', 1, 60, 90], ['star_heart', 1, 3, 3], ['charm_dawn', 1, 1, 1], ['scythe_void', 1, 1, 1]] },
 
   /* 7단계 보스 */
   proliferator: { n: '증식체', cw: '기', hp: 46000, dmg: 150, def: 62, spd: 112, ai: 'b_prolif', w: 88, h: 72, c: '#9a8a76', boss: 1,
-                 xp: 150000, gold: 70000, minion: 'splitter',
+                 xp: 8600, gold: 70000, minion: 'splitter',
                  drops: [['core_shard', 1, 40, 60], ['machine_frame', 1, 6, 10], ['power_core', 1, 25, 40]] },
   hepha:        { n: '헤파 · 최초의 기계', cw: '기', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_hepha', w: 172, h: 216, c: '#c8a05a', ph: 5, boss: 1,
-                 xp: 400000, gold: 180000, minion: 'coreling', aggro: 4000,
+                 xp: 10000, gold: 180000, minion: 'coreling', aggro: 4000,
                  drops: [['hepha_heart', 1, 1, 1], ['core_shard', 1, 60, 90], ['aether_shard', 1, 30, 45]] },
 
   /* 세션 2 — 지하 공창의 관리자 */
-  overseer:     { n: '공창의 관리자', cw: '기', hp: 30000, dmg: 140, def: 60, spd: 104, ai: 'b_overseer', w: 68, h: 88, c: '#8a8a96', xp: 90000, gold: 44000, boss: 1,
+  overseer:     { n: '공창의 관리자', cw: '기', hp: 30000, dmg: 140, def: 60, spd: 104, ai: 'b_overseer', w: 68, h: 88, c: '#8a8a96', xp: 7900, gold: 44000, boss: 1,
                  minion: 'riveter',
                  drops: [['steel_plate', 1, 60, 90], ['power_core', 1, 20, 30], ['blueprint_core', 1, 1, 1], ['pick_drill', 1, 1, 1]] },
 
   /* --- 세션 2 종장: 설계실 --- */
-  draft_form:   { n: '미완의 형상', cw: '기', hp: 1600, dmg: 96, def: 52, spd: 82, ai: 'walker', w: 26, h: 44, c: '#cfc7b8', xp: 3200, gold: 700, aggro: 520,
+  draft_form:   { n: '미완의 형상', cw: '기', hp: 1600, dmg: 96, def: 52, spd: 82, ai: 'walker', w: 26, h: 44, c: '#cfc7b8', xp: 120, gold: 700, aggro: 520,
                  drops: [['proto_ash', 1, 2, 5], ['draft_glass', .5, 1, 3]] },
-  scribe_hand:  { n: '기록하는 손', cw: '기', hp: 1300, dmg: 88, def: 34, spd: 150, ai: 'caster', w: 24, h: 30, c: '#8fd8e8', xp: 3000, gold: 660, aggro: 620, range: 360, proj: 'rune',
+  scribe_hand:  { n: '기록하는 손', cw: '기', hp: 1300, dmg: 88, def: 34, spd: 150, ai: 'caster', w: 24, h: 30, c: '#8fd8e8', xp: 120, gold: 660, aggro: 620, range: 360, proj: 'rune',
                  drops: [['draft_glass', 1, 2, 4], ['proto_ash', .5, 1, 2], ['aether_shard', .3, 1, 3]] },
-  mold_walker:  { n: '거푸집 보행체', cw: '기', hp: 2400, dmg: 110, def: 66, spd: 62, ai: 'walker', w: 34, h: 50, c: '#b8a878', xp: 3800, gold: 820, aggro: 440,
+  mold_walker:  { n: '거푸집 보행체', cw: '기', hp: 2400, dmg: 110, def: 66, spd: 62, ai: 'walker', w: 34, h: 50, c: '#b8a878', xp: 150, gold: 820, aggro: 440,
                  drops: [['archestone', 1, 4, 9], ['proto_ash', .6, 2, 4], ['draft_glass', .4, 1, 2]] },
 
   /* 세션 2 최종 — 사람을 본떠 만든 첫 번째 것 */
   archetype:    { n: '원형 · 첫 번째 설계', cw: '기', hp: 105000, dmg: 215, def: 92, spd: 126, ai: 'b_arche', w: 192, h: 232, c: '#e8dcc0', ph: 5, boss: 1,
-                 xp: 900000, gold: 400000, minion: 'draft_form', aggro: 4000,
+                 xp: 11000, gold: 400000, minion: 'draft_form', aggro: 4000,
                  drops: [['arche_core', 1, 1, 1], ['draft_glass', 1, 40, 60], ['archestone', 1, 30, 50]] },
 
   /* --- 세션 3 보스 --- */
   tide_warden:  { n: '조수의 파수꾼 · 물이 지운 것', hp: 148000, dmg: 310, def: 104, spd: 96, ai: 'b_keeper', w: 104, h: 120, c: '#3f7fa8', boss: 1,
-                 xp: 1200000, gold: 520000, minion: 'deep_octopus', aggro: 4200,
+                 xp: 20000, gold: 520000, minion: 'deep_octopus', aggro: 4200,
                  drops: [['abyss_pearl', 1, 20, 30], ['abyss_core', 1, 4, 6], ['tide_heart', 1, 1, 1]] },
 
   /* --- 특별 유적 ① 부유 성채 (하늘) --- */
-  orbit_sentry: { n: '궤도 파수병', cw: '기', hp: 3200, dmg: 128, def: 74, spd: 112, ai: 'caster', w: 28, h: 40, c: '#8fa8c8', xp: 5200, gold: 1200, range: 380, proj: 'star', aggro: 640,
+  orbit_sentry: { n: '궤도 파수병', cw: '기', hp: 3200, dmg: 128, def: 74, spd: 112, ai: 'caster', w: 28, h: 40, c: '#8fa8c8', xp: 140, gold: 1200, range: 380, proj: 'star', aggro: 640,
                  drops: [['orbit_plate', 1, 3, 8], ['orbit_gear', .5, 1, 2], ['aether_shard', .4, 2, 5]] },
-  meridian_eye: { n: '자오선의 눈', cw: '기', hp: 2600, dmg: 116, def: 44, spd: 186, ai: 'flyer', w: 26, h: 26, c: '#7fe0ff', xp: 4800, gold: 1100, aggro: 720,
+  meridian_eye: { n: '자오선의 눈', cw: '기', hp: 2600, dmg: 116, def: 44, spd: 186, ai: 'flyer', w: 26, h: 26, c: '#7fe0ff', xp: 120, gold: 1100, aggro: 720,
                  drops: [['void_lens', .25, 1, 1], ['orbit_gear', .6, 1, 3], ['sky_feather', .7, 2, 5]] },
-  ballast_form: { n: '평형추', cw: '기', hp: 5200, dmg: 152, def: 96, spd: 54, ai: 'walker', w: 38, h: 54, c: '#5a6a80', xp: 6400, gold: 1500, aggro: 460,
+  ballast_form: { n: '평형추', cw: '기', hp: 5200, dmg: 152, def: 96, spd: 54, ai: 'walker', w: 38, h: 54, c: '#5a6a80', xp: 160, gold: 1500, aggro: 460,
                  drops: [['orbit_plate', 1, 6, 12], ['star_ash', .3, 1, 2], ['orbit_gear', .5, 2, 4]] },
 
   /* 부유 성채의 주인 — 지금까지 나온 무엇보다 세다. */
   restorer:     { n: '환원기 · 되돌리려는 것', cw: '기', hp: 320000, dmg: 340, def: 130, spd: 132, ai: 'b_restorer', w: 236, h: 264, c: '#a8c8e8', ph: 5, boss: 1,
-                 xp: 2600000, gold: 1200000, minion: 'orbit_sentry', aggro: 5000,
+                 xp: 12000, gold: 1200000, minion: 'orbit_sentry', aggro: 5000,
                  drops: [['star_ash', 1, 4, 6], ['orbit_gear', 1, 40, 60], ['void_lens', 1, 2, 3], ['lance_orbit', 1, 1, 1]] },
 
   /* --- 특별 유적 ② 무너진 갱 (최심부) --- */
-  gloom_crawler:{ n: '어둠을 기는 것', hp: 2800, dmg: 118, def: 56, spd: 128, ai: 'walker', w: 30, h: 24, c: '#2e2a26', xp: 4200, gold: 900, aggro: 560,
+  gloom_crawler:{ n: '어둠을 기는 것', hp: 2800, dmg: 118, def: 56, spd: 128, ai: 'walker', w: 30, h: 24, c: '#2e2a26', xp: 140, gold: 900, aggro: 560,
                  drops: [['deep_alloy', 1, 2, 5], ['gloom_pearl', .2, 1, 1], ['bone_frag', .6, 3, 7]] },
-  damp_wisp:    { n: '가스 도깨비불', hp: 1800, dmg: 104, def: 28, spd: 158, ai: 'flyer', w: 22, h: 22, c: '#8aa05a', xp: 3800, gold: 820, aggro: 620,
+  damp_wisp:    { n: '가스 도깨비불', hp: 1800, dmg: 104, def: 28, spd: 158, ai: 'flyer', w: 22, h: 22, c: '#8aa05a', xp: 120, gold: 820, aggro: 620,
                  drops: [['deep_alloy', .6, 1, 3], ['hell_ore', .5, 3, 8]] },
-  lost_miner:   { n: '올라오지 못한 사람', cw: '명', hp: 4200, dmg: 136, def: 68, spd: 88, ai: 'walker', w: 22, h: 42, c: '#7a6a58', xp: 5600, gold: 1300, aggro: 600,
+  lost_miner:   { n: '올라오지 못한 사람', cw: '명', hp: 4200, dmg: 136, def: 68, spd: 88, ai: 'walker', w: 22, h: 42, c: '#7a6a58', xp: 180, gold: 1300, aggro: 600,
                  drops: [['miner_tag', .5, 1, 1], ['deep_alloy', 1, 3, 7], ['lost_lamp', .35, 1, 2]] },
 
   /* 무너진 갱의 주인 — 스토리와 무관한 순수 탐험 보상 */
   /* 떠 있는 섬을 붙들고 있는 것 — 스토리와 무관하다. */
   isle_keeper:  { n: '섬을 든 것', hp: 34000, dmg: 300, def: 118, spd: 92, ai: 'b_keeper', w: 88, h: 96, c: '#4a7a86', boss: 1,
-                 xp: 480000, gold: 240000, minion: 'reef_shark', aggro: 3200,
+                 xp: 15000, gold: 240000, minion: 'reef_shark', aggro: 3200,
                  drops: [['abyss_pearl', 1, 6, 10], ['abyss_core', 1, 2, 3], ['coconut', 1, 8, 14]] },
   shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_heart', w: 184, h: 168, c: '#3a342c', ph: 5, boss: 1,
-                 xp: 620000, gold: 300000, minion: 'gloom_crawler', aggro: 3600,
+                 xp: 11000, gold: 300000, minion: 'gloom_crawler', aggro: 3600,
                  drops: [['gloom_pearl', 1, 3, 4], ['deep_alloy', 1, 40, 60], ['miner_tag', 1, 2, 3], ['hammer_cave', 1, 1, 1]] }
 };
 

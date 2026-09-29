@@ -188,10 +188,10 @@ export const ITEMS: Record<string, ItemDef> = {
     d: '가까운 것들이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머의 몬스터가 화면에도 드러난다. 보고 싶지 않은 것까지 보인다.' },
   coconut:     { n: '코코넛', i: '🥥', type: 'consum', use: { hp: 90, buff: 'fed_coconut' }, cd: 8, price: 90, stack: 99,
     d: '단단한 껍질 안에 물이 차 있다. 섬에서만 난다.' },
-  egg_dragon_fire:  { n: '불의 드래곤 알', i: '🥚', type: 'consum', use: { egg: 'dragon_fire' }, price: 48000, fixed: 1, stack: 5, d: '손을 대면 데일 듯 뜨겁다. 깨면 불의 드래곤이 나온다.' },
-  egg_dragon_earth: { n: '흙의 드래곤 알', i: '🥚', type: 'consum', use: { egg: 'dragon_earth' }, price: 48000, fixed: 1, stack: 5, d: '돌처럼 무겁다. 깨면 흙의 드래곤이 나온다.' },
-  egg_dragon_storm: { n: '전기의 드래곤 알', i: '🥚', type: 'consum', use: { egg: 'dragon_storm' }, price: 48000, fixed: 1, stack: 5, d: '쥐면 손끝이 저릿하다. 깨면 전기의 드래곤이 나온다.' },
-  egg_dragon_dark:  { n: '암흑의 드래곤 알', i: '🥚', type: 'consum', use: { egg: 'dragon_dark' }, price: 48000, fixed: 1, stack: 5, d: '빛을 먹는 듯 어둡다. 깨면 암흑의 드래곤이 나온다.' },
+  egg_dragon_fire:  { n: '불의 드래곤 알', i: '🥚', type: 'consum', use: { egg: 'dragon_fire' }, price: 240000, fixed: 1, stack: 5, d: '손을 대면 데일 듯 뜨겁다. 깨면 불의 드래곤이 나온다.' },
+  egg_dragon_earth: { n: '흙의 드래곤 알', i: '🥚', type: 'consum', use: { egg: 'dragon_earth' }, price: 240000, fixed: 1, stack: 5, d: '돌처럼 무겁다. 깨면 흙의 드래곤이 나온다.' },
+  egg_dragon_storm: { n: '전기의 드래곤 알', i: '🥚', type: 'consum', use: { egg: 'dragon_storm' }, price: 240000, fixed: 1, stack: 5, d: '쥐면 손끝이 저릿하다. 깨면 전기의 드래곤이 나온다.' },
+  egg_dragon_dark:  { n: '암흑의 드래곤 알', i: '🥚', type: 'consum', use: { egg: 'dragon_dark' }, price: 240000, fixed: 1, stack: 5, d: '빛을 먹는 듯 어둡다. 깨면 암흑의 드래곤이 나온다.' },
   /* 드래곤 진화 먹이 — 경험치가 문턱(9·19·29레벨)에 차면 그 단계 먹이를 먹여야 다음 단계로 넘어간다 */
   dragon_treat_1: { n: '용의 첫 먹이', i: '🍖', type: 'consum', use: { dragonFeed: 1 }, price: 9000, stack: 20,
                     d: '새끼 드래곤이 어린 용이 되려면 먹어야 한다(9레벨에서 경험치가 다 찼을 때).' },
@@ -199,7 +199,7 @@ export const ITEMS: Record<string, ItemDef> = {
                     d: '어린 용이 성룡이 되려면 먹어야 한다(19레벨에서 경험치가 다 찼을 때).' },
   dragon_treat_3: { n: '별똥 심장', i: '💠', type: 'consum', use: { dragonFeed: 3 }, stack: 20,
                     d: '성룡이 고룡이 되려면 먹어야 한다(29레벨에서 경험치가 다 찼을 때).' },
-  pet_candy:   { n: '펫 사탕', i: '🍬', type: 'consum', use: { petXp: 1200 }, price: 6000, fixed: 1, stack: 99, instant: 1, d: '주머니에 넣어 두면 녀석들이 먼저 안다.' },
+  pet_candy:   { n: '펫 사탕', i: '🍬', type: 'consum', use: { petXp: 300 }, price: 6000, fixed: 1, stack: 99, instant: 1, d: '주머니에 넣어 두면 녀석들이 먼저 안다.' },
 
   /* --- 채집물: 들판에 흩어진 장식이 주는 재료. 아직 이걸 쓰는 제작법은 없다 --- */
   wildflower:   { n: '들꽃', i: '🌸', type: 'mat', stack: 999, d: '숲과 초원 어디에나 핀다.' },

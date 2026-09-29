@@ -23,7 +23,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 2,
     require: [],
     goal: { type: 'talk', npc: 'elara', t: '살아 있는 사람을 찾는다', task: '엘라라와 대화', verb: 'talk' },
-    rw: { xp: 60, gold: 40, items: [['potion_hp_small', 3], ['torch', 20]] },
+    rw: { xp: 40, gold: 40, items: [['potion_hp_small', 3], ['torch', 20]] },
     outro: '엘라라: "살아 있는 사람을 본 게 얼마 만인지…"\n' +
       '"…네 오른손. 빛나고 있는 거, 알고는 있니?"'
   },
@@ -47,7 +47,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 2,
     require: ['dig'],
     goal: { type: 'boss', target: 'king_slime', t: '한 덩어리가 더 갈라지지 않을 때까지', task: '슬라임 왕 토벌', verb: 'boss' },
-    rw: { xp: 260, gold: 180, items: [['helm_copper', 1], ['potion_hp_small', 5]] },
+    rw: { xp: 110, gold: 180, items: [['helm_copper', 1], ['potion_hp_small', 5]] },
     outro: '슬라임 왕이 터지자 안에서 손바닥만 한 심장이 굴러 나왔다. 아직 미지근하다.\n\n' +
       '노인: "그게 무엇을 꿈꿨는지 알겠나. …외롭지 않기를 꿈꿨어."\n' +
       '미라: "하나야. 다섯 중에 하나."'
@@ -68,7 +68,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 2,
     require: ['depth'],
     goal: { type: 'boss', target: 'bone_lord', t: '뼈 위에 앉은 것을 내린다', task: '뼈의 군주 토벌', verb: 'boss' },
-    rw: { xp: 900, gold: 600, items: [['ring_vigor', 1], ['potion_hp_small', 8]] },
+    rw: { xp: 480, gold: 600, items: [['ring_vigor', 1], ['potion_hp_small', 8]] },
     outro: '뼈의 군주는 무너지기 직전, 조각을 제 갈비뼈 사이에서 꺼내 네 쪽으로 밀어주었다.\n\n' +
       '"…고맙다. 꿈이 너무 길었어."\n' +
       '그는 재가 되기 전에 한 마디를 더 남겼다. "셋째는 스스로 걸어올 것이다."'
@@ -89,7 +89,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 2,
     require: ['gather'],
     goal: { type: 'boss', target: 'corrupt_heart', t: '굶주림의 한가운데', task: '부패의 심장 토벌', verb: 'boss' },
-    rw: { xp: 2400, gold: 1400, items: [['mythril_ore', 20], ['potion_hp', 5]] },
+    rw: { xp: 910, gold: 1400, items: [['mythril_ore', 20], ['potion_hp', 5]] },
     outro: '심장이 멈추자 숲이 처음으로 숨을 뱉었다. 들이쉬는 게 아니라, 뱉는 것을.\n\n' +
       '미라: "굶주림은 병이 아니야. 그냥, 아무도 먹여주지 않은 거지."'
   },
@@ -110,7 +110,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 3,
     require: ['gather'],
     goal: { type: 'boss', target: 'frost_witch', t: '조각을 재우지 않은 사람과 마주 선다', task: '실비아 토벌', verb: 'boss' },
-    rw: { xp: 6000, gold: 3200, items: [['boots_mythril', 1], ['potion_hp', 6]] },
+    rw: { xp: 2400, gold: 3200, items: [['boots_mythril', 1], ['potion_hp', 6]] },
     outro: '실비아: "네 손도 곧 이렇게 돼. 알고 있지?"\n' +
       '그녀는 조각을 내밀며 처음으로 목소리가 떨렸다.\n\n' +
       '"가져가. 대신 하나만 약속해. …아래에 있는 건 깨우지 마."'
@@ -131,7 +131,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 3,
     require: ['depth'],
     goal: { type: 'boss', target: 'void_king', t: '꿈꿀 필요가 없었던 것', task: '공허의 왕 토벌', verb: 'boss' },
-    rw: { xp: 20000, gold: 12000, items: [['charm_star', 1]] },
+    rw: { xp: 3700, gold: 12000, items: [['charm_star', 1]] },
     outro: '다섯 번째 조각이 손에 들어오자, 손안의 빛이 처음으로 뜨거워졌다.\n' +
       '다섯이 서로를 알아본 것이다.\n\n' +
       '그리고 하늘에서 잿빛 구름이 걷혔다.\n' +
@@ -153,7 +153,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 3,
     require: ['depth'],
     goal: { type: 'boss', target: 'storm_warden', t: '폭풍이 지키고 있던 것', task: '폭풍의 수호자 토벌', verb: 'boss' },
-    rw: { xp: 30000, gold: 16000, items: [['charm_feather', 1], ['potion_hp_greater', 3]] },
+    rw: { xp: 5100, gold: 16000, items: [['charm_feather', 1], ['potion_hp_greater', 3]] },
     outro: '수호자는 멈추기 직전, 처음으로 사람처럼 말했다.\n\n' +
       '"벌써 다섯을 모았나. …그럼 아래도 곧 열리겠군."\n' +
       '"가라. 우리가 무엇을 잘못했는지, 네 눈으로 직접 읽어라."'
@@ -176,7 +176,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 3,
     require: ['craft'],
     goal: { type: 'boss', target: 'first_keeper', t: '먼저 왔던 이들의 마지막 문장', task: '최초의 파수꾼 토벌', verb: 'boss' },
-    rw: { xp: 90000, gold: 40000, items: [['charm_rune', 1], ['star_heart', 2]] },
+    rw: { xp: 9400, gold: 40000, items: [['charm_rune', 1], ['star_heart', 2]] },
     outro: '파수꾼이 멈추자 유적의 불이 하나씩 꺼졌다.\n' +
       '마지막 석판에 없던 한 줄이 새로 새겨졌다.\n\n' +
       '『이번에는 아무도 잠들지 않았다. 이제 선택은 너희 것이다.』\n\n' +
@@ -202,7 +202,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 2,
     require: ['craft'],
     goal: { type: 'boss', target: 'pursuer', t: '이번에는 넘기지 않는다', task: '추적자 토벌', verb: 'boss' },
-    rw: { xp: 260000, gold: 120000, items: [['charm_dawn', 1], ['sword_first', 1]] },
+    rw: { xp: 17000, gold: 120000, items: [['charm_dawn', 1], ['sword_first', 1]] },
     outro: '그것은 비명을 지르지 않았다. 마지막까지 아무 소리도 내지 않았다.\n' +
       '무너져 내리면서, 처음으로 제 형태를 갖췄을 뿐이다.\n' +
       '그건 굶주린 것도 악한 것도 아니었다. 그냥 아주 오래 혼자였던 것이다.\n\n' +
@@ -228,7 +228,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 2,
     require: [],
     goal: { type: 'talk', npc: 'kade', t: '여기에 도시를 세울 수 있다', task: '케이드와 대화', verb: 'talk' },
-    rw: { xp: 320000, gold: 90000, items: [['gear_basic', 20], ['potion_hp_greater', 3]] },
+    rw: { xp: 13000, gold: 90000, items: [['gear_basic', 20], ['potion_hp_greater', 3]] },
     outro: '케이드가 강철판을 손톱으로 긁어 보더니 한참을 말이 없었다.\n\n' +
       '"…이거, 우리 대장간에서 백 년을 두드려도 못 만들어."\n' +
       '"근데 여긴 이런 게 벽으로 쌓여 있어. 벽으로."\n\n' +
@@ -252,7 +252,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 2,
     require: ['read'],
     goal: { type: 'boss', target: 'overseer', t: '관리자에게 멈추라고 말한다', task: '공창의 관리자 정지', verb: 'boss' },
-    rw: { xp: 600000, gold: 200000, items: [['blueprint_core', 1], ['power_core', 30]] },
+    rw: { xp: 15000, gold: 200000, items: [['blueprint_core', 1], ['power_core', 30]] },
     outro: '관리자는 저항하지 않았다. 마지막에 딱 한 줄을 띄우고 꺼졌다.\n\n' +
       '『정지 명령 수신. …1,140일 만입니다.』\n\n' +
       '공장이 조용해지자 케이드가 설계 핵을 들어 올렸다.\n' +
@@ -279,7 +279,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 3,
     require: ['craft'],
     goal: { type: 'place', mach: 'assembler', stop: 1, t: '스스로 도는 것을 손으로 끊어 본다', task: '조립기 설치 · 동력 · 정지', verb: 'place' },
-    rw: { xp: 750000, gold: 250000, items: [['battery_cell', 12], ['motor', 6]] },
+    rw: { xp: 11000, gold: 250000, items: [['battery_cell', 12], ['motor', 6]] },
     outro: '셋째 날, 조립기 하나가 정해진 몫을 다 채우고도 멈추지 않았다.\n' +
       '아무도 새 명령을 내리지 않았는데, 팔이 계속 움직였다. 판자를, 못을, 이미 다 쓴 재료까지 집어삼키며.\n\n' +
       '케이드가 달려가 동력줄을 손으로 뽑았다. 팔이 허공에서 뚝 멈췄다.\n\n' +
@@ -307,7 +307,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 3,
     require: ['craft'],
     goal: { type: 'boss', target: 'proliferator', t: '갈라지는 것을 끝낸다', task: '증식체 정지', verb: 'boss' },
-    rw: { xp: 900000, gold: 300000, items: [['machine_frame', 8], ['power_core', 40], ['potion_hp_greater', 5]] },
+    rw: { xp: 12000, gold: 300000, items: [['machine_frame', 8], ['power_core', 40], ['potion_hp_greater', 5]] },
     outro: '증식체는 부서지면서도 계속 자기를 복사하려고 했다. 마지막 조각까지.\n\n' +
       '케이드: "이건 악의가 아니야. 그냥… 멈추라는 말을 아무도 안 해 준 거지."\n' +
       '미라: "3,400번을 혼자 결재했네."\n\n' +
@@ -336,7 +336,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 3,
     require: ['craft'],
     goal: { type: 'boss', target: 'hepha', t: '멈추면 아무도 남지 않는다', task: '헤파 토벌', verb: 'boss' },
-    rw: { xp: 2000000, gold: 800000, items: [['hepha_heart', 1], ['stop_core', 1]] },
+    rw: { xp: 13000, gold: 800000, items: [['hepha_heart', 1], ['stop_core', 1]] },
     outro: '헤파는 마지막에 저항을 멈췄다. 이길 수 없어서가 아니었다.\n\n' +
       '『정지 명령 수신.』\n' +
       '『확인 요청 — 정지 후에도 이곳에 사람이 남습니까.』\n\n' +
@@ -372,7 +372,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 3,
     require: ['craft'],
     goal: { type: 'boss', target: 'archetype', t: '사람을 본떠 만든 첫 번째 것', task: '원형 토벌', verb: 'boss' },
-    rw: { xp: 4000000, gold: 1600000, items: [['charm_maker', 1], ['blade_arche', 1], ['tome_origin', 1]] },
+    rw: { xp: 22000, gold: 1600000, items: [['charm_maker', 1], ['blade_arche', 1], ['tome_origin', 1]] },
     outro: '원형은 사람처럼 싸웠다. 기계처럼 지지 않으려 한 게 아니라, 사람처럼 무서워하면서.\n\n' +
       '무너지기 직전에 그것이 처음으로 입을 열었다. 기계 소리가 아니었다.\n\n' +
       '『나는 첫 번째였습니다. 그리고 마지막까지 혼자였습니다.』\n' +
@@ -414,7 +414,7 @@ export const CHAPTERS: ChapterDef[] = [
     ],
     needBasics: 3,
     require: ['craft'],
-    rw: { xp: 5200000, gold: 2000000, items: [['tank_air', 1], ['jelly_lamp', 20]] },
+    rw: { xp: 50000, gold: 2000000, items: [['tank_air', 1], ['jelly_lamp', 20]] },
     outro: '숨이 먼저 떨어진다. 물은 사람을 밀어내지 않고, 그냥 기다린다.\n\n' +
       '통 하나를 등에 메고서야 겨우 지붕 하나를 만져 봤다. 기와가 아니라 판이었다.\n' +
       '공창에서 본 것과 같은 판.\n\n' +
@@ -440,7 +440,7 @@ export const CHAPTERS: ChapterDef[] = [
     ],
     needBasics: 3,
     require: ['craft'],
-    rw: { xp: 8000000, gold: 3200000, items: [['abyss_core', 2], ['ring_pearl', 1]] },
+    rw: { xp: 60000, gold: 3200000, items: [['abyss_core', 2], ['ring_pearl', 1]] },
     outro: '노심을 눌러 굳히는 데 진주 두 개가 들어갔다. 값이 비싸다는 뜻이 아니라,\n' +
       '그만큼 깊이 내려갔다 왔다는 뜻이다.\n\n' +
       '보린이 그걸 작업대에 물리자 나무 상판이 삐걱거리며 내려앉았다.\n' +
@@ -467,7 +467,7 @@ export const CHAPTERS: ChapterDef[] = [
     needBasics: 2,
     require: ['craft'],
     goal: { type: 'boss', target: 'tide_warden', t: '조수의 파수꾼과 마주 선다', task: '조수의 파수꾼 토벌', verb: 'boss' },
-    rw: { xp: 14000000, gold: 5600000, items: [['tide_heart', 1], ['hammer_tide', 1], ['chest_abyss', 1]] },
+    rw: { xp: 96000, gold: 5600000, items: [['tide_heart', 1], ['hammer_tide', 1], ['chest_abyss', 1]] },
     outro: '파수꾼은 싸우는 내내 한 번도 물 밖으로 나오려 하지 않았다.\n' +
       '나올 수 없어서가 아니라, 나갈 생각이 아예 없어서.\n\n' +
       '무너지면서 그것이 남긴 소리는 말이 아니라 종소리였다. 한 번, 길게.\n\n' +
