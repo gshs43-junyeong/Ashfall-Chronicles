@@ -260,7 +260,11 @@ def drape(c, f, pal, near=None):
     XB = PX + 6
     d2 = lambda p, q: sum((p[i] - q[i]) ** 2 for i in range(3))
     head = min(y for y in range(FH) for x in range(FW) if c[y][x][3])
-    for y in range(head + 9, FH):                      # 옛 망토 걷기(머리 9줄은 안 건드린다)
+    # ★ 피격 장은 통째로 붉게 물들어 소매도 망토색과 가깝다 — 색으로만 걷으면 뒷팔 소매가 지워져 손만 망토 위에 떠 있었다
+    #   (사용자 지적). 뒷손(물든 살색) 맨 아랫줄까지는 팔이라 두고 그 아래만 걷는다.
+    skin = [y for y in range(FH) for x in range(XB + 1) if c[y][x][3] and c[y][x][0] > 190 and c[y][x][1] > 100]
+    y0 = max(skin) + 1 if near and skin else head + 9
+    for y in range(y0, FH):                            # 옛 망토 걷기(머리 9줄은 안 건드린다)
         for x in range(XB + 1):
             p = c[y][x]
             if p[3] and (p[:3] in [q[:3] for q in pal] or (near and min(d2(p, q) for q in pal) < near)):
@@ -291,6 +295,8 @@ def drape(c, f, pal, near=None):
     elif air:
         anchor = AIR_ANCHOR[f]                         # 목도리 색이 다른 캐릭터 — 자세는 방랑자와 같다
     new = []
+    if f == DASH:
+        return banner(c, f, pal, top, anchor, OUTC)
     for y in range(top, hem + 1):
         t = (y - top) / max(1, hem - top)
         xl = round(anchor - (1.2 + 3.0 * t ** 0.85) - sway * t * t)
@@ -302,6 +308,42 @@ def drape(c, f, pal, near=None):
                 continue
             u, fold = x - xl, (x * 2 + (y - top) // 5) % 5
             col = dk if u == 0 or (y <= top + 1) else (dk2 if fold == 0 else lt if fold == 3 else mid)
+            c[y][x] = col
+            new.append((x, y))
+    for x, y in new:
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < FW and 0 <= ny < FH and not c[ny][nx][3]:
+                c[ny][nx] = OUTC
+    return c
+
+
+# ★ 대시 장의 망토 — 늘어뜨린 망토를 옆으로 쓸면 몸 옆 덩어리 + 가는 꼬챙이가 되어 무엇인지 안 읽혔다(사용자 지적).
+#   어깨에서 허리 아래까지 매달려 뒤로 휘날리며 끝이 모이는 깃발로 그린다(뒤로 뻗은 팔은 그 앞)(아랫단 물결 · 끝자락 들쭉날쭉). 결은 흐르는
+#   방향(가로) — 세로 띠로 칠하면 원통처럼 보였다. 투명 칸에만 칠해 뒤로 뻗은 팔은 늘 앞.
+DASH, BANNER_L = 8, 13
+
+
+def banner(c, f, pal, top, anchor, OUTC):
+    import math
+    dk2, dk, mid, lt = pal
+    body = lambda q: q[3] and q != OUTC
+    anchor = min(x for y in range(top + 9, top + 12) for x in range(FW) if body(c[y][x])) + 1   # 등허리(팔 밑)
+    new = []
+    for d in range(BANNER_L + 1):
+        x = anchor + 1 - d
+        if x < 1:
+            break
+        t = d / BANNER_L
+        ya = top + round(2.5 * t)                                   # 윗단 — 어깨에서 조금씩 처진다(팔은 그 앞)
+        yb = top + 15 - round(5.5 * t) + round(0.9 * math.sin(t * math.pi * 3))   # 아랫단 — 끝으로 모이며 물결
+        if d >= BANNER_L - 2 and d % 2:
+            yb -= 1                                                 # 끝자락은 들쭉날쭉
+        for y in range(ya, yb + 1):
+            if c[y][x][3]:
+                continue
+            r = (y - ya) / max(1, yb - ya)                          # 결은 흐르는 방향(가로) — 위는 빛, 가운데 접힘, 아래 그늘
+            col = lt if r < 0.25 else dk2 if 0.5 <= r < 0.65 else dk if r >= 0.85 else mid
             c[y][x] = col
             new.append((x, y))
     for x, y in new:
