@@ -314,7 +314,7 @@ export const FishingPart: Bag = {
         if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
       }
     };
-    const plv = +qs.get('plv') || 40;
+    const plv = +qs.get('plv') || 50;
     while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
     p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
     p.gold = +qs.get('gold') || 200000;
