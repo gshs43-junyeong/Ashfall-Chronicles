@@ -97,7 +97,9 @@ export const T = {
   /* --- 광상 — 광맥 한가운데 드물게 뭉친 덩이. 곡괭이는 몇 개, 공장 드릴은 끝없이 --- */
   COALRICH: 191, COPPERRICH: 192, IRONRICH: 193, LEADRICH: 194, GOLDRICH: 195, MYTHRILRICH: 196,
   /* --- 심층 드릴 — 전동 드릴 윗단(채굴 등급 5) --- */
-  M_DRILL_X: 197
+  M_DRILL_X: 197,
+  /* --- 스프링클러 — 물 양동이로 둘레 밭에 아침마다 물을 준다 --- */
+  M_SPRINKLER: 198
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -351,10 +353,15 @@ export const TILE_DEF: TileDef[] = [
   { n: '납 광상', c: '#9494ac', solid: 1, hard: 2, drop: 'lead_ore', dropN: [4, 7], ore: 1, rich: 1 },
   { n: '금 광상', c: '#f0c848', solid: 1, hard: 3, drop: 'gold_ore', dropN: [3, 6], ore: 1, rich: 1 },
   { n: '미스릴 광상', c: '#5ac8ba', solid: 1, hard: 3, drop: 'mythril_ore', dropN: [3, 5], ore: 1, rich: 1 },
-  { n: '심층 드릴', c: '#3a6a8a', solid: 1, hard: 5, drop: 'm_drill_x', mach: 'drill_x' }
+  { n: '심층 드릴', c: '#3a6a8a', solid: 1, hard: 5, drop: 'm_drill_x', mach: 'drill_x' },
+  { n: '스프링클러', c: '#6a8aa8', solid: 1, hard: 2, drop: 'm_sprinkler', mach: 'sprinkler' }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
+/* 밭 물 — 물가(FARM_WET_R 칸 안에 민물·바닷물) 밭은 늘 젖어 있고, 그 밖의 밭은 물을 주면 FARM_WET_DAYS 번의 아침 동안 젖는다. */
+export const FARM_WET_R = 5, FARM_WET_DAYS = 3;
+/* 스프링클러 — 좌우 칸 · 위아래 칸 · 한 대가 맡는 밭 최대 칸 · 양동이 하나로 물 주는 칸. */
+export const SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
 export const SEED_TILE = {
   seed_wheat: T.WHEAT0, seed_starroot: T.ROOT0, seed_ashcap: T.CAP0,
   seed_bloodbean: T.BEAN0, seed_bonebloom: T.BLOOM0,
@@ -372,7 +379,7 @@ export const TILE_SPRITE = {
   coal: T.COAL, lead: T.LEAD, oilshale: T.OILSHALE,
   icebrick: T.ICEBRICK, sandbrick: T.SANDBRICK, minewood: T.MINEWOOD,
   m_dart: T.M_DART, m_flame: T.M_FLAME, m_frost: T.M_FROST,
-  m_pressor: T.M_PRESSOR, m_desal: T.M_DESAL, m_belt_f: T.M_BELT_F, m_battery_hi: T.M_BATTERY_HI, m_drill_x: T.M_DRILL_X,
+  m_pressor: T.M_PRESSOR, m_desal: T.M_DESAL, m_belt_f: T.M_BELT_F, m_battery_hi: T.M_BATTERY_HI, m_drill_x: T.M_DRILL_X, m_sprinkler: T.M_SPRINKLER,
   junglegrass: T.JUNGLEGRASS, mud: T.MUD, jungleleaf: T.JUNGLELEAF, fern: T.FERN, orchid: T.ORCHID,
   glowmoss: T.GLOWMOSS, sporestone: T.SPORESTONE, glowcap: T.GLOWCAP, glowleaf: T.GLOWLEAF, lily: T.LILY, airpocket: T.AIRPOCKET, roomair: T.ROOMAIR,
   palmwood: T.PALMWOOD, palmleaf: T.PALMLEAF, coconut: T.COCONUT, seawater: T.SEAWATER,

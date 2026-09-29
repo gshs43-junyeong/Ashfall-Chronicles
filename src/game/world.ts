@@ -162,7 +162,7 @@ export class World extends TileMap {
   declare buildCitadel: any; declare buildDawnCity: any; declare buildDeepShaft: any; declare buildDungeon: any;
   declare buildJungleFalls: any; declare buildRuinCaches: any; declare buildRuins: any; declare buildRunaway: any;
   declare buildSea: any; declare buildSkyIslands: any; declare buildVillage: any; declare buildWorks: any;
-  declare cactusPlant: any; declare caveGrid: any; declare caverns: any; declare citadel: any; declare crops: any;
+  declare cactusPlant: any; declare caveGrid: any; declare caverns: any; declare citadel: any; declare crops: any; declare wet: any; declare isWet: any; declare waterFarm: any; declare nearWater: any;
   declare crumbled: any; declare dawnCity: any; declare dawnY: any; declare decoratePonds: any; declare decorateWater: any;
   declare deepShaft: any; declare doors: any; declare dungeon: any; declare ensureEntranceTraps: any; declare fAcc: any;
   declare falls: any; declare faults: any; declare fillMossCorners: any; declare fitObjects: any; declare floodCaves: any;
@@ -192,6 +192,7 @@ export class World extends TileMap {
     this.nets = [];
     /* 심어 둔 작물의 타일 인덱스. */
     this.crops = new Set();
+    this.wet = {};              // 밭 칸 → 이 날(G.dayCount)까지 젖어 있다
     /* 부서진 바닥이 되돌아올 시각. */
     this.crumbled = new Map();
     this.spawnX = 180; this.spawnY = 0;
@@ -859,7 +860,7 @@ export class World extends TileMap {
       surface: Array.from(this.surface),
       objects: this.objects.map(o => ({ ...o })),
       machines: Array.from(this.machines.values()),
-      crops: Array.from(this.crops),
+      crops: Array.from(this.crops), wet: this.wet || {},
       spawnX: this.spawnX, spawnY: this.spawnY, villageY: this.villageY,
       dawnY: this.dawnY, dawnCity: this.dawnCity, works: this.works, runaway: this.runaway,
       atelier: this.atelier, citadel: this.citadel, deepShaft: this.deepShaft,
@@ -886,6 +887,7 @@ export class World extends TileMap {
       w.machines.set(m.y * WW + m.x, m);
     }
     for (const k of (d.crops || [])) w.crops.add(k);
+    w.wet = d.wet || {};
     w.netDirty = true;
     // 예전 세이브(v3 이전)에는 explored가 없다 — 그런 경우 처음부터 다시 밝혀 나가면 된다
     if (d.explored) w.explored = rleDecode(d.explored, WW * WH, Uint8Array);

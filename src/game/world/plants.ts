@@ -3,8 +3,9 @@ import { app as G, factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { HELL_Y, WH, WORLD_BOT, WW } from '../size.js';
-import { SEED_TILE, T, TILE_DEF } from '../data.js';
+import { FARM_WET_DAYS, FARM_WET_R, SEED_TILE, T, TILE_DEF } from '../data.js';
 import { OBJ_SIZE } from '../data/items.js';
+import { FLUID_KIND } from '../data/materials.js';
 import { MAT_LAYER, TS, World, inSeaZone } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
@@ -220,11 +221,32 @@ export const WorldPlants: Bag & ThisType<World> = {
     return true;
   },
 
+  /** 밭 칸(x, y)에서 FARM_WET_R 칸 안에 물(민물·바닷물)이 있는가 — 물가 밭은 늘 젖어 있다. */
+  nearWater(x, y) {
+    for (let dy = -FARM_WET_R; dy <= FARM_WET_R; dy++)
+      for (let dx = -FARM_WET_R; dx <= FARM_WET_R; dx++) {
+        const k = FLUID_KIND[this.get(x + dx, y + dy)];
+        if (k === 1 || k === 2) return true;
+      }
+    return false;
+  },
+  /** 밭 칸(x, y)이 day 날 아침에 젖어 있는가. */
+  isWet(x, y, day) {
+    return (this.wet[y * WW + x] | 0) >= day || this.nearWater(x, y);
+  },
+  /** 밭 칸(x, y)에 물을 준다 — day 날부터 FARM_WET_DAYS 번의 아침 동안 젖어 있다. */
+  waterFarm(x, y, day) {
+    if (!TILE_DEF[this.get(x, y)].farm) return false;
+    const k = y * WW + x;
+    this.wet[k] = Math.max(this.wet[k] | 0, day + FARM_WET_DAYS);
+    return true;
+  },
+
   /** 작물 한 단계 성장. */
-  /** 자란 칸을 돌려준다 — 화면에 보이는 밭이면 게임 쪽에서 티를 낸다. */
-  /** speed: 농사 숙련이 얹어 주는 성장 배율(1 = 보정 없음) */
-  growCrops(rng, dayF, speed) {
-    const out = { grew: [], ripe: [] };
+  /** 자란 칸을 돌려준다 — 화면에 보이는 밭이면 게임 쪽에서 티를 낸다. 마른 밭(물 안 준 밭)은 자라지 않고 dry 로 센다. */
+  /** speed: 농사 숙련이 얹어 주는 성장 배율(1 = 보정 없음) · day: 오늘(G.dayCount) — 없으면 젖음을 안 본다 */
+  growCrops(rng, dayF, speed, day) {
+    const out = { grew: [], ripe: [], dry: [] };
     if (!this.crops.size) return out;
     const sp = speed === undefined ? 1 : speed;
     for (const k of this.crops) {
@@ -233,6 +255,7 @@ export const WorldPlants: Bag & ThisType<World> = {
       if (!def.crop.next) continue;                        // 이미 다 여물었다
       const x = k % WW, y = (k / WW) | 0;
       if (!TILE_DEF[this.get(x, y + 1)].farm) { this.crops.delete(k); continue; }   // 밭이 없어졌다
+      if (day !== undefined && !this.isWet(x, y + 1, day)) { out.dry.push(k); continue; }
       // sp 를 크게 넘기면(아침 성장) 확률 굴림 없이 반드시 한 단계 자란다
       if (rng.chance(Math.min(1, 0.22 * (0.55 + dayF * 0.75) * sp))) {
         this.tiles[k] = def.crop.next;

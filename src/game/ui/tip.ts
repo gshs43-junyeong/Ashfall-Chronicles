@@ -98,6 +98,7 @@ export const TipUIPart: Bag = {
     }
     if (d.power) h += `<div class="tstat">${tr('채굴 등급 <b>{power}</b>', { power: d.power })}</div>`;
     if (d.type === 'tool') h += `<div class="tstat">${tr('필요 레벨 <b>Lv.{equipReqLv}</b>', { equipReqLv: equipReqLv(it.id) })}</div>`;
+    if (d.water) h += `<div class="tstat">${tr('물 <b>{n}</b> / {max}', { n: it.w | 0, max: d.water })}</div>`;
     if (d.pw) h += `<div class="tstat">${tr('전하 소모 <b>{pw}</b> / 사용', { pw: d.pw })}</div>`;
     // 기계는 정보를 MACHINE 표가 들고 있다 — 아이템 쪽에 같은 내용을 또 쓰지 않는다
     if (d.mach) {

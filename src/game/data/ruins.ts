@@ -381,7 +381,7 @@ export const RIG: Bag = { in: [['forest', 2], ['forest2', 1]], edge: 40, leg: 2,
   parts: [['steel_plate', 10], ['gear_basic', 8], ['iron_bar', 12], ['wire', 12], ['motor', 2], ['circuit', 3], ['machine_frame', 1]] };
 
 /* 마을 2단계(밭이 생기는 때)에 가방으로 주는 연장·씨앗 한 벌 */
-export const FARM_KIT: [string, number][] = [['hoe_iron', 1], ['scythe_iron', 1], ['seed_wheat', 12], ['seed_starroot', 8], ['seed_ashcap', 6], ['fertilizer', 6]];
+export const FARM_KIT: [string, number][] = [['hoe_iron', 1], ['scythe_iron', 1], ['watering_can', 1], ['seed_wheat', 12], ['seed_starroot', 8], ['seed_ashcap', 6], ['fertilizer', 6]];
 
 export const RUIN_HINTS = {
   ice: [

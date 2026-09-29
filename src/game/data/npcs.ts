@@ -5,7 +5,7 @@
 export const NPCS: Record<string, NpcDef> = {
   elara:  { n: '엘라라', i: '🧝‍♀️', c: '#c8a06a', role: '캠프 관리인', art: 'elara' },
   /* disc — 이 사람에게 살 때 붙는 할인. */
-  borin:  { n: '보린', i: '🧔', c: '#8a6a4a', role: '대장장이', disc: 0.4, shop: ['pick_iron', 'sword_iron', 'helm_iron', 'potion_hp_small', 'potion_iron', 'torch', 'band_worn'], art: 'borin' },
+  borin:  { n: '보린', i: '🧔', c: '#8a6a4a', role: '대장장이', disc: 0.4, shop: ['pick_iron', 'sword_iron', 'helm_iron', 'potion_hp_small', 'potion_iron', 'torch', 'band_worn', 'watering_can', 'bucket'], art: 'borin' },
   mira:   { n: '미라', i: '🧙‍♀️', c: '#8f6fd8', role: '마녀', shop: ['staff_branch', 'potion_mp_small', 'ring_focus', 'potion_str'], art: 'mira' },
   old:    { n: '이름 없는 노인', i: '👴', c: '#9a9a9a', role: '???', art: 'elder' },
   /* --- 여명 마을 주민 (세션 1 종장 이후) --- */
@@ -17,7 +17,7 @@ export const NPCS: Record<string, NpcDef> = {
             line: '방은 얼마든지 있어. 이 도시엔 아직 사람보다 방이 많거든.' },
   seira:  { n: '세이라', i: '🔨', c: '#7a8fb8', role: '재련사', art: 'seira',
             line: '물건은 그대로 두고 이름만 바꿔 주는 거야. 운이 나쁘면 더 나빠지고.' },
-  kade:   { n: '케이드', i: '⚙', c: '#8a8a96', role: '기술자', art: 'kade', shop: ['charm_cap', 'charm_conduit', 'battery_cell', 'circuit'],
+  kade:   { n: '케이드', i: '⚙', c: '#8a8a96', role: '기술자', art: 'kade', shop: ['charm_cap', 'charm_conduit', 'battery_cell', 'circuit', 'm_sprinkler'],
             line: '이 도시, 사람이 지은 게 아니야. 그럼 누가 지었냐고? 그걸 알아내는 게 내 일이고.' },
   /* 떠돌이 상인 셋 — 마을이 커질수록 하나씩 늘어난다(1·3·4단계). */
   pedlar:  { n: '허윤', i: '🎒', c: '#c8925a', role: '잡화상', art: 'pedlar', dynamicShop: true,

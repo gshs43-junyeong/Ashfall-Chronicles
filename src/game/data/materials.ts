@@ -92,7 +92,10 @@ for (const k of ['SEAWATER', 'FLOWSEA', 'KELPPLANT']) FLUID_KIND[T[k]] = 2;
 for (const k of ['LAVA', 'FLOWLAVA']) FLUID_KIND[T[k]] = 3;
 for (const k of ['WATER', 'SEAWATER', 'LAVA', 'LILY', 'PONDWEED', 'KELPPLANT']) FLUID_SRC[T[k]] = 1;
 for (const k of ['FLOWWATER', 'FLOWSEA', 'FLOWLAVA']) FLUID_FLOW[T[k]] = 1;
-export const FLUID_TILE = [0, T.FLOWWATER, T.FLOWSEA, T.FLOWLAVA];     // 종류 → 흐르는 타일
+export const FLUID_TILE = [0, T.FLOWWATER, T.FLOWSEA, T.FLOWLAVA];
+/* 양동이로 떠 담을 수 있는 물 — 민물·바닷물 칸(수련·물풀·해초 칸은 빼고). */
+export const DRAWABLE = new Uint8Array(TILE_DEF.length);
+for (const k of ['WATER', 'FALLS', 'FLOWWATER', 'SEAWATER', 'FLOWSEA']) DRAWABLE[T[k]] = 1;     // 종류 → 흐르는 타일
 /* 물이 밀고 들어갈 수 있는 칸 — 빈칸과 풀·꽃·고사리·조개(쓸려 간다). */
 export const FLUID_WASH = new Uint8Array(TILE_DEF.length);
 for (const k of ['AIR', 'FLOWER', 'WEED', 'FERN', 'SEASHELL']) FLUID_WASH[T[k]] = 1;

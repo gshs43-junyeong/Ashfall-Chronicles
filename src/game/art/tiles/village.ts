@@ -336,5 +336,15 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
+  mk_sprinkler(H) {                             // 스프링클러 — 물통 받침 위에 선 관 · 도는 꼭지
+    const { g, ox, oy, R, base } = H;
+    this._mkBody(g, ox, oy, base, R);
+    R(5, 9, TS - 10, TS - 13, '#3a5a78');        // 물통 창
+    R(6, 14, TS - 12, TS - 19, '#4a8fd0');
+    R(6, 14, TS - 12, 1, '#8fc8f0');
+    R(TS / 2 - 1, 2, 2, 8, '#8a9098');          // 관
+    R(TS / 2 - 5, 2, 10, 2, '#b8c0c8');         // 꼭지
+    R(TS / 2 - 6, 1, 2, 2, '#8fc8f0'); R(TS / 2 + 4, 1, 2, 2, '#8fc8f0');
+  },
 };
 Object.assign(TILE_PAINT, TilePaintVillage);

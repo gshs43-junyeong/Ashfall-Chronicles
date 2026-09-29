@@ -898,7 +898,17 @@
   "{item|을} 벨트에서 집었다": "{item} vom Band genommen",
   "비석에 손을 대면 {to|로} 돌아간다.": "Berührst du den Stein, kehrst du nach {to} zurück.",
   "({to|로} 이동한다)": "(Nach {to} reisen)",
-  "확인": "OK"
+  "확인": "OK",
+  "물 <b>{n}</b> / {max}": "Wasser <b>{n}</b> / {max}",
+  "물 없음": "Kein Wasser",
+  "물 칸을 우클릭해 떠 담는다": "Rechtsklicke ein Wasserfeld, um es aufzufangen",
+  "물뿌리개가 비었다 — 물가를 우클릭해 채우자": "Die Gießkanne ist leer — rechtsklicke Wasser zum Füllen",
+  "물뿌리개가 이미 가득하다": "Die Gießkanne ist schon voll",
+  "물뿌리개를 채웠다 — {n}번": "Gießkanne gefüllt — {n} Güsse",
+  "밭이 말라 {n}칸이 자라지 않았다 — 물뿌리개로 물을 주자": "{n} trockene Felder sind nicht gewachsen — gieß sie mit der Gießkanne",
+  "밭이나 작물에 물을 준다 — 물가를 우클릭하면 채운다": "Gießt ein Feld oder eine Pflanze — rechtsklicke Wasser zum Füllen",
+  "빈 칸에만 부을 수 있다": "Du kannst nur in ein leeres Feld gießen",
+  "아침을 기다림": "Wartet auf den Morgen"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4055,6 +4065,16 @@
   "NAME_CALL.seira.2": "{name}, zeig mir, was du da hast.",
   "NAME_CALL.kade.0": "{name}, du kommst gerade recht.",
   "NAME_CALL.kade.1": "Ah, {name}. Die Maschine macht wieder dieses seltsame Geräusch.",
-  "NAME_CALL.kade.2": "{name}. Welche Teile hast du heute dabei?"
+  "NAME_CALL.kade.2": "{name}. Welche Teile hast du heute dabei?",
+  "ITEMS.watering_can.n": "Gießkanne",
+  "ITEMS.watering_can.d": "Rechtsklicke Wasser, um sie zu füllen (20 Güsse), dann ein Feld oder eine Pflanze, um zu gießen. Ein gegossenes Feld bleibt drei Morgen lang feucht.",
+  "ITEMS.bucket.n": "Leerer Eimer",
+  "ITEMS.bucket.d": "Rechtsklicke ein Wasserfeld, um das ganze Feld aufzufangen — das Wasser dort ist dann weg.",
+  "ITEMS.water_bucket.n": "Wassereimer",
+  "ITEMS.water_bucket.d": "Wasser für einen Sprenger. Rechtsklicke ein leeres Feld, um es als ein Wasserfeld zurückzugießen.",
+  "ITEMS.m_sprinkler.n": "Sprenger",
+  "MACHINE.sprinkler.n": "Sprenger",
+  "MACHINE.sprinkler.d": "Mit Wassereimern befüllt, gießt er jeden Morgen die nächstgelegenen Felder ringsum (25 Felder links und rechts, 6 oben und unten), bis zu 500. Ein Eimer reicht für 50 Felder. Braucht keinen Strom.",
+  "TILE_DEF.198.n": "Sprenger"
  }
 }

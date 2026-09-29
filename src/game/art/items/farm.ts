@@ -3,6 +3,11 @@ import { TAU } from '../../../engine/core/math.js';
 import { ITEM_PAINT, sh2 } from '../../itemart.js';
 /* itemart.js Art.paint 의 갈래들 — 읽히는 순간 ITEM_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 Art. */
 
+/** 꺾은선 — H.stroke(색, 굵기, 그리기) 위에 점 목록으로. */
+export function line(H, pts, col, wd) {
+  H.stroke(col, wd, () => { H.g.moveTo(pts[0][0], pts[0][1]); for (const q of pts.slice(1)) H.g.lineTo(q[0], q[1]); });
+}
+
 export const ItemPaintFarm: Bag = {
   /* ---------- 농업 ---------- */
   hoe(H) {
@@ -17,6 +22,27 @@ export const ItemPaintFarm: Bag = {
         return;
       }
     }
+  },
+  wcan(H) {                                           // 물뿌리개 — 몸통 · 긴 주둥이 · 꽃잎 꼭지 · 손잡이
+    const { P, poly, circ } = H, s = H.s;
+    const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .62);
+    line(H, [[9, 12], [9, 7], [18, 7], [18, 12]], dk, 2);  // 손잡이
+    poly([[6, 12], [20, 12], [21, 27], [5, 27]], c);      // 몸통
+    P(6, 12, 14, 2, lt); P(5, 25, 16, 2, dk);
+    P(8, 15, 2, 9, lt);
+    poly([[20, 20], [28, 11], [29.6, 12.4], [21, 23]], dk);   // 주둥이
+    circ(28.6, 11.4, 2.2, lt); circ(28.6, 11.4, 1.1, '#5aa0e0');
+  },
+  bucket(H) {                                         // 양동이 — 나무 통 · 쇠테 · 들손(물 양동이는 윗면에 물)
+    const { P, poly, ell } = H, s = H.s;
+    const wood = '#8a6440', wlt = '#a67c52', band = s.c;
+    line(H, [[6, 12], [8, 5], [16, 3], [24, 5], [26, 12]], sh2(band, .7), 1.6);   // 들손
+    poly([[6, 12], [26, 12], [24, 28], [8, 28]], wood);
+    for (const x of [11, 16, 21]) P(x, 13, 1, 15, '#6e4e30');
+    P(8, 13, 2, 14, wlt);
+    P(6.4, 15, 19.2, 2, band); P(7.4, 24, 17.2, 2, band);
+    ell(16, 12, 10, 2.4, s.water || '#3a2a1a');
+    if (s.water) ell(14, 11.6, 5, 1, sh2(s.water, 1.4));
   },
   seed(H) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;

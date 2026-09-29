@@ -75,6 +75,13 @@ export const SAVE_UPGRADES = [
       }
       for (const k in o) { const v = o[k]; if (v && typeof v === 'object') walk(v); }
     })(d);
+  },
+  /* v11 → v12 — 밭 젖음(world.wet: 밭 칸 → 젖어 있는 마지막 날). 이미 심어 둔 작물이 판이 바뀌자마자 서지 않게, 그 밑 밭은 사흘 젖게 둔다. */
+  (d) => {
+    if (!d.world || d.world.wet) return;
+    const wet = {}, ww = d.world.ww || 5000, until = (d.dayCount || 0) + 3;
+    for (const k of (d.world.crops || [])) wet[k + ww] = until;
+    d.world.wet = wet;
   }
 ];
 export const SAVE_VERSION = SAVE_UPGRADES.length + 1;
