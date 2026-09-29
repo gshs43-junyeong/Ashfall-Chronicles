@@ -343,8 +343,7 @@ export const TilePaintVillage: Bag = {
     R(6, 14, TS - 12, TS - 19, '#4a8fd0');
     R(6, 14, TS - 12, 1, '#8fc8f0');
     R(TS / 2 - 1, 2, 2, 8, '#8a9098');          // 관
-    R(TS / 2 - 5, 2, 10, 2, '#b8c0c8');         // 꼭지
-    R(TS / 2 - 6, 1, 2, 2, '#8fc8f0'); R(TS / 2 + 4, 1, 2, 2, '#8fc8f0');
+    R(TS / 2 - 5, 2, 10, 2, '#b8c0c8');         // 꼭지 — 물은 그림에 안 둔다(rStreaks 가 뿜을 때만)
   },
 };
 Object.assign(TILE_PAINT, TilePaintVillage);

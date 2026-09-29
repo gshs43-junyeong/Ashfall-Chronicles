@@ -3,7 +3,7 @@ import { aabb, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
 import { WH, WW } from '../size.js';
-import { MACH_OF_TILE, T, TILE_DEF } from '../data.js';
+import { MACH_OF_TILE, SPRINKLE_R, T, TILE_DEF } from '../data.js';
 import { ITEMS, OBJ_SIZE } from '../data/items.js';
 import { MACHINE } from '../data/recipes.js';
 import { DECO_MOUNT, DECO_OF, DRAWABLE, FLUID_KIND, LEAVE_OF } from '../data/materials.js';
@@ -203,19 +203,22 @@ export const ActPart: Bag = {
       this.streak(x, y, Math.cos(a) * 90, Math.sin(a) * (110 + Math.random() * 60), .5);
     }
   },
-  /** 렌더 단계 — 물줄기. 아침(5~9시)에 전력과 물이 있는 스프링클러는 꼭지에서 양옆으로 뿜는다. */
+  /** 렌더 단계 — 물줄기. 아침(5~9시)에 전력과 물이 있는 스프링클러는 꼭지에서 양옆으로 뿜는다.
+   *  ★ 떨어지는 거리를 1~SPRINKLE_R[0] 칸에서 고르고 속도를 거꾸로 잰다 — 물줄기가 닿는 곳이 실제로 적시는 범위다. */
   rStreaks(f) {
     const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
     const dt = Math.min(0.05, Math.max(0, this.time - (this._stT || this.time))); this._stT = this.time;
-    const hour = this.dayT / 60;
+    const hour = this.dayT / 60, RX = SPRINKLE_R[0], RY = SPRINKLE_R[1];
     if (hour >= 5 && hour < 9 && w.machines.size) {
       for (const m of w.machines.values()) {
-        if (m.t !== 'sprinkler' || !m.on || !m.act || m.x < tx0 - 3 || m.x > tx1 + 3 || m.y < ty0 - 3 || m.y > ty1 + 3) continue;
+        if (m.t !== 'sprinkler' || !m.on || !m.act || m.x < tx0 - RX || m.x > tx1 + RX || m.y < ty0 - RY || m.y > ty1 + RY) continue;
         if (Factory.sat(w, m) <= 0) continue;
-        m.sprT = (m.sprT || 0) + dt * 22;                 // 한 대에 초당 22줄
+        m.sprT = (m.sprT || 0) + dt * 26;                 // 한 대에 초당 26줄
         for (; m.sprT >= 1; m.sprT--) {
-          const side = Math.random() < .5 ? -1 : 1, a = (0.35 + Math.random() * 0.75), sp = 110 + Math.random() * 70;
-          this.streak((m.x + .5) * TS + side * 5, m.y * TS + 1, side * Math.cos(a) * sp, -Math.sin(a) * sp, .9);
+          const side = Math.random() < .5 ? -1 : 1, a = 0.35 + Math.random() * 0.3;   // 낮은 호 — 꼭대기가 4칸 안(비처럼 안 보이게)
+          const d = (1 + Math.sqrt(Math.random()) * (RX - 1)) * TS;   // 먼 곳일수록 넓어 줄을 더 보낸다
+          const sp = Math.sqrt(d * 420 / Math.sin(2 * a)), fl = 2 * sp * Math.sin(a) / 420;
+          this.streak((m.x + .5) * TS + side * 5, m.y * TS + 1, side * Math.cos(a) * sp, -Math.sin(a) * sp, fl + .35);
         }
       }
     }

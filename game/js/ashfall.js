@@ -21881,8 +21881,6 @@
       R(6, 14, TS - 12, 1, "#8fc8f0");
       R(TS / 2 - 1, 2, 2, 8, "#8a9098");
       R(TS / 2 - 5, 2, 10, 2, "#b8c0c8");
-      R(TS / 2 - 6, 1, 2, 2, "#8fc8f0");
-      R(TS / 2 + 4, 1, 2, 2, "#8fc8f0");
     }
   };
   Object.assign(TILE_PAINT, TilePaintVillage);
@@ -36168,20 +36166,23 @@
         this.streak(x, y, Math.cos(a) * 90, Math.sin(a) * (110 + Math.random() * 60), 0.5);
       }
     },
-    /** 렌더 단계 — 물줄기. 아침(5~9시)에 전력과 물이 있는 스프링클러는 꼭지에서 양옆으로 뿜는다. */
+    /** 렌더 단계 — 물줄기. 아침(5~9시)에 전력과 물이 있는 스프링클러는 꼭지에서 양옆으로 뿜는다.
+     *  ★ 떨어지는 거리를 1~SPRINKLE_R[0] 칸에서 고르고 속도를 거꾸로 잰다 — 물줄기가 닿는 곳이 실제로 적시는 범위다. */
     rStreaks(f) {
       const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
       const dt = Math.min(0.05, Math.max(0, this.time - (this._stT || this.time)));
       this._stT = this.time;
-      const hour = this.dayT / 60;
+      const hour = this.dayT / 60, RX = SPRINKLE_R[0], RY = SPRINKLE_R[1];
       if (hour >= 5 && hour < 9 && w.machines.size) {
         for (const m of w.machines.values()) {
-          if (m.t !== "sprinkler" || !m.on || !m.act || m.x < tx0 - 3 || m.x > tx1 + 3 || m.y < ty0 - 3 || m.y > ty1 + 3) continue;
+          if (m.t !== "sprinkler" || !m.on || !m.act || m.x < tx0 - RX || m.x > tx1 + RX || m.y < ty0 - RY || m.y > ty1 + RY) continue;
           if (Factory11.sat(w, m) <= 0) continue;
-          m.sprT = (m.sprT || 0) + dt * 22;
+          m.sprT = (m.sprT || 0) + dt * 26;
           for (; m.sprT >= 1; m.sprT--) {
-            const side = Math.random() < 0.5 ? -1 : 1, a2 = 0.35 + Math.random() * 0.75, sp = 110 + Math.random() * 70;
-            this.streak((m.x + 0.5) * TS + side * 5, m.y * TS + 1, side * Math.cos(a2) * sp, -Math.sin(a2) * sp, 0.9);
+            const side = Math.random() < 0.5 ? -1 : 1, a2 = 0.35 + Math.random() * 0.3;
+            const d = (1 + Math.sqrt(Math.random()) * (RX - 1)) * TS;
+            const sp = Math.sqrt(d * 420 / Math.sin(2 * a2)), fl = 2 * sp * Math.sin(a2) / 420;
+            this.streak((m.x + 0.5) * TS + side * 5, m.y * TS + 1, side * Math.cos(a2) * sp, -Math.sin(a2) * sp, fl + 0.35);
           }
         }
       }
