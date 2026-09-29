@@ -217,6 +217,9 @@ export const RECIPES: RecipeDef[] = [
   { out: 'haybale', n: 2, need: { weed: 6 }, station: 'work' },
   { out: 'sandbag', n: 4, need: { sand: 6, spider_silk: 1 }, station: 'work' },
   { out: 'hoe_iron', n: 1, need: { iron_bar: 3, wood: 2 }, station: 'work' },
+  { out: 'dragon_treat_1', n: 1, need: { raw_meat: 6, fish_deep: 2 }, station: 'work' },
+  { out: 'dragon_treat_2', n: 1, need: { storm_amber: 2, cloud_pearl: 1, raw_meat: 4 }, station: 'work' },
+  { out: 'dragon_treat_3', n: 1, need: { meteorite: 3, star_crystal: 3, cloud_pearl: 2 }, station: 'work' },
   { out: 'watering_can', n: 1, need: { copper_bar: 3 }, station: 'work' },
   { out: 'bucket', n: 2, need: { iron_bar: 2, wood: 4 }, station: 'work' },
   /* 낫 — 다 여문 작물을 성하게 거두는 유일한 연장. */

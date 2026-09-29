@@ -3184,6 +3184,36 @@
       stack: 99,
       d: "단단한 껍질 안에 물이 차 있다. 섬에서만 난다."
     },
+    egg_dragon_fire: { n: "불의 드래곤 알", i: "🥚", type: "consum", use: { egg: "dragon_fire" }, price: 48e3, fixed: 1, stack: 5, d: "손을 대면 데일 듯 뜨겁다. 깨면 불의 드래곤이 나온다." },
+    egg_dragon_earth: { n: "흙의 드래곤 알", i: "🥚", type: "consum", use: { egg: "dragon_earth" }, price: 48e3, fixed: 1, stack: 5, d: "돌처럼 무겁다. 깨면 흙의 드래곤이 나온다." },
+    egg_dragon_storm: { n: "전기의 드래곤 알", i: "🥚", type: "consum", use: { egg: "dragon_storm" }, price: 48e3, fixed: 1, stack: 5, d: "쥐면 손끝이 저릿하다. 깨면 전기의 드래곤이 나온다." },
+    egg_dragon_dark: { n: "암흑의 드래곤 알", i: "🥚", type: "consum", use: { egg: "dragon_dark" }, price: 48e3, fixed: 1, stack: 5, d: "빛을 먹는 듯 어둡다. 깨면 암흑의 드래곤이 나온다." },
+    /* 드래곤 진화 먹이 — 경험치가 문턱(9·19·29레벨)에 차면 그 단계 먹이를 먹여야 다음 단계로 넘어간다 */
+    dragon_treat_1: {
+      n: "용의 첫 먹이",
+      i: "🍖",
+      type: "consum",
+      use: { dragonFeed: 1 },
+      price: 9e3,
+      stack: 20,
+      d: "새끼 드래곤이 어린 용이 되려면 먹어야 한다(9레벨에서 경험치가 다 찼을 때)."
+    },
+    dragon_treat_2: {
+      n: "폭풍 호박 심장",
+      i: "🧡",
+      type: "consum",
+      use: { dragonFeed: 2 },
+      stack: 20,
+      d: "어린 용이 성룡이 되려면 먹어야 한다(19레벨에서 경험치가 다 찼을 때)."
+    },
+    dragon_treat_3: {
+      n: "별똥 심장",
+      i: "💠",
+      type: "consum",
+      use: { dragonFeed: 3 },
+      stack: 20,
+      d: "성룡이 고룡이 되려면 먹어야 한다(29레벨에서 경험치가 다 찼을 때)."
+    },
     pet_candy: { n: "펫 사탕", i: "🍬", type: "consum", use: { petXp: 1200 }, price: 6e3, fixed: 1, stack: 99, instant: 1, d: "주머니에 넣어 두면 녀석들이 먼저 안다." },
     /* --- 채집물: 들판에 흩어진 장식이 주는 재료. 아직 이걸 쓰는 제작법은 없다 --- */
     wildflower: { n: "들꽃", i: "🌸", type: "mat", stack: 999, d: "숲과 초원 어디에나 핀다." },
@@ -5031,6 +5061,9 @@
     { out: "haybale", n: 2, need: { weed: 6 }, station: "work" },
     { out: "sandbag", n: 4, need: { sand: 6, spider_silk: 1 }, station: "work" },
     { out: "hoe_iron", n: 1, need: { iron_bar: 3, wood: 2 }, station: "work" },
+    { out: "dragon_treat_1", n: 1, need: { raw_meat: 6, fish_deep: 2 }, station: "work" },
+    { out: "dragon_treat_2", n: 1, need: { storm_amber: 2, cloud_pearl: 1, raw_meat: 4 }, station: "work" },
+    { out: "dragon_treat_3", n: 1, need: { meteorite: 3, star_crystal: 3, cloud_pearl: 2 }, station: "work" },
     { out: "watering_can", n: 1, need: { copper_bar: 3 }, station: "work" },
     { out: "bucket", n: 2, need: { iron_bar: 2, wood: 4 }, station: "work" },
     /* 낫 — 다 여문 작물을 성하게 거두는 유일한 연장. */
@@ -9119,7 +9152,13 @@
         { id: "jelly_lamp", w: 8, max: 6 },
         { id: "abyss_pearl", w: 5, max: 3 },
         { id: "pressure_plate_m", w: 6, max: 6 },
-        { id: "rope_kelp", w: 6, max: 8 }
+        { id: "rope_kelp", w: 6, max: 8 },
+        // 드래곤 알 넷 · 첫 먹이 — 가라앉은 도시가 품고 있던 것
+        { id: "egg_dragon_fire", w: 2, max: 1 },
+        { id: "egg_dragon_earth", w: 2, max: 1 },
+        { id: "egg_dragon_storm", w: 2, max: 1 },
+        { id: "egg_dragon_dark", w: 2, max: 1 },
+        { id: "dragon_treat_1", w: 5, max: 3 }
       ]
     },
     {
@@ -10358,16 +10397,22 @@
   // src/game/data/pets.ts
   var pets_exports = {};
   __export(pets_exports, {
+    DRAGON_FOOD: () => DRAGON_FOOD,
+    DRAGON_GATES: () => DRAGON_GATES,
+    DRAGON_LV_MAX: () => DRAGON_LV_MAX,
+    DRAGON_STAGE_N: () => DRAGON_STAGE_N,
     EGG_POOL: () => EGG_POOL,
     LV_SCALE_BASE: () => LV_SCALE_BASE,
     PETS: () => PETS,
     PET_LV_MAX: () => PET_LV_MAX,
     PET_XP_SHARE: () => PET_XP_SHARE,
     bloodMult: () => bloodMult,
+    dragonStage: () => dragonStage,
     levelMult: () => levelMult,
     petAtkMul: () => petAtkMul,
     petDmgScale: () => petDmgScale,
     petLvMul: () => petLvMul,
+    petMaxLv: () => petMaxLv,
     petXpNext: () => petXpNext
   });
   var PETS = {
@@ -10481,6 +10526,47 @@
       b: { ms: 11, crit: 9 },
       atk: { k: "proj", proj: "bolt", dmg: 140, cd: 1.05, range: 340, spd: 560 },
       d: "내려꽂힐 때 소리가 한 박자 늦게 온다."
+    },
+    /* --- 드래곤 — 윤슬의 알에서 나온다. 레벨 30까지 자라며 10·20·30 에서 그 단계 먹이를 먹어야 진화한다(DRAGON_*) --- */
+    dragon_fire: {
+      n: "불의 드래곤",
+      i: "🐉",
+      r: 2,
+      c: "#e0603c",
+      dragon: "fire",
+      b: { dmgP: 0.06 },
+      atk: { k: "proj", proj: "fire", dmg: 120, cd: 1.5, range: 300, spd: 420 },
+      d: "알 껍데기를 스스로 녹이고 나왔다. 자랄수록 숨결이 길어진다."
+    },
+    dragon_earth: {
+      n: "흙의 드래곤",
+      i: "🐉",
+      r: 2,
+      c: "#9a8a5a",
+      dragon: "earth",
+      b: { def: 18, hp: 90 },
+      atk: { k: "proj", proj: "rune", dmg: 135, cd: 1.7, range: 260, spd: 360 },
+      d: "등의 비늘이 바위처럼 겹친다. 서두르는 법이 없다."
+    },
+    dragon_storm: {
+      n: "전기의 드래곤",
+      i: "🐉",
+      r: 2,
+      c: "#6cb4e4",
+      dragon: "storm",
+      b: { ms: 6, crit: 5 },
+      atk: { k: "proj", proj: "bolt", dmg: 105, cd: 1.2, range: 330, spd: 560 },
+      d: "날개를 털 때마다 날개 끝에서 불똥이 튄다."
+    },
+    dragon_dark: {
+      n: "암흑의 드래곤",
+      i: "🐉",
+      r: 2,
+      c: "#7e5ea6",
+      dragon: "dark",
+      b: { lifesteal: 3, critD: 14 },
+      atk: { k: "proj", proj: "void", dmg: 125, cd: 1.45, range: 320, spd: 400 },
+      d: "그림자 속에 있어도 눈만은 또렷이 빛난다."
     }
   };
   var LV_SCALE_BASE = 2.5;
@@ -10500,9 +10586,16 @@
   function petAtkMul(lv) {
     return 1 + 0.06 * ((lv || 1) - 1);
   }
-  function petXpNext(lv) {
+  function petXpNext(lv, id) {
+    if (id && PETS[id] && PETS[id].dragon) return Math.round(400 * Math.pow(1.18, (lv || 1) - 1));
     return Math.round(600 * Math.pow(1.6, (lv || 1) - 1));
   }
+  var DRAGON_LV_MAX = 30;
+  var DRAGON_GATES = [10, 20, 30];
+  var DRAGON_FOOD = ["dragon_treat_1", "dragon_treat_2", "dragon_treat_3"];
+  var DRAGON_STAGE_N = ["새끼", "어린 용", "성룡", "고룡"];
+  var dragonStage = (lv) => (lv || 1) >= 30 ? 3 : (lv || 1) >= 20 ? 2 : (lv || 1) >= 10 ? 1 : 0;
+  var petMaxLv = (id) => PETS[id] && PETS[id].dragon ? DRAGON_LV_MAX : PET_LV_MAX;
   var PET_XP_SHARE = 0.08;
   for (const id in PETS) {
     const pt = PETS[id];
@@ -10514,8 +10607,8 @@
       b: pt.b,
       stack: 1,
       // 최소 레벨·값어치도 세션 2 기준 — 마을에 막 닿으면 공통·희귀는 바로 쓸 수 있고 영웅은 조금 더 키운 뒤에 붙는다(레벨 100).
-      lvReq: [60, 80, 100][pt.r],
-      price: [9e3, 34e3, 95e3][pt.r],
+      lvReq: pt.dragon ? 40 : [60, 80, 100][pt.r],
+      price: pt.dragon ? 7e4 : [9e3, 34e3, 95e3][pt.r],
       d: pt.d
     };
   }
@@ -22525,6 +22618,13 @@
     /* 펫 알 */
     egg_common: { k: "egg", c: "#a8967a" },
     egg_rare: { k: "egg", c: "#6fa8d8", glow: "#6fa8d8" },
+    egg_dragon_fire: { k: "egg", c: "#d0583a", glow: "#ff9a3a" },
+    egg_dragon_earth: { k: "egg", c: "#8a7a4a" },
+    egg_dragon_storm: { k: "egg", c: "#5a9ad0", glow: "#ffe864" },
+    egg_dragon_dark: { k: "egg", c: "#4a3a66", glow: "#b07aff" },
+    dragon_treat_1: { k: "gel", c: "#c8604a" },
+    dragon_treat_2: { k: "heart", c: "#e0a040", glow: "#ffd070" },
+    dragon_treat_3: { k: "heart", c: "#8ab0f0", glow: "#e8f0ff" },
     egg_epic: { k: "egg", c: "#b17fe0", glow: "#b17fe0" },
     pet_candy: { k: "candy", c: "#e05a8a" },
     coconut: { k: "coconut_i", c: "#6a4a2a" },
@@ -23004,7 +23104,11 @@
     star_sprite: "wisp",
     ember_drake: "drake",
     void_hatchling: "wisp",
-    storm_falcon: "bird"
+    storm_falcon: "bird",
+    dragon_fire: "drake",
+    dragon_earth: "drake",
+    dragon_storm: "drake",
+    dragon_dark: "drake"
   };
   var NPCSPEC = {
     elara: { hair: "#d8c07a", skin: "#e8c39a", cloth: "#c8a06a", long: 1 },
@@ -27829,13 +27933,23 @@
         if (!it || idef(it).type !== "pet") continue;
         it.lv = it.lv || 1;
         it.xp = (it.xp || 0) + n;
-        while (it.lv < PET_LV_MAX && it.xp >= petXpNext(it.lv)) {
-          it.xp -= petXpNext(it.lv);
+        const pid = idef(it).pet, max = petMaxLv(pid), dragon = PETS[pid] && PETS[pid].dragon;
+        while (it.lv < max && it.xp >= petXpNext(it.lv, pid)) {
+          if (dragon && DRAGON_GATES.includes(it.lv + 1)) {
+            it.xp = petXpNext(it.lv, pid);
+            if (!it.hungry) {
+              it.hungry = 1;
+              const food = DRAGON_FOOD[DRAGON_GATES.indexOf(it.lv + 1)];
+              app.toast(tr("{idef|이} 진화를 기다린다 — {food|을} 먹이자", { idef: idef(it).n, food: ITEMS[food].n }), "good");
+            }
+            break;
+          }
+          it.xp -= petXpNext(it.lv, pid);
           it.lv++;
           up = true;
           app.toast(tr("{idef} — {lv}레벨이 되었다", { idef: idef(it).n, lv: it.lv }), "good");
         }
-        if (it.lv >= PET_LV_MAX) it.xp = 0;
+        if (it.lv >= max) it.xp = 0;
       }
       if (up) {
         this.recalc();
@@ -28308,7 +28422,8 @@
     /** 플레이어 기준 떠 있을 자리 — 슬롯마다 반대쪽 어깨 뒤에 선다 */
     anchor(p) {
       const side = this.slot === 0 ? -1 : 1;
-      return [p.cx - p.facing * side * 26, p.cy - 16 + Math.sin(this.t * 2.2 + this.slot) * 4];
+      const ex = this.def.dragon ? [0, 4, 10, 16][dragonStage(this.lvOf(p))] : 0;
+      return [p.cx - p.facing * side * (26 + ex), p.cy - 16 - ex * 0.6 + Math.sin(this.t * 2.2 + this.slot) * 4];
     }
     update(dt, p) {
       this.t += dt;
@@ -33596,11 +33711,13 @@
       if (d.def) h += `<div class="tstat">${tr("방어 <b>{n}</b>", { n: Math.round(d.def * enhMul(it)) })}</div>`;
       if (it.e) h += `<div class="tstat">${tr("강화 <b>+{e}</b>", { e: it.e })} <span class="thint">${tr("(공격·방어 +{n}%p)", { n: it.e * 5 })}</span></div>`;
       if (d.type === "pet") {
-        const lv = it.lv || 1, max = lv >= PET_LV_MAX;
-        h += `<div class="tstat">${tr("레벨 <b>{lv}</b> / {petLvMax}", { lv, petLvMax: PET_LV_MAX })}` + (max ? ` <span class="thint">${tr("(끝까지 키웠다)")}</span>` : ` <span class="thint">${tr("패시브 ×{petLvMul} · 공격 ×{petAtkMul}", { petLvMul: petLvMul(lv).toFixed(2), petAtkMul: petAtkMul(lv).toFixed(2) })}</span>`) + `</div>`;
+        const pid = d.pet, lvMax = petMaxLv(pid), dragon = PETS[pid] && PETS[pid].dragon;
+        const lv = it.lv || 1, max = lv >= lvMax;
+        if (dragon) h += `<div class="tstat">${tr("단계 <b>{stage}</b>", { stage: tr(DRAGON_STAGE_N[dragonStage(lv)]) })}</div>`;
+        h += `<div class="tstat">${tr("레벨 <b>{lv}</b> / {petLvMax}", { lv, petLvMax: lvMax })}` + (max ? ` <span class="thint">${tr("(끝까지 키웠다)")}</span>` : ` <span class="thint">${tr("패시브 ×{petLvMul} · 공격 ×{petAtkMul}", { petLvMul: petLvMul(lv).toFixed(2), petAtkMul: petAtkMul(lv).toFixed(2) })}</span>`) + `</div>`;
         if (!max) {
-          const need = petXpNext(lv), cur = it.xp || 0;
-          h += `<div class="petxp"><i style="width:${Math.round(clamp(cur / need, 0, 1) * 100)}%"></i></div><div class="thint">${tr("다음 레벨까지 {n}", { n: fmt(need - cur) })}</div>`;
+          const need = petXpNext(lv, pid), cur = it.xp || 0;
+          h += `<div class="petxp"><i style="width:${Math.round(clamp(cur / need, 0, 1) * 100)}%"></i></div>` + (it.hungry ? `<div class="thint">${tr("진화를 기다린다 — {food|을} 먹여야 한다", { food: ITEMS[DRAGON_FOOD[DRAGON_GATES.indexOf(lv + 1)]].n })}</div>` : `<div class="thint">${tr("다음 레벨까지 {n}", { n: fmt(need - cur) })}</div>`);
         }
       }
       if (d.power) h += `<div class="tstat">${tr("채굴 등급 <b>{power}</b>", { power: d.power })}</div>`;
@@ -38112,6 +38229,10 @@
         this.sfx("hatch");
         return;
       }
+      if (d.use.dragonFeed) {
+        this.feedDragon(slot, d.use.dragonFeed);
+        return;
+      }
       if (d.use.petXp) {
         if (!p.equip.pet1 && !p.equip.pet2) {
           this.toast(tr("펫을 끼고 있어야 준다"), "bad");
@@ -38181,12 +38302,42 @@
     /* ================= 펫 ================= */
     hatchEgg(tier) {
       const p = this.player;
-      const id = this.rng.weighted(EGG_POOL[tier]);
+      const id = PETS[tier] ? tier : this.rng.weighted(EGG_POOL[tier]);
       const it = makeItem("pet_" + id, 1);
+      it.lv = 1;
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
       this.toast(tr("{pet|을} 얻었다! (장비창의 펫 칸에 끼울 수 있다)", { pet: PETS[id].n }), "good");
       UI5.refreshBag();
       UI5.refreshChest();
+    },
+    /** 드래곤 진화 먹이 — 문턱에서 기다리는(경험치가 다 찬) 드래곤만 먹는다. 먹으면 한 레벨 올라 다음 단계로. */
+    feedDragon(slot, stage) {
+      const p = this.player, it = p.bag[slot];
+      const gate = DRAGON_GATES[stage - 1];
+      let fed = null, near = null;
+      for (const k of ["pet1", "pet2"]) {
+        const pe = p.equip[k];
+        if (!pe || !PETS[idef(pe).pet] || !PETS[idef(pe).pet].dragon) continue;
+        if ((pe.lv || 1) === gate - 1 && pe.hungry) {
+          fed = pe;
+          break;
+        }
+        if ((pe.lv || 1) === gate - 1) near = pe;
+      }
+      if (!fed) {
+        this.toast(near ? tr("아직 경험치가 덜 찼다 — 다 차면 먹는다") : tr("이 먹이를 먹을 드래곤이 없다 — {lv}레벨에서 경험치가 다 찬 드래곤이 먹는다", { lv: gate - 1 }), "bad");
+        return;
+      }
+      fed.lv = gate;
+      fed.xp = 0;
+      fed.hungry = 0;
+      it.c--;
+      if (it.c <= 0) p.bag[slot] = null;
+      this.toast(tr("{pet|이} {stage|로} 자랐다!", { pet: idef(fed).n, stage: tr(DRAGON_STAGE_N[dragonStage(gate)]) }), "good");
+      p.recalc();
+      UI5.refreshEquip();
+      UI5.refreshBag();
+      this.sfx("level");
     },
     /** 장비창의 펫 슬롯을 실제로 따라다니는 펫 인스턴스와 맞춘다. */
     syncPets() {
@@ -42530,10 +42681,11 @@
         c.shadowColor = pet.def.c;
         c.shadowBlur = 10;
       }
-      const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets["pet_" + pet.id];
+      const key = pet.def.dragon ? `pet_${pet.id}_s${dragonStage(pet.lvOf(this.player))}` : "pet_" + pet.id;
+      const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets[key];
       if (sheet) {
-        const fr = pet.flash > 0 ? 2 : Math.floor(this.time * 3 + pet.slot) % 2;
-        if (Sprites.draw(c, "pet_" + pet.id, fr, sx - sheet.frameW / 2, sy - sheet.frameH / 2, pet.facing < 0)) {
+        const fr = sheet.flap ? pet.flash > 0 ? sheet.flap : Math.floor(this.time * 9 + pet.slot * 2) % sheet.flap : pet.flash > 0 ? 2 : Math.floor(this.time * 3 + pet.slot) % 2;
+        if (Sprites.draw(c, key, fr, sx - sheet.frameW / 2, sy - sheet.frameH / 2, pet.facing < 0)) {
           c.restore();
           return;
         }

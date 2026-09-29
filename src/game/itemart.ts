@@ -157,6 +157,13 @@ export const ISPEC = {
   /* 펫 알 */
   egg_common: { k: 'egg', c: '#a8967a' },
   egg_rare: { k: 'egg', c: '#6fa8d8', glow: '#6fa8d8' },
+  egg_dragon_fire: { k: 'egg', c: '#d0583a', glow: '#ff9a3a' },
+  egg_dragon_earth: { k: 'egg', c: '#8a7a4a' },
+  egg_dragon_storm: { k: 'egg', c: '#5a9ad0', glow: '#ffe864' },
+  egg_dragon_dark: { k: 'egg', c: '#4a3a66', glow: '#b07aff' },
+  dragon_treat_1: { k: 'gel', c: '#c8604a' },
+  dragon_treat_2: { k: 'heart', c: '#e0a040', glow: '#ffd070' },
+  dragon_treat_3: { k: 'heart', c: '#8ab0f0', glow: '#e8f0ff' },
   egg_epic: { k: 'egg', c: '#b17fe0', glow: '#b17fe0' },
   pet_candy: { k: 'candy', c: '#e05a8a' },
   coconut: { k: 'coconut_i', c: '#6a4a2a' },
@@ -618,7 +625,8 @@ export const UISPEC = {
 export const PET_FORM = {
   ember_squirrel: 'beast', glass_moth: 'moth', pebble_kin: 'rock', dust_sparrow: 'bird',
   frost_kit: 'beast', ash_owl: 'bird', cinder_toad: 'rock', thorn_wisp: 'wisp',
-  star_sprite: 'wisp', ember_drake: 'drake', void_hatchling: 'wisp', storm_falcon: 'bird'
+  star_sprite: 'wisp', ember_drake: 'drake', void_hatchling: 'wisp', storm_falcon: 'bird',
+  dragon_fire: 'drake', dragon_earth: 'drake', dragon_storm: 'drake', dragon_dark: 'drake'
 };
 export const NPCSPEC = {
   elara: { hair: '#d8c07a', skin: '#e8c39a', cloth: '#c8a06a', long: 1 },

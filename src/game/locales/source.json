@@ -194,6 +194,9 @@
   "{e} {e2|이} 지나갔다": [
    "game/spawn.updateEvents"
   ],
+  "{idef|이} 진화를 기다린다 — {food|을} 먹이자": [
+   "entity.addPetXp"
+  ],
   "{idef} — {lv}레벨이 되었다": [
    "entity.addPetXp"
   ],
@@ -305,6 +308,9 @@
   ],
   "{pet|을} 얻었다! (장비창의 펫 칸에 끼울 수 있다)": [
    "game/altar.hatchEgg"
+  ],
+  "{pet|이} {stage|로} 자랐다!": [
+   "game/altar.feedDragon"
   ],
   "{rowsCount}개 표시": [
    "ui/craft.refreshCraft"
@@ -935,6 +941,9 @@
   ],
   "다음에 켤 때부터 이 언어로 나온다": [
    "ui.bindSettings"
+  ],
+  "단계 <b>{stage}</b>": [
+   "ui/tip.showTip"
   ],
   "단단한 바닥 위에만 놓을 수 있다": [
    "game/act.rightClick"
@@ -1814,6 +1823,9 @@
   "아궁이": [
    "data/quests"
   ],
+  "아직 경험치가 덜 찼다 — 다 차면 먹는다": [
+   "game/altar.feedDragon"
+  ],
   "아직 다 하지 못했다": [
    "game/village.claimBounty"
   ],
@@ -2090,6 +2102,9 @@
   ],
   "이 단계로 올린다": [
    "ui/craft.refreshTownhall"
+  ],
+  "이 먹이를 먹을 드래곤이 없다 — {lv}레벨에서 경험치가 다 찬 드래곤이 먹는다": [
+   "game/altar.feedDragon"
   ],
   "이 문은 여기서 열 수 없다": [
    "game/ruin-map.tryCodeDoor"
@@ -2496,6 +2511,9 @@
   "진행 중": [
    "ui/quest.refreshQuest",
    "index.html"
+  ],
+  "진화를 기다린다 — {food|을} 먹여야 한다": [
+   "ui/tip.showTip"
   ],
   "짠물이 폐를 채운다 — 숨이 줄었다": [
    "game.tickTileTraps"
@@ -3782,6 +3800,10 @@
   "DIALOGUE.kade.13.1": "나라면 어땠을까 생각해 봤는데… 나도 안 멈췄을 것 같아.",
   "DIALOGUE.kade.14.0": "기계 설계도가 아니야. 사람 설계도야. 심장 위치까지 적혀 있어.",
   "DIALOGUE.kade.14.1": "우리가 그 도면에 있는지 없는지는 확인 안 할래. 어느 쪽이든 오늘 할 일은 안 바뀌니까.",
+  "DRAGON_STAGE_N.0": "새끼",
+  "DRAGON_STAGE_N.1": "어린 용",
+  "DRAGON_STAGE_N.2": "성룡",
+  "DRAGON_STAGE_N.3": "고룡",
   "ENEMIES.rabbit.n": "들토끼",
   "ENEMIES.arctic_hare.n": "눈산토끼",
   "ENEMIES.sand_lizard.n": "모래 도마뱀",
@@ -4102,6 +4124,20 @@
   "ITEMS.det_mob.d": "가까운 것들이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머의 몬스터가 화면에도 드러난다. 보고 싶지 않은 것까지 보인다.",
   "ITEMS.coconut.n": "코코넛",
   "ITEMS.coconut.d": "단단한 껍질 안에 물이 차 있다. 섬에서만 난다.",
+  "ITEMS.egg_dragon_fire.n": "불의 드래곤 알",
+  "ITEMS.egg_dragon_fire.d": "손을 대면 데일 듯 뜨겁다. 깨면 불의 드래곤이 나온다.",
+  "ITEMS.egg_dragon_earth.n": "흙의 드래곤 알",
+  "ITEMS.egg_dragon_earth.d": "돌처럼 무겁다. 깨면 흙의 드래곤이 나온다.",
+  "ITEMS.egg_dragon_storm.n": "전기의 드래곤 알",
+  "ITEMS.egg_dragon_storm.d": "쥐면 손끝이 저릿하다. 깨면 전기의 드래곤이 나온다.",
+  "ITEMS.egg_dragon_dark.n": "암흑의 드래곤 알",
+  "ITEMS.egg_dragon_dark.d": "빛을 먹는 듯 어둡다. 깨면 암흑의 드래곤이 나온다.",
+  "ITEMS.dragon_treat_1.n": "용의 첫 먹이",
+  "ITEMS.dragon_treat_1.d": "새끼 드래곤이 어린 용이 되려면 먹어야 한다(9레벨에서 경험치가 다 찼을 때).",
+  "ITEMS.dragon_treat_2.n": "폭풍 호박 심장",
+  "ITEMS.dragon_treat_2.d": "어린 용이 성룡이 되려면 먹어야 한다(19레벨에서 경험치가 다 찼을 때).",
+  "ITEMS.dragon_treat_3.n": "별똥 심장",
+  "ITEMS.dragon_treat_3.d": "성룡이 고룡이 되려면 먹어야 한다(29레벨에서 경험치가 다 찼을 때).",
   "ITEMS.pet_candy.n": "펫 사탕",
   "ITEMS.pet_candy.d": "주머니에 넣어 두면 녀석들이 먼저 안다.",
   "ITEMS.wildflower.n": "들꽃",
@@ -4736,6 +4772,14 @@
   "ITEMS.pet_void_hatchling.d": "들여다보면 이쪽이 먼저 눈을 피하게 된다.",
   "ITEMS.pet_storm_falcon.n": "뇌운 매",
   "ITEMS.pet_storm_falcon.d": "내려꽂힐 때 소리가 한 박자 늦게 온다.",
+  "ITEMS.pet_dragon_fire.n": "불의 드래곤",
+  "ITEMS.pet_dragon_fire.d": "알 껍데기를 스스로 녹이고 나왔다. 자랄수록 숨결이 길어진다.",
+  "ITEMS.pet_dragon_earth.n": "흙의 드래곤",
+  "ITEMS.pet_dragon_earth.d": "등의 비늘이 바위처럼 겹친다. 서두르는 법이 없다.",
+  "ITEMS.pet_dragon_storm.n": "전기의 드래곤",
+  "ITEMS.pet_dragon_storm.d": "날개를 털 때마다 날개 끝에서 불똥이 튄다.",
+  "ITEMS.pet_dragon_dark.n": "암흑의 드래곤",
+  "ITEMS.pet_dragon_dark.d": "그림자 속에 있어도 눈만은 또렷이 빛난다.",
   "KEY_ACTIONS.0.n": "왼쪽",
   "KEY_ACTIONS.1.n": "오른쪽",
   "KEY_ACTIONS.2.n": "내려가기",
@@ -4925,6 +4969,14 @@
   "PETS.void_hatchling.d": "들여다보면 이쪽이 먼저 눈을 피하게 된다.",
   "PETS.storm_falcon.n": "뇌운 매",
   "PETS.storm_falcon.d": "내려꽂힐 때 소리가 한 박자 늦게 온다.",
+  "PETS.dragon_fire.n": "불의 드래곤",
+  "PETS.dragon_fire.d": "알 껍데기를 스스로 녹이고 나왔다. 자랄수록 숨결이 길어진다.",
+  "PETS.dragon_earth.n": "흙의 드래곤",
+  "PETS.dragon_earth.d": "등의 비늘이 바위처럼 겹친다. 서두르는 법이 없다.",
+  "PETS.dragon_storm.n": "전기의 드래곤",
+  "PETS.dragon_storm.d": "날개를 털 때마다 날개 끝에서 불똥이 튄다.",
+  "PETS.dragon_dark.n": "암흑의 드래곤",
+  "PETS.dragon_dark.d": "그림자 속에 있어도 눈만은 또렷이 빛난다.",
   "PREFIX.0.n": "날카로운",
   "PREFIX.1.n": "잔혹한",
   "PREFIX.2.n": "신속한",
