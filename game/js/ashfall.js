@@ -5363,9 +5363,10 @@
       item: "m_sprinkler",
       ammo: "water_bucket",
       cap: 20,
+      power: 3,
       wetR: SPRINKLE_R,
       wetMax: SPRINKLE_MAX,
-      d: "물 양동이를 넣어 두면 아침마다 둘레(좌우 25칸 · 위아래 6칸)의 밭 가운데 가까운 것부터 500칸까지 물을 준다. 양동이 하나가 50칸. 동력은 필요 없다."
+      d: "물 양동이를 넣어 두면 아침마다 둘레(좌우 25칸 · 위아래 6칸)의 밭 가운데 가까운 것부터 500칸까지 물을 준다. 양동이 하나가 50칸. 물이 들어 있는 동안 전력을 조금(3) 쓴다 — 전력이 없으면 물을 주지 않는다."
     },
     mill: {
       n: "밀링기",
@@ -30363,6 +30364,10 @@
     sprinkle(w, day) {
       for (const m of w.machines.values()) {
         if (m.t !== "sprinkler" || !m.on) continue;
+        if (this.sat(w, m) <= 0) {
+          m.last = 0;
+          continue;
+        }
         const s = MACHINE[m.t], [rx, ry] = s.wetR, spots = [];
         for (let y = m.y - ry; y <= m.y + ry; y++)
           for (let x = m.x - rx; x <= m.x + rx; x++)
@@ -30605,10 +30610,11 @@
           case "windmill":
             break;
           // 전력 정산에서 이미 처리했다
-          case "sprinkler":
-            m.st = m.in.water_bucket > 0 || m.wl > 0 ? N_("아침을 기다림") : N_("물 없음");
-            m.act = 0;
+          case "sprinkler": {
+            m.act = m.in.water_bucket > 0 || m.wl > 0 ? 1 : 0;
+            m.st = !m.act ? N_("물 없음") : this.sat(w, m) > 0 ? N_("아침을 기다림") : m.net < 0 ? N_("망 없음") : N_("전력 없음");
             break;
+          }
           default:
             if (s.proc) this.runProc(w, m, s);
             break;
@@ -35970,16 +35976,13 @@
     /** 물뿌리개 — 물 칸이면 가득 채우고, 밭(또는 작물 밑 밭)이면 물을 한 번 준다. */
     useWateringCan(w, hi, hd, tx, ty) {
       const t = w.get(tx, ty), p = this.player;
-      const drop = (col, n, vy) => {
-        for (let i = 0; i < n; i++) this.parts.push(new Part((tx + 0.5) * TS, (ty + 0.3) * TS, col, vy));
-      };
       if (FLUID_KIND[t] === 1 || FLUID_KIND[t] === 2) {
         if ((hi.w | 0) >= hd.water) {
           this.toast(tr("물뿌리개가 이미 가득하다"), "bad");
           return;
         }
         hi.w = hd.water;
-        drop("#7fb8e8", 8, -60);
+        this.splashStreaks((tx + 0.5) * TS, ty * TS, 8);
         this.sfx("splash");
         this.toast(tr("물뿌리개를 채웠다 — {n}번", { n: hd.water }));
         UI5.refreshBag();
@@ -35996,7 +35999,7 @@
       }
       w.waterFarm(tx, fy, this.dayCount);
       hi.w--;
-      drop("#8fc8f0", 6, 30);
+      this.pourStreaks((tx + 0.5) * TS, (fy - 1.4) * TS, 10);
       this.sfx("splash");
       UI5.refreshBag();
     },
@@ -36016,7 +36019,7 @@
       if (hi.c <= 0) p.bag[p.sel] = null;
       const got = makeItem(full ? "bucket" : "water_bucket", 1);
       if (!p.addItem(got)) this.drops.push(new Drop((tx + 0.5) * TS, (ty + 0.5) * TS, got));
-      for (let i = 0; i < 8; i++) this.parts.push(new Part((tx + 0.5) * TS, (ty + 0.5) * TS, "#7fb8e8", -50));
+      this.splashStreaks((tx + 0.5) * TS, ty * TS, 8);
       this.sfx("splash");
       UI5.refreshBag();
     },
@@ -36030,6 +36033,63 @@
           break;
         }
         if (open) w.waterFarm(x, fy, day);
+      }
+    },
+    /* ================= 물줄기 — 점이 아니라 가는 선(분수대 물줄기처럼). 인물 뒤(objects 단계)에 반투명으로 ================= */
+    streak(x, y, vx, vy, life) {
+      const a = this.streaks || (this.streaks = []);
+      if (a.length < 260) a.push({ x, y, vx, vy, t: life, life });
+    },
+    /** 물뿌리개로 줄 때 — 주둥이 높이에서 앞으로 흘러 떨어진다. */
+    pourStreaks(x, y, n) {
+      for (let i = 0; i < n; i++) this.streak(x + (Math.random() - 0.5) * 10, y, (Math.random() - 0.5) * 30, 40 + Math.random() * 50, 0.45);
+    },
+    /** 물을 뜰 때 — 짧게 튀어 오른다. */
+    splashStreaks(x, y, n) {
+      for (let i = 0; i < n; i++) {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.4;
+        this.streak(x, y, Math.cos(a) * 90, Math.sin(a) * (110 + Math.random() * 60), 0.5);
+      }
+    },
+    /** 렌더 단계 — 물줄기. 아침(5~9시)에 전력과 물이 있는 스프링클러는 꼭지에서 양옆으로 뿜는다. */
+    rStreaks(f) {
+      const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
+      const dt = Math.min(0.05, Math.max(0, this.time - (this._stT || this.time)));
+      this._stT = this.time;
+      const hour = this.dayT / 60;
+      if (hour >= 5 && hour < 9 && w.machines.size) {
+        for (const m of w.machines.values()) {
+          if (m.t !== "sprinkler" || !m.on || !m.act || m.x < tx0 - 3 || m.x > tx1 + 3 || m.y < ty0 - 3 || m.y > ty1 + 3) continue;
+          if (Factory11.sat(w, m) <= 0) continue;
+          m.sprT = (m.sprT || 0) + dt * 22;
+          for (; m.sprT >= 1; m.sprT--) {
+            const side = Math.random() < 0.5 ? -1 : 1, a2 = 0.35 + Math.random() * 0.75, sp = 110 + Math.random() * 70;
+            this.streak((m.x + 0.5) * TS + side * 5, m.y * TS + 1, side * Math.cos(a2) * sp, -Math.sin(a2) * sp, 0.9);
+          }
+        }
+      }
+      const a = this.streaks;
+      if (!a || !a.length) return;
+      c.lineCap = "round";
+      c.lineWidth = 1.4;
+      for (let i = a.length - 1; i >= 0; i--) {
+        const s = a[i];
+        s.t -= dt;
+        s.vy += 420 * dt;
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        const tx = Math.floor(s.x / TS), ty = Math.floor(s.y / TS);
+        if (s.t <= 0 || TILE_DEF[w.get(tx, ty)].solid === 1) {
+          a[i] = a[a.length - 1];
+          a.pop();
+          continue;
+        }
+        const k = 0.035, al = 0.7 * Math.min(1, s.t / s.life * 2);
+        c.strokeStyle = `rgba(185,222,250,${al.toFixed(2)})`;
+        c.beginPath();
+        c.moveTo(s.x - camX, s.y - camY);
+        c.lineTo(s.x - s.vx * k - camX, s.y - s.vy * k - camY);
+        c.stroke();
       }
     },
     /** 렌더 단계 — 젖은 밭은 흙이 짙고 윗면에 물기가 번들거린다. 물가 판정은 칸마다 2초 캐시(121칸을 매 프레임 훑지 않게). */
@@ -40595,6 +40655,7 @@
       this.pipe.add("tiles", (f) => this.rFarmWet(f));
       this.pipe.add("machines", (f) => this.rMachines(f));
       this.pipe.add("objects", (f) => this.rObjects(f));
+      this.pipe.add("objects", (f) => this.rStreaks(f));
       this.pipe.add("ground", (f) => this.rGround(f));
       this.pipe.add("drops", (f) => this.rDrops(f));
       this.pipe.add("actors", (f) => this.rActors(f));

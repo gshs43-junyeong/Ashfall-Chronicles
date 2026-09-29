@@ -182,6 +182,7 @@ export const Factory: Bag = {
   sprinkle(w, day) {
     for (const m of w.machines.values()) {
       if (m.t !== 'sprinkler' || !m.on) continue;
+      if (this.sat(w, m) <= 0) { m.last = 0; continue; }          // 전력 없음 — 펌프가 안 돈다
       const s = MACHINE[m.t], [rx, ry] = s.wetR, spots = [];
       for (let y = m.y - ry; y <= m.y + ry; y++)
         for (let x = m.x - rx; x <= m.x + rx; x++)
@@ -334,7 +335,11 @@ export const Factory: Bag = {
         case 'pole': m.st = m.net >= 0 ? N_('망 #{n}') : '—'; m.act = 0; break;
         case 'crate': m.st = m.feed ? N_('배출 중') : N_('보관'); m.act = 0; break;
         case 'gen': case 'windmill': break;   // 전력 정산에서 이미 처리했다
-        case 'sprinkler': m.st = (m.in.water_bucket > 0 || m.wl > 0) ? N_('아침을 기다림') : N_('물 없음'); m.act = 0; break;
+        case 'sprinkler': {                   // 물이 있을 때만 전력을 먹는다(act) — 전력이 없으면 아침에 물을 안 준다
+          m.act = (m.in.water_bucket > 0 || m.wl > 0) ? 1 : 0;
+          m.st = !m.act ? N_('물 없음') : this.sat(w, m) > 0 ? N_('아침을 기다림') : m.net < 0 ? N_('망 없음') : N_('전력 없음');
+          break;
+        }
         default: if (s.proc) this.runProc(w, m, s); break;
       }
     }

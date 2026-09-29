@@ -43,6 +43,7 @@ export const RenderPart: Bag = {
     this.pipe.add('tiles', f => this.rFarmWet(f));    // 젖은 밭(game/act)
     this.pipe.add('machines', f => this.rMachines(f));
     this.pipe.add('objects', f => this.rObjects(f));
+    this.pipe.add('objects', f => this.rStreaks(f));   // 물줄기(game/act) — 인물 뒤
     this.pipe.add('ground', f => this.rGround(f));
     this.pipe.add('drops', f => this.rDrops(f));
     this.pipe.add('actors', f => this.rActors(f));

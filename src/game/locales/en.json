@@ -4074,7 +4074,7 @@
   "ITEMS.water_bucket.d": "Water for a sprinkler. Right-click an empty tile to pour it back as one tile of water.",
   "ITEMS.m_sprinkler.n": "Sprinkler",
   "MACHINE.sprinkler.n": "Sprinkler",
-  "MACHINE.sprinkler.d": "Load water buckets and every morning it waters the nearest plots around it (25 tiles left and right, 6 up and down), up to 500. One bucket covers 50 plots. Needs no power.",
+  "MACHINE.sprinkler.d": "Load water buckets and every morning it waters the nearest plots around it (25 tiles left and right, 6 up and down), up to 500. One bucket covers 50 plots. While it holds water it draws a little power (3) — without power it does not water.",
   "TILE_DEF.198.n": "Sprinkler"
  }
 }

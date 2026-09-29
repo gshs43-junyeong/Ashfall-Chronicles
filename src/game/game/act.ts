@@ -147,11 +147,10 @@ export const ActPart: Bag = {
   /** 물뿌리개 — 물 칸이면 가득 채우고, 밭(또는 작물 밑 밭)이면 물을 한 번 준다. */
   useWateringCan(w, hi, hd, tx, ty) {
     const t = w.get(tx, ty), p = this.player;
-    const drop = (col, n, vy) => { for (let i = 0; i < n; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .3) * TS, col, vy)); };
     if (FLUID_KIND[t] === 1 || FLUID_KIND[t] === 2) {
       if ((hi.w | 0) >= hd.water) { this.toast(tr('물뿌리개가 이미 가득하다'), 'bad'); return; }
       hi.w = hd.water;
-      drop('#7fb8e8', 8, -60); this.sfx('splash');
+      this.splashStreaks((tx + .5) * TS, ty * TS, 8); this.sfx('splash');
       this.toast(tr('물뿌리개를 채웠다 — {n}번', { n: hd.water }));
       UI.refreshBag(); return;
     }
@@ -160,7 +159,7 @@ export const ActPart: Bag = {
     if (!(hi.w > 0)) { this.toast(tr('물뿌리개가 비었다 — 물가를 우클릭해 채우자'), 'bad'); return; }
     w.waterFarm(tx, fy, this.dayCount);
     hi.w--;
-    drop('#8fc8f0', 6, 30); this.sfx('splash');
+    this.pourStreaks((tx + .5) * TS, (fy - 1.4) * TS, 10); this.sfx('splash');
     UI.refreshBag();
   },
 
@@ -173,7 +172,7 @@ export const ActPart: Bag = {
     hi.c--; if (hi.c <= 0) p.bag[p.sel] = null;
     const got = makeItem(full ? 'bucket' : 'water_bucket', 1);
     if (!p.addItem(got)) this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, got));
-    for (let i = 0; i < 8; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, '#7fb8e8', -50));
+    this.splashStreaks((tx + .5) * TS, ty * TS, 8);
     this.sfx('splash');
     UI.refreshBag();
   },
@@ -185,6 +184,52 @@ export const ActPart: Bag = {
       let open = true;
       for (let y = fy - 2; y >= 0; y--) if (TILE_DEF[w.get(x, y)].solid === 1) { open = false; break; }
       if (open) w.waterFarm(x, fy, day);
+    }
+  },
+
+  /* ================= 물줄기 — 점이 아니라 가는 선(분수대 물줄기처럼). 인물 뒤(objects 단계)에 반투명으로 ================= */
+  streak(x, y, vx, vy, life) {
+    const a = this.streaks || (this.streaks = []);
+    if (a.length < 260) a.push({ x, y, vx, vy, t: life, life });
+  },
+  /** 물뿌리개로 줄 때 — 주둥이 높이에서 앞으로 흘러 떨어진다. */
+  pourStreaks(x, y, n) {
+    for (let i = 0; i < n; i++) this.streak(x + (Math.random() - .5) * 10, y, (Math.random() - .5) * 30, 40 + Math.random() * 50, .45);
+  },
+  /** 물을 뜰 때 — 짧게 튀어 오른다. */
+  splashStreaks(x, y, n) {
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + (Math.random() - .5) * 1.4;
+      this.streak(x, y, Math.cos(a) * 90, Math.sin(a) * (110 + Math.random() * 60), .5);
+    }
+  },
+  /** 렌더 단계 — 물줄기. 아침(5~9시)에 전력과 물이 있는 스프링클러는 꼭지에서 양옆으로 뿜는다. */
+  rStreaks(f) {
+    const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
+    const dt = Math.min(0.05, Math.max(0, this.time - (this._stT || this.time))); this._stT = this.time;
+    const hour = this.dayT / 60;
+    if (hour >= 5 && hour < 9 && w.machines.size) {
+      for (const m of w.machines.values()) {
+        if (m.t !== 'sprinkler' || !m.on || !m.act || m.x < tx0 - 3 || m.x > tx1 + 3 || m.y < ty0 - 3 || m.y > ty1 + 3) continue;
+        if (Factory.sat(w, m) <= 0) continue;
+        m.sprT = (m.sprT || 0) + dt * 22;                 // 한 대에 초당 22줄
+        for (; m.sprT >= 1; m.sprT--) {
+          const side = Math.random() < .5 ? -1 : 1, a = (0.35 + Math.random() * 0.75), sp = 110 + Math.random() * 70;
+          this.streak((m.x + .5) * TS + side * 5, m.y * TS + 1, side * Math.cos(a) * sp, -Math.sin(a) * sp, .9);
+        }
+      }
+    }
+    const a = this.streaks;
+    if (!a || !a.length) return;
+    c.lineCap = 'round'; c.lineWidth = 1.4;
+    for (let i = a.length - 1; i >= 0; i--) {
+      const s = a[i];
+      s.t -= dt; s.vy += 420 * dt; s.x += s.vx * dt; s.y += s.vy * dt;
+      const tx = Math.floor(s.x / TS), ty = Math.floor(s.y / TS);
+      if (s.t <= 0 || TILE_DEF[w.get(tx, ty)].solid === 1) { a[i] = a[a.length - 1]; a.pop(); continue; }
+      const k = 0.035, al = 0.7 * Math.min(1, s.t / s.life * 2);
+      c.strokeStyle = `rgba(185,222,250,${al.toFixed(2)})`;
+      c.beginPath(); c.moveTo(s.x - camX, s.y - camY); c.lineTo(s.x - s.vx * k - camX, s.y - s.vy * k - camY); c.stroke();
     }
   },
 

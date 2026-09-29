@@ -4074,7 +4074,7 @@
   "ITEMS.water_bucket.d": "Wasser für einen Sprenger. Rechtsklicke ein leeres Feld, um es als ein Wasserfeld zurückzugießen.",
   "ITEMS.m_sprinkler.n": "Sprenger",
   "MACHINE.sprinkler.n": "Sprenger",
-  "MACHINE.sprinkler.d": "Mit Wassereimern befüllt, gießt er jeden Morgen die nächstgelegenen Felder ringsum (25 Felder links und rechts, 6 oben und unten), bis zu 500. Ein Eimer reicht für 50 Felder. Braucht keinen Strom.",
+  "MACHINE.sprinkler.d": "Mit Wassereimern befüllt, gießt er jeden Morgen die nächstgelegenen Felder ringsum (25 Felder links und rechts, 6 oben und unten), bis zu 500. Ein Eimer reicht für 50 Felder. Solange er Wasser hat, braucht er etwas Strom (3) — ohne Strom gießt er nicht.",
   "TILE_DEF.198.n": "Sprenger"
  }
 }
