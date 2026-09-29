@@ -123,6 +123,7 @@ for (let i = 0; i < 4; i++) {
 /* --- 마을 기계 --- */
 ART[T.M_WINDMILL] = { k: 'mk_windmill', c: '#c8bca0', a: 1 };
 ART[T.M_MILL] = { k: 'mk_mill', c: '#8a7a5a', a: 1 };
+ART[T.M_SPRINKLER] = { k: 'mk_sprinkler', c: '#6a7a8a', a: 1 };
 ART[T.M_OVEN] = { k: 'mk_oven', c: '#9a6a4a', a: 1 };
 /* --- 울림 정글 / 버섯 골짜기 --- */
 ART[T.JUNGLEGRASS] = { k: 'grass', c: '#4a3a26', g: '#3f7a34' };

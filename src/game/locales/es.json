@@ -898,7 +898,17 @@
   "{item|을} 벨트에서 집었다": "Recogido de la cinta: {item}",
   "비석에 손을 대면 {to|로} 돌아간다.": "Toca la piedra para volver a {to}.",
   "({to|로} 이동한다)": "(Viajar a {to})",
-  "확인": "Aceptar"
+  "확인": "Aceptar",
+  "물 <b>{n}</b> / {max}": "Agua <b>{n}</b> / {max}",
+  "물 없음": "Sin agua",
+  "물 칸을 우클릭해 떠 담는다": "Haz clic derecho en una casilla de agua para recogerla",
+  "물뿌리개가 비었다 — 물가를 우클릭해 채우자": "La regadera está vacía — haz clic derecho en el agua para llenarla",
+  "물뿌리개가 이미 가득하다": "La regadera ya está llena",
+  "물뿌리개를 채웠다 — {n}번": "Regadera llena — {n} usos",
+  "밭이 말라 {n}칸이 자라지 않았다 — 물뿌리개로 물을 주자": "{n} parcelas secas no crecieron — riégalas con la regadera",
+  "밭이나 작물에 물을 준다 — 물가를 우클릭하면 채운다": "Riega una parcela o un cultivo — clic derecho en el agua para llenarla",
+  "빈 칸에만 부을 수 있다": "Solo puedes verterla en una casilla vacía",
+  "아침을 기다림": "Esperando la mañana"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4055,6 +4065,16 @@
   "NAME_CALL.seira.2": "{name}, enséñame lo que llevas.",
   "NAME_CALL.kade.0": "{name}, llegas justo a tiempo.",
   "NAME_CALL.kade.1": "Ah, {name}. La máquina vuelve a hacer ese ruido raro.",
-  "NAME_CALL.kade.2": "{name}. ¿Qué piezas traes hoy?"
+  "NAME_CALL.kade.2": "{name}. ¿Qué piezas traes hoy?",
+  "ITEMS.watering_can.n": "Regadera",
+  "ITEMS.watering_can.d": "Haz clic derecho en el agua para llenarla (20 usos) y luego en una parcela o cultivo para regar. Una parcela regada sigue húmeda tres mañanas.",
+  "ITEMS.bucket.n": "Cubo vacío",
+  "ITEMS.bucket.d": "Haz clic derecho en una casilla de agua para recogerla entera — el agua de ahí desaparece.",
+  "ITEMS.water_bucket.n": "Cubo de agua",
+  "ITEMS.water_bucket.d": "Agua para un aspersor. Haz clic derecho en una casilla vacía para verterla como una casilla de agua.",
+  "ITEMS.m_sprinkler.n": "Aspersor",
+  "MACHINE.sprinkler.n": "Aspersor",
+  "MACHINE.sprinkler.d": "Cárgalo con cubos de agua y cada mañana riega las parcelas más cercanas a su alrededor (25 casillas a cada lado, 6 arriba y abajo), hasta 500. Un cubo alcanza para 50 parcelas. No necesita energía.",
+  "TILE_DEF.198.n": "Aspersor"
  }
 }

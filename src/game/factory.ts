@@ -5,7 +5,7 @@ import { TAU, aabb, angleTo, clamp, dist2 } from '../engine/core/math.js';
 import { tileHash } from '../engine/core/rng.js';
 import { N_, tr } from './lang.js';
 import { WH, WW } from './size.js';
-import { T, TILE_DEF } from './data.js';
+import { FARM_WET_DAYS, SPRINKLE_PER_BUCKET, T, TILE_DEF } from './data.js';
 import { ITEMS } from './data/items.js';
 import { FUEL, MACHINE, MRECIPES } from './data/recipes.js';
 import { TS } from './world.js';
@@ -55,7 +55,7 @@ export const Factory: Bag = {
     if (s.slots) { m.items = new Array(s.slots).fill(null); m.feed = 0; }
     if (s.fuelIn) { m.fuel = 0; m.fmax = 1; }
     if (s.fuelIn || s.proc || s.ammo) m.in = {};
-    if (s.proc || s.mine || key === 'pump') m.out = {};
+    if (s.proc || s.mine || key === 'pump' || s.wetR) m.out = {};
     if (s.proc) { m.prog = 0; m.rec = -1; }
     if (s.store) m.e = 0;
     if (s.mine || key === 'pump' || s.ammo || key === 'trap' || s.proj) m.cd = 0;
@@ -175,6 +175,30 @@ export const Factory: Bag = {
     if (m.t === 'belt' || m.t === 'belt_fast' || m.t === 'sorter' || s.slots) return true;
     if (!m.in) return false;
     return !!((s.fuelIn && FUEL[id]) || s.ammo === id || (s.proc && this.isInput(s.proc, id)));
+  },
+
+  /** 아침 — 스프링클러마다 둘레 밭에 물을 준다(가까운 것부터 wetMax 칸). 물가 밭·이미 젖은 밭은 건너뛰어 물을 아낀다.
+      양동이 하나 = SPRINKLE_PER_BUCKET 칸(m.wl 에 남은 물). */
+  sprinkle(w, day) {
+    for (const m of w.machines.values()) {
+      if (m.t !== 'sprinkler' || !m.on) continue;
+      const s = MACHINE[m.t], [rx, ry] = s.wetR, spots = [];
+      for (let y = m.y - ry; y <= m.y + ry; y++)
+        for (let x = m.x - rx; x <= m.x + rx; x++)
+          if (TILE_DEF[w.get(x, y)].farm) spots.push([Math.abs(x - m.x) + Math.abs(y - m.y), x, y]);
+      spots.sort((a, b) => a[0] - b[0]);
+      let n = 0;
+      for (const [, x, y] of spots.slice(0, s.wetMax)) {
+        if (w.isWet(x, y, day + FARM_WET_DAYS)) continue;          // 사흘 뒤까지 젖어 있으면 또 줄 까닭이 없다
+        if (!(m.wl > 0)) {
+          if (!(m.in.water_bucket > 0)) break;
+          this.bufTake(m.in, 'water_bucket', 1); m.wl = SPRINKLE_PER_BUCKET;
+          m.out.bucket = (m.out.bucket | 0) + 1;                     // 빈 양동이는 출구 칸에 모인다(벨트·기계 창으로 꺼낸다)
+        }
+        w.waterFarm(x, y, day); m.wl--; n++;
+      }
+      m.last = n;
+    }
   },
 
   /* ================= 아이템 투입 ================= */
@@ -310,6 +334,7 @@ export const Factory: Bag = {
         case 'pole': m.st = m.net >= 0 ? N_('망 #{n}') : '—'; m.act = 0; break;
         case 'crate': m.st = m.feed ? N_('배출 중') : N_('보관'); m.act = 0; break;
         case 'gen': case 'windmill': break;   // 전력 정산에서 이미 처리했다
+        case 'sprinkler': m.st = (m.in.water_bucket > 0 || m.wl > 0) ? N_('아침을 기다림') : N_('물 없음'); m.act = 0; break;
         default: if (s.proc) this.runProc(w, m, s); break;
       }
     }

@@ -453,6 +453,13 @@ export const ITEMS: Record<string, ItemDef> = {
   /* --- 농기구 · 씨앗 · 작물 --- */
   hoe_iron:   { n: '강철 괭이', i: '🛠', type: 'tool', power: 0, dmg: 8, spd: 2.0, hoe: 1,
                 d: '흙이나 풀을 우클릭해 밭을 간다. 씨앗은 밭 위에 심는다.' , lvReq: 3},
+  /* --- 물 — 물뿌리개 · 양동이 --- */
+  watering_can: { n: '물뿌리개', i: '🚿', type: 'tool', power: 0, dmg: 3, spd: 2.0, water: 20,
+                  d: '물가를 우클릭해 가득 채우고(20번), 밭이나 작물을 우클릭해 물을 준다. 물 준 밭은 사흘 아침 동안 젖어 있다.', lvReq: 0 },
+  bucket:       { n: '빈 양동이', i: '🪣', type: 'material', stack: 16,
+                  d: '물 칸을 우클릭해 그 물을 통째로 떠 담는다 — 뜬 자리의 물은 사라진다.' },
+  water_bucket: { n: '물 양동이', i: '🪣', type: 'material', stack: 16,
+                  d: '스프링클러에 넣는 물. 빈 칸을 우클릭하면 도로 부어 물 한 칸이 된다.' },
   /* --- 낫 --- */
   scythe_iron:  { n: '강철 낫', i: '🌾', type: 'tool', power: 0, dmg: 14, spd: 2.4, scythe: 1,
                   d: '다 여문 작물을 이걸로 베어야 알곡이 성하게 남는다. 다른 연장으로 치면 다 으스러진다.', lvReq: 3 },
@@ -501,6 +508,7 @@ export const ITEMS: Record<string, ItemDef> = {
   m_belt_f:   { n: '고속 컨베이어 벨트', i: '⏩', type: 'machine', mach: 'belt_fast', stack: 999 },
   m_battery_hi:{ n: '강화 축전지', i: '🔋', type: 'machine', mach: 'battery_hi', stack: 99 },
   m_drill_x:  { n: '심층 드릴', i: '⛏', type: 'machine', mach: 'drill_x', stack: 99 },
+  m_sprinkler: { n: '스프링클러', i: '💦', type: 'machine', mach: 'sprinkler', stack: 99 },
   /* 미니보스 전리품 */
   frozen_core:{ n: '얼어붙은 핵', i: '🔷', type: 'mat', stack: 99 },
   sun_disc:   { n: '태양 원반', i: '🌞', type: 'mat', stack: 99 },

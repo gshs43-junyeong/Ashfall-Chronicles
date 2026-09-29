@@ -1990,12 +1990,17 @@
   // src/game/data.ts
   var data_exports = {};
   __export(data_exports, {
+    FARM_WET_DAYS: () => FARM_WET_DAYS,
+    FARM_WET_R: () => FARM_WET_R,
     MACH_OF_TILE: () => MACH_OF_TILE,
     PREFIX: () => PREFIX,
     RARITY: () => RARITY,
     RARITY_COLOR: () => RARITY_COLOR,
     RARITY_MULT: () => RARITY_MULT,
     SEED_TILE: () => SEED_TILE,
+    SPRINKLE_MAX: () => SPRINKLE_MAX,
+    SPRINKLE_PER_BUCKET: () => SPRINKLE_PER_BUCKET,
+    SPRINKLE_R: () => SPRINKLE_R,
     SUFFIX: () => SUFFIX,
     T: () => T,
     TILE_DEF: () => TILE_DEF,
@@ -2244,7 +2249,9 @@
     GOLDRICH: 195,
     MYTHRILRICH: 196,
     /* --- 심층 드릴 — 전동 드릴 윗단(채굴 등급 5) --- */
-    M_DRILL_X: 197
+    M_DRILL_X: 197,
+    /* --- 스프링클러 — 물 양동이로 둘레 밭에 아침마다 물을 준다 --- */
+    M_SPRINKLER: 198
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -2554,8 +2561,11 @@
     { n: "납 광상", c: "#9494ac", solid: 1, hard: 2, drop: "lead_ore", dropN: [4, 7], ore: 1, rich: 1 },
     { n: "금 광상", c: "#f0c848", solid: 1, hard: 3, drop: "gold_ore", dropN: [3, 6], ore: 1, rich: 1 },
     { n: "미스릴 광상", c: "#5ac8ba", solid: 1, hard: 3, drop: "mythril_ore", dropN: [3, 5], ore: 1, rich: 1 },
-    { n: "심층 드릴", c: "#3a6a8a", solid: 1, hard: 5, drop: "m_drill_x", mach: "drill_x" }
+    { n: "심층 드릴", c: "#3a6a8a", solid: 1, hard: 5, drop: "m_drill_x", mach: "drill_x" },
+    { n: "스프링클러", c: "#6a8aa8", solid: 1, hard: 2, drop: "m_sprinkler", mach: "sprinkler" }
   ];
+  var FARM_WET_R = 5, FARM_WET_DAYS = 3;
+  var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
   var SEED_TILE = {
     seed_wheat: T.WHEAT0,
     seed_starroot: T.ROOT0,
@@ -2584,6 +2594,7 @@
     m_belt_f: T.M_BELT_F,
     m_battery_hi: T.M_BATTERY_HI,
     m_drill_x: T.M_DRILL_X,
+    m_sprinkler: T.M_SPRINKLER,
     junglegrass: T.JUNGLEGRASS,
     mud: T.MUD,
     jungleleaf: T.JUNGLELEAF,
@@ -3652,6 +3663,32 @@
       d: "흙이나 풀을 우클릭해 밭을 간다. 씨앗은 밭 위에 심는다.",
       lvReq: 3
     },
+    /* --- 물 — 물뿌리개 · 양동이 --- */
+    watering_can: {
+      n: "물뿌리개",
+      i: "🚿",
+      type: "tool",
+      power: 0,
+      dmg: 3,
+      spd: 2,
+      water: 20,
+      d: "물가를 우클릭해 가득 채우고(20번), 밭이나 작물을 우클릭해 물을 준다. 물 준 밭은 사흘 아침 동안 젖어 있다.",
+      lvReq: 0
+    },
+    bucket: {
+      n: "빈 양동이",
+      i: "🪣",
+      type: "material",
+      stack: 16,
+      d: "물 칸을 우클릭해 그 물을 통째로 떠 담는다 — 뜬 자리의 물은 사라진다."
+    },
+    water_bucket: {
+      n: "물 양동이",
+      i: "🪣",
+      type: "material",
+      stack: 16,
+      d: "스프링클러에 넣는 물. 빈 칸을 우클릭하면 도로 부어 물 한 칸이 된다."
+    },
     /* --- 낫 --- */
     scythe_iron: {
       n: "강철 낫",
@@ -3724,6 +3761,7 @@
     m_belt_f: { n: "고속 컨베이어 벨트", i: "⏩", type: "machine", mach: "belt_fast", stack: 999 },
     m_battery_hi: { n: "강화 축전지", i: "🔋", type: "machine", mach: "battery_hi", stack: 99 },
     m_drill_x: { n: "심층 드릴", i: "⛏", type: "machine", mach: "drill_x", stack: 99 },
+    m_sprinkler: { n: "스프링클러", i: "💦", type: "machine", mach: "sprinkler", stack: 99 },
     /* 미니보스 전리품 */
     frozen_core: { n: "얼어붙은 핵", i: "🔷", type: "mat", stack: 99 },
     sun_disc: { n: "태양 원반", i: "🌞", type: "mat", stack: 99 },
@@ -4993,6 +5031,8 @@
     { out: "haybale", n: 2, need: { weed: 6 }, station: "work" },
     { out: "sandbag", n: 4, need: { sand: 6, spider_silk: 1 }, station: "work" },
     { out: "hoe_iron", n: 1, need: { iron_bar: 3, wood: 2 }, station: "work" },
+    { out: "watering_can", n: 1, need: { copper_bar: 3 }, station: "work" },
+    { out: "bucket", n: 2, need: { iron_bar: 2, wood: 4 }, station: "work" },
     /* 낫 — 다 여문 작물을 성하게 거두는 유일한 연장. */
     { out: "scythe_iron", n: 1, need: { iron_bar: 3, wood: 2 }, station: "work" },
     { out: "scythe_star", n: 1, need: { mythril_bar: 4, aether_shard: 6, wood: 4 }, station: "forge", lv: 2 },
@@ -5003,6 +5043,7 @@
     /* 마을 설비 — 화덕은 전기가 필요 없어 정밀 작업대 단계에서 바로 세울 수 있다 */
     { out: "m_oven", n: 1, need: { brick: 24, iron_bar: 6, stone: 20 }, station: "work", lv: 2 },
     { out: "m_windmill", n: 1, need: { plank: 30, gear_basic: 10, spider_silk: 12, iron_bar: 8 }, station: "work", lv: 2 },
+    { out: "m_sprinkler", n: 1, need: { iron_bar: 6, copper_bar: 4, gear_basic: 2 }, station: "work", lv: 3 },
     { out: "m_mill", n: 1, need: { gear_basic: 8, stone: 30, iron_bar: 10, circuit: 2 }, station: "work", lv: 3 },
     /* 씨앗은 처음 한 번만 사서 시작하면 되도록, 수확할 때 씨앗이 함께 나온다 */
     { out: "seed_wheat", n: 4, need: { wheat: 1 } },
@@ -5315,6 +5356,16 @@
       gen: 26,
       sky: 14,
       d: "연료 없이 도는 대신, 위로 14칸이 하늘까지 트여 있어야 한다. 마을 지붕 위가 제자리다."
+    },
+    sprinkler: {
+      n: "스프링클러",
+      tile: T.M_SPRINKLER,
+      item: "m_sprinkler",
+      ammo: "water_bucket",
+      cap: 20,
+      wetR: SPRINKLE_R,
+      wetMax: SPRINKLE_MAX,
+      d: "물 양동이를 넣어 두면 아침마다 둘레(좌우 25칸 · 위아래 6칸)의 밭 가운데 가까운 것부터 500칸까지 물을 준다. 양동이 하나가 50칸. 동력은 필요 없다."
     },
     mill: {
       n: "밀링기",
@@ -7345,6 +7396,7 @@
   __export(materials_exports, {
     DECO_MOUNT: () => DECO_MOUNT,
     DECO_OF: () => DECO_OF,
+    DRAWABLE: () => DRAWABLE,
     FLUID_FLOW: () => FLUID_FLOW,
     FLUID_KIND: () => FLUID_KIND,
     FLUID_OPEN: () => FLUID_OPEN,
@@ -7467,6 +7519,8 @@
   for (const k of ["WATER", "SEAWATER", "LAVA", "LILY", "PONDWEED", "KELPPLANT"]) FLUID_SRC[T[k]] = 1;
   for (const k of ["FLOWWATER", "FLOWSEA", "FLOWLAVA"]) FLUID_FLOW[T[k]] = 1;
   var FLUID_TILE = [0, T.FLOWWATER, T.FLOWSEA, T.FLOWLAVA];
+  var DRAWABLE = new Uint8Array(TILE_DEF.length);
+  for (const k of ["WATER", "FALLS", "FLOWWATER", "SEAWATER", "FLOWSEA"]) DRAWABLE[T[k]] = 1;
   var FLUID_WASH = new Uint8Array(TILE_DEF.length);
   for (const k of ["AIR", "FLOWER", "WEED", "FERN", "SEASHELL"]) FLUID_WASH[T[k]] = 1;
   var FLUID_OPEN = (t) => FLUID_WASH[t] === 1;
@@ -8787,7 +8841,7 @@
     stack: 8,
     parts: [["steel_plate", 10], ["gear_basic", 8], ["iron_bar", 12], ["wire", 12], ["motor", 2], ["circuit", 3], ["machine_frame", 1]]
   };
-  var FARM_KIT = [["hoe_iron", 1], ["scythe_iron", 1], ["seed_wheat", 12], ["seed_starroot", 8], ["seed_ashcap", 6], ["fertilizer", 6]];
+  var FARM_KIT = [["hoe_iron", 1], ["scythe_iron", 1], ["watering_can", 1], ["seed_wheat", 12], ["seed_starroot", 8], ["seed_ashcap", 6], ["fertilizer", 6]];
   var RUIN_HINTS = {
     ice: [
       ["성에 낀 손자국", ["벽 안쪽에 손바닥 자국이 얼어붙어 있다. 안에서 밖으로 밀어낸 자국이다.", "나가려던 게 아니라, 무언가 못 들어오게 막던 손이다."]],
@@ -8907,7 +8961,7 @@
   var NPCS = {
     elara: { n: "엘라라", i: "🧝‍♀️", c: "#c8a06a", role: "캠프 관리인", art: "elara" },
     /* disc — 이 사람에게 살 때 붙는 할인. */
-    borin: { n: "보린", i: "🧔", c: "#8a6a4a", role: "대장장이", disc: 0.4, shop: ["pick_iron", "sword_iron", "helm_iron", "potion_hp_small", "potion_iron", "torch", "band_worn"], art: "borin" },
+    borin: { n: "보린", i: "🧔", c: "#8a6a4a", role: "대장장이", disc: 0.4, shop: ["pick_iron", "sword_iron", "helm_iron", "potion_hp_small", "potion_iron", "torch", "band_worn", "watering_can", "bucket"], art: "borin" },
     mira: { n: "미라", i: "🧙‍♀️", c: "#8f6fd8", role: "마녀", shop: ["staff_branch", "potion_mp_small", "ring_focus", "potion_str"], art: "mira" },
     old: { n: "이름 없는 노인", i: "👴", c: "#9a9a9a", role: "???", art: "elder" },
     /* --- 여명 마을 주민 (세션 1 종장 이후) --- */
@@ -8951,7 +9005,7 @@
       c: "#8a8a96",
       role: "기술자",
       art: "kade",
-      shop: ["charm_cap", "charm_conduit", "battery_cell", "circuit"],
+      shop: ["charm_cap", "charm_conduit", "battery_cell", "circuit", "m_sprinkler"],
       line: "이 도시, 사람이 지은 게 아니야. 그럼 누가 지었냐고? 그걸 알아내는 게 내 일이고."
     },
     /* 떠돌이 상인 셋 — 마을이 커질수록 하나씩 늘어난다(1·3·4단계). */
@@ -13426,6 +13480,7 @@
       this.netDirty = true;
       this.nets = [];
       this.crops = /* @__PURE__ */ new Set();
+      this.wet = {};
       this.crumbled = /* @__PURE__ */ new Map();
       this.spawnX = 180;
       this.spawnY = 0;
@@ -14070,6 +14125,7 @@
         objects: this.objects.map((o) => ({ ...o })),
         machines: Array.from(this.machines.values()),
         crops: Array.from(this.crops),
+        wet: this.wet || {},
         spawnX: this.spawnX,
         spawnY: this.spawnY,
         villageY: this.villageY,
@@ -14116,6 +14172,7 @@
         w.machines.set(m.y * WW + m.x, m);
       }
       for (const k of d.crops || []) w.crops.add(k);
+      w.wet = d.wet || {};
       w.netDirty = true;
       if (d.explored) w.explored = rleDecode(d.explored, WW * WH, Uint8Array);
       w.spawnX = d.spawnX;
@@ -14404,11 +14461,31 @@
       this.crops.add(y * WW + x);
       return true;
     },
+    /** 밭 칸(x, y)에서 FARM_WET_R 칸 안에 물(민물·바닷물)이 있는가 — 물가 밭은 늘 젖어 있다. */
+    nearWater(x, y) {
+      for (let dy = -FARM_WET_R; dy <= FARM_WET_R; dy++)
+        for (let dx = -FARM_WET_R; dx <= FARM_WET_R; dx++) {
+          const k = FLUID_KIND[this.get(x + dx, y + dy)];
+          if (k === 1 || k === 2) return true;
+        }
+      return false;
+    },
+    /** 밭 칸(x, y)이 day 날 아침에 젖어 있는가. */
+    isWet(x, y, day) {
+      return (this.wet[y * WW + x] | 0) >= day || this.nearWater(x, y);
+    },
+    /** 밭 칸(x, y)에 물을 준다 — day 날부터 FARM_WET_DAYS 번의 아침 동안 젖어 있다. */
+    waterFarm(x, y, day) {
+      if (!TILE_DEF[this.get(x, y)].farm) return false;
+      const k = y * WW + x;
+      this.wet[k] = Math.max(this.wet[k] | 0, day + FARM_WET_DAYS);
+      return true;
+    },
     /** 작물 한 단계 성장. */
-    /** 자란 칸을 돌려준다 — 화면에 보이는 밭이면 게임 쪽에서 티를 낸다. */
-    /** speed: 농사 숙련이 얹어 주는 성장 배율(1 = 보정 없음) */
-    growCrops(rng, dayF, speed) {
-      const out = { grew: [], ripe: [] };
+    /** 자란 칸을 돌려준다 — 화면에 보이는 밭이면 게임 쪽에서 티를 낸다. 마른 밭(물 안 준 밭)은 자라지 않고 dry 로 센다. */
+    /** speed: 농사 숙련이 얹어 주는 성장 배율(1 = 보정 없음) · day: 오늘(G.dayCount) — 없으면 젖음을 안 본다 */
+    growCrops(rng, dayF, speed, day) {
+      const out = { grew: [], ripe: [], dry: [] };
       if (!this.crops.size) return out;
       const sp = speed === void 0 ? 1 : speed;
       for (const k of this.crops) {
@@ -14421,6 +14498,10 @@
         const x = k % WW, y = k / WW | 0;
         if (!TILE_DEF[this.get(x, y + 1)].farm) {
           this.crops.delete(k);
+          continue;
+        }
+        if (day !== void 0 && !this.isWet(x, y + 1, day)) {
+          out.dry.push(k);
           continue;
         }
         if (rng.chance(Math.min(1, 0.22 * (0.55 + dayF * 0.75) * sp))) {
@@ -19119,6 +19200,7 @@
   }
   ART[T.M_WINDMILL] = { k: "mk_windmill", c: "#c8bca0", a: 1 };
   ART[T.M_MILL] = { k: "mk_mill", c: "#8a7a5a", a: 1 };
+  ART[T.M_SPRINKLER] = { k: "mk_sprinkler", c: "#6a7a8a", a: 1 };
   ART[T.M_OVEN] = { k: "mk_oven", c: "#9a6a4a", a: 1 };
   ART[T.JUNGLEGRASS] = { k: "grass", c: "#4a3a26", g: "#3f7a34" };
   ART[T.MUD] = { k: "mud", c: "#4a3a26" };
@@ -21696,6 +21778,17 @@
           return;
         }
       }
+    },
+    mk_sprinkler(H) {
+      const { g, ox, oy, R, base } = H;
+      this._mkBody(g, ox, oy, base, R);
+      R(5, 9, TS - 10, TS - 13, "#3a5a78");
+      R(6, 14, TS - 12, TS - 19, "#4a8fd0");
+      R(6, 14, TS - 12, 1, "#8fc8f0");
+      R(TS / 2 - 1, 2, 2, 8, "#8a9098");
+      R(TS / 2 - 5, 2, 10, 2, "#b8c0c8");
+      R(TS / 2 - 6, 1, 2, 2, "#8fc8f0");
+      R(TS / 2 + 4, 1, 2, 2, "#8fc8f0");
     }
   };
   Object.assign(TILE_PAINT, TilePaintVillage);
@@ -22690,9 +22783,13 @@
     sandbag: { k: "block", tile: T.SANDBAG },
     m_windmill: { k: "machine", tile: T.M_WINDMILL },
     m_mill: { k: "machine", tile: T.M_MILL },
+    m_sprinkler: { k: "machine", tile: T.M_SPRINKLER },
     m_oven: { k: "machine", tile: T.M_OVEN, glow: "#e8842a" },
     /* --- 농업 --- */
     hoe_iron: { k: "hoe", c: "#b8bcc4" },
+    watering_can: { k: "wcan", c: "#9aa6b0" },
+    bucket: { k: "bucket", c: "#8a8f98" },
+    water_bucket: { k: "bucket", c: "#8a8f98", water: "#4a8fd0" },
     /* 낫 — 이미 있는 낫 그림(scythe_void가 쓰는 것)에 색만 갈아 끼운다 */
     scythe_iron: { k: "scythe", c: "#c8ccd4", shaft: "#6a4a2a" },
     scythe_star: { k: "scythe", c: "#a8e0ff", shaft: "#4a4a6a", glow: "#9fe8ff" },
@@ -24372,8 +24469,15 @@
   // src/game/art/items/farm.ts
   var farm_exports = {};
   __export(farm_exports, {
-    ItemPaintFarm: () => ItemPaintFarm
+    ItemPaintFarm: () => ItemPaintFarm,
+    line: () => line
   });
+  function line(H, pts, col, wd) {
+    H.stroke(col, wd, () => {
+      H.g.moveTo(pts[0][0], pts[0][1]);
+      for (const q of pts.slice(1)) H.g.lineTo(q[0], q[1]);
+    });
+  }
   var ItemPaintFarm = {
     /* ---------- 농업 ---------- */
     hoe(H) {
@@ -24389,6 +24493,30 @@
           return;
         }
       }
+    },
+    wcan(H) {
+      const { P, poly, circ } = H, s = H.s;
+      const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.62);
+      line(H, [[9, 12], [9, 7], [18, 7], [18, 12]], dk, 2);
+      poly([[6, 12], [20, 12], [21, 27], [5, 27]], c);
+      P(6, 12, 14, 2, lt);
+      P(5, 25, 16, 2, dk);
+      P(8, 15, 2, 9, lt);
+      poly([[20, 20], [28, 11], [29.6, 12.4], [21, 23]], dk);
+      circ(28.6, 11.4, 2.2, lt);
+      circ(28.6, 11.4, 1.1, "#5aa0e0");
+    },
+    bucket(H) {
+      const { P, poly, ell } = H, s = H.s;
+      const wood = "#8a6440", wlt = "#a67c52", band = s.c;
+      line(H, [[6, 12], [8, 5], [16, 3], [24, 5], [26, 12]], sh2(band, 0.7), 1.6);
+      poly([[6, 12], [26, 12], [24, 28], [8, 28]], wood);
+      for (const x of [11, 16, 21]) P(x, 13, 1, 15, "#6e4e30");
+      P(8, 13, 2, 14, wlt);
+      P(6.4, 15, 19.2, 2, band);
+      P(7.4, 24, 17.2, 2, band);
+      ell(16, 12, 10, 2.4, s.water || "#3a2a1a");
+      if (s.water) ell(14, 11.6, 5, 1, sh2(s.water, 1.4));
     },
     seed(H) {
       const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
@@ -29429,8 +29557,8 @@
       }
       app.ringFx(this.cx, this.cy, Math.max(this.w, this.h) * 1.6, "#ffe08a", 0.55);
       app.sfxAt("chapter", this.cx / TS, this.cy / TS);
-      const line = (BOSS_LINES[this.type] || {})[ph];
-      if (line) app.bossLine(this.def.n, line);
+      const line2 = (BOSS_LINES[this.type] || {})[ph];
+      if (line2) app.bossLine(this.def.n, line2);
       const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
       switch (this.def.ai) {
         case "b_slime":
@@ -30091,7 +30219,7 @@
         m.fmax = 1;
       }
       if (s.fuelIn || s.proc || s.ammo) m.in = {};
-      if (s.proc || s.mine || key === "pump") m.out = {};
+      if (s.proc || s.mine || key === "pump" || s.wetR) m.out = {};
       if (s.proc) {
         m.prog = 0;
         m.rec = -1;
@@ -30229,6 +30357,32 @@
       if (m.t === "belt" || m.t === "belt_fast" || m.t === "sorter" || s.slots) return true;
       if (!m.in) return false;
       return !!(s.fuelIn && FUEL[id] || s.ammo === id || s.proc && this.isInput(s.proc, id));
+    },
+    /** 아침 — 스프링클러마다 둘레 밭에 물을 준다(가까운 것부터 wetMax 칸). 물가 밭·이미 젖은 밭은 건너뛰어 물을 아낀다.
+        양동이 하나 = SPRINKLE_PER_BUCKET 칸(m.wl 에 남은 물). */
+    sprinkle(w, day) {
+      for (const m of w.machines.values()) {
+        if (m.t !== "sprinkler" || !m.on) continue;
+        const s = MACHINE[m.t], [rx, ry] = s.wetR, spots = [];
+        for (let y = m.y - ry; y <= m.y + ry; y++)
+          for (let x = m.x - rx; x <= m.x + rx; x++)
+            if (TILE_DEF[w.get(x, y)].farm) spots.push([Math.abs(x - m.x) + Math.abs(y - m.y), x, y]);
+        spots.sort((a, b) => a[0] - b[0]);
+        let n = 0;
+        for (const [, x, y] of spots.slice(0, s.wetMax)) {
+          if (w.isWet(x, y, day + FARM_WET_DAYS)) continue;
+          if (!(m.wl > 0)) {
+            if (!(m.in.water_bucket > 0)) break;
+            this.bufTake(m.in, "water_bucket", 1);
+            m.wl = SPRINKLE_PER_BUCKET;
+            m.out.bucket = (m.out.bucket | 0) + 1;
+          }
+          w.waterFarm(x, y, day);
+          m.wl--;
+          n++;
+        }
+        m.last = n;
+      }
     },
     /* ================= 아이템 투입 ================= */
     insert(w, m, id, n) {
@@ -30451,6 +30605,10 @@
           case "windmill":
             break;
           // 전력 정산에서 이미 처리했다
+          case "sprinkler":
+            m.st = m.in.water_bucket > 0 || m.wl > 0 ? N_("아침을 기다림") : N_("물 없음");
+            m.act = 0;
+            break;
           default:
             if (s.proc) this.runProc(w, m, s);
             break;
@@ -33441,6 +33599,7 @@
       }
       if (d.power) h += `<div class="tstat">${tr("채굴 등급 <b>{power}</b>", { power: d.power })}</div>`;
       if (d.type === "tool") h += `<div class="tstat">${tr("필요 레벨 <b>Lv.{equipReqLv}</b>", { equipReqLv: equipReqLv(it.id) })}</div>`;
+      if (d.water) h += `<div class="tstat">${tr("물 <b>{n}</b> / {max}", { n: it.w | 0, max: d.water })}</div>`;
       if (d.pw) h += `<div class="tstat">${tr("전하 소모 <b>{pw}</b> / 사용", { pw: d.pw })}</div>`;
       if (d.mach) {
         const M = MACHINE[d.mach];
@@ -34319,6 +34478,13 @@
           if (v && typeof v === "object") walk(v);
         }
       })(d);
+    },
+    /* v11 → v12 — 밭 젖음(world.wet: 밭 칸 → 젖어 있는 마지막 날). 이미 심어 둔 작물이 판이 바뀌자마자 서지 않게, 그 밑 밭은 사흘 젖게 둔다. */
+    (d) => {
+      if (!d.world || d.world.wet) return;
+      const wet = {}, ww = d.world.ww || 5e3, until = (d.dayCount || 0) + 3;
+      for (const k of d.world.crops || []) wet[k + ww] = until;
+      d.world.wet = wet;
     }
   ];
   var SAVE_VERSION = SAVE_UPGRADES.length + 1;
@@ -35774,14 +35940,20 @@
     growCropsDaily() {
       const w = this.world;
       if (!w || !w.crops || !w.crops.size) return;
-      const lv = this.player.profLv("farm");
+      const lv = this.player.profLv("farm"), day = this.dayCount;
+      if (this.event && this.event.id === "rain") this.rainWater(w, day);
+      Factory11.sprinkle(w, day);
       let grew = 0, ripe = 0;
+      const dry = /* @__PURE__ */ new Set();
       const steps = 1 + (this.rng.chance((lv - 1) * 0.07) ? 1 : 0);
       for (let i = 0; i < steps; i++) {
-        const g = w.growCrops(this.rng, 1, 99);
+        const g = w.growCrops(this.rng, 1, 99, day);
         grew += g.grew.length;
         ripe += g.ripe.length;
+        for (const k of g.dry) dry.add(k);
       }
+      if (dry.size && this.everPlanted)
+        this.toast(tr("밭이 말라 {n}칸이 자라지 않았다 — 물뿌리개로 물을 주자", { n: dry.size }), "bad");
       if (grew + ripe > 0 && this.everPlanted) {
         this.toast(tr("밤새 밭이 자랐다 — {n}칸{v}", { n: grew + ripe, v: ripe ? ` ${tr("· {ripe}칸은 다 여물었다", { ripe })}` : "" }), "good");
         for (const k of w.crops) {
@@ -35794,6 +35966,94 @@
             this.parts.push(new Part((x + 0.5) * TS, (y + 0.6) * TS, d.crop.ripe ? "#ffe08a" : "#8fc85a", -22, 0.5));
         }
       }
+    },
+    /** 물뿌리개 — 물 칸이면 가득 채우고, 밭(또는 작물 밑 밭)이면 물을 한 번 준다. */
+    useWateringCan(w, hi, hd, tx, ty) {
+      const t = w.get(tx, ty), p = this.player;
+      const drop = (col, n, vy) => {
+        for (let i = 0; i < n; i++) this.parts.push(new Part((tx + 0.5) * TS, (ty + 0.3) * TS, col, vy));
+      };
+      if (FLUID_KIND[t] === 1 || FLUID_KIND[t] === 2) {
+        if ((hi.w | 0) >= hd.water) {
+          this.toast(tr("물뿌리개가 이미 가득하다"), "bad");
+          return;
+        }
+        hi.w = hd.water;
+        drop("#7fb8e8", 8, -60);
+        this.sfx("splash");
+        this.toast(tr("물뿌리개를 채웠다 — {n}번", { n: hd.water }));
+        UI5.refreshBag();
+        return;
+      }
+      const fy = TILE_DEF[t].farm ? ty : TILE_DEF[w.get(tx, ty + 1)].farm && TILE_DEF[t].crop ? ty + 1 : -1;
+      if (fy < 0) {
+        this.toast(tr("밭이나 작물에 물을 준다 — 물가를 우클릭하면 채운다"), "bad");
+        return;
+      }
+      if (!(hi.w > 0)) {
+        this.toast(tr("물뿌리개가 비었다 — 물가를 우클릭해 채우자"), "bad");
+        return;
+      }
+      w.waterFarm(tx, fy, this.dayCount);
+      hi.w--;
+      drop("#8fc8f0", 6, 30);
+      this.sfx("splash");
+      UI5.refreshBag();
+    },
+    /** 양동이 — 빈 것은 물 칸을 통째로 떠 담고(그 칸의 물이 사라진다), 물 양동이는 빈 칸에 도로 붓는다. */
+    useBucket(w, hi, tx, ty) {
+      const t = w.get(tx, ty), p = this.player, full = hi.id === "water_bucket";
+      if (!full && !DRAWABLE[t]) {
+        this.toast(tr("물 칸을 우클릭해 떠 담는다"), "bad");
+        return;
+      }
+      if (full && t !== T.AIR) {
+        this.toast(tr("빈 칸에만 부을 수 있다"), "bad");
+        return;
+      }
+      w.set(tx, ty, full ? T.WATER : T.AIR);
+      hi.c--;
+      if (hi.c <= 0) p.bag[p.sel] = null;
+      const got = makeItem(full ? "bucket" : "water_bucket", 1);
+      if (!p.addItem(got)) this.drops.push(new Drop((tx + 0.5) * TS, (ty + 0.5) * TS, got));
+      for (let i = 0; i < 8; i++) this.parts.push(new Part((tx + 0.5) * TS, (ty + 0.5) * TS, "#7fb8e8", -50));
+      this.sfx("splash");
+      UI5.refreshBag();
+    },
+    /** 비 오는 아침 — 위로 막힌 것 없이 하늘이 트인 밭만 적신다(지붕 밑·굴 속 밭은 그대로). */
+    rainWater(w, day) {
+      for (const k of w.crops) {
+        const x = k % WW, fy = (k / WW | 0) + 1;
+        let open = true;
+        for (let y = fy - 2; y >= 0; y--) if (TILE_DEF[w.get(x, y)].solid === 1) {
+          open = false;
+          break;
+        }
+        if (open) w.waterFarm(x, fy, day);
+      }
+    },
+    /** 렌더 단계 — 젖은 밭은 흙이 짙고 윗면에 물기가 번들거린다. 물가 판정은 칸마다 2초 캐시(121칸을 매 프레임 훑지 않게). */
+    rFarmWet(f) {
+      const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
+      const day = this.dayCount + 1;
+      const nw = this._nearWet || (this._nearWet = /* @__PURE__ */ new Map());
+      for (let ty = Math.max(0, ty0); ty <= Math.min(WH - 1, ty1); ty++)
+        for (let tx = Math.max(0, tx0); tx <= Math.min(WW - 1, tx1); tx++) {
+          const k = ty * WW + tx;
+          if (w.tiles[k] !== T.FARMLAND) continue;
+          let wet = (w.wet[k] | 0) >= day;
+          if (!wet) {
+            let e = nw.get(k);
+            if (!e || this.time - e[0] > 2) nw.set(k, e = [this.time, w.nearWater(tx, ty)]);
+            wet = e[1];
+          }
+          if (!wet) continue;
+          const sx = tx * TS - camX, sy = ty * TS - camY;
+          c.fillStyle = "rgba(24,18,34,0.34)";
+          c.fillRect(sx, sy, TS, TS);
+          c.fillStyle = "rgba(150,190,230,0.35)";
+          c.fillRect(sx + 2, sy + 1, TS - 4, 1);
+        }
     },
     /* ================= 농사 숙련 ================= */
     harvestBonus(tx, ty, def, tool) {
@@ -35983,6 +36243,14 @@
       if (dist(p.cx, p.cy, (mtx + 0.5) * TS, (mty + 0.5) * TS) <= TS * 6) {
         const hi = p.held();
         const hd = hi && idef(hi);
+        if (hd && hd.water) {
+          this.useWateringCan(w, hi, hd, mtx, mty);
+          return;
+        }
+        if (hi && (hi.id === "bucket" || hi.id === "water_bucket")) {
+          this.useBucket(w, hi, mtx, mty);
+          return;
+        }
         if (hd && hd.hoe) {
           const t = w.get(mtx, mty);
           if (w.inRig(mtx, mty - 1)) {
@@ -40324,6 +40592,7 @@
       this.pipe.add("light", (f) => this.rLightCalc(f));
       this.pipe.add("far", (f) => this.rFar(f));
       this.pipe.add("tiles", (f) => this.rTiles(f));
+      this.pipe.add("tiles", (f) => this.rFarmWet(f));
       this.pipe.add("machines", (f) => this.rMachines(f));
       this.pipe.add("objects", (f) => this.rObjects(f));
       this.pipe.add("ground", (f) => this.rGround(f));
@@ -42238,7 +42507,7 @@
         const k = s.t / s.max, x = s.x - camX, y = s.y - camY;
         if (s.k === "band") {
           const a = SIG_FX.rain.a * Math.min(1, 0.35 + k);
-          const line = () => {
+          const line2 = () => {
             c.beginPath();
             c.moveTo(x - s.hw, y);
             c.lineTo(x + s.hw, y);
@@ -42261,11 +42530,11 @@
           c.globalAlpha = a * 0.8;
           c.strokeStyle = "#12100c";
           c.lineWidth = 4.5;
-          line();
+          line2();
           c.globalAlpha = a;
           c.strokeStyle = s.c;
           c.lineWidth = 2;
-          line();
+          line2();
           c.lineCap = "butt";
         } else if (s.k === "sigil") {
           const a = SIG_FX.wolf.a * Math.min(1, k * 1.6);
@@ -44138,7 +44407,7 @@
           c.scale(p.facing > 0 ? 1 : -1, 1);
           c.rotate(-0.4);
           c.lineCap = "round";
-          const line = (col, w) => {
+          const line2 = (col, w) => {
             c.strokeStyle = col;
             c.lineWidth = w;
             c.beginPath();
@@ -44146,8 +44415,8 @@
             c.lineTo(L.len, 0);
             c.stroke();
           };
-          line("#241c14", L.w + 1.6);
-          line(L.c, L.w);
+          line2("#241c14", L.w + 1.6);
+          line2(L.c, L.w);
           c.strokeStyle = L.grip;
           c.lineWidth = L.w + 1.2;
           c.beginPath();

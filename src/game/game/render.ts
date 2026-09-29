@@ -40,6 +40,7 @@ export const RenderPart: Bag = {
     this.pipe.add('light', f => this.rLightCalc(f));
     this.pipe.add('far', f => this.rFar(f));
     this.pipe.add('tiles', f => this.rTiles(f));
+    this.pipe.add('tiles', f => this.rFarmWet(f));    // 젖은 밭(game/act)
     this.pipe.add('machines', f => this.rMachines(f));
     this.pipe.add('objects', f => this.rObjects(f));
     this.pipe.add('ground', f => this.rGround(f));

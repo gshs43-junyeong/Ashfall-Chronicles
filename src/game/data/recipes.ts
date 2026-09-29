@@ -1,6 +1,6 @@
 /* ===== data/recipes.js — 제작법 · 연료 · 공장 기계 · 기계 제작법 · 물건값 단계 ===== */
 import { clamp } from '../../engine/core/math.js';
-import { T } from '../data.js';
+import { SPRINKLE_MAX, SPRINKLE_R, T } from '../data.js';
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
 
 /* ---------------- 제작법 ---------------- */
@@ -217,6 +217,8 @@ export const RECIPES: RecipeDef[] = [
   { out: 'haybale', n: 2, need: { weed: 6 }, station: 'work' },
   { out: 'sandbag', n: 4, need: { sand: 6, spider_silk: 1 }, station: 'work' },
   { out: 'hoe_iron', n: 1, need: { iron_bar: 3, wood: 2 }, station: 'work' },
+  { out: 'watering_can', n: 1, need: { copper_bar: 3 }, station: 'work' },
+  { out: 'bucket', n: 2, need: { iron_bar: 2, wood: 4 }, station: 'work' },
   /* 낫 — 다 여문 작물을 성하게 거두는 유일한 연장. */
   { out: 'scythe_iron', n: 1, need: { iron_bar: 3, wood: 2 }, station: 'work' },
   { out: 'scythe_star', n: 1, need: { mythril_bar: 4, aether_shard: 6, wood: 4 }, station: 'forge', lv: 2 },
@@ -227,6 +229,7 @@ export const RECIPES: RecipeDef[] = [
   /* 마을 설비 — 화덕은 전기가 필요 없어 정밀 작업대 단계에서 바로 세울 수 있다 */
   { out: 'm_oven', n: 1, need: { brick: 24, iron_bar: 6, stone: 20 }, station: 'work', lv: 2 },
   { out: 'm_windmill', n: 1, need: { plank: 30, gear_basic: 10, spider_silk: 12, iron_bar: 8 }, station: 'work', lv: 2 },
+  { out: 'm_sprinkler', n: 1, need: { iron_bar: 6, copper_bar: 4, gear_basic: 2 }, station: 'work', lv: 3 },
   { out: 'm_mill', n: 1, need: { gear_basic: 8, stone: 30, iron_bar: 10, circuit: 2 }, station: 'work', lv: 3 },
   /* 씨앗은 처음 한 번만 사서 시작하면 되도록, 수확할 때 씨앗이 함께 나온다 */
   { out: 'seed_wheat', n: 4, need: { wheat: 1 } },
@@ -396,6 +399,10 @@ export const MACHINE: Record<string, MachineDef> = {
   windmill: {
     n: '풍차', tile: T.M_WINDMILL, item: 'm_windmill', gen: 26, sky: 14,
     d: '연료 없이 도는 대신, 위로 14칸이 하늘까지 트여 있어야 한다. 마을 지붕 위가 제자리다.'
+  },
+  sprinkler: {
+    n: '스프링클러', tile: T.M_SPRINKLER, item: 'm_sprinkler', ammo: 'water_bucket', cap: 20, wetR: SPRINKLE_R, wetMax: SPRINKLE_MAX,
+    d: '물 양동이를 넣어 두면 아침마다 둘레(좌우 25칸 · 위아래 6칸)의 밭 가운데 가까운 것부터 500칸까지 물을 준다. 양동이 하나가 50칸. 동력은 필요 없다.'
   },
   mill: {
     n: '밀링기', tile: T.M_MILL, item: 'm_mill', power: 12, rot: 1, proc: 'mill', cap: 40,

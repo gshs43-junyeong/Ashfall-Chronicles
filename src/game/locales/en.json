@@ -898,7 +898,17 @@
   "{item|을} 벨트에서 집었다": "Picked {item} off the belt",
   "비석에 손을 대면 {to|로} 돌아간다.": "Touch the stone to return to {to}.",
   "({to|로} 이동한다)": "(Travel to {to})",
-  "확인": "OK"
+  "확인": "OK",
+  "물 <b>{n}</b> / {max}": "Water <b>{n}</b> / {max}",
+  "물 없음": "No water",
+  "물 칸을 우클릭해 떠 담는다": "Right-click a water tile to scoop it up",
+  "물뿌리개가 비었다 — 물가를 우클릭해 채우자": "The watering can is empty — right-click water to refill",
+  "물뿌리개가 이미 가득하다": "The watering can is already full",
+  "물뿌리개를 채웠다 — {n}번": "Watering can filled — {n} uses",
+  "밭이 말라 {n}칸이 자라지 않았다 — 물뿌리개로 물을 주자": "{n} dry plots did not grow — water them with a watering can",
+  "밭이나 작물에 물을 준다 — 물가를 우클릭하면 채운다": "Waters a plot or crop — right-click water to refill",
+  "빈 칸에만 부을 수 있다": "You can only pour into an empty tile",
+  "아침을 기다림": "Waiting for morning"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4055,6 +4065,16 @@
   "NAME_CALL.seira.2": "{name}, show me what you're holding.",
   "NAME_CALL.kade.0": "{name}, good timing.",
   "NAME_CALL.kade.1": "Ah, {name}. The machine's making that odd noise again.",
-  "NAME_CALL.kade.2": "{name}. What parts did you bring today?"
+  "NAME_CALL.kade.2": "{name}. What parts did you bring today?",
+  "ITEMS.watering_can.n": "Watering Can",
+  "ITEMS.watering_can.d": "Right-click water to fill it (20 uses), then right-click a plot or crop to water it. A watered plot stays wet for three mornings.",
+  "ITEMS.bucket.n": "Empty Bucket",
+  "ITEMS.bucket.d": "Right-click a water tile to scoop up the whole tile — the water there is gone.",
+  "ITEMS.water_bucket.n": "Water Bucket",
+  "ITEMS.water_bucket.d": "Water for a sprinkler. Right-click an empty tile to pour it back as one tile of water.",
+  "ITEMS.m_sprinkler.n": "Sprinkler",
+  "MACHINE.sprinkler.n": "Sprinkler",
+  "MACHINE.sprinkler.d": "Load water buckets and every morning it waters the nearest plots around it (25 tiles left and right, 6 up and down), up to 500. One bucket covers 50 plots. Needs no power.",
+  "TILE_DEF.198.n": "Sprinkler"
  }
 }

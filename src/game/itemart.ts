@@ -434,10 +434,14 @@ export const ISPEC = {
   sandbag: { k: 'block', tile: T.SANDBAG },
   m_windmill: { k: 'machine', tile: T.M_WINDMILL },
   m_mill: { k: 'machine', tile: T.M_MILL },
+  m_sprinkler: { k: 'machine', tile: T.M_SPRINKLER },
   m_oven: { k: 'machine', tile: T.M_OVEN, glow: '#e8842a' },
 
   /* --- 농업 --- */
   hoe_iron: { k: 'hoe', c: '#b8bcc4' },
+  watering_can: { k: 'wcan', c: '#9aa6b0' },
+  bucket: { k: 'bucket', c: '#8a8f98' },
+  water_bucket: { k: 'bucket', c: '#8a8f98', water: '#4a8fd0' },
   /* 낫 — 이미 있는 낫 그림(scythe_void가 쓰는 것)에 색만 갈아 끼운다 */
   scythe_iron: { k: 'scythe', c: '#c8ccd4', shaft: '#6a4a2a' },
   scythe_star: { k: 'scythe', c: '#a8e0ff', shaft: '#4a4a6a', glow: '#9fe8ff' },

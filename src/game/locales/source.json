@@ -1255,11 +1255,20 @@
   "문틀에서 비켜야 닫힌다": [
    "game/fishing.interact"
   ],
+  "물 <b>{n}</b> / {max}": [
+   "ui/tip.showTip"
+  ],
   "물 밖 숨 회복 {n}배": [
    "ui/tip.showTip"
   ],
+  "물 없음": [
+   "factory.tick"
+  ],
   "물 위에 던져야 한다": [
    "game/fishing.tryFish"
+  ],
+  "물 칸을 우클릭해 떠 담는다": [
+   "game/act.useBucket"
   ],
   "물건 {backCount}칸": [
    "game.update"
@@ -1269,6 +1278,15 @@
   ],
   "물러선다": [
    "index.html"
+  ],
+  "물뿌리개가 비었다 — 물가를 우클릭해 채우자": [
+   "game/act.useWateringCan"
+  ],
+  "물뿌리개가 이미 가득하다": [
+   "game/act.useWateringCan"
+  ],
+  "물뿌리개를 채웠다 — {n}번": [
+   "game/act.useWateringCan"
   ],
   "물속에 동전이 여럿 가라앉아 있다. 오래된 것도, 어제 것도 있다.": [
    "game/village.useFountain"
@@ -1364,6 +1382,12 @@
   ],
   "방향이 없는 기계다": [
    "game/spawn.rotatePlace"
+  ],
+  "밭이 말라 {n}칸이 자라지 않았다 — 물뿌리개로 물을 주자": [
+   "game/act.growCropsDaily"
+  ],
+  "밭이나 작물에 물을 준다 — 물가를 우클릭하면 채운다": [
+   "game/act.useWateringCan"
   ],
   "배출 끄기": [
    "ui/machine.refreshMachine"
@@ -1558,6 +1582,9 @@
   ],
   "빈 자리에만 달 수 있다": [
    "game/act.placeDoor"
+  ],
+  "빈 칸에만 부을 수 있다": [
+   "game/act.useBucket"
   ],
   "빚을 갚았군. 이제 좀 편히 잘 수 있겠어.": [
    "data/quests"
@@ -1807,6 +1834,9 @@
   ],
   "아직 회복할 수 없다": [
    "game/altar.useConsumable"
+  ],
+  "아침을 기다림": [
+   "factory.tick"
   ],
   "안쪽을 봤어. 사람이 만든 게 아니야. …사람을 보고 만든 거야.": [
    "data/quests"
@@ -4359,6 +4389,12 @@
   "ITEMS.sandbag.d": "급하게 쌓는 방벽.",
   "ITEMS.hoe_iron.n": "강철 괭이",
   "ITEMS.hoe_iron.d": "흙이나 풀을 우클릭해 밭을 간다. 씨앗은 밭 위에 심는다.",
+  "ITEMS.watering_can.n": "물뿌리개",
+  "ITEMS.watering_can.d": "물가를 우클릭해 가득 채우고(20번), 밭이나 작물을 우클릭해 물을 준다. 물 준 밭은 사흘 아침 동안 젖어 있다.",
+  "ITEMS.bucket.n": "빈 양동이",
+  "ITEMS.bucket.d": "물 칸을 우클릭해 그 물을 통째로 떠 담는다 — 뜬 자리의 물은 사라진다.",
+  "ITEMS.water_bucket.n": "물 양동이",
+  "ITEMS.water_bucket.d": "스프링클러에 넣는 물. 빈 칸을 우클릭하면 도로 부어 물 한 칸이 된다.",
   "ITEMS.scythe_iron.n": "강철 낫",
   "ITEMS.scythe_iron.d": "다 여문 작물을 이걸로 베어야 알곡이 성하게 남는다. 다른 연장으로 치면 다 으스러진다.",
   "ITEMS.scythe_star.n": "별무늬 낫",
@@ -4418,6 +4454,7 @@
   "ITEMS.m_belt_f.n": "고속 컨베이어 벨트",
   "ITEMS.m_battery_hi.n": "강화 축전지",
   "ITEMS.m_drill_x.n": "심층 드릴",
+  "ITEMS.m_sprinkler.n": "스프링클러",
   "ITEMS.frozen_core.n": "얼어붙은 핵",
   "ITEMS.sun_disc.n": "태양 원반",
   "ITEMS.rust_gear.n": "녹슨 톱니",
@@ -4767,6 +4804,8 @@
   "MACHINE.battery_hi.d": "축전지 네 대 몫을 한 칸에 담는다. 해가 지고 바람이 멎어도 공장이 안 선다.",
   "MACHINE.windmill.n": "풍차",
   "MACHINE.windmill.d": "연료 없이 도는 대신, 위로 14칸이 하늘까지 트여 있어야 한다. 마을 지붕 위가 제자리다.",
+  "MACHINE.sprinkler.n": "스프링클러",
+  "MACHINE.sprinkler.d": "물 양동이를 넣어 두면 아침마다 둘레(좌우 25칸 · 위아래 6칸)의 밭 가운데 가까운 것부터 500칸까지 물을 준다. 양동이 하나가 50칸. 동력은 필요 없다.",
   "MACHINE.mill.n": "밀링기",
   "MACHINE.mill.d": "곡물을 가루로 빻는다. 뼛조각을 넣으면 퇴비가 나온다.",
   "MACHINE.oven.n": "화덕",
@@ -5936,6 +5975,7 @@
   "TILE_DEF.195.n": "금 광상",
   "TILE_DEF.196.n": "미스릴 광상",
   "TILE_DEF.197.n": "심층 드릴",
+  "TILE_DEF.198.n": "스프링클러",
   "VILLAGE.1.n": "되살아난 마을",
   "VILLAGE.1.d": "잿빛이 걷히고 사람이 다시 들어왔다. 아직은 살아남은 자리에 가깝다.",
   "VILLAGE.1.gain.0": "주민 5명 · 여관 · 보관고 · 재련대 · 의뢰 게시판",

@@ -2,11 +2,11 @@
 import { aabb, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { WW } from '../size.js';
+import { WH, WW } from '../size.js';
 import { MACH_OF_TILE, T, TILE_DEF } from '../data.js';
 import { ITEMS, OBJ_SIZE } from '../data/items.js';
 import { MACHINE } from '../data/recipes.js';
-import { DECO_MOUNT, DECO_OF, FLUID_KIND, LEAVE_OF } from '../data/materials.js';
+import { DECO_MOUNT, DECO_OF, DRAWABLE, FLUID_KIND, LEAVE_OF } from '../data/materials.js';
 import { PROF_MAX } from '../data/skills.js';
 import { idef } from '../data/values.js';
 import { TS } from '../world.js';
@@ -116,13 +116,19 @@ export const ActPart: Bag = {
   /* ================= 밭은 아침에 자란다 ================= */
   growCropsDaily() {
     const w = this.world; if (!w || !w.crops || !w.crops.size) return;
-    const lv = this.player.profLv('farm');
+    const lv = this.player.profLv('farm'), day = this.dayCount;
+    if (this.event && this.event.id === 'rain') this.rainWater(w, day);   // 비는 하늘이 트인 밭을 적신다
+    Factory.sprinkle(w, day);                                             // 스프링클러가 제 둘레 밭에 물을 준다
     let grew = 0, ripe = 0;
+    const dry = new Set();
     const steps = 1 + (this.rng.chance((lv - 1) * 0.07) ? 1 : 0);
     for (let i = 0; i < steps; i++) {
-      const g = w.growCrops(this.rng, 1, 99);   // 아침에는 반드시 한 단계 (확률 굴림 없음)
+      const g = w.growCrops(this.rng, 1, 99, day);   // 아침에는 반드시 한 단계 (확률 굴림 없음) · 젖은 밭만
       grew += g.grew.length; ripe += g.ripe.length;
+      for (const k of g.dry) dry.add(k);
     }
+    if (dry.size && this.everPlanted)
+      this.toast(tr('밭이 말라 {n}칸이 자라지 않았다 — 물뿌리개로 물을 주자', { n: dry.size }), 'bad');
     if (grew + ripe > 0 && this.everPlanted) {
       this.toast(tr('밤새 밭이 자랐다 — {n}칸{v}', { n: grew + ripe, v: ripe ? ` ${tr('· {ripe}칸은 다 여물었다', { ripe })}` : '' }), 'good');
       // 화면 안에 밭이 있으면 티를 낸다
@@ -136,6 +142,72 @@ export const ActPart: Bag = {
           this.parts.push(new Part((x + .5) * TS, (y + .6) * TS, d.crop.ripe ? '#ffe08a' : '#8fc85a', -22, .5));
       }
     }
+  },
+
+  /** 물뿌리개 — 물 칸이면 가득 채우고, 밭(또는 작물 밑 밭)이면 물을 한 번 준다. */
+  useWateringCan(w, hi, hd, tx, ty) {
+    const t = w.get(tx, ty), p = this.player;
+    const drop = (col, n, vy) => { for (let i = 0; i < n; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .3) * TS, col, vy)); };
+    if (FLUID_KIND[t] === 1 || FLUID_KIND[t] === 2) {
+      if ((hi.w | 0) >= hd.water) { this.toast(tr('물뿌리개가 이미 가득하다'), 'bad'); return; }
+      hi.w = hd.water;
+      drop('#7fb8e8', 8, -60); this.sfx('splash');
+      this.toast(tr('물뿌리개를 채웠다 — {n}번', { n: hd.water }));
+      UI.refreshBag(); return;
+    }
+    const fy = TILE_DEF[t].farm ? ty : TILE_DEF[w.get(tx, ty + 1)].farm && TILE_DEF[t].crop ? ty + 1 : -1;
+    if (fy < 0) { this.toast(tr('밭이나 작물에 물을 준다 — 물가를 우클릭하면 채운다'), 'bad'); return; }
+    if (!(hi.w > 0)) { this.toast(tr('물뿌리개가 비었다 — 물가를 우클릭해 채우자'), 'bad'); return; }
+    w.waterFarm(tx, fy, this.dayCount);
+    hi.w--;
+    drop('#8fc8f0', 6, 30); this.sfx('splash');
+    UI.refreshBag();
+  },
+
+  /** 양동이 — 빈 것은 물 칸을 통째로 떠 담고(그 칸의 물이 사라진다), 물 양동이는 빈 칸에 도로 붓는다. */
+  useBucket(w, hi, tx, ty) {
+    const t = w.get(tx, ty), p = this.player, full = hi.id === 'water_bucket';
+    if (!full && !DRAWABLE[t]) { this.toast(tr('물 칸을 우클릭해 떠 담는다'), 'bad'); return; }
+    if (full && t !== T.AIR) { this.toast(tr('빈 칸에만 부을 수 있다'), 'bad'); return; }
+    w.set(tx, ty, full ? T.WATER : T.AIR);
+    hi.c--; if (hi.c <= 0) p.bag[p.sel] = null;
+    const got = makeItem(full ? 'bucket' : 'water_bucket', 1);
+    if (!p.addItem(got)) this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, got));
+    for (let i = 0; i < 8; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, '#7fb8e8', -50));
+    this.sfx('splash');
+    UI.refreshBag();
+  },
+
+  /** 비 오는 아침 — 위로 막힌 것 없이 하늘이 트인 밭만 적신다(지붕 밑·굴 속 밭은 그대로). */
+  rainWater(w, day) {
+    for (const k of w.crops) {
+      const x = k % WW, fy = ((k / WW) | 0) + 1;
+      let open = true;
+      for (let y = fy - 2; y >= 0; y--) if (TILE_DEF[w.get(x, y)].solid === 1) { open = false; break; }
+      if (open) w.waterFarm(x, fy, day);
+    }
+  },
+
+  /** 렌더 단계 — 젖은 밭은 흙이 짙고 윗면에 물기가 번들거린다. 물가 판정은 칸마다 2초 캐시(121칸을 매 프레임 훑지 않게). */
+  rFarmWet(f) {
+    const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
+    const day = this.dayCount + 1;                     // 다음 아침에도 젖어 있는가 = 지금 젖어 있다
+    const nw = this._nearWet || (this._nearWet = new Map());
+    for (let ty = Math.max(0, ty0); ty <= Math.min(WH - 1, ty1); ty++)
+      for (let tx = Math.max(0, tx0); tx <= Math.min(WW - 1, tx1); tx++) {
+        const k = ty * WW + tx;
+        if (w.tiles[k] !== T.FARMLAND) continue;
+        let wet = (w.wet[k] | 0) >= day;
+        if (!wet) {
+          let e = nw.get(k);
+          if (!e || this.time - e[0] > 2) nw.set(k, e = [this.time, w.nearWater(tx, ty)]);
+          wet = e[1];
+        }
+        if (!wet) continue;
+        const sx = tx * TS - camX, sy = ty * TS - camY;
+        c.fillStyle = 'rgba(24,18,34,0.34)'; c.fillRect(sx, sy, TS, TS);
+        c.fillStyle = 'rgba(150,190,230,0.35)'; c.fillRect(sx + 2, sy + 1, TS - 4, 1);
+      }
   },
 
   /* ================= 농사 숙련 ================= */
@@ -320,6 +392,8 @@ export const ActPart: Bag = {
     if (dist(p.cx, p.cy, (mtx + .5) * TS, (mty + .5) * TS) <= TS * 6) {
       const hi = p.held();
       const hd = hi && idef(hi);
+      if (hd && hd.water) { this.useWateringCan(w, hi, hd, mtx, mty); return; }
+      if (hi && (hi.id === 'bucket' || hi.id === 'water_bucket')) { this.useBucket(w, hi, mtx, mty); return; }
       if (hd && hd.hoe) {
         const t = w.get(mtx, mty);
         if (w.inRig(mtx, mty - 1)) { this.toast(tr('채취탑 자리다'), 'bad'); return; }
