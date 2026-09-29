@@ -483,6 +483,8 @@ def strap_fix(g, w):
 #   팔 모양은 원본 그대로 두고, 20~30줄에서 팔(또는 손) 오른끝과 몸통 사이의 빈 칸·윤곽선 칸만 망토로 채운다
 #   (주름 색은 팔 아래 망토의 같은 열 색, 팔에 붙은 칸은 가장 어두운 색 = 그늘). 칸 번호는 36×46 기준.
 GAP_FRAME, GAP_ROWS = 4, range(20, 31)
+# 윗팔 띠(줄: 소매 왼끝·그늘 시작) — 어깨에서 팔꿈치로 내려가며 왼쪽(뒤)으로 기운다
+UPPER_ARM = {17: (10, 12), 18: (10, 12), 19: (9, 12), 20: (9, 11), 21: (8, 11), 22: (8, 11), 23: (7, 11), 24: (7, 11), 25: (7, 11)}
 
 
 def fill_arm_gap(c, pal):
@@ -497,18 +499,17 @@ def fill_arm_gap(c, pal):
         for x in range(x0, te):
             if not c[y][x][3] or c[y][x] == OUTC:
                 c[y][x] = pal[0] if arm and x == x0 else colc.get(x, pal[1])
-    # 어깨 잇기 — 윗팔(원본 22줄 7·9열의 옷색 둘)을 20~22줄, 소매색을 23~25줄에서 몸통 왼끝까지 칠해 팔이 몸에 붙게 한다.
-    # 망토만 채우면 팔이 몸통과 떨어져 떠 보였다(사용자 지적 2026-09-28). 몸통 쪽 칸은 그늘색.
-    lit, shade = c[22][7], c[22][9]
-    for y in (20, 21, 22):
-        te = next(x for x in range(10, FW - 2) if all(body(c[y][x + k]) for k in range(3)))
-        for x in range(10, te):
-            c[y][x] = shade if x == te - 1 else lit
+    # ★ 윗팔 — 원본은 소매가 23줄(허리 높이)에서 갑자기 시작하고 그 위 어깨까지는 망토뿐이라, 팔이 어깨가 아니라 허리에서
+    #   돋은 것처럼 보였다(사용자 지적 · 거짓 색 지도로 확인). 어깨(17줄 몸통 가장자리)에서 소매 윗끝까지 비스듬한 소매 띠를
+    #   칠하고(몸통에 붙는 칸은 그늘), 망토 쪽 바깥에 윤곽선을 둔다. 23~25줄은 소매를 몸통까지 잇는다 — 망토는 팔꿈치 아래만.
     sleeve = c[24][7]
-    for y in (23, 24, 25):                              # 윗팔(어깨~팔꿈치)은 몸통에 붙는다 — 망토는 팔꿈치 아래로만
+    shade = tuple(max(0, round(v * 0.8)) for v in sleeve[:3]) + (255,)
+    for y, (x0, x1) in UPPER_ARM.items():
         te = next(x for x in range(10, FW - 2) if all(body(c[y][x + k]) for k in range(3)))
-        for x in range(10, te):
-            c[y][x] = sleeve
+        for x in range(x0, te):
+            c[y][x] = shade if x >= x1 else sleeve
+        if c[y][x0 - 1] in capec or not c[y][x0 - 1][3]:
+            c[y][x0 - 1] = OUTC
     return c
 
 def main():
