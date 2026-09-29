@@ -628,6 +628,42 @@ def fill_holes(c, pal):
     return c
 
 
+# ★ 피격·대시 장의 발 — 원본 발끝이 한 줄씩 계단으로 길어져 끝이 뾰족했고(피격 신발 · 대시 앞발), 대시 뒷발은 밑창 아래로
+#   두 칸이 꼬리처럼 삐져나왔다. 피격 장은 옛 망토를 걷을 때 신발 왼쪽 윤곽선도 같이 빠졌다(사용자 지적 — "뾰족하지 않고 자연스럽게").
+#   걷기 장 신발처럼 끝이 뭉툭한 덩어리가 되게 칸만 손본다: in = 안쪽(dx) 칸 색 · out = 윤곽선 · edge = 빈 칸일 때만 윤곽선 · clr = 비움.
+#   다섯 캐릭터는 몸 틀이 같아 방랑자에서 잡은 칸을 쓰되, 고칠 칸 둘레 실루엣이 방랑자와 다르면 건너뛴다.
+FOOT_EDIT = {
+    12: [('edge', 13, y) for y in range(41, 45)] + [('out', 23, 31), ('clr', 24, 31),
+         ('in', 23, 41, -1), ('out', 24, 41), ('in', 23, 42, -1), ('in', 24, 42, -1), ('out', 25, 42),
+         ('in', 24, 43, -1), ('out', 25, 43)],
+    8: [('out', 10, 42), ('out', 11, 42), ('clr', 10, 43), ('clr', 11, 43),
+        ('in', 29, 40, -1), ('out', 30, 40), ('out', 29, 41)],
+}
+_FOOT_MASK = {}
+
+
+def fix_feet(c, f, cid):
+    if f not in FOOT_EDIT:
+        return c
+    near = sorted({(x + dx, y + dy) for op, x, y, *_ in FOOT_EDIT[f] if op != 'edge' for dx in (-2, -1, 0, 1, 2) for dy in (-2, -1, 0, 1, 2)
+                   if 0 <= x + dx < FW and 0 <= y + dy < FH})
+    mask = tuple(bool(c[y][x][3]) for x, y in near)          # 고칠 칸 둘레 두 칸만 본다
+    if cid == 'wanderer':
+        _FOOT_MASK[f] = mask
+    elif _FOOT_MASK.get(f) != mask:
+        print('  %s %d번 장: 발 실루엣이 방랑자와 달라 발 손질을 건너뛴다' % (cid, f))
+        return c
+    OUTC = outline_color(c)
+    for e in FOOT_EDIT[f]:
+        op, x, y = e[:3]
+        if op == 'edge':
+            if not c[y][x][3]:
+                c[y][x] = OUTC
+            continue
+        c[y][x] = c[y][x + e[3]] if op == 'in' else OUTC if op == 'out' else (0, 0, 0, 0)
+    return c
+
+
 def main():
     man_p = os.path.join(ROOT, 'manifest.json')
     man = json.load(open(man_p, encoding='utf-8'))
@@ -644,6 +680,7 @@ def main():
         frames = [fill_gear_gap(c, cid, i, pal) for i, c in enumerate(frames)]
         frames = [fill_slits(c) if i in SLIT_FRAMES else c for i, c in enumerate(frames)]
         frames = [fill_holes(c, pal12 if i == 12 else pal) for i, c in enumerate(frames)]
+        frames = [fix_feet(c, i, cid) for i, c in enumerate(frames)]
         if cid == 'wanderer':
             hs = [FIXED.get(i) or hand_of(c, i in HIGH) for i, c in enumerate(frames)]
             # 피격(붉게 물든 장)처럼 살색이 안 잡히는 장은 첫 장의 손을 쓴다
