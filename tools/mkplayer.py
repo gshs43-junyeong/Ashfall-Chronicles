@@ -446,6 +446,39 @@ def recolor_gear(g, cid):
                     fr[y][x] = rc[hx(fr[y][x])]
     return g
 
+# ★ 손 색 맞추기 — 원본은 뒷손을 그늘 살색(방랑자 #a78864, 24~29줄에만 있다)으로 칠해 앞손과 색이 달라 보였다(사용자 지적).
+#   그 자리를 그 캐릭터의 앞손 살색(방랑자 #e6bb8a 자리의 가장 흔한 색)으로 바꾼다. 방랑자에서 자리를 재서 다섯 캐릭터에 쓴다.
+def unify_hands(g, w):
+    from collections import Counter
+    lit = Counter(g[f][y][x] for f in range(N) for y in range(20, OH) for x in range(OW)
+                  if w[f][y][x][3] and hx(w[f][y][x]) == 'e6bb8a' and g[f][y][x][3]).most_common(1)[0][0]
+    for f in range(N - 1):                              # 피격 장(12)은 통째로 물든 장이라 뺀다
+        for y in range(20, OH):
+            for x in range(OW):
+                if w[f][y][x][3] and hx(w[f][y][x]) == 'a78864' and g[f][y][x][3]:
+                    g[f][y][x] = lit
+    return g
+
+
+# 서기·걷기 장에서 팔과 몸통 사이에 한 줄로 남은 투명 칸(배경이 비쳐 팔이 가운데서 끊겨 보였다 — 걷기 4번째 장 9열 27~30줄)을
+# 왼쪽(팔) 색으로 메운다. 오른쪽 두 칸 안에 몸이 있을 때만 — 다리 사이 같은 넓은 틈은 그대로 둔다.
+SLIT_FRAMES = range(6)
+
+
+def fill_slits(c):
+    OUTC = outline_color(c)
+    body = lambda p: p[3] and p != OUTC
+    for y in range(16, 35):
+        for x in range(4, 17):
+            if not c[y][x][3] and body(c[y][x - 1]) and (body(c[y][x + 1]) or (not c[y][x + 1][3] and body(c[y][x + 2]))):
+                c[y][x] = c[y][x - 1]
+    for y in range(30, 15, -1):                         # 틈 맨 윗칸(왼쪽이 윤곽선) — 바로 아래 메운 칸을 잇는다
+        for x in range(4, 17):
+            if not c[y][x][3] and c[y][x - 1][3] and body(c[y][x + 1]) and body(c[y + 1][x]):
+                c[y][x] = c[y + 1][x]
+    return c
+
+
 # ★ 가슴 끈(방랑자 #3f2e20, 1칸 사선)은 **걸어도 흔들리지 않는다** — 원본 그림은 걷기 2·3·4번 장만 끈이 2칸 오른쪽(또는
 #   1칸 아래)에 그려져 걸을 때 좌우로 튀었다. 서기·걷기 여섯 장 모두 0번 장의 모양을 목도리 높이에 맞춰 건다.
 #   끈 칸과 그 자리 옷 칸만 바꾼다(사용자 허락 범위 2026-09-28). 다섯 캐릭터는 몸 모양이 같아 방랑자에서 잰 자리를 쓰되,
@@ -520,11 +553,13 @@ def main():
     for cid in IDS:
         key = 'player_' + cid
         wsrc = frames_of(os.path.join(SRC, 'player_wanderer.png'))
-        src = recolor_gear(strap_fix(fix_frames(frames_of(os.path.join(SRC, key + '.png')), wsrc), wsrc), cid)
-        pal, pal12 = cape_palettes(wsrc, src)
+        raw = fix_frames(frames_of(os.path.join(SRC, key + '.png')), wsrc)
+        pal, pal12 = cape_palettes(wsrc, raw)            # 손을 고치기 전 그림으로 — 피격 장 물들임 맞춤이 흔들리지 않게
+        src = recolor_gear(strap_fix(unify_hands([[r[:] for r in f] for f in raw], wsrc), wsrc), cid)
         frames = [drape(rebuild(g), i, pal12 if i == 12 else pal, 900 if i == 12 else None) for i, g in enumerate(src)]
         frames[GAP_FRAME] = fill_arm_gap(frames[GAP_FRAME], pal)
         frames = [fill_gear_gap(c, cid, i, pal) for i, c in enumerate(frames)]
+        frames = [fill_slits(c) if i in SLIT_FRAMES else c for i, c in enumerate(frames)]
         if cid == 'wanderer':
             hs = [FIXED.get(i) or hand_of(c, i in HIGH) for i, c in enumerate(frames)]
             # 피격(붉게 물든 장)처럼 살색이 안 잡히는 장은 첫 장의 손을 쓴다
