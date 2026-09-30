@@ -37,6 +37,12 @@ jobs:
       - name: zip 빌드
         run: bash tools/build.sh "${{ steps.ver.outputs.value }}"
 
+      # 릴리스 본문 = docs/v<버전>-changelog.md(있으면) + 자동 커밋 목록
+      - name: 릴리스 노트
+        run: |
+          f="docs/v${{ steps.ver.outputs.value }}-changelog.md"
+          if [ -f "$f" ]; then cp "$f" dist/NOTES.md; else : > dist/NOTES.md; fi
+
       - name: Release에 첨부
         uses: softprops/action-gh-release@v2
         with:
@@ -48,4 +54,5 @@ jobs:
           files: |
             dist/AshfallChronicles-*.zip
             dist/SHA256SUMS.txt
+          body_path: dist/NOTES.md
           generate_release_notes: true
