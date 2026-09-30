@@ -491,7 +491,12 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   안 열리면 localStorage 로 떨어진다. 세이브를 읽고 쓰는 곳은 **전부 `SaveStore.put/get/remove/list`** 를 거친다 —
   localStorage 를 직접 만지면 IndexedDB 쪽과 어긋난다(설정 `SET_KEY` 만 localStorage). 저장은 비동기라 `saveGame()` 은
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
-- `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1.1`이다.
+- `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1.2-dev` 다 — v1.1.1 출시 뒤 **웹(/play)만 v1.1.2 개발판**으로 돈다(사용자 결정 2026-09-30).
+  사이트 홈·다운로드는 "웹 = v1.1.2 개발판 · 내려받는 판 = v1.1.1" 로 적는다. 다음 zip 을 낼 때 판 번호로 바꾼다.
+- **로고**(`tools/mklogo.py`): Michroma(ASHFALL) · Jost Light/Medium(CHRONICLES) 윤곽을 굽는다(글꼴 원본·OFL 전문 `tools/art/fonts/`).
+  게임 = 잔불빛 글자 PNG(`ui/logo.png` 2배 · `logo_small.png`), 사이트 홈 히어로 = 같은 윤곽의 SVG 를 `<!-- wordmark -->` 자리에 끼우고
+  색을 뒤집는다(별빛 글자 · 잔불 아랫줄 · 별이 떨어져 앉는 움직임 — site/style.css `.wordmark`). 로고를 고치면 `mkkeyart.py` 도 다시.
+  사이트 상단 메뉴는 홈·다운로드 둘뿐이다(바로 플레이 링크 · 내려받기 네모 단추는 뺐다).
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 엔진화·모듈 분리·TS·다국어·모바일·Docker — 계획과 단계별 프롬프트는
   [`docs/v1.1.1-engine-plan.md`](docs/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
   `World extends TileMap` · 번역 Claude/검수 Grok · 폰 가로+태블릿) / v1.1.1 뒤 몰아서 할 수정(계획서 §9-1 — 해·비·세이브 삭제 팝업·사이트 재구성·영어 화면 다시 찍기) /
