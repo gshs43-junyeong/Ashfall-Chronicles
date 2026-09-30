@@ -169,7 +169,7 @@ export class World extends TileMap {
   declare floodHell: any; declare flv: any; declare fmark: any; declare fq: any; declare giantTree: any; declare glowStalk: any;
   declare inAtelier: any; declare inCitadel: any; declare inDeepShaft: any; declare inRuin: any; declare inRunaway: any;
   declare inWorks: any; declare jungleTree: any; declare lavaPools: any; declare lbh: any; declare lbw: any; declare lbx: any;
-  declare lby: any; declare lightBuf: any; declare machines: any; declare matId: any; declare netDirty: any; declare nets: any;
+  declare lby: any; declare lightBuf: any; declare machines: any; declare matId: any; declare netDirty: boolean; declare nets: any;
   declare objects: any; declare openCodeDoorway: any; declare oreHits: any; declare pineTree: any; declare placeRichOres: any;
   declare placeRigs: any; declare pools: any; declare pruneSmallCaves: any; declare restoreSealRoom: any; declare rng: any;
   declare ruinAt: any; declare ruinEvents: any; declare ruinSites: any; declare ruins: any; declare runaway: any;
