@@ -5,7 +5,7 @@
   python3 tools/mkkeyart.py [장면.png]               # → site/keyart.png (+ --preview 는 /tmp 에 작은 그림)
 
 장면은 실제 게임 화면 그대로 두고, 위에 떨어지는 별(bg/sky_meteor_near) · 노을 빛 · 가장자리 어둠 · 로고만 얹는다.
-★ 로고는 mklogo.logo() 로 새로 찍는다 — 게임 폴더의 logo.png 를 늘리면 칸이 뭉개진다."""
+★ 로고는 mklogo.logo() 로 새로 찍는다 — 게임 폴더의 logo.png 를 늘리면 흐려진다."""
 import os, sys, math
 from PIL import Image, ImageFilter, ImageEnhance
 
@@ -62,8 +62,8 @@ def main():
     dark = Image.new('RGBA', (W, H), (10, 7, 14, 255)); dark.putalpha(vig)
     im.alpha_composite(dark)
 
-    # 로고 — 왼쪽 위 하늘. 칸 크기 11 로 새로 찍는다(섬에 안 걸리게)
-    lg = logo(11)
+    # 로고 — 왼쪽 위 하늘. 폭 760 으로 새로 찍는다(섬에 안 걸리게)
+    lg = logo(760)
     sh = Image.new('RGBA', lg.size, (0, 0, 0, 0)); sh.putalpha(lg.split()[3].point(lambda v: int(v * .55)))
     sh = sh.filter(ImageFilter.GaussianBlur(14))
     lx, ly = 70, 60

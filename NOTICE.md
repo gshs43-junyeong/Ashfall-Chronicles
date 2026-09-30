@@ -49,8 +49,9 @@
   한국어 Pretendard · Apple SD Gothic Neo · 맑은 고딕, 일본어 Hiragino · Yu Gothic · Meiryo · Noto Sans JP,
   중국어 PingFang SC · Microsoft YaHei · Noto Sans SC, 영어·독일어·스페인어 Segoe UI · Roboto · Helvetica ·
   Arial, 없으면 시스템 글꼴. 기기에 딸린 글꼴을 화면에 쓰는 것은 따로 허락이 필요 없고, 이름만 적은
-  Pretendard · Noto(둘 다 SIL OFL 1.1)는 따로 깔아도 무료입니다. 로고는 글꼴이 아니라
-  `tools/mklogo.py` 가 찍은 픽셀 그림이라 어느 언어에서나 같습니다.
+  Pretendard · Noto(둘 다 SIL OFL 1.1)는 따로 깔아도 무료입니다. 로고는 글꼴을 싣지 않고
+  `tools/mklogo.py` 가 Michroma · Jost(둘 다 SIL OFL 1.1, 파일과 라이선스 전문은 `tools/art/fonts/`)의 글자 윤곽을
+  그림(PNG)·경로(SVG)로 구운 것이라 어느 언어에서나 같습니다.
 - **사이트**(`site/home` · `site/download`)는 Hahmlet · IBM Plex Sans KR · IBM Plex Mono 를
   **Google Fonts 에서 불러옵니다.** 글꼴 파일은 이 저장소에 없고, 세 글꼴은
   [SIL Open Font License 1.1](https://openfontlicense.org) 을 따릅니다. `site/**` 의 MIT 는
@@ -104,8 +105,9 @@ synthesized tones, so replacing only some of them works.
   (per language: Pretendard / Apple SD Gothic Neo / Malgun Gothic, Hiragino / Yu Gothic / Meiryo /
   Noto Sans JP, PingFang SC / Microsoft YaHei / Noto Sans SC, Segoe UI / Roboto / Helvetica / Arial,
   then the system font). Displaying the device's own fonts needs no licence; Pretendard and Noto,
-  if installed separately, are free under the SIL OFL 1.1. The logo is pixel art drawn by
-  `tools/mklogo.py`, not a font, so it looks the same in every language.
+  if installed separately, are free under the SIL OFL 1.1. The logo ships no font: `tools/mklogo.py`
+  bakes the glyph outlines of Michroma and Jost (both SIL OFL 1.1; files and licence texts in `tools/art/fonts/`)
+  into a PNG and SVG paths, so it looks the same in every language.
 - The **website** loads Hahmlet, IBM Plex Sans KR and IBM Plex Mono from Google Fonts.
   They are not stored in this repository and are licensed under the
   [SIL Open Font License 1.1](https://openfontlicense.org), not MIT.
