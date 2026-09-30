@@ -109,7 +109,7 @@ export const UI: Bag = {
   },
   withdrawGold() {
     if (G.vaultGold <= 0) { this.toast(tr('보관된 금화가 없다'), 'bad'); return; }
-    const raw = prompt(tr('보관고에서 뺄 금화 (최대 {vaultGold})', { vaultGold: G.vaultGold }), G.vaultGold);
+    const raw = prompt(tr('보관고에서 뺄 금화 (최대 {vaultGold})', { vaultGold: G.vaultGold }), String(G.vaultGold));
     if (raw === null) return;
     const amt = Math.floor(+raw);
     if (!amt || amt <= 0 || amt > G.vaultGold) { this.toast(tr('뺄 수 없는 금액이다'), 'bad'); return; }

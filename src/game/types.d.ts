@@ -72,6 +72,41 @@ interface PetDef {
   n: string; i?: string; r?: number; c?: string; b?: Record<string, number>; atk?: Record<string, any>; d?: string; dragon?: string;
 }
 
+/** 아래층(world · entity · factory · ui)이 ctx.ts 로 쓰는 G 의 칸 — tests/baseline/ctx.json 계약과 같은 목록. 새로 쓰면 둘 다 더할 것. */
+interface AppCtx {
+  ENH_MAX: number; addCorpse: (...a: any[]) => any; aoe: (...a: any[]) => any; applySettings: (...a: any[]) => any;
+  bandFx: (...a: any[]) => any; boltFx: (...a: any[]) => any; bossLine: (...a: any[]) => any; bounties: any[];
+  bountyPay: (...a: any[]) => any; bountyProgress: (...a: any[]) => any; breakFx: (...a: any[]) => any; burst: (...a: any[]) => any;
+  buy: (...a: any[]) => any; buyPrice: (...a: any[]) => any; buyStock: (...a: any[]) => any; chapter: number;
+  chapterState: (...a: any[]) => any; checkAch: (...a: any[]) => any; claimBounty: (...a: any[]) => any; craft: (...a: any[]) => any;
+  dayCount: number; dayT: number; deathBurst: (...a: any[]) => any; drops: any[]; edgeFx: (...a: any[]) => any;
+  enhBreak: (...a: any[]) => any; enhCost: (...a: any[]) => any; enhFail: (...a: any[]) => any; enhMat: (...a: any[]) => any;
+  enhanceSlot: (...a: any[]) => any; ents: any[]; exportSaves: (...a: any[]) => any; fallFx: (...a: any[]) => any;
+  flashFx: (...a: any[]) => any; goldRate: number; hitFx: (...a: any[]) => any; hitStop: (...a: any[]) => any;
+  importSaves: (...a: any[]) => any; keysFor: (...a: any[]) => any; killMult: (...a: any[]) => any; mapAtlas: any;
+  marketRate: (...a: any[]) => any; merchantOf: (...a: any[]) => any; modeMul: (...a: any[]) => any; nearSt: any; nearStObj: any;
+  objLabel: (...a: any[]) => any; onBossDown: (...a: any[]) => any; onDeath: (...a: any[]) => any; onKill: (...a: any[]) => any;
+  onLevelUp: (...a: any[]) => any; onPickup: (...a: any[]) => any; onProfUp: (...a: any[]) => any; parts: any[]; pending: any[];
+  player: any; price: (...a: any[]) => any; projs: any[]; reforgeCost: (...a: any[]) => any; reforgeSlot: (...a: any[]) => any;
+  ringFx: (...a: any[]) => any; rng: any; rollBounties: (...a: any[]) => any; saveSettings: (...a: any[]) => any;
+  scale: (...a: any[]) => any; sellItem: (...a: any[]) => any; setOpt: (...a: any[]) => any; setPause: (...a: any[]) => any;
+  settings: any; sfx: (...a: any[]) => any; sfxAt: (...a: any[]) => any; shake: number; shopBundle: (...a: any[]) => any; sideActive: any;
+  sideDone: any; sidePay: (...a: any[]) => any; sideProgress: (...a: any[]) => any; sigilFx: (...a: any[]) => any;
+  skillDeny: (...a: any[]) => any; spritesOn: boolean; state: string; stockOf: (...a: any[]) => any; strokeRate: (...a: any[]) => any;
+  surfacePx: (...a: any[]) => any; texts: any[]; time: number; toast: (...a: any[]) => any; triggerFault: (...a: any[]) => any;
+  uiOpen: boolean; upgradeStation: (...a: any[]) => any; upgradeVillage: (...a: any[]) => any; useConsumable: (...a: any[]) => any;
+  useSummon: (...a: any[]) => any; useUtil: (...a: any[]) => any; utilLeft: (...a: any[]) => any; vault: any[]; vaultGold: number;
+  villageLv: (...a: any[]) => any; warnFx: (...a: any[]) => any; world: any; achievements: any; ruinSpec: (...a: any[]) => any; surveyScore: (...a: any[]) => any;
+}
+/** 아래층이 쓰는 UI 의 칸. */
+interface UiCtx {
+  refreshBag: (...a: any[]) => any; refreshEquip: (...a: any[]) => any;
+}
+/** 아래층이 쓰는 Factory 의 칸. */
+interface FactoryCtx {
+  canPlace: (...a: any[]) => any; place: (...a: any[]) => any;
+}
+
 /** 창구에 싣는 부팅 표식(테스트가 읽는다) · 옛 사파리 오디오. */
 interface Window {
   __acBooting?: number; __acDeadline?: number; __acBooted?: number; SPRITE_MANIFEST?: any; webkitAudioContext?: typeof AudioContext;
