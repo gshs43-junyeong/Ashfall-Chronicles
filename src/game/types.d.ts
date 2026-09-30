@@ -1,6 +1,6 @@
 /* 게임 공용 타입(전역) — 타입만, 번들에 안 들어간다.
    표 모양은 실제 표 값에서 뽑은 칸 전부를 적는다(열린 칸 [k: string]: any 없음 — 모르는 칸을 읽으면 타입 검사가 잡는다).
-   유적 표(RuinDef)만 아직 열려 있다. 표에 새 칸을 더하면 여기에도 적을 것. */
+   표에 새 칸을 더하면 여기에도 적을 것. */
 
 /** 타입을 다 입히기 전의 큰 객체(G · UI · Factory · 그림 표와 그 조각) — 아무 이름이나 읽고 쓸 수 있다. */
 type Bag = Record<string, any>;
@@ -40,7 +40,11 @@ interface EnemyDef {
 interface RuinDef {
   id?: string; n: string; plan?: string; arch?: string; rooms?: number; bsp?: number[];
   decor?: (string | number)[][]; mobs?: string[]; rank?: number; sig?: string; event?: string;
-  [k: string]: any;
+  x?: number; y?: number; w?: number; h?: number; wall?: number; floor?: number; bg?: number; torch?: number; traps?: string[];
+  boss?: string; tier?: number; trapRate?: number; spikeRate?: number; chestRate?: number; mobMul?: number; bonus?: string;
+  bonus2?: string; maze?: number; entryKind?: string;
+  /** 실행 중에 붙는 칸 — bx·by 는 setWorldSize 가 적는 소형 기준 좌표, mystic 은 세계를 만들 때마다 써 넣는다(전역 표를 고쳐 쓴다 — 엔진화 2차에서 World 로). */
+  bx?: number; by?: number; mystic?: string;
 }
 
 interface AchDef { id: string; cat: string; i: string; n: string; d: string; check?: (g: any) => boolean; lv?: number; t?: string; h?: number; }
