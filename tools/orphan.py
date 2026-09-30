@@ -11,7 +11,7 @@
     플레이어    'player_' + id    (CHARS 의 id)
     마을 사람   'npcw_' + art     (NPCS 의 art)  — 몸통 시트
     마을 사람   'npc_'  + art     (NPCS 의 art)  — 얼굴 한 장(초상화와 같은 이름칸)
-    펫          'pet_' + id       (PETS 의 키)
+    펫          'pet_' + id       (PETS 의 키 · 드래곤은 + '_s' + 단계)
 
 그래서 시트 이름이나 그 접두어를 뗀 이름이 게임 소스에 나오면 쓰이는 것으로 본다.
 하나도 안 나오면 고아다.
@@ -59,6 +59,8 @@ def main(argv):
         for pre in ('player_', 'npcw_', 'npc_', 'pet_'):
             if name.startswith(pre):
                 short = name[len(pre):]
+                if pre == 'pet_':
+                    short = re.sub(r'_s\d$', '', short)   # 드래곤은 단계마다 시트 — `pet_${id}_s${단계}`
                 if re.search(r"['\"]" + re.escape(short) + r"['\"]", src):
                     return True
         return False
