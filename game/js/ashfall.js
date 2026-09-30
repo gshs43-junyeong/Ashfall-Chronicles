@@ -31776,7 +31776,7 @@
         this.toast(tr("보관된 금화가 없다"), "bad");
         return;
       }
-      const raw = prompt(tr("보관고에서 뺄 금화 (최대 {vaultGold})", { vaultGold: app.vaultGold }), app.vaultGold);
+      const raw = prompt(tr("보관고에서 뺄 금화 (최대 {vaultGold})", { vaultGold: app.vaultGold }), String(app.vaultGold));
       if (raw === null) return;
       const amt = Math.floor(+raw);
       if (!amt || amt <= 0 || amt > app.vaultGold) {
