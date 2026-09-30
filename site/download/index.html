@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>다운로드 — Ashfall Chronicles</title>
-<meta name="description" content="Ashfall Chronicles — 별이 잠든 땅 v1.1.0 내려받기. Windows·macOS용 실행 방법, 시스템 요구사항, 저장 데이터 안내, 문제 해결.">
+<meta name="description" content="Ashfall Chronicles — 별이 잠든 땅 v1.1.1 내려받기. Windows·macOS용 실행 방법, 시스템 요구사항, 저장 데이터 안내, 문제 해결.">
 <link rel="canonical" href="https://ashfall-chronicles.vercel.app/download">
 <link rel="icon" href="../favicon.ico?v=dev" sizes="16x16 32x32 48x48">
 <link rel="apple-touch-icon" href="../play/assets/ui/favicon_180.png?v=dev">
@@ -32,7 +32,7 @@
 </nav>
 
 <header class="wrap page-head">
-  <p class="eyebrow">v1.1.0 · Windows · macOS <span class="eyebrow-sub">웹과 같은 판입니다</span></p>
+  <p class="eyebrow">v1.1.1 · Windows · macOS <span class="eyebrow-sub">웹과 같은 판입니다</span></p>
   <h1>내려받기</h1>
   <p class="sec-lede">인터넷 없이 돌아가고, 압축을 푼 폴더 밖 어디에도 파일을 설치하지 않습니다. 지우고 싶으면 폴더째 버리면 됩니다.</p>
 </header>
@@ -50,7 +50,7 @@
         </div>
         <a class="btn btn-primary" data-dl href="#">Windows용 내려받기</a>
         <div class="dl-meta">
-          <div><span class="k">버전</span> 1.1.0</div>
+          <div><span class="k">버전</span> 1.1.1</div>
           <div><span class="k">크기</span> 79.1 MiB</div>
           <div><span class="k">요구</span> Windows 10 이상 · 최신 브라우저</div>
           <div class="hash"><span class="k">SHA-256</span> <span data-hash="windows">—</span></div>
@@ -64,7 +64,7 @@
         </div>
         <a class="btn btn-primary" data-dl href="#">macOS용 내려받기</a>
         <div class="dl-meta">
-          <div><span class="k">버전</span> 1.1.0</div>
+          <div><span class="k">버전</span> 1.1.1</div>
           <div><span class="k">크기</span> 79.1 MiB</div>
           <div><span class="k">요구</span> 최신 브라우저</div>
           <div class="hash"><span class="k">SHA-256</span> <span data-hash="macos">—</span></div>
@@ -73,7 +73,7 @@
     </div>
 
     <p style="margin-top:18px;font-size:.84rem;color:var(--bone-faint)">
-      전체 해시는 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/download/v1.1.0/SHA256SUMS.txt">SHA256SUMS.txt</a>,
+      전체 해시는 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/download/v1.1.1/SHA256SUMS.txt">SHA256SUMS.txt</a>,
       지난 버전은 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases">릴리스 목록</a>에 있습니다.
       받지 않고 해 보려면 <a href="../home#play">브라우저에서 바로 플레이</a>할 수 있습니다.
     </p>
@@ -123,7 +123,7 @@ bash launch.sh</code></pre>
       <div class="alert">
         <b class="h">그래도 막힌다면</b>
         터미널에서 격리 속성을 지우고 다시 시도하세요.
-        <pre class="cmd" style="margin-top:10px"><code>xattr -dr com.apple.quarantine AshfallChronicles-1.1.0/</code></pre>
+        <pre class="cmd" style="margin-top:10px"><code>xattr -dr com.apple.quarantine AshfallChronicles-1.1.1/</code></pre>
       </div>
     </div>
   </div>
@@ -240,10 +240,27 @@ bash launch.sh</code></pre>
   <div class="wrap">
     <div class="sec-head"><p class="eyebrow">변경 이력</p></div>
     <h2>이번에 달라진 것</h2>
-    <p class="sec-lede">내려받는 판은 <span class="mono">v1.1.0</span> 이고, 웹에서 도는 것과 같습니다.</p>
+    <p class="sec-lede">내려받는 판은 <span class="mono">v1.1.1</span> 이고, 웹에서 도는 것과 같습니다.</p>
 
-    <!-- 전체 목록은 docs/v1.1-changelog.md. 저장 호환이 깨진 판이라 맨 위에 크게 알린다(CLAUDE.md §7). -->
+    <!-- 전체 목록은 docs/v1.1.1-changelog.md -->
     <details class="log" open>
+      <summary>v1.1.1 — 여섯 언어와 밭의 물</summary>
+      <div class="log-body">
+        <p class="log-note"><strong>v1.1.0 의 저장은 그대로 열립니다.</strong> 레벨과 가방은 그대로이고, 밭은 처음 사흘 동안 젖은 채로 시작합니다.</p>
+        <ul>
+          <li><strong>여섯 언어.</strong> 한국어에 더해 English · 日本語 · 简体中文 · Deutsch · Español. 설정에서 바꾸고, 사이트도 같은 언어로 보입니다.</li>
+          <li><strong>폰과 태블릿.</strong> 손가락으로 쓰는 기기에서는 가상 스틱 · 점프 · 대시 · 스킬 칸 탭이 저절로 켜지고, 화질이 기기에 맞춰 골라집니다.</li>
+          <li><strong>밭에 물을.</strong> 작물은 젖은 밭에서만 자랍니다. 물뿌리개 · 양동이 · 스프링클러, 그리고 비가 밭을 적십니다.</li>
+          <li><strong>드래곤 알.</strong> 윤슬이 불 · 흙 · 전기 · 암흑 알 넷을 팝니다. 30레벨까지 자라며 모습이 네 번 바뀌고, 단계를 넘을 때마다 특별한 먹이가 필요합니다.</li>
+          <li><strong>레벨 곡선 정리.</strong> 장 보상만으로 세션 2 를 40레벨, 세션 3 을 60레벨에 맞이합니다. 몹 · 보스 경험치와 펫 능력치를 여기에 맞췄습니다.</li>
+          <li><strong>탐지기 켜기.</strong> 유틸리티 칸의 탐지기를 <kbd>Z</kbd> · <kbd>X</kbd> 로 켜면 파동이 퍼집니다.</li>
+          <li>버프마다 아이콘, 게임 안 확인 창, 이름을 불러 주는 마을 사람들, 큰 광맥 한가운데의 광상, 새 로고.</li>
+          <li>고침: 주인공 그림(팔 · 망토 · 발끝), 죽은 뒤 멈춤이 풀리지 않던 것, 가만히 떠 있을 때 나던 헤엄 소리, 언어를 바꾸면 장비 접사가 옛 언어로 남던 것.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="log">
       <summary>v1.1.0 — 벽 너머와 물이 지운 쪽</summary>
       <div class="log-body">
         <p class="log-note"><strong>⚠ v1.0.x 의 저장은 열리지 않습니다.</strong> 세계 폭이 4200 → 5000 칸으로 넓어져(왼쪽에 바다와 빙하 지대가 붙었습니다)
@@ -344,7 +361,7 @@ bash launch.sh</code></pre>
 
 <footer>
   <div class="wrap foot-row">
-    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.1.0</span></p>
+    <p>Ashfall Chronicles — 별이 잠든 땅 <span class="mono">v1.1.1</span></p>
     <p class="foot-credit">코드와 그림은 <a href="https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
        — 음악(<a href="https://suno.com" target="_blank" rel="noopener">Suno</a>)과
        효과음(<a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a>)은 각 서비스의 약관을 따릅니다
@@ -364,7 +381,7 @@ bash launch.sh</code></pre>
   'use strict';
 
   var REPO = 'gshs43-junyeong/Ashfall-Chronicles';
-  var VERSION = '1.1.0';
+  var VERSION = '1.1.1';
 
   var FILES = {
     windows: 'AshfallChronicles-' + VERSION + '-Windows.zip',
@@ -373,8 +390,8 @@ bash launch.sh</code></pre>
 
   /* 릴리스 파일의 SHA-256 앞 8자리. tools/build.sh 가 찍어 주는 값과 같아야 한다. */
   var HASHES = {
-    windows: 'ceb7a289',
-    macos:   '9af38dbb'
+    windows: '3b1e682d',
+    macos:   '9c5905ae'
   };
 
   document.querySelectorAll('.dl').forEach(function (card) {

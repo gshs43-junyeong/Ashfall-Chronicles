@@ -21,9 +21,10 @@
 **[내려받기](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)** ·
 **[영문 안내](docs/README.en.md)**
 
-> **v1.1.0 (2026-09-26)** — 웹과 내려받는 zip 이 같은 판입니다.
-> **세션 3 「물이 지운 쪽」이 들어가** 장이 열다섯에서 **열여덟**으로 늘었습니다.
-> 무엇이 들어갔는지는 [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다.
+> **v1.1.1 (2026-09-30)** — 웹과 내려받는 zip 이 같은 판입니다.
+> **여섯 언어**(한국어 · English · 日本語 · 简体中文 · Deutsch · Español) · 폰과 태블릿 터치 조작 · 밭 물 주기 · 드래곤 알 ·
+> 레벨 곡선 정리. 무엇이 들어갔는지는 [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) 에 있습니다.
+> v1.1.0 의 저장은 그대로 열립니다.
 >
 > ⚠ **v1.0.x 의 저장은 v1.1 에서 열리지 않습니다** — 세계 폭이 4200 → 5000 칸으로 넓어졌습니다.
 > 새로 시작해야 하며, 옛 기록은 슬롯에 그대로 남습니다.
@@ -62,7 +63,8 @@
 | [`docs/README.en.md`](docs/README.en.md) | 영어권 플레이어·기여자를 위한 프로젝트 안내 |
 | [`docs/about-copy.md`](docs/about-copy.md) | GitHub About · 소개 문구(한국어·영어)의 원본 |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
-| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | **v1.1.0 에 무엇이 들어갔는가** |
+| [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) | **v1.1.1 에 무엇이 들어갔는가** |
+| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | v1.1.0 에 무엇이 들어갔는가 |
 | [`docs/system-requirements.md`](docs/system-requirements.md) | 시스템 요구사항과 그 숫자를 잰 방법 |
 | [`CLAUDE.md`](CLAUDE.md) | 이 저장소에서 코드를 고칠 때의 규칙 — 타일 번호·좌표(`SHIFT`)·세이브처럼 **어기면 조용히 망가지는 것들** |
 | [`docs/deploy-cache.md`](docs/deploy-cache.md) | 배포와 캐시 무효화 |
@@ -72,8 +74,8 @@
 ## 새 버전 내보내기
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.1.1
+git push origin v1.1.1
 ```
 
 태그가 올라가면 `.github/workflows/release.yml`이 자동으로:
@@ -85,7 +87,7 @@ git push origin v1.1.0
 로컬에서 직접 만들려면:
 
 ```bash
-bash tools/build.sh 1.1.0
+bash tools/build.sh 1.1.1
 ```
 
 결과물은 `dist/`에 생깁니다.
@@ -105,7 +107,7 @@ bash tools/build.sh 1.1.0
 파일을 **우클릭 → 열기**로 실행하면 그 뒤로는 경고 없이 열립니다. 그래도 막히면:
 
 ```bash
-xattr -dr com.apple.quarantine AshfallChronicles-1.1.0/   # 받은 판 번호로
+xattr -dr com.apple.quarantine AshfallChronicles-1.1.1/   # 받은 판 번호로
 ```
 
 
@@ -199,4 +201,4 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 
 버전별 변경 사항은 [릴리스 목록](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases)과
 [다운로드 페이지의 변경 이력](https://ashfall-chronicles.vercel.app/download#changelog)에 있습니다.
-v1.1.0 의 전체 목록은 [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다.
+v1.1.1 · v1.1.0 의 전체 목록은 [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) · [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다.

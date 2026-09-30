@@ -277,11 +277,11 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 ## 7. 배포
 
 ```bash
-bash tools/build.sh 1.1.0        # dist/ 에 Windows·macOS zip + SHA256SUMS
+bash tools/build.sh 1.1.1        # dist/ 에 Windows·macOS zip + SHA256SUMS
 bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트 검사
 ```
 
-- **캐시 무효화**: `game/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255). zip 을 낼 때
+- **캐시 무효화**: `game/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255 · v1.1.1 = 256). zip 을 낼 때
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
   PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.
@@ -303,7 +303,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
   도중에 찾은 버그·새 기능 요청은 계획서 §9-1 에 모아 두고 **v1.1.1 이 끝난 뒤** 한꺼번에 한다(사용자 결정).
-- **v1.1.0 출시**(태그 `v1.1.0`). 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
+- **v1.1.1 출시**(태그 `v1.1.1` — 여섯 언어 · 터치 · 밭 물 · 드래곤 · 레벨 곡선, 변경은 `docs/v1.1.1-changelog.md`). **v1.1.0 출시**(태그 `v1.1.0`). 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
   들어가 있고, 업적은 75개다. v1.0.x 세이브는 세계 폭이 달라 열리지 않는다(릴리스 노트·다운로드 페이지에 알림).
 - 세이브는 v12 — v10 에 `world.sea`(바다 수면), v11 에 장비 접사를 번호로(`{k, i}` — entity.js `affixOf`, 옛 `{n, s}` 는 판올림이 번호로 바꾼다), v12 에 밭 젖음 `world.wet`(옛 작물 밑 밭은 사흘 젖게). 빠졌던 동안 불러온 세계에서 바다 물고기 생성이 터졌다; sea 없는
   세이브는 `World.deserialize` 가 타일에서 다시 잰다. **생성 때 `this.X =` 로 만든 필드를 런타임이 읽으면 serialize 에도 넣을 것.**

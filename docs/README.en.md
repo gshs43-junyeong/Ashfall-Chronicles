@@ -35,7 +35,7 @@ Full details (Korean) are in the [changelog](v1.1-changelog.md).
 
 - **Browser build:** [ashfall-chronicles.vercel.app](https://ashfall-chronicles.vercel.app/)
 - **Packaged builds:** [GitHub Releases](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)
-- **Status:** **v1.1.0** (2026-09-26) — the browser build and the downloadable archive are the same version.
+- **Status:** **v1.1.1** (2026-09-30) — the browser build and the downloadable archive are the same version. Six languages, touch controls, watered farmland, dragon eggs; v1.1.0 saves open as they are (changes: `docs/v1.1.1-changelog.md`, Korean).
 - **Saves:** v1.0.x saves do not open in v1.1 — the world grew from 4200 to 5000 tiles wide. Start a new journey; old slots stay untouched.
 
 Keep a save export before switching between the web build and a downloaded build. They use different browser origins, so their saves do not automatically transfer.
@@ -108,9 +108,9 @@ Finished v1.1 working notes (plans, prompts, interim reports) were removed; they
 ## Build and release
 
 ```bash
-bash tools/build.sh 1.1.0
-git tag v1.1.0
-git push origin v1.1.0
+bash tools/build.sh 1.1.1
+git tag v1.1.1
+git push origin v1.1.1
 ```
 
 The release workflow produces Windows and macOS archives and a `SHA256SUMS.txt` checksum file. See `.github/workflows/release.yml` and `tools/build.sh` for the exact process.
