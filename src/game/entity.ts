@@ -179,7 +179,7 @@ export class Player extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare static _vol: number;   // 한 번 휘두른 공격의 번호(여러 몹이 같은 휘두름에 맞았는지)
   declare _jetNoteAt: any; declare atkTimer: number; declare bag: any; declare base: any; declare bossKilled: any;
-  declare buffs: any; declare cd: any; declare channel: any; declare charId: any; declare charge: number; declare d: any;
+  declare buffs: any[]; declare cd: any; declare channel: any; declare charId: any; declare charge: number; declare d: any;
   declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: any; declare facing: number; declare flash: number;
   declare gathered: any; declare gold: number; declare hp: any; declare hurtCd: number; declare iframe: number; declare jetGap: number;
   declare jetHeat: number; declare jetOver: boolean; declare jumpHeld: boolean; declare jumpsLeft: number; declare kills: any;
@@ -487,7 +487,7 @@ export class Player extends Ent {
 export class Enemy extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare _vol: any; declare aggro: any; declare armor: any; declare atkCd: number; declare atkPose: number; declare boss: any;
-  declare def: any; declare dmg: any; declare dots: any; declare elite: any; declare facing: number; declare flash: number;
+  declare def: any; declare dmg: any; declare dots: any[]; declare elite: any; declare facing: number; declare flash: number;
   declare fleeT: number; declare gold: number; declare guard: any; declare hitCd: number; declare hp: any; declare jumpCd: number;
   declare lastPhase: number; declare lvFactor: any; declare markAmt: number; declare markT: number; declare maxHp: number; declare mech: number;
   declare pedestal: any; declare pf: number; declare phase: number; declare phaseInv: any; declare phases: any; declare sgAmt: any;
