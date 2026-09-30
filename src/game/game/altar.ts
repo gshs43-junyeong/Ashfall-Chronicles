@@ -165,6 +165,15 @@ export const AltarPart: Bag = {
     }
     fed.lv = gate; fed.xp = 0; fed.hungry = 0;
     it.c--; if (it.c <= 0) p.bag[slot] = null;
+    /* 진화 — 새 모습이 빛 속에서 드러나게: 겹 고리 · 속성 빛 파편 · 짧은 흔들림 · 한동안 번쩍임 */
+    const pe = (this.petEnts || []).find(e => e && PETS[e.id] && PETS[e.id].dragon && e.lvOf(p) === gate);
+    if (pe) {
+      const col = PETS[pe.id].c;
+      this.burst(pe.x, pe.y, 'starmerge', 90, 1.6);
+      this.ringFx(pe.x, pe.y, 46, col, 0.6); this.ringFx(pe.x, pe.y, 80, '#fff4d8', 0.9);
+      for (let i = 0; i < 26; i++) this.parts.push(new Part(pe.x, pe.y, i % 3 ? col : '#fff4d8', -30, 0.9));
+      this.shake = Math.max(this.shake, 5); pe.flash = 0.6;
+    }
     this.toast(tr('{pet|이} {stage|로} 자랐다!', { pet: idef(fed).n, stage: tr(DRAGON_STAGE_N[dragonStage(gate)]) }), 'good');
     p.recalc(); UI.refreshEquip(); UI.refreshBag(); this.sfx('level');
   },

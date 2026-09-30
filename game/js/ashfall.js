@@ -10405,6 +10405,7 @@
     LV_SCALE_BASE: () => LV_SCALE_BASE,
     PETS: () => PETS,
     PET_LV_MAX: () => PET_LV_MAX,
+    PET_MOTION: () => PET_MOTION,
     PET_XP_SHARE: () => PET_XP_SHARE,
     bloodMult: () => bloodMult,
     dragonStage: () => dragonStage,
@@ -10497,7 +10498,7 @@
       r: 2,
       c: "#ffe08a",
       b: { lifesteal: 6, critD: 28 },
-      atk: { k: "proj", proj: "star", dmg: 165, cd: 1.25, range: 320, spd: 440 },
+      atk: { k: "proj", proj: "pstar", dmg: 165, cd: 1.25, range: 320, spd: 440 },
       d: "오른손의 별빛에 이끌려 왔다."
     },
     ember_drake: {
@@ -10569,6 +10570,13 @@
       atk: { k: "proj", proj: "void", dmg: 145, cd: 1.45, range: 320, spd: 400 },
       d: "그림자 속에 있어도 눈만은 또렷이 빛난다."
     }
+  };
+  var PET_MOTION = {
+    storm_falcon: { fps: 6, bob: 1.5, tilt: 0.1 },
+    dust_sparrow: { fps: 6, bob: 1.5, tilt: 0.09 },
+    glass_moth: { fps: 5, bob: 1, flapX: 0.28 },
+    ember_drake: { fps: 5, bob: 1.2, tilt: 0.07 },
+    star_sprite: { fps: 4, pulse: 0.09, spin: 0.25 }
   };
   var LV_SCALE_BASE = 2.5;
   function levelMult(level, pow) {
@@ -28455,6 +28463,7 @@
       if (a.k === "melee") {
         target.hurt(dmg, false, null, 2);
         for (let i = 0; i < 5; i++) app.parts.push(new Part(target.cx, target.cy, this.def.c));
+        app.burst(target.cx, target.cy, "hit_blunt", 34);
       } else {
         const ang = Math.atan2(target.cy - this.y, target.cx - this.x);
         app.projs.push(new Proj(this.x, this.y, Math.cos(ang) * a.spd, Math.sin(ang) * a.spd, dmg, "player", a.proj));
@@ -28464,6 +28473,7 @@
   var PROJ_FX = {
     arrow: "arrow",
     star: "arrow",
+    pstar: "starfrag",
     fire: "flame",
     frost: "frost",
     void: "void",
@@ -28491,6 +28501,7 @@
     rune: { burst: "arcane", ring: "#9fe8d8", rr: 26, parts: 8 },
     wind: { burst: "arcane", ring: "#bcd8f0", rr: 32, parts: 6 },
     star: { burst: "hit", ring: "#ffe08a", rr: 24, parts: 8 },
+    pstar: { burst: "stargain", ring: "#ffe08a", rr: 26, parts: 10 },
     bullet: { burst: "hit", ring: "#ffd86a", rr: 12, parts: 6 }
     /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
   };
@@ -28501,6 +28512,7 @@
     bomb: { c: "#3a3630", r: 6 },
     // 폭탄 — 심지 불티는 Bomb.update가 따로 뿌린다
     star: { c: "#ffe08a", r: 5, glow: 1 },
+    pstar: { c: "#ffe08a", r: 5, glow: 1 },
     bolt: { c: "#8fd8ff", r: 5, glow: 1 },
     fire: { c: "#ff8a3a", r: 6, glow: 1 },
     frost: { c: "#9fe0ff", r: 6, glow: 1 },
@@ -38318,13 +38330,13 @@
       const gate = DRAGON_GATES[stage - 1];
       let fed = null, near = null;
       for (const k of ["pet1", "pet2"]) {
-        const pe = p.equip[k];
-        if (!pe || !PETS[idef(pe).pet] || !PETS[idef(pe).pet].dragon) continue;
-        if ((pe.lv || 1) === gate - 1 && pe.hungry) {
-          fed = pe;
+        const pe2 = p.equip[k];
+        if (!pe2 || !PETS[idef(pe2).pet] || !PETS[idef(pe2).pet].dragon) continue;
+        if ((pe2.lv || 1) === gate - 1 && pe2.hungry) {
+          fed = pe2;
           break;
         }
-        if ((pe.lv || 1) === gate - 1) near = pe;
+        if ((pe2.lv || 1) === gate - 1) near = pe2;
       }
       if (!fed) {
         this.toast(near ? tr("아직 경험치가 덜 찼다 — 다 차면 먹는다") : tr("이 먹이를 먹을 드래곤이 없다 — {lv}레벨에서 경험치가 다 찬 드래곤이 먹는다", { lv: gate - 1 }), "bad");
@@ -38335,6 +38347,16 @@
       fed.hungry = 0;
       it.c--;
       if (it.c <= 0) p.bag[slot] = null;
+      const pe = (this.petEnts || []).find((e) => e && PETS[e.id] && PETS[e.id].dragon && e.lvOf(p) === gate);
+      if (pe) {
+        const col = PETS[pe.id].c;
+        this.burst(pe.x, pe.y, "starmerge", 90, 1.6);
+        this.ringFx(pe.x, pe.y, 46, col, 0.6);
+        this.ringFx(pe.x, pe.y, 80, "#fff4d8", 0.9);
+        for (let i = 0; i < 26; i++) this.parts.push(new Part(pe.x, pe.y, i % 3 ? col : "#fff4d8", -30, 0.9));
+        this.shake = Math.max(this.shake, 5);
+        pe.flash = 0.6;
+      }
       this.toast(tr("{pet|이} {stage|로} 자랐다!", { pet: idef(fed).n, stage: tr(DRAGON_STAGE_N[dragonStage(gate)]) }), "good");
       p.recalc();
       UI5.refreshEquip();
@@ -42686,8 +42708,19 @@
       const key = pet.def.dragon ? `pet_${pet.id}_s${dragonStage(pet.lvOf(this.player))}` : "pet_" + pet.id;
       const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets[key];
       if (sheet) {
-        const fr = sheet.flap ? pet.flash > 0 ? sheet.flap : Math.floor(this.time * 9 + pet.slot * 2) % sheet.flap : pet.flash > 0 ? 2 : Math.floor(this.time * 3 + pet.slot) % 2;
-        if (Sprites.draw(c, key, fr, sx - sheet.frameW / 2, sy - sheet.frameH / 2, pet.facing < 0)) {
+        const mo = PET_MOTION[pet.id] || {}, fps = mo.fps || 3, ph = (this.time * fps + pet.slot) * Math.PI;
+        const fr = sheet.flap ? pet.flash > 0 ? sheet.flap : Math.floor(this.time * 9 + pet.slot * 2) % sheet.flap : pet.flash > 0 ? 2 : Math.floor(this.time * fps + pet.slot) % 2;
+        const a = pet.def.atk, hit = pet.flash > 0 ? pet.flash / 0.18 : 0;
+        const lunge = hit ? pet.facing * (a && a.k === "melee" ? 8 : -2) * Math.sin(hit * Math.PI) : 0;
+        c.save();
+        c.translate(sx + lunge, sy + (mo.bob || 0) * Math.sin(ph));
+        if (mo.tilt) c.rotate(mo.tilt * Math.sin(ph) * pet.facing);
+        if (mo.spin) c.rotate(mo.spin * Math.sin(ph * 0.5));
+        const sc = 1 + (mo.pulse || 0) * Math.sin(ph);
+        c.scale(sc * (1 - (mo.flapX || 0) * Math.abs(Math.sin(ph))), sc);
+        const ok = Sprites.draw(c, key, fr, -sheet.frameW / 2, -sheet.frameH / 2, pet.facing < 0);
+        c.restore();
+        if (ok) {
           c.restore();
           return;
         }

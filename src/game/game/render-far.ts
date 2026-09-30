@@ -7,7 +7,7 @@ import { BIOMES, HELL_Y, SURF_BASE, WH, WW } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { ENEMIES } from '../data/enemies.js';
 import { FLUID_FLOW, FLUID_KIND } from '../data/materials.js';
-import { dragonStage } from '../data/pets.js';
+import { PET_MOTION, dragonStage } from '../data/pets.js';
 import { TS, doorEdge } from '../world.js';
 import { ART, TileArt } from '../tileart.js';
 import { Art } from '../itemart.js';
@@ -800,11 +800,20 @@ export const RenderFarPart: Bag = {
     const key = pet.def.dragon ? `pet_${pet.id}_s${dragonStage(pet.lvOf(this.player))}` : 'pet_' + pet.id;
     const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets[key];
     if (sheet) {
+      const mo = PET_MOTION[pet.id] || {}, fps = mo.fps || 3, ph = (this.time * fps + pet.slot) * Math.PI;
       const fr = sheet.flap ? (pet.flash > 0 ? sheet.flap : Math.floor(this.time * 9 + pet.slot * 2) % sheet.flap)
-        : pet.flash > 0 ? 2 : (Math.floor(this.time * 3 + pet.slot) % 2);
-      if (Sprites.draw(c, key, fr, sx - sheet.frameW / 2, sy - sheet.frameH / 2, pet.facing < 0)) {
-        c.restore(); return;
-      }
+        : pet.flash > 0 ? 2 : (Math.floor(this.time * fps + pet.slot) % 2);
+      /* 공격 순간 — 근접은 과녁 쪽으로 달려들고, 쏘는 펫은 반동으로 살짝 물러난다 */
+      const a = pet.def.atk, hit = pet.flash > 0 ? pet.flash / 0.18 : 0;
+      const lunge = hit ? pet.facing * (a && a.k === 'melee' ? 8 : -2) * Math.sin(hit * Math.PI) : 0;
+      c.save(); c.translate(sx + lunge, sy + (mo.bob || 0) * Math.sin(ph));
+      if (mo.tilt) c.rotate(mo.tilt * Math.sin(ph) * pet.facing);
+      if (mo.spin) c.rotate(mo.spin * Math.sin(ph * 0.5));
+      const sc = 1 + (mo.pulse || 0) * Math.sin(ph);
+      c.scale(sc * (1 - (mo.flapX || 0) * Math.abs(Math.sin(ph))), sc);
+      const ok = Sprites.draw(c, key, fr, -sheet.frameW / 2, -sheet.frameH / 2, pet.facing < 0);
+      c.restore();
+      if (ok) { c.restore(); return; }
     }
     if (pet.facing < 0) { c.translate(sx * 2, 0); c.scale(-1, 1); }
     Art.draw(c, 'p:' + pet.id, sx - S / 2, sy - S / 2, S);

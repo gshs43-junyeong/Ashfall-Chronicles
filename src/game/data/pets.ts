@@ -32,7 +32,7 @@ export const PETS: Record<string, PetDef> = {
     d: '스칠 때마다 잔가시가 남는다.' },
   /* --- 영웅 --- */
   star_sprite:    { n: '별조각 정령', i: '✨', r: 2, c: '#ffe08a', b: { lifesteal: 6, critD: 28 },
-    atk: { k: 'proj', proj: 'star', dmg: 165, cd: 1.25, range: 320, spd: 440 },
+    atk: { k: 'proj', proj: 'pstar', dmg: 165, cd: 1.25, range: 320, spd: 440 },
     d: '오른손의 별빛에 이끌려 왔다.' },
   ember_drake:    { n: '잿불 새끼용', i: '🐉', r: 2, c: '#e0603c', b: { dmgP: 0.13 },
     atk: { k: 'proj', proj: 'fire', dmg: 190, cd: 1.35, range: 300, spd: 420 },
@@ -57,6 +57,15 @@ export const PETS: Record<string, PetDef> = {
   dragon_dark:  { n: '암흑의 드래곤', i: '🐉', r: 2, c: '#7e5ea6', dragon: 'dark', b: { lifesteal: 3.6, critD: 17 },
     atk: { k: 'proj', proj: 'void', dmg: 145, cd: 1.45, range: 320, spd: 400 },
     d: '그림자 속에 있어도 눈만은 또렷이 빛난다.' }
+};
+/* 두 장짜리 떠 있기에서 바뀌는 칸이 적은 펫(0↔1장 차이 11~29%) — 그릴 때 몸짓을 더한다(drawPet · tools/petboard 점검판이 같은 값).
+   fps 장 넘김 · bob 위아래(px) · tilt 기울기(rad) · flapX 가로로 접히는 날개(정면 나방) · pulse 크기 숨 · spin 흔들 회전 */
+export const PET_MOTION: Record<string, { fps?: number; bob?: number; tilt?: number; flapX?: number; pulse?: number; spin?: number }> = {
+  storm_falcon: { fps: 6, bob: 1.5, tilt: 0.1 },
+  dust_sparrow: { fps: 6, bob: 1.5, tilt: 0.09 },
+  glass_moth:   { fps: 5, bob: 1, flapX: 0.28 },
+  ember_drake:  { fps: 5, bob: 1.2, tilt: 0.07 },
+  star_sprite:  { fps: 4, pulse: 0.09, spin: 0.25 },
 };
 /* 펫 피해 배율 — 위 기준 피해는 "펫을 처음 손에 넣는 레벨 44 언저리(세션 2 초입)"에서의 값이다. 레벨 75(세션 3 끝)에 2배. */
 /* 레벨 배수 — 세계의 기본 규칙(몹은 레벨을 안 탄다)에서 **일부러 뺀 것들**만 쓴다 — 사연: docs/code-history.md#h19 */
