@@ -178,14 +178,14 @@ export class Ent extends Entity {
 export class Player extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare static _vol: number;   // 한 번 휘두른 공격의 번호(여러 몹이 같은 휘두름에 맞았는지)
-  declare _jetNoteAt: any; declare atkTimer: number; declare bag: any; declare base: any; declare bossKilled: any;
-  declare buffs: any[]; declare cd: any; declare channel: any; declare charId: any; declare charge: number; declare d: any;
-  declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: any; declare facing: number; declare flash: number;
-  declare gathered: any; declare gold: number; declare hp: any; declare hurtCd: number; declare iframe: number; declare jetGap: number;
-  declare jetHeat: number; declare jetOver: boolean; declare jumpHeld: boolean; declare jumpsLeft: number; declare kills: any;
-  declare level: number; declare mineProg: number; declare mineTx: number; declare mineTy: number; declare mined: any; declare mp: any;
-  declare name: string; declare potionCd: number; declare prof: any; declare sel: number; declare shield: number; declare shieldMax: number;
-  declare shieldT: number; declare skillPts: number; declare skills: any; declare slots: any; declare starFade: number;
+  declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
+  declare buffs: any[]; declare cd: Record<string, any>; declare channel: any; declare charId: any; declare charge: number; declare d: Record<string, any>;
+  declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: Record<string, any>; declare facing: number; declare flash: number;
+  declare gathered: Record<string, any>; declare gold: number; declare hp: number; declare hurtCd: number; declare iframe: number; declare jetGap: number;
+  declare jetHeat: number; declare jetOver: boolean; declare jumpHeld: boolean; declare jumpsLeft: number; declare kills: Record<string, any>;
+  declare level: number; declare mineProg: number; declare mineTx: number; declare mineTy: number; declare mined: Record<string, any>; declare mp: number;
+  declare name: string; declare potionCd: number; declare prof: Record<string, any>; declare sel: number; declare shield: number; declare shieldMax: number;
+  declare shieldT: number; declare skillPts: number; declare skills: Record<string, any>; declare slots: any[]; declare starFade: number;
   declare starLit: number; declare starOrbits: number; declare statPts: number; declare swing: number; declare swingDir: number;
   declare swingHit: any; declare undyingCd: number; declare xp: number; declare xpNext: number;
 
@@ -486,14 +486,14 @@ export class Player extends Ent {
 /* ================= 적 ================= */
 export class Enemy extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare _vol: any; declare aggro: any; declare armor: any; declare atkCd: number; declare atkPose: number; declare boss: any;
-  declare def: any; declare dmg: any; declare dots: any[]; declare elite: any; declare facing: number; declare flash: number;
-  declare fleeT: number; declare gold: number; declare guard: any; declare hitCd: number; declare hp: any; declare jumpCd: number;
-  declare lastPhase: number; declare lvFactor: any; declare markAmt: number; declare markT: number; declare maxHp: number; declare mech: number;
-  declare pedestal: any; declare pf: number; declare phase: number; declare phaseInv: any; declare phases: any; declare sgAmt: any;
-  declare sgBuf: any; declare sgCd: any; declare sgKind: any; declare sgRing: any; declare sgStun: number; declare sgT: any;
-  declare sgTook: number; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: any; declare state: number;
-  declare stateT: number; declare think: number; declare type: any; declare weatherBuffed: any; declare xp: number;
+  declare _vol: any; declare aggro: number; declare armor: number; declare atkCd: number; declare atkPose: number; declare boss: boolean;
+  declare def: any; declare dmg: number; declare dots: any[]; declare elite: any; declare facing: number; declare flash: number;
+  declare fleeT: number; declare gold: number; declare guard: any; declare hitCd: number; declare hp: number; declare jumpCd: number;
+  declare lastPhase: number; declare lvFactor: number; declare markAmt: number; declare markT: number; declare maxHp: number; declare mech: number;
+  declare pedestal: any; declare pf: number; declare phase: number; declare phaseInv: any; declare phases: number; declare sgAmt: number;
+  declare sgBuf: number; declare sgCd: number; declare sgKind: string; declare sgRing: number; declare sgStun: number; declare sgT: number;
+  declare sgTook: number; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number; declare state: number;
+  declare stateT: number; declare think: number; declare type: string; declare weatherBuffed: any; declare xp: number;
 
   constructor(type, x, y, scale = 1) {
     const d = ENEMIES[type];
@@ -730,8 +730,8 @@ export class Enemy extends Ent {
 /* ================= 마을 경비병 ================= */
 export class Guard extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare atkCd: number; declare dmg: any; declare face: any; declare guard: boolean; declare home: any; declare homeTx: any;
-  declare hp: any; declare maxHp: any; declare shootCd: number;
+  declare atkCd: number; declare dmg: number; declare face: number; declare guard: boolean; declare home: any; declare homeTx: any;
+  declare hp: number; declare maxHp: number; declare shootCd: number;
 
   constructor(x, y, lv) {
     super(x, y, 20, 40);
@@ -783,7 +783,7 @@ export class Guard extends Ent {
 
 export class Wolf extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare atkCd: number; declare dmg: any; declare life: number; declare minion: boolean; declare owner: any;
+  declare atkCd: number; declare dmg: number; declare life: number; declare minion: boolean; declare owner: any;
 
   constructor(x, y, owner) {
     super(x, y, 30, 22);
@@ -815,8 +815,8 @@ export class Wolf extends Ent {
 /* ================= 펫 ================= */
 export class Pet {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare cd: any; declare def: any; declare facing: any; declare flash: number; declare id: any; declare slot: any; declare t: number;
-  declare x: any; declare y: any;
+  declare cd: number; declare def: any; declare facing: number; declare flash: number; declare id: string; declare slot: number; declare t: number;
+  declare x: number; declare y: number;
 
   constructor(petId, slot) {
     this.id = petId; this.slot = slot;
@@ -922,7 +922,7 @@ export const PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1 };
 export class Proj extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare crit: boolean; declare dmg: any; declare explode: any; declare fire: any; declare frost: any; declare grav: number;
-  declare hitSet: any; declare life: number; declare pierce: number; declare poison: any; declare team: any; declare type: any;
+  declare hitSet: Set<any>; declare life: number; declare pierce: number; declare poison: any; declare team: any; declare type: any;
   declare vol: any;
 
   constructor(x, y, vx, vy, dmg, team, type) {
@@ -991,8 +991,8 @@ export class Proj extends Ent {
 /* ================= 이펙트 ================= */
 export class Part {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare c: any; declare drag: any; declare g: any; declare glow: any; declare life: any; declare max: any; declare r: any;
-  declare rot: number; declare spin: any; declare sq: any; declare vx: number; declare vy: number; declare x: any; declare y: any;
+  declare c: string; declare drag: number; declare g: number; declare glow: number; declare life: number; declare max: number; declare r: number;
+  declare rot: number; declare spin: number; declare sq: number; declare vx: number; declare vy: number; declare x: number; declare y: number;
 
   /* g 중력 배수 — 사연: docs/code-history.md#h37 */
   constructor(x, y, c, vy0 = 0, life = 0.5, o = null) {
@@ -1018,7 +1018,7 @@ export class Part {
 }
 export class DmgText {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare c: any; declare crit: any; declare life: number; declare v: any; declare vy: number; declare x: any; declare y: any;
+  declare c: string; declare crit: any; declare life: number; declare v: any; declare vy: number; declare x: number; declare y: number;
 
   constructor(x, y, v, c, crit) { this.x = x + (Math.random() - 0.5) * 8; this.y = y; this.v = v; this.c = c; this.crit = crit; this.life = 0.85; this.vy = -70; }
   update(dt) { this.life -= dt; this.y += this.vy * dt; this.vy += 110 * dt; return this.life > 0; }
@@ -1026,7 +1026,7 @@ export class DmgText {
 /* ===== 폭탄 ===== */
 export class Bomb extends Proj {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare grav: number; declare life: any; declare spec: any; declare spin: number;
+  declare grav: number; declare life: number; declare spec: any; declare spin: number;
 
   constructor(x, y, vx, vy, spec) {
     super(x, y, vx, vy, spec.dmg, 'player', 'bomb');
@@ -1094,8 +1094,8 @@ export class Bomb extends Proj {
 
 export class Drop {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare dead: boolean; declare h: number; declare item: any; declare life: number; declare pick: number; declare t: number; declare vx: any;
-  declare vy: any; declare w: number; declare x: any; declare y: any;
+  declare dead: boolean; declare h: number; declare item: any; declare life: number; declare pick: number; declare t: number; declare vx: number;
+  declare vy: number; declare w: number; declare x: number; declare y: number;
 
   constructor(x, y, item) {
     this.x = x - 8; this.y = y - 8; this.w = 16; this.h = 16; this.item = item;
