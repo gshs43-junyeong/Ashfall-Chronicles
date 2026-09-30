@@ -4,10 +4,10 @@
   python3 tools/mklogo.py            # game/assets/ui/logo.png · logo_small.png · favicon*.png · site/favicon.ico
   python3 tools/mklogo.py --preview  # 위 + /tmp 에 어두운 바탕 미리보기
 
-로고 = 'ASHFALL' (Michroma — 넓은 기하 대문자, 위는 밝은 금 → 아래 잿불 주황) + 'CHRONICLES' (Jost Light, 넓게 벌려 양옆 금줄)
+로고 = 'ASHFALL' (Cinzel Black — 첫 A · 끝 L 이 큰 제목 글자, 위는 밝은 금 → 아래 잿불 주황, 아래로 민 두께와 검은 윤곽)
+     + 'CHRONICLES' (Cinzel Bold, 넓게 벌려 양옆 마름모로 끝나는 금줄)
      + 'A' 의 꼭짓점에 앉은 별 하나와 오른쪽 위 하늘로 난 꼬리(게임의 시작 — 떨어진 별).
 사이트 홈 히어로는 같은 윤곽을 SVG 로 받아 색을 뒤집는다(별빛 글자 · 잔불 아랫줄 — site/style.css .wordmark).
-작은 판(logo_small)은 가는 Jost Light 가 사라져 Jost Medium 을 쓴다.
 파비콘 = 네 갈래 별(별 조각) — 16px 에서도 읽히게 칸을 손으로 찍었다.
 ★ 게임 폴더의 로고를 이 도구에 다시 먹이지 말 것 — 원본은 글꼴 윤곽이다."""
 import os, sys, math, random
@@ -16,7 +16,7 @@ from PIL import Image, ImageFilter
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 UI = os.path.join(ROOT, 'game', 'assets', 'ui')
 
-# ---- 글자 윤곽 — tools/art/fonts 의 OFL 글꼴(Michroma · Jost Light)에서 뽑는다 ----
+# ---- 글자 윤곽 — tools/art/fonts 의 OFL 글꼴(Cinzel Black · Bold)에서 뽑는다 ----
 # 로고는 글꼴을 싣지 않는다: 윤곽을 PNG(게임) · SVG 경로(사이트)로 구워 넣으므로 게임·사이트 어디에도 글꼴 파일이 없다.
 from fontTools.ttLib import TTFont
 from fontTools.pens.basePen import BasePen
@@ -25,12 +25,14 @@ from fontTools.pens.transformPen import TransformPen
 from PIL import ImageChops, ImageDraw
 
 FONTS = os.path.join(ROOT, 'tools', 'art', 'fonts')
-MAIN = TTFont(os.path.join(FONTS, 'Michroma-Regular.ttf'))
-SUB = TTFont(os.path.join(FONTS, 'Jost-Light.ttf'))
-SUB_BOLD = TTFont(os.path.join(FONTS, 'Jost-Medium.ttf'))   # 작은 판 — 가는 글자는 150px 폭에서 사라진다
+MAIN = TTFont(os.path.join(FONTS, 'Cinzel-Black.ttf'))
+SUB = TTFont(os.path.join(FONTS, 'Cinzel-Bold.ttf'))
+SUB_BOLD = SUB
 CAP = 100                     # ASHFALL 대문자 높이 = 100 단위 — 모든 치수의 기준
-SUB_CAP = 21                  # CHRONICLES 대문자 높이
-GAP = 30                      # 두 줄 사이
+BIG = {0: 1.22, 6: 1.22}       # 첫·끝 큰 글자 배율
+SUB_CAP = 20                  # CHRONICLES 대문자 높이
+GAP = 26                      # 두 줄 사이(두께 DEPTH 아래부터)
+DEPTH = 6                     # 글자 두께 — 아래로 밀린 옆면(옛 픽셀 로고의 입체감을 잇는다)
 
 
 class FlatPen(BasePen):
@@ -55,13 +57,13 @@ class FlatPen(BasePen):
     _endPath = _closePath
 
 
-def layout(font, text, cap, track, x0, base):
-    """글자마다 (글리프 이름, 변환 행렬) — track 은 글자 사이 더할 간격(단위)"""
-    s = cap / font['OS/2'].sCapHeight
+def layout(font, text, cap, track, x0, base, big=None):
+    """글자마다 (글리프 이름, 변환 행렬) — track 은 글자 사이 더할 간격(단위) · big = {글자 순번: 배율}(제목의 첫·끝 큰 글자)"""
+    s0 = cap / font['OS/2'].sCapHeight
     cmap, hmtx = font.getBestCmap(), font['hmtx']
     out, x = [], x0
-    for ch in text:
-        g = cmap[ord(ch)]
+    for i, ch in enumerate(text):
+        g = cmap[ord(ch)]; s = s0 * (big or {}).get(i, 1)
         out.append((g, (s, 0, 0, -s, x, base)))
         x += hmtx[g][0] * s + track
     return out, x - track - x0
@@ -97,22 +99,22 @@ def fill_mask(polys, W, H, k, ox, oy, ss=4):
 def geometry(sub=None):
     sub = sub or SUB
     """두 줄 · 가는 줄 · 별 자리를 단위 좌표로. ASHFALL 왼쪽 위 = (0, 0)"""
-    trackA = 0.05 * CAP
-    a_glyphs, wA = layout(MAIN, 'ASHFALL', CAP, trackA, 0, CAP)
-    wC_target = wA * 0.66                                           # 아랫줄은 윗줄의 2/3 — 양옆에 가는 줄이 설 자리
+    trackA = 0.015 * CAP
+    a_glyphs, wA = layout(MAIN, 'ASHFALL', CAP, trackA, 0, CAP, BIG)   # 첫 A · 끝 L 을 키워 제목 글자답게(바닥은 같은 선)
+    wC_target = wA * 0.7                                            # 아랫줄은 윗줄의 7/10 — 양옆에 마름모로 끝나는 금줄
     raw = word_width(sub, 'CHRONICLES', SUB_CAP, 0)
     trackC = (wC_target - raw) / 9
-    yC = CAP + GAP
+    yC = CAP + DEPTH + GAP
     c_glyphs, wC = layout(sub, 'CHRONICLES', SUB_CAP, trackC, (wA - wC_target) / 2, yC + SUB_CAP)
     cx = wA / 2; lineY = yC + SUB_CAP / 2
-    gapL = 14
-    lines = [(0, cx - wC / 2 - gapL), (cx + wC / 2 + gapL, wA)]
+    gapL = 9
+    lines = [(wA * 0.06, cx - wC / 2 - gapL), (cx + wC / 2 + gapL, wA * 0.94)]   # 바깥 끝은 마름모
     # 별 — 첫 'A' 꼭짓점 왼쪽 위에서 반짝이고, 꼬리는 오른쪽 위 하늘로 길게(떨어져 내려온 길)
     apex = min(polygons(MAIN, a_glyphs[:1])[0], key=lambda p: p[1])
-    star_c = (apex[0] - 4, -26)
+    star_c = (apex[0] - 3, -BIG[0] * CAP + CAP - 30)
     tail = (star_c[0] + wA * 0.58, star_c[1] - wA * 0.07)
     return dict(a=a_glyphs, c=c_glyphs, wA=wA, wC=wC, lineY=lineY, lines=lines, star=star_c, tail=tail,
-                box=(-34, -64, wA + 34, yC + SUB_CAP + 30))
+                box=(-30, -84, wA + 30, yC + SUB_CAP + 26))
 
 
 def lerp(a, b, t): return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(len(a)))
@@ -164,27 +166,39 @@ def logo(width, sub=None):
     # 뒤에 번지는 잔불 — 글자 모양 그대로 흐리게
     glow = Image.new('RGBA', (W, H), (255, 120, 40, 0)); glow.putalpha(ma.point(lambda v: v * .55))
     im.alpha_composite(glow.filter(ImageFilter.GaussianBlur(k * 9)))
-    # 어두운 밑선 — 밝은 하늘 배경에서도 윤곽이 서게(글자보다 한 단위 넓고 조금 아래)
-    edge = ma.filter(ImageFilter.MaxFilter(max(3, int(k * 3.2) | 1)))
-    sh = Image.new('RGBA', (W, H), (26, 14, 10, 0)); sh.putalpha(edge.point(lambda v: v * .85))
-    im.alpha_composite(sh, (0, max(1, round(k * 1.2))))
+    # 옆면 — 글자를 DEPTH 만큼 아래로 밀어 쌓는다(위는 짙은 잔불 → 아래는 그을음)
+    dp = max(2, round(DEPTH * k)); side = Image.new('L', (W, H), 0)
+    for i in range(1, dp + 1): side = ImageChops.lighter(side, ma.transform(ma.size, Image.AFFINE, (1, 0, 0, 0, 1, -i)))
+    solid = ImageChops.lighter(side, ma)
+    # 어두운 윤곽 — 앞면과 옆면을 한 덩어리로 두른다(밝은 하늘에서도 선다)
+    edge = solid.filter(ImageFilter.MaxFilter(max(3, int(k * 3.6) | 1)))
+    sh = Image.new('RGBA', (W, H), (22, 11, 8, 0)); sh.putalpha(edge.point(lambda v: v * .92))
+    im.alpha_composite(sh)
+    _, sy0 = P(0, 0); _, sy1 = P(0, CAP + DEPTH)
+    sidef = gradient(W, H, [(0, (150, 58, 24)), (.8, (110, 38, 16)), (1, (58, 20, 10))], sy0, sy1).convert('RGBA'); sidef.putalpha(side)
+    im.alpha_composite(sidef)
     _, ay0 = P(0, 0); _, ay1 = P(0, CAP)
     fillA = gradient(W, H, EMBER, ay0, ay1).convert('RGBA'); fillA.putalpha(ma)
     im.alpha_composite(fillA)
     # 윗모서리 빛 — 글자 윗면 한 줄만 밝게(위로 한 칸 민 마스크와의 차)
-    up = ImageChops.subtract(ma, ma.transform(ma.size, Image.AFFINE, (1, 0, 0, 0, 1, max(1, round(k * 1.4)))))
-    hl = Image.new('RGBA', (W, H), (255, 252, 236, 0)); hl.putalpha(up.point(lambda v: v * .7))
+    up = ImageChops.subtract(ma, ma.transform(ma.size, Image.AFFINE, (1, 0, 0, 0, 1, max(1, round(k * 1.0)))))
+    hl = Image.new('RGBA', (W, H), (255, 252, 236, 0)); hl.putalpha(up.point(lambda v: v * .38))
     im.alpha_composite(hl)
-    shc = Image.new('RGBA', (W, H), (20, 12, 10, 0)); shc.putalpha(mc.filter(ImageFilter.MaxFilter(3)).point(lambda v: v * .7))
-    im.alpha_composite(shc, (0, max(1, round(k))))
+    dc = max(1, round(2.2 * k)); sc = mc
+    for i in range(1, dc + 1): sc = ImageChops.lighter(sc, mc.transform(mc.size, Image.AFFINE, (1, 0, 0, 0, 1, -i)))
+    shc = Image.new('RGBA', (W, H), (20, 12, 10, 0)); shc.putalpha(sc.filter(ImageFilter.MaxFilter(max(3, int(k * 2.4) | 1))).point(lambda v: v * .85))
+    im.alpha_composite(shc)
+    sdc = Image.new('RGBA', (W, H), (96, 86, 78, 0)); sdc.putalpha(sc); im.alpha_composite(sdc)
     fc = Image.new('RGBA', (W, H), BONE + (0,)); fc.putalpha(mc); im.alpha_composite(fc)
-    # 아랫줄 양옆 가는 금줄 — 글자 쪽이 짙고 바깥으로 사라진다
-    d = ImageDraw.Draw(im); ly = P(0, g['lineY'])[1]; th = max(1, round(k * 1.1))
-    for (a, b), inward in zip(g['lines'], (1, -1)):
-        xa, xb = P(a, 0)[0], P(b, 0)[0]; n = max(1, int(xb - xa))
-        for i in range(n):
-            t = i / n if inward > 0 else 1 - i / n
-            d.rectangle([xa + i, ly - th / 2, xa + i + 1, ly + th / 2], fill=(236, 176, 92, int(230 * t ** 1.6)))
+    # 아랫줄 양옆 금줄 — 바깥 끝에 마름모(책 제목의 장식선)
+    d = ImageDraw.Draw(im); ly = P(0, g['lineY'])[1]; th = max(1, round(k * 1.3)); r = 4.2 * k
+    GOLD = (236, 176, 92, 235)
+    for (a, b), outer in zip(g['lines'], (0, 1)):
+        xa, xb = P(a, 0)[0], P(b, 0)[0]
+        d.rectangle([xa, ly - th / 2, xb, ly + th / 2], fill=GOLD)
+        ex = xa if outer == 0 else xb
+        d.polygon([(ex - r, ly), (ex, ly - r), (ex + r, ly), (ex, ly + r)], fill=(22, 11, 8, 255))
+        d.polygon([(ex - r * .7, ly), (ex, ly - r * .7), (ex + r * .7, ly), (ex, ly + r * .7)], fill=(255, 214, 128, 255))
     # 떨어진 별과 꼬리
     sx, sy = P(*g['star']); tx, ty = P(*g['tail'])
     tail = Image.new('RGBA', (W, H), (0, 0, 0, 0)); td = ImageDraw.Draw(tail); n = int(math.hypot(tx - sx, ty - sy))
@@ -207,12 +221,16 @@ def svg_wordmark(uid='wm'):
             f'<linearGradient id="{uid}-l" x1="0" x2="1"><stop offset="0" class="wm-l0"/><stop offset="1" class="wm-l1"/></linearGradient>'
             f'<linearGradient id="{uid}-r" x1="1" x2="0"><stop offset="0" class="wm-l0"/><stop offset="1" class="wm-l1"/></linearGradient>'
             f'<linearGradient id="{uid}-t" x1="{f(sx)}" y1="{f(sy)}" x2="{f(tx)}" y2="{f(ty)}" gradientUnits="userSpaceOnUse">'
-            f'<stop offset="0" class="wm-t0"/><stop offset="1" class="wm-t1"/></linearGradient></defs>'
+            f'<stop offset="0" class="wm-t0"/><stop offset="1" class="wm-t1"/></linearGradient>'
+            f'<path id="{uid}-g" d="{svg_path(MAIN, g["a"])}"/><path id="{uid}-s" d="{svg_path(SUB, g["c"])}"/></defs>'
             f'<path class="wm-tail" d="M{f(tx)} {f(ty)}L{f(sx)} {f(sy)}" pathLength="1" stroke="url(#{uid}-t)"/>'
-            f'<path class="wm-main" fill="url(#{uid}-a)" d="{svg_path(MAIN, g["a"])}"/>'
-            f'<rect class="wm-line" x="{f(a0)}" y="{f(ly - .6)}" width="{f(a1 - a0)}" height="1.2" fill="url(#{uid}-r)"/>'
-            f'<rect class="wm-line" x="{f(b0)}" y="{f(ly - .6)}" width="{f(b1 - b0)}" height="1.2" fill="url(#{uid}-l)"/>'
-            f'<path class="wm-sub" d="{svg_path(SUB, g["c"])}"/>'
+            + '<g class="wm-depth">' + ''.join(f'<use href="#{uid}-g" y="{i}"/>' for i in range(DEPTH, 0, -1)) + '</g>'
+            + f'<use class="wm-main" href="#{uid}-g" fill="url(#{uid}-a)"/>'
+            + '<g class="wm-subdepth">' + ''.join(f'<use href="#{uid}-s" y="{i}"/>' for i in (2, 1)) + '</g>' +
+            f'<rect class="wm-line" x="{f(a0)}" y="{f(ly - .7)}" width="{f(a1 - a0)}" height="1.4"/>'
+            f'<rect class="wm-line" x="{f(b0)}" y="{f(ly - .7)}" width="{f(b1 - b0)}" height="1.4"/>'
+            + ''.join(f'<path class="wm-gem" d="M{f(ex - 3.2)} {f(ly)}L{f(ex)} {f(ly - 3.2)}L{f(ex + 3.2)} {f(ly)}L{f(ex)} {f(ly + 3.2)}Z"/>' for ex in (a0, b1)) +
+            f'<use class="wm-sub" href="#{uid}-s"/>'
             f'<g class="wm-star" transform="translate({f(sx)} {f(sy)})"><path d="M0 -15L2.2 -2.2L15 0L2.2 2.2L0 15L-2.2 2.2L-15 0L-2.2 -2.2Z"/>'
             f'<circle r="3.2"/></g></svg>')
 
