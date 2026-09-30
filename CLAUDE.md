@@ -493,9 +493,9 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
 - `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1.2-dev` 다 — v1.1.1 출시 뒤 **웹(/play)만 v1.1.2 개발판**으로 돈다(사용자 결정 2026-09-30).
   사이트 홈·다운로드는 "웹 = v1.1.2 개발판 · 내려받는 판 = v1.1.1" 로 적는다. 다음 zip 을 낼 때 판 번호로 바꾼다.
-- **로고**(`tools/mklogo.py`): Michroma(ASHFALL) · Jost Light/Medium(CHRONICLES) 윤곽을 굽는다(글꼴 원본·OFL 전문 `tools/art/fonts/`).
-  게임 = 잔불빛 글자 PNG(`ui/logo.png` 2배 · `logo_small.png`), 사이트 홈 히어로 = 같은 윤곽의 SVG 를 `<!-- wordmark -->` 자리에 끼우고
-  색을 뒤집는다(별빛 글자 · 잔불 아랫줄 · 별이 떨어져 앉는 움직임 — site/style.css `.wordmark`). 로고를 고치면 `mkkeyart.py` 도 다시.
+- **로고**(`tools/mklogo.py`): Cinzel Black(ASHFALL — 첫 A · 끝 L 을 1.22배 `BIG`) · Bold(CHRONICLES) 윤곽을 굽는다(글꼴 원본·OFL 전문 `tools/art/fonts/`) —
+  사용자가 고른 글꼴(2026-09-30): 아래로 민 두께(`DEPTH`) · 검은 윤곽 · 양옆 마름모 금줄로 제목답게. 게임 = 잔불빛 글자 PNG(`ui/logo.png` 2배 · `logo_small.png`), 사이트 홈 히어로 = 같은 윤곽의 SVG 를 `<!-- wordmark -->` 자리에 끼우고
+  색을 뒤집는다(별빛 글자 · 남색 두께 · 잔불 아랫줄 · 별이 떨어져 앉는 움직임 — site/style.css `.wordmark`). 로고를 고치면 `mkkeyart.py` 도 다시.
   사이트 상단 메뉴는 홈·다운로드 둘뿐이다(바로 플레이 링크 · 내려받기 네모 단추는 뺐다).
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 엔진화·모듈 분리·TS·다국어·모바일·Docker — 계획과 단계별 프롬프트는
   [`docs/v1.1.1-engine-plan.md`](docs/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
