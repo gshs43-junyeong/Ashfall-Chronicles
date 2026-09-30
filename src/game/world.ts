@@ -124,7 +124,7 @@ export const DAWN_WALL = { leftOff: -16, rightOff: 15, gateH: 3, towerH: 14,
    docs/code-history.md#h104 */
 export class BoxSet {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare bh: any; declare bw: any; declare list: any[]; declare m: Uint8Array; declare out: any; declare x0: any; declare y0: any;
+  declare bh: number; declare bw: number; declare list: any[]; declare m: Uint8Array; declare out: Set<any>; declare x0: number; declare y0: number;
 
   constructor(box, pad) {
     this.x0 = box[0] - pad; this.y0 = box[1] - pad;
@@ -157,26 +157,26 @@ export function doorEdge(d) {
 /** Ashfall 세계 — 타일맵(engine/tilemap) 위에 생성기 · 마을 · 유적 · 바다 · 유체 · 조명 규칙을 얹는다(엔진화 계획 §8-4 상속). */
 export class World extends TileMap {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare _ensureWalkable: any; declare _walkJobs: any[]; declare atelier: any; declare beach: any; declare breakLongRuns: any;
-  declare buildAltars: any; declare buildAtelier: any; declare buildCaveZones: any; declare buildCaverns: any;
-  declare buildCitadel: any; declare buildDawnCity: any; declare buildDeepShaft: any; declare buildDungeon: any;
-  declare buildJungleFalls: any; declare buildRuinCaches: any; declare buildRuins: any; declare buildRunaway: any;
-  declare buildSea: any; declare buildSkyIslands: any; declare buildVillage: any; declare buildWorks: any;
-  declare cactusPlant: any; declare caveGrid: Uint8Array; declare caverns: any[]; declare citadel: any; declare crops: any; declare wet: any; declare isWet: any; declare waterFarm: any; declare nearWater: any;
-  declare crumbled: any; declare dawnCity: any; declare dawnY: any; declare decoratePonds: any; declare decorateWater: any;
-  declare deepShaft: any; declare doors: any[]; declare dungeon: any; declare ensureEntranceTraps: any; declare fAcc: any;
-  declare falls: any; declare faults: any; declare fillMossCorners: any; declare fitObjects: any; declare floodCaves: any;
-  declare floodHell: any; declare flv: Uint8Array; declare fmark: any; declare fq: any; declare giantTree: any; declare glowStalk: any;
-  declare inAtelier: any; declare inCitadel: any; declare inDeepShaft: any; declare inRuin: any; declare inRunaway: any;
-  declare inWorks: any; declare jungleTree: any; declare lavaPools: any[]; declare lbh: any; declare lbw: any; declare lbx: any;
-  declare lby: any; declare lightBuf: any; declare machines: any; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
-  declare objects: any[]; declare openCodeDoorway: any; declare oreHits: any; declare pineTree: any; declare placeRichOres: any;
-  declare placeRigs: any; declare pools: any; declare pruneSmallCaves: any; declare restoreSealRoom: any; declare rng: any;
-  declare ruinAt: any; declare ruinEvents: any[]; declare ruinSites: any[]; declare ruins: any[]; declare runaway: any;
-  declare scatterChests: any; declare sea: any; declare seaLevel: any; declare sealCipherVaults: any; declare sealLiquids: any;
+  declare _ensureWalkable: (...a: any[]) => any; declare _walkJobs: any[]; declare atelier: any; declare beach: any; declare breakLongRuns: (...a: any[]) => any;
+  declare buildAltars: (...a: any[]) => any; declare buildAtelier: (...a: any[]) => any; declare buildCaveZones: (...a: any[]) => any; declare buildCaverns: (...a: any[]) => any;
+  declare buildCitadel: (...a: any[]) => any; declare buildDawnCity: (...a: any[]) => any; declare buildDeepShaft: (...a: any[]) => any; declare buildDungeon: (...a: any[]) => any;
+  declare buildJungleFalls: (...a: any[]) => any; declare buildRuinCaches: (...a: any[]) => any; declare buildRuins: (...a: any[]) => any; declare buildRunaway: (...a: any[]) => any;
+  declare buildSea: (...a: any[]) => any; declare buildSkyIslands: (...a: any[]) => any; declare buildVillage: (...a: any[]) => any; declare buildWorks: (...a: any[]) => any;
+  declare cactusPlant: (...a: any[]) => any; declare caveGrid: Uint8Array; declare caverns: any[]; declare citadel: any; declare crops: Set<any>; declare wet: Record<string, any>; declare isWet: (...a: any[]) => any; declare waterFarm: (...a: any[]) => any; declare nearWater: (...a: any[]) => any;
+  declare crumbled: Map<any, any>; declare dawnCity: any; declare dawnY: number; declare decoratePonds: (...a: any[]) => any; declare decorateWater: (...a: any[]) => any;
+  declare deepShaft: any; declare doors: any[]; declare dungeon: any; declare ensureEntranceTraps: (...a: any[]) => any; declare fAcc: number[];
+  declare falls: any; declare faults: any[]; declare fillMossCorners: (...a: any[]) => any; declare fitObjects: (...a: any[]) => any; declare floodCaves: (...a: any[]) => any;
+  declare floodHell: (...a: any[]) => any; declare flv: Uint8Array; declare fmark: Uint8Array[]; declare fq: any[]; declare giantTree: any; declare glowStalk: (...a: any[]) => any;
+  declare inAtelier: (...a: any[]) => any; declare inCitadel: (...a: any[]) => any; declare inDeepShaft: (...a: any[]) => any; declare inRuin: (...a: any[]) => any; declare inRunaway: (...a: any[]) => any;
+  declare inWorks: (...a: any[]) => any; declare jungleTree: (...a: any[]) => any; declare lavaPools: any[]; declare lbh: number; declare lbw: number; declare lbx: number;
+  declare lby: number; declare lightBuf: Float32Array; declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
+  declare objects: any[]; declare openCodeDoorway: (...a: any[]) => any; declare oreHits: Record<string, any>; declare pineTree: (...a: any[]) => any; declare placeRichOres: (...a: any[]) => any;
+  declare placeRigs: (...a: any[]) => any; declare pools: any; declare pruneSmallCaves: (...a: any[]) => any; declare restoreSealRoom: (...a: any[]) => any; declare rng: any;
+  declare ruinAt: (...a: any[]) => any; declare ruinEvents: any[]; declare ruinSites: any[]; declare ruins: any[]; declare runaway: any;
+  declare scatterChests: (...a: any[]) => any; declare sea: any; declare seaLevel: any; declare sealCipherVaults: (...a: any[]) => any; declare sealLiquids: (...a: any[]) => any;
   declare sealRoom: any; declare seed: any; declare shoreY: any; declare skyGate: any; declare skyIslands: any[];
-  declare spawnX: any; declare spawnY: any; declare surface: Int16Array; declare sweepFloatingDecor: any; declare sweepPockets: any;
-  declare tree: any; declare villageY: any; declare works: any;
+  declare spawnX: number; declare spawnY: number; declare surface: Int16Array; declare sweepFloatingDecor: (...a: any[]) => any; declare sweepPockets: (...a: any[]) => any;
+  declare tree: (...a: any[]) => any; declare villageY: number; declare works: any;
 
   constructor(seed) {
     super(WW, WH, TS, TILE_DEF, T.BEDROCK);   // 타일 · 벽지 · 탐험 배열, 경계 밖 = 기반암
