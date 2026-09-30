@@ -36,11 +36,13 @@ ELEM = {
                   eye='#ff5aa0', line='#0a0612', acc='#b07aff', breath=['#e0b0ff', '#a06fff', '#5a2e9a']),
 }
 # 단계 — 크기 배율 · 머리 비율 · 날개 길이 · 꼬리 · 뿔 · 등가시 수
+# 진화마다 한눈에 달라지게(사용자 요청 2026-09-30): 성룡부터 배 비늘판 · 날개 속막 · 두 번째 뿔, 고룡은 뿔 왕관 · 속성 빛 무늬 ·
+# 날개 끝 빛줄 · 가슴의 빛 · 몸을 도는 속성 기운(aura). neck = 목 길이(머리가 앞·위로 나간다)
 STAGE = [
-    dict(k=1.00, head=1.30, wing=0.70, tail=0.80, horn=0.3, spikes=0),
-    dict(k=1.15, head=1.10, wing=0.85, tail=1.00, horn=0.8, spikes=3),
-    dict(k=1.35, head=1.00, wing=1.05, tail=1.10, horn=1.2, spikes=5),
-    dict(k=1.60, head=0.95, wing=1.20, tail=1.20, horn=1.7, spikes=7),
+    dict(k=1.00, head=1.30, wing=0.70, tail=0.80, horn=0.3, spikes=0, neck=0.9),
+    dict(k=1.15, head=1.10, wing=0.85, tail=1.00, horn=0.8, spikes=3, neck=1.0),
+    dict(k=1.40, head=1.00, wing=1.10, tail=1.15, horn=1.3, spikes=5, neck=1.2),
+    dict(k=1.72, head=0.95, wing=1.30, tail=1.30, horn=1.9, spikes=7, neck=1.35),
 ]
 
 
@@ -86,6 +88,10 @@ def draw_dragon(el, st, frame, W, H, ox, oy):
     def wing(col, bone, scale, dx):
         pts = [(sx + dx - u * WU * scale, sy - v * WV * scale * sa) for u, v in TPL]
         poly(pts, col)
+        if st >= 2 and abs(sa) > 0.15:                  # 속막 — 뿌리 쪽 60% 를 한 톤 밝게(날개 면이 두 겹으로 읽힌다)
+            poly([(sx + dx - u * WU * scale * 0.6, sy - v * WV * scale * sa * 0.6) for u, v in TPL], lighten(col, 0.2))
+        if st >= 3 and abs(sa) > 0.15:                  # 고룡 — 날개 끝 가장자리에 속성 빛
+            line([pts[i] for i in (2, 3, 4, 5, 6, 7, 8)], P['acc'], 0.7)
         for b in BONES[:1 + (2 if st >= 1 else 0)]:
             line([pts[i] for i in b], bone, 0.55 + 0.12 * k)
     # 먼 쪽 날개 — 몸 뒤, 어둡게, 조금 작게
@@ -109,6 +115,15 @@ def draw_dragon(el, st, frame, W, H, ox, oy):
     # 몸 · 배
     ell(cx, cy, brx, bry, P['body'])
     ell(cx + 0.4 * k, cy + bry * 0.45, brx * 0.78, bry * 0.5, P['belly'])
+    if st >= 2:                                       # 배 비늘판 — 가로 마디
+        plate = tuple(round(P['belly'][i] * 0.72 + P['dark'][i] * 0.28) for i in range(3)) + (255,)
+        for i in range(4 if st == 2 else 5):
+            px_ = cx - brx * 0.45 + i * brx * 0.3
+            line([(px_, cy + bry * 0.05), (px_ - 0.3 * k, cy + bry * 0.85)], plate, 0.5)
+    if st >= 3:                                       # 고룡 — 옆구리에 속성 빛 무늬
+        for i in range(3):
+            gx = cx - brx * 0.55 + i * brx * 0.45
+            line([(gx, cy - bry * 0.45), (gx + 0.9 * k, cy - bry * 0.1), (gx + 0.3 * k, cy + bry * 0.2)], P['acc'], 0.55)
     # 등가시
     for i in range(sp['spikes']):
         u = (i + 0.5) / max(1, sp['spikes'])
@@ -117,7 +132,8 @@ def draw_dragon(el, st, frame, W, H, ox, oy):
         h = (1.0 + 0.5 * (1 - abs(u - 0.5) * 2)) * k * 0.8
         poly([(bx - 0.7 * k, by + 0.2), (bx, by - h), (bx + 0.7 * k, by + 0.2)], P['acc'] if el == 'earth' else P['dark'])
     # 목 · 머리
-    hx, hy = cx + brx * 0.95 + hs * 0.55, cy - bry * 0.9 - hs * 0.35
+    nk = sp['neck']
+    hx, hy = cx + brx * 0.95 * nk + hs * 0.55, cy - bry * 0.9 * nk - hs * 0.35
     poly([(cx + brx * 0.3, cy - bry * 0.8), (hx - hs * 0.2, hy - hs * 0.5), (hx + hs * 0.1, hy + hs * 0.55), (cx + brx * 0.75, cy + bry * 0.1)], P['body'])
     poly([(cx + brx * 0.55, cy - bry * 0.1), (hx - hs * 0.1, hy + hs * 0.2), (hx + hs * 0.2, hy + hs * 0.6), (cx + brx * 0.8, cy + bry * 0.25)], P['belly'])
     ell(hx, hy, hs, hs * 0.82, P['body'])
@@ -127,9 +143,17 @@ def draw_dragon(el, st, frame, W, H, ox, oy):
     # 뿔 — 뒤로 휘어 오른다
     hl = sp['horn'] * 2.2 * k
     line([(hx - hs * 0.2, hy - hs * 0.55), (hx - hs * 0.2 - hl * 0.7, hy - hs * 0.6 - hl * 0.55), (hx - hs * 0.2 - hl, hy - hs * 0.45 - hl * 0.6)], P['horn'], 0.9 + 0.25 * k)
-    if st >= 3:                                       # 고룡 — 뿔 한 쌍 더 · 턱 갈기
-        line([(hx + hs * 0.2, hy - hs * 0.7), (hx - hl * 0.1, hy - hs * 0.8 - hl * 0.6)], P['horn'], 0.9)
-        poly([(hx - hs * 0.3, hy + hs * 0.5), (hx - hs * 1.1, hy + hs * 1.1), (hx + hs * 0.2, hy + hs * 0.8)], P['acc'] if el != 'fire' else P['dark'])
+    if st >= 2:                                       # 성룡 — 두 번째 뿔(앞, 짧게)
+        line([(hx + hs * 0.15, hy - hs * 0.7), (hx - hl * 0.15, hy - hs * 0.85 - hl * 0.55)], P['horn'], 0.8 + 0.1 * k)
+    if st >= 3:                                       # 고룡 — 뿔 왕관(뒤로 셋) · 턱 갈기 · 목덜미 지느러미
+        for j, (dx0, ln) in enumerate(((-0.55, 0.8), (-0.8, 0.62))):
+            line([(hx + hs * dx0, hy - hs * 0.35), (hx + hs * dx0 - hl * ln * 0.9, hy - hs * 0.3 - hl * ln * 0.35)], P['horn'], 0.8)
+        poly([(hx - hs * 0.3, hy + hs * 0.5), (hx - hs * 1.3, hy + hs * 1.25), (hx - hs * 0.4, hy + hs * 1.0), (hx + hs * 0.2, hy + hs * 0.8)], P['acc'] if el != 'fire' else P['dark'])
+        for j in range(3):                            # 목 뒤 지느러미 가시
+            u = 0.25 + j * 0.25
+            nx, ny = cx + brx * 0.3 + (hx - hs * 0.2 - cx - brx * 0.3) * u, cy - bry * 0.8 + (hy - hs * 0.5 - cy + bry * 0.8) * u
+            poly([(nx - 0.6 * k, ny + 0.3), (nx - 1.1 * k, ny - 1.3 * k), (nx + 0.6 * k, ny)], P['acc'])
+        ell(cx + brx * 0.55, cy + bry * 0.05, 0.9 * k, 0.8 * k, lighten(P['acc'], 0.45))   # 가슴의 빛
     # 가까운 날개 — 몸 앞, 따로 한 겹(몸과 맞닿는 가장자리에 선을 긋는다)
     base_im, base_d = im, d
     im = Image.new('RGBA', (W * SS, H * SS), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
@@ -176,6 +200,14 @@ def draw_dragon(el, st, frame, W, H, ox, oy):
             if g[y][x][3]: continue
             if any(0 <= y + dy < H and 0 <= x + dx < W and g[y + dy][x + dx][3] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
                 out[y][x] = P['line']
+    if st >= 3:                                       # 고룡 — 몸 둘레를 도는 속성 기운(윤곽 없이 한 칸씩, 장마다 돈다)
+        br = [hexc(c) for c in ELEM[el]['breath']]
+        for j in range(7):
+            ang = 2 * math.pi * (j / 7 + (frame % FLAP) / FLAP / 7)
+            rx_, ry_ = brx * 1.55 + (j % 2) * 1.2, bry * 2.1 + (j % 3) * 0.8
+            ax_, ay_ = round(cx + math.cos(ang) * rx_), round(cy + math.sin(ang) * ry_ - (frame % FLAP) * 0.3 * (j % 2))
+            if 0 <= ax_ < W and 0 <= ay_ < H and not out[ay_][ax_][3]:
+                out[ay_][ax_] = br[j % len(br)]
     return out
 
 

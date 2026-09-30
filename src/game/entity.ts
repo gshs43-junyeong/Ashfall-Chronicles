@@ -863,6 +863,7 @@ export class Pet {
     if (a.k === 'melee') {
       target.hurt(dmg, false, null, 2);
       for (let i = 0; i < 5; i++) G.parts.push(new Part(target.cx, target.cy, this.def.c));
+      G.burst(target.cx, target.cy, 'hit_blunt', 34);
     } else {
       const ang = Math.atan2(target.cy - this.y, target.cx - this.x);
       G.projs.push(new Proj(this.x, this.y, Math.cos(ang) * a.spd, Math.sin(ang) * a.spd, dmg, 'player', a.proj));
@@ -873,7 +874,7 @@ export class Pet {
 /* ================= 투사체 ================= */
 /* 손그림 이펙트 시트로 대체할 투사체 종류 */
 export const PROJ_FX = {
-  arrow: 'arrow', star: 'arrow',
+  arrow: 'arrow', star: 'arrow', pstar: 'starfrag',
   fire: 'flame',
   frost: 'frost',
   void: 'void', dark: 'void', soul: 'void',
@@ -898,6 +899,7 @@ export const IMPACT_FX = {
   rune:  { burst: 'arcane', ring: '#9fe8d8', rr: 26, parts: 8 },
   wind:  { burst: 'arcane', ring: '#bcd8f0', rr: 32, parts: 6 },
   star:  { burst: 'hit',    ring: '#ffe08a', rr: 24, parts: 8 },
+  pstar: { burst: 'stargain', ring: '#ffe08a', rr: 26, parts: 10 },
   bullet: { burst: 'hit',   ring: '#ffd86a', rr: 12, parts: 6 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
@@ -906,6 +908,7 @@ export const PROJ_STYLE = {
   bullet: { c: '#ffe0a0', r: 2, tracer: 22 },   // 포탑 총탄 — 예광 줄기
   bomb: { c: '#3a3630', r: 6 },          // 폭탄 — 심지 불티는 Bomb.update가 따로 뿌린다
   star: { c: '#ffe08a', r: 5, glow: 1 },
+  pstar: { c: '#ffe08a', r: 5, glow: 1 },
   bolt: { c: '#8fd8ff', r: 5, glow: 1 },
   fire: { c: '#ff8a3a', r: 6, glow: 1 },
   frost: { c: '#9fe0ff', r: 6, glow: 1 },
