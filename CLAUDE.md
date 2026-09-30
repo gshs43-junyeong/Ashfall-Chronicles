@@ -296,9 +296,9 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ---
 
-## 8. 지금 상태 (2026-09-26)
+## 8. 지금 상태 (2026-09-30)
 
-- **v1.1.1 엔진화 진행 중**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) · 중국어 간체(zh-Hans) · 독일어(de) · 스페인어(es) 4,020개 끝** — 사이트(site/ home·download) 6개 언어 끝, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 진행 중 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입 첫 단계(`@ts-nocheck` 0, 표 타입 `types.d.ts`) 끝 — `any` 좁히기는 차례로(계획서 §7-1). 다국어 UI 검사(`node tests/ui-audit.mjs` — 6개 언어 0건) · 유틸리티 Z·X(탐지 파동, game/utility.ts) · 로고·파비콘(`tools/mklogo.py`)·대표 그림(`tools/mkkeyart.py` → site/keyart.png) 끝. P11 Docker 끝(`docker compose up dev|game|site` · `docker compose run --rm check` — 스크린샷 기준은 `tests/baseline/shots-docker` 따로, 로컬 기준을 다시 찍으면 Docker 것도 다시 찍을 것). P12 마무리(엔진 문서 `docs/engine.md` · 예제 `games/sample` · `npm run test:sample`) 끝 — 남은 것은 계획서 §9-1 에 모아 둔 수정(v1.1.1 뒤).
+- **v1.1.1 엔진화 끝 · 출시**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) · 중국어 간체(zh-Hans) · 독일어(de) · 스페인어(es) 4,020개 끝** — 사이트(site/ home·download) 6개 언어 끝, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 끝 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입(`@ts-nocheck` 0 · 클래스 필드 `any` 0 · 표 타입 `types.d.ts` 닫힘) 끝 — 게임 쪽 strict 는 v1.1.2. 다국어 UI 검사(`node tests/ui-audit.mjs` — 6개 언어 0건) · 유틸리티 Z·X(탐지 파동, game/utility.ts) · 로고·파비콘(`tools/mklogo.py`)·대표 그림(`tools/mkkeyart.py` → site/keyart.png) 끝. P11 Docker 끝(`docker compose up dev|game|site` · `docker compose run --rm check` — 스크린샷 기준은 `tests/baseline/shots-docker` 따로, 로컬 기준을 다시 찍으면 Docker 것도 다시 찍을 것). P12 마무리(엔진 문서 `docs/engine.md` · 예제 `games/sample` · `npm run test:sample`) 끝 — 남은 것은 계획서 §9-1 에 모아 둔 수정(v1.1.1 뒤).
   **화질**(설정 · game.js `QUALITY`): 자동 = 폰 절약(픽셀 밀도 1 · 입자 300) · 태블릿 보통(1.5 · 600) · 컴퓨터 높음(2 · 900). 렌더 단계별 시간은 `G.pipe.profile(true)` → `G.pipe.stats()`. 도중에 찾은 버그는 계획서 §9-1 에 모아 P12 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
@@ -491,7 +491,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   안 열리면 localStorage 로 떨어진다. 세이브를 읽고 쓰는 곳은 **전부 `SaveStore.put/get/remove/list`** 를 거친다 —
   localStorage 를 직접 만지면 IndexedDB 쪽과 어긋난다(설정 `SET_KEY` 만 localStorage). 저장은 비동기라 `saveGame()` 은
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
-- `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1`이다.
+- `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1.1`이다.
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 엔진화·모듈 분리·TS·다국어·모바일·Docker — 계획과 단계별 프롬프트는
   [`docs/v1.1.1-engine-plan.md`](docs/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
   `World extends TileMap` · 번역 Claude/검수 Grok · 폰 가로+태블릿) / v1.1.1 뒤 몰아서 할 수정(계획서 §9-1 — 해·비·세이브 삭제 팝업·사이트 재구성·영어 화면 다시 찍기) /
