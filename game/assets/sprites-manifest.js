@@ -1244,9 +1244,10 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_glass_moth.png",
         "frameW": 28,
         "frameH": 21,
-        "count": 3,
+        "count": 5,
         "foot": 4.25,
-        "side": 0.5
+        "side": 0.5,
+        "idle": 4
       },
       "pet_pebble_kin": {
         "file": "char/pet_pebble_kin.png",
@@ -1316,17 +1317,19 @@ window.SPRITE_MANIFEST = {
         "file": "char/pet_void_hatchling.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 3,
+        "count": 5,
         "foot": 5.25,
-        "side": 0
+        "side": 0,
+        "idle": 4
       },
       "pet_storm_falcon": {
         "file": "char/pet_storm_falcon.png",
         "frameW": 24,
         "frameH": 20,
-        "count": 3,
+        "count": 5,
         "foot": 4.25,
-        "side": 0.5
+        "side": 0.5,
+        "idle": 4
       },
       "npcw_elara": {
         "file": "char/npc_elara.png",

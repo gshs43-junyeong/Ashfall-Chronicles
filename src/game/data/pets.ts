@@ -59,11 +59,14 @@ export const PETS: Record<string, PetDef> = {
     d: '그림자 속에 있어도 눈만은 또렷이 빛난다.' }
 };
 /* 두 장짜리 떠 있기에서 바뀌는 칸이 적은 펫(0↔1장 차이 11~29%) — 그릴 때 몸짓을 더한다(drawPet · tools/petboard 점검판이 같은 값).
-   fps 장 넘김 · bob 위아래(px) · tilt 기울기(rad) · flapX 가로로 접히는 날개(정면 나방) · pulse 크기 숨 · spin 흔들 회전 */
+   fps 장 넘김 · bob 위아래(px) · tilt 기울기(rad) · flapX 가로로 접히는 날개 · pulse 크기 숨 · spin 흔들 회전.
+   ★ 매 · 나방 · 공허의 유생은 그림째 기울이거나 접으면 날갯짓이 아니라 그림이 흔들려 보였다 — 사이 장을 구워(tools/mkpetidle.py,
+   매니페스트 idle: 4) 날개·다리가 움직이게 하고, 여기서는 장 넘김과 위아래만 준다. */
 export const PET_MOTION: Record<string, { fps?: number; bob?: number; tilt?: number; flapX?: number; pulse?: number; spin?: number }> = {
-  storm_falcon: { fps: 6, bob: 1.5, tilt: 0.1 },
+  storm_falcon: { fps: 8, bob: 1 },
   dust_sparrow: { fps: 6, bob: 1.5, tilt: 0.09 },
-  glass_moth:   { fps: 5, bob: 1, flapX: 0.28 },
+  glass_moth:   { fps: 8, bob: 1.2 },
+  void_hatchling: { fps: 5, bob: 1 },
   ember_drake:  { fps: 5, bob: 1.2, tilt: 0.07 },
   star_sprite:  { fps: 4, pulse: 0.09, spin: 0.25 },
 };
