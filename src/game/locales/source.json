@@ -760,6 +760,9 @@
   "그러면 우리가 원래 적으려 한 수가 나온다.": [
    "game/ruin-map.ruinCipher"
   ],
+  "그런 방이 없다": [
+   "game/net.mpJoin"
+  ],
   "그림 애셋": [
    "index.html"
   ],
@@ -1397,6 +1400,9 @@
   ],
   "방이 가득 찼다": [
    "game/net.mpJoin"
+  ],
+  "방이 닫혔다 — 새로 열어야 한다": [
+   "game/net.mpHost"
   ],
   "방전": [
    "factory",
@@ -2480,6 +2486,9 @@
   ],
   "줄이 끊겼다": [
    "game/fishing.resolveFish"
+  ],
+  "중개 서버에 닿지 않는다": [
+   "game/net.mpHost"
   ],
   "증식체의 노심": [
    "world/village.buildRunaway"

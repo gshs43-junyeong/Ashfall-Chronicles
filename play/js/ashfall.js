@@ -38000,8 +38000,8 @@
       this.storyHeard[id] = this.chapter;
       const pick = first && this.chapter === 0 ? null : this.talkPick(id);
       const lines = fresh ? story.slice() : [];
-      const call = pick && !fresh ? this.nameCall(id) : null;
-      if (call) lines.push(call);
+      const call2 = pick && !fresh ? this.nameCall(id) : null;
+      if (call2) lines.push(call2);
       if (pick) lines.push(pick.say);
       if (!lines.length) lines.push(story[story.length - 1]);
       const rest = [];
@@ -38047,8 +38047,8 @@
       const lines = [];
       if (first) lines.push(d.line);
       if (fresh) lines.push(...story);
-      const call = pick ? this.nameCall(id) : null;
-      if (call) lines.push(call);
+      const call2 = pick ? this.nameCall(id) : null;
+      if (call2) lines.push(call2);
       if (pick) lines.push(pick.say);
       this.villageSeen = this.villageSeen || {};
       const lv = this.villageLv(), vt = VILLAGE_TALK[id];
@@ -45850,7 +45850,8 @@
   __export(net_exports, {
     NET_HZ: () => NET_HZ,
     NET_MAX: () => NET_MAX,
-    NetPart: () => NetPart
+    NetPart: () => NetPart,
+    SIGNAL_URL: () => SIGNAL_URL
   });
 
   // src/engine/net/chunk.ts
@@ -45940,6 +45941,51 @@
     bc.onmessage = (e) => {
       if (s.onmessage) s.onmessage(e.data);
     };
+    return s;
+  }
+  async function call(url, body) {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error("signal: " + (j.error || r.status));
+    return j;
+  }
+  async function openRoom(url) {
+    return String((await call(url, { op: "open" })).room);
+  }
+  function closeRoom(url, room) {
+    call(url, { op: "close", room }).catch(() => {
+    });
+  }
+  function createHttpSignal(url, room, id, every = 1500) {
+    let alive = true, timer = null;
+    const s = {
+      onmessage: null,
+      onerror: null,
+      post(msg) {
+        call(url, { op: "post", room, to: msg.to || "host", msg }).catch((e) => {
+          if (s.onerror) s.onerror(e);
+        });
+      },
+      close() {
+        alive = false;
+        if (timer) clearTimeout(timer);
+      }
+    };
+    const poll = async () => {
+      if (!alive) return;
+      try {
+        const j = await call(url, { op: "poll", room, id });
+        for (const m of j.msgs || []) if (s.onmessage) s.onmessage(m);
+      } catch (e) {
+        if (String(e).includes("no-room")) {
+          alive = false;
+          if (s.onerror) s.onerror(e);
+          return;
+        }
+      }
+      if (alive) timer = setTimeout(poll, every);
+    };
+    poll();
     return s;
   }
 
@@ -46044,6 +46090,7 @@
   // src/game/game/net.ts
   var NET_MAX = 4;
   var NET_HZ = 15;
+  var SIGNAL_URL = "https://ashfall-chronicles.vercel.app/api/room";
   var now = () => performance.now() / 1e3;
   var NetPart = {
     net: null,
@@ -46140,13 +46187,35 @@
       if (text.length > 15e3) for (const part of chunkText(++this.net.chunkId, text)) t.send("rel", part);
       else t.send(ch, text);
     },
+    /** 중개 주소 — ?sig=tab 이면 같은 브라우저 탭끼리(null), ?sig=<주소> 면 그 주소(시험용), 아니면 사이트 함수. */
+    netSignalUrl() {
+      const s = new URLSearchParams(location.search).get("sig");
+      if (s === "tab") return null;
+      if (s) return s;
+      return location.host === "ashfall-chronicles.vercel.app" ? "/api/room" : SIGNAL_URL;
+    },
     /* ================= 호스트 ================= */
-    /** 방을 연다 — 참가자 셋까지. 지금 중개는 같은 브라우저의 탭끼리뿐이다(인터넷 중개는 M4). */
-    mpHost(room) {
+    /** 방을 연다 — 참가자 셋까지. 인터넷 중개면 방 코드는 중개가 고른다. */
+    async mpHost(room) {
       if (this.net || !this.me) return;
-      const sig = createTabSignal(room), n = { role: "host", room, sig, peers: /* @__PURE__ */ new Map(), pending: /* @__PURE__ */ new Map(), nextId: 1, sendT: 0, chunkId: 0 };
+      const url = this.netSignalUrl(), n = { role: "host", room, sig: null, peers: /* @__PURE__ */ new Map(), pending: /* @__PURE__ */ new Map(), nextId: 1, sendT: 0, chunkId: 0, url };
       this.net = n;
       this.me.netId = 0;
+      if (url) {
+        try {
+          n.room = room = await openRoom(url);
+        } catch (e) {
+          console.warn("net: 방 열기 실패", e);
+          this.net = null;
+          this.toast(tr("중개 서버에 닿지 않는다"), "bad");
+          return;
+        }
+        const hs = createHttpSignal(url, room, "host", 2e3);
+        hs.onerror = () => this.toast(tr("방이 닫혔다 — 새로 열어야 한다"), "bad");
+        n.sig = hs;
+        addEventListener("pagehide", () => closeRoom(url, room));
+      } else n.sig = createTabSignal(room);
+      const sig = n.sig;
       sig.onmessage = async (m) => {
         if (m.t === "want" && !m.to) {
           if (n.peers.size + n.pending.size >= NET_MAX - 1) {
@@ -46217,7 +46286,14 @@
     /** 방에 붙는다 — 캐릭터는 새로 만든 것(charId · name). 제 캐릭터 고르기·저장은 M4. */
     mpJoin(room, name, charId) {
       if (this.net) return;
-      const sig = createTabSignal(room), me = Math.random().toString(36).slice(2, 8);
+      const url = this.netSignalUrl(), me = Math.random().toString(36).slice(2, 8);
+      room = String(room || "").trim().toUpperCase();
+      const sig = url ? createHttpSignal(url, room, me, 1e3) : createTabSignal(room);
+      if (url) sig.onerror = () => {
+        clearInterval(n.ask);
+        this.net = null;
+        this.toast(tr("그런 방이 없다"), "bad");
+      };
       const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map() };
       n.char = this.freshPlayer(0, 0, name, charId);
       this.net = n;
@@ -46234,6 +46310,7 @@
         sig.post({ t: "answer", from: me, to: "host", sdp: g.answer });
         const t = await g.ready;
         n.t = t;
+        if (url) sig.close();
         t.onmessage = (ch, d) => {
           if (isChunk(d)) {
             const r = n.joiner.push(d);
@@ -46249,7 +46326,7 @@
         });
       };
       const ask = () => sig.post({ t: "want", from: me });
-      n.ask = setInterval(ask, 2e3);
+      n.ask = setInterval(ask, url ? 4e3 : 2e3);
       ask();
     },
     netOnGuest(m) {
@@ -46335,7 +46412,7 @@
     /** 주소의 ?mp=host&room= — 새 게임·불러오기를 마치면 방을 연다(개발판 시험용, 창은 M4). */
     mpAuto() {
       const qs = new URLSearchParams(location.search);
-      if (!this.net && qs.get("mp") === "host") this.mpHost(qs.get("room") || "test");
+      if (!this.net && qs.get("mp") === "host") this.mpHost((qs.get("room") || "TEST").toUpperCase());
     }
   };
   mixin(G, NetPart);
