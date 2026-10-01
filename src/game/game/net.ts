@@ -6,7 +6,7 @@ import { SnapBuffer } from '../../engine/net/interp.js';
 import { closeRoom, createHttpSignal, createTabSignal, createWsSignal, openRoom } from '../../engine/net/signal.js';
 import { guestAnswer, hostOffer } from '../../engine/net/webrtc.js';
 import { tr } from '../lang.js';
-import { T } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
 import { HIT_FX } from '../data/items.js';
 import { ENEMIES } from '../data/enemies.js';
 import { DmgText, Enemy, Proj, makeItem } from '../entity.js';
@@ -83,12 +83,12 @@ export const NetPart: Bag = {
   /* 캐기·놓기는 각자 화면에서 하고(손맛 · 얻은 물건은 제 가방) 바뀐 칸만 보낸다 — 호스트가 받아 넣고 남에게 퍼뜨린다.
      물 흐름·작물·무너지는 바닥은 호스트만 돌리고 결과 칸을 보낸다. */
   netTrackWorld() { this.world.netLog = new Set(); this.world.netMute = false; },
-  /** 모인 바뀐 칸 → [칸, 타일, 벽지, 수위, …] */
+  /** 모인 바뀐 칸 → [칸, 타일, 벽지, 수위, 젖음(밭에 물 준 날), …] */
   netTakeTiles() {
     const w = this.world, log = w && w.netLog;
     if (!log || !log.size) return null;
     const out = [];
-    for (const k of log) out.push(k, w.tiles[k], w.walls[k], w.flv ? w.flv[k] : 0);
+    for (const k of log) out.push(k, w.tiles[k], w.walls[k], w.flv ? w.flv[k] : 0, (w.wet && w.wet[k]) | 0);
     log.clear();
     return out;
   },
@@ -97,13 +97,15 @@ export const NetPart: Bag = {
     const w = this.world, { WW } = w.dims;
     w.netMute = true;
     try {
-      for (let i = 0; i + 3 < list.length; i += 4) {
+      for (let i = 0; i + 4 < list.length; i += 5) {
         const k = list[i], t = list[i + 1], wl = list[i + 2], x = k % WW, y = (k / WW) | 0;
         if (!w.inB(x, y)) continue;
         if (fromGuest && (w.tiles[k] === T.BEDROCK || t === T.BEDROCK)) continue;   // ★ 세계 경계 — 누구의 글로도 안 바뀐다
         if (w.tiles[k] !== t) w.set(x, y, t);
         if (w.walls[k] !== wl) w.setWall(x, y, wl);
         if (w.flv) w.flv[k] = list[i + 3];
+        if (list[i + 4] > ((w.wet[k]) | 0)) w.wet[k] = list[i + 4];
+        if (fromGuest && TILE_DEF[t].crop) w.crops.add(k);   // 참가자가 심은 씨앗 — 작물은 호스트가 키운다
       }
     } finally { w.netMute = false; }
   },

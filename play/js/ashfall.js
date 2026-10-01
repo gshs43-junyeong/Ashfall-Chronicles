@@ -14644,6 +14644,7 @@
       if (!TILE_DEF[this.get(x, y)].farm) return false;
       const k = y * WW2 + x;
       this.wet[k] = Math.max(this.wet[k] | 0, day + FARM_WET_DAYS);
+      this.netMark(k);
       return true;
     },
     /** 작물 한 단계 성장. */
@@ -46350,12 +46351,12 @@
       this.world.netLog = /* @__PURE__ */ new Set();
       this.world.netMute = false;
     },
-    /** 모인 바뀐 칸 → [칸, 타일, 벽지, 수위, …] */
+    /** 모인 바뀐 칸 → [칸, 타일, 벽지, 수위, 젖음(밭에 물 준 날), …] */
     netTakeTiles() {
       const w = this.world, log = w && w.netLog;
       if (!log || !log.size) return null;
       const out = [];
-      for (const k of log) out.push(k, w.tiles[k], w.walls[k], w.flv ? w.flv[k] : 0);
+      for (const k of log) out.push(k, w.tiles[k], w.walls[k], w.flv ? w.flv[k] : 0, (w.wet && w.wet[k]) | 0);
       log.clear();
       return out;
     },
@@ -46364,13 +46365,15 @@
       const w = this.world, { WW: WW2 } = w.dims;
       w.netMute = true;
       try {
-        for (let i = 0; i + 3 < list.length; i += 4) {
+        for (let i = 0; i + 4 < list.length; i += 5) {
           const k = list[i], t = list[i + 1], wl = list[i + 2], x = k % WW2, y = k / WW2 | 0;
           if (!w.inB(x, y)) continue;
           if (fromGuest && (w.tiles[k] === T.BEDROCK || t === T.BEDROCK)) continue;
           if (w.tiles[k] !== t) w.set(x, y, t);
           if (w.walls[k] !== wl) w.setWall(x, y, wl);
           if (w.flv) w.flv[k] = list[i + 3];
+          if (list[i + 4] > (w.wet[k] | 0)) w.wet[k] = list[i + 4];
+          if (fromGuest && TILE_DEF[t].crop) w.crops.add(k);
         }
       } finally {
         w.netMute = false;
