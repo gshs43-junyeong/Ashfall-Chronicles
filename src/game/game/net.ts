@@ -8,7 +8,9 @@ import { guestAnswer, hostOffer } from '../../engine/net/webrtc.js';
 import { tr } from '../lang.js';
 import { T, TILE_DEF } from '../data.js';
 import { HIT_FX } from '../data/items.js';
+import { MACHINE } from '../data/recipes.js';
 import { ENEMIES } from '../data/enemies.js';
+import { TS } from '../world.js';
 import { DmgText, Enemy, Proj, makeItem } from '../entity.js';
 import { UI } from '../ui.js';
 import { G } from '../game.js';
@@ -262,11 +264,68 @@ export const NetPart: Bag = {
   netWatchObjs() {
     const n = this.net, t = now();
     for (const o of [UI.chestRef, UI.storeRef]) if (o) n.watch.set(o, t);
+    if (UI.machRef && UI.open === 'machine') n.mwatch.set(UI.machRef, t);
+    for (const [m, at] of n.mwatch) {
+      if (t - at > 3) { n.mwatch.delete(m); continue; }
+      const j = JSON.stringify(m);
+      if (n.objJ.get(m) !== j) { n.objJ.set(m, j); this.netMachState(m); }
+    }
     for (const [o, at] of n.watch) {
       if (t - at > 3) { n.watch.delete(o); continue; }
       const j = JSON.stringify([o.items || null, !!o.guarded, o.woke || 0]);
       if (n.objJ.get(o) !== j) { n.objJ.set(o, j); this.netObjState(o); }
     }
+  },
+  /* ================= 기계 — 공장은 호스트만 돌린다 ================= */
+  /* 놓기(madd)·걷기(mrem)·창에서 넣고 빼기·돌리기(mst)는 한 사람이 바꾼 것을 보내고, 돌아가는 상태는 호스트가 0.5초마다
+     참가자 근처의 바뀐 기계만 보낸다(ms). 기계 몸은 타일 그리기가 건너뛰고 Factory.render 가 w.machines 로 그리므로 참가자도 이 표가 있어야 보인다. */
+  netMachKey(m) { return m.y * this.world.dims.WW + m.x; },
+  netMachState(m) { this.netBroadcast({ k: 'mst', key: this.netMachKey(m), m }); },
+  /** 기계 하나를 받은 상태로 — 같은 객체를 고쳐 쓴다(기계 창이 붙들고 있는 참조가 끊기지 않게). */
+  netMachPut(key, data) {
+    const w = this.world, cur = w.machines.get(key);
+    if (data.it) { delete data.it.t0; delete data.it.fx; delete data.it.fy; }   // 미끄러짐 시각은 보낸 쪽 시계 — 여기서는 새로 잰다
+    if (cur) { for (const k in cur) if (!(k in data)) delete cur[k]; Object.assign(cur, data); }
+    else w.machines.set(key, data);
+    const m = w.machines.get(key);
+    this.net.objJ.set(m, JSON.stringify(m));                // 되돌려 보내지 않게
+    w.netDirty = true;
+    if (UI.machRef === m && UI.open === 'machine') UI.refreshMachine();
+    return m;
+  },
+  netPutMach(m, fromGuest) {
+    const w = this.world, { WW } = w.dims;
+    if (m.k === 'madd') {
+      const key = m.y * WW + m.x;
+      if (w.machines.has(key)) return;
+      w.netMute = true;
+      try { w.set(m.x, m.y, MACHINE[m.m.t] ? MACHINE[m.m.t].tile : w.get(m.x, m.y)); } finally { w.netMute = false; }
+      this.netMachPut(key, m.m);
+    } else if (m.k === 'mrem') {
+      const key = m.y * WW + m.x;
+      if (!w.machines.has(key)) return;
+      w.machines.delete(key); w.netDirty = true;
+      w.netMute = true;
+      try { w.set(m.x, m.y, T.AIR); } finally { w.netMute = false; }
+      if (UI.machRef && !w.machines.has(this.netMachKey(UI.machRef)) && UI.open === 'machine') UI.closePanel();
+    } else if (m.k === 'mst') {
+      if (fromGuest && !w.machines.has(m.key)) return;
+      this.netMachPut(m.key, m.m);
+    }
+  },
+  /** 호스트 → 참가자: 근처 기계 중 지난번과 달라진 것 · 사라진 것 */
+  netMachList(q) {
+    const w = this.world, { WW } = w.dims, rp = q.rp, cx = rp.cx / TS, cy = rp.cy / TS, out = [], seen = new Set();
+    q.mj = q.mj || new Map();
+    for (const [key, m] of w.machines) {
+      if (Math.abs(m.x - cx) > 80 || Math.abs(m.y - cy) > 50) continue;
+      seen.add(key);
+      const j = JSON.stringify(m);
+      if (q.mj.get(key) !== j) { q.mj.set(key, j); out.push([key, m]); }
+    }
+    const gone = [];
+    for (const key of q.mj.keys()) if (!seen.has(key)) { q.mj.delete(key); if (!w.machines.has(key)) gone.push(key); }
+    return out.length || gone.length ? { k: 'ms', l: out, g: gone } : null;
   },
   netSend(t, ch, msg) {
     const text = JSON.stringify(msg);
@@ -288,7 +347,7 @@ export const NetPart: Bag = {
   async mpHost(room) {
     if (this.net || !this.me) return;
     const url = this.netSignalUrl(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0, url,
-      eid: 0, live: new Map(), dead: [], joined: new Set(), watch: new Map(), objJ: new WeakMap() };
+      eid: 0, live: new Map(), dead: [], joined: new Set(), watch: new Map(), mwatch: new Map(), objJ: new WeakMap() };
     this.net = n; this.me.netId = 0;
     this.netTrackWorld();
     if (isWs(url)) {
@@ -367,6 +426,9 @@ export const NetPart: Bag = {
     } else if (m.k === 'hit' && peer.rp) {
       const e = n.live.get(m.e);
       if (e && !e.dead && Math.abs(e.cx - peer.rp.cx) < 900 && Math.abs(e.cy - peer.rp.cy) < 700) e.hurt(m.a, !!m.c, peer.rp, m.kb, m.f || undefined);
+    } else if ((m.k === 'madd' || m.k === 'mrem' || m.k === 'mst') && peer.rp) {
+      this.netPutMach(m, true);
+      this.netBroadcast(m, peer);
     } else if ((m.k === 'oadd' || m.k === 'odel' || m.k === 'ost') && peer.rp) {
       this.netPutObj(m);
       this.netBroadcast(m, peer);
@@ -391,7 +453,7 @@ export const NetPart: Bag = {
     room = String(room || '').trim().toUpperCase();
     const sig = isWs(url) ? createWsSignal(url, { role: 'guest', room, id: me }) : url ? createHttpSignal(url, room, me, 1000) : createTabSignal(room);
     if (url) (sig as Bag).onerror = () => { clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
-    const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map(), gproj: new Map(), watch: new Map(), objJ: new WeakMap() };
+    const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map(), gproj: new Map(), watch: new Map(), mwatch: new Map(), objJ: new WeakMap() };
     n.char = this.freshPlayer(0, 0, name, charId);
     this.net = n;
     sig.onmessage = async m => {
@@ -465,6 +527,11 @@ export const NetPart: Bag = {
       this.netPutDoor(m);
     } else if (m.k === 'oadd' || m.k === 'odel' || m.k === 'ost') {
       this.netPutObj(m);
+    } else if (m.k === 'madd' || m.k === 'mrem' || m.k === 'mst') {
+      this.netPutMach(m, false);
+    } else if (m.k === 'ms') {
+      for (const [key, d] of m.l) this.netMachPut(key, d);
+      for (const key of m.g) { this.world.machines.delete(key); this.world.netDirty = true; }
     }
   },
   netLost() {
@@ -500,6 +567,11 @@ export const NetPart: Bag = {
       if (n.dead.length) this.netSend(q.t, 'rel', { k: 'ed', l: n.dead });
     }
     n.dead = [];
+    n.machT = (n.machT || 0) - 1 / NET_HZ;
+    if (n.machT <= 0) {
+      n.machT = 0.5;
+      for (const q of n.peers.values()) { if (!q.rp) continue; const ms = this.netMachList(q); if (ms) this.netSend(q.t, 'rel', ms); }
+    }
     n.clkT = (n.clkT || 0) - 1 / NET_HZ;
     if (n.clkT <= 0) {
       n.clkT = 1;

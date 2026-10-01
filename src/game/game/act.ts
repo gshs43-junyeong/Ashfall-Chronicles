@@ -72,6 +72,7 @@ export const ActPart: Bag = {
          (바닥에 떨군 것은 5분 뒤 사라지고 저장도 안 된다) */
       if (MACH_OF_TILE[id]) {
         const back = Factory.remove(w, tx, ty);
+        if (back && this.net) this.netBroadcast({ k: 'mrem', x: tx, y: ty });   // 안에 든 것은 캔 사람 가방으로 — 남은 지우기만
         let spill = 0;
         if (back) for (const it of back) if (!p.addItem(it)) { this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it)); spill++; }
         if (spill) this.toast(tr('가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라'), 'bad');
@@ -431,6 +432,7 @@ export const ActPart: Bag = {
         const placed = Factory.place(w, mtx, mty, idef(hi).mach, this.placeDirFor(idef(hi).mach));
         // 발사형 함정은 누가 놓았는지에 따라 편이 갈린다 — 내가 놓은 건 적을 쏜다
         if (placed && MACHINE[placed.t].proj) placed.own = 1;
+        if (placed && this.net) this.netBroadcast({ k: 'madd', x: mtx, y: mty, m: placed });
         hi.c--; if (hi.c <= 0) p.bag[p.sel] = null;
         UI.refreshBag(); this.sfx('place');
         return;
