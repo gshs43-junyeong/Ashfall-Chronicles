@@ -101,6 +101,16 @@ check(ghost && hostHpAfter && hostHpAfter[0] < hostHpAfter[1], `몹: 참가자 �
 check(after[2] === xp0[2] + 1 && (after[0] !== xp0[0] || after[1] > xp0[1]) && !after[3] && !hostAfter[0] && hostAfter[1] === 0,
   `몹: 참가자가 잡으면 처치·경험치는 참가자에게(처치 ${xp0[2]}→${after[2]}) · 호스트는 안 받는다(${hostAfter[1]})`);
 
+/* 시계·사건 · 적 투사체 — 호스트 것이 참가자 화면에 */
+await host.evaluate(() => {
+  G.dayT = 20 * 60; G.event = { id: 'rain', t: 0 };
+  const g = G.players.find(p => p.remote);
+  G.projs.push(new Proj(g.cx + 300, g.cy - 200, -40, 0, 1, 'enemy', 'orb'));
+});
+await guest.waitForTimeout(1600);
+const sync = await guest.evaluate(() => ({ d: Math.round(G.dayT), ev: G.event && G.event.id, gp: G.projs.filter(q => q.ghost).length }));
+check(Math.abs(sync.d - 1200) < 10 && sync.ev === 'rain' && sync.gp >= 1, `시계·사건·투사체: 참가자 화면 ${sync.d}분 · 사건 ${sync.ev} · 그림자 투사체 ${sync.gp}`);
+
 /* 앞의 몹에게 맞았으면 무적 시간이 풀릴 때까지 — 이 기계는 두 판을 같이 돌려 참가자 쪽 게임 시간이 느리게 흐른다 */
 await guest.waitForFunction(() => G.me.iframe <= 0, null, { timeout: 20000 });
 await host.waitForFunction(() => { const r = G.players.find(p => p.remote); return !r._hurtAt || G.time - r._hurtAt > 0.4; }, null, { timeout: 20000 });   // 호스트의 넘기기 간격(0.3초)

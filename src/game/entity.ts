@@ -951,7 +951,7 @@ export class Proj extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare crit: boolean; declare dmg: number; declare explode: number; declare fire: number; declare frost: number; declare grav: number;
   declare hitSet: Set<any>; declare life: number; declare pierce: number; declare poison: number; declare team: string; declare type: string;
-  declare vol: number;
+  declare vol: number; declare ghost: boolean; declare nid: number; declare seenAt: number;   // 멀티플레이 — 참가자 화면의 그림자 투사체
 
   constructor(x, y, vx, vy, dmg, team, type) {
     super(x - 6, y - 6, 12, 12);
@@ -962,6 +962,8 @@ export class Proj extends Ent {
       G.sfxAt(PHYS_PROJ[type] ? 'efire_phys' : 'efire_magic', x / TS, y / TS);
   }
   update(dt, world, player) { const { WW, WH } = dimsOf(world);
+    /* 그림자(참가자 화면) — 날아가는 그림만. 맞히는 판정은 호스트가 아바타로 한다. */
+    if (this.ghost) { this.x += this.vx * dt; this.y += this.vy * dt; return; }
     this.life -= dt;
     if (this.life <= 0) { this.dead = true; return; }
     this.vy += this.grav * dt;
