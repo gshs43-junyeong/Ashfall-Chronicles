@@ -919,7 +919,10 @@
   "{name|이} 나갔다": "{name} se fue",
   "방 {room|을} 열었다": "Sala {room} abierta",
   "방이 가득 찼다": "La sala está llena",
-  "호스트와 연결이 끊겼다": "Se perdió la conexión con el anfitrión"
+  "호스트와 연결이 끊겼다": "Se perdió la conexión con el anfitrión",
+  "중개 서버에 닿지 않는다": "No se puede conectar al servidor de enlace",
+  "방이 닫혔다 — 새로 열어야 한다": "La sala se cerró. Abre una nueva.",
+  "그런 방이 없다": "No existe esa sala"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

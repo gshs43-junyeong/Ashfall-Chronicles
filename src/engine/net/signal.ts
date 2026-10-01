@@ -19,3 +19,40 @@ export function createTabSignal(room: string): Signal {
   bc.onmessage = e => { if (s.onmessage) s.onmessage(e.data as SignalMsg); };
   return s;
 }
+
+/* ---- 인터넷 너머 — HTTP 우편함(짧은 폴링). 서버 규칙은 api/_room-core.js ---- */
+async function call(url: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error('signal: ' + (j.error || r.status));
+  return j;
+}
+
+/** 새 방을 연다 — 중개가 고른 방 코드(다섯 글자). */
+export async function openRoom(url: string): Promise<string> {
+  return String((await call(url, { op: 'open' })).room);
+}
+export function closeRoom(url: string, room: string) { call(url, { op: 'close', room }).catch(() => {}); }
+
+/** id 의 우편함을 every ms 마다 비운다. 보내는 글은 msg.to(없으면 'host')의 우편함으로.
+    onerror 는 방이 사라졌을 때(만료·닫힘) 한 번 — 그 뒤로는 폴링을 멈춘다. */
+export function createHttpSignal(url: string, room: string, id: string, every = 1500): Signal & { onerror: ((e: Error) => void) | null } {
+  let alive = true, timer: ReturnType<typeof setTimeout> | null = null;
+  const s: Signal & { onerror: ((e: Error) => void) | null } = {
+    onmessage: null, onerror: null,
+    post(msg) { call(url, { op: 'post', room, to: msg.to || 'host', msg }).catch(e => { if (s.onerror) s.onerror(e); }); },
+    close() { alive = false; if (timer) clearTimeout(timer); }
+  };
+  const poll = async () => {
+    if (!alive) return;
+    try {
+      const j = await call(url, { op: 'poll', room, id });
+      for (const m of (j.msgs as SignalMsg[]) || []) if (s.onmessage) s.onmessage(m);
+    } catch (e) {
+      if (String(e).includes('no-room')) { alive = false; if (s.onerror) s.onerror(e as Error); return; }
+    }
+    if (alive) timer = setTimeout(poll, every);
+  };
+  poll();
+  return s;
+}

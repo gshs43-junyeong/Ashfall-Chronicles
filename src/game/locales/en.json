@@ -919,7 +919,10 @@
   "{name|이} 나갔다": "{name} left",
   "방 {room|을} 열었다": "Opened room {room}",
   "방이 가득 찼다": "The room is full",
-  "호스트와 연결이 끊겼다": "Lost connection to the host"
+  "호스트와 연결이 끊겼다": "Lost connection to the host",
+  "중개 서버에 닿지 않는다": "Can't reach the relay server",
+  "방이 닫혔다 — 새로 열어야 한다": "The room closed. Open a new one.",
+  "그런 방이 없다": "No such room"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

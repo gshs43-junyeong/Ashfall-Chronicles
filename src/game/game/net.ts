@@ -2,7 +2,7 @@
 import { mixin } from '../../engine/core/mixin.js';
 import { chunkText, createJoiner, isChunk } from '../../engine/net/chunk.js';
 import { SnapBuffer } from '../../engine/net/interp.js';
-import { createTabSignal } from '../../engine/net/signal.js';
+import { closeRoom, createHttpSignal, createTabSignal, openRoom } from '../../engine/net/signal.js';
 import { guestAnswer, hostOffer } from '../../engine/net/webrtc.js';
 import { tr } from '../lang.js';
 import { makeItem } from '../entity.js';
@@ -12,6 +12,8 @@ import { G } from '../game.js';
 
 export const NET_MAX = 4;          // 호스트 포함
 export const NET_HZ = 15;          // 위치를 보내는 횟수(초당)
+/* 방 중개 — 사이트의 Vercel 함수(api/room.js). zip(file://)·Electron 도 이 주소로 붙는다. */
+export const SIGNAL_URL = 'https://ashfall-chronicles.vercel.app/api/room';
 const now = () => performance.now() / 1000;
 
 export const NetPart: Bag = {
@@ -64,12 +66,29 @@ export const NetPart: Bag = {
     else t.send(ch, text);
   },
 
+  /** 중개 주소 — ?sig=tab 이면 같은 브라우저 탭끼리(null), ?sig=<주소> 면 그 주소(시험용), 아니면 사이트 함수. */
+  netSignalUrl() {
+    const s = new URLSearchParams(location.search).get('sig');
+    if (s === 'tab') return null;
+    if (s) return s;
+    return location.host === 'ashfall-chronicles.vercel.app' ? '/api/room' : SIGNAL_URL;
+  },
+
   /* ================= 호스트 ================= */
-  /** 방을 연다 — 참가자 셋까지. 지금 중개는 같은 브라우저의 탭끼리뿐이다(인터넷 중개는 M4). */
-  mpHost(room) {
+  /** 방을 연다 — 참가자 셋까지. 인터넷 중개면 방 코드는 중개가 고른다. */
+  async mpHost(room) {
     if (this.net || !this.me) return;
-    const sig = createTabSignal(room), n: Bag = { role: 'host', room, sig, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0 };
+    const url = this.netSignalUrl(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0, url };
     this.net = n; this.me.netId = 0;
+    if (url) {
+      try { n.room = room = await openRoom(url); }
+      catch (e) { console.warn('net: 방 열기 실패', e); this.net = null; this.toast(tr('중개 서버에 닿지 않는다'), 'bad'); return; }
+      const hs = createHttpSignal(url, room, 'host', 2000);
+      hs.onerror = () => this.toast(tr('방이 닫혔다 — 새로 열어야 한다'), 'bad');
+      n.sig = hs;
+      addEventListener('pagehide', () => closeRoom(url, room));
+    } else n.sig = createTabSignal(room);
+    const sig = n.sig;
     sig.onmessage = async m => {
       if (m.t === 'want' && !m.to) {
         if (n.peers.size + n.pending.size >= NET_MAX - 1) { sig.post({ t: 'full', from: 'host', to: m.from }); return; }
@@ -123,7 +142,10 @@ export const NetPart: Bag = {
   /** 방에 붙는다 — 캐릭터는 새로 만든 것(charId · name). 제 캐릭터 고르기·저장은 M4. */
   mpJoin(room, name, charId) {
     if (this.net) return;
-    const sig = createTabSignal(room), me = Math.random().toString(36).slice(2, 8);
+    const url = this.netSignalUrl(), me = Math.random().toString(36).slice(2, 8);
+    room = String(room || '').trim().toUpperCase();
+    const sig = url ? createHttpSignal(url, room, me, 1000) : createTabSignal(room);
+    if (url) (sig as Bag).onerror = () => { clearInterval(n.ask); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
     const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map() };
     n.char = this.freshPlayer(0, 0, name, charId);
     this.net = n;
@@ -136,6 +158,7 @@ export const NetPart: Bag = {
       sig.post({ t: 'answer', from: me, to: 'host', sdp: g.answer });
       const t = await g.ready;
       n.t = t;
+      if (url) sig.close();                         // 붙었으면 우편함은 그만 본다(중개 요청을 아낀다)
       t.onmessage = (ch, d) => {
         if (isChunk(d)) { const r = n.joiner.push(d); if (r) this.netOnGuest(JSON.parse(r.text)); return; }
         this.netOnGuest(JSON.parse(d));
@@ -146,7 +169,7 @@ export const NetPart: Bag = {
       addEventListener('pagehide', () => { if (n.t) n.t.send('rel', JSON.stringify({ k: 'bye' })); });
     };
     const ask = () => sig.post({ t: 'want', from: me });
-    n.ask = setInterval(ask, 2000); ask();   // 호스트가 아직 방을 안 열었으면 열 때까지 두드린다
+    n.ask = setInterval(ask, url ? 4000 : 2000); ask();   // 호스트가 아직 방을 안 열었으면 열 때까지 두드린다
   },
   netOnGuest(m) {
     const n = this.net;
@@ -212,7 +235,7 @@ export const NetPart: Bag = {
   /** 주소의 ?mp=host&room= — 새 게임·불러오기를 마치면 방을 연다(개발판 시험용, 창은 M4). */
   mpAuto() {
     const qs = new URLSearchParams(location.search);
-    if (!this.net && qs.get('mp') === 'host') this.mpHost(qs.get('room') || 'test');
+    if (!this.net && qs.get('mp') === 'host') this.mpHost((qs.get('room') || 'TEST').toUpperCase());
   }
 };
 

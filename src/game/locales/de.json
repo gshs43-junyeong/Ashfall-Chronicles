@@ -919,7 +919,10 @@
   "{name|이} 나갔다": "{name} hat verlassen",
   "방 {room|을} 열었다": "Raum {room} geöffnet",
   "방이 가득 찼다": "Der Raum ist voll",
-  "호스트와 연결이 끊겼다": "Verbindung zum Host verloren"
+  "호스트와 연결이 끊겼다": "Verbindung zum Host verloren",
+  "중개 서버에 닿지 않는다": "Vermittlungsserver nicht erreichbar",
+  "방이 닫혔다 — 새로 열어야 한다": "Der Raum wurde geschlossen. Öffne einen neuen.",
+  "그런 방이 없다": "Diesen Raum gibt es nicht"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
