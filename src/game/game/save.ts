@@ -23,6 +23,57 @@ import { G, NONAME, SAVE_KEY, SAVE_SLOTS, SAVE_VERSION, SET_KEY, SaveStore, TOUC
 export const SavePart: Bag = {
 
   /* ================= 저장 ================= */
+  /** 캐릭터 몫(레벨·가방·장비·스킬·통계…) — 세계와 떼어 들고 다닐 수 있는 덩어리. 멀티플레이 참가자는 이것만 들고 남의 세계에 들어간다. */
+  packChar(p) {
+    return {
+      x: p.x, y: p.y, level: p.level, xp: p.xp, xpNext: p.xpNext, statPts: p.statPts, skillPts: p.skillPts,
+      base: p.base, hp: p.hp, mp: p.mp, charge: p.charge, gold: p.gold, bag: p.bag, equip: p.equip, sel: p.sel,
+      charId: p.charId,
+      skills: p.skills, slots: p.slots, kills: p.kills, mined: p.mined, bossKilled: p.bossKilled,
+      prof: p.prof,
+      starOrbits: p.starOrbits, starLit: p.starLit, starFade: p.starFade,
+      deepest: p.deepest, highest: p.highest, gathered: p.gathered
+    };
+  },
+  /** packChar 로 만든 덩어리에서 플레이어를 되살린다 — chapter 는 옛 기록(별 조각 궤도 없음)을 채울 때만 쓴다. */
+  unpackChar(c, name, chapter) {
+    const p = new Player(c.x, c.y);
+    p.name = name || NONAME;
+    Object.assign(p, {
+      level: c.level, xp: c.xp, xpNext: c.xpNext, statPts: c.statPts, skillPts: c.skillPts,
+      base: c.base, gold: c.gold, bag: c.bag, equip: c.equip, sel: c.sel,
+      skills: c.skills, slots: c.slots, kills: c.kills, mined: c.mined,
+      bossKilled: c.bossKilled, deepest: c.deepest, highest: c.highest, gathered: c.gathered || {}
+    });
+    p.charId = CHAR_OF(c.charId).id;
+    /* 이전 세이브에는 생활 숙련이 없다 — 1레벨로 시작한다. */
+    if (c.prof) for (const k in p.prof) if (c.prof[k]) Object.assign(p.prof[k], c.prof[k]);
+    /* 별 조각 궤도 — 옛 기록에는 없다. */
+    if (c.starOrbits === undefined) {
+      p.starOrbits = clamp(chapter - 1, 0, 5);
+      p.starLit = chapter > 5 ? 1 : 0;
+      p.starFade = chapter > 8 ? 1 : 0;
+    } else {
+      p.starOrbits = c.starOrbits || 0; p.starLit = c.starLit || 0; p.starFade = c.starFade || 0;
+    }
+    let spent = 0; for (const k in p.skills) spent += p.skills[k] || 0;
+    const due = p.level;                     // 1레벨에 1 + 레벨업마다 1
+    if (spent + p.skillPts < due) p.skillPts = due - spent;
+    // 옛 세이브는 펫이 도감(pets{}/activePet)이었다 — 그때 모은 펫을 잃지 않도록 전부 아이템으로 바꿔 가방에 넣고, 쓰고 있던 펫은 그대로 펫 슬롯에 끼워 준다.
+    if (c.pets) {
+      if (!p.equip.pet1) p.equip.pet1 = null;
+      if (!p.equip.pet2) p.equip.pet2 = null;
+      for (const id in c.pets) {
+        if (!PETS[id] || !ITEMS['pet_' + id]) continue;
+        const it = makeItem('pet_' + id, 1);
+        if (id === c.activePet && !p.equip.pet1) p.equip.pet1 = it;
+        else if (!p.addItem(it)) this.drops.push(new Drop(p.x, p.y, it));
+      }
+    }
+    p.recalc(); p.hp = c.hp; p.mp = c.mp;   // recalc()가 가방 용량도 함께 동기화한다
+    p.charge = c.charge === undefined ? p.d.maxCharge : c.charge;
+    return p;
+  },
   /** 저장이 끝나면 true. */
   async saveGame() {
     if (this.currentSlot === null) return false;   // 타이틀에서 슬롯을 거치지 않고는 저장할 수 없다
@@ -44,15 +95,7 @@ export const SavePart: Bag = {
         vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties, bountyNext: this.bountyNext,
         shopStock: this.shopStock, shopStockDay: this.shopStockDay,
         achievements: this.achievements, tally: this.tally, survey: this.survey,
-        p: {
-          x: p.x, y: p.y, level: p.level, xp: p.xp, xpNext: p.xpNext, statPts: p.statPts, skillPts: p.skillPts,
-          base: p.base, hp: p.hp, mp: p.mp, charge: p.charge, gold: p.gold, bag: p.bag, equip: p.equip, sel: p.sel,
-          charId: p.charId,
-          skills: p.skills, slots: p.slots, kills: p.kills, mined: p.mined, bossKilled: p.bossKilled,
-          prof: p.prof,
-          starOrbits: p.starOrbits, starLit: p.starLit, starFade: p.starFade,
-          deepest: p.deepest, highest: p.highest, gathered: p.gathered
-        }
+        p: this.packChar(p)
       };
       data.sealed = 1;                                 // 서명이 있는 기록이라는 표시
       await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
@@ -142,41 +185,7 @@ export const SavePart: Bag = {
       this._rigs = null; this._fbg = null;   // 다른 세계를 불러왔다 — 자리·원경 캐시를 버린다
       this.world.placeRigs(true);            // 채취탑이 object 가 되기 전 세이브 — 지금 지면으로 한 번 골라 세운다
       this.rng = new RNG(d.world.seed + '_g');
-      const p = new Player(d.p.x, d.p.y);
-      p.name = d.name || NONAME;
-      Object.assign(p, {
-        level: d.p.level, xp: d.p.xp, xpNext: d.p.xpNext, statPts: d.p.statPts, skillPts: d.p.skillPts,
-        base: d.p.base, gold: d.p.gold, bag: d.p.bag, equip: d.p.equip, sel: d.p.sel,
-        skills: d.p.skills, slots: d.p.slots, kills: d.p.kills, mined: d.p.mined,
-        bossKilled: d.p.bossKilled, deepest: d.p.deepest, highest: d.p.highest, gathered: d.p.gathered || {}
-      });
-      p.charId = CHAR_OF(d.p.charId).id;
-      /* 이전 세이브에는 생활 숙련이 없다 — 1레벨로 시작한다. */
-      if (d.p.prof) for (const k in p.prof) if (d.p.prof[k]) Object.assign(p.prof[k], d.p.prof[k]);
-      /* 별 조각 궤도 — 옛 기록에는 없다. */
-      if (d.p.starOrbits === undefined) {
-        p.starOrbits = clamp(d.chapter - 1, 0, 5);
-        p.starLit = d.chapter > 5 ? 1 : 0;
-        p.starFade = d.chapter > 8 ? 1 : 0;
-      } else {
-        p.starOrbits = d.p.starOrbits || 0; p.starLit = d.p.starLit || 0; p.starFade = d.p.starFade || 0;
-      }
-      let spent = 0; for (const k in p.skills) spent += p.skills[k] || 0;
-      const due = p.level;                     // 1레벨에 1 + 레벨업마다 1
-      if (spent + p.skillPts < due) p.skillPts = due - spent;
-      // 옛 세이브는 펫이 도감(pets{}/activePet)이었다 — 그때 모은 펫을 잃지 않도록 전부 아이템으로 바꿔 가방에 넣고, 쓰고 있던 펫은 그대로 펫 슬롯에 끼워 준다.
-      if (d.p.pets) {
-        if (!p.equip.pet1) p.equip.pet1 = null;
-        if (!p.equip.pet2) p.equip.pet2 = null;
-        for (const id in d.p.pets) {
-          if (!PETS[id] || !ITEMS['pet_' + id]) continue;
-          const it = makeItem('pet_' + id, 1);
-          if (id === d.p.activePet && !p.equip.pet1) p.equip.pet1 = it;
-          else if (!p.addItem(it)) this.drops.push(new Drop(p.x, p.y, it));
-        }
-      }
-      p.recalc(); p.hp = d.p.hp; p.mp = d.p.mp;   // recalc()가 가방 용량도 함께 동기화한다
-      p.charge = d.p.charge === undefined ? p.d.maxCharge : d.p.charge;
+      const p = this.unpackChar(d.p, d.name, d.chapter);
       this.player = p;
       this.chapter = d.chapter; this.dayT = d.dayT;
       this.talked = d.talked || {}; this.crafted = d.crafted || {};
