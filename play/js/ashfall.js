@@ -28679,11 +28679,12 @@
           }
         }
       } else {
-        if (aabb(this.rect(), player.rect())) {
-          player.hurt(this.dmg, this.cx);
-          this.impact();
-          return;
-        }
+        for (const q of app.players.length ? app.players : [player])
+          if (aabb(this.rect(), q.rect())) {
+            q.hurt(this.dmg, this.cx);
+            this.impact();
+            return;
+          }
       }
       if (this.x < 0 || this.x > WW2 * TS || this.y > WH2 * TS || this.y < -400) this.dead = true;
     }
@@ -34789,8 +34790,10 @@
     H: 0,
     cam: { x: 0, y: 0 },
     world: null,
-    player: null,
     rng: new RNG(1),
+    /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
+    players: [],
+    me: null,
     ents: [],
     projs: [],
     parts: [],
@@ -34812,6 +34815,29 @@
       // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
       start: "title"
     }),
+    /** 이 화면의 플레이어(= me). 넣으면 혼자 하는 판으로 players 를 [p] 로 맞춘다. */
+    get player() {
+      return this.me;
+    },
+    set player(p) {
+      this.me = p;
+      this.players = p ? [p] : [];
+    },
+    /** 이 자리에서 가장 가까운 플레이어 — 몹이 노리는 대상 · 물건이 끌려가는 쪽. */
+    nearestPlayer(x, y) {
+      const ps = this.players;
+      if (ps.length < 2) return this.me;
+      let best = ps[0], bd = Infinity;
+      for (const q of ps) {
+        if (q.hp <= 0) continue;
+        const d = dist2(x, y, q.cx, q.cy);
+        if (d < bd) {
+          bd = d;
+          best = q;
+        }
+      }
+      return best;
+    },
     get state() {
       return this.scenes.current;
     },
@@ -35753,17 +35779,19 @@
       }
       for (let i = this.ents.length - 1; i >= 0; i--) {
         const e = this.ents[i];
-        e.update(dt, w, p);
+        const tp = this.nearestPlayer(e.cx, e.cy);
+        e.update(dt, w, tp);
         if (e.elite && !e.dead && Math.random() < 0.2) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * e.w, e.cy + (Math.random() - 0.5) * e.h, "#ffd24a", -34, 0.55));
         if (e.dead) this.ents.splice(i, 1);
-        else if (!e.boss && !e.minion && !e.guard && dist2(e.cx, e.cy, p.cx, p.cy) > 2400 * 2400) this.ents.splice(i, 1);
+        else if (!e.boss && !e.minion && !e.guard && dist2(e.cx, e.cy, tp.cx, tp.cy) > 2400 * 2400) this.ents.splice(i, 1);
       }
       for (let i = this.projs.length - 1; i >= 0; i--) {
         this.projs[i].update(dt, w, p);
         if (this.projs[i].dead) this.projs.splice(i, 1);
       }
       for (let i = this.drops.length - 1; i >= 0; i--) {
-        this.drops[i].update(dt, w, p);
+        const d = this.drops[i];
+        d.update(dt, w, this.nearestPlayer(d.x, d.y));
         if (this.drops[i].dead) this.drops.splice(i, 1);
       }
       for (let i = this.parts.length - 1; i >= 0; i--) if (!this.parts[i].update(dt)) this.parts.splice(i, 1);
@@ -35795,7 +35823,7 @@
         this.trapTimer = 0.2;
         this.tickTileTraps();
       }
-      w.tickCrumble(dt, p);
+      for (const q of this.players) w.tickCrumble(dt, q);
       this.updateEvents(dt);
       this.updateWeather(dt);
       this.updateSmoke(dt);
@@ -35840,7 +35868,7 @@
       this.growTimer = (this.growTimer || 0) - dt;
       if (this.growTimer <= 0) {
         this.growTimer = 5;
-        w.regrow(this.rng, 4, Math.floor(p.cx / TS));
+        for (const q of this.players) w.regrow(this.rng, 4, Math.floor(q.cx / TS));
       }
       const tx = p.cx - this.W / 2, ty = p.cy - this.H / 2 - 30;
       this.cam.x = lerp(this.cam.x, clamp(tx, 0, WW2 * TS - this.W), 1 - Math.pow(2e-3, dt));
