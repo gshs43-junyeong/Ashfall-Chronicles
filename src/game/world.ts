@@ -166,7 +166,7 @@ export class World extends TileMap {
   declare putPathTrap: (...a: any[]) => any; declare putRuinDecor: (...a: any[]) => any; declare putTileTrap: (...a: any[]) => any;
   declare skyAlt: (...a: any[]) => any; declare skyFeature: (...a: any[]) => any; declare skyGrotto: (...a: any[]) => any;
   declare trapSpot: (...a: any[]) => any;
-  declare dims: WorldDims; declare ruinSpec: RuinDef[];
+  declare dims: WorldDims; declare ruinSpec: RuinDef[]; declare netLog: Set<number> | null; declare netMute: boolean;
   declare _ensureWalkable: (...a: any[]) => any; declare _walkJobs: any[]; declare atelier: Record<string, any>; declare beach: Record<string, any>; declare breakLongRuns: (...a: any[]) => any;
   declare buildAltars: (...a: any[]) => any; declare buildAtelier: (...a: any[]) => any; declare buildCaveZones: (...a: any[]) => any; declare buildCaverns: (...a: any[]) => any;
   declare buildCitadel: (...a: any[]) => any; declare buildDawnCity: (...a: any[]) => any; declare buildDeepShaft: (...a: any[]) => any; declare buildDungeon: (...a: any[]) => any;
@@ -217,7 +217,14 @@ export class World extends TileMap {
     this.tiles[y * WW + x] = t;
     /* 유체가 켜진 뒤(생성·불러오기 끝)에만 — 바뀐 칸과 그 네 이웃을 흐름 검사 줄에 세운다. */
     if (this.fq) this.fluidWake(x, y);
+    if (this.netLog && !this.netMute) this.netLog.add(y * WW + x);   // 멀티플레이 — 바뀐 칸을 모아 보낸다(game/net.ts)
   }
+  setWall(x, y, w) {
+    super.setWall(x, y, w);
+    if (this.netLog && !this.netMute && this.inB(x, y)) this.netLog.add(y * this.dims.WW + x);
+  }
+  /** tiles 를 직접 쓴 칸(작물 자람 · 무너지는 바닥)도 멀티플레이 기록에 남긴다. */
+  netMark(k) { if (this.netLog && !this.netMute) this.netLog.add(k); }
   hurtTile(x, y) { return TILE_DEF[this.get(x, y)].hurt || 0; }
   /** 사각형이 물에 얼마나 잠겼는지 0~1. */
   liquidIn(px, py, w, h) { const { WW } = this.dims;
@@ -729,7 +736,7 @@ export class World extends TileMap {
     for (const [k, t, lv] of out) {
       const x = k % WW, y = (k / WW) | 0;
       if (this.tiles[k] !== t) this.set(x, y, t);
-      else this.fluidWake(x, y);
+      else { this.fluidWake(x, y); this.netMark(k); }   // 수위만 바뀐 칸도 보낸다
       this.flv[k] = lv;
       // 떨어지는 줄기가 바뀌었거나 그 옆 물이 바뀌었다 — 이 칸과 양옆 열의 폭포 판정을 다시 한다
       if (j === 0) for (const d of [-1, 0, 1]) cols.add(k + d);

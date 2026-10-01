@@ -925,7 +925,7 @@ export const G: Bag = {
     // 고대 유적의 타일 함정 — 화면 근처만 훑는다
     this.trapTimer = (this.trapTimer || 0) - dt;
     if (this.trapTimer <= 0) { this.trapTimer = 0.2; this.tickTileTraps(); }
-    for (const q of this.players) w.tickCrumble(dt, q);
+    if (!guest) for (const q of this.players) w.tickCrumble(dt, q);
 
     // 세계 이벤트 (붉은 달 · 모래폭풍 · 포자 개화 · 비)
     if (!guest) this.updateEvents(dt);
@@ -936,7 +936,7 @@ export const G: Bag = {
     this.checkRuinEvent();
     this.updatePulse(dt);          // 유적의 맥박 · 탐사 기록 (아래 '유적의 맥박' 절)
     this.updateCaves(dt);          // 동굴 갈래 · 낙석 · 무너지는 자갈 (아래 '동굴' 절)
-    this.world.fluidTick(dt);      // 물·바닷물·용암이 흐른다 (world.js '유체' 절)
+    if (!guest) this.world.fluidTick(dt);   // 물·바닷물·용암이 흐른다 (world.js '유체' 절) — 참가자는 호스트 것을 받는다
     this.updateFalls(dt);          // 폭포 밑 물보라
     /* 유적 고유 이벤트의 여운 — 꺼진 불(화면 어둠)과 홀씨(지속 피해)는 시간이 지나면 걷힌다 */
     if (this.ruinDark > 0) this.ruinDark -= dt;
@@ -975,7 +975,7 @@ export const G: Bag = {
 
     // 나무 재생성 (플레이어 주변)
     this.growTimer = (this.growTimer || 0) - dt;
-    if (this.growTimer <= 0) { this.growTimer = 5; for (const q of this.players) w.regrow(this.rng, 4, Math.floor(q.cx / TS)); }
+    if (this.growTimer <= 0 && !guest) { this.growTimer = 5; for (const q of this.players) w.regrow(this.rng, 4, Math.floor(q.cx / TS)); }
 
     // 카메라
     const tx = p.cx - this.W / 2, ty = p.cy - this.H / 2 - 30;

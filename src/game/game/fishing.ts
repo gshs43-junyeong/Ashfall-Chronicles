@@ -300,6 +300,7 @@ export const FishingPart: Bag = {
       }
       o.closed = !o.closed;
       this.sfx(o.closed ? 'door_shut' : 'door_open');
+      if (this.net) this.netDoor(o);
     }
   },
 
