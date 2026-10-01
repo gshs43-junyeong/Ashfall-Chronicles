@@ -23,6 +23,20 @@ import { G, NONAME, SAVE_KEY, SAVE_SLOTS, SAVE_VERSION, SET_KEY, SaveStore, TOUC
 export const SavePart: Bag = {
 
   /* ================= 저장 ================= */
+  /** 그 캐릭터의 새 플레이어(시작 장비·가방) — 새 게임과 멀티플레이 새 참가자가 같이 쓴다. */
+  freshPlayer(x, y, name, charId) {
+    const p = new Player(x, y);
+    p.name = (name || '').trim().slice(0, 12) || NONAME;
+    const ch = CHAR_OF(charId);
+    p.charId = ch.id;
+    p.base = Object.assign({}, ch.base);
+    if (ch.weapon) p.equip.weapon = makeItem(ch.weapon);
+    p.equip.chest = makeItem('chest_cloth'); p.equip.boots = makeItem('boots_cloth');
+    if (ch.gold) p.gold = ch.gold;
+    ch.bag.forEach(([id, n], i) => { p.bag[i] = makeItem(id, ITEMS[id].stack > 1 ? n : 1); });
+    p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+    return p;
+  },
   /** 캐릭터 몫(레벨·가방·장비·스킬·통계…) — 세계와 떼어 들고 다닐 수 있는 덩어리. 멀티플레이 참가자는 이것만 들고 남의 세계에 들어간다. */
   packChar(p) {
     return {

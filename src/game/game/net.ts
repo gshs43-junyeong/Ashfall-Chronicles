@@ -1,4 +1,5 @@
 /* ===== game/net.js — 멀티플레이: 호스트 권위 · WebRTC(설계: docs/v1.1.2-multiplayer-plan.md) ===== */
+import { dist2 } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { chunkText, createJoiner, isChunk } from '../../engine/net/chunk.js';
 import { SnapBuffer } from '../../engine/net/interp.js';
@@ -6,7 +7,9 @@ import { closeRoom, createHttpSignal, createTabSignal, createWsSignal, openRoom 
 import { guestAnswer, hostOffer } from '../../engine/net/webrtc.js';
 import { tr } from '../lang.js';
 import { T } from '../data.js';
-import { makeItem } from '../entity.js';
+import { HIT_FX } from '../data/items.js';
+import { ENEMIES } from '../data/enemies.js';
+import { DmgText, Enemy, makeItem } from '../entity.js';
 import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
@@ -25,6 +28,15 @@ const now = () => performance.now() / 1000;
 
 export const NetPart: Bag = {
   net: null,
+
+  /** 이 자리에서 가장 가까운 플레이어 — 몹이 노리는 대상 · 물건이 끌려가는 쪽. */
+  nearestPlayer(x, y) {
+    const ps = this.players;
+    if (ps.length < 2) return this.me;
+    let best = ps[0], bd = Infinity;
+    for (const q of ps) { if (q.hp <= 0) continue; const d = dist2(x, y, q.cx, q.cy); if (d < bd) { bd = d; best = q; } }
+    return best;
+  },
 
   /* ================= 상태 한 장 ================= */
   /** 남의 화면이 이 플레이어를 그리는 데 쓰는 것만 — 레벨·가방은 보내지 않는다. */
@@ -107,6 +119,76 @@ export const NetPart: Bag = {
     d.closed = !!m.c;
     if (this.me && Math.abs(this.me.cx - d.x) < 600 && Math.abs(this.me.cy - d.y) < 400) this.sfx(d.closed ? 'door_shut' : 'door_open');
   },
+  /* ================= 몹 — 호스트가 돌리고 참가자는 그림자를 그린다 ================= */
+  /** 참가자 근처 몹 한 장 — [번호, 종류, x, y, vx, vy, 방향, 땅, hp, 최대 hp, 번쩍임] */
+  netEnemyList(rp) {
+    const n = this.net, out = [];
+    for (const e of this.ents) {
+      if (!(e instanceof Enemy) || e.dead || Math.abs(e.cx - rp.cx) > 1500 || Math.abs(e.cy - rp.cy) > 1000) continue;
+      if (!e.nid) { e.nid = ++n.eid; n.live.set(e.nid, e); }
+      out.push([e.nid, e.type, Math.round(e.x), Math.round(e.y), Math.round(e.vx), Math.round(e.vy), e.facing, e.onGround ? 1 : 0,
+        Math.round(e.hp), Math.round(e.maxHp), +(e.flash || 0).toFixed(2)]);
+    }
+    return out;
+  },
+  /** 참가자 화면 — 그림자 몹을 받은 자리로 보간해 옮긴다(AI 는 안 돌린다). */
+  netGhostStep(e, dt) {
+    const s = e.netBuf && e.netBuf.sample(now());
+    if (s) { e.x = s.x; e.y = s.y; }
+    if (e.flash > 0) e.flash = Math.max(0, e.flash - dt);
+  },
+  netPutEnemies(list) {
+    const n = this.net, t = now();
+    for (const [nid, type, x, y, vx, vy, f, g, hp, mhp, fl] of list) {
+      let e = n.ghosts.get(nid);
+      if (!e) {
+        if (!ENEMIES[type]) continue;
+        e = new Enemy(type, x, y); e.ghost = true; e.nid = nid; e.netBuf = new SnapBuffer(1.5 / NET_HZ);
+        n.ghosts.set(nid, e); this.ents.push(e);
+      }
+      e.netBuf.push(t, { x, y }); e.vx = vx; e.vy = vy; e.facing = f; e.onGround = !!g; e.hp = hp; e.maxHp = mhp;
+      if (fl > (e.flash || 0)) e.flash = fl;
+      e.seenAt = t;
+    }
+    for (const [nid, e] of n.ghosts) if (t - e.seenAt > 1) { e.dead = true; n.ghosts.delete(nid); }   // 멀어졌다
+  },
+  /** 참가자가 그림자 몹을 쳤다 — 맞는 그림은 바로(손맛), 피해는 호스트가 계산한다. */
+  netHitGhost(e, amount, crit, src, kb, fam) {
+    const n = this.net;
+    if (!n || !n.t) return;
+    const dmg = Math.max(1, Math.round(amount * (1 - e.armor / (e.armor + 70))));
+    this.texts.push(new DmgText(e.cx + (Math.random() - 0.5) * 14, e.y - 4, dmg, crit ? '#ffd24a' : '#fff', crit ? 1 : 0));
+    this.hitFx(e, e.cx, e.cy, crit, fam);
+    if (fam && HIT_FX[fam]) this.burst(e.cx, e.cy - 2, 'hit_' + fam + (crit ? '_crit' : ''), HIT_FX[fam].size * (crit ? 1.3 : 1), HIT_FX[fam].slow);
+    e.flash = 0.12;
+    this.netSend(n.t, 'rel', { k: 'hit', e: e.nid, a: amount, c: crit ? 1 : 0, kb: kb || 0, f: fam || '' });
+  },
+  /** 호스트 — 남의 아바타가 몹을 잡았다. 경험치·금화·전리품은 그 주인 화면에서 굴린다. */
+  netKilledBy(rp, e) {
+    const peer = this.net && this.net.peers.get(rp.netId);
+    if (!peer) return;
+    const mult = this.killMult ? this.killMult() : 1;
+    this.netSend(peer.t, 'rel', { k: 'kill', e: e.nid, t: e.type, xp: Math.round(e.xp * mult), gold: Math.round(e.gold * mult), x: e.x, y: e.y, mech: e.mech || 0 });
+    if (e.nid) this.net.dead.push(e.nid);
+  },
+  /** 참가자 — 내가 잡았다는 소식. 보상을 굴리는 길은 혼자 할 때의 Enemy.die 그대로다. */
+  netPutKill(m) {
+    const n = this.net;
+    let e = n.ghosts.get(m.e);
+    if (e) n.ghosts.delete(m.e);
+    else { if (!ENEMIES[m.t]) return; e = new Enemy(m.t, m.x, m.y); this.ents.push(e); }
+    e.ghost = false; e.dead = false; e.xp = m.xp; e.gold = m.gold; e.mech = m.mech;
+    e.die(this.me);
+  },
+  netPutDeaths(list) {
+    const n = this.net;
+    for (const nid of list) {
+      const e = n.ghosts.get(nid);
+      if (!e) continue;
+      n.ghosts.delete(nid); e.dead = true;
+      this.addCorpse(e); this.deathBurst(e);
+    }
+  },
   netSend(t, ch, msg) {
     const text = JSON.stringify(msg);
     if (text.length > 15000) for (const part of chunkText(++this.net.chunkId, text)) t.send('rel', part);
@@ -126,7 +208,8 @@ export const NetPart: Bag = {
   /** 방을 연다 — 참가자 셋까지. 인터넷 중개면 방 코드는 중개가 고른다. */
   async mpHost(room) {
     if (this.net || !this.me) return;
-    const url = this.netSignalUrl(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0, url };
+    const url = this.netSignalUrl(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0, url,
+      eid: 0, live: new Map(), dead: [], joined: new Set() };
     this.net = n; this.me.netId = 0;
     this.netTrackWorld();
     if (isWs(url)) {
@@ -147,13 +230,13 @@ export const NetPart: Bag = {
     sig.onmessage = async m => {
       if (m.t === 'want' && !m.to) {
         if (n.peers.size + n.pending.size >= NET_MAX - 1) { sig.post({ t: 'full', from: 'host', to: m.from }); return; }
-        if (n.pending.has(m.from)) return;
+        if (n.pending.has(m.from) || n.joined.has(m.from)) return;   // 이미 붙은 참가자가 앞서 보내 둔 글이 늦게 왔다
         const h = await hostOffer();
         n.pending.set(m.from, h);
         sig.post({ t: 'offer', from: 'host', to: m.from, sdp: h.offer });
       } else if (m.t === 'answer' && m.to === 'host' && n.pending.has(m.from)) {
         const h = n.pending.get(m.from);
-        try { this.netAddPeer(await h.accept(m.sdp)); }
+        try { this.netAddPeer(await h.accept(m.sdp)); n.joined.add(m.from); }
         catch (e) { console.warn('net: 참가 실패', e); }
         finally { n.pending.delete(m.from); }
       }
@@ -202,6 +285,9 @@ export const NetPart: Bag = {
     } else if (m.k === 'tiles' && peer.rp) {
       this.netPutTiles(m.l, true);
       for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, 'rel', m);   // 다른 참가자에게 그대로
+    } else if (m.k === 'hit' && peer.rp) {
+      const e = n.live.get(m.e);
+      if (e && !e.dead && Math.abs(e.cx - peer.rp.cx) < 900 && Math.abs(e.cy - peer.rp.cy) < 700) e.hurt(m.a, !!m.c, peer.rp, m.kb, m.f || undefined);
     } else if (m.k === 'door' && peer.rp) {
       this.netPutDoor(m);
       for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, 'rel', m);
@@ -223,7 +309,7 @@ export const NetPart: Bag = {
     room = String(room || '').trim().toUpperCase();
     const sig = isWs(url) ? createWsSignal(url, { role: 'guest', room, id: me }) : url ? createHttpSignal(url, room, me, 1000) : createTabSignal(room);
     if (url) (sig as Bag).onerror = () => { clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
-    const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map() };
+    const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map() };
     n.char = this.freshPlayer(0, 0, name, charId);
     this.net = n;
     sig.onmessage = async m => {
@@ -282,6 +368,12 @@ export const NetPart: Bag = {
       if (rp) { n.others.delete(m.id); this.netRemove(rp); this.toast(tr('{name|이} 나갔다', { name: rp.name }), 'info'); }
     } else if (m.k === 'hurt') {
       this.me.hurt(m.a, m.sx);
+    } else if (m.k === 'es') {
+      this.netPutEnemies(m.l);
+    } else if (m.k === 'ed') {
+      this.netPutDeaths(m.l);
+    } else if (m.k === 'kill') {
+      this.netPutKill(m);
     } else if (m.k === 'tiles') {
       this.netPutTiles(m.l, false);
     } else if (m.k === 'door') {
@@ -313,6 +405,13 @@ export const NetPart: Bag = {
       return;
     }
     if (tiles) for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, 'rel', { k: 'tiles', l: tiles });
+    for (const [nid, e] of n.live) if (e.dead) { n.live.delete(nid); if (!n.dead.includes(nid)) n.dead.push(nid); }
+    for (const q of n.peers.values()) {
+      if (!q.rp) continue;
+      q.t.send('fast', JSON.stringify({ k: 'es', l: this.netEnemyList(q.rp) }));
+      if (n.dead.length) this.netSend(q.t, 'rel', { k: 'ed', l: n.dead });
+    }
+    n.dead = [];
     const t = now();
     for (const q of n.peers.values()) if (q.heard && t - q.heard > 5) { q.t.close(); this.netDropPeer(q); }   // 5초 넘게 소식 없음 = 나감
     const list = [[0, this.netState(this.me)]];
@@ -322,7 +421,8 @@ export const NetPart: Bag = {
   /** 호스트의 몹이 남의 아바타를 쳤다 — 피해는 그 주인 화면에서 계산한다(무적 시간도 거기 것). */
   netRemoteHurt(rp, amount, srcX) {
     const n = this.net;
-    if (!n || n.role !== 'host' || rp.iframe > 0 || (rp._hurtAt && this.time - rp._hurtAt < 0.3)) return;
+    /* 무적 시간은 주인 화면이 본다(Player.hurt) — 여기 사본은 한 박자 늦어 막 풀린 피해를 버렸다. 0.3초 간격만 둔다. */
+    if (!n || n.role !== 'host' || (rp._hurtAt && this.time - rp._hurtAt < 0.3)) return;
     const peer = n.peers.get(rp.netId);
     if (!peer) return;
     rp._hurtAt = this.time;

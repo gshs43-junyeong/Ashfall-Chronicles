@@ -15,7 +15,7 @@ import { N_, fmt, tr } from './lang.js';
 import { dimsOf } from './size.js';
 import { T, TILE_DEF, TILE_SPRITE } from './data.js';
 import { ITEMS } from './data/items.js';
-import { CHAR_OF, KEY_ACTIONS, MODE_OF, VILLAGE } from './data/start.js';
+import { KEY_ACTIONS, MODE_OF, VILLAGE } from './data/start.js';
 import { CAVE_TYPES, RUIN_SPEC } from './data/ruins.js';
 import { CHAPTERS, SESSIONS } from './data/story.js';
 import { PART_CAP, idef } from './data/values.js';
@@ -24,7 +24,7 @@ import { TileArt } from './tileart.js';
 import { Art } from './itemart.js';
 import { Sprites } from './sprites.js';
 import { TitleBG } from './titlebg.js';
-import { Bomb, Drop, Enemy, Guard, HOTBAR, Part, Player, Proj, VAULT_SIZE, affixIndex, makeItem } from './entity.js';
+import { Bomb, Drop, Enemy, Guard, HOTBAR, Part, Proj, VAULT_SIZE, affixIndex, makeItem } from './entity.js';
 import { FAC_TICK, Factory } from './factory.js';
 import { $, $$, UI } from './ui.js';
 import { Ambient, Music, SfxLoop } from './music.js';
@@ -144,14 +144,6 @@ export const G: Bag = {
   /** 이 화면의 플레이어(= me). 넣으면 혼자 하는 판으로 players 를 [p] 로 맞춘다. */
   get player() { return this.me; },
   set player(p) { this.me = p; this.players = p ? [p] : []; },
-  /** 이 자리에서 가장 가까운 플레이어 — 몹이 노리는 대상 · 물건이 끌려가는 쪽. */
-  nearestPlayer(x, y) {
-    const ps = this.players;
-    if (ps.length < 2) return this.me;
-    let best = ps[0], bd = Infinity;
-    for (const q of ps) { if (q.hp <= 0) continue; const d = dist2(x, y, q.cx, q.cy); if (d < bd) { bd = d; best = q; } }
-    return best;
-  },
   get state() { return this.scenes.current; },
   get paused() { return this.scenes.paused(); },
   get uiOpen() { return this.scenes.has('ui'); },
@@ -426,20 +418,6 @@ export const G: Bag = {
     this.showLoading(tr('세계를 빚는 중…'));           // 크기와 상관없이 같은 문구
     // 다음 프레임에 생성해서 로딩 화면이 먼저 그려지게 한다
     setTimeout(() => { try { this._newGame(seed, name, charId, mode, size); } finally { this.hideLoading(); } }, 40);
-  },
-  /** 그 캐릭터의 새 플레이어(시작 장비·가방) — 새 게임과 멀티플레이 새 참가자가 같이 쓴다. */
-  freshPlayer(x, y, name, charId) {
-    const p = new Player(x, y);
-    p.name = (name || '').trim().slice(0, 12) || NONAME;
-    const ch = CHAR_OF(charId);
-    p.charId = ch.id;
-    p.base = Object.assign({}, ch.base);
-    if (ch.weapon) p.equip.weapon = makeItem(ch.weapon);
-    p.equip.chest = makeItem('chest_cloth'); p.equip.boots = makeItem('boots_cloth');
-    if (ch.gold) p.gold = ch.gold;
-    ch.bag.forEach(([id, n], i) => { p.bag[i] = makeItem(id, ITEMS[id].stack > 1 ? n : 1); });
-    p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-    return p;
   },
   _newGame(seed, name, charId, mode, size) {
     this.rng = new RNG(seed + '_g');
@@ -893,7 +871,8 @@ export const G: Bag = {
     for (let i = this.ents.length - 1; i >= 0; i--) {
       const e = this.ents[i];
       const tp = this.nearestPlayer(e.cx, e.cy);
-      e.update(dt, w, tp);
+      if (e.ghost) this.netGhostStep(e, dt);   // 참가자 화면의 몹 — 호스트 것을 받아 그린다(AI 없음)
+      else e.update(dt, w, tp);
       // 정예는 은은한 금빛 입자를 계속 흘려 눈에 띄게 한다 (평범한 놈이 아니라는 신호)
       if (e.elite && !e.dead && Math.random() < 0.2) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * e.w, e.cy + (Math.random() - 0.5) * e.h, '#ffd24a', -34, 0.55));
       if (e.dead) this.ents.splice(i, 1);
@@ -913,7 +892,11 @@ export const G: Bag = {
 
     // 스폰
     this.spawnTimer -= dt;
-    if (this.spawnTimer <= 0 && !guest) { this.spawnTimer = 1.1; this.trySpawn(); }
+    if (this.spawnTimer <= 0 && !guest) {
+      this.spawnTimer = 1.1;
+      for (const q of this.players) { this.spawnFor = q; this.trySpawn(); }   // 플레이어마다 제 주변에
+      this.spawnFor = null;
+    }
     this.updateRigs(dt);
 
     // 공장 — 프레임률과 무관하게 고정 8틱/초로 돌린다

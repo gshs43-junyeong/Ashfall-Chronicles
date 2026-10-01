@@ -42,15 +42,16 @@ const SIG = process.env.MP_SIG || `http://127.0.0.1:${sigSrv.address().port}/api
 
 const { srv, url } = await serve();
 const b = await browser();
-const ctx = await b.newContext({ viewport: { width: 1280, height: 720 } });
-const host = await ctx.newPage(), guest = await ctx.newPage();
+/* ★ 창(문맥)을 따로 — 한 창의 두 탭이면 뒤 탭의 화면 갱신이 느려져 게임 시간이 거의 안 흐른다(무적 시간이 안 풀려 시험이 흔들렸다). */
+const host = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+const guest = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
 const eh = collectErrors(host), eg = collectErrors(guest);
 let bad = 0;
 const check = (cond, msg) => { if (cond) ok(msg); else { bad++; fail(msg); } };
 
 await host.goto(url + `/index.html?lang=ko&mp=host&sig=${encodeURIComponent(SIG)}`);
 await host.waitForFunction(() => window.G && G.booted, null, { timeout: 60000 });
-await host.evaluate(() => G._newGame('d1', 'Host', 'wanderer', 'normal', 's'));
+await host.evaluate(() => { G._newGame('d1', 'Host', 'wanderer', 'normal', 's'); G.dbgCalm = true; G.ents.length = 0; });   // 자연 생성은 끈다(시험이 흔들리지 않게)
 await host.waitForFunction(() => G.net && G.net.sig, null, { timeout: 10000 });
 const room = await host.evaluate(() => G.net.room);
 await guest.goto(url + `/index.html?lang=ko&mp=join&room=${room.toLowerCase()}&name=Guest&char=ranger&sig=${encodeURIComponent(SIG)}`);
@@ -84,6 +85,25 @@ await guest.waitForTimeout(600);
 const doorG = doorOk && await guest.evaluate(([x, y]) => { const d = G.world.doors.find(o => o.x === x && o.y === y); return d && d.closed; }, doorOk);
 check(!doorOk || doorG === doorOk[2], `문: 호스트가 여닫으면 참가자 화면도 (${doorOk ? doorOk[2] : '문 없음'})`);
 
+/* 몹 — 호스트가 참가자 곁에 세운 몹이 참가자 화면에 그림자로 · 참가자가 치면 호스트에서 깎이고 · 잡으면 보상은 참가자에게 */
+await host.evaluate(() => { const g = G.players.find(p => p.remote); const e = new Enemy('cartwraith', g.x + 70, g.y); e.tagT = 1; G.ents.push(e); });
+await guest.waitForTimeout(700);
+const ghost = await guest.evaluate(() => { const e = G.ents.find(e => e.ghost && e.type === 'cartwraith'); return e ? { nid: e.nid, hp: e.hp } : null; });
+const xp0 = await guest.evaluate(() => [G.me.xp, G.me.level, G.me.kills.cartwraith || 0]);
+await guest.evaluate(() => { const e = G.ents.find(e => e.ghost && e.type === 'cartwraith'); e.hurt(30, false, G.me, 0, 'slash'); });
+await guest.waitForTimeout(500);
+const hostHpAfter = await host.evaluate(() => { const e = G.ents.find(e => e.type === 'cartwraith'); return e ? [Math.round(e.hp), Math.round(e.maxHp)] : null; });
+await guest.evaluate(() => { const e = G.ents.find(e => e.ghost && e.type === 'cartwraith'); if (e) e.hurt(999999, true, G.me, 0, 'slash'); });
+await guest.waitForTimeout(800);
+const after = await guest.evaluate(() => [G.me.xp, G.me.level, G.me.kills.cartwraith || 0, G.ents.some(e => e.ghost && e.type === 'cartwraith')]);
+const hostAfter = await host.evaluate(() => [G.ents.some(e => e.type === 'cartwraith' && !e.dead), G.me.kills.cartwraith || 0]);
+check(ghost && hostHpAfter && hostHpAfter[0] < hostHpAfter[1], `몹: 참가자 화면에 그림자(${ghost && ghost.nid}) · 참가자 공격이 호스트 몹을 깎는다 (${hostHpAfter})`);
+check(after[2] === xp0[2] + 1 && (after[0] !== xp0[0] || after[1] > xp0[1]) && !after[3] && !hostAfter[0] && hostAfter[1] === 0,
+  `몹: 참가자가 잡으면 처치·경험치는 참가자에게(처치 ${xp0[2]}→${after[2]}) · 호스트는 안 받는다(${hostAfter[1]})`);
+
+/* 앞의 몹에게 맞았으면 무적 시간이 풀릴 때까지 — 이 기계는 두 판을 같이 돌려 참가자 쪽 게임 시간이 느리게 흐른다 */
+await guest.waitForFunction(() => G.me.iframe <= 0, null, { timeout: 20000 });
+await host.waitForFunction(() => { const r = G.players.find(p => p.remote); return !r._hurtAt || G.time - r._hurtAt > 0.4; }, null, { timeout: 20000 });   // 호스트의 넘기기 간격(0.3초)
 const hp0 = await guest.evaluate(() => G.me.hp);
 await host.evaluate(() => G.players.find(p => p.remote).hurt(20, 0));
 await guest.waitForTimeout(500);
