@@ -8,3 +8,4 @@ tests/out
 tools/__pycache__
 design/*.html
 .DS_Store
+**/node_modules

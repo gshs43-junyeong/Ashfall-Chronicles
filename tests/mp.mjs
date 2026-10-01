@@ -37,7 +37,8 @@ const sigSrv = http.createServer((req, res) => {
   });
 });
 await new Promise(r => sigSrv.listen(0, '127.0.0.1', r));
-const SIG = `http://127.0.0.1:${sigSrv.address().port}/api/room`;
+/* MP_SIG 가 있으면 그 중개로(tests/relay.mjs 가 Cloudflare 중개를 로컬로 띄워 넘긴다) */
+const SIG = process.env.MP_SIG || `http://127.0.0.1:${sigSrv.address().port}/api/room`;
 
 const { srv, url } = await serve();
 const b = await browser();
@@ -72,7 +73,8 @@ const hp1 = await guest.evaluate(() => G.me.hp);
 const hostHp = await host.evaluate(() => G.me.hp);
 check(hp1 < hp0 && hostHp > 0, `호스트 쪽에서 참가자 아바타가 맞으면 피해는 참가자에게 (${hp0} → ${hp1})`);
 
-/* 참가 받기 창 — 지나면 호스트가 우편함 확인을 멈추고(중개 요청 0), mpInvite 로 다시 켠다 */
+/* 참가 받기 창 — 지나면 호스트가 우편함 확인을 멈추고(중개 요청 0), mpInvite 로 다시 켠다(폴링 중개만) */
+if (!process.env.MP_SIG) {
 await host.evaluate(() => G.net.sig.resume(300));
 await host.waitForTimeout(2600);
 const idle = await host.evaluate(() => G.net.sig.polling);
@@ -80,6 +82,7 @@ await host.evaluate(() => G.mpInvite());
 await host.waitForTimeout(400);
 const again = await host.evaluate(() => G.net.sig.polling);
 check(idle === false && again === true, `참가 받기 창: 지나면 확인을 멈추고(${idle}) 다시 켠다(${again})`);
+}
 
 await guest.close();
 await host.waitForTimeout(1500);

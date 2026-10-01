@@ -45853,6 +45853,7 @@
     NET_HZ: () => NET_HZ,
     NET_MAX: () => NET_MAX,
     NetPart: () => NetPart,
+    RELAY_URL: () => RELAY_URL,
     SIGNAL_URL: () => SIGNAL_URL
   });
 
@@ -46001,6 +46002,90 @@
     poll();
     return s;
   }
+  function createWsSignal(base, q) {
+    let ws = null, alive = true, room = (q.room || "").toUpperCase(), tries = 0;
+    let ping = null, gotRoom = () => {
+    }, failRoom = () => {
+    };
+    const queue = [];
+    const s = {
+      onmessage: null,
+      onerror: null,
+      room: new Promise((res, rej) => {
+        gotRoom = res;
+        failRoom = rej;
+      }),
+      post(msg) {
+        const t = JSON.stringify(msg);
+        if (ws && ws.readyState === 1) ws.send(t);
+        else queue.push(t);
+      },
+      close() {
+        alive = false;
+        if (ping) clearInterval(ping);
+        if (ws) ws.close(1e3);
+      }
+    };
+    s.room.catch(() => {
+    });
+    const fail = (e) => {
+      alive = false;
+      failRoom(e);
+      if (s.onerror) s.onerror(e);
+      if (ws) ws.close(1e3);
+    };
+    const connect = () => {
+      const u = new URL(base);
+      u.searchParams.set("role", q.role);
+      if (room) u.searchParams.set("room", room);
+      if (q.id) u.searchParams.set("id", q.id);
+      const w = ws = new WebSocket(u.toString());
+      let opened = false;
+      w.onopen = () => {
+        opened = true;
+        tries = 0;
+        if (q.role === "guest") gotRoom(room);
+        while (queue.length) w.send(queue.shift());
+        if (ping) clearInterval(ping);
+        ping = setInterval(() => {
+          if (w.readyState === 1) w.send("ping");
+        }, 3e4);
+      };
+      w.onmessage = (e) => {
+        if (e.data === "pong") return;
+        let m;
+        try {
+          m = JSON.parse(String(e.data));
+        } catch {
+          return;
+        }
+        if (m.t === "room") {
+          room = String(m.room);
+          gotRoom(room);
+          return;
+        }
+        if (m.t === "err") {
+          fail(new Error("signal: " + m.e));
+          return;
+        }
+        if (s.onmessage) s.onmessage(m);
+      };
+      w.onclose = (e) => {
+        if (!alive) return;
+        if (e.code === 4410) {
+          fail(new Error("signal: host-left"));
+          return;
+        }
+        if (q.role === "host" && room && tries++ < 5) {
+          setTimeout(connect, 2e3 * tries);
+          return;
+        }
+        fail(new Error(opened ? "signal: closed" : "signal: unreachable"));
+      };
+    };
+    connect();
+    return s;
+  }
 
   // src/engine/net/webrtc.ts
   var DEFAULT_ICE = [{ urls: "stun:stun.l.google.com:19302" }];
@@ -46103,7 +46188,9 @@
   // src/game/game/net.ts
   var NET_MAX = 4;
   var NET_HZ = 15;
+  var RELAY_URL = "";
   var SIGNAL_URL = "https://ashfall-chronicles.vercel.app/api/room";
+  var isWs = (url) => /^wss?:/.test(url || "");
   var INVITE_MS = 5 * 60 * 1e3;
   var JOIN_GIVEUP_MS = 60 * 1e3;
   var now = () => performance.now() / 1e3;
@@ -46207,6 +46294,7 @@
       const s = new URLSearchParams(location.search).get("sig");
       if (s === "tab") return null;
       if (s) return s;
+      if (RELAY_URL) return RELAY_URL;
       return location.host === "ashfall-chronicles.vercel.app" ? "/api/room" : SIGNAL_URL;
     },
     /* ================= 호스트 ================= */
@@ -46216,7 +46304,19 @@
       const url = this.netSignalUrl(), n = { role: "host", room, sig: null, peers: /* @__PURE__ */ new Map(), pending: /* @__PURE__ */ new Map(), nextId: 1, sendT: 0, chunkId: 0, url };
       this.net = n;
       this.me.netId = 0;
-      if (url) {
+      if (isWs(url)) {
+        const ws = createWsSignal(url, { role: "host" });
+        n.sig = ws;
+        try {
+          n.room = room = await ws.room;
+        } catch (e) {
+          console.warn("net: 방 열기 실패", e);
+          this.net = null;
+          this.toast(tr("중개 서버에 닿지 않는다"), "bad");
+          return;
+        }
+        ws.onerror = () => this.toast(tr("중개 서버와 끊겼다 — 새 참가는 받을 수 없다"), "bad");
+      } else if (url) {
         try {
           const o = await openRoom(url);
           n.room = room = o.room;
@@ -46254,12 +46354,17 @@
           }
         }
       };
-      this.toast(tr("방 {room|을} 열었다 — 5분 동안 참가를 받는다", { room }), "good");
+      if (isWs(url)) this.toast(tr("방 {room|을} 열었다", { room }), "good");
+      else this.toast(tr("방 {room|을} 열었다 — 5분 동안 참가를 받는다", { room }), "good");
     },
     /** 참가 받기를 5분 더 — 쉬는 동안 방이 만료됐으면 같은 코드로 되찾는다(남이 가져갔으면 새 코드). */
     async mpInvite() {
       const n = this.net;
       if (!n || n.role !== "host" || !n.url) return;
+      if (isWs(n.url)) {
+        this.toast(tr("방 {room|을} 열었다", { room: n.room }), "good");
+        return;
+      }
       try {
         await openRoom(n.url, n.room, n.key);
       } catch (e) {
@@ -46329,7 +46434,7 @@
       if (this.net) return;
       const url = this.netSignalUrl(), me = Math.random().toString(36).slice(2, 8);
       room = String(room || "").trim().toUpperCase();
-      const sig = url ? createHttpSignal(url, room, me, 1e3) : createTabSignal(room);
+      const sig = isWs(url) ? createWsSignal(url, { role: "guest", room, id: me }) : url ? createHttpSignal(url, room, me, 1e3) : createTabSignal(room);
       if (url) sig.onerror = () => {
         clearInterval(n.ask);
         clearTimeout(n.giveUp);
@@ -46369,7 +46474,7 @@
         });
       };
       const ask = () => sig.post({ t: "want", from: me });
-      n.ask = setInterval(ask, url ? 4e3 : 2e3);
+      n.ask = setInterval(ask, isWs(url) ? 5e3 : url ? 4e3 : 2e3);
       ask();
       n.giveUp = setTimeout(() => {
         if (this.net !== n || n.t) return;

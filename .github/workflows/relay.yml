@@ -1,0 +1,30 @@
+name: Relay
+
+# 멀티플레이 방 중개(relay/ — Cloudflare Workers + Durable Objects)를 배포한다.
+# 저장소 Secrets 에 CLOUDFLARE_API_TOKEN · CLOUDFLARE_ACCOUNT_ID 가 있어야 한다(없으면 건너뛴다) — 만드는 법은 docs/v1.1.2-multiplayer-plan.md §11.
+on:
+  push:
+    branches: [main]
+    paths: ['relay/**', '.github/workflows/relay.yml']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: install
+        working-directory: relay
+        run: npm ci
+      - name: deploy
+        working-directory: relay
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "CLOUDFLARE_API_TOKEN 이 없어 배포를 건너뛴다"; exit 0; fi
+          npx wrangler deploy
