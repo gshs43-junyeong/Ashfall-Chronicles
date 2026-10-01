@@ -4,7 +4,6 @@ import { clamp, lerp } from '../engine/core/math.js';
 import { RNG, tileHash } from '../engine/core/rng.js';
 import { bakeAtlas, blitCell, cacheGet } from '../engine/render/atlas.js';
 import { createConnTiles } from '../engine/render/conn.js';
-import { WW } from './size.js';
 import { MACH_OF_TILE, T, TILE_DEF, WALL_COLOR } from './data.js';
 import { FLUID_KIND } from './data/materials.js';
 import { CAVE_TYPES } from './data/ruins.js';
@@ -506,7 +505,7 @@ export const TileArt: Bag = {
   drawConn(c, w, id, tx, ty, sx, sy, v) { return this.conn.draw(c, this.atlas, w, id, tx, ty, sx, sy, v); },
   /** ② 이웃을 보고 통째로 그리는 타일마다 그리는 법 — build() 가 엔진 틀에 건다. */
   _connDraws() {
-    const mossOf = (w, tx) => this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, WW - 1)).id] || '#6f9a4a');
+    const mossOf = (w, tx) => this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, w.dims.WW - 1)).id] || '#6f9a4a');
     const drip = (c, w, id, tx, ty, sx, sy) => {
       const up = id === T.STALAGMITE;
       let i = 0, n = 1;                                    // i: 붙은 쪽에서 몇 번째 칸, n: 줄 길이
@@ -847,7 +846,7 @@ export const TileArt: Bag = {
     return cv;
   },
   /** 이끼가 얼마나 빽빽한가 — 0.4(마른 외톨이) ~ 1(최대) — 사연: docs/code-history.md#h84 */
-  _mossDensity(w, tx, ty) {
+  _mossDensity(w, tx, ty) { const { WW } = w.dims;
     this._md = this._md || new Map();
     const i = ty * WW + tx, now = performance.now(), hit = this._md.get(i);
     if (hit && now - hit[1] < 1500) return hit[0];

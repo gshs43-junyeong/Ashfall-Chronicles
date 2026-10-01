@@ -2,7 +2,7 @@
 import { factory as Factory } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
-import { BIOMES, SHIFT, SKY_Y, SX, SY, WORLD_BOT, WSX, WW } from '../size.js';
+import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { RIG, RUIN_HINTS } from '../data/ruins.js';
 import { TS, World, inSeaZone } from '../world.js';
@@ -11,7 +11,7 @@ import { TS, World, inSeaZone } from '../world.js';
 export const WorldSky: Bag & ThisType<World> = {
 
   /* ---- 지하 묘실 ---- */
-  buildDungeon(rng, n2) {
+  buildDungeon(rng, n2) { const { SX, SY } = this.dims;
     // 묘실도 방 묶음으로.
     const cx = SX(2300 + SHIFT), cy = SY(240), w = 68, h = 38;   // 사막 지하
     const x0 = cx - (w >> 1), y0 = cy - (h >> 1);
@@ -42,7 +42,7 @@ export const WorldSky: Bag & ThisType<World> = {
   },
 
   /* ---- 하늘 섬 + 지상에서 올라가는 거대 나무 ---- */
-  buildSkyIslands(rng, n1) {
+  buildSkyIslands(rng, n1) { const { WSX, SX, SY, WW, SKY_Y, SEA_X1 } = this.dims;
     this.skyIslands = [];
     const N = Math.round(32 * WSX);     // 세계 폭에 맞춰 — 소형 32개
     /* 높이는 제 난수로 높·중·낮 세 층을 이웃과 다르게 고른다. ★ 본 난수의 cy 는 뽑기만 하고 버린다 —
@@ -51,7 +51,7 @@ export const WorldSky: Bag & ThisType<World> = {
     let last = -1;
     for (let i = 0; i < N; i++) {
       const cx = Math.round(((i + 0.5) / N) * WW + rng.range(-32, 32));
-      if (inSeaZone(cx)) continue;                // 바다 위에는 하늘 섬을 띄우지 않는다
+      if (inSeaZone(cx, SEA_X1)) continue;                // 바다 위에는 하늘 섬을 띄우지 않는다
       rng.int(SY(12), SKY_Y - 8);
       let tier = alt.int(0, 2);
       if (tier === last) tier = (tier + 1 + alt.int(0, 1)) % 3;
@@ -148,7 +148,7 @@ export const WorldSky: Bag & ThisType<World> = {
   /** 잿빛 숲의 채취탑 자리를 골라 object(type 'rig')로 세운다 — 저장되므로 땅을 파도 자리가 옮겨 가지 않는다.
       ★ 자리 고르는 법은 예전 game.js rigs() 그대로다(바이옴 이름으로 묻는다 — 사연: docs/code-history.md#h51 · #h52).
       clear 면 발자국 안의 나무·풀을 걷는다 — 나무가 탑을 뚫고 자라 보였다. */
-  placeRigs(clear) {
+  placeRigs(clear) { const { BIOMES } = this.dims;
     if (this.objects.some(o => o.type === 'rig')) { for (const o of this.objects) if (o.type === 'rig') this.fitRig(o); return; }
     const LEG = RIG.leg;
     let wake = 9;
@@ -197,7 +197,7 @@ export const WorldSky: Bag & ThisType<World> = {
   /** 광상 — 같은 종류 광맥 덩어리(4방향) 중 종류마다 큰 것 상위 `RICH_TOP`(20칸 이상)만 골라, 가장자리에서 가장 먼 칸과
       그 곁 1~2칸을 광상으로. 한가운데라 광맥을 파고 들어가야 닿는다(소형 d1 실측 100곳 안팎). 덩어리 수가 넓이를 따르니
       크기 배수는 따로 안 곱한다. ★ 제 난수(seed+'_rich')만 쓴다 — 본 난수를 뽑으면 뒤따르는 생성이 씨앗마다 바뀐다. */
-  placeRichOres() {
+  placeRichOres() { const { WW, WORLD_BOT } = this.dims;
     const r = new RNG(this.seed + '_rich');
     const RICH = { [T.COAL]: T.COALRICH, [T.COPPER]: T.COPPERRICH, [T.IRON]: T.IRONRICH, [T.LEAD]: T.LEADRICH,
       [T.GOLD]: T.GOLDRICH, [T.MYTHRIL]: T.MYTHRILRICH };
@@ -259,7 +259,7 @@ export const WorldSky: Bag & ThisType<World> = {
   },
 
   /** 하늘 섬 높이 — 0 높은 층 · 1 가운데 · 2 낮은 층. 낮은 층 바닥(SKY_Y-8)은 이중 점프로 지상에서 못 닿게 둔 최소 높이다. */
-  skyAlt(r, tier) {
+  skyAlt(r, tier) { const { SY, SKY_Y } = this.dims;
     return tier === 0 ? r.int(SY(5), SY(10)) : tier === 1 ? r.int(SY(14), SY(21)) : r.int(SKY_Y - 13, SKY_Y - 8);
   },
   /** 섬 위 나무를 걷는다. */
@@ -273,7 +273,7 @@ export const WorldSky: Bag & ThisType<World> = {
   /** 하늘 섬을 더 — 큰 섬 · 작은 섬 · 조각 섬, 그리고 상자 말고도 찾아갈 거리.
       ★ 제 난수(seed+'_sky')를 쓴다. 본 난수를 더 뽑으면 뒤따르는 유적·동굴·성채가 씨앗마다 통째로 바뀐다.
       찾아갈 거리가 있는 섬은 위로 13칸이 필요해 SY(14) 아래 두 층, 조각 섬은 SY(5) 까지 — 바닥은 SKY_Y-8 그대로. */
-  buildSkyExtras() {
+  buildSkyExtras() { const { WSX, SX, SY, WW, SKY_Y, SEA_X1 } = this.dims;
     const r = new RNG(this.seed + '_sky');
     const occ = [];
     const hit = (x0, y0, x1, y1) => occ.some(b => x0 < b[2] && b[0] < x1 && y0 < b[3] && b[1] < y1);
@@ -284,7 +284,7 @@ export const WorldSky: Bag & ThisType<World> = {
     const place = (rw, rh, tries, band) => {
       for (let t = 0; t < tries; t++) {
         const cx = r.int(40 + rw, WW - 40 - rw), cy = band();
-        if (inSeaZone(cx - rw) || inSeaZone(cx + rw)) continue;
+        if (inSeaZone(cx - rw, SEA_X1) || inSeaZone(cx + rw, SEA_X1)) continue;
         const box: [number, number, number, number] = [cx - rw - 5, cy - 13, cx + rw + 5, cy + rh + 6];
         if (hit(...box)) continue;
         occ.push(box);

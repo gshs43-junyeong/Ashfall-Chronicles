@@ -3,7 +3,7 @@ import { app as G, ui as UI } from '../ctx.js';
 import { aabb, angleTo, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { SEA_X1 } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T } from '../data.js';
 import { BOSS_LINES } from '../data/skills.js';
 import { TS } from '../world.js';
@@ -12,7 +12,7 @@ import { Enemy, Part, Proj } from '../entity.js';
 
 export const EnemyAI: Bag & ThisType<Enemy> = {
 
-  update(dt, world, player) {
+  update(dt, world, player) { const { SEA_X1 } = dimsOf(world);
     this.atkPose -= dt;
     this.flash -= dt; this.atkCd -= dt; this.jumpCd -= dt; this.hitCd -= dt;
     if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slowF = 1; }

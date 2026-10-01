@@ -4,7 +4,7 @@ import { TAU, clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { pad2 } from '../util.js';
 import { fmt, tr } from '../lang.js';
-import { SURF_BASE, WH, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { BUFFS } from '../data/skills.js';
 import { idef } from '../data/values.js';
 import { TS } from '../world.js';
@@ -15,7 +15,7 @@ import { $, UI } from '../ui.js';
 export const HudUIPart: Bag = {
 
   /* ---------------- HUD ---------------- */
-  updateHUD() {
+  updateHUD() { const { SURF_BASE } = dimsOf(G.world);
     const p = G.player, d = p.d;
     $('#hp-fill').style.width = (p.hp / d.maxHp * 100) + '%';
     $('#hp-text').textContent = `${Math.ceil(p.hp)} / ${d.maxHp}`;
@@ -117,7 +117,7 @@ export const HudUIPart: Bag = {
     this.fmC.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.fmDprW = w; this.fmDprH = h;
   },
-  renderFullmap() {
+  renderFullmap() { const { WW, WH } = dimsOf(G.world);
     if (this.open !== 'fullmap' || !this.fmDprW) return;
     const c = this.fmC, W = this.fmDprW, H = this.fmDprH, z = this.fmZoom;
     c.imageSmoothingEnabled = false;

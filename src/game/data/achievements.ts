@@ -1,5 +1,5 @@
 /* ===== data/achievements.js — 업적 ===== */
-import { BIOMES, DEEP_Y, HELL_Y, SKY_Y } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T } from '../data.js';
 import { PET_LV_MAX } from './pets.js';
 import { SESSIONS } from './story.js';
@@ -109,11 +109,11 @@ export const ACHIEVEMENTS: AchDef[] = [
   { id: 'a_cave', cat: 'explore', i: '🕯', n: '첫 동굴', d: '지하 60칸 아래를 봤다.',
     check: g => g.player.deepest >= 120 },
   { id: 'a_deep', cat: 'explore', i: '⬇', n: '심층', d: '심층까지 내려갔다.',
-    check: g => g.player.deepest >= DEEP_Y },
+    check: g => g.player.deepest >= dimsOf(g.world).DEEP_Y },
   { id: 'a_hell', cat: 'explore', i: '🔥', n: '가장 아래', d: '가장 아래에 발을 디뎠다.',
-    check: g => g.player.deepest >= HELL_Y },
+    check: g => g.player.deepest >= dimsOf(g.world).HELL_Y },
   { id: 'a_sky', cat: 'explore', i: '☁', n: '구름 위', d: '구름 위에 올라섰다.',
-    check: g => g.player.highest !== undefined && g.player.highest <= SKY_Y },
+    check: g => g.player.highest !== undefined && g.player.highest <= dimsOf(g.world).SKY_Y },
   { id: 'a_lore', cat: 'explore', i: '🪨', n: '읽은 사람', d: '유적 석판 셋을 다 읽었다.',
     check: g => Object.keys(g.tabletsRead || {}).length >= 3 },
   { id: 'a_seafloor', cat: 'explore', i: '🐙', n: '숨이 닿지 않는 곳', d: '숨이 닿지 않는 바닥까지 내려갔다.',
@@ -122,7 +122,7 @@ export const ACHIEVEMENTS: AchDef[] = [
   { id: 'a_glacier', cat: 'explore', i: '❄', n: '갈라지는 땅', d: '빙하 지대에 발을 디뎠다.',
     check: g => !!(g.seenBiomes || {}).glacier },
   { id: 'a_all_zones', cat: 'explore', i: '🗺', n: '아홉 땅', d: '아홉 땅에 모두 발자국을 남겼다.',
-    check: g => BIOMES.every(b => (g.seenBiomes || {})[b.id]) },
+    check: g => dimsOf(g.world).BIOMES.every(b => (g.seenBiomes || {})[b.id]) },
   /* 유적의 맥박 · 탐사 기록 — survey 는 세이브에 담긴다(SAVE_UPGRADES v6). */
   { id: 'a_pulse_rage', cat: 'explore', i: '💓', n: '격노를 견딘 자', d: '유적의 맥박이 격노에 닿았다.',
     check: g => Object.values(g.survey || {}).some((s: Bag) => (s.peak || 0) >= 3) },

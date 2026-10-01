@@ -3,7 +3,7 @@ import { factory as Factory } from '../ctx.js';
 import { clamp, dist, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
-import { CAMP_GX1, CAMP_X0, DEEP_Y, HELL_Y, SHIFT, SURF_BASE, SX, SY, WH, WORLD_BOT, WSX, WSY, WW } from '../size.js';
+import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { CAVE_TYPES, FAULT } from '../data/ruins.js';
 import { CAVE_GH, CAVE_GW, MAT_LAYER, TS, World, inSeaZone } from '../world.js';
@@ -13,14 +13,14 @@ export const WorldCaves: Bag & ThisType<World> = {
 
   /** 큰 동굴을 여러 개 드렁커드 워크로 파낸다. */
   /* ================= 동굴 갈래 (data.js CAVE_TYPES) ================= */
-  caveTypeAt(tx, ty) {
+  caveTypeAt(tx, ty) { const { HELL_Y } = this.dims;
     if (!this.caveGrid || ty < 0 || ty >= HELL_Y) return 0;
     const gx = Math.floor(tx / CAVE_GW), gy = Math.floor(ty / CAVE_GH);
     return this.caveGrid[gy * this._cgW() + gx] || 0;
   },
-  _cgW() { return Math.ceil(WW / CAVE_GW); },
+  _cgW() { const { WW } = this.dims; return Math.ceil(WW / CAVE_GW); },
   /** 플레이어가 선 자리의 동굴 갈래 — **자연 굴 안**일 때만(지표 12칸 아래 · 지층 벽지 · 유적 밖). */
-  caveKindAt(tx, ty) {
+  caveKindAt(tx, ty) { const { WW } = this.dims;
     if (!this.caveGrid || !this.inB(tx, ty) || ty <= this.surface[tx] + 12) return 0;
     if (!this._natural) {
       this._natural = new Set();
@@ -30,7 +30,7 @@ export const WorldCaves: Bag & ThisType<World> = {
     return this.caveTypeAt(tx, ty);
   },
 
-  buildCaveZones(rng) {
+  buildCaveZones(rng) { const { SY, WW, SURF_BASE, HELL_Y, DEEP_Y, CAMP_X0, CAMP_GX1, SEA_X1 } = this.dims;
     const gW = this._cgW(), gH = Math.ceil(HELL_Y / CAVE_GH);
     this.caveGrid = new Uint8Array(gW * gH);
     const natural = new Set();
@@ -39,7 +39,7 @@ export const WorldCaves: Bag & ThisType<World> = {
     for (let gy = 0; gy < gH; gy++)
       for (let gx = 0; gx < gW; gx++) {
         const x = gx * CAVE_GW + (CAVE_GW >> 1), y = gy * CAVE_GH + (CAVE_GH >> 1);
-        if (inSeaZone(x) || y < SURF_BASE + 10) continue;
+        if (inSeaZone(x, SEA_X1) || y < SURF_BASE + 10) continue;
         const deep = clamp((y - 120) / (DEEP_Y - 120), 0, 1);
         if (gx > 0 && this.caveGrid[gy * gW + gx - 1] && rng.chance(0.4)) {
           this.caveGrid[gy * gW + gx] = this.caveGrid[gy * gW + gx - 1]; continue;
@@ -57,7 +57,7 @@ export const WorldCaves: Bag & ThisType<World> = {
       for (let k = 0; k < n; k++) { if (this.get(x, y + k) !== T.AIR) break; this.set(x, y + k, tile); }
     };
     for (let x = 4; x < WW - 4; x++) {
-      if (inSeaZone(x) || (x > CAMP_X0 - 30 && x < CAMP_GX1 + 30)) continue;
+      if (inSeaZone(x, SEA_X1) || (x > CAMP_X0 - 30 && x < CAMP_GX1 + 30)) continue;
       for (let y = this.surface[x] + 12; y < HELL_Y - 2; y++) {
         if (this.get(x, y) !== T.AIR) continue;
         const k = this.caveTypeAt(x, y); if (!k) continue;
@@ -113,12 +113,12 @@ export const WorldCaves: Bag & ThisType<World> = {
   },
 
   /** 금 간 자갈 — 동굴 옆벽에 판 작은 굴(오목한 자리) 안쪽 끝에 박는다. */
-  buildFaults(rng, natural) {
+  buildFaults(rng, natural) { const { WSX, WSY, WW, HELL_Y, CAMP_X0, CAMP_GX1, SEA_X1 } = this.dims;
     this.faults = [];
     let tries = 0;
     while (this.faults.length < Math.round(FAULT.count * WSX * WSY) && tries++ < 6000 * WSX * WSY) {
       const x = rng.int(40, WW - 40);
-      if (inSeaZone(x) || (x > CAMP_X0 - 60 && x < CAMP_GX1 + 60)) continue;
+      if (inSeaZone(x, SEA_X1) || (x > CAMP_X0 - 60 && x < CAMP_GX1 + 60)) continue;
       const y = rng.int(this.surface[x] + 30, HELL_Y - 20);
       // 자연 굴의 바닥 칸이어야 한다
       if (this.get(x, y) !== T.AIR || !this.solid(x, y + 1) || this.get(x, y - 1) !== T.AIR) continue;
@@ -157,7 +157,7 @@ export const WorldCaves: Bag & ThisType<World> = {
   },
 
   /** 금 간 자갈이 무너진 뒤 열릴 동굴의 칸들 — 씨앗에서 뽑으므로 세계마다 같고, 저장할 필요가 없다. */
-  faultCells(f) {
+  faultCells(f) { const { WW, HELL_Y } = this.dims;
     const rng = new RNG(f.seed), cells = [], seen = new Set();
     const natural = new Set();
     for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
@@ -186,7 +186,7 @@ export const WorldCaves: Bag & ThisType<World> = {
   },
 
   /** 무너져 열린 칸들을 꾸민다 — 갈래를 하나 골라(이끼·종유·수정) 새 굴에 입히고, 드러난 벽의 몇 군데를 광석으로 바꾼다. */
-  dressFault(f, cells) {
+  dressFault(f, cells) { const { SY } = this.dims;
     const rng = new RNG(f.seed + 7);
     const k = [1, 2, 3][rng.int(0, 2)];
     f.k = k;
@@ -215,7 +215,7 @@ export const WorldCaves: Bag & ThisType<World> = {
     return k;
   },
 
-  buildCaverns(rng) {
+  buildCaverns(rng) { const { WSX, WSY, SX, WW, WH, WORLD_BOT, HELL_Y, DEEP_Y, SEA_X1 } = this.dims;
     // 구조물 자리(캠프·여명 마을·정글 폭포) — 중형·대형에서는 양 끝을 같이 늘려 넉넉히 비운다
     const reserved = x => (x > SX(685 + SHIFT) && x < SX(845 + SHIFT)) || (x > SX(1865 + SHIFT) && x < SX(2055 + SHIFT)) || (x > SX(1365 + SHIFT) && x < SX(1445 + SHIFT));
     this.caverns = [];
@@ -224,7 +224,7 @@ export const WorldCaves: Bag & ThisType<World> = {
     while (placed < Math.round(16 * WSX * WSY) && tries < 3000 * WSX * WSY) {
       tries++;
       const cx = rng.int(20, WW - 20);
-      if (reserved(cx) || inSeaZone(cx)) continue;
+      if (reserved(cx) || inSeaZone(cx, SEA_X1)) continue;
       /* 큰 동굴은 DEEP_Y 언저리부터 — 얕으면 황금 상자를 초반에 너무 쉽게 줍는다. */
       const cy = rng.int(Math.max(this.surface[cx] + 60, DEEP_Y - 30), Math.min(WORLD_BOT - 20, HELL_Y - 8));
       if (cy < DEEP_Y - 30) continue;
@@ -293,7 +293,7 @@ export const WorldCaves: Bag & ThisType<World> = {
   /* ================= 동굴 물 ================= */
 
   /** 물을 채우면 안 되는 자리인가 */
-  _noWater(tx, ty, forLava) {
+  _noWater(tx, ty, forLava) { const { WW, WH, HELL_Y, CAMP_X0, CAMP_GX1 } = this.dims;
     if (tx < 4 || tx >= WW - 4 || ty < 4 || ty >= WH - 6) return true;
     if (this.sea && tx < this.sea.x1 + 4) return true;      // 바다는 buildSea가 따로 만든다
     if (ty < this.surface[clamp(tx, 0, WW - 1)] + 8) return true;   // 지표 근처는 제외

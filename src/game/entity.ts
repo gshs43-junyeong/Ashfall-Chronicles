@@ -3,7 +3,7 @@ import { app as G, ui as UI } from './ctx.js';
 import { TAU, aabb, angleTo, clamp, dist, dist2, lerp } from '../engine/core/math.js';
 import { Entity } from '../engine/entity/entity.js';
 import { fmt, tr } from './lang.js';
-import { WH, WW } from './size.js';
+import { dimsOf } from './size.js';
 import { MACH_OF_TILE, PREFIX, RARITY_MULT, SUFFIX, T, TILE_DEF, WEAPON_TIER_LV } from './data.js';
 import { HIT_FX, ITEMS, MULTI_FALLOFF } from './data/items.js';
 import { ENEMIES, MECH_PART } from './data/enemies.js';
@@ -149,7 +149,7 @@ export class Ent extends Entity {
   declare submerged: number;
 
   /** 타일 충돌을 포함한 이동 */
-  move(dt, world, opts: Bag = {}) {
+  move(dt, world, opts: Bag = {}) { const { WW, WH } = dimsOf(world);
     const prevBottom = this.y + this.h;
     // 물 — 잠긴 비율만큼 중력과 낙하 상한이 줄고, 좌우로도 끈적해진다.
     const liq = opts.aquatic ? { f: 0, flow: 0, cur: 0 } : world.liquidIn(this.x, this.y, this.w, this.h);
@@ -936,7 +936,7 @@ export class Proj extends Ent {
     if (team === 'enemy' && typeof G !== 'undefined' && G.sfxAt)
       G.sfxAt(PHYS_PROJ[type] ? 'efire_phys' : 'efire_magic', x / TS, y / TS);
   }
-  update(dt, world, player) {
+  update(dt, world, player) { const { WW, WH } = dimsOf(world);
     this.life -= dt;
     if (this.life <= 0) { this.dead = true; return; }
     this.vy += this.grav * dt;
@@ -1038,7 +1038,7 @@ export class Bomb extends Proj {
     this.life = spec.fuse || 1.6;
     this.spin = 0;
   }
-  update(dt, world) {
+  update(dt, world) { const { WH } = dimsOf(world);
     this.life -= dt;
     this.spin += (this.vx > 0 ? 1 : -1) * dt * 9;
     if (Math.random() < dt * 24)                                   // 심지 불티

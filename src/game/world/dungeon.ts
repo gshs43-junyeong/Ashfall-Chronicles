@@ -2,7 +2,6 @@
 import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
-import { WH, WW } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { RUIN_PLANS } from '../data/ruins.js';
 import { BoxSet, World } from '../world.js';
@@ -234,7 +233,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** 방 하나에서 걸어 닿을 수 있는 칸을 모아 온다 */
-  _walkable(x0, y0, w, h, sx, sy) {
+  _walkable(x0, y0, w, h, sx, sy) { const { WW } = this.dims;
     const seen = new Set(), st = [[sx, sy]];
     seen.add(sy * WW + sx);
     while (st.length) {
@@ -251,7 +250,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** 고립된 방마다 가장 가까운 이미 닿는 방까지 ㄱ자 굴을 판다 */
-  _ensureConnected(x0, y0, w, h, rooms) {
+  _ensureConnected(x0, y0, w, h, rooms) { const { WW } = this.dims;
     const spot = r => [r.x + 2, r.y + r.h - 3];
     let guard = 0;
     while (guard++ < rooms.length + 2) {
@@ -327,9 +326,9 @@ export const WorldDungeon: Bag & ThisType<World> = {
     }
   },
   /** (sx, sy) 에서 걸어서(뛰고 떨어지며) 닿는 설 자리 전부. */
-  _standSet(box, sx, sy) {
+  _standSet(box, sx, sy) { const { WW } = this.dims;
     const f = this._standFns();
-    const seen = new BoxSet(box, 10), st = [];
+    const seen = new BoxSet(box, 10, WW), st = [];
     const push = (x, y) => { const k = y * WW + x; if (!seen.has(k)) { seen.add(k); st.push(x, y); } };
     const s0 = this._standSeed(box, f, sx, sy);
     if (s0) push(s0[0], s0[1]);
@@ -341,7 +340,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
     return seen;
   },
   /** 거꾸로 걷기 — 상자 안 설 자리 가운데 **rootK 까지 걸어 닿을 수 있는** 칸 전부 — 사연: docs/code-history.md#h113 */
-  _returnSet(box, rootK) {
+  _returnSet(box, rootK) { const { WW } = this.dims;
     const f = this._standFns();
     const preds = new Map();
     for (let y = box[1] - 8; y <= box[3]; y++)
@@ -355,7 +354,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
           a.push(k);
         });
       }
-    const R = new BoxSet(box, 10), st = [rootK];
+    const R = new BoxSet(box, 10, WW), st = [rootK];
     R.add(rootK);
     while (st.length) {
       const a = preds.get(st.pop());
@@ -396,7 +395,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** spots 의 모든 자리를 서로 걸어 다닐 수 있게 만든다. */
-  _ensureWalkable(x0, y0, w, h, spots, floor, traps, rng) {
+  _ensureWalkable(x0, y0, w, h, spots, floor, traps, rng) { const { WW, WH } = this.dims;
     if (spots.length < 2) return;
     // 검사 범위는 유적 둘레 열두 칸.
     /* ★ 옆으로도 같다 — 입구 통로는 유적 옆 바깥 열(x0-5)에서 좌우로 서른여섯 칸까지 오르내리며 내려오므로, 통로의 방이 상자(유적 ±12) 밖에 놓일 수 있다. */
@@ -416,7 +415,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** 자리마다 **기준점으로 돌아올 수 있는지** 하나씩 걸어 보고, 못 돌아오면 길을 낸다. */
-  _walkBack(box, spots, floor, traps, rng) {
+  _walkBack(box, spots, floor, traps, rng) { const { WW } = this.dims;
     const near = (set, tx, ty) => {
       let b = null, bd = 1e9;
       for (const k of set) {
@@ -459,7 +458,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
     }
   },
 
-  _walkPass(box, anchor, spots, floor, traps, rng) {
+  _walkPass(box, anchor, spots, floor, traps, rng) { const { WW } = this.dims;
     // 넉넉하게 잡으면 "닿은 칸 옆"을 닿았다고 세어 버린다 — 바짝 붙여 본다
     const hit = (seen, p) => {
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 2; dy++)

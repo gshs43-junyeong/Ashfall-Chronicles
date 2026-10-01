@@ -6,8 +6,7 @@ import { RNG } from '../engine/core/rng.js';
 import { rleDecode, rleEncode } from '../engine/save/rle.js';
 import { sweepLight } from '../engine/tilemap/light.js';
 import { TileMap } from '../engine/tilemap/tilemap.js';
-import { BIOMES, CAMP_GX1, CAMP_X0, CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SHIFT, SKY_Y, SURF_BASE, SX, SY, SYB, WH,
-  WORLD_BOT, WSIZE, WSX, WSY, WW, applyWorldSize } from './size.js';
+import { SHIFT, SX, SY, SYB, WSY, applyWorldSize, dimsOf } from './size.js';
 import { T, TILE_DEF } from './data.js';
 import { OBJ_SIZE } from './data/items.js';
 import { FLUID_FLOW, FLUID_KIND, FLUID_OPEN, FLUID_SRC, FLUID_TILE } from './data/materials.js';
@@ -22,7 +21,7 @@ export const MIN_CAVE = 220;
 /* 해변 폭. */
 export const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 모래 해변이다
 /* 바다 + 해변 — 나무·풀·꽃 같은 지상 초목을 놓지 않는다 — 사연: docs/code-history.md#h102 */
-export const inSeaZone = x => x < SEA_X1 + BEACH_W + 4;
+export const inSeaZone = (x, seaX1) => x < seaX1 + BEACH_W + 4;
 export const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
 
 /** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(치수는 size.js). */
@@ -124,15 +123,16 @@ export const DAWN_WALL = { leftOff: -16, rightOff: 15, gateH: 3, towerH: 14,
    docs/code-history.md#h104 */
 export class BoxSet {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare bh: number; declare bw: number; declare list: any[]; declare m: Uint8Array; declare out: Set<any>; declare x0: number; declare y0: number;
+  declare bh: number; declare bw: number; declare list: any[]; declare m: Uint8Array; declare out: Set<any>; declare ww: number; declare x0: number; declare y0: number;
 
-  constructor(box, pad) {
+  constructor(box, pad, ww) {
+    this.ww = ww;                                   // 칸 번호(k = y·ww + x)를 푸는 세계 폭
     this.x0 = box[0] - pad; this.y0 = box[1] - pad;
     this.bw = box[2] - box[0] + 1 + pad * 2; this.bh = box[3] - box[1] + 1 + pad * 2;
     this.m = new Uint8Array(this.bw * this.bh); this.list = []; this.out = null;
   }
   _i(k) {
-    const y = (k / WW) | 0, x = k - y * WW, lx = x - this.x0, ly = y - this.y0;
+    const y = (k / this.ww) | 0, x = k - y * this.ww, lx = x - this.x0, ly = y - this.y0;
     return lx >= 0 && ly >= 0 && lx < this.bw && ly < this.bh ? ly * this.bw + lx : -1;
   }
   has(k) { const i = this._i(k); return i >= 0 ? this.m[i] === 1 : !!(this.out && this.out.has(k)); }
@@ -157,6 +157,7 @@ export function doorEdge(d) {
 /** Ashfall 세계 — 타일맵(engine/tilemap) 위에 생성기 · 마을 · 유적 · 바다 · 유체 · 조명 규칙을 얹는다(엔진화 계획 §8-4 상속). */
 export class World extends TileMap {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare dims: WorldDims;
   declare _ensureWalkable: (...a: any[]) => any; declare _walkJobs: any[]; declare atelier: Record<string, any>; declare beach: Record<string, any>; declare breakLongRuns: (...a: any[]) => any;
   declare buildAltars: (...a: any[]) => any; declare buildAtelier: (...a: any[]) => any; declare buildCaveZones: (...a: any[]) => any; declare buildCaverns: (...a: any[]) => any;
   declare buildCitadel: (...a: any[]) => any; declare buildDawnCity: (...a: any[]) => any; declare buildDeepShaft: (...a: any[]) => any; declare buildDungeon: (...a: any[]) => any;
@@ -179,7 +180,9 @@ export class World extends TileMap {
   declare tree: (...a: any[]) => any; declare villageY: number; declare works: Record<string, any>;
 
   constructor(seed) {
+    const D = dimsOf(), { WW, WH } = D;         // setWorldSize 가 고른 크기 — 이 세계가 제 것으로 가져간다
     super(WW, WH, TS, TILE_DEF, T.BEDROCK);   // 타일 · 벽지 · 탐험 배열, 경계 밖 = 기반암
+    this.dims = D;
     this.seed = seed;
     this.rng = new RNG(seed);
     this.surface = new Int16Array(WW);
@@ -199,7 +202,7 @@ export class World extends TileMap {
     this.lightBuf = null; this.lbx = 0; this.lby = 0; this.lbw = 0; this.lbh = 0;
   }
 
-  set(x, y, t) {
+  set(x, y, t) { const { WW } = this.dims;
     if (!this.inB(x, y)) return;
     this.tiles[y * WW + x] = t;
     /* 유체가 켜진 뒤(생성·불러오기 끝)에만 — 바뀐 칸과 그 네 이웃을 흐름 검사 줄에 세운다. */
@@ -207,7 +210,7 @@ export class World extends TileMap {
   }
   hurtTile(x, y) { return TILE_DEF[this.get(x, y)].hurt || 0; }
   /** 사각형이 물에 얼마나 잠겼는지 0~1. */
-  liquidIn(px, py, w, h) {
+  liquidIn(px, py, w, h) { const { WW } = this.dims;
     const x0 = Math.floor(px / TS), x1 = Math.floor((px + w - 0.01) / TS);
     const y0 = Math.floor(py / TS), y1 = Math.floor((py + h - 0.01) / TS);
     let n = 0, tot = 0, flow = 0, cur = 0;
@@ -228,7 +231,7 @@ export class World extends TileMap {
     return { f: tot ? n / tot : 0, flow, cur };
   }
   /** 흐르는 칸의 물살 방향과 세기(-1~1) — 수위가 높은 쪽에서 낮은 쪽으로. */
-  currentAt(x, y) {
+  currentAt(x, y) { const { WW } = this.dims;
     const k = y * WW + x, t = this.tiles[k], kind = FLUID_KIND[t];
     if (!FLUID_FLOW[t] || !this.flv) return 0;
     const me = this.flv[k] || 8;
@@ -260,23 +263,23 @@ export class World extends TileMap {
     return m;
   }
 
-  biomeAt(tx) {
+  biomeAt(tx) { const { BIOMES } = this.dims;
     for (const b of BIOMES) if (tx >= b.x0 && tx < b.x1) return b;
     return BIOMES[1];
   }
-  biomeIndexAt(tx) {
+  biomeIndexAt(tx) { const { BIOMES } = this.dims;
     for (let i = 0; i < BIOMES.length; i++) if (tx >= BIOMES[i].x0 && tx < BIOMES[i].x1) return i;
     return tx < 0 ? 0 : BIOMES.length - 1;
   }
   /** 경계 혼합: [주 바이옴, 이웃 바이옴, 이웃 비중 0~0.5] */
-  biomeMix(tx) {
+  biomeMix(tx) { const { BIOMES } = this.dims;
     const i = this.biomeIndexAt(tx), b = BIOMES[i];
     if (i > 0 && tx - b.x0 < BIOME_BAND) return [i, i - 1, 0.5 * (1 - (tx - b.x0) / BIOME_BAND)];
     if (i < BIOMES.length - 1 && b.x1 - tx <= BIOME_BAND) return [i, i + 1, 0.5 * (1 - (b.x1 - tx) / BIOME_BAND)];
     return [i, i, 0];
   }
   /** 바이옴별 지표 높이 (경계에서 부드럽게 이어지도록 x 전 구간에서 정의) */
-  _hFor(bid, x, n1) {
+  _hFor(bid, x, n1) { const { SURF_BASE } = this.dims;
     let h = SURF_BASE + (n1(x, 0.011) - 0.5) * 32 + (n1(x + 900, 0.042) - 0.5) * 10;
     if (bid === 'desert') h += 8 + (n1(x + 400, 0.025) - 0.5) * 12;
     else if (bid === 'ice') h -= 8 + (n1(x + 1500, 0.06) - 0.5) * 6;
@@ -290,13 +293,13 @@ export class World extends TileMap {
     return h;
   }
   /** 이 x에서 어떤 바이옴의 '재질'을 쓸지 — 경계에서는 노이즈로 맞물리게 */
-  _matAt(x, n1) {
+  _matAt(x, n1) { const { BIOMES } = this.dims;
     const [ia, ib, t] = this.biomeMix(x);
     if (t <= 0.001 || ia === ib) return BIOMES[ia].id;
     return n1(x + 7777, 0.11) < t ? BIOMES[ib].id : BIOMES[ia].id;
   }
   /** 전투/스폰용 구역 태그 */
-  zoneAt(tx, ty) {
+  zoneAt(tx, ty) { const { WW, HELL_Y, DEEP_Y, SKY_Y, CAMP_X0, CAMP_X1 } = this.dims;
     // 특별 유적 둘은 각각 하늘·지옥 판정보다 먼저 본다 — 안에 들어와 있으면 그 구역이 우선이다
     if (this.inCitadel && this.inCitadel(tx, ty)) return 'citadel';
     if (this.inDeepShaft && this.inDeepShaft(tx, ty)) return 'deepshaft';
@@ -340,7 +343,7 @@ export class World extends TileMap {
   }
 
   /* ================= 생성 ================= */
-  generate() {
+  generate() { const { WSX, WSY, SX, SY, WW, WORLD_BOT, SURF_BASE, HELL_Y, DEEP_Y, CAMP_X0, CAMP_GX1, SEA_X1, BIOMES } = this.dims;
     const rng = this.rng;
     const n1 = makeNoise1D(new RNG(rng.next() * 1e9), 4);
     const n2 = makeNoise2D(new RNG(rng.next() * 1e9));
@@ -498,7 +501,7 @@ export class World extends TileMap {
     let occR = -99;
     for (let x = 4; x < WW - 4; x++) {
       const s = this.surface[x];
-      if (inSeaZone(x)) continue;                 // 바다에는 나무가 안 선다
+      if (inSeaZone(x, SEA_X1)) continue;                 // 바다에는 나무가 안 선다
       if (x > vx0 - 6 && x < vx1 + 6) continue;
       if (x > dx0 - 10 && x < dx1 + 10) continue;
       const g = this.get(x, s);
@@ -604,7 +607,7 @@ export class World extends TileMap {
 
   /* ================= 조명 ================= */
   /** 화면 범위 조명 계산. */
-  computeLight(tx0, ty0, tx1, ty1, dayLight, extra) {
+  computeLight(tx0, ty0, tx1, ty1, dayLight, extra) { const { WW, WH } = this.dims;
     const P = 14;
     const x0 = clamp(tx0 - P, 0, WW - 1), x1 = clamp(tx1 + P, 0, WW - 1);
     const y0 = clamp(ty0 - P, 0, WH - 1), y1 = clamp(ty1 + P, 0, WH - 1);
@@ -654,7 +657,7 @@ export class World extends TileMap {
   }
 
   /* ================= 유체 ================= */
-  fluidInit() {
+  fluidInit() { const { WW, WH } = this.dims;
     this.flv = new Uint8Array(WW * WH);
     this.fq = [[], []];                                  // [물·바닷물, 용암]
     this.fmark = [new Uint8Array(WW * WH), new Uint8Array(WW * WH)];
@@ -669,7 +672,7 @@ export class World extends TileMap {
     }
     this.fallsAll();
   }
-  fluidWake(x, y) {
+  fluidWake(x, y) { const { WW, WH } = this.dims;
     const q = this.fq;
     for (let d = 0; d < 5; d++) {
       const xx = x + (d === 1 ? -1 : d === 2 ? 1 : 0), yy = y + (d === 3 ? -1 : d === 4 ? 1 : 0);
@@ -701,7 +704,7 @@ export class World extends TileMap {
     if (FLUID_FLOW[t] || t === T.FALLS) return false;
     return !FLUID_OPEN(t);
   }
-  _fluidStep(j) {
+  _fluidStep(j) { const { WW } = this.dims;
     const q = this.fq[j], mark = this.fmark[j];
     const n = Math.min(q.length, 6000);                 // 한 걸음에 이만큼만 — 큰 범람도 프레임을 안 먹는다
     const todo = q.splice(0, n);
@@ -724,7 +727,7 @@ export class World extends TileMap {
     for (const k of cols) this._fallsCol(k % WW, (k / WW) | 0);
   }
   /** 불러온 세계·막 만든 세계의 폭포를 한 번 판정한다(_fallsCol). */
-  fallsAll() {
+  fallsAll() { const { WW, WH } = this.dims;
     for (let k = WW; k < WW * (WH - 1); k++) {
       if (this.tiles[k] !== T.FALLS || this.tiles[k - WW] === T.FALLS) continue;   // 줄기마다 맨 윗칸에서 한 번
       const x = k % WW, y = (k / WW) | 0;
@@ -732,7 +735,7 @@ export class World extends TileMap {
     }
   }
   /** 칸 k 가 무엇이 되어야 하는가 → [k, 타일, 수위] 또는 null(그대로). */
-  _fluidEval(k, j) {
+  _fluidEval(k, j) { const { WW } = this.dims;
     const t = this.tiles[k], kind = FLUID_KIND[t];
     // 용암이 물에 닿았다 — 원천은 흑암석, 흐르는 용암은 돌.
     if (kind === 3) {
@@ -785,7 +788,7 @@ export class World extends TileMap {
   }
   /** ★ 폭포 판정 — 떨어지는 민물 줄기 가운데 **4칸 이상 곧게 떨어지고, 양옆에 고인·흐르는 물이 없는** 토막만 폭포(FALLS)다 — 사연:
      docs/code-history.md#h135 */
-  _fallsCol(x, y) {
+  _fallsCol(x, y) { const { WW, WH } = this.dims;
     const falling = k => this.tiles[k] === T.FALLS || (this.tiles[k] === T.FLOWWATER && this.flv[k] === 8);
     let k = y * WW + x;
     if (!falling(k)) return;
@@ -839,7 +842,7 @@ export class World extends TileMap {
     }
   }
   /** 옛 세이브·생성된 폭포의 윗머리 — 폭포 꼭대기 위가 막혀 있으면 그 칸을 샘 바위로, 위가 트여 있으면(정글 절벽 폭포처럼 땅 위로 쏟아지는 것) 꼭대기 칸을 샘 바위로 바꾼다. */
-  springFalls() {
+  springFalls() { const { WW, WH } = this.dims;
     for (let k = WW; k < WW * (WH - 1); k++) {
       if (this.tiles[k] !== T.FALLS) continue;
       const up = this.tiles[k - WW];
@@ -852,7 +855,7 @@ export class World extends TileMap {
   }
 
   /* ================= 저장 ================= */
-  serialize() {
+  serialize() { const { WSIZE, WW, WH } = this.dims;
     return {
       seed: this.seed, ww: WW, wh: WH, size: WSIZE, ruinSites: this.ruinSites, ruinEvents: this.ruinEvents,
       tiles: rleEncode(this.tiles),
@@ -871,7 +874,7 @@ export class World extends TileMap {
       explored: rleEncode(this.explored)
     };
   }
-  static deserialize(d) {
+  static deserialize(d) { const { WW, WH } = dimsOf();
     const w = new World(d.seed);
     w.tiles = rleDecode(d.tiles, WW * WH, Uint8Array);
     w.walls = rleDecode(d.walls, WW * WH, Uint8Array);

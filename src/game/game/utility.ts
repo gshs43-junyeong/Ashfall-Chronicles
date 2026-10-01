@@ -2,7 +2,7 @@
 import { TAU } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { WH, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { TILE_DEF } from '../data.js';
 import { idef } from '../data/values.js';
 import { TS } from '../world.js';
@@ -36,7 +36,7 @@ export const UtilityPart: Bag = {
     const el = document.querySelectorAll('#skillbar .usl')[i];
     if (el) { el.classList.remove('deny'); void (el as HTMLElement).offsetWidth; el.classList.add('deny'); }
   },
-  scanPulse(kind, i) {
+  scanPulse(kind, i) { const { WW, WH } = dimsOf(this.world);
     const p = this.player, w = this.world, R = this.DET_R, R2 = R * R;
     const px = Math.floor(p.cx / TS), py = Math.floor(p.cy / TS);
     const hits = [];
@@ -63,7 +63,7 @@ export const UtilityPart: Bag = {
   },
 
   /** 렌더 단계(fx) — 조명 뒤라 어둠 속에서도 보인다 */
-  rUtil(f) {
+  rUtil(f) { const { WW } = dimsOf(this.world);
     if (!this.scans || !this.scans.length) return;
     const { c, camX, camY } = f, R = this.DET_R * TS, w = this.world;
     this.scans = this.scans.filter(s => this.time - s.t0 < this.SCAN_T);

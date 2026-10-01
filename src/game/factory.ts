@@ -4,7 +4,7 @@ import { shade } from '../engine/core/color.js';
 import { TAU, aabb, angleTo, clamp, dist2 } from '../engine/core/math.js';
 import { tileHash } from '../engine/core/rng.js';
 import { N_, tr } from './lang.js';
-import { WH, WW } from './size.js';
+import { dimsOf } from './size.js';
 import { FARM_WET_DAYS, SPRINKLE_PER_BUCKET, T, TILE_DEF } from './data.js';
 import { ITEMS } from './data/items.js';
 import { FUEL, MACHINE, MRECIPES } from './data/recipes.js';
@@ -33,19 +33,19 @@ export const Factory: Bag = {
 
   /* ================= 조회 / 설치 / 철거 ================= */
   spec(m) { return MACHINE[m.t]; },
-  at(w, tx, ty) {
+  at(w, tx, ty) { const { WW, WH } = dimsOf(w);
     // x가 범위를 벗어나면 y*WW+x가 이웃 행으로 감겨 엉뚱한 기계를 집게 된다 — 먼저 막는다
     if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) return null;
     return w.machines.get(ty * WW + tx) || null;
   },
 
   /** 이 칸에 기계를 놓을 수 있는가 — 빈 칸이어야 한다 */
-  canPlace(w, tx, ty) {
+  canPlace(w, tx, ty) { const { WW } = dimsOf(w);
     return w.inB(tx, ty) && w.get(tx, ty) === T.AIR && !w.machines.has(ty * WW + tx);
   },
 
   /** gen 을 주면 "세계가 지어 둔 기계"로 표시한다. */
-  place(w, tx, ty, key, dir, gen) {
+  place(w, tx, ty, key, dir, gen) { const { WW } = dimsOf(w);
     const s = MACHINE[key];
     if (!s || !this.canPlace(w, tx, ty)) return null;
     const m: Bag = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: '' };
@@ -66,7 +66,7 @@ export const Factory: Bag = {
   },
 
   /** 철거 — 기계 아이템과 안에 든 것 전부를 돌려준다 */
-  remove(w, tx, ty) {
+  remove(w, tx, ty) { const { WW } = dimsOf(w);
     const m = this.at(w, tx, ty);
     if (!m) return null;
     const s = MACHINE[m.t];
@@ -90,7 +90,7 @@ export const Factory: Bag = {
   },
 
   /* ================= 전력망 ================= */
-  buildNets(w) {
+  buildNets(w) { const { WW } = dimsOf(w);
     const R = MACHINE.pole.reach, LINK = R * 2;
     const poles = [];
     for (const m of w.machines.values()) { m.net = -1; if (m.t === 'pole') poles.push(m); }
@@ -245,7 +245,7 @@ export const Factory: Bag = {
   },
 
   /* ================= 틱 ================= */
-  tick(w, G) {
+  tick(w, G) { const { WW } = dimsOf(w);
     this.now = G.time;
     if (w.netDirty) this.buildNets(w);
     const ms = w.machines;
@@ -379,7 +379,7 @@ export const Factory: Bag = {
   },
 
   /** 풍차 위를 막는가 — 고체 타일과 다른 기계 둘 다 바람을 가린다 */
-  blocksWind(w, x, y) {
+  blocksWind(w, x, y) { const { WW } = dimsOf(w);
     return w.solid(x, y) || w.machines.has(y * WW + x);
   },
 
@@ -447,7 +447,7 @@ export const Factory: Bag = {
   SHAKE: { drill: 1, drill_e: 1.3, drill_x: 1.6, press: 0.6, pressor: 0.8, gen: 0.5, pump: 0.4, mill: 0.5 },   // 일할 때 몸체 떨림(px)
 
   /** 일하는 모습 — 기계마다 한 가지 움직임. 일하지 않으면(act 0) 그리지 않는다. */
-  drawWork(c, w, m, sx, sy, time, camX, camY) {
+  drawWork(c, w, m, sx, sy, time, camX, camY) { const { WW } = dimsOf(w);
     if (!m.on || !m.act) return;
     const cx = sx + TS / 2, cy = sy + TS / 2, t = time + m.x * 0.37;
     c.save();
@@ -645,7 +645,7 @@ export const Factory: Bag = {
   },
 
   /* ---- 드릴: 반경 안의 광맥을 실제로 캐낸다 (캐낸 자리는 사라진다) ---- */
-  runDrill(w, m, s) {
+  runDrill(w, m, s) { const { WW } = dimsOf(w);
     let step = 1;
     if (s.fuelIn) { if (!this.burn(m)) { m.st = N_('연료 없음'); return; } }
     else { step = this.sat(w, m); if (step <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); return; } }
@@ -852,7 +852,7 @@ export const Factory: Bag = {
   stLabel(m) { return tr(m.st || N_('대기'), { n: m.net + 1 }); },
 
   /* ================= 렌더 ================= */
-  render(c, w, camX, camY, tx0, ty0, tx1, ty1, time) {
+  render(c, w, camX, camY, tx0, ty0, tx1, ty1, time) { const { WW, WH } = dimsOf(w);
     if (!w.machines.size) return;
     c.save();
     c.imageSmoothingEnabled = false;

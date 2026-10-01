@@ -4,7 +4,7 @@ import { TAU, angleTo, clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { hashStr } from '../../engine/core/rng.js';
 import { tr } from '../lang.js';
-import { BIOMES, HELL_Y, SURF_BASE, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { BOW_HAND } from '../data/start.js';
 import { CIPHER_KIND, CIPHER_WORDS, MYSTIC, RUIN_CARD, RUIN_CIPHER, RUIN_SPEC, STORY_RUIN } from '../data/ruins.js';
@@ -303,7 +303,7 @@ export const RuinMapPart: Bag = {
 
   /** 바이옴에 처음 들어섰을 때 — 그 땅이 어떤 곳인지 한 번 알린다. */
   /** 지금 화면 뒤에 깔린 원경이 무엇인가 — drawParallaxArt 의 고르는 규칙과 같다. */
-  bgId(camX, camY) {
+  bgId(camX, camY) { const { WW, SURF_BASE, HELL_Y } = dimsOf(this.world);
     const p = this.player, w = this.world;
     if (!p || !w) return null;
     if (camY > HELL_Y * TS - 700) return 'hell';
@@ -315,7 +315,7 @@ export const RuinMapPart: Bag = {
   },
 
   /** 땅·구역의 이름표. */
-  checkBiomeEntry(camX, camY) {
+  checkBiomeEntry(camX, camY) { const { BIOMES } = dimsOf(this.world);
     if (this.time < 3) return;                 // 시작 직후엔 장 카드와 겹친다
     const id = this.bgId(camX, camY);
     if (!id) return;                           // 원경이 없는 층 — 기준이 없으니 세지 않는다
@@ -338,7 +338,7 @@ export const RuinMapPart: Bag = {
   },
 
   /** 그 땅의 공기색. */
-  biomeAir(camX, camY) {
+  biomeAir(camX, camY) { const { WW, SURF_BASE, HELL_Y, BIOMES } = dimsOf(this.world);
     const w = this.world;
     const tx = clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1);
     const [i, j, k] = w.biomeMix(tx);
@@ -368,7 +368,7 @@ export const RuinMapPart: Bag = {
   },
 
   /** 다 여문 작물에 얹는 반짝임. */
-  drawRipeCrops(c, camX, camY) {
+  drawRipeCrops(c, camX, camY) { const { WW } = dimsOf(this.world);
     const w = this.world;
     if (!w.crops || !w.crops.size) return;
     c.save();

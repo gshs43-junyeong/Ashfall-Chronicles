@@ -3,7 +3,7 @@ import { aabb, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG, hashStr } from '../../engine/core/rng.js';
 import { tr } from '../lang.js';
-import { CAMP_X1, WH, WORLD_BOT, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { ITEMS, OBJ_SIZE } from '../data/items.js';
 import { MACHINE } from '../data/recipes.js';
@@ -305,7 +305,7 @@ export const FishingPart: Bag = {
 
   /** ?debug=factory — 캠프 오른쪽을 평평하게 밀고 기계 스물여섯 종을 한 줄로 세운다.
       전주는 10칸마다(반경 5 · 이음 10) 서서 줄 전체가 망 하나다. 몹은 &mobs=1 일 때만 나온다. */
-  buildDebugFactory(qs) {
+  buildDebugFactory(qs) { const { WW, WH, WORLD_BOT, CAMP_X1 } = dimsOf(this.world);
     const p = this.player, w = this.world;
     const give = (id, n) => {
       const max = ITEMS[id].stack || 1;

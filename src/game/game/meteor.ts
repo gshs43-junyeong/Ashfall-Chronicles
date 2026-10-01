@@ -3,7 +3,7 @@ import { TAU, clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
 import { tr } from '../lang.js';
-import { DEEP_Y, SY, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { MACH_OF_TILE, T, TILE_DEF } from '../data.js';
 import { CAVE_TYPES, FAULT } from '../data/ruins.js';
 import { TS, inSeaZone } from '../world.js';
@@ -18,9 +18,9 @@ export const MeteorPart: Bag = {
   METEOR: { chance: 0.0018, fall: 5.2, fg: 1.2, rMin: 5, rMax: 8 },
 
   /** 떨어져도 되는 자리인가 — 구덩이 상자(좌우 R+3, 위 18 · 아래 R+2) 안에 지은 것이 하나도 없어야 한다 */
-  meteorSiteOk(cx, R) {
+  meteorSiteOk(cx, R) { const { WW, SEA_X1 } = dimsOf(this.world);
     const w = this.world;
-    if (cx < 40 || cx > WW - 40 || inSeaZone(cx)) return false;
+    if (cx < 40 || cx > WW - 40 || inSeaZone(cx, SEA_X1)) return false;
     const cy = w.surface[cx];
     const x0 = cx - R - 3, x1 = cx + R + 3, y0 = cy - 18, y1 = cy + R + 2;
     if (w.giantTree && x1 >= w.giantTree.x - 24 && x0 <= w.giantTree.x + 24) return false;
@@ -43,7 +43,7 @@ export const MeteorPart: Bag = {
   },
 
   /** 운석을 띄운다. */
-  startMeteor(at) {
+  startMeteor(at) { const { WW } = dimsOf(this.world);
     if (this.meteor) return false;
     const w = this.world, M = this.METEOR;
     let x = -1, R = M.rMin + Math.floor(Math.random() * (M.rMax - M.rMin + 1));
@@ -114,7 +114,7 @@ export const MeteorPart: Bag = {
   },
 
   /** 운석 구덩이 — 있는 타일로만. */
-  carveCrater(cx, cy, R) {
+  carveCrater(cx, cy, R) { const { WW } = dimsOf(this.world);
     const w = this.world;
     for (let dx = -R - 3; dx <= R + 3; dx++) {
       const x = cx + dx;
@@ -259,7 +259,7 @@ export const MeteorPart: Bag = {
   },
 
   /** 금 간 자갈을 깼다 — 곡괭이든 폭탄이든. */
-  triggerFault(tx, ty) {
+  triggerFault(tx, ty) { const { WW } = dimsOf(this.world);
     const w = this.world;
     if (this.quake) return;                  // 이미 울리는 중 — 남은 자갈은 다음에 캐면 무너진다
     /* 무너질 칸 = 깬 칸에 **맞닿아 이어진 자갈 전부**. 세계가 굴 자리 전체를 자갈로 채워 두므로 (world.js buildFaults 의 ★) 덩어리 어디를 캐도 같은 굴이
@@ -287,7 +287,7 @@ export const MeteorPart: Bag = {
     this.sfx('sk_quake');
   },
   /* 지진 — 2.6초 동안 흔들리며 새 굴을 차례로 판다(한 번에 파면 화면이 한 프레임에 뒤바뀐다). */
-  updateQuake(dt) {
+  updateQuake(dt) { const { SY, DEEP_Y } = dimsOf(this.world);
     const q = this.quake, w = this.world, p = this.player;
     q.t += dt;
     this.shake = Math.max(this.shake || 0, q.t < 2.2 ? 9 : 3);

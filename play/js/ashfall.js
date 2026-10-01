@@ -1865,7 +1865,9 @@
     WSX: () => WSX,
     WSY: () => WSY,
     WW: () => WW,
-    applyWorldSize: () => applyWorldSize
+    applyWorldSize: () => applyWorldSize,
+    dimsOf: () => dimsOf,
+    makeDims: () => makeDims
   });
   var SHIFT = 800;
   var WORLD_SIZES = {
@@ -1966,26 +1968,63 @@
     b.bx0 = b.x0;
     b.bx1 = b.x1;
   }
+  function makeDims(key) {
+    const WSIZE2 = WORLD_SIZES[key] ? key : "s", k = WORLD_SIZES[WSIZE2].k;
+    const SX2 = (x) => Math.round(x * k);
+    const SY2 = (y) => y >= 70 ? Math.round(y * k) : y + Math.round(70 * (k - 1));
+    const SYB2 = (y) => y + Math.round(720 * k) - 720;
+    const WW2 = SX2(5e3);
+    const CAMP_X02 = SX2(1050 + SHIFT) - 50;
+    const BIOMES_K = BIOMES.map((b) => Object.assign({}, b, { x0: b.bx0 === 0 ? 0 : SX2(b.bx0), x1: b.bx1 >= 5e3 ? WW2 : SX2(b.bx1) }));
+    return {
+      WSIZE: WSIZE2,
+      WSX: k,
+      WSY: k,
+      SX: SX2,
+      SY: SY2,
+      SYB: SYB2,
+      WW: WW2,
+      WH: SY2(720),
+      WORLD_BOT: SY2(480),
+      SURF_BASE: SY2(70),
+      HELL_Y: SY2(390),
+      DEEP_Y: SY2(280),
+      SKY_Y: SY2(40),
+      CAMP_X0: CAMP_X02,
+      CAMP_X1: CAMP_X02 + 66,
+      CAMP_GX1: CAMP_X02 + 100,
+      SEA_X1: SX2(430),
+      GLACIER_X1: SX2(SHIFT),
+      BIOMES: BIOMES_K
+    };
+  }
+  var CUR = null;
+  function dimsOf(w) {
+    return w && w.dims || CUR;
+  }
   function applyWorldSize(key) {
-    WSIZE = WORLD_SIZES[key] ? key : "s";
-    WSX = WSY = WORLD_SIZES[WSIZE].k;
-    WW = SX(5e3);
-    WH = SY(720);
-    WORLD_BOT = SY(480);
-    SURF_BASE = SY(70);
-    HELL_Y = SY(390);
-    DEEP_Y = SY(280);
-    SKY_Y = SY(40);
-    CAMP_X0 = SX(1050 + SHIFT) - 50;
-    CAMP_X1 = CAMP_X0 + 66;
-    CAMP_GX1 = CAMP_X0 + 100;
-    SEA_X1 = SX(430);
-    GLACIER_X1 = SX(SHIFT);
-    for (const b of BIOMES) {
-      b.x0 = b.bx0 === 0 ? 0 : SX(b.bx0);
-      b.x1 = b.bx1 >= 5e3 ? WW : SX(b.bx1);
+    CUR = makeDims(key);
+    WSIZE = CUR.WSIZE;
+    WSX = CUR.WSX;
+    WSY = CUR.WSY;
+    WW = CUR.WW;
+    WH = CUR.WH;
+    WORLD_BOT = CUR.WORLD_BOT;
+    SURF_BASE = CUR.SURF_BASE;
+    HELL_Y = CUR.HELL_Y;
+    DEEP_Y = CUR.DEEP_Y;
+    SKY_Y = CUR.SKY_Y;
+    CAMP_X0 = CUR.CAMP_X0;
+    CAMP_X1 = CUR.CAMP_X1;
+    CAMP_GX1 = CUR.CAMP_GX1;
+    SEA_X1 = CUR.SEA_X1;
+    GLACIER_X1 = CUR.GLACIER_X1;
+    for (const [i, b] of BIOMES.entries()) {
+      b.x0 = CUR.BIOMES[i].x0;
+      b.x1 = CUR.BIOMES[i].x1;
     }
   }
+  applyWorldSize("s");
 
   // src/game/data.ts
   var data_exports = {};
@@ -12926,7 +12965,7 @@
       i: "⬇",
       n: "심층",
       d: "심층까지 내려갔다.",
-      check: (g) => g.player.deepest >= DEEP_Y
+      check: (g) => g.player.deepest >= dimsOf(g.world).DEEP_Y
     },
     {
       id: "a_hell",
@@ -12934,7 +12973,7 @@
       i: "🔥",
       n: "가장 아래",
       d: "가장 아래에 발을 디뎠다.",
-      check: (g) => g.player.deepest >= HELL_Y
+      check: (g) => g.player.deepest >= dimsOf(g.world).HELL_Y
     },
     {
       id: "a_sky",
@@ -12942,7 +12981,7 @@
       i: "☁",
       n: "구름 위",
       d: "구름 위에 올라섰다.",
-      check: (g) => g.player.highest !== void 0 && g.player.highest <= SKY_Y
+      check: (g) => g.player.highest !== void 0 && g.player.highest <= dimsOf(g.world).SKY_Y
     },
     {
       id: "a_lore",
@@ -12975,7 +13014,7 @@
       i: "🗺",
       n: "아홉 땅",
       d: "아홉 땅에 모두 발자국을 남겼다.",
-      check: (g) => BIOMES.every((b) => (g.seenBiomes || {})[b.id])
+      check: (g) => dimsOf(g.world).BIOMES.every((b) => (g.seenBiomes || {})[b.id])
     },
     /* 유적의 맥박 · 탐사 기록 — survey 는 세이브에 담긴다(SAVE_UPGRADES v6). */
     {
@@ -13410,7 +13449,7 @@
   var CAVE_GW = 60, CAVE_GH = 55;
   var MIN_CAVE = 220;
   var BEACH_W = 90;
-  var inSeaZone = (x) => x < SEA_X1 + BEACH_W + 4;
+  var inSeaZone = (x, seaX1) => x < seaX1 + BEACH_W + 4;
   var BIOME_BAND = 104;
   function setWorldSize(key) {
     applyWorldSize(key);
@@ -13527,7 +13566,8 @@
     flatPad: 10
   };
   var BoxSet = class {
-    constructor(box, pad) {
+    constructor(box, pad, ww) {
+      this.ww = ww;
       this.x0 = box[0] - pad;
       this.y0 = box[1] - pad;
       this.bw = box[2] - box[0] + 1 + pad * 2;
@@ -13537,7 +13577,7 @@
       this.out = null;
     }
     _i(k) {
-      const y = k / WW | 0, x = k - y * WW, lx = x - this.x0, ly = y - this.y0;
+      const y = k / this.ww | 0, x = k - y * this.ww, lx = x - this.x0, ly = y - this.y0;
       return lx >= 0 && ly >= 0 && lx < this.bw && ly < this.bh ? ly * this.bw + lx : -1;
     }
     has(k) {
@@ -13573,10 +13613,12 @@
   }
   var World = class _World extends TileMap {
     constructor(seed) {
-      super(WW, WH, TS, TILE_DEF, T.BEDROCK);
+      const D = dimsOf(), { WW: WW2, WH: WH2 } = D;
+      super(WW2, WH2, TS, TILE_DEF, T.BEDROCK);
+      this.dims = D;
       this.seed = seed;
       this.rng = new RNG(seed);
-      this.surface = new Int16Array(WW);
+      this.surface = new Int16Array(WW2);
       this.objects = [];
       this.doors = [];
       this.machines = /* @__PURE__ */ new Map();
@@ -13595,8 +13637,9 @@
       this.lbh = 0;
     }
     set(x, y, t) {
+      const { WW: WW2 } = this.dims;
       if (!this.inB(x, y)) return;
-      this.tiles[y * WW + x] = t;
+      this.tiles[y * WW2 + x] = t;
       if (this.fq) this.fluidWake(x, y);
     }
     hurtTile(x, y) {
@@ -13604,6 +13647,7 @@
     }
     /** 사각형이 물에 얼마나 잠겼는지 0~1. */
     liquidIn(px, py, w, h) {
+      const { WW: WW2 } = this.dims;
       const x0 = Math.floor(px / TS), x1 = Math.floor((px + w - 0.01) / TS);
       const y0 = Math.floor(py / TS), y1 = Math.floor((py + h - 0.01) / TS);
       let n = 0, tot = 0, flow = 0, cur = 0;
@@ -13613,8 +13657,8 @@
         if (!d.liquid) continue;
         if (d.flow) flow = 1;
         if (FLUID_FLOW[t] && this.flv) {
-          const k = y * WW + x, lv = this.flv[k] || 8;
-          const topped = FLUID_KIND[this.tiles[k - WW]] === FLUID_KIND[t];
+          const k = y * WW2 + x, lv = this.flv[k] || 8;
+          const topped = FLUID_KIND[this.tiles[k - WW2]] === FLUID_KIND[t];
           n += topped ? 1 : lv / 8;
           if (lv < 8 && !cur) cur = this.currentAt(x, y);
         } else n++;
@@ -13623,7 +13667,8 @@
     }
     /** 흐르는 칸의 물살 방향과 세기(-1~1) — 수위가 높은 쪽에서 낮은 쪽으로. */
     currentAt(x, y) {
-      const k = y * WW + x, t = this.tiles[k], kind = FLUID_KIND[t];
+      const { WW: WW2 } = this.dims;
+      const k = y * WW2 + x, t = this.tiles[k], kind = FLUID_KIND[t];
       if (!FLUID_FLOW[t] || !this.flv) return 0;
       const me = this.flv[k] || 8;
       const side = (n) => {
@@ -13653,23 +13698,27 @@
       return m;
     }
     biomeAt(tx) {
-      for (const b of BIOMES) if (tx >= b.x0 && tx < b.x1) return b;
-      return BIOMES[1];
+      const { BIOMES: BIOMES2 } = this.dims;
+      for (const b of BIOMES2) if (tx >= b.x0 && tx < b.x1) return b;
+      return BIOMES2[1];
     }
     biomeIndexAt(tx) {
-      for (let i = 0; i < BIOMES.length; i++) if (tx >= BIOMES[i].x0 && tx < BIOMES[i].x1) return i;
-      return tx < 0 ? 0 : BIOMES.length - 1;
+      const { BIOMES: BIOMES2 } = this.dims;
+      for (let i = 0; i < BIOMES2.length; i++) if (tx >= BIOMES2[i].x0 && tx < BIOMES2[i].x1) return i;
+      return tx < 0 ? 0 : BIOMES2.length - 1;
     }
     /** 경계 혼합: [주 바이옴, 이웃 바이옴, 이웃 비중 0~0.5] */
     biomeMix(tx) {
-      const i = this.biomeIndexAt(tx), b = BIOMES[i];
+      const { BIOMES: BIOMES2 } = this.dims;
+      const i = this.biomeIndexAt(tx), b = BIOMES2[i];
       if (i > 0 && tx - b.x0 < BIOME_BAND) return [i, i - 1, 0.5 * (1 - (tx - b.x0) / BIOME_BAND)];
-      if (i < BIOMES.length - 1 && b.x1 - tx <= BIOME_BAND) return [i, i + 1, 0.5 * (1 - (b.x1 - tx) / BIOME_BAND)];
+      if (i < BIOMES2.length - 1 && b.x1 - tx <= BIOME_BAND) return [i, i + 1, 0.5 * (1 - (b.x1 - tx) / BIOME_BAND)];
       return [i, i, 0];
     }
     /** 바이옴별 지표 높이 (경계에서 부드럽게 이어지도록 x 전 구간에서 정의) */
     _hFor(bid, x, n1) {
-      let h = SURF_BASE + (n1(x, 0.011) - 0.5) * 32 + (n1(x + 900, 0.042) - 0.5) * 10;
+      const { SURF_BASE: SURF_BASE2 } = this.dims;
+      let h = SURF_BASE2 + (n1(x, 0.011) - 0.5) * 32 + (n1(x + 900, 0.042) - 0.5) * 10;
       if (bid === "desert") h += 8 + (n1(x + 400, 0.025) - 0.5) * 12;
       else if (bid === "ice") h -= 8 + (n1(x + 1500, 0.06) - 0.5) * 6;
       else if (bid === "glacier") h -= 16 + (n1(x + 2600, 0.09) - 0.5) * 22;
@@ -13681,16 +13730,18 @@
     }
     /** 이 x에서 어떤 바이옴의 '재질'을 쓸지 — 경계에서는 노이즈로 맞물리게 */
     _matAt(x, n1) {
+      const { BIOMES: BIOMES2 } = this.dims;
       const [ia, ib, t] = this.biomeMix(x);
-      if (t <= 1e-3 || ia === ib) return BIOMES[ia].id;
-      return n1(x + 7777, 0.11) < t ? BIOMES[ib].id : BIOMES[ia].id;
+      if (t <= 1e-3 || ia === ib) return BIOMES2[ia].id;
+      return n1(x + 7777, 0.11) < t ? BIOMES2[ib].id : BIOMES2[ia].id;
     }
     /** 전투/스폰용 구역 태그 */
     zoneAt(tx, ty) {
+      const { WW: WW2, HELL_Y: HELL_Y2, DEEP_Y: DEEP_Y2, SKY_Y: SKY_Y2, CAMP_X0: CAMP_X02, CAMP_X1: CAMP_X12 } = this.dims;
       if (this.inCitadel && this.inCitadel(tx, ty)) return "citadel";
       if (this.inDeepShaft && this.inDeepShaft(tx, ty)) return "deepshaft";
-      if (ty < SKY_Y) return "sky";
-      if (tx >= CAMP_X0 - 16 && tx <= CAMP_X1 + 16 && ty < this.surface[clamp(tx, 0, WW - 1)] + 20) return "camp";
+      if (ty < SKY_Y2) return "sky";
+      if (tx >= CAMP_X02 - 16 && tx <= CAMP_X12 + 16 && ty < this.surface[clamp(tx, 0, WW2 - 1)] + 20) return "camp";
       if (this.dawnCity) {
         const d = this.dawnCity;
         if (tx >= d.x0 - 16 && tx <= d.x1 + 16 && ty < d.gy + 20) return "village";
@@ -13699,10 +13750,10 @@
       if (this.inRunaway && this.inRunaway(tx, ty)) return "runaway";
       if (this.inWorks && this.inWorks(tx, ty)) return "works";
       if (this.inRuin && this.inRuin(tx, ty)) return "ruin";
-      if (ty >= HELL_Y) return "hell";
+      if (ty >= HELL_Y2) return "hell";
       const b = this.biomeAt(tx).id;
-      if (ty > this.surface[clamp(tx, 0, WW - 1)] + 6) {
-        if (ty > DEEP_Y) return "deep";
+      if (ty > this.surface[clamp(tx, 0, WW2 - 1)] + 6) {
+        if (ty > DEEP_Y2) return "deep";
         if (b === "corrupt") return "corrupt";
         if (b === "ice" || b === "glacier") return "ice";
         if (b === "jungle") return "jungle";
@@ -13725,29 +13776,30 @@
     }
     /* ================= 생성 ================= */
     generate() {
+      const { WSX: WSX2, WSY: WSY2, SX: SX2, SY: SY2, WW: WW2, WORLD_BOT: WORLD_BOT2, SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2, DEEP_Y: DEEP_Y2, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12, SEA_X1: SEA_X12, BIOMES: BIOMES2 } = this.dims;
       const rng = this.rng;
       const n1 = makeNoise1D(new RNG(rng.next() * 1e9), 4);
       const n2 = makeNoise2D(new RNG(rng.next() * 1e9));
       const n3 = makeNoise2D(new RNG(rng.next() * 1e9));
-      const rawH = new Float32Array(WW);
-      for (let x = 0; x < WW; x++) {
+      const rawH = new Float32Array(WW2);
+      for (let x = 0; x < WW2; x++) {
         const [ia, ib, t] = this.biomeMix(x);
-        const ha = this._hFor(BIOMES[ia].id, x, n1);
-        const h = t > 1e-3 && ia !== ib ? lerp(ha, this._hFor(BIOMES[ib].id, x, n1), t) : ha;
-        rawH[x] = clamp(h, SURF_BASE - 12, SURF_BASE + 38);
+        const ha = this._hFor(BIOMES2[ia].id, x, n1);
+        const h = t > 1e-3 && ia !== ib ? lerp(ha, this._hFor(BIOMES2[ib].id, x, n1), t) : ha;
+        rawH[x] = clamp(h, SURF_BASE2 - 12, SURF_BASE2 + 38);
       }
-      for (let x = 0; x < WW; x++) {
-        const a = rawH[Math.max(0, x - 1)], b2 = rawH[x], c2 = rawH[Math.min(WW - 1, x + 1)];
+      for (let x = 0; x < WW2; x++) {
+        const a = rawH[Math.max(0, x - 1)], b2 = rawH[x], c2 = rawH[Math.min(WW2 - 1, x + 1)];
         this.surface[x] = Math.round((a + b2 * 2 + c2) / 4);
       }
-      const vx0 = CAMP_X0, vx1 = CAMP_GX1;
+      const vx0 = CAMP_X02, vx1 = CAMP_GX12;
       let vh = this.surface[vx0 + vx1 >> 1];
       for (let x = vx0 - 12; x < vx1 + 12; x++) {
         const t = clamp(inv(vx0 - 12, vx0, x), 0, 1) * clamp(inv(vx1 + 12, vx1, x), 0, 1);
         this.surface[x] = Math.round(lerp(this.surface[x], vh, Math.min(1, t * 1.6)));
       }
       this.villageY = vh;
-      const dx0 = SX(2905 + SHIFT) - 55, dx1 = dx0 + 110;
+      const dx0 = SX2(2905 + SHIFT) - 55, dx1 = dx0 + 110;
       const dh = this.surface[dx0 + dx1 >> 1];
       const padL = -DAWN_WALL.leftOff + DAWN_WALL.flatPad;
       const padR = DAWN_WALL.rightOff + DAWN_WALL.flatPad;
@@ -13757,45 +13809,45 @@
         this.surface[x] = Math.round(lerp(this.surface[x], dh, Math.min(1, t * 1.6)));
       }
       this.dawnY = dh;
-      this.matId = new Uint8Array(WW);
-      for (let x = 0; x < WW; x++) this.matId[x] = MAT_OF[this._matAt(x, n1)];
-      for (let x = 0; x < WW; x++) {
+      this.matId = new Uint8Array(WW2);
+      for (let x = 0; x < WW2; x++) this.matId[x] = MAT_OF[this._matAt(x, n1)];
+      for (let x = 0; x < WW2; x++) {
         const s = this.surface[x], m = this.matId[x];
         const soilD = 4 + Math.round(n1(x + 3100, 0.09) * 3);
         const subD = 15 + Math.round(n1(x + 5200, 0.07) * 8);
         const L = MAT_LAYER[m];
-        for (let y = s; y < WORLD_BOT; y++) {
+        for (let y = s; y < WORLD_BOT2; y++) {
           let t;
           const depth = y - s;
-          if (y >= WORLD_BOT - 4) t = T.BEDROCK;
-          else if (y >= HELL_Y) t = T.ASH;
+          if (y >= WORLD_BOT2 - 4) t = T.BEDROCK;
+          else if (y >= HELL_Y2) t = T.ASH;
           else if (depth === 0) t = L.top;
           else if (depth < soilD) t = L.soil;
           else if (depth < subD) t = L.sub;
           else t = L.deep;
-          if (y > DEEP_Y && t === T.STONE && n3(x, y, 0.06, 2) > 0.72) t = T.OBSIDIAN;
+          if (y > DEEP_Y2 && t === T.STONE && n3(x, y, 0.06, 2) > 0.72) t = T.OBSIDIAN;
           this.tiles[this.i(x, y)] = t;
-          this.walls[this.i(x, y)] = y >= HELL_Y ? 7 : depth < subD - 3 ? L.wall : L.subWall;
+          this.walls[this.i(x, y)] = y >= HELL_Y2 ? 7 : depth < subD - 3 ? L.wall : L.subWall;
         }
       }
-      for (let x = 1; x < WW - 1; x++) {
+      for (let x = 1; x < WW2 - 1; x++) {
         const s = this.surface[x];
-        for (let y = s + 4; y < WORLD_BOT - 5; y++) {
-          const scale = y > DEEP_Y - 36 ? 0.045 : 0.058;
+        for (let y = s + 4; y < WORLD_BOT2 - 5; y++) {
+          const scale = y > DEEP_Y2 - 36 ? 0.045 : 0.058;
           let v = n2(x, y, scale, 3);
-          const bias = y > DEEP_Y ? 0.06 : y > SY(180) ? 0.03 : 0;
+          const bias = y > DEEP_Y2 ? 0.06 : y > SY2(180) ? 0.03 : 0;
           const wide = y > s + 20 ? 0.03 : 0;
           if (v > 0.63 - bias - wide && v < 0.8 + bias + wide) this.tiles[this.i(x, y)] = T.AIR;
           if (n3(x, y, 0.13, 2) > 0.8 && y > s + 10) this.tiles[this.i(x, y)] = T.AIR;
         }
       }
       this.pruneSmallCaves(MIN_CAVE);
-      for (const b of BIOMES) {
+      for (const b of BIOMES2) {
         if (b.id !== "corrupt") continue;
-        for (let k = 0; k < Math.round(24 * WSX); k++) {
+        for (let k = 0; k < Math.round(24 * WSX2); k++) {
           let cx = rng.int(b.x0 + 8, b.x1 - 8), cy = this.surface[cx];
           let w = rng.range(3, 6);
-          while (cy < DEEP_Y && w > 0.8) {
+          while (cy < DEEP_Y2 && w > 0.8) {
             for (let x = Math.floor(cx - w); x <= cx + w; x++)
               for (let y = cy; y < cy + 3; y++) this.set(x, y, T.AIR);
             for (let x = Math.floor(cx - w) - 2; x <= cx + w + 2; x++)
@@ -13807,24 +13859,24 @@
         }
       }
       const oreSpec = [
-        [T.COPPER, SY(74), SY(200), 700, 5],
-        [T.IRON, SY(100), SY(300), 730, 5],
-        [T.GOLD, SY(150), SY(360), 480, 4],
-        [T.MYTHRIL, SY(240), SY(400), 360, 4],
-        [T.CRYSTAL, SY(190), SY(390), 280, 3],
-        [T.SOULSTONE, SY(300), SY(420), 200, 3],
-        [T.HELLSTONE, HELL_Y, WORLD_BOT - 6, 600, 5],
+        [T.COPPER, SY2(74), SY2(200), 700, 5],
+        [T.IRON, SY2(100), SY2(300), 730, 5],
+        [T.GOLD, SY2(150), SY2(360), 480, 4],
+        [T.MYTHRIL, SY2(240), SY2(400), 360, 4],
+        [T.CRYSTAL, SY2(190), SY2(390), 280, 3],
+        [T.SOULSTONE, SY2(300), SY2(420), 200, 3],
+        [T.HELLSTONE, HELL_Y2, WORLD_BOT2 - 6, 600, 5],
         /* --- 동력 자원 --- */
-        [T.COAL, SY(80), HELL_Y - 10, 1500, 6],
-        [T.LEAD, SY(110), SY(330), 560, 5],
-        [T.OILSHALE, SY(150), SY(300), 620, 6, SX(2e3 + SHIFT), SX(2680 + SHIFT)]
+        [T.COAL, SY2(80), HELL_Y2 - 10, 1500, 6],
+        [T.LEAD, SY2(110), SY2(330), 560, 5],
+        [T.OILSHALE, SY2(150), SY2(300), 620, 6, SX2(2e3 + SHIFT), SX2(2680 + SHIFT)]
         // 사막 구간 — 세계가 왼쪽으로 밀린 만큼 같이 민다
       ];
-      const oreScale = WW / 2800;
+      const oreScale = WW2 / 2800;
       for (const [tile, y0, y1, count, size, ox0, ox1] of oreSpec) {
-        const n = Math.round(count * (ox0 === void 0 ? oreScale : WSX) * WSY);
+        const n = Math.round(count * (ox0 === void 0 ? oreScale : WSX2) * WSY2);
         for (let k = 0; k < n; k++) {
-          const cx = rng.int(ox0 === void 0 ? 2 : ox0, ox1 === void 0 ? WW - 3 : ox1 - 1);
+          const cx = rng.int(ox0 === void 0 ? 2 : ox0, ox1 === void 0 ? WW2 - 3 : ox1 - 1);
           const cy = rng.int(y0, y1);
           const r = rng.range(1.4, size * 0.5 + 1.4);
           for (let x = Math.floor(cx - r); x <= cx + r; x++)
@@ -13836,10 +13888,10 @@
             }
         }
       }
-      for (const [tile, y0, y1, count, r0, r1] of [[T.LIMESTONE, 0, SY(230), 520, 4, 9], [T.GRANITE, SY(200), HELL_Y - 8, 420, 4, 10]]) {
-        const n = Math.round(count * oreScale * WSY);
+      for (const [tile, y0, y1, count, r0, r1] of [[T.LIMESTONE, 0, SY2(230), 520, 4, 9], [T.GRANITE, SY2(200), HELL_Y2 - 8, 420, 4, 10]]) {
+        const n = Math.round(count * oreScale * WSY2);
         for (let k = 0; k < n; k++) {
-          const cx = rng.int(4, WW - 5);
+          const cx = rng.int(4, WW2 - 5);
           const cy = rng.int(Math.max(y0, this.surface[cx] + 15), y1);
           if (cy >= y1) continue;
           const rx = rng.range(r0, r1), ry = rx * rng.range(0.45, 0.8);
@@ -13851,9 +13903,9 @@
         }
       }
       let occR = -99;
-      for (let x = 4; x < WW - 4; x++) {
+      for (let x = 4; x < WW2 - 4; x++) {
         const s = this.surface[x];
-        if (inSeaZone(x)) continue;
+        if (inSeaZone(x, SEA_X12)) continue;
         if (x > vx0 - 6 && x < vx1 + 6) continue;
         if (x > dx0 - 10 && x < dx1 + 10) continue;
         const g = this.get(x, s);
@@ -13890,8 +13942,8 @@
           this.set(x, s - 1, T.GLOWCAP);
         }
       }
-      for (let x = 2; x < WW - 2; x++) {
-        for (let y = this.surface[x] + 8; y < DEEP_Y; y++) {
+      for (let x = 2; x < WW2 - 2; x++) {
+        for (let y = this.surface[x] + 8; y < DEEP_Y2; y++) {
           if (this.get(x, y) !== T.AIR || !this.solid(x, y - 1)) continue;
           if (!rng.chance(0.012)) continue;
           for (let k = 0; k < rng.int(2, 6) && this.get(x, y + k) === T.AIR; k++) this.set(x, y + k, T.VINE);
@@ -13962,9 +14014,10 @@
     /* ================= 조명 ================= */
     /** 화면 범위 조명 계산. */
     computeLight(tx0, ty0, tx1, ty1, dayLight, extra) {
+      const { WW: WW2, WH: WH2 } = this.dims;
       const P = 14;
-      const x0 = clamp(tx0 - P, 0, WW - 1), x1 = clamp(tx1 + P, 0, WW - 1);
-      const y0 = clamp(ty0 - P, 0, WH - 1), y1 = clamp(ty1 + P, 0, WH - 1);
+      const x0 = clamp(tx0 - P, 0, WW2 - 1), x1 = clamp(tx1 + P, 0, WW2 - 1);
+      const y0 = clamp(ty0 - P, 0, WH2 - 1), y1 = clamp(ty1 + P, 0, WH2 - 1);
       const w = x1 - x0 + 1, h = y1 - y0 + 1;
       if (!this.lightBuf || this.lightBuf.length < w * h) this.lightBuf = new Float32Array(w * h + 64);
       const L = this.lightBuf;
@@ -13973,11 +14026,11 @@
       for (let x = x0; x <= x1; x++) {
         const s = this.surface[x];
         for (let y = y0; y <= y1; y++) {
-          const t = this.tiles[y * WW + x];
+          const t = this.tiles[y * WW2 + x];
           const d = TILE_DEF[t];
           const k = (y - y0) * w + (x - x0);
           if (d.light) L[k] = d.light;
-          if (t === T.AIR && y <= s && this.walls[y * WW + x] === 0) L[k] = Math.max(L[k], dayLight);
+          if (t === T.AIR && y <= s && this.walls[y * WW2 + x] === 0) L[k] = Math.max(L[k], dayLight);
           else if (d.sea && sea && y > sea.level)
             L[k] = Math.max(L[k], dayLight - (y - sea.level) * 0.42, seaAmb);
         }
@@ -13988,7 +14041,7 @@
         L[k] = Math.max(L[k], ev);
       }
       const dec = (x, y) => {
-        const t = this.tiles[y * WW + x];
+        const t = this.tiles[y * WW2 + x];
         const d = TILE_DEF[t];
         if (d.clear) return 1.05;
         if (d.solid === 1) return 2.7;
@@ -14008,28 +14061,30 @@
     }
     /* ================= 유체 ================= */
     fluidInit() {
-      this.flv = new Uint8Array(WW * WH);
+      const { WW: WW2, WH: WH2 } = this.dims;
+      this.flv = new Uint8Array(WW2 * WH2);
       this.fq = [[], []];
-      this.fmark = [new Uint8Array(WW * WH), new Uint8Array(WW * WH)];
+      this.fmark = [new Uint8Array(WW2 * WH2), new Uint8Array(WW2 * WH2)];
       this.fAcc = [0, 0];
-      for (let k = WW; k < WW * (WH - 1); k++) {
+      for (let k = WW2; k < WW2 * (WH2 - 1); k++) {
         const t = this.tiles[k];
         if (t === T.FALLS) {
           this.flv[k] = 8;
           continue;
         }
         if (!FLUID_FLOW[t]) continue;
-        this.flv[k] = FLUID_KIND[this.tiles[k - WW]] ? 8 : 7;
-        this.fluidWake(k % WW, k / WW | 0);
+        this.flv[k] = FLUID_KIND[this.tiles[k - WW2]] ? 8 : 7;
+        this.fluidWake(k % WW2, k / WW2 | 0);
       }
       this.fallsAll();
     }
     fluidWake(x, y) {
+      const { WW: WW2, WH: WH2 } = this.dims;
       const q = this.fq;
       for (let d = 0; d < 5; d++) {
         const xx = x + (d === 1 ? -1 : d === 2 ? 1 : 0), yy = y + (d === 3 ? -1 : d === 4 ? 1 : 0);
-        if (xx < 1 || yy < 1 || xx >= WW - 1 || yy >= WH - 1) continue;
-        const k = yy * WW + xx;
+        if (xx < 1 || yy < 1 || xx >= WW2 - 1 || yy >= WH2 - 1) continue;
+        const k = yy * WW2 + xx;
         for (let j = 0; j < 2; j++) if (!this.fmark[j][k]) {
           this.fmark[j][k] = 1;
           q[j].push(k);
@@ -14060,6 +14115,7 @@
       return !FLUID_OPEN(t);
     }
     _fluidStep(j) {
+      const { WW: WW2 } = this.dims;
       const q = this.fq[j], mark = this.fmark[j];
       const n = Math.min(q.length, 6e3);
       const todo = q.splice(0, n);
@@ -14071,27 +14127,29 @@
       }
       const cols = /* @__PURE__ */ new Set();
       for (const [k, t, lv] of out) {
-        const x = k % WW, y = k / WW | 0;
+        const x = k % WW2, y = k / WW2 | 0;
         if (this.tiles[k] !== t) this.set(x, y, t);
         else this.fluidWake(x, y);
         this.flv[k] = lv;
         if (j === 0) for (const d of [-1, 0, 1]) cols.add(k + d);
       }
-      for (const k of cols) this._fallsCol(k % WW, k / WW | 0);
+      for (const k of cols) this._fallsCol(k % WW2, k / WW2 | 0);
     }
     /** 불러온 세계·막 만든 세계의 폭포를 한 번 판정한다(_fallsCol). */
     fallsAll() {
-      for (let k = WW; k < WW * (WH - 1); k++) {
-        if (this.tiles[k] !== T.FALLS || this.tiles[k - WW] === T.FALLS) continue;
-        const x = k % WW, y = k / WW | 0;
+      const { WW: WW2, WH: WH2 } = this.dims;
+      for (let k = WW2; k < WW2 * (WH2 - 1); k++) {
+        if (this.tiles[k] !== T.FALLS || this.tiles[k - WW2] === T.FALLS) continue;
+        const x = k % WW2, y = k / WW2 | 0;
         this._fallsCol(x, y);
       }
     }
     /** 칸 k 가 무엇이 되어야 하는가 → [k, 타일, 수위] 또는 null(그대로). */
     _fluidEval(k, j) {
+      const { WW: WW2 } = this.dims;
       const t = this.tiles[k], kind = FLUID_KIND[t];
       if (kind === 3) {
-        for (const d of [-1, 1, -WW, WW]) {
+        for (const d of [-1, 1, -WW2, WW2]) {
           const nk = FLUID_KIND[this.tiles[k + d]];
           if (nk === 1 || nk === 2) return [k, t === T.LAVA ? T.OBSIDIAN : T.STONE, 0];
         }
@@ -14101,7 +14159,7 @@
       if (!flowing && !FLUID_OPEN(t)) return null;
       if (flowing && kind === 3 !== (j === 1)) return null;
       let bestK = 0, bestL = 0;
-      const up = this.tiles[k - WW];
+      const up = this.tiles[k - WW2];
       const upK = up === T.SPRING ? 1 : FLUID_KIND[up];
       if (upK && upK === 3 === (j === 1)) {
         bestK = upK;
@@ -14113,7 +14171,7 @@
           const nk = nt2 === T.SPRING ? 1 : FLUID_KIND[nt2];
           if (!nk || nk === 3 !== (j === 1)) continue;
           if (FLUID_SRC[nt2] && nk !== 3 && (nt2 === T.WATER || nt2 === T.SEAWATER)) srcN++;
-          const bt = this.tiles[k + d + WW];
+          const bt = this.tiles[k + d + WW2];
           const held = FLUID_SRC[nt2] || nt2 === T.SPRING ? this._fluidHeld(bt) : !FLUID_KIND[bt] && !FLUID_OPEN(bt);
           if (!held) continue;
           const l = this._flvAt(k + d) - (nk === 3 ? 2 : 1);
@@ -14122,7 +14180,7 @@
             bestK = nk;
           }
         }
-        if (srcN >= 2 && bestK !== 3 && this._fluidHeld(this.tiles[k + WW]))
+        if (srcN >= 2 && bestK !== 3 && this._fluidHeld(this.tiles[k + WW2]))
           return [k, bestK === 2 ? T.SEAWATER : T.WATER, 0];
       }
       if (bestL <= 0 || !bestK) {
@@ -14138,12 +14196,13 @@
     /** ★ 폭포 판정 — 떨어지는 민물 줄기 가운데 **4칸 이상 곧게 떨어지고, 양옆에 고인·흐르는 물이 없는** 토막만 폭포(FALLS)다 — 사연:
        docs/code-history.md#h135 */
     _fallsCol(x, y) {
+      const { WW: WW2, WH: WH2 } = this.dims;
       const falling = (k2) => this.tiles[k2] === T.FALLS || this.tiles[k2] === T.FLOWWATER && this.flv[k2] === 8;
-      let k = y * WW + x;
+      let k = y * WW2 + x;
       if (!falling(k)) return;
       let top = k, bot = k;
-      while (top - WW > WW && falling(top - WW)) top -= WW;
-      while (bot + WW < WW * (WH - 1) && falling(bot + WW)) bot += WW;
+      while (top - WW2 > WW2 && falling(top - WW2)) top -= WW2;
+      while (bot + WW2 < WW2 * (WH2 - 1) && falling(bot + WW2)) bot += WW2;
       const still = (n) => {
         const t = this.tiles[n], kd = FLUID_KIND[t];
         if (kd !== 1 && kd !== 2) return false;
@@ -14153,16 +14212,16 @@
       const flush = () => {
         const want = seg.length >= 4 ? T.FALLS : T.FLOWWATER;
         for (const n of seg) if (this.tiles[n] !== want) {
-          this.set(n % WW, n / WW | 0, want);
+          this.set(n % WW2, n / WW2 | 0, want);
           this.flv[n] = 8;
         }
         seg = [];
       };
-      for (let n = top; n <= bot; n += WW) {
+      for (let n = top; n <= bot; n += WW2) {
         if (still(n - 1) || still(n + 1)) {
           flush();
           if (this.tiles[n] !== T.FLOWWATER) {
-            this.set(n % WW, n / WW | 0, T.FLOWWATER);
+            this.set(n % WW2, n / WW2 | 0, T.FLOWWATER);
             this.flv[n] = 8;
           }
         } else seg.push(n);
@@ -14204,23 +14263,25 @@
     }
     /** 옛 세이브·생성된 폭포의 윗머리 — 폭포 꼭대기 위가 막혀 있으면 그 칸을 샘 바위로, 위가 트여 있으면(정글 절벽 폭포처럼 땅 위로 쏟아지는 것) 꼭대기 칸을 샘 바위로 바꾼다. */
     springFalls() {
-      for (let k = WW; k < WW * (WH - 1); k++) {
+      const { WW: WW2, WH: WH2 } = this.dims;
+      for (let k = WW2; k < WW2 * (WH2 - 1); k++) {
         if (this.tiles[k] !== T.FALLS) continue;
-        const up = this.tiles[k - WW];
+        const up = this.tiles[k - WW2];
         if (up === T.FALLS || up === T.SPRING || FLUID_KIND[up]) continue;
         if (up === T.BEDROCK) continue;
-        const x = k % WW, y = k / WW | 0;
+        const x = k % WW2, y = k / WW2 | 0;
         if (TILE_DEF[up].solid === 1) this.set(x, y - 1, T.SPRING);
         else this.set(x, y, T.SPRING);
       }
     }
     /* ================= 저장 ================= */
     serialize() {
+      const { WSIZE: WSIZE2, WW: WW2, WH: WH2 } = this.dims;
       return {
         seed: this.seed,
-        ww: WW,
-        wh: WH,
-        size: WSIZE,
+        ww: WW2,
+        wh: WH2,
+        size: WSIZE2,
         ruinSites: this.ruinSites,
         ruinEvents: this.ruinEvents,
         tiles: rleEncode(this.tiles),
@@ -14258,9 +14319,10 @@
       };
     }
     static deserialize(d) {
+      const { WW: WW2, WH: WH2 } = dimsOf();
       const w = new _World(d.seed);
-      w.tiles = rleDecode(d.tiles, WW * WH, Uint8Array);
-      w.walls = rleDecode(d.walls, WW * WH, Uint8Array);
+      w.tiles = rleDecode(d.tiles, WW2 * WH2, Uint8Array);
+      w.walls = rleDecode(d.walls, WW2 * WH2, Uint8Array);
       w.surface = Int16Array.from(d.surface);
       w.objects = d.objects;
       w.fitObjects();
@@ -14273,12 +14335,12 @@
           delete m.it.fx;
           delete m.it.fy;
         }
-        w.machines.set(m.y * WW + m.x, m);
+        w.machines.set(m.y * WW2 + m.x, m);
       }
       for (const k of d.crops || []) w.crops.add(k);
       w.wet = d.wet || {};
       w.netDirty = true;
-      if (d.explored) w.explored = rleDecode(d.explored, WW * WH, Uint8Array);
+      if (d.explored) w.explored = rleDecode(d.explored, WW2 * WH2, Uint8Array);
       w.spawnX = d.spawnX;
       w.spawnY = d.spawnY;
       w.villageY = d.villageY;
@@ -14304,11 +14366,11 @@
       w.sea = d.sea || null;
       if (!w.sea) {
         let lv = -1;
-        for (let y = 1; y < WH && lv < 0; y++) if (w.tiles[y * WW + 5] === T.SEAWATER) lv = y;
+        for (let y = 1; y < WH2 && lv < 0; y++) if (w.tiles[y * WW2 + 5] === T.SEAWATER) lv = y;
         if (lv > 0) {
           let x1 = 5;
-          for (let x = 6, gap = 0; x < WW && gap < 40; x++) {
-            if (w.tiles[lv * WW + x] === T.SEAWATER || w.tiles[(lv + 1) * WW + x] === T.SEAWATER) {
+          for (let x = 6, gap = 0; x < WW2 && gap < 40; x++) {
+            if (w.tiles[lv * WW2 + x] === T.SEAWATER || w.tiles[(lv + 1) * WW2 + x] === T.SEAWATER) {
               x1 = x;
               gap = 0;
             } else gap++;
@@ -14350,8 +14412,9 @@
     },
     /** 베어낸 나무를 시간이 지나면 되살린다. */
     regrow(rng, n, centerX) {
+      const { WW: WW2 } = this.dims;
       for (let k = 0; k < n; k++) {
-        const x = clamp(Math.round(centerX + rng.range(-420, 420)), 2, WW - 3);
+        const x = clamp(Math.round(centerX + rng.range(-420, 420)), 2, WW2 - 3);
         if (Math.abs(x - this.spawnX) < 40) continue;
         if (this.objects.some((o) => o.type === "rig" && !o.gone && Math.abs(x - o.tx) <= 7)) continue;
         const s = this.surface[x];
@@ -14446,14 +14509,16 @@
     },
     /** 그 자리에 원래 있어야 할 지층 타일 (메울 때 쓴다) */
     _bedAt(x, y) {
-      if (y >= WORLD_BOT - 4) return T.BEDROCK;
-      if (y >= HELL_Y) return T.ASH;
+      const { WORLD_BOT: WORLD_BOT2, HELL_Y: HELL_Y2 } = this.dims;
+      if (y >= WORLD_BOT2 - 4) return T.BEDROCK;
+      if (y >= HELL_Y2) return T.ASH;
       const L = MAT_LAYER[this.matId[x]], depth = y - this.surface[x];
       if (depth < 20) return L.sub;
       return L.deep;
     },
     /** 마지막 구멍 메우기 — pruneSmallCaves(생성 초반)가 끝난 **뒤에** 생긴 작은 굴을 메운다. */
     sweepPockets(maxSize) {
+      const { WW: WW2, WH: WH2, HELL_Y: HELL_Y2, SEA_X1: SEA_X12 } = this.dims;
       const natural = /* @__PURE__ */ new Set();
       for (const k in MAT_LAYER) {
         natural.add(MAT_LAYER[k].wall);
@@ -14463,19 +14528,19 @@
       for (const o of this.objects) {
         const x0 = Math.floor(o.x / TS) - 1, x1 = Math.floor((o.x + (o.w || TS)) / TS) + 1;
         const y0 = Math.floor(o.y / TS) - 1, y1 = Math.floor((o.y + (o.h || TS)) / TS) + 1;
-        for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) busy.add(y * WW + x);
+        for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) busy.add(y * WW2 + x);
       }
       for (const k of this.machines.keys()) busy.add(k);
       const open = (k) => {
         const t = this.tiles[k], d = TILE_DEF[t];
         return t === T.AIR || d.solid === 2 || !d.solid && !d.liquid;
       };
-      const seen = new Uint8Array(WW * WH), cells = [];
+      const seen = new Uint8Array(WW2 * WH2), cells = [];
       let filled = 0;
-      for (let sx = 2; sx < WW - 2; sx++) {
-        if (inSeaZone(sx)) continue;
-        for (let sy = this.surface[sx] + 10; sy < HELL_Y - 2; sy++) {
-          const k0 = sy * WW + sx;
+      for (let sx = 2; sx < WW2 - 2; sx++) {
+        if (inSeaZone(sx, SEA_X12)) continue;
+        for (let sy = this.surface[sx] + 10; sy < HELL_Y2 - 2; sy++) {
+          const k0 = sy * WW2 + sx;
           if (seen[k0] || !open(k0)) continue;
           cells.length = 0;
           const st = [k0];
@@ -14484,11 +14549,11 @@
           while (st.length) {
             const c = st.pop();
             cells.push(c);
-            const cx = c % WW, cy = c / WW | 0;
-            if (cells.length > maxSize || cy <= this.surface[cx] + 9 || cy >= HELL_Y - 2 || inSeaZone(cx)) ok = false;
+            const cx = c % WW2, cy = c / WW2 | 0;
+            if (cells.length > maxSize || cy <= this.surface[cx] + 9 || cy >= HELL_Y2 - 2 || inSeaZone(cx, SEA_X12)) ok = false;
             if (!natural.has(this.walls[c]) || busy.has(c)) ok = false;
-            for (const d of [c - 1, c + 1, c - WW, c + WW]) {
-              if (d < WW || d >= WW * (HELL_Y + 2)) {
+            for (const d of [c - 1, c + 1, c - WW2, c + WW2]) {
+              if (d < WW2 || d >= WW2 * (HELL_Y2 + 2)) {
                 ok = false;
                 continue;
               }
@@ -14500,8 +14565,8 @@
             }
           }
           if (!ok) continue;
-          if (cells.some((c) => this.ruinAt(c % WW, c / WW | 0))) continue;
-          for (const c of cells) this.set(c % WW, c / WW | 0, this._bedAt(c % WW, c / WW | 0));
+          if (cells.some((c) => this.ruinAt(c % WW2, c / WW2 | 0))) continue;
+          for (const c of cells) this.set(c % WW2, c / WW2 | 0, this._bedAt(c % WW2, c / WW2 | 0));
           filled++;
         }
       }
@@ -14509,22 +14574,23 @@
     },
     /** 이어진 공동을 하나씩 재서, 기준보다 작고 지표와도 통하지 않는 것은 도로 메운다. */
     pruneSmallCaves(minSize) {
-      const N = WW * WH;
+      const { WW: WW2, WH: WH2, WORLD_BOT: WORLD_BOT2 } = this.dims;
+      const N = WW2 * WH2;
       const seen = new Uint8Array(N);
       const stack = new Int32Array(N);
       const cells = new Int32Array(minSize);
       let pockets = 0;
-      for (let sx = 1; sx < WW - 1; sx++) {
+      for (let sx = 1; sx < WW2 - 1; sx++) {
         const top = this.surface[sx] + 3;
-        for (let sy = top; sy < WORLD_BOT - 5; sy++) {
-          const k0 = sy * WW + sx;
+        for (let sy = top; sy < WORLD_BOT2 - 5; sy++) {
+          const k0 = sy * WW2 + sx;
           if (seen[k0] || this.tiles[k0] !== T.AIR) continue;
           let sp = 0, n = 0, open = false;
           stack[sp++] = k0;
           seen[k0] = 1;
           while (sp > 0) {
             const c = stack[--sp];
-            const cx = c % WW, cy = c / WW | 0;
+            const cx = c % WW2, cy = c / WW2 | 0;
             if (n < minSize) cells[n] = c;
             n++;
             if (cy <= this.surface[cx] + 2) open = true;
@@ -14532,23 +14598,23 @@
               seen[c - 1] = 1;
               stack[sp++] = c - 1;
             }
-            if (cx < WW - 1 && !seen[c + 1] && this.tiles[c + 1] === T.AIR) {
+            if (cx < WW2 - 1 && !seen[c + 1] && this.tiles[c + 1] === T.AIR) {
               seen[c + 1] = 1;
               stack[sp++] = c + 1;
             }
-            if (cy > 0 && !seen[c - WW] && this.tiles[c - WW] === T.AIR) {
-              seen[c - WW] = 1;
-              stack[sp++] = c - WW;
+            if (cy > 0 && !seen[c - WW2] && this.tiles[c - WW2] === T.AIR) {
+              seen[c - WW2] = 1;
+              stack[sp++] = c - WW2;
             }
-            if (cy < WH - 1 && !seen[c + WW] && this.tiles[c + WW] === T.AIR) {
-              seen[c + WW] = 1;
-              stack[sp++] = c + WW;
+            if (cy < WH2 - 1 && !seen[c + WW2] && this.tiles[c + WW2] === T.AIR) {
+              seen[c + WW2] = 1;
+              stack[sp++] = c + WW2;
             }
           }
           if (open || n >= minSize) continue;
           for (let i = 0; i < n; i++) {
             const c = cells[i];
-            this.tiles[c] = this._bedAt(c % WW, c / WW | 0);
+            this.tiles[c] = this._bedAt(c % WW2, c / WW2 | 0);
           }
           pockets++;
         }
@@ -14558,11 +14624,12 @@
     /* ================= 농업 ================= */
     /** 씨앗을 심는다. */
     plantSeed(x, y, seedId) {
+      const { WW: WW2 } = this.dims;
       const tile = SEED_TILE[seedId];
       if (tile === void 0) return false;
       if (this.get(x, y) !== T.AIR || !TILE_DEF[this.get(x, y + 1)].farm) return false;
       this.set(x, y, tile);
-      this.crops.add(y * WW + x);
+      this.crops.add(y * WW2 + x);
       return true;
     },
     /** 밭 칸(x, y)에서 FARM_WET_R 칸 안에 물(민물·바닷물)이 있는가 — 물가 밭은 늘 젖어 있다. */
@@ -14576,12 +14643,14 @@
     },
     /** 밭 칸(x, y)이 day 날 아침에 젖어 있는가. */
     isWet(x, y, day) {
-      return (this.wet[y * WW + x] | 0) >= day || this.nearWater(x, y);
+      const { WW: WW2 } = this.dims;
+      return (this.wet[y * WW2 + x] | 0) >= day || this.nearWater(x, y);
     },
     /** 밭 칸(x, y)에 물을 준다 — day 날부터 FARM_WET_DAYS 번의 아침 동안 젖어 있다. */
     waterFarm(x, y, day) {
+      const { WW: WW2 } = this.dims;
       if (!TILE_DEF[this.get(x, y)].farm) return false;
-      const k = y * WW + x;
+      const k = y * WW2 + x;
       this.wet[k] = Math.max(this.wet[k] | 0, day + FARM_WET_DAYS);
       return true;
     },
@@ -14589,6 +14658,7 @@
     /** 자란 칸을 돌려준다 — 화면에 보이는 밭이면 게임 쪽에서 티를 낸다. 마른 밭(물 안 준 밭)은 자라지 않고 dry 로 센다. */
     /** speed: 농사 숙련이 얹어 주는 성장 배율(1 = 보정 없음) · day: 오늘(G.dayCount) — 없으면 젖음을 안 본다 */
     growCrops(rng, dayF, speed, day) {
+      const { WW: WW2 } = this.dims;
       const out = { grew: [], ripe: [], dry: [] };
       if (!this.crops.size) return out;
       const sp = speed === void 0 ? 1 : speed;
@@ -14599,7 +14669,7 @@
           continue;
         }
         if (!def.crop.next) continue;
-        const x = k % WW, y = k / WW | 0;
+        const x = k % WW2, y = k / WW2 | 0;
         if (!TILE_DEF[this.get(x, y + 1)].farm) {
           this.crops.delete(k);
           continue;
@@ -14618,10 +14688,11 @@
     },
     /** 부서지는 바닥 — 밟으면 잠깐 뒤 무너지고, 한참 뒤 되돌아온다 */
     tickCrumble(dt, p) {
+      const { WW: WW2 } = this.dims;
       const fy = Math.floor((p.y + p.h + 2) / TS);
       for (let x = Math.floor(p.x / TS); x <= Math.floor((p.x + p.w - 1) / TS); x++) {
         if (!TILE_DEF[this.get(x, fy)].crumble) continue;
-        const k = fy * WW + x;
+        const k = fy * WW2 + x;
         if (!this.crumbled.has(k)) this.crumbled.set(k, 0.45);
       }
       if (!this.crumbled.size) return;
@@ -14631,7 +14702,7 @@
           this.crumbled.set(k, nt);
           continue;
         }
-        const x = k % WW, y = k / WW | 0;
+        const x = k % WW2, y = k / WW2 | 0;
         if (this.tiles[k] === T.CRUMBLE) {
           this.tiles[k] = T.AIR;
           this.crumbled.set(k, 9);
@@ -14705,6 +14776,7 @@
   var WorldVillage = {
     /* ---- 마을: 오두막 3채 + 작업대 + 용광로 + NPC ---- */
     buildVillage(x0, x1, gy, rng) {
+      const { CAMP_X1: CAMP_X12 } = this.dims;
       const huts = [
         { x: x0 + 2, w: 13, npc: "elara" },
         { x: x0 + 19, w: 14, npc: "borin" },
@@ -14743,7 +14815,7 @@
       this.set(cx - 9, gy - 1, T.TORCH);
       this.set(cx + 9, gy - 1, T.TORCH);
       this.objects.push({ type: "waystone", x: (cx - 12) * TS, y: gy * TS - 48, w: 30, h: 48 });
-      const ox = CAMP_X1 + 6;
+      const ox = CAMP_X12 + 6;
       this.objects.push({ type: "npc", npc: "old", x: ox * TS, y: this.surface[ox] * TS - 44, w: 22, h: 44 });
     },
     /* ---- 여명 마을 ---- */
@@ -14780,8 +14852,9 @@
     },
     /* ---- 지하 공창 (세션 2) ---- */
     buildWorks(dx0, dx1, rng) {
+      const { SY: SY2 } = this.dims;
       const cx = dx0 + dx1 >> 1;
-      const y0 = SY(210), h = 40, x0 = cx - 34, w = 68;
+      const y0 = SY2(210), h = 40, x0 = cx - 34, w = 68;
       this.works = { x0, y0, w, h, cx, liftX: cx };
       this.clearBox(x0, y0, w, h);
       for (let x = x0 - 1; x <= x0 + w; x++) {
@@ -14842,8 +14915,9 @@
     },
     /* ---- 폭주로 ---- */
     buildRunaway(dx0, dx1, rng) {
+      const { SY: SY2 } = this.dims;
       const cx = dx0 + dx1 >> 1;
-      const y0 = SY(306), h = 54, w = 86, x0 = cx - (w >> 1);
+      const y0 = SY2(306), h = 54, w = 86, x0 = cx - (w >> 1);
       this.runaway = { x0, y0, w, h, cx };
       const rooms = this.carveDungeon({
         x0,
@@ -14935,11 +15009,12 @@
     },
     /* ---- 설계실 (세션 2 종장) ---- */
     buildAtelier(rng) {
+      const { WW: WW2 } = this.dims;
       const rw = this.runaway;
       if (!rw) return;
       const w = 66, h = 40;
       const x0 = rw.x0 + rw.w + 10, y0 = rw.y0 + 6;
-      if (x0 + w >= WW - 8) return;
+      if (x0 + w >= WW2 - 8) return;
       this.atelier = { x0, y0, w, h, cx: x0 + (w >> 1) };
       const rooms = this.carveDungeon({
         x0,
@@ -15025,8 +15100,9 @@
     },
     /* ---- 특별 유적 ① 부유 성채 (하늘) ---- */
     buildCitadel(rng) {
+      const { SX: SX2, SKY_Y: SKY_Y2 } = this.dims;
       const w = 74, h = 30;
-      const x0 = SX(3300 + SHIFT), y0 = 4;
+      const x0 = SX2(3300 + SHIFT), y0 = 4;
       this.citadel = { x0, y0, w, h, cx: x0 + (w >> 1) };
       for (let x = x0 - 2; x <= x0 + w + 2; x++)
         for (let y = y0 + h - 3; y <= y0 + h; y++) this.set(x, y, T.ORBITPLATE);
@@ -15058,7 +15134,7 @@
         for (let k = 0; k < 46 && bx > 6; k++, bx--) {
           this.set(bx, by, T.ORBITPLATE);
           for (let dy = -3; dy <= -1; dy++) this.set(bx, by + dy, T.AIR);
-          if (k % 6 === 5 && by < SKY_Y - 4) by++;
+          if (k % 6 === 5 && by < SKY_Y2 - 4) by++;
           if (k % 9 === 4) this.set(bx, by - 1, T.TORCH);
         }
         this.citadel.bridgeX = bx;
@@ -15114,8 +15190,9 @@
     },
     /* ---- 특별 유적 ② 무너진 갱 (최심부) ---- */
     buildDeepShaft(rng) {
+      const { SX: SX2, WORLD_BOT: WORLD_BOT2, HELL_Y: HELL_Y2 } = this.dims;
       const w = 70, h = 34;
-      const x0 = SX(640 + SHIFT), y0 = WORLD_BOT - 46;
+      const x0 = SX2(640 + SHIFT), y0 = WORLD_BOT2 - 46;
       this.deepShaft = { x0, y0, w, h, cx: x0 + (w >> 1) };
       const rooms = this.carveDungeon({
         x0,
@@ -15133,7 +15210,7 @@
       });
       rooms.sort((a, b) => b.w * b.h - a.w * a.h);
       const ex = x0 + (w >> 1);
-      for (let y = HELL_Y + 10; y <= y0 + 1; y++) {
+      for (let y = HELL_Y2 + 10; y <= y0 + 1; y++) {
         for (let dx = -2; dx <= 2; dx++) this.set(ex + dx, y, T.AIR);
         this.setWall(ex, y, 4);
         if (y % 5 === 0) {
@@ -15458,7 +15535,8 @@
   var WorldSky = {
     /* ---- 지하 묘실 ---- */
     buildDungeon(rng, n2) {
-      const cx = SX(2300 + SHIFT), cy = SY(240), w = 68, h = 38;
+      const { SX: SX2, SY: SY2 } = this.dims;
+      const cx = SX2(2300 + SHIFT), cy = SY2(240), w = 68, h = 38;
       const x0 = cx - (w >> 1), y0 = cy - (h >> 1);
       const rooms = this.carveDungeon({
         x0,
@@ -15509,14 +15587,15 @@
     },
     /* ---- 하늘 섬 + 지상에서 올라가는 거대 나무 ---- */
     buildSkyIslands(rng, n1) {
+      const { WSX: WSX2, SX: SX2, SY: SY2, WW: WW2, SKY_Y: SKY_Y2, SEA_X1: SEA_X12 } = this.dims;
       this.skyIslands = [];
-      const N = Math.round(32 * WSX);
+      const N = Math.round(32 * WSX2);
       const alt = new RNG(this.seed + "_skyalt");
       let last = -1;
       for (let i = 0; i < N; i++) {
-        const cx = Math.round((i + 0.5) / N * WW + rng.range(-32, 32));
-        if (inSeaZone(cx)) continue;
-        rng.int(SY(12), SKY_Y - 8);
+        const cx = Math.round((i + 0.5) / N * WW2 + rng.range(-32, 32));
+        if (inSeaZone(cx, SEA_X12)) continue;
+        rng.int(SY2(12), SKY_Y2 - 8);
         let tier = alt.int(0, 2);
         if (tier === last) tier = (tier + 1 + alt.int(0, 1)) % 3;
         last = tier;
@@ -15528,7 +15607,7 @@
         this.objects.push({ type: "chest", tier: 6, x: (cx + rng.int(-4, 4)) * TS, y: (cy - 1.2) * TS, w: 30, h: 26, items: null });
         if (rng.chance(0.45)) this.set(cx + rng.int(-6, 6), cy - 1, T.TORCH);
       }
-      const gx = SX(1300 + SHIFT), gy = SY(18);
+      const gx = SX2(1300 + SHIFT), gy = SY2(18);
       this.carveIsland(gx, gy, 34, 9, rng);
       this.skyIslands.push({ x: gx, y: gy, w: 34 });
       this.skyGate = { x: gx, y: gy };
@@ -15606,6 +15685,7 @@
         ★ 자리 고르는 법은 예전 game.js rigs() 그대로다(바이옴 이름으로 묻는다 — 사연: docs/code-history.md#h51 · #h52).
         clear 면 발자국 안의 나무·풀을 걷는다 — 나무가 탑을 뚫고 자라 보였다. */
     placeRigs(clear) {
+      const { BIOMES: BIOMES2 } = this.dims;
       if (this.objects.some((o) => o.type === "rig")) {
         for (const o of this.objects) if (o.type === "rig") this.fitRig(o);
         return;
@@ -15613,7 +15693,7 @@
       const LEG = RIG.leg;
       let wake = 9;
       for (const [bid, n] of RIG.in) {
-        const b = BIOMES.find((q) => q.id === bid);
+        const b = BIOMES2.find((q) => q.id === bid);
         if (!b) continue;
         const x0 = b.x0 + RIG.edge, x1 = b.x1 - RIG.edge;
         for (let i = 0; i < n; i++) {
@@ -15663,6 +15743,7 @@
         그 곁 1~2칸을 광상으로. 한가운데라 광맥을 파고 들어가야 닿는다(소형 d1 실측 100곳 안팎). 덩어리 수가 넓이를 따르니
         크기 배수는 따로 안 곱한다. ★ 제 난수(seed+'_rich')만 쓴다 — 본 난수를 뽑으면 뒤따르는 생성이 씨앗마다 바뀐다. */
     placeRichOres() {
+      const { WW: WW2, WORLD_BOT: WORLD_BOT2 } = this.dims;
       const r = new RNG(this.seed + "_rich");
       const RICH = {
         [T.COAL]: T.COALRICH,
@@ -15672,10 +15753,10 @@
         [T.GOLD]: T.GOLDRICH,
         [T.MYTHRIL]: T.MYTHRILRICH
       };
-      const RICH_TOP = 0.016, MIN = 20, tl = this.tiles, seen = new Uint8Array(WW * WORLD_BOT);
+      const RICH_TOP = 0.016, MIN = 20, tl = this.tiles, seen = new Uint8Array(WW2 * WORLD_BOT2);
       const ok = (i, t) => {
-        const x = i % WW;
-        return x > 0 && x < WW - 1 && i >= WW && i < WW * WORLD_BOT && tl[i] === t;
+        const x = i % WW2;
+        return x > 0 && x < WW2 - 1 && i >= WW2 && i < WW2 * WORLD_BOT2 && tl[i] === t;
       };
       const flood = (i0, t, mk) => {
         const st = [i0], cells = [];
@@ -15683,7 +15764,7 @@
         while (st.length) {
           const i = st.pop();
           cells.push(i);
-          for (const j of [i + 1, i - 1, i + WW, i - WW]) if (seen[j] !== mk && ok(j, t)) {
+          for (const j of [i + 1, i - 1, i + WW2, i - WW2]) if (seen[j] !== mk && ok(j, t)) {
             seen[j] = mk;
             st.push(j);
           }
@@ -15691,7 +15772,7 @@
         return cells;
       };
       const found = {};
-      for (let i = WW; i < WW * WORLD_BOT; i++) {
+      for (let i = WW2; i < WW2 * WORLD_BOT2; i++) {
         const t = tl[i];
         if (!RICH[t] || seen[i] || !ok(i, t)) continue;
         const n2 = flood(i, t, 1).length;
@@ -15703,11 +15784,11 @@
         const take = Math.round(list.length * RICH_TOP);
         for (let k = 0; k < take && list[k][0] >= MIN; k++) {
           const cells = flood(list[k][1], t, 2), dist3 = /* @__PURE__ */ new Map();
-          let q = cells.filter((i) => [i + 1, i - 1, i + WW, i - WW].some((j) => !ok(j, t)));
+          let q = cells.filter((i) => [i + 1, i - 1, i + WW2, i - WW2].some((j) => !ok(j, t)));
           for (const i of q) dist3.set(i, 0);
           while (q.length) {
             const nq = [];
-            for (const i of q) for (const j of [i + 1, i - 1, i + WW, i - WW])
+            for (const i of q) for (const j of [i + 1, i - 1, i + WW2, i - WW2])
               if (ok(j, t) && !dist3.has(j)) {
                 dist3.set(j, dist3.get(i) + 1);
                 nq.push(j);
@@ -15718,13 +15799,13 @@
           const core = cells.filter((i) => dist3.get(i) === far).sort((a, b) => a - b);
           const c = core[r.int(0, core.length - 1)], put = [c], want = r.int(1, 2);
           for (let m = 0; m < want; m++) {
-            const nb = put.flatMap((i) => [i + 1, i - 1, i + WW, i - WW]).filter((j) => ok(j, t) && !put.includes(j));
+            const nb = put.flatMap((i) => [i + 1, i - 1, i + WW2, i - WW2]).filter((j) => ok(j, t) && !put.includes(j));
             if (!nb.length) break;
             const best = Math.max(...nb.map((j) => dist3.get(j))), pick = [...new Set(nb.filter((j) => dist3.get(j) === best))].sort((a, b) => a - b);
             put.push(pick[r.int(0, pick.length - 1)]);
           }
           for (const i of put) {
-            this.set(i % WW, i / WW | 0, RICH[t]);
+            this.set(i % WW2, i / WW2 | 0, RICH[t]);
             n++;
           }
           sites++;
@@ -15745,7 +15826,8 @@
     },
     /** 하늘 섬 높이 — 0 높은 층 · 1 가운데 · 2 낮은 층. 낮은 층 바닥(SKY_Y-8)은 이중 점프로 지상에서 못 닿게 둔 최소 높이다. */
     skyAlt(r, tier) {
-      return tier === 0 ? r.int(SY(5), SY(10)) : tier === 1 ? r.int(SY(14), SY(21)) : r.int(SKY_Y - 13, SKY_Y - 8);
+      const { SY: SY2, SKY_Y: SKY_Y2 } = this.dims;
+      return tier === 0 ? r.int(SY2(5), SY2(10)) : tier === 1 ? r.int(SY2(14), SY2(21)) : r.int(SKY_Y2 - 13, SKY_Y2 - 8);
     },
     /** 섬 위 나무를 걷는다. */
     _skyStrip(x0, x1, cy) {
@@ -15758,19 +15840,20 @@
         ★ 제 난수(seed+'_sky')를 쓴다. 본 난수를 더 뽑으면 뒤따르는 유적·동굴·성채가 씨앗마다 통째로 바뀐다.
         찾아갈 거리가 있는 섬은 위로 13칸이 필요해 SY(14) 아래 두 층, 조각 섬은 SY(5) 까지 — 바닥은 SKY_Y-8 그대로. */
     buildSkyExtras() {
+      const { WSX: WSX2, SX: SX2, SY: SY2, WW: WW2, SKY_Y: SKY_Y2, SEA_X1: SEA_X12 } = this.dims;
       const r = new RNG(this.seed + "_sky");
       const occ = [];
       const hit = (x0, y0, x1, y1) => occ.some((b) => x0 < b[2] && b[0] < x1 && y0 < b[3] && b[1] < y1);
       for (const s of this.skyIslands) occ.push([s.x - s.w - 6, s.y - 14, s.x + s.w + 6, s.y + 14]);
       const g = this.skyGate;
       occ.push([g.x - 46, 0, g.x + 46, g.y + 16]);
-      const cz = SX(3300 + SHIFT);
+      const cz = SX2(3300 + SHIFT);
       occ.push([cz - 16, 0, cz + 74 + 16, 4 + 30 + 10]);
-      const feat = () => r.chance(0.5) ? r.int(SY(14), SY(20)) : r.int(SKY_Y - 13, SKY_Y - 8);
+      const feat = () => r.chance(0.5) ? r.int(SY2(14), SY2(20)) : r.int(SKY_Y2 - 13, SKY_Y2 - 8);
       const place = (rw, rh, tries, band) => {
         for (let t = 0; t < tries; t++) {
-          const cx = r.int(40 + rw, WW - 40 - rw), cy = band();
-          if (inSeaZone(cx - rw) || inSeaZone(cx + rw)) continue;
+          const cx = r.int(40 + rw, WW2 - 40 - rw), cy = band();
+          if (inSeaZone(cx - rw, SEA_X12) || inSeaZone(cx + rw, SEA_X12)) continue;
           const box = [cx - rw - 5, cy - 13, cx + rw + 5, cy + rh + 6];
           if (hit(...box)) continue;
           occ.push(box);
@@ -15788,7 +15871,7 @@
           }
         return feats[fi++ % feats.length];
       };
-      for (let i = 0; i < Math.round(5 * WSX); i++) {
+      for (let i = 0; i < Math.round(5 * WSX2); i++) {
         const rw = r.int(32, 44), rh = r.int(10, 13), at = place(rw, rh, 80, feat);
         if (!at) continue;
         this.carveIsland(at.cx, at.cy, rw, rh, r);
@@ -15797,7 +15880,7 @@
         this.skyGrotto(at.cx - side * Math.round(rw * 0.3), at.cy, Math.round(rw * 0.42), rh, side, r);
         this.skyFeature(nextFeat(), at.cx + side * Math.round(rw * 0.45), at.cy, r, () => hint++);
       }
-      for (let i = 0; i < Math.round(13 * WSX); i++) {
+      for (let i = 0; i < Math.round(13 * WSX2); i++) {
         const rw = r.int(11, 20), rh = r.int(6, 9), at = place(rw, rh, 60, feat);
         if (!at) continue;
         this.carveIsland(at.cx, at.cy, rw, rh, r);
@@ -15805,8 +15888,8 @@
         this.skyIslands.push({ x: at.cx, y: at.cy, w: rw, k });
         this.skyFeature(k, at.cx, at.cy, r, () => hint++);
       }
-      for (let i = 0; i < Math.round(30 * WSX); i++) {
-        const rw = r.int(3, 7), rh = r.int(2, 4), at = place(rw, rh, 30, () => r.int(SY(5), SKY_Y - 8));
+      for (let i = 0; i < Math.round(30 * WSX2); i++) {
+        const rw = r.int(3, 7), rh = r.int(2, 4), at = place(rw, rh, 30, () => r.int(SY2(5), SKY_Y2 - 8));
         if (!at) continue;
         const cloud = r.chance(0.3);
         for (let x = at.cx - rw; x <= at.cx + rw; x++) {
@@ -16208,14 +16291,15 @@
     },
     /** 방 하나에서 걸어 닿을 수 있는 칸을 모아 온다 */
     _walkable(x0, y0, w, h, sx, sy) {
+      const { WW: WW2 } = this.dims;
       const seen = /* @__PURE__ */ new Set(), st = [[sx, sy]];
-      seen.add(sy * WW + sx);
+      seen.add(sy * WW2 + sx);
       while (st.length) {
         const [x, y] = st.pop();
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
           const nx = x + dx, ny = y + dy;
           if (nx < x0 - 1 || nx > x0 + w || ny < y0 - 1 || ny > y0 + h) continue;
-          const k = ny * WW + nx;
+          const k = ny * WW2 + nx;
           if (seen.has(k) || TILE_DEF[this.get(nx, ny)].solid === 1) continue;
           seen.add(k);
           st.push([nx, ny]);
@@ -16225,6 +16309,7 @@
     },
     /** 고립된 방마다 가장 가까운 이미 닿는 방까지 ㄱ자 굴을 판다 */
     _ensureConnected(x0, y0, w, h, rooms) {
+      const { WW: WW2 } = this.dims;
       const spot = (r) => [r.x + 2, r.y + r.h - 3];
       let guard = 0;
       while (guard++ < rooms.length + 2) {
@@ -16232,12 +16317,12 @@
         const seen = this._walkable(x0, y0, w, h, bx, by);
         const lost = rooms.filter((r) => {
           const [sx, sy] = spot(r);
-          return !seen.has(sy * WW + sx);
+          return !seen.has(sy * WW2 + sx);
         });
         if (!lost.length) return;
         const ok = rooms.filter((r) => {
           const [sx, sy] = spot(r);
-          return seen.has(sy * WW + sx);
+          return seen.has(sy * WW2 + sx);
         });
         const a = lost[0];
         let best = ok[0], bd = 1e9;
@@ -16316,10 +16401,11 @@
     },
     /** (sx, sy) 에서 걸어서(뛰고 떨어지며) 닿는 설 자리 전부. */
     _standSet(box, sx, sy) {
+      const { WW: WW2 } = this.dims;
       const f = this._standFns();
-      const seen = new BoxSet(box, 10), st = [];
+      const seen = new BoxSet(box, 10, WW2), st = [];
       const push = (x, y) => {
-        const k = y * WW + x;
+        const k = y * WW2 + x;
         if (!seen.has(k)) {
           seen.add(k);
           st.push(x, y);
@@ -16336,20 +16422,21 @@
     },
     /** 거꾸로 걷기 — 상자 안 설 자리 가운데 **rootK 까지 걸어 닿을 수 있는** 칸 전부 — 사연: docs/code-history.md#h113 */
     _returnSet(box, rootK) {
+      const { WW: WW2 } = this.dims;
       const f = this._standFns();
       const preds = /* @__PURE__ */ new Map();
       for (let y = box[1] - 8; y <= box[3]; y++)
         for (let x = box[0]; x <= box[2]; x++) {
           if (!f.stand(x, y)) continue;
-          const k = y * WW + x;
+          const k = y * WW2 + x;
           this._standNext(box, f, x, y, (nx, ny) => {
-            const nk = ny * WW + nx;
+            const nk = ny * WW2 + nx;
             let a = preds.get(nk);
             if (!a) preds.set(nk, a = []);
             a.push(k);
           });
         }
-      const R = new BoxSet(box, 10), st = [rootK];
+      const R = new BoxSet(box, 10, WW2), st = [rootK];
       R.add(rootK);
       while (st.length) {
         const a = preds.get(st.pop());
@@ -16401,6 +16488,7 @@
     },
     /** spots 의 모든 자리를 서로 걸어 다닐 수 있게 만든다. */
     _ensureWalkable(x0, y0, w, h, spots, floor, traps, rng) {
+      const { WW: WW2, WH: WH2 } = this.dims;
       if (spots.length < 2) return;
       const top = spots.reduce((m, p) => Math.min(m, p[1] - 3), y0 - 12);
       const left = spots.reduce((m, p) => Math.min(m, p[0] - 6), x0 - 12);
@@ -16408,8 +16496,8 @@
       const box = [
         Math.max(2, left),
         Math.max(2, top),
-        Math.min(WW - 3, right),
-        Math.min(WH - 3, y0 + h + 12)
+        Math.min(WW2 - 3, right),
+        Math.min(WH2 - 3, y0 + h + 12)
       ];
       const d0 = (p) => Math.abs(p[0] - spots[0][0]) + Math.abs(p[1] - spots[0][1]);
       const far = spots.reduce((b, p) => d0(p) > d0(b) ? p : b, spots[1]);
@@ -16420,10 +16508,11 @@
     },
     /** 자리마다 **기준점으로 돌아올 수 있는지** 하나씩 걸어 보고, 못 돌아오면 길을 낸다. */
     _walkBack(box, spots, floor, traps, rng) {
+      const { WW: WW2 } = this.dims;
       const near = (set, tx, ty) => {
         let b = null, bd = 1e9;
         for (const k of set) {
-          const y = Math.floor(k / WW), x = k - y * WW;
+          const y = Math.floor(k / WW2), x = k - y * WW2;
           const d = Math.abs(x - tx) + Math.abs(y - ty);
           if (d < bd) {
             bd = d;
@@ -16435,7 +16524,7 @@
       let home = this._standSet(box, spots[0][0], spots[0][1]);
       let root = home.values().next().value;
       if (root === void 0) return;
-      const rx = root % WW, ry = Math.floor(root / WW);
+      const rx = root % WW2, ry = Math.floor(root / WW2);
       const f = this._standFns();
       let R = this._returnSet(box, root);
       for (let i = 1; i < spots.length; i++) {
@@ -16443,13 +16532,13 @@
         for (let k = 0; k < 4; k++) {
           const s0 = this._standSeed(box, f, spots[i][0], spots[i][1]);
           if (!s0) break;
-          if (R.has(s0[1] * WW + s0[0])) break;
+          if (R.has(s0[1] * WW2 + s0[0])) break;
           const back = this._standSet(box, spots[i][0], spots[i][1]);
           const a = near(back, rx, ry);
           let b = null, bd = 1e9;
           for (const kk of home) {
             if (back.has(kk)) continue;
-            const y = Math.floor(kk / WW), x = kk - y * WW;
+            const y = Math.floor(kk / WW2), x = kk - y * WW2;
             const d = Math.abs(x - a[0]) + Math.abs(y - a[1]);
             if (d < bd) {
               bd = d;
@@ -16465,9 +16554,10 @@
       }
     },
     _walkPass(box, anchor, spots, floor, traps, rng) {
+      const { WW: WW2 } = this.dims;
       const hit = (seen, p) => {
         for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 2; dy++)
-          if (seen.has((p[1] + dy) * WW + p[0] + dx)) return true;
+          if (seen.has((p[1] + dy) * WW2 + p[0] + dx)) return true;
         return false;
       };
       let guard = 0;
@@ -16478,7 +16568,7 @@
         const lost = spots.filter((p) => !hit(seen, p));
         if (!lost.length) return;
         const a = lost[0];
-        const key = a[1] * WW + a[0];
+        const key = a[1] * WW2 + a[0];
         const once = (tried.get(key) || 0) < 6;
         tried.set(key, (tried.get(key) || 0) + 1);
         const from = once ? this._standSet(box, a[0], a[1]) : /* @__PURE__ */ new Set();
@@ -16486,14 +16576,14 @@
         if (from.size) {
           const cols = /* @__PURE__ */ new Map();
           for (const k of seen) {
-            const y = Math.floor(k / WW), x = k - y * WW;
+            const y = Math.floor(k / WW2), x = k - y * WW2;
             const c = cols.get(x);
             if (c) c.push(y);
             else cols.set(x, [y]);
           }
           for (const k of from) {
             if (seen.has(k)) continue;
-            const fy = Math.floor(k / WW), fx = k - fy * WW;
+            const fy = Math.floor(k / WW2), fx = k - fy * WW2;
             for (let dx = 0; dx < bd; dx++) {
               for (const x of dx ? [fx - dx, fx + dx] : [fx]) {
                 const c = cols.get(x);
@@ -16512,7 +16602,7 @@
         }
         if (!best) {
           for (const k of seen) {
-            const y = Math.floor(k / WW), x = k - y * WW;
+            const y = Math.floor(k / WW2), x = k - y * WW2;
             const d = Math.abs(x - a[0]) + Math.abs(y - a[1]);
             if (d < bd) {
               bd = d;
@@ -16861,6 +16951,7 @@
   var WorldRuins = {
     /** 유적 입구를 판다 — 생김새(arch)에 따라 들어가는 방식이 다르다. */
     carveRuinEntrance(spec, x0, y0, rng) {
+      const { WW: WW2 } = this.dims;
       this._entranceLandY = void 0;
       this._entranceSpots = [];
       this._entranceRooms = [];
@@ -16884,7 +16975,7 @@
         const faceX = (y) => Math.round(mid + side * ((y - y0 + 1) * (spec.w / 2) / spec.h));
         let yd = y0 + 10;
         for (; yd < y0 + spec.h - 8; yd++)
-          if (this.surface[clamp(faceX(yd), 0, WW - 1)] - yd <= 6) break;
+          if (this.surface[clamp(faceX(yd), 0, WW2 - 1)] - yd <= 6) break;
         const dx0 = faceX(yd) + side * 2;
         const end = this._buildPassage(
           dx0,
@@ -16921,7 +17012,7 @@
         }
         for (let dx = -3; dx <= 3; dx++) {
           if (dx === 0 || !rng.chance(0.55)) continue;
-          this.set(ex + dx, this.surface[clamp(ex + dx, 0, WW - 1)] - 1, spec.wall);
+          this.set(ex + dx, this.surface[clamp(ex + dx, 0, WW2 - 1)] - 1, spec.wall);
         }
         this._entranceLandX = null;
         this._carveEntranceShaft(ex, cap, y0 + 1, spec, rng);
@@ -16988,6 +17079,7 @@
     },
     /** 유적으로 가는 **쌓아 올린 길** — 테라리아 던전 복도나 마인크래프트 요새처럼 벽돌로 두른 곧은 마디를 이어 붙인다. */
     _buildPassage(sx, sy, yBot, spec, rng, o) {
+      const { WW: WW2 } = this.dims;
       const kind = spec.entryKind || "foothold";
       const H = 5;
       const span = Math.max(20, Math.round((spec.w || 40) * 0.45));
@@ -16995,7 +17087,7 @@
       let yGuard = yBot;
       const bg = spec.bg, wall = spec.wall || T.RUINBRICK, floorT = spec.floor || T.RUINTILE;
       const traps = spec.traps || ["dart", "crumble"];
-      const K = (x2, y) => y * WW + x2;
+      const K = (x2, y) => y * WW2 + x2;
       const dug = /* @__PURE__ */ new Set();
       const ok = (x2, y) => this.inB(x2, y) && this.get(x2, y) !== T.BEDROCK && !this.locked(x2, y);
       const dig = (x2, y) => {
@@ -17640,14 +17732,15 @@
     },
     /* ---- 숨겨진 유적 3곳 + 심층 봉인실 ---- */
     buildRuins(rng) {
+      const { SX: SX2, SY: SY2, WW: WW2 } = this.dims;
       this.ruins = [];
       this.ruinEvents = [];
       this.ruinSites = [];
       this._walkJobs = [];
       const spots = [
-        { x: SX(420 + SHIFT), y: SY(220), trap: 0.52, spike: 0.24, chest: 0.56, w: 84, h: 44, tier: 2, traps: ["dart", "crumble"], entryKind: "foothold" },
-        { x: SX(1700 + SHIFT), y: SY(252), trap: 0.72, spike: 0.38, chest: 0.6, w: 68, h: 40, tier: 3, traps: ["dart", "crumble", "vent"], entryKind: "maze" },
-        { x: SX(3860 + SHIFT), y: SY(236), trap: 0.9, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ["dart", "vent", "crumble"], entryKind: "nofoothold" }
+        { x: SX2(420 + SHIFT), y: SY2(220), trap: 0.52, spike: 0.24, chest: 0.56, w: 84, h: 44, tier: 2, traps: ["dart", "crumble"], entryKind: "foothold" },
+        { x: SX2(1700 + SHIFT), y: SY2(252), trap: 0.72, spike: 0.38, chest: 0.6, w: 68, h: 40, tier: 3, traps: ["dart", "crumble", "vent"], entryKind: "maze" },
+        { x: SX2(3860 + SHIFT), y: SY2(236), trap: 0.9, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ["dart", "vent", "crumble"], entryKind: "nofoothold" }
       ];
       spots.forEach((sp, i) => {
         const cx = sp.x, cy = sp.y, w = sp.w, h = sp.h;
@@ -17771,13 +17864,13 @@
         this.ruinSites.push(this.buildRuinSite(spec, i, rng));
         this.ruins.push({ id: spec.id, x: spec.x, y: spec.y + (spec.h >> 1), w: spec.w, h: spec.h });
       });
-      const kx = SX(2800 + SHIFT), ky = SY(350), kw = 56, kh = 26;
+      const kx = SX2(2800 + SHIFT), ky = SY2(350), kw = 56, kh = 26;
       const dx0 = kx - kw / 2;
       this.objects.push({ type: "seal", x: (dx0 + 1) * TS, y: (ky - 2) * TS, w: 44, h: 66 });
       this.objects.push({ type: "altar", boss: "first_keeper", x: kx * TS, y: (ky + kh / 2 - 3) * TS - 48, w: 44, h: 48 });
       this.ruins.push({ id: "seal", x: kx, y: ky, w: kw, h: kh });
       this.sealRoom = { x: kx, y: ky, w: kw, h: kh, dx: dx0 + 1, dy: ky };
-      const sx0 = clamp(kx - 45, 40, WW - 40);
+      const sx0 = clamp(kx - 45, 40, WW2 - 40);
       const surfY = this.surface[sx0];
       this._entranceLandX = null;
       this._carveEntranceShaft(sx0, surfY + 2, ky + 4, {
@@ -17794,7 +17887,7 @@
         // 봉인문 서쪽 벽을 넘지 않는다
       }, rng);
       for (const dx of [-4, -3, 3, 4]) {
-        const gx = sx0 + dx, gy = this.surface[clamp(gx, 0, WW - 1)] - 1;
+        const gx = sx0 + dx, gy = this.surface[clamp(gx, 0, WW2 - 1)] - 1;
         for (let k = 0; k < (Math.abs(dx) === 3 ? 3 : 2); k++) this.set(gx, gy - k, T.RUINBRICK);
       }
       this.sealRoom.endX = this._entranceLandX === null ? sx0 : this._entranceLandX;
@@ -17845,10 +17938,11 @@
     },
     /** 위치 지도를 세계에 흩뿌린다 — 입구 없는 유적(arch: 'buried')마다 두 군데. */
     buildRuinCaches(rng) {
+      const { WW: WW2, WH: WH2 } = this.dims;
       for (const spec of RUIN_SPEC) {
         if (spec.arch !== "buried") continue;
         const mapId = "ruinmap_" + spec.id;
-        const cx = clamp(spec.x + rng.int(-6, 6), 40, WW - 40);
+        const cx = clamp(spec.x + rng.int(-6, 6), 40, WW2 - 40);
         const surf = this.surface[cx];
         const cy = surf + rng.int(4, 7);
         for (let x = cx - 3; x <= cx + 3; x++)
@@ -17870,15 +17964,15 @@
           items: null
         });
         for (const dx of [-2, -1, 1, 2]) {
-          const gx = cx + dx, gy = this.surface[clamp(gx, 0, WW - 1)] - 1;
+          const gx = cx + dx, gy = this.surface[clamp(gx, 0, WW2 - 1)] - 1;
           this.set(gx, gy, T.RUINBRICK);
           if (Math.abs(dx) === 1) this.set(gx, gy - 1, T.RUINBRICK);
         }
         const cav = (this.caverns || []).filter((c) => Math.abs(c.cx - spec.x) > 500);
         if (!cav.length) continue;
         const pick = cav[rng.int(0, cav.length - 1)];
-        let px = clamp(pick.cx + rng.int(-6, 6), 40, WW - 40), py = pick.cy;
-        for (let k = 0; k < 40 && py < WH - 8; k++) {
+        let px = clamp(pick.cx + rng.int(-6, 6), 40, WW2 - 40), py = pick.cy;
+        for (let k = 0; k < 40 && py < WH2 - 8; k++) {
           if (this.get(px, py) === T.AIR && TILE_DEF[this.get(px, py + 1)].solid === 1) break;
           py++;
         }
@@ -17917,28 +18011,29 @@
       return 1;
     },
     buildAltars(rng) {
-      const cx1 = SX(2500 + SHIFT), sy1 = this.surface[cx1];
+      const { SX: SX2, WORLD_BOT: WORLD_BOT2 } = this.dims;
+      const cx1 = SX2(2500 + SHIFT), sy1 = this.surface[cx1];
       this.clearBox(cx1 - 14, sy1 - 14, 28, 14);
       for (let x = cx1 - 14; x < cx1 + 14; x++) {
         this.set(x, sy1, T.EBONSTONE);
         this.set(x, sy1 + 1, T.EBONSTONE);
       }
       this.objects.push({ type: "altar", boss: "corrupt_heart", x: cx1 * TS, y: sy1 * TS - 44, w: 40, h: 44 });
-      const cx2 = SX(210 + SHIFT), sy2 = this.surface[cx2];
+      const cx2 = SX2(210 + SHIFT), sy2 = this.surface[cx2];
       this.clearBox(cx2 - 16, sy2 - 15, 32, 15);
       for (let x = cx2 - 16; x < cx2 + 16; x++) {
         this.set(x, sy2, T.BRICK);
         this.set(x, sy2 + 1, T.BRICK);
       }
       this.objects.push({ type: "altar", boss: "frost_witch", x: cx2 * TS, y: sy2 * TS - 44, w: 40, h: 44 });
-      const cx3 = SX(800 + SHIFT), sy3 = this.surface[cx3];
+      const cx3 = SX2(800 + SHIFT), sy3 = this.surface[cx3];
       this.clearBox(cx3 - 14, sy3 - 13, 28, 13);
       for (let x = cx3 - 14; x < cx3 + 14; x++) {
         this.set(x, sy3, T.STONE);
         this.set(x, sy3 + 1, T.STONE);
       }
       this.objects.push({ type: "altar", boss: "king_slime", x: cx3 * TS, y: sy3 * TS - 44, w: 40, h: 44 });
-      const cx4 = SX(1400 + SHIFT), cy4 = WORLD_BOT - 17;
+      const cx4 = SX2(1400 + SHIFT), cy4 = WORLD_BOT2 - 17;
       this.clearBox(cx4 - 36, cy4 - 22, 72, 22);
       for (let x = cx4 - 36; x < cx4 + 36; x++) {
         this.set(x, cy4, T.OBSIDIAN);
@@ -17966,15 +18061,18 @@
     /** 큰 동굴을 여러 개 드렁커드 워크로 파낸다. */
     /* ================= 동굴 갈래 (data.js CAVE_TYPES) ================= */
     caveTypeAt(tx, ty) {
-      if (!this.caveGrid || ty < 0 || ty >= HELL_Y) return 0;
+      const { HELL_Y: HELL_Y2 } = this.dims;
+      if (!this.caveGrid || ty < 0 || ty >= HELL_Y2) return 0;
       const gx = Math.floor(tx / CAVE_GW), gy = Math.floor(ty / CAVE_GH);
       return this.caveGrid[gy * this._cgW() + gx] || 0;
     },
     _cgW() {
-      return Math.ceil(WW / CAVE_GW);
+      const { WW: WW2 } = this.dims;
+      return Math.ceil(WW2 / CAVE_GW);
     },
     /** 플레이어가 선 자리의 동굴 갈래 — **자연 굴 안**일 때만(지표 12칸 아래 · 지층 벽지 · 유적 밖). */
     caveKindAt(tx, ty) {
+      const { WW: WW2 } = this.dims;
       if (!this.caveGrid || !this.inB(tx, ty) || ty <= this.surface[tx] + 12) return 0;
       if (!this._natural) {
         this._natural = /* @__PURE__ */ new Set();
@@ -17983,11 +18081,12 @@
           this._natural.add(MAT_LAYER[k].subWall);
         }
       }
-      if (!this._natural.has(this.walls[ty * WW + tx]) || this.ruinAt(tx, ty)) return 0;
+      if (!this._natural.has(this.walls[ty * WW2 + tx]) || this.ruinAt(tx, ty)) return 0;
       return this.caveTypeAt(tx, ty);
     },
     buildCaveZones(rng) {
-      const gW = this._cgW(), gH = Math.ceil(HELL_Y / CAVE_GH);
+      const { SY: SY2, WW: WW2, SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2, DEEP_Y: DEEP_Y2, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12, SEA_X1: SEA_X12 } = this.dims;
+      const gW = this._cgW(), gH = Math.ceil(HELL_Y2 / CAVE_GH);
       this.caveGrid = new Uint8Array(gW * gH);
       const natural = /* @__PURE__ */ new Set();
       for (const k in MAT_LAYER) {
@@ -17997,8 +18096,8 @@
       for (let gy = 0; gy < gH; gy++)
         for (let gx = 0; gx < gW; gx++) {
           const x = gx * CAVE_GW + (CAVE_GW >> 1), y = gy * CAVE_GH + (CAVE_GH >> 1);
-          if (inSeaZone(x) || y < SURF_BASE + 10) continue;
-          const deep = clamp((y - 120) / (DEEP_Y - 120), 0, 1);
+          if (inSeaZone(x, SEA_X12) || y < SURF_BASE2 + 10) continue;
+          const deep = clamp((y - 120) / (DEEP_Y2 - 120), 0, 1);
           if (gx > 0 && this.caveGrid[gy * gW + gx - 1] && rng.chance(0.4)) {
             this.caveGrid[gy * gW + gx] = this.caveGrid[gy * gW + gx - 1];
             continue;
@@ -18022,13 +18121,13 @@
           this.set(x, y + k, tile);
         }
       };
-      for (let x = 4; x < WW - 4; x++) {
-        if (inSeaZone(x) || x > CAMP_X0 - 30 && x < CAMP_GX1 + 30) continue;
-        for (let y = this.surface[x] + 12; y < HELL_Y - 2; y++) {
+      for (let x = 4; x < WW2 - 4; x++) {
+        if (inSeaZone(x, SEA_X12) || x > CAMP_X02 - 30 && x < CAMP_GX12 + 30) continue;
+        for (let y = this.surface[x] + 12; y < HELL_Y2 - 2; y++) {
           if (this.get(x, y) !== T.AIR) continue;
           const k = this.caveTypeAt(x, y);
           if (!k) continue;
-          if (!natural.has(this.walls[y * WW + x]) || this.ruinAt(x, y)) continue;
+          if (!natural.has(this.walls[y * WW2 + x]) || this.ruinAt(x, y)) continue;
           const id = CAVE_TYPES[k].id;
           const below = this.get(x, y + 1), above = this.get(x, y - 1);
           const floor = host(below), ceil = host(above);
@@ -18067,7 +18166,7 @@
           if (CAVE_TYPES[this.caveGrid[gy * gW + gx]].id !== "fume") continue;
           for (let n = 0; n < 7; n++) {
             const cx = gx * CAVE_GW + rng.int(3, CAVE_GW - 3), cy = gy * CAVE_GH + rng.int(3, CAVE_GH - 3);
-            const ore = cy > SY(300) ? T.MYTHRIL : cy > SY(200) ? T.GOLD : cy > SY(130) ? T.IRON : T.COPPER;
+            const ore = cy > SY2(300) ? T.MYTHRIL : cy > SY2(200) ? T.GOLD : cy > SY2(130) ? T.IRON : T.COPPER;
             const r = rng.range(1.5, 2.8);
             for (let x = Math.floor(cx - r); x <= cx + r; x++)
               for (let y = Math.floor(cy - r); y <= cy + r; y++)
@@ -18078,14 +18177,15 @@
     },
     /** 금 간 자갈 — 동굴 옆벽에 판 작은 굴(오목한 자리) 안쪽 끝에 박는다. */
     buildFaults(rng, natural) {
+      const { WSX: WSX2, WSY: WSY2, WW: WW2, HELL_Y: HELL_Y2, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12, SEA_X1: SEA_X12 } = this.dims;
       this.faults = [];
       let tries = 0;
-      while (this.faults.length < Math.round(FAULT.count * WSX * WSY) && tries++ < 6e3 * WSX * WSY) {
-        const x = rng.int(40, WW - 40);
-        if (inSeaZone(x) || x > CAMP_X0 - 60 && x < CAMP_GX1 + 60) continue;
-        const y = rng.int(this.surface[x] + 30, HELL_Y - 20);
+      while (this.faults.length < Math.round(FAULT.count * WSX2 * WSY2) && tries++ < 6e3 * WSX2 * WSY2) {
+        const x = rng.int(40, WW2 - 40);
+        if (inSeaZone(x, SEA_X12) || x > CAMP_X02 - 60 && x < CAMP_GX12 + 60) continue;
+        const y = rng.int(this.surface[x] + 30, HELL_Y2 - 20);
         if (this.get(x, y) !== T.AIR || !this.solid(x, y + 1) || this.get(x, y - 1) !== T.AIR) continue;
-        if (!natural.has(this.walls[y * WW + x]) || this.ruinAt(x, y)) continue;
+        if (!natural.has(this.walls[y * WW2 + x]) || this.ruinAt(x, y)) continue;
         const dir = rng.chance(0.5) ? 1 : -1;
         let wx = x;
         for (let k = 1; k <= 3; k++) if (this.solid(x + dir * k, y)) {
@@ -18099,7 +18199,7 @@
             const xx = wx + dir * dx, yy = y + dy;
             tot++;
             if (this.solid(xx, yy)) solid++;
-            if (this.get(xx, yy) === T.BEDROCK || this.ruinAt(xx, yy) || yy >= HELL_Y - 4 || yy <= this.surface[clamp(xx, 0, WW - 1)] + 12) bad = true;
+            if (this.get(xx, yy) === T.BEDROCK || this.ruinAt(xx, yy) || yy >= HELL_Y2 - 4 || yy <= this.surface[clamp(xx, 0, WW2 - 1)] + 12) bad = true;
           }
         if (bad || solid / tot < 0.78) continue;
         if (this.faults.some((f2) => Math.abs(f2.x - wx) < 90 && Math.abs(f2.y - y) < 50)) continue;
@@ -18120,6 +18220,7 @@
     },
     /** 금 간 자갈이 무너진 뒤 열릴 동굴의 칸들 — 씨앗에서 뽑으므로 세계마다 같고, 저장할 필요가 없다. */
     faultCells(f) {
+      const { WW: WW2, HELL_Y: HELL_Y2 } = this.dims;
       const rng = new RNG(f.seed), cells = [], seen = /* @__PURE__ */ new Set();
       const natural = /* @__PURE__ */ new Set();
       for (const k in MAT_LAYER) {
@@ -18127,12 +18228,12 @@
         natural.add(MAT_LAYER[k].subWall);
       }
       const dig = (xx, yy) => {
-        const key = yy * WW + xx;
+        const key = yy * WW2 + xx;
         if (seen.has(key) || !this.inB(xx, yy)) return;
         seen.add(key);
         const t = this.get(xx, yy);
         if (t === T.AIR || t === T.BEDROCK || this.locked(xx, yy) || TILE_DEF[t].liquid || TILE_DEF[t].solid !== 1) return;
-        if (yy >= HELL_Y - 2 || yy <= this.surface[xx] + 12 || this.ruinAt(xx, yy)) return;
+        if (yy >= HELL_Y2 - 2 || yy <= this.surface[xx] + 12 || this.ruinAt(xx, yy)) return;
         if (!natural.has(this.walls[key])) return;
         cells.push([xx, yy]);
       };
@@ -18150,11 +18251,12 @@
     },
     /** 무너져 열린 칸들을 꾸민다 — 갈래를 하나 골라(이끼·종유·수정) 새 굴에 입히고, 드러난 벽의 몇 군데를 광석으로 바꾼다. */
     dressFault(f, cells) {
+      const { SY: SY2 } = this.dims;
       const rng = new RNG(f.seed + 7);
       const k = [1, 2, 3][rng.int(0, 2)];
       f.k = k;
       const id = CAVE_TYPES[k].id;
-      const ore = f.y > SY(300) ? T.MYTHRIL : f.y > SY(200) ? T.GOLD : f.y > SY(130) ? T.IRON : T.COPPER;
+      const ore = f.y > SY2(300) ? T.MYTHRIL : f.y > SY2(200) ? T.GOLD : f.y > SY2(130) ? T.IRON : T.COPPER;
       for (const [x, y] of cells) {
         if (this.get(x, y) !== T.AIR) continue;
         const floor = this.solid(x, y + 1), ceil = this.solid(x, y - 1);
@@ -18184,15 +18286,16 @@
       return k;
     },
     buildCaverns(rng) {
-      const reserved = (x) => x > SX(685 + SHIFT) && x < SX(845 + SHIFT) || x > SX(1865 + SHIFT) && x < SX(2055 + SHIFT) || x > SX(1365 + SHIFT) && x < SX(1445 + SHIFT);
+      const { WSX: WSX2, WSY: WSY2, SX: SX2, WW: WW2, WH: WH2, WORLD_BOT: WORLD_BOT2, HELL_Y: HELL_Y2, DEEP_Y: DEEP_Y2, SEA_X1: SEA_X12 } = this.dims;
+      const reserved = (x) => x > SX2(685 + SHIFT) && x < SX2(845 + SHIFT) || x > SX2(1865 + SHIFT) && x < SX2(2055 + SHIFT) || x > SX2(1365 + SHIFT) && x < SX2(1445 + SHIFT);
       this.caverns = [];
       let placed = 0, tries = 0;
-      while (placed < Math.round(16 * WSX * WSY) && tries < 3e3 * WSX * WSY) {
+      while (placed < Math.round(16 * WSX2 * WSY2) && tries < 3e3 * WSX2 * WSY2) {
         tries++;
-        const cx = rng.int(20, WW - 20);
-        if (reserved(cx) || inSeaZone(cx)) continue;
-        const cy = rng.int(Math.max(this.surface[cx] + 60, DEEP_Y - 30), Math.min(WORLD_BOT - 20, HELL_Y - 8));
-        if (cy < DEEP_Y - 30) continue;
+        const cx = rng.int(20, WW2 - 20);
+        if (reserved(cx) || inSeaZone(cx, SEA_X12)) continue;
+        const cy = rng.int(Math.max(this.surface[cx] + 60, DEEP_Y2 - 30), Math.min(WORLD_BOT2 - 20, HELL_Y2 - 8));
+        if (cy < DEEP_Y2 - 30) continue;
         let x = cx, y = cy;
         const cells = [];
         const steps = rng.int(150, 240);
@@ -18201,7 +18304,7 @@
           for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) {
             if (dx * dx + dy * dy > r * r) continue;
             const xx = x + dx, yy = y + dy;
-            if (xx < 3 || xx >= WW - 3 || yy < 6 || yy >= WORLD_BOT - 8) continue;
+            if (xx < 3 || xx >= WW2 - 3 || yy < 6 || yy >= WORLD_BOT2 - 8) continue;
             if (this.solid(xx, yy)) {
               this.set(xx, yy, T.AIR);
               cells.push([xx, yy]);
@@ -18220,18 +18323,18 @@
         if (rng.chance(0.3)) {
           const [gx, gy0] = cells[rng.int(0, cells.length - 1)];
           let fy = gy0;
-          while (fy < WORLD_BOT - 8 && !this.solid(gx, fy + 1)) fy++;
-          if (fy < WORLD_BOT - 8) {
-            chestTier = fy < DEEP_Y ? 4 : fy < (DEEP_Y + HELL_Y) / 2 ? 5 : 6;
+          while (fy < WORLD_BOT2 - 8 && !this.solid(gx, fy + 1)) fy++;
+          if (fy < WORLD_BOT2 - 8) {
+            chestTier = fy < DEEP_Y2 ? 4 : fy < (DEEP_Y2 + HELL_Y2) / 2 ? 5 : 6;
             this.objects.push({ type: "chest", tier: chestTier, x: gx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
             this.set(gx - 1, fy, T.TORCH);
             let laid = 0;
             const want = chestTier >= 6 ? 4 : chestTier >= 5 ? 3 : 2;
             for (const tdx of [2, -2, 3, -3, 4, -4, 5, -5, 6, -6]) {
               if (laid >= want) break;
-              const tx = clamp(gx + tdx, 3, WW - 3);
+              const tx = clamp(gx + tdx, 3, WW2 - 3);
               let ty = fy;
-              while (ty < WORLD_BOT - 8 && !this.solid(tx, ty + 1)) ty++;
+              while (ty < WORLD_BOT2 - 8 && !this.solid(tx, ty + 1)) ty++;
               if (this.get(tx, ty) === T.AIR && this.solid(tx, ty + 1)) {
                 this.set(tx, ty, T.SPIKE);
                 laid++;
@@ -18246,7 +18349,7 @@
                 }
           }
         }
-        let bx0 = WW, bx1 = 0, by0 = WH, by1 = 0;
+        let bx0 = WW2, bx1 = 0, by0 = WH2, by1 = 0;
         for (const [px, py] of cells) {
           if (px < bx0) bx0 = px;
           if (px > bx1) bx1 = px;
@@ -18260,18 +18363,19 @@
     /* ================= 동굴 물 ================= */
     /** 물을 채우면 안 되는 자리인가 */
     _noWater(tx, ty, forLava) {
-      if (tx < 4 || tx >= WW - 4 || ty < 4 || ty >= WH - 6) return true;
+      const { WW: WW2, WH: WH2, HELL_Y: HELL_Y2, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12 } = this.dims;
+      if (tx < 4 || tx >= WW2 - 4 || ty < 4 || ty >= WH2 - 6) return true;
       if (this.sea && tx < this.sea.x1 + 4) return true;
-      if (ty < this.surface[clamp(tx, 0, WW - 1)] + 8) return true;
+      if (ty < this.surface[clamp(tx, 0, WW2 - 1)] + 8) return true;
       if (forLava) {
-        if (ty < HELL_Y + 4) return true;
-      } else if (ty >= HELL_Y - 6) return true;
+        if (ty < HELL_Y2 + 4) return true;
+      } else if (ty >= HELL_Y2 - 6) return true;
       if (this.inRuin && this.inRuin(tx, ty)) return true;
       if (this.inWorks && this.inWorks(tx, ty)) return true;
       if (this.inRunaway && this.inRunaway(tx, ty)) return true;
       const d = this.dungeon;
       if (d && Math.abs(tx - d.x) <= d.w / 2 + 4 && Math.abs(ty - d.y) <= d.h / 2 + 4) return true;
-      if (tx >= CAMP_X0 - 24 && tx <= CAMP_GX1 + 24) return true;
+      if (tx >= CAMP_X02 - 24 && tx <= CAMP_GX12 + 24) return true;
       const dc = this.dawnCity;
       if (dc && tx >= dc.x0 - 24 && tx <= dc.x1 + 24) return true;
       return false;
@@ -18287,13 +18391,14 @@
   var WorldSea = {
     /* ================= 가라앉은 바다 (세션 3) ================= */
     buildSea(rng, n1) {
+      const { WSX: WSX2, SX: SX2, WW: WW2, WH: WH2, SEA_X1: SEA_X12, GLACIER_X1: GLACIER_X12 } = this.dims;
       this.pools = this.pools || [];
-      const shore = SEA_X1;
+      const shore = SEA_X12;
       this.seaLevel = this.surface[shore] + 1;
-      const FLOOR = WH - 26;
+      const FLOOR = WH2 - 26;
       this.sea = { x1: shore, level: this.seaLevel, floor: FLOOR };
       const WADE = 50;
-      const RUN = Math.max(60, Math.min(SX(300), shore - WADE - SX(60)));
+      const RUN = Math.max(60, Math.min(SX2(300), shore - WADE - SX2(60)));
       this.shoreY = this.seaLevel + 2;
       const wadeRng = new RNG(this.seed + "_wade");
       const wadeBed = new Int16Array(WADE + 1);
@@ -18311,9 +18416,9 @@
         const bed = Math.round(clamp(base + jitter, this.shoreY, FLOOR));
         this.surface[x] = this.seaLevel - 1;
         for (let y = this.seaLevel; y < bed; y++) this.set(x, y, T.SEAWATER);
-        for (let y = bed; y < WH; y++) {
+        for (let y = bed; y < WH2; y++) {
           let t2;
-          if (y >= WH - 4) t2 = T.BEDROCK;
+          if (y >= WH2 - 4) t2 = T.BEDROCK;
           else if (y - bed < 4) t2 = T.SAND;
           else if (y - bed < 16) t2 = T.SANDSTONE;
           else t2 = T.STONE;
@@ -18343,12 +18448,12 @@
         for (let dx = -r; dx <= r; dx++)
           for (let dy = 0; dy <= r; dy++) {
             const x = cx + dx, y = bed + dy;
-            if (x < 1 || x >= shore || y >= WH - 8) continue;
+            if (x < 1 || x >= shore || y >= WH2 - 8) continue;
             if (dx * dx + dy * dy > r * r) continue;
             this.set(x, y, T.SEAWATER);
           }
       }
-      for (let k = 0; k < Math.round(26 * WSX) && plainR > 20; k++) {
+      for (let k = 0; k < Math.round(26 * WSX2) && plainR > 20; k++) {
         const cx = rng.int(6, plainR - 6);
         const bed = this.seaBed[cx];
         const r = rng.int(3, 7);
@@ -18356,7 +18461,7 @@
         for (let dx = -r; dx <= r; dx++)
           for (let dy = -r; dy <= r; dy++) {
             const x = cx + dx, y = bed + dy;
-            if (x < 1 || x >= plainR || y < this.seaLevel + 2 || y >= WH - 8) continue;
+            if (x < 1 || x >= plainR || y < this.seaLevel + 2 || y >= WH2 - 8) continue;
             if (dx * dx + dy * dy > r * r) continue;
             if (hill) {
               if (dy >= 0) this.set(x, y, dy < 2 ? T.SAND : T.SANDSTONE);
@@ -18388,8 +18493,8 @@
       this.beach = { x0: shore, x1: shore + BEACH_W };
       for (let k = 0; k <= BEACH_W; k++) {
         const x = shore + k;
-        if (x >= WW - 2) break;
-        const inlandRaw = this.surface[clamp(shore + BEACH_W, 0, WW - 1)];
+        if (x >= WW2 - 2) break;
+        const inlandRaw = this.surface[clamp(shore + BEACH_W, 0, WW2 - 1)];
         const target = Math.min(inlandRaw, this.seaLevel - 1);
         const SHOAL = 6, FLAT = 11;
         let want;
@@ -18420,12 +18525,12 @@
         const rx = clamp(18, 8, Math.max(9, plainR - 20));
         const bed = this.seaBed[rx];
         const RW = 11, RH = 7;
-        const y0 = Math.min(WH - 12, bed + 3);
+        const y0 = Math.min(WH2 - 12, bed + 3);
         const fy = y0 + RH - 1;
         for (let dx = -RW; dx <= RW; dx++)
           for (let dy = 0; dy <= RH; dy++) {
             const x = rx + dx, y = y0 + dy;
-            if (x < 2 || x >= shore || y >= WH - 5) continue;
+            if (x < 2 || x >= shore || y >= WH2 - 5) continue;
             const edge = Math.abs(dx) >= RW - 1 || dy >= RH - 1;
             if (edge) {
               this.set(x, y, T.SANDSTONE);
@@ -18474,7 +18579,7 @@
         this.yunseul = { x: rx, y: fy };
       }
       {
-        const ix = SX(200), FLAT = 9, SLOPE = 5, THICK = 12;
+        const ix = SX2(200), FLAT = 9, SLOPE = 5, THICK = 12;
         const half = FLAT + SLOPE, iw = half * 2 + 1;
         const iy = this.seaLevel;
         for (let dx = -half; dx <= half; dx++) {
@@ -18519,11 +18624,11 @@
       }
       {
         const bx = shore + BEACH_W, JOIN = 14;
-        const from = this.surface[clamp(bx, 0, WW - 1)];
+        const from = this.surface[clamp(bx, 0, WW2 - 1)];
         for (let k = 1; k <= JOIN; k++) {
           const x = bx + k;
-          if (x >= WW - 2) break;
-          const to = this.surface[clamp(bx + JOIN, 0, WW - 1)];
+          if (x >= WW2 - 2) break;
+          const to = this.surface[clamp(bx + JOIN, 0, WW2 - 1)];
           const want = Math.round(lerp(from, to, k / JOIN));
           const cur = this.surface[x];
           for (let y = Math.min(cur, want); y < Math.max(cur, want) + 6; y++) {
@@ -18540,10 +18645,10 @@
       }
       for (let k = 0; k < 260; k++) {
         const inGlacier = rng.chance(0.45);
-        const x = inGlacier ? rng.int(shore + BEACH_W + 4, GLACIER_X1 - 4) : rng.int(4, shore - 4);
-        if (x < 2 || x >= WW - 2) continue;
+        const x = inGlacier ? rng.int(shore + BEACH_W + 4, GLACIER_X12 - 4) : rng.int(4, shore - 4);
+        if (x < 2 || x >= WW2 - 2) continue;
         const top = inGlacier ? this.surface[x] + 6 : (this.seaBed[x] || 0) + 2;
-        const y = rng.int(top, Math.min(WH - 8, top + (inGlacier ? 120 : 20)));
+        const y = rng.int(top, Math.min(WH2 - 8, top + (inGlacier ? 120 : 20)));
         if (!this.solid(x, y)) continue;
         const id = this.get(x, y);
         if (id === T.BEDROCK) continue;
@@ -18556,10 +18661,10 @@
       }
       for (const [tile, inGlacierOnly, tries] of [[T.GLACIUM, 1, 120], [T.TIDESTONE, 0, 120]]) {
         for (let k = 0; k < tries; k++) {
-          const x = inGlacierOnly ? rng.int(shore + BEACH_W + 4, GLACIER_X1 - 4) : rng.int(4, shore - 4);
-          if (x < 2 || x >= WW - 2) continue;
+          const x = inGlacierOnly ? rng.int(shore + BEACH_W + 4, GLACIER_X12 - 4) : rng.int(4, shore - 4);
+          if (x < 2 || x >= WW2 - 2) continue;
           const top = inGlacierOnly ? this.surface[x] + 40 : (this.seaBed[x] || 0) + 6;
-          const lo = Math.min(WH - 8, top), hi = Math.min(WH - 8, top + (inGlacierOnly ? 140 : 26));
+          const lo = Math.min(WH2 - 8, top), hi = Math.min(WH2 - 8, top + (inGlacierOnly ? 140 : 26));
           if (hi <= lo) continue;
           const y = rng.int(lo, hi);
           if (!this.solid(x, y) || this.get(x, y) === T.BEDROCK) continue;
@@ -18572,8 +18677,8 @@
         }
       }
       for (let k = 2; k <= BEACH_W; k++) {
-        const x = shore + k, sy = this.surface[clamp(x, 0, WW - 1)];
-        if (x >= WW - 2) break;
+        const x = shore + k, sy = this.surface[clamp(x, 0, WW2 - 1)];
+        if (x >= WW2 - 2) break;
         if (this.get(x, sy) !== T.SAND || this.get(x, sy - 1) !== T.AIR) continue;
         if (rng.chance(0.12)) this.set(x, sy - 1, T.SEASHELL);
       }
@@ -18587,17 +18692,18 @@
     },
     /** 세계 전체 마무리 검사 — 웅덩이 하나하나를 다듬는 _levelLiquid로는 못 잡는 것이 있다. */
     sealLiquids() {
+      const { WW: WW2, WH: WH2 } = this.dims;
       const isQ = (t) => t === T.WATER || t === T.LAVA;
       let queue = [];
       const sx0 = this.sea ? this.sea.x1 + 2 : 3;
-      for (let y = 5; y < WH - 4; y++)
-        for (let x = sx0; x < WW - 3; x++)
-          if (isQ(this.get(x, y))) queue.push(y * WW + x);
+      for (let y = 5; y < WH2 - 4; y++)
+        for (let x = sx0; x < WW2 - 3; x++)
+          if (isQ(this.get(x, y))) queue.push(y * WW2 + x);
       let guard = 0;
       while (queue.length && guard++ < 60) {
         const next = [];
         for (const k of queue) {
-          const x = k % WW, y = k / WW | 0;
+          const x = k % WW2, y = k / WW2 | 0;
           if (!isQ(this.get(x, y))) continue;
           let bad = false;
           for (const dx of [-1, 1]) {
@@ -18611,7 +18717,7 @@
           if (!bad) continue;
           this.set(x, y, T.AIR);
           for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]])
-            if (isQ(this.get(x + dx, y + dy))) next.push((y + dy) * WW + (x + dx));
+            if (isQ(this.get(x + dx, y + dy))) next.push((y + dy) * WW2 + (x + dx));
         }
         if (!next.length) break;
         queue = next;
@@ -18660,6 +18766,7 @@
     },
     /** 웅덩이 채우기 — (x, y0)를 바닥으로 삼아 물이 새지 않는 만큼만 위로 쌓는다. */
     _fillBasin(x, y0, maxDepth, maxWidth, commit, liquid) {
+      const { WW: WW2 } = this.dims;
       const filled = [];
       const mark = /* @__PURE__ */ new Set();
       for (let d = 0; d < maxDepth; d++) {
@@ -18672,7 +18779,7 @@
           let cx = x + dir;
           if (dir === 0) cx = x;
           for (let step = 0; step < maxWidth; step++) {
-            if (cx < 4 || cx >= WW - 4) {
+            if (cx < 4 || cx >= WW2 - 4) {
               leak = true;
               break;
             }
@@ -18702,34 +18809,38 @@
     },
     /** 이 x열에서 (x, yFrom) 아래로 처음 만나는 "고체 위의 빈칸"을 찾는다 */
     _floorBelow(x, yFrom, limit) {
-      for (let y = yFrom; y < Math.min(WH - 6, yFrom + limit); y++) {
+      const { WH: WH2 } = this.dims;
+      for (let y = yFrom; y < Math.min(WH2 - 6, yFrom + limit); y++) {
         if (this.get(x, y) === T.AIR && TILE_DEF[this.get(x, y + 1)].solid) return y;
       }
       return -1;
     },
     /** 같은 열에서 가장 낮은 바닥 — 큰 동굴은 중간에 선반이 여러 겹이라 첫 바닥이 진짜 바닥이 아니다 */
     _deepFloor(x, yTop, yBot) {
+      const { WH: WH2 } = this.dims;
       let found = -1;
-      for (let y = yTop; y < Math.min(WH - 6, yBot); y++) {
+      for (let y = yTop; y < Math.min(WH2 - 6, yBot); y++) {
         if (this.get(x, y) === T.AIR && TILE_DEF[this.get(x, y + 1)].solid) found = y;
       }
       return found;
     },
     /** y 언저리에서 바닥 높이를 찾는다 (평탄한지 재는 데 쓴다) */
     _floorNear(x, y) {
+      const { WORLD_BOT: WORLD_BOT2 } = this.dims;
       for (let d = -2; d <= 3; d++) {
         const yy = y + d;
-        if (yy < 6 || yy >= WORLD_BOT - 6) continue;
+        if (yy < 6 || yy >= WORLD_BOT2 - 6) continue;
         if (this.get(x, yy) === T.AIR && TILE_DEF[this.get(x, yy + 1)].solid) return yy;
       }
       return -1;
     },
     /** 바닥에 그릇 모양을 파고 물을 채운다. */
     _carveBasin(cx, floorY, halfW, depth, liquid) {
+      const { WW: WW2 } = this.dims;
       const cells = [];
       for (let dx = -halfW; dx <= halfW; dx++) {
         const x = cx + dx;
-        if (x < 6 || x >= WW - 6) continue;
+        if (x < 6 || x >= WW2 - 6) continue;
         const fy = this._floorNear(x, floorY);
         if (fy < 0 || Math.abs(fy - floorY) > 1) continue;
         if (this._noWater(x, fy, liquid === T.LAVA)) continue;
@@ -18760,6 +18871,7 @@
   });
   var WorldWater = {
     floodCaves(rng) {
+      const { WSX: WSX2, WSY: WSY2, WW: WW2, WH: WH2, WORLD_BOT: WORLD_BOT2, HELL_Y: HELL_Y2 } = this.dims;
       this.pools = (this.pools || []).filter((q) => q.biome === "sea");
       const bigX = /* @__PURE__ */ new Set();
       for (const c of this.caverns || []) for (let x = c.x0; x <= c.x1; x++) bigX.add(x);
@@ -18782,10 +18894,10 @@
         if (!best) continue;
         const cells = this._carveBasin(best.x, best.y, rng.int(5, 9), rng.int(2, 4));
         if (cells.length < 12) continue;
-        let top = WH;
+        let top = WH2;
         for (const [, cy] of cells) if (cy < top) top = cy;
         this.pools.push({ x: best.x, y: top, n: cells.length, big: 1 });
-        let x0 = WW, x1 = 0;
+        let x0 = WW2, x1 = 0;
         for (const [cx, cy] of cells) if (cy === top) {
           x0 = Math.min(x0, cx);
           x1 = Math.max(x1, cx);
@@ -18836,19 +18948,19 @@
         }
       }
       let made = 0, tries = 0;
-      const want = Math.round(46 * WSX * WSY);
+      const want = Math.round(46 * WSX2 * WSY2);
       while (made < want && tries < 9e3) {
         tries++;
-        const px = rng.int(6, WW - 6);
+        const px = rng.int(6, WW2 - 6);
         if (bigX.has(px)) continue;
-        const py = rng.int(this.surface[px] + 14, Math.min(WORLD_BOT - 12, HELL_Y - 10));
+        const py = rng.int(this.surface[px] + 14, Math.min(WORLD_BOT2 - 12, HELL_Y2 - 10));
         if (this.get(px, py) !== T.AIR) continue;
         const fy = this._floorBelow(px, py, 10);
         if (fy < 0 || this._noWater(px, fy)) continue;
         const cells = this._fillBasin(px, fy, 4, 14, false);
         if (cells.length < 5) continue;
         this._fillBasin(px, fy, 4, 14, true);
-        let top = WH;
+        let top = WH2;
         for (const [, cy] of cells) if (cy < top) top = cy;
         this.pools.push({ x: px, y: top, n: cells.length, big: 0 });
         made++;
@@ -18856,8 +18968,9 @@
     },
     /** 물속 공기 주머니 — 큰 호수의 천장 아래 물칸 몇 개를 공기로 바꾼다. */
     _airPocket(cx, top, cells, rng) {
+      const { WW: WW2 } = this.dims;
       if (cells.length < 18 || !rng.chance(0.8)) return;
-      if (top < this.surface[clamp(cx, 0, WW - 1)] + 8) return;
+      if (top < this.surface[clamp(cx, 0, WW2 - 1)] + 8) return;
       const inner = cells.filter(([, cy]) => cy >= top + 2);
       if (!inner.length) return;
       const [px, py] = inner[rng.int(0, inner.length - 1)];
@@ -18873,12 +18986,13 @@
     /* 이제 동굴 호수·정글 호수와 *같은 방식**이다: 1) 바닥이 평평한 자리를 골라 (동굴 호수와 같은 평탄도 기준) 2) _carveBasin으로 웅덩이를 **파낸 뒤** 용암을 붓고 3)
        그 밖의 자잘한 자리는 — 사연: docs/code-history.md#h133 */
     floodHell(rng) {
+      const { WSX: WSX2, WSY: WSY2, WW: WW2, WH: WH2, WORLD_BOT: WORLD_BOT2, HELL_Y: HELL_Y2 } = this.dims;
       this.lavaPools = [];
       let made = 0, tries = 0;
-      while (made < Math.round(26 * WSX * WSY) && tries < 9e3 * WSX * WSY) {
+      while (made < Math.round(26 * WSX2 * WSY2) && tries < 9e3 * WSX2 * WSY2) {
         tries++;
-        const px = rng.int(8, WW - 8);
-        const fy = this._deepFloor(px, HELL_Y + 6, WORLD_BOT - 8);
+        const px = rng.int(8, WW2 - 8);
+        const fy = this._deepFloor(px, HELL_Y2 + 6, WORLD_BOT2 - 8);
         if (fy < 0 || this._noWater(px, fy, true)) continue;
         let flat = 0;
         for (let dx = -7; dx <= 7; dx++) {
@@ -18888,7 +19002,7 @@
         if (flat < 9) continue;
         const cells = this._carveBasin(px, fy, rng.int(5, 9), rng.int(2, 4), T.LAVA);
         if (cells.length < 12) continue;
-        let top = WH;
+        let top = WH2;
         for (const [, cy] of cells) if (cy < top) top = cy;
         this.lavaPools.push({ x: px, y: top, n: cells.length, big: 1 });
         made++;
@@ -18897,15 +19011,15 @@
       tries = 0;
       while (small < 40 && tries < 9e3) {
         tries++;
-        const px = rng.int(6, WW - 6);
-        const py = rng.int(HELL_Y + 6, WORLD_BOT - 12);
+        const px = rng.int(6, WW2 - 6);
+        const py = rng.int(HELL_Y2 + 6, WORLD_BOT2 - 12);
         if (this.get(px, py) !== T.AIR) continue;
         const fy = this._floorBelow(px, py, 10);
         if (fy < 0 || this._noWater(px, fy, true)) continue;
         const cells = this._fillBasin(px, fy, 4, 14, false, T.LAVA);
         if (cells.length < 5) continue;
         this._fillBasin(px, fy, 4, 14, true, T.LAVA);
-        let top = WH;
+        let top = WH2;
         for (const [, cy] of cells) if (cy < top) top = cy;
         this.lavaPools.push({ x: px, y: top, n: cells.length, big: 0 });
         small++;
@@ -18913,10 +19027,11 @@
     },
     /** 정글 중간의 지상 폭포 + 호수. */
     buildJungleFalls(rng) {
-      const cx = SX(1850 + SHIFT);
+      const { SX: SX2, WW: WW2 } = this.dims;
+      const cx = SX2(1850 + SHIFT);
       if (this.biomeAt(cx).id !== "jungle") return;
       let leftY = 0;
-      for (const sx of [cx - 30, cx - 25, cx - 20]) leftY += this.surface[clamp(sx, 0, WW - 1)];
+      for (const sx of [cx - 30, cx - 25, cx - 20]) leftY += this.surface[clamp(sx, 0, WW2 - 1)];
       leftY = Math.round(leftY / 3);
       const rise = 14;
       const rightY = leftY - rise;
@@ -19032,15 +19147,16 @@
         this.pools.push({ x: lakeL + cliffL >> 1, y: leftY, n: poolN, big: 1, spawnMul: 0.6, rareMul: 0.3, biome: "jungle" });
       }
       for (const x of [cliffR + 2, cliffR + 8, lakeL - 2, lakeL - 6]) {
-        const fy = this.surface[clamp(x, 0, WW - 1)];
+        const fy = this.surface[clamp(x, 0, WW2 - 1)];
         if (this.get(x, fy) === T.AIR && this.solid(x, fy + 1)) this.set(x, fy, T.ORCHID);
       }
       this.jungleLake = { x0: lakeL, x1: cliffR, y: leftY };
     },
     /** 이 열 위로 전주가 서 있는가 — 전주 기둥은 타일이 아니라 그림이라(factory.js), 그 아래를 밭으로 갈면 작물이 기둥과 겹쳐 그려진다. */
     poleColumn(x, y) {
+      const { WW: WW2 } = this.dims;
       for (let ty = y - 1; ty >= y - 40 && ty > 2; ty--) {
-        const m = this.machines.get(ty * WW + x);
+        const m = this.machines.get(ty * WW2 + x);
         if (m) return m.t === "pole";
         if (this.solid(x, ty)) return false;
       }
@@ -19070,20 +19186,21 @@
     },
     /** 동굴 웅덩이 꾸미기 — 물·지형이 다 정해진 뒤에 한 번. */
     decoratePonds(rng) {
+      const { WW: WW2, WH: WH2 } = this.dims;
       const natural = /* @__PURE__ */ new Set();
       for (const k in MAT_LAYER) {
         natural.add(MAT_LAYER[k].wall);
         natural.add(MAT_LAYER[k].subWall);
       }
       const host = (t) => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE || t === T.LIMESTONE || t === T.GRANITE;
-      const wild = (x, y) => natural.has(this.walls[y * WW + x]) && !this.ruinAt(x, y);
-      const seen = new Uint8Array(WW * WH);
+      const wild = (x, y) => natural.has(this.walls[y * WW2 + x]) && !this.ruinAt(x, y);
+      const seen = new Uint8Array(WW2 * WH2);
       for (const pl of this.pools || []) {
         if (pl.biome) continue;
         let sk = -1;
         for (let dy = 0; dy <= 3 && sk < 0; dy++)
           for (let dx = -6; dx <= 6; dx++) if (this.get(pl.x + dx, pl.y + dy) === T.WATER) {
-            sk = (pl.y + dy) * WW + pl.x + dx;
+            sk = (pl.y + dy) * WW2 + pl.x + dx;
             break;
           }
         if (sk < 0 || seen[sk]) continue;
@@ -19092,7 +19209,7 @@
         while (st.length && cells.length < 900) {
           const k = st.pop();
           cells.push(k);
-          for (const d of [-1, 1, -WW, WW]) {
+          for (const d of [-1, 1, -WW2, WW2]) {
             const n = k + d;
             if (!seen[n] && this.tiles[n] === T.WATER) {
               seen[n] = 1;
@@ -19101,11 +19218,11 @@
           }
         }
         if (cells.length < 4) continue;
-        const y0 = cells[0] / WW | 0;
-        if (y0 < this.surface[cells[0] % WW] + 8) continue;
-        let bx0 = WW, bx1 = 0, by0 = WH, by1 = 0;
+        const y0 = cells[0] / WW2 | 0;
+        if (y0 < this.surface[cells[0] % WW2] + 8) continue;
+        let bx0 = WW2, bx1 = 0, by0 = WH2, by1 = 0;
         for (const k of cells) {
-          const x = k % WW, y = k / WW | 0;
+          const x = k % WW2, y = k / WW2 | 0;
           bx0 = Math.min(bx0, x);
           bx1 = Math.max(bx1, x);
           by0 = Math.min(by0, y);
@@ -19126,17 +19243,17 @@
             }
           }
         for (const k of cells) {
-          const x = k % WW, y = k / WW | 0;
-          const up = this.tiles[k - WW];
+          const x = k % WW2, y = k / WW2 | 0;
+          const up = this.tiles[k - WW2];
           if (up === T.AIR) {
             const nearFall = [-1, 0, 1].some((d) => this.get(x + d, y - 1) === T.FALLS);
             if (!nearFall && rng.chance(0.24)) this.set(x, y, T.LILY);
           } else if (up === T.WATER && this.solid(x, y + 1) && rng.chance(0.3)) this.set(x, y, T.PONDWEED);
         }
-        let tx0 = WW, tx1 = 0;
-        for (const k of cells) if ((k / WW | 0) === by0) {
-          tx0 = Math.min(tx0, k % WW);
-          tx1 = Math.max(tx1, k % WW);
+        let tx0 = WW2, tx1 = 0;
+        for (const k of cells) if ((k / WW2 | 0) === by0) {
+          tx0 = Math.min(tx0, k % WW2);
+          tx1 = Math.max(tx1, k % WW2);
         }
         const sy = by0;
         for (const dir of [-1, 1]) {
@@ -19157,12 +19274,13 @@
     },
     /** 오목한 모서리 — 바닥 이끼 칸과 벽 이끼 칸 사이, 대각선으로만 굴에 닿는 돌 한 칸. */
     fillMossCorners() {
+      const { WW: WW2, HELL_Y: HELL_Y2 } = this.dims;
       const host = (t) => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE;
       const open = (x, y) => TILE_DEF[this.get(x, y)].solid !== 1;
       const mos = (x, y) => this.get(x, y) === T.MOSSSTONE;
       const put = [];
-      for (let x = 2; x < WW - 2; x++)
-        for (let y = this.surface[x] + 6; y < HELL_Y; y++) {
+      for (let x = 2; x < WW2 - 2; x++)
+        for (let y = this.surface[x] + 6; y < HELL_Y2; y++) {
           if (!host(this.get(x, y))) continue;
           for (const [dx, dy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]])
             if (open(x + dx, y + dy) && mos(x + dx, y) && mos(x, y + dy)) {
@@ -19173,14 +19291,15 @@
       for (const [x, y] of put) this.set(x, y, T.MOSSSTONE);
     },
     scatterChests(rng) {
+      const { WSX: WSX2, WSY: WSY2, SY: SY2, WW: WW2, WORLD_BOT: WORLD_BOT2, HELL_Y: HELL_Y2, SEA_X1: SEA_X12 } = this.dims;
       let placed = 0, tries = 0;
-      while (placed < Math.round(165 * WSX * WSY) && tries < 14e4 * WSX * WSY) {
+      while (placed < Math.round(165 * WSX2 * WSY2) && tries < 14e4 * WSX2 * WSY2) {
         tries++;
-        const x = rng.int(4, WW - 5), y = rng.int(this.surface[x] + 12, WORLD_BOT - 8);
-        if (inSeaZone(x)) continue;
+        const x = rng.int(4, WW2 - 5), y = rng.int(this.surface[x] + 12, WORLD_BOT2 - 8);
+        if (inSeaZone(x, SEA_X12)) continue;
         if (this.get(x, y) !== T.AIR || this.get(x, y - 1) !== T.AIR) continue;
         if (!this.solid(x, y + 1) || !this.solid(x + 1, y + 1)) continue;
-        let tier = y > HELL_Y ? 5 : y > SY(326) ? 4 : y > SY(214) ? 3 : y > SY(142) ? 2 : 1;
+        let tier = y > HELL_Y2 ? 5 : y > SY2(326) ? 4 : y > SY2(214) ? 3 : y > SY2(142) ? 2 : 1;
         this.objects.push({ type: "chest", tier, cave: 1, x: x * TS, y: (y - 0.2) * TS, w: 30, h: 26, items: null });
         this.set(x - 1, y - 1, T.TORCH);
         placed++;
@@ -19697,7 +19816,7 @@
     },
     /** ② 이웃을 보고 통째로 그리는 타일마다 그리는 법 — build() 가 엔진 틀에 건다. */
     _connDraws() {
-      const mossOf = (w, tx) => this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, WW - 1)).id] || "#6f9a4a");
+      const mossOf = (w, tx) => this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, w.dims.WW - 1)).id] || "#6f9a4a");
       const drip = (c, w, id, tx, ty, sx, sy) => {
         const up = id === T.STALAGMITE;
         let i = 0, n = 1;
@@ -20093,8 +20212,9 @@
     },
     /** 이끼가 얼마나 빽빽한가 — 0.4(마른 외톨이) ~ 1(최대) — 사연: docs/code-history.md#h84 */
     _mossDensity(w, tx, ty) {
+      const { WW: WW2 } = w.dims;
       this._md = this._md || /* @__PURE__ */ new Map();
-      const i = ty * WW + tx, now = performance.now(), hit = this._md.get(i);
+      const i = ty * WW2 + tx, now = performance.now(), hit = this._md.get(i);
       if (hit && now - hit[1] < 1500) return hit[0];
       if (this._md.size > 6e3) this._md.clear();
       let wd = 99;
@@ -20108,7 +20228,7 @@
       for (let dy = -2; dy <= 2; dy++)
         for (let dx = -2; dx <= 2; dx++) if ((dx || dy) && w.get(tx + dx, ty + dy) === T.MOSSSTONE) n++;
       const moss = CAVE_TYPES.findIndex((k) => k.id === "moss");
-      const inCave = w.caveTypeAt && w.caveTypeAt(tx, ty) === moss && ty > w.surface[clamp(tx, 0, WW - 1)] + 12;
+      const inCave = w.caveTypeAt && w.caveTypeAt(tx, ty) === moss && ty > w.surface[clamp(tx, 0, WW2 - 1)] + 12;
       const base = inCave ? 0.55 : 0.35;
       const D = Math.round(Math.max(wet, base + (1 - base) * Math.min(1, n / 12)) * 10) / 10;
       this._md.set(i, [D, now]);
@@ -27646,6 +27766,7 @@
   var Ent = class extends Entity {
     /** 타일 충돌을 포함한 이동 */
     move(dt, world, opts = {}) {
+      const { WW: WW2, WH: WH2 } = dimsOf(world);
       const prevBottom = this.y + this.h;
       const liq = opts.aquatic ? { f: 0, flow: 0, cur: 0 } : world.liquidIn(this.x, this.y, this.w, this.h);
       this.submerged = liq.f;
@@ -27662,7 +27783,7 @@
       }
       this.fall(dt, GRAV * gm, -2e3, cap);
       this.moveY(world, this.y + this.vy * dt, prevBottom, !opts.dropThrough);
-      this.keepIn(TS, WW * TS - TS, WH * TS);
+      this.keepIn(TS, WW2 * TS - TS, WH2 * TS);
     }
   };
   var Player = class extends Ent {
@@ -28542,6 +28663,7 @@
         app.sfxAt(PHYS_PROJ[type] ? "efire_phys" : "efire_magic", x / TS, y / TS);
     }
     update(dt, world, player) {
+      const { WW: WW2, WH: WH2 } = dimsOf(world);
       this.life -= dt;
       if (this.life <= 0) {
         this.dead = true;
@@ -28583,7 +28705,7 @@
           return;
         }
       }
-      if (this.x < 0 || this.x > WW * TS || this.y > WH * TS || this.y < -400) this.dead = true;
+      if (this.x < 0 || this.x > WW2 * TS || this.y > WH2 * TS || this.y < -400) this.dead = true;
     }
     impact() {
       this.dead = true;
@@ -28662,6 +28784,7 @@
       this.spin = 0;
     }
     update(dt, world) {
+      const { WH: WH2 } = dimsOf(world);
       this.life -= dt;
       this.spin += (this.vx > 0 ? 1 : -1) * dt * 9;
       if (Math.random() < dt * 24)
@@ -28683,7 +28806,7 @@
           if (Math.abs(this.vy) < 40) this.vy = 0;
         } else this.vy = 0;
       } else this.y = ny;
-      if (this.y > WH * TS) this.dead = true;
+      if (this.y > WH2 * TS) this.dead = true;
     }
     boom(world) {
       this.dead = true;
@@ -29226,6 +29349,7 @@
   var PlayerMove = {
     /* ---- 산소 ---- */
     updateOxygen(dt, world) {
+      const { WSY: WSY2 } = dimsOf(world);
       const max = this.d.oxyMax;
       if (this.oxygen === void 0 || this.oxygen > max) this.oxygen = max;
       const hx = Math.floor(this.cx / TS), hy = Math.floor((this.y + 4) / TS);
@@ -29235,7 +29359,7 @@
       this.headUnder = under;
       if (under) {
         const lv = world.sea ? world.sea.level : null;
-        const deep = lv === null ? 1 : clamp(1 + Math.max(0, this.cy / TS - lv) / (90 * WSY), 1, 4);
+        const deep = lv === null ? 1 : clamp(1 + Math.max(0, this.cy / TS - lv) / (90 * WSY2), 1, 4);
         this.oxygen = Math.max(0, this.oxygen - dt * deep);
         this.oxyPressure = deep;
         if (this.oxygen <= 0) {
@@ -29513,6 +29637,7 @@
   });
   var EnemyAI = {
     update(dt, world, player) {
+      const { SEA_X1: SEA_X12 } = dimsOf(world);
       this.atkPose -= dt;
       this.flash -= dt;
       this.atkCd -= dt;
@@ -29656,7 +29781,7 @@
           this.vy = lerp(this.vy, (want - this.y) * 5, dt * 6);
         } else this.vy = Math.min(this.vy + 900 * dt, 400);
         const ahead = Math.floor((this.cx + Math.sign(this.drift) * (this.w / 2 + 6)) / TS);
-        if (this.hitWall || !world.liquid(ahead, sr >= 0 ? sr : Math.floor(this.cy / TS)) || ahead >= SEA_X1 - 2) this.drift = -this.drift;
+        if (this.hitWall || !world.liquid(ahead, sr >= 0 ? sr : Math.floor(this.cy / TS)) || ahead >= SEA_X12 - 2) this.drift = -this.drift;
         this.vx = lerp(this.vx, this.drift, dt * 1.2);
         if (sr >= 0 && app.surfacePx) this.tilt = Math.atan2(app.surfacePx(hx + 0.6, sr) - app.surfacePx(hx - 0.6, sr), TS * 1.2);
         this.move(dt, world, { gravMul: 0, aquatic: 1 });
@@ -29786,6 +29911,7 @@
   var BossAI = {
     /* ---- 보스 AI ---- */
     bossAI(dt, world, p, dx, dy, dd) {
+      const { WW: WW2, WH: WH2 } = dimsOf(world);
       const AI = this.def.ai;
       this.stateT -= dt;
       const hpr = this.hp / this.maxHp;
@@ -29884,7 +30010,7 @@
           this.stateT = 2.4;
           if (this.state === 0) {
             const a = Math.random() * TAU, r = 200;
-            this.x = clamp(p.cx + Math.cos(a) * r, TS * 2, WW * TS - TS * 3);
+            this.x = clamp(p.cx + Math.cos(a) * r, TS * 2, WW2 * TS - TS * 3);
             this.y = p.cy + Math.sin(a) * r - 60;
             for (let i = 0; i < 24; i++) app.parts.push(new Part(this.cx, this.cy, "#a8dcf0"));
           }
@@ -30033,7 +30159,7 @@
           this.state = (this.state + 1) % 4;
           this.stateT = 3 - this.pf * 0.8;
           if (this.state === 1) {
-            this.x = clamp(p.cx + (Math.random() < 0.5 ? -170 : 170), TS * 3, WW * TS - TS * 3) - this.w / 2;
+            this.x = clamp(p.cx + (Math.random() < 0.5 ? -170 : 170), TS * 3, WW2 * TS - TS * 3) - this.w / 2;
             this.y = p.cy - this.h;
             app.shake = Math.max(app.shake, 12);
             for (let i = 0; i < 26; i++) app.parts.push(new Part(this.cx, this.cy, "#a06fff", -40, 1.1));
@@ -30233,7 +30359,7 @@
           for (let k = 0; k < 5 + this.pf * 6; k++) {
             const a = Math.random() * TAU, r = Math.random() * R;
             const tx = bx + Math.round(Math.cos(a) * r), ty = by + Math.round(Math.sin(a) * r);
-            if (tx < 2 || ty < 2 || tx >= WW - 2 || ty >= WH - 2) continue;
+            if (tx < 2 || ty < 2 || tx >= WW2 - 2 || ty >= WH2 - 2) continue;
             const t = world.get(tx, ty);
             if (t === T.AIR || t === T.BEDROCK || t === T.ALTARSTONE) continue;
             world.set(tx, ty, T.AIR);
@@ -30323,15 +30449,18 @@
       return MACHINE[m.t];
     },
     at(w, tx, ty) {
-      if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) return null;
-      return w.machines.get(ty * WW + tx) || null;
+      const { WW: WW2, WH: WH2 } = dimsOf(w);
+      if (tx < 0 || ty < 0 || tx >= WW2 || ty >= WH2) return null;
+      return w.machines.get(ty * WW2 + tx) || null;
     },
     /** 이 칸에 기계를 놓을 수 있는가 — 빈 칸이어야 한다 */
     canPlace(w, tx, ty) {
-      return w.inB(tx, ty) && w.get(tx, ty) === T.AIR && !w.machines.has(ty * WW + tx);
+      const { WW: WW2 } = dimsOf(w);
+      return w.inB(tx, ty) && w.get(tx, ty) === T.AIR && !w.machines.has(ty * WW2 + tx);
     },
     /** gen 을 주면 "세계가 지어 둔 기계"로 표시한다. */
     place(w, tx, ty, key, dir, gen) {
+      const { WW: WW2 } = dimsOf(w);
       const s = MACHINE[key];
       if (!s || !this.canPlace(w, tx, ty)) return null;
       const m = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: "" };
@@ -30355,12 +30484,13 @@
       if (s.store) m.e = 0;
       if (s.mine || key === "pump" || s.ammo || key === "trap" || s.proj) m.cd = 0;
       w.set(tx, ty, s.tile);
-      w.machines.set(ty * WW + tx, m);
+      w.machines.set(ty * WW2 + tx, m);
       w.netDirty = true;
       return m;
     },
     /** 철거 — 기계 아이템과 안에 든 것 전부를 돌려준다 */
     remove(w, tx, ty) {
+      const { WW: WW2 } = dimsOf(w);
       const m = this.at(w, tx, ty);
       if (!m) return null;
       const s = MACHINE[m.t];
@@ -30378,7 +30508,7 @@
       if (m.items) {
         for (const it of m.items) if (it) back.push(it);
       }
-      w.machines.delete(ty * WW + tx);
+      w.machines.delete(ty * WW2 + tx);
       w.set(tx, ty, T.AIR);
       w.netDirty = true;
       return back;
@@ -30390,6 +30520,7 @@
     },
     /* ================= 전력망 ================= */
     buildNets(w) {
+      const { WW: WW2 } = dimsOf(w);
       const R = MACHINE.pole.reach, LINK = R * 2;
       const poles = [];
       for (const m of w.machines.values()) {
@@ -30439,10 +30570,10 @@
       const cover = /* @__PURE__ */ new Map();
       for (const p of poles)
         for (let dx = -R; dx <= R; dx++) for (let dy = -R; dy <= R; dy++)
-          cover.set((p.y + dy) * WW + (p.x + dx), p.net);
+          cover.set((p.y + dy) * WW2 + (p.x + dx), p.net);
       for (const m of w.machines.values()) {
         if (m.t === "pole") continue;
-        const n = cover.get(m.y * WW + m.x);
+        const n = cover.get(m.y * WW2 + m.x);
         m.net = n === void 0 ? -1 : n;
       }
       w.nets = nets;
@@ -30570,6 +30701,7 @@
     },
     /* ================= 틱 ================= */
     tick(w, G2) {
+      const { WW: WW2 } = dimsOf(w);
       this.now = G2.time;
       if (w.netDirty) this.buildNets(w);
       const ms = w.machines;
@@ -30600,7 +30732,7 @@
       const p = G2.player;
       let pn = null, pwant = 0;
       if (p && !p.dead && w.cover) {
-        const k = w.cover.get(Math.floor(p.cy / TS) * WW + Math.floor(p.cx / TS));
+        const k = w.cover.get(Math.floor(p.cy / TS) * WW2 + Math.floor(p.cx / TS));
         pn = k === void 0 ? null : nets[k];
         if (pn && !pn.off) {
           pwant = Math.min(this.CHARGE_TICK, p.d.maxCharge - p.charge);
@@ -30792,7 +30924,8 @@
     },
     /** 풍차 위를 막는가 — 고체 타일과 다른 기계 둘 다 바람을 가린다 */
     blocksWind(w, x, y) {
-      return w.solid(x, y) || w.machines.has(y * WW + x);
+      const { WW: WW2 } = dimsOf(w);
+      return w.solid(x, y) || w.machines.has(y * WW2 + x);
     },
     /* ---- 연료를 태운다. 태울 수 있으면 true ---- */
     burn(m) {
@@ -30896,6 +31029,7 @@
     // 일할 때 몸체 떨림(px)
     /** 일하는 모습 — 기계마다 한 가지 움직임. 일하지 않으면(act 0) 그리지 않는다. */
     drawWork(c, w, m, sx, sy, time, camX, camY) {
+      const { WW: WW2 } = dimsOf(w);
       if (!m.on || !m.act) return;
       const cx = sx + TS / 2, cy = sy + TS / 2, t = time + m.x * 0.37;
       c.save();
@@ -30933,7 +31067,7 @@
           c.fill();
           c.restore();
           c.save();
-          const k = m.tgt[1] * WW + m.tgt[0], left = w.oreHits[k];
+          const k = m.tgt[1] * WW2 + m.tgt[0], left = w.oreHits[k];
           const tot = this.ORE_HITS + (tileHash(m.tgt[0], m.tgt[1]) * 10 | 0);
           const n = left === void 0 ? 1 : 1 + Math.round((1 - left / tot) * 5);
           c.strokeStyle = "rgba(20,16,12,.75)";
@@ -31176,6 +31310,7 @@
     },
     /* ---- 드릴: 반경 안의 광맥을 실제로 캐낸다 (캐낸 자리는 사라진다) ---- */
     runDrill(w, m, s) {
+      const { WW: WW2 } = dimsOf(w);
       let step = 1;
       if (s.fuelIn) {
         if (!this.burn(m)) {
@@ -31219,7 +31354,7 @@
         m.tgt = null;
         return;
       }
-      const [bx, by] = best, k = by * WW + bx;
+      const [bx, by] = best, k = by * WW2 + bx;
       this.drillFx(bx, by, TILE_DEF[w.get(bx, by)].c);
       if (!TILE_DEF[w.get(bx, by)].rich) {
         if (w.oreHits[k] === void 0) w.oreHits[k] = this.ORE_HITS + (tileHash(bx, by) * 10 | 0);
@@ -31484,11 +31619,12 @@
     },
     /* ================= 렌더 ================= */
     render(c, w, camX, camY, tx0, ty0, tx1, ty1, time) {
+      const { WW: WW2, WH: WH2 } = dimsOf(w);
       if (!w.machines.size) return;
       c.save();
       c.imageSmoothingEnabled = false;
-      const y0 = Math.max(0, ty0), y1 = Math.min(WH - 1, ty1);
-      const x0 = Math.max(0, tx0), x1 = Math.min(WW - 1, tx1);
+      const y0 = Math.max(0, ty0), y1 = Math.min(WH2 - 1, ty1);
+      const x0 = Math.max(0, tx0), x1 = Math.min(WW2 - 1, tx1);
       if (w.wires && w.wires.length) {
         c.strokeStyle = "rgba(28,26,22,.85)";
         c.lineWidth = 1.4;
@@ -31506,7 +31642,7 @@
       const items = [];
       for (let ty = y0; ty <= y1; ty++) {
         for (let tx = x0; tx <= x1; tx++) {
-          const m = w.machines.get(ty * WW + tx);
+          const m = w.machines.get(ty * WW2 + tx);
           if (!m) continue;
           const sx = tx * TS - camX, sy = ty * TS - camY;
           const s = MACHINE[m.t];
@@ -31520,7 +31656,7 @@
           }
           if (m.t === "pole") {
             let by = ty + 1;
-            while (by < WH && !w.solid(tx, by) && by - ty < 40) by++;
+            while (by < WH2 && !w.solid(tx, by) && by - ty < 40) by++;
             const h = (by - ty) * TS - (TS - 1);
             if (h > 0) {
               const px = sx + TS / 2 - 2, py = sy + TS - 1;
@@ -34040,6 +34176,7 @@
   var HudUIPart = {
     /* ---------------- HUD ---------------- */
     updateHUD() {
+      const { SURF_BASE: SURF_BASE2 } = dimsOf(app.world);
       const p = app.player, d = p.d;
       $("#hp-fill").style.width = p.hp / d.maxHp * 100 + "%";
       $("#hp-text").textContent = `${Math.ceil(p.hp)} / ${d.maxHp}`;
@@ -34074,7 +34211,7 @@
       }
       $("#gold-text").innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl("coin")})"></span>${fmt(p.gold)}`;
       const ty = Math.floor(p.cy / TS);
-      const depth = Math.round((ty - SURF_BASE) * 5);
+      const depth = Math.round((ty - SURF_BASE2) * 5);
       $("#depth-text").textContent = depth > 0 ? tr("지하 {depth}m", { depth }) : tr("지상 {n}m", { n: -depth });
       const hh = Math.floor(app.dayT / 60), mm = Math.floor(app.dayT % 60);
       $("#clock-text").textContent = `${pad2(hh)}:${pad2(mm)}`;
@@ -34146,6 +34283,7 @@
       this.fmDprH = h;
     },
     renderFullmap() {
+      const { WW: WW2, WH: WH2 } = dimsOf(app.world);
       if (this.open !== "fullmap" || !this.fmDprW) return;
       const c = this.fmC, W = this.fmDprW, H = this.fmDprH, z = this.fmZoom;
       c.imageSmoothingEnabled = false;
@@ -34153,8 +34291,8 @@
       c.fillRect(0, 0, W, H);
       const sw = W / z, sh = H / z;
       let sx0 = this.fmX - sw / 2, sy0 = this.fmY - sh / 2;
-      this.fmX = clamp(this.fmX, -sw * 0.4, WW + sw * 0.4);
-      this.fmY = clamp(this.fmY, -sh * 0.4, WH + sh * 0.4);
+      this.fmX = clamp(this.fmX, -sw * 0.4, WW2 + sw * 0.4);
+      this.fmY = clamp(this.fmY, -sh * 0.4, WH2 + sh * 0.4);
       sx0 = this.fmX - sw / 2;
       sy0 = this.fmY - sh / 2;
       c.drawImage(app.mapAtlas, sx0, sy0, sw, sh, 0, 0, W, H);
@@ -34491,12 +34629,13 @@
   Object.assign(Ambient, {
     /** 매 프레임 — 플레이어와 가장 가까운 폭포/큰 웅덩이까지 거리를 재서 음량을 맞춘다. */
     updateFromWorld(w, p, dt, active) {
+      const { WW: WW2 } = dimsOf(w);
       for (const key in AMBIENT_FILES) {
         let target = 0;
         if (active && w && p && (key === "sea" || key === "glacier")) {
           const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
           if (key === "sea") target = p.swimming || p.submerged > 0.5 ? 1 : 0;
-          else target = w.biomeAt(clamp(tx, 0, WW - 1)).id === "glacier" && !(p.swimming || p.submerged > 0.5) ? 0.8 : 0;
+          else target = w.biomeAt(clamp(tx, 0, WW2 - 1)).id === "glacier" && !(p.swimming || p.submerged > 0.5) ? 0.8 : 0;
         } else if (active && w && p) {
           const R = AMBIENT_RADIUS[key];
           const list = key === "waterfall" ? w.falls || [] : (w.pools || []).filter((pl) => pl.big);
@@ -34736,13 +34875,14 @@
     // 지금 열려 있는 세이브가 몇 번 슬롯인지 — saveGame()이 여길 본다
     /* ================= 초기화 ================= */
     init() {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       this.cv = $("#game");
       this.ctx = this.cv.getContext("2d");
       this.mm = $("#minimap");
       this.mmx = this.mm.getContext("2d");
       this.mapAtlas = document.createElement("canvas");
-      this.mapAtlas.width = WW;
-      this.mapAtlas.height = WH;
+      this.mapAtlas.width = WW2;
+      this.mapAtlas.height = WH2;
       this.mapAtlasX = this.mapAtlas.getContext("2d");
       addEventListener("resize", () => this.resize());
       this.resize();
@@ -35050,6 +35190,7 @@
       this.rng = new RNG(seed + "_g");
       setWorldSize(size || new URLSearchParams(location.search).get("size") || "s");
       this.world = new World(seed).generate();
+      const { WW: WW2, WH: WH2, HELL_Y: HELL_Y2, CAMP_X1: CAMP_X12, SEA_X1: SEA_X12 } = this.world.dims;
       this.fitMapAtlas();
       this._rigs = null;
       this._fbg = null;
@@ -35139,8 +35280,8 @@
       this.bountyNext = [];
       this.shopStock = {};
       this.shopStockDay = -1;
-      this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-      this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+      this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+      this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
       $("#title-screen").style.display = "none";
       if (typeof TitleBG !== "undefined") TitleBG.stop();
       this.closeAllModals();
@@ -35190,8 +35331,8 @@
           p.y = (d.gy - 3) * TS;
         }
         p.vx = p.vy = 0;
-        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+        this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+        this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
       }
       if (qs.get("debug") === "price") {
         this.villageUnlocked = true;
@@ -35236,8 +35377,8 @@
         p.x = ((d.x0 + d.x1 >> 1) - 5) * TS;
         p.y = (d.gy - 3) * TS;
         p.vx = p.vy = 0;
-        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+        this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+        this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
         UI5.refreshBag();
         UI5.refreshEquip();
         this.toast(tr("값 확인 자리 — {plv}레벨 · 마을 {n}단계 · 세션 {sess}", { plv, n: VILLAGE.length - 1, sess }), "good");
@@ -35292,12 +35433,12 @@
         p.hp = p.d.maxHp;
         p.mp = p.d.maxMp;
         const w = this.world;
-        const sx = SEA_X1 + 6;
+        const sx = SEA_X12 + 6;
         p.x = sx * TS;
         p.y = (w.surface[sx] - 3) * TS;
         p.vx = p.vy = 0;
-        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+        this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+        this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
         UI5.refreshBag();
         UI5.refreshEquip();
         this.toast(tr("세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급"), "good");
@@ -35337,14 +35478,14 @@
           let sx = lake.x;
           for (let k = 0; k < 40; k++) {
             const tx = lake.x - k;
-            const ty = w.surface[clamp(tx, 0, WW - 1)];
+            const ty = w.surface[clamp(tx, 0, WW2 - 1)];
             if (!TILE_DEF[w.get(tx, ty)].liquid && w.solid(tx, ty + 1)) {
               sx = tx;
               break;
             }
           }
           for (let k = 1; k <= 12; k++) {
-            const x = sx - k, sy = w.surface[clamp(x, 0, WW - 1)];
+            const x = sx - k, sy = w.surface[clamp(x, 0, WW2 - 1)];
             if (TILE_DEF[w.get(x, sy)].liquid) continue;
             if (w.solid(x, sy - 1)) continue;
             if (w.get(x, sy - 1) !== T.AIR) w.set(x, sy - 1, T.AIR);
@@ -35352,10 +35493,10 @@
             if (!w.solid(x, sy + 1)) w.set(x, sy + 1, T.DIRT);
           }
           p.x = sx * TS;
-          p.y = (w.surface[clamp(sx, 0, WW - 1)] - 2) * TS;
+          p.y = (w.surface[clamp(sx, 0, WW2 - 1)] - 2) * TS;
           p.vx = p.vy = 0;
-          this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-          this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+          this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+          this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
           this.toast(tr("낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭"), "good");
         }
         UI5.refreshBag();
@@ -35391,8 +35532,8 @@
           this.seenRuins[id] = 1;
           if (qs.get("boss") === "1") this.lairs[idx] = 1;
           this.ruinPulse = { [id]: clamp(+qs.get("pulse") || 0, 0, 100) };
-          this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-          this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+          this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+          this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
           UI5.refreshBag();
         }
       }
@@ -35426,10 +35567,10 @@
             for (let dx = -8; dx <= 8; dx++) for (let dy = -8; dy <= 3; dy++) if (w.get(x + dx, y + dy) === mark) n++;
             return n >= (kq === "fume" ? 1 : 3);
           };
-          for (let r = 0; r < WW && !at; r += 7)
+          for (let r = 0; r < WW2 && !at; r += 7)
             for (const x of [cx0 + r, cx0 - r]) {
-              if (x < 5 || x >= WW - 5 || at) continue;
-              for (let y = w.surface[x] + 14; y < HELL_Y - 4; y++)
+              if (x < 5 || x >= WW2 - 5 || at) continue;
+              for (let y = w.surface[x] + 14; y < HELL_Y2 - 4; y++)
                 if (w.caveKindAt(x, y) === k && w.get(x, y) === T.AIR && w.get(x, y - 1) === T.AIR && w.solid(x, y + 1) && near(x, y)) {
                   at = [x, y];
                   break;
@@ -35443,8 +35584,8 @@
           p.x = at[0] * TS + TS / 2 - p.w / 2;
           p.y = (at[1] + 1) * TS - p.h;
           p.vx = p.vy = 0;
-          this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-          this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+          this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+          this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
         }
         UI5.refreshBag();
       }
@@ -35482,10 +35623,10 @@
         p.mp = p.d.maxMp;
         p.gold = +qs.get("gold") || 2e5;
         const w = this.world;
-        const gx = CAMP_X1 + 16;
+        const gx = CAMP_X12 + 16;
         let smin = 1e9;
-        for (let x = gx - 26; x <= gx; x++) smin = Math.min(smin, w.surface[clamp(x, 0, WW - 1)]);
-        const gy = clamp(smin + 18, 60, WH - 40);
+        for (let x = gx - 26; x <= gx; x++) smin = Math.min(smin, w.surface[clamp(x, 0, WW2 - 1)]);
+        const gy = clamp(smin + 18, 60, WH2 - 40);
         const x0 = gx - 26, x1 = gx + 78, top = gy - 13;
         for (let x = x0; x <= x1; x++)
           for (let y = top; y <= gy + 6; y++) {
@@ -35514,8 +35655,8 @@
         p.x = (gx - 6) * TS;
         p.y = (gy - 2) * TS;
         p.vx = p.vy = 0;
-        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+        this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+        this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
         UI5.refreshBag();
         UI5.refreshEquip();
         this.toast(tr("폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳"), "good");
@@ -35543,6 +35684,7 @@
     },
     /** 지금 상황에 맞는 배경음악 키를 고른다 (music.js의 BGM 테이블과 짝) */
     pickBgm() {
+      const { SKY_Y: SKY_Y2 } = dimsOf(this.world);
       if (this.state !== "play" || !this.player || !this.world) return "title";
       if (this._deathEl === void 0) this._deathEl = $("#death-screen");
       if (this._deathEl && this._deathEl.classList.contains("open")) return "lastnote";
@@ -35557,7 +35699,7 @@
       const wx = this.event && this.eventActive() ? this.event.id : null;
       const weather = lowHp ? "tense" : wx === "rain" ? "rain" : wx ? "tense" : null;
       if (zone === "citadel") return weather || "sky";
-      if (zone === "sky" || ty < SKY_Y) return "sky";
+      if (zone === "sky" || ty < SKY_Y2) return "sky";
       if (p.swimming || p.submerged > 0.5) return "seadeep";
       if (this.inCatacomb(tx, ty, zone)) return weather || "catacomb";
       if (weather) return weather;
@@ -35570,13 +35712,15 @@
     },
     /** 카타콤 곡을 쓰는 자리인가 — 심층 전부와, 깊이와 무관한 모든 던전·유적 */
     inCatacomb(tx, ty, zone) {
-      if (ty > DEEP_Y) return true;
+      const { DEEP_Y: DEEP_Y2 } = dimsOf(this.world);
+      if (ty > DEEP_Y2) return true;
       if (zone === "ruin" || zone === "works" || zone === "runaway" || zone === "atelier" || zone === "deepshaft") return true;
       const d = this.world.dungeon;
       if (d && Math.abs(tx - d.x) <= d.w / 2 + 2 && Math.abs(ty - d.y) <= d.h / 2 + 2) return true;
       return false;
     },
     update(dt) {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       if (this.stopT > 0) {
         this.stopT -= dt;
         dt *= 0.12;
@@ -35719,8 +35863,8 @@
         w.regrow(this.rng, 4, Math.floor(p.cx / TS));
       }
       const tx = p.cx - this.W / 2, ty = p.cy - this.H / 2 - 30;
-      this.cam.x = lerp(this.cam.x, clamp(tx, 0, WW * TS - this.W), 1 - Math.pow(2e-3, dt));
-      this.cam.y = lerp(this.cam.y, clamp(ty, 0, WH * TS - this.H), 1 - Math.pow(2e-3, dt));
+      this.cam.x = lerp(this.cam.x, clamp(tx, 0, WW2 * TS - this.W), 1 - Math.pow(2e-3, dt));
+      this.cam.y = lerp(this.cam.y, clamp(ty, 0, WH2 * TS - this.H), 1 - Math.pow(2e-3, dt));
       this.shake = Math.max(0, this.shake - dt * 26);
       const heldTool = p.held() && idef(p.held()).type === "tool";
       if (heldTool !== this._mining) {
@@ -35793,11 +35937,12 @@
     },
     /* ---- 고대 유적 함정 ---- */
     tickTileTraps() {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const w = this.world, p = this.player;
       const cx = Math.floor(p.cx / TS), cy = Math.floor(p.cy / TS);
       const R = 26;
-      const x0 = Math.max(1, cx - R), x1 = Math.min(WW - 2, cx + R);
-      const y0 = Math.max(1, cy - 18), y1 = Math.min(WH - 2, cy + 18);
+      const x0 = Math.max(1, cx - R), x1 = Math.min(WW2 - 2, cx + R);
+      const y0 = Math.max(1, cy - 18), y1 = Math.min(WH2 - 2, cy + 18);
       for (let y = y0; y <= y1; y++) {
         for (let x = x0; x <= x1; x++) {
           const def = TILE_DEF[w.get(x, y)];
@@ -35974,6 +36119,7 @@
       if (p.attackReady()) p.doAttack(this.input.wx, this.input.wy);
     },
     mine(dt, tool) {
+      const { WW: WW2 } = dimsOf(this.world);
       const p = this.player, w = this.world;
       const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
       if (dist(p.cx, p.cy, (tx + 0.5) * TS, (ty + 0.5) * TS) > TS * 6) {
@@ -36050,7 +36196,7 @@
         this.checkAch();
         const reaping = def.crop && def.crop.ripe;
         if (reaping && !tool.scythe) {
-          w.crops.delete(ty * WW + tx);
+          w.crops.delete(ty * WW2 + tx);
           this.matBurst("plant", (tx + 0.5) * TS, (ty + 0.5) * TS, 12, { spd: 1.1, vy: -40 });
           if (!this._scytheWarn || this.time - this._scytheWarn > 2.5) {
             this._scytheWarn = this.time;
@@ -36061,7 +36207,7 @@
         }
         this.dropTile(tx, ty, id);
         if (def.crop) {
-          w.crops.delete(ty * WW + tx);
+          w.crops.delete(ty * WW2 + tx);
           if (def.crop.ripe) this.harvestBonus(tx, ty, def, tool);
         }
         if (def.crop && def.crop.ripe) {
@@ -36073,6 +36219,7 @@
     },
     /* ================= 밭은 아침에 자란다 ================= */
     growCropsDaily() {
+      const { WW: WW2 } = dimsOf(this.world);
       const w = this.world;
       if (!w || !w.crops || !w.crops.size) return;
       const lv = this.player.profLv("farm"), day = this.dayCount;
@@ -36092,7 +36239,7 @@
       if (grew + ripe > 0 && this.everPlanted) {
         this.toast(tr("밤새 밭이 자랐다 — {n}칸{v}", { n: grew + ripe, v: ripe ? ` ${tr("· {ripe}칸은 다 여물었다", { ripe })}` : "" }), "good");
         for (const k of w.crops) {
-          const x = k % WW, y = k / WW | 0;
+          const x = k % WW2, y = k / WW2 | 0;
           if (Math.abs(x * TS - this.cam.x - this.W / 2) > this.W / 2 + TS) continue;
           if (Math.abs(y * TS - this.cam.y - this.H / 2) > this.H / 2 + TS) continue;
           const d = TILE_DEF[w.get(x, y)];
@@ -36154,8 +36301,9 @@
     },
     /** 비 오는 아침 — 위로 막힌 것 없이 하늘이 트인 밭만 적신다(지붕 밑·굴 속 밭은 그대로). */
     rainWater(w, day) {
+      const { WW: WW2 } = dimsOf(this.world);
       for (const k of w.crops) {
-        const x = k % WW, fy = (k / WW | 0) + 1;
+        const x = k % WW2, fy = (k / WW2 | 0) + 1;
         let open = true;
         for (let y = fy - 2; y >= 0; y--) if (TILE_DEF[w.get(x, y)].solid === 1) {
           open = false;
@@ -36226,12 +36374,13 @@
     },
     /** 렌더 단계 — 젖은 밭은 흙이 짙고 윗면에 물기가 번들거린다. 물가 판정은 칸마다 2초 캐시(121칸을 매 프레임 훑지 않게). */
     rFarmWet(f) {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
       const day = this.dayCount + 1;
       const nw = this._nearWet || (this._nearWet = /* @__PURE__ */ new Map());
-      for (let ty = Math.max(0, ty0); ty <= Math.min(WH - 1, ty1); ty++)
-        for (let tx = Math.max(0, tx0); tx <= Math.min(WW - 1, tx1); tx++) {
-          const k = ty * WW + tx;
+      for (let ty = Math.max(0, ty0); ty <= Math.min(WH2 - 1, ty1); ty++)
+        for (let tx = Math.max(0, tx0); tx <= Math.min(WW2 - 1, tx1); tx++) {
+          const k = ty * WW2 + tx;
           if (w.tiles[k] !== T.FARMLAND) continue;
           let wet = (w.wet[k] | 0) >= day;
           if (!wet) {
@@ -36282,6 +36431,7 @@
     },
     /** 벌목 — 기둥을 자르면 그 위 기둥이 무너지고, 살아 있는 기둥에서 떨어져 나간 잎 *덩어리**가 통째로 함께 떨어진다. */
     fellTree(tx, ty, wasTrunk) {
+      const { WW: WW2 } = dimsOf(this.world);
       const w = this.world;
       const leafy = (id) => !!TILE_DEF[id].leaf;
       if (wasTrunk) {
@@ -36299,9 +36449,9 @@
       for (let y = ty - 22; y <= ty + R; y++) {
         for (let x = tx - R; x <= tx + R; x++) {
           const id0 = w.get(x, y);
-          if (!leafy(id0) || seen.has(y * WW + x)) continue;
+          if (!leafy(id0) || seen.has(y * WW2 + x)) continue;
           const group = [], st = [[x, y]];
-          seen.add(y * WW + x);
+          seen.add(y * WW2 + x);
           let touching = false, guard = 0;
           while (st.length && guard++ < 900) {
             const [cx, cy] = st.pop();
@@ -36313,7 +36463,7 @@
                 continue;
               }
               if (!leafy(nid)) continue;
-              const k = ny * WW + nx;
+              const k = ny * WW2 + nx;
               if (seen.has(k)) continue;
               seen.add(k);
               st.push([nx, ny]);
@@ -36977,6 +37127,7 @@
     /** ?debug=factory — 캠프 오른쪽을 평평하게 밀고 기계 스물여섯 종을 한 줄로 세운다.
         전주는 10칸마다(반경 5 · 이음 10) 서서 줄 전체가 망 하나다. 몹은 &mobs=1 일 때만 나온다. */
     buildDebugFactory(qs) {
+      const { WW: WW2, WH: WH2, WORLD_BOT: WORLD_BOT2, CAMP_X1: CAMP_X12 } = dimsOf(this.world);
       const p = this.player, w = this.world;
       const give = (id, n) => {
         const max = ITEMS[id].stack || 1;
@@ -36999,10 +37150,10 @@
       this.dbgCalm = qs.get("mobs") !== "1";
       this.dayT = 12 * 60;
       for (const k in MACHINE) give(MACHINE[k].item, 10);
-      const X0 = CAMP_X1 + 8, LEN = 84, AX = X0 + LEN + 12, BX = AX + 40, XEND = BX + 28;
+      const X0 = CAMP_X12 + 8, LEN = 84, AX = X0 + LEN + 12, BX = AX + 40, XEND = BX + 28;
       let gy = 0;
-      for (let x = X0 - 8; x <= XEND; x++) gy = Math.max(gy, w.surface[clamp(x, 0, WW - 1)]);
-      gy = Math.min(gy, WORLD_BOT - 20);
+      for (let x = X0 - 8; x <= XEND; x++) gy = Math.max(gy, w.surface[clamp(x, 0, WW2 - 1)]);
+      gy = Math.min(gy, WORLD_BOT2 - 20);
       for (const o of w.objects) if (o.type === "rig" && o.tx >= X0 - 16 && o.tx <= XEND + 8) o.gone = 1;
       this._rigs = null;
       for (let x = X0 - 8; x <= XEND; x++) {
@@ -37117,8 +37268,8 @@
       p.x = (X0 - 5) * TS;
       p.y = (gy - 3) * TS;
       p.vx = p.vy = 0;
-      this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-      this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+      this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+      this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
       UI5.refreshBag();
       UI5.refreshEquip();
       this.toast(tr("공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다"), "good");
@@ -37270,6 +37421,7 @@
     /* ================= 여명 마을 시설 ================= */
     /** 귀환 비석 — 베이스캠프 ↔ 여명 마을 왕복 */
     useWaystone() {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const p = this.player, w = this.world;
       const d = w.dawnCity;
       if (!this.villageUnlocked) {
@@ -37288,8 +37440,8 @@
             p.x = tx * TS - p.w / 2;
             p.y = ty * TS;
             p.vx = p.vy = 0;
-            this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-            this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+            this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+            this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
             for (let i = 0; i < 30; i++) this.parts.push(new Part(p.cx, p.cy, "#9fe8dc", -60, 1.1));
             this.toast(tr("{to}에 도착했다", { to }), "good");
             this.sfx("chapter");
@@ -38642,7 +38794,8 @@
     /* 개조가 걸리는 구역 — 세션 1 바이옴의 지층들. */
     MECH_ZONE: { surface: 1, cave: 1, deep: 1, corrupt: 1, ice: 1, hell: 1, jungle: 1, glowfen: 1 },
     zoneTable(zone, night, tx, ty) {
-      const desert = tx !== void 0 && this.world.biomeAt(clamp(tx, 0, WW - 1)).id === "desert";
+      const { WW: WW2 } = dimsOf(this.world);
+      const desert = tx !== void 0 && this.world.biomeAt(clamp(tx, 0, WW2 - 1)).id === "desert";
       switch (zone) {
         case "surface":
           if (desert) return night ? ["scorpion", "sandmaw", "zombie"] : ["scorpion", "sandmaw", "ashcrow", "sand_lizard"];
@@ -38660,7 +38813,7 @@
         case "beach":
           return night ? ["driftling", "driftling", "glacier_stalker", "zombie"] : ["driftling", "driftling", "ashcrow", "arctic_hare"];
         case "ice": {
-          const glacier = tx !== void 0 && this.world.biomeAt(clamp(tx, 0, WW - 1)).id === "glacier";
+          const glacier = tx !== void 0 && this.world.biomeAt(clamp(tx, 0, WW2 - 1)).id === "glacier";
           if (glacier) return night ? ["glacier_stalker", "crevasse_maw", "glacier_stalker", "icewolf"] : ["glacier_stalker", "crevasse_maw", "frostling", "arctic_hare"];
           return night ? ["frostling", "icewolf", "zombie"] : ["frostling", "icewolf", "slime", "arctic_hare", "arctic_hare"];
         }
@@ -38700,10 +38853,11 @@
     },
     /** 이 이벤트가 지금 플레이어 위치에서 실제로 작동하는가 */
     eventActive() {
+      const { WW: WW2 } = dimsOf(this.world);
       const e = this.eventSpec();
       if (!e) return false;
       const w = this.world, p = this.player;
-      const tx = clamp(Math.floor(p.cx / TS), 0, WW - 1);
+      const tx = clamp(Math.floor(p.cx / TS), 0, WW2 - 1);
       const bio = w.biomeAt(tx).id;
       if (e.biome && bio !== e.biome) return false;
       if (e.notBiome && e.notBiome.indexOf(bio) >= 0) return false;
@@ -38711,6 +38865,7 @@
       return e.zones.indexOf(z) >= 0;
     },
     updateEvents(dt) {
+      const { WW: WW2 } = dimsOf(this.world);
       const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
       const phase = this.dayCount * 2 + (night ? 1 : 0);
       if (this.meteorRolled === void 0) this.meteorRolled = phase;
@@ -38730,7 +38885,7 @@
       if (this.eventRolled === phase) return;
       this.eventRolled = phase;
       const p = this.player;
-      const tx = clamp(Math.floor(p.cx / TS), 0, WW - 1);
+      const tx = clamp(Math.floor(p.cx / TS), 0, WW2 - 1);
       const biome = this.world.biomeAt(tx).id;
       const r = new RNG(this.world.seed + "_ev" + phase);
       for (const id in EVENTS) {
@@ -38962,8 +39117,9 @@
     // 굴뚝 꼭대기
     /** 이 자리 위로 막힌 칸까지 몇 px인가. */
     smokeCeil(x, y) {
+      const { WW: WW2 } = dimsOf(this.world);
       const w = this.world;
-      const tx = clamp(Math.floor(x / TS), 0, WW - 1);
+      const tx = clamp(Math.floor(x / TS), 0, WW2 - 1);
       const y0 = Math.floor(y / TS);
       for (let d = 1; d <= 10; d++) {
         const ty = y0 - d;
@@ -38973,6 +39129,7 @@
       return null;
     },
     updateSmoke(dt) {
+      const { WW: WW2 } = dimsOf(this.world);
       const w = this.world, p = this.player;
       if (!w || !p) return;
       if (!this.smokes) this.smokes = [];
@@ -39015,7 +39172,7 @@
           s.x += (s.sway < Math.PI ? 1 : -1) * 13 * dt;
         } else {
           const ny = s.y - this.SMOKE_RISE * dt;
-          const tx = clamp(Math.floor(s.x / TS), 0, WW - 1);
+          const tx = clamp(Math.floor(s.x / TS), 0, WW2 - 1);
           const ty = Math.floor((ny - s.sz * 0.4) / TS);
           if (ty >= 0 && w.solid(tx, ty)) {
             s.stuck = 1;
@@ -39187,6 +39344,7 @@
     },
     /** 근처 웅덩이 한 곳을 골라 물속 생물을 채운다. */
     trySpawnWater(normal) {
+      const { WSY: WSY2 } = dimsOf(this.world);
       const p = this.player, w = this.world;
       const pools = w.pools;
       if (!pools || !pools.length) return false;
@@ -39206,7 +39364,7 @@
         if (!w.liquid(tx, ty)) continue;
         const sx = tx * TS - this.cam.x, sy = ty * TS - this.cam.y;
         if (sx > -60 && sx < this.W + 60 && sy > -60 && sy < this.H + 60) continue;
-        const table = pool.biome === "sea" ? ty > w.sea.level + 220 * WSY ? ["abyss_angler", "deep_octopus", "abyss_angler"] : ty > w.sea.level + 90 * WSY ? ["deep_octopus", "reef_shark", "abyss_angler"] : ty > w.sea.level + 30 * WSY ? ["reef_shark", "reef_crab", "lantern_jelly", "reef_shark"] : ["reef_crab", "lantern_jelly", "reef_crab"] : pool.biome === "jungle" ? ["jungle_koi", "jungle_koi", "jungle_koi", "grotto_eel"] : pool.big ? ["grotto_eel", "cave_minnow", "drowned_hand", "grotto_eel"] : ["cave_minnow", "cave_minnow", "grotto_eel"];
+        const table = pool.biome === "sea" ? ty > w.sea.level + 220 * WSY2 ? ["abyss_angler", "deep_octopus", "abyss_angler"] : ty > w.sea.level + 90 * WSY2 ? ["deep_octopus", "reef_shark", "abyss_angler"] : ty > w.sea.level + 30 * WSY2 ? ["reef_shark", "reef_crab", "lantern_jelly", "reef_shark"] : ["reef_crab", "lantern_jelly", "reef_crab"] : pool.biome === "jungle" ? ["jungle_koi", "jungle_koi", "jungle_koi", "grotto_eel"] : pool.big ? ["grotto_eel", "cave_minnow", "drowned_hand", "grotto_eel"] : ["cave_minnow", "cave_minnow", "grotto_eel"];
         const type = table[Math.floor(Math.random() * table.length)];
         if (this.ents.filter((e) => e instanceof Enemy && e.def.ai === "swimmer").length >= 7) return false;
         this.ents.push(new Enemy(type, tx * TS, ty * TS, this.scale()));
@@ -39216,14 +39374,15 @@
     },
     /** 바다 부유물 — 바다 수면 가까이 있을 때만, 드물게. */
     trySpawnFlotsam() {
+      const { SEA_X1: SEA_X12 } = dimsOf(this.world);
       const p = this.player, w = this.world;
       if (!w.sea || Math.random() > 0.012) return false;
       const ptx = Math.floor(p.cx / TS), pty = Math.floor(p.cy / TS), lv = w.sea.level;
-      if (ptx >= SEA_X1 + 20 || Math.abs(pty - lv) > 30) return false;
+      if (ptx >= SEA_X12 + 20 || Math.abs(pty - lv) > 30) return false;
       const fl = this.ents.filter((e) => e instanceof Enemy && e.def.ai === "flotsam");
       if (fl.filter((e) => Math.abs(e.cx / TS - ptx) < 100).length >= 2) return false;
       for (let att = 0; att < 10; att++) {
-        const tx = clamp(ptx + (Math.random() < 0.5 ? -1 : 1) * (30 + Math.floor(Math.random() * 60)), 4, SEA_X1 - 6);
+        const tx = clamp(ptx + (Math.random() < 0.5 ? -1 : 1) * (30 + Math.floor(Math.random() * 60)), 4, SEA_X12 - 6);
         if (fl.some((e) => Math.abs(e.cx / TS - tx) < 70)) continue;
         if (w.get(tx, lv) !== T.SEAWATER || w.get(tx, lv - 1) !== T.AIR) continue;
         const sx = tx * TS - this.cam.x;
@@ -39237,6 +39396,7 @@
       return false;
     },
     trySpawn() {
+      const { WW: WW2, WH: WH2, SEA_X1: SEA_X12 } = dimsOf(this.world);
       if (this.dbgCalm) return;
       const p = this.player, w = this.world;
       const normal = this.ents.filter((e) => e instanceof Enemy && !e.boss).length;
@@ -39251,8 +39411,8 @@
         const rad = 520 + Math.random() * 460;
         const tx = Math.floor((p.cx + Math.cos(ang) * rad) / TS);
         const ty = Math.floor((p.cy + Math.sin(ang) * rad) / TS);
-        if (tx < 3 || ty < 3 || tx >= WW - 3 || ty >= WH - 6) continue;
-        if (tx < SEA_X1 + 8) continue;
+        if (tx < 3 || ty < 3 || tx >= WW2 - 3 || ty >= WH2 - 6) continue;
+        if (tx < SEA_X12 + 8) continue;
         const sx = tx * TS - this.cam.x, sy = ty * TS - this.cam.y;
         if (sx > -80 && sx < this.W + 80 && sy > -80 && sy < this.H + 80) continue;
         if (w.get(tx, ty) !== T.AIR || w.get(tx, ty - 1) !== T.AIR) continue;
@@ -39274,7 +39434,7 @@
           let ok = false;
           for (let d = 0; d < 14; d++) {
             const yy = ty + d;
-            if (yy >= WH - 6) break;
+            if (yy >= WH2 - 6) break;
             if (w.solid(tx, yy + 1) && w.get(tx, yy) === T.AIR && w.get(tx, yy - 1) === T.AIR) {
               sy2 = yy;
               ok = true;
@@ -39330,6 +39490,7 @@
     /* ================= 진행 ================= */
     /* 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은 목록에 없거나 있어도 순서가 강제됐다 — 사연: docs/code-history.md#h54 */
     objProgress(o) {
+      const { SURF_BASE: SURF_BASE2 } = dimsOf(this.world);
       const p = this.player;
       let cur = 0, max = 1, label = null;
       switch (o.type) {
@@ -39355,9 +39516,9 @@
           break;
         case "depth":
           if (o.up) {
-            const gained = clamp(SURF_BASE - (p.highest === void 0 ? SURF_BASE : p.highest), 0, SURF_BASE - o.y);
+            const gained = clamp(SURF_BASE2 - (p.highest === void 0 ? SURF_BASE2 : p.highest), 0, SURF_BASE2 - o.y);
             cur = gained;
-            max = SURF_BASE - o.y;
+            max = SURF_BASE2 - o.y;
           } else {
             cur = Math.min(p.deepest, o.y);
             max = o.y;
@@ -40055,9 +40216,10 @@
       try {
         const d = JSON.parse(raw);
         upgradeSave(d);
-        const prevSize = WSIZE;
+        const prevSize = dimsOf(this.world).WSIZE;
         setWorldSize(d.world && d.world.size || "s");
-        if (d.world && (d.world.ww && d.world.ww !== WW || d.world.wh && d.world.wh !== WH)) {
+        const { WW: WW2, WH: WH2 } = dimsOf();
+        if (d.world && (d.world.ww && d.world.ww !== WW2 || d.world.wh && d.world.wh !== WH2)) {
           setWorldSize(prevSize);
           this.toast(tr("이전 크기({ww}×{v})의 세계라 열 수 없다 — 새로 시작해야 한다", { ww: d.world.ww, v: d.world.wh || "?" }), "bad");
           return;
@@ -40194,8 +40356,8 @@
         this.guardCd = 0;
         this.facTimer = 0;
         this.cropTimer = 0;
-        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+        this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+        this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
         $("#title-screen").style.display = "none";
         if (typeof TitleBG !== "undefined") TitleBG.stop();
         this.closeAllModals();
@@ -40867,6 +41029,7 @@
     },
     /** 렌더 단계 — 타일 · 벽지 */
     rTiles(f) {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       const VA = TileArt.V;
       const ashF = this.ashF(), ashOn = ashF > 0.02 && TileArt.ashAtlas;
@@ -40874,8 +41037,8 @@
       this._mapTick = (this._mapTick || 0) + 1 & 3;
       for (let ty = ty0; ty <= ty1; ty++) {
         for (let tx = tx0; tx <= tx1; tx++) {
-          if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) continue;
-          const k = ty * WW + tx;
+          if (tx < 0 || ty < 0 || tx >= WW2 || ty >= WH2) continue;
+          const k = ty * WW2 + tx;
           const id = w.tiles[k], wl = w.walls[k];
           if (w.lightAt(tx, ty) >= MAP_REVEAL_LIGHT && (w.explored[k] || (tx + ty + this._mapTick & 3) === 0 && this.seesTile(eyeX, eyeY, tx, ty))) {
             w.explored[k] = 1;
@@ -40889,7 +41052,7 @@
             if (wl) TileArt.drawWall(c, wl, v, sx, sy);
             continue;
           }
-          if (id === T.SEAWATER && w.tiles[k - WW] === T.AIR) {
+          if (id === T.SEAWATER && w.tiles[k - WW2] === T.AIR) {
             this.drawWave(c, tx, ty, sx, sy, wl);
             continue;
           }
@@ -40915,7 +41078,7 @@
           if ((BODY_ONLY[id] || CONN[id]) && TileArt.drawConn(c, w, id, tx, ty, sx, sy, v)) continue;
           if (id === T.PLATFORM) TileArt.draw(c, id, v, sx, sy, 7);
           else TileArt.draw(c, id, v, sx, sy);
-          if (!TOP_SKIP[id] && w.tiles[k - WW] === T.AIR && w.walls[k - WW] === 0 && ty - 1 <= w.surface[tx]) {
+          if (!TOP_SKIP[id] && w.tiles[k - WW2] === T.AIR && w.walls[k - WW2] === 0 && ty - 1 <= w.surface[tx]) {
             c.fillStyle = "rgba(255,255,255,.10)";
             c.fillRect(sx, sy, TS, 2);
           }
@@ -41382,9 +41545,10 @@
     },
     /** 렌더 단계 — 조준 · 비 · 비네트 · 길잡이 */
     rScreen(f) {
+      const { SURF_BASE: SURF_BASE2 } = dimsOf(this.world);
       const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       this.drawCursor(c, camX, camY);
-      if (camY < SURF_BASE * TS + 400) this.drawRain(c);
+      if (camY < SURF_BASE2 * TS + 400) this.drawRain(c);
       const vg = c.createRadialGradient(this.W / 2, this.H / 2, Math.min(this.W, this.H) * 0.38, this.W / 2, this.H / 2, Math.max(this.W, this.H) * 0.78);
       vg.addColorStop(0, "rgba(0,0,0,0)");
       vg.addColorStop(1, "rgba(0,0,0,.55)");
@@ -41428,7 +41592,8 @@
       return inv(4 * 60, 7 * 60, t);
     },
     drawSky(c, f, camX, camY) {
-      const surfPx = SURF_BASE * TS;
+      const { SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2 } = dimsOf(this.world);
+      const surfPx = SURF_BASE2 * TS;
       let top = mixHex("#0a0d1c", "#4a86c8", f);
       let bot = mixHex("#141020", "#a8c8e0", f);
       let ev = this.eventActive() ? this.eventSpec() : null;
@@ -41496,7 +41661,7 @@
         this.drawClouds(c, camX, camY, this.rainT || 0);
         this.drawMeteorSky(c, camY);
       } else {
-        const deep = camY > HELL_Y * TS - 400;
+        const deep = camY > HELL_Y2 * TS - 400;
         const g = c.createLinearGradient(0, 0, 0, this.H);
         g.addColorStop(0, deep ? "#2a0d08" : "#0a0a10");
         g.addColorStop(1, deep ? "#4a1408" : "#06060a");
@@ -41654,14 +41819,15 @@
       c.globalAlpha = 1;
     },
     drawParallax(c, camX, camY, f) {
+      const { SURF_BASE: SURF_BASE2 } = dimsOf(this.world);
       if (this.spritesOn && this.drawParallaxArt(c, camX, camY, f)) return;
-      if (camY > SURF_BASE * TS + 500) return;
+      if (camY > SURF_BASE2 * TS + 500) return;
       c.save();
       const layers = [[0.22, "#2b3a4a", 150], [0.38, "#25313f", 90]];
-      const groundCamY = SURF_BASE * TS - this.H / 2;
+      const groundCamY = SURF_BASE2 * TS - this.H / 2;
       for (const [sp, col, off] of layers) {
         c.fillStyle = mixHex("#0d1018", col, 0.3 + f * 0.7);
-        const ox = -camX * sp, base = SURF_BASE * TS - groundCamY + off + (groundCamY - camY) * sp;
+        const ox = -camX * sp, base = SURF_BASE2 * TS - groundCamY + off + (groundCamY - camY) * sp;
         c.beginPath();
         c.moveTo(0, this.H);
         for (let x = -100; x < this.W + 100; x += 40) {
@@ -41794,26 +41960,27 @@
       return b === "ice" ? "parallax_snow" : b === "corrupt" ? "parallax_corrupt" : b === "desert" ? "parallax_desert" : b === "jungle" && Sprites.img.parallax_jungle && Sprites.img.parallax_jungle.width ? "parallax_jungle" : b === "glowfen" && Sprites.img.parallax_glowfen && Sprites.img.parallax_glowfen.width ? "parallax_glowfen" : b === "sea" && Sprites.img.parallax_sea && Sprites.img.parallax_sea.width ? "parallax_sea" : b === "glacier" && Sprites.img.parallax_glacier && Sprites.img.parallax_glacier.width ? "parallax_glacier" : b === "sea" || b === "glacier" ? "parallax_snow" : "parallax_forest";
     },
     drawParallaxArt(c, camX, camY, f) {
+      const { WW: WW2, SURF_BASE: SURF_BASE2, BIOMES: BIOMES2 } = dimsOf(this.world);
       const p = this.player;
       const zone = this.world.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
       let key;
       if (zone === "sky") key = "parallax_sky";
-      else if (camY > SURF_BASE * TS + 500) return true;
+      else if (camY > SURF_BASE2 * TS + 500) return true;
       else if (zone === "village" || zone === "camp") key = "parallax_forest";
       let layers;
       if (key) layers = [[key, 1]];
       else {
-        const w = this.world, tx = clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1);
-        const i = w.biomeIndexAt(tx), bi = BIOMES[i], BG_BAND = 48;
+        const w = this.world, tx = clamp(Math.floor((camX + this.W / 2) / TS), 0, WW2 - 1);
+        const i = w.biomeIndexAt(tx), bi = BIOMES2[i], BG_BAND = 48;
         let j = i, wt = 0;
         if (i > 0 && tx - bi.x0 < BG_BAND) {
           j = i - 1;
           wt = 0.5 - (tx - bi.x0) / (2 * BG_BAND);
-        } else if (i < BIOMES.length - 1 && bi.x1 - tx <= BG_BAND) {
+        } else if (i < BIOMES2.length - 1 && bi.x1 - tx <= BG_BAND) {
           j = i + 1;
           wt = 0.5 - (bi.x1 - tx) / (2 * BG_BAND);
         }
-        const ka = this.bgKeyFor(bi.id), kb = this.bgKeyFor(BIOMES[j].id);
+        const ka = this.bgKeyFor(bi.id), kb = this.bgKeyFor(BIOMES2[j].id);
         layers = kb === ka || wt <= 0.01 ? [[ka, 1]] : [[ka, 1 - wt], [kb, wt]];
       }
       const parts = [];
@@ -41824,7 +41991,7 @@
       }
       if (!parts.length) return false;
       const af = "|" + Math.round(this.ashF() * 20);
-      const ref = SURF_BASE * TS;
+      const ref = SURF_BASE2 * TS;
       const restY = TS * 7 + this.H / 2;
       const refCamY = ref - this.H / 2;
       c.save();
@@ -41926,9 +42093,10 @@
     },
     /** 이 열의 수면이 화면(세계) 몇 px 에 있나 — 수면 칸 ty 를 알 때. */
     surfacePx(tx, ty) {
+      const { WW: WW2 } = dimsOf(this.world);
       const w = this.world, t = w.get(Math.floor(tx), ty);
       if (t === T.SEAWATER) return (ty + 1) * TS - this.waveFrac(tx) * TS;
-      if (FLUID_FLOW[t] && w.flv) return (ty + 1) * TS - (w.flv[ty * WW + Math.floor(tx)] || 8) / 8 * TS;
+      if (FLUID_FLOW[t] && w.flv) return (ty + 1) * TS - (w.flv[ty * WW2 + Math.floor(tx)] || 8) / 8 * TS;
       return ty * TS;
     },
     drawWave(c, tx, ty, sx, sy, wl) {
@@ -41956,8 +42124,9 @@
     },
     /** 흐르는 액체 한 칸 — 고인 것과 **같은 그림**을 수위만큼 잘라 그린다. */
     drawFlow(c, w, id, k, tx, ty, sx, sy) {
+      const { WW: WW2 } = dimsOf(this.world);
       const kind = FLUID_KIND[id], lv = w.flv ? w.flv[k] || 7 : 7;
-      const full = lv >= 8 || FLUID_KIND[w.tiles[k - WW]] === kind;
+      const full = lv >= 8 || FLUID_KIND[w.tiles[k - WW2]] === kind;
       const src = kind === 1 ? T.WATER : kind === 2 ? T.SEAWATER : T.LAVA;
       const art = src;
       const an = TileArt.ANIM[art];
@@ -42000,18 +42169,19 @@
     },
     /** 폭포 밑 물보라 — 물줄기가 수면·바닥에 닿는 칸에서 물방울이 튄다. */
     updateFalls(dt) {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       this._fallsT = (this._fallsT || 0) - dt;
       if (this._fallsT > 0) return;
       this._fallsT = 0.08;
       const w = this.world, cam = this.cam;
-      const tx0 = Math.max(1, Math.floor(cam.x / TS)), tx1 = Math.min(WW - 2, Math.ceil((cam.x + this.W) / TS));
-      const ty0 = Math.max(1, Math.floor(cam.y / TS)), ty1 = Math.min(WH - 2, Math.ceil((cam.y + this.H) / TS));
+      const tx0 = Math.max(1, Math.floor(cam.x / TS)), tx1 = Math.min(WW2 - 2, Math.ceil((cam.x + this.W) / TS));
+      const ty0 = Math.max(1, Math.floor(cam.y / TS)), ty1 = Math.min(WH2 - 2, Math.ceil((cam.y + this.H) / TS));
       for (let ty = ty0; ty <= ty1; ty++)
         for (let tx = tx0; tx <= tx1; tx++) {
-          const k = ty * WW + tx, t = w.tiles[k];
+          const k = ty * WW2 + tx, t = w.tiles[k];
           if (t !== T.FALLS) continue;
-          const b = w.tiles[k + WW];
-          if (b === T.FALLS || FLUID_FLOW[b] && w.flv[k + WW] >= 8) continue;
+          const b = w.tiles[k + WW2];
+          if (b === T.FALLS || FLUID_FLOW[b] && w.flv[k + WW2] >= 8) continue;
           if (Math.random() > 0.55) continue;
           const px = (tx + Math.random()) * TS, py = (ty + 1) * TS - 2;
           this.parts.push(new Part(px, py, Math.random() < 0.5 ? "#dff2ff" : "#9fd0f0", -150, 0.45, { g: 0.9, sq: 0, r: 0.7, spd: 0.8 }));
@@ -42049,13 +42219,14 @@
       return l < 120 ? shade(c0, 120 / Math.max(30, l)) : c0;
     },
     drawGlow(c, camX, camY, tx0, ty0, tx1, ty1) {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const w = this.world;
       this._glowC = this._glowC || {};
       c.save();
       c.globalCompositeOperation = "lighter";
-      for (let ty = Math.max(0, ty0 - 2); ty <= Math.min(WH - 1, ty1 + 2); ty++)
-        for (let tx = Math.max(0, tx0 - 2); tx <= Math.min(WW - 1, tx1 + 2); tx++) {
-          const d = TILE_DEF[w.tiles[ty * WW + tx]];
+      for (let ty = Math.max(0, ty0 - 2); ty <= Math.min(WH2 - 1, ty1 + 2); ty++)
+        for (let tx = Math.max(0, tx0 - 2); tx <= Math.min(WW2 - 1, tx1 + 2); tx++) {
+          const d = TILE_DEF[w.tiles[ty * WW2 + tx]];
           if (!d.lc) continue;
           const r = Math.round(10 + d.light * 5);
           const key = d.lc + r;
@@ -42077,6 +42248,7 @@
       c.restore();
     },
     drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1) {
+      const { SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2 } = dimsOf(this.world);
       const w = this.world;
       const x0 = tx0 - 1, y0 = ty0 - 1, x1 = tx1 + 1, y1 = ty1 + 1;
       const lw = x1 - x0 + 1, lh = y1 - y0 + 1;
@@ -42089,11 +42261,11 @@
       }
       const mid = (ty0 + ty1) / 2;
       let tr2 = 0, tg = 0, tb = 0;
-      if (mid > HELL_Y - 24) {
+      if (mid > HELL_Y2 - 24) {
         tr2 = 44;
         tg = 8;
         tb = 2;
-      } else if (mid > SURF_BASE + 24) {
+      } else if (mid > SURF_BASE2 + 24) {
         tr2 = 4;
         tg = 7;
         tb = 18;
@@ -43815,6 +43987,7 @@
     },
     /** 떨어지는 돌 — 흔들리는 동안(t) 제자리에서 먼지를 떨구고, 그다음 떨어진다 */
     updateRocks(dt) {
+      const { WH: WH2 } = dimsOf(this.world);
       const p = this.player, w = this.world;
       for (let i = this.rocks.length - 1; i >= 0; i--) {
         const r = this.rocks[i];
@@ -43827,7 +44000,7 @@
         r.y += r.vy * dt;
         const hitP = Math.abs(r.x - p.cx) < p.w / 2 + 6 && r.y > p.y && r.y < p.y + p.h;
         const hitW = w.solid(Math.floor(r.x / TS), Math.floor((r.y + 8) / TS));
-        if (hitP || hitW || r.y > (WH - 2) * TS) {
+        if (hitP || hitW || r.y > (WH2 - 2) * TS) {
           if (hitP) p.hurt(r.dmg, r.x);
           for (let k = 0; k < 12; k++) this.parts.push(new Part(r.x, r.y, "#8a8478", -60, 0.8));
           this.sfx("break_stone");
@@ -43848,22 +44021,23 @@
     METEOR: { chance: 18e-4, fall: 5.2, fg: 1.2, rMin: 5, rMax: 8 },
     /** 떨어져도 되는 자리인가 — 구덩이 상자(좌우 R+3, 위 18 · 아래 R+2) 안에 지은 것이 하나도 없어야 한다 */
     meteorSiteOk(cx, R) {
+      const { WW: WW2, SEA_X1: SEA_X12 } = dimsOf(this.world);
       const w = this.world;
-      if (cx < 40 || cx > WW - 40 || inSeaZone(cx)) return false;
+      if (cx < 40 || cx > WW2 - 40 || inSeaZone(cx, SEA_X12)) return false;
       const cy = w.surface[cx];
       const x0 = cx - R - 3, x1 = cx + R + 3, y0 = cy - 18, y1 = cy + R + 2;
       if (w.giantTree && x1 >= w.giantTree.x - 24 && x0 <= w.giantTree.x + 24) return false;
       const built = /* @__PURE__ */ new Set([T.PLANK, T.BRICK, T.PLATFORM, T.TORCH, T.RUINBRICK, T.RUINTILE, T.ALTARSTONE]);
       for (let x = x0; x <= x1; x++) {
-        if (Math.abs(w.surface[clamp(x, 0, WW - 1)] - cy) > R + 4) return false;
+        if (Math.abs(w.surface[clamp(x, 0, WW2 - 1)] - cy) > R + 4) return false;
         for (let y = y0; y <= y1; y++) {
           const z = w.zoneAt(x, y);
           if (z === "village" || z === "camp" || z === "citadel" || z === "deepshaft") return false;
           if (w.ruinAt(x, y)) return false;
           const t = w.get(x, y);
           if (built.has(t) || MACH_OF_TILE[t] || TILE_DEF[t].liquid) return false;
-          if (y < w.surface[clamp(x, 0, WW - 1)] && w.walls[w.i(x, y)]) return false;
-          if (w.machines && w.machines.has(y * WW + x)) return false;
+          if (y < w.surface[clamp(x, 0, WW2 - 1)] && w.walls[w.i(x, y)]) return false;
+          if (w.machines && w.machines.has(y * WW2 + x)) return false;
         }
       }
       const bx0 = x0 * TS, bx1 = (x1 + 1) * TS, by0 = y0 * TS, by1 = (y1 + 1) * TS;
@@ -43872,12 +44046,13 @@
     },
     /** 운석을 띄운다. */
     startMeteor(at) {
+      const { WW: WW2 } = dimsOf(this.world);
       if (this.meteor) return false;
       const w = this.world, M = this.METEOR;
       let x = -1, R = M.rMin + Math.floor(Math.random() * (M.rMax - M.rMin + 1));
-      if (at !== void 0) x = clamp(Math.round(at), 40, WW - 40);
+      if (at !== void 0) x = clamp(Math.round(at), 40, WW2 - 40);
       else for (let i = 0; i < 400 && x < 0; i++) {
-        const c = 40 + Math.floor(Math.random() * (WW - 80));
+        const c = 40 + Math.floor(Math.random() * (WW2 - 80));
         if (this.meteorSiteOk(c, R)) x = c;
       }
       if (x < 0) return false;
@@ -43944,10 +44119,11 @@
     },
     /** 운석 구덩이 — 있는 타일로만. */
     carveCrater(cx, cy, R) {
+      const { WW: WW2 } = dimsOf(this.world);
       const w = this.world;
       for (let dx = -R - 3; dx <= R + 3; dx++) {
         const x = cx + dx;
-        if (x < 1 || x >= WW - 1) continue;
+        if (x < 1 || x >= WW2 - 1) continue;
         for (let y = cy - 24; y <= cy + R; y++) {
           const t = w.get(x, y), d = TILE_DEF[t];
           if (t !== T.AIR && (d.tree || d.leaf || d.plant || t === T.VINE || t === T.FLOWER || t === T.WEED)) w.set(x, y, T.AIR);
@@ -44127,13 +44303,14 @@
     },
     /** 금 간 자갈을 깼다 — 곡괭이든 폭탄이든. */
     triggerFault(tx, ty) {
+      const { WW: WW2 } = dimsOf(this.world);
       const w = this.world;
       if (this.quake) return;
-      const cells = [], seen = /* @__PURE__ */ new Set([ty * WW + tx]), st = [[tx, ty]];
+      const cells = [], seen = /* @__PURE__ */ new Set([ty * WW2 + tx]), st = [[tx, ty]];
       while (st.length && cells.length < 6e3) {
         const [x, y] = st.pop();
         for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
-          const k = ny * WW + nx;
+          const k = ny * WW2 + nx;
           if (seen.has(k) || w.get(nx, ny) !== T.FAULTSTONE) continue;
           seen.add(k);
           cells.push([nx, ny]);
@@ -44154,6 +44331,7 @@
     },
     /* 지진 — 2.6초 동안 흔들리며 새 굴을 차례로 판다(한 번에 파면 화면이 한 프레임에 뒤바뀐다). */
     updateQuake(dt) {
+      const { SY: SY2, DEEP_Y: DEEP_Y2 } = dimsOf(this.world);
       const q = this.quake, w = this.world, p = this.player;
       q.t += dt;
       this.shake = Math.max(this.shake || 0, q.t < 2.2 ? 9 : 3);
@@ -44184,10 +44362,10 @@
       const chestRng = new RNG(f.seed + 13);
       if (floors.length && chestRng.chance(0.3)) {
         const [gx, gy] = floors[0];
-        const tier = gy < SY(180) ? 3 : gy < DEEP_Y ? 4 : 5;
+        const tier = gy < SY2(180) ? 3 : gy < DEEP_Y2 ? 4 : 5;
         w.objects.push({ type: "chest", tier, x: gx * TS, y: (gy - 0.2) * TS, w: 30, h: 26, items: null });
       }
-      const pool = f.y > DEEP_Y ? ["skeleton", "spider"] : ["bat", "spider"];
+      const pool = f.y > DEEP_Y2 ? ["skeleton", "spider"] : ["bat", "spider"];
       let made = 0;
       for (const [x, y] of floors.slice().reverse()) {
         if (made >= 3) break;
@@ -44560,16 +44738,18 @@
     /** 바이옴에 처음 들어섰을 때 — 그 땅이 어떤 곳인지 한 번 알린다. */
     /** 지금 화면 뒤에 깔린 원경이 무엇인가 — drawParallaxArt 의 고르는 규칙과 같다. */
     bgId(camX, camY) {
+      const { WW: WW2, SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2 } = dimsOf(this.world);
       const p = this.player, w = this.world;
       if (!p || !w) return null;
-      if (camY > HELL_Y * TS - 700) return "hell";
+      if (camY > HELL_Y2 * TS - 700) return "hell";
       const zone = w.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
       if (zone === "sky" || zone === "ruin" || zone === "village" || zone === "camp") return zone;
-      if (camY > SURF_BASE * TS + 500) return null;
-      return w.biomeAt(clamp(Math.floor(p.cx / TS), 0, WW - 1)).id;
+      if (camY > SURF_BASE2 * TS + 500) return null;
+      return w.biomeAt(clamp(Math.floor(p.cx / TS), 0, WW2 - 1)).id;
     },
     /** 땅·구역의 이름표. */
     checkBiomeEntry(camX, camY) {
+      const { BIOMES: BIOMES2 } = dimsOf(this.world);
       if (this.time < 3) return;
       const id = this.bgId(camX, camY);
       if (!id) return;
@@ -44579,7 +44759,7 @@
       if (first) return;
       if (!this.seenBiomes) this.seenBiomes = {};
       const z = ZONE_CARD[id];
-      const b = z ? null : BIOMES.find((q) => q.id === id);
+      const b = z ? null : BIOMES2.find((q) => q.id === id);
       const card = z ? z.card : b && b.card;
       if (!card) return;
       this.seenBiomes[id] = 1;
@@ -44590,13 +44770,14 @@
     },
     /** 그 땅의 공기색. */
     biomeAir(camX, camY) {
+      const { WW: WW2, SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2, BIOMES: BIOMES2 } = dimsOf(this.world);
       const w = this.world;
-      const tx = clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1);
+      const tx = clamp(Math.floor((camX + this.W / 2) / TS), 0, WW2 - 1);
       const [i, j, k] = w.biomeMix(tx);
-      const A = BIOMES[i].air, B = BIOMES[j].air;
+      const A = BIOMES2[i].air, B = BIOMES2[j].air;
       if (!A || !B) return null;
       const ty = (camY + this.H / 2) / TS;
-      const depth = 1 - clamp((ty - SURF_BASE - 60) / (HELL_Y - SURF_BASE - 60), 0, 1);
+      const depth = 1 - clamp((ty - SURF_BASE2 - 60) / (HELL_Y2 - SURF_BASE2 - 60), 0, 1);
       const a = (A.a * (1 - k) + B.a * k) * (0.4 + 0.6 * depth);
       if (a < 4e-3) return null;
       return { c: mixHex(A.c, B.c, k), a };
@@ -44615,6 +44796,7 @@
     },
     /** 다 여문 작물에 얹는 반짝임. */
     drawRipeCrops(c, camX, camY) {
+      const { WW: WW2 } = dimsOf(this.world);
       const w = this.world;
       if (!w.crops || !w.crops.size) return;
       c.save();
@@ -44622,7 +44804,7 @@
       for (const k of w.crops) {
         const def = TILE_DEF[w.tiles[k]];
         if (!def || !def.crop || !def.crop.ripe) continue;
-        const x = k % WW, y = k / WW | 0;
+        const x = k % WW2, y = k / WW2 | 0;
         const sx = x * TS - camX, sy = y * TS - camY;
         if (sx < -TS || sy < -TS || sx > this.W || sy > this.H) continue;
         const ph = (this.time * 0.8 + (x * 7 + y * 13) * 0.19) % 1;
@@ -45325,7 +45507,8 @@
     },
     /* ---- 지도 색 (미니맵 · 전체 지도 공용) ---- */
     mapColorAt(tx, ty, id, wl) {
-      const w = this.world, k = ty * WW + tx;
+      const { WW: WW2 } = dimsOf(this.world);
+      const w = this.world, k = ty * WW2 + tx;
       if (id === void 0) {
         id = w.tiles[k];
         wl = w.walls[k];
@@ -45346,19 +45529,21 @@
     /** 세이브를 막 불러왔을 때(또는 새 게임 시작 시) explored 비트로부터 축소 지도를 다시 칠한다. */
     /** 축소 지도 캔버스를 지금 세계 크기(WW×WH)에 맞춘다 — 세계 크기가 바뀌면 다시 만든다. */
     fitMapAtlas() {
-      if (this.mapAtlas.width === WW && this.mapAtlas.height === WH) return;
-      this.mapAtlas.width = WW;
-      this.mapAtlas.height = WH;
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
+      if (this.mapAtlas.width === WW2 && this.mapAtlas.height === WH2) return;
+      this.mapAtlas.width = WW2;
+      this.mapAtlas.height = WH2;
       this.mapAtlasX = this.mapAtlas.getContext("2d");
     },
     buildMapAtlas() {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const c = this.mapAtlasX, w = this.world;
       c.fillStyle = "#07080c";
-      c.fillRect(0, 0, WW, WH);
-      const img = c.getImageData(0, 0, WW, WH), buf = img.data;
-      for (let k = 0; k < WW * WH; k++) {
+      c.fillRect(0, 0, WW2, WH2);
+      const img = c.getImageData(0, 0, WW2, WH2), buf = img.data;
+      for (let k = 0; k < WW2 * WH2; k++) {
         if (!w.explored[k]) continue;
-        const hex = this.mapColorAt(k % WW, k / WW | 0);
+        const hex = this.mapColorAt(k % WW2, k / WW2 | 0);
         const n = parseInt(hex.slice(1), 16), o = k * 4;
         buf[o] = n >> 16 & 255;
         buf[o + 1] = n >> 8 & 255;
@@ -45383,6 +45568,7 @@
     DET_R: 30,
     // 탐지 반경(칸)
     drawMinimap() {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const c = this.mmx, w = this.world, p = this.player;
       const MW = this.mm.width, MH = this.mm.height, S = 2;
       const detOre = this.hasDetector("ore"), detMob = this.hasDetector("mob");
@@ -45395,8 +45581,8 @@
       for (let y = 0; y < MH / S; y++) {
         for (let x = 0; x < MW / S; x++) {
           const tx = px - halfW + x, ty = py - halfH + y;
-          if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) continue;
-          const k = ty * WW + tx;
+          if (tx < 0 || ty < 0 || tx >= WW2 || ty >= WH2) continue;
+          const k = ty * WW2 + tx;
           const id = w.tiles[k];
           if (!w.explored[k]) {
             if (!detOre || !TILE_DEF[id] || !TILE_DEF[id].ore) continue;
@@ -45423,7 +45609,7 @@
       for (const o of w.objects) {
         if (o.type !== "npc" && o.type !== "chest") continue;
         const otx = Math.floor(o.x / TS), oty = Math.floor(o.y / TS);
-        if (!w.explored[clamp(oty, 0, WH - 1) * WW + clamp(otx, 0, WW - 1)]) continue;
+        if (!w.explored[clamp(oty, 0, WH2 - 1) * WW2 + clamp(otx, 0, WW2 - 1)]) continue;
         const ox = otx - (px - halfW), oy = oty - (py - halfH);
         if (ox < 0 || oy < 0 || ox * S >= MW || oy * S >= MH) continue;
         c.fillStyle = o.type === "npc" ? "#6fd8ff" : "#d8a94b";
@@ -45431,10 +45617,10 @@
       }
       for (const e of this.ents) {
         if (!(e instanceof Enemy)) continue;
-        const etx = clamp(Math.floor(e.cx / TS), 0, WW - 1), ety = clamp(Math.floor(e.cy / TS), 0, WH - 1);
+        const etx = clamp(Math.floor(e.cx / TS), 0, WW2 - 1), ety = clamp(Math.floor(e.cy / TS), 0, WH2 - 1);
         const near = detMob && (etx - px) * (etx - px) + (ety - py) * (ety - py) <= DR2;
         if (near) detHit++;
-        if (!near && !w.explored[ety * WW + etx]) continue;
+        if (!near && !w.explored[ety * WW2 + etx]) continue;
         const ox = etx - (px - halfW), oy = ety - (py - halfH);
         if (ox < 0 || oy < 0 || ox * S >= MW || oy * S >= MH) continue;
         c.fillStyle = e.boss ? "#ff4a4a" : "#e07070";
@@ -45508,15 +45694,16 @@
       }
     },
     scanPulse(kind, i) {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const p = this.player, w = this.world, R = this.DET_R, R2 = R * R;
       const px = Math.floor(p.cx / TS), py = Math.floor(p.cy / TS);
       const hits = [];
       if (kind === "ore") {
-        for (let y = Math.max(0, py - R); y <= Math.min(WH - 1, py + R); y++)
-          for (let x = Math.max(0, px - R); x <= Math.min(WW - 1, px + R); x++) {
+        for (let y = Math.max(0, py - R); y <= Math.min(WH2 - 1, py + R); y++)
+          for (let x = Math.max(0, px - R); x <= Math.min(WW2 - 1, px + R); x++) {
             const dx = x - px, dy = y - py;
             if (dx * dx + dy * dy > R2) continue;
-            const td = TILE_DEF[w.tiles[y * WW + x]];
+            const td = TILE_DEF[w.tiles[y * WW2 + x]];
             if (td && td.ore) hits.push({ x, y, c: td.c, r: Math.sqrt(dx * dx + dy * dy) });
           }
       } else {
@@ -45534,6 +45721,7 @@
     },
     /** 렌더 단계(fx) — 조명 뒤라 어둠 속에서도 보인다 */
     rUtil(f) {
+      const { WW: WW2 } = dimsOf(this.world);
       if (!this.scans || !this.scans.length) return;
       const { c, camX, camY } = f, R = this.DET_R * TS, w = this.world;
       this.scans = this.scans.filter((s) => this.time - s.t0 < this.SCAN_T);
@@ -45573,7 +45761,7 @@
           } else {
             const x = h.x * TS - camX, y = h.y * TS - camY;
             if (x < -TS || y < -TS || x > this.W || y > this.H) continue;
-            if (!TILE_DEF[w.tiles[h.y * WW + h.x]].ore) continue;
+            if (!TILE_DEF[w.tiles[h.y * WW2 + h.x]].ore) continue;
             c.globalAlpha = 0.3 * fade * pulse;
             c.fillStyle = h.c;
             c.fillRect(x, y, TS, TS);

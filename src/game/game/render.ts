@@ -5,7 +5,7 @@ import { mixin } from '../../engine/core/mixin.js';
 import { tileHash } from '../../engine/core/rng.js';
 import { createPipeline, tileView } from '../../engine/render/pipeline.js';
 import { FONT, FONT_PLAIN, tr } from '../lang.js';
-import { HELL_Y, SURF_BASE, WH, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { MACH_OF_TILE, T } from '../data.js';
 import { FLUID_FLOW, LEAVE_OF } from '../data/materials.js';
 import { SIG_FX } from '../data/values.js';
@@ -78,7 +78,7 @@ export const RenderPart: Bag = {
     this.drawRigs(c, camX, camY);
   },
   /** 렌더 단계 — 타일 · 벽지 */
-  rTiles(f) {
+  rTiles(f) { const { WW, WH } = dimsOf(this.world);
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 타일 (절차적 텍스처 아틀라스) ----
     const VA = TileArt.V;
@@ -519,7 +519,7 @@ export const RenderPart: Bag = {
     c.globalAlpha = 1;
   },
   /** 렌더 단계 — 조준 · 비 · 비네트 · 길잡이 */
-  rScreen(f) {
+  rScreen(f) { const { SURF_BASE } = dimsOf(this.world);
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 조준/채굴 표시 ----
     this.drawCursor(c, camX, camY);
@@ -560,7 +560,7 @@ export const RenderPart: Bag = {
     if (t >= 20 * 60 || t < 4 * 60) return 0;
     return inv(4 * 60, 7 * 60, t);
   },
-  drawSky(c, f, camX, camY) {
+  drawSky(c, f, camX, camY) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
     const surfPx = SURF_BASE * TS;
     let top = mixHex('#0a0d1c', '#4a86c8', f);
     let bot = mixHex('#141020', '#a8c8e0', f);
@@ -755,7 +755,7 @@ export const RenderPart: Bag = {
     c.stroke();
     c.globalAlpha = 1;
   },
-  drawParallax(c, camX, camY, f) {
+  drawParallax(c, camX, camY, f) { const { SURF_BASE } = dimsOf(this.world);
     // 손그림 원경이 있으면 그것으로
     if (this.spritesOn && this.drawParallaxArt(c, camX, camY, f)) return;
     if (camY > SURF_BASE * TS + 500) return;

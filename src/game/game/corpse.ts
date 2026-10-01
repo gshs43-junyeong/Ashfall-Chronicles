@@ -3,7 +3,7 @@ import { shade } from '../../engine/core/color.js';
 import { TAU, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT, tr } from '../lang.js';
-import { WH, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { NPCS } from '../data/npcs.js';
 import { idef } from '../data/values.js';
@@ -467,7 +467,7 @@ export const CorpsePart: Bag = {
   },
 
   /* ---- 지도 색 (미니맵 · 전체 지도 공용) ---- */
-  mapColorAt(tx, ty, id, wl) {
+  mapColorAt(tx, ty, id, wl) { const { WW } = dimsOf(this.world);
     const w = this.world, k = ty * WW + tx;
     if (id === undefined) { id = w.tiles[k]; wl = w.walls[k]; }
     if (id === T.AIR) return wl ? '#20202c' : '#141620';
@@ -485,12 +485,12 @@ export const CorpsePart: Bag = {
   },
   /** 세이브를 막 불러왔을 때(또는 새 게임 시작 시) explored 비트로부터 축소 지도를 다시 칠한다. */
   /** 축소 지도 캔버스를 지금 세계 크기(WW×WH)에 맞춘다 — 세계 크기가 바뀌면 다시 만든다. */
-  fitMapAtlas() {
+  fitMapAtlas() { const { WW, WH } = dimsOf(this.world);
     if (this.mapAtlas.width === WW && this.mapAtlas.height === WH) return;
     this.mapAtlas.width = WW; this.mapAtlas.height = WH;
     this.mapAtlasX = this.mapAtlas.getContext('2d');
   },
-  buildMapAtlas() {
+  buildMapAtlas() { const { WW, WH } = dimsOf(this.world);
     const c = this.mapAtlasX, w = this.world;
     c.fillStyle = '#07080c'; c.fillRect(0, 0, WW, WH);
     const img = c.getImageData(0, 0, WW, WH), buf = img.data;
@@ -517,7 +517,7 @@ export const CorpsePart: Bag = {
     return (eq.util1 && idef(eq.util1).det === kind) || (eq.util2 && idef(eq.util2).det === kind);
   },
   DET_R: 30,                                   // 탐지 반경(칸)
-  drawMinimap() {
+  drawMinimap() { const { WW, WH } = dimsOf(this.world);
     const c = this.mmx, w = this.world, p = this.player;
     const MW = this.mm.width, MH = this.mm.height, S = 2;
     /* 탐지기 — **안개를 뚫고** 보여 준다. */

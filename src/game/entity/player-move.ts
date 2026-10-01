@@ -3,7 +3,7 @@ import { app as G, ui as UI } from '../ctx.js';
 import { TAU, aabb, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { WSY } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { hitFam } from '../data/items.js';
 import { SIG_FX, idef } from '../data/values.js';
@@ -15,7 +15,7 @@ import { DmgText, Enemy, JET_BURN, JET_COOL_AIR, JET_COOL_GROUND, JET_HIGH_FALL,
 export const PlayerMove: Bag & ThisType<Player> = {
 
   /* ---- 산소 ---- */
-  updateOxygen(dt, world) {
+  updateOxygen(dt, world) { const { WSY } = dimsOf(world);
     const max = this.d.oxyMax;
     if (this.oxygen === undefined || this.oxygen > max) this.oxygen = max;
     // 머리 칸이 액체인가 — 몸 전체 비율(submerged)로 보면 목까지 잠겨도 익사한다

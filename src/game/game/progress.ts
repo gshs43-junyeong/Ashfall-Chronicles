@@ -2,7 +2,7 @@
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT_UI, fmt, tr } from '../lang.js';
-import { SURF_BASE } from '../size.js';
+import { dimsOf } from '../size.js';
 import { ITEMS } from '../data/items.js';
 import { MODE_OF } from '../data/start.js';
 import { PROFS } from '../data/skills.js';
@@ -21,7 +21,7 @@ export const ProgressPart: Bag = {
 
   /* ================= 진행 ================= */
   /* 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은 목록에 없거나 있어도 순서가 강제됐다 — 사연: docs/code-history.md#h54 */
-  objProgress(o) {
+  objProgress(o) { const { SURF_BASE } = dimsOf(this.world);
     const p = this.player;
     let cur = 0, max = 1, label = null;
     switch (o.type) {

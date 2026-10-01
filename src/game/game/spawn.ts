@@ -3,7 +3,7 @@ import { TAU, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG, tileHash } from '../../engine/core/rng.js';
 import { tr } from '../lang.js';
-import { SEA_X1, WH, WSY, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T } from '../data.js';
 import { MACHINE } from '../data/recipes.js';
 import { ENEMIES, MECH_MUL, isMech, mobName } from '../data/enemies.js';
@@ -26,7 +26,7 @@ export const SpawnPart: Bag = {
   /* 개조가 걸리는 구역 — 세션 1 바이옴의 지층들. */
   MECH_ZONE: { surface: 1, cave: 1, deep: 1, corrupt: 1, ice: 1, hell: 1, jungle: 1, glowfen: 1 },
 
-  zoneTable(zone, night, tx, ty) {
+  zoneTable(zone, night, tx, ty) { const { WW } = dimsOf(this.world);
     // 사막은 지상/동굴 판정 안에 들어가므로 x로 따로 갈라준다
     const desert = tx !== undefined && this.world.biomeAt(clamp(tx, 0, WW - 1)).id === 'desert';
     switch (zone) {
@@ -81,7 +81,7 @@ export const SpawnPart: Bag = {
   /* ---- 세계 이벤트 ---- */
   eventSpec() { return this.event ? EVENTS[this.event.id] : null; },
   /** 이 이벤트가 지금 플레이어 위치에서 실제로 작동하는가 */
-  eventActive() {
+  eventActive() { const { WW } = dimsOf(this.world);
     const e = this.eventSpec();
     if (!e) return false;
     const w = this.world, p = this.player;
@@ -93,7 +93,7 @@ export const SpawnPart: Bag = {
     const z = w.zoneAt(tx, Math.floor(p.cy / TS));
     return e.zones.indexOf(z) >= 0;
   },
-  updateEvents(dt) {
+  updateEvents(dt) { const { WW } = dimsOf(this.world);
     const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
     const phase = (this.dayCount * 2) + (night ? 1 : 0);
     /* 운석은 이벤트(this.event)와 따로 굴린다 — 비·붉은 달이 오는 중에도 떨어질 수 있다. */
@@ -332,7 +332,7 @@ export const SpawnPart: Bag = {
   SMOKE_VENT_Y: 6,          // 굴뚝 꼭대기
 
   /** 이 자리 위로 막힌 칸까지 몇 px인가. */
-  smokeCeil(x, y) {
+  smokeCeil(x, y) { const { WW } = dimsOf(this.world);
     const w = this.world;
     const tx = clamp(Math.floor(x / TS), 0, WW - 1);
     const y0 = Math.floor(y / TS);
@@ -344,7 +344,7 @@ export const SpawnPart: Bag = {
     return null;
   },
 
-  updateSmoke(dt) {
+  updateSmoke(dt) { const { WW } = dimsOf(this.world);
     const w = this.world, p = this.player;
     if (!w || !p) return;
     if (!this.smokes) this.smokes = [];
@@ -526,7 +526,7 @@ export const SpawnPart: Bag = {
   },
 
   /** 근처 웅덩이 한 곳을 골라 물속 생물을 채운다. */
-  trySpawnWater(normal) {
+  trySpawnWater(normal) { const { WSY } = dimsOf(this.world);
     const p = this.player, w = this.world;
     const pools = w.pools;
     if (!pools || !pools.length) return false;
@@ -570,7 +570,7 @@ export const SpawnPart: Bag = {
   },
 
   /** 바다 부유물 — 바다 수면 가까이 있을 때만, 드물게. */
-  trySpawnFlotsam() {
+  trySpawnFlotsam() { const { SEA_X1 } = dimsOf(this.world);
     const p = this.player, w = this.world;
     if (!w.sea || Math.random() > 0.012) return false;
     const ptx = Math.floor(p.cx / TS), pty = Math.floor(p.cy / TS), lv = w.sea.level;
@@ -592,7 +592,7 @@ export const SpawnPart: Bag = {
     return false;
   },
 
-  trySpawn() {
+  trySpawn() { const { WW, WH, SEA_X1 } = dimsOf(this.world);
     if (this.dbgCalm) return;                           // 디버그 확인 자리(공장)만 켠다
     const p = this.player, w = this.world;
     const normal = this.ents.filter(e => e instanceof Enemy && !e.boss).length;

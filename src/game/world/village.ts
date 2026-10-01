@@ -4,7 +4,7 @@ import { aabb } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
 import { tr } from '../lang.js';
-import { CAMP_X1, HELL_Y, SHIFT, SKY_Y, SX, SY, WORLD_BOT, WW } from '../size.js';
+import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { OBJ_SIZE } from '../data/items.js';
 import { MERCHANTS } from '../data/npcs.js';
@@ -14,7 +14,7 @@ import { DAWN_BUILDINGS, DAWN_INSIDE, DAWN_OBJ, DAWN_PLAZA, DAWN_WALL, TS, World
 export const WorldVillage: Bag & ThisType<World> = {
 
   /* ---- 마을: 오두막 3채 + 작업대 + 용광로 + NPC ---- */
-  buildVillage(x0, x1, gy, rng) {
+  buildVillage(x0, x1, gy, rng) { const { CAMP_X1 } = this.dims;
     const huts = [
       { x: x0 + 2, w: 13, npc: 'elara' },
       { x: x0 + 19, w: 14, npc: 'borin' },
@@ -94,7 +94,7 @@ export const WorldVillage: Bag & ThisType<World> = {
   },
 
   /* ---- 지하 공창 (세션 2) ---- */
-  buildWorks(dx0, dx1, rng) {
+  buildWorks(dx0, dx1, rng) { const { SY } = this.dims;
     const cx = (dx0 + dx1) >> 1;
     const y0 = SY(210), h = 40, x0 = cx - 34, w = 68;
     this.works = { x0, y0, w, h, cx, liftX: cx };
@@ -148,7 +148,7 @@ export const WorldVillage: Bag & ThisType<World> = {
     this.objects.push({ type: 'terminal', x: (x0 + 14) * TS, y: (y0 + 30) * TS - 40, w: 34, h: 40, term: 2 });
   },
   /* ---- 폭주로 ---- */
-  buildRunaway(dx0, dx1, rng) {
+  buildRunaway(dx0, dx1, rng) { const { SY } = this.dims;
     const cx = (dx0 + dx1) >> 1;
     const y0 = SY(306), h = 54, w = 86, x0 = cx - (w >> 1);
     this.runaway = { x0, y0, w, h, cx };
@@ -212,7 +212,7 @@ export const WorldVillage: Bag & ThisType<World> = {
   },
 
   /* ---- 설계실 (세션 2 종장) ---- */
-  buildAtelier(rng) {
+  buildAtelier(rng) { const { WW } = this.dims;
     const rw = this.runaway;
     if (!rw) return;
     const w = 66, h = 40;
@@ -272,7 +272,7 @@ export const WorldVillage: Bag & ThisType<World> = {
   },
 
   /* ---- 특별 유적 ① 부유 성채 (하늘) ---- */
-  buildCitadel(rng) {
+  buildCitadel(rng) { const { SX, SKY_Y } = this.dims;
     const w = 74, h = 30;
     const x0 = SX(3300 + SHIFT), y0 = 4;         // 버섯 골짜기 위 하늘 (세션 2 바이옴 상공)
     this.citadel = { x0, y0, w, h, cx: x0 + (w >> 1) };
@@ -338,7 +338,7 @@ export const WorldVillage: Bag & ThisType<World> = {
   },
 
   /* ---- 특별 유적 ② 무너진 갱 (최심부) ---- */
-  buildDeepShaft(rng) {
+  buildDeepShaft(rng) { const { SX, WORLD_BOT, HELL_Y } = this.dims;
     const w = 70, h = 34;
     const x0 = SX(640 + SHIFT), y0 = WORLD_BOT - 46;     // 잿빛 숲 최하부 — 지옥 바닥 아래
     this.deepShaft = { x0, y0, w, h, cx: x0 + (w >> 1) };

@@ -3,7 +3,7 @@ import { mixHex, shade } from '../../engine/core/color.js';
 import { TAU, clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tileHash } from '../../engine/core/rng.js';
-import { BIOMES, HELL_Y, SURF_BASE, WH, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { ENEMIES } from '../data/enemies.js';
 import { FLUID_FLOW, FLUID_KIND } from '../data/materials.js';
@@ -59,7 +59,7 @@ export const RenderFarPart: Bag = {
       : 'parallax_forest';
   },
 
-  drawParallaxArt(c, camX, camY, f) {
+  drawParallaxArt(c, camX, camY, f) { const { WW, SURF_BASE, BIOMES } = dimsOf(this.world);
     const p = this.player;
     const zone = this.world.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
     let key;
@@ -181,7 +181,7 @@ export const RenderFarPart: Bag = {
     return clamp(0.66 + (main * 0.68 + sub + jit) * 0.32, 0.34, 1);
   },
   /** 이 열의 수면이 화면(세계) 몇 px 에 있나 — 수면 칸 ty 를 알 때. */
-  surfacePx(tx, ty) {
+  surfacePx(tx, ty) { const { WW } = dimsOf(this.world);
     const w = this.world, t = w.get(Math.floor(tx), ty);
     if (t === T.SEAWATER) return (ty + 1) * TS - this.waveFrac(tx) * TS;
     if (FLUID_FLOW[t] && w.flv) return (ty + 1) * TS - (w.flv[ty * WW + Math.floor(tx)] || 8) / 8 * TS;
@@ -211,7 +211,7 @@ export const RenderFarPart: Bag = {
   },
 
   /** 흐르는 액체 한 칸 — 고인 것과 **같은 그림**을 수위만큼 잘라 그린다. */
-  drawFlow(c, w, id, k, tx, ty, sx, sy) {
+  drawFlow(c, w, id, k, tx, ty, sx, sy) { const { WW } = dimsOf(this.world);
     const kind = FLUID_KIND[id], lv = w.flv ? (w.flv[k] || 7) : 7;
     const full = lv >= 8 || FLUID_KIND[w.tiles[k - WW]] === kind;
     const src = kind === 1 ? T.WATER : kind === 2 ? T.SEAWATER : T.LAVA;
@@ -253,7 +253,7 @@ export const RenderFarPart: Bag = {
   },
 
   /** 폭포 밑 물보라 — 물줄기가 수면·바닥에 닿는 칸에서 물방울이 튄다. */
-  updateFalls(dt) {
+  updateFalls(dt) { const { WW, WH } = dimsOf(this.world);
     this._fallsT = (this._fallsT || 0) - dt;
     if (this._fallsT > 0) return;
     this._fallsT = 0.08;
@@ -298,7 +298,7 @@ export const RenderFarPart: Bag = {
     const n = parseInt(c0.slice(1), 16), l = ((n >> 16) + ((n >> 8) & 255) + (n & 255)) / 3;
     return l < 120 ? shade(c0, 120 / Math.max(30, l)) : c0;
   },
-  drawGlow(c, camX, camY, tx0, ty0, tx1, ty1) {
+  drawGlow(c, camX, camY, tx0, ty0, tx1, ty1) { const { WW, WH } = dimsOf(this.world);
     const w = this.world;
     this._glowC = this._glowC || {};
     c.save();
@@ -322,7 +322,7 @@ export const RenderFarPart: Bag = {
       }
     c.restore();
   },
-  drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1) {
+  drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
     const w = this.world;
     const x0 = tx0 - 1, y0 = ty0 - 1, x1 = tx1 + 1, y1 = ty1 + 1;
     const lw = x1 - x0 + 1, lh = y1 - y0 + 1;

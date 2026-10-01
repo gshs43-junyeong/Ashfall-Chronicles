@@ -5,6 +5,15 @@
 /** 타입을 다 입히기 전의 큰 객체(G · UI · Factory · 그림 표와 그 조각) — 아무 이름이나 읽고 쓸 수 있다. */
 type Bag = Record<string, any>;
 
+/** 세계 한 벌의 치수 — World 인스턴스가 제 것을 들고 다닌다(`world.dims`). 필드 이름은 예전 모듈 전역과 같다. */
+interface WorldDims {
+  WSIZE: string; WSX: number; WSY: number;
+  SX: (x: number) => number; SY: (y: number) => number; SYB: (y: number) => number;
+  WW: number; WH: number; WORLD_BOT: number; SURF_BASE: number; HELL_Y: number; DEEP_Y: number; SKY_Y: number;
+  CAMP_X0: number; CAMP_X1: number; CAMP_GX1: number; SEA_X1: number; GLACIER_X1: number;
+  BIOMES: Bag[];
+}
+
 /** TILE_DEF 한 칸 — 인덱스가 타일 번호(세이브가 번호 그대로 담는다). */
 interface TileDef {
   n: string; c: string | null; solid: number; hard: number;
