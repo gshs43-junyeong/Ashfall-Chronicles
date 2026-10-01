@@ -96,7 +96,7 @@ interface AppCtx {
   marketRate: (...a: any[]) => any; merchantOf: (...a: any[]) => any; modeMul: (...a: any[]) => any; nearSt: any; nearStObj: any;
   objLabel: (...a: any[]) => any; onBossDown: (...a: any[]) => any; onDeath: (...a: any[]) => any; onKill: (...a: any[]) => any;
   onLevelUp: (...a: any[]) => any; onPickup: (...a: any[]) => any; onProfUp: (...a: any[]) => any; parts: any[]; pending: any[];
-  player: any; price: (...a: any[]) => any; projs: any[]; reforgeCost: (...a: any[]) => any; reforgeSlot: (...a: any[]) => any;
+  player: any; me: any; players: any[]; price: (...a: any[]) => any; projs: any[]; reforgeCost: (...a: any[]) => any; reforgeSlot: (...a: any[]) => any;
   ringFx: (...a: any[]) => any; rng: any; rollBounties: (...a: any[]) => any; saveSettings: (...a: any[]) => any;
   scale: (...a: any[]) => any; sellItem: (...a: any[]) => any; setOpt: (...a: any[]) => any; setPause: (...a: any[]) => any;
   settings: any; sfx: (...a: any[]) => any; sfxAt: (...a: any[]) => any; shake: number; shopBundle: (...a: any[]) => any; sideActive: any;

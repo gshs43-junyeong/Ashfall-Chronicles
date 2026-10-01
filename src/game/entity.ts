@@ -974,7 +974,9 @@ export class Proj extends Ent {
         if (this.pierce > 0) this.pierce--; else { this.impact(); return; }
       }
     } else {
-      if (aabb(this.rect(), player.rect())) { player.hurt(this.dmg, this.cx); this.impact(); return; }
+      /* 적 투사체는 세계의 플레이어 누구든 맞힌다(혼자면 player 하나). */
+      for (const q of (G.players.length ? G.players : [player]))
+        if (aabb(this.rect(), q.rect())) { q.hurt(this.dmg, this.cx); this.impact(); return; }
     }
     if (this.x < 0 || this.x > WW * TS || this.y > WH * TS || this.y < -400) this.dead = true;
   }

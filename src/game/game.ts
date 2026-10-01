@@ -129,7 +129,9 @@ export const NONAME = N_('이름 없는 모험가');
 export const G: Bag = {
   cv: null, ctx: null, mm: null, mmx: null,
   W: 0, H: 0, cam: { x: 0, y: 0 },
-  world: null, player: null, rng: new RNG(1),
+  world: null, rng: new RNG(1),
+  /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
+  players: [], me: null,
   ents: [], projs: [], parts: [], texts: [], drops: [], pending: [], corpses: [],
   time: 0, dayT: 6 * 60, shake: 0,
   /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
@@ -139,6 +141,17 @@ export const G: Bag = {
     layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true } },   // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
     start: 'title'
   }),
+  /** 이 화면의 플레이어(= me). 넣으면 혼자 하는 판으로 players 를 [p] 로 맞춘다. */
+  get player() { return this.me; },
+  set player(p) { this.me = p; this.players = p ? [p] : []; },
+  /** 이 자리에서 가장 가까운 플레이어 — 몹이 노리는 대상 · 물건이 끌려가는 쪽. */
+  nearestPlayer(x, y) {
+    const ps = this.players;
+    if (ps.length < 2) return this.me;
+    let best = ps[0], bd = Infinity;
+    for (const q of ps) { if (q.hp <= 0) continue; const d = dist2(x, y, q.cx, q.cy); if (d < bd) { bd = d; best = q; } }
+    return best;
+  },
   get state() { return this.scenes.current; },
   get paused() { return this.scenes.paused(); },
   get uiOpen() { return this.scenes.has('ui'); },
@@ -867,15 +880,16 @@ export const G: Bag = {
     // 엔티티
     for (let i = this.ents.length - 1; i >= 0; i--) {
       const e = this.ents[i];
-      e.update(dt, w, p);
+      const tp = this.nearestPlayer(e.cx, e.cy);
+      e.update(dt, w, tp);
       // 정예는 은은한 금빛 입자를 계속 흘려 눈에 띄게 한다 (평범한 놈이 아니라는 신호)
       if (e.elite && !e.dead && Math.random() < 0.2) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * e.w, e.cy + (Math.random() - 0.5) * e.h, '#ffd24a', -34, 0.55));
       if (e.dead) this.ents.splice(i, 1);
       // 경비병은 마을 반대편 감시탑에 서 있어도 거리로 정리하면 안 된다 — 마을을 벗어날 때 따로 거둔다
-      else if (!e.boss && !e.minion && !e.guard && dist2(e.cx, e.cy, p.cx, p.cy) > 2400 * 2400) this.ents.splice(i, 1);
+      else if (!e.boss && !e.minion && !e.guard && dist2(e.cx, e.cy, tp.cx, tp.cy) > 2400 * 2400) this.ents.splice(i, 1);
     }
     for (let i = this.projs.length - 1; i >= 0; i--) { this.projs[i].update(dt, w, p); if (this.projs[i].dead) this.projs.splice(i, 1); }
-    for (let i = this.drops.length - 1; i >= 0; i--) { this.drops[i].update(dt, w, p); if (this.drops[i].dead) this.drops.splice(i, 1); }
+    for (let i = this.drops.length - 1; i >= 0; i--) { const d = this.drops[i]; d.update(dt, w, this.nearestPlayer(d.x, d.y)); if (this.drops[i].dead) this.drops.splice(i, 1); }
     for (let i = this.parts.length - 1; i >= 0; i--) if (!this.parts[i].update(dt)) this.parts.splice(i, 1);
     this.walkDust(p);
     /* ★ 잰 최고치는 257개라 PART_CAP(900)에 정상 전투로는 닿지 않지만, 난간이 없으면 언젠가 프레임으로 값을 치른다. */
@@ -899,7 +913,7 @@ export const G: Bag = {
     // 고대 유적의 타일 함정 — 화면 근처만 훑는다
     this.trapTimer = (this.trapTimer || 0) - dt;
     if (this.trapTimer <= 0) { this.trapTimer = 0.2; this.tickTileTraps(); }
-    w.tickCrumble(dt, p);
+    for (const q of this.players) w.tickCrumble(dt, q);
 
     // 세계 이벤트 (붉은 달 · 모래폭풍 · 포자 개화 · 비)
     this.updateEvents(dt);
@@ -949,7 +963,7 @@ export const G: Bag = {
 
     // 나무 재생성 (플레이어 주변)
     this.growTimer = (this.growTimer || 0) - dt;
-    if (this.growTimer <= 0) { this.growTimer = 5; w.regrow(this.rng, 4, Math.floor(p.cx / TS)); }
+    if (this.growTimer <= 0) { this.growTimer = 5; for (const q of this.players) w.regrow(this.rng, 4, Math.floor(q.cx / TS)); }
 
     // 카메라
     const tx = p.cx - this.W / 2, ty = p.cy - this.H / 2 - 30;
