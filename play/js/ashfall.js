@@ -13620,6 +13620,15 @@
       if (!this.inB(x, y)) return;
       this.tiles[y * WW2 + x] = t;
       if (this.fq) this.fluidWake(x, y);
+      if (this.netLog && !this.netMute) this.netLog.add(y * WW2 + x);
+    }
+    setWall(x, y, w) {
+      super.setWall(x, y, w);
+      if (this.netLog && !this.netMute && this.inB(x, y)) this.netLog.add(y * this.dims.WW + x);
+    }
+    /** tiles 를 직접 쓴 칸(작물 자람 · 무너지는 바닥)도 멀티플레이 기록에 남긴다. */
+    netMark(k) {
+      if (this.netLog && !this.netMute) this.netLog.add(k);
     }
     hurtTile(x, y) {
       return TILE_DEF[this.get(x, y)].hurt || 0;
@@ -14108,7 +14117,10 @@
       for (const [k, t, lv] of out) {
         const x = k % WW2, y = k / WW2 | 0;
         if (this.tiles[k] !== t) this.set(x, y, t);
-        else this.fluidWake(x, y);
+        else {
+          this.fluidWake(x, y);
+          this.netMark(k);
+        }
         this.flv[k] = lv;
         if (j === 0) for (const d of [-1, 0, 1]) cols.add(k + d);
       }
@@ -14659,6 +14671,7 @@
         }
         if (rng.chance(Math.min(1, 0.22 * (0.55 + dayF * 0.75) * sp))) {
           this.tiles[k] = def.crop.next;
+          this.netMark(k);
           const nd = TILE_DEF[def.crop.next];
           (nd.crop && nd.crop.ripe ? out.ripe : out.grew).push(k);
         }
@@ -14684,10 +14697,14 @@
         const x = k % WW2, y = k / WW2 | 0;
         if (this.tiles[k] === T.CRUMBLE) {
           this.tiles[k] = T.AIR;
+          this.netMark(k);
           this.crumbled.set(k, 9);
           if (app.world === this) app.breakFx(x, y, T.CRUMBLE);
         } else {
-          if (!this.hitSolid(x * TS, y * TS, TS, TS)) this.tiles[k] = T.CRUMBLE;
+          if (!this.hitSolid(x * TS, y * TS, TS, TS)) {
+            this.tiles[k] = T.CRUMBLE;
+            this.netMark(k);
+          }
           this.crumbled.delete(k);
         }
       }
@@ -35838,7 +35855,7 @@
         this.trapTimer = 0.2;
         this.tickTileTraps();
       }
-      for (const q of this.players) w.tickCrumble(dt, q);
+      if (!guest) for (const q of this.players) w.tickCrumble(dt, q);
       if (!guest) this.updateEvents(dt);
       this.updateWeather(dt);
       this.updateSmoke(dt);
@@ -35846,7 +35863,7 @@
       this.checkRuinEvent();
       this.updatePulse(dt);
       this.updateCaves(dt);
-      this.world.fluidTick(dt);
+      if (!guest) this.world.fluidTick(dt);
       this.updateFalls(dt);
       if (this.ruinDark > 0) this.ruinDark -= dt;
       if (this.ruinSpore > 0) {
@@ -35881,7 +35898,7 @@
         }
       }
       this.growTimer = (this.growTimer || 0) - dt;
-      if (this.growTimer <= 0) {
+      if (this.growTimer <= 0 && !guest) {
         this.growTimer = 5;
         for (const q of this.players) w.regrow(this.rng, 4, Math.floor(q.cx / TS));
       }
@@ -37145,6 +37162,7 @@
         }
         o.closed = !o.closed;
         this.sfx(o.closed ? "door_shut" : "door_open");
+        if (this.net) this.netDoor(o);
       }
     },
     /** ?debug=factory — 캠프 오른쪽을 평평하게 밀고 기계 스물여섯 종을 한 줄로 세운다.
@@ -46284,6 +46302,52 @@
         }
       }
     },
+    /* ================= 세계 바뀜 — 타일 · 벽지 · 물 수위 · 문 ================= */
+    /* 캐기·놓기는 각자 화면에서 하고(손맛 · 얻은 물건은 제 가방) 바뀐 칸만 보낸다 — 호스트가 받아 넣고 남에게 퍼뜨린다.
+       물 흐름·작물·무너지는 바닥은 호스트만 돌리고 결과 칸을 보낸다. */
+    netTrackWorld() {
+      this.world.netLog = /* @__PURE__ */ new Set();
+      this.world.netMute = false;
+    },
+    /** 모인 바뀐 칸 → [칸, 타일, 벽지, 수위, …] */
+    netTakeTiles() {
+      const w = this.world, log = w && w.netLog;
+      if (!log || !log.size) return null;
+      const out = [];
+      for (const k of log) out.push(k, w.tiles[k], w.walls[k], w.flv ? w.flv[k] : 0);
+      log.clear();
+      return out;
+    },
+    /** 받은 칸을 넣는다 — 기록하지 않고(되돌려 보내지 않게). fromGuest 면 기반암은 건드리지 못한다. */
+    netPutTiles(list, fromGuest) {
+      const w = this.world, { WW: WW2 } = w.dims;
+      w.netMute = true;
+      try {
+        for (let i = 0; i + 3 < list.length; i += 4) {
+          const k = list[i], t = list[i + 1], wl = list[i + 2], x = k % WW2, y = k / WW2 | 0;
+          if (!w.inB(x, y)) continue;
+          if (fromGuest && (w.tiles[k] === T.BEDROCK || t === T.BEDROCK)) continue;
+          if (w.tiles[k] !== t) w.set(x, y, t);
+          if (w.walls[k] !== wl) w.setWall(x, y, wl);
+          if (w.flv) w.flv[k] = list[i + 3];
+        }
+      } finally {
+        w.netMute = false;
+      }
+    },
+    /** 문을 여닫았다 — 자리(x·y)로 같은 문을 찾는다. */
+    netDoor(o) {
+      const m = { k: "door", x: o.x, y: o.y, c: o.closed ? 1 : 0 }, n = this.net;
+      if (n.role === "guest") {
+        if (n.t) this.netSend(n.t, "rel", m);
+      } else for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", m);
+    },
+    netPutDoor(m) {
+      const d = (this.world.doors || []).find((o) => o.x === m.x && o.y === m.y);
+      if (!d || d.closed === !!m.c) return;
+      d.closed = !!m.c;
+      if (this.me && Math.abs(this.me.cx - d.x) < 600 && Math.abs(this.me.cy - d.y) < 400) this.sfx(d.closed ? "door_shut" : "door_open");
+    },
     netSend(t, ch, msg) {
       const text = JSON.stringify(msg);
       if (text.length > 15e3) for (const part of chunkText(++this.net.chunkId, text)) t.send("rel", part);
@@ -46304,6 +46368,7 @@
       const url = this.netSignalUrl(), n = { role: "host", room, sig: null, peers: /* @__PURE__ */ new Map(), pending: /* @__PURE__ */ new Map(), nextId: 1, sendT: 0, chunkId: 0, url };
       this.net = n;
       this.me.netId = 0;
+      this.netTrackWorld();
       if (isWs(url)) {
         const ws = createWsSignal(url, { role: "host" });
         n.sig = ws;
@@ -46416,6 +46481,12 @@
       } else if (m.k === "bye") {
         peer.t.close();
         this.netDropPeer(peer);
+      } else if (m.k === "tiles" && peer.rp) {
+        this.netPutTiles(m.l, true);
+        for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, "rel", m);
+      } else if (m.k === "door" && peer.rp) {
+        this.netPutDoor(m);
+        for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, "rel", m);
       }
     },
     netDropPeer(peer) {
@@ -46494,6 +46565,7 @@
         me.y = m.y;
         me.netId = n.id = m.id;
         this.player = me;
+        this.netTrackWorld();
         for (const [id, s] of m.roster) n.others.set(id, this.netAvatar(id, s));
         this.cam.x = me.cx - this.W / 2;
         this.cam.y = me.cy - this.H / 2;
@@ -46524,6 +46596,10 @@
         }
       } else if (m.k === "hurt") {
         this.me.hurt(m.a, m.sx);
+      } else if (m.k === "tiles") {
+        this.netPutTiles(m.l, false);
+      } else if (m.k === "door") {
+        this.netPutDoor(m);
       }
     },
     netLost() {
@@ -46542,9 +46618,16 @@
       if (n.sendT > 0) return;
       n.sendT += 1 / NET_HZ;
       if (n.sendT < 0) n.sendT = 0;
+      const tiles = this.netTakeTiles();
       if (n.role === "guest") {
-        if (n.t && n.id >= 0) n.t.send("fast", JSON.stringify({ k: "st", s: this.netState(this.me) }));
+        if (n.t && n.id >= 0) {
+          n.t.send("fast", JSON.stringify({ k: "st", s: this.netState(this.me) }));
+          if (tiles) this.netSend(n.t, "rel", { k: "tiles", l: tiles });
+        }
         return;
+      }
+      if (tiles) {
+        for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", { k: "tiles", l: tiles });
       }
       const t = now();
       for (const q of n.peers.values()) if (q.heard && t - q.heard > 5) {

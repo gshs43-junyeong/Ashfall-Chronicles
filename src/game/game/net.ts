@@ -5,6 +5,7 @@ import { SnapBuffer } from '../../engine/net/interp.js';
 import { closeRoom, createHttpSignal, createTabSignal, createWsSignal, openRoom } from '../../engine/net/signal.js';
 import { guestAnswer, hostOffer } from '../../engine/net/webrtc.js';
 import { tr } from '../lang.js';
+import { T } from '../data.js';
 import { makeItem } from '../entity.js';
 import { UI } from '../ui.js';
 import { G } from '../game.js';
@@ -66,6 +67,46 @@ export const NetPart: Bag = {
       if (s) { rp.x = s.x; rp.y = s.y; }
     }
   },
+  /* ================= 세계 바뀜 — 타일 · 벽지 · 물 수위 · 문 ================= */
+  /* 캐기·놓기는 각자 화면에서 하고(손맛 · 얻은 물건은 제 가방) 바뀐 칸만 보낸다 — 호스트가 받아 넣고 남에게 퍼뜨린다.
+     물 흐름·작물·무너지는 바닥은 호스트만 돌리고 결과 칸을 보낸다. */
+  netTrackWorld() { this.world.netLog = new Set(); this.world.netMute = false; },
+  /** 모인 바뀐 칸 → [칸, 타일, 벽지, 수위, …] */
+  netTakeTiles() {
+    const w = this.world, log = w && w.netLog;
+    if (!log || !log.size) return null;
+    const out = [];
+    for (const k of log) out.push(k, w.tiles[k], w.walls[k], w.flv ? w.flv[k] : 0);
+    log.clear();
+    return out;
+  },
+  /** 받은 칸을 넣는다 — 기록하지 않고(되돌려 보내지 않게). fromGuest 면 기반암은 건드리지 못한다. */
+  netPutTiles(list, fromGuest) {
+    const w = this.world, { WW } = w.dims;
+    w.netMute = true;
+    try {
+      for (let i = 0; i + 3 < list.length; i += 4) {
+        const k = list[i], t = list[i + 1], wl = list[i + 2], x = k % WW, y = (k / WW) | 0;
+        if (!w.inB(x, y)) continue;
+        if (fromGuest && (w.tiles[k] === T.BEDROCK || t === T.BEDROCK)) continue;   // ★ 세계 경계 — 누구의 글로도 안 바뀐다
+        if (w.tiles[k] !== t) w.set(x, y, t);
+        if (w.walls[k] !== wl) w.setWall(x, y, wl);
+        if (w.flv) w.flv[k] = list[i + 3];
+      }
+    } finally { w.netMute = false; }
+  },
+  /** 문을 여닫았다 — 자리(x·y)로 같은 문을 찾는다. */
+  netDoor(o) {
+    const m = { k: 'door', x: o.x, y: o.y, c: o.closed ? 1 : 0 }, n = this.net;
+    if (n.role === 'guest') { if (n.t) this.netSend(n.t, 'rel', m); }
+    else for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, 'rel', m);
+  },
+  netPutDoor(m) {
+    const d = (this.world.doors || []).find(o => o.x === m.x && o.y === m.y);
+    if (!d || d.closed === !!m.c) return;
+    d.closed = !!m.c;
+    if (this.me && Math.abs(this.me.cx - d.x) < 600 && Math.abs(this.me.cy - d.y) < 400) this.sfx(d.closed ? 'door_shut' : 'door_open');
+  },
   netSend(t, ch, msg) {
     const text = JSON.stringify(msg);
     if (text.length > 15000) for (const part of chunkText(++this.net.chunkId, text)) t.send('rel', part);
@@ -87,6 +128,7 @@ export const NetPart: Bag = {
     if (this.net || !this.me) return;
     const url = this.netSignalUrl(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0, url };
     this.net = n; this.me.netId = 0;
+    this.netTrackWorld();
     if (isWs(url)) {
       const ws = createWsSignal(url, { role: 'host' });
       n.sig = ws;
@@ -157,6 +199,12 @@ export const NetPart: Bag = {
       peer.rp.netBuf.push(now(), m.s); this.netApply(peer.rp, m.s); peer.last = m.s; peer.heard = now();
     } else if (m.k === 'bye') {
       peer.t.close(); this.netDropPeer(peer);
+    } else if (m.k === 'tiles' && peer.rp) {
+      this.netPutTiles(m.l, true);
+      for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, 'rel', m);   // 다른 참가자에게 그대로
+    } else if (m.k === 'door' && peer.rp) {
+      this.netPutDoor(m);
+      for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, 'rel', m);
     }
   },
   netDropPeer(peer) {
@@ -214,6 +262,7 @@ export const NetPart: Bag = {
       const me = n.char;
       me.x = m.x; me.y = m.y; me.netId = n.id = m.id;
       this.player = me;
+      this.netTrackWorld();
       for (const [id, s] of m.roster) n.others.set(id, this.netAvatar(id, s));
       this.cam.x = me.cx - this.W / 2; this.cam.y = me.cy - this.H / 2;
       this.petEnts = []; this.syncPets();
@@ -233,6 +282,10 @@ export const NetPart: Bag = {
       if (rp) { n.others.delete(m.id); this.netRemove(rp); this.toast(tr('{name|이} 나갔다', { name: rp.name }), 'info'); }
     } else if (m.k === 'hurt') {
       this.me.hurt(m.a, m.sx);
+    } else if (m.k === 'tiles') {
+      this.netPutTiles(m.l, false);
+    } else if (m.k === 'door') {
+      this.netPutDoor(m);
     }
   },
   netLost() {
@@ -251,7 +304,15 @@ export const NetPart: Bag = {
     if (n.sendT > 0) return;
     n.sendT += 1 / NET_HZ;
     if (n.sendT < 0) n.sendT = 0;
-    if (n.role === 'guest') { if (n.t && n.id >= 0) n.t.send('fast', JSON.stringify({ k: 'st', s: this.netState(this.me) })); return; }
+    const tiles = this.netTakeTiles();
+    if (n.role === 'guest') {
+      if (n.t && n.id >= 0) {
+        n.t.send('fast', JSON.stringify({ k: 'st', s: this.netState(this.me) }));
+        if (tiles) this.netSend(n.t, 'rel', { k: 'tiles', l: tiles });
+      }
+      return;
+    }
+    if (tiles) for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, 'rel', { k: 'tiles', l: tiles });
     const t = now();
     for (const q of n.peers.values()) if (q.heard && t - q.heard > 5) { q.t.close(); this.netDropPeer(q); }   // 5초 넘게 소식 없음 = 나감
     const list = [[0, this.netState(this.me)]];

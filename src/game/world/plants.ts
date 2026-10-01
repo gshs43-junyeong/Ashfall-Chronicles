@@ -257,7 +257,7 @@ export const WorldPlants: Bag & ThisType<World> = {
       if (day !== undefined && !this.isWet(x, y + 1, day)) { out.dry.push(k); continue; }
       // sp 를 크게 넘기면(아침 성장) 확률 굴림 없이 반드시 한 단계 자란다
       if (rng.chance(Math.min(1, 0.22 * (0.55 + dayF * 0.75) * sp))) {
-        this.tiles[k] = def.crop.next;
+        this.tiles[k] = def.crop.next; this.netMark(k);
         const nd = TILE_DEF[def.crop.next];
         (nd.crop && nd.crop.ripe ? out.ripe : out.grew).push(k);
       }
@@ -281,12 +281,12 @@ export const WorldPlants: Bag & ThisType<World> = {
       // 어느 단계인지는 타일이 알려 준다 — CRUMBLE이면 무너질 차례, AIR면 돌아올 차례
       const x = k % WW, y = (k / WW) | 0;
       if (this.tiles[k] === T.CRUMBLE) {
-        this.tiles[k] = T.AIR;
+        this.tiles[k] = T.AIR; this.netMark(k);
         this.crumbled.set(k, 9);                               // 9초 뒤 제자리로
         if (G.world === this) G.breakFx(x, y, T.CRUMBLE);      // 무너지는 먼지 · 소리
       } else {
         // 그 자리에 누가 서 있으면 끼이므로, 비어 있을 때만 되돌린다
-        if (!this.hitSolid(x * TS, y * TS, TS, TS)) this.tiles[k] = T.CRUMBLE;
+        if (!this.hitSolid(x * TS, y * TS, TS, TS)) { this.tiles[k] = T.CRUMBLE; this.netMark(k); }
         this.crumbled.delete(k);
       }
     }

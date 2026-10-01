@@ -66,6 +66,24 @@ const r = await host.evaluate(() => { const g = G.players.find(p => p.remote); r
 const gx = await guest.evaluate(() => G.me.x);
 check(r && r.name === 'Guest' && gx - x0 > 100 && Math.abs(r.x - gx) < 24, `호스트가 참가자 걸음을 본다 (참가자 ${Math.round(gx - x0)}px 걸음 · 어긋남 ${r ? Math.round(Math.abs(r.x - gx)) : '?'}px)`);
 
+/* 세계 바뀜 — 참가자가 캔 칸이 호스트로, 호스트가 놓은 칸이 참가자로 · 기반암은 참가자 글로 안 바뀐다 · 문 */
+const spot = await guest.evaluate(() => {
+  const p = G.me, tx = Math.floor(p.cx / 16) + 3, ty = Math.floor((p.y + p.h + 1) / 16) + 1;
+  const before = G.world.get(tx, ty);
+  G.world.set(tx, ty, T.AIR);                              // 캐기와 같은 길(world.set)
+  G.world.set(5, G.world.dims.WH - 1, T.AIR);              // 기반암 — 호스트가 거절해야 한다
+  return { tx, ty, before };
+});
+await host.evaluate(({ tx, ty }) => G.world.set(tx, ty - 3, T.STONE), spot);
+await guest.waitForTimeout(800);
+const tilesHost = await host.evaluate(({ tx, ty }) => [G.world.get(tx, ty), G.world.get(5, G.world.dims.WH - 1) === T.BEDROCK], spot);
+const tileGuest = await guest.evaluate(({ tx, ty }) => G.world.get(tx, ty - 3) === T.STONE, spot);
+check(spot.before !== 0 && tilesHost[0] === 0 && tilesHost[1] && tileGuest, `세계 바뀜: 참가자가 캔 칸 → 호스트 · 호스트가 놓은 칸 → 참가자 · 기반암은 그대로`);
+const doorOk = await host.evaluate(() => { const d = G.world.doors[0]; if (!d) return null; d.closed = !d.closed; G.netDoor(d); return [d.x, d.y, d.closed]; });
+await guest.waitForTimeout(600);
+const doorG = doorOk && await guest.evaluate(([x, y]) => { const d = G.world.doors.find(o => o.x === x && o.y === y); return d && d.closed; }, doorOk);
+check(!doorOk || doorG === doorOk[2], `문: 호스트가 여닫으면 참가자 화면도 (${doorOk ? doorOk[2] : '문 없음'})`);
+
 const hp0 = await guest.evaluate(() => G.me.hp);
 await host.evaluate(() => G.players.find(p => p.remote).hurt(20, 0));
 await guest.waitForTimeout(500);
