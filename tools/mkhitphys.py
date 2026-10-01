@@ -59,7 +59,7 @@
 import math, os
 from PIL import Image
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'game', 'assets', 'fx')
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'play', 'assets', 'fx')
 N, S, GAP, FRAMES = 64, 4, 4, 6
 MARGIN = 2              # 틀 안쪽에 반드시 남는 여백(원본 px) — 단면이 안 생기는 최소치
 

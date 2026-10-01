@@ -45,7 +45,7 @@
 import os
 from PIL import Image
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'game', 'assets', 'char')
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'play', 'assets', 'char')
 S, FRAMES = 4, 7
 OUTLINE = (0x0c, 0x0c, 0x11)
 

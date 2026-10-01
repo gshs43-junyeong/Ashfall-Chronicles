@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""분수대 시트 굽기 — tools/art/fountain_src.png(110x66, 한 장) → game/assets/obj/fountain.png(4배, N장).
+"""분수대 시트 굽기 — tools/art/fountain_src.png(110x66, 한 장) → play/assets/obj/fountain.png(4배, N장).
 
 원래 두 장은 물줄기 곡선 자체가 장마다 달라서 물이 위아래로 출렁이는 것처럼 보였다.
 곡선은 한 번만 맞춰 두고(원래 그림의 물방울 자리에 2차식 맞춤) **물방울이 그 길을 따라 흘러가게** 칠한다:
@@ -11,7 +11,7 @@ from PIL import Image
 
 ROOT = os.path.join(os.path.dirname(__file__), '..')
 SRC = os.path.join(ROOT, 'tools', 'art', 'fountain_src.png')
-OUT = os.path.join(ROOT, 'game', 'assets', 'obj', 'fountain.png')
+OUT = os.path.join(ROOT, 'play', 'assets', 'obj', 'fountain.png')
 N, K = 8, 4
 MID, LIGHT, DEEP = (79, 164, 192, 255), (134, 208, 228, 255), (47, 114, 144, 255)
 W, H = 110, 66

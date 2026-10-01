@@ -8,7 +8,7 @@
      고칠지 말지는 사람이 보고 정한다 — 이 판은 "어디가 이상한가"만 짚어 준다. -->
 <meta charset="utf-8">
 <title>드래곤 모션 점검판</title>
-<script src="../game/assets/sprites-manifest.js"></script>
+<script src="../play/assets/sprites-manifest.js"></script>
 <script>FIXED_URL = "fixed.json";</script>
 <style>
 :root{
@@ -348,7 +348,7 @@ for (const sheet of SHEETS){
     if (--pending === 0) { cards.sort((a,b)=>ord(a.name)-ord(b.name)); for (const c of cards) out.appendChild(c.el); applyFilter(); }
   };
   img.onerror = () => { if (--pending === 0) { cards.sort((a,b)=>ord(a.name)-ord(b.name)); for (const c of cards) out.appendChild(c.el); applyFilter(); } };
-  img.src = '../game/assets/' + sheet.m.file;
+  img.src = '../play/assets/' + sheet.m.file;
 }
 }
 if (window.FIXED) boot();

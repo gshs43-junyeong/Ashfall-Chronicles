@@ -1,5 +1,5 @@
 'use strict';
-/* 엔진 예제 — 자동 생성물(tools/bundle.mjs). 원본은 games/sample/src/ · src/engine/ */
+/* 엔진 예제 — 자동 생성물(tools/bundle.mjs). 원본은 examples/sample/src/ · src/engine/ */
 "use strict";
 (() => {
   // src/engine/core/math.ts
@@ -1098,7 +1098,7 @@
     }
   };
 
-  // games/sample/src/tiles.ts
+  // examples/sample/src/tiles.ts
   var TS = 16;
   var WW = 240, WH = 90;
   var T = { AIR: 0, DIRT: 1, GRASS: 2, STONE: 3, PLANK: 4, BEDROCK: 5, TORCH: 6 };
@@ -1183,7 +1183,7 @@
     });
   }
 
-  // games/sample/src/main.ts
+  // examples/sample/src/main.ts
   var EN = {
     "←→ 이동 · 스페이스 점프 · ↓ 발판 내려가기": "←→ move · Space jump · ↓ drop through",
     "왼쪽 클릭 캐기 · 오른쪽 클릭 놓기 · 1~4 블록 · P 멈춤 · S 저장 · L 불러오기": "Left click dig · Right click place · 1–4 block · P pause · S save · L load",

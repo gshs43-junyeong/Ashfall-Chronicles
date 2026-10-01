@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# 배포용 사이트를 만든다: game/ 을 site/play/ 로 복사해 브라우저에서 바로 플레이되게 한다.
+# 배포용 사이트를 만든다: play/ 를 site/play/ 로 복사해 브라우저에서 바로 플레이되게 한다.
 #
-# site/play/ 는 git 에 올리지 않는다(.gitignore). game/ 과 똑같은 파일을 저장소에 두 벌
+# site/play/ 는 git 에 올리지 않는다(.gitignore). play/ 와 똑같은 파일을 저장소에 두 벌
 # 두게 되기 때문이다. 대신 배포할 때마다 이 스크립트가 만든다.
 # Vercel(vercel.json 의 buildCommand)과 GitHub Pages 워크플로가 둘 다 이걸 부른다.
 #
@@ -18,8 +18,8 @@ set -uo pipefail        # -e 는 일부러 빼 두었다. 아래에서 필요한
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 warn() { echo "  ! $*" >&2; }
 
-if [ ! -f "$ROOT/game/index.html" ]; then
-  echo "game/index.html 이 없습니다. 저장소 루트에서 실행했는지 확인하세요." >&2
+if [ ! -f "$ROOT/play/index.html" ]; then
+  echo "play/index.html 이 없습니다. 저장소 루트에서 실행했는지 확인하세요." >&2
   exit 1
 fi
 
@@ -48,18 +48,18 @@ else
 fi
 
 # ---- 게임 코드 번들 -------------------------------------------------------------
-# src/game/ 가 원본이고 game/js/ashfall.js 는 산출물(커밋돼 있다). 여기서 다시 만들어
+# src/game/ 가 원본이고 play/js/ashfall.js 는 산출물(커밋돼 있다). 여기서 다시 만들어
 # 소스만 고치고 번들을 안 올린 커밋도 배포판에는 반영되게 한다. 실패하면 커밋된 번들을 쓴다.
 if command -v node >/dev/null 2>&1; then
-  node "$ROOT/tools/bundle.mjs" || warn "번들 만들기 실패 — 커밋된 game/js/ashfall.js 를 그대로 씁니다"
+  node "$ROOT/tools/bundle.mjs" || warn "번들 만들기 실패 — 커밋된 play/js/ashfall.js 를 그대로 씁니다"
 else
-  warn "node 가 없습니다 — game/js/ashfall.js 는 커밋된 것을 그대로 씁니다"
+  warn "node 가 없습니다 — play/js/ashfall.js 는 커밋된 것을 그대로 씁니다"
 fi
 
 # ---- 복사 (여기만 실패로 친다) -----------------------------------------------
 rm -rf "$ROOT/site/play" || true
 mkdir -p "$ROOT/site/play" || { echo "site/play 를 만들 수 없습니다" >&2; exit 1; }
-cp -R "$ROOT/game/." "$ROOT/site/play/" || { echo "game/ 복사 실패" >&2; exit 1; }
+cp -R "$ROOT/play/." "$ROOT/site/play/" || { echo "play/ 복사 실패" >&2; exit 1; }
 
 # ---- ?v= 를 이 배포의 값으로 -------------------------------------------------
 # html 의 <script src="js/ashfall.js?v=185"> 를 전부 ?v=<해시> 로 바꾼다.

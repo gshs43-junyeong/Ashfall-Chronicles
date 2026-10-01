@@ -21,7 +21,7 @@ ENEMIES 의 stiff 표시(js/data.js)를 정할 때 쓴 값이 이 스크립트�
 import json, os, sys
 from PIL import Image, ImageChops
 
-ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'game')
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'play')
 M = json.load(open(os.path.join(ROOT, 'assets/manifest.json')))
 
 

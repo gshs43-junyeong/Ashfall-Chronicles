@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """타이틀 로고 · 파비콘을 굽는다 — 글꼴 윤곽(tools/art/fonts, SIL OFL)을 그림·경로로 구워 게임·사이트는 글꼴 파일이 없다.
 
-  python3 tools/mklogo.py            # game/assets/ui/logo.png · logo_small.png · favicon*.png · site/favicon.ico
+  python3 tools/mklogo.py            # play/assets/ui/logo.png · logo_small.png · favicon*.png · site/favicon.ico
   python3 tools/mklogo.py --preview  # 위 + /tmp 에 어두운 바탕 미리보기
 
 로고 = 'ASHFALL' (Cinzel Black — 첫 A · 끝 L 이 큰 제목 글자, 위는 밝은 금 → 아래 잿불 주황, 아래로 민 두께와 검은 윤곽)
@@ -14,7 +14,7 @@ import os, sys, math, random
 from PIL import Image, ImageFilter
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
-UI = os.path.join(ROOT, 'game', 'assets', 'ui')
+UI = os.path.join(ROOT, 'play', 'assets', 'ui')
 
 # ---- 글자 윤곽 — tools/art/fonts 의 OFL 글꼴(Cinzel Black · Bold)에서 뽑는다 ----
 # 로고는 글꼴을 싣지 않는다: 윤곽을 PNG(게임) · SVG 경로(사이트)로 구워 넣으므로 게임·사이트 어디에도 글꼴 파일이 없다.
@@ -264,7 +264,7 @@ def main():
     for n in (16, 32, 48, 180, 512):
         favicon(n).save(os.path.join(UI, f'favicon_{n}.png'))
     ico = favicon(256)
-    ico.save(os.path.join(ROOT, 'game', 'favicon.ico'), sizes=[(16, 16), (32, 32), (48, 48)])
+    ico.save(os.path.join(ROOT, 'play', 'favicon.ico'), sizes=[(16, 16), (32, 32), (48, 48)])
     ico.save(os.path.join(ROOT, 'site', 'favicon.ico'), sizes=[(16, 16), (32, 32), (48, 48)])
     print('logo', big.size, 'small', small.size)
     if '--preview' in sys.argv:

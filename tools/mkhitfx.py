@@ -28,7 +28,7 @@
 import math, os
 from PIL import Image
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'game', 'assets', 'fx')
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'play', 'assets', 'fx')
 N, S, GAP, FRAMES = 64, 4, 4, 6
 C = N / 2 - 0.5
 

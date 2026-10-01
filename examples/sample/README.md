@@ -1,4 +1,4 @@
-# 엔진 예제 — games/sample
+# 엔진 예제 — examples/sample
 
 `src/engine` **만** 써서 만든 최소 타일 게임입니다(게임 `src/game` 은 import 하지 않습니다). 엔진이 Ashfall 없이도 돈다는 증명이자,
 새 게임을 시작할 때 복사해 쓰는 틀입니다. API 는 [docs/engine.md](../../docs/engine.md).

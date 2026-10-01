@@ -2,7 +2,7 @@
      node tools/i18n.mjs wrap <파일…>     코드의 한국어 문구를 tr('원문', { 값 }) 으로 감싼다
      node tools/i18n.mjs scan              아직 안 감싼 한국어 문구(함수 안) — 남으면 1
      node tools/i18n.mjs extract [--check] 원문 목록 src/game/locales/source.json 을 새로 쓴다(--check 는 어긋나면 1)
-     node tools/i18n.mjs build [--check]   번역 묶음 src/game/locales/<lang>.json → game/locales/<lang>.js + list.js
+     node tools/i18n.mjs build [--check]   번역 묶음 src/game/locales/<lang>.json → play/locales/<lang>.js + list.js
      node tools/i18n.mjs check             언어마다 빠진 열쇠 · 원문에 없는 열쇠 · 자리표 · 태그 · 남은 한글 · 형식
      node tools/i18n.mjs sheet <lang>      검수 시트 tools/i18n-review/<lang>.csv
      node tools/i18n.mjs merge <lang> <csv> 검수본을 받아 넣는다(열쇠 기준 · 자리표 검사)
@@ -322,7 +322,7 @@ function extract() {
     });
   }
   /* 정적 HTML — lang.js localizeDom 과 같은 규칙(글 마디는 앞뒤 공백을 뺀 것, 안내 속성 넷) */
-  const raw = fs.readFileSync(path.join(ROOT, 'game/index.html'), 'utf8');
+  const raw = fs.readFileSync(path.join(ROOT, 'play/index.html'), 'utf8');
   for (const m of raw.matchAll(/\btr\('([^'\\]+)'\)/g)) (msgs[m[1]] = msgs[m[1]] || []).includes('index.html') || msgs[m[1]].push('index.html');   // 인라인 스크립트
   const html = raw.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<!--[\s\S]*?-->/g, '<x>');
   const ent = t => t.replace(/&nbsp;/g, '\u00a0').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
@@ -341,7 +341,7 @@ function extract() {
 
 /* ---- 번역 묶음: src/game/locales/<lang>.json = { msgs: {원문: 번역}, tables: {경로: 번역} } ---- */
 const LOC = path.join(LEGACY, 'locales');
-const OUT = path.join(ROOT, 'game/locales');
+const OUT = path.join(ROOT, 'play/locales');
 const ORDER = ['ko', 'en', 'ja', 'zh-Hans', 'de', 'es'];
 const langs = () => fs.readdirSync(LOC).filter(f => /^[a-z]{2}(-[A-Za-z]+)?\.json$/.test(f)).map(f => f.slice(0, -5))
   .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
@@ -349,7 +349,7 @@ const readLoc = l => JSON.parse(fs.readFileSync(path.join(LOC, l + '.json'), 'ut
 const writeLoc = (l, d) => fs.writeFileSync(path.join(LOC, l + '.json'), JSON.stringify(d, null, 1) + '\n');
 const readSource = () => JSON.parse(fs.readFileSync(SOURCE_JSON, 'utf8'));
 
-/** game/locales/*.js — <script> 로 싣는 묶음과 언어 목록 */
+/** play/locales/*.js — <script> 로 싣는 묶음과 언어 목록 */
 function buildFiles() {
   const files = {};
   const ls = langs();
@@ -429,13 +429,13 @@ if (cmd === 'wrap') {
   if (args.includes('--check')) {
     const stale = Object.entries(files).filter(([f, t]) => !fs.existsSync(path.join(OUT, f)) || fs.readFileSync(path.join(OUT, f), 'utf8') !== t);
     const extra = fs.existsSync(OUT) ? fs.readdirSync(OUT).filter(f => !(f in files)) : [];
-    if (stale.length || extra.length) { console.error('✗ game/locales 가 번역 묶음과 어긋난다 — node tools/i18n.mjs build (' + [...stale.map(x => x[0]), ...extra].join(', ') + ')'); process.exit(1); }
-    console.log(`✓ game/locales 가 번역 묶음과 맞다(${Object.keys(files).length - 1}개 언어 묶음)`);
+    if (stale.length || extra.length) { console.error('✗ play/locales 가 번역 묶음과 어긋난다 — node tools/i18n.mjs build (' + [...stale.map(x => x[0]), ...extra].join(', ') + ')'); process.exit(1); }
+    console.log(`✓ play/locales 가 번역 묶음과 맞다(${Object.keys(files).length - 1}개 언어 묶음)`);
   } else {
     fs.mkdirSync(OUT, { recursive: true });
     for (const f of fs.readdirSync(OUT)) if (!(f in files)) fs.unlinkSync(path.join(OUT, f));
     for (const [f, t] of Object.entries(files)) fs.writeFileSync(path.join(OUT, f), t);
-    console.log('✓ game/locales — ' + Object.keys(files).join(' · '));
+    console.log('✓ play/locales — ' + Object.keys(files).join(' · '));
   }
 } else if (cmd === 'check') {
   const src = readSource(); let fail = 0;

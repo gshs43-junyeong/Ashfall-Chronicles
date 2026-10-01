@@ -2,9 +2,9 @@
 
 Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다. 코드의 **원본은 `src/`** — 게임 쪽
 `src/game/**/*.ts`(ES 모듈 · 느슨한 TS — 표 모양은 `types.d.ts`, 큰 객체는 아직 `Bag`)와 게임을 모르는 엔진 `src/engine/**/*.ts`(TypeScript strict)이고, `tools/bundle.mjs`(esbuild)가 `main.ts` 에서 import 를 따라
-`game/js/ashfall.js` 하나(클래식 스크립트 · IIFE)로 묶는다 — file:// 에서도 돈다. 처음 한 번 `npm ci`, 그다음 **`npm run dev`
+`play/js/ashfall.js` 하나(클래식 스크립트 · IIFE)로 묶는다 — file:// 에서도 돈다. 처음 한 번 `npm ci`, 그다음 **`npm run dev`
 를 켜 두면 고치고 새로고침하는 흐름 그대로다**(소스를 고치면 번들이 다시 만들어진다).
-번들은 커밋한다 — `game/` 만 받아도 빌드 없이 돈다. **소스를 고쳤으면 번들도 같이 커밋할 것**
+번들은 커밋한다 — `play/` 만 받아도 빌드 없이 돈다. **소스를 고쳤으면 번들도 같이 커밋할 것**
 (`npm run check` · CI · `build.sh` 가 어긋나면 막는다). 엔진화 계획은 `docs/v1.1.1-engine-plan.md`.
 
 이 문서는 "어디에 무엇이 있는가"보다 **"무엇을 하면 조용히 망가지는가"**에 무게를
@@ -103,7 +103,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 
 | 경로 | 내용 |
 |---|---|
-| `game/` | 실행 폴더. 이 폴더만 정적 서버에 올리면 그대로 돈다(`js/ashfall.js` 는 **산출물**) |
+| `play/` | 실행 폴더. 이 폴더만 정적 서버에 올리면 그대로 돈다(`js/ashfall.js` 는 **산출물**) |
 | `src/game/size.ts` | 세계 크기 — `SHIFT`·`SX`/`SY`·치수 `let`·바이옴 경계. `let` 은 여기서만 고쳐 쓴다 |
 | `src/game/data.ts` + `data/*.ts` | 표만 있는 곳 — `data.ts` 는 타일·희귀도, `data/` 에 아이템 · 제작법 · 적 · 재질 · 스킬 · 유적 · 업적 · NPC·대사 · 펫 · 장·이야기 · 부탁·의뢰 · 물건값 |
 | `src/game/world.ts` + `world/*.ts` | `World`(생성자 · generate · 충돌 · 조명 · 유체 · 저장) + 생성 조각(나무 · 마을 · 하늘 섬 · 던전 · 함정 · 유적 · 동굴 · 바다 · 물) |
@@ -113,20 +113,20 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `src/game/ui.ts` + `ui/*.ts` · `music.ts` · `factory.ts` · `titlebg.ts` · `util.ts` · `sprites.ts` | UI 뼈대 + 창 조각(특성 · 퀘스트 · 제작 · 기계 · 상점 · 툴팁 · 대화 · HUD) · 그 이름대로 |
 | `src/game/main.ts` · `ctx.ts` | 묶는 입구(모듈 순서 · 디버그 창구 · 다른 언어면 표·HTML 덮기) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
 | `src/game/lang.ts` · `locales/` | 번역 창구 `tr` · `N_` · `fmt` · `FONT` · `LANG` · 원문 목록 `locales/source.json`(`extract` 산출물) · 번역 `locales/<lang>.json` · 용어집 `glossary.csv` |
-| `game/locales/` | `<script>` 로 싣는 번역 묶음과 언어 목록 — `node tools/i18n.mjs build` 산출물(손으로 고치지 말 것). 언어는 index.html 이 번들보다 먼저 고른다(`?lang=` → 설정 → 브라우저 언어 → ko) |
+| `play/locales/` | `<script>` 로 싣는 번역 묶음과 언어 목록 — `node tools/i18n.mjs build` 산출물(손으로 고치지 말 것). 언어는 index.html 이 번들보다 먼저 고른다(`?lang=` → 설정 → 브라우저 언어 → ko) |
 | `src/engine/` | 엔진(TS) — `core`(수학·난수·잡음·색·루프) · `save`(저장소·서명·판올림·RLE) · `audio`(음악·효과음·환경음 틀) · `assets`(그림 불러오기·여백 재기) · `platform`(화면 맞추기) · `input`(키·액션 매핑 · 마우스 · 터치 뼈대) · `tilemap`(`TileMap` — `World extends TileMap` · 빛 퍼뜨리기) · `render`(파이프라인 단계 · 아틀라스 굽기 · 연결 타일 틀) · `i18n`(tr · ICU 부분집합 · 한국어 조사 · 표 덮기) · `entity`(`Entity` — `Ent extends Entity` · 칸 충돌 이동 조각) · `scene`(씬 스택 — `G.state`·`paused`·`uiOpen` 은 접근자) · `ui`(패널 · 툴팁 · 슬롯 칸). 게임 고유값은 `create*({…})` 설정으로 받는다 |
-| `games/sample/` | 엔진**만** 쓰는 최소 예제 게임(src/ → `sample.js` 산출물, `tools/bundle.mjs` 가 같이 묶는다) — 엔진 API 는 `docs/engine.md`. 엔진을 고쳐 이것이 깨지면(`npm run test:sample`) 게임 가정이 엔진에 스민 것 |
+| `examples/sample/` | 엔진**만** 쓰는 최소 예제 게임(src/ → `sample.js` 산출물, `tools/bundle.mjs` 가 같이 묶는다) — 엔진 API 는 `docs/engine.md`. 엔진을 고쳐 이것이 깨지면(`npm run test:sample`) 게임 가정이 엔진에 스민 것 |
 | `tools/imports.mjs` | 코드를 옮긴 뒤 `src/game` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
-| `tools/bundle.mjs` | 소스 → `game/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
+| `tools/bundle.mjs` | 소스 → `play/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/`(Docker 검사 이미지는 `shots-docker`) |
 | `Dockerfile` · `docker-compose.yml` · `docker/` | 컨테이너 — dev(소스 걸고 다시 묶기) · game · site(nginx, `vercel.json` 규칙을 옮김) · check. `vercel.json` 을 고치면 `docker/nginx-site.conf` 도 |
-| `game/assets/manifest.json` | **애셋 원본 목록** |
-| `game/assets/sprites-manifest.js` | 위의 **자동 생성물** — 손으로 고치지 말 것 |
-| `site/` | 배포 사이트. 빌드하면 `game/`이 `site/play/`로 복사된다. 번역은 `site/i18n.js`(게임과 같은 언어 고르기 · 같은 열쇠 `ashfall.lang` · 한국어 원문이 열쇠라 HTML 에 표시 없음) + `site/i18n/<언어>.json` — 페이지 글을 고치면 `node tools/site-i18n.mjs extract` → 번역 → `build`(`npm run test:site` 가 빠짐·태그 어긋남을 막는다) |
+| `play/assets/manifest.json` | **애셋 원본 목록** |
+| `play/assets/sprites-manifest.js` | 위의 **자동 생성물** — 손으로 고치지 말 것 |
+| `site/` | 배포 사이트. 빌드하면 `play/`이 `site/play/`로 복사된다. 번역은 `site/i18n.js`(게임과 같은 언어 고르기 · 같은 열쇠 `ashfall.lang` · 한국어 원문이 열쇠라 HTML 에 표시 없음) + `site/i18n/<언어>.json` — 페이지 글을 고치면 `node tools/site-i18n.mjs extract` → 번역 → `build`(`npm run test:site` 가 빠짐·태그 어긋남을 막는다) |
 | `tools/` | zip 빌드·애셋을 굽고 재는 파이썬 도구들 |
 | `docs/` | 변경 사항 · 세션 규약 · 코드의 사연(`code-history.md`) · 배포 캐시 · 시스템 요구사항 |
 
-> **리포가 원본이다.** 게임 코드는 `src/game/` 에서 고친다 — `game/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
+> **리포가 원본이다.** 게임 코드는 `src/game/` 에서 고친다 — `play/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
 
 읽는 순서(`main.js` 의 import 순서 = 층): `sprites-manifest`(번들 밖, 먼저) →
 `ctx → util → lang → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
@@ -278,15 +278,15 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 
 ```bash
 bash tools/build.sh 1.1.1        # dist/ 에 Windows·macOS zip + SHA256SUMS
-bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트 검사
+bash tools/build-site.sh         # play/ → site/play/ 복사 + 매니페스트 검사
 ```
 
-- **캐시 무효화**: `game/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255 · v1.1.1 = 256). zip 을 낼 때
+- **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255 · v1.1.1 = 256). zip 을 낼 때
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
   PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.
 - `tools/build.sh` 는 재현 가능한 zip 을 만든다(두 번 빌드해 해시가 같다) — 다운로드 페이지 `HASHES` 는 그 앞 8자리.
-- **버전 문자열**이 박힌 곳: `game/index.html`(타이틀 표시) · `README.md` ·
+- **버전 문자열**이 박힌 곳: `play/index.html`(타이틀 표시) · `README.md` ·
   `site/download/index.html` · `tools/build.sh` 인자 · `docs/*`.
 - **커밋 메시지는 영어로 쓴다**(사용자 결정 2026-09-27). 코드 주석·문서는 그대로 한국어.
 - zip은 커밋하지 않는다(`.gitignore`). 태그를 push하면 Actions가 만들어 Release에
@@ -298,7 +298,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-30)
 
-- **v1.1.1 엔진화 끝 · 출시**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) · 중국어 간체(zh-Hans) · 독일어(de) · 스페인어(es) 4,020개 끝** — 사이트(site/ home·download) 6개 언어 끝, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 끝 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입(`@ts-nocheck` 0 · 클래스 필드 `any` 0 · 표 타입 `types.d.ts` 닫힘) 끝 — 게임 쪽 strict 는 v1.1.2. 다국어 UI 검사(`node tests/ui-audit.mjs` — 6개 언어 0건) · 유틸리티 Z·X(탐지 파동, game/utility.ts) · 로고·파비콘(`tools/mklogo.py`)·대표 그림(`tools/mkkeyart.py` → site/keyart.png) 끝. P11 Docker 끝(`docker compose up dev|game|site` · `docker compose run --rm check` — 스크린샷 기준은 `tests/baseline/shots-docker` 따로, 로컬 기준을 다시 찍으면 Docker 것도 다시 찍을 것). P12 마무리(엔진 문서 `docs/engine.md` · 예제 `games/sample` · `npm run test:sample`) 끝 — 남은 것은 계획서 §9-1 에 모아 둔 수정(v1.1.1 뒤).
+- **v1.1.1 엔진화 끝 · 출시**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) · 중국어 간체(zh-Hans) · 독일어(de) · 스페인어(es) 4,020개 끝** — 사이트(site/ home·download) 6개 언어 끝, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 끝 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입(`@ts-nocheck` 0 · 클래스 필드 `any` 0 · 표 타입 `types.d.ts` 닫힘) 끝 — 게임 쪽 strict 는 v1.1.2. 다국어 UI 검사(`node tests/ui-audit.mjs` — 6개 언어 0건) · 유틸리티 Z·X(탐지 파동, play/utility.ts) · 로고·파비콘(`tools/mklogo.py`)·대표 그림(`tools/mkkeyart.py` → site/keyart.png) 끝. P11 Docker 끝(`docker compose up dev|game|site` · `docker compose run --rm check` — 스크린샷 기준은 `tests/baseline/shots-docker` 따로, 로컬 기준을 다시 찍으면 Docker 것도 다시 찍을 것). P12 마무리(엔진 문서 `docs/engine.md` · 예제 `examples/sample` · `npm run test:sample`) 끝 — 남은 것은 계획서 §9-1 에 모아 둔 수정(v1.1.1 뒤).
   **화질**(설정 · game.js `QUALITY`): 자동 = 폰 절약(픽셀 밀도 1 · 입자 300) · 태블릿 보통(1.5 · 600) · 컴퓨터 높음(2 · 900). 렌더 단계별 시간은 `G.pipe.profile(true)` → `G.pipe.stats()`. 도중에 찾은 버그는 계획서 §9-1 에 모아 P12 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
@@ -427,7 +427,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   세계가 지은 유적 함정(`m.gen && !m.own`)은 망 없이 돈다(`runWildTrap`). 기계를 캐면 내용물은 가방 먼저.
   옛 세이브는 불러올 때 지금 지면으로 한 번 세운다. 그림은 game.js `drawRig`.
 - 마을 2단계의 괭이·낫·물뿌리개·씨앗은 가방으로 준다(data.js `FARM_KIT`) — 밭 위 상자는 없앴다.
-- **밭 물**(world/plants.ts `isWet`·`waterFarm`·`nearWater` · game/act.ts `growCropsDaily`): 작물은 **젖은 밭에서만** 아침에 자란다. 젖음 = `world.wet[밭 칸] >= 그날`
+- **밭 물**(world/plants.ts `isWet`·`waterFarm`·`nearWater` · play/act.ts `growCropsDaily`): 작물은 **젖은 밭에서만** 아침에 자란다. 젖음 = `world.wet[밭 칸] >= 그날`
   (물 주면 `FARM_WET_DAYS` 3번의 아침) 또는 `FARM_WET_R` 5칸 안에 민물·바닷물. 비 오는 아침은 하늘이 트인 밭을 적신다(`rainWater`). 물뿌리개(`watering_can`,
   아이템 `it.w` 에 남은 물 · 20번)는 물 칸 우클릭 = 채우기, 밭·작물 우클릭 = 주기. 양동이(`bucket`)는 물 칸을 **통째로** 떠 그 칸이 사라진다(`DRAWABLE`),
   물 양동이는 빈 칸에 부으면 물 한 칸. 스프링클러(기계 `sprinkler`, 물이 있을 때만 전력 3 — 전력이 없으면 그날 안 준다)는 물 양동이를 받아 아침마다 좌우 25·위아래 6칸의 밭을 가까운 것부터
@@ -439,7 +439,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   희귀 ≈70 · 영웅 ≈135, 최소 레벨 40·44·48(세션 2), `petDmgScale` 은 레벨 44 = 1 · 75 = 2. 드래곤 1레벨 ≈100 → 20레벨에 영웅 10레벨 ·
   30레벨에 1.3배, 최소 레벨 62, 알 24만(윤슬 웃돈 1.6배). 디버그 바로가기 레벨도 이 기준(마을 세션 2 = 40 · 3 = 60 · 바다·폭탄 60 · 공장 50).
   ★ `ACH_LV` 를 바꾸면 업적 순서가 바뀌어 번역 열쇠(`ACHIEVEMENTS.<순번>`)가 밀린다.
-- **드래곤**(data/pets.ts `dragon_*` · `DRAGON_*` · game/altar.ts `feedDragon` · entity.ts `addPetXp`): 윤슬이 알 넷(불·흙·전기·암흑)을 판다 — 깨면 그 드래곤(1레벨).
+- **드래곤**(data/pets.ts `dragon_*` · `DRAGON_*` · play/altar.ts `feedDragon` · entity.ts `addPetXp`): 윤슬이 알 넷(불·흙·전기·암흑)을 판다 — 깨면 그 드래곤(1레벨).
   30레벨까지(`petXpNext(lv, id)` 는 드래곤만 완만한 곡선), 10·20·30 레벨로 오를 때는 경험치가 가득 찬 채 멈추고(`it.hungry`) 그 단계 먹이
   (`DRAGON_FOOD` — 용의 첫 먹이 · 폭풍 호박 심장 · 별똥 심장, 폭풍 호박·구름 진주·운석·별빛 수정이 재료)를 먹어야 넘는다. 단계 `dragonStage` 0~3(새끼·어린 용·성룡·고룡).
   그림은 `python3 tools/mkdragons.py` 가 굽는다(`char/pet_dragon_<속성>_s<단계>.png` — 날갯짓 6장 + 숨결 1장, 매니페스트 `flap`) → sync. 날개는 몸통 축을 도는
@@ -498,7 +498,7 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
   안 열리면 localStorage 로 떨어진다. 세이브를 읽고 쓰는 곳은 **전부 `SaveStore.put/get/remove/list`** 를 거친다 —
   localStorage 를 직접 만지면 IndexedDB 쪽과 어긋난다(설정 `SET_KEY` 만 localStorage). 저장은 비동기라 `saveGame()` 은
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
-- `game/index.html`의 브라우저 빌드 버전 표시는 `v1.1.2-dev` 다 — v1.1.1 출시 뒤 **웹(/play)만 v1.1.2 개발판**으로 돈다(사용자 결정 2026-09-30).
+- `play/index.html`의 브라우저 빌드 버전 표시는 `v1.1.2-dev` 다 — v1.1.1 출시 뒤 **웹(/play)만 v1.1.2 개발판**으로 돈다(사용자 결정 2026-09-30).
   사이트 홈·다운로드는 "웹 = v1.1.2 개발판 · 내려받는 판 = v1.1.1" 로 적는다. 다음 zip 을 낼 때 판 번호로 바꾼다.
 - **로고**(`tools/mklogo.py`): Cinzel Black(ASHFALL — 첫 A · 끝 L 을 1.22배 `BIG`) · Bold(CHRONICLES) 윤곽을 굽는다(글꼴 원본·OFL 전문 `tools/art/fonts/`) —
   사용자가 고른 글꼴(2026-09-30): 아래로 민 두께(`DEPTH`) · 검은 윤곽 · 양옆 마름모 금줄로 제목답게. 게임 = 잔불빛 글자 PNG(`ui/logo.png` 2배 · `logo_small.png`), 사이트 홈 히어로 = 같은 윤곽의 SVG 를 `<!-- wordmark -->` 자리에 끼우고
@@ -507,5 +507,5 @@ bash tools/build-site.sh         # game/ → site/play/ 복사 + 매니페스트
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 엔진화·모듈 분리·TS·다국어·모바일·Docker — 계획과 단계별 프롬프트는
   [`docs/v1.1.1-engine-plan.md`](docs/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
   `World extends TileMap` · 번역 Claude/검수 Grok · 폰 가로+태블릿) / v1.1.1 뒤 몰아서 할 수정(계획서 §9-1 — 해·비·세이브 삭제 팝업·사이트 재구성·영어 화면 다시 찍기) /
-  v1.1.2 엔진화 2차(게임 코드 안의 전역 — 세계 치수 `let` · 단일 `G`·`UI`·`Factory` 정리 · 게임 쪽 strict, 멀티플레이보다 먼저) · 폴더 이름 정리(src · game · games/sample 이 헷갈리지 않게 — 산출물 커밋은 그대로, 엔진화 2차보다 먼저) · md 문서 전부 영어→한국어 순 · 멀티플레이 · 한글·영문 글꼴 · 무서명 Electron(§9-2) / v1.2.0 데코레이션. 엔진화 도중 게임플레이 개선은 넣어도 된다(따로 '바꾸는 커밋'). 멀티플레이는 지금 구조(전역 `G` 하나 +
+  v1.1.2 엔진화 2차(게임 코드 안의 전역 — 세계 치수 `let` · 단일 `G`·`UI`·`Factory` 정리 · 게임 쪽 strict, 멀티플레이보다 먼저) · 폴더 이름 정리(src · game · examples/sample 이 헷갈리지 않게 — 산출물 커밋은 그대로, 엔진화 2차보다 먼저) · md 문서 전부 영어→한국어 순 · 멀티플레이 · 한글·영문 글꼴 · 무서명 Electron(§9-2) / v1.2.0 데코레이션. 엔진화 도중 게임플레이 개선은 넣어도 된다(따로 '바꾸는 커밋'). 멀티플레이는 지금 구조(전역 `G` 하나 +
   브라우저 안 세이브 + 절차 생성 월드)와 정면으로 부딪히므로 구조 논의가 먼저다.

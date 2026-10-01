@@ -1,4 +1,4 @@
-/* 번역 검사 — ① 함수 안에 안 감싼 한국어 문구 0 ② 원문 목록(locales/source.json)이 소스와 같다 · game/locales 가 묶음과 같다
+/* 번역 검사 — ① 함수 안에 안 감싼 한국어 문구 0 ② 원문 목록(locales/source.json)이 소스와 같다 · play/locales 가 묶음과 같다
    · 언어마다 자리표·태그·남은 한글·형식(빠진 열쇠는 비율만 알린다)
    ③ 형식기: 자리표 · 조사 훅(엔진 josa 와 같은 결과) · plural · select · 번역 찾기 순서 */
 import { execFileSync } from 'node:child_process';

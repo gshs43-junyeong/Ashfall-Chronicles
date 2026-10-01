@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""하늘의 해와 운석 그림을 굽는다 — game/assets/bg/sky_*.png
+"""하늘의 해와 운석 그림을 굽는다 — play/assets/bg/sky_*.png
 
   python3 tools/mksky.py && python3 tools/sync-manifest.py
 
@@ -19,7 +19,7 @@
 import math, os, random
 from PIL import Image, ImageFilter
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'game', 'assets', 'bg')
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'play', 'assets', 'bg')
 SS = 3                                   # 구울 때 크게 그렸다가 줄인다(가장자리 계단 없애기)
 
 

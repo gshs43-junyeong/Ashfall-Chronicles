@@ -3,9 +3,9 @@
 
     python3 tools/mkflotsam.py
 
-게임 크기(px) 그대로 한 픽셀씩 찍은 뒤 4배(nearest)로 키워 game/assets/obj/ 에 둔다
+게임 크기(px) 그대로 한 픽셀씩 찍은 뒤 4배(nearest)로 키워 play/assets/obj/ 에 둔다
 (manifest.json objects 절의 규격: 파일은 4배, w·h 는 게임 크기).
-나침반은 아이템 아이콘 규격 32×32 로 game/assets/item/ 에 둔다.
+나침반은 아이템 아이콘 규격 32×32 로 play/assets/item/ 에 둔다.
 
 부유물은 **물에 반쯤 잠겨** 보이도록 아래쪽 네댓 줄을 물빛으로 어둡게 적신다 — 게임은
 그림의 55% 높이를 수면에 맞춘다(entity.js flotsam AI). 무늬를 바꾸면 그 비율도 같이 볼 것.
@@ -13,7 +13,7 @@
 import os, random
 from PIL import Image
 
-ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'game', 'assets')
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'play', 'assets')
 S = 4
 
 

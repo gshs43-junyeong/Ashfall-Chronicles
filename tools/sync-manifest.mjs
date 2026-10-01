@@ -13,8 +13,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = join(ROOT, 'game', 'assets', 'manifest.json');
-const DST = join(ROOT, 'game', 'assets', 'sprites-manifest.js');
+const SRC = join(ROOT, 'play', 'assets', 'manifest.json');
+const DST = join(ROOT, 'play', 'assets', 'sprites-manifest.js');
 
 const HEAD = `/* assets/sprites-manifest.js — 자동 생성물. 손으로 고치지 마세요.
    원본은 assets/manifest.json 이고, tools/sync-manifest(.mjs/.py) 가 옮겨 적습니다.

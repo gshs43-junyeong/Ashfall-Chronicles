@@ -45,7 +45,7 @@ import sys
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, 'game', 'assets')
+ASSETS = os.path.join(ROOT, 'play', 'assets')
 MANIFEST = os.path.join(ASSETS, 'manifest.json')
 S = 4
 WANT = 2        # 좌우·위에 두고 싶은 최소 여백(논리 픽셀)

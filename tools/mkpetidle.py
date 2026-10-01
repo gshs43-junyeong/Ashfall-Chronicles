@@ -2,7 +2,7 @@
 """떠 있기 장이 거의 같은 펫에 사이 장을 구워 넣는다 — 원본 세 장(떠 있기 0·1 · 공격 2)은 그대로 두고
 떠 있기를 네 장 고리(0 → 사이 → 1 → 사이)로 늘린다. 매니페스트에 `idle: 4` 를 적으면 drawPet 이 넷을 돌고 공격은 5번째 장.
 
-  python3 tools/mkpetidle.py     # tools/art/pets/<id>.png(원본) → game/assets/char/pet_<id>.png + 매니페스트 → 그다음 sync-manifest.py
+  python3 tools/mkpetidle.py     # tools/art/pets/<id>.png(원본) → play/assets/char/pet_<id>.png + 매니페스트 → 그다음 sync-manifest.py
 
 ■ 왜 그림을 통째로 돌리지 않나 — 몸 전체를 기울이거나 가로로 접으면(예전 PET_MOTION tilt · flapX) 날갯짓이 아니라 그림이 흔들려 보였다.
   움직여야 하는 부위만 칸 단위로 옮긴다:
@@ -14,8 +14,8 @@ from PIL import Image
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 ART = os.path.join(ROOT, 'tools', 'art', 'pets')
-CHAR = os.path.join(ROOT, 'game', 'assets', 'char')
-MAN = os.path.join(ROOT, 'game', 'assets', 'manifest.json')
+CHAR = os.path.join(ROOT, 'play', 'assets', 'char')
+MAN = os.path.join(ROOT, 'play', 'assets', 'manifest.json')
 S = 4
 
 

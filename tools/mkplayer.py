@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """주인공 시트 다섯 장을 **원래 손그림 그대로**, 잘린 데 없이 다시 굽는다.
 
-  python3 tools/mkplayer.py           # tools/art/player_<id>.png → game/assets/char/player_<id>.png
+  python3 tools/mkplayer.py           # tools/art/player_<id>.png → play/assets/char/player_<id>.png
   python3 tools/sync-manifest.py      # 그다음 매니페스트 옮겨 적기
 
-★ 원본은 tools/art/ 의 22×41 시트다. game/assets/char/ 의 것은 **산출물**이라
+★ 원본은 tools/art/ 의 22×41 시트다. play/assets/char/ 의 것은 **산출물**이라
   그걸 다시 먹이면 두 번 늘어난다. 그림을 고치려면 tools/art/ 를 고치고 이걸 돌린다.
 
 ■ 왜 다시 굽나
@@ -40,7 +40,7 @@ from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, 'art')
-ROOT = os.path.join(HERE, '..', 'game', 'assets')
+ROOT = os.path.join(HERE, '..', 'play', 'assets')
 CHAR = os.path.join(ROOT, 'char')
 S = 4
 OW, OH, N = 22, 41, 13                  # 원본(unclip 뒤) 프레임

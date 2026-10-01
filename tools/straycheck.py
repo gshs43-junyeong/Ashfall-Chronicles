@@ -28,7 +28,7 @@ from collections import deque
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, 'game', 'assets')
+ASSETS = os.path.join(ROOT, 'play', 'assets')
 MANIFEST = os.path.join(ASSETS, 'manifest.json')
 S = 4
 STRAY_REL = 0.08     # 몸 넓이의 이만큼 미만이어야 잔해

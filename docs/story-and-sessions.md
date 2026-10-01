@@ -47,7 +47,7 @@
 | `biomeAt()` | `world.js` | 새 바이옴이 안 생김 |
 | parallax 키 분기 | `game.js` `drawParallaxArt` | 새 바이옴이 숲 배경을 씀. **지상 바이옴에만 답니다** — 땅속은 벽지에 다 덮여 한 픽셀도 안 보입니다(2-5절) |
 | `manifest.json` → `sync-manifest.mjs` | `assets/`, `tools/` | **게임은 `sprites-manifest.js` 를 읽습니다.** json 만 고치면 아무 일도 안 일어남 |
-| `?v=` | `game/index.html` | 브라우저가 옛 파일을 계속 씀 |
+| `?v=` | `play/index.html` | 브라우저가 옛 파일을 계속 씀 |
 
 ### 1-2. 잊기 쉬운 것
 
@@ -66,7 +66,7 @@
   **바꾸면 모든 기존 세이브가 죽습니다.** 새 바이옴은 지금 폭 안에서 자리를 냅니다.
 - **월드 생성의 난수** — 지형은 시드 `rng`, 연출·전투는 `Math.random()`.
   섞으면 같은 시드가 같은 세계를 안 만듭니다.
-- **`game/` 이 유일한 원본** — `site/play/` 는 빌드 산출물이고 `.gitignore` 입니다.
+- **`play/` 가 유일한 원본** — `site/play/` 는 빌드 산출물이고 `.gitignore` 입니다.
 
 ---
 

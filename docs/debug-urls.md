@@ -13,7 +13,7 @@
 | 어디서 | 주소 앞부분 |
 |---|---|
 | 배포 사이트 | `https://ashfall-chronicles.vercel.app/play/index.html` — 예: `…/play/index.html?debug=village` |
-| 로컬 | `game/` 폴더에서 `python3 -m http.server 8000` → `http://127.0.0.1:8000/` |
+| 로컬 | `play/` 폴더에서 `python3 -m http.server 8000` → `http://127.0.0.1:8000/` |
 | zip 빌드 | `index.html` 을 연 뒤 주소창 끝에 붙인다 |
 
 > ★ `…/play/?debug=…` 처럼 폴더 주소로 열지 말 것 — 배포 설정(`trailingSlash: false`)이 `/play` 로 돌려 css·js 가 404 가 된다.

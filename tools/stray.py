@@ -38,7 +38,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from straycheck import blobs, gap_to           # 찾는 눈은 그쪽 것을 쓴다
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, 'game', 'assets')
+ASSETS = os.path.join(ROOT, 'play', 'assets')
 MANIFEST = os.path.join(ASSETS, 'manifest.json')
 S = 4
 

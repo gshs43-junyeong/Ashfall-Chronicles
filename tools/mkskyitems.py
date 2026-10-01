@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""하늘 섬 고유 재료 두 아이콘 굽기 → game/assets/item/storm_amber.png · cloud_pearl.png (32x32).
+"""하늘 섬 고유 재료 두 아이콘 굽기 → play/assets/item/storm_amber.png · cloud_pearl.png (32x32).
 
 폭풍 호박: 번개가 구름 수액을 굳힌 덩이 — 울퉁불퉁한 호박빛, 속에 갇힌 하얀 번개 한 줄.
 구름 진주: 구름 해파리 속에서 자란 진주 — 둥근 진줏빛에 무지갯빛 띠, 밑에 구름 한 줌.
@@ -8,7 +8,7 @@
 import math, os
 from PIL import Image
 
-OUT = os.path.join(os.path.dirname(__file__), '..', 'game', 'assets', 'item')
+OUT = os.path.join(os.path.dirname(__file__), '..', 'play', 'assets', 'item')
 N = 32
 
 

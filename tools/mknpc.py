@@ -13,8 +13,8 @@ from PIL import Image
 
 ROOT = os.path.join(os.path.dirname(__file__), '..')
 SRC = os.path.join(ROOT, 'tools', 'art', 'npc_template.png')
-CHAR = os.path.join(ROOT, 'game', 'assets', 'char')
-MAN = os.path.join(ROOT, 'game', 'assets', 'manifest.json')
+CHAR = os.path.join(ROOT, 'play', 'assets', 'char')
+MAN = os.path.join(ROOT, 'play', 'assets', 'manifest.json')
 W, H, K = 24, 40, 4
 OUT = (0x14, 0x11, 0x1a, 255)
 

@@ -61,7 +61,7 @@ from PIL import Image
 
 W, H, S, FRAMES = 192, 232, 4, 10
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                   'game', 'assets', 'boss', 'archetype.png')
+                   'play', 'assets', 'boss', 'archetype.png')
 
 # ---------------------------------------------------------------- 색
 # 밝은 것부터 어두운 것 순. 칠할 때 밝기 t(0~1) 를 이 순서에 맞춰 고른다.
