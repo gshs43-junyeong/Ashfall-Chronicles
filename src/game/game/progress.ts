@@ -21,7 +21,12 @@ export const ProgressPart: Bag = {
 
   /* ================= 진행 ================= */
   /* 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은 목록에 없거나 있어도 순서가 강제됐다 — 사연: docs/code-history.md#h54 */
-  objProgress(o) { const { SURF_BASE } = dimsOf(this.world);
+  /** 목표 글 — 깊이 목표에 적힌 '지하 ○○m' 은 세계 크기 배수로 고쳐 읽는다(표는 소형 기준). */
+  objTask(o) {
+    const t = (o && o.task) || '';
+    return o && o.type === 'depth' ? t.replace(/([0-9]+)m/, (_, n) => Math.round(+n * dimsOf(this.world).WSY) + 'm') : t;
+  },
+  objProgress(o) { const { SURF_BASE, SY } = dimsOf(this.world);
     const p = this.player;
     let cur = 0, max = 1, label = null;
     switch (o.type) {
@@ -32,9 +37,9 @@ export const ProgressPart: Bag = {
       case 'talk': cur = (this.talked && this.talked[o.npc]) ? 1 : 0; max = 1; break;
       case 'depth':
         if (o.up) {   // 위로 올라가는 목표: 낮은 y일수록 진행
-          const gained = clamp(SURF_BASE - (p.highest === undefined ? SURF_BASE : p.highest), 0, SURF_BASE - o.y);
-          cur = gained; max = SURF_BASE - o.y;
-        } else { cur = Math.min(p.deepest, o.y); max = o.y; }
+          const gained = clamp(SURF_BASE - (p.highest === undefined ? SURF_BASE : p.highest), 0, SURF_BASE - SY(o.y));
+          cur = gained; max = SURF_BASE - SY(o.y);
+        } else { cur = Math.min(p.deepest, SY(o.y)); max = SY(o.y); }   // 표의 깊이는 소형 기준
         break;
       case 'boss': cur = p.bossKilled[o.target] ? 1 : 0; max = 1; break;
       /* 가 본 곳 — 바이옴 이름표(seenBiomes)와 유적 첫 입장(seenRuins)을 그대로 쓴다. */

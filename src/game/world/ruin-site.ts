@@ -5,7 +5,7 @@ import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
 import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
-import { MYSTIC, RUIN_CIPHER, RUIN_HINTS, RUIN_MAP_IN, RUIN_RELIC, RUIN_SPEC, STORY_RUIN } from '../data/ruins.js';
+import { MYSTIC, RUIN_CIPHER, RUIN_HINTS, RUIN_MAP_IN, RUIN_RELIC, STORY_RUIN } from '../data/ruins.js';
 import { TS, World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
@@ -279,12 +279,12 @@ export const WorldRuinSite: Bag & ThisType<World> = {
 
     /* --- 바이옴 유적 5곳 (스토리와 무관한 탐험 콘텐츠) --- */
     const mk = Object.keys(MYSTIC);
-    const pick = RUIN_SPEC.map((_, i) => i);
+    const pick = this.ruinSpec.map((_, i) => i);
     for (let i = pick.length - 1; i > 0; i--) { const j = rng.int(0, i); [pick[i], pick[j]] = [pick[j], pick[i]]; }
-    pick.slice(0, 3).forEach((ri, k) => { RUIN_SPEC[ri].mystic = mk[k % mk.length]; });
-    pick.slice(3).forEach(ri => { delete RUIN_SPEC[ri].mystic; });
+    pick.slice(0, 3).forEach((ri, k) => { this.ruinSpec[ri].mystic = mk[k % mk.length]; });
+    pick.slice(3).forEach(ri => { delete this.ruinSpec[ri].mystic; });
 
-    RUIN_SPEC.forEach((spec, i) => {
+    this.ruinSpec.forEach((spec, i) => {
       this.ruinSites.push(this.buildRuinSite(spec, i, rng));
       this.ruins.push({ id: spec.id, x: spec.x, y: spec.y + (spec.h >> 1), w: spec.w, h: spec.h });
     });
@@ -352,7 +352,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
 
   /** 위치 지도를 세계에 흩뿌린다 — 입구 없는 유적(arch: 'buried')마다 두 군데. */
   buildRuinCaches(rng) { const { WW, WH } = this.dims;
-    for (const spec of RUIN_SPEC) {
+    for (const spec of this.ruinSpec) {
       if (spec.arch !== 'buried') continue;
       const mapId = 'ruinmap_' + spec.id;
 
@@ -406,7 +406,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
   },
   /** 이 좌표가 속한 바이옴 유적의 잡몹 배율. */
   ruinMobMul(tx, ty) {
-    for (const spec of RUIN_SPEC) {
+    for (const spec of this.ruinSpec) {
       const hw = spec.w / 2, y0 = spec.y, y1 = spec.y + spec.h;
       if (tx > spec.x - hw && tx < spec.x + hw && ty > y0 - 2 && ty < y1 + 2)
         return spec.mobMul === undefined ? 1 : spec.mobMul;

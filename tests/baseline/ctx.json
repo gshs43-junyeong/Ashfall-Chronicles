@@ -92,6 +92,7 @@
       "nearSt",
       "nearStObj",
       "objLabel",
+      "objTask",
       "onPickup",
       "player",
       "price",
