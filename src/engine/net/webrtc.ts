@@ -50,6 +50,7 @@ function wrap(pc: RTCPeerConnection, openMs: number): { transport: Transport; re
     const check = () => { if (t.open) { clearTimeout(tm); res(t); } };
     rel.addEventListener('open', check); fast.addEventListener('open', check);
   });
+  ready.catch(() => {});   // 기다리는 쪽이 없을 때(취소된 제안) 처리 안 된 거부로 새지 않게 — 기다리는 쪽은 여전히 거부를 받는다
   return { transport: t, ready };
 }
 

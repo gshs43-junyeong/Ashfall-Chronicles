@@ -496,6 +496,7 @@ export class Player extends Ent {
 /* ================= 적 ================= */
 export class Enemy extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare ghost: boolean; declare nid: number; declare netBuf: any;   // 멀티플레이 — 참가자 화면의 그림자 몹 · 호스트가 매긴 번호
   declare combo: number; declare dashA: number; declare drift: number; declare iceCd: number; declare iceFloor: number; declare landT: number;
   declare openT: number; declare phaseT: number; declare spin: number; declare stopT: number; declare term: number; declare tilt: number;
   declare unmakeCd: number; declare wDir: number; declare wob: number; declare bossAI: (...a: any[]) => any; declare layHeat: (...a: any[]) => any;
@@ -667,6 +668,8 @@ export class Enemy extends Ent {
   /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). */
   hurt(amount, crit?, src?, kb?, fam?) {
     if (this.dead) return;
+    /* ★ 그림자 몹(참가자 화면) — 피해는 호스트가 계산한다. 여기서는 맞는 그림만 내고 요청을 보낸다. */
+    if (this.ghost) { G.netHitGhost(this, amount, crit, src, kb, fam); return; }
     /* 페이즈가 넘어가는 0.8초 동안은 피해가 들어가지 않는다. */
     if (this.phaseInv > 0) {
       G.texts.push(new DmgText(this.cx, this.y - 4, tr('전환 중'), '#9fd4ff', 0));
@@ -710,6 +713,14 @@ export class Enemy extends Ent {
   die(src) {
     if (this.dead) return;
     this.dead = true;
+    /* 남의 아바타가 잡았다(호스트) — 보상은 그 주인 화면에서 굴린다. 보스 토벌(세계 진행)은 여기서. */
+    if (src && src.remote) {
+      G.netKilledBy(src, this);
+      G.addCorpse(this); G.deathBurst(this);
+      if (this.boss) { G.shake = 18; G.onBossDown(this.type); }
+      G.sfx(this.boss ? 'bossdie' : 'die');
+      return;
+    }
     const p = G.player;
     /* ★ 플레이어가 먼저 쓰러졌으면 보스는 **처치가 아니다** — onDeath 가 피해 처리 도중에 불려 같은 프레임의
        남은 투사체·펫·지속 피해가 보스를 마저 잡으면 토벌·장 목표·둥지 비움이 그대로 잡혔다 */
@@ -733,7 +744,7 @@ export class Enemy extends Ent {
     /* 쓰러지는 그림을 남긴다 — 사연: docs/code-history.md#h35 */
     G.addCorpse(this);
     G.deathBurst(this);
-    if (this.boss) { G.shake = 18; G.onBossDown(this.type); }
+    if (this.boss) { G.shake = 18; if (!(G.net && G.net.role === 'guest')) G.onBossDown(this.type); }   // 세계 진행은 호스트 것
     if (p.skills.s_hunter) p.addBuff('swift_kill', 3);
     G.onKill(this.type);
     G.sfx(this.boss ? 'bossdie' : 'die');

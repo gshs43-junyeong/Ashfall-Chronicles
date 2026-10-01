@@ -28361,6 +28361,10 @@
     /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). */
     hurt(amount, crit, src, kb, fam) {
       if (this.dead) return;
+      if (this.ghost) {
+        app.netHitGhost(this, amount, crit, src, kb, fam);
+        return;
+      }
       if (this.phaseInv > 0) {
         app.texts.push(new DmgText(this.cx, this.y - 4, tr("전환 중"), "#9fd4ff", 0));
         return;
@@ -28405,6 +28409,17 @@
     die(src) {
       if (this.dead) return;
       this.dead = true;
+      if (src && src.remote) {
+        app.netKilledBy(src, this);
+        app.addCorpse(this);
+        app.deathBurst(this);
+        if (this.boss) {
+          app.shake = 18;
+          app.onBossDown(this.type);
+        }
+        app.sfx(this.boss ? "bossdie" : "die");
+        return;
+      }
       const p = app.player;
       if (this.boss && p.hp <= 0) return;
       const mult = app.killMult ? app.killMult() : 1;
@@ -28426,7 +28441,7 @@
       app.deathBurst(this);
       if (this.boss) {
         app.shake = 18;
-        app.onBossDown(this.type);
+        if (!(app.net && app.net.role === "guest")) app.onBossDown(this.type);
       }
       if (p.skills.s_hunter) p.addBuff("swift_kill", 3);
       app.onKill(this.type);
@@ -34845,21 +34860,6 @@
       this.me = p;
       this.players = p ? [p] : [];
     },
-    /** 이 자리에서 가장 가까운 플레이어 — 몹이 노리는 대상 · 물건이 끌려가는 쪽. */
-    nearestPlayer(x, y) {
-      const ps = this.players;
-      if (ps.length < 2) return this.me;
-      let best = ps[0], bd = Infinity;
-      for (const q of ps) {
-        if (q.hp <= 0) continue;
-        const d = dist2(x, y, q.cx, q.cy);
-        if (d < bd) {
-          bd = d;
-          best = q;
-        }
-      }
-      return best;
-    },
     get state() {
       return this.scenes.current;
     },
@@ -35215,25 +35215,6 @@
           this.hideLoading();
         }
       }, 40);
-    },
-    /** 그 캐릭터의 새 플레이어(시작 장비·가방) — 새 게임과 멀티플레이 새 참가자가 같이 쓴다. */
-    freshPlayer(x, y, name, charId) {
-      const p = new Player(x, y);
-      p.name = (name || "").trim().slice(0, 12) || NONAME;
-      const ch = CHAR_OF(charId);
-      p.charId = ch.id;
-      p.base = Object.assign({}, ch.base);
-      if (ch.weapon) p.equip.weapon = makeItem(ch.weapon);
-      p.equip.chest = makeItem("chest_cloth");
-      p.equip.boots = makeItem("boots_cloth");
-      if (ch.gold) p.gold = ch.gold;
-      ch.bag.forEach(([id, n], i) => {
-        p.bag[i] = makeItem(id, ITEMS[id].stack > 1 ? n : 1);
-      });
-      p.recalc();
-      p.hp = p.d.maxHp;
-      p.mp = p.d.maxMp;
-      return p;
     },
     _newGame(seed, name, charId, mode, size) {
       this.rng = new RNG(seed + "_g");
@@ -35812,7 +35793,8 @@
       for (let i = this.ents.length - 1; i >= 0; i--) {
         const e = this.ents[i];
         const tp = this.nearestPlayer(e.cx, e.cy);
-        e.update(dt, w, tp);
+        if (e.ghost) this.netGhostStep(e, dt);
+        else e.update(dt, w, tp);
         if (e.elite && !e.dead && Math.random() < 0.2) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * e.w, e.cy + (Math.random() - 0.5) * e.h, "#ffd24a", -34, 0.55));
         if (e.dead) this.ents.splice(i, 1);
         else if (!e.boss && !e.minion && !e.guard && dist2(e.cx, e.cy, tp.cx, tp.cy) > 2400 * 2400) this.ents.splice(i, 1);
@@ -35842,7 +35824,11 @@
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0 && !guest) {
         this.spawnTimer = 1.1;
-        this.trySpawn();
+        for (const q of this.players) {
+          this.spawnFor = q;
+          this.trySpawn();
+        }
+        this.spawnFor = null;
       }
       this.updateRigs(dt);
       this.facTimer = (this.facTimer || 0) - dt;
@@ -39386,7 +39372,7 @@
     /** 근처 웅덩이 한 곳을 골라 물속 생물을 채운다. */
     trySpawnWater(normal) {
       const { WSY: WSY2 } = dimsOf(this.world);
-      const p = this.player, w = this.world;
+      const p = this.spawnFor || this.player, w = this.world;
       const pools = w.pools;
       if (!pools || !pools.length) return false;
       if (normal >= 20) return false;
@@ -39416,7 +39402,7 @@
     /** 바다 부유물 — 바다 수면 가까이 있을 때만, 드물게. */
     trySpawnFlotsam() {
       const { SEA_X1: SEA_X12 } = dimsOf(this.world);
-      const p = this.player, w = this.world;
+      const p = this.spawnFor || this.player, w = this.world;
       if (!w.sea || Math.random() > 0.012) return false;
       const ptx = Math.floor(p.cx / TS), pty = Math.floor(p.cy / TS), lv = w.sea.level;
       if (ptx >= SEA_X12 + 20 || Math.abs(pty - lv) > 30) return false;
@@ -39439,10 +39425,10 @@
     trySpawn() {
       const { WW: WW2, WH: WH2, SEA_X1: SEA_X12 } = dimsOf(this.world);
       if (this.dbgCalm) return;
-      const p = this.player, w = this.world;
+      const p = this.spawnFor || this.player, w = this.world;
       const normal = this.ents.filter((e) => e instanceof Enemy && !e.boss).length;
       const ev = this.eventActive() ? this.eventSpec() : null;
-      if (normal >= (ev ? ev.cap : 22) || this.boss) return;
+      if (normal >= (ev ? ev.cap : 22) * Math.max(1, 0.75 * this.players.length) || this.boss) return;
       const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
       const playerZone = w.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
       if (this.trySpawnWater(normal)) return;
@@ -40065,6 +40051,25 @@
   });
   var SavePart = {
     /* ================= 저장 ================= */
+    /** 그 캐릭터의 새 플레이어(시작 장비·가방) — 새 게임과 멀티플레이 새 참가자가 같이 쓴다. */
+    freshPlayer(x, y, name, charId) {
+      const p = new Player(x, y);
+      p.name = (name || "").trim().slice(0, 12) || NONAME;
+      const ch = CHAR_OF(charId);
+      p.charId = ch.id;
+      p.base = Object.assign({}, ch.base);
+      if (ch.weapon) p.equip.weapon = makeItem(ch.weapon);
+      p.equip.chest = makeItem("chest_cloth");
+      p.equip.boots = makeItem("boots_cloth");
+      if (ch.gold) p.gold = ch.gold;
+      ch.bag.forEach(([id, n], i) => {
+        p.bag[i] = makeItem(id, ITEMS[id].stack > 1 ? n : 1);
+      });
+      p.recalc();
+      p.hp = p.d.maxHp;
+      p.mp = p.d.maxMp;
+      return p;
+    },
     /** 캐릭터 몫(레벨·가방·장비·스킬·통계…) — 세계와 떼어 들고 다닐 수 있는 덩어리. 멀티플레이 참가자는 이것만 들고 남의 세계에 들어간다. */
     packChar(p) {
       return {
@@ -46174,6 +46179,8 @@
       rel.addEventListener("open", check);
       fast.addEventListener("open", check);
     });
+    ready.catch(() => {
+    });
     return { transport: t, ready };
   }
   async function hostOffer(opts = {}) {
@@ -46214,6 +46221,21 @@
   var now = () => performance.now() / 1e3;
   var NetPart = {
     net: null,
+    /** 이 자리에서 가장 가까운 플레이어 — 몹이 노리는 대상 · 물건이 끌려가는 쪽. */
+    nearestPlayer(x, y) {
+      const ps = this.players;
+      if (ps.length < 2) return this.me;
+      let best = ps[0], bd = Infinity;
+      for (const q of ps) {
+        if (q.hp <= 0) continue;
+        const d = dist2(x, y, q.cx, q.cy);
+        if (d < bd) {
+          bd = d;
+          best = q;
+        }
+      }
+      return best;
+    },
     /* ================= 상태 한 장 ================= */
     /** 남의 화면이 이 플레이어를 그리는 데 쓰는 것만 — 레벨·가방은 보내지 않는다. */
     netState(p) {
@@ -46348,6 +46370,116 @@
       d.closed = !!m.c;
       if (this.me && Math.abs(this.me.cx - d.x) < 600 && Math.abs(this.me.cy - d.y) < 400) this.sfx(d.closed ? "door_shut" : "door_open");
     },
+    /* ================= 몹 — 호스트가 돌리고 참가자는 그림자를 그린다 ================= */
+    /** 참가자 근처 몹 한 장 — [번호, 종류, x, y, vx, vy, 방향, 땅, hp, 최대 hp, 번쩍임] */
+    netEnemyList(rp) {
+      const n = this.net, out = [];
+      for (const e of this.ents) {
+        if (!(e instanceof Enemy) || e.dead || Math.abs(e.cx - rp.cx) > 1500 || Math.abs(e.cy - rp.cy) > 1e3) continue;
+        if (!e.nid) {
+          e.nid = ++n.eid;
+          n.live.set(e.nid, e);
+        }
+        out.push([
+          e.nid,
+          e.type,
+          Math.round(e.x),
+          Math.round(e.y),
+          Math.round(e.vx),
+          Math.round(e.vy),
+          e.facing,
+          e.onGround ? 1 : 0,
+          Math.round(e.hp),
+          Math.round(e.maxHp),
+          +(e.flash || 0).toFixed(2)
+        ]);
+      }
+      return out;
+    },
+    /** 참가자 화면 — 그림자 몹을 받은 자리로 보간해 옮긴다(AI 는 안 돌린다). */
+    netGhostStep(e, dt) {
+      const s = e.netBuf && e.netBuf.sample(now());
+      if (s) {
+        e.x = s.x;
+        e.y = s.y;
+      }
+      if (e.flash > 0) e.flash = Math.max(0, e.flash - dt);
+    },
+    netPutEnemies(list) {
+      const n = this.net, t = now();
+      for (const [nid, type, x, y, vx, vy, f, g, hp, mhp, fl] of list) {
+        let e = n.ghosts.get(nid);
+        if (!e) {
+          if (!ENEMIES[type]) continue;
+          e = new Enemy(type, x, y);
+          e.ghost = true;
+          e.nid = nid;
+          e.netBuf = new SnapBuffer(1.5 / NET_HZ);
+          n.ghosts.set(nid, e);
+          this.ents.push(e);
+        }
+        e.netBuf.push(t, { x, y });
+        e.vx = vx;
+        e.vy = vy;
+        e.facing = f;
+        e.onGround = !!g;
+        e.hp = hp;
+        e.maxHp = mhp;
+        if (fl > (e.flash || 0)) e.flash = fl;
+        e.seenAt = t;
+      }
+      for (const [nid, e] of n.ghosts) if (t - e.seenAt > 1) {
+        e.dead = true;
+        n.ghosts.delete(nid);
+      }
+    },
+    /** 참가자가 그림자 몹을 쳤다 — 맞는 그림은 바로(손맛), 피해는 호스트가 계산한다. */
+    netHitGhost(e, amount, crit, src, kb, fam) {
+      const n = this.net;
+      if (!n || !n.t) return;
+      const dmg = Math.max(1, Math.round(amount * (1 - e.armor / (e.armor + 70))));
+      this.texts.push(new DmgText(e.cx + (Math.random() - 0.5) * 14, e.y - 4, dmg, crit ? "#ffd24a" : "#fff", crit ? 1 : 0));
+      this.hitFx(e, e.cx, e.cy, crit, fam);
+      if (fam && HIT_FX[fam]) this.burst(e.cx, e.cy - 2, "hit_" + fam + (crit ? "_crit" : ""), HIT_FX[fam].size * (crit ? 1.3 : 1), HIT_FX[fam].slow);
+      e.flash = 0.12;
+      this.netSend(n.t, "rel", { k: "hit", e: e.nid, a: amount, c: crit ? 1 : 0, kb: kb || 0, f: fam || "" });
+    },
+    /** 호스트 — 남의 아바타가 몹을 잡았다. 경험치·금화·전리품은 그 주인 화면에서 굴린다. */
+    netKilledBy(rp, e) {
+      const peer = this.net && this.net.peers.get(rp.netId);
+      if (!peer) return;
+      const mult = this.killMult ? this.killMult() : 1;
+      this.netSend(peer.t, "rel", { k: "kill", e: e.nid, t: e.type, xp: Math.round(e.xp * mult), gold: Math.round(e.gold * mult), x: e.x, y: e.y, mech: e.mech || 0 });
+      if (e.nid) this.net.dead.push(e.nid);
+    },
+    /** 참가자 — 내가 잡았다는 소식. 보상을 굴리는 길은 혼자 할 때의 Enemy.die 그대로다. */
+    netPutKill(m) {
+      const n = this.net;
+      let e = n.ghosts.get(m.e);
+      if (e) n.ghosts.delete(m.e);
+      else {
+        if (!ENEMIES[m.t]) return;
+        e = new Enemy(m.t, m.x, m.y);
+        this.ents.push(e);
+      }
+      e.ghost = false;
+      e.dead = false;
+      e.xp = m.xp;
+      e.gold = m.gold;
+      e.mech = m.mech;
+      e.die(this.me);
+    },
+    netPutDeaths(list) {
+      const n = this.net;
+      for (const nid of list) {
+        const e = n.ghosts.get(nid);
+        if (!e) continue;
+        n.ghosts.delete(nid);
+        e.dead = true;
+        this.addCorpse(e);
+        this.deathBurst(e);
+      }
+    },
     netSend(t, ch, msg) {
       const text = JSON.stringify(msg);
       if (text.length > 15e3) for (const part of chunkText(++this.net.chunkId, text)) t.send("rel", part);
@@ -46365,7 +46497,21 @@
     /** 방을 연다 — 참가자 셋까지. 인터넷 중개면 방 코드는 중개가 고른다. */
     async mpHost(room) {
       if (this.net || !this.me) return;
-      const url = this.netSignalUrl(), n = { role: "host", room, sig: null, peers: /* @__PURE__ */ new Map(), pending: /* @__PURE__ */ new Map(), nextId: 1, sendT: 0, chunkId: 0, url };
+      const url = this.netSignalUrl(), n = {
+        role: "host",
+        room,
+        sig: null,
+        peers: /* @__PURE__ */ new Map(),
+        pending: /* @__PURE__ */ new Map(),
+        nextId: 1,
+        sendT: 0,
+        chunkId: 0,
+        url,
+        eid: 0,
+        live: /* @__PURE__ */ new Map(),
+        dead: [],
+        joined: /* @__PURE__ */ new Set()
+      };
       this.net = n;
       this.me.netId = 0;
       this.netTrackWorld();
@@ -46404,7 +46550,7 @@
             sig.post({ t: "full", from: "host", to: m.from });
             return;
           }
-          if (n.pending.has(m.from)) return;
+          if (n.pending.has(m.from) || n.joined.has(m.from)) return;
           const h = await hostOffer();
           n.pending.set(m.from, h);
           sig.post({ t: "offer", from: "host", to: m.from, sdp: h.offer });
@@ -46412,6 +46558,7 @@
           const h = n.pending.get(m.from);
           try {
             this.netAddPeer(await h.accept(m.sdp));
+            n.joined.add(m.from);
           } catch (e) {
             console.warn("net: 참가 실패", e);
           } finally {
@@ -46484,6 +46631,9 @@
       } else if (m.k === "tiles" && peer.rp) {
         this.netPutTiles(m.l, true);
         for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, "rel", m);
+      } else if (m.k === "hit" && peer.rp) {
+        const e = n.live.get(m.e);
+        if (e && !e.dead && Math.abs(e.cx - peer.rp.cx) < 900 && Math.abs(e.cy - peer.rp.cy) < 700) e.hurt(m.a, !!m.c, peer.rp, m.kb, m.f || void 0);
       } else if (m.k === "door" && peer.rp) {
         this.netPutDoor(m);
         for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, "rel", m);
@@ -46512,7 +46662,7 @@
         this.net = null;
         this.toast(tr("그런 방이 없다"), "bad");
       };
-      const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map() };
+      const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map(), ghosts: /* @__PURE__ */ new Map() };
       n.char = this.freshPlayer(0, 0, name, charId);
       this.net = n;
       sig.onmessage = async (m) => {
@@ -46596,6 +46746,12 @@
         }
       } else if (m.k === "hurt") {
         this.me.hurt(m.a, m.sx);
+      } else if (m.k === "es") {
+        this.netPutEnemies(m.l);
+      } else if (m.k === "ed") {
+        this.netPutDeaths(m.l);
+      } else if (m.k === "kill") {
+        this.netPutKill(m);
       } else if (m.k === "tiles") {
         this.netPutTiles(m.l, false);
       } else if (m.k === "door") {
@@ -46629,6 +46785,16 @@
       if (tiles) {
         for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", { k: "tiles", l: tiles });
       }
+      for (const [nid, e] of n.live) if (e.dead) {
+        n.live.delete(nid);
+        if (!n.dead.includes(nid)) n.dead.push(nid);
+      }
+      for (const q of n.peers.values()) {
+        if (!q.rp) continue;
+        q.t.send("fast", JSON.stringify({ k: "es", l: this.netEnemyList(q.rp) }));
+        if (n.dead.length) this.netSend(q.t, "rel", { k: "ed", l: n.dead });
+      }
+      n.dead = [];
       const t = now();
       for (const q of n.peers.values()) if (q.heard && t - q.heard > 5) {
         q.t.close();
@@ -46641,7 +46807,7 @@
     /** 호스트의 몹이 남의 아바타를 쳤다 — 피해는 그 주인 화면에서 계산한다(무적 시간도 거기 것). */
     netRemoteHurt(rp, amount, srcX) {
       const n = this.net;
-      if (!n || n.role !== "host" || rp.iframe > 0 || rp._hurtAt && this.time - rp._hurtAt < 0.3) return;
+      if (!n || n.role !== "host" || rp._hurtAt && this.time - rp._hurtAt < 0.3) return;
       const peer = n.peers.get(rp.netId);
       if (!peer) return;
       rp._hurtAt = this.time;

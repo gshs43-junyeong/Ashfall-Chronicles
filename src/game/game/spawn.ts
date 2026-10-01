@@ -527,7 +527,7 @@ export const SpawnPart: Bag = {
 
   /** 근처 웅덩이 한 곳을 골라 물속 생물을 채운다. */
   trySpawnWater(normal) { const { WSY } = dimsOf(this.world);
-    const p = this.player, w = this.world;
+    const p = this.spawnFor || this.player, w = this.world;
     const pools = w.pools;
     if (!pools || !pools.length) return false;
     if (normal >= 20) return false;
@@ -571,7 +571,7 @@ export const SpawnPart: Bag = {
 
   /** 바다 부유물 — 바다 수면 가까이 있을 때만, 드물게. */
   trySpawnFlotsam() { const { SEA_X1 } = dimsOf(this.world);
-    const p = this.player, w = this.world;
+    const p = this.spawnFor || this.player, w = this.world;
     if (!w.sea || Math.random() > 0.012) return false;
     const ptx = Math.floor(p.cx / TS), pty = Math.floor(p.cy / TS), lv = w.sea.level;
     if (ptx >= SEA_X1 + 20 || Math.abs(pty - lv) > 30) return false;
@@ -594,10 +594,11 @@ export const SpawnPart: Bag = {
 
   trySpawn() { const { WW, WH, SEA_X1 } = dimsOf(this.world);
     if (this.dbgCalm) return;                           // 디버그 확인 자리(공장)만 켠다
-    const p = this.player, w = this.world;
+    const p = this.spawnFor || this.player, w = this.world;
     const normal = this.ents.filter(e => e instanceof Enemy && !e.boss).length;
     const ev = this.eventActive() ? this.eventSpec() : null;
-    if (normal >= (ev ? ev.cap : 22) || this.boss) return;
+    /* 여럿이면 세계 전체 상한을 인원 × 0.75 까지 올린다(혼자면 그대로) — 멀티플레이 설계 §3-2 */
+    if (normal >= (ev ? ev.cap : 22) * Math.max(1, 0.75 * this.players.length) || this.boss) return;
     const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
     // 스폰 반경(최대 980px≈44타일)이 수직으로도 적용되므로, 하늘/유적처럼 고도로만 갈리는 구역은 플레이어가 실제로 그 구역에 있을 때만 후보로 허용한다 (지상에서 하늘 몹이 쏟아지는
     // 것 방지)
