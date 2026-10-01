@@ -209,4 +209,4 @@ Object.assign(Ambient, {
       }
     }
   }
-});
+} as Bag);

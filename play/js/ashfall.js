@@ -27383,6 +27383,7 @@
     raf: 0,
     w: 0,
     h: 0,
+    _try: 0,
     /* 뒤에서 앞으로. */
     LAYER_SPEC: [
       { key: "parallax_sky", speed: 10, y: 6, alpha: 0.55 },

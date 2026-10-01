@@ -1,11 +1,16 @@
 {
-  "//": "게임(src/game) 타입 검사 — 아직 느슨하게(strict 끔). @ts-nocheck 를 뗀 파일만 본다. 파일마다 타입을 좁히며 엄격하게 올린다(계획서 §7-1).",
+  "//": "게임(src/game) 타입 검사 — strict 묶음 중 this · 함수 · catch 만 켰다(남은 것: noImplicitAny · strictNullChecks — 계획서 §9-2 4번). @ts-nocheck 를 뗀 파일만 본다. 파일마다 타입을 좁히며 엄격하게 올린다(계획서 §7-1).",
   "compilerOptions": {
     "target": "es2022",
     "module": "esnext",
     "moduleResolution": "bundler",
     "lib": ["es2022", "dom", "dom.iterable"],
     "strict": false,
+    "noImplicitThis": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "useUnknownInCatchVariables": true,
+    "alwaysStrict": true,
     "noEmit": true,
     "isolatedModules": true,
     "skipLibCheck": true

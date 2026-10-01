@@ -59,7 +59,7 @@ export const SavePart: Bag = {
       this.toast(tr('저장했다'), 'good');
       return true;
     } catch (e) {
-      this.toast(e && e.name === 'QuotaExceededError' ? tr('저장 실패: 용량 초과') : tr('저장 실패'), 'bad'); console.error(e);
+      this.toast(e && (e as Error).name === 'QuotaExceededError' ? tr('저장 실패: 용량 초과') : tr('저장 실패'), 'bad'); console.error(e);
       return false;
     } finally { this._saving = false; }
   },
