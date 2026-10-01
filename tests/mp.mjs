@@ -79,6 +79,16 @@ await host.evaluate(({ tx, ty }) => G.world.set(tx, ty - 3, T.STONE), spot);
 await guest.waitForTimeout(800);
 const tilesHost = await host.evaluate(({ tx, ty }) => [G.world.get(tx, ty), G.world.get(5, G.world.dims.WH - 1) === T.BEDROCK], spot);
 const tileGuest = await guest.evaluate(({ tx, ty }) => G.world.get(tx, ty - 3) === T.STONE, spot);
+/* 밭 — 참가자가 심고 물 준 칸이 호스트 작물 목록·젖음에 */
+const farm = await guest.evaluate(({ tx, ty }) => {
+  const w = G.world, x = tx + 6, y = ty - 1;
+  for (let d = 0; d < 3; d++) w.set(x, y - d, T.AIR);
+  w.set(x, y + 1, T.FARMLAND); w.plantSeed(x, y, Object.keys(SEED_TILE)[0]); w.waterFarm(x, y + 1, G.dayCount);
+  return { x, y, k: y * w.dims.WW + x, kb: (y + 1) * w.dims.WW + x, t: w.get(x, y) };
+}, spot);
+await guest.waitForTimeout(600);
+const farmHost = await host.evaluate(f => [G.world.get(f.x, f.y) === f.t, G.world.crops.has(f.k), (G.world.wet[f.kb] | 0) > G.dayCount], farm);
+check(farmHost.every(Boolean), `밭: 참가자가 심은 씨앗이 호스트 작물 목록에 · 물 준 밭이 젖는다 (${farmHost})`);
 check(spot.before !== 0 && tilesHost[0] === 0 && tilesHost[1] && tileGuest, `세계 바뀜: 참가자가 캔 칸 → 호스트 · 호스트가 놓은 칸 → 참가자 · 기반암은 그대로`);
 const doorOk = await host.evaluate(() => { const d = G.world.doors[0]; if (!d) return null; d.closed = !d.closed; G.netDoor(d); return [d.x, d.y, d.closed]; });
 await guest.waitForTimeout(600);

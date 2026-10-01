@@ -238,6 +238,7 @@ export const WorldPlants: Bag & ThisType<World> = {
     if (!TILE_DEF[this.get(x, y)].farm) return false;
     const k = y * WW + x;
     this.wet[k] = Math.max(this.wet[k] | 0, day + FARM_WET_DAYS);
+    this.netMark(k);                                  // 멀티플레이 — 젖음도 칸 기록에 실려 간다
     return true;
   },
 
