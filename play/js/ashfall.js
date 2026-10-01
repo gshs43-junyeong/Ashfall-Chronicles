@@ -13998,6 +13998,7 @@
       const d = Object.assign({ type: "door", x, y, w, h, closed: true, dir: dir || -1 }, extra);
       this.objects.push(d);
       this.doors.push(d);
+      return d;
     }
     /* ================= 조명 ================= */
     /** 화면 범위 조명 계산. */
@@ -36772,6 +36773,7 @@
         if (d.gold) o.gold = 1;
       } else o.lv = 1;
       w.objects.push(o);
+      if (this.net) this.netObjAdd(o);
       it.c--;
       if (it.c <= 0) p.bag[p.sel] = null;
       for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + 0.5) * TS, (ty + 0.5) * TS, "#d8b06a", -30, 0.5));
@@ -36819,7 +36821,8 @@
       }
       const dir = p.facing >= 0 ? 1 : -1;
       const inside = aabb(w.doorEdge({ x: tx * TS, y: y0 * TS, w: TS, h: TS * 2, dir }), p.rect());
-      w.pushDoor(tx * TS, y0 * TS, TS, TS * 2, dir, { placed: 1, closed: !inside, sw: inside ? 1 : 0 });
+      const door = w.pushDoor(tx * TS, y0 * TS, TS, TS * 2, dir, { placed: 1, closed: !inside, sw: inside ? 1 : 0 });
+      if (this.net) this.netObjAdd(door);
       it.c--;
       if (it.c <= 0) p.bag[p.sel] = null;
       for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + 0.5) * TS, (ty + 0.5) * TS, "#8a6a42", -30, 0.5));
@@ -36836,6 +36839,7 @@
       if (i >= 0) w.objects.splice(i, 1);
       i = w.doors.indexOf(o);
       if (i >= 0) w.doors.splice(i, 1);
+      if (this.net) this.netObjDel(o);
       this.matBurst("wood", o.x + o.w / 2, o.y + o.h / 2, 12, { spd: 1.1 });
       UI5.refreshBag();
       this.sfx("break_wood", this.strokeRate());
@@ -36853,6 +36857,7 @@
       for (const it of back) if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y + o.h / 2, it));
       const i = w.objects.indexOf(o);
       if (i >= 0) w.objects.splice(i, 1);
+      if (this.net) this.netObjDel(o);
       this.matBurst("wood", o.x + o.w / 2, o.y + o.h / 2, 10, { spd: 1.1 });
       this.matBurst("stone", o.x + o.w / 2, o.y + o.h / 2, 5, { spd: 0.9 });
       UI5.refreshBag();
@@ -37056,6 +37061,19 @@
       }
       return null;
     },
+    /** 상자 지킴이를 깨운다 — 세계의 몹이라 호스트(혼자면 나)만. */
+    wakeChestGuard(o) {
+      const n = o.guard.n || 2;
+      for (let i = 0; i < n; i++) this.ents.push(new Enemy(o.guard.t, o.x + (i - n / 2) * 34, o.y - 40, this.scale()));
+      this.toast(tr("상자를 열자 무언가 깨어났다"), "bad");
+      this.shake = 10;
+    },
+    /** 보스가 달린 상자 — 잡몹 지킴이(o.guard)와 달리 하나가 제대로 깨어난다. */
+    wakeChestBoss(o) {
+      this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 80);
+      this.toast(tr("상자를 열자 섬이 흔들렸다"), "bad");
+      this.shake = 20;
+    },
     interact(o) {
       if (o.type === "chest") {
         if (o.codeRuin && !this.ruinCodeDone(o.codeRuin)) {
@@ -37078,26 +37096,21 @@
         }
         UI5.openChest(o);
         this.sfx("open");
+        if (this.net) this.netWatch(o);
+        const guest = !!(this.net && this.net.role === "guest");
         if (o.guard && !o.guarded) {
           o.guarded = true;
-          const n = o.guard.n || 2;
-          for (let i = 0; i < n; i++) {
-            const e = new Enemy(o.guard.t, o.x + (i - n / 2) * 34, o.y - 40, this.scale());
-            this.ents.push(e);
-          }
-          this.toast(tr("상자를 열자 무언가 깨어났다"), "bad");
-          this.shake = 10;
+          if (!guest) this.wakeChestGuard(o);
         }
         if (o.boss && !o.woke) {
           o.woke = 1;
-          this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 80);
-          this.toast(tr("상자를 열자 섬이 흔들렸다"), "bad");
-          this.shake = 20;
+          if (!guest) this.wakeChestBoss(o);
         }
       } else if (o.type === "crate") {
         if (!o.items) o.items = new Array(o.slots || 24).fill(null);
         UI5.openStore(o);
         this.sfx("open");
+        if (this.net) this.netWatch(o);
       } else if (o.type === "lorestone") {
         this.readRuinLore(o);
       } else if (o.type === "workbench" || o.type === "forge") {
@@ -46524,6 +46537,82 @@
       this.dayCount = m.n;
       this.event = m.ev;
     },
+    /* ================= 물건 — 놓기·걷기 · 상자 안 ================= */
+    /* 물건은 종류와 자리로 찾는다(같은 칸에 같은 종류는 하나뿐이다). */
+    netObjKey(o) {
+      return o.type + "@" + Math.round(o.x) + "," + Math.round(o.y);
+    },
+    netObjFind(key) {
+      return this.world.objects.find((o) => this.netObjKey(o) === key);
+    },
+    /** 남에게 — 호스트면 모든 참가자에게(except 빼고), 참가자면 호스트에게. */
+    netBroadcast(msg, except) {
+      const n = this.net;
+      if (!n) return;
+      if (n.role === "guest") {
+        if (n.t) this.netSend(n.t, "rel", msg);
+        return;
+      }
+      for (const q of n.peers.values()) if (q.rp && q !== except) this.netSend(q.t, "rel", msg);
+    },
+    netObjAdd(o) {
+      this.netBroadcast({ k: "oadd", o: JSON.parse(JSON.stringify(o)) });
+    },
+    netObjDel(o) {
+      this.netBroadcast({ k: "odel", key: this.netObjKey(o) });
+    },
+    /** 상자 안 · 지킴이 깨움 — 바뀐 그대로 */
+    netObjState(o) {
+      this.netBroadcast({ k: "ost", key: this.netObjKey(o), items: o.items || null, guarded: !!o.guarded, woke: o.woke || 0 });
+    },
+    netPutObj(m) {
+      const w = this.world;
+      if (m.k === "oadd") {
+        if (this.netObjFind(this.netObjKey(m.o))) return;
+        w.objects.push(m.o);
+        if (m.o.type === "door") w.doors.push(m.o);
+      } else if (m.k === "odel") {
+        const o = this.netObjFind(m.key);
+        if (!o) return;
+        w.objects.splice(w.objects.indexOf(o), 1);
+        const i = w.doors.indexOf(o);
+        if (i >= 0) w.doors.splice(i, 1);
+        if (UI5.chestRef === o || UI5.storeRef === o) UI5.closePanel();
+      } else if (m.k === "ost") {
+        const o = this.netObjFind(m.key);
+        if (!o) return;
+        const host = this.net.role === "host";
+        const wake = host && m.guarded && !o.guarded && o.guard, boss = host && m.woke && !o.woke && o.boss;
+        o.items = m.items;
+        o.guarded = m.guarded;
+        o.woke = m.woke;
+        this.net.objJ.set(o, JSON.stringify([o.items, !!o.guarded, o.woke || 0]));
+        if (wake) this.wakeChestGuard(o);
+        if (boss) this.wakeChestBoss(o);
+        if (UI5.chestRef === o) UI5.refreshChest();
+        if (UI5.storeRef === o) UI5.refreshVault();
+      }
+    },
+    /** 연 상자를 지켜보기 시작 — 여는 순간에 올려 둬야 한 박자 안에 넣고 닫아도 놓치지 않는다. */
+    netWatch(o) {
+      this.net.watch.set(o, now());
+    },
+    /** 열어 둔(또는 막 닫은) 상자의 안이 바뀌었으면 보낸다 — 옮기는 길이 여럿(끌기·우클릭·모두 넣기)이라 결과를 본다. */
+    netWatchObjs() {
+      const n = this.net, t = now();
+      for (const o of [UI5.chestRef, UI5.storeRef]) if (o) n.watch.set(o, t);
+      for (const [o, at] of n.watch) {
+        if (t - at > 3) {
+          n.watch.delete(o);
+          continue;
+        }
+        const j = JSON.stringify([o.items || null, !!o.guarded, o.woke || 0]);
+        if (n.objJ.get(o) !== j) {
+          n.objJ.set(o, j);
+          this.netObjState(o);
+        }
+      }
+    },
     netSend(t, ch, msg) {
       const text = JSON.stringify(msg);
       if (text.length > 15e3) for (const part of chunkText(++this.net.chunkId, text)) t.send("rel", part);
@@ -46554,7 +46643,9 @@
         eid: 0,
         live: /* @__PURE__ */ new Map(),
         dead: [],
-        joined: /* @__PURE__ */ new Set()
+        joined: /* @__PURE__ */ new Set(),
+        watch: /* @__PURE__ */ new Map(),
+        objJ: /* @__PURE__ */ new WeakMap()
       };
       this.net = n;
       this.me.netId = 0;
@@ -46678,6 +46769,9 @@
       } else if (m.k === "hit" && peer.rp) {
         const e = n.live.get(m.e);
         if (e && !e.dead && Math.abs(e.cx - peer.rp.cx) < 900 && Math.abs(e.cy - peer.rp.cy) < 700) e.hurt(m.a, !!m.c, peer.rp, m.kb, m.f || void 0);
+      } else if ((m.k === "oadd" || m.k === "odel" || m.k === "ost") && peer.rp) {
+        this.netPutObj(m);
+        this.netBroadcast(m, peer);
       } else if (m.k === "door" && peer.rp) {
         this.netPutDoor(m);
         for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, "rel", m);
@@ -46706,7 +46800,7 @@
         this.net = null;
         this.toast(tr("그런 방이 없다"), "bad");
       };
-      const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map(), ghosts: /* @__PURE__ */ new Map(), gproj: /* @__PURE__ */ new Map() };
+      const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map(), ghosts: /* @__PURE__ */ new Map(), gproj: /* @__PURE__ */ new Map(), watch: /* @__PURE__ */ new Map(), objJ: /* @__PURE__ */ new WeakMap() };
       n.char = this.freshPlayer(0, 0, name, charId);
       this.net = n;
       sig.onmessage = async (m) => {
@@ -46803,6 +46897,8 @@
         this.netPutTiles(m.l, false);
       } else if (m.k === "door") {
         this.netPutDoor(m);
+      } else if (m.k === "oadd" || m.k === "odel" || m.k === "ost") {
+        this.netPutObj(m);
       }
     },
     netLost() {
@@ -46822,6 +46918,7 @@
       n.sendT += 1 / NET_HZ;
       if (n.sendT < 0) n.sendT = 0;
       const tiles = this.netTakeTiles();
+      this.netWatchObjs();
       if (n.role === "guest") {
         if (n.t && n.id >= 0) {
           n.t.send("fast", JSON.stringify({ k: "st", s: this.netState(this.me) }));

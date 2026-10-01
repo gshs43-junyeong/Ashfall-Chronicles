@@ -101,6 +101,21 @@ check(ghost && hostHpAfter && hostHpAfter[0] < hostHpAfter[1], `몹: 참가자 �
 check(after[2] === xp0[2] + 1 && (after[0] !== xp0[0] || after[1] > xp0[1]) && !after[3] && !hostAfter[0] && hostAfter[1] === 0,
   `몹: 참가자가 잡으면 처치·경험치는 참가자에게(처치 ${xp0[2]}→${after[2]}) · 호스트는 안 받는다(${hostAfter[1]})`);
 
+/* 물건 — 호스트가 놓은 나무 상자가 참가자에게 · 참가자가 넣은 물건이 호스트 상자에 · 걷으면 양쪽에서 */
+const crateAt = await host.evaluate(() => {
+  const g = G.players.find(p => p.remote);
+  const o = { type: 'crate', placed: 1, x: Math.round(g.x + 40), y: Math.round(g.y + g.h - 26), w: 30, h: 26, slots: 24, items: new Array(24).fill(null) };
+  G.world.objects.push(o); G.netObjAdd(o); return [o.x, o.y];
+});
+await guest.waitForTimeout(500);
+await guest.evaluate(([x, y]) => { const o = G.world.objects.find(o => o.type === 'crate' && o.x === x && o.y === y); G.interact(o); o.items[0] = makeItem('wood', 7); UI.closePanel(); }, crateAt);
+await guest.waitForTimeout(600);
+const inHost = await host.evaluate(([x, y]) => { const o = G.world.objects.find(o => o.type === 'crate' && o.x === x && o.y === y); return o && o.items[0] && o.items[0].id + ':' + o.items[0].c; }, crateAt);
+await host.evaluate(([x, y]) => { const o = G.world.objects.find(o => o.type === 'crate' && o.x === x && o.y === y); G.world.objects.splice(G.world.objects.indexOf(o), 1); G.netObjDel(o); }, crateAt);
+await guest.waitForTimeout(500);
+const gone = await guest.evaluate(([x, y]) => !G.world.objects.some(o => o.type === 'crate' && o.x === x && o.y === y), crateAt);
+check(inHost === 'wood:7' && gone, `물건: 놓은 상자가 참가자에게 · 참가자가 넣은 물건이 호스트 상자에(${inHost}) · 걷으면 사라진다(${gone})`);
+
 /* 시계·사건 · 적 투사체 — 호스트 것이 참가자 화면에 */
 await host.evaluate(() => {
   G.dayT = 20 * 60; G.event = { id: 'rain', t: 0 };

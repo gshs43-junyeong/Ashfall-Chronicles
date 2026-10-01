@@ -203,6 +203,19 @@ export const FishingPart: Bag = {
     }
     return null;
   },
+  /** 상자 지킴이를 깨운다 — 세계의 몹이라 호스트(혼자면 나)만. */
+  wakeChestGuard(o) {
+    const n = o.guard.n || 2;
+    for (let i = 0; i < n; i++) this.ents.push(new Enemy(o.guard.t, o.x + (i - n / 2) * 34, o.y - 40, this.scale()));
+    this.toast(tr('상자를 열자 무언가 깨어났다'), 'bad');
+    this.shake = 10;
+  },
+  /** 보스가 달린 상자 — 잡몹 지킴이(o.guard)와 달리 하나가 제대로 깨어난다. */
+  wakeChestBoss(o) {
+    this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 80);
+    this.toast(tr('상자를 열자 섬이 흔들렸다'), 'bad');
+    this.shake = 20;
+  },
   interact(o) {
     if (o.type === 'chest') {
       /* ★ 암호 골방의 상자는 그 유적의 암호문이 풀린 뒤에만 열린다. */
@@ -229,27 +242,21 @@ export const FishingPart: Bag = {
         this.pulseChest(o, tx, ty);      // 맥박이 뛰는 유적의 상자 — 덤을 얹고 맥박을 올린다
       }
       UI.openChest(o); this.sfx('open');
-      // 지킴이가 붙은 상자 — 열면 그 자리에서 깨어난다.
+      if (this.net) this.netWatch(o);
+      /* 지킴이가 붙은 상자 — 열면 그 자리에서 깨어난다. 참가자가 열면 몹은 호스트가 깨운다(상자 상태가 넘어가면 — game/net.ts). */
+      const guest = !!(this.net && this.net.role === 'guest');
       if (o.guard && !o.guarded) {
         o.guarded = true;
-        const n = o.guard.n || 2;
-        for (let i = 0; i < n; i++) {
-          const e = new Enemy(o.guard.t, o.x + (i - n / 2) * 34, o.y - 40, this.scale());
-          this.ents.push(e);
-        }
-        this.toast(tr('상자를 열자 무언가 깨어났다'), 'bad');
-        this.shake = 10;
+        if (!guest) this.wakeChestGuard(o);
       }
-      /* 보스가 달린 상자 — 잡몹 지킴이(o.guard)와 달리 하나가 제대로 깨어난다. */
       if (o.boss && !o.woke) {
         o.woke = 1;
-        this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 80);
-        this.toast(tr('상자를 열자 섬이 흔들렸다'), 'bad');
-        this.shake = 20;
+        if (!guest) this.wakeChestBoss(o);
       }
     } else if (o.type === 'crate') {
       if (!o.items) o.items = new Array(o.slots || 24).fill(null);
       UI.openStore(o); this.sfx('open');
+      if (this.net) this.netWatch(o);
     } else if (o.type === 'lorestone') {
       this.readRuinLore(o);
     } else if (o.type === 'workbench' || o.type === 'forge') {
