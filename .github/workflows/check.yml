@@ -22,6 +22,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: npm ci
+      - name: relay deps (tests/relay.mjs 가 Cloudflare 중개를 로컬로 띄운다)
+        working-directory: relay
+        run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: npm run check
         env:

@@ -120,6 +120,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `examples/sample/` | 엔진**만** 쓰는 최소 예제 게임(src/ → `sample.js` 산출물, `tools/bundle.mjs` 가 같이 묶는다) — 엔진 API 는 `docs/engine.md`. 엔진을 고쳐 이것이 깨지면(`npm run test:sample`) 게임 가정이 엔진에 스민 것 |
 | `tools/imports.mjs` | 코드를 옮긴 뒤 `src/game` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
 | `tools/bundle.mjs` | 소스 → `play/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
+| `relay/` · `api/` | 멀티플레이 방 중개 — `relay/`(Cloudflare Worker · 본 중개, 따로 `npm ci` · 배포는 `.github/workflows/relay.yml`) · `api/room.js`(Vercel 함수 · 예비, 규칙은 `api/_room-core.js`). 설계 `docs/v1.1.2-multiplayer-plan.md` |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/`(Docker 검사 이미지는 `shots-docker`) |
 | `Dockerfile` · `docker-compose.yml` · `docker/` | 컨테이너 — dev(소스 걸고 다시 묶기) · game · site(nginx, `vercel.json` 규칙을 옮김) · check. `vercel.json` 을 고치면 `docker/nginx-site.conf` 도 |
 | `play/assets/manifest.json` | **애셋 원본 목록** |

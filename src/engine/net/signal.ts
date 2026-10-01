@@ -67,3 +67,57 @@ export function createHttpSignal(url: string, room: string, id: string, every = 
   poll();
   return s;
 }
+
+/* ---- 인터넷 너머 — WebSocket 우편함(Cloudflare 중개 relay/src/worker.js) ----
+   호스트는 연결을 열어 둔 채 기다린다 — 중개 쪽이 휴면이라 기다리는 동안 요청이 들지 않는다. */
+export interface WsSignal extends Signal {
+  onerror: ((e: Error) => void) | null;
+  /** 방 코드 — 호스트는 중개가 고른 것, 참가자는 준 것. */
+  room: Promise<string>;
+}
+
+export function createWsSignal(base: string, q: { role: 'host' | 'guest'; room?: string; id?: string }): WsSignal {
+  let ws: WebSocket | null = null, alive = true, room = (q.room || '').toUpperCase(), tries = 0;
+  let ping: ReturnType<typeof setInterval> | null = null, gotRoom: (r: string) => void = () => {}, failRoom: (e: Error) => void = () => {};
+  const queue: string[] = [];
+  const s: WsSignal = {
+    onmessage: null, onerror: null,
+    room: new Promise<string>((res, rej) => { gotRoom = res; failRoom = rej; }),
+    post(msg) { const t = JSON.stringify(msg); if (ws && ws.readyState === 1) ws.send(t); else queue.push(t); },
+    close() { alive = false; if (ping) clearInterval(ping); if (ws) ws.close(1000); }
+  };
+  s.room.catch(() => {});
+  const fail = (e: Error) => { alive = false; failRoom(e); if (s.onerror) s.onerror(e); if (ws) ws.close(1000); };
+  const connect = () => {
+    const u = new URL(base);
+    u.searchParams.set('role', q.role);
+    if (room) u.searchParams.set('room', room);
+    if (q.id) u.searchParams.set('id', q.id);
+    const w = ws = new WebSocket(u.toString());
+    let opened = false;
+    w.onopen = () => {
+      opened = true; tries = 0;
+      if (q.role === 'guest') gotRoom(room);
+      while (queue.length) w.send(queue.shift() as string);
+      if (ping) clearInterval(ping);
+      ping = setInterval(() => { if (w.readyState === 1) w.send('ping'); }, 30000);   // 중개가 깨지 않고 답한다
+    };
+    w.onmessage = e => {
+      if (e.data === 'pong') return;
+      let m: Record<string, unknown>;
+      try { m = JSON.parse(String(e.data)); } catch { return; }
+      if (m.t === 'room') { room = String(m.room); gotRoom(room); return; }
+      if (m.t === 'err') { fail(new Error('signal: ' + m.e)); return; }
+      if (s.onmessage) s.onmessage(m as unknown as SignalMsg);
+    };
+    w.onclose = e => {
+      if (!alive) return;
+      if (e.code === 4410) { fail(new Error('signal: host-left')); return; }
+      /* 호스트는 잠깐 끊겨도(망 흔들림) 같은 코드로 다시 붙는다 — 다섯 번까지 */
+      if (q.role === 'host' && room && tries++ < 5) { setTimeout(connect, 2000 * tries); return; }
+      fail(new Error(opened ? 'signal: closed' : 'signal: unreachable'));
+    };
+  };
+  connect();
+  return s;
+}

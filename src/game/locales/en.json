@@ -922,7 +922,9 @@
   "중개 서버에 닿지 않는다": "Can't reach the relay server",
   "그런 방이 없다": "No such room",
   "방 {room|을} 열었다 — 5분 동안 참가를 받는다": "Opened room {room}. Accepting players for 5 minutes.",
-  "호스트가 지금 참가를 받고 있지 않다": "The host isn't accepting players right now"
+  "호스트가 지금 참가를 받고 있지 않다": "The host isn't accepting players right now",
+  "방 {room|을} 열었다": "Opened room {room}",
+  "중개 서버와 끊겼다 — 새 참가는 받을 수 없다": "Lost the relay server. New players can’t join."
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

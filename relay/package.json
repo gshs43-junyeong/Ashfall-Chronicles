@@ -1,0 +1,13 @@
+{
+  "name": "ashfall-relay",
+  "private": true,
+  "type": "module",
+  "//": "멀티플레이 방 중개(Cloudflare Workers + Durable Objects) — 게임 번들과 별개. 배포는 .github/workflows/relay.yml",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.145.0"
+  }
+}
