@@ -14,6 +14,9 @@ export const NET_MAX = 4;          // 호스트 포함
 export const NET_HZ = 15;          // 위치를 보내는 횟수(초당)
 /* 방 중개 — 사이트의 Vercel 함수(api/room.js). zip(file://)·Electron 도 이 주소로 붙는다. */
 export const SIGNAL_URL = 'https://ashfall-chronicles.vercel.app/api/room';
+/* ★ 호스트는 참가를 받는 동안만 우편함을 본다 — 열어 둔 내내 보면 중개 요청이 시간에 비례해 무료 범위를 넘는다. */
+export const INVITE_MS = 5 * 60 * 1000;
+export const JOIN_GIVEUP_MS = 60 * 1000;   // 참가자가 답을 기다리는 시간
 const now = () => performance.now() / 1000;
 
 export const NetPart: Bag = {
@@ -81,12 +84,12 @@ export const NetPart: Bag = {
     const url = this.netSignalUrl(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0, url };
     this.net = n; this.me.netId = 0;
     if (url) {
-      try { n.room = room = await openRoom(url); }
+      try { const o = await openRoom(url); n.room = room = o.room; n.key = o.key; }
       catch (e) { console.warn('net: 방 열기 실패', e); this.net = null; this.toast(tr('중개 서버에 닿지 않는다'), 'bad'); return; }
-      const hs = createHttpSignal(url, room, 'host', 2000);
-      hs.onerror = () => this.toast(tr('방이 닫혔다 — 새로 열어야 한다'), 'bad');
+      const hs = createHttpSignal(url, room, 'host', 2000, INVITE_MS, n.key);
+      hs.onerror = () => this.mpInvite();            // 창 안에서 방이 만료됐으면 같은 코드로 되찾는다
       n.sig = hs;
-      addEventListener('pagehide', () => closeRoom(url, room));
+      addEventListener('pagehide', () => closeRoom(url, n.room, n.key));
     } else n.sig = createTabSignal(room);
     const sig = n.sig;
     sig.onmessage = async m => {
@@ -103,7 +106,21 @@ export const NetPart: Bag = {
         finally { n.pending.delete(m.from); }
       }
     };
-    this.toast(tr('방 {room|을} 열었다', { room }), 'good');
+    this.toast(tr('방 {room|을} 열었다 — 5분 동안 참가를 받는다', { room }), 'good');
+  },
+  /** 참가 받기를 5분 더 — 쉬는 동안 방이 만료됐으면 같은 코드로 되찾는다(남이 가져갔으면 새 코드). */
+  async mpInvite() {
+    const n = this.net;
+    if (!n || n.role !== 'host' || !n.url) return;
+    try { await openRoom(n.url, n.room, n.key); }
+    catch (e) {
+      try { const o = await openRoom(n.url); n.room = o.room; n.key = o.key; } catch (e2) { this.toast(tr('중개 서버에 닿지 않는다'), 'bad'); return; }
+      n.sig.close();
+      const hs = createHttpSignal(n.url, n.room, 'host', 2000, INVITE_MS, n.key);
+      hs.onerror = () => this.mpInvite(); hs.onmessage = n.sig.onmessage; n.sig = hs;
+    }
+    n.sig.resume(INVITE_MS);
+    this.toast(tr('방 {room|을} 열었다 — 5분 동안 참가를 받는다', { room: n.room }), 'good');
   },
   netAddPeer(t) {
     const n = this.net, peer: Bag = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
@@ -145,7 +162,7 @@ export const NetPart: Bag = {
     const url = this.netSignalUrl(), me = Math.random().toString(36).slice(2, 8);
     room = String(room || '').trim().toUpperCase();
     const sig = url ? createHttpSignal(url, room, me, 1000) : createTabSignal(room);
-    if (url) (sig as Bag).onerror = () => { clearInterval(n.ask); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
+    if (url) (sig as Bag).onerror = () => { clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
     const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map() };
     n.char = this.freshPlayer(0, 0, name, charId);
     this.net = n;
@@ -153,7 +170,7 @@ export const NetPart: Bag = {
       if (m.to !== me || n.t) return;
       if (m.t === 'full') { this.toast(tr('방이 가득 찼다'), 'bad'); clearInterval(n.ask); return; }
       if (m.t !== 'offer') return;
-      clearInterval(n.ask);
+      clearInterval(n.ask); clearTimeout(n.giveUp);
       const g = await guestAnswer(m.sdp);
       sig.post({ t: 'answer', from: me, to: 'host', sdp: g.answer });
       const t = await g.ready;
@@ -169,7 +186,13 @@ export const NetPart: Bag = {
       addEventListener('pagehide', () => { if (n.t) n.t.send('rel', JSON.stringify({ k: 'bye' })); });
     };
     const ask = () => sig.post({ t: 'want', from: me });
-    n.ask = setInterval(ask, url ? 4000 : 2000); ask();   // 호스트가 아직 방을 안 열었으면 열 때까지 두드린다
+    n.ask = setInterval(ask, url ? 4000 : 2000); ask();
+    /* 방은 있는데 호스트가 참가 받기를 쉬고 있으면 답이 없다 — 1분 뒤 포기한다. */
+    n.giveUp = setTimeout(() => {
+      if (this.net !== n || n.t) return;
+      clearInterval(n.ask); sig.close(); this.net = null;
+      this.toast(tr('호스트가 지금 참가를 받고 있지 않다'), 'bad');
+    }, JOIN_GIVEUP_MS);   // 호스트가 아직 방을 안 열었으면 열 때까지 두드린다
   },
   netOnGuest(m) {
     const n = this.net;

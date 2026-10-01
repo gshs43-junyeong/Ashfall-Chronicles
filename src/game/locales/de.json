@@ -917,12 +917,12 @@
   "진화를 기다린다 — {food|을} 먹여야 한다": "Wartet auf die Entwicklung — füttere {food}",
   "{name|이} 들어왔다": "{name} ist beigetreten",
   "{name|이} 나갔다": "{name} hat verlassen",
-  "방 {room|을} 열었다": "Raum {room} geöffnet",
   "방이 가득 찼다": "Der Raum ist voll",
   "호스트와 연결이 끊겼다": "Verbindung zum Host verloren",
   "중개 서버에 닿지 않는다": "Vermittlungsserver nicht erreichbar",
-  "방이 닫혔다 — 새로 열어야 한다": "Der Raum wurde geschlossen. Öffne einen neuen.",
-  "그런 방이 없다": "Diesen Raum gibt es nicht"
+  "그런 방이 없다": "Diesen Raum gibt es nicht",
+  "방 {room|을} 열었다 — 5분 동안 참가를 받는다": "Raum {room} geöffnet. 5 Minuten lang können Spieler beitreten.",
+  "호스트가 지금 참가를 받고 있지 않다": "Der Host nimmt gerade keine Spieler auf"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

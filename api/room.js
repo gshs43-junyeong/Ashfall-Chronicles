@@ -14,9 +14,9 @@ async function redis(path, cmds) {
 const one = async cmd => (await redis('/pipeline', [cmd]))[0].result;
 
 const store = {
-  async claim(k, ttl) { return (await one(['SET', k, '1', 'NX', 'EX', ttl])) === 'OK'; },
+  async claim(k, v, ttl) { return (await one(['SET', k, v, 'NX', 'EX', ttl])) === 'OK'; },
+  async get(k) { return (await one(['GET', k])) ?? null; },
   async touch(k, ttl) { await one(['EXPIRE', k, ttl]); },
-  async exists(k) { return (await one(['EXISTS', k])) === 1; },
   async del(k) { await one(['DEL', k]); },
   async push(k, v, ttl, cap) { await redis('/pipeline', [['RPUSH', k, v], ['LTRIM', k, -cap, -1], ['EXPIRE', k, ttl]]); },
   async drain(k) { const r = await redis('/multi-exec', [['LRANGE', k, 0, -1], ['DEL', k]]); return r[0].result || []; }

@@ -1378,8 +1378,9 @@
   "방": [
    "ui/quest.renderRuins"
   ],
-  "방 {room|을} 열었다": [
-   "game/net.mpHost"
+  "방 {room|을} 열었다 — 5분 동안 참가를 받는다": [
+   "game/net.mpHost",
+   "game/net.mpInvite"
   ],
   "방벽 {shield}": [
    "entity/player-combat.useSkill"
@@ -1400,9 +1401,6 @@
   ],
   "방이 가득 찼다": [
    "game/net.mpJoin"
-  ],
-  "방이 닫혔다 — 새로 열어야 한다": [
-   "game/net.mpHost"
   ],
   "방전": [
    "factory",
@@ -2488,7 +2486,8 @@
    "game/fishing.resolveFish"
   ],
   "중개 서버에 닿지 않는다": [
-   "game/net.mpHost"
+   "game/net.mpHost",
+   "game/net.mpInvite"
   ],
   "증식체의 노심": [
    "world/village.buildRunaway"
@@ -2829,6 +2828,9 @@
   ],
   "헤파의 격실": [
    "world/village.buildRunaway"
+  ],
+  "호스트가 지금 참가를 받고 있지 않다": [
+   "game/net.mpJoin"
   ],
   "호스트와 연결이 끊겼다": [
    "game/net.netLost"

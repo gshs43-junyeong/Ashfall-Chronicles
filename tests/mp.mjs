@@ -8,15 +8,21 @@ import { handleRoom, memoryStore } from '../api/_room-core.js';
 /* 중개 규칙 — 서버 없이 먼저 */
 {
   const st = memoryStore();
-  const { body: { room } } = await handleRoom(st, { op: 'open' });
+  const { body: { room, key } } = await handleRoom(st, { op: 'open' });
   const a = await handleRoom(st, { op: 'post', room, to: 'host', msg: { t: 'want', from: 'abc' } });
-  const b = await handleRoom(st, { op: 'poll', room, id: 'host' });
-  const c = await handleRoom(st, { op: 'poll', room, id: 'host' });
+  const b = await handleRoom(st, { op: 'poll', room, id: 'host', key });
+  const c = await handleRoom(st, { op: 'poll', room, id: 'host', key });
+  const thief = await handleRoom(st, { op: 'poll', room, id: 'host' });
   const d = await handleRoom(st, { op: 'post', room: 'ZZZZZ', to: 'host', msg: {} });
   const e = await handleRoom(st, { op: 'post', room, to: 'host', msg: { sdp: 'x'.repeat(13000) } });
   const okRule = /^[A-Z0-9]{5}$/.test(room) && a.status === 200 && b.body.msgs.length === 1 && b.body.msgs[0].from === 'abc'
-    && c.body.msgs.length === 0 && d.status === 404 && e.status === 413;
-  if (okRule) ok(`중개 규칙: 방 ${room} · 우편함 비우기 · 없는 방 404 · 큰 글 413`); else fail('중개 규칙');
+    && c.body.msgs.length === 0 && d.status === 404 && e.status === 413 && thief.status === 403;
+  if (okRule) ok(`중개 규칙: 방 ${room} · 우편함 비우기 · 없는 방 404 · 큰 글 413 · 열쇠 없이 호스트 우편함 403`); else fail('중개 규칙');
+  /* 되찾기 — 만료된(지워진) 방은 같은 열쇠로 같은 코드를 다시, 남의 열쇠로는 409 */
+  const steal = await handleRoom(st, { op: 'open', room, key: 'nope' });
+  await handleRoom(st, { op: 'close', room, key });
+  const r1 = await handleRoom(st, { op: 'open', room: room.toLowerCase(), key });
+  if (steal.status === 409 && r1.status === 200 && r1.body.room === room) ok('중개 규칙: 같은 열쇠로 같은 코드를 되찾고 남의 열쇠는 막는다'); else fail(`중개 규칙: 되찾기 ${JSON.stringify(r1)}`);
 }
 const store = memoryStore();
 const sigSrv = http.createServer((req, res) => {
@@ -65,6 +71,15 @@ await guest.waitForTimeout(500);
 const hp1 = await guest.evaluate(() => G.me.hp);
 const hostHp = await host.evaluate(() => G.me.hp);
 check(hp1 < hp0 && hostHp > 0, `호스트 쪽에서 참가자 아바타가 맞으면 피해는 참가자에게 (${hp0} → ${hp1})`);
+
+/* 참가 받기 창 — 지나면 호스트가 우편함 확인을 멈추고(중개 요청 0), mpInvite 로 다시 켠다 */
+await host.evaluate(() => G.net.sig.resume(300));
+await host.waitForTimeout(2600);
+const idle = await host.evaluate(() => G.net.sig.polling);
+await host.evaluate(() => G.mpInvite());
+await host.waitForTimeout(400);
+const again = await host.evaluate(() => G.net.sig.polling);
+check(idle === false && again === true, `참가 받기 창: 지나면 확인을 멈추고(${idle}) 다시 켠다(${again})`);
 
 await guest.close();
 await host.waitForTimeout(1500);

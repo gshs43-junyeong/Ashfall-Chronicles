@@ -45848,6 +45848,8 @@
   // src/game/game/net.ts
   var net_exports = {};
   __export(net_exports, {
+    INVITE_MS: () => INVITE_MS,
+    JOIN_GIVEUP_MS: () => JOIN_GIVEUP_MS,
     NET_HZ: () => NET_HZ,
     NET_MAX: () => NET_MAX,
     NetPart: () => NetPart,
@@ -45949,18 +45951,22 @@
     if (!r.ok) throw new Error("signal: " + (j.error || r.status));
     return j;
   }
-  async function openRoom(url) {
-    return String((await call(url, { op: "open" })).room);
+  async function openRoom(url, room, key) {
+    const j = await call(url, room ? { op: "open", room, key } : { op: "open" });
+    return { room: String(j.room), key: String(j.key) };
   }
-  function closeRoom(url, room) {
-    call(url, { op: "close", room }).catch(() => {
+  function closeRoom(url, room, key) {
+    call(url, { op: "close", room, key }).catch(() => {
     });
   }
-  function createHttpSignal(url, room, id, every = 1500) {
-    let alive = true, timer = null;
+  function createHttpSignal(url, room, id, every = 1500, windowMs = 0, key = "") {
+    let alive = true, timer = null, until = windowMs ? Date.now() + windowMs : Infinity, running = false;
     const s = {
       onmessage: null,
       onerror: null,
+      get polling() {
+        return running;
+      },
       post(msg) {
         call(url, { op: "post", room, to: msg.to || "host", msg }).catch((e) => {
           if (s.onerror) s.onerror(e);
@@ -45969,21 +45975,28 @@
       close() {
         alive = false;
         if (timer) clearTimeout(timer);
+      },
+      resume(ms = windowMs || 3e5) {
+        alive = true;
+        until = Date.now() + ms;
+        if (!running) poll();
       }
     };
     const poll = async () => {
-      if (!alive) return;
+      running = alive && Date.now() < until;
+      if (!running) return;
       try {
-        const j = await call(url, { op: "poll", room, id });
+        const j = await call(url, { op: "poll", room, id, key });
         for (const m of j.msgs || []) if (s.onmessage) s.onmessage(m);
       } catch (e) {
         if (String(e).includes("no-room")) {
-          alive = false;
+          alive = running = false;
           if (s.onerror) s.onerror(e);
           return;
         }
       }
       if (alive) timer = setTimeout(poll, every);
+      else running = false;
     };
     poll();
     return s;
@@ -46091,6 +46104,8 @@
   var NET_MAX = 4;
   var NET_HZ = 15;
   var SIGNAL_URL = "https://ashfall-chronicles.vercel.app/api/room";
+  var INVITE_MS = 5 * 60 * 1e3;
+  var JOIN_GIVEUP_MS = 60 * 1e3;
   var now = () => performance.now() / 1e3;
   var NetPart = {
     net: null,
@@ -46203,17 +46218,19 @@
       this.me.netId = 0;
       if (url) {
         try {
-          n.room = room = await openRoom(url);
+          const o = await openRoom(url);
+          n.room = room = o.room;
+          n.key = o.key;
         } catch (e) {
           console.warn("net: 방 열기 실패", e);
           this.net = null;
           this.toast(tr("중개 서버에 닿지 않는다"), "bad");
           return;
         }
-        const hs = createHttpSignal(url, room, "host", 2e3);
-        hs.onerror = () => this.toast(tr("방이 닫혔다 — 새로 열어야 한다"), "bad");
+        const hs = createHttpSignal(url, room, "host", 2e3, INVITE_MS, n.key);
+        hs.onerror = () => this.mpInvite();
         n.sig = hs;
-        addEventListener("pagehide", () => closeRoom(url, room));
+        addEventListener("pagehide", () => closeRoom(url, n.room, n.key));
       } else n.sig = createTabSignal(room);
       const sig = n.sig;
       sig.onmessage = async (m) => {
@@ -46237,7 +46254,31 @@
           }
         }
       };
-      this.toast(tr("방 {room|을} 열었다", { room }), "good");
+      this.toast(tr("방 {room|을} 열었다 — 5분 동안 참가를 받는다", { room }), "good");
+    },
+    /** 참가 받기를 5분 더 — 쉬는 동안 방이 만료됐으면 같은 코드로 되찾는다(남이 가져갔으면 새 코드). */
+    async mpInvite() {
+      const n = this.net;
+      if (!n || n.role !== "host" || !n.url) return;
+      try {
+        await openRoom(n.url, n.room, n.key);
+      } catch (e) {
+        try {
+          const o = await openRoom(n.url);
+          n.room = o.room;
+          n.key = o.key;
+        } catch (e2) {
+          this.toast(tr("중개 서버에 닿지 않는다"), "bad");
+          return;
+        }
+        n.sig.close();
+        const hs = createHttpSignal(n.url, n.room, "host", 2e3, INVITE_MS, n.key);
+        hs.onerror = () => this.mpInvite();
+        hs.onmessage = n.sig.onmessage;
+        n.sig = hs;
+      }
+      n.sig.resume(INVITE_MS);
+      this.toast(tr("방 {room|을} 열었다 — 5분 동안 참가를 받는다", { room: n.room }), "good");
     },
     netAddPeer(t) {
       const n = this.net, peer = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
@@ -46291,6 +46332,7 @@
       const sig = url ? createHttpSignal(url, room, me, 1e3) : createTabSignal(room);
       if (url) sig.onerror = () => {
         clearInterval(n.ask);
+        clearTimeout(n.giveUp);
         this.net = null;
         this.toast(tr("그런 방이 없다"), "bad");
       };
@@ -46306,6 +46348,7 @@
         }
         if (m.t !== "offer") return;
         clearInterval(n.ask);
+        clearTimeout(n.giveUp);
         const g = await guestAnswer(m.sdp);
         sig.post({ t: "answer", from: me, to: "host", sdp: g.answer });
         const t = await g.ready;
@@ -46328,6 +46371,13 @@
       const ask = () => sig.post({ t: "want", from: me });
       n.ask = setInterval(ask, url ? 4e3 : 2e3);
       ask();
+      n.giveUp = setTimeout(() => {
+        if (this.net !== n || n.t) return;
+        clearInterval(n.ask);
+        sig.close();
+        this.net = null;
+        this.toast(tr("호스트가 지금 참가를 받고 있지 않다"), "bad");
+      }, JOIN_GIVEUP_MS);
     },
     netOnGuest(m) {
       const n = this.net;
