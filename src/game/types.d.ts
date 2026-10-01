@@ -52,8 +52,8 @@ interface RuinDef {
   x?: number; y?: number; w?: number; h?: number; wall?: number; floor?: number; bg?: number; torch?: number; traps?: string[];
   boss?: string; tier?: number; trapRate?: number; spikeRate?: number; chestRate?: number; mobMul?: number; bonus?: string;
   bonus2?: string; maze?: number; entryKind?: string;
-  /** 실행 중에 붙는 칸 — bx·by 는 setWorldSize 가 적는 소형 기준 좌표, mystic 은 세계를 만들 때마다 써 넣는다(전역 표를 고쳐 쓴다 — 엔진화 2차에서 World 로). */
-  bx?: number; by?: number; mystic?: string;
+  /** 세계를 만들 때 그 세계의 복사본(`world.ruinSpec`)에 써 넣는다 — 표에는 없다. */
+  mystic?: string;
 }
 
 interface AchDef { id: string; cat: string; i: string; n: string; d: string; check?: (g: any) => boolean; lv?: number; t?: string; h?: number; }
@@ -87,7 +87,7 @@ interface AppCtx {
   bandFx: (...a: any[]) => any; boltFx: (...a: any[]) => any; bossLine: (...a: any[]) => any; bounties: any[];
   bountyPay: (...a: any[]) => any; bountyProgress: (...a: any[]) => any; breakFx: (...a: any[]) => any; burst: (...a: any[]) => any;
   buy: (...a: any[]) => any; buyPrice: (...a: any[]) => any; buyStock: (...a: any[]) => any; chapter: number;
-  chapterState: (...a: any[]) => any; checkAch: (...a: any[]) => any; claimBounty: (...a: any[]) => any; craft: (...a: any[]) => any;
+  chapterState: (...a: any[]) => any; objTask: (o: any) => string; checkAch: (...a: any[]) => any; claimBounty: (...a: any[]) => any; craft: (...a: any[]) => any;
   dayCount: number; dayT: number; deathBurst: (...a: any[]) => any; drops: any[]; edgeFx: (...a: any[]) => any;
   enhBreak: (...a: any[]) => any; enhCost: (...a: any[]) => any; enhFail: (...a: any[]) => any; enhMat: (...a: any[]) => any;
   enhanceSlot: (...a: any[]) => any; ents: any[]; exportSaves: (...a: any[]) => any; fallFx: (...a: any[]) => any;

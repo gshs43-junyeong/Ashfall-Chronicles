@@ -6,12 +6,11 @@ import { RNG } from '../engine/core/rng.js';
 import { rleDecode, rleEncode } from '../engine/save/rle.js';
 import { sweepLight } from '../engine/tilemap/light.js';
 import { TileMap } from '../engine/tilemap/tilemap.js';
-import { SHIFT, SX, SY, SYB, WSY, applyWorldSize, dimsOf } from './size.js';
+import { SHIFT, applyWorldSize, dimsOf } from './size.js';
 import { T, TILE_DEF } from './data.js';
 import { OBJ_SIZE } from './data/items.js';
 import { FLUID_FLOW, FLUID_KIND, FLUID_OPEN, FLUID_SRC, FLUID_TILE } from './data/materials.js';
 import { RUIN_SPEC } from './data/ruins.js';
-import { CHAPTERS } from './data/story.js';
 
 export const TS = 22;              // 타일 픽셀 크기
 export const CAVE_GW = 60, CAVE_GH = 55; // 동굴 갈래 구역 한 칸의 크기(buildCaveZones)
@@ -24,26 +23,12 @@ export const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 �
 export const inSeaZone = (x, seaX1) => x < seaX1 + BEACH_W + 4;
 export const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
 
-/** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(치수는 size.js). */
-export function setWorldSize(key) {
-  applyWorldSize(key);
-  for (const r of RUIN_SPEC) {
-    if (r.bx === undefined) { r.bx = r.x; r.by = r.y; }
-    r.x = SX(r.bx); r.y = r.id === 'abyss' ? SYB(r.by) : SY(r.by);
-  }
-  /* 깊이 목표(장의 basics · obj · goal 어디에 있든) — 목표 깊이를 옮기고, 적힌 '지하 ○○m' 도 같은 배수로 고쳐 적는다. */
-  const walk = o => {
-    if (!o || typeof o !== 'object') return;
-    if (Array.isArray(o)) { o.forEach(walk); return; }
-    if (o.type === 'depth' && typeof o.y === 'number') {
-      if (o.by === undefined) { o.by = o.y; o.btask = o.task; }
-      o.y = SY(o.by);
-      if (o.btask) o.task = o.btask.replace(/([0-9]+)m/, (_, n) => Math.round(+n * WSY) + 'm');
-      return;
-    }
-    for (const k in o) if (k !== 'rw') walk(o[k]);
-  };
-  walk(CHAPTERS);
+/** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(치수는 size.js). 다음 new World 가 이 크기로 만들어진다. */
+export function setWorldSize(key) { applyWorldSize(key); }
+
+/** 그 크기 세계의 바이옴 유적 명세 — 표(RUIN_SPEC)는 소형 기준 그대로 두고 세계마다 자리를 옮긴 복사본을 갖는다(`world.ruinSpec`). */
+export function ruinSpecFor(D: WorldDims): RuinDef[] {
+  return RUIN_SPEC.map(r => Object.assign({}, r, { x: D.SX(r.x), y: r.id === 'abyss' ? D.SYB(r.y) : D.SY(r.y) }));
 }
 
 /* 바이옴이 아닌 구역의 이름표 — 원경 그림이 바뀌는 자리와 짝이다(G.bgId). */
@@ -157,7 +142,7 @@ export function doorEdge(d) {
 /** Ashfall 세계 — 타일맵(engine/tilemap) 위에 생성기 · 마을 · 유적 · 바다 · 유체 · 조명 규칙을 얹는다(엔진화 계획 §8-4 상속). */
 export class World extends TileMap {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare dims: WorldDims;
+  declare dims: WorldDims; declare ruinSpec: RuinDef[];
   declare _ensureWalkable: (...a: any[]) => any; declare _walkJobs: any[]; declare atelier: Record<string, any>; declare beach: Record<string, any>; declare breakLongRuns: (...a: any[]) => any;
   declare buildAltars: (...a: any[]) => any; declare buildAtelier: (...a: any[]) => any; declare buildCaveZones: (...a: any[]) => any; declare buildCaverns: (...a: any[]) => any;
   declare buildCitadel: (...a: any[]) => any; declare buildDawnCity: (...a: any[]) => any; declare buildDeepShaft: (...a: any[]) => any; declare buildDungeon: (...a: any[]) => any;
@@ -183,6 +168,7 @@ export class World extends TileMap {
     const D = dimsOf(), { WW, WH } = D;         // setWorldSize 가 고른 크기 — 이 세계가 제 것으로 가져간다
     super(WW, WH, TS, TILE_DEF, T.BEDROCK);   // 타일 · 벽지 · 탐험 배열, 경계 밖 = 기반암
     this.dims = D;
+    this.ruinSpec = ruinSpecFor(D);             // 이 세계의 유적 자리(mystic 도 여기에 적는다)
     this.seed = seed;
     this.rng = new RNG(seed);
     this.surface = new Int16Array(WW);

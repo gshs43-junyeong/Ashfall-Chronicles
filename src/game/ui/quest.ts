@@ -81,14 +81,14 @@ export const QuestUIPart: Bag = {
               const must = (ch.require || []).includes(b.o.verb);
               h += `<div class="obj ${b.p.done ? 'ok' : ''}${must ? ' must' : ''}">` +
                 `${b.p.done ? '✔' : '◆'} ${must ? `<span class="objreq">${tr('필수')}</span> ` : ''}${b.o.t}` +
-                `<span class="obj-task">${b.o.task || ''} <b>${b.p.label || b.p.cur + '/' + b.p.max}</b></span></div>`;
+                `<span class="obj-task">${G.objTask(b.o)} <b>${b.p.label || b.p.cur + '/' + b.p.max}</b></span></div>`;
             }
             if (st.goal) {
               const gp = st.goal.p, go = st.goal.o;
               h += `<div class="obj-head">${tr('목표')}</div>`;
               h += `<div class="obj goal ${gp.done ? 'ok' : ''}${st.ready ? '' : ' locked'}">` +
                 `${gp.done ? '✔' : (st.ready ? '◆' : '🔒')} ${go.t}` +
-                `<span class="obj-task">${go.task || ''} <b>${gp.cur}/${gp.max}</b></span></div>`;
+                `<span class="obj-task">${G.objTask(go)} <b>${gp.cur}/${gp.max}</b></span></div>`;
             }
           }
         } else h += `<div class="cdesc">???</div>`;
@@ -247,7 +247,7 @@ export const QuestUIPart: Bag = {
       h += `<div style="color:#c9b07a;margin-bottom:4px">${ch.title}</div>`;
       if (st.ready) {
         h += `<div class="qt-obj">${st.goal ? st.goal.o.t : tr('목표')}` +
-          (st.goal && st.goal.o.task ? `<span class="qt-task">${st.goal.o.task}</span>` : '') + '</div>';
+          (st.goal && st.goal.o.task ? `<span class="qt-task">${G.objTask(st.goal.o)}</span>` : '') + '</div>';
       } else {
         /* ★ 갈림길은 **고를 수 있다는 것을 보여 주는 것**이다. */
         h += `<div class="qt-obj">${tr('준비 <b>{done}/{need}</b>', { done: st.done, need: st.need })}</div>`;
@@ -259,7 +259,7 @@ export const QuestUIPart: Bag = {
           h += `<div class="qt-pick${b.p.done ? ' done' : ''}${must ? ' must' : ''}">` +
             `<span class="qt-line">${b.p.done ? '✔' : '·'} ` +
             (must ? `<span class="qt-must">${tr('필수')}</span> ` : '') + `${b.o.t}</span>` +
-            `<span class="qt-task">${b.o.task || ''} <b>${b.p.label || b.p.cur + '/' + b.p.max}</b></span></div>`;
+            `<span class="qt-task">${G.objTask(b.o)} <b>${b.p.label || b.p.cur + '/' + b.p.max}</b></span></div>`;
         }
         h += '</div>';
       }

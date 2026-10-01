@@ -13427,6 +13427,7 @@
     ZONE_CARD: () => ZONE_CARD,
     doorEdge: () => doorEdge,
     inSeaZone: () => inSeaZone,
+    ruinSpecFor: () => ruinSpecFor,
     setWorldSize: () => setWorldSize
   });
 
@@ -13453,32 +13454,9 @@
   var BIOME_BAND = 104;
   function setWorldSize(key) {
     applyWorldSize(key);
-    for (const r of RUIN_SPEC) {
-      if (r.bx === void 0) {
-        r.bx = r.x;
-        r.by = r.y;
-      }
-      r.x = SX(r.bx);
-      r.y = r.id === "abyss" ? SYB(r.by) : SY(r.by);
-    }
-    const walk = (o) => {
-      if (!o || typeof o !== "object") return;
-      if (Array.isArray(o)) {
-        o.forEach(walk);
-        return;
-      }
-      if (o.type === "depth" && typeof o.y === "number") {
-        if (o.by === void 0) {
-          o.by = o.y;
-          o.btask = o.task;
-        }
-        o.y = SY(o.by);
-        if (o.btask) o.task = o.btask.replace(/([0-9]+)m/, (_, n) => Math.round(+n * WSY) + "m");
-        return;
-      }
-      for (const k in o) if (k !== "rw") walk(o[k]);
-    };
-    walk(CHAPTERS);
+  }
+  function ruinSpecFor(D) {
+    return RUIN_SPEC.map((r) => Object.assign({}, r, { x: D.SX(r.x), y: r.id === "abyss" ? D.SYB(r.y) : D.SY(r.y) }));
   }
   var ZONE_CARD = {
     camp: {
@@ -13616,6 +13594,7 @@
       const D = dimsOf(), { WW: WW2, WH: WH2 } = D;
       super(WW2, WH2, TS, TILE_DEF, T.BEDROCK);
       this.dims = D;
+      this.ruinSpec = ruinSpecFor(D);
       this.seed = seed;
       this.rng = new RNG(seed);
       this.surface = new Int16Array(WW2);
@@ -17849,18 +17828,18 @@
         });
       });
       const mk = Object.keys(MYSTIC);
-      const pick = RUIN_SPEC.map((_, i) => i);
+      const pick = this.ruinSpec.map((_, i) => i);
       for (let i = pick.length - 1; i > 0; i--) {
         const j = rng.int(0, i);
         [pick[i], pick[j]] = [pick[j], pick[i]];
       }
       pick.slice(0, 3).forEach((ri, k) => {
-        RUIN_SPEC[ri].mystic = mk[k % mk.length];
+        this.ruinSpec[ri].mystic = mk[k % mk.length];
       });
       pick.slice(3).forEach((ri) => {
-        delete RUIN_SPEC[ri].mystic;
+        delete this.ruinSpec[ri].mystic;
       });
-      RUIN_SPEC.forEach((spec, i) => {
+      this.ruinSpec.forEach((spec, i) => {
         this.ruinSites.push(this.buildRuinSite(spec, i, rng));
         this.ruins.push({ id: spec.id, x: spec.x, y: spec.y + (spec.h >> 1), w: spec.w, h: spec.h });
       });
@@ -17939,7 +17918,7 @@
     /** 위치 지도를 세계에 흩뿌린다 — 입구 없는 유적(arch: 'buried')마다 두 군데. */
     buildRuinCaches(rng) {
       const { WW: WW2, WH: WH2 } = this.dims;
-      for (const spec of RUIN_SPEC) {
+      for (const spec of this.ruinSpec) {
         if (spec.arch !== "buried") continue;
         const mapId = "ruinmap_" + spec.id;
         const cx = clamp(spec.x + rng.int(-6, 6), 40, WW2 - 40);
@@ -18003,7 +17982,7 @@
     },
     /** 이 좌표가 속한 바이옴 유적의 잡몹 배율. */
     ruinMobMul(tx, ty) {
-      for (const spec of RUIN_SPEC) {
+      for (const spec of this.ruinSpec) {
         const hw = spec.w / 2, y0 = spec.y, y1 = spec.y + spec.h;
         if (tx > spec.x - hw && tx < spec.x + hw && ty > y0 - 2 && ty < y1 + 2)
           return spec.mobMul === void 0 ? 1 : spec.mobMul;
@@ -32919,12 +32898,12 @@
               h += `<div class="obj-head">${tr("준비 <b>{done}/{need}</b>", { done: st.done, need: st.need })}` + (st.missing.length ? ` ${tr("· <em>이 장의 일이 남았다</em>")}` : "") + "</div>";
               for (const b of st.basics) {
                 const must = (ch.require || []).includes(b.o.verb);
-                h += `<div class="obj ${b.p.done ? "ok" : ""}${must ? " must" : ""}">${b.p.done ? "✔" : "◆"} ${must ? `<span class="objreq">${tr("필수")}</span> ` : ""}${b.o.t}<span class="obj-task">${b.o.task || ""} <b>${b.p.label || b.p.cur + "/" + b.p.max}</b></span></div>`;
+                h += `<div class="obj ${b.p.done ? "ok" : ""}${must ? " must" : ""}">${b.p.done ? "✔" : "◆"} ${must ? `<span class="objreq">${tr("필수")}</span> ` : ""}${b.o.t}<span class="obj-task">${app.objTask(b.o)} <b>${b.p.label || b.p.cur + "/" + b.p.max}</b></span></div>`;
               }
               if (st.goal) {
                 const gp = st.goal.p, go = st.goal.o;
                 h += `<div class="obj-head">${tr("목표")}</div>`;
-                h += `<div class="obj goal ${gp.done ? "ok" : ""}${st.ready ? "" : " locked"}">${gp.done ? "✔" : st.ready ? "◆" : "🔒"} ${go.t}<span class="obj-task">${go.task || ""} <b>${gp.cur}/${gp.max}</b></span></div>`;
+                h += `<div class="obj goal ${gp.done ? "ok" : ""}${st.ready ? "" : " locked"}">${gp.done ? "✔" : st.ready ? "◆" : "🔒"} ${go.t}<span class="obj-task">${app.objTask(go)} <b>${gp.cur}/${gp.max}</b></span></div>`;
               }
             }
           } else h += `<div class="cdesc">???</div>`;
@@ -33076,13 +33055,13 @@
         const st = app.chapterState(ch);
         h += `<div style="color:#c9b07a;margin-bottom:4px">${ch.title}</div>`;
         if (st.ready) {
-          h += `<div class="qt-obj">${st.goal ? st.goal.o.t : tr("목표")}` + (st.goal && st.goal.o.task ? `<span class="qt-task">${st.goal.o.task}</span>` : "") + "</div>";
+          h += `<div class="qt-obj">${st.goal ? st.goal.o.t : tr("목표")}` + (st.goal && st.goal.o.task ? `<span class="qt-task">${app.objTask(st.goal.o)}</span>` : "") + "</div>";
         } else {
           h += `<div class="qt-obj">${tr("준비 <b>{done}/{need}</b>", { done: st.done, need: st.need })}</div>`;
           h += '<div class="qt-list">';
           for (const b of st.basics) {
             const must = (ch.require || []).includes(b.o.verb);
-            h += `<div class="qt-pick${b.p.done ? " done" : ""}${must ? " must" : ""}"><span class="qt-line">${b.p.done ? "✔" : "·"} ` + (must ? `<span class="qt-must">${tr("필수")}</span> ` : "") + `${b.o.t}</span><span class="qt-task">${b.o.task || ""} <b>${b.p.label || b.p.cur + "/" + b.p.max}</b></span></div>`;
+            h += `<div class="qt-pick${b.p.done ? " done" : ""}${must ? " must" : ""}"><span class="qt-line">${b.p.done ? "✔" : "·"} ` + (must ? `<span class="qt-must">${tr("필수")}</span> ` : "") + `${b.o.t}</span><span class="qt-task">${app.objTask(b.o)} <b>${b.p.label || b.p.cur + "/" + b.p.max}</b></span></div>`;
           }
           h += "</div>";
         }
@@ -39489,8 +39468,13 @@
   var ProgressPart = {
     /* ================= 진행 ================= */
     /* 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은 목록에 없거나 있어도 순서가 강제됐다 — 사연: docs/code-history.md#h54 */
+    /** 목표 글 — 깊이 목표에 적힌 '지하 ○○m' 은 세계 크기 배수로 고쳐 읽는다(표는 소형 기준). */
+    objTask(o) {
+      const t = o && o.task || "";
+      return o && o.type === "depth" ? t.replace(/([0-9]+)m/, (_, n) => Math.round(+n * dimsOf(this.world).WSY) + "m") : t;
+    },
     objProgress(o) {
-      const { SURF_BASE: SURF_BASE2 } = dimsOf(this.world);
+      const { SURF_BASE: SURF_BASE2, SY: SY2 } = dimsOf(this.world);
       const p = this.player;
       let cur = 0, max = 1, label = null;
       switch (o.type) {
@@ -39516,12 +39500,12 @@
           break;
         case "depth":
           if (o.up) {
-            const gained = clamp(SURF_BASE2 - (p.highest === void 0 ? SURF_BASE2 : p.highest), 0, SURF_BASE2 - o.y);
+            const gained = clamp(SURF_BASE2 - (p.highest === void 0 ? SURF_BASE2 : p.highest), 0, SURF_BASE2 - SY2(o.y));
             cur = gained;
-            max = SURF_BASE2 - o.y;
+            max = SURF_BASE2 - SY2(o.y);
           } else {
-            cur = Math.min(p.deepest, o.y);
-            max = o.y;
+            cur = Math.min(p.deepest, SY2(o.y));
+            max = SY2(o.y);
           }
           break;
         case "boss":
