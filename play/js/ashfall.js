@@ -40166,6 +40166,7 @@
         v: SAVE_VERSION,
         name: p.name,
         savedAt: Date.now(),
+        mode: this.mode,
         world: this.world.serialize(),
         chapter: this.chapter,
         dayT: this.dayT,
