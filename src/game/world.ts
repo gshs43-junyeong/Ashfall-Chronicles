@@ -620,6 +620,7 @@ export class World extends TileMap {
   pushDoor(x, y, w, h, dir, extra?) {
     const d = Object.assign({ type: 'door', x, y, w, h, closed: true, dir: dir || -1 }, extra);
     this.objects.push(d); this.doors.push(d);
+    return d;
   }
 
   /* ================= 조명 ================= */

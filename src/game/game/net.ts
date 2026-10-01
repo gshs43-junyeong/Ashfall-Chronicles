@@ -214,6 +214,58 @@ export const NetPart: Bag = {
     this.dayCount = m.n;
     this.event = m.ev;
   },
+  /* ================= 물건 — 놓기·걷기 · 상자 안 ================= */
+  /* 물건은 종류와 자리로 찾는다(같은 칸에 같은 종류는 하나뿐이다). */
+  netObjKey(o) { return o.type + '@' + Math.round(o.x) + ',' + Math.round(o.y); },
+  netObjFind(key) { return this.world.objects.find(o => this.netObjKey(o) === key); },
+  /** 남에게 — 호스트면 모든 참가자에게(except 빼고), 참가자면 호스트에게. */
+  netBroadcast(msg, except?) {
+    const n = this.net;
+    if (!n) return;
+    if (n.role === 'guest') { if (n.t) this.netSend(n.t, 'rel', msg); return; }
+    for (const q of n.peers.values()) if (q.rp && q !== except) this.netSend(q.t, 'rel', msg);
+  },
+  netObjAdd(o) { this.netBroadcast({ k: 'oadd', o: JSON.parse(JSON.stringify(o)) }); },
+  netObjDel(o) { this.netBroadcast({ k: 'odel', key: this.netObjKey(o) }); },
+  /** 상자 안 · 지킴이 깨움 — 바뀐 그대로 */
+  netObjState(o) { this.netBroadcast({ k: 'ost', key: this.netObjKey(o), items: o.items || null, guarded: !!o.guarded, woke: o.woke || 0 }); },
+  netPutObj(m) {
+    const w = this.world;
+    if (m.k === 'oadd') {
+      if (this.netObjFind(this.netObjKey(m.o))) return;
+      w.objects.push(m.o);
+      if (m.o.type === 'door') w.doors.push(m.o);
+    } else if (m.k === 'odel') {
+      const o = this.netObjFind(m.key);
+      if (!o) return;
+      w.objects.splice(w.objects.indexOf(o), 1);
+      const i = w.doors.indexOf(o); if (i >= 0) w.doors.splice(i, 1);
+      if (UI.chestRef === o || UI.storeRef === o) UI.closePanel();
+    } else if (m.k === 'ost') {
+      const o = this.netObjFind(m.key);
+      if (!o) return;
+      const host = this.net.role === 'host';
+      const wake = host && m.guarded && !o.guarded && o.guard, boss = host && m.woke && !o.woke && o.boss;
+      o.items = m.items; o.guarded = m.guarded; o.woke = m.woke;
+      this.net.objJ.set(o, JSON.stringify([o.items, !!o.guarded, o.woke || 0]));   // 되돌려 보내지 않게
+      if (wake) this.wakeChestGuard(o);
+      if (boss) this.wakeChestBoss(o);
+      if (UI.chestRef === o) UI.refreshChest();
+      if (UI.storeRef === o) UI.refreshVault();
+    }
+  },
+  /** 연 상자를 지켜보기 시작 — 여는 순간에 올려 둬야 한 박자 안에 넣고 닫아도 놓치지 않는다. */
+  netWatch(o) { this.net.watch.set(o, now()); },
+  /** 열어 둔(또는 막 닫은) 상자의 안이 바뀌었으면 보낸다 — 옮기는 길이 여럿(끌기·우클릭·모두 넣기)이라 결과를 본다. */
+  netWatchObjs() {
+    const n = this.net, t = now();
+    for (const o of [UI.chestRef, UI.storeRef]) if (o) n.watch.set(o, t);
+    for (const [o, at] of n.watch) {
+      if (t - at > 3) { n.watch.delete(o); continue; }
+      const j = JSON.stringify([o.items || null, !!o.guarded, o.woke || 0]);
+      if (n.objJ.get(o) !== j) { n.objJ.set(o, j); this.netObjState(o); }
+    }
+  },
   netSend(t, ch, msg) {
     const text = JSON.stringify(msg);
     if (text.length > 15000) for (const part of chunkText(++this.net.chunkId, text)) t.send('rel', part);
@@ -234,7 +286,7 @@ export const NetPart: Bag = {
   async mpHost(room) {
     if (this.net || !this.me) return;
     const url = this.netSignalUrl(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0, url,
-      eid: 0, live: new Map(), dead: [], joined: new Set() };
+      eid: 0, live: new Map(), dead: [], joined: new Set(), watch: new Map(), objJ: new WeakMap() };
     this.net = n; this.me.netId = 0;
     this.netTrackWorld();
     if (isWs(url)) {
@@ -313,6 +365,9 @@ export const NetPart: Bag = {
     } else if (m.k === 'hit' && peer.rp) {
       const e = n.live.get(m.e);
       if (e && !e.dead && Math.abs(e.cx - peer.rp.cx) < 900 && Math.abs(e.cy - peer.rp.cy) < 700) e.hurt(m.a, !!m.c, peer.rp, m.kb, m.f || undefined);
+    } else if ((m.k === 'oadd' || m.k === 'odel' || m.k === 'ost') && peer.rp) {
+      this.netPutObj(m);
+      this.netBroadcast(m, peer);
     } else if (m.k === 'door' && peer.rp) {
       this.netPutDoor(m);
       for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, 'rel', m);
@@ -334,7 +389,7 @@ export const NetPart: Bag = {
     room = String(room || '').trim().toUpperCase();
     const sig = isWs(url) ? createWsSignal(url, { role: 'guest', room, id: me }) : url ? createHttpSignal(url, room, me, 1000) : createTabSignal(room);
     if (url) (sig as Bag).onerror = () => { clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
-    const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map(), gproj: new Map() };
+    const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map(), gproj: new Map(), watch: new Map(), objJ: new WeakMap() };
     n.char = this.freshPlayer(0, 0, name, charId);
     this.net = n;
     sig.onmessage = async m => {
@@ -406,6 +461,8 @@ export const NetPart: Bag = {
       this.netPutTiles(m.l, false);
     } else if (m.k === 'door') {
       this.netPutDoor(m);
+    } else if (m.k === 'oadd' || m.k === 'odel' || m.k === 'ost') {
+      this.netPutObj(m);
     }
   },
   netLost() {
@@ -425,6 +482,7 @@ export const NetPart: Bag = {
     n.sendT += 1 / NET_HZ;
     if (n.sendT < 0) n.sendT = 0;
     const tiles = this.netTakeTiles();
+    this.netWatchObjs();
     if (n.role === 'guest') {
       if (n.t && n.id >= 0) {
         n.t.send('fast', JSON.stringify({ k: 'st', s: this.netState(this.me) }));

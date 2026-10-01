@@ -543,6 +543,7 @@ export const ActPart: Bag = {
     if (d.obj === 'crate') { o.slots = d.slots; o.items = new Array(d.slots).fill(null); if (d.gold) o.gold = 1; }
     else o.lv = 1;
     w.objects.push(o);
+    if (this.net) this.netObjAdd(o);
     it.c--; if (it.c <= 0) p.bag[p.sel] = null;
     for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, '#d8b06a', -30, .5));
     UI.refreshBag(); this.sfx('place');
@@ -568,7 +569,8 @@ export const ActPart: Bag = {
     /* 문틀 안에 서 있는 채로 달면 닫힌 문에 갇힌다 — 그때만 열어 둔 채로 세운다. */
     const dir = p.facing >= 0 ? 1 : -1;
     const inside = aabb(w.doorEdge({ x: tx * TS, y: y0 * TS, w: TS, h: TS * 2, dir }), p.rect());
-    w.pushDoor(tx * TS, y0 * TS, TS, TS * 2, dir, { placed: 1, closed: !inside, sw: inside ? 1 : 0 });
+    const door = w.pushDoor(tx * TS, y0 * TS, TS, TS * 2, dir, { placed: 1, closed: !inside, sw: inside ? 1 : 0 });
+    if (this.net) this.netObjAdd(door);
     it.c--; if (it.c <= 0) p.bag[p.sel] = null;
     for (let i = 0; i < 6; i++) this.parts.push(new Part((tx + .5) * TS, (ty + .5) * TS, '#8a6a42', -30, .5));
     UI.refreshBag(); this.sfx('place');
@@ -581,6 +583,7 @@ export const ActPart: Bag = {
     if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y + o.h / 2, it));
     let i = w.objects.indexOf(o); if (i >= 0) w.objects.splice(i, 1);
     i = w.doors.indexOf(o); if (i >= 0) w.doors.splice(i, 1);
+    if (this.net) this.netObjDel(o);
     this.matBurst('wood', o.x + o.w / 2, o.y + o.h / 2, 12, { spd: 1.1 });
     UI.refreshBag(); this.sfx('break_wood', this.strokeRate());
     return true;
@@ -598,6 +601,7 @@ export const ActPart: Bag = {
     for (const it of back) if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y + o.h / 2, it));
     const i = w.objects.indexOf(o);
     if (i >= 0) w.objects.splice(i, 1);
+    if (this.net) this.netObjDel(o);
     // 작업대·화로는 나무와 돌로 짜인 것이다 — 쇠 기계와 다른 소리가 나야 한다
     this.matBurst('wood', o.x + o.w / 2, o.y + o.h / 2, 10, { spd: 1.1 });
     this.matBurst('stone', o.x + o.w / 2, o.y + o.h / 2, 5, { spd: .9 });
