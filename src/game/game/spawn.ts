@@ -237,6 +237,7 @@ export const SpawnPart: Bag = {
     if (mac && dist(p.cx, p.cy, (mtx + .5) * TS, (mty + .5) * TS) <= TS * 7 && Factory.rotate(mac)) {
       this.sfx('place');
       if (UI.open === 'machine' && UI.machRef === mac) UI.refreshMachine(true);
+      if (this.net) this.netMachState(mac);
     }
   },
   /** 기계를 들고 있으면 커서 칸에 반투명 미리보기 + 방향 화살표. 못 놓는 자리는 붉게. */

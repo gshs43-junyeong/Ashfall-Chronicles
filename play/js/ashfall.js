@@ -36211,6 +36211,7 @@
         p.mineProg = 0;
         if (MACH_OF_TILE[id]) {
           const back = Factory11.remove(w, tx, ty);
+          if (back && this.net) this.netBroadcast({ k: "mrem", x: tx, y: ty });
           let spill = 0;
           if (back) {
             for (const it of back) if (!p.addItem(it)) {
@@ -36609,6 +36610,7 @@
           }
           const placed = Factory11.place(w, mtx, mty, idef(hi).mach, this.placeDirFor(idef(hi).mach));
           if (placed && MACHINE[placed.t].proj) placed.own = 1;
+          if (placed && this.net) this.netBroadcast({ k: "madd", x: mtx, y: mty, m: placed });
           hi.c--;
           if (hi.c <= 0) p.bag[p.sel] = null;
           UI5.refreshBag();
@@ -39056,6 +39058,7 @@
       if (mac && dist(p.cx, p.cy, (mtx + 0.5) * TS, (mty + 0.5) * TS) <= TS * 7 && Factory11.rotate(mac)) {
         this.sfx("place");
         if (UI5.open === "machine" && UI5.machRef === mac) UI5.refreshMachine(true);
+        if (this.net) this.netMachState(mac);
       }
     },
     /** 기계를 들고 있으면 커서 칸에 반투명 미리보기 + 방향 화살표. 못 놓는 자리는 붉게. */
@@ -46604,6 +46607,18 @@
     netWatchObjs() {
       const n = this.net, t = now();
       for (const o of [UI5.chestRef, UI5.storeRef]) if (o) n.watch.set(o, t);
+      if (UI5.machRef && UI5.open === "machine") n.mwatch.set(UI5.machRef, t);
+      for (const [m, at] of n.mwatch) {
+        if (t - at > 3) {
+          n.mwatch.delete(m);
+          continue;
+        }
+        const j = JSON.stringify(m);
+        if (n.objJ.get(m) !== j) {
+          n.objJ.set(m, j);
+          this.netMachState(m);
+        }
+      }
       for (const [o, at] of n.watch) {
         if (t - at > 3) {
           n.watch.delete(o);
@@ -46615,6 +46630,82 @@
           this.netObjState(o);
         }
       }
+    },
+    /* ================= 기계 — 공장은 호스트만 돌린다 ================= */
+    /* 놓기(madd)·걷기(mrem)·창에서 넣고 빼기·돌리기(mst)는 한 사람이 바꾼 것을 보내고, 돌아가는 상태는 호스트가 0.5초마다
+       참가자 근처의 바뀐 기계만 보낸다(ms). 기계 몸은 타일 그리기가 건너뛰고 Factory.render 가 w.machines 로 그리므로 참가자도 이 표가 있어야 보인다. */
+    netMachKey(m) {
+      return m.y * this.world.dims.WW + m.x;
+    },
+    netMachState(m) {
+      this.netBroadcast({ k: "mst", key: this.netMachKey(m), m });
+    },
+    /** 기계 하나를 받은 상태로 — 같은 객체를 고쳐 쓴다(기계 창이 붙들고 있는 참조가 끊기지 않게). */
+    netMachPut(key, data) {
+      const w = this.world, cur = w.machines.get(key);
+      if (data.it) {
+        delete data.it.t0;
+        delete data.it.fx;
+        delete data.it.fy;
+      }
+      if (cur) {
+        for (const k in cur) if (!(k in data)) delete cur[k];
+        Object.assign(cur, data);
+      } else w.machines.set(key, data);
+      const m = w.machines.get(key);
+      this.net.objJ.set(m, JSON.stringify(m));
+      w.netDirty = true;
+      if (UI5.machRef === m && UI5.open === "machine") UI5.refreshMachine();
+      return m;
+    },
+    netPutMach(m, fromGuest) {
+      const w = this.world, { WW: WW2 } = w.dims;
+      if (m.k === "madd") {
+        const key = m.y * WW2 + m.x;
+        if (w.machines.has(key)) return;
+        w.netMute = true;
+        try {
+          w.set(m.x, m.y, MACHINE[m.m.t] ? MACHINE[m.m.t].tile : w.get(m.x, m.y));
+        } finally {
+          w.netMute = false;
+        }
+        this.netMachPut(key, m.m);
+      } else if (m.k === "mrem") {
+        const key = m.y * WW2 + m.x;
+        if (!w.machines.has(key)) return;
+        w.machines.delete(key);
+        w.netDirty = true;
+        w.netMute = true;
+        try {
+          w.set(m.x, m.y, T.AIR);
+        } finally {
+          w.netMute = false;
+        }
+        if (UI5.machRef && !w.machines.has(this.netMachKey(UI5.machRef)) && UI5.open === "machine") UI5.closePanel();
+      } else if (m.k === "mst") {
+        if (fromGuest && !w.machines.has(m.key)) return;
+        this.netMachPut(m.key, m.m);
+      }
+    },
+    /** 호스트 → 참가자: 근처 기계 중 지난번과 달라진 것 · 사라진 것 */
+    netMachList(q) {
+      const w = this.world, { WW: WW2 } = w.dims, rp = q.rp, cx = rp.cx / TS, cy = rp.cy / TS, out = [], seen = /* @__PURE__ */ new Set();
+      q.mj = q.mj || /* @__PURE__ */ new Map();
+      for (const [key, m] of w.machines) {
+        if (Math.abs(m.x - cx) > 80 || Math.abs(m.y - cy) > 50) continue;
+        seen.add(key);
+        const j = JSON.stringify(m);
+        if (q.mj.get(key) !== j) {
+          q.mj.set(key, j);
+          out.push([key, m]);
+        }
+      }
+      const gone = [];
+      for (const key of q.mj.keys()) if (!seen.has(key)) {
+        q.mj.delete(key);
+        if (!w.machines.has(key)) gone.push(key);
+      }
+      return out.length || gone.length ? { k: "ms", l: out, g: gone } : null;
     },
     netSend(t, ch, msg) {
       const text = JSON.stringify(msg);
@@ -46648,6 +46739,7 @@
         dead: [],
         joined: /* @__PURE__ */ new Set(),
         watch: /* @__PURE__ */ new Map(),
+        mwatch: /* @__PURE__ */ new Map(),
         objJ: /* @__PURE__ */ new WeakMap()
       };
       this.net = n;
@@ -46772,6 +46864,9 @@
       } else if (m.k === "hit" && peer.rp) {
         const e = n.live.get(m.e);
         if (e && !e.dead && Math.abs(e.cx - peer.rp.cx) < 900 && Math.abs(e.cy - peer.rp.cy) < 700) e.hurt(m.a, !!m.c, peer.rp, m.kb, m.f || void 0);
+      } else if ((m.k === "madd" || m.k === "mrem" || m.k === "mst") && peer.rp) {
+        this.netPutMach(m, true);
+        this.netBroadcast(m, peer);
       } else if ((m.k === "oadd" || m.k === "odel" || m.k === "ost") && peer.rp) {
         this.netPutObj(m);
         this.netBroadcast(m, peer);
@@ -46803,7 +46898,7 @@
         this.net = null;
         this.toast(tr("그런 방이 없다"), "bad");
       };
-      const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map(), ghosts: /* @__PURE__ */ new Map(), gproj: /* @__PURE__ */ new Map(), watch: /* @__PURE__ */ new Map(), objJ: /* @__PURE__ */ new WeakMap() };
+      const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map(), ghosts: /* @__PURE__ */ new Map(), gproj: /* @__PURE__ */ new Map(), watch: /* @__PURE__ */ new Map(), mwatch: /* @__PURE__ */ new Map(), objJ: /* @__PURE__ */ new WeakMap() };
       n.char = this.freshPlayer(0, 0, name, charId);
       this.net = n;
       sig.onmessage = async (m) => {
@@ -46902,6 +46997,14 @@
         this.netPutDoor(m);
       } else if (m.k === "oadd" || m.k === "odel" || m.k === "ost") {
         this.netPutObj(m);
+      } else if (m.k === "madd" || m.k === "mrem" || m.k === "mst") {
+        this.netPutMach(m, false);
+      } else if (m.k === "ms") {
+        for (const [key, d] of m.l) this.netMachPut(key, d);
+        for (const key of m.g) {
+          this.world.machines.delete(key);
+          this.world.netDirty = true;
+        }
       }
     },
     netLost() {
@@ -46942,6 +47045,15 @@
         if (n.dead.length) this.netSend(q.t, "rel", { k: "ed", l: n.dead });
       }
       n.dead = [];
+      n.machT = (n.machT || 0) - 1 / NET_HZ;
+      if (n.machT <= 0) {
+        n.machT = 0.5;
+        for (const q of n.peers.values()) {
+          if (!q.rp) continue;
+          const ms = this.netMachList(q);
+          if (ms) this.netSend(q.t, "rel", ms);
+        }
+      }
       n.clkT = (n.clkT || 0) - 1 / NET_HZ;
       if (n.clkT <= 0) {
         n.clkT = 1;

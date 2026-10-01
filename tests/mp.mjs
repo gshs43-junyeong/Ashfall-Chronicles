@@ -69,7 +69,7 @@ check(r && r.name === 'Guest' && gx - x0 > 100 && Math.abs(r.x - gx) < 24, `호�
 
 /* 세계 바뀜 — 참가자가 캔 칸이 호스트로, 호스트가 놓은 칸이 참가자로 · 기반암은 참가자 글로 안 바뀐다 · 문 */
 const spot = await guest.evaluate(() => {
-  const p = G.me, tx = Math.floor(p.cx / 16) + 3, ty = Math.floor((p.y + p.h + 1) / 16) + 1;
+  const p = G.me, tx = Math.floor(p.cx / TS) + 3, ty = Math.floor((p.y + p.h + 1) / TS) + 1;
   const before = G.world.get(tx, ty);
   G.world.set(tx, ty, T.AIR);                              // 캐기와 같은 길(world.set)
   G.world.set(5, G.world.dims.WH - 1, T.AIR);              // 기반암 — 호스트가 거절해야 한다
@@ -125,6 +125,22 @@ await host.evaluate(([x, y]) => { const o = G.world.objects.find(o => o.type ===
 await guest.waitForTimeout(500);
 const gone = await guest.evaluate(([x, y]) => !G.world.objects.some(o => o.type === 'crate' && o.x === x && o.y === y), crateAt);
 check(inHost === 'wood:7' && gone, `물건: 놓은 상자가 참가자에게 · 참가자가 넣은 물건이 호스트 상자에(${inHost}) · 걷으면 사라진다(${gone})`);
+
+/* 기계 — 호스트가 놓은 벨트가 참가자에게 · 참가자가 돌리면 호스트도 · 호스트 벨트 위 물건이 참가자 화면에 · 참가자가 걷으면 호스트에서 */
+const mk = await host.evaluate(() => {
+  const g = G.players.find(p => p.remote), w = G.world, x = Math.floor(g.cx / TS) + 5, y = Math.floor((g.y + g.h - 1) / TS);
+  w.set(x, y, T.AIR); const m = Factory.place(w, x, y, 'belt', 0); G.netBroadcast({ k: 'madd', x, y, m }); return { x, y, key: y * w.dims.WW + x };
+});
+await guest.waitForTimeout(600);
+const gHas = await guest.evaluate(k => { const m = G.world.machines.get(k.key); if (!m) return null; Factory.rotate(m); G.netMachState(m); return m.dir; }, mk);
+await host.waitForTimeout(600);
+const hDir = await host.evaluate(k => { const m = G.world.machines.get(k.key); m.it = makeItem('wood', 1); return m.dir; }, mk);
+await guest.waitForTimeout(1200);
+const gIt = await guest.evaluate(k => { const m = G.world.machines.get(k.key); return m && m.it && m.it.id; }, mk);
+await guest.evaluate(k => { Factory.remove(G.world, k.x, k.y); G.netBroadcast({ k: 'mrem', x: k.x, y: k.y }); }, mk);
+await host.waitForTimeout(600);
+const hGone = await host.evaluate(k => !G.world.machines.has(k.key), mk);
+check(gHas !== null && hDir === gHas && gIt === 'wood' && hGone, `기계: 놓기 → 참가자 · 돌리기 → 호스트(${gHas}/${hDir}) · 벨트 위 물건 → 참가자(${gIt}) · 걷기 → 호스트(${hGone})`);
 
 /* 시계·사건 · 적 투사체 — 호스트 것이 참가자 화면에 */
 await host.evaluate(() => {
