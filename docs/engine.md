@@ -1,10 +1,10 @@
 # 엔진 안내 — `src/engine`
 
-[← 문서 안내](README.md) · 예제: [`games/sample`](../games/sample/README.md) · 계획: [v1.1.1 엔진화](v1.1.1-engine-plan.md)
+[← 문서 안내](README.md) · 예제: [`examples/sample`](../examples/sample/README.md) · 계획: [v1.1.1 엔진화](v1.1.1-engine-plan.md)
 
 `src/engine` 은 Ashfall Chronicles 에서 떼어 낸 **게임을 모르는** 2D 타일 게임 엔진입니다. TypeScript(strict)이고,
 게임 고유값(타일 표 · 키 · 곡 · DB 이름 …)은 전부 `create*({…})` 설정이나 생성자 인자로 받습니다.
-엔진만으로 도는 최소 게임이 [`games/sample`](../games/sample/) 에 있고, `npm run test:sample` 이 그것을 헤드리스로 돌려 확인합니다.
+엔진만으로 도는 최소 게임이 [`examples/sample`](../examples/sample/) 에 있고, `npm run test:sample` 이 그것을 헤드리스로 돌려 확인합니다.
 
 ## 1. 원칙 — 지키지 않으면 조용히 망가진다
 
@@ -22,20 +22,20 @@
 
 ```bash
 npm ci                         # 처음 한 번
-node tools/bundle.mjs          # src/game → game/js/ashfall.js · games/sample/src → games/sample/sample.js
-# 열기: games/sample/index.html 을 브라우저로(file:// 로도 된다) — ?lang=en 영어 · ?touch=1 터치 조작
+node tools/bundle.mjs          # src/game → play/js/ashfall.js · examples/sample/src → examples/sample/sample.js
+# 열기: examples/sample/index.html 을 브라우저로(file:// 로도 된다) — ?lang=en 영어 · ?touch=1 터치 조작
 npm run test:sample            # 엔진 밖 import 0 · 서기 · 걷기 · 캐기 · 멈춤 · 저장/불러오기 · 콘솔 오류 0
 ```
 
-예제(`games/sample/src`, 두 파일 약 300줄)가 쓰는 것:
+예제(`examples/sample/src`, 두 파일 약 300줄)가 쓰는 것:
 
 | 파일 | 엔진 모듈 |
 |---|---|
 | `tiles.ts` — 타일 표 · 세계 만들기 · 아틀라스 | `core/rng` · `core/noise` · `core/color` · `tilemap/tilemap` · `render/atlas` |
 | `main.ts` — 입력 · 플레이어 · 카메라 · 빛 · 씬 · 저장 · 번역 · 터치 | `core/loop` · `core/math` · `entity/entity` · `input/*` · `platform/viewport` · `render/pipeline` · `scene/scenes` · `tilemap/light` · `i18n/*` · `save/*` |
 
-**새 게임을 시작하려면** `games/sample` 을 통째로 복사하고, `tools/bundle.mjs` 의 `SAMPLE` 처럼 묶기 설정 하나와
-`tsconfig.json` 의 `include`(이미 `games/*/src/**/*.ts`)를 확인하면 됩니다.
+**새 게임을 시작하려면** `examples/sample` 을 통째로 복사하고, `tools/bundle.mjs` 의 `SAMPLE` 처럼 묶기 설정 하나와
+`tsconfig.json` 의 `include`(이미 `examples/*/src/**/*.ts`)를 확인하면 됩니다.
 
 ## 3. 한 프레임의 모양
 

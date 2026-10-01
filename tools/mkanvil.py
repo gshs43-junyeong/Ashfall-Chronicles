@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""강화 모루 그림 굽기 → game/assets/obj/anvil.png (44x44, 4배).
+"""강화 모루 그림 굽기 → play/assets/obj/anvil.png (44x44, 4배).
 
 예전 그림은 윤곽선이 없고 면이 평평해 옆의 재련대·금고·게시판과 따로 놀았다(받침이 가늘고 망치가 떠 보였다).
 같은 마을 시설처럼 짙은 윤곽선(#0d0d13) · 재련대의 쇳빛 팔레트 · 점 무늬 질감으로 다시 그린다:
@@ -8,7 +8,7 @@
 import os, random
 from PIL import Image
 
-OUT = os.path.join(os.path.dirname(__file__), '..', 'game', 'assets', 'obj', 'anvil.png')
+OUT = os.path.join(os.path.dirname(__file__), '..', 'play', 'assets', 'obj', 'anvil.png')
 W = H = 44
 K = 4
 OL = (0x0d, 0x0d, 0x13, 255)

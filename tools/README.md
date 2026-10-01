@@ -1,16 +1,16 @@
 # tools/ — 도구 목록
 
-게임은 `game/` 만으로 돈다. 여기 것은 굽고 · 재고 · 묶는 도구이고, **원본 그림은 `tools/art/`** 에 있다
+게임은 `play/` 만으로 돈다. 여기 것은 굽고 · 재고 · 묶는 도구이고, **원본 그림은 `tools/art/`** 에 있다
 (게임 폴더의 산출물을 도구에 다시 먹이지 말 것 — 두 번 늘어난다). 파이썬 도구는 Pillow 만 쓴다.
 
 ## 빌드 · 개발
 
 | 도구 | 하는 일 |
 |---|---|
-| `bundle.mjs` | `src/game/main.ts` → `game/js/ashfall.js`(+소스맵) · `--check` · `--watch` |
-| `dev.mjs` | `npm run dev` — 고치면 다시 묶고 `game/` 을 정적 서버로 |
+| `bundle.mjs` | `src/game/main.ts` → `play/js/ashfall.js`(+소스맵) · `--check` · `--watch` |
+| `dev.mjs` | `npm run dev` — 고치면 다시 묶고 `play/` 를 정적 서버로 |
 | `build.sh` · `mkzip.py` | 배포 zip(Windows·macOS) + `SHA256SUMS.txt` → `dist/` (재현 가능) |
-| `build-site.sh` | `game/` → `site/play/` 복사 + 매니페스트 검사 |
+| `build-site.sh` | `play/` → `site/play/` 복사 + 매니페스트 검사 |
 | `sync-manifest.py` · `.mjs` | `assets/manifest.json` → `sprites-manifest.js` (`--check`) |
 | `i18n.mjs` · `site-i18n.mjs` | 게임 · 사이트 번역(`wrap` · `extract` · `build` · `check`) |
 | `imports.mjs` · `srcmods.mjs` | `src/game` import 줄 다시 짜기 · 모듈 읽기(검사가 쓴다) |

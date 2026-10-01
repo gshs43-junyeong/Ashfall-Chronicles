@@ -17,8 +17,8 @@ index.html 을 그냥 더블클릭하면 매니페스트를 못 읽어 그림이
 import json, os, sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-SRC = os.path.join(ROOT, 'game', 'assets', 'manifest.json')
-DST = os.path.join(ROOT, 'game', 'assets', 'sprites-manifest.js')
+SRC = os.path.join(ROOT, 'play', 'assets', 'manifest.json')
+DST = os.path.join(ROOT, 'play', 'assets', 'sprites-manifest.js')
 
 HEAD = """/* assets/sprites-manifest.js — 자동 생성물. 손으로 고치지 마세요.
    원본은 assets/manifest.json 이고, tools/sync-manifest(.mjs/.py) 가 옮겨 적습니다.

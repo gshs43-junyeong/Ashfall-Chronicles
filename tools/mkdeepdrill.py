@@ -10,7 +10,7 @@
 from PIL import Image
 import colorsys, os
 
-ROOT = os.path.join(os.path.dirname(__file__), '..', 'game', 'assets', 'tile')
+ROOT = os.path.join(os.path.dirname(__file__), '..', 'play', 'assets', 'tile')
 src = Image.open(os.path.join(ROOT, 'tile_m_drill_e.png')).convert('RGBA')
 im = src.copy(); px = im.load(); W, H = im.size
 

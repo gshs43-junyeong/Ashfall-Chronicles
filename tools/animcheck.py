@@ -41,7 +41,7 @@ import sys
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, 'game', 'assets')
+ASSETS = os.path.join(ROOT, 'play', 'assets')
 S = 4                                       # 시트는 4배로 구워져 있다
 SHIFT = 4                                   # 겹쳐 볼 때 밀어 보는 최대 칸수
 THIN = 8                                    # 이 아래면 "사실상 평행이동"

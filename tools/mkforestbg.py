@@ -42,7 +42,7 @@ import math, os, random
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BG = os.path.join(ROOT, 'game', 'assets', 'bg')
+BG = os.path.join(ROOT, 'play', 'assets', 'bg')
 SRC = os.path.join(BG, 'parallax_forest.png')
 
 

@@ -35,10 +35,10 @@
 
 | 경로 | 내용 |
 |---|---|
-| `game/` | 게임 본체. 이 폴더만 있으면 정적 서버 위에서 그대로 돌아갑니다. |
+| `play/` | 게임 본체. 이 폴더만 있으면 정적 서버 위에서 그대로 돌아갑니다. |
 | `launchers/windows/` | `AshfallChronicles.bat` + Windows용 README |
 | `launchers/macos/` | `AshfallChronicles.command`, `launch.sh` + macOS용 README |
-| `site/` | 배포 사이트. 빌드할 때 `game/`이 `site/play/`로 복사됩니다. |
+| `site/` | 배포 사이트. 빌드할 때 `play/`이 `site/play/`로 복사됩니다. |
 | `site/home/` | 홈 페이지 — 주소는 `/home` (루트 `/`는 이쪽으로 넘깁니다) |
 | `site/download/` | 다운로드 페이지 — 주소는 `/download` |
 | `docs/` | 변경 사항 · 세션 규약 · 배포 캐시 · 시스템 요구사항 |
@@ -47,7 +47,7 @@
 | `.github/workflows/` | Release 자동 첨부, Pages 자동 배포 |
 | `Dockerfile` · `docker-compose.yml` · `docker/` | 컨테이너로 묶기 · 검사 · 서빙(아래 「개발 · Docker」) |
 
-**`game/` 만이 원본입니다.** `site/play/` 는 빌드 산출물이고 `.gitignore` 되어
+**`play/` 만이 원본입니다.** `site/play/` 는 빌드 산출물이고 `.gitignore` 되어
 있습니다 — 거기를 고치면 다음 빌드에 날아갑니다.
 
 배포용 zip은 저장소에 커밋하지 않습니다(`.gitignore`). 태그를 push하면 Actions가
@@ -115,11 +115,11 @@ xattr -dr com.apple.quarantine AshfallChronicles-1.1.1/   # 받은 판 번호로
 
 ## 개발 · Docker
 
-코드 원본은 `src/`(TypeScript)이고 `game/js/ashfall.js` 는 그것을 묶은 **산출물**입니다(커밋됨 — `game/` 만 받아도 빌드 없이 돕니다).
+코드 원본은 `src/`(TypeScript)이고 `play/js/ashfall.js` 는 그것을 묶은 **산출물**입니다(커밋됨 — `play/` 만 받아도 빌드 없이 돕니다).
 
 ```bash
 npm ci            # 처음 한 번
-npm run dev       # 소스를 고치면 번들을 다시 만들고 game/ 을 띄웁니다
+npm run dev       # 소스를 고치면 번들을 다시 만들고 play/ 를 띄웁니다
 npm run check     # 회귀 검사 한 벌(문법 · 타입 · 모듈 · 번역 · 생성 해시 · 동작 · 스크린샷)
 ```
 
@@ -183,8 +183,8 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 
 | 무엇 | 어디 | 어디서 왔나 |
 |---|---|---|
-| 배경 음악 14곡 | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
-| 효과음 92개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 배경 음악 14곡 | `play/assets/audio/*.m4a` | [Suno](https://suno.com) |
+| 효과음 92개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 
 이 둘은 바깥 서비스에서 만든 것이라 여기서 MIT 로 다시 내어 줄 권한이 없습니다.
 게임을 받아 즐기는 데에는 아무 제한이 없지만, **소리 파일만 따로 떼어다 쓰려면**

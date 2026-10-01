@@ -38,7 +38,7 @@ def main():
     im = ImageEnhance.Contrast(im).enhance(1.08)
 
     # 떨어지는 별 — 오른쪽 위에서 왼쪽 아래로. 게임 그림(sky_meteor_near, 머리가 오른쪽)을 뒤집어 기울인다
-    met = Image.open(os.path.join(ROOT, 'game', 'assets', 'bg', 'sky_meteor_near.png')).convert('RGBA')
+    met = Image.open(os.path.join(ROOT, 'play', 'assets', 'bg', 'sky_meteor_near.png')).convert('RGBA')
     met = met.resize((met.width * 2, met.height * 2), Image.NEAREST).transpose(Image.FLIP_LEFT_RIGHT)
     w0, h0 = met.size
     met = met.rotate(MET_ANG, resample=Image.BICUBIC, expand=True)

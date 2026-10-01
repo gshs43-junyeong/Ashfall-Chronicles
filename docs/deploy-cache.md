@@ -22,7 +22,7 @@
 
 지금은 `tools/build-site.sh` 가 배포마다 **커밋 해시로 찍는다**
 (`VERCEL_GIT_COMMIT_SHA` → `GITHUB_SHA` → `git rev-parse` → 시각 순으로 고른다).
-`game/assets/sprites.js` 는 제 `<script>` 태그의 물음표 뒤를 그대로 물려받아
+`play/assets/sprites.js` 는 제 `<script>` 태그의 물음표 뒤를 그대로 물려받아
 그림 URL 에도 붙이므로(`_ver`), 이 한 번으로 스크립트·CSS·그림이 같이 따라온다.
 
 `sed` 만 쓴다. 처음에는 `perl` 로 썼는데, 빌드 이미지에 perl 이 없으면
@@ -47,7 +47,7 @@
 
 ## 그래도 옛 HTML 이 오면
 
-`game/index.html` 안에 자가 점검이 들어 있다. `version.json` 을 `no-store` 로
+`play/index.html` 안에 자가 점검이 들어 있다. `version.json` 을 `no-store` 로
 물어보고 제가 든 판과 다르면 주소 뒤에 `?b=<판>` 을 붙여 **딱 한 번** 새로 받는다.
 같은 판으로 두 번 시도하지 않게 세션에 적어 둔다 — 무한 새로고침이 제일 나쁘다.
 `file://`(zip)에서는 물어볼 데가 없으므로 건너뛴다.
@@ -55,7 +55,7 @@
 ## 지금 도는 판을 어떻게 보는가
 
 타이틀 화면 구석에 적혀 있다 — `v1.1 · 4620896`.
-`game/` 을 직접 열었을 때는 `v1.1 · 개발판`.
+`play/` 를 직접 열었을 때는 `v1.1 · 개발판`.
 서버에 직접 물어보려면 `/play/version.json`.
 
 셋 중 무엇이 문제인지(캐시 / 배포 실패 / 코드)를 구별할 데가 여태 없어서 붙였다.

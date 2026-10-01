@@ -1,4 +1,4 @@
-/* ===== games/sample/src/tiles.ts — 예제 게임의 타일 표 · 세계 만들기 · 아틀라스 ===== */
+/* ===== examples/sample/src/tiles.ts — 예제 게임의 타일 표 · 세계 만들기 · 아틀라스 ===== */
 /* 엔진(src/engine)만 쓴다 — 게임(src/game)은 import 하지 않는다. 타일 번호의 뜻은 이 표가 정하고, 엔진은 solid 만 읽는다. */
 import { RNG, tileHash } from '../../../src/engine/core/rng.js';
 import { makeNoise1D, makeNoise2D } from '../../../src/engine/core/noise.js';

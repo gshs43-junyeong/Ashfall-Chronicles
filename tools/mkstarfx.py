@@ -15,7 +15,7 @@
 import math, os
 from PIL import Image
 
-OUT = os.path.join(os.path.dirname(__file__), '..', 'game', 'assets', 'fx')
+OUT = os.path.join(os.path.dirname(__file__), '..', 'play', 'assets', 'fx')
 S, GAP = 4, 4                       # 4배로 굽고, 프레임 사이 4px
 
 CORE  = (255, 250, 235)             # 심지 — 거의 흰색이지만 아주 살짝 따뜻하다

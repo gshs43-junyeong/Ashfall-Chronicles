@@ -2,12 +2,12 @@
 # Ashfall Chronicles — 컨테이너로 묶기 · 검사 · 서빙(엔진화 계획 §5-2 · P11).
 # 기존 방식(index.html 더블클릭 · python3 -m http.server · Vercel)은 그대로다 — 이 파일은 "누구 컴퓨터에서든 같게"를 위한 덧문이다.
 #
-#   docker build --target game  -t ashfall-game .    # game/ 만 nginx 로   → docker run -p 8000:80 ashfall-game
+#   docker build --target game  -t ashfall-game .    # play/ 만 nginx 로   → docker run -p 8000:80 ashfall-game
 #   docker build --target site  -t ashfall-site .    # 배포 사이트(/home · /download · /play)
 #   docker build --target check -t ashfall-check .   # 회귀 검사 한 벌   → docker run --rm ashfall-check
 #   docker compose up dev                            # 고치고 새로고침(소스를 걸어 둔다)
 #
-# ★ 번들(game/js/ashfall.js)은 저장소에 커밋된 산출물이다. build 단계가 소스에서 다시 만들어 쓰지만,
+# ★ 번들(play/js/ashfall.js)은 저장소에 커밋된 산출물이다. build 단계가 소스에서 다시 만들어 쓰지만,
 #   이미지 안에서 만든 번들을 저장소로 되가져오지는 않는다 — 커밋할 번들은 늘 로컬 `npm run build` 로.
 
 ARG NODE_IMAGE=node:22-bookworm-slim
@@ -34,12 +34,12 @@ RUN node tools/bundle.mjs \
  && node tools/sync-manifest.mjs \
  && CI=1 GITHUB_SHA="$BUILD" bash tools/build-site.sh \
  # 체크아웃의 파일 권한(600 따위)이 이미지에 따라오면 nginx 가 403 을 낸다 — 누구나 읽게
- && chmod -R a+rX game site
+ && chmod -R a+rX play site
 
 # ---- 게임만 서빙 ----
 FROM ${NGINX_IMAGE} AS game
 COPY docker/nginx-game.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/game /usr/share/nginx/html
+COPY --from=build /app/play /usr/share/nginx/html
 EXPOSE 80
 
 # ---- 배포 사이트 — vercel.json 의 되돌려 보내기·캐시 규칙을 nginx 로 옮겼다 ----

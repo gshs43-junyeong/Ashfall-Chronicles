@@ -42,7 +42,7 @@ from PIL import Image
 import clipcheck as CC
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, 'game', 'assets')
+ASSETS = os.path.join(ROOT, 'play', 'assets')
 MANIFEST = os.path.join(ASSETS, 'manifest.json')
 S = 4
 PAD = 2               # 잘린 변마다 주는 여백(논리 픽셀). 이어 붙이기 1 + 윤곽선 1

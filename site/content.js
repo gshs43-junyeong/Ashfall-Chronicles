@@ -1,5 +1,5 @@
 /* 홈 화면의 챕터·보스 목록.
- * 값은 game/js/data.js 의 CHAPTERS 와 보스 정의에서 그대로 가져온 것이다.
+ * 값은 play/js/data.js 의 CHAPTERS 와 보스 정의에서 그대로 가져온 것이다.
  * 게임 데이터가 바뀌면 여기도 같이 고쳐야 한다. */
 (function () {
   'use strict';

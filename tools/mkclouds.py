@@ -33,7 +33,7 @@ import sys
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BG = os.path.join(ROOT, 'game', 'assets', 'bg')
+BG = os.path.join(ROOT, 'play', 'assets', 'bg')
 S = 4                      # 격자 배수
 LW, LH = 64, 32            # 논리 칸
 BAND = (0.22, 0.55, 0.75)  # 위 표면에서의 깊이 비율 — A/B/C/D 경계

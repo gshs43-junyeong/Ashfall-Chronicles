@@ -1,17 +1,17 @@
-/* 엔진 예제(games/sample) — ① 엔진 밖을 import 하지 않는가 ② 헤드리스로 돌려 서기 · 걷기 · 캐기 · 멈춤 · 저장/불러오기가 되는가.
+/* 엔진 예제(examples/sample) — ① 엔진 밖을 import 하지 않는가 ② 헤드리스로 돌려 서기 · 걷기 · 캐기 · 멈춤 · 저장/불러오기가 되는가.
    엔진이 게임(src/game)을 모르고도 도는지의 증명이다 — 엔진을 고치다 이것이 깨지면 게임만 쓰던 가정이 엔진에 스며든 것이다. */
 import fs from 'node:fs';
 import path from 'node:path';
 import { serve, browser, DETERMINISM, collectErrors, ROOT, OUT, fail, ok } from './lib.mjs';
 
-const SRC = path.join(ROOT, 'games', 'sample', 'src');
+const SRC = path.join(ROOT, 'examples', 'sample', 'src');
 const ENGINE = path.join(ROOT, 'src', 'engine');
 let bad = 0;
 for (const f of fs.readdirSync(SRC).filter(n => n.endsWith('.ts'))) {
   const text = fs.readFileSync(path.join(SRC, f), 'utf8');
   for (const m of text.matchAll(/^\s*import\s[^'"]*['"]([^'"]+)['"]/gm)) {
     const to = path.resolve(SRC, m[1].replace(/\.js$/, '.ts'));
-    if (!to.startsWith(ENGINE + path.sep) && path.dirname(to) !== SRC) { bad++; fail(`games/sample/src/${f}: 엔진 밖을 import 한다 — ${m[1]}`); }
+    if (!to.startsWith(ENGINE + path.sep) && path.dirname(to) !== SRC) { bad++; fail(`examples/sample/src/${f}: 엔진 밖을 import 한다 — ${m[1]}`); }
   }
 }
 if (!bad) ok('예제는 src/engine 만 import 한다');
@@ -21,7 +21,7 @@ const b = await browser();
 const page = await b.newPage({ viewport: { width: 1280, height: 720 } });
 await page.addInitScript(DETERMINISM(3));
 const errs = collectErrors(page);
-await page.goto(url + '/games/sample/index.html?lang=ko');
+await page.goto(url + '/examples/sample/index.html?lang=ko');
 await page.waitForFunction(() => window.SAMPLE && window.__step, null, { timeout: 15000 });
 
 const r = await page.evaluate(async () => {

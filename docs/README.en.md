@@ -80,8 +80,8 @@ Progress lives in the browser (IndexedDB, gzip-compressed; `localStorage` where 
 
 | Path | Role |
 |---|---|
-| `game/` | Playable runtime folder (serve it as-is). `game/js/ashfall.js` is a generated bundle. |
-| `src/game/**/*.ts` | **Game source** — TypeScript ES modules (being typed file by file). `tools/bundle.mjs` (esbuild) bundles them from `main.ts` into `game/js/ashfall.js`, a single classic script that also runs from `file://`. |
+| `play/` | Playable runtime folder (serve it as-is). `play/js/ashfall.js` is a generated bundle. |
+| `src/game/**/*.ts` | **Game source** — TypeScript ES modules (being typed file by file). `tools/bundle.mjs` (esbuild) bundles them from `main.ts` into `play/js/ashfall.js`, a single classic script that also runs from `file://`. |
 | `src/engine/` | Game-agnostic engine in TypeScript (strict): core math/RNG/noise/loop, save store (IndexedDB + gzip + signature, upgrade chain), audio (music/SFX/ambient), asset loading, viewport. The game passes its own tables and names in through `create*({...})` configs; the engine never imports game code. |
 | `src/game/data.ts` (+ `data/`) | Content tables: chapters, dialogue, items, enemies, objectives, and balancing data. |
 | `src/game/world.ts` (+ `world/`) | World generation, terrain, biome, and dungeon logic. |
@@ -94,7 +94,7 @@ Progress lives in the browser (IndexedDB, gzip-compressed; `localStorage` where 
 
 ### Source-of-truth rule
 
-Edit game code in `src/game/` (run `npm ci` once, then `npm run dev` to rebuild the bundle on save) and commit the rebuilt `game/js/ashfall.js` with it; assets and HTML stay in `game/`. `site/play/` is generated output and is overwritten by the next build. `npm run check` runs the regression suite. The repository’s [CLAUDE.md](../CLAUDE.md) and [story/session rules](story-and-sessions.md) document the content tables and save-sensitive constraints to check before extending the game.
+Edit game code in `src/game/` (run `npm ci` once, then `npm run dev` to rebuild the bundle on save) and commit the rebuilt `play/js/ashfall.js` with it; assets and HTML stay in `play/`. `site/play/` is generated output and is overwritten by the next build. `npm run check` runs the regression suite. The repository’s [CLAUDE.md](../CLAUDE.md) and [story/session rules](story-and-sessions.md) document the content tables and save-sensitive constraints to check before extending the game.
 
 ## Documentation map
 

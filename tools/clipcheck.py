@@ -27,7 +27,7 @@ from collections import Counter
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, 'game', 'assets')
+ASSETS = os.path.join(ROOT, 'play', 'assets')
 S = 4
 MIN_CUT = 4          # 이 아래는 점 몇 개라 잘림으로 안 본다
 

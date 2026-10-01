@@ -1,4 +1,4 @@
-# docker compose up dev    — 소스를 걸어 두고 번들을 다시 만들며 game/ 을 띄운다 → http://localhost:8000/index.html
+# docker compose up dev    — 소스를 걸어 두고 번들을 다시 만들며 play/ 를 띄운다 → http://localhost:8000/index.html
 # docker compose up game   — 지금 소스로 만든 게임만(nginx)                       → http://localhost:8001
 # docker compose up site   — 배포 사이트와 같은 모양(/home · /download · /play)     → http://localhost:8002
 # docker compose run --rm check — 회귀 검사 한 벌(npm run check)

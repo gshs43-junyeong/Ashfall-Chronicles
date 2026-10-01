@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const GAME = process.env.GAME_DIR ? path.resolve(process.env.GAME_DIR) : path.join(ROOT, 'game');   // GAME_DIR — 다른 판의 game/ 으로 기준값을 찍을 때
+export const GAME = process.env.GAME_DIR ? path.resolve(process.env.GAME_DIR) : path.join(ROOT, 'play');   // GAME_DIR — 다른 판의 play/ 로 기준값을 찍을 때
 export const BASE = path.join(ROOT, 'tests', 'baseline');
 export const OUT = path.join(ROOT, 'tests', 'out');
 export const UPDATE = process.argv.includes('--update');
@@ -16,7 +16,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
   '.png': 'image/png', '.jpg': 'image/jpeg', '.m4a': 'audio/mp4', '.mp3': 'audio/mpeg', '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
 
-/** game/ 을 비어 있는 포트로 서빙한다. */
+/** play/ 를 비어 있는 포트로 서빙한다. */
 export function serve(dir = GAME) {
   const srv = http.createServer((req, res) => {
     const u = decodeURIComponent(req.url.split('?')[0]);

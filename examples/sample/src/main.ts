@@ -1,6 +1,6 @@
-/* ===== games/sample/src/main.ts — 엔진만으로 도는 최소 예제: 타일맵 · 플레이어 · 캐기/놓기 · 빛 · 멈춤 · 저장 · 번역 · 터치 ===== */
+/* ===== examples/sample/src/main.ts — 엔진만으로 도는 최소 예제: 타일맵 · 플레이어 · 캐기/놓기 · 빛 · 멈춤 · 저장 · 번역 · 터치 ===== */
 /* 엔진이 게임을 모르고도 돈다는 증명이다 — import 는 전부 src/engine 에서만 온다(tests/sample.mjs 가 막는다).
-   묶기: node tools/bundle.mjs → games/sample/sample.js(클래식 스크립트 하나 — file:// 에서도 열린다). */
+   묶기: node tools/bundle.mjs → examples/sample/sample.js(클래식 스크립트 하나 — file:// 에서도 열린다). */
 import { clamp } from '../../../src/engine/core/math.js';
 import { startLoop } from '../../../src/engine/core/loop.js';
 import { Entity } from '../../../src/engine/entity/entity.js';

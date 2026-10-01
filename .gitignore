@@ -3,7 +3,7 @@
 dist/
 *.zip
 
-# 사이트 빌드 시 game/ 을 복사해 넣는 자리
+# 사이트 빌드 시 play/ 를 복사해 넣는 자리
 site/play/
 
 # OS 부스러기

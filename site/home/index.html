@@ -12,21 +12,21 @@
 <meta property="og:url" content="https://ashfall-chronicles.vercel.app/home">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://ashfall-chronicles.vercel.app/home">
-<link rel="icon" href="../favicon.ico?v=52bef28c3b7a" sizes="16x16 32x32 48x48">
-<link rel="apple-touch-icon" href="../play/assets/ui/favicon_180.png?v=52bef28c3b7a">
+<link rel="icon" href="../favicon.ico?v=56e121393ef1" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="../play/assets/ui/favicon_180.png?v=56e121393ef1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
-<link rel="stylesheet" href="../style.css?v=52bef28c3b7a">
+<link rel="stylesheet" href="../style.css?v=56e121393ef1">
 <!-- 언어 — 먼저 골라 그 언어 묶음만 싣는다(게임과 같은 규칙 · 같은 열쇠 ashfall.lang). 글은 아래 SiteI18n.apply() 가 옮긴다 -->
-<script src="../i18n.js?v=52bef28c3b7a"></script>
+<script src="../i18n.js?v=56e121393ef1"></script>
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-inner">
     <a class="nav-brand" href="../home">
-      <img class="brand-logo" src="../play/assets/ui/logo_small.png?v=52bef28c3b7a" alt="Ashfall Chronicles" width="167" height="40">
+      <img class="brand-logo" src="../play/assets/ui/logo_small.png?v=56e121393ef1" alt="Ashfall Chronicles" width="167" height="40">
     </a>
     <div class="nav-links">
       <a href="../home" aria-current="page">홈</a>
@@ -67,7 +67,7 @@
 
     <div class="stage" id="stage">
       <button class="stage-cover pixel" id="stageCover" type="button"
-              style="background-image:url('../play/assets/bg/title_key.png?v=52bef28c3b7a')">
+              style="background-image:url('../play/assets/bg/title_key.png?v=56e121393ef1')">
         <span class="play-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </span>
@@ -322,10 +322,10 @@
 </footer>
 
 <script>SiteI18n.apply();</script>
-<script src="../hero.js?v=52bef28c3b7a"></script>
-<script src="../showcase.js?v=52bef28c3b7a"></script>
-<script src="../content.js?v=52bef28c3b7a"></script>
-<script src="../decor.js?v=52bef28c3b7a"></script>
+<script src="../hero.js?v=56e121393ef1"></script>
+<script src="../showcase.js?v=56e121393ef1"></script>
+<script src="../content.js?v=56e121393ef1"></script>
+<script src="../decor.js?v=56e121393ef1"></script>
 <script>
 (function () {
   'use strict';
@@ -384,7 +384,7 @@
   if (cover && stage) {
     cover.addEventListener('click', function () {
       frame = document.createElement('iframe');
-      frame.src = '../play/index.html?v=52bef28c3b7a&lang=' + SiteI18n.lang;   // 사이트에서 고른 언어로 게임도 연다
+      frame.src = '../play/index.html?v=56e121393ef1&lang=' + SiteI18n.lang;   // 사이트에서 고른 언어로 게임도 연다
       frame.title = SiteI18n.t('Ashfall Chronicles — 별이 잠든 땅');
       frame.allow = 'autoplay; fullscreen';
       stage.appendChild(frame);
@@ -396,7 +396,7 @@
   }
 
   var mp = document.getElementById('mobilePlay');
-  if (mp) mp.href = '../play/index.html?v=52bef28c3b7a&lang=' + SiteI18n.lang;   // 사이트에서 고른 언어로
+  if (mp) mp.href = '../play/index.html?v=56e121393ef1&lang=' + SiteI18n.lang;   // 사이트에서 고른 언어로
 
   if (fsBtn) fsBtn.addEventListener('click', toggleFs);
   if (fsExit) fsExit.addEventListener('click', toggleFs);

@@ -34,13 +34,13 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, 'game', 'assets')
+ASSETS = os.path.join(ROOT, 'play', 'assets')
 MANIFEST = os.path.join(ASSETS, 'manifest.json')
 
 
 def game_source():
     src = ''
-    js = os.path.join(ROOT, 'src', 'game')   # 원본 — game/js/ashfall.js 는 주석이 빠지고 따옴표가 바뀐 산출물
+    js = os.path.join(ROOT, 'src', 'game')   # 원본 — play/js/ashfall.js 는 주석이 빠지고 따옴표가 바뀐 산출물
     for d, _, fs in sorted(os.walk(js)):
         for f in sorted(fs):
             if f.endswith('.ts'):

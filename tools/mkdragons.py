@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """드래곤 펫 그림 — 속성 넷(불·흙·전기·암흑) × 진화 단계 넷(새끼·어린 용·성룡·고룡)을 굽는다.
 
-  python3 tools/mkdragons.py            # game/assets/char/pet_dragon_<속성>_s<단계>.png + 매니페스트 characters.sheets
+  python3 tools/mkdragons.py            # play/assets/char/pet_dragon_<속성>_s<단계>.png + 매니페스트 characters.sheets
   python3 tools/sync-manifest.py        # 그다음 매니페스트 옮겨 적기
 
 ■ 그리는 법
@@ -16,7 +16,7 @@ import json, math, os
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.join(HERE, '..', 'game', 'assets')
+ROOT = os.path.join(HERE, '..', 'play', 'assets')
 CHAR = os.path.join(ROOT, 'char')
 SS = 8          # 매끈한 도형을 그리는 배율
 S = 4           # 파일 배율(기존 펫 시트와 같다)

@@ -13,9 +13,9 @@
 
 | 무엇 | 어디 |
 |---|---|
-| 게임 코드 전부 | `game/js/**`, `game/index.html`, `game/css/**` |
-| 그림 애셋 전부 | `game/assets/` 중 **아래 '예외' 표에 없는 모든 것** — 캐릭터·보스·NPC·타일·아이템·배경·UI |
-| 절차 생성 그림 | `game/js/tileart.js` · `itemart.js` · `titlebg.js` 가 그려 내는 것 |
+| 게임 코드 전부 | `play/js/**`, `play/index.html`, `play/css/**` |
+| 그림 애셋 전부 | `play/assets/` 중 **아래 '예외' 표에 없는 모든 것** — 캐릭터·보스·NPC·타일·아이템·배경·UI |
+| 절차 생성 그림 | `play/js/tileart.js` · `itemart.js` · `titlebg.js` 가 그려 내는 것 |
 | 도구·빌드 | `tools/**`, `.github/workflows/**`, `launchers/**` |
 | 사이트 | `site/**` (아래 '글꼴' 참고) |
 | 문서 | `README.md`, `CLAUDE.md`, `NOTICE.md`, `docs/**` |
@@ -27,8 +27,8 @@
 
 | 무엇 | 어디 | 어떻게 만들었나 |
 |---|---|---|
-| 배경 음악 13곡 | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
-| 효과음 87개 | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 배경 음악 13곡 | `play/assets/audio/*.m4a` | [Suno](https://suno.com) |
+| 효과음 87개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 
 이 두 폴더의 파일은 **각 서비스의 이용 약관을 따릅니다.**
 
@@ -39,7 +39,7 @@
   MIT 가 아니라 각 서비스의 약관이 기준입니다.
 
 포크에서 소리를 바꾸고 싶다면 두 폴더를 비우고 자기 파일로 채우면 됩니다. 소리는
-매니페스트를 타지 않고 `game/js/music.js` 가 경로를 직접 알고 있으므로, **같은 이름**으로
+매니페스트를 타지 않고 `play/js/music.js` 가 경로를 직접 알고 있으므로, **같은 이름**으로
 갈아 끼우면 그대로 돕니다. 효과음은 **1.0초** 길이를 지켜야 `SfxLoop` 가 끊김 없이
 이어 붙입니다. 파일이 없는 효과음은 게임이 합성음으로 대신 내므로, 일부만 바꿔도 돕니다.
 
@@ -70,8 +70,8 @@ plain MIT; the exceptions are documented here instead.
 
 ## Covered by MIT — copyright gshs43-junyeong
 
-All game code (`game/js/**`, `game/index.html`, `game/css/**`); every visual asset under
-`game/assets/` except the two folders below, together with the procedurally drawn art
+All game code (`play/js/**`, `play/index.html`, `play/css/**`); every visual asset under
+`play/assets/` except the two folders below, together with the procedurally drawn art
 from `tileart.js`, `itemart.js` and `titlebg.js`; tools, build workflows and launchers;
 the website (`site/**`, see *Fonts*); and the
 documentation.
@@ -83,8 +83,8 @@ purchased or taken from elsewhere.
 
 | What | Where | Made with |
 |---|---|---|
-| 13 background music tracks | `game/assets/audio/*.m4a` | [Suno](https://suno.com) |
-| 87 sound effects | `game/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 13 background music tracks | `play/assets/audio/*.m4a` | [Suno](https://suno.com) |
+| 87 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 
 These files are governed by the terms of the respective services.
 
@@ -95,7 +95,7 @@ These files are governed by the terms of the respective services.
   MIT — apply to these two folders.
 
 To replace the audio in a fork, empty both folders and add your own files under the
-**same names**; `game/js/music.js` references them directly. Sound effects should stay
+**same names**; `play/js/music.js` references them directly. Sound effects should stay
 **1.0 s** long so `SfxLoop` can chain them seamlessly. Missing sound effects fall back to
 synthesized tones, so replacing only some of them works.
 
