@@ -276,6 +276,14 @@
   "{label} {v} (지금 {q})": [
    "game/ruin-pulse.surveyScore"
   ],
+  "{name|이} 나갔다": [
+   "game/net.netDropPeer",
+   "game/net.netOnGuest"
+  ],
+  "{name|이} 들어왔다": [
+   "game/net.netOnHost",
+   "game/net.netOnGuest"
+  ],
   "{nm|으로} 개조해야 만들 수 있다": [
    "game/altar.craft"
   ],
@@ -1367,6 +1375,9 @@
   "방": [
    "ui/quest.renderRuins"
   ],
+  "방 {room|을} 열었다": [
+   "game/net.mpHost"
+  ],
   "방벽 {shield}": [
    "entity/player-combat.useSkill"
   ],
@@ -1383,6 +1394,9 @@
   ],
   "방을 잡는다": [
    "game/village.talkExtra"
+  ],
+  "방이 가득 찼다": [
+   "game/net.mpJoin"
   ],
   "방전": [
    "factory",
@@ -2806,6 +2820,9 @@
   ],
   "헤파의 격실": [
    "world/village.buildRunaway"
+  ],
+  "호스트와 연결이 끊겼다": [
+   "game/net.netLost"
   ],
   "홀씨가 한꺼번에 터졌다": [
    "game/ruin-map.fireRuinEvent"

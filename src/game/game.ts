@@ -404,6 +404,9 @@ export const G: Bag = {
     if (this.booted) return;
     this.booted = true;
     window.__acBooted = 1;                    // index.html 의 안전장치에게 알린다
+    /* ?mp=join&room=&name=&char= — 열린 방에 새 캐릭터로 붙는다(개발판 시험용, 창은 M4). */
+    const mq = new URLSearchParams(location.search);
+    if (mq.get('mp') === 'join') setTimeout(() => this.mpJoin(mq.get('room') || 'test', mq.get('name') || '', mq.get('char') || ''), 300);
     /* 글꼴까지 기다린다. */
     const fr = document.fonts && document.fonts.ready;
     const fonts = fr ? Promise.race([fr, new Promise(r => setTimeout(r, 1500))])
@@ -424,19 +427,10 @@ export const G: Bag = {
     // 다음 프레임에 생성해서 로딩 화면이 먼저 그려지게 한다
     setTimeout(() => { try { this._newGame(seed, name, charId, mode, size); } finally { this.hideLoading(); } }, 40);
   },
-  _newGame(seed, name, charId, mode, size) {
-    this.rng = new RNG(seed + '_g');
-    // ★ World 를 만들기 **전에** — 배열 크기와 모든 좌표가 여기서 정해진다.
-    setWorldSize(size || new URLSearchParams(location.search).get('size') || 's');
-    this.world = new World(seed).generate();
-    const { WW, WH, HELL_Y, CAMP_X1, SEA_X1 } = this.world.dims;
-    this.fitMapAtlas();
-    this._rigs = null; this._fbg = null;   // 세계가 바뀌었으니 자리·원경 캐시를 버린다
-    this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
-    const p = this.player;
+  /** 그 캐릭터의 새 플레이어(시작 장비·가방) — 새 게임과 멀티플레이 새 참가자가 같이 쓴다. */
+  freshPlayer(x, y, name, charId) {
+    const p = new Player(x, y);
     p.name = (name || '').trim().slice(0, 12) || NONAME;
-    /* 난이도와 캐릭터는 새 게임에서 한 번 정하고 끝이다 — 설정에서 못 바꾼다. */
-    this.mode = MODE_OF(mode).id;
     const ch = CHAR_OF(charId);
     p.charId = ch.id;
     p.base = Object.assign({}, ch.base);
@@ -445,6 +439,20 @@ export const G: Bag = {
     if (ch.gold) p.gold = ch.gold;
     ch.bag.forEach(([id, n], i) => { p.bag[i] = makeItem(id, ITEMS[id].stack > 1 ? n : 1); });
     p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+    return p;
+  },
+  _newGame(seed, name, charId, mode, size) {
+    this.rng = new RNG(seed + '_g');
+    // ★ World 를 만들기 **전에** — 배열 크기와 모든 좌표가 여기서 정해진다.
+    setWorldSize(size || new URLSearchParams(location.search).get('size') || 's');
+    this.world = new World(seed).generate();
+    const { WW, WH, HELL_Y, CAMP_X1, SEA_X1 } = this.world.dims;
+    this.fitMapAtlas();
+    this._rigs = null; this._fbg = null;   // 세계가 바뀌었으니 자리·원경 캐시를 버린다
+    this.player = this.freshPlayer(this.world.spawnX * TS, (this.world.spawnY - 2) * TS, name, charId);
+    const p = this.player;
+    /* 난이도와 캐릭터는 새 게임에서 한 번 정하고 끝이다 — 설정에서 못 바꾼다. */
+    this.mode = MODE_OF(mode).id;
     this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = [];
     this.corpses = [];
     this.rings = []; this.bolts = []; this.warns = []; this.sigs = []; this.edge = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
@@ -477,6 +485,7 @@ export const G: Bag = {
     this.toast(tr('별이 떨어진 다음 날 아침이다.'));
     this.audioInit();
     this.buildMapAtlas();
+    this.mpAuto();
     // 디버그 바로가기 — 주소 끝에 ?debug=village를 붙이고 "새로운 여정"을 누르면 종장을 안 깨도 여명 마을이 바로 열리고 그 앞에서 시작한다.
     const qs = new URLSearchParams(location.search);
     /* ?debug=meteor — 2.5초 뒤 운석. */
@@ -843,13 +852,16 @@ export const G: Bag = {
       if ((before / 60 | 0) !== (this.tally.play / 60 | 0)) this.checkAch();
     }
     const nextDayT = (this.dayT + dt * 2) % 1440;
-    if (nextDayT < this.dayT) { this.dayCount++; this.updateEconomy(); this.growCropsDaily(); }
+    /* ★ 참가자는 세계를 돌리지 않는다 — 몹·공장·날짜·사건은 호스트 것을 받는다(멀티플레이 설계 §3). */
+    const guest = !!(this.net && this.net.role === 'guest');
+    if (nextDayT < this.dayT && !guest) { this.dayCount++; this.updateEconomy(); this.growCropsDaily(); }
     this.dayT = nextDayT;
     this.readInput();
     const p = this.player, w = this.world;
 
     // 스킬 채널 중 이동 제한 등은 Player 내부에서 처리
     p.update(dt, w, this.input);
+    if (this.net) this.netTick(dt);
     this.updateFishing(dt);
     if (this.starMerge > 0) this.starMerge = Math.max(0, this.starMerge - dt);
     if (this.starGain) { this.starGain.t += dt; if (this.starGain.t >= this.starGain.dur) this.starGain = null; }
@@ -901,14 +913,14 @@ export const G: Bag = {
 
     // 스폰
     this.spawnTimer -= dt;
-    if (this.spawnTimer <= 0) { this.spawnTimer = 1.1; this.trySpawn(); }
+    if (this.spawnTimer <= 0 && !guest) { this.spawnTimer = 1.1; this.trySpawn(); }
     this.updateRigs(dt);
 
     // 공장 — 프레임률과 무관하게 고정 8틱/초로 돌린다
     this.facTimer = (this.facTimer || 0) - dt;
     /* 남은 시간을 이어 간다 — FAC_TICK 으로 되돌리면 60fps 에서 8프레임(0.133초)마다 돌아 벨트 1초가 1.07초가 되고,
        물건이 칸마다 가운데서 멈칫했다 */
-    if (this.facTimer <= 0) { this.facTimer = Math.max(this.facTimer + FAC_TICK, -FAC_TICK); Factory.tick(w, this); }
+    if (this.facTimer <= 0 && !guest) { this.facTimer = Math.max(this.facTimer + FAC_TICK, -FAC_TICK); Factory.tick(w, this); }
 
     // 고대 유적의 타일 함정 — 화면 근처만 훑는다
     this.trapTimer = (this.trapTimer || 0) - dt;
@@ -916,7 +928,7 @@ export const G: Bag = {
     for (const q of this.players) w.tickCrumble(dt, q);
 
     // 세계 이벤트 (붉은 달 · 모래폭풍 · 포자 개화 · 비)
-    this.updateEvents(dt);
+    if (!guest) this.updateEvents(dt);
     this.updateWeather(dt);
     this.updateSmoke(dt);        // 용광로 굴뚝 연기
 

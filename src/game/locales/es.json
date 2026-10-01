@@ -914,7 +914,12 @@
   "단계 <b>{stage}</b>": "Etapa <b>{stage}</b>",
   "아직 경험치가 덜 찼다 — 다 차면 먹는다": "Aún no tiene la experiencia llena — comerá cuando la llene",
   "이 먹이를 먹을 드래곤이 없다 — {lv}레벨에서 경험치가 다 찬 드래곤이 먹는다": "Ningún dragón puede comer esto — lo come un dragón de nivel {lv} con la experiencia llena",
-  "진화를 기다린다 — {food|을} 먹여야 한다": "Espera para evolucionar — hay que darle {food}"
+  "진화를 기다린다 — {food|을} 먹여야 한다": "Espera para evolucionar — hay que darle {food}",
+  "{name|이} 들어왔다": "{name} se unió",
+  "{name|이} 나갔다": "{name} se fue",
+  "방 {room|을} 열었다": "Sala {room} abierta",
+  "방이 가득 찼다": "La sala está llena",
+  "호스트와 연결이 끊겼다": "Se perdió la conexión con el anfitrión"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

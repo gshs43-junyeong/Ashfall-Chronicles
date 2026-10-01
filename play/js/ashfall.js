@@ -598,10 +598,10 @@
           }
         }
         if (!pool) return false;
-        const now = performance.now() / 1e3;
+        const now2 = performance.now() / 1e3;
         const gap = SFX_GAP2[kind];
-        if (gap !== void 0 && now - (this.last[kind] || -9) < gap) return true;
-        this.last[kind] = now;
+        if (gap !== void 0 && now2 - (this.last[kind] || -9) < gap) return true;
+        this.last[kind] = now2;
         const i = this.turn[kind] = ((this.turn[kind] || 0) + 1) % pool.length;
         const a = pool[i];
         a.volume = Math.min(1, this.vol * (SFX_VOL2[kind] === void 0 ? 1 : SFX_VOL2[kind]) * fg * (vol === void 0 ? 1 : vol));
@@ -841,9 +841,9 @@
     let last = 0;
     const tick = (t) => {
       requestAnimationFrame(tick);
-      const now = t / 1e3;
-      const rawDt = now - (last || now);
-      last = now;
+      const now2 = t / 1e3;
+      const rawDt = now2 - (last || now2);
+      last = now2;
       frame(Math.min(maxDt, rawDt), rawDt);
     };
     requestAnimationFrame(tick);
@@ -20193,8 +20193,8 @@
     _mossDensity(w, tx, ty) {
       const { WW: WW2 } = w.dims;
       this._md = this._md || /* @__PURE__ */ new Map();
-      const i = ty * WW2 + tx, now = performance.now(), hit = this._md.get(i);
-      if (hit && now - hit[1] < 1500) return hit[0];
+      const i = ty * WW2 + tx, now2 = performance.now(), hit = this._md.get(i);
+      if (hit && now2 - hit[1] < 1500) return hit[0];
       if (this._md.size > 6e3) this._md.clear();
       let wd = 99;
       for (let dy = -6; dy <= 6; dy++)
@@ -20210,7 +20210,7 @@
       const inCave = w.caveTypeAt && w.caveTypeAt(tx, ty) === moss && ty > w.surface[clamp(tx, 0, WW2 - 1)] + 12;
       const base = inCave ? 0.55 : 0.35;
       const D = Math.round(Math.max(wet, base + (1 - base) * Math.min(1, n / 12)) * 10) / 10;
-      this._md.set(i, [D, now]);
+      this._md.set(i, [D, now2]);
       return D;
     },
     /** 종유석(위에 붙음)·석순(바닥에 붙음) 한 줄의 i 번째 칸 — 줄 전체가 원뿔 하나가 되게 */
@@ -27462,10 +27462,10 @@
       if (this.raf) cancelAnimationFrame(this.raf);
       this.raf = 0;
     },
-    tick(now) {
+    tick(now2) {
       if (!this.on) return;
-      const dt = this.last ? Math.min(0.05, (now - this.last) / 1e3) : 0.016;
-      this.last = now;
+      const dt = this.last ? Math.min(0.05, (now2 - this.last) / 1e3) : 0.016;
+      this.last = now2;
       this.t += dt;
       this.frame(dt);
       this.raf = requestAnimationFrame((t) => this.tick(t));
@@ -28090,6 +28090,10 @@
     }
     /* ---- 피해 ---- */
     hurt(amount, srcX) {
+      if (this.remote) {
+        app.netRemoteHurt(this, amount, srcX);
+        return;
+      }
       if (this.iframe > 0 || this.dead) return;
       const red = this.d.def / (this.d.def + 60);
       let dmg = Math.max(1, Math.round(amount * (1 - red) * (1 - (this.d.dr || 0) / 100)));
@@ -28852,6 +28856,7 @@
         this.dead = true;
         return;
       }
+      if (player.remote) player = app.me;
       const d = dist(this.x, this.y, player.cx, player.cy);
       if (this.pick <= 0 && d < 92) {
         const a = angleTo(this.x, this.y, player.cx, player.cy);
@@ -34255,8 +34260,8 @@
       this.renderFullmap();
     },
     resizeFullmap() {
-      const wrap = $("#fullmap-wrap"), c = this.fmCanvas;
-      const w = wrap.clientWidth, h = wrap.clientHeight, dpr = Math.min(2, devicePixelRatio || 1);
+      const wrap2 = $("#fullmap-wrap"), c = this.fmCanvas;
+      const w = wrap2.clientWidth, h = wrap2.clientHeight, dpr = Math.min(2, devicePixelRatio || 1);
       c.width = w * dpr;
       c.height = h * dpr;
       this.fmC.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -35151,8 +35156,8 @@
           this.bootDone();
           return;
         }
-        const now = Date.now();
-        if (now - bestAt > STALL || now - t0 > CAP) {
+        const now2 = Date.now();
+        if (now2 - bestAt > STALL || now2 - t0 > CAP) {
           console.warn(`[부팅] 타이틀 그림 ${got}/${NEED} 에서 더 안 온다 — 그대로 연다`);
           this.bootDone();
           return;
@@ -35167,6 +35172,8 @@
       if (this.booted) return;
       this.booted = true;
       window.__acBooted = 1;
+      const mq = new URLSearchParams(location.search);
+      if (mq.get("mp") === "join") setTimeout(() => this.mpJoin(mq.get("room") || "test", mq.get("name") || "", mq.get("char") || ""), 300);
       const fr = document.fonts && document.fonts.ready;
       const fonts = fr ? Promise.race([fr, new Promise((r) => setTimeout(r, 1500))]) : Promise.resolve();
       fonts.catch(() => {
@@ -35192,18 +35199,10 @@
         }
       }, 40);
     },
-    _newGame(seed, name, charId, mode, size) {
-      this.rng = new RNG(seed + "_g");
-      setWorldSize(size || new URLSearchParams(location.search).get("size") || "s");
-      this.world = new World(seed).generate();
-      const { WW: WW2, WH: WH2, HELL_Y: HELL_Y2, CAMP_X1: CAMP_X12, SEA_X1: SEA_X12 } = this.world.dims;
-      this.fitMapAtlas();
-      this._rigs = null;
-      this._fbg = null;
-      this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
-      const p = this.player;
+    /** 그 캐릭터의 새 플레이어(시작 장비·가방) — 새 게임과 멀티플레이 새 참가자가 같이 쓴다. */
+    freshPlayer(x, y, name, charId) {
+      const p = new Player(x, y);
       p.name = (name || "").trim().slice(0, 12) || NONAME;
-      this.mode = MODE_OF(mode).id;
       const ch = CHAR_OF(charId);
       p.charId = ch.id;
       p.base = Object.assign({}, ch.base);
@@ -35217,6 +35216,19 @@
       p.recalc();
       p.hp = p.d.maxHp;
       p.mp = p.d.maxMp;
+      return p;
+    },
+    _newGame(seed, name, charId, mode, size) {
+      this.rng = new RNG(seed + "_g");
+      setWorldSize(size || new URLSearchParams(location.search).get("size") || "s");
+      this.world = new World(seed).generate();
+      const { WW: WW2, WH: WH2, HELL_Y: HELL_Y2, CAMP_X1: CAMP_X12, SEA_X1: SEA_X12 } = this.world.dims;
+      this.fitMapAtlas();
+      this._rigs = null;
+      this._fbg = null;
+      this.player = this.freshPlayer(this.world.spawnX * TS, (this.world.spawnY - 2) * TS, name, charId);
+      const p = this.player;
+      this.mode = MODE_OF(mode).id;
       this.ents = [];
       this.projs = [];
       this.parts = [];
@@ -35304,6 +35316,7 @@
       this.toast(tr("별이 떨어진 다음 날 아침이다."));
       this.audioInit();
       this.buildMapAtlas();
+      this.mpAuto();
       const qs = new URLSearchParams(location.search);
       if (qs.get("debug") === "meteor") {
         const at = qs.get("at"), me = Math.floor(this.player.cx / TS);
@@ -35739,7 +35752,8 @@
         if ((before / 60 | 0) !== (this.tally.play / 60 | 0)) this.checkAch();
       }
       const nextDayT = (this.dayT + dt * 2) % 1440;
-      if (nextDayT < this.dayT) {
+      const guest = !!(this.net && this.net.role === "guest");
+      if (nextDayT < this.dayT && !guest) {
         this.dayCount++;
         this.updateEconomy();
         this.growCropsDaily();
@@ -35748,6 +35762,7 @@
       this.readInput();
       const p = this.player, w = this.world;
       p.update(dt, w, this.input);
+      if (this.net) this.netTick(dt);
       this.updateFishing(dt);
       if (this.starMerge > 0) this.starMerge = Math.max(0, this.starMerge - dt);
       if (this.starGain) {
@@ -35808,13 +35823,13 @@
         }
       }
       this.spawnTimer -= dt;
-      if (this.spawnTimer <= 0) {
+      if (this.spawnTimer <= 0 && !guest) {
         this.spawnTimer = 1.1;
         this.trySpawn();
       }
       this.updateRigs(dt);
       this.facTimer = (this.facTimer || 0) - dt;
-      if (this.facTimer <= 0) {
+      if (this.facTimer <= 0 && !guest) {
         this.facTimer = Math.max(this.facTimer + FAC_TICK, -FAC_TICK);
         Factory11.tick(w, this);
       }
@@ -35824,7 +35839,7 @@
         this.tickTileTraps();
       }
       for (const q of this.players) w.tickCrumble(dt, q);
-      this.updateEvents(dt);
+      if (!guest) this.updateEvents(dt);
       this.updateWeather(dt);
       this.updateSmoke(dt);
       this.checkRuinEntry();
@@ -35911,8 +35926,8 @@
       }
       if (this.deathMark) {
         const dm = this.deathMark;
-        const now = this.dayCount * 1440 + this.dayT;
-        if (now - (dm.at || 0) >= 720) {
+        const now2 = this.dayCount * 1440 + this.dayT;
+        if (now2 - (dm.at || 0) >= 720) {
           this.deathMark = null;
           this.toast(tr("비석이 잿빛에 삼켜졌다"), "bad");
         } else if (dist(p.cx, p.cy, dm.x, dm.y) < 70) {
@@ -40131,48 +40146,7 @@
       }
       this._saving = true;
       try {
-        const p = this.player;
-        const data = {
-          v: SAVE_VERSION,
-          name: p.name,
-          savedAt: Date.now(),
-          world: this.world.serialize(),
-          chapter: this.chapter,
-          dayT: this.dayT,
-          talked: this.talked,
-          crafted: this.crafted,
-          talkSeq: this.talkSeq,
-          storyHeard: this.storyHeard,
-          villageSeen: this.villageSeen,
-          sideActive: this.sideActive,
-          sideDone: this.sideDone,
-          tabletsRead: this.tabletsRead,
-          termsRead: this.termsRead,
-          loreRead: this.loreRead,
-          seenRuins: this.seenRuins,
-          seenBiomes: this.seenBiomes,
-          ruinMarks: this.ruinMarks,
-          ruinEvDone: this.ruinEvDone,
-          cipherSeen: this.cipherSeen,
-          // 어느 유적의 쪽지를 몇 장 읽었나
-          deathMark: this.deathMark,
-          villageUnlocked: this.villageUnlocked,
-          goldRate: this.goldRate,
-          dayCount: this.dayCount,
-          lairs: this.lairs,
-          asmRan: this.asmRan,
-          everPlanted: this.everPlanted,
-          vault: this.vault,
-          vaultGold: this.vaultGold,
-          bounties: this.bounties,
-          bountyNext: this.bountyNext,
-          shopStock: this.shopStock,
-          shopStockDay: this.shopStockDay,
-          achievements: this.achievements,
-          tally: this.tally,
-          survey: this.survey,
-          p: this.packChar(p)
-        };
+        const data = this.saveData();
         data.sealed = 1;
         await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
         this.toast(tr("저장했다"), "good");
@@ -40184,6 +40158,52 @@
       } finally {
         this._saving = false;
       }
+    },
+    /** 지금 판의 세이브 본문 — 저장과 멀티플레이 참가자에게 보내는 세계 스냅샷이 같이 쓴다. */
+    saveData() {
+      const p = this.player;
+      const data = {
+        v: SAVE_VERSION,
+        name: p.name,
+        savedAt: Date.now(),
+        world: this.world.serialize(),
+        chapter: this.chapter,
+        dayT: this.dayT,
+        talked: this.talked,
+        crafted: this.crafted,
+        talkSeq: this.talkSeq,
+        storyHeard: this.storyHeard,
+        villageSeen: this.villageSeen,
+        sideActive: this.sideActive,
+        sideDone: this.sideDone,
+        tabletsRead: this.tabletsRead,
+        termsRead: this.termsRead,
+        loreRead: this.loreRead,
+        seenRuins: this.seenRuins,
+        seenBiomes: this.seenBiomes,
+        ruinMarks: this.ruinMarks,
+        ruinEvDone: this.ruinEvDone,
+        cipherSeen: this.cipherSeen,
+        // 어느 유적의 쪽지를 몇 장 읽었나
+        deathMark: this.deathMark,
+        villageUnlocked: this.villageUnlocked,
+        goldRate: this.goldRate,
+        dayCount: this.dayCount,
+        lairs: this.lairs,
+        asmRan: this.asmRan,
+        everPlanted: this.everPlanted,
+        vault: this.vault,
+        vaultGold: this.vaultGold,
+        bounties: this.bounties,
+        bountyNext: this.bountyNext,
+        shopStock: this.shopStock,
+        shopStockDay: this.shopStockDay,
+        achievements: this.achievements,
+        tally: this.tally,
+        survey: this.survey,
+        p: this.packChar(p)
+      };
+      return data;
     },
     /* ================= 저장 내보내기 / 가져오기 ================= */
     /* 파일은 슬롯 번호(0부터)를 열쇠로 본문 글자열을 담는다 — 저장소가 바뀌어도 파일 모양은 그대로다. */
@@ -40397,6 +40417,7 @@
         this.toast(tr("여정을 이어간다"), "good");
         this.audioInit();
         this.buildMapAtlas();
+        this.mpAuto();
       } catch (e) {
         this.toast(tr("불러오기 실패"), "bad");
         console.error(e);
@@ -40945,9 +40966,9 @@
       const gap = SFX_GAP && SFX_GAP[kind];
       if (gap !== void 0) {
         this._synLast = this._synLast || {};
-        const now = t;
-        if (now - (this._synLast[kind] || -9) < gap) return;
-        this._synLast[kind] = now;
+        const now2 = t;
+        if (now2 - (this._synLast[kind] || -9) < gap) return;
+        this._synLast[kind] = now2;
       }
       const r = rate || 1;
       const [f0, f1, type, vol, nz] = spec;
@@ -41318,9 +41339,32 @@
       this.drawRipeCrops(c, camX, camY);
       this.drawStarOrbit(c, p, camX, camY);
       this.drawPlayer(c, p, p.x - camX, p.y - camY);
+      for (const q of this.players) if (q !== p) {
+        this.drawPlayer(c, q, q.x - camX, q.y - camY);
+        this.drawNameTag(c, q, camX, camY);
+      }
       for (const pet of this.petEnts || []) if (pet) this.drawPet(c, pet, camX, camY);
       this.drawWhirlArc(c, p, camX, camY);
       this.drawSigSky(c, camX, camY);
+    },
+    /** 남의 캐릭터 머리 위 이름과 체력 줄. */
+    drawNameTag(c, q, camX, camY) {
+      const x = Math.round(q.cx - camX), y = Math.round(q.y - camY) - 14;
+      c.save();
+      c.font = "11px " + FONT;
+      c.textAlign = "center";
+      c.textBaseline = "bottom";
+      c.lineWidth = 3;
+      c.strokeStyle = "rgba(0,0,0,.75)";
+      c.strokeText(q.name, x, y);
+      c.fillStyle = "#e8f0ff";
+      c.fillText(q.name, x, y);
+      const k = clamp(q.hp / (q.netMaxHp || q.d.maxHp || 1), 0, 1);
+      c.fillStyle = "rgba(0,0,0,.6)";
+      c.fillRect(x - 14, y + 2, 28, 3);
+      c.fillStyle = k > 0.35 ? "#6fd36f" : "#e05a4a";
+      c.fillRect(x - 14, y + 2, Math.round(28 * k), 3);
+      c.restore();
     },
     /** 렌더 단계 — 어둠 · 빛 색 · 공기색 · 유적 여운 */
     rLightOverlay(f) {
@@ -43103,8 +43147,8 @@
           riseFade = Math.max(0, 1 - k * k * 1.15);
         }
       }
-      const gather = Math.max(mg * 0.92, riseK);
-      const rx = (30 + Math.sin(t * 0.7) * 1.5) * (1 - gather);
+      const gather2 = Math.max(mg * 0.92, riseK);
+      const rx = (30 + Math.sin(t * 0.7) * 1.5) * (1 - gather2);
       const ry = rx * 0.42;
       const lit = p.starLit ? 1 : 0;
       const base = p.starFade ? 0.18 : 0.5 + lit * 0.25;
@@ -43268,9 +43312,9 @@
       this.ruinPulse = this.ruinPulse || {};
       if (v > 0 && !byHand && this.hasSeal("mine")) v *= 0.75;
       const before = this.ruinPulse[id] || 0;
-      const now = clamp(before + v, 0, 100);
-      this.ruinPulse[id] = now;
-      const s0 = this.pulseStage(before), s1 = this.pulseStage(now);
+      const now2 = clamp(before + v, 0, 100);
+      this.ruinPulse[id] = now2;
+      const s0 = this.pulseStage(before), s1 = this.pulseStage(now2);
       const sv = this.surveyOf(id);
       if (s1 > (sv.peak || 0)) sv.peak = s1;
       if (s1 !== s0) this.onPulseStage(id, s0, s1);
@@ -45800,6 +45844,501 @@
   };
   mixin(G, UtilityPart);
 
+  // src/game/game/net.ts
+  var net_exports = {};
+  __export(net_exports, {
+    NET_HZ: () => NET_HZ,
+    NET_MAX: () => NET_MAX,
+    NetPart: () => NetPart
+  });
+
+  // src/engine/net/chunk.ts
+  var CHUNK_SIZE = 16e3;
+  function chunkText(id, text, size = CHUNK_SIZE) {
+    const n = Math.max(1, Math.ceil(text.length / size)), out = [];
+    for (let i = 0; i < n; i++) out.push(`#${id}:${i}:${n}:` + text.slice(i * size, (i + 1) * size));
+    return out;
+  }
+  var isChunk = (msg) => msg.charCodeAt(0) === 35;
+  function createJoiner() {
+    const parts = /* @__PURE__ */ new Map();
+    return {
+      push(msg) {
+        const a = msg.indexOf(":"), b = msg.indexOf(":", a + 1), c = msg.indexOf(":", b + 1);
+        if (msg[0] !== "#" || a < 0 || b < 0 || c < 0) return null;
+        const id = +msg.slice(1, a), i = +msg.slice(a + 1, b), n = +msg.slice(b + 1, c);
+        let e = parts.get(id);
+        if (!e) {
+          e = { got: 0, list: new Array(n) };
+          parts.set(id, e);
+        }
+        if (e.list[i] === void 0) {
+          e.list[i] = msg.slice(c + 1);
+          e.got++;
+        }
+        if (e.got < n) return null;
+        parts.delete(id);
+        return { id, text: e.list.join("") };
+      },
+      progress(id) {
+        const e = parts.get(id);
+        return e ? [e.got, e.list.length] : null;
+      }
+    };
+  }
+
+  // src/engine/net/interp.ts
+  var SnapBuffer = class {
+    /** delay — 그리는 시각을 얼마나 늦출지(초) · cap — 들고 있을 최대 장 수. */
+    constructor(delay = 0.1, cap = 32) {
+      this.delay = delay;
+      this.cap = cap;
+      this.list = [];
+    }
+    /** t(받는 쪽 시계, 초)의 상태를 넣는다 — 시각이 거꾸로 온 장은 버린다. */
+    push(t, s) {
+      const L = this.list;
+      if (L.length && t <= L[L.length - 1].t) return;
+      L.push({ t, s });
+      if (L.length > this.cap) L.splice(0, L.length - this.cap);
+    }
+    /** now(받는 쪽 시계)에 그릴 상태 — 아직 한 장도 없으면 null. 마지막 장보다 늦으면 마지막 장 그대로(넘겨 짐작하지 않는다). */
+    sample(now2) {
+      const L = this.list, t = now2 - this.delay;
+      if (!L.length) return null;
+      if (t <= L[0].t) return L[0].s;
+      const last = L[L.length - 1];
+      if (t >= last.t) return last.s;
+      let i = L.length - 2;
+      while (i > 0 && L[i].t > t) i--;
+      const a = L[i], b = L[i + 1], k = (t - a.t) / (b.t - a.t), out = {};
+      for (const key in a.s) {
+        const va = a.s[key], vb = b.s[key];
+        out[key] = typeof va === "number" && typeof vb === "number" ? va + (vb - va) * k : va;
+      }
+      if (i > 2) L.splice(0, i - 1);
+      return out;
+    }
+    clear() {
+      this.list.length = 0;
+    }
+  };
+
+  // src/engine/net/signal.ts
+  function createTabSignal(room) {
+    const bc = new BroadcastChannel("ashfall-room-" + room);
+    const s = {
+      onmessage: null,
+      post(msg) {
+        bc.postMessage(msg);
+      },
+      close() {
+        bc.close();
+      }
+    };
+    bc.onmessage = (e) => {
+      if (s.onmessage) s.onmessage(e.data);
+    };
+    return s;
+  }
+
+  // src/engine/net/webrtc.ts
+  var DEFAULT_ICE = [{ urls: "stun:stun.l.google.com:19302" }];
+  function gather(pc, ms) {
+    if (pc.iceGatheringState === "complete") return Promise.resolve();
+    return new Promise((res) => {
+      const done = () => {
+        clearTimeout(tm);
+        pc.removeEventListener("icegatheringstatechange", on);
+        res();
+      };
+      const on = () => {
+        if (pc.iceGatheringState === "complete") done();
+      };
+      const tm = setTimeout(done, ms);
+      pc.addEventListener("icegatheringstatechange", on);
+    });
+  }
+  function wrap(pc, openMs) {
+    const rel = pc.createDataChannel("rel", { negotiated: true, id: 0 });
+    const fast = pc.createDataChannel("fast", { negotiated: true, id: 1, ordered: false, maxRetransmits: 0 });
+    let closed = false;
+    const t = {
+      onmessage: null,
+      onclose: null,
+      get open() {
+        return !closed && rel.readyState === "open" && fast.readyState === "open";
+      },
+      send(ch, data) {
+        const dc = ch === "rel" ? rel : fast;
+        if (!closed && dc.readyState === "open") dc.send(data);
+      },
+      close() {
+        if (!closed) {
+          closed = true;
+          rel.close();
+          fast.close();
+          pc.close();
+          if (t.onclose) t.onclose();
+        }
+      }
+    };
+    rel.onmessage = (e) => {
+      if (t.onmessage) t.onmessage("rel", String(e.data));
+    };
+    fast.onmessage = (e) => {
+      if (t.onmessage) t.onmessage("fast", String(e.data));
+    };
+    const lost = () => {
+      if (!closed) t.close();
+    };
+    rel.onclose = lost;
+    fast.onclose = lost;
+    pc.addEventListener("connectionstatechange", () => {
+      if (pc.connectionState === "failed" || pc.connectionState === "closed") lost();
+    });
+    const ready = new Promise((res, rej) => {
+      const tm = setTimeout(() => {
+        lost();
+        rej(new Error("webrtc: open timeout"));
+      }, openMs);
+      const check = () => {
+        if (t.open) {
+          clearTimeout(tm);
+          res(t);
+        }
+      };
+      rel.addEventListener("open", check);
+      fast.addEventListener("open", check);
+    });
+    return { transport: t, ready };
+  }
+  async function hostOffer(opts = {}) {
+    const pc = new RTCPeerConnection({ iceServers: opts.iceServers || DEFAULT_ICE });
+    const { transport, ready } = wrap(pc, opts.openMs || 15e3);
+    await pc.setLocalDescription(await pc.createOffer());
+    await gather(pc, opts.gatherMs || 3e3);
+    return {
+      offer: JSON.stringify(pc.localDescription),
+      async accept(answer) {
+        await pc.setRemoteDescription(JSON.parse(answer));
+        return ready;
+      },
+      cancel() {
+        transport.close();
+      }
+    };
+  }
+  async function guestAnswer(offer, opts = {}) {
+    const pc = new RTCPeerConnection({ iceServers: opts.iceServers || DEFAULT_ICE });
+    const { transport, ready } = wrap(pc, opts.openMs || 15e3);
+    await pc.setRemoteDescription(JSON.parse(offer));
+    await pc.setLocalDescription(await pc.createAnswer());
+    await gather(pc, opts.gatherMs || 3e3);
+    return { answer: JSON.stringify(pc.localDescription), ready, cancel() {
+      transport.close();
+    } };
+  }
+
+  // src/game/game/net.ts
+  var NET_MAX = 4;
+  var NET_HZ = 15;
+  var now = () => performance.now() / 1e3;
+  var NetPart = {
+    net: null,
+    /* ================= 상태 한 장 ================= */
+    /** 남의 화면이 이 플레이어를 그리는 데 쓰는 것만 — 레벨·가방은 보내지 않는다. */
+    netState(p) {
+      const held = p.held(), wep = p.equip.weapon;
+      return {
+        x: Math.round(p.x),
+        y: Math.round(p.y),
+        vx: Math.round(p.vx),
+        vy: Math.round(p.vy),
+        f: p.facing,
+        g: p.onGround ? 1 : 0,
+        sw: p.swing || 0,
+        sa: p.swingAng || 0,
+        sd: p.swingDir || 0,
+        sr: p.swingReach || 0,
+        dv: p.dashV || 0,
+        fl: p.flash || 0,
+        ch: p.channel ? 1 : 0,
+        sm: p.swimming ? 1 : 0,
+        smv: p.swimMove ? 1 : 0,
+        flt: p.floating ? 1 : 0,
+        sp: p.swimPh || 0,
+        ifr: p.iframe || 0,
+        hp: Math.round(p.hp),
+        mhp: Math.round(p.d.maxHp),
+        hid: held ? held.id : "",
+        wid: wep ? wep.id : "",
+        c: p.charId,
+        n: p.name
+      };
+    },
+    /** 받은 상태를 남의 아바타에 — 자리(x·y)는 보간 버퍼가 따로 맞춘다. */
+    netApply(rp, s) {
+      rp.vx = s.vx;
+      rp.vy = s.vy;
+      rp.facing = s.f;
+      rp.onGround = !!s.g;
+      rp.swing = s.sw;
+      rp.swingAng = s.sa;
+      rp.swingDir = s.sd;
+      rp.swingReach = s.sr;
+      rp.dashV = s.dv;
+      rp.flash = s.fl;
+      rp.channel = s.ch ? rp.channel || {} : null;
+      rp.swimming = !!s.sm;
+      rp.swimMove = !!s.smv;
+      rp.floating = !!s.flt;
+      rp.swimPh = s.sp;
+      rp.iframe = s.ifr;
+      rp.hp = s.hp;
+      rp.netMaxHp = s.mhp;
+      rp.charId = s.c;
+      rp.name = s.n;
+      if (rp._hid !== s.hid) {
+        rp._hid = s.hid;
+        rp.bag[rp.sel] = s.hid ? makeItem(s.hid) : null;
+      }
+      if (rp._wid !== s.wid) {
+        rp._wid = s.wid;
+        rp.equip.weapon = s.wid ? makeItem(s.wid) : null;
+      }
+    },
+    /** 남의 아바타 — 이 화면에서는 그림자(update 를 안 돌리고 피해는 주인에게 넘긴다). */
+    netAvatar(id, s) {
+      const rp = this.freshPlayer(s.x, s.y, s.n, s.c);
+      rp.remote = true;
+      rp.netId = id;
+      rp.netBuf = new SnapBuffer(1.5 / NET_HZ);
+      this.netApply(rp, s);
+      this.players.push(rp);
+      return rp;
+    },
+    netRemove(rp) {
+      const i = this.players.indexOf(rp);
+      if (i > 0) this.players.splice(i, 1);
+    },
+    /** 남의 아바타를 보간한 자리로 옮긴다 — 매 프레임. */
+    netMoveAvatars() {
+      const t = now();
+      for (const rp of this.players) {
+        if (!rp.remote || !rp.netBuf) continue;
+        const s = rp.netBuf.sample(t);
+        if (s) {
+          rp.x = s.x;
+          rp.y = s.y;
+        }
+      }
+    },
+    netSend(t, ch, msg) {
+      const text = JSON.stringify(msg);
+      if (text.length > 15e3) for (const part of chunkText(++this.net.chunkId, text)) t.send("rel", part);
+      else t.send(ch, text);
+    },
+    /* ================= 호스트 ================= */
+    /** 방을 연다 — 참가자 셋까지. 지금 중개는 같은 브라우저의 탭끼리뿐이다(인터넷 중개는 M4). */
+    mpHost(room) {
+      if (this.net || !this.me) return;
+      const sig = createTabSignal(room), n = { role: "host", room, sig, peers: /* @__PURE__ */ new Map(), pending: /* @__PURE__ */ new Map(), nextId: 1, sendT: 0, chunkId: 0 };
+      this.net = n;
+      this.me.netId = 0;
+      sig.onmessage = async (m) => {
+        if (m.t === "want" && !m.to) {
+          if (n.peers.size + n.pending.size >= NET_MAX - 1) {
+            sig.post({ t: "full", from: "host", to: m.from });
+            return;
+          }
+          if (n.pending.has(m.from)) return;
+          const h = await hostOffer();
+          n.pending.set(m.from, h);
+          sig.post({ t: "offer", from: "host", to: m.from, sdp: h.offer });
+        } else if (m.t === "answer" && m.to === "host" && n.pending.has(m.from)) {
+          const h = n.pending.get(m.from);
+          try {
+            this.netAddPeer(await h.accept(m.sdp));
+          } catch (e) {
+            console.warn("net: 참가 실패", e);
+          } finally {
+            n.pending.delete(m.from);
+          }
+        }
+      };
+      this.toast(tr("방 {room|을} 열었다", { room }), "good");
+    },
+    netAddPeer(t) {
+      const n = this.net, peer = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
+      n.peers.set(peer.id, peer);
+      t.onmessage = (ch, d) => {
+        if (isChunk(d)) {
+          const r = peer.joiner.push(d);
+          if (r) this.netOnHost(peer, JSON.parse(r.text));
+          return;
+        }
+        this.netOnHost(peer, JSON.parse(d));
+      };
+      t.onclose = () => this.netDropPeer(peer);
+    },
+    netOnHost(peer, m) {
+      const n = this.net;
+      if (m.k === "hello") {
+        const me = this.me, s = Object.assign(this.netState(me), { x: me.x + 24, n: m.n, c: m.c });
+        peer.rp = this.netAvatar(peer.id, s);
+        const roster = [[0, this.netState(me)]];
+        for (const q of n.peers.values()) if (q.rp && q !== peer) roster.push([q.id, this.netState(q.rp)]);
+        this.netSend(peer.t, "rel", { k: "world", id: peer.id, x: s.x, y: s.y, save: this.saveData(), roster });
+        for (const q of n.peers.values()) if (q !== peer) this.netSend(q.t, "rel", { k: "join", id: peer.id, s });
+        this.toast(tr("{name|이} 들어왔다", { name: m.n }), "good");
+      } else if (m.k === "st" && peer.rp) {
+        peer.rp.netBuf.push(now(), m.s);
+        this.netApply(peer.rp, m.s);
+        peer.last = m.s;
+        peer.heard = now();
+      } else if (m.k === "bye") {
+        peer.t.close();
+        this.netDropPeer(peer);
+      }
+    },
+    netDropPeer(peer) {
+      const n = this.net;
+      if (!n || !n.peers.has(peer.id)) return;
+      n.peers.delete(peer.id);
+      if (peer.rp) {
+        this.netRemove(peer.rp);
+        this.toast(tr("{name|이} 나갔다", { name: peer.rp.name }), "info");
+      }
+      for (const q of n.peers.values()) this.netSend(q.t, "rel", { k: "leave", id: peer.id });
+    },
+    /* ================= 참가자 ================= */
+    /** 방에 붙는다 — 캐릭터는 새로 만든 것(charId · name). 제 캐릭터 고르기·저장은 M4. */
+    mpJoin(room, name, charId) {
+      if (this.net) return;
+      const sig = createTabSignal(room), me = Math.random().toString(36).slice(2, 8);
+      const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map() };
+      n.char = this.freshPlayer(0, 0, name, charId);
+      this.net = n;
+      sig.onmessage = async (m) => {
+        if (m.to !== me || n.t) return;
+        if (m.t === "full") {
+          this.toast(tr("방이 가득 찼다"), "bad");
+          clearInterval(n.ask);
+          return;
+        }
+        if (m.t !== "offer") return;
+        clearInterval(n.ask);
+        const g = await guestAnswer(m.sdp);
+        sig.post({ t: "answer", from: me, to: "host", sdp: g.answer });
+        const t = await g.ready;
+        n.t = t;
+        t.onmessage = (ch, d) => {
+          if (isChunk(d)) {
+            const r = n.joiner.push(d);
+            if (r) this.netOnGuest(JSON.parse(r.text));
+            return;
+          }
+          this.netOnGuest(JSON.parse(d));
+        };
+        t.onclose = () => this.netLost();
+        this.netSend(t, "rel", { k: "hello", n: n.char.name, c: n.char.charId });
+        addEventListener("pagehide", () => {
+          if (n.t) n.t.send("rel", JSON.stringify({ k: "bye" }));
+        });
+      };
+      const ask = () => sig.post({ t: "want", from: me });
+      n.ask = setInterval(ask, 2e3);
+      ask();
+    },
+    netOnGuest(m) {
+      const n = this.net;
+      if (m.k === "world") {
+        this.currentSlot = null;
+        this._loadGame(JSON.stringify(m.save));
+        const me = n.char;
+        me.x = m.x;
+        me.y = m.y;
+        me.netId = n.id = m.id;
+        this.player = me;
+        for (const [id, s] of m.roster) n.others.set(id, this.netAvatar(id, s));
+        this.cam.x = me.cx - this.W / 2;
+        this.cam.y = me.cy - this.H / 2;
+        this.petEnts = [];
+        this.syncPets();
+        UI5.refreshBag();
+        UI5.refreshEquip();
+        UI5.refreshSkillbar();
+        UI5.refreshStatAlloc();
+        UI5.refreshSkillSlots();
+      } else if (m.k === "ps") {
+        const t = now();
+        for (const [id, s] of m.list) {
+          if (id === n.id) continue;
+          const rp = n.others.get(id) || (n.others.set(id, this.netAvatar(id, s)), n.others.get(id));
+          rp.netBuf.push(t, s);
+          this.netApply(rp, s);
+        }
+      } else if (m.k === "join") {
+        if (!n.others.has(m.id)) n.others.set(m.id, this.netAvatar(m.id, m.s));
+        this.toast(tr("{name|이} 들어왔다", { name: m.s.n }), "good");
+      } else if (m.k === "leave") {
+        const rp = n.others.get(m.id);
+        if (rp) {
+          n.others.delete(m.id);
+          this.netRemove(rp);
+          this.toast(tr("{name|이} 나갔다", { name: rp.name }), "info");
+        }
+      } else if (m.k === "hurt") {
+        this.me.hurt(m.a, m.sx);
+      }
+    },
+    netLost() {
+      const n = this.net;
+      if (!n || n.role !== "guest") return;
+      for (const rp of n.others.values()) this.netRemove(rp);
+      n.sig.close();
+      this.net = null;
+      this.toast(tr("호스트와 연결이 끊겼다"), "bad");
+    },
+    /* ================= 매 프레임 ================= */
+    netTick(dt) {
+      const n = this.net;
+      this.netMoveAvatars();
+      n.sendT -= dt;
+      if (n.sendT > 0) return;
+      n.sendT += 1 / NET_HZ;
+      if (n.sendT < 0) n.sendT = 0;
+      if (n.role === "guest") {
+        if (n.t && n.id >= 0) n.t.send("fast", JSON.stringify({ k: "st", s: this.netState(this.me) }));
+        return;
+      }
+      const t = now();
+      for (const q of n.peers.values()) if (q.heard && t - q.heard > 5) {
+        q.t.close();
+        this.netDropPeer(q);
+      }
+      const list = [[0, this.netState(this.me)]];
+      for (const q of n.peers.values()) if (q.last) list.push([q.id, q.last]);
+      for (const q of n.peers.values()) if (q.rp) q.t.send("fast", JSON.stringify({ k: "ps", list: list.filter((e) => e[0] !== q.id) }));
+    },
+    /** 호스트의 몹이 남의 아바타를 쳤다 — 피해는 그 주인 화면에서 계산한다(무적 시간도 거기 것). */
+    netRemoteHurt(rp, amount, srcX) {
+      const n = this.net;
+      if (!n || n.role !== "host" || rp.iframe > 0 || rp._hurtAt && this.time - rp._hurtAt < 0.3) return;
+      const peer = n.peers.get(rp.netId);
+      if (!peer) return;
+      rp._hurtAt = this.time;
+      this.netSend(peer.t, "rel", { k: "hurt", a: amount, sx: srcX });
+    },
+    /** 주소의 ?mp=host&room= — 새 게임·불러오기를 마치면 방을 연다(개발판 시험용, 창은 M4). */
+    mpAuto() {
+      const qs = new URLSearchParams(location.search);
+      if (!this.net && qs.get("mp") === "host") this.mpHost(qs.get("room") || "test");
+    }
+  };
+  mixin(G, NetPart);
+
   // src/game/main.ts
   var DATA = Object.fromEntries(Object.entries(Object.assign({}, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports)).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
   if (!I18N.isSource) {
@@ -45807,7 +46346,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports, utility_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports, utility_exports, net_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
