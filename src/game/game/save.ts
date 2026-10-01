@@ -80,23 +80,7 @@ export const SavePart: Bag = {
     if (this._saving) { this.toast(tr('저장하는 중이다'), 'info'); return false; }
     this._saving = true;
     try {
-      const p = this.player;
-      const data: Bag = {
-        v: SAVE_VERSION, name: p.name, savedAt: Date.now(),
-        world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
-        talked: this.talked, crafted: this.crafted,
-        talkSeq: this.talkSeq, storyHeard: this.storyHeard, villageSeen: this.villageSeen,
-        sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
-        seenRuins: this.seenRuins, seenBiomes: this.seenBiomes, ruinMarks: this.ruinMarks, ruinEvDone: this.ruinEvDone,
-        cipherSeen: this.cipherSeen,        // 어느 유적의 쪽지를 몇 장 읽었나
-        deathMark: this.deathMark,
-        villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
-        lairs: this.lairs, asmRan: this.asmRan, everPlanted: this.everPlanted,
-        vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties, bountyNext: this.bountyNext,
-        shopStock: this.shopStock, shopStockDay: this.shopStockDay,
-        achievements: this.achievements, tally: this.tally, survey: this.survey,
-        p: this.packChar(p)
-      };
+      const data = this.saveData();
       data.sealed = 1;                                 // 서명이 있는 기록이라는 표시
       await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
       this.toast(tr('저장했다'), 'good');
@@ -105,6 +89,27 @@ export const SavePart: Bag = {
       this.toast(e && (e as Error).name === 'QuotaExceededError' ? tr('저장 실패: 용량 초과') : tr('저장 실패'), 'bad'); console.error(e);
       return false;
     } finally { this._saving = false; }
+  },
+  /** 지금 판의 세이브 본문 — 저장과 멀티플레이 참가자에게 보내는 세계 스냅샷이 같이 쓴다. */
+  saveData() {
+    const p = this.player;
+    const data: Bag = {
+      v: SAVE_VERSION, name: p.name, savedAt: Date.now(),
+      world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
+      talked: this.talked, crafted: this.crafted,
+      talkSeq: this.talkSeq, storyHeard: this.storyHeard, villageSeen: this.villageSeen,
+      sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
+      seenRuins: this.seenRuins, seenBiomes: this.seenBiomes, ruinMarks: this.ruinMarks, ruinEvDone: this.ruinEvDone,
+      cipherSeen: this.cipherSeen,        // 어느 유적의 쪽지를 몇 장 읽었나
+      deathMark: this.deathMark,
+      villageUnlocked: this.villageUnlocked, goldRate: this.goldRate, dayCount: this.dayCount,
+      lairs: this.lairs, asmRan: this.asmRan, everPlanted: this.everPlanted,
+      vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties, bountyNext: this.bountyNext,
+      shopStock: this.shopStock, shopStockDay: this.shopStockDay,
+      achievements: this.achievements, tally: this.tally, survey: this.survey,
+      p: this.packChar(p)
+    };
+    return data;
   },
   /* ================= 저장 내보내기 / 가져오기 ================= */
   /* 파일은 슬롯 번호(0부터)를 열쇠로 본문 글자열을 담는다 — 저장소가 바뀌어도 파일 모양은 그대로다. */
@@ -233,6 +238,7 @@ export const SavePart: Bag = {
       this.toast(tr('여정을 이어간다'), 'good');
       this.audioInit();
       this.buildMapAtlas();
+      this.mpAuto();
     } catch (e) { this.toast(tr('불러오기 실패'), 'bad'); console.error(e); }
   },
 

@@ -324,11 +324,24 @@ export const RenderPart: Bag = {
     this.drawRipeCrops(c, camX, camY);
     this.drawStarOrbit(c, p, camX, camY);
     this.drawPlayer(c, p, p.x - camX, p.y - camY);
+    for (const q of this.players) if (q !== p) { this.drawPlayer(c, q, q.x - camX, q.y - camY); this.drawNameTag(c, q, camX, camY); }
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
     /* 회오리 검무의 칼선 — 플레이어 바로 위에, 선으로만. */
     this.drawWhirlArc(c, p, camX, camY);
     // ---- 떨어지는 별 ----
     this.drawSigSky(c, camX, camY);
+  },
+  /** 남의 캐릭터 머리 위 이름과 체력 줄. */
+  drawNameTag(c, q, camX, camY) {
+    const x = Math.round(q.cx - camX), y = Math.round(q.y - camY) - 14;
+    c.save();
+    c.font = '11px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'bottom';
+    c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.75)'; c.strokeText(q.name, x, y);
+    c.fillStyle = '#e8f0ff'; c.fillText(q.name, x, y);
+    const k = clamp(q.hp / (q.netMaxHp || q.d.maxHp || 1), 0, 1);
+    c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(x - 14, y + 2, 28, 3);
+    c.fillStyle = k > 0.35 ? '#6fd36f' : '#e05a4a'; c.fillRect(x - 14, y + 2, Math.round(28 * k), 3);
+    c.restore();
   },
   /** 렌더 단계 — 어둠 · 빛 색 · 공기색 · 유적 여운 */
   rLightOverlay(f) {

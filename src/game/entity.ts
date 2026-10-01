@@ -185,6 +185,7 @@ export class Player extends Ent {
   declare climbOut: (...a: any[]) => any; declare fireProj: (...a: any[]) => any; declare punch: (...a: any[]) => any;
   declare rollCrit: (...a: any[]) => any; declare scaleDmg: (...a: any[]) => any; declare updateOxygen: (...a: any[]) => any;
   declare volley: number;
+  declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare _hid: string; declare _wid: string; declare _hurtAt: number;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
   declare buffs: any[]; declare cd: Record<string, any>; declare channel: Record<string, any>; declare charId: string; declare charge: number; declare d: Record<string, any>;
   declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: Record<string, any>; declare facing: number; declare flash: number;
@@ -434,6 +435,8 @@ export class Player extends Ent {
 
   /* ---- 피해 ---- */
   hurt(amount, srcX?) {
+    /* ★ 남의 아바타가 맞으면 피해는 주인 화면에서 계산한다 — 여기서 hp 를 깎으면 이 화면의 G.onDeath 가 불린다. */
+    if (this.remote) { G.netRemoteHurt(this, amount, srcX); return; }
     if (this.iframe > 0 || this.dead) return;
     const red = this.d.def / (this.d.def + 60);
     let dmg = Math.max(1, Math.round(amount * (1 - red) * (1 - (this.d.dr || 0) / 100)));
@@ -1121,6 +1124,7 @@ export class Drop {
   update(dt, world, player) {
     this.life -= dt; this.pick -= dt; this.t += dt;
     if (this.life <= 0) { this.dead = true; return; }
+    if (player.remote) player = G.me;   // 남의 아바타는 줍지 않는다(줍기는 주인 화면 몫)
     const d = dist(this.x, this.y, player.cx, player.cy);
     if (this.pick <= 0 && d < 92) {
       const a = angleTo(this.x, this.y, player.cx, player.cy);
