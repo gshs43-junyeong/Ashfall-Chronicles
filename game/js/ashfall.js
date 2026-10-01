@@ -10572,9 +10572,10 @@
     }
   };
   var PET_MOTION = {
-    storm_falcon: { fps: 6, bob: 1.5, tilt: 0.1 },
+    storm_falcon: { fps: 8, bob: 1 },
     dust_sparrow: { fps: 6, bob: 1.5, tilt: 0.09 },
-    glass_moth: { fps: 5, bob: 1, flapX: 0.28 },
+    glass_moth: { fps: 8, bob: 1.2 },
+    void_hatchling: { fps: 5, bob: 1 },
     ember_drake: { fps: 5, bob: 1.2, tilt: 0.07 },
     star_sprite: { fps: 4, pulse: 0.09, spin: 0.25 }
   };
@@ -42709,7 +42710,8 @@
       const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets[key];
       if (sheet) {
         const mo = PET_MOTION[pet.id] || {}, fps = mo.fps || 3, ph = (this.time * fps + pet.slot) * Math.PI;
-        const fr = sheet.flap ? pet.flash > 0 ? sheet.flap : Math.floor(this.time * 9 + pet.slot * 2) % sheet.flap : pet.flash > 0 ? 2 : Math.floor(this.time * fps + pet.slot) % 2;
+        const idle = sheet.idle || 2;
+        const fr = sheet.flap ? pet.flash > 0 ? sheet.flap : Math.floor(this.time * 9 + pet.slot * 2) % sheet.flap : pet.flash > 0 ? idle : Math.floor(this.time * fps + pet.slot) % idle;
         const a = pet.def.atk, hit = pet.flash > 0 ? pet.flash / 0.18 : 0;
         const lunge = hit ? pet.facing * (a && a.k === "melee" ? 8 : -2) * Math.sin(hit * Math.PI) : 0;
         c.save();

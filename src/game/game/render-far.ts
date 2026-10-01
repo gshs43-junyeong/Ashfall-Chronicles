@@ -801,8 +801,9 @@ export const RenderFarPart: Bag = {
     const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets[key];
     if (sheet) {
       const mo = PET_MOTION[pet.id] || {}, fps = mo.fps || 3, ph = (this.time * fps + pet.slot) * Math.PI;
+      const idle = sheet.idle || 2;                     // 떠 있기 장 수 — 사이 장을 구운 펫은 넷, 공격 장은 그다음
       const fr = sheet.flap ? (pet.flash > 0 ? sheet.flap : Math.floor(this.time * 9 + pet.slot * 2) % sheet.flap)
-        : pet.flash > 0 ? 2 : (Math.floor(this.time * fps + pet.slot) % 2);
+        : pet.flash > 0 ? idle : (Math.floor(this.time * fps + pet.slot) % idle);
       /* 공격 순간 — 근접은 과녁 쪽으로 달려들고, 쏘는 펫은 반동으로 살짝 물러난다 */
       const a = pet.def.atk, hit = pet.flash > 0 ? pet.flash / 0.18 : 0;
       const lunge = hit ? pet.facing * (a && a.k === 'melee' ? 8 : -2) * Math.sin(hit * Math.PI) : 0;
