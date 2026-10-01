@@ -726,7 +726,7 @@ export const Art: Bag = {
       try {
         this.paint(g, spec, rng);
       } catch (e) {
-        console.warn(`${tr('[아이콘]')} ` + key + ` ${tr('를 그리지 못했습니다:')}`, e && e.message);
+        console.warn(`${tr('[아이콘]')} ` + key + ` ${tr('를 그리지 못했습니다:')}`, e && (e as Error).message);
       }
       g.restore();
       // 펫은 형태(네발·새·정령…)마다 그림이 칸 안에서 치우쳐 있어서, 슬롯에 나란히 놓으면 저마다 다른 높이로 떠 보인다.

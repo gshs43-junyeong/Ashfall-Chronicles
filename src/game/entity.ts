@@ -178,6 +178,13 @@ export class Ent extends Entity {
 export class Player extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare static _vol: number;   // 한 번 휘두른 공격의 번호(여러 몹이 같은 휘두름에 맞았는지)
+  declare _punchDmg: number; declare chargeDmg: number; declare chargeHit: Set<any>; declare chargeT: number; declare drownT: number;
+  declare floating: boolean; declare gliding: boolean; declare headUnder: boolean; declare highest: number; declare jetOk: boolean;
+  declare jetT: number; declare jetting: boolean; declare oxyPressure: number; declare oxygen: number; declare swimMove: boolean;
+  declare swimPh: number; declare swimming: boolean; declare swingAng: number; declare swingReach: number; declare wasInWater: boolean;
+  declare climbOut: (...a: any[]) => any; declare fireProj: (...a: any[]) => any; declare punch: (...a: any[]) => any;
+  declare rollCrit: (...a: any[]) => any; declare scaleDmg: (...a: any[]) => any; declare updateOxygen: (...a: any[]) => any;
+  declare volley: number;
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
   declare buffs: any[]; declare cd: Record<string, any>; declare channel: Record<string, any>; declare charId: string; declare charge: number; declare d: Record<string, any>;
   declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: Record<string, any>; declare facing: number; declare flash: number;
@@ -306,7 +313,7 @@ export class Player extends Ent {
   }
 
   /** 제트팩 안내 한 줄 — 같은 말이 초당 몇 번씩 뜨지 않게 3초에 한 번만 */
-  jetNote(msg, kind) {
+  jetNote(msg, kind?) {
     if (G.time - (this._jetNoteAt || -1e9) < 3) return;
     this._jetNoteAt = G.time;
     G.toast(msg, kind);
@@ -426,7 +433,7 @@ export class Player extends Ent {
   }
 
   /* ---- 피해 ---- */
-  hurt(amount, srcX) {
+  hurt(amount, srcX?) {
     if (this.iframe > 0 || this.dead) return;
     const red = this.d.def / (this.d.def + 60);
     let dmg = Math.max(1, Math.round(amount * (1 - red) * (1 - (this.d.dr || 0) / 100)));
@@ -486,6 +493,10 @@ export class Player extends Ent {
 /* ================= 적 ================= */
 export class Enemy extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare combo: number; declare dashA: number; declare drift: number; declare iceCd: number; declare iceFloor: number; declare landT: number;
+  declare openT: number; declare phaseT: number; declare spin: number; declare stopT: number; declare term: number; declare tilt: number;
+  declare unmakeCd: number; declare wDir: number; declare wob: number; declare bossAI: (...a: any[]) => any; declare layHeat: (...a: any[]) => any;
+  declare onPhaseChange: (...a: any[]) => any; declare raisePedestals: (...a: any[]) => any; declare tickWeak: (...a: any[]) => any;
   declare _vol: number; declare aggro: number; declare armor: number; declare atkCd: number; declare atkPose: number; declare boss: boolean;
   declare def: EnemyDef; declare dmg: number; declare dots: any[]; declare elite: boolean; declare facing: number; declare flash: number;
   declare fleeT: number; declare gold: number; declare guard: number | boolean; declare hitCd: number; declare hp: number; declare jumpCd: number;

@@ -142,6 +142,30 @@ export function doorEdge(d) {
 /** Ashfall 세계 — 타일맵(engine/tilemap) 위에 생성기 · 마을 · 유적 · 바다 · 유체 · 조명 규칙을 얹는다(엔진화 계획 §8-4 상속). */
 export class World extends TileMap {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare _entranceLandX: number; declare _entranceLandY: number; declare _entranceRooms: any[]; declare _entranceSpots: any[];
+  declare _natural: Set<any>; declare _ruinCtx: Record<string, any>; declare isle: Record<string, any>; declare jungleLake: Record<string, any>;
+  declare richCount: number; declare richSites: number; declare ruinVaults: any[]; declare seaBed: Int16Array; declare yunseul: Record<string, any>;
+  declare _airPocket: (...a: any[]) => any; declare _bedAt: (...a: any[]) => any; declare _buildPassage: (...a: any[]) => any;
+  declare _canDecor: (...a: any[]) => any; declare _canopy: (...a: any[]) => any; declare _carveBasin: (...a: any[]) => any;
+  declare _carveEntranceShaft: (...a: any[]) => any; declare _cgW: (...a: any[]) => any; declare _decorOne: (...a: any[]) => any;
+  declare _deepFloor: (...a: any[]) => any; declare _digStair: (...a: any[]) => any; declare _ensureConnected: (...a: any[]) => any;
+  declare _fillBasin: (...a: any[]) => any; declare _finishPyramid: (...a: any[]) => any; declare _floorBelow: (...a: any[]) => any;
+  declare _floorNear: (...a: any[]) => any; declare _groundTrunk: (...a: any[]) => any; declare _levelLiquid: (...a: any[]) => any;
+  declare _linkRooms: (...a: any[]) => any; declare _noWater: (...a: any[]) => any; declare _returnSet: (...a: any[]) => any;
+  declare _skyClear: (...a: any[]) => any; declare _skyStrip: (...a: any[]) => any; declare _standFns: (...a: any[]) => any;
+  declare _standNext: (...a: any[]) => any; declare _standSeed: (...a: any[]) => any; declare _standSet: (...a: any[]) => any;
+  declare _walkBack: (...a: any[]) => any; declare _walkPass: (...a: any[]) => any; declare _walkable: (...a: any[]) => any;
+  declare bspSplit: (...a: any[]) => any; declare buildCipherVault: (...a: any[]) => any; declare buildFaults: (...a: any[]) => any;
+  declare buildMysticRoom: (...a: any[]) => any; declare buildRuinSite: (...a: any[]) => any; declare buildSigRoom: (...a: any[]) => any;
+  declare buildSkyExtras: (...a: any[]) => any; declare buildSkyTemple: (...a: any[]) => any; declare carveDungeon: (...a: any[]) => any;
+  declare carveIsland: (...a: any[]) => any; declare carveRuinEntrance: (...a: any[]) => any; declare caveTypeAt: (...a: any[]) => any;
+  declare checkDawnLayout: (...a: any[]) => any; declare clearBox: (...a: any[]) => any; declare clearRigSite: (...a: any[]) => any;
+  declare dawnPlace: (...a: any[]) => any; declare dawnPlazaSpan: (...a: any[]) => any; declare faultCells: (...a: any[]) => any;
+  declare fitRig: (...a: any[]) => any; declare inRig: (...a: any[]) => any; declare locked: (...a: any[]) => any;
+  declare placeMerchants: (...a: any[]) => any; declare poleColumn: (...a: any[]) => any; declare putDecor: (...a: any[]) => any;
+  declare putPathTrap: (...a: any[]) => any; declare putRuinDecor: (...a: any[]) => any; declare putTileTrap: (...a: any[]) => any;
+  declare skyAlt: (...a: any[]) => any; declare skyFeature: (...a: any[]) => any; declare skyGrotto: (...a: any[]) => any;
+  declare trapSpot: (...a: any[]) => any;
   declare dims: WorldDims; declare ruinSpec: RuinDef[];
   declare _ensureWalkable: (...a: any[]) => any; declare _walkJobs: any[]; declare atelier: Record<string, any>; declare beach: Record<string, any>; declare breakLongRuns: (...a: any[]) => any;
   declare buildAltars: (...a: any[]) => any; declare buildAtelier: (...a: any[]) => any; declare buildCaveZones: (...a: any[]) => any; declare buildCaverns: (...a: any[]) => any;
@@ -586,7 +610,7 @@ export class World extends TileMap {
   }
   doorEdge(d) { return doorEdge(d); }
   /** 문 하나를 만들어 objects/doors 양쪽에 같은 참조로 등록한다 (열고 닫는 상태가 항상 같이 반영되도록). */
-  pushDoor(x, y, w, h, dir, extra) {
+  pushDoor(x, y, w, h, dir, extra?) {
     const d = Object.assign({ type: 'door', x, y, w, h, closed: true, dir: dir || -1 }, extra);
     this.objects.push(d); this.doors.push(d);
   }
