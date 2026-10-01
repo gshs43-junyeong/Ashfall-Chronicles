@@ -1659,10 +1659,10 @@
    "game/corpse.drawCursor"
   ],
   "상자를 열자 무언가 깨어났다": [
-   "game/fishing.interact"
+   "game/fishing.wakeChestGuard"
   ],
   "상자를 열자 섬이 흔들렸다": [
-   "game/fishing.interact"
+   "game/fishing.wakeChestBoss"
   ],
   "상자에 손이 닿지 않는다 — 골방 문을 먼저 열어야 한다": [
    "game/fishing.interact"
