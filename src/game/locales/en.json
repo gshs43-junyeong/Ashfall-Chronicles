@@ -917,12 +917,12 @@
   "진화를 기다린다 — {food|을} 먹여야 한다": "Waiting to evolve — feed it {food}",
   "{name|이} 들어왔다": "{name} joined",
   "{name|이} 나갔다": "{name} left",
-  "방 {room|을} 열었다": "Opened room {room}",
   "방이 가득 찼다": "The room is full",
   "호스트와 연결이 끊겼다": "Lost connection to the host",
   "중개 서버에 닿지 않는다": "Can't reach the relay server",
-  "방이 닫혔다 — 새로 열어야 한다": "The room closed. Open a new one.",
-  "그런 방이 없다": "No such room"
+  "그런 방이 없다": "No such room",
+  "방 {room|을} 열었다 — 5분 동안 참가를 받는다": "Opened room {room}. Accepting players for 5 minutes.",
+  "호스트가 지금 참가를 받고 있지 않다": "The host isn't accepting players right now"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
