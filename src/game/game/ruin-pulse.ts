@@ -2,7 +2,7 @@
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT, fmt, tr } from '../lang.js';
-import { WH } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { ITEMS } from '../data/items.js';
 import { ENEMIES } from '../data/enemies.js';
@@ -684,7 +684,7 @@ export const RuinPulsePart: Bag = {
   },
 
   /** 떨어지는 돌 — 흔들리는 동안(t) 제자리에서 먼지를 떨구고, 그다음 떨어진다 */
-  updateRocks(dt) {
+  updateRocks(dt) { const { WH } = dimsOf(this.world);
     const p = this.player, w = this.world;
     for (let i = this.rocks.length - 1; i >= 0; i--) {
       const r = this.rocks[i];

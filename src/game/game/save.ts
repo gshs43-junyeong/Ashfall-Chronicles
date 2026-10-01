@@ -4,7 +4,7 @@ import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
 import { escHtml } from '../util.js';
 import { tr } from '../lang.js';
-import { WH, WORLD_SIZES, WSIZE, WW } from '../size.js';
+import { WORLD_SIZES, dimsOf } from '../size.js';
 import { ITEMS } from '../data/items.js';
 import { CHARACTERS, CHAR_OF, MODES, MODE_OF } from '../data/start.js';
 import { PETS } from '../data/pets.js';
@@ -129,8 +129,9 @@ export const SavePart: Bag = {
       // 세계 폭이 바뀐 버전의 기록은 그대로 풀면 지형이 어긋난 채로 열린다 — 아예 막는다
       /* 세계 크기가 다른 판의 기록은 열지 않는다 — 사연: docs/code-history.md#h58 */
       /* 세계 크기(소형·중형·대형)를 **먼저** 맞추고 대조한다 — 크기마다 WW·WH 가 다르다. */
-      const prevSize = WSIZE;
+      const prevSize = dimsOf(this.world).WSIZE;
       setWorldSize((d.world && d.world.size) || 's');
+      const { WW, WH } = dimsOf();                 // 고른 크기의 치수 — 아직 세계가 없다
       if (d.world && ((d.world.ww && d.world.ww !== WW) || (d.world.wh && d.world.wh !== WH))) {
         setWorldSize(prevSize);
         this.toast(tr('이전 크기({ww}×{v})의 세계라 열 수 없다 — 새로 시작해야 한다', { ww: d.world.ww, v: d.world.wh || '?' }), 'bad');

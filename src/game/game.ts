@@ -12,7 +12,7 @@ import { createSaveStore } from '../engine/save/store.js';
 import { upgrade } from '../engine/save/upgrade.js';
 import { createScenes } from '../engine/scene/scenes.js';
 import { N_, fmt, tr } from './lang.js';
-import { CAMP_X1, DEEP_Y, HELL_Y, SEA_X1, SKY_Y, WH, WW } from './size.js';
+import { dimsOf } from './size.js';
 import { T, TILE_DEF, TILE_SPRITE } from './data.js';
 import { ITEMS } from './data/items.js';
 import { CHAR_OF, KEY_ACTIONS, MODE_OF, VILLAGE } from './data/start.js';
@@ -161,7 +161,7 @@ export const G: Bag = {
   currentSlot: null,      // 지금 열려 있는 세이브가 몇 번 슬롯인지 — saveGame()이 여길 본다
 
   /* ================= 초기화 ================= */
-  init() {
+  init() { const { WW, WH } = dimsOf(this.world);
     this.cv = $('#game'); this.ctx = this.cv.getContext('2d');
     this.mm = $('#minimap'); this.mmx = this.mm.getContext('2d');
     // 전체 지도용 축소 버전 — 타일 하나당 1px.
@@ -416,6 +416,7 @@ export const G: Bag = {
     // ★ World 를 만들기 **전에** — 배열 크기와 모든 좌표가 여기서 정해진다.
     setWorldSize(size || new URLSearchParams(location.search).get('size') || 's');
     this.world = new World(seed).generate();
+    const { WW, WH, HELL_Y, CAMP_X1, SEA_X1 } = this.world.dims;
     this.fitMapAtlas();
     this._rigs = null; this._fbg = null;   // 세계가 바뀌었으니 자리·원경 캐시를 버린다
     this.player = new Player(this.world.spawnX * TS, (this.world.spawnY - 2) * TS);
@@ -764,7 +765,7 @@ export const G: Bag = {
   },
 
   /** 지금 상황에 맞는 배경음악 키를 고른다 (music.js의 BGM 테이블과 짝) */
-  pickBgm() {
+  pickBgm() { const { SKY_Y } = dimsOf(this.world);
     if (this.state !== 'play' || !this.player || !this.world) return 'title';
     /* 쓰러진 자리 — 사망 화면이 떠 있는 동안. */
     if (this._deathEl === undefined) this._deathEl = $('#death-screen');
@@ -807,7 +808,7 @@ export const G: Bag = {
     return 'normal';
   },
   /** 카타콤 곡을 쓰는 자리인가 — 심층 전부와, 깊이와 무관한 모든 던전·유적 */
-  inCatacomb(tx, ty, zone) {
+  inCatacomb(tx, ty, zone) { const { DEEP_Y } = dimsOf(this.world);
     if (ty > DEEP_Y) return true;
     if (zone === 'ruin' || zone === 'works' || zone === 'runaway' || zone === 'atelier'
       || zone === 'deepshaft') return true;
@@ -817,7 +818,7 @@ export const G: Bag = {
     return false;
   },
 
-  update(dt) {
+  update(dt) { const { WW, WH } = dimsOf(this.world);
     /* ---- 손이 멈추는 한 박자(히트스톱) ---- */
     if (this.stopT > 0) { this.stopT -= dt; dt *= 0.12; }
     this.time += dt;
@@ -1017,7 +1018,7 @@ export const G: Bag = {
   },
 
   /* ---- 고대 유적 함정 ---- */
-  tickTileTraps() {
+  tickTileTraps() { const { WW, WH } = dimsOf(this.world);
     const w = this.world, p = this.player;
     const cx = Math.floor(p.cx / TS), cy = Math.floor(p.cy / TS);
     const R = 26;                                   // 화면 언저리만

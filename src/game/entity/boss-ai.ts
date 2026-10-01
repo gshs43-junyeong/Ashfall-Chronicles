@@ -3,7 +3,7 @@ import { app as G, ui as UI } from '../ctx.js';
 import { TAU, angleTo, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { WH, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { T } from '../data.js';
 import { TS } from '../world.js';
 import { Enemy, Part, Proj } from '../entity.js';
@@ -12,7 +12,7 @@ import { Enemy, Part, Proj } from '../entity.js';
 export const BossAI: Bag & ThisType<Enemy> = {
 
   /* ---- 보스 AI ---- */
-  bossAI(dt, world, p, dx, dy, dd) {
+  bossAI(dt, world, p, dx, dy, dd) { const { WW, WH } = dimsOf(world);
     const AI = this.def.ai;
     this.stateT -= dt;
     const hpr = this.hp / this.maxHp;

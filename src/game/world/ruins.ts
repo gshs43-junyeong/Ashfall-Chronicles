@@ -2,7 +2,6 @@
 import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
-import { WW } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { MYSTIC } from '../data/ruins.js';
 import { TS, World } from '../world.js';
@@ -11,7 +10,7 @@ import { TS, World } from '../world.js';
 export const WorldRuins: Bag & ThisType<World> = {
 
   /** 유적 입구를 판다 — 생김새(arch)에 따라 들어가는 방식이 다르다. */
-  carveRuinEntrance(spec, x0, y0, rng) {
+  carveRuinEntrance(spec, x0, y0, rng) { const { WW } = this.dims;
     this._entranceLandY = undefined;                          // 피라미드만 채운다
     this._entranceSpots = [];                                 // 입구가 없으면 빈 채로 둔다
     this._entranceRooms = [];
@@ -144,7 +143,7 @@ export const WorldRuins: Bag & ThisType<World> = {
   },
 
   /** 유적으로 가는 **쌓아 올린 길** — 테라리아 던전 복도나 마인크래프트 요새처럼 벽돌로 두른 곧은 마디를 이어 붙인다. */
-  _buildPassage(sx, sy, yBot, spec, rng, o) {
+  _buildPassage(sx, sy, yBot, spec, rng, o) { const { WW } = this.dims;
     const kind = spec.entryKind || 'foothold';
     const H = 5;                                              // 복도 안 높이
     const span = Math.max(20, Math.round((spec.w || 40) * 0.45));

@@ -3,7 +3,7 @@ import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
 import { fmt, tr } from '../lang.js';
-import { WH, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { RARITY_MULT, T, TILE_DEF } from '../data.js';
 import { ITEMS } from '../data/items.js';
 import { CHAR_OF } from '../data/start.js';
@@ -24,7 +24,7 @@ export const VillagePart: Bag = {
   /* ================= 여명 마을 시설 ================= */
 
   /** 귀환 비석 — 베이스캠프 ↔ 여명 마을 왕복 */
-  useWaystone() {
+  useWaystone() { const { WW, WH } = dimsOf(this.world);
     const p = this.player, w = this.world;
     const d = w.dawnCity;
     if (!this.villageUnlocked) {

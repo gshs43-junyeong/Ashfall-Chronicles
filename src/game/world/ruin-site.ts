@@ -3,7 +3,7 @@ import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { SHIFT, SX, SY, WH, WORLD_BOT, WW } from '../size.js';
+import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { MYSTIC, RUIN_CIPHER, RUIN_HINTS, RUIN_MAP_IN, RUIN_RELIC, RUIN_SPEC, STORY_RUIN } from '../data/ruins.js';
 import { TS, World } from '../world.js';
@@ -193,7 +193,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
   },
 
   /* ---- 숨겨진 유적 3곳 + 심층 봉인실 ---- */
-  buildRuins(rng) {
+  buildRuins(rng) { const { SX, SY, WW } = this.dims;
     this.ruins = [];
     this.ruinEvents = [];
     this.ruinSites = [];                                      // 석판 유적도 같이 담는다 (진단·저장용)
@@ -351,7 +351,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
   },
 
   /** 위치 지도를 세계에 흩뿌린다 — 입구 없는 유적(arch: 'buried')마다 두 군데. */
-  buildRuinCaches(rng) {
+  buildRuinCaches(rng) { const { WW, WH } = this.dims;
     for (const spec of RUIN_SPEC) {
       if (spec.arch !== 'buried') continue;
       const mapId = 'ruinmap_' + spec.id;
@@ -414,7 +414,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
     return 1;
   },
 
-  buildAltars(rng) {
+  buildAltars(rng) { const { SX, WORLD_BOT } = this.dims;
     // 제단 밑면이 바닥 타일 윗면에 정확히 닿도록: y = 바닥행*TS - h 부패 제단
     const cx1 = SX(2500 + SHIFT), sy1 = this.surface[cx1];
     this.clearBox(cx1 - 14, sy1 - 14, 28, 14);

@@ -2,7 +2,6 @@
 import { app as G, factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
-import { HELL_Y, WH, WORLD_BOT, WW } from '../size.js';
 import { FARM_WET_DAYS, FARM_WET_R, SEED_TILE, T, TILE_DEF } from '../data.js';
 import { OBJ_SIZE } from '../data/items.js';
 import { FLUID_KIND } from '../data/materials.js';
@@ -26,7 +25,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 베어낸 나무를 시간이 지나면 되살린다. */
-  regrow(rng, n, centerX) {
+  regrow(rng, n, centerX) { const { WW } = this.dims;
     for (let k = 0; k < n; k++) {
       const x = clamp(Math.round(centerX + rng.range(-420, 420)), 2, WW - 3);
       if (Math.abs(x - this.spawnX) < 40) continue;   // 마을 안쪽은 피한다
@@ -122,7 +121,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 그 자리에 원래 있어야 할 지층 타일 (메울 때 쓴다) */
-  _bedAt(x, y) {
+  _bedAt(x, y) { const { WORLD_BOT, HELL_Y } = this.dims;
     if (y >= WORLD_BOT - 4) return T.BEDROCK;
     if (y >= HELL_Y) return T.ASH;
     const L = MAT_LAYER[this.matId[x]], depth = y - this.surface[x];
@@ -131,7 +130,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 마지막 구멍 메우기 — pruneSmallCaves(생성 초반)가 끝난 **뒤에** 생긴 작은 굴을 메운다. */
-  sweepPockets(maxSize) {
+  sweepPockets(maxSize) { const { WW, WH, HELL_Y, SEA_X1 } = this.dims;
     const natural = new Set();
     for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
     const busy = new Set();
@@ -146,7 +145,7 @@ export const WorldPlants: Bag & ThisType<World> = {
     const seen = new Uint8Array(WW * WH), cells = [];
     let filled = 0;
     for (let sx = 2; sx < WW - 2; sx++) {
-      if (inSeaZone(sx)) continue;
+      if (inSeaZone(sx, SEA_X1)) continue;
       for (let sy = this.surface[sx] + 10; sy < HELL_Y - 2; sy++) {
         const k0 = sy * WW + sx;
         if (seen[k0] || !open(k0)) continue;
@@ -156,7 +155,7 @@ export const WorldPlants: Bag & ThisType<World> = {
         while (st.length) {
           const c = st.pop(); cells.push(c);
           const cx = c % WW, cy = (c / WW) | 0;
-          if (cells.length > maxSize || cy <= this.surface[cx] + 9 || cy >= HELL_Y - 2 || inSeaZone(cx)) ok = false;
+          if (cells.length > maxSize || cy <= this.surface[cx] + 9 || cy >= HELL_Y - 2 || inSeaZone(cx, SEA_X1)) ok = false;
           if (!natural.has(this.walls[c]) || busy.has(c)) ok = false;
           /* ★ 실격이어도 **끝까지 돈다.** */
           for (const d of [c - 1, c + 1, c - WW, c + WW]) {
@@ -175,7 +174,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 이어진 공동을 하나씩 재서, 기준보다 작고 지표와도 통하지 않는 것은 도로 메운다. */
-  pruneSmallCaves(minSize) {
+  pruneSmallCaves(minSize) { const { WW, WH, WORLD_BOT } = this.dims;
     const N = WW * WH;
     const seen = new Uint8Array(N);
     const stack = new Int32Array(N);      // 한 덩어리가 아무리 커도 넘치지 않게 최대 크기로
@@ -212,7 +211,7 @@ export const WorldPlants: Bag & ThisType<World> = {
 
   /* ================= 농업 ================= */
   /** 씨앗을 심는다. */
-  plantSeed(x, y, seedId) {
+  plantSeed(x, y, seedId) { const { WW } = this.dims;
     const tile = SEED_TILE[seedId];
     if (tile === undefined) return false;
     if (this.get(x, y) !== T.AIR || !TILE_DEF[this.get(x, y + 1)].farm) return false;
@@ -231,11 +230,11 @@ export const WorldPlants: Bag & ThisType<World> = {
     return false;
   },
   /** 밭 칸(x, y)이 day 날 아침에 젖어 있는가. */
-  isWet(x, y, day) {
+  isWet(x, y, day) { const { WW } = this.dims;
     return (this.wet[y * WW + x] | 0) >= day || this.nearWater(x, y);
   },
   /** 밭 칸(x, y)에 물을 준다 — day 날부터 FARM_WET_DAYS 번의 아침 동안 젖어 있다. */
-  waterFarm(x, y, day) {
+  waterFarm(x, y, day) { const { WW } = this.dims;
     if (!TILE_DEF[this.get(x, y)].farm) return false;
     const k = y * WW + x;
     this.wet[k] = Math.max(this.wet[k] | 0, day + FARM_WET_DAYS);
@@ -245,7 +244,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   /** 작물 한 단계 성장. */
   /** 자란 칸을 돌려준다 — 화면에 보이는 밭이면 게임 쪽에서 티를 낸다. 마른 밭(물 안 준 밭)은 자라지 않고 dry 로 센다. */
   /** speed: 농사 숙련이 얹어 주는 성장 배율(1 = 보정 없음) · day: 오늘(G.dayCount) — 없으면 젖음을 안 본다 */
-  growCrops(rng, dayF, speed, day) {
+  growCrops(rng, dayF, speed, day) { const { WW } = this.dims;
     const out = { grew: [], ripe: [], dry: [] };
     if (!this.crops.size) return out;
     const sp = speed === undefined ? 1 : speed;
@@ -267,7 +266,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 부서지는 바닥 — 밟으면 잠깐 뒤 무너지고, 한참 뒤 되돌아온다 */
-  tickCrumble(dt, p) {
+  tickCrumble(dt, p) { const { WW } = this.dims;
     // 발밑을 본다
     const fy = Math.floor((p.y + p.h + 2) / TS);
     for (let x = Math.floor(p.x / TS); x <= Math.floor((p.x + p.w - 1) / TS); x++) {

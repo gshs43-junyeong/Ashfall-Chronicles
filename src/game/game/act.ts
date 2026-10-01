@@ -2,7 +2,7 @@
 import { aabb, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { WH, WW } from '../size.js';
+import { dimsOf } from '../size.js';
 import { MACH_OF_TILE, SPRINKLE_R, T, TILE_DEF } from '../data.js';
 import { ITEMS, OBJ_SIZE } from '../data/items.js';
 import { MACHINE } from '../data/recipes.js';
@@ -28,7 +28,7 @@ export const ActPart: Bag = {
     if (hd && hd.type === 'rod') return;
     if (p.attackReady()) p.doAttack(this.input.wx, this.input.wy);
   },
-  mine(dt, tool) {
+  mine(dt, tool) { const { WW } = dimsOf(this.world);
     const p = this.player, w = this.world;
     const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
     if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { p.mineTx = -1; return; }
@@ -114,7 +114,7 @@ export const ActPart: Bag = {
   },
 
   /* ================= 밭은 아침에 자란다 ================= */
-  growCropsDaily() {
+  growCropsDaily() { const { WW } = dimsOf(this.world);
     const w = this.world; if (!w || !w.crops || !w.crops.size) return;
     const lv = this.player.profLv('farm'), day = this.dayCount;
     if (this.event && this.event.id === 'rain') this.rainWater(w, day);   // 비는 하늘이 트인 밭을 적신다
@@ -178,7 +178,7 @@ export const ActPart: Bag = {
   },
 
   /** 비 오는 아침 — 위로 막힌 것 없이 하늘이 트인 밭만 적신다(지붕 밑·굴 속 밭은 그대로). */
-  rainWater(w, day) {
+  rainWater(w, day) { const { WW } = dimsOf(this.world);
     for (const k of w.crops) {
       const x = k % WW, fy = ((k / WW) | 0) + 1;
       let open = true;
@@ -237,7 +237,7 @@ export const ActPart: Bag = {
   },
 
   /** 렌더 단계 — 젖은 밭은 흙이 짙고 윗면에 물기가 번들거린다. 물가 판정은 칸마다 2초 캐시(121칸을 매 프레임 훑지 않게). */
-  rFarmWet(f) {
+  rFarmWet(f) { const { WW, WH } = dimsOf(this.world);
     const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
     const day = this.dayCount + 1;                     // 다음 아침에도 젖어 있는가 = 지금 젖어 있다
     const nw = this._nearWet || (this._nearWet = new Map());
@@ -300,7 +300,7 @@ export const ActPart: Bag = {
   },
 
   /** 벌목 — 기둥을 자르면 그 위 기둥이 무너지고, 살아 있는 기둥에서 떨어져 나간 잎 *덩어리**가 통째로 함께 떨어진다. */
-  fellTree(tx, ty, wasTrunk) {
+  fellTree(tx, ty, wasTrunk) { const { WW } = dimsOf(this.world);
     const w = this.world;
     const leafy = id => !!TILE_DEF[id].leaf;
 

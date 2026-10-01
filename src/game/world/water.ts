@@ -2,7 +2,7 @@
 import { factory as Factory } from '../ctx.js';
 import { clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
-import { HELL_Y, SHIFT, SX, SY, WH, WORLD_BOT, WSX, WSY, WW } from '../size.js';
+import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { FLUID_KIND } from '../data/materials.js';
 import { MAT_LAYER, TS, World, inSeaZone } from '../world.js';
@@ -10,7 +10,7 @@ import { MAT_LAYER, TS, World, inSeaZone } from '../world.js';
 
 export const WorldWater: Bag & ThisType<World> = {
 
-  floodCaves(rng) {
+  floodCaves(rng) { const { WSX, WSY, WW, WH, WORLD_BOT, HELL_Y } = this.dims;
     // 바다(buildSea)가 먼저 등록해 둔 웅덩이는 살린다 — 여기서 통째로 비우면 수중 몹이 바다에 안 나온다
     this.pools = (this.pools || []).filter(q => q.biome === 'sea');
     const bigX = new Set();
@@ -113,7 +113,7 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 물속 공기 주머니 — 큰 호수의 천장 아래 물칸 몇 개를 공기로 바꾼다. */
-  _airPocket(cx, top, cells, rng) {
+  _airPocket(cx, top, cells, rng) { const { WW } = this.dims;
     if (cells.length < 18 || !rng.chance(0.8)) return;
     // 지하 물에만 — 지상 호수는 수면이 바로 위라 숨 돌릴 자리가 필요 없고, 물에 뚫린 구멍으로만 보인다
     if (top < this.surface[clamp(cx, 0, WW - 1)] + 8) return;
@@ -133,7 +133,7 @@ export const WorldWater: Bag & ThisType<World> = {
 
   /* 이제 동굴 호수·정글 호수와 *같은 방식**이다: 1) 바닥이 평평한 자리를 골라 (동굴 호수와 같은 평탄도 기준) 2) _carveBasin으로 웅덩이를 **파낸 뒤** 용암을 붓고 3)
      그 밖의 자잘한 자리는 — 사연: docs/code-history.md#h133 */
-  floodHell(rng) {
+  floodHell(rng) { const { WSX, WSY, WW, WH, WORLD_BOT, HELL_Y } = this.dims;
     this.lavaPools = [];
 
     // --- 1. 큰 용암 호수 — 파낸다 ---
@@ -177,7 +177,7 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 정글 중간의 지상 폭포 + 호수. */
-  buildJungleFalls(rng) {
+  buildJungleFalls(rng) { const { SX, WW } = this.dims;
     const cx = SX(1850 + SHIFT);
     if (this.biomeAt(cx).id !== 'jungle') return;   // 바이옴 경계가 시드에 따라 흔들릴 수 있다
     let leftY = 0;
@@ -304,7 +304,7 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 이 열 위로 전주가 서 있는가 — 전주 기둥은 타일이 아니라 그림이라(factory.js), 그 아래를 밭으로 갈면 작물이 기둥과 겹쳐 그려진다. */
-  poleColumn(x, y) {
+  poleColumn(x, y) { const { WW } = this.dims;
     for (let ty = y - 1; ty >= y - 40 && ty > 2; ty--) {
       const m = this.machines.get(ty * WW + x);
       if (m) return m.t === 'pole';
@@ -337,7 +337,7 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 동굴 웅덩이 꾸미기 — 물·지형이 다 정해진 뒤에 한 번. */
-  decoratePonds(rng) {
+  decoratePonds(rng) { const { WW, WH } = this.dims;
     const natural = new Set();
     for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
     const host = t => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE ||
@@ -413,7 +413,7 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 오목한 모서리 — 바닥 이끼 칸과 벽 이끼 칸 사이, 대각선으로만 굴에 닿는 돌 한 칸. */
-  fillMossCorners() {
+  fillMossCorners() { const { WW, HELL_Y } = this.dims;
     const host = t => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE;
     const open = (x, y) => TILE_DEF[this.get(x, y)].solid !== 1;
     const mos = (x, y) => this.get(x, y) === T.MOSSSTONE;
@@ -427,12 +427,12 @@ export const WorldWater: Bag & ThisType<World> = {
     for (const [x, y] of put) this.set(x, y, T.MOSSSTONE);   // d1 실측 1416칸
   },
 
-  scatterChests(rng) {
+  scatterChests(rng) { const { WSX, WSY, SY, WW, WORLD_BOT, HELL_Y, SEA_X1 } = this.dims;
     let placed = 0, tries = 0;
     while (placed < Math.round(165 * WSX * WSY) && tries < 140000 * WSX * WSY) {
       tries++;
       const x = rng.int(4, WW - 5), y = rng.int(this.surface[x] + 12, WORLD_BOT - 8);
-      if (inSeaZone(x)) continue;                 // 해저에는 지상식 상자를 흩뿌리지 않는다
+      if (inSeaZone(x, SEA_X1)) continue;                 // 해저에는 지상식 상자를 흩뿌리지 않는다
       if (this.get(x, y) !== T.AIR || this.get(x, y - 1) !== T.AIR) continue;
       if (!this.solid(x, y + 1) || !this.solid(x + 1, y + 1)) continue;
       let tier = y > HELL_Y ? 5 : y > SY(326) ? 4 : y > SY(214) ? 3 : y > SY(142) ? 2 : 1;

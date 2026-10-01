@@ -3,7 +3,7 @@ import { createAmbient } from '../engine/audio/ambient.js';
 import { createMusic } from '../engine/audio/music.js';
 import { createSfx, createSfxLoop } from '../engine/audio/sfx.js';
 import { clamp, lerp } from '../engine/core/math.js';
-import { WW } from './size.js';
+import { dimsOf } from './size.js';
 import { TS } from './world.js';
 
 
@@ -175,7 +175,7 @@ export const AMBIENT_RADIUS = { waterfall: 13 * TS, water: 9 * TS };   // 이 �
 export const Ambient: Bag = createAmbient({ dir: SFX_DIR, files: AMBIENT_FILES });
 Object.assign(Ambient, {
   /** 매 프레임 — 플레이어와 가장 가까운 폭포/큰 웅덩이까지 거리를 재서 음량을 맞춘다. */
-  updateFromWorld(w, p, dt, active) {
+  updateFromWorld(w, p, dt, active) { const { WW } = dimsOf(w);
     for (const key in AMBIENT_FILES) {
       let target = 0;
       if (active && w && p && (key === 'sea' || key === 'glacier')) {
