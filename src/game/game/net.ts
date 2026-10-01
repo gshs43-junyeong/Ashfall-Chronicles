@@ -9,7 +9,7 @@ import { tr } from '../lang.js';
 import { T } from '../data.js';
 import { HIT_FX } from '../data/items.js';
 import { ENEMIES } from '../data/enemies.js';
-import { DmgText, Enemy, makeItem } from '../entity.js';
+import { DmgText, Enemy, Proj, makeItem } from '../entity.js';
 import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
@@ -189,6 +189,31 @@ export const NetPart: Bag = {
       this.addCorpse(e); this.deathBurst(e);
     }
   },
+  /** 참가자 근처 적 투사체 — [번호, x, y, vx, vy, 종류] */
+  netProjList(rp) {
+    const n = this.net, out = [];
+    for (const q of this.projs) {
+      if (q.team !== 'enemy' || q.dead || Math.abs(q.cx - rp.cx) > 1300 || Math.abs(q.cy - rp.cy) > 900) continue;
+      if (!q.nid) q.nid = ++n.eid;
+      out.push([q.nid, Math.round(q.cx), Math.round(q.cy), Math.round(q.vx), Math.round(q.vy), q.type]);
+    }
+    return out;
+  },
+  netPutProjs(list) {
+    const n = this.net, t = now();
+    for (const [nid, x, y, vx, vy, type] of list) {
+      let q = n.gproj.get(nid);
+      if (!q) { q = new Proj(x, y, vx, vy, 0, 'enemy', type); q.ghost = true; q.nid = nid; n.gproj.set(nid, q); this.projs.push(q); }   // 처음 볼 때만 발사음
+      q.x = x - q.w / 2; q.y = y - q.h / 2; q.vx = vx; q.vy = vy; q.seenAt = t;
+    }
+    for (const [nid, q] of n.gproj) if (t - q.seenAt > 0.25) { q.dead = true; n.gproj.delete(nid); }   // 맞았거나 사라졌다
+  },
+  /** 시계·날짜·세계 사건(비·붉은 달…) — 참가자는 사건을 굴리지 않고 호스트 것을 받는다. */
+  netPutClock(m) {
+    if (Math.abs(this.dayT - m.d) > 2) this.dayT = m.d;
+    this.dayCount = m.n;
+    this.event = m.ev;
+  },
   netSend(t, ch, msg) {
     const text = JSON.stringify(msg);
     if (text.length > 15000) for (const part of chunkText(++this.net.chunkId, text)) t.send('rel', part);
@@ -309,7 +334,7 @@ export const NetPart: Bag = {
     room = String(room || '').trim().toUpperCase();
     const sig = isWs(url) ? createWsSignal(url, { role: 'guest', room, id: me }) : url ? createHttpSignal(url, room, me, 1000) : createTabSignal(room);
     if (url) (sig as Bag).onerror = () => { clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
-    const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map() };
+    const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map(), gproj: new Map() };
     n.char = this.freshPlayer(0, 0, name, charId);
     this.net = n;
     sig.onmessage = async m => {
@@ -370,6 +395,9 @@ export const NetPart: Bag = {
       this.me.hurt(m.a, m.sx);
     } else if (m.k === 'es') {
       this.netPutEnemies(m.l);
+      if (m.p) this.netPutProjs(m.p);
+    } else if (m.k === 'clk') {
+      this.netPutClock(m);
     } else if (m.k === 'ed') {
       this.netPutDeaths(m.l);
     } else if (m.k === 'kill') {
@@ -408,10 +436,16 @@ export const NetPart: Bag = {
     for (const [nid, e] of n.live) if (e.dead) { n.live.delete(nid); if (!n.dead.includes(nid)) n.dead.push(nid); }
     for (const q of n.peers.values()) {
       if (!q.rp) continue;
-      q.t.send('fast', JSON.stringify({ k: 'es', l: this.netEnemyList(q.rp) }));
+      q.t.send('fast', JSON.stringify({ k: 'es', l: this.netEnemyList(q.rp), p: this.netProjList(q.rp) }));
       if (n.dead.length) this.netSend(q.t, 'rel', { k: 'ed', l: n.dead });
     }
     n.dead = [];
+    n.clkT = (n.clkT || 0) - 1 / NET_HZ;
+    if (n.clkT <= 0) {
+      n.clkT = 1;
+      const clk = JSON.stringify({ k: 'clk', d: this.dayT, n: this.dayCount, ev: this.event || null });
+      for (const q of n.peers.values()) if (q.rp) q.t.send('rel', clk);
+    }
     const t = now();
     for (const q of n.peers.values()) if (q.heard && t - q.heard > 5) { q.t.close(); this.netDropPeer(q); }   // 5초 넘게 소식 없음 = 나감
     const list = [[0, this.netState(this.me)]];
