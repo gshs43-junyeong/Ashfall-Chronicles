@@ -143,6 +143,16 @@ e.keepIn(x0, x1, yMax)                 // 세계 안에 가둔다
 | `createTooltip(el, opts)` → `show(html, x, y)` · `hide()` · `place` | 화면 밖으로 안 나가는 툴팁 |
 | `makeSlot(cls, opts, host?)` · `paintSlot(el, cls, icon, count)` · `setIcon` | 아이콘 + 개수 칸 |
 
+### net — 두 끝 잇기(멀티플레이 바탕)
+
+| 이름 | 쓰임 |
+|---|---|
+| `Transport` — `send(ch, data)` · `onmessage(ch, data)` · `onclose` · `open` · `close()` | 통로 모양. `ch` 는 `'rel'`(순서·도착 보장) · `'fast'`(순서 없음·재전송 없음). 글자열만 싣는다 |
+| `createLoopback({ latency, loss })` → `[a, b]` | 같은 탭 안의 두 끝(시험·흉내) — fast 만 `loss` 비율로 버린다 |
+| `hostOffer(opts)` → `{ offer, accept(answer), cancel }` · `guestAnswer(offer, opts)` → `{ answer, ready, cancel }` | WebRTC — 후보를 다 모은 뒤 제안/응답 글 한 번씩만 주고받는다(중개가 짧은 폴링이어도 되게) |
+| `chunkText(id, text)` · `createJoiner()` → `push(msg)` · `isChunk(msg)` | 큰 글(세계 스냅샷)을 16,000자 조각으로 · 순서가 섞여도 잇는다 |
+| `new SnapBuffer(delay, cap)` → `push(t, state)` · `sample(now)` | 늦게 오는 상태를 delay 만큼 늦춰 두 장 사이를 보간(숫자 칸만) |
+
 ## 5. Ashfall 은 엔진을 어떻게 쓰나
 
 | 엔진 | 게임(`src/game`) |
@@ -157,6 +167,9 @@ e.keepIn(x0, x1, yMax)                 // 세계 안에 가둔다
 | `mixin` | `G` · `UI` · `World` 를 조각 파일로 나눠 붙인다 |
 
 ## 6. 검사
+
+`npm run test:net` — loopback · 조각 · 보간(노드) + 헤드리스 크롬 안의 실제 WebRTC 두 끝(20만 자 · fast 통로 · 끊김 알림).
+
 
 ```bash
 npm run typecheck      # 엔진 · 예제 strict, 게임은 느슨하게(tsconfig.game.json)
