@@ -94,7 +94,7 @@ export const SavePart: Bag = {
   saveData() {
     const p = this.player;
     const data: Bag = {
-      v: SAVE_VERSION, name: p.name, savedAt: Date.now(),
+      v: SAVE_VERSION, name: p.name, savedAt: Date.now(), mode: this.mode,
       world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
       talked: this.talked, crafted: this.crafted,
       talkSeq: this.talkSeq, storyHeard: this.storyHeard, villageSeen: this.villageSeen,
