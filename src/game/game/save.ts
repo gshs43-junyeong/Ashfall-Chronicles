@@ -121,7 +121,7 @@ export const SavePart: Bag = {
       lairs: this.lairs, asmRan: this.asmRan, everPlanted: this.everPlanted,
       vault: this.vault, vaultGold: this.vaultGold, bounties: this.bounties, bountyNext: this.bountyNext,
       shopStock: this.shopStock, shopStockDay: this.shopStockDay,
-      achievements: this.achievements, tally: this.tally, survey: this.survey,
+      achievements: this.achievements, tally: this.tally, survey: this.survey, mpGuests: this.mpGuests || {},
       p: this.packChar(p)
     };
     return data;
@@ -236,6 +236,7 @@ export const SavePart: Bag = {
       if (this.bounties.some(b => !b.obj)) this.bounties = [];
       this.shopStock = d.shopStock || {}; this.shopStockDay = d.shopStockDay === undefined ? -1 : d.shopStockDay;
       this.achievements = d.achievements || {};
+      this.mpGuests = d.mpGuests || {};
       this.tally = d.tally || {};
       if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
       this.ents = []; this.corpses = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = []; this.boss = null;

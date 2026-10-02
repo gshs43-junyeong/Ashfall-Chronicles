@@ -928,7 +928,6 @@
   "방 닫기": "Raum schließen",
   "방 만들기": "Raum erstellen",
   "방 코드": "Raumcode",
-  "방 코드를 넣어라": "Gib einen Raumcode ein.",
   "방 코드를 복사했다": "Raumcode kopiert.",
   "방에서 나가기": "Raum verlassen",
   "방을 닫았다": "Raum geschlossen.",
@@ -960,7 +959,11 @@
   "호스트가 채팅을 껐다": "Der Gastgeber hat den Chat ausgeschaltet.",
   "방 설정": "Raumeinstellungen",
   "방 설정은 호스트가 바꾼다.": "Nur der Gastgeber kann die Raumeinstellungen ändern.",
-  "함께하는 사람": "Mitspieler"
+  "함께하는 사람": "Mitspieler",
+  "{name|이} 돌아왔다": "{name} ist zurück.",
+  "방 코드는 영문·숫자 5~6자다": "Raumcodes haben 5–6 Buchstaben oder Ziffern.",
+  "이 세계에 다시 왔다 — 지난 자리에서 이어 간다": "Zurück in dieser Welt – es geht dort weiter, wo du aufgehört hast.",
+  "이 세계에서 쓰던 캐릭터로 돌아왔다": "Du bist mit deinem Charakter aus dieser Welt zurück."
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

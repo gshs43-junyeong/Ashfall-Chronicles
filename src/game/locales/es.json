@@ -928,7 +928,6 @@
   "방 닫기": "Cerrar sala",
   "방 만들기": "Crear sala",
   "방 코드": "Código de sala",
-  "방 코드를 넣어라": "Introduce un código de sala.",
   "방 코드를 복사했다": "Código de sala copiado.",
   "방에서 나가기": "Salir de la sala",
   "방을 닫았다": "Sala cerrada.",
@@ -960,7 +959,11 @@
   "호스트가 채팅을 껐다": "El anfitrión ha desactivado el chat.",
   "방 설정": "Ajustes de sala",
   "방 설정은 호스트가 바꾼다.": "Solo el anfitrión puede cambiar los ajustes de sala.",
-  "함께하는 사람": "Jugadores"
+  "함께하는 사람": "Jugadores",
+  "{name|이} 돌아왔다": "{name} ha vuelto.",
+  "방 코드는 영문·숫자 5~6자다": "El código de sala tiene 5–6 letras o números.",
+  "이 세계에 다시 왔다 — 지난 자리에서 이어 간다": "De vuelta en este mundo: continúas donde lo dejaste.",
+  "이 세계에서 쓰던 캐릭터로 돌아왔다": "Has vuelto con el personaje que usabas en este mundo."
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

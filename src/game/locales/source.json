@@ -286,6 +286,9 @@
    "game/net.netDropPeer",
    "game/net.netOnGuest"
   ],
+  "{name|이} 돌아왔다": [
+   "game/net.netOnHost"
+  ],
   "{name|이} 들어왔다": [
    "game/net.netOnHost",
    "game/net.netOnGuest"
@@ -1412,7 +1415,7 @@
   "방 코드": [
    "index.html"
   ],
-  "방 코드를 넣어라": [
+  "방 코드는 영문·숫자 5~6자다": [
    "game/netui.mpJoinFromTitle"
   ],
   "방 코드를 복사했다": [
@@ -2195,6 +2198,12 @@
   ],
   "이 세계로 방 열기": [
    "index.html"
+  ],
+  "이 세계에 다시 왔다 — 지난 자리에서 이어 간다": [
+   "game/net.netOnGuest"
+  ],
+  "이 세계에서 쓰던 캐릭터로 돌아왔다": [
+   "game/net.netOnGuest"
   ],
   "이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.": [
    "game/save.deleteSlot"

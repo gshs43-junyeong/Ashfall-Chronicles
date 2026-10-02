@@ -399,14 +399,24 @@ export const NetPart: Bag = {
   netOnHost(peer, m) {
     const n = this.net;
     if (m.k === 'hello') {
-      const me = this.me, s = Object.assign(this.netState(me), { x: me.x + 24, n: m.n, c: m.c });
+      /* 다시 온 손님이면(아이디 · 이 세계의 mpGuests) 지난 자리에서 — 새로 만든 캐릭터였으면 그 캐릭터도 돌려준다 */
+      peer.pid = typeof m.pid === 'string' ? m.pid.slice(0, 24) : null; peer.temp = !!m.temp;
+      const me = this.me, rec = this.netGuestRec(peer.pid);
+      const back = rec && !this.world.hitSolid(rec.x, rec.y, me.w, me.h);
+      const char = peer.temp && rec && rec.char ? rec.char : null, name = char && rec.n ? rec.n : m.n;
+      const s = Object.assign(this.netState(me), back ? { x: rec.x, y: rec.y } : { x: me.x + 24 }, { n: name, c: char ? char.charId : m.c });
       peer.rp = this.netAvatar(peer.id, s);
       const roster = [[0, this.netState(me)]];
       for (const q of n.peers.values()) if (q.rp && q !== peer) roster.push([q.id, this.netState(q.rp)]);
-      this.netSend(peer.t, 'rel', { k: 'world', id: peer.id, x: s.x, y: s.y, save: this.saveData(), roster });
+      const save = this.saveData();
+      delete save.mpGuests;                          // 다른 손님 기록은 안 보낸다
+      this.netSend(peer.t, 'rel', { k: 'world', id: peer.id, x: s.x, y: s.y, save, roster, back: !!rec, char, name });
       this.netSend(peer.t, 'rel', Object.assign({ k: 'cfg' }, n.cfg));
       for (const q of n.peers.values()) if (q !== peer) this.netSend(q.t, 'rel', { k: 'join', id: peer.id, s });
-      this.toast(tr('{name|이} 들어왔다', { name: m.n }), 'good');
+      this.toast(rec ? tr('{name|이} 돌아왔다', { name }) : tr('{name|이} 들어왔다', { name }), 'good');
+      this.netGuestKeep(peer);
+    } else if (m.k === 'csave' && peer.rp) {
+      this.netGuestKeep(peer, m.char);
     } else if (m.k === 'st' && peer.rp) {
       peer.rp.netBuf.push(now(), m.s); this.netApply(peer.rp, m.s); peer.last = m.s; peer.heard = now();
     } else if (m.k === 'prog') {
@@ -440,6 +450,7 @@ export const NetPart: Bag = {
     const n = this.net;
     if (!n || !n.peers.has(peer.id)) return;
     n.peers.delete(peer.id);
+    this.netGuestKeep(peer);
     if (peer.rp) { this.netRemove(peer.rp); this.toast(tr('{name|이} 나갔다', { name: peer.rp.name }), 'info'); }
     for (const q of n.peers.values()) this.netSend(q.t, 'rel', { k: 'leave', id: peer.id });
   },
@@ -476,9 +487,9 @@ export const NetPart: Bag = {
         this.netOnGuest(JSON.parse(d));
       };
       t.onclose = () => this.netLost();
-      this.netSend(t, 'rel', { k: 'hello', n: n.char.name, c: n.char.charId });
+      this.netSend(t, 'rel', { k: 'hello', n: n.char.name, c: n.char.charId, pid: this.mpPlayerId(), temp: n.slot === null || n.slot === undefined });
       /* 탭을 닫으면 데이터 통로가 끊겼다는 소식이 늦게(수십 초) 간다 — 나간다고 먼저 알린다. */
-      addEventListener('pagehide', () => { if (this.net === n && n.t) { n.t.send('rel', JSON.stringify({ k: 'bye' })); this.netSaveChar(n); } });
+      addEventListener('pagehide', () => { if (this.net === n && n.t) { this.netCharOut(n); n.t.send('rel', JSON.stringify({ k: 'bye' })); this.netSaveChar(n); } });
     };
     const ask = () => sig.post({ t: 'want', from: me });
     n.ask = setInterval(ask, sigs ? 5000 : 2000); ask();
@@ -496,6 +507,8 @@ export const NetPart: Bag = {
     if (m.k === 'world') {
       this.currentSlot = null;                      // ★ 남의 세계다 — 참가자 슬롯에 저장하지 않는다
       this._loadGame(JSON.stringify(m.save));
+      /* 이 세계에서 쓰던(새로 만든) 캐릭터가 호스트에 남아 있었다 — 그것으로 돌아간다 */
+      if (m.char && typeof m.char === 'object') n.char = this.unpackChar(m.char, m.name || n.char.name, this.chapter);
       const me = n.char;
       me.x = m.x; me.y = m.y; me.netId = n.id = m.id;
       this.player = me;
@@ -504,6 +517,8 @@ export const NetPart: Bag = {
       this.cam.x = me.cx - this.W / 2; this.cam.y = me.cy - this.H / 2;
       this.petEnts = []; this.syncPets();
       UI.refreshBag(); UI.refreshEquip(); UI.refreshSkillbar(); UI.refreshStatAlloc(); UI.refreshSkillSlots();
+      if (m.char) this.toast(tr('이 세계에서 쓰던 캐릭터로 돌아왔다'), 'good');
+      else if (m.back) this.toast(tr('이 세계에 다시 왔다 — 지난 자리에서 이어 간다'), 'good');
     } else if (m.k === 'ps') {
       const t = now();
       for (const [id, s] of m.list) {
@@ -602,7 +617,7 @@ export const NetPart: Bag = {
   mpLeave() {
     const n = this.net;
     if (!n || n.role !== 'guest') return;
-    if (n.t) n.t.send('rel', JSON.stringify({ k: 'bye' }));
+    if (n.t) { this.netCharOut(n); n.t.send('rel', JSON.stringify({ k: 'bye' })); }
     this.netEnd();
     this.netSaveChar(n);
     this.toTitle();
@@ -647,7 +662,7 @@ export const NetPart: Bag = {
       /* 왕복 시간 — 1초마다 재고 모두에게 알린다(파티 목록) */
       const pi = JSON.stringify({ k: 'pi', t: Math.round(performance.now()) });
       const pr = JSON.stringify({ k: 'pr', l: [...n.peers.values()].filter(q => q.rp).map(q => [q.id, q.ping === undefined ? null : q.ping]) });
-      for (const q of n.peers.values()) if (q.rp) { q.t.send('rel', clk); q.t.send('rel', pi); q.t.send('rel', pr); }
+      for (const q of n.peers.values()) if (q.rp) { q.t.send('rel', clk); q.t.send('rel', pi); q.t.send('rel', pr); this.netGuestKeep(q); }
     }
     const t = now();
     for (const q of n.peers.values()) if (q.heard && t - q.heard > 5) { q.t.close(); this.netDropPeer(q); }   // 5초 넘게 소식 없음 = 나감

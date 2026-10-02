@@ -1,6 +1,7 @@
 /* ===== game/netui.ts — 멀티플레이 창: 타이틀의 방 만들기·참가하기 · 일시정지의 방 줄 · 참가 캐릭터 저장 ===== */
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
+import { randomCode } from '../../engine/net/signal.js';
 import { escHtml } from '../util.js';
 import { tr } from '../lang.js';
 import { CHARACTERS } from '../data/start.js';
@@ -8,6 +9,9 @@ import { $ } from '../ui.js';
 import { G, NONAME, SAVE_VERSION, SaveStore, saveHead, saveSealOk, upgradeSave } from '../game.js';
 import { NET_MAX } from './net.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
+
+/* 방 코드 — 자체 중개 다섯 자 · PeerJS 여섯 자(net.ts PEER_CODE), 영문 대문자·숫자 */
+export const ROOM_CODE_RE = /^[A-Z0-9]{5,6}$/;
 
 export const NetUiPart: Bag = {
   bindMpUi() {
@@ -19,7 +23,13 @@ export const NetUiPart: Bag = {
     };
     $('#btn-mp-join').onclick = () => this.mpJoinFromTitle();
     $('#mp-char').onchange = () => { $('#mp-new').hidden = $('#mp-char').value !== 'new'; };
-    $('#mp-code').onkeydown = e => { if (e.key === 'Enter') this.mpJoinFromTitle(); };
+    /* 방 코드 — 영문·숫자 5~6자. 치는 대로 대문자로 · 그 밖의 글자(한글 조합 포함)는 지운다 · 5자 전에는 참가를 막는다 */
+    const code = $('#mp-code');
+    const tidy = () => { const v = String(code.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      if (code.value !== v) code.value = v; $('#btn-mp-join').disabled = !ROOM_CODE_RE.test(v); };
+    code.oninput = e => { if (!e.isComposing) tidy(); };
+    code.addEventListener('compositionend', tidy);
+    code.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) this.mpJoinFromTitle(); };
     const el = $('#mp-screen');
     el.onclick = e => { if (e.target === el) this.closeModal('#mp-screen'); };
     $('#btn-room-open').onclick = async () => { await this.mpHost('ROOM'); this.refreshPauseMp(); };
@@ -43,6 +53,7 @@ export const NetUiPart: Bag = {
     $('#mp-char').innerHTML = opts + `<option value="new">${tr('새 캐릭터')}</option>`;
     $('#mp-class').innerHTML = CHARACTERS.map(c => `<option value="${c.id}">${escHtml(c.n)}</option>`).join('');
     $('#mp-new').hidden = $('#mp-char').value !== 'new';
+    $('#btn-mp-join').disabled = !ROOM_CODE_RE.test(String($('#mp-code').value || ''));
     this.netSay('');
     this.openModal('#mp-screen');
     this.fillIcons($('#mp-screen'));
@@ -50,7 +61,7 @@ export const NetUiPart: Bag = {
   async mpJoinFromTitle() {
     if (this.net) return;                        // 이미 방을 찾는 중
     const code = String($('#mp-code').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (code.length < 4) { this.netSay(tr('방 코드를 넣어라')); return; }
+    if (!ROOM_CODE_RE.test(code)) { this.netSay(tr('방 코드는 영문·숫자 5~6자다')); return; }
     const v = $('#mp-char').value;
     let char, slot = null;
     if (v === 'new') char = this.freshPlayer(0, 0, $('#mp-name').value, $('#mp-class').value);
@@ -63,6 +74,26 @@ export const NetUiPart: Bag = {
     }
     this.netSay(tr('방을 찾는 중…'), true);
     this.mpJoin(code, char, slot);
+  },
+  /** 이 브라우저의 손님 아이디 — 호스트 세계가 다시 온 사람을 알아본다(설정에 한 번 만들어 둔다). */
+  mpPlayerId() {
+    if (!this.settings.mpId) { this.settings.mpId = randomCode(12).toLowerCase(); this.saveSettings(); }
+    return this.settings.mpId;
+  },
+  /** 호스트 — 그 손님의 기록(없으면 null). */
+  netGuestRec(pid) { return pid && this.mpGuests && this.mpGuests[pid] || null; },
+  /** 호스트 — 손님의 마지막 자리(1초마다 · 나갈 때)와 새로 만든 캐릭터(손님이 보낸 것)를 세계 기록에. 호스트가 저장하면 세이브에 남는다. */
+  netGuestKeep(peer, char) {
+    if (!peer || !peer.pid || !peer.rp) return;
+    this.mpGuests = this.mpGuests || {};
+    const rec = this.mpGuests[peer.pid] || (this.mpGuests[peer.pid] = {});
+    Object.assign(rec, { x: Math.round(peer.rp.x), y: Math.round(peer.rp.y), n: peer.rp.name, c: peer.rp.charId, t: Date.now() });
+    if (char && typeof char === 'object' && peer.temp && JSON.stringify(char).length < 60000) rec.char = char;
+  },
+  /** 참가자 — 새로 만든 캐릭터는 제 슬롯이 없으니 호스트 세계에 맡긴다(다시 오면 돌려받는다). */
+  netCharOut(n) {
+    if (!n || n.role !== 'guest' || !n.t || n.id <= 0 || (n.slot !== null && n.slot !== undefined)) return;
+    this.netSend(n.t, 'rel', { k: 'csave', char: this.packChar(n.char) });
   },
   /** 참가 창이 열려 있으면 거기에, 아니면 알림으로. */
   netSay(text, ok = false) {
@@ -112,6 +143,8 @@ export const NetUiPart: Bag = {
     if (n.partyT > 0) return;
     n.partyT = 0.25;
     this.refreshParty(); this.refreshChat();
+    n.csaveT = (n.csaveT || 0) - 0.25;
+    if (n.csaveT <= 0) { n.csaveT = 15; this.netCharOut(n); }   // 15초마다 — 갑자기 끊겨도 잃는 것이 적게
   },
   /** 그 플레이어의 왕복 시간(ms) — 호스트 자신은 없다. */
   netPing(id) {

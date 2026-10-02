@@ -1316,3 +1316,4 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 }
 /* 터치 기기는 화면 위 가운데에 전체 화면 단추가 떠 있다 — 멈춤 제목이 그 밑에 깔리지 않게 내린다 */
 @media (max-height:440px){body.touch #pause-screen{padding-top:calc(44px + env(safe-area-inset-top,0px))}}
+#btn-mp-join:disabled{opacity:.45;cursor:default}
