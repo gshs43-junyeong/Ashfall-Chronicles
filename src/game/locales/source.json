@@ -131,8 +131,14 @@
   "Ctrl(왼)": [
    "ui.keyLabel"
   ],
+  "Enter 보내기 · Esc 닫기": [
+   "index.html"
+  ],
   "Lv {profMax} · 끝": [
    "ui/tree.refreshProf"
+  ],
+  "PvP 꺼짐": [
+   "game/netchat.netCfgToast"
   ],
   "S 등급 보상 ·": [
    "ui/quest.renderRuins"
@@ -2652,6 +2658,12 @@
   "채취탑을 해체했다 — 부품이 쏟아졌다": [
    "game/spawn.fn"
   ],
+  "채팅": [
+   "index.html"
+  ],
+  "채팅이 켜졌다": [
+   "game/netchat.netCfgToast"
+  ],
   "챘지만 바늘이 빠졌다": [
    "game/fishing.resolveFish"
   ],
@@ -2849,6 +2861,12 @@
   "푹 잤다 — 아침이다": [
    "game/village.fn"
   ],
+  "플레이어끼리 싸울 수 있다(PvP 켜짐)": [
+   "game/netchat.netCfgToast"
+  ],
+  "플레이어끼리 싸움(PvP)": [
+   "index.html"
+  ],
   "피해": [
    "ui/tip.showTip"
   ],
@@ -2918,6 +2936,10 @@
   ],
   "호스트가 지금 참가를 받고 있지 않다": [
    "game/net.mpJoin"
+  ],
+  "호스트가 채팅을 껐다": [
+   "game/netchat.netCfgToast",
+   "game/netchat.openChat"
   ],
   "호스트와 연결이 끊겼다": [
    "game/net.netLost"

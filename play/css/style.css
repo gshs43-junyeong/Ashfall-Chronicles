@@ -1268,3 +1268,15 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .ps-guest{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:#c8bfa4;
   background:#0b0a08b8;border:1px solid #2a261c;border-radius:3px;padding:4px 8px}
 .ps-inner .ps-guest .mini-btn{display:inline-block;width:auto;margin:0;padding:2px 8px;font-size:10.5px}
+/* 채팅 — 핫바 위 왼쪽. HUD 는 클릭을 안 받으니 입력 칸만 받는다 */
+#chat{position:absolute;left:14px;bottom:96px;width:380px;max-width:calc(100% - 28px)}
+#chat-log{display:flex;flex-direction:column;gap:2px}
+.ch-line{background:#0b0a08b0;border-radius:3px;padding:2px 7px;font-size:12px;color:#e0d8c0;
+  width:fit-content;max-width:100%;overflow-wrap:anywhere;text-shadow:0 1px 1px #000}
+.ch-line b{color:var(--gold);font-weight:600;margin-right:4px}
+#chat-input{pointer-events:auto;width:100%;margin-top:4px;padding:6px 9px;border-radius:3px;background:#0c0b08e8;
+  border:1px solid var(--gold);color:var(--ink);font-family:inherit;font-size:12.5px}
+.pt-pvp{color:#e07a5a;font-weight:600}
+.ps-cfg{display:flex;justify-content:center;gap:14px;margin:0 auto 10px;font-size:11.5px;color:#c8bfa4}
+.ps-cfg label{display:flex;align-items:center;gap:5px;cursor:pointer}
+.ps-cfg input{accent-color:var(--gold)}

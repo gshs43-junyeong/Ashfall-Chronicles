@@ -989,6 +989,12 @@ export class Proj extends Ent {
         if (this.poison) e.addDot('poison', this.dmg * 0.11 * this.poison, 5);
         if (this.pierce > 0) this.pierce--; else { this.impact(); return; }
       }
+      if (G.net) for (const q of G.pvpTargets()) {   // PvP — 내가 쏜 것만 이 화면에 있다
+        if (this.hitSet.has(q) || !aabb(this.rect(), q.rect())) continue;
+        this.hitSet.add(q);
+        G.pvpHit(q, this.dmg, this.cx);
+        if (this.pierce > 0) this.pierce--; else { this.impact(); return; }
+      }
     } else {
       /* 적 투사체는 세계의 플레이어 누구든 맞힌다(혼자면 player 하나). */
       for (const q of (G.players.length ? G.players : [player]))

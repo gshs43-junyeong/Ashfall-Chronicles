@@ -264,6 +264,14 @@ export const PlayerMove: Bag & ThisType<Player> = {
         if (this.d.frost) e.slow(0.45, 2.5);
         if (this.d.poison) e.addDot('poison', this.scaleDmg(base, 'str') * 0.13 * this.d.poison, 5);
       }
+      /* PvP — 남의 아바타도 같은 판정으로(피해는 주인 화면에서) */
+      if (G.net && this === G.me) for (const q of G.pvpTargets()) {
+        if (this.swingHit.has(q)) continue;
+        const dx = q.cx - this.cx, dy = q.cy - this.cy;
+        if (dx * dx + dy * dy > (reach + q.w / 2) * (reach + q.w / 2) || (Math.sign(dx) !== this.swingDir && Math.abs(dx) > 8) || Math.abs(dy) > reach * 0.85) continue;
+        this.swingHit.add(q);
+        G.pvpHit(q, this.scaleDmg(base, 'str'), this.cx);
+      }
     }
 
     // 용암/가시/선인장 등 환경 피해 — 몸 전체 범위로 검사해야 고체 블록(선인장)도 스치기만 해도 걸린다

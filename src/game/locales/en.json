@@ -950,7 +950,14 @@
   "호스트가 방을 닫았다": "The host closed the room.",
   "내보내기": "Kick",
   "방 {room}": "Room {room}",
-  "호스트": "Host"
+  "호스트": "Host",
+  "Enter 보내기 · Esc 닫기": "Enter to send · Esc to close",
+  "PvP 꺼짐": "PvP off",
+  "채팅": "Chat",
+  "채팅이 켜졌다": "Chat is on.",
+  "플레이어끼리 싸울 수 있다(PvP 켜짐)": "Players can fight each other (PvP on).",
+  "플레이어끼리 싸움(PvP)": "Player vs. player (PvP)",
+  "호스트가 채팅을 껐다": "The host turned chat off."
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

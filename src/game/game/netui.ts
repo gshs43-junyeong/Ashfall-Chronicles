@@ -111,7 +111,7 @@ export const NetUiPart: Bag = {
     n.partyT = (n.partyT || 0) - dt;
     if (n.partyT > 0) return;
     n.partyT = 0.25;
-    this.refreshParty();
+    this.refreshParty(); this.refreshChat();
   },
   /** 그 플레이어의 왕복 시간(ms) — 호스트 자신은 없다. */
   netPing(id) {
@@ -132,7 +132,7 @@ export const NetUiPart: Bag = {
         <span class="pt-lv">Lv.${p.level | 0}</span><span class="pt-ping">${ping === null ? '' : ping + 'ms'}</span>
         <div class="pt-hp"><i style="width:${clamp(p.hp / (mhp || 1), 0, 1) * 100}%"></i></div></div>`;
     }).join('');
-    const head = `<div class="pt-head">${n.role === 'host' && n.room ? tr('방 {room}', { room: n.room }) + ' · ' : ''}${this.players.length}/${NET_MAX}</div>`;
+    const head = `<div class="pt-head">${n.role === 'host' && n.room ? tr('방 {room}', { room: n.room }) + ' · ' : ''}${this.players.length}/${NET_MAX}${this.netPvpOn() ? ' · <b class="pt-pvp">PvP</b>' : ''}</div>`;
     box.innerHTML = head + rows;
     box.hidden = false;
   },
@@ -146,6 +146,8 @@ export const NetUiPart: Bag = {
     $('#btn-room-close').hidden = !host;
     $('#btn-room-leave').hidden = !guest;
     $('#btn-save-export').hidden = guest;        // 참가자는 캐릭터만 저장한다
+    $('#ps-cfg').hidden = !host;
+    if (host) { $('#mp-pvp').checked = !!n.cfg.pvp; $('#mp-chat').checked = !!n.cfg.chat; }
     const list = $('#ps-party'), guests = host ? [...n.peers.values()].filter(q => q.rp) : [];
     list.hidden = !guests.length;
     list.innerHTML = guests.map(q => `<div class="ps-guest"><span>${escHtml(q.rp.name)} · Lv.${q.rp.level | 0}</span>

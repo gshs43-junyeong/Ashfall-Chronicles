@@ -63,6 +63,8 @@
       <!-- 멀티플레이 파티 — 이름 · 레벨 · 체력 · 왕복 시간(G.refreshParty) -->
       <div id="party" hidden></div>
     </div>
+    <!-- 멀티플레이 채팅 — Enter 로 열고 보낸다(G.openChat). 입력 칸만 클릭을 받는다 -->
+    <div id="chat" hidden><div id="chat-log"></div><input id="chat-input" maxlength="200" autocomplete="off" placeholder="Enter 보내기 · Esc 닫기" hidden></div>
 
     <div id="hud-right">
       <div id="clock-box">
@@ -478,6 +480,7 @@
         <!-- 멀티플레이 — 열 때마다 지금 상태(혼자 · 호스트 · 참가자)에 맞는 것만 보인다(G.refreshPauseMp) -->
         <div id="ps-room" class="ps-room" hidden><span>방 코드</span><b id="ps-room-code"></b><button id="btn-room-copy" class="mini-btn">복사</button></div>
         <div id="ps-party" class="ps-party" hidden></div>
+        <div id="ps-cfg" class="ps-cfg" hidden><label><input type="checkbox" id="mp-pvp">플레이어끼리 싸움(PvP)</label><label><input type="checkbox" id="mp-chat">채팅</label></div>
         <button id="btn-room-open" hidden><span class="ui-ic" data-ui-icon="u_room"></span>이 세계로 방 열기</button>
         <button id="btn-room-close" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방 닫기</button>
         <button id="btn-room-leave" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방에서 나가기</button>
