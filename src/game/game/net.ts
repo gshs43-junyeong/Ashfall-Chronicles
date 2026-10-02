@@ -19,8 +19,8 @@ import { G } from '../game.js';
 export const NET_MAX = 4;          // 호스트 포함
 export const NET_HZ = 15;          // 위치를 보내는 횟수(초당)
 /* 방 중개 — 본 중개는 Cloudflare(relay/ — WebSocket, 기다리는 동안 요청 0), 예비는 사이트의 Vercel 함수(api/room.js · 폴링).
-   RELAY_URL 이 비어 있으면(배포 전) 예비를 쓴다. zip(file://)·Electron 도 이 주소들로 붙는다. */
-export const RELAY_URL = '';
+   예비는 RELAY_URL 을 비우면 쓴다(?sig= 로 고를 수도 있다). zip(file://)·Electron 도 이 주소들로 붙는다. */
+export const RELAY_URL = 'wss://ashfall-relay.gshs43junyeong.workers.dev/ws';
 export const SIGNAL_URL = 'https://ashfall-chronicles.vercel.app/api/room';
 const isWs = url => /^wss?:/.test(url || '');
 /* ★ 호스트는 참가를 받는 동안만 우편함을 본다 — 열어 둔 내내 보면 중개 요청이 시간에 비례해 무료 범위를 넘는다. */
