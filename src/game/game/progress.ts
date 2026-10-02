@@ -290,7 +290,8 @@ export const ProgressPart: Bag = {
     if (cause) this.tally[cause] = (this.tally[cause] || 0) + 1;
     this.checkAch();
     const p = this.player;
-    this.endBossFight();
+    /* 여럿이면 보스전은 모두 쓰러졌을 때만 끝난다(호스트 판정 — 참가자 화면의 보스는 그림자다). */
+    if (!this.net || (this.net.role === 'host' && this.players.every(q => q === p || q.hp <= 0))) this.endBossFight();
     const lostXp = Math.floor(p.xp * 0.15), lostG = Math.floor(p.gold * 0.4);
     p.xp -= lostXp; p.gold -= lostG;
     // 죽은 자리를 남긴다 — 세계가 5000타일이 넘어 "어디서 죽었더라"를 기억으로 버티기 어렵다.
@@ -319,7 +320,7 @@ export const ProgressPart: Bag = {
       $('#death-line').textContent = tr('불가능 모드였다. 이 슬롯의 기록이 지워졌다.');
       $('#death-screen').classList.add('open');
       $('#death-screen').classList.add('wipe');
-      this.scenes.open('death');
+      this.scenes.open(this.net ? 'mdeath' : 'death');
       this.sfx('death');
       return;
     }
@@ -328,7 +329,7 @@ export const ProgressPart: Bag = {
     parts.push(tr('쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.'));
     $('#death-line').textContent = parts.join(' ');
     $('#death-screen').classList.add('open');
-    this.scenes.open('death');
+    this.scenes.open(this.net ? 'mdeath' : 'death');
     this.sfx('death');
   },
 
@@ -454,16 +455,18 @@ export const ProgressPart: Bag = {
     else { p.x = w.spawnX * TS; p.y = (w.spawnY - 3) * TS; }
     p.vx = p.vy = 0;
     p.hp = p.d.maxHp; p.mp = p.d.maxMp; p.iframe = 2; p.buffs = [];
-    this.ents = []; this.corpses = []; this.boss = null; this.projs = [];
+    /* 세계의 몹·보스는 혼자일 때만 걷는다 — 여럿이면 남은 사람이 아직 싸우고 있다. */
+    if (!this.net) { this.ents = []; this.corpses = []; this.boss = null; this.projs = []; }
     /* ★ 깨워 둔 둥지·메아리 표시도 같이 지운다. */
     this.pendingLair = null; this.pendingEcho = null;
     if (this.pulseEvent) this.endPulseEvent(false);   // 쓰러지면 사건도 놓친 것이다
     this.rocks = [];
     $('#death-screen').classList.remove('open');
-    this.scenes.close('death');
+    this.scenes.close('death'); this.scenes.close('mdeath');
   },
   setPause(on) {
-    this.scenes.set('pause', on);
+    this.scenes.set(this.net ? 'mpause' : 'pause', on);
+    if (!on) this.scenes.set(this.net ? 'pause' : 'mpause', false);   // 메뉴를 연 사이에 방을 열고 닫았어도 닫힌다
     $('#pause-screen').classList.toggle('open', on);
     if (on) UI.syncSettings();      // 열 때마다 현재 값으로 맞춘다
   },

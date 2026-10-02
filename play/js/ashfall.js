@@ -34856,7 +34856,8 @@
         G.syncCtl();
         G.render();
       } } },
-      layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true } },
+      /* 멀티플레이에서는 멈춤 메뉴·쓰러짐이 세계를 멈추면 안 된다(남의 판이 같이 멈추고 끊긴다) — 입력만 막는 겹(mpause·mdeath)을 쓴다. */
+      layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true }, mpause: { input: true }, mdeath: { input: true } },
       // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
       start: "title"
     }),
@@ -35258,6 +35259,8 @@
       this.crafted = {};
       this.scenes.close("pause");
       this.scenes.close("death");
+      this.scenes.close("mpause");
+      this.scenes.close("mdeath");
       this.talkSeq = {};
       this.storyHeard = {};
       this.villageSeen = {};
@@ -39839,7 +39842,7 @@
       if (cause) this.tally[cause] = (this.tally[cause] || 0) + 1;
       this.checkAch();
       const p = this.player;
-      this.endBossFight();
+      if (!this.net || this.net.role === "host" && this.players.every((q) => q === p || q.hp <= 0)) this.endBossFight();
       const lostXp = Math.floor(p.xp * 0.15), lostG = Math.floor(p.gold * 0.4);
       p.xp -= lostXp;
       p.gold -= lostG;
@@ -39870,7 +39873,7 @@
         $("#death-line").textContent = tr("불가능 모드였다. 이 슬롯의 기록이 지워졌다.");
         $("#death-screen").classList.add("open");
         $("#death-screen").classList.add("wipe");
-        this.scenes.open("death");
+        this.scenes.open(this.net ? "mdeath" : "death");
         this.sfx("death");
         return;
       }
@@ -39879,7 +39882,7 @@
       parts.push(tr("쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다."));
       $("#death-line").textContent = parts.join(" ");
       $("#death-screen").classList.add("open");
-      this.scenes.open("death");
+      this.scenes.open(this.net ? "mdeath" : "death");
       this.sfx("death");
     },
     /** 쓰러지면 싸움은 없던 일 — 깨운 보스는 조용히 사라지고(처치 아님 · 보상 없음) 제단·둥지·메아리는 다시 깨울 수 있다. */
@@ -40040,19 +40043,23 @@
       p.mp = p.d.maxMp;
       p.iframe = 2;
       p.buffs = [];
-      this.ents = [];
-      this.corpses = [];
-      this.boss = null;
-      this.projs = [];
+      if (!this.net) {
+        this.ents = [];
+        this.corpses = [];
+        this.boss = null;
+        this.projs = [];
+      }
       this.pendingLair = null;
       this.pendingEcho = null;
       if (this.pulseEvent) this.endPulseEvent(false);
       this.rocks = [];
       $("#death-screen").classList.remove("open");
       this.scenes.close("death");
+      this.scenes.close("mdeath");
     },
     setPause(on) {
-      this.scenes.set("pause", on);
+      this.scenes.set(this.net ? "mpause" : "pause", on);
+      if (!on) this.scenes.set(this.net ? "pause" : "mpause", false);
       $("#pause-screen").classList.toggle("open", on);
       if (on) UI5.syncSettings();
     },
@@ -40453,6 +40460,8 @@
         this.scenes.go("play");
         this.scenes.close("pause");
         this.scenes.close("death");
+        this.scenes.close("mpause");
+        this.scenes.close("mdeath");
         this.petEnts = [];
         this.syncPets();
         UI5.refreshBag();
