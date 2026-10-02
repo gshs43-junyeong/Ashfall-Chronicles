@@ -57,6 +57,7 @@ export const MeteorPart: Bag = {
     this.meteor = { t: 0, x, y: w.surface[x], R, dir: pd >= 0 ? 1 : -1, hit: false, quake: 0, amp: 0 };
     this.toast(tr('☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!'), 'bad');
     this.sfx('boss');
+    this.netMeteorOut();
     return true;
   },
 
@@ -86,7 +87,7 @@ export const MeteorPart: Bag = {
     this.shake = Math.max(this.shake, m.amp);
     this.sfx('boom_big', 0.7, 0.4 + 0.6 * near);
     this.sfx('sk_quake', 1, 0.3 + 0.7 * near);
-    this.carveCrater(cx, cy, R);
+    if (!m.remote) this.carveCrater(cx, cy, R);   // 참가자 화면 — 구덩이는 호스트 칸이 온다
     // 불티·흙
     if (dist < 80) for (let i = 0; i < 90; i++) {
       const c = i % 3 ? (i % 2 ? '#ffb24a' : '#ff6a2a') : '#6a5a48';
@@ -95,7 +96,7 @@ export const MeteorPart: Bag = {
     }
     // 폭발 반경 안의 생물 — 주인은 버틴다(보스가 돌에 맞아 죽으면 이야기가 끊긴다)
     const bx = (cx + 0.5) * TS, by = cy * TS, br = (R + 2) * TS;
-    for (const e of this.ents) {
+    for (const e of m.remote ? [] : this.ents) {   // 참가자 화면의 몹은 그림자 — 호스트가 정리한다
       if (e.dead || e.boss) continue;
       // die() 는 경험치·금화를 준다 — 하늘이 잡은 것까지 플레이어 몫으로 치면 안 된다
       if (Math.hypot(e.cx - bx, e.cy - by) < br) { e.hp = 0; e.dead = true; }

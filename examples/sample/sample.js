@@ -22,16 +22,45 @@
   }
 
   // src/engine/core/loop.ts
-  function startLoop(frame, maxDt) {
-    let last = 0;
-    const tick = (t) => {
-      requestAnimationFrame(tick);
-      const now = t / 1e3;
+  function startLoop(frame, maxDt, opts = {}) {
+    let last = 0, bgOn = false, worker = null;
+    const step = (now) => {
       const rawDt = now - (last || now);
       last = now;
       frame(Math.min(maxDt, rawDt), rawDt);
     };
+    const tick = (t) => {
+      requestAnimationFrame(tick);
+      if (!bgOn) step(t / 1e3);
+    };
     requestAnimationFrame(tick);
+    if (!opts.background || typeof document === "undefined" || typeof Worker === "undefined") return;
+    const sync = () => {
+      const want = document.hidden && !!opts.background && opts.background();
+      if (want === bgOn) return;
+      bgOn = want;
+      if (want && !worker) {
+        const src = "let id=0;onmessage=e=>{clearInterval(id);if(e.data>0)id=setInterval(()=>postMessage(0),e.data)}";
+        try {
+          worker = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+        } catch {
+          bgOn = false;
+          return;
+        }
+        worker.onmessage = () => {
+          if (bgOn) {
+            try {
+              step(performance.now() / 1e3);
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        };
+      }
+      if (worker) worker.postMessage(want ? Math.round(1e3 / (opts.bgHz || 30)) : 0);
+    };
+    document.addEventListener("visibilitychange", sync);
+    setInterval(sync, 1e3);
   }
 
   // src/engine/entity/entity.ts
