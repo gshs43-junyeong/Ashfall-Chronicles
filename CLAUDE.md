@@ -288,6 +288,7 @@ bash tools/build-site.sh         # play/ → site/play/ 복사 + 매니페스트
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
   PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.
+- 사이트는 Vercel(`vercel.json`) · Cloudflare Pages(`site/_redirects` · `site/_headers` · `.github/workflows/pages-cf.yml`) · Docker(`docker/nginx-site.conf`) 셋이 같은 규칙을 따로 든다 — 하나를 고치면 셋 다(docs/deploy-cache.md).
 - `tools/build.sh` 는 재현 가능한 zip 을 만든다(두 번 빌드해 해시가 같다) — 다운로드 페이지 `HASHES` 는 그 앞 8자리.
 - **버전 문자열**이 박힌 곳: `play/index.html`(타이틀 표시) · `README.md` ·
   `site/download/index.html` · `tools/build.sh` 인자 · `docs/*`.

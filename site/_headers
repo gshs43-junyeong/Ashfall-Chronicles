@@ -1,0 +1,57 @@
+# Cloudflare Pages — vercel.json 의 headers(캐시 규칙)를 옮긴 것(★ 둘 중 하나를 고치면 다른 쪽과 docker/nginx-site.conf 도)
+# 늘 새로 확인할 것 — 페이지 · 사이트 스크립트 · 게임 html · 판 표식 · 매니페스트
+/home/*
+  Cache-Control: public, max-age=0, must-revalidate
+/download/*
+  Cache-Control: public, max-age=0, must-revalidate
+/hero.js
+  Cache-Control: public, max-age=0, must-revalidate
+/showcase.js
+  Cache-Control: public, max-age=0, must-revalidate
+/content.js
+  Cache-Control: public, max-age=0, must-revalidate
+/decor.js
+  Cache-Control: public, max-age=0, must-revalidate
+/i18n.js
+  Cache-Control: public, max-age=0, must-revalidate
+/style.css
+  Cache-Control: public, max-age=0, must-revalidate
+/play/
+  Cache-Control: public, max-age=0, must-revalidate
+/play/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+/play/version.json
+  Cache-Control: no-store
+/play/assets/manifest.json
+  Cache-Control: public, max-age=0, must-revalidate
+# 게임 코드·그림·소리는 ?v= 가 붙어 나가므로 오래 둔다(★ 겹치는 규칙이 있으면 Pages 는 값을 이어 붙인다 — 폴더로 갈라 둔다)
+/play/js/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/css/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/locales/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/audio/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/sound_effects/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/bg/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/boss/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/char/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/fx/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/item/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/npc/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/obj/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/tile/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/ui/*
+  Cache-Control: public, max-age=31536000, immutable
+/play/assets/sprites-manifest.js
+  Cache-Control: public, max-age=31536000, immutable

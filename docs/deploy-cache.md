@@ -59,3 +59,21 @@
 서버에 직접 물어보려면 `/play/version.json`.
 
 셋 중 무엇이 문제인지(캐시 / 배포 실패 / 코드)를 구별할 데가 여태 없어서 붙였다.
+
+## Cloudflare Pages (사이트 본 배포 후보)
+
+Vercel 무료 대역폭(월 100GB)은 웹 한 판에 30MB 남짓 받으므로 하루 100명쯤에서 찬다. Cloudflare Pages 는 대역폭이 무제한이라
+사이트를 그쪽으로 옮길 수 있게 해 두었다(Vercel 배포는 그대로 — 둘 다 돌아도 된다).
+
+- 규칙: `site/_redirects`(첫 화면 `/` → `/home` 따위) · `site/_headers`(위 캐시 표). **`vercel.json` · `docker/nginx-site.conf` 와 같이 고칠 것.**
+  ★ Pages 는 겹치는 규칙의 값을 **이어 붙인다** — 그래서 immutable 규칙을 `assets/` 하위 폴더마다 갈라 적었다(`manifest.json` 과 안 겹치게).
+- 배포: `.github/workflows/pages-cf.yml` — `main` 에 push 하면 `build-site.sh` 로 굽고 `wrangler pages deploy site` 로 올린다.
+  비밀값이 없으면 건너뛴다. 커밋 해시는 `CF_PAGES_COMMIT_SHA`(대시보드에서 Git 을 직접 이었을 때) → `GITHUB_SHA` 순.
+
+켜는 법(한 번만):
+1. Cloudflare 대시보드 → 오른쪽 위 계정 → **My Profile → API Tokens → Create Token** → 템플릿 *Edit Cloudflare Workers* 를 고르고
+   권한에 **Account · Cloudflare Pages · Edit** 를 더한다(중개 `relay.yml` 과 같은 토큰을 써도 된다).
+2. 계정 ID: 대시보드 **Workers & Pages** 오른쪽 칸의 *Account ID*.
+3. GitHub 저장소 → Settings → Secrets and variables → Actions 에 `CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID`.
+4. Actions → **Cloudflare Pages** → Run workflow(처음 한 번은 프로젝트 `ashfall-chronicles` 를 만든다).
+   주소는 `https://ashfall-chronicles.pages.dev` — 자기 도메인은 Pages 프로젝트 → Custom domains.

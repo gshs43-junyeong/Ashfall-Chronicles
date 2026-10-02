@@ -1,0 +1,44 @@
+name: Cloudflare Pages
+
+# 사이트(site/ — 홈 · 다운로드 · /play 웹 게임)를 Cloudflare Pages 로 올린다 — 정적 파일 전송량에 한도가 없다
+# (Vercel 무료는 월 100GB — 웹 게임 한 판이 30MB 안팎이라 하루 100명 남짓에서 막힌다).
+# 규칙은 site/_redirects · site/_headers(vercel.json 과 같은 내용). 빌드는 Vercel 과 같은 tools/build-site.sh.
+# Secrets: CLOUDFLARE_API_TOKEN(Workers 와 Pages 편집 권한) · CLOUDFLARE_ACCOUNT_ID — 없으면 건너뛴다.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cf-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      PROJECT: ashfall-chronicles
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: 토큰 확인
+        id: tok
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "CLOUDFLARE_API_TOKEN 이 없어 배포를 건너뛴다"; echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+      - name: 사이트 빌드
+        if: steps.tok.outputs.skip != '1'
+        run: |
+          npm ci
+          bash tools/build-site.sh
+      - name: 프로젝트 만들기(처음 한 번 — 이미 있으면 넘어간다)
+        if: steps.tok.outputs.skip != '1'
+        run: npx --yes wrangler@4.145.0 pages project create "$PROJECT" --production-branch=main || true
+      - name: 올리기
+        if: steps.tok.outputs.skip != '1'
+        run: npx --yes wrangler@4.145.0 pages deploy site --project-name="$PROJECT" --branch=main --commit-hash="$GITHUB_SHA"
