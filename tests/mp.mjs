@@ -140,6 +140,43 @@ const death = await host.evaluate(async () => {
 });
 check(death[0] === false && death[1] && death[2] >= 1 && death[3] === death[2], `쓰러짐: 호스트가 쓰러져도 세계는 돈다(멈춤 ${death[0]}) · 부활해도 몹이 남는다(${death[2]}→${death[3]})`);
 
+/* 채팅 — Enter 로 열어 친 글이 호스트를 거쳐 모두에게(치는 동안 캐릭터는 안 걷는다) · 호스트가 끄면 막힌다 */
+await guest.bringToFront();
+const gx0 = await guest.evaluate(() => G.me.x);
+await guest.keyboard.press('Enter');
+await guest.keyboard.type('dddd hello');
+const typing = await guest.evaluate(() => [document.activeElement && document.activeElement.id, G.keys.KeyD | 0]);
+await guest.keyboard.press('Enter');
+await host.waitForTimeout(800);
+const chat1 = await Promise.all([host, guest].map(pg => pg.evaluate(() => (G.chatLog || []).map(l => l.n + ':' + l.s).join('|'))));
+const gx1 = await guest.evaluate(() => G.me.x);
+check(typing[0] === 'chat-input' && !typing[1] && Math.abs(gx1 - gx0) < 4 && chat1[0].includes('Guest:dddd hello') && chat1[1].includes('Guest:dddd hello'),
+  `채팅: Enter → 입력 칸(${typing[0]}) · 치는 동안 안 걷는다(${Math.round(gx1 - gx0)}px) · 호스트·참가자 둘 다 받는다`);
+await host.evaluate(() => G.mpSetCfg('chat', false));
+await host.waitForTimeout(500);
+await guest.evaluate(() => G.sendChat('blocked'));
+await host.waitForTimeout(500);
+const chat2 = await Promise.all([host.evaluate(() => G.chatLog.some(l => l.s === 'blocked')), guest.evaluate(() => G.net.cfg.chat)]);
+check(!chat2[0] && chat2[1] === false, '채팅: 호스트가 끄면 참가자에게 알리고 글이 막힌다');
+await host.evaluate(() => G.mpSetCfg('chat', true));
+/* PvP — 꺼져 있으면 안 아프고, 켜면 반(PVP_SCALE)만큼 주인 화면에서 */
+const hitHost = () => guest.evaluate(() => { const h = G.players.find(p => p.remote && p.netId === 0); G.pvpHit(h, 40, h.cx - 30); });
+await host.evaluate(() => { G.me.iframe = 0; G.me.hp = G.me.d.maxHp; });
+await hitHost(); await host.waitForTimeout(500);
+const pv0 = await host.evaluate(() => [G.me.hp, G.me.d.maxHp]);
+await host.evaluate(() => G.mpSetCfg('pvp', true));
+await host.waitForTimeout(500);
+await host.evaluate(() => { G.me.iframe = 0; });
+await hitHost(); await host.waitForTimeout(500);
+const pv1 = await host.evaluate(() => G.me.hp);
+await guest.evaluate(() => { G.me.iframe = 0; G.me.hp = G.me.d.maxHp; });
+const ghp0 = await guest.evaluate(() => G.me.hp);
+await host.evaluate(() => { const g = G.players.find(p => p.remote); G.pvpHit(g, 40, g.cx - 30); });
+await guest.waitForTimeout(500);
+const ghp1 = await guest.evaluate(() => [G.me.hp, G.net.cfg.pvp]);
+check(pv0[0] === pv0[1] && pv1 < pv0[0] && ghp1[0] < ghp0 && ghp1[1] === true, `PvP: 꺼짐이면 그대로(${pv0[0]}) · 켜면 호스트 ${pv0[0]}→${pv1} · 참가자 ${ghp0}→${ghp1[0]}`);
+await host.evaluate(() => G.mpSetCfg('pvp', false));
+
 /* PeerJS 쪽 — 방 코드 여섯 글자 · 자체 중개가 닿지 않으면 PeerJS 로 넘어간다 · 없는 방은 '그런 방이 없다' */
 if (!process.env.MP_SIG) {
   check(room.length === 6, `PeerJS 중개: 방 코드 여섯 글자 (${room})`);

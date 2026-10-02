@@ -28725,6 +28725,16 @@
             return;
           }
         }
+        if (app.net) for (const q of app.pvpTargets()) {
+          if (this.hitSet.has(q) || !aabb(this.rect(), q.rect())) continue;
+          this.hitSet.add(q);
+          app.pvpHit(q, this.dmg, this.cx);
+          if (this.pierce > 0) this.pierce--;
+          else {
+            this.impact();
+            return;
+          }
+        }
       } else {
         for (const q of app.players.length ? app.players : [player])
           if (aabb(this.rect(), q.rect())) {
@@ -29643,6 +29653,13 @@
           if (this.d.fire) e.addDot("burn", this.scaleDmg(base, "str") * 0.12 * this.d.fire, 4);
           if (this.d.frost) e.slow(0.45, 2.5);
           if (this.d.poison) e.addDot("poison", this.scaleDmg(base, "str") * 0.13 * this.d.poison, 5);
+        }
+        if (app.net && this === app.me) for (const q of app.pvpTargets()) {
+          if (this.swingHit.has(q)) continue;
+          const dx = q.cx - this.cx, dy = q.cy - this.cy;
+          if (dx * dx + dy * dy > (reach + q.w / 2) * (reach + q.w / 2) || Math.sign(dx) !== this.swingDir && Math.abs(dx) > 8 || Math.abs(dy) > reach * 0.85) continue;
+          this.swingHit.add(q);
+          app.pvpHit(q, this.scaleDmg(base, "str"), this.cx);
         }
       }
       const tx = Math.floor(this.cx / TS), ty = Math.floor(this.cy / TS);
@@ -34970,6 +34987,7 @@
         this.openModal("#slots-screen");
       };
       this.bindMpUi();
+      this.bindChat();
       $("#btn-slots-close").onclick = () => this.closeModal("#slots-screen");
       $("#btn-credits").onclick = () => this.openModal("#credits-screen");
       $("#btn-credits-close").onclick = () => this.closeModal("#credits-screen");
@@ -35109,6 +35127,11 @@
         return;
       }
       const k = e.code;
+      if ((k === "Enter" || k === "NumpadEnter") && this.net && !UI5.dlg && !UI5.open) {
+        this.openChat();
+        e.preventDefault();
+        return;
+      }
       if (k === "Escape") {
         if (UI5.open || UI5.dlg) {
           UI5.closePanel();
@@ -46838,6 +46861,7 @@
         mwatch: /* @__PURE__ */ new Map(),
         objJ: /* @__PURE__ */ new WeakMap()
       };
+      n.cfg = { pvp: !!this.settings.mpPvp, chat: this.settings.mpChat !== false };
       this.net = n;
       this.me.netId = 0;
       this.netTrackWorld();
@@ -46905,6 +46929,7 @@
         const roster = [[0, this.netState(me)]];
         for (const q of n.peers.values()) if (q.rp && q !== peer) roster.push([q.id, this.netState(q.rp)]);
         this.netSend(peer.t, "rel", { k: "world", id: peer.id, x: s.x, y: s.y, save: this.saveData(), roster });
+        this.netSend(peer.t, "rel", Object.assign({ k: "cfg" }, n.cfg));
         for (const q of n.peers.values()) if (q !== peer) this.netSend(q.t, "rel", { k: "join", id: peer.id, s });
         this.toast(tr("{name|이} 들어왔다", { name: m.n }), "good");
       } else if (m.k === "st" && peer.rp) {
@@ -46912,6 +46937,10 @@
         this.netApply(peer.rp, m.s);
         peer.last = m.s;
         peer.heard = now();
+      } else if (m.k === "chat" && peer.rp) {
+        this.netChatOut(peer.rp.name, m.s);
+      } else if (m.k === "pvp") {
+        this.netPvpIn(peer, m);
       } else if (m.k === "po") {
         peer.ping = Math.max(0, Math.round(performance.now() - m.t));
       } else if (m.k === "bye") {
@@ -47062,6 +47091,10 @@
       } else if (m.k === "es") {
         this.netPutEnemies(m.l);
         if (m.p) this.netPutProjs(m.p);
+      } else if (m.k === "chat") {
+        this.chatLine(m.n, m.s);
+      } else if (m.k === "cfg") {
+        this.netGotCfg(m);
       } else if (m.k === "pi") {
         n.t.send("rel", JSON.stringify({ k: "po", t: m.t }));
       } else if (m.k === "pr") {
@@ -47121,6 +47154,8 @@
       if (this.world) this.world.netLog = null;
       if (this.me) this.me.netId = 0;
       this.refreshParty();
+      this.closeChat();
+      this.refreshChat();
     },
     /** 호스트가 방을 닫는다 — 참가자에게 알리고(그쪽은 캐릭터를 저장하고 나간다) 혼자 하기로 돌아온다. */
     mpClose() {
@@ -47377,6 +47412,7 @@
       if (n.partyT > 0) return;
       n.partyT = 0.25;
       this.refreshParty();
+      this.refreshChat();
     },
     /** 그 플레이어의 왕복 시간(ms) — 호스트 자신은 없다. */
     netPing(id) {
@@ -47403,7 +47439,7 @@
         <span class="pt-lv">Lv.${p.level | 0}</span><span class="pt-ping">${ping === null ? "" : ping + "ms"}</span>
         <div class="pt-hp"><i style="width:${clamp(p.hp / (mhp || 1), 0, 1) * 100}%"></i></div></div>`;
       }).join("");
-      const head = `<div class="pt-head">${n.role === "host" && n.room ? tr("방 {room}", { room: n.room }) + " · " : ""}${this.players.length}/${NET_MAX}</div>`;
+      const head = `<div class="pt-head">${n.role === "host" && n.room ? tr("방 {room}", { room: n.room }) + " · " : ""}${this.players.length}/${NET_MAX}${this.netPvpOn() ? ' · <b class="pt-pvp">PvP</b>' : ""}</div>`;
       box.innerHTML = head + rows;
       box.hidden = false;
     },
@@ -47416,6 +47452,11 @@
       $("#btn-room-close").hidden = !host;
       $("#btn-room-leave").hidden = !guest;
       $("#btn-save-export").hidden = guest;
+      $("#ps-cfg").hidden = !host;
+      if (host) {
+        $("#mp-pvp").checked = !!n.cfg.pvp;
+        $("#mp-chat").checked = !!n.cfg.chat;
+      }
       const list = $("#ps-party"), guests = host ? [...n.peers.values()].filter((q) => q.rp) : [];
       list.hidden = !guests.length;
       list.innerHTML = guests.map((q) => `<div class="ps-guest"><span>${escHtml(q.rp.name)} · Lv.${q.rp.level | 0}</span>
@@ -47430,6 +47471,158 @@
   };
   mixin(G, NetUiPart);
 
+  // src/game/game/netchat.ts
+  var netchat_exports = {};
+  __export(netchat_exports, {
+    CHAT_FADE: () => CHAT_FADE,
+    CHAT_LINES: () => CHAT_LINES,
+    CHAT_MAX: () => CHAT_MAX,
+    NetChatPart: () => NetChatPart,
+    PVP_SCALE: () => PVP_SCALE
+  });
+  var CHAT_MAX = 200;
+  var CHAT_LINES = 6;
+  var CHAT_FADE = 12;
+  var PVP_SCALE = 0.5;
+  var NetChatPart = {
+    bindChat() {
+      const inp = $("#chat-input");
+      inp.onkeydown = (e) => {
+        e.stopPropagation();
+        if (e.key === "Enter") {
+          const s = inp.value;
+          inp.value = "";
+          this.closeChat();
+          this.sendChat(s);
+          e.preventDefault();
+        } else if (e.key === "Escape") {
+          this.closeChat();
+          e.preventDefault();
+        }
+      };
+      inp.onkeyup = (e) => e.stopPropagation();
+      inp.onblur = () => this.closeChat();
+      $("#mp-pvp").onchange = (e) => this.mpSetCfg("pvp", e.target.checked);
+      $("#mp-chat").onchange = (e) => this.mpSetCfg("chat", e.target.checked);
+    },
+    /* ---- 호스트 설정 ---- */
+    /** 방의 설정(PvP · 채팅) — 혼자면 null. 참가자는 호스트가 보낸 것. */
+    netCfg() {
+      const n = this.net;
+      return n ? n.cfg || { pvp: false, chat: true } : null;
+    },
+    /** 호스트가 바꾼다 — 다음 판에도 쓰게 설정에 남기고 모두에게 알린다. */
+    mpSetCfg(key, v) {
+      const n = this.net;
+      if (!n || n.role !== "host") return;
+      n.cfg = Object.assign({}, this.netCfg(), { [key]: !!v });
+      this.settings[key === "pvp" ? "mpPvp" : "mpChat"] = !!v;
+      this.saveSettings();
+      const m = Object.assign({ k: "cfg" }, n.cfg);
+      for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", m);
+      this.netCfgToast(key, !!v);
+    },
+    /** 참가자 — 호스트가 보낸 설정. 바뀐 것만 알린다. */
+    netGotCfg(m) {
+      const n = this.net, old = this.netCfg();
+      n.cfg = { pvp: !!m.pvp, chat: !!m.chat };
+      for (const key of ["pvp", "chat"]) if (old[key] !== n.cfg[key]) this.netCfgToast(key, n.cfg[key]);
+      if (!n.cfg.chat) this.closeChat();
+    },
+    netCfgToast(key, on) {
+      if (key === "pvp") this.toast(on ? tr("플레이어끼리 싸울 수 있다(PvP 켜짐)") : tr("PvP 꺼짐"), on ? "bad" : "info");
+      else this.toast(on ? tr("채팅이 켜졌다") : tr("호스트가 채팅을 껐다"), "info");
+    },
+    /* ---- 채팅 ---- */
+    openChat() {
+      const c = this.netCfg();
+      if (!c) return;
+      if (!c.chat) {
+        this.toast(tr("호스트가 채팅을 껐다"), "info");
+        return;
+      }
+      for (const k in this.keys) this.keys[k] = 0;
+      this.input.m1 = this.input.m2 = 0;
+      $("#chat").hidden = false;
+      const inp = $("#chat-input");
+      inp.hidden = false;
+      inp.focus();
+      this.chatOpen = true;
+      this.refreshChat();
+    },
+    closeChat() {
+      if (!this.chatOpen) return;
+      this.chatOpen = false;
+      const inp = $("#chat-input");
+      inp.hidden = true;
+      inp.blur();
+      this.refreshChat();
+    },
+    sendChat(text) {
+      const n = this.net, s = String(text || "").trim().slice(0, CHAT_MAX);
+      if (!n || !s) return;
+      if (n.role === "host") this.netChatOut(this.me.name, s);
+      else if (n.t) this.netSend(n.t, "rel", { k: "chat", s });
+    },
+    /** 호스트 — 보낸 이 이름을 박아 모두에게(참가자 글은 호스트를 거친다 — 채팅을 껐으면 여기서 막힌다). */
+    netChatOut(name, s) {
+      const n = this.net;
+      if (!this.netCfg().chat) return;
+      const m = { k: "chat", n: name, s: String(s).slice(0, CHAT_MAX) };
+      for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", m);
+      this.chatLine(m.n, m.s);
+    },
+    chatLine(name, s) {
+      this.chatLog = (this.chatLog || []).concat({ n: String(name || ""), s: String(s || ""), t: performance.now() }).slice(-CHAT_LINES * 4);
+      this.refreshChat();
+    },
+    /** 대화 줄 — 입력 중이면 최근 것을 다 보이고, 아니면 CHAT_FADE 초 안의 것만. */
+    refreshChat() {
+      const box = $("#chat");
+      if (!box) return;
+      if (!this.net) {
+        box.hidden = true;
+        this.chatLog = [];
+        return;
+      }
+      const now2 = performance.now(), log = (this.chatLog || []).slice(-CHAT_LINES);
+      const lines = log.filter((l) => this.chatOpen || now2 - l.t < CHAT_FADE * 1e3);
+      $("#chat-log").innerHTML = lines.map((l) => `<div class="ch-line"><b>${escHtml(l.n)}</b> ${escHtml(l.s)}</div>`).join("");
+      box.hidden = !this.chatOpen && !lines.length;
+    },
+    /* ---- PvP ---- */
+    netPvpOn() {
+      const c = this.netCfg();
+      return !!(c && c.pvp);
+    },
+    /** 이 화면에서 칠 수 있는 남의 아바타 — PvP 가 꺼져 있으면 없다. */
+    pvpTargets() {
+      return this.netPvpOn() ? this.players.filter((p) => p.remote && p.hp > 0) : [];
+    },
+    /** 내 공격이 남의 아바타에 닿았다 — 숫자는 바로 띄우고 피해는 주인 화면으로(호스트를 거친다). */
+    pvpHit(q, dmg, sx) {
+      const n = this.net;
+      if (!n || !this.netPvpOn()) return;
+      const a = Math.max(1, Math.round(dmg * PVP_SCALE));
+      this.texts.push(new DmgText(q.cx, q.y, a, "#ffb070", 0));
+      if (n.role === "host") {
+        const peer = n.peers.get(q.netId);
+        if (peer) this.netSend(peer.t, "rel", { k: "hurt", a, sx });
+      } else if (n.t) this.netSend(n.t, "rel", { k: "pvp", id: q.netId, a, sx });
+    },
+    /** 호스트 — 참가자가 남을 쳤다. PvP 가 켜져 있고 둘이 가까울 때만 맞은 사람에게 넘긴다. */
+    netPvpIn(peer, m) {
+      const n = this.net;
+      if (!this.netPvpOn() || !peer.rp) return;
+      const tgt = m.id === 0 ? this.me : (n.peers.get(m.id) || {}).rp;
+      if (!tgt || Math.abs(tgt.cx - peer.rp.cx) > 700 || Math.abs(tgt.cy - peer.rp.cy) > 500) return;
+      const a = clamp(+m.a || 0, 0, 1e6);
+      if (m.id === 0) this.me.hurt(a, peer.rp.cx);
+      else this.netSend(n.peers.get(m.id).t, "rel", { k: "hurt", a, sx: peer.rp.cx });
+    }
+  };
+  mixin(G, NetChatPart);
+
   // src/game/main.ts
   var DATA = Object.fromEntries(Object.entries(Object.assign({}, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports)).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
   if (!I18N.isSource) {
@@ -47437,7 +47630,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports, utility_exports, net_exports, netui_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports, utility_exports, net_exports, netui_exports, netchat_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

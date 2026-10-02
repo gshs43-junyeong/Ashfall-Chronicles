@@ -358,6 +358,7 @@ export const NetPart: Bag = {
     if (this.net || !this.me) return;
     const sigs = this.netSignals(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0,
       eid: 0, live: new Map(), dead: [], joined: new Set(), watch: new Map(), mwatch: new Map(), objJ: new WeakMap() };
+    n.cfg = { pvp: !!this.settings.mpPvp, chat: this.settings.mpChat !== false };
     this.net = n; this.me.netId = 0;
     this.netTrackWorld();
     if (sigs) {
@@ -403,10 +404,15 @@ export const NetPart: Bag = {
       const roster = [[0, this.netState(me)]];
       for (const q of n.peers.values()) if (q.rp && q !== peer) roster.push([q.id, this.netState(q.rp)]);
       this.netSend(peer.t, 'rel', { k: 'world', id: peer.id, x: s.x, y: s.y, save: this.saveData(), roster });
+      this.netSend(peer.t, 'rel', Object.assign({ k: 'cfg' }, n.cfg));
       for (const q of n.peers.values()) if (q !== peer) this.netSend(q.t, 'rel', { k: 'join', id: peer.id, s });
       this.toast(tr('{name|이} 들어왔다', { name: m.n }), 'good');
     } else if (m.k === 'st' && peer.rp) {
       peer.rp.netBuf.push(now(), m.s); this.netApply(peer.rp, m.s); peer.last = m.s; peer.heard = now();
+    } else if (m.k === 'chat' && peer.rp) {
+      this.netChatOut(peer.rp.name, m.s);
+    } else if (m.k === 'pvp') {
+      this.netPvpIn(peer, m);
     } else if (m.k === 'po') {
       peer.ping = Math.max(0, Math.round(performance.now() - m.t));
     } else if (m.k === 'bye') {
@@ -514,6 +520,10 @@ export const NetPart: Bag = {
     } else if (m.k === 'es') {
       this.netPutEnemies(m.l);
       if (m.p) this.netPutProjs(m.p);
+    } else if (m.k === 'chat') {
+      this.chatLine(m.n, m.s);
+    } else if (m.k === 'cfg') {
+      this.netGotCfg(m);
     } else if (m.k === 'pi') {
       n.t.send('rel', JSON.stringify({ k: 'po', t: m.t }));
     } else if (m.k === 'pr') {
@@ -562,7 +572,7 @@ export const NetPart: Bag = {
     if (n.sig) n.sig.close();
     if (this.world) this.world.netLog = null;
     if (this.me) this.me.netId = 0;
-    this.refreshParty();
+    this.refreshParty(); this.closeChat(); this.refreshChat();
   },
   /** 호스트가 방을 닫는다 — 참가자에게 알리고(그쪽은 캐릭터를 저장하고 나간다) 혼자 하기로 돌아온다. */
   mpClose() {

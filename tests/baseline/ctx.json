@@ -35,6 +35,8 @@
       "player",
       "players",
       "projs",
+      "pvpHit",
+      "pvpTargets",
       "ringFx",
       "rng",
       "scale",

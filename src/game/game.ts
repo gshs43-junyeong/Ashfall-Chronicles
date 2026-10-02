@@ -217,7 +217,7 @@ export const G: Bag = {
     this.renderSlotScreen();
     /* 타이틀에는 버튼 넷만 둔다 — 저장 슬롯도, 캐릭터 선택도 팝업으로 뺐다. */
     $('#btn-single').onclick = () => { this.mpWant = null; this.renderSlotScreen(); this.openModal('#slots-screen'); };
-    this.bindMpUi();
+    this.bindMpUi(); this.bindChat();
     $('#btn-slots-close').onclick = () => this.closeModal('#slots-screen');
     $('#btn-credits').onclick = () => this.openModal('#credits-screen');
     $('#btn-credits-close').onclick = () => this.closeModal('#credits-screen');
@@ -329,6 +329,7 @@ export const G: Bag = {
     }
     const k = e.code;
     /* Esc 는 바꿀 수 없게 둔다 — 다시 못 빠져나오는 자리를 만들지 않기 위해서다. */
+    if ((k === 'Enter' || k === 'NumpadEnter') && this.net && !UI.dlg && !UI.open) { this.openChat(); e.preventDefault(); return; }
     if (k === 'Escape') { if (UI.open || UI.dlg) { UI.closePanel(); UI.closeDialogue(); } else this.setPause($('#pause-screen').className !== 'open'); }
     else if (this.isKey('inv', k)) { UI.togglePanel('inv'); e.preventDefault(); }
     else if (this.isKey('skills', k)) { UI.togglePanel('skill'); e.preventDefault(); }

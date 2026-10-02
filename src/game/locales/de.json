@@ -950,7 +950,14 @@
   "호스트가 방을 닫았다": "Der Gastgeber hat den Raum geschlossen.",
   "내보내기": "Entfernen",
   "방 {room}": "Raum {room}",
-  "호스트": "Host"
+  "호스트": "Host",
+  "Enter 보내기 · Esc 닫기": "Enter senden · Esc schließen",
+  "PvP 꺼짐": "PvP aus",
+  "채팅": "Chat",
+  "채팅이 켜졌다": "Chat ist an.",
+  "플레이어끼리 싸울 수 있다(PvP 켜짐)": "Spieler können gegeneinander kämpfen (PvP an).",
+  "플레이어끼리 싸움(PvP)": "Spieler gegen Spieler (PvP)",
+  "호스트가 채팅을 껐다": "Der Gastgeber hat den Chat ausgeschaltet."
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
