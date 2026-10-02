@@ -60,14 +60,17 @@
 
 셋 중 무엇이 문제인지(캐시 / 배포 실패 / 코드)를 구별할 데가 여태 없어서 붙였다.
 
-## Cloudflare Pages (사이트 본 배포 후보)
+## Cloudflare Pages (사이트 예비 배포)
+
+본 사이트는 `vercel.app` 그대로다(사용자 결정 2026-10-02). 아래는 Vercel 대역폭이 모자랄 때 옮길 자리로 준비만 해 둔 것 —
+워크플로는 손으로만 돈다(Actions → Cloudflare Pages → Run workflow).
 
 Vercel 무료 대역폭(월 100GB)은 웹 한 판에 30MB 남짓 받으므로 하루 100명쯤에서 찬다. Cloudflare Pages 는 대역폭이 무제한이라
 사이트를 그쪽으로 옮길 수 있게 해 두었다(Vercel 배포는 그대로 — 둘 다 돌아도 된다).
 
 - 규칙: `site/_redirects`(첫 화면 `/` → `/home` 따위) · `site/_headers`(위 캐시 표). **`vercel.json` · `docker/nginx-site.conf` 와 같이 고칠 것.**
   ★ Pages 는 겹치는 규칙의 값을 **이어 붙인다** — 그래서 immutable 규칙을 `assets/` 하위 폴더마다 갈라 적었다(`manifest.json` 과 안 겹치게).
-- 배포: `.github/workflows/pages-cf.yml` — `main` 에 push 하면 `build-site.sh` 로 굽고 `wrangler pages deploy site` 로 올린다.
+- 배포: `.github/workflows/pages-cf.yml` — 돌리면 `build-site.sh` 로 굽고 `wrangler pages deploy site` 로 올린다.
   비밀값이 없으면 건너뛴다. 커밋 해시는 `CF_PAGES_COMMIT_SHA`(대시보드에서 Git 을 직접 이었을 때) → `GITHUB_SHA` 순.
 
 켜는 법(한 번만):
