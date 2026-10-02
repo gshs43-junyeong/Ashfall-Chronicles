@@ -383,6 +383,7 @@ export const NetPart: Bag = {
       }
     };
     this.toast(tr('방 {room|을} 열었다', { room }), 'good');
+    this.refreshPauseMp();
   },
   netAddPeer(t) {
     const n = this.net, peer: Bag = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
@@ -433,20 +434,24 @@ export const NetPart: Bag = {
   },
 
   /* ================= 참가자 ================= */
-  /** 방에 붙는다 — 캐릭터는 새로 만든 것(charId · name). 제 캐릭터 고르기·저장은 M4. */
-  mpJoin(room, name, charId) {
+  /** 방에 붙는다 — char 는 들고 갈 캐릭터(Player). slot 이 있으면 나갈 때 그 칸에 캐릭터 몫만 되적는다(netSaveChar). */
+  mpJoin(room, char, slot = null) {
     if (this.net) return;
     const sigs = this.netSignals(), me = Math.random().toString(36).slice(2, 8);
     room = String(room || '').trim().toUpperCase();
     const viaPeer = sigs && sigs.peer && (!sigs.relay || room.length === PEER_CODE);
     const sig = !sigs ? createTabSignal(room) : viaPeer ? createPeerSignal(sigs.peer, { role: 'guest', room, id: me }) : createWsSignal(sigs.relay, { role: 'guest', room, id: me });
-    if (sigs) (sig as Bag).onerror = () => { clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
+    if (sigs) (sig as Bag).onerror = e => {
+      if (this.net !== n || n.t) return;
+      clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null;
+      this.netSay(String(e && e.message).includes('unreachable') ? tr('중개 서버에 닿지 않는다') : tr('그런 방이 없다'));
+    };
     const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map(), gproj: new Map(), watch: new Map(), mwatch: new Map(), objJ: new WeakMap() };
-    n.char = this.freshPlayer(0, 0, name, charId);
+    n.char = char; n.slot = slot;
     this.net = n;
     sig.onmessage = async m => {
       if (m.to !== me || n.t) return;
-      if (m.t === 'full') { this.toast(tr('방이 가득 찼다'), 'bad'); clearInterval(n.ask); return; }
+      if (m.t === 'full') { clearInterval(n.ask); clearTimeout(n.giveUp); sig.close(); this.net = null; this.netSay(tr('방이 가득 찼다')); return; }
       if (m.t !== 'offer') return;
       clearInterval(n.ask); clearTimeout(n.giveUp);
       const g = await guestAnswer(m.sdp);
@@ -461,7 +466,7 @@ export const NetPart: Bag = {
       t.onclose = () => this.netLost();
       this.netSend(t, 'rel', { k: 'hello', n: n.char.name, c: n.char.charId });
       /* 탭을 닫으면 데이터 통로가 끊겼다는 소식이 늦게(수십 초) 간다 — 나간다고 먼저 알린다. */
-      addEventListener('pagehide', () => { if (n.t) n.t.send('rel', JSON.stringify({ k: 'bye' })); });
+      addEventListener('pagehide', () => { if (this.net === n && n.t) { n.t.send('rel', JSON.stringify({ k: 'bye' })); this.netSaveChar(n); } });
     };
     const ask = () => sig.post({ t: 'want', from: me });
     n.ask = setInterval(ask, sigs ? 5000 : 2000); ask();
@@ -469,11 +474,13 @@ export const NetPart: Bag = {
     n.giveUp = setTimeout(() => {
       if (this.net !== n || n.t) return;
       clearInterval(n.ask); sig.close(); this.net = null;
-      this.toast(tr('호스트가 지금 참가를 받고 있지 않다'), 'bad');
+      this.netSay(tr('호스트가 지금 참가를 받고 있지 않다'));
     }, JOIN_GIVEUP_MS);   // 호스트가 아직 방을 안 열었으면 열 때까지 두드린다
   },
   netOnGuest(m) {
     const n = this.net;
+    if (m.k === 'close') { this.netLost(tr('호스트가 방을 닫았다')); return; }
+    if (m.k === 'kick') { this.netLost(tr('호스트가 방에서 내보냈다')); return; }
     if (m.k === 'world') {
       this.currentSlot = null;                      // ★ 남의 세계다 — 참가자 슬롯에 저장하지 않는다
       this._loadGame(JSON.stringify(m.save));
@@ -522,12 +529,48 @@ export const NetPart: Bag = {
       for (const key of m.g) { this.world.machines.delete(key); this.world.netDirty = true; }
     }
   },
-  netLost() {
+  /** 호스트를 잃었다(끊김 · 방 닫힘 · 내쫓김) — 캐릭터를 제 칸에 적고 타이틀로. */
+  netLost(msg) {
     const n = this.net;
     if (!n || n.role !== 'guest') return;
-    for (const rp of n.others.values()) this.netRemove(rp);
-    n.sig.close(); this.net = null;
-    this.toast(tr('호스트와 연결이 끊겼다'), 'bad');
+    this.netEnd();
+    this.netSaveChar(n);
+    this.toast(msg || tr('호스트와 연결이 끊겼다'), 'bad');
+    if (n.t) this.toTitle();                       // 세계를 받기 전이면 아직 타이틀이다
+  },
+  /** 이 화면의 방 상태를 걷는다 — 남의 아바타 · 그림자 · 통로 · 중개. 세계는 그대로 둔다. closeMs 는 통로를 닫기까지(마지막 글이 먼저 가게). */
+  netEnd(room = null, closeMs = 0) {
+    const n = room || this.net;
+    if (!n) return;
+    if (this.net === n) this.net = null;
+    for (const rp of this.players.slice()) if (rp.remote) this.netRemove(rp);
+    const shut = () => {
+      if (n.role === 'host') { for (const q of n.peers.values()) q.t.close(); for (const h of n.pending.values()) h.cancel(); }
+      else if (n.t) n.t.close();
+    };
+    if (closeMs) setTimeout(shut, closeMs); else shut();
+    if (n.role === 'guest') { this.ents = this.ents.filter(e => !e.ghost); this.projs = this.projs.filter(p => !p.ghost); }
+    clearInterval(n.ask); clearTimeout(n.giveUp);
+    if (n.sig) n.sig.close();
+    if (this.world) this.world.netLog = null;
+    if (this.me) this.me.netId = 0;
+  },
+  /** 호스트가 방을 닫는다 — 참가자에게 알리고(그쪽은 캐릭터를 저장하고 나간다) 혼자 하기로 돌아온다. */
+  mpClose() {
+    const n = this.net;
+    if (!n || n.role !== 'host') return;
+    for (const q of n.peers.values()) this.netSend(q.t, 'rel', { k: 'close' });
+    this.netEnd(n, 300);
+    this.toast(tr('방을 닫았다'), 'info');
+  },
+  /** 참가자가 나간다 — 캐릭터를 저장하고 타이틀로. */
+  mpLeave() {
+    const n = this.net;
+    if (!n || n.role !== 'guest') return;
+    if (n.t) n.t.send('rel', JSON.stringify({ k: 'bye' }));
+    this.netEnd();
+    this.netSaveChar(n);
+    this.toTitle();
   },
 
   /* ================= 매 프레임 ================= */
@@ -582,10 +625,11 @@ export const NetPart: Bag = {
     rp._hurtAt = this.time;
     this.netSend(peer.t, 'rel', { k: 'hurt', a: amount, sx: srcX });
   },
-  /** 주소의 ?mp=host&room= — 새 게임·불러오기를 마치면 방을 연다(개발판 시험용, 창은 M4). */
+  /** 새 게임·불러오기를 마치면 방을 연다 — 타이틀 멀티플레이 창의 '방 만들기'(mpWant) 또는 주소의 ?mp=host&room=(시험용). */
   mpAuto() {
-    const qs = new URLSearchParams(location.search);
-    if (!this.net && qs.get('mp') === 'host') this.mpHost((qs.get('room') || 'TEST').toUpperCase());
+    const qs = new URLSearchParams(location.search), want = this.mpWant;
+    this.mpWant = null;
+    if (!this.net && (want === 'host' || qs.get('mp') === 'host')) this.mpHost((qs.get('room') || 'TEST').toUpperCase());
   }
 };
 

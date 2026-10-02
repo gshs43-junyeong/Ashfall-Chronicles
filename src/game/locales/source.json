@@ -1202,6 +1202,9 @@
   "먼저": [
    "ui/tree.lockReason"
   ],
+  "멀티플레이": [
+   "index.html"
+  ],
   "멈춘 기계에는 넣을 수 없다": [
    "ui/machine.refreshMachine"
   ],
@@ -1381,6 +1384,21 @@
   "방 {room|을} 열었다": [
    "game/net.mpHost"
   ],
+  "방 닫기": [
+   "index.html"
+  ],
+  "방 만들기": [
+   "index.html"
+  ],
+  "방 코드": [
+   "index.html"
+  ],
+  "방 코드를 넣어라": [
+   "game/netui.mpJoinFromTitle"
+  ],
+  "방 코드를 복사했다": [
+   "game/netui.done"
+  ],
   "방벽 {shield}": [
    "entity/player-combat.useSkill"
   ],
@@ -1395,8 +1413,17 @@
   "방어구": [
    "ui/tip.showTip"
   ],
+  "방에서 나가기": [
+   "index.html"
+  ],
+  "방을 닫았다": [
+   "game/net.mpClose"
+  ],
   "방을 잡는다": [
    "game/village.talkExtra"
+  ],
+  "방을 찾는 중…": [
+   "game/netui.mpJoinFromTitle"
   ],
   "방이 가득 찼다": [
    "game/net.mpJoin"
@@ -1502,6 +1529,9 @@
    "ui/shop.refreshBoard"
   ],
   "보통": [
+   "index.html"
+  ],
+  "복사": [
    "index.html"
   ],
   "볼일이 있다": [
@@ -1665,8 +1695,17 @@
   "샅샅이 뒤졌다 — {item}": [
    "game/ruin-pulse.checkSurvey"
   ],
+  "새 캐릭터": [
+   "game/netui.openMpScreen"
+  ],
+  "새 캐릭터는 저장되지 않는다 — 남기려면 싱글플레이에서 만든 캐릭터를 고를 것.": [
+   "index.html"
+  ],
   "새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다.": [
    "game/ruin-map.ruinCipher"
+  ],
+  "새로 만든 참가 캐릭터는 저장되지 않는다": [
+   "game/netui.netSaveChar"
   ],
   "새로운 여정": [
    "game/save.renderSlotScreen"
@@ -1726,11 +1765,17 @@
   "설치물": [
    "ui/tip.showTip"
   ],
+  "세계 고르고 방 열기": [
+   "index.html"
+  ],
   "세계 씨앗": [
    "game/save.showNewGameForm"
   ],
   "세계 크기": [
    "game/save.showNewGameForm"
+  ],
+  "세계는 방을 연 사람 것을 함께 쓰고, 캐릭터는 각자 제 것을 들고 간다. 2~4명.": [
+   "index.html"
   ],
   "세계를 빚는 중…": [
    "game.newGame"
@@ -2114,6 +2159,9 @@
   "이 기계가 받지 않는 물건이다": [
    "ui/machine.refreshMachine"
   ],
+  "이 기록은 열 수 없다": [
+   "game/netui.mpJoinFromTitle"
+  ],
   "이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다": [
    "game/save.loadGame"
   ],
@@ -2125,6 +2173,9 @@
   ],
   "이 문은 여기서 열 수 없다": [
    "game/ruin-map.tryCodeDoor"
+  ],
+  "이 세계로 방 열기": [
+   "index.html"
   ],
   "이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.": [
    "game/save.deleteSlot"
@@ -2148,11 +2199,13 @@
    "ui/tip.showTip"
   ],
   "이름": [
-   "game/save.showNewGameForm"
+   "game/save.showNewGameForm",
+   "index.html"
   ],
   "이름 없는 모험가": [
    "game",
-   "game/save.showNewGameForm"
+   "game/save.showNewGameForm",
+   "index.html"
   ],
   "이름 없는 유적": [
    "game/ruin-map.checkRuinEntry"
@@ -2192,6 +2245,9 @@
   ],
   "이야기는 계속된다": [
    "game/progress.checkChapter"
+  ],
+  "이어 할 세계를 고르거나 새로 시작하면 방이 열리고 방 코드가 뜬다. 코드를 친구에게 알려 주면 된다.": [
+   "index.html"
   ],
   "이어하기": [
    "game/save.renderSlotScreen"
@@ -2323,6 +2379,7 @@
    "index.html"
   ],
   "저장 실패": [
+   "game/netui.netSaveChar",
    "game/save.saveGame"
   ],
   "저장 실패: 용량 초과": [
@@ -2485,7 +2542,8 @@
    "game/fishing.resolveFish"
   ],
   "중개 서버에 닿지 않는다": [
-   "game/net.mpHost"
+   "game/net.mpHost",
+   "game/net.mpJoin"
   ],
   "중개 서버와 끊겼다 — 새 참가는 받을 수 없다": [
    "game/net.mpHost"
@@ -2531,6 +2589,9 @@
   "지하 {depth}m": [
    "ui/hud.updateHUD"
   ],
+  "직업": [
+   "index.html"
+  ],
   "진행 중": [
    "ui/quest.refreshQuest",
    "index.html"
@@ -2546,6 +2607,12 @@
   ],
   "차고 있는 것과 큰 차이 없다": [
    "ui/tip.compareLine"
+  ],
+  "참가": [
+   "index.html"
+  ],
+  "참가하기": [
+   "index.html"
   ],
   "창 탭 단추": [
    "index.html"
@@ -2657,7 +2724,11 @@
    "ui/tip.compareLine"
   ],
   "캐릭터": [
-   "game/save.showNewGameForm"
+   "game/save.showNewGameForm",
+   "index.html"
+  ],
+  "캐릭터를 저장했다": [
+   "game/netui.netSaveChar"
   ],
   "커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기": [
    "ui.init"
@@ -2829,6 +2900,12 @@
   ],
   "헤파의 격실": [
    "world/village.buildRunaway"
+  ],
+  "호스트가 방에서 내보냈다": [
+   "game/net.netOnGuest"
+  ],
+  "호스트가 방을 닫았다": [
+   "game/net.netOnGuest"
   ],
   "호스트가 지금 참가를 받고 있지 않다": [
    "game/net.mpJoin"

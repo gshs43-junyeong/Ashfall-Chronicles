@@ -90,6 +90,7 @@ export const SavePart: Bag = {
   },
   /** 저장이 끝나면 true. */
   async saveGame() {
+    if (this.net && this.net.role === 'guest') return this.netSaveChar(this.net, true);   // 남의 세계 — 캐릭터만
     if (this.currentSlot === null) return false;   // 타이틀에서 슬롯을 거치지 않고는 저장할 수 없다
     if (this._saving) { this.toast(tr('저장하는 중이다'), 'info'); return false; }
     this._saving = true;
@@ -335,7 +336,7 @@ export const SavePart: Bag = {
   closeModal(sel) { $(sel).classList.remove('open'); },
   /* 팝업은 여러 겹으로 열린다(슬롯 위에 새 게임). */
   MODAL_STACK: ['#code-screen', '#newgame-screen', '#bye-screen', '#credits-screen',
-                '#settings-screen', '#slots-screen'],
+                '#settings-screen', '#slots-screen', '#mp-screen'],
   /** 열려 있는 팝업 중 가장 위의 것을 닫는다. */
   closeTopModal() {
     for (const sel of this.MODAL_STACK) {

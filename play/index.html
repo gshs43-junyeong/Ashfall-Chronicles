@@ -365,6 +365,7 @@
       <p class="ts-tag">떨어진 별이 대지를 갈랐다. 잿빛이 번지기 전에, 다섯 개의 심장을 되찾아라.</p>
       <div class="ts-menu">
         <button id="btn-single"><span class="ui-ic" data-ui-icon="t_single"></span>싱글플레이</button>
+        <button id="btn-multi"><span class="ui-ic" data-ui-icon="t_multi"></span>멀티플레이</button>
         <button id="btn-settings-title"><span class="ui-ic" data-ui-icon="t_settings"></span>설정</button>
         <button id="btn-credits"><span class="ui-ic" data-ui-icon="t_credits"></span>크레딧</button>
         <button id="btn-quit"><span class="ui-ic" data-ui-icon="t_quit"></span>나가기</button>
@@ -378,6 +379,29 @@
       <div class="set-title">저장 슬롯</div>
       <div id="slot-list" class="slot-list"></div>
       <button id="btn-slots-close" class="set-close">닫기</button>
+    </div>
+  </div>
+
+  <!-- 멀티플레이 — 방 만들기(내 세계를 골라 연다) · 참가하기(코드 + 내 캐릭터). 세계는 호스트 것, 캐릭터는 각자 -->
+  <div id="mp-screen" class="modal">
+    <div class="modal-box mp-box">
+      <div class="set-title">멀티플레이</div>
+      <p class="mp-lead">세계는 방을 연 사람 것을 함께 쓰고, 캐릭터는 각자 제 것을 들고 간다. 2~4명.</p>
+      <div class="mp-sec"><span class="ui-ic" data-ui-icon="ng_world"></span>방 만들기</div>
+      <p class="mp-note">이어 할 세계를 고르거나 새로 시작하면 방이 열리고 방 코드가 뜬다. 코드를 친구에게 알려 주면 된다.</p>
+      <button id="btn-mp-host" class="mp-wide"><span class="ui-ic" data-ui-icon="ng_start"></span>세계 고르고 방 열기</button>
+      <div class="mp-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>참가하기</div>
+      <div class="mp-form">
+        <label>방 코드<input id="mp-code" class="mp-code" maxlength="6" autocomplete="off" spellcheck="false" placeholder="ABCDE"></label>
+        <label>캐릭터<select id="mp-char"></select></label>
+        <div id="mp-new" class="mp-new">
+          <label>이름<input id="mp-name" maxlength="12" placeholder="이름 없는 모험가"></label>
+          <label>직업<select id="mp-class"></select></label>
+          <p class="mp-note">새 캐릭터는 저장되지 않는다 — 남기려면 싱글플레이에서 만든 캐릭터를 고를 것.</p>
+        </div>
+      </div>
+      <p id="mp-msg" class="code-msg"></p>
+      <div class="code-btns"><button id="btn-mp-join">참가</button><button id="btn-mp-close">닫기</button></div>
     </div>
   </div>
 
@@ -449,6 +473,11 @@
              플레이 중에 백업하려면 일부러 타이틀까지 나갔다 와야 했다.
              누르면 먼저 저장한 다음 파일로 내보낸다 — 지금까지 한 것이 담긴다. -->
         <button id="btn-save-export" class="ps-sub"><span class="ui-ic" data-ui-icon="u_export"></span>저장하고 파일로 내보내기</button>
+        <!-- 멀티플레이 — 열 때마다 지금 상태(혼자 · 호스트 · 참가자)에 맞는 것만 보인다(G.refreshPauseMp) -->
+        <div id="ps-room" class="ps-room" hidden><span>방 코드</span><b id="ps-room-code"></b><button id="btn-room-copy" class="mini-btn">복사</button></div>
+        <button id="btn-room-open" hidden><span class="ui-ic" data-ui-icon="u_room"></span>이 세계로 방 열기</button>
+        <button id="btn-room-close" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방 닫기</button>
+        <button id="btn-room-leave" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방에서 나가기</button>
         <button id="btn-settings-pause"><span class="ui-ic" data-ui-icon="t_settings"></span>설정</button>
         <button id="btn-title"><span class="ui-ic" data-ui-icon="u_title"></span>타이틀로</button>
       </div>

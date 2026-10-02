@@ -1231,3 +1231,25 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .set-title .ps-ic{width:16px;height:16px;margin-right:6px;vertical-align:-3px}
 .ps-inner .ps-menu .ui-ic{width:18px;height:18px;margin-right:8px;vertical-align:-4px}
 .set-tabs .set-tab .ui-ic{width:15px;height:15px;margin-right:4px;vertical-align:-3px}
+/* ---- 멀티플레이 창 · 일시정지 방 줄 ---- */
+.modal-box.mp-box{width:400px}
+.mp-lead{font-size:12px;color:#a8a292;line-height:1.7;margin-bottom:4px}
+.mp-sec{color:var(--gold);font-size:11.5px;letter-spacing:.08em;margin:14px 0 6px;padding-top:10px;border-top:1px solid #2a261c}
+.mp-sec .ui-ic{width:14px;height:14px;margin-right:5px;vertical-align:-2px}
+.mp-note{font-size:11px;color:#8d8774;line-height:1.6;margin:2px 0 8px}
+.mp-wide{width:100%;padding:9px}
+.mp-wide .ui-ic{width:15px;height:15px;margin-right:6px;vertical-align:-3px}
+.mp-form{display:flex;flex-direction:column;gap:8px}
+.mp-form label{display:flex;align-items:center;gap:10px;font-size:11px;color:#8d8774}
+.mp-form label>input,.mp-form label>select{flex:1;padding:7px 9px;border-radius:3px;background:#0c0b08;
+  border:1px solid var(--frame);color:var(--ink);font-family:inherit;font-size:12.5px;min-width:0}
+.mp-form .mp-code{text-transform:uppercase;letter-spacing:.3em;font-size:15px}
+.mp-new{display:flex;flex-direction:column;gap:8px;padding-left:10px;border-left:2px solid #2a261c}
+.mp-new .mp-note{margin:0}
+.ps-room{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px auto 10px;font-size:11.5px;color:#8d8774}
+.ps-room b{color:var(--gold);font-size:17px;letter-spacing:.25em}
+.ps-room .mini-btn{float:none}
+@media (max-width:480px){.modal-box.mp-box{width:100%}}
+/* ★ .ps-inner button 의 display:block 이 hidden 을 이긴다 — 상태에 따라 숨기는 방 단추가 다 보였다 */
+.ps-inner [hidden]{display:none!important}
+.ps-inner .ps-room .mini-btn{display:inline-block;width:auto;margin:0;padding:3px 10px;font-size:11px}
