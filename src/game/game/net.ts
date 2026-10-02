@@ -3,7 +3,7 @@ import { dist2 } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { chunkText, createJoiner, isChunk } from '../../engine/net/chunk.js';
 import { SnapBuffer } from '../../engine/net/interp.js';
-import { closeRoom, createHttpSignal, createTabSignal, createWsSignal, openRoom } from '../../engine/net/signal.js';
+import { createPeerSignal, createTabSignal, createWsSignal } from '../../engine/net/signal.js';
 import { guestAnswer, hostOffer } from '../../engine/net/webrtc.js';
 import { tr } from '../lang.js';
 import { T, TILE_DEF } from '../data.js';
@@ -18,13 +18,12 @@ import { G } from '../game.js';
 
 export const NET_MAX = 4;          // 호스트 포함
 export const NET_HZ = 15;          // 위치를 보내는 횟수(초당)
-/* 방 중개 — 본 중개는 Cloudflare(relay/ — WebSocket, 기다리는 동안 요청 0), 예비는 사이트의 Vercel 함수(api/room.js · 폴링).
-   예비는 RELAY_URL 을 비우면 쓴다(?sig= 로 고를 수도 있다). zip(file://)·Electron 도 이 주소들로 붙는다. */
+/* 웹의 방 중개 — 본 중개는 Cloudflare(relay/), 닿지 않으면 공개 PeerJS 서버. 둘 다 처음 서로 찾을 때만 쓴다.
+   ★ 방 코드 길이로 가른다 — 다섯 글자 = 자체 중개, 여섯 글자 = PeerJS. 참가자는 어느 쪽인지 묻지 않고 바로 간다. */
 export const RELAY_URL = 'wss://ashfall-relay.gshs43junyeong.workers.dev/ws';
-export const SIGNAL_URL = 'https://ashfall-chronicles.vercel.app/api/room';
-const isWs = url => /^wss?:/.test(url || '');
-/* ★ 호스트는 참가를 받는 동안만 우편함을 본다 — 열어 둔 내내 보면 중개 요청이 시간에 비례해 무료 범위를 넘는다. */
-export const INVITE_MS = 5 * 60 * 1000;
+export const PEER_URL = 'wss://0.peerjs.com/peerjs';
+export const PEER_CODE = 6;
+const RELAY_WAIT_MS = 8000;        // 본 중개가 이 안에 방을 못 열면 PeerJS 로
 export const JOIN_GIVEUP_MS = 60 * 1000;   // 참가자가 답을 기다리는 시간
 const now = () => performance.now() / 1000;
 
@@ -333,36 +332,40 @@ export const NetPart: Bag = {
     else t.send(ch, text);
   },
 
-  /** 중개 주소 — ?sig=tab 이면 같은 브라우저 탭끼리(null), ?sig=<주소> 면 그 주소(시험용), 아니면 사이트 함수. */
-  netSignalUrl() {
+  /** 중개 — ?sig=tab 이면 같은 브라우저 탭끼리(null), ?sig=<ws 주소> 면 자체 중개만 · ?sig=peer:<주소> 면 PeerJS 만(시험용). */
+  netSignals() {
     const s = new URLSearchParams(location.search).get('sig');
     if (s === 'tab') return null;
-    if (s) return s;
-    if (RELAY_URL) return RELAY_URL;
-    return location.host === 'ashfall-chronicles.vercel.app' ? '/api/room' : SIGNAL_URL;
+    if (s) return s.startsWith('peer:') ? { peer: s.slice(5) } : { relay: s };
+    return { relay: RELAY_URL, peer: PEER_URL };
+  },
+  /** 호스트 쪽 중개를 연다 — 자체 중개가 정해진 시간 안에 방을 못 열면 PeerJS 로. */
+  async netOpenSignal(sigs) {
+    for (const kind of ['relay', 'peer']) {
+      if (!sigs[kind]) continue;
+      const sig = kind === 'relay' ? createWsSignal(sigs.relay, { role: 'host' }) : createPeerSignal(sigs.peer, { role: 'host', codeLen: PEER_CODE });
+      let tm = null;
+      const late = new Promise((_, rej) => { tm = setTimeout(() => rej(new Error('signal: timeout')), RELAY_WAIT_MS); });
+      try { const room = await Promise.race([sig.room, late]); clearTimeout(tm); return { sig, room, kind }; }
+      catch (e) { clearTimeout(tm); sig.close(); console.warn('net: 중개', kind, '실패', e); }
+    }
+    return null;
   },
 
   /* ================= 호스트 ================= */
   /** 방을 연다 — 참가자 셋까지. 인터넷 중개면 방 코드는 중개가 고른다. */
   async mpHost(room) {
     if (this.net || !this.me) return;
-    const url = this.netSignalUrl(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0, url,
+    const sigs = this.netSignals(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0,
       eid: 0, live: new Map(), dead: [], joined: new Set(), watch: new Map(), mwatch: new Map(), objJ: new WeakMap() };
     this.net = n; this.me.netId = 0;
     this.netTrackWorld();
-    if (isWs(url)) {
-      const ws = createWsSignal(url, { role: 'host' });
-      n.sig = ws;
-      try { n.room = room = await ws.room; }
-      catch (e) { console.warn('net: 방 열기 실패', e); this.net = null; this.toast(tr('중개 서버에 닿지 않는다'), 'bad'); return; }
-      ws.onerror = () => this.toast(tr('중개 서버와 끊겼다 — 새 참가는 받을 수 없다'), 'bad');   // 이미 붙은 참가자는 그대로 논다
-    } else if (url) {
-      try { const o = await openRoom(url); n.room = room = o.room; n.key = o.key; }
-      catch (e) { console.warn('net: 방 열기 실패', e); this.net = null; this.toast(tr('중개 서버에 닿지 않는다'), 'bad'); return; }
-      const hs = createHttpSignal(url, room, 'host', 2000, INVITE_MS, n.key);
-      hs.onerror = () => this.mpInvite();            // 창 안에서 방이 만료됐으면 같은 코드로 되찾는다
-      n.sig = hs;
-      addEventListener('pagehide', () => closeRoom(url, n.room, n.key));
+    if (sigs) {
+      const o = await this.netOpenSignal(sigs);
+      if (this.net !== n) { if (o) o.sig.close(); return; }
+      if (!o) { this.net = null; this.toast(tr('중개 서버에 닿지 않는다'), 'bad'); return; }
+      n.sig = o.sig; n.room = room = o.room; n.via = o.kind;
+      o.sig.onerror = () => this.toast(tr('중개 서버와 끊겼다 — 새 참가는 받을 수 없다'), 'bad');   // 이미 붙은 참가자는 그대로 논다
     } else n.sig = createTabSignal(room);
     const sig = n.sig;
     sig.onmessage = async m => {
@@ -379,23 +382,7 @@ export const NetPart: Bag = {
         finally { n.pending.delete(m.from); }
       }
     };
-    if (isWs(url)) this.toast(tr('방 {room|을} 열었다', { room }), 'good');
-    else this.toast(tr('방 {room|을} 열었다 — 5분 동안 참가를 받는다', { room }), 'good');
-  },
-  /** 참가 받기를 5분 더 — 쉬는 동안 방이 만료됐으면 같은 코드로 되찾는다(남이 가져갔으면 새 코드). */
-  async mpInvite() {
-    const n = this.net;
-    if (!n || n.role !== 'host' || !n.url) return;
-    if (isWs(n.url)) { this.toast(tr('방 {room|을} 열었다', { room: n.room }), 'good'); return; }   // 늘 받고 있다
-    try { await openRoom(n.url, n.room, n.key); }
-    catch (e) {
-      try { const o = await openRoom(n.url); n.room = o.room; n.key = o.key; } catch (e2) { this.toast(tr('중개 서버에 닿지 않는다'), 'bad'); return; }
-      n.sig.close();
-      const hs = createHttpSignal(n.url, n.room, 'host', 2000, INVITE_MS, n.key);
-      hs.onerror = () => this.mpInvite(); hs.onmessage = n.sig.onmessage; n.sig = hs;
-    }
-    n.sig.resume(INVITE_MS);
-    this.toast(tr('방 {room|을} 열었다 — 5분 동안 참가를 받는다', { room: n.room }), 'good');
+    this.toast(tr('방 {room|을} 열었다', { room }), 'good');
   },
   netAddPeer(t) {
     const n = this.net, peer: Bag = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
@@ -449,10 +436,11 @@ export const NetPart: Bag = {
   /** 방에 붙는다 — 캐릭터는 새로 만든 것(charId · name). 제 캐릭터 고르기·저장은 M4. */
   mpJoin(room, name, charId) {
     if (this.net) return;
-    const url = this.netSignalUrl(), me = Math.random().toString(36).slice(2, 8);
+    const sigs = this.netSignals(), me = Math.random().toString(36).slice(2, 8);
     room = String(room || '').trim().toUpperCase();
-    const sig = isWs(url) ? createWsSignal(url, { role: 'guest', room, id: me }) : url ? createHttpSignal(url, room, me, 1000) : createTabSignal(room);
-    if (url) (sig as Bag).onerror = () => { clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
+    const viaPeer = sigs && sigs.peer && (!sigs.relay || room.length === PEER_CODE);
+    const sig = !sigs ? createTabSignal(room) : viaPeer ? createPeerSignal(sigs.peer, { role: 'guest', room, id: me }) : createWsSignal(sigs.relay, { role: 'guest', room, id: me });
+    if (sigs) (sig as Bag).onerror = () => { clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null; this.toast(tr('그런 방이 없다'), 'bad'); };
     const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map(), gproj: new Map(), watch: new Map(), mwatch: new Map(), objJ: new WeakMap() };
     n.char = this.freshPlayer(0, 0, name, charId);
     this.net = n;
@@ -465,7 +453,7 @@ export const NetPart: Bag = {
       sig.post({ t: 'answer', from: me, to: 'host', sdp: g.answer });
       const t = await g.ready;
       n.t = t;
-      if (url) sig.close();                         // 붙었으면 우편함은 그만 본다(중개 요청을 아낀다)
+      if (sigs) sig.close();                        // 붙었으면 중개는 그만 쓴다
       t.onmessage = (ch, d) => {
         if (isChunk(d)) { const r = n.joiner.push(d); if (r) this.netOnGuest(JSON.parse(r.text)); return; }
         this.netOnGuest(JSON.parse(d));
@@ -476,7 +464,7 @@ export const NetPart: Bag = {
       addEventListener('pagehide', () => { if (n.t) n.t.send('rel', JSON.stringify({ k: 'bye' })); });
     };
     const ask = () => sig.post({ t: 'want', from: me });
-    n.ask = setInterval(ask, isWs(url) ? 5000 : url ? 4000 : 2000); ask();
+    n.ask = setInterval(ask, sigs ? 5000 : 2000); ask();
     /* 방은 있는데 호스트가 참가 받기를 쉬고 있으면 답이 없다 — 1분 뒤 포기한다. */
     n.giveUp = setTimeout(() => {
       if (this.net !== n || n.t) return;

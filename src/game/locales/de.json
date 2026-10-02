@@ -921,7 +921,6 @@
   "호스트와 연결이 끊겼다": "Verbindung zum Host verloren",
   "중개 서버에 닿지 않는다": "Vermittlungsserver nicht erreichbar",
   "그런 방이 없다": "Diesen Raum gibt es nicht",
-  "방 {room|을} 열었다 — 5분 동안 참가를 받는다": "Raum {room} geöffnet. 5 Minuten lang können Spieler beitreten.",
   "호스트가 지금 참가를 받고 있지 않다": "Der Host nimmt gerade keine Spieler auf",
   "방 {room|을} 열었다": "Raum {room} geöffnet",
   "중개 서버와 끊겼다 — 새 참가는 받을 수 없다": "Verbindung zum Vermittlungsserver verloren. Neue Spieler können nicht beitreten."
