@@ -3,7 +3,7 @@
 #
 # site/play/ 는 git 에 올리지 않는다(.gitignore). play/ 와 똑같은 파일을 저장소에 두 벌
 # 두게 되기 때문이다. 대신 배포할 때마다 이 스크립트가 만든다.
-# Vercel(vercel.json 의 buildCommand)과 GitHub Pages 워크플로가 둘 다 이걸 부른다.
+# Vercel(vercel.json 의 buildCommand) · Cloudflare Pages(.github/workflows/pages-cf.yml) · GitHub Pages 워크플로가 모두 이걸 부른다.
 #
 # ★★ 이 스크립트의 첫째 규칙: **죽지 않는다.**
 #   빌드가 실패하면 Vercel 은 아무 말 없이 **직전 배포판을 그대로 계속 서빙한다**.
@@ -25,7 +25,7 @@ fi
 
 # ---- 이 배포의 표식 ----------------------------------------------------------
 # Vercel / GitHub Actions 는 얕은 복제라 git 이 없을 수도 있어 환경 변수를 먼저 본다.
-BUILD="${VERCEL_GIT_COMMIT_SHA:-${GITHUB_SHA:-}}"
+BUILD="${VERCEL_GIT_COMMIT_SHA:-${CF_PAGES_COMMIT_SHA:-${GITHUB_SHA:-}}}"
 if [ -z "$BUILD" ]; then
   BUILD="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
 fi
@@ -107,7 +107,7 @@ echo "site/play/ 준비 완료 — $(find "$ROOT/site/play" -type f | wc -l | tr
 # 고친다(?v=dev → 커밋 해시, __AC_BUILD__ → 커밋 해시). 두 파일은 커밋되는 원본이라,
 # 로컬에서 돌린 뒤 그대로 커밋하면 판 번호가 소스에 박힌 채 올라간다. 배포 환경은
 # 일회용 체크아웃이라 상관없지만 로컬에서는 아니다 — 실제로 한 번 그렇게 섞였다.
-if [ -z "${VERCEL:-}${CI:-}" ] && git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+if [ -z "${VERCEL:-}${CI:-}${CF_PAGES:-}" ] && git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
   if ! git -C "$ROOT" diff --quiet -- site/home/index.html site/download/index.html 2>/dev/null; then
     echo "  ※ 로컬 실행입니다. 커밋 전에 되돌리세요:"
     echo "     git checkout -- site/home/index.html site/download/index.html"

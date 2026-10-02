@@ -1,0 +1,5 @@
+# Cloudflare Pages — vercel.json 의 redirects 를 옮긴 것(★ 둘 중 하나를 고치면 다른 쪽과 docker/nginx-site.conf 도)
+/              /home              302
+/index.html    /home              301
+/download.html /download          301
+/play          /play/             302
