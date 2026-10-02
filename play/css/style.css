@@ -1268,11 +1268,18 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .mp-form>label,.mp-new>label{font-size:11px;color:#8d8774;white-space:nowrap}
 .mp-form input,.mp-form select{width:100%;min-width:0;padding:7px 9px;border-radius:3px;background:#0c0b08;
   border:1px solid var(--frame);color:var(--ink);font-family:inherit;font-size:12.5px}
-.mp-form .mp-code{text-transform:uppercase;letter-spacing:.3em;font-size:15px}
-.mp-new{grid-column:1/-1;display:grid;grid-template-columns:subgrid;gap:8px 12px;align-items:center;
-  background:#14120d;border:1px solid #2a261c;border-radius:4px;padding:8px 10px;margin:0 -10px}
-.mp-new .mp-note{grid-column:1/-1;margin:0}
-.mp-new[hidden]{display:none}
+.mp-code-box{position:relative;width:max-content;max-width:100%}
+.mp-cells{display:flex;gap:6px}
+.mp-cells i{width:32px;height:38px;display:flex;align-items:center;justify-content:center;font-style:normal;
+  font-size:19px;font-weight:600;color:var(--ink);background:#0c0b08;border:1px solid var(--frame);border-radius:3px}
+.mp-cells i.opt{border-style:dashed;opacity:.75}
+.mp-cells i.cur{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+/* ★ 투명 입력 칸은 네모 위를 그대로 덮는다 — 16px 밑이면 iOS 가 확대한다 */
+.mp-form .mp-code{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;background:transparent;
+  color:transparent;caret-color:transparent;font-size:16px;outline:none;cursor:text}
+.mp-hint{grid-column:2;font-size:10.5px;color:#8d8774;margin:-3px 0 2px}
+.mp-wide-note{grid-column:1/-1;margin:0}
+@media (max-width:480px){.mp-cells{gap:4px}.mp-cells i{width:28px;height:34px;font-size:17px}}
 
 /* 일시정지 — 멀티플레이면 두 열(왼쪽 메뉴 · 오른쪽 방). 한 열일 때는 예전 그대로 */
 .ps-cols{display:flex;justify-content:center;align-items:flex-start;gap:28px}

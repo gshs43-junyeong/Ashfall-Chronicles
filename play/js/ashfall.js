@@ -28630,6 +28630,7 @@
     }
   };
   var Pet = class {
+    // lv — 남의 펫(멀티플레이)은 장비가 없어 받은 레벨로
     constructor(petId, slot) {
       this.id = petId;
       this.slot = slot;
@@ -28643,6 +28644,7 @@
     }
     /** 지금 이 칸에 낀 펫 아이템의 레벨. */
     lvOf(p) {
+      if (this.lv) return this.lv;
       const it = p.equip["pet" + (this.slot + 1)];
       return it ? it.lv || 1 : 1;
     }
@@ -28652,9 +28654,9 @@
       const ex = this.def.dragon ? [0, 4, 10, 16][dragonStage(this.lvOf(p))] : 0;
       return [p.cx - p.facing * side * (26 + ex), p.cy - 16 - ex * 0.6 + Math.sin(this.t * 2.2 + this.slot) * 4];
     }
-    update(dt, p) {
+    /** 따라다니기만 — 남의 펫은 이것만 돈다(치는 것은 주인 화면이 하고 피해만 호스트로 간다). */
+    follow(dt, p) {
       this.t += dt;
-      this.cd -= dt;
       if (this.flash > 0) this.flash -= dt;
       const [ax, ay] = this.anchor(p);
       if (dist2(this.x, this.y, ax, ay) > 640 * 640) {
@@ -28663,6 +28665,10 @@
       }
       this.x = lerp(this.x, ax, Math.min(1, dt * 6));
       this.y = lerp(this.y, ay, Math.min(1, dt * 6));
+    }
+    update(dt, p) {
+      this.cd -= dt;
+      this.follow(dt, p);
       const a = this.def.atk;
       if (!a) return;
       let target = null, best = a.range * a.range;
@@ -35915,6 +35921,9 @@
       }
       this.syncPets();
       for (const pet of this.petEnts) if (pet) pet.update(dt, p);
+      for (const q of this.players) if (q.remote && q.petEnts) {
+        for (const pet of q.petEnts) if (pet) pet.follow(dt, q);
+      }
       if (this.input.m1 && !this.uiOpen) this.leftHold(dt);
       else {
         p.mineTx = -1;
@@ -40342,6 +40351,7 @@
         return false;
       }
       this._saving = true;
+      this._saveSeq = (this._saveSeq || 0) + 1;
       try {
         const data = this.saveData();
         data.sealed = 1;
@@ -41547,6 +41557,9 @@
         this.drawNameTag(c, q, camX, camY);
       }
       for (const pet of this.petEnts || []) if (pet) this.drawPet(c, pet, camX, camY);
+      for (const q of this.players) if (q.remote && q.petEnts) {
+        for (const pet of q.petEnts) if (pet) this.drawPet(c, pet, camX, camY);
+      }
       this.drawWhirlArc(c, p, camX, camY);
       this.drawSigSky(c, camX, camY);
     },
@@ -46492,8 +46505,14 @@
         wid: wep ? wep.id : "",
         c: p.charId,
         n: p.name,
-        lv: p.level
+        lv: p.level,
+        pt: this.netPetsOf(p)
       };
+    },
+    /** 따라다니는 펫 — 'id:레벨' 을 쉼표로(바뀔 때만 다시 만든다). 남의 아바타는 받은 그대로 되돌려 보낸다. */
+    netPetsOf(p) {
+      if (p.remote) return p._pt || "";
+      return (this.petEnts || []).map((pe) => pe ? pe.id + ":" + pe.lvOf(p) : "").join(",");
     },
     /** 받은 상태를 남의 아바타에 — 자리(x·y)는 보간 버퍼가 따로 맞춘다. */
     netApply(rp, s) {
@@ -46525,6 +46544,17 @@
       if (rp._wid !== s.wid) {
         rp._wid = s.wid;
         rp.equip.weapon = s.wid ? makeItem(s.wid) : null;
+      }
+      if (rp._pt !== (s.pt || "")) {
+        rp._pt = s.pt || "";
+        rp.petEnts = rp._pt.split(",").map((v, slot) => {
+          const [id, lv] = v.split(":");
+          if (!PETS[id]) return null;
+          const pe = new Pet(id, slot);
+          pe.lv = Math.max(1, +lv || 1);
+          [pe.x, pe.y] = pe.anchor(rp);
+          return pe;
+        });
       }
     },
     /** 남의 아바타 — 이 화면에서는 그림자(update 를 안 돌리고 피해는 주인에게 넘긴다). */
@@ -47031,10 +47061,9 @@
       const n = this.net;
       if (m.k === "hello") {
         peer.pid = typeof m.pid === "string" ? m.pid.slice(0, 24) : null;
-        peer.temp = !!m.temp;
         const me = this.me, rec = this.netGuestRec(peer.pid);
         const back = rec && !this.world.hitSolid(rec.x, rec.y, me.w, me.h);
-        const char = peer.temp && rec && rec.char ? rec.char : null, name = char && rec.n ? rec.n : m.n;
+        const char = rec && rec.char ? rec.char : null, name = char && rec.n ? rec.n : m.n;
         const s = Object.assign(this.netState(me), back ? { x: rec.x, y: rec.y } : { x: me.x + 24 }, { n: name, c: char ? char.charId : m.c });
         peer.rp = this.netAvatar(peer.id, s);
         const roster = [[0, this.netState(me)]];
@@ -47048,6 +47077,7 @@
         this.netGuestKeep(peer);
       } else if (m.k === "csave" && peer.rp) {
         this.netGuestKeep(peer, m.char);
+        if (m.s) this.netGuestPersist();
       } else if (m.k === "st" && peer.rp) {
         peer.rp.netBuf.push(now(), m.s);
         this.netApply(peer.rp, m.s);
@@ -47086,6 +47116,7 @@
       if (!n || !n.peers.has(peer.id)) return;
       n.peers.delete(peer.id);
       this.netGuestKeep(peer);
+      this.netGuestPersist();
       if (peer.rp) {
         this.netRemove(peer.rp);
         this.toast(tr("{name|이} 나갔다", { name: peer.rp.name }), "info");
@@ -47093,8 +47124,8 @@
       for (const q of n.peers.values()) this.netSend(q.t, "rel", { k: "leave", id: peer.id });
     },
     /* ================= 참가자 ================= */
-    /** 방에 붙는다 — char 는 들고 갈 캐릭터(Player). slot 이 있으면 나갈 때 그 칸에 캐릭터 몫만 되적는다(netSaveChar). */
-    mpJoin(room, char, slot = null) {
+    /** 방에 붙는다 — char 는 처음 가는 세계에서 쓸 새 캐릭터(Player). 호스트가 기억하는 캐릭터가 있으면 그것으로 바뀐다. */
+    mpJoin(room, char) {
       if (this.net) return;
       const sigs = this.netSignals(), me = Math.random().toString(36).slice(2, 8);
       room = String(room || "").trim().toUpperCase();
@@ -47109,7 +47140,6 @@
       };
       const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map(), ghosts: /* @__PURE__ */ new Map(), gproj: /* @__PURE__ */ new Map(), watch: /* @__PURE__ */ new Map(), mwatch: /* @__PURE__ */ new Map(), objJ: /* @__PURE__ */ new WeakMap() };
       n.char = char;
-      n.slot = slot;
       this.net = n;
       sig.onmessage = async (m) => {
         if (m.to !== me || n.t) return;
@@ -47139,12 +47169,11 @@
           this.netOnGuest(JSON.parse(d));
         };
         t.onclose = () => this.netLost();
-        this.netSend(t, "rel", { k: "hello", n: n.char.name, c: n.char.charId, pid: this.mpPlayerId(), temp: n.slot === null || n.slot === void 0 });
+        this.netSend(t, "rel", { k: "hello", n: n.char.name, c: n.char.charId, pid: this.mpPlayerId() });
         addEventListener("pagehide", () => {
           if (this.net === n && n.t) {
-            this.netCharOut(n);
+            this.netCharOut(n, true);
             n.t.send("rel", JSON.stringify({ k: "bye" }));
-            this.netSaveChar(n);
           }
         });
       };
@@ -47250,12 +47279,11 @@
         }
       }
     },
-    /** 호스트를 잃었다(끊김 · 방 닫힘 · 내쫓김) — 캐릭터를 제 칸에 적고 타이틀로. */
+    /** 호스트를 잃었다(끊김 · 방 닫힘 · 내쫓김) — 타이틀로. 캐릭터는 호스트가 마지막으로 받은 것(15초마다)이 남는다. */
     netLost(msg) {
       const n = this.net;
       if (!n || n.role !== "guest") return;
       this.netEnd();
-      this.netSaveChar(n);
       this.toast(msg || tr("호스트와 연결이 끊겼다"), "bad");
       if (n.t) this.toTitle();
     },
@@ -47286,15 +47314,17 @@
       this.closeChat();
       this.refreshChat();
     },
-    /** 호스트가 방을 닫는다 — 참가자에게 알리고(그쪽은 캐릭터를 저장하고 나간다) 혼자 하기로 돌아온다. */
+    /** 호스트가 방을 닫는다 — 손님 자리를 기록해 두고 알린 뒤 혼자 하기로 돌아온다. */
     mpClose() {
       const n = this.net;
       if (!n || n.role !== "host") return;
+      for (const q of n.peers.values()) this.netGuestKeep(q);
+      this.netGuestPersist();
       for (const q of n.peers.values()) this.netSend(q.t, "rel", { k: "close" });
       this.netEnd(n, 300);
       this.toast(tr("방을 닫았다"), "info");
     },
-    /** 호스트가 참가자를 내보낸다 — 그쪽은 캐릭터를 저장하고 타이틀로. */
+    /** 호스트가 참가자를 내보낸다 — 그쪽은 타이틀로(캐릭터는 이 세계 기록에 남는다). */
     mpKick(id) {
       const n = this.net, q = n && n.role === "host" && n.peers.get(id);
       if (!q) return;
@@ -47302,16 +47332,15 @@
       this.netDropPeer(q);
       setTimeout(() => q.t.close(), 300);
     },
-    /** 참가자가 나간다 — 캐릭터를 저장하고 타이틀로. */
+    /** 참가자가 나간다 — 캐릭터를 호스트에 맡기고 타이틀로. */
     mpLeave() {
       const n = this.net;
       if (!n || n.role !== "guest") return;
       if (n.t) {
-        this.netCharOut(n);
+        this.netCharOut(n, true);
         n.t.send("rel", JSON.stringify({ k: "bye" }));
       }
       this.netEnd();
-      this.netSaveChar(n);
       this.toTitle();
     },
     /* ================= 매 프레임 ================= */
@@ -47413,19 +47442,26 @@
         this.openModal("#slots-screen");
       };
       $("#btn-mp-join").onclick = () => this.mpJoinFromTitle();
-      $("#mp-char").onchange = () => {
-        $("#mp-new").hidden = $("#mp-char").value !== "new";
-      };
       const code = $("#mp-code");
       const tidy = () => {
         const v = String(code.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
         if (code.value !== v) code.value = v;
-        $("#btn-mp-join").disabled = !ROOM_CODE_RE.test(v);
+        this.mpCodeCells();
+      };
+      const toEnd = () => {
+        const l = code.value.length;
+        try {
+          code.setSelectionRange(l, l);
+        } catch (e) {
+        }
+        this.mpCodeCells();
       };
       code.oninput = (e) => {
         if (!e.isComposing) tidy();
       };
       code.addEventListener("compositionend", tidy);
+      code.onfocus = code.onclick = toEnd;
+      code.onblur = () => this.mpCodeCells();
       code.onkeydown = (e) => {
         if (e.key === "Enter" && !e.isComposing) this.mpJoinFromTitle();
       };
@@ -47451,47 +47487,35 @@
         else done();
       };
     },
-    /** 타이틀의 멀티플레이 창 — 참가 캐릭터는 저장 슬롯의 캐릭터 또는 새 캐릭터(저장 안 됨). */
-    async openMpScreen() {
+    /** 타이틀의 멀티플레이 창 — 참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계면 이 이름·직업으로 새로 만들고,
+        그 세계(호스트)가 기억해 두었다가 다시 오면 돌려준다. */
+    openMpScreen() {
       this.mpWant = null;
-      let slots;
-      try {
-        slots = await SaveStore.list();
-      } catch (e) {
-        console.error(e);
-        slots = [];
-      }
-      const opts = slots.map((s, i) => s && !s.bad ? `<option value="${i}">${escHtml(s.name === NONAME ? tr(NONAME) : s.name)} · Lv.${s.level}</option>` : "").join("");
-      $("#mp-char").innerHTML = opts + `<option value="new">${tr("새 캐릭터")}</option>`;
       $("#mp-class").innerHTML = CHARACTERS.map((c) => `<option value="${c.id}">${escHtml(c.n)}</option>`).join("");
-      $("#mp-new").hidden = $("#mp-char").value !== "new";
-      $("#btn-mp-join").disabled = !ROOM_CODE_RE.test(String($("#mp-code").value || ""));
+      this.mpCodeCells();
       this.netSay("");
       this.openModal("#mp-screen");
       this.fillIcons($("#mp-screen"));
     },
-    async mpJoinFromTitle() {
+    /** 방 코드 네모 — 글자 · 지금 칠 칸 · 참가 단추. */
+    mpCodeCells() {
+      const code = $("#mp-code"), v = String(code.value || ""), on = document.activeElement === code;
+      $$("#mp-cells i").forEach((el, i) => {
+        el.textContent = v[i] || "";
+        el.classList.toggle("cur", on && i === Math.min(v.length, 5));
+      });
+      $("#btn-mp-join").disabled = !ROOM_CODE_RE.test(v);
+    },
+    mpJoinFromTitle() {
       if (this.net) return;
       const code = String($("#mp-code").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
       if (!ROOM_CODE_RE.test(code)) {
         this.netSay(tr("방 코드는 영문·숫자 5~6자다"));
         return;
       }
-      const v = $("#mp-char").value;
-      let char, slot = null;
-      if (v === "new") char = this.freshPlayer(0, 0, $("#mp-name").value, $("#mp-class").value);
-      else {
-        slot = +v;
-        const d = await this.netReadSlot(slot);
-        if (!d) {
-          this.netSay(tr("이 기록은 열 수 없다"));
-          return;
-        }
-        this.drops = this.drops || [];
-        char = this.unpackChar(d.p, d.name, d.chapter);
-      }
+      const char = this.freshPlayer(0, 0, $("#mp-name").value, $("#mp-class").value);
       this.netSay(tr("방을 찾는 중…"), true);
-      this.mpJoin(code, char, slot);
+      this.mpJoin(code, char);
     },
     /** 이 브라우저의 손님 아이디 — 호스트 세계가 다시 온 사람을 알아본다(설정에 한 번 만들어 둔다). */
     mpPlayerId() {
@@ -47505,18 +47529,38 @@
     netGuestRec(pid) {
       return pid && this.mpGuests && this.mpGuests[pid] || null;
     },
-    /** 호스트 — 손님의 마지막 자리(1초마다 · 나갈 때)와 새로 만든 캐릭터(손님이 보낸 것)를 세계 기록에. 호스트가 저장하면 세이브에 남는다. */
+    /** 호스트 — 손님의 마지막 자리(1초마다 · 나갈 때)와 캐릭터(손님이 보낸 것)를 세계 기록에. */
     netGuestKeep(peer, char) {
       if (!peer || !peer.pid || !peer.rp) return;
       this.mpGuests = this.mpGuests || {};
       const rec = this.mpGuests[peer.pid] || (this.mpGuests[peer.pid] = {});
       Object.assign(rec, { x: Math.round(peer.rp.x), y: Math.round(peer.rp.y), n: peer.rp.name, c: peer.rp.charId, t: Date.now() });
-      if (char && typeof char === "object" && peer.temp && JSON.stringify(char).length < 6e4) rec.char = char;
+      if (char && typeof char === "object" && JSON.stringify(char).length < 6e4) rec.char = char;
     },
-    /** 참가자 — 새로 만든 캐릭터는 제 슬롯이 없으니 호스트 세계에 맡긴다(다시 오면 돌려받는다). */
-    netCharOut(n) {
-      if (!n || n.role !== "guest" || !n.t || n.id <= 0 || n.slot !== null && n.slot !== void 0) return;
-      this.netSend(n.t, "rel", { k: "csave", char: this.packChar(n.char) });
+    /** 호스트 — 손님 기록만 제 슬롯에 바로 적는다(세계는 마지막 저장 그대로). 호스트가 저장을 잊어도 손님 캐릭터는 남게 —
+        나갈 때 · 손님이 저장할 때만(15초마다 슬롯 전체를 쓰면 무겁다). */
+    netGuestPersist() {
+      const n = this.net, slot = this.currentSlot;
+      if (!n || n.role !== "host" || slot === null || slot === void 0) return;
+      clearTimeout(n.persistT);
+      n.persistT = setTimeout(async () => {
+        if (this._saving) return;
+        const seq = this._saveSeq;
+        try {
+          const d = await this.netReadSlot(slot);
+          if (!d || this.currentSlot !== slot || this._saving || this._saveSeq !== seq) return;
+          d.mpGuests = JSON.parse(JSON.stringify(this.mpGuests || {}));
+          await SaveStore.put(slot, JSON.stringify(d), saveHead(d));
+        } catch (e) {
+          console.error(e);
+        }
+      }, 1500);
+    },
+    /** 참가자 — 캐릭터는 호스트 세계에 맡긴다(15초마다 · 나갈 때 · 저장할 때). */
+    netCharOut(n, save = false) {
+      if (!n || n.role !== "guest" || !n.t || n.id <= 0) return false;
+      this.netSend(n.t, "rel", { k: "csave", char: this.packChar(n.char), s: save ? 1 : 0 });
+      return true;
     },
     /** 참가 창이 열려 있으면 거기에, 아니면 알림으로. */
     netSay(text, ok = false) {
@@ -47546,36 +47590,13 @@
       upgradeSave(d);
       return d;
     },
-    /** 참가 캐릭터를 제 슬롯에 되적는다 — 캐릭터 몫(packChar)만 바꾸고 그 슬롯의 세계·자리는 그대로. 새 캐릭터면 저장하지 않는다. */
-    async netSaveChar(room = null, loud = false) {
+    /** 참가자의 저장 — 제 슬롯에 쓰지 않고 호스트 세계에 맡긴다(그쪽 슬롯에 손님 기록으로 남는다). */
+    netSaveChar(room = null, loud = false) {
       const n = room || this.net;
       if (!n || n.role !== "guest" || !n.char) return false;
-      if (n.slot === null || n.slot === void 0) {
-        if (loud) this.toast(tr("새로 만든 참가 캐릭터는 저장되지 않는다"), "info");
-        return false;
-      }
-      try {
-        const d = await this.netReadSlot(n.slot);
-        if (!d) {
-          if (loud) this.toast(tr("저장 실패"), "bad");
-          return false;
-        }
-        const c = this.packChar(n.char);
-        c.x = d.p.x;
-        c.y = d.p.y;
-        d.p = c;
-        d.name = n.char.name;
-        d.v = SAVE_VERSION;
-        d.savedAt = Date.now();
-        d.sealed = 1;
-        await SaveStore.put(n.slot, JSON.stringify(d), saveHead(d));
-        if (loud) this.toast(tr("캐릭터를 저장했다"), "good");
-        return true;
-      } catch (e) {
-        console.error(e);
-        if (loud) this.toast(tr("저장 실패"), "bad");
-        return false;
-      }
+      const ok = this.netCharOut(n, true);
+      if (loud) this.toast(ok ? tr("캐릭터를 이 세계에 맡겼다") : tr("저장 실패"), ok ? "good" : "bad");
+      return ok;
     },
     /* ---- 파티 목록(HUD — 보기만) · 내보내기는 일시정지 창에서 ---- */
     netPartyTick(dt) {

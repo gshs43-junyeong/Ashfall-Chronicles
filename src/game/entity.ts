@@ -185,7 +185,7 @@ export class Player extends Ent {
   declare climbOut: (...a: any[]) => any; declare fireProj: (...a: any[]) => any; declare punch: (...a: any[]) => any;
   declare rollCrit: (...a: any[]) => any; declare scaleDmg: (...a: any[]) => any; declare updateOxygen: (...a: any[]) => any;
   declare volley: number;
-  declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare _hid: string; declare _wid: string; declare _hurtAt: number;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
+  declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare _hid: string; declare _wid: string; declare _hurtAt: number; declare petEnts: any[]; declare _pt: string;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
   declare buffs: any[]; declare cd: Record<string, any>; declare channel: Record<string, any>; declare charId: string; declare charge: number; declare d: Record<string, any>;
   declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: Record<string, any>; declare facing: number; declare flash: number;
@@ -841,7 +841,7 @@ export class Wolf extends Ent {
 export class Pet {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare cd: number; declare def: PetDef; declare facing: number; declare flash: number; declare id: string; declare slot: number; declare t: number;
-  declare x: number; declare y: number;
+  declare x: number; declare y: number; declare lv: number;   // lv — 남의 펫(멀티플레이)은 장비가 없어 받은 레벨로
 
   constructor(petId, slot) {
     this.id = petId; this.slot = slot;
@@ -853,22 +853,25 @@ export class Pet {
     this.flash = 0;
   }
   /** 지금 이 칸에 낀 펫 아이템의 레벨. */
-  lvOf(p) { const it = p.equip['pet' + (this.slot + 1)]; return it ? (it.lv || 1) : 1; }
+  lvOf(p) { if (this.lv) return this.lv; const it = p.equip['pet' + (this.slot + 1)]; return it ? (it.lv || 1) : 1; }
   /** 플레이어 기준 떠 있을 자리 — 슬롯마다 반대쪽 어깨 뒤에 선다 */
   anchor(p) {
     const side = this.slot === 0 ? -1 : 1;
     const ex = this.def.dragon ? [0, 4, 10, 16][dragonStage(this.lvOf(p))] : 0;   // 큰 드래곤은 조금 더 떨어져 뜬다
     return [p.cx - p.facing * side * (26 + ex), p.cy - 16 - ex * 0.6 + Math.sin(this.t * 2.2 + this.slot) * 4];
   }
-  update(dt, p) {
+  /** 따라다니기만 — 남의 펫은 이것만 돈다(치는 것은 주인 화면이 하고 피해만 호스트로 간다). */
+  follow(dt, p) {
     this.t += dt;
-    this.cd -= dt;
     if (this.flash > 0) this.flash -= dt;
     const [ax, ay] = this.anchor(p);
-    // 부드럽게 따라붙는다.
     if (dist2(this.x, this.y, ax, ay) > 640 * 640) { this.x = ax; this.y = ay; }
     this.x = lerp(this.x, ax, Math.min(1, dt * 6));
     this.y = lerp(this.y, ay, Math.min(1, dt * 6));
+  }
+  update(dt, p) {
+    this.cd -= dt;
+    this.follow(dt, p);
 
     const a = this.def.atk;
     if (!a) return;

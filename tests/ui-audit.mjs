@@ -131,10 +131,13 @@ const MEASURE = () => {
     const lines = structured ? Math.max(0, ...nodes.map(lineCount)) : lineCount(all);
     if (lines > 1) add('두 줄', el, (el.textContent || '').trim().slice(0, 40), lines + '줄');
   }
-  // ⑦ 정렬 — 두 열 칸의 입력 칸들은 왼쪽·오른쪽 끝이 같아야 한다
+  // ⑦ 정렬 — 두 열 칸의 입력 칸들은 왼쪽·오른쪽 끝이 같아야 한다(방 코드 네모는 글자 수만큼이라 왼쪽 끝만)
   for (const form of document.querySelectorAll('.mp-form')) {
     if (!vis(form)) continue;
-    const ctl = [...form.querySelectorAll('input, select')].filter(vis).map(e => e.getBoundingClientRect()).filter(r => r.width > 0);
+    const cells = form.querySelector('.mp-cells'), cr = cells && vis(cells) ? cells.getBoundingClientRect() : null;
+    const ctl = [...form.querySelectorAll('input, select')].filter(e => vis(e) && !e.closest('.mp-code-box')).map(e => e.getBoundingClientRect()).filter(r => r.width > 0);
+    if (cr && ctl.length && Math.abs(cr.left - ctl[0].left) > 1.5) add('정렬', form, '방 코드 네모', `왼쪽 ${Math.round(cr.left)} · 입력 칸 ${Math.round(ctl[0].left)}`);
+    if (cr && ctl.length && cr.right > ctl[0].right + 1.5) add('정렬', form, '방 코드 네모', `오른쪽 ${Math.round(cr.right)} > 입력 칸 ${Math.round(ctl[0].right)}`);
     if (ctl.length < 2) continue;
     const L = ctl.map(r => r.left), R = ctl.map(r => r.right);
     if (Math.max(...L) - Math.min(...L) > 1.5 || Math.max(...R) - Math.min(...R) > 1.5)

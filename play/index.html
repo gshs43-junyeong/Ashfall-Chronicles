@@ -386,24 +386,24 @@
     </div>
   </div>
 
-  <!-- 멀티플레이 — 방 만들기(내 세계를 골라 연다) · 참가하기(코드 + 내 캐릭터). 세계는 호스트 것, 캐릭터는 각자 -->
+  <!-- 멀티플레이 — 방 만들기(내 세계를 골라 연다) · 참가하기(코드 + 이름·직업). 세계는 호스트 것, 손님 캐릭터는 그 세계가 기억 -->
   <div id="mp-screen" class="modal">
     <div class="modal-box mp-box">
       <div class="set-title">멀티플레이</div>
-      <p class="mp-lead">세계는 방을 연 사람 것을 함께 쓰고, 캐릭터는 각자 제 것을 들고 간다. 2~4명.</p>
+      <p class="mp-lead">세계는 방을 연 사람 것을 함께 쓴다. 호스트는 제 싱글플레이 세계를 열고, 손님 캐릭터는 그 세계에 남는다. 2~4명.</p>
       <div class="mp-sec"><span class="ui-ic" data-ui-icon="ng_world"></span>방 만들기</div>
       <p class="mp-note">이어 할 세계를 고르거나 새로 시작하면 방이 열리고 방 코드가 뜬다. 코드를 친구에게 알려 주면 된다.</p>
       <button id="btn-mp-host" class="mp-wide"><span class="ui-ic" data-ui-icon="ng_start"></span>세계 고르고 방 열기</button>
       <div class="mp-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>참가하기</div>
       <!-- 이름 칸 한 열 · 입력 칸 한 열(grid) — 언어마다 이름 길이가 달라도 입력 칸의 왼쪽·오른쪽 끝이 맞는다 -->
       <div class="mp-form">
-        <label for="mp-code">방 코드</label><input id="mp-code" class="mp-code" minlength="5" maxlength="6" pattern="[A-Za-z0-9]{5,6}" autocapitalize="characters" autocomplete="off" spellcheck="false" inputmode="latin" placeholder="ABCDE">
-        <label for="mp-char">캐릭터</label><select id="mp-char"></select>
-        <div id="mp-new" class="mp-new">
-          <label for="mp-name">이름</label><input id="mp-name" maxlength="12" placeholder="이름 없는 모험가">
-          <label for="mp-class">직업</label><select id="mp-class"></select>
-          <p class="mp-note">새 캐릭터는 저장되지 않는다 — 남기려면 싱글플레이에서 만든 캐릭터를 고를 것.</p>
-        </div>
+        <label for="mp-code">방 코드</label>
+        <!-- 글자마다 네모 한 칸 — 실제 입력은 위에 겹친 투명한 칸 하나(붙여넣기·입력기·폰 자판) · 여섯째 칸은 점선(있을 때만) -->
+        <div class="mp-code-box"><div id="mp-cells" class="mp-cells" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i class="opt"></i></div><input id="mp-code" class="mp-code" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-describedby="mp-code-hint"></div>
+        <p id="mp-code-hint" class="mp-hint">영문과 숫자를 섞어 5~6자 — 예: 7K2QM</p>
+        <label for="mp-name">이름</label><input id="mp-name" maxlength="12" placeholder="이름 없는 모험가">
+        <label for="mp-class">직업</label><select id="mp-class"></select>
+        <p class="mp-note mp-wide-note">참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다.</p>
       </div>
       <p id="mp-msg" class="code-msg"></p>
       <div class="code-btns"><button id="btn-mp-join">참가</button><button id="btn-mp-close">닫기</button></div>

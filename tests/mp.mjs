@@ -93,6 +93,21 @@ check(ghost && hostHpAfter && hostHpAfter[0] < hostHpAfter[1], `몹: 참가자 �
 check(after[2] === xp0[2] + 1 && (after[0] !== xp0[0] || after[1] > xp0[1]) && !after[3] && !hostAfter[0] && hostAfter[1] === 0,
   `몹: 참가자가 잡으면 처치·경험치는 참가자에게(처치 ${xp0[2]}→${after[2]}) · 호스트는 안 받는다(${hostAfter[1]})`);
 
+/* 펫 — 참가자 펫이 호스트 화면에도 따라다니고, 참가자 화면에서 그림자 몹을 물면 호스트 몹이 깎인다 */
+await guest.evaluate(() => { const it = makeItem('pet_pebble_kin'); it.lv = 4; G.me.equip.pet1 = it; });
+await host.evaluate(() => { const g = G.players.find(p => p.remote); const e = new Enemy('cartwraith', g.x + 40, g.y); e.tagT = 1; e.speed = 0; G.ents.push(e); });
+await guest.waitForTimeout(800);
+const petHost = await host.evaluate(() => { const g = G.players.find(p => p.remote), pe = g && g.petEnts && g.petEnts[0];
+  return pe ? [pe.id, pe.lvOf(g), Math.round(Math.hypot(pe.x - g.cx, pe.y - g.cy))] : null; });
+const petHp0 = await host.evaluate(() => { const e = G.ents.find(e => e.type === 'cartwraith' && !e.dead); return e ? Math.round(e.hp) : null; });
+await guest.evaluate(() => { const pe = G.petEnts[0]; if (pe) pe.cd = 0; });
+await guest.waitForTimeout(900);
+const petHp1 = await host.evaluate(() => { const e = G.ents.find(e => e.type === 'cartwraith' && !e.dead); return e ? Math.round(e.hp) : null; });
+check(petHost && petHost[0] === 'pebble_kin' && petHost[1] === 4 && petHost[2] < 120 && petHp0 !== null && petHp1 < petHp0,
+  `펫: 참가자 펫이 호스트 화면에(${petHost && petHost.join('/')}) · 그림자 몹을 물면 호스트 몹이 깎인다(${petHp0}→${petHp1})`);
+await host.evaluate(() => { for (const e of G.ents) if (e.type === 'cartwraith') e.dead = true; });
+await guest.evaluate(() => { G.me.equip.pet1 = null; });
+
 /* 물건 — 호스트가 놓은 나무 상자가 참가자에게 · 참가자가 넣은 물건이 호스트 상자에 · 걷으면 양쪽에서 */
 const crateAt = await host.evaluate(() => {
   const g = G.players.find(p => p.remote);
@@ -252,30 +267,32 @@ const eg2 = collectErrors(g2);
 await g2.goto(url + `/index.html?lang=ko&sig=${encodeURIComponent(SIG)}`);
 await g2.waitForFunction(() => window.G && G.booted, null, { timeout: 60000 });
 await g2.evaluate(async () => { G.currentSlot = 2; G._newGame('d2', 'Saver', 'ranger', 'normal', 's'); G.me.level = 7; await G.saveGame(); G.toTitle(); });
-const sBefore = await g2.evaluate(async () => JSON.parse((await SaveStore.get(2)).raw));
+const sBefore = await g2.evaluate(async () => (await SaveStore.get(2)).raw);
 await g2.click('#btn-multi');
+const cells = () => g2.evaluate(() => [document.querySelector('#mp-code').value, document.querySelector('#btn-mp-join').disabled,
+  [...document.querySelectorAll('#mp-cells i')].map(e => e.textContent || '_').join('')]);
 await g2.fill('#mp-code', 'ab-c 1한!');
-const codeA = await g2.evaluate(() => [document.querySelector('#mp-code').value, document.querySelector('#btn-mp-join').disabled]);
+const codeA = await cells();
 await g2.fill('#mp-code', 'xy7k9q2z');
-const codeB = await g2.evaluate(() => [document.querySelector('#mp-code').value, document.querySelector('#btn-mp-join').disabled]);
-check(codeA[0] === 'ABC1' && codeA[1] && codeB[0] === 'XY7K9Q' && !codeB[1], `방 코드 칸: 'ab-c 1한!' → ${codeA[0]}(참가 잠김) · 'xy7k9q2z' → ${codeB[0]}(6자까지 · 열림)`);
-await g2.waitForFunction(() => document.querySelector('#mp-char option[value="2"]'), null, { timeout: 5000 });
+const codeB = await cells();
+check(codeA[0] === 'ABC1' && codeA[1] && codeA[2] === 'ABC1__' && codeB[0] === 'XY7K9Q' && !codeB[1] && codeB[2] === 'XY7K9Q',
+  `방 코드 네모 6칸: 'ab-c 1한!' → ${codeA[2]}(참가 잠김) · 'xy7k9q2z' → ${codeB[2]}(6자까지 · 열림)`);
+const noSlotPick = await g2.evaluate(() => !document.querySelector('#mp-char'));
 await g2.fill('#mp-code', room.toLowerCase());
-await g2.selectOption('#mp-char', '2');
+await g2.fill('#mp-name', 'Visitor');
 await g2.click('#btn-mp-join');
 await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
 const joined = await g2.evaluate(() => [G.me.name, G.me.level, G.world.seed, document.querySelector('#mp-screen').classList.contains('open')]);
-check(joined[0] === 'Saver' && joined[1] === 7 && joined[2] !== 'd2' && !joined[3], `창으로 참가: 슬롯 캐릭터(${joined[0]} Lv.${joined[1]})로 호스트 세계(${joined[2]})에`);
+check(noSlotPick && joined[0] === 'Visitor' && joined[1] === 1 && joined[2] !== 'd2' && !joined[3], `창으로 참가: 싱글 캐릭터를 고르지 않고 새 손님 캐릭터(${joined[0]} Lv.${joined[1]})로 호스트 세계(${joined[2]})에`);
 await g2.evaluate(() => { G.me.gold = 12345; G.setPause(true); document.querySelector('#btn-room-leave').click(); });
 await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 });
 await g2.waitForTimeout(500);
-const sAfter = await g2.evaluate(async () => JSON.parse((await SaveStore.get(2)).raw));
-check(sAfter.p.gold === 12345 && sAfter.p.level === 7 && sAfter.world.seed === sBefore.world.seed && sAfter.p.x === sBefore.p.x && sAfter.chapter === sBefore.chapter,
-  `나가면 캐릭터 몫만 그 슬롯에(금화 ${sAfter.p.gold}) · 세계·자리·장은 그대로(${sAfter.world.seed})`);
+const sAfter = await g2.evaluate(async () => (await SaveStore.get(2)).raw);
+check(sAfter === sBefore, '나가도 손님의 싱글플레이 슬롯은 그대로(멀티 캐릭터와 따로)');
 await host.waitForTimeout(1500);
 await g2.evaluate(code => { document.querySelector('#btn-multi').click(); const c = document.querySelector('#mp-code'); c.value = code; c.dispatchEvent(new Event('input')); }, room);
 await g2.waitForTimeout(300);
-await g2.evaluate(() => { document.querySelector('#mp-char').value = 'new'; document.querySelector('#btn-mp-join').click(); });
+await g2.evaluate(() => document.querySelector('#btn-mp-join').click());
 await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
 await host.waitForTimeout(2500);
 const party = await Promise.all([host, g2].map(pg => pg.evaluate(() => {
@@ -290,22 +307,25 @@ check(kickRow && kicked[0][0] && kicked[0][1] === 'title' && kicked[1][0] === 0 
 await host.waitForTimeout(800);
 await g2.evaluate(code => { document.querySelector('#btn-multi').click(); const c = document.querySelector('#mp-code'); c.value = code; c.dispatchEvent(new Event('input')); }, room);
 await g2.waitForTimeout(300);
-await g2.evaluate(() => { document.querySelector('#mp-char').value = 'new'; document.querySelector('#btn-mp-join').click(); });
+await g2.evaluate(() => document.querySelector('#btn-mp-join').click());
 await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
 /* 다시 온 손님 — 새로 만든 캐릭터는 호스트 세계에 맡겨 두었다가 돌려받는다 · 지난 자리에서 */
+await host.evaluate(async () => { G.currentSlot = 1; await G.saveGame(); });
 const left2 = await g2.evaluate(() => { G.me.gold = 777; G.me.x += 3 * TS; const pid = G.mpPlayerId(); return [pid, Math.round(G.me.x)]; });
 await g2.waitForTimeout(1300);
 await g2.evaluate(() => { G.setPause(true); document.querySelector('#btn-room-leave').click(); });
 await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 });
 await host.waitForTimeout(800);
-const rec2 = await host.evaluate(pid => { const r = G.mpGuests[pid]; return r && [r.char && r.char.gold, Math.round(r.x), 'mpGuests' in G.saveData()]; }, left2[0]);
+await host.waitForTimeout(1500);
+const rec2 = await host.evaluate(async pid => { const r = G.mpGuests[pid], d = JSON.parse((await SaveStore.get(1)).raw), s = d.mpGuests && d.mpGuests[pid];
+  return r && [r.char && r.char.gold, Math.round(r.x), !!(s && s.char && s.char.gold === 777)]; }, left2[0]);
 await g2.evaluate(code => { document.querySelector('#btn-multi').click(); const c = document.querySelector('#mp-code'); c.value = code; c.dispatchEvent(new Event('input')); }, room);
 await g2.waitForTimeout(300);
-await g2.evaluate(() => { document.querySelector('#mp-char').value = 'new'; document.querySelector('#btn-mp-join').click(); });
+await g2.evaluate(() => document.querySelector('#btn-mp-join').click());
 await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
 const back2 = await g2.evaluate(() => [G.me.gold, Math.round(G.me.x)]);
 check(rec2 && rec2[0] === 777 && rec2[2] && back2[0] === 777 && Math.abs(back2[1] - left2[1]) < 3 * 22,
-  `다시 온 손님: 호스트 세계가 캐릭터·자리를 기억(금화 ${rec2 && rec2[0]}) → 다시 들어오면 그대로(금화 ${back2[0]} · x ${left2[1]}→${back2[1]}) · 호스트 세이브에 남는다`);
+  `다시 온 손님: 호스트 세계가 캐릭터·자리를 기억(금화 ${rec2 && rec2[0]}) → 다시 들어오면 그대로(금화 ${back2[0]} · x ${left2[1]}→${back2[1]}) · 호스트가 다시 저장하지 않아도 호스트 슬롯에 남는다`);
 await host.evaluate(() => G.mpClose());
 await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 }).catch(() => {});
 const closed = await Promise.all([g2.evaluate(() => [!G.net, G.state]), host.evaluate(() => [!G.net, G.players.length, G.state])]);
