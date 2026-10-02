@@ -4,9 +4,8 @@ name: Cloudflare Pages
 # (Vercel 무료는 월 100GB — 웹 게임 한 판이 30MB 안팎이라 하루 100명 남짓에서 막힌다).
 # 규칙은 site/_redirects · site/_headers(vercel.json 과 같은 내용). 빌드는 Vercel 과 같은 tools/build-site.sh.
 # Secrets: CLOUDFLARE_API_TOKEN(Workers 와 Pages 편집 권한) · CLOUDFLARE_ACCOUNT_ID — 없으면 건너뛴다.
+# ★ 본 사이트는 Vercel(사용자 결정 2026-10-02) — 그래서 손으로만 돌린다. 옮기면 push: branches: [main] 을 다시 단다.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
