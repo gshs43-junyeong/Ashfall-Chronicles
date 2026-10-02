@@ -152,7 +152,7 @@ export const G: Bag = {
   /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
   _ctlOff: false,
   syncCtl() {
-    const off = this.uiOpen || this.paused || !!(this.player && this.player.hp <= 0);
+    const off = this.uiOpen || this.paused || this.scenes.has('mpause') || this.scenes.has('mdeath') || !!(this.player && this.player.hp <= 0);   // 멀티플레이 멈춤·쓰러짐은 세계를 안 멈추는 층
     if (off !== this._ctlOff) { this._ctlOff = off; document.body.classList.toggle('ctl-off', off); }
   },
   mode: 'normal',        // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.

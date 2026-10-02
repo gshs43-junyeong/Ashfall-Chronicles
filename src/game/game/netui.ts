@@ -137,21 +137,26 @@ export const NetUiPart: Bag = {
     box.hidden = false;
   },
 
-  /** 일시정지 창의 방 줄 — 혼자면 '방 열기', 호스트면 코드·닫기, 참가자면 나가기. */
+  /** 일시정지 창 — 혼자면 왼쪽 메뉴에 '방 열기'만, 멀티플레이면 오른쪽 열(방 코드 · 함께하는 사람 · 방 설정 · 닫기/나가기). */
   refreshPauseMp() {
     const n = this.net, host = !!n && n.role === 'host', guest = !!n && n.role === 'guest';
-    $('#ps-room').hidden = !host || !n.room;
-    if (host) $('#ps-room-code').textContent = n.room || '';
+    $('#ps-side').hidden = !n;
     $('#btn-room-open').hidden = !!n || !this.world;
+    $('#btn-save-export').hidden = guest;        // 참가자는 캐릭터만 저장한다
+    if (!n) return;
+    $('#ps-room').hidden = !n.room;
+    $('#ps-room-code').textContent = n.room || '';
     $('#btn-room-close').hidden = !host;
     $('#btn-room-leave').hidden = !guest;
-    $('#btn-save-export').hidden = guest;        // 참가자는 캐릭터만 저장한다
-    $('#ps-cfg').hidden = !host;
-    if (host) { $('#mp-pvp').checked = !!n.cfg.pvp; $('#mp-chat').checked = !!n.cfg.chat; }
-    const list = $('#ps-party'), guests = host ? [...n.peers.values()].filter(q => q.rp) : [];
-    list.hidden = !guests.length;
-    list.innerHTML = guests.map(q => `<div class="ps-guest"><span>${escHtml(q.rp.name)} · Lv.${q.rp.level | 0}</span>
-      <button class="mini-btn" data-kick="${q.id}">${tr('내보내기')}</button></div>`).join('');
+    const cfg = this.netCfg();
+    for (const [id, key] of [['#mp-pvp', 'pvp'], ['#mp-chat', 'chat']]) { const el = $(id); el.checked = !!cfg[key]; el.disabled = !host; }
+    $('#ps-cfg-note').hidden = host;
+    const list = $('#ps-party');
+    list.innerHTML = this.players.map(p => {
+      const id = p === this.me ? (host ? 0 : n.id) : p.netId;
+      const kick = host && p.remote ? `<button class="mini-btn" data-kick="${id}">${tr('내보내기')}</button>` : '';
+      return `<div class="ps-guest"><span>${id === 0 ? `<i class="pt-host">${tr('호스트')}</i> ` : ''}${escHtml(p.name)} · Lv.${p.level | 0}</span>${kick}</div>`;
+    }).join('');
     list.querySelectorAll('[data-kick]').forEach(b => {
       b.onclick = () => { this.mpKick(+b.dataset.kick); this.refreshPauseMp(); };
     });
