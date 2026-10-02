@@ -326,6 +326,7 @@ export const RenderPart: Bag = {
     this.drawPlayer(c, p, p.x - camX, p.y - camY);
     for (const q of this.players) if (q !== p) { this.drawPlayer(c, q, q.x - camX, q.y - camY); this.drawNameTag(c, q, camX, camY); }
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
+    for (const q of this.players) if (q.remote && q.petEnts) for (const pet of q.petEnts) if (pet) this.drawPet(c, pet, camX, camY);
     /* 회오리 검무의 칼선 — 플레이어 바로 위에, 선으로만. */
     this.drawWhirlArc(c, p, camX, camY);
     // ---- 떨어지는 별 ----

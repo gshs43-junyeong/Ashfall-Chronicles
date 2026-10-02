@@ -93,7 +93,7 @@ export const SavePart: Bag = {
     if (this.net && this.net.role === 'guest') return this.netSaveChar(this.net, true);   // 남의 세계 — 캐릭터만
     if (this.currentSlot === null) return false;   // 타이틀에서 슬롯을 거치지 않고는 저장할 수 없다
     if (this._saving) { this.toast(tr('저장하는 중이다'), 'info'); return false; }
-    this._saving = true;
+    this._saving = true; this._saveSeq = (this._saveSeq || 0) + 1;   // 손님 기록만 적는 netGuestPersist 가 이 저장을 덮지 않게
     try {
       const data = this.saveData();
       data.sealed = 1;                                 // 서명이 있는 기록이라는 표시

@@ -1717,17 +1717,8 @@
   "샅샅이 뒤졌다 — {item}": [
    "game/ruin-pulse.checkSurvey"
   ],
-  "새 캐릭터": [
-   "game/netui.openMpScreen"
-  ],
-  "새 캐릭터는 저장되지 않는다 — 남기려면 싱글플레이에서 만든 캐릭터를 고를 것.": [
-   "index.html"
-  ],
   "새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다.": [
    "game/ruin-map.ruinCipher"
-  ],
-  "새로 만든 참가 캐릭터는 저장되지 않는다": [
-   "game/netui.netSaveChar"
   ],
   "새로운 여정": [
    "game/save.renderSlotScreen"
@@ -1796,7 +1787,7 @@
   "세계 크기": [
    "game/save.showNewGameForm"
   ],
-  "세계는 방을 연 사람 것을 함께 쓰고, 캐릭터는 각자 제 것을 들고 간다. 2~4명.": [
+  "세계는 방을 연 사람 것을 함께 쓴다. 호스트는 제 싱글플레이 세계를 열고, 손님 캐릭터는 그 세계에 남는다. 2~4명.": [
    "index.html"
   ],
   "세계를 빚는 중…": [
@@ -2035,6 +2026,9 @@
   "연료를 직접 태운다": [
    "ui/tip.showTip"
   ],
+  "영문과 숫자를 섞어 5~6자 — 예: 7K2QM": [
+   "index.html"
+  ],
   "오늘 묵는 사람은 더운물로 씻는다. 그거 하나로 여관이 여관이 돼.": [
    "data/quests"
   ],
@@ -2180,9 +2174,6 @@
   ],
   "이 기계가 받지 않는 물건이다": [
    "ui/machine.refreshMachine"
-  ],
-  "이 기록은 열 수 없다": [
-   "game/netui.mpJoinFromTitle"
   ],
   "이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다": [
    "game/save.loadGame"
@@ -2639,6 +2630,9 @@
   "참가": [
    "index.html"
   ],
+  "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다.": [
+   "index.html"
+  ],
   "참가하기": [
    "index.html"
   ],
@@ -2758,10 +2752,9 @@
    "ui/tip.compareLine"
   ],
   "캐릭터": [
-   "game/save.showNewGameForm",
-   "index.html"
+   "game/save.showNewGameForm"
   ],
-  "캐릭터를 저장했다": [
+  "캐릭터를 이 세계에 맡겼다": [
    "game/netui.netSaveChar"
   ],
   "커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기": [

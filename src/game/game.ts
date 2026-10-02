@@ -873,6 +873,7 @@ export const G: Bag = {
     // 펫 — 장비창 상태와 맞춘 뒤 각자 알아서 따라오고 알아서 문다
     this.syncPets();
     for (const pet of this.petEnts) if (pet) pet.update(dt, p);
+    for (const q of this.players) if (q.remote && q.petEnts) for (const pet of q.petEnts) if (pet) pet.follow(dt, q);
 
     // 공격 / 채굴
     if (this.input.m1 && !this.uiOpen) this.leftHold(dt);
