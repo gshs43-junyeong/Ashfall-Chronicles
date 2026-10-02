@@ -138,7 +138,8 @@ export const G: Bag = {
      ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
   scenes: createScenes({
     scenes: { title: {}, play: { update: dt => G.update(dt), render: () => { G.syncCtl(); G.render(); } } },
-    layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true } },   // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
+    /* 멀티플레이에서는 멈춤 메뉴·쓰러짐이 세계를 멈추면 안 된다(남의 판이 같이 멈추고 끊긴다) — 입력만 막는 겹(mpause·mdeath)을 쓴다. */
+    layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true }, mpause: { input: true }, mdeath: { input: true } },   // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
     start: 'title'
   }),
   /** 이 화면의 플레이어(= me). 넣으면 혼자 하는 판으로 players 를 [p] 로 맞춘다. */
@@ -436,7 +437,7 @@ export const G: Bag = {
     this.rings = []; this.bolts = []; this.warns = []; this.sigs = []; this.edge = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
-    this.talked = {}; this.crafted = {}; this.scenes.close('pause'); this.scenes.close('death');
+    this.talked = {}; this.crafted = {}; this.scenes.close('pause'); this.scenes.close('death'); this.scenes.close('mpause'); this.scenes.close('mdeath');
     /* 대화 — 상황 대사의 순번 · 장 이야기를 들은 기록 · 마을 단계를 들은 기록 */
     this.talkSeq = {}; this.storyHeard = {}; this.villageSeen = {};
     this.sideActive = {}; this.sideDone = {}; this.tabletsRead = {}; this.termsRead = {}; this.loreRead = {};

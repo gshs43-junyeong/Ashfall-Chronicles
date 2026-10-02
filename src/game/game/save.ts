@@ -246,7 +246,7 @@ export const SavePart: Bag = {
       $('#title-screen').style.display = 'none';
     if (typeof TitleBG !== 'undefined') TitleBG.stop();   // 화면 밖이면 프레임을 낭비하지 않는다
       this.closeAllModals();
-      this.scenes.go('play'); this.scenes.close('pause'); this.scenes.close('death');
+      this.scenes.go('play'); this.scenes.close('pause'); this.scenes.close('death'); this.scenes.close('mpause'); this.scenes.close('mdeath');
       this.petEnts = []; this.syncPets();
       UI.refreshBag(); UI.refreshEquip(); UI.refreshTracker(); UI.refreshSkillbar(); UI.refreshStatAlloc(); UI.refreshSkillSlots();
       this.toast(tr('여정을 이어간다'), 'good');

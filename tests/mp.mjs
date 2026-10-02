@@ -162,6 +162,15 @@ const hp1 = await guest.evaluate(() => G.me.hp);
 const hostHp = await host.evaluate(() => G.me.hp);
 check(hp1 < hp0 && hostHp > 0, `호스트 쪽에서 참가자 아바타가 맞으면 피해는 참가자에게 (${hp0} → ${hp1})`);
 
+/* 쓰러짐 — 여럿이면 세계가 멈추지 않고(남의 판이 끊긴다) 부활해도 세계의 몹을 지우지 않는다 */
+const death = await host.evaluate(async () => {
+  const g = G.players.find(p => p.remote); G.ents.push(new Enemy('cartwraith', g.x + 400, g.y));
+  G.me.iframe = 0; G.me.hp = 1; G.me.hurt(9999, G.me.cx);
+  const t0 = G.time; await new Promise(r => setTimeout(r, 500));
+  const r = [G.paused, G.time > t0, G.ents.length]; G.respawn(); return [...r, G.ents.length];
+});
+check(death[0] === false && death[1] && death[2] >= 1 && death[3] === death[2], `쓰러짐: 호스트가 쓰러져도 세계는 돈다(멈춤 ${death[0]}) · 부활해도 몹이 남는다(${death[2]}→${death[3]})`);
+
 /* 참가 받기 창 — 지나면 호스트가 우편함 확인을 멈추고(중개 요청 0), mpInvite 로 다시 켠다(폴링 중개만) */
 if (!process.env.MP_SIG) {
 await host.evaluate(() => G.net.sig.resume(300));
