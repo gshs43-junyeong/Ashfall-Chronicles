@@ -216,7 +216,8 @@ export const G: Bag = {
     SaveStore.start();                   // 옛 localStorage 기록을 IndexedDB 로 옮기는 것도 여기서 시작한다
     this.renderSlotScreen();
     /* 타이틀에는 버튼 넷만 둔다 — 저장 슬롯도, 캐릭터 선택도 팝업으로 뺐다. */
-    $('#btn-single').onclick = () => { this.renderSlotScreen(); this.openModal('#slots-screen'); };
+    $('#btn-single').onclick = () => { this.mpWant = null; this.renderSlotScreen(); this.openModal('#slots-screen'); };
+    this.bindMpUi();
     $('#btn-slots-close').onclick = () => this.closeModal('#slots-screen');
     $('#btn-credits').onclick = () => this.openModal('#credits-screen');
     $('#btn-credits-close').onclick = () => this.closeModal('#credits-screen');
@@ -236,13 +237,19 @@ export const G: Bag = {
     $('#btn-settings-pause').onclick = openSettings;
     $('#btn-settings-close').onclick = () => $('#settings-screen').classList.remove('open');
     $('#btn-title').onclick = () => {
-      this.setPause(false); this.scenes.go('title'); $('#title-screen').style.display = '';
-      if (typeof TitleBG !== 'undefined') TitleBG.start();
-      UI.bossBar(null); this.renderSlotScreen();
+      if (this.net && this.net.role === 'guest') { this.mpLeave(); return; }
+      if (this.net) this.mpClose();
+      this.toTitle();
     };
     $('#btn-respawn').onclick = () => this.respawn();
     this.buildPipeline();
     startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
+  },
+  /** 타이틀로 돌아간다(저장은 부르는 쪽이 정한다). */
+  toTitle() {
+    this.setPause(false); this.scenes.go('title'); $('#title-screen').style.display = '';
+    if (typeof TitleBG !== 'undefined') TitleBG.start();
+    UI.bossBar(null); this.renderSlotScreen();
   },
   /** 화질 — 자동이면 폰 절약 · 태블릿 보통 · 컴퓨터 높음 */
   quality() {
@@ -399,7 +406,7 @@ export const G: Bag = {
     window.__acBooted = 1;                    // index.html 의 안전장치에게 알린다
     /* ?mp=join&room=&name=&char= — 열린 방에 새 캐릭터로 붙는다(개발판 시험용, 창은 M4). */
     const mq = new URLSearchParams(location.search);
-    if (mq.get('mp') === 'join') setTimeout(() => this.mpJoin(mq.get('room') || 'test', mq.get('name') || '', mq.get('char') || ''), 300);
+    if (mq.get('mp') === 'join') setTimeout(() => this.mpJoin(mq.get('room') || 'test', this.freshPlayer(0, 0, mq.get('name') || '', mq.get('char') || '')), 300);
     /* 글꼴까지 기다린다. */
     const fr = document.fonts && document.fonts.ready;
     const fonts = fr ? Promise.race([fr, new Promise(r => setTimeout(r, 1500))])

@@ -23209,6 +23209,9 @@
     t_settings: { k: "ng", g: "gear" },
     t_credits: { k: "ng", g: "scroll" },
     t_quit: { k: "ng", g: "door" },
+    t_multi: { k: "ng", g: "swords" },
+    u_room: { k: "ng", g: "globe" },
+    u_leave: { k: "ng", g: "door" },
     u_resume: { k: "ng", g: "play" },
     u_save: { k: "ng", g: "disk" },
     u_export: { k: "ng", g: "export" },
@@ -34962,9 +34965,11 @@
       SaveStore.start();
       this.renderSlotScreen();
       $("#btn-single").onclick = () => {
+        this.mpWant = null;
         this.renderSlotScreen();
         this.openModal("#slots-screen");
       };
+      this.bindMpUi();
       $("#btn-slots-close").onclick = () => this.closeModal("#slots-screen");
       $("#btn-credits").onclick = () => this.openModal("#credits-screen");
       $("#btn-credits-close").onclick = () => this.closeModal("#credits-screen");
@@ -34990,16 +34995,25 @@
       $("#btn-settings-pause").onclick = openSettings;
       $("#btn-settings-close").onclick = () => $("#settings-screen").classList.remove("open");
       $("#btn-title").onclick = () => {
-        this.setPause(false);
-        this.scenes.go("title");
-        $("#title-screen").style.display = "";
-        if (typeof TitleBG !== "undefined") TitleBG.start();
-        UI5.bossBar(null);
-        this.renderSlotScreen();
+        if (this.net && this.net.role === "guest") {
+          this.mpLeave();
+          return;
+        }
+        if (this.net) this.mpClose();
+        this.toTitle();
       };
       $("#btn-respawn").onclick = () => this.respawn();
       this.buildPipeline();
       startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
+    },
+    /** 타이틀로 돌아간다(저장은 부르는 쪽이 정한다). */
+    toTitle() {
+      this.setPause(false);
+      this.scenes.go("title");
+      $("#title-screen").style.display = "";
+      if (typeof TitleBG !== "undefined") TitleBG.start();
+      UI5.bossBar(null);
+      this.renderSlotScreen();
     },
     /** 화질 — 자동이면 폰 절약 · 태블릿 보통 · 컴퓨터 높음 */
     quality() {
@@ -35199,7 +35213,7 @@
       this.booted = true;
       window.__acBooted = 1;
       const mq = new URLSearchParams(location.search);
-      if (mq.get("mp") === "join") setTimeout(() => this.mpJoin(mq.get("room") || "test", mq.get("name") || "", mq.get("char") || ""), 300);
+      if (mq.get("mp") === "join") setTimeout(() => this.mpJoin(mq.get("room") || "test", this.freshPlayer(0, 0, mq.get("name") || "", mq.get("char") || "")), 300);
       const fr = document.fonts && document.fonts.ready;
       const fonts = fr ? Promise.race([fr, new Promise((r) => setTimeout(r, 1500))]) : Promise.resolve();
       fonts.catch(() => {
@@ -40061,7 +40075,10 @@
       this.scenes.set(this.net ? "mpause" : "pause", on);
       if (!on) this.scenes.set(this.net ? "pause" : "mpause", false);
       $("#pause-screen").classList.toggle("open", on);
-      if (on) UI5.syncSettings();
+      if (on) {
+        UI5.syncSettings();
+        this.refreshPauseMp();
+      }
     },
     /* 설정에서 끈 갈래는 띄우지 않는다. */
     toast(m, k) {
@@ -40192,6 +40209,7 @@
     },
     /** 저장이 끝나면 true. */
     async saveGame() {
+      if (this.net && this.net.role === "guest") return this.netSaveChar(this.net, true);
       if (this.currentSlot === null) return false;
       if (this._saving) {
         this.toast(tr("저장하는 중이다"), "info");
@@ -40593,7 +40611,8 @@
       "#bye-screen",
       "#credits-screen",
       "#settings-screen",
-      "#slots-screen"
+      "#slots-screen",
+      "#mp-screen"
     ],
     /** 열려 있는 팝업 중 가장 위의 것을 닫는다. */
     closeTopModal() {
@@ -46860,6 +46879,7 @@
         }
       };
       this.toast(tr("방 {room|을} 열었다", { room }), "good");
+      this.refreshPauseMp();
     },
     netAddPeer(t) {
       const n = this.net, peer = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
@@ -46920,27 +46940,32 @@
       for (const q of n.peers.values()) this.netSend(q.t, "rel", { k: "leave", id: peer.id });
     },
     /* ================= 참가자 ================= */
-    /** 방에 붙는다 — 캐릭터는 새로 만든 것(charId · name). 제 캐릭터 고르기·저장은 M4. */
-    mpJoin(room, name, charId) {
+    /** 방에 붙는다 — char 는 들고 갈 캐릭터(Player). slot 이 있으면 나갈 때 그 칸에 캐릭터 몫만 되적는다(netSaveChar). */
+    mpJoin(room, char, slot = null) {
       if (this.net) return;
       const sigs = this.netSignals(), me = Math.random().toString(36).slice(2, 8);
       room = String(room || "").trim().toUpperCase();
       const viaPeer = sigs && sigs.peer && (!sigs.relay || room.length === PEER_CODE);
       const sig = !sigs ? createTabSignal(room) : viaPeer ? createPeerSignal(sigs.peer, { role: "guest", room, id: me }) : createWsSignal(sigs.relay, { role: "guest", room, id: me });
-      if (sigs) sig.onerror = () => {
+      if (sigs) sig.onerror = (e) => {
+        if (this.net !== n || n.t) return;
         clearInterval(n.ask);
         clearTimeout(n.giveUp);
         this.net = null;
-        this.toast(tr("그런 방이 없다"), "bad");
+        this.netSay(String(e && e.message).includes("unreachable") ? tr("중개 서버에 닿지 않는다") : tr("그런 방이 없다"));
       };
       const n = { role: "guest", room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: /* @__PURE__ */ new Map(), ghosts: /* @__PURE__ */ new Map(), gproj: /* @__PURE__ */ new Map(), watch: /* @__PURE__ */ new Map(), mwatch: /* @__PURE__ */ new Map(), objJ: /* @__PURE__ */ new WeakMap() };
-      n.char = this.freshPlayer(0, 0, name, charId);
+      n.char = char;
+      n.slot = slot;
       this.net = n;
       sig.onmessage = async (m) => {
         if (m.to !== me || n.t) return;
         if (m.t === "full") {
-          this.toast(tr("방이 가득 찼다"), "bad");
           clearInterval(n.ask);
+          clearTimeout(n.giveUp);
+          sig.close();
+          this.net = null;
+          this.netSay(tr("방이 가득 찼다"));
           return;
         }
         if (m.t !== "offer") return;
@@ -46962,7 +46987,10 @@
         t.onclose = () => this.netLost();
         this.netSend(t, "rel", { k: "hello", n: n.char.name, c: n.char.charId });
         addEventListener("pagehide", () => {
-          if (n.t) n.t.send("rel", JSON.stringify({ k: "bye" }));
+          if (this.net === n && n.t) {
+            n.t.send("rel", JSON.stringify({ k: "bye" }));
+            this.netSaveChar(n);
+          }
         });
       };
       const ask = () => sig.post({ t: "want", from: me });
@@ -46973,11 +47001,19 @@
         clearInterval(n.ask);
         sig.close();
         this.net = null;
-        this.toast(tr("호스트가 지금 참가를 받고 있지 않다"), "bad");
+        this.netSay(tr("호스트가 지금 참가를 받고 있지 않다"));
       }, JOIN_GIVEUP_MS);
     },
     netOnGuest(m) {
       const n = this.net;
+      if (m.k === "close") {
+        this.netLost(tr("호스트가 방을 닫았다"));
+        return;
+      }
+      if (m.k === "kick") {
+        this.netLost(tr("호스트가 방에서 내보냈다"));
+        return;
+      }
       if (m.k === "world") {
         this.currentSlot = null;
         this._loadGame(JSON.stringify(m.save));
@@ -47042,13 +47078,55 @@
         }
       }
     },
-    netLost() {
+    /** 호스트를 잃었다(끊김 · 방 닫힘 · 내쫓김) — 캐릭터를 제 칸에 적고 타이틀로. */
+    netLost(msg) {
       const n = this.net;
       if (!n || n.role !== "guest") return;
-      for (const rp of n.others.values()) this.netRemove(rp);
-      n.sig.close();
-      this.net = null;
-      this.toast(tr("호스트와 연결이 끊겼다"), "bad");
+      this.netEnd();
+      this.netSaveChar(n);
+      this.toast(msg || tr("호스트와 연결이 끊겼다"), "bad");
+      if (n.t) this.toTitle();
+    },
+    /** 이 화면의 방 상태를 걷는다 — 남의 아바타 · 그림자 · 통로 · 중개. 세계는 그대로 둔다. closeMs 는 통로를 닫기까지(마지막 글이 먼저 가게). */
+    netEnd(room = null, closeMs = 0) {
+      const n = room || this.net;
+      if (!n) return;
+      if (this.net === n) this.net = null;
+      for (const rp of this.players.slice()) if (rp.remote) this.netRemove(rp);
+      const shut = () => {
+        if (n.role === "host") {
+          for (const q of n.peers.values()) q.t.close();
+          for (const h of n.pending.values()) h.cancel();
+        } else if (n.t) n.t.close();
+      };
+      if (closeMs) setTimeout(shut, closeMs);
+      else shut();
+      if (n.role === "guest") {
+        this.ents = this.ents.filter((e) => !e.ghost);
+        this.projs = this.projs.filter((p) => !p.ghost);
+      }
+      clearInterval(n.ask);
+      clearTimeout(n.giveUp);
+      if (n.sig) n.sig.close();
+      if (this.world) this.world.netLog = null;
+      if (this.me) this.me.netId = 0;
+    },
+    /** 호스트가 방을 닫는다 — 참가자에게 알리고(그쪽은 캐릭터를 저장하고 나간다) 혼자 하기로 돌아온다. */
+    mpClose() {
+      const n = this.net;
+      if (!n || n.role !== "host") return;
+      for (const q of n.peers.values()) this.netSend(q.t, "rel", { k: "close" });
+      this.netEnd(n, 300);
+      this.toast(tr("방을 닫았다"), "info");
+    },
+    /** 참가자가 나간다 — 캐릭터를 저장하고 타이틀로. */
+    mpLeave() {
+      const n = this.net;
+      if (!n || n.role !== "guest") return;
+      if (n.t) n.t.send("rel", JSON.stringify({ k: "bye" }));
+      this.netEnd();
+      this.netSaveChar(n);
+      this.toTitle();
     },
     /* ================= 매 프레임 ================= */
     netTick(dt) {
@@ -47113,13 +47191,171 @@
       rp._hurtAt = this.time;
       this.netSend(peer.t, "rel", { k: "hurt", a: amount, sx: srcX });
     },
-    /** 주소의 ?mp=host&room= — 새 게임·불러오기를 마치면 방을 연다(개발판 시험용, 창은 M4). */
+    /** 새 게임·불러오기를 마치면 방을 연다 — 타이틀 멀티플레이 창의 '방 만들기'(mpWant) 또는 주소의 ?mp=host&room=(시험용). */
     mpAuto() {
-      const qs = new URLSearchParams(location.search);
-      if (!this.net && qs.get("mp") === "host") this.mpHost((qs.get("room") || "TEST").toUpperCase());
+      const qs = new URLSearchParams(location.search), want = this.mpWant;
+      this.mpWant = null;
+      if (!this.net && (want === "host" || qs.get("mp") === "host")) this.mpHost((qs.get("room") || "TEST").toUpperCase());
     }
   };
   mixin(G, NetPart);
+
+  // src/game/game/netui.ts
+  var netui_exports = {};
+  __export(netui_exports, {
+    NetUiPart: () => NetUiPart
+  });
+  var NetUiPart = {
+    bindMpUi() {
+      $("#btn-multi").onclick = () => this.openMpScreen();
+      $("#btn-mp-close").onclick = () => this.closeModal("#mp-screen");
+      $("#btn-mp-host").onclick = () => {
+        this.mpWant = "host";
+        this.closeModal("#mp-screen");
+        this.renderSlotScreen();
+        this.openModal("#slots-screen");
+      };
+      $("#btn-mp-join").onclick = () => this.mpJoinFromTitle();
+      $("#mp-char").onchange = () => {
+        $("#mp-new").hidden = $("#mp-char").value !== "new";
+      };
+      $("#mp-code").onkeydown = (e) => {
+        if (e.key === "Enter") this.mpJoinFromTitle();
+      };
+      const el = $("#mp-screen");
+      el.onclick = (e) => {
+        if (e.target === el) this.closeModal("#mp-screen");
+      };
+      $("#btn-room-open").onclick = async () => {
+        await this.mpHost("ROOM");
+        this.refreshPauseMp();
+      };
+      $("#btn-room-close").onclick = () => {
+        this.mpClose();
+        this.refreshPauseMp();
+      };
+      $("#btn-room-leave").onclick = () => this.mpLeave();
+      $("#btn-room-copy").onclick = () => {
+        const room = this.net && this.net.room;
+        if (!room) return;
+        const done = () => this.toast(tr("방 코드를 복사했다"), "info");
+        if (navigator.clipboard) navigator.clipboard.writeText(room).then(done, () => {
+        });
+        else done();
+      };
+    },
+    /** 타이틀의 멀티플레이 창 — 참가 캐릭터는 저장 슬롯의 캐릭터 또는 새 캐릭터(저장 안 됨). */
+    async openMpScreen() {
+      this.mpWant = null;
+      let slots;
+      try {
+        slots = await SaveStore.list();
+      } catch (e) {
+        console.error(e);
+        slots = [];
+      }
+      const opts = slots.map((s, i) => s && !s.bad ? `<option value="${i}">${escHtml(s.name === NONAME ? tr(NONAME) : s.name)} · Lv.${s.level}</option>` : "").join("");
+      $("#mp-char").innerHTML = opts + `<option value="new">${tr("새 캐릭터")}</option>`;
+      $("#mp-class").innerHTML = CHARACTERS.map((c) => `<option value="${c.id}">${escHtml(c.n)}</option>`).join("");
+      $("#mp-new").hidden = $("#mp-char").value !== "new";
+      this.netSay("");
+      this.openModal("#mp-screen");
+      this.fillIcons($("#mp-screen"));
+    },
+    async mpJoinFromTitle() {
+      if (this.net) return;
+      const code = String($("#mp-code").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (code.length < 4) {
+        this.netSay(tr("방 코드를 넣어라"));
+        return;
+      }
+      const v = $("#mp-char").value;
+      let char, slot = null;
+      if (v === "new") char = this.freshPlayer(0, 0, $("#mp-name").value, $("#mp-class").value);
+      else {
+        slot = +v;
+        const d = await this.netReadSlot(slot);
+        if (!d) {
+          this.netSay(tr("이 기록은 열 수 없다"));
+          return;
+        }
+        this.drops = this.drops || [];
+        char = this.unpackChar(d.p, d.name, d.chapter);
+      }
+      this.netSay(tr("방을 찾는 중…"), true);
+      this.mpJoin(code, char, slot);
+    },
+    /** 참가 창이 열려 있으면 거기에, 아니면 알림으로. */
+    netSay(text, ok = false) {
+      const box = $("#mp-screen");
+      if (box && box.classList.contains("open")) {
+        const el = $("#mp-msg");
+        el.textContent = text;
+        el.classList.toggle("ok", ok);
+      } else if (text) this.toast(text, ok ? "info" : "bad");
+    },
+    /** 슬롯의 세이브를 읽어 지금 판 모양으로 — 손댄 기록이면 null. */
+    async netReadSlot(slot) {
+      let rec = null;
+      try {
+        rec = await SaveStore.get(slot);
+      } catch (e) {
+        console.error(e);
+      }
+      if (!rec) return null;
+      let d = null;
+      try {
+        d = JSON.parse(rec.raw);
+      } catch (e) {
+        return null;
+      }
+      if (!saveSealOk(rec.raw, d, rec.sig)) return null;
+      upgradeSave(d);
+      return d;
+    },
+    /** 참가 캐릭터를 제 슬롯에 되적는다 — 캐릭터 몫(packChar)만 바꾸고 그 슬롯의 세계·자리는 그대로. 새 캐릭터면 저장하지 않는다. */
+    async netSaveChar(room = null, loud = false) {
+      const n = room || this.net;
+      if (!n || n.role !== "guest" || !n.char) return false;
+      if (n.slot === null || n.slot === void 0) {
+        if (loud) this.toast(tr("새로 만든 참가 캐릭터는 저장되지 않는다"), "info");
+        return false;
+      }
+      try {
+        const d = await this.netReadSlot(n.slot);
+        if (!d) {
+          if (loud) this.toast(tr("저장 실패"), "bad");
+          return false;
+        }
+        const c = this.packChar(n.char);
+        c.x = d.p.x;
+        c.y = d.p.y;
+        d.p = c;
+        d.name = n.char.name;
+        d.v = SAVE_VERSION;
+        d.savedAt = Date.now();
+        d.sealed = 1;
+        await SaveStore.put(n.slot, JSON.stringify(d), saveHead(d));
+        if (loud) this.toast(tr("캐릭터를 저장했다"), "good");
+        return true;
+      } catch (e) {
+        console.error(e);
+        if (loud) this.toast(tr("저장 실패"), "bad");
+        return false;
+      }
+    },
+    /** 일시정지 창의 방 줄 — 혼자면 '방 열기', 호스트면 코드·닫기, 참가자면 나가기. */
+    refreshPauseMp() {
+      const n = this.net, host = !!n && n.role === "host", guest = !!n && n.role === "guest";
+      $("#ps-room").hidden = !host || !n.room;
+      if (host) $("#ps-room-code").textContent = n.room || "";
+      $("#btn-room-open").hidden = !!n || !this.world;
+      $("#btn-room-close").hidden = !host;
+      $("#btn-room-leave").hidden = !guest;
+      $("#btn-save-export").hidden = guest;
+    }
+  };
+  mixin(G, NetUiPart);
 
   // src/game/main.ts
   var DATA = Object.fromEntries(Object.entries(Object.assign({}, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports)).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
@@ -47128,7 +47364,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports, utility_exports, net_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports, utility_exports, net_exports, netui_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

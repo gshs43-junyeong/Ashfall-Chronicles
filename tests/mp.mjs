@@ -162,6 +162,42 @@ await guest.close();
 await host.waitForTimeout(1500);
 const left = await host.evaluate(() => G.players.length);
 check(left === 1, `참가자가 나가면 호스트 쪽에서 빠진다 (${left}명)`);
+/* 창으로 — 일시정지 방 줄 · 타이틀 멀티플레이 창에서 저장 슬롯 캐릭터로 참가 · 나가면 캐릭터 몫만 그 슬롯에 · 호스트가 방을 닫으면 타이틀로 */
+const ps = await host.evaluate(() => { G.setPause(true); const q = s => document.querySelector(s);
+  const r = [!q('#ps-room').hidden, q('#ps-room-code').textContent, q('#btn-room-close').hidden, q('#btn-room-open').hidden]; G.setPause(false); return r; });
+check(ps[0] && ps[1] === room && !ps[2] && ps[3], `일시정지: 호스트에게 방 코드(${ps[1]}) · 방 닫기`);
+const g2 = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+const eg2 = collectErrors(g2);
+await g2.goto(url + `/index.html?lang=ko&sig=${encodeURIComponent(SIG)}`);
+await g2.waitForFunction(() => window.G && G.booted, null, { timeout: 60000 });
+await g2.evaluate(async () => { G.currentSlot = 2; G._newGame('d2', 'Saver', 'ranger', 'normal', 's'); G.me.level = 7; await G.saveGame(); G.toTitle(); });
+const sBefore = await g2.evaluate(async () => JSON.parse((await SaveStore.get(2)).raw));
+await g2.click('#btn-multi');
+await g2.waitForFunction(() => document.querySelector('#mp-char option[value="2"]'), null, { timeout: 5000 });
+await g2.fill('#mp-code', room.toLowerCase());
+await g2.selectOption('#mp-char', '2');
+await g2.click('#btn-mp-join');
+await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
+const joined = await g2.evaluate(() => [G.me.name, G.me.level, G.world.seed, document.querySelector('#mp-screen').classList.contains('open')]);
+check(joined[0] === 'Saver' && joined[1] === 7 && joined[2] !== 'd2' && !joined[3], `창으로 참가: 슬롯 캐릭터(${joined[0]} Lv.${joined[1]})로 호스트 세계(${joined[2]})에`);
+await g2.evaluate(() => { G.me.gold = 12345; G.setPause(true); document.querySelector('#btn-room-leave').click(); });
+await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 });
+await g2.waitForTimeout(500);
+const sAfter = await g2.evaluate(async () => JSON.parse((await SaveStore.get(2)).raw));
+check(sAfter.p.gold === 12345 && sAfter.p.level === 7 && sAfter.world.seed === sBefore.world.seed && sAfter.p.x === sBefore.p.x && sAfter.chapter === sBefore.chapter,
+  `나가면 캐릭터 몫만 그 슬롯에(금화 ${sAfter.p.gold}) · 세계·자리·장은 그대로(${sAfter.world.seed})`);
+await host.waitForTimeout(1500);
+await g2.evaluate(code => { document.querySelector('#btn-multi').click(); document.querySelector('#mp-code').value = code; }, room);
+await g2.waitForTimeout(300);
+await g2.evaluate(() => { document.querySelector('#mp-char').value = 'new'; document.querySelector('#btn-mp-join').click(); });
+await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
+await host.evaluate(() => G.mpClose());
+await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 }).catch(() => {});
+const closed = await Promise.all([g2.evaluate(() => [!G.net, G.state]), host.evaluate(() => [!G.net, G.players.length, G.state])]);
+check(closed[0][0] && closed[0][1] === 'title' && closed[1][0] && closed[1][1] === 1 && closed[1][2] === 'play',
+  `호스트가 방을 닫으면 참가자는 타이틀로(${closed[0][1]}) · 호스트는 혼자 계속(${closed[1][2]})`);
+check(!eg2.length, `콘솔 오류 0 (창 참가자) ${eg2.slice(0, 2).join(' | ')}`);
+
 check(!eh.length && !eg.length, `콘솔 오류 0 ${[...eh, ...eg].slice(0, 2).join(' | ')}`);
 srv.close(); peerSrv.srv.close(); await b.close();
 process.exit(bad ? 1 : 0);

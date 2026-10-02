@@ -617,7 +617,8 @@ export const UISPEC = {
   ng_name: { k: 'ng', g: 'quill' }, ng_seed: { k: 'ng', g: 'seed' },
   ng_start: { k: 'ng', g: 'play' }, ng_cancel: { k: 'ng', g: 'cross' }, ng_new: { k: 'ng', g: 'compass' },
   t_single: { k: 'ng', g: 'sword' }, t_settings: { k: 'ng', g: 'gear' }, t_credits: { k: 'ng', g: 'scroll' },
-  t_quit: { k: 'ng', g: 'door' },
+  t_quit: { k: 'ng', g: 'door' }, t_multi: { k: 'ng', g: 'swords' },
+  u_room: { k: 'ng', g: 'globe' }, u_leave: { k: 'ng', g: 'door' },
   u_resume: { k: 'ng', g: 'play' }, u_save: { k: 'ng', g: 'disk' }, u_export: { k: 'ng', g: 'export' }, u_title: { k: 'ng', g: 'home' },
   s_disp: { k: 'ng', g: 'speaker' }, s_noti: { k: 'ng', g: 'bell' }, s_keys: { k: 'ng', g: 'keys' }, s_hud: { k: 'ng', g: 'layout' }
 };

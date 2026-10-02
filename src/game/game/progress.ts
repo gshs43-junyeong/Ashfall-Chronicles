@@ -468,7 +468,7 @@ export const ProgressPart: Bag = {
     this.scenes.set(this.net ? 'mpause' : 'pause', on);
     if (!on) this.scenes.set(this.net ? 'pause' : 'mpause', false);   // 메뉴를 연 사이에 방을 열고 닫았어도 닫힌다
     $('#pause-screen').classList.toggle('open', on);
-    if (on) UI.syncSettings();      // 열 때마다 현재 값으로 맞춘다
+    if (on) { UI.syncSettings(); this.refreshPauseMp(); }   // 열 때마다 현재 값으로 맞춘다
   },
   /* 설정에서 끈 갈래는 띄우지 않는다. */
   toast(m, k) {
