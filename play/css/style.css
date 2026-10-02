@@ -829,11 +829,11 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 .ps-inner,.ds-inner{text-align:center}
 .ps-inner h2,.ds-inner h2{font-size:28px;font-weight:300;letter-spacing:.2em;margin-bottom:22px}
 .ds-inner h2{color:#b8433c}
-.ps-inner button,.ds-inner button{display:block;width:210px;margin:8px auto}
+.ps-inner button,.ds-inner button{display:block;width:250px;margin:8px auto}
 /* 위 버튼에 딸린 선택지. 같은 폭으로 두면 다섯 번째 메뉴로 읽히므로,
    한 단 작고 붙여서 "저장하기의 곁가지"로 보이게 한다. */
 .ps-inner button.ps-sub{
-  width:210px;margin:-4px auto 8px;font-size:11px;padding:5px 8px;
+  width:250px;margin:-4px auto 8px;font-size:11px;padding:5px 8px;
   opacity:.78;letter-spacing:0;
 }
 .ps-inner button.ps-sub:hover{opacity:1}
@@ -844,7 +844,7 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 /* 세 갈래(화면·소리 / 알림 / 조작)로 나눠 세로 길이를 잡는다.
    예전에는 한 줄로 이어 붙여 화면 높이의 두 배를 넘었고, 조작키를 보려면
    한참을 굴려 내려가야 했다. 이제 머리(탭)와 발(닫기)은 붙박이고 가운데만 구른다. */
-.settings{width:440px;max-width:calc(100vw - 32px);max-height:calc(100vh - 56px);
+.settings{width:480px;max-width:calc(100vw - 32px);max-height:calc(100vh - 56px);
   display:flex;flex-direction:column;text-align:left;
   background:#100f0ad0;border:1px solid var(--frame);
   border-radius:5px;padding:14px 16px 12px;box-shadow:0 6px 22px #000a}
@@ -1239,20 +1239,9 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .mp-note{font-size:11px;color:#8d8774;line-height:1.6;margin:2px 0 8px}
 .mp-wide{width:100%;padding:9px}
 .mp-wide .ui-ic{width:15px;height:15px;margin-right:6px;vertical-align:-3px}
-.mp-form{display:flex;flex-direction:column;gap:8px}
-.mp-form label{display:flex;align-items:center;gap:10px;font-size:11px;color:#8d8774}
-.mp-form label>input,.mp-form label>select{flex:1;padding:7px 9px;border-radius:3px;background:#0c0b08;
-  border:1px solid var(--frame);color:var(--ink);font-family:inherit;font-size:12.5px;min-width:0}
-.mp-form .mp-code{text-transform:uppercase;letter-spacing:.3em;font-size:15px}
-.mp-new{display:flex;flex-direction:column;gap:8px;padding-left:10px;border-left:2px solid #2a261c}
-.mp-new .mp-note{margin:0}
-.ps-room{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px auto 10px;font-size:11.5px;color:#8d8774}
-.ps-room b{color:var(--gold);font-size:17px;letter-spacing:.25em}
-.ps-room .mini-btn{float:none}
 @media (max-width:480px){.modal-box.mp-box{width:100%}}
 /* ★ .ps-inner button 의 display:block 이 hidden 을 이긴다 — 상태에 따라 숨기는 방 단추가 다 보였다 */
 .ps-inner [hidden]{display:none!important}
-.ps-inner .ps-room .mini-btn{display:inline-block;width:auto;margin:0;padding:3px 10px;font-size:11px}
 /* 파티 목록(HUD) — 보기만 한다(HUD 는 클릭을 안 받는다). 내보내기는 일시정지 창 */
 #party{margin-top:8px;background:#0b0a08b8;border:1px solid #2a261c;border-radius:4px;padding:5px 8px;font-size:11px}
 .pt-head{color:var(--gold);font-size:10.5px;letter-spacing:.08em;margin-bottom:3px}
@@ -1264,10 +1253,6 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .pt-ping{color:#6f8a6a;min-width:38px;text-align:right}
 .pt-hp{grid-column:1/-1;height:3px;background:#2a1412;border-radius:2px;overflow:hidden}
 .pt-hp i{display:block;height:100%;background:#b8433c}
-.ps-party{width:260px;margin:0 auto 10px;display:flex;flex-direction:column;gap:4px}
-.ps-guest{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:#c8bfa4;
-  background:#0b0a08b8;border:1px solid #2a261c;border-radius:3px;padding:4px 8px}
-.ps-inner .ps-guest .mini-btn{display:inline-block;width:auto;margin:0;padding:2px 8px;font-size:10.5px}
 /* 채팅 — 핫바 위 왼쪽. HUD 는 클릭을 안 받으니 입력 칸만 받는다 */
 #chat{position:absolute;left:14px;bottom:96px;width:380px;max-width:calc(100% - 28px)}
 #chat-log{display:flex;flex-direction:column;gap:2px}
@@ -1277,6 +1262,57 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 #chat-input{pointer-events:auto;width:100%;margin-top:4px;padding:6px 9px;border-radius:3px;background:#0c0b08e8;
   border:1px solid var(--gold);color:var(--ink);font-family:inherit;font-size:12.5px}
 .pt-pvp{color:#e07a5a;font-weight:600}
-.ps-cfg{display:flex;justify-content:center;gap:14px;margin:0 auto 10px;font-size:11.5px;color:#c8bfa4}
-.ps-cfg label{display:flex;align-items:center;gap:5px;cursor:pointer}
-.ps-cfg input{accent-color:var(--gold)}
+
+/* 참가 창 — 이름 한 열(max-content) · 입력 한 열. 새 캐릭터 줄도 같은 두 열(subgrid)이라 어느 언어든 입력 칸 끝이 맞는다 */
+.mp-form{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 12px;align-items:center}
+.mp-form>label,.mp-new>label{font-size:11px;color:#8d8774;white-space:nowrap}
+.mp-form input,.mp-form select{width:100%;min-width:0;padding:7px 9px;border-radius:3px;background:#0c0b08;
+  border:1px solid var(--frame);color:var(--ink);font-family:inherit;font-size:12.5px}
+.mp-form .mp-code{text-transform:uppercase;letter-spacing:.3em;font-size:15px}
+.mp-new{grid-column:1/-1;display:grid;grid-template-columns:subgrid;gap:8px 12px;align-items:center;
+  background:#14120d;border:1px solid #2a261c;border-radius:4px;padding:8px 10px;margin:0 -10px}
+.mp-new .mp-note{grid-column:1/-1;margin:0}
+.mp-new[hidden]{display:none}
+
+/* 일시정지 — 멀티플레이면 두 열(왼쪽 메뉴 · 오른쪽 방). 한 열일 때는 예전 그대로 */
+.ps-cols{display:flex;justify-content:center;align-items:flex-start;gap:28px}
+.ps-cols .ps-menu{flex:0 0 auto}
+.ps-side{flex:0 0 290px;text-align:left;background:#0b0a08cc;border:1px solid #2a261c;border-radius:5px;padding:12px 14px;margin-top:8px}
+.ps-side-title{color:var(--gold);font-size:12.5px;letter-spacing:.1em;margin-bottom:8px}
+.ps-side-title .ui-ic{width:16px;height:16px;margin-right:6px;vertical-align:-3px}
+.ps-side-sec{color:#8d8774;font-size:10.5px;letter-spacing:.08em;margin:10px 0 5px;padding-top:8px;border-top:1px solid #2a261c}
+.ps-room{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#8d8774}
+.ps-room b{color:var(--gold);font-size:17px;letter-spacing:.25em;flex:1}
+.ps-inner .ps-side .mini-btn{float:none;display:inline-block;width:auto;margin:0;padding:3px 10px;font-size:11px;white-space:nowrap}
+.ps-party{display:flex;flex-direction:column;gap:4px}
+.ps-guest{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#c8bfa4;
+  background:#14120d;border:1px solid #2a261c;border-radius:3px;padding:4px 8px;min-height:28px}
+.ps-guest span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-guest .pt-host{font-style:normal}
+.ps-cfg{display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:#c8bfa4}
+.ps-cfg label{display:flex;align-items:center;gap:7px;cursor:pointer}
+.ps-cfg input{accent-color:var(--gold);flex:0 0 auto}
+.ps-cfg input:disabled+*,.ps-cfg label:has(input:disabled){cursor:default;opacity:.75}
+.ps-cfg-note{font-size:10.5px;color:#6f6b5c;margin-top:6px}
+.ps-inner .ps-side button:not(.mini-btn){width:100%;margin:12px 0 0}
+@media (max-width:640px),(max-height:440px){.ps-cols{gap:14px}.ps-side{flex-basis:250px;padding:9px 11px}}
+
+/* 단추·탭은 한 줄 — 두 줄로 꺾이면 단추가 두꺼워져 줄이 어긋난다(ui-audit ⑥). 길면 말줄임, 발의 단추들은 줄째로 넘긴다 */
+.set-tabs .set-tab{flex:1 1 auto;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.set-foot{flex-wrap:wrap}
+.set-foot button{flex:1 1 auto!important;white-space:nowrap}
+/* 조작키 — 이름 한 열(고정 폭) · 단추 한 열. 이름이 길면 이름만 꺾이고 단추의 왼쪽 끝은 그대로 */
+.set-grid .set-row.key{display:grid;grid-template-columns:6.6em minmax(0,1fr);gap:8px}
+.set-grid .set-row.key .keybtn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;width:100%}
+/* 낮은 화면(폰 가로)의 일시정지 — 제목·단추를 줄여 두 열이 화면에 들어오게 */
+#pause-screen{overflow:auto}
+@media (max-height:440px){
+  .ps-inner h2{font-size:20px;margin-bottom:8px}
+  .ps-inner button{margin:5px auto;padding-top:6px;padding-bottom:6px}
+  .ps-inner button.ps-sub{margin:-2px auto 5px}
+  .ps-side{padding:8px 11px;margin-top:5px}
+  .ps-side-sec{margin:6px 0 4px;padding-top:5px}
+  .ps-inner .ps-side button:not(.mini-btn){margin-top:8px}
+}
+/* 터치 기기는 화면 위 가운데에 전체 화면 단추가 떠 있다 — 멈춤 제목이 그 밑에 깔리지 않게 내린다 */
+@media (max-height:440px){body.touch #pause-screen{padding-top:calc(44px + env(safe-area-inset-top,0px))}}

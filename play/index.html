@@ -395,12 +395,13 @@
       <p class="mp-note">이어 할 세계를 고르거나 새로 시작하면 방이 열리고 방 코드가 뜬다. 코드를 친구에게 알려 주면 된다.</p>
       <button id="btn-mp-host" class="mp-wide"><span class="ui-ic" data-ui-icon="ng_start"></span>세계 고르고 방 열기</button>
       <div class="mp-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>참가하기</div>
+      <!-- 이름 칸 한 열 · 입력 칸 한 열(grid) — 언어마다 이름 길이가 달라도 입력 칸의 왼쪽·오른쪽 끝이 맞는다 -->
       <div class="mp-form">
-        <label>방 코드<input id="mp-code" class="mp-code" maxlength="6" autocomplete="off" spellcheck="false" placeholder="ABCDE"></label>
-        <label>캐릭터<select id="mp-char"></select></label>
+        <label for="mp-code">방 코드</label><input id="mp-code" class="mp-code" maxlength="6" autocomplete="off" spellcheck="false" placeholder="ABCDE">
+        <label for="mp-char">캐릭터</label><select id="mp-char"></select>
         <div id="mp-new" class="mp-new">
-          <label>이름<input id="mp-name" maxlength="12" placeholder="이름 없는 모험가"></label>
-          <label>직업<select id="mp-class"></select></label>
+          <label for="mp-name">이름</label><input id="mp-name" maxlength="12" placeholder="이름 없는 모험가">
+          <label for="mp-class">직업</label><select id="mp-class"></select>
           <p class="mp-note">새 캐릭터는 저장되지 않는다 — 남기려면 싱글플레이에서 만든 캐릭터를 고를 것.</p>
         </div>
       </div>
@@ -470,6 +471,8 @@
   <div id="pause-screen">
     <div class="ps-inner">
       <h2><span class="ps-ic" data-ui-icon="p_menu" aria-hidden="true"></span>일시정지</h2>
+      <!-- 멀티플레이 중이면 두 열 — 왼쪽은 늘 같은 메뉴, 오른쪽은 방(코드 · 함께하는 사람 · 방 설정 · 닫기/나가기). G.refreshPauseMp -->
+      <div class="ps-cols">
       <div class="ps-menu">
         <button id="btn-resume"><span class="ui-ic" data-ui-icon="u_resume"></span>계속하기</button>
         <button id="btn-save"><span class="ui-ic" data-ui-icon="u_save"></span>저장하기</button>
@@ -477,15 +480,21 @@
              플레이 중에 백업하려면 일부러 타이틀까지 나갔다 와야 했다.
              누르면 먼저 저장한 다음 파일로 내보낸다 — 지금까지 한 것이 담긴다. -->
         <button id="btn-save-export" class="ps-sub"><span class="ui-ic" data-ui-icon="u_export"></span>저장하고 파일로 내보내기</button>
-        <!-- 멀티플레이 — 열 때마다 지금 상태(혼자 · 호스트 · 참가자)에 맞는 것만 보인다(G.refreshPauseMp) -->
-        <div id="ps-room" class="ps-room" hidden><span>방 코드</span><b id="ps-room-code"></b><button id="btn-room-copy" class="mini-btn">복사</button></div>
-        <div id="ps-party" class="ps-party" hidden></div>
-        <div id="ps-cfg" class="ps-cfg" hidden><label><input type="checkbox" id="mp-pvp">플레이어끼리 싸움(PvP)</label><label><input type="checkbox" id="mp-chat">채팅</label></div>
         <button id="btn-room-open" hidden><span class="ui-ic" data-ui-icon="u_room"></span>이 세계로 방 열기</button>
-        <button id="btn-room-close" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방 닫기</button>
-        <button id="btn-room-leave" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방에서 나가기</button>
         <button id="btn-settings-pause"><span class="ui-ic" data-ui-icon="t_settings"></span>설정</button>
         <button id="btn-title"><span class="ui-ic" data-ui-icon="u_title"></span>타이틀로</button>
+      </div>
+      <div id="ps-side" class="ps-side" hidden>
+        <div class="ps-side-title"><span class="ui-ic" data-ui-icon="t_multi"></span>멀티플레이</div>
+        <div id="ps-room" class="ps-room"><span>방 코드</span><b id="ps-room-code"></b><button id="btn-room-copy" class="mini-btn">복사</button></div>
+        <div class="ps-side-sec">함께하는 사람</div>
+        <div id="ps-party" class="ps-party"></div>
+        <div class="ps-side-sec">방 설정</div>
+        <div id="ps-cfg" class="ps-cfg"><label><input type="checkbox" id="mp-pvp">플레이어끼리 싸움(PvP)</label><label><input type="checkbox" id="mp-chat">채팅</label></div>
+        <p id="ps-cfg-note" class="ps-cfg-note" hidden>방 설정은 호스트가 바꾼다.</p>
+        <button id="btn-room-close" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방 닫기</button>
+        <button id="btn-room-leave" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방에서 나가기</button>
+      </div>
       </div>
     </div>
   </div>

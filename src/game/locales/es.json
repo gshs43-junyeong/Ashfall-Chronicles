@@ -44,8 +44,8 @@
   "Ctrl(왼)": "Ctrl izq.",
   "Lv {profMax} · 끝": "Nv. {profMax} · Máx.",
   "S 등급 보상 ·": "Recompensa de rango S ·",
-  "Shift(오)": "Mayús der.",
-  "Shift(왼)": "Mayús izq.",
+  "Shift(오)": "Mayús D",
+  "Shift(왼)": "Mayús I",
   "UI 크기": "Tamaño de la interfaz",
   "[{stationName} 필요]": "[Requiere: {stationName}]",
   "[아이콘]": "[Icono]",
@@ -879,7 +879,7 @@
   "홈이 셋. 무언가를 맞춰 넣는 자리다.": "Tres ranuras. Un lugar donde hay que encajar algo.",
   "화로가 자꾸 식어. 석탄 {n}개만 있으면 밤새 살려 둘 수 있어.": "La estufa no para de enfriarse. Con solo {n} de carbón podría mantenerla viva toda la noche.",
   "화면 · 소리": "Imagen · Sonido",
-  "화면 구성": "Disposición de pantalla",
+  "화면 구성": "Interfaz",
   "화면 효과": "Efectos de pantalla",
   "화면 흔들림과 큰 스킬의 섬광을 함께 조절합니다. 0%로 두면 둘 다 없습니다.": "Ajusta a la vez las sacudidas de pantalla y los destellos de las grandes habilidades. Al 0% no hay ninguno de los dos.",
   "화염 부여": "Encantamiento de fuego",
@@ -957,7 +957,10 @@
   "채팅이 켜졌다": "Chat activado.",
   "플레이어끼리 싸울 수 있다(PvP 켜짐)": "Los jugadores pueden luchar entre sí (PvP activado).",
   "플레이어끼리 싸움(PvP)": "Jugador contra jugador (PvP)",
-  "호스트가 채팅을 껐다": "El anfitrión ha desactivado el chat."
+  "호스트가 채팅을 껐다": "El anfitrión ha desactivado el chat.",
+  "방 설정": "Ajustes de sala",
+  "방 설정은 호스트가 바꾼다.": "Solo el anfitrión puede cambiar los ajustes de sala.",
+  "함께하는 사람": "Jugadores"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

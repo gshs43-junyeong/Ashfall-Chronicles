@@ -44,8 +44,8 @@
   "Ctrl(왼)": "Strg (links)",
   "Lv {profMax} · 끝": "Stufe {profMax} · Maximum",
   "S 등급 보상 ·": "Belohnung für Rang S ·",
-  "Shift(오)": "Shift (rechts)",
-  "Shift(왼)": "Shift (links)",
+  "Shift(오)": "Shift R",
+  "Shift(왼)": "Shift L",
   "UI 크기": "UI-Größe",
   "[{stationName} 필요]": "[{stationName} nötig]",
   "[아이콘]": "[Symbol]",
@@ -957,7 +957,10 @@
   "채팅이 켜졌다": "Chat ist an.",
   "플레이어끼리 싸울 수 있다(PvP 켜짐)": "Spieler können gegeneinander kämpfen (PvP an).",
   "플레이어끼리 싸움(PvP)": "Spieler gegen Spieler (PvP)",
-  "호스트가 채팅을 껐다": "Der Gastgeber hat den Chat ausgeschaltet."
+  "호스트가 채팅을 껐다": "Der Gastgeber hat den Chat ausgeschaltet.",
+  "방 설정": "Raumeinstellungen",
+  "방 설정은 호스트가 바꾼다.": "Nur der Gastgeber kann die Raumeinstellungen ändern.",
+  "함께하는 사람": "Mitspieler"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

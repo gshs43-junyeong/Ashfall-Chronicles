@@ -1,5 +1,6 @@
 /* 다국어 UI 전수 검사 — 언어마다 창·탭·툴팁·대화·설정을 거의 다 열어 보고, 글자가
    ① 제 칸을 넘치거나(잘림·말줄임) ② 잘라 내는 조상 밖으로 삐져나가거나 ③ 다른 글과 겹치거나 ④ 화면 밖에 있는지 잰다.
+   ⑥ 단추·탭 글이 두 줄로 꺾여 단추가 두꺼워졌는지 ⑦ 이름·입력 두 열 칸(.mp-form)의 입력 칸 왼쪽·오른쪽 끝이 맞는지도 본다.
    npm run check 에는 넣지 않는다(언어 여섯 × 장면 사십여 개 — 몇 분 걸린다). 번역·UI 를 크게 바꿨을 때 돌린다:
      node tests/ui-audit.mjs                 # 여섯 언어 전부
      node tests/ui-audit.mjs en de --shots   # 몇 언어만 · tests/out/ui-audit/<언어>/ 에 장면마다 스크린샷
@@ -72,7 +73,12 @@ const MEASURE = () => {
     }
     // 창은 세로로만 스크롤한다 — 스크롤 칸 안에서도 글이 **옆으로** 칸 밖에 있으면 잘린 것이다(독일어 폰에서 능력치 숫자가 그랬다)
     if (sc) { const sr = sc.getBoundingClientRect(); if (x.rects.some(q => q.right > sr.right + 1 || q.left < sr.left - 1)) add('잘림(가로)', el, x.t, 'in ' + name(sc)); }
-    const box = sc ? [sc.getBoundingClientRect()] : x.rects;
+    const clipBox = el => { const r = el.getBoundingClientRect(); let q = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) { const acs = getComputedStyle(a);
+        if (acs.overflowX === 'visible' && acs.overflowY === 'visible') continue; const ar = a.getBoundingClientRect();
+        q = { left: Math.max(q.left, ar.left), top: Math.max(q.top, ar.top), right: Math.min(q.right, ar.right), bottom: Math.min(q.bottom, ar.bottom) }; }
+      return q; };
+    const box = sc ? [clipBox(sc)] : x.rects;   // 스크롤 칸이 바깥 스크롤 칸 안에 있으면 바깥이 깎은 만큼만
     if (box.some(q => q.right > vw + 1 || q.bottom > vh + 1 || q.left < -1 || q.top < -1)) add('화면 밖', sc || el, sc ? '(스크롤 칸)' : x.t);
   }
   // ③ 겹침 — 같은 층 안의 서로 다른 글 조각끼리, 넓이 8px² 넘게
@@ -88,9 +94,9 @@ const MEASURE = () => {
     if (hit) add('겹침', A.el, A.t, '↔ ' + name(B.el) + ' "' + B.t + '"');
   }
   // ⑤ 가림 — 열린 창(패널·모달·대화·멈춤) 위에 조작 단추(터치 · 탭 단추 줄)가 떠서 창을 가리면
-  const wins = [...document.querySelectorAll('.panel, .modal.open, #dialogue.open, #pause-screen.open, #death-screen.open')].filter(vis)
+  const wins = [...document.querySelectorAll('.panel, .modal.open .modal-box, #dialogue.open, #pause-screen.open .ps-inner, #death-screen.open .ds-inner')].filter(vis)
     .map(w => w.getBoundingClientRect()).filter(r => r.width > 40 && r.height > 40);
-  for (const c of document.querySelectorAll('#touchpad .ti-btn, #touchpad .ti-stick, #touchpad .ti-alt, #tabbar .tb')) {
+  for (const c of document.querySelectorAll('#touchpad .ti-btn, #touchpad .ti-stick, #touchpad .ti-alt, #touchpad .ti-fs, #tabbar .tb')) {
     if (!vis(c)) continue;
     const r = c.getBoundingClientRect();
     for (const w of wins) {
@@ -99,6 +105,49 @@ const MEASURE = () => {
       // 정말 위에 떠 있는가 — 겹친 곳 가운데에서 맨 위 요소가 이 단추여야 한다(타이틀 화면 밑에 깔린 탭 단추 줄은 가린 게 아니다)
       const top = document.elementFromPoint((Math.max(r.left, w.left) + Math.min(r.right, w.right)) / 2, (Math.max(r.top, w.top) + Math.min(r.bottom, w.bottom)) / 2);
       if (top && (top === c || c.contains(top))) { add('가림', c, (c.textContent || '').trim().slice(0, 20) || c.className, `${Math.round(iw)}×${Math.round(ih)}`); break; }
+    }
+  }
+  // ⑥ 두 줄 — 한 줄짜리여야 하는 단추·탭의 글이 꺾였다(단추가 두꺼워진다).
+  //   줄은 글 사각형을 세로로 겹치는 것끼리 묶어 센다(크기가 다른 글이 한 줄에 있어도 한 줄). 일부러 두 단으로 짠 단추(제목 + 작은 부제 ·
+  //   구석의 단축키)는 칸 안의 블록·떠 있는 요소로 알아보고 — 글 조각 **하나가** 꺾였을 때만 센다.
+  const ONE_LINE = 'button, .tb, .set-tab, .qtab, .sk-tab, .ng-mode, .mini-btn, .pt-row, .ps-guest span';
+  const lineCount = rects => { const ls = [];
+    for (const q of rects) { const m = (q.top + q.bottom) / 2; const l = ls.find(l => m > l.top && m < l.bottom);
+      if (l) { l.top = Math.min(l.top, q.top); l.bottom = Math.max(l.bottom, q.bottom); } else ls.push({ top: q.top, bottom: q.bottom }); }
+    return ls.length; };
+  for (const el of document.querySelectorAll(ONE_LINE)) {
+    if (!vis(el) || el.closest('.slot-card, .ng-char, .shop-row, .cr-row, .mach-slot')) continue;
+    let structured = false; const all = [], nodes = [];
+    for (const d of el.querySelectorAll('*')) { const cs = getComputedStyle(d);
+      if (/^(block|flex|grid|list-item|table)$/.test(cs.display) || cs.position === 'absolute' || cs.position === 'fixed') { structured = true; break; } }
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      if (!n.data.trim()) continue;
+      const r = document.createRange(); r.selectNodeContents(n);
+      const rs = [...r.getClientRects()].filter(q => q.width > 1 && q.height > 1);
+      nodes.push(rs); all.push(...rs);
+    }
+    const lines = structured ? Math.max(0, ...nodes.map(lineCount)) : lineCount(all);
+    if (lines > 1) add('두 줄', el, (el.textContent || '').trim().slice(0, 40), lines + '줄');
+  }
+  // ⑦ 정렬 — 두 열 칸의 입력 칸들은 왼쪽·오른쪽 끝이 같아야 한다
+  for (const form of document.querySelectorAll('.mp-form')) {
+    if (!vis(form)) continue;
+    const ctl = [...form.querySelectorAll('input, select')].filter(vis).map(e => e.getBoundingClientRect()).filter(r => r.width > 0);
+    if (ctl.length < 2) continue;
+    const L = ctl.map(r => r.left), R = ctl.map(r => r.right);
+    if (Math.max(...L) - Math.min(...L) > 1.5 || Math.max(...R) - Math.min(...R) > 1.5)
+      add('정렬', form, '입력 칸 끝', `왼쪽 ${Math.round(Math.min(...L))}~${Math.round(Math.max(...L))} · 오른쪽 ${Math.round(Math.min(...R))}~${Math.round(Math.max(...R))}`);
+  }
+  // ⑦-2 조작키 두 열 — 같은 열의 단추는 왼쪽·오른쪽 끝이 같아야 한다
+  const kb = [...document.querySelectorAll('#set-keys .keybtn')].filter(vis).map(e => e.getBoundingClientRect());
+  if (kb.length > 2) {
+    const mid = (Math.min(...kb.map(r => r.left)) + Math.max(...kb.map(r => r.right))) / 2;
+    for (const col of [kb.filter(r => r.right < mid + 40), kb.filter(r => r.left > mid - 40)]) {
+      if (col.length < 2) continue;
+      const L = col.map(r => r.left), R = col.map(r => r.right);
+      if (Math.max(...L) - Math.min(...L) > 1.5 || Math.max(...R) - Math.min(...R) > 1.5)
+        add('정렬', document.querySelector('#set-keys'), '조작키 단추 열', `왼쪽 ${Math.round(Math.min(...L))}~${Math.round(Math.max(...L))}`);
     }
   }
   return out;
@@ -164,6 +213,9 @@ for (const lang of langs) {
     ['settings-keys', () => document.querySelector('.set-tab[data-tab="keys"]').click()],
     ['settings-close', () => $('#btn-settings-close').click()],
     ['credits', () => $('#btn-credits').click()],
+    ['credits-close', () => { document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')); }],
+    ['multi', () => $('#btn-multi').click()],
+    ['multi-new', () => { const sel = $('#mp-char'); sel.value = 'new'; sel.onchange(); }],
   ]);
   // 새 게임 — 창·탭·툴팁·대화·멈춤·쓰러짐
   const steps = [
@@ -211,9 +263,19 @@ for (const lang of langs) {
   // 유적 · 바다 — 맥박 · 숨 · 버프
   await run(lang, { q: 'debug=ruin&id=mine&pulse=90' }, [['pulse', () => __step(200)], ['quest', () => UI.togglePanel('quest')]]);
   await run(lang, { q: 'debug=sea&sess=3&plv=80' }, [['swim', () => __step(240)], ['buffs', () => { for (const k of Object.keys(BUFFS).slice(0, 12)) G.player.addBuff ? G.player.addBuff(k, 60) : 0; __step(2); }]]);
+  // 멀티플레이 — 호스트 HUD(파티 · 채팅) · 두 열 일시정지. 참가자 하나는 가짜 통로로 붙여 줄을 채운다
+  const MP_FAKE = () => { G.mpHost('ABCDE'); const n = G.net; n.room = 'ABCDE';
+    const rp = G.netAvatar(1, Object.assign(G.netState(G.me), { n: 'Mina', lv: 12 }));
+    n.peers.set(1, { id: 1, rp, t: { send() {}, close() {} }, ping: 42 }); n.cfg.pvp = true; };
+  await run(lang, { q: 'sig=tab' }, [
+    ['mp-host', MP_FAKE],
+    ['mp-chat', () => { G.sendChat('Meet at the mine entrance — bring torches'); G.chatLine('Mina', 'on my way'); G.openChat(); }],
+    ['mp-pause', () => { G.closeChat(); G.setPause(true); }],
+  ]);
   // 폰 가로 — 터치 조작과 좁은 화면
-  await run(lang, { device: 'Pixel 7 landscape' }, [['inv', () => UI.togglePanel('inv')], ['skill', () => UI.togglePanel('skill')], ['quest', () => UI.togglePanel('quest')],
-    ['craft', () => UI.togglePanel('craft')], ['pause', () => { UI.closePanel(); G.setPause(true); }], ['settings', () => $('#btn-settings-pause').click()]]);
+  await run(lang, { device: 'Pixel 7 landscape', q: 'sig=tab' }, [['inv', () => UI.togglePanel('inv')], ['skill', () => UI.togglePanel('skill')], ['quest', () => UI.togglePanel('quest')],
+    ['craft', () => UI.togglePanel('craft')], ['pause', () => { UI.closePanel(); G.setPause(true); }], ['settings', () => $('#btn-settings-pause').click()],
+    ['mp-pause', () => { $('#btn-settings-close').click(); G.setPause(false); G.mpHost('ABCDE'); const n = G.net; n.room = 'ABCDE'; const rp = G.netAvatar(1, Object.assign(G.netState(G.me), { n: 'Mina', lv: 12 })); n.peers.set(1, { id: 1, rp, t: { send() {}, close() {} }, ping: 42 }); G.setPause(true); }]]);
   const n = (found.get(lang) || []).length;
   console.log(`${n ? '✗' : '✓'} ${lang}: ${n}건`);
 }

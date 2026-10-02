@@ -1402,6 +1402,12 @@
   "방 만들기": [
    "index.html"
   ],
+  "방 설정": [
+   "index.html"
+  ],
+  "방 설정은 호스트가 바꾼다.": [
+   "index.html"
+  ],
   "방 코드": [
    "index.html"
   ],
@@ -2907,6 +2913,9 @@
   "할 일은 모두 끝냈다.": [
    "game/village.tellQuest"
   ],
+  "함께하는 사람": [
+   "index.html"
+  ],
   "핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)": [
    "ui/tip.showTip"
   ],
@@ -2926,7 +2935,8 @@
    "world/village.buildRunaway"
   ],
   "호스트": [
-   "game/netui.refreshParty"
+   "game/netui.refreshParty",
+   "game/netui.refreshPauseMp"
   ],
   "호스트가 방에서 내보냈다": [
    "game/net.netOnGuest"
