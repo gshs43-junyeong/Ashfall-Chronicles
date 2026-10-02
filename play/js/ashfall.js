@@ -46245,7 +46245,7 @@
   // src/game/game/net.ts
   var NET_MAX = 4;
   var NET_HZ = 15;
-  var RELAY_URL = "";
+  var RELAY_URL = "wss://ashfall-relay.gshs43junyeong.workers.dev/ws";
   var SIGNAL_URL = "https://ashfall-chronicles.vercel.app/api/room";
   var isWs = (url) => /^wss?:/.test(url || "");
   var INVITE_MS = 5 * 60 * 1e3;
