@@ -82,7 +82,9 @@ export const SAVE_UPGRADES = [
     const wet = {}, ww = d.world.ww || 5000, until = (d.dayCount || 0) + 3;
     for (const k of (d.world.crops || [])) wet[k + ww] = until;
     d.world.wet = wet;
-  }
+  },
+  /* v12 → v13 — 멀티플레이 손님 기록(mpGuests: 손님 아이디 → 마지막 자리 · 새로 만든 손님 캐릭터). 옛 세계엔 손님이 없었다. */
+  (d) => { if (!d.mpGuests) d.mpGuests = {}; }
 ];
 export const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 
@@ -451,7 +453,7 @@ export const G: Bag = {
     this.sideActive = {}; this.sideDone = {}; this.tabletsRead = {}; this.termsRead = {}; this.loreRead = {};
     this.deathMark = null;
     this.villageUnlocked = false; this.goldRate = 1; this.market = {}; this.dayCount = 0; this.trainedToday = 0;
-    this.achievements = {}; this.tally = {};
+    this.achievements = {}; this.tally = {}; this.mpGuests = {};
     this.survey = {}; this.ruinPulse = {}; this.pendingEcho = null; this.pulseHere = null;
     this.rocks = []; this.quake = null; this.meteor = null; this.meteorRolled = undefined; this.caveHere = 0; this._caveLast = 0;
     this.nearStObj = { work: null, forge: null };

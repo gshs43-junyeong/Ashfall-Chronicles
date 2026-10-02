@@ -34882,6 +34882,10 @@
       const wet = {}, ww = d.world.ww || 5e3, until = (d.dayCount || 0) + 3;
       for (const k of d.world.crops || []) wet[k + ww] = until;
       d.world.wet = wet;
+    },
+    /* v12 → v13 — 멀티플레이 손님 기록(mpGuests: 손님 아이디 → 마지막 자리 · 새로 만든 손님 캐릭터). 옛 세계엔 손님이 없었다. */
+    (d) => {
+      if (!d.mpGuests) d.mpGuests = {};
     }
   ];
   var SAVE_VERSION = SAVE_UPGRADES.length + 1;
@@ -35391,6 +35395,7 @@
       this.trainedToday = 0;
       this.achievements = {};
       this.tally = {};
+      this.mpGuests = {};
       this.survey = {};
       this.ruinPulse = {};
       this.pendingEcho = null;
@@ -40394,6 +40399,7 @@
         achievements: this.achievements,
         tally: this.tally,
         survey: this.survey,
+        mpGuests: this.mpGuests || {},
         p: this.packChar(p)
       };
       return data;
@@ -40573,6 +40579,7 @@
         this.shopStock = d.shopStock || {};
         this.shopStockDay = d.shopStockDay === void 0 ? -1 : d.shopStockDay;
         this.achievements = d.achievements || {};
+        this.mpGuests = d.mpGuests || {};
         this.tally = d.tally || {};
         if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
         this.ents = [];
@@ -47023,14 +47030,24 @@
     netOnHost(peer, m) {
       const n = this.net;
       if (m.k === "hello") {
-        const me = this.me, s = Object.assign(this.netState(me), { x: me.x + 24, n: m.n, c: m.c });
+        peer.pid = typeof m.pid === "string" ? m.pid.slice(0, 24) : null;
+        peer.temp = !!m.temp;
+        const me = this.me, rec = this.netGuestRec(peer.pid);
+        const back = rec && !this.world.hitSolid(rec.x, rec.y, me.w, me.h);
+        const char = peer.temp && rec && rec.char ? rec.char : null, name = char && rec.n ? rec.n : m.n;
+        const s = Object.assign(this.netState(me), back ? { x: rec.x, y: rec.y } : { x: me.x + 24 }, { n: name, c: char ? char.charId : m.c });
         peer.rp = this.netAvatar(peer.id, s);
         const roster = [[0, this.netState(me)]];
         for (const q of n.peers.values()) if (q.rp && q !== peer) roster.push([q.id, this.netState(q.rp)]);
-        this.netSend(peer.t, "rel", { k: "world", id: peer.id, x: s.x, y: s.y, save: this.saveData(), roster });
+        const save = this.saveData();
+        delete save.mpGuests;
+        this.netSend(peer.t, "rel", { k: "world", id: peer.id, x: s.x, y: s.y, save, roster, back: !!rec, char, name });
         this.netSend(peer.t, "rel", Object.assign({ k: "cfg" }, n.cfg));
         for (const q of n.peers.values()) if (q !== peer) this.netSend(q.t, "rel", { k: "join", id: peer.id, s });
-        this.toast(tr("{name|이} 들어왔다", { name: m.n }), "good");
+        this.toast(rec ? tr("{name|이} 돌아왔다", { name }) : tr("{name|이} 들어왔다", { name }), "good");
+        this.netGuestKeep(peer);
+      } else if (m.k === "csave" && peer.rp) {
+        this.netGuestKeep(peer, m.char);
       } else if (m.k === "st" && peer.rp) {
         peer.rp.netBuf.push(now(), m.s);
         this.netApply(peer.rp, m.s);
@@ -47068,6 +47085,7 @@
       const n = this.net;
       if (!n || !n.peers.has(peer.id)) return;
       n.peers.delete(peer.id);
+      this.netGuestKeep(peer);
       if (peer.rp) {
         this.netRemove(peer.rp);
         this.toast(tr("{name|이} 나갔다", { name: peer.rp.name }), "info");
@@ -47121,9 +47139,10 @@
           this.netOnGuest(JSON.parse(d));
         };
         t.onclose = () => this.netLost();
-        this.netSend(t, "rel", { k: "hello", n: n.char.name, c: n.char.charId });
+        this.netSend(t, "rel", { k: "hello", n: n.char.name, c: n.char.charId, pid: this.mpPlayerId(), temp: n.slot === null || n.slot === void 0 });
         addEventListener("pagehide", () => {
           if (this.net === n && n.t) {
+            this.netCharOut(n);
             n.t.send("rel", JSON.stringify({ k: "bye" }));
             this.netSaveChar(n);
           }
@@ -47153,6 +47172,7 @@
       if (m.k === "world") {
         this.currentSlot = null;
         this._loadGame(JSON.stringify(m.save));
+        if (m.char && typeof m.char === "object") n.char = this.unpackChar(m.char, m.name || n.char.name, this.chapter);
         const me = n.char;
         me.x = m.x;
         me.y = m.y;
@@ -47169,6 +47189,8 @@
         UI5.refreshSkillbar();
         UI5.refreshStatAlloc();
         UI5.refreshSkillSlots();
+        if (m.char) this.toast(tr("이 세계에서 쓰던 캐릭터로 돌아왔다"), "good");
+        else if (m.back) this.toast(tr("이 세계에 다시 왔다 — 지난 자리에서 이어 간다"), "good");
       } else if (m.k === "ps") {
         const t = now();
         for (const [id, s] of m.list) {
@@ -47284,7 +47306,10 @@
     mpLeave() {
       const n = this.net;
       if (!n || n.role !== "guest") return;
-      if (n.t) n.t.send("rel", JSON.stringify({ k: "bye" }));
+      if (n.t) {
+        this.netCharOut(n);
+        n.t.send("rel", JSON.stringify({ k: "bye" }));
+      }
       this.netEnd();
       this.netSaveChar(n);
       this.toTitle();
@@ -47340,6 +47365,7 @@
           q.t.send("rel", clk);
           q.t.send("rel", pi);
           q.t.send("rel", pr);
+          this.netGuestKeep(q);
         }
       }
       const t = now();
@@ -47372,8 +47398,10 @@
   // src/game/game/netui.ts
   var netui_exports = {};
   __export(netui_exports, {
-    NetUiPart: () => NetUiPart
+    NetUiPart: () => NetUiPart,
+    ROOM_CODE_RE: () => ROOM_CODE_RE
   });
+  var ROOM_CODE_RE = /^[A-Z0-9]{5,6}$/;
   var NetUiPart = {
     bindMpUi() {
       $("#btn-multi").onclick = () => this.openMpScreen();
@@ -47388,8 +47416,18 @@
       $("#mp-char").onchange = () => {
         $("#mp-new").hidden = $("#mp-char").value !== "new";
       };
-      $("#mp-code").onkeydown = (e) => {
-        if (e.key === "Enter") this.mpJoinFromTitle();
+      const code = $("#mp-code");
+      const tidy = () => {
+        const v = String(code.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+        if (code.value !== v) code.value = v;
+        $("#btn-mp-join").disabled = !ROOM_CODE_RE.test(v);
+      };
+      code.oninput = (e) => {
+        if (!e.isComposing) tidy();
+      };
+      code.addEventListener("compositionend", tidy);
+      code.onkeydown = (e) => {
+        if (e.key === "Enter" && !e.isComposing) this.mpJoinFromTitle();
       };
       const el = $("#mp-screen");
       el.onclick = (e) => {
@@ -47427,6 +47465,7 @@
       $("#mp-char").innerHTML = opts + `<option value="new">${tr("새 캐릭터")}</option>`;
       $("#mp-class").innerHTML = CHARACTERS.map((c) => `<option value="${c.id}">${escHtml(c.n)}</option>`).join("");
       $("#mp-new").hidden = $("#mp-char").value !== "new";
+      $("#btn-mp-join").disabled = !ROOM_CODE_RE.test(String($("#mp-code").value || ""));
       this.netSay("");
       this.openModal("#mp-screen");
       this.fillIcons($("#mp-screen"));
@@ -47434,8 +47473,8 @@
     async mpJoinFromTitle() {
       if (this.net) return;
       const code = String($("#mp-code").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-      if (code.length < 4) {
-        this.netSay(tr("방 코드를 넣어라"));
+      if (!ROOM_CODE_RE.test(code)) {
+        this.netSay(tr("방 코드는 영문·숫자 5~6자다"));
         return;
       }
       const v = $("#mp-char").value;
@@ -47453,6 +47492,31 @@
       }
       this.netSay(tr("방을 찾는 중…"), true);
       this.mpJoin(code, char, slot);
+    },
+    /** 이 브라우저의 손님 아이디 — 호스트 세계가 다시 온 사람을 알아본다(설정에 한 번 만들어 둔다). */
+    mpPlayerId() {
+      if (!this.settings.mpId) {
+        this.settings.mpId = randomCode(12).toLowerCase();
+        this.saveSettings();
+      }
+      return this.settings.mpId;
+    },
+    /** 호스트 — 그 손님의 기록(없으면 null). */
+    netGuestRec(pid) {
+      return pid && this.mpGuests && this.mpGuests[pid] || null;
+    },
+    /** 호스트 — 손님의 마지막 자리(1초마다 · 나갈 때)와 새로 만든 캐릭터(손님이 보낸 것)를 세계 기록에. 호스트가 저장하면 세이브에 남는다. */
+    netGuestKeep(peer, char) {
+      if (!peer || !peer.pid || !peer.rp) return;
+      this.mpGuests = this.mpGuests || {};
+      const rec = this.mpGuests[peer.pid] || (this.mpGuests[peer.pid] = {});
+      Object.assign(rec, { x: Math.round(peer.rp.x), y: Math.round(peer.rp.y), n: peer.rp.name, c: peer.rp.charId, t: Date.now() });
+      if (char && typeof char === "object" && peer.temp && JSON.stringify(char).length < 6e4) rec.char = char;
+    },
+    /** 참가자 — 새로 만든 캐릭터는 제 슬롯이 없으니 호스트 세계에 맡긴다(다시 오면 돌려받는다). */
+    netCharOut(n) {
+      if (!n || n.role !== "guest" || !n.t || n.id <= 0 || n.slot !== null && n.slot !== void 0) return;
+      this.netSend(n.t, "rel", { k: "csave", char: this.packChar(n.char) });
     },
     /** 참가 창이 열려 있으면 거기에, 아니면 알림으로. */
     netSay(text, ok = false) {
@@ -47521,6 +47585,11 @@
       n.partyT = 0.25;
       this.refreshParty();
       this.refreshChat();
+      n.csaveT = (n.csaveT || 0) - 0.25;
+      if (n.csaveT <= 0) {
+        n.csaveT = 15;
+        this.netCharOut(n);
+      }
     },
     /** 그 플레이어의 왕복 시간(ms) — 호스트 자신은 없다. */
     netPing(id) {
