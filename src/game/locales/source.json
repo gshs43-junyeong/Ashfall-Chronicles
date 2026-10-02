@@ -863,6 +863,9 @@
   "내가 정련법을 가르쳐줄 테니, {item} {n}개를 직접 만들어 와 봐.": [
    "data/quests"
   ],
+  "내보내기": [
+   "game/netui.refreshPauseMp"
+  ],
   "내보내기 실패": [
    "game/save.exportSaves"
   ],
@@ -1383,6 +1386,9 @@
   ],
   "방 {room|을} 열었다": [
    "game/net.mpHost"
+  ],
+  "방 {room}": [
+   "game/netui.refreshParty"
   ],
   "방 닫기": [
    "index.html"
@@ -2900,6 +2906,9 @@
   ],
   "헤파의 격실": [
    "world/village.buildRunaway"
+  ],
+  "호스트": [
+   "game/netui.refreshParty"
   ],
   "호스트가 방에서 내보냈다": [
    "game/net.netOnGuest"

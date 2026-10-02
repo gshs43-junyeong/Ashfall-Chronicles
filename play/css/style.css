@@ -1253,3 +1253,18 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 /* ★ .ps-inner button 의 display:block 이 hidden 을 이긴다 — 상태에 따라 숨기는 방 단추가 다 보였다 */
 .ps-inner [hidden]{display:none!important}
 .ps-inner .ps-room .mini-btn{display:inline-block;width:auto;margin:0;padding:3px 10px;font-size:11px}
+/* 파티 목록(HUD) — 보기만 한다(HUD 는 클릭을 안 받는다). 내보내기는 일시정지 창 */
+#party{margin-top:8px;background:#0b0a08b8;border:1px solid #2a261c;border-radius:4px;padding:5px 8px;font-size:11px}
+.pt-head{color:var(--gold);font-size:10.5px;letter-spacing:.08em;margin-bottom:3px}
+.pt-row{display:grid;grid-template-columns:1fr auto auto;gap:2px 8px;align-items:center;padding:2px 0}
+.pt-row.me .pt-name{color:#e8dcb8}
+.pt-name{color:#c8bfa4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-host{font-style:normal;color:var(--gold);font-size:9.5px;margin-right:4px;border:1px solid #6a5a30;border-radius:2px;padding:0 3px}
+.pt-lv{color:#8d8774}
+.pt-ping{color:#6f8a6a;min-width:38px;text-align:right}
+.pt-hp{grid-column:1/-1;height:3px;background:#2a1412;border-radius:2px;overflow:hidden}
+.pt-hp i{display:block;height:100%;background:#b8433c}
+.ps-party{width:260px;margin:0 auto 10px;display:flex;flex-direction:column;gap:4px}
+.ps-guest{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:#c8bfa4;
+  background:#0b0a08b8;border:1px solid #2a261c;border-radius:3px;padding:4px 8px}
+.ps-inner .ps-guest .mini-btn{display:inline-block;width:auto;margin:0;padding:2px 8px;font-size:10.5px}

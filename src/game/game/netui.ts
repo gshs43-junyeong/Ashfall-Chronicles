@@ -1,10 +1,12 @@
 /* ===== game/netui.ts — 멀티플레이 창: 타이틀의 방 만들기·참가하기 · 일시정지의 방 줄 · 참가 캐릭터 저장 ===== */
+import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { escHtml } from '../util.js';
 import { tr } from '../lang.js';
 import { CHARACTERS } from '../data/start.js';
 import { $ } from '../ui.js';
 import { G, NONAME, SAVE_VERSION, SaveStore, saveHead, saveSealOk, upgradeSave } from '../game.js';
+import { NET_MAX } from './net.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const NetUiPart: Bag = {
@@ -103,6 +105,38 @@ export const NetUiPart: Bag = {
     }
   },
 
+  /* ---- 파티 목록(HUD — 보기만) · 내보내기는 일시정지 창에서 ---- */
+  netPartyTick(dt) {
+    const n = this.net;
+    n.partyT = (n.partyT || 0) - dt;
+    if (n.partyT > 0) return;
+    n.partyT = 0.25;
+    this.refreshParty();
+  },
+  /** 그 플레이어의 왕복 시간(ms) — 호스트 자신은 없다. */
+  netPing(id) {
+    const n = this.net;
+    if (!n || !id) return null;
+    if (n.role === 'host') { const q = n.peers.get(id); return q && q.ping !== undefined ? q.ping : null; }
+    return n.pings && n.pings.has(id) ? n.pings.get(id) : null;
+  },
+  refreshParty() {
+    const box = $('#party'), n = this.net;
+    if (!box) return;
+    if (!n || (n.role === 'guest' && n.id < 0)) { box.hidden = true; return; }
+    const rows = this.players.map(p => {
+      const id = p === this.me ? (n.role === 'host' ? 0 : n.id) : p.netId;
+      const mhp = p.remote ? (p.netMaxHp || p.d.maxHp) : p.d.maxHp, ping = this.netPing(id);
+      return `<div class="pt-row${p === this.me ? ' me' : ''}">
+        <span class="pt-name">${id === 0 ? `<i class="pt-host">${tr('호스트')}</i>` : ''}${escHtml(p.name)}</span>
+        <span class="pt-lv">Lv.${p.level | 0}</span><span class="pt-ping">${ping === null ? '' : ping + 'ms'}</span>
+        <div class="pt-hp"><i style="width:${clamp(p.hp / (mhp || 1), 0, 1) * 100}%"></i></div></div>`;
+    }).join('');
+    const head = `<div class="pt-head">${n.role === 'host' && n.room ? tr('방 {room}', { room: n.room }) + ' · ' : ''}${this.players.length}/${NET_MAX}</div>`;
+    box.innerHTML = head + rows;
+    box.hidden = false;
+  },
+
   /** 일시정지 창의 방 줄 — 혼자면 '방 열기', 호스트면 코드·닫기, 참가자면 나가기. */
   refreshPauseMp() {
     const n = this.net, host = !!n && n.role === 'host', guest = !!n && n.role === 'guest';
@@ -112,6 +146,13 @@ export const NetUiPart: Bag = {
     $('#btn-room-close').hidden = !host;
     $('#btn-room-leave').hidden = !guest;
     $('#btn-save-export').hidden = guest;        // 참가자는 캐릭터만 저장한다
+    const list = $('#ps-party'), guests = host ? [...n.peers.values()].filter(q => q.rp) : [];
+    list.hidden = !guests.length;
+    list.innerHTML = guests.map(q => `<div class="ps-guest"><span>${escHtml(q.rp.name)} · Lv.${q.rp.level | 0}</span>
+      <button class="mini-btn" data-kick="${q.id}">${tr('내보내기')}</button></div>`).join('');
+    list.querySelectorAll('[data-kick]').forEach(b => {
+      b.onclick = () => { this.mpKick(+b.dataset.kick); this.refreshPauseMp(); };
+    });
   }
 };
 

@@ -191,6 +191,21 @@ await g2.evaluate(code => { document.querySelector('#btn-multi').click(); docume
 await g2.waitForTimeout(300);
 await g2.evaluate(() => { document.querySelector('#mp-char').value = 'new'; document.querySelector('#btn-mp-join').click(); });
 await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
+await host.waitForTimeout(2500);
+const party = await Promise.all([host, g2].map(pg => pg.evaluate(() => {
+  const box = document.querySelector('#party'); return [box.hidden, box.querySelectorAll('.pt-row').length, [...box.querySelectorAll('.pt-ping')].map(e => e.textContent).join(',')];
+})));
+check(!party[0][0] && party[0][1] === 2 && /\d+ms/.test(party[0][2]) && !party[1][0] && party[1][1] === 2,
+  `파티 목록: 양쪽 다 2명 · 왕복 시간(${party[0][2]} / ${party[1][2]})`);
+const kickRow = await host.evaluate(() => { G.setPause(true); const b = document.querySelector('#ps-party [data-kick]'); const ok = !!b; if (b) b.click(); G.setPause(false); return ok; });
+await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 }).catch(() => {});
+const kicked = await Promise.all([g2.evaluate(() => [!G.net, G.state]), host.evaluate(() => [G.net && G.net.peers.size, G.players.length])]);
+check(kickRow && kicked[0][0] && kicked[0][1] === 'title' && kicked[1][0] === 0 && kicked[1][1] === 1, `내보내기: 일시정지 창 단추 → 참가자는 타이틀로(${kicked[0][1]}) · 호스트 쪽에서 빠진다`);
+await host.waitForTimeout(800);
+await g2.evaluate(code => { document.querySelector('#btn-multi').click(); document.querySelector('#mp-code').value = code; }, room);
+await g2.waitForTimeout(300);
+await g2.evaluate(() => { document.querySelector('#mp-char').value = 'new'; document.querySelector('#btn-mp-join').click(); });
+await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
 await host.evaluate(() => G.mpClose());
 await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 }).catch(() => {});
 const closed = await Promise.all([g2.evaluate(() => [!G.net, G.state]), host.evaluate(() => [!G.net, G.players.length, G.state])]);

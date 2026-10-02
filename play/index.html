@@ -60,6 +60,8 @@
         </div>
       </div>
       <div id="buffs"></div>
+      <!-- 멀티플레이 파티 — 이름 · 레벨 · 체력 · 왕복 시간(G.refreshParty) -->
+      <div id="party" hidden></div>
     </div>
 
     <div id="hud-right">
@@ -475,6 +477,7 @@
         <button id="btn-save-export" class="ps-sub"><span class="ui-ic" data-ui-icon="u_export"></span>저장하고 파일로 내보내기</button>
         <!-- 멀티플레이 — 열 때마다 지금 상태(혼자 · 호스트 · 참가자)에 맞는 것만 보인다(G.refreshPauseMp) -->
         <div id="ps-room" class="ps-room" hidden><span>방 코드</span><b id="ps-room-code"></b><button id="btn-room-copy" class="mini-btn">복사</button></div>
+        <div id="ps-party" class="ps-party" hidden></div>
         <button id="btn-room-open" hidden><span class="ui-ic" data-ui-icon="u_room"></span>이 세계로 방 열기</button>
         <button id="btn-room-close" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방 닫기</button>
         <button id="btn-room-leave" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방에서 나가기</button>
