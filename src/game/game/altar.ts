@@ -62,6 +62,7 @@ export const AltarPart: Bag = {
   spawnBoss(id, x, y) {
     /* 스토리 보스는 수치를 고정한다. */
     const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
+    this.netBossScale(e);                    // 멀티플레이 — 인원만큼 체력
     this.ents.push(e); this.boss = e;
     this.toast(tr('{enemy|이} 깨어났다!', { enemy: ENEMIES[id].n }), 'bad');
     this.shake = 16;

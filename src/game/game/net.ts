@@ -409,6 +409,8 @@ export const NetPart: Bag = {
       this.toast(tr('{name|이} 들어왔다', { name: m.n }), 'good');
     } else if (m.k === 'st' && peer.rp) {
       peer.rp.netBuf.push(now(), m.s); this.netApply(peer.rp, m.s); peer.last = m.s; peer.heard = now();
+    } else if (m.k === 'prog') {
+      this.netProgIn(peer, m);
     } else if (m.k === 'chat' && peer.rp) {
       this.netChatOut(peer.rp.name, m.s);
     } else if (m.k === 'pvp') {
@@ -522,6 +524,12 @@ export const NetPart: Bag = {
       if (m.p) this.netPutProjs(m.p);
     } else if (m.k === 'chat') {
       this.chatLine(m.n, m.s);
+    } else if (m.k === 'progs') {
+      this.netProgsIn(m);
+    } else if (m.k === 'chap') {
+      this.netChapterIn(m);
+    } else if (m.k === 'meteor') {
+      this.netMeteorIn(m);
     } else if (m.k === 'cfg') {
       this.netGotCfg(m);
     } else if (m.k === 'pi') {
@@ -605,6 +613,7 @@ export const NetPart: Bag = {
     const n = this.net;
     this.netMoveAvatars();
     this.netPartyTick(dt);
+    this.netProgTick(dt);
     n.sendT -= dt;
     if (n.sendT > 0) return;
     n.sendT += 1 / NET_HZ;

@@ -1,6 +1,7 @@
 /* 다국어 UI 전수 검사 — 언어마다 창·탭·툴팁·대화·설정을 거의 다 열어 보고, 글자가
    ① 제 칸을 넘치거나(잘림·말줄임) ② 잘라 내는 조상 밖으로 삐져나가거나 ③ 다른 글과 겹치거나 ④ 화면 밖에 있는지 잰다.
    ⑥ 단추·탭 글이 두 줄로 꺾여 단추가 두꺼워졌는지 ⑦ 이름·입력 두 열 칸(.mp-form)의 입력 칸 왼쪽·오른쪽 끝이 맞는지도 본다.
+   ⑤ 는 열린 창 위에 뜬 HUD(미니맵 · 퀘스트 · 핫바 · 파티 · 채팅 …)도, ⑧ 은 한 창 안에서 단추끼리 겹친 것을 잡는다.
    npm run check 에는 넣지 않는다(언어 여섯 × 장면 사십여 개 — 몇 분 걸린다). 번역·UI 를 크게 바꿨을 때 돌린다:
      node tests/ui-audit.mjs                 # 여섯 언어 전부
      node tests/ui-audit.mjs en de --shots   # 몇 언어만 · tests/out/ui-audit/<언어>/ 에 장면마다 스크린샷
@@ -96,7 +97,7 @@ const MEASURE = () => {
   // ⑤ 가림 — 열린 창(패널·모달·대화·멈춤) 위에 조작 단추(터치 · 탭 단추 줄)가 떠서 창을 가리면
   const wins = [...document.querySelectorAll('.panel, .modal.open .modal-box, #dialogue.open, #pause-screen.open .ps-inner, #death-screen.open .ds-inner')].filter(vis)
     .map(w => w.getBoundingClientRect()).filter(r => r.width > 40 && r.height > 40);
-  for (const c of document.querySelectorAll('#touchpad .ti-btn, #touchpad .ti-stick, #touchpad .ti-alt, #touchpad .ti-fs, #tabbar .tb')) {
+  for (const c of document.querySelectorAll('#touchpad .ti-btn, #touchpad .ti-stick, #touchpad .ti-alt, #touchpad .ti-fs, #tabbar .tb, #quest-tracker, #minimap, #clock-box, #hotbar, #skillbar, #party, #chat, #buffs, #hud-left .orb-row, #bossbar')) {
     if (!vis(c)) continue;
     const r = c.getBoundingClientRect();
     for (const w of wins) {
@@ -138,6 +139,18 @@ const MEASURE = () => {
     const L = ctl.map(r => r.left), R = ctl.map(r => r.right);
     if (Math.max(...L) - Math.min(...L) > 1.5 || Math.max(...R) - Math.min(...R) > 1.5)
       add('정렬', form, '입력 칸 끝', `왼쪽 ${Math.round(Math.min(...L))}~${Math.round(Math.max(...L))} · 오른쪽 ${Math.round(Math.min(...R))}~${Math.round(Math.max(...R))}`);
+  }
+  // ⑧ 단추 겹침 — 한 창(패널·모달·멈춤) 안의 단추끼리 상자가 겹친다(글이 없어도 — 아이콘 단추 · 닫기 ×)
+  const BTN = 'button, .mini-btn, .ctab, .qtab, .set-tab, .session-tab, .mach-btn, [data-kick]';
+  for (const w of document.querySelectorAll('.panel, .modal.open .modal-box, #pause-screen.open .ps-inner, #settings-screen.open .settings')) {
+    if (!vis(w)) continue;
+    const bs = [...w.querySelectorAll(BTN)].filter(e => vis(e) && !e.closest('.slot-grid, .bag-grid, .inv-grid')).map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width > 2 && r.height > 2);
+    for (let i = 0; i < bs.length; i++) for (let j = i + 1; j < bs.length; j++) {
+      const [a, p] = bs[i], [c, q] = bs[j];
+      if (a.contains(c) || c.contains(a)) continue;
+      const iw = Math.min(p.right, q.right) - Math.max(p.left, q.left), ih = Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top);
+      if (iw > 3 && ih > 3) add('단추 겹침', a, (a.textContent || '').trim().slice(0, 20) || a.className, '↔ ' + name(c) + ` ${Math.round(iw)}×${Math.round(ih)}`);
+    }
   }
   // ⑦-2 조작키 두 열 — 같은 열의 단추는 왼쪽·오른쪽 끝이 같아야 한다
   const kb = [...document.querySelectorAll('#set-keys .keybtn')].filter(vis).map(e => e.getBoundingClientRect());
@@ -230,6 +243,12 @@ for (const lang of langs) {
     ['quest-ach', () => document.querySelector('.qtab[data-qtab="ach"]').click()],
     ['quest-ruins', () => document.querySelector('.qtab[data-qtab="ruins"]').click()],
     ['craft', () => UI.togglePanel('craft')],
+    ['craft-pick', () => { const r = document.querySelector('#panel-craft .cr-row, #panel-craft [data-r], #panel-craft .recipe'); if (r) r.click(); }],
+    ...['work', 'forge'].map(k => ['craft-' + k, new Function(`UI.closePanel(); const o = G.world.objects.find(o => o.type === '${k === 'work' ? 'workbench' : 'forge'}');
+      if (!o) return; G.me.x = o.x * TS; G.me.y = (o.y - 2) * TS; G.me.vx = G.me.vy = 0; G.nearSt.${k} = true; G.nearStObj.${k} = o; UI.craftTab = '${k}'; UI.togglePanel('craft');
+      const r = document.querySelector('#panel-craft .cr-row, #panel-craft [data-r], #panel-craft .recipe'); if (r) r.click();`)]),
+    ['quest-sessions', () => { UI.closePanel(); UI.togglePanel('quest'); document.querySelector('.qtab[data-qtab="journey"]').click(); const t = document.querySelectorAll('.session-tab'); if (t[1]) t[1].click(); }],
+    ['quest-sessions-3', () => { const t = document.querySelectorAll('.session-tab'); if (t[2]) t[2].click(); }],
     ['map', () => { UI.closePanel(); UI.openFullmap(); }],
     ['map-close', () => UI.closePanel()],
     ['talk', () => G.talkTo('elara')],
@@ -258,7 +277,7 @@ for (const lang of langs) {
     ['inn', () => { UI.closePanel(); G.talkTo('haran'); }],
   ]);
   // 공장 — 기계 창 갈래마다
-  await run(lang, { q: 'debug=factory' }, ['smelter', 'assembler', 'sorter', 'crate', 'battery', 'turret', 'drill_e', 'refinery', 'gen'].map(t =>
+  await run(lang, { q: 'debug=factory' }, ['belt', 'pole', 'crate', 'gen', 'battery', 'drill', 'drill_e', 'drill_x', 'pump', 'smelter', 'press', 'refinery', 'assembler', 'sorter', 'turret', 'trap', 'switch', 'dart', 'flamejet', 'frostjet', 'pressor', 'desal', 'belt_fast', 'battery_hi', 'windmill', 'sprinkler', 'mill', 'oven'].map(t =>
     ['mach ' + t, new Function(`UI.closePanel(); const m = [...G.world.machines.values()].find(m => m.t === '${t}'); if (m) UI.openMachine(m);`)]));
   // 유적 · 바다 — 맥박 · 숨 · 버프
   await run(lang, { q: 'debug=ruin&id=mine&pulse=90' }, [['pulse', () => __step(200)], ['quest', () => UI.togglePanel('quest')]]);

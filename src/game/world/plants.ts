@@ -353,5 +353,45 @@ export const WorldPlants: Bag & ThisType<World> = {
       if (this.get(x + adx, ay) === T.AIR) this.set(x + adx, ay, T.CACTUS_BLOCK);
     }
   },
+  /** 잘리거나 뜬 나무를 통째로 걷는다 — 세계 천장에 닿은 나무 · 뒷공사(섬·굴 파기)에 밑동이 날아가 뜬 나무 · 줄기 없는 잎 덩어리.
+      잎이 든 덩어리만 본다(잎 없는 나무 건물은 안 건드린다). 난수를 안 뽑으니 뒤 단계가 바뀌지 않는다. 사연: docs/code-history.md#h141 */
+  pruneBrokenTrees() {
+    const { WW, WH } = this.dims;
+    const WOOD = new Set([T.WOOD, T.PALMWOOD]);
+    const LEAF = new Set([T.LEAF, T.CORRUPTLEAF, T.SKYLEAF, T.JUNGLELEAF, T.GLOWLEAF, T.PALMLEAF, T.PINELEAF]);
+    const isTree = t => WOOD.has(t) || LEAF.has(t);
+    let removed = 0;
+    /* ① 밑동이 허공인 줄기 토막(굴·방이 밑을 파 갔다) — 옆 줄기에 기대지 않으면 그 열을 잎 밑까지 걷는다 */
+    for (let y = WH - 2; y >= 0; y--) for (let x = 1; x < WW - 1; x++) {
+      if (!WOOD.has(this.get(x, y)) || this.get(x, y + 1) !== T.AIR || WOOD.has(this.get(x - 1, y)) || WOOD.has(this.get(x + 1, y))) continue;
+      for (let yy = y; yy >= 0 && WOOD.has(this.get(x, yy)); yy--) { this.set(x, yy, T.AIR); removed++; }
+    }
+    /* ② 덩어리째 — 줄기가 땅에 닿지 않았거나(줄기 없는 덤불은 잎이 땅에 닿으면 된다) 세계 천장에 닿았으면 */
+    const seen = new Uint8Array(WW * WH);
+    for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
+      if (seen[x + y * WW] || !LEAF.has(this.get(x, y))) continue;
+      const cells = [], st = [x + y * WW];
+      seen[st[0]] = 1;
+      let ceil = false, rooted = false, leafRest = false, hasWood = false;
+      while (st.length) {
+        const i = st.pop(), cx = i % WW, cy = (i / WW) | 0;
+        cells.push(i);
+        if (cy <= 1) ceil = true;
+        const below = this.get(cx, cy + 1), wood = WOOD.has(this.get(cx, cy));
+        if (wood) hasWood = true;
+        if (!isTree(below) && TILE_DEF[below] && TILE_DEF[below].solid === 1) { if (wood) rooted = true; else leafRest = true; }   // 땅·섬·벽돌에 서 있다
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = cx + dx, ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= WW || ny >= WH) continue;
+          const j = nx + ny * WW;
+          if (!seen[j] && isTree(this.get(nx, ny))) { seen[j] = 1; st.push(j); }
+        }
+      }
+      if ((rooted || (!hasWood && leafRest)) && !ceil) continue;
+      for (const i of cells) this.set(i % WW, (i / WW) | 0, T.AIR);
+      removed += cells.length;
+    }
+    return removed;
+  },
 };
 mixin(World.prototype, WorldPlants, true);

@@ -185,7 +185,7 @@ export class World extends TileMap {
   declare ruinAt: (...a: any[]) => any; declare ruinEvents: any[]; declare ruinSites: any[]; declare ruins: any[]; declare runaway: Record<string, any>;
   declare scatterChests: (...a: any[]) => any; declare sea: Record<string, any>; declare seaLevel: number; declare sealCipherVaults: (...a: any[]) => any; declare sealLiquids: (...a: any[]) => any;
   declare sealRoom: Record<string, any>; declare seed: string; declare shoreY: number; declare skyGate: Record<string, any>; declare skyIslands: any[];
-  declare spawnX: number; declare spawnY: number; declare surface: Int16Array; declare sweepFloatingDecor: (...a: any[]) => any; declare sweepPockets: (...a: any[]) => any;
+  declare spawnX: number; declare spawnY: number; declare surface: Int16Array; declare sweepFloatingDecor: (...a: any[]) => any; declare pruneBrokenTrees: () => number; declare sweepPockets: (...a: any[]) => any;
   declare tree: (...a: any[]) => any; declare villageY: number; declare works: Record<string, any>;
 
   constructor(seed) {
@@ -584,6 +584,7 @@ export class World extends TileMap {
     this.breakLongRuns(rng);         // 함정 하나 없이 쭉 걸어가는 직선 구간을 끊는다
     this.sealCipherVaults();         // 암호 골방의 껍질을 한 번 더 세운다
     this.sweepFloatingDecor();       // 뒷공사가 받침을 헐고 간 장식을 걷어낸다
+    this.pruneBrokenTrees();         // 천장에 잘리거나 밑동이 날아가 뜬 나무를 통째로 걷는다
     /* 액체 마무리는 **지형을 건드리는 마지막 단계 뒤**에 와야 한다. */
     this.sweepPockets(60);           // 뒷공사가 남긴 한두 칸짜리 구멍을 메운다 — 물을 고치기 전에
     this.sealLiquids();

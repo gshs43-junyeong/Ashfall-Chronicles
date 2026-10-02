@@ -459,7 +459,7 @@
    "ui/machine.refreshMachine"
   ],
   "— 여기까지가 지금까지 쓰인 이야기다 —": [
-   "game/progress.checkChapter"
+   "game/progress.completeChapter"
   ],
   "— 이 유적에서 찾은 쪽지 {seen}/3": [
    "game/ruin-map.readCipherNote"
@@ -504,7 +504,8 @@
    "game/meteor.meteorImpact"
   ],
   "☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!": [
-   "game/meteor.startMeteor"
+   "game/meteor.startMeteor",
+   "game/netprog.netMeteorIn"
   ],
   "⤓ 전부 가방으로": [
    "ui/machine.refreshMachine"
@@ -516,7 +517,7 @@
    "game/ruin-map.ruinCipher"
   ],
   "『{title}』 완료 — 경험치 {xp} · 금화 {gold}": [
-   "game/progress.checkChapter"
+   "game/progress.completeChapter"
   ],
   "『세 석판을 모두 읽은 자만이 이 문을 연다.』": [
    "game/village.openSeal"
@@ -1057,7 +1058,7 @@
    "game/meteor.meteorImpact"
   ],
   "동쪽 숲에 묻혀 있던 도시가 드러났다.": [
-   "game/progress.checkChapter"
+   "game/progress.completeChapter"
   ],
   "두 방을 더 열었다. 채울 사람은 아직 없지만, 열어는 뒀어.": [
    "data/quests"
@@ -1490,13 +1491,13 @@
    "game/village.useWaystone"
   ],
   "베이스캠프의 귀환 비석으로 여명 마을에 갈 수 있다.": [
-   "game/progress.checkChapter"
+   "game/progress.completeChapter"
   ],
   "벼릴 것": [
    "data/quests"
   ],
   "벽 너머": [
-   "game/progress.checkChapter"
+   "game/progress.completeChapter"
   ],
   "벽 너머에 빈 곳이 있다": [
    "game/ruin-map.fireRuinEvent"
@@ -1916,7 +1917,7 @@
    "ui/quest.renderRuins"
   ],
   "아직 열리지 않은 장이 남아 있다. 그때까지 이 세계는 당신 것이다.": [
-   "game/progress.checkChapter"
+   "game/progress.completeChapter"
   ],
   "아직 자격이 없다 —": [
    "game/progress.goalLocked"
@@ -1992,7 +1993,7 @@
    "entity.boom"
   ],
   "여명 마을": [
-   "game/progress.checkChapter",
+   "game/progress.completeChapter",
    "game/village.useWaystone",
    "index.html"
   ],
@@ -2262,7 +2263,7 @@
    "ui/machine.refreshMachine"
   ],
   "이야기는 계속된다": [
-   "game/progress.checkChapter"
+   "game/progress.completeChapter"
   ],
   "이어 할 세계를 고르거나 새로 시작하면 방이 열리고 방 코드가 뜬다. 코드를 친구에게 알려 주면 된다.": [
    "index.html"
@@ -2382,7 +2383,7 @@
    "data/quests"
   ],
   "잿빛이 걷혔다": [
-   "game/progress.checkChapter"
+   "game/progress.completeChapter"
   ],
   "저 아래 {enemy}에게 진 빚이 있다. {n}마리를 대신 갚아 다오.": [
    "data/quests"

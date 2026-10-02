@@ -243,7 +243,7 @@ export const G: Bag = {
     };
     $('#btn-respawn').onclick = () => this.respawn();
     this.buildPipeline();
-    startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
+    startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033, { background: () => !!this.net });   // 방이 열렸으면 탭을 내려도 돈다
   },
   /** 타이틀로 돌아간다(저장은 부르는 쪽이 정한다). */
   toTitle() {

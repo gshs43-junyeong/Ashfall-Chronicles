@@ -28,24 +28,27 @@ export const ProgressPart: Bag = {
   },
   objProgress(o) { const { SURF_BASE, SY } = dimsOf(this.world);
     const p = this.player;
+    /* 멀티플레이면 방 모두의 값 중 큰 것과 견준다(netprog.ts — 혼자면 제 값 그대로) */
+    const sh = (key, v) => { const s = this.progShared(key); return s === null ? v : Math.max(v, s); };
     let cur = 0, max = 1, label = null;
     switch (o.type) {
-      case 'kill': cur = p.kills[o.target] || 0; max = o.n; break;
-      case 'mine': cur = p.mined[o.tile] || 0; max = o.n; break;
-      case 'collect': cur = Math.max(p.countItem(o.item), p.gathered[o.item] || 0); max = o.n; break;
-      case 'craft': cur = (this.crafted && this.crafted[o.item]) ? 1 : 0; max = 1; break;
-      case 'talk': cur = (this.talked && this.talked[o.npc]) ? 1 : 0; max = 1; break;
+      case 'kill': cur = sh('k:' + o.target, p.kills[o.target] || 0); max = o.n; break;
+      case 'mine': cur = sh('m:' + o.tile, p.mined[o.tile] || 0); max = o.n; break;
+      case 'collect': cur = sh('c:' + o.item, Math.max(p.countItem(o.item), p.gathered[o.item] || 0)); max = o.n; break;
+      case 'craft': cur = sh('cr:' + o.item, (this.crafted && this.crafted[o.item]) ? 1 : 0); max = 1; break;
+      case 'talk': cur = sh('t:' + o.npc, (this.talked && this.talked[o.npc]) ? 1 : 0); max = 1; break;
       case 'depth':
         if (o.up) {   // 위로 올라가는 목표: 낮은 y일수록 진행
-          const gained = clamp(SURF_BASE - (p.highest === undefined ? SURF_BASE : p.highest), 0, SURF_BASE - SY(o.y));
+          const top = -sh('h', -(p.highest === undefined ? SURF_BASE : p.highest));
+          const gained = clamp(SURF_BASE - top, 0, SURF_BASE - SY(o.y));
           cur = gained; max = SURF_BASE - SY(o.y);
-        } else { cur = Math.min(p.deepest, SY(o.y)); max = SY(o.y); }   // 표의 깊이는 소형 기준
+        } else { cur = Math.min(sh('d', p.deepest), SY(o.y)); max = SY(o.y); }   // 표의 깊이는 소형 기준
         break;
-      case 'boss': cur = p.bossKilled[o.target] ? 1 : 0; max = 1; break;
+      case 'boss': cur = sh('b:' + o.target, p.bossKilled[o.target] ? 1 : 0); max = 1; break;
       /* 가 본 곳 — 바이옴 이름표(seenBiomes)와 유적 첫 입장(seenRuins)을 그대로 쓴다. */
       case 'explore':
-        cur = (o.zone ? (this.seenBiomes && this.seenBiomes[o.zone])
-                      : (this.seenRuins && this.seenRuins[o.ruin])) ? 1 : 0;
+        cur = o.zone ? sh('z:' + o.zone, this.seenBiomes && this.seenBiomes[o.zone] ? 1 : 0)
+                     : sh('r:' + o.ruin, this.seenRuins && this.seenRuins[o.ruin] ? 1 : 0);
         break;
       /* 세우고 · 물리고 · 끊기. */
       case 'place': cur = this.placeProgress(o); max = o.stop ? 3 : 1; break;
@@ -105,7 +108,13 @@ export const ProgressPart: Bag = {
     const ch = CHAPTERS[this.chapter];
     if (!ch) return;
     if (!this.chapterState(ch).complete) { UI.refreshTracker(); return; }
-    // 완료
+    /* 멀티플레이 — 장 완료는 호스트만 판정하고 알린다(참가자는 netChapterIn 에서 같은 보상·연출) */
+    if (this.net && this.net.role === 'guest') { UI.refreshTracker(); return; }
+    if (this.net) { const msg = { k: 'chap', i: this.chapter }; for (const q of this.net.peers.values()) if (q.rp) this.netSend(q.t, 'rel', msg); }
+    this.completeChapter(ch);
+  },
+  /** 장을 끝낸다 — 보상 · 별 · (8장이면) 여명 마을 · 뒷이야기 → 다음 장. */
+  completeChapter(ch) {
     const p = this.player;
     p.addXp(ch.rw.xp); p.gold += ch.rw.gold;
     for (const [id, n] of (ch.rw.items || [])) {
@@ -124,7 +133,11 @@ export const ProgressPart: Bag = {
     let delay = Math.max(1400, starShow);
     if (ch.id === 8 && !this.villageUnlocked) {
       this.villageUnlocked = true;
+      /* 참가자도 같은 도시를 세운다(난수 없음) — 칸은 호스트가 보내니 되보내지 않는다 */
+      const guest = this.net && this.net.role === 'guest';
+      if (guest) this.world.netMute = true;
       this.world.restoreDawnCity();
+      if (guest) this.world.netMute = false;
       this.rollBounties();
       // 별이 하늘로 다 올라간 다음에 마을이 드러난다
       const villageAt = starShow + 600;

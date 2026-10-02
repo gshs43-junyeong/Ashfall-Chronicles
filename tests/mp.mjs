@@ -48,6 +48,19 @@ await host.evaluate(({ tx, ty }) => G.world.set(tx, ty - 3, T.STONE), spot);
 await guest.waitForTimeout(800);
 const tilesHost = await host.evaluate(({ tx, ty }) => [G.world.get(tx, ty), G.world.get(5, G.world.dims.WH - 1) === T.BEDROCK], spot);
 const tileGuest = await guest.evaluate(({ tx, ty }) => G.world.get(tx, ty - 3) === T.STONE, spot);
+/* 블록 설치 — 참가자가 진짜 우클릭(가방의 돌 · 커서 칸)으로 놓은 블록이 호스트에 */
+const placed = await guest.evaluate(() => {
+  const p = G.me, tx = Math.floor(p.cx / TS) - 3;
+  let ty = Math.floor(p.cy / TS); while (ty > 2 && G.world.get(tx, ty) !== T.AIR) ty--;
+  while (G.world.get(tx, ty + 1) === T.AIR) ty++;   // 바닥 바로 위 빈칸
+  p.bag[p.sel] = makeItem('stone', 20);
+  G.input.wx = (tx + 0.5) * TS; G.input.wy = (ty + 0.5) * TS;
+  G.rightClick();
+  return { tx, ty, here: G.world.get(tx, ty) === T.STONE };
+});
+await host.waitForTimeout(800);
+const placedHost = await host.evaluate(({ tx, ty }) => G.world.get(tx, ty) === T.STONE, placed);
+check(placed.here && placedHost, `블록 설치: 참가자가 우클릭으로 놓은 돌 → 호스트(${placedHost})`);
 /* 밭 — 참가자가 심고 물 준 칸이 호스트 작물 목록·젖음에 */
 const farm = await guest.evaluate(({ tx, ty }) => {
   const w = G.world, x = tx + 6, y = ty - 1;
@@ -140,6 +153,16 @@ const death = await host.evaluate(async () => {
 });
 check(death[0] === false && death[1] && death[2] >= 1 && death[3] === death[2], `쓰러짐: 호스트가 쓰러져도 세계는 돈다(멈춤 ${death[0]}) · 부활해도 몹이 남는다(${death[2]}→${death[3]})`);
 
+/* 호스트 탭이 숨어도 세계가 돈다 — 숨은 탭은 화면 갱신(rAF)이 멈춘다. 숨김을 흉내 내면 루프는 rAF 틱을 버리고 워커 틱만 받는다 */
+await host.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange'));
+  const g = G.players.find(p => p.remote); G.ents.push(new Enemy('slime', g.x + 260, g.y - 40)); });
+await host.waitForTimeout(400);
+const hid0 = await Promise.all([host.evaluate(() => G.time), guest.evaluate(() => G.ents.filter(e => e.ghost).map(e => Math.round(e.x)).join('/'))]);
+await host.waitForTimeout(1500);
+const hid1 = await Promise.all([host.evaluate(() => G.time), guest.evaluate(() => G.ents.filter(e => e.ghost).map(e => Math.round(e.x)).join('/'))]);
+await host.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); });
+check(hid1[0] - hid0[0] > 0.8 && hid1[1] !== hid0[1], `호스트 탭이 숨어도 세계가 돈다(게임 시간 +${(hid1[0] - hid0[0]).toFixed(1)}초) · 참가자 화면 몹이 움직인다(${hid0[1]} → ${hid1[1]})`);
+
 /* 채팅 — Enter 로 열어 친 글이 호스트를 거쳐 모두에게(치는 동안 캐릭터는 안 걷는다) · 호스트가 끄면 막힌다 */
 await guest.bringToFront();
 const gx0 = await guest.evaluate(() => G.me.x);
@@ -176,6 +199,27 @@ await guest.waitForTimeout(500);
 const ghp1 = await guest.evaluate(() => [G.me.hp, G.net.cfg.pvp]);
 check(pv0[0] === pv0[1] && pv1 < pv0[0] && ghp1[0] < ghp0 && ghp1[1] === true, `PvP: 꺼짐이면 그대로(${pv0[0]}) · 켜면 호스트 ${pv0[0]}→${pv1} · 참가자 ${ghp0}→${ghp1[0]}`);
 await host.evaluate(() => G.mpSetCfg('pvp', false));
+
+/* 장 진행 공유(M5) — 참가자가 센 값이 호스트 장 목표에 들어간다(최댓값) · 장 완료는 호스트가 알리고 참가자도 보상 */
+const k0 = await host.evaluate(() => { const ks = G.progKeys(CHAPTERS[G.chapter]); return ks.find(k => k.startsWith('k:')); });
+await guest.evaluate(k => { G.me.kills[k.slice(2)] = 99; }, k0);
+await host.waitForTimeout(2600);
+const shared = await Promise.all([host.evaluate(k => [G.net.progAll && G.net.progAll[k], G.me.kills[k.slice(2)] || 0], k0), guest.evaluate(k => G.net.progAll && G.net.progAll[k], k0)]);
+check(k0 && shared[0][0] === 99 && shared[0][1] < 99 && shared[1] === 99, `장 진행 공유: 참가자 처치 수가 호스트 목표에 (${k0} = ${shared[0][0]} · 호스트 혼자 ${shared[0][1]})`);
+const chBefore = await guest.evaluate(() => [G.chapter, G.me.xp, G.me.level, G.me.gold]);
+await host.evaluate(() => { const real = G.chapterState; G.chapterState = ch => Object.assign(real.call(G, ch), { complete: true }); try { G.checkChapter(); } finally { G.chapterState = real; } });
+await guest.waitForTimeout(1200);
+const chAfter = await Promise.all([host.evaluate(() => G.chapter), guest.evaluate(() => [G.chapter, G.me.xp, G.me.level, G.me.gold])]);
+check(chAfter[0] === chBefore[0] + 1 && chAfter[1][0] === chBefore[0] + 1 && (chAfter[1][2] > chBefore[2] || chAfter[1][1] > chBefore[1]) && chAfter[1][3] > chBefore[3],
+  `장 완료: 호스트가 알리면 참가자도 다음 장(${chBefore[0]}→${chAfter[1][0]}) · 보상(Lv.${chBefore[2]}→${chAfter[1][2]} · 금화 ${chBefore[3]}→${chAfter[1][3]})`);
+/* 보스 체력은 인원만큼 · 운석은 참가자 화면에도 */
+const boss = await host.evaluate(() => { const hp0 = new Enemy('king_slime', 0, 0, 1).maxHp; const e = new Enemy('king_slime', G.me.x + 600, G.me.y - 200, 1); G.netBossScale(e); const r = [hp0, e.maxHp]; return r; });
+check(Math.abs(boss[1] / boss[0] - 1.6) < 0.01, `보스 체력 × 1.6 (2명 · ${boss[0]} → ${boss[1]})`);
+await host.evaluate(() => { G.startMeteor(Math.floor(G.me.cx / TS) + 200); });
+await guest.waitForTimeout(800);
+const met = await guest.evaluate(() => !!(G.meteor && G.meteor.remote));
+check(met, '운석: 호스트가 굴리면 참가자 화면에도 불덩이·알림');
+await host.waitForTimeout(6500);
 
 /* PeerJS 쪽 — 방 코드 여섯 글자 · 자체 중개가 닿지 않으면 PeerJS 로 넘어간다 · 없는 방은 '그런 방이 없다' */
 if (!process.env.MP_SIG) {

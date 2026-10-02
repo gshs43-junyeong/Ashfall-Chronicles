@@ -837,16 +837,45 @@
   __export(loop_exports, {
     startLoop: () => startLoop
   });
-  function startLoop(frame, maxDt) {
-    let last = 0;
-    const tick = (t) => {
-      requestAnimationFrame(tick);
-      const now2 = t / 1e3;
+  function startLoop(frame, maxDt, opts = {}) {
+    let last = 0, bgOn = false, worker = null;
+    const step = (now2) => {
       const rawDt = now2 - (last || now2);
       last = now2;
       frame(Math.min(maxDt, rawDt), rawDt);
     };
+    const tick = (t) => {
+      requestAnimationFrame(tick);
+      if (!bgOn) step(t / 1e3);
+    };
     requestAnimationFrame(tick);
+    if (!opts.background || typeof document === "undefined" || typeof Worker === "undefined") return;
+    const sync = () => {
+      const want = document.hidden && !!opts.background && opts.background();
+      if (want === bgOn) return;
+      bgOn = want;
+      if (want && !worker) {
+        const src = "let id=0;onmessage=e=>{clearInterval(id);if(e.data>0)id=setInterval(()=>postMessage(0),e.data)}";
+        try {
+          worker = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+        } catch {
+          bgOn = false;
+          return;
+        }
+        worker.onmessage = () => {
+          if (bgOn) {
+            try {
+              step(performance.now() / 1e3);
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        };
+      }
+      if (worker) worker.postMessage(want ? Math.round(1e3 / (opts.bgHz || 30)) : 0);
+    };
+    document.addEventListener("visibilitychange", sync);
+    setInterval(sync, 1e3);
   }
 
   // src/engine/platform/viewport.ts
@@ -13963,6 +13992,7 @@
       this.breakLongRuns(rng);
       this.sealCipherVaults();
       this.sweepFloatingDecor();
+      this.pruneBrokenTrees();
       this.sweepPockets(60);
       this.sealLiquids();
       this.decorateWater(rng);
@@ -14762,6 +14792,53 @@
         const ay = s - 1 - rng.int(1, h - 1), adx = rng.chance(0.5) ? -1 : 1;
         if (this.get(x + adx, ay) === T.AIR) this.set(x + adx, ay, T.CACTUS_BLOCK);
       }
+    },
+    /** 잘리거나 뜬 나무를 통째로 걷는다 — 세계 천장에 닿은 나무 · 뒷공사(섬·굴 파기)에 밑동이 날아가 뜬 나무 · 줄기 없는 잎 덩어리.
+        잎이 든 덩어리만 본다(잎 없는 나무 건물은 안 건드린다). 난수를 안 뽑으니 뒤 단계가 바뀌지 않는다. 사연: docs/code-history.md#h141 */
+    pruneBrokenTrees() {
+      const { WW: WW2, WH: WH2 } = this.dims;
+      const WOOD = /* @__PURE__ */ new Set([T.WOOD, T.PALMWOOD]);
+      const LEAF = /* @__PURE__ */ new Set([T.LEAF, T.CORRUPTLEAF, T.SKYLEAF, T.JUNGLELEAF, T.GLOWLEAF, T.PALMLEAF, T.PINELEAF]);
+      const isTree = (t) => WOOD.has(t) || LEAF.has(t);
+      let removed = 0;
+      for (let y = WH2 - 2; y >= 0; y--) for (let x = 1; x < WW2 - 1; x++) {
+        if (!WOOD.has(this.get(x, y)) || this.get(x, y + 1) !== T.AIR || WOOD.has(this.get(x - 1, y)) || WOOD.has(this.get(x + 1, y))) continue;
+        for (let yy = y; yy >= 0 && WOOD.has(this.get(x, yy)); yy--) {
+          this.set(x, yy, T.AIR);
+          removed++;
+        }
+      }
+      const seen = new Uint8Array(WW2 * WH2);
+      for (let y = 0; y < WH2; y++) for (let x = 0; x < WW2; x++) {
+        if (seen[x + y * WW2] || !LEAF.has(this.get(x, y))) continue;
+        const cells = [], st = [x + y * WW2];
+        seen[st[0]] = 1;
+        let ceil = false, rooted = false, leafRest = false, hasWood = false;
+        while (st.length) {
+          const i = st.pop(), cx = i % WW2, cy = i / WW2 | 0;
+          cells.push(i);
+          if (cy <= 1) ceil = true;
+          const below = this.get(cx, cy + 1), wood = WOOD.has(this.get(cx, cy));
+          if (wood) hasWood = true;
+          if (!isTree(below) && TILE_DEF[below] && TILE_DEF[below].solid === 1) {
+            if (wood) rooted = true;
+            else leafRest = true;
+          }
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nx = cx + dx, ny = cy + dy;
+            if (nx < 0 || ny < 0 || nx >= WW2 || ny >= WH2) continue;
+            const j = nx + ny * WW2;
+            if (!seen[j] && isTree(this.get(nx, ny))) {
+              seen[j] = 1;
+              st.push(j);
+            }
+          }
+        }
+        if ((rooted || !hasWood && leafRest) && !ceil) continue;
+        for (const i of cells) this.set(i % WW2, i / WW2 | 0, T.AIR);
+        removed += cells.length;
+      }
+      return removed;
     }
   };
   mixin(World.prototype, WorldPlants, true);
@@ -35022,7 +35099,7 @@
       };
       $("#btn-respawn").onclick = () => this.respawn();
       this.buildPipeline();
-      startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033);
+      startLoop((dt, rawDt) => this.frame(dt, rawDt), 0.033, { background: () => !!this.net });
     },
     /** 타이틀로 돌아간다(저장은 부르는 쪽이 정한다). */
     toTitle() {
@@ -38449,6 +38526,7 @@
     },
     spawnBoss(id, x, y) {
       const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
+      this.netBossScale(e);
       this.ents.push(e);
       this.boss = e;
       this.toast(tr("{enemy|이} 깨어났다!", { enemy: ENEMIES[id].n }), "bad");
@@ -39587,45 +39665,50 @@
     objProgress(o) {
       const { SURF_BASE: SURF_BASE2, SY: SY2 } = dimsOf(this.world);
       const p = this.player;
+      const sh = (key, v) => {
+        const s = this.progShared(key);
+        return s === null ? v : Math.max(v, s);
+      };
       let cur = 0, max = 1, label = null;
       switch (o.type) {
         case "kill":
-          cur = p.kills[o.target] || 0;
+          cur = sh("k:" + o.target, p.kills[o.target] || 0);
           max = o.n;
           break;
         case "mine":
-          cur = p.mined[o.tile] || 0;
+          cur = sh("m:" + o.tile, p.mined[o.tile] || 0);
           max = o.n;
           break;
         case "collect":
-          cur = Math.max(p.countItem(o.item), p.gathered[o.item] || 0);
+          cur = sh("c:" + o.item, Math.max(p.countItem(o.item), p.gathered[o.item] || 0));
           max = o.n;
           break;
         case "craft":
-          cur = this.crafted && this.crafted[o.item] ? 1 : 0;
+          cur = sh("cr:" + o.item, this.crafted && this.crafted[o.item] ? 1 : 0);
           max = 1;
           break;
         case "talk":
-          cur = this.talked && this.talked[o.npc] ? 1 : 0;
+          cur = sh("t:" + o.npc, this.talked && this.talked[o.npc] ? 1 : 0);
           max = 1;
           break;
         case "depth":
           if (o.up) {
-            const gained = clamp(SURF_BASE2 - (p.highest === void 0 ? SURF_BASE2 : p.highest), 0, SURF_BASE2 - SY2(o.y));
+            const top = -sh("h", -(p.highest === void 0 ? SURF_BASE2 : p.highest));
+            const gained = clamp(SURF_BASE2 - top, 0, SURF_BASE2 - SY2(o.y));
             cur = gained;
             max = SURF_BASE2 - SY2(o.y);
           } else {
-            cur = Math.min(p.deepest, SY2(o.y));
+            cur = Math.min(sh("d", p.deepest), SY2(o.y));
             max = SY2(o.y);
           }
           break;
         case "boss":
-          cur = p.bossKilled[o.target] ? 1 : 0;
+          cur = sh("b:" + o.target, p.bossKilled[o.target] ? 1 : 0);
           max = 1;
           break;
         /* 가 본 곳 — 바이옴 이름표(seenBiomes)와 유적 첫 입장(seenRuins)을 그대로 쓴다. */
         case "explore":
-          cur = (o.zone ? this.seenBiomes && this.seenBiomes[o.zone] : this.seenRuins && this.seenRuins[o.ruin]) ? 1 : 0;
+          cur = o.zone ? sh("z:" + o.zone, this.seenBiomes && this.seenBiomes[o.zone] ? 1 : 0) : sh("r:" + o.ruin, this.seenRuins && this.seenRuins[o.ruin] ? 1 : 0);
           break;
         /* 세우고 · 물리고 · 끊기. */
         case "place":
@@ -39693,6 +39776,18 @@
         UI5.refreshTracker();
         return;
       }
+      if (this.net && this.net.role === "guest") {
+        UI5.refreshTracker();
+        return;
+      }
+      if (this.net) {
+        const msg = { k: "chap", i: this.chapter };
+        for (const q of this.net.peers.values()) if (q.rp) this.netSend(q.t, "rel", msg);
+      }
+      this.completeChapter(ch);
+    },
+    /** 장을 끝낸다 — 보상 · 별 · (8장이면) 여명 마을 · 뒷이야기 → 다음 장. */
+    completeChapter(ch) {
       const p = this.player;
       p.addXp(ch.rw.xp);
       p.gold += ch.rw.gold;
@@ -39708,7 +39803,10 @@
       let delay = Math.max(1400, starShow);
       if (ch.id === 8 && !this.villageUnlocked) {
         this.villageUnlocked = true;
+        const guest = this.net && this.net.role === "guest";
+        if (guest) this.world.netMute = true;
         this.world.restoreDawnCity();
+        if (guest) this.world.netMute = false;
         this.rollBounties();
         const villageAt = starShow + 600;
         setTimeout(() => {
@@ -44224,6 +44322,7 @@
       this.meteor = { t: 0, x, y: w.surface[x], R, dir: pd >= 0 ? 1 : -1, hit: false, quake: 0, amp: 0 };
       this.toast(tr("☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!"), "bad");
       this.sfx("boss");
+      this.netMeteorOut();
       return true;
     },
     updateMeteor(dt) {
@@ -44250,7 +44349,7 @@
       this.shake = Math.max(this.shake, m.amp);
       this.sfx("boom_big", 0.7, 0.4 + 0.6 * near);
       this.sfx("sk_quake", 1, 0.3 + 0.7 * near);
-      this.carveCrater(cx, cy, R);
+      if (!m.remote) this.carveCrater(cx, cy, R);
       if (dist3 < 80) for (let i = 0; i < 90; i++) {
         const c = i % 3 ? i % 2 ? "#ffb24a" : "#ff6a2a" : "#6a5a48";
         this.parts.push(new Part(
@@ -44263,7 +44362,7 @@
         ));
       }
       const bx = (cx + 0.5) * TS, by = cy * TS, br = (R + 2) * TS;
-      for (const e of this.ents) {
+      for (const e of m.remote ? [] : this.ents) {
         if (e.dead || e.boss) continue;
         if (Math.hypot(e.cx - bx, e.cy - by) < br) {
           e.hp = 0;
@@ -46937,6 +47036,8 @@
         this.netApply(peer.rp, m.s);
         peer.last = m.s;
         peer.heard = now();
+      } else if (m.k === "prog") {
+        this.netProgIn(peer, m);
       } else if (m.k === "chat" && peer.rp) {
         this.netChatOut(peer.rp.name, m.s);
       } else if (m.k === "pvp") {
@@ -47093,6 +47194,12 @@
         if (m.p) this.netPutProjs(m.p);
       } else if (m.k === "chat") {
         this.chatLine(m.n, m.s);
+      } else if (m.k === "progs") {
+        this.netProgsIn(m);
+      } else if (m.k === "chap") {
+        this.netChapterIn(m);
+      } else if (m.k === "meteor") {
+        this.netMeteorIn(m);
       } else if (m.k === "cfg") {
         this.netGotCfg(m);
       } else if (m.k === "pi") {
@@ -47187,6 +47294,7 @@
       const n = this.net;
       this.netMoveAvatars();
       this.netPartyTick(dt);
+      this.netProgTick(dt);
       n.sendT -= dt;
       if (n.sendT > 0) return;
       n.sendT += 1 / NET_HZ;
@@ -47629,6 +47737,168 @@
   };
   mixin(G, NetChatPart);
 
+  // src/game/game/netprog.ts
+  var netprog_exports = {};
+  __export(netprog_exports, {
+    BOSS_HP_PER: () => BOSS_HP_PER,
+    NetProgPart: () => NetProgPart,
+    PROG_EVERY: () => PROG_EVERY
+  });
+  var PROG_EVERY = 1;
+  var BOSS_HP_PER = 0.6;
+  var NetProgPart = {
+    /** 이 장의 목표가 보는 숫자 열쇠 — 'k:적' · 'm:타일' · 'c:물건' · 'd' 깊이 · 'h' 높이(음수) · 'b:보스' · 'cr:물건' · 't:npc' · 'z:바이옴' · 'r:유적' */
+    progKeys(ch) {
+      const out = /* @__PURE__ */ new Set();
+      const walk = (o) => {
+        if (!o) return;
+        switch (o.type) {
+          case "kill":
+            out.add("k:" + o.target);
+            break;
+          case "mine":
+            out.add("m:" + o.tile);
+            break;
+          case "collect":
+            out.add("c:" + o.item);
+            break;
+          case "craft":
+            out.add("cr:" + o.item);
+            break;
+          case "talk":
+            out.add("t:" + o.npc);
+            break;
+          case "depth":
+            out.add(o.up ? "h" : "d");
+            break;
+          case "boss":
+            out.add("b:" + o.target);
+            break;
+          case "explore":
+            out.add(o.zone ? "z:" + o.zone : "r:" + o.ruin);
+            break;
+          case "and":
+            o.parts.forEach(walk);
+            break;
+        }
+      };
+      for (const o of ch && ch.basics || []) walk(o);
+      if (ch) walk(ch.goal);
+      return [...out];
+    },
+    /** 이 화면 혼자의 값(objProgress 가 보던 것과 같은 원천). */
+    progLocal(key) {
+      const p = this.me, i = key.indexOf(":"), k = i < 0 ? key : key.slice(0, i), v = i < 0 ? "" : key.slice(i + 1);
+      switch (k) {
+        case "k":
+          return p.kills[v] || 0;
+        case "m":
+          return p.mined[v] || 0;
+        case "c":
+          return Math.max(p.countItem(v), p.gathered[v] || 0);
+        case "cr":
+          return this.crafted && this.crafted[v] ? 1 : 0;
+        case "t":
+          return this.talked && this.talked[v] ? 1 : 0;
+        case "d":
+          return p.deepest || 0;
+        case "h":
+          return -(p.highest === void 0 ? dimsOf(this.world).SURF_BASE : p.highest);
+        case "b":
+          return p.bossKilled[v] ? 1 : 0;
+        case "z":
+          return this.seenBiomes && this.seenBiomes[v] ? 1 : 0;
+        case "r":
+          return this.seenRuins && this.seenRuins[v] ? 1 : 0;
+      }
+      return 0;
+    },
+    /** 방 모두의 값 중 가장 큰 것(혼자면 null) — objProgress 가 제 값과 견준다. */
+    progShared(key) {
+      const n = this.net;
+      return n && n.progAll && key in n.progAll ? n.progAll[key] : null;
+    },
+    /** 1초마다 — 참가자는 제 값을 호스트로, 호스트는 모은 값을 모두에게(바뀌었을 때만). */
+    netProgTick(dt) {
+      const n = this.net;
+      n.progT = (n.progT || 0) - dt;
+      if (n.progT > 0) return;
+      n.progT = PROG_EVERY;
+      const ch = CHAPTERS[this.chapter], keys = this.progKeys(ch), mine = {};
+      for (const k of keys) mine[k] = this.progLocal(k);
+      if (n.role === "guest") {
+        const s2 = JSON.stringify(mine);
+        if (n.t && n.id > 0 && s2 !== n.progSent) {
+          n.progSent = s2;
+          this.netSend(n.t, "rel", { k: "prog", ch: this.chapter, v: mine });
+        }
+        return;
+      }
+      const all = Object.assign({}, mine);
+      for (const q of n.peers.values()) {
+        if (!q.rp || !q.prog || q.progCh !== this.chapter) continue;
+        for (const k of keys) if (typeof q.prog[k] === "number") all[k] = Math.max(all[k] || 0, q.prog[k]);
+      }
+      const s = JSON.stringify(all);
+      if (s === n.progSent) return;
+      n.progSent = s;
+      n.progAll = all;
+      for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", { k: "progs", ch: this.chapter, v: all });
+      this.checkChapter();
+    },
+    /** 호스트 — 참가자 값을 받아 둔다(다음 1초 틱에 모은다). */
+    netProgIn(peer, m) {
+      if (!m.v || typeof m.v !== "object") return;
+      peer.prog = m.v;
+      peer.progCh = m.ch;
+    },
+    /** 참가자 — 호스트가 모은 값. 호스트가 앞 장에 있으면(알림을 놓쳤으면) 장 번호만 맞춘다. */
+    netProgsIn(m) {
+      const n = this.net;
+      if (m.ch > this.chapter) {
+        this.chapter = m.ch;
+        UI5.chapterCard(CHAPTERS[this.chapter]);
+      }
+      if (m.ch !== this.chapter) return;
+      n.progAll = m.v;
+      UI5.refreshTracker();
+    },
+    /** 호스트가 장을 끝냈다 — 참가자도 같은 장이면 제 캐릭터로 보상과 연출을 받는다. */
+    netChapterIn(m) {
+      if (m.i !== this.chapter) {
+        if (m.i > this.chapter) this.chapter = m.i + 1;
+        return;
+      }
+      const n = this.net;
+      if (n) n.progAll = null;
+      this.completeChapter(CHAPTERS[this.chapter]);
+    },
+    /** 보스 체력을 방 인원만큼 — 호스트에서 깨울 때 한 번. */
+    netBossScale(e) {
+      const n = this.net;
+      if (!n || n.role !== "host" || !e) return;
+      const k = 1 + BOSS_HP_PER * (this.players.length - 1);
+      if (k <= 1) return;
+      e.maxHp = Math.round(e.maxHp * k);
+      e.hp = e.maxHp;
+    },
+    /* ---- 운석 — 호스트가 굴리고, 참가자는 같은 알림 · 하늘 불덩이 · 지진을 본다(구덩이는 칸 동기화로 온다) ---- */
+    netMeteorOut() {
+      const n = this.net, m = this.meteor;
+      if (!n || n.role !== "host" || !m) return;
+      const msg = { k: "meteor", x: m.x, y: m.y, R: m.R };
+      for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", msg);
+    },
+    netMeteorIn(m) {
+      if (this.meteor) return;
+      const p = this.me, pd = m.x - Math.floor(p.cx / TS);
+      this.meteor = { t: 0, x: m.x, y: m.y, R: m.R, dir: pd >= 0 ? 1 : -1, hit: false, quake: 0, amp: 0, remote: true };
+      this.toast(tr("☄ 하늘을 가르는 불덩이 — 운석이 떨어진다!"), "bad");
+      this.sfx("boss");
+    }
+  };
+  mixin(G, NetProgPart);
+
   // src/game/main.ts
   var DATA = Object.fromEntries(Object.entries(Object.assign({}, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports)).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
   if (!I18N.isSource) {
@@ -47636,7 +47906,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports, utility_exports, net_exports, netui_exports, netchat_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, game_exports, act_exports, fishing_exports, village_exports3, altar_exports, spawn_exports, progress_exports, save_exports, sound_exports, render_exports, render_far_exports, render_fx_exports, ruin_pulse_exports, meteor_exports, ruin_map_exports, corpse_exports, utility_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
