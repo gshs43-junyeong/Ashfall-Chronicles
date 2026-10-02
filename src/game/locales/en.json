@@ -947,7 +947,10 @@
   "참가하기": "Join a Room",
   "캐릭터를 저장했다": "Character saved.",
   "호스트가 방에서 내보냈다": "The host removed you from the room.",
-  "호스트가 방을 닫았다": "The host closed the room."
+  "호스트가 방을 닫았다": "The host closed the room.",
+  "내보내기": "Kick",
+  "방 {room}": "Room {room}",
+  "호스트": "Host"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

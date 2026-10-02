@@ -947,7 +947,10 @@
   "참가하기": "Raum beitreten",
   "캐릭터를 저장했다": "Charakter gespeichert.",
   "호스트가 방에서 내보냈다": "Der Gastgeber hat dich aus dem Raum entfernt.",
-  "호스트가 방을 닫았다": "Der Gastgeber hat den Raum geschlossen."
+  "호스트가 방을 닫았다": "Der Gastgeber hat den Raum geschlossen.",
+  "내보내기": "Entfernen",
+  "방 {room}": "Raum {room}",
+  "호스트": "Host"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

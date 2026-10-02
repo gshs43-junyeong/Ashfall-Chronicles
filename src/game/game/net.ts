@@ -47,7 +47,7 @@ export const NetPart: Bag = {
       g: p.onGround ? 1 : 0, sw: p.swing || 0, sa: p.swingAng || 0, sd: p.swingDir || 0, sr: p.swingReach || 0,
       dv: p.dashV || 0, fl: p.flash || 0, ch: p.channel ? 1 : 0, sm: p.swimming ? 1 : 0, smv: p.swimMove ? 1 : 0,
       flt: p.floating ? 1 : 0, sp: p.swimPh || 0, ifr: p.iframe || 0, hp: Math.round(p.hp), mhp: Math.round(p.d.maxHp),
-      hid: held ? held.id : '', wid: wep ? wep.id : '', c: p.charId, n: p.name };
+      hid: held ? held.id : '', wid: wep ? wep.id : '', c: p.charId, n: p.name, lv: p.level };
   },
   /** 받은 상태를 남의 아바타에 — 자리(x·y)는 보간 버퍼가 따로 맞춘다. */
   netApply(rp, s) {
@@ -55,7 +55,7 @@ export const NetPart: Bag = {
     rp.swing = s.sw; rp.swingAng = s.sa; rp.swingDir = s.sd; rp.swingReach = s.sr; rp.dashV = s.dv; rp.flash = s.fl;
     rp.channel = s.ch ? (rp.channel || {}) : null;
     rp.swimming = !!s.sm; rp.swimMove = !!s.smv; rp.floating = !!s.flt; rp.swimPh = s.sp; rp.iframe = s.ifr;
-    rp.hp = s.hp; rp.netMaxHp = s.mhp; rp.charId = s.c; rp.name = s.n;
+    rp.hp = s.hp; rp.netMaxHp = s.mhp; rp.charId = s.c; rp.name = s.n; rp.level = s.lv || 1;
     if (rp._hid !== s.hid) { rp._hid = s.hid; rp.bag[rp.sel] = s.hid ? makeItem(s.hid) : null; }
     if (rp._wid !== s.wid) { rp._wid = s.wid; rp.equip.weapon = s.wid ? makeItem(s.wid) : null; }
   },
@@ -389,6 +389,7 @@ export const NetPart: Bag = {
     const n = this.net, peer: Bag = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
     n.peers.set(peer.id, peer);
     t.onmessage = (ch, d) => {
+      if (this.net !== n || !n.peers.has(peer.id)) return;   // 닫은 방 · 내보낸 참가자에게서 늦게 온 글
       if (isChunk(d)) { const r = peer.joiner.push(d); if (r) this.netOnHost(peer, JSON.parse(r.text)); return; }
       this.netOnHost(peer, JSON.parse(d));
     };
@@ -406,6 +407,8 @@ export const NetPart: Bag = {
       this.toast(tr('{name|이} 들어왔다', { name: m.n }), 'good');
     } else if (m.k === 'st' && peer.rp) {
       peer.rp.netBuf.push(now(), m.s); this.netApply(peer.rp, m.s); peer.last = m.s; peer.heard = now();
+    } else if (m.k === 'po') {
+      peer.ping = Math.max(0, Math.round(performance.now() - m.t));
     } else if (m.k === 'bye') {
       peer.t.close(); this.netDropPeer(peer);
     } else if (m.k === 'tiles' && peer.rp) {
@@ -460,6 +463,7 @@ export const NetPart: Bag = {
       n.t = t;
       if (sigs) sig.close();                        // 붙었으면 중개는 그만 쓴다
       t.onmessage = (ch, d) => {
+        if (this.net !== n) return;                 // 방을 떠난 뒤 늦게 온 글
         if (isChunk(d)) { const r = n.joiner.push(d); if (r) this.netOnGuest(JSON.parse(r.text)); return; }
         this.netOnGuest(JSON.parse(d));
       };
@@ -510,6 +514,10 @@ export const NetPart: Bag = {
     } else if (m.k === 'es') {
       this.netPutEnemies(m.l);
       if (m.p) this.netPutProjs(m.p);
+    } else if (m.k === 'pi') {
+      n.t.send('rel', JSON.stringify({ k: 'po', t: m.t }));
+    } else if (m.k === 'pr') {
+      n.pings = new Map(m.l);
     } else if (m.k === 'clk') {
       this.netPutClock(m);
     } else if (m.k === 'ed') {
@@ -554,6 +562,7 @@ export const NetPart: Bag = {
     if (n.sig) n.sig.close();
     if (this.world) this.world.netLog = null;
     if (this.me) this.me.netId = 0;
+    this.refreshParty();
   },
   /** 호스트가 방을 닫는다 — 참가자에게 알리고(그쪽은 캐릭터를 저장하고 나간다) 혼자 하기로 돌아온다. */
   mpClose() {
@@ -562,6 +571,14 @@ export const NetPart: Bag = {
     for (const q of n.peers.values()) this.netSend(q.t, 'rel', { k: 'close' });
     this.netEnd(n, 300);
     this.toast(tr('방을 닫았다'), 'info');
+  },
+  /** 호스트가 참가자를 내보낸다 — 그쪽은 캐릭터를 저장하고 타이틀로. */
+  mpKick(id) {
+    const n = this.net, q = n && n.role === 'host' && n.peers.get(id);
+    if (!q) return;
+    this.netSend(q.t, 'rel', { k: 'kick' });
+    this.netDropPeer(q);
+    setTimeout(() => q.t.close(), 300);
   },
   /** 참가자가 나간다 — 캐릭터를 저장하고 타이틀로. */
   mpLeave() {
@@ -577,6 +594,7 @@ export const NetPart: Bag = {
   netTick(dt) {
     const n = this.net;
     this.netMoveAvatars();
+    this.netPartyTick(dt);
     n.sendT -= dt;
     if (n.sendT > 0) return;
     n.sendT += 1 / NET_HZ;
@@ -607,7 +625,10 @@ export const NetPart: Bag = {
     if (n.clkT <= 0) {
       n.clkT = 1;
       const clk = JSON.stringify({ k: 'clk', d: this.dayT, n: this.dayCount, ev: this.event || null });
-      for (const q of n.peers.values()) if (q.rp) q.t.send('rel', clk);
+      /* 왕복 시간 — 1초마다 재고 모두에게 알린다(파티 목록) */
+      const pi = JSON.stringify({ k: 'pi', t: Math.round(performance.now()) });
+      const pr = JSON.stringify({ k: 'pr', l: [...n.peers.values()].filter(q => q.rp).map(q => [q.id, q.ping === undefined ? null : q.ping]) });
+      for (const q of n.peers.values()) if (q.rp) { q.t.send('rel', clk); q.t.send('rel', pi); q.t.send('rel', pr); }
     }
     const t = now();
     for (const q of n.peers.values()) if (q.heard && t - q.heard > 5) { q.t.close(); this.netDropPeer(q); }   // 5초 넘게 소식 없음 = 나감

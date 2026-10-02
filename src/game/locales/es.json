@@ -947,7 +947,10 @@
   "참가하기": "Unirse a una sala",
   "캐릭터를 저장했다": "Personaje guardado.",
   "호스트가 방에서 내보냈다": "El anfitrión te ha expulsado de la sala.",
-  "호스트가 방을 닫았다": "El anfitrión ha cerrado la sala."
+  "호스트가 방을 닫았다": "El anfitrión ha cerrado la sala.",
+  "내보내기": "Expulsar",
+  "방 {room}": "Sala {room}",
+  "호스트": "Anfitrión"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

@@ -46362,7 +46362,8 @@
         hid: held ? held.id : "",
         wid: wep ? wep.id : "",
         c: p.charId,
-        n: p.name
+        n: p.name,
+        lv: p.level
       };
     },
     /** 받은 상태를 남의 아바타에 — 자리(x·y)는 보간 버퍼가 따로 맞춘다. */
@@ -46387,6 +46388,7 @@
       rp.netMaxHp = s.mhp;
       rp.charId = s.c;
       rp.name = s.n;
+      rp.level = s.lv || 1;
       if (rp._hid !== s.hid) {
         rp._hid = s.hid;
         rp.bag[rp.sel] = s.hid ? makeItem(s.hid) : null;
@@ -46885,6 +46887,7 @@
       const n = this.net, peer = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
       n.peers.set(peer.id, peer);
       t.onmessage = (ch, d) => {
+        if (this.net !== n || !n.peers.has(peer.id)) return;
         if (isChunk(d)) {
           const r = peer.joiner.push(d);
           if (r) this.netOnHost(peer, JSON.parse(r.text));
@@ -46909,6 +46912,8 @@
         this.netApply(peer.rp, m.s);
         peer.last = m.s;
         peer.heard = now();
+      } else if (m.k === "po") {
+        peer.ping = Math.max(0, Math.round(performance.now() - m.t));
       } else if (m.k === "bye") {
         peer.t.close();
         this.netDropPeer(peer);
@@ -46977,6 +46982,7 @@
         n.t = t;
         if (sigs) sig.close();
         t.onmessage = (ch, d) => {
+          if (this.net !== n) return;
           if (isChunk(d)) {
             const r = n.joiner.push(d);
             if (r) this.netOnGuest(JSON.parse(r.text));
@@ -47056,6 +47062,10 @@
       } else if (m.k === "es") {
         this.netPutEnemies(m.l);
         if (m.p) this.netPutProjs(m.p);
+      } else if (m.k === "pi") {
+        n.t.send("rel", JSON.stringify({ k: "po", t: m.t }));
+      } else if (m.k === "pr") {
+        n.pings = new Map(m.l);
       } else if (m.k === "clk") {
         this.netPutClock(m);
       } else if (m.k === "ed") {
@@ -47110,6 +47120,7 @@
       if (n.sig) n.sig.close();
       if (this.world) this.world.netLog = null;
       if (this.me) this.me.netId = 0;
+      this.refreshParty();
     },
     /** 호스트가 방을 닫는다 — 참가자에게 알리고(그쪽은 캐릭터를 저장하고 나간다) 혼자 하기로 돌아온다. */
     mpClose() {
@@ -47118,6 +47129,14 @@
       for (const q of n.peers.values()) this.netSend(q.t, "rel", { k: "close" });
       this.netEnd(n, 300);
       this.toast(tr("방을 닫았다"), "info");
+    },
+    /** 호스트가 참가자를 내보낸다 — 그쪽은 캐릭터를 저장하고 타이틀로. */
+    mpKick(id) {
+      const n = this.net, q = n && n.role === "host" && n.peers.get(id);
+      if (!q) return;
+      this.netSend(q.t, "rel", { k: "kick" });
+      this.netDropPeer(q);
+      setTimeout(() => q.t.close(), 300);
     },
     /** 참가자가 나간다 — 캐릭터를 저장하고 타이틀로. */
     mpLeave() {
@@ -47132,6 +47151,7 @@
     netTick(dt) {
       const n = this.net;
       this.netMoveAvatars();
+      this.netPartyTick(dt);
       n.sendT -= dt;
       if (n.sendT > 0) return;
       n.sendT += 1 / NET_HZ;
@@ -47171,7 +47191,13 @@
       if (n.clkT <= 0) {
         n.clkT = 1;
         const clk = JSON.stringify({ k: "clk", d: this.dayT, n: this.dayCount, ev: this.event || null });
-        for (const q of n.peers.values()) if (q.rp) q.t.send("rel", clk);
+        const pi = JSON.stringify({ k: "pi", t: Math.round(performance.now()) });
+        const pr = JSON.stringify({ k: "pr", l: [...n.peers.values()].filter((q) => q.rp).map((q) => [q.id, q.ping === void 0 ? null : q.ping]) });
+        for (const q of n.peers.values()) if (q.rp) {
+          q.t.send("rel", clk);
+          q.t.send("rel", pi);
+          q.t.send("rel", pr);
+        }
       }
       const t = now();
       for (const q of n.peers.values()) if (q.heard && t - q.heard > 5) {
@@ -47344,6 +47370,43 @@
         return false;
       }
     },
+    /* ---- 파티 목록(HUD — 보기만) · 내보내기는 일시정지 창에서 ---- */
+    netPartyTick(dt) {
+      const n = this.net;
+      n.partyT = (n.partyT || 0) - dt;
+      if (n.partyT > 0) return;
+      n.partyT = 0.25;
+      this.refreshParty();
+    },
+    /** 그 플레이어의 왕복 시간(ms) — 호스트 자신은 없다. */
+    netPing(id) {
+      const n = this.net;
+      if (!n || !id) return null;
+      if (n.role === "host") {
+        const q = n.peers.get(id);
+        return q && q.ping !== void 0 ? q.ping : null;
+      }
+      return n.pings && n.pings.has(id) ? n.pings.get(id) : null;
+    },
+    refreshParty() {
+      const box = $("#party"), n = this.net;
+      if (!box) return;
+      if (!n || n.role === "guest" && n.id < 0) {
+        box.hidden = true;
+        return;
+      }
+      const rows = this.players.map((p) => {
+        const id = p === this.me ? n.role === "host" ? 0 : n.id : p.netId;
+        const mhp = p.remote ? p.netMaxHp || p.d.maxHp : p.d.maxHp, ping = this.netPing(id);
+        return `<div class="pt-row${p === this.me ? " me" : ""}">
+        <span class="pt-name">${id === 0 ? `<i class="pt-host">${tr("호스트")}</i>` : ""}${escHtml(p.name)}</span>
+        <span class="pt-lv">Lv.${p.level | 0}</span><span class="pt-ping">${ping === null ? "" : ping + "ms"}</span>
+        <div class="pt-hp"><i style="width:${clamp(p.hp / (mhp || 1), 0, 1) * 100}%"></i></div></div>`;
+      }).join("");
+      const head = `<div class="pt-head">${n.role === "host" && n.room ? tr("방 {room}", { room: n.room }) + " · " : ""}${this.players.length}/${NET_MAX}</div>`;
+      box.innerHTML = head + rows;
+      box.hidden = false;
+    },
     /** 일시정지 창의 방 줄 — 혼자면 '방 열기', 호스트면 코드·닫기, 참가자면 나가기. */
     refreshPauseMp() {
       const n = this.net, host = !!n && n.role === "host", guest = !!n && n.role === "guest";
@@ -47353,6 +47416,16 @@
       $("#btn-room-close").hidden = !host;
       $("#btn-room-leave").hidden = !guest;
       $("#btn-save-export").hidden = guest;
+      const list = $("#ps-party"), guests = host ? [...n.peers.values()].filter((q) => q.rp) : [];
+      list.hidden = !guests.length;
+      list.innerHTML = guests.map((q) => `<div class="ps-guest"><span>${escHtml(q.rp.name)} · Lv.${q.rp.level | 0}</span>
+      <button class="mini-btn" data-kick="${q.id}">${tr("내보내기")}</button></div>`).join("");
+      list.querySelectorAll("[data-kick]").forEach((b) => {
+        b.onclick = () => {
+          this.mpKick(+b.dataset.kick);
+          this.refreshPauseMp();
+        };
+      });
     }
   };
   mixin(G, NetUiPart);
