@@ -38029,8 +38029,8 @@
       this.storyHeard[id] = this.chapter;
       const pick = first && this.chapter === 0 ? null : this.talkPick(id);
       const lines = fresh ? story.slice() : [];
-      const call2 = pick && !fresh ? this.nameCall(id) : null;
-      if (call2) lines.push(call2);
+      const call = pick && !fresh ? this.nameCall(id) : null;
+      if (call) lines.push(call);
       if (pick) lines.push(pick.say);
       if (!lines.length) lines.push(story[story.length - 1]);
       const rest = [];
@@ -38076,8 +38076,8 @@
       const lines = [];
       if (first) lines.push(d.line);
       if (fresh) lines.push(...story);
-      const call2 = pick ? this.nameCall(id) : null;
-      if (call2) lines.push(call2);
+      const call = pick ? this.nameCall(id) : null;
+      if (call) lines.push(call);
       if (pick) lines.push(pick.say);
       this.villageSeen = this.villageSeen || {};
       const lv = this.villageLv(), vt = VILLAGE_TALK[id];
@@ -45903,13 +45903,13 @@
   // src/game/game/net.ts
   var net_exports = {};
   __export(net_exports, {
-    INVITE_MS: () => INVITE_MS,
     JOIN_GIVEUP_MS: () => JOIN_GIVEUP_MS,
     NET_HZ: () => NET_HZ,
     NET_MAX: () => NET_MAX,
     NetPart: () => NetPart,
-    RELAY_URL: () => RELAY_URL,
-    SIGNAL_URL: () => SIGNAL_URL
+    PEER_CODE: () => PEER_CODE,
+    PEER_URL: () => PEER_URL,
+    RELAY_URL: () => RELAY_URL
   });
 
   // src/engine/net/chunk.ts
@@ -46001,62 +46001,6 @@
     };
     return s;
   }
-  async function call(url, body) {
-    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error("signal: " + (j.error || r.status));
-    return j;
-  }
-  async function openRoom(url, room, key) {
-    const j = await call(url, room ? { op: "open", room, key } : { op: "open" });
-    return { room: String(j.room), key: String(j.key) };
-  }
-  function closeRoom(url, room, key) {
-    call(url, { op: "close", room, key }).catch(() => {
-    });
-  }
-  function createHttpSignal(url, room, id, every = 1500, windowMs = 0, key = "") {
-    let alive = true, timer = null, until = windowMs ? Date.now() + windowMs : Infinity, running = false;
-    const s = {
-      onmessage: null,
-      onerror: null,
-      get polling() {
-        return running;
-      },
-      post(msg) {
-        call(url, { op: "post", room, to: msg.to || "host", msg }).catch((e) => {
-          if (s.onerror) s.onerror(e);
-        });
-      },
-      close() {
-        alive = false;
-        if (timer) clearTimeout(timer);
-      },
-      resume(ms = windowMs || 3e5) {
-        alive = true;
-        until = Date.now() + ms;
-        if (!running) poll();
-      }
-    };
-    const poll = async () => {
-      running = alive && Date.now() < until;
-      if (!running) return;
-      try {
-        const j = await call(url, { op: "poll", room, id, key });
-        for (const m of j.msgs || []) if (s.onmessage) s.onmessage(m);
-      } catch (e) {
-        if (String(e).includes("no-room")) {
-          alive = running = false;
-          if (s.onerror) s.onerror(e);
-          return;
-        }
-      }
-      if (alive) timer = setTimeout(poll, every);
-      else running = false;
-    };
-    poll();
-    return s;
-  }
   function createWsSignal(base, q) {
     let ws = null, alive = true, room = (q.room || "").toUpperCase(), tries = 0;
     let ping = null, gotRoom = () => {
@@ -46131,6 +46075,109 @@
           fail(new Error("signal: host-left"));
           return;
         }
+        if (q.role === "host" && room && tries++ < 5) {
+          setTimeout(connect, 2e3 * tries);
+          return;
+        }
+        fail(new Error(opened ? "signal: closed" : "signal: unreachable"));
+      };
+    };
+    connect();
+    return s;
+  }
+  var CODE_CH = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  function randomCode(n) {
+    return Array.from(crypto.getRandomValues(new Uint8Array(n)), (b) => CODE_CH[b % CODE_CH.length]).join("");
+  }
+  function createPeerSignal(base, q) {
+    const pre = q.prefix || "ashfall", token = randomCode(12).toLowerCase();
+    let ws = null, alive = true, room = (q.room || "").toUpperCase(), tries = 0, picks = 0, opened = false;
+    let beat = null, gotRoom = () => {
+    }, failRoom = () => {
+    };
+    const hostId = () => pre + "-" + room.toLowerCase(), myId = () => q.role === "host" ? hostId() : pre + "-g-" + q.id;
+    const queue = [];
+    const send = (t) => {
+      if (ws && ws.readyState === 1 && opened) ws.send(t);
+      else queue.push(t);
+    };
+    const s = {
+      onmessage: null,
+      onerror: null,
+      room: new Promise((res, rej) => {
+        gotRoom = res;
+        failRoom = rej;
+      }),
+      post(msg) {
+        const dst = q.role === "host" ? pre + "-g-" + msg.to : hostId();
+        send(JSON.stringify({ type: "OFFER", dst, payload: msg }));
+      },
+      close() {
+        alive = false;
+        if (beat) clearInterval(beat);
+        if (ws) ws.close(1e3);
+      }
+    };
+    s.room.catch(() => {
+    });
+    const fail = (e) => {
+      alive = false;
+      if (beat) clearInterval(beat);
+      failRoom(e);
+      if (s.onerror) s.onerror(e);
+      if (ws) ws.close(1e3);
+    };
+    const connect = () => {
+      if (q.role === "host" && !room) room = randomCode(q.codeLen || 6);
+      const u = new URL(base);
+      u.searchParams.set("key", "peerjs");
+      u.searchParams.set("id", myId());
+      u.searchParams.set("token", token);
+      const w = ws = new WebSocket(u.toString()), re = tries > 0;
+      opened = false;
+      const ready = () => {
+        if (opened) return;
+        opened = true;
+        tries = 0;
+        gotRoom(room);
+        while (queue.length) w.send(queue.shift());
+        if (beat) clearInterval(beat);
+        beat = setInterval(() => {
+          if (w.readyState === 1) w.send('{"type":"HEARTBEAT"}');
+        }, 15e3);
+      };
+      w.onopen = () => {
+        if (re) ready();
+      };
+      w.onmessage = (e) => {
+        let m;
+        try {
+          m = JSON.parse(String(e.data));
+        } catch {
+          return;
+        }
+        if (m.type === "OPEN") ready();
+        else if (m.type === "ID-TAKEN") {
+          if (q.role === "host" && !opened && tries === 0 && picks++ < 5) {
+            room = "";
+            w.onclose = null;
+            w.close();
+            connect();
+          }
+        } else if (m.type === "ERROR") fail(new Error("signal: " + String((m.payload || {}).msg || "error")));
+        else if (m.type === "EXPIRE" || m.type === "LEAVE") {
+          if (q.role === "guest" && m.src === hostId()) fail(new Error("signal: no-room"));
+        } else if (m.type === "OFFER" && s.onmessage && m.payload && typeof m.payload === "object") {
+          const src = String(m.src || ""), msg = m.payload;
+          if (q.role === "host") {
+            if (!src.startsWith(pre + "-g-")) return;
+            msg.from = src.slice(pre.length + 3);
+          } else if (src !== hostId()) return;
+          s.onmessage(msg);
+        }
+      };
+      w.onclose = () => {
+        if (!alive || ws !== w) return;
         if (q.role === "host" && room && tries++ < 5) {
           setTimeout(connect, 2e3 * tries);
           return;
@@ -46246,9 +46293,9 @@
   var NET_MAX = 4;
   var NET_HZ = 15;
   var RELAY_URL = "wss://ashfall-relay.gshs43junyeong.workers.dev/ws";
-  var SIGNAL_URL = "https://ashfall-chronicles.vercel.app/api/room";
-  var isWs = (url) => /^wss?:/.test(url || "");
-  var INVITE_MS = 5 * 60 * 1e3;
+  var PEER_URL = "wss://0.peerjs.com/peerjs";
+  var PEER_CODE = 6;
+  var RELAY_WAIT_MS = 8e3;
   var JOIN_GIVEUP_MS = 60 * 1e3;
   var now = () => performance.now() / 1e3;
   var NetPart = {
@@ -46721,19 +46768,39 @@
       if (text.length > 15e3) for (const part of chunkText(++this.net.chunkId, text)) t.send("rel", part);
       else t.send(ch, text);
     },
-    /** 중개 주소 — ?sig=tab 이면 같은 브라우저 탭끼리(null), ?sig=<주소> 면 그 주소(시험용), 아니면 사이트 함수. */
-    netSignalUrl() {
+    /** 중개 — ?sig=tab 이면 같은 브라우저 탭끼리(null), ?sig=<ws 주소> 면 자체 중개만 · ?sig=peer:<주소> 면 PeerJS 만(시험용). */
+    netSignals() {
       const s = new URLSearchParams(location.search).get("sig");
       if (s === "tab") return null;
-      if (s) return s;
-      if (RELAY_URL) return RELAY_URL;
-      return location.host === "ashfall-chronicles.vercel.app" ? "/api/room" : SIGNAL_URL;
+      if (s) return s.startsWith("peer:") ? { peer: s.slice(5) } : { relay: s };
+      return { relay: RELAY_URL, peer: PEER_URL };
+    },
+    /** 호스트 쪽 중개를 연다 — 자체 중개가 정해진 시간 안에 방을 못 열면 PeerJS 로. */
+    async netOpenSignal(sigs) {
+      for (const kind of ["relay", "peer"]) {
+        if (!sigs[kind]) continue;
+        const sig = kind === "relay" ? createWsSignal(sigs.relay, { role: "host" }) : createPeerSignal(sigs.peer, { role: "host", codeLen: PEER_CODE });
+        let tm = null;
+        const late = new Promise((_, rej) => {
+          tm = setTimeout(() => rej(new Error("signal: timeout")), RELAY_WAIT_MS);
+        });
+        try {
+          const room = await Promise.race([sig.room, late]);
+          clearTimeout(tm);
+          return { sig, room, kind };
+        } catch (e) {
+          clearTimeout(tm);
+          sig.close();
+          console.warn("net: 중개", kind, "실패", e);
+        }
+      }
+      return null;
     },
     /* ================= 호스트 ================= */
     /** 방을 연다 — 참가자 셋까지. 인터넷 중개면 방 코드는 중개가 고른다. */
     async mpHost(room) {
       if (this.net || !this.me) return;
-      const url = this.netSignalUrl(), n = {
+      const sigs = this.netSignals(), n = {
         role: "host",
         room,
         sig: null,
@@ -46742,7 +46809,6 @@
         nextId: 1,
         sendT: 0,
         chunkId: 0,
-        url,
         eid: 0,
         live: /* @__PURE__ */ new Map(),
         dead: [],
@@ -46754,33 +46820,21 @@
       this.net = n;
       this.me.netId = 0;
       this.netTrackWorld();
-      if (isWs(url)) {
-        const ws = createWsSignal(url, { role: "host" });
-        n.sig = ws;
-        try {
-          n.room = room = await ws.room;
-        } catch (e) {
-          console.warn("net: 방 열기 실패", e);
+      if (sigs) {
+        const o = await this.netOpenSignal(sigs);
+        if (this.net !== n) {
+          if (o) o.sig.close();
+          return;
+        }
+        if (!o) {
           this.net = null;
           this.toast(tr("중개 서버에 닿지 않는다"), "bad");
           return;
         }
-        ws.onerror = () => this.toast(tr("중개 서버와 끊겼다 — 새 참가는 받을 수 없다"), "bad");
-      } else if (url) {
-        try {
-          const o = await openRoom(url);
-          n.room = room = o.room;
-          n.key = o.key;
-        } catch (e) {
-          console.warn("net: 방 열기 실패", e);
-          this.net = null;
-          this.toast(tr("중개 서버에 닿지 않는다"), "bad");
-          return;
-        }
-        const hs = createHttpSignal(url, room, "host", 2e3, INVITE_MS, n.key);
-        hs.onerror = () => this.mpInvite();
-        n.sig = hs;
-        addEventListener("pagehide", () => closeRoom(url, n.room, n.key));
+        n.sig = o.sig;
+        n.room = room = o.room;
+        n.via = o.kind;
+        o.sig.onerror = () => this.toast(tr("중개 서버와 끊겼다 — 새 참가는 받을 수 없다"), "bad");
       } else n.sig = createTabSignal(room);
       const sig = n.sig;
       sig.onmessage = async (m) => {
@@ -46805,36 +46859,7 @@
           }
         }
       };
-      if (isWs(url)) this.toast(tr("방 {room|을} 열었다", { room }), "good");
-      else this.toast(tr("방 {room|을} 열었다 — 5분 동안 참가를 받는다", { room }), "good");
-    },
-    /** 참가 받기를 5분 더 — 쉬는 동안 방이 만료됐으면 같은 코드로 되찾는다(남이 가져갔으면 새 코드). */
-    async mpInvite() {
-      const n = this.net;
-      if (!n || n.role !== "host" || !n.url) return;
-      if (isWs(n.url)) {
-        this.toast(tr("방 {room|을} 열었다", { room: n.room }), "good");
-        return;
-      }
-      try {
-        await openRoom(n.url, n.room, n.key);
-      } catch (e) {
-        try {
-          const o = await openRoom(n.url);
-          n.room = o.room;
-          n.key = o.key;
-        } catch (e2) {
-          this.toast(tr("중개 서버에 닿지 않는다"), "bad");
-          return;
-        }
-        n.sig.close();
-        const hs = createHttpSignal(n.url, n.room, "host", 2e3, INVITE_MS, n.key);
-        hs.onerror = () => this.mpInvite();
-        hs.onmessage = n.sig.onmessage;
-        n.sig = hs;
-      }
-      n.sig.resume(INVITE_MS);
-      this.toast(tr("방 {room|을} 열었다 — 5분 동안 참가를 받는다", { room: n.room }), "good");
+      this.toast(tr("방 {room|을} 열었다", { room }), "good");
     },
     netAddPeer(t) {
       const n = this.net, peer = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
@@ -46898,10 +46923,11 @@
     /** 방에 붙는다 — 캐릭터는 새로 만든 것(charId · name). 제 캐릭터 고르기·저장은 M4. */
     mpJoin(room, name, charId) {
       if (this.net) return;
-      const url = this.netSignalUrl(), me = Math.random().toString(36).slice(2, 8);
+      const sigs = this.netSignals(), me = Math.random().toString(36).slice(2, 8);
       room = String(room || "").trim().toUpperCase();
-      const sig = isWs(url) ? createWsSignal(url, { role: "guest", room, id: me }) : url ? createHttpSignal(url, room, me, 1e3) : createTabSignal(room);
-      if (url) sig.onerror = () => {
+      const viaPeer = sigs && sigs.peer && (!sigs.relay || room.length === PEER_CODE);
+      const sig = !sigs ? createTabSignal(room) : viaPeer ? createPeerSignal(sigs.peer, { role: "guest", room, id: me }) : createWsSignal(sigs.relay, { role: "guest", room, id: me });
+      if (sigs) sig.onerror = () => {
         clearInterval(n.ask);
         clearTimeout(n.giveUp);
         this.net = null;
@@ -46924,7 +46950,7 @@
         sig.post({ t: "answer", from: me, to: "host", sdp: g.answer });
         const t = await g.ready;
         n.t = t;
-        if (url) sig.close();
+        if (sigs) sig.close();
         t.onmessage = (ch, d) => {
           if (isChunk(d)) {
             const r = n.joiner.push(d);
@@ -46940,7 +46966,7 @@
         });
       };
       const ask = () => sig.post({ t: "want", from: me });
-      n.ask = setInterval(ask, isWs(url) ? 5e3 : url ? 4e3 : 2e3);
+      n.ask = setInterval(ask, sigs ? 5e3 : 2e3);
       ask();
       n.giveUp = setTimeout(() => {
         if (this.net !== n || n.t) return;

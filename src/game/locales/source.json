@@ -1379,12 +1379,7 @@
    "ui/quest.renderRuins"
   ],
   "방 {room|을} 열었다": [
-   "game/net.mpHost",
-   "game/net.mpInvite"
-  ],
-  "방 {room|을} 열었다 — 5분 동안 참가를 받는다": [
-   "game/net.mpHost",
-   "game/net.mpInvite"
+   "game/net.mpHost"
   ],
   "방벽 {shield}": [
    "entity/player-combat.useSkill"
@@ -2490,8 +2485,7 @@
    "game/fishing.resolveFish"
   ],
   "중개 서버에 닿지 않는다": [
-   "game/net.mpHost",
-   "game/net.mpInvite"
+   "game/net.mpHost"
   ],
   "중개 서버와 끊겼다 — 새 참가는 받을 수 없다": [
    "game/net.mpHost"

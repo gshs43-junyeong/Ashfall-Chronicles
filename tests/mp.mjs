@@ -1,44 +1,13 @@
-/* 멀티플레이(M2) — 두 탭: 호스트가 ?mp=host 로 방을 열고 참가자가 ?mp=join 으로 붙는다.
-   중개는 api/_room-core.js 를 메모리 저장소로 돌리는 로컬 HTTP 서버(배포된 Vercel 함수와 같은 규칙) + 실제 WebRTC.
+/* 멀티플레이(M2) — 두 창: 호스트가 ?mp=host 로 방을 열고 참가자가 ?mp=join 으로 붙는다.
+   중개는 로컬에 띄운 PeerJS 서버(npm peer — 공개 0.peerjs.com 과 같은 서버) + 실제 WebRTC. MP_SIG 가 있으면 그 중개로
+   (tests/relay.mjs 가 Cloudflare 중개를 로컬로 띄워 넘긴다).
    참가자가 세계 스냅샷을 받아 같은 세계에 서는가 · 서로의 아바타가 보이는가 · 참가자가 걸은 자리가 호스트에 닿는가 · 끊기면 빠지는가. */
-import http from 'node:http';
+import net from 'node:net';
+import { PeerServer } from 'peer';
 import { serve, browser, collectErrors, fail, ok } from './lib.mjs';
-import { handleRoom, memoryStore } from '../api/_room-core.js';
 
-/* 중개 규칙 — 서버 없이 먼저 */
-{
-  const st = memoryStore();
-  const { body: { room, key } } = await handleRoom(st, { op: 'open' });
-  const a = await handleRoom(st, { op: 'post', room, to: 'host', msg: { t: 'want', from: 'abc' } });
-  const b = await handleRoom(st, { op: 'poll', room, id: 'host', key });
-  const c = await handleRoom(st, { op: 'poll', room, id: 'host', key });
-  const thief = await handleRoom(st, { op: 'poll', room, id: 'host' });
-  const d = await handleRoom(st, { op: 'post', room: 'ZZZZZ', to: 'host', msg: {} });
-  const e = await handleRoom(st, { op: 'post', room, to: 'host', msg: { sdp: 'x'.repeat(13000) } });
-  const okRule = /^[A-Z0-9]{5}$/.test(room) && a.status === 200 && b.body.msgs.length === 1 && b.body.msgs[0].from === 'abc'
-    && c.body.msgs.length === 0 && d.status === 404 && e.status === 413 && thief.status === 403;
-  if (okRule) ok(`중개 규칙: 방 ${room} · 우편함 비우기 · 없는 방 404 · 큰 글 413 · 열쇠 없이 호스트 우편함 403`); else fail('중개 규칙');
-  /* 되찾기 — 만료된(지워진) 방은 같은 열쇠로 같은 코드를 다시, 남의 열쇠로는 409 */
-  const steal = await handleRoom(st, { op: 'open', room, key: 'nope' });
-  await handleRoom(st, { op: 'close', room, key });
-  const r1 = await handleRoom(st, { op: 'open', room: room.toLowerCase(), key });
-  if (steal.status === 409 && r1.status === 200 && r1.body.room === room) ok('중개 규칙: 같은 열쇠로 같은 코드를 되찾고 남의 열쇠는 막는다'); else fail(`중개 규칙: 되찾기 ${JSON.stringify(r1)}`);
-}
-const store = memoryStore();
-const sigSrv = http.createServer((req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
-  let body = '';
-  req.on('data', c => body += c);
-  req.on('end', async () => {
-    const { status, body: out } = await handleRoom(store, JSON.parse(body || '{}'));
-    res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(out));
-  });
-});
-await new Promise(r => sigSrv.listen(0, '127.0.0.1', r));
-/* MP_SIG 가 있으면 그 중개로(tests/relay.mjs 가 Cloudflare 중개를 로컬로 띄워 넘긴다) */
-const SIG = process.env.MP_SIG || `http://127.0.0.1:${sigSrv.address().port}/api/room`;
+const peerSrv = await new Promise(r => PeerServer({ port: 0, host: '127.0.0.1', path: '/' }, srv => r({ srv, port: srv.address().port })));
+const SIG = process.env.MP_SIG || `peer:ws://127.0.0.1:${peerSrv.port}/peerjs`;
 
 const { srv, url } = await serve();
 const b = await browser();
@@ -171,15 +140,22 @@ const death = await host.evaluate(async () => {
 });
 check(death[0] === false && death[1] && death[2] >= 1 && death[3] === death[2], `쓰러짐: 호스트가 쓰러져도 세계는 돈다(멈춤 ${death[0]}) · 부활해도 몹이 남는다(${death[2]}→${death[3]})`);
 
-/* 참가 받기 창 — 지나면 호스트가 우편함 확인을 멈추고(중개 요청 0), mpInvite 로 다시 켠다(폴링 중개만) */
+/* PeerJS 쪽 — 방 코드 여섯 글자 · 자체 중개가 닿지 않으면 PeerJS 로 넘어간다 · 없는 방은 '그런 방이 없다' */
 if (!process.env.MP_SIG) {
-await host.evaluate(() => G.net.sig.resume(300));
-await host.waitForTimeout(2600);
-const idle = await host.evaluate(() => G.net.sig.polling);
-await host.evaluate(() => G.mpInvite());
-await host.waitForTimeout(400);
-const again = await host.evaluate(() => G.net.sig.polling);
-check(idle === false && again === true, `참가 받기 창: 지나면 확인을 멈추고(${idle}) 다시 켠다(${again})`);
+  check(room.length === 6, `PeerJS 중개: 방 코드 여섯 글자 (${room})`);
+  const dead = await new Promise(r => { const t = net.createServer().listen(0, '127.0.0.1', () => { const p = t.address().port; t.close(() => r(p)); }); });
+  const fb = await host.evaluate(async ([peer, dead]) => {
+    const o = await G.netOpenSignal({ relay: `ws://127.0.0.1:${dead}/ws`, peer });
+    if (o) o.sig.close();
+    return o && [o.kind, o.room.length];
+  }, [SIG.slice(5), dead]);
+  eh.splice(0, eh.length, ...eh.filter(e => !e.includes(`127.0.0.1:${dead}`)));   // 일부러 닿지 않게 한 중개
+  check(fb && fb[0] === 'peer' && fb[1] === 6, `자체 중개가 닿지 않으면 PeerJS 로 방을 연다 (${fb})`);
+  const third = await (await b.newContext()).newPage();
+  await third.goto(url + `/index.html?lang=ko&mp=join&room=zzzzzz&name=X&char=ranger&sig=${encodeURIComponent(SIG)}`);
+  await third.waitForFunction(() => window.G && G.booted && !G.net, null, { timeout: 30000 }).catch(() => {});
+  check(await third.evaluate(() => !G.net), '없는 방(여섯 글자)에 붙으려 하면 그만둔다');
+  await third.close();
 }
 
 await guest.close();
@@ -187,5 +163,5 @@ await host.waitForTimeout(1500);
 const left = await host.evaluate(() => G.players.length);
 check(left === 1, `참가자가 나가면 호스트 쪽에서 빠진다 (${left}명)`);
 check(!eh.length && !eg.length, `콘솔 오류 0 ${[...eh, ...eg].slice(0, 2).join(' | ')}`);
-srv.close(); sigSrv.close(); await b.close();
+srv.close(); peerSrv.srv.close(); await b.close();
 process.exit(bad ? 1 : 0);

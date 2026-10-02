@@ -149,9 +149,10 @@ e.keepIn(x0, x1, yMax)                 // 세계 안에 가둔다
 |---|---|
 | `Transport` — `send(ch, data)` · `onmessage(ch, data)` · `onclose` · `open` · `close()` | 통로 모양. `ch` 는 `'rel'`(순서·도착 보장) · `'fast'`(순서 없음·재전송 없음). 글자열만 싣는다 |
 | `createLoopback({ latency, loss })` → `[a, b]` | 같은 탭 안의 두 끝(시험·흉내) — fast 만 `loss` 비율로 버린다 |
-| `hostOffer(opts)` → `{ offer, accept(answer), cancel }` · `guestAnswer(offer, opts)` → `{ answer, ready, cancel }` | WebRTC — 후보를 다 모은 뒤 제안/응답 글 한 번씩만 주고받는다(중개가 짧은 폴링이어도 되게) |
+| `hostOffer(opts)` → `{ offer, accept(answer), cancel }` · `guestAnswer(offer, opts)` → `{ answer, ready, cancel }` | WebRTC — 후보를 다 모은 뒤 제안/응답 글 한 번씩만 주고받는다(중개 왕복을 두 번으로) |
 | `chunkText(id, text)` · `createJoiner()` → `push(msg)` · `isChunk(msg)` | 큰 글(세계 스냅샷)을 16,000자 조각으로 · 순서가 섞여도 잇는다 |
 | `new SnapBuffer(delay, cap)` → `push(t, state)` · `sample(now)` | 늦게 오는 상태를 delay 만큼 늦춰 두 장 사이를 보간(숫자 칸만) |
+| `Signal` — `post(msg)` · `onmessage` · `close()` · (인터넷) `room` 약속 · `onerror` | 처음 서로 찾기(제안/응답 글 건네기). `createTabSignal(room)`(같은 브라우저 탭끼리) · `createWsSignal(url, { role, room, id })`(자체 WebSocket 중개 — `relay/`) · `createPeerSignal(url, { role, room, id, prefix, codeLen })`(PeerJS 서버를 우편함으로만) · `randomCode(n)` |
 
 ## 5. Ashfall 은 엔진을 어떻게 쓰나
 

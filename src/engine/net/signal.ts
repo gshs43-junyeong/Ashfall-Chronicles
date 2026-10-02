@@ -1,6 +1,6 @@
 /* ===== engine/net/signal.ts — 처음 서로 찾기(중개) ===== */
 /* WebRTC 는 제안/응답 글을 **다른 길로** 한 번 건네야 붙는다. 그 길의 모양만 정하고, 탭끼리(BroadcastChannel — 같은 브라우저의
-   두 탭, 개발·시험용) 구현을 둔다. 인터넷 너머는 같은 모양의 HTTP 중개를 따로 붙인다. 글은 방 코드 안에서만 오간다. */
+   두 탭, 개발·시험용) 구현을 둔다. 인터넷 너머는 같은 모양의 WebSocket 중개 둘(자체 중개 · PeerJS 서버)이다. 글은 방 코드 안에서만 오간다. */
 export interface SignalMsg { t: 'want' | 'offer' | 'answer' | 'full'; from: string; to?: string; sdp?: string; }
 
 export interface Signal {
@@ -17,54 +17,6 @@ export function createTabSignal(room: string): Signal {
     close() { bc.close(); }
   };
   bc.onmessage = e => { if (s.onmessage) s.onmessage(e.data as SignalMsg); };
-  return s;
-}
-
-/* ---- 인터넷 너머 — HTTP 우편함(짧은 폴링). 서버 규칙은 api/_room-core.js ---- */
-async function call(url: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error('signal: ' + (j.error || r.status));
-  return j;
-}
-
-/** 새 방을 연다(room·key 를 주면 그 방을 되찾는다) — 중개가 고른 방 코드(다섯 글자)와 호스트 열쇠. */
-export async function openRoom(url: string, room?: string, key?: string): Promise<{ room: string; key: string }> {
-  const j = await call(url, room ? { op: 'open', room, key } : { op: 'open' });
-  return { room: String(j.room), key: String(j.key) };
-}
-export function closeRoom(url: string, room: string, key: string) { call(url, { op: 'close', room, key }).catch(() => {}); }
-
-export interface HttpSignal extends Signal {
-  onerror: ((e: Error) => void) | null;
-  /** 우편함 확인을 ms 동안 (다시) 켠다 — 그 뒤엔 저절로 쉰다. 요청량은 연 시간이 아니라 이 창의 길이에 비례한다. */
-  resume(ms?: number): void;
-  readonly polling: boolean;
-}
-
-/** id 의 우편함을 every ms 마다 비운다. 보내는 글은 msg.to(없으면 'host')의 우편함으로.
-    windowMs 가 있으면 그만큼만 확인하고 쉰다(resume 으로 다시). onerror 는 방이 사라졌을 때(만료·닫힘) — 그 뒤로는 확인을 멈춘다. */
-export function createHttpSignal(url: string, room: string, id: string, every = 1500, windowMs = 0, key = ''): HttpSignal {
-  let alive = true, timer: ReturnType<typeof setTimeout> | null = null, until = windowMs ? Date.now() + windowMs : Infinity, running = false;
-  const s: HttpSignal = {
-    onmessage: null, onerror: null,
-    get polling() { return running; },
-    post(msg) { call(url, { op: 'post', room, to: msg.to || 'host', msg }).catch(e => { if (s.onerror) s.onerror(e); }); },
-    close() { alive = false; if (timer) clearTimeout(timer); },
-    resume(ms = windowMs || 300000) { alive = true; until = Date.now() + ms; if (!running) poll(); }
-  };
-  const poll = async () => {
-    running = alive && Date.now() < until;
-    if (!running) return;
-    try {
-      const j = await call(url, { op: 'poll', room, id, key });
-      for (const m of (j.msgs as SignalMsg[]) || []) if (s.onmessage) s.onmessage(m);
-    } catch (e) {
-      if (String(e).includes('no-room')) { alive = running = false; if (s.onerror) s.onerror(e as Error); return; }
-    }
-    if (alive) timer = setTimeout(poll, every); else running = false;
-  };
-  poll();
   return s;
 }
 
@@ -114,6 +66,77 @@ export function createWsSignal(base: string, q: { role: 'host' | 'guest'; room?:
       if (!alive) return;
       if (e.code === 4410) { fail(new Error('signal: host-left')); return; }
       /* 호스트는 잠깐 끊겨도(망 흔들림) 같은 코드로 다시 붙는다 — 다섯 번까지 */
+      if (q.role === 'host' && room && tries++ < 5) { setTimeout(connect, 2000 * tries); return; }
+      fail(new Error(opened ? 'signal: closed' : 'signal: unreachable'));
+    };
+  };
+  connect();
+  return s;
+}
+
+/* ---- 인터넷 너머 — PeerJS 서버(공개 0.peerjs.com 따위)를 우편함으로만 쓴다 ----
+   PeerJS 라이브러리는 안 싣는다 — 서버는 {type, dst, payload} 를 받아 보낸 이(src)를 박아 넘길 뿐이라 그 글 모양만 맞춘다.
+   방 코드 room → 호스트 아이디 `<prefix>-<room>`, 참가자 아이디 `<prefix>-g-<id>`. 없는 상대에게 보낸 글은 서버가 몇 초 쥐고 있다가
+   EXPIRE 로 돌려준다 → 참가자에게는 no-room. 호스트는 같은 아이디·토큰으로 다시 붙을 수 있다. */
+const CODE_CH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+export function randomCode(n: number): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(n)), b => CODE_CH[b % CODE_CH.length]).join('');
+}
+
+export function createPeerSignal(base: string, q: { role: 'host' | 'guest'; room?: string; id?: string; prefix?: string; codeLen?: number }): WsSignal {
+  const pre = q.prefix || 'ashfall', token = randomCode(12).toLowerCase();
+  let ws: WebSocket | null = null, alive = true, room = (q.room || '').toUpperCase(), tries = 0, picks = 0, opened = false;
+  let beat: ReturnType<typeof setInterval> | null = null, gotRoom: (r: string) => void = () => {}, failRoom: (e: Error) => void = () => {};
+  const hostId = () => pre + '-' + room.toLowerCase(), myId = () => q.role === 'host' ? hostId() : pre + '-g-' + q.id;
+  const queue: string[] = [];
+  const send = (t: string) => { if (ws && ws.readyState === 1 && opened) ws.send(t); else queue.push(t); };
+  const s: WsSignal = {
+    onmessage: null, onerror: null,
+    room: new Promise<string>((res, rej) => { gotRoom = res; failRoom = rej; }),
+    post(msg) {
+      const dst = q.role === 'host' ? pre + '-g-' + msg.to : hostId();
+      send(JSON.stringify({ type: 'OFFER', dst, payload: msg }));
+    },
+    close() { alive = false; if (beat) clearInterval(beat); if (ws) ws.close(1000); }
+  };
+  s.room.catch(() => {});
+  const fail = (e: Error) => { alive = false; if (beat) clearInterval(beat); failRoom(e); if (s.onerror) s.onerror(e); if (ws) ws.close(1000); };
+  const connect = () => {
+    if (q.role === 'host' && !room) room = randomCode(q.codeLen || 6);
+    const u = new URL(base);
+    u.searchParams.set('key', 'peerjs'); u.searchParams.set('id', myId()); u.searchParams.set('token', token);
+    const w = ws = new WebSocket(u.toString()), re = tries > 0;
+    opened = false;
+    const ready = () => {
+      if (opened) return;
+      opened = true; tries = 0; gotRoom(room);
+      while (queue.length) w.send(queue.shift() as string);
+      if (beat) clearInterval(beat);
+      beat = setInterval(() => { if (w.readyState === 1) w.send('{"type":"HEARTBEAT"}'); }, 15000);
+    };
+    /* 되붙을 때 서버가 옛 연결을 아직 쥐고 있으면(같은 토큰) OPEN 없이 그대로 잇는다 */
+    w.onopen = () => { if (re) ready(); };
+    w.onmessage = e => {
+      let m: Record<string, unknown>;
+      try { m = JSON.parse(String(e.data)); } catch { return; }
+      if (m.type === 'OPEN') ready();
+      else if (m.type === 'ID-TAKEN') {
+        /* 새 방이면 다른 코드로(다섯 번까지), 되붙는 중이면 서버가 옛 연결을 정리할 때까지 기다렸다 다시 */
+        if (q.role === 'host' && !opened && tries === 0 && picks++ < 5) { room = ''; w.onclose = null; w.close(); connect(); }
+      } else if (m.type === 'ERROR') fail(new Error('signal: ' + String((m.payload as Record<string, unknown> || {}).msg || 'error')));
+      else if (m.type === 'EXPIRE' || m.type === 'LEAVE') {
+        if (q.role === 'guest' && m.src === hostId()) fail(new Error('signal: no-room'));
+      } else if (m.type === 'OFFER' && s.onmessage && m.payload && typeof m.payload === 'object') {
+        const src = String(m.src || ''), msg = m.payload as SignalMsg;
+        if (q.role === 'host') {
+          if (!src.startsWith(pre + '-g-')) return;
+          msg.from = src.slice(pre.length + 3);              // 보낸 이는 서버가 박은 src 로(사칭 막기)
+        } else if (src !== hostId()) return;
+        s.onmessage(msg);
+      }
+    };
+    w.onclose = () => {
+      if (!alive || ws !== w) return;
       if (q.role === 'host' && room && tries++ < 5) { setTimeout(connect, 2000 * tries); return; }
       fail(new Error(opened ? 'signal: closed' : 'signal: unreachable'));
     };
