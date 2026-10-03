@@ -965,7 +965,10 @@
   "머리 위 고드름이 갈라진다 — 비켜라!": "¡El carámbano sobre tu cabeza se agrieta — apártate!",
   "같은 것 넣기": "Guardar iguales",
   "모두 가져오기": "Tomar todo",
-  "모두 꺼내기": "Sacar todo"
+  "모두 꺼내기": "Sacar todo",
+  "쓰러짐": "Caído",
+  "{name|이} 쓰러졌다": "{name} ha caído",
+  "{name|이} 다시 일어났다": "{name} se ha levantado"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

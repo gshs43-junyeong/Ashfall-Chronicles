@@ -965,7 +965,10 @@
   "머리 위 고드름이 갈라진다 — 비켜라!": "The icicle overhead is cracking — move!",
   "같은 것 넣기": "Stack matching",
   "모두 가져오기": "Take all",
-  "모두 꺼내기": "Take all out"
+  "모두 꺼내기": "Take all out",
+  "쓰러짐": "Down",
+  "{name|이} 쓰러졌다": "{name} went down",
+  "{name|이} 다시 일어났다": "{name} is back on their feet"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

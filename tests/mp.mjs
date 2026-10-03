@@ -36,6 +36,15 @@ const r = await host.evaluate(() => { const g = G.players.find(p => p.remote); r
 const gx = await guest.evaluate(() => G.me.x);
 check(r && r.name === 'Guest' && gx - x0 > 100 && Math.abs(r.x - gx) < 24, `호스트가 참가자 걸음을 본다 (참가자 ${Math.round(gx - x0)}px 걸음 · 어긋남 ${r ? Math.round(Math.abs(r.x - gx)) : '?'}px)`);
 
+/* 쓰러짐이 남에게 보이는가 — 참가자가 쓰러지면 호스트 화면의 아바타가 '쓰러짐'(생명 0 · 알림), 되살아나면 다시 선다 */
+await guest.evaluate(() => { G.me.iframe = 0; G.me.hp = 1; G.me.hurt(1e6, G.me.cx + 10); });
+await host.waitForTimeout(900);
+const down = await host.evaluate(() => { const g = G.players.find(p => p.remote); return [g.hp, document.querySelector('#toasts') ? document.querySelector('#toasts').innerText.includes('쓰러졌다') : null]; });
+await guest.evaluate(() => G.respawn());
+await host.waitForTimeout(900);
+const up = await host.evaluate(() => G.players.find(p => p.remote).hp);
+check(down[0] <= 0 && down[1] !== false && up > 0, `참가자가 쓰러지면 호스트가 본다(생명 ${down[0]} · 알림 ${down[1]}) · 되살아나면 다시 선다(생명 ${up})`);
+
 /* 세계 바뀜 — 참가자가 캔 칸이 호스트로, 호스트가 놓은 칸이 참가자로 · 기반암은 참가자 글로 안 바뀐다 · 문 */
 const spot = await guest.evaluate(() => {
   const p = G.me, tx = Math.floor(p.cx / TS) + 3, ty = Math.floor((p.y + p.h + 1) / TS) + 1;

@@ -73,7 +73,31 @@ export const RenderActorsPart: Bag = {
     return Math.floor(this.time * 2.4) % 2;
   },
 
+  /** 쓰러진 플레이어(여럿일 때) — 바닥에 누운 잿빛 몸 + 빠져나가는 넋. 남의 화면에서도 누가 쓰러졌는지 한눈에 보이게
+      (혼자일 때는 죽음 창이 화면을 덮는다). 몸은 판정 상자 가운데를 축으로 눕혀 아래 끝이 바닥에 닿는다. */
+  drawDowned(c: CanvasRenderingContext2D, p: Player, sx: number, sy: number) {
+    const key = 'player_' + CHAR_OF(p.charId).id, dir = p.facing < 0 ? 1 : -1;
+    c.save();
+    c.translate(sx + p.w / 2, sy + p.h - p.w / 2 - 1);
+    c.rotate(dir * Math.PI / 2);
+    c.filter = 'grayscale(0.75) brightness(0.7)';
+    if (!(this.spritesOn && Sprites.draw(c, key, 12, -p.w / 2, -p.h / 2, p.facing < 0))) {
+      c.fillStyle = '#5a5e6a'; c.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    }
+    c.restore();
+    c.save();
+    c.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 3; i++) {
+      const k = ((this.time * 0.55 + i / 3) % 1), x = sx + p.w / 2 + Math.sin(this.time * 2.2 + i * 2.1) * 5 * k;
+      const y = sy + p.h - 14 - k * 46, r = 7 - k * 3;
+      const g = c.createRadialGradient(x, y, 0, x, y, r * 2.2);
+      g.addColorStop(0, `rgba(200,215,255,${0.55 * (1 - k)})`); g.addColorStop(1, 'rgba(160,180,255,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 2.2, 0, Math.PI * 2); c.fill();
+    }
+    c.restore();
+  },
   drawPlayer(c: CanvasRenderingContext2D, p: Player, sx: number, sy: number) {
+    if (p.hp <= 0 && this.net) { this.drawDowned(c, p, sx, sy); return; }
     c.save();
     if (p.iframe > 0 && Math.floor(this.time * 24) % 2 === 0) c.globalAlpha = 0.45;
     /* ★ 주인공은 **손그림 시트 한 장이 전부**다(char/player_<id>.png, tools/mkplayer.py) — 사연: docs/code-history.md#h69 */

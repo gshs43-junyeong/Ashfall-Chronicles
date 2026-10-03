@@ -355,6 +355,11 @@ export const RenderPart: Bag = {
     c.font = '11px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'bottom';
     c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.75)'; c.strokeText(q.name, x, y);
     c.fillStyle = '#e8f0ff'; c.fillText(q.name, x, y);
+    if (q.hp <= 0) {      // 쓰러졌다 — 생명 막대 대신 붉은 글
+      c.font = 'bold 10px ' + FONT; c.textBaseline = 'top';
+      c.strokeText(tr('쓰러짐'), x, y + 1); c.fillStyle = '#ff7a6a'; c.fillText(tr('쓰러짐'), x, y + 1);
+      c.restore(); return;
+    }
     const k = clamp(q.hp / (q.netMaxHp || q.d.maxHp || 1), 0, 1);
     c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(x - 14, y + 2, 28, 3);
     c.fillStyle = k > 0.35 ? '#6fd36f' : '#e05a4a'; c.fillRect(x - 14, y + 2, Math.round(28 * k), 3);
