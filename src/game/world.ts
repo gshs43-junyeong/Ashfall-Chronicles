@@ -4,7 +4,7 @@ import { clamp, dist, inv, lerp } from '../engine/core/math.js';
 import { makeNoise1D, makeNoise2D } from '../engine/core/noise.js';
 import { RNG } from '../engine/core/rng.js';
 import { rleDecode, rleEncode } from '../engine/save/rle.js';
-import { sweepLight } from '../engine/tilemap/light.js';
+import { castPointLight, sweepLightGrid } from '../engine/tilemap/light.js';
 import { TileMap } from '../engine/tilemap/tilemap.js';
 import { SHIFT, applyWorldSize, dimsOf } from './size.js';
 import { T, TILE_DEF } from './data.js';
@@ -22,6 +22,16 @@ export const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 �
 /* 바다 + 해변 — 나무·풀·꽃 같은 지상 초목을 놓지 않는다 — 사연: docs/code-history.md#h102 */
 export const inSeaZone = (x: number, seaX1: any) => x < seaX1 + BEACH_W + 4;
 export const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
+
+/* 조명(computeLight) — 이 세기 이상의 빛나는 칸은 점 광원(그늘을 계산), 거리 한 칸에 줄어드는 양, 그늘로 튀어 들어가는 빛이
+   한 칸에 줄어드는 양(작을수록 그림자가 옅다), 빛 색을 얹는 세기. 사연: docs/code-history.md#h142 */
+export const LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
+/** 빛을 막는 타일 — 막힌 칸(solid 1) 중 창문(clear)이 아닌 것 */
+export const LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
+TILE_DEF.forEach((d, i) => { LIGHT_OPAQUE[i] = d.solid === 1 && !d.clear ? 1 : 0; });
+/** 빛 색 '#rrggbb' → [r, g, b](0~1) */
+export const LIGHT_RGB: Record<string, number[]> = {};
+for (const d of TILE_DEF) if (d.lc && !LIGHT_RGB[d.lc]) { const v = parseInt(d.lc.slice(1), 16); LIGHT_RGB[d.lc] = [(v >> 16) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255]; }
 
 /** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(치수는 size.js). 다음 new World 가 이 크기로 만들어진다. */
 export function setWorldSize(key: string) { applyWorldSize(key); }
@@ -179,7 +189,8 @@ export class World extends TileMap {
   declare floodHell: (...a: any[]) => any; declare flv: Uint8Array; declare fmark: Uint8Array[]; declare fq: any[]; declare giantTree: Record<string, any>; declare glowStalk: (...a: any[]) => any;
   declare inAtelier: (...a: any[]) => any; declare inCitadel: (...a: any[]) => any; declare inDeepShaft: (...a: any[]) => any; declare inRuin: (...a: any[]) => any; declare inRunaway: (...a: any[]) => any;
   declare inWorks: (...a: any[]) => any; declare jungleTree: (...a: any[]) => any; declare lavaPools: any[]; declare lbh: number; declare lbw: number; declare lbx: number;
-  declare lby: number; declare lightBuf: Float32Array | null; declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
+  declare lby: number; declare lightBuf: Float32Array | null; declare lightBufP: Float32Array; declare lightCol: Float32Array; declare lightOp: Uint8Array;
+  declare lightDec: Float32Array; declare lightDecP: Float32Array; declare lightCache: Map<number, LightPatch> | null; declare lightDirty: number[]; declare lightFrame: number; declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
   declare objects: any[]; declare openCodeDoorway: (...a: any[]) => any; declare oreHits: Record<string, any>; declare pineTree: (...a: any[]) => any; declare placeRichOres: (...a: any[]) => any;
   declare placeRigs: (...a: any[]) => any; declare pools: any[]; declare pruneSmallCaves: (...a: any[]) => any; declare restoreSealRoom: (...a: any[]) => any; declare rng: RNG;
   declare ruinAt: (...a: any[]) => any; declare ruinEvents: any[]; declare ruinSites: any[]; declare ruins: any[]; declare runaway: Record<string, any>;
@@ -214,7 +225,9 @@ export class World extends TileMap {
 
   set(x: number, y: number, t: any) { const { WW } = this.dims;
     if (!this.inB(x, y)) return;
-    this.tiles[y * WW + x] = t;
+    const k = y * WW + x, was = this.tiles[k];
+    this.tiles[k] = t;
+    if (this.lightCache && was !== t) this.lightTouch(k, was);
     /* 유체가 켜진 뒤(생성·불러오기 끝)에만 — 바뀐 칸과 그 네 이웃을 흐름 검사 줄에 세운다. */
     if (this.fq) this.fluidWake(x, y);
     if (this.netLog && !this.netMute) this.netLog.add(y * WW + x);   // 멀티플레이 — 바뀐 칸을 모아 보낸다(game/net.ts)
@@ -224,7 +237,7 @@ export class World extends TileMap {
     if (this.netLog && !this.netMute && this.inB(x, y)) this.netLog.add(y * this.dims.WW + x);
   }
   /** tiles 를 직접 쓴 칸(작물 자람 · 무너지는 바닥)도 멀티플레이 기록에 남긴다. */
-  netMark(k: any) { if (this.netLog && !this.netMute) this.netLog.add(k); }
+  netMark(k: any) { if (this.netLog && !this.netMute) this.netLog.add(k); if (this.lightCache) this.lightTouch(k, -1); }
   hurtTile(x: number, y: number) { return TILE_DEF[this.get(x, y)].hurt || 0; }
   /** 사각형이 물에 얼마나 잠겼는지 0~1. */
   liquidIn(px: any, py: any, w: any, h: any) { const { WW } = this.dims;
@@ -625,16 +638,27 @@ export class World extends TileMap {
   }
 
   /* ================= 조명 ================= */
-  /** 화면 범위 조명 계산. */
-  computeLight(tx0: number, ty0: number, tx1: number, ty1: number, dayLight: any, extra: any) { const { WW, WH } = this.dims;
+  /** 화면 범위 조명 계산 — 두 겹을 따로 퍼뜨려 큰 쪽을 쓴다.
+      ① 햇빛·바닷속 빛·약한 빛·액체 빛: 예전처럼 번진다(트인 칸 0.92 · 막힌 칸 2.7씩 줄어듦).
+      ② 강한 점 광원(횃불·등불·수정 …, 세기 LIGHT_POINT 이상)과 플레이어 미광: 칸마다 광선을 쏘아 **가려진 칸은 그늘**(castPointLight),
+         그다음 튀는 빛만 조금(LIGHT_BOUNCE 씩) 번진다 — 모서리를 돌아 다 밝아지면 그림자가 사라진다.
+      ★ 두 겹 다 막힌 칸은 빛을 받되 트인 칸으로 넘기지 않는다(sweepLightGrid op) — 벽 한두 칸 뒤의 빈 방이 밝던 것. 사연: docs/code-history.md#h142 */
+  computeLight(tx0: number, ty0: number, tx1: number, ty1: number, dayLight: number, extra: number[][] | null) { const { WW, WH } = this.dims;
     const P = 14;
     const x0 = clamp(tx0 - P, 0, WW - 1), x1 = clamp(tx1 + P, 0, WW - 1);
     const y0 = clamp(ty0 - P, 0, WH - 1), y1 = clamp(ty1 + P, 0, WH - 1);
-    const w = x1 - x0 + 1, h = y1 - y0 + 1;
-    if (!this.lightBuf || this.lightBuf.length < w * h) this.lightBuf = new Float32Array(w * h + 64);
-    const L = this.lightBuf;
-    L.fill(0, 0, w * h);
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, n = w * h;
+    if (!this.lightBuf || this.lightBuf.length < n) {
+      this.lightBuf = new Float32Array(n + 64); this.lightBufP = new Float32Array(n + 64); this.lightCol = new Float32Array((n + 64) * 3);
+      this.lightOp = new Uint8Array(n + 64); this.lightDec = new Float32Array(n + 64); this.lightDecP = new Float32Array(n + 64);
+    }
+    if (!this.lightCache) { this.lightCache = new Map(); this.lightDirty = []; this.lightFrame = 0; }
+    this.lightFrame++;
+    this.lightFlush();
+    const L = this.lightBuf, Lp = this.lightBufP, col = this.lightCol, op = this.lightOp, dec = this.lightDec, decP = this.lightDecP;
+    L.fill(0, 0, n); Lp.fill(0, 0, n); col.fill(0, 0, n * 3);
     const sea = this.sea, seaAmb = 1.2 + dayLight * 0.1;   // 깊은 바다: 낮 2.7 · 밤 1.5 (/15)
+    const pts: number[] = [];
     // 시드
     for (let x = x0; x <= x1; x++) {
       const s = this.surface[x];
@@ -642,7 +666,14 @@ export class World extends TileMap {
         const t = this.tiles[y * WW + x];
         const d = TILE_DEF[t];
         const k = (y - y0) * w + (x - x0);
-        if (d.light) L[k] = d.light;
+        op[k] = LIGHT_OPAQUE[t];
+        // 창문은 고체지만 빛은 거의 그대로 통과한다 — 2층 집 안이 낮에 환해지는 이유 · 바닷물은 빛을 덜 먹는다
+        dec[k] = d.clear ? 1.05 : d.solid === 1 ? 2.7 : t === T.SEAWATER ? 0.42 : 0.92;
+        decP[k] = Math.max(dec[k], LIGHT_BOUNCE);
+        if (d.light) {
+          if (d.light >= LIGHT_POINT && !d.liquid) pts.push(x, y);
+          else L[k] = Math.max(L[k], d.light);
+        }
         if (t === T.AIR && y <= s && this.walls[y * WW + x] === 0) L[k] = Math.max(L[k], dayLight);
         /* 바닷물은 깊이만큼 햇빛을 잃되 흩어진 빛이 남는다 — 수면이 화면(+14칸) 밖이면 스윕이
            빛을 못 받아 수심 30칸부터 새까매졌고, 그 어둠에 바다 몹이 통째로 묻혔다. */
@@ -650,24 +681,77 @@ export class World extends TileMap {
           L[k] = Math.max(L[k], dayLight - (y - sea.level) * 0.42, seaAmb);
       }
     }
-    // 추가 광원 (플레이어 등)
+    // 점 광원 — 그늘을 계산해 둔 판(광원 칸마다 저장)을 찍는다. 빛 색도 같은 판으로 모은다(drawGlow)
+    for (let i = 0; i < pts.length; i += 2) {
+      const lx = pts[i], ly = pts[i + 1], d = TILE_DEF[this.tiles[ly * WW + lx]];
+      this.lightStamp(this.lightPatch(lx, ly, d.light!), lx, ly, x0, y0, w, h, Lp, LIGHT_RGB[d.lc!] || null, d.light!);
+    }
+    // 추가 광원 (플레이어 미광) — 움직이므로 저장하지 않는다
     if (extra) for (const [ex, ey, ev] of extra) {
       if (ex < x0 || ex > x1 || ey < y0 || ey > y1) continue;
-      const k = (ey - y0) * w + (ex - x0);
-      L[k] = Math.max(L[k], ev);
+      this.lightStamp(castPointLight(ev, LIGHT_FALL, (dx, dy) => this.lightBlocks(ex + dx, ey + dy)), ex, ey, x0, y0, w, h, Lp, null, ev);
     }
-    const dec = (x: number, y: number) => {
-      const t = this.tiles[y * WW + x];
-      const d = TILE_DEF[t];
-      // 창문은 고체지만 빛은 거의 그대로 통과한다 — 2층 집 안이 낮에 환해지는 이유
-      if (d.clear) return 1.05;
-      if (d.solid === 1) return 2.7;
-      /* 바닷물은 빛을 **덜 먹는다.** */
-      if (t === T.SEAWATER) return 0.42;
-      return 0.92;
-    };
-    sweepLight(L, w, h, x0, y0, 2, dec);                // 4방향 스윕 x2(engine/tilemap/light)
+    sweepLightGrid(L, w, h, 2, dec, op);                // 4방향 스윕 x2(engine/tilemap/light)
+    sweepLightGrid(Lp, w, h, 1, decP, op);             // 튀는 빛 — 한 번만
+    for (let k = 0; k < n; k++) if (Lp[k] > L[k]) L[k] = Lp[k];
     this.lbx = x0; this.lby = y0; this.lbw = w; this.lbh = h;
+  }
+  /** 그 칸이 점 광원의 빛을 막는가(세계 밖은 막힌 것으로) */
+  lightBlocks(x: number, y: number) { const { WW, WH } = this.dims;
+    return x < 0 || y < 0 || x >= WW || y >= WH || LIGHT_OPAQUE[this.tiles[y * WW + x]] === 1;
+  }
+  /** 점 광원 하나의 판 — 저장해 두고, 둘레 칸의 막힘이 바뀌면(lightTouch) 버린다 */
+  lightPatch(x: number, y: number, s: number) { const { WW } = this.dims;
+    const key = y * WW + x, cache = this.lightCache!;
+    let e = cache.get(key);
+    if (!e || e.s !== s) {
+      const p = castPointLight(s, LIGHT_FALL, (dx, dy) => this.lightBlocks(x + dx, y + dy));
+      e = { s, x, y, r: p.r, v: p.v, used: 0 };
+      cache.set(key, e);
+    }
+    e.used = this.lightFrame;
+    return e;
+  }
+  lightStamp(p: { r: number; v: Float32Array }, lx: number, ly: number, x0: number, y0: number, w: number, h: number, Lp: Float32Array, rgb: number[] | null, s: number) {
+    const r = p.r, n = 2 * r + 1, col = this.lightCol;
+    for (let dy = -r; dy <= r; dy++) {
+      const yy = ly + dy - y0;
+      if (yy < 0 || yy >= h) continue;
+      for (let dx = -r; dx <= r; dx++) {
+        const xx = lx + dx - x0;
+        if (xx < 0 || xx >= w) continue;
+        const v = p.v[(dy + r) * n + dx + r];
+        if (v <= 0) continue;
+        const k = yy * w + xx;
+        if (v > Lp[k]) Lp[k] = v;
+        /* 빛 색은 더하지 않고 센 쪽을 남긴다 — 횃불이 줄지어 있으면(폭탄 시험장) 더한 색이 넘쳐 노랗게 바랬다 */
+        if (rgb) { const f = v / s, a = f * f * f * LIGHT_TINT, j = k * 3; col[j] = Math.max(col[j], rgb[0] * a); col[j + 1] = Math.max(col[j + 1], rgb[1] * a); col[j + 2] = Math.max(col[j + 2], rgb[2] * a); }
+      }
+    }
+  }
+  /** 칸이 바뀌었다 — 막힘이나 빛이 달라졌으면 그 둘레 광원 판을 버리게 적어 둔다(was: 예전 타일, -1 이면 모름) */
+  lightTouch(k: number, was: number) {
+    const t = this.tiles[k];
+    if (was >= 0 && LIGHT_OPAQUE[was] === LIGHT_OPAQUE[t] && TILE_DEF[was].light === TILE_DEF[t].light) return;
+    this.lightDirty.push(k);
+  }
+  lightFlush() { const { WW } = this.dims;
+    const cache = this.lightCache!;
+    if (this.lightDirty.length) {
+      for (const k of this.lightDirty) {
+        const x = k % WW, y = (k / WW) | 0;
+        for (const [key, e] of cache) if (Math.abs(e.x - x) <= e.r && Math.abs(e.y - y) <= e.r) cache.delete(key);
+      }
+      this.lightDirty.length = 0;
+    }
+    if (cache.size > 3000) for (const [key, e] of cache) if (this.lightFrame - e.used > 600) cache.delete(key);   // 오래 안 본 광원은 버린다
+  }
+  /** 빛 색(점 광원) — 0~1 rgb, 화면 밖이면 null */
+  lightColAt(x: number, y: number) {
+    const lx = x - this.lbx, ly = y - this.lby;
+    if (lx < 0 || ly < 0 || lx >= this.lbw || ly >= this.lbh) return null;
+    const k = (ly * this.lbw + lx) * 3;
+    return this.lightCol.subarray(k, k + 3);
   }
   lightAt(x: number, y: number) {
     const lx = x - this.lbx, ly = y - this.lby;

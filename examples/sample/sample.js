@@ -503,6 +503,59 @@
       }
     }
   }
+  function sweepLightGrid(L2, w, h, passes, dec, op) {
+    for (let pass = 0; pass < passes; pass++) {
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const k = y * w + x, d = dec[k], open = !op || !op[k];
+        let v = L2[k];
+        if (x > 0 && (!open || !op[k - 1])) v = Math.max(v, L2[k - 1] - d);
+        if (y > 0 && (!open || !op[k - w])) v = Math.max(v, L2[k - w] - d);
+        L2[k] = v;
+      }
+      for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+        const k = y * w + x, d = dec[k], open = !op || !op[k];
+        let v = L2[k];
+        if (x < w - 1 && (!open || !op[k + 1])) v = Math.max(v, L2[k + 1] - d);
+        if (y < h - 1 && (!open || !op[k + w])) v = Math.max(v, L2[k + w] - d);
+        L2[k] = v;
+      }
+    }
+  }
+  var SAMPLES = [[0.5, 0.5], [0.15, 0.15], [0.85, 0.15], [0.15, 0.85], [0.85, 0.85]];
+  function castPointLight(strength, falloff, blocked) {
+    const r = Math.max(1, Math.ceil(strength / falloff)), n = 2 * r + 1, v = new Float32Array(n * n);
+    const opq = new Uint8Array(n * n);
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) opq[(dy + r) * n + dx + r] = blocked(dx, dy) ? 1 : 0;
+    const hits = (tx, ty, px, py) => {
+      const ox = 0.5, oy = 0.5, ddx = px - ox, ddy = py - oy;
+      let cx = 0, cy = 0;
+      const sx = ddx > 0 ? 1 : ddx < 0 ? -1 : 0, sy = ddy > 0 ? 1 : ddy < 0 ? -1 : 0;
+      const tdx = sx ? Math.abs(1 / ddx) : Infinity, tdy = sy ? Math.abs(1 / ddy) : Infinity;
+      let tmx = sx > 0 ? (1 - ox) * tdx : sx < 0 ? ox * tdx : Infinity;
+      let tmy = sy > 0 ? (1 - oy) * tdy : sy < 0 ? oy * tdy : Infinity;
+      for (let guard = 0; guard < 4 * n; guard++) {
+        if (tmx < tmy) {
+          tmx += tdx;
+          cx += sx;
+        } else {
+          tmy += tdy;
+          cy += sy;
+        }
+        if (cx === tx && cy === ty) return false;
+        if (opq[(cy + r) * n + cx + r]) return true;
+      }
+      return false;
+    };
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const base = strength - Math.hypot(dx, dy) * falloff;
+      if (base <= 0) continue;
+      let seen = 0;
+      if (dx === 0 && dy === 0) seen = SAMPLES.length;
+      else for (const [sx, sy] of SAMPLES) if (!hits(dx, dy, dx + sx, dy + sy)) seen++;
+      if (seen) v[(dy + r) * n + dx + r] = base * seen / SAMPLES.length;
+    }
+    return { r, v };
+  }
 
   // src/engine/i18n/format.ts
   function parse(s, i, stop) {

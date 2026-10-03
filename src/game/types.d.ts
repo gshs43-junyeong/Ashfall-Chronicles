@@ -150,3 +150,5 @@ interface TilePaintKit {
 }
 /** 공장 기계 제작법(MRECIPES) — m 기계 · in 재료 · out 산출 · t 틱 수. */
 interface MRecipeDef { m: string; in: Record<string, number>; out: Record<string, number>; t: number; [k: string]: any; }
+/** 점 광원 하나가 둘레에 주는 빛(그늘 계산 끝) — World.lightPatch 가 광원 칸마다 저장한다. */
+interface LightPatch { s: number; x: number; y: number; r: number; v: Float32Array; used: number; }
