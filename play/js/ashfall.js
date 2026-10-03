@@ -29937,6 +29937,9 @@
       const w = this.weapon();
       const wdmg = w && idef(w).dmg ? itemDamage(w) : 10;
       const ang = angleTo(this.cx, this.cy, mx, my);
+      this.facing = Math.cos(ang) >= 0 ? 1 : -1;
+      const fo = { x: this.cx, y: this.cy, foot: this.y + this.h, ang, f: this.facing, mx, my };
+      const GEN = "s_cleave s_charge s_guard s_warcry s_volley s_rain s_pierce s_smoke s_fireball s_nova s_heal s_barrier s_quake";
       switch (id) {
         case "s_cleave": {
           const dmg = this.scaleDmg(wdmg * sk.v(r) / 100, "str");
@@ -30003,6 +30006,7 @@
             const wx = this.cx + (k - 1) * 26;
             app.ents.push(new Wolf(wx, this.cy, this));
             app.sigilFx(wx, this.y + this.h - 6, 22, "#c8b88a");
+            app.skillVfx("s_wolf", { ...fo, wx });
             for (let j = 0; j < SIG_FX.wolf.n; j++)
               app.parts.push(new Part(wx + (Math.random() - 0.5) * 26, this.y + this.h - 8, "#c8b88a", -70, 0.8));
           }
@@ -30026,6 +30030,7 @@
               app.after(step * 0.05, () => {
                 const x = this.cx + dir * (34 + step * 34);
                 app.aoe(x, foot - 14, 40, dmg / 2, 5, "#c8845a", "frost");
+                app.skillVfx("s_quake_step", { ...fo, x });
                 for (let k = 0; k < 4; k++)
                   app.parts.push(new Part(x + (Math.random() - 0.5) * 24, foot - 4, "#c8845a", -180, 0.5));
               });
@@ -30099,6 +30104,10 @@
           }
           best.markT = 10;
           best.markAmt = sk.v(r) / 100;
+          {
+            const tg = best;
+            app.skillVfx("s_mark", { ...fo, at: () => tg.dead ? null : [tg.cx, tg.cy], r: tg.w / 2 + 16, tx: tg.cx, ty: tg.cy });
+          }
           app.ringFx(best.cx, best.cy, best.w + 26, "#e8d05a", 0.5);
           for (let k = 0; k < 12; k++) app.parts.push(new Part(best.cx, best.y, "#e8d05a", -60, 0.7));
           break;
@@ -30131,7 +30140,9 @@
             }
             if (!best) break;
             hit.add(best);
-            app.boltFx(fx2, fy, best.cx, best.cy, "#ffe86a");
+            app.boltFx(fx2, fy, best.cx, best.cy, "#ffe86a", 0.36);
+            app.boltFx(fx2, fy, best.cx, best.cy, "#fff8c0", 0.3);
+            app.skillVfx("s_chain_hop", { ...fo, tx: best.cx, ty: best.cy });
             const crit = this.rollCrit();
             best.hurt(power * (crit ? 1 + this.d.critD / 100 : 1), crit, this, 2);
             best.slow(0.25, 1.5);
@@ -30168,6 +30179,7 @@
             app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 24, this.cy + (Math.random() - 0.5) * 34, "#c08fff", -40, 0.7));
           }
           app.boltFx(ox, oy, this.cx, this.cy, "#c08fff");
+          app.skillVfx("s_blink", { ...fo, x: this.cx, y: this.cy, ox, oy });
           break;
         }
         case "s_meteor": {
@@ -30185,6 +30197,7 @@
               app.parts.push(new Part(tx + Math.cos(a) * d2, ty + Math.sin(a) * d2, k % 3 ? "#ffb04a" : "#fff0c0", -150, 1));
             }
             app.flashFx(tx, ty, 230, "#fff0c0");
+            app.skillVfx("s_meteor", { ...fo, tx, ty });
             const h = SKILL_HIT.meteor;
             app.shake = Math.max(app.shake, h.k);
             app.hitStop(h.st);
@@ -30193,6 +30206,7 @@
           break;
         }
       }
+      if (GEN.includes(id)) app.skillVfx(id, fo);
       const fx = SKILL_FX[id] || {};
       if (fx.c) app.ringFx(this.cx, this.cy, fx.r || 44, fx.c, 0.26);
       if (fx.k) app.shake = Math.max(app.shake, fx.k);
@@ -30482,6 +30496,9 @@
           if (aabb(this.rect(), e.rect())) {
             this.chargeHit.add(e);
             e.hurt(this.chargeDmg, this.rollCrit(), this, 14, hitFam(this.weapon()));
+            app.skillVfx("s_charge_hit", { x: e.cx, y: e.cy, ang: this.vx >= 0 ? 0 : Math.PI });
+            app.hitStop(0.05);
+            app.shake = Math.max(app.shake, 8);
           }
         }
       }
@@ -30491,6 +30508,7 @@
         if (this.channel.tick <= 0) {
           this.channel.tick = 0.28;
           app.aoe(this.cx, this.cy, 96, this.channel.dmg * 0.28, 3, "#ffcf6a");
+          app.skillVfx("s_whirl", { x: this.cx, y: this.cy, a0: this.channel.a0 = (this.channel.a0 || 0) + 2.4 });
           app.sfx("sk_whirl", app.strokeRate());
           app.shake = Math.max(app.shake, 3);
           const foot = this.y + this.h;
@@ -36526,14 +36544,14 @@
       this.warns.length = 0;
     }
     draw(c, camX, camY) {
-      const TAU2 = Math.PI * 2;
+      const TAU3 = Math.PI * 2;
       for (const r of this.rings) {
         const k = r.t / r.max;
         c.strokeStyle = r.c;
         c.globalAlpha = k * 0.8;
         c.lineWidth = 3;
         c.beginPath();
-        c.arc(r.x - camX, r.y - camY, r.r * (1.3 - k * 0.3), 0, TAU2);
+        c.arc(r.x - camX, r.y - camY, r.r * (1.3 - k * 0.3), 0, TAU3);
         c.stroke();
       }
       for (const w of this.warns) {
@@ -36541,13 +36559,13 @@
         c.globalAlpha = 0.22 + 0.2 * Math.sin(k * 18);
         c.fillStyle = w.c;
         c.beginPath();
-        c.arc(x, y, w.r * k, 0, TAU2);
+        c.arc(x, y, w.r * k, 0, TAU3);
         c.fill();
         c.globalAlpha = 0.85;
         c.strokeStyle = w.c;
         c.lineWidth = 2.5;
         c.beginPath();
-        c.arc(x, y, w.r, 0, TAU2);
+        c.arc(x, y, w.r, 0, TAU3);
         c.stroke();
       }
       for (const b of this.bolts) {
@@ -36601,6 +36619,337 @@
     }
     clear() {
       this.shots.length = 0;
+    }
+  };
+
+  // src/engine/fx/vfx.ts
+  var TAU2 = Math.PI * 2;
+  var easeOut = (k) => 1 - (1 - k) * (1 - k);
+  var Vfx = class {
+    /** density — 불티 · 조각 수 배율(화질 설정) · cap — 한꺼번에 남는 도형 상한 */
+    constructor(density = 1, cap = 600, rand = Math.random) {
+      this.list = [];
+      this.density = density;
+      this.cap = cap;
+      this.rand = rand;
+    }
+    add(f) {
+      if (this.list.length < this.cap) this.list.push(f);
+    }
+    n(k) {
+      return Math.max(1, Math.round(k * this.density));
+    }
+    /** 칼선 — 각 a0 에서 a1 로 휘둘러 나가는 초승달(반지름 r · 굵기 w). 머리가 수명의 4할에 끝까지 가고 꼬리가 따라 지운다 */
+    slash(x, y, r, a0, a1, c, life = 0.26, w = 14) {
+      this.add({ k: "slash", x, y, r, a0, a1, c, w, t: life, max: life });
+    }
+    /** 충격파 — 0 에서 r 로 빨리 벌어지다 느려지는 고리, 두께 w 가 얇아지며 사라진다(sy < 1 이면 바닥에 눕힌 타원) */
+    shock(x, y, r, c, life = 0.4, w = 10, sy = 1) {
+      this.add({ k: "shock", x, y, r, c, w, sy, t: life, max: life });
+    }
+    /** 섬광 — 둥근 빛 + 네 갈래 빛살 */
+    flare(x, y, s, c, life = 0.22) {
+      this.add({ k: "flare", x, y, s, c, rot: this.rand() * 0.6, t: life, max: life });
+    }
+    /** 불티 줄기 — 속도 방향으로 늘어진 선. ang 쪽으로 spread 폭 안에서 n 개 */
+    sparks(x, y, n, c, speed = 420, ang = 0, spread = TAU2, life = 0.35, g = 600) {
+      for (let i = 0, m = this.n(n); i < m; i++) {
+        const a = ang + (this.rand() - 0.5) * spread, v = speed * (0.45 + this.rand() * 0.75);
+        const l = life * (0.6 + this.rand() * 0.6);
+        this.add({ k: "spark", x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g, len: 0.035, c, t: l, max: l });
+      }
+    }
+    /** 마법진 — 겹 원 + n 각 별 + 눈금. 튀어나오듯 커졌다가 돌며 사라진다 */
+    sigil(x, y, r, c, life = 0.7, n = 6, spin = 1.2, sy = 1) {
+      this.add({ k: "sigil", x, y, r, c, n, spin, sy, t: life, max: life });
+    }
+    /** 얼음 · 수정 조각 — 돌며 바깥으로 */
+    shards(x, y, n, c, speed = 360, life = 0.5, s = 7) {
+      for (let i = 0, m = this.n(n); i < m; i++) {
+        const a = i / m * TAU2 + this.rand() * 0.4, v = speed * (0.6 + this.rand() * 0.6);
+        this.add({ k: "shard", x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, a, va: (this.rand() - 0.5) * 14, s: s * (0.7 + this.rand() * 0.6), c, t: life, max: life });
+      }
+    }
+    /** 땅 갈라짐 — (x, y) 에서 dir 쪽으로 len 만큼 지그재그 금(바닥을 따라). 빛나다 식는다 */
+    crack(x, y, dir, len, c, life = 0.7) {
+      const pts = [[x, y]];
+      let px = x, py = y;
+      for (let d = 0; d < len; ) {
+        const st = 10 + this.rand() * 14;
+        d += st;
+        px += dir * st;
+        py = y + (this.rand() - 0.5) * 7;
+        pts.push([px, py]);
+      }
+      this.add({ k: "crack", pts, c, t: life, max: life });
+    }
+    /** 빛기둥 — 바닥 (x, y) 에서 위로 h, 폭 w */
+    column(x, y, w, h, c, life = 0.6) {
+      this.add({ k: "column", x, y, w, h, c, t: life, max: life });
+    }
+    /** 연기 덩이 — 부풀며 옅어진다(보통 섞기) */
+    puffs(x, y, n, r, c, life = 1.1, spread = 40) {
+      for (let i = 0, m = this.n(n); i < m; i++) {
+        const a = this.rand() * TAU2, d = this.rand() * spread, l = life * (0.7 + this.rand() * 0.5);
+        this.add({
+          k: "puff",
+          x: x + Math.cos(a) * d,
+          y: y + Math.sin(a) * d * 0.6,
+          r: r * (0.6 + this.rand() * 0.6),
+          vx: Math.cos(a) * 40,
+          vy: -20 - this.rand() * 30,
+          c,
+          t: l,
+          max: l
+        });
+      }
+    }
+    /** 조준 — 네 모서리 괄호가 과녁(at() — 사라지면 null)으로 조여 들며 돈다 */
+    reticle(at, r, c, life = 0.8) {
+      this.add({ k: "reticle", at, r, c, t: life, max: life });
+    }
+    /** 빛줄기 — 두 점을 잇는 굵은 빛(관통 화살 · 순간이동 자국) */
+    beam(x0, y0, x1, y1, c, life = 0.25, w = 8) {
+      this.add({ k: "beam", x0, y0, x1, y1, c, w, t: life, max: life });
+    }
+    update(dt) {
+      const L = this.list;
+      for (let i = L.length - 1; i >= 0; i--) {
+        const f = L[i];
+        f.t -= dt;
+        if (f.t <= 0) {
+          L.splice(i, 1);
+          continue;
+        }
+        if (f.k === "spark") {
+          f.x += f.vx * dt;
+          f.y += f.vy * dt;
+          f.vy += f.g * dt;
+          f.vx *= 1 - 2.2 * dt;
+        } else if (f.k === "shard") {
+          f.x += f.vx * dt;
+          f.y += f.vy * dt;
+          f.vy += 520 * dt;
+          f.vx *= 1 - 2.5 * dt;
+          f.a += f.va * dt;
+        } else if (f.k === "puff") {
+          f.x += f.vx * dt;
+          f.y += f.vy * dt;
+          f.vx *= 1 - 1.8 * dt;
+        }
+      }
+    }
+    clear() {
+      this.list.length = 0;
+    }
+    draw(c, camX, camY) {
+      if (!this.list.length) return;
+      c.save();
+      for (const f of this.list) {
+        if (f.k !== "puff") continue;
+        const k = f.t / f.max, r = f.r * (1.6 - k * 0.6), x = f.x - camX, y = f.y - camY;
+        const g = c.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, f.c);
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        c.globalAlpha = 0.55 * Math.min(1, k * 1.6);
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(x, y, r, 0, TAU2);
+        c.fill();
+      }
+      c.globalCompositeOperation = "lighter";
+      c.lineCap = "round";
+      c.lineJoin = "round";
+      for (const f of this.list) {
+        const k = f.t / f.max, p = 1 - k;
+        switch (f.k) {
+          case "slash": {
+            const x = f.x - camX, y = f.y - camY;
+            const head = f.a0 + (f.a1 - f.a0) * Math.min(1, p / 0.4), tail = f.a0 + (f.a1 - f.a0) * Math.max(0, (p - 0.25) / 0.75);
+            if (Math.abs(head - tail) < 0.01) break;
+            const steps = Math.max(6, Math.ceil(Math.abs(head - tail) * 10));
+            for (const [ws, col, al] of [[1.6, f.c, 0.28], [1, f.c, 0.75], [0.35, "#ffffff", 0.9]]) {
+              c.globalAlpha = al * Math.min(1, k * 2.2);
+              c.strokeStyle = col;
+              for (let i = 0; i < steps; i++) {
+                const u0 = i / steps, u1 = (i + 1) / steps;
+                c.lineWidth = Math.max(0.5, f.w * ws * (0.15 + 0.85 * u1));
+                c.beginPath();
+                c.arc(x, y, f.r, tail + (head - tail) * u0, tail + (head - tail) * u1, f.a1 < f.a0);
+                c.stroke();
+              }
+            }
+            break;
+          }
+          case "shock": {
+            const r = f.r * easeOut(Math.min(1, p * 1.35)), x = f.x - camX, y = f.y - camY;
+            for (const [lw, col, al] of [[f.w * k * 2.2, f.c, 0.25], [Math.max(1, f.w * k), f.c, 0.85], [Math.max(0.5, f.w * k * 0.3), "#ffffff", 0.7]]) {
+              c.globalAlpha = al * k;
+              c.strokeStyle = col;
+              c.lineWidth = lw;
+              c.beginPath();
+              c.ellipse(x, y, r, r * f.sy, 0, 0, TAU2);
+              c.stroke();
+            }
+            break;
+          }
+          case "flare": {
+            const x = f.x - camX, y = f.y - camY, s = f.s * (0.6 + 0.4 * easeOut(Math.min(1, p * 3)));
+            const g = c.createRadialGradient(x, y, 0, x, y, s);
+            g.addColorStop(0, "#ffffff");
+            g.addColorStop(0.25, f.c);
+            g.addColorStop(1, "rgba(0,0,0,0)");
+            c.globalAlpha = 0.85 * k;
+            c.fillStyle = g;
+            c.beginPath();
+            c.arc(x, y, s, 0, TAU2);
+            c.fill();
+            c.strokeStyle = f.c;
+            c.lineWidth = 2;
+            for (let i = 0; i < 4; i++) {
+              const a = f.rot + i * Math.PI / 2 + p * 0.8, l = s * (i % 2 ? 1.1 : 1.6);
+              c.globalAlpha = 0.9 * k;
+              c.beginPath();
+              c.moveTo(x - Math.cos(a) * l, y - Math.sin(a) * l);
+              c.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
+              c.stroke();
+            }
+            break;
+          }
+          case "spark": {
+            c.globalAlpha = Math.min(1, k * 1.5);
+            c.strokeStyle = f.c;
+            c.lineWidth = 1.8;
+            const x = f.x - camX, y = f.y - camY;
+            c.beginPath();
+            c.moveTo(x - f.vx * f.len, y - f.vy * f.len);
+            c.lineTo(x, y);
+            c.stroke();
+            break;
+          }
+          case "sigil": {
+            const x = f.x - camX, y = f.y - camY, s = f.r * (p < 0.15 ? easeOut(p / 0.15) * 1.08 : 1.08 - 0.08 * Math.min(1, (p - 0.15) * 4));
+            const rot = p * f.spin * TAU2 * 0.25;
+            c.globalAlpha = Math.min(1, k * 2) * 0.9;
+            c.strokeStyle = f.c;
+            c.save();
+            c.translate(x, y);
+            c.scale(1, f.sy);
+            c.lineWidth = 2;
+            c.beginPath();
+            c.arc(0, 0, s, 0, TAU2);
+            c.stroke();
+            c.lineWidth = 1.2;
+            c.beginPath();
+            c.arc(0, 0, s * 0.78, 0, TAU2);
+            c.stroke();
+            c.rotate(rot);
+            c.lineWidth = 1.6;
+            c.beginPath();
+            for (let i = 0; i <= f.n; i++) {
+              const a = i * 2 % f.n / f.n * TAU2 - Math.PI / 2, px = Math.cos(a) * s * 0.78, py = Math.sin(a) * s * 0.78;
+              if (i) c.lineTo(px, py);
+              else c.moveTo(px, py);
+            }
+            c.stroke();
+            c.rotate(-rot * 2);
+            for (let i = 0; i < f.n * 3; i++) {
+              const a = i / (f.n * 3) * TAU2;
+              c.beginPath();
+              c.moveTo(Math.cos(a) * s * 0.84, Math.sin(a) * s * 0.84);
+              c.lineTo(Math.cos(a) * s * (i % 3 ? 0.92 : 0.98), Math.sin(a) * s * (i % 3 ? 0.92 : 0.98));
+              c.stroke();
+            }
+            c.restore();
+            break;
+          }
+          case "shard": {
+            const x = f.x - camX, y = f.y - camY;
+            c.globalAlpha = Math.min(1, k * 1.8);
+            c.fillStyle = f.c;
+            c.save();
+            c.translate(x, y);
+            c.rotate(f.a);
+            c.beginPath();
+            c.moveTo(f.s * 1.4, 0);
+            c.lineTo(-f.s * 0.6, f.s * 0.45);
+            c.lineTo(-f.s * 0.6, -f.s * 0.45);
+            c.closePath();
+            c.fill();
+            c.globalAlpha *= 0.8;
+            c.fillStyle = "#ffffff";
+            c.beginPath();
+            c.moveTo(f.s * 0.9, 0);
+            c.lineTo(-f.s * 0.2, f.s * 0.15);
+            c.lineTo(-f.s * 0.2, -f.s * 0.15);
+            c.closePath();
+            c.fill();
+            c.restore();
+            break;
+          }
+          case "crack": {
+            const n = Math.max(2, Math.ceil(f.pts.length * Math.min(1, p * 5)));
+            for (const [lw, col, al] of [[6, f.c, 0.3], [2.2, f.c, 0.9], [0.9, "#fff4d8", 0.8]]) {
+              c.globalAlpha = al * k;
+              c.strokeStyle = col;
+              c.lineWidth = lw;
+              c.beginPath();
+              for (let i = 0; i < n; i++) {
+                const q = f.pts[i];
+                if (i) c.lineTo(q[0] - camX, q[1] - camY);
+                else c.moveTo(q[0] - camX, q[1] - camY);
+              }
+              c.stroke();
+            }
+            break;
+          }
+          case "column": {
+            const x = f.x - camX, y = f.y - camY, w = f.w * (0.5 + 0.5 * easeOut(Math.min(1, p * 4))) * (0.6 + 0.4 * k);
+            const g = c.createLinearGradient(0, y - f.h, 0, y);
+            g.addColorStop(0, "rgba(0,0,0,0)");
+            g.addColorStop(0.6, f.c);
+            g.addColorStop(1, "#ffffff");
+            c.globalAlpha = 0.6 * k;
+            c.fillStyle = g;
+            c.fillRect(x - w / 2, y - f.h, w, f.h);
+            c.globalAlpha = 0.8 * k;
+            c.fillRect(x - w / 6, y - f.h * 0.9, w / 3, f.h * 0.9);
+            break;
+          }
+          case "reticle": {
+            const at = f.at();
+            if (!at) break;
+            const x = at[0] - camX, y = at[1] - camY, r = f.r * (1 + 0.8 * (1 - easeOut(Math.min(1, p * 3)))), rot = p * 2.2;
+            c.globalAlpha = Math.min(1, k * 2.5);
+            c.strokeStyle = f.c;
+            c.lineWidth = 2.2;
+            for (let i = 0; i < 4; i++) {
+              const a = rot + i * Math.PI / 2;
+              c.beginPath();
+              c.arc(x, y, r, a - 0.35, a + 0.35);
+              c.stroke();
+              c.beginPath();
+              c.moveTo(x + Math.cos(a) * (r + 6), y + Math.sin(a) * (r + 6));
+              c.lineTo(x + Math.cos(a) * (r - 6), y + Math.sin(a) * (r - 6));
+              c.stroke();
+            }
+            break;
+          }
+          case "beam": {
+            for (const [lw, col, al] of [[f.w * 2.4, f.c, 0.22], [f.w, f.c, 0.7], [f.w * 0.3, "#ffffff", 0.9]]) {
+              c.globalAlpha = al * k;
+              c.strokeStyle = col;
+              c.lineWidth = lw * (0.4 + 0.6 * k);
+              c.beginPath();
+              c.moveTo(f.x0 - camX, f.y0 - camY);
+              c.lineTo(f.x1 - camX, f.y1 - camY);
+              c.stroke();
+            }
+            break;
+          }
+        }
+      }
+      c.restore();
     }
   };
 
@@ -37031,6 +37380,7 @@
         fade: new ScreenFade(),
         perf: new PerfPanel(),
         shapes: new ShapeFx(),
+        vfx: new Vfx(),
         trail: new Afterimages(0.028, 0.2, 7),
         entHash: new SpatialHash(64),
         /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
@@ -37489,6 +37839,7 @@
       this.tweens.clear();
       this.corpses = [];
       this.shapes.clear();
+      this.vfx.clear();
       this.trail.clear();
       this.sigs = [];
       this.edge = null;
@@ -37710,7 +38061,9 @@
       }
       stepParticles(this.parts, dt, QUALITY[this.quality()].parts);
       this.shapes.update(dt);
-      this.trail.update(dt, p.dashV > 0 && !p.swimming, p.x, p.y, () => ({ fr: this.playerFrame(p), flip: p.facing < 0, key: "player_" + CHAR_OF(p.charId).id }));
+      this.vfx.density = QUALITY[this.quality()].parts / PART_CAP;
+      this.vfx.update(dt);
+      this.trail.update(dt, (p.dashV > 0 || p.chargeT > 0) && !p.swimming, p.x, p.y, () => ({ fr: this.playerFrame(p), flip: p.facing < 0, key: "player_" + CHAR_OF(p.charId).id }));
       this.walkDust(p);
       for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
       for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
@@ -38610,6 +38963,7 @@
         this.tweens.clear();
         this.boss = null;
         this.shapes.clear();
+        this.vfx.clear();
         this.trail.clear();
         this.sigs = [];
         this.edge = null;
@@ -39151,12 +39505,129 @@
       this.shapes.ring(x, y, r, c, life || 0.3);
     },
     /** 두 점을 잇는 번개. */
-    boltFx(x0, y0, x1, y1, c) {
-      this.shapes.bolt(x0, y0, x1, y1, c);
+    boltFx(x0, y0, x1, y1, c, life) {
+      this.shapes.bolt(x0, y0, x1, y1, c, life);
     },
     /** 떨어질 자리 예고 — 차오르는 원. */
     warnFx(x, y, r, dur, c) {
       this.shapes.warn(x, y, r, dur, c);
+    },
+    /** 스킬 연출 — 무엇을 했는지 한눈에 읽히게(칼선 · 갈라진 땅 · 마법진 · 빛기둥). 판정은 player-combat 이 하고 여기는 그림만.
+        o: x·y(몸 가운데) · foot(발 높이) · ang(겨눈 각) · f(바라보는 쪽) · mx·my(겨눈 자리) */
+    skillVfx(id, o) {
+      const v = this.vfx, { x, y, foot, ang, f } = o;
+      switch (id) {
+        case "s_cleave":
+          v.slash(x, y, 70, ang - Math.PI * 0.9 * f, ang + Math.PI * 1.1 * f, "#ffb24a", 0.3, 18);
+          v.slash(x, y, 98, ang + Math.PI * f, ang - Math.PI * f, "#ffd88a", 0.34, 10);
+          v.shock(x, y, 112, "#ffb24a", 0.36, 8);
+          v.sparks(x, y, 18, "#ffd07a", 520, 0, TAU, 0.35, 400);
+          break;
+        case "s_charge":
+          v.puffs(x - f * 14, foot - 6, 5, 16, "rgba(170,150,120,.8)", 0.6, 10);
+          v.sparks(x, y, 10, "#ffe0a0", 600, ang + Math.PI, 0.5, 0.25, 0);
+          v.flare(x + Math.cos(ang) * 14, y + Math.sin(ang) * 14, 26, "#ffd07a", 0.18);
+          break;
+        case "s_charge_hit":
+          v.flare(x, y, 40, "#ffd07a", 0.2);
+          v.shock(x, y, 44, "#ffe0a0", 0.25, 6);
+          v.sparks(x, y, 14, "#ffd07a", 560, ang, 1.4, 0.3, 500);
+          break;
+        case "s_whirl":
+          v.slash(x, y, 62, o.a0, o.a0 + TAU * 0.8, "#ffcf6a", 0.24, 12);
+          v.slash(x, y, 84, o.a0 + Math.PI, o.a0 + Math.PI + TAU * 0.6, "#fff0c0", 0.22, 7);
+          v.sparks(x, y, 4, "#ffd07a", 380, o.a0, TAU, 0.25, 300);
+          break;
+        case "s_quake":
+          v.crack(x, foot, -1, 200, "#ff9a4a", 0.9);
+          v.crack(x, foot, 1, 200, "#ff9a4a", 0.9);
+          v.crack(x, foot, -1, 120, "#ffc07a", 0.7);
+          v.crack(x, foot, 1, 120, "#ffc07a", 0.7);
+          v.shock(x, foot, 150, "#c8845a", 0.5, 12, 0.3);
+          v.flare(x, foot, 46, "#ffb070", 0.22);
+          v.puffs(x, foot - 8, 8, 20, "rgba(150,120,90,.85)", 0.9, 60);
+          break;
+        case "s_quake_step":
+          v.sparks(o.x, foot, 5, "#d8a070", 380, -Math.PI / 2, 1.1, 0.45, 900);
+          v.shock(o.x, foot - 4, 30, "#ffb070", 0.3, 5, 0.4);
+          break;
+        case "s_guard":
+          v.sigil(x, y, 34, "#e8b86a", 0.55, 6, 0.5, 1.3);
+          v.shock(x, y, 56, "#d8a05a", 0.35, 6);
+          v.sparks(x, y, 10, "#fff0c0", 300, 0, TAU, 0.3, 200);
+          break;
+        case "s_warcry":
+          v.flare(x, y - 6, 54, "#ffd88a", 0.28);
+          v.shock(x, y, 200, "#e8a04a", 0.55, 12);
+          this.after(0.08, () => v.shock(x, y, 150, "#ffd88a", 0.45, 8));
+          this.after(0.16, () => v.shock(x, y, 100, "#fff0c0", 0.35, 5));
+          v.sparks(x, y, 16, "#ffb24a", 600, 0, TAU, 0.35, 0);
+          break;
+        case "s_volley":
+          v.flare(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 30, "#bff09a", 0.16);
+          v.sparks(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 12, "#d8ffb0", 700, ang, 1, 0.22, 0);
+          break;
+        case "s_rain":
+          v.sigil(o.mx, o.my, 130, "#9fe07a", 1, 8, 0.6, 0.28);
+          v.flare(o.mx, o.my - 430, 50, "#d8ffb0", 0.5);
+          break;
+        case "s_pierce":
+          v.beam(x, y - 4, x + Math.cos(ang) * 620, y - 4 + Math.sin(ang) * 620, "#bff09a", 0.28, 7);
+          v.flare(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 40, "#d8ffb0", 0.2);
+          v.sparks(x, y - 4, 10, "#d8ffb0", 800, ang, 0.35, 0.25, 0);
+          break;
+        case "s_smoke":
+          v.puffs(x, y, 16, 34, "rgba(184,200,176,.9)", 1.4, 70);
+          v.shock(x, y, 150, "#b8c8b0", 0.45, 6);
+          break;
+        case "s_mark":
+          v.reticle(o.at, o.r, "#ffe070", 0.9);
+          v.flare(o.tx, o.ty, 34, "#ffe070", 0.25);
+          break;
+        case "s_fireball":
+          v.flare(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 34, "#ffb060", 0.18);
+          v.sparks(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 10, "#ffc070", 360, ang, 1.2, 0.3, -200);
+          break;
+        case "s_nova":
+          v.sigil(x, foot - 2, 150, "#9fe0ff", 0.75, 6, 1, 0.3);
+          v.shards(x, y, 18, "#bfefff", 420, 0.55, 8);
+          v.shock(x, y, 165, "#9fe0ff", 0.45, 10);
+          v.flare(x, y, 50, "#dff6ff", 0.24);
+          break;
+        case "s_heal":
+          v.column(x, foot, 46, 150, "#9ff09f", 0.75);
+          v.sigil(x, foot - 2, 44, "#9ff09f", 0.8, 5, 0.8, 0.3);
+          v.sparks(x, foot - 10, 14, "#d8ffd0", 220, -Math.PI / 2, 1.2, 0.8, -60);
+          break;
+        case "s_barrier":
+          v.sigil(x, y, 38, "#8fc8ff", 0.7, 6, 0.6, 1.35);
+          v.shards(x, y, 10, "#bfe0ff", 220, 0.45, 6);
+          v.flare(x, y, 40, "#bfe0ff", 0.22);
+          break;
+        case "s_wolf":
+          v.column(o.wx, foot, 30, 110, "#e8d8a8", 0.6);
+          v.flare(o.wx, foot - 14, 30, "#fff0c8", 0.25);
+          break;
+        case "s_chain_hop":
+          v.flare(o.tx, o.ty, 32, "#fff0a0", 0.2);
+          v.sparks(o.tx, o.ty, 8, "#ffe86a", 420, 0, TAU, 0.25, 0);
+          break;
+        case "s_blink":
+          v.beam(o.ox, o.oy, x, y, "#c08fff", 0.3, 10);
+          v.flare(o.ox, o.oy, 44, "#d8b8ff", 0.25);
+          v.flare(x, y, 36, "#d8b8ff", 0.22);
+          v.shock(o.ox, o.oy, 80, "#c08fff", 0.35, 7);
+          v.shards(o.ox, o.oy, 10, "#d8b8ff", 280, 0.45, 6);
+          break;
+        case "s_meteor":
+          v.flare(o.tx, o.ty, 120, "#fff0c0", 0.35);
+          v.shock(o.tx, o.ty, 170, "#ffb04a", 0.6, 16);
+          this.after(0.1, () => v.shock(o.tx, o.ty, 110, "#fff0c0", 0.45, 9));
+          for (let i = 0; i < 6; i++) v.crack(o.tx, o.ty + 10, i % 2 ? 1 : -1, 90 + i * 25, "#ff9a3a", 1.1);
+          v.sparks(o.tx, o.ty, 34, "#ffc060", 760, -Math.PI / 2, 2.6, 0.7, 900);
+          v.puffs(o.tx, o.ty - 10, 12, 40, "rgba(110,90,80,.85)", 1.6, 110);
+          break;
+      }
     },
     /* ---- 특별한 스킬의 고유 연출 (SIG_FX) ---- */
     sigFx(o) {
@@ -45592,6 +46063,7 @@
         }
       }
       this.shapes.draw(c, camX, camY);
+      this.vfx.draw(c, camX, camY);
       if (this.bossSay) {
         const bs = this.bossSay;
         bs.t -= 1 / 60;

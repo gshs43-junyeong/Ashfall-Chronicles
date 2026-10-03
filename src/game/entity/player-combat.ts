@@ -130,6 +130,9 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     const w = this.weapon();
     const wdmg = w && idef(w).dmg ? itemDamage(w) : 10;
     const ang = angleTo(this.cx, this.cy, mx, my);
+    this.facing = Math.cos(ang) >= 0 ? 1 : -1;      // 시전은 겨눈 쪽을 본다
+    const fo = { x: this.cx, y: this.cy, foot: this.y + this.h, ang, f: this.facing, mx, my };
+    const GEN = 's_cleave s_charge s_guard s_warcry s_volley s_rain s_pierce s_smoke s_fireball s_nova s_heal s_barrier s_quake';
 
     switch (id) {
       case 's_cleave': {
@@ -190,7 +193,8 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         for (let k = 0; k < sk.v!(r); k++) {
           const wx = this.cx + (k - 1) * 26;
           G.ents.push(new Wolf(wx, this.cy, this));
-          G.sigilFx(wx, this.y + this.h - 6, 22, '#c8b88a');   // 22 — 늑대 간격이 26이라 30은 셋이 한 덩이로 뭉쳤다
+          G.sigilFx(wx, this.y + this.h - 6, 22, '#c8b88a');
+          G.skillVfx('s_wolf', { ...fo, wx });   // 22 — 늑대 간격이 26이라 30은 셋이 한 덩이로 뭉쳤다
           for (let j = 0; j < SIG_FX.wolf.n; j++)
             G.parts.push(new Part(wx + (Math.random() - .5) * 26, this.y + this.h - 8, '#c8b88a', -70, .8));
         }
@@ -217,6 +221,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
             G.after(step * 0.05, () => {
                 const x = this.cx + dir * (34 + step * 34);
                 G.aoe(x, foot - 14, 40, dmg / 2, 5, '#c8845a', 'frost');
+                G.skillVfx('s_quake_step', { ...fo, x });
                 for (let k = 0; k < 4; k++)
                   G.parts.push(new Part(x + (Math.random() - .5) * 24, foot - 4, '#c8845a', -180, .5));
               });
@@ -272,6 +277,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         }
         if (!best) { this.cd[id] = 1; this.mp += sk.mana!; G.toast(tr('겨눈 곳에 적이 없다'), 'bad'); return; }
         best.markT = 10; best.markAmt = sk.v!(r) / 100;
+        { const tg = best; G.skillVfx('s_mark', { ...fo, at: () => tg.dead ? null : [tg.cx, tg.cy], r: tg.w / 2 + 16, tx: tg.cx, ty: tg.cy }); }
         G.ringFx(best.cx, best.cy, best.w + 26, '#e8d05a', .5);
         for (let k = 0; k < 12; k++) G.parts.push(new Part(best.cx, best.y, '#e8d05a', -60, .7));
         break;
@@ -302,7 +308,9 @@ export const PlayerCombat: Bag & ThisType<Player> = {
           }
           if (!best) break;
           hit.add(best);
-          G.boltFx(fx, fy, best.cx, best.cy, '#ffe86a');
+          G.boltFx(fx, fy, best.cx, best.cy, '#ffe86a', 0.36);
+          G.boltFx(fx, fy, best.cx, best.cy, '#fff8c0', 0.3);     // 두 갈래 — 한 줄은 가늘어 보였다
+          G.skillVfx('s_chain_hop', { ...fo, tx: best.cx, ty: best.cy });
           const crit = this.rollCrit();
           best.hurt(power * (crit ? 1 + this.d.critD / 100 : 1), crit, this, 2);
           best.slow(0.25, 1.5);
@@ -330,6 +338,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
           G.parts.push(new Part(this.cx + (Math.random() - .5) * 24, this.cy + (Math.random() - .5) * 34, '#c08fff', -40, .7));
         }
         G.boltFx(ox, oy, this.cx, this.cy, '#c08fff');
+        G.skillVfx('s_blink', { ...fo, x: this.cx, y: this.cy, ox, oy });
         break;
       }
       case 's_meteor': {
@@ -350,12 +359,14 @@ export const PlayerCombat: Bag & ThisType<Player> = {
             }
             /* 착탄 섬광 — 바닥에 깔리므로 적을 지우지 않는다. */
             G.flashFx(tx, ty, 230, '#fff0c0');
+            G.skillVfx('s_meteor', { ...fo, tx, ty });
             const h = SKILL_HIT.meteor;
             G.shake = Math.max(G.shake, h.k); G.hitStop(h.st); G.sfx(h.s);
           });
         break;
       }
     }
+    if (GEN.includes(id)) G.skillVfx(id, fo);
     /* 시전의 끝맺음 — 소리·흔들림·멈춤·고리를 SKILL_FX 한 표에서 가져온다. */
     const fx = SKILL_FX[id] || {};
     if (fx.c) G.ringFx(this.cx, this.cy, fx.r || 44, fx.c, .26);

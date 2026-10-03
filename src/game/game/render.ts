@@ -442,6 +442,7 @@ export const RenderPart: Bag = {
 
     // ---- 고리 · 떨어질 자리 예고 · 번개(engine fx/shapes) ----
     this.shapes.draw(c, camX, camY);
+    this.vfx.draw(c, camX, camY);          // 스킬 연출(engine fx/vfx)
 
     // ---- 보스 대사 (화면 아래) ----
     if (this.bossSay) {
