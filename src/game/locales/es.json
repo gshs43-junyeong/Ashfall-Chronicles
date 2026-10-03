@@ -968,7 +968,8 @@
   "모두 꺼내기": "Sacar todo",
   "쓰러짐": "Caído",
   "{name|이} 쓰러졌다": "{name} ha caído",
-  "{name|이} 다시 일어났다": "{name} se ha levantado"
+  "{name|이} 다시 일어났다": "{name} se ha levantado",
+  "저주에 걸렸다 — 주는 피해가 줄었다": "Maldito: tu daño se ha reducido"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -1369,6 +1370,8 @@
   "BUFFS.well.n": "Bien alimentado",
   "BUFFS.frostbite.n": "Congelación",
   "BUFFS.burn.n": "Quemadura",
+  "BUFFS.poison.n": "Envenenamiento",
+  "BUFFS.weak.n": "Debilidad",
   "BUFFS.swift_kill.n": "Persecución",
   "BUFFS.bulwark.n": "Baluarte",
   "BUFFS.smokescreen.n": "Cortina de humo",

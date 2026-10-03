@@ -581,6 +581,8 @@ export const BFSPEC: Bag = {
   well: { k: 'stew' },
   frostbite: { k: 'snow', c: '#9fe0ff' },
   burn: { k: 'flame', c: '#ff8a3a' },
+  poison: { k: 'drop', c: '#8fd06a', glow: '#8fd06a' },
+  weak: { k: 'skull', c: '#b07aff' },
   swift_kill: { k: 'wind', c: '#9fe0c0' },
   wish: { k: 'coin', c: '#ffd85a' }        // 분수대에 던진 금화
 };

@@ -72,6 +72,19 @@ export const PlayerMove: Bag & ThisType<Player> = {
     for (const k in this.cd) if (this.cd[k] > 0) this.cd[k] = Math.max(0, this.cd[k] - dt);
     for (let i = this.buffs.length - 1; i >= 0; i--) { this.buffs[i].t -= dt; if (this.buffs[i].t <= 0) { this.buffs.splice(i, 1); this.recalc(); } }
 
+    /* 화상 · 중독(몹 스킬 · 원소 탄) — 맞은 게 아니라 타는 것이라 무적 시간과 상관없이 흐른다. 숫자는 0.6초치를 모아 한 번 */
+    let dot = 0;
+    for (const b of this.buffs) if (b.dps > 0) dot += b.dps * dt;
+    if (dot > 0 && this.hp > 0 && !this.remote) {
+      this.hp -= dot; this.dotAcc = (this.dotAcc || 0) + dot; this.dotT = (this.dotT || 0) + dt;
+      if (this.dotT >= 0.6) {
+        const burn = this.buffs.some(b => b.id === 'burn' && b.dps > 0);
+        if (this.dotAcc >= 1) G.texts.push(new DmgText(this.cx, this.y, String(Math.round(this.dotAcc)), burn ? '#ff9a4a' : '#9fd86a', 0));
+        this.dotAcc = 0; this.dotT = 0;
+      }
+      if (this.hp <= 0) { this.hp = 0; G.onDeath('dot'); }
+    }
+
     // 재생
     this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
     if (this.hurtCd <= 0) {
@@ -285,7 +298,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
         const crit = this.rollCrit();
         e.hurt(this.scaleDmg(base, 'str'), crit, this, kb, hitFam(w));
         if (this.d.fire) e.addDot('burn', this.scaleDmg(base, 'str') * 0.12 * this.d.fire, 4);
-        if (this.d.frost) e.slow(0.45, 2.5);
+        if (this.d.frost) e.chill(2.5);
         if (this.d.poison) e.addDot('poison', this.scaleDmg(base, 'str') * 0.13 * this.d.poison, 5);
       }
       /* PvP — 남의 아바타도 같은 판정으로(피해는 주인 화면에서) */

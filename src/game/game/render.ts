@@ -14,7 +14,7 @@ import { TS } from '../world.js';
 import { ALPHA_TILE, BODY_ONLY, CONN, LEAF_TWIG, TOP_SKIP, TileArt } from '../tileart.js';
 import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';
-import { Bomb, Guard, PROJ_FX, PROJ_STYLE, Wolf } from '../entity.js';
+import { Bomb, Enemy, Guard, PROJ_FX, PROJ_STYLE, Wolf } from '../entity.js';
 import { Factory } from '../factory.js';
 import { DAY_CYCLE, Game, MAP_REVEAL_LIGHT, PATH_BUDGET } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
@@ -309,6 +309,7 @@ export const RenderPart: Bag = {
       if (e instanceof Wolf) this.drawWolf(c, e, sx, sy);
       else if (e instanceof Guard) this.drawGuard(c, e, sx, sy);
       else this.drawEnemy(c, e, sx, sy);
+      if (e instanceof Enemy) this.drawStatus(c, e, sx, sy);
     }
 
     // ---- 플레이어 ----
@@ -343,6 +344,7 @@ export const RenderPart: Bag = {
     });
     this.drawPlayer(c, p, p.x - camX, p.y - camY);
     for (const q of this.players) if (q !== p) { this.drawPlayer(c, q, q.x - camX, q.y - camY); this.drawNameTag(c, q, camX, camY); }
+    for (const q of this.players) if (!q.downed) this.drawStatus(c, q, q.x - camX, q.y - camY);
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
     for (const q of this.players) if (q.remote && q.petEnts) for (const pet of q.petEnts) if (pet) this.drawPet(c, pet, camX, camY);
     /* 회오리 검무의 칼선 — 플레이어 바로 위에, 선으로만. */
@@ -544,6 +546,8 @@ export const RenderPart: Bag = {
         }
       }
     }
+
+    this.drawDebuffEdge(c, this.W, this.H);
 
     // ---- 길잡이 (비네트 위에 얹어야 어두운 곳에서도 읽힌다) ----
     if (this.settings === undefined || this.settings.compass !== false) this.drawCompass(c, camX, camY);

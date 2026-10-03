@@ -250,6 +250,8 @@ export const BUFFS: Record<string, BuffDef> = {
   well: { n: '포만감', i: '🍲', dur: 240, b: { hpreg: 1.2 } },
   frostbite: { n: '동상', i: '🥶', dur: 3, debuff: 1, b: { ms: -30 } },   // 걸음이 30% 느려진다
   burn: { n: '화상', i: '🔥', dur: 4, debuff: 1 },
+  poison: { n: '중독', i: '🤢', dur: 5, debuff: 1 },             // 초당 피해는 건 쪽이 정한다(buff.dps)
+  weak: { n: '쇠약', i: '💀', dur: 6, debuff: 1, b: { dmgP: -0.25 } },   // 몹의 저주 — 주는 피해 -25%
   swift_kill: { n: '추격', i: '💨', dur: 3, b: { ms: 30 } },
   /* 특성으로만 붙는 것들 — 지속 시간은 스킬 랭크가 정하므로 여기 dur 은 기본값일 뿐이다 */
   bulwark: { n: '철벽', i: '🧱', dur: 3, b: { dr: 55 } },

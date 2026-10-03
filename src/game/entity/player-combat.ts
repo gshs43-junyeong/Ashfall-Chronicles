@@ -220,14 +220,14 @@ export const PlayerCombat: Bag & ThisType<Player> = {
           for (let step = 0; step < 5; step++) {
             G.after(step * 0.05, () => {
                 const x = this.cx + dir * (34 + step * 34);
-                G.aoe(x, foot - 14, 40, dmg / 2, 5, '#c8845a', 'frost');
+                G.aoe(x, foot - 14, 40, dmg / 2, 5, '#c8845a', 'slow');
                 G.skillVfx('s_quake_step', { ...fo, x });
                 for (let k = 0; k < 4; k++)
                   G.parts.push(new Part(x + (Math.random() - .5) * 24, foot - 4, '#c8845a', -180, .5));
               });
           }
         }
-        G.aoe(this.cx, foot - 14, 60, dmg, 7, '#c8845a', 'frost');
+        G.aoe(this.cx, foot - 14, 60, dmg, 7, '#c8845a', 'slow');
         break;
       }
       case 's_warcry': {

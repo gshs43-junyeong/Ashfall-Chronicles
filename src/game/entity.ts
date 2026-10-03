@@ -17,6 +17,7 @@ import { CELL_CHARGE } from './data/ruins.js';
 import { DRAGON_FOOD, DRAGON_GATES, PETS, PET_XP_SHARE, dragonStage, levelMult, petAtkMul, petDmgScale, petMaxLv,
   petXpNext } from './data/pets.js';
 import { SIG_FX, idef } from './data/values.js';
+import { PROJ_INFLICT } from './data/mobskills.js';
 import { TS } from './world.js';
 import { STACK_RULES, enhMul, equipReqLv, itemStats, makeItem, rollGear } from './items.js';
 import type { Senses } from '../engine/entity/sense.js';
@@ -81,6 +82,7 @@ export class Player extends Ent {
   declare volley: number;
   declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare _hid: string; declare _wid: string; declare _hurtAt: number; declare petEnts: any[]; declare _pt: string;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
+  declare dotAcc: number; declare dotT: number;
   declare buffs: any[]; declare cd: Record<string, any>; declare channel: Record<string, any> | null; declare charId: string; declare charge: number; declare d: Record<string, any>;
   declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: Record<string, any>; declare facing: number; declare flash: number;
   declare gathered: Record<string, any>; declare gold: number; declare hp: number; declare hurtCd: number; declare iframe: number; declare jetGap: number;
@@ -302,12 +304,20 @@ export class Player extends Ent {
     }
   }
 
-  addBuff(id: string, dur: number) {
+  addBuff(id: string, dur: number, dps = 0) {
     const bd = BUFFS[id]; if (!bd) return;
     const ex = this.buffs.find(b => b.id === id);
-    if (ex) ex.t = Math.max(ex.t, dur || bd.dur!);
-    else this.buffs.push({ id, t: dur || bd.dur });
+    if (ex) { ex.t = Math.max(ex.t, dur || bd.dur!); ex.dps = Math.max(ex.dps || 0, dps); }
+    else this.buffs.push({ id, t: dur || bd.dur, dps });
     this.recalc();
+  }
+  /** 해로운 것을 건다(몹 스킬 · 원소 탄) — 남의 아바타면 그 주인 화면으로 보낸다. 처음 걸릴 때만 몸에 연출(다시 걸려도 겹치지 않는다) */
+  inflict(id: string, dur: number, dps = 0) {
+    if (this.remote) { G.netRemoteInflict(this, id, dur, dps); return; }
+    if (this.dead || this.hp <= 0) return;
+    const had = this.buffs.some(b => b.id === id);
+    this.addBuff(id, dur, dps);
+    if (!had) G.statusOnset(this, id);
   }
 
   /* ---- 피해 ---- */
@@ -390,6 +400,10 @@ export class Enemy extends Ent {
   declare sgBuf: number; declare sgCd: number; declare sgKind: string | null; declare sgRing: number; declare sgStun: number; declare sgT: number;
   declare sgTook: number; declare slowFx: Timed; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
   declare stateT: number; declare think: number; declare type: string; declare weatherBuffed: boolean; declare xp: number;
+  /* 몹 스킬 · 걸린 것(entity/enemy-skills) */
+  declare chillT: number; declare empT: number; declare baseDmg: number; declare cast: Bag | null; declare mskCd: Bag | null; declare skillIds: string[] | null;
+  declare chill: (t: number) => void; declare empower: (dur: number, mult: number) => void; declare mobSkills: (dt: number, player: any, seen: boolean, dd: number) => void;
+  declare allyTarget: (id: string, S: Bag) => any; declare fireSkill: (id: string, player: any, tgt: any) => void;
 
   constructor(type: string, x: number, y: number, scale = 1) {
     const d = ENEMIES[type];
@@ -411,6 +425,7 @@ export class Enemy extends Ent {
     this.atkPose = 0;
     this.lastPhase = 0;
     this.slowT = 0; this.slowF = 1; this.dots = []; this.slowFx = new Timed(1, 'min');
+    this.chillT = 0; this.empT = 0; this.cast = null; this.mskCd = null; this.skillIds = null;
     /* 페이즈 수는 보스마다 다르다(ENEMIES 의 ph) — 사연: docs/code-history.md#h34 */
     this.phases = d.ph || 3;
     this.phase = 0; this.pf = 0; this.state = 0; this.stateT = 0;
@@ -544,7 +559,10 @@ export class Enemy extends Ent {
     this.sgKind = null; this.sgAmt = 0;
   }
   /** 같은 갈래는 3겹까지(engine entity/status) — 빠른 무기로 불을 수십 겹 쌓던 것 */
-  addDot(kind: string, dps: any, dur: number) { addDot(this.dots, kind, dps, dur, 3); }
+  addDot(kind: string, dps: any, dur: number) {
+    if (!this.dots.some(d => d.kind === kind)) G.statusOnset(this, kind);   // 처음 붙는 순간만 — 불이 확 붙는다 · 독이 퍼진다
+    addDot(this.dots, kind, dps, dur, 3);
+  }
   slow(f: any, t: any) { this.slowFx.set(1 - f, t); this.slowF = this.slowFx.v; this.slowT = this.slowFx.t; }   // 겹치면 센 쪽 · 긴 시간(engine entity/status)
 
   /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). */
@@ -829,6 +847,7 @@ export const PROJ_STYLE: Bag = {
   rune: { c: '#9fe8d8', r: 6, glow: 1 },
   void: { c: '#a06fff', r: 7, glow: 1 },
   dark: { c: '#9a5fd8', r: 6, glow: 1 },
+  poison: { c: '#8fd06a', r: 5, glow: 1 },
   bone: { c: '#e8e0c8', r: 5 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */
@@ -836,6 +855,7 @@ export const PHYS_PROJ: Record<string, number> = { arrow: 1, bone: 1, star: 1, b
 
 export class Proj extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
+  declare inflict: [string, number, number?] | null;
   declare crit: boolean; declare dmg: number; declare explode: number; declare fire: number; declare frost: number; declare grav: number;
   declare hitSet: Set<any>; declare life: number; declare pierce: number; declare poison: number; declare team: string; declare type: string;
   declare vol: number; declare ghost: boolean; declare nid: number; declare seenAt: number;   // 멀티플레이 — 참가자 화면의 그림자 투사체
@@ -873,7 +893,7 @@ export class Proj extends Ent {
         // 물리 화살·별조각만 금빛 타격을 얹는다.
         e.hurt(dmg, this.crit, G.player, 3, (this.type === 'arrow' || this.type === 'star' || this.type === 'bullet') ? 'pierce' : null);
         if (this.fire) e.addDot('burn', this.dmg * 0.1, 4);
-        if (this.frost) e.slow(0.4, 2.5);
+        if (this.frost) e.chill(2.5);
         if (this.poison) e.addDot('poison', this.dmg * 0.11 * this.poison, 5);
         if (this.pierce > 0) this.pierce--; else { this.impact(); spent = true; return true; }
       });
@@ -887,7 +907,12 @@ export class Proj extends Ent {
     } else {
       /* 적 투사체는 세계의 플레이어 누구든 맞힌다(혼자면 player 하나). */
       for (const q of (G.players.length ? G.players : [player]))
-        if (aabb(this.rect(), q.rect())) { q.hurt(this.dmg, this.cx); this.impact(); return; }
+        if (aabb(this.rect(), q.rect())) {
+          const inf = this.inflict || PROJ_INFLICT[this.type], open = !(q.iframe > 0) && q.hp > 0;   // 무적으로 피한 탄은 걸지도 않는다
+          q.hurt(this.dmg, this.cx);
+          if (inf && open) q.inflict(inf[0], inf[1], inf[2] ? this.dmg * inf[2] : 0);
+          this.impact(); return;
+        }
     }
     if (this.x < 0 || this.x > WW * TS || this.y > WH * TS || this.y < -400) this.dead = true;
   }
