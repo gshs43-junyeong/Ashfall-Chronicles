@@ -29,7 +29,7 @@ export const TILE_MAT = (() => {
     m[T[k]] = mat;
   });
   put('dirt', 'DIRT GRASS SAND MUD ASH FARMLAND SANDBAG CLOUD SKYGRASS');
-  put('ice', 'SNOW ICE ICEBRICK FROSTGLYPH ICEBANNER');
+  put('ice', 'SNOW ICE ICEBRICK FROSTGLYPH ICEBANNER ICICLE');
   put('wood', 'WOOD PLANK PLATFORM TIMBERWALL FENCE THATCH HAYBALE MINEWOOD BANNER TORCH');
   put('plant', 'LEAF CORRUPTLEAF SKYLEAF JUNGLELEAF GLOWLEAF PINELEAF VINE WEED FLOWER ORCHID FERN '
     + 'LILY MUSHROOM GLOWCAP GLOWMOSS CACTUS CACTUS_BLOCK JUNGLEGRASS SPOREVENT HYPHAE '
@@ -45,7 +45,7 @@ export const TILE_MAT = (() => {
   put('ember', 'LAVA HELLSTONE FLAMEVENT');
   put('bone', 'BONEHEAP');
   put('stone', 'MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE');
-  put('plant', 'HANGMOSS');
+  put('plant', 'HANGMOSS GLOWFROND');
   put('glass', 'GEODE STARCRYSTAL FUSEDROCK');
   put('metal', 'METEORITE COPPERRICH IRONRICH LEADRICH GOLDRICH MYTHRILRICH');
   put('stone', 'COALRICH');
@@ -64,7 +64,7 @@ export const LIGHT_SPEC: Bag = {
   ALTARSTONE: [6, '#e8a0ff'], POD3: [5.6, '#ff9a3a'], SOULSTONE: [5.4, '#c49fff'],
   M_GEN: [5.2, '#ff9a4a'], GLOWMOSS: [5, '#5fd0b8'], SPOREVENT: [4.6, '#8fe0a0'],
   HELLSTONE: [4.4, '#ff5a2a'], SEALSTONE: [4.2, '#d8c080'], GLOWLEAF: [4, '#6fe0c0'],
-  M_BATTERY: [3.8, '#8fd0f0'], M_FLAME: [3.6, '#ff7a3a'], FLAMEVENT: [3.4, '#ff6a2a'],
+  M_BATTERY: [3.8, '#8fd0f0'], GLOWFROND: [3.7, '#7fe8c8'], M_FLAME: [3.6, '#ff7a3a'], FLAMEVENT: [3.4, '#ff6a2a'],
   FROSTGLYPH: [3.2, '#9fd8ea'], SPARKCOIL: [3.1, '#8fd0ff'], ORCHID: [3, '#ff8ac8'],
   CIPHERSTONE: [2.9, '#ffe08a'], ROOT3: [2.8, '#ffe08a'], M_SWITCH: [2.6, '#ff5a5a'],
   GLACIUM: [2.5, '#9fd8e8'], HYPHAE: [2.4, '#8fe0c4'], TIDESTONE: [2.3, '#3fc0a8'],
@@ -109,7 +109,7 @@ export const DECO_MOUNT = (() => {
   for (const k of ['FLOWER', 'WEED', 'CACTUS', 'MUSHROOM', 'FERN', 'ORCHID', 'GLOWCAP', 'STALAGMITE', 'GEODE',
                    'BONEHEAP', 'CANOPIC', 'TOOLPILE', 'SEASHELL', 'CATTAIL', 'PEBBLES']) m[T[k]] = 'floor';
   m[T.PONDWEED] = 'water';   // 고인 물 칸 안, 바닥 위에만 — 물 밖에 놓으면 마른 풀이 된다
-  for (const k of ['STALACTITE', 'HANGMOSS', 'VINE', 'HYPHAE', 'MINELAMP', 'ICEBANNER']) m[T[k]] = 'ceil';
+  for (const k of ['STALACTITE', 'HANGMOSS', 'VINE', 'HYPHAE', 'MINELAMP', 'ICEBANNER', 'ICICLE', 'GLOWFROND']) m[T[k]] = 'ceil';
   return m;
 })();
 /** 장식 타일 → 그 장식 아이템(ITEMS 의 deco: 1). */

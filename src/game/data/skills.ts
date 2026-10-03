@@ -248,7 +248,7 @@ export const BUFFS: Record<string, BuffDef> = {
   iron: { n: '무쇠 피부', i: '🪨', dur: 180, b: { def: 12 } },
   iron_greater: { n: '상급 무쇠 피부', i: '🪨', dur: 240, b: { def: 22 } },
   well: { n: '포만감', i: '🍲', dur: 240, b: { hpreg: 1.2 } },
-  frostbite: { n: '동상', i: '🥶', dur: 3, debuff: 1 },
+  frostbite: { n: '동상', i: '🥶', dur: 3, debuff: 1, b: { ms: -30 } },   // 걸음이 30% 느려진다
   burn: { n: '화상', i: '🔥', dur: 4, debuff: 1 },
   swift_kill: { n: '추격', i: '💨', dur: 3, b: { ms: 30 } },
   /* 특성으로만 붙는 것들 — 지속 시간은 스킬 랭크가 정하므로 여기 dur 은 기본값일 뿐이다 */

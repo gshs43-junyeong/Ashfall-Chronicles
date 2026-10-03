@@ -82,3 +82,35 @@ export function castPointLight(strength: number, falloff: number, blocked: (dx: 
   }
   return { r, v };
 }
+
+/** 방향광(해) — 칸마다 해 쪽으로 거슬러 올라가며 빛이 얼마나 닿는지(0~1)를 R 에 적는다. 화면 칸 수에 비례(매 프레임 돌려도 된다).
+    trans[k]: 그 칸을 지나며 남는 빛(막힌 칸 0 · 잎 0.4 따위 · 빈칸 1) — 막힌 칸도 R 은 받는다(해 쪽 겉면이 밝다), 다음 칸으로 넘기지 않을 뿐.
+    (sx, sy): 칸에서 해를 향하는 방향(sy < 0 = 위). 해가 기울수록 그림자가 길다.
+    sky(x, y): 판 밖(세계 좌표) 칸이 하늘에 트였는가(1/0) — 판 가장자리로 들어오는 빛의 씨앗. */
+export function castSunlight(R: Float32Array, w: number, h: number, x0: number, y0: number, trans: Float32Array,
+  sx: number, sy: number, sky: (x: number, y: number) => number): void {
+  const P = (x: number, y: number): number => {                     // 칸 (x, y)(판 좌표)가 다음 칸으로 넘기는 빛
+    if (x < 0 || x >= w || y < 0 || y >= h) return sky(x0 + x, y0 + y);
+    const k = y * w + x;
+    return R[k] * trans[k];
+  };
+  if (sy >= -1e-6) { R.fill(0, 0, w * h); return; }                 // 해가 지평선 아래
+  const s = sx / -sy;                                                // 한 줄 올라갈 때 옆으로 가는 칸 수(+ = 해가 오른쪽)
+  if (Math.abs(s) <= 1) {
+    /* 위에서 아래로 — 한 칸 위 줄의 x + s 자리(두 칸 사이를 섞는다) */
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const fx = x + s, ix = Math.floor(fx), f = fx - ix;
+      R[y * w + x] = P(ix, y - 1) * (1 - f) + P(ix + 1, y - 1) * f;
+    }
+  } else {
+    /* 해가 낮다 — 해 쪽 옆에서부터 한 열씩: 한 칸 옆 열의 y − 1/|s| 자리 */
+    const dir = s > 0 ? 1 : -1, t = 1 / Math.abs(s);
+    for (let i = 0; i < w; i++) {
+      const x = dir > 0 ? w - 1 - i : i;
+      for (let y = 0; y < h; y++) {
+        const fy = y - t, iy = Math.floor(fy), f = fy - iy;
+        R[y * w + x] = P(x + dir, iy) * (1 - f) + P(x + dir, iy + 1) * f;
+      }
+    }
+  }
+}

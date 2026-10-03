@@ -961,7 +961,8 @@
   "세계는 방을 연 사람 것을 함께 쓴다. 호스트는 제 싱글플레이 세계를 열고, 손님 캐릭터는 그 세계에 남는다. 2~4명.": "Alle teilen die Welt dessen, der den Raum öffnet. Der Host öffnet eine seiner Einzelspieler-Welten, Gast-Charaktere bleiben in dieser Welt. 2–4 Spieler.",
   "영문과 숫자를 섞어 5~6자 — 예: 7K2QM": "5–6 Buchstaben und Ziffern — z. B. 7K2QM",
   "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다.": "Mehrspieler-Charaktere sind vom Einzelspieler getrennt. In einer neuen Welt beginnst du mit diesem Namen und dieser Klasse; die Welt merkt sich dich, und beim nächsten Besuch machst du dort weiter.",
-  "캐릭터를 이 세계에 맡겼다": "Charakter in dieser Welt hinterlegt"
+  "캐릭터를 이 세계에 맡겼다": "Charakter in dieser Welt hinterlegt",
+  "머리 위 고드름이 갈라진다 — 비켜라!": "Der Eiszapfen über dir bricht — weg da!"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4162,6 +4163,12 @@
   "ITEMS.pet_dragon_dark.n": "Schattendrache",
   "ITEMS.pet_dragon_dark.d": "Selbst im Schatten leuchten seine Augen klar.",
   "PETS.dragon_dark.n": "Schattendrache",
-  "PETS.dragon_dark.d": "Selbst im Schatten leuchten seine Augen klar."
+  "PETS.dragon_dark.d": "Selbst im Schatten leuchten seine Augen klar.",
+  "CAVE_TYPES.5.n": "Eishöhle",
+  "CAVE_TYPES.5.line": "Dein Atem gefriert zu weißem Dunst. Die Eiszapfen an der Decke können jeden Moment fallen.",
+  "ITEMS.deco_icicle.n": "Eiszapfen",
+  "ITEMS.deco_glowfrond.n": "Leuchtwedel",
+  "TILE_DEF.199.n": "Eiszapfen",
+  "TILE_DEF.200.n": "Leuchtwedel"
  }
 }

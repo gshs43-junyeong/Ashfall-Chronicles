@@ -45,7 +45,8 @@ export const WorldCaves: Bag & ThisType<World> = {
           this.caveGrid[gy * gW + gx] = this.caveGrid[gy * gW + gx - 1]; continue;
         }
         if (rng.chance(0.22)) continue;                          // 넷에 하나쯤은 그냥 굴
-        const ws = CAVE_TYPES.map((c, i) => i === 0 ? 0 : lerp(c.w![0], c.w![1], deep));
+        const cold = this.biomeAt(x).id === 'ice' || this.biomeAt(x).id === 'glacier';   // 추운 바이옴 밑은 얼음 동굴이 많다
+        const ws = CAVE_TYPES.map((c, i) => i === 0 ? 0 : c.cold ? (cold ? c.cold : 0) : lerp(c.w![0], c.w![1], deep));
         let r = rng.range(0, ws.reduce((a, b) => a + b, 0)), k = 1;
         for (let i = 1; i < ws.length; i++) { r -= ws[i]; if (r <= 0) { k = i; break; } }
         this.caveGrid[gy * gW + gx] = k;
@@ -53,6 +54,7 @@ export const WorldCaves: Bag & ThisType<World> = {
     // 2) 꾸민다 — 자연 굴의 빈 칸마다 바닥·천장·옆벽을 보고 장식이 붙을 수 있는 자연 돌 — 이끼·종유석은 흙·돌·지층 돌 위에만
     const host = (t: any) => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE ||
                       t === T.LIMESTONE || t === T.GRANITE;
+    const frng = new RNG(this.seed + '_cave2');   // 얼음 동굴 · 발광 잎은 제 난수 — 본 난수 흐름(뒤따르는 장식·자갈)을 덜 흔든다
     const hang = (x: number, y: number, tile: any, n: number) => {                          // 천장에서 아래로 n 칸
       for (let k = 0; k < n; k++) { if (this.get(x, y + k) !== T.AIR) break; this.set(x, y + k, tile); }
     };
@@ -69,7 +71,11 @@ export const WorldCaves: Bag & ThisType<World> = {
         if (id === 'moss') {
           if (floor && rng.chance(0.92)) this.set(x, y + 1, T.MOSSSTONE);
           for (const sx of [x - 1, x + 1]) if (host(this.get(sx, y)) && rng.chance(0.75)) this.set(sx, y, T.MOSSSTONE);
-          if (ceil) { if (rng.chance(0.85)) this.set(x, y - 1, T.MOSSSTONE); if (rng.chance(0.45)) hang(x, y, T.HANGMOSS, rng.int(1, 4)); }
+          if (ceil) {
+            if (rng.chance(0.85)) this.set(x, y - 1, T.MOSSSTONE);
+            if (rng.chance(0.45)) hang(x, y, T.HANGMOSS, rng.int(1, 4));
+            else if (frng.chance(0.07)) hang(x, y, T.GLOWFROND, frng.int(2, 4));   // 발광 잎 — 드문드문, 이끼가 빈 천장에
+          }
           else if (floor && rng.chance(0.08) && this.get(x, y - 1) === T.AIR) this.set(x, y, T.GLOWCAP);
         } else if (id === 'drip') {
           // 종유 동굴의 벽은 석회암이 많다 — 석회암이 녹아 종유석이 자란다는 흉내
@@ -87,6 +93,11 @@ export const WorldCaves: Bag & ThisType<World> = {
             const sx = host(this.get(x - 1, y)) ? x - 1 : x + 1;
             this.set(sx, y, T.CRYSTAL);
           }
+        } else if (id === 'frost') {
+          // 얼음 동굴 — 벽·천장·바닥 돌이 얼음으로, 바닥엔 눈, 천장엔 고드름(1~4칸)
+          for (const [hx, hy] of [[x, y - 1], [x - 1, y], [x + 1, y]]) if (host(this.get(hx, hy)) && frng.chance(0.7)) this.set(hx, hy, T.ICE);
+          if (floor && frng.chance(0.8)) this.set(x, y + 1, frng.chance(0.6) ? T.SNOW : T.ICE);
+          if ((ceil || this.get(x, y - 1) === T.ICE) && frng.chance(0.3)) hang(x, y, T.ICICLE, frng.chance(0.2) ? frng.int(3, 4) : frng.int(1, 2));
         } else if (id === 'fume') {
           if (floor && rng.chance(0.02) && below === T.STONE) this.set(x, y + 1, T.GASVENT);
         } else {

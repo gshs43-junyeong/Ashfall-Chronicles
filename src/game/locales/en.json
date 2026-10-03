@@ -961,7 +961,8 @@
   "세계는 방을 연 사람 것을 함께 쓴다. 호스트는 제 싱글플레이 세계를 열고, 손님 캐릭터는 그 세계에 남는다. 2~4명.": "Everyone shares the world of whoever opens the room. The host opens one of their single-player worlds, and guest characters stay with that world. 2–4 players.",
   "영문과 숫자를 섞어 5~6자 — 예: 7K2QM": "5–6 letters and digits — e.g. 7K2QM",
   "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다.": "Multiplayer characters are separate from single player. In a new world you start fresh with this name and class; the world remembers you, so you pick up where you left off when you come back.",
-  "캐릭터를 이 세계에 맡겼다": "Character left in this world's keeping"
+  "캐릭터를 이 세계에 맡겼다": "Character left in this world's keeping",
+  "머리 위 고드름이 갈라진다 — 비켜라!": "The icicle overhead is cracking — move!"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4162,6 +4163,12 @@
   "ITEMS.pet_dragon_dark.n": "Dark Dragon",
   "ITEMS.pet_dragon_dark.d": "Even in shadow, its eyes shine clearly.",
   "PETS.dragon_dark.n": "Dark Dragon",
-  "PETS.dragon_dark.d": "Even in shadow, its eyes shine clearly."
+  "PETS.dragon_dark.d": "Even in shadow, its eyes shine clearly.",
+  "CAVE_TYPES.5.n": "Ice Cave",
+  "CAVE_TYPES.5.line": "Your breath hangs white. The icicles on the ceiling could fall at any moment.",
+  "ITEMS.deco_icicle.n": "Icicle",
+  "ITEMS.deco_glowfrond.n": "Glowfrond",
+  "TILE_DEF.199.n": "Icicle",
+  "TILE_DEF.200.n": "Glowfrond"
  }
 }

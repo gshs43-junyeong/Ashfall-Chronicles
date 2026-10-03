@@ -961,7 +961,8 @@
   "세계는 방을 연 사람 것을 함께 쓴다. 호스트는 제 싱글플레이 세계를 열고, 손님 캐릭터는 그 세계에 남는다. 2~4명.": "Todos comparten el mundo de quien abre la sala. El anfitrión abre uno de sus mundos de un jugador y los personajes invitados se quedan en ese mundo. De 2 a 4 jugadores.",
   "영문과 숫자를 섞어 5~6자 — 예: 7K2QM": "5–6 letras y números — p. ej. 7K2QM",
   "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다.": "Los personajes multijugador van aparte del modo un jugador. En un mundo nuevo empiezas con este nombre y clase; el mundo te recuerda y, al volver, sigues donde lo dejaste.",
-  "캐릭터를 이 세계에 맡겼다": "Personaje guardado en este mundo"
+  "캐릭터를 이 세계에 맡겼다": "Personaje guardado en este mundo",
+  "머리 위 고드름이 갈라진다 — 비켜라!": "¡El carámbano sobre tu cabeza se agrieta — apártate!"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4162,6 +4163,12 @@
   "ITEMS.pet_dragon_dark.n": "Dragón oscuro",
   "ITEMS.pet_dragon_dark.d": "Incluso en la sombra, sus ojos brillan con claridad.",
   "PETS.dragon_dark.n": "Dragón oscuro",
-  "PETS.dragon_dark.d": "Incluso en la sombra, sus ojos brillan con claridad."
+  "PETS.dragon_dark.d": "Incluso en la sombra, sus ojos brillan con claridad.",
+  "CAVE_TYPES.5.n": "Cueva de hielo",
+  "CAVE_TYPES.5.line": "Tu aliento se vuelve blanco. Los carámbanos del techo pueden caer en cualquier momento.",
+  "ITEMS.deco_icicle.n": "Carámbano",
+  "ITEMS.deco_glowfrond.n": "Fronda luminosa",
+  "TILE_DEF.199.n": "Carámbano",
+  "TILE_DEF.200.n": "Fronda luminosa"
  }
 }

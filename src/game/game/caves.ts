@@ -4,7 +4,8 @@ import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
 import { tr } from '../lang.js';
 import { dimsOf } from '../size.js';
-import { MACH_OF_TILE, T } from '../data.js';
+import { MACH_OF_TILE, T, TILE_DEF } from '../data.js';
+import { DECO_MOUNT, LEAVE_OF } from '../data/materials.js';
 import { CAVE_TYPES, FAULT } from '../data/ruins.js';
 import { TS } from '../world.js';
 import { Enemy, Part } from '../entity.js';
@@ -101,9 +102,9 @@ export const CavesPart: Bag = {
       const jx = r.t > 0 ? (Math.random() - .5) * 3 : 0;
       const sx = r.x - camX + jx, sy = r.y - camY;
       if (sx < -30 || sx > this.W + 30 || sy < -30 || sy > this.H + 30) continue;
-      c.fillStyle = r.kind === 'drip' ? '#9a9488' : '#6a6258';
+      c.fillStyle = r.kind === 'drip' ? '#9a9488' : r.kind === 'ice' ? '#bfe6f5' : '#6a6258';
       c.beginPath();
-      if (r.kind === 'drip') { c.moveTo(sx - 7, sy - 10); c.lineTo(sx + 7, sy - 10); c.lineTo(sx, sy + 11); }
+      if (r.kind === 'drip' || r.kind === 'ice') { c.moveTo(sx - 7, sy - 10); c.lineTo(sx + 7, sy - 10); c.lineTo(sx, sy + 11); }
       else { c.moveTo(sx - 7, sy - 4); c.lineTo(sx - 2, sy - 8); c.lineTo(sx + 7, sy - 3); c.lineTo(sx + 5, sy + 6); c.lineTo(sx - 5, sy + 7); }
       c.closePath(); c.fill();
       c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(sx - 4, sy - 7, 2, 7);
@@ -123,6 +124,7 @@ export const CavesPart: Bag = {
     const p = this.player, w = this.world;
     if (!p || !w || p.dead) return;
     this.rocks = this.rocks || [];
+    this.updateHang();
     this.updateRocks(dt);
     if (this.quake) this.updateQuake(dt);
     if (this.meteor) this.updateMeteor(dt);
@@ -151,21 +153,23 @@ export const CavesPart: Bag = {
     }
     // 종유 동굴 — 머리 위 종유석이 흔들리다 떨어진다.
     this._dripCd = (this._dripCd || 0) - 0.35;
-    if (C.id === 'drip' && this._dripCd <= 0 && Math.random() < 0.3) {
+    const fallT = C.id === 'drip' ? T.STALACTITE : C.id === 'frost' ? T.ICICLE : 0;   // 얼음 동굴은 고드름이 떨어진다
+    if (fallT && this._dripCd <= 0 && Math.random() < 0.3) {
       for (let dx = -3; dx <= 3; dx++) {
         const x = tx + dx;
         let y = -1;
         for (let dy = 1; dy <= 10; dy++) {
           const t = w.get(x, ty - dy);
-          if (t === T.STALACTITE) { if (w.get(x, ty - dy + 1) !== T.STALACTITE) y = ty - dy; break; }
+          if (t === fallT) { if (w.get(x, ty - dy + 1) !== fallT) y = ty - dy; break; }
           if (w.solid(x, ty - dy)) break;
         }
         if (y < 0) continue;
         w.set(x, y, T.AIR);
-        this.rocks.push({ x: (x + .5) * TS, y: (y + .5) * TS, vy: 0, t: 0.7, dmg: 14 + p.level * 0.9, kind: 'drip' });
+        this.rocks.push({ x: (x + .5) * TS, y: (y + .5) * TS, vy: 0, t: 0.7, dmg: 14 + p.level * 0.9, kind: fallT === T.ICICLE ? 'ice' : 'drip' });
         this._dripCd = 5;
         this.tally = this.tally || {};
-        if (!this.tally.dripHint) { this.tally.dripHint = 1; this.toast(tr('머리 위 종유석이 흔들린다 — 비켜라!'), 'bad'); }
+        if (fallT === T.ICICLE) { if (!this.tally.iceHint) { this.tally.iceHint = 1; this.toast(tr('머리 위 고드름이 갈라진다 — 비켜라!'), 'bad'); } }
+        else if (!this.tally.dripHint) { this.tally.dripHint = 1; this.toast(tr('머리 위 종유석이 흔들린다 — 비켜라!'), 'bad'); }
         break;
       }
     }
@@ -175,6 +179,33 @@ export const CavesPart: Bag = {
       if (w.get(f.x, f.y) !== T.FAULTSTONE) { f.done = 1; continue; }   // 다른 까닭으로 사라진 자갈
       this.parts.push(new Part((f.x + Math.random()) * TS, (f.y + 1) * TS, '#c8b890', 30, .9));
     }
+  },
+
+  /** 바뀐 칸 둘레의 장식이 기댈 데를 잃었으면 무너뜨린다 — 천장 장식(DECO_MOUNT 'ceil')은 그 아래 줄이 통째로,
+      바닥 장식은 그 위 줄이 통째로. 종유석·고드름은 떨어져 바닥에서 부서지고(밑에 있으면 맞는다), 나머지는 그 자리에서 떨어진다.
+      ★ 참가자는 세지 않는다 — 호스트가 무너뜨린 칸을 받는다. */
+  updateHang() { const { WW } = dimsOf(this.world);
+    const w = this.world, q = w.hangQ;
+    if (!q || !q.length) return;
+    if (this.net && this.net.role === 'guest') { q.length = 0; return; }
+    const holds = (t: number, mount: string) => TILE_DEF[t].solid === 1 || DECO_MOUNT[t] === mount || (mount === 'ceil' && !!TILE_DEF[t].leaf);
+    const ks = q.splice(0, q.length);
+    for (const k of ks) {
+      const x = k % WW, y = (k / WW) | 0, t = w.tiles[k];
+      if (!holds(t, 'ceil')) for (let yy = y + 1; DECO_MOUNT[w.get(x, yy)] === 'ceil'; yy++) this.dropHung(x, yy);
+      if (!holds(t, 'floor')) for (let yy = y - 1; DECO_MOUNT[w.get(x, yy)] === 'floor'; yy--) this.dropHung(x, yy);
+    }
+  },
+  dropHung(x: number, y: number) {
+    const w = this.world, t = w.get(x, y);
+    w.set(x, y, LEAVE_OF[t] || T.AIR);
+    if (t === T.STALACTITE || t === T.ICICLE) {
+      const p = this.player;
+      this.rocks.push({ x: (x + .5) * TS, y: (y + .5) * TS, vy: 0, t: 0.12, dmg: 14 + (p ? p.level * 0.9 : 0), kind: t === T.ICICLE ? 'ice' : 'drip', drop: t });
+      return;
+    }
+    this.dropTile(x, y, t);
+    this.breakFx(x, y, t);
   },
 
   /** 떨어지는 돌 — 흔들리는 동안(t) 제자리에서 먼지를 떨구고, 그다음 떨어진다 */
@@ -192,9 +223,10 @@ export const CavesPart: Bag = {
       const hitP = Math.abs(r.x - p.cx) < p.w / 2 + 6 && r.y > p.y && r.y < p.y + p.h;
       const hitW = w.solid(Math.floor(r.x / TS), Math.floor((r.y + 8) / TS));
       if (hitP || hitW || r.y > (WH - 2) * TS) {
-        if (hitP) p.hurt(r.dmg, r.x);
-        for (let k = 0; k < 12; k++) this.parts.push(new Part(r.x, r.y, '#8a8478', -60, .8));
-        this.sfx('break_stone');
+        if (hitP) { p.hurt(r.dmg, r.x); if (r.kind === 'ice') p.addBuff('frostbite', 2.5); }   // 고드름은 동상(잠깐 느려진다)
+        for (let k = 0; k < 12; k++) this.parts.push(new Part(r.x, r.y, r.kind === 'ice' ? '#dff2ff' : '#8a8478', -60, .8));
+        this.sfx(r.kind === 'ice' ? 'break_ice' : 'break_stone');
+        if (r.drop) this.dropTile(Math.floor(r.x / TS), Math.floor(r.y / TS), r.drop);   // 받침을 잃고 떨어진 것은 조각이 남는다
         this.rocks.splice(i, 1);
       }
     }

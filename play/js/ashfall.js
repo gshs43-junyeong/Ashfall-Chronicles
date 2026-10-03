@@ -1195,6 +1195,7 @@
   var light_exports = {};
   __export(light_exports, {
     castPointLight: () => castPointLight,
+    castSunlight: () => castSunlight,
     sweepLight: () => sweepLight,
     sweepLightGrid: () => sweepLightGrid
   });
@@ -1268,6 +1269,33 @@
       if (seen) v[(dy + r) * n + dx + r] = base * seen / SAMPLES.length;
     }
     return { r, v };
+  }
+  function castSunlight(R, w, h, x0, y0, trans, sx, sy, sky) {
+    const P = (x, y) => {
+      if (x < 0 || x >= w || y < 0 || y >= h) return sky(x0 + x, y0 + y);
+      const k = y * w + x;
+      return R[k] * trans[k];
+    };
+    if (sy >= -1e-6) {
+      R.fill(0, 0, w * h);
+      return;
+    }
+    const s = sx / -sy;
+    if (Math.abs(s) <= 1) {
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const fx = x + s, ix = Math.floor(fx), f = fx - ix;
+        R[y * w + x] = P(ix, y - 1) * (1 - f) + P(ix + 1, y - 1) * f;
+      }
+    } else {
+      const dir = s > 0 ? 1 : -1, t = 1 / Math.abs(s);
+      for (let i = 0; i < w; i++) {
+        const x = dir > 0 ? w - 1 - i : i;
+        for (let y = 0; y < h; y++) {
+          const fy = y - t, iy = Math.floor(fy), f = fy - iy;
+          R[y * w + x] = P(x + dir, iy) * (1 - f) + P(x + dir, iy + 1) * f;
+        }
+      }
+    }
   }
 
   // src/engine/render/pipeline.ts
@@ -2374,7 +2402,10 @@
     /* --- 심층 드릴 — 전동 드릴 윗단(채굴 등급 5) --- */
     M_DRILL_X: 197,
     /* --- 스프링클러 — 물 양동이로 둘레 밭에 아침마다 물을 준다 --- */
-    M_SPRINKLER: 198
+    M_SPRINKLER: 198,
+    /* --- 얼음 동굴의 고드름 · 이끼 굴에 늘어진 발광 잎 --- */
+    ICICLE: 199,
+    GLOWFROND: 200
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -2685,7 +2716,9 @@
     { n: "금 광상", c: "#f0c848", solid: 1, hard: 3, drop: "gold_ore", dropN: [3, 6], ore: 1, rich: 1 },
     { n: "미스릴 광상", c: "#5ac8ba", solid: 1, hard: 3, drop: "mythril_ore", dropN: [3, 5], ore: 1, rich: 1 },
     { n: "심층 드릴", c: "#3a6a8a", solid: 1, hard: 5, drop: "m_drill_x", mach: "drill_x" },
-    { n: "스프링클러", c: "#6a8aa8", solid: 1, hard: 2, drop: "m_sprinkler", mach: "sprinkler" }
+    { n: "스프링클러", c: "#6a8aa8", solid: 1, hard: 2, drop: "m_sprinkler", mach: "sprinkler" },
+    { n: "고드름", c: "#bfe6f5", solid: 0, hard: 1, drop: "ice_shard", a: 1 },
+    { n: "발광 잎", c: "#7fe8c8", solid: 0, hard: 0, drop: "cave_moss", a: 1 }
   ];
   var FARM_WET_R = 5, FARM_WET_DAYS = 3;
   var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
@@ -3483,6 +3516,8 @@
     deco_icebanner: { n: "언 깃발", i: "🚩", type: "block", tile: T.ICEBANNER, stack: 999, deco: 1 },
     deco_hangmoss: { n: "늘어진 이끼", i: "🌿", type: "block", tile: T.HANGMOSS, stack: 999, deco: 1 },
     deco_stalactite: { n: "종유석", i: "🪨", type: "block", tile: T.STALACTITE, stack: 999, deco: 1 },
+    deco_icicle: { n: "고드름", i: "🧊", type: "block", tile: T.ICICLE, stack: 999, deco: 1 },
+    deco_glowfrond: { n: "발광 잎", i: "🌿", type: "block", tile: T.GLOWFROND, stack: 999, deco: 1 },
     deco_stalagmite: { n: "석순", i: "🪨", type: "block", tile: T.STALAGMITE, stack: 999, deco: 1 },
     deco_geode: { n: "수정 무리", i: "💎", type: "block", tile: T.GEODE, stack: 999, deco: 1 },
     deco_mossstone: { n: "이끼 낀 바위", i: "🪨", type: "block", tile: T.MOSSSTONE, stack: 999, deco: 1 },
@@ -7591,7 +7626,7 @@
       m[T[k]] = mat;
     });
     put("dirt", "DIRT GRASS SAND MUD ASH FARMLAND SANDBAG CLOUD SKYGRASS");
-    put("ice", "SNOW ICE ICEBRICK FROSTGLYPH ICEBANNER");
+    put("ice", "SNOW ICE ICEBRICK FROSTGLYPH ICEBANNER ICICLE");
     put("wood", "WOOD PLANK PLATFORM TIMBERWALL FENCE THATCH HAYBALE MINEWOOD BANNER TORCH");
     put("plant", "LEAF CORRUPTLEAF SKYLEAF JUNGLELEAF GLOWLEAF PINELEAF VINE WEED FLOWER ORCHID FERN LILY MUSHROOM GLOWCAP GLOWMOSS CACTUS CACTUS_BLOCK JUNGLEGRASS SPOREVENT HYPHAE WHEAT0 WHEAT1 WHEAT2 WHEAT3 ROOT0 ROOT1 ROOT2 ROOT3 CAP0 CAP1 CAP2 CAP3 BEAN0 BEAN1 BEAN2 BEAN3 BLOOM0 BLOOM1 BLOOM2 BLOOM3 HERB0 HERB1 HERB2 HERB3 POD0 POD1 POD2 POD3");
     put("metal", "COPPER IRON GOLD MYTHRIL LEAD STEELPLATE CONDUIT SLAGSTEEL ORBITPLATE SPIKE SPARKCOIL GRINDER DART_L DART_R LAMPPOST MINELAMP TOOLPILE M_BELT M_DRILL M_DRILL_E M_PUMP M_SMELTER M_PRESS M_REFINERY M_ASSEMBLER M_CRATE M_GEN M_BATTERY M_POLE M_SORTER M_TURRET M_TRAP M_SWITCH M_WINDMILL M_MILL M_OVEN M_DART M_FLAME M_FROST M_DRILL_X");
@@ -7599,7 +7634,7 @@
     put("ember", "LAVA HELLSTONE FLAMEVENT");
     put("bone", "BONEHEAP");
     put("stone", "MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE");
-    put("plant", "HANGMOSS");
+    put("plant", "HANGMOSS GLOWFROND");
     put("glass", "GEODE STARCRYSTAL FUSEDROCK");
     put("metal", "METEORITE COPPERRICH IRONRICH LEADRICH GOLDRICH MYTHRILRICH");
     put("stone", "COALRICH");
@@ -7637,6 +7672,7 @@
     SEALSTONE: [4.2, "#d8c080"],
     GLOWLEAF: [4, "#6fe0c0"],
     M_BATTERY: [3.8, "#8fd0f0"],
+    GLOWFROND: [3.7, "#7fe8c8"],
     M_FLAME: [3.6, "#ff7a3a"],
     FLAMEVENT: [3.4, "#ff6a2a"],
     FROSTGLYPH: [3.2, "#9fd8ea"],
@@ -7702,7 +7738,7 @@
       "PEBBLES"
     ]) m[T[k]] = "floor";
     m[T.PONDWEED] = "water";
-    for (const k of ["STALACTITE", "HANGMOSS", "VINE", "HYPHAE", "MINELAMP", "ICEBANNER"]) m[T[k]] = "ceil";
+    for (const k of ["STALACTITE", "HANGMOSS", "VINE", "HYPHAE", "MINELAMP", "ICEBANNER", "ICICLE", "GLOWFROND"]) m[T[k]] = "ceil";
     return m;
   })();
   var DECO_OF = (() => {
@@ -8342,7 +8378,8 @@
     iron: { n: "무쇠 피부", i: "🪨", dur: 180, b: { def: 12 } },
     iron_greater: { n: "상급 무쇠 피부", i: "🪨", dur: 240, b: { def: 22 } },
     well: { n: "포만감", i: "🍲", dur: 240, b: { hpreg: 1.2 } },
-    frostbite: { n: "동상", i: "🥶", dur: 3, debuff: 1 },
+    frostbite: { n: "동상", i: "🥶", dur: 3, debuff: 1, b: { ms: -30 } },
+    // 걸음이 30% 느려진다
     burn: { n: "화상", i: "🔥", dur: 4, debuff: 1 },
     swift_kill: { n: "추격", i: "💨", dur: 3, b: { ms: 30 } },
     /* 특성으로만 붙는 것들 — 지속 시간은 스킬 랭크가 정하므로 여기 dur 은 기본값일 뿐이다 */
@@ -8391,6 +8428,7 @@
     FARM_KIT: () => FARM_KIT,
     FAULT: () => FAULT,
     MYSTIC: () => MYSTIC,
+    MYSTIC_W: () => MYSTIC_W,
     PULSE: () => PULSE,
     PULSE_EVENTS: () => PULSE_EVENTS,
     PULSE_RAGE: () => PULSE_RAGE,
@@ -8710,6 +8748,7 @@
       got: "발밑이 가벼워졌다 — 공중에서 한 번 더 뛸 수 있다"
     }
   };
+  var MYSTIC_W = { well: 3, echo: 3, star: 0.9, none: 3.2 };
   var RUIN_MAP_IN = {
     ice: "mine",
     // 광산(입구 있음) → 얼음 던전
@@ -8840,6 +8879,15 @@
       c: "#a8c04a",
       w: [0.6, 1.6],
       line: "숨이 따갑다. 오래 머물면 몸이 상하지만, 광맥이 짙다."
+    },
+    /* 얼음 동굴 — 추운 바이옴(빙하 · 서리 지대) 밑에만(w 는 쓰지 않고 buildCaveZones 가 정한다) */
+    {
+      id: "frost",
+      n: "얼음 동굴",
+      c: "#bfe6f5",
+      w: [0, 0],
+      cold: 4,
+      line: "숨이 하얗게 맺힌다. 천장에 매달린 고드름이 언제 떨어질지 모른다."
     }
   ];
   var FAULT = { count: 28, steps: 260, rx: 34, ry: 15 };
@@ -13512,6 +13560,9 @@
     MAT_LAYER: () => MAT_LAYER,
     MAT_OF: () => MAT_OF,
     MIN_CAVE: () => MIN_CAVE,
+    SUN_AMB: () => SUN_AMB,
+    SUN_DEPTH: () => SUN_DEPTH,
+    SUN_LEAF: () => SUN_LEAF,
     TS: () => TS,
     World: () => World,
     ZONE_CARD: () => ZONE_CARD,
@@ -13543,6 +13594,7 @@
   var inSeaZone = (x, seaX1) => x < seaX1 + BEACH_W + 4;
   var BIOME_BAND = 104;
   var LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
+  var SUN_AMB = 0.4, SUN_LEAF = 0.4, SUN_DEPTH = 10;
   var LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
   TILE_DEF.forEach((d, i) => {
     LIGHT_OPAQUE[i] = d.solid === 1 && !d.clear ? 1 : 0;
@@ -13722,6 +13774,7 @@
       this.tiles[k] = t;
       if (this.lightCache && was !== t) this.lightTouch(k, was);
       if (this.fq) this.fluidWake(x, y);
+      if (this.hangQ && was !== t) this.hangQ.push(k);
       if (this.netLog && !this.netMute) this.netLog.add(y * WW2 + x);
     }
     setWall(x, y, w) {
@@ -14110,7 +14163,7 @@
         ② 강한 점 광원(횃불·등불·수정 …, 세기 LIGHT_POINT 이상)과 플레이어 미광: 칸마다 광선을 쏘아 **가려진 칸은 그늘**(castPointLight),
            그다음 튀는 빛만 조금(LIGHT_BOUNCE 씩) 번진다 — 모서리를 돌아 다 밝아지면 그림자가 사라진다.
         ★ 두 겹 다 막힌 칸은 빛을 받되 트인 칸으로 넘기지 않는다(sweepLightGrid op) — 벽 한두 칸 뒤의 빈 방이 밝던 것. 사연: docs/code-history.md#h142 */
-    computeLight(tx0, ty0, tx1, ty1, dayLight, extra) {
+    computeLight(tx0, ty0, tx1, ty1, dayLight, extra, sun) {
       const { WW: WW2, WH: WH2 } = this.dims;
       const P = 14;
       const x0 = clamp(tx0 - P, 0, WW2 - 1), x1 = clamp(tx1 + P, 0, WW2 - 1);
@@ -14123,6 +14176,8 @@
         this.lightOp = new Uint8Array(n + 64);
         this.lightDec = new Float32Array(n + 64);
         this.lightDecP = new Float32Array(n + 64);
+        this.lightSun = new Float32Array(n + 64);
+        this.lightTrans = new Float32Array(n + 64);
       }
       if (!this.lightCache) {
         this.lightCache = /* @__PURE__ */ new Map();
@@ -14136,6 +14191,7 @@
       Lp.fill(0, 0, n);
       col.fill(0, 0, n * 3);
       const sea = this.sea, seaAmb = 1.2 + dayLight * 0.1;
+      const sunK = sun ? sun.k : 0, skyL = dayLight * (1 - (1 - SUN_AMB) * sunK), trans = this.lightTrans;
       const pts = [];
       for (let x = x0; x <= x1; x++) {
         const s = this.surface[x];
@@ -14150,7 +14206,8 @@
             if (d.light >= LIGHT_POINT && !d.liquid) pts.push(x, y);
             else L[k] = Math.max(L[k], d.light);
           }
-          if (t === T.AIR && y <= s && this.walls[y * WW2 + x] === 0) L[k] = Math.max(L[k], dayLight);
+          trans[k] = op[k] ? 0 : d.leaf ? SUN_LEAF : d.liquid ? 0.8 : 1;
+          if (t === T.AIR && y <= s && this.walls[y * WW2 + x] === 0) L[k] = Math.max(L[k], skyL);
           else if (d.sea && sea && y > sea.level)
             L[k] = Math.max(L[k], dayLight - (y - sea.level) * 0.42, seaAmb);
         }
@@ -14163,9 +14220,25 @@
         if (ex < x0 || ex > x1 || ey < y0 || ey > y1) continue;
         this.lightStamp(castPointLight(ev, LIGHT_FALL, (dx, dy) => this.lightBlocks(ex + dx, ey + dy)), ex, ey, x0, y0, w, h, Lp, null, ev);
       }
+      const S = this.lightSun, sunOn = !!sun && sunK > 0, top = dayLight * sunK + skyL * (1 - sunK);
+      if (sunOn) {
+        castSunlight(S, w, h, x0, y0, trans, sun.x, sun.y, (x, y) => y < 0 || y <= this.surface[clamp(x, 0, WW2 - 1)] ? 1 : 0);
+        for (let k = 0; k < n; k++) {
+          if (S[k] <= 0.01) {
+            S[k] = 0;
+            continue;
+          }
+          const dd = y0 + (k / w | 0) - this.surface[x0 + k % w];
+          S[k] = top * S[k] * (dd <= 0 ? 1 : Math.max(0, 1 - dd / SUN_DEPTH));
+          if (op[k] && S[k] > L[k]) L[k] = S[k];
+        }
+      }
       sweepLightGrid(L, w, h, 2, dec, op);
       sweepLightGrid(Lp, w, h, 1, decP, op);
       for (let k = 0; k < n; k++) if (Lp[k] > L[k]) L[k] = Lp[k];
+      if (sunOn) {
+        for (let k = 0; k < n; k++) if (!op[k] && S[k] > L[k]) L[k] = S[k];
+      }
       this.lbx = x0;
       this.lby = y0;
       this.lbw = w;
@@ -14247,6 +14320,7 @@
       const { WW: WW2, WH: WH2 } = this.dims;
       this.flv = new Uint8Array(WW2 * WH2);
       this.fq = [[], []];
+      this.hangQ = [];
       this.fmark = [new Uint8Array(WW2 * WH2), new Uint8Array(WW2 * WH2)];
       this.fAcc = [0, 0];
       for (let k = WW2; k < WW2 * (WH2 - 1); k++) {
@@ -18087,14 +18161,27 @@
           traps: (sp.traps || ["dart", "crumble"]).slice()
         });
       });
-      const mk = Object.keys(MYSTIC);
       const pick = this.ruinSpec.map((_, i) => i);
       for (let i = pick.length - 1; i > 0; i--) {
         const j = rng.int(0, i);
         [pick[i], pick[j]] = [pick[j], pick[i]];
       }
-      pick.slice(0, 3).forEach((ri, k) => {
-        this.ruinSpec[ri].mystic = mk[k % mk.length];
+      const mrng = new RNG(this.seed + "_mystic");
+      pick.slice(0, 3).forEach((ri) => {
+        delete this.ruinSpec[ri].mystic;
+      });
+      pick.slice(0, 3).forEach((ri) => {
+        const pool = Object.keys(MYSTIC_W).filter((id) => id === "none" || !pick.slice(0, 3).some((o) => this.ruinSpec[o].mystic === id));
+        let r = mrng.range(0, pool.reduce((s, id) => s + MYSTIC_W[id], 0)), got = pool[0];
+        for (const id of pool) {
+          r -= MYSTIC_W[id];
+          if (r <= 0) {
+            got = id;
+            break;
+          }
+        }
+        if (got === "none") delete this.ruinSpec[ri].mystic;
+        else this.ruinSpec[ri].mystic = got;
       });
       pick.slice(3).forEach((ri) => {
         delete this.ruinSpec[ri].mystic;
@@ -18342,7 +18429,8 @@
             continue;
           }
           if (rng.chance(0.22)) continue;
-          const ws = CAVE_TYPES.map((c, i) => i === 0 ? 0 : lerp(c.w[0], c.w[1], deep));
+          const cold = this.biomeAt(x).id === "ice" || this.biomeAt(x).id === "glacier";
+          const ws = CAVE_TYPES.map((c, i) => i === 0 ? 0 : c.cold ? cold ? c.cold : 0 : lerp(c.w[0], c.w[1], deep));
           let r = rng.range(0, ws.reduce((a, b) => a + b, 0)), k = 1;
           for (let i = 1; i < ws.length; i++) {
             r -= ws[i];
@@ -18354,6 +18442,7 @@
           this.caveGrid[gy * gW + gx] = k;
         }
       const host = (t) => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE || t === T.LIMESTONE || t === T.GRANITE;
+      const frng = new RNG(this.seed + "_cave2");
       const hang = (x, y, tile, n) => {
         for (let k = 0; k < n; k++) {
           if (this.get(x, y + k) !== T.AIR) break;
@@ -18376,6 +18465,7 @@
             if (ceil) {
               if (rng.chance(0.85)) this.set(x, y - 1, T.MOSSSTONE);
               if (rng.chance(0.45)) hang(x, y, T.HANGMOSS, rng.int(1, 4));
+              else if (frng.chance(0.07)) hang(x, y, T.GLOWFROND, frng.int(2, 4));
             } else if (floor && rng.chance(0.08) && this.get(x, y - 1) === T.AIR) this.set(x, y, T.GLOWCAP);
           } else if (id === "drip") {
             for (const [hx, hy] of [[x, y - 1], [x, y + 1], [x - 1, y], [x + 1, y]])
@@ -18392,6 +18482,10 @@
               const sx = host(this.get(x - 1, y)) ? x - 1 : x + 1;
               this.set(sx, y, T.CRYSTAL);
             }
+          } else if (id === "frost") {
+            for (const [hx, hy] of [[x, y - 1], [x - 1, y], [x + 1, y]]) if (host(this.get(hx, hy)) && frng.chance(0.7)) this.set(hx, hy, T.ICE);
+            if (floor && frng.chance(0.8)) this.set(x, y + 1, frng.chance(0.6) ? T.SNOW : T.ICE);
+            if ((ceil || this.get(x, y - 1) === T.ICE) && frng.chance(0.3)) hang(x, y, T.ICICLE, frng.chance(0.2) ? frng.int(3, 4) : frng.int(1, 2));
           } else if (id === "fume") {
             if (floor && rng.chance(0.02) && below === T.STONE) this.set(x, y + 1, T.GASVENT);
           } else {
@@ -19725,6 +19819,8 @@
   ART[T.MOSSSTONE] = { k: "mossrock", c: "#5d5d63", g: "#5f8f4a" };
   ART[T.HANGMOSS] = { k: "hangmoss", c: "#6fa05a", a: 1 };
   ART[T.STALACTITE] = { k: "dripstone", c: "#9a9488", a: 1, up: 0 };
+  ART[T.ICICLE] = { k: "dripstone", c: "#bfe6f5", a: 1, up: 0 };
+  ART[T.GLOWFROND] = { k: "hangmoss", c: "#7fe8c8", a: 1 };
   ART[T.STALAGMITE] = { k: "dripstone", c: "#8a8478", a: 1, up: 1 };
   ART[T.GEODE] = { k: "geode", c: "#a88fe8", a: 1, glow: 1 };
   ART[T.FAULTSTONE] = { k: "fault", c: "#5f5e62" };
@@ -19762,7 +19858,7 @@
   var BODY_ONLY = {};
   var CONN = {};
   for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS, T.SNOW, T.ICE]) BODY_ONLY[id] = 1;
-  for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
+  for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.ICICLE, T.GLOWFROND, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
   var TILE_PAINT = {};
   var TileArt = {
     /* 타일마다 아틀라스에 미리 그려 두는 칸 수. */
@@ -20134,8 +20230,38 @@
           }
           return true;
         },
+        /* 발광 잎 — 이끼 천장에서 늘어진 가는 줄기에 둥근 잎이 달리고, 잎 끝이 빛난다(빛 세기는 LIGHT_SPEC) */
+        [T.GLOWFROND]: (c, w, id, tx, ty, sx, sy) => {
+          let top = ty, bot = ty;
+          while (top > ty - 8 && w.get(tx, top - 1) === T.GLOWFROND) top--;
+          while (bot < ty + 8 && w.get(tx, bot + 1) === T.GLOWFROND) bot++;
+          const run = (bot - top + 1) * TS, y0 = (ty - top) * TS;
+          const leaf = "#7fe8c8", dk = "#3f8a72", stem = "#4f7a5a", tip = "#dffff4";
+          for (let j = 0; j < 3; j++) {
+            const fx = 4 + j * 7 + (tileHash(tx * 5 + j, top) * 3 | 0), len = run * (0.5 + 0.5 * tileHash(tx * 11 + j, top));
+            const a0 = y0, a1 = Math.min(y0 + TS, len);
+            if (a1 <= a0) continue;
+            c.fillStyle = stem;
+            c.fillRect(sx + fx, sy, 1, a1 - a0);
+            for (let ly = Math.ceil(a0 / 5) * 5; ly < a1; ly += 5) {
+              const side = ly / 5 % 2 ? 1 : -3;
+              c.fillStyle = dk;
+              c.fillRect(sx + fx + side, sy + ly - a0, 3, 2);
+              c.fillStyle = leaf;
+              c.fillRect(sx + fx + side, sy + ly - a0, 2, 1);
+            }
+            if (a1 === len && a1 < y0 + TS) {
+              c.fillStyle = leaf;
+              c.fillRect(sx + fx - 1, sy + a1 - a0 - 3, 3, 3);
+              c.fillStyle = tip;
+              c.fillRect(sx + fx, sy + a1 - a0 - 2, 1, 1);
+            }
+          }
+          return true;
+        },
         [T.STALACTITE]: drip,
-        [T.STALAGMITE]: drip
+        [T.STALAGMITE]: drip,
+        [T.ICICLE]: drip
       };
     },
     /** 칸 캐시 — 열쇠가 같으면 다시 그리지 않는다 */
@@ -28430,7 +28556,7 @@
     heal(n) {
       const before = this.hp;
       this.hp = Math.min(this.d.maxHp, this.hp + n);
-      if (this.hp > before) app.texts.push(new DmgText(this.cx, this.y, Math.round(this.hp - before), "#7fe07f", 0));
+      if (this.hp - before >= 0.5) app.texts.push(new DmgText(this.cx, this.y, "+" + Math.round(this.hp - before), "#7fe07f", 0));
     }
   };
   var Enemy = class extends Ent {
@@ -29635,8 +29761,10 @@
   // src/game/entity/player-move.ts
   var player_move_exports = {};
   __export(player_move_exports, {
-    PlayerMove: () => PlayerMove
+    PlayerMove: () => PlayerMove,
+    STAB_VY: () => STAB_VY
   });
+  var STAB_VY = 680;
   var PlayerMove = {
     /* ---- 산소 ---- */
     updateOxygen(dt, world) {
@@ -29706,7 +29834,17 @@
         }
       }
       this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
-      if (this.hurtCd <= 0) this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
+      if (this.hurtCd <= 0) {
+        const h02 = this.hp;
+        this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
+        this.regAcc = (this.regAcc || 0) + this.hp - h02;
+        this.regT = (this.regT || 0) + dt;
+        if (this.regT >= 2) {
+          if (this.regAcc >= 1 && this === app.me) app.texts.push(new DmgText(this.cx, this.y, "+" + Math.round(this.regAcc), "#7fe07f", 0));
+          this.regAcc = 0;
+          this.regT = 0;
+        }
+      }
       const sub = this.submerged || 0;
       const wasSwim = this.swimming;
       this.swimming = this.swimming ? sub > 0.25 : sub > 0.35;
@@ -29862,6 +30000,16 @@
           if (dmg > 0) {
             this.hurt(dmg);
             this.hurtCd = Math.max(this.hurtCd, 0.4);
+          }
+        }
+        if (fallVy > STAB_VY && this.iframe <= 0) {
+          const fy = Math.floor((this.y + this.h - 4) / TS);
+          for (let x = Math.floor((this.x + 3) / TS); x <= Math.floor((this.x + this.w - 3) / TS); x++) {
+            if (world.get(x, fy) !== T.STALAGMITE) continue;
+            this.hurt(Math.round((10 + this.level * 0.7) * clamp(fallVy / STAB_VY, 1, 1.8)));
+            this.hurtCd = Math.max(this.hurtCd, 0.4);
+            for (let i = 0; i < 8; i++) app.parts.push(new Part((x + 0.5) * TS, this.y + this.h, "#c8c0b0", -40, 0.5));
+            break;
           }
         }
       }
@@ -41442,9 +41590,9 @@
         const jx = r.t > 0 ? (Math.random() - 0.5) * 3 : 0;
         const sx = r.x - camX + jx, sy = r.y - camY;
         if (sx < -30 || sx > this.W + 30 || sy < -30 || sy > this.H + 30) continue;
-        c.fillStyle = r.kind === "drip" ? "#9a9488" : "#6a6258";
+        c.fillStyle = r.kind === "drip" ? "#9a9488" : r.kind === "ice" ? "#bfe6f5" : "#6a6258";
         c.beginPath();
-        if (r.kind === "drip") {
+        if (r.kind === "drip" || r.kind === "ice") {
           c.moveTo(sx - 7, sy - 10);
           c.lineTo(sx + 7, sy - 10);
           c.lineTo(sx, sy + 11);
@@ -41474,6 +41622,7 @@
       const p = this.player, w = this.world;
       if (!p || !w || p.dead) return;
       this.rocks = this.rocks || [];
+      this.updateHang();
       this.updateRocks(dt);
       if (this.quake) this.updateQuake(dt);
       if (this.meteor) this.updateMeteor(dt);
@@ -41499,24 +41648,30 @@
         }
       }
       this._dripCd = (this._dripCd || 0) - 0.35;
-      if (C.id === "drip" && this._dripCd <= 0 && Math.random() < 0.3) {
+      const fallT = C.id === "drip" ? T.STALACTITE : C.id === "frost" ? T.ICICLE : 0;
+      if (fallT && this._dripCd <= 0 && Math.random() < 0.3) {
         for (let dx = -3; dx <= 3; dx++) {
           const x = tx + dx;
           let y = -1;
           for (let dy = 1; dy <= 10; dy++) {
             const t = w.get(x, ty - dy);
-            if (t === T.STALACTITE) {
-              if (w.get(x, ty - dy + 1) !== T.STALACTITE) y = ty - dy;
+            if (t === fallT) {
+              if (w.get(x, ty - dy + 1) !== fallT) y = ty - dy;
               break;
             }
             if (w.solid(x, ty - dy)) break;
           }
           if (y < 0) continue;
           w.set(x, y, T.AIR);
-          this.rocks.push({ x: (x + 0.5) * TS, y: (y + 0.5) * TS, vy: 0, t: 0.7, dmg: 14 + p.level * 0.9, kind: "drip" });
+          this.rocks.push({ x: (x + 0.5) * TS, y: (y + 0.5) * TS, vy: 0, t: 0.7, dmg: 14 + p.level * 0.9, kind: fallT === T.ICICLE ? "ice" : "drip" });
           this._dripCd = 5;
           this.tally = this.tally || {};
-          if (!this.tally.dripHint) {
+          if (fallT === T.ICICLE) {
+            if (!this.tally.iceHint) {
+              this.tally.iceHint = 1;
+              this.toast(tr("머리 위 고드름이 갈라진다 — 비켜라!"), "bad");
+            }
+          } else if (!this.tally.dripHint) {
             this.tally.dripHint = 1;
             this.toast(tr("머리 위 종유석이 흔들린다 — 비켜라!"), "bad");
           }
@@ -41531,6 +41686,36 @@
         }
         this.parts.push(new Part((f.x + Math.random()) * TS, (f.y + 1) * TS, "#c8b890", 30, 0.9));
       }
+    },
+    /** 바뀐 칸 둘레의 장식이 기댈 데를 잃었으면 무너뜨린다 — 천장 장식(DECO_MOUNT 'ceil')은 그 아래 줄이 통째로,
+        바닥 장식은 그 위 줄이 통째로. 종유석·고드름은 떨어져 바닥에서 부서지고(밑에 있으면 맞는다), 나머지는 그 자리에서 떨어진다.
+        ★ 참가자는 세지 않는다 — 호스트가 무너뜨린 칸을 받는다. */
+    updateHang() {
+      const { WW: WW2 } = dimsOf(this.world);
+      const w = this.world, q = w.hangQ;
+      if (!q || !q.length) return;
+      if (this.net && this.net.role === "guest") {
+        q.length = 0;
+        return;
+      }
+      const holds = (t, mount) => TILE_DEF[t].solid === 1 || DECO_MOUNT[t] === mount || mount === "ceil" && !!TILE_DEF[t].leaf;
+      const ks = q.splice(0, q.length);
+      for (const k of ks) {
+        const x = k % WW2, y = k / WW2 | 0, t = w.tiles[k];
+        if (!holds(t, "ceil")) for (let yy = y + 1; DECO_MOUNT[w.get(x, yy)] === "ceil"; yy++) this.dropHung(x, yy);
+        if (!holds(t, "floor")) for (let yy = y - 1; DECO_MOUNT[w.get(x, yy)] === "floor"; yy--) this.dropHung(x, yy);
+      }
+    },
+    dropHung(x, y) {
+      const w = this.world, t = w.get(x, y);
+      w.set(x, y, LEAVE_OF[t] || T.AIR);
+      if (t === T.STALACTITE || t === T.ICICLE) {
+        const p = this.player;
+        this.rocks.push({ x: (x + 0.5) * TS, y: (y + 0.5) * TS, vy: 0, t: 0.12, dmg: 14 + (p ? p.level * 0.9 : 0), kind: t === T.ICICLE ? "ice" : "drip", drop: t });
+        return;
+      }
+      this.dropTile(x, y, t);
+      this.breakFx(x, y, t);
     },
     /** 떨어지는 돌 — 흔들리는 동안(t) 제자리에서 먼지를 떨구고, 그다음 떨어진다 */
     updateRocks(dt) {
@@ -41548,9 +41733,13 @@
         const hitP = Math.abs(r.x - p.cx) < p.w / 2 + 6 && r.y > p.y && r.y < p.y + p.h;
         const hitW = w.solid(Math.floor(r.x / TS), Math.floor((r.y + 8) / TS));
         if (hitP || hitW || r.y > (WH2 - 2) * TS) {
-          if (hitP) p.hurt(r.dmg, r.x);
-          for (let k = 0; k < 12; k++) this.parts.push(new Part(r.x, r.y, "#8a8478", -60, 0.8));
-          this.sfx("break_stone");
+          if (hitP) {
+            p.hurt(r.dmg, r.x);
+            if (r.kind === "ice") p.addBuff("frostbite", 2.5);
+          }
+          for (let k = 0; k < 12; k++) this.parts.push(new Part(r.x, r.y, r.kind === "ice" ? "#dff2ff" : "#8a8478", -60, 0.8));
+          this.sfx(r.kind === "ice" ? "break_ice" : "break_stone");
+          if (r.drop) this.dropTile(Math.floor(r.x / TS), Math.floor(r.y / TS), r.drop);
           this.rocks.splice(i, 1);
         }
       }
@@ -43098,13 +43287,17 @@
       const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       const dayLight = lerp(3, 15, dayF);
       const litR = p.buffs.some((b) => b.id === "lit_greater") ? 9.5 : p.buffs.some((b) => b.id === "lit") ? 6.8 : p.buffs.some((b) => b.id === "lantern") ? 6 : 4.6;
+      const su = this.skyArc(1), up = Math.sin(Math.PI * su);
+      const sunK = clamp(up * 3, 0, 1) * (1 - 0.75 * clamp((this.rainT || 0) * 1.4, 0, 1));
+      const sun = up > 0.02 ? { x: Math.cos(Math.PI * su), y: -Math.max(0.3, up), k: sunK } : null;
       w.computeLight(
         tx0,
         ty0,
         tx1,
         ty1,
         dayLight,
-        [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]]
+        [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]],
+        sun
       );
     },
     /** 렌더 단계 — 원경 · 채취탑 */
@@ -45068,7 +45261,21 @@
       const ch = CHAR_OF(p.charId);
       const fr = this.playerFrame(p);
       const key = "player_" + ch.id;
-      if (this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel && this.drawSwimPlayer(c, p, sx, sy, key)) {
+      const swim = this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel;
+      if (this.spritesOn && this.world.liquid(Math.floor(p.cx / TS), Math.floor(p.cy / TS))) {
+        const one = (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0);
+        const a0 = c.globalAlpha;
+        c.save();
+        c.filter = "brightness(0)";
+        c.globalAlpha = a0 * 0.55;
+        for (const [ox, oy] of [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]]) one(ox, oy);
+        c.filter = "brightness(0) invert(1)";
+        c.globalAlpha = a0 * 0.32;
+        one(0, -1);
+        c.restore();
+        c.filter = "none";
+      }
+      if (swim && this.drawSwimPlayer(c, p, sx, sy, key)) {
         c.restore();
         return;
       }
@@ -46055,9 +46262,9 @@
         give("torch", 60);
         let at = null;
         if (kq) {
-          const k = CAVE_TYPES.findIndex((c) => c.id === kq);
+          const k = CAVE_TYPES.findIndex((c) => c.id === (kq === "frond" ? "moss" : kq));
           const cx0 = w.spawnX;
-          const mark = { moss: T.HANGMOSS, drip: T.STALACTITE, geode: T.GEODE, fume: T.GASVENT }[kq];
+          const mark = { moss: T.HANGMOSS, drip: T.STALACTITE, geode: T.GEODE, fume: T.GASVENT, frost: T.ICICLE, frond: T.GLOWFROND }[kq];
           const near = (x, y) => {
             let n = 0;
             for (let dx = -8; dx <= 8; dx++) for (let dy = -8; dy <= 3; dy++) if (w.get(x + dx, y + dy) === mark) n++;

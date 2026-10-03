@@ -196,10 +196,10 @@ export const DebugStartPart: Bag = {
       give('pick_iron', 1); give('potion_hp', 20); give('bomb_small', 10); give('torch', 60);
       let at = null;
       if (kq) {
-        const k = CAVE_TYPES.findIndex(c => c.id === kq);
+        const k = CAVE_TYPES.findIndex(c => c.id === (kq === 'frond' ? 'moss' : kq));   // frond = 발광 잎이 달린 이끼 굴
         const cx0 = w.spawnX;
         // 그 갈래의 장식이 **실제로 깔린** 자리여야 한다(캠프 둘레처럼 갈래만 있고 안 꾸민 곳이 있다)
-        const mark = ({ moss: T.HANGMOSS, drip: T.STALACTITE, geode: T.GEODE, fume: T.GASVENT } as Bag)[kq];
+        const mark = ({ moss: T.HANGMOSS, drip: T.STALACTITE, geode: T.GEODE, fume: T.GASVENT, frost: T.ICICLE, frond: T.GLOWFROND } as Bag)[kq];
         const near = (x: number, y: number) => {
           let n = 0;
           for (let dx = -8; dx <= 8; dx++) for (let dy = -8; dy <= 3; dy++) if (w.get(x + dx, y + dy) === mark) n++;
