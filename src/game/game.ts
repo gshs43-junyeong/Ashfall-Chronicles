@@ -703,8 +703,9 @@ export const GameCore: Bag = {
       this.checkChapter();
     }
 
-    /* 비석 — 닿으면 잃은 것의 절반을 돌려준다. */
-    if (this.deathMark) {
+    /* 비석 — 닿으면 잃은 것의 절반을 돌려준다. ★ 쓰러진 몸은 비석 바로 위다 — 되살아난 뒤에만 줍는다
+       (안 막으면 죽는 그 프레임에 되찾아 죽는 소리 위에 'chapter' 팡파르가 겹쳤다. 사연: docs/code-history.md#h149) */
+    if (this.deathMark && this.player.hp > 0 && !this.scenes.has('death') && !this.scenes.has('mdeath')) {
       const dm = this.deathMark;
       const now = this.dayCount * 1440 + this.dayT;
       if (now - (dm.at || 0) >= 720) {          // 12시간 = 720분

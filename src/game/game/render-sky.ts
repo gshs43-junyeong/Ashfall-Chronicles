@@ -17,7 +17,8 @@ export const RenderSkyPart: Bag = {
     let bot = mixHex('#141020', '#a8c8e0', f);
     // 이벤트 중에는 하늘 자체가 물든다 — 붉은 달이 떴다는 걸 UI 없이 알 수 있게.
     let ev = this.eventActive() ? this.eventSpec() : null;
-    if (!ev && this.event && this.event.id === 'rain') {
+    /* 비 · 붉은 달은 하늘 전체의 일 — 몹이 안 나오는 캠프 · 마을에서도 하늘은 같이 물든다(몹 생성은 eventActive 가 따로 막는다) */
+    if (!ev && this.event && (this.event.id === 'rain' || this.event.id === 'bloodmoon')) {
       const p = this.player, w = this.world;
       const zone = p && w ? w.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS)) : null;
       if (zone === 'village' || zone === 'camp') ev = this.eventSpec();
