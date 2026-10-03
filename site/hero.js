@@ -252,3 +252,92 @@ var PLAYER = { file: 'char/player_wanderer.png', frames: 13, walk: [2, 3, 4, 5],
     document.fonts.ready.then(resync);
   }
 })();
+
+/* 제목 글자의 별똥별 — 처음 한 번, 오른쪽 위 하늘에서 떨어져 'A' 꼭짓점에 앉는다.
+ * 앉는 순간 별까지 다 있는 로고(게임과 같은 그림)를 드러내므로 끝난 모습은 게임 로고와 같다.
+ * ★ 앉은 별은 움직이지 않는다(반짝임을 되풀이하지 않는다) — 사용자 결정 2026-10-03.
+ * 자리는 tools/mklogo.py 가 data-star · data-tail(그림 폭·높이에 대한 비율)로 적어 둔다. */
+(function () {
+  'use strict';
+  var box = document.querySelector('.wordmark');
+  if (!box || !box.dataset.star) return;
+  var cv = box.querySelector('.wm-fx'), imgs = box.querySelectorAll('img');
+  var land = function () { box.classList.add('wm-landed'); };
+  if (!cv || !cv.getContext || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { land(); return; }
+  var c = cv.getContext('2d');
+  var S = box.dataset.star.split(',').map(Number), T = box.dataset.tail.split(',').map(Number);
+  /* 캔버스는 로고 상자보다 크다(style.css .wm-fx: 왼쪽 -10% · 위 -90% · 폭 150% · 높이 220%) */
+  var toX = function (fx) { return (fx + 0.10) / 1.5; }, toY = function (fy) { return (fy + 0.90) / 2.2; };
+  var A = [S[0] + (T[0] - S[0]) * 1.9, S[1] + (T[1] - S[1]) * 1.9];      // 떨어지기 시작하는 자리 — 꼬리 끝보다 더 먼 하늘
+  var DELAY = 0.35, FALL = 1.15, sparks = [], landed = false, t0 = 0, last = 0, W = 0, H = 0, u = 1;
+
+  function size() {
+    var r = cv.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1);
+    W = cv.width = Math.round(r.width * d); H = cv.height = Math.round(r.height * d);
+    u = r.width / 1.5 / 560 * d;                                           // 로고가 560px 일 때 1
+  }
+  function pt(f) { return [toX(f[0]) * W, toY(f[1]) * H]; }
+  function glow(x, y, r, col, a) {
+    var g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, 'rgba(' + col + ',' + a + ')'); g.addColorStop(1, 'rgba(' + col + ',0)');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+  }
+  /* 꼬리 — 머리에서 굵고 하늘 쪽으로 가늘어지는 쐐기(빛 번짐 한 겹 + 심 한 겹) */
+  function tail(h, b, w, a) {
+    var dx = b[0] - h[0], dy = b[1] - h[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+    [[w * 3.2, 'rgba(255,170,80,', a * 0.35], [w, 'rgba(255,240,205,', a]].forEach(function (s) {
+      var g = c.createLinearGradient(h[0], h[1], b[0], b[1]);
+      g.addColorStop(0, s[1] + s[2] + ')'); g.addColorStop(0.45, s[1] + s[2] * 0.4 + ')'); g.addColorStop(1, s[1] + '0)');
+      c.fillStyle = g; c.beginPath();
+      c.moveTo(h[0] + nx * s[0] / 2, h[1] + ny * s[0] / 2); c.lineTo(b[0], b[1]); c.lineTo(h[0] - nx * s[0] / 2, h[1] - ny * s[0] / 2);
+      c.arc(h[0], h[1], s[0] / 2, Math.atan2(-ny, -nx), Math.atan2(ny, nx)); c.fill();
+    });
+  }
+  function frame(now) {
+    if (!t0) t0 = now;
+    var t = (now - t0) / 1000, dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
+    c.clearRect(0, 0, W, H);
+    c.globalCompositeOperation = 'lighter';
+    var a = pt(A), s = pt(S), k = Math.min(1, Math.max(0, (t - DELAY) / FALL));
+    if (k > 0 && !landed) {
+      var p = 0.25 * k + 0.75 * k * k;                                      // 떨어질수록 빨라진다
+      var h = [a[0] + (s[0] - a[0]) * p, a[1] + (s[1] - a[1]) * p];
+      var len = Math.min(p, 0.42), b = [h[0] + (a[0] - h[0]) * len / Math.max(p, 1e-3), h[1] + (a[1] - h[1]) * len / Math.max(p, 1e-3)];
+      tail(h, b, 3.4 * u, 0.95);
+      glow(h[0], h[1], 26 * u, '255,190,100', 0.5); glow(h[0], h[1], 7 * u, '255,250,235', 1);
+      for (var i = 0; i < 2; i++) sparks.push({ x: h[0], y: h[1], vx: (Math.random() - 0.5) * 40 * u, vy: (Math.random() * 30 + 10) * u,
+        life: 0.4 + Math.random() * 0.5, age: 0, r: (0.8 + Math.random() * 1.2) * u });
+      if (k >= 1) {
+        landed = true; land();
+        for (var j = 0; j < 26; j++) {
+          var an = Math.random() * Math.PI * 2, sp = (60 + Math.random() * 120) * u;
+          sparks.push({ x: s[0], y: s[1], vx: Math.cos(an) * sp, vy: Math.sin(an) * sp, life: 0.5 + Math.random() * 0.6, age: 0, r: (1 + Math.random() * 1.4) * u });
+        }
+        box._landT = t;
+      }
+    }
+    if (landed) {                                                           // 앉는 순간 — 번쩍임과 퍼지는 고리 한 번
+      var q = (t - box._landT) / 0.55;
+      if (q < 1) {
+        glow(s[0], s[1], (30 + 40 * q) * u, '255,214,140', 0.8 * (1 - q));
+        c.strokeStyle = 'rgba(255,226,170,' + (0.7 * (1 - q)) + ')'; c.lineWidth = 2 * u * (1 - q) + 0.5;
+        c.beginPath(); c.arc(s[0], s[1], (6 + 46 * q) * u, 0, Math.PI * 2); c.stroke();
+      }
+    }
+    sparks = sparks.filter(function (p) { p.age += dt; return p.age < p.life; });
+    sparks.forEach(function (p) {
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 60 * u * dt; p.vx *= 0.97;
+      var f = 1 - p.age / p.life;
+      c.fillStyle = 'rgba(255,' + Math.round(190 + 50 * f) + ',' + Math.round(110 + 80 * f) + ',' + f + ')';
+      c.beginPath(); c.arc(p.x, p.y, p.r * (0.5 + f * 0.5), 0, Math.PI * 2); c.fill();
+    });
+    c.globalCompositeOperation = 'source-over';
+    if (landed && !sparks.length && t - box._landT > 0.6) { c.clearRect(0, 0, W, H); return; }   // 다 끝나면 멈춘다 — 앉은 별은 그대로
+    requestAnimationFrame(frame);
+  }
+  /* 두 그림이 다 들어온 뒤에 떨어뜨린다 — 그 전에 앉으면 별 없는 몸만 보인다 */
+  var wait = Array.prototype.map.call(imgs, function (im) {
+    return im.decode ? im.decode().catch(function () {}) : Promise.resolve();
+  });
+  Promise.all(wait).then(function () { size(); window.addEventListener('resize', size); requestAnimationFrame(frame); });
+})();

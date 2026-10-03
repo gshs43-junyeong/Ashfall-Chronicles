@@ -120,3 +120,5 @@
 "유적 수호병","Ruin Guard","遺跡の守護兵","遗迹守卫","Ruinenwächter","Guardia de las ruinas","enemy",""
 "잿불 새끼용","Ember Drakeling","熾火の仔竜","余烬幼龙","Glutdrachenjunges","Dragoncito de ascuas","pet",""
 "드래곤 알","Dragon Egg","ドラゴンの卵","龙蛋","Drachenei","Huevo de dragón","item","v1.1.1 뒤 추가 예정(윤슬) — 미리 정해 둔다"
+"싱글플레이","Singleplayer","シングルプレイ","单人游戏","Einzelspieler","Un jugador","ui","영어는 붙여 쓴다(Single Player · single-player 금지, 문장 안은 singleplayer) — 사용자 결정 2026-10-03. 중국어는 单人游戏(单人世界 X)"
+"멀티플레이","Multiplayer","マルチプレイ","多人游戏","Mehrspieler","Multijugador","ui","문장 안 영어는 multiplayer. 중국어는 多人游戏(联机 X)"

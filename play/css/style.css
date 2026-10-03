@@ -772,14 +772,17 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 .ts-version{position:absolute;right:16px;bottom:12px;font-size:11px;color:#6f6b5c;letter-spacing:.06em;opacity:.75}
 #pause-screen,#death-screen{display:none;background:#04050ae0;backdrop-filter:blur(3px)}
 #pause-screen.open,#death-screen.open{display:flex}
-.ts-inner{text-align:center;max-width:600px;padding:20px}
+.ts-inner{text-align:center;max-width:740px;padding:20px}
 .ts-sub{font-size:12px;letter-spacing:.42em;color:var(--gold);margin-bottom:14px;opacity:.9}
 /* ---- 로고 — tools/mklogo.py 가 굽는 픽셀 그림(글꼴 파일 없이 어느 언어에서나 같은 모양) ---- */
 .ts-inner h1{margin:0 auto 18px;line-height:0}
-.ts-logo{width:556px;max-width:88vw;height:auto}
+.ts-logo{width:707px;max-width:min(707px,98vw);height:auto}   /* logo_title.png — 글자는 예전 556px 로고와 같은 크기, 둘레 장식만큼 넓다 */
 .ts-tag{font-size:13px;color:#8d8774;line-height:1.9;margin-bottom:34px}
 .ts-menu{display:flex;flex-direction:column;gap:9px;width:230px;margin:0 auto}
 .ts-menu button{padding:11px}
+.ts-inner h1{position:relative}
+.ts-inner h1::before{content:"";position:absolute;left:14%;right:14%;top:22%;bottom:10%;z-index:-1;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,138,52,.2),rgba(255,110,40,.07) 55%,transparent);filter:blur(6px)}
 .ts-seed{margin-top:22px;font-size:11px;color:#6f6b5c}
 .ts-seed input{background:#0c0b08;border:1px solid var(--frame);color:var(--ink);padding:5px 9px;
   border-radius:2px;font:inherit;font-size:11px;width:150px;margin-left:6px}
@@ -1044,7 +1047,7 @@ body.booting #title-screen{visibility:hidden}
   #prof-wrap{grid-template-columns:1fr}
   #craft-list{grid-template-columns:1fr}
   #quest-tracker{width:190px;font-size:11px}
-  .ts-logo{width:390px}
+  .ts-logo{width:496px}
   #hotbar .slot,.sk{width:42px;height:42px;font-size:19px}
   #skillbar{bottom:74px}
   /* 좁은 화면에서는 등급별 폭을 vw 로만 가른다 — 등급 규칙(t-*)이 여기 뒤에 오므로

@@ -7,7 +7,7 @@
 로고 = 'ASHFALL' (Cinzel Black — 첫 A · 끝 L 이 큰 제목 글자, 위는 밝은 금 → 아래 잿불 주황, 아래로 민 두께와 검은 윤곽)
      + 'CHRONICLES' (Cinzel Bold, 넓게 벌려 양옆 마름모로 끝나는 금줄)
      + 'A' 의 꼭짓점에 앉은 별 하나와 오른쪽 위 하늘로 난 꼬리(게임의 시작 — 떨어진 별).
-사이트 홈 히어로는 같은 윤곽을 SVG 로 받아 색을 뒤집는다(별빛 글자 · 잔불 아랫줄 — site/style.css .wordmark).
+사이트 홈 히어로는 같은 그림을 쓴다(site/wordmark*.png) — 별똥별이 떨어져 앉는 움직임만 site/hero.js 가 더한다.
 파비콘 = 네 갈래 별(별 조각) — 16px 에서도 읽히게 칸을 손으로 찍었다.
 ★ 게임 폴더의 로고를 이 도구에 다시 먹이지 말 것 — 원본은 글꼴 윤곽이다."""
 import os, sys, math, random
@@ -17,12 +17,12 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 UI = os.path.join(ROOT, 'play', 'assets', 'ui')
 
 # ---- 글자 윤곽 — tools/art/fonts 의 OFL 글꼴(Cinzel Black · Bold)에서 뽑는다 ----
-# 로고는 글꼴을 싣지 않는다: 윤곽을 PNG(게임) · SVG 경로(사이트)로 구워 넣으므로 게임·사이트 어디에도 글꼴 파일이 없다.
+# 로고는 글꼴을 싣지 않는다: 윤곽을 PNG(게임 · 사이트 같은 그림)로 구워 넣으므로 게임·사이트 어디에도 글꼴 파일이 없다.
 from fontTools.ttLib import TTFont
 from fontTools.pens.basePen import BasePen
-from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from PIL import ImageChops, ImageDraw
+import pathops
 
 FONTS = os.path.join(ROOT, 'tools', 'art', 'fonts')
 MAIN = TTFont(os.path.join(FONTS, 'Cinzel-Black.ttf'))
@@ -73,16 +73,14 @@ def word_width(font, text, cap, track):
     return layout(font, text, cap, track, 0, 0)[1]
 
 
-def svg_path(font, glyphs):
-    gs = font.getGlyphSet(); pen = SVGPathPen(gs, lambda v: f'{v:.1f}'.rstrip('0').rstrip('.'))
-    for g, m in glyphs: gs[g].draw(TransformPen(pen, m))
-    return pen.getCommands()
-
-
 def polygons(font, glyphs):
+    """글자 윤곽을 다각형으로 — ★ 겹친 윤곽(Cinzel 의 획 조각)을 먼저 합친다. 안 합치면 XOR 로 칠할 때
+    겹친 띠가 비어 H · F · L 획 안에 세로 실금이 그어졌다"""
     gs = font.getGlyphSet(); out = []
     for g, m in glyphs:
-        fp = FlatPen(gs); gs[g].draw(TransformPen(fp, m)); out += fp.polys
+        path = pathops.Path(); gs[g].draw(TransformPen(path.getPen(), m))
+        path.simplify(fix_winding=True); path.convertConicsToQuads()
+        fp = FlatPen(gs); path.draw(fp); out += fp.polys
     return out
 
 
@@ -149,18 +147,89 @@ def gradient(W, H, stops, y0, y1):
     return im.resize((W, H))
 
 
+def DECO_BOX(g):
+    """장식 판의 상자 — 로고 상자보다 양옆 · 위 · 아래로 넓다"""
+    x0, y0, x1, y1 = g['box']
+    return (x0 - 120, y0 - 92, x1 + 120, y1 + 34)
+
+
+def ornament(g, W, H, k, ox, oy, ss=3):
+    """타이틀 화면 로고의 둘레 — 별자리 눈금을 새긴 하늘 아치(별똥별이 뚫고 내려온 자리) · 양옆 금빛 덩굴 장식 ·
+    아치 위 작은 별들 · CHRONICLES 아래 늘어진 마름모. 글자 뒤에 깔리므로 옅게(잔불 금색 한 가지)"""
+    L = Image.new('RGBA', (W * ss, H * ss), (0, 0, 0, 0)); d = ImageDraw.Draw(L)
+    P = lambda x, y: ((x + ox) * k * ss, (y + oy) * k * ss)
+    u = k * ss
+    GOLD = (236, 176, 92); PALE = (255, 220, 150); DARK = (22, 11, 8)
+    wA = g['wA']; cx = wA / 2
+    def line(pts, w, col, a):
+        d.line([P(*q) for q in pts], fill=col + (int(255 * a),), width=max(1, round(w * u)), joint='curve')
+    def diamond(x, y, r, col, a=1, edge=True):
+        X, Y = P(x, y); R = r * u
+        if edge: d.polygon([(X - R - u, Y), (X, Y - R - u), (X + R + u, Y), (X, Y + R + u)], fill=DARK + (int(230 * a),))
+        d.polygon([(X - R, Y), (X, Y - R), (X + R, Y), (X, Y + R)], fill=col + (int(255 * a),))
+    def spark(x, y, r, a):
+        X, Y = P(x, y); R = r * u; w = R * .22
+        d.polygon([(X, Y - R), (X + w, Y - w), (X + R, Y), (X + w, Y + w), (X, Y + R), (X - w, Y + w), (X - R, Y), (X - w, Y - w)], fill=PALE + (int(255 * a),))
+    # 하늘 아치 — 양옆 덩굴 끝에서 솟아 로고 위를 넘는 반타원, 바깥 줄 · 안쪽 줄 사이에 별자리 눈금
+    ay = 58; rx = wA / 2 + 96; ry = 205            # ★ 별(A 꼭짓점)과 꼬리 끝보다 높게 — 낮으면 아치가 별을 꿰뚫었다
+    def arc(r_off, w, a, t0=0, t1=math.pi):
+        pts = [(cx - (rx + r_off) * math.cos(t), ay - (ry + r_off) * math.sin(t)) for t in [t0 + (t1 - t0) * i / 160 for i in range(161)]]
+        line(pts, w, GOLD, a)
+    arc(0, 1.6, .75); arc(-9, .9, .5)
+    for i in range(1, 60):
+        t = math.pi * i / 60; long_ = i % 5 == 0
+        c, s_ = math.cos(t), math.sin(t)
+        p0 = (cx - rx * c, ay - ry * s_); r1 = -9 if long_ else -4.5
+        p1 = (cx - (rx + r1) * c, ay - (ry + r1) * s_)
+        line([p0, p1], 1 if long_ else .7, GOLD, .7 if long_ else .45)
+    # 아치 꼭대기 · 4분점의 마름모와 별
+    for t, r in ((math.pi / 2, 4.2), (math.pi / 4, 2.6), (3 * math.pi / 4, 2.6)):
+        diamond(cx - (rx + 4.5) * math.cos(t), ay - (ry + 4.5) * math.sin(t), r, PALE, .9)
+    # 아치 위 별자리 — 몇 개의 별을 옅은 선으로 잇는다(왼쪽 · 오른쪽 한 무리씩)
+    for grp in (((-92, -62), (-64, -100), (-20, -116), (14, -150)), ((wA - 40, -150), (wA + 6, -126), (wA + 52, -96), (wA + 84, -58))):
+        line(list(grp), .6, GOLD, .4)
+        for j, (x, y) in enumerate(grp): spark(x, y, 4.5 if j % 2 else 3.2, .85)
+    # 양옆 덩굴 장식 — 글자 쪽이 굵고 바깥으로 가늘어지는 금줄 + 끝의 소용돌이 + 마름모
+    for sgn in (-1, 1):
+        x_in = -14 if sgn < 0 else wA + 14; x_out = x_in + sgn * 92; y = ay
+        X0, Y0 = P(x_in, y); X1, Y1 = P(x_out, y)
+        d.polygon([(X0, Y0 - 2.2 * u), (X1, Y1 - .7 * u), (X1, Y1 + .7 * u), (X0, Y0 + 2.2 * u)], fill=GOLD + (235,))
+        line([(x_in + sgn * 8, y - 7), (x_in + sgn * 62, y - 7)], .6, GOLD, .55)       # 위 · 아래 가는 덧줄
+        line([(x_in + sgn * 8, y + 7), (x_in + sgn * 62, y + 7)], .6, GOLD, .55)
+        for up in (-1, 1):                                                              # 소용돌이 — 줄 끝에서 위아래로 말린다
+            pts = [];
+            for i in range(41):
+                t = i / 40 * 1.6 * math.pi; r = 9 * (1 - i / 52)
+                pts.append((x_out - sgn * 10 + sgn * r * math.sin(t), y + up * (9 - r * math.cos(t))))
+            line(pts, 1.2, GOLD, .85)
+        diamond(x_out + sgn * 6, y, 5.2, PALE)
+        d.ellipse([P(x_out + sgn * 16 - 1.6, y - 1.6), P(x_out + sgn * 16 + 1.6, y + 1.6)], fill=GOLD + (230,))
+        diamond(x_in + sgn * 40, y, 2.2, PALE, .9, edge=False)
+    # CHRONICLES 아래 늘어진 장식 — 얕은 활 + 가운데 마름모 + 매달린 작은 별
+    by = g['lineY'] + 22
+    pts = [(cx + (i / 40 - .5) * 150, by - 6 * math.cos((i / 40 - .5) * math.pi)) for i in range(41)]
+    line(pts, 1.1, GOLD, .7)
+    diamond(cx, by - 6, 4, PALE); spark(cx, by + 8, 4, .8)
+    for sx_ in (-1, 1): diamond(cx + sx_ * 75, by, 1.8, GOLD, .9, edge=False)
+    L = L.resize((W, H), Image.LANCZOS)
+    glow = L.filter(ImageFilter.GaussianBlur(k * 3)); out = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    out.alpha_composite(glow); out.alpha_composite(L)                   # 금빛이 살짝 번진다(잔불 빛을 받은 것처럼)
+    return out
+
+
 EMBER = [(0, (255, 244, 206)), (.38, (255, 204, 110)), (.72, (240, 128, 56)), (1, (186, 66, 28))]
 BONE = (234, 224, 206)
 
 
-def logo(width, sub=None):
+def logo(width, sub=None, with_star=True, crop=True, deco=False):
     """게임 타이틀 로고 — 잔불빛 글자 + 잿빛 아랫줄 + 떨어진 별. width = PNG 폭(픽셀)"""
     sub = sub or SUB
-    g = geometry(sub); x0, y0, x1, y1 = g['box']
+    g = geometry(sub); x0, y0, x1, y1 = DECO_BOX(g) if deco else g['box']
     k = width / (x1 - x0); W, H = width, round((y1 - y0) * k)
     ox, oy = -x0, -y0
     P = lambda x, y: ((x + ox) * k, (y + oy) * k)
     im = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    if deco: im.alpha_composite(ornament(g, W, H, k, ox, oy))
     ma = fill_mask(polygons(MAIN, g['a']), W, H, k, ox, oy)
     mc = fill_mask(polygons(sub, g['c']), W, H, k, ox, oy)
     # 뒤에 번지는 잔불 — 글자 모양 그대로 흐리게
@@ -172,6 +241,9 @@ def logo(width, sub=None):
     solid = ImageChops.lighter(side, ma)
     # 어두운 윤곽 — 앞면과 옆면을 한 덩어리로 두른다(밝은 하늘에서도 선다)
     edge = solid.filter(ImageFilter.MaxFilter(max(3, int(k * 3.6) | 1)))
+    rim = ImageChops.subtract(edge.filter(ImageFilter.MaxFilter(max(3, int(k * 5.2) | 1))), edge)
+    gr = gradient(W, H, [(0, (255, 214, 140)), (1, (196, 112, 48))], P(0, -20)[1], P(0, CAP + DEPTH)[1]).convert('RGBA')
+    gr.putalpha(rim.point(lambda v: v * .3)); im.alpha_composite(gr)          # 바깥 금테 — 검은 윤곽 둘레의 가는 금줄
     sh = Image.new('RGBA', (W, H), (22, 11, 8, 0)); sh.putalpha(edge.point(lambda v: v * .92))
     im.alpha_composite(sh)
     _, sy0 = P(0, 0); _, sy1 = P(0, CAP + DEPTH)
@@ -180,6 +252,13 @@ def logo(width, sub=None):
     _, ay0 = P(0, 0); _, ay1 = P(0, CAP)
     fillA = gradient(W, H, EMBER, ay0, ay1).convert('RGBA'); fillA.putalpha(ma)
     im.alpha_composite(fillA)
+    # 안쪽 모서리 — 왼쪽 위는 빛, 오른쪽 아래는 그늘(금속을 두드려 세운 듯한 각)
+    bv = max(1, round(k * 2.2))
+    shift = lambda m, dx, dy: m.transform(m.size, Image.AFFINE, (1, 0, -dx, 0, 1, -dy))
+    lit = ImageChops.subtract(ma, shift(ma, bv, bv)).filter(ImageFilter.GaussianBlur(k * .5))
+    shd = ImageChops.subtract(ma, shift(ma, -bv, -bv)).filter(ImageFilter.GaussianBlur(k * .5))
+    for m_, col, a_ in ((lit, (255, 248, 220), .2), (shd, (150, 50, 18), .3)):
+        lay = Image.new('RGBA', (W, H), col + (0,)); lay.putalpha(ImageChops.multiply(m_, ma).point(lambda v, a_=a_: v * a_)); im.alpha_composite(lay)
     # 윗모서리 빛 — 글자 윗면 한 줄만 밝게(위로 한 칸 민 마스크와의 차)
     up = ImageChops.subtract(ma, ma.transform(ma.size, Image.AFFINE, (1, 0, 0, 0, 1, max(1, round(k * 1.0)))))
     hl = Image.new('RGBA', (W, H), (255, 252, 236, 0)); hl.putalpha(up.point(lambda v: v * .38))
@@ -195,10 +274,29 @@ def logo(width, sub=None):
     GOLD = (236, 176, 92, 235)
     for (a, b), outer in zip(g['lines'], (0, 1)):
         xa, xb = P(a, 0)[0], P(b, 0)[0]
-        d.rectangle([xa, ly - th / 2, xb, ly + th / 2], fill=GOLD)
-        ex = xa if outer == 0 else xb
+        ex, inn = (xa, xb) if outer == 0 else (xb, xa)
+        t0, t1 = th * 1.3, th * .45                                      # 글자 쪽이 굵고 바깥으로 가늘어진다
+        d.polygon([(inn, ly - t0 / 2 - k * .8), (ex, ly - t1 / 2 - k * .8), (ex, ly + t1 / 2 + k * .8), (inn, ly + t0 / 2 + k * .8)], fill=(22, 11, 8, 200))
+        d.polygon([(inn, ly - t0 / 2), (ex, ly - t1 / 2), (ex, ly + t1 / 2), (inn, ly + t0 / 2)], fill=GOLD)
         d.polygon([(ex - r, ly), (ex, ly - r), (ex + r, ly), (ex, ly + r)], fill=(22, 11, 8, 255))
         d.polygon([(ex - r * .7, ly), (ex, ly - r * .7), (ex + r * .7, ly), (ex, ly + r * .7)], fill=(255, 214, 128, 255))
+        dx = (-1 if outer == 0 else 1) * r * 2.1; rr = r * .38                 # 마름모 바깥의 작은 점
+        d.ellipse([ex + dx - rr - k * .6, ly - rr - k * .6, ex + dx + rr + k * .6, ly + rr + k * .6], fill=(22, 11, 8, 255))
+        d.ellipse([ex + dx - rr, ly - rr, ex + dx + rr, ly + rr], fill=(236, 176, 92, 255))
+    # 불티 — 글자 위로 떠오르는 잔불(위로 갈수록 작고 옅다). 씨앗 고정
+    ember = Image.new('RGBA', (W, H), (0, 0, 0, 0)); ed = ImageDraw.Draw(ember); rnd = random.Random(5)
+    for _ in range(44):
+        u = rnd.random(); x = P(g['wA'] * (.03 + .94 * rnd.random()), 0)[0]
+        y = P(0, CAP * (.12 - u * .75))[1]; r = k * (1.9 - u * 1.2) * (.6 + rnd.random() * .6)
+        a = int(255 * (1 - u * .8) * (.6 + rnd.random() * .4))
+        if r <= .3 or a < 20: continue
+        col = rnd.choice([(255, 224, 150), (255, 186, 96), (255, 244, 210)])
+        ed.ellipse([x - r, y - r, x + r, y + r], fill=col + (a,))
+    off = ImageChops.invert(solid.filter(ImageFilter.MaxFilter(max(3, int(k * 6) | 1))))       # 글자 면 · 윤곽 위에는 안 놓는다(얼룩처럼 보였다)
+    ember.putalpha(ImageChops.multiply(ember.getchannel('A'), off))
+    halo = ember.filter(ImageFilter.GaussianBlur(k * 1.6))
+    im.alpha_composite(halo); im.alpha_composite(halo); im.alpha_composite(ember)
+    if not with_star: return im.crop(im.getbbox()) if crop else im
     # 떨어진 별과 꼬리
     sx, sy = P(*g['star']); tx, ty = P(*g['tail'])
     tail = Image.new('RGBA', (W, H), (0, 0, 0, 0)); td = ImageDraw.Draw(tail); n = int(math.hypot(tx - sx, ty - sy))
@@ -207,60 +305,78 @@ def logo(width, sub=None):
         td.ellipse([x - w, y - w, x + w, y + w], fill=(255, 226, 160, int(235 * (1 - t) ** 1.7)))
     im.alpha_composite(tail.filter(ImageFilter.GaussianBlur(max(.5, k * .4))))
     st = star(int(k * 42) | 1); im.alpha_composite(st, (int(sx - st.width / 2), int(sy - st.height / 2)))
-    return im.crop(im.getbbox())
+    return im.crop(im.getbbox()) if crop else im
 
 
-def svg_wordmark(uid='wm'):
-    """사이트용 SVG — 같은 윤곽을 벡터 그대로. 색과 움직임은 사이트 CSS 가 입힌다(클래스만 단다)"""
-    g = geometry(); x0, y0, x1, y1 = g['box']
-    (a0, a1), (b0, b1) = g['lines']; ly = g['lineY']; sx, sy = g['star']; tx, ty = g['tail']
-    f = lambda v: f'{v:.1f}'.rstrip('0').rstrip('.')
-    return (f'<svg class="wordmark" viewBox="{f(x0)} {f(y0)} {f(x1 - x0)} {f(y1 - y0)}" role="img" aria-label="Ashfall Chronicles">'
-            f'<defs><linearGradient id="{uid}-a" x1="0" y1="0" x2="0" y2="{CAP}" gradientUnits="userSpaceOnUse">'
-            f'<stop offset="0" class="wm-a0"/><stop offset=".55" class="wm-a1"/><stop offset="1" class="wm-a2"/></linearGradient>'
-            f'<linearGradient id="{uid}-l" x1="0" x2="1"><stop offset="0" class="wm-l0"/><stop offset="1" class="wm-l1"/></linearGradient>'
-            f'<linearGradient id="{uid}-r" x1="1" x2="0"><stop offset="0" class="wm-l0"/><stop offset="1" class="wm-l1"/></linearGradient>'
-            f'<linearGradient id="{uid}-t" x1="{f(sx)}" y1="{f(sy)}" x2="{f(tx)}" y2="{f(ty)}" gradientUnits="userSpaceOnUse">'
-            f'<stop offset="0" class="wm-t0"/><stop offset="1" class="wm-t1"/></linearGradient>'
-            f'<path id="{uid}-g" d="{svg_path(MAIN, g["a"])}"/><path id="{uid}-s" d="{svg_path(SUB, g["c"])}"/></defs>'
-            f'<path class="wm-tail" d="M{f(tx)} {f(ty)}L{f(sx)} {f(sy)}" pathLength="1" stroke="url(#{uid}-t)"/>'
-            + '<g class="wm-depth">' + ''.join(f'<use href="#{uid}-g" y="{i}"/>' for i in range(DEPTH, 0, -1)) + '</g>'
-            + f'<use class="wm-main" href="#{uid}-g" fill="url(#{uid}-a)"/>'
-            + '<g class="wm-subdepth">' + ''.join(f'<use href="#{uid}-s" y="{i}"/>' for i in (2, 1)) + '</g>' +
-            f'<rect class="wm-line" x="{f(a0)}" y="{f(ly - .7)}" width="{f(a1 - a0)}" height="1.4"/>'
-            f'<rect class="wm-line" x="{f(b0)}" y="{f(ly - .7)}" width="{f(b1 - b0)}" height="1.4"/>'
-            + ''.join(f'<path class="wm-gem" d="M{f(ex - 3.2)} {f(ly)}L{f(ex)} {f(ly - 3.2)}L{f(ex + 3.2)} {f(ly)}L{f(ex)} {f(ly + 3.2)}Z"/>' for ex in (a0, b1)) +
-            f'<use class="wm-sub" href="#{uid}-s"/>'
-            f'<g class="wm-star" transform="translate({f(sx)} {f(sy)})"><path d="M0 -15L2.2 -2.2L15 0L2.2 2.2L0 15L-2.2 2.2L-15 0L-2.2 -2.2Z"/>'
-            f'<circle r="3.2"/></g></svg>')
-
-
-def write_site_svg():
-    """사이트 홈 히어로의 <!-- wordmark --> 자리에 SVG 를 끼운다(사이트는 글꼴 없이 벡터로 그린다)"""
+def write_site_logo(width=1440):
+    """사이트 홈 히어로 — 게임과 **같은 그림**(별 없는 몸 + 별까지 다 있는 판, 같은 자르기 상자)과 별 · 꼬리 자리를
+    <!-- wordmark --> 자리에 끼운다. 별똥별이 떨어져 앉는 움직임은 site/hero.js 가 그 자리 위에 그린다"""
+    full = logo(width, crop=False, deco=True); bb = full.getbbox()
+    body = logo(width, with_star=False, crop=False, deco=True).crop(bb); full = full.crop(bb)
+    full.save(os.path.join(ROOT, 'site', 'wordmark.png'), optimize=True)
+    body.save(os.path.join(ROOT, 'site', 'wordmark-body.png'), optimize=True)
+    g = geometry(); x0, y0, x1, y1 = DECO_BOX(g); k = width / (x1 - x0)
+    fx = lambda x: ((x - x0) * k - bb[0]) / full.width
+    fy = lambda y: ((y - y0) * k - bb[1]) / full.height
+    (sx, sy), (tx, ty) = g['star'], g['tail']
+    f = lambda v: f'{v:.4f}'
+    html = (f'<div class="wordmark" data-star="{f(fx(sx))},{f(fy(sy))}" data-tail="{f(fx(tx))},{f(fy(ty))}" '
+            f'data-arm="{f(21 * k / full.width)}">'
+            f'<img class="wm-body" src="../wordmark-body.png?v=dev" width="{full.width}" height="{full.height}" alt="Ashfall Chronicles">'
+            f'<img class="wm-full" src="../wordmark.png?v=dev" width="{full.width}" height="{full.height}" alt="" aria-hidden="true">'
+            '<canvas class="wm-fx" aria-hidden="true"></canvas>'
+            '<script>document.currentScript.parentNode.classList.add(\'wm-anim\')</script></div>')
     p = os.path.join(ROOT, 'site', 'home', 'index.html'); t = open(p, encoding='utf-8').read()
     a, b = '<!-- wordmark:start -->', '<!-- wordmark:end -->'
     if a in t:
         i, j = t.index(a) + len(a), t.index(b)
-        open(p, 'w', encoding='utf-8').write(t[:i] + svg_wordmark() + t[j:])
+        open(p, 'w', encoding='utf-8').write(t[:i] + html + t[j:])
 
 
 def favicon(n):
-    """n×n 파비콘 — 어두운 둥근 판 · 금빛 테 · 판을 꽉 채운 네 갈래 별(16px 에서도 별로 읽힌다)"""
-    S = 128
-    im = Image.new('RGBA', (S, S), (0, 0, 0, 0)); P = im.load()
-    for y in range(S):
-        for x in range(S):
-            d = math.hypot(x - 63.5, y - 63.5)
-            if d <= 63: P[x, y] = (214, 146, 62, 255) if d > 57 else lerp((52, 36, 50), (18, 13, 20), y / S) + (255,)
-    im.alpha_composite(star(122), (3, 3))
+    """n×n 탭 아이콘 — 가운데 별 하나가 오른쪽 위 하늘에서 휘어 내려온 빛 꼬리를 끌고 막 앉은 순간(로고의 떨어진 별).
+    별은 칸의 한가운데보다 조금 아래 · 왼쪽, 꼬리는 별 쪽이 굵고 밝다. 작은 칸(16 · 32)은 별 · 꼬리를 키워 뭉개지지 않게 한다"""
+    S = 256; small = n <= 32
+    im = Image.new('RGBA', (S, S), (0, 0, 0, 0))
+    plate = Image.new('L', (S, S), 0); ImageDraw.Draw(plate).rounded_rectangle([4, 4, S - 5, S - 5], radius=56, fill=255)
+    bg = gradient(S, S, [(0, (30, 24, 44)), (.6, (22, 15, 22)), (1, (40, 18, 12))], 0, S).convert('RGBA'); bg.putalpha(plate)
+    im.alpha_composite(bg)
+    cx, cy = 104, 150                                                    # 별이 앉은 자리
+    # 별 뒤 잔불 후광
+    halo = Image.new('L', (S, S), 0); ImageDraw.Draw(halo).ellipse([cx - 70, cy - 70, cx + 70, cy + 70], fill=255)
+    hl = Image.new('RGBA', (S, S), (255, 150, 60, 0)); hl.putalpha(halo.filter(ImageFilter.GaussianBlur(30)).point(lambda v: v * .55))
+    im.alpha_composite(hl)
+    # 꼬리 — 오른쪽 위에서 별까지 휘어 내려오는 쐐기(별 쪽이 굵다) + 바깥 번짐
+    tail = Image.new('RGBA', (S * 2, S * 2), (0, 0, 0, 0)); td = ImageDraw.Draw(tail)
+    p0, p1, p2 = (236, 22), (196, 104), (cx, cy)                        # 2차 곡선 — 떨어지며 휘는 길
+    N = 220
+    for i in range(N + 1):
+        t = i / N; x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0]; y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1]
+        w = (3 + 20 * t ** 1.3) * (1.3 if small else 1); a = int(255 * min(1, .15 + t ** .7))
+        col = lerp((240, 120, 50), (255, 236, 180), t ** 1.5)
+        td.ellipse([(x - w) * 2, (y - w) * 2, (x + w) * 2, (y + w) * 2], fill=col + (a,))
+    tail = tail.resize((S, S), Image.LANCZOS)
+    tg = tail.filter(ImageFilter.GaussianBlur(9)); im.alpha_composite(tg); im.alpha_composite(tg); im.alpha_composite(tail)
+    # 꼬리를 따라 떨어진 불티
+    for (x, y, r) in ((214, 52, 4), (186, 84, 5), (226, 92, 3.5), (160, 108, 4)):
+        g_ = Image.new('RGBA', (S, S), (0, 0, 0, 0)); ImageDraw.Draw(g_).ellipse([x - r, y - r, x + r, y + r], fill=(255, 226, 160, 230))
+        im.alpha_composite(g_.filter(ImageFilter.GaussianBlur(1)))
+    # 별 — 네 갈래(로고와 같은 그림), 작은 칸에선 더 크게
+    st = star(176 if small else 150)
+    im.alpha_composite(st, (int(cx - st.width / 2), int(cy - st.height / 2)))
+    ring = ImageChops.subtract(plate, plate.filter(ImageFilter.MinFilter(9)))
+    gold = Image.new('RGBA', (S, S), (214, 146, 62, 0)); gold.putalpha(ring.point(lambda v: v * .9)); im.alpha_composite(gold)
+    im = Image.composite(im, Image.new('RGBA', (S, S), (0, 0, 0, 0)), plate)
     return im.resize((n, n), Image.LANCZOS)
 
 
 def main():
     os.makedirs(UI, exist_ok=True)
     big = logo(1112); big.save(os.path.join(UI, 'logo.png'))          # 2배로 구워 556px 로 보인다
+    title = logo(1440, deco=True); title.save(os.path.join(UI, 'logo_title.png'))   # 타이틀 화면 — 같은 글자 크기에 둘레 장식
+    print('title', title.size, 'css width', round(title.width * 556 / big.width))
     small = logo(320, SUB_BOLD); small.save(os.path.join(UI, 'logo_small.png'))
-    write_site_svg()
+    write_site_logo()
     for n in (16, 32, 48, 180, 512):
         favicon(n).save(os.path.join(UI, f'favicon_{n}.png'))
     ico = favicon(256)
