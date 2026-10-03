@@ -23,13 +23,12 @@ export const FxPart: Bag = {
       e.hurt(dmg * (crit ? 1 + this.player.d.critD / 100 : 1), crit, this.player, kb);
       if (effect === 'frost') e.slow(0.5, 3);
     }
-    this.rings = this.rings || [];
-    this.rings.push({ x, y, r, t: 0.3, c: color });
+    this.shapes.ring(x, y, r, color, 0.3);
   },
 
   /** 퍼져 나가는 고리. */
   /** 세계를 s초만큼 멈춘다(겹치면 긴 쪽). */
-  hitStop(s: any) { this.stopT = Math.min(0.12, Math.max(this.stopT || 0, s || 0)); },
+  hitStop(s: any) { this.timeScale.hit(s, 0.12); },
 
   /* ★ 입력을 삼키면 안 된다. */
   skillDeny(slot: number, msg: string) {
@@ -39,26 +38,11 @@ export const FxPart: Bag = {
     if (msg) this.toast(msg, 'bad');
   },
 
-  ringFx(x: number, y: number, r: any, c: any, life: number) {
-    this.rings = this.rings || [];
-    this.rings.push({ x, y, r, t: life || 0.3, max: life || 0.3, c });
-  },
+  ringFx(x: number, y: number, r: any, c: any, life?: number) { this.shapes.ring(x, y, r, c, life || 0.3); },
   /** 두 점을 잇는 번개. */
-  boltFx(x0: number, y0: number, x1: number, y1: number, c: any) {
-    this.bolts = this.bolts || [];
-    const seg = 7, pts = [];
-    for (let i = 0; i <= seg; i++) {
-      const k = i / seg, j = i === 0 || i === seg ? 0 : (Math.random() - 0.5) * 26;
-      const nx = -(y1 - y0), ny = x1 - x0, L = Math.hypot(nx, ny) || 1;
-      pts.push([x0 + (x1 - x0) * k + nx / L * j, y0 + (y1 - y0) * k + ny / L * j]);
-    }
-    this.bolts.push({ pts, t: 0.22, max: 0.22, c });
-  },
+  boltFx(x0: number, y0: number, x1: number, y1: number, c: any) { this.shapes.bolt(x0, y0, x1, y1, c); },
   /** 떨어질 자리 예고 — 차오르는 원. */
-  warnFx(x: number, y: number, r: any, dur: number, c: any) {
-    this.warns = this.warns || [];
-    this.warns.push({ x, y, r, t: dur, max: dur, c });
-  },
+  warnFx(x: number, y: number, r: any, dur: number, c: any) { this.shapes.warn(x, y, r, dur, c); },
 
   /* ---- 특별한 스킬의 고유 연출 (SIG_FX) ---- */
   sigFx(o: Bag) { (this.sigs = this.sigs || []).push(o); },

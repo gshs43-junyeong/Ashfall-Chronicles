@@ -2,8 +2,11 @@
 import { mixHex, shade } from '../../engine/core/color.js';
 import { TAU, angleTo, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
+import { Beat, cycleFrame } from '../../engine/render/anim.js';
+import { drawOutlined } from '../../engine/render/outline.js';
 import { TILE_DEF } from '../data.js';
 import { BOW_HAND, CHAR_OF } from '../data/start.js';
+import { tileMat } from '../data/materials.js';
 import { NPCS } from '../data/npcs.js';
 import { PET_MOTION, dragonStage } from '../data/pets.js';
 import { idef } from '../data/values.js';
@@ -14,21 +17,29 @@ import { Part } from '../entity.js';
 import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
+/** 걷기 장(0~3) 가운데 발이 땅에 닿는 장 */
+export const STEP_BEATS = [0, 2];
+/** 바닥 재질 → 발소리 [음높이, 크기] */
+export const STEP_FEEL: Record<string, [number, number]> = {
+  stone: [0.82, 1], dirt: [1, 0.85], wood: [1.12, 0.95], metal: [1.25, 0.9], ice: [1.15, 0.8], plant: [0.95, 0.6], glass: [1.3, 0.8], bone: [1.1, 0.85],
+};
+
 export const RenderActorsPart: Bag = {
 
   /* ---- 프레임 선택 (우리 엔티티 필드 기준) ---- */
   /** 걸을 때 발밑 흙먼지 — 그림만(Part 는 충돌·판정이 없다). 걷기 프레임(9fps)의 발 딛는 두 칸에 맞춰
       절반쯤만 한 톨씩 — 매 프레임 뿌리면 달리기 내내 연기처럼 깔린다. */
   walkDust(p: Player) {
-    const st = Math.floor(this.time * 9) % 4;
-    const step = st !== this._dustSt && (st === 0 || st === 2);
-    this._dustSt = st;
+    this._stepBeat = this._stepBeat || new Beat();
+    const step = this._stepBeat.hit(cycleFrame(this.time, 9, 4), STEP_BEATS);   // 걷기 장의 발 딛는 두 장(engine render/anim)
     if (!step || !p.onGround || p.swimming || Math.abs(p.vx) < 60) return;
     const w = this.world, fy = p.y + p.h + 1;
     const tx = Math.floor(p.cx / TS), ty = Math.floor(fy / TS);
-    this.sfx('step', 0.9 + Math.random() * 0.2);          // 발소리는 딛는 칸마다(파일이 있을 때만 울린다)
-    if (w.liquid(tx, ty - 1) || Math.random() > 0.55) return;   // 얕은 물을 걸을 땐 먼지가 안 인다
     const d = TILE_DEF[w.get(tx, ty)];
+    /* 발소리는 딛는 바닥 재질을 따른다 — 돌은 낮고 단단하게, 눈·풀은 낮고 작게, 나무·쇠는 높게 */
+    const fs = STEP_FEEL[tileMat(w.get(tx, ty))] || STEP_FEEL.dirt;
+    this.sfx('step', fs[0] * (0.92 + Math.random() * 0.16), fs[1]);
+    if (w.liquid(tx, ty - 1) || Math.random() > 0.55) return;   // 얕은 물을 걸을 땐 먼지가 안 인다
     if (!d || !d.solid || !d.c) return;
     const n = Math.random() < 0.3 ? 2 : 1;
     for (let i = 0; i < n; i++)
@@ -40,8 +51,8 @@ export const RenderActorsPart: Bag = {
     if (p.dashV > 0) return 8;                                      // 대시
     if (p.swing > 0) return 9 + Math.min(2, Math.floor((0.24 - p.swing) / 0.08));
     if (!p.onGround) return p.vy < 0 ? 6 : 7;                       // 점프 / 낙하
-    if (Math.abs(p.vx) > 20) return 2 + (Math.floor(this.time * 9) % 4);
-    return Math.floor(this.time * 2) % 2;
+    if (Math.abs(p.vx) > 20) return cycleFrame(this.time, 9, 4, 2);   // 걷기 네 장
+    return cycleFrame(this.time, 2, 2);                                // 서기 두 장
   },
   enemyFrame(e: Enemy) {
     if (e.boss) {
@@ -71,17 +82,8 @@ export const RenderActorsPart: Bag = {
     const key = 'player_' + ch.id;
     const swim = this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel;
     /* 물속에서는 몹(drawEnemy 의 헤엄 몹)과 같은 식으로 — 어두운 그림자 윤곽 + 등에 맺힌 빛 한 줄. 발광은 쓰지 않는다(어둠에선 같이 어둡다) */
-    if (this.spritesOn && this.world.liquid(Math.floor(p.cx / TS), Math.floor(p.cy / TS))) {
-      const one = (ox: number, oy: number) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0);
-      const a0 = c.globalAlpha;
-      c.save();
-      c.filter = 'brightness(0)'; c.globalAlpha = a0 * 0.55;
-      for (const [ox, oy] of [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]]) one(ox, oy);
-      c.filter = 'brightness(0) invert(1)'; c.globalAlpha = a0 * 0.32;
-      one(0, -1);
-      c.restore();
-      c.filter = 'none';
-    }
+    if (this.spritesOn && this.world.liquid(Math.floor(p.cx / TS), Math.floor(p.cy / TS)))
+      drawOutlined(c, (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0));
     if (swim && this.drawSwimPlayer(c, p, sx, sy, key)) { c.restore(); return; }
     if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
       this.drawHeldWeapon(c, p, sx, sy, 0, this.playerHand(key, fr, sx, sy, p.facing < 0));
@@ -196,29 +198,15 @@ export const RenderActorsPart: Bag = {
     /* 물속 몹은 어둡게 깔린 물 위에 제 색이 묻혀 안 보인다 — 웅덩이 뱀장어(#3a6a5a)는 어두운 물과 거의 같은 색이라 "보이지 않는 몬스터"가 됐다. */
     const wet = e.type === 'grotto_eel' && this.world.liquid(Math.floor(e.cx / TS), Math.floor(e.cy / TS));
     if (this.spritesOn && wet && meta) {
-      c.save();
-      c.filter = 'brightness(0) invert(1)';
-      c.globalAlpha = 0.5;
-      for (const [ox, oy] of [[-2, 0], [2, 0], [0, -2], [0, 2]])
-        Sprites.draw(c, key, this.enemyFrame(e), sx + dx + ox, sy - dy + oy, e.facing < 0);
-      c.restore();
-      c.filter = 'none';
+      drawOutlined(c, (ox, oy) => Sprites.draw(c, key, this.enemyFrame(e), sx + dx + ox, sy - dy + oy, e.facing < 0),
+        { light: true, dark: 0.5, offsets: [[-2, 0], [2, 0], [0, -2], [0, 2]] });
     } else if (this.spritesOn && meta && e.def.ai === 'swimmer'
       && this.world.liquid(Math.floor(e.cx / TS), Math.floor(e.cy / TS))) {
       /* 물속 몹은 물색과 명도가 비슷해(암초 상어 #5a6a78 : 바닷물 #12496e) 윤곽이 풀린다.
          발광 대신 물속에서 실제로 보이는 식으로 — 아래·옆은 어두운 그림자 윤곽,
          위는 수면에서 내려오는 빛이 등에 맺힌 한 줄. 둘 다 조명 아래라 어둠에선 같이 어둡다. */
       const fr = this.enemyFrame(e), fl = e.facing < 0, bx = sx + dx, by = sy - dy;
-      c.save();
-      c.filter = 'brightness(0)';
-      c.globalAlpha = 0.55;
-      for (const [ox, oy] of [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]])
-        Sprites.draw(c, key, fr, bx + ox, by + oy, fl);
-      c.filter = 'brightness(0) invert(1)';
-      c.globalAlpha = 0.32;
-      Sprites.draw(c, key, fr, bx, by - 1, fl);
-      c.restore();
-      c.filter = 'none';
+      drawOutlined(c, (ox, oy) => Sprites.draw(c, key, fr, bx + ox, by + oy, fl));
     }
 
     /* 말랑한 몹 — 공중에선 속도만큼 세로로 늘고(최대 10%) 폭은 그만큼 준다. 부피가 같아 말랑하게 읽힌다. */

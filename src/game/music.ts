@@ -1,7 +1,9 @@
 /* ===== music.js — 곡 · 효과음 · 환경음 표와 거리로 맞추는 환경음(틀은 src/engine/audio) ===== */
+import { app as G } from './ctx.js';
 import { createAmbient } from '../engine/audio/ambient.js';
 import { createMusic } from '../engine/audio/music.js';
 import { createSfx, createSfxLoop } from '../engine/audio/sfx.js';
+import { createPanRouter } from '../engine/audio/spatial.js';
 import { clamp, lerp } from '../engine/core/math.js';
 import { dimsOf } from './size.js';
 import { TS } from './world.js';
@@ -158,7 +160,9 @@ export const SFX_START = { hatch: 1.60, jump: 0.12, jump2: 0.08,
   swing: 0.15, hit_crit: 0.14, sk_guard: 0.13, sk_whirl: 0.12, drown: 0.11, sk_charge: 0.1, sk_slash: 0.08,
   mat_plant: 0.08, mat_flesh: 0.08 };
 
-export const Sfx = createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: SFX_GAP, vol: SFX_VOL, start: SFX_START });
+/* 좌우 가르기 — 게임이 만든 AudioContext 가 돌고 있을 때만(멈춘 컨텍스트에 이으면 그 목소리가 들리지 않는다) */
+export const SFX_PAN = createPanRouter(() => (G && G.ac && G.ac.state === 'running' ? G.ac : null));
+export const Sfx = createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: SFX_GAP, vol: SFX_VOL, start: SFX_START, panner: SFX_PAN });
 Sfx.init();
 
 /* ===== SfxLoop: 계속 울려야 하는 효과음 ===== */

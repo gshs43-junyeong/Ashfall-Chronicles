@@ -11,6 +11,7 @@ import { mountTouch } from '../../../src/engine/input/touch.js';
 import { fitCanvas } from '../../../src/engine/platform/viewport.js';
 import { createPipeline, tileView } from '../../../src/engine/render/pipeline.js';
 import { blitCell } from '../../../src/engine/render/atlas.js';
+import { Animator } from '../../../src/engine/render/anim.js';
 import { createScenes } from '../../../src/engine/scene/scenes.js';
 import { sweepLight } from '../../../src/engine/tilemap/light.js';
 import type { TileMap } from '../../../src/engine/tilemap/tilemap.js';
@@ -127,6 +128,10 @@ async function load(): Promise<void> {
   say(tr('불러왔다'));
 }
 
+/* ---------- 몸짓 — 서 있으면 숨 쉬듯 두 장, 걸으면 네 장(engine render/anim). 장 번호로 몸을 위아래로 흔든다 ---------- */
+const anim = new Animator<'idle' | 'walk'>({ idle: { from: 0, n: 2, fps: 2 }, walk: { from: 2, n: 4, fps: 9 } }, 'idle');
+const BOB = [0, 1, 0, -1, 0, -1];
+
 /* ---------- 씬 — 바닥 씬 하나 + 멈춤 겹(갱신·조작을 막고 그리기는 한다) ---------- */
 const scenes = createScenes({
   scenes: {
@@ -134,6 +139,7 @@ const scenes = createScenes({
       update(dt: number): void {
         const ctl = !scenes.inputBlocked();
         player.update(dt, map, ctl);
+        anim.play(Math.abs(player.vx) > 20 && player.onGround ? 'walk' : 'idle'); anim.update(dt);
         if (ctl) digTick(dt);
         cam.x = clamp(player.cx - view.W / 2, 0, WW * TS - view.W);
         cam.y = clamp(player.cy - view.H / 2, 0, WH * TS - view.H);
@@ -189,7 +195,7 @@ pipe.add('tiles', ({ c, camX, camY, W, H }) => {
 });
 
 pipe.add('actors', ({ c, camX, camY }) => {
-  const x = Math.round(player.x - camX), y = Math.round(player.y - camY);
+  const x = Math.round(player.x - camX), y = Math.round(player.y - camY) + BOB[anim.frame];
   c.fillStyle = '#e8d8b0'; c.fillRect(x, y, player.w, player.h);                 // 몸
   c.fillStyle = '#c0392b'; c.fillRect(x - 1, y + 7, player.w + 2, 3);             // 목도리
   c.fillStyle = '#1a1420'; c.fillRect(x + (player.face > 0 ? 6 : 2), y + 3, 2, 2); // 눈

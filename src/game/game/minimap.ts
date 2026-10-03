@@ -2,6 +2,8 @@
 import { shade } from '../../engine/core/color.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
+import { drawMapMark, drawTileWindow } from '../../engine/render/minimap.js';
+import { lineOfSight } from '../../engine/tilemap/ray.js';
 import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { idef } from '../data/values.js';
@@ -22,32 +24,14 @@ export const MinimapPart: Bag = {
   },
   /** 눈(ex, ey)에서 칸(tx, ty)이 보이는가 — 가는 길이 트여 있어야 하고, 과녁 앞 세 칸 안의 바위만 봐준다(벽 두께가 지도에 남게). */
   seesTile(ex: number, ey: number, tx: number, ty: number) {
-    const w = this.world, dx = tx - ex, dy = ty - ey, n = Math.max(Math.abs(dx), Math.abs(dy));
-    for (let i = 1; i < n - 3; i++) {
-      const x = Math.round(ex + dx * i / n), y = Math.round(ey + dy * i / n);
-      if (TILE_DEF[w.get(x, y)].solid === 1) return false;
-    }
-    return true;
+    const w = this.world;
+    return lineOfSight((x, y) => Math.max(Math.abs(x - tx), Math.abs(y - ty)) > 3 && TILE_DEF[w.get(x, y)].solid === 1,
+      ex + 0.5, ey + 0.5, tx + 0.5, ty + 0.5);   // engine tilemap/ray — 칸 격자를 빠짐없이 걷는다
   },
   /** 세이브를 막 불러왔을 때(또는 새 게임 시작 시) explored 비트로부터 축소 지도를 다시 칠한다. */
   /** 축소 지도 캔버스를 지금 세계 크기(WW×WH)에 맞춘다 — 세계 크기가 바뀌면 다시 만든다. */
-  fitMapAtlas() { const { WW, WH } = dimsOf(this.world);
-    if (this.mapAtlas.width === WW && this.mapAtlas.height === WH) return;
-    this.mapAtlas.width = WW; this.mapAtlas.height = WH;
-    this.mapAtlasX = this.mapAtlas.getContext('2d');
-  },
-  buildMapAtlas() { const { WW, WH } = dimsOf(this.world);
-    const c = this.mapAtlasX, w = this.world;
-    c.fillStyle = '#07080c'; c.fillRect(0, 0, WW, WH);
-    const img = c.getImageData(0, 0, WW, WH), buf = img.data;
-    for (let k = 0; k < WW * WH; k++) {
-      if (!w.explored[k]) continue;
-      const hex = this.mapColorAt(k % WW, (k / WW) | 0);
-      const n = parseInt(hex.slice(1), 16), o = k * 4;
-      buf[o] = (n >> 16) & 255; buf[o + 1] = (n >> 8) & 255; buf[o + 2] = n & 255; buf[o + 3] = 255;
-    }
-    c.putImageData(img, 0, 0);
-  },
+  fitMapAtlas() { const { WW, WH } = dimsOf(this.world); this.mapAtlas.fit(WW, WH); },
+  buildMapAtlas() { const w = this.world; this.mapAtlas.rebuild((k: number) => !!w.explored[k], (x: number, y: number) => this.mapColorAt(x, y)); },
 
   /* ---- 미니맵 ---- */
   /* 탐지기 소리 — 잡힌 것이 **없다가 생겼을 때만** 한 번 운다. */
@@ -73,41 +57,27 @@ export const MinimapPart: Bag = {
     c.fillStyle = '#07080c'; c.fillRect(0, 0, MW, MH);
     const px = Math.floor(p.cx / TS), py = Math.floor(p.cy / TS);
     const halfW = Math.floor(MW / S / 2), halfH = Math.floor(MH / S / 2);
-    for (let y = 0; y < MH / S; y++) {
-      for (let x = 0; x < MW / S; x++) {
-        const tx = px - halfW + x, ty = py - halfH + y;
-        if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) continue;
-        const k = ty * WW + tx;
-        const id = w.tiles[k];
-        if (!w.explored[k]) {
-          // 안개 — 눈으로 본 적 없는 칸은 그리지 않는다.
-          if (!detOre || !TILE_DEF[id] || !TILE_DEF[id].ore) continue;
-          const ddx = tx - px, ddy = ty - py;
-          if (ddx * ddx + ddy * ddy > DR2) continue;
-          c.fillStyle = TILE_DEF[id].c;
-          c.fillRect(x * S, y * S, S, S);
-          detHit++;
-          continue;
-        }
-        if (id === T.AIR) {
-          const wl = w.walls[k];
-          if (wl) { c.fillStyle = '#181820'; c.fillRect(x * S, y * S, S, S); }
-          continue;
-        }
-        const d = TILE_DEF[id];
-        c.fillStyle = d.ore ? d.c : shade(d.c || '#333', 0.65);
-        c.fillRect(x * S, y * S, S, S);
+    /* 칸마다 색(engine render/minimap) — 눈으로 본 적 없는 칸은 안개(그리지 않음), 탐지기는 반경 안 광맥만 안개를 뚫는다 */
+    const org = drawTileWindow(c, MW, MH, S, px, py, (tx, ty) => {
+      if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) return null;
+      const k = ty * WW + tx, id = w.tiles[k];
+      if (!w.explored[k]) {
+        if (!detOre || !TILE_DEF[id] || !TILE_DEF[id].ore) return null;
+        const ddx = tx - px, ddy = ty - py;
+        if (ddx * ddx + ddy * ddy > DR2) return null;
+        detHit++;
+        return TILE_DEF[id].c;
       }
-    }
+      if (id === T.AIR) return w.walls[k] ? '#181820' : null;
+      const d = TILE_DEF[id];
+      return d.ore ? d.c : shade(d.c || '#333', 0.65);
+    });
     // NPC·상자 — 빛을 받아 공개된 칸에 있을 때만 위치를 보여 준다.
     for (const o of w.objects) {
       if (o.type !== 'npc' && o.type !== 'chest') continue;
       const otx = Math.floor(o.x / TS), oty = Math.floor(o.y / TS);
       if (!w.explored[clamp(oty, 0, WH - 1) * WW + clamp(otx, 0, WW - 1)]) continue;
-      const ox = otx - (px - halfW), oy = oty - (py - halfH);
-      if (ox < 0 || oy < 0 || ox * S >= MW || oy * S >= MH) continue;
-      c.fillStyle = o.type === 'npc' ? '#6fd8ff' : '#d8a94b';
-      c.fillRect(ox * S - 1, oy * S - 1, S + 2, S + 2);
+      drawMapMark(c, org, S, MW, MH, otx, oty, o.type === 'npc' ? '#6fd8ff' : '#d8a94b');
     }
     // 적도 미지의 어둠 속에서는 보이지 않는다.
     for (const e of this.ents) {
@@ -117,22 +87,11 @@ export const MinimapPart: Bag = {
       const near = detMob && (etx - px) * (etx - px) + (ety - py) * (ety - py) <= DR2;
       if (near) detHit++;
       if (!near && !w.explored[ety * WW + etx]) continue;
-      const ox = etx - (px - halfW), oy = ety - (py - halfH);
-      if (ox < 0 || oy < 0 || ox * S >= MW || oy * S >= MH) continue;
-      c.fillStyle = e.boss ? '#ff4a4a' : '#e07070';
-      c.fillRect(ox * S - 1, oy * S - 1, S + 2, S + 2);
+      drawMapMark(c, org, S, MW, MH, etx, ety, e.boss ? '#ff4a4a' : '#e07070');
     }
     this.detBeep(detHit);
     // 쓰러진 자리 — 안개와 무관하게 늘 보인다(내가 죽은 자리는 내가 안다)
-    if (this.deathMark) {
-      const dx = Math.floor(this.deathMark.x / TS) - (px - halfW);
-      const dy = Math.floor(this.deathMark.y / TS) - (py - halfH);
-      if (dx >= 0 && dy >= 0 && dx * S < MW && dy * S < MH) {
-        c.fillStyle = '#cfd8ff';
-        c.fillRect(dx * S - 1, dy * S - 3, 3, 7);
-        c.fillRect(dx * S - 3, dy * S - 1, 7, 3);
-      }
-    }
+    if (this.deathMark) drawMapMark(c, org, S, MW, MH, Math.floor(this.deathMark.x / TS), Math.floor(this.deathMark.y / TS), '#cfd8ff', '+');
     // 플레이어
     c.fillStyle = '#fff';
     c.fillRect(halfW * S - 1, halfH * S - 1, 3, 3);

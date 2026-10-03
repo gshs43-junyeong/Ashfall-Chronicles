@@ -6,9 +6,10 @@ import { aud } from './url.js';
 export interface SfxConfig {
   dir: string; files: Record<string, string>; fam: Record<string, [string, number, number]>;
   gap: Record<string, number>; vol: Record<string, number>; start: Record<string, number>;
+  panner?: { pan(a: HTMLAudioElement, pan: number): boolean };   // 좌우 가르기(engine audio/spatial createPanRouter)
 }
 
-export function createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: SFX_GAP, vol: SFX_VOL, start: SFX_START }: SfxConfig) {
+export function createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: SFX_GAP, vol: SFX_VOL, start: SFX_START, panner }: SfxConfig) {
   return {
     vol: 0.5,
     voices: {} as Record<string, HTMLAudioElement[]>,   // key -> [Audio, ...] (로드 성공한 것만)
@@ -33,8 +34,8 @@ export function createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: S
     },
 
     /** 재생을 시도한다. */
-    /** vol — 이 한 번만 음량을 더 줄이거나 키우는 배수(기본 1). */
-    play(kind: string, rate?: number, vol?: number): boolean {
+    /** vol — 이 한 번만 음량을 더 줄이거나 키우는 배수(기본 1). pan — 좌우(-1~1, panner 가 있을 때만). */
+    play(kind: string, rate?: number, vol?: number, pan?: number): boolean {
       /* 제 이름의 파일이 없으면 **같은 결의 한 벌**을 대신 튼다(SFX_FAM). */
       let pool = this.voices[kind], fr = 1, fg = 1, file = kind;
       if (!pool) {
@@ -52,6 +53,7 @@ export function createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: S
       a.volume = Math.min(1, this.vol * (SFX_VOL[kind] === undefined ? 1 : SFX_VOL[kind]) * fg * (vol === undefined ? 1 : vol));
       /* ★ 한 획마다 음높이를 흔든다. */
       a.playbackRate = (rate || 1) * fr;
+      if (panner) panner.pan(a, pan || 0);         // 한 번 가른 목소리는 다음에 가운데 소리를 낼 때 되돌려야 한다
       try { a.currentTime = SFX_START[kind] !== undefined ? SFX_START[kind] : (SFX_START[file] || 0); } catch (e) { }
       a.play().catch(() => { });
       return true;

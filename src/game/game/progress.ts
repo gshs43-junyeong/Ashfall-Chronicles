@@ -1,4 +1,5 @@
 /* ===== game/progress.js — 장 진행 · 업적 · 길잡이 표지 ===== */
+import { checkUnlocks } from '../../engine/core/achieve.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT_UI, fmt, tr } from '../lang.js';
@@ -164,7 +165,7 @@ export const ProgressPart: Bag = {
     }, delay);
     UI.refreshTracker(); UI.refreshQuest();
     this.sfx('story');
-    if (ch.rw.gold) this.pending.push({ t: 0.45, fn: () => this.sfx('manycoins') });
+    if (ch.rw.gold) this.after(0.45, () => this.sfx('manycoins'));
   },
   onKill() {
     // 유적 안에서 피를 보면 맥박이 가라앉는다 — 싸우는 사람은 격노를 붙들어 둘 수 있다
@@ -174,14 +175,7 @@ export const ProgressPart: Bag = {
   /* 업적 판정. */
   checkAch() {
     if (!this.player || !this.achievements) return;
-    for (const a of ACHIEVEMENTS) {
-      if (this.achievements[a.id]) continue;
-      let ok = false;
-      try { ok = !!a.check!(this); } catch (e) { ok = false; }   // 아직 없는 값을 읽어도 죽지 않게
-      if (!ok) continue;
-      this.achievements[a.id] = Date.now();
-      this.onAchieved(a);
-    }
+    checkUnlocks(ACHIEVEMENTS as any[], this.achievements, this, (a: any) => this.onAchieved(a));   // 아직 없는 값을 읽어도 죽지 않게(engine core/achieve)
   },
   onAchieved(a: any) {
     this.toast(tr('업적 달성 — {a}', { a: a.n }), 'good');

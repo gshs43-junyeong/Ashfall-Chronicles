@@ -3,6 +3,7 @@ import { shade } from '../../engine/core/color.js';
 import { TAU, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tileHash } from '../../engine/core/rng.js';
+import { drawFloatTexts } from '../../engine/fx/floattext.js';
 import { createPipeline, tileView } from '../../engine/render/pipeline.js';
 import { FONT, FONT_PLAIN, tr } from '../lang.js';
 import { dimsOf } from '../size.js';
@@ -15,7 +16,7 @@ import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';
 import { Bomb, Guard, PROJ_FX, PROJ_STYLE, Wolf } from '../entity.js';
 import { Factory } from '../factory.js';
-import { Game, MAP_REVEAL_LIGHT } from '../game.js';
+import { DAY_CYCLE, Game, MAP_REVEAL_LIGHT, PATH_BUDGET } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const RenderPart: Bag = {
@@ -26,8 +27,7 @@ export const RenderPart: Bag = {
   render() {
     const c = this.ctx, w = this.world, p = this.player;
     const shk = this.shake * (this.settings ? this.settings.shake / 100 : 1);
-    const shX = (Math.random() - 0.5) * shk, shY = (Math.random() - 0.5) * shk;
-    const camX = Math.round(this.cam.x + shX), camY = Math.round(this.cam.y + shY);
+    const { x: camX, y: camY } = this.cam.view(shk);    // 흔들림은 이어지는 잡음(engine Camera)
 
     const dayF = this.dayFactor();
     const f = { c, w, p, camX, camY, dayF, ...tileView(camX, camY, this.W, this.H, TS) };
@@ -51,6 +51,15 @@ export const RenderPart: Bag = {
     this.pipe.add('fx', (f: any) => this.rFx(f));
     this.pipe.add('fx', (f: any) => this.rUtil(f));           // 탐지 파동(game/utility)
     this.pipe.add('screen', (f: any) => this.rScreen(f));
+    this.pipe.add('screen', (f: any) => this.fade.draw(f.c, this.W, this.H));   // 잠 · 되살아남 — 화면 맨 위(engine render/fade)
+    this.pipe.add('screen', (f: any) => {                                       // F3 성능 판(engine ui/perf)
+      if (!this.perf.on) return;
+      const st = this.pipe.stats ? this.pipe.stats() : null;
+      this.perf.info([`ents ${this.ents.length} · parts ${this.parts.length} · projs ${this.projs.length} · lights ${this.world.light ? this.world.light.cache.size : 0}`,
+        `cam ${Math.round(this.cam.x / TS)},${Math.round(this.cam.y / TS)} · paths ${PATH_BUDGET - this.pathBudget}/${PATH_BUDGET}`,
+        ...(st ? Object.keys(st).map(k => `${k} ${(+st[k]).toFixed(2)}ms`) : [])]);
+      this.perf.draw(f.c, this.cv.width / Math.max(1, this.cv.clientWidth));
+    });
   },
   /** 렌더 단계 — 하늘 */
   rSky(f: any) {
@@ -67,9 +76,7 @@ export const RenderPart: Bag = {
       : p.buffs.some((b: any) => b.id === 'lantern') ? 6.0 : 4.6;
     /* 해 — 하늘에 그린 자리(skyArc: 0 = 동 · 1 = 서)에서 방향을 잡는다. 떠오르고 질 때는 세기를 줄여 그림자가 서서히 생기고 사라진다.
        비 오는 동안은 구름이 해를 가려 그림자가 옅다. */
-    const su = this.skyArc(1), up = Math.sin(Math.PI * su);
-    const sunK = clamp(up * 3, 0, 1) * (1 - 0.75 * clamp((this.rainT || 0) * 1.4, 0, 1));
-    const sun = up > 0.02 ? { x: Math.cos(Math.PI * su), y: -Math.max(0.3, up), k: sunK } : null;
+    const sun = DAY_CYCLE.sunDir(this.dayT, (this.rainT || 0) * 1.4);
     w.computeLight(tx0, ty0, tx1, ty1, dayLight,
       [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]], sun);   // 플레이어 미광
   },
@@ -100,8 +107,7 @@ export const RenderPart: Bag = {
         if (w.lightAt(tx, ty) >= MAP_REVEAL_LIGHT &&
             (w.explored[k] || (((tx + ty + this._mapTick) & 3) === 0 && this.seesTile(eyeX, eyeY, tx, ty)))) {
           w.explored[k] = 1;
-          this.mapAtlasX.fillStyle = this.mapColorAt(tx, ty, id, wl);
-          this.mapAtlasX.fillRect(tx, ty, 1, 1);
+          this.mapAtlas.paint(tx, ty, this.mapColorAt(tx, ty, id, wl));
         }
         const sx = tx * TS - camX, sy = ty * TS - camY;
         /* 움직이는 타일(물·폭포·용암)은 아틀라스 칸을 **시간**으로 고른다. */
@@ -328,6 +334,11 @@ export const RenderPart: Bag = {
     }
     this.drawRipeCrops(c, camX, camY);
     this.drawStarOrbit(c, p, camX, camY);
+    if (this.spritesOn) this.trail.draw((s: any, a: number) => {                // 대시 잔상 — 몸보다 먼저(뒤에)
+      c.save(); c.globalAlpha = a * 0.42; c.filter = 'brightness(1.6) saturate(0.4)';
+      Sprites.draw(c, s.d.key, s.d.fr, s.x - camX, s.y - camY, s.d.flip);
+      c.restore(); c.filter = 'none';
+    });
     this.drawPlayer(c, p, p.x - camX, p.y - camY);
     for (const q of this.players) if (q !== p) { this.drawPlayer(c, q, q.x - camX, q.y - camY); this.drawNameTag(c, q, camX, camY); }
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
@@ -424,44 +435,8 @@ export const RenderPart: Bag = {
       } else { c.beginPath(); c.arc(sx, sy, st.r, 0, TAU); c.fill(); }
     }
 
-    // ---- 링 이펙트 ----
-    if (this.rings) for (let i = this.rings.length - 1; i >= 0; i--) {
-      const r = this.rings[i]; r.t -= 1 / 60;
-      if (r.t <= 0) { this.rings.splice(i, 1); continue; }
-      const mx = r.max || 0.3, k = r.t / mx;
-      c.strokeStyle = r.c; c.globalAlpha = k * .8; c.lineWidth = 3;
-      c.beginPath(); c.arc(r.x - camX, r.y - camY, r.r * (1.3 - k * 0.3), 0, TAU); c.stroke();
-      c.globalAlpha = 1; c.lineWidth = 1;
-    }
-
-    // ---- 떨어질 자리 예고 (별의 낙하) ----
-    if (this.warns) for (let i = this.warns.length - 1; i >= 0; i--) {
-      const w = this.warns[i]; w.t -= 1 / 60;
-      if (w.t <= 0) { this.warns.splice(i, 1); continue; }
-      const k = 1 - w.t / w.max;                 // 0 -> 1 로 차오른다
-      const x = w.x - camX, y = w.y - camY;
-      c.globalAlpha = 0.22 + 0.2 * Math.sin(k * 18);
-      c.fillStyle = w.c;
-      c.beginPath(); c.arc(x, y, w.r * k, 0, TAU); c.fill();
-      c.globalAlpha = 0.85; c.strokeStyle = w.c; c.lineWidth = 2.5;
-      c.beginPath(); c.arc(x, y, w.r, 0, TAU); c.stroke();
-      c.globalAlpha = 1; c.lineWidth = 1;
-    }
-
-    // ---- 번개 (사슬 번개 · 차원 도약) ----
-    if (this.bolts) for (let i = this.bolts.length - 1; i >= 0; i--) {
-      const b = this.bolts[i]; b.t -= 1 / 60;
-      if (b.t <= 0) { this.bolts.splice(i, 1); continue; }
-      const k = b.t / b.max;
-      c.lineCap = 'round'; c.lineJoin = 'round';
-      for (const [lw, col, al] of [[6, b.c, 0.22 * k], [2.4, b.c, 0.9 * k], [1, '#ffffff', 0.9 * k]]) {
-        c.globalAlpha = al; c.strokeStyle = col; c.lineWidth = lw;
-        c.beginPath();
-        b.pts.forEach((p: number[], j: number) => j ? c.lineTo(p[0] - camX, p[1] - camY) : c.moveTo(p[0] - camX, p[1] - camY));
-        c.stroke();
-      }
-      c.globalAlpha = 1; c.lineWidth = 1; c.lineCap = 'butt';
-    }
+    // ---- 고리 · 떨어질 자리 예고 · 번개(engine fx/shapes) ----
+    this.shapes.draw(c, camX, camY);
 
     // ---- 보스 대사 (화면 아래) ----
     if (this.bossSay) {
@@ -528,13 +503,8 @@ export const RenderPart: Bag = {
     c.globalAlpha = 1;
 
     // ---- 피해 숫자 ----
-    if (!this.settings || this.settings.dmgnum) for (const t of this.texts) {
-      c.globalAlpha = clamp(t.life / 0.85, 0, 1);
-      c.font = (t.crit ? 'bold 19px' : '14px') + ' ' + FONT;
-      c.fillStyle = '#000'; c.fillText(t.v, t.x - camX + 1, t.y - camY + 1);
-      c.fillStyle = t.c; c.fillText(t.v, t.x - camX, t.y - camY);
-      if (t.crit) { c.font = '10px ' + FONT_PLAIN; c.fillStyle = '#ffd24a'; c.fillText(tr('치명'), t.x - camX, t.y - camY - 15); }
-    }
+    if (!this.settings || this.settings.dmgnum)
+      drawFloatTexts(c, this.texts, camX, camY, { font: crit => (crit ? 'bold 19px' : '14px') + ' ' + FONT, critLabel: tr('치명'), critFont: '10px ' + FONT_PLAIN });
     c.globalAlpha = 1;
   },
   /** 렌더 단계 — 조준 · 비 · 비네트 · 길잡이 */

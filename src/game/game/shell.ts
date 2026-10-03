@@ -1,5 +1,7 @@
 /* ===== game/shell.js — 화면 겹 — 창 · 확인 · 설정 · 멈춤 · 알림 ===== */
 import { mixin } from '../../engine/core/mixin.js';
+import { createSettingsStore } from '../../engine/save/settings.js';
+import { confirmBox, createModalStack } from '../../engine/ui/modal.js';
 import { tr } from '../lang.js';
 import { SET_DEFAULT } from '../data/values.js';
 import { Art } from '../itemart.js';
@@ -9,44 +11,27 @@ import { SET_KEY } from '../savefmt.js';
 import { Game, TOUCH } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
+/** 설정 — 기본값 위에 저장한 값(engine save/settings). 세이브와 따로 localStorage 한 칸 */
+export const SETTINGS = createSettingsStore(SET_KEY, SET_DEFAULT as Bag);
+
 export const ShellPart: Bag = {
   /** 게임 안 확인 창 — 확인이면 true. Esc·바깥 누르기는 취소, Enter 는 확인. 브라우저 confirm 은 게임 화면 밖에 떴다. */
   askConfirm(msg: any, ok: any) {
-    return new Promise(res => {
-      const el = $('#confirm-screen'), okB = $('#btn-confirm-ok'), noB = $('#btn-confirm-cancel');
-      $('#confirm-msg').textContent = msg;
-      okB.textContent = ok || tr('확인'); noB.textContent = tr('취소');
-      const key = (e: any) => {
-        if (e.key !== 'Escape' && e.key !== 'Enter') return;
-        e.preventDefault(); e.stopPropagation(); done(e.key === 'Enter');
-      };
-      const done = (v: any) => { el.classList.remove('open'); removeEventListener('keydown', key, true); res(v); };
-      okB.onclick = () => done(true); noB.onclick = () => done(false);
-      el.onclick = (e: any) => { if (e.target === el) done(false); };
-      addEventListener('keydown', key, true);         // 캡처 — 게임 키(Esc = 멈춤)보다 먼저 받는다
-      el.classList.add('open'); noB.focus();          // 되돌릴 수 없는 일이라 기본 초점은 취소
-    });
+    return confirmBox({ root: '#confirm-screen', msg: '#confirm-msg', ok: '#btn-confirm-ok', cancel: '#btn-confirm-cancel' }, msg, ok || tr('확인'), tr('취소'));
   },
 
-  /* ---- 타이틀 팝업 ---- */
-  openModal(sel: string) { $(sel).classList.add('open'); },
-  closeModal(sel: string) { $(sel).classList.remove('open'); },
-  /* 팝업은 여러 겹으로 열린다(슬롯 위에 새 게임). */
-  MODAL_STACK: ['#code-screen', '#newgame-screen', '#bye-screen', '#credits-screen',
-                '#settings-screen', '#slots-screen', '#mp-screen'],
-  /** 열려 있는 팝업 중 가장 위의 것을 닫는다. */
-  closeTopModal() {
-    for (const sel of this.MODAL_STACK) {
-      const el = $(sel);
-      if (!el || !el.classList.contains('open')) continue;
-      if (sel === '#code-screen') this.closeCodeDoor();   // 딸린 상태까지 같이 푼다
-      else el.classList.remove('open');
-      return true;
-    }
-    return false;
+  /* ---- 타이틀 팝업(engine ui/modal) — 여러 겹으로 열린다(슬롯 위에 새 게임). 목록 앞이 위 ---- */
+  modals: null as any,
+  modalStack() {
+    return this.modals || (this.modals = createModalStack(['#code-screen', '#newgame-screen', '#bye-screen', '#credits-screen',
+      '#settings-screen', '#slots-screen', '#mp-screen'], { '#code-screen': () => this.closeCodeDoor() }));
   },
+  openModal(sel: string) { this.modalStack().open(sel); },
+  closeModal(sel: string) { this.modalStack().close(sel); },
+  /** 열려 있는 팝업 중 가장 위의 것을 닫는다. */
+  closeTopModal() { return this.modalStack().closeTop(); },
   /** 게임에 들어갈 때 — 타이틀에서 열려 있던 팝업을 전부 걷는다 */
-  closeAllModals() { this.MODAL_STACK.forEach((sel: string) => { const el = $(sel); if (el) el.classList.remove('open'); }); },
+  closeAllModals() { this.modalStack().closeAll(); },
   /** 나가기. */
   quit() {
     try { window.close(); } catch (e) { }
@@ -62,15 +47,14 @@ export const ShellPart: Bag = {
 
   /* ================= 설정 ================= */
   loadSettings() {
-    let v: Bag = {};
-    try { v = JSON.parse(localStorage.getItem(SET_KEY)!) || {}; } catch (e) { }
-    this.settings = Object.assign({}, SET_DEFAULT, v);
+    const { value, raw: v } = SETTINGS.load();
+    this.settings = value;
     /* 낮은 폰 화면은 처음부터 UI 를 작게 — 한 번 고른 값은 그대로 둔다 */
     if (v.uiscale === undefined && TOUCH && Math.min(innerWidth, innerHeight) <= 540) this.settings.uiscale = 80;
     this.applySettings();
   },
   saveSettings() {
-    try { localStorage.setItem(SET_KEY, JSON.stringify(this.settings)); } catch (e) { }
+    SETTINGS.save(this.settings);
   },
   /** 설정값을 실제 동작에 반영한다. */
   applySettings() {

@@ -35,7 +35,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
       const deep = lv === null ? 1 : clamp(1 + Math.max(0, (this.cy / TS) - lv) / (90 * WSY), 1, 4);
       this.oxygen = Math.max(0, this.oxygen - dt * deep);
       this.oxyPressure = deep;
-      if (this.oxygen <= 0) {
+      if (this.oxygen <= 0 && this.hp > 0) {
         this.drownT = (this.drownT || 0) + dt;
         if (this.drownT >= 1) {                                  // 초당 한 번
           this.drownT -= 1;

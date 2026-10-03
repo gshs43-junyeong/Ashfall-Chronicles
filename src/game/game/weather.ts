@@ -2,13 +2,19 @@
 import { TAU, clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tileHash } from '../../engine/core/rng.js';
-import { T } from '../data.js';
+import { Precip } from '../../engine/fx/precip.js';
+import { Wind } from '../../engine/fx/wind.js';
+import { T, TILE_DEF } from '../data.js';
 import { CHAPTERS } from '../data/story.js';
 import { TS } from '../world.js';
 import { LEAF_TWIG, TileArt } from '../tileart.js';
 import { Sprites } from '../sprites.js';
+import { Part } from '../entity.js';
 import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
+
+/** 하나뿐인 바람 — 시간의 함수라 저장할 것이 없다 */
+export const WIND = new Wind(16, 36, 11);
 
 export const WeatherPart: Bag = {
 
@@ -22,60 +28,28 @@ export const WeatherPart: Bag = {
     const raining = isRain && (this.eventActive() || inSafeZone);
     // 얼음 지형에서는 같은 비 이벤트가 눈으로 보여야 자연스럽다
     const snowing = !!(raining && zone === 'ice');     // ★ !! — 비가 그치면 null 이 되어 '눈↔비 바뀜'으로 읽혀 빗줄기가 한꺼번에 지워졌다
-    if (snowing !== !!this.snowMode) { this.snowMode = snowing; this.rainDrops = null; }
+    this.precip = this.precip || new Precip();
+    this.precip.setMode(snowing ? 'snow' : 'rain');
     this.rainT = clamp((this.rainT || 0) + (raining ? 1 : -1) * dt / 2.5, 0, 1);
-    /* ★ 빗줄기는 세계에 붙어 있다 — 카메라가 움직인 만큼 반대로 민다. 화면에 붙여 두면 떨어지거나 뛸 때
-       세계에 비해 비가 갑자기 빨라졌다 느려졌다 했다. 켜고 끄기는 **위에서 새로 날 때만**(d.on) 바꿔
-       비가 위에서부터 들어오고 빠져나간다 — 한꺼번에 깔고 투명도만 올리면 화면 전체에 쫘르륵 쏟아졌다. */
+    /* 빗줄기는 세계에 붙어 있다(engine fx/precip). 하늘이 트인 자리에서만 나고, 땅·지붕에 닿으면 거기서 튄다 — 굴·집 안에는 안 내린다 */
     const cam = this.cam, pc = this._rainCam;
-    let mx = pc ? cam.x - pc.x : 0, my = pc ? cam.y - pc.y : 0;
-    if (Math.abs(mx) > this.W || Math.abs(my) > this.H) mx = my = 0;       // 순간이동 · 불러오기
+    const mx = pc ? cam.x - pc.x : 0, my = pc ? cam.y - pc.y : 0;
     this._rainCam = { x: cam.x, y: cam.y };
-    if (this.rainT <= 0 && (!this.rainDrops || !this.rainDrops.some((d: any) => d.on))) { this.rainDrops = null; return; }
-    const W = this.W || 1280, H = this.H || 720;
-    if (!this.rainDrops) {
-      this.rainDrops = [];
-      const n = this.snowMode ? 110 : 160;
-      for (let i = 0; i < n; i++) this.rainDrops.push(this.snowMode ? {
-        x: Math.random() * W, y: Math.random() * H, k: i / n, on: false,
-        r: 1.5 + Math.random() * 2, spd: 40 + Math.random() * 50,
-        drift: Math.random() * TAU, sway: 20 + Math.random() * 30
-      } : {
-        x: Math.random() * W, y: Math.random() * H, k: i / n, on: false,
-        len: 10 + Math.random() * 14, spd: 480 + Math.random() * 260
-      });
-    }
-    const top = (d: any) => { d.y -= H + 40; d.x = Math.random() * W; d.on = d.k < this.rainT; };
-    for (const d of this.rainDrops) {
-      if (this.snowMode) {
-        d.y += d.spd * dt - my; d.drift += dt * 1.4;
-        d.x += Math.sin(d.drift) * d.sway * dt - mx;
-      } else {
-        d.y += d.spd * dt - my; d.x -= d.spd * 0.15 * dt + mx;
-      }
-      if (d.y > H) top(d);
-      else if (d.y < -40) d.y += H + 40;
-      if (d.x < -20) d.x += W + 40; else if (d.x > W + 20) d.x -= W + 40;
-    }
+    if (!w) return;
+    const cell = (sx: number, sy: number) => [Math.floor((sx + cam.x) / TS), Math.floor((sy + cam.y) / TS)];
+    this.precip.update(dt, this.rainT, mx, my, this.W || 1280, this.H || 720, {
+      open: (sx: number, sy: number) => { const [x, y] = cell(sx, sy); return y <= w.surface[Math.max(0, Math.min(w.surface.length - 1, x))]; },
+      blocked: (sx: number, sy: number) => { const [x, y] = cell(sx, sy); return w.solid(x, y) || !!TILE_DEF[w.get(x, y)].liquid; },
+      hit: (sx: number, sy: number, mode: string) => {
+        if (mode === 'snow' || Math.random() > 0.35) return;
+        this.parts.push(new Part(sx + cam.x, sy + cam.y - 1, '#cfe0ee', -70, 0.18, { spd: 0.35, r: 0.6 }));
+      },
+    }, Math.random, this.windNow());
   },
-  /** 빗줄기. */
-  drawRain(c: any) {
-    if (!this.rainDrops) return;
-    if (this.snowMode) {
-      c.globalAlpha = 0.85;
-      c.fillStyle = '#f0f6ff';
-      for (const d of this.rainDrops) if (d.on) { c.beginPath(); c.arc(d.x, d.y, d.r, 0, TAU); c.fill(); }
-      c.globalAlpha = 1;
-      return;
-    }
-    c.globalAlpha = 0.55;
-    c.strokeStyle = '#bcd0e0';
-    c.lineWidth = 1.4;
-    c.beginPath();
-    for (const d of this.rainDrops) if (d.on) { c.moveTo(d.x, d.y); c.lineTo(d.x - 5, d.y + d.len); }
-    c.stroke();
-    c.globalAlpha = 1;
-  },
+  /** 빗줄기 · 눈송이 */
+  drawRain(c: any) { if (this.precip) this.precip.draw(c, undefined, undefined, clamp(this.windNow() * 0.08 - 5, -14, 6)); },
+  /** 지금 바람(px/s) — 비가 오면 세진다(engine fx/wind). 비 · 눈 · 굴뚝 연기가 같이 받는다 */
+  windNow() { WIND.storm = this.rainT || 0; return WIND.at(this.time || 0); },
   /** 하늘에 늘 몇 점씩 흘러가는 구름. */
   drawClouds(c: any, camX: number, camY: number, rainT: any) {
     // 맑을 때는 16개가 옅게 흘러가고, 비가 짙어질수록 개수·범위·불투명도가 함께 올라 폭우일 때는 하늘 대부분이 구름으로 덮인다.

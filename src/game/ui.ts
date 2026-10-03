@@ -1,7 +1,9 @@
 /* ===== ui.js — DOM 인터페이스 ===== */
 import { app as G, bindUI } from './ctx.js';
+import { sortSlots } from '../engine/core/inventory.js';
 import { createPanels } from '../engine/ui/panels.js';
 import { makeSlot, paintSlot, setIcon } from '../engine/ui/slots.js';
+import { createToasts } from '../engine/ui/toasts.js';
 import { createTooltip } from '../engine/ui/tooltip.js';
 import { LANG, LANGS, LANG_KEY, LANG_NAMES, fmt, setLang, tr } from './lang.js';
 import { KEY_ACTIONS, NOTICE_KINDS } from './data/start.js';
@@ -10,11 +12,14 @@ import { NPCS } from './data/npcs.js';
 import { SET_DEFAULT, idef } from './data/values.js';
 import { Art } from './itemart.js';
 import { Sprites } from './sprites.js';
-import { equipReqLv, isGear, itemDamage, itemName, maxStack } from './items.js';
+import { STACK_RULES, equipReqLv, isGear, itemDamage, itemName, maxStack } from './items.js';
 import { HOTBAR, MAX_BAG_SIZE } from './entity.js';
 
 export const $ = (s: any) => document.querySelector(s);
 export const $$ = (s: any) => Array.from(document.querySelectorAll(s));
+
+/** 알림 줄 — 한꺼번에 6줄까지 · 2.2초 뒤 흐려진다 */
+export const TOASTS = createToasts({ host: () => $('#toasts'), life: 2.2, fade: 0.4, max: 6 });
 
 export const UI: Bag = {
   cursor: null,        // 집어든 아이템
@@ -95,6 +100,10 @@ export const UI: Bag = {
     const depBtn = $('#btn-vault-deposit'), wdBtn = $('#btn-vault-withdraw');
     if (depBtn) depBtn.addEventListener('click', () => this.depositGold());
     if (wdBtn) wdBtn.addEventListener('click', () => this.withdrawGold());
+    const btn = (id: string, fn: () => void) => { const b = $(id); if (b) b.addEventListener('click', fn); };
+    btn('#btn-chest-all', () => this.lootAll());
+    btn('#btn-vault-stack', () => this.vaultMove('stack'));
+    btn('#btn-vault-takeall', () => this.vaultMove('take'));
   },
   /* ---------------- 보관고 금화 ---------------- */
   depositGold() {
@@ -292,14 +301,8 @@ export const UI: Bag = {
   },
 
   /* ---------------- 토스트 ---------------- */
-  toast(msg: string, kind: string) {
-    const el = document.createElement('div');
-    el.className = 'toast' + (kind ? ' ' + kind : '');
-    el.textContent = msg;
-    $('#toasts').appendChild(el);
-    setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; }, 2200);
-    setTimeout(() => el.remove(), 2700);
-  },
+  /** 알림 — 같은 글이 잇달아 오면 ×N 으로 합친다(engine ui/toasts) */
+  toast(msg: string, kind?: string) { TOASTS.push(msg, kind || ''); },
 
   /* ---------------- 패널 ---------------- */
   togglePanel(id: string) {
@@ -404,32 +407,16 @@ export const UI: Bag = {
   /** 가방 정리 — 같은 것끼리 합치고, 종류·등급 순으로 앞에서부터 채운다. */
   sortBag() {
     const p = G.player;
-    const keep: any[] = [];                                   // [index, item] — 잠긴 것
-    const move: Bag[] = [];
-    p.bag.forEach((it: Bag, i: number) => { if (!it) return; if (it.lk) keep.push([i, it]); else move.push(it); });
-    // 같은 아이템끼리 합친다 (접사 붙은 장비는 각각 하나짜리라 합쳐지지 않는다)
-    const merged: Bag[] = [];
-    for (const it of move) {
-      const same = merged.find(q => q.id === it.id && !q.a && !it.a && q.r === it.r && maxStack(q) > 1 && q.c < maxStack(q));
-      if (same) {
-        const room = maxStack(same) - same.c, mv = Math.min(room, it.c);
-        same.c += mv; it.c -= mv;
-        if (it.c > 0) merged.push(it);
-      } else merged.push(it);
-    }
     const ORDER: Record<string, number> = { weapon: 0, tool: 1, armor: 2, acc: 3, bag: 4, consum: 5, summon: 6, seed: 7, mat: 8, block: 9, machine: 10 };
-    merged.sort((a, b) => {
+    /* 잠근 것은 제자리 · 같은 것끼리 합친 뒤 종류 → 등급(높은 것 먼저) → 이름 순(engine core/inventory sortSlots) */
+    const out = sortSlots(p.bag, STACK_RULES, (a: Bag, b: Bag) => {
       const da = idef(a), db = idef(b);
       const oa = ORDER[da.type!] === undefined ? 99 : ORDER[da.type!];
       const ob = ORDER[db.type!] === undefined ? 99 : ORDER[db.type!];
       if (oa !== ob) return oa - ob;
-      if (b.r !== a.r) return b.r - a.r;                // 등급 높은 것 먼저
+      if (b.r !== a.r) return b.r - a.r;
       return da.n.localeCompare(db.n, 'ko');
     });
-    const out = new Array(p.bag.length).fill(null);
-    for (const [i, it] of keep) out[i] = it;            // 잠긴 것은 원래 자리에
-    let k = 0;
-    for (const it of merged) { while (out[k] !== null && k < out.length) k++; if (k >= out.length) break; out[k] = it; }
     p.bag = out;
     this.refreshBag(); this.refreshHotbar();
     G.sfx('place');

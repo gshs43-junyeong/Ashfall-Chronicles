@@ -1,4 +1,5 @@
 /* ===== game/sound.js — 소리 · 타격 효과 ===== */
+import { spatialMix } from '../../engine/audio/spatial.js';
 import { TAU } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { TILE_DEF } from '../data.js';
@@ -18,11 +19,14 @@ export const SoundPart: Bag = {
     try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { }
   },
   /** 타일 좌표에서 나는 소리 — 화면 근처가 아니면 아예 재생하지 않는다. */
-  sfxAt(kind: string, tx: number, ty: number, rate: number, vol: any) {
+  /* 멀리서 난 소리는 작게, 옆에서 난 소리는 그쪽 귀로(engine audio/spatial) — 화면 밖 멀리는 아예 틀지 않는다 */
+  sfxAt(kind: string, tx: number, ty: number, rate?: number, vol?: any) {
     const p = this.player; if (!p) return;
     const dx = Math.abs(tx * TS - p.cx), dy = Math.abs(ty * TS - p.cy);
     if (dx > this.W * 0.6 + 120 || dy > this.H * 0.6 + 120) return;
-    this.sfx(kind, rate, vol);
+    const m = spatialMix({ near: 160, far: Math.max(this.W, this.H) * 0.75 + 160, panWidth: this.W * 0.5, maxPan: 0.55 }, p.cx, p.cy, tx * TS, ty * TS);
+    if (!m) return;
+    this.sfx(kind, rate, (vol === undefined ? 1 : vol) * (0.35 + 0.65 * m.gain), m.pan);
   },
 
   /* ================= 재질 파편 ================= */
@@ -37,7 +41,7 @@ export const SoundPart: Bag = {
       const pt = new Part(x + Math.cos(a) * rr, y + Math.sin(a) * rr,
         m.c[(Math.random() * m.c.length) | 0], o.vy === undefined ? -20 : o.vy,
         m.life * (o.life || 1),
-        { g: m.g, sq: m.sq, glow: m.glow, spd, r: o.r || 1, drag: m.glow ? 0.90 : 0.96 });
+        { g: m.g, sq: m.sq, glow: m.glow, spd, r: o.r || 1, drag: m.glow ? 0.90 : 0.96, bounce: o.ring ? 0 : m.bounce });
       if (rr) {                       // 고리에서 시작하면 방향을 반지름 축으로 다시 잡는다
         const v = Math.hypot(pt.vx, pt.vy) * (o.in ? -1 : 1);
         pt.vx = Math.cos(a) * v; pt.vy = Math.sin(a) * v;
@@ -81,16 +85,13 @@ export const SoundPart: Bag = {
     this.shake = Math.max(this.shake, d.shake || 20);
     if (!d.mat2) return;
     const x = e.cx, y = e.cy;
-    this.pending.push({
-      t: d.at || 0.2,
-      fn: () => {
+    this.after(d.at || 0.2, () => {
         this.matBurst(d.mat2, x, y, d.n2, {
           spd: (d.spd || 1) * 1.25, life: (d.life || 1) * 1.1, r: 1.2,
         });
         this.sfx(MAT[d.mat2].brk, 0.78 + Math.random() * 0.18);
         this.shake = Math.max(this.shake, (d.shake || 20) * 0.5);
-      },
-    });
+      });
   },
 
   /** 캐는 동안 한 획마다 — 파편 한 톨과 재질 타격음 */
@@ -131,8 +132,9 @@ export const SoundPart: Bag = {
   },
 
   /* ================= 효과음 ================= */
-  sfx(kind: any, rate: any, volMul: any) {
-    if (Sfx && Sfx.play(kind, rate, volMul)) return;   // 손그림 파일이 로드돼 있으면 그걸로 대신한다
+  sfx(kind: any, rate?: any, volMul?: any, pan?: number) {
+    if (this.ac && this.ac.state === 'suspended') this.ac.resume();   // 좌우로 가른 목소리는 컨텍스트를 거친다
+    if (Sfx && Sfx.play(kind, rate, volMul, pan)) return;   // 손그림 파일이 로드돼 있으면 그걸로 대신한다
     const ac = this.ac; if (!ac) return;
     if (ac.state === 'suspended') ac.resume();
     const t = ac.currentTime;

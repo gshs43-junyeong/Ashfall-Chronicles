@@ -437,6 +437,48 @@
     return hit;
   }
 
+  // src/engine/render/anim.ts
+  function cycleFrame(t, fps, n, start = 0, phase = 0) {
+    return start + (Math.floor(t * fps + phase) % n + n) % n;
+  }
+  function onceFrame(elapsed, fps, n, start = 0) {
+    return start + Math.min(n - 1, Math.max(0, Math.floor(elapsed * fps)));
+  }
+  var Beat = class {
+    constructor() {
+      this.last = -1;
+    }
+    hit(frame, beats) {
+      const changed = frame !== this.last;
+      this.last = frame;
+      return changed && beats.indexOf(frame) >= 0;
+    }
+  };
+  var Animator = class {
+    constructor(clips, start) {
+      this.clips = clips;
+      this.cur = start;
+      this.t = 0;
+    }
+    play(k) {
+      if (k !== this.cur) {
+        this.cur = k;
+        this.t = 0;
+      }
+    }
+    update(dt) {
+      this.t += dt;
+    }
+    get frame() {
+      const c = this.clips[this.cur];
+      return c.loop === false ? onceFrame(this.t, c.fps, c.n, c.from) : cycleFrame(this.t, c.fps, c.n, c.from);
+    }
+    get done() {
+      const c = this.clips[this.cur];
+      return c.loop === false && this.t * c.fps >= c.n;
+    }
+  };
+
   // src/engine/scene/scenes.ts
   function createScenes({ scenes: scenes2, layers, start }) {
     let cur = start;
@@ -1438,12 +1480,16 @@
     sel = d.sel || 0;
     say(tr("불러왔다"));
   }
+  var anim = new Animator({ idle: { from: 0, n: 2, fps: 2 }, walk: { from: 2, n: 4, fps: 9 } }, "idle");
+  var BOB = [0, 1, 0, -1, 0, -1];
   var scenes = createScenes({
     scenes: {
       play: {
         update(dt) {
           const ctl = !scenes.inputBlocked();
           player.update(dt, map, ctl);
+          anim.play(Math.abs(player.vx) > 20 && player.onGround ? "walk" : "idle");
+          anim.update(dt);
           if (ctl) digTick(dt);
           cam.x = clamp(player.cx - view.W / 2, 0, WW * TS - view.W);
           cam.y = clamp(player.cy - view.H / 2, 0, WH * TS - view.H);
@@ -1501,7 +1547,7 @@
     c.strokeRect(k.x * TS - camX + 0.5, k.y * TS - camY + 0.5, TS - 1, TS - 1);
   });
   pipe.add("actors", ({ c, camX, camY }) => {
-    const x = Math.round(player.x - camX), y = Math.round(player.y - camY);
+    const x = Math.round(player.x - camX), y = Math.round(player.y - camY) + BOB[anim.frame];
     c.fillStyle = "#e8d8b0";
     c.fillRect(x, y, player.w, player.h);
     c.fillStyle = "#c0392b";

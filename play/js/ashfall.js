@@ -554,7 +554,7 @@
     createSfx: () => createSfx,
     createSfxLoop: () => createSfxLoop
   });
-  function createSfx({ dir: SFX_DIR2, files: SFX_FILES2, fam: SFX_FAM2, gap: SFX_GAP2, vol: SFX_VOL2, start: SFX_START2 }) {
+  function createSfx({ dir: SFX_DIR2, files: SFX_FILES2, fam: SFX_FAM2, gap: SFX_GAP2, vol: SFX_VOL2, start: SFX_START2, panner }) {
     return {
       vol: 0.5,
       voices: {},
@@ -585,8 +585,8 @@
         }
       },
       /** 재생을 시도한다. */
-      /** vol — 이 한 번만 음량을 더 줄이거나 키우는 배수(기본 1). */
-      play(kind, rate, vol) {
+      /** vol — 이 한 번만 음량을 더 줄이거나 키우는 배수(기본 1). pan — 좌우(-1~1, panner 가 있을 때만). */
+      play(kind, rate, vol, pan) {
         let pool = this.voices[kind], fr = 1, fg = 1, file = kind;
         if (!pool) {
           const f = SFX_FAM2[kind];
@@ -606,6 +606,7 @@
         const a = pool[i];
         a.volume = Math.min(1, this.vol * (SFX_VOL2[kind] === void 0 ? 1 : SFX_VOL2[kind]) * fg * (vol === void 0 ? 1 : vol));
         a.playbackRate = (rate || 1) * fr;
+        if (panner) panner.pan(a, pan || 0);
         try {
           a.currentTime = SFX_START2[kind] !== void 0 ? SFX_START2[kind] : SFX_START2[file] || 0;
         } catch (e) {
@@ -7605,15 +7606,15 @@
     tileMat: () => tileMat
   });
   var MAT = {
-    stone: { c: ["#9a9aa0", "#6a6a70", "#4a4a50"], n: 9, g: 1, life: 0.5, sq: 1, hit: "hit_stone", brk: "break_stone" },
-    dirt: { c: ["#8a6a44", "#5d4429", "#40301d"], n: 8, g: 1.25, life: 0.36, sq: 1, hit: "hit_stone", brk: "break_dirt" },
-    wood: { c: ["#a67a44", "#77542d", "#523a1e"], n: 8, g: 0.95, life: 0.55, sq: 1, hit: "hit_wood", brk: "break_wood" },
+    stone: { c: ["#9a9aa0", "#6a6a70", "#4a4a50"], n: 9, g: 1, life: 0.5, sq: 1, bounce: 0.35, hit: "hit_stone", brk: "break_stone" },
+    dirt: { c: ["#8a6a44", "#5d4429", "#40301d"], n: 8, g: 1.25, life: 0.36, sq: 1, bounce: 0.2, hit: "hit_stone", brk: "break_dirt" },
+    wood: { c: ["#a67a44", "#77542d", "#523a1e"], n: 8, g: 0.95, life: 0.55, sq: 1, bounce: 0.3, hit: "hit_wood", brk: "break_wood" },
     plant: { c: ["#94c46a", "#5a9a3a", "#376d24"], n: 10, g: 0.55, life: 0.7, sq: 0, hit: "hit_plant", brk: "break_plant" },
-    metal: { c: ["#c8d2de", "#8792a0", "#57616d"], n: 7, g: 1.15, life: 0.45, sq: 1, hit: "hit_metal", brk: "break_metal" },
-    glass: { c: ["#e8f8ff", "#9fd8ec", "#6aa8c0"], n: 12, g: 1, life: 0.5, sq: 1, hit: "hit_glass", brk: "break_glass" },
-    ice: { c: ["#eaf6ff", "#a8d8ff", "#6fa8d8"], n: 11, g: 1, life: 0.48, sq: 1, hit: "hit_glass", brk: "break_ice" },
+    metal: { c: ["#c8d2de", "#8792a0", "#57616d"], n: 7, g: 1.15, life: 0.45, sq: 1, bounce: 0.4, hit: "hit_metal", brk: "break_metal" },
+    glass: { c: ["#e8f8ff", "#9fd8ec", "#6aa8c0"], n: 12, g: 1, life: 0.5, sq: 1, bounce: 0.3, hit: "hit_glass", brk: "break_glass" },
+    ice: { c: ["#eaf6ff", "#a8d8ff", "#6fa8d8"], n: 11, g: 1, life: 0.48, sq: 1, bounce: 0.3, hit: "hit_glass", brk: "break_ice" },
     ember: { c: ["#ffe6a0", "#ff9a3c", "#e0561c"], n: 12, g: -0.3, life: 0.6, sq: 0, glow: 1, hit: "hit_ember", brk: "break_ember" },
-    bone: { c: ["#f2ecd8", "#c6bda6", "#8e8574"], n: 10, g: 1, life: 0.55, sq: 1, hit: "hit_bone", brk: "break_bone" },
+    bone: { c: ["#f2ecd8", "#c6bda6", "#8e8574"], n: 10, g: 1, life: 0.55, sq: 1, bounce: 0.35, hit: "hit_bone", brk: "break_bone" },
     gel: { c: ["#d8f0dc", "#8ac49a", "#4f8a5e"], n: 12, g: 0.85, life: 0.42, sq: 0, hit: "hit_gel", brk: "break_flesh" },
     flesh: { c: ["#e07a6a", "#b8484a", "#7a2c2e"], n: 10, g: 1.1, life: 0.42, sq: 0, hit: "hit_flesh", brk: "break_flesh" },
     void: { c: ["#d8c0ff", "#a06fff", "#5a3a86"], n: 12, g: -0.2, life: 0.78, sq: 0, glow: 1, hit: "hit_void", brk: "break_void" }
@@ -13543,7 +13544,6 @@
   __export(world_exports, {
     BEACH_W: () => BEACH_W,
     BIOME_BAND: () => BIOME_BAND,
-    BoxSet: () => BoxSet,
     CAVE_GH: () => CAVE_GH,
     CAVE_GW: () => CAVE_GW,
     DAWN_BUILDINGS: () => DAWN_BUILDINGS,
@@ -13562,7 +13562,7 @@
     MIN_CAVE: () => MIN_CAVE,
     SUN_AMB: () => SUN_AMB,
     SUN_DEPTH: () => SUN_DEPTH,
-    SUN_LEAF: () => SUN_LEAF,
+    SUN_SOFT: () => SUN_SOFT,
     TS: () => TS,
     World: () => World,
     ZONE_CARD: () => ZONE_CARD,
@@ -13586,6 +13586,187 @@
     factory = v;
   }
 
+  // src/engine/tilemap/cellqueue.ts
+  var CellQueue = class {
+    /** ww·wh — 세계 칸 수 · every[j] — 갈래 j 의 걸음 간격(초) */
+    constructor(ww, wh, every) {
+      this.ww = ww;
+      this.wh = wh;
+      this.every = every.slice();
+      this.q = every.map(() => []);
+      this.mark = every.map(() => new Uint8Array(ww * wh));
+      this.acc = every.map(() => 0);
+    }
+    /** (x, y) 와 네 이웃을 모든 갈래의 줄에 세운다(테두리 한 칸은 건너뛴다 — 이웃을 볼 때 밖으로 나가지 않게) */
+    wake(x, y) {
+      const { ww, wh, q, mark } = this;
+      for (let d = 0; d < 5; d++) {
+        const xx = x + (d === 1 ? -1 : d === 2 ? 1 : 0), yy = y + (d === 3 ? -1 : d === 4 ? 1 : 0);
+        if (xx < 1 || yy < 1 || xx >= ww - 1 || yy >= wh - 1) continue;
+        const k = yy * ww + xx;
+        for (let j = 0; j < q.length; j++) if (!mark[j][k]) {
+          mark[j][k] = 1;
+          q[j].push(k);
+        }
+      }
+    }
+    /** 줄에 선 칸이 있는가 */
+    busy(j) {
+      return j === void 0 ? this.q.some((a) => a.length > 0) : this.q[j].length > 0;
+    }
+    /** 갈래 j 를 한 걸음 — 줄 앞에서 budget 칸까지 eval(k) 로 재고(null 이면 그대로), 다 잰 뒤 apply(결과들) */
+    step(j, evalCell, apply, budget = 6e3) {
+      const q = this.q[j], mark = this.mark[j];
+      const todo = q.splice(0, Math.min(q.length, budget));
+      const out = [];
+      for (const k of todo) {
+        mark[k] = 0;
+        const r = evalCell(k);
+        if (r) out.push(r);
+      }
+      apply(out);
+    }
+    /** 시간을 흘린다 — 간격이 찬 갈래마다 run(j) */
+    tick(dt, run) {
+      for (let j = 0; j < this.q.length; j++) {
+        this.acc[j] += dt;
+        if (this.acc[j] < this.every[j]) continue;
+        this.acc[j] = 0;
+        if (this.q[j].length) run(j);
+      }
+    }
+  };
+
+  // src/engine/tilemap/lightfield.ts
+  var LightField = class {
+    constructor(cfg) {
+      this.cfg = cfg;
+      this.cache = /* @__PURE__ */ new Map();
+      this.dirty = [];
+      this.frame = 0;
+      this.x0 = this.y0 = this.w = this.h = this.n = 0;
+      this.sunOn = false;
+      this.alloc(1024);
+    }
+    alloc(n) {
+      this.L = new Float32Array(n);
+      this.Lp = new Float32Array(n);
+      this.col = new Float32Array(n * 3);
+      this.op = new Uint8Array(n);
+      this.dec = new Float32Array(n);
+      this.decP = new Float32Array(n);
+      this.sunV = new Float32Array(n);
+      this.trans = new Float32Array(n);
+    }
+    /** 새 창 — (x0, y0) 부터 w×h 칸. 버퍼를 비우고, 바뀐 칸 둘레의 광원 판을 버린다. 칸 번호 k = (y-y0)·w + (x-x0). */
+    begin(x0, y0, w, h) {
+      const n = w * h;
+      if (this.L.length < n) this.alloc(n + 64);
+      this.x0 = x0;
+      this.y0 = y0;
+      this.w = w;
+      this.h = h;
+      this.n = n;
+      this.sunOn = false;
+      this.L.fill(0, 0, n);
+      this.Lp.fill(0, 0, n);
+      this.col.fill(0, 0, n * 3);
+      this.frame++;
+      this.flush();
+    }
+    /** 칸 (x, y) 의 막힘이나 빛이 바뀌었다 — 그 둘레 광원 판을 다음 begin 에서 버린다 */
+    touch(x, y) {
+      this.dirty.push(x, y);
+    }
+    flush() {
+      const cache2 = this.cache, d = this.dirty;
+      if (d.length) {
+        for (let i = 0; i < d.length; i += 2) {
+          const x = d[i], y = d[i + 1];
+          for (const [key, e] of cache2) if (Math.abs(e.x - x) <= e.r && Math.abs(e.y - y) <= e.r) cache2.delete(key);
+        }
+        d.length = 0;
+      }
+      if (cache2.size > 3e3) {
+        for (const [key, e] of cache2) if (this.frame - e.used > 600) cache2.delete(key);
+      }
+    }
+    /** 점 광원 하나를 찍는다 — 세기 s, 색 rgb(0~1 셋, 없으면 null). keep 이면 판을 저장해 두고 다시 쓴다(움직이는 빛은 false). */
+    stampPoint(x, y, s, rgb, keep = true) {
+      const c = this.cfg;
+      let p;
+      if (keep) {
+        const key = c.key(x, y);
+        let e = this.cache.get(key);
+        if (!e || e.s !== s) {
+          const q = castPointLight(s, c.fall, (dx, dy) => c.blocked(x + dx, y + dy));
+          e = { s, x, y, r: q.r, v: q.v, used: 0 };
+          this.cache.set(key, e);
+        }
+        e.used = this.frame;
+        p = e;
+      } else p = castPointLight(s, c.fall, (dx, dy) => c.blocked(x + dx, y + dy));
+      const r = p.r, n = 2 * r + 1, Lp = this.Lp, col = this.col, w = this.w, h = this.h;
+      for (let dy = -r; dy <= r; dy++) {
+        const yy = y + dy - this.y0;
+        if (yy < 0 || yy >= h) continue;
+        for (let dx = -r; dx <= r; dx++) {
+          const xx = x + dx - this.x0;
+          if (xx < 0 || xx >= w) continue;
+          const v = p.v[(dy + r) * n + dx + r];
+          if (v <= 0) continue;
+          const k = yy * w + xx;
+          if (v > Lp[k]) Lp[k] = v;
+          if (rgb) {
+            const f = v / s, a = f * f * f * c.tint, j = k * 3;
+            col[j] = Math.max(col[j], rgb[0] * a);
+            col[j + 1] = Math.max(col[j + 1], rgb[1] * a);
+            col[j + 2] = Math.max(col[j + 2], rgb[2] * a);
+          }
+        }
+      }
+    }
+    /** 방향광 — (sx, sy) 해 쪽 방향 · sky(x, y) 창 밖 칸이 하늘에 트였나 · level(k, 닿는 정도 0~1) 그 칸이 받는 빛.
+        막힌 칸(해 쪽 겉면)은 번지기 전에 L 에 넣어 땅속으로 부드럽게 번지고, 트인 칸은 finish 에서 번진 뒤에 얹는다. */
+    sun(sx, sy, sky, level) {
+      const S = this.sunV, n = this.n, L = this.L, op = this.op;
+      castSunlight(S, this.w, this.h, this.x0, this.y0, this.trans, sx, sy, sky);
+      for (let k = 0; k < n; k++) {
+        if (S[k] <= 0.01) {
+          S[k] = 0;
+          continue;
+        }
+        S[k] = level(k, S[k]);
+        if (op[k] && S[k] > L[k]) L[k] = S[k];
+      }
+      this.sunOn = true;
+    }
+    /** 번지기 — L 은 passes 번, Lp(튀는 빛)는 한 번. 큰 쪽을 남기고, 해가 곧게 닿는 트인 칸을 마지막에 얹는다. */
+    finish(passes = 2) {
+      const { L, Lp, n, w, h, op } = this;
+      sweepLightGrid(L, w, h, passes, this.dec, op);
+      sweepLightGrid(Lp, w, h, 1, this.decP, op);
+      for (let k = 0; k < n; k++) if (Lp[k] > L[k]) L[k] = Lp[k];
+      if (this.sunOn) {
+        const S = this.sunV;
+        for (let k = 0; k < n; k++) if (!op[k] && S[k] > L[k]) L[k] = S[k];
+      }
+    }
+    /** 세계 칸의 밝기(창 밖은 0) */
+    at(x, y) {
+      const lx = x - this.x0, ly = y - this.y0;
+      if (lx < 0 || ly < 0 || lx >= this.w || ly >= this.h) return 0;
+      return this.L[ly * this.w + lx];
+    }
+    /** 세계 칸의 빛 색(0~1 rgb, 창 밖이면 null) */
+    colorAt(x, y) {
+      const lx = x - this.x0, ly = y - this.y0;
+      if (lx < 0 || ly < 0 || lx >= this.w || ly >= this.h) return null;
+      const k = (ly * this.w + lx) * 3;
+      return this.col.subarray(k, k + 3);
+    }
+  };
+
   // src/game/world.ts
   var TS = 22;
   var CAVE_GW = 60, CAVE_GH = 55;
@@ -13594,7 +13775,7 @@
   var inSeaZone = (x, seaX1) => x < seaX1 + BEACH_W + 4;
   var BIOME_BAND = 104;
   var LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
-  var SUN_AMB = 0.4, SUN_LEAF = 0.4, SUN_DEPTH = 10;
+  var SUN_AMB = 0.4, SUN_SOFT = 0.75, SUN_DEPTH = 10;
   var LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
   TILE_DEF.forEach((d, i) => {
     LIGHT_OPAQUE[i] = d.solid === 1 && !d.clear ? 1 : 0;
@@ -13695,48 +13876,6 @@
     /* 성벽에서 이만큼 더 바깥까지 지면을 평평하게 깎는다. */
     flatPad: 10
   };
-  var BoxSet = class {
-    constructor(box, pad, ww) {
-      this.ww = ww;
-      this.x0 = box[0] - pad;
-      this.y0 = box[1] - pad;
-      this.bw = box[2] - box[0] + 1 + pad * 2;
-      this.bh = box[3] - box[1] + 1 + pad * 2;
-      this.m = new Uint8Array(this.bw * this.bh);
-      this.list = [];
-      this.out = null;
-    }
-    _i(k) {
-      const y = k / this.ww | 0, x = k - y * this.ww, lx = x - this.x0, ly = y - this.y0;
-      return lx >= 0 && ly >= 0 && lx < this.bw && ly < this.bh ? ly * this.bw + lx : -1;
-    }
-    has(k) {
-      const i = this._i(k);
-      return i >= 0 ? this.m[i] === 1 : !!(this.out && this.out.has(k));
-    }
-    add(k) {
-      const i = this._i(k);
-      if (i >= 0) {
-        if (this.m[i]) return this;
-        this.m[i] = 1;
-      } else {
-        this.out = this.out || /* @__PURE__ */ new Set();
-        if (this.out.has(k)) return this;
-        this.out.add(k);
-      }
-      this.list.push(k);
-      return this;
-    }
-    get size() {
-      return this.list.length;
-    }
-    values() {
-      return this.list.values();
-    }
-    [Symbol.iterator]() {
-      return this.list[Symbol.iterator]();
-    }
-  };
   function doorEdge(d) {
     const w = Math.max(6, Math.round(d.w * 0.32));
     return { x: d.dir === -1 ? d.x : d.x + d.w - w, y: d.y, w, h: d.h };
@@ -13761,18 +13900,14 @@
       this.crumbled = /* @__PURE__ */ new Map();
       this.spawnX = 180;
       this.spawnY = 0;
-      this.lightBuf = null;
-      this.lbx = 0;
-      this.lby = 0;
-      this.lbw = 0;
-      this.lbh = 0;
+      this.light = null;
     }
     set(x, y, t) {
       const { WW: WW2 } = this.dims;
       if (!this.inB(x, y)) return;
       const k = y * WW2 + x, was = this.tiles[k];
       this.tiles[k] = t;
-      if (this.lightCache && was !== t) this.lightTouch(k, was);
+      if (this.light && was !== t) this.lightTouch(k, was);
       if (this.fq) this.fluidWake(x, y);
       if (this.hangQ && was !== t) this.hangQ.push(k);
       if (this.netLog && !this.netMute) this.netLog.add(y * WW2 + x);
@@ -13784,7 +13919,7 @@
     /** tiles 를 직접 쓴 칸(작물 자람 · 무너지는 바닥)도 멀티플레이 기록에 남긴다. */
     netMark(k) {
       if (this.netLog && !this.netMute) this.netLog.add(k);
-      if (this.lightCache) this.lightTouch(k, -1);
+      if (this.light) this.lightTouch(k, -1);
     }
     hurtTile(x, y) {
       return TILE_DEF[this.get(x, y)].hurt || 0;
@@ -13860,24 +13995,24 @@
       return [i, i, 0];
     }
     /** 바이옴별 지표 높이 (경계에서 부드럽게 이어지도록 x 전 구간에서 정의) */
-    _hFor(bid, x, n1) {
+    _hFor(bid, x, n12) {
       const { SURF_BASE: SURF_BASE2 } = this.dims;
-      let h = SURF_BASE2 + (n1(x, 0.011) - 0.5) * 32 + (n1(x + 900, 0.042) - 0.5) * 10;
-      if (bid === "desert") h += 8 + (n1(x + 400, 0.025) - 0.5) * 12;
-      else if (bid === "ice") h -= 8 + (n1(x + 1500, 0.06) - 0.5) * 6;
-      else if (bid === "glacier") h -= 16 + (n1(x + 2600, 0.09) - 0.5) * 22;
-      else if (bid === "sea") h -= 2 + (n1(x + 5300, 0.05) - 0.5) * 6;
-      else if (bid === "corrupt") h += 2 + (n1(x + 2200, 0.075) - 0.5) * 24;
-      else if (bid === "jungle") h += 6 + (n1(x + 3300, 0.05) - 0.5) * 18;
-      else if (bid === "glowfen") h += 16 + (n1(x + 4100, 0.03) - 0.5) * 10;
+      let h = SURF_BASE2 + (n12(x, 0.011) - 0.5) * 32 + (n12(x + 900, 0.042) - 0.5) * 10;
+      if (bid === "desert") h += 8 + (n12(x + 400, 0.025) - 0.5) * 12;
+      else if (bid === "ice") h -= 8 + (n12(x + 1500, 0.06) - 0.5) * 6;
+      else if (bid === "glacier") h -= 16 + (n12(x + 2600, 0.09) - 0.5) * 22;
+      else if (bid === "sea") h -= 2 + (n12(x + 5300, 0.05) - 0.5) * 6;
+      else if (bid === "corrupt") h += 2 + (n12(x + 2200, 0.075) - 0.5) * 24;
+      else if (bid === "jungle") h += 6 + (n12(x + 3300, 0.05) - 0.5) * 18;
+      else if (bid === "glowfen") h += 16 + (n12(x + 4100, 0.03) - 0.5) * 10;
       return h;
     }
     /** 이 x에서 어떤 바이옴의 '재질'을 쓸지 — 경계에서는 노이즈로 맞물리게 */
-    _matAt(x, n1) {
+    _matAt(x, n12) {
       const { BIOMES: BIOMES2 } = this.dims;
       const [ia, ib, t] = this.biomeMix(x);
       if (t <= 1e-3 || ia === ib) return BIOMES2[ia].id;
-      return n1(x + 7777, 0.11) < t ? BIOMES2[ib].id : BIOMES2[ia].id;
+      return n12(x + 7777, 0.11) < t ? BIOMES2[ib].id : BIOMES2[ia].id;
     }
     /** 전투/스폰용 구역 태그 */
     zoneAt(tx, ty) {
@@ -13922,14 +14057,14 @@
     generate() {
       const { WSX: WSX2, WSY: WSY2, SX: SX2, SY: SY2, WW: WW2, WORLD_BOT: WORLD_BOT2, SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2, DEEP_Y: DEEP_Y2, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12, SEA_X1: SEA_X12, BIOMES: BIOMES2 } = this.dims;
       const rng = this.rng;
-      const n1 = makeNoise1D(new RNG(rng.next() * 1e9), 4);
+      const n12 = makeNoise1D(new RNG(rng.next() * 1e9), 4);
       const n2 = makeNoise2D(new RNG(rng.next() * 1e9));
       const n3 = makeNoise2D(new RNG(rng.next() * 1e9));
       const rawH = new Float32Array(WW2);
       for (let x = 0; x < WW2; x++) {
         const [ia, ib, t] = this.biomeMix(x);
-        const ha = this._hFor(BIOMES2[ia].id, x, n1);
-        const h = t > 1e-3 && ia !== ib ? lerp(ha, this._hFor(BIOMES2[ib].id, x, n1), t) : ha;
+        const ha = this._hFor(BIOMES2[ia].id, x, n12);
+        const h = t > 1e-3 && ia !== ib ? lerp(ha, this._hFor(BIOMES2[ib].id, x, n12), t) : ha;
         rawH[x] = clamp(h, SURF_BASE2 - 12, SURF_BASE2 + 38);
       }
       for (let x = 0; x < WW2; x++) {
@@ -13954,11 +14089,11 @@
       }
       this.dawnY = dh;
       this.matId = new Uint8Array(WW2);
-      for (let x = 0; x < WW2; x++) this.matId[x] = MAT_OF[this._matAt(x, n1)];
+      for (let x = 0; x < WW2; x++) this.matId[x] = MAT_OF[this._matAt(x, n12)];
       for (let x = 0; x < WW2; x++) {
         const s = this.surface[x], m = this.matId[x];
-        const soilD = 4 + Math.round(n1(x + 3100, 0.09) * 3);
-        const subD = 15 + Math.round(n1(x + 5200, 0.07) * 8);
+        const soilD = 4 + Math.round(n12(x + 3100, 0.09) * 3);
+        const subD = 15 + Math.round(n12(x + 5200, 0.07) * 8);
         const L = MAT_LAYER[m];
         for (let y = s; y < WORLD_BOT2; y++) {
           let t;
@@ -14096,12 +14231,12 @@
       }
       this.buildVillage(vx0, vx1, vh, rng);
       this.buildDawnCity(dx0, dx1, dh, rng);
-      this.buildSea(rng, n1);
+      this.buildSea(rng, n12);
       this.buildWorks(dx0, dx1, rng);
       this.buildRunaway(dx0, dx1, rng);
       this.buildAtelier(rng);
       this.buildDungeon(rng, n2);
-      this.buildSkyIslands(rng, n1);
+      this.buildSkyIslands(rng, n12);
       this.buildRuins(rng);
       this.buildCitadel(rng);
       this.buildDeepShaft(rng);
@@ -14168,30 +14303,17 @@
       const P = 14;
       const x0 = clamp(tx0 - P, 0, WW2 - 1), x1 = clamp(tx1 + P, 0, WW2 - 1);
       const y0 = clamp(ty0 - P, 0, WH2 - 1), y1 = clamp(ty1 + P, 0, WH2 - 1);
-      const w = x1 - x0 + 1, h = y1 - y0 + 1, n = w * h;
-      if (!this.lightBuf || this.lightBuf.length < n) {
-        this.lightBuf = new Float32Array(n + 64);
-        this.lightBufP = new Float32Array(n + 64);
-        this.lightCol = new Float32Array((n + 64) * 3);
-        this.lightOp = new Uint8Array(n + 64);
-        this.lightDec = new Float32Array(n + 64);
-        this.lightDecP = new Float32Array(n + 64);
-        this.lightSun = new Float32Array(n + 64);
-        this.lightTrans = new Float32Array(n + 64);
-      }
-      if (!this.lightCache) {
-        this.lightCache = /* @__PURE__ */ new Map();
-        this.lightDirty = [];
-        this.lightFrame = 0;
-      }
-      this.lightFrame++;
-      this.lightFlush();
-      const L = this.lightBuf, Lp = this.lightBufP, col = this.lightCol, op = this.lightOp, dec = this.lightDec, decP = this.lightDecP;
-      L.fill(0, 0, n);
-      Lp.fill(0, 0, n);
-      col.fill(0, 0, n * 3);
+      const w = x1 - x0 + 1, h = y1 - y0 + 1;
+      const F = this.light = this.light || new LightField({
+        fall: LIGHT_FALL,
+        tint: LIGHT_TINT,
+        blocked: (x, y) => this.lightBlocks(x, y),
+        key: (x, y) => y * WW2 + x
+      });
+      F.begin(x0, y0, w, h);
+      const L = F.L, op = F.op, dec = F.dec, decP = F.decP, trans = F.trans;
       const sea = this.sea, seaAmb = 1.2 + dayLight * 0.1;
-      const sunK = sun ? sun.k : 0, skyL = dayLight * (1 - (1 - SUN_AMB) * sunK), trans = this.lightTrans;
+      const sunK = sun ? sun.k : 0, skyL = dayLight * (1 - (1 - SUN_AMB) * sunK);
       const pts = [];
       for (let x = x0; x <= x1; x++) {
         const s = this.surface[x];
@@ -14206,123 +14328,53 @@
             if (d.light >= LIGHT_POINT && !d.liquid) pts.push(x, y);
             else L[k] = Math.max(L[k], d.light);
           }
-          trans[k] = op[k] ? 0 : d.leaf ? SUN_LEAF : d.liquid ? 0.8 : 1;
+          trans[k] = d.solid === 1 ? op[k] ? 0 : 1 : d.liquid ? 0.8 : op[k] || d.leaf ? SUN_SOFT : 1;
           if (t === T.AIR && y <= s && this.walls[y * WW2 + x] === 0) L[k] = Math.max(L[k], skyL);
           else if (d.sea && sea && y > sea.level)
             L[k] = Math.max(L[k], dayLight - (y - sea.level) * 0.42, seaAmb);
         }
       }
       for (let i = 0; i < pts.length; i += 2) {
-        const lx = pts[i], ly = pts[i + 1], d = TILE_DEF[this.tiles[ly * WW2 + lx]];
-        this.lightStamp(this.lightPatch(lx, ly, d.light), lx, ly, x0, y0, w, h, Lp, LIGHT_RGB[d.lc] || null, d.light);
+        const d = TILE_DEF[this.tiles[pts[i + 1] * WW2 + pts[i]]];
+        F.stampPoint(pts[i], pts[i + 1], d.light, LIGHT_RGB[d.lc] || null);
       }
-      if (extra) for (const [ex, ey, ev] of extra) {
-        if (ex < x0 || ex > x1 || ey < y0 || ey > y1) continue;
-        this.lightStamp(castPointLight(ev, LIGHT_FALL, (dx, dy) => this.lightBlocks(ex + dx, ey + dy)), ex, ey, x0, y0, w, h, Lp, null, ev);
+      if (extra) {
+        for (const [ex, ey, ev] of extra) if (ex >= x0 && ex <= x1 && ey >= y0 && ey <= y1) F.stampPoint(ex, ey, ev, null, false);
       }
-      const S = this.lightSun, sunOn = !!sun && sunK > 0, top = dayLight * sunK + skyL * (1 - sunK);
-      if (sunOn) {
-        castSunlight(S, w, h, x0, y0, trans, sun.x, sun.y, (x, y) => y < 0 || y <= this.surface[clamp(x, 0, WW2 - 1)] ? 1 : 0);
-        for (let k = 0; k < n; k++) {
-          if (S[k] <= 0.01) {
-            S[k] = 0;
-            continue;
-          }
+      if (sun && sunK > 0) {
+        const top = dayLight * sunK + skyL * (1 - sunK);
+        F.sun(sun.x, sun.y, (x, y) => y < 0 || y <= this.surface[clamp(x, 0, WW2 - 1)] ? 1 : 0, (k, raw) => {
           const dd = y0 + (k / w | 0) - this.surface[x0 + k % w];
-          S[k] = top * S[k] * (dd <= 0 ? 1 : Math.max(0, 1 - dd / SUN_DEPTH));
-          if (op[k] && S[k] > L[k]) L[k] = S[k];
-        }
+          return top * raw * (dd <= 0 ? 1 : Math.max(0, 1 - dd / SUN_DEPTH));
+        });
       }
-      sweepLightGrid(L, w, h, 2, dec, op);
-      sweepLightGrid(Lp, w, h, 1, decP, op);
-      for (let k = 0; k < n; k++) if (Lp[k] > L[k]) L[k] = Lp[k];
-      if (sunOn) {
-        for (let k = 0; k < n; k++) if (!op[k] && S[k] > L[k]) L[k] = S[k];
-      }
-      this.lbx = x0;
-      this.lby = y0;
-      this.lbw = w;
-      this.lbh = h;
+      F.finish(2);
     }
     /** 그 칸이 점 광원의 빛을 막는가(세계 밖은 막힌 것으로) */
     lightBlocks(x, y) {
       const { WW: WW2, WH: WH2 } = this.dims;
       return x < 0 || y < 0 || x >= WW2 || y >= WH2 || LIGHT_OPAQUE[this.tiles[y * WW2 + x]] === 1;
     }
-    /** 점 광원 하나의 판 — 저장해 두고, 둘레 칸의 막힘이 바뀌면(lightTouch) 버린다 */
-    lightPatch(x, y, s) {
-      const { WW: WW2 } = this.dims;
-      const key = y * WW2 + x, cache2 = this.lightCache;
-      let e = cache2.get(key);
-      if (!e || e.s !== s) {
-        const p = castPointLight(s, LIGHT_FALL, (dx, dy) => this.lightBlocks(x + dx, y + dy));
-        e = { s, x, y, r: p.r, v: p.v, used: 0 };
-        cache2.set(key, e);
-      }
-      e.used = this.lightFrame;
-      return e;
-    }
-    lightStamp(p, lx, ly, x0, y0, w, h, Lp, rgb, s) {
-      const r = p.r, n = 2 * r + 1, col = this.lightCol;
-      for (let dy = -r; dy <= r; dy++) {
-        const yy = ly + dy - y0;
-        if (yy < 0 || yy >= h) continue;
-        for (let dx = -r; dx <= r; dx++) {
-          const xx = lx + dx - x0;
-          if (xx < 0 || xx >= w) continue;
-          const v = p.v[(dy + r) * n + dx + r];
-          if (v <= 0) continue;
-          const k = yy * w + xx;
-          if (v > Lp[k]) Lp[k] = v;
-          if (rgb) {
-            const f = v / s, a = f * f * f * LIGHT_TINT, j = k * 3;
-            col[j] = Math.max(col[j], rgb[0] * a);
-            col[j + 1] = Math.max(col[j + 1], rgb[1] * a);
-            col[j + 2] = Math.max(col[j + 2], rgb[2] * a);
-          }
-        }
-      }
-    }
     /** 칸이 바뀌었다 — 막힘이나 빛이 달라졌으면 그 둘레 광원 판을 버리게 적어 둔다(was: 예전 타일, -1 이면 모름) */
     lightTouch(k, was) {
+      const { WW: WW2 } = this.dims;
       const t = this.tiles[k];
       if (was >= 0 && LIGHT_OPAQUE[was] === LIGHT_OPAQUE[t] && TILE_DEF[was].light === TILE_DEF[t].light) return;
-      this.lightDirty.push(k);
-    }
-    lightFlush() {
-      const { WW: WW2 } = this.dims;
-      const cache2 = this.lightCache;
-      if (this.lightDirty.length) {
-        for (const k of this.lightDirty) {
-          const x = k % WW2, y = k / WW2 | 0;
-          for (const [key, e] of cache2) if (Math.abs(e.x - x) <= e.r && Math.abs(e.y - y) <= e.r) cache2.delete(key);
-        }
-        this.lightDirty.length = 0;
-      }
-      if (cache2.size > 3e3) {
-        for (const [key, e] of cache2) if (this.lightFrame - e.used > 600) cache2.delete(key);
-      }
+      this.light.touch(k % WW2, k / WW2 | 0);
     }
     /** 빛 색(점 광원) — 0~1 rgb, 화면 밖이면 null */
     lightColAt(x, y) {
-      const lx = x - this.lbx, ly = y - this.lby;
-      if (lx < 0 || ly < 0 || lx >= this.lbw || ly >= this.lbh) return null;
-      const k = (ly * this.lbw + lx) * 3;
-      return this.lightCol.subarray(k, k + 3);
+      return this.light ? this.light.colorAt(x, y) : null;
     }
     lightAt(x, y) {
-      const lx = x - this.lbx, ly = y - this.lby;
-      if (lx < 0 || ly < 0 || lx >= this.lbw || ly >= this.lbh) return 0;
-      return this.lightBuf[ly * this.lbw + lx];
+      return this.light ? this.light.at(x, y) : 0;
     }
     /* ================= 유체 ================= */
     fluidInit() {
       const { WW: WW2, WH: WH2 } = this.dims;
       this.flv = new Uint8Array(WW2 * WH2);
-      this.fq = [[], []];
+      this.fq = new CellQueue(WW2, WH2, [0.2, 0.9]);
       this.hangQ = [];
-      this.fmark = [new Uint8Array(WW2 * WH2), new Uint8Array(WW2 * WH2)];
-      this.fAcc = [0, 0];
       for (let k = WW2; k < WW2 * (WH2 - 1); k++) {
         const t = this.tiles[k];
         if (t === T.FALLS) {
@@ -14336,28 +14388,11 @@
       this.fallsAll();
     }
     fluidWake(x, y) {
-      const { WW: WW2, WH: WH2 } = this.dims;
-      const q = this.fq;
-      for (let d = 0; d < 5; d++) {
-        const xx = x + (d === 1 ? -1 : d === 2 ? 1 : 0), yy = y + (d === 3 ? -1 : d === 4 ? 1 : 0);
-        if (xx < 1 || yy < 1 || xx >= WW2 - 1 || yy >= WH2 - 1) continue;
-        const k = yy * WW2 + xx;
-        for (let j = 0; j < 2; j++) if (!this.fmark[j][k]) {
-          this.fmark[j][k] = 1;
-          q[j].push(k);
-        }
-      }
+      this.fq.wake(x, y);
     }
-    /** 물은 0.2초, 용암은 0.9초에 한 걸음 — 용암은 느리고 짧게 번진다 */
+    /** 용암은 느리고 짧게 번진다 */
     fluidTick(dt) {
-      if (!this.fq) return;
-      const STEP = [0.2, 0.9];
-      for (let j = 0; j < 2; j++) {
-        this.fAcc[j] += dt;
-        if (this.fAcc[j] < STEP[j]) continue;
-        this.fAcc[j] = 0;
-        if (this.fq[j].length) this._fluidStep(j);
-      }
+      if (this.fq) this.fq.tick(dt, (j) => this._fluidStep(j));
     }
     /** 이 칸의 수위 — 원천·샘·폭포는 8, 흐르는 칸은 flv, 액체가 아니면 0 */
     _flvAt(k) {
@@ -14373,27 +14408,20 @@
     }
     _fluidStep(j) {
       const { WW: WW2 } = this.dims;
-      const q = this.fq[j], mark = this.fmark[j];
-      const n = Math.min(q.length, 6e3);
-      const todo = q.splice(0, n);
-      const out = [];
-      for (const k of todo) {
-        mark[k] = 0;
-        const r = this._fluidEval(k, j);
-        if (r) out.push(r);
-      }
-      const cols = /* @__PURE__ */ new Set();
-      for (const [k, t, lv] of out) {
-        const x = k % WW2, y = k / WW2 | 0;
-        if (this.tiles[k] !== t) this.set(x, y, t);
-        else {
-          this.fluidWake(x, y);
-          this.netMark(k);
+      this.fq.step(j, (k) => this._fluidEval(k, j), (out) => {
+        const cols = /* @__PURE__ */ new Set();
+        for (const [k, t, lv] of out) {
+          const x = k % WW2, y = k / WW2 | 0;
+          if (this.tiles[k] !== t) this.set(x, y, t);
+          else {
+            this.fluidWake(x, y);
+            this.netMark(k);
+          }
+          this.flv[k] = lv;
+          if (j === 0) for (const d of [-1, 0, 1]) cols.add(k + d);
         }
-        this.flv[k] = lv;
-        if (j === 0) for (const d of [-1, 0, 1]) cols.add(k + d);
-      }
-      for (const k of cols) this._fallsCol(k % WW2, k / WW2 | 0);
+        for (const k of cols) this._fallsCol(k % WW2, k / WW2 | 0);
+      });
     }
     /** 불러온 세계·막 만든 세계의 폭포를 한 번 판정한다(_fallsCol). */
     fallsAll() {
@@ -14516,9 +14544,10 @@
     }
     /** 세계를 막 만들었을 때 — 샘에서 나온 물이 폭포가 되어 떨어지고 물길이 되어 호수로 들기까지 흐름을 끝까지 돌려 둔다. */
     fluidSettle() {
-      for (let i = 0; i < 600 && (this.fq[0].length || this.fq[1].length); i++) {
-        if (this.fq[0].length) this._fluidStep(0);
-        if (i % 4 === 0 && this.fq[1].length) this._fluidStep(1);
+      const q = this.fq;
+      for (let i = 0; i < 600 && q.busy(); i++) {
+        if (q.busy(0)) this._fluidStep(0);
+        if (i % 4 === 0 && q.busy(1)) this._fluidStep(1);
       }
     }
     /** 옛 세이브·생성된 폭포의 윗머리 — 폭포 꼭대기 위가 막혀 있으면 그 칸을 샘 바위로, 위가 트여 있으면(정글 절벽 폭포처럼 땅 위로 쏟아지는 것) 꼭대기 칸을 샘 바위로 바꾼다. */
@@ -15899,7 +15928,7 @@
       }
     },
     /* ---- 하늘 섬 + 지상에서 올라가는 거대 나무 ---- */
-    buildSkyIslands(rng, n1) {
+    buildSkyIslands(rng, n12) {
       const { WSX: WSX2, SX: SX2, SY: SY2, WW: WW2, SKY_Y: SKY_Y2, SEA_X1: SEA_X12 } = this.dims;
       this.skyIslands = [];
       const N = Math.round(32 * WSX2);
@@ -16374,6 +16403,152 @@
   __export(dungeon_exports, {
     WorldDungeon: () => WorldDungeon
   });
+
+  // src/engine/procgen/cells.ts
+  var N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  var N8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+  function floodFill(sx, sy, pass, limit = 1e6, diag = false) {
+    const nb = diag ? N8 : N4, seen = /* @__PURE__ */ new Set(), out = [];
+    const key = (x, y) => (y + 1e5) * 4e5 + (x + 1e5);
+    seen.add(key(sx, sy));
+    if (pass(sx, sy)) out.push([sx, sy]);
+    const st = [[sx, sy]];
+    while (st.length && out.length < limit) {
+      const [x, y] = st.pop();
+      for (const [dx, dy] of nb) {
+        const nx = x + dx, ny = y + dy, k = key(nx, ny);
+        if (seen.has(k) || !pass(nx, ny)) continue;
+        seen.add(k);
+        out.push([nx, ny]);
+        st.push([nx, ny]);
+      }
+    }
+    return out;
+  }
+  function distanceField(starts, x0, y0, w, h, pass, diag = false) {
+    const d = new Int32Array(w * h).fill(-1), q = new Int32Array(w * h), nb = diag ? N8 : N4;
+    let qh = 0, qt = 0;
+    for (const [x, y] of starts) {
+      const lx = x - x0, ly = y - y0;
+      if (lx < 0 || ly < 0 || lx >= w || ly >= h || d[ly * w + lx] >= 0) continue;
+      d[ly * w + lx] = 0;
+      q[qt++] = ly * w + lx;
+    }
+    while (qh < qt) {
+      const i = q[qh++], lx = i % w, ly = i / w | 0;
+      for (const [dx, dy] of nb) {
+        const nx = lx + dx, ny = ly + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const j = ny * w + nx;
+        if (d[j] >= 0 || !pass(x0 + nx, y0 + ny)) continue;
+        d[j] = d[i] + 1;
+        q[qt++] = j;
+      }
+    }
+    return d;
+  }
+  var BoxSet = class {
+    /** box = [x0, y0, x1, y1](칸, 끝 포함) · pad = 둘레 여유 · ww = 칸 번호를 푸는 세계 폭 */
+    constructor(box, pad, ww) {
+      this.ww = ww;
+      this.x0 = box[0] - pad;
+      this.y0 = box[1] - pad;
+      this.bw = box[2] - box[0] + 1 + pad * 2;
+      this.bh = box[3] - box[1] + 1 + pad * 2;
+      this.m = new Uint8Array(this.bw * this.bh);
+      this.list = [];
+      this.out = null;
+    }
+    _i(k) {
+      const y = k / this.ww | 0, x = k - y * this.ww, lx = x - this.x0, ly = y - this.y0;
+      return lx >= 0 && ly >= 0 && lx < this.bw && ly < this.bh ? ly * this.bw + lx : -1;
+    }
+    has(k) {
+      const i = this._i(k);
+      return i >= 0 ? this.m[i] === 1 : !!(this.out && this.out.has(k));
+    }
+    add(k) {
+      const i = this._i(k);
+      if (i >= 0) {
+        if (this.m[i]) return this;
+        this.m[i] = 1;
+      } else {
+        this.out = this.out || /* @__PURE__ */ new Set();
+        if (this.out.has(k)) return this;
+        this.out.add(k);
+      }
+      this.list.push(k);
+      return this;
+    }
+    get size() {
+      return this.list.length;
+    }
+    values() {
+      return this.list.values();
+    }
+    [Symbol.iterator]() {
+      return this.list[Symbol.iterator]();
+    }
+  };
+  function automataStep(grid, w, h, birth = 5, survive = 4, edge = 1) {
+    const out = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let n = 0;
+      for (const [dx, dy] of N8) {
+        const nx = x + dx, ny = y + dy;
+        n += nx < 0 || ny < 0 || nx >= w || ny >= h ? edge : grid[ny * w + nx];
+      }
+      const k = y * w + x;
+      out[k] = grid[k] ? n >= survive ? 1 : 0 : n >= birth ? 1 : 0;
+    }
+    return out;
+  }
+  function poissonDisc(w, h, r, rand, tries = 20) {
+    const cell = r / Math.SQRT2, gw = Math.ceil(w / cell), gh = Math.ceil(h / cell);
+    const grid = new Int32Array(gw * gh).fill(-1), pts = [], active = [];
+    const add = (x, y) => {
+      pts.push([x, y]);
+      active.push(pts.length - 1);
+      grid[(y / cell | 0) * gw + (x / cell | 0)] = pts.length - 1;
+    };
+    add(rand() * w, rand() * h);
+    while (active.length) {
+      const ai = rand() * active.length | 0, [px, py] = pts[active[ai]];
+      let placed = false;
+      for (let t = 0; t < tries && !placed; t++) {
+        const a = rand() * Math.PI * 2, d = r * (1 + rand());
+        const x = px + Math.cos(a) * d, y = py + Math.sin(a) * d;
+        if (x < 0 || y < 0 || x >= w || y >= h) continue;
+        const gx = x / cell | 0, gy = y / cell | 0;
+        let ok = true;
+        for (let yy = Math.max(0, gy - 2); yy <= Math.min(gh - 1, gy + 2) && ok; yy++)
+          for (let xx = Math.max(0, gx - 2); xx <= Math.min(gw - 1, gx + 2); xx++) {
+            const j = grid[yy * gw + xx];
+            if (j >= 0 && Math.hypot(pts[j][0] - x, pts[j][1] - y) < r) {
+              ok = false;
+              break;
+            }
+          }
+        if (ok) {
+          add(x, y);
+          placed = true;
+        }
+      }
+      if (!placed) active.splice(ai, 1);
+    }
+    return pts;
+  }
+  function weightedKey(w, rand) {
+    const ks = Object.keys(w);
+    let r = rand() * ks.reduce((s, k) => s + w[k], 0);
+    for (const k of ks) {
+      r -= w[k];
+      if (r <= 0) return k;
+    }
+    return ks[ks.length - 1];
+  }
+
+  // src/game/world/dungeon.ts
   var WorldDungeon = {
     /* ================= 방이 여러 개인 던전 ================= */
     bspSplit(x, y, w, h, depth, minW, minH, rng, out) {
@@ -18172,14 +18347,7 @@
       });
       pick.slice(0, 3).forEach((ri) => {
         const pool = Object.keys(MYSTIC_W).filter((id) => id === "none" || !pick.slice(0, 3).some((o) => this.ruinSpec[o].mystic === id));
-        let r = mrng.range(0, pool.reduce((s, id) => s + MYSTIC_W[id], 0)), got = pool[0];
-        for (const id of pool) {
-          r -= MYSTIC_W[id];
-          if (r <= 0) {
-            got = id;
-            break;
-          }
-        }
+        const got = weightedKey(Object.fromEntries(pool.map((id) => [id, MYSTIC_W[id]])), () => mrng.next());
         if (got === "none") delete this.ruinSpec[ri].mystic;
         else this.ruinSpec[ri].mystic = got;
       });
@@ -18723,7 +18891,7 @@
   });
   var WorldSea = {
     /* ================= 가라앉은 바다 (세션 3) ================= */
-    buildSea(rng, n1) {
+    buildSea(rng, n12) {
       const { WSX: WSX2, SX: SX2, WW: WW2, WH: WH2, SEA_X1: SEA_X12, GLACIER_X1: GLACIER_X12 } = this.dims;
       this.pools = this.pools || [];
       const shore = SEA_X12;
@@ -18745,7 +18913,7 @@
           const t = clamp((fromShore - WADE) / RUN, 0, 1);
           base = lerp(wadeBed[WADE], FLOOR, t * t * (3 - 2 * t));
         }
-        const jitter = fromShore <= WADE ? 0 : (n1(x + 7700, 0.02) - 0.5) * 4;
+        const jitter = fromShore <= WADE ? 0 : (n12(x + 7700, 0.02) - 0.5) * 4;
         const bed = Math.round(clamp(base + jitter, this.shoreY, FLOOR));
         this.surface[x] = this.seaLevel - 1;
         for (let y = this.seaLevel; y < bed; y++) this.set(x, y, T.SEAWATER);
@@ -27948,6 +28116,7 @@
   var items_exports2 = {};
   __export(items_exports2, {
     CHEST_LOOT: () => CHEST_LOOT,
+    STACK_RULES: () => STACK_RULES,
     affixIndex: () => affixIndex,
     affixOf: () => affixOf,
     enhMul: () => enhMul,
@@ -27975,6 +28144,7 @@
   function maxStack(it) {
     return idef(it).stack || 1;
   }
+  var STACK_RULES = { max: (it) => maxStack(it), same: (a, b) => a.id === b.id && !a.a && !b.a && a.r === b.r };
   function isGear(it) {
     const t = idef(it).type;
     return t === "weapon" || t === "armor" || t === "acc" || t === "tool" || t === "bag" || t === "pet";
@@ -28114,6 +28284,7 @@
     JET_RESUME: () => JET_RESUME,
     MAX_BAG_SIZE: () => MAX_BAG_SIZE,
     MAX_FALL: () => MAX_FALL,
+    PART_WORLD: () => PART_WORLD,
     PHYS_PROJ: () => PHYS_PROJ,
     PROJ_FX: () => PROJ_FX,
     PROJ_STYLE: () => PROJ_STYLE,
@@ -28126,6 +28297,344 @@
     VAULT_SIZE: () => VAULT_SIZE,
     Wolf: () => Wolf
   });
+
+  // src/engine/core/inventory.ts
+  function stackAdd(slots, it, R) {
+    const ms = R.max(it);
+    if (ms > 1) for (const s of slots) {
+      if (!s || s.c >= ms || !R.same(s, it)) continue;
+      const mv = Math.min(ms - s.c, it.c);
+      s.c += mv;
+      it.c -= mv;
+      if (it.c <= 0) return true;
+    }
+    for (let i = 0; i < slots.length; i++) if (!slots[i]) {
+      slots[i] = it;
+      return true;
+    }
+    return false;
+  }
+  function countOf(slots, id) {
+    let n = 0;
+    for (const s of slots) if (s && s.id === id) n += s.c;
+    return n;
+  }
+  function takeOut(slots, id, n) {
+    for (let i = 0; i < slots.length && n > 0; i++) {
+      const s = slots[i];
+      if (s && s.id === id) {
+        const k = Math.min(s.c, n);
+        s.c -= k;
+        n -= k;
+        if (s.c <= 0) slots[i] = null;
+      }
+    }
+    return n <= 0;
+  }
+  function sortSlots(slots, R, cmp) {
+    const out = new Array(slots.length).fill(null), loose = [];
+    slots.forEach((it, i) => {
+      if (!it) return;
+      if (it.lk) out[i] = it;
+      else loose.push(it);
+    });
+    const merged = [];
+    for (const it of loose) {
+      const same = merged.find((q) => R.same(q, it) && R.max(q) > 1 && q.c < R.max(q));
+      if (same) {
+        const mv = Math.min(R.max(same) - same.c, it.c);
+        same.c += mv;
+        it.c -= mv;
+        if (it.c > 0) merged.push(it);
+      } else merged.push(it);
+    }
+    merged.sort(cmp);
+    let k = 0;
+    for (const it of merged) {
+      while (k < out.length && out[k] !== null) k++;
+      if (k >= out.length) break;
+      out[k] = it;
+    }
+    return out;
+  }
+  function moveAll(from, to, R, keep) {
+    const moved = [];
+    for (let i = 0; i < from.length; i++) {
+      const it = from[i];
+      if (!it || it.lk || keep && keep(it)) continue;
+      const c0 = it.c;
+      if (stackAdd(to, it, R)) {
+        from[i] = null;
+        moved.push(it);
+      } else if (it.c < c0) moved.push({ ...it, c: c0 - it.c });
+    }
+    return moved;
+  }
+  function quickStack(from, to, R) {
+    const have = new Set(to.filter(Boolean).map((s) => s.id));
+    return moveAll(from, to, R, (it) => !have.has(it.id));
+  }
+
+  // src/engine/core/loot.ts
+  function rollLoot(rows, rand, int, pity, o = {}) {
+    const rare = o.rare ?? 0.1, step = o.step ?? 0.15, cap = o.cap ?? 4;
+    const out = [];
+    for (const [id, ch, a, b] of rows) {
+      const pk = (o.key || "") + "|" + id;
+      const miss = pity && ch < rare ? pity.get(pk) : 0;
+      const p = Math.min(1, ch * Math.min(cap, 1 + miss * step));
+      if (rand() >= p) {
+        if (pity && ch < rare) pity.set(pk, miss + 1);
+        continue;
+      }
+      if (pity && ch < rare) pity.set(pk, 0);
+      out.push({ id, n: int(a, b) });
+    }
+    return out;
+  }
+  function mapPity(m = /* @__PURE__ */ new Map()) {
+    return { get: (k) => m.get(k) || 0, set: (k, v) => {
+      if (v) m.set(k, v);
+      else m.delete(k);
+    } };
+  }
+
+  // src/engine/entity/status.ts
+  function addDot(list, kind, dps, t, maxStacks = 3) {
+    const same = list.filter((d) => d.kind === kind);
+    if (same.length < maxStacks) {
+      list.push({ kind, dps, t });
+      return;
+    }
+    const weak = same.reduce((a, b) => b.dps < a.dps ? b : a);
+    if (dps > weak.dps) {
+      weak.dps = dps;
+      weak.t = Math.max(weak.t, t);
+      return;
+    }
+    const short = same.reduce((a, b) => b.t < a.t ? b : a);
+    short.t = Math.max(short.t, t);
+  }
+  function tickDots(list, dt, each) {
+    let dmg = 0;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const d = list[i];
+      d.t -= dt;
+      dmg += d.dps * dt;
+      if (each) each(d);
+      if (d.t <= 0) list.splice(i, 1);
+    }
+    return dmg;
+  }
+  var Timed = class {
+    constructor(rest, pick) {
+      this.rest = rest;
+      this.v = rest;
+      this.t = 0;
+      this.pick = pick;
+    }
+    set(v, t) {
+      this.v = this.t > 0 ? this.pick === "min" ? Math.min(this.v, v) : Math.max(this.v, v) : v;
+      this.t = Math.max(this.t, t);
+    }
+    tick(dt) {
+      if (this.t > 0) {
+        this.t -= dt;
+        if (this.t <= 0) {
+          this.t = 0;
+          this.v = this.rest;
+        }
+      }
+    }
+    get on() {
+      return this.t > 0;
+    }
+  };
+
+  // src/engine/core/tween.ts
+  var EASE = {
+    linear: (t) => t,
+    inQuad: (t) => t * t,
+    outQuad: (t) => t * (2 - t),
+    inOutQuad: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+    outCubic: (t) => 1 - Math.pow(1 - t, 3),
+    inOutCubic: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+    outBack: (t) => {
+      const c = 1.70158;
+      return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
+    },
+    outElastic: (t) => t === 0 || t === 1 ? t : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * (2 * Math.PI) / 3) + 1,
+    outBounce: (t) => {
+      const n = 7.5625, d = 2.75;
+      if (t < 1 / d) return n * t * t;
+      if (t < 2 / d) return n * (t -= 1.5 / d) * t + 0.75;
+      if (t < 2.5 / d) return n * (t -= 2.25 / d) * t + 0.9375;
+      return n * (t -= 2.625 / d) * t + 0.984375;
+    }
+  };
+  function pop(t, peak = 1.5, at = 0.18) {
+    if (t <= 0) return 1;
+    if (t < at) return 1 + (peak - 1) * EASE.outQuad(t / at);
+    return 1 + (peak - 1) * (1 - EASE.inOutQuad(Math.min(1, (t - at) / (1 - at))));
+  }
+  var Tweens = class {
+    constructor() {
+      this.jobs = [];
+    }
+    /** set(v) 를 dur 초 동안 from → to 로(ease 곡선). 돌려준 함수를 부르면 멈춘다. */
+    to(from, to, dur, set, o = {}) {
+      const j = { t: 0, dur: Math.max(1e-6, dur), from, to, ease: o.ease || EASE.outCubic, set, done: o.done, delay: o.delay || 0 };
+      this.jobs.push(j);
+      return () => {
+        const i = this.jobs.indexOf(j);
+        if (i >= 0) this.jobs.splice(i, 1);
+      };
+    }
+    /** sec 초 뒤에 fn */
+    after(sec, fn) {
+      return this.to(0, 1, 1e-6, () => {
+      }, { delay: sec, done: fn });
+    }
+    update(dt) {
+      for (let i = this.jobs.length - 1; i >= 0; i--) {
+        const j = this.jobs[i];
+        if (j.delay > 0) {
+          j.delay -= dt;
+          if (j.delay > 0) continue;
+        }
+        j.t = Math.min(j.dur, j.t + dt);
+        const k = j.ease(j.t / j.dur);
+        j.set(j.from + (j.to - j.from) * k);
+        if (j.t >= j.dur) {
+          this.jobs.splice(i, 1);
+          if (j.done) j.done();
+        }
+      }
+    }
+    clear() {
+      this.jobs.length = 0;
+    }
+    get busy() {
+      return this.jobs.length > 0;
+    }
+  };
+  function approach(cur, target, keep, dt) {
+    return target + (cur - target) * Math.pow(keep, dt);
+  }
+
+  // src/engine/fx/floattext.ts
+  var FloatText = class {
+    constructor(x, y, v, c, crit, life = 0.85) {
+      this.x = x + (Math.random() - 0.5) * 8;
+      this.y = y;
+      this.v = v;
+      this.c = c;
+      this.crit = !!crit;
+      this.life = life;
+      this.max = life;
+      this.vy = -70;
+    }
+    update(dt) {
+      this.life -= dt;
+      this.y += this.vy * dt;
+      this.vy += 110 * dt;
+      return this.life > 0;
+    }
+  };
+  function drawFloatTexts(c, list, camX, camY, st) {
+    for (const t of list) {
+      c.globalAlpha = Math.max(0, Math.min(1, t.life / t.max));
+      const k = pop(1 - t.life / t.max, t.crit ? 1.7 : 1.35, 0.12);
+      c.save();
+      c.translate(t.x - camX, t.y - camY);
+      c.scale(k, k);
+      c.font = st.font(t.crit);
+      c.fillStyle = st.outline || "#000";
+      c.fillText(String(t.v), 1, 1);
+      c.fillStyle = t.c;
+      c.fillText(String(t.v), 0, 0);
+      if (t.crit && st.critLabel) {
+        c.font = st.critFont || c.font;
+        c.fillStyle = st.critColor || "#ffd24a";
+        c.fillText(st.critLabel, 0, -15);
+      }
+      c.restore();
+    }
+    c.globalAlpha = 1;
+  }
+
+  // src/engine/fx/particles.ts
+  var Particle = class {
+    // 바닥에 누웠다
+    constructor(x, y, vx, vy, life) {
+      this.x = x;
+      this.y = y;
+      this.vx = vx;
+      this.vy = vy;
+      this.life = life;
+      this.max = life;
+      this.g = 1;
+      this.drag = 0.96;
+      this.rot = 0;
+      this.spin = 0;
+      this.bounce = 0;
+      this.rest = false;
+    }
+    /** 0~1 — 남은 수명 비율(사라지며 흐려지기 · 줄어들기에) */
+    get k() {
+      return this.max > 0 ? Math.max(0, this.life / this.max) : 0;
+    }
+    /** grav: 중력(px/s², g 배수가 곱해진다) · world 를 주면 bounce > 0 인 입자는 칸에 부딪힌다. 살아 있으면 true. */
+    step(dt, grav, world) {
+      this.life -= dt;
+      if (this.rest) return this.life > 0;
+      this.vy += grav * this.g * dt;
+      const nx = this.x + this.vx * dt, ny = this.y + this.vy * dt;
+      if (world && this.bounce > 0) {
+        if (world.solidAt(nx, this.y)) {
+          this.vx = -this.vx * this.bounce;
+          this.spin *= -0.5;
+        } else this.x = nx;
+        if (world.solidAt(this.x, ny)) {
+          if (this.vy > 0) {
+            this.vy = -this.vy * this.bounce;
+            this.vx *= 0.6;
+            this.spin *= 0.5;
+            if (Math.abs(this.vy) < 40) {
+              this.vy = 0;
+              this.vx = 0;
+              this.spin = 0;
+              this.rest = true;
+            }
+          } else this.vy = 0;
+        } else this.y = ny;
+      } else {
+        this.x = nx;
+        this.y = ny;
+      }
+      this.vx *= this.drag;
+      this.rot += this.spin * dt;
+      return this.life > 0;
+    }
+  };
+  function stepParticles(list, dt, cap) {
+    let n = list.length;
+    for (let i = 0; i < n; ) {
+      if (list[i].update(dt)) i++;
+      else {
+        list[i] = list[n - 1];
+        n--;
+      }
+    }
+    list.length = n;
+    if (n > cap) list.splice(0, n - cap);
+  }
+  function scatter(rand, a, spread, lo, hi) {
+    const t = a + (rand() - 0.5) * spread, s = lo + rand() * (hi - lo);
+    return { vx: Math.cos(t) * s, vy: Math.sin(t) * s };
+  }
+
+  // src/game/entity.ts
   var GRAV = 2e3, MAX_FALL = 1250;
   var JET_MAX_UP = 30;
   var JET_BURN = 4;
@@ -28354,40 +28863,13 @@
         if (got > 0) this.gathered[id] = (this.gathered[id] || 0) + got;
         return ok;
       };
-      const ms = maxStack(it);
-      if (ms > 1) {
-        for (let i = 0; i < this.bag.length; i++) {
-          const s = this.bag[i];
-          if (s && s.id === it.id && !s.a && !it.a && s.r === it.r && s.c < ms) {
-            const move = Math.min(ms - s.c, it.c);
-            s.c += move;
-            it.c -= move;
-            if (it.c <= 0) return done(true);
-          }
-        }
-      }
-      for (let i = 0; i < this.bag.length; i++) if (!this.bag[i]) {
-        this.bag[i] = it;
-        return done(true);
-      }
-      return done(false);
+      return done(stackAdd(this.bag, it, STACK_RULES));
     }
     countItem(id) {
-      let n = 0;
-      for (const s of this.bag) if (s && s.id === id) n += s.c;
-      return n;
+      return countOf(this.bag, id);
     }
     removeItem(id, n) {
-      for (let i = 0; i < this.bag.length && n > 0; i++) {
-        const s = this.bag[i];
-        if (s && s.id === id) {
-          const take = Math.min(s.c, n);
-          s.c -= take;
-          n -= take;
-          if (s.c <= 0) this.bag[i] = null;
-        }
-      }
-      return n <= 0;
+      return takeOut(this.bag, id, n);
     }
     hasAll(need) {
       for (const k in need) if (this.countItem(k) < need[k]) return false;
@@ -28587,6 +29069,7 @@
       this.slowT = 0;
       this.slowF = 1;
       this.dots = [];
+      this.slowFx = new Timed(1, "min");
       this.phases = d.ph || 3;
       this.phase = 0;
       this.pf = 0;
@@ -28728,13 +29211,16 @@
       this.sgKind = null;
       this.sgAmt = 0;
     }
+    /** 같은 갈래는 3겹까지(engine entity/status) — 빠른 무기로 불을 수십 겹 쌓던 것 */
     addDot(kind, dps, dur) {
-      this.dots.push({ kind, dps, t: dur });
+      addDot(this.dots, kind, dps, dur, 3);
     }
     slow(f, t) {
-      this.slowF = Math.min(this.slowF, 1 - f);
-      this.slowT = Math.max(this.slowT, t);
+      this.slowFx.set(1 - f, t);
+      this.slowF = this.slowFx.v;
+      this.slowT = this.slowFx.t;
     }
+    // 겹치면 센 쪽 · 긴 시간(engine entity/status)
     /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). */
     hurt(amount, crit, src, kb, fam) {
       if (this.dead) return;
@@ -28755,6 +29241,10 @@
       let dmg = Math.max(1, Math.round(amount * (1 - red)));
       this.hp -= dmg;
       this.flash = 0.12;
+      if (this.sense) {
+        const s = src && src.cx !== void 0 ? src : app.player;
+        if (s) this.sense.alarm(s.cx, s.cy);
+      }
       if (this.sgT > 0) {
         const S = BOSS_SURGE[this.type];
         this.sgTook += dmg;
@@ -28806,11 +29296,10 @@
       p.kills[this.type] = (p.kills[this.type] || 0) + 1;
       if (this.boss) p.bossKilled[this.type] = true;
       const rng = app.rng;
-      for (const [id0, ch, a, b] of this.def.drops || []) {
-        if (!rng.chance(ch)) continue;
+      app.lootPity = app.lootPity || mapPity();
+      for (const { id: id0, n } of rollLoot(this.def.drops || [], () => rng.next(), (a, b) => rng.int(a, b), app.lootPity, { key: this.type })) {
         const id = this.mech && typeof MECH_PART !== "undefined" ? MECH_PART : id0;
         if (!ITEMS[id]) continue;
-        const n = rng.int(a, b);
         if (ITEMS[id] && (ITEMS[id].stack || 1) > 1) app.drops.push(new Drop(this.cx, this.cy, makeItem(id, n)));
         else for (let k = 0; k < n; k++) app.drops.push(new Drop(this.cx, this.cy, rollGear(id, rng, this.boss ? 3 : 0)));
       }
@@ -29084,9 +29573,9 @@
         return;
       }
       if (this.team === "player") {
-        for (const e of app.ents) {
-          if (!(e instanceof Enemy) || e.dead || this.hitSet.has(e)) continue;
-          if (!aabb(this.rect(), e.rect())) continue;
+        let spent = false;
+        app.entHash.query(this.x, this.y, this.w, this.h, (e) => {
+          if (e.dead || this.hitSet.has(e) || !aabb(this.rect(), e.rect())) return;
           this.hitSet.add(e);
           let dmg = this.dmg;
           if (this.vol) {
@@ -29100,9 +29589,11 @@
           if (this.pierce > 0) this.pierce--;
           else {
             this.impact();
-            return;
+            spent = true;
+            return true;
           }
-        }
+        });
+        if (spent) return;
         if (app.net) for (const q of app.pvpTargets()) {
           if (this.hitSet.has(q) || !aabb(this.rect(), q.rect())) continue;
           this.hitSet.add(q);
@@ -29144,18 +29635,13 @@
       }
     }
   };
-  var Part = class {
-    /* g 중력 배수 — 사연: docs/code-history.md#h37 */
+  var Part = class extends Particle {
+    /* g 중력 배수 · bounce 를 주면 땅에 부딪혀 튀다 눕는다(돌·흙·나무 파편) — 사연: docs/code-history.md#h37 */
     constructor(x, y, c, vy0 = 0, life = 0.5, o = null) {
-      this.x = x;
-      this.y = y;
-      this.c = c;
       const sp = o && o.spd !== void 0 ? o.spd : 1;
       const a = Math.random() * TAU, s = (40 + Math.random() * 140) * sp;
-      this.vx = Math.cos(a) * s;
-      this.vy = Math.sin(a) * s + vy0;
-      this.life = life + Math.random() * 0.3;
-      this.max = this.life;
+      super(x, y, Math.cos(a) * s, Math.sin(a) * s + vy0, life + Math.random() * 0.3);
+      this.c = c;
       this.r = (1.5 + Math.random() * 2) * (o && o.r !== void 0 ? o.r : 1);
       this.g = o && o.g !== void 0 ? o.g : 1;
       this.sq = o && o.sq !== void 0 ? o.sq : 1;
@@ -29163,33 +29649,17 @@
       this.drag = o && o.drag !== void 0 ? o.drag : 0.96;
       this.spin = (Math.random() - 0.5) * 12;
       this.rot = Math.random() * TAU;
+      if (o && o.bounce) {
+        this.bounce = o.bounce;
+        this.max = this.life += 0.6;
+      }
     }
     update(dt) {
-      this.life -= dt;
-      this.vy += 340 * this.g * dt;
-      this.x += this.vx * dt;
-      this.y += this.vy * dt;
-      this.vx *= this.drag;
-      this.rot += this.spin * dt;
-      return this.life > 0;
+      return this.step(dt, 340, this.bounce ? PART_WORLD : null);
     }
   };
-  var DmgText = class {
-    constructor(x, y, v, c, crit) {
-      this.x = x + (Math.random() - 0.5) * 8;
-      this.y = y;
-      this.v = v;
-      this.c = c;
-      this.crit = crit;
-      this.life = 0.85;
-      this.vy = -70;
-    }
-    update(dt) {
-      this.life -= dt;
-      this.y += this.vy * dt;
-      this.vy += 110 * dt;
-      return this.life > 0;
-    }
+  var PART_WORLD = { solidAt: (px, py) => !!app.world && app.world.solid(Math.floor(px / TS), Math.floor(py / TS)) };
+  var DmgText = class extends FloatText {
   };
   var Bomb = class extends Proj {
     constructor(x, y, vx, vy, spec) {
@@ -29496,14 +29966,11 @@
           const n = sk.v(r);
           app.bandFx(mx, my, 130, n * 0.07 + 0.45, "#9fe07a");
           for (let i2 = 0; i2 < n; i2++) {
-            app.pending.push({
-              t: i2 * 0.07,
-              fn: () => {
-                const px = mx + (Math.random() - 0.5) * 260;
-                const p = new Proj(px, my - 420 - Math.random() * 80, (Math.random() - 0.5) * 60, 820, this.scaleDmg(wdmg * 0.6, "dex"), "player", "star");
-                p.grav = 260;
-                app.projs.push(p);
-              }
+            app.after(i2 * 0.07, () => {
+              const px = mx + (Math.random() - 0.5) * 260;
+              const p = new Proj(px, my - 420 - Math.random() * 80, (Math.random() - 0.5) * 60, 820, this.scaleDmg(wdmg * 0.6, "dex"), "player", "star");
+              p.grav = 260;
+              app.projs.push(p);
             });
           }
           break;
@@ -29554,14 +30021,11 @@
           const foot = this.y + this.h;
           for (const dir of [-1, 1]) {
             for (let step = 0; step < 5; step++) {
-              app.pending.push({
-                t: step * 0.05,
-                fn: () => {
-                  const x = this.cx + dir * (34 + step * 34);
-                  app.aoe(x, foot - 14, 40, dmg / 2, 5, "#c8845a", "frost");
-                  for (let k = 0; k < 4; k++)
-                    app.parts.push(new Part(x + (Math.random() - 0.5) * 24, foot - 4, "#c8845a", -180, 0.5));
-                }
+              app.after(step * 0.05, () => {
+                const x = this.cx + dir * (34 + step * 34);
+                app.aoe(x, foot - 14, 40, dmg / 2, 5, "#c8845a", "frost");
+                for (let k = 0; k < 4; k++)
+                  app.parts.push(new Part(x + (Math.random() - 0.5) * 24, foot - 4, "#c8845a", -180, 0.5));
               });
             }
           }
@@ -29708,24 +30172,21 @@
           const tx = mx, ty = my;
           app.warnFx(tx, ty, 150, 0.9, "#ffb04a");
           app.fallFx(tx, ty, 0.9, "#ffd07a");
-          app.pending.push({
-            t: 0.9,
-            fn: () => {
-              const dmg = this.scaleDmg(340 + this.d.int * 6.5, "int");
-              app.aoe(tx, ty, 150, dmg, 12, "#ffb04a");
-              for (const e of app.ents) if (e instanceof Enemy && !e.dead && dist(tx, ty, e.cx, e.cy) < 150) e.addDot("fire", dmg * 0.06, 5);
-              app.ringFx(tx, ty, 150, "#ffb04a", 0.55);
-              app.ringFx(tx, ty, 90, "#fff0c0", 0.4);
-              for (let k = 0; k < 46; k++) {
-                const a = Math.random() * TAU, d2 = Math.random() * 140;
-                app.parts.push(new Part(tx + Math.cos(a) * d2, ty + Math.sin(a) * d2, k % 3 ? "#ffb04a" : "#fff0c0", -150, 1));
-              }
-              app.flashFx(tx, ty, 230, "#fff0c0");
-              const h = SKILL_HIT.meteor;
-              app.shake = Math.max(app.shake, h.k);
-              app.hitStop(h.st);
-              app.sfx(h.s);
+          app.after(0.9, () => {
+            const dmg = this.scaleDmg(340 + this.d.int * 6.5, "int");
+            app.aoe(tx, ty, 150, dmg, 12, "#ffb04a");
+            for (const e of app.ents) if (e instanceof Enemy && !e.dead && dist(tx, ty, e.cx, e.cy) < 150) e.addDot("fire", dmg * 0.06, 5);
+            app.ringFx(tx, ty, 150, "#ffb04a", 0.55);
+            app.ringFx(tx, ty, 90, "#fff0c0", 0.4);
+            for (let k = 0; k < 46; k++) {
+              const a = Math.random() * TAU, d2 = Math.random() * 140;
+              app.parts.push(new Part(tx + Math.cos(a) * d2, ty + Math.sin(a) * d2, k % 3 ? "#ffb04a" : "#fff0c0", -150, 1));
             }
+            app.flashFx(tx, ty, 230, "#fff0c0");
+            const h = SKILL_HIT.meteor;
+            app.shake = Math.max(app.shake, h.k);
+            app.hitStop(h.st);
+            app.sfx(h.s);
           });
           break;
         }
@@ -30079,9 +30540,406 @@
   // src/game/entity/enemy-ai.ts
   var enemy_ai_exports = {};
   __export(enemy_ai_exports, {
-    EnemyAI: () => EnemyAI
+    EnemyAI: () => EnemyAI,
+    SENSING: () => SENSING
   });
+
+  // src/engine/entity/sense.ts
+  var Senses = class {
+    constructor(cfg) {
+      this.cfg = { memory: 4, react: 0.25, look: 0.2, ...cfg };
+      this.state = "idle";
+      this.seen = false;
+      this.lastX = 0;
+      this.lastY = 0;
+      this.lostT = 0;
+      this.reactT = this.cfg.react;
+      this.lookT = Math.random() * this.cfg.look;
+    }
+    /** 맞았다 · 큰 소리가 났다 — 그 자리를 곧바로 안다(시선과 상관없이) */
+    alarm(x, y) {
+      this.lastX = x;
+      this.lastY = y;
+      this.lostT = this.cfg.memory;
+      this.reactT = 0;
+      if (this.state !== "chase") this.state = "search";
+    }
+    /** dist — 과녁까지 거리 · (tx, ty) 과녁 자리 · canSee() — 시선이 트였나(필요할 때만 부른다) */
+    update(dt, dist3, tx, ty, canSee) {
+      const c = this.cfg;
+      this.lookT -= dt;
+      if (this.lookT <= 0) {
+        this.lookT = c.look;
+        this.seen = dist3 <= c.sight && canSee();
+      } else if (dist3 > c.sight) this.seen = false;
+      if (this.seen) {
+        this.lastX = tx;
+        this.lastY = ty;
+        this.lostT = c.memory;
+        this.reactT -= dt;
+        this.state = this.reactT <= 0 ? "chase" : "alert";
+      } else if (dist3 <= c.hearing) {
+        this.lastX = tx;
+        this.lastY = ty;
+        this.lostT = c.memory;
+        this.state = this.state === "chase" ? "chase" : "alert";
+      } else {
+        this.lostT -= dt;
+        if (this.lostT > 0) this.state = "search";
+        else {
+          this.state = "idle";
+          this.reactT = c.react;
+        }
+      }
+      return this.state;
+    }
+    /** 쫓거나 찾고 있는가(움직일 목표가 있는가) */
+    get engaged() {
+      return this.state === "chase" || this.state === "search";
+    }
+  };
+
+  // src/engine/entity/steer.ts
+  function seek(x, y, tx, ty, sp, slow = 0) {
+    const dx = tx - x, dy = ty - y, d = Math.hypot(dx, dy) || 1;
+    const k = slow > 0 && d < slow ? d / slow : 1;
+    return { x: dx / d * sp * k, y: dy / d * sp * k };
+  }
+  function flee(x, y, tx, ty, sp) {
+    const v = seek(x, y, tx, ty, sp);
+    return { x: -v.x, y: -v.y };
+  }
+  function separation(x, y, others, r, sp, self) {
+    let ax = 0, ay = 0;
+    for (const o of others) {
+      if (o === self) continue;
+      const ox = o.cx !== void 0 ? o.cx : o.x, oy = o.cy !== void 0 ? o.cy : o.y;
+      const dx = x - ox, dy = y - oy, d = Math.hypot(dx, dy);
+      if (d >= r) continue;
+      const k = (r - d) / r;
+      if (d < 0.01) {
+        ax += (Math.random() - 0.5) * k;
+        ay += (Math.random() - 0.5) * k;
+        continue;
+      }
+      ax += dx / d * k;
+      ay += dy / d * k;
+    }
+    const m = Math.hypot(ax, ay);
+    return m > 1 ? { x: ax / m * sp, y: ay / m * sp } : { x: ax * sp, y: ay * sp };
+  }
+  function wander(a, dt, sp, turn = 1.6, rand = Math.random) {
+    const na = a + (rand() - 0.5) * turn * dt * 6;
+    return { v: { x: Math.cos(na) * sp, y: Math.sin(na) * sp }, a: na };
+  }
+  function followPoints(x, y, pts, i, cell, sp, reach = 0.6) {
+    while (i < pts.length) {
+      const px = (pts[i][0] + 0.5) * cell, py = (pts[i][1] + 0.5) * cell;
+      if (Math.hypot(px - x, py - y) < cell * reach) {
+        i++;
+        continue;
+      }
+      return { v: seek(x, y, px, py, sp), i };
+    }
+    return { v: { x: 0, y: 0 }, i };
+  }
+
+  // src/engine/tilemap/path.ts
+  var Heap = class {
+    constructor() {
+      this.k = [];
+      this.f = [];
+    }
+    get size() {
+      return this.k.length;
+    }
+    push(k, f) {
+      const K = this.k, F = this.f;
+      let i = K.length;
+      K.push(k);
+      F.push(f);
+      while (i > 0) {
+        const p = i - 1 >> 1;
+        if (F[p] <= f) break;
+        K[i] = K[p];
+        F[i] = F[p];
+        i = p;
+      }
+      K[i] = k;
+      F[i] = f;
+    }
+    pop() {
+      const K = this.k, F = this.f, top = K[0], lk = K.pop(), lf = F.pop();
+      const n = K.length;
+      if (n) {
+        let i = 0;
+        for (; ; ) {
+          let c = 2 * i + 1;
+          if (c >= n) break;
+          if (c + 1 < n && F[c + 1] < F[c]) c++;
+          if (F[c] >= lf) break;
+          K[i] = K[c];
+          F[i] = F[c];
+          i = c;
+        }
+        K[i] = lk;
+        F[i] = lf;
+      }
+      return top;
+    }
+  };
+  function fits(o, x, y) {
+    for (let dx = 0; dx < o.w; dx++) for (let dy = 0; dy < o.h; dy++) if (o.solid(x + dx, y - dy)) return false;
+    return true;
+  }
+  function stands(o, x, y) {
+    if (!fits(o, x, y)) return false;
+    for (let dx = 0; dx < o.w; dx++) if (o.floor(x + dx, y + 1)) return true;
+    return false;
+  }
+  function findGroundPath(sx, sy, gx, gy, opt) {
+    const o = { floor: opt.solid, w: 1, h: 2, jump: 2, maxFall: 12, maxNodes: 1500, ...opt };
+    for (let i = 0; i < o.maxFall && !stands(o, sx, sy) && fits(o, sx, sy + 1); i++) sy++;
+    if (!stands(o, sx, sy)) return null;
+    const KEY = (x, y) => (y + 4096) * 8192 + (x + 4096);
+    const H = (x, y) => Math.abs(x - gx) + Math.abs(y - gy) * 0.8;
+    const g = /* @__PURE__ */ new Map(), from = /* @__PURE__ */ new Map(), how = /* @__PURE__ */ new Map();
+    const open = new Heap(), closed = /* @__PURE__ */ new Set();
+    const s0 = KEY(sx, sy);
+    g.set(s0, 0);
+    how.set(s0, { x: sx, y: sy, move: "start", up: 0 });
+    open.push(s0, H(sx, sy));
+    let best = s0, bestH = H(sx, sy), n = 0;
+    const relax = (cur, x, y, move, up, cost) => {
+      const k = KEY(x, y);
+      if (closed.has(k)) return;
+      const ng = g.get(cur) + cost;
+      if (ng >= (g.get(k) ?? Infinity)) return;
+      g.set(k, ng);
+      from.set(k, cur);
+      how.set(k, { x, y, move, up });
+      open.push(k, ng + H(x, y));
+    };
+    while (open.size && n++ < o.maxNodes) {
+      const cur = open.pop();
+      if (closed.has(cur)) continue;
+      closed.add(cur);
+      const c = how.get(cur), x = c.x, y = c.y;
+      const h = H(x, y);
+      if (h < bestH) {
+        bestH = h;
+        best = cur;
+      }
+      if (x === gx && y === gy) {
+        best = cur;
+        break;
+      }
+      for (const d of [-1, 1]) {
+        if (stands(o, x + d, y)) relax(cur, x + d, y, "walk", 0, 1);
+        else if (stands(o, x + d, y - 1) && fits(o, x, y - 1)) relax(cur, x + d, y - 1, "walk", 1, 1.4);
+        else if (fits(o, x + d, y)) {
+          let yy = y;
+          while (yy - y < o.maxFall && !stands(o, x + d, yy) && fits(o, x + d, yy + 1)) yy++;
+          if (stands(o, x + d, yy) && yy > y) relax(cur, x + d, yy, "drop", 0, 1 + (yy - y) * 0.25);
+        }
+      }
+      for (let k = 1; k <= o.jump; k++) {
+        if (!fits(o, x, y - k)) break;
+        for (let d = -2; d <= 2; d++) {
+          if (d === 0 && k < 2) continue;
+          const tx = x + d, ty = y - k;
+          if (d !== 0 && !fits(o, x + Math.sign(d), ty)) continue;
+          if (Math.abs(d) === 2 && !fits(o, x + Math.sign(d) * 2, ty)) continue;
+          if (stands(o, tx, ty)) relax(cur, tx, ty, "jump", k, 1.5 + k * 0.6 + Math.abs(d) * 0.3);
+        }
+      }
+    }
+    if (best === s0 && !(sx === gx && sy === gy)) return null;
+    const out = [];
+    for (let k = best; k !== void 0; k = from.get(k)) out.push(how.get(k));
+    return out.reverse();
+  }
+  var PathFollower = class {
+    constructor() {
+      this.path = [];
+      this.i = 0;
+      this.age = 0;
+    }
+    set(path) {
+      this.path = path || [];
+      this.i = this.path.length > 1 ? 1 : this.path.length;
+      this.age = 0;
+    }
+    get done() {
+      return this.i >= this.path.length;
+    }
+    get next() {
+      return this.path[this.i] || null;
+    }
+    /** dir: 가로 방향(-1·0·1) · jump: 지금 뛰어야 할 높이(칸, 0 이면 안 뜀) · bodyW: 몸 폭(칸) */
+    steer(fx, fy, onGround, bodyW = 1) {
+      let n = this.next;
+      while (n) {
+        const cx = n.x + bodyW / 2, dx2 = cx - fx, dy = n.y + 1 - fy;
+        if (Math.abs(dx2) < 0.35 && Math.abs(dy) < 0.6) {
+          this.i++;
+          n = this.next;
+          continue;
+        }
+        break;
+      }
+      if (!n) return { dir: 0, jump: 0 };
+      const dx = n.x + bodyW / 2 - fx;
+      const dir = Math.abs(dx) < 0.15 ? 0 : Math.sign(dx);
+      const jump = onGround && (n.move === "jump" || n.move === "walk" && n.up > 0) && n.y + 1 < fy - 0.3 ? Math.max(1, n.up) : 0;
+      return { dir, jump };
+    }
+  };
+  function findOpenPath(sx, sy, gx, gy, opt) {
+    const w = opt.w || 1, h = opt.h || 1, maxNodes = opt.maxNodes || 1200;
+    const free = (x, y) => {
+      for (let dx = 0; dx < w; dx++) for (let dy = 0; dy < h; dy++) if (opt.solid(x + dx, y + dy)) return false;
+      return true;
+    };
+    if (!free(sx, sy)) return null;
+    const KEY = (x, y) => (y + 4096) * 8192 + (x + 4096);
+    const H = (x, y) => {
+      const dx = Math.abs(x - gx), dy = Math.abs(y - gy);
+      return Math.max(dx, dy) + 0.41 * Math.min(dx, dy);
+    };
+    const g = /* @__PURE__ */ new Map(), from = /* @__PURE__ */ new Map(), at = /* @__PURE__ */ new Map();
+    const open = new Heap(), closed = /* @__PURE__ */ new Set();
+    const s0 = KEY(sx, sy);
+    g.set(s0, 0);
+    at.set(s0, [sx, sy]);
+    open.push(s0, H(sx, sy));
+    let best = s0, bestH = H(sx, sy), n = 0;
+    while (open.size && n++ < maxNodes) {
+      const cur = open.pop();
+      if (closed.has(cur)) continue;
+      closed.add(cur);
+      const [x, y] = at.get(cur), hh = H(x, y);
+      if (hh < bestH) {
+        bestH = hh;
+        best = cur;
+      }
+      if (x === gx && y === gy) {
+        best = cur;
+        break;
+      }
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx, ny = y + dy;
+        if (!free(nx, ny)) continue;
+        if (dx && dy && (!free(x + dx, y) || !free(x, y + dy))) continue;
+        const k = KEY(nx, ny);
+        if (closed.has(k)) continue;
+        const ng = g.get(cur) + (dx && dy ? 1.41 : 1);
+        if (ng >= (g.get(k) ?? Infinity)) continue;
+        g.set(k, ng);
+        from.set(k, cur);
+        at.set(k, [nx, ny]);
+        open.push(k, ng + H(nx, ny));
+      }
+    }
+    if (best === s0) return null;
+    const out = [];
+    for (let k = best; k !== void 0; k = from.get(k)) out.push(at.get(k));
+    return out.reverse();
+  }
+
+  // src/engine/tilemap/ray.ts
+  function gridRay(x0, y0, x1, y1, visit) {
+    let cx = Math.floor(x0), cy = Math.floor(y0);
+    const ex = Math.floor(x1), ey = Math.floor(y1);
+    const dx = x1 - x0, dy = y1 - y0;
+    const sx = dx > 0 ? 1 : dx < 0 ? -1 : 0, sy = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+    const tdx = sx ? Math.abs(1 / dx) : Infinity, tdy = sy ? Math.abs(1 / dy) : Infinity;
+    let tmx = sx > 0 ? (cx + 1 - x0) * tdx : sx < 0 ? (x0 - cx) * tdx : Infinity;
+    let tmy = sy > 0 ? (cy + 1 - y0) * tdy : sy < 0 ? (y0 - cy) * tdy : Infinity;
+    const steps = Math.abs(ex - cx) + Math.abs(ey - cy);
+    for (let i = 0; i < steps; i++) {
+      let t;
+      if (tmx < tmy) {
+        t = tmx;
+        tmx += tdx;
+        cx += sx;
+      } else {
+        t = tmy;
+        tmy += tdy;
+        cy += sy;
+      }
+      if (visit(cx, cy, Math.min(1, t))) return true;
+    }
+    return false;
+  }
+  function lineOfSight(blocked, x0, y0, x1, y1) {
+    const ex = Math.floor(x1), ey = Math.floor(y1);
+    return !gridRay(x0, y0, x1, y1, (cx, cy) => (cx !== ex || cy !== ey) && blocked(cx, cy));
+  }
+  function rayHit(blocked, x0, y0, x1, y1) {
+    let hit = null;
+    gridRay(x0, y0, x1, y1, (cx, cy, t) => {
+      if (blocked(cx, cy)) {
+        hit = { x: cx, y: cy, t };
+        return true;
+      }
+    });
+    return hit;
+  }
+  function seesBox(blocked, ex, ey, tx, ty, halfH) {
+    return lineOfSight(blocked, ex, ey, tx, ty) || lineOfSight(blocked, ex, ey, tx, ty - halfH) || lineOfSight(blocked, ex, ey, tx, ty + halfH * 0.8);
+  }
+
+  // src/game/entity/enemy-ai.ts
+  var SENSING = { walker: 1, jumper: 1, archer: 1, flyer: 1, caster: 1, swimmer: 1 };
   var EnemyAI = {
+    /** 나는 몹이 가고 싶은 속도 — 보이면 곧장, 놓쳤으면 벽을 돌아가는 길(engine tilemap/path findOpenPath)로 마지막 자리까지.
+        곁의 몹에게서는 조금씩 비켜 선다(engine entity/steer separation — 여럿이 한 점에 겹쳐 한 마리처럼 보이던 것). */
+    flyWant(dt, world, tx, ty, sp, seen) {
+      let v = seek(this.cx, this.cy, tx, ty, sp);
+      if (!seen && this.sense) {
+        this.pathT = (this.pathT || 0) - dt;
+        if ((!this.fly || this.pathT <= 0) && app.pathBudget > 0) {
+          app.pathBudget--;
+          this.pathT = 0.8 + Math.random() * 0.4;
+          const bw = Math.max(1, Math.ceil(this.w / TS - 0.05)), bh = Math.max(1, Math.ceil(this.h / TS - 0.05));
+          const pts = findOpenPath(
+            Math.floor(this.x / TS),
+            Math.floor(this.y / TS),
+            Math.floor(tx / TS - bw / 2),
+            Math.floor(ty / TS - bh / 2),
+            { solid: (x, y) => world.solid(x, y), w: bw, h: bh, maxNodes: 700 }
+          );
+          this.fly = pts ? { pts, i: 1 } : null;
+        }
+        if (this.fly) {
+          const r = followPoints(this.x + TS / 2, this.y + TS / 2, this.fly.pts, this.fly.i, TS, sp);
+          this.fly.i = r.i;
+          if (r.i < this.fly.pts.length) v = r.v;
+        }
+      } else this.fly = null;
+      const s = separation(this.cx, this.cy, app.entHash.near(this.cx, this.cy, 40), 40, sp * 0.7, this);
+      return { x: v.x + s.x, y: v.y + s.y };
+    },
+    /** 걷는 몹의 길 — 과녁이 위·아래로 두 칸 넘게 갈리거나 벽에 막혔을 때만 길을 찾는다(engine tilemap/path).
+        한 프레임에 찾는 몹 수를 줄이려고 몹마다 0.7초에 한 번 · 세계 전체로 프레임당 PATH_BUDGET 번만. 길이 없으면 null(곧장 걸어간다). */
+    walkPath(dt, world, tx, ty, jump) {
+      const bw = Math.max(1, Math.ceil(this.w / TS - 0.05)), bh = Math.max(1, Math.ceil(this.h / TS - 0.05));
+      const fx = Math.floor(this.x / TS), fy = Math.floor((this.y + this.h - 1) / TS);
+      const gx = Math.floor(tx / TS), gy = Math.floor((ty + 18) / TS);
+      const far = Math.abs(gy - fy) > 2 || this.hitWall;
+      this.pathT = (this.pathT || 0) - dt;
+      if (!far && (!this.path || this.path.done)) return null;
+      if (far && this.pathT <= 0 && this.onGround && Math.abs(gx - fx) < 40 && app.pathBudget > 0) {
+        app.pathBudget--;
+        this.pathT = 0.7 + Math.random() * 0.3;
+        this.path = this.path || new PathFollower();
+        this.path.set(findGroundPath(fx, fy, gx, gy, { solid: (x, y) => world.solid(x, y), floor: (x, y) => world.solid(x, y) || TILE_DEF[world.get(x, y)].solid === 2, w: bw, h: bh, jump, maxNodes: 900 }));
+      }
+      if (!this.path || this.path.done) return null;
+      return this.path.steer(this.cx / TS, (this.y + this.h) / TS, this.onGround, bw);
+    },
     update(dt, world, player) {
       const { SEA_X1: SEA_X12 } = dimsOf(world);
       this.atkPose -= dt;
@@ -30089,37 +30947,58 @@
       this.atkCd -= dt;
       this.jumpCd -= dt;
       this.hitCd -= dt;
-      if (this.slowT > 0) {
-        this.slowT -= dt;
-        if (this.slowT <= 0) this.slowF = 1;
-      }
+      this.slowFx.tick(dt);
+      this.slowF = this.slowFx.v;
+      this.slowT = this.slowFx.t;
       if (this.markT > 0) {
         this.markT -= dt;
         if (this.markT > 0 && Math.random() < dt * 5)
           app.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w, this.y - 6, "#e8d05a", -24, 0.5));
       }
-      for (let i = this.dots.length - 1; i >= 0; i--) {
-        const d = this.dots[i];
-        d.t -= dt;
-        this.hp -= d.dps * dt;
+      this.hp -= tickDots(this.dots, dt, (d) => {
         if (Math.random() < dt * 6) app.parts.push(new Part(this.cx, this.cy, d.kind === "burn" ? "#ff8a3a" : d.kind === "poison" ? "#8fd06a" : "#9fe0ff"));
-        if (d.t <= 0) this.dots.splice(i, 1);
-      }
+      });
       if (this.hp <= 0) {
         this.die(null);
         return;
       }
-      const dx = player.cx - this.cx, dy = player.cy - this.cy;
-      const dd = Math.hypot(dx, dy);
-      this.facing = dx >= 0 ? 1 : -1;
       const AI = this.def.ai;
       const sp = this.spd * this.slowF;
+      const real = Math.hypot(player.cx - this.cx, player.cy - this.cy);
+      let tx = player.cx, ty = player.cy, seen = true, engaged = real < this.aggro;
+      if (SENSING[AI] && !this.boss && !this.def.passive) {
+        if (!this.sense) this.sense = new Senses({ sight: this.aggro, hearing: Math.min(150, this.aggro * 0.35), memory: 5, react: 0.18 });
+        const ex = this.cx / TS, ey = (this.y + Math.min(10, this.h * 0.3)) / TS;
+        this.sense.update(
+          dt,
+          real,
+          player.cx,
+          player.cy,
+          () => seesBox((x, y) => world.solid(x, y), ex, ey, player.cx / TS, player.cy / TS, player.h / 2 / TS)
+        );
+        seen = this.sense.seen;
+        engaged = this.sense.engaged || this.sense.state === "alert";
+        if (!seen) {
+          tx = this.sense.lastX;
+          ty = this.sense.lastY;
+        }
+      }
+      const dx = tx - this.cx, dy = ty - this.cy;
+      const dd = engaged ? Math.hypot(dx, dy) : Infinity;
+      if (engaged || real < this.aggro) this.facing = dx >= 0 ? 1 : -1;
       if (AI === "walker" || AI === "jumper" || AI === "archer") {
         const range = this.def.range || 0;
-        if (AI === "archer" && dd < range * 0.55) this.vx = -Math.sign(dx) * sp;
-        else if (dd < this.aggro) this.vx = Math.sign(dx) * sp * (AI === "jumper" && !this.onGround ? 1.4 : 1);
+        const step = dd < this.aggro ? this.walkPath(dt, world, tx, ty, AI === "jumper" ? 3 : 2) : null;
+        if (AI === "archer" && seen && dd < range * 0.55) this.vx = -Math.sign(dx) * sp;
+        else if (step) {
+          this.vx = step.dir * sp;
+          if (step.jump) {
+            this.vy = -Math.sqrt(2 * GRAV * (step.jump * TS + 10));
+            this.jumpCd = 0.5;
+          }
+        } else if (dd < this.aggro && Math.abs(dx) > 4) this.vx = Math.sign(dx) * sp * (AI === "jumper" && !this.onGround ? 1.4 : 1);
         else this.vx *= 0.9;
-        if (AI === "jumper" && this.onGround && this.jumpCd <= 0 && dd < Math.min(480, this.aggro)) {
+        if (AI === "jumper" && seen && this.onGround && this.jumpCd <= 0 && dd < Math.min(480, this.aggro)) {
           this.vy = -430;
           this.jumpCd = 1.1 + Math.random() * 0.6;
         }
@@ -30127,7 +31006,7 @@
           this.vy = -420;
           this.jumpCd = 0.6;
         }
-        if (AI === "archer" && this.atkCd <= 0 && dd < Math.min(range, this.aggro) && Math.abs(dy) < 180) {
+        if (AI === "archer" && seen && this.atkCd <= 0 && dd < Math.min(range, this.aggro) && Math.abs(dy) < 180) {
           this.atkCd = 1.8 + Math.random() * 0.6;
           this.atkPose = 0.26;
           const a = angleTo(this.cx, this.cy, player.cx, player.cy - 6);
@@ -30143,8 +31022,9 @@
           this.wob = (Math.random() - 0.5) * 90;
         }
         if (dd < this.aggro) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * sp, dt * 3);
-          this.vy = lerp(this.vy, dy / (dd || 1) * sp + (this.wob || 0), dt * 3);
+          const v = this.flyWant(dt, world, tx, ty, sp, seen);
+          this.vx = lerp(this.vx, v.x, dt * 3);
+          this.vy = lerp(this.vy, v.y + (this.wob || 0), dt * 3);
         } else {
           this.vx *= 0.98;
           this.vy = lerp(this.vy, Math.sin(app.time * 2) * 30, dt * 2);
@@ -30156,6 +31036,10 @@
         if (dd > this.aggro) {
           this.vx *= 0.95;
           this.vy = lerp(this.vy, Math.sin(app.time * 3 + this.x) * 40, dt * 2);
+        } else if (!seen) {
+          const v = this.flyWant(dt, world, tx, ty, sp, false);
+          this.vx = lerp(this.vx, v.x, dt * 3);
+          this.vy = lerp(this.vy, v.y, dt * 3);
         } else if (dd > range * 0.8) {
           this.vx = lerp(this.vx, dx / (dd || 1) * sp, dt * 3);
           this.vy = lerp(this.vy, dy / (dd || 1) * sp, dt * 3);
@@ -30166,7 +31050,7 @@
           this.vx *= 0.95;
           this.vy = lerp(this.vy, Math.sin(app.time * 3 + this.x) * 40, dt * 2);
         }
-        if (this.atkCd <= 0 && dd < Math.min(range, this.aggro)) {
+        if (seen && this.atkCd <= 0 && dd < Math.min(range, this.aggro)) {
           this.atkCd = 2 + Math.random() * 0.8;
           this.atkPose = 0.26;
           const a = angleTo(this.cx, this.cy, player.cx, player.cy);
@@ -30552,12 +31436,9 @@
             this.atkCd = 0.5 - this.pf * 0.2;
             for (let i = 0; i < 3 + this.pf * 2; i++) {
               const px2 = p.cx + (Math.random() - 0.5) * 340;
-              app.pending.push({
-                t: i * 0.06,
-                fn: () => {
-                  const pr = new Proj(px2, p.cy - 420, 0, 780, this.dmg * 0.5, "enemy", "bolt");
-                  app.projs.push(pr);
-                }
+              app.after(i * 0.06, () => {
+                const pr = new Proj(px2, p.cy - 420, 0, 780, this.dmg * 0.5, "enemy", "bolt");
+                app.projs.push(pr);
               });
             }
           }
@@ -30698,10 +31579,10 @@
             this.atkCd = 0.55 - this.pf * 0.16;
             const fx = p.cx + (Math.random() - 0.5) * 260;
             app.warnFx(fx, p.cy + 20, 34, 0.6, "#c8843a");
-            app.pending.push({ t: 0.6, fn: () => {
+            app.after(0.6, () => {
               app.aoe(fx, p.cy + 20, 40, this.dmg * 0.6, 6, "#c8843a");
               for (let k = 0; k < 8; k++) app.parts.push(new Part(fx, p.cy + 20, "#c8843a", -160, 0.6));
-            } });
+            });
           }
         } else if (this.state === 1) {
           this.vx = lerp(this.vx, -Math.sign(dx) * this.spd * 0.9, dt * 3);
@@ -30731,10 +31612,10 @@
             this.atkCd = 0.9 - this.pf * 0.3;
             for (const dir of [-1, 1]) for (let k = 0; k < 4; k++) {
               const x = this.cx + dir * (50 + k * 44);
-              app.pending.push({ t: k * 0.06, fn: () => {
+              app.after(k * 0.06, () => {
                 app.aoe(x, this.y + this.h - 12, 34, this.dmg * 0.45, 5, "#c8a05a");
                 for (let i = 0; i < 3; i++) app.parts.push(new Part(x, this.y + this.h - 6, "#c8a05a", -140, 0.5));
-              } });
+              });
             }
           }
         } else if (this.state === 1) {
@@ -32275,10 +33156,61 @@
   __export(ui_exports2, {
     $: () => $,
     $$: () => $$,
+    TOASTS: () => TOASTS,
     UI: () => UI5
   });
+
+  // src/engine/ui/toasts.ts
+  function createToasts({ host, life = 2.2, fade = 0.4, max = 6 }) {
+    const rows = [];
+    const drop = (r) => {
+      clearTimeout(r.t1);
+      clearTimeout(r.t2);
+      r.el.remove();
+      const i = rows.indexOf(r);
+      if (i >= 0) rows.splice(i, 1);
+    };
+    const arm = (r) => {
+      clearTimeout(r.t1);
+      clearTimeout(r.t2);
+      r.el.style.transition = "";
+      r.el.style.opacity = "";
+      r.t1 = setTimeout(() => {
+        r.el.style.transition = `opacity ${fade}s`;
+        r.el.style.opacity = "0";
+      }, life * 1e3);
+      r.t2 = setTimeout(() => drop(r), (life + fade) * 1e3);
+    };
+    return {
+      push(msg, kind = "") {
+        const h = host();
+        if (!h) return;
+        const last = rows[rows.length - 1];
+        if (last && last.msg === msg && last.kind === kind) {
+          last.n++;
+          last.el.textContent = `${msg} ×${last.n}`;
+          arm(last);
+          return;
+        }
+        const el = document.createElement("div");
+        el.className = "toast" + (kind ? " " + kind : "");
+        el.textContent = msg;
+        h.appendChild(el);
+        const r = { el, msg, kind, n: 1, t1: 0, t2: 0 };
+        rows.push(r);
+        arm(r);
+        while (rows.length > max) drop(rows[0]);
+      },
+      clear() {
+        while (rows.length) drop(rows[0]);
+      }
+    };
+  }
+
+  // src/game/ui.ts
   var $ = (s) => document.querySelector(s);
   var $$ = (s) => Array.from(document.querySelectorAll(s));
+  var TOASTS = createToasts({ host: () => $("#toasts"), life: 2.2, fade: 0.4, max: 6 });
   var UI5 = {
     cursor: null,
     // 집어든 아이템
@@ -32363,6 +33295,13 @@
       const depBtn = $("#btn-vault-deposit"), wdBtn = $("#btn-vault-withdraw");
       if (depBtn) depBtn.addEventListener("click", () => this.depositGold());
       if (wdBtn) wdBtn.addEventListener("click", () => this.withdrawGold());
+      const btn = (id, fn) => {
+        const b = $(id);
+        if (b) b.addEventListener("click", fn);
+      };
+      btn("#btn-chest-all", () => this.lootAll());
+      btn("#btn-vault-stack", () => this.vaultMove("stack"));
+      btn("#btn-vault-takeall", () => this.vaultMove("take"));
     },
     /* ---------------- 보관고 금화 ---------------- */
     depositGold() {
@@ -32616,16 +33555,9 @@
       this.tipTarget = true;
     },
     /* ---------------- 토스트 ---------------- */
+    /** 알림 — 같은 글이 잇달아 오면 ×N 으로 합친다(engine ui/toasts) */
     toast(msg, kind) {
-      const el = document.createElement("div");
-      el.className = "toast" + (kind ? " " + kind : "");
-      el.textContent = msg;
-      $("#toasts").appendChild(el);
-      setTimeout(() => {
-        el.style.transition = "opacity .4s";
-        el.style.opacity = "0";
-      }, 2200);
-      setTimeout(() => el.remove(), 2700);
+      TOASTS.push(msg, kind || "");
     },
     /* ---------------- 패널 ---------------- */
     togglePanel(id) {
@@ -32790,25 +33722,8 @@
     /** 가방 정리 — 같은 것끼리 합치고, 종류·등급 순으로 앞에서부터 채운다. */
     sortBag() {
       const p = app.player;
-      const keep = [];
-      const move = [];
-      p.bag.forEach((it, i) => {
-        if (!it) return;
-        if (it.lk) keep.push([i, it]);
-        else move.push(it);
-      });
-      const merged = [];
-      for (const it of move) {
-        const same = merged.find((q) => q.id === it.id && !q.a && !it.a && q.r === it.r && maxStack(q) > 1 && q.c < maxStack(q));
-        if (same) {
-          const room = maxStack(same) - same.c, mv = Math.min(room, it.c);
-          same.c += mv;
-          it.c -= mv;
-          if (it.c > 0) merged.push(it);
-        } else merged.push(it);
-      }
       const ORDER = { weapon: 0, tool: 1, armor: 2, acc: 3, bag: 4, consum: 5, summon: 6, seed: 7, mat: 8, block: 9, machine: 10 };
-      merged.sort((a, b) => {
+      const out = sortSlots(p.bag, STACK_RULES, (a, b) => {
         const da = idef(a), db = idef(b);
         const oa = ORDER[da.type] === void 0 ? 99 : ORDER[da.type];
         const ob = ORDER[db.type] === void 0 ? 99 : ORDER[db.type];
@@ -32816,14 +33731,6 @@
         if (b.r !== a.r) return b.r - a.r;
         return da.n.localeCompare(db.n, "ko");
       });
-      const out = new Array(p.bag.length).fill(null);
-      for (const [i, it] of keep) out[i] = it;
-      let k = 0;
-      for (const it of merged) {
-        while (out[k] !== null && k < out.length) k++;
-        if (k >= out.length) break;
-        out[k] = it;
-      }
       p.bag = out;
       this.refreshBag();
       this.refreshHotbar();
@@ -34067,6 +34974,8 @@
       if (toggle) toggle.style.display = "none";
       const c = this.chestRef;
       if (!c) return;
+      const acts = $("#chest-actions");
+      if (acts) acts.style.display = (c.items || []).some(Boolean) ? "" : "none";
       (c.items || []).forEach((it, i) => {
         makeSlot("slot" + (it ? " r" + it.r : ""), {
           fill: it ? { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : "" } : void 0,
@@ -34145,6 +35054,34 @@
         this.refreshBag();
         app.sfx("place");
       });
+    },
+    /** 상자 모두 가져오기 — 가방에 들어가는 만큼(있는 더미에 먼저) · 못 들어간 것은 상자에 남는다(engine core/inventory moveAll) */
+    lootAll() {
+      const c = this.chestRef, p = app.player;
+      if (!c || !c.items) return;
+      const moved = moveAll(c.items, p.bag, STACK_RULES);
+      for (const it of moved) {
+        p.gathered[it.id] = (p.gathered[it.id] || 0) + it.c;
+        app.onPickup(it);
+      }
+      if (c.items.some(Boolean)) this.toast(tr("가방이 가득 찼다"), "bad");
+      if (moved.length) app.sfx("place");
+      this.refreshChest();
+      this.refreshBag();
+      this.refreshHotbar();
+    },
+    /** 창고 — 'stack' 가방에서 창고에 이미 있는 종류만 넣기 · 'take' 창고에서 모두 꺼내기 */
+    vaultMove(kind) {
+      const p = app.player, store = this.storeRef ? this.storeRef.items : app.vault;
+      const moved = kind === "stack" ? quickStack(p.bag, store, STACK_RULES) : moveAll(store, p.bag, STACK_RULES);
+      if (kind === "take") {
+        for (const it of moved) p.gathered[it.id] = (p.gathered[it.id] || 0) + it.c;
+        if (store.some(Boolean)) this.toast(tr("가방이 가득 찼다"), "bad");
+      }
+      if (moved.length) app.sfx("place");
+      this.refreshVault();
+      this.refreshBag();
+      this.refreshHotbar();
     },
     /** 의뢰 게시판 — 하루마다 갱신되는 반복 사냥 의뢰 */
     openBoard() {
@@ -34423,6 +35360,70 @@
   __export(dialogue_exports, {
     DialogueUIPart: () => DialogueUIPart
   });
+
+  // src/engine/ui/typewriter.ts
+  var DEFAULT_PAUSE = { ",": 2, ".": 4, "!": 4, "?": 4, "—": 3, "…": 5, "、": 2, "。": 4 };
+  function typewrite(el, text, o) {
+    const n = text.length, pause = o.pause || DEFAULT_PAUSE;
+    const at = new Float32Array(n + 1);
+    let acc = 0;
+    for (let i = 0; i < n; i++) {
+      at[i] = acc;
+      acc += 1 + (pause[text[i]] || 0);
+    }
+    at[n] = acc;
+    const dur = Math.max(o.min ?? 300, Math.min(o.max ?? 1100, n * (o.msPer ?? 34)));
+    const unit = acc > 0 ? dur / acc : 0;
+    let shown = 0, raf = 0, live = true;
+    const t0 = performance.now();
+    const end = () => {
+      live = false;
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    };
+    const tick = () => {
+      if (!live) return;
+      const t = (performance.now() - t0) / (unit || 1);
+      let k = shown;
+      while (k < n && at[k] <= t) k++;
+      if (k !== shown) {
+        for (let i = shown; i < k; i++) if (o.onChar && text[i] !== " ") o.onChar(text[i], i);
+        shown = k;
+        el.textContent = text.slice(0, k);
+      }
+      if (shown >= n) {
+        end();
+        o.done();
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    if (!n) {
+      el.textContent = text;
+      live = false;
+      o.done();
+    } else {
+      el.textContent = "";
+      raf = requestAnimationFrame(tick);
+    }
+    return {
+      finish() {
+        if (!live) return false;
+        end();
+        el.textContent = text;
+        o.done();
+        return true;
+      },
+      stop() {
+        end();
+      },
+      get busy() {
+        return live;
+      }
+    };
+  }
+
+  // src/game/ui/dialogue.ts
   var DialogueUIPart = {
     /* ---------------- 대화 ---------------- */
     /** '다시 듣기'는 이름 옆 작은 단추로 뺀다 (없으면 감춘다) */
@@ -34452,47 +35453,28 @@
     TYPE_MS: 34,
     TYPE_MIN: 300,
     TYPE_MAX: 1100,
+    /* 쉼표·마침표 뒤에서 잠깐 숨을 쉬고(engine ui/typewriter), 끄는 설정이면 한 번에 */
     typeLine(text, done) {
       const el = $("#dlg-text");
       this.stopType();
-      const n = text.length;
-      if (!n || !(app.settings ? app.settings.dlgtype : 1)) {
+      if (!text.length || !(app.settings ? app.settings.dlgtype : 1)) {
         el.textContent = text;
         done();
         return;
       }
-      const dur = Math.max(this.TYPE_MIN, Math.min(this.TYPE_MAX, n * this.TYPE_MS));
-      const t0 = performance.now();
-      el.textContent = "";
-      this.typing = { text, done, el };
-      const step = () => {
-        if (!this.typing) return;
-        const k = Math.min(n, Math.ceil((performance.now() - t0) / dur * n));
-        el.textContent = text.slice(0, k);
-        if (k >= n) {
-          this.typing = null;
-          done();
-          return;
-        }
-        this._typeRaf = requestAnimationFrame(step);
-      };
-      this._typeRaf = requestAnimationFrame(step);
+      this.typing = typewrite(el, text, { msPer: this.TYPE_MS, min: this.TYPE_MIN, max: this.TYPE_MAX, done: () => {
+        this.typing = null;
+        done();
+      } });
     },
     stopType() {
-      if (this._typeRaf) {
-        cancelAnimationFrame(this._typeRaf);
-        this._typeRaf = 0;
-      }
+      if (this.typing) this.typing.stop();
       this.typing = null;
     },
     /** 타자가 도는 중이면 끝까지 펼치고 true. */
     finishType() {
       if (!this.typing) return false;
-      const t = this.typing;
-      this.stopType();
-      t.el.textContent = t.text;
-      t.done();
-      return true;
+      return this.typing.finish();
     },
     nextLine(first) {
       if (!this.dlg) return;
@@ -34637,6 +35619,90 @@
   __export(hud_exports, {
     HudUIPart: () => HudUIPart
   });
+
+  // src/engine/ui/panzoom.ts
+  var PanZoom = class {
+    constructor(cfg) {
+      this.cfg = { min: 0.4, max: 16, step: 1.2, ...cfg };
+      this.x = 0;
+      this.y = 0;
+      this.zoom = 1;
+      this.drag = null;
+      this.pts = /* @__PURE__ */ new Map();
+      this.pinch = null;
+    }
+    /** 화면 자리(sx, sy — 요소 안 CSS px)의 내용 좌표 */
+    toContent(sx, sy) {
+      const s = this.cfg.size();
+      return { x: this.x + (sx - s.w / 2) / this.zoom, y: this.y + (sy - s.h / 2) / this.zoom };
+    }
+    /** 내용 좌표 (wx, wy) 를 화면 자리 (sx, sy) 에 붙든 채 배율을 z 로 */
+    zoomAt(sx, sy, z) {
+      const s = this.cfg.size(), w = this.toContent(sx, sy);
+      this.zoom = Math.max(this.cfg.min, Math.min(this.cfg.max, z));
+      this.x = w.x - (sx - s.w / 2) / this.zoom;
+      this.y = w.y - (sy - s.h / 2) / this.zoom;
+    }
+    set(x, y, zoom) {
+      this.x = x;
+      this.y = y;
+      if (zoom) this.zoom = zoom;
+      this.drag = null;
+      this.pinch = null;
+    }
+    /** 요소에 휠 · 끌기 · 집기를 건다 */
+    bind(el) {
+      const rel = (e) => {
+        const r = el.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+      };
+      el.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const p = rel(e);
+        this.zoomAt(p.x, p.y, this.zoom * (e.deltaY < 0 ? this.cfg.step : 1 / this.cfg.step));
+        this.cfg.change();
+      }, { passive: false });
+      el.style.touchAction = "none";
+      el.addEventListener("pointerdown", (e) => {
+        el.setPointerCapture(e.pointerId);
+        this.pts.set(e.pointerId, rel(e));
+        if (this.pts.size === 1) this.drag = { x: e.clientX, y: e.clientY, fx: this.x, fy: this.y };
+        else if (this.pts.size === 2) {
+          const [a, b] = [...this.pts.values()], m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, w = this.toContent(m.x, m.y);
+          this.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: this.zoom, wx: w.x, wy: w.y };
+          this.drag = null;
+        }
+      });
+      el.addEventListener("pointermove", (e) => {
+        if (!this.pts.has(e.pointerId)) return;
+        this.pts.set(e.pointerId, rel(e));
+        if (this.pinch && this.pts.size >= 2) {
+          const [a, b] = [...this.pts.values()], s = this.cfg.size(), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+          this.zoom = Math.max(this.cfg.min, Math.min(this.cfg.max, this.pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / this.pinch.d));
+          this.x = this.pinch.wx - (m.x - s.w / 2) / this.zoom;
+          this.y = this.pinch.wy - (m.y - s.h / 2) / this.zoom;
+          this.cfg.change();
+        } else if (this.drag) {
+          this.x = this.drag.fx - (e.clientX - this.drag.x) / this.zoom;
+          this.y = this.drag.fy - (e.clientY - this.drag.y) / this.zoom;
+          this.cfg.change();
+        }
+      });
+      const up = (e) => {
+        this.pts.delete(e.pointerId);
+        if (this.pts.size < 2) this.pinch = null;
+        if (this.pts.size === 1) {
+          const p = [...this.pts.values()][0], r = el.getBoundingClientRect();
+          this.drag = { x: p.x + r.left, y: p.y + r.top, fx: this.x, fy: this.y };
+        }
+        if (!this.pts.size) this.drag = null;
+      };
+      el.addEventListener("pointerup", up);
+      el.addEventListener("pointercancel", up);
+    }
+  };
+
+  // src/game/ui/hud.ts
   var HudUIPart = {
     /* ---------------- HUD ---------------- */
     updateHUD() {
@@ -34690,34 +35756,9 @@
       const canvas = $("#fullmap-canvas");
       this.fmCanvas = canvas;
       this.fmC = canvas.getContext("2d");
-      this.fmZoom = 3;
-      this.fmX = 0;
-      this.fmY = 0;
-      this.fmDrag = null;
+      this.fmPZ = new PanZoom({ min: 0.4, max: 16, step: 1.2, change: () => this.renderFullmap(), size: () => ({ w: this.fmDprW || 1, h: this.fmDprH || 1 }) });
+      this.fmPZ.bind(canvas);
       $("#minimap").addEventListener("click", () => this.openFullmap());
-      canvas.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-        const wx = this.fmX + (mx - this.fmDprW / 2) / this.fmZoom;
-        const wy = this.fmY + (my - this.fmDprH / 2) / this.fmZoom;
-        this.fmZoom = clamp(this.fmZoom * (e.deltaY < 0 ? 1.2 : 1 / 1.2), 0.4, 16);
-        this.fmX = wx - (mx - this.fmDprW / 2) / this.fmZoom;
-        this.fmY = wy - (my - this.fmDprH / 2) / this.fmZoom;
-        this.renderFullmap();
-      }, { passive: false });
-      canvas.addEventListener("mousedown", (e) => {
-        this.fmDrag = { x: e.clientX, y: e.clientY, fx: this.fmX, fy: this.fmY };
-      });
-      addEventListener("mousemove", (e) => {
-        if (!this.fmDrag) return;
-        this.fmX = this.fmDrag.fx - (e.clientX - this.fmDrag.x) / this.fmZoom;
-        this.fmY = this.fmDrag.fy - (e.clientY - this.fmDrag.y) / this.fmZoom;
-        this.renderFullmap();
-      });
-      addEventListener("mouseup", () => {
-        this.fmDrag = null;
-      });
       addEventListener("resize", () => {
         if (this.open === "fullmap") {
           this.resizeFullmap();
@@ -34730,10 +35771,7 @@
       this.togglePanel("fullmap");
       if (already) return;
       const p = app.player;
-      this.fmX = p.cx / TS;
-      this.fmY = p.cy / TS;
-      this.fmZoom = 3;
-      this.fmDrag = null;
+      this.fmPZ.set(p.cx / TS, p.cy / TS, 3);
       this.resizeFullmap();
       this.renderFullmap();
     },
@@ -34749,17 +35787,15 @@
     renderFullmap() {
       const { WW: WW2, WH: WH2 } = dimsOf(app.world);
       if (this.open !== "fullmap" || !this.fmDprW) return;
-      const c = this.fmC, W = this.fmDprW, H = this.fmDprH, z = this.fmZoom;
+      const c = this.fmC, W = this.fmDprW, H = this.fmDprH, v = this.fmPZ, z = v.zoom;
       c.imageSmoothingEnabled = false;
       c.fillStyle = "#050609";
       c.fillRect(0, 0, W, H);
       const sw = W / z, sh = H / z;
-      let sx0 = this.fmX - sw / 2, sy0 = this.fmY - sh / 2;
-      this.fmX = clamp(this.fmX, -sw * 0.4, WW2 + sw * 0.4);
-      this.fmY = clamp(this.fmY, -sh * 0.4, WH2 + sh * 0.4);
-      sx0 = this.fmX - sw / 2;
-      sy0 = this.fmY - sh / 2;
-      c.drawImage(app.mapAtlas, sx0, sy0, sw, sh, 0, 0, W, H);
+      v.x = clamp(v.x, -sw * 0.4, WW2 + sw * 0.4);
+      v.y = clamp(v.y, -sh * 0.4, WH2 + sh * 0.4);
+      const sx0 = v.x - sw / 2, sy0 = v.y - sh / 2;
+      app.mapAtlas.draw(c, sx0, sy0, sw, sh, W, H);
       const p = app.player;
       const px = (p.cx / TS - sx0) * z, py = (p.cy / TS - sy0) * z;
       c.fillStyle = "#fff";
@@ -34787,11 +35823,52 @@
     SFX_FILES: () => SFX_FILES,
     SFX_GAP: () => SFX_GAP,
     SFX_LOOP_KEYS: () => SFX_LOOP_KEYS,
+    SFX_PAN: () => SFX_PAN,
     SFX_START: () => SFX_START,
     SFX_VOL: () => SFX_VOL,
     Sfx: () => Sfx,
     SfxLoop: () => SfxLoop
   });
+
+  // src/engine/audio/spatial.ts
+  function spatialMix(cfg, lx, ly, sx, sy) {
+    const dx = sx - lx, dy = sy - ly, d = Math.hypot(dx, dy);
+    if (d >= cfg.far) return null;
+    const t = d <= cfg.near ? 0 : (d - cfg.near) / (cfg.far - cfg.near);
+    const gain = (1 - t) * (1 - t);
+    const m = cfg.maxPan === void 0 ? 0.6 : cfg.maxPan;
+    const pan = Math.max(-m, Math.min(m, dx / cfg.panWidth * m));
+    return { gain, pan };
+  }
+  function createPanRouter(getCtx) {
+    const ok = typeof location !== "undefined" && /^https?:$/.test(location.protocol);
+    const nodes = /* @__PURE__ */ new WeakMap();
+    return {
+      /** 이 목소리의 좌우를 pan 으로. 갈랐으면 true */
+      pan(a, pan) {
+        if (!ok) return false;
+        let p = nodes.get(a);
+        if (!p) {
+          if (Math.abs(pan) < 0.02) return false;
+          const ac = getCtx();
+          if (!ac || !ac.createStereoPanner) return false;
+          try {
+            const src = ac.createMediaElementSource(a);
+            p = ac.createStereoPanner();
+            src.connect(p);
+            p.connect(ac.destination);
+            nodes.set(a, p);
+          } catch (e) {
+            return false;
+          }
+        }
+        p.pan.value = pan;
+        return true;
+      }
+    };
+  }
+
+  // src/game/music.ts
   var BGM = {
     // mp3 원본은 용량이 커서(5~11MB) AAC(m4a)로 다시 구웠다 — 브라우저 재생엔 문제없다.
     title: "assets/audio/falling_stars.m4a",
@@ -35078,7 +36155,8 @@
     mat_plant: 0.08,
     mat_flesh: 0.08
   };
-  var Sfx = createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: SFX_GAP, vol: SFX_VOL, start: SFX_START });
+  var SFX_PAN = createPanRouter(() => app && app.ac && app.ac.state === "running" ? app.ac : null);
+  var Sfx = createSfx({ dir: SFX_DIR, files: SFX_FILES, fam: SFX_FAM, gap: SFX_GAP, vol: SFX_VOL, start: SFX_START, panner: SFX_PAN });
   Sfx.init();
   var SFX_LOOP_KEYS = { swim: 0.55, fuse: 0.5 };
   var SfxLoop = createSfxLoop({ dir: SFX_DIR, files: SFX_FILES, keys: SFX_LOOP_KEYS, sfx: Sfx });
@@ -35261,14 +36339,659 @@
   // src/game/game.ts
   var game_exports = {};
   __export(game_exports, {
+    AUTOSAVE_SEC: () => AUTOSAVE_SEC,
+    DAY_CYCLE: () => DAY_CYCLE,
     G: () => G3,
     Game: () => Game,
     GameCore: () => GameCore,
     MAP_REVEAL_LIGHT: () => MAP_REVEAL_LIGHT,
+    PATH_BUDGET: () => PATH_BUDGET,
     QUALITY: () => QUALITY,
     TOUCH: () => TOUCH
   });
+
+  // src/engine/core/daycycle.ts
+  var DayCycle = class {
+    constructor(c = {}) {
+      this.len = c.len || 1440;
+      this.rise = c.rise ?? 330;
+      this.set = c.set ?? 1110;
+      this.dawn = c.dawn || [240, 420];
+      this.dusk = c.dusk || [1020, 1200];
+    }
+    /** 낮의 밝기 0~1 */
+    light(t) {
+      const [a0, a1] = this.dawn, [b0, b1] = this.dusk;
+      if (t >= a1 && t <= b0) return 1;
+      if (t > b0 && t < b1) return 1 - (t - b0) / (b1 - b0);
+      if (t >= b1 || t < a0) return 0;
+      return (t - a0) / (a1 - a0);
+    }
+    /** 해(sun) 또는 달이 하늘 반원 위 어디쯤인가 — 0 = 동쪽 지평선(뜸) · 0.5 = 한가운데 · 1 = 서쪽(짐), 범위 밖은 지평선 아래 */
+    arc(t, sun) {
+      const t0 = sun ? this.rise : this.set, dur = sun ? this.set - this.rise : this.len - this.set + this.rise, off = (this.len - dur) / 2;
+      return (((t - t0 + off) % this.len + this.len) % this.len - off) / dur;
+    }
+    /** 지평선 위 높이 0~1(sin) — 음수면 지평선 아래 */
+    height(t, sun = true) {
+      return Math.sin(Math.PI * this.arc(t, sun));
+    }
+    /** 칸에서 해를 향하는 방향(x: + 오른쪽 · y: − 위)과 세기 k(0~1) — 해가 지평선 아래면 null.
+        cloud 0~1 은 구름이 가린 정도(그림자가 옅어진다) · minUp 은 가장 낮은 해의 높이(너무 누운 그림자가 화면을 다 덮지 않게) */
+    sunDir(t, cloud = 0, minUp = 0.3) {
+      const u = this.arc(t, true), up = Math.sin(Math.PI * u);
+      if (up <= 0.02) return null;
+      const k = Math.max(0, Math.min(1, up * 3)) * (1 - 0.75 * Math.max(0, Math.min(1, cloud)));
+      return { x: Math.cos(Math.PI * u), y: -Math.max(minUp, up), k };
+    }
+    /** 밤인가(어두운 시간) — from~to 시각(분)을 밤으로 친다 */
+    isNight(t, from = 19 * 60, to = 5 * 60) {
+      return t < to || t > from;
+    }
+  };
+
+  // src/engine/core/spatial.ts
+  var SpatialHash = class {
+    constructor(cell = 64) {
+      this.cell = cell;
+      this.buckets = /* @__PURE__ */ new Map();
+      this.stamp = /* @__PURE__ */ new Map();
+      this.q = 0;
+    }
+    key(cx, cy) {
+      return (cy + 32768) * 65536 + (cx + 32768);
+    }
+    clear() {
+      for (const b of this.buckets.values()) b.length = 0;
+    }
+    insert(o) {
+      const c = this.cell;
+      const x0 = Math.floor(o.x / c), x1 = Math.floor((o.x + o.w) / c), y0 = Math.floor(o.y / c), y1 = Math.floor((o.y + o.h) / c);
+      for (let cy = y0; cy <= y1; cy++) for (let cx = x0; cx <= x1; cx++) {
+        const k = this.key(cx, cy);
+        let b = this.buckets.get(k);
+        if (!b) {
+          b = [];
+          this.buckets.set(k, b);
+        }
+        b.push(o);
+      }
+    }
+    /** 다 비우고 list 를 다시 넣는다(조건 keep 을 통과한 것만) */
+    rebuild(list, keep) {
+      this.clear();
+      for (const o of list) if (!keep || keep(o)) this.insert(o);
+    }
+    /** 사각형(x, y, w, h)에 걸치는 바구니의 것들을 한 번씩 — 실제로 겹치는지는 부르는 쪽이 본다. fn 이 true 면 멈춘다. */
+    query(x, y, w, h, fn) {
+      const c = this.cell, q = ++this.q;
+      const x0 = Math.floor(x / c), x1 = Math.floor((x + w) / c), y0 = Math.floor(y / c), y1 = Math.floor((y + h) / c);
+      for (let cy = y0; cy <= y1; cy++) for (let cx = x0; cx <= x1; cx++) {
+        const b = this.buckets.get(this.key(cx, cy));
+        if (!b) continue;
+        for (const o of b) {
+          if (this.stamp.get(o) === q) continue;
+          this.stamp.set(o, q);
+          if (fn(o)) return;
+        }
+      }
+    }
+    /** 원(cx, cy, r) 근처의 것들 — 배열로 */
+    near(cx, cy, r) {
+      const out = [];
+      this.query(cx - r, cy - r, r * 2, r * 2, (o) => {
+        out.push(o);
+      });
+      return out;
+    }
+  };
+
+  // src/engine/core/timescale.ts
+  var TimeScale = class {
+    constructor() {
+      this.stopT = 0;
+      this.stopF = 0.12;
+      this.slowT = 0;
+      this.slowF = 1;
+    }
+    /** 히트스톱 — sec 초 동안 factor 배로(기본 0.12). 이미 걸려 있으면 더 긴 쪽, cap 초를 넘지 않는다 */
+    hit(sec, cap = 0.12, factor = 0.12) {
+      this.stopT = Math.min(cap, Math.max(this.stopT, sec || 0));
+      this.stopF = factor;
+    }
+    /** 느린 화면 — sec 초 동안 factor 배(끝으로 갈수록 제 빠르기로 돌아온다) */
+    slow(sec, factor = 0.4) {
+      this.slowT = Math.max(this.slowT, sec);
+      this.slowF = factor;
+    }
+    /** 진짜 dt → 세계에 흘릴 dt. 늦추는 동안의 시간은 진짜 시간으로 줄인다(멈춘 채 끝나지 않게) */
+    step(dt) {
+      let k = 1;
+      if (this.stopT > 0) {
+        this.stopT -= dt;
+        k = Math.min(k, this.stopF);
+      }
+      if (this.slowT > 0) {
+        const t = Math.min(1, this.slowT);
+        this.slowT -= dt;
+        k = Math.min(k, this.slowF + (1 - this.slowF) * (1 - t));
+      }
+      return dt * k;
+    }
+    get active() {
+      return this.stopT > 0 || this.slowT > 0;
+    }
+    clear() {
+      this.stopT = 0;
+      this.slowT = 0;
+    }
+  };
+
+  // src/engine/fx/shapes.ts
+  var ShapeFx = class {
+    constructor() {
+      this.rings = [];
+      this.bolts = [];
+      this.warns = [];
+    }
+    /** 퍼져 나가는 고리 — 반지름 r 까지 1.3배로 벌어지며 흐려진다 */
+    ring(x, y, r, c, life = 0.3) {
+      this.rings.push({ x, y, r, t: life, max: life, c });
+    }
+    /** 두 점을 잇는 번개 — 마디 seg 개, 옆으로 jitter px 까지 흔들린다 */
+    bolt(x0, y0, x1, y1, c, life = 0.22, seg = 7, jitter = 26, rand = Math.random) {
+      const pts = [], nx = -(y1 - y0), ny = x1 - x0, L = Math.hypot(nx, ny) || 1;
+      for (let i = 0; i <= seg; i++) {
+        const k = i / seg, j = i === 0 || i === seg ? 0 : (rand() - 0.5) * jitter;
+        pts.push([x0 + (x1 - x0) * k + nx / L * j, y0 + (y1 - y0) * k + ny / L * j]);
+      }
+      this.bolts.push({ pts, t: life, max: life, c });
+    }
+    /** 떨어질 자리 예고 — dur 초 동안 원이 안에서부터 차오른다 */
+    warn(x, y, r, dur, c) {
+      this.warns.push({ x, y, r, t: dur, max: dur, c });
+    }
+    update(dt) {
+      for (const L of [this.rings, this.bolts, this.warns])
+        for (let i = L.length - 1; i >= 0; i--) {
+          L[i].t -= dt;
+          if (L[i].t <= 0) L.splice(i, 1);
+        }
+    }
+    clear() {
+      this.rings.length = 0;
+      this.bolts.length = 0;
+      this.warns.length = 0;
+    }
+    draw(c, camX, camY) {
+      const TAU2 = Math.PI * 2;
+      for (const r of this.rings) {
+        const k = r.t / r.max;
+        c.strokeStyle = r.c;
+        c.globalAlpha = k * 0.8;
+        c.lineWidth = 3;
+        c.beginPath();
+        c.arc(r.x - camX, r.y - camY, r.r * (1.3 - k * 0.3), 0, TAU2);
+        c.stroke();
+      }
+      for (const w of this.warns) {
+        const k = 1 - w.t / w.max, x = w.x - camX, y = w.y - camY;
+        c.globalAlpha = 0.22 + 0.2 * Math.sin(k * 18);
+        c.fillStyle = w.c;
+        c.beginPath();
+        c.arc(x, y, w.r * k, 0, TAU2);
+        c.fill();
+        c.globalAlpha = 0.85;
+        c.strokeStyle = w.c;
+        c.lineWidth = 2.5;
+        c.beginPath();
+        c.arc(x, y, w.r, 0, TAU2);
+        c.stroke();
+      }
+      for (const b of this.bolts) {
+        const k = b.t / b.max;
+        c.lineCap = "round";
+        c.lineJoin = "round";
+        for (const [lw, col, al] of [[6, b.c, 0.22 * k], [2.4, b.c, 0.9 * k], [1, "#ffffff", 0.9 * k]]) {
+          c.globalAlpha = al;
+          c.strokeStyle = col;
+          c.lineWidth = lw;
+          c.beginPath();
+          b.pts.forEach((p, j) => j ? c.lineTo(p[0] - camX, p[1] - camY) : c.moveTo(p[0] - camX, p[1] - camY));
+          c.stroke();
+        }
+        c.lineCap = "butt";
+      }
+      c.globalAlpha = 1;
+      c.lineWidth = 1;
+    }
+  };
+
+  // src/engine/fx/trail.ts
+  var Afterimages = class {
+    /** gap — 몇 초마다 한 장 · life — 한 장이 남는 시간 · max — 한꺼번에 남는 장 수 */
+    constructor(gap = 0.03, life = 0.22, max = 8) {
+      this.shots = [];
+      this.gap = gap;
+      this.acc = 0;
+      this.life = life;
+      this.max = max;
+    }
+    /** 매 프레임 — on 이면(빠르게 움직이는 중) gap 마다 한 장을 찍는다 */
+    update(dt, on, x, y, d) {
+      for (let i = this.shots.length - 1; i >= 0; i--) {
+        this.shots[i].t -= dt;
+        if (this.shots[i].t <= 0) this.shots.splice(i, 1);
+      }
+      if (!on) {
+        this.acc = this.gap;
+        return;
+      }
+      this.acc += dt;
+      if (this.acc < this.gap) return;
+      this.acc = 0;
+      this.shots.push({ x, y, t: this.life, max: this.life, d: d() });
+      if (this.shots.length > this.max) this.shots.shift();
+    }
+    /** 오래된 것부터 — draw(장, 투명도 0~1) */
+    draw(fn) {
+      for (const s of this.shots) fn(s, s.t / s.max);
+    }
+    clear() {
+      this.shots.length = 0;
+    }
+  };
+
+  // src/engine/input/gamepad.ts
+  function createGamepad(cfg) {
+    const dead = cfg.dead === void 0 ? 0.28 : cfg.dead, reach = cfg.reach || 150;
+    const m1 = cfg.m1 === void 0 ? 7 : cfg.m1, m2 = cfg.m2 === void 0 ? 6 : cfg.m2;
+    let prev = [], on = false, ax = 1, ay = 0, owned = {};
+    const pressed = (b) => !!b && (b.pressed || b.value > 0.5);
+    const pad = {
+      /** 지금 패드로 조작하고 있는가(마지막으로 만진 것이 패드) */
+      get active() {
+        return on;
+      },
+      /** 매 프레임 — 패드가 없으면 아무 일도 않는다 */
+      poll() {
+        const list = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads() : [];
+        let gp = null;
+        for (const g of list) if (g && g.connected) {
+          gp = g;
+          break;
+        }
+        const V = cfg.input.virt;
+        if (!gp) {
+          if (on) {
+            for (const a in owned) V[a] = 0;
+            owned = {};
+            on = false;
+            if (cfg.active) cfg.active(false);
+          }
+          return;
+        }
+        const b = gp.buttons, now2 = b.map(pressed);
+        const lx = gp.axes[0] || 0, ly = gp.axes[1] || 0, rx = gp.axes[2] || 0, ry = gp.axes[3] || 0;
+        const touched = now2.some((x) => x) || Math.hypot(lx, ly) > dead || Math.hypot(rx, ry) > dead;
+        if (touched && !on) {
+          on = true;
+          if (cfg.active) cfg.active(true);
+        }
+        if (!on) return;
+        const want = {
+          left: lx < -dead || now2[14] ? 1 : 0,
+          right: lx > dead || now2[15] ? 1 : 0,
+          down: ly > dead + 0.25 || now2[13] ? 1 : 0
+        };
+        for (const i in cfg.hold) want[cfg.hold[i]] = (want[cfg.hold[i]] || 0) | (now2[+i] ? 1 : 0);
+        for (const a in want) {
+          if (want[a]) {
+            V[a] = 1;
+            owned[a] = 1;
+          } else if (owned[a]) {
+            V[a] = 0;
+            delete owned[a];
+          }
+        }
+        for (const i in cfg.tap) if (now2[+i] && !prev[+i]) cfg.press(cfg.tap[i]);
+        if (Math.hypot(rx, ry) > dead) {
+          const d = Math.hypot(rx, ry);
+          ax = rx / d;
+          ay = ry / d;
+        }
+        const c = cfg.anchor(), k = Math.min(1, Math.max(0.35, Math.hypot(rx, ry)));
+        cfg.ptr.mx = c.x + ax * reach * k;
+        cfg.ptr.my = c.y + ay * reach * k;
+        cfg.ptr.m1 = now2[m1] ? 1 : 0;
+        if (now2[m2] && !prev[m2] && cfg.rightDown) cfg.rightDown();
+        cfg.ptr.m2 = now2[m2] ? 1 : 0;
+        prev = now2;
+      },
+      /** 진동(지원하는 패드만) — 세기 0~1, 길이 ms */
+      rumble(strong, weak, ms) {
+        const list = navigator.getGamepads ? navigator.getGamepads() : [];
+        for (const g of list) {
+          const a = g && g.vibrationActuator;
+          if (a && a.playEffect) a.playEffect("dual-rumble", { duration: ms, strongMagnitude: strong, weakMagnitude: weak }).catch(() => {
+          });
+        }
+      }
+    };
+    return pad;
+  }
+
+  // src/engine/render/camera.ts
+  function vnoise(t, s) {
+    const h = (i2) => {
+      let x = Math.imul(i2 ^ s * 2654435761, 2246822507);
+      x ^= x >>> 13;
+      x = Math.imul(x, 3266489909);
+      x ^= x >>> 16;
+      return (x >>> 0) / 4294967295 * 2 - 1;
+    };
+    const i = Math.floor(t), f = t - i, u = f * f * (3 - 2 * f);
+    return h(i) * (1 - u) + h(i + 1) * u;
+  }
+  var Camera = class {
+    constructor(cfg = {}) {
+      this.x = 0;
+      this.y = 0;
+      this.lx = 0;
+      this.ly = 0;
+      this.t = 0;
+      this.cfg = { follow: 2e-3, leadX: 0, leadY: 0, leadSpeed: 300, leadEase: 0.05, shakeFreq: 18, ...cfg };
+    }
+    /** (tx, ty) = 화면 왼쪽 위가 가야 할 자리. (vx, vy) = 따라가는 것의 속도. 세계 [0, maxX]·[0, maxY] 안에 가둔다. */
+    update(dt, tx, ty, vx, vy, maxX, maxY) {
+      const c = this.cfg;
+      this.t += dt;
+      const e = 1 - Math.pow(c.leadEase, dt);
+      const wantX = c.leadX * Math.max(-1, Math.min(1, vx / c.leadSpeed));
+      const wantY = c.leadY * Math.max(0, Math.min(1, (vy - c.leadSpeed * 0.5) / c.leadSpeed));
+      this.lx += (wantX - this.lx) * e;
+      this.ly += (wantY - this.ly) * e;
+      const k = 1 - Math.pow(c.follow, dt);
+      const gx = Math.max(0, Math.min(maxX, tx + this.lx)), gy = Math.max(0, Math.min(maxY, ty + this.ly));
+      this.x += (gx - this.x) * k;
+      this.y += (gy - this.y) * k;
+    }
+    /** 곧바로 맞춘다(순간이동 · 불러오기) — 앞 내기도 지운다 */
+    snap(tx, ty, maxX, maxY) {
+      this.lx = 0;
+      this.ly = 0;
+      this.x = Math.max(0, Math.min(maxX, tx));
+      this.y = Math.max(0, Math.min(maxY, ty));
+    }
+    /** 흔들림 세기 amp(px)일 때 이 프레임의 어긋남 — 가장 크게 amp/2(예전 난수 흔들림과 같은 폭) */
+    shakeOffset(amp) {
+      if (amp <= 0.05) return { x: 0, y: 0 };
+      const f = this.t * this.cfg.shakeFreq, a = amp * 0.5;
+      return { x: vnoise(f, 1) * a, y: vnoise(f, 2) * a };
+    }
+    /** 그릴 때 쓰는 정수 자리(흔들림 포함) */
+    view(amp) {
+      const s = this.shakeOffset(amp);
+      return { x: Math.round(this.x + s.x), y: Math.round(this.y + s.y) };
+    }
+  };
+
+  // src/engine/render/fade.ts
+  var ScreenFade = class {
+    constructor() {
+      this.a = 0;
+      this.color = "#000";
+      this.phase = 0;
+      this.t = 0;
+      this.tOut = 0.4;
+      this.tHold = 0.2;
+      this.tIn = 0.6;
+      this.mid = null;
+    }
+    /** 어두워졌다(out 초) → mid() → 머물렀다(hold) → 밝아진다(in) */
+    run(mid, out = 0.45, hold = 0.25, inn = 0.7, color = "#000") {
+      this.mid = mid;
+      this.tOut = out;
+      this.tHold = hold;
+      this.tIn = inn;
+      this.color = color;
+      this.phase = 1;
+      this.t = 0;
+    }
+    /** 이미 가려진 채로 시작해 밝아지기만(되살아난 첫 화면) */
+    reveal(inn = 0.8, color = "#000") {
+      this.color = color;
+      this.a = 1;
+      this.phase = 3;
+      this.t = 0;
+      this.tIn = inn;
+      this.mid = null;
+    }
+    get busy() {
+      return this.phase !== 0;
+    }
+    /** 진짜 시간으로(멈춤과 상관없이) 흘린다 */
+    update(dt) {
+      if (!this.phase) return;
+      this.t += dt;
+      if (this.phase === 1) {
+        this.a = Math.min(1, this.t / this.tOut);
+        if (this.t >= this.tOut) {
+          this.phase = 2;
+          this.t = 0;
+          this.a = 1;
+          const m = this.mid;
+          this.mid = null;
+          if (m) m();
+        }
+      } else if (this.phase === 2) {
+        if (this.t >= this.tHold) {
+          this.phase = 3;
+          this.t = 0;
+        }
+      } else {
+        this.a = Math.max(0, 1 - this.t / this.tIn);
+        if (this.t >= this.tIn) {
+          this.phase = 0;
+          this.a = 0;
+        }
+      }
+    }
+    draw(c, w, h) {
+      if (this.a <= 0) return;
+      c.save();
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.globalAlpha = this.a;
+      c.fillStyle = this.color;
+      c.fillRect(0, 0, c.canvas.width || w, c.canvas.height || h);
+      c.restore();
+    }
+  };
+
+  // src/engine/render/minimap.ts
+  var MapAtlas = class {
+    constructor() {
+      this.cv = document.createElement("canvas");
+      this.cv.width = this.cv.height = 1;
+      this.cx = this.cv.getContext("2d");
+    }
+    /** 세계 크기에 맞춘다 — 크기가 바뀌었으면 true(다시 칠해야 한다) */
+    fit(w, h) {
+      if (this.cv.width === w && this.cv.height === h) return false;
+      this.cv.width = w;
+      this.cv.height = h;
+      this.cx = this.cv.getContext("2d");
+      return true;
+    }
+    /** 칸 하나를 칠한다(막 밝혀진 칸) */
+    paint(x, y, color) {
+      this.cx.fillStyle = color;
+      this.cx.fillRect(x, y, 1, 1);
+    }
+    /** 처음부터 다시 — revealed(k) 인 칸만 color(x, y) 로, 나머지는 bg. 칸 하나씩 fillRect 하지 않고 화소 판에 한 번에 쓴다 */
+    rebuild(revealed, color, bg = "#07080c") {
+      const W = this.cv.width, H = this.cv.height, c = this.cx;
+      c.fillStyle = bg;
+      c.fillRect(0, 0, W, H);
+      const img = c.getImageData(0, 0, W, H), buf = img.data;
+      for (let k = 0; k < W * H; k++) {
+        if (!revealed(k)) continue;
+        const n = parseInt(color(k % W, k / W | 0).slice(1), 16), o = k * 4;
+        buf[o] = n >> 16 & 255;
+        buf[o + 1] = n >> 8 & 255;
+        buf[o + 2] = n & 255;
+        buf[o + 3] = 255;
+      }
+      c.putImageData(img, 0, 0);
+    }
+    /** 판의 (sx0, sy0) 부터 sw×sh 칸을 c 의 (0, 0)~(dw, dh) 에 늘려 그린다(칸 경계가 번지지 않게) */
+    draw(c, sx0, sy0, sw, sh, dw, dh) {
+      c.imageSmoothingEnabled = false;
+      c.drawImage(this.cv, sx0, sy0, sw, sh, 0, 0, dw, dh);
+    }
+  };
+  function drawTileWindow(c, w, h, scale, cx, cy, color) {
+    const cols = Math.floor(w / scale), rows = Math.floor(h / scale);
+    const x0 = cx - Math.floor(cols / 2), y0 = cy - Math.floor(rows / 2);
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      const col = color(x0 + x, y0 + y);
+      if (!col) continue;
+      c.fillStyle = col;
+      c.fillRect(x * scale, y * scale, scale, scale);
+    }
+    return { x0, y0 };
+  }
+  function drawMapMark(c, origin, scale, w, h, tx, ty, color, shape = "box", size = scale + 2) {
+    const x = (tx - origin.x0) * scale, y = (ty - origin.y0) * scale;
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    c.fillStyle = color;
+    if (shape === "+") {
+      c.fillRect(x - 1, y - 3, 3, 7);
+      c.fillRect(x - 3, y - 1, 7, 3);
+    } else if (shape === "o") {
+      c.beginPath();
+      c.arc(x + scale / 2, y + scale / 2, size / 2, 0, Math.PI * 2);
+      c.fill();
+    } else c.fillRect(x - (size - scale) / 2, y - (size - scale) / 2, size, size);
+  }
+
+  // src/engine/save/autosave.ts
+  function createAutosave(cfg) {
+    let t = 0, wait = cfg.every, busy = false, enabled = true;
+    const run = async (quiet) => {
+      if (busy || !enabled || !cfg.can()) return false;
+      busy = true;
+      try {
+        const ok = await cfg.save(quiet);
+        wait = ok ? cfg.every : Math.min(cfg.every * 8, wait * 2);
+        return ok;
+      } catch (e) {
+        wait = Math.min(cfg.every * 8, wait * 2);
+        return false;
+      } finally {
+        busy = false;
+        t = 0;
+      }
+    };
+    if (cfg.onHide !== false && typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) run(true);
+      });
+      addEventListener("pagehide", () => {
+        run(true);
+      });
+    }
+    return {
+      /** 게임 시간으로 흘린다(멈춤 동안은 부르지 않는다) — 때가 되면 저장 */
+      tick(dt) {
+        t += dt;
+        if (t >= wait) {
+          t = 0;
+          run(false);
+        }
+      },
+      /** 손으로 저장했다 — 다음 자동 저장까지 처음부터 센다 */
+      reset() {
+        t = 0;
+        wait = cfg.every;
+      },
+      now(quiet = false) {
+        return run(quiet);
+      },
+      set enabled(v) {
+        enabled = v;
+      },
+      get enabled() {
+        return enabled;
+      },
+      get left() {
+        return Math.max(0, wait - t);
+      }
+    };
+  }
+
+  // src/engine/ui/perf.ts
+  var PerfPanel = class {
+    constructor() {
+      this.on = false;
+      this.ms = new Float32Array(120);
+      this.i = 0;
+      this.last = 0;
+      this.lines = [];
+    }
+    toggle() {
+      this.on = !this.on;
+      return this.on;
+    }
+    /** 매 프레임 — 진짜 걸린 시간(초) */
+    frame(rawDt) {
+      if (!this.on) return;
+      this.ms[this.i] = rawDt * 1e3;
+      this.i = (this.i + 1) % this.ms.length;
+    }
+    /** 아래에 적을 줄들(매 프레임 새로) */
+    info(lines) {
+      this.lines = lines;
+    }
+    /** 화면 왼쪽 위에 — 변환은 지운 채(화면 픽셀) 그린다 */
+    draw(c, scale = 1) {
+      if (!this.on) return;
+      const n = this.ms.length, W = 240, H = 60, x0 = 8, y0 = 8;
+      let sum = 0, worst = 0;
+      for (let k = 0; k < n; k++) {
+        sum += this.ms[k];
+        worst = Math.max(worst, this.ms[k]);
+      }
+      const avg = sum / n;
+      c.save();
+      c.setTransform(scale, 0, 0, scale, 0, 0);
+      c.fillStyle = "rgba(0,0,0,.66)";
+      c.fillRect(x0, y0, W + 12, H + 30 + this.lines.length * 13);
+      const yms = (v) => y0 + 6 + H - Math.min(H, v / 50 * H);
+      for (let k = 0; k < n; k++) {
+        const v = this.ms[(this.i + k) % n];
+        c.fillStyle = v > 33.4 ? "#ff6a5a" : v > 17.5 ? "#ffd24a" : "#7fe07f";
+        c.fillRect(x0 + 6 + k * 2, yms(v), 2, y0 + 6 + H - yms(v));
+      }
+      c.strokeStyle = "rgba(255,255,255,.35)";
+      c.beginPath();
+      c.moveTo(x0 + 6, yms(16.7));
+      c.lineTo(x0 + 6 + W, yms(16.7));
+      c.stroke();
+      c.font = "11px monospace";
+      c.fillStyle = "#e8f0ff";
+      c.textBaseline = "top";
+      c.fillText(`${avg > 0 ? Math.round(1e3 / avg) : 0} fps · avg ${avg.toFixed(1)}ms · max ${worst.toFixed(1)}ms`, x0 + 6, y0 + H + 10);
+      this.lines.forEach((l, k) => c.fillText(l, x0 + 6, y0 + H + 24 + k * 13));
+      c.restore();
+    }
+  };
+
+  // src/game/game.ts
   var MAP_REVEAL_LIGHT = 1;
+  var DAY_CYCLE = new DayCycle({ rise: 330, set: 1110, dawn: [240, 420], dusk: [1020, 1200] });
+  var AUTOSAVE_SEC = 300;
+  var PATH_BUDGET = 3;
   var QUALITY = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 300 } };
   var TOUCH = (() => {
     const q = new URLSearchParams(location.search).get("touch");
@@ -35285,7 +37008,7 @@
         mmx: null,
         W: 0,
         H: 0,
-        cam: { x: 0, y: 0 },
+        cam: new Camera({ follow: 2e-3, leadX: 56, leadY: 64, leadSpeed: 320, leadEase: 0.08 }),
         world: null,
         rng: new RNG(1),
         /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
@@ -35296,11 +37019,18 @@
         parts: [],
         texts: [],
         drops: [],
-        pending: [],
+        tweens: new Tweens(),
         corpses: [],
         time: 0,
         dayT: 6 * 60,
         shake: 0,
+        pathBudget: 0,
+        timeScale: new TimeScale(),
+        fade: new ScreenFade(),
+        perf: new PerfPanel(),
+        shapes: new ShapeFx(),
+        trail: new Afterimages(0.028, 0.2, 7),
+        entHash: new SpatialHash(64),
         /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
            ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
         scenes: createScenes({
@@ -35376,10 +37106,8 @@
       this.ctx = this.cv.getContext("2d");
       this.mm = $("#minimap");
       this.mmx = this.mm.getContext("2d");
-      this.mapAtlas = document.createElement("canvas");
-      this.mapAtlas.width = WW2;
-      this.mapAtlas.height = WH2;
-      this.mapAtlasX = this.mapAtlas.getContext("2d");
+      this.mapAtlas = new MapAtlas();
+      this.mapAtlas.fit(WW2, WH2);
       addEventListener("resize", () => this.resize());
       this.resize();
       TileArt.build();
@@ -35479,6 +37207,10 @@
       return !TOUCH ? "high" : Math.min(screen.width, screen.height) <= 540 ? "low" : "mid";
     },
     /** 설정의 시야 배율. */
+    /** sec 초 뒤에 fn — 세계 시간으로 흐른다(멈추면 같이 멈춘다) */
+    after(sec, fn) {
+      return this.tweens.after(sec, fn);
+    },
     viewZoom() {
       return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6);
     },
@@ -35527,6 +37259,26 @@
           buttons: [{ id: "jump", label: tr("점프") }, { id: "dash", label: tr("대시") }],
           altLabel: tr("사용")
         });
+      this.autosave = createAutosave({
+        every: AUTOSAVE_SEC,
+        can: () => this.state === "play" && this.currentSlot !== null && !!this.player && this.player.hp > 0 && !this.boss && !(this.net && this.net.role === "guest"),
+        save: (quiet) => this.saveGame(quiet)
+      });
+      this.pad = createGamepad({
+        input: this.inp,
+        ptr: this.input,
+        hold: { 0: "jump", 1: "dash", 12: "jump" },
+        tap: { 2: "skill1", 10: "skill2", 11: "skill3", 3: "inv", 8: "map", 9: "menu", 4: "slotPrev", 5: "slotNext" },
+        press: (a) => this.padPress(a),
+        anchor: () => {
+          const z = this.viewZoom(), p = this.player;
+          return p ? { x: (p.cx - this.cam.x) * z, y: (p.cy - this.cam.y) * z } : { x: innerWidth / 2, y: innerHeight / 2 };
+        },
+        rightDown: () => {
+          if (this.state === "play") this.rightClick();
+        },
+        active: (on) => document.body.classList.toggle("pad", on)
+      });
       if (this.touch) document.body.classList.add("touch");
       if (this.touch) {
         const lift = () => {
@@ -35557,7 +37309,25 @@
       });
     },
     /** 새로 눌린 키 하나(반복 아님) — 패널 · 저장 · 핫바 · 스킬. */
+    /** 패드의 한 번 누르는 단추 — 그 액션에 걸린 첫 키를 누른 것으로 친다(키 처리 한 곳을 같이 쓴다) */
+    padPress(a) {
+      if (a === "slotPrev" || a === "slotNext") {
+        if (this.state !== "play" || !this.player) return;
+        const p = this.player;
+        p.sel = (p.sel + (a === "slotNext" ? 1 : -1) + HOTBAR) % HOTBAR;
+        UI5.refreshHotbar();
+        return;
+      }
+      const code = a === "menu" ? "Escape" : this.keysFor(a)[0];
+      if (code) this.keyDown({ code, preventDefault() {
+      } });
+    },
     keyDown(e) {
+      if (e.code === "F3") {
+        this.pipe.profile(this.perf.toggle());
+        if (e.preventDefault) e.preventDefault();
+        return;
+      }
       if (this.state !== "play") {
         if (e.code === "Escape" && this.closeTopModal()) e.preventDefault();
         return;
@@ -35714,11 +37484,10 @@
       this.parts = [];
       this.texts = [];
       this.drops = [];
-      this.pending = [];
+      this.tweens.clear();
       this.corpses = [];
-      this.rings = [];
-      this.bolts = [];
-      this.warns = [];
+      this.shapes.clear();
+      this.trail.clear();
       this.sigs = [];
       this.edge = null;
       this.guardCd = 0;
@@ -35772,7 +37541,7 @@
       this.ruinEvDone = {};
       this.trapTimer = 0;
       this.rainT = 0;
-      this.rainDrops = null;
+      this.precip = null;
       this.smokes = [];
       this.smokeT = 0;
       this.vault = new Array(VAULT_SIZE).fill(null);
@@ -35805,6 +37574,9 @@
     /* ================= 루프 ================= */
     /** 한 프레임 — dt 는 0.033초로 자른 것, rawDt 는 실제로 흐른 시간(engine/core/loop.js). */
     frame(dt, rawDt) {
+      if (this.pad) this.pad.poll();
+      this.fade.update(Math.min(rawDt, 0.1));
+      this.perf.frame(rawDt);
       this.scenes.frame(dt);
       if (Music) {
         Music.update(Math.min(rawDt, 3));
@@ -35861,10 +37633,8 @@
     },
     update(dt) {
       const { WW: WW2, WH: WH2 } = dimsOf(this.world);
-      if (this.stopT > 0) {
-        this.stopT -= dt;
-        dt *= 0.12;
-      }
+      dt = this.timeScale.step(dt);
+      if (this.autosave && !this.net) this.autosave.tick(dt);
       this.time += dt;
       if (this.state === "play" && !this.paused) {
         this.tally = this.tally || {};
@@ -35916,6 +37686,7 @@
         p.mineTx = -1;
         p.mineProg = 0;
       }
+      this.pathBudget = PATH_BUDGET;
       for (let i = this.ents.length - 1; i >= 0; i--) {
         const e = this.ents[i];
         const tp = this.nearestPlayer(e.cx, e.cy);
@@ -35925,6 +37696,7 @@
         if (e.dead) this.ents.splice(i, 1);
         else if (!e.boss && !e.minion && !e.guard && dist2(e.cx, e.cy, tp.cx, tp.cy) > 2400 * 2400) this.ents.splice(i, 1);
       }
+      this.entHash.rebuild(this.ents, (e) => e instanceof Enemy && !e.dead);
       for (let i = this.projs.length - 1; i >= 0; i--) {
         this.projs[i].update(dt, w, p);
         if (this.projs[i].dead) this.projs.splice(i, 1);
@@ -35934,19 +37706,13 @@
         d.update(dt, w, this.nearestPlayer(d.x, d.y));
         if (this.drops[i].dead) this.drops.splice(i, 1);
       }
-      for (let i = this.parts.length - 1; i >= 0; i--) if (!this.parts[i].update(dt)) this.parts.splice(i, 1);
+      stepParticles(this.parts, dt, QUALITY[this.quality()].parts);
+      this.shapes.update(dt);
+      this.trail.update(dt, p.dashV > 0 && !p.swimming, p.x, p.y, () => ({ fr: this.playerFrame(p), flip: p.facing < 0, key: "player_" + CHAR_OF(p.charId).id }));
       this.walkDust(p);
-      const cap = QUALITY[this.quality()].parts;
-      if (this.parts.length > cap) this.parts.splice(0, this.parts.length - cap);
       for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
       for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
-      for (let i = this.pending.length - 1; i >= 0; i--) {
-        this.pending[i].t -= dt;
-        if (this.pending[i].t <= 0) {
-          this.pending[i].fn();
-          this.pending.splice(i, 1);
-        }
-      }
+      this.tweens.update(dt);
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0 && !guest) {
         this.spawnTimer = 1.1;
@@ -35999,10 +37765,10 @@
           const posts = w.dawnCity.posts || [w.dawnCity.x0 - 12];
           if (gs.length < posts.length && this.guardCd <= 0) {
             const taken = new Set(gs.map((g) => g.homeTx));
-            const tx2 = posts.find((t) => !taken.has(t));
-            if (tx2 !== void 0) {
-              const g = new Guard(tx2 * TS, (w.dawnCity.gy - 3) * TS, p.level);
-              g.homeTx = tx2;
+            const tx = posts.find((t) => !taken.has(t));
+            if (tx !== void 0) {
+              const g = new Guard(tx * TS, (w.dawnCity.gy - 3) * TS, p.level);
+              g.homeTx = tx;
               this.ents.push(g);
             }
             this.guardCd = gs.length === 0 ? 0.4 : 25;
@@ -36014,9 +37780,7 @@
         this.growTimer = 5;
         for (const q of this.players) w.regrow(this.rng, 4, Math.floor(q.cx / TS));
       }
-      const tx = p.cx - this.W / 2, ty = p.cy - this.H / 2 - 30;
-      this.cam.x = lerp(this.cam.x, clamp(tx, 0, WW2 * TS - this.W), 1 - Math.pow(2e-3, dt));
-      this.cam.y = lerp(this.cam.y, clamp(ty, 0, WH2 * TS - this.H), 1 - Math.pow(2e-3, dt));
+      this.cam.update(dt, p.cx - this.W / 2, p.cy - this.H / 2 - 30, p.vx, p.vy, WW2 * TS - this.W, WH2 * TS - this.H);
       this.shake = Math.max(0, this.shake - dt * 26);
       const heldTool = p.held() && idef(p.held()).type === "tool";
       if (heldTool !== this._mining) {
@@ -36257,71 +38021,144 @@
   // src/game/game/shell.ts
   var shell_exports = {};
   __export(shell_exports, {
+    SETTINGS: () => SETTINGS,
     ShellPart: () => ShellPart
   });
+
+  // src/engine/save/settings.ts
+  function createSettingsStore(key, defaults) {
+    return {
+      /** 저장한 값(없거나 깨졌으면 빈 것)과 기본값을 합친 것 · raw 는 저장돼 있던 그대로(처음 쓰는 칸인지 볼 때) */
+      load() {
+        let raw = {};
+        try {
+          raw = JSON.parse(localStorage.getItem(key)) || {};
+        } catch (e) {
+          raw = {};
+        }
+        return { value: Object.assign({}, defaults, raw), raw };
+      },
+      save(v) {
+        try {
+          localStorage.setItem(key, JSON.stringify(v));
+          return true;
+        } catch (e) {
+          return false;
+        }
+      },
+      /** 저장한 것을 지우고 기본값으로 */
+      reset() {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+        }
+        return Object.assign({}, defaults);
+      }
+    };
+  }
+
+  // src/engine/ui/modal.ts
+  var $q = (sel) => document.querySelector(sel);
+  function createModalStack(order, closeHook) {
+    return {
+      open(sel) {
+        const el = $q(sel);
+        if (el) el.classList.add("open");
+      },
+      close(sel) {
+        const el = $q(sel);
+        if (el) el.classList.remove("open");
+      },
+      isOpen(sel) {
+        const el = $q(sel);
+        return !!el && el.classList.contains("open");
+      },
+      /** 가장 위에 열린 창 하나를 닫는다 — 닫았으면 true(Esc 를 삼켰다) */
+      closeTop() {
+        for (const sel of order) {
+          const el = $q(sel);
+          if (!el || !el.classList.contains("open")) continue;
+          if (closeHook && closeHook[sel]) closeHook[sel]();
+          else el.classList.remove("open");
+          return true;
+        }
+        return false;
+      },
+      closeAll() {
+        for (const sel of order) {
+          const el = $q(sel);
+          if (el) el.classList.remove("open");
+        }
+      },
+      get any() {
+        return order.some((sel) => {
+          const el = $q(sel);
+          return !!el && el.classList.contains("open");
+        });
+      }
+    };
+  }
+  function confirmBox(p, text, okLabel, cancelLabel) {
+    return new Promise((res) => {
+      const el = $q(p.root), okB = $q(p.ok), noB = $q(p.cancel);
+      $q(p.msg).textContent = text;
+      okB.textContent = okLabel;
+      noB.textContent = cancelLabel;
+      const key = (e) => {
+        if (e.key !== "Escape" && e.key !== "Enter") return;
+        e.preventDefault();
+        e.stopPropagation();
+        done(e.key === "Enter");
+      };
+      const done = (v) => {
+        el.classList.remove("open");
+        removeEventListener("keydown", key, true);
+        res(v);
+      };
+      okB.onclick = () => done(true);
+      noB.onclick = () => done(false);
+      el.onclick = (e) => {
+        if (e.target === el) done(false);
+      };
+      addEventListener("keydown", key, true);
+      el.classList.add("open");
+      noB.focus();
+    });
+  }
+
+  // src/game/game/shell.ts
+  var SETTINGS = createSettingsStore(SET_KEY, SET_DEFAULT);
   var ShellPart = {
     /** 게임 안 확인 창 — 확인이면 true. Esc·바깥 누르기는 취소, Enter 는 확인. 브라우저 confirm 은 게임 화면 밖에 떴다. */
     askConfirm(msg, ok) {
-      return new Promise((res) => {
-        const el = $("#confirm-screen"), okB = $("#btn-confirm-ok"), noB = $("#btn-confirm-cancel");
-        $("#confirm-msg").textContent = msg;
-        okB.textContent = ok || tr("확인");
-        noB.textContent = tr("취소");
-        const key = (e) => {
-          if (e.key !== "Escape" && e.key !== "Enter") return;
-          e.preventDefault();
-          e.stopPropagation();
-          done(e.key === "Enter");
-        };
-        const done = (v) => {
-          el.classList.remove("open");
-          removeEventListener("keydown", key, true);
-          res(v);
-        };
-        okB.onclick = () => done(true);
-        noB.onclick = () => done(false);
-        el.onclick = (e) => {
-          if (e.target === el) done(false);
-        };
-        addEventListener("keydown", key, true);
-        el.classList.add("open");
-        noB.focus();
-      });
+      return confirmBox({ root: "#confirm-screen", msg: "#confirm-msg", ok: "#btn-confirm-ok", cancel: "#btn-confirm-cancel" }, msg, ok || tr("확인"), tr("취소"));
     },
-    /* ---- 타이틀 팝업 ---- */
+    /* ---- 타이틀 팝업(engine ui/modal) — 여러 겹으로 열린다(슬롯 위에 새 게임). 목록 앞이 위 ---- */
+    modals: null,
+    modalStack() {
+      return this.modals || (this.modals = createModalStack([
+        "#code-screen",
+        "#newgame-screen",
+        "#bye-screen",
+        "#credits-screen",
+        "#settings-screen",
+        "#slots-screen",
+        "#mp-screen"
+      ], { "#code-screen": () => this.closeCodeDoor() }));
+    },
     openModal(sel) {
-      $(sel).classList.add("open");
+      this.modalStack().open(sel);
     },
     closeModal(sel) {
-      $(sel).classList.remove("open");
+      this.modalStack().close(sel);
     },
-    /* 팝업은 여러 겹으로 열린다(슬롯 위에 새 게임). */
-    MODAL_STACK: [
-      "#code-screen",
-      "#newgame-screen",
-      "#bye-screen",
-      "#credits-screen",
-      "#settings-screen",
-      "#slots-screen",
-      "#mp-screen"
-    ],
     /** 열려 있는 팝업 중 가장 위의 것을 닫는다. */
     closeTopModal() {
-      for (const sel of this.MODAL_STACK) {
-        const el = $(sel);
-        if (!el || !el.classList.contains("open")) continue;
-        if (sel === "#code-screen") this.closeCodeDoor();
-        else el.classList.remove("open");
-        return true;
-      }
-      return false;
+      return this.modalStack().closeTop();
     },
     /** 게임에 들어갈 때 — 타이틀에서 열려 있던 팝업을 전부 걷는다 */
     closeAllModals() {
-      this.MODAL_STACK.forEach((sel) => {
-        const el = $(sel);
-        if (el) el.classList.remove("open");
-      });
+      this.modalStack().closeAll();
     },
     /** 나가기. */
     quit() {
@@ -36344,20 +38181,13 @@
     },
     /* ================= 설정 ================= */
     loadSettings() {
-      let v = {};
-      try {
-        v = JSON.parse(localStorage.getItem(SET_KEY)) || {};
-      } catch (e) {
-      }
-      this.settings = Object.assign({}, SET_DEFAULT, v);
+      const { value, raw: v } = SETTINGS.load();
+      this.settings = value;
       if (v.uiscale === void 0 && TOUCH && Math.min(innerWidth, innerHeight) <= 540) this.settings.uiscale = 80;
       this.applySettings();
     },
     saveSettings() {
-      try {
-        localStorage.setItem(SET_KEY, JSON.stringify(this.settings));
-      } catch (e) {
-      }
+      SETTINGS.save(this.settings);
     },
     /** 설정값을 실제 동작에 반영한다. */
     applySettings() {
@@ -36519,7 +38349,7 @@
       return p;
     },
     /** 저장이 끝나면 true. */
-    async saveGame() {
+    async saveGame(quiet) {
       if (this.net && this.net.role === "guest") return this.netSaveChar(this.net, true);
       if (this.currentSlot === null) return false;
       if (this._saving) {
@@ -36532,7 +38362,8 @@
         const data = this.saveData();
         data.sealed = 1;
         await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
-        this.toast(tr("저장했다"), "good");
+        if (!quiet) this.toast(tr("저장했다"), "good");
+        if (this.autosave) this.autosave.reset();
         return true;
       } catch (e) {
         this.toast(e && e.name === "QuotaExceededError" ? tr("저장 실패: 용량 초과") : tr("저장 실패"), "bad");
@@ -36753,7 +38584,7 @@
         this.eventRolled = -1;
         this.lairs = d.lairs || {};
         this.rainT = 0;
-        this.rainDrops = null;
+        this.precip = null;
         this.smokes = [];
         this.smokeT = 0;
         this.vault = d.vault || new Array(VAULT_SIZE).fill(null);
@@ -36774,11 +38605,10 @@
         this.parts = [];
         this.texts = [];
         this.drops = [];
-        this.pending = [];
+        this.tweens.clear();
         this.boss = null;
-        this.rings = [];
-        this.bolts = [];
-        this.warns = [];
+        this.shapes.clear();
+        this.trail.clear();
         this.sigs = [];
         this.edge = null;
         this.guardCd = 0;
@@ -36985,12 +38815,15 @@
       }
     },
     /** 타일 좌표에서 나는 소리 — 화면 근처가 아니면 아예 재생하지 않는다. */
+    /* 멀리서 난 소리는 작게, 옆에서 난 소리는 그쪽 귀로(engine audio/spatial) — 화면 밖 멀리는 아예 틀지 않는다 */
     sfxAt(kind, tx, ty, rate, vol) {
       const p = this.player;
       if (!p) return;
       const dx = Math.abs(tx * TS - p.cx), dy = Math.abs(ty * TS - p.cy);
       if (dx > this.W * 0.6 + 120 || dy > this.H * 0.6 + 120) return;
-      this.sfx(kind, rate, vol);
+      const m = spatialMix({ near: 160, far: Math.max(this.W, this.H) * 0.75 + 160, panWidth: this.W * 0.5, maxPan: 0.55 }, p.cx, p.cy, tx * TS, ty * TS);
+      if (!m) return;
+      this.sfx(kind, rate, (vol === void 0 ? 1 : vol) * (0.35 + 0.65 * m.gain), m.pan);
     },
     /* ================= 재질 파편 ================= */
     /* ★ 이름은 반드시 matBurst 다. */
@@ -37007,7 +38840,7 @@
           m.c[Math.random() * m.c.length | 0],
           o.vy === void 0 ? -20 : o.vy,
           m.life * (o.life || 1),
-          { g: m.g, sq: m.sq, glow: m.glow, spd, r: o.r || 1, drag: m.glow ? 0.9 : 0.96 }
+          { g: m.g, sq: m.sq, glow: m.glow, spd, r: o.r || 1, drag: m.glow ? 0.9 : 0.96, bounce: o.ring ? 0 : m.bounce }
         );
         if (rr) {
           const v = Math.hypot(pt.vx, pt.vy) * (o.in ? -1 : 1);
@@ -37058,17 +38891,14 @@
       this.shake = Math.max(this.shake, d.shake || 20);
       if (!d.mat2) return;
       const x = e.cx, y = e.cy;
-      this.pending.push({
-        t: d.at || 0.2,
-        fn: () => {
-          this.matBurst(d.mat2, x, y, d.n2, {
-            spd: (d.spd || 1) * 1.25,
-            life: (d.life || 1) * 1.1,
-            r: 1.2
-          });
-          this.sfx(MAT[d.mat2].brk, 0.78 + Math.random() * 0.18);
-          this.shake = Math.max(this.shake, (d.shake || 20) * 0.5);
-        }
+      this.after(d.at || 0.2, () => {
+        this.matBurst(d.mat2, x, y, d.n2, {
+          spd: (d.spd || 1) * 1.25,
+          life: (d.life || 1) * 1.1,
+          r: 1.2
+        });
+        this.sfx(MAT[d.mat2].brk, 0.78 + Math.random() * 0.18);
+        this.shake = Math.max(this.shake, (d.shake || 20) * 0.5);
       });
     },
     /** 캐는 동안 한 획마다 — 파편 한 톨과 재질 타격음 */
@@ -37125,8 +38955,9 @@
       n.start(t);
     },
     /* ================= 효과음 ================= */
-    sfx(kind, rate, volMul) {
-      if (Sfx && Sfx.play(kind, rate, volMul)) return;
+    sfx(kind, rate, volMul, pan) {
+      if (this.ac && this.ac.state === "suspended") this.ac.resume();
+      if (Sfx && Sfx.play(kind, rate, volMul, pan)) return;
       const ac = this.ac;
       if (!ac) return;
       if (ac.state === "suspended") ac.resume();
@@ -37296,13 +39127,12 @@
         e.hurt(dmg * (crit ? 1 + this.player.d.critD / 100 : 1), crit, this.player, kb);
         if (effect === "frost") e.slow(0.5, 3);
       }
-      this.rings = this.rings || [];
-      this.rings.push({ x, y, r, t: 0.3, c: color });
+      this.shapes.ring(x, y, r, color, 0.3);
     },
     /** 퍼져 나가는 고리. */
     /** 세계를 s초만큼 멈춘다(겹치면 긴 쪽). */
     hitStop(s) {
-      this.stopT = Math.min(0.12, Math.max(this.stopT || 0, s || 0));
+      this.timeScale.hit(s, 0.12);
     },
     /* ★ 입력을 삼키면 안 된다. */
     skillDeny(slot, msg) {
@@ -37316,24 +39146,15 @@
       if (msg) this.toast(msg, "bad");
     },
     ringFx(x, y, r, c, life) {
-      this.rings = this.rings || [];
-      this.rings.push({ x, y, r, t: life || 0.3, max: life || 0.3, c });
+      this.shapes.ring(x, y, r, c, life || 0.3);
     },
     /** 두 점을 잇는 번개. */
     boltFx(x0, y0, x1, y1, c) {
-      this.bolts = this.bolts || [];
-      const seg = 7, pts = [];
-      for (let i = 0; i <= seg; i++) {
-        const k = i / seg, j = i === 0 || i === seg ? 0 : (Math.random() - 0.5) * 26;
-        const nx = -(y1 - y0), ny = x1 - x0, L = Math.hypot(nx, ny) || 1;
-        pts.push([x0 + (x1 - x0) * k + nx / L * j, y0 + (y1 - y0) * k + ny / L * j]);
-      }
-      this.bolts.push({ pts, t: 0.22, max: 0.22, c });
+      this.shapes.bolt(x0, y0, x1, y1, c);
     },
     /** 떨어질 자리 예고 — 차오르는 원. */
     warnFx(x, y, r, dur, c) {
-      this.warns = this.warns || [];
-      this.warns.push({ x, y, r, t: dur, max: dur, c });
+      this.shapes.warn(x, y, r, dur, c);
     },
     /* ---- 특별한 스킬의 고유 연출 (SIG_FX) ---- */
     sigFx(o) {
@@ -38949,19 +40770,21 @@
               return;
             }
             p.gold -= cost;
-            this.dayT = 6 * 60;
-            this.dayCount++;
-            this.trainedToday = 0;
-            this.updateEconomy();
-            this.rollBounties();
-            p.hp = p.d.maxHp;
-            p.mp = p.d.maxMp;
-            p.addBuff("rested");
-            this.toast(tr("푹 잤다 — 아침이다"), "good");
-            this.sfx("level");
-            this.tally = this.tally || {};
-            this.tally.inn = (this.tally.inn || 0) + 1;
-            this.checkAch();
+            this.fade.run(() => {
+              this.dayT = 6 * 60;
+              this.dayCount++;
+              this.trainedToday = 0;
+              this.updateEconomy();
+              this.rollBounties();
+              p.hp = p.d.maxHp;
+              p.mp = p.d.maxMp;
+              p.addBuff("rested");
+              this.toast(tr("푹 잤다 — 아침이다"), "good");
+              this.sfx("level");
+              this.tally = this.tally || {};
+              this.tally.inn = (this.tally.inn || 0) + 1;
+              this.checkAch();
+            }, 0.6, 0.5, 1);
           }
         }
       ]);
@@ -40046,6 +41869,7 @@
     },
     onBossDown(id) {
       this.boss = null;
+      this.timeScale.slow(1.1, 0.3);
       this.pulseBossDown();
       if (this.pendingLair !== void 0 && this.pendingLair !== null) {
         this.lairs = this.lairs || {};
@@ -40120,6 +41944,32 @@
   __export(progress_exports, {
     ProgressPart: () => ProgressPart
   });
+
+  // src/engine/core/achieve.ts
+  function checkUnlocks(list, done, state, open, now2 = Date.now()) {
+    let n = 0;
+    for (const a of list) {
+      if (done[a.id] || !a.check) continue;
+      let ok = false;
+      try {
+        ok = !!a.check(state);
+      } catch (e) {
+        ok = false;
+      }
+      if (!ok) continue;
+      done[a.id] = now2;
+      n++;
+      open(a);
+    }
+    return n;
+  }
+  function unlockProgress(list, done) {
+    let got = 0;
+    for (const a of list) if (done[a.id]) got++;
+    return { got, all: list.length };
+  }
+
+  // src/game/game/progress.ts
   var ProgressPart = {
     /* ================= 진행 ================= */
     /* 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은 목록에 없거나 있어도 순서가 강제됐다 — 사연: docs/code-history.md#h54 */
@@ -40297,7 +42147,7 @@
       UI5.refreshTracker();
       UI5.refreshQuest();
       this.sfx("story");
-      if (ch.rw.gold) this.pending.push({ t: 0.45, fn: () => this.sfx("manycoins") });
+      if (ch.rw.gold) this.after(0.45, () => this.sfx("manycoins"));
     },
     onKill() {
       if (this.pulseHere) this.addPulse(this.pulseHere, -PULSE.kill * (this.hasSeal("spore") ? 2 : 1));
@@ -40306,18 +42156,7 @@
     /* 업적 판정. */
     checkAch() {
       if (!this.player || !this.achievements) return;
-      for (const a of ACHIEVEMENTS) {
-        if (this.achievements[a.id]) continue;
-        let ok = false;
-        try {
-          ok = !!a.check(this);
-        } catch (e) {
-          ok = false;
-        }
-        if (!ok) continue;
-        this.achievements[a.id] = Date.now();
-        this.onAchieved(a);
-      }
+      checkUnlocks(ACHIEVEMENTS, this.achievements, this, (a) => this.onAchieved(a));
     },
     onAchieved(a) {
       this.toast(tr("업적 달성 — {a}", { a: a.n }), "good");
@@ -40700,6 +42539,7 @@
         p.y = (w.spawnY - 3) * TS;
       }
       p.vx = p.vy = 0;
+      this.fade.reveal(0.9);
       p.hp = p.d.maxHp;
       p.mp = p.d.maxMp;
       p.iframe = 2;
@@ -40803,7 +42643,7 @@
     },
     updateEvents(dt) {
       const { WW: WW2 } = dimsOf(this.world);
-      const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
+      const night = DAY_CYCLE.isNight(this.dayT);
       const phase = this.dayCount * 2 + (night ? 1 : 0);
       if (this.meteorRolled === void 0) this.meteorRolled = phase;
       if (this.meteorRolled !== phase) {
@@ -40898,7 +42738,7 @@
       const normal = this.ents.filter((e) => e instanceof Enemy && !e.boss).length;
       const ev = this.eventActive() ? this.eventSpec() : null;
       if (normal >= (ev ? ev.cap : 22) * Math.max(1, 0.75 * this.players.length) || this.boss) return;
-      const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
+      const night = DAY_CYCLE.isNight(this.dayT);
       const playerZone = w.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
       if (this.trySpawnWater(normal)) return;
       if (this.trySpawnFlotsam()) return;
@@ -40980,8 +42820,133 @@
   // src/game/game/weather.ts
   var weather_exports = {};
   __export(weather_exports, {
+    WIND: () => WIND,
     WeatherPart: () => WeatherPart
   });
+
+  // src/engine/fx/precip.ts
+  var Precip = class {
+    constructor() {
+      this.mode = "rain";
+      this.drops = null;
+    }
+    /** 다 걷혔나(세기 0 이고 켜진 방울이 하나도 없다) */
+    get idle() {
+      return !this.drops || !this.drops.some((d) => d.on);
+    }
+    /** 비 ↔ 눈이 바뀌면 처음부터 다시 깐다 */
+    setMode(m) {
+      if (m !== this.mode) {
+        this.mode = m;
+        this.drops = null;
+      }
+    }
+    /** amount 0~1 — 켜진 방울 비율. W·H 는 화면(그리는 좌표계) 크기 */
+    /** wind — 가로 바람(px/s, engine fx/wind) — 눈은 다 받고 비는 조금 받는다 */
+    update(dt, amount, camDx, camDy, W, H, hooks = {}, rand = Math.random, wind = 0) {
+      if (amount <= 0 && this.idle) {
+        this.drops = null;
+        return;
+      }
+      if (Math.abs(camDx) > W || Math.abs(camDy) > H) camDx = camDy = 0;
+      const snow = this.mode === "snow";
+      if (!this.drops) {
+        this.drops = [];
+        const n = snow ? 110 : 160;
+        for (let i = 0; i < n; i++) this.drops.push({
+          x: rand() * W,
+          y: rand() * H,
+          k: i / n,
+          on: false,
+          len: 10 + rand() * 14,
+          spd: snow ? 40 + rand() * 50 : 480 + rand() * 260,
+          r: 1.5 + rand() * 2,
+          drift: rand() * Math.PI * 2,
+          sway: 20 + rand() * 30
+        });
+      }
+      const top = (d) => {
+        d.y -= H + 40;
+        d.x = rand() * W;
+        d.on = d.k < amount && (!hooks.open || hooks.open(d.x, d.y));
+      };
+      for (const d of this.drops) {
+        if (snow) {
+          d.y += d.spd * dt - camDy;
+          d.drift += dt * 1.4;
+          d.x += (Math.sin(d.drift) * d.sway + wind) * dt - camDx;
+        } else {
+          d.y += d.spd * dt - camDy;
+          d.x += (wind * 0.5 - d.spd * 0.15) * dt - camDx;
+        }
+        if (d.on && hooks.blocked && d.y > 0 && hooks.blocked(d.x, d.y + (snow ? d.r : d.len))) {
+          if (hooks.hit) hooks.hit(d.x, d.y + (snow ? d.r : d.len), this.mode);
+          d.y = H + 1;
+        }
+        if (d.y > H) top(d);
+        else if (d.y < -40) d.y += H + 40;
+        if (d.x < -20) d.x += W + 40;
+        else if (d.x > W + 20) d.x -= W + 40;
+      }
+    }
+    /** 그리기 — 비는 기울어진 줄 한 묶음(한 번에 stroke), 눈은 동그란 점 */
+    /** slant — 빗줄기가 한 줄에서 옆으로 기우는 정도(px, 바람이 세면 더 눕는다) */
+    draw(c, color = this.mode === "snow" ? "#f0f6ff" : "#bcd0e0", alpha = this.mode === "snow" ? 0.85 : 0.55, slant = -5) {
+      if (!this.drops) return;
+      c.globalAlpha = alpha;
+      if (this.mode === "snow") {
+        c.fillStyle = color;
+        for (const d of this.drops) if (d.on) {
+          c.beginPath();
+          c.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+          c.fill();
+        }
+      } else {
+        c.strokeStyle = color;
+        c.lineWidth = 1.4;
+        c.beginPath();
+        for (const d of this.drops) if (d.on) {
+          c.moveTo(d.x, d.y);
+          c.lineTo(d.x + slant, d.y + d.len);
+        }
+        c.stroke();
+      }
+      c.globalAlpha = 1;
+    }
+  };
+
+  // src/engine/fx/wind.ts
+  function n1(t, seed) {
+    const h = (i2) => {
+      let x = Math.imul(i2 ^ seed, 739982445);
+      x ^= x >>> 12;
+      x = Math.imul(x, 695872825);
+      x ^= x >>> 15;
+      return (x >>> 0) / 4294967295 * 2 - 1;
+    };
+    const i = Math.floor(t), f = t - i, u = f * f * (3 - 2 * f);
+    return h(i) * (1 - u) + h(i + 1) * u;
+  }
+  var Wind = class {
+    /** base — 바탕 바람의 세기(px/s) · gust — 돌풍의 세기 */
+    constructor(base = 18, gust = 40, seed = 7) {
+      this.base = base;
+      this.gust = gust;
+      this.seed = seed;
+      this.storm = 0;
+    }
+    /** 시각 t(초) · 높이 y(px, 높을수록 세다 — 땅 가까이는 막힌다)의 가로 바람(px/s) */
+    at(t, y = 0) {
+      const s = 1 + this.storm * 1.5;
+      const slow = n1(t / 23, this.seed) * this.base;
+      const g = Math.max(0, n1(t / 3.1, this.seed + 1)) ** 2 * this.gust;
+      const hgt = y < 0 ? 1.25 : 1;
+      return (slow + g * Math.sign(slow || 1)) * s * hgt;
+    }
+  };
+
+  // src/game/game/weather.ts
+  var WIND = new Wind(16, 36, 11);
   var WeatherPart = {
     /** 빗줄기 페이드 인/아웃 + 화면 좌표계 낙하 갱신. */
     updateWeather(dt) {
@@ -40991,85 +42956,37 @@
       const inSafeZone = zone === "village" || zone === "camp";
       const raining = isRain && (this.eventActive() || inSafeZone);
       const snowing = !!(raining && zone === "ice");
-      if (snowing !== !!this.snowMode) {
-        this.snowMode = snowing;
-        this.rainDrops = null;
-      }
+      this.precip = this.precip || new Precip();
+      this.precip.setMode(snowing ? "snow" : "rain");
       this.rainT = clamp((this.rainT || 0) + (raining ? 1 : -1) * dt / 2.5, 0, 1);
       const cam = this.cam, pc = this._rainCam;
-      let mx = pc ? cam.x - pc.x : 0, my = pc ? cam.y - pc.y : 0;
-      if (Math.abs(mx) > this.W || Math.abs(my) > this.H) mx = my = 0;
+      const mx = pc ? cam.x - pc.x : 0, my = pc ? cam.y - pc.y : 0;
       this._rainCam = { x: cam.x, y: cam.y };
-      if (this.rainT <= 0 && (!this.rainDrops || !this.rainDrops.some((d) => d.on))) {
-        this.rainDrops = null;
-        return;
-      }
-      const W = this.W || 1280, H = this.H || 720;
-      if (!this.rainDrops) {
-        this.rainDrops = [];
-        const n = this.snowMode ? 110 : 160;
-        for (let i = 0; i < n; i++) this.rainDrops.push(this.snowMode ? {
-          x: Math.random() * W,
-          y: Math.random() * H,
-          k: i / n,
-          on: false,
-          r: 1.5 + Math.random() * 2,
-          spd: 40 + Math.random() * 50,
-          drift: Math.random() * TAU,
-          sway: 20 + Math.random() * 30
-        } : {
-          x: Math.random() * W,
-          y: Math.random() * H,
-          k: i / n,
-          on: false,
-          len: 10 + Math.random() * 14,
-          spd: 480 + Math.random() * 260
-        });
-      }
-      const top = (d) => {
-        d.y -= H + 40;
-        d.x = Math.random() * W;
-        d.on = d.k < this.rainT;
-      };
-      for (const d of this.rainDrops) {
-        if (this.snowMode) {
-          d.y += d.spd * dt - my;
-          d.drift += dt * 1.4;
-          d.x += Math.sin(d.drift) * d.sway * dt - mx;
-        } else {
-          d.y += d.spd * dt - my;
-          d.x -= d.spd * 0.15 * dt + mx;
+      if (!w) return;
+      const cell = (sx, sy) => [Math.floor((sx + cam.x) / TS), Math.floor((sy + cam.y) / TS)];
+      this.precip.update(dt, this.rainT, mx, my, this.W || 1280, this.H || 720, {
+        open: (sx, sy) => {
+          const [x, y] = cell(sx, sy);
+          return y <= w.surface[Math.max(0, Math.min(w.surface.length - 1, x))];
+        },
+        blocked: (sx, sy) => {
+          const [x, y] = cell(sx, sy);
+          return w.solid(x, y) || !!TILE_DEF[w.get(x, y)].liquid;
+        },
+        hit: (sx, sy, mode) => {
+          if (mode === "snow" || Math.random() > 0.35) return;
+          this.parts.push(new Part(sx + cam.x, sy + cam.y - 1, "#cfe0ee", -70, 0.18, { spd: 0.35, r: 0.6 }));
         }
-        if (d.y > H) top(d);
-        else if (d.y < -40) d.y += H + 40;
-        if (d.x < -20) d.x += W + 40;
-        else if (d.x > W + 20) d.x -= W + 40;
-      }
+      }, Math.random, this.windNow());
     },
-    /** 빗줄기. */
+    /** 빗줄기 · 눈송이 */
     drawRain(c) {
-      if (!this.rainDrops) return;
-      if (this.snowMode) {
-        c.globalAlpha = 0.85;
-        c.fillStyle = "#f0f6ff";
-        for (const d of this.rainDrops) if (d.on) {
-          c.beginPath();
-          c.arc(d.x, d.y, d.r, 0, TAU);
-          c.fill();
-        }
-        c.globalAlpha = 1;
-        return;
-      }
-      c.globalAlpha = 0.55;
-      c.strokeStyle = "#bcd0e0";
-      c.lineWidth = 1.4;
-      c.beginPath();
-      for (const d of this.rainDrops) if (d.on) {
-        c.moveTo(d.x, d.y);
-        c.lineTo(d.x - 5, d.y + d.len);
-      }
-      c.stroke();
-      c.globalAlpha = 1;
+      if (this.precip) this.precip.draw(c, void 0, void 0, clamp(this.windNow() * 0.08 - 5, -14, 6));
+    },
+    /** 지금 바람(px/s) — 비가 오면 세진다(engine fx/wind). 비 · 눈 · 굴뚝 연기가 같이 받는다 */
+    windNow() {
+      WIND.storm = this.rainT || 0;
+      return WIND.at(this.time || 0);
     },
     /** 하늘에 늘 몇 점씩 흘러가는 구름. */
     drawClouds(c, camX, camY, rainT) {
@@ -41327,7 +43244,7 @@
             s.y = (ty + 1) * TS + s.sz * 0.4;
           } else {
             s.y = ny;
-            s.x += Math.sin(s.sway + s.t * 1.6) * 8 * dt;
+            s.x += (Math.sin(s.sway + s.t * 1.6) * 8 + this.windNow() * 0.5 * Math.min(1, s.t)) * dt;
           }
         }
       }
@@ -41509,17 +43426,7 @@
       const { WW: WW2 } = dimsOf(this.world);
       const w = this.world;
       if (this.quake) return;
-      const cells = [], seen = /* @__PURE__ */ new Set([ty * WW2 + tx]), st = [[tx, ty]];
-      while (st.length && cells.length < 6e3) {
-        const [x, y] = st.pop();
-        for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
-          const k = ny * WW2 + nx;
-          if (seen.has(k) || w.get(nx, ny) !== T.FAULTSTONE) continue;
-          seen.add(k);
-          cells.push([nx, ny]);
-          st.push([nx, ny]);
-        }
-      }
+      const cells = floodFill(tx, ty, (x, y) => w.get(x, y) === T.FAULTSTONE, 6e3);
       let f = (w.faults || []).find((q) => !q.done && Math.abs(q.cx - tx) <= FAULT.rx + 8 && Math.abs(q.cy - ty) <= FAULT.ry + 8);
       const old = !cells.length && !!f;
       if (old) cells.push(...w.faultCells(f));
@@ -43116,38 +45023,24 @@
     },
     /** 눈(ex, ey)에서 칸(tx, ty)이 보이는가 — 가는 길이 트여 있어야 하고, 과녁 앞 세 칸 안의 바위만 봐준다(벽 두께가 지도에 남게). */
     seesTile(ex, ey, tx, ty) {
-      const w = this.world, dx = tx - ex, dy = ty - ey, n = Math.max(Math.abs(dx), Math.abs(dy));
-      for (let i = 1; i < n - 3; i++) {
-        const x = Math.round(ex + dx * i / n), y = Math.round(ey + dy * i / n);
-        if (TILE_DEF[w.get(x, y)].solid === 1) return false;
-      }
-      return true;
+      const w = this.world;
+      return lineOfSight(
+        (x, y) => Math.max(Math.abs(x - tx), Math.abs(y - ty)) > 3 && TILE_DEF[w.get(x, y)].solid === 1,
+        ex + 0.5,
+        ey + 0.5,
+        tx + 0.5,
+        ty + 0.5
+      );
     },
     /** 세이브를 막 불러왔을 때(또는 새 게임 시작 시) explored 비트로부터 축소 지도를 다시 칠한다. */
     /** 축소 지도 캔버스를 지금 세계 크기(WW×WH)에 맞춘다 — 세계 크기가 바뀌면 다시 만든다. */
     fitMapAtlas() {
       const { WW: WW2, WH: WH2 } = dimsOf(this.world);
-      if (this.mapAtlas.width === WW2 && this.mapAtlas.height === WH2) return;
-      this.mapAtlas.width = WW2;
-      this.mapAtlas.height = WH2;
-      this.mapAtlasX = this.mapAtlas.getContext("2d");
+      this.mapAtlas.fit(WW2, WH2);
     },
     buildMapAtlas() {
-      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
-      const c = this.mapAtlasX, w = this.world;
-      c.fillStyle = "#07080c";
-      c.fillRect(0, 0, WW2, WH2);
-      const img = c.getImageData(0, 0, WW2, WH2), buf = img.data;
-      for (let k = 0; k < WW2 * WH2; k++) {
-        if (!w.explored[k]) continue;
-        const hex = this.mapColorAt(k % WW2, k / WW2 | 0);
-        const n = parseInt(hex.slice(1), 16), o = k * 4;
-        buf[o] = n >> 16 & 255;
-        buf[o + 1] = n >> 8 & 255;
-        buf[o + 2] = n & 255;
-        buf[o + 3] = 255;
-      }
-      c.putImageData(img, 0, 0);
+      const w = this.world;
+      this.mapAtlas.rebuild((k) => !!w.explored[k], (x, y) => this.mapColorAt(x, y));
     },
     /* ---- 미니맵 ---- */
     /* 탐지기 소리 — 잡힌 것이 **없다가 생겼을 때만** 한 번 운다. */
@@ -43175,42 +45068,25 @@
       c.fillRect(0, 0, MW, MH);
       const px = Math.floor(p.cx / TS), py = Math.floor(p.cy / TS);
       const halfW = Math.floor(MW / S / 2), halfH = Math.floor(MH / S / 2);
-      for (let y = 0; y < MH / S; y++) {
-        for (let x = 0; x < MW / S; x++) {
-          const tx = px - halfW + x, ty = py - halfH + y;
-          if (tx < 0 || ty < 0 || tx >= WW2 || ty >= WH2) continue;
-          const k = ty * WW2 + tx;
-          const id = w.tiles[k];
-          if (!w.explored[k]) {
-            if (!detOre || !TILE_DEF[id] || !TILE_DEF[id].ore) continue;
-            const ddx = tx - px, ddy = ty - py;
-            if (ddx * ddx + ddy * ddy > DR2) continue;
-            c.fillStyle = TILE_DEF[id].c;
-            c.fillRect(x * S, y * S, S, S);
-            detHit++;
-            continue;
-          }
-          if (id === T.AIR) {
-            const wl = w.walls[k];
-            if (wl) {
-              c.fillStyle = "#181820";
-              c.fillRect(x * S, y * S, S, S);
-            }
-            continue;
-          }
-          const d = TILE_DEF[id];
-          c.fillStyle = d.ore ? d.c : shade(d.c || "#333", 0.65);
-          c.fillRect(x * S, y * S, S, S);
+      const org = drawTileWindow(c, MW, MH, S, px, py, (tx, ty) => {
+        if (tx < 0 || ty < 0 || tx >= WW2 || ty >= WH2) return null;
+        const k = ty * WW2 + tx, id = w.tiles[k];
+        if (!w.explored[k]) {
+          if (!detOre || !TILE_DEF[id] || !TILE_DEF[id].ore) return null;
+          const ddx = tx - px, ddy = ty - py;
+          if (ddx * ddx + ddy * ddy > DR2) return null;
+          detHit++;
+          return TILE_DEF[id].c;
         }
-      }
+        if (id === T.AIR) return w.walls[k] ? "#181820" : null;
+        const d = TILE_DEF[id];
+        return d.ore ? d.c : shade(d.c || "#333", 0.65);
+      });
       for (const o of w.objects) {
         if (o.type !== "npc" && o.type !== "chest") continue;
         const otx = Math.floor(o.x / TS), oty = Math.floor(o.y / TS);
         if (!w.explored[clamp(oty, 0, WH2 - 1) * WW2 + clamp(otx, 0, WW2 - 1)]) continue;
-        const ox = otx - (px - halfW), oy = oty - (py - halfH);
-        if (ox < 0 || oy < 0 || ox * S >= MW || oy * S >= MH) continue;
-        c.fillStyle = o.type === "npc" ? "#6fd8ff" : "#d8a94b";
-        c.fillRect(ox * S - 1, oy * S - 1, S + 2, S + 2);
+        drawMapMark(c, org, S, MW, MH, otx, oty, o.type === "npc" ? "#6fd8ff" : "#d8a94b");
       }
       for (const e of this.ents) {
         if (!(e instanceof Enemy)) continue;
@@ -43218,21 +45094,10 @@
         const near = detMob && (etx - px) * (etx - px) + (ety - py) * (ety - py) <= DR2;
         if (near) detHit++;
         if (!near && !w.explored[ety * WW2 + etx]) continue;
-        const ox = etx - (px - halfW), oy = ety - (py - halfH);
-        if (ox < 0 || oy < 0 || ox * S >= MW || oy * S >= MH) continue;
-        c.fillStyle = e.boss ? "#ff4a4a" : "#e07070";
-        c.fillRect(ox * S - 1, oy * S - 1, S + 2, S + 2);
+        drawMapMark(c, org, S, MW, MH, etx, ety, e.boss ? "#ff4a4a" : "#e07070");
       }
       this.detBeep(detHit);
-      if (this.deathMark) {
-        const dx = Math.floor(this.deathMark.x / TS) - (px - halfW);
-        const dy = Math.floor(this.deathMark.y / TS) - (py - halfH);
-        if (dx >= 0 && dy >= 0 && dx * S < MW && dy * S < MH) {
-          c.fillStyle = "#cfd8ff";
-          c.fillRect(dx * S - 1, dy * S - 3, 3, 7);
-          c.fillRect(dx * S - 3, dy * S - 1, 7, 3);
-        }
-      }
+      if (this.deathMark) drawMapMark(c, org, S, MW, MH, Math.floor(this.deathMark.x / TS), Math.floor(this.deathMark.y / TS), "#cfd8ff", "+");
       c.fillStyle = "#fff";
       c.fillRect(halfW * S - 1, halfH * S - 1, 3, 3);
       c.strokeStyle = "#3b3527";
@@ -43252,8 +45117,7 @@
     render() {
       const c = this.ctx, w = this.world, p = this.player;
       const shk = this.shake * (this.settings ? this.settings.shake / 100 : 1);
-      const shX = (Math.random() - 0.5) * shk, shY = (Math.random() - 0.5) * shk;
-      const camX = Math.round(this.cam.x + shX), camY = Math.round(this.cam.y + shY);
+      const { x: camX, y: camY } = this.cam.view(shk);
       const dayF = this.dayFactor();
       const f = { c, w, p, camX, camY, dayF, ...tileView(camX, camY, this.W, this.H, TS) };
       this.pipe.run(f);
@@ -43276,6 +45140,17 @@
       this.pipe.add("fx", (f) => this.rFx(f));
       this.pipe.add("fx", (f) => this.rUtil(f));
       this.pipe.add("screen", (f) => this.rScreen(f));
+      this.pipe.add("screen", (f) => this.fade.draw(f.c, this.W, this.H));
+      this.pipe.add("screen", (f) => {
+        if (!this.perf.on) return;
+        const st = this.pipe.stats ? this.pipe.stats() : null;
+        this.perf.info([
+          `ents ${this.ents.length} · parts ${this.parts.length} · projs ${this.projs.length} · lights ${this.world.light ? this.world.light.cache.size : 0}`,
+          `cam ${Math.round(this.cam.x / TS)},${Math.round(this.cam.y / TS)} · paths ${PATH_BUDGET - this.pathBudget}/${PATH_BUDGET}`,
+          ...st ? Object.keys(st).map((k) => `${k} ${(+st[k]).toFixed(2)}ms`) : []
+        ]);
+        this.perf.draw(f.c, this.cv.width / Math.max(1, this.cv.clientWidth));
+      });
     },
     /** 렌더 단계 — 하늘 */
     rSky(f) {
@@ -43287,9 +45162,7 @@
       const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       const dayLight = lerp(3, 15, dayF);
       const litR = p.buffs.some((b) => b.id === "lit_greater") ? 9.5 : p.buffs.some((b) => b.id === "lit") ? 6.8 : p.buffs.some((b) => b.id === "lantern") ? 6 : 4.6;
-      const su = this.skyArc(1), up = Math.sin(Math.PI * su);
-      const sunK = clamp(up * 3, 0, 1) * (1 - 0.75 * clamp((this.rainT || 0) * 1.4, 0, 1));
-      const sun = up > 0.02 ? { x: Math.cos(Math.PI * su), y: -Math.max(0.3, up), k: sunK } : null;
+      const sun = DAY_CYCLE.sunDir(this.dayT, (this.rainT || 0) * 1.4);
       w.computeLight(
         tx0,
         ty0,
@@ -43321,8 +45194,7 @@
           const id = w.tiles[k], wl = w.walls[k];
           if (w.lightAt(tx, ty) >= MAP_REVEAL_LIGHT && (w.explored[k] || (tx + ty + this._mapTick & 3) === 0 && this.seesTile(eyeX, eyeY, tx, ty))) {
             w.explored[k] = 1;
-            this.mapAtlasX.fillStyle = this.mapColorAt(tx, ty, id, wl);
-            this.mapAtlasX.fillRect(tx, ty, 1, 1);
+            this.mapAtlas.paint(tx, ty, this.mapColorAt(tx, ty, id, wl));
           }
           const sx = tx * TS - camX, sy = ty * TS - camY;
           const an = TileArt.ANIM[id];
@@ -43574,6 +45446,14 @@
       }
       this.drawRipeCrops(c, camX, camY);
       this.drawStarOrbit(c, p, camX, camY);
+      if (this.spritesOn) this.trail.draw((s, a) => {
+        c.save();
+        c.globalAlpha = a * 0.42;
+        c.filter = "brightness(1.6) saturate(0.4)";
+        Sprites.draw(c, s.d.key, s.d.fr, s.x - camX, s.y - camY, s.d.flip);
+        c.restore();
+        c.filter = "none";
+      });
       this.drawPlayer(c, p, p.x - camX, p.y - camY);
       for (const q of this.players) if (q !== p) {
         this.drawPlayer(c, q, q.x - camX, q.y - camY);
@@ -43699,68 +45579,7 @@
           c.fill();
         }
       }
-      if (this.rings) for (let i = this.rings.length - 1; i >= 0; i--) {
-        const r = this.rings[i];
-        r.t -= 1 / 60;
-        if (r.t <= 0) {
-          this.rings.splice(i, 1);
-          continue;
-        }
-        const mx = r.max || 0.3, k = r.t / mx;
-        c.strokeStyle = r.c;
-        c.globalAlpha = k * 0.8;
-        c.lineWidth = 3;
-        c.beginPath();
-        c.arc(r.x - camX, r.y - camY, r.r * (1.3 - k * 0.3), 0, TAU);
-        c.stroke();
-        c.globalAlpha = 1;
-        c.lineWidth = 1;
-      }
-      if (this.warns) for (let i = this.warns.length - 1; i >= 0; i--) {
-        const w2 = this.warns[i];
-        w2.t -= 1 / 60;
-        if (w2.t <= 0) {
-          this.warns.splice(i, 1);
-          continue;
-        }
-        const k = 1 - w2.t / w2.max;
-        const x = w2.x - camX, y = w2.y - camY;
-        c.globalAlpha = 0.22 + 0.2 * Math.sin(k * 18);
-        c.fillStyle = w2.c;
-        c.beginPath();
-        c.arc(x, y, w2.r * k, 0, TAU);
-        c.fill();
-        c.globalAlpha = 0.85;
-        c.strokeStyle = w2.c;
-        c.lineWidth = 2.5;
-        c.beginPath();
-        c.arc(x, y, w2.r, 0, TAU);
-        c.stroke();
-        c.globalAlpha = 1;
-        c.lineWidth = 1;
-      }
-      if (this.bolts) for (let i = this.bolts.length - 1; i >= 0; i--) {
-        const b = this.bolts[i];
-        b.t -= 1 / 60;
-        if (b.t <= 0) {
-          this.bolts.splice(i, 1);
-          continue;
-        }
-        const k = b.t / b.max;
-        c.lineCap = "round";
-        c.lineJoin = "round";
-        for (const [lw, col, al] of [[6, b.c, 0.22 * k], [2.4, b.c, 0.9 * k], [1, "#ffffff", 0.9 * k]]) {
-          c.globalAlpha = al;
-          c.strokeStyle = col;
-          c.lineWidth = lw;
-          c.beginPath();
-          b.pts.forEach((p2, j) => j ? c.lineTo(p2[0] - camX, p2[1] - camY) : c.moveTo(p2[0] - camX, p2[1] - camY));
-          c.stroke();
-        }
-        c.globalAlpha = 1;
-        c.lineWidth = 1;
-        c.lineCap = "butt";
-      }
+      this.shapes.draw(c, camX, camY);
       if (this.bossSay) {
         const bs = this.bossSay;
         bs.t -= 1 / 60;
@@ -43833,19 +45652,8 @@
       }
       if (lit) c.globalCompositeOperation = "source-over";
       c.globalAlpha = 1;
-      if (!this.settings || this.settings.dmgnum) for (const t of this.texts) {
-        c.globalAlpha = clamp(t.life / 0.85, 0, 1);
-        c.font = (t.crit ? "bold 19px" : "14px") + " " + FONT;
-        c.fillStyle = "#000";
-        c.fillText(t.v, t.x - camX + 1, t.y - camY + 1);
-        c.fillStyle = t.c;
-        c.fillText(t.v, t.x - camX, t.y - camY);
-        if (t.crit) {
-          c.font = "10px " + FONT_PLAIN;
-          c.fillStyle = "#ffd24a";
-          c.fillText(tr("치명"), t.x - camX, t.y - camY - 15);
-        }
-      }
+      if (!this.settings || this.settings.dmgnum)
+        drawFloatTexts(c, this.texts, camX, camY, { font: (crit) => (crit ? "bold 19px" : "14px") + " " + FONT, critLabel: tr("치명"), critFont: "10px " + FONT_PLAIN });
       c.globalAlpha = 1;
     },
     /** 렌더 단계 — 조준 · 비 · 비네트 · 길잡이 */
@@ -43899,11 +45707,7 @@
   });
   var RenderSkyPart = {
     dayFactor() {
-      const t = this.dayT;
-      if (t >= 7 * 60 && t <= 17 * 60) return 1;
-      if (t > 17 * 60 && t < 20 * 60) return 1 - inv(17 * 60, 20 * 60, t);
-      if (t >= 20 * 60 || t < 4 * 60) return 0;
-      return inv(4 * 60, 7 * 60, t);
+      return DAY_CYCLE.light(this.dayT);
     },
     drawSky(c, f, camX, camY) {
       const { SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2 } = dimsOf(this.world);
@@ -43988,9 +45792,7 @@
         ★ 뜨고 지는 시각은 dayFactor 가 밝아지고(4~7시) 어두워지는(17~20시) 한가운데여야 한다 — 어긋나면
         밝은 하늘에 해가 없거나, 해가 중천 가까이에서 갑자기 나타나 제멋대로 떠 보인다. */
     skyArc(sun) {
-      const RISE = 330, SET = 1110;
-      const t0 = sun ? RISE : SET, dur = sun ? SET - RISE : 1440 - SET + RISE, off = (1440 - dur) / 2;
-      return (((this.dayT - t0 + off) % 1440 + 1440) % 1440 - off) / dur;
+      return DAY_CYCLE.arc(this.dayT, !!sun);
     },
     /** 해·달의 화면 자리 — u 0 = 오른쪽(동) → 1 = 왼쪽(서). 노을 빛도 같은 값을 쓴다. */
     skyX(u) {
@@ -44277,6 +46079,91 @@
   __export(render_world_exports, {
     RenderWorldPart: () => RenderWorldPart
   });
+
+  // src/engine/render/lightoverlay.ts
+  var GridImage = class {
+    constructor() {
+      this.cv = document.createElement("canvas");
+      this.cv.width = this.cv.height = 1;
+      this.cx = this.cv.getContext("2d");
+      this.img = this.cx.createImageData(1, 1);
+    }
+    size(w, h) {
+      if (this.cv.width !== w || this.cv.height !== h) {
+        this.cv.width = w;
+        this.cv.height = h;
+        this.cx = this.cv.getContext("2d");
+        this.img = this.cx.createImageData(w, h);
+      }
+      return this.img.data;
+    }
+    put(c, dx, dy, dw, dh) {
+      this.cx.putImageData(this.img, 0, 0);
+      c.imageSmoothingEnabled = true;
+      c.drawImage(this.cv, dx, dy, dw, dh);
+      c.imageSmoothingEnabled = false;
+    }
+  };
+  var LightOverlay = class {
+    constructor() {
+      this.dark = new GridImage();
+      this.tint = new GridImage();
+      this.glows = /* @__PURE__ */ new Map();
+    }
+    /** 어둠 한 겹 — 칸 (x0..x1, y0..y1) 의 밝기 level(x, y)(0~max)를 곡선 gamma 로 펴서, 그 만큼 덜 덮는다.
+        floor — 가장 어두운 곳도 이만큼은 비친다(블록 실루엣이 읽히게) · rgb — 덮는 색(지하는 푸르게 · 지옥은 붉게) */
+    drawDark(c, x0, y0, x1, y1, cell, camX, camY, level, max, rgb = [0, 0, 0], floor = 0.022, gamma = 0.72) {
+      const lw = x1 - x0 + 1, lh = y1 - y0 + 1, d = this.dark.size(lw, lh);
+      let i = 0;
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++, i += 4) {
+        const f = Math.pow(Math.max(floor, Math.min(1, level(x, y) / max)), gamma);
+        d[i] = rgb[0];
+        d[i + 1] = rgb[1];
+        d[i + 2] = rgb[2];
+        d[i + 3] = 255 * (1 - f);
+      }
+      this.dark.put(c, x0 * cell - camX, y0 * cell - camY, lw * cell, lh * cell);
+    }
+    /** 빛 색 한 겹 — 칸마다 0~1 rgb(없으면 null)를 늘려 더한다(그늘째 모은 색이라 벽 너머로 번지지 않는다) */
+    drawTint(c, x0, y0, lw, lh, cell, camX, camY, color) {
+      const d = this.tint.size(lw, lh);
+      for (let y = 0, i = 0; y < lh; y++) for (let x = 0; x < lw; x++, i += 4) {
+        const v = color(x0 + x, y0 + y);
+        d[i] = v ? Math.min(255, v[0] * 255) : 0;
+        d[i + 1] = v ? Math.min(255, v[1] * 255) : 0;
+        d[i + 2] = v ? Math.min(255, v[2] * 255) : 0;
+        d[i + 3] = 255;
+      }
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      this.tint.put(c, x0 * cell - camX, y0 * cell - camY, lw * cell, lh * cell);
+      c.restore();
+    }
+    /** 둥근 번짐 하나 — 색 hex(#rrggbb) · 반지름 r 의 원을 (x, y) 가운데에 더한다(같은 색·크기는 한 번 구워 다시 쓴다) */
+    glow(c, x, y, r, hex, alpha) {
+      const key = hex + r;
+      let g = this.glows.get(key);
+      if (!g) {
+        g = document.createElement("canvas");
+        g.width = g.height = r * 2;
+        const gc = g.getContext("2d"), gr = gc.createRadialGradient(r, r, 0, r, r, r);
+        gr.addColorStop(0, hex + "66");
+        gr.addColorStop(0.45, hex + "22");
+        gr.addColorStop(1, hex + "00");
+        gc.fillStyle = gr;
+        gc.fillRect(0, 0, r * 2, r * 2);
+        this.glows.set(key, g);
+      }
+      const a = c.globalAlpha, op = c.globalCompositeOperation;
+      c.globalCompositeOperation = "lighter";
+      c.globalAlpha = alpha;
+      c.drawImage(g, x - r, y - r);
+      c.globalAlpha = a;
+      c.globalCompositeOperation = op;
+    }
+  };
+
+  // src/game/game/render-world.ts
   var RenderWorldPart = {
     /** 타일 광원값을 저해상도 알파맵으로 만들어 확대 — 계단 없는 부드러운 명암 */
     /** 바다 수면 한 칸 — 사연: docs/code-history.md#h65 */
@@ -44479,92 +46366,22 @@
     },
     drawGlow(c, camX, camY, tx0, ty0, tx1, ty1) {
       const { WW: WW2, WH: WH2 } = dimsOf(this.world);
-      const w = this.world;
-      this._glowC = this._glowC || {};
-      c.save();
-      c.globalCompositeOperation = "lighter";
-      const x0 = tx0 - 1, y0 = ty0 - 1, lw = tx1 - tx0 + 3, lh = ty1 - ty0 + 3;
-      if (!this.glowCv || this.glowCv.width !== lw || this.glowCv.height !== lh) {
-        this.glowCv = document.createElement("canvas");
-        this.glowCv.width = lw;
-        this.glowCv.height = lh;
-        this.glowCx = this.glowCv.getContext("2d");
-        this.glowImg = this.glowCx.createImageData(lw, lh);
-      }
-      const gd = this.glowImg.data;
-      for (let y = 0, i = 0; y < lh; y++) for (let x = 0; x < lw; x++, i += 4) {
-        const rgb = w.lightColAt(x0 + x, y0 + y);
-        gd[i] = rgb ? Math.min(255, rgb[0] * 255) : 0;
-        gd[i + 1] = rgb ? Math.min(255, rgb[1] * 255) : 0;
-        gd[i + 2] = rgb ? Math.min(255, rgb[2] * 255) : 0;
-        gd[i + 3] = 255;
-      }
-      this.glowCx.putImageData(this.glowImg, 0, 0);
-      c.imageSmoothingEnabled = true;
-      c.drawImage(this.glowCv, x0 * TS - camX, y0 * TS - camY, lw * TS, lh * TS);
-      c.imageSmoothingEnabled = false;
+      const w = this.world, L = this.lightOv = this.lightOv || new LightOverlay();
+      L.drawTint(c, tx0 - 1, ty0 - 1, tx1 - tx0 + 3, ty1 - ty0 + 3, TS, camX, camY, (x, y) => w.lightColAt(x, y));
       for (let ty = Math.max(0, ty0 - 2); ty <= Math.min(WH2 - 1, ty1 + 2); ty++)
         for (let tx = Math.max(0, tx0 - 2); tx <= Math.min(WW2 - 1, tx1 + 2); tx++) {
           const d = TILE_DEF[w.tiles[ty * WW2 + tx]];
           if (!d.lc || d.light >= LIGHT_POINT && !d.liquid) continue;
-          const r = Math.round(10 + d.light * 5);
-          const key = d.lc + r;
-          let g = this._glowC[key];
-          if (!g) {
-            g = document.createElement("canvas");
-            g.width = g.height = r * 2;
-            const gc = g.getContext("2d"), gr = gc.createRadialGradient(r, r, 0, r, r, r);
-            gr.addColorStop(0, d.lc + "66");
-            gr.addColorStop(0.45, d.lc + "22");
-            gr.addColorStop(1, d.lc + "00");
-            gc.fillStyle = gr;
-            gc.fillRect(0, 0, r * 2, r * 2);
-            this._glowC[key] = g;
-          }
-          c.globalAlpha = Math.min(1, 0.4 + d.light * 0.03);
-          c.drawImage(g, tx * TS + TS / 2 - camX - r, ty * TS + TS / 2 - camY - r);
+          L.glow(c, tx * TS + TS / 2 - camX, ty * TS + TS / 2 - camY, Math.round(10 + d.light * 5), d.lc, Math.min(1, 0.4 + d.light * 0.03));
         }
-      c.restore();
     },
+    /** 어둠 — 깊이에 따른 색조: 지하는 푸른 기운, 지옥은 붉은 기운(engine render/lightoverlay) */
     drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1) {
       const { SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2 } = dimsOf(this.world);
-      const w = this.world;
-      const x0 = tx0 - 1, y0 = ty0 - 1, x1 = tx1 + 1, y1 = ty1 + 1;
-      const lw = x1 - x0 + 1, lh = y1 - y0 + 1;
-      if (!this.lightCv || this.lightCv.width !== lw || this.lightCv.height !== lh) {
-        this.lightCv = document.createElement("canvas");
-        this.lightCv.width = lw;
-        this.lightCv.height = lh;
-        this.lightCx = this.lightCv.getContext("2d");
-        this.lightImg = this.lightCx.createImageData(lw, lh);
-      }
+      const w = this.world, L = this.lightOv = this.lightOv || new LightOverlay();
       const mid = (ty0 + ty1) / 2;
-      let tr2 = 0, tg = 0, tb = 0;
-      if (mid > HELL_Y2 - 24) {
-        tr2 = 44;
-        tg = 8;
-        tb = 2;
-      } else if (mid > SURF_BASE2 + 24) {
-        tr2 = 4;
-        tg = 7;
-        tb = 18;
-      }
-      const d = this.lightImg.data;
-      let i = 0;
-      for (let y = y0; y <= y1; y++) {
-        for (let x = x0; x <= x1; x++) {
-          const f = Math.pow(clamp(w.lightAt(x, y) / 15, 0.022, 1), 0.72);
-          d[i] = tr2;
-          d[i + 1] = tg;
-          d[i + 2] = tb;
-          d[i + 3] = 255 * (1 - f);
-          i += 4;
-        }
-      }
-      this.lightCx.putImageData(this.lightImg, 0, 0);
-      c.imageSmoothingEnabled = true;
-      c.drawImage(this.lightCv, x0 * TS - camX, y0 * TS - camY, lw * TS, lh * TS);
-      c.imageSmoothingEnabled = false;
+      const rgb = mid > HELL_Y2 - 24 ? [44, 8, 2] : mid > SURF_BASE2 + 24 ? [4, 7, 18] : [0, 0, 0];
+      L.drawDark(c, tx0 - 1, ty0 - 1, tx1 + 1, ty1 + 1, TS, camX, camY, (x, y) => w.lightAt(x, y), 15, rgb);
     },
     /** 소환 제단 — 새긴 받침 위 세 갈래 발톱이 구슬을 받친다. 구슬은 빛이 안에서 도는 유리알:
         가장자리는 어둡고 속은 밝고, 왼쪽 위에 창빛 한 점. 결전 중이면 붉게 물든다. */
@@ -45206,22 +47023,96 @@
   // src/game/game/render-actors.ts
   var render_actors_exports = {};
   __export(render_actors_exports, {
-    RenderActorsPart: () => RenderActorsPart
+    RenderActorsPart: () => RenderActorsPart,
+    STEP_BEATS: () => STEP_BEATS,
+    STEP_FEEL: () => STEP_FEEL
   });
+
+  // src/engine/render/anim.ts
+  function cycleFrame(t, fps, n, start = 0, phase = 0) {
+    return start + (Math.floor(t * fps + phase) % n + n) % n;
+  }
+  function onceFrame(elapsed, fps, n, start = 0) {
+    return start + Math.min(n - 1, Math.max(0, Math.floor(elapsed * fps)));
+  }
+  var Beat = class {
+    constructor() {
+      this.last = -1;
+    }
+    hit(frame, beats) {
+      const changed = frame !== this.last;
+      this.last = frame;
+      return changed && beats.indexOf(frame) >= 0;
+    }
+  };
+  var Animator = class {
+    constructor(clips, start) {
+      this.clips = clips;
+      this.cur = start;
+      this.t = 0;
+    }
+    play(k) {
+      if (k !== this.cur) {
+        this.cur = k;
+        this.t = 0;
+      }
+    }
+    update(dt) {
+      this.t += dt;
+    }
+    get frame() {
+      const c = this.clips[this.cur];
+      return c.loop === false ? onceFrame(this.t, c.fps, c.n, c.from) : cycleFrame(this.t, c.fps, c.n, c.from);
+    }
+    get done() {
+      const c = this.clips[this.cur];
+      return c.loop === false && this.t * c.fps >= c.n;
+    }
+  };
+
+  // src/engine/render/outline.ts
+  var AROUND = [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]];
+  function drawOutlined(c, draw, o = {}) {
+    const a0 = c.globalAlpha;
+    c.save();
+    c.filter = o.light ? "brightness(0) invert(1)" : "brightness(0)";
+    c.globalAlpha = a0 * (o.dark ?? 0.55);
+    for (const [ox, oy] of o.offsets || AROUND) draw(ox, oy);
+    if ((o.rim ?? 0.32) > 0 && !o.light) {
+      c.filter = "brightness(0) invert(1)";
+      c.globalAlpha = a0 * (o.rim ?? 0.32);
+      draw(0, -1);
+    }
+    c.restore();
+    c.filter = "none";
+  }
+
+  // src/game/game/render-actors.ts
+  var STEP_BEATS = [0, 2];
+  var STEP_FEEL = {
+    stone: [0.82, 1],
+    dirt: [1, 0.85],
+    wood: [1.12, 0.95],
+    metal: [1.25, 0.9],
+    ice: [1.15, 0.8],
+    plant: [0.95, 0.6],
+    glass: [1.3, 0.8],
+    bone: [1.1, 0.85]
+  };
   var RenderActorsPart = {
     /* ---- 프레임 선택 (우리 엔티티 필드 기준) ---- */
     /** 걸을 때 발밑 흙먼지 — 그림만(Part 는 충돌·판정이 없다). 걷기 프레임(9fps)의 발 딛는 두 칸에 맞춰
         절반쯤만 한 톨씩 — 매 프레임 뿌리면 달리기 내내 연기처럼 깔린다. */
     walkDust(p) {
-      const st = Math.floor(this.time * 9) % 4;
-      const step = st !== this._dustSt && (st === 0 || st === 2);
-      this._dustSt = st;
+      this._stepBeat = this._stepBeat || new Beat();
+      const step = this._stepBeat.hit(cycleFrame(this.time, 9, 4), STEP_BEATS);
       if (!step || !p.onGround || p.swimming || Math.abs(p.vx) < 60) return;
       const w = this.world, fy = p.y + p.h + 1;
       const tx = Math.floor(p.cx / TS), ty = Math.floor(fy / TS);
-      this.sfx("step", 0.9 + Math.random() * 0.2);
-      if (w.liquid(tx, ty - 1) || Math.random() > 0.55) return;
       const d = TILE_DEF[w.get(tx, ty)];
+      const fs = STEP_FEEL[tileMat(w.get(tx, ty))] || STEP_FEEL.dirt;
+      this.sfx("step", fs[0] * (0.92 + Math.random() * 0.16), fs[1]);
+      if (w.liquid(tx, ty - 1) || Math.random() > 0.55) return;
       if (!d || !d.solid || !d.c) return;
       const n = Math.random() < 0.3 ? 2 : 1;
       for (let i = 0; i < n; i++)
@@ -45239,8 +47130,8 @@
       if (p.dashV > 0) return 8;
       if (p.swing > 0) return 9 + Math.min(2, Math.floor((0.24 - p.swing) / 0.08));
       if (!p.onGround) return p.vy < 0 ? 6 : 7;
-      if (Math.abs(p.vx) > 20) return 2 + Math.floor(this.time * 9) % 4;
-      return Math.floor(this.time * 2) % 2;
+      if (Math.abs(p.vx) > 20) return cycleFrame(this.time, 9, 4, 2);
+      return cycleFrame(this.time, 2, 2);
     },
     enemyFrame(e) {
       if (e.boss) {
@@ -45262,19 +47153,8 @@
       const fr = this.playerFrame(p);
       const key = "player_" + ch.id;
       const swim = this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel;
-      if (this.spritesOn && this.world.liquid(Math.floor(p.cx / TS), Math.floor(p.cy / TS))) {
-        const one = (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0);
-        const a0 = c.globalAlpha;
-        c.save();
-        c.filter = "brightness(0)";
-        c.globalAlpha = a0 * 0.55;
-        for (const [ox, oy] of [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]]) one(ox, oy);
-        c.filter = "brightness(0) invert(1)";
-        c.globalAlpha = a0 * 0.32;
-        one(0, -1);
-        c.restore();
-        c.filter = "none";
-      }
+      if (this.spritesOn && this.world.liquid(Math.floor(p.cx / TS), Math.floor(p.cy / TS)))
+        drawOutlined(c, (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0));
       if (swim && this.drawSwimPlayer(c, p, sx, sy, key)) {
         c.restore();
         return;
@@ -45386,25 +47266,14 @@
       const dx = meta ? (e.w - meta.frameW) / 2 - side : 0;
       const wet = e.type === "grotto_eel" && this.world.liquid(Math.floor(e.cx / TS), Math.floor(e.cy / TS));
       if (this.spritesOn && wet && meta) {
-        c.save();
-        c.filter = "brightness(0) invert(1)";
-        c.globalAlpha = 0.5;
-        for (const [ox, oy] of [[-2, 0], [2, 0], [0, -2], [0, 2]])
-          Sprites.draw(c, key, this.enemyFrame(e), sx + dx + ox, sy - dy + oy, e.facing < 0);
-        c.restore();
-        c.filter = "none";
+        drawOutlined(
+          c,
+          (ox, oy) => Sprites.draw(c, key, this.enemyFrame(e), sx + dx + ox, sy - dy + oy, e.facing < 0),
+          { light: true, dark: 0.5, offsets: [[-2, 0], [2, 0], [0, -2], [0, 2]] }
+        );
       } else if (this.spritesOn && meta && e.def.ai === "swimmer" && this.world.liquid(Math.floor(e.cx / TS), Math.floor(e.cy / TS))) {
         const fr = this.enemyFrame(e), fl = e.facing < 0, bx = sx + dx, by = sy - dy;
-        c.save();
-        c.filter = "brightness(0)";
-        c.globalAlpha = 0.55;
-        for (const [ox, oy] of [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]])
-          Sprites.draw(c, key, fr, bx + ox, by + oy, fl);
-        c.filter = "brightness(0) invert(1)";
-        c.globalAlpha = 0.32;
-        Sprites.draw(c, key, fr, bx, by - 1, fl);
-        c.restore();
-        c.filter = "none";
+        drawOutlined(c, (ox, oy) => Sprites.draw(c, key, fr, bx + ox, by + oy, fl));
       }
       if (e.def.squish && !e.onGround && this.spritesOn && meta) {
         const k = 1 + Math.min(0.1, Math.abs(e.vy) / 4e3);

@@ -188,12 +188,10 @@ export const BossAI: Bag & ThisType<Enemy> = {
           this.atkCd = 0.5 - this.pf * 0.2;
           for (let i = 0; i < 3 + this.pf * 2; i++) {
             const px2 = p.cx + (Math.random() - 0.5) * 340;
-            G.pending.push({
-              t: i * 0.06, fn: () => {
+            G.after(i * 0.06, () => {
                 const pr = new Proj(px2, p.cy - 420, 0, 780, this.dmg * 0.5, 'enemy', 'bolt');
                 G.projs.push(pr);
-              }
-            });
+              });
           }
         }
       } else { this.vx *= 0.92; this.vy *= 0.92; }
@@ -326,10 +324,10 @@ export const BossAI: Bag & ThisType<Enemy> = {
           this.atkCd = 0.55 - this.pf * 0.16;
           const fx = p.cx + (Math.random() - 0.5) * 260;
           G.warnFx(fx, p.cy + 20, 34, 0.6, '#c8843a');
-          G.pending.push({ t: 0.6, fn: () => {
+          G.after(0.6, () => {
             G.aoe(fx, p.cy + 20, 40, this.dmg * 0.6, 6, '#c8843a');
             for (let k = 0; k < 8; k++) G.parts.push(new Part(fx, p.cy + 20, '#c8843a', -160, .6));
-          } });
+          });
         }
       } else if (this.state === 1) {             // 물러서며 재장전 — 유일하게 붙을 틈
         this.vx = lerp(this.vx, -Math.sign(dx) * this.spd! * 0.9, dt * 3);
@@ -358,10 +356,10 @@ export const BossAI: Bag & ThisType<Enemy> = {
           this.atkCd = 0.9 - this.pf * 0.3;
           for (const dir of [-1, 1]) for (let k = 0; k < 4; k++) {
             const x = this.cx + dir * (50 + k * 44);
-            G.pending.push({ t: k * 0.06, fn: () => {
+            G.after(k * 0.06, () => {
               G.aoe(x, this.y + this.h - 12, 34, this.dmg * 0.45, 5, '#c8a05a');
               for (let i = 0; i < 3; i++) G.parts.push(new Part(x, this.y + this.h - 6, '#c8a05a', -140, .5));
-            } });
+            });
           }
         }
       } else if (this.state === 1) {             // 불티 — 위로 뿌려 떨어뜨린다

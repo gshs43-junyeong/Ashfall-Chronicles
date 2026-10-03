@@ -174,6 +174,7 @@
     <section class="panel" id="panel-chest">
       <header><span class="title-ic" data-ui-icon="p_chest" aria-hidden="true"></span><h2 id="chest-title">상자</h2><button class="x" data-close>✕</button></header>
       <div id="chest-grid"></div>
+      <div class="inv-actions" id="chest-actions"><button id="btn-chest-all">모두 가져오기</button></div>
     </section>
 
     <!-- 보관고 (여명 마을) -->
@@ -186,11 +187,11 @@
       </div>
       <div class="vault-wrap">
         <div class="vault-col">
-          <div class="equip-title">보관고 <small>(클릭해서 가방으로 꺼내기)</small></div>
+          <div class="equip-title">보관고 <small>(클릭해서 가방으로 꺼내기)</small><button class="mini" id="btn-vault-takeall">모두 꺼내기</button></div>
           <div id="vault-grid"></div>
         </div>
         <div class="vault-col">
-          <div class="equip-title">소지품 <small>(클릭해서 보관고에 넣기)</small></div>
+          <div class="equip-title">소지품 <small>(클릭해서 보관고에 넣기)</small><button class="mini" id="btn-vault-stack">같은 것 넣기</button></div>
           <div id="vault-bag"></div>
         </div>
       </div>

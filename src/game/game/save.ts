@@ -88,7 +88,7 @@ export const SavePart: Bag = {
     return p;
   },
   /** 저장이 끝나면 true. */
-  async saveGame() {
+  async saveGame(quiet?: boolean) {
     if (this.net && this.net.role === 'guest') return this.netSaveChar(this.net, true);   // 남의 세계 — 캐릭터만
     if (this.currentSlot === null) return false;   // 타이틀에서 슬롯을 거치지 않고는 저장할 수 없다
     if (this._saving) { this.toast(tr('저장하는 중이다'), 'info'); return false; }
@@ -97,7 +97,8 @@ export const SavePart: Bag = {
       const data = this.saveData();
       data.sealed = 1;                                 // 서명이 있는 기록이라는 표시
       await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
-      this.toast(tr('저장했다'), 'good');
+      if (!quiet) this.toast(tr('저장했다'), 'good');
+      if (this.autosave) this.autosave.reset();
       return true;
     } catch (e) {
       this.toast(e && (e as Error).name === 'QuotaExceededError' ? tr('저장 실패: 용량 초과') : tr('저장 실패'), 'bad'); console.error(e);
@@ -226,7 +227,7 @@ export const SavePart: Bag = {
       this.dayCount = d.dayCount || 0; this.market = {}; this.trainedToday = 0;
       this.nearStObj = { work: null, forge: null };
       this.event = null; this.eventRolled = -1; this.lairs = d.lairs || {};
-      this.rainT = 0; this.rainDrops = null; this.smokes = []; this.smokeT = 0;
+      this.rainT = 0; this.precip = null; this.smokes = []; this.smokeT = 0;
       this.vault = d.vault || new Array(VAULT_SIZE).fill(null); this.vaultGold = d.vaultGold || 0;
       while (this.vault.length < this.vaultCap()) this.vault.push(null);
       this.bounties = d.bounties || [];
@@ -238,8 +239,8 @@ export const SavePart: Bag = {
       this.mpGuests = d.mpGuests || {};
       this.tally = d.tally || {};
       if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
-      this.ents = []; this.corpses = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = []; this.boss = null;
-      this.rings = []; this.bolts = []; this.warns = []; this.sigs = []; this.edge = null;
+      this.ents = []; this.corpses = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.tweens.clear(); this.boss = null;
+      this.shapes.clear(); this.trail.clear(); this.sigs = []; this.edge = null;
       this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
       // 카메라를 저장된 위치로 바로 맞춘다 — 안 하면 (0,0) 근처에서 훅 팬 되는 게 첫 프레임에 보인다
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);

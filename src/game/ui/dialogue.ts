@@ -1,6 +1,7 @@
 /* ===== ui/dialogue.js — 대화 · 흘러나오는 대사 · 연출 ===== */
 import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
+import { typewrite } from '../../engine/ui/typewriter.js';
 import { fmt, tr } from '../lang.js';
 import { BOSS_TIER } from '../data/skills.js';
 import { NPCS } from '../data/npcs.js';
@@ -37,36 +38,21 @@ export const DialogueUIPart: Bag = {
   /* ---- 한 글자씩 흘러나오는 대사 ---- */
   TYPE_MS: 34, TYPE_MIN: 300, TYPE_MAX: 1100,
 
+  /* 쉼표·마침표 뒤에서 잠깐 숨을 쉬고(engine ui/typewriter), 끄는 설정이면 한 번에 */
   typeLine(text: string, done: Function) {
     const el = $('#dlg-text');
     this.stopType();
-    const n = text.length;
-    if (!n || !(G.settings ? G.settings.dlgtype : 1)) { el.textContent = text; done(); return; }
-    const dur = Math.max(this.TYPE_MIN, Math.min(this.TYPE_MAX, n * this.TYPE_MS));
-    const t0 = performance.now();
-    el.textContent = '';
-    this.typing = { text, done, el };
-    const step = () => {
-      if (!this.typing) return;
-      const k = Math.min(n, Math.ceil((performance.now() - t0) / dur * n));
-      el.textContent = text.slice(0, k);
-      if (k >= n) { this.typing = null; done(); return; }
-      this._typeRaf = requestAnimationFrame(step);
-    };
-    this._typeRaf = requestAnimationFrame(step);
+    if (!text.length || !(G.settings ? G.settings.dlgtype : 1)) { el.textContent = text; done(); return; }
+    this.typing = typewrite(el, text, { msPer: this.TYPE_MS, min: this.TYPE_MIN, max: this.TYPE_MAX, done: () => { this.typing = null; done(); } });
   },
   stopType() {
-    if (this._typeRaf) { cancelAnimationFrame(this._typeRaf); this._typeRaf = 0; }
+    if (this.typing) this.typing.stop();
     this.typing = null;
   },
   /** 타자가 도는 중이면 끝까지 펼치고 true. */
   finishType() {
     if (!this.typing) return false;
-    const t = this.typing;
-    this.stopType();
-    t.el.textContent = t.text;
-    t.done();
-    return true;
+    return this.typing.finish();
   },
 
   nextLine(first: boolean) {

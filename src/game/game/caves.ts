@@ -2,6 +2,7 @@
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
+import { floodFill } from '../../engine/procgen/cells.js';
 import { tr } from '../lang.js';
 import { dimsOf } from '../size.js';
 import { MACH_OF_TILE, T, TILE_DEF } from '../data.js';
@@ -20,15 +21,7 @@ export const CavesPart: Bag = {
     if (this.quake) return;                  // 이미 울리는 중 — 남은 자갈은 다음에 캐면 무너진다
     /* 무너질 칸 = 깬 칸에 **맞닿아 이어진 자갈 전부**. 세계가 굴 자리 전체를 자갈로 채워 두므로 (world.js buildFaults 의 ★) 덩어리 어디를 캐도 같은 굴이
        열린다. */
-    const cells = [], seen = new Set([ty * WW + tx]), st = [[tx, ty]];
-    while (st.length && cells.length < 6000) {
-      const [x, y] = st.pop()!;
-      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
-        const k = ny * WW + nx;
-        if (seen.has(k) || w.get(nx, ny) !== T.FAULTSTONE) continue;
-        seen.add(k); cells.push([nx, ny]); st.push([nx, ny]);
-      }
-    }
+    const cells: number[][] = floodFill(tx, ty, (x, y) => w.get(x, y) === T.FAULTSTONE, 6000);
     let f = (w.faults || []).find((q: any) => !q.done && Math.abs(q.cx - tx) <= FAULT.rx + 8 && Math.abs(q.cy - ty) <= FAULT.ry + 8);
     // 자갈 한 칸만 박혀 있던 v7 첫 판 세계 — 그때처럼 씨앗에서 굴 모양을 뽑는다
     const old = !cells.length && !!f;

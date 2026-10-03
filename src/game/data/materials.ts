@@ -5,16 +5,17 @@ import { ITEMS } from './items.js';
 
 /* c 파편 색 셋(밝은 쪽→어두운 쪽) · n 기본 개수 · g 중력 배수(음수면 위로 뜬다) life 사는 시간(초) · sq 1이면 네모(돌·쇠·유리) 0이면 동그라미(살·젤·연기) glow
    1이면 — 사연: docs/code-history.md#h10 */
+/** bounce — 파편이 땅에 부딪혀 튀는 정도(0 이면 땅을 지나간다 · 불티·풀·살점은 가볍게 흩어져 사라진다) */
 export const MAT: Bag = {
-  stone: { c: ['#9a9aa0', '#6a6a70', '#4a4a50'], n: 9, g: 1.0, life: .50, sq: 1, hit: 'hit_stone', brk: 'break_stone' },
-  dirt:  { c: ['#8a6a44', '#5d4429', '#40301d'], n: 8, g: 1.25, life: .36, sq: 1, hit: 'hit_stone', brk: 'break_dirt' },
-  wood:  { c: ['#a67a44', '#77542d', '#523a1e'], n: 8, g: .95, life: .55, sq: 1, hit: 'hit_wood', brk: 'break_wood' },
+  stone: { c: ['#9a9aa0', '#6a6a70', '#4a4a50'], n: 9, g: 1.0, life: .50, sq: 1, bounce: 0.35, hit: 'hit_stone', brk: 'break_stone' },
+  dirt:  { c: ['#8a6a44', '#5d4429', '#40301d'], n: 8, g: 1.25, life: .36, sq: 1, bounce: 0.2, hit: 'hit_stone', brk: 'break_dirt' },
+  wood:  { c: ['#a67a44', '#77542d', '#523a1e'], n: 8, g: .95, life: .55, sq: 1, bounce: 0.3, hit: 'hit_wood', brk: 'break_wood' },
   plant: { c: ['#94c46a', '#5a9a3a', '#376d24'], n: 10, g: .55, life: .70, sq: 0, hit: 'hit_plant', brk: 'break_plant' },
-  metal: { c: ['#c8d2de', '#8792a0', '#57616d'], n: 7, g: 1.15, life: .45, sq: 1, hit: 'hit_metal', brk: 'break_metal' },
-  glass: { c: ['#e8f8ff', '#9fd8ec', '#6aa8c0'], n: 12, g: 1.0, life: .50, sq: 1, hit: 'hit_glass', brk: 'break_glass' },
-  ice:   { c: ['#eaf6ff', '#a8d8ff', '#6fa8d8'], n: 11, g: 1.0, life: .48, sq: 1, hit: 'hit_glass', brk: 'break_ice' },
+  metal: { c: ['#c8d2de', '#8792a0', '#57616d'], n: 7, g: 1.15, life: .45, sq: 1, bounce: 0.4, hit: 'hit_metal', brk: 'break_metal' },
+  glass: { c: ['#e8f8ff', '#9fd8ec', '#6aa8c0'], n: 12, g: 1.0, life: .50, sq: 1, bounce: 0.3, hit: 'hit_glass', brk: 'break_glass' },
+  ice:   { c: ['#eaf6ff', '#a8d8ff', '#6fa8d8'], n: 11, g: 1.0, life: .48, sq: 1, bounce: 0.3, hit: 'hit_glass', brk: 'break_ice' },
   ember: { c: ['#ffe6a0', '#ff9a3c', '#e0561c'], n: 12, g: -.30, life: .60, sq: 0, glow: 1, hit: 'hit_ember', brk: 'break_ember' },
-  bone:  { c: ['#f2ecd8', '#c6bda6', '#8e8574'], n: 10, g: 1.0, life: .55, sq: 1, hit: 'hit_bone', brk: 'break_bone' },
+  bone:  { c: ['#f2ecd8', '#c6bda6', '#8e8574'], n: 10, g: 1.0, life: .55, sq: 1, bounce: 0.35, hit: 'hit_bone', brk: 'break_bone' },
   gel:   { c: ['#d8f0dc', '#8ac49a', '#4f8a5e'], n: 12, g: .85, life: .42, sq: 0, hit: 'hit_gel', brk: 'break_flesh' },
   flesh: { c: ['#e07a6a', '#b8484a', '#7a2c2e'], n: 10, g: 1.10, life: .42, sq: 0, hit: 'hit_flesh', brk: 'break_flesh' },
   void:  { c: ['#d8c0ff', '#a06fff', '#5a3a86'], n: 12, g: -.20, life: .78, sq: 0, glow: 1, hit: 'hit_void', brk: 'break_void' },

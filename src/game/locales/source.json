@@ -581,7 +581,9 @@
    "game/shop.buy",
    "ui/machine.refreshMachine",
    "ui/shop.click",
-   "ui/shop.refreshVault"
+   "ui/shop.refreshVault",
+   "ui/shop.lootAll",
+   "ui/shop.vaultMove"
   ],
   "가방이 차서 일부는 바닥에 떨어졌다": [
    "game.update"
@@ -630,6 +632,9 @@
   ],
   "강화 모루 — 🪙 {gold}": [
    "ui/shop.refreshAnvil"
+  ],
+  "같은 것 넣기": [
+   "index.html"
   ],
   "같은 것끼리 합치고 종류·등급 순으로 정렬합니다. 잠근 물건은 자리를 지킵니다.": [
    "ui.init"
@@ -1241,6 +1246,12 @@
   ],
   "메워진 막장": [
    "world/village.buildDeepShaft"
+  ],
+  "모두 가져오기": [
+   "index.html"
+  ],
+  "모두 꺼내기": [
+   "index.html"
   ],
   "모든 여정이 끝났다.": [
    "game/quests.tellQuest"

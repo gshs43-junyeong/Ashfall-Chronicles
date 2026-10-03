@@ -3,6 +3,7 @@ import { shade } from '../../engine/core/color.js';
 import { TAU, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tileHash } from '../../engine/core/rng.js';
+import { LightOverlay } from '../../engine/render/lightoverlay.js';
 import { FONT, tr } from '../lang.js';
 import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
@@ -193,74 +194,24 @@ export const RenderWorldPart: Bag = {
     return l < 120 ? shade(c0, 120 / Math.max(30, l)) : c0;
   },
   drawGlow(c: CanvasRenderingContext2D, camX: number, camY: number, tx0: number, ty0: number, tx1: number, ty1: number) { const { WW, WH } = dimsOf(this.world);
-    const w = this.world;
-    this._glowC = this._glowC || {};
-    c.save();
-    c.globalCompositeOperation = 'lighter';
+    const w = this.world, L = this.lightOv = this.lightOv || new LightOverlay();
     /* 점 광원의 빛 색 — 조명 계산이 그늘째 모은 칸 단위 색(world.lightColAt)을 부드럽게 늘려 얹는다. 벽 너머로 번지지 않는다 */
-    const x0 = tx0 - 1, y0 = ty0 - 1, lw = tx1 - tx0 + 3, lh = ty1 - ty0 + 3;
-    if (!this.glowCv || this.glowCv.width !== lw || this.glowCv.height !== lh) {
-      this.glowCv = document.createElement('canvas'); this.glowCv.width = lw; this.glowCv.height = lh;
-      this.glowCx = this.glowCv.getContext('2d'); this.glowImg = this.glowCx.createImageData(lw, lh);
-    }
-    const gd = this.glowImg.data;
-    for (let y = 0, i = 0; y < lh; y++) for (let x = 0; x < lw; x++, i += 4) {
-      const rgb = w.lightColAt(x0 + x, y0 + y);
-      gd[i] = rgb ? Math.min(255, rgb[0] * 255) : 0; gd[i + 1] = rgb ? Math.min(255, rgb[1] * 255) : 0; gd[i + 2] = rgb ? Math.min(255, rgb[2] * 255) : 0; gd[i + 3] = 255;
-    }
-    this.glowCx.putImageData(this.glowImg, 0, 0);
-    c.imageSmoothingEnabled = true;
-    c.drawImage(this.glowCv, x0 * TS - camX, y0 * TS - camY, lw * TS, lh * TS);
-    c.imageSmoothingEnabled = false;
+    L.drawTint(c, tx0 - 1, ty0 - 1, tx1 - tx0 + 3, ty1 - ty0 + 3, TS, camX, camY, (x: number, y: number) => w.lightColAt(x, y));
     /* 액체 빛(용암)은 칸이 많아 그늘을 따로 재지 않는다 — 예전처럼 둥근 번짐 */
     for (let ty = Math.max(0, ty0 - 2); ty <= Math.min(WH - 1, ty1 + 2); ty++)
       for (let tx = Math.max(0, tx0 - 2); tx <= Math.min(WW - 1, tx1 + 2); tx++) {
         const d = TILE_DEF[w.tiles[ty * WW + tx]];
         if (!d.lc || (d.light! >= LIGHT_POINT && !d.liquid)) continue;
-        const r = Math.round(10 + d.light! * 5);
-        const key = d.lc + r;
-        let g = this._glowC[key];
-        if (!g) {
-          g = document.createElement('canvas'); g.width = g.height = r * 2;
-          const gc = g.getContext('2d'), gr = gc.createRadialGradient(r, r, 0, r, r, r);
-          gr.addColorStop(0, d.lc + '66'); gr.addColorStop(0.45, d.lc + '22'); gr.addColorStop(1, d.lc + '00');
-          gc.fillStyle = gr; gc.fillRect(0, 0, r * 2, r * 2);
-          this._glowC[key] = g;
-        }
-        c.globalAlpha = Math.min(1, 0.4 + d.light! * 0.03);
-        c.drawImage(g, tx * TS + TS / 2 - camX - r, ty * TS + TS / 2 - camY - r);
+        L.glow(c, tx * TS + TS / 2 - camX, ty * TS + TS / 2 - camY, Math.round(10 + d.light! * 5), d.lc, Math.min(1, 0.4 + d.light! * 0.03));
       }
-    c.restore();
   },
+  /** 어둠 — 깊이에 따른 색조: 지하는 푸른 기운, 지옥은 붉은 기운(engine render/lightoverlay) */
   drawLightOverlay(c: CanvasRenderingContext2D, camX: number, camY: number, tx0: number, ty0: number, tx1: number, ty1: number) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
-    const w = this.world;
-    const x0 = tx0 - 1, y0 = ty0 - 1, x1 = tx1 + 1, y1 = ty1 + 1;
-    const lw = x1 - x0 + 1, lh = y1 - y0 + 1;
-    if (!this.lightCv || this.lightCv.width !== lw || this.lightCv.height !== lh) {
-      this.lightCv = document.createElement('canvas');
-      this.lightCv.width = lw; this.lightCv.height = lh;
-      this.lightCx = this.lightCv.getContext('2d');
-      this.lightImg = this.lightCx.createImageData(lw, lh);
-    }
-    // 깊이에 따른 색조: 지하는 푸른 기운, 지옥은 붉은 기운
+    const w = this.world, L = this.lightOv = this.lightOv || new LightOverlay();
     const mid = (ty0 + ty1) / 2;
-    let tr = 0, tg = 0, tb = 0;
-    if (mid > HELL_Y - 24) { tr = 44; tg = 8; tb = 2; }
-    else if (mid > SURF_BASE + 24) { tr = 4; tg = 7; tb = 18; }
-    const d = this.lightImg.data;
-    let i = 0;
-    for (let y = y0; y <= y1; y++) {
-      for (let x = x0; x <= x1; x++) {
-        // 하한을 조금 남겨 완전한 암흑에서도 블록 실루엣은 읽히게
-        const f = Math.pow(clamp(w.lightAt(x, y) / 15, 0.022, 1), 0.72);
-        d[i] = tr; d[i + 1] = tg; d[i + 2] = tb; d[i + 3] = 255 * (1 - f);
-        i += 4;
-      }
-    }
-    this.lightCx.putImageData(this.lightImg, 0, 0);
-    c.imageSmoothingEnabled = true;
-    c.drawImage(this.lightCv, x0 * TS - camX, y0 * TS - camY, lw * TS, lh * TS);
-    c.imageSmoothingEnabled = false;
+    const rgb: [number, number, number] = mid > HELL_Y - 24 ? [44, 8, 2] : mid > SURF_BASE + 24 ? [4, 7, 18] : [0, 0, 0];
+    // 하한을 조금 남겨 완전한 암흑에서도 블록 실루엣은 읽히게
+    L.drawDark(c, tx0 - 1, ty0 - 1, tx1 + 1, ty1 + 1, TS, camX, camY, (x: number, y: number) => w.lightAt(x, y), 15, rgb);
   },
 
   /** 소환 제단 — 새긴 받침 위 세 갈래 발톱이 구슬을 받친다. 구슬은 빛이 안에서 도는 유리알:

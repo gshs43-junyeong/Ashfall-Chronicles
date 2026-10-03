@@ -1,18 +1,31 @@
 /* ===== game.js — 루프 / 입력 / 렌더 / 진행 ===== */
 import { bindApp } from './ctx.js';
+import { DayCycle } from '../engine/core/daycycle.js';
 import { startLoop } from '../engine/core/loop.js';
-import { aabb, clamp, dist, dist2, lerp } from '../engine/core/math.js';
+import { aabb, clamp, dist, dist2 } from '../engine/core/math.js';
 import { mixin } from '../engine/core/mixin.js';
 import { RNG, tileHash } from '../engine/core/rng.js';
+import { SpatialHash } from '../engine/core/spatial.js';
+import { TimeScale } from '../engine/core/timescale.js';
+import { Tweens } from '../engine/core/tween.js';
+import { stepParticles } from '../engine/fx/particles.js';
+import { ShapeFx } from '../engine/fx/shapes.js';
+import { Afterimages } from '../engine/fx/trail.js';
 import { createInput } from '../engine/input/actions.js';
+import { createGamepad } from '../engine/input/gamepad.js';
 import { bindPointer } from '../engine/input/pointer.js';
 import { mountTouch } from '../engine/input/touch.js';
 import { fitCanvas } from '../engine/platform/viewport.js';
+import { Camera } from '../engine/render/camera.js';
+import { ScreenFade } from '../engine/render/fade.js';
+import { MapAtlas } from '../engine/render/minimap.js';
+import { createAutosave } from '../engine/save/autosave.js';
 import { createScenes } from '../engine/scene/scenes.js';
+import { PerfPanel } from '../engine/ui/perf.js';
 import { fmt, tr } from './lang.js';
 import { dimsOf } from './size.js';
 import { T, TILE_DEF, TILE_SPRITE } from './data.js';
-import { KEY_ACTIONS, MODE_OF } from './data/start.js';
+import { CHAR_OF, KEY_ACTIONS, MODE_OF } from './data/start.js';
 import { CHAPTERS } from './data/story.js';
 import { PART_CAP, idef } from './data/values.js';
 import { TS, World, setWorldSize } from './world.js';
@@ -30,6 +43,12 @@ import { SaveStore } from './savefmt.js';
 export const MAP_REVEAL_LIGHT = 1;
 
 /** 화질 — 픽셀 밀도 상한 · 입자 상한. ★ 헤드리스 폰 흉내에서 밀도 1.5 → 1 로 프레임이 10.8 → 21.2 로 두 배였다(JS 시간은 같음 — 막히는 곳은 화면 합성) */
+/** 하루 — 해 5:30~18:30 · 밝아짐 4~7시 · 어두워짐 17~20시(engine core/daycycle). 그린 해 자리 · 그림자 방향 · 밤이 같은 식을 쓴다 */
+export const DAY_CYCLE = new DayCycle({ rise: 330, set: 1110, dawn: [240, 420], dusk: [1020, 1200] });
+/** 자동 저장 간격(초) */
+export const AUTOSAVE_SEC = 300;
+/** 한 프레임에 찾는 몹 길의 수(entity/enemy-ai walkPath) */
+export const PATH_BUDGET = 3;
 export const QUALITY: Bag = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 300 } };
 
 /** 터치 기기인가 — ?touch=1 / 0 이 먼저, 아니면 손가락이 주 포인터인 기기(폰 · 태블릿) */
@@ -46,12 +65,12 @@ export class Game {
     const g: Bag = this;   // 씬·입력 콜백이 부르는 이 게임
     Object.assign(this, {
       cv: null, ctx: null, mm: null, mmx: null,
-      W: 0, H: 0, cam: { x: 0, y: 0 },
+      W: 0, H: 0, cam: new Camera({ follow: 0.002, leadX: 56, leadY: 64, leadSpeed: 320, leadEase: 0.08 }),
       world: null, rng: new RNG(1),
       /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
       players: [], me: null,
-      ents: [], projs: [], parts: [], texts: [], drops: [], pending: [], corpses: [],
-      time: 0, dayT: 6 * 60, shake: 0,
+      ents: [], projs: [], parts: [], texts: [], drops: [], tweens: new Tweens(), corpses: [],
+      time: 0, dayT: 6 * 60, shake: 0, pathBudget: 0, timeScale: new TimeScale(), fade: new ScreenFade(), perf: new PerfPanel(), shapes: new ShapeFx(), trail: new Afterimages<Bag>(0.028, 0.2, 7), entHash: new SpatialHash<Enemy>(64),
       /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
          ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
       scenes: createScenes({
@@ -97,10 +116,8 @@ export const GameCore: Bag = {
   init() { const { WW, WH } = dimsOf(this.world);
     this.cv = $('#game'); this.ctx = this.cv.getContext('2d');
     this.mm = $('#minimap'); this.mmx = this.mm.getContext('2d');
-    // 전체 지도용 축소 버전 — 타일 하나당 1px.
-    this.mapAtlas = document.createElement('canvas');
-    this.mapAtlas.width = WW; this.mapAtlas.height = WH;
-    this.mapAtlasX = this.mapAtlas.getContext('2d');
+    // 전체 지도용 축소 버전 — 타일 하나당 1px(engine render/minimap)
+    this.mapAtlas = new MapAtlas(); this.mapAtlas.fit(WW, WH);
     addEventListener('resize', () => this.resize()); this.resize();
     TileArt.build();
     Art.build();
@@ -185,6 +202,8 @@ export const GameCore: Bag = {
     return !TOUCH ? 'high' : Math.min(screen.width, screen.height) <= 540 ? 'low' : 'mid';
   },
   /** 설정의 시야 배율. */
+  /** sec 초 뒤에 fn — 세계 시간으로 흐른다(멈추면 같이 멈춘다) */
+  after(sec: number, fn: () => void) { return this.tweens.after(sec, fn); },
   viewZoom() { return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6); },
 
   resize() {
@@ -220,6 +239,18 @@ export const GameCore: Bag = {
     if (TOUCH)
       this.touch = mountTouch({ input: this.inp, ptr: this.input, surface: this.cv, rightDown: () => this.rightClick(),
         buttons: [{ id: 'jump', label: tr('점프') }, { id: 'dash', label: tr('대시') }], altLabel: tr('사용') });
+    /* 자동 저장 — 5분마다 · 탭을 내리거나 닫을 때(engine save/autosave). 결전 중 · 쓰러진 동안 · 남의 세계(손님)에서는 세계를 저장하지 않는다 */
+    this.autosave = createAutosave({ every: AUTOSAVE_SEC,
+      can: () => this.state === 'play' && this.currentSlot !== null && !!this.player && this.player.hp > 0 && !this.boss && !(this.net && this.net.role === 'guest'),
+      save: (quiet: boolean) => this.saveGame(quiet) });
+    /* 게임패드 — A 점프 · B 대시 · X/L3/R3 스킬 · Y 가방 · Back 지도 · Start 메뉴 · LB/RB 핫바 · RT 공격·캐기 · LT 놓기·쓰기 · 오른쪽 스틱 조준 */
+    this.pad = createGamepad({ input: this.inp, ptr: this.input,
+      hold: { 0: 'jump', 1: 'dash', 12: 'jump' },
+      tap: { 2: 'skill1', 10: 'skill2', 11: 'skill3', 3: 'inv', 8: 'map', 9: 'menu', 4: 'slotPrev', 5: 'slotNext' },
+      press: (a: string) => this.padPress(a),
+      anchor: () => { const z = this.viewZoom(), p = this.player; return p ? { x: (p.cx - this.cam.x) * z, y: (p.cy - this.cam.y) * z } : { x: innerWidth / 2, y: innerHeight / 2 }; },
+      rightDown: () => { if (this.state === 'play') this.rightClick(); },
+      active: (on: boolean) => document.body.classList.toggle('pad', on) });
     if (this.touch) document.body.classList.add('touch');   // 낮은 화면에선 미니맵·퀘스트 창을 숨긴다(style.css)
     if (this.touch) {         // 오른쪽 단추가 탭 단추 줄(패널을 여는 유일한 길)을 가리지 않게 그 윗변 위로 올린다 — 좁은 화면에선 줄이 핫바 위에 있다
       const lift = () => { const bar = $('#tabbar'), r = bar && bar.getBoundingClientRect();
@@ -244,7 +275,17 @@ export const GameCore: Bag = {
     $('#dialogue').addEventListener('click', () => { if (UI.dlg && !UI.finishType()) UI.nextLine(false); });
   },
   /** 새로 눌린 키 하나(반복 아님) — 패널 · 저장 · 핫바 · 스킬. */
+  /** 패드의 한 번 누르는 단추 — 그 액션에 걸린 첫 키를 누른 것으로 친다(키 처리 한 곳을 같이 쓴다) */
+  padPress(a: string) {
+    if (a === 'slotPrev' || a === 'slotNext') {
+      if (this.state !== 'play' || !this.player) return;
+      const p = this.player; p.sel = (p.sel + (a === 'slotNext' ? 1 : -1) + HOTBAR) % HOTBAR; UI.refreshHotbar(); return;
+    }
+    const code = a === 'menu' ? 'Escape' : this.keysFor(a)[0];
+    if (code) this.keyDown({ code, preventDefault() {} });
+  },
   keyDown(e: any) {
+    if (e.code === 'F3') { this.pipe.profile(this.perf.toggle()); if (e.preventDefault) e.preventDefault(); return; }   // 성능 판(engine ui/perf) · 단계별 시간
     // 타이틀에서는 Esc 로 열려 있는 팝업을 한 겹씩 닫는다
     if (this.state !== 'play') {
       if (e.code === 'Escape' && this.closeTopModal()) e.preventDefault();
@@ -363,9 +404,9 @@ export const GameCore: Bag = {
     const p = this.player;
     /* 난이도와 캐릭터는 새 게임에서 한 번 정하고 끝이다 — 설정에서 못 바꾼다. */
     this.mode = MODE_OF(mode).id;
-    this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.pending = [];
+    this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.tweens.clear();
     this.corpses = [];
-    this.rings = []; this.bolts = []; this.warns = []; this.sigs = []; this.edge = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
+    this.shapes.clear(); this.trail.clear(); this.sigs = []; this.edge = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
     this.talked = {}; this.crafted = {}; this.scenes.close('pause'); this.scenes.close('death'); this.scenes.close('mpause'); this.scenes.close('mdeath');
@@ -379,7 +420,7 @@ export const GameCore: Bag = {
     this.rocks = []; this.quake = null; this.meteor = null; this.meteorRolled = undefined; this.caveHere = 0; this._caveLast = 0;
     this.nearStObj = { work: null, forge: null };
     this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
-    this.rainT = 0; this.rainDrops = null; this.smokes = []; this.smokeT = 0;
+    this.rainT = 0; this.precip = null; this.smokes = []; this.smokeT = 0;
     this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = []; this.bountyNext = [];
     this.shopStock = {}; this.shopStockDay = -1;
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
@@ -403,6 +444,9 @@ export const GameCore: Bag = {
   /* ================= 루프 ================= */
   /** 한 프레임 — dt 는 0.033초로 자른 것, rawDt 는 실제로 흐른 시간(engine/core/loop.js). */
   frame(dt: number, rawDt: any) {
+    if (this.pad) this.pad.poll();
+    this.fade.update(Math.min(rawDt, 0.1));
+    this.perf.frame(rawDt);   // 화면 가리기는 진짜 시간으로(멈춤과 상관없이)   // 게임패드는 상태만 준다 — 매 프레임 읽는다(engine input/gamepad)
     this.scenes.frame(dt);
     // 배경음악은 일시정지/타이틀과 무관하게 항상 갱신해야 크로스페이드가 끊기지 않는다.
     if (Music) { Music.update(Math.min(rawDt, 3)); Music.play(this.pickBgm()); }
@@ -478,7 +522,8 @@ export const GameCore: Bag = {
 
   update(dt: number) { const { WW, WH } = dimsOf(this.world);
     /* ---- 손이 멈추는 한 박자(히트스톱) ---- */
-    if (this.stopT > 0) { this.stopT -= dt; dt *= 0.12; }
+    dt = this.timeScale.step(dt);   // 히트스톱 · 느린 화면(engine core/timescale)
+    if (this.autosave && !this.net) this.autosave.tick(dt);
     this.time += dt;
     /* 플레이 시간(초). */
     if (this.state === 'play' && !this.paused) {
@@ -526,7 +571,8 @@ export const GameCore: Bag = {
     if (this.input.m1 && !this.uiOpen) this.leftHold(dt);
     else { p.mineTx = -1; p.mineProg = 0; }
 
-    // 엔티티
+    // 엔티티 — 길찾기는 프레임마다 몇 번만(몹이 몰려도 한 프레임이 길어지지 않게)
+    this.pathBudget = PATH_BUDGET;
     for (let i = this.ents.length - 1; i >= 0; i--) {
       const e = this.ents[i];
       const tp = this.nearestPlayer(e.cx, e.cy);
@@ -538,16 +584,18 @@ export const GameCore: Bag = {
       // 경비병은 마을 반대편 감시탑에 서 있어도 거리로 정리하면 안 된다 — 마을을 벗어날 때 따로 거둔다
       else if (!e.boss && !e.minion && !e.guard && dist2(e.cx, e.cy, tp.cx, tp.cy) > 2400 * 2400) this.ents.splice(i, 1);
     }
+    this.entHash.rebuild(this.ents, (e: any) => e instanceof Enemy && !e.dead);   // 투사체가 근처 몹만 보게
     for (let i = this.projs.length - 1; i >= 0; i--) { this.projs[i].update(dt, w, p); if (this.projs[i].dead) this.projs.splice(i, 1); }
     for (let i = this.drops.length - 1; i >= 0; i--) { const d = this.drops[i]; d.update(dt, w, this.nearestPlayer(d.x, d.y)); if (this.drops[i].dead) this.drops.splice(i, 1); }
-    for (let i = this.parts.length - 1; i >= 0; i--) if (!this.parts[i].update(dt)) this.parts.splice(i, 1);
-    this.walkDust(p);
     /* ★ 잰 최고치는 257개라 PART_CAP(900)에 정상 전투로는 닿지 않지만, 난간이 없으면 언젠가 프레임으로 값을 치른다. */
-    const cap = QUALITY[this.quality()].parts;
-    if (this.parts.length > cap) this.parts.splice(0, this.parts.length - cap);
+    stepParticles(this.parts, dt, QUALITY[this.quality()].parts);   // engine fx/particles
+    this.shapes.update(dt);
+    /* 대시 잔상 — 한순간에 멀리 가는 움직임을 눈이 따라가게(engine fx/trail) */
+    this.trail.update(dt, p.dashV > 0 && !p.swimming, p.x, p.y, () => ({ fr: this.playerFrame(p), flip: p.facing < 0, key: 'player_' + CHAR_OF(p.charId).id }));
+    this.walkDust(p);
     for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
     for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
-    for (let i = this.pending.length - 1; i >= 0; i--) { this.pending[i].t -= dt; if (this.pending[i].t <= 0) { this.pending[i].fn(); this.pending.splice(i, 1); } }
+    this.tweens.update(dt);   // 미뤄 둔 일 · 값 옮기기(engine core/tween)
 
     // 스폰
     this.spawnTimer -= dt;
@@ -620,9 +668,8 @@ export const GameCore: Bag = {
     if (this.growTimer <= 0 && !guest) { this.growTimer = 5; for (const q of this.players) w.regrow(this.rng, 4, Math.floor(q.cx / TS)); }
 
     // 카메라
-    const tx = p.cx - this.W / 2, ty = p.cy - this.H / 2 - 30;
-    this.cam.x = lerp(this.cam.x, clamp(tx, 0, WW * TS - this.W), 1 - Math.pow(0.002, dt));
-    this.cam.y = lerp(this.cam.y, clamp(ty, 0, WH * TS - this.H), 1 - Math.pow(0.002, dt));
+    /* 달리는 쪽 · 떨어지는 아래쪽을 조금 더 보여 준다(engine Camera — 멈추면 천천히 가운데로 돌아온다) */
+    this.cam.update(dt, p.cx - this.W / 2, p.cy - this.H / 2 - 30, p.vx, p.vy, WW * TS - this.W, WH * TS - this.H);
     this.shake = Math.max(0, this.shake - dt * 26);
 
     // 곡괭이를 들면 채굴 커서로

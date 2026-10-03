@@ -156,6 +156,33 @@ e.keepIn(x0, x1, yMax)                 // 세계 안에 가둔다
 | `new SnapBuffer(delay, cap)` → `push(t, state)` · `sample(now)` | 늦게 오는 상태를 delay 만큼 늦춰 두 장 사이를 보간(숫자 칸만) |
 | `Signal` — `post(msg)` · `onmessage` · `close()` · (인터넷) `room` 약속 · `onerror` | 처음 서로 찾기(제안/응답 글 건네기). `createTabSignal(room)`(같은 브라우저 탭끼리) · `createWsSignal(url, { role, room, id })`(자체 WebSocket 중개 — `relay/`) · `createPeerSignal(url, { role, room, id, prefix, codeLen })`(PeerJS 서버를 우편함으로만) · `randomCode(n)` |
 
+### 더 붙은 틀 — 게임을 모르는 도구들
+
+Ashfall 이 손으로 들고 있던 일 중 다른 게임에도 쓰일 것을 엔진으로 옮겼다. 게임 값은 전부 설정이나 콜백으로 받는다.
+
+| 파일 | 이름 | 쓰임 |
+|---|---|---|
+| `core/tween.ts` | `Tweens` · `EASE` · `pop` · `approach` | 시간 지난 뒤 할 일(`after`) · 값 보간 · 튀는 크기 |
+| `core/spatial.ts` | `SpatialHash` | 칸 단위 공간 해시 — 투사체·몹 근처 찾기(`query` · `near`) |
+| `core/daycycle.ts` | `DayCycle` | 하루 시각 → 낮빛 · 해·달 호 · 해 방향(`sunDir` — 그림자 각도) · 밤 |
+| `core/timescale.ts` | `TimeScale` | 맞힐 때 잠깐 멈춤 · 슬로 모션 |
+| `core/inventory.ts` | `stackAdd` · `countOf` · `takeOut` · `sortSlots` · `moveAll` · `quickStack` | 가방 칸 — 겹치기 규칙은 게임이(`StackRules`) |
+| `core/loot.ts` | `rollLoot` · `mapPity` | 전리품 표 굴리기 · 연속 꽝 보정 |
+| `core/achieve.ts` | `checkUnlocks` · `unlockProgress` | 조건 표로 업적 열기 |
+| `tilemap/ray.ts` | `gridRay` · `lineOfSight` · `rayHit` · `seesBox` | 칸 광선 — 시야 · 지도 밝히기 · 몹 감각 |
+| `tilemap/path.ts` | `findGroundPath` · `findOpenPath` · `PathFollower` | 걷는 몹(점프 높이 · 낙하 고려) · 나는 몹의 A* |
+| `tilemap/lightfield.ts` | `LightField` | 빛 버퍼 · 점 광원 조각 캐시(`touch` 로 무효) · 해(`castSunlight`) — `World.computeLight` 가 쓴다 |
+| `tilemap/cellqueue.ts` | `CellQueue` | 바뀐 칸만 다시 보는 칸 오토마타(유체) — 다 잰 뒤 한꺼번에 바꾼다 |
+| `procgen/cells.ts` | `floodFill` · `distanceField` · `BoxSet` · `automataStep` · `poissonDisc` · `weightedKey` | 생성 도구 |
+| `entity/sense.ts` · `steer.ts` · `status.ts` | `Senses` · `seek`/`flee`/`separation`/`wander` · `addDot`/`tickDots`/`Timed` | 보고 듣고 기억하기 · 조향 · 지속 피해 |
+| `render/camera.ts` · `fade.ts` · `outline.ts` · `anim.ts` | `Camera` · `ScreenFade` · `drawOutlined` · `Animator`/`cycleFrame` | 따라가는 카메라(흔들림) · 화면 페이드 · 윤곽 · 장 넘김 |
+| `render/minimap.ts` · `lightoverlay.ts` | `MapAtlas` · `drawTileWindow` · `LightOverlay` | 지도 아틀라스 · 빛 덮개 |
+| `fx/particles.ts` · `floattext.ts` · `shapes.ts` · `trail.ts` · `precip.ts` · `wind.ts` | `Particle` · `FloatText` · `ShapeFx` · `Afterimages` · `Precip` · `Wind` | 입자 · 뜨는 숫자 · 고리/번개 · 잔상 · 비/눈 · 바람 |
+| `audio/spatial.ts` | `spatialMix` · `createPanRouter` | 거리 감쇠 · 좌우 소리 위치 |
+| `input/gamepad.ts` | `createGamepad` | 패드 → 액션 |
+| `save/settings.ts` · `autosave.ts` | `createSettingsStore` · `createAutosave` | 설정 저장 · 자동 저장 타이머 |
+| `ui/toasts.ts` · `modal.ts` · `typewriter.ts` · `panzoom.ts` · `perf.ts` | `createToasts` · `confirmBox` · `typewrite` · `PanZoom` · `PerfPanel` | 알림 · 확인 창 · 한 글자씩 · 끌고 확대 · 성능 판(F3) |
+
 ## 5. Ashfall 은 엔진을 어떻게 쓰나
 
 | 엔진 | 게임(`src/game`) |

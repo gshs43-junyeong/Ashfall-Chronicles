@@ -83,7 +83,7 @@ interface PetDef {
 
 /** 아래층(world · entity · factory · ui)이 ctx.ts 로 쓰는 G 의 칸 — tests/baseline/ctx.json 계약과 같은 목록. 새로 쓰면 둘 다 더할 것. */
 interface AppCtx {
-  ENH_MAX: number; addCorpse: (...a: any[]) => any; aoe: (...a: any[]) => any; applySettings: (...a: any[]) => any;
+  ENH_MAX: number; ac: AudioContext | null; timeScale: { hit(s: number, cap?: number, f?: number): void; slow(s: number, f?: number): void }; fade: { run(mid: (() => void) | null, o?: number, h?: number, i?: number): void; reveal(i?: number): void }; pathBudget: number; lootPity: any; entHash: { query(x: number, y: number, w: number, h: number, fn: (o: any) => boolean | void): void; near(cx: number, cy: number, r: number): any[] }; addCorpse: (...a: any[]) => any; aoe: (...a: any[]) => any; applySettings: (...a: any[]) => any;
   bandFx: (...a: any[]) => any; boltFx: (...a: any[]) => any; bossLine: (...a: any[]) => any; bounties: any[];
   bountyPay: (...a: any[]) => any; bountyProgress: (...a: any[]) => any; breakFx: (...a: any[]) => any; burst: (...a: any[]) => any;
   buy: (...a: any[]) => any; buyPrice: (...a: any[]) => any; buyStock: (...a: any[]) => any; chapter: number;
@@ -95,7 +95,7 @@ interface AppCtx {
   importSaves: (...a: any[]) => any; keysFor: (...a: any[]) => any; killMult: (...a: any[]) => any; mapAtlas: any;
   marketRate: (...a: any[]) => any; merchantOf: (...a: any[]) => any; modeMul: (...a: any[]) => any; nearSt: any; nearStObj: any;
   objLabel: (...a: any[]) => any; onBossDown: (...a: any[]) => any; onDeath: (...a: any[]) => any; onKill: (...a: any[]) => any;
-  onLevelUp: (...a: any[]) => any; onPickup: (...a: any[]) => any; onProfUp: (...a: any[]) => any; parts: any[]; pending: any[];
+  onLevelUp: (...a: any[]) => any; onPickup: (...a: any[]) => any; onProfUp: (...a: any[]) => any; parts: any[]; after: (sec: number, fn: () => void) => () => void;
   player: any; me: any; players: any[]; netRemoteHurt: (rp: any, amount: number, srcX?: number) => void; net: any; pvpTargets: () => any[]; pvpHit: (q: any, dmg: number, srcX: number) => void; netHitGhost: (...a: any[]) => any; netKilledBy: (...a: any[]) => any; price: (...a: any[]) => any; projs: any[]; reforgeCost: (...a: any[]) => any; reforgeSlot: (...a: any[]) => any;
   ringFx: (...a: any[]) => any; rng: any; rollBounties: (...a: any[]) => any; saveSettings: (...a: any[]) => any;
   scale: (...a: any[]) => any; sellItem: (...a: any[]) => any; setOpt: (...a: any[]) => any; setPause: (...a: any[]) => any;
@@ -150,5 +150,3 @@ interface TilePaintKit {
 }
 /** 공장 기계 제작법(MRECIPES) — m 기계 · in 재료 · out 산출 · t 틱 수. */
 interface MRecipeDef { m: string; in: Record<string, number>; out: Record<string, number>; t: number; [k: string]: any; }
-/** 점 광원 하나가 둘레에 주는 빛(그늘 계산 끝) — World.lightPatch 가 광원 칸마다 저장한다. */
-interface LightPatch { s: number; x: number; y: number; r: number; v: Float32Array; used: number; }

@@ -962,7 +962,10 @@
   "영문과 숫자를 섞어 5~6자 — 예: 7K2QM": "5–6 letters and digits — e.g. 7K2QM",
   "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다.": "Multiplayer characters are separate from single player. In a new world you start fresh with this name and class; the world remembers you, so you pick up where you left off when you come back.",
   "캐릭터를 이 세계에 맡겼다": "Character left in this world's keeping",
-  "머리 위 고드름이 갈라진다 — 비켜라!": "The icicle overhead is cracking — move!"
+  "머리 위 고드름이 갈라진다 — 비켜라!": "The icicle overhead is cracking — move!",
+  "같은 것 넣기": "Stack matching",
+  "모두 가져오기": "Take all",
+  "모두 꺼내기": "Take all out"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

@@ -1,22 +1,16 @@
 /* ===== game/render-sky.js — 하늘 · 해와 달 · 원경 ===== */
 import { mixHex } from '../../engine/core/color.js';
-import { TAU, clamp, inv } from '../../engine/core/math.js';
+import { TAU, clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { dimsOf } from '../size.js';
 import { TS } from '../world.js';
 import { Sprites } from '../sprites.js';
-import { Game } from '../game.js';
+import { DAY_CYCLE, Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const RenderSkyPart: Bag = {
 
-  dayFactor() {
-    const t = this.dayT;
-    if (t >= 7 * 60 && t <= 17 * 60) return 1;
-    if (t > 17 * 60 && t < 20 * 60) return 1 - inv(17 * 60, 20 * 60, t);
-    if (t >= 20 * 60 || t < 4 * 60) return 0;
-    return inv(4 * 60, 7 * 60, t);
-  },
+  dayFactor() { return DAY_CYCLE.light(this.dayT); },
   drawSky(c: CanvasRenderingContext2D, f: any, camX: number, camY: number) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
     const surfPx = SURF_BASE * TS;
     let top = mixHex('#0a0d1c', '#4a86c8', f);
@@ -103,11 +97,7 @@ export const RenderSkyPart: Bag = {
   /** 해(1)·달(0)이 하늘을 건넌 몫 — 0 = 동쪽 지평선(화면 오른쪽), 1 = 서쪽 지평선. 밖이면 지평선 밑(sin 이 음수).
       ★ 뜨고 지는 시각은 dayFactor 가 밝아지고(4~7시) 어두워지는(17~20시) 한가운데여야 한다 — 어긋나면
       밝은 하늘에 해가 없거나, 해가 중천 가까이에서 갑자기 나타나 제멋대로 떠 보인다. */
-  skyArc(sun: any) {
-    const RISE = 330, SET = 1110;                         // 5:30 · 18:30
-    const t0 = sun ? RISE : SET, dur = sun ? SET - RISE : 1440 - SET + RISE, off = (1440 - dur) / 2;
-    return ((((this.dayT - t0 + off) % 1440) + 1440) % 1440 - off) / dur;
-  },
+  skyArc(sun: any) { return DAY_CYCLE.arc(this.dayT, !!sun); },
   /** 해·달의 화면 자리 — u 0 = 오른쪽(동) → 1 = 왼쪽(서). 노을 빛도 같은 값을 쓴다. */
   skyX(u: any) { return this.W / 2 + Math.cos(Math.PI * u) * this.W * .42; },
   /* 높이는 √up — 선형이면 아침·저녁 내내 숲 원경(화면 0.15~0.5) 뒤에 숨어 한낮에만 보였다 */
