@@ -86,7 +86,9 @@ export const NetUiPart: Bag = {
     if (!peer || !peer.pid || !peer.rp) return;
     this.mpGuests = this.mpGuests || {};
     const rec = this.mpGuests[peer.pid] || (this.mpGuests[peer.pid] = {});
-    Object.assign(rec, { x: Math.round(peer.rp.x), y: Math.round(peer.rp.y), n: peer.rp.name, c: peer.rp.charId, t: Date.now() });
+    /* ★ 아바타(peer.rp)는 보간으로 조금 뒤처져 그린 자리다 — 받은 마지막 상태(peer.last)가 손님의 진짜 자리(나가기 직전에 움직이면 몇 칸 어긋났다) */
+    const at = peer.last || peer.rp;
+    Object.assign(rec, { x: Math.round(at.x), y: Math.round(at.y), n: peer.rp.name, c: peer.rp.charId, t: Date.now() });
     if (char && typeof char === 'object' && JSON.stringify(char).length < 60000) rec.char = char;
   },
   /** 호스트 — 손님 기록만 제 슬롯에 바로 적는다(세계는 마지막 저장 그대로). 호스트가 저장을 잊어도 손님 캐릭터는 남게 —
