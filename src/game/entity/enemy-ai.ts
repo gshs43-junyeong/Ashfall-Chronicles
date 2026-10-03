@@ -2,47 +2,109 @@
 import { app as G, ui as UI } from '../ctx.js';
 import { aabb, angleTo, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
+import { Senses } from '../../engine/entity/sense.js';
+import { tickDots } from '../../engine/entity/status.js';
+import { followPoints, seek, separation } from '../../engine/entity/steer.js';
+import { PathFollower, findGroundPath, findOpenPath } from '../../engine/tilemap/path.js';
+import { seesBox } from '../../engine/tilemap/ray.js';
 import { tr } from '../lang.js';
 import { dimsOf } from '../size.js';
-import { T } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
 import { BOSS_LINES } from '../data/skills.js';
 import { TS } from '../world.js';
-import { Enemy, Part, Proj } from '../entity.js';
+import { Enemy, GRAV, Part, Proj } from '../entity.js';
 /* entity.js 의 Enemy 에서 나눈 조각 — 읽히는 순간 Enemy.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
+/** 눈·귀·기억으로 쫓는 갈래 — 순한 동물 · 부유물 · 보스는 따로 */
+export const SENSING: Record<string, 1> = { walker: 1, jumper: 1, archer: 1, flyer: 1, caster: 1, swimmer: 1 };
+
 export const EnemyAI: Bag & ThisType<Enemy> = {
+
+  /** 나는 몹이 가고 싶은 속도 — 보이면 곧장, 놓쳤으면 벽을 돌아가는 길(engine tilemap/path findOpenPath)로 마지막 자리까지.
+      곁의 몹에게서는 조금씩 비켜 선다(engine entity/steer separation — 여럿이 한 점에 겹쳐 한 마리처럼 보이던 것). */
+  flyWant(dt: number, world: World, tx: number, ty: number, sp: number, seen: boolean) {
+    let v = seek(this.cx, this.cy, tx, ty, sp);
+    if (!seen && this.sense) {
+      this.pathT = (this.pathT || 0) - dt;
+      if ((!this.fly || this.pathT <= 0) && G.pathBudget > 0) {
+        G.pathBudget--; this.pathT = 0.8 + Math.random() * 0.4;
+        const bw = Math.max(1, Math.ceil(this.w / TS - 0.05)), bh = Math.max(1, Math.ceil(this.h / TS - 0.05));
+        const pts = findOpenPath(Math.floor(this.x / TS), Math.floor(this.y / TS), Math.floor(tx / TS - bw / 2), Math.floor(ty / TS - bh / 2),
+          { solid: (x, y) => world.solid(x, y), w: bw, h: bh, maxNodes: 700 });
+        this.fly = pts ? { pts, i: 1 } : null;
+      }
+      if (this.fly) {
+        const r = followPoints(this.x + TS / 2, this.y + TS / 2, this.fly.pts, this.fly.i, TS, sp);
+        this.fly.i = r.i;
+        if (r.i < this.fly.pts.length) v = r.v;
+      }
+    } else this.fly = null;
+    const s = separation(this.cx, this.cy, G.entHash.near(this.cx, this.cy, 40), 40, sp * 0.7, this);
+    return { x: v.x + s.x, y: v.y + s.y };
+  },
+
+  /** 걷는 몹의 길 — 과녁이 위·아래로 두 칸 넘게 갈리거나 벽에 막혔을 때만 길을 찾는다(engine tilemap/path).
+      한 프레임에 찾는 몹 수를 줄이려고 몹마다 0.7초에 한 번 · 세계 전체로 프레임당 PATH_BUDGET 번만. 길이 없으면 null(곧장 걸어간다). */
+  walkPath(dt: number, world: World, tx: number, ty: number, jump: number) {
+    const bw = Math.max(1, Math.ceil(this.w / TS - 0.05)), bh = Math.max(1, Math.ceil(this.h / TS - 0.05));
+    const fx = Math.floor(this.x / TS), fy = Math.floor((this.y + this.h - 1) / TS);
+    const gx = Math.floor(tx / TS), gy = Math.floor((ty + 18) / TS);
+    const far = Math.abs(gy - fy) > 2 || this.hitWall;
+    this.pathT = (this.pathT || 0) - dt;
+    if (!far && (!this.path || this.path.done)) return null;
+    if (far && this.pathT <= 0 && this.onGround && Math.abs(gx - fx) < 40 && G.pathBudget > 0) {
+      G.pathBudget--;
+      this.pathT = 0.7 + Math.random() * 0.3;
+      this.path = this.path || new PathFollower();
+      this.path.set(findGroundPath(fx, fy, gx, gy, { solid: (x, y) => world.solid(x, y), floor: (x, y) => world.solid(x, y) || TILE_DEF[world.get(x, y)].solid === 2, w: bw, h: bh, jump, maxNodes: 900 }));
+    }
+    if (!this.path || this.path.done) return null;
+    return this.path.steer(this.cx / TS, (this.y + this.h) / TS, this.onGround, bw);
+  },
 
   update(dt: number, world: World, player: Player) { const { SEA_X1 } = dimsOf(world);
     this.atkPose -= dt;
     this.flash -= dt; this.atkCd -= dt; this.jumpCd -= dt; this.hitCd -= dt;
-    if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slowF = 1; }
+    this.slowFx.tick(dt); this.slowF = this.slowFx.v; this.slowT = this.slowFx.t;
     if (this.markT > 0) {
       this.markT -= dt;
       if (this.markT > 0 && Math.random() < dt * 5)
         G.parts.push(new Part(this.cx + (Math.random() - .5) * this.w, this.y - 6, '#e8d05a', -24, .5));
     }
-    for (let i = this.dots.length - 1; i >= 0; i--) {
-      const d = this.dots[i]; d.t -= dt;
-      this.hp -= d.dps * dt;
+    this.hp -= tickDots(this.dots, dt, d => {
       if (Math.random() < dt * 6) G.parts.push(new Part(this.cx, this.cy, d.kind === 'burn' ? '#ff8a3a' : d.kind === 'poison' ? '#8fd06a' : '#9fe0ff'));
-      if (d.t <= 0) this.dots.splice(i, 1);
-    }
+    });
     if (this.hp <= 0) { this.die(null); return; }
 
-    const dx = player.cx - this.cx, dy = player.cy - this.cy;
-    const dd = Math.hypot(dx, dy);
-    this.facing = dx >= 0 ? 1 : -1;
     const AI = this.def.ai;
     const sp = this.spd! * this.slowF;
+    /* 알아차림 — 보스·순한 동물·떠다니는 것 말고는 눈(시선)과 귀(가까움)와 기억으로 쫓는다(engine entity/sense).
+       보이면 플레이어를, 놓쳤으면 마지막으로 본 자리를 과녁으로 삼는다. 쏘는 몹은 보일 때만 쏜다. */
+    const real = Math.hypot(player.cx - this.cx, player.cy - this.cy);
+    let tx = player.cx, ty = player.cy, seen = true, engaged = real < this.aggro;
+    if (SENSING[AI] && !this.boss && !this.def.passive) {
+      if (!this.sense) this.sense = new Senses({ sight: this.aggro, hearing: Math.min(150, this.aggro * 0.35), memory: 5, react: 0.18 });
+      const ex = this.cx / TS, ey = (this.y + Math.min(10, this.h * 0.3)) / TS;
+      this.sense.update(dt, real, player.cx, player.cy,
+        () => seesBox((x, y) => world.solid(x, y), ex, ey, player.cx / TS, player.cy / TS, player.h / 2 / TS));
+      seen = this.sense.seen;
+      engaged = this.sense.engaged || this.sense.state === 'alert';
+      if (!seen) { tx = this.sense.lastX; ty = this.sense.lastY; }
+    }
+    const dx = tx - this.cx, dy = ty - this.cy;
+    const dd = engaged ? Math.hypot(dx, dy) : Infinity;
+    if (engaged || real < this.aggro) this.facing = dx >= 0 ? 1 : -1;
 
     if (AI === 'walker' || AI === 'jumper' || AI === 'archer') {
       const range = this.def.range || 0;
-      if (AI === 'archer' && dd < range * 0.55) this.vx = -Math.sign(dx) * sp;
-      else if (dd < this.aggro) this.vx = Math.sign(dx) * sp * (AI === 'jumper' && !this.onGround ? 1.4 : 1);
+      const step = dd < this.aggro ? this.walkPath(dt, world, tx, ty, AI === 'jumper' ? 3 : 2) : null;
+      if (AI === 'archer' && seen && dd < range * 0.55) this.vx = -Math.sign(dx) * sp;
+      else if (step) { this.vx = step.dir * sp; if (step.jump) { this.vy = -Math.sqrt(2 * GRAV * (step.jump * TS + 10)); this.jumpCd = 0.5; } }
+      else if (dd < this.aggro && Math.abs(dx) > 4) this.vx = Math.sign(dx) * sp * (AI === 'jumper' && !this.onGround ? 1.4 : 1);
       else this.vx *= 0.9;
-      if (AI === 'jumper' && this.onGround && this.jumpCd <= 0 && dd < Math.min(480, this.aggro)) { this.vy = -430; this.jumpCd = 1.1 + Math.random() * 0.6; }
+      if (AI === 'jumper' && seen && this.onGround && this.jumpCd <= 0 && dd < Math.min(480, this.aggro)) { this.vy = -430; this.jumpCd = 1.1 + Math.random() * 0.6; }
       if (this.hitWall && this.onGround && this.jumpCd <= 0) { this.vy = -420; this.jumpCd = 0.6; }
-      if (AI === 'archer' && this.atkCd <= 0 && dd < Math.min(range, this.aggro) && Math.abs(dy) < 180) {
+      if (AI === 'archer' && seen && this.atkCd <= 0 && dd < Math.min(range, this.aggro) && Math.abs(dy) < 180) {
         this.atkCd = 1.8 + Math.random() * 0.6;
         this.atkPose = 0.26;
         const a = angleTo(this.cx, this.cy, player.cx, player.cy - 6);
@@ -54,18 +116,20 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       this.think -= dt;
       if (this.think <= 0) { this.think = 0.5 + Math.random() * 0.5; this.wob = (Math.random() - 0.5) * 90; }
       if (dd < this.aggro) {
-        this.vx = lerp(this.vx, (dx / (dd || 1)) * sp, dt * 3);
-        this.vy = lerp(this.vy, (dy / (dd || 1)) * sp + (this.wob || 0), dt * 3);
+        const v = this.flyWant(dt, world, tx, ty, sp, seen);
+        this.vx = lerp(this.vx, v.x, dt * 3);
+        this.vy = lerp(this.vy, v.y + (this.wob || 0), dt * 3);
       } else { this.vx *= 0.98; this.vy = lerp(this.vy, Math.sin(G.time * 2) * 30, dt * 2); }
       this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'caster') {
       const range = this.def.range || 300;
       this.think -= dt;
       if (dd > this.aggro) { this.vx *= 0.95; this.vy = lerp(this.vy, Math.sin(G.time * 3 + this.x) * 40, dt * 2); }   // 사정거리 밖 — 배회만
+      else if (!seen) { const v = this.flyWant(dt, world, tx, ty, sp, false); this.vx = lerp(this.vx, v.x, dt * 3); this.vy = lerp(this.vy, v.y, dt * 3); }   // 놓쳤다 — 벽을 돌아 찾아간다
       else if (dd > range * 0.8) { this.vx = lerp(this.vx, (dx / (dd || 1)) * sp, dt * 3); this.vy = lerp(this.vy, (dy / (dd || 1)) * sp, dt * 3); }
       else if (dd < range * 0.4) { this.vx = lerp(this.vx, -(dx / (dd || 1)) * sp, dt * 3); this.vy = lerp(this.vy, -(dy / (dd || 1)) * sp, dt * 3); }
       else { this.vx *= 0.95; this.vy = lerp(this.vy, Math.sin(G.time * 3 + this.x) * 40, dt * 2); }
-      if (this.atkCd <= 0 && dd < Math.min(range, this.aggro)) {
+      if (seen && this.atkCd <= 0 && dd < Math.min(range, this.aggro)) {
         this.atkCd = 2.0 + Math.random() * 0.8;
         this.atkPose = 0.26;
         const a = angleTo(this.cx, this.cy, player.cx, player.cy);

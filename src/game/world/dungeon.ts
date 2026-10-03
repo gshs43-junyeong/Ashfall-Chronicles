@@ -2,9 +2,10 @@
 import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
+import { BoxSet } from '../../engine/procgen/cells.js';
 import { T, TILE_DEF } from '../data.js';
 import { RUIN_PLANS } from '../data/ruins.js';
-import { BoxSet, World } from '../world.js';
+import { World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
 export const WorldDungeon: Bag & ThisType<World> = {
@@ -328,7 +329,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
   /** (sx, sy) 에서 걸어서(뛰고 떨어지며) 닿는 설 자리 전부. */
   _standSet(box: Bag, sx: number, sy: number) { const { WW } = this.dims;
     const f = this._standFns();
-    const seen = new BoxSet(box, 10, WW), st: number[] = [];
+    const seen = new BoxSet(box as number[], 10, WW), st: number[] = [];
     const push = (x: number, y: number) => { const k = y * WW + x; if (!seen.has(k)) { seen.add(k); st.push(x, y); } };
     const s0 = this._standSeed(box, f, sx, sy);
     if (s0) push(s0[0], s0[1]);
@@ -354,7 +355,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
           a.push(k);
         });
       }
-    const R = new BoxSet(box, 10, WW), st = [rootK];
+    const R = new BoxSet(box as number[], 10, WW), st = [rootK];
     R.add(rootK);
     while (st.length) {
       const a = preds.get(st.pop());

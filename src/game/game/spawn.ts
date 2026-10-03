@@ -10,7 +10,7 @@ import { EVENTS, RUIN_SPEC } from '../data/ruins.js';
 import { bloodMult } from '../data/pets.js';
 import { TS } from '../world.js';
 import { Enemy } from '../entity.js';
-import { Game } from '../game.js';
+import { DAY_CYCLE, Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const SpawnPart: Bag = {
@@ -87,7 +87,7 @@ export const SpawnPart: Bag = {
     return e.zones.indexOf(z) >= 0;
   },
   updateEvents(dt: number) { const { WW } = dimsOf(this.world);
-    const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
+    const night = DAY_CYCLE.isNight(this.dayT);
     const phase = (this.dayCount * 2) + (night ? 1 : 0);
     /* 운석은 이벤트(this.event)와 따로 굴린다 — 비·붉은 달이 오는 중에도 떨어질 수 있다. */
     if (this.meteorRolled === undefined) this.meteorRolled = phase;
@@ -199,7 +199,7 @@ export const SpawnPart: Bag = {
     const ev = this.eventActive() ? this.eventSpec() : null;
     /* 여럿이면 세계 전체 상한을 인원 × 0.75 까지 올린다(혼자면 그대로) — 멀티플레이 설계 §3-2 */
     if (normal >= (ev ? ev.cap : 22) * Math.max(1, 0.75 * this.players.length) || this.boss) return;
-    const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
+    const night = DAY_CYCLE.isNight(this.dayT);
     // 스폰 반경(최대 980px≈44타일)이 수직으로도 적용되므로, 하늘/유적처럼 고도로만 갈리는 구역은 플레이어가 실제로 그 구역에 있을 때만 후보로 허용한다 (지상에서 하늘 몹이 쏟아지는
     // 것 방지)
     const playerZone = w.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));

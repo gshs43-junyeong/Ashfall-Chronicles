@@ -1,7 +1,12 @@
 /* ===== entity.js — 플레이어 / 적 / 동료 / 펫 / 투사체 / 떨어진 물건 ===== */
 import { app as G, ui as UI } from './ctx.js';
+import { countOf, stackAdd, takeOut } from '../engine/core/inventory.js';
+import { mapPity, rollLoot } from '../engine/core/loot.js';
 import { TAU, aabb, angleTo, clamp, dist, dist2, lerp } from '../engine/core/math.js';
 import { Entity } from '../engine/entity/entity.js';
+import { Timed, addDot } from '../engine/entity/status.js';
+import { FloatText } from '../engine/fx/floattext.js';
+import { Particle } from '../engine/fx/particles.js';
 import { fmt, tr } from './lang.js';
 import { dimsOf } from './size.js';
 import { MACH_OF_TILE, T, TILE_DEF } from './data.js';
@@ -13,7 +18,10 @@ import { DRAGON_FOOD, DRAGON_GATES, PETS, PET_XP_SHARE, dragonStage, levelMult, 
   petXpNext } from './data/pets.js';
 import { SIG_FX, idef } from './data/values.js';
 import { TS } from './world.js';
-import { enhMul, equipReqLv, itemStats, makeItem, maxStack, rollGear } from './items.js';
+import { STACK_RULES, enhMul, equipReqLv, itemStats, makeItem, rollGear } from './items.js';
+import type { Senses } from '../engine/entity/sense.js';
+import type { LootRow } from '../engine/core/loot.js';
+import type { PathFollower } from '../engine/tilemap/path.js';
 
 export const GRAV = 2000, MAX_FALL = 1250;
 /* ================= 제트팩의 두 한계 ================= */
@@ -224,27 +232,10 @@ export class Player extends Ent {
     /* 모은 수(장 목표)는 **실제로 들어간 만큼만** — 먼저 세면 가방이 찬 채 기계 산출 칸을 누를 때마다 부풀었다 */
     const id = it.id, c0 = it.c;
     const done = (ok: boolean) => { const got = ok ? c0 : c0 - it.c; if (got > 0) this.gathered[id] = (this.gathered[id] || 0) + got; return ok; };
-    const ms = maxStack(it);
-    if (ms > 1) {
-      for (let i = 0; i < this.bag.length; i++) {
-        const s = this.bag[i];
-        if (s && s.id === it.id && !s.a && !it.a && s.r === it.r && s.c < ms) {
-          const move = Math.min(ms - s.c, it.c); s.c += move; it.c -= move;
-          if (it.c <= 0) return done(true);
-        }
-      }
-    }
-    for (let i = 0; i < this.bag.length; i++) if (!this.bag[i]) { this.bag[i] = it; return done(true); }
-    return done(false);
+    return done(stackAdd(this.bag, it as any, STACK_RULES));   // 있는 더미에 먼저, 남은 것만 빈 칸(engine core/inventory)
   }
-  countItem(id: string) { let n = 0; for (const s of this.bag) if (s && s.id === id) n += s.c; return n; }
-  removeItem(id: string, n: number) {
-    for (let i = 0; i < this.bag.length && n > 0; i++) {
-      const s = this.bag[i];
-      if (s && s.id === id) { const take = Math.min(s.c, n); s.c -= take; n -= take; if (s.c <= 0) this.bag[i] = null; }
-    }
-    return n <= 0;
-  }
+  countItem(id: string) { return countOf(this.bag, id); }
+  removeItem(id: string, n: number) { return takeOut(this.bag, id, n); }
   hasAll(need: any) { for (const k in need) if (this.countItem(k) < need[k]) return false; return true; }
 
   equipFrom(slotIdx: any) {
@@ -323,7 +314,9 @@ export class Player extends Ent {
   hurt(amount: any, srcX?: any) {
     /* ★ 남의 아바타가 맞으면 피해는 주인 화면에서 계산한다 — 여기서 hp 를 깎으면 이 화면의 G.onDeath 가 불린다. */
     if (this.remote) { G.netRemoteHurt(this, amount, srcX); return; }
-    if (this.iframe > 0 || this.dead) return;
+    /* ★ 쓰러진 뒤에는 맞지 않는다 — 여럿이면 세계가 계속 돌아 몹·호스트가 보낸 피해가 쓰러진 몸에 닿았고, 그때마다 onDeath 가 다시 불려
+       죽는 소리가 되풀이되고 경험치·금화를 거듭 잃었다. 사연: docs/code-history.md#h147 */
+    if (this.iframe > 0 || this.dead || this.hp <= 0) return;
     const red = this.d.def / (this.d.def + 60);
     let dmg = Math.max(1, Math.round(amount * (1 - red) * (1 - (this.d.dr || 0) / 100)));
     /* 비전 방벽이 남아 있으면 먼저 그쪽이 받는다. */
@@ -387,13 +380,15 @@ export class Enemy extends Ent {
   declare openT: number; declare phaseT: number; declare spin: number; declare stopT: number; declare term: number; declare tilt: number;
   declare unmakeCd: number; declare wDir: number; declare wob: number; declare bossAI: (...a: any[]) => any; declare layHeat: (...a: any[]) => any;
   declare onPhaseChange: (...a: any[]) => any; declare raisePedestals: (...a: any[]) => any; declare tickWeak: (...a: any[]) => any;
+  declare sense: Senses | null; declare path: PathFollower | null; declare pathT: number; declare walkPath: (...a: any[]) => { dir: number; jump: number } | null; declare fly: { pts: [number, number][]; i: number } | null;
+  declare flyWant: (...a: any[]) => { x: number; y: number };   // 알아차림 · 길(entity/enemy-ai)
   declare _vol: number; declare aggro: number; declare armor: number; declare atkCd: number; declare atkPose: number; declare boss: boolean;
   declare def: EnemyDef; declare dmg: number; declare dots: any[]; declare elite: boolean; declare facing: number; declare flash: number;
   declare fleeT: number; declare gold: number; declare guard: number | boolean; declare hitCd: number; declare hp: number; declare jumpCd: number;
   declare lastPhase: number; declare lvFactor: number; declare markAmt: number; declare markT: number; declare maxHp: number; declare mech: number;
   declare pedestal: number; declare pf: number; declare phase: number; declare phaseInv: number; declare phases: number; declare sgAmt: number;
   declare sgBuf: number; declare sgCd: number; declare sgKind: string | null; declare sgRing: number; declare sgStun: number; declare sgT: number;
-  declare sgTook: number; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
+  declare sgTook: number; declare slowFx: Timed; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
   declare stateT: number; declare think: number; declare type: string; declare weatherBuffed: boolean; declare xp: number;
 
   constructor(type: string, x: number, y: number, scale = 1) {
@@ -415,7 +410,7 @@ export class Enemy extends Ent {
     /* 공격 포즈를 띄워 둘 시간 — 사연: docs/code-history.md#h33 */
     this.atkPose = 0;
     this.lastPhase = 0;
-    this.slowT = 0; this.slowF = 1; this.dots = [];
+    this.slowT = 0; this.slowF = 1; this.dots = []; this.slowFx = new Timed(1, 'min');
     /* 페이즈 수는 보스마다 다르다(ENEMIES 의 ph) — 사연: docs/code-history.md#h34 */
     this.phases = d.ph || 3;
     this.phase = 0; this.pf = 0; this.state = 0; this.stateT = 0;
@@ -548,8 +543,9 @@ export class Enemy extends Ent {
     else if (this.sgKind === 'rage') { this.dmg /= 1 + this.sgAmt; this.spd! /= 1 + this.sgAmt * 0.5; }
     this.sgKind = null; this.sgAmt = 0;
   }
-  addDot(kind: string, dps: any, dur: number) { this.dots.push({ kind, dps, t: dur }); }
-  slow(f: any, t: any) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
+  /** 같은 갈래는 3겹까지(engine entity/status) — 빠른 무기로 불을 수십 겹 쌓던 것 */
+  addDot(kind: string, dps: any, dur: number) { addDot(this.dots, kind, dps, dur, 3); }
+  slow(f: any, t: any) { this.slowFx.set(1 - f, t); this.slowF = this.slowFx.v; this.slowT = this.slowFx.t; }   // 겹치면 센 쪽 · 긴 시간(engine entity/status)
 
   /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). */
   hurt(amount: any, crit?: any, src?: any, kb?: any, fam?: any) {
@@ -571,6 +567,8 @@ export class Enemy extends Ent {
     if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
     let dmg = Math.max(1, Math.round(amount * (1 - red)));
     this.hp -= dmg; this.flash = 0.12;
+    /* 맞으면 누가 쳤는지 안다 — 벽 너머에서 쏘아도 그쪽을 찾아 나선다 */
+    if (this.sense) { const s = src && src.cx !== undefined ? src : G.player; if (s) this.sense.alarm(s.cx, s.cy); }
     /* 모으는 중에 맞은 것을 쌓는다 — brk 를 넘기면 끊긴다. */
     if (this.sgT > 0) {
       const S = BOSS_SURGE[this.type];
@@ -618,12 +616,12 @@ export class Enemy extends Ent {
     p.kills[this.type] = (p.kills[this.type] || 0) + 1;
     if (this.boss) p.bossKilled[this.type] = true;
     const rng = G.rng;
-    for (const [id0, ch, a, b] of (this.def.drops || [])) {
-      if (!rng.chance(ch)) continue;
+    /* 드문 떨굼(10% 미만)은 못 얻을수록 확률이 오른다(engine core/loot — 판 동안만 기억한다) */
+    G.lootPity = G.lootPity || mapPity();
+    for (const { id: id0, n } of rollLoot((this.def.drops || []) as LootRow[], () => rng.next(), (a, b) => rng.int(a, b), G.lootPity, { key: this.type })) {
       /* 개조된 것에서는 부품만 나온다 — 원래 표에 얹지 않고 **바꿔친다**. 얹으면 개조된 쪽이 그냥 더 좋은 사냥감이 되어 세기 1.5배를 치르고도 이득이 남는다. */
       const id = (this.mech && typeof MECH_PART !== 'undefined') ? MECH_PART : id0;
       if (!ITEMS[id]) continue;                  // 없는 아이템이면 rollGear 가 null 을 준다 — 빈 Drop 을 만들지 않는다
-      const n = rng.int(a, b);
       if (ITEMS[id] && (ITEMS[id].stack || 1) > 1) G.drops.push(new Drop(this.cx, this.cy, makeItem(id, n)!));
       else for (let k = 0; k < n; k++) G.drops.push(new Drop(this.cx, this.cy, rollGear(id, rng, this.boss ? 3 : 0)!));
     }
@@ -861,9 +859,10 @@ export class Proj extends Ent {
     if (st && st.glow && Math.random() < dt * 30) G.parts.push(new Part(this.cx, this.cy, st.c, 0, 0.3));
     if (world.hitSolid(this.x, this.y, this.w, this.h)) { this.impact(); return; }
     if (this.team === 'player') {
-      for (const e of G.ents) {
-        if (!(e instanceof Enemy) || e.dead || this.hitSet.has(e)) continue;
-        if (!aabb(this.rect(), e.rect())) continue;
+      /* 근처 칸 바구니의 몹만 본다(engine core/spatial — 엔티티 갱신 뒤 G.entHash 를 다시 채운다) */
+      let spent = false;
+      G.entHash.query(this.x, this.y, this.w, this.h, (e: Enemy) => {
+        if (e.dead || this.hitSet.has(e) || !aabb(this.rect(), e.rect())) return;
         this.hitSet.add(e);
         /* ★ 같은 발사에서 나온 것이 **이 적에게 두 번째로** 박히면 몫이 준다. */
         let dmg = this.dmg;
@@ -876,8 +875,9 @@ export class Proj extends Ent {
         if (this.fire) e.addDot('burn', this.dmg * 0.1, 4);
         if (this.frost) e.slow(0.4, 2.5);
         if (this.poison) e.addDot('poison', this.dmg * 0.11 * this.poison, 5);
-        if (this.pierce > 0) this.pierce--; else { this.impact(); return; }
-      }
+        if (this.pierce > 0) this.pierce--; else { this.impact(); spent = true; return true; }
+      });
+      if (spent) return;
       if (G.net) for (const q of G.pvpTargets()) {   // PvP — 내가 쏜 것만 이 화면에 있다
         if (this.hitSet.has(q) || !aabb(this.rect(), q.rect())) continue;
         this.hitSet.add(q);
@@ -916,18 +916,16 @@ export class Proj extends Ent {
 }
 
 /* ================= 이펙트 ================= */
-export class Part {
+export class Part extends Particle {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare c: string; declare drag: number; declare g: number; declare glow: number; declare life: number; declare max: number; declare r: number;
-  declare rot: number; declare spin: number; declare sq: number; declare vx: number; declare vy: number; declare x: number; declare y: number;
+  declare c: string; declare glow: number; declare r: number; declare sq: number;
 
-  /* g 중력 배수 — 사연: docs/code-history.md#h37 */
+  /* g 중력 배수 · bounce 를 주면 땅에 부딪혀 튀다 눕는다(돌·흙·나무 파편) — 사연: docs/code-history.md#h37 */
   constructor(x: number, y: number, c: any, vy0 = 0, life = 0.5, o: Bag | null = null) {
-    this.x = x; this.y = y; this.c = c;
     const sp = o && o.spd !== undefined ? o.spd : 1;
     const a = Math.random() * TAU, s = (40 + Math.random() * 140) * sp;
-    this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s + vy0;
-    this.life = life + Math.random() * 0.3; this.max = this.life;
+    super(x, y, Math.cos(a) * s, Math.sin(a) * s + vy0, life + Math.random() * 0.3);
+    this.c = c;
     this.r = (1.5 + Math.random() * 2) * (o && o.r !== undefined ? o.r : 1);
     this.g = o && o.g !== undefined ? o.g : 1;
     this.sq = o && o.sq !== undefined ? o.sq : 1;
@@ -935,21 +933,14 @@ export class Part {
     this.drag = o && o.drag !== undefined ? o.drag : 0.96;
     this.spin = (Math.random() - 0.5) * 12;
     this.rot = Math.random() * TAU;
+    if (o && o.bounce) { this.bounce = o.bounce; this.max = this.life += 0.6; }   // 바닥에 누워 있는 동안 조금 더 남는다
   }
-  update(dt: number) {
-    this.life -= dt; this.vy += 340 * this.g * dt;
-    this.x += this.vx * dt; this.y += this.vy * dt;
-    this.vx *= this.drag; this.rot += this.spin * dt;
-    return this.life > 0;
-  }
+  update(dt: number) { return this.step(dt, 340, this.bounce ? PART_WORLD : null); }
 }
-export class DmgText {
-  /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare c: string; declare crit: boolean; declare life: number; declare v: number | string; declare vy: number; declare x: number; declare y: number;
-
-  constructor(x: any, y: any, v: any, c: any, crit: any) { this.x = x + (Math.random() - 0.5) * 8; this.y = y; this.v = v; this.c = c; this.crit = crit; this.life = 0.85; this.vy = -70; }
-  update(dt: number) { this.life -= dt; this.y += this.vy * dt; this.vy += 110 * dt; return this.life > 0; }
-}
+/** 파편이 부딪히는 판 — 고체 칸(발판·장식은 지나간다) */
+export const PART_WORLD = { solidAt: (px: number, py: number) => !!G.world && G.world.solid(Math.floor(px / TS), Math.floor(py / TS)) };
+/** 떠오르는 피해 · 회복 숫자(engine fx/floattext) */
+export class DmgText extends FloatText {}
 /* ===== 폭탄 ===== */
 export class Bomb extends Proj {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */

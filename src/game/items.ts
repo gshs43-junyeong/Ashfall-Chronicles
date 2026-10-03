@@ -13,6 +13,8 @@ export function makeItem(id: any, count = 1, rarity = 0, affixes: any = null) {
   return it;
 }
 export function maxStack(it: Bag) { return idef(it).stack || 1; }
+/** 무엇끼리 한 더미가 되는가 — 같은 id · 같은 등급 · 접사 없는 것(engine core/inventory) */
+export const STACK_RULES = { max: (it: any) => maxStack(it), same: (a: any, b: any) => a.id === b.id && !a.a && !b.a && a.r === b.r };
 export function isGear(it: Bag) { const t = idef(it).type; return t === 'weapon' || t === 'armor' || t === 'acc' || t === 'tool' || t === 'bag' || t === 'pet'; }
 /* 장비 최소 착용 레벨. */
 export function equipReqLv(id: string) {

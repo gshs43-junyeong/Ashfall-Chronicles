@@ -3,6 +3,7 @@
     "G": [
       "(값 그대로)",
       "addCorpse",
+      "after",
       "aoe",
       "bandFx",
       "boltFx",
@@ -12,12 +13,14 @@
       "deathBurst",
       "drops",
       "edgeFx",
+      "entHash",
       "ents",
       "fallFx",
       "flashFx",
       "hitFx",
       "hitStop",
       "killMult",
+      "lootPity",
       "me",
       "modeMul",
       "net",
@@ -31,7 +34,7 @@
       "onPickup",
       "onProfUp",
       "parts",
-      "pending",
+      "pathBudget",
       "player",
       "players",
       "projs",
@@ -68,6 +71,12 @@
       "time"
     ]
   },
+  "music.js": {
+    "G": [
+      "(값 그대로)",
+      "ac"
+    ]
+  },
   "ui.js": {
     "G": [
       "(값 그대로)",
@@ -95,7 +104,6 @@
       "importSaves",
       "keysFor",
       "mapAtlas",
-      "marketRate",
       "merchantOf",
       "nearSt",
       "nearStObj",

@@ -176,8 +176,9 @@ export const LifePart: Bag = {
     if (perk) UI.chapterCard({ sub: tr('{P} 숙련 {lv}', { P: P.n, lv }), title: perk[1], line: perk[2] });
     if (UI.open === 'skill') UI.refreshProf();
   },
-  onDeath(cause: any) {
+  onDeath(cause?: any) {
     if (this.state !== 'play') return;
+    if (this.scenes.has('death') || this.scenes.has('mdeath')) return;   // 이미 쓰러져 있다 — 한 번만(사연: docs/code-history.md#h147)
     this.tally = this.tally || {};
     this.tally.deaths = (this.tally.deaths || 0) + 1;
     if (cause) this.tally[cause] = (this.tally[cause] || 0) + 1;
@@ -233,6 +234,7 @@ export const LifePart: Bag = {
     if (this.villageUnlocked && d) { p.x = (((d.x0 + d.x1) >> 1) - 5) * TS; p.y = (d.gy - 3) * TS; }
     else { p.x = w.spawnX * TS; p.y = (w.spawnY - 3) * TS; }
     p.vx = p.vy = 0;
+    this.fade.reveal(0.9);   // 되살아난 첫 화면은 어둠에서 밝아진다
     p.hp = p.d.maxHp; p.mp = p.d.maxMp; p.iframe = 2; p.buffs = [];
     /* 세계의 몹·보스는 혼자일 때만 걷는다 — 여럿이면 남은 사람이 아직 싸우고 있다. */
     if (!this.net) { this.ents = []; this.corpses = []; this.boss = null; this.projs = []; }

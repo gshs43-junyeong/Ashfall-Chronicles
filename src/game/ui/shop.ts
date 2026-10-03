@@ -1,5 +1,6 @@
 /* ===== ui/shop.js — 상자 · 상점 · 여명 마을 시설 ===== */
 import { app as G } from '../ctx.js';
+import { moveAll, quickStack } from '../../engine/core/inventory.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { makeSlot } from '../../engine/ui/slots.js';
 import { fmt, tr } from '../lang.js';
@@ -7,7 +8,7 @@ import { ITEMS } from '../data/items.js';
 import { NPCS } from '../data/npcs.js';
 import { idef } from '../data/values.js';
 import { Art } from '../itemart.js';
-import { isGear, makeItem } from '../items.js';
+import { STACK_RULES, isGear, makeItem } from '../items.js';
 import { $, UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
 
@@ -88,6 +89,7 @@ export const ShopUIPart: Bag = {
     }
     if (toggle) toggle.style.display = 'none';
     const c = this.chestRef; if (!c) return;
+    const acts = $('#chest-actions'); if (acts) acts.style.display = (c.items || []).some(Boolean) ? '' : 'none';
     (c.items || []).forEach((it: Bag, i: number) => {
       makeSlot('slot' + (it ? ' r' + it.r : ''), { fill: it ? { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' } : undefined,
         click: () => {
@@ -143,6 +145,27 @@ export const ShopUIPart: Bag = {
       store[slot] = it; p.bag[i] = null;
       this.refreshVault(); this.refreshBag(); G.sfx('place');
     });
+  },
+
+  /** 상자 모두 가져오기 — 가방에 들어가는 만큼(있는 더미에 먼저) · 못 들어간 것은 상자에 남는다(engine core/inventory moveAll) */
+  lootAll() {
+    const c = this.chestRef, p = G.player; if (!c || !c.items) return;
+    const moved = moveAll(c.items, p.bag, STACK_RULES);
+    for (const it of moved) { p.gathered[it.id] = (p.gathered[it.id] || 0) + it.c; G.onPickup(it); }
+    if (c.items.some(Boolean)) this.toast(tr('가방이 가득 찼다'), 'bad');
+    if (moved.length) G.sfx('place');
+    this.refreshChest(); this.refreshBag(); this.refreshHotbar();
+  },
+  /** 창고 — 'stack' 가방에서 창고에 이미 있는 종류만 넣기 · 'take' 창고에서 모두 꺼내기 */
+  vaultMove(kind: string) {
+    const p = G.player, store = this.storeRef ? this.storeRef.items : G.vault;
+    const moved = kind === 'stack' ? quickStack(p.bag, store, STACK_RULES) : moveAll(store, p.bag, STACK_RULES);
+    if (kind === 'take') {
+      for (const it of moved) p.gathered[it.id] = (p.gathered[it.id] || 0) + it.c;   // 한 칸씩 꺼낼 때(addItem)와 같게
+      if (store.some(Boolean)) this.toast(tr('가방이 가득 찼다'), 'bad');
+    }
+    if (moved.length) G.sfx('place');
+    this.refreshVault(); this.refreshBag(); this.refreshHotbar();
   },
 
   /** 의뢰 게시판 — 하루마다 갱신되는 반복 사냥 의뢰 */

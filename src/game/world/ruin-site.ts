@@ -3,6 +3,7 @@ import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
+import { weightedKey } from '../../engine/procgen/cells.js';
 import { tr } from '../lang.js';
 import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
@@ -287,8 +288,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
     pick.slice(0, 3).forEach(ri => { delete this.ruinSpec[ri].mystic; });
     pick.slice(0, 3).forEach(ri => {
       const pool = Object.keys(MYSTIC_W).filter(id => id === 'none' || !pick.slice(0, 3).some(o => this.ruinSpec[o].mystic === id));
-      let r = mrng.range(0, pool.reduce((s, id) => s + MYSTIC_W[id], 0)), got = pool[0];
-      for (const id of pool) { r -= MYSTIC_W[id]; if (r <= 0) { got = id; break; } }
+      const got = weightedKey(Object.fromEntries(pool.map(id => [id, MYSTIC_W[id]])), () => mrng.next());
       if (got === 'none') delete this.ruinSpec[ri].mystic; else this.ruinSpec[ri].mystic = got;
     });
     pick.slice(3).forEach(ri => { delete this.ruinSpec[ri].mystic; });

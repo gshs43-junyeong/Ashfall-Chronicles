@@ -162,13 +162,11 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         /* ★ 실제 퍼지는 폭 (±130)과 같은 띠를 깔아 둔다. */
         G.bandFx(mx, my, 130, n * 0.07 + 0.45, '#9fe07a');
         for (let i2 = 0; i2 < n; i2++) {
-          G.pending.push({
-            t: i2 * 0.07, fn: () => {
+          G.after(i2 * 0.07, () => {
               const px = mx + (Math.random() - 0.5) * 260;
               const p = new Proj(px, my - 420 - Math.random() * 80, (Math.random() - 0.5) * 60, 820, this.scaleDmg(wdmg * 0.6, 'dex'), 'player', 'star');
               p.grav = 260; G.projs.push(p);
-            }
-          });
+            });
         }
         break;
       }
@@ -216,14 +214,12 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         const foot = this.y + this.h;
         for (const dir of [-1, 1]) {
           for (let step = 0; step < 5; step++) {
-            G.pending.push({
-              t: step * 0.05, fn: () => {
+            G.after(step * 0.05, () => {
                 const x = this.cx + dir * (34 + step * 34);
                 G.aoe(x, foot - 14, 40, dmg / 2, 5, '#c8845a', 'frost');
                 for (let k = 0; k < 4; k++)
                   G.parts.push(new Part(x + (Math.random() - .5) * 24, foot - 4, '#c8845a', -180, .5));
-              }
-            });
+              });
           }
         }
         G.aoe(this.cx, foot - 14, 60, dmg, 7, '#c8845a', 'frost');
@@ -342,8 +338,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         G.warnFx(tx, ty, 150, 0.9, '#ffb04a');
         /* ★ 하늘에 있는 동안은 아무것도 가리지 않으므로 여기만은 진하게 둔다. */
         G.fallFx(tx, ty, 0.9, '#ffd07a');
-        G.pending.push({
-          t: 0.9, fn: () => {
+        G.after(0.9, () => {
             const dmg = this.scaleDmg(340 + this.d.int * 6.5, 'int');
             G.aoe(tx, ty, 150, dmg, 12, '#ffb04a');
             for (const e of G.ents) if (e instanceof Enemy && !e.dead && dist(tx, ty, e.cx, e.cy) < 150) e.addDot('fire', dmg * 0.06, 5);
@@ -357,8 +352,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
             G.flashFx(tx, ty, 230, '#fff0c0');
             const h = SKILL_HIT.meteor;
             G.shake = Math.max(G.shake, h.k); G.hitStop(h.st); G.sfx(h.s);
-          }
-        });
+          });
         break;
       }
     }

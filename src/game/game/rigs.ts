@@ -135,7 +135,7 @@ export const RigsPart: Bag = {
         const tx = clamp(Math.floor(s.x / TS), 0, WW - 1);
         const ty = Math.floor((ny - s.sz * 0.4) / TS);
         if (ty >= 0 && w.solid(tx, ty)) { s.stuck = 1; s.y = (ty + 1) * TS + s.sz * 0.4; }
-        else { s.y = ny; s.x += Math.sin(s.sway + s.t * 1.6) * 8 * dt; }
+        else { s.y = ny; s.x += (Math.sin(s.sway + s.t * 1.6) * 8 + this.windNow() * 0.5 * Math.min(1, s.t)) * dt; }   // 올라갈수록 바람에 눕는다
       }
     }
   },

@@ -312,15 +312,18 @@ export const InteractPart: Bag = {
           UI.closeDialogue();
           if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
           p.gold -= cost;
-          this.dayT = 6 * 60; this.dayCount++; this.trainedToday = 0;
-          this.updateEconomy(); this.rollBounties();
-          p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-          p.addBuff('rested');
-          this.toast(tr('푹 잤다 — 아침이다'), 'good');
-          this.sfx('level');
-          this.tally = this.tally || {};
-          this.tally.inn = (this.tally.inn || 0) + 1;
-          this.checkAch();
+          /* 눈을 감았다 뜬다 — 가장 어두운 순간에 아침으로 넘긴다(engine render/fade) */
+          this.fade.run(() => {
+            this.dayT = 6 * 60; this.dayCount++; this.trainedToday = 0;
+            this.updateEconomy(); this.rollBounties();
+            p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+            p.addBuff('rested');
+            this.toast(tr('푹 잤다 — 아침이다'), 'good');
+            this.sfx('level');
+            this.tally = this.tally || {};
+            this.tally.inn = (this.tally.inn || 0) + 1;
+            this.checkAch();
+          }, 0.6, 0.5, 1.0);
         }
       }
     ]);

@@ -569,6 +569,9 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 #mg-bag .slot.no{opacity:.35}
 
 #chest-grid{padding:16px;display:grid;grid-template-columns:repeat(8,46px);gap:5px}
+.inv-actions{display:flex;justify-content:flex-end;gap:8px;padding:0 16px 14px}
+.inv-actions button{padding:6px 14px;font-size:11.5px}
+.equip-title .mini{float:right;padding:3px 10px;font-size:11px;margin-left:8px}
 
 /* ---- 여명 마을 시설 ---- */
 .vault-gold-row{display:flex;align-items:center;gap:10px;padding:10px 16px 0;font-size:12px;color:#a49e88}

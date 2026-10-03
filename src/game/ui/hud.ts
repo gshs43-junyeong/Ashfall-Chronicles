@@ -2,6 +2,7 @@
 import { app as G } from '../ctx.js';
 import { TAU, clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
+import { PanZoom } from '../../engine/ui/panzoom.js';
 import { pad2 } from '../util.js';
 import { fmt, tr } from '../lang.js';
 import { dimsOf } from '../size.js';
@@ -75,30 +76,10 @@ export const HudUIPart: Bag = {
   initFullmap() {
     const canvas = $('#fullmap-canvas');
     this.fmCanvas = canvas; this.fmC = canvas.getContext('2d');
-    this.fmZoom = 3; this.fmX = 0; this.fmY = 0; this.fmDrag = null;
+    /* 휠 · 끌기 · 두 손가락 집기(engine ui/panzoom) — 보기 가운데와 배율은 지도 칸 단위 */
+    this.fmPZ = new PanZoom({ min: 0.4, max: 16, step: 1.2, change: () => this.renderFullmap(), size: () => ({ w: this.fmDprW || 1, h: this.fmDprH || 1 }) });
+    this.fmPZ.bind(canvas);
     $('#minimap').addEventListener('click', () => this.openFullmap());
-
-    canvas.addEventListener('wheel', (e: any) => {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      const wx = this.fmX + (mx - this.fmDprW / 2) / this.fmZoom;
-      const wy = this.fmY + (my - this.fmDprH / 2) / this.fmZoom;
-      this.fmZoom = clamp(this.fmZoom * (e.deltaY < 0 ? 1.2 : 1 / 1.2), 0.4, 16);
-      this.fmX = wx - (mx - this.fmDprW / 2) / this.fmZoom;
-      this.fmY = wy - (my - this.fmDprH / 2) / this.fmZoom;
-      this.renderFullmap();
-    }, { passive: false });
-    canvas.addEventListener('mousedown', (e: any) => {
-      this.fmDrag = { x: e.clientX, y: e.clientY, fx: this.fmX, fy: this.fmY };
-    });
-    addEventListener('mousemove', e => {
-      if (!this.fmDrag) return;
-      this.fmX = this.fmDrag.fx - (e.clientX - this.fmDrag.x) / this.fmZoom;
-      this.fmY = this.fmDrag.fy - (e.clientY - this.fmDrag.y) / this.fmZoom;
-      this.renderFullmap();
-    });
-    addEventListener('mouseup', () => { this.fmDrag = null; });
     addEventListener('resize', () => { if (this.open === 'fullmap') { this.resizeFullmap(); this.renderFullmap(); } });
   },
   openFullmap() {
@@ -106,7 +87,7 @@ export const HudUIPart: Bag = {
     this.togglePanel('fullmap');
     if (already) return;
     const p = G.player;
-    this.fmX = p.cx / TS; this.fmY = p.cy / TS; this.fmZoom = 3; this.fmDrag = null;
+    this.fmPZ.set(p.cx / TS, p.cy / TS, 3);
     this.resizeFullmap();
     this.renderFullmap();
   },
@@ -119,16 +100,15 @@ export const HudUIPart: Bag = {
   },
   renderFullmap() { const { WW, WH } = dimsOf(G.world);
     if (this.open !== 'fullmap' || !this.fmDprW) return;
-    const c = this.fmC, W = this.fmDprW, H = this.fmDprH, z = this.fmZoom;
+    const c = this.fmC, W = this.fmDprW, H = this.fmDprH, v = this.fmPZ, z = v.zoom;
     c.imageSmoothingEnabled = false;
     c.fillStyle = '#050609'; c.fillRect(0, 0, W, H);
     const sw = W / z, sh = H / z;
-    let sx0 = this.fmX - sw / 2, sy0 = this.fmY - sh / 2;
     // 세계 범위 밖으로 너무 벗어나 헤매지 않게 살짝만 여유를 두고 막는다
-    this.fmX = clamp(this.fmX, -sw * 0.4, WW + sw * 0.4);
-    this.fmY = clamp(this.fmY, -sh * 0.4, WH + sh * 0.4);
-    sx0 = this.fmX - sw / 2; sy0 = this.fmY - sh / 2;
-    c.drawImage(G.mapAtlas, sx0, sy0, sw, sh, 0, 0, W, H);
+    v.x = clamp(v.x, -sw * 0.4, WW + sw * 0.4);
+    v.y = clamp(v.y, -sh * 0.4, WH + sh * 0.4);
+    const sx0 = v.x - sw / 2, sy0 = v.y - sh / 2;
+    G.mapAtlas.draw(c, sx0, sy0, sw, sh, W, H);
     // 플레이어 위치
     const p = G.player;
     const px = (p.cx / TS - sx0) * z, py = (p.cy / TS - sy0) * z;
