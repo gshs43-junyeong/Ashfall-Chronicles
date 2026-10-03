@@ -164,6 +164,8 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 
 ## 3. 애셋 파이프라인
 
+> **그림의 일관성 · 잘림 규칙은 [`DESIGN.md`](DESIGN.md)** — 새 애셋(특히 초상 · 캐릭터 시트)을 넣기 전에 읽을 것. 마을 NPC · 상인 초상은 `python3 tools/mkportrait.py`.
+
 ```
 assets/<폴더>/*.png  +  assets/manifest.json      ← 사람이 고치는 곳
             │

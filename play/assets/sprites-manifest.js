@@ -2031,7 +2031,7 @@ window.SPRITE_MANIFEST = {
       "armsman": "npc/portrait_armsman.png",
       "yunseul": "npc/portrait_yunseul.png"
     },
-    "note": "portrait_elara~kade 9종은 128×128, v1.1의 pedlar·oreman·armsman·yunseul 4종은 요청대로 96×96."
+    "note": "전부 128×128(64칸 2배 · 배경 투명 · 흉상). rika~kade · pedlar·oreman·armsman·yunseul 9장은 tools/mkportrait.py 가 엘라라 짜임으로 굽는다 — 규칙은 DESIGN.md '초상'."
   },
   "ui": {
     "cursors": {
