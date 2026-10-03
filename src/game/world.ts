@@ -4,7 +4,7 @@ import { clamp, dist, inv, lerp } from '../engine/core/math.js';
 import { makeNoise1D, makeNoise2D } from '../engine/core/noise.js';
 import { RNG } from '../engine/core/rng.js';
 import { rleDecode, rleEncode } from '../engine/save/rle.js';
-import { castPointLight, sweepLightGrid } from '../engine/tilemap/light.js';
+import { castPointLight, castSunlight, sweepLightGrid } from '../engine/tilemap/light.js';
 import { TileMap } from '../engine/tilemap/tilemap.js';
 import { SHIFT, applyWorldSize, dimsOf } from './size.js';
 import { T, TILE_DEF } from './data.js';
@@ -26,6 +26,8 @@ export const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
 /* 조명(computeLight) — 이 세기 이상의 빛나는 칸은 점 광원(그늘을 계산), 거리 한 칸에 줄어드는 양, 그늘로 튀어 들어가는 빛이
    한 칸에 줄어드는 양(작을수록 그림자가 옅다), 빛 색을 얹는 세기. 사연: docs/code-history.md#h142 */
 export const LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
+/* 해(computeLight sun) — 해가 높이 떠 있을 때 그늘진 바깥이 받는 하늘빛 몫 · 잎이 통과시키는 햇빛 몫(나무 그늘이 얼룩진다) */
+export const SUN_AMB = 0.4, SUN_LEAF = 0.4, SUN_DEPTH = 10;
 /** 빛을 막는 타일 — 막힌 칸(solid 1) 중 창문(clear)이 아닌 것 */
 export const LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
 TILE_DEF.forEach((d, i) => { LIGHT_OPAQUE[i] = d.solid === 1 && !d.clear ? 1 : 0; });
@@ -186,11 +188,12 @@ export class World extends TileMap {
   declare crumbled: Map<any, any>; declare dawnCity: Record<string, any>; declare dawnY: number; declare decoratePonds: (...a: any[]) => any; declare decorateWater: (...a: any[]) => any;
   declare deepShaft: Record<string, any>; declare doors: any[]; declare dungeon: Record<string, any>; declare ensureEntranceTraps: (...a: any[]) => any; declare fAcc: number[];
   declare falls: any[]; declare faults: any[]; declare fillMossCorners: (...a: any[]) => any; declare fitObjects: (...a: any[]) => any; declare floodCaves: (...a: any[]) => any;
-  declare floodHell: (...a: any[]) => any; declare flv: Uint8Array; declare fmark: Uint8Array[]; declare fq: any[]; declare giantTree: Record<string, any>; declare glowStalk: (...a: any[]) => any;
+  declare floodHell: (...a: any[]) => any; declare flv: Uint8Array; declare fmark: Uint8Array[]; declare fq: any[]; declare hangQ: number[] | null; declare giantTree: Record<string, any>; declare glowStalk: (...a: any[]) => any;
   declare inAtelier: (...a: any[]) => any; declare inCitadel: (...a: any[]) => any; declare inDeepShaft: (...a: any[]) => any; declare inRuin: (...a: any[]) => any; declare inRunaway: (...a: any[]) => any;
   declare inWorks: (...a: any[]) => any; declare jungleTree: (...a: any[]) => any; declare lavaPools: any[]; declare lbh: number; declare lbw: number; declare lbx: number;
   declare lby: number; declare lightBuf: Float32Array | null; declare lightBufP: Float32Array; declare lightCol: Float32Array; declare lightOp: Uint8Array;
-  declare lightDec: Float32Array; declare lightDecP: Float32Array; declare lightCache: Map<number, LightPatch> | null; declare lightDirty: number[]; declare lightFrame: number; declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
+  declare lightDec: Float32Array; declare lightDecP: Float32Array; declare lightCache: Map<number, LightPatch> | null; declare lightDirty: number[]; declare lightFrame: number;
+  declare lightSun: Float32Array; declare lightTrans: Float32Array; declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
   declare objects: any[]; declare openCodeDoorway: (...a: any[]) => any; declare oreHits: Record<string, any>; declare pineTree: (...a: any[]) => any; declare placeRichOres: (...a: any[]) => any;
   declare placeRigs: (...a: any[]) => any; declare pools: any[]; declare pruneSmallCaves: (...a: any[]) => any; declare restoreSealRoom: (...a: any[]) => any; declare rng: RNG;
   declare ruinAt: (...a: any[]) => any; declare ruinEvents: any[]; declare ruinSites: any[]; declare ruins: any[]; declare runaway: Record<string, any>;
@@ -230,6 +233,7 @@ export class World extends TileMap {
     if (this.lightCache && was !== t) this.lightTouch(k, was);
     /* 유체가 켜진 뒤(생성·불러오기 끝)에만 — 바뀐 칸과 그 네 이웃을 흐름 검사 줄에 세운다. */
     if (this.fq) this.fluidWake(x, y);
+    if (this.hangQ && was !== t) this.hangQ.push(k);   // 매달린·세운 장식이 기댈 데를 잃었나(game/caves.ts updateHang)
     if (this.netLog && !this.netMute) this.netLog.add(y * WW + x);   // 멀티플레이 — 바뀐 칸을 모아 보낸다(game/net.ts)
   }
   setWall(x: any, y: any, w: any) {
@@ -643,7 +647,7 @@ export class World extends TileMap {
       ② 강한 점 광원(횃불·등불·수정 …, 세기 LIGHT_POINT 이상)과 플레이어 미광: 칸마다 광선을 쏘아 **가려진 칸은 그늘**(castPointLight),
          그다음 튀는 빛만 조금(LIGHT_BOUNCE 씩) 번진다 — 모서리를 돌아 다 밝아지면 그림자가 사라진다.
       ★ 두 겹 다 막힌 칸은 빛을 받되 트인 칸으로 넘기지 않는다(sweepLightGrid op) — 벽 한두 칸 뒤의 빈 방이 밝던 것. 사연: docs/code-history.md#h142 */
-  computeLight(tx0: number, ty0: number, tx1: number, ty1: number, dayLight: number, extra: number[][] | null) { const { WW, WH } = this.dims;
+  computeLight(tx0: number, ty0: number, tx1: number, ty1: number, dayLight: number, extra: number[][] | null, sun?: { x: number; y: number; k: number } | null) { const { WW, WH } = this.dims;
     const P = 14;
     const x0 = clamp(tx0 - P, 0, WW - 1), x1 = clamp(tx1 + P, 0, WW - 1);
     const y0 = clamp(ty0 - P, 0, WH - 1), y1 = clamp(ty1 + P, 0, WH - 1);
@@ -651,6 +655,7 @@ export class World extends TileMap {
     if (!this.lightBuf || this.lightBuf.length < n) {
       this.lightBuf = new Float32Array(n + 64); this.lightBufP = new Float32Array(n + 64); this.lightCol = new Float32Array((n + 64) * 3);
       this.lightOp = new Uint8Array(n + 64); this.lightDec = new Float32Array(n + 64); this.lightDecP = new Float32Array(n + 64);
+      this.lightSun = new Float32Array(n + 64); this.lightTrans = new Float32Array(n + 64);
     }
     if (!this.lightCache) { this.lightCache = new Map(); this.lightDirty = []; this.lightFrame = 0; }
     this.lightFrame++;
@@ -658,6 +663,8 @@ export class World extends TileMap {
     const L = this.lightBuf, Lp = this.lightBufP, col = this.lightCol, op = this.lightOp, dec = this.lightDec, decP = this.lightDecP;
     L.fill(0, 0, n); Lp.fill(0, 0, n); col.fill(0, 0, n * 3);
     const sea = this.sea, seaAmb = 1.2 + dayLight * 0.1;   // 깊은 바다: 낮 2.7 · 밤 1.5 (/15)
+    /* 해가 떠 있으면 트인 하늘 칸은 하늘빛(SUN_AMB)만 받고, 해가 곧게 닿는 칸이 나머지를 받는다 — 그늘이 해 반대쪽으로 눕는다 */
+    const sunK = sun ? sun.k : 0, skyL = dayLight * (1 - (1 - SUN_AMB) * sunK), trans = this.lightTrans;
     const pts: number[] = [];
     // 시드
     for (let x = x0; x <= x1; x++) {
@@ -674,7 +681,8 @@ export class World extends TileMap {
           if (d.light >= LIGHT_POINT && !d.liquid) pts.push(x, y);
           else L[k] = Math.max(L[k], d.light);
         }
-        if (t === T.AIR && y <= s && this.walls[y * WW + x] === 0) L[k] = Math.max(L[k], dayLight);
+        trans[k] = op[k] ? 0 : d.leaf ? SUN_LEAF : d.liquid ? 0.8 : 1;
+        if (t === T.AIR && y <= s && this.walls[y * WW + x] === 0) L[k] = Math.max(L[k], skyL);
         /* 바닷물은 깊이만큼 햇빛을 잃되 흩어진 빛이 남는다 — 수면이 화면(+14칸) 밖이면 스윕이
            빛을 못 받아 수심 30칸부터 새까매졌고, 그 어둠에 바다 몹이 통째로 묻혔다. */
         else if (d.sea && sea && y > sea.level)
@@ -691,9 +699,23 @@ export class World extends TileMap {
       if (ex < x0 || ex > x1 || ey < y0 || ey > y1) continue;
       this.lightStamp(castPointLight(ev, LIGHT_FALL, (dx, dy) => this.lightBlocks(ex + dx, ey + dy)), ex, ey, x0, y0, w, h, Lp, null, ev);
     }
+    /* 직사광 — 해 쪽으로 거슬러 올라가며 가려졌는지(engine castSunlight). 막힌 칸(해 쪽 겉면)은 스윕 전에 넣어 땅속으로 부드럽게 번지고,
+       트인 칸은 스윕 뒤에 얹는다 — 트인 칸끼리 번지면 그늘이 옆에서 메워져 사라진다. */
+    const S = this.lightSun, sunOn = !!sun && sunK > 0, top = dayLight * sunK + skyL * (1 - sunK);
+    if (sunOn) {
+      castSunlight(S, w, h, x0, y0, trans, sun!.x, sun!.y, (x, y) => y < 0 || y <= this.surface[clamp(x, 0, WW - 1)] ? 1 : 0);
+      /* 지표 아래로는 SUN_DEPTH 칸에 걸쳐 흐려진다 — 곧은 굴로 햇빛이 바닥까지 꽂히면 깊은 굴이 대낮이 된다 */
+      for (let k = 0; k < n; k++) {
+        if (S[k] <= 0.01) { S[k] = 0; continue; }
+        const dd = y0 + ((k / w) | 0) - this.surface[x0 + k % w];
+        S[k] = top * S[k] * (dd <= 0 ? 1 : Math.max(0, 1 - dd / SUN_DEPTH));
+        if (op[k] && S[k] > L[k]) L[k] = S[k];
+      }
+    }
     sweepLightGrid(L, w, h, 2, dec, op);                // 4방향 스윕 x2(engine/tilemap/light)
     sweepLightGrid(Lp, w, h, 1, decP, op);             // 튀는 빛 — 한 번만
     for (let k = 0; k < n; k++) if (Lp[k] > L[k]) L[k] = Lp[k];
+    if (sunOn) for (let k = 0; k < n; k++) if (!op[k] && S[k] > L[k]) L[k] = S[k];
     this.lbx = x0; this.lby = y0; this.lbw = w; this.lbh = h;
   }
   /** 그 칸이 점 광원의 빛을 막는가(세계 밖은 막힌 것으로) */
@@ -763,6 +785,7 @@ export class World extends TileMap {
   fluidInit() { const { WW, WH } = this.dims;
     this.flv = new Uint8Array(WW * WH);
     this.fq = [[], []];                                  // [물·바닷물, 용암]
+    this.hangQ = [];
     this.fmark = [new Uint8Array(WW * WH), new Uint8Array(WW * WH)];
     this.fAcc = [0, 0];
     for (let k = WW; k < WW * (WH - 1); k++) {

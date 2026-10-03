@@ -69,8 +69,20 @@ export const RenderActorsPart: Bag = {
     const ch = CHAR_OF(p.charId);
     const fr = this.playerFrame(p);
     const key = 'player_' + ch.id;
-    if (this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel
-        && this.drawSwimPlayer(c, p, sx, sy, key)) { c.restore(); return; }
+    const swim = this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel;
+    /* 물속에서는 몹(drawEnemy 의 헤엄 몹)과 같은 식으로 — 어두운 그림자 윤곽 + 등에 맺힌 빛 한 줄. 발광은 쓰지 않는다(어둠에선 같이 어둡다) */
+    if (this.spritesOn && this.world.liquid(Math.floor(p.cx / TS), Math.floor(p.cy / TS))) {
+      const one = (ox: number, oy: number) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0);
+      const a0 = c.globalAlpha;
+      c.save();
+      c.filter = 'brightness(0)'; c.globalAlpha = a0 * 0.55;
+      for (const [ox, oy] of [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]]) one(ox, oy);
+      c.filter = 'brightness(0) invert(1)'; c.globalAlpha = a0 * 0.32;
+      one(0, -1);
+      c.restore();
+      c.filter = 'none';
+    }
+    if (swim && this.drawSwimPlayer(c, p, sx, sy, key)) { c.restore(); return; }
     if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
       this.drawHeldWeapon(c, p, sx, sy, 0, this.playerHand(key, fr, sx, sy, p.facing < 0));
       c.restore();

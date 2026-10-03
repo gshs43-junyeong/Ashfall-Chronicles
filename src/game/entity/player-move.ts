@@ -13,6 +13,8 @@ import { DmgText, Enemy, JET_BURN, JET_COOL_AIR, JET_COOL_GROUND, JET_HIGH_FALL,
   Part, Player, SAFE_FALL_VY } from '../entity.js';
 /* entity.js 의 Player 에서 나눈 조각 — 읽히는 순간 Player.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
+/** 이보다 빠르게 떨어져 석순에 닿으면 찔린다 — 제자리 점프의 착지 속도(620)보다 조금 위라 석순 사이를 뛰어다니는 것은 괜찮다 */
+export const STAB_VY = 680;
 export const PlayerMove: Bag & ThisType<Player> = {
 
   /* ---- 산소 ---- */
@@ -72,7 +74,13 @@ export const PlayerMove: Bag & ThisType<Player> = {
 
     // 재생
     this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
-    if (this.hurtCd <= 0) this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
+    if (this.hurtCd <= 0) {
+      const h0 = this.hp;
+      this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
+      /* 저절로 차는 생명도 보이게 — 프레임마다 띄우면 숫자가 줄줄이 흘러서 2초치를 모아 한 번 */
+      this.regAcc = (this.regAcc || 0) + this.hp - h0; this.regT = (this.regT || 0) + dt;
+      if (this.regT >= 2) { if (this.regAcc >= 1 && this === G.me) G.texts.push(new DmgText(this.cx, this.y, '+' + Math.round(this.regAcc), '#7fe07f', 0)); this.regAcc = 0; this.regT = 0; }
+    }
 
     /* 들어가는 값과 나오는 값을 갈라 둔다(히스테리시스) — 사연: docs/code-history.md#h29 */
     const sub = this.submerged || 0;
@@ -220,6 +228,16 @@ export const PlayerMove: Bag & ThisType<Player> = {
       if (fallVy > SAFE_FALL_VY && this.iframe <= 0 && !TILE_DEF[bt].soft) {
         const dmg = Math.round((fallVy - SAFE_FALL_VY) / (MAX_FALL - SAFE_FALL_VY) * 55);
         if (dmg > 0) { this.hurt(dmg); this.hurtCd = Math.max(this.hurtCd, 0.4); }
+      }
+      /* 석순 위로 떨어지면 찔린다 — 석순은 걸음을 안 막아 발이 그 칸을 지나 바닥에 닿는다. 걸어서 지나가는 것은 괜찮다(빠르게 떨어질 때만). */
+      if (fallVy > STAB_VY && this.iframe <= 0) {
+        const fy = Math.floor((this.y + this.h - 4) / TS);
+        for (let x = Math.floor((this.x + 3) / TS); x <= Math.floor((this.x + this.w - 3) / TS); x++) {
+          if (world.get(x, fy) !== T.STALAGMITE) continue;
+          this.hurt(Math.round((10 + this.level * 0.7) * clamp(fallVy / STAB_VY, 1, 1.8))); this.hurtCd = Math.max(this.hurtCd, 0.4);
+          for (let i = 0; i < 8; i++) G.parts.push(new Part((x + .5) * TS, this.y + this.h, '#c8c0b0', -40, .5));
+          break;
+        }
       }
     }
 

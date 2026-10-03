@@ -556,6 +556,33 @@
     }
     return { r, v };
   }
+  function castSunlight(R, w, h, x0, y0, trans, sx, sy, sky) {
+    const P = (x, y) => {
+      if (x < 0 || x >= w || y < 0 || y >= h) return sky(x0 + x, y0 + y);
+      const k = y * w + x;
+      return R[k] * trans[k];
+    };
+    if (sy >= -1e-6) {
+      R.fill(0, 0, w * h);
+      return;
+    }
+    const s = sx / -sy;
+    if (Math.abs(s) <= 1) {
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const fx = x + s, ix = Math.floor(fx), f = fx - ix;
+        R[y * w + x] = P(ix, y - 1) * (1 - f) + P(ix + 1, y - 1) * f;
+      }
+    } else {
+      const dir = s > 0 ? 1 : -1, t = 1 / Math.abs(s);
+      for (let i = 0; i < w; i++) {
+        const x = dir > 0 ? w - 1 - i : i;
+        for (let y = 0; y < h; y++) {
+          const fy = y - t, iy = Math.floor(fy), f = fy - iy;
+          R[y * w + x] = P(x + dir, iy) * (1 - f) + P(x + dir, iy + 1) * f;
+        }
+      }
+    }
+  }
 
   // src/engine/i18n/format.ts
   function parse(s, i, stop) {

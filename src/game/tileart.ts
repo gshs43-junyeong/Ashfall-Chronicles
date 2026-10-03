@@ -198,6 +198,8 @@ ART[T.HYPHAE] = { k: 'hyphae', c: '#8fe0c4', a: 1, glow: 1 };
 ART[T.MOSSSTONE] = { k: 'mossrock', c: '#5d5d63', g: '#5f8f4a' };
 ART[T.HANGMOSS] = { k: 'hangmoss', c: '#6fa05a', a: 1 };
 ART[T.STALACTITE] = { k: 'dripstone', c: '#9a9488', a: 1, up: 0 };
+ART[T.ICICLE] = { k: 'dripstone', c: '#bfe6f5', a: 1, up: 0 };
+ART[T.GLOWFROND] = { k: 'hangmoss', c: '#7fe8c8', a: 1 };
 ART[T.STALAGMITE] = { k: 'dripstone', c: '#8a8478', a: 1, up: 1 };
 ART[T.GEODE] = { k: 'geode', c: '#a88fe8', a: 1, glow: 1 };
 ART[T.FAULTSTONE] = { k: 'fault', c: '#5f5e62' };   // 돌과 거의 같은 색 — 알갱이 결과 가는 금으로만 알아본다
@@ -233,7 +235,7 @@ export const MOSS_COL: Record<string, string> = {
 export const BODY_ONLY: Bag = {};   // 위가 막히면 몸통만 그리는 타일(①)
 export const CONN: Bag = {};        // 이웃을 보고 통째로 그리는 타일(②)
 for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS, T.SNOW, T.ICE]) BODY_ONLY[id] = 1;
-for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
+for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.ICICLE, T.GLOWFROND, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
 
 /** 질감 갈래(ART[id].k) → 그리는 법 — art/tiles/*.js 가 채운다. this 는 TileArt, H 는 paint 의 인자·도우미 */
 export const TILE_PAINT: Bag = {};
@@ -558,7 +560,31 @@ export const TileArt: Bag = {
         }
         return true;
       },
-      [T.STALACTITE]: drip, [T.STALAGMITE]: drip
+      /* 발광 잎 — 이끼 천장에서 늘어진 가는 줄기에 둥근 잎이 달리고, 잎 끝이 빛난다(빛 세기는 LIGHT_SPEC) */
+      [T.GLOWFROND]: (c: any, w: any, id: any, tx: any, ty: any, sx: any, sy: any) => {
+        let top = ty, bot = ty;
+        while (top > ty - 8 && w.get(tx, top - 1) === T.GLOWFROND) top--;
+        while (bot < ty + 8 && w.get(tx, bot + 1) === T.GLOWFROND) bot++;
+        const run = (bot - top + 1) * TS, y0 = (ty - top) * TS;
+        const leaf = '#7fe8c8', dk = '#3f8a72', stem = '#4f7a5a', tip = '#dffff4';
+        for (let j = 0; j < 3; j++) {
+          const fx = 4 + j * 7 + ((tileHash(tx * 5 + j, top) * 3) | 0), len = run * (0.5 + 0.5 * tileHash(tx * 11 + j, top));
+          const a0 = y0, a1 = Math.min(y0 + TS, len);
+          if (a1 <= a0) continue;
+          c.fillStyle = stem; c.fillRect(sx + fx, sy, 1, a1 - a0);
+          for (let ly = Math.ceil(a0 / 5) * 5; ly < a1; ly += 5) {                  // 다섯 칸마다 좌우 번갈아 잎
+            const side = (ly / 5) % 2 ? 1 : -3;
+            c.fillStyle = dk; c.fillRect(sx + fx + side, sy + ly - a0, 3, 2);
+            c.fillStyle = leaf; c.fillRect(sx + fx + side, sy + ly - a0, 2, 1);
+          }
+          if (a1 === len && a1 < y0 + TS) {                                        // 줄기 끝 — 빛나는 잎 한 송이
+            c.fillStyle = leaf; c.fillRect(sx + fx - 1, sy + a1 - a0 - 3, 3, 3);
+            c.fillStyle = tip; c.fillRect(sx + fx, sy + a1 - a0 - 2, 1, 1);
+          }
+        }
+        return true;
+      },
+      [T.STALACTITE]: drip, [T.STALAGMITE]: drip, [T.ICICLE]: drip
     };
   },
   /** 칸 캐시 — 열쇠가 같으면 다시 그리지 않는다 */

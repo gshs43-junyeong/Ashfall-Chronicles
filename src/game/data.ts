@@ -99,7 +99,9 @@ export const T: Record<string, number> = {
   /* --- 심층 드릴 — 전동 드릴 윗단(채굴 등급 5) --- */
   M_DRILL_X: 197,
   /* --- 스프링클러 — 물 양동이로 둘레 밭에 아침마다 물을 준다 --- */
-  M_SPRINKLER: 198
+  M_SPRINKLER: 198,
+  /* --- 얼음 동굴의 고드름 · 이끼 굴에 늘어진 발광 잎 --- */
+  ICICLE: 199, GLOWFROND: 200
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -354,7 +356,9 @@ export const TILE_DEF: TileDef[] = [
   { n: '금 광상', c: '#f0c848', solid: 1, hard: 3, drop: 'gold_ore', dropN: [3, 6], ore: 1, rich: 1 },
   { n: '미스릴 광상', c: '#5ac8ba', solid: 1, hard: 3, drop: 'mythril_ore', dropN: [3, 5], ore: 1, rich: 1 },
   { n: '심층 드릴', c: '#3a6a8a', solid: 1, hard: 5, drop: 'm_drill_x', mach: 'drill_x' },
-  { n: '스프링클러', c: '#6a8aa8', solid: 1, hard: 2, drop: 'm_sprinkler', mach: 'sprinkler' }
+  { n: '스프링클러', c: '#6a8aa8', solid: 1, hard: 2, drop: 'm_sprinkler', mach: 'sprinkler' },
+  { n: '고드름', c: '#bfe6f5', solid: 0, hard: 1, drop: 'ice_shard', a: 1 },
+  { n: '발광 잎', c: '#7fe8c8', solid: 0, hard: 0, drop: 'cave_moss', a: 1 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */

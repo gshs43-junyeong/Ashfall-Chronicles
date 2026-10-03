@@ -2,55 +2,55 @@
   "d1:s": {
     "ww": 5000,
     "wh": 720,
-    "tiles": "43bc1eb8",
-    "walls": "622c58b5",
-    "objects": "61da727c",
-    "nObjects": 405,
+    "tiles": "7903086a",
+    "walls": "dac0f785",
+    "objects": "576ae3fb",
+    "nObjects": 401,
     "ruins": 10
   },
   "d3:s": {
     "ww": 5000,
     "wh": 720,
-    "tiles": "480218f2",
+    "tiles": "ed4ff64e",
     "walls": "a22a5e10",
-    "objects": "7c0e5aa0",
-    "nObjects": 415,
+    "objects": "16f50bfe",
+    "nObjects": 416,
     "ruins": 10
   },
   "d1:m": {
     "ww": 7500,
     "wh": 1080,
-    "tiles": "e020ea8b",
+    "tiles": "a34d79f9",
     "walls": "0bb7c872",
-    "objects": "ee5f6fc4",
-    "nObjects": 656,
+    "objects": "67f1d430",
+    "nObjects": 652,
     "ruins": 10
   },
   "d3:m": {
     "ww": 7500,
     "wh": 1080,
-    "tiles": "2d7a455e",
+    "tiles": "542e59a4",
     "walls": "c2347fa7",
-    "objects": "1ff33da4",
-    "nObjects": 639,
+    "objects": "730a436f",
+    "nObjects": 638,
     "ruins": 10
   },
   "d1:l": {
     "ww": 10000,
     "wh": 1440,
-    "tiles": "022d8177",
-    "walls": "825be209",
-    "objects": "7f75dfb6",
-    "nObjects": 972,
+    "tiles": "1a505a9b",
+    "walls": "9a8822a0",
+    "objects": "10830b63",
+    "nObjects": 960,
     "ruins": 10
   },
   "d3:l": {
     "ww": 10000,
     "wh": 1440,
-    "tiles": "85a649b3",
-    "walls": "219504e7",
-    "objects": "1cb7ca06",
-    "nObjects": 979,
+    "tiles": "b6d0b279",
+    "walls": "8f3bb242",
+    "objects": "7b1e13d7",
+    "nObjects": 973,
     "ruins": 10
   }
 }

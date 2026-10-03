@@ -153,6 +153,9 @@ export const MYSTIC: Bag = {
     got: '발밑이 가벼워졌다 — 공중에서 한 번 더 뛸 수 있다' }
 };
 
+/** 유적 신비한 방의 무게 — 세계마다 셋을 겹치지 않게 뽑는다. star(체력을 다 채움)는 '없음'과 섞여 세계 셋에 하나 남짓 */
+export const MYSTIC_W: Record<string, number> = { well: 3, echo: 3, star: 0.9, none: 3.2 };
+
 export const RUIN_MAP_IN: Record<string, string> = {
   ice: 'mine',        // 광산(입구 있음) → 얼음 던전
   spore: 'pyramid',   // 피라미드(지상에 솟음) → 포자 굴
@@ -231,7 +234,10 @@ export const CAVE_TYPES = [
   { id: 'geode', n: '수정 동굴', c: '#b89fff', w: [0.8, 3],
     line: '벽이 스스로 빛난다. 수정이 뿌리를 내린 자리다.' },
   { id: 'fume',  n: '독기 굴',   c: '#a8c04a', w: [0.6, 1.6],
-    line: '숨이 따갑다. 오래 머물면 몸이 상하지만, 광맥이 짙다.' }
+    line: '숨이 따갑다. 오래 머물면 몸이 상하지만, 광맥이 짙다.' },
+  /* 얼음 동굴 — 추운 바이옴(빙하 · 서리 지대) 밑에만(w 는 쓰지 않고 buildCaveZones 가 정한다) */
+  { id: 'frost', n: '얼음 동굴', c: '#bfe6f5', w: [0, 0], cold: 4,
+    line: '숨이 하얗게 맺힌다. 천장에 매달린 고드름이 언제 떨어질지 모른다.' }
 ];
 /* 금 간 자갈 — 무너지면 숨은 동굴이 열린다. */
 export const FAULT = { count: 28, steps: 260, rx: 34, ry: 15 };   // steps 190 이면 열린 굴이 500칸 남짓이라 '확장'으로 안 읽혔다

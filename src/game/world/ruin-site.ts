@@ -2,10 +2,11 @@
 import { factory as Factory } from '../ctx.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
+import { RNG } from '../../engine/core/rng.js';
 import { tr } from '../lang.js';
 import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
-import { MYSTIC, RUIN_CIPHER, RUIN_HINTS, RUIN_MAP_IN, RUIN_RELIC, STORY_RUIN } from '../data/ruins.js';
+import { MYSTIC_W, RUIN_CIPHER, RUIN_HINTS, RUIN_MAP_IN, RUIN_RELIC, STORY_RUIN } from '../data/ruins.js';
 import { TS, World } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
@@ -278,10 +279,18 @@ export const WorldRuinSite: Bag & ThisType<World> = {
     });
 
     /* --- 바이옴 유적 5곳 (스토리와 무관한 탐험 콘텐츠) --- */
-    const mk = Object.keys(MYSTIC);
     const pick = this.ruinSpec.map((_, i) => i);
     for (let i = pick.length - 1; i > 0; i--) { const j = rng.int(0, i); [pick[i], pick[j]] = [pick[j], pick[i]]; }
-    pick.slice(0, 3).forEach((ri, k) => { this.ruinSpec[ri].mystic = mk[k % mk.length]; });
+    /* 신비한 방 자리 셋은 무게(MYSTIC_W)로 고른다 — 체력을 다 채우는 별빛 웅덩이는 세계 셋에 하나 남짓, 'none' 이면 그 유적엔 없다.
+       제 난수(_mystic)라 뒤따르는 유적 생성은 그대로다. 사연: docs/code-history.md#h143 */
+    const mrng = new RNG(this.seed + '_mystic');
+    pick.slice(0, 3).forEach(ri => { delete this.ruinSpec[ri].mystic; });
+    pick.slice(0, 3).forEach(ri => {
+      const pool = Object.keys(MYSTIC_W).filter(id => id === 'none' || !pick.slice(0, 3).some(o => this.ruinSpec[o].mystic === id));
+      let r = mrng.range(0, pool.reduce((s, id) => s + MYSTIC_W[id], 0)), got = pool[0];
+      for (const id of pool) { r -= MYSTIC_W[id]; if (r <= 0) { got = id; break; } }
+      if (got === 'none') delete this.ruinSpec[ri].mystic; else this.ruinSpec[ri].mystic = got;
+    });
     pick.slice(3).forEach(ri => { delete this.ruinSpec[ri].mystic; });
 
     this.ruinSpec.forEach((spec, i) => {

@@ -65,8 +65,13 @@ export const RenderPart: Bag = {
     const litR = p.buffs.some((b: any) => b.id === 'lit_greater') ? 9.5
       : p.buffs.some((b: any) => b.id === 'lit') ? 6.8
       : p.buffs.some((b: any) => b.id === 'lantern') ? 6.0 : 4.6;
+    /* 해 — 하늘에 그린 자리(skyArc: 0 = 동 · 1 = 서)에서 방향을 잡는다. 떠오르고 질 때는 세기를 줄여 그림자가 서서히 생기고 사라진다.
+       비 오는 동안은 구름이 해를 가려 그림자가 옅다. */
+    const su = this.skyArc(1), up = Math.sin(Math.PI * su);
+    const sunK = clamp(up * 3, 0, 1) * (1 - 0.75 * clamp((this.rainT || 0) * 1.4, 0, 1));
+    const sun = up > 0.02 ? { x: Math.cos(Math.PI * su), y: -Math.max(0.3, up), k: sunK } : null;
     w.computeLight(tx0, ty0, tx1, ty1, dayLight,
-      [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]]);   // 플레이어 미광
+      [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]], sun);   // 플레이어 미광
   },
   /** 렌더 단계 — 원경 · 채취탑 */
   rFar(f: any) {
