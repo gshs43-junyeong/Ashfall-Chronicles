@@ -28970,7 +28970,7 @@
         app.netRemoteHurt(this, amount, srcX);
         return;
       }
-      if (this.iframe > 0 || this.dead) return;
+      if (this.iframe > 0 || this.dead || this.hp <= 0) return;
       const red = this.d.def / (this.d.def + 60);
       let dmg = Math.max(1, Math.round(amount * (1 - red) * (1 - (this.d.dr || 0) / 100)));
       if (this.shield > 0) {
@@ -30242,7 +30242,7 @@
         const deep = lv === null ? 1 : clamp(1 + Math.max(0, this.cy / TS - lv) / (90 * WSY2), 1, 4);
         this.oxygen = Math.max(0, this.oxygen - dt * deep);
         this.oxyPressure = deep;
-        if (this.oxygen <= 0) {
+        if (this.oxygen <= 0 && this.hp > 0) {
           this.drownT = (this.drownT || 0) + dt;
           if (this.drownT >= 1) {
             this.drownT -= 1;
@@ -42480,6 +42480,7 @@
     },
     onDeath(cause) {
       if (this.state !== "play") return;
+      if (this.scenes.has("death") || this.scenes.has("mdeath")) return;
       this.tally = this.tally || {};
       this.tally.deaths = (this.tally.deaths || 0) + 1;
       if (cause) this.tally[cause] = (this.tally[cause] || 0) + 1;
