@@ -6,8 +6,10 @@ const STACKS: Record<string, string> = {
   'zh-Hans': '"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC"',
   latin: '-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial'
 };
-/** 그 언어의 글꼴 스택(끝은 sans-serif) — 원본 언어면 게임이 준 기본 스택 그대로 */
-export function fontStack(lang: string, source: string, base: string): string {
-  if (lang === source) return base;
-  return (STACKS[lang] || STACKS.latin) + ',sans-serif';
+/** 그 언어의 글꼴 스택(끝은 sans-serif) — 원본 언어면 게임이 준 기본 스택 그대로.
+    own — 게임이 싣는 글꼴과 그 글꼴이 덮는 언어: 그 언어면 맨 앞에 둔다(없는 글자는 뒤 글꼴로 넘어간다) */
+export function fontStack(lang: string, source: string, base: string, own?: { name: string; langs: string[] }): string {
+  const lead = own && own.langs.indexOf(lang) >= 0 ? '"' + own.name + '",' : '';
+  if (lang === source) return lead + base;
+  return lead + (STACKS[lang] || STACKS.latin) + ',sans-serif';
 }

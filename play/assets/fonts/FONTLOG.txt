@@ -1,0 +1,30 @@
+FONTLOG for Ashfall (game font of Ashfall Chronicles)
+======================================================
+
+Ashfall is a modified version of Pretendard 1.3.9 (Regular, Bold) by Kil Hyung-jin,
+made for the game Ashfall Chronicles (https://github.com/gshs43-junyeong/Ashfall-Chronicles).
+It is licensed under the SIL Open Font License 1.1 (see OFL.txt). Pretendard is
+distributed with the Reserved Font Name "Pretendard", so this modified version is
+named "Ashfall" and does not use the reserved name.
+
+Changes from Pretendard
+- Renamed to "Ashfall" (name table and CFF names).
+- Corners of every glyph are slightly rounded (radius 14 of 2048 units); outlines are
+  rewritten without hints.
+- Hangul strokes are 4.5% thinner (outlines eroded evenly); glyph size and advance
+  widths are unchanged.
+- Lowercase l with a tail and capital I with serifs by default (Pretendard's cv05 and
+  cv08 glyphs mapped in cmap), so I, l and 1 are easy to tell apart.
+- Figures 0-9 are tabular by default (the 'tnum' glyphs are mapped in cmap), so
+  numbers in the game HUD keep their width while they change.
+- Subset: Hangul KS X 1001 (2,350 syllables) plus every Hangul syllable used in the
+  game text, Hangul compatibility jamo, Latin-1, Latin Extended-A, general
+  punctuation and a few symbols. OpenType layout features are kept.
+- Built by tools/mkfont.py in the repository above.
+
+Version 1.000 (2026-10-03)
+- First release.
+
+Acknowledgements
+- Pretendard: Kil Hyung-jin, https://github.com/orioncactus/pretendard
+  (Pretendard is based on Inter, Source Han Sans and M PLUS 1p, all SIL OFL 1.1.)
