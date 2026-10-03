@@ -83,6 +83,7 @@ import * as ip_ui from './art/items/ui.js';
 import * as ip_misc from './art/items/misc.js';
 import * as sprites from './sprites.js';
 import * as titlebg from './titlebg.js';
+import * as items from './items.js';
 import * as entity from './entity.js';
 /* entity.js Player · Enemy 의 메서드 조각 — 읽히는 순간 프로토타입에 붙는다 */
 import * as e_player_combat from './entity/player-combat.js';
@@ -90,6 +91,9 @@ import * as e_player_move from './entity/player-move.js';
 import * as e_enemy_ai from './entity/enemy-ai.js';
 import * as e_boss_ai from './entity/boss-ai.js';
 import * as factory from './factory.js';
+/* factory.js 의 Factory 를 나눈 조각 — 틱 · 그리기 */
+import * as f_tick from './factory/tick.js';
+import * as f_render from './factory/render.js';
 import * as ui from './ui.js';
 /* ui.js 의 UI 를 나눈 조각 */
 import * as u_tree from './ui/tree.js';
@@ -101,24 +105,40 @@ import * as u_tip from './ui/tip.js';
 import * as u_dialogue from './ui/dialogue.js';
 import * as u_hud from './ui/hud.js';
 import * as music from './music.js';
+import * as savefmt from './savefmt.js';
 import * as game from './game.js';
-/* game.js 의 G 를 영역별로 나눈 조각 — 읽히는 순간 G 에 붙는다(순서는 원래 소스 순서) */
-import * as g_act from './game/act.js';
-import * as g_fishing from './game/fishing.js';
-import * as g_village from './game/village.js';
-import * as g_altar from './game/altar.js';
-import * as g_spawn from './game/spawn.js';
-import * as g_progress from './game/progress.js';
+/* game.js 의 G 를 영역별로 나눈 조각 — 읽히는 순간 G 에 붙는다(조각끼리는 이름이 겹치지 않는다 — tools/regroup.mjs 가 막는다) */
+import * as g_shell from './game/shell.js';
 import * as g_save from './game/save.js';
 import * as g_sound from './game/sound.js';
-import * as g_render from './game/render.js';
-import * as g_render_far from './game/render-far.js';
-import * as g_render_fx from './game/render-fx.js';
-import * as g_ruin_pulse from './game/ruin-pulse.js';
+import * as g_fx from './game/fx.js';
+import * as g_mine from './game/mine.js';
+import * as g_farm from './game/farm.js';
+import * as g_fishing from './game/fishing.js';
+import * as g_interact from './game/interact.js';
+import * as g_talk from './game/talk.js';
+import * as g_quests from './game/quests.js';
+import * as g_shop from './game/shop.js';
+import * as g_village from './game/village.js';
+import * as g_pets from './game/pets.js';
+import * as g_boss from './game/boss.js';
+import * as g_progress from './game/progress.js';
+import * as g_life from './game/life.js';
+import * as g_spawn from './game/spawn.js';
+import * as g_weather from './game/weather.js';
+import * as g_rigs from './game/rigs.js';
+import * as g_zones from './game/zones.js';
+import * as g_caves from './game/caves.js';
 import * as g_meteor from './game/meteor.js';
-import * as g_ruin_map from './game/ruin-map.js';
-import * as g_corpse from './game/corpse.js';
+import * as g_ruins from './game/ruins.js';
+import * as g_ruin_pulse from './game/ruin-pulse.js';
+import * as g_minimap from './game/minimap.js';
+import * as g_render from './game/render.js';
+import * as g_render_sky from './game/render-sky.js';
+import * as g_render_world from './game/render-world.js';
+import * as g_render_actors from './game/render-actors.js';
 import * as g_utility from './game/utility.js';
+import * as g_debug_start from './game/debug-start.js';
 import * as g_net from './game/net.js';
 import * as g_netui from './game/netui.js';
 import * as g_netchat from './game/netchat.js';
@@ -141,7 +161,7 @@ if (!lang.I18N.isSource) {
 /* 디버그 창구 — 콘솔·?debug 도구·tests·tools/*.py 가 예전처럼 G · World · T · WW … 를 이름으로 읽는다.
    ★ 읽기 전용이고 살아 있는 값이다(WW 는 setWorldSize 뒤에 바뀐 값). 게임 코드는 이것을 읽지 말고 import 할 것.
    브라우저가 이미 가진 이름은 덮지 않는다. */
-for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, d_items, d_recipes, d_start, d_enemies, d_materials, d_skills, d_ruins, d_npcs, d_pets, d_story, d_quests, d_values, d_achievements, world, w_plants, w_village, w_sky, w_dungeon, w_traps, w_ruins, w_ruin_site, w_caves, w_sea, w_water, tileart, tp_ground, tp_misc, tp_factory, tp_water, tp_village, tp_ruins, tp_cave, itemart, ip_glyphs, ip_gear, ip_goods, ip_farm, ip_loot, ip_skills, ip_ui, ip_misc, sprites, titlebg, entity, e_player_combat, e_player_move, e_enemy_ai, e_boss_ai, factory, ui, u_tree, u_quest, u_craft, u_machine, u_shop, u_tip, u_dialogue, u_hud, music, game, g_act, g_fishing, g_village, g_altar, g_spawn, g_progress, g_save, g_sound, g_render, g_render_far, g_render_fx, g_ruin_pulse, g_meteor, g_ruin_map, g_corpse, g_utility, g_net, g_netui, g_netchat, g_netprog]) {
+for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, d_items, d_recipes, d_start, d_enemies, d_materials, d_skills, d_ruins, d_npcs, d_pets, d_story, d_quests, d_values, d_achievements, world, w_plants, w_village, w_sky, w_dungeon, w_traps, w_ruins, w_ruin_site, w_caves, w_sea, w_water, tileart, tp_ground, tp_misc, tp_factory, tp_water, tp_village, tp_ruins, tp_cave, itemart, ip_glyphs, ip_gear, ip_goods, ip_farm, ip_loot, ip_skills, ip_ui, ip_misc, sprites, titlebg, items, entity, e_player_combat, e_player_move, e_enemy_ai, e_boss_ai, factory, f_tick, f_render, ui, u_tree, u_quest, u_craft, u_machine, u_shop, u_tip, u_dialogue, u_hud, music, savefmt, game, g_shell, g_save, g_sound, g_fx, g_mine, g_farm, g_fishing, g_interact, g_talk, g_quests, g_shop, g_village, g_pets, g_boss, g_progress, g_life, g_spawn, g_weather, g_rigs, g_zones, g_caves, g_meteor, g_ruins, g_ruin_pulse, g_minimap, g_render, g_render_sky, g_render_world, g_render_actors, g_utility, g_debug_start, g_net, g_netui, g_netchat, g_netprog]) {
   for (const k of Object.keys(m)) {
     if (k in window) continue;
     Object.defineProperty(window, k, { get: () => m[k], configurable: true });

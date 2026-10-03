@@ -1,4 +1,4 @@
-/* ===== game/sound.js — 사운드 · 재질 파편 · 효과음 ===== */
+/* ===== game/sound.js — 소리 · 타격 효과 ===== */
 import { TAU } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { TILE_DEF } from '../data.js';
@@ -224,4 +224,5 @@ export const SoundPart: Bag = {
     src.start(t); src.stop(t + 0.3);
   },
 };
+
 mixin(G, SoundPart);

@@ -6,7 +6,7 @@ import { ITEMS, STATION_DESC, STATION_NAME, STATION_UP } from '../data/items.js'
 import { RECIPES } from '../data/recipes.js';
 import { VILLAGE } from '../data/start.js';
 import { Art } from '../itemart.js';
-import { makeItem } from '../entity.js';
+import { makeItem } from '../items.js';
 import { $, $$, UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
 

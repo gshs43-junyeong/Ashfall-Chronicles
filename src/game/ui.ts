@@ -10,7 +10,8 @@ import { NPCS } from './data/npcs.js';
 import { SET_DEFAULT, idef } from './data/values.js';
 import { Art } from './itemart.js';
 import { Sprites } from './sprites.js';
-import { HOTBAR, MAX_BAG_SIZE, equipReqLv, isGear, itemDamage, itemName, maxStack } from './entity.js';
+import { equipReqLv, isGear, itemDamage, itemName, maxStack } from './items.js';
+import { HOTBAR, MAX_BAG_SIZE } from './entity.js';
 
 export const $ = (s) => document.querySelector(s);
 export const $$ = (s) => Array.from(document.querySelectorAll(s));

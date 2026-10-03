@@ -8,8 +8,9 @@ import { T, TILE_DEF } from '../data.js';
 import { hitFam } from '../data/items.js';
 import { SIG_FX, idef } from '../data/values.js';
 import { TS } from '../world.js';
+import { itemDamage } from '../items.js';
 import { DmgText, Enemy, JET_BURN, JET_COOL_AIR, JET_COOL_GROUND, JET_HIGH_FALL, JET_MAX_UP, JET_RESUME, MAX_FALL,
-  Part, Player, SAFE_FALL_VY, itemDamage } from '../entity.js';
+  Part, Player, SAFE_FALL_VY } from '../entity.js';
 /* entity.js 의 Player 에서 나눈 조각 — 읽히는 순간 Player.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
 export const PlayerMove: Bag & ThisType<Player> = {

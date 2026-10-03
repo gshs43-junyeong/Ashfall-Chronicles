@@ -11,7 +11,7 @@ import { DRAGON_FOOD, DRAGON_GATES, DRAGON_STAGE_N, PETS, dragonStage, petAtkMul
 import { idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Art } from '../itemart.js';
-import { enhMul, equipReqLv, isGear, itemDamage, itemName, itemSpeed, itemStats } from '../entity.js';
+import { enhMul, equipReqLv, isGear, itemDamage, itemName, itemSpeed, itemStats } from '../items.js';
 import { UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
 

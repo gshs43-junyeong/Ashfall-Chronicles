@@ -1,128 +1,22 @@
-/* ===== game/render-far.js — 원경 · 문 그리기 ===== */
-import { mixHex, shade } from '../../engine/core/color.js';
-import { TAU, clamp } from '../../engine/core/math.js';
+/* ===== game/render-world.js — 세계 그림 — 물결 · 폭포 · 빛 · 둥지 · 제단 · 문 · 시설 · 폭탄 · 커서 ===== */
+import { shade } from '../../engine/core/color.js';
+import { TAU, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tileHash } from '../../engine/core/rng.js';
+import { FONT, tr } from '../lang.js';
 import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { ENEMIES } from '../data/enemies.js';
 import { FLUID_FLOW, FLUID_KIND } from '../data/materials.js';
-import { PET_MOTION, dragonStage } from '../data/pets.js';
+import { idef } from '../data/values.js';
 import { TS, doorEdge } from '../world.js';
 import { ART, TileArt } from '../tileart.js';
-import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';
 import { Part } from '../entity.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const RenderFarPart: Bag = {
-
-  /** 손그림 원경 — 두 겹으로 무한 스크롤. */
-  /* ================= 원경을 불투명하게 ================= */
-  tintBg(src, slot, ck, haze, hazeAmt, darkAmt) {
-    if (hazeAmt <= 0 && darkAmt <= 0) return src;
-    const q = v => Math.round(v * 12) / 12;
-    /* 색도 **뭉뚱그려서** 열쇠에 넣는다. */
-    const n = parseInt(haze.slice(1), 16);
-    haze = '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255]
-      .map(v => (Math.round(v / 16) * 16 & 255).toString(16).padStart(2, '0')).join('');
-    const key = ck + '|' + haze + '|' + q(hazeAmt) + '|' + q(darkAmt);
-    this._bgT = this._bgT || [];
-    const slotT = this._bgT[slot] = this._bgT[slot] || {};
-    if (slotT.key === key && slotT.cv) return slotT.cv;
-    const cv = slotT.cv || document.createElement('canvas');
-    cv.width = src.width; cv.height = src.height;
-    const g = cv.getContext('2d');
-    g.globalCompositeOperation = 'source-over';
-    g.clearRect(0, 0, cv.width, cv.height);
-    g.drawImage(src, 0, 0);
-    /* source-atop — 그림이 있는 자리에만 색을 얹는다. */
-    g.globalCompositeOperation = 'source-atop';
-    if (hazeAmt > 0) { g.globalAlpha = q(hazeAmt); g.fillStyle = haze; g.fillRect(0, 0, cv.width, cv.height); }
-    if (darkAmt > 0) { g.globalAlpha = q(darkAmt); g.fillStyle = '#0a0c14'; g.fillRect(0, 0, cv.width, cv.height); }
-    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
-    slotT.key = key; slotT.cv = cv;
-    return cv;
-  },
-
-  /** 바이옴 → 원경 그림 열쇠. */
-  bgKeyFor(b) {
-    return b === 'ice' ? 'parallax_snow' : b === 'corrupt' ? 'parallax_corrupt' : b === 'desert' ? 'parallax_desert'
-      // jungle·glowfen 전용 배경(parallax_jungle·parallax_glowfen)은 아직 그림이 없다.
-      : (b === 'jungle' && Sprites.img.parallax_jungle && Sprites.img.parallax_jungle.width) ? 'parallax_jungle'
-      : (b === 'glowfen' && Sprites.img.parallax_glowfen && Sprites.img.parallax_glowfen.width) ? 'parallax_glowfen'
-      /* 세션 3(바다·빙하)이 이 사슬에 빠져 있어서 **바다 위에 잿빛 숲 원경**이 떴다. */
-      : (b === 'sea' && Sprites.img.parallax_sea && Sprites.img.parallax_sea.width) ? 'parallax_sea'
-      : (b === 'glacier' && Sprites.img.parallax_glacier && Sprites.img.parallax_glacier.width) ? 'parallax_glacier'
-      : (b === 'sea' || b === 'glacier') ? 'parallax_snow'
-      : 'parallax_forest';
-  },
-
-  drawParallaxArt(c, camX, camY, f) { const { WW, SURF_BASE, BIOMES } = dimsOf(this.world);
-    const p = this.player;
-    const zone = this.world.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
-    let key;
-    // 하늘 섬은 지하 깊이와 무관하게 전용 배경을 쓴다
-    if (zone === 'sky') key = 'parallax_sky';
-    /* ★ 땅속에서는 원경이 **한 픽셀도** 안 보인다 — 재서 확인한 것이다. */
-    else if (camY > SURF_BASE * TS + 500) return true;
-    /* 여명 마을·베이스캠프 둘 다 **숲 원경**을 쓴다. */
-    else if (zone === 'village' || zone === 'camp') key = 'parallax_forest';
-    /* 섞는 비중은 경계에서 0.5 — 어느 쪽에서 넘어도 같다. */
-    let layers;
-    if (key) layers = [[key, 1]];
-    else {
-      const w = this.world, tx = clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1);
-      const i = w.biomeIndexAt(tx), bi = BIOMES[i], BG_BAND = 48;
-      let j = i, wt = 0;                                   // 이웃 바이옴과 그 비중
-      if (i > 0 && tx - bi.x0 < BG_BAND) { j = i - 1; wt = 0.5 - (tx - bi.x0) / (2 * BG_BAND); }
-      else if (i < BIOMES.length - 1 && bi.x1 - tx <= BG_BAND) { j = i + 1; wt = 0.5 - (bi.x1 - tx) / (2 * BG_BAND); }
-      const ka = this.bgKeyFor(bi.id), kb = this.bgKeyFor(BIOMES[j].id);
-      layers = (kb === ka || wt <= 0.01) ? [[ka, 1]] : [[ka, 1 - wt], [kb, wt]];
-    }
-    const parts = [];
-    for (const [k, a] of layers) {
-      const im = Sprites.img[k];
-      if (!im || !im.width) continue;
-      /* 잿빛 숲 원경만 장에 따라 색이 빠진다. */
-      parts.push({ key: k, a, im, src: k === 'parallax_forest' ? this.forestBg(im) : im });
-    }
-    if (!parts.length) return false;
-    const af = '|' + Math.round(this.ashF() * 20);   // 숲 원경은 장마다 그림이 달라진다
-
-    // 배경의 세로 위치는 camY(카메라의 실제 세계 y좌표) 하나로만 정한다.
-    const ref = SURF_BASE * TS;
-    const restY = TS * 7 + this.H / 2;    // camY가 기준 고도와 같을 때 배경이 놓일 화면 위치
-    const refCamY = ref - this.H / 2;
-    c.save();
-    c.imageSmoothingEnabled = false;
-    const haze = this.skyHaze || '#a8c8e0';
-    const dark = (1 - f) * 0.58;          // 밤에는 어두워진다 — 옅어지는 게 아니라
-    /* ★ 먼 층은 지평선 하늘색(낮 #a8c8e0)으로 55% 씻기는데, 숲 원경은 그림 자체가 옅은 회색이라 씻고 나면 흰 종이처럼 떴다. */
-    /* 먼 층은 느리고 흐리게, 가까운 층은 빠르고 진하게. */
-    for (const [slot, spd, dy, sc] of [[0, 0.16, -54, 1.15], [1, 0.34, 0, 1]]) {
-      parts.forEach((pt, n) => {
-        const forest = pt.key === 'parallax_forest';
-        const hz = slot === 0 ? (forest ? .40 : .55) : 0;
-        const tint = slot === 0 && forest ? mixHex(haze, '#4f7a6a', 0.5) : haze;
-        const IW = pt.im.width, IH = pt.im.height, w = IW * sc, h = IH * sc;
-        const baseY = restY + (refCamY - camY) * spd;
-        const img = this.tintBg(pt.src, slot + 2 * n, pt.key + af, tint, hz, dark);
-        let ox = -((camX * spd) % w);
-        if (ox > 0) ox -= w;
-        c.globalAlpha = pt.a;
-        for (let x = ox; x < this.W; x += w) c.drawImage(img, x, baseY - h + dy, w, h);
-        // 사막 분지 같은 저지대에서는 카메라가 내려가면서 근경 이미지의 바닥이 화면 바닥보다 위로 올라와, 그 아래로 빈 캔버스가 그대로 드러나는 틈이 생긴다.
-        if (slot === 1 && baseY + dy < this.H) {
-          for (let x = ox; x < this.W; x += w) c.drawImage(img, 0, IH - 1, IW, 1, x, baseY + dy, w, this.H - baseY - dy);
-        }
-      });
-    }
-    c.globalAlpha = 1;
-    c.restore();
-    return true;
-  },
+export const RenderWorldPart: Bag = {
 
   /** 타일 광원값을 저해상도 알파맵으로 만들어 확대 — 계단 없는 부드러운 명암 */
   /** 바다 수면 한 칸 — 사연: docs/code-history.md#h65 */
@@ -351,52 +245,6 @@ export const RenderFarPart: Bag = {
     c.imageSmoothingEnabled = true;
     c.drawImage(this.lightCv, x0 * TS - camX, y0 * TS - camY, lw * TS, lh * TS);
     c.imageSmoothingEnabled = false;
-  },
-
-  /* ---- 프레임 선택 (우리 엔티티 필드 기준) ---- */
-  /** 걸을 때 발밑 흙먼지 — 그림만(Part 는 충돌·판정이 없다). 걷기 프레임(9fps)의 발 딛는 두 칸에 맞춰
-      절반쯤만 한 톨씩 — 매 프레임 뿌리면 달리기 내내 연기처럼 깔린다. */
-  walkDust(p) {
-    const st = Math.floor(this.time * 9) % 4;
-    const step = st !== this._dustSt && (st === 0 || st === 2);
-    this._dustSt = st;
-    if (!step || !p.onGround || p.swimming || Math.abs(p.vx) < 60) return;
-    const w = this.world, fy = p.y + p.h + 1;
-    const tx = Math.floor(p.cx / TS), ty = Math.floor(fy / TS);
-    this.sfx('step', 0.9 + Math.random() * 0.2);          // 발소리는 딛는 칸마다(파일이 있을 때만 울린다)
-    if (w.liquid(tx, ty - 1) || Math.random() > 0.55) return;   // 얕은 물을 걸을 땐 먼지가 안 인다
-    const d = TILE_DEF[w.get(tx, ty)];
-    if (!d || !d.solid || !d.c) return;
-    const n = Math.random() < 0.3 ? 2 : 1;
-    for (let i = 0; i < n; i++)
-      this.parts.push(new Part(p.cx - Math.sign(p.vx) * 5, fy - 2, mixHex(d.c, '#d2c6a8', 0.75), -22, 0.38,
-        { spd: 0.2, r: 1, g: 0.2, drag: 0.9 }));
-  },
-  playerFrame(p) {
-    if (p.flash > 0.12) return 12;                                  // 피격
-    if (p.dashV > 0) return 8;                                      // 대시
-    if (p.swing > 0) return 9 + Math.min(2, Math.floor((0.24 - p.swing) / 0.08));
-    if (!p.onGround) return p.vy < 0 ? 6 : 7;                       // 점프 / 낙하
-    if (Math.abs(p.vx) > 20) return 2 + (Math.floor(this.time * 9) % 4);
-    return Math.floor(this.time * 2) % 2;
-  },
-  enemyFrame(e) {
-    if (e.boss) {
-      /* ★ 체력 문턱(66%/33%)을 여기서 다시 계산하면 안 된다. */
-      const m = Sprites.meta && Sprites.meta.bosses.sheets[e.type];
-      /* ★ 시트 끝의 **쓰러지는 칸**(death)은 마디가 아니다. */
-      const idle = m ? m.count - (m.death || 0) : 6;
-      const pairs = m ? Math.max(1, Math.floor(idle / 2)) : 3;   // 시트에 든 페이즈 그림 벌 수
-      /* 비율로 나누므로 2페이즈는 **첫 벌과 마지막 벌**을 쓴다(가운데를 쓰면 두 마디 차이가 가장 작은 두 그림이 된다). */
-      const sp = Math.min(pairs - 1, Math.round((e.pf || 0) * (pairs - 1)));
-      return sp * 2 + (Math.floor(this.time * 2.5) % 2);
-    }
-    /* ★ 공격 직후는 atkPose 로 본다. */
-    if (e.atkPose > 0) return 4;
-    /* 말랑한 몹(ENEMIES squish)은 공중에서 걷기 두 장을 번갈아 돌리면 떨어뜨린 상자처럼 보였다 — 오를 땐 늘어난 장, 내릴 땐 둥근 장. */
-    if (e.def.squish && !e.onGround) return e.vy < 0 ? 2 : 0;
-    if (Math.abs(e.vx) > 6) return 2 + (Math.floor(this.time * 7) % 2);
-    return Math.floor(this.time * 2.4) % 2;
   },
 
   /** 소환 제단 — 새긴 받침 위 세 갈래 발톱이 구슬을 받친다. 구슬은 빛이 안에서 도는 유리알:
@@ -785,40 +633,93 @@ export const RenderFarPart: Bag = {
       c.globalAlpha = 1;
     }
   },
-
-  /** 장착한 펫을 플레이어 뒤에 둥실둥실 띄워 그린다 (별도 물리 없이 위치만 따라감) */
-  /** 펫 — 손그림 시트가 있으면 그것으로, 없으면 itemart 의 절차 생성 아이콘으로. */
-  drawPet(c, pet, camX, camY) {
-    const sx = Math.round(pet.x - camX), sy = Math.round(pet.y - camY);
-    const S = 20;
+  /* 분수 물 — 손그림(정지)이든 절차 생성이든 그 위에 이것만 얹어 움직인다. */
+  drawFountainWater(c, o, sx, sy) {
+    const FR = 3, fr = ((this.time * 6) | 0) % FR;
+    const mx = sx + o.w / 2;
+    const topY = sy + 8;                       // 물동이 수면
+    const surf = sy + o.h - TS + 5;            // 물받이 수면
+    const fall = surf - topY;                  // 떨어지는 높이
     c.save();
-    c.imageSmoothingEnabled = false;
-    // 공격 직후 잠깐 밝게 — 뭘 하고 있는지 눈에 보이게
-    if (pet.flash > 0) { c.shadowColor = pet.def.c; c.shadowBlur = 10; }
-    /* 손그림 시트가 있으면 그쪽을 쓴다. */
-    /* 드래곤은 단계마다 시트가 따로다(pet_<id>_s<단계>) — 날갯짓 flap 장을 초당 9장으로 돌고, 공격 직후엔 숨결 장 */
-    const key = pet.def.dragon ? `pet_${pet.id}_s${dragonStage(pet.lvOf(this.player))}` : 'pet_' + pet.id;
-    const sheet = this.spritesOn && Sprites.meta && Sprites.meta.characters.sheets[key];
-    if (sheet) {
-      const mo = PET_MOTION[pet.id] || {}, fps = mo.fps || 3, ph = (this.time * fps + pet.slot) * Math.PI;
-      const idle = sheet.idle || 2;                     // 떠 있기 장 수 — 사이 장을 구운 펫은 넷, 공격 장은 그다음
-      const fr = sheet.flap ? (pet.flash > 0 ? sheet.flap : Math.floor(this.time * 9 + pet.slot * 2) % sheet.flap)
-        : pet.flash > 0 ? idle : (Math.floor(this.time * fps + pet.slot) % idle);
-      /* 공격 순간 — 근접은 과녁 쪽으로 달려들고, 쏘는 펫은 반동으로 살짝 물러난다 */
-      const a = pet.def.atk, hit = pet.flash > 0 ? pet.flash / 0.18 : 0;
-      const lunge = hit ? pet.facing * (a && a.k === 'melee' ? 8 : -2) * Math.sin(hit * Math.PI) : 0;
-      c.save(); c.translate(sx + lunge, sy + (mo.bob || 0) * Math.sin(ph));
-      if (mo.tilt) c.rotate(mo.tilt * Math.sin(ph) * pet.facing);
-      if (mo.spin) c.rotate(mo.spin * Math.sin(ph * 0.5));
-      const sc = 1 + (mo.pulse || 0) * Math.sin(ph);
-      c.scale(sc * (1 - (mo.flapX || 0) * Math.abs(Math.sin(ph))), sc);
-      const ok = Sprites.draw(c, key, fr, -sheet.frameW / 2, -sheet.frameH / 2, pet.facing < 0);
-      c.restore();
-      if (ok) { c.restore(); return; }
+
+    // 1) 물동이에서 솟았다가 곧바로 떨어지는 물기둥
+    c.globalAlpha = .8; c.fillStyle = '#8fd4ef';
+    c.fillRect(mx - 2, topY - 7 + [0, -2, -1][fr], 4, 9 + [0, 2, 1][fr]);
+
+    // 2) 좌우 포물선 — 물방울이 프레임마다 궤적을 따라 나아가 물받이로 떨어진다.
+    const N = 6, RX = 26;
+    c.fillStyle = '#7fc8e8';
+    for (const dir of [-1, 1])
+      for (let k = 0; k < N; k++) {
+        const u = (k + fr / FR) / N;
+        const px = mx + dir * (4 + RX * u);
+        const py = topY - 4 + fall * (u * u);
+        if (py > surf) continue;
+        c.globalAlpha = .8 - u * 0.25;
+        c.fillRect(px - 1.5, py, 3, 3 + u * 3);            // 아래로 갈수록 길어진다 = 빨라 보인다
+      }
+
+    // 3) 물동이 테두리에서 흘러내리는 물 — 끊긴 세로줄이 프레임마다 내려간다
+    c.globalAlpha = .45; c.fillStyle = '#bfe8ff';
+    for (const dir of [-1, 1])
+      for (let k = 0; k < 3; k++) {
+        const py = topY + 4 + ((k * 9 + fr * 3) % (fall - 6));
+        c.fillRect(mx + dir * 8 - 1, py, 2, 5);
+      }
+
+    // 4) 떨어진 자리의 물보라 + 수면 잔물결
+    c.globalAlpha = .5; c.fillStyle = '#dff2ff';
+    for (const dir of [-1, 1]) {
+      const lx = mx + dir * (4 + RX);
+      c.fillRect(lx - 4, surf - 1 - (fr === 1 ? 1 : 0), 8, 2);
+      c.fillRect(lx - 6 - fr, surf - 3, 2, 2); c.fillRect(lx + 4 + fr, surf - 3, 2, 2);
     }
-    if (pet.facing < 0) { c.translate(sx * 2, 0); c.scale(-1, 1); }
-    Art.draw(c, 'p:' + pet.id, sx - S / 2, sy - S / 2, S);
+    c.globalAlpha = .38;
+    for (let k = 0; k < 3; k++) {
+      const rx = sx + 8 + ((k * 17 + fr * 6) % (o.w - 20));
+      c.fillRect(rx, surf + 3, 6, 1);
+    }
     c.restore();
   },
+  drawCursor(c, camX, camY) {
+    const p = this.player;
+    const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
+    const near = dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) <= TS * 6;
+    const held = p.held();
+    const showTile = held && (idef(held).type === 'tool' || idef(held).type === 'block');
+    if (showTile && near && !this.uiOpen) {
+      c.strokeStyle = 'rgba(255,235,180,.55)'; c.lineWidth = 1.5;
+      c.strokeRect(tx * TS - camX + .5, ty * TS - camY + .5, TS - 1, TS - 1);
+      c.lineWidth = 1;
+    }
+    if (p.mineTx >= 0 && p.mineProg > 0) {
+      c.fillStyle = `rgba(255,255,255,${0.12 + p.mineProg * 0.2})`;
+      c.fillRect(p.mineTx * TS - camX, p.mineTy * TS - camY, TS, TS * p.mineProg);
+    }
+    if (this.hoverObj) {
+      const o = this.hoverObj;
+      if (dist(p.cx, p.cy, o.x + o.w / 2, o.y + o.h / 2) < TS * 7) {
+        c.strokeStyle = 'rgba(216,169,75,.8)'; c.lineWidth = 1.5;
+        c.strokeRect(o.x - camX - 2.5, o.y - camY - 2.5, o.w + 5, o.h + 5);
+        c.lineWidth = 1;
+        const label = o.type === 'door' ? (o.closed ? tr('문 열기') : tr('문 닫기')) : {
+          chest: tr('상자 열기'), workbench: tr('작업대'), forge: tr('용광로'), npc: tr('대화'), altar: tr('제단'),
+          vault: tr('보관고'), board: tr('의뢰 게시판'), reforge: tr('재련대'), waystone: tr('귀환 비석'), inn: tr('여관'),
+          terminal: tr('단말 읽기'), lorestone: tr('비문 읽기'), tablet: tr('석판 읽기'), lair: tr('둥지'), seal: tr('봉인문'),
+          ciphernote: tr('쪽지 읽기'), codedoor: tr('잠긴 홈')
+        }[o.type];
+        if (label) {
+          c.fillStyle = '#e8dcc0'; c.font = '11px ' + FONT; c.textAlign = 'center';
+          c.fillText(label + ` ${tr('(우클릭)')}`, o.x - camX + o.w / 2, o.y - camY - 12);
+        }
+      }
+    }
+    // 조준선 — 캔버스에는 시야 배율이 걸려 있어 화면 좌표를 배율로 나눈다(안 나누면 100% 가 아닐 때 커서와 따로 놀았다)
+    const zv = this.viewZoom();
+    c.strokeStyle = 'rgba(255,255,255,.35)';
+    c.beginPath();
+    c.arc(this.input.mx / zv, this.input.my / zv, 5 / zv, 0, TAU); c.stroke();
+  },
 };
-mixin(G, RenderFarPart);
+
+mixin(G, RenderWorldPart);
