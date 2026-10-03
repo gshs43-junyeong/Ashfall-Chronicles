@@ -55,7 +55,7 @@ for (const [k, g] of spec.groups.entries()) {
   const ctxLine = (src.match(/^import \{[^}]*\} from '\.\/ctx\.js';$/m) || [''])[0].replace("'./ctx.js'", "'../ctx.js'");
   const text = `/* ===== ${g.file} — ${g.title} ===== */\n` + (ctxLine ? ctxLine + '\n' : '') +
     `/* ${spec.file} 의 ${spec.name} 에서 나눈 조각 — 읽히는 순간 ${target} 에 붙는다(main.js 가 ${spec.file} 다음에 읽는다). */\n\n` +
-    `export const ${g.part} = {\n${spec.kind === 'class' ? classPart(k) : parts[k]}};\n` +
+    `export const ${g.part}${spec.kind === 'object' ? ': Bag' : ''} = {\n${spec.kind === 'class' ? classPart(k) : parts[k]}};\n` +
     `mixin(${target}, ${g.part}${spec.kind === 'class' ? ', true' : ''});\n`;
   const out = path.join(LEGACY, g.file);
   fs.mkdirSync(path.dirname(out), { recursive: true });

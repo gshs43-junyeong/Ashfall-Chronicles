@@ -1,15 +1,15 @@
-/* ===== game/ruin-pulse.js — 유적의 맥박 · 탐사 기록 · 메아리 시련 ===== */
+/* ===== game/ruin-pulse.js — 유적의 맥박 · 탐사 기록 · 메아리 ===== */
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT, fmt, tr } from '../lang.js';
-import { dimsOf } from '../size.js';
-import { T, TILE_DEF } from '../data.js';
+import { TILE_DEF } from '../data.js';
 import { ITEMS } from '../data/items.js';
 import { ENEMIES } from '../data/enemies.js';
-import { CAVE_TYPES, ECHO, PULSE, PULSE_EVENTS, PULSE_RAGE, RUIN_LORE, RUIN_RELIC, RUIN_SPEC, STORY_RUIN,
-  SURVEY_LABEL, SURVEY_TIERS, SURVEY_W } from '../data/ruins.js';
+import { ECHO, PULSE, PULSE_EVENTS, PULSE_RAGE, RUIN_LORE, RUIN_RELIC, RUIN_SPEC, STORY_RUIN, SURVEY_LABEL,
+  SURVEY_TIERS, SURVEY_W } from '../data/ruins.js';
 import { TS } from '../world.js';
-import { Drop, Enemy, Part, makeItem, rollGear } from '../entity.js';
+import { makeItem, rollGear } from '../items.js';
+import { Drop, Enemy, Part } from '../entity.js';
 import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
@@ -622,88 +622,6 @@ export const RuinPulsePart: Bag = {
       }
     }
   },
-
-  /* 갈래(CAVE_TYPES)마다 몸에 오는 것이 다르게 했다: 이끼 굴은 아물고, 종유 동굴은 머리 위를 봐야 하고, 독기 굴은 숨이 따갑고, 금 간 자갈은 무너뜨리면 숨은 동굴이 열린다 —
-     사연: docs/code-history.md#h72 */
-  updateCaves(dt) {
-    const p = this.player, w = this.world;
-    if (!p || !w || p.dead) return;
-    this.rocks = this.rocks || [];
-    this.updateRocks(dt);
-    if (this.quake) this.updateQuake(dt);
-    if (this.meteor) this.updateMeteor(dt);
-    const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
-    this._caveT = (this._caveT || 0) - dt;
-    if (this._caveT > 0) return;
-    this._caveT = 0.35;
-    const k = w.caveKindAt(tx, ty), C = CAVE_TYPES[k];
-    this.caveHere = k;
-    /* 갈래가 바뀌면 업적용으로만 센다 — 알림은 띄우지 않는다(구역이 60×55칸이라 굴 근처만 지나가도 떴다) */
-    if (k && k !== this._caveLast) {
-      this.tally = this.tally || {};
-      (this.tally.caves = this.tally.caves || {})[C.id] = 1;
-      this.checkAch();
-    }
-    this._caveLast = k;
-    // 갈래마다 몸에 오는 것 — 1초에 한 번
-    this._caveTick = (this._caveTick || 0) - 0.35;
-    if (this._caveTick <= 0 && k) {
-      this._caveTick = 1;
-      if (C.id === 'moss' && p.hp < p.d.maxHp) p.heal(Math.max(1, Math.round(p.d.maxHp * 0.012)));
-      if (C.id === 'fume') {
-        p.hurt(3 + p.level * 0.25);
-        for (let i = 0; i < 5; i++) this.parts.push(new Part(p.cx + (Math.random() - .5) * 26, p.cy, '#b8c85a', -18, .7));
-      }
-    }
-    // 종유 동굴 — 머리 위 종유석이 흔들리다 떨어진다.
-    this._dripCd = (this._dripCd || 0) - 0.35;
-    if (C.id === 'drip' && this._dripCd <= 0 && Math.random() < 0.3) {
-      for (let dx = -3; dx <= 3; dx++) {
-        const x = tx + dx;
-        let y = -1;
-        for (let dy = 1; dy <= 10; dy++) {
-          const t = w.get(x, ty - dy);
-          if (t === T.STALACTITE) { if (w.get(x, ty - dy + 1) !== T.STALACTITE) y = ty - dy; break; }
-          if (w.solid(x, ty - dy)) break;
-        }
-        if (y < 0) continue;
-        w.set(x, y, T.AIR);
-        this.rocks.push({ x: (x + .5) * TS, y: (y + .5) * TS, vy: 0, t: 0.7, dmg: 14 + p.level * 0.9, kind: 'drip' });
-        this._dripCd = 5;
-        this.tally = this.tally || {};
-        if (!this.tally.dripHint) { this.tally.dripHint = 1; this.toast(tr('머리 위 종유석이 흔들린다 — 비켜라!'), 'bad'); }
-        break;
-      }
-    }
-    // 금 간 자갈 — 가까이 가면 금 사이로 먼지가 흘러내린다(알아보라는 표시)
-    for (const f of (w.faults || [])) {
-      if (f.done || Math.abs(f.x - tx) > 18 || Math.abs(f.y - ty) > 12) continue;
-      if (w.get(f.x, f.y) !== T.FAULTSTONE) { f.done = 1; continue; }   // 다른 까닭으로 사라진 자갈
-      this.parts.push(new Part((f.x + Math.random()) * TS, (f.y + 1) * TS, '#c8b890', 30, .9));
-    }
-  },
-
-  /** 떨어지는 돌 — 흔들리는 동안(t) 제자리에서 먼지를 떨구고, 그다음 떨어진다 */
-  updateRocks(dt) { const { WH } = dimsOf(this.world);
-    const p = this.player, w = this.world;
-    for (let i = this.rocks.length - 1; i >= 0; i--) {
-      const r = this.rocks[i];
-      if (r.t > 0) {
-        r.t -= dt;
-        if (Math.random() < dt * 14) this.parts.push(new Part(r.x + (Math.random() - .5) * 10, r.y + 8, '#a8a090', 40, .5));
-        continue;
-      }
-      r.vy = Math.min(900, r.vy + 1500 * dt);
-      r.y += r.vy * dt;
-      const hitP = Math.abs(r.x - p.cx) < p.w / 2 + 6 && r.y > p.y && r.y < p.y + p.h;
-      const hitW = w.solid(Math.floor(r.x / TS), Math.floor((r.y + 8) / TS));
-      if (hitP || hitW || r.y > (WH - 2) * TS) {
-        if (hitP) p.hurt(r.dmg, r.x);
-        for (let k = 0; k < 12; k++) this.parts.push(new Part(r.x, r.y, '#8a8478', -60, .8));
-        this.sfx('break_stone');
-        this.rocks.splice(i, 1);
-      }
-    }
-  },
 };
+
 mixin(G, RuinPulsePart);

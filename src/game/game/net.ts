@@ -12,7 +12,8 @@ import { MACHINE } from '../data/recipes.js';
 import { ENEMIES } from '../data/enemies.js';
 import { PETS } from '../data/pets.js';
 import { TS } from '../world.js';
-import { DmgText, Enemy, Pet, Proj, makeItem } from '../entity.js';
+import { makeItem } from '../items.js';
+import { DmgText, Enemy, Pet, Proj } from '../entity.js';
 import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */

@@ -6,7 +6,8 @@ import { escHtml } from '../util.js';
 import { tr } from '../lang.js';
 import { CHARACTERS } from '../data/start.js';
 import { $, $$ } from '../ui.js';
-import { G, SaveStore, saveHead, saveSealOk, upgradeSave } from '../game.js';
+import { SaveStore, saveHead, saveSealOk, upgradeSave } from '../savefmt.js';
+import { G } from '../game.js';
 import { NET_MAX } from './net.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 

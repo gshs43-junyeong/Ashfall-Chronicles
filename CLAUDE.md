@@ -38,7 +38,7 @@ Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다.
 
 ### 1-4. 세이브 모양을 바꿨으면 `SAVE_UPGRADES`에 한 칸을 더한다
 
-`game.js` 맨 위에 `SAVE_UPGRADES` 배열이 있고 `SAVE_VERSION = SAVE_UPGRADES.length + 1`
+`savefmt.ts`(세이브 모양 — 판올림 · 서명 · 슬롯 요약 · 저장소)에 `SAVE_UPGRADES` 배열이 있고 `SAVE_VERSION = SAVE_UPGRADES.length + 1`
 이다. 새 필드를 넣었으면 **배열 끝에 마이그레이션 함수를 하나 더해** 옛 세이브가
 그 필드를 기본값으로 얻게 한다. 버전 숫자를 손으로 올리지 말 것.
 
@@ -109,10 +109,10 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `src/game/size.ts` | 세계 크기 — `SHIFT`·`SX`/`SY`·치수 `let`·바이옴 경계. `let` 은 여기서만 고쳐 쓴다 |
 | `src/game/data.ts` + `data/*.ts` | 표만 있는 곳 — `data.ts` 는 타일·희귀도, `data/` 에 아이템 · 제작법 · 적 · 재질 · 스킬 · 유적 · 업적 · NPC·대사 · 펫 · 장·이야기 · 부탁·의뢰 · 물건값 |
 | `src/game/world.ts` + `world/*.ts` | `World`(생성자 · generate · 충돌 · 조명 · 유체 · 저장) + 생성 조각(나무 · 마을 · 하늘 섬 · 던전 · 함정 · 유적 · 동굴 · 바다 · 물) |
-| `src/game/game.ts` + `game/*.ts` | `G` 뼈대(초기화 · 입력 · 게임 시작 · 루프) + 조각 15개(채굴·설치 · 낚시 · 마을 · 제단 · 스폰 · 진행 · 저장 · 소리 · 렌더 셋 · 유적 맥박 · 운석 · 유적 지도 · 시체) |
-| `src/game/entity.ts` + `entity/*.ts` | 아이템 인스턴스 · `Ent`·`Player`·`Enemy`·투사체 · 조각(플레이어 공격·움직임 · 적 AI · 보스 AI) |
+| `src/game/game.ts` + `game/*.ts` · `savefmt.ts` | `G` 뼈대(초기화 · 입력 · 게임 시작 · 루프) + **영역별** 조각 35개 — 화면 겹 `shell` · 세이브 `save` · 소리 `sound` · 연출 `fx` · 채굴·놓기 `mine` · 밭 `farm` · 낚시 `fishing` · 상호작용 `interact` · 대화 `talk` · 의뢰 `quests` · 상점 `shop` · 마을 `village` · 펫 `pets` · 보스 `boss` · 장·업적 `progress` · 성장·죽음 `life` · 몹 생성·사건 `spawn` · 날씨 `weather` · 채취탑 `rigs` · 구역 `zones` · 동굴 `caves` · 운석 `meteor` · 유적 `ruins` · 맥박 `ruin-pulse` · 지도 `minimap` · 렌더 `render`(단계) · `render-sky` · `render-world` · `render-actors` · 유틸리티 `utility` · 디버그 시험장 `debug-start` · 멀티플레이 `net*` 넷. 새 메서드는 **그 영역 파일에** — 영역이 섞이면 `tools/regroup.mjs`(절을 글자 그대로 다시 묶는다). 세이브 모양은 `savefmt.ts` |
+| `src/game/items.ts` · `entity.ts` + `entity/*.ts` | 아이템 인스턴스(`makeItem` · 능력치 · 장비 굴리기 · 상자 전리품) · `Ent`·`Player`·`Enemy`·동료·펫·투사체 · 조각(플레이어 공격·움직임 · 적 AI · 보스 AI) |
 | `src/game/tileart.ts` · `itemart.ts` + `art/tiles` · `art/items` | 절차 생성 그림 — 갈래마다 그리는 법은 `TILE_PAINT` · `ITEM_PAINT` 표(조각 파일이 채운다) |
-| `src/game/ui.ts` + `ui/*.ts` · `music.ts` · `factory.ts` · `titlebg.ts` · `util.ts` · `sprites.ts` | UI 뼈대 + 창 조각(특성 · 퀘스트 · 제작 · 기계 · 상점 · 툴팁 · 대화 · HUD) · 그 이름대로 |
+| `src/game/ui.ts` + `ui/*.ts` · `music.ts` · `factory.ts` + `factory/`(틱 · 그리기) · `titlebg.ts` · `util.ts` · `sprites.ts` | UI 뼈대 + 창 조각(특성 · 퀘스트 · 제작 · 기계 · 상점 · 툴팁 · 대화 · HUD) · 그 이름대로 |
 | `src/game/main.ts` · `ctx.ts` | 묶는 입구(모듈 순서 · 디버그 창구 · 다른 언어면 표·HTML 덮기) · 늦게 묶는 자리(아래층이 쓰는 G·UI·Factory) |
 | `src/game/lang.ts` · `locales/` | 번역 창구 `tr` · `N_` · `fmt` · `FONT` · `LANG` · 원문 목록 `locales/source.json`(`extract` 산출물) · 번역 `locales/<lang>.json` · 용어집 `glossary.csv` |
 | `play/locales/` | `<script>` 로 싣는 번역 묶음과 언어 목록 — `node tools/i18n.mjs build` 산출물(손으로 고치지 말 것). 언어는 index.html 이 번들보다 먼저 고른다(`?lang=` → 설정 → 브라우저 언어 → ko) |
@@ -132,7 +132,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 > **리포가 원본이다.** 게임 코드는 `src/game/` 에서 고친다 — `play/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
 
 읽는 순서(`main.js` 의 import 순서 = 층): `sprites-manifest`(번들 밖, 먼저) →
-`ctx → util → lang → size → data → world → tileart → itemart → sprites → titlebg → entity → factory → ui → music → game`
+`ctx → util → lang → size → data → world → tileart → itemart → sprites → titlebg → items → entity → factory → ui → music → savefmt → game`
 
 **모듈 규칙**(`npm run test:modules` 가 기계로 막는다):
 - **한 파일 한 영역 — 코드 1,200줄 · 표(data/) 2,000줄 이하.** 큰 객체(`G` · `UI` · 클래스)는 조각 모듈로 나눠 `mixin(대상, 조각)` 으로
@@ -302,7 +302,7 @@ bash tools/build-site.sh         # play/ → site/play/ 복사 + 매니페스트
 
 ## 8. 지금 상태 (2026-09-30)
 
-- **v1.1.1 엔진화 끝 · 출시**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) · 중국어 간체(zh-Hans) · 독일어(de) · 스페인어(es) 4,020개 끝** — 사이트(site/ home·download) 6개 언어 끝, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 끝 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입(`@ts-nocheck` 0 · 클래스 필드 `any` 0 · 표 타입 `types.d.ts` 닫힘) 끝 — 게임 쪽 strict 는 v1.1.2. 다국어 UI 검사(`node tests/ui-audit.mjs` — 6개 언어 0건) · 유틸리티 Z·X(탐지 파동, play/utility.ts) · 로고·파비콘(`tools/mklogo.py`)·대표 그림(`tools/mkkeyart.py` → site/keyart.png) 끝. P11 Docker 끝(`docker compose up dev|game|site` · `docker compose run --rm check` — 스크린샷 기준은 `tests/baseline/shots-docker` 따로, 로컬 기준을 다시 찍으면 Docker 것도 다시 찍을 것). P12 마무리(엔진 문서 `docs/engine.md` · 예제 `examples/sample` · `npm run test:sample`) 끝 — 남은 것은 계획서 §9-1 에 모아 둔 수정(v1.1.1 뒤).
+- **v1.1.1 엔진화 끝 · 출시**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) · 중국어 간체(zh-Hans) · 독일어(de) · 스페인어(es) 4,020개 끝** — 사이트(site/ home·download) 6개 언어 끝, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 끝 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입(`@ts-nocheck` 0 · 클래스 필드 `any` 0 · 표 타입 `types.d.ts` 닫힘) 끝 — 게임 쪽 strict 는 v1.1.2. 다국어 UI 검사(`node tests/ui-audit.mjs` — 6개 언어 0건) · 유틸리티 Z·X(탐지 파동, game/utility.ts) · 로고·파비콘(`tools/mklogo.py`)·대표 그림(`tools/mkkeyart.py` → site/keyart.png) 끝. P11 Docker 끝(`docker compose up dev|game|site` · `docker compose run --rm check` — 스크린샷 기준은 `tests/baseline/shots-docker` 따로, 로컬 기준을 다시 찍으면 Docker 것도 다시 찍을 것). P12 마무리(엔진 문서 `docs/engine.md` · 예제 `examples/sample` · `npm run test:sample`) 끝 — 남은 것은 계획서 §9-1 에 모아 둔 수정(v1.1.1 뒤).
   **화질**(설정 · game.js `QUALITY`): 자동 = 폰 절약(픽셀 밀도 1 · 입자 300) · 태블릿 보통(1.5 · 600) · 컴퓨터 높음(2 · 900). 렌더 단계별 시간은 `G.pipe.profile(true)` → `G.pipe.stats()`. 도중에 찾은 버그는 계획서 §9-1 에 모아 P12 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
@@ -431,7 +431,7 @@ bash tools/build-site.sh         # play/ → site/play/ 복사 + 매니페스트
   세계가 지은 유적 함정(`m.gen && !m.own`)은 망 없이 돈다(`runWildTrap`). 기계를 캐면 내용물은 가방 먼저.
   옛 세이브는 불러올 때 지금 지면으로 한 번 세운다. 그림은 game.js `drawRig`.
 - 마을 2단계의 괭이·낫·물뿌리개·씨앗은 가방으로 준다(data.js `FARM_KIT`) — 밭 위 상자는 없앴다.
-- **밭 물**(world/plants.ts `isWet`·`waterFarm`·`nearWater` · play/act.ts `growCropsDaily`): 작물은 **젖은 밭에서만** 아침에 자란다. 젖음 = `world.wet[밭 칸] >= 그날`
+- **밭 물**(world/plants.ts `isWet`·`waterFarm`·`nearWater` · game/farm.ts `growCropsDaily`): 작물은 **젖은 밭에서만** 아침에 자란다. 젖음 = `world.wet[밭 칸] >= 그날`
   (물 주면 `FARM_WET_DAYS` 3번의 아침) 또는 `FARM_WET_R` 5칸 안에 민물·바닷물. 비 오는 아침은 하늘이 트인 밭을 적신다(`rainWater`). 물뿌리개(`watering_can`,
   아이템 `it.w` 에 남은 물 · 20번)는 물 칸 우클릭 = 채우기, 밭·작물 우클릭 = 주기. 양동이(`bucket`)는 물 칸을 **통째로** 떠 그 칸이 사라진다(`DRAWABLE`),
   물 양동이는 빈 칸에 부으면 물 한 칸. 스프링클러(기계 `sprinkler`, 물이 있을 때만 전력 3 — 전력이 없으면 그날 안 준다)는 물 양동이를 받아 아침마다 좌우 25·위아래 6칸의 밭을 가까운 것부터
@@ -443,7 +443,7 @@ bash tools/build-site.sh         # play/ → site/play/ 복사 + 매니페스트
   희귀 ≈70 · 영웅 ≈135, 최소 레벨 40·44·48(세션 2), `petDmgScale` 은 레벨 44 = 1 · 75 = 2. 드래곤 1레벨 ≈100 → 20레벨에 영웅 10레벨 ·
   30레벨에 1.3배, 최소 레벨 62, 알 24만(윤슬 웃돈 1.6배). 디버그 바로가기 레벨도 이 기준(마을 세션 2 = 40 · 3 = 60 · 바다·폭탄 60 · 공장 50).
   ★ `ACH_LV` 를 바꾸면 업적 순서가 바뀌어 번역 열쇠(`ACHIEVEMENTS.<순번>`)가 밀린다.
-- **드래곤**(data/pets.ts `dragon_*` · `DRAGON_*` · play/altar.ts `feedDragon` · entity.ts `addPetXp`): 윤슬이 알 넷(불·흙·전기·암흑)을 판다 — 깨면 그 드래곤(1레벨).
+- **드래곤**(data/pets.ts `dragon_*` · `DRAGON_*` · game/pets.ts `feedDragon` · entity.ts `addPetXp`): 윤슬이 알 넷(불·흙·전기·암흑)을 판다 — 깨면 그 드래곤(1레벨).
   30레벨까지(`petXpNext(lv, id)` 는 드래곤만 완만한 곡선), 10·20·30 레벨로 오를 때는 경험치가 가득 찬 채 멈추고(`it.hungry`) 그 단계 먹이
   (`DRAGON_FOOD` — 용의 첫 먹이 · 폭풍 호박 심장 · 별똥 심장, 폭풍 호박·구름 진주·운석·별빛 수정이 재료)를 먹어야 넘는다. 단계 `dragonStage` 0~3(새끼·어린 용·성룡·고룡).
   그림은 `python3 tools/mkdragons.py` 가 굽는다(`char/pet_dragon_<속성>_s<단계>.png` — 날갯짓 6장 + 숨결 1장, 매니페스트 `flap`) → sync. 날개는 몸통 축을 도는

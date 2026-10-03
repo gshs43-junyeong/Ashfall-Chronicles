@@ -7,111 +7,24 @@ import { createInput } from '../engine/input/actions.js';
 import { bindPointer } from '../engine/input/pointer.js';
 import { mountTouch } from '../engine/input/touch.js';
 import { fitCanvas } from '../engine/platform/viewport.js';
-import { makeSigner } from '../engine/save/seal.js';
-import { createSaveStore } from '../engine/save/store.js';
-import { upgrade } from '../engine/save/upgrade.js';
 import { createScenes } from '../engine/scene/scenes.js';
-import { N_, fmt, tr } from './lang.js';
+import { fmt, tr } from './lang.js';
 import { dimsOf } from './size.js';
 import { T, TILE_DEF, TILE_SPRITE } from './data.js';
-import { ITEMS } from './data/items.js';
-import { KEY_ACTIONS, MODE_OF, VILLAGE } from './data/start.js';
-import { CAVE_TYPES, RUIN_SPEC } from './data/ruins.js';
-import { CHAPTERS, SESSIONS } from './data/story.js';
+import { KEY_ACTIONS, MODE_OF } from './data/start.js';
+import { CHAPTERS } from './data/story.js';
 import { PART_CAP, idef } from './data/values.js';
-import { DAWN_WALL, TS, World, setWorldSize } from './world.js';
+import { TS, World, setWorldSize } from './world.js';
 import { TileArt } from './tileart.js';
 import { Art } from './itemart.js';
 import { Sprites } from './sprites.js';
 import { TitleBG } from './titlebg.js';
-import { Bomb, Drop, Enemy, Guard, HOTBAR, Part, Proj, VAULT_SIZE, affixIndex, makeItem } from './entity.js';
+import { Bomb, Drop, Enemy, Guard, HOTBAR, Part, Proj, VAULT_SIZE } from './entity.js';
 import { FAC_TICK, Factory } from './factory.js';
 import { $, $$, UI } from './ui.js';
 import { Ambient, Music, SfxLoop } from './music.js';
+import { SaveStore } from './savefmt.js';
 
-export const SAVE_KEY = 'ashfall_save_v3';   // v1: 640×232 · v2: 2800×480 — 세계 폭이 바뀌면 호환 불가
-export const SAVE_SLOTS = 3;
-
-/* ---------------- 세이브 판올림 ---------------- */
-export const SAVE_UPGRADES = [
-  // v1 → v2
-  (d) => {
-    // 상인 재고 — 하루 단위로 갈리는 무작위 재고를 세이브에 담는다
-    if (!d.shopStock) d.shopStock = {};
-    if (d.shopStockDay === undefined) d.shopStockDay = -1;
-  },
-  // v2 → v3 — 유틸리티 장비 칸 두 개가 생겼다
-  (d) => {
-    const eq = d.player && d.player.equip;
-    if (!eq) return;
-    if (eq.util1 === undefined) eq.util1 = null;
-    if (eq.util2 === undefined) eq.util2 = null;
-  },
-  /* v3 → v4 — 업적. */
-  (d) => { if (!d.achievements) d.achievements = {}; },
-  /* v4 → v5 — 업적 중에 세이브에 없는 값을 묻는 것들이 생겼다 (플레이 시간·거래 횟수·익사 같은 것). */
-  (d) => { if (!d.tally) d.tally = {}; },
-  /* v5 → v6 — 유적 탐사 기록. */
-  (d) => { if (!d.survey) d.survey = {}; },
-  /* v6 → v7 — 동굴 갈래(world.caveGrid)와 금 간 자갈(world.faults). */
-  (d) => { if (d.world) { if (d.world.caveGrid === undefined) d.world.caveGrid = null; if (!d.world.faults) d.world.faults = []; } },
-  /* v7 → v8 — 세계 크기(world.size: 's' 소형 · 'm' 중형 · 'l' 대형). */
-  (d) => { if (d.world && !d.world.size) d.world.size = 's'; },
-  /* v8 → v9 — 드릴이 광맥 칸마다 더 캘 수 있는 횟수(world.oreHits). */
-  (d) => { if (d.world && !d.world.oreHits) d.world.oreHits = {}; },
-  /* v9 → v10 — 바다 수면(world.sea). 없으면 World.deserialize 가 타일에서 다시 잰다(null 로 두면 그쪽이 채운다). */
-  (d) => { if (d.world && d.world.sea === undefined) d.world.sea = null; },
-  /* v10 → v11 — 장비 접사를 글자({n, s}) 대신 표 번호({k, i})로. 아이템이 가방·장비·금고·상자·기계 어디에나 있어 통째로 훑는다. */
-  (d) => {
-    const seen = new Set();
-    (function walk(o) {
-      if (!o || typeof o !== 'object' || seen.has(o)) return;
-      seen.add(o);
-      if (Array.isArray(o.a) && typeof o.id === 'string') {
-        for (const a of o.a) if (a && (a.k === 'p' || a.k === 's') && a.i === undefined) {
-          const i = affixIndex(a);
-          if (i >= 0) { a.i = i; delete a.n; delete a.s; }
-        }
-      }
-      for (const k in o) { const v = o[k]; if (v && typeof v === 'object') walk(v); }
-    })(d);
-  },
-  /* v11 → v12 — 밭 젖음(world.wet: 밭 칸 → 젖어 있는 마지막 날). 이미 심어 둔 작물이 판이 바뀌자마자 서지 않게, 그 밑 밭은 사흘 젖게 둔다. */
-  (d) => {
-    if (!d.world || d.world.wet) return;
-    const wet = {}, ww = d.world.ww || 5000, until = (d.dayCount || 0) + 3;
-    for (const k of (d.world.crops || [])) wet[k + ww] = until;
-    d.world.wet = wet;
-  },
-  /* v12 → v13 — 멀티플레이 손님 기록(mpGuests: 손님 아이디 → 마지막 자리 · 새로 만든 손님 캐릭터). 옛 세계엔 손님이 없었다. */
-  (d) => { if (!d.mpGuests) d.mpGuests = {}; }
-];
-export const SAVE_VERSION = SAVE_UPGRADES.length + 1;
-
-/** 옛 세이브를 지금 판까지 끌어올린다. */
-export function upgradeSave(d) { return upgrade(d, SAVE_UPGRADES); }
-export const slotKey = (i) => `${SAVE_KEY}_slot${i}`;
-export const sigKey = (i) => `${SAVE_KEY}_slot${i}_s`;
-
-/* ================= 세이브 무결성 ================= */
-export const SAVE_SALT = 'ashfall-seal-1';
-/** FNV-1a 32비트 두 벌 — 소금은 게임 것(engine/save/seal.js). */
-export const saveSign = makeSigner(SAVE_SALT);
-/** 열어도 되는 기록인가(sig 는 그 기록에 딸린 서명). */
-export function saveSealOk(raw, d, sig) {
-  if (!d || !d.sealed) return true;
-  return !!sig && sig === saveSign(raw);
-}
-/** 슬롯 목록에 띄울 요약 — 본문을 열지 않고 목록을 그리려고 따로 적는다 */
-export function saveHead(d) {
-  return { name: d.name || NONAME, level: d.p ? d.p.level : 1, chapter: d.chapter,
-    size: (d.world && d.world.size) || 's', savedAt: d.savedAt };
-}
-
-/* ================= 저장소 ================= */
-export const SaveStore = createSaveStore({ dbName: 'ashfall', slots: SAVE_SLOTS, slotKey, sigKey,
-  sign: saveSign, head: saveHead, sealOk: saveSealOk });
-export const SET_KEY = 'ashfall_settings';
 // 완전한 암흑(0)은 지도에 남기지 않는다.
 export const MAP_REVEAL_LIGHT = 1;
 
@@ -124,9 +37,6 @@ export const TOUCH = (() => {
   if (q === '1' || q === '0') return q === '1';
   return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 })();
-
-/** 이름을 비워 둔 모험가 — 세이브에는 원문으로 남기고 보일 때 옮긴다(언어를 바꿔도 따라온다) */
-export const NONAME = N_('이름 없는 모험가');
 
 export const G: Bag = {
   cv: null, ctx: null, mm: null, mmx: null,
@@ -435,7 +345,7 @@ export const G: Bag = {
     // ★ World 를 만들기 **전에** — 배열 크기와 모든 좌표가 여기서 정해진다.
     setWorldSize(size || new URLSearchParams(location.search).get('size') || 's');
     this.world = new World(seed).generate();
-    const { WW, WH, HELL_Y, CAMP_X1, SEA_X1 } = this.world.dims;
+    const { WW, WH } = this.world.dims;
     this.fitMapAtlas();
     this._rigs = null; this._fbg = null;   // 세계가 바뀌었으니 자리·원경 캐시를 버린다
     this.player = this.freshPlayer(this.world.spawnX * TS, (this.world.spawnY - 2) * TS, name, charId);
@@ -475,282 +385,8 @@ export const G: Bag = {
     this.audioInit();
     this.buildMapAtlas();
     this.mpAuto();
-    // 디버그 바로가기 — 주소 끝에 ?debug=village를 붙이고 "새로운 여정"을 누르면 종장을 안 깨도 여명 마을이 바로 열리고 그 앞에서 시작한다.
-    const qs = new URLSearchParams(location.search);
-    /* ?debug=meteor — 2.5초 뒤 운석. */
-    if (qs.get('debug') === 'meteor') {
-      const at = qs.get('at'), me = Math.floor(this.player.cx / TS);
-      setTimeout(() => this.startMeteor(at === 'me' ? me : at ? +at : me + (+qs.get('dx') || 30)), 2500);
-    }
-    if (qs.get('debug') === 'village') {
-      this.villageUnlocked = true;
-      this.world.restoreDawnCity();
-      // 단계 수가 늘어도 따라오게 VILLAGE 표를 기준으로 돌린다 — 사연: docs/code-history.md#h40
-      const lv = clamp(+qs.get('lv') || 1, 1, VILLAGE.length - 1);
-      for (let k = 2; k <= lv; k++) this.world.upgradeVillage(k);
-      this.world.dawnCity.lv = lv;
-      /* 스토리 진행도 함께 맞춘다 — 여명 마을은 종장(세션 2)을 지나야 열리는 곳이라, 챕터를 0(세션 1)에 둔 채 마을만 열면 세계가 앞뒤가 안 맞는다. */
-      const sess = clamp(+qs.get('sess') || 2, 1, SESSIONS.length);
-      this.chapter = qs.get('ch') !== null ? +qs.get('ch') : SESSIONS[sess - 1].ch0;
-      const plv = +qs.get('plv') || (sess >= 3 ? 60 : sess >= 2 ? 40 : 1);
-      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
-      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-      p.gold = +qs.get('gold') || 20000;
-      const d = this.world.dawnCity;
-      // 3단계면 서쪽 성문 앞에 세운다 — 마을에 들어서는 순간 성벽이 바로 보인다
-      if (lv >= 3) { p.x = (d.x0 + DAWN_WALL.leftOff + 4) * TS; p.y = (d.gy - 3) * TS; }
-      else { p.x = (((d.x0 + d.x1) >> 1) - 5) * TS; p.y = (d.gy - 3) * TS; }
-      p.vx = p.vy = 0;
-      this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-      this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-    }
-
-    /* ?debug=price — 값 확인용. */
-    if (qs.get('debug') === 'price') {
-      this.villageUnlocked = true;
-      this.world.restoreDawnCity();
-      for (let k = 2; k <= VILLAGE.length - 1; k++) this.world.upgradeVillage(k);
-      this.world.dawnCity.lv = VILLAGE.length - 1;
-      const sess = clamp(+qs.get('sess') || 2, 1, SESSIONS.length);
-      this.chapter = qs.get('ch') !== null ? +qs.get('ch') : SESSIONS[sess - 1].ch0;
-      const plv = +qs.get('plv') || 100;
-      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
-      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-      p.gold = +qs.get('gold') || 10000000;
-      // 되팔 거리 — 알 세 종류와 공장 물건·재료를 한 벌씩 쥐여 준다
-      const give = (id, n) => {
-        const max = ITEMS[id].stack || 1;
-        for (let left = n; left > 0; left -= max) {
-          const it = makeItem(id, Math.min(max, left), 0);
-          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-        }
-      };
-      for (const id of ['egg_common', 'egg_rare', 'egg_epic']) give(id, 3);
-      for (const id of ['m_belt', 'm_assembler', 'm_gen', 'steel_plate', 'circuit', 'motor',
-                        'iron_bar', 'wood', 'potion_hp', 'station_work', 'crate_wood']) give(id, 5);
-      const d = this.world.dawnCity;
-      p.x = (((d.x0 + d.x1) >> 1) - 5) * TS; p.y = (d.gy - 3) * TS; p.vx = p.vy = 0;
-      this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-      this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-      UI.refreshBag(); UI.refreshEquip();
-      this.toast(tr('값 확인 자리 — {plv}레벨 · 마을 {n}단계 · 세션 {sess}', { plv, n: VILLAGE.length - 1, sess }), 'good');
-    }
-
-    /* ?debug=sea — 세션 3 확인 자리. */
-    if (qs.get('debug') === 'sea') {
-      const give = (id, n) => {
-        const max = ITEMS[id].stack || 1;
-        for (let left = n; left > 0; left -= max) {
-          const it = makeItem(id, Math.min(max, left), 0);
-          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-        }
-      };
-      this.chapter = qs.get('ch') !== null ? +qs.get('ch') : SESSIONS[2].ch0;
-      const plv = +qs.get('plv') || 60;
-      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
-      p.gold = +qs.get('gold') || 300000;
-      // 숨 계단 · 심해 장비 · 불빛 · 채굴
-      for (const id of ['tank_air', 'tank_deep', 'tank_abyss']) give(id, 1);
-      for (const id of ['helm_diver', 'chest_scale', 'boots_fin', 'ring_pearl', 'charm_ink',
-                        'spear_tide', 'bow_harpoon', 'orb_abyss', 'pick_abyss']) give(id, 1);
-      give('torch', 200); give('potion_hp_greater', 20); give('rod_adv', 1); give('raw_meat', 20);
-      // 4단계 설비를 바로 세워 볼 수 있게 재료도 준다
-      for (const id of ['abyss_core', 'pressure_plate_m', 'abyss_pearl', 'jelly_lamp',
-                        'crab_shell', 'shark_tooth', 'ink_sac', 'kelp', 'sea_salt']) give(id, 40);
-      for (const id of ['m_pressor', 'm_desal', 'm_belt_f', 'm_battery_hi', 'm_gen', 'm_pole']) give(id, 8);
-      p.equip.util1 = makeItem('tank_deep', 1, 0);
-      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-      const w = this.world;
-      const sx = SEA_X1 + 6;                                  // 물가 바로 오른쪽(빙하 쪽)
-      p.x = sx * TS; p.y = (w.surface[sx] - 3) * TS; p.vx = p.vy = 0;
-      this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-      this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-      UI.refreshBag(); UI.refreshEquip();
-      this.toast(tr('세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급'), 'good');
-    }
-
-    /* ?debug=fishfarm — 낚시·농사만 확인하는 자리. */
-    if (qs.get('debug') === 'fishfarm') {
-      // 한 칸 최대치(stack)를 넘겨 주면 한 슬롯에 몰아 담겨 버린다 — 나눠서 넣는다
-      const give = (id, n) => {
-        const max = ITEMS[id].stack || 1;
-        for (let left = n; left > 0; left -= max) {
-          const it = makeItem(id, Math.min(max, left), 0);
-          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-        }
-      };
-      give('rod_basic', 1); give('rod_adv', 1);
-      give('raw_meat', 40);                                   // 미끼 — 생고기가 있으면 자동으로 걸린다
-      give('hoe_iron', 1);
-      give('seed_wheat', 60); give('seed_starroot', 40); give('seed_ashcap', 40);
-      give('fertilizer', 40);
-      give('pick_iron', 1); give('torch', 40);
-      const plv = +qs.get('plv') || 15;
-      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
-      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-      p.gold = +qs.get('gold') || 5000;
-      /* 정글 호수 기슭 — 물가 바로 옆의 마른 땅에 세운다. */
-      const w = this.world;
-      const lake = (w.pools || []).find(q => q.biome === 'jungle') || (w.pools || []).find(q => q.big);
-      if (lake) {
-        let sx = lake.x;
-        // 호수 왼쪽으로 걸어 나가 물이 끝나는 첫 마른 바닥을 찾는다
-        for (let k = 0; k < 40; k++) {
-          const tx = lake.x - k;
-          const ty = w.surface[clamp(tx, 0, WW - 1)];
-          if (!TILE_DEF[w.get(tx, ty)].liquid && w.solid(tx, ty + 1)) { sx = tx; break; }
-        }
-        /* 밭 감을 자리를 깔아 둔다. */
-        for (let k = 1; k <= 12; k++) {
-          const x = sx - k, sy = w.surface[clamp(x, 0, WW - 1)];
-          if (TILE_DEF[w.get(x, sy)].liquid) continue;
-          if (w.solid(x, sy - 1)) continue;                      // 나무 밑동은 건너뛴다
-          /* 정글은 지면 바로 위가 덩굴·풀포기라 그 칸이 AIR가 아니다. */
-          if (w.get(x, sy - 1) !== T.AIR) w.set(x, sy - 1, T.AIR);
-          w.set(x, sy, T.GRASS);
-          if (!w.solid(x, sy + 1)) w.set(x, sy + 1, T.DIRT);
-        }
-        p.x = sx * TS;
-        p.y = (w.surface[clamp(sx, 0, WW - 1)] - 2) * TS;
-        p.vx = p.vy = 0;
-        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-        this.toast(tr('낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭'), 'good');
-      }
-      UI.refreshBag(); UI.refreshEquip();
-    }
-
-    /* ?debug=ruin&id=mine — 유적의 맥박·탐사 기록·메아리 확인 자리. */
-    if (qs.get('debug') === 'ruin') {
-      const w = this.world, id = qs.get('id') || 'mine';
-      const idx = RUIN_SPEC.findIndex(s => s.id === id);
-      const site = (w.ruinSites || []).find(s => s.id === id);
-      if (idx >= 0 && site && site.rooms.length) {
-        const plv = +qs.get('plv') || 30;
-        while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
-        p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-        const give = (iid, n) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
-        give('tonic_hush', 4); give('drum_pulse', 4); give('pulse_shard', 3); give('potion_hp', 20);
-        const r = site.rooms.slice().sort((a, b) => a.y - b.y)[0];
-        p.x = (r.x + (r.w >> 1)) * TS; p.y = (r.y + r.h - 3) * TS - p.h + TS; p.vx = p.vy = 0;
-        this.seenRuins[id] = 1;
-        if (qs.get('boss') === '1') this.lairs[idx] = 1;
-        this.ruinPulse = { [id]: clamp(+qs.get('pulse') || 0, 0, 100) };
-        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-        UI.refreshBag();
-      }
-    }
-
-    /* ?debug=cave — 동굴 확인 자리. */
-    if (qs.get('debug') === 'cave') {
-      const w = this.world, kq = qs.get('k');
-      const plv = +qs.get('plv') || 30;
-      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
-      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-      const give = (iid, n) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
-      give('pick_iron', 1); give('potion_hp', 20); give('bomb_small', 10); give('torch', 60);
-      let at = null;
-      if (kq) {
-        const k = CAVE_TYPES.findIndex(c => c.id === kq);
-        const cx0 = w.spawnX;
-        // 그 갈래의 장식이 **실제로 깔린** 자리여야 한다(캠프 둘레처럼 갈래만 있고 안 꾸민 곳이 있다)
-        const mark = { moss: T.HANGMOSS, drip: T.STALACTITE, geode: T.GEODE, fume: T.GASVENT }[kq];
-        const near = (x, y) => {
-          let n = 0;
-          for (let dx = -8; dx <= 8; dx++) for (let dy = -8; dy <= 3; dy++) if (w.get(x + dx, y + dy) === mark) n++;
-          return n >= (kq === 'fume' ? 1 : 3);
-        };
-        for (let r = 0; r < WW && !at; r += 7)
-          for (const x of [cx0 + r, cx0 - r]) {
-            if (x < 5 || x >= WW - 5 || at) continue;
-            for (let y = w.surface[x] + 14; y < HELL_Y - 4; y++)
-              if (w.caveKindAt(x, y) === k && w.get(x, y) === T.AIR && w.get(x, y - 1) === T.AIR && w.solid(x, y + 1) && near(x, y)) { at = [x, y]; break; }
-          }
-      } else {
-        const f = (w.faults || []).filter(q => !q.done).sort((a, b) => Math.abs(a.x - w.spawnX) - Math.abs(b.x - w.spawnX))[0];
-        if (f) at = [f.x - f.dir * 3, f.y + 1];
-      }
-      if (at) {
-        p.x = at[0] * TS + TS / 2 - p.w / 2; p.y = (at[1] + 1) * TS - p.h; p.vx = p.vy = 0;
-        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-      }
-      UI.refreshBag();
-    }
-
-    /* ?debug=factory — 기계 화면·애셋 확인 자리. 캠프 오른쪽 평지에 기계 전 종류를 재료를 채워 한 줄로 세운다. */
-    if (qs.get('debug') === 'factory') this.buildDebugFactory(qs);
-
-    /* ?debug=bomb — 폭탄만 확인하는 자리. */
-    if (qs.get('debug') === 'bomb') {
-      const give = (id, n) => {
-        const max = ITEMS[id].stack || 1;
-        for (let left = n; left > 0; left -= max) {
-          const it = makeItem(id, Math.min(max, left), 0);
-          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-        }
-      };
-      for (const id of ['bomb_small', 'bomb_big', 'bomb_dig']) give(id, 99);
-      // 제작도 그 자리에서 해 볼 수 있게 재료를 함께 준다 (화약 = 유황3+바다소금2+석탄2)
-      give('sulfur', 99); give('sea_salt', 99); give('coal', 99); give('gunpowder', 99);
-      give('iron_bar', 40); give('steel_plate', 30); give('rope_kelp', 40); give('pressure_plate_m', 20);
-      give('station_work', 3); give('pick_iron', 1); give('torch', 60); give('potion_hp', 20);
-      const plv = +qs.get('plv') || 60;
-      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
-      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-      p.gold = +qs.get('gold') || 200000;
-
-      const w = this.world;
-      const gx = CAMP_X1 + 16;                               // 안전 지대의 오른쪽 경계
-      /* 깊이는 **안전 지대 판정이 정한다.** */
-      let smin = 1e9;
-      for (let x = gx - 26; x <= gx; x++) smin = Math.min(smin, w.surface[clamp(x, 0, WW - 1)]);
-      const gy = clamp(smin + 18, 60, WH - 40);
-      const x0 = gx - 26, x1 = gx + 78, top = gy - 13;
-      // 굴을 파고 바닥 여섯 줄을 돌로 깐다
-      for (let x = x0; x <= x1; x++)
-        for (let y = top; y <= gy + 6; y++) {
-          if (!w.inB(x, y)) continue;
-          w.set(x, y, y > gy ? T.STONE : T.AIR);
-          /* 뒷벽을 반드시 발라 준다 — 사연: docs/code-history.md#h41 */
-          w.walls[w.i(x, y)] = 2;
-        }
-      /* 천장 메우기 — 사연: docs/code-history.md#h42 */
-      for (let x = x0; x <= x1; x++)
-        for (let y = Math.max(0, top - 8); y < top; y++)
-          if (w.inB(x, y) && w.get(x, y) === T.AIR) w.set(x, y, T.STONE);
-      // 경계 기둥 — 기반암이라 어떤 폭탄으로도 안 없어진다.
-      for (let y = top; y <= gy; y++) if (y < gy - 3 || y > gy - 1) w.set(gx, y, T.BEDROCK);
-      // 천장 횃불
-      /* 단단하기 시험 기둥 — 폭탄이 어디서 멈추는지가 이 줄에 다 나온다. */
-      const PILLARS = [T.STONE, T.GOLD, T.EBONSTONE, T.OBSIDIAN, T.DEEPROCK, T.BEDROCK];
-      PILLARS.forEach((tile, i) => {
-        const px = gx + 6 + i * 8;
-        for (let dx = 0; dx < 5; dx++) for (let y = gy - 7; y <= gy; y++) w.set(px + dx, y, tile);
-      });
-      // 왼쪽(안전 지대)에도 같은 돌기둥 하나 — 같은 폭탄을 두 쪽에 던져 비교하라고
-      for (let dx = 0; dx < 5; dx++) for (let y = gy - 7; y <= gy; y++) w.set(gx - 12 + dx, y, T.STONE);
-      // 물·용암 웅덩이 — 액체는 건너뛴다
-      for (let x = gx + 56; x <= gx + 68; x++)
-        for (let y = gy - 2; y <= gy; y++) w.set(x, y, x < gx + 63 ? T.WATER : T.LAVA);
-      // 기계 한 줄 — 남의 기계는 안 날린다
-      ['belt', 'belt', 'gen', 'battery'].forEach((k, i) => Factory.place(w, gx + 72 + i, gy, k, 0));
-      // 방어력이 폭탄 피해를 얼마나 깎는지 볼 표적.
-      for (let i = 0; i < 3; i++)
-        this.ents.push(new Enemy(i === 0 ? 'reef_crab' : 'slime', (gx + 30 + i * 4) * TS, (gy - 3) * TS, this.scale()));
-
-      /* 불빛은 **마지막에** 건다. */
-      for (const row of [top + 1, gy - 9, gy])
-        for (let x = x0 + 2; x < x1; x += 3)
-          if (w.get(x, row) === T.AIR) w.set(x, row, T.TORCH);
-
-      p.x = (gx - 6) * TS; p.y = (gy - 2) * TS; p.vx = p.vy = 0;
-      this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
-      this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-      UI.refreshBag(); UI.refreshEquip();
-      this.toast(tr('폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳'), 'good');
-    }
+    // 디버그 바로가기 — 주소 끝에 ?debug=village를 붙이고 "새로운 여정"을 누르면 그 시험장에서 시작한다(game/debug-start.ts)
+    this.debugStart(new URLSearchParams(location.search));
   },
 
   /* ================= 루프 ================= */

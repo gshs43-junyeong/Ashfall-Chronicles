@@ -1,22 +1,24 @@
-/* ===== game/act.js — 좌클릭 · 우클릭 · 농사 · 설치물 · 문 ===== */
+/* ===== game/mine.js — 채굴 · 놓기 · 우클릭 · 문과 시설 ===== */
 import { aabb, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
 import { dimsOf } from '../size.js';
-import { MACH_OF_TILE, SPRINKLE_R, T, TILE_DEF } from '../data.js';
+import { MACH_OF_TILE, T, TILE_DEF } from '../data.js';
 import { ITEMS, OBJ_SIZE } from '../data/items.js';
 import { MACHINE } from '../data/recipes.js';
-import { DECO_MOUNT, DECO_OF, DRAWABLE, FLUID_KIND, LEAVE_OF } from '../data/materials.js';
+import { DECO_MOUNT, DECO_OF, FLUID_KIND, LEAVE_OF } from '../data/materials.js';
 import { PROF_MAX } from '../data/skills.js';
 import { idef } from '../data/values.js';
 import { TS } from '../world.js';
-import { Bomb, Drop, Part, makeItem } from '../entity.js';
-import { Factory } from '../factory.js';
+import { TileArt } from '../tileart.js';
+import { makeItem } from '../items.js';
+import { Bomb, Drop, Part } from '../entity.js';
+import { DIR_NAME, Factory, dirTable } from '../factory.js';
 import { UI } from '../ui.js';
 import { G } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
-export const ActPart: Bag = {
+export const MinePart: Bag = {
 
   /* ================= 좌클릭: 채굴 또는 공격 ================= */
   leftHold(dt) {
@@ -112,151 +114,6 @@ export const ActPart: Bag = {
       } else this.breakFx(tx, ty, id);         // 재질 파편 + 재질 파괴음
       if (def.tree) this.fellTree(tx, ty, id === T.WOOD);
     }
-  },
-
-  /* ================= 밭은 아침에 자란다 ================= */
-  growCropsDaily() { const { WW } = dimsOf(this.world);
-    const w = this.world; if (!w || !w.crops || !w.crops.size) return;
-    const lv = this.player.profLv('farm'), day = this.dayCount;
-    if (this.event && this.event.id === 'rain') this.rainWater(w, day);   // 비는 하늘이 트인 밭을 적신다
-    Factory.sprinkle(w, day);                                             // 스프링클러가 제 둘레 밭에 물을 준다
-    let grew = 0, ripe = 0;
-    const dry = new Set();
-    const steps = 1 + (this.rng.chance((lv - 1) * 0.07) ? 1 : 0);
-    for (let i = 0; i < steps; i++) {
-      const g = w.growCrops(this.rng, 1, 99, day);   // 아침에는 반드시 한 단계 (확률 굴림 없음) · 젖은 밭만
-      grew += g.grew.length; ripe += g.ripe.length;
-      for (const k of g.dry) dry.add(k);
-    }
-    if (dry.size && this.everPlanted)
-      this.toast(tr('밭이 말라 {n}칸이 자라지 않았다 — 물뿌리개로 물을 주자', { n: dry.size }), 'bad');
-    if (grew + ripe > 0 && this.everPlanted) {
-      this.toast(tr('밤새 밭이 자랐다 — {n}칸{v}', { n: grew + ripe, v: ripe ? ` ${tr('· {ripe}칸은 다 여물었다', { ripe })}` : '' }), 'good');
-      // 화면 안에 밭이 있으면 티를 낸다
-      for (const k of w.crops) {
-        const x = k % WW, y = (k / WW) | 0;
-        if (Math.abs(x * TS - this.cam.x - this.W / 2) > this.W / 2 + TS) continue;
-        if (Math.abs(y * TS - this.cam.y - this.H / 2) > this.H / 2 + TS) continue;
-        const d = TILE_DEF[w.get(x, y)];
-        if (!d || !d.crop) continue;
-        for (let i = 0; i < 2; i++)
-          this.parts.push(new Part((x + .5) * TS, (y + .6) * TS, d.crop.ripe ? '#ffe08a' : '#8fc85a', -22, .5));
-      }
-    }
-  },
-
-  /** 물뿌리개 — 물 칸이면 가득 채우고, 밭(또는 작물 밑 밭)이면 물을 한 번 준다. */
-  useWateringCan(w, hi, hd, tx, ty) {
-    const t = w.get(tx, ty), p = this.player;
-    if (FLUID_KIND[t] === 1 || FLUID_KIND[t] === 2) {
-      if ((hi.w | 0) >= hd.water) { this.toast(tr('물뿌리개가 이미 가득하다'), 'bad'); return; }
-      hi.w = hd.water;
-      this.splashStreaks((tx + .5) * TS, ty * TS, 8); this.sfx('splash');
-      this.toast(tr('물뿌리개를 채웠다 — {n}번', { n: hd.water }));
-      UI.refreshBag(); return;
-    }
-    const fy = TILE_DEF[t].farm ? ty : TILE_DEF[w.get(tx, ty + 1)].farm && TILE_DEF[t].crop ? ty + 1 : -1;
-    if (fy < 0) { this.toast(tr('밭이나 작물에 물을 준다 — 물가를 우클릭하면 채운다'), 'bad'); return; }
-    if (!(hi.w > 0)) { this.toast(tr('물뿌리개가 비었다 — 물가를 우클릭해 채우자'), 'bad'); return; }
-    w.waterFarm(tx, fy, this.dayCount);
-    hi.w--;
-    this.pourStreaks((tx + .5) * TS, (fy - 1.4) * TS, 10); this.sfx('splash');
-    UI.refreshBag();
-  },
-
-  /** 양동이 — 빈 것은 물 칸을 통째로 떠 담고(그 칸의 물이 사라진다), 물 양동이는 빈 칸에 도로 붓는다. */
-  useBucket(w, hi, tx, ty) {
-    const t = w.get(tx, ty), p = this.player, full = hi.id === 'water_bucket';
-    if (!full && !DRAWABLE[t]) { this.toast(tr('물 칸을 우클릭해 떠 담는다'), 'bad'); return; }
-    if (full && t !== T.AIR) { this.toast(tr('빈 칸에만 부을 수 있다'), 'bad'); return; }
-    w.set(tx, ty, full ? T.WATER : T.AIR);
-    hi.c--; if (hi.c <= 0) p.bag[p.sel] = null;
-    const got = makeItem(full ? 'bucket' : 'water_bucket', 1);
-    if (!p.addItem(got)) this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, got));
-    this.splashStreaks((tx + .5) * TS, ty * TS, 8);
-    this.sfx('splash');
-    UI.refreshBag();
-  },
-
-  /** 비 오는 아침 — 위로 막힌 것 없이 하늘이 트인 밭만 적신다(지붕 밑·굴 속 밭은 그대로). */
-  rainWater(w, day) { const { WW } = dimsOf(this.world);
-    for (const k of w.crops) {
-      const x = k % WW, fy = ((k / WW) | 0) + 1;
-      let open = true;
-      for (let y = fy - 2; y >= 0; y--) if (TILE_DEF[w.get(x, y)].solid === 1) { open = false; break; }
-      if (open) w.waterFarm(x, fy, day);
-    }
-  },
-
-  /* ================= 물줄기 — 점이 아니라 가는 선(분수대 물줄기처럼). 인물 뒤(objects 단계)에 반투명으로 ================= */
-  streak(x, y, vx, vy, life) {
-    const a = this.streaks || (this.streaks = []);
-    if (a.length < 260) a.push({ x, y, vx, vy, t: life, life });
-  },
-  /** 물뿌리개로 줄 때 — 주둥이 높이에서 앞으로 흘러 떨어진다. */
-  pourStreaks(x, y, n) {
-    for (let i = 0; i < n; i++) this.streak(x + (Math.random() - .5) * 10, y, (Math.random() - .5) * 30, 40 + Math.random() * 50, .45);
-  },
-  /** 물을 뜰 때 — 짧게 튀어 오른다. */
-  splashStreaks(x, y, n) {
-    for (let i = 0; i < n; i++) {
-      const a = -Math.PI / 2 + (Math.random() - .5) * 1.4;
-      this.streak(x, y, Math.cos(a) * 90, Math.sin(a) * (110 + Math.random() * 60), .5);
-    }
-  },
-  /** 렌더 단계 — 물줄기. 아침(5~9시)에 전력과 물이 있는 스프링클러는 꼭지에서 양옆으로 뿜는다.
-   *  ★ 떨어지는 거리를 1~SPRINKLE_R[0] 칸에서 고르고 속도를 거꾸로 잰다 — 물줄기가 닿는 곳이 실제로 적시는 범위다. */
-  rStreaks(f) {
-    const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
-    const dt = Math.min(0.05, Math.max(0, this.time - (this._stT || this.time))); this._stT = this.time;
-    const hour = this.dayT / 60, RX = SPRINKLE_R[0], RY = SPRINKLE_R[1];
-    if (hour >= 5 && hour < 9 && w.machines.size) {
-      for (const m of w.machines.values()) {
-        if (m.t !== 'sprinkler' || !m.on || !m.act || m.x < tx0 - RX || m.x > tx1 + RX || m.y < ty0 - RY || m.y > ty1 + RY) continue;
-        if (Factory.sat(w, m) <= 0) continue;
-        m.sprT = (m.sprT || 0) + dt * 26;                 // 한 대에 초당 26줄
-        for (; m.sprT >= 1; m.sprT--) {
-          const side = Math.random() < .5 ? -1 : 1, a = 0.35 + Math.random() * 0.3;   // 낮은 호 — 꼭대기가 4칸 안(비처럼 안 보이게)
-          const d = (1 + Math.sqrt(Math.random()) * (RX - 1)) * TS;   // 먼 곳일수록 넓어 줄을 더 보낸다
-          const sp = Math.sqrt(d * 420 / Math.sin(2 * a)), fl = 2 * sp * Math.sin(a) / 420;
-          this.streak((m.x + .5) * TS + side * 5, m.y * TS + 1, side * Math.cos(a) * sp, -Math.sin(a) * sp, fl + .35);
-        }
-      }
-    }
-    const a = this.streaks;
-    if (!a || !a.length) return;
-    c.lineCap = 'round'; c.lineWidth = 1.4;
-    for (let i = a.length - 1; i >= 0; i--) {
-      const s = a[i];
-      s.t -= dt; s.vy += 420 * dt; s.x += s.vx * dt; s.y += s.vy * dt;
-      const tx = Math.floor(s.x / TS), ty = Math.floor(s.y / TS);
-      if (s.t <= 0 || TILE_DEF[w.get(tx, ty)].solid === 1) { a[i] = a[a.length - 1]; a.pop(); continue; }
-      const k = 0.035, al = 0.7 * Math.min(1, s.t / s.life * 2);
-      c.strokeStyle = `rgba(185,222,250,${al.toFixed(2)})`;
-      c.beginPath(); c.moveTo(s.x - camX, s.y - camY); c.lineTo(s.x - s.vx * k - camX, s.y - s.vy * k - camY); c.stroke();
-    }
-  },
-
-  /** 렌더 단계 — 젖은 밭은 흙이 짙고 윗면에 물기가 번들거린다. 물가 판정은 칸마다 2초 캐시(121칸을 매 프레임 훑지 않게). */
-  rFarmWet(f) { const { WW, WH } = dimsOf(this.world);
-    const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
-    const day = this.dayCount + 1;                     // 다음 아침에도 젖어 있는가 = 지금 젖어 있다
-    const nw = this._nearWet || (this._nearWet = new Map());
-    for (let ty = Math.max(0, ty0); ty <= Math.min(WH - 1, ty1); ty++)
-      for (let tx = Math.max(0, tx0); tx <= Math.min(WW - 1, tx1); tx++) {
-        const k = ty * WW + tx;
-        if (w.tiles[k] !== T.FARMLAND) continue;
-        let wet = (w.wet[k] | 0) >= day;
-        if (!wet) {
-          let e = nw.get(k);
-          if (!e || this.time - e[0] > 2) nw.set(k, e = [this.time, w.nearWater(tx, ty)]);
-          wet = e[1];
-        }
-        if (!wet) continue;
-        const sx = tx * TS - camX, sy = ty * TS - camY;
-        c.fillStyle = 'rgba(24,18,34,0.34)'; c.fillRect(sx, sy, TS, TS);
-        c.fillStyle = 'rgba(150,190,230,0.35)'; c.fillRect(sx + 2, sy + 1, TS - 4, 1);
-      }
   },
 
   /* ================= 농사 숙련 ================= */
@@ -610,5 +467,59 @@ export const ActPart: Bag = {
     UI.refreshBag(); this.sfx('break_wood', this.strokeRate());
     return true;
   },
+
+  /* ================= 용광로 굴뚝 연기 ================= */
+  /* ================= 기계 놓기 ================= */
+  /** 놓을 방향 — 방향 키(T)로 고르지 않았으면 보고 있는 쪽(벨트를 깔며 걸으면 자연히 이어진다). */
+  placeDirFor(key) {
+    const n = dirTable(key).length;
+    return this.placeDir != null && this.placeDir < n ? this.placeDir : (this.player.facing >= 0 ? 0 : 2);
+  },
+  /** 방향 키 — 기계를 들었으면 놓을 방향을 [보는 쪽 → 오른쪽 → 아래 …] 로 돌리고, 아니면 커서 밑 기계를 돌린다. */
+  rotatePlace() {
+    const p = this.player, w = this.world, hi = p.held();
+    const key = hi && idef(hi).type === 'machine' ? idef(hi).mach : null;
+    if (key) {
+      if (!MACHINE[key].rot) { this.toast(tr('방향이 없는 기계다'), 'info'); return; }
+      const n = dirTable(key).length, cur = this.placeDir != null && this.placeDir < n ? this.placeDir : -1;
+      this.placeDir = cur + 1 >= n ? null : cur + 1;
+      this.toast(`${tr('놓을 방향 —')} ` + (this.placeDir == null ? tr('보는 쪽') : DIR_NAME[this.placeDir]), 'craft');
+      this.sfx('place');
+      return;
+    }
+    const mtx = Math.floor(this.input.wx / TS), mty = Math.floor(this.input.wy / TS);
+    const mac = Factory.at(w, mtx, mty);
+    if (mac && dist(p.cx, p.cy, (mtx + .5) * TS, (mty + .5) * TS) <= TS * 7 && Factory.rotate(mac)) {
+      this.sfx('place');
+      if (UI.open === 'machine' && UI.machRef === mac) UI.refreshMachine(true);
+      if (this.net) this.netMachState(mac);
+    }
+  },
+  /** 기계를 들고 있으면 커서 칸에 반투명 미리보기 + 방향 화살표. 못 놓는 자리는 붉게. */
+  drawPlaceGhost(c, camX, camY) {
+    const p = this.player, w = this.world, hi = p && p.held();
+    if (!hi || idef(hi).type !== 'machine' || UI.open) return;
+    const key = idef(hi).mach, s = MACHINE[key];
+    const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
+    if (Factory.at(w, tx, ty) || dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 7) return;
+    const sx = tx * TS - camX, sy = ty * TS - camY;
+    const ok = Factory.canPlace(w, tx, ty) && !w.inRig(tx, ty);
+    c.save();
+    c.globalAlpha = 0.45;
+    if (key === 'belt' || key === 'belt_fast') Factory.drawBelt(c, sx, sy, key, this.placeDirFor(key), 0);
+    else TileArt.draw(c, s.tile, 0, sx, sy);
+    c.globalAlpha = 1;
+    c.strokeStyle = ok ? 'rgba(160,230,140,.9)' : 'rgba(230,90,70,.9)';
+    c.lineWidth = 1; c.strokeRect(sx + .5, sy + .5, TS - 1, TS - 1);
+    if (s.rot) {
+      const [dx, dy] = dirTable(key)[this.placeDirFor(key)];
+      const cx = sx + TS / 2, cy = sy + TS / 2, ang = Math.atan2(dy, dx);
+      c.translate(cx, cy); c.rotate(ang);
+      c.fillStyle = 'rgba(255,230,150,.95)';
+      c.beginPath(); c.moveTo(TS / 2 + 5, 0); c.lineTo(TS / 2 - 3, -5); c.lineTo(TS / 2 - 3, 5); c.closePath(); c.fill();
+    }
+    c.restore();
+  },
 };
-mixin(G, ActPart);
+
+mixin(G, MinePart);

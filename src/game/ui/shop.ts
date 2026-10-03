@@ -7,7 +7,7 @@ import { ITEMS } from '../data/items.js';
 import { NPCS } from '../data/npcs.js';
 import { idef } from '../data/values.js';
 import { Art } from '../itemart.js';
-import { isGear, makeItem } from '../entity.js';
+import { isGear, makeItem } from '../items.js';
 import { $, UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
 
