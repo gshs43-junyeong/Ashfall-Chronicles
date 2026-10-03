@@ -11,7 +11,7 @@ Changes from Pretendard
 - Renamed to "Ashfall" (name table and CFF names).
 - Corners of every glyph are slightly rounded (radius 14 of 2048 units); outlines are
   rewritten without hints.
-- Hangul strokes are 4.5% thinner (outlines eroded evenly); glyph size and advance
+- Hangul strokes are 14.5% thinner (outlines eroded evenly); glyph size and advance
   widths are unchanged.
 - Lowercase l with a tail and capital I with serifs by default (Pretendard's cv05 and
   cv08 glyphs mapped in cmap), so I, l and 1 are easy to tell apart.
