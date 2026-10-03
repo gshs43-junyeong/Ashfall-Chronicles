@@ -123,7 +123,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `relay/` | 멀티플레이 방 중개 — Cloudflare Worker(본 중개, 따로 `npm ci` · 배포는 `.github/workflows/relay.yml`). 닿지 않으면 공개 PeerJS 서버(엔진 `createPeerSignal`), Electron 은 LAN. 설계 `docs/v1.1.2-multiplayer-plan.md` §10 |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/`(Docker 검사 이미지는 `shots-docker`) |
 | `Dockerfile` · `docker-compose.yml` · `docker/` | 컨테이너 — dev(소스 걸고 다시 묶기) · game · site(nginx, `vercel.json` 규칙을 옮김) · check. `vercel.json` 을 고치면 `docker/nginx-site.conf` 도 |
-| `play/assets/fonts/` | 게임 글꼴 Ashfall(Pretendard 고친 판 — 한글 획 4.5% 가늘게 · 모서리 살짝 둥글게 · l·I 대체 · 숫자 고정폭 · **SIL OFL 1.1** — `OFL.txt` · `FONTLOG.txt` 를 같이 둔다). `python3 tools/mkfont.py` 산출물(원본 `tools/art/fonts/`) — 손으로 바꾸지 말 것. 'Pretendard' 는 예약 글꼴 이름이라 고친 판에 쓰지 않는다. 사연: docs/code-history.md#h148 |
+| `play/assets/fonts/` | 게임 글꼴 Ashfall(Pretendard 고친 판 — 한글 획 14.5% 가늘게 · 모서리 살짝 둥글게 · l·I 대체 · 숫자 고정폭 · **SIL OFL 1.1** — `OFL.txt` · `FONTLOG.txt` 를 같이 둔다). `python3 tools/mkfont.py` 산출물(원본 `tools/art/fonts/`) — 손으로 바꾸지 말 것. 'Pretendard' 는 예약 글꼴 이름이라 고친 판에 쓰지 않는다. 사연: docs/code-history.md#h148 |
 | `play/assets/manifest.json` | **애셋 원본 목록** |
 | `play/assets/sprites-manifest.js` | 위의 **자동 생성물** — 손으로 고치지 말 것 |
 | `site/` | 배포 사이트. 빌드하면 `play/`이 `site/play/`로 복사된다. 번역은 `site/i18n.js`(게임과 같은 언어 고르기 · 같은 열쇠 `ashfall.lang` · 한국어 원문이 열쇠라 HTML 에 표시 없음) + `site/i18n/<언어>.json` — 페이지 글을 고치면 `node tools/site-i18n.mjs extract` → 번역 → `build`(`npm run test:site` 가 빠짐·태그 어긋남을 막는다) |

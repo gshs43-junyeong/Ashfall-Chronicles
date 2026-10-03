@@ -47,7 +47,7 @@
 ## 글꼴
 
 - **게임 글꼴 Ashfall**(`play/assets/fonts/ashfall-*.woff2`)은 [Pretendard](https://github.com/orioncactus/pretendard)
-  (길형진, SIL OFL 1.1)를 고친 판입니다 — 한글 획 4.5% 가늘게 · 모서리를 살짝 둥글게 · l · I 대체 글자 · 숫자 고정폭 · 쓰는 글자만 남기기 · 이름 바꾸기(Pretendard 는 **예약 글꼴 이름**이라
+  (길형진, SIL OFL 1.1)를 고친 판입니다 — 한글 획 14.5% 가늘게 · 모서리를 살짝 둥글게 · l · I 대체 글자 · 숫자 고정폭 · 쓰는 글자만 남기기 · 이름 바꾸기(Pretendard 는 **예약 글꼴 이름**이라
   고친 판은 그 이름을 쓰지 않습니다). 이 글꼴은 MIT 가 아니라 **SIL OFL 1.1** 을 따르고, 라이선스 전문과 저작권은
   같은 폴더 `OFL.txt`, 바꾼 내용은 `FONTLOG.txt` 에 있습니다(글꼴 파일 안 이름표에도 저작권 · 라이선스가 들어 있습니다).
   원본 글꼴과 원본 라이선스는 `tools/art/fonts/`, 굽는 도구는 `tools/mkfont.py`. 글꼴에 없는 글자(드문 한글 음절 ·
@@ -106,7 +106,7 @@ synthesized tones, so replacing only some of them works.
 ## Fonts
 
 - The **game font Ashfall** (`play/assets/fonts/ashfall-*.woff2`) is a modified version of
-  [Pretendard](https://github.com/orioncactus/pretendard) by Kil Hyung-jin (SIL OFL 1.1): Hangul strokes 4.5% thinner, slightly rounded corners, alternate l and I, tabular figures,
+  [Pretendard](https://github.com/orioncactus/pretendard) by Kil Hyung-jin (SIL OFL 1.1): Hangul strokes 14.5% thinner, slightly rounded corners, alternate l and I, tabular figures,
   subset to the characters the game uses, and renamed, because "Pretendard" is a Reserved Font Name.
   It is licensed under the **SIL OFL 1.1**, not MIT; the licence text and copyright are in `OFL.txt` and the
   changes in `FONTLOG.txt` in the same folder (the font's name table carries them too). The original fonts

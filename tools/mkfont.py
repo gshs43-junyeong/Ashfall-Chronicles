@@ -5,7 +5,7 @@
   그래서 이름표(name)와 CFF 안 이름을 전부 'Ashfall' 로 바꾸고, 저작권 줄에는 원작자 줄을 그대로 두고 우리 줄을 더한다.
   글꼴 안 저작권(name 0)과 play/assets/fonts/OFL.txt 첫 줄들이 같아야 한다(OFL 배포 관례) — COPYRIGHT 하나에서 둘 다 만든다.
 게임에 맞춘 손질(사용자 결정 2026-10-03 — 느낌은 그대로, 디테일만 아주 약간 다르게):
-  - 한글 획을 4.5% 가늘게(`HANGUL` — 크기 · 글자 폭은 그대로). UI 크기에서 원본과 갈리는 것은 이것뿐이다.
+  - 한글 획을 14.5% 가늘게(`HANGUL` — 크기 · 글자 폭은 그대로). UI 크기에서 원본과 갈리는 것은 이것뿐이다.
   - 획 모서리를 살짝 둥글게(`ROUND` — 2048 단위 중 반지름 14, 0.7%). 작은 글씨에선 거의 안 보이고 크게 보면 부드럽다.
   - 라틴 l 은 꼬리 · 대문자 I 는 세리프(Pretendard 대체 글자 cv05 · cv08) — 방 번호 · 이름에서 I · l · 1 이 갈린다.
   - 숫자를 기본으로 고정폭(tnum) — 생명 · 금화 · 시계 숫자가 바뀔 때 글자 폭이 달라 흔들리지 않게.
@@ -208,7 +208,7 @@ def soften(font, r):
                 try: delattr(p, k)
                 except AttributeError: pass
 
-HANGUL = {'round': 0, 'thin': 0.045, 'scale': 1.0}   # 한글만 손질 — 사용자 결정(2026-10-03): 획 굵기만 4~5% 가늘게 · 크기 그대로
+HANGUL = {'round': 0, 'thin': 0.145, 'scale': 1.0}   # 한글만 손질 — 사용자 결정(2026-10-03): 획 굵기만 14.5% 가늘게(4.5% 에서 10% 더) · 크기 그대로
 # (견본: 모서리 둥글기만은 UI 크기에서 차이가 안 보였다 · 굵게 · 작게도 봤다 — tests/out/_fontvar.py)
 
 def _morph(path, d):
@@ -319,7 +319,7 @@ Changes from Pretendard
 - Renamed to "Ashfall" (name table and CFF names).
 - Corners of every glyph are slightly rounded (radius 14 of 2048 units); outlines are
   rewritten without hints.
-- Hangul strokes are 4.5% thinner (outlines eroded evenly); glyph size and advance
+- Hangul strokes are 14.5% thinner (outlines eroded evenly); glyph size and advance
   widths are unchanged.
 - Lowercase l with a tail and capital I with serifs by default (Pretendard's cv05 and
   cv08 glyphs mapped in cmap), so I, l and 1 are easy to tell apart.
