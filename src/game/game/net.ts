@@ -15,7 +15,7 @@ import { TS } from '../world.js';
 import { makeItem } from '../items.js';
 import { DmgText, Enemy, Pet, Proj } from '../entity.js';
 import { UI } from '../ui.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const NET_MAX = 4;          // 호스트 포함
@@ -706,4 +706,4 @@ export const NetPart: Bag = {
   }
 };
 
-mixin(G, NetPart);
+mixin(Game.prototype, NetPart, true);

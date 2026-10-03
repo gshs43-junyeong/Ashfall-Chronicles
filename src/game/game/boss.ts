@@ -12,7 +12,7 @@ import { TS } from '../world.js';
 import { Enemy } from '../entity.js';
 import { UI } from '../ui.js';
 import { Music } from '../music.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const BossPart: Bag = {
@@ -123,4 +123,4 @@ export const BossPart: Bag = {
   modeMul() { return MODE_OF(this.mode).mul; },
 };
 
-mixin(G, BossPart);
+mixin(Game.prototype, BossPart, true);

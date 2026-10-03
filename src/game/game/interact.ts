@@ -13,7 +13,7 @@ import { TS } from '../world.js';
 import { itemName, makeItem, rollChest, rollGear } from '../items.js';
 import { Drop, Enemy, Part } from '../entity.js';
 import { UI } from '../ui.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const InteractPart: Bag = {
@@ -361,4 +361,4 @@ export const InteractPart: Bag = {
   },
 };
 
-mixin(G, InteractPart);
+mixin(Game.prototype, InteractPart, true);

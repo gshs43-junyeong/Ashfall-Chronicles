@@ -15,7 +15,7 @@ import { makeItem } from '../items.js';
 import { Bomb, Drop, Part } from '../entity.js';
 import { DIR_NAME, Factory, dirTable } from '../factory.js';
 import { UI } from '../ui.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const MinePart: Bag = {
@@ -522,4 +522,4 @@ export const MinePart: Bag = {
   },
 };
 
-mixin(G, MinePart);
+mixin(Game.prototype, MinePart, true);

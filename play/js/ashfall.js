@@ -34950,6 +34950,8 @@
   var game_exports = {};
   __export(game_exports, {
     G: () => G3,
+    Game: () => Game,
+    GameCore: () => GameCore,
     MAP_REVEAL_LIGHT: () => MAP_REVEAL_LIGHT,
     QUALITY: () => QUALITY,
     TOUCH: () => TOUCH
@@ -34961,41 +34963,72 @@
     if (q === "1" || q === "0") return q === "1";
     return typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
   })();
-  var G3 = {
-    cv: null,
-    ctx: null,
-    mm: null,
-    mmx: null,
-    W: 0,
-    H: 0,
-    cam: { x: 0, y: 0 },
-    world: null,
-    rng: new RNG(1),
-    /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
-    players: [],
-    me: null,
-    ents: [],
-    projs: [],
-    parts: [],
-    texts: [],
-    drops: [],
-    pending: [],
-    corpses: [],
-    time: 0,
-    dayT: 6 * 60,
-    shake: 0,
-    /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
-       ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
-    scenes: createScenes({
-      scenes: { title: {}, play: { update: (dt) => G3.update(dt), render: () => {
-        G3.syncCtl();
-        G3.render();
-      } } },
-      /* 멀티플레이에서는 멈춤 메뉴·쓰러짐이 세계를 멈추면 안 된다(남의 판이 같이 멈추고 끊긴다) — 입력만 막는 겹(mpause·mdeath)을 쓴다. */
-      layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true }, mpause: { input: true }, mdeath: { input: true } },
-      // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
-      start: "title"
-    }),
+  var Game = class {
+    constructor() {
+      const g = this;
+      Object.assign(this, {
+        cv: null,
+        ctx: null,
+        mm: null,
+        mmx: null,
+        W: 0,
+        H: 0,
+        cam: { x: 0, y: 0 },
+        world: null,
+        rng: new RNG(1),
+        /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
+        players: [],
+        me: null,
+        ents: [],
+        projs: [],
+        parts: [],
+        texts: [],
+        drops: [],
+        pending: [],
+        corpses: [],
+        time: 0,
+        dayT: 6 * 60,
+        shake: 0,
+        /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
+           ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
+        scenes: createScenes({
+          scenes: { title: {}, play: { update: (dt) => g.update(dt), render: () => {
+            g.syncCtl();
+            g.render();
+          } } },
+          /* 멀티플레이에서는 멈춤 메뉴·쓰러짐이 세계를 멈추면 안 된다(남의 판이 같이 멈추고 끊긴다) — 입력만 막는 겹(mpause·mdeath)을 쓴다. */
+          layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true }, mpause: { input: true }, mdeath: { input: true } },
+          // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
+          start: "title"
+        }),
+        /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
+        _ctlOff: false,
+        mode: "normal",
+        // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
+        chapter: 0,
+        boss: null,
+        /* 제작 시설: nearSt는 지금 어떤 시설 앞에 서 있는가. */
+        nearSt: { work: false, forge: false },
+        nearStObj: { work: null, forge: null },
+        event: null,
+        // 진행 중인 세계 이벤트 {id, t}
+        eventRolled: -1,
+        // 이 국면(낮/밤)에 이미 주사위를 굴렸는가
+        sideActive: {},
+        sideDone: {},
+        input: { left: 0, right: 0, up: 0, down: 0, jump: 0, dash: 0, m1: 0, m2: 0, mx: 0, my: 0, wx: 0, wy: 0 },
+        spawnTimer: 0,
+        mmTimer: 0,
+        hoverObj: null,
+        currentSlot: null,
+        // 지금 열려 있는 세이브가 몇 번 슬롯인지 — saveGame()이 여길 본다
+        /* ================= 입력 ================= */
+        /** 키 · 액션(engine/input) — 액션 표는 data.js KEY_ACTIONS, 다시 매긴 키는 설정. */
+        inp: createInput({ actions: KEY_ACTIONS, custom: () => g.settings && g.settings.keys })
+      });
+    }
+  };
+  var GameCore = {
     /** 이 화면의 플레이어(= me). 넣으면 혼자 하는 판으로 players 를 [p] 로 맞춘다. */
     get player() {
       return this.me;
@@ -35017,8 +35050,6 @@
       this.scenes.set("ui", on);
     },
     // ui.js 의 패널·대화가 연다
-    /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
-    _ctlOff: false,
     syncCtl() {
       const off = this.uiOpen || this.paused || this.scenes.has("mpause") || this.scenes.has("mdeath") || !!(this.player && this.player.hp <= 0);
       if (off !== this._ctlOff) {
@@ -35026,25 +35057,6 @@
         document.body.classList.toggle("ctl-off", off);
       }
     },
-    mode: "normal",
-    // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
-    chapter: 0,
-    boss: null,
-    /* 제작 시설: nearSt는 지금 어떤 시설 앞에 서 있는가. */
-    nearSt: { work: false, forge: false },
-    nearStObj: { work: null, forge: null },
-    event: null,
-    // 진행 중인 세계 이벤트 {id, t}
-    eventRolled: -1,
-    // 이 국면(낮/밤)에 이미 주사위를 굴렸는가
-    sideActive: {},
-    sideDone: {},
-    input: { left: 0, right: 0, up: 0, down: 0, jump: 0, dash: 0, m1: 0, m2: 0, mx: 0, my: 0, wx: 0, wy: 0 },
-    spawnTimer: 0,
-    mmTimer: 0,
-    hoverObj: null,
-    currentSlot: null,
-    // 지금 열려 있는 세이브가 몇 번 슬롯인지 — saveGame()이 여길 본다
     /* ================= 초기화 ================= */
     init() {
       const { WW: WW2, WH: WH2 } = dimsOf(this.world);
@@ -35163,9 +35175,6 @@
       this.W = v.W;
       this.H = v.H;
     },
-    /* ================= 입력 ================= */
-    /** 키 · 액션(engine/input) — 액션 표는 data.js KEY_ACTIONS, 다시 매긴 키는 설정. */
-    inp: createInput({ actions: KEY_ACTIONS, custom: () => G3.settings && G3.settings.keys }),
     /** 이 액션에 걸린 키 목록. */
     keysFor(id) {
       return this.inp.keysFor(id);
@@ -35928,6 +35937,8 @@
       }
     }
   };
+  mixin(Game.prototype, GameCore, true);
+  var G3 = new Game();
   bindApp(G3);
   addEventListener("DOMContentLoaded", () => G3.init());
 
@@ -36077,7 +36088,7 @@
       UI5.toast(m, k);
     }
   };
-  mixin(G3, ShellPart);
+  mixin(Game.prototype, ShellPart, true);
 
   // src/game/game/save.ts
   var save_exports = {};
@@ -36645,7 +36656,7 @@
       this.openModal("#newgame-screen");
     }
   };
-  mixin(G3, SavePart);
+  mixin(Game.prototype, SavePart, true);
 
   // src/game/game/sound.ts
   var sound_exports = {};
@@ -36951,7 +36962,7 @@
       src.stop(t + 0.3);
     }
   };
-  mixin(G3, SoundPart);
+  mixin(Game.prototype, SoundPart, true);
 
   // src/game/game/fx.ts
   var fx_exports = {};
@@ -37187,7 +37198,7 @@
       c.lineWidth = 1;
     }
   };
-  mixin(G3, FxPart);
+  mixin(Game.prototype, FxPart, true);
 
   // src/game/game/mine.ts
   var mine_exports = {};
@@ -37806,7 +37817,7 @@
       c.restore();
     }
   };
-  mixin(G3, MinePart);
+  mixin(Game.prototype, MinePart, true);
 
   // src/game/game/farm.ts
   var farm_exports2 = {};
@@ -38018,7 +38029,7 @@
       c.restore();
     }
   };
-  mixin(G3, FarmPart);
+  mixin(Game.prototype, FarmPart, true);
 
   // src/game/game/fishing.ts
   var fishing_exports = {};
@@ -38296,7 +38307,7 @@
       c.restore();
     }
   };
-  mixin(G3, FishingPart);
+  mixin(Game.prototype, FishingPart, true);
 
   // src/game/game/interact.ts
   var interact_exports = {};
@@ -38702,7 +38713,7 @@
       this.sfx("drink");
     }
   };
-  mixin(G3, InteractPart);
+  mixin(Game.prototype, InteractPart, true);
 
   // src/game/game/talk.ts
   var talk_exports = {};
@@ -38917,7 +38928,7 @@
       this.sfx("talk");
     }
   };
-  mixin(G3, TalkPart);
+  mixin(Game.prototype, TalkPart, true);
 
   // src/game/game/quests.ts
   var quests_exports2 = {};
@@ -39135,7 +39146,7 @@
       UI5.togglePanel("quest");
     }
   };
-  mixin(G3, QuestsPart);
+  mixin(Game.prototype, QuestsPart, true);
 
   // src/game/game/shop.ts
   var shop_exports2 = {};
@@ -39298,7 +39309,7 @@
       this.tradeDone();
     }
   };
-  mixin(G3, ShopPart);
+  mixin(Game.prototype, ShopPart, true);
 
   // src/game/game/village.ts
   var village_exports3 = {};
@@ -39566,7 +39577,7 @@
       this.sfx("craft");
     }
   };
-  mixin(G3, VillagePart);
+  mixin(Game.prototype, VillagePart, true);
 
   // src/game/game/pets.ts
   var pets_exports2 = {};
@@ -39645,7 +39656,7 @@
       });
     }
   };
-  mixin(G3, PetsPart);
+  mixin(Game.prototype, PetsPart, true);
 
   // src/game/game/boss.ts
   var boss_exports = {};
@@ -39790,7 +39801,7 @@
       return MODE_OF(this.mode).mul;
     }
   };
-  mixin(G3, BossPart);
+  mixin(Game.prototype, BossPart, true);
 
   // src/game/game/progress.ts
   var progress_exports = {};
@@ -40146,7 +40157,7 @@
       c.restore();
     }
   };
-  mixin(G3, ProgressPart);
+  mixin(Game.prototype, ProgressPart, true);
 
   // src/game/game/life.ts
   var life_exports = {};
@@ -40396,7 +40407,7 @@
       this.scenes.close("mdeath");
     }
   };
-  mixin(G3, LifePart);
+  mixin(Game.prototype, LifePart, true);
 
   // src/game/game/spawn.ts
   var spawn_exports = {};
@@ -40652,7 +40663,7 @@
       }
     }
   };
-  mixin(G3, SpawnPart);
+  mixin(Game.prototype, SpawnPart, true);
 
   // src/game/game/weather.ts
   var weather_exports = {};
@@ -40860,7 +40871,7 @@
       return clamp(0.1 + ch / last * 0.78, 0.1, 0.88);
     }
   };
-  mixin(G3, WeatherPart);
+  mixin(Game.prototype, WeatherPart, true);
 
   // src/game/game/rigs.ts
   var rigs_exports = {};
@@ -41105,7 +41116,7 @@
       c.globalAlpha = 1;
     }
   };
-  mixin(G3, RigsPart);
+  mixin(Game.prototype, RigsPart, true);
 
   // src/game/game/zones.ts
   var zones_exports = {};
@@ -41173,7 +41184,7 @@
       c.restore();
     }
   };
-  mixin(G3, ZonesPart);
+  mixin(Game.prototype, ZonesPart, true);
 
   // src/game/game/caves.ts
   var caves_exports2 = {};
@@ -41381,7 +41392,7 @@
       }
     }
   };
-  mixin(G3, CavesPart);
+  mixin(Game.prototype, CavesPart, true);
 
   // src/game/game/meteor.ts
   var meteor_exports = {};
@@ -41675,7 +41686,7 @@
       c.fill();
     }
   };
-  mixin(G3, MeteorPart);
+  mixin(Game.prototype, MeteorPart, true);
 
   // src/game/game/ruins.ts
   var ruins_exports4 = {};
@@ -41997,7 +42008,7 @@
       this.sfx("chapter");
     }
   };
-  mixin(G3, RuinsPart);
+  mixin(Game.prototype, RuinsPart, true);
 
   // src/game/game/ruin-pulse.ts
   var ruin_pulse_exports = {};
@@ -42730,7 +42741,7 @@
       }
     }
   };
-  mixin(G3, RuinPulsePart);
+  mixin(Game.prototype, RuinPulsePart, true);
 
   // src/game/game/minimap.ts
   var minimap_exports = {};
@@ -42875,7 +42886,7 @@
       c.strokeRect(0.5, 0.5, MW - 1, MH - 1);
     }
   };
-  mixin(G3, MinimapPart);
+  mixin(Game.prototype, MinimapPart, true);
 
   // src/game/game/render.ts
   var render_exports2 = {};
@@ -43522,7 +43533,7 @@
       this.drawPulse(c);
     }
   };
-  mixin(G3, RenderPart);
+  mixin(Game.prototype, RenderPart, true);
 
   // src/game/game/render-sky.ts
   var render_sky_exports = {};
@@ -43902,7 +43913,7 @@
       return true;
     }
   };
-  mixin(G3, RenderSkyPart);
+  mixin(Game.prototype, RenderSkyPart, true);
 
   // src/game/game/render-world.ts
   var render_world_exports = {};
@@ -44813,7 +44824,7 @@
       c.stroke();
     }
   };
-  mixin(G3, RenderWorldPart);
+  mixin(Game.prototype, RenderWorldPart, true);
 
   // src/game/game/render-actors.ts
   var render_actors_exports = {};
@@ -45455,7 +45466,7 @@
       }
     }
   };
-  mixin(G3, RenderActorsPart);
+  mixin(Game.prototype, RenderActorsPart, true);
 
   // src/game/game/utility.ts
   var utility_exports = {};
@@ -45589,7 +45600,7 @@
       }
     }
   };
-  mixin(G3, UtilityPart);
+  mixin(Game.prototype, UtilityPart, true);
 
   // src/game/game/debug-start.ts
   var debug_start_exports = {};
@@ -46226,7 +46237,7 @@
       P(BX + 12, gy - 13, "windmill");
     }
   };
-  mixin(G3, DebugStartPart);
+  mixin(Game.prototype, DebugStartPart, true);
 
   // src/game/game/net.ts
   var net_exports = {};
@@ -47589,7 +47600,7 @@
       if (!this.net && (want === "host" || qs.get("mp") === "host")) this.mpHost((qs.get("room") || "TEST").toUpperCase());
     }
   };
-  mixin(G3, NetPart);
+  mixin(Game.prototype, NetPart, true);
 
   // src/game/game/netui.ts
   var netui_exports = {};
@@ -47840,7 +47851,7 @@
       });
     }
   };
-  mixin(G3, NetUiPart);
+  mixin(Game.prototype, NetUiPart, true);
 
   // src/game/game/netchat.ts
   var netchat_exports = {};
@@ -47992,7 +48003,7 @@
       else this.netSend(n.peers.get(m.id).t, "rel", { k: "hurt", a, sx: peer.rp.cx });
     }
   };
-  mixin(G3, NetChatPart);
+  mixin(Game.prototype, NetChatPart, true);
 
   // src/game/game/netprog.ts
   var netprog_exports = {};
@@ -48154,7 +48165,7 @@
       this.sfx("boss");
     }
   };
-  mixin(G3, NetProgPart);
+  mixin(Game.prototype, NetProgPart, true);
 
   // src/game/main.ts
   var DATA = Object.fromEntries(Object.entries(Object.assign({}, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports)).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));

@@ -10,7 +10,7 @@ import { sessionOf } from '../data/story.js';
 import { ITEM_VAL, idef } from '../data/values.js';
 import { equipReqLv, itemName, makeItem } from '../items.js';
 import { UI } from '../ui.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const ShopPart: Bag = {
@@ -151,4 +151,4 @@ export const ShopPart: Bag = {
   },
 };
 
-mixin(G, ShopPart);
+mixin(Game.prototype, ShopPart, true);

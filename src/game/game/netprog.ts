@@ -5,7 +5,7 @@ import { dimsOf } from '../size.js';
 import { CHAPTERS } from '../data/story.js';
 import { TS } from '../world.js';
 import { UI } from '../ui.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 /* 장 목표는 그 세계의 **누구든** 채우면 된다 — 다만 플레이어마다 따로 센 값의 최댓값(합하면 남의 세계에서 쌓아 온 처치 수가
@@ -128,4 +128,4 @@ export const NetProgPart: Bag = {
   }
 };
 
-mixin(G, NetProgPart);
+mixin(Game.prototype, NetProgPart, true);

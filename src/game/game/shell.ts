@@ -6,7 +6,7 @@ import { Art } from '../itemart.js';
 import { $, UI } from '../ui.js';
 import { Ambient, Music, Sfx } from '../music.js';
 import { SET_KEY } from '../savefmt.js';
-import { G, TOUCH } from '../game.js';
+import { Game, TOUCH } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const ShellPart: Bag = {
@@ -109,4 +109,4 @@ export const ShellPart: Bag = {
   },
 };
 
-mixin(G, ShellPart);
+mixin(Game.prototype, ShellPart, true);
