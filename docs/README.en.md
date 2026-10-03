@@ -8,7 +8,7 @@ Ashfall Chronicles is a browser-native, story-led 2D sandbox adventure. Its core
 
 > **Explore → gather → craft or automate → overcome a regional objective → unlock the next region.**
 
-The project is intentionally a single-player, no-install experience. A current development build is playable in a browser; packaged desktop-friendly releases are also provided for Windows and macOS.
+The project is intentionally a singleplayer-first, no-install experience. A current development build is playable in a browser; packaged desktop-friendly releases are also provided for Windows and macOS.
 
 | Current scope | Count |
 |---|---:|
@@ -42,7 +42,7 @@ Keep a save export before switching between the web build and a downloaded build
 
 ## New-player route
 
-1. Start a new single-player slot.
+1. Start a new singleplayer slot.
 2. Read the active chapter goal in the journal (`J`).
 3. Mine basic material, establish a small work area, and craft the tools the objective asks for.
 4. Treat the first boss and the first dungeon as tutorials for combat preparation and exploration.
