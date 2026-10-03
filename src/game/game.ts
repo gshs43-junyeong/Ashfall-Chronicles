@@ -11,6 +11,7 @@ import { Tweens } from '../engine/core/tween.js';
 import { stepParticles } from '../engine/fx/particles.js';
 import { ShapeFx } from '../engine/fx/shapes.js';
 import { Afterimages } from '../engine/fx/trail.js';
+import { Vfx } from '../engine/fx/vfx.js';
 import { createInput } from '../engine/input/actions.js';
 import { createGamepad } from '../engine/input/gamepad.js';
 import { bindPointer } from '../engine/input/pointer.js';
@@ -70,7 +71,7 @@ export class Game {
       /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
       players: [], me: null,
       ents: [], projs: [], parts: [], texts: [], drops: [], tweens: new Tweens(), corpses: [],
-      time: 0, dayT: 6 * 60, shake: 0, pathBudget: 0, timeScale: new TimeScale(), fade: new ScreenFade(), perf: new PerfPanel(), shapes: new ShapeFx(), trail: new Afterimages<Bag>(0.028, 0.2, 7), entHash: new SpatialHash<Enemy>(64),
+      time: 0, dayT: 6 * 60, shake: 0, pathBudget: 0, timeScale: new TimeScale(), fade: new ScreenFade(), perf: new PerfPanel(), shapes: new ShapeFx(), vfx: new Vfx(), trail: new Afterimages<Bag>(0.028, 0.2, 7), entHash: new SpatialHash<Enemy>(64),
       /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
          ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
       scenes: createScenes({
@@ -406,7 +407,7 @@ export const GameCore: Bag = {
     this.mode = MODE_OF(mode).id;
     this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.tweens.clear();
     this.corpses = [];
-    this.shapes.clear(); this.trail.clear(); this.sigs = []; this.edge = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
+    this.shapes.clear(); this.vfx.clear(); this.trail.clear(); this.sigs = []; this.edge = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
     this.talked = {}; this.crafted = {}; this.scenes.close('pause'); this.scenes.close('death'); this.scenes.close('mpause'); this.scenes.close('mdeath');
@@ -590,8 +591,9 @@ export const GameCore: Bag = {
     /* ★ 잰 최고치는 257개라 PART_CAP(900)에 정상 전투로는 닿지 않지만, 난간이 없으면 언젠가 프레임으로 값을 치른다. */
     stepParticles(this.parts, dt, QUALITY[this.quality()].parts);   // engine fx/particles
     this.shapes.update(dt);
+    this.vfx.density = QUALITY[this.quality()].parts / PART_CAP; this.vfx.update(dt);
     /* 대시 잔상 — 한순간에 멀리 가는 움직임을 눈이 따라가게(engine fx/trail) */
-    this.trail.update(dt, p.dashV > 0 && !p.swimming, p.x, p.y, () => ({ fr: this.playerFrame(p), flip: p.facing < 0, key: 'player_' + CHAR_OF(p.charId).id }));
+    this.trail.update(dt, (p.dashV > 0 || p.chargeT > 0) && !p.swimming, p.x, p.y, () => ({ fr: this.playerFrame(p), flip: p.facing < 0, key: 'player_' + CHAR_OF(p.charId).id }));
     this.walkDust(p);
     for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
     for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);

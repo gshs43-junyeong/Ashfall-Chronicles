@@ -240,7 +240,7 @@ export const SavePart: Bag = {
       this.tally = d.tally || {};
       if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
       this.ents = []; this.corpses = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.tweens.clear(); this.boss = null;
-      this.shapes.clear(); this.trail.clear(); this.sigs = []; this.edge = null;
+      this.shapes.clear(); this.vfx.clear(); this.trail.clear(); this.sigs = []; this.edge = null;
       this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
       // 카메라를 저장된 위치로 바로 맞춘다 — 안 하면 (0,0) 근처에서 훅 팬 되는 게 첫 프레임에 보인다
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);

@@ -245,7 +245,11 @@ export const PlayerMove: Bag & ThisType<Player> = {
     if (this.chargeT > 0) {
       for (const e of G.ents) {
         if (!(e instanceof Enemy) || e.dead || this.chargeHit.has(e)) continue;
-        if (aabb(this.rect(), e.rect())) { this.chargeHit.add(e); e.hurt(this.chargeDmg, this.rollCrit(), this, 14, hitFam(this.weapon())); }
+        if (aabb(this.rect(), e.rect())) {
+          this.chargeHit.add(e); e.hurt(this.chargeDmg, this.rollCrit(), this, 14, hitFam(this.weapon()));
+          G.skillVfx('s_charge_hit', { x: e.cx, y: e.cy, ang: this.vx >= 0 ? 0 : Math.PI });
+          G.hitStop(0.05); G.shake = Math.max(G.shake, 8);      // 부딪는 맛 — 맞은 적마다 한 번
+        }
       }
     }
     // 채널링
@@ -254,6 +258,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
       if (this.channel.tick <= 0) {
         this.channel.tick = 0.28;
         G.aoe(this.cx, this.cy, 96, this.channel.dmg * 0.28, 3, '#ffcf6a');
+        G.skillVfx('s_whirl', { x: this.cx, y: this.cy, a0: (this.channel.a0 = (this.channel.a0 || 0) + 2.4) });
         /* 도는 동안 박자마다 운다. */
         G.sfx('sk_whirl', G.strokeRate());
         G.shake = Math.max(G.shake, 3);
