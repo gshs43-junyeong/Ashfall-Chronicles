@@ -968,8 +968,7 @@
   "모두 꺼내기": "Sacar todo",
   "쓰러짐": "Caído",
   "{name|이} 쓰러졌다": "{name} ha caído",
-  "{name|이} 다시 일어났다": "{name} se ha levantado",
-  "저주에 걸렸다 — 주는 피해가 줄었다": "Maldito: tu daño se ha reducido"
+  "{name|이} 다시 일어났다": "{name} se ha levantado"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

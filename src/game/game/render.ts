@@ -306,9 +306,11 @@ export const RenderPart: Bag = {
     for (const e of this.ents) {
       const sx = e.x - camX, sy = e.y - camY;
       if (sx < -200 || sx > this.W + 200 || sy < -200 || sy > this.H + 200) continue;
+      const posed = e instanceof Enemy && this.castPose(c, e, sx, sy);   // 시전 몸짓(mob-fx)
       if (e instanceof Wolf) this.drawWolf(c, e, sx, sy);
       else if (e instanceof Guard) this.drawGuard(c, e, sx, sy);
       else this.drawEnemy(c, e, sx, sy);
+      if (posed) c.restore();
       if (e instanceof Enemy) this.drawStatus(c, e, sx, sy);
     }
 
@@ -447,6 +449,7 @@ export const RenderPart: Bag = {
     // ---- 고리 · 떨어질 자리 예고 · 번개(engine fx/shapes) ----
     this.shapes.draw(c, camX, camY);
     this.vfx.draw(c, camX, camY);          // 스킬 연출(engine fx/vfx)
+    this.drawMobFx(c, camX, camY);         // 몹 스킬 · 원소 탄 꼬리(mob-fx)
 
     // ---- 보스 대사 (화면 아래) ----
     if (this.bossSay) {

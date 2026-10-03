@@ -31397,6 +31397,8 @@
         if (this.cast.t <= 0) {
           const c = this.cast;
           this.cast = null;
+          this.atkPose = 0.3;
+          this.castKick = 0.3;
           this.fireSkill(c.id, player, c.tgt);
         }
         return;
@@ -31412,7 +31414,6 @@
         } else if (!seen || dd > S.range) continue;
         this.mskCd[id] = S.cd * (0.85 + Math.random() * 0.3);
         this.cast = { id, t: S.cast, max: S.cast, tgt };
-        this.atkPose = S.cast;
         app.mobCastFx(this, S);
         break;
       }
@@ -40068,35 +40069,8 @@
         v.flare(x, y, 30, "#ff6a4a", 0.22);
         v.column(x, e.y + e.h, e.w + 10, e.h * 1.6, "#ff5a3a", 0.45);
       } else if (kind === "weak") {
-        v.puffs(x, y - 6, 6, 12, "rgba(110,70,160,.8)", 1, 14);
-        v.sigil(x, e.y + e.h, e.w * 0.9 + 8, "#b07aff", 0.7, 5, -1, 0.3);
-      }
-    },
-    /** 몹이 스킬을 시작한다 — 발밑 마법진(예고 시간만큼) */
-    mobCastFx(e, S) {
-      this.vfx.sigil(e.cx, e.y + e.h - 2, Math.max(22, e.w * 0.9), S.c, S.cast + 0.3, S.kind === "ally" ? 6 : 5, 1.4, 0.3);
-      this.sfxAt("magic", e.cx / TS, e.cy / TS, 0.8, 0.45);
-    },
-    /** 몹 스킬이 터진다 */
-    mobSkillFx(e, S, id, tgt, amt) {
-      const v = this.vfx;
-      if (id === "heal" && tgt) {
-        v.beam(e.cx, e.cy, tgt.cx, tgt.cy, S.c, 0.3, 4);
-        v.column(tgt.cx, tgt.y + tgt.h, tgt.w + 14, tgt.h * 1.8, S.c, 0.6);
-        v.sparks(tgt.cx, tgt.y + tgt.h - 6, 10, "#d8ffd0", 200, -Math.PI / 2, 1.2, 0.6, -60);
-        this.texts.push(new DmgText(tgt.cx, tgt.y, "+" + amt, "#7fe07f", 0));
-      } else if (id === "empower") {
-        v.shock(e.cx, e.cy, S.range * 0.7, S.c, 0.45, 8);
-        v.flare(e.cx, e.cy - 6, 34, "#ff9a6a", 0.22);
-      } else if (id === "hex" && tgt) {
-        v.beam(e.cx, e.cy, tgt.cx, tgt.cy, S.c, 0.35, 5);
-        v.reticle(() => [tgt.cx, tgt.cy], tgt.w / 2 + 14, S.c, 0.7);
-        this.toast(tr("저주에 걸렸다 — 주는 피해가 줄었다"), "bad");
-      } else if (id === "fizzle") {
-        v.puffs(e.cx, e.cy, 3, 8, "rgba(120,100,150,.6)", 0.5, 6);
-      } else {
-        v.flare(e.cx, e.cy, 32, S.c, 0.2);
-        v.sparks(e.cx, e.cy, 8, S.c, 300, 0, TAU, 0.3, 0);
+        v.puffs(x, y - 6, 8, 12, "rgba(110,70,160,.8)", 1, 18);
+        v.flare(x, y, 24, "#b07aff", 0.2);
       }
     },
     mobSkillDef(id) {
@@ -40158,27 +40132,31 @@
         }
       }
       if (k.cast) {
-        const S = this.mobSkillDef(k.cast.id), p = 1 - Math.max(0, k.cast.t) / k.cast.max;
-        const ox = sx + w / 2 + (e.facing || 1) * (w / 2 + 4), oy = sy + h * 0.35, r = 3 + p * 8;
+        const S = this.mobSkillDef(k.cast.id), p = 1 - Math.max(0, k.cast.t) / k.cast.max, col = S ? S.c : "#ffffff";
+        const fx = sx + w / 2, fy = sy + h, pr = w * 0.9 + 10;
+        const pool = c.createRadialGradient(fx, fy, 0, fx, fy, pr);
+        pool.addColorStop(0, col);
+        pool.addColorStop(1, "rgba(0,0,0,0)");
+        c.save();
+        c.translate(fx, fy);
+        c.scale(1, 0.28);
+        c.translate(-fx, -fy);
+        c.globalAlpha = 0.25 + 0.35 * p;
+        c.fillStyle = pool;
+        c.beginPath();
+        c.arc(fx, fy, pr, 0, TAU);
+        c.fill();
+        c.restore();
+        const ox = sx + w / 2 + (e.facing || 1) * (w / 2 + 4), oy = sy + h * 0.35, r = 3 + p * 8 + Math.sin(t * 30) * 0.8;
         const g = c.createRadialGradient(ox, oy, 0, ox, oy, r * 2.4);
         g.addColorStop(0, "#ffffff");
-        g.addColorStop(0.3, S ? S.c : "#ffffff");
+        g.addColorStop(0.3, col);
         g.addColorStop(1, "rgba(0,0,0,0)");
         c.globalAlpha = 0.9;
         c.fillStyle = g;
         c.beginPath();
         c.arc(ox, oy, r * 2.4, 0, TAU);
         c.fill();
-        c.strokeStyle = S ? S.c : "#fff";
-        c.lineWidth = 1.2;
-        for (let i = 0; i < 5; i++) {
-          const a = i * 1.26 + t * 3, d = 18 * (1 - (t * 2 + i * 0.2) % 1);
-          c.globalAlpha = 0.6;
-          c.beginPath();
-          c.moveTo(ox + Math.cos(a) * (d + 6), oy + Math.sin(a) * (d + 6));
-          c.lineTo(ox + Math.cos(a) * d, oy + Math.sin(a) * d);
-          c.stroke();
-        }
       }
       c.globalCompositeOperation = "source-over";
       if (k.chill) this.iceCrust(c, sx, sy, w, h, id, t);
@@ -40333,6 +40311,341 @@
     }
   };
   mixin(Game.prototype, StatusFxPart, true);
+
+  // src/game/game/mob-fx.ts
+  var mob_fx_exports = {};
+  __export(mob_fx_exports, {
+    MobFxPart: () => MobFxPart
+  });
+  var LOOK = {
+    heal: { k: "mote", c: "150,240,140", c2: "240,255,210" },
+    empower: { k: "ember", c: "255,90,50", c2: "255,200,120" },
+    firebolt: { k: "ember", c: "255,130,50", c2: "255,226,150" },
+    frostbolt: { k: "flake", c: "170,225,255", c2: "240,252,255" },
+    venom: { k: "bubble", c: "130,205,90", c2: "220,255,170" },
+    hex: { k: "smoke", c: "120,60,180", c2: "200,150,255" }
+  };
+  var MobFxPart = {
+    mfx: null,
+    mfxT: 0,
+    /** 손 자리 — 몸 앞 · 가슴 높이(시전 빛이 모이는 곳) */
+    mobHand(e) {
+      return [e.cx + (e.facing || 1) * (e.w / 2 + 4), e.y + e.h * 0.35];
+    },
+    mfxAdd(p) {
+      const L = this.mfx = this.mfx || [];
+      if (L.length > 700) return;
+      L.push(Object.assign({ vx: 0, vy: 0, age: 0, life: 0.6, r: 2, g: 0, drag: 1, c2: "255,255,255" }, p));
+    },
+    /** n 개를 화면 효과 설정만큼 줄여 뿌린다 */
+    mfxN(n) {
+      const s = this.fxScale ? this.fxScale() : 1;
+      return Math.max(1, Math.round(n * Math.max(0.35, s)));
+    },
+    /** 시전 중 몸짓 — 떠오르며 뒤로 젖히고 떨린다 · 쏜 순간은 앞으로 내지르며 찌그러진다. 그릴 때만 바꾼다(판정은 그대로) */
+    castPose(c, e, sx, sy) {
+      const k = e.castKick > 0 ? e.castKick / 0.3 : 0;
+      if (!e.cast && !(k > 0)) return false;
+      const p = e.cast ? 1 - Math.max(0, e.cast.t) / (e.cast.max || 1) : 0, f = e.facing || 1, fly = e.def && e.def.fly;
+      const px = sx + e.w / 2, py = sy + e.h;
+      const shake = Math.sin(this.time * 55) * 0.9 * p;
+      c.save();
+      c.translate(px + shake + f * 7 * k * k, py - (fly ? 8 : 3) * Math.sin(p * Math.PI / 2));
+      c.rotate(-f * 0.11 * p + f * 0.16 * k);
+      c.scale(1 - 0.03 * p + 0.09 * k, 1 + 0.06 * p - 0.09 * k);
+      c.translate(-px, -py);
+      return true;
+    },
+    /** 시전 첫 순간 — 발밑에서 그 갈래의 알갱이가 한 번 피어오른다 */
+    mobCastFx(e, S) {
+      const id = this.mobSkillId(S), L = LOOK[id] || LOOK.heal;
+      for (let i = 0; i < this.mfxN(10); i++) {
+        const a = Math.random() * TAU;
+        this.mfxAdd({
+          k: L.k,
+          x: e.cx + Math.cos(a) * e.w * 0.6,
+          y: e.y + e.h - 2,
+          vx: Math.cos(a) * 30,
+          vy: -40 - Math.random() * 60,
+          life: 0.5 + Math.random() * 0.4,
+          r: 1.6 + Math.random() * 1.6,
+          c: L.c,
+          c2: L.c2,
+          drag: 0.9
+        });
+      }
+      this.sfxAt("magic", e.cx / 22, e.cy / 22, 0.8, 0.45);
+    },
+    mobSkillId(S) {
+      for (const id in MOB_SKILLS) if (MOB_SKILLS[id] === S) return id;
+      return "heal";
+    },
+    /** 시전 중 매 프레임 — 둘레에서 손으로 빨려 드는 알갱이 + 갈래마다 몸에서 피어나는 것 */
+    mobCastEmit(e, dt) {
+      const id = e.cast.id, L = LOOK[id] || LOOK.heal, p = 1 - Math.max(0, e.cast.t) / (e.cast.max || 1);
+      const [hx, hy] = this.mobHand(e);
+      e._mfxAcc = (e._mfxAcc || 0) + dt * this.mfxN(46) * (0.6 + p);
+      while (e._mfxAcc >= 1) {
+        e._mfxAcc -= 1;
+        const ang = Math.random() * TAU, rad = 26 + Math.random() * 22;
+        this.mfxAdd({
+          k: "gather",
+          x: hx + Math.cos(ang) * rad,
+          y: hy + Math.sin(ang) * rad,
+          life: 0.45 + Math.random() * 0.25,
+          r: 1.4 + Math.random() * 1.4,
+          c: L.c,
+          c2: L.c2,
+          src: e,
+          ang,
+          rad,
+          spin: (Math.random() < 0.5 ? -1 : 1) * (3 + Math.random() * 3)
+        });
+        if (Math.random() < 0.45) {
+          const bx = e.x + Math.random() * e.w, by = e.y + e.h * (0.4 + Math.random() * 0.6);
+          if (L.k === "smoke") this.mfxAdd({ k: "smoke", x: bx, y: by, vx: (Math.random() - 0.5) * 20, vy: -18, life: 0.9, r: 5 + Math.random() * 4, c: L.c, c2: L.c2 });
+          else if (L.k === "bubble") this.mfxAdd({ k: "bubble", x: bx, y: e.y + e.h - 2, vx: (Math.random() - 0.5) * 12, vy: -30 - Math.random() * 30, life: 0.8, r: 1.5 + Math.random() * 2.5, c: L.c, c2: L.c2 });
+          else if (L.k === "flake") this.mfxAdd({ k: "flake", x: bx, y: by, vx: (Math.random() - 0.5) * 30, vy: -20, life: 0.7, r: 2 + Math.random() * 2, c: L.c, c2: L.c2, spin: (Math.random() - 0.5) * 8 });
+          else this.mfxAdd({ k: L.k, x: bx, y: e.y + e.h - 2, vx: (Math.random() - 0.5) * 16, vy: -50 - Math.random() * 50, life: 0.6, r: 1.4 + Math.random() * 1.6, c: L.c, c2: L.c2, drag: 0.97 });
+        }
+      }
+    },
+    /** 몹 스킬이 터진다 — 갈래마다 다른 모양(선 없이 알갱이 · 빛 덩이로) */
+    mobSkillFx(e, S, id, tgt, amt) {
+      const v = this.vfx, L = LOOK[id] || LOOK[this.mobSkillId(S)] || LOOK.heal;
+      const [hx, hy] = this.mobHand(e), f = e.facing || 1;
+      if (id === "heal" && tgt) {
+        for (let i = 0; i < this.mfxN(16); i++)
+          this.mfxAdd({
+            k: "seek",
+            x: hx,
+            y: hy,
+            vx: (Math.random() - 0.5) * 220,
+            vy: -120 - Math.random() * 160,
+            life: 1.2,
+            r: 2 + Math.random() * 1.5,
+            c: L.c,
+            c2: L.c2,
+            tgt,
+            age: -i * 0.025
+          });
+        for (let i = 0; i < this.mfxN(18); i++)
+          this.mfxAdd({
+            k: "mote",
+            x: tgt.x + Math.random() * tgt.w,
+            y: tgt.y - 30 - Math.random() * 40,
+            vy: 70 + Math.random() * 60,
+            life: 0.55,
+            r: 1.6 + Math.random() * 1.4,
+            c: L.c,
+            c2: L.c2,
+            age: -0.25 - Math.random() * 0.25
+          });
+        v.column(tgt.cx, tgt.y + tgt.h, tgt.w + 14, tgt.h * 1.8, "#9ff09f", 0.6);
+        this.texts.push(new DmgText(tgt.cx, tgt.y, "+" + amt, "#7fe07f", 0));
+      } else if (id === "empower") {
+        for (let i = 0; i < this.mfxN(34); i++) {
+          const a = Math.random() * TAU, sp = 120 + Math.random() * 180;
+          this.mfxAdd({ k: "ember", x: e.cx, y: e.cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7, life: 0.5 + Math.random() * 0.3, r: 1.6 + Math.random() * 1.8, c: L.c, c2: L.c2, drag: 0.9 });
+        }
+        for (let i = 0; i < this.mfxN(14); i++)
+          this.mfxAdd({ k: "ember", x: e.x + Math.random() * e.w, y: e.y + e.h, vy: -120 - Math.random() * 120, life: 0.6, r: 2 + Math.random() * 2, c: L.c, c2: L.c2, drag: 0.95 });
+        v.flare(e.cx, e.cy - 4, 46, "#ff7a4a", 0.28);
+        this.shake = Math.max(this.shake || 0, 3);
+      } else if (id === "hex" && tgt) {
+        for (let i = 0; i < this.mfxN(22); i++)
+          this.mfxAdd({
+            k: "seek",
+            x: hx,
+            y: hy,
+            vx: f * (80 + Math.random() * 120),
+            vy: (Math.random() - 0.5) * 160,
+            life: 1.1,
+            r: 2.6 + Math.random() * 2,
+            c: L.c,
+            c2: L.c2,
+            tgt,
+            age: -i * 0.02,
+            g: 1
+          });
+        for (let i = 0; i < this.mfxN(8); i++)
+          this.mfxAdd({ k: "smoke", x: hx, y: hy, vx: (Math.random() - 0.5) * 50, vy: -20 - Math.random() * 30, life: 1, r: 6 + Math.random() * 5, c: "60,30,90", c2: L.c2 });
+      } else if (id === "fizzle") {
+        for (let i = 0; i < this.mfxN(6); i++)
+          this.mfxAdd({ k: "smoke", x: hx, y: hy, vx: (Math.random() - 0.5) * 30, vy: -25, life: 0.7, r: 4 + Math.random() * 3, c: "110,100,130", c2: "200,200,220" });
+      } else {
+        const pl = this.player, a = pl ? Math.atan2(pl.cy - hy, pl.cx - hx) : f > 0 ? 0 : Math.PI;
+        for (let i = 0; i < this.mfxN(18); i++) {
+          const aa = a + (Math.random() - 0.5) * 0.9, sp = 90 + Math.random() * 200;
+          this.mfxAdd({
+            k: L.k === "bubble" ? "bubble" : L.k,
+            x: hx,
+            y: hy,
+            vx: Math.cos(aa) * sp,
+            vy: Math.sin(aa) * sp,
+            life: 0.3 + Math.random() * 0.3,
+            r: 1.5 + Math.random() * 1.8,
+            c: L.c,
+            c2: L.c2,
+            drag: 0.88,
+            spin: (Math.random() - 0.5) * 10
+          });
+        }
+        v.flare(hx, hy, 30, "rgb(" + L.c2 + ")", 0.2);
+      }
+    },
+    /** 원소 탄의 꼬리 — 불덩이는 불티 · 얼음은 서리 김 · 독은 떨어지는 방울 · 어둠은 연기 */
+    projTrails(dt) {
+      for (const pr of this.projs || []) {
+        if (pr.team !== "enemy") continue;
+        const L = pr.type === "fire" ? LOOK.firebolt : pr.type === "frost" ? LOOK.frostbolt : pr.type === "poison" ? LOOK.venom : pr.type === "dark" || pr.type === "void" ? LOOK.hex : null;
+        if (!L) continue;
+        pr._trail = (pr._trail || 0) + dt * this.mfxN(30);
+        while (pr._trail >= 1) {
+          pr._trail -= 1;
+          const x = pr.cx + (Math.random() - 0.5) * 10, y = pr.cy + (Math.random() - 0.5) * 10;
+          if (L.k === "bubble") this.mfxAdd({ k: "drip", x, y, vx: pr.vx * 0.05, vy: 10, g: 1, life: 0.5, r: 1.6 + Math.random(), c: L.c, c2: L.c2 });
+          else if (L.k === "smoke") this.mfxAdd({ k: "smoke", x, y, vx: -pr.vx * 0.05, vy: -10, life: 0.6, r: 3 + Math.random() * 3, c: L.c, c2: L.c2 });
+          else this.mfxAdd({
+            k: L.k,
+            x,
+            y,
+            vx: -pr.vx * 0.12 + (Math.random() - 0.5) * 60,
+            vy: -pr.vy * 0.12 + (Math.random() - 0.5) * 40 - (L.k === "ember" ? 40 : 0),
+            life: 0.18 + Math.random() * 0.22,
+            r: 0.9 + Math.random() * 1.3,
+            c: L.c,
+            c2: L.c2,
+            drag: 0.9,
+            spin: (Math.random() - 0.5) * 8
+          });
+        }
+      }
+    },
+    /** 몹 연출 판을 움직이고 그린다(fx 단계, 투사체 위) */
+    drawMobFx(c, camX, camY) {
+      const now2 = this.time, dt = Math.min(0.05, Math.max(0, now2 - (this.mfxT || now2)));
+      this.mfxT = now2;
+      for (const e of this.ents || []) {
+        if (!(e instanceof Enemy) || e.dead) continue;
+        if (e.castKick > 0) e.castKick -= dt;
+        if (e.cast && e.cast.id && dt > 0) this.mobCastEmit(e, dt);
+      }
+      if (dt > 0) this.projTrails(dt);
+      const L = this.mfx || [];
+      if (!L.length) return;
+      let n = 0;
+      for (const p of L) {
+        p.age += dt;
+        if (p.age < 0) {
+          L[n++] = p;
+          continue;
+        }
+        if (p.age > p.life) continue;
+        if (p.k === "gather" && p.src) {
+          const [hx, hy] = this.mobHand(p.src), k = p.age / p.life;
+          p.ang += p.spin * dt;
+          const r = p.rad * (1 - k * k);
+          p.x = hx + Math.cos(p.ang) * r;
+          p.y = hy + Math.sin(p.ang) * r;
+        } else if (p.k === "seek" && p.tgt) {
+          const tx = p.tgt.cx, ty = p.tgt.cy, dx = tx - p.x, dy = ty - p.y, d = Math.hypot(dx, dy) || 1;
+          const pull = 900 + p.age * 2400;
+          p.vx = (p.vx + dx / d * pull * dt) * 0.93;
+          p.vy = (p.vy + dy / d * pull * dt) * 0.93;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          if (d < 8) {
+            p.life = p.age;
+            this.mfxAdd({ k: p.g ? "smoke" : "mote", x: p.x, y: p.y, vy: -30, life: 0.4, r: p.g ? 5 : 2.4, c: p.c, c2: p.c2 });
+          }
+        } else {
+          p.vy += (p.k === "drip" ? 420 : p.k === "flake" ? 30 : 0) * dt;
+          p.vx *= Math.pow(p.drag, dt * 60);
+          p.vy *= Math.pow(p.drag, dt * 60);
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          if (p.spin) p.ang = (p.ang || 0) + p.spin * dt;
+        }
+        L[n++] = p;
+      }
+      L.length = n;
+      c.save();
+      for (const p of L) {
+        if (p.age < 0 || p.k !== "smoke") continue;
+        const k = p.age / p.life, x = p.x - camX, y = p.y - camY, r = p.r * (1 + k * 1.4);
+        c.globalAlpha = 0.5 * (1 - k) * Math.min(1, p.age * 8);
+        c.fillStyle = "rgb(" + p.c + ")";
+        c.beginPath();
+        c.arc(x, y, r, 0, TAU);
+        c.fill();
+        c.globalAlpha *= 0.6;
+        c.fillStyle = "rgb(" + p.c2 + ")";
+        c.beginPath();
+        c.arc(x - r * 0.25, y - r * 0.3, r * 0.45, 0, TAU);
+        c.fill();
+      }
+      c.globalCompositeOperation = "lighter";
+      for (const p of L) {
+        if (p.age < 0 || p.k === "smoke") continue;
+        const k = p.age / p.life, x = p.x - camX, y = p.y - camY;
+        const a = p.k === "gather" ? Math.min(1, k * 4) : 1 - k * k;
+        if (p.k === "bubble" || p.k === "drip") {
+          c.globalAlpha = 0.55 * a;
+          c.fillStyle = "rgb(" + p.c + ")";
+          c.beginPath();
+          c.arc(x, y, p.r, 0, TAU);
+          c.fill();
+          c.globalAlpha = 0.9 * a;
+          c.fillStyle = "rgb(" + p.c2 + ")";
+          c.beginPath();
+          c.arc(x - p.r * 0.35, y - p.r * 0.35, p.r * 0.35, 0, TAU);
+          c.fill();
+          continue;
+        }
+        if (p.k === "flake") {
+          c.save();
+          c.translate(x, y);
+          c.rotate(p.ang || 0);
+          c.globalAlpha = 0.9 * a;
+          c.fillStyle = "rgb(" + p.c2 + ")";
+          for (const rot of [0, Math.PI / 4]) {
+            c.rotate(rot);
+            const r2 = p.r * (rot ? 0.7 : 1.2);
+            c.beginPath();
+            c.moveTo(0, -r2);
+            c.lineTo(r2 * 0.3, 0);
+            c.lineTo(0, r2);
+            c.lineTo(-r2 * 0.3, 0);
+            c.closePath();
+            c.fill();
+            c.beginPath();
+            c.moveTo(-r2, 0);
+            c.lineTo(0, r2 * 0.3);
+            c.lineTo(r2, 0);
+            c.lineTo(0, -r2 * 0.3);
+            c.closePath();
+            c.fill();
+          }
+          c.restore();
+          continue;
+        }
+        const r = p.r * (p.k === "ember" ? 1 - k * 0.5 : 1);
+        c.globalAlpha = 0.35 * a;
+        c.fillStyle = "rgb(" + p.c + ")";
+        c.beginPath();
+        c.arc(x, y, r * 2.6, 0, TAU);
+        c.fill();
+        c.globalAlpha = 0.95 * a;
+        c.fillStyle = "rgb(" + p.c2 + ")";
+        c.beginPath();
+        c.arc(x, y, r * 0.9, 0, TAU);
+        c.fill();
+      }
+      c.restore();
+    }
+  };
+  mixin(Game.prototype, MobFxPart, true);
 
   // src/game/game/mine.ts
   var mine_exports = {};
@@ -46438,9 +46751,11 @@
       for (const e of this.ents) {
         const sx = e.x - camX, sy = e.y - camY;
         if (sx < -200 || sx > this.W + 200 || sy < -200 || sy > this.H + 200) continue;
+        const posed = e instanceof Enemy && this.castPose(c, e, sx, sy);
         if (e instanceof Wolf) this.drawWolf(c, e, sx, sy);
         else if (e instanceof Guard) this.drawGuard(c, e, sx, sy);
         else this.drawEnemy(c, e, sx, sy);
+        if (posed) c.restore();
         if (e instanceof Enemy) this.drawStatus(c, e, sx, sy);
       }
       if (this.deathMark) {
@@ -46615,6 +46930,7 @@
       }
       this.shapes.draw(c, camX, camY);
       this.vfx.draw(c, camX, camY);
+      this.drawMobFx(c, camX, camY);
       if (this.bossSay) {
         const bs = this.bossSay;
         bs.t -= 1 / 60;
@@ -50170,7 +50486,9 @@
           e.onGround ? 1 : 0,
           Math.round(e.hp),
           Math.round(e.maxHp),
-          +(e.flash || 0).toFixed(2)
+          +(e.flash || 0).toFixed(2),
+          e.cast ? [e.cast.id, +e.cast.t.toFixed(2), e.cast.max] : 0,
+          e.castKick > 0 ? 1 : 0
         ]);
       }
       return out;
@@ -50186,7 +50504,7 @@
     },
     netPutEnemies(list) {
       const n = this.net, t = now();
-      for (const [nid, type, x, y, vx, vy, f, g, hp, mhp, fl] of list) {
+      for (const [nid, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck] of list) {
         let e = n.ghosts.get(nid);
         if (!e) {
           if (!ENEMIES[type]) continue;
@@ -50205,6 +50523,11 @@
         e.hp = hp;
         e.maxHp = mhp;
         if (fl > (e.flash || 0)) e.flash = fl;
+        e.cast = ca ? { id: ca[0], t: ca[1], max: ca[2] } : null;
+        if (ck && !(e.castKick > 0)) {
+          e.castKick = 0.3;
+          e.atkPose = 0.3;
+        }
         e.seenAt = t;
       }
       for (const [nid, e] of n.ghosts) if (t - e.seenAt > 1) {
@@ -51522,7 +51845,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_pulse_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_pulse_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

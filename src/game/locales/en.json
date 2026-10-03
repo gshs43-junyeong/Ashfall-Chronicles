@@ -968,8 +968,7 @@
   "모두 꺼내기": "Take all out",
   "쓰러짐": "Down",
   "{name|이} 쓰러졌다": "{name} went down",
-  "{name|이} 다시 일어났다": "{name} is back on their feet",
-  "저주에 걸렸다 — 주는 피해가 줄었다": "Cursed — your damage is reduced"
+  "{name|이} 다시 일어났다": "{name} is back on their feet"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
