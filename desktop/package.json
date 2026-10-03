@@ -1,0 +1,17 @@
+{
+  "name": "ashfall-chronicles-desktop",
+  "productName": "Ashfall Chronicles",
+  "version": "1.1.1",
+  "description": "Ashfall Chronicles — desktop app (unsigned Electron shell around play/)",
+  "author": "Ashfall Chronicles Project",
+  "main": "main.js",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "44.5.1"
+  }
+}

@@ -1,6 +1,6 @@
 name: Release
 
-# v1.0.6 같은 태그를 push하면 zip 두 개를 만들어 Release에 첨부한다.
+# v1.0.6 같은 태그를 push하면 zip(브라우저로 여는 판 둘 + 앱으로 여는 판 넷)을 만들어 Release에 첨부한다.
 on:
   push:
     tags: ['v*']
@@ -37,6 +37,15 @@ jobs:
       - name: zip 빌드
         run: bash tools/build.sh "${{ steps.ver.outputs.value }}"
 
+      # 앱으로 여는 판(Electron · 서명 없음) — Windows 아이콘(rcedit)은 wine 이 있어야 박힌다. 못 깔면 기본 아이콘으로.
+      - name: wine (Windows 앱 아이콘)
+        run: |
+          sudo dpkg --add-architecture i386 && sudo apt-get update -qq && sudo apt-get install -y -qq wine wine64 wine32 || echo "wine 없음 — Windows 앱은 기본 아이콘"
+      - name: 앱 zip 빌드
+        run: |
+          (cd desktop && npm ci)
+          bash tools/build-desktop.sh "${{ steps.ver.outputs.value }}"
+
       # 릴리스 본문 = docs/v<버전>-changelog.md(있으면) + 자동 커밋 목록
       - name: 릴리스 노트
         run: |
@@ -54,5 +63,6 @@ jobs:
           files: |
             dist/AshfallChronicles-*.zip
             dist/SHA256SUMS.txt
+            dist/SHA256SUMS-App.txt
           body_path: dist/NOTES.md
           generate_release_notes: true
