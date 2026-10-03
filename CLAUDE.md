@@ -258,6 +258,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 | `?debug=cave` | 가장 가까운 금 간 자갈 앞에서 시작 (`&k=moss\|drip\|geode\|fume` 그 갈래 굴 안) |
 | `?debug=meteor` | 2.5초 뒤 운석 (`&at=me` 머리 위 = 즉사 · `&at=<x>` 그 칸 · `&dx=` 오른쪽 몇 칸, 기본 30) |
 | `?debug=factory` | 캠프 오른쪽 예시 공장 — 기계 26종을 재료 채워 한 줄로(`&mobs=1` 몹 켜기) |
+| `?debug=showcase` | 영상 촬영용 — 세션(`&sess=1\|2\|3`)에 맞는 레벨 · 장비 · 특성 · 유틸리티 · 펫을 갖추고 알림 없이 시작(`&at=village`) |
 | `?touch=1` · `?touch=0` | 터치 조작(가상 스틱 · 점프/대시 · 탭 · '사용' 전환 · 스킬 칸 탭 · 전체 화면)을 강제로 켜고 끈다 — 기본은 손가락이 주 포인터인 기기(폰·태블릿)에서 저절로 켜진다 |
 | `&sess=` · `&ch=` · `&plv=` · `&gold=` | 세션·장·레벨·금화를 직접 준다 |
 

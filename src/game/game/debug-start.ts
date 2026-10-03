@@ -21,6 +21,7 @@ export const DebugStartPart: Bag = {
   /** 새 게임을 막 만든 뒤 — ?debug= 시험장으로 옮겨 준다(정상 플레이에는 영향 없음 · 주소 목록 docs/debug-urls.md). */
   debugStart(qs: any) {
     const p = this.player, { WW, WH, HELL_Y, CAMP_X1, SEA_X1 } = this.world.dims;
+    if (qs.get('debug') === 'showcase') this.showcaseStart(qs);   // 영상 촬영용(game/debug-showcase.ts)
     /* ?debug=meteor — 2.5초 뒤 운석. */
     if (qs.get('debug') === 'meteor') {
       const at = qs.get('at'), me = Math.floor(this.player.cx / TS);
