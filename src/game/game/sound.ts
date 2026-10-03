@@ -7,7 +7,7 @@ import { BOSS_DIE } from '../data/skills.js';
 import { TS } from '../world.js';
 import { Part } from '../entity.js';
 import { SFX_GAP, Sfx } from '../music.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const SoundPart: Bag = {
@@ -225,4 +225,4 @@ export const SoundPart: Bag = {
   },
 };
 
-mixin(G, SoundPart);
+mixin(Game.prototype, SoundPart, true);

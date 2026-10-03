@@ -5,7 +5,7 @@ import { escHtml } from '../util.js';
 import { tr } from '../lang.js';
 import { DmgText } from '../entity.js';
 import { $ } from '../ui.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const CHAT_MAX = 200;       // 글 한 줄 최대 글자
@@ -130,4 +130,4 @@ export const NetChatPart: Bag = {
   }
 };
 
-mixin(G, NetChatPart);
+mixin(Game.prototype, NetChatPart, true);

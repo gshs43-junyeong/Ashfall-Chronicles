@@ -9,7 +9,7 @@ import { idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Enemy, Part } from '../entity.js';
 import { $, UI } from '../ui.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const RuinsPart: Bag = {
@@ -297,4 +297,4 @@ export const RuinsPart: Bag = {
   },
 };
 
-mixin(G, RuinsPart);
+mixin(Game.prototype, RuinsPart, true);

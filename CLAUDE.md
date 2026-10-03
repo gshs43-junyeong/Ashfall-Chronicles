@@ -218,8 +218,9 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 - `★`는 "여기 손대기 전에 이 문단을 읽어라"는 표시다.
 - 숫자를 바꿨으면 **실측값을 같이 적는다**("3780개 중 807개(21.3%)가 떠 있었다").
 - 세미콜론 사용, 들여쓰기 2칸, 작은따옴표.
-- 클래스는 `world.js`/`entity.js`에만 있고, 나머지는 큰 객체 리터럴에 메서드를
-  모아 둔 형태다(`G`, `UI`, `TileArt` …).
+- 클래스는 `World`(world.ts) · 엔티티(entity.ts) · **`Game`**(game.ts — `G = new Game()`)이고, 나머지는 큰 객체 리터럴에 메서드를
+  모아 둔 형태다(`UI`, `Factory`, `TileArt` …). `Game` 은 상태 칸을 생성자에, 메서드를 프로토타입에 둔다 — 조각은 `mixin(Game.prototype, 조각, true)`.
+  ★ 조각에 객체·배열을 처음 값으로 두면 인스턴스끼리 나눠 쓴다 — `null` 로 두고 쓸 때 새로 만들 것(`scans` · `utilReady` 처럼).
 
 ---
 

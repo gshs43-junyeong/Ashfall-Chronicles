@@ -15,7 +15,7 @@ import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';
 import { Bomb, Guard, PROJ_FX, PROJ_STYLE, Wolf } from '../entity.js';
 import { Factory } from '../factory.js';
-import { G, MAP_REVEAL_LIGHT } from '../game.js';
+import { Game, MAP_REVEAL_LIGHT } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const RenderPart: Bag = {
@@ -568,4 +568,4 @@ export const RenderPart: Bag = {
   },
 };
 
-mixin(G, RenderPart);
+mixin(Game.prototype, RenderPart, true);

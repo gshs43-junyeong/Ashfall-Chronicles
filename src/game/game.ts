@@ -2,6 +2,7 @@
 import { bindApp } from './ctx.js';
 import { startLoop } from '../engine/core/loop.js';
 import { aabb, clamp, dist, dist2, lerp } from '../engine/core/math.js';
+import { mixin } from '../engine/core/mixin.js';
 import { RNG, tileHash } from '../engine/core/rng.js';
 import { createInput } from '../engine/input/actions.js';
 import { bindPointer } from '../engine/input/pointer.js';
@@ -38,22 +39,48 @@ export const TOUCH = (() => {
   return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 })();
 
-export const G: Bag = {
-  cv: null, ctx: null, mm: null, mmx: null,
-  W: 0, H: 0, cam: { x: 0, y: 0 },
-  world: null, rng: new RNG(1),
-  /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
-  players: [], me: null,
-  ents: [], projs: [], parts: [], texts: [], drops: [], pending: [], corpses: [],
-  time: 0, dayT: 6 * 60, shake: 0,
-  /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
-     ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
-  scenes: createScenes({
-    scenes: { title: {}, play: { update: dt => G.update(dt), render: () => { G.syncCtl(); G.render(); } } },
-    /* 멀티플레이에서는 멈춤 메뉴·쓰러짐이 세계를 멈추면 안 된다(남의 판이 같이 멈추고 끊긴다) — 입력만 막는 겹(mpause·mdeath)을 쓴다. */
-    layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true }, mpause: { input: true }, mdeath: { input: true } },   // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
-    start: 'title'
-  }),
+/** 게임 하나 — 상태는 인스턴스 칸(생성자), 메서드는 프로토타입(이 파일의 GameCore 와 game/*.ts 조각이 붙인다).
+    ★ 조각에 새 칸을 만들 때 객체·배열을 처음 값으로 두면 인스턴스끼리 나눠 쓴다 — null 로 두고 쓸 때 새로 만들 것. */
+export class Game {
+  constructor() {
+    const g: Bag = this;   // 씬·입력 콜백이 부르는 이 게임
+    Object.assign(this, {
+      cv: null, ctx: null, mm: null, mmx: null,
+      W: 0, H: 0, cam: { x: 0, y: 0 },
+      world: null, rng: new RNG(1),
+      /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
+      players: [], me: null,
+      ents: [], projs: [], parts: [], texts: [], drops: [], pending: [], corpses: [],
+      time: 0, dayT: 6 * 60, shake: 0,
+      /* 씬 스택 — 바닥 씬(타이틀·플레이) 위에 멈춤(메뉴·쓰러짐)과 창(패널·대화·자물쇠) 겹이 얹힌다.
+         ★ 멈춤·창은 각각 **한 겹**이다 — 여러 곳이 같은 겹을 열고 닫는다(대화를 닫으면 패널이 열려 있어도 창 겹이 걷힌다). */
+      scenes: createScenes({
+        scenes: { title: {}, play: { update: dt => g.update(dt), render: () => { g.syncCtl(); g.render(); } } },
+        /* 멀티플레이에서는 멈춤 메뉴·쓰러짐이 세계를 멈추면 안 된다(남의 판이 같이 멈추고 끊긴다) — 입력만 막는 겹(mpause·mdeath)을 쓴다. */
+        layers: { pause: { pause: true }, death: { pause: true }, ui: { input: true }, mpause: { input: true }, mdeath: { input: true } },   // ★ 쓰러짐은 멈춤 메뉴와 다른 겹 — 메뉴를 열고 닫아도 부활 전엔 안 돈다
+        start: 'title'
+      }),
+      /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
+      _ctlOff: false,
+      mode: 'normal',        // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
+      chapter: 0, boss: null,
+      /* 제작 시설: nearSt는 지금 어떤 시설 앞에 서 있는가. */
+      nearSt: { work: false, forge: false }, nearStObj: { work: null, forge: null },
+      event: null,            // 진행 중인 세계 이벤트 {id, t}
+      eventRolled: -1,        // 이 국면(낮/밤)에 이미 주사위를 굴렸는가
+      sideActive: {}, sideDone: {},
+      input: { left: 0, right: 0, up: 0, down: 0, jump: 0, dash: 0, m1: 0, m2: 0, mx: 0, my: 0, wx: 0, wy: 0 },
+      spawnTimer: 0, mmTimer: 0, hoverObj: null,
+      currentSlot: null,      // 지금 열려 있는 세이브가 몇 번 슬롯인지 — saveGame()이 여길 본다
+
+      /* ================= 입력 ================= */
+      /** 키 · 액션(engine/input) — 액션 표는 data.js KEY_ACTIONS, 다시 매긴 키는 설정. */
+      inp: createInput({ actions: KEY_ACTIONS, custom: () => g.settings && g.settings.keys }),
+    });
+  }
+}
+
+export const GameCore: Bag = {
   /** 이 화면의 플레이어(= me). 넣으면 혼자 하는 판으로 players 를 [p] 로 맞춘다. */
   get player() { return this.me; },
   set player(p) { this.me = p; this.players = p ? [p] : []; },
@@ -61,22 +88,10 @@ export const G: Bag = {
   get paused() { return this.scenes.paused(); },
   get uiOpen() { return this.scenes.has('ui'); },
   set uiOpen(on) { this.scenes.set('ui', on); },     // ui.js 의 패널·대화가 연다
-  /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
-  _ctlOff: false,
   syncCtl() {
     const off = this.uiOpen || this.paused || this.scenes.has('mpause') || this.scenes.has('mdeath') || !!(this.player && this.player.hp <= 0);   // 멀티플레이 멈춤·쓰러짐은 세계를 안 멈추는 층
     if (off !== this._ctlOff) { this._ctlOff = off; document.body.classList.toggle('ctl-off', off); }
   },
-  mode: 'normal',        // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
-  chapter: 0, boss: null,
-  /* 제작 시설: nearSt는 지금 어떤 시설 앞에 서 있는가. */
-  nearSt: { work: false, forge: false }, nearStObj: { work: null, forge: null },
-  event: null,            // 진행 중인 세계 이벤트 {id, t}
-  eventRolled: -1,        // 이 국면(낮/밤)에 이미 주사위를 굴렸는가
-  sideActive: {}, sideDone: {},
-  input: { left: 0, right: 0, up: 0, down: 0, jump: 0, dash: 0, m1: 0, m2: 0, mx: 0, my: 0, wx: 0, wy: 0 },
-  spawnTimer: 0, mmTimer: 0, hoverObj: null,
-  currentSlot: null,      // 지금 열려 있는 세이브가 몇 번 슬롯인지 — saveGame()이 여길 본다
 
   /* ================= 초기화 ================= */
   init() { const { WW, WH } = dimsOf(this.world);
@@ -177,10 +192,6 @@ export const G: Bag = {
     const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), QUALITY[this.quality()].dpr);
     this.W = v.W; this.H = v.H;
   },
-
-  /* ================= 입력 ================= */
-  /** 키 · 액션(engine/input) — 액션 표는 data.js KEY_ACTIONS, 다시 매긴 키는 설정. */
-  inp: createInput({ actions: KEY_ACTIONS, custom: () => G.settings && G.settings.keys }),
   /** 이 액션에 걸린 키 목록. */
   keysFor(id) { return this.inp.keysFor(id); },
   /** 지금 눌려 있는가 */
@@ -823,6 +834,10 @@ export const G: Bag = {
     }
   },
 };
+mixin(Game.prototype, GameCore, true);
+
+/** 이 페이지의 게임 — 아래층(world · entity · factory · ui)은 ctx.js 의 app 으로 이것을 본다 */
+export const G: Bag = new Game();
 
 bindApp(G);
 addEventListener('DOMContentLoaded', () => G.init());

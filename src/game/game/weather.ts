@@ -7,7 +7,7 @@ import { CHAPTERS } from '../data/story.js';
 import { TS } from '../world.js';
 import { LEAF_TWIG, TileArt } from '../tileart.js';
 import { Sprites } from '../sprites.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const WeatherPart: Bag = {
@@ -192,4 +192,4 @@ export const WeatherPart: Bag = {
   },
 };
 
-mixin(G, WeatherPart);
+mixin(Game.prototype, WeatherPart, true);

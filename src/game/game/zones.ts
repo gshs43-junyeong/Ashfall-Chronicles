@@ -5,7 +5,7 @@ import { mixin } from '../../engine/core/mixin.js';
 import { dimsOf } from '../size.js';
 import { TS, ZONE_CARD } from '../world.js';
 import { UI } from '../ui.js';
-import { G } from '../game.js';
+import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const ZonesPart: Bag = {
@@ -77,4 +77,4 @@ export const ZonesPart: Bag = {
   },
 };
 
-mixin(G, ZonesPart);
+mixin(Game.prototype, ZonesPart, true);
