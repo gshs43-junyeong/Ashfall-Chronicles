@@ -401,7 +401,7 @@ export class Enemy extends Ent {
   declare sgTook: number; declare slowFx: Timed; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
   declare stateT: number; declare think: number; declare type: string; declare weatherBuffed: boolean; declare xp: number;
   /* 몹 스킬 · 걸린 것(entity/enemy-skills) */
-  declare chillT: number; declare empT: number; declare baseDmg: number; declare cast: Bag | null; declare mskCd: Bag | null; declare skillIds: string[] | null;
+  declare chillT: number; declare empT: number; declare baseDmg: number; declare cast: Bag | null; declare mskCd: Bag | null; declare skillIds: string[] | null; declare castKick: number;
   declare chill: (t: number) => void; declare empower: (dur: number, mult: number) => void; declare mobSkills: (dt: number, player: any, seen: boolean, dd: number) => void;
   declare allyTarget: (id: string, S: Bag) => any; declare fireSkill: (id: string, player: any, tgt: any) => void;
 

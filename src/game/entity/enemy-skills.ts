@@ -30,7 +30,7 @@ export const EnemySkills: Bag & ThisType<Enemy> = {
     /* 시전 중 — 예고가 끝나면 터뜨린다. 그동안은 거의 서 있다 */
     if (this.cast) {
       this.cast.t -= dt; this.vx *= 0.85;
-      if (this.cast.t <= 0) { const c = this.cast; this.cast = null; this.fireSkill(c.id, player, c.tgt); }
+      if (this.cast.t <= 0) { const c = this.cast; this.cast = null; this.atkPose = 0.3; this.castKick = 0.3; this.fireSkill(c.id, player, c.tgt); }
       return;
     }
     if (dd > this.aggro) return;
@@ -44,7 +44,6 @@ export const EnemySkills: Bag & ThisType<Enemy> = {
       } else if (!seen || dd > S.range) continue;
       this.mskCd[id] = S.cd * (0.85 + Math.random() * 0.3);
       this.cast = { id, t: S.cast, max: S.cast, tgt };
-      this.atkPose = S.cast;
       G.mobCastFx(this, S);
       break;
     }

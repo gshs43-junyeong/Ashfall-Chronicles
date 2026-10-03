@@ -968,8 +968,7 @@
   "모두 꺼내기": "Alles herausnehmen",
   "쓰러짐": "Am Boden",
   "{name|이} 쓰러졌다": "{name} ist gefallen",
-  "{name|이} 다시 일어났다": "{name} ist wieder auf den Beinen",
-  "저주에 걸렸다 — 주는 피해가 줄었다": "Verflucht — dein Schaden ist verringert"
+  "{name|이} 다시 일어났다": "{name} ist wieder auf den Beinen"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

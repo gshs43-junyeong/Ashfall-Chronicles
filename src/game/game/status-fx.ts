@@ -5,10 +5,8 @@
 import { TAU } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tileHash } from '../../engine/core/rng.js';
-import { tr } from '../lang.js';
 import { DEBUFF_EDGE, MOB_SKILLS } from '../data/mobskills.js';
 import { TS } from '../world.js';
-import { DmgText } from '../entity.js';
 import { Game } from '../game.js';
 
 type Kinds = { burn: boolean; poison: boolean; chill: boolean; empower: boolean; weak: boolean; cast: Bag | null };
@@ -43,34 +41,7 @@ export const StatusFxPart: Bag = {
     } else if (kind === 'empower') {
       v.flare(x, y, 30, '#ff6a4a', 0.22); v.column(x, e.y + e.h, e.w + 10, e.h * 1.6, '#ff5a3a', 0.45);
     } else if (kind === 'weak') {
-      v.puffs(x, y - 6, 6, 12, 'rgba(110,70,160,.8)', 1.0, 14); v.sigil(x, e.y + e.h, e.w * 0.9 + 8, '#b07aff', 0.7, 5, -1, 0.3);
-    }
-  },
-
-  /** 몹이 스킬을 시작한다 — 발밑 마법진(예고 시간만큼) */
-  mobCastFx(e: any, S: Bag) {
-    this.vfx.sigil(e.cx, e.y + e.h - 2, Math.max(22, e.w * 0.9), S.c, S.cast + 0.3, S.kind === 'ally' ? 6 : 5, 1.4, 0.3);
-    this.sfxAt('magic', e.cx / TS, e.cy / TS, 0.8, 0.45);
-  },
-  /** 몹 스킬이 터진다 */
-  mobSkillFx(e: any, S: Bag, id: string, tgt?: any, amt?: number) {
-    const v = this.vfx;
-    if (id === 'heal' && tgt) {
-      v.beam(e.cx, e.cy, tgt.cx, tgt.cy, S.c, 0.3, 4);
-      v.column(tgt.cx, tgt.y + tgt.h, tgt.w + 14, tgt.h * 1.8, S.c, 0.6);
-      v.sparks(tgt.cx, tgt.y + tgt.h - 6, 10, '#d8ffd0', 200, -Math.PI / 2, 1.2, 0.6, -60);
-      this.texts.push(new DmgText(tgt.cx, tgt.y, '+' + amt, '#7fe07f', 0));
-    } else if (id === 'empower') {
-      v.shock(e.cx, e.cy, S.range * 0.7, S.c, 0.45, 8); v.flare(e.cx, e.cy - 6, 34, '#ff9a6a', 0.22);
-    } else if (id === 'hex' && tgt) {
-      v.beam(e.cx, e.cy, tgt.cx, tgt.cy, S.c, 0.35, 5);
-      v.reticle(() => [tgt.cx, tgt.cy], tgt.w / 2 + 14, S.c, 0.7);
-      this.toast(tr('저주에 걸렸다 — 주는 피해가 줄었다'), 'bad');
-    } else if (id === 'fizzle') {
-      v.puffs(e.cx, e.cy, 3, 8, 'rgba(120,100,150,.6)', 0.5, 6);
-    } else {
-      v.flare(e.cx, e.cy, 32, S.c, 0.2);
-      v.sparks(e.cx, e.cy, 8, S.c, 300, 0, TAU, 0.3, 0);
+      v.puffs(x, y - 6, 8, 12, 'rgba(110,70,160,.8)', 1.0, 18); v.flare(x, y, 24, '#b07aff', 0.2);
     }
   },
 
@@ -116,17 +87,17 @@ export const StatusFxPart: Bag = {
         c.beginPath(); c.arc(sx + w / 2 + Math.cos(a) * r, sy + h * 0.5 + Math.sin(a * 1.3) * h * 0.35, 2.2, 0, TAU); c.fill();
       }
     }
-    if (k.cast) {             // 시전 예고 — 손 앞에 빛이 모인다(남은 시간만큼 커진다)
-      const S = this.mobSkillDef(k.cast.id), p = 1 - Math.max(0, k.cast.t) / k.cast.max;
-      const ox = sx + w / 2 + (e.facing || 1) * (w / 2 + 4), oy = sy + h * 0.35, r = 3 + p * 8;
+    if (k.cast) {             // 시전 예고 — 발밑에 빛이 차오르고 손에 빛 덩이가 커진다(모여드는 알갱이는 mob-fx)
+      const S = this.mobSkillDef(k.cast.id), p = 1 - Math.max(0, k.cast.t) / k.cast.max, col = S ? S.c : '#ffffff';
+      const fx = sx + w / 2, fy = sy + h, pr = w * 0.9 + 10;
+      const pool = c.createRadialGradient(fx, fy, 0, fx, fy, pr);
+      pool.addColorStop(0, col); pool.addColorStop(1, 'rgba(0,0,0,0)');
+      c.save(); c.translate(fx, fy); c.scale(1, 0.28); c.translate(-fx, -fy);
+      c.globalAlpha = 0.25 + 0.35 * p; c.fillStyle = pool; c.beginPath(); c.arc(fx, fy, pr, 0, TAU); c.fill(); c.restore();
+      const ox = sx + w / 2 + (e.facing || 1) * (w / 2 + 4), oy = sy + h * 0.35, r = 3 + p * 8 + Math.sin(t * 30) * 0.8;
       const g = c.createRadialGradient(ox, oy, 0, ox, oy, r * 2.4);
-      g.addColorStop(0, '#ffffff'); g.addColorStop(0.3, S ? S.c : '#ffffff'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      g.addColorStop(0, '#ffffff'); g.addColorStop(0.3, col); g.addColorStop(1, 'rgba(0,0,0,0)');
       c.globalAlpha = 0.9; c.fillStyle = g; c.beginPath(); c.arc(ox, oy, r * 2.4, 0, TAU); c.fill();
-      c.strokeStyle = S ? S.c : '#fff'; c.lineWidth = 1.2;
-      for (let i = 0; i < 5; i++) {           // 빨려 드는 빛줄기
-        const a = i * 1.26 + t * 3, d = 18 * (1 - ((t * 2 + i * 0.2) % 1));
-        c.globalAlpha = 0.6; c.beginPath(); c.moveTo(ox + Math.cos(a) * (d + 6), oy + Math.sin(a) * (d + 6)); c.lineTo(ox + Math.cos(a) * d, oy + Math.sin(a) * d); c.stroke();
-      }
     }
     c.globalCompositeOperation = 'source-over';
     if (k.chill) this.iceCrust(c, sx, sy, w, h, id, t);
