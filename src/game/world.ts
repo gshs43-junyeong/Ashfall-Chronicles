@@ -28,7 +28,8 @@ export const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
    한 칸에 줄어드는 양(작을수록 그림자가 옅다), 빛 색을 얹는 세기. 사연: docs/code-history.md#h142 */
 export const LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
 /* 해(computeLight sun) — 해가 높이 떠 있을 때 그늘진 바깥이 받는 하늘빛 몫 · 잎이 통과시키는 햇빛 몫(나무 그늘이 얼룩진다) */
-export const SUN_AMB = 0.4, SUN_SOFT = 0.75, SUN_DEPTH = 10;   // SUN_SOFT — 밟을 수 없는 것(기둥 · 잎 · 장식)을 지나며 남는 햇빛
+export const SUN_AMB = 0.4, SUN_SOFT = 0.9, SUN_DEPTH = 10;    // SUN_SOFT — 밟을 수 없는 것(기둥 · 장식)을 지나며 남는 햇빛
+export const SUN_LEAF = 0.9;     // 잎이 다 붙어 있을 때 남는 햇빛 — 잎이 지면(leafKeep) 1 로 다가간다. 사연: docs/code-history.md#h150
 /** 빛을 막는 타일 — 막힌 칸(solid 1) 중 창문(clear)이 아닌 것 */
 export const LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
 TILE_DEF.forEach((d, i) => { LIGHT_OPAQUE[i] = d.solid === 1 && !d.clear ? 1 : 0; });
@@ -618,7 +619,7 @@ export class World extends TileMap {
       ② 강한 점 광원(횃불·등불·수정 …, 세기 LIGHT_POINT 이상)과 플레이어 미광: 칸마다 광선을 쏘아 **가려진 칸은 그늘**(castPointLight),
          그다음 튀는 빛만 조금(LIGHT_BOUNCE 씩) 번진다 — 모서리를 돌아 다 밝아지면 그림자가 사라진다.
       ★ 두 겹 다 막힌 칸은 빛을 받되 트인 칸으로 넘기지 않는다(sweepLightGrid op) — 벽 한두 칸 뒤의 빈 방이 밝던 것. 사연: docs/code-history.md#h142 */
-  computeLight(tx0: number, ty0: number, tx1: number, ty1: number, dayLight: number, extra: number[][] | null, sun?: { x: number; y: number; k: number } | null) { const { WW, WH } = this.dims;
+  computeLight(tx0: number, ty0: number, tx1: number, ty1: number, dayLight: number, extra: number[][] | null, sun?: { x: number; y: number; k: number } | null, leafKeep?: (t: number) => number) { const { WW, WH, SKY_Y } = this.dims;
     const P = 14;
     const x0 = clamp(tx0 - P, 0, WW - 1), x1 = clamp(tx1 + P, 0, WW - 1);
     const y0 = clamp(ty0 - P, 0, WH - 1), y1 = clamp(ty1 + P, 0, WH - 1);
@@ -647,7 +648,9 @@ export class World extends TileMap {
           else L[k] = Math.max(L[k], d.light);
         }
         /* 햇빛 통과 — 밟을 수 없는 것(나무 기둥 · 잎 · 장식)은 그늘이 옅다(SUN_SOFT). 사연: docs/code-history.md#h146 */
-        trans[k] = d.solid === 1 ? (op[k] ? 0 : 1) : d.liquid ? 0.8 : op[k] || d.leaf ? SUN_SOFT : 1;
+        /* ★ 하늘 섬(SKY_Y 위)은 해를 가리지 않는다 — 섬 서른 개 넘게 땅에 그늘을 떨궈 지면이 얼룩덜룩했다 */
+        trans[k] = y < SKY_Y ? 1 : d.solid === 1 ? (op[k] ? 0 : 1) : d.liquid ? 0.8
+          : d.leaf ? 1 - (1 - SUN_LEAF) * (leafKeep ? leafKeep(t) : 1) : op[k] ? SUN_SOFT : 1;
         if (t === T.AIR && y <= s && this.walls[y * WW + x] === 0) L[k] = Math.max(L[k], skyL);
         /* 바닷물은 깊이만큼 햇빛을 잃되 흩어진 빛이 남는다 — 수면이 화면(+14칸) 밖이면 스윕이
            빛을 못 받아 수심 30칸부터 새까매졌고, 그 어둠에 바다 몹이 통째로 묻혔다. */

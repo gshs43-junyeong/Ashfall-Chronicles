@@ -77,8 +77,10 @@ export const RenderPart: Bag = {
     /* 해 — 하늘에 그린 자리(skyArc: 0 = 동 · 1 = 서)에서 방향을 잡는다. 떠오르고 질 때는 세기를 줄여 그림자가 서서히 생기고 사라진다.
        비 오는 동안은 구름이 해를 가려 그림자가 옅다. */
     const sun = DAY_CYCLE.sunDir(this.dayT, (this.rainT || 0) * 1.4);
+    /* 장이 넘어가며 잿빛에 진 잎만큼 잎 그늘도 옅어진다 — drawAshTile 이 칸을 지우는 평균 비율(shed × 잿빛)을 그대로 쓴다 */
+    const ashF = this.ashF(), keep = (t: number) => { const a = this.ASH_TILE[t]; return a && a.shed ? clamp(1 - a.shed * ashF * a.fade * 1.15, 0, 1) : 1; };
     w.computeLight(tx0, ty0, tx1, ty1, dayLight,
-      [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]], sun);   // 플레이어 미광
+      [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]], sun, keep);   // 플레이어 미광
   },
   /** 렌더 단계 — 원경 · 채취탑 */
   rFar(f: any) {

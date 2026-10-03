@@ -13564,6 +13564,7 @@
     MIN_CAVE: () => MIN_CAVE,
     SUN_AMB: () => SUN_AMB,
     SUN_DEPTH: () => SUN_DEPTH,
+    SUN_LEAF: () => SUN_LEAF,
     SUN_SOFT: () => SUN_SOFT,
     TS: () => TS,
     World: () => World,
@@ -13777,7 +13778,8 @@
   var inSeaZone = (x, seaX1) => x < seaX1 + BEACH_W + 4;
   var BIOME_BAND = 104;
   var LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
-  var SUN_AMB = 0.4, SUN_SOFT = 0.75, SUN_DEPTH = 10;
+  var SUN_AMB = 0.4, SUN_SOFT = 0.9, SUN_DEPTH = 10;
+  var SUN_LEAF = 0.9;
   var LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
   TILE_DEF.forEach((d, i) => {
     LIGHT_OPAQUE[i] = d.solid === 1 && !d.clear ? 1 : 0;
@@ -14300,8 +14302,8 @@
         ② 강한 점 광원(횃불·등불·수정 …, 세기 LIGHT_POINT 이상)과 플레이어 미광: 칸마다 광선을 쏘아 **가려진 칸은 그늘**(castPointLight),
            그다음 튀는 빛만 조금(LIGHT_BOUNCE 씩) 번진다 — 모서리를 돌아 다 밝아지면 그림자가 사라진다.
         ★ 두 겹 다 막힌 칸은 빛을 받되 트인 칸으로 넘기지 않는다(sweepLightGrid op) — 벽 한두 칸 뒤의 빈 방이 밝던 것. 사연: docs/code-history.md#h142 */
-    computeLight(tx0, ty0, tx1, ty1, dayLight, extra, sun) {
-      const { WW: WW2, WH: WH2 } = this.dims;
+    computeLight(tx0, ty0, tx1, ty1, dayLight, extra, sun, leafKeep) {
+      const { WW: WW2, WH: WH2, SKY_Y: SKY_Y2 } = this.dims;
       const P = 14;
       const x0 = clamp(tx0 - P, 0, WW2 - 1), x1 = clamp(tx1 + P, 0, WW2 - 1);
       const y0 = clamp(ty0 - P, 0, WH2 - 1), y1 = clamp(ty1 + P, 0, WH2 - 1);
@@ -14330,7 +14332,7 @@
             if (d.light >= LIGHT_POINT && !d.liquid) pts.push(x, y);
             else L[k] = Math.max(L[k], d.light);
           }
-          trans[k] = d.solid === 1 ? op[k] ? 0 : 1 : d.liquid ? 0.8 : op[k] || d.leaf ? SUN_SOFT : 1;
+          trans[k] = y < SKY_Y2 ? 1 : d.solid === 1 ? op[k] ? 0 : 1 : d.liquid ? 0.8 : d.leaf ? 1 - (1 - SUN_LEAF) * (leafKeep ? leafKeep(t) : 1) : op[k] ? SUN_SOFT : 1;
           if (t === T.AIR && y <= s && this.walls[y * WW2 + x] === 0) L[k] = Math.max(L[k], skyL);
           else if (d.sea && sea && y > sea.level)
             L[k] = Math.max(L[k], dayLight - (y - sea.level) * 0.42, seaAmb);
@@ -38172,7 +38174,7 @@
         if (UI5.open === "machine") UI5.refreshMachine();
         this.checkChapter();
       }
-      if (this.deathMark) {
+      if (this.deathMark && this.player.hp > 0 && !this.scenes.has("death") && !this.scenes.has("mdeath")) {
         const dm = this.deathMark;
         const now2 = this.dayCount * 1440 + this.dayT;
         if (now2 - (dm.at || 0) >= 720) {
@@ -45637,6 +45639,10 @@
       const dayLight = lerp(3, 15, dayF);
       const litR = p.buffs.some((b) => b.id === "lit_greater") ? 9.5 : p.buffs.some((b) => b.id === "lit") ? 6.8 : p.buffs.some((b) => b.id === "lantern") ? 6 : 4.6;
       const sun = DAY_CYCLE.sunDir(this.dayT, (this.rainT || 0) * 1.4);
+      const ashF = this.ashF(), keep = (t) => {
+        const a = this.ASH_TILE[t];
+        return a && a.shed ? clamp(1 - a.shed * ashF * a.fade * 1.15, 0, 1) : 1;
+      };
       w.computeLight(
         tx0,
         ty0,
@@ -45644,7 +45650,8 @@
         ty1,
         dayLight,
         [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]],
-        sun
+        sun,
+        keep
       );
     },
     /** 렌더 단계 — 원경 · 채취탑 */
@@ -46199,7 +46206,7 @@
       let top = mixHex("#0a0d1c", "#4a86c8", f);
       let bot = mixHex("#141020", "#a8c8e0", f);
       let ev = this.eventActive() ? this.eventSpec() : null;
-      if (!ev && this.event && this.event.id === "rain") {
+      if (!ev && this.event && (this.event.id === "rain" || this.event.id === "bloodmoon")) {
         const p = this.player, w = this.world;
         const zone = p && w ? w.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS)) : null;
         if (zone === "village" || zone === "camp") ev = this.eventSpec();
