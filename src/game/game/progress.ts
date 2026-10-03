@@ -125,6 +125,7 @@ export const ProgressPart: Bag = {
     /* 별 연출이 얼마나 걸리는지 되받는다. */
     const starShow = this.gainStarOrbit(ch.id) || 0;
     this.chapter++;
+    this.ashHold = this.time + starShow / 1000 + (ch.id === 8 ? 0.6 : 0);   // 잿빛은 별이 다 오른 뒤에 걷힌다
     this.checkAch();
     UI.refreshBag();
 

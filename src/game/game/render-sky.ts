@@ -183,7 +183,8 @@ export const RenderSkyPart: Bag = {
 
   /** 숲 원경을 지금 잿빛 깊이에 맞춰 섞어 둔다. */
   forestBg(im: any) {
-    const af = this.ashF();
+    let af = this.ashF();
+    if (af !== this.ashTarget(this.chapter || 0)) af = Math.round(af * 40) / 40;   // 옮겨 가는 동안은 원경을 1/40 걸음으로만 다시 굽는다
     const S = this.FOREST_STAGE;
     /* 지금 잿빛 깊이가 어느 두 단계 사이인가. */
     let a = 0;

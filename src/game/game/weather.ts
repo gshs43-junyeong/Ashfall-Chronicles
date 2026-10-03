@@ -5,7 +5,7 @@ import { tileHash } from '../../engine/core/rng.js';
 import { Precip } from '../../engine/fx/precip.js';
 import { Wind } from '../../engine/fx/wind.js';
 import { T, TILE_DEF } from '../data.js';
-import { CHAPTERS } from '../data/story.js';
+import { CHAPTERS, SESSIONS } from '../data/story.js';
 import { TS } from '../world.js';
 import { LEAF_TWIG, TileArt } from '../tileart.js';
 import { Sprites } from '../sprites.js';
@@ -157,12 +157,22 @@ export const WeatherPart: Bag = {
     c.globalAlpha = 1;
   },
 
-  /** 지금 잿빛이 얼마나 깊은가 (0 = 아직 색이 있다, 1 = 다 빠졌다) */
-  /** 숲 원경의 잿빛 깊이(0=푸른 숲 · 1=죽은 나무만) — 사연: docs/code-history.md#h49 */
+  /** 숲의 잿빛 깊이(0=푸른 숲 · 1=죽은 나무만) — 세션 1 동안 짙어지고 종장을 끝내면 걷힌다 — 사연: docs/code-history.md#h151 */
+  ashTarget(ch: number) {
+    const s2 = SESSIONS[1].ch0, last = Math.max(s2 + 1, CHAPTERS.length - 1);
+    if (ch < s2) return 0.10 + clamp(ch / (s2 - 1), 0, 1) * 0.78;
+    return 0.10 + clamp((ch - s2) / (last - s2), 0, 1) * 0.25;   // 세션 2·3 은 옅게만 다시 번진다
+  },
+  /** 지금 보이는 잿빛 깊이 — 장이 바뀌면 목표로 서서히 옮겨 간다(별 연출이 끝날 때까지는 붙들어 둔다) */
   ashF() {
-    const last = Math.max(1, CHAPTERS.length - 1);
-    const ch = clamp(this.chapter || 0, 0, last);
-    return clamp(0.10 + (ch / last) * 0.78, 0.10, 0.88);
+    const tgt = this.ashTarget(this.chapter || 0), now = this.time || 0;
+    /* 새 세계(새 게임 · 불러오기)는 바로 그 값 — 서장부터 다시 번지는 연출이 돌면 안 된다 */
+    if (this.ashW !== this.world || this.ashCur == null) { this.ashW = this.world; this.ashCur = tgt; this.ashT = now; return tgt; }
+    const dt = clamp(now - this.ashT, 0, 0.1); this.ashT = now;
+    if (now < (this.ashHold || 0)) return this.ashCur;
+    const d = tgt - this.ashCur, ad = Math.abs(d);
+    this.ashCur = ad < 0.002 ? tgt : this.ashCur + Math.sign(d) * Math.min(ad, (0.05 + ad * 0.9) * dt);
+    return this.ashCur;
   },
 };
 

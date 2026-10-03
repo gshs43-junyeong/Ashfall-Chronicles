@@ -43115,6 +43115,7 @@
       this.toast(tr("『{title}』 완료 — 경험치 {xp} · 금화 {gold}", { title: ch.title, xp: fmt(ch.rw.xp), gold: fmt(ch.rw.gold) }), "good");
       const starShow = this.gainStarOrbit(ch.id) || 0;
       this.chapter++;
+      this.ashHold = this.time + starShow / 1e3 + (ch.id === 8 ? 0.6 : 0);
       this.checkAch();
       UI5.refreshBag();
       let delay = Math.max(1400, starShow);
@@ -44094,12 +44095,27 @@
       }
       c.globalAlpha = 1;
     },
-    /** 지금 잿빛이 얼마나 깊은가 (0 = 아직 색이 있다, 1 = 다 빠졌다) */
-    /** 숲 원경의 잿빛 깊이(0=푸른 숲 · 1=죽은 나무만) — 사연: docs/code-history.md#h49 */
+    /** 숲의 잿빛 깊이(0=푸른 숲 · 1=죽은 나무만) — 세션 1 동안 짙어지고 종장을 끝내면 걷힌다 — 사연: docs/code-history.md#h151 */
+    ashTarget(ch) {
+      const s2 = SESSIONS[1].ch0, last = Math.max(s2 + 1, CHAPTERS.length - 1);
+      if (ch < s2) return 0.1 + clamp(ch / (s2 - 1), 0, 1) * 0.78;
+      return 0.1 + clamp((ch - s2) / (last - s2), 0, 1) * 0.25;
+    },
+    /** 지금 보이는 잿빛 깊이 — 장이 바뀌면 목표로 서서히 옮겨 간다(별 연출이 끝날 때까지는 붙들어 둔다) */
     ashF() {
-      const last = Math.max(1, CHAPTERS.length - 1);
-      const ch = clamp(this.chapter || 0, 0, last);
-      return clamp(0.1 + ch / last * 0.78, 0.1, 0.88);
+      const tgt = this.ashTarget(this.chapter || 0), now2 = this.time || 0;
+      if (this.ashW !== this.world || this.ashCur == null) {
+        this.ashW = this.world;
+        this.ashCur = tgt;
+        this.ashT = now2;
+        return tgt;
+      }
+      const dt = clamp(now2 - this.ashT, 0, 0.1);
+      this.ashT = now2;
+      if (now2 < (this.ashHold || 0)) return this.ashCur;
+      const d = tgt - this.ashCur, ad = Math.abs(d);
+      this.ashCur = ad < 2e-3 ? tgt : this.ashCur + Math.sign(d) * Math.min(ad, (0.05 + ad * 0.9) * dt);
+      return this.ashCur;
     }
   };
   mixin(Game.prototype, WeatherPart, true);
@@ -46935,7 +46951,8 @@
     ],
     /** 숲 원경을 지금 잿빛 깊이에 맞춰 섞어 둔다. */
     forestBg(im) {
-      const af = this.ashF();
+      let af = this.ashF();
+      if (af !== this.ashTarget(this.chapter || 0)) af = Math.round(af * 40) / 40;
       const S = this.FOREST_STAGE;
       let a = 0;
       while (a < S.length - 2 && af > S[a + 1][0]) a++;
