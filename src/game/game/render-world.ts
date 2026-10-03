@@ -9,7 +9,7 @@ import { T, TILE_DEF } from '../data.js';
 import { ENEMIES } from '../data/enemies.js';
 import { FLUID_FLOW, FLUID_KIND } from '../data/materials.js';
 import { idef } from '../data/values.js';
-import { TS, doorEdge } from '../world.js';
+import { LIGHT_POINT, TS, doorEdge } from '../world.js';
 import { ART, TileArt } from '../tileart.js';
 import { Sprites } from '../sprites.js';
 import { Part } from '../entity.js';
@@ -197,10 +197,26 @@ export const RenderWorldPart: Bag = {
     this._glowC = this._glowC || {};
     c.save();
     c.globalCompositeOperation = 'lighter';
+    /* 점 광원의 빛 색 — 조명 계산이 그늘째 모은 칸 단위 색(world.lightColAt)을 부드럽게 늘려 얹는다. 벽 너머로 번지지 않는다 */
+    const x0 = tx0 - 1, y0 = ty0 - 1, lw = tx1 - tx0 + 3, lh = ty1 - ty0 + 3;
+    if (!this.glowCv || this.glowCv.width !== lw || this.glowCv.height !== lh) {
+      this.glowCv = document.createElement('canvas'); this.glowCv.width = lw; this.glowCv.height = lh;
+      this.glowCx = this.glowCv.getContext('2d'); this.glowImg = this.glowCx.createImageData(lw, lh);
+    }
+    const gd = this.glowImg.data;
+    for (let y = 0, i = 0; y < lh; y++) for (let x = 0; x < lw; x++, i += 4) {
+      const rgb = w.lightColAt(x0 + x, y0 + y);
+      gd[i] = rgb ? Math.min(255, rgb[0] * 255) : 0; gd[i + 1] = rgb ? Math.min(255, rgb[1] * 255) : 0; gd[i + 2] = rgb ? Math.min(255, rgb[2] * 255) : 0; gd[i + 3] = 255;
+    }
+    this.glowCx.putImageData(this.glowImg, 0, 0);
+    c.imageSmoothingEnabled = true;
+    c.drawImage(this.glowCv, x0 * TS - camX, y0 * TS - camY, lw * TS, lh * TS);
+    c.imageSmoothingEnabled = false;
+    /* 액체 빛(용암)은 칸이 많아 그늘을 따로 재지 않는다 — 예전처럼 둥근 번짐 */
     for (let ty = Math.max(0, ty0 - 2); ty <= Math.min(WH - 1, ty1 + 2); ty++)
       for (let tx = Math.max(0, tx0 - 2); tx <= Math.min(WW - 1, tx1 + 2); tx++) {
         const d = TILE_DEF[w.tiles[ty * WW + tx]];
-        if (!d.lc) continue;
+        if (!d.lc || (d.light! >= LIGHT_POINT && !d.liquid)) continue;
         const r = Math.round(10 + d.light! * 5);
         const key = d.lc + r;
         let g = this._glowC[key];

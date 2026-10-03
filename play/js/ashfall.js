@@ -1194,7 +1194,9 @@
   // src/engine/tilemap/light.ts
   var light_exports = {};
   __export(light_exports, {
-    sweepLight: () => sweepLight
+    castPointLight: () => castPointLight,
+    sweepLight: () => sweepLight,
+    sweepLightGrid: () => sweepLightGrid
   });
   function sweepLight(L, w, h, x0, y0, passes, dec) {
     for (let pass = 0; pass < passes; pass++) {
@@ -1213,6 +1215,59 @@
         L[k] = v;
       }
     }
+  }
+  function sweepLightGrid(L, w, h, passes, dec, op) {
+    for (let pass = 0; pass < passes; pass++) {
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const k = y * w + x, d = dec[k], open = !op || !op[k];
+        let v = L[k];
+        if (x > 0 && (!open || !op[k - 1])) v = Math.max(v, L[k - 1] - d);
+        if (y > 0 && (!open || !op[k - w])) v = Math.max(v, L[k - w] - d);
+        L[k] = v;
+      }
+      for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+        const k = y * w + x, d = dec[k], open = !op || !op[k];
+        let v = L[k];
+        if (x < w - 1 && (!open || !op[k + 1])) v = Math.max(v, L[k + 1] - d);
+        if (y < h - 1 && (!open || !op[k + w])) v = Math.max(v, L[k + w] - d);
+        L[k] = v;
+      }
+    }
+  }
+  var SAMPLES = [[0.5, 0.5], [0.15, 0.15], [0.85, 0.15], [0.15, 0.85], [0.85, 0.85]];
+  function castPointLight(strength, falloff, blocked) {
+    const r = Math.max(1, Math.ceil(strength / falloff)), n = 2 * r + 1, v = new Float32Array(n * n);
+    const opq = new Uint8Array(n * n);
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) opq[(dy + r) * n + dx + r] = blocked(dx, dy) ? 1 : 0;
+    const hits = (tx, ty, px, py) => {
+      const ox = 0.5, oy = 0.5, ddx = px - ox, ddy = py - oy;
+      let cx = 0, cy = 0;
+      const sx = ddx > 0 ? 1 : ddx < 0 ? -1 : 0, sy = ddy > 0 ? 1 : ddy < 0 ? -1 : 0;
+      const tdx = sx ? Math.abs(1 / ddx) : Infinity, tdy = sy ? Math.abs(1 / ddy) : Infinity;
+      let tmx = sx > 0 ? (1 - ox) * tdx : sx < 0 ? ox * tdx : Infinity;
+      let tmy = sy > 0 ? (1 - oy) * tdy : sy < 0 ? oy * tdy : Infinity;
+      for (let guard = 0; guard < 4 * n; guard++) {
+        if (tmx < tmy) {
+          tmx += tdx;
+          cx += sx;
+        } else {
+          tmy += tdy;
+          cy += sy;
+        }
+        if (cx === tx && cy === ty) return false;
+        if (opq[(cy + r) * n + cx + r]) return true;
+      }
+      return false;
+    };
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const base = strength - Math.hypot(dx, dy) * falloff;
+      if (base <= 0) continue;
+      let seen = 0;
+      if (dx === 0 && dy === 0) seen = SAMPLES.length;
+      else for (const [sx, sy] of SAMPLES) if (!hits(dx, dy, dx + sx, dy + sy)) seen++;
+      if (seen) v[(dy + r) * n + dx + r] = base * seen / SAMPLES.length;
+    }
+    return { r, v };
   }
 
   // src/engine/render/pipeline.ts
@@ -13448,6 +13503,12 @@
     DAWN_OBJ: () => DAWN_OBJ,
     DAWN_PLAZA: () => DAWN_PLAZA,
     DAWN_WALL: () => DAWN_WALL,
+    LIGHT_BOUNCE: () => LIGHT_BOUNCE,
+    LIGHT_FALL: () => LIGHT_FALL,
+    LIGHT_OPAQUE: () => LIGHT_OPAQUE,
+    LIGHT_POINT: () => LIGHT_POINT,
+    LIGHT_RGB: () => LIGHT_RGB,
+    LIGHT_TINT: () => LIGHT_TINT,
     MAT_LAYER: () => MAT_LAYER,
     MAT_OF: () => MAT_OF,
     MIN_CAVE: () => MIN_CAVE,
@@ -13481,6 +13542,16 @@
   var BEACH_W = 90;
   var inSeaZone = (x, seaX1) => x < seaX1 + BEACH_W + 4;
   var BIOME_BAND = 104;
+  var LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
+  var LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
+  TILE_DEF.forEach((d, i) => {
+    LIGHT_OPAQUE[i] = d.solid === 1 && !d.clear ? 1 : 0;
+  });
+  var LIGHT_RGB = {};
+  for (const d of TILE_DEF) if (d.lc && !LIGHT_RGB[d.lc]) {
+    const v = parseInt(d.lc.slice(1), 16);
+    LIGHT_RGB[d.lc] = [(v >> 16) / 255, (v >> 8 & 255) / 255, (v & 255) / 255];
+  }
   function setWorldSize(key) {
     applyWorldSize(key);
   }
@@ -13647,7 +13718,9 @@
     set(x, y, t) {
       const { WW: WW2 } = this.dims;
       if (!this.inB(x, y)) return;
-      this.tiles[y * WW2 + x] = t;
+      const k = y * WW2 + x, was = this.tiles[k];
+      this.tiles[k] = t;
+      if (this.lightCache && was !== t) this.lightTouch(k, was);
       if (this.fq) this.fluidWake(x, y);
       if (this.netLog && !this.netMute) this.netLog.add(y * WW2 + x);
     }
@@ -13658,6 +13731,7 @@
     /** tiles 를 직접 쓴 칸(작물 자람 · 무너지는 바닥)도 멀티플레이 기록에 남긴다. */
     netMark(k) {
       if (this.netLog && !this.netMute) this.netLog.add(k);
+      if (this.lightCache) this.lightTouch(k, -1);
     }
     hurtTile(x, y) {
       return TILE_DEF[this.get(x, y)].hurt || 0;
@@ -14031,47 +14105,137 @@
       return d;
     }
     /* ================= 조명 ================= */
-    /** 화면 범위 조명 계산. */
+    /** 화면 범위 조명 계산 — 두 겹을 따로 퍼뜨려 큰 쪽을 쓴다.
+        ① 햇빛·바닷속 빛·약한 빛·액체 빛: 예전처럼 번진다(트인 칸 0.92 · 막힌 칸 2.7씩 줄어듦).
+        ② 강한 점 광원(횃불·등불·수정 …, 세기 LIGHT_POINT 이상)과 플레이어 미광: 칸마다 광선을 쏘아 **가려진 칸은 그늘**(castPointLight),
+           그다음 튀는 빛만 조금(LIGHT_BOUNCE 씩) 번진다 — 모서리를 돌아 다 밝아지면 그림자가 사라진다.
+        ★ 두 겹 다 막힌 칸은 빛을 받되 트인 칸으로 넘기지 않는다(sweepLightGrid op) — 벽 한두 칸 뒤의 빈 방이 밝던 것. 사연: docs/code-history.md#h142 */
     computeLight(tx0, ty0, tx1, ty1, dayLight, extra) {
       const { WW: WW2, WH: WH2 } = this.dims;
       const P = 14;
       const x0 = clamp(tx0 - P, 0, WW2 - 1), x1 = clamp(tx1 + P, 0, WW2 - 1);
       const y0 = clamp(ty0 - P, 0, WH2 - 1), y1 = clamp(ty1 + P, 0, WH2 - 1);
-      const w = x1 - x0 + 1, h = y1 - y0 + 1;
-      if (!this.lightBuf || this.lightBuf.length < w * h) this.lightBuf = new Float32Array(w * h + 64);
-      const L = this.lightBuf;
-      L.fill(0, 0, w * h);
+      const w = x1 - x0 + 1, h = y1 - y0 + 1, n = w * h;
+      if (!this.lightBuf || this.lightBuf.length < n) {
+        this.lightBuf = new Float32Array(n + 64);
+        this.lightBufP = new Float32Array(n + 64);
+        this.lightCol = new Float32Array((n + 64) * 3);
+        this.lightOp = new Uint8Array(n + 64);
+        this.lightDec = new Float32Array(n + 64);
+        this.lightDecP = new Float32Array(n + 64);
+      }
+      if (!this.lightCache) {
+        this.lightCache = /* @__PURE__ */ new Map();
+        this.lightDirty = [];
+        this.lightFrame = 0;
+      }
+      this.lightFrame++;
+      this.lightFlush();
+      const L = this.lightBuf, Lp = this.lightBufP, col = this.lightCol, op = this.lightOp, dec = this.lightDec, decP = this.lightDecP;
+      L.fill(0, 0, n);
+      Lp.fill(0, 0, n);
+      col.fill(0, 0, n * 3);
       const sea = this.sea, seaAmb = 1.2 + dayLight * 0.1;
+      const pts = [];
       for (let x = x0; x <= x1; x++) {
         const s = this.surface[x];
         for (let y = y0; y <= y1; y++) {
           const t = this.tiles[y * WW2 + x];
           const d = TILE_DEF[t];
           const k = (y - y0) * w + (x - x0);
-          if (d.light) L[k] = d.light;
+          op[k] = LIGHT_OPAQUE[t];
+          dec[k] = d.clear ? 1.05 : d.solid === 1 ? 2.7 : t === T.SEAWATER ? 0.42 : 0.92;
+          decP[k] = Math.max(dec[k], LIGHT_BOUNCE);
+          if (d.light) {
+            if (d.light >= LIGHT_POINT && !d.liquid) pts.push(x, y);
+            else L[k] = Math.max(L[k], d.light);
+          }
           if (t === T.AIR && y <= s && this.walls[y * WW2 + x] === 0) L[k] = Math.max(L[k], dayLight);
           else if (d.sea && sea && y > sea.level)
             L[k] = Math.max(L[k], dayLight - (y - sea.level) * 0.42, seaAmb);
         }
       }
+      for (let i = 0; i < pts.length; i += 2) {
+        const lx = pts[i], ly = pts[i + 1], d = TILE_DEF[this.tiles[ly * WW2 + lx]];
+        this.lightStamp(this.lightPatch(lx, ly, d.light), lx, ly, x0, y0, w, h, Lp, LIGHT_RGB[d.lc] || null, d.light);
+      }
       if (extra) for (const [ex, ey, ev] of extra) {
         if (ex < x0 || ex > x1 || ey < y0 || ey > y1) continue;
-        const k = (ey - y0) * w + (ex - x0);
-        L[k] = Math.max(L[k], ev);
+        this.lightStamp(castPointLight(ev, LIGHT_FALL, (dx, dy) => this.lightBlocks(ex + dx, ey + dy)), ex, ey, x0, y0, w, h, Lp, null, ev);
       }
-      const dec = (x, y) => {
-        const t = this.tiles[y * WW2 + x];
-        const d = TILE_DEF[t];
-        if (d.clear) return 1.05;
-        if (d.solid === 1) return 2.7;
-        if (t === T.SEAWATER) return 0.42;
-        return 0.92;
-      };
-      sweepLight(L, w, h, x0, y0, 2, dec);
+      sweepLightGrid(L, w, h, 2, dec, op);
+      sweepLightGrid(Lp, w, h, 1, decP, op);
+      for (let k = 0; k < n; k++) if (Lp[k] > L[k]) L[k] = Lp[k];
       this.lbx = x0;
       this.lby = y0;
       this.lbw = w;
       this.lbh = h;
+    }
+    /** 그 칸이 점 광원의 빛을 막는가(세계 밖은 막힌 것으로) */
+    lightBlocks(x, y) {
+      const { WW: WW2, WH: WH2 } = this.dims;
+      return x < 0 || y < 0 || x >= WW2 || y >= WH2 || LIGHT_OPAQUE[this.tiles[y * WW2 + x]] === 1;
+    }
+    /** 점 광원 하나의 판 — 저장해 두고, 둘레 칸의 막힘이 바뀌면(lightTouch) 버린다 */
+    lightPatch(x, y, s) {
+      const { WW: WW2 } = this.dims;
+      const key = y * WW2 + x, cache2 = this.lightCache;
+      let e = cache2.get(key);
+      if (!e || e.s !== s) {
+        const p = castPointLight(s, LIGHT_FALL, (dx, dy) => this.lightBlocks(x + dx, y + dy));
+        e = { s, x, y, r: p.r, v: p.v, used: 0 };
+        cache2.set(key, e);
+      }
+      e.used = this.lightFrame;
+      return e;
+    }
+    lightStamp(p, lx, ly, x0, y0, w, h, Lp, rgb, s) {
+      const r = p.r, n = 2 * r + 1, col = this.lightCol;
+      for (let dy = -r; dy <= r; dy++) {
+        const yy = ly + dy - y0;
+        if (yy < 0 || yy >= h) continue;
+        for (let dx = -r; dx <= r; dx++) {
+          const xx = lx + dx - x0;
+          if (xx < 0 || xx >= w) continue;
+          const v = p.v[(dy + r) * n + dx + r];
+          if (v <= 0) continue;
+          const k = yy * w + xx;
+          if (v > Lp[k]) Lp[k] = v;
+          if (rgb) {
+            const f = v / s, a = f * f * f * LIGHT_TINT, j = k * 3;
+            col[j] = Math.max(col[j], rgb[0] * a);
+            col[j + 1] = Math.max(col[j + 1], rgb[1] * a);
+            col[j + 2] = Math.max(col[j + 2], rgb[2] * a);
+          }
+        }
+      }
+    }
+    /** 칸이 바뀌었다 — 막힘이나 빛이 달라졌으면 그 둘레 광원 판을 버리게 적어 둔다(was: 예전 타일, -1 이면 모름) */
+    lightTouch(k, was) {
+      const t = this.tiles[k];
+      if (was >= 0 && LIGHT_OPAQUE[was] === LIGHT_OPAQUE[t] && TILE_DEF[was].light === TILE_DEF[t].light) return;
+      this.lightDirty.push(k);
+    }
+    lightFlush() {
+      const { WW: WW2 } = this.dims;
+      const cache2 = this.lightCache;
+      if (this.lightDirty.length) {
+        for (const k of this.lightDirty) {
+          const x = k % WW2, y = k / WW2 | 0;
+          for (const [key, e] of cache2) if (Math.abs(e.x - x) <= e.r && Math.abs(e.y - y) <= e.r) cache2.delete(key);
+        }
+        this.lightDirty.length = 0;
+      }
+      if (cache2.size > 3e3) {
+        for (const [key, e] of cache2) if (this.lightFrame - e.used > 600) cache2.delete(key);
+      }
+    }
+    /** 빛 색(점 광원) — 0~1 rgb, 화면 밖이면 null */
+    lightColAt(x, y) {
+      const lx = x - this.lbx, ly = y - this.lby;
+      if (lx < 0 || ly < 0 || lx >= this.lbw || ly >= this.lbh) return null;
+      const k = (ly * this.lbw + lx) * 3;
+      return this.lightCol.subarray(k, k + 3);
     }
     lightAt(x, y) {
       const lx = x - this.lbx, ly = y - this.lby;
@@ -44126,10 +44290,30 @@
       this._glowC = this._glowC || {};
       c.save();
       c.globalCompositeOperation = "lighter";
+      const x0 = tx0 - 1, y0 = ty0 - 1, lw = tx1 - tx0 + 3, lh = ty1 - ty0 + 3;
+      if (!this.glowCv || this.glowCv.width !== lw || this.glowCv.height !== lh) {
+        this.glowCv = document.createElement("canvas");
+        this.glowCv.width = lw;
+        this.glowCv.height = lh;
+        this.glowCx = this.glowCv.getContext("2d");
+        this.glowImg = this.glowCx.createImageData(lw, lh);
+      }
+      const gd = this.glowImg.data;
+      for (let y = 0, i = 0; y < lh; y++) for (let x = 0; x < lw; x++, i += 4) {
+        const rgb = w.lightColAt(x0 + x, y0 + y);
+        gd[i] = rgb ? Math.min(255, rgb[0] * 255) : 0;
+        gd[i + 1] = rgb ? Math.min(255, rgb[1] * 255) : 0;
+        gd[i + 2] = rgb ? Math.min(255, rgb[2] * 255) : 0;
+        gd[i + 3] = 255;
+      }
+      this.glowCx.putImageData(this.glowImg, 0, 0);
+      c.imageSmoothingEnabled = true;
+      c.drawImage(this.glowCv, x0 * TS - camX, y0 * TS - camY, lw * TS, lh * TS);
+      c.imageSmoothingEnabled = false;
       for (let ty = Math.max(0, ty0 - 2); ty <= Math.min(WH2 - 1, ty1 + 2); ty++)
         for (let tx = Math.max(0, tx0 - 2); tx <= Math.min(WW2 - 1, tx1 + 2); tx++) {
           const d = TILE_DEF[w.tiles[ty * WW2 + tx]];
-          if (!d.lc) continue;
+          if (!d.lc || d.light >= LIGHT_POINT && !d.liquid) continue;
           const r = Math.round(10 + d.light * 5);
           const key = d.lc + r;
           let g = this._glowC[key];

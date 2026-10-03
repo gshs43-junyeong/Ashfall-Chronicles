@@ -74,6 +74,8 @@ class TileMap {
 
 - `TileDef` 는 `{ solid?: 1 | 2, liquid? }` 만 엔진이 읽는다 — 이름 · 색 · 단단함 같은 나머지는 게임이 얹는다(예제 `SampleTile`).
 - `sweepLight(L, w, h, x0, y0, passes, dec(x, y))` — 씨앗을 넣어 둔 `L`(w×h 칸)을 네 방향으로 번지게 한다. 무엇이 빛을 얼마나 먹는지는 `dec` 로 게임이 정한다.
+- `sweepLightGrid(L, w, h, passes, dec, op?)` — 같은 일을 칸마다 미리 잰 표(`dec: Float32Array`)로 더 빠르게. `op` 를 주면 막힌 칸(1)은 빛을 받되 트인 칸으로 넘기지 않는다(벽 너머로 새지 않게).
+- `castPointLight(strength, falloff, blocked(dx, dy))` → `{ r, v }` — 점 광원 하나가 둘레 (2r+1)² 칸에 주는 빛. 칸마다 광선을 쏘아 사이에 막힌 칸이 있으면 그늘(칸 안 다섯 점 — 가장자리가 부드럽다). 광원이 움직이지 않으면 결과를 저장해 두고 둘레가 바뀔 때만 다시 잴 것.
 
 ### entity — 위치 · 속도 · 칸 충돌 이동
 
