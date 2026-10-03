@@ -968,7 +968,8 @@
   "모두 꺼내기": "全部取出",
   "쓰러짐": "倒下",
   "{name|이} 쓰러졌다": "{name} 倒下了",
-  "{name|이} 다시 일어났다": "{name} 重新站起来了"
+  "{name|이} 다시 일어났다": "{name} 重新站起来了",
+  "저주에 걸렸다 — 주는 피해가 줄었다": "中了诅咒——造成的伤害降低了"
  },
  "tables": {
   "BIOMES.0.n": "沉没之海",
@@ -1369,6 +1370,8 @@
   "BUFFS.well.n": "饱腹",
   "BUFFS.frostbite.n": "冻伤",
   "BUFFS.burn.n": "烧伤",
+  "BUFFS.poison.n": "中毒",
+  "BUFFS.weak.n": "虚弱",
   "BUFFS.swift_kill.n": "追击",
   "BUFFS.bulwark.n": "铁壁",
   "BUFFS.smokescreen.n": "烟幕",

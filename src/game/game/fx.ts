@@ -21,7 +21,8 @@ export const FxPart: Bag = {
       if (dist(x, y, e.cx, e.cy) > r + e.w / 2) continue;
       const crit = this.player.rollCrit();
       e.hurt(dmg * (crit ? 1 + this.player.d.critD / 100 : 1), crit, this.player, kb);
-      if (effect === 'frost') e.slow(0.5, 3);
+      if (effect === 'frost') e.chill(3);          // 얼음 — 느려짐 + 얼음 껍질
+      else if (effect === 'slow') e.slow(0.5, 3);   // 그냥 느려짐(대지 가르기)
     }
     this.shapes.ring(x, y, r, color, 0.3);
   },

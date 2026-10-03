@@ -2448,6 +2448,9 @@
   "저장했다": [
    "game/save.saveGame"
   ],
+  "저주에 걸렸다 — 주는 피해가 줄었다": [
+   "game/status-fx.mobSkillFx"
+  ],
   "전 <b>{totalN}개 장</b>": [
    "ui/quest.refreshQuest"
   ],
@@ -3452,6 +3455,8 @@
   "BUFFS.well.n": "포만감",
   "BUFFS.frostbite.n": "동상",
   "BUFFS.burn.n": "화상",
+  "BUFFS.poison.n": "중독",
+  "BUFFS.weak.n": "쇠약",
   "BUFFS.swift_kill.n": "추격",
   "BUFFS.bulwark.n": "철벽",
   "BUFFS.smokescreen.n": "연막",

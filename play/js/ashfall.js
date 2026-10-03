@@ -8384,6 +8384,10 @@
     frostbite: { n: "동상", i: "🥶", dur: 3, debuff: 1, b: { ms: -30 } },
     // 걸음이 30% 느려진다
     burn: { n: "화상", i: "🔥", dur: 4, debuff: 1 },
+    poison: { n: "중독", i: "🤢", dur: 5, debuff: 1 },
+    // 초당 피해는 건 쪽이 정한다(buff.dps)
+    weak: { n: "쇠약", i: "💀", dur: 6, debuff: 1, b: { dmgP: -0.25 } },
+    // 몹의 저주 — 주는 피해 -25%
     swift_kill: { n: "추격", i: "💨", dur: 3, b: { ms: 30 } },
     /* 특성으로만 붙는 것들 — 지속 시간은 스킬 랭크가 정하므로 여기 dur 은 기본값일 뿐이다 */
     bulwark: { n: "철벽", i: "🧱", dur: 3, b: { dr: 55 } },
@@ -12720,6 +12724,60 @@
     keys: null,
     notice: null
   };
+
+  // src/game/data/mobskills.ts
+  var mobskills_exports = {};
+  __export(mobskills_exports, {
+    DEBUFF_EDGE: () => DEBUFF_EDGE,
+    MOB_SKILLS: () => MOB_SKILLS,
+    MOB_SKILLSET: () => MOB_SKILLSET,
+    PROJ_INFLICT: () => PROJ_INFLICT
+  });
+  var MOB_SKILLS = {
+    heal: { kind: "ally", cd: 10, range: 200, cast: 0.6, amt: 0.2, c: "#9ff09f", s: "sk_heal" },
+    // 다친 동료(자기 포함) 최대 생명의 2할
+    empower: { kind: "ally", cd: 15, range: 200, cast: 0.5, dur: 7, mult: 1.35, c: "#ff6a4a", s: "sk_shout" },
+    // 주변 동료 공격력 1.35배
+    firebolt: { kind: "shot", cd: 7, range: 380, cast: 0.45, proj: "fire", n: 3, spread: 0.16, inflict: ["burn", 4, 0.12], c: "#ff8a3a", s: "sk_fire" },
+    frostbolt: { kind: "shot", cd: 7, range: 380, cast: 0.45, proj: "frost", n: 1, inflict: ["frostbite", 3], c: "#9fe0ff", s: "sk_frost" },
+    venom: { kind: "shot", cd: 6, range: 320, cast: 0.4, proj: "poison", n: 2, spread: 0.12, inflict: ["poison", 5, 0.1], c: "#8fd06a", s: "mat_plant" },
+    hex: { kind: "curse", cd: 13, range: 340, cast: 0.8, inflict: ["weak", 6], c: "#b07aff", s: "sk_mark" }
+  };
+  var MOB_SKILLSET = {
+    archivist: ["heal", "hex"],
+    lantern: ["heal"],
+    damp_wisp: ["heal"],
+    sporeling: ["heal", "venom"],
+    crimson_howler: ["empower"],
+    icewolf: ["empower"],
+    foreman: ["empower"],
+    canopy_ape: ["empower"],
+    ruin_guard: ["empower"],
+    imp: ["firebolt"],
+    weldarm: ["firebolt"],
+    lavaslug: ["firebolt"],
+    ventspitter: ["firebolt"],
+    frostling: ["frostbolt"],
+    frostbound: ["frostbolt"],
+    glacier_stalker: ["frostbolt"],
+    cloudjelly: ["frostbolt"],
+    spider: ["venom"],
+    scorpion: ["venom"],
+    bloomspitter: ["venom"],
+    vinelash: ["venom"],
+    shadoweye: ["hex"],
+    wraith: ["hex"],
+    minerghost: ["hex"],
+    crimson_eye: ["hex"]
+  };
+  var PROJ_INFLICT = {
+    fire: ["burn", 3, 0.08],
+    frost: ["frostbite", 2],
+    poison: ["poison", 4, 0.08],
+    dark: ["weak", 3],
+    void: ["weak", 4]
+  };
+  var DEBUFF_EDGE = { frostbite: "frost", burn: "burn", poison: "poison", weak: "weak" };
 
   // src/game/data/achievements.ts
   var achievements_exports = {};
@@ -23681,6 +23739,8 @@
     well: { k: "stew" },
     frostbite: { k: "snow", c: "#9fe0ff" },
     burn: { k: "flame", c: "#ff8a3a" },
+    poison: { k: "drop", c: "#8fd06a", glow: "#8fd06a" },
+    weak: { k: "skull", c: "#b07aff" },
     swift_kill: { k: "wind", c: "#9fe0c0" },
     wish: { k: "coin", c: "#ffd85a" }
     // 분수대에 던진 금화
@@ -28960,13 +29020,26 @@
         app.onLevelUp(this.level);
       }
     }
-    addBuff(id, dur) {
+    addBuff(id, dur, dps = 0) {
       const bd = BUFFS[id];
       if (!bd) return;
       const ex = this.buffs.find((b) => b.id === id);
-      if (ex) ex.t = Math.max(ex.t, dur || bd.dur);
-      else this.buffs.push({ id, t: dur || bd.dur });
+      if (ex) {
+        ex.t = Math.max(ex.t, dur || bd.dur);
+        ex.dps = Math.max(ex.dps || 0, dps);
+      } else this.buffs.push({ id, t: dur || bd.dur, dps });
       this.recalc();
+    }
+    /** 해로운 것을 건다(몹 스킬 · 원소 탄) — 남의 아바타면 그 주인 화면으로 보낸다. 처음 걸릴 때만 몸에 연출(다시 걸려도 겹치지 않는다) */
+    inflict(id, dur, dps = 0) {
+      if (this.remote) {
+        app.netRemoteInflict(this, id, dur, dps);
+        return;
+      }
+      if (this.dead || this.hp <= 0) return;
+      const had = this.buffs.some((b) => b.id === id);
+      this.addBuff(id, dur, dps);
+      if (!had) app.statusOnset(this, id);
     }
     /* ---- 피해 ---- */
     hurt(amount, srcX) {
@@ -29074,6 +29147,11 @@
       this.slowF = 1;
       this.dots = [];
       this.slowFx = new Timed(1, "min");
+      this.chillT = 0;
+      this.empT = 0;
+      this.cast = null;
+      this.mskCd = null;
+      this.skillIds = null;
       this.phases = d.ph || 3;
       this.phase = 0;
       this.pf = 0;
@@ -29217,6 +29295,7 @@
     }
     /** 같은 갈래는 3겹까지(engine entity/status) — 빠른 무기로 불을 수십 겹 쌓던 것 */
     addDot(kind, dps, dur) {
+      if (!this.dots.some((d) => d.kind === kind)) app.statusOnset(this, kind);
       addDot(this.dots, kind, dps, dur, 3);
     }
     slow(f, t) {
@@ -29535,6 +29614,7 @@
     rune: { c: "#9fe8d8", r: 6, glow: 1 },
     void: { c: "#a06fff", r: 7, glow: 1 },
     dark: { c: "#9a5fd8", r: 6, glow: 1 },
+    poison: { c: "#8fd06a", r: 5, glow: 1 },
     bone: { c: "#e8e0c8", r: 5 }
   };
   var PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1 };
@@ -29588,7 +29668,7 @@
           }
           e.hurt(dmg, this.crit, app.player, 3, this.type === "arrow" || this.type === "star" || this.type === "bullet" ? "pierce" : null);
           if (this.fire) e.addDot("burn", this.dmg * 0.1, 4);
-          if (this.frost) e.slow(0.4, 2.5);
+          if (this.frost) e.chill(2.5);
           if (this.poison) e.addDot("poison", this.dmg * 0.11 * this.poison, 5);
           if (this.pierce > 0) this.pierce--;
           else {
@@ -29611,7 +29691,9 @@
       } else {
         for (const q of app.players.length ? app.players : [player])
           if (aabb(this.rect(), q.rect())) {
+            const inf = this.inflict || PROJ_INFLICT[this.type], open = !(q.iframe > 0) && q.hp > 0;
             q.hurt(this.dmg, this.cx);
+            if (inf && open) q.inflict(inf[0], inf[1], inf[2] ? this.dmg * inf[2] : 0);
             this.impact();
             return;
           }
@@ -30031,14 +30113,14 @@
             for (let step = 0; step < 5; step++) {
               app.after(step * 0.05, () => {
                 const x = this.cx + dir * (34 + step * 34);
-                app.aoe(x, foot - 14, 40, dmg / 2, 5, "#c8845a", "frost");
+                app.aoe(x, foot - 14, 40, dmg / 2, 5, "#c8845a", "slow");
                 app.skillVfx("s_quake_step", { ...fo, x });
                 for (let k = 0; k < 4; k++)
                   app.parts.push(new Part(x + (Math.random() - 0.5) * 24, foot - 4, "#c8845a", -180, 0.5));
               });
             }
           }
-          app.aoe(this.cx, foot - 14, 60, dmg, 7, "#c8845a", "frost");
+          app.aoe(this.cx, foot - 14, 60, dmg, 7, "#c8845a", "slow");
           break;
         }
         case "s_warcry": {
@@ -30312,6 +30394,23 @@
           this.recalc();
         }
       }
+      let dot = 0;
+      for (const b of this.buffs) if (b.dps > 0) dot += b.dps * dt;
+      if (dot > 0 && this.hp > 0 && !this.remote) {
+        this.hp -= dot;
+        this.dotAcc = (this.dotAcc || 0) + dot;
+        this.dotT = (this.dotT || 0) + dt;
+        if (this.dotT >= 0.6) {
+          const burn = this.buffs.some((b) => b.id === "burn" && b.dps > 0);
+          if (this.dotAcc >= 1) app.texts.push(new DmgText(this.cx, this.y, String(Math.round(this.dotAcc)), burn ? "#ff9a4a" : "#9fd86a", 0));
+          this.dotAcc = 0;
+          this.dotT = 0;
+        }
+        if (this.hp <= 0) {
+          this.hp = 0;
+          app.onDeath("dot");
+        }
+      }
       this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
       if (this.hurtCd <= 0) {
         const h02 = this.hp;
@@ -30534,7 +30633,7 @@
           const crit = this.rollCrit();
           e.hurt(this.scaleDmg(base, "str"), crit, this, kb, hitFam(w));
           if (this.d.fire) e.addDot("burn", this.scaleDmg(base, "str") * 0.12 * this.d.fire, 4);
-          if (this.d.frost) e.slow(0.45, 2.5);
+          if (this.d.frost) e.chill(2.5);
           if (this.d.poison) e.addDot("poison", this.scaleDmg(base, "str") * 0.13 * this.d.poison, 5);
         }
         if (app.net && this === app.me) for (const q of app.pvpTargets()) {
@@ -31008,6 +31107,7 @@
       const dx = tx - this.cx, dy = ty - this.cy;
       const dd = engaged ? Math.hypot(dx, dy) : Infinity;
       if (engaged || real < this.aggro) this.facing = dx >= 0 ? 1 : -1;
+      this.mobSkills(dt, player, seen, dd);
       if (AI === "walker" || AI === "jumper" || AI === "archer") {
         const range = this.def.range || 0;
         const step = dd < this.aggro ? this.walkPath(dt, world, tx, ty, AI === "jumper" ? 3 : 2) : null;
@@ -31254,6 +31354,119 @@
     }
   };
   mixin(Enemy.prototype, EnemyAI, true);
+
+  // src/game/entity/enemy-skills.ts
+  var enemy_skills_exports = {};
+  __export(enemy_skills_exports, {
+    EnemySkills: () => EnemySkills
+  });
+  var EnemySkills = {
+    /** 냉기 — 느려짐 + 얼음 껍질(그림). 처음 걸릴 때만 얼어붙는 연출 */
+    chill(t) {
+      this.slow(0.4, t);
+      if (!(this.chillT > 0)) app.statusOnset(this, "chill");
+      this.chillT = Math.max(this.chillT || 0, t);
+    },
+    /** 북돋움 — 공격력 배수. 이미 걸려 있으면 시간만 늘린다(겹쳐 곱하지 않는다) */
+    empower(dur, mult) {
+      if (!(this.empT > 0)) {
+        this.baseDmg = this.dmg;
+        this.dmg *= mult;
+        app.statusOnset(this, "empower");
+      }
+      this.empT = Math.max(this.empT || 0, dur);
+    },
+    /** 매 프레임 — 걸린 것의 시간 · 스킬 고르기 · 시전 예고 */
+    mobSkills(dt, player, seen, dd) {
+      if (this.chillT > 0) this.chillT -= dt;
+      if (this.empT > 0) {
+        this.empT -= dt;
+        if (this.empT <= 0) {
+          this.dmg = this.baseDmg;
+          this.empT = 0;
+        }
+      }
+      if (this.boss || this.def.passive) return;
+      if (!this.skillIds) this.skillIds = MOB_SKILLSET[this.type] || (this.elite ? ["empower"] : []);
+      if (!this.skillIds.length) return;
+      this.mskCd = this.mskCd || {};
+      for (const id in this.mskCd) this.mskCd[id] -= dt;
+      if (this.cast) {
+        this.cast.t -= dt;
+        this.vx *= 0.85;
+        if (this.cast.t <= 0) {
+          const c = this.cast;
+          this.cast = null;
+          this.fireSkill(c.id, player, c.tgt);
+        }
+        return;
+      }
+      if (dd > this.aggro) return;
+      for (const id of this.skillIds) {
+        const S = MOB_SKILLS[id];
+        if ((this.mskCd[id] || 0) > 0) continue;
+        let tgt = null;
+        if (S.kind === "ally") {
+          tgt = this.allyTarget(id, S);
+          if (!tgt) continue;
+        } else if (!seen || dd > S.range) continue;
+        this.mskCd[id] = S.cd * (0.85 + Math.random() * 0.3);
+        this.cast = { id, t: S.cast, max: S.cast, tgt };
+        this.atkPose = S.cast;
+        app.mobCastFx(this, S);
+        break;
+      }
+    },
+    /** 우리편 스킬의 과녁 — 치유는 가장 다친 동료(자기 포함), 북돋움은 아직 안 걸린 동료가 둘 이상일 때 */
+    allyTarget(id, S) {
+      const near = app.ents.filter((e) => e instanceof Enemy && !e.dead && !e.def.passive && dist(this.cx, this.cy, e.cx, e.cy) < S.range);
+      if (id === "heal") {
+        let best = null, bk = 0.7;
+        for (const e of near) {
+          if (e.boss) continue;
+          const k = e.hp / e.maxHp;
+          if (k < bk) {
+            bk = k;
+            best = e;
+          }
+        }
+        return best;
+      }
+      const fresh = near.filter((e) => !(e.empT > 0));
+      return fresh.length >= 2 || fresh.length === 1 && fresh[0] !== this ? fresh : null;
+    },
+    fireSkill(id, player, tgt) {
+      const S = MOB_SKILLS[id];
+      if (this.dead) return;
+      app.sfxAt(S.s, this.cx / 22, this.cy / 22, 1.05, 0.7);
+      if (id === "heal") {
+        if (!tgt || tgt.dead) return;
+        const amt = Math.round(tgt.maxHp * S.amt);
+        tgt.hp = Math.min(tgt.maxHp, tgt.hp + amt);
+        app.mobSkillFx(this, S, id, tgt, amt);
+      } else if (id === "empower") {
+        for (const e of tgt || []) if (!e.dead) e.empower(S.dur, S.mult);
+        app.mobSkillFx(this, S, id, tgt);
+      } else if (S.kind === "shot") {
+        const a = angleTo(this.cx, this.cy, player.cx, player.cy - 4);
+        for (let i = 0; i < S.n; i++) {
+          const aa = a + (S.n > 1 ? (i - (S.n - 1) / 2) * S.spread : 0);
+          const p = new Proj(this.cx, this.cy, Math.cos(aa) * 360, Math.sin(aa) * 360, this.dmg * (S.n > 1 ? 0.6 : 0.9), "enemy", S.proj);
+          p.inflict = S.inflict;
+          app.projs.push(p);
+        }
+        app.mobSkillFx(this, S, id);
+      } else if (S.kind === "curse") {
+        if (dist(this.cx, this.cy, player.cx, player.cy) > S.range * 1.15 || !this.sense || !this.sense.seen) {
+          app.mobSkillFx(this, S, "fizzle");
+          return;
+        }
+        player.inflict(S.inflict[0], S.inflict[1], 0);
+        app.mobSkillFx(this, S, id, player);
+      }
+    }
+  };
+  mixin(Enemy.prototype, EnemySkills, true);
 
   // src/game/entity/boss-ai.ts
   var boss_ai_exports = {};
@@ -39483,7 +39696,8 @@
         if (dist(x, y, e.cx, e.cy) > r + e.w / 2) continue;
         const crit = this.player.rollCrit();
         e.hurt(dmg * (crit ? 1 + this.player.d.critD / 100 : 1), crit, this.player, kb);
-        if (effect === "frost") e.slow(0.5, 3);
+        if (effect === "frost") e.chill(3);
+        else if (effect === "slow") e.slow(0.5, 3);
       }
       this.shapes.ring(x, y, r, color, 0.3);
     },
@@ -39807,6 +40021,318 @@
     }
   };
   mixin(Game.prototype, FxPart, true);
+
+  // src/game/game/status-fx.ts
+  var status_fx_exports = {};
+  __export(status_fx_exports, {
+    StatusFxPart: () => StatusFxPart
+  });
+  var StatusFxPart = {
+    edgeA: null,
+    edgeT: 0,
+    frostEdge: null,
+    /** 무엇에 걸려 있나 — 몹은 지속 피해 · 냉기 · 북돋움, 플레이어는 디버프 버프 */
+    statusKinds(e) {
+      if (e.buffs) {
+        const has = (id) => e.buffs.some((b) => b.id === id);
+        return { burn: has("burn"), poison: has("poison"), chill: has("frostbite"), empower: false, weak: has("weak"), cast: null };
+      }
+      const dots = e.dots || [];
+      return {
+        burn: dots.some((d) => d.kind === "burn"),
+        poison: dots.some((d) => d.kind === "poison"),
+        chill: e.chillT > 0,
+        empower: e.empT > 0,
+        weak: false,
+        cast: e.cast || null
+      };
+    },
+    /** 처음 걸리는 순간 — 확 붙는 불 · 얼어붙으며 튀는 조각 · 퍼지는 독 */
+    statusOnset(e, kind) {
+      const v = this.vfx, x = e.cx, y = e.cy, tx = x / TS, ty = y / TS;
+      if (kind === "burn") {
+        v.flare(x, y, 30, "#ff9a3a", 0.22);
+        v.sparks(x, y + e.h * 0.3, 12, "#ffb050", 260, -Math.PI / 2, 1.4, 0.5, -300);
+        v.puffs(x, y - 4, 3, 10, "rgba(70,60,55,.8)", 0.7, 8);
+        this.sfxAt("mat_ember", tx, ty, 1.1, 0.5);
+      } else if (kind === "chill" || kind === "frostbite") {
+        v.shards(x, y, 10, "#d8f4ff", 260, 0.45, 6);
+        v.flare(x, y, 26, "#bfefff", 0.2);
+        v.shock(x, y, e.w * 0.9 + 10, "#bfefff", 0.3, 4);
+        this.sfxAt("mat_glass", tx, ty, 1.25, 0.45);
+      } else if (kind === "poison") {
+        v.puffs(x, y, 5, 12, "rgba(120,190,80,.75)", 0.9, 12);
+        v.sparks(x, y, 8, "#a8e070", 160, -Math.PI / 2, 2, 0.5, 200);
+        this.sfxAt("mat_plant", tx, ty, 0.9, 0.5);
+      } else if (kind === "empower") {
+        v.flare(x, y, 30, "#ff6a4a", 0.22);
+        v.column(x, e.y + e.h, e.w + 10, e.h * 1.6, "#ff5a3a", 0.45);
+      } else if (kind === "weak") {
+        v.puffs(x, y - 6, 6, 12, "rgba(110,70,160,.8)", 1, 14);
+        v.sigil(x, e.y + e.h, e.w * 0.9 + 8, "#b07aff", 0.7, 5, -1, 0.3);
+      }
+    },
+    /** 몹이 스킬을 시작한다 — 발밑 마법진(예고 시간만큼) */
+    mobCastFx(e, S) {
+      this.vfx.sigil(e.cx, e.y + e.h - 2, Math.max(22, e.w * 0.9), S.c, S.cast + 0.3, S.kind === "ally" ? 6 : 5, 1.4, 0.3);
+      this.sfxAt("magic", e.cx / TS, e.cy / TS, 0.8, 0.45);
+    },
+    /** 몹 스킬이 터진다 */
+    mobSkillFx(e, S, id, tgt, amt) {
+      const v = this.vfx;
+      if (id === "heal" && tgt) {
+        v.beam(e.cx, e.cy, tgt.cx, tgt.cy, S.c, 0.3, 4);
+        v.column(tgt.cx, tgt.y + tgt.h, tgt.w + 14, tgt.h * 1.8, S.c, 0.6);
+        v.sparks(tgt.cx, tgt.y + tgt.h - 6, 10, "#d8ffd0", 200, -Math.PI / 2, 1.2, 0.6, -60);
+        this.texts.push(new DmgText(tgt.cx, tgt.y, "+" + amt, "#7fe07f", 0));
+      } else if (id === "empower") {
+        v.shock(e.cx, e.cy, S.range * 0.7, S.c, 0.45, 8);
+        v.flare(e.cx, e.cy - 6, 34, "#ff9a6a", 0.22);
+      } else if (id === "hex" && tgt) {
+        v.beam(e.cx, e.cy, tgt.cx, tgt.cy, S.c, 0.35, 5);
+        v.reticle(() => [tgt.cx, tgt.cy], tgt.w / 2 + 14, S.c, 0.7);
+        this.toast(tr("저주에 걸렸다 — 주는 피해가 줄었다"), "bad");
+      } else if (id === "fizzle") {
+        v.puffs(e.cx, e.cy, 3, 8, "rgba(120,100,150,.6)", 0.5, 6);
+      } else {
+        v.flare(e.cx, e.cy, 32, S.c, 0.2);
+        v.sparks(e.cx, e.cy, 8, S.c, 300, 0, TAU, 0.3, 0);
+      }
+    },
+    mobSkillDef(id) {
+      return MOB_SKILLS[id];
+    },
+    /** 몸 위의 연출 — 판정 상자(sx, sy, w, h) 기준. 불 · 독은 몸 위로, 얼음은 몸에 붙어, 북돋움은 몸 둘레로 */
+    drawStatus(c, e, sx, sy) {
+      const k = this.statusKinds(e);
+      if (!k.burn && !k.poison && !k.chill && !k.empower && !k.weak && !k.cast) return;
+      const t = this.time, w = e.w, h = e.h;
+      const id = e._sfxId = e._sfxId || Math.floor(Math.random() * 1e6);
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      if (k.empower) {
+        const pul = 0.5 + 0.5 * Math.sin(t * 6 + id);
+        c.globalAlpha = 0.35 + 0.25 * pul;
+        c.strokeStyle = "#ff5a3a";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.ellipse(sx + w / 2, sy + h, w * 0.7 + 4 * pul, 5, 0, 0, TAU);
+        c.stroke();
+        this.flames(c, sx - 3, sy + h * 0.2, w + 6, h * 0.8, t + id, "rgba(255,60,40,", 0.35, 4);
+      }
+      if (k.burn) {
+        this.flames(c, sx - 2, sy + h * 0.15, w + 4, h * 0.85, t + id, "rgba(255,110,30,", 0.85, Math.max(3, Math.round(w / 6)));
+        for (let i = 0; i < 4; i++) {
+          const ph = (t * 1.1 + i / 4 + tileHash(id, i + 20)) % 1;
+          c.globalAlpha = 1 - ph;
+          c.fillStyle = "#ffc060";
+          c.fillRect(sx + w * tileHash(id + i, 21) + Math.sin(t * 6 + i) * 3, sy + h * 0.3 - ph * 26, 1.6, 1.6);
+        }
+      }
+      if (k.poison) {
+        const n = Math.max(3, Math.round(w / 8));
+        for (let i = 0; i < n; i++) {
+          const ph = (t * 0.9 + i / n + tileHash(id, i)) % 1, bx = sx + w * (0.15 + 0.7 * tileHash(id + i, 3)), by = sy + h * 0.85 - ph * h;
+          c.globalAlpha = 0.85 * (1 - ph);
+          c.strokeStyle = "#a8e070";
+          c.lineWidth = 1.4;
+          c.beginPath();
+          c.arc(bx, by, 1.8 + ph * 2.6, 0, TAU);
+          c.stroke();
+        }
+        const dp = (t * 1.3 + tileHash(id, 9)) % 1;
+        c.globalAlpha = 0.8 * (1 - dp);
+        c.fillStyle = "#8fd06a";
+        c.beginPath();
+        c.ellipse(sx + w * 0.6, sy + h + dp * 10, 1.6, 2.6, 0, 0, TAU);
+        c.fill();
+      }
+      if (k.weak) {
+        for (let i = 0; i < 3; i++) {
+          const a = t * 2.2 + i * 2.1, r = w * 0.6 + 4;
+          c.globalAlpha = 0.6;
+          c.fillStyle = "#b07aff";
+          c.beginPath();
+          c.arc(sx + w / 2 + Math.cos(a) * r, sy + h * 0.5 + Math.sin(a * 1.3) * h * 0.35, 2.2, 0, TAU);
+          c.fill();
+        }
+      }
+      if (k.cast) {
+        const S = this.mobSkillDef(k.cast.id), p = 1 - Math.max(0, k.cast.t) / k.cast.max;
+        const ox = sx + w / 2 + (e.facing || 1) * (w / 2 + 4), oy = sy + h * 0.35, r = 3 + p * 8;
+        const g = c.createRadialGradient(ox, oy, 0, ox, oy, r * 2.4);
+        g.addColorStop(0, "#ffffff");
+        g.addColorStop(0.3, S ? S.c : "#ffffff");
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        c.globalAlpha = 0.9;
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(ox, oy, r * 2.4, 0, TAU);
+        c.fill();
+        c.strokeStyle = S ? S.c : "#fff";
+        c.lineWidth = 1.2;
+        for (let i = 0; i < 5; i++) {
+          const a = i * 1.26 + t * 3, d = 18 * (1 - (t * 2 + i * 0.2) % 1);
+          c.globalAlpha = 0.6;
+          c.beginPath();
+          c.moveTo(ox + Math.cos(a) * (d + 6), oy + Math.sin(a) * (d + 6));
+          c.lineTo(ox + Math.cos(a) * d, oy + Math.sin(a) * d);
+          c.stroke();
+        }
+      }
+      c.globalCompositeOperation = "source-over";
+      if (k.chill) this.iceCrust(c, sx, sy, w, h, id, t);
+      c.restore();
+    },
+    /** 불길 — 바닥(x, y0+hh)에서 위로 일렁이는 혀 n 개. col 은 'rgba(r,g,b,' 꼴 */
+    flames(c, x, y0, ww, hh, t, col, a, n) {
+      const base = y0 + hh;
+      for (let i = 0; i < n; i++) {
+        const fx = x + (i + 0.5) * ww / n + Math.sin(t * 7 + i * 1.9) * 2;
+        const fh = hh * (0.45 + 0.3 * Math.sin(t * 13 + i * 2.1) * Math.sin(t * 5.3 + i)), fw = ww / n * 0.75;
+        const tip = fx + Math.sin(t * 9 + i * 3) * 3;
+        const g = c.createLinearGradient(0, base, 0, base - fh);
+        g.addColorStop(0, col + a + ")");
+        g.addColorStop(0.55, col + a * 0.7 + ")");
+        g.addColorStop(1, "rgba(255,230,140,0)");
+        c.globalAlpha = 1;
+        c.fillStyle = g;
+        c.beginPath();
+        c.moveTo(fx - fw, base);
+        c.quadraticCurveTo(fx - fw * 0.6, base - fh * 0.55, tip, base - fh);
+        c.quadraticCurveTo(fx + fw * 0.6, base - fh * 0.55, fx + fw, base);
+        c.closePath();
+        c.fill();
+        c.globalAlpha = a * 0.7;
+        c.fillStyle = "rgba(255,236,170,1)";
+        c.beginPath();
+        c.moveTo(fx - fw * 0.35, base);
+        c.quadraticCurveTo(fx, base - fh * 0.5, fx + fw * 0.35, base);
+        c.fill();
+      }
+    },
+    /** 얼음 껍질 — 발부터 몸을 타고 오른 서리 조각(자리는 개체마다 고정) + 반짝임 */
+    iceCrust(c, sx, sy, w, h, id, t) {
+      const n = 6 + Math.round(w / 5);
+      c.globalAlpha = 0.18;
+      c.fillStyle = "#cfefff";
+      c.fillRect(sx + 1, sy + h * 0.45, w - 2, h * 0.55);
+      for (let i = 0; i < n; i++) {
+        const u = tileHash(id, i * 3), side = i % 3;
+        const bx = side === 0 ? sx + u * w : side === 1 ? sx : sx + w, by = side === 0 ? sy + h : sy + h * (0.4 + 0.6 * u);
+        const ang = side === 0 ? -Math.PI / 2 + (u - 0.5) * 1.6 : side === 1 ? Math.PI + (u - 0.5) * 1.2 : (u - 0.5) * 1.2;
+        const L = 4 + tileHash(id, i * 3 + 1) * 6, hw = 1.6 + tileHash(id, i * 3 + 2) * 1.6;
+        const tx = bx + Math.cos(ang) * L, ty = by + Math.sin(ang) * L, nx = -Math.sin(ang) * hw, ny = Math.cos(ang) * hw;
+        c.globalAlpha = 0.85;
+        c.fillStyle = "#d8f4ff";
+        c.beginPath();
+        c.moveTo(bx + nx, by + ny);
+        c.lineTo(tx, ty);
+        c.lineTo(bx - nx, by - ny);
+        c.closePath();
+        c.fill();
+        c.globalAlpha = 0.9;
+        c.strokeStyle = "#ffffff";
+        c.lineWidth = 0.8;
+        c.beginPath();
+        c.moveTo(bx, by);
+        c.lineTo(tx, ty);
+        c.stroke();
+      }
+      const tw = (t * 1.5 + tileHash(id, 77)) % 1;
+      c.globalAlpha = Math.sin(tw * Math.PI);
+      c.fillStyle = "#ffffff";
+      const px = sx + w * tileHash(id, Math.floor(t * 1.5)), py = sy + h * (0.3 + 0.6 * tileHash(Math.floor(t * 1.5), id));
+      c.fillRect(px - 0.5, py - 2.5, 1, 5);
+      c.fillRect(px - 2.5, py - 0.5, 5, 1);
+    },
+    /* ================= 화면 가장자리 — 플레이어 디버프 ================= */
+    drawDebuffEdge(c, W, H) {
+      const me = this.me;
+      if (!me) return;
+      const fs = this.fxScale();
+      if (fs <= 0) return;
+      const now2 = this.time, dt = Math.min(0.1, Math.max(0, now2 - (this.edgeT || now2)));
+      this.edgeT = now2;
+      const A = this.edgeA = this.edgeA || { frost: 0, burn: 0, poison: 0, weak: 0 };
+      const on = {};
+      for (const b of me.buffs || []) {
+        const k = DEBUFF_EDGE[b.id];
+        if (k) on[k] = 1;
+      }
+      let any = false;
+      for (const k in A) {
+        A[k] += ((on[k] ? 1 : 0) - A[k]) * Math.min(1, dt * (on[k] ? 5 : 1.8));
+        if (A[k] > 0.01) any = true;
+        else A[k] = 0;
+      }
+      if (!any) return;
+      const cx = W / 2, cy = H / 2, R = Math.hypot(W, H) / 2;
+      const vign = (rgb, a, inner = 0.42) => {
+        const g = c.createRadialGradient(cx, cy, Math.min(W, H) * inner, cx, cy, R);
+        g.addColorStop(0, `rgba(${rgb},0)`);
+        g.addColorStop(1, `rgba(${rgb},${a})`);
+        c.fillStyle = g;
+        c.fillRect(0, 0, W, H);
+      };
+      c.save();
+      if (A.frost) {
+        vign("185,228,255", 0.36 * A.frost * fs, 0.5);
+        const key = W + "x" + H;
+        if (!this.frostEdge || this.frostEdge.key !== key) this.frostEdge = { key, lines: this.frostLines(W, H) };
+        c.strokeStyle = "#eef9ff";
+        c.lineWidth = 1.4;
+        c.globalAlpha = (0.55 + 0.1 * Math.sin(now2 * 2)) * A.frost * fs;
+        c.beginPath();
+        for (const L of this.frostEdge.lines) {
+          c.moveTo(L[0], L[1]);
+          for (let i = 2; i < L.length; i += 2) c.lineTo(L[i], L[i + 1]);
+        }
+        c.stroke();
+      }
+      if (A.burn) {
+        const fl = 0.8 + 0.2 * Math.sin(now2 * 17) * Math.sin(now2 * 7.3);
+        const g = c.createLinearGradient(0, H, 0, H * 0.62);
+        g.addColorStop(0, `rgba(255,90,30,${0.38 * A.burn * fl * fs})`);
+        g.addColorStop(1, "rgba(255,90,30,0)");
+        c.globalAlpha = 1;
+        c.fillStyle = g;
+        c.fillRect(0, H * 0.6, W, H * 0.4);
+        vign("255,120,40", 0.28 * A.burn * fl * fs, 0.5);
+      }
+      if (A.poison) {
+        const pu = 0.7 + 0.3 * Math.sin(now2 * 3.1);
+        vign("80,160,50", 0.45 * A.poison * pu * fs, 0.38);
+      }
+      if (A.weak) vign("50,25,80", 0.5 * A.weak * (0.85 + 0.15 * Math.sin(now2 * 1.7)) * fs, 0.4);
+      c.restore();
+    },
+    /** 서리 결 — 가장자리에서 안으로 갈라져 들어오는 가지(화면 크기마다 한 번) */
+    frostLines(W, H) {
+      const out = [];
+      let s = 1;
+      const rnd = () => (s = s * 16807 % 2147483647) / 2147483647;
+      const branch = (x, y, a, len, depth) => {
+        const L = [x, y];
+        let px = x, py = y;
+        for (let d = 0; d < len; d += 7) {
+          a += (rnd() - 0.5) * 0.5;
+          px += Math.cos(a) * 7;
+          py += Math.sin(a) * 7;
+          L.push(px, py);
+          if (depth < 2 && rnd() < 0.14) branch(px, py, a + (rnd() < 0.5 ? -0.9 : 0.9), len * 0.45, depth + 1);
+        }
+        out.push(L);
+      };
+      for (let i = 0; i < 46; i++) {
+        const e = i % 4, u = rnd();
+        const [x, y, a] = e === 0 ? [u * W, 0, Math.PI / 2] : e === 1 ? [u * W, H, -Math.PI / 2] : e === 2 ? [0, u * H, 0] : [W, u * H, Math.PI];
+        branch(x, y, a + (rnd() - 0.5) * 0.8, 30 + rnd() * 70, 0);
+      }
+      return out;
+    }
+  };
+  mixin(Game.prototype, StatusFxPart, true);
 
   // src/game/game/mine.ts
   var mine_exports = {};
@@ -45899,6 +46425,7 @@
         if (e instanceof Wolf) this.drawWolf(c, e, sx, sy);
         else if (e instanceof Guard) this.drawGuard(c, e, sx, sy);
         else this.drawEnemy(c, e, sx, sy);
+        if (e instanceof Enemy) this.drawStatus(c, e, sx, sy);
       }
       if (this.deathMark) {
         const dm = this.deathMark;
@@ -45940,6 +46467,7 @@
         this.drawPlayer(c, q, q.x - camX, q.y - camY);
         this.drawNameTag(c, q, camX, camY);
       }
+      for (const q of this.players) if (!q.downed) this.drawStatus(c, q, q.x - camX, q.y - camY);
       for (const pet of this.petEnts || []) if (pet) this.drawPet(c, pet, camX, camY);
       for (const q of this.players) if (q.remote && q.petEnts) {
         for (const pet of q.petEnts) if (pet) this.drawPet(c, pet, camX, camY);
@@ -46185,6 +46713,7 @@
           }
         }
       }
+      this.drawDebuffEdge(c, this.W, this.H);
       if (this.settings === void 0 || this.settings.compass !== false) this.drawCompass(c, camX, camY);
       this.drawPulse(c);
     }
@@ -50212,6 +50741,8 @@
         }
       } else if (m.k === "hurt") {
         this.me.hurt(m.a, m.sx);
+      } else if (m.k === "debuff") {
+        this.me.inflict(m.id, m.dur, m.dps);
       } else if (m.k === "es") {
         this.netPutEnemies(m.l);
         if (m.p) this.netPutProjs(m.p);
@@ -50386,6 +50917,11 @@
       if (!peer) return;
       rp._hurtAt = this.time;
       this.netSend(peer.t, "rel", { k: "hurt", a: amount, sx: srcX });
+    },
+    /** 호스트의 몹 스킬이 남의 아바타에 디버프를 걸었다 — 시간·피해는 그 주인 화면이 센다 */
+    netRemoteInflict(rp, id, dur, dps) {
+      const n = this.net, peer = n && n.role === "host" && n.peers.get(rp.netId);
+      if (peer) this.netSend(peer.t, "rel", { k: "debuff", id, dur, dps });
     },
     /** 새 게임·불러오기를 마치면 방을 연다 — 타이틀 멀티플레이 창의 '방 만들기'(mpWant) 또는 주소의 ?mp=host&room=(시험용). */
     mpAuto() {
@@ -50969,7 +51505,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_pulse_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_pulse_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

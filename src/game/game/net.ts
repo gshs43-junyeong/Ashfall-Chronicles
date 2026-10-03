@@ -563,6 +563,8 @@ export const NetPart: Bag = {
       if (rp) { n.others.delete(m.id); this.netRemove(rp); this.toast(tr('{name|이} 나갔다', { name: rp.name }), 'info'); }
     } else if (m.k === 'hurt') {
       this.me.hurt(m.a, m.sx);
+    } else if (m.k === 'debuff') {
+      this.me.inflict(m.id, m.dur, m.dps);
     } else if (m.k === 'es') {
       this.netPutEnemies(m.l);
       if (m.p) this.netPutProjs(m.p);
@@ -708,6 +710,11 @@ export const NetPart: Bag = {
     if (!peer) return;
     rp._hurtAt = this.time;
     this.netSend(peer.t, 'rel', { k: 'hurt', a: amount, sx: srcX });
+  },
+  /** 호스트의 몹 스킬이 남의 아바타에 디버프를 걸었다 — 시간·피해는 그 주인 화면이 센다 */
+  netRemoteInflict(rp: Bag, id: string, dur: number, dps: number) {
+    const n = this.net, peer = n && n.role === 'host' && n.peers.get(rp.netId);
+    if (peer) this.netSend(peer.t, 'rel', { k: 'debuff', id, dur, dps });
   },
   /** 새 게임·불러오기를 마치면 방을 연다 — 타이틀 멀티플레이 창의 '방 만들기'(mpWant) 또는 주소의 ?mp=host&room=(시험용). */
   mpAuto() {

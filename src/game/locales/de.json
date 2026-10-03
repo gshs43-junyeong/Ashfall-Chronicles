@@ -968,7 +968,8 @@
   "모두 꺼내기": "Alles herausnehmen",
   "쓰러짐": "Am Boden",
   "{name|이} 쓰러졌다": "{name} ist gefallen",
-  "{name|이} 다시 일어났다": "{name} ist wieder auf den Beinen"
+  "{name|이} 다시 일어났다": "{name} ist wieder auf den Beinen",
+  "저주에 걸렸다 — 주는 피해가 줄었다": "Verflucht — dein Schaden ist verringert"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -1369,6 +1370,8 @@
   "BUFFS.well.n": "Satt",
   "BUFFS.frostbite.n": "Erfrierung",
   "BUFFS.burn.n": "Verbrennung",
+  "BUFFS.poison.n": "Vergiftung",
+  "BUFFS.weak.n": "Schwäche",
   "BUFFS.swift_kill.n": "Hetzjagd",
   "BUFFS.bulwark.n": "Bollwerk",
   "BUFFS.smokescreen.n": "Rauchschleier",

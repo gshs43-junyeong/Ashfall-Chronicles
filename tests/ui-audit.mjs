@@ -231,7 +231,7 @@ for (const lang of langs) {
     ['credits', () => $('#btn-credits').click()],
     ['credits-close', () => { document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')); }],
     ['multi', () => $('#btn-multi').click()],
-    ['multi-new', () => { const sel = $('#mp-char'); sel.value = 'new'; sel.onchange(); }],
+    ['multi-fill', () => { $('#mp-name').value = 'Visitor'; const c = $('#mp-code'); c.value = '7K2QM'; c.dispatchEvent(new Event('input')); }],   // 참가 창 — 이름 · 방 코드를 채운 모습
   ]);
   // 새 게임 — 창·탭·툴팁·대화·멈춤·쓰러짐
   const steps = [
