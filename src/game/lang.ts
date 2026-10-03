@@ -57,10 +57,11 @@ export function fmt(n: number) {
   return t + u;
 }
 
-/** 캔버스 글꼴 — 원본은 예전 그대로('"Pretendard",sans-serif'), 다른 언어는 그 언어 글꼴을 앞에 */
-export const FONT = fontStack(LANG, 'ko', '"Pretendard",sans-serif');
-export const FONT_UI = fontStack(LANG, 'ko', 'system-ui, sans-serif');
-export const FONT_PLAIN = fontStack(LANG, 'ko', 'sans-serif');
+/** 캔버스 글꼴 — 게임 글꼴 Ashfall(tools/mkfont.py — Pretendard 고친 판)이 덮는 언어는 그것을 맨 앞에, 일본어 · 중국어는 그 언어 글꼴 */
+const OWN_FONT = { name: 'Ashfall', langs: ['ko', 'en', 'de', 'es'] };
+export const FONT = fontStack(LANG, 'ko', '"Pretendard",sans-serif', OWN_FONT);
+export const FONT_UI = fontStack(LANG, 'ko', 'system-ui, sans-serif', OWN_FONT);
+export const FONT_PLAIN = fontStack(LANG, 'ko', 'sans-serif', OWN_FONT);
 
 /** 언어를 바꾼다 — 글·표는 켤 때 한 번 정해지므로 새로 연다 */
 export function setLang(l: any) {

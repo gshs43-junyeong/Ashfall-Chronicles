@@ -1886,9 +1886,10 @@
     "zh-Hans": '"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC"',
     latin: '-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial'
   };
-  function fontStack(lang, source, base) {
-    if (lang === source) return base;
-    return (STACKS[lang] || STACKS.latin) + ",sans-serif";
+  function fontStack(lang, source, base, own) {
+    const lead = own && own.langs.indexOf(lang) >= 0 ? '"' + own.name + '",' : "";
+    if (lang === source) return lead + base;
+    return lead + (STACKS[lang] || STACKS.latin) + ",sans-serif";
   }
 
   // src/game/lang.ts
@@ -1941,9 +1942,10 @@
     const t = (v / d).toFixed(2).replace(/\.?0+$/, "");
     return t + u;
   }
-  var FONT = fontStack(LANG, "ko", '"Pretendard",sans-serif');
-  var FONT_UI = fontStack(LANG, "ko", "system-ui, sans-serif");
-  var FONT_PLAIN = fontStack(LANG, "ko", "sans-serif");
+  var OWN_FONT = { name: "Ashfall", langs: ["ko", "en", "de", "es"] };
+  var FONT = fontStack(LANG, "ko", '"Pretendard",sans-serif', OWN_FONT);
+  var FONT_UI = fontStack(LANG, "ko", "system-ui, sans-serif", OWN_FONT);
+  var FONT_PLAIN = fontStack(LANG, "ko", "sans-serif", OWN_FONT);
   function setLang(l) {
     try {
       localStorage.setItem(LANG_KEY, l);

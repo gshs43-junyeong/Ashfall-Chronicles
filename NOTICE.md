@@ -29,6 +29,7 @@
 |---|---|---|
 | 배경 음악 13곡 | `play/assets/audio/*.m4a` | [Suno](https://suno.com) |
 | 효과음 87개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 게임 글꼴 Ashfall | `play/assets/fonts/` | Pretendard(SIL OFL 1.1)를 고친 판 — 아래 '글꼴' |
 
 이 두 폴더의 파일은 **각 서비스의 이용 약관을 따릅니다.**
 
@@ -45,13 +46,15 @@
 
 ## 글꼴
 
-- **게임**은 글꼴 파일을 싣지 않습니다. 기기에 설치된 글꼴을 이름으로 부를 뿐입니다 — 언어마다
-  한국어 Pretendard · Apple SD Gothic Neo · 맑은 고딕, 일본어 Hiragino · Yu Gothic · Meiryo · Noto Sans JP,
-  중국어 PingFang SC · Microsoft YaHei · Noto Sans SC, 영어·독일어·스페인어 Segoe UI · Roboto · Helvetica ·
-  Arial, 없으면 시스템 글꼴. 기기에 딸린 글꼴을 화면에 쓰는 것은 따로 허락이 필요 없고, 이름만 적은
-  Pretendard · Noto(둘 다 SIL OFL 1.1)는 따로 깔아도 무료입니다. 로고는 글꼴을 싣지 않고
-  `tools/mklogo.py` 가 Cinzel(SIL OFL 1.1, 파일과 라이선스 전문은 `tools/art/fonts/`)의 글자 윤곽을
-  그림(PNG)·경로(SVG)로 구운 것이라 어느 언어에서나 같습니다.
+- **게임 글꼴 Ashfall**(`play/assets/fonts/ashfall-*.woff2`)은 [Pretendard](https://github.com/orioncactus/pretendard)
+  (길형진, SIL OFL 1.1)를 고친 판입니다 — 한글 획 4.5% 가늘게 · 모서리를 살짝 둥글게 · l · I 대체 글자 · 숫자 고정폭 · 쓰는 글자만 남기기 · 이름 바꾸기(Pretendard 는 **예약 글꼴 이름**이라
+  고친 판은 그 이름을 쓰지 않습니다). 이 글꼴은 MIT 가 아니라 **SIL OFL 1.1** 을 따르고, 라이선스 전문과 저작권은
+  같은 폴더 `OFL.txt`, 바꾼 내용은 `FONTLOG.txt` 에 있습니다(글꼴 파일 안 이름표에도 저작권 · 라이선스가 들어 있습니다).
+  원본 글꼴과 원본 라이선스는 `tools/art/fonts/`, 굽는 도구는 `tools/mkfont.py`. 글꼴에 없는 글자(드문 한글 음절 ·
+  일본어 · 중국어)는 기기 글꼴로 나옵니다 — 일본어 Hiragino · Yu Gothic · Meiryo · Noto Sans JP, 중국어 PingFang SC ·
+  Microsoft YaHei · Noto Sans SC, 그 밖 Pretendard · Apple SD Gothic Neo · 맑은 고딕 · 시스템 글꼴(기기 글꼴은 이름만 부릅니다).
+  로고는 글꼴을 싣지 않고 `tools/mklogo.py` 가 Cinzel(SIL OFL 1.1, 파일과 라이선스 전문은 `tools/art/fonts/`)의
+  글자 윤곽을 그림(PNG)·경로(SVG)로 구운 것이라 어느 언어에서나 같습니다.
 - **사이트**(`site/home` · `site/download`)는 Hahmlet · IBM Plex Sans KR · IBM Plex Mono 를
   **Google Fonts 에서 불러옵니다.** 글꼴 파일은 이 저장소에 없고, 세 글꼴은
   [SIL Open Font License 1.1](https://openfontlicense.org) 을 따릅니다. `site/**` 의 MIT 는
@@ -85,6 +88,7 @@ purchased or taken from elsewhere.
 |---|---|---|
 | 13 background music tracks | `play/assets/audio/*.m4a` | [Suno](https://suno.com) |
 | 87 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| Game font Ashfall | `play/assets/fonts/` | Modified Pretendard (SIL OFL 1.1) — see 'Fonts' |
 
 These files are governed by the terms of the respective services.
 
@@ -101,13 +105,16 @@ synthesized tones, so replacing only some of them works.
 
 ## Fonts
 
-- The **game** ships no font files; it only names fonts already installed on the device
-  (per language: Pretendard / Apple SD Gothic Neo / Malgun Gothic, Hiragino / Yu Gothic / Meiryo /
-  Noto Sans JP, PingFang SC / Microsoft YaHei / Noto Sans SC, Segoe UI / Roboto / Helvetica / Arial,
-  then the system font). Displaying the device's own fonts needs no licence; Pretendard and Noto,
-  if installed separately, are free under the SIL OFL 1.1. The logo ships no font: `tools/mklogo.py`
-  bakes the glyph outlines of Cinzel (SIL OFL 1.1; files and licence text in `tools/art/fonts/`)
-  into a PNG and SVG paths, so it looks the same in every language.
+- The **game font Ashfall** (`play/assets/fonts/ashfall-*.woff2`) is a modified version of
+  [Pretendard](https://github.com/orioncactus/pretendard) by Kil Hyung-jin (SIL OFL 1.1): Hangul strokes 4.5% thinner, slightly rounded corners, alternate l and I, tabular figures,
+  subset to the characters the game uses, and renamed, because "Pretendard" is a Reserved Font Name.
+  It is licensed under the **SIL OFL 1.1**, not MIT; the licence text and copyright are in `OFL.txt` and the
+  changes in `FONTLOG.txt` in the same folder (the font's name table carries them too). The original fonts
+  and licence are in `tools/art/fonts/`; `tools/mkfont.py` builds the font. Characters it does not cover
+  (rare Hangul syllables, Japanese, Chinese) use device fonts, named only (Hiragino / Yu Gothic / Meiryo /
+  Noto Sans JP, PingFang SC / Microsoft YaHei / Noto Sans SC, Pretendard / Apple SD Gothic Neo / Malgun Gothic,
+  then the system font). The logo ships no font: `tools/mklogo.py` bakes the glyph outlines of Cinzel
+  (SIL OFL 1.1; files and licence text in `tools/art/fonts/`) into a PNG and SVG paths.
 - The **website** loads Hahmlet, IBM Plex Sans KR and IBM Plex Mono from Google Fonts.
   They are not stored in this repository and are licensed under the
   [SIL Open Font License 1.1](https://openfontlicense.org), not MIT.

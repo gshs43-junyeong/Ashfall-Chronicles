@@ -14,17 +14,20 @@
      제 색이 있는 자리(난이도·분기·위험)는 --hi 만 갈아 끼우면 모양이 그대로 따라온다. */
   --hi:#d8a94b;
 }
+/* 게임 글꼴 Ashfall(Pretendard 고친 판 · OFL — assets/fonts/OFL.txt) — tools/mkfont.py 가 굽고 ?v= 도 맞춘다. 일본어 · 중국어는 기기 글꼴 */
+@font-face{font-family:"Ashfall";font-weight:400;font-display:swap;src:url("../assets/fonts/ashfall-regular.woff2?v=30b5c392") format("woff2")}
+@font-face{font-family:"Ashfall";font-weight:700;font-display:swap;src:url("../assets/fonts/ashfall-bold.woff2?v=af0a5e48") format("woff2")}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#000;overflow:hidden}
 body{
-  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,system-ui,sans-serif;
+  font-family:"Ashfall","Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,system-ui,sans-serif;
   color:var(--ink); user-select:none; -webkit-font-smoothing:antialiased;
 }
 /* 언어별 글꼴 — engine/i18n/fonts.ts 와 같은 스택. ★ 한국어 글꼴이 앞에 있으면 일본어·중국어 한자가 한국식 자형으로 나온다.
    일본어·중국어는 띄어쓰기가 없어 줄을 글자 단위로 끊되 금칙(문장부호로 시작하는 줄)을 지킨다. */
 html:lang(ja) body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Meiryo","Noto Sans JP","Noto Sans CJK JP",sans-serif;line-break:strict}
 html:lang(zh-Hans) body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC",sans-serif;line-break:strict}
-html:lang(en) body,html:lang(de) body,html:lang(es) body{font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+html:lang(en) body,html:lang(de) body,html:lang(es) body{font-family:"Ashfall",-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
 html:lang(ja) *,html:lang(zh-Hans) *{word-break:normal!important}
 html:lang(de) body,html:lang(es) body{hyphens:auto}
 #app{position:fixed;inset:0}
@@ -1180,7 +1183,7 @@ body.booting #title-screen{visibility:hidden}
   background:#1a1712;border:1px solid var(--frame);border-radius:4px}
 .rv.off{opacity:.5}
 .rv-rank{flex:0 0 38px;text-align:center;font:700 26px/1 "Hahmlet","Pretendard",serif}
-.rv-rank small{display:block;font:500 10px/1.6 "Pretendard",sans-serif;color:#7a7263}
+.rv-rank small{display:block;font:500 10px/1.6 "Ashfall","Pretendard",sans-serif;color:#7a7263}
 .rv-body{flex:1;min-width:0}
 .rv-body h4{margin:0 0 5px;font-size:13px;color:#e8dcc0;font-weight:600}
 .rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:3px 10px;font-size:11px;color:#8a8271}
