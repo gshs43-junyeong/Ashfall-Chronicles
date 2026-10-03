@@ -30,7 +30,7 @@
 </nav>
 
 <header class="wrap page-head">
-  <p class="eyebrow">v1.1.1 · Windows · macOS <span class="eyebrow-sub">웹은 v1.1.2 개발판입니다</span></p>
+  <p class="eyebrow">v1.1.1 · Windows · macOS · Linux(앱) <span class="eyebrow-sub">웹은 v1.1.2 개발판입니다</span></p>
   <h1>내려받기</h1>
   <p class="sec-lede">인터넷 없이 돌아가고, 압축을 푼 폴더 밖 어디에도 파일을 설치하지 않습니다. 지우고 싶으면 폴더째 버리면 됩니다.</p>
 </header>
@@ -40,7 +40,12 @@
 <!-- ============ 받기 ============ -->
 <section id="get" style="border-top:none;padding-top:44px">
   <div class="wrap">
-    <div class="dl-grid" id="dlGrid">
+    <div class="dl-mode" role="group" aria-label="여는 방법">
+      <button type="button" class="dl-mode-btn" data-mode="browser" aria-pressed="true"><b>브라우저로 여는 판</b><span>기본 브라우저 창에서 열립니다 · 가볍고 설치가 없습니다</span></button>
+      <button type="button" class="dl-mode-btn" data-mode="app" aria-pressed="false"><b>앱으로 여는 판</b><span>브라우저 없이 창 하나로 열립니다 · 서명 없는 Electron 앱</span></button>
+    </div>
+
+    <div class="dl-grid" id="dlGrid" data-mode="browser">
       <div class="dl" data-os="windows">
         <div class="dl-os">
           <h3>Windows</h3>
@@ -68,6 +73,44 @@
           <div class="hash"><span class="k">SHA-256</span> <span data-hash="macos">—</span></div>
         </div>
       </div>
+    </div>
+
+    <div class="dl-grid" id="dlAppGrid" data-mode="app" hidden>
+      <div class="dl" data-os="windows">
+        <div class="dl-os"><h3>Windows</h3><span class="dl-you" hidden>당신의 운영체제</span></div>
+        <a class="btn btn-primary" data-app="Windows" href="#">Windows 앱 내려받기</a>
+        <div class="dl-meta">
+          <div><span class="k">크기</span> 약 230 MiB</div>
+          <div><span class="k">요구</span> Windows 10 이상 (64비트)</div>
+          <div class="hash"><span class="k">SHA-256</span> <span data-apphash="Windows">—</span></div>
+        </div>
+      </div>
+      <div class="dl" data-os="macos">
+        <div class="dl-os"><h3>macOS</h3><span class="dl-you" hidden>당신의 운영체제</span></div>
+        <a class="btn btn-primary" data-app="macOS-AppleSilicon" href="#">Apple 칩(M1 이후) 앱</a>
+        <a class="btn" data-app="macOS-Intel" href="#">Intel Mac 앱</a>
+        <div class="dl-meta">
+          <div><span class="k">크기</span> 약 210 MiB</div>
+          <div><span class="k">요구</span> macOS 12 이상</div>
+          <div class="hash"><span class="k">SHA-256</span> <span data-apphash="macOS-AppleSilicon">—</span></div>
+        </div>
+      </div>
+      <div class="dl" data-os="linux">
+        <div class="dl-os"><h3>Linux</h3><span class="dl-you" hidden>당신의 운영체제</span></div>
+        <a class="btn btn-primary" data-app="Linux" href="#">Linux 앱 내려받기</a>
+        <div class="dl-meta">
+          <div><span class="k">크기</span> 약 200 MiB</div>
+          <div><span class="k">요구</span> x64 · Ubuntu 22.04 급 이상</div>
+          <div class="hash"><span class="k">SHA-256</span> <span data-apphash="Linux">—</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="alert dl-app-note" data-mode="app" hidden>
+      <b class="h">서명하지 않은 앱입니다</b>
+      처음 열 때 운영체제가 한 번 묻습니다 — 악성이라서가 아니라 서명한 회사가 없다는 경고입니다.
+      Windows 는 <strong>추가 정보 → 실행</strong>, macOS 는 앱을 <strong>오른쪽 클릭 → 열기</strong>. 압축을 풀어 바로 실행하며 설치하지 않습니다.
+      세이브는 앱 안에 따로 저장됩니다(브라우저 판과 옮길 때는 게임 설정의 내보내기 · 가져오기).
+      <span class="dl-app-wait" hidden>앱 판은 다음 릴리스(v1.1.2)부터 받을 수 있습니다 — 그때까지는 브라우저로 여는 판을 받아 주세요.</span>
     </div>
 
     <p style="margin-top:18px;font-size:.84rem;color:var(--bone-faint)">
@@ -392,23 +435,43 @@ bash launch.sh</code></pre>
     macos:   '9a143ac8'
   };
 
-  document.querySelectorAll('.dl').forEach(function (card) {
+  document.querySelectorAll('#dlGrid .dl').forEach(function (card) {   // 브라우저로 여는 판 — 앱 카드는 아래 APP_* 가 맡는다
     var os = card.dataset.os;
     card.querySelector('[data-dl]').href =
       'https://github.com/' + REPO + '/releases/download/v' + VERSION + '/' + FILES[os];
     card.querySelector('[data-hash]').textContent = HASHES[os];
   });
 
+  /* ---- 앱으로 여는 판(Electron · tools/build-desktop.sh) — APP_VERSION 이 null 이면 아직 릴리스에 없다: 단추를 잠그고 안내 ---- */
+  var APP_VERSION = null;
+  /* 릴리스 SHA256SUMS-App.txt 의 앞 8자리 */
+  var APP_HASHES = { 'Windows': '', 'macOS-AppleSilicon': '', 'macOS-Intel': '', 'Linux': '' };
+  document.querySelectorAll('[data-app]').forEach(function (a) {
+    var k = a.dataset.app;
+    if (APP_VERSION) a.href = 'https://github.com/' + REPO + '/releases/download/v' + APP_VERSION + '/AshfallChronicles-' + APP_VERSION + '-App-' + k + '.zip';
+    else { a.removeAttribute('href'); a.setAttribute('aria-disabled', 'true'); a.classList.add('is-off'); }
+  });
+  document.querySelectorAll('[data-apphash]').forEach(function (s) { s.textContent = APP_HASHES[s.dataset.apphash] || '—'; });
+  if (!APP_VERSION) document.querySelector('.dl-app-wait').hidden = false;
+
+  /* ---- 여는 방법 고르기(브라우저 · 앱) — 고른 것은 주소 #app 으로도 연다 ---- */
+  var modeBtns = Array.prototype.slice.call(document.querySelectorAll('.dl-mode-btn'));
+  function mode(m) {
+    modeBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.mode === m)); });
+    document.querySelectorAll('#get [data-mode]:not(.dl-mode-btn)').forEach(function (el) { el.hidden = el.dataset.mode !== m; });
+  }
+  modeBtns.forEach(function (b) { b.addEventListener('click', function () { mode(b.dataset.mode); }); });
+  if (location.hash === '#app') mode('app');
+
   /* ---- 운영체제 추정: 맞는 카드를 앞으로 끌어올린다 ---- */
   var ua = navigator.userAgent;
-  var guess = /Mac|iPhone|iPad/.test(ua) ? 'macos' : /Win/.test(ua) ? 'windows' : null;
+  var guess = /Mac|iPhone|iPad/.test(ua) ? 'macos' : /Win/.test(ua) ? 'windows' : /Linux/.test(ua) && !/Android/.test(ua) ? 'linux' : null;
   if (guess) {
-    var mine = document.querySelector('.dl[data-os="' + guess + '"]');
-    if (mine) {
+    document.querySelectorAll('.dl[data-os="' + guess + '"]').forEach(function (mine) {
       mine.dataset.recommended = '1';
       mine.querySelector('.dl-you').hidden = false;
       mine.parentNode.prepend(mine);
-    }
+    });
   }
 
   /* ---- 실행 방법 탭 ---- */
