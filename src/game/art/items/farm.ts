@@ -4,13 +4,13 @@ import { ITEM_PAINT, sh2 } from '../../itemart.js';
 /* itemart.js Art.paint 의 갈래들 — 읽히는 순간 ITEM_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 Art. */
 
 /** 꺾은선 — H.stroke(색, 굵기, 그리기) 위에 점 목록으로. */
-export function line(H, pts, col, wd) {
+export function line(H: ItemPaintKit, pts: any, col: string, wd: number) {
   H.stroke(col, wd, () => { H.g.moveTo(pts[0][0], pts[0][1]); for (const q of pts.slice(1)) H.g.lineTo(q[0], q[1]); });
 }
 
 export const ItemPaintFarm: Bag = {
   /* ---------- 농업 ---------- */
-  hoe(H) {
+  hoe(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .65);
@@ -23,7 +23,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  wcan(H) {                                           // 물뿌리개 — 몸통 · 긴 주둥이 · 꽃잎 꼭지 · 손잡이
+  wcan(H: ItemPaintKit) {                                           // 물뿌리개 — 몸통 · 긴 주둥이 · 꽃잎 꼭지 · 손잡이
     const { P, poly, circ } = H, s = H.s;
     const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .62);
     line(H, [[9, 12], [9, 7], [18, 7], [18, 12]], dk, 2);  // 손잡이
@@ -33,7 +33,7 @@ export const ItemPaintFarm: Bag = {
     poly([[20, 20], [28, 11], [29.6, 12.4], [21, 23]], dk);   // 주둥이
     circ(28.6, 11.4, 2.2, lt); circ(28.6, 11.4, 1.1, '#5aa0e0');
   },
-  bucket(H) {                                         // 양동이 — 나무 통 · 쇠테 · 들손(물 양동이는 윗면에 물)
+  bucket(H: ItemPaintKit) {                                         // 양동이 — 나무 통 · 쇠테 · 들손(물 양동이는 윗면에 물)
     const { P, poly, ell } = H, s = H.s;
     const wood = '#8a6440', wlt = '#a67c52', band = s.c;
     line(H, [[6, 12], [8, 5], [16, 3], [24, 5], [26, 12]], sh2(band, .7), 1.6);   // 들손
@@ -44,7 +44,7 @@ export const ItemPaintFarm: Bag = {
     ell(16, 12, 10, 2.4, s.water || '#3a2a1a');
     if (s.water) ell(14, 11.6, 5, 1, sh2(s.water, 1.4));
   },
-  seed(H) {
+  seed(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -60,7 +60,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  wheatitem(H) {
+  wheatitem(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .7);
@@ -77,7 +77,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  rootitem(H) {
+  rootitem(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -94,7 +94,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  flouritem(H) {
+  flouritem(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, dk = sh2(c, .72);
@@ -108,7 +108,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  compost(H) {
+  compost(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -125,7 +125,7 @@ export const ItemPaintFarm: Bag = {
     }
   },
   /* ---------- 음식 ---------- */
-  bread(H) {
+  bread(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.28), dk = sh2(c, .68);
@@ -138,7 +138,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  pie(H) {
+  pie(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .66);
@@ -152,7 +152,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  bowl(H) {
+  bowl(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .66);
@@ -168,7 +168,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  teacup(H) {
+  teacup(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, dk = sh2(c, .7);
@@ -182,7 +182,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  jelly(H) {
+  jelly(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .68);
@@ -195,7 +195,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  feast(H) {
+  feast(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -213,7 +213,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  stopcore(H) {
+  stopcore(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 「멈춰라」 하나만 크게 적어 넣은 물건 — 붉은 정지 표식
@@ -229,7 +229,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  railgun(H) {
+  railgun(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .6);
@@ -244,7 +244,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  torchitem(H) {
+  torchitem(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         glow(16, 9, 9, '#ffb24a', .3);
@@ -260,7 +260,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  platformitem(H) {
+  platformitem(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         P(3, 12, 26, 6, '#8a6640');
@@ -270,7 +270,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  ore(H) {
+  ore(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -287,7 +287,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  meteorite(H) {
+  meteorite(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {           // 운석 조각 — 둥근 검은 쇳덩이, 오목 자국 셋, 쇠 윤과 붉은 금
         const c = s.c;
@@ -304,7 +304,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  bar(H) {
+  bar(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .68);
@@ -321,7 +321,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  rock(H) {
+  rock(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -333,7 +333,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  shard(H) {
+  shard(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -345,7 +345,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  crystal(H) {
+  crystal(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -358,7 +358,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  gel(H) {
+  gel(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -376,7 +376,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  bone(H) {
+  bone(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = '#e8e2cd', d = '#bdb59c';
@@ -389,7 +389,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  egg(H) {
+  egg(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -402,7 +402,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  detector(H) {
+  detector(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         /* 탐지기 — 접시 안테나 달린 손잡이 상자. */
@@ -421,7 +421,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  coconut_i(H) {
+  coconut_i(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         /* 코코넛 — 반으로 쪼갠 모양. */
@@ -440,7 +440,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  candy(H) {
+  candy(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         /* 사탕 — 가운데 알맹이에 양쪽 포장지를 꼬아 묶은 모양. */
@@ -457,7 +457,7 @@ export const ItemPaintFarm: Bag = {
       }
     }
   },
-  wisp(H) {
+  wisp(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;

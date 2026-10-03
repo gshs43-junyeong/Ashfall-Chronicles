@@ -2,7 +2,7 @@
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
 
 /* ---------------- 마을 등급 ---------------- */
-export const VILLAGE = [
+export const VILLAGE: (Bag | null)[] = [
   null,
   {
     n: '되살아난 마을',
@@ -97,8 +97,8 @@ export const MODES = [
   { id: 'impossible', n: '불가능', mul: 5, death: 'wipe', c: '#d0564c',
     d: '몬스터의 체력과 공격력이 5배. 한 번 죽으면 이 슬롯의 기록이 지워집니다.' }
 ];
-export const MODE_OF = id => MODES.find(m => m.id === id) || MODES[0];
-export const CHAR_OF = id => CHARACTERS.find(c => c.id === id) || CHARACTERS[0];
+export const MODE_OF = (id: string) => MODES.find(m => m.id === id) || MODES[0];
+export const CHAR_OF = (id: string) => CHARACTERS.find(c => c.id === id) || CHARACTERS[0];
 
 /* ---------------- 활·총을 든 손 ---------------- */
 /* 활은 겨눈 쪽으로 돌려 그리는데, 손 바로 위에 그리면 몸을 파고든다. */

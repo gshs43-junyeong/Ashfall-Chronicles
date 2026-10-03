@@ -20,7 +20,7 @@ export const RuinPulsePart: Bag = {
   /* ================= 유적의 맥박 · 탐사 기록 · 메아리 시련 ================= */
 
   /** 그 자리의 바이옴 유적 — { r, spec, idx, id } 또는 null. */
-  pulseRuinAt(tx, ty) {
+  pulseRuinAt(tx: number, ty: number) {
     const r = this.world.ruinAt(tx, ty);
     if (!r || !r.id) return null;
     const spec = this.ruinSpec(r.id);
@@ -29,7 +29,7 @@ export const RuinPulsePart: Bag = {
   },
   /** 맥박·탐사 기록이 쓰는 유적 명세 — 바이옴 유적은 RUIN_SPEC 그대로, 석판 유적(story0~2)은 STORY_RUIN 에서 한 벌 만든다(주인·메아리·인장 없음, story 에
      석판 번호) — 사연: docs/code-history.md#h71 */
-  ruinSpec(id) {
+  ruinSpec(id: string) {
     const s = RUIN_SPEC.find(q => q.id === id);
     if (s) return s;
     const m = /^story(\d)$/.exec(id || '');
@@ -42,18 +42,18 @@ export const RuinPulsePart: Bag = {
     }
     return this._storySpec[id];
   },
-  pulseStage(v) {
+  pulseStage(v: number) {
     let s = 0;
     for (let i = 0; i < PULSE.stages.length; i++) if (v >= PULSE.stages[i].at) s = i;
     return s;
   },
-  pulseOf(id) { return ((this.ruinPulse || {})[id]) || 0; },
-  hasSeal(k) {
+  pulseOf(id: string) { return ((this.ruinPulse || {})[id]) || 0; },
+  hasSeal(k: any) {
     const e = this.player && this.player.equip;
     return !!e && [e.acc1, e.acc2].some(it => it && it.id === 'seal_' + k);
   },
   /** 맥박을 움직인다. */
-  addPulse(id, v, byHand) {
+  addPulse(id: string, v: number, byHand: any) {
     this.ruinPulse = this.ruinPulse || {};
     if (v > 0 && !byHand && this.hasSeal('mine')) v *= 0.75;
     const before = this.ruinPulse[id] || 0;
@@ -65,7 +65,7 @@ export const RuinPulsePart: Bag = {
     if (s1 > (sv.peak || 0)) sv.peak = s1;
     if (s1 !== s0) this.onPulseStage(id, s0, s1);
   },
-  onPulseStage(id, s0, s1) {
+  onPulseStage(id: string, s0: any, s1: any) {
     const S = PULSE.stages[s1];
     if (s1 > s0) {
       /* 처음 한 번은 무엇이 일어나는지 말해 준다 — 규칙을 모르면 "갑자기 몹이 쏟아졌다"로만 읽힌다 */
@@ -87,7 +87,7 @@ export const RuinPulsePart: Bag = {
   },
 
   /** 매 프레임 — 유적 안이면 맥박을 올리고 기록을 적고, 밖에 있는 유적은 가라앉힌다 */
-  updatePulse(dt) {
+  updatePulse(dt: number) {
     const p = this.player, w = this.world;
     if (!p || !w || p.dead) return;
     this.ruinPulse = this.ruinPulse || {};
@@ -122,14 +122,14 @@ export const RuinPulsePart: Bag = {
     if (this._waveT <= 0) {
       this._waveT = PULSE.wave[st];
       /* 이미 둘레에 많으면 더 부르지 않는다 — 몰려오는 것이 쌓이기만 하면 "피하면 계속 오른다"가 아니라 "그냥 못 버틴다"가 된다. */
-      const near = this.ents.filter(e => e instanceof Enemy && !e.boss &&
+      const near = this.ents.filter((e: Enemy) => e instanceof Enemy && !e.boss &&
         Math.abs(e.cx - p.cx) < 900 && Math.abs(e.cy - p.cy) < 600).length;
       if (near < 4 + st * 2) this.spawnRuinMobs(here, PULSE.waveN[st]);
     }
   },
 
   /** 유적의 것들을 **그 유적 안, 설 수 있는 자리에** 부른다. */
-  spawnRuinMobs(here, n, mulX) {
+  spawnRuinMobs(here: any, n: number, mulX: any) {
     const w = this.world, p = this.player, pool = here.spec.mobs || ['skeleton'];
     const ptx = Math.floor(p.cx / TS), pty = Math.floor((p.y + p.h - 1) / TS);
     const mul = this.scale() * w.ruinMobMul(ptx, pty) * (mulX || 1);
@@ -145,7 +145,7 @@ export const RuinPulsePart: Bag = {
     return out;
   },
   /** 유적 안, 플레이어에게서 가로 minD~maxD 칸 떨어진 **설 수 있는** 칸 [tx, ty] (발은 ty+1 위) */
-  pulseSpot(here, minD, maxD) {
+  pulseSpot(here: any, minD: any, maxD: any) {
     const w = this.world, p = this.player;
     const ptx = Math.floor(p.cx / TS), pty = Math.floor((p.y + p.h - 1) / TS);
     for (let att = 0; att < 80; att++) {
@@ -160,7 +160,7 @@ export const RuinPulsePart: Bag = {
   },
 
   /* ---- 맥박 사건 (data.js PULSE_EVENTS) ---- */
-  startPulseEvent(id, stage, force) {          // force — 확인용으로 갈래를 고정한다
+  startPulseEvent(id: any, stage: any, force: any) {          // force — 확인용으로 갈래를 고정한다
     const here = this.pulseRuinAt(Math.floor(this.player.cx / TS), Math.floor(this.player.cy / TS));
     if (!here || here.id !== id) return;
     const pool = Object.keys(PULSE_EVENTS).filter(k => PULSE_EVENTS[k].stages.includes(stage) && k !== this._lastPev);
@@ -178,24 +178,24 @@ export const RuinPulsePart: Bag = {
       if (!ev.marks.length) return;
     } else if (k === 'stones') {
       /* 지금 방이 아닌 **다른 방** 셋에 — 가까운 방에서부터 고르되 서로 다른 방으로. */
-      const site = (this.world.ruinSites || []).find(q => q.id === id);
+      const site = (this.world.ruinSites || []).find((q: any) => q.id === id);
       if (!site) return;
       const p = this.player, ptx = p.cx / TS, pty = p.cy / TS;
-      const rooms = site.rooms.filter(r => !(ptx > r.x && ptx < r.x + r.w && pty > r.y && pty < r.y + r.h))
-        .map(r => ({ r, d: Math.hypot(r.x + r.w / 2 - ptx, r.y + r.h / 2 - pty) }))
-        .filter(q => q.d > 8).sort((a, b) => a.d - b.d).slice(0, 7);
+      const rooms = site.rooms.filter((r: any) => !(ptx > r.x && ptx < r.x + r.w && pty > r.y && pty < r.y + r.h))
+        .map((r: any) => ({ r, d: Math.hypot(r.x + r.w / 2 - ptx, r.y + r.h / 2 - pty) }))
+        .filter((q: any) => q.d > 8).sort((a: any, b: any) => a.d - b.d).slice(0, 7);
       for (let i = rooms.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rooms[i], rooms[j]] = [rooms[j], rooms[i]]; }
       /* ★ 방 바닥 높이는 방마다 다르다 — 고정 높이(r.y+r.h-3)에 두면 발판 없는 허공에 떠 손이 안 닿았다(3씨앗 27유적 중 6).
          가운데에서 가까운 **설 수 있는 칸**의 발 높이에 둔다. */
-      const w = this.world, standY = r => {
+      const w = this.world, standY = (r: any) => {
         const cx = r.x + (r.w >> 1);
         for (let d = 0; d < r.w >> 1; d++) for (const x of [cx + d, cx - d])
           for (let y = r.y + r.h - 2; y > r.y; y--)
             if (!w.solid(x, y) && !w.solid(x, y - 1) && TILE_DEF[w.get(x, y + 1)].solid) return [x, y + 1];
         return null;
       };
-      ev.stones = rooms.map(q => standY(q.r)).filter(Boolean).slice(0, 3)
-        .map(([x, y]) => ({ x: (x + 0.5) * TS, y: y * TS, got: false }));
+      ev.stones = rooms.map((q: any) => standY(q.r)).filter(Boolean).slice(0, 3)
+        .map(([x, y]: number[]) => ({ x: (x + 0.5) * TS, y: y * TS, got: false }));
       if (ev.stones.length < 3) return;
     } else if (k === 'greed') {
       const at = this.pulseSpot(here, 4, 12);
@@ -215,7 +215,7 @@ export const RuinPulsePart: Bag = {
     this.toast(`${E.i} ${E.n} — ${E.d}`, 'bad');
     this.shake = Math.max(this.shake || 0, 8);
   },
-  updatePulseEvent(here, dt) {
+  updatePulseEvent(here: any, dt: number) {
     const ev = this.pulseEvent, p = this.player;
     const inside = here && here.id === ev.id;
     // 유적을 나가면 5초 안에 돌아와야 한다 — 포위는 나가는 순간 실패
@@ -223,17 +223,17 @@ export const RuinPulsePart: Bag = {
     if (!inside && (ev.k === 'siege' || ev.away > 5)) { this.endPulseEvent(false); return; }
     ev.t -= dt;
     if (ev.k === 'hunt') {
-      if (ev.marks.every(e => e.dead)) { this.endPulseEvent(true); return; }
+      if (ev.marks.every((e: Enemy) => e.dead)) { this.endPulseEvent(true); return; }
     } else if (ev.k === 'stones') {
       for (const s of ev.stones)
         if (!s.got && Math.abs(s.x - p.cx) < 30 && Math.abs(s.y - (p.y + p.h)) < 44) {
           s.got = true;
           this.sfx('coin');
           for (let q = 0; q < 24; q++) this.parts.push(new Part(s.x, s.y - 14, '#8fe0ff', -50, 1));
-          const left = ev.stones.filter(q => !q.got).length;
+          const left = ev.stones.filter((q: any) => !q.got).length;
           if (left) this.toast(tr('공명석 — {n}/3', { n: 3 - left }), 'good');
         }
-      if (ev.stones.every(q => q.got)) { this.endPulseEvent(true); return; }
+      if (ev.stones.every((q: any) => q.got)) { this.endPulseEvent(true); return; }
     } else if (ev.k === 'greed') {
       if (ev.chest.items) { this.endPulseEvent(true); return; }
     } else if (ev.k === 'siege') {
@@ -243,16 +243,16 @@ export const RuinPulsePart: Bag = {
         ev.mobs.push(...this.spawnRuinMobs(here, 1 + ev.stage + (ev.wave === 3 ? 1 : 0)));
         this.toast(tr('포위 — {wave}/3 무리', { wave: ev.wave }), 'bad');
       }
-      if (ev.wave >= 3 && ev.mobs.every(e => e.dead)) { this.endPulseEvent(true); return; }
+      if (ev.wave >= 3 && ev.mobs.every((e: Enemy) => e.dead)) { this.endPulseEvent(true); return; }
     }
     if (ev.t <= 0) this.endPulseEvent(false);
   },
-  endPulseEvent(ok) {
+  endPulseEvent(ok: boolean) {
     const ev = this.pulseEvent; if (!ev) return;
     this.pulseEvent = null;
     const E = PULSE_EVENTS[ev.k], p = this.player;
     const spec = this.ruinSpec(ev.id);
-    const give = it => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+    const give = (it: Bag) => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
     // 표식된 것이 살아 있으면 달아난다(사라진다) — 남겨 두면 표식 없는 정예가 되어 버린다
     if (ev.k === 'hunt') for (const e of ev.marks) if (!e.dead) {
       e.dead = true;
@@ -276,9 +276,9 @@ export const RuinPulsePart: Bag = {
     const gold = 120 * rank * st;
     p.gold += gold;
     p.addXp(Math.round(p.xpNext * 0.15 * st));          // 레벨 곡선을 따른다 — 사연: docs/code-history.md#h44
-    if (spec && spec.bonus2 && ITEMS[spec.bonus2] && ev.k !== 'greed') give(makeItem(spec.bonus2, 1 + st));
-    if (st >= 2) give(makeItem('pulse_shard', st - 1));
-    const calm = { hunt: 15, stones: 35, greed: 0, siege: 25 }[ev.k];
+    if (spec && spec.bonus2 && ITEMS[spec.bonus2] && ev.k !== 'greed') give(makeItem(spec.bonus2, 1 + st)!);
+    if (st >= 2) give(makeItem('pulse_shard', st - 1)!);
+    const calm = ({ hunt: 15, stones: 35, greed: 0, siege: 25 } as Bag)[ev.k];
     if (calm) this.addPulse(ev.id, -calm);
     this.toast(tr('{E} — 해냈다 · 금화 {gold}{v}', { E: E.n, gold: fmt(gold), v: calm ? ` ${tr('· 맥박 -')}` + calm : '' }), 'good');
     this.sfx('chapter');
@@ -286,7 +286,7 @@ export const RuinPulsePart: Bag = {
     UI.refreshBag();
   },
   /** 사건 표지 — 공명석 · 표식된 것 · 탐욕의 상자. */
-  drawPulseEvent(c) {
+  drawPulseEvent(c: any) {
     const ev = this.pulseEvent; if (!ev) return;
     const cx0 = this.cam.x, cy0 = this.cam.y, t = this.time || 0;
     const marks = [];
@@ -325,7 +325,7 @@ export const RuinPulsePart: Bag = {
   },
 
   /** 격노 발작 — 그 유적 고유의 한 가지(data.js PULSE_RAGE). */
-  pulseRage(here) {
+  pulseRage(here: any) {
     const R = PULSE_RAGE[here.id]; if (!R) return;
     const p = this.player;
     this.toast(R.t, 'bad');
@@ -345,7 +345,7 @@ export const RuinPulsePart: Bag = {
   },
 
   /** 유적 상자를 처음 열 때 — 맥박 단계만큼 덤을 얹고 맥박을 올린다. */
-  pulseChest(o, tx, ty) {
+  pulseChest(o: Bag, tx: number, ty: number) {
     const here = this.pulseRuinAt(tx, ty);
     if (!here) return;
     const st = this.pulseStage(this.pulseOf(here.id));
@@ -366,11 +366,11 @@ export const RuinPulsePart: Bag = {
     const spec = (idx !== undefined && idx !== null) ? RUIN_SPEC[idx] : null;
     if (!spec || !spec.id) return;
     const p = this.player, st = this.pulseStage(this.pulseOf(spec.id));
-    const give = it => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+    const give = (it: Bag) => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
     if (echo) this.echoReward(spec, echo.lv);
     else if (st >= 3) {
       // 격노를 들고 주인을 쓰러뜨렸다 — 그 값을 따로 친다
-      give(makeItem('pulse_shard', 3));
+      give(makeItem('pulse_shard', 3)!);
       this.toast(tr('격노 속에서 주인을 쓰러뜨렸다 — 맥박 결정 셋'), 'good');
     }
     /* 주인이 쓰러지면 유적이 잠잠해진다. */
@@ -381,21 +381,21 @@ export const RuinPulsePart: Bag = {
   },
 
   /* ---- 탐사 기록 ---- */
-  surveyOf(id) {
+  surveyOf(id: string) {
     this.survey = this.survey || {};
     return this.survey[id] || (this.survey[id] = { rooms: {}, peak: 0, echo: 0 });
   },
   /** 유적 안에 있는 동안 — 밟은 방을 적고, 2초마다 등급을 다시 잰다 */
-  surveyTick(here, dt) {
+  surveyTick(here: any, dt: number) {
     this._svT = (this._svT || 0) - dt;
     if (this._svT > 0) return;
     this._svT = 0.5;
     const p = this.player, sv = this.surveyOf(here.id);
-    const site = (this.world.ruinSites || []).find(s => s.id === here.id);
+    const site = (this.world.ruinSites || []).find((s: any) => s.id === here.id);
     if (!site) return;
     const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
     let fresh = false;
-    site.rooms.forEach((r, i) => {
+    site.rooms.forEach((r: any, i: number) => {
       if (sv.rooms[i]) return;
       if (tx > r.x && tx < r.x + r.w - 1 && ty > r.y && ty < r.y + r.h - 1) { sv.rooms[i] = 1; fresh = true; }
     });
@@ -403,10 +403,10 @@ export const RuinPulsePart: Bag = {
     if (fresh || this._svFull >= 4) { this._svFull = 0; this.checkSurvey(here.id); }
   },
   /** 그 유적의 점수와 등급. */
-  surveyScore(id) {
+  surveyScore(id: string) {
     const w = this.world, sv = (this.survey || {})[id] || { rooms: {} };
-    const site = (w.ruinSites || []).find(s => s.id === id);
-    const r = (w.ruins || []).find(q => q.id === id);
+    const site = (w.ruinSites || []).find((s: any) => s.id === id);
+    const r = (w.ruins || []).find((q: any) => q.id === id);
     const idx = RUIN_SPEC.findIndex(s => s.id === id);
     const part: Bag = {};
     const nRooms = site ? site.rooms.length : 0;
@@ -441,20 +441,20 @@ export const RuinPulsePart: Bag = {
     }
     const score = max ? Math.floor(got / max * 100) : 0;
     /* 조건 하나의 충족 여부 — rooms·chests 는 비율, events·kinds·echo 는 개수, 나머지는 했나. */
-    const meets = (k, v) => {
+    const meets = (k: any, v: number) => {
       const q = part[k]; if (!q) return true;
       if (k === 'rooms' || k === 'chests') return q[0] / q[1] >= v - 1e-9;
       if (k === 'events' || k === 'kinds' || k === 'echo') return q[0] >= v;
       return q[0] >= 1;
     };
-    let tier = SURVEY_TIERS[SURVEY_TIERS.length - 1], next = null, missing = [];
+    let tier = SURVEY_TIERS[SURVEY_TIERS.length - 1], next = null, missing: string[] = [];
     for (let i = 0; i < SURVEY_TIERS.length; i++) {
       const T0 = SURVEY_TIERS[i];
       if (Object.keys(T0.need).every(k => meets(k, T0.need[k]))) {
         tier = T0; next = i > 0 ? SURVEY_TIERS[i - 1] : null; break;
       }
     }
-    const label = k => (story && k === 'boss') ? tr('석판') : SURVEY_LABEL[k];
+    const label = (k: any) => (story && k === 'boss') ? tr('석판') : SURVEY_LABEL[k];
     if (next) missing = Object.keys(next.need).filter(k => !meets(k, next.need[k])).map(k => {
       const v = next.need[k], q = part[k];
       if (k === 'rooms' || k === 'chests') return tr('{label} {n}% (지금 {n2}%)', { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
@@ -465,11 +465,11 @@ export const RuinPulsePart: Bag = {
              seen: !!(this.seenRuins || {})[id] };
   },
   /** 등급이 오르면 알리고, A · S 에 처음 닿으면 보상을 준다 */
-  checkSurvey(id) {
+  checkSurvey(id: string) {
     const spec = this.ruinSpec(id); if (!spec) return;
     const sc = this.surveyScore(id), sv = sc.sv, p = this.player;
     const order = SURVEY_TIERS.map(q => q.r);
-    const give = it => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+    const give = (it: Bag) => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
     if (sv.best && order.indexOf(sc.rank) >= order.indexOf(sv.best)) return;   // 오르지 않았다
     const firstTime = !sv.best;
     sv.best = sc.rank;
@@ -479,14 +479,14 @@ export const RuinPulsePart: Bag = {
       sv.a = 1;
       const gold = 1200 * (spec.rank || 3);
       p.gold += gold;
-      give(makeItem('pulse_shard', 3));
+      give(makeItem('pulse_shard', 3)!);
       this.toast(tr('{spec|을} 거의 다 봤다 — 금화 {gold} · 맥박 결정 셋', { spec: spec.n, gold: fmt(gold) }), 'good');
       this.sfx('manycoins');
     }
     if (sc.rank === 'S' && !sv.s) {
       sv.s = 1;
       const sid = 'seal_' + id;
-      if (ITEMS[sid]) { give(makeItem(sid, 1)); this.toast(tr('샅샅이 뒤졌다 — {item}', { item: ITEMS[sid].n }), 'good'); }
+      if (ITEMS[sid]) { give(makeItem(sid, 1)!); this.toast(tr('샅샅이 뒤졌다 — {item}', { item: ITEMS[sid].n }), 'good'); }
       this.shake = 8; this.sfx('chapter');
     }
     this.checkAch();
@@ -495,13 +495,13 @@ export const RuinPulsePart: Bag = {
   },
 
   /* ---- 메아리 시련 ---- */
-  openEcho(o) {
+  openEcho(o: Bag) {
     const spec = RUIN_SPEC[o.ruin];
     if (this.boss) { this.toast(tr('이미 무언가가 깨어 있다'), 'bad'); return; }
     const sv = this.surveyOf(spec.id);
     const best = sv.echo || 0, next = Math.min(ECHO.max, best + 1);
     const st = this.pulseStage(this.pulseOf(spec.id));
-    const bn = ENEMIES[spec.boss] ? ENEMIES[spec.boss].n : tr('주인');
+    const bn = ENEMIES[spec.boss!] ? ENEMIES[spec.boss!].n : tr('주인');
     const lines = [tr('주인은 쓰러졌지만, 둥지는 아직 그 모양을 기억한다.'),
                    tr('유적이 깨어 있으면 그 기억이 다시 일어선다.'), '',
                    tr('넘긴 메아리 {best} / {max}', { best, max: ECHO.max }) +
@@ -524,7 +524,7 @@ export const RuinPulsePart: Bag = {
     UI.openLore(tr('{spec} — 메아리', { spec: spec.n }), lines, choices);
     this.sfx('open');
   },
-  summonEcho(o, spec, lv) {
+  summonEcho(o: Bag, spec: Bag, lv: number) {
     if (this.boss) return;
     this.pendingLair = null;
     this.pendingEcho = { idx: o.ruin, id: spec.id, lv };
@@ -540,21 +540,21 @@ export const RuinPulsePart: Bag = {
     if (here && lv > 1) this.spawnRuinMobs(here, lv - 1);
     this.toast(tr('메아리 {lv}단계', { lv }), 'bad');
   },
-  echoReward(spec, lv) {
+  echoReward(spec: Bag, lv: number) {
     const p = this.player, sv = this.surveyOf(spec.id);
-    const give = it => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+    const give = (it: Bag) => { if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
     const first = lv > (sv.echo || 0);
     sv.echo = Math.max(sv.echo || 0, lv);
     const k = this.hasSeal('abyss') ? 1.5 : 1;
     const gold = Math.round(350 * lv * (spec.rank || 3) * k * (first ? 1.5 : 1));
     p.gold += gold;
     p.addXp(Math.round(p.xpNext * 0.25 * lv * k));   // 되풀이할 수 있어 한 번에 한 레벨 남짓까지만
-    give(makeItem('pulse_shard', Math.round((lv + 1) * k)));
-    if (spec.bonus2 && ITEMS[spec.bonus2]) give(makeItem(spec.bonus2, Math.round(2 * lv * k)));
+    give(makeItem('pulse_shard', Math.round((lv + 1) * k))!);
+    if (spec.bonus2 && ITEMS[spec.bonus2]) give(makeItem(spec.bonus2, Math.round(2 * lv * k))!);
     // 마지막 단계를 처음 넘기면 그 유적의 유물을 한 번 더 — 이번엔 잘 벼린 것으로
     const relic = RUIN_RELIC[spec.id];
     if (first && lv === ECHO.max && relic && ITEMS[relic]) {
-      give(rollGear(relic, this.rng, 3));
+      give(rollGear(relic, this.rng, 3)!);
       this.toast(tr('마지막 메아리가 흩어졌다 — {item}', { item: ITEMS[relic].n }), 'good');
     }
     this.toast(tr('메아리 {lv}단계를 넘겼다 — 금화 {gold}', { lv, gold: fmt(gold) }), 'good');
@@ -563,7 +563,7 @@ export const RuinPulsePart: Bag = {
   },
 
   /** 맥박 막대 — 바이옴 유적 안에 있을 때만. */
-  drawPulse(c) {
+  drawPulse(c: any) {
     const id = this.pulseHere; if (!id) return;
     const v = this.pulseOf(id), st = this.pulseStage(v), S = PULSE.stages[st];
     const Wd = 230, x = Math.round((this.W - Wd) / 2), y = this.boss ? 84 : 20;
@@ -596,8 +596,8 @@ export const RuinPulsePart: Bag = {
     if (ev && ev.id === id) {
       const E = PULSE_EVENTS[ev.k];
       let prog = '';
-      if (ev.k === 'stones') prog = `${ev.stones.filter(q => q.got).length}/3`;
-      else if (ev.k === 'hunt') prog = `${ev.marks.filter(e => e.dead).length}/${ev.marks.length}`;
+      if (ev.k === 'stones') prog = `${ev.stones.filter((q: any) => q.got).length}/3`;
+      else if (ev.k === 'hunt') prog = `${ev.marks.filter((e: Enemy) => e.dead).length}/${ev.marks.length}`;
       else if (ev.k === 'siege') prog = tr('{wave}/3 무리', { wave: ev.wave });
       else if (ev.k === 'greed') prog = tr('상자');
       const ey = y + 32;

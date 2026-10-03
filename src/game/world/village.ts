@@ -14,7 +14,7 @@ import { DAWN_BUILDINGS, DAWN_INSIDE, DAWN_OBJ, DAWN_PLAZA, DAWN_WALL, TS, World
 export const WorldVillage: Bag & ThisType<World> = {
 
   /* ---- 마을: 오두막 3채 + 작업대 + 용광로 + NPC ---- */
-  buildVillage(x0, x1, gy, rng) { const { CAMP_X1 } = this.dims;
+  buildVillage(x0: any, x1: any, gy: any, rng: any) { const { CAMP_X1 } = this.dims;
     const huts = [
       { x: x0 + 2, w: 13, npc: 'elara' },
       { x: x0 + 19, w: 14, npc: 'borin' },
@@ -55,7 +55,7 @@ export const WorldVillage: Bag & ThisType<World> = {
   },
 
   /* ---- 여명 마을 ---- */
-  buildDawnCity(x0, x1, gy, rng) {
+  buildDawnCity(x0: any, x1: any, gy: any, rng: any) {
     const blocks = DAWN_BUILDINGS.map(b => ({ x: x0 + b.off, w: b.w, h: b.h }));
     this.dawnCity = { x0, x1, gy, blocks, restored: 0 };
 
@@ -84,7 +84,7 @@ export const WorldVillage: Bag & ThisType<World> = {
     for (let x = pL; x <= pR; x++)
       for (let y = gy - 3; y < gy; y++) this.set(x, y, T.AIR);
     const fo = DAWN_PLAZA.find(s => s.id === 'fountain');
-    for (let x = cx + fo.off; x < cx + fo.off + fo.w; x++) this.set(x, gy - 1, T.RUINBRICK);
+    for (let x = cx + fo!.off; x < cx + fo!.off + fo!.w; x++) this.set(x, gy - 1, T.RUINBRICK);
   },
 
   /** 광장 가로 구간(타일) — 건물1 오른쪽 끝 다음 칸부터 건물2 왼쪽 끝 앞 칸까지. */
@@ -94,7 +94,7 @@ export const WorldVillage: Bag & ThisType<World> = {
   },
 
   /* ---- 지하 공창 (세션 2) ---- */
-  buildWorks(dx0, dx1, rng) { const { SY } = this.dims;
+  buildWorks(dx0: any, dx1: any, rng: any) { const { SY } = this.dims;
     const cx = (dx0 + dx1) >> 1;
     const y0 = SY(210), h = 40, x0 = cx - 34, w = 68;
     this.works = { x0, y0, w, h, cx, liftX: cx };
@@ -148,7 +148,7 @@ export const WorldVillage: Bag & ThisType<World> = {
     this.objects.push({ type: 'terminal', x: (x0 + 14) * TS, y: (y0 + 30) * TS - 40, w: 34, h: 40, term: 2 });
   },
   /* ---- 폭주로 ---- */
-  buildRunaway(dx0, dx1, rng) { const { SY } = this.dims;
+  buildRunaway(dx0: any, dx1: any, rng: any) { const { SY } = this.dims;
     const cx = (dx0 + dx1) >> 1;
     const y0 = SY(306), h = 54, w = 86, x0 = cx - (w >> 1);
     this.runaway = { x0, y0, w, h, cx };
@@ -157,7 +157,7 @@ export const WorldVillage: Bag & ThisType<World> = {
       x0, y0, w, h, wall: T.SLAGSTEEL, floor: T.STEELPLATE, bg: 2,
       rng, depth: 4, minW: 13, minH: 10
     });
-    rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+    rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
 
     // 공창 바닥에서 폭주로까지 뚫린 수직 통로
     const wk = this.works;
@@ -206,13 +206,13 @@ export const WorldVillage: Bag & ThisType<World> = {
     }
     this.objects.push({ type: 'terminal', x: (boss.x + 3) * TS, y: (bfy) * TS - 40, w: 34, h: 40, term: 3 });
   },
-  inRunaway(tx, ty) {
+  inRunaway(tx: number, ty: number) {
     const k = this.runaway;
     return !!k && tx >= k.x0 - 1 && tx <= k.x0 + k.w && ty >= k.y0 - 1 && ty <= k.y0 + k.h;
   },
 
   /* ---- 설계실 (세션 2 종장) ---- */
-  buildAtelier(rng) { const { WW } = this.dims;
+  buildAtelier(rng: any) { const { WW } = this.dims;
     const rw = this.runaway;
     if (!rw) return;
     const w = 66, h = 40;
@@ -224,7 +224,7 @@ export const WorldVillage: Bag & ThisType<World> = {
       x0, y0, w, h, wall: T.ARCHESTONE, floor: T.ARCHESTONE, bg: 6,
       rng, depth: 4, minW: 12, minH: 9, shapes: ['rect', 'rect', 'octagon', 'round']
     });
-    rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+    rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
 
     // 폭주로 오른쪽 벽 ↔ 설계실 왼쪽 벽을 잇는 수평 통로.
     const ty = y0 + 4;
@@ -266,13 +266,13 @@ export const WorldVillage: Bag & ThisType<World> = {
           x: (rcx + rng.int(-2, 2)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
     }
   },
-  inAtelier(tx, ty) {
+  inAtelier(tx: number, ty: number) {
     const k = this.atelier;
     return !!k && tx >= k.x0 - 1 && tx <= k.x0 + k.w && ty >= k.y0 - 1 && ty <= k.y0 + k.h;
   },
 
   /* ---- 특별 유적 ① 부유 성채 (하늘) ---- */
-  buildCitadel(rng) { const { SX, SKY_Y } = this.dims;
+  buildCitadel(rng: any) { const { SX, SKY_Y } = this.dims;
     const w = 74, h = 30;
     const x0 = SX(3300 + SHIFT), y0 = 4;         // 버섯 골짜기 위 하늘 (세션 2 바이옴 상공)
     this.citadel = { x0, y0, w, h, cx: x0 + (w >> 1) };
@@ -285,7 +285,7 @@ export const WorldVillage: Bag & ThisType<World> = {
       x0, y0, w, h, wall: T.ORBITPLATE, floor: T.ORBITPLATE, bg: 9,
       rng, depth: 4, minW: 12, minH: 8, shapes: ['rect', 'octagon', 'round']
     });
-    rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+    rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
 
     /* 진입 다리 — 성채는 통째로 떠 있는 판이라 그냥 두면 들어갈 방법이 제트팩뿐이다. */
     {
@@ -332,13 +332,13 @@ export const WorldVillage: Bag & ThisType<World> = {
           x: (rcx + rng.int(-2, 2)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
     }
   },
-  inCitadel(tx, ty) {
+  inCitadel(tx: number, ty: number) {
     const k = this.citadel;
     return !!k && tx >= k.x0 - 2 && tx <= k.x0 + k.w + 2 && ty >= k.y0 - 1 && ty <= k.y0 + k.h + 1;
   },
 
   /* ---- 특별 유적 ② 무너진 갱 (최심부) ---- */
-  buildDeepShaft(rng) { const { SX, WORLD_BOT, HELL_Y } = this.dims;
+  buildDeepShaft(rng: any) { const { SX, WORLD_BOT, HELL_Y } = this.dims;
     const w = 70, h = 34;
     const x0 = SX(640 + SHIFT), y0 = WORLD_BOT - 46;     // 잿빛 숲 최하부 — 지옥 바닥 아래
     this.deepShaft = { x0, y0, w, h, cx: x0 + (w >> 1) };
@@ -347,7 +347,7 @@ export const WorldVillage: Bag & ThisType<World> = {
       x0, y0, w, h, wall: T.DEEPROCK, floor: T.DEEPROCK, bg: 4,
       rng, depth: 4, minW: 12, minH: 8, shapes: ['rect', 'rect', 'pillars']
     });
-    rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+    rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
 
     // 지옥에서 내려오는 수직 갱도 — 무너진 버팀목이 드문드문 남아 있다
     const ex = x0 + (w >> 1);
@@ -383,19 +383,19 @@ export const WorldVillage: Bag & ThisType<World> = {
           x: (rcx + rng.int(-2, 2)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
     }
   },
-  inDeepShaft(tx, ty) {
+  inDeepShaft(tx: number, ty: number) {
     const k = this.deepShaft;
     return !!k && tx >= k.x0 - 1 && tx <= k.x0 + k.w && ty >= k.y0 - 1 && ty <= k.y0 + k.h;
   },
 
-  inWorks(tx, ty) {
+  inWorks(tx: number, ty: number) {
     const k = this.works;
     return !!k && tx >= k.x0 - 1 && tx <= k.x0 + k.w && ty >= k.y0 - 1 && ty <= k.y0 + k.h;
   },
 
   /** 종장 완료 시 1회. */
   /** 배치표 한 줄을 실제 오브젝트로 만든다. */
-  dawnPlace(tx, slotW, spec, gy, label) {
+  dawnPlace(tx: number, slotW: any, spec: Bag, gy: number, label: string) {
     const o = Object.assign({}, spec, {
       x: tx * TS + Math.round((slotW * TS - spec.w) / 2),
       y: gy * TS - spec.h
@@ -405,9 +405,9 @@ export const WorldVillage: Bag & ThisType<World> = {
   },
 
   /** 놓기 직전 겹침 검사. */
-  checkDawnLayout(items, gy, plaza) {
+  checkDawnLayout(items: any, gy: number, plaza: any) {
     const bad = [];
-    const sorted = items.slice().sort((a, b) => a.tx0 - b.tx0);
+    const sorted = items.slice().sort((a: any, b: any) => a.tx0 - b.tx0);
     for (let i = 1; i < sorted.length; i++) {
       const a = sorted[i - 1], b = sorted[i];
       if (b.tx0 <= a.tx1) bad.push(tr('겹침: {slotKey}({tx0}~{tx1}) ↔ {slotKey2}({tx02}~{tx12})', { slotKey: a.slotKey, tx0: a.tx0, tx1: a.tx1, slotKey2: b.slotKey, tx02: b.tx0, tx12: b.tx1 }));
@@ -485,7 +485,7 @@ export const WorldVillage: Bag & ThisType<World> = {
 
   /* ---- 마을 개선 ---- */
   /* 떠돌이 상인 배치 — MERCHANTS 표가 자리를 들고 있다(1·3·4단계에 하나씩). */
-  placeMerchants(lv) {
+  placeMerchants(lv: number) {
     const d = this.dawnCity; if (!d) return;
     const { gy, blocks } = d, cx = (d.x0 + d.x1) >> 1;
     const ns = DAWN_OBJ.npcBase;
@@ -503,15 +503,15 @@ export const WorldVillage: Bag & ThisType<World> = {
       this.objects.push({ type: 'npc', npc: m.npc, x: tx * TS, y: fy * TS - ns.h, w: ns.w, h: ns.h });
     }
   },
-  upgradeVillage(lv) {
+  upgradeVillage(lv: any) {
     const d = this.dawnCity;
     if (!d || !d.restored || (d.lv || 1) >= lv) return false;
     d.lv = lv;
     const { x0, x1, gy, blocks } = d;
     const cx = (x0 + x1) >> 1;
     const rng = new RNG(this.seed + '_v' + lv);
-    const P = (o) => this.objects.push(o);
-    const mach = (tx, ty, key, dir?) => {
+    const P = (o: Bag) => this.objects.push(o);
+    const mach = (tx: number, ty: number, key: string, dir?: number) => {
       if (Factory && Factory.canPlace(this, tx, ty)) Factory.place(this, tx, ty, key, dir || 0, 1);
     };
 
@@ -634,7 +634,7 @@ export const WorldVillage: Bag & ThisType<World> = {
         const eLimit = blocks[0].x - 2;                 // 첫 집 앞 한 칸은 비워 둔다
         const nx0 = Math.max(f.x0 - 6, wLimit);
         const nx1 = Math.min(f.x1 + 6, eLimit);
-        const till = (x) => {
+        const till = (x: number) => {
           for (let y = gy - 5; y < gy; y++) this.set(x, y, T.AIR);
           this.set(x, gy, this.poleColumn(x, gy) ? T.DIRT : T.FARMLAND);
         };

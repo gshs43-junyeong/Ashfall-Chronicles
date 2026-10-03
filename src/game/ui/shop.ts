@@ -14,14 +14,14 @@ import { $, UI } from '../ui.js';
 export const ShopUIPart: Bag = {
 
   /* ---------------- 상자 / 상점 ---------------- */
-  openChest(obj) {
+  openChest(obj: Bag) {
     this.closePanel();
     this.chestRef = obj; this.shopRef = null;
     $('#chest-title').textContent = tr('상자');
     this.panels.show('chest'); G.uiOpen = true;
     this.refreshChest();
   },
-  openShop(npcId) {
+  openShop(npcId: string) {
     this.closePanel();
     this.shopRef = npcId; this.chestRef = null; this.shopMode = 'buy';
     let toggle = $('#shop-mode-btn');
@@ -38,7 +38,7 @@ export const ShopUIPart: Bag = {
     this.refreshChest();
   },
   shopTitle() {
-    const rate = G.marketRate ? Math.round((G.goldRate || 1) * 100) : 100;
+    const rate = Math.round((G.goldRate || 1) * 100);   // marketRate 는 늘 있다(예전 조건은 늘 참이었다)
     const arrow = rate > 105 ? ' 📈' : rate < 95 ? ' 📉' : '';
     return tr('{npc}의 상점 — 🪙 {gold} · 환율 {rate}%{arrow}', { npc: NPCS[this.shopRef].n, gold: fmt(G.player.gold), rate, arrow });
   },
@@ -49,7 +49,7 @@ export const ShopUIPart: Bag = {
       if (toggle) { toggle.style.display = ''; toggle.textContent = this.shopMode === 'buy' ? tr('판매하기 ▸') : tr('◂ 구매하기'); }
       if (this.shopMode === 'sell') {
         const p = G.player;
-        p.bag.forEach((it, i) => {
+        p.bag.forEach((it: Bag, i: number) => {
           if (!it) return;
           const price = Math.round(G.price(it) * 0.5);
           makeSlot('slot' + (it.r ? ' r' + it.r : ''), { fill: { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' },
@@ -67,7 +67,7 @@ export const ShopUIPart: Bag = {
           $('#chest-title').textContent = this.shopTitle();
           return;
         }
-        stock.forEach((row, i) => {
+        stock.forEach((row: any, i: number) => {
           const it = makeItem(row.id, row.c, 0);
           const price = G.buyPrice(it, m.markup);
           makeSlot('slot', { fill: { icon: Art.itemUrl(row.id), count: price, extra: row.c > 1 ? `<span class="num">×${row.c}</span>` : '' },
@@ -88,7 +88,7 @@ export const ShopUIPart: Bag = {
     }
     if (toggle) toggle.style.display = 'none';
     const c = this.chestRef; if (!c) return;
-    (c.items || []).forEach((it, i) => {
+    (c.items || []).forEach((it: Bag, i: number) => {
       makeSlot('slot' + (it ? ' r' + it.r : ''), { fill: it ? { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' } : undefined,
         click: () => {
           if (!it) return;
@@ -109,7 +109,7 @@ export const ShopUIPart: Bag = {
     this.refreshVault();
   },
   /** 플레이어가 놓은 저장 상자 — 마을 보관고와 같은 두 칸짜리 화면을 그대로 쓴다. */
-  openStore(obj) {
+  openStore(obj: Bag) {
     this.closePanel();
     this.storeRef = obj;
     this.panels.show('vault'); G.uiOpen = true;
@@ -126,17 +126,17 @@ export const ShopUIPart: Bag = {
       goldRow.style.display = this.storeRef ? 'none' : 'flex';   // 마을 금고에만 있다
       $('#vault-gold-amt').textContent = fmt(G.vaultGold);
     }
-    const fill = (host, arr, onClick) => {
+    const fill = (host: any, arr: any, onClick: any) => {
       host.innerHTML = '';
-      arr.forEach((it, i) => makeSlot('slot' + (it ? ' r' + it.r : ''), { fill: it ? { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' } : undefined,
+      arr.forEach((it: Bag, i: number) => makeSlot('slot' + (it ? ' r' + it.r : ''), { fill: it ? { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' } : undefined,
         click: () => onClick(i), enter: e => this.showTip(it, e), leave: () => this.hideTip() }, host));
     };
-    fill($('#vault-grid'), store, i => {
+    fill($('#vault-grid'), store, (i: number) => {
       const it = store[i]; if (!it) return;
       if (p.addItem(it)) { store[i] = null; this.refreshVault(); this.refreshBag(); G.sfx('place'); }
       else this.toast(tr('가방이 가득 찼다'), 'bad');
     });
-    fill($('#vault-bag'), p.bag, i => {
+    fill($('#vault-bag'), p.bag, (i: number) => {
       const it = p.bag[i]; if (!it) return;
       const slot = store.indexOf(null);
       if (slot < 0) { this.toast(tr('{label|이} 가득 찼다', { label }), 'bad'); return; }
@@ -166,7 +166,7 @@ export const ShopUIPart: Bag = {
       el.className = 'quest-card' + (q.done ? ' done' : pr.done ? ' ready' : '');
       /* 종이 한 장을 그대로 옮긴다 — 제목 · 본문 · 붙인 사람 · 목표 · 값. */
       const body = (q.done && q.doneLine) ? `<div class="qc-say">${q.doneLine}</div>`
-        : (q.body || []).map(l => `<div class="qc-line">${l}</div>`).join('');
+        : (q.body || []).map((l: any) => `<div class="qc-line">${l}</div>`).join('');
       /* 값은 그때그때 센다 — 레벨이 오르면 종이에 적힌 값도 같이 오른다. */
       const pay = G.bountyPay(q);
       el.innerHTML = `<div class="qc-title">${q.title || ''}</div>` + body +
@@ -174,7 +174,7 @@ export const ShopUIPart: Bag = {
         `<div class="qc-obj">${G.objLabel(q.obj)}` +
         `${q.done ? ` ${tr('· 완료됨')}` : ` <b>${pr.cur} / ${pr.max}</b>`}</div>` +
         `<div class="qc-rw">${tr('보상 🪙 {gold} · 경험치 {xp}', { gold: fmt(pay.gold), xp: fmt(pay.xp) })}` +
-        `${(q.items || []).map(([id, n]) => ` · ${ITEMS[id].n}×${n}`).join('')}</div>`;
+        `${(q.items || []).map(([id, n]: [string, number]) => ` · ${ITEMS[id].n}×${n}`).join('')}</div>`;
       if (!q.done && pr.done) {
         const btn = document.createElement('button');
         btn.textContent = tr('떼어 간다');
@@ -195,7 +195,7 @@ export const ShopUIPart: Bag = {
     $('#reforge-title').textContent = tr('재련대 — 🪙 {gold}', { gold: fmt(G.player.gold) });
     $('#reforge-note').textContent = tr('다시 벼릴 장비를 고르시오. 접사가 새로 붙지만, 더 나빠질 수도 있다.');
     const g = $('#reforge-grid'); g.innerHTML = '';
-    G.player.bag.forEach((it, i) => {
+    G.player.bag.forEach((it: Bag, i: number) => {
       if (!it || !isGear(it)) return;
       const cost = G.reforgeCost(it);
       makeSlot('slot r' + it.r, { fill: { icon: Art.itemUrl(it.id), count: fmt(cost) },
@@ -215,7 +215,7 @@ export const ShopUIPart: Bag = {
     $('#anvil-note').textContent =
       tr('한 단계마다 공격력·방어력이 오른다 (최대 +{ENH_MAX}). +2부터 실패(단계 그대로), +4부터 파괴(한 단계 하락)가 있다.', { ENH_MAX: G.ENH_MAX });
     const g = $('#anvil-grid'); g.innerHTML = '';
-    G.player.bag.forEach((it, i) => {
+    G.player.bag.forEach((it: Bag, i: number) => {
       if (!it || !isGear(it)) return;
       const d = idef(it);
       if (!d.dmg && !d.def) return;                     // 벼릴 수치가 없는 장신구는 뺀다

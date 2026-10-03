@@ -30,7 +30,7 @@ import { SaveStore } from './savefmt.js';
 export const MAP_REVEAL_LIGHT = 1;
 
 /** 화질 — 픽셀 밀도 상한 · 입자 상한. ★ 헤드리스 폰 흉내에서 밀도 1.5 → 1 로 프레임이 10.8 → 21.2 로 두 배였다(JS 시간은 같음 — 막히는 곳은 화면 합성) */
-export const QUALITY = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 300 } };
+export const QUALITY: Bag = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 300 } };
 
 /** 터치 기기인가 — ?touch=1 / 0 이 먼저, 아니면 손가락이 주 포인터인 기기(폰 · 태블릿) */
 export const TOUCH = (() => {
@@ -126,7 +126,7 @@ export const GameCore: Bag = {
           UI.refreshBag(); UI.refreshEquip();
         }
         if (typeof TitleBG !== 'undefined') TitleBG.useSprites();
-      }).catch(e => { console.warn('sprite load failed, using procedural render', e); })
+      }).catch((e: any) => { console.warn('sprite load failed, using procedural render', e); })
         .finally(() => {
           // 위에서 예외가 났더라도 그림 자체는 다 받아 놓았을 수 있다.
           if (typeof TitleBG !== 'undefined') TitleBG.useSprites();
@@ -153,7 +153,7 @@ export const GameCore: Bag = {
     // 바깥을 누르면 닫힌다 (새 게임 폼은 입력 중 실수로 닫히면 곤란해 뺀다)
     ['#slots-screen', '#credits-screen'].forEach(sel => {
       const el = $(sel);
-      el.onclick = e => { if (e.target === el) this.closeModal(sel); };
+      el.onclick = (e: any) => { if (e.target === el) this.closeModal(sel); };
     });
     $('#btn-resume').onclick = () => this.setPause(false);
     $('#btn-save').onclick = () => this.saveGame();
@@ -193,18 +193,18 @@ export const GameCore: Bag = {
     this.W = v.W; this.H = v.H;
   },
   /** 이 액션에 걸린 키 목록. */
-  keysFor(id) { return this.inp.keysFor(id); },
+  keysFor(id: string) { return this.inp.keysFor(id); },
   /** 지금 눌려 있는가 */
-  held(id) { return this.inp.held(id); },
+  held(id: string) { return this.inp.held(id); },
   /** 방금 눌린 code 가 이 액션인가 */
-  isKey(id, code) { return this.inp.isKey(id, code); },
+  isKey(id: string, code: string) { return this.inp.isKey(id, code); },
 
   bindInput() {
     this.keys = this.inp.keys;
     this.inp.bindKeyboard({
       // 조작키를 다시 매기는 중이면 그 키를 여기서 삼킨다
-      capture: e => !!(UI.captureKey && UI.captureKey(e.code)),
-      down: e => this.keyDown(e),
+      capture: (e: any) => !!(UI.captureKey && UI.captureKey(e.code)),
+      down: (e: any) => this.keyDown(e),
       blur: () => { this.input.m1 = this.input.m2 = 0; }
     });
     bindPointer(this.cv, this.input, {
@@ -226,7 +226,7 @@ export const GameCore: Bag = {
         this.touch.el.style.setProperty('--ti-bottom', (r && r.height ? innerHeight - r.top + 14 : 24) + 'px'); };
       lift(); addEventListener('resize', lift);
       /* 스킬 칸을 누르면 그 스킬 — 겨누는 곳은 마지막으로 짚은 자리 */
-      $$('#skillbar .sk').forEach((el, i) => el.addEventListener('pointerdown', e => {
+      $$('#skillbar .sk').forEach((el, i) => el.addEventListener('pointerdown', (e: any) => {
         e.preventDefault();
         if (this.state === 'play' && !UI.dlg && !UI.open) this.player.useSkill(i, this.input.wx, this.input.wy);
       }));
@@ -244,7 +244,7 @@ export const GameCore: Bag = {
     $('#dialogue').addEventListener('click', () => { if (UI.dlg && !UI.finishType()) UI.nextLine(false); });
   },
   /** 새로 눌린 키 하나(반복 아님) — 패널 · 저장 · 핫바 · 스킬. */
-  keyDown(e) {
+  keyDown(e: any) {
     // 타이틀에서는 Esc 로 열려 있는 팝업을 한 겹씩 닫는다
     if (this.state !== 'play') {
       if (e.code === 'Escape' && this.closeTopModal()) e.preventDefault();
@@ -286,7 +286,7 @@ export const GameCore: Bag = {
   },
 
   /* ================= 게임 시작 ================= */
-  showLoading(msg) {
+  showLoading(msg: string) {
     const el = $('#loading');
     $('#loading-text').textContent = msg;
     el.classList.remove('fade'); el.classList.add('open');
@@ -344,14 +344,14 @@ export const GameCore: Bag = {
     });
   },
 
-  newGame(seedStr, slot, name, charId, mode, size) {
+  newGame(seedStr: string, slot: number, name: string, charId: string, mode: string, size: any) {
     const seed = seedStr || ('' + Math.floor(Math.random() * 1e9));
     this.currentSlot = slot;
     this.showLoading(tr('세계를 빚는 중…'));           // 크기와 상관없이 같은 문구
     // 다음 프레임에 생성해서 로딩 화면이 먼저 그려지게 한다
     setTimeout(() => { try { this._newGame(seed, name, charId, mode, size); } finally { this.hideLoading(); } }, 40);
   },
-  _newGame(seed, name, charId, mode, size) {
+  _newGame(seed: string, name: string, charId: string, mode: string, size: any) {
     this.rng = new RNG(seed + '_g');
     // ★ World 를 만들기 **전에** — 배열 크기와 모든 좌표가 여기서 정해진다.
     setWorldSize(size || new URLSearchParams(location.search).get('size') || 's');
@@ -402,7 +402,7 @@ export const GameCore: Bag = {
 
   /* ================= 루프 ================= */
   /** 한 프레임 — dt 는 0.033초로 자른 것, rawDt 는 실제로 흐른 시간(engine/core/loop.js). */
-  frame(dt, rawDt) {
+  frame(dt: number, rawDt: any) {
     this.scenes.frame(dt);
     // 배경음악은 일시정지/타이틀과 무관하게 항상 갱신해야 크로스페이드가 끊기지 않는다.
     if (Music) { Music.update(Math.min(rawDt, 3)); Music.play(this.pickBgm()); }
@@ -411,7 +411,7 @@ export const GameCore: Bag = {
       const pl = this.player, playing = this.state === 'play' && !this.paused;
       /* 헤엄 소리는 물속에서 **움직일 때만** — 가만히 떠 있어도 팔 젓는 소리가 났다 */
       const swim = playing && pl && (pl.swimming || pl.submerged > 0.5) && !!pl.swimMove;
-      const fuse = playing && this.projs.some(q => q instanceof Bomb);
+      const fuse = playing && this.projs.some((q: any) => q instanceof Bomb);
       SfxLoop.set('swim', swim);
       SfxLoop.set('fuse', fuse);
     }
@@ -466,7 +466,7 @@ export const GameCore: Bag = {
     return 'normal';
   },
   /** 카타콤 곡을 쓰는 자리인가 — 심층 전부와, 깊이와 무관한 모든 던전·유적 */
-  inCatacomb(tx, ty, zone) { const { DEEP_Y } = dimsOf(this.world);
+  inCatacomb(tx: number, ty: number, zone: string) { const { DEEP_Y } = dimsOf(this.world);
     if (ty > DEEP_Y) return true;
     if (zone === 'ruin' || zone === 'works' || zone === 'runaway' || zone === 'atelier'
       || zone === 'deepshaft') return true;
@@ -476,7 +476,7 @@ export const GameCore: Bag = {
     return false;
   },
 
-  update(dt) { const { WW, WH } = dimsOf(this.world);
+  update(dt: number) { const { WW, WH } = dimsOf(this.world);
     /* ---- 손이 멈추는 한 박자(히트스톱) ---- */
     if (this.stopT > 0) { this.stopT -= dt; dt *= 0.12; }
     this.time += dt;
@@ -596,15 +596,15 @@ export const GameCore: Bag = {
     // 마을 경비병 — 요새 단계에서 마을에 들어와 있는 동안만 감시탑마다 하나씩 선다
     if (this.villageLv() >= 3) {
       const inV = this.inDawn(30);
-      const gs = this.ents.filter(e => e instanceof Guard);
+      const gs = this.ents.filter((e: any) => e instanceof Guard);
       if (!inV) { for (const g of gs) g.dead = true; this.guardCd = 0; }
       else {
         this.guardCd = (this.guardCd || 0) - dt;
         const posts = (w.dawnCity.posts || [w.dawnCity.x0 - 12]);
         if (gs.length < posts.length && this.guardCd <= 0) {
           // 아직 아무도 안 선 초소를 찾아 세운다
-          const taken = new Set(gs.map(g => g.homeTx));
-          const tx = posts.find(t => !taken.has(t));
+          const taken = new Set(gs.map((g: any) => g.homeTx));
+          const tx = posts.find((t: any) => !taken.has(t));
           if (tx !== undefined) {
             const g = new Guard(tx * TS, (w.dawnCity.gy - 3) * TS, p.level);
             g.homeTx = tx;
@@ -772,7 +772,7 @@ export const GameCore: Bag = {
   },
 
   /** 새 함정 셋. */
-  tickTileTrap2(def, x, y) {
+  tickTileTrap2(def: any, x: any, y: any) {
     const w = this.world, p = this.player;
     const ph = tileHash(x, y);
     if (def.tcoil) {

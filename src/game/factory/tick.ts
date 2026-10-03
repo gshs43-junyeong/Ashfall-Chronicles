@@ -18,7 +18,7 @@ import { DIR4, FAC_TICK, Factory } from '../factory.js';
 export const FactoryTickPart: Bag = {
 
   /* ================= 틱 ================= */
-  tick(w, G) { const { WW } = dimsOf(w);
+  tick(w: any, G: any) { const { WW } = dimsOf(w);
     this.now = G.time;
     if (w.netDirty) this.buildNets(w);
     const ms = w.machines;
@@ -80,7 +80,7 @@ export const FactoryTickPart: Bag = {
       let sur = n.sur, drawn = n.drawn;
       for (const b of n.bats) {
         const cap = MACHINE[b.t].store;              // ★ 제 용량 — 강화 축전지(14000)가 3000에서 멈췄었다
-        if (sur > 0) { const c = Math.min(sur, cap - b.e); b.e += c; sur -= c; }
+        if (sur > 0) { const c = Math.min(sur, cap! - b.e); b.e += c; sur -= c; }
         else if (drawn > 0) { const c = Math.min(drawn, b.e); b.e -= c; drawn -= c; }
       }
     }
@@ -152,12 +152,12 @@ export const FactoryTickPart: Bag = {
   },
 
   /** 풍차 위를 막는가 — 고체 타일과 다른 기계 둘 다 바람을 가린다 */
-  blocksWind(w, x, y) { const { WW } = dimsOf(w);
+  blocksWind(w: World, x: number, y: number) { const { WW } = dimsOf(w);
     return w.solid(x, y) || w.machines.has(y * WW + x);
   },
 
   /* ---- 연료를 태운다. 태울 수 있으면 true ---- */
-  burn(m) {
+  burn(m: any) {
     if (m.fuel > 0) { m.fuel--; return true; }
     for (const k in m.in) {
       if (!FUEL[k]) continue;
@@ -169,7 +169,7 @@ export const FactoryTickPart: Bag = {
   },
 
   /* ---- 가공 기계 (자동 용광로 / 압축기 / 정제기 / 조립기 / 축전지) ---- */
-  runProc(w, m, s) {
+  runProc(w: any, m: any, s: any) {
     const cap = s.cap || 40;
     if (m.rec < 0) {
       let pick = -1;
@@ -204,15 +204,15 @@ export const FactoryTickPart: Bag = {
   },
 
   /** 벨트·분류기 위에서 3초 넘게 멈춘 물건인가 — 플레이어가 집어 갈 수 있다(불러온 뒤 시각이 없는 것도 멈춘 것으로 본다) */
-  stalled(m) {
+  stalled(m: any) {
     if (!m.it || !(m.t === 'belt' || m.t === 'belt_fast' || m.t === 'sorter')) return false;
     const t0 = m.it.t0 !== undefined ? m.it.t0 : -1e9;
     return G.time - t0 >= (this.DWELL[m.t] || FAC_TICK) + 3;
   },
   /** 멈춘 물건을 가방으로. 가져갔으면 true */
-  takeStalled(m, p) {
+  takeStalled(m: any, p: Player) {
     if (!this.stalled(m)) return false;
-    if (!p.addItem(makeItem(m.it.id, 1))) return false;
+    if (!p.addItem(makeItem(m.it.id, 1)!)) return false;
     m.it = null;
     return true;
   },
@@ -220,7 +220,7 @@ export const FactoryTickPart: Bag = {
   SHAKE: { drill: 1, drill_e: 1.3, drill_x: 1.6, press: 0.6, pressor: 0.8, gen: 0.5, pump: 0.4, mill: 0.5 },   // 일할 때 몸체 떨림(px)
 
   /** 일하는 모습 — 기계마다 한 가지 움직임. 일하지 않으면(act 0) 그리지 않는다. */
-  drawWork(c, w, m, sx, sy, time, camX, camY) { const { WW } = dimsOf(w);
+  drawWork(c: any, w: World, m: any, sx: number, sy: number, time: number, camX: number, camY: number) { const { WW } = dimsOf(w);
     if (!m.on || !m.act) return;
     const cx = sx + TS / 2, cy = sy + TS / 2, t = time + m.x * 0.37;
     c.save();
@@ -323,7 +323,7 @@ export const FactoryTickPart: Bag = {
   },
 
   /** 포탑 — 받침대는 타일 그림에서 잘라 쓰고, 머리·총열은 조준 방향(m.aim)으로 돌린다. 쏘면(fx) 총열이 뒤로 밀린다. */
-  drawTurret(c, m, sx, sy, v) {
+  drawTurret(c: any, m: any, sx: number, sy: number, v: number) {
     c.drawImage(TileArt.atlas, v * TS, T.M_TURRET * TS + TS - 8, TS, 8, sx, sy + TS - 8, TS, 8);
     const want = m.aim !== undefined ? m.aim : -Math.PI / 2;
     if (m.aimV === undefined) m.aimV = want;
@@ -342,7 +342,7 @@ export const FactoryTickPart: Bag = {
   },
 
   /** 캔 순간 — 광맥에서 파편이 튀고, 가까우면 땅이 조금 울린다(멀면 안 뿌린다) */
-  drillFx(bx, by, col) {
+  drillFx(bx: number, by: number, col: string) {
     const p = G.player; if (!p || !G.parts) return;
     const px = (bx + .5) * TS, py = (by + .5) * TS, d = Math.hypot(px - p.cx, py - p.cy);
     if (d > 900) return;
@@ -350,7 +350,7 @@ export const FactoryTickPart: Bag = {
     if (d < 6 * TS) G.shake = Math.max(G.shake || 0, 1.5);
   },
   /** 연료 기계의 연기 한 덩이 — 굴뚝(칸 위)에서 느리게 오른다 */
-  puff(m) {
+  puff(m: any) {
     const p = G.player; if (!p || !G.parts) return;
     const px = (m.x + .5) * TS, py = m.y * TS;
     if (Math.hypot(px - p.cx, py - p.cy) > 900) return;
@@ -358,19 +358,19 @@ export const FactoryTickPart: Bag = {
   },
 
   /** 물건 그림의 칸 안 높이(px) — 가로 벨트는 띠 윗면(TS-9)에 얹히고, 세로·대각선·기계는 가운데쯤. */
-  itemOff(m) {
+  itemOff(m: any) {
     if ((m.t === 'belt' || m.t === 'belt_fast') && (m.dir === 0 || m.dir === 2)) return TS - 9 - 14;
     return 4;
   },
   /** 벨트 한 칸 — **옆에서 본 모습**. run 0→1 = 물건이 한 칸을 가는 동안(물건과 같은 시계).
       가로(0·2): 아랫단 틀 · 굴대 둘 · 윗면 띠(무늬가 흐른다). 세로(1·3): 양옆 기둥 사이로 발판이 오르내리는 승강 벨트.
       대각선(4·5): 비탈 띠. 무늬 간격은 칸 길이를 나눠 떨어지게 — 옆 칸과 이어져 한 줄로 흐른다. */
-  drawBelt(c, sx, sy, key, dir, run) {
+  drawBelt(c: any, sx: number, sy: number, key: string, dir: number, run: any) {
     const fast = key === 'belt_fast';
     const FR = fast ? '#6a7684' : '#5c5046', FR2 = fast ? '#3c4550' : '#3a312a', BAND = '#202328';
     const TREAD = fast ? '#8c9cac' : '#6a6f78', RL = fast ? '#9aa6b2' : '#8a8078';
     const gap = TS / 4;
-    const flow = (sg, len) => ((run * len * sg) % gap + gap) % gap;    // 흐르는 무늬의 시작점
+    const flow = (sg: any, len: number) => ((run * len * sg) % gap + gap) % gap;    // 흐르는 무늬의 시작점
     c.save();
     if (dir === 0 || dir === 2) {
       const sg = dir === 0 ? 1 : -1, top = sy + TS - 9;
@@ -412,13 +412,13 @@ export const FactoryTickPart: Bag = {
     c.restore();
   },
 
-  outFull(m, r, cap) {
+  outFull(m: any, r: any, cap: number) {
     for (const k in r.out) if ((m.out[k] || 0) + r.out[k] > cap) return true;
     return false;
   },
 
   /* ---- 드릴: 반경 안의 광맥을 실제로 캐낸다 (캐낸 자리는 사라진다) ---- */
-  runDrill(w, m, s) { const { WW } = dimsOf(w);
+  runDrill(w: World, m: any, s: any) { const { WW } = dimsOf(w);
     let step = 1;
     if (s.fuelIn) { if (!this.burn(m)) { m.st = N_('연료 없음'); return; } }
     else { step = this.sat(w, m); if (step <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); return; } }
@@ -451,7 +451,7 @@ export const FactoryTickPart: Bag = {
   },
 
   /* ---- 시추 펌프: 유혈암을 소모하지 않는다. 마르지 않는 대신 느리다 ---- */
-  runPump(w, m, s) {
+  runPump(w: World, m: any, s: any) {
     const step = this.sat(w, m);
     if (step <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); return; }
     if (this.bufTotal(m.out) >= (s.cap || 40)) { m.st = N_('출력 가득'); m.act = 0; return; }
@@ -469,7 +469,7 @@ export const FactoryTickPart: Bag = {
   },
 
   /* ---- 자동 포탑 ---- */
-  runTurret(w, m, s, G) {
+  runTurret(w: any, m: any, s: any, G: any) {
     const step = this.sat(w, m);
     if (step <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); return; }
     if (!(m.in[s.ammo] > 0)) { m.st = N_('탄약 없음'); m.act = 0; return; }
@@ -509,7 +509,7 @@ export const FactoryTickPart: Bag = {
   },
 
   /* ---- 발사형 함정 (화살·화염·서리) ---- */
-  runShooter(w, m, s, G) {
+  runShooter(w: World, m: any, s: any, G: any) {
     m.cd -= 1;
     if (m.cd > 0) { m.st = N_('장전 중'); m.act = 0; return; }
     const [dx, dy] = DIR4[m.dir];
@@ -541,7 +541,7 @@ export const FactoryTickPart: Bag = {
   },
 
   /* ---- 전격 함정: 위에 올라선 적만 지진다 (플레이어는 안전) — 함정도 몸이 있는 칸이라 들어올 수는 없다 ---- */
-  runTrap(w, m, s, G) {
+  runTrap(w: any, m: any, s: any, G: any) {
     const r = { x: m.x * TS, y: (m.y - 1) * TS, w: TS, h: TS + 2 };   // 윗칸 + 윗면에 닿은 발
     /* ★ 세계가 지은 함정(gen, 유적 공장)은 망 없이 돌고 **올라선 누구든** 지진다 — 망을 찾으면 영영 꺼져 있었다 */
     if (m.gen && !m.own) return this.runWildTrap(w, m, r, G);
@@ -561,7 +561,7 @@ export const FactoryTickPart: Bag = {
     if (hit) { m.cd = 4; m.fx = 3; G.sfxAt('zap', m.x, m.y); } else m.cd = 1;
   },
   /** 유적 함정 — 밟으면 0.5초 불꽃으로 알리고 그때도 위에 있으면 방전, 2초 쉰다. */
-  runWildTrap(w, m, r, G) {
+  runWildTrap(w: any, m: any, r: any, G: any) {
     const p = G.player, on = !p.dead && aabb(r, p.rect());
     let foe = false;
     for (const e of G.ents) if (e instanceof Enemy && !e.dead && aabb(r, e.rect())) { foe = true; break; }

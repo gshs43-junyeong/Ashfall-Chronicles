@@ -33,7 +33,7 @@ export const NetPart: Bag = {
   net: null,
 
   /** 이 자리에서 가장 가까운 플레이어 — 몹이 노리는 대상 · 물건이 끌려가는 쪽. */
-  nearestPlayer(x, y) {
+  nearestPlayer(x: number, y: number) {
     const ps = this.players;
     if (ps.length < 2) return this.me;
     let best = ps[0], bd = Infinity;
@@ -43,7 +43,7 @@ export const NetPart: Bag = {
 
   /* ================= 상태 한 장 ================= */
   /** 남의 화면이 이 플레이어를 그리는 데 쓰는 것만 — 레벨·가방은 보내지 않는다. */
-  netState(p) {
+  netState(p: Player) {
     const held = p.held(), wep = p.equip.weapon;
     return { x: Math.round(p.x), y: Math.round(p.y), vx: Math.round(p.vx), vy: Math.round(p.vy), f: p.facing,
       g: p.onGround ? 1 : 0, sw: p.swing || 0, sa: p.swingAng || 0, sd: p.swingDir || 0, sr: p.swingReach || 0,
@@ -52,12 +52,12 @@ export const NetPart: Bag = {
       hid: held ? held.id : '', wid: wep ? wep.id : '', c: p.charId, n: p.name, lv: p.level, pt: this.netPetsOf(p) };
   },
   /** 따라다니는 펫 — 'id:레벨' 을 쉼표로(바뀔 때만 다시 만든다). 남의 아바타는 받은 그대로 되돌려 보낸다. */
-  netPetsOf(p) {
+  netPetsOf(p: Player) {
     if (p.remote) return p._pt || '';
-    return (this.petEnts || []).map(pe => pe ? pe.id + ':' + pe.lvOf(p) : '').join(',');
+    return (this.petEnts || []).map((pe: any) => pe ? pe.id + ':' + pe.lvOf(p) : '').join(',');
   },
   /** 받은 상태를 남의 아바타에 — 자리(x·y)는 보간 버퍼가 따로 맞춘다. */
-  netApply(rp, s) {
+  netApply(rp: any, s: any) {
     rp.vx = s.vx; rp.vy = s.vy; rp.facing = s.f; rp.onGround = !!s.g;
     rp.swing = s.sw; rp.swingAng = s.sa; rp.swingDir = s.sd; rp.swingReach = s.sr; rp.dashV = s.dv; rp.flash = s.fl;
     rp.channel = s.ch ? (rp.channel || {}) : null;
@@ -67,7 +67,7 @@ export const NetPart: Bag = {
     if (rp._wid !== s.wid) { rp._wid = s.wid; rp.equip.weapon = s.wid ? makeItem(s.wid) : null; }
     if (rp._pt !== (s.pt || '')) {
       rp._pt = s.pt || '';
-      rp.petEnts = rp._pt.split(',').map((v, slot) => {
+      rp.petEnts = rp._pt.split(',').map((v: any, slot: any) => {
         const [id, lv] = v.split(':');
         if (!PETS[id]) return null;
         const pe = new Pet(id, slot); pe.lv = Math.max(1, +lv || 1);
@@ -77,14 +77,14 @@ export const NetPart: Bag = {
     }
   },
   /** 남의 아바타 — 이 화면에서는 그림자(update 를 안 돌리고 피해는 주인에게 넘긴다). */
-  netAvatar(id, s) {
+  netAvatar(id: string, s: any) {
     const rp = this.freshPlayer(s.x, s.y, s.n, s.c);
     rp.remote = true; rp.netId = id; rp.netBuf = new SnapBuffer(1.5 / NET_HZ);
     this.netApply(rp, s);
     this.players.push(rp);
     return rp;
   },
-  netRemove(rp) {
+  netRemove(rp: Bag) {
     const i = this.players.indexOf(rp);
     if (i > 0) this.players.splice(i, 1);
   },
@@ -111,7 +111,7 @@ export const NetPart: Bag = {
     return out;
   },
   /** 받은 칸을 넣는다 — 기록하지 않고(되돌려 보내지 않게). fromGuest 면 기반암은 건드리지 못한다. */
-  netPutTiles(list, fromGuest) {
+  netPutTiles(list: any, fromGuest: any) {
     const w = this.world, { WW } = w.dims;
     w.netMute = true;
     try {
@@ -128,20 +128,20 @@ export const NetPart: Bag = {
     } finally { w.netMute = false; }
   },
   /** 문을 여닫았다 — 자리(x·y)로 같은 문을 찾는다. */
-  netDoor(o) {
+  netDoor(o: Bag) {
     const m = { k: 'door', x: o.x, y: o.y, c: o.closed ? 1 : 0 }, n = this.net;
     if (n.role === 'guest') { if (n.t) this.netSend(n.t, 'rel', m); }
     else for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, 'rel', m);
   },
-  netPutDoor(m) {
-    const d = (this.world.doors || []).find(o => o.x === m.x && o.y === m.y);
+  netPutDoor(m: any) {
+    const d = (this.world.doors || []).find((o: Bag) => o.x === m.x && o.y === m.y);
     if (!d || d.closed === !!m.c) return;
     d.closed = !!m.c;
     if (this.me && Math.abs(this.me.cx - d.x) < 600 && Math.abs(this.me.cy - d.y) < 400) this.sfx(d.closed ? 'door_shut' : 'door_open');
   },
   /* ================= 몹 — 호스트가 돌리고 참가자는 그림자를 그린다 ================= */
   /** 참가자 근처 몹 한 장 — [번호, 종류, x, y, vx, vy, 방향, 땅, hp, 최대 hp, 번쩍임] */
-  netEnemyList(rp) {
+  netEnemyList(rp: Bag) {
     const n = this.net, out = [];
     for (const e of this.ents) {
       if (!(e instanceof Enemy) || e.dead || Math.abs(e.cx - rp.cx) > 1500 || Math.abs(e.cy - rp.cy) > 1000) continue;
@@ -152,12 +152,12 @@ export const NetPart: Bag = {
     return out;
   },
   /** 참가자 화면 — 그림자 몹을 받은 자리로 보간해 옮긴다(AI 는 안 돌린다). */
-  netGhostStep(e, dt) {
+  netGhostStep(e: Enemy, dt: number) {
     const s = e.netBuf && e.netBuf.sample(now());
     if (s) { e.x = s.x; e.y = s.y; }
     if (e.flash > 0) e.flash = Math.max(0, e.flash - dt);
   },
-  netPutEnemies(list) {
+  netPutEnemies(list: any) {
     const n = this.net, t = now();
     for (const [nid, type, x, y, vx, vy, f, g, hp, mhp, fl] of list) {
       let e = n.ghosts.get(nid);
@@ -173,7 +173,7 @@ export const NetPart: Bag = {
     for (const [nid, e] of n.ghosts) if (t - e.seenAt > 1) { e.dead = true; n.ghosts.delete(nid); }   // 멀어졌다
   },
   /** 참가자가 그림자 몹을 쳤다 — 맞는 그림은 바로(손맛), 피해는 호스트가 계산한다. */
-  netHitGhost(e, amount, crit, src, kb, fam) {
+  netHitGhost(e: any, amount: any, crit: any, src: any, kb: any, fam: any) {
     const n = this.net;
     if (!n || !n.t) return;
     const dmg = Math.max(1, Math.round(amount * (1 - e.armor / (e.armor + 70))));
@@ -184,7 +184,7 @@ export const NetPart: Bag = {
     this.netSend(n.t, 'rel', { k: 'hit', e: e.nid, a: amount, c: crit ? 1 : 0, kb: kb || 0, f: fam || '' });
   },
   /** 호스트 — 남의 아바타가 몹을 잡았다. 경험치·금화·전리품은 그 주인 화면에서 굴린다. */
-  netKilledBy(rp, e) {
+  netKilledBy(rp: Bag, e: Enemy) {
     const peer = this.net && this.net.peers.get(rp.netId);
     if (!peer) return;
     const mult = this.killMult ? this.killMult() : 1;
@@ -192,7 +192,7 @@ export const NetPart: Bag = {
     if (e.nid) this.net.dead.push(e.nid);
   },
   /** 참가자 — 내가 잡았다는 소식. 보상을 굴리는 길은 혼자 할 때의 Enemy.die 그대로다. */
-  netPutKill(m) {
+  netPutKill(m: any) {
     const n = this.net;
     let e = n.ghosts.get(m.e);
     if (e) n.ghosts.delete(m.e);
@@ -200,7 +200,7 @@ export const NetPart: Bag = {
     e.ghost = false; e.dead = false; e.xp = m.xp; e.gold = m.gold; e.mech = m.mech;
     e.die(this.me);
   },
-  netPutDeaths(list) {
+  netPutDeaths(list: any) {
     const n = this.net;
     for (const nid of list) {
       const e = n.ghosts.get(nid);
@@ -210,7 +210,7 @@ export const NetPart: Bag = {
     }
   },
   /** 참가자 근처 적 투사체 — [번호, x, y, vx, vy, 종류] */
-  netProjList(rp) {
+  netProjList(rp: Bag) {
     const n = this.net, out = [];
     for (const q of this.projs) {
       if (q.team !== 'enemy' || q.dead || Math.abs(q.cx - rp.cx) > 1300 || Math.abs(q.cy - rp.cy) > 900) continue;
@@ -219,7 +219,7 @@ export const NetPart: Bag = {
     }
     return out;
   },
-  netPutProjs(list) {
+  netPutProjs(list: any) {
     const n = this.net, t = now();
     for (const [nid, x, y, vx, vy, type] of list) {
       let q = n.gproj.get(nid);
@@ -229,27 +229,27 @@ export const NetPart: Bag = {
     for (const [nid, q] of n.gproj) if (t - q.seenAt > 0.25) { q.dead = true; n.gproj.delete(nid); }   // 맞았거나 사라졌다
   },
   /** 시계·날짜·세계 사건(비·붉은 달…) — 참가자는 사건을 굴리지 않고 호스트 것을 받는다. */
-  netPutClock(m) {
+  netPutClock(m: any) {
     if (Math.abs(this.dayT - m.d) > 2) this.dayT = m.d;
     this.dayCount = m.n;
     this.event = m.ev;
   },
   /* ================= 물건 — 놓기·걷기 · 상자 안 ================= */
   /* 물건은 종류와 자리로 찾는다(같은 칸에 같은 종류는 하나뿐이다). */
-  netObjKey(o) { return o.type + '@' + Math.round(o.x) + ',' + Math.round(o.y); },
-  netObjFind(key) { return this.world.objects.find(o => this.netObjKey(o) === key); },
+  netObjKey(o: Bag) { return o.type + '@' + Math.round(o.x) + ',' + Math.round(o.y); },
+  netObjFind(key: string) { return this.world.objects.find((o: Bag) => this.netObjKey(o) === key); },
   /** 남에게 — 호스트면 모든 참가자에게(except 빼고), 참가자면 호스트에게. */
-  netBroadcast(msg, except?) {
+  netBroadcast(msg: string, except?: any) {
     const n = this.net;
     if (!n) return;
     if (n.role === 'guest') { if (n.t) this.netSend(n.t, 'rel', msg); return; }
     for (const q of n.peers.values()) if (q.rp && q !== except) this.netSend(q.t, 'rel', msg);
   },
-  netObjAdd(o) { this.netBroadcast({ k: 'oadd', o: JSON.parse(JSON.stringify(o)) }); },
-  netObjDel(o) { this.netBroadcast({ k: 'odel', key: this.netObjKey(o) }); },
+  netObjAdd(o: Bag) { this.netBroadcast({ k: 'oadd', o: JSON.parse(JSON.stringify(o)) }); },
+  netObjDel(o: Bag) { this.netBroadcast({ k: 'odel', key: this.netObjKey(o) }); },
   /** 상자 안 · 지킴이 깨움 — 바뀐 그대로 */
-  netObjState(o) { this.netBroadcast({ k: 'ost', key: this.netObjKey(o), items: o.items || null, guarded: !!o.guarded, woke: o.woke || 0 }); },
-  netPutObj(m) {
+  netObjState(o: Bag) { this.netBroadcast({ k: 'ost', key: this.netObjKey(o), items: o.items || null, guarded: !!o.guarded, woke: o.woke || 0 }); },
+  netPutObj(m: any) {
     const w = this.world;
     if (m.k === 'oadd') {
       if (this.netObjFind(this.netObjKey(m.o))) return;
@@ -275,7 +275,7 @@ export const NetPart: Bag = {
     }
   },
   /** 연 상자를 지켜보기 시작 — 여는 순간에 올려 둬야 한 박자 안에 넣고 닫아도 놓치지 않는다. */
-  netWatch(o) { this.net.watch.set(o, now()); },
+  netWatch(o: Bag) { this.net.watch.set(o, now()); },
   /** 열어 둔(또는 막 닫은) 상자의 안이 바뀌었으면 보낸다 — 옮기는 길이 여럿(끌기·우클릭·모두 넣기)이라 결과를 본다. */
   netWatchObjs() {
     const n = this.net, t = now();
@@ -295,10 +295,10 @@ export const NetPart: Bag = {
   /* ================= 기계 — 공장은 호스트만 돌린다 ================= */
   /* 놓기(madd)·걷기(mrem)·창에서 넣고 빼기·돌리기(mst)는 한 사람이 바꾼 것을 보내고, 돌아가는 상태는 호스트가 0.5초마다
      참가자 근처의 바뀐 기계만 보낸다(ms). 기계 몸은 타일 그리기가 건너뛰고 Factory.render 가 w.machines 로 그리므로 참가자도 이 표가 있어야 보인다. */
-  netMachKey(m) { return m.y * this.world.dims.WW + m.x; },
-  netMachState(m) { this.netBroadcast({ k: 'mst', key: this.netMachKey(m), m }); },
+  netMachKey(m: any) { return m.y * this.world.dims.WW + m.x; },
+  netMachState(m: any) { this.netBroadcast({ k: 'mst', key: this.netMachKey(m), m }); },
   /** 기계 하나를 받은 상태로 — 같은 객체를 고쳐 쓴다(기계 창이 붙들고 있는 참조가 끊기지 않게). */
-  netMachPut(key, data) {
+  netMachPut(key: string, data: Bag) {
     const w = this.world, cur = w.machines.get(key);
     if (data.it) { delete data.it.t0; delete data.it.fx; delete data.it.fy; }   // 미끄러짐 시각은 보낸 쪽 시계 — 여기서는 새로 잰다
     if (cur) { for (const k in cur) if (!(k in data)) delete cur[k]; Object.assign(cur, data); }
@@ -309,7 +309,7 @@ export const NetPart: Bag = {
     if (UI.machRef === m && UI.open === 'machine') UI.refreshMachine();
     return m;
   },
-  netPutMach(m, fromGuest) {
+  netPutMach(m: any, fromGuest: any) {
     const w = this.world, { WW } = w.dims;
     if (m.k === 'madd') {
       const key = m.y * WW + m.x;
@@ -330,7 +330,7 @@ export const NetPart: Bag = {
     }
   },
   /** 호스트 → 참가자: 근처 기계 중 지난번과 달라진 것 · 사라진 것 */
-  netMachList(q) {
+  netMachList(q: any) {
     const w = this.world, { WW } = w.dims, rp = q.rp, cx = rp.cx / TS, cy = rp.cy / TS, out = [], seen = new Set();
     q.mj = q.mj || new Map();
     for (const [key, m] of w.machines) {
@@ -343,7 +343,7 @@ export const NetPart: Bag = {
     for (const key of q.mj.keys()) if (!seen.has(key)) { q.mj.delete(key); if (!w.machines.has(key)) gone.push(key); }
     return out.length || gone.length ? { k: 'ms', l: out, g: gone } : null;
   },
-  netSend(t, ch, msg) {
+  netSend(t: any, ch: any, msg: string) {
     const text = JSON.stringify(msg);
     if (text.length > 15000) for (const part of chunkText(++this.net.chunkId, text)) t.send('rel', part);
     else t.send(ch, text);
@@ -357,11 +357,11 @@ export const NetPart: Bag = {
     return { relay: RELAY_URL, peer: PEER_URL };
   },
   /** 호스트 쪽 중개를 연다 — 자체 중개가 정해진 시간 안에 방을 못 열면 PeerJS 로. */
-  async netOpenSignal(sigs) {
+  async netOpenSignal(sigs: any) {
     for (const kind of ['relay', 'peer']) {
       if (!sigs[kind]) continue;
       const sig = kind === 'relay' ? createWsSignal(sigs.relay, { role: 'host' }) : createPeerSignal(sigs.peer, { role: 'host', codeLen: PEER_CODE });
-      let tm = null;
+      let tm: ReturnType<typeof setTimeout> | undefined;
       const late = new Promise((_, rej) => { tm = setTimeout(() => rej(new Error('signal: timeout')), RELAY_WAIT_MS); });
       try { const room = await Promise.race([sig.room, late]); clearTimeout(tm); return { sig, room, kind }; }
       catch (e) { clearTimeout(tm); sig.close(); console.warn('net: 중개', kind, '실패', e); }
@@ -371,7 +371,7 @@ export const NetPart: Bag = {
 
   /* ================= 호스트 ================= */
   /** 방을 연다 — 참가자 셋까지. 인터넷 중개면 방 코드는 중개가 고른다. */
-  async mpHost(room) {
+  async mpHost(room: string) {
     if (this.net || !this.me) return;
     const sigs = this.netSignals(), n: Bag = { role: 'host', room, sig: null, peers: new Map(), pending: new Map(), nextId: 1, sendT: 0, chunkId: 0,
       eid: 0, live: new Map(), dead: [], joined: new Set(), watch: new Map(), mwatch: new Map(), objJ: new WeakMap() };
@@ -386,7 +386,7 @@ export const NetPart: Bag = {
       o.sig.onerror = () => this.toast(tr('중개 서버와 끊겼다 — 새 참가는 받을 수 없다'), 'bad');   // 이미 붙은 참가자는 그대로 논다
     } else n.sig = createTabSignal(room);
     const sig = n.sig;
-    sig.onmessage = async m => {
+    sig.onmessage = async (m: any) => {
       if (m.t === 'want' && !m.to) {
         if (n.peers.size + n.pending.size >= NET_MAX - 1) { sig.post({ t: 'full', from: 'host', to: m.from }); return; }
         if (n.pending.has(m.from) || n.joined.has(m.from)) return;   // 이미 붙은 참가자가 앞서 보내 둔 글이 늦게 왔다
@@ -403,17 +403,17 @@ export const NetPart: Bag = {
     this.toast(tr('방 {room|을} 열었다', { room }), 'good');
     this.refreshPauseMp();
   },
-  netAddPeer(t) {
+  netAddPeer(t: any) {
     const n = this.net, peer: Bag = { id: n.nextId++, t, rp: null, joiner: createJoiner() };
     n.peers.set(peer.id, peer);
-    t.onmessage = (ch, d) => {
+    t.onmessage = (ch: any, d: any) => {
       if (this.net !== n || !n.peers.has(peer.id)) return;   // 닫은 방 · 내보낸 참가자에게서 늦게 온 글
       if (isChunk(d)) { const r = peer.joiner.push(d); if (r) this.netOnHost(peer, JSON.parse(r.text)); return; }
       this.netOnHost(peer, JSON.parse(d));
     };
     t.onclose = () => this.netDropPeer(peer);
   },
-  netOnHost(peer, m) {
+  netOnHost(peer: Bag, m: any) {
     const n = this.net;
     if (m.k === 'hello') {
       /* 다시 온 손님이면(아이디 · 이 세계의 mpGuests) 지난 자리와 이 세계에서 쓰던 캐릭터를 돌려준다 */
@@ -464,7 +464,7 @@ export const NetPart: Bag = {
       for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, 'rel', m);
     }
   },
-  netDropPeer(peer) {
+  netDropPeer(peer: Bag) {
     const n = this.net;
     if (!n || !n.peers.has(peer.id)) return;
     n.peers.delete(peer.id);
@@ -475,13 +475,13 @@ export const NetPart: Bag = {
 
   /* ================= 참가자 ================= */
   /** 방에 붙는다 — char 는 처음 가는 세계에서 쓸 새 캐릭터(Player). 호스트가 기억하는 캐릭터가 있으면 그것으로 바뀐다. */
-  mpJoin(room, char) {
+  mpJoin(room: any, char: any) {
     if (this.net) return;
     const sigs = this.netSignals(), me = Math.random().toString(36).slice(2, 8);
     room = String(room || '').trim().toUpperCase();
     const viaPeer = sigs && sigs.peer && (!sigs.relay || room.length === PEER_CODE);
     const sig = !sigs ? createTabSignal(room) : viaPeer ? createPeerSignal(sigs.peer, { role: 'guest', room, id: me }) : createWsSignal(sigs.relay, { role: 'guest', room, id: me });
-    if (sigs) (sig as Bag).onerror = e => {
+    if (sigs) (sig as Bag).onerror = (e: any) => {
       if (this.net !== n || n.t) return;
       clearInterval(n.ask); clearTimeout(n.giveUp); this.net = null;
       this.netSay(String(e && e.message).includes('unreachable') ? tr('중개 서버에 닿지 않는다') : tr('그런 방이 없다'));
@@ -494,7 +494,7 @@ export const NetPart: Bag = {
       if (m.t === 'full') { clearInterval(n.ask); clearTimeout(n.giveUp); sig.close(); this.net = null; this.netSay(tr('방이 가득 찼다')); return; }
       if (m.t !== 'offer') return;
       clearInterval(n.ask); clearTimeout(n.giveUp);
-      const g = await guestAnswer(m.sdp);
+      const g = await guestAnswer(m.sdp!);
       sig.post({ t: 'answer', from: me, to: 'host', sdp: g.answer });
       const t = await g.ready;
       n.t = t;
@@ -518,7 +518,7 @@ export const NetPart: Bag = {
       this.netSay(tr('호스트가 지금 참가를 받고 있지 않다'));
     }, JOIN_GIVEUP_MS);   // 호스트가 아직 방을 안 열었으면 열 때까지 두드린다
   },
-  netOnGuest(m) {
+  netOnGuest(m: any) {
     const n = this.net;
     if (m.k === 'close') { this.netLost(tr('호스트가 방을 닫았다')); return; }
     if (m.k === 'kick') { this.netLost(tr('호스트가 방에서 내보냈다')); return; }
@@ -589,7 +589,7 @@ export const NetPart: Bag = {
     }
   },
   /** 호스트를 잃었다(끊김 · 방 닫힘 · 내쫓김) — 타이틀로. 캐릭터는 호스트가 마지막으로 받은 것(15초마다)이 남는다. */
-  netLost(msg) {
+  netLost(msg: string) {
     const n = this.net;
     if (!n || n.role !== 'guest') return;
     this.netEnd();
@@ -597,7 +597,7 @@ export const NetPart: Bag = {
     if (n.t) this.toTitle();                       // 세계를 받기 전이면 아직 타이틀이다
   },
   /** 이 화면의 방 상태를 걷는다 — 남의 아바타 · 그림자 · 통로 · 중개. 세계는 그대로 둔다. closeMs 는 통로를 닫기까지(마지막 글이 먼저 가게). */
-  netEnd(room = null, closeMs = 0) {
+  netEnd(room: any = null, closeMs = 0) {
     const n = room || this.net;
     if (!n) return;
     if (this.net === n) this.net = null;
@@ -607,7 +607,7 @@ export const NetPart: Bag = {
       else if (n.t) n.t.close();
     };
     if (closeMs) setTimeout(shut, closeMs); else shut();
-    if (n.role === 'guest') { this.ents = this.ents.filter(e => !e.ghost); this.projs = this.projs.filter(p => !p.ghost); }
+    if (n.role === 'guest') { this.ents = this.ents.filter((e: Enemy) => !e.ghost); this.projs = this.projs.filter((p: any) => !p.ghost); }
     clearInterval(n.ask); clearTimeout(n.giveUp);
     if (n.sig) n.sig.close();
     if (this.world) this.world.netLog = null;
@@ -625,7 +625,7 @@ export const NetPart: Bag = {
     this.toast(tr('방을 닫았다'), 'info');
   },
   /** 호스트가 참가자를 내보낸다 — 그쪽은 타이틀로(캐릭터는 이 세계 기록에 남는다). */
-  mpKick(id) {
+  mpKick(id: string) {
     const n = this.net, q = n && n.role === 'host' && n.peers.get(id);
     if (!q) return;
     this.netSend(q.t, 'rel', { k: 'kick' });
@@ -642,7 +642,7 @@ export const NetPart: Bag = {
   },
 
   /* ================= 매 프레임 ================= */
-  netTick(dt) {
+  netTick(dt: number) {
     const n = this.net;
     this.netMoveAvatars();
     this.netPartyTick(dt);
@@ -689,7 +689,7 @@ export const NetPart: Bag = {
     for (const q of n.peers.values()) if (q.rp) q.t.send('fast', JSON.stringify({ k: 'ps', list: list.filter(e => e[0] !== q.id) }));
   },
   /** 호스트의 몹이 남의 아바타를 쳤다 — 피해는 그 주인 화면에서 계산한다(무적 시간도 거기 것). */
-  netRemoteHurt(rp, amount, srcX) {
+  netRemoteHurt(rp: Bag, amount: number, srcX: any) {
     const n = this.net;
     /* 무적 시간은 주인 화면이 본다(Player.hurt) — 여기 사본은 한 박자 늦어 막 풀린 피해를 버렸다. 0.3초 간격만 둔다. */
     if (!n || n.role !== 'host' || (rp._hurtAt && this.time - rp._hurtAt < 0.3)) return;

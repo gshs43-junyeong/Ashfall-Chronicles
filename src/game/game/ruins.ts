@@ -17,11 +17,11 @@ export const RuinsPart: Bag = {
   /* ================= 유적 — 지도 · 고유 이벤트 · 암호문 ================= */
 
   /** 위치 지도를 편다. */
-  useRuinMap(slot) {
+  useRuinMap(slot: number) {
     const p = this.player, it = p.bag[slot];
     const d = it && idef(it); if (!d || d.type !== 'map') return;
     if (!this.ruinMarks) this.ruinMarks = {};
-    const r = this.world.ruins.find(q => q.id === d.ruin);
+    const r = this.world.ruins.find((q: any) => q.id === d.ruin);
     if (!r) { this.toast(tr('여기서는 쓸 수 없다'), 'bad'); return; }
     if (this.ruinMarks[d.ruin]) { this.toast(tr('이미 자리를 안다')); return; }
     this.ruinMarks[d.ruin] = 1;
@@ -47,7 +47,7 @@ export const RuinsPart: Bag = {
   },
 
   /** 유적 잡몹을 플레이어 둘레에 불러낸다 — swarm·blackout·bloom 이 같이 쓴다 */
-  _ruinSpawn(ruinId, n, spread) {
+  _ruinSpawn(ruinId: any, n: number, spread: any) {
     const spec = RUIN_SPEC.find(s => s.id === ruinId);
     const pool = (spec && spec.mobs) || ['crawler', 'skeleton'];
     const p = this.player;
@@ -60,7 +60,7 @@ export const RuinsPart: Bag = {
     }
   },
 
-  fireRuinEvent(e) {
+  fireRuinEvent(e: any) {
     const p = this.player;
     if (e.ev === 'blackout') {
       /* 불이 꺼진다 — 화면이 한동안 어두워지고 서리 것들이 몰려온다. */
@@ -98,7 +98,7 @@ export const RuinsPart: Bag = {
   },
 
   /** 신비한 방 — 한 세계에 세 곳뿐이고, 한 번 쓰면 끝난다. */
-  useMystic(o) {
+  useMystic(o: Bag) {
     const m = MYSTIC[o.mk]; if (!m) return;
     const p = this.player;
     if (o.used) { UI.openLore(m.n, [tr('한 번 쓰고 나면 아무 일도 일어나지 않는다.')], []); this.sfx('open'); return; }
@@ -126,7 +126,7 @@ export const RuinsPart: Bag = {
   },
 
   /** 그 유적의 자물쇠 — 갈래 · 답 · 문에 새겨진 것 · 쪽지 셋. */
-  ruinCipher(id) {
+  ruinCipher(id: string) {
     const kind = RUIN_CIPHER[id];
     if (!kind) return null;
     this._cipherCache = this._cipherCache || {};
@@ -168,7 +168,7 @@ export const RuinsPart: Bag = {
   },
 
   /** 암호 쪽지 하나를 읽는다 — 그 유적 자물쇠의 세 조각 중 하나 */
-  readCipherNote(o) {
+  readCipherNote(o: Bag) {
     const c = this.ruinCipher(o.ruin);
     if (!c) return;
     const nt = c.notes[o.idx] || c.notes[0];
@@ -183,13 +183,13 @@ export const RuinsPart: Bag = {
 
   /** ★ 암호는 게임 안 창(#code-screen)으로 받는다. */
   /** 그 유적의 암호 골방 문이 열렸는가 — 골방 상자의 자물쇠가 이 값을 본다 */
-  ruinCodeDone(ruinId) {
+  ruinCodeDone(ruinId: any) {
     for (const o of (this.world.objects || []))
       if (o.type === 'codedoor' && o.ruin === ruinId) return !!o.opened;
     return true;          // 문이 아예 없으면 잠글 것도 없다
   },
 
-  openCodeDoor(o) {
+  openCodeDoor(o: any) {
     if (o.opened) { this.toast(tr('이미 열려 있다')); return; }
     const el = $('#code-screen'), inp = $('#code-input'), msg = $('#code-msg');
     const c = this.ruinCipher(o.ruin);
@@ -224,14 +224,14 @@ export const RuinsPart: Bag = {
       inp.value = inp.value.slice(0, len);
       if (inp.value.length === len && numeric) this.tryCodeDoor();
     });
-    inp.addEventListener('keydown', e => {
+    inp.addEventListener('keydown', (e: any) => {
       e.stopPropagation();                     // 게임 조작키로 새지 않게
       if (e.key === 'Enter') this.tryCodeDoor();
       if (e.key === 'Escape') this.closeCodeDoor();
     });
     $('#btn-code-ok').onclick = () => this.tryCodeDoor();
     $('#btn-code-cancel').onclick = () => this.closeCodeDoor();
-    el.onclick = e => { if (e.target === el) this.closeCodeDoor(); };
+    el.onclick = (e: any) => { if (e.target === el) this.closeCodeDoor(); };
   },
 
   closeCodeDoor() {

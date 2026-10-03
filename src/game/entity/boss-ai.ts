@@ -12,7 +12,7 @@ import { Enemy, Part, Proj } from '../entity.js';
 export const BossAI: Bag & ThisType<Enemy> = {
 
   /* ---- 보스 AI ---- */
-  bossAI(dt, world, p, dx, dy, dd) { const { WW, WH } = dimsOf(world);
+  bossAI(dt: number, world: World, p: Player, dx: number, dy: number, dd: any) { const { WW, WH } = dimsOf(world);
     const AI = this.def.ai;
     this.stateT -= dt;
     const hpr = this.hp / this.maxHp;
@@ -62,8 +62,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
         if (this.state === 2) for (let i = 0; i < 2 + this.pf * 2; i++) G.ents.push(new Enemy(Math.random() < .5 ? 'skeleton' : 'archer', this.cx + (Math.random() - 0.5) * 200, this.cy - 30, G.scale()));
       }
       if (this.state === 0) {           // 추격
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd, dt * 3);
-        this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.6, dt * 3);
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd!, dt * 3);
+        this.vy = lerp(this.vy, Math.sign(dy) * this.spd! * 0.6, dt * 3);
       } else if (this.state === 1) {    // 뼈 투척
         this.vx *= 0.94; this.vy = lerp(this.vy, -20, dt * 2);
         if (this.atkCd <= 0) {
@@ -81,8 +81,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
         if (this.state === 2) for (let i = 0; i < 1 + this.pf * 2; i++) G.ents.push(new Enemy('shadoweye', this.cx + (Math.random() - 0.5) * 220, this.cy, G.scale()));
       }
       if (this.state === 0) {
-        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd * 0.7, dt * 2);
-        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd * 0.7, dt * 2);
+        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd! * 0.7, dt * 2);
+        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd! * 0.7, dt * 2);
         if (this.atkCd <= 0) {
           this.atkCd = 1.1 - this.pf * 0.5;
           const n = 8 + this.pf * 8;
@@ -92,7 +92,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
           }
         }
       } else if (this.state === 1) {
-        this.vx = Math.cos(this.dashA) * this.spd * 3.4; this.vy = Math.sin(this.dashA) * this.spd * 3.4;
+        this.vx = Math.cos(this.dashA) * this.spd! * 3.4; this.vy = Math.sin(this.dashA) * this.spd! * 3.4;
       } else { this.vx *= 0.92; this.vy *= 0.92; }
       this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'b_witch') {
@@ -119,8 +119,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
           }
         }
       } else if (this.state === 3) { // 서리 폭발 추적
-        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd * 1.4, dt * 3);
-        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd * 1.4, dt * 3);
+        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd! * 1.4, dt * 3);
+        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd! * 1.4, dt * 3);
         if (this.atkCd <= 0) {
           this.atkCd = 1.4;
           for (let i = 0; i < 12; i++) {
@@ -136,8 +136,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
         if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++) G.ents.push(new Enemy('wraith', this.cx + (Math.random() - 0.5) * 320, this.cy, G.scale()));
       }
       if (this.state === 0) {          // 나선탄
-        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd * 0.6, dt * 2);
-        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd * 0.6, dt * 2);
+        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd! * 0.6, dt * 2);
+        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd! * 0.6, dt * 2);
         if (this.atkCd <= 0) {
           this.atkCd = 0.16;
           const a = G.time * 5;
@@ -155,8 +155,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
           }
         }
       } else if (this.state === 2) {   // 돌진
-        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd * 3, dt * 4);
-        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd * 3, dt * 4);
+        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd! * 3, dt * 4);
+        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd! * 3, dt * 4);
       } else { this.vx *= 0.92; this.vy *= 0.92; }
       this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'b_storm') {
@@ -169,8 +169,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
           G.ents.push(new Enemy(Math.random() < .5 ? 'gale' : 'sky_sentry', this.cx + (Math.random() - 0.5) * 300, this.cy, G.scale()));
       }
       if (this.state === 0) {            // 회전 돌풍
-        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd * .7, dt * 2);
-        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd * .7, dt * 2);
+        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd! * .7, dt * 2);
+        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd! * .7, dt * 2);
         if (this.atkCd <= 0) {
           this.atkCd = 0.22;
           const n = 5 + this.pf * 4, base = G.time * 4;
@@ -180,8 +180,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
           }
         }
       } else if (this.state === 1) {     // 급강하
-        this.vx = Math.cos(this.dashA) * this.spd * 3.6;
-        this.vy = Math.sin(this.dashA) * this.spd * 3.6;
+        this.vx = Math.cos(this.dashA) * this.spd! * 3.6;
+        this.vy = Math.sin(this.dashA) * this.spd! * 3.6;
       } else if (this.state === 2) {     // 벼락 세례
         this.vx *= 0.9; this.vy = lerp(this.vy, -30, dt * 2);
         if (this.atkCd <= 0) {
@@ -219,10 +219,10 @@ export const BossAI: Bag & ThisType<Enemy> = {
           }
         }
       } else if (this.state === 1) {     // 추격
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd, dt * 3);
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd!, dt * 3);
         if (this.onGround && (dy < -40 || this.hitWall)) this.vy = -560;
       } else if (this.state === 2) {     // 지진 돌진
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 2.6, dt * 4);
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 2.6, dt * 4);
         if (this.onGround && this.atkCd <= 0) {
           this.atkCd = 0.7;
           G.shake = Math.max(G.shake, 10);
@@ -248,8 +248,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
           G.ents.push(new Enemy(this.def.minion || 'wraith', this.cx + (Math.random() - 0.5) * 300, this.cy - 30, G.scale()));
       }
       if (this.state === 0) {            // 공허 탄막 — 천천히 돌아가는 나선
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.5, dt * 2);
-        this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.4, dt * 2);
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 0.5, dt * 2);
+        this.vy = lerp(this.vy, Math.sign(dy) * this.spd! * 0.4, dt * 2);
         if (this.atkCd <= 0) {
           this.atkCd = 0.28 - this.pf * 0.1;
           this.spin = (this.spin || 0) + 0.55;
@@ -261,8 +261,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
         }
       } else if (this.state === 1) {     // 강타 — 플레이어를 향해 가속, 닿으면 폭발
         const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-        this.vx = lerp(this.vx, Math.cos(a) * this.spd * 2.4, dt * 5);
-        this.vy = lerp(this.vy, Math.sin(a) * this.spd * 2.4, dt * 5);
+        this.vx = lerp(this.vx, Math.cos(a) * this.spd! * 2.4, dt * 5);
+        this.vy = lerp(this.vy, Math.sin(a) * this.spd! * 2.4, dt * 5);
         if (this.atkCd <= 0) {
           this.atkCd = 1.1;
           const n = 10 + this.pf * 8;
@@ -283,7 +283,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
       this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'b_prolif') {
       /* 증식체 — 뛰지 않는다. */
-      this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.35, dt * 2);
+      this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 0.35, dt * 2);
       if (this.stateT <= 0) {
         this.stateT = 2.4 - this.pf * 0.8;
         const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'splitter')).length;
@@ -332,7 +332,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
           } });
         }
       } else if (this.state === 1) {             // 물러서며 재장전 — 유일하게 붙을 틈
-        this.vx = lerp(this.vx, -Math.sign(dx) * this.spd * 0.9, dt * 3);
+        this.vx = lerp(this.vx, -Math.sign(dx) * this.spd! * 0.9, dt * 3);
       } else {                                   // 호출
         this.vx *= 0.92;
         if (this.atkCd <= 0) {
@@ -391,14 +391,14 @@ export const BossAI: Bag & ThisType<Enemy> = {
         if (this.state === 1) { this.combo = 0; this.atkCd = 0.2; }
       }
       if (this.state === 1) {                    // 연격 — 세 번 파고든다
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 2.2, dt * 6);
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 2.2, dt * 6);
         if (this.atkCd <= 0 && this.combo < 3) {
           this.combo++; this.atkCd = 0.42;
           G.aoe(this.cx + Math.sign(dx) * 44, this.cy, 52, this.dmg * 0.8, 7, '#e8dcc0');
           G.shake = Math.max(G.shake, 6);
         }
       } else if (this.state === 0) {             // 겨눔 — 천천히 붙는다
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.6, dt * 3);
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 0.6, dt * 3);
         if (this.onGround && dy < -50) this.vy = -580;
       } else {                                   // 숨 고르기 — 붙을 틈
         this.vx *= 0.86;
@@ -436,8 +436,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
         }
       }
       if (this.state === 0) {            // 궤도 탄막 — 회전하는 별 다발
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.5, dt * 2);
-        this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.4, dt * 2);
+        this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 0.5, dt * 2);
+        this.vy = lerp(this.vy, Math.sign(dy) * this.spd! * 0.4, dt * 2);
         if (this.atkCd <= 0) {
           this.atkCd = 0.24 - this.pf * 0.08;
           this.spin = (this.spin || 0) + 0.42;
@@ -449,8 +449,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
         }
       } else if (this.state === 1) {     // 끌어올림 — 플레이어를 위로 잡아당기며 접근
         const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-        this.vx = lerp(this.vx, Math.cos(a) * this.spd * 1.8, dt * 4);
-        this.vy = lerp(this.vy, Math.sin(a) * this.spd * 1.8, dt * 4);
+        this.vx = lerp(this.vx, Math.cos(a) * this.spd! * 1.8, dt * 4);
+        this.vy = lerp(this.vy, Math.sin(a) * this.spd! * 1.8, dt * 4);
         if (dd < 420) p.vy -= 320 * dt;   // 발이 자꾸 뜬다
         if (this.atkCd <= 0) {
           this.atkCd = 0.9;

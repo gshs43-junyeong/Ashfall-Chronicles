@@ -5,7 +5,7 @@ import { ITEM_PAINT, sh2 } from '../../itemart.js';
 
 export const ItemPaintMisc: Bag = {
   /* ---------- 장비 칸 실루엣 ---------- */
-  slotic(H) {
+  slotic(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = '#6a6250', l = '#8e8672';
@@ -72,7 +72,7 @@ export const ItemPaintMisc: Bag = {
     }
   },
   /* ---------- 손으로 놓는 설치물 ---------- */
-  stationic(H) {
+  stationic(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         if (s.m === 'work') {                             // 작업대 — 상판 + 다리 두 개
@@ -100,7 +100,7 @@ export const ItemPaintMisc: Bag = {
     }
   },
   /* ---------- 문 ---------- */
-  doorit(H) {
+  doorit(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         P(4, 2, 24, 28, '#3a2610');                     // 문틀
@@ -115,7 +115,7 @@ export const ItemPaintMisc: Bag = {
     }
   },
   /* ---------- 펫 ---------- */
-  pet(H) {
+  pet(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, dark = sh2(c, 0.62), lite = sh2(c, 1.3);
@@ -174,7 +174,7 @@ export const ItemPaintMisc: Bag = {
     }
   },
   /* ---------- NPC 초상 ---------- */
-  npc(H) {
+  npc(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const p = s.p;

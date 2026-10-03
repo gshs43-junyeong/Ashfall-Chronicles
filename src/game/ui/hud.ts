@@ -65,7 +65,7 @@ export const HudUIPart: Bag = {
     this.setIcon($('#clock-icon'), Art.uiUrl((hh >= 6 && hh < 19) ? 'sun' : 'moon'));
     // 버프
     const bf = $('#buffs');
-    bf.innerHTML = p.buffs.map(b =>
+    bf.innerHTML = p.buffs.map((b: any) =>
       `<div class="buff" title="${BUFFS[b.id].n}"><span class="bi" style="background-image:url(${Art.buffUrl(b.id)})"></span>` +
       `<span class="bt">${Math.ceil(b.t)}</span></div>`).join('');
     this.refreshSkillbar();
@@ -78,7 +78,7 @@ export const HudUIPart: Bag = {
     this.fmZoom = 3; this.fmX = 0; this.fmY = 0; this.fmDrag = null;
     $('#minimap').addEventListener('click', () => this.openFullmap());
 
-    canvas.addEventListener('wheel', e => {
+    canvas.addEventListener('wheel', (e: any) => {
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
@@ -89,7 +89,7 @@ export const HudUIPart: Bag = {
       this.fmY = wy - (my - this.fmDprH / 2) / this.fmZoom;
       this.renderFullmap();
     }, { passive: false });
-    canvas.addEventListener('mousedown', e => {
+    canvas.addEventListener('mousedown', (e: any) => {
       this.fmDrag = { x: e.clientX, y: e.clientY, fx: this.fmX, fy: this.fmY };
     });
     addEventListener('mousemove', e => {

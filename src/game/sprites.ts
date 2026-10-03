@@ -8,7 +8,7 @@ export const Sprites: Bag = {
   _ver: ASSET_VER,
   /** CSS·DOM 에서 그림을 부를 때도 같은 ?v= 를 붙인다 — 배포는 /play/assets/*.png 를 1년 immutable 로 캐시해서,
       ?v= 없는 주소는 시트를 다시 구워도 옛 그림이 나온다(옛 32칸 시트가 36칸 자리로 늘어나 뚱뚱해 보였다). */
-  url(path) { return path + (this._ver ? '?' + this._ver : ''); },
+  url(path: string) { return path + (this._ver ? '?' + this._ver : ''); },
 
   async ready() {
     /* 매니페스트는 <script> 로 미리 들어와 있다(assets/sprites-manifest.js) — 사연: docs/code-history.md#h137 */
@@ -16,8 +16,8 @@ export const Sprites: Bag = {
     if (!this.meta) {
       this.meta = await (await fetch(this.base + 'manifest.json', { cache: 'no-cache' })).json();
     }
-    const jobs = [];
-    const add = (key, file) => jobs.push(imageJob(this.base + file + (this._ver ? '?' + this._ver : ''), im => { this.img[key] = im; }));
+    const jobs: Promise<any>[] = [];
+    const add = (key: string, file: any) => jobs.push(imageJob(this.base + file + (this._ver ? '?' + this._ver : ''), im => { this.img[key] = im; }));
     const C = this.meta.characters.sheets, B = this.meta.bosses.sheets;
     for (const k in C) add(k, C[k].file);
     for (const k in B) add(k, B[k].file);
@@ -26,15 +26,15 @@ export const Sprites: Bag = {
     // 연기(용광로 굴뚝) — 투사체·폭발과 규격만 다른 세 번째 이펙트 무리
     if (this.meta.fx.smoke) for (const k in this.meta.fx.smoke.files) add('smoke_' + k, this.meta.fx.smoke.files[k]);
     for (const k in this.meta.npc.files) add('npc_' + k, this.meta.npc.files[k]);
-    this.meta.backgrounds.parallax.files.forEach(f => add(f.split('/')[1].replace('.png',''), f));
+    this.meta.backgrounds.parallax.files.forEach((f: any) => add(f.split('/')[1].replace('.png',''), f));
     add('title', this.meta.backgrounds.title.file);
-    this.meta.backgrounds.chapters.files.forEach(f => add(f.split('/')[1].replace('.png',''), f));
+    this.meta.backgrounds.chapters.files.forEach((f: any) => add(f.split('/')[1].replace('.png',''), f));
     // 구름 — 절이 있을 때만 읽는다(옛 매니페스트에는 없다)
     if (this.meta.backgrounds.clouds)
-      this.meta.backgrounds.clouds.files.forEach(f => add(f.split('/')[1].replace('.png', ''), f));
+      this.meta.backgrounds.clouds.files.forEach((f: any) => add(f.split('/')[1].replace('.png', ''), f));
     // 하늘의 해·운석(tools/mksky.py) — 없으면 게임이 절차 그림으로 떨어진다
     if (this.meta.backgrounds.sky)
-      this.meta.backgrounds.sky.files.forEach(f => add(f.split('/')[1].replace('.png', ''), f));
+      this.meta.backgrounds.sky.files.forEach((f: any) => add(f.split('/')[1].replace('.png', ''), f));
     // 여명 마을 시설물 (한 장짜리 정지 이미지, 상태별 변형 파일이 있을 수 있다)
     if (this.meta.objects) for (const k in this.meta.objects.files) {
       const o = this.meta.objects.files[k];
@@ -68,11 +68,11 @@ export const Sprites: Bag = {
   },
 
   /** 시트 프레임 0의 알파 채널을 한 번 훑어 두 가지를 잰다(engine/assets/image.js). */
-  _measurePad(im, m) { return measurePad(im, m.frameW, m.frameH, this.scale); },
+  _measurePad(im: any, m: any) { return measurePad(im, m.frameW, m.frameH, this.scale); },
 
 
   /* ================= 개조 시트 ================= */
-  mechSheet(key) {
+  mechSheet(key: string) {
     const have = this.img['mech_' + key];
     if (have !== undefined) return have;
     const im = this.img[key];
@@ -82,29 +82,29 @@ export const Sprites: Bag = {
     const cv = document.createElement('canvas');
     cv.width = im.naturalWidth || im.width; cv.height = im.naturalHeight || im.height;
     const g = cv.getContext('2d');
-    g.imageSmoothingEnabled = false;
-    g.drawImage(im, 0, 0);
+    g!.imageSmoothingEnabled = false;
+    g!.drawImage(im, 0, 0);
 
     const S = this.scale, W = cv.width, H = cv.height;
-    g.globalCompositeOperation = 'source-atop';
+    g!.globalCompositeOperation = 'source-atop';
 
     // 1.
-    const grad = g.createLinearGradient(0, 0, 0, H);
+    const grad = g!.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0, '#7d8896');
     grad.addColorStop(0.5, '#4d555f');
     grad.addColorStop(1, '#333a43');
-    g.globalAlpha = 0.66;
-    g.fillStyle = grad; g.fillRect(0, 0, W, H);
+    g!.globalAlpha = 0.66;
+    g!.fillStyle = grad; g!.fillRect(0, 0, W, H);
 
     /* 2. */
-    g.globalAlpha = 0.22; g.fillStyle = '#171c23';
-    for (let y = 7 * S; y < H; y += 13 * S) g.fillRect(0, y, W, S);
-    g.globalAlpha = 0.55; g.fillStyle = '#cfd8e2';
+    g!.globalAlpha = 0.22; g!.fillStyle = '#171c23';
+    for (let y = 7 * S; y < H; y += 13 * S) g!.fillRect(0, y, W, S);
+    g!.globalAlpha = 0.55; g!.fillStyle = '#cfd8e2';
     for (let y = 5 * S; y < H; y += 13 * S)
-      for (let x = 3 * S; x < W; x += 9 * S) g.fillRect(x, y, S, S);
+      for (let x = 3 * S; x < W; x += 9 * S) g!.fillRect(x, y, S, S);
 
     /* 화로 불빛은 여기서 굽지 않는다. */
-    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+    g!.globalCompositeOperation = 'source-over'; g!.globalAlpha = 1;
     /* 매니페스트에도 같은 규격으로 등록해 둔다 — draw() 는 여기서 프레임 칸을 읽는다. */
     this.meta.characters.sheets['mech_' + key] = m;
     this.footInset['mech_' + key] = this.footInset[key] || 0;
@@ -113,7 +113,7 @@ export const Sprites: Bag = {
   },
 
   /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다. */
-  draw(c, key, frame, x, y, flip) {
+  draw(c: CanvasRenderingContext2D, key: string, frame: number, x: number, y: number, flip: boolean) {
     const im = this.img[key]; if (!im || !im.width) return false;
     const m = (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
     if (!m) return false;
@@ -141,7 +141,7 @@ export const Sprites: Bag = {
   },
 
   /* 이펙트 시트(투사체 16×16 / 폭발 64×64) 한 프레임을 size 크기로 그린다. */
-  drawFx(c, key, frame, x, y, size) {
+  drawFx(c: CanvasRenderingContext2D, key: string, frame: number, x: number, y: number, size: any) {
     const im = this.img[key]; if (!im || !im.width || !this.meta) return false;
     const m = key.startsWith('proj_') ? this.meta.fx.projectiles
             : key.startsWith('smoke_') ? this.meta.fx.smoke
@@ -158,7 +158,7 @@ export const Sprites: Bag = {
   },
 
   /* 시설물을 게임 좌표(x,y)에 w×h 크기로 그린다. t = 게임 시각(두 장짜리 그림을 넘긴다) */
-  drawObj(c, key, x, y, w, h, t = 0) {
+  drawObj(c: CanvasRenderingContext2D, key: string, x: number, y: number, w: number, h: number, t = 0) {
     const im = this.img[key]; if (!im || !im.width) return false;
     const want = w / h;
     const frames = Math.abs(im.width / im.height - want) < 0.03 ? 1
@@ -173,7 +173,7 @@ export const Sprites: Bag = {
   },
 
   /* 적 상태 → 프레임 인덱스 (기본 7프레임 규격: idle1 idle2 move1 move2 atk death1 death2) */
-  enemyFrame(e, t) {
+  enemyFrame(e: any, t: any) {
     if (e.dying) return e.dying > .12 ? 5 : 6;
     if (e.attacking) return 4;
     if (Math.abs(e.vx) > 6) return 2 + (Math.floor(t * 7) % 2);
@@ -181,7 +181,7 @@ export const Sprites: Bag = {
   },
 
   /* 플레이어 상태 → 프레임 인덱스 (13프레임) */
-  playerFrame(p, t) {
+  playerFrame(p: any, t: any) {
     if (p.iframe > 0 && p.hurtT > 0) return 12;
     if (p.dashT > 0) return 8;
     if (p.swing > 0) return 9 + Math.min(2, Math.floor((0.24 - p.swing) / 0.08));

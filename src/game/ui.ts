@@ -13,15 +13,15 @@ import { Sprites } from './sprites.js';
 import { equipReqLv, isGear, itemDamage, itemName, maxStack } from './items.js';
 import { HOTBAR, MAX_BAG_SIZE } from './entity.js';
 
-export const $ = (s) => document.querySelector(s);
-export const $$ = (s) => Array.from(document.querySelectorAll(s));
+export const $ = (s: any) => document.querySelector(s);
+export const $$ = (s: any) => Array.from(document.querySelectorAll(s));
 
 export const UI: Bag = {
   cursor: null,        // 집어든 아이템
   cursorEl: null,
 
   /** 요소에 스프라이트를 배경으로 넣는다 (이모지 대신) */
-  setIcon(el, url) { setIcon(el, url); },
+  setIcon(el: any, url: string) { setIcon(el, url); },
 
   /* 손그림 애셋이 로드되면 코드 생성분 위에 덮어쓴다 */
   npcArt: null,
@@ -37,7 +37,7 @@ export const UI: Bag = {
     document.body.classList.add('sprites-on');
     if (this.dlg) this.setIcon($('#dlg-portrait'), this.npcPortrait(this.dlg.npcId));
   },
-  npcPortrait(id) {
+  npcPortrait(id: string) {
     if (this.npcArt && this.npcArt[id]) return Sprites.url(`assets/npc/portrait_${this.npcArt[id]}.png`);
     return Art.npcUrl(id);
   },
@@ -78,18 +78,18 @@ export const UI: Bag = {
 
     const trash = $('#trash-zone');
     if (trash) {
-      trash.addEventListener('mousedown', e => {
+      trash.addEventListener('mousedown', (e: any) => {
         e.preventDefault();
         if (this.cursor) this.discardCursor();
         else this.toast(tr('버릴 아이템을 먼저 집어야 한다 (칸을 클릭)'));
       });
-      trash.addEventListener('mouseenter', e => { this.tipText(tr('휴지통'), tr('커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기'), e); });
+      trash.addEventListener('mouseenter', (e: any) => { this.tipText(tr('휴지통'), tr('커서에 든 아이템을 버립니다 · Shift+좌클릭으로 칸에서 바로 버리기'), e); });
       trash.addEventListener('mouseleave', () => this.hideTip());
     }
     const sortBtn = $('#btn-sort-bag');
     if (sortBtn) {
       sortBtn.addEventListener('click', () => this.sortBag());
-      sortBtn.addEventListener('mouseenter', e => this.tipText(tr('가방 정리'), tr('같은 것끼리 합치고 종류·등급 순으로 정렬합니다. 잠근 물건은 자리를 지킵니다.'), e));
+      sortBtn.addEventListener('mouseenter', (e: any) => this.tipText(tr('가방 정리'), tr('같은 것끼리 합치고 종류·등급 순으로 정렬합니다. 잠근 물건은 자리를 지킵니다.'), e));
       sortBtn.addEventListener('mouseleave', () => this.hideTip());
     }
     const depBtn = $('#btn-vault-deposit'), wdBtn = $('#btn-vault-withdraw');
@@ -139,7 +139,7 @@ export const UI: Bag = {
     const ls = $('#set-lang');
     if (ls && LANGS.length > 1) {
       $('#set-lang-row').hidden = false;
-      ls.innerHTML = LANGS.map(l => `<option value="${l}"${l === LANG ? ' selected' : ''}>${LANG_NAMES[l] || l}</option>`).join('');
+      ls.innerHTML = LANGS.map((l: any) => `<option value="${l}"${l === LANG ? ' selected' : ''}>${LANG_NAMES[l] || l}</option>`).join('');
       ls.addEventListener('change', () => {
         if (G.state === 'play') {
           try { localStorage.setItem(LANG_KEY, ls.value); } catch (e) { }
@@ -187,7 +187,7 @@ export const UI: Bag = {
   },
 
   /** 설정 갈래를 고른다 (disp · noti · keys) */
-  setTab(id) {
+  setTab(id: string) {
     document.querySelectorAll<HTMLElement>('.set-tab').forEach(t => t.classList.toggle('on', t.dataset.tab === id));
     document.querySelectorAll<HTMLElement>('.set-pane').forEach(p => p.classList.toggle('on', p.dataset.pane === id));
     const body = $('.set-body'); if (body) body.scrollTop = 0;
@@ -201,7 +201,7 @@ export const UI: Bag = {
     box.innerHTML = NOTICE_KINDS.map(k =>
       `<label class="set-row chk"><span>${k.n}</span>` +
       `<input type="checkbox" data-notice="${k.id}"${off[k.id] === 0 ? '' : ' checked'}></label>`).join('');
-    box.querySelectorAll('[data-notice]').forEach(el => el.addEventListener('change', () => {
+    box.querySelectorAll('[data-notice]').forEach((el: any) => el.addEventListener('change', () => {
       const n = Object.assign({}, (G.settings && G.settings.notice) || {});
       n[el.dataset.notice] = el.checked ? 1 : 0;
       G.setOpt('notice', n);
@@ -212,27 +212,27 @@ export const UI: Bag = {
   /* 누르면 그 항목이 대기 상태가 되고, 다음에 눌린 키를 그 자리에 넣는다. */
   buildKeys() {
     const box = $('#set-keys'); if (!box) return;
-    const label = c => this.keyLabel(c);
+    const label = (c: any) => this.keyLabel(c);
     box.innerHTML = KEY_ACTIONS.map(a =>
       `<div class="set-row key"><span>${a.n}</span>` +
       `<button class="keybtn" data-act="${a.id}">${G.keysFor(a.id).map(label).join(' · ')}</button></div>`).join('');
-    box.querySelectorAll('.keybtn').forEach(btn => btn.addEventListener('click', () => {
+    box.querySelectorAll('.keybtn').forEach((btn: any) => btn.addEventListener('click', () => {
       if (this.keyWait) return;
       btn.classList.add('waiting'); btn.textContent = tr('키를 누르세요…');
       this.keyWait = { act: btn.dataset.act, btn };
     }));
   },
   /** 키 코드 → 화면에 적을 이름(설정 창 · 화면 아래 탭 단추가 같이 쓴다) */
-  keyLabel(c) {
-    const ARROW = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
-    const NAMED = { ShiftLeft: tr('Shift(왼)'), ShiftRight: tr('Shift(오)'), ControlLeft: tr('Ctrl(왼)'),
+  keyLabel(c: any) {
+    const ARROW: Record<string, string> = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
+    const NAMED: Bag = { ShiftLeft: tr('Shift(왼)'), ShiftRight: tr('Shift(오)'), ControlLeft: tr('Ctrl(왼)'),
       ControlRight: tr('Ctrl(오)'), AltLeft: tr('Alt(왼)'), AltRight: tr('Alt(오)'), Space: 'Space' };
     return ARROW[c] || NAMED[c] || c.replace(/^Key/, '').replace(/^Digit/, '');
   },
   /* ---- 화면 아래 탭 단추 ---- */
   bindTabBar() {
     const bar = $('#tabbar'); if (!bar) return;
-    bar.querySelectorAll('.tb').forEach(b => b.addEventListener('click', e => {
+    bar.querySelectorAll('.tb').forEach((b: any) => b.addEventListener('click', (e: any) => {
       e.stopPropagation();
       const t = b.dataset.tab;
       if (t === 'inv') this.togglePanel('inv');
@@ -247,15 +247,15 @@ export const UI: Bag = {
   },
   refreshTabBar() {
     const bar = $('#tabbar'); if (!bar) return;
-    bar.querySelectorAll('.tb').forEach(b => {
+    bar.querySelectorAll('.tb').forEach((b: any) => {
       const t = b.dataset.tab, kb = b.querySelector('kbd');
-      if (t !== 'menu' && kb) kb.textContent = G.keysFor(t).slice(0, 1).map(c => this.keyLabel(c)).join('');
-      const open = { inv: 'inv', skills: 'skill', quest: 'quest', craft: 'craft', map: 'fullmap' }[t];
+      if (t !== 'menu' && kb) kb.textContent = G.keysFor(t).slice(0, 1).map((c: any) => this.keyLabel(c)).join('');
+      const open = ({ inv: 'inv', skills: 'skill', quest: 'quest', craft: 'craft', map: 'fullmap' } as Bag)[t];
       b.classList.toggle('on', !!open && this.open === open);
     });
   },
   /** bindInput 의 keydown 이 설정 창에서 먼저 들르는 자리 */
-  captureKey(code) {
+  captureKey(code: string) {
     if (!this.keyWait) return false;
     const { act } = this.keyWait;
     this.keyWait = null;
@@ -271,9 +271,9 @@ export const UI: Bag = {
   /** G.settings → 화면 (열 때와 값이 바뀔 때마다) */
   syncSettings() {
     const s = G.settings; if (!s) return;
-    const set = (id, v) => { const el = $('#' + id); if (el) el.value = v; };
-    const txt = (id, v) => { const el = $('#' + id); if (el) el.textContent = v + '%'; };
-    const chk = (id, v) => { const el = $('#' + id); if (el) el.checked = !!v; };
+    const set = (id: string, v: number) => { const el = $('#' + id); if (el) el.value = v; };
+    const txt = (id: string, v: number) => { const el = $('#' + id); if (el) el.textContent = v + '%'; };
+    const chk = (id: string, v: number) => { const el = $('#' + id); if (el) el.checked = !!v; };
     set('set-music', s.music); txt('set-music-v', s.music);
     set('set-sfx', s.sfx); txt('set-sfx-v', s.sfx);
     set('set-shake', s.shake); txt('set-shake-v', s.shake);
@@ -286,13 +286,13 @@ export const UI: Bag = {
   },
 
   /** 아이템이 아닌 순수 텍스트 툴팁(휴지통 안내 등) */
-  tipText(title, desc, e) {
+  tipText(title: any, desc: any, e: any) {
     this.tip.show(`<div class="tname c0">${title}</div><div class="tdesc">${desc}</div>`, e.clientX, e.clientY);
     this.tipTarget = true;
   },
 
   /* ---------------- 토스트 ---------------- */
-  toast(msg, kind) {
+  toast(msg: string, kind: string) {
     const el = document.createElement('div');
     el.className = 'toast' + (kind ? ' ' + kind : '');
     el.textContent = msg;
@@ -302,7 +302,7 @@ export const UI: Bag = {
   },
 
   /* ---------------- 패널 ---------------- */
-  togglePanel(id) {
+  togglePanel(id: string) {
     if (this.open === id) { this.closePanel(); return; }
     this.closePanel();
     const el = $('#panel-' + id);
@@ -359,7 +359,7 @@ export const UI: Bag = {
     });
     this.refreshHotbar();
   },
-  bagClick(i, btn, shift, ctrl) {
+  bagClick(i: number, btn: any, shift: any, ctrl: any) {
     const p = G.player;
     if (i >= p.bag.length) return;         // 아직 열리지 않은 확장 칸
     // Ctrl+좌클릭: 잠금 토글.
@@ -392,7 +392,7 @@ export const UI: Bag = {
     this.refreshBag();
   },
   /** 슬롯의 아이템을 확인 없이 즉시 버린다 (Shift+좌클릭 / 휴지통 드롭 공용) */
-  discardSlot(i) {
+  discardSlot(i: number) {
     const p = G.player, it = p.bag[i];
     if (!it) return;
     if (it.lk) { this.toast(tr('잠긴 물건이다 (Ctrl+좌클릭으로 해제)'), 'bad'); return; }
@@ -404,11 +404,11 @@ export const UI: Bag = {
   /** 가방 정리 — 같은 것끼리 합치고, 종류·등급 순으로 앞에서부터 채운다. */
   sortBag() {
     const p = G.player;
-    const keep = [];                                   // [index, item] — 잠긴 것
-    const move = [];
-    p.bag.forEach((it, i) => { if (!it) return; if (it.lk) keep.push([i, it]); else move.push(it); });
+    const keep: any[] = [];                                   // [index, item] — 잠긴 것
+    const move: Bag[] = [];
+    p.bag.forEach((it: Bag, i: number) => { if (!it) return; if (it.lk) keep.push([i, it]); else move.push(it); });
     // 같은 아이템끼리 합친다 (접사 붙은 장비는 각각 하나짜리라 합쳐지지 않는다)
-    const merged = [];
+    const merged: Bag[] = [];
     for (const it of move) {
       const same = merged.find(q => q.id === it.id && !q.a && !it.a && q.r === it.r && maxStack(q) > 1 && q.c < maxStack(q));
       if (same) {
@@ -417,11 +417,11 @@ export const UI: Bag = {
         if (it.c > 0) merged.push(it);
       } else merged.push(it);
     }
-    const ORDER = { weapon: 0, tool: 1, armor: 2, acc: 3, bag: 4, consum: 5, summon: 6, seed: 7, mat: 8, block: 9, machine: 10 };
+    const ORDER: Record<string, number> = { weapon: 0, tool: 1, armor: 2, acc: 3, bag: 4, consum: 5, summon: 6, seed: 7, mat: 8, block: 9, machine: 10 };
     merged.sort((a, b) => {
       const da = idef(a), db = idef(b);
-      const oa = ORDER[da.type] === undefined ? 99 : ORDER[da.type];
-      const ob = ORDER[db.type] === undefined ? 99 : ORDER[db.type];
+      const oa = ORDER[da.type!] === undefined ? 99 : ORDER[da.type!];
+      const ob = ORDER[db.type!] === undefined ? 99 : ORDER[db.type!];
       if (oa !== ob) return oa - ob;
       if (b.r !== a.r) return b.r - a.r;                // 등급 높은 것 먼저
       return da.n.localeCompare(db.n, 'ko');
@@ -442,7 +442,7 @@ export const UI: Bag = {
     this.setCursor(null);
     G.sfx('place');
   },
-  setCursor(it) {
+  setCursor(it: Bag) {
     this.cursor = it;
     if (it) {
       this.cursorEl.style.display = 'block';
@@ -454,13 +454,13 @@ export const UI: Bag = {
   /* ---------------- 장비 ---------------- */
   buildEquipSlots() {
     // 칸마다 비었을 때 깔릴 실루엣.
-    const SLOT_IC = { weapon: 'weapon', helm: 'helm', chest: 'chest', boots: 'boots', acc1: 'acc', acc2: 'acc', util1: 'util', util2: 'util', bag: 'bag', pet1: 'pet', pet2: 'pet' };
+    const SLOT_IC: Record<string, string> = { weapon: 'weapon', helm: 'helm', chest: 'chest', boots: 'boots', acc1: 'acc', acc2: 'acc', util1: 'util', util2: 'util', bag: 'bag', pet1: 'pet', pet2: 'pet' };
     $$('.slot.equip').forEach(el => {
       const key = el.dataset.eq;
       el.insertAdjacentHTML('beforeend', '<span class="eqic"></span><span class="ic"></span>');
       const ic = SLOT_IC[key];
       if (ic) this.setIcon(el.querySelector('.eqic'), Art.uiUrl('slot_' + ic));
-      el.addEventListener('mousedown', e => {
+      el.addEventListener('mousedown', (e: any) => {
         e.preventDefault();
         const p = G.player;
         if (this.cursor) {
@@ -478,8 +478,8 @@ export const UI: Bag = {
         }
         p.recalc(); this.refreshEquip(); this.refreshBag(); this.refreshStatSheet(); G.sfx('equip');
       });
-      el.addEventListener('contextmenu', e => e.preventDefault());
-      el.addEventListener('mouseenter', e => this.showTip(G.player.equip[key], e));
+      el.addEventListener('contextmenu', (e: any) => e.preventDefault());
+      el.addEventListener('mouseenter', (e: any) => this.showTip(G.player.equip[key], e));
       el.addEventListener('mouseleave', () => this.hideTip());
     });
   },
@@ -553,10 +553,10 @@ export const UI: Bag = {
       const id = p.slots[i];
       if (!id) { el.className = 'sk empty'; this.setIcon(el.querySelector('.ic'), ''); el.querySelector('.cdnum').textContent = ''; return; }
       const sk = SKILLS[id], cd = p.cd[id] || 0;
-      el.className = 'sk' + (cd <= 0 && p.mp >= sk.mana ? ' ready' : '');
+      el.className = 'sk' + (cd <= 0 && p.mp >= sk.mana! ? ' ready' : '');
       this.setIcon(el.querySelector('.ic'), Art.skillUrl(id));
       el.querySelector('.cdnum').textContent = cd > 0 ? (cd > 1 ? Math.ceil(cd) : cd.toFixed(1)) : '';
-      el.style.filter = cd > 0 ? 'grayscale(1) brightness(.55)' : (p.mp < sk.mana ? 'hue-rotate(0) brightness(.7)' : '');
+      el.style.filter = cd > 0 ? 'grayscale(1) brightness(.55)' : (p.mp < sk.mana! ? 'hue-rotate(0) brightness(.7)' : '');
     });
     this.refreshUtilbar();
   },
@@ -569,7 +569,7 @@ export const UI: Bag = {
       const el = document.createElement('div');
       el.className = 'stat-chip';
       el.innerHTML = `<span class="sname">${n}</span><span class="snum" data-s="${k}">0</span><button data-add="${k}">+</button><span class="sdesc">${dsc}</span>`;
-      el.querySelector('button').addEventListener('click', () => {
+      el.querySelector('button')!.addEventListener('click', () => {
         const p = G.player;
         if (p.statPts <= 0) return;
         p.statPts--; p.base[k]++; p.recalc();

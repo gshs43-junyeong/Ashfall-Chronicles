@@ -18,7 +18,7 @@ export const SoundPart: Bag = {
     try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { }
   },
   /** 타일 좌표에서 나는 소리 — 화면 근처가 아니면 아예 재생하지 않는다. */
-  sfxAt(kind, tx, ty, rate, vol) {
+  sfxAt(kind: string, tx: number, ty: number, rate: number, vol: any) {
     const p = this.player; if (!p) return;
     const dx = Math.abs(tx * TS - p.cx), dy = Math.abs(ty * TS - p.cy);
     if (dx > this.W * 0.6 + 120 || dy > this.H * 0.6 + 120) return;
@@ -27,7 +27,7 @@ export const SoundPart: Bag = {
 
   /* ================= 재질 파편 ================= */
   /* ★ 이름은 반드시 matBurst 다. */
-  matBurst(mat, x, y, n, o) {
+  matBurst(mat: any, x: number, y: number, n: number, o: Bag) {
     const m = MAT[mat] || MAT[MAT_DEF];
     o = o || {};
     const k = n === undefined || n === null ? m.n : n;
@@ -49,7 +49,7 @@ export const SoundPart: Bag = {
   strokeRate() { return 0.94 + Math.random() * 0.12; },
 
   /** 무기가 닿는 순간 — 맞은 것의 재질로 소리와 파편을 낸다. */
-  hitFx(e, x, y, crit, fam) {
+  hitFx(e: Enemy, x: number, y: number, crit: boolean, fam: string) {
     const mat = mobMat(e.type, e.mech);
     this.matBurst(mat, x, y, crit ? 8 : 4, { spd: crit ? 1.15 : 0.85, life: 0.75 });
     const tx = x / TS, ty = y / TS;
@@ -59,7 +59,7 @@ export const SoundPart: Bag = {
     if (crit) this.sfxAt('hit_crit', tx, ty);
   },
   /** 한 칸이 떨어져 나가는 순간 */
-  breakFx(tx, ty, id, mach) {
+  breakFx(tx: number, ty: number, id: number, mach: Bag) {
     const mat = tileMat(id);
     const x = (tx + .5) * TS, y = (ty + .5) * TS;
     this.matBurst(mat, x, y, mach ? 14 : undefined, { spd: mach ? 1.2 : 1 });
@@ -68,7 +68,7 @@ export const SoundPart: Bag = {
     if (mach || (this.HEAVY[mat] && TILE_DEF[id].solid === 1)) this.thump(mach ? 1 : TILE_DEF[id].ore ? 0.9 : 0.7);
   },
   /* 죽을 때 — 보스는 **무엇으로 만들어졌는지**에 따라 다르게 무너진다(BOSS_DIE). */
-  deathBurst(e) {
+  deathBurst(e: Enemy) {
     const mat = mobMat(e.type, e.mech);
     if (!e.boss) {
       this.matBurst(mat, e.cx, e.cy, MAT[mat].n + 3, { spd: 1.15, life: 1.2 });
@@ -97,7 +97,7 @@ export const SoundPart: Bag = {
   /* ★ 한 칸을 캐는 데 박자가 서넛씩 들어가고 그 박자마다 **무기 타격음과 같은 파일**이 제 음량으로 울렸다 */
   MINE_TICK_VOL: 0.18,
   MINE_TICK_RATE: 0.62,
-  mineTickFx(tx, ty, id) {
+  mineTickFx(tx: number, ty: number, id: number) {
     const mat = tileMat(id);
     const x = (tx + .5) * TS, y = (ty + .5) * TS;
     this.matBurst(mat, x, y, 1, { spd: 0.7, life: 0.6 });
@@ -108,7 +108,7 @@ export const SoundPart: Bag = {
   HEAVY: { stone: 1, metal: 1, glass: 1, ember: 1, ice: 1, bone: 1 },
   /** 묵직한 한 겹 — 파일 소리 위에 얹는 짧은 저음(140→48Hz)과 낮게 거른 잡음. 돌·광석·기계를 칠 때와 깰 때.
       ★ 파일(mat_stone · ore_hit · mine)의 저음 비중이 0~3%(실측, 150Hz 아래 에너지)라 곡괭이가 가볍게만 들렸다. */
-  thump(power) {
+  thump(power: number) {
     const ac = this.ac; if (!ac) return;
     const v = (Sfx ? Sfx.vol : 0.5) * power;
     if (v < 0.005) return;
@@ -131,12 +131,12 @@ export const SoundPart: Bag = {
   },
 
   /* ================= 효과음 ================= */
-  sfx(kind, rate, volMul) {
+  sfx(kind: any, rate: any, volMul: any) {
     if (Sfx && Sfx.play(kind, rate, volMul)) return;   // 손그림 파일이 로드돼 있으면 그걸로 대신한다
     const ac = this.ac; if (!ac) return;
     if (ac.state === 'suspended') ac.resume();
     const t = ac.currentTime;
-    const spec = {
+    const spec = ({
       swing: [220, 90, 'triangle', .05], bow: [520, 180, 'square', .04], magic: [700, 340, 'sine', .05],
       mine: [140, 90, 'square', .035], place: [300, 220, 'square', .03], die: [180, 60, 'sawtooth', .05],
       bossdie: [90, 40, 'sawtooth', .12], level: [520, 880, 'sine', .08], coin: [880, 1200, 'square', .04],
@@ -185,7 +185,7 @@ export const SoundPart: Bag = {
       sk_blink: [900, 180, 'sine', .045, .35],      // 사라졌다 나타난다
       sk_summon: [260, 430, 'sawtooth', .055, .4],  // 부르는 소리
       sk_deny: [200, 150, 'square', .028, .25]      // 막힌 소리 — 짧고 낮게
-    }[kind];
+    } as Bag)[kind];
     if (!spec) return;
     /* ★ 파일이 없어 합성음으로 떨어질 때도 SFX_GAP 을 지킨다. */
     const gap = SFX_GAP && SFX_GAP[kind];

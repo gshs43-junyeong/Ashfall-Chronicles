@@ -10,14 +10,14 @@ import { CAVE_TYPES } from './data/ruins.js';
 import { TS } from './world.js';
 
 /* 배경이 비쳐야 하는 타일 (나무·잎·횃불·발판·덩굴) */
-export const ALPHA_TILE = {};
+export const ALPHA_TILE: Bag = {};
 export const WOOD_WALL = 15;             // WALL_COLOR 색인 — 나무 판자 벽지
 /* 상단 하이라이트를 생략할 타일 (이미 텍스처에 윗면이 있거나 반투명) */
-export const TOP_SKIP = {};
+export const TOP_SKIP: Bag = {};
 /* 변형 넷이 '무작위 노이즈'가 아니라 '가지 방향'인 타일. */
-export const LEAF_TWIG = {};
+export const LEAF_TWIG: Bag = {};
 
-export const ART = {};
+export const ART: Bag = {};
 ART[T.DIRT] = { k: 'soil', c: '#6b4a2f' };
 ART[T.GRASS] = { k: 'grass', c: '#6b4a2f', g: '#4c7f34' };
 ART[T.STONE] = { k: 'rock', c: '#5d5d63' };
@@ -224,19 +224,19 @@ ART[T.DEEPROCK] = { k: 'rock', c: '#3a3630' };
 ART[T.BLACKDAMP] = { k: 'water', c: '#6a7a4a', a: 1, fall: 0 };
 
 /* ---------------- 이웃을 보고 그리는 타일 ---------------- */
-export const MOSS_COL = {
+export const MOSS_COL: Record<string, string> = {
   sea: '#4f8a6a', glacier: '#9fc8c0', ice: '#8fb8a8',          // 서리 이끼 — 희푸르다
   forest: '#6f9a4a', forest2: '#6f9a4a', jungle: '#3f8a2f',     // 푸른 이끼
   desert: '#b09a50',                                             // 바위옷 — 누렇게 마른 이끼
   glowfen: '#5fd0b8', corrupt: '#9a6ab8'                         // 발광 이끼 · 부패 이끼
 };
-export const BODY_ONLY = {};   // 위가 막히면 몸통만 그리는 타일(①)
-export const CONN = {};        // 이웃을 보고 통째로 그리는 타일(②)
+export const BODY_ONLY: Bag = {};   // 위가 막히면 몸통만 그리는 타일(①)
+export const CONN: Bag = {};        // 이웃을 보고 통째로 그리는 타일(②)
 for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS, T.SNOW, T.ICE]) BODY_ONLY[id] = 1;
 for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
 
 /** 질감 갈래(ART[id].k) → 그리는 법 — art/tiles/*.js 가 채운다. this 는 TileArt, H 는 paint 의 인자·도우미 */
-export const TILE_PAINT = {};
+export const TILE_PAINT: Bag = {};
 
 export const TileArt: Bag = {
   /* 타일마다 아틀라스에 미리 그려 두는 칸 수. */
@@ -310,7 +310,7 @@ export const TileArt: Bag = {
   _topHand: {},
 
   /** 손그림 타일 텍스처가 로드되면 절차 생성 아틀라스의 해당 타일 행을 덮어 그린다. */
-  applySprite(id, img) {
+  applySprite(id: any, img: any) {
     if (!this.atlas || !img || !img.width) return;
     const g = this.atlas.getContext('2d');
     g.imageSmoothingEnabled = false;
@@ -379,7 +379,7 @@ export const TileArt: Bag = {
     this.capAtlas = cv;
   },
   /** 흙은 원본 · 갓만 잿빛인 판. */
-  drawCapAsh(c, id, v, sx, sy) {
+  drawCapAsh(c: CanvasRenderingContext2D, id: string, v: number, sx: number, sy: number) {
     const i = this.CAP_TILE.indexOf(id);
     if (this.capAtlas && i >= 0)
       c.drawImage(this.capAtlas, v * TS, i * TS, TS, TS, sx, sy, TS, TS);
@@ -400,9 +400,9 @@ export const TileArt: Bag = {
     for (let i = 0; i < ids.length; i++)
       g.drawImage(this.atlas, 0, ids[i] * TS, W, TS, 0, (i * 4) * TS, W, TS);
 
-    const at = (x, y) => (y * W + x) * 4;
+    const at = (x: number, y: number) => (y * W + x) * 4;
     const rng = new RNG('ashfall-leaf-thin');
-    const eraser = (px) => (row, n, tr, tg, tb) => {
+    const eraser = (px: Uint8ClampedArray) => (row: any, n: number, tr: any, tg: any, tb: any) => {
       // 작은 덩이 단위로 지운다 — 픽셀 하나씩 지우면 잎이 성근 게 아니라 좀먹어 보인다
       for (let k = 0; k < n * this.V; k++) {
         const bx = rng.range(0, W), by = rng.range(0, TS), r = rng.range(1.1, 2.5);
@@ -419,7 +419,7 @@ export const TileArt: Bag = {
           }
       }
     };
-    const twig = (id): [number, number, number] => {
+    const twig = (id: any): [number, number, number] => {
       const t = ART[id].tw || '#000000';
       return [parseInt(t.slice(1, 3), 16), parseInt(t.slice(3, 5), 16), parseInt(t.slice(5, 7), 16)];
     };
@@ -455,7 +455,7 @@ export const TileArt: Bag = {
     this.thinAtlas = cv;
   },
   /** lv 0 = 성근1, 1 = 성근2(거의 앙상) */
-  drawThin(c, id, v, sx, sy, ash, lv) {
+  drawThin(c: CanvasRenderingContext2D, id: string, v: number, sx: number, sy: number, ash: any, lv: number) {
     const i = this.THIN_TILE ? this.THIN_TILE.indexOf(id) : -1;
     if (this.thinAtlas && i >= 0)
       c.drawImage(this.thinAtlas, v * TS, (i * 4 + (lv ? 2 : 0) + (ash ? 1 : 0)) * TS,
@@ -484,29 +484,29 @@ export const TileArt: Bag = {
     g.putImageData(d, 0, 0);
     this.burntAtlas = cv;
   },
-  drawBurnt(c, v, sx, sy) {
+  drawBurnt(c: CanvasRenderingContext2D, v: number, sx: number, sy: number) {
     if (this.burntAtlas) c.drawImage(this.burntAtlas, v * TS, 0, TS, TS, sx, sy, TS, TS);
   },
 
   /** 타일 블릿. */
-  draw(c, id, v, sx, sy, h) { blitCell(c, this.atlas, TS, v, id, sx, sy, h); },
+  draw(c: any, id: any, v: any, sx: any, sy: any, h: any) { blitCell(c, this.atlas, TS, v, id, sx, sy, h); },
   /** 잿빛 판 블릿 — 같은 자리, 색만 빠진 것 */
-  drawAsh(c, id, v, sx, sy) {
+  drawAsh(c: any, id: any, v: any, sx: any, sy: any) {
     if (this.ashAtlas) c.drawImage(this.ashAtlas, v * TS, id * TS, TS, TS, sx, sy, TS, TS);
   },
   /** 바이옴 이끼 색을 돌 색(#5d5d63) 쪽으로 35% 섞어 채도를 죽인다 — 이끼 바위·늘어진 이끼가 같이 쓴다. */
-  mossCol(c) {
+  mossCol(c: any) {
     this._mc = this._mc || {};
     if (this._mc[c]) return this._mc[c];
     const t = 0.35, g = '#5d5d63';
     return (this._mc[c] = '#' + [1, 3, 5].map(i => Math.round(parseInt(c.slice(i, i + 2), 16) * (1 - t) + parseInt(g.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join(''));
   },
   /** ①② 를 그린다 — 틀(위가 막히면 몸통만 · 번호별 그리기 찾기)은 엔진 render/conn, 번호별 그리는 법은 _connDraws. */
-  drawConn(c, w, id, tx, ty, sx, sy, v) { return this.conn.draw(c, this.atlas, w, id, tx, ty, sx, sy, v); },
+  drawConn(c: any, w: number, id: string, tx: number, ty: number, sx: number, sy: number, v: number) { return this.conn.draw(c, this.atlas, w, id, tx, ty, sx, sy, v); },
   /** ② 이웃을 보고 통째로 그리는 타일마다 그리는 법 — build() 가 엔진 틀에 건다. */
   _connDraws() {
-    const mossOf = (w, tx) => this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, w.dims.WW - 1)).id] || '#6f9a4a');
-    const drip = (c, w, id, tx, ty, sx, sy) => {
+    const mossOf = (w: any, tx: any) => this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, w.dims.WW - 1)).id] || '#6f9a4a');
+    const drip = (c: any, w: any, id: any, tx: any, ty: any, sx: any, sy: any) => {
       const up = id === T.STALAGMITE;
       let i = 0, n = 1;                                    // i: 붙은 쪽에서 몇 번째 칸, n: 줄 길이
       if (!up) { while (i < 6 && w.get(tx, ty - i - 1) === id) i++; n = i + 1; while (n < 8 && w.get(tx, ty - i + n) === id) n++; }
@@ -515,15 +515,15 @@ export const TileArt: Bag = {
       return true;
     };
     return {
-      [T.WOOD]: (c, w, id, tx, ty, sx, sy) => { c.drawImage(this._trunkTile(w, tx, ty), sx, sy); return true; },
-      [T.PALMWOOD]: (c, w, id, tx, ty, sx, sy) => { c.drawImage(this._palmTile(w, tx, ty), sx, sy); return true; },
-      [T.PALMLEAF]: (c, w, id, tx, ty, sx, sy) => { c.drawImage(this._palmLeafTile(w, tx, ty), sx, sy); return true; },
-      [T.MOSSSTONE]: (c, w, id, tx, ty, sx, sy, v) => {
+      [T.WOOD]: (c: CanvasRenderingContext2D, w: number, id: string, tx: number, ty: number, sx: number, sy: number) => { c.drawImage(this._trunkTile(w, tx, ty), sx, sy); return true; },
+      [T.PALMWOOD]: (c: CanvasRenderingContext2D, w: number, id: string, tx: number, ty: number, sx: number, sy: number) => { c.drawImage(this._palmTile(w, tx, ty), sx, sy); return true; },
+      [T.PALMLEAF]: (c: CanvasRenderingContext2D, w: number, id: string, tx: number, ty: number, sx: number, sy: number) => { c.drawImage(this._palmLeafTile(w, tx, ty), sx, sy); return true; },
+      [T.MOSSSTONE]: (c: CanvasRenderingContext2D, w: number, id: string, tx: number, ty: number, sx: number, sy: number, v: number) => {
         this.draw(c, T.STONE, v, sx, sy);
         c.drawImage(this._mossTile(w, tx, ty, mossOf(w, tx)), sx, sy);
         return true;
       },
-      [T.PINELEAF]: (c, w, id, tx, ty, sx, sy, v) => {
+      [T.PINELEAF]: (c: any, w: any, id: any, tx: any, ty: any, sx: any, sy: any, v: any) => {
         /* 윗칸이 트였으면(공기·비고체이고 같은 솔잎이 아님) 눈을 얹는다 — 톱니 원뿔 층마다 넓은 줄의 윗면이 트여 있어 층층이 눈이 쌓인 것처럼 보인다. */
         this.draw(c, id, v, sx, sy);
         const up = w.get(tx, ty - 1);
@@ -539,7 +539,7 @@ export const TileArt: Bag = {
         }
         return true;
       },
-      [T.HANGMOSS]: (c, w, id, tx, ty, sx, sy) => {
+      [T.HANGMOSS]: (c: any, w: any, id: any, tx: any, ty: any, sx: any, sy: any) => {
         const mc = mossOf(w, tx);
         // 이어진 줄의 맨 위(붙은 칸)와 길이를 잰다 — 가닥이 여러 칸을 건너 한 줄로 이어지게
         let top = ty, bot = ty;
@@ -562,11 +562,11 @@ export const TileArt: Bag = {
     };
   },
   /** 칸 캐시 — 열쇠가 같으면 다시 그리지 않는다 */
-  _cache(name, key, make) { return cacheGet(this[name] = this[name] || new Map(), key, make); },
+  _cache(name: string, key: string, make: any) { return cacheGet(this[name] = this[name] || new Map(), key, make); },
   /* ★ 나무 기둥·야자 줄기·야자 잎은 칸 무늬가 아니라 **세계 좌표**로 칠한다 — 이웃 칸과 결이 이어져
      한 그루로 읽힌다(이끼 바위와 같은 방식). 칸마다 난수로 그리면 칸 경계마다 결이 끊긴다. */
-  _trunkTile(w, tx, ty) {
-    const wd = (x, y) => w.get(x, y) === T.WOOD;
+  _trunkTile(w: any, tx: any, ty: any) {
+    const wd = (x: any, y: any) => w.get(x, y) === T.WOOD;
     const L = wd(tx - 1, ty), R = wd(tx + 1, ty), U = wd(tx, ty - 1), D = wd(tx, ty + 1);
     const ground = !D && TILE_DEF[w.get(tx, ty + 1)].solid === 1;
     const capTop = !U && w.get(tx, ty - 1) === T.AIR;   // 벗은 꼭대기 — 옆 기둥이 없는 쪽만 둥글게 깎는다
@@ -576,11 +576,11 @@ export const TileArt: Bag = {
     const key = tx + ',' + ty + ':' + (+L) + (+R) + (+U) + (+ground) + (+capTop) + lx + ',' + rx;
     return this._cache('_tk', key, () => {
       const cv = document.createElement('canvas'); cv.width = cv.height = TS;
-      const g = cv.getContext('2d'), img = g.createImageData(TS, TS), px = img.data;
+      const g = cv.getContext('2d'), img = g!.createImageData(TS, TS), px = img.data;
       const base = [0x5a, 0x3c, 0x22];
-      const mul = (c, k) => c.map(v => Math.min(255, Math.round(v * k)));
+      const mul = (c: any, k: any) => c.map((v: number) => Math.min(255, Math.round(v * k)));
       const lt = mul(base, 1.22), dk = mul(base, .72), dk2 = mul(base, .52);
-      const vn = (u, sd) => { const i = Math.floor(u), f = u - i, e = f * f * (3 - 2 * f); return lerp(tileHash(i, sd), tileHash(i + 1, sd), e); };
+      const vn = (u: any, sd: any) => { const i = Math.floor(u), f = u - i, e = f * f * (3 - 2 * f); return lerp(tileHash(i, sd), tileHash(i + 1, sd), e); };
       for (let y = 0; y < TS; y++) {
         // 기둥 폭 — 옆이 기둥이면 칸 끝까지, 밑동은 뿌리로 벌어지고 벗은 꼭대기는 좁아진다
         let a = L ? 0 : 3, b = R ? TS : TS - 3;
@@ -609,14 +609,14 @@ export const TileArt: Bag = {
           const o = (y * TS + x) * 4; px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
         }
       }
-      g.putImageData(img, 0, 0);
+      g!.putImageData(img, 0, 0);
       return cv;
     });
   },
   /** 야자 줄기 — ★ 칸 격자를 따른다: 보통 칸은 가운데 곧은 줄기, 이음줄(옆 칸으로 옮겨 가는 줄)만
       그 줄 두 칸 안에서 S자로 넘어간다(줄 위아래 끝에서 세로라 꺾인 데가 없다). 마디는 세계 y. */
-  _palmTile(w, tx, ty) {
-    const pw = (x, y) => w.get(x, y) === T.PALMWOOD;
+  _palmTile(w: any, tx: any, ty: any) {
+    const pw = (x: any, y: any) => w.get(x, y) === T.PALMWOOD;
     const U = pw(tx, ty - 1), D = pw(tx, ty + 1), L = pw(tx - 1, ty), R = pw(tx + 1, ty);
     const side = R ? 1 : L ? -1 : 0;
     const top = U || w.get(tx, ty - 1) === T.PALMLEAF;
@@ -626,12 +626,12 @@ export const TileArt: Bag = {
     const key = tx + ',' + ty + ':' + side + role + (+ground);
     return this._cache('_pk', key, () => {
       const cv = document.createElement('canvas'); cv.width = cv.height = TS;
-      const g = cv.getContext('2d'), img = g.createImageData(TS, TS), px = img.data;
+      const g = cv.getContext('2d'), img = g!.createImageData(TS, TS), px = img.data;
       const base = [0x7a, 0x5a, 0x38];
-      const mul = (c, k) => c.map(v => Math.min(255, Math.round(v * k)));
+      const mul = (c: any, k: any) => c.map((v: number) => Math.min(255, Math.round(v * k)));
       const lt = mul(base, 1.2), dk = mul(base, .72), dk2 = mul(base, .52);
-      const sm = t => t * t * (3 - 2 * t);
-      const cx = y => {                                  // 칸 안 y(0=위)의 줄기 가운데
+      const sm = (t: any) => t * t * (3 - 2 * t);
+      const cx = (y: number) => {                                  // 칸 안 y(0=위)의 줄기 가운데
         const t = clamp((TS - y) / TS, 0, 1);
         return role === 1 ? 11 + side * TS * sm(t) : role === 2 ? 11 + side * TS * (1 - sm(t)) : 11;
       };
@@ -650,14 +650,14 @@ export const TileArt: Bag = {
           const o = (y * TS + x) * 4; px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
         }
       }
-      g.putImageData(img, 0, 0);
+      g!.putImageData(img, 0, 0);
       return cv;
     });
   },
   /** 이어진 야자 잎 덩어리(4방향, 80칸까지)와 그 닻. 닻은 줄기 꼭대기 바로 위 잎 칸(이음줄이면 옮겨 간 칸),
       줄기가 없으면(놓은 잎 블록) 덩어리 맨 아랫줄 가운데 — 어떤 모양으로 놓아도 잎갓 하나로 읽힌다. */
-  _palmCluster(w, tx, ty) {
-    const lf = (x, y) => w.get(x, y) === T.PALMLEAF;
+  _palmCluster(w: any, tx: any, ty: any) {
+    const lf = (x: any, y: any) => w.get(x, y) === T.PALMLEAF;
     const seen = new Set([tx + ',' + ty]), cells = [[tx, ty]];
     for (let i = 0; i < cells.length && cells.length < 80; i++) {
       const [x, y] = cells[i];
@@ -683,18 +683,18 @@ export const TileArt: Bag = {
   /** 야자 잎 — 닻에서 잎줄기를 촘촘히 뻗되 ★ 잎 칸이 끝나는 곳에서 멈춘다. 잎갓 한 장을 덩어리 전체로
       그리고(칸을 넘어 이어짐) 잎 칸은 제 몫만 잘라 쓰므로 윤곽은 놓인 잎 칸 모양(격자)을 따른다.
       잎줄기가 닿지 않은 칸에는 그 칸 몫의 짧은 잎줄기를 더해 빈 칸이 없게 한다. */
-  _palmLeafTile(w, tx, ty) {
+  _palmLeafTile(w: any, tx: any, ty: any) {
     const cl = this._palmCluster(w, tx, ty);
     const cr = this._cache('_pc', cl.key, () => {
       const { W, H, mask } = cl, CW = W * TS, CH = H * TS;
       const cv = document.createElement('canvas'); cv.width = CW; cv.height = CH;
       const g = cv.getContext('2d');
-      const inL = (x, y) => x >= 0 && y >= 0 && x < CW && y < CH && mask[((y / TS) | 0) * W + ((x / TS) | 0)] === '1';
+      const inL = (x: number, y: number) => x >= 0 && y >= 0 && x < CW && y < CH && mask[((y / TS) | 0) * W + ((x / TS) | 0)] === '1';
       const base = ART[T.PALMLEAF].c, lt = shade(base, 1.3), lt2 = shade(base, 1.55), dk = shade(base, .72), dk2 = shade(base, .5);
       const O = [(cl.an[0] - cl.x0 + 0.5) * TS, (cl.an[1] - cl.y0 + 1) * TS - 4];
       const rr = new RNG('palm-' + cl.key);
       // 잎줄기 하나 — 시작점·방향(라디안)·처짐으로 칸이 끝날 때까지 뻗고, 양옆에 처진 작은 잎을 단다
-      const frond = (sx, sy, a, droop, maxS) => {
+      const frond = (sx: number, sy: number, a: any, droop: any, maxS: any) => {
         const pts = [];
         for (let s = 0; s < maxS; s += 1.5) {
           const x = sx + Math.cos(a) * s, y = sy - Math.sin(a) * s + droop * s * s;
@@ -708,7 +708,7 @@ export const TileArt: Bag = {
         const a = deg * Math.PI / 180;
         fr.push(frond(O[0], O[1], a, 0.004 + 0.016 * (1 - Math.sin(a)), 260));
       }
-      const paint = list => {
+      const paint = (list: any) => {
         for (const pass of [0, 1])
           for (const pts of list) {
             const n = pts.length;
@@ -718,30 +718,30 @@ export const TileArt: Bag = {
               // 끝으로 갈수록 짧아져 잎줄기 끝이 뾰족하게 모인다
               let len = Math.min((1 - t * 0.6) * (8 + rr.range(0, 3)), (n - i) * 1.1);
               const la = ang + (pass ? -1 : 1) * 1.2;
-              const ex = l => x + Math.cos(la) * l, ey = l => y + Math.sin(la) * l + l * 0.45;
+              const ex = (l: any) => x + Math.cos(la) * l, ey = (l: any) => y + Math.sin(la) * l + l * 0.45;
               while (len > 1 && !inL(ex(len), ey(len))) len -= 1;   // 잎 칸 밖으로 나가는 작은 잎은 줄인다(잘리지 않게)
               if (len <= 1) continue;
-              g.strokeStyle = pass ? (i % 4 ? lt : lt2) : (i % 4 ? dk : base);
-              g.lineWidth = 1.7;
-              g.beginPath(); g.moveTo(x, y); g.lineTo(ex(len), ey(len)); g.stroke();
+              g!.strokeStyle = pass ? (i % 4 ? lt : lt2) : (i % 4 ? dk : base);
+              g!.lineWidth = 1.7;
+              g!.beginPath(); g!.moveTo(x, y); g!.lineTo(ex(len), ey(len)); g!.stroke();
             }
           }
         for (const pts of list) {                         // 잎줄기 — 끝 쪽 3분의 1은 가늘게
           if (pts.length < 2) continue;
           const cut = Math.floor(pts.length * 0.66);
-          g.strokeStyle = dk2;
+          g!.strokeStyle = dk2;
           for (const [from, to, lw] of [[0, cut, 1.6], [cut, pts.length - 1, 0.9]]) {
             if (to <= from) continue;
-            g.lineWidth = lw; g.beginPath(); g.moveTo(pts[from][0], pts[from][1]);
-            for (let i = from + 1; i <= to; i++) g.lineTo(pts[i][0], pts[i][1]);
-            g.stroke();
+            g!.lineWidth = lw; g!.beginPath(); g!.moveTo(pts[from][0], pts[from][1]);
+            for (let i = from + 1; i <= to; i++) g!.lineTo(pts[i][0], pts[i][1]);
+            g!.stroke();
           }
         }
       };
       paint(fr);
       // 덜 덮인 칸(20% 미만) — 닻에서 잎 칸을 따라 건너온 앞 칸(부모) 가운데에서 이 칸을 지나 뻗는 잎줄기.
       // 부모 칸에서 시작하므로 떨어져 뜬 조각이 되지 않고, 가지처럼 덩어리 끝까지 이어진다.
-      const id = g.getImageData(0, 0, CW, CH).data, extra = [];
+      const id = g!.getImageData(0, 0, CW, CH).data, extra = [];
       const ai = cl.an[0] - cl.x0, aj = cl.an[1] - cl.y0, par = new Map([[aj * W + ai, -1]]), order = [aj * W + ai];
       for (let q = 0; q < order.length; q++) {
         const k = order[q], i = k % W, j = (k / W) | 0;
@@ -751,36 +751,36 @@ export const TileArt: Bag = {
           par.set(nk, k); order.push(nk);
         }
       }
-      const cov = k => {
+      const cov = (k: any) => {
         const i = k % W, j = (k / W) | 0; let n = 0;
         for (let y = 0; y < TS; y += 2) for (let x = 0; x < TS; x += 2) if (id[((j * TS + y) * CW + i * TS + x) * 4 + 3] > 40) n++;
         return n / ((TS / 2) * (TS / 2));
       };
       for (const k of order) {
         const pk = par.get(k);
-        if (pk < 0 || cov(k) >= 0.2) continue;
-        const px0 = (pk % W + 0.5) * TS, py0 = (((pk / W) | 0) + 0.5) * TS;
+        if (pk! < 0 || cov(k) >= 0.2) continue;
+        const px0 = (pk! % W + 0.5) * TS, py0 = (((pk! / W) | 0) + 0.5) * TS;
         const cx = (k % W + 0.5) * TS, cy = (((k / W) | 0) + 0.5) * TS;
         const a = Math.atan2(-(cy - py0), cx - px0);
         for (const da of [-0.3, 0.3]) extra.push(frond(px0, py0, a + da, 0.006, 90));
       }
       if (extra.length) paint(extra);
       if (cl.an && w.get(cl.an[0], cl.an[1] + 1) === T.PALMWOOD) {
-        g.fillStyle = dk2; g.beginPath(); g.ellipse(O[0], O[1], 6, 4, 0, 0, Math.PI * 2); g.fill();
+        g!.fillStyle = dk2; g!.beginPath(); g!.ellipse(O[0], O[1], 6, 4, 0, 0, Math.PI * 2); g!.fill();
       }
-      for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (mask[j * W + i] !== '1') g.clearRect(i * TS, j * TS, TS, TS);
+      for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (mask[j * W + i] !== '1') g!.clearRect(i * TS, j * TS, TS, TS);
       return cv;
     });
     return this._cache('_pf', tx + ',' + ty + ':' + cl.key, () => {
       const c = document.createElement('canvas'); c.width = c.height = TS;
-      c.getContext('2d').drawImage(cr, (tx - cl.x0) * TS, (ty - cl.y0) * TS, TS, TS, 0, 0, TS, TS);
+      c.getContext('2d')!.drawImage(cr, (tx - cl.x0) * TS, (ty - cl.y0) * TS, TS, TS, 0, 0, TS, TS);
       return c;
     });
   },
   /** 이끼 바위 한 칸의 이끼 — ★ 칸 단위 띠가 아니라 **세계 좌표의 이끼 두께 장**을 칸마다 잘라 그린다. */
-  _mossTile(w, tx, ty, col) {
-    const sol = (x, y) => TILE_DEF[w.get(x, y)].solid === 1;
-    const mos = (x, y) => w.get(x, y) === T.MOSSSTONE;
+  _mossTile(w: any, tx: any, ty: any, col: any) {
+    const sol = (x: any, y: any) => TILE_DEF[w.get(x, y)].solid === 1;
+    const mos = (x: any, y: any) => w.get(x, y) === T.MOSSSTONE;
     const oT = !sol(tx, ty - 1), oR = !sol(tx + 1, ty), oB = !sol(tx, ty + 1), oL = !sol(tx - 1, ty);
     const cTL = !oT && !oL && !sol(tx - 1, ty - 1), cTR = !oT && !oR && !sol(tx + 1, ty - 1);
     const cBR = !oB && !oR && !sol(tx + 1, ty + 1), cBL = !oB && !oL && !sol(tx - 1, ty + 1);
@@ -797,7 +797,7 @@ export const TileArt: Bag = {
        비치게 한다. */
     const dk = shade(col, .72), dk2 = shade(col, .56), lt = shade(col, 1.12), lt2 = shade(col, 1.22);
     // 세계 좌표 값 잡음 — 5px 마디 사이를 부드럽게 잇는다(이웃 칸과 같은 값을 본다)
-    const vn = (u, s) => {
+    const vn = (u: any, s: any) => {
       const i = Math.floor(u / 5), f = u / 5 - i, e = f * f * (3 - 2 * f);
       return lerp(tileHash(i, s), tileHash(i + 1, s), e);
     };
@@ -808,8 +808,8 @@ export const TileArt: Bag = {
     const nb = Math.round(((oT || oR || oB || oL) ? 1 + (nm >> 1) : (nm >= 2 ? nm - 1 : 0)) * D);
     for (let i = 0; i < nb; i++)
       blobs.push([3 + tileHash(tx * 5 + i, ty * 3) * (TS - 6), 3 + tileHash(tx * 3, ty * 5 + i) * (TS - 6), 2.5 + tileHash(tx + i, ty - i) * 2.5 + nm * 0.5]);
-    const img = g.createImageData(TS, TS), px = img.data;
-    const rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+    const img = g!.createImageData(TS, TS), px = img.data;
+    const rgb = (h: any) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
     const C = { lt2: rgb(lt2), lt: rgb(lt), c: rgb(col), dk: rgb(dk), dk2: rgb(dk2) };
     for (let y = 0; y < TS; y++)
       for (let x = 0; x < TS; x++) {
@@ -841,12 +841,12 @@ export const TileArt: Bag = {
         const o = (y * TS + x) * 4;
         px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = c === C.c ? 215 : 240;
       }
-    g.putImageData(img, 0, 0);
+    g!.putImageData(img, 0, 0);
     this._mt.set(key, cv);
     return cv;
   },
   /** 이끼가 얼마나 빽빽한가 — 0.4(마른 외톨이) ~ 1(최대) — 사연: docs/code-history.md#h84 */
-  _mossDensity(w, tx, ty) { const { WW } = w.dims;
+  _mossDensity(w: any, tx: any, ty: any) { const { WW } = w.dims;
     this._md = this._md || new Map();
     const i = ty * WW + tx, now = performance.now(), hit = this._md.get(i);
     if (hit && now - hit[1] < 1500) return hit[0];
@@ -870,41 +870,41 @@ export const TileArt: Bag = {
     return D;
   },
   /** 종유석(위에 붙음)·석순(바닥에 붙음) 한 줄의 i 번째 칸 — 줄 전체가 원뿔 하나가 되게 */
-  _drip(id, i, n) {
+  _drip(id: any, i: any, n: any) {
     const key = id + ':' + i + ':' + n;
     this._dc = this._dc || {};
     if (this._dc[key]) return this._dc[key];
     const cv = document.createElement('canvas'); cv.width = cv.height = TS;
     const g = cv.getContext('2d');
-    const base = TILE_DEF[id].c, dk = shade(base, .74), lt = shade(base, 1.2), lt2 = shade(base, 1.4);
+    const base = TILE_DEF[id].c, dk = shade(base!, .74), lt = shade(base!, 1.2), lt2 = shade(base!, 1.4);
     const up = id === T.STALAGMITE;
     for (let y = 0; y < TS; y++) {
       const yy = up ? TS - 1 - y : y;                       // 붙은 쪽에서 잰 칸 속 높이
       const t = (i + (yy + 0.5) / TS) / n;                   // 0(붙은 쪽) → 1(끝)
       const wdt = Math.max(1, (TS - 3) * (1 - t * 0.9));
       const gy = i * TS + yy;                                // 줄 전체에서의 높이 — 줄무늬가 칸을 건너 이어진다
-      g.fillStyle = gy % 6 === 0 ? dk : gy % 6 === 3 ? lt : base;
-      g.fillRect(TS / 2 - wdt / 2, y, wdt, 1);
-      g.fillStyle = lt2; g.fillRect(TS / 2 - wdt / 2, y, Math.max(1, wdt * .22), 1);
+      g!.fillStyle = (gy % 6 === 0 ? dk : gy % 6 === 3 ? lt : base)!;
+      g!.fillRect(TS / 2 - wdt / 2, y, wdt, 1);
+      g!.fillStyle = lt2; g!.fillRect(TS / 2 - wdt / 2, y, Math.max(1, wdt * .22), 1);
     }
-    if (!up && i === n - 1) { g.fillStyle = '#9fd0e8'; g.fillRect(TS / 2 - 0.5, TS - 2, 1, 2); }
+    if (!up && i === n - 1) { g!.fillStyle = '#9fd0e8'; g!.fillRect(TS / 2 - 0.5, TS - 2, 1, 2); }
     return (this._dc[key] = cv);
   },
-  drawWall(c, wl, v, sx, sy) { blitCell(c, this.wallAtlas, TS, v, wl, sx, sy); },
+  drawWall(c: any, wl: any, v: number, sx: number, sy: number) { blitCell(c, this.wallAtlas, TS, v, wl, sx, sy); },
 
   /* ---------- 그리기 도우미 ---------- */
-  _r(g, ox, oy, x, y, w, h, col) {
+  _r(g: CanvasRenderingContext2D, ox: number, oy: number, x: number, y: number, w: number, h: number, col: string) {
     g.fillStyle = col;
     g.fillRect(ox + Math.round(x), oy + Math.round(y), Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
   },
-  _fill(g, ox, oy, col) { g.fillStyle = col; g.fillRect(ox, oy, TS, TS); },
-  _speck(g, ox, oy, rng, n, a, b) {
+  _fill(g: CanvasRenderingContext2D, ox: number, oy: number, col: string) { g.fillStyle = col; g.fillRect(ox, oy, TS, TS); },
+  _speck(g: any, ox: number, oy: number, rng: RNG, n: number, a: any, b: any) {
     for (let i = 0; i < n; i++) this._r(g, ox, oy, rng.range(0, TS - 1), rng.range(0, TS - 1), 1, 1, rng.chance(.5) ? a : b);
   },
 
   /* ---------- 개별 질감 ---------- */
-  paint(g, ox, oy, s, rng, v, seed) {
-    const R = (x, y, w, h, c) => this._r(g, ox, oy, x, y, w, h, c);
+  paint(g: any, ox: number, oy: number, s: any, rng: any, v: number, seed: string) {
+    const R = (x: number, y: number, w: number, h: number, c: any) => this._r(g, ox, oy, x, y, w, h, c);
     const base = s.c;
     const dk = shade(base, .74), dk2 = shade(base, .54), lt = shade(base, 1.18), lt2 = shade(base, 1.4);
 
@@ -913,7 +913,7 @@ export const TileArt: Bag = {
   },
 
   /** 기계 공통 뼈대 — 강철 상자에 볼트 네 개 */
-  _mkBody(g, ox, oy, base, R) {
+  _mkBody(g: any, ox: number, oy: number, base: any, R: any) {
     const dk = shade(base, .62), lt = shade(base, 1.3);
     R(1, 2, TS - 2, TS - 3, base);
     R(1, 2, TS - 2, 2, lt);
@@ -924,7 +924,7 @@ export const TileArt: Bag = {
   },
 
   /* 나무 판자 벽지. */
-  paintWoodWall(g, ox, oy, col, rng) {
+  paintWoodWall(g: CanvasRenderingContext2D, ox: number, oy: number, col: string, rng: RNG) {
     const base = shade(col, .62), dk = shade(col, .40), lt = shade(col, .82);
     this._fill(g, ox, oy, base);
     let x = rng.int(0, 3);
@@ -942,7 +942,7 @@ export const TileArt: Bag = {
     g.globalAlpha = 1;
   },
 
-  paintWall(g, ox, oy, col, rng) {
+  paintWall(g: CanvasRenderingContext2D, ox: number, oy: number, col: string, rng: RNG) {
     const base = shade(col, .66), dk = shade(col, .44), lt = shade(col, .86);
     this._fill(g, ox, oy, base);
     for (let i = 0; i < 9; i++)

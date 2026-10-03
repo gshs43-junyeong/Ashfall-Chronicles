@@ -20,19 +20,19 @@ export const MIN_CAVE = 220;
 /* 해변 폭. */
 export const BEACH_W = 90;          // 물가에서 안쪽으로 이만큼이 모래 해변이다
 /* 바다 + 해변 — 나무·풀·꽃 같은 지상 초목을 놓지 않는다 — 사연: docs/code-history.md#h102 */
-export const inSeaZone = (x, seaX1) => x < seaX1 + BEACH_W + 4;
+export const inSeaZone = (x: number, seaX1: any) => x < seaX1 + BEACH_W + 4;
 export const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
 
 /** 세계 크기를 정한다 — 새 게임 직전·불러오기 직전에 부른다(치수는 size.js). 다음 new World 가 이 크기로 만들어진다. */
-export function setWorldSize(key) { applyWorldSize(key); }
+export function setWorldSize(key: string) { applyWorldSize(key); }
 
 /** 그 크기 세계의 바이옴 유적 명세 — 표(RUIN_SPEC)는 소형 기준 그대로 두고 세계마다 자리를 옮긴 복사본을 갖는다(`world.ruinSpec`). */
 export function ruinSpecFor(D: WorldDims): RuinDef[] {
-  return RUIN_SPEC.map(r => Object.assign({}, r, { x: D.SX(r.x), y: r.id === 'abyss' ? D.SYB(r.y) : D.SY(r.y) }));
+  return RUIN_SPEC.map(r => Object.assign({}, r, { x: D.SX(r.x!), y: r.id === 'abyss' ? D.SYB(r.y!) : D.SY(r.y!) }));
 }
 
 /* 바이옴이 아닌 구역의 이름표 — 원경 그림이 바뀌는 자리와 짝이다(G.bgId). */
-export const ZONE_CARD = {
+export const ZONE_CARD: Bag = {
   camp: { n: '베이스캠프', sub: '잿빛 숲 한복판',
           card: { line: '살아남은 이들이 처음 불을 피운 자리. 여기서부터 다시 센다.' } },
   village: { n: '여명 마을', sub: '재를 이고 사는 곳',
@@ -52,7 +52,7 @@ export const MAT_LAYER = [
   // 7 바다 — 지면은 해저 모래다
   { top: T.SAND, soil: T.SAND, sub: T.SANDSTONE, deep: T.STONE, wall: 8, subWall: 2 }
 ];
-export const MAT_OF = { ice: 0, forest: 1, forest2: 1, desert: 2, corrupt: 3, jungle: 4, glowfen: 5,
+export const MAT_OF: Record<string, number> = { ice: 0, forest: 1, forest2: 1, desert: 2, corrupt: 3, jungle: 4, glowfen: 5,
                  glacier: 6, sea: 7 };
 
 /* ================= 여명 마을 배치표 ================= */
@@ -78,7 +78,7 @@ export const DAWN_PLAZA = [
   { id: 'forge',     off:  12, w: 2 }
 ];
 /* 광장 물건의 실제 그림 크기(px). */
-export const DAWN_OBJ = {
+export const DAWN_OBJ: Bag = {
   // 베이스캠프·여명 마을·플레이어가 직접 놓는 것 전부 같은 크기(OBJ_SIZE)를 쓴다
   workbench: { type: 'workbench', w: OBJ_SIZE.workbench.w, h: OBJ_SIZE.workbench.h, lv: 1 },
   kade:      { type: 'npc', npc: 'kade', w: 22, h: 44 },
@@ -108,20 +108,20 @@ export const DAWN_WALL = { leftOff: -16, rightOff: 15, gateH: 3, towerH: 14,
    docs/code-history.md#h104 */
 export class BoxSet {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare bh: number; declare bw: number; declare list: any[]; declare m: Uint8Array; declare out: Set<any>; declare ww: number; declare x0: number; declare y0: number;
+  declare bh: number; declare bw: number; declare list: any[]; declare m: Uint8Array; declare out: Set<any> | null; declare ww: number; declare x0: number; declare y0: number;
 
-  constructor(box, pad, ww) {
+  constructor(box: Bag, pad: any, ww: any) {
     this.ww = ww;                                   // 칸 번호(k = y·ww + x)를 푸는 세계 폭
     this.x0 = box[0] - pad; this.y0 = box[1] - pad;
     this.bw = box[2] - box[0] + 1 + pad * 2; this.bh = box[3] - box[1] + 1 + pad * 2;
     this.m = new Uint8Array(this.bw * this.bh); this.list = []; this.out = null;
   }
-  _i(k) {
+  _i(k: any) {
     const y = (k / this.ww) | 0, x = k - y * this.ww, lx = x - this.x0, ly = y - this.y0;
     return lx >= 0 && ly >= 0 && lx < this.bw && ly < this.bh ? ly * this.bw + lx : -1;
   }
-  has(k) { const i = this._i(k); return i >= 0 ? this.m[i] === 1 : !!(this.out && this.out.has(k)); }
-  add(k) {
+  has(k: any) { const i = this._i(k); return i >= 0 ? this.m[i] === 1 : !!(this.out && this.out.has(k)); }
+  add(k: any) {
     const i = this._i(k);
     if (i >= 0) { if (this.m[i]) return this; this.m[i] = 1; }
     else { this.out = this.out || new Set(); if (this.out.has(k)) return this; this.out.add(k); }
@@ -134,7 +134,7 @@ export class BoxSet {
 
 /** 닫힌 문 = 옆에서 본 문짝 — 경첩 쪽 가장자리의 얇은 판만 막는다(열린 문은 칸을 채운 앞면이고 안 막는다).
     game.js drawDoor 가 같은 폭으로 그린다. */
-export function doorEdge(d) {
+export function doorEdge(d: any) {
   const w = Math.max(6, Math.round(d.w * 0.32));
   return { x: d.dir === -1 ? d.x : d.x + d.w - w, y: d.y, w, h: d.h };
 }
@@ -142,8 +142,8 @@ export function doorEdge(d) {
 /** Ashfall 세계 — 타일맵(engine/tilemap) 위에 생성기 · 마을 · 유적 · 바다 · 유체 · 조명 규칙을 얹는다(엔진화 계획 §8-4 상속). */
 export class World extends TileMap {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
-  declare _entranceLandX: number; declare _entranceLandY: number; declare _entranceRooms: any[]; declare _entranceSpots: any[];
-  declare _natural: Set<any>; declare _ruinCtx: Record<string, any>; declare isle: Record<string, any>; declare jungleLake: Record<string, any>;
+  declare _entranceLandX: number | null; declare _entranceLandY: number | undefined; declare _entranceRooms: any[]; declare _entranceSpots: any[];
+  declare _natural: Set<any>; declare _ruinCtx: Record<string, any> | null; declare isle: Record<string, any>; declare jungleLake: Record<string, any>;
   declare richCount: number; declare richSites: number; declare ruinVaults: any[]; declare seaBed: Int16Array; declare yunseul: Record<string, any>;
   declare _airPocket: (...a: any[]) => any; declare _bedAt: (...a: any[]) => any; declare _buildPassage: (...a: any[]) => any;
   declare _canDecor: (...a: any[]) => any; declare _canopy: (...a: any[]) => any; declare _carveBasin: (...a: any[]) => any;
@@ -172,14 +172,14 @@ export class World extends TileMap {
   declare buildCitadel: (...a: any[]) => any; declare buildDawnCity: (...a: any[]) => any; declare buildDeepShaft: (...a: any[]) => any; declare buildDungeon: (...a: any[]) => any;
   declare buildJungleFalls: (...a: any[]) => any; declare buildRuinCaches: (...a: any[]) => any; declare buildRuins: (...a: any[]) => any; declare buildRunaway: (...a: any[]) => any;
   declare buildSea: (...a: any[]) => any; declare buildSkyIslands: (...a: any[]) => any; declare buildVillage: (...a: any[]) => any; declare buildWorks: (...a: any[]) => any;
-  declare cactusPlant: (...a: any[]) => any; declare caveGrid: Uint8Array; declare caverns: any[]; declare citadel: Record<string, any>; declare crops: Set<any>; declare wet: Record<string, any>; declare isWet: (...a: any[]) => any; declare waterFarm: (...a: any[]) => any; declare nearWater: (...a: any[]) => any;
+  declare cactusPlant: (...a: any[]) => any; declare caveGrid: Uint8Array | null; declare caverns: any[]; declare citadel: Record<string, any>; declare crops: Set<any>; declare wet: Record<string, any>; declare isWet: (...a: any[]) => any; declare waterFarm: (...a: any[]) => any; declare nearWater: (...a: any[]) => any;
   declare crumbled: Map<any, any>; declare dawnCity: Record<string, any>; declare dawnY: number; declare decoratePonds: (...a: any[]) => any; declare decorateWater: (...a: any[]) => any;
   declare deepShaft: Record<string, any>; declare doors: any[]; declare dungeon: Record<string, any>; declare ensureEntranceTraps: (...a: any[]) => any; declare fAcc: number[];
   declare falls: any[]; declare faults: any[]; declare fillMossCorners: (...a: any[]) => any; declare fitObjects: (...a: any[]) => any; declare floodCaves: (...a: any[]) => any;
   declare floodHell: (...a: any[]) => any; declare flv: Uint8Array; declare fmark: Uint8Array[]; declare fq: any[]; declare giantTree: Record<string, any>; declare glowStalk: (...a: any[]) => any;
   declare inAtelier: (...a: any[]) => any; declare inCitadel: (...a: any[]) => any; declare inDeepShaft: (...a: any[]) => any; declare inRuin: (...a: any[]) => any; declare inRunaway: (...a: any[]) => any;
   declare inWorks: (...a: any[]) => any; declare jungleTree: (...a: any[]) => any; declare lavaPools: any[]; declare lbh: number; declare lbw: number; declare lbx: number;
-  declare lby: number; declare lightBuf: Float32Array; declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
+  declare lby: number; declare lightBuf: Float32Array | null; declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
   declare objects: any[]; declare openCodeDoorway: (...a: any[]) => any; declare oreHits: Record<string, any>; declare pineTree: (...a: any[]) => any; declare placeRichOres: (...a: any[]) => any;
   declare placeRigs: (...a: any[]) => any; declare pools: any[]; declare pruneSmallCaves: (...a: any[]) => any; declare restoreSealRoom: (...a: any[]) => any; declare rng: RNG;
   declare ruinAt: (...a: any[]) => any; declare ruinEvents: any[]; declare ruinSites: any[]; declare ruins: any[]; declare runaway: Record<string, any>;
@@ -188,7 +188,7 @@ export class World extends TileMap {
   declare spawnX: number; declare spawnY: number; declare surface: Int16Array; declare sweepFloatingDecor: (...a: any[]) => any; declare pruneBrokenTrees: () => number; declare sweepPockets: (...a: any[]) => any;
   declare tree: (...a: any[]) => any; declare villageY: number; declare works: Record<string, any>;
 
-  constructor(seed) {
+  constructor(seed: string) {
     const D = dimsOf(), { WW, WH } = D;         // setWorldSize 가 고른 크기 — 이 세계가 제 것으로 가져간다
     super(WW, WH, TS, TILE_DEF, T.BEDROCK);   // 타일 · 벽지 · 탐험 배열, 경계 밖 = 기반암
     this.dims = D;
@@ -212,22 +212,22 @@ export class World extends TileMap {
     this.lightBuf = null; this.lbx = 0; this.lby = 0; this.lbw = 0; this.lbh = 0;
   }
 
-  set(x, y, t) { const { WW } = this.dims;
+  set(x: number, y: number, t: any) { const { WW } = this.dims;
     if (!this.inB(x, y)) return;
     this.tiles[y * WW + x] = t;
     /* 유체가 켜진 뒤(생성·불러오기 끝)에만 — 바뀐 칸과 그 네 이웃을 흐름 검사 줄에 세운다. */
     if (this.fq) this.fluidWake(x, y);
     if (this.netLog && !this.netMute) this.netLog.add(y * WW + x);   // 멀티플레이 — 바뀐 칸을 모아 보낸다(game/net.ts)
   }
-  setWall(x, y, w) {
+  setWall(x: any, y: any, w: any) {
     super.setWall(x, y, w);
     if (this.netLog && !this.netMute && this.inB(x, y)) this.netLog.add(y * this.dims.WW + x);
   }
   /** tiles 를 직접 쓴 칸(작물 자람 · 무너지는 바닥)도 멀티플레이 기록에 남긴다. */
-  netMark(k) { if (this.netLog && !this.netMute) this.netLog.add(k); }
-  hurtTile(x, y) { return TILE_DEF[this.get(x, y)].hurt || 0; }
+  netMark(k: any) { if (this.netLog && !this.netMute) this.netLog.add(k); }
+  hurtTile(x: number, y: number) { return TILE_DEF[this.get(x, y)].hurt || 0; }
   /** 사각형이 물에 얼마나 잠겼는지 0~1. */
-  liquidIn(px, py, w, h) { const { WW } = this.dims;
+  liquidIn(px: any, py: any, w: any, h: any) { const { WW } = this.dims;
     const x0 = Math.floor(px / TS), x1 = Math.floor((px + w - 0.01) / TS);
     const y0 = Math.floor(py / TS), y1 = Math.floor((py + h - 0.01) / TS);
     let n = 0, tot = 0, flow = 0, cur = 0;
@@ -248,11 +248,11 @@ export class World extends TileMap {
     return { f: tot ? n / tot : 0, flow, cur };
   }
   /** 흐르는 칸의 물살 방향과 세기(-1~1) — 수위가 높은 쪽에서 낮은 쪽으로. */
-  currentAt(x, y) { const { WW } = this.dims;
+  currentAt(x: number, y: number) { const { WW } = this.dims;
     const k = y * WW + x, t = this.tiles[k], kind = FLUID_KIND[t];
     if (!FLUID_FLOW[t] || !this.flv) return 0;
     const me = this.flv[k] || 8;
-    const side = n => {
+    const side = (n: number) => {
       const nt = this.tiles[n];
       if (FLUID_KIND[nt] === kind) return this._flvAt(n);
       return FLUID_OPEN(nt) ? 0 : me;
@@ -261,14 +261,14 @@ export class World extends TileMap {
     return clamp((side(k - 1) - side(k + 1)) / 2, -1, 1);
   }
   /** (tx, ty) 칸이 물이면 그 물기둥의 **맨 윗칸**을 찾는다(최대 lim 칸 위까지). */
-  surfaceRow(tx, ty, lim) {
+  surfaceRow(tx: number, ty: number, lim: any) {
     if (!TILE_DEF[this.get(tx, ty)].liquid) return -1;
     for (let y = ty; y > ty - lim && y > 1; y--)
       if (!TILE_DEF[this.get(tx, y - 1)].liquid) return this.get(tx, y - 1) === T.AIR ? y : -1;
     return -1;
   }
   /** 사각형이 겹치거나 맞닿은 타일 중 가장 큰 hurt값을 돌려준다. */
-  hurtInRect(px, py, w, h) {
+  hurtInRect(px: any, py: any, w: any, h: any) {
     const pad = 1;
     const x0 = Math.floor((px - pad) / TS), x1 = Math.floor((px + w - 0.01 + pad) / TS);
     const y0 = Math.floor((py - pad) / TS), y1 = Math.floor((py + h - 0.01 + pad) / TS);
@@ -280,23 +280,23 @@ export class World extends TileMap {
     return m;
   }
 
-  biomeAt(tx) { const { BIOMES } = this.dims;
+  biomeAt(tx: number) { const { BIOMES } = this.dims;
     for (const b of BIOMES) if (tx >= b.x0 && tx < b.x1) return b;
     return BIOMES[1];
   }
-  biomeIndexAt(tx) { const { BIOMES } = this.dims;
+  biomeIndexAt(tx: number) { const { BIOMES } = this.dims;
     for (let i = 0; i < BIOMES.length; i++) if (tx >= BIOMES[i].x0 && tx < BIOMES[i].x1) return i;
     return tx < 0 ? 0 : BIOMES.length - 1;
   }
   /** 경계 혼합: [주 바이옴, 이웃 바이옴, 이웃 비중 0~0.5] */
-  biomeMix(tx) { const { BIOMES } = this.dims;
+  biomeMix(tx: number) { const { BIOMES } = this.dims;
     const i = this.biomeIndexAt(tx), b = BIOMES[i];
     if (i > 0 && tx - b.x0 < BIOME_BAND) return [i, i - 1, 0.5 * (1 - (tx - b.x0) / BIOME_BAND)];
     if (i < BIOMES.length - 1 && b.x1 - tx <= BIOME_BAND) return [i, i + 1, 0.5 * (1 - (b.x1 - tx) / BIOME_BAND)];
     return [i, i, 0];
   }
   /** 바이옴별 지표 높이 (경계에서 부드럽게 이어지도록 x 전 구간에서 정의) */
-  _hFor(bid, x, n1) { const { SURF_BASE } = this.dims;
+  _hFor(bid: string, x: number, n1: any) { const { SURF_BASE } = this.dims;
     let h = SURF_BASE + (n1(x, 0.011) - 0.5) * 32 + (n1(x + 900, 0.042) - 0.5) * 10;
     if (bid === 'desert') h += 8 + (n1(x + 400, 0.025) - 0.5) * 12;
     else if (bid === 'ice') h -= 8 + (n1(x + 1500, 0.06) - 0.5) * 6;
@@ -310,13 +310,13 @@ export class World extends TileMap {
     return h;
   }
   /** 이 x에서 어떤 바이옴의 '재질'을 쓸지 — 경계에서는 노이즈로 맞물리게 */
-  _matAt(x, n1) { const { BIOMES } = this.dims;
+  _matAt(x: number, n1: any) { const { BIOMES } = this.dims;
     const [ia, ib, t] = this.biomeMix(x);
     if (t <= 0.001 || ia === ib) return BIOMES[ia].id;
     return n1(x + 7777, 0.11) < t ? BIOMES[ib].id : BIOMES[ia].id;
   }
   /** 전투/스폰용 구역 태그 */
-  zoneAt(tx, ty) { const { WW, HELL_Y, DEEP_Y, SKY_Y, CAMP_X0, CAMP_X1 } = this.dims;
+  zoneAt(tx: number, ty: number) { const { WW, HELL_Y, DEEP_Y, SKY_Y, CAMP_X0, CAMP_X1 } = this.dims;
     // 특별 유적 둘은 각각 하늘·지옥 판정보다 먼저 본다 — 안에 들어와 있으면 그 구역이 우선이다
     if (this.inCitadel && this.inCitadel(tx, ty)) return 'citadel';
     if (this.inDeepShaft && this.inDeepShaft(tx, ty)) return 'deepshaft';
@@ -352,7 +352,7 @@ export class World extends TileMap {
     return 'surface';
   }
   /** 상자 보상은 지형 이름이 아니라 실제 위치 프로필로 고른다. */
-  chestLootProfile(tx, ty) {
+  chestLootProfile(tx: number, ty: number) {
     const zone = this.zoneAt(tx, ty);
     if (zone === 'works' || zone === 'runaway' || zone === 'atelier'
       || zone === 'citadel' || zone === 'deepshaft') return 'session2';
@@ -607,7 +607,7 @@ export class World extends TileMap {
 
   /* ================= 충돌 ================= */
   /** 사각형이 막힌 칸이나 닫힌 문의 판과 겹치는지 */
-  hitSolid(px, py, w, h) {
+  hitSolid(px: any, py: any, w: any, h: any) {
     if (super.hitSolid(px, py, w, h)) return true;
     for (const d of this.doors) {
       if (!d.closed) continue;
@@ -616,9 +616,9 @@ export class World extends TileMap {
     }
     return false;
   }
-  doorEdge(d) { return doorEdge(d); }
+  doorEdge(d: any) { return doorEdge(d); }
   /** 문 하나를 만들어 objects/doors 양쪽에 같은 참조로 등록한다 (열고 닫는 상태가 항상 같이 반영되도록). */
-  pushDoor(x, y, w, h, dir, extra?) {
+  pushDoor(x: any, y: any, w: any, h: any, dir: any, extra?: any) {
     const d = Object.assign({ type: 'door', x, y, w, h, closed: true, dir: dir || -1 }, extra);
     this.objects.push(d); this.doors.push(d);
     return d;
@@ -626,7 +626,7 @@ export class World extends TileMap {
 
   /* ================= 조명 ================= */
   /** 화면 범위 조명 계산. */
-  computeLight(tx0, ty0, tx1, ty1, dayLight, extra) { const { WW, WH } = this.dims;
+  computeLight(tx0: number, ty0: number, tx1: number, ty1: number, dayLight: any, extra: any) { const { WW, WH } = this.dims;
     const P = 14;
     const x0 = clamp(tx0 - P, 0, WW - 1), x1 = clamp(tx1 + P, 0, WW - 1);
     const y0 = clamp(ty0 - P, 0, WH - 1), y1 = clamp(ty1 + P, 0, WH - 1);
@@ -656,7 +656,7 @@ export class World extends TileMap {
       const k = (ey - y0) * w + (ex - x0);
       L[k] = Math.max(L[k], ev);
     }
-    const dec = (x, y) => {
+    const dec = (x: number, y: number) => {
       const t = this.tiles[y * WW + x];
       const d = TILE_DEF[t];
       // 창문은 고체지만 빛은 거의 그대로 통과한다 — 2층 집 안이 낮에 환해지는 이유
@@ -669,10 +669,10 @@ export class World extends TileMap {
     sweepLight(L, w, h, x0, y0, 2, dec);                // 4방향 스윕 x2(engine/tilemap/light)
     this.lbx = x0; this.lby = y0; this.lbw = w; this.lbh = h;
   }
-  lightAt(x, y) {
+  lightAt(x: number, y: number) {
     const lx = x - this.lbx, ly = y - this.lby;
     if (lx < 0 || ly < 0 || lx >= this.lbw || ly >= this.lbh) return 0;
-    return this.lightBuf[ly * this.lbw + lx];
+    return this.lightBuf![ly * this.lbw + lx];
   }
 
   /* ================= 유체 ================= */
@@ -691,7 +691,7 @@ export class World extends TileMap {
     }
     this.fallsAll();
   }
-  fluidWake(x, y) { const { WW, WH } = this.dims;
+  fluidWake(x: number, y: number) { const { WW, WH } = this.dims;
     const q = this.fq;
     for (let d = 0; d < 5; d++) {
       const xx = x + (d === 1 ? -1 : d === 2 ? 1 : 0), yy = y + (d === 3 ? -1 : d === 4 ? 1 : 0);
@@ -701,7 +701,7 @@ export class World extends TileMap {
     }
   }
   /** 물은 0.2초, 용암은 0.9초에 한 걸음 — 용암은 느리고 짧게 번진다 */
-  fluidTick(dt) {
+  fluidTick(dt: number) {
     if (!this.fq) return;
     const STEP = [0.2, 0.9];
     for (let j = 0; j < 2; j++) {
@@ -712,18 +712,18 @@ export class World extends TileMap {
     }
   }
   /** 이 칸의 수위 — 원천·샘·폭포는 8, 흐르는 칸은 flv, 액체가 아니면 0 */
-  _flvAt(k) {
+  _flvAt(k: any) {
     const t = this.tiles[k];
     if (FLUID_SRC[t] || t === T.SPRING || t === T.FALLS) return 8;
     return FLUID_FLOW[t] ? this.flv[k] : 0;
   }
   /** 흐르는 물이 옆으로 번지려면 밑이 받쳐 줘야 한다 — 고체·발판·막힌 칸·고인 원천. */
-  _fluidHeld(t) {
+  _fluidHeld(t: any) {
     if (FLUID_SRC[t]) return true;
     if (FLUID_FLOW[t] || t === T.FALLS) return false;
     return !FLUID_OPEN(t);
   }
-  _fluidStep(j) { const { WW } = this.dims;
+  _fluidStep(j: number) { const { WW } = this.dims;
     const q = this.fq[j], mark = this.fmark[j];
     const n = Math.min(q.length, 6000);                 // 한 걸음에 이만큼만 — 큰 범람도 프레임을 안 먹는다
     const todo = q.splice(0, n);
@@ -754,7 +754,7 @@ export class World extends TileMap {
     }
   }
   /** 칸 k 가 무엇이 되어야 하는가 → [k, 타일, 수위] 또는 null(그대로). */
-  _fluidEval(k, j) { const { WW } = this.dims;
+  _fluidEval(k: any, j: number) { const { WW } = this.dims;
     const t = this.tiles[k], kind = FLUID_KIND[t];
     // 용암이 물에 닿았다 — 원천은 흑암석, 흐르는 용암은 돌.
     if (kind === 3) {
@@ -807,19 +807,19 @@ export class World extends TileMap {
   }
   /** ★ 폭포 판정 — 떨어지는 민물 줄기 가운데 **4칸 이상 곧게 떨어지고, 양옆에 고인·흐르는 물이 없는** 토막만 폭포(FALLS)다 — 사연:
      docs/code-history.md#h135 */
-  _fallsCol(x, y) { const { WW, WH } = this.dims;
-    const falling = k => this.tiles[k] === T.FALLS || (this.tiles[k] === T.FLOWWATER && this.flv[k] === 8);
+  _fallsCol(x: number, y: number) { const { WW, WH } = this.dims;
+    const falling = (k: any) => this.tiles[k] === T.FALLS || (this.tiles[k] === T.FLOWWATER && this.flv[k] === 8);
     let k = y * WW + x;
     if (!falling(k)) return;
     let top = k, bot = k;
     while (top - WW > WW && falling(top - WW)) top -= WW;
     while (bot + WW < WW * (WH - 1) && falling(bot + WW)) bot += WW;
-    const still = n => {
+    const still = (n: number) => {
       const t = this.tiles[n], kd = FLUID_KIND[t];
       if (kd !== 1 && kd !== 2) return false;
       return !(t === T.FALLS || (FLUID_FLOW[t] && this.flv[n] === 8));
     };
-    let seg = [];
+    let seg: number[] = [];
     const flush = () => {
       const want = seg.length >= 4 ? T.FALLS : T.FLOWWATER;
       for (const n of seg) if (this.tiles[n] !== want) { this.set(n % WW, (n / WW) | 0, want); this.flv[n] = 8; }
@@ -834,11 +834,11 @@ export class World extends TileMap {
     flush();
   }
   /** 동굴 호수를 폭포가 떨어지는 열(fx)까지 **한 덩어리로** 잇는다. */
-  _extendLake(lk, fx, dir) {
+  _extendLake(lk: any, fx: number, dir: number) {
     const x0 = Math.min(fx, lk.x0), x1 = Math.max(fx, lk.x1), top = lk.top;
     for (let x = x0; x <= x1; x++)
       for (let y = top - 4; y <= top + 2; y++) if (this.ruinAt(x, y) || this.get(x, y) === T.BEDROCK) return false;
-    const wet = t => t === T.WATER || t === T.LILY || t === T.PONDWEED;
+    const wet = (t: any) => t === T.WATER || t === T.LILY || t === T.PONDWEED;
     for (let x = x0; x <= x1; x++) {
       if (wet(this.get(x, top)) && wet(this.get(x, top + 1))) continue;
       for (let y = top; y <= top + 1; y++) if (!wet(this.get(x, y))) this.set(x, y, T.WATER);
@@ -893,7 +893,7 @@ export class World extends TileMap {
       explored: rleEncode(this.explored)
     };
   }
-  static deserialize(d) { const { WW, WH } = dimsOf();
+  static deserialize(d: any) { const { WW, WH } = dimsOf();
     const w = new World(d.seed);
     w.tiles = rleDecode(d.tiles, WW * WH, Uint8Array);
     w.walls = rleDecode(d.walls, WW * WH, Uint8Array);

@@ -27,7 +27,7 @@ export const LifePart: Bag = {
     this.sfx('star_rise');
   },
   /** 남은 시간(초). */
-  tickStarRise(dt) {
+  tickStarRise(dt: number) {
     const s = this.starRise; if (!s) return;
     s.t += dt;
     const p = this.player;
@@ -54,7 +54,7 @@ export const LifePart: Bag = {
     }
   },
 
-  gainStarOrbit(id) {
+  gainStarOrbit(id: any) {
     const p = this.player;
     if (id >= 1 && id <= 5) {
       p.starOrbits = Math.min(5, (p.starOrbits || 0) + 1);
@@ -92,7 +92,7 @@ export const LifePart: Bag = {
 
   /* ---- 캐릭터 렌더 ---- */
   /* ================= 별 조각 궤도 (세션 1) ================= */
-  drawStarOrbit(c, p, camX, camY) {
+  drawStarOrbit(c: any, p: Player, camX: number, camY: number) {
     const n = p.starOrbits | 0;
     if (!n) return;
     const t = this.time;
@@ -157,16 +157,16 @@ export const LifePart: Bag = {
     c.restore();
   },
 
-  onLevelUp(lv) {
+  onLevelUp(lv: number) {
     this.toast(tr('레벨 {lv} 달성! 스탯 +3, 특성 +1', { lv }), 'good');
     for (let i = 0; i < 30; i++) this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 0.9));
     UI.refreshStatAlloc(); this.sfx('level');
   },
 
   /** 생활 숙련이 한 단계 올랐다. */
-  onProfUp(kind, lv) {
+  onProfUp(kind: string, lv: number) {
     const P = PROFS[kind]; if (!P) return;
-    const perk = P.perks.find(([at]) => at === lv);
+    const perk = P.perks.find(([at]: any[]) => at === lv);
     this.toast(tr('{P} {P2} 숙련 {lv}{v}', { P: P.i, P2: P.n, lv, v: perk ? ` — ${perk[1]}` : '' }), 'good');
     const p = this.player;
     this.ringFx(p.cx, p.cy, perk ? 74 : 46, P.c, perk ? .55 : .35);
@@ -176,7 +176,7 @@ export const LifePart: Bag = {
     if (perk) UI.chapterCard({ sub: tr('{P} 숙련 {lv}', { P: P.n, lv }), title: perk[1], line: perk[2] });
     if (UI.open === 'skill') UI.refreshProf();
   },
-  onDeath(cause) {
+  onDeath(cause: any) {
     if (this.state !== 'play') return;
     this.tally = this.tally || {};
     this.tally.deaths = (this.tally.deaths || 0) + 1;
@@ -184,7 +184,7 @@ export const LifePart: Bag = {
     this.checkAch();
     const p = this.player;
     /* 여럿이면 보스전은 모두 쓰러졌을 때만 끝난다(호스트 판정 — 참가자 화면의 보스는 그림자다). */
-    if (!this.net || (this.net.role === 'host' && this.players.every(q => q === p || q.hp <= 0))) this.endBossFight();
+    if (!this.net || (this.net.role === 'host' && this.players.every((q: any) => q === p || q.hp <= 0))) this.endBossFight();
     const lostXp = Math.floor(p.xp * 0.15), lostG = Math.floor(p.gold * 0.4);
     p.xp -= lostXp; p.gold -= lostG;
     // 죽은 자리를 남긴다 — 세계가 5000타일이 넘어 "어디서 죽었더라"를 기억으로 버티기 어렵다.
@@ -192,9 +192,9 @@ export const LifePart: Bag = {
     const md = MODE_OF(this.mode);
     let lostItems = [];
     if (md.death === 'drop') {
-      const filled = p.bag.map((it, i) => it ? i : -1).filter(i => i >= 0);
+      const filled = p.bag.map((it: Bag, i: number) => it ? i : -1).filter((i: number) => i >= 0);
       // 잠근 칸(Ctrl+좌클릭)은 남긴다 — 잠금은 "이건 잃고 싶지 않다"는 표시다
-      const droppable = filled.filter(i => !p.bag[i].lock);
+      const droppable = filled.filter((i: number) => !p.bag[i].lock);
       for (let n = Math.floor(droppable.length / 2); n > 0; n--) {
         const k = droppable.splice(Math.floor(Math.random() * droppable.length), 1)[0];
         lostItems.push(p.bag[k]); p.bag[k] = null;

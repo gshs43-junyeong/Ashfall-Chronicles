@@ -35,7 +35,7 @@ export class Ent extends Entity {
   declare submerged: number;
 
   /** 타일 충돌을 포함한 이동 */
-  move(dt, world, opts: Bag = {}) { const { WW, WH } = dimsOf(world);
+  move(dt: any, world: any, opts: Bag = {}) { const { WW, WH } = dimsOf(world);
     const prevBottom = this.y + this.h;
     // 물 — 잠긴 비율만큼 중력과 낙하 상한이 줄고, 좌우로도 끈적해진다.
     const liq = opts.aquatic ? { f: 0, flow: 0, cur: 0 } : world.liquidIn(this.x, this.y, this.w, this.h);
@@ -65,7 +65,7 @@ export class Player extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare static _vol: number;   // 한 번 휘두른 공격의 번호(여러 몹이 같은 휘두름에 맞았는지)
   declare _punchDmg: number; declare chargeDmg: number; declare chargeHit: Set<any>; declare chargeT: number; declare drownT: number;
-  declare floating: boolean; declare gliding: boolean; declare headUnder: boolean; declare highest: number; declare jetOk: boolean;
+  declare floating: boolean; declare gliding: boolean; declare headUnder: boolean; declare highest: number; declare jetOk: boolean | undefined;
   declare jetT: number; declare jetting: boolean; declare oxyPressure: number; declare oxygen: number; declare swimMove: boolean;
   declare swimPh: number; declare swimming: boolean; declare swingAng: number; declare swingReach: number; declare wasInWater: boolean;
   declare climbOut: (...a: any[]) => any; declare fireProj: (...a: any[]) => any; declare punch: (...a: any[]) => any;
@@ -73,7 +73,7 @@ export class Player extends Ent {
   declare volley: number;
   declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare _hid: string; declare _wid: string; declare _hurtAt: number; declare petEnts: any[]; declare _pt: string;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
-  declare buffs: any[]; declare cd: Record<string, any>; declare channel: Record<string, any>; declare charId: string; declare charge: number; declare d: Record<string, any>;
+  declare buffs: any[]; declare cd: Record<string, any>; declare channel: Record<string, any> | null; declare charId: string; declare charge: number; declare d: Record<string, any>;
   declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: Record<string, any>; declare facing: number; declare flash: number;
   declare gathered: Record<string, any>; declare gold: number; declare hp: number; declare hurtCd: number; declare iframe: number; declare jetGap: number;
   declare jetHeat: number; declare jetOver: boolean; declare jumpHeld: boolean; declare jumpsLeft: number; declare kills: Record<string, any>;
@@ -81,9 +81,9 @@ export class Player extends Ent {
   declare name: string; declare potionCd: number; declare prof: Record<string, any>; declare sel: number; declare shield: number; declare shieldMax: number;
   declare shieldT: number; declare skillPts: number; declare skills: Record<string, any>; declare slots: any[]; declare starFade: number;
   declare starLit: number; declare starOrbits: number; declare statPts: number; declare swing: number; declare swingDir: number;
-  declare swingHit: Set<any>; declare undyingCd: number; declare xp: number; declare xpNext: number;
+  declare swingHit: Set<any> | null; declare undyingCd: number; declare xp: number; declare xpNext: number;
 
-  constructor(x, y) {
+  constructor(x: number, y: number) {
     super(x, y, 20, 40);
     this.name = '';
     this.level = 1; this.xp = 0; this.xpNext = 40;
@@ -125,9 +125,9 @@ export class Player extends Ent {
 
   /* ---- 파생 스탯 ---- */
   recalc() {
-    const s = { str: this.base.str, dex: this.base.dex, int: this.base.int, vit: this.base.vit };
+    const s: Bag = { str: this.base.str, dex: this.base.dex, int: this.base.int, vit: this.base.vit };
     const acc: Bag = { def: 0, hp: 0, mp: 0, ms: 0, crit: 5, critD: 50, cdr: 0, lifesteal: 0, jump: 0, mpreg: 0, hpreg: 0, dmgP: 0, spdP: 0, magicP: 0, fire: 0, frost: 0, poison: 0, dashCd: 0, dashI: 0, charge: 0, dr: 0 };
-    const merge = (o) => { for (const k in o) { if (k in s) s[k] += o[k]; else acc[k] = (acc[k] || 0) + o[k]; } };
+    const merge = (o: Bag) => { for (const k in o) { if (k in s) s[k] += o[k]; else acc[k] = (acc[k] || 0) + o[k]; } };
     for (const k in this.equip) { const it = this.equip[k]; if (!it) continue; const st = itemStats(it); merge(st); acc.def += (idef(it).def || 0) * enhMul(it); }
     // 특성 패시브
     for (const id in this.skills) {
@@ -173,11 +173,11 @@ export class Player extends Ent {
   /* ---- 동력 장비의 전하 ---- */
   /** 전하를 쓴다. 모자라면 가방의 충전된 배터리 하나를 **더한다**(CELL_CHARGE) — 남은 전하를 버리고 최대치로 채우면
       부적으로 최대치를 늘린 사람만 배터리 한 개 값이 두 배가 됐다. 전주 곁에 서 있으면 망에서도 찬다(factory.js). */
-  useCharge(n) {
+  useCharge(n: number) {
     if (this.charge >= n) { this.charge -= n; return true; }
     if (!this.removeItem('battery_cell', 1)) return false;
     this.charge = Math.min(this.d.maxCharge, this.charge + CELL_CHARGE);
-    if (!this.addItem(makeItem('battery_empty', 1))) G.drops.push(new Drop(this.cx, this.cy, makeItem('battery_empty', 1)));
+    if (!this.addItem(makeItem('battery_empty', 1)!)) G.drops.push(new Drop(this.cx, this.cy, makeItem('battery_empty', 1)!));
     G.toast(tr('배터리를 갈아 끼웠다'));
     UI.refreshBag();
     if (this.charge < n) return false;
@@ -186,7 +186,7 @@ export class Player extends Ent {
   }
 
   /** 발밑에서 지면까지 몇 칸인가. */
-  groundGap(world) {
+  groundGap(world: World) {
     if (!world) return 0;
     const fy = Math.floor((this.y + this.h + 1) / TS);
     const x0 = Math.floor(this.x / TS), x1 = Math.floor((this.x + this.w - 1) / TS);
@@ -200,7 +200,7 @@ export class Player extends Ent {
   }
 
   /** 제트팩 안내 한 줄 — 같은 말이 초당 몇 번씩 뜨지 않게 3초에 한 번만 */
-  jetNote(msg, kind?) {
+  jetNote(msg: string, kind?: string) {
     if (G.time - (this._jetNoteAt || -1e9) < 3) return;
     this._jetNoteAt = G.time;
     G.toast(msg, kind);
@@ -219,11 +219,11 @@ export class Player extends Ent {
   }
 
   /* ---- 인벤토리 ---- */
-  addItem(it) {
+  addItem(it: Bag) {
     if (!it) return true;
     /* 모은 수(장 목표)는 **실제로 들어간 만큼만** — 먼저 세면 가방이 찬 채 기계 산출 칸을 누를 때마다 부풀었다 */
     const id = it.id, c0 = it.c;
-    const done = ok => { const got = ok ? c0 : c0 - it.c; if (got > 0) this.gathered[id] = (this.gathered[id] || 0) + got; return ok; };
+    const done = (ok: boolean) => { const got = ok ? c0 : c0 - it.c; if (got > 0) this.gathered[id] = (this.gathered[id] || 0) + got; return ok; };
     const ms = maxStack(it);
     if (ms > 1) {
       for (let i = 0; i < this.bag.length; i++) {
@@ -237,17 +237,17 @@ export class Player extends Ent {
     for (let i = 0; i < this.bag.length; i++) if (!this.bag[i]) { this.bag[i] = it; return done(true); }
     return done(false);
   }
-  countItem(id) { let n = 0; for (const s of this.bag) if (s && s.id === id) n += s.c; return n; }
-  removeItem(id, n) {
+  countItem(id: string) { let n = 0; for (const s of this.bag) if (s && s.id === id) n += s.c; return n; }
+  removeItem(id: string, n: number) {
     for (let i = 0; i < this.bag.length && n > 0; i++) {
       const s = this.bag[i];
       if (s && s.id === id) { const take = Math.min(s.c, n); s.c -= take; n -= take; if (s.c <= 0) this.bag[i] = null; }
     }
     return n <= 0;
   }
-  hasAll(need) { for (const k in need) if (this.countItem(k) < need[k]) return false; return true; }
+  hasAll(need: any) { for (const k in need) if (this.countItem(k) < need[k]) return false; return true; }
 
-  equipFrom(slotIdx) {
+  equipFrom(slotIdx: any) {
     const it = this.bag[slotIdx]; if (!it) return;
     const d = idef(it);
     if (this.level < equipReqLv(it.id)) { G.toast(tr('레벨 {equipReqLv} 필요', { equipReqLv: equipReqLv(it.id) }), 'bad'); return false; }
@@ -263,7 +263,7 @@ export class Player extends Ent {
     this.equip[key] = it; this.bag[slotIdx] = old || null;
     this.recalc(); return true;
   }
-  unequip(key) {
+  unequip(key: string) {
     const it = this.equip[key]; if (!it) return;
     for (let i = 0; i < this.bag.length; i++) if (!this.bag[i]) { this.bag[i] = it; this.equip[key] = null; this.recalc(); return true; }
     return false;
@@ -271,14 +271,14 @@ export class Player extends Ent {
 
   /* ---- 성장 ---- */
   /** 낀 펫에게 경험치. */
-  addPetXp(n) {
+  addPetXp(n: number) {
     if (n <= 0) return;
     let up = false;
     for (const k of ['pet1', 'pet2']) {
       const it = this.equip[k];
       if (!it || idef(it).type !== 'pet') continue;
       it.lv = it.lv || 1; it.xp = (it.xp || 0) + n;
-      const pid = idef(it).pet, max = petMaxLv(pid), dragon = PETS[pid] && PETS[pid].dragon;
+      const pid = idef(it).pet, max = petMaxLv(pid!), dragon = PETS[pid!] && PETS[pid!].dragon;
       while (it.lv < max && it.xp >= petXpNext(it.lv, pid)) {
         /* 드래곤 진화 문턱 — 경험치가 가득 찬 채로 기다리고, 그 단계 먹이를 먹어야 넘는다(G.feedDragon) */
         if (dragon && DRAGON_GATES.includes(it.lv + 1)) {
@@ -298,7 +298,7 @@ export class Player extends Ent {
     if (up) { this.recalc(); UI.refreshEquip(); G.sfx('level'); }
   }
 
-  addXp(n) {
+  addXp(n: number) {
     this.xp += n;
     while (this.xp >= this.xpNext) {
       this.xp -= this.xpNext; this.level++;
@@ -311,16 +311,16 @@ export class Player extends Ent {
     }
   }
 
-  addBuff(id, dur) {
+  addBuff(id: string, dur: number) {
     const bd = BUFFS[id]; if (!bd) return;
     const ex = this.buffs.find(b => b.id === id);
-    if (ex) ex.t = Math.max(ex.t, dur || bd.dur);
+    if (ex) ex.t = Math.max(ex.t, dur || bd.dur!);
     else this.buffs.push({ id, t: dur || bd.dur });
     this.recalc();
   }
 
   /* ---- 피해 ---- */
-  hurt(amount, srcX?) {
+  hurt(amount: any, srcX?: any) {
     /* ★ 남의 아바타가 맞으면 피해는 주인 화면에서 계산한다 — 여기서 hp 를 깎으면 이 화면의 G.onDeath 가 불린다. */
     if (this.remote) { G.netRemoteHurt(this, amount, srcX); return; }
     if (this.iframe > 0 || this.dead) return;
@@ -360,7 +360,7 @@ export class Player extends Ent {
   }
 
   /* ---- 생활 숙련 ---- */
-  addProf(kind, n) {
+  addProf(kind: string, n: number) {
     const pr = this.prof && this.prof[kind];
     if (!pr || pr.lv >= PROF_MAX) return;
     pr.xp += n;
@@ -371,8 +371,8 @@ export class Player extends Ent {
     if (pr.lv >= PROF_MAX) pr.xp = 0;
   }
   /** 숙련 레벨 (없던 세이브도 1로 읽힌다) */
-  profLv(kind) { return (this.prof && this.prof[kind] ? this.prof[kind].lv : 1); }
-  heal(n) {
+  profLv(kind: string) { return (this.prof && this.prof[kind] ? this.prof[kind].lv : 1); }
+  heal(n: any) {
     const before = this.hp;
     this.hp = Math.min(this.d.maxHp, this.hp + n);
     if (this.hp > before) G.texts.push(new DmgText(this.cx, this.y, Math.round(this.hp - before), '#7fe07f', 0));
@@ -392,11 +392,11 @@ export class Enemy extends Ent {
   declare fleeT: number; declare gold: number; declare guard: number | boolean; declare hitCd: number; declare hp: number; declare jumpCd: number;
   declare lastPhase: number; declare lvFactor: number; declare markAmt: number; declare markT: number; declare maxHp: number; declare mech: number;
   declare pedestal: number; declare pf: number; declare phase: number; declare phaseInv: number; declare phases: number; declare sgAmt: number;
-  declare sgBuf: number; declare sgCd: number; declare sgKind: string; declare sgRing: number; declare sgStun: number; declare sgT: number;
-  declare sgTook: number; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number; declare state: number;
+  declare sgBuf: number; declare sgCd: number; declare sgKind: string | null; declare sgRing: number; declare sgStun: number; declare sgT: number;
+  declare sgTook: number; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
   declare stateT: number; declare think: number; declare type: string; declare weatherBuffed: boolean; declare xp: number;
 
-  constructor(type, x, y, scale = 1) {
+  constructor(type: string, x: number, y: number, scale = 1) {
     const d = ENEMIES[type];
     super(x, y, d.w, d.h);
     this.type = type; this.def = d;
@@ -407,8 +407,8 @@ export class Enemy extends Ent {
     const lf = this.lvFactor;
     const md = (typeof G !== 'undefined' && G.modeMul) ? G.modeMul() : 1;
     this.maxHp = Math.round(d.hp * sc * lf * md); this.hp = this.maxHp;
-    this.dmg = d.dmg * sc * lf * md; this.armor = d.def * sc;
-    this.spd = d.spd; this.xp = Math.round(d.xp * sc * lf); this.gold = Math.round(d.gold * sc * lf);
+    this.dmg = d.dmg * sc * lf * md; this.armor = d.def! * sc;
+    this.spd = d.spd; this.xp = Math.round(d.xp! * sc * lf); this.gold = Math.round(d.gold! * sc * lf);
     this.boss = !!d.boss;
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
     this.flash = 0; this.atkCd = 0; this.jumpCd = 0; this.think = 0;
@@ -428,7 +428,7 @@ export class Enemy extends Ent {
   }
 
   /** 개조 — 세션 2 에서 이 몹이 기계가 되어 나온다. */
-  makeMech(mul) {
+  makeMech(mul: number) {
     this.mech = 1;
     this.maxHp = Math.round(this.maxHp * mul); this.hp = this.maxHp;
     this.dmg *= mul; this.armor *= mul;
@@ -440,7 +440,7 @@ export class Enemy extends Ent {
   lastPh() { return this.phase >= this.phases - 1; }
 
   /* ================= 힘 축적 (BOSS_SURGE) ================= */
-  tickSurge(dt, world, p) {
+  tickSurge(dt: number, world: any, p: Player) {
     const S = BOSS_SURGE[this.type];
     if (!S) return false;
     const fly = SURGE_FLY[this.def.ai] ? { gravMul: 0 } : undefined;
@@ -501,7 +501,7 @@ export class Enemy extends Ent {
   }
 
   /** 다 모았다 — 종류대로 터뜨린다 */
-  releaseSurge(S, p) {
+  releaseSurge(S: any, p: any) {
     this.sgCd = S.cd;
     /* ★ 앞의 버프가 아직 살아 있으면 먼저 내린다. */
     if (this.sgBuf > 0) this.endBuff();
@@ -522,7 +522,7 @@ export class Enemy extends Ent {
       G.toast(`${this.def.n} — ${S.m}`, 'bad');
     } else if (S.k === 'rage') {
       this.sgKind = 'rage'; this.sgAmt = S.v; this.sgBuf = S.dur;
-      this.dmg *= 1 + S.v; this.spd *= 1 + S.v * 0.5;
+      this.dmg *= 1 + S.v; this.spd! *= 1 + S.v * 0.5;
       G.toast(`${this.def.n} — ${S.m}`, 'bad');
     } else if (S.k === 'mend') {
       const heal = Math.round(this.maxHp * S.v);
@@ -545,14 +545,14 @@ export class Enemy extends Ent {
   endBuff() {
     this.sgBuf = 0;
     if (this.sgKind === 'ward') this.armor -= this.sgAmt;
-    else if (this.sgKind === 'rage') { this.dmg /= 1 + this.sgAmt; this.spd /= 1 + this.sgAmt * 0.5; }
+    else if (this.sgKind === 'rage') { this.dmg /= 1 + this.sgAmt; this.spd! /= 1 + this.sgAmt * 0.5; }
     this.sgKind = null; this.sgAmt = 0;
   }
-  addDot(kind, dps, dur) { this.dots.push({ kind, dps, t: dur }); }
-  slow(f, t) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
+  addDot(kind: string, dps: any, dur: number) { this.dots.push({ kind, dps, t: dur }); }
+  slow(f: any, t: any) { this.slowF = Math.min(this.slowF, 1 - f); this.slowT = Math.max(this.slowT, t); }
 
   /** fam 은 물리 타격 그림 계열('slash'·'pierce'·'blunt'). */
-  hurt(amount, crit?, src?, kb?, fam?) {
+  hurt(amount: any, crit?: any, src?: any, kb?: any, fam?: any) {
     if (this.dead) return;
     /* ★ 그림자 몹(참가자 화면) — 피해는 호스트가 계산한다. 여기서는 맞는 그림만 내고 요청을 보낸다. */
     if (this.ghost) { G.netHitGhost(this, amount, crit, src, kb, fam); return; }
@@ -596,7 +596,7 @@ export class Enemy extends Ent {
     /* 맞는 소리는 hitFx 가 재질에 맞춰 낸다 — 여기서 'damage' 를 또 울리면 무엇을 때리든 같은 소리가 한 겹 덮여 재질이 안 갈린다. */
     if (this.hp <= 0) this.die(src);
   }
-  die(src) {
+  die(src: any) {
     if (this.dead) return;
     this.dead = true;
     /* 남의 아바타가 잡았다(호스트) — 보상은 그 주인 화면에서 굴린다. 보스 토벌(세계 진행)은 여기서. */
@@ -624,8 +624,8 @@ export class Enemy extends Ent {
       const id = (this.mech && typeof MECH_PART !== 'undefined') ? MECH_PART : id0;
       if (!ITEMS[id]) continue;                  // 없는 아이템이면 rollGear 가 null 을 준다 — 빈 Drop 을 만들지 않는다
       const n = rng.int(a, b);
-      if (ITEMS[id] && (ITEMS[id].stack || 1) > 1) G.drops.push(new Drop(this.cx, this.cy, makeItem(id, n)));
-      else for (let k = 0; k < n; k++) G.drops.push(new Drop(this.cx, this.cy, rollGear(id, rng, this.boss ? 3 : 0)));
+      if (ITEMS[id] && (ITEMS[id].stack || 1) > 1) G.drops.push(new Drop(this.cx, this.cy, makeItem(id, n)!));
+      else for (let k = 0; k < n; k++) G.drops.push(new Drop(this.cx, this.cy, rollGear(id, rng, this.boss ? 3 : 0)!));
     }
     /* 쓰러지는 그림을 남긴다 — 사연: docs/code-history.md#h35 */
     G.addCorpse(this);
@@ -644,7 +644,7 @@ export class Guard extends Ent {
   declare atkCd: number; declare dmg: number; declare face: number; declare guard: boolean; declare home: number; declare homeTx: number;
   declare hp: number; declare maxHp: number; declare shootCd: number;
 
-  constructor(x, y, lv) {
+  constructor(x: number, y: number, lv: number) {
     super(x, y, 20, 40);
     this.home = x;          // 초소 위치 — 픽셀 좌표다 (타일 아님)
     this.guard = true;
@@ -653,8 +653,8 @@ export class Guard extends Ent {
     this.dmg = 38 + lv * 7;
     this.atkCd = 0; this.shootCd = 0; this.face = 1;
   }
-  hurt(n) { this.hp -= n; if (this.hp <= 0) this.dead = true; }
-  update(dt, world, player) {
+  hurt(n: number) { this.hp -= n; if (this.hp <= 0) this.dead = true; }
+  update(dt: number, world: any, player: any) {
     this.atkCd -= dt; this.shootCd -= dt;
     let target = null, best = 520 * 520;
     for (const e of G.ents) {
@@ -696,12 +696,12 @@ export class Wolf extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare atkCd: number; declare dmg: number; declare life: number; declare minion: boolean; declare owner: Player;
 
-  constructor(x, y, owner) {
+  constructor(x: number, y: number, owner: Player) {
     super(x, y, 30, 22);
     this.owner = owner; this.life = 30; this.atkCd = 0; this.minion = true;
     this.dmg = 18 + owner.d.int * 1.8;
   }
-  update(dt, world, player) {
+  update(dt: number, world: any, player: Player) {
     this.life -= dt; this.atkCd -= dt;
     if (this.life <= 0) { this.dead = true; return; }
     let target = null, best = 460 * 460;
@@ -729,7 +729,7 @@ export class Pet {
   declare cd: number; declare def: PetDef; declare facing: number; declare flash: number; declare id: string; declare slot: number; declare t: number;
   declare x: number; declare y: number; declare lv: number;   // lv — 남의 펫(멀티플레이)은 장비가 없어 받은 레벨로
 
-  constructor(petId, slot) {
+  constructor(petId: string, slot: number) {
     this.id = petId; this.slot = slot;
     this.def = PETS[petId];
     this.x = 0; this.y = 0;
@@ -739,15 +739,15 @@ export class Pet {
     this.flash = 0;
   }
   /** 지금 이 칸에 낀 펫 아이템의 레벨. */
-  lvOf(p) { if (this.lv) return this.lv; const it = p.equip['pet' + (this.slot + 1)]; return it ? (it.lv || 1) : 1; }
+  lvOf(p: Player) { if (this.lv) return this.lv; const it = p.equip['pet' + (this.slot + 1)]; return it ? (it.lv || 1) : 1; }
   /** 플레이어 기준 떠 있을 자리 — 슬롯마다 반대쪽 어깨 뒤에 선다 */
-  anchor(p) {
+  anchor(p: any) {
     const side = this.slot === 0 ? -1 : 1;
     const ex = this.def.dragon ? [0, 4, 10, 16][dragonStage(this.lvOf(p))] : 0;   // 큰 드래곤은 조금 더 떨어져 뜬다
     return [p.cx - p.facing * side * (26 + ex), p.cy - 16 - ex * 0.6 + Math.sin(this.t * 2.2 + this.slot) * 4];
   }
   /** 따라다니기만 — 남의 펫은 이것만 돈다(치는 것은 주인 화면이 하고 피해만 호스트로 간다). */
-  follow(dt, p) {
+  follow(dt: number, p: any) {
     this.t += dt;
     if (this.flash > 0) this.flash -= dt;
     const [ax, ay] = this.anchor(p);
@@ -755,7 +755,7 @@ export class Pet {
     this.x = lerp(this.x, ax, Math.min(1, dt * 6));
     this.y = lerp(this.y, ay, Math.min(1, dt * 6));
   }
-  update(dt, p) {
+  update(dt: number, p: Player) {
     this.cd -= dt;
     this.follow(dt, p);
 
@@ -787,7 +787,7 @@ export class Pet {
 
 /* ================= 투사체 ================= */
 /* 손그림 이펙트 시트로 대체할 투사체 종류 */
-export const PROJ_FX = {
+export const PROJ_FX: Record<string, string> = {
   arrow: 'arrow', star: 'arrow', pstar: 'starfrag',
   fire: 'flame',
   frost: 'frost',
@@ -799,11 +799,11 @@ export const PROJ_FX = {
 
 /* 원소마다 맞는 순간이 달라야 한다. */
 /* 타격 그림 → 그 그림에 붙는 원소 소리. */
-export const BURST_SFX = {
+export const BURST_SFX: Record<string, string> = {
   fire: 'hit_fire', frost: 'hit_frost', soul: 'hit_soul',
   void: 'hit_void', arcane: 'hit_arcane'
 };
-export const IMPACT_FX = {
+export const IMPACT_FX: Bag = {
   fire:  { burst: 'fire',   ring: '#ff8a3a', rr: 34, parts: 10 },
   frost: { burst: 'frost',  ring: '#9fe0ff', rr: 30, parts: 12 },
   soul:  { burst: 'soul',   ring: '#c49fff', rr: 26, parts: 8 },
@@ -817,7 +817,7 @@ export const IMPACT_FX = {
   bullet: { burst: 'hit',   ring: '#ffd86a', rr: 12, parts: 6 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
-export const PROJ_STYLE = {
+export const PROJ_STYLE: Bag = {
   arrow: { c: '#d8c898', r: 3, len: 14 },
   bullet: { c: '#ffe0a0', r: 2, tracer: 22 },   // 포탑 총탄 — 예광 줄기
   bomb: { c: '#3a3630', r: 6 },          // 폭탄 — 심지 불티는 Bomb.update가 따로 뿌린다
@@ -834,7 +834,7 @@ export const PROJ_STYLE = {
   bone: { c: '#e8e0c8', r: 5 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */
-export const PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1 };
+export const PHYS_PROJ: Record<string, number> = { arrow: 1, bone: 1, star: 1, bullet: 1 };
 
 export class Proj extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
@@ -842,7 +842,7 @@ export class Proj extends Ent {
   declare hitSet: Set<any>; declare life: number; declare pierce: number; declare poison: number; declare team: string; declare type: string;
   declare vol: number; declare ghost: boolean; declare nid: number; declare seenAt: number;   // 멀티플레이 — 참가자 화면의 그림자 투사체
 
-  constructor(x, y, vx, vy, dmg, team, type) {
+  constructor(x: number, y: number, vx: number, vy: number, dmg: number, team: any, type: string) {
     super(x - 6, y - 6, 12, 12);
     this.vx = vx; this.vy = vy; this.dmg = dmg; this.team = team; this.type = type;
     this.life = 3.2; this.grav = 0; this.pierce = 0; this.hitSet = new Set(); this.crit = false;
@@ -850,7 +850,7 @@ export class Proj extends Ent {
     if (team === 'enemy' && typeof G !== 'undefined' && G.sfxAt)
       G.sfxAt(PHYS_PROJ[type] ? 'efire_phys' : 'efire_magic', x / TS, y / TS);
   }
-  update(dt, world, player) { const { WW, WH } = dimsOf(world);
+  update(dt: any, world: any, player: any) { const { WW, WH } = dimsOf(world);
     /* 그림자(참가자 화면) — 날아가는 그림만. 맞히는 판정은 호스트가 아바타로 한다. */
     if (this.ghost) { this.x += this.vx * dt; this.y += this.vy * dt; return; }
     this.life -= dt;
@@ -922,7 +922,7 @@ export class Part {
   declare rot: number; declare spin: number; declare sq: number; declare vx: number; declare vy: number; declare x: number; declare y: number;
 
   /* g 중력 배수 — 사연: docs/code-history.md#h37 */
-  constructor(x, y, c, vy0 = 0, life = 0.5, o = null) {
+  constructor(x: number, y: number, c: any, vy0 = 0, life = 0.5, o: Bag | null = null) {
     this.x = x; this.y = y; this.c = c;
     const sp = o && o.spd !== undefined ? o.spd : 1;
     const a = Math.random() * TAU, s = (40 + Math.random() * 140) * sp;
@@ -936,7 +936,7 @@ export class Part {
     this.spin = (Math.random() - 0.5) * 12;
     this.rot = Math.random() * TAU;
   }
-  update(dt) {
+  update(dt: number) {
     this.life -= dt; this.vy += 340 * this.g * dt;
     this.x += this.vx * dt; this.y += this.vy * dt;
     this.vx *= this.drag; this.rot += this.spin * dt;
@@ -947,22 +947,22 @@ export class DmgText {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare c: string; declare crit: boolean; declare life: number; declare v: number | string; declare vy: number; declare x: number; declare y: number;
 
-  constructor(x, y, v, c, crit) { this.x = x + (Math.random() - 0.5) * 8; this.y = y; this.v = v; this.c = c; this.crit = crit; this.life = 0.85; this.vy = -70; }
-  update(dt) { this.life -= dt; this.y += this.vy * dt; this.vy += 110 * dt; return this.life > 0; }
+  constructor(x: any, y: any, v: any, c: any, crit: any) { this.x = x + (Math.random() - 0.5) * 8; this.y = y; this.v = v; this.c = c; this.crit = crit; this.life = 0.85; this.vy = -70; }
+  update(dt: number) { this.life -= dt; this.y += this.vy * dt; this.vy += 110 * dt; return this.life > 0; }
 }
 /* ===== 폭탄 ===== */
 export class Bomb extends Proj {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare grav: number; declare life: number; declare spec: Record<string, any>; declare spin: number;
 
-  constructor(x, y, vx, vy, spec) {
+  constructor(x: number, y: number, vx: number, vy: number, spec: Bag) {
     super(x, y, vx, vy, spec.dmg, 'player', 'bomb');
     this.spec = spec;
     this.grav = 900;
     this.life = spec.fuse || 1.6;
     this.spin = 0;
   }
-  update(dt, world) { const { WH } = dimsOf(world);
+  update(dt: any, world: any) { const { WH } = dimsOf(world);
     this.life -= dt;
     this.spin += (this.vx > 0 ? 1 : -1) * dt * 9;
     if (Math.random() < dt * 24)                                   // 심지 불티
@@ -980,7 +980,7 @@ export class Bomb extends Proj {
     } else this.y = ny;
     if (this.y > WH * TS) this.dead = true;
   }
-  boom(world) {
+  boom(world: World) {
     this.dead = true;
     const sp = this.spec, R = sp.r;
     G.aoe(this.cx, this.cy, R * TS * 0.9, sp.dmg, 8, '#ff9a3a');
@@ -1014,7 +1014,7 @@ export class Bomb extends Proj {
         world.set(x, y, T.AIR);
         if (id === T.FAULTSTONE && G.triggerFault) G.triggerFault(x, y);   // 폭탄으로도 무너진다
         if (d.drop && Math.random() < 0.45)                // 절반쯤만 건진다 — 곡괭이가 손해는 아니게
-          G.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(d.drop, 1)));
+          G.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(d.drop, 1)!));
       }
   }
 }
@@ -1024,12 +1024,12 @@ export class Drop {
   declare dead: boolean; declare h: number; declare item: Record<string, any>; declare life: number; declare pick: number; declare t: number; declare vx: number;
   declare vy: number; declare w: number; declare x: number; declare y: number;
 
-  constructor(x, y, item) {
+  constructor(x: number, y: number, item: Bag) {
     this.x = x - 8; this.y = y - 8; this.w = 16; this.h = 16; this.item = item;
     this.vx = (Math.random() - 0.5) * 140; this.vy = -160 - Math.random() * 80;
     this.life = 300; this.t = Math.random() * 10; this.pick = 0.5; this.dead = false;
   }
-  update(dt, world, player) {
+  update(dt: any, world: any, player: any) {
     this.life -= dt; this.pick -= dt; this.t += dt;
     if (this.life <= 0) { this.dead = true; return; }
     if (player.remote) player = G.me;   // 남의 아바타는 줍지 않는다(줍기는 주인 화면 몫)

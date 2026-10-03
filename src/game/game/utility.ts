@@ -18,7 +18,7 @@ export const UtilityPart: Bag = {
   utilReady: null,                              // 칸마다 다시 쓸 수 있는 G.time
   scans: null,
   /** 유틸리티 칸 i(0 = 왼쪽 · 1 = 오른쪽)의 도구를 쓴다 — 키(util1·util2)와 터치 칸이 부른다 */
-  useUtil(i) {
+  useUtil(i: number) {
     const p = this.player;
     if (!p || this.state !== 'play' || UI.dlg || UI.open) return;
     const it = p.equip['util' + (i + 1)];
@@ -30,13 +30,13 @@ export const UtilityPart: Bag = {
     if (d.act === 'scan') this.scanPulse(d.det, i);
   },
   /** 다시 쓸 때까지 남은 초 */
-  utilLeft(i) { return Math.max(0, ((this.utilReady || [0, 0])[i] || 0) - this.time); },
-  utilDeny(i) {
+  utilLeft(i: number) { return Math.max(0, ((this.utilReady || [0, 0])[i] || 0) - this.time); },
+  utilDeny(i: number) {
     this.sfx('sk_deny');
     const el = document.querySelectorAll('#skillbar .usl')[i];
     if (el) { el.classList.remove('deny'); void (el as HTMLElement).offsetWidth; el.classList.add('deny'); }
   },
-  scanPulse(kind, i) { const { WW, WH } = dimsOf(this.world);
+  scanPulse(kind: string, i: number) { const { WW, WH } = dimsOf(this.world);
     const p = this.player, w = this.world, R = this.DET_R, R2 = R * R;
     const px = Math.floor(p.cx / TS), py = Math.floor(p.cy / TS);
     const hits = [];
@@ -55,7 +55,7 @@ export const UtilityPart: Bag = {
         if (dx * dx + dy * dy <= R2) hits.push({ e, r: Math.sqrt(dx * dx + dy * dy) });
       }
     }
-    this.scans = (this.scans || []).filter(s => s.kind !== kind);   // 같은 갈래는 새 파동이 덮는다
+    this.scans = (this.scans || []).filter((s: any) => s.kind !== kind);   // 같은 갈래는 새 파동이 덮는다
     this.scans.push({ kind, t0: this.time, x: p.cx, y: p.cy, hits });
     this.utilReady[i] = this.time + this.SCAN_CD;
     this.sfx('detector');
@@ -63,10 +63,10 @@ export const UtilityPart: Bag = {
   },
 
   /** 렌더 단계(fx) — 조명 뒤라 어둠 속에서도 보인다 */
-  rUtil(f) { const { WW } = dimsOf(this.world);
+  rUtil(f: any) { const { WW } = dimsOf(this.world);
     if (!this.scans || !this.scans.length) return;
     const { c, camX, camY } = f, R = this.DET_R * TS, w = this.world;
-    this.scans = this.scans.filter(s => this.time - s.t0 < this.SCAN_T);
+    this.scans = this.scans.filter((s: any) => this.time - s.t0 < this.SCAN_T);
     const pulse = 0.65 + 0.35 * Math.sin(this.time * 6);
     for (const s of this.scans) {
       const age = this.time - s.t0, col = s.kind === 'ore' ? '111,227,255' : '255,107,107';

@@ -14,21 +14,21 @@ import { Game } from '../game.js';
 export const CavesPart: Bag = {
 
   /** 금 간 자갈을 깼다 — 곡괭이든 폭탄이든. */
-  triggerFault(tx, ty) { const { WW } = dimsOf(this.world);
+  triggerFault(tx: number, ty: number) { const { WW } = dimsOf(this.world);
     const w = this.world;
     if (this.quake) return;                  // 이미 울리는 중 — 남은 자갈은 다음에 캐면 무너진다
     /* 무너질 칸 = 깬 칸에 **맞닿아 이어진 자갈 전부**. 세계가 굴 자리 전체를 자갈로 채워 두므로 (world.js buildFaults 의 ★) 덩어리 어디를 캐도 같은 굴이
        열린다. */
     const cells = [], seen = new Set([ty * WW + tx]), st = [[tx, ty]];
     while (st.length && cells.length < 6000) {
-      const [x, y] = st.pop();
+      const [x, y] = st.pop()!;
       for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
         const k = ny * WW + nx;
         if (seen.has(k) || w.get(nx, ny) !== T.FAULTSTONE) continue;
         seen.add(k); cells.push([nx, ny]); st.push([nx, ny]);
       }
     }
-    let f = (w.faults || []).find(q => !q.done && Math.abs(q.cx - tx) <= FAULT.rx + 8 && Math.abs(q.cy - ty) <= FAULT.ry + 8);
+    let f = (w.faults || []).find((q: any) => !q.done && Math.abs(q.cx - tx) <= FAULT.rx + 8 && Math.abs(q.cy - ty) <= FAULT.ry + 8);
     // 자갈 한 칸만 박혀 있던 v7 첫 판 세계 — 그때처럼 씨앗에서 굴 모양을 뽑는다
     const old = !cells.length && !!f;
     if (old) cells.push(...w.faultCells(f));
@@ -42,7 +42,7 @@ export const CavesPart: Bag = {
     this.sfx('sk_quake');
   },
   /* 지진 — 2.6초 동안 흔들리며 새 굴을 차례로 판다(한 번에 파면 화면이 한 프레임에 뒤바뀐다). */
-  updateQuake(dt) { const { SY, DEEP_Y } = dimsOf(this.world);
+  updateQuake(dt: number) { const { SY, DEEP_Y } = dimsOf(this.world);
     const q = this.quake, w = this.world, p = this.player;
     q.t += dt;
     this.shake = Math.max(this.shake || 0, q.t < 2.2 ? 9 : 3);
@@ -69,8 +69,8 @@ export const CavesPart: Bag = {
     const k = w.dressFault(f, q.cells);
     const C = CAVE_TYPES[k];
     // 상자 — 새 굴 한가운데에 가까운 바닥에.
-    const floors = q.cells.filter(([x, y]) => w.get(x, y) === T.AIR && w.solid(x, y + 1) && w.get(x, y - 1) === T.AIR);
-    floors.sort((a, b) => Math.hypot(a[0] - f.cx, a[1] - f.cy) - Math.hypot(b[0] - f.cx, b[1] - f.cy));
+    const floors = q.cells.filter(([x, y]: number[]) => w.get(x, y) === T.AIR && w.solid(x, y + 1) && w.get(x, y - 1) === T.AIR);
+    floors.sort((a: any, b: any) => Math.hypot(a[0] - f.cx, a[1] - f.cy) - Math.hypot(b[0] - f.cx, b[1] - f.cy));
     /* 상자는 **드물게**(열에 셋) — 무너진 굴마다 상자가 있으면 자갈을 보자마자 캐는 것이 곧 정답이 된다. */
     const chestRng = new RNG(f.seed + 13);
     if (floors.length && chestRng.chance(0.3)) {
@@ -96,7 +96,7 @@ export const CavesPart: Bag = {
   },
 
   /** 동굴 쪽 그리기 — 떨어지는 돌(흔들리는 동안은 제자리에서 떤다)과 독기 굴의 탁한 공기 */
-  drawCaves(c, camX, camY) {
+  drawCaves(c: any, camX: number, camY: number) {
     for (const r of (this.rocks || [])) {
       const jx = r.t > 0 ? (Math.random() - .5) * 3 : 0;
       const sx = r.x - camX + jx, sy = r.y - camY;
@@ -119,7 +119,7 @@ export const CavesPart: Bag = {
 
   /* 갈래(CAVE_TYPES)마다 몸에 오는 것이 다르게 했다: 이끼 굴은 아물고, 종유 동굴은 머리 위를 봐야 하고, 독기 굴은 숨이 따갑고, 금 간 자갈은 무너뜨리면 숨은 동굴이 열린다 —
      사연: docs/code-history.md#h72 */
-  updateCaves(dt) {
+  updateCaves(dt: number) {
     const p = this.player, w = this.world;
     if (!p || !w || p.dead) return;
     this.rocks = this.rocks || [];
@@ -178,7 +178,7 @@ export const CavesPart: Bag = {
   },
 
   /** 떨어지는 돌 — 흔들리는 동안(t) 제자리에서 먼지를 떨구고, 그다음 떨어진다 */
-  updateRocks(dt) { const { WH } = dimsOf(this.world);
+  updateRocks(dt: number) { const { WH } = dimsOf(this.world);
     const p = this.player, w = this.world;
     for (let i = this.rocks.length - 1; i >= 0; i--) {
       const r = this.rocks[i];

@@ -10,14 +10,14 @@ import { MAT_LAYER, TS, World, inSeaZone } from '../world.js';
 
 export const WorldWater: Bag & ThisType<World> = {
 
-  floodCaves(rng) { const { WSX, WSY, WW, WH, WORLD_BOT, HELL_Y } = this.dims;
+  floodCaves(rng: any) { const { WSX, WSY, WW, WH, WORLD_BOT, HELL_Y } = this.dims;
     // 바다(buildSea)가 먼저 등록해 둔 웅덩이는 살린다 — 여기서 통째로 비우면 수중 몹이 바다에 안 나온다
     this.pools = (this.pools || []).filter(q => q.biome === 'sea');
     const bigX = new Set();
     for (const c of this.caverns || []) for (let x = c.x0; x <= c.x1; x++) bigX.add(x);
 
     // --- 1. 큰 동굴: 절반 남짓에 호수를 판다. 그중 일부는 천장에서 물이 떨어진다 ---
-    const lakes = [];
+    const lakes: Bag[] = [];
     for (const c of this.caverns || []) {
       if (!rng.chance(0.55)) continue;
       // 바닥이 넓게 평평한 자리를 고른다 — 좁고 울퉁불퉁한 곳에 파면 웅덩이로 안 보인다
@@ -48,9 +48,9 @@ export const WorldWater: Bag & ThisType<World> = {
     }
 
     /* --- 폭포: 호숫가 **옆벽의 샘 바위**에서 물이 나와 호수로 떨어진다 --- */
-    const host = t => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE || t === T.MUD;
+    const host = (t: any) => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE || t === T.MUD;
     /* 큰 동굴의 호수는 평평한 바닥 한가운데에 판 것이라 호수 바로 위에 벽이 있는 일이 드물다 (d1·d3 은 한 곳도 없었다 — 호숫가에서 벽까지 5~18칸). */
-    const springAt = (lk) => {
+    const springAt = (lk: any) => {
       let best = null;
       for (let fx = lk.x0 - 6; fx <= lk.x1 + 6; fx++) {
         const over = fx >= lk.x0 && fx <= lk.x1;                  // 호수 위로 바로 떨어지나
@@ -113,12 +113,12 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 물속 공기 주머니 — 큰 호수의 천장 아래 물칸 몇 개를 공기로 바꾼다. */
-  _airPocket(cx, top, cells, rng) { const { WW } = this.dims;
+  _airPocket(cx: number, top: number, cells: any, rng: RNG) { const { WW } = this.dims;
     if (cells.length < 18 || !rng.chance(0.8)) return;
     // 지하 물에만 — 지상 호수는 수면이 바로 위라 숨 돌릴 자리가 필요 없고, 물에 뚫린 구멍으로만 보인다
     if (top < this.surface[clamp(cx, 0, WW - 1)] + 8) return;
     // 수면 아래로 두 칸 이상 남는 호수에만 — 얕은 웅덩이에 두면 수면에 뜬 거품처럼 보인다
-    const inner = cells.filter(([, cy]) => cy >= top + 2);
+    const inner = cells.filter(([, cy]: number[]) => cy >= top + 2);
     if (!inner.length) return;
     const [px, py] = inner[rng.int(0, inner.length - 1)];
     const w = rng.int(2, 3), h = rng.int(1, 2);
@@ -133,7 +133,7 @@ export const WorldWater: Bag & ThisType<World> = {
 
   /* 이제 동굴 호수·정글 호수와 *같은 방식**이다: 1) 바닥이 평평한 자리를 골라 (동굴 호수와 같은 평탄도 기준) 2) _carveBasin으로 웅덩이를 **파낸 뒤** 용암을 붓고 3)
      그 밖의 자잘한 자리는 — 사연: docs/code-history.md#h133 */
-  floodHell(rng) { const { WSX, WSY, WW, WH, WORLD_BOT, HELL_Y } = this.dims;
+  floodHell(rng: RNG) { const { WSX, WSY, WW, WH, WORLD_BOT, HELL_Y } = this.dims;
     this.lavaPools = [];
 
     // --- 1. 큰 용암 호수 — 파낸다 ---
@@ -177,7 +177,7 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 정글 중간의 지상 폭포 + 호수. */
-  buildJungleFalls(rng) { const { SX, WW } = this.dims;
+  buildJungleFalls(rng: any) { const { SX, WW } = this.dims;
     const cx = SX(1850 + SHIFT);
     if (this.biomeAt(cx).id !== 'jungle') return;   // 바이옴 경계가 시드에 따라 흔들릴 수 있다
     let leftY = 0;
@@ -216,7 +216,7 @@ export const WorldWater: Bag & ThisType<World> = {
     /* --- 3. 절벽 · 윗물 · 폭포 뒤 굴 --- */
     const RIV = 12;                                  // 물길 길이(절벽 끝에서 굴 안쪽 벽까지)
     const hill0 = cliffL + 5, hill1 = cliffL + 18;   // 물길이 파고드는 언덕
-    const clearAbove = (x, y) => {                   // 돋운 땅 위에 남은 나무·잎을 걷는다
+    const clearAbove = (x: number, y: number) => {                   // 돋운 땅 위에 남은 나무·잎을 걷는다
       for (let yy = y - 1; yy > y - 26 && yy > 3; yy--) {
         const d = TILE_DEF[this.get(x, yy)];
         if (d.tree || d.leaf || this.get(x, yy) === T.VINE) this.set(x, yy, T.AIR);
@@ -304,7 +304,7 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 이 열 위로 전주가 서 있는가 — 전주 기둥은 타일이 아니라 그림이라(factory.js), 그 아래를 밭으로 갈면 작물이 기둥과 겹쳐 그려진다. */
-  poleColumn(x, y) { const { WW } = this.dims;
+  poleColumn(x: number, y: number) { const { WW } = this.dims;
     for (let ty = y - 1; ty >= y - 40 && ty > 2; ty--) {
       const m = this.machines.get(ty * WW + x);
       if (m) return m.t === 'pole';
@@ -314,7 +314,7 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 물 위 마무리 — 지형·액체가 다 정해진 **뒤에** 한 번만 돈다. */
-  decorateWater(rng) {
+  decorateWater(rng: RNG) {
     const lake = this.jungleLake;
     if (!lake) return;
     for (let x = lake.x0; x <= lake.x1; x++) {
@@ -337,12 +337,12 @@ export const WorldWater: Bag & ThisType<World> = {
   },
 
   /** 동굴 웅덩이 꾸미기 — 물·지형이 다 정해진 뒤에 한 번. */
-  decoratePonds(rng) { const { WW, WH } = this.dims;
+  decoratePonds(rng: RNG) { const { WW, WH } = this.dims;
     const natural = new Set();
     for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
-    const host = t => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE ||
+    const host = (t: any) => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE ||
                       t === T.LIMESTONE || t === T.GRANITE;
-    const wild = (x, y) => natural.has(this.walls[y * WW + x]) && !this.ruinAt(x, y);
+    const wild = (x: number, y: number) => natural.has(this.walls[y * WW + x]) && !this.ruinAt(x, y);
     const seen = new Uint8Array(WW * WH);
     for (const pl of this.pools || []) {
       if (pl.biome) continue;                                   // 바다·정글은 제 손질이 있다
@@ -356,16 +356,16 @@ export const WorldWater: Bag & ThisType<World> = {
       while (st.length && cells.length < 900) {
         const k = st.pop(); cells.push(k);
         for (const d of [-1, 1, -WW, WW]) {
-          const n = k + d;
+          const n = k! + d;
           if (!seen[n] && this.tiles[n] === T.WATER) { seen[n] = 1; st.push(n); }
         }
       }
       if (cells.length < 4) continue;
-      const y0 = (cells[0] / WW) | 0;
-      if (y0 < this.surface[cells[0] % WW] + 8) continue;         // 지표 웅덩이는 건드리지 않는다
+      const y0 = (cells[0]! / WW) | 0;
+      if (y0 < this.surface[cells[0]! % WW] + 8) continue;         // 지표 웅덩이는 건드리지 않는다
       let bx0 = WW, bx1 = 0, by0 = WH, by1 = 0;
       for (const k of cells) {
-        const x = k % WW, y = (k / WW) | 0;
+        const x = k! % WW, y = (k! / WW) | 0;
         bx0 = Math.min(bx0, x); bx1 = Math.max(bx1, x); by0 = Math.min(by0, y); by1 = Math.max(by1, y);
       }
       // 1) 이끼 — 웅덩이 둘레 굴.
@@ -385,8 +385,8 @@ export const WorldWater: Bag & ThisType<World> = {
         }
       // 2) 수면·물속
       for (const k of cells) {
-        const x = k % WW, y = (k / WW) | 0;
-        const up = this.tiles[k - WW];
+        const x = k! % WW, y = (k! / WW) | 0;
+        const up = this.tiles[k! - WW];
         if (up === T.AIR) {
           // 수면 — 폭포가 떨어지는 열과 그 옆에는 안 띄운다(물줄기가 잎을 뚫고 떨어진다)
           const nearFall = [-1, 0, 1].some(d => this.get(x + d, y - 1) === T.FALLS);
@@ -395,7 +395,7 @@ export const WorldWater: Bag & ThisType<World> = {
       }
       // 3) 물가 — 수면 줄 양 끝에서 바깥으로 세 칸까지, 바닥이 있는 빈칸
       let tx0 = WW, tx1 = 0;
-      for (const k of cells) if (((k / WW) | 0) === by0) { tx0 = Math.min(tx0, k % WW); tx1 = Math.max(tx1, k % WW); }
+      for (const k of cells) if (((k! / WW) | 0) === by0) { tx0 = Math.min(tx0, k! % WW); tx1 = Math.max(tx1, k! % WW); }
       const sy = by0;
       for (const dir of [-1, 1]) {
         const ex = dir < 0 ? tx0 : tx1;
@@ -414,9 +414,9 @@ export const WorldWater: Bag & ThisType<World> = {
 
   /** 오목한 모서리 — 바닥 이끼 칸과 벽 이끼 칸 사이, 대각선으로만 굴에 닿는 돌 한 칸. */
   fillMossCorners() { const { WW, HELL_Y } = this.dims;
-    const host = t => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE;
-    const open = (x, y) => TILE_DEF[this.get(x, y)].solid !== 1;
-    const mos = (x, y) => this.get(x, y) === T.MOSSSTONE;
+    const host = (t: any) => t === T.STONE || t === T.DIRT || t === T.LIMESTONE || t === T.GRANITE || t === T.SANDSTONE;
+    const open = (x: number, y: number) => TILE_DEF[this.get(x, y)].solid !== 1;
+    const mos = (x: number, y: number) => this.get(x, y) === T.MOSSSTONE;
     const put = [];
     for (let x = 2; x < WW - 2; x++)
       for (let y = this.surface[x] + 6; y < HELL_Y; y++) {
@@ -427,7 +427,7 @@ export const WorldWater: Bag & ThisType<World> = {
     for (const [x, y] of put) this.set(x, y, T.MOSSSTONE);   // d1 실측 1416칸
   },
 
-  scatterChests(rng) { const { WSX, WSY, SY, WW, WORLD_BOT, HELL_Y, SEA_X1 } = this.dims;
+  scatterChests(rng: RNG) { const { WSX, WSY, SY, WW, WORLD_BOT, HELL_Y, SEA_X1 } = this.dims;
     let placed = 0, tries = 0;
     while (placed < Math.round(165 * WSX * WSY) && tries < 140000 * WSX * WSY) {
       tries++;

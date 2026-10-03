@@ -57,13 +57,13 @@ export const QuestUIPart: Bag = {
       for (const ch of chapterBlock.chapters) {
         const state = ch.id < g.chapter ? 'done' : ch.id === g.chapter ? 'cur' : 'locked';
         // 세션 2의 sub는 "세션 2 · 제 1 장" 꼴이라, 세션 2 탭 안에서는 앞의 "세션 2 · "가 줄마다 반복돼 군더더기다 — 사연: docs/code-history.md#h93
-        const sub = ch.sub.replace(/^세션\s*\d+\s*·\s*/, '');
+        const sub = ch.sub!.replace(/^세션\s*\d+\s*·\s*/, '');
         /* 아직 안 열린 장은 **제목도 가린다.** — 사연: docs/code-history.md#h94 */
         const titleText = state === 'locked' ? `${sub} · ???` : `${sub} · ${ch.title}`;
         h += `<div class="chap ${state}"><div class="chap-badge ${state}">${state === 'done' ? tr('완료') : state === 'cur' ? tr('진행 중') : tr('대기')}</div><h3>${titleText}</h3>`;
         if (state !== 'locked') {
           /* 끝낸 장은 도입부와 뒷이야기를 **둘 다** 남긴다 — 사연: docs/code-history.md#h95 */
-          const para = t => (t || '').split('\n\n').map(s =>
+          const para = (t: any) => (t || '').split('\n\n').map((s: any) =>
             `<p>${s.trim().replace(/\n/g, '<br>')}</p>`).join('');
           h += `<div class="cdesc">${para(ch.intro)}`;
           if (state === 'done') {
@@ -128,7 +128,7 @@ export const QuestUIPart: Bag = {
     if (questBody) {
       questBody.innerHTML = topTabs + h + sh;
       this.syncSessionBorder(this.questSession || currentSession, null, currentSession);
-      questBody.onclick = ev => {
+      questBody.onclick = (ev: any) => {
         const tab = ev.target.closest('.qtab');
         if (tab) { this.questTab = tab.dataset.qtab; this.refreshQuest(); return; }
         const btn = ev.target.closest('.session-tab');
@@ -136,12 +136,12 @@ export const QuestUIPart: Bag = {
         this.questSession = btn.dataset.session;
         this.refreshQuest();
       };
-      questBody.onmouseover = ev => {
+      questBody.onmouseover = (ev: any) => {
         const btn = ev.target.closest('.session-tab');
         if (!btn) return;
         this.syncSessionBorder(this.questSession || currentSession, btn.dataset.session, currentSession);
       };
-      questBody.onmouseout = ev => {
+      questBody.onmouseout = (ev: any) => {
         const nextBtn = ev.relatedTarget && ev.relatedTarget.closest ? ev.relatedTarget.closest('.session-tab') : null;
         if (nextBtn) {
           this.syncSessionBorder(this.questSession || currentSession, nextBtn.dataset.session, currentSession);
@@ -153,7 +153,7 @@ export const QuestUIPart: Bag = {
   },
   /** 업적 목록 — 갈래(cat)별로 묶어 보여 준다. */
   /** 유적 탐사 기록 — 여섯 유적의 등급 · 무엇이 남았는가 · 메아리 · 인장. */
-  renderRuins(topTabs) {
+  renderRuins(topTabs: any) {
     const g = G;
     let h = topTabs + `<div class="rv-note">${tr('유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,\n      쓰러뜨릴수록 가라앉는다. 깨어난 유적은 더 몰려오고 더 준다. 주인을 잡은 둥지는 유적이\n      <b>「{stages}」</b> 이상일 때 <b>메아리</b>를 다시 부른다.\n      맥박이 한 단계 오를 때마다 <b>사건</b>(표식된 것 · 공명석 · 탐욕의 상자 · 포위)이 하나 터진다.\n      등급은 조건을 <b>모두</b> 채워야 오른다 — 아래에 다음 등급까지 남은 것을 적었다.\n      기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.', { stages: PULSE.stages[ECHO.needStage].n })}</div>`;
     // 바이옴 유적 여섯 + 석판 유적 셋(G.ruinSpec 이 STORY_RUIN 에서 만든 것) — 등급(난이도) 순
@@ -161,7 +161,7 @@ export const QuestUIPart: Bag = {
       .sort((a, b) => (a.rank || 0) - (b.rank || 0));
     for (const spec of list) {
       const sc = g.surveyScore(spec.id), P = sc.part, sv = sc.sv;
-      const cell = (label, q) => !q ? '' :
+      const cell = (label: string, q: any) => !q ? '' :
         `<span class="${q[0] >= q[1] ? 'ok' : ''}">${label} <b>${q[1] === 1 ? (q[0] ? '✔' : '—') : q[0] + '/' + q[1]}</b></span>`;
       const seal = ITEMS['seal_' + spec.id];
       h += `<div class="rv${sc.seen ? '' : ' off'}">` +
@@ -172,7 +172,7 @@ export const QuestUIPart: Bag = {
           cell(sc.story ? tr('석판') : tr('주인'), P.boss) + cell(tr('골방'), P.code) + cell(tr('격노'), P.rage) +
           cell(tr('사건'), P.events) + cell(tr('갈래'), P.kinds) + cell(tr('메아리'), P.echo) + `</div>`;
         if (sc.next) h += `<div class="rv-next">${tr('다음 {next} 까지 — {join}', { next: sc.next, join: sc.missing.join(' · ') })}</div>`;
-        if (seal) h += `<div class="rv-seal">${sv.s ? '✔ ' + seal.n + ' — ' + seal.d.replace(/^[^.]*\.\s*/, '') : `${tr('S 등급 보상 ·')} ` + seal.n}</div>`;
+        if (seal) h += `<div class="rv-seal">${sv.s ? '✔ ' + seal.n + ' — ' + seal.d!.replace(/^[^.]*\.\s*/, '') : `${tr('S 등급 보상 ·')} ` + seal.n}</div>`;
       }
       h += '</div></div>';
     }
@@ -180,13 +180,13 @@ export const QuestUIPart: Bag = {
     if (!body) return;
     body.innerHTML = h;
     body.onmouseover = null; body.onmouseout = null;
-    body.onclick = ev => {
+    body.onclick = (ev: any) => {
       const tab = ev.target.closest('.qtab');
       if (tab) { this.questTab = tab.dataset.qtab; this.refreshQuest(); }
     };
   },
 
-  renderAch(topTabs) {
+  renderAch(topTabs: any) {
     const g = G, got = g.achievements || {};
     // 난이도별 진행도를 맨 위에 — 쉬운 것부터 얼마나 남았는지가 한눈에 보인다
     let sum = '<div class="ach-sum">';
@@ -197,7 +197,7 @@ export const QuestUIPart: Bag = {
     }
     sum += '</div>';
     let h = topTabs + sum;
-    const fmtDate = t => { const d = new Date(t); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
+    const fmtDate = (t: any) => { const d = new Date(t); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
     for (const cat in ACH_CAT) {
       const list = ACHIEVEMENTS.filter(a => a.cat === cat);
       if (!list.length) continue;
@@ -206,7 +206,7 @@ export const QuestUIPart: Bag = {
       /* ★ 여기서 다시 줄 세우지 않는다 — data.js 가 ACHIEVEMENTS 를 품(ACH_LV) 순으로 이미 정렬해 둔다. */
       for (const a of list) {
         const on = !!got[a.id];
-        const [tn, tc] = ACH_TIER[a.t] || ACH_TIER.mid;
+        const [tn, tc] = ACH_TIER[a.t!] || ACH_TIER.mid;
         // 숨은 업적은 달성 전까지 이름도 조건도 안 보인다.
         const hide = achHidden(a) && !on;
         const nm = hide ? '???' : a.n;
@@ -222,12 +222,12 @@ export const QuestUIPart: Bag = {
     if (!body) return;
     body.innerHTML = h;
     body.onmouseover = null; body.onmouseout = null;
-    body.onclick = ev => {
+    body.onclick = (ev: any) => {
       const tab = ev.target.closest('.qtab');
       if (tab) { this.questTab = tab.dataset.qtab; this.refreshQuest(); }
     };
   },
-  syncSessionBorder(activeKey, hoverKey, currentSession) {
+  syncSessionBorder(activeKey: any, hoverKey: any, currentSession: any) {
     $$('#quest-body .session-tab').forEach(b => {
       const key = b.dataset.session;
       const isActive = key === activeKey;

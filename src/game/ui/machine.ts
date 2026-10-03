@@ -15,14 +15,14 @@ import { $, $$, UI } from '../ui.js';
 export const MachineUIPart: Bag = {
 
   /* ---------------- 기계 ---------------- */
-  openMachine(m) {
+  openMachine(m: any) {
     this.closePanel();
     this.machRef = m; this._machSig = null;
     this.panels.show('machine'); G.uiOpen = true;
     this.refreshMachine(true);
   },
   /** id별 개수 묶음을 클릭 가능한 칸으로 */
-  bufGrid(buf, cls) {
+  bufGrid(buf: any, cls: string) {
     let h = '';
     for (const k in buf) {
       if (!buf[k]) continue;
@@ -32,17 +32,17 @@ export const MachineUIPart: Bag = {
   },
   /** 창을 다시 짜야 하는 것만 모은 열쇠 — 상태·전력·진행처럼 계속 바뀌는 값은 machLive 가 제자리에서 고친다.
       ★ 0.1초마다 통째로 다시 짜면 누르는 사이에 칸이 바뀌어 클릭이 씹히고 툴팁이 깜빡였다. */
-  machSig(m, p) {
+  machSig(m: any, p: Player) {
     // 개수는 빼고 **무엇이 어느 칸에 있는가**만 — 개수는 machLive 가 고친다(도는 기계는 매 틱 개수가 바뀐다)
-    const j = b => b ? Object.keys(b).filter(k => b[k] > 0).join(',') : '';
+    const j = (b: any) => b ? Object.keys(b).filter(k => b[k] > 0).join(',') : '';
     const ok = m.in && MACHINE[m.t].proc ? MRECIPES.map(r => r.m === MACHINE[m.t].proc &&
       Object.keys(r.in).every(k => (m.in[k] || 0) >= r.in[k]) ? 1 : 0).join('') : '';
     return [m.t, m.on, m.dir, m.feed, m.f, m.rec, j(m.in), j(m.out), ok, m.it ? m.it.id : '',
-      m.items ? m.items.map(it => it ? it.id : '').join(',') : '',
-      p.bag.map(it => it ? it.id : '').join(','), m.net].join('|');
+      m.items ? m.items.map((it: Bag) => it ? it.id : '').join(',') : '',
+      p.bag.map((it: Bag) => it ? it.id : '').join(','), m.net].join('|');
   },
   /** 계속 바뀌는 값 — 상태 · 전력망 · 축전 · 연료 · 진행 막대 */
-  machLive(m) {
+  machLive(m: any) {
     const s = MACHINE[m.t], w = G.world;
     const st = $('#mach-st');
     if (st) st.innerHTML = `<span class="mdot" style="background:${Factory.statusColor(m)}"></span><b>${Factory.stLabel(m)}</b>` +
@@ -71,7 +71,7 @@ export const MachineUIPart: Bag = {
     // 개수 — 칸 구성은 같고 수만 바뀐 경우
     for (const [sel, buf] of [['#mg-in', m.in], ['#mg-out', m.out]])
       if (buf) $$(sel + ' .slot').forEach(el => { const c = el.querySelector('.cnt'); if (c) c.textContent = buf[el.dataset.id] || ''; });
-    const cnt = (sel, arr) => { const els = $$(sel + ' .slot'); els.forEach(el => { const it = arr[+el.dataset.i]; const c = el.querySelector('.cnt'); if (c && it) c.textContent = it.c > 1 ? it.c : ''; }); };
+    const cnt = (sel: string, arr: any) => { const els = $$(sel + ' .slot'); els.forEach(el => { const it = arr[+el.dataset.i]; const c = el.querySelector('.cnt'); if (c && it) c.textContent = it.c > 1 ? it.c : ''; }); };
     if (m.items) cnt('#mg-store', m.items);
     cnt('#mg-bag', G.player.bag);
     const pr = $('#mach-prog');
@@ -84,7 +84,7 @@ export const MachineUIPart: Bag = {
         : tr('만들 것이 없다 — 아래 목록의 재료를 넣어라');
     }
   },
-  refreshMachine(force) {
+  refreshMachine(force: any) {
     const m = this.machRef; if (!m) return;
     const s = MACHINE[m.t], w = G.world, p = G.player;
     // 방금 설치한 기계를 바로 열면 아직 전력망 계산 전이라 "망 없음"으로 보인다 — 먼저 갱신
@@ -118,14 +118,14 @@ export const MachineUIPart: Bag = {
       btns += `<button class="mbtn" data-act="takeall">${tr('⤓ 전부 가방으로')}</button>`;
 
     // ---- 만드는 것 — 이 기계의 제작법. 지금 하는 것은 금색, 재료가 다 들어 있으면 초록 ----
-    const ic = id => `<span class="ri" style="background-image:url(${Art.itemUrl(id)})" title="${ITEMS[id].n}"></span>`;
+    const ic = (id: string) => `<span class="ri" style="background-image:url(${Art.itemUrl(id)})" title="${ITEMS[id].n}"></span>`;
     let recs = '';
     if (s.proc) {
       MRECIPES.forEach((r, i) => {
         if (r.m !== s.proc) return;
         let ok = true;
         for (const k in r.in) if ((m.in[k] || 0) < r.in[k]) { ok = false; break; }
-        const side = o => Object.keys(o).map(k => `${ic(k)}<small>${o[k]}</small>`).join('');
+        const side = (o: Bag) => Object.keys(o).map(k => `${ic(k)}<small>${o[k]}</small>`).join('');
         recs += `<div class="mrec${i === m.rec ? ' cur' : ok ? ' ok' : ''}">${side(r.in)}<b>→</b>${side(r.out)}` +
           `${tr('<em>{n}초</em>', { n: (r.t * FAC_TICK).toFixed(1) })}</div>`;
       });
@@ -149,7 +149,7 @@ export const MachineUIPart: Bag = {
 
     // ---- 연결 ----
     /* 누르는 순간 처리한다 — 떼는 사이에 창이 다시 짜이면 click 이 사라진다 */
-    const press = (el, fn) => el.addEventListener('mousedown', e => { if (e.button === 0) { e.preventDefault(); fn(); } });
+    const press = (el: any, fn: any) => el.addEventListener('mousedown', (e: any) => { if (e.button === 0) { e.preventDefault(); fn(); } });
     $$('#mach-body .mbtn').forEach(b => press(b, () => {
       const a = b.dataset.act;
       let snd = 'place';
@@ -163,7 +163,7 @@ export const MachineUIPart: Bag = {
       else if (a === 'takeall') {
         let full = false;
         if (m.out) for (const k of Object.keys(m.out)) if (Factory.playerTake(w, m, 'out', k, p) < 1) full = true;
-        if (m.items) m.items.forEach((it, i) => { if (!it) return; if (p.addItem(it)) m.items[i] = null; else full = true; });
+        if (m.items) m.items.forEach((it: Bag, i: number) => { if (!it) return; if (p.addItem(it)) m.items[i] = null; else full = true; });
         if (full) this.toast(tr('가방이 가득 찼다'), 'bad');
         this.refreshBag();
       }
@@ -176,7 +176,7 @@ export const MachineUIPart: Bag = {
     });
     const store = $('#mg-store');
     if (store) {
-      m.items.forEach((it, i) => {
+      m.items.forEach((it: Bag, i: number) => {
         const d = makeSlot('slot' + (it ? ' r' + it.r : ''), { data: { i }, fill: it ? { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' } : undefined,
           enter: e => this.showTip(it, e), leave: () => this.hideTip() }, store);
         press(d, () => {
@@ -195,14 +195,14 @@ export const MachineUIPart: Bag = {
           if (Factory.playerTake(w, m, which, id, p) <= 0) this.toast(tr('가방이 가득 찼다'), 'bad');
           this.refreshMachine(true); this.refreshBag();
         });
-        el.addEventListener('mouseenter', e => this.showTip(makeItem(id, 1, 0), e));
+        el.addEventListener('mouseenter', (e: any) => this.showTip(makeItem(id, 1, 0), e));
         el.addEventListener('mouseleave', () => this.hideTip());
       });
     }
     const bag = $('#mg-bag');
-    const order = p.bag.map((it, i) => i).filter(i => p.bag[i]);
-    const yes = i => m.t === 'sorter' || Factory.accepts(m, p.bag[i].id);
-    order.sort((a2, b2) => (yes(b2) ? 1 : 0) - (yes(a2) ? 1 : 0) || a2 - b2);   // 받는 것을 앞으로
+    const order = p.bag.map((it: Bag, i: number) => i).filter((i: number) => p.bag[i]);
+    const yes = (i: number) => m.t === 'sorter' || Factory.accepts(m, p.bag[i].id);
+    order.sort((a2: any, b2: any) => (yes(b2) ? 1 : 0) - (yes(a2) ? 1 : 0) || a2 - b2);   // 받는 것을 앞으로
     for (const i of order) {
       const it = p.bag[i];
       const d = makeSlot('slot r' + it.r + (yes(i) ? '' : ' no'), { data: { i }, fill: { icon: Art.itemUrl(it.id), count: it.c > 1 ? it.c : '' },

@@ -21,7 +21,7 @@ export const TipUIPart: Bag = {
 
   /* ---------------- 툴팁 ---------------- */
   /** 같은 자리에 차고 있는 장비와 견준 한 줄. */
-  compareLine(it) {
+  compareLine(it: Bag) {
     const p = G.player;
     if (!p || !it) return null;
     const d = idef(it);
@@ -31,15 +31,15 @@ export const TipUIPart: Bag = {
     else if (d.type === 'bag') key = 'bag';
     else if (d.type === 'acc') {
       // 두 칸 중 약한 쪽과 견준다 — 실제로 갈아 끼우게 되는 쪽이 그쪽이다
-      const score = q => { if (!q) return -1; const s = itemStats(q); let v = 0; for (const k in s) v += s[k]; return v; };
+      const score = (q: any) => { if (!q) return -1; const s = itemStats(q); let v = 0; for (const k in s) v += s[k]; return v; };
       key = score(p.equip.acc1) <= score(p.equip.acc2) ? 'acc1' : 'acc2';
     }
     if (!key) return null;
     const cur = p.equip[key];
     if (!cur) return `<div class="tcmp new">${tr('빈 자리에 낄 수 있다')}</div>`;
     if (cur === it) return `<div class="tcmp same">${tr('지금 차고 있는 것')}</div>`;
-    const rows = [];
-    const push = (label, a, b, unit?) => {
+    const rows: string[] = [];
+    const push = (label: string, a: any, b: any, unit?: any) => {
       const dv = Math.round((a - b) * 10) / 10;
       if (!dv) return;
       rows.push(`<span class="${dv > 0 ? 'up' : 'down'}">${dv > 0 ? '▲' : '▼'} ${label} ${dv > 0 ? '+' : ''}${dv}${unit || ''}</span>`);
@@ -48,7 +48,7 @@ export const TipUIPart: Bag = {
     if (d.def || idef(cur).def) push(tr('방어'), Math.round((d.def || 0) * RARITY_MULT[it.r]), Math.round((idef(cur).def || 0) * RARITY_MULT[cur.r]));
     if (d.type === 'bag' && (d.slots || idef(cur).slots)) push(tr('가방 칸'), d.slots || 0, idef(cur).slots || 0);
     const sa = itemStats(it), sb = itemStats(cur);
-    const NM = { hp: tr('생명'), mp: tr('마나'), def: tr('방어'), ms: tr('이속'), crit: tr('치명'), critD: tr('치명피해'), cdr: tr('쿨감'), lifesteal: tr('흡혈'), str: tr('힘'), dex: tr('민첩'), int: tr('지능'), vit: tr('체력'), jump: tr('점프'), mpreg: tr('마나재생'), hpreg: tr('생명재생'),
+    const NM: Bag = { hp: tr('생명'), mp: tr('마나'), def: tr('방어'), ms: tr('이속'), crit: tr('치명'), critD: tr('치명피해'), cdr: tr('쿨감'), lifesteal: tr('흡혈'), str: tr('힘'), dex: tr('민첩'), int: tr('지능'), vit: tr('체력'), jump: tr('점프'), mpreg: tr('마나재생'), hpreg: tr('생명재생'),
       // 산소통·잠수 장비.
       oxyMax: tr('숨(초)'), oxyReg: tr('숨 회복'), charge: tr('전하') };
     for (const k in NM) {
@@ -59,12 +59,12 @@ export const TipUIPart: Bag = {
     return `<div class="tcmp"><span class="cmp-h">${tr('지금 낀 것과 비교')}</span>${rows.join('')}</div>`;
   },
 
-  showTip(it, e, extra) {
+  showTip(it: any, e: any, extra: any) {
     if (!it) { this.hideTip(); return; }
     const d = idef(it), st = itemStats(it);
     let h = `<div class="thead"><span class="tip-ic" style="background-image:url(${Art.itemUrl(it.id)})"></span>` +
       `<span class="tname c${it.r}">${itemName(it)}</span></div>`;
-    const typeName = d.type === 'weapon' ? ({ melee: tr('근접 무기'), ranged: tr('원거리 무기'), magic: tr('마법 무기') })[d.wc]
+    const typeName = d.type === 'weapon' ? ({ melee: tr('근접 무기'), ranged: tr('원거리 무기'), magic: tr('마법 무기') })[d.wc!]
       : d.type === 'armor' ? tr('방어구') : d.type === 'acc' ? tr('장신구') : d.type === 'tool' ? tr('도구')
         : d.type === 'rod' ? tr('낚싯대') : d.type === 'pet' ? tr('펫') : d.type === 'station' ? tr('설치물')
           : d.type === 'door' ? tr('문')
@@ -86,7 +86,7 @@ export const TipUIPart: Bag = {
     if (it.e) h += `<div class="tstat">${tr('강화 <b>+{e}</b>', { e: it.e })} <span class="thint">${tr('(공격·방어 +{n}%p)', { n: it.e * 5 })}</span></div>`;
     /* 펫은 레벨이 곧 값어치다 — 패시브가 통째로 커지므로 지금 몇 레벨이고 다음까지 얼마나 남았는지가 한눈에 보여야 한다. */
     if (d.type === 'pet') {
-      const pid = d.pet, lvMax = petMaxLv(pid), dragon = PETS[pid] && PETS[pid].dragon;
+      const pid = d.pet, lvMax = petMaxLv(pid!), dragon = PETS[pid!] && PETS[pid!].dragon;
       const lv = it.lv || 1, max = lv >= lvMax;
       if (dragon) h += `<div class="tstat">${tr('단계 <b>{stage}</b>', { stage: tr(DRAGON_STAGE_N[dragonStage(lv)]) })}</div>`;
       h += `<div class="tstat">${tr('레벨 <b>{lv}</b> / {petLvMax}', { lv, petLvMax: lvMax })}` +
@@ -116,8 +116,8 @@ export const TipUIPart: Bag = {
     // 펫 — 고유 자동 공격이 이 펫의 정체성이라 수치를 그대로 보여 준다
     if (d.pet && PETS[d.pet] && PETS[d.pet].atk) {
       const a = PETS[d.pet].atk;
-      h += `<div class="tstat">${tr('고유 공격 <b>{v}</b> · 피해 <b>{dmg}</b>', { v: a.k === 'melee' ? tr('물어뜯기') : tr('투사체'), dmg: a.dmg })}` +
-        ` ${tr('· {cd}초마다 · 사거리 <b>{n}</b>칸', { cd: a.cd, n: Math.round(a.range / TS) })}</div>`;
+      h += `<div class="tstat">${tr('고유 공격 <b>{v}</b> · 피해 <b>{dmg}</b>', { v: a!.k === 'melee' ? tr('물어뜯기') : tr('투사체'), dmg: a!.dmg })}` +
+        ` ${tr('· {cd}초마다 · 사거리 <b>{n}</b>칸', { cd: a!.cd, n: Math.round(a!.range / TS) })}</div>`;
       h += `<div class="tstat">${tr('필요 레벨 <b>Lv.{equipReqLv}</b>', { equipReqLv: equipReqLv(it.id) })}</div>`;
     }
     if (d.mana) h += `<div class="tstat">${tr('소모 마나 <b>{mana}</b>', { mana: d.mana })}</div>`;
@@ -128,7 +128,7 @@ export const TipUIPart: Bag = {
     if (d.slots) h += d.type === 'bag'
       ? `<div class="taff">${tr('+{slots} 가방 칸', { slots: d.slots })}</div>`
       : `<div class="taff">${tr('{slots}개 칸', { slots: d.slots })}</div>`;
-    const NAME = { hp: tr('최대 생명'), mp: tr('최대 마나'), def: tr('방어'), ms: tr('이동 속도'), crit: tr('치명타'), critD: tr('치명 피해'), cdr: tr('재사용 감소'), lifesteal: tr('흡혈'), jump: tr('추가 점프'), str: tr('힘'), dex: tr('민첩'), int: tr('지능'), vit: tr('체력'), dmgP: tr('피해'), spdP: tr('공격 속도'), fire: tr('화염 부여'), frost: tr('냉기 부여'), mpreg: tr('마나 재생'), hpreg: tr('생명 재생'), magicP: tr('마법 피해'),
+    const NAME: Bag = { hp: tr('최대 생명'), mp: tr('최대 마나'), def: tr('방어'), ms: tr('이동 속도'), crit: tr('치명타'), critD: tr('치명 피해'), cdr: tr('재사용 감소'), lifesteal: tr('흡혈'), jump: tr('추가 점프'), str: tr('힘'), dex: tr('민첩'), int: tr('지능'), vit: tr('체력'), dmgP: tr('피해'), spdP: tr('공격 속도'), fire: tr('화염 부여'), frost: tr('냉기 부여'), mpreg: tr('마나 재생'), hpreg: tr('생명 재생'), magicP: tr('마법 피해'),
       // 산소통·잠수 장비가 늘려 주는 값.
       oxyMax: tr('숨 참는 시간'), charge: tr('전하') };
     for (const k in st) {
@@ -162,7 +162,7 @@ export const TipUIPart: Bag = {
     this.tip.show(h, e.clientX, e.clientY);
     this.tipTarget = true;
   },
-  placeTip(x, y) { this.tip.place(x, y); },
+  placeTip(x: number, y: number) { this.tip.place(x, y); },
   hideTip() { this.tip.hide(); this.tipTarget = false; },
 };
 mixin(UI, TipUIPart);

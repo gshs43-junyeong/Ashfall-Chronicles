@@ -7,7 +7,7 @@ import { TILE_PAINT } from '../../tileart.js';
 
 export const TilePaintFactory: Bag = {
   /* ---------- 유혈암 ---------- */
-  oilshale(H) {
+  oilshale(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);
@@ -25,7 +25,7 @@ export const TilePaintFactory: Bag = {
     }
   },
   /* ---------- 기계 ---------- */
-  mk_belt(H) {
+  mk_belt(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         R(0, 6, TS, TS - 10, dk2);
@@ -37,7 +37,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_drill(H) {
+  mk_drill(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -48,7 +48,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_pump(H) {
+  mk_pump(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -60,7 +60,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_furnace(H) {
+  mk_furnace(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -72,7 +72,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_gen(H) {
+  mk_gen(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -93,7 +93,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_press(H) {
+  mk_press(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -108,7 +108,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_tank(H) {
+  mk_tank(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -121,7 +121,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_gear(H) {
+  mk_gear(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -138,7 +138,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_crate(H) {
+  mk_crate(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 나무 상자(저장 상자류)와 헷갈리지 않도록 다른 기계들과 같은 금속 뼈대(_mkBody)를 쓰고, 위쪽 투입구+아래쪽 저장 칸 표식만 얹는다 — "기계"로 한눈에 묶여 보이면서도
@@ -151,7 +151,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_battery(H) {
+  mk_battery(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -164,7 +164,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_pole(H) {
+  mk_pole(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         R(TS / 2 - 2, 2, 4, TS - 3, base);
@@ -177,7 +177,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_sorter(H) {
+  mk_sorter(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -189,7 +189,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_turret(H) {
+  mk_turret(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         R(2, TS - 8, 18, 6, shade(base, .8));                // 받침대
@@ -207,7 +207,7 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
-  mk_trap(H) {
+  mk_trap(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         R(0, TS - 8, TS, 8, shade(base, .55));
@@ -219,7 +219,7 @@ export const TilePaintFactory: Bag = {
     }
   },
   /* ---------- 정글 / 버섯 골짜기 ---------- */
-  mud(H) {
+  mud(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         // 흙과 헷갈리지 않게 더 어둡게 깔고, 물기와 뿌리를 얹어 젖은 땅으로 읽히게 한다

@@ -13,7 +13,7 @@ import { Game } from '../game.js';
 export const WeatherPart: Bag = {
 
   /** 빗줄기 페이드 인/아웃 + 화면 좌표계 낙하 갱신. */
-  updateWeather(dt) {
+  updateWeather(dt: number) {
     /* ★ 비 이벤트의 zones 에는 village·camp 가 없다(안전 지대 몹까지 비로 강해지면 안 되니까). */
     const isRain = this.event && this.event.id === 'rain';
     const p = this.player, w = this.world;
@@ -31,7 +31,7 @@ export const WeatherPart: Bag = {
     let mx = pc ? cam.x - pc.x : 0, my = pc ? cam.y - pc.y : 0;
     if (Math.abs(mx) > this.W || Math.abs(my) > this.H) mx = my = 0;       // 순간이동 · 불러오기
     this._rainCam = { x: cam.x, y: cam.y };
-    if (this.rainT <= 0 && (!this.rainDrops || !this.rainDrops.some(d => d.on))) { this.rainDrops = null; return; }
+    if (this.rainT <= 0 && (!this.rainDrops || !this.rainDrops.some((d: any) => d.on))) { this.rainDrops = null; return; }
     const W = this.W || 1280, H = this.H || 720;
     if (!this.rainDrops) {
       this.rainDrops = [];
@@ -45,7 +45,7 @@ export const WeatherPart: Bag = {
         len: 10 + Math.random() * 14, spd: 480 + Math.random() * 260
       });
     }
-    const top = d => { d.y -= H + 40; d.x = Math.random() * W; d.on = d.k < this.rainT; };
+    const top = (d: any) => { d.y -= H + 40; d.x = Math.random() * W; d.on = d.k < this.rainT; };
     for (const d of this.rainDrops) {
       if (this.snowMode) {
         d.y += d.spd * dt - my; d.drift += dt * 1.4;
@@ -59,7 +59,7 @@ export const WeatherPart: Bag = {
     }
   },
   /** 빗줄기. */
-  drawRain(c) {
+  drawRain(c: any) {
     if (!this.rainDrops) return;
     if (this.snowMode) {
       c.globalAlpha = 0.85;
@@ -77,7 +77,7 @@ export const WeatherPart: Bag = {
     c.globalAlpha = 1;
   },
   /** 하늘에 늘 몇 점씩 흘러가는 구름. */
-  drawClouds(c, camX, camY, rainT) {
+  drawClouds(c: any, camX: number, camY: number, rainT: any) {
     // 맑을 때는 16개가 옅게 흘러가고, 비가 짙어질수록 개수·범위·불투명도가 함께 올라 폭우일 때는 하늘 대부분이 구름으로 덮인다.
     const n = Math.round(16 + 90 * rainT);
     const wrapW = 2600;
@@ -127,7 +127,7 @@ export const WeatherPart: Bag = {
   ASH_GRASS_MIN: 0.40,
 
   /** 잎 칸의 변형(=가지 방향)을 줄기 쪽을 보고 고른다. */
-  pickLeafV(w, tx, ty) {
+  pickLeafV(w: World, tx: number, ty: number) {
     /* ★ **바로 옆 칸만** 본다. */
     if (w.get(tx - 1, ty) === T.WOOD) return 0;
     if (w.get(tx + 1, ty) === T.WOOD) return 1;
@@ -136,11 +136,11 @@ export const WeatherPart: Bag = {
   },
 
   /** 잿빛에 먹히는 칸 한 장. */
-  drawAshTile(c, id, v, sx, sy, tx, ty, ashF0) {
+  drawAshTile(c: any, id: any, v: any, sx: any, sy: any, tx: any, ty: any, ashF0: any) {
     const spec = this.ASH_TILE[id];
     const ashF = ashF0 * spec.fade;      // 지형마다 드는 세기가 다르다 (정글은 절반)
     const solid = ashF > 0.98;
-    const pair = (a) => {     // 같은 그림의 성한 판·잿빛 판을 a 만큼 겹쳐 그린다
+    const pair = (a: any) => {     // 같은 그림의 성한 판·잿빛 판을 a 만큼 겹쳐 그린다
       if (!solid) { c.globalAlpha = (1 - ashF) * a; TileArt.draw(c, id, v, sx, sy); }
       c.globalAlpha = ashF * a; TileArt.drawAsh(c, id, v, sx, sy);
     };
@@ -166,7 +166,7 @@ export const WeatherPart: Bag = {
       if (canThin) {
         const d = clamp((ashF - 0.10) / 0.80, 0, 1) * (spec.thin || 1);
         const t1 = clamp(d * 2, 0, 1), t2 = clamp(d * 2 - 1, 0, 1);
-        const plate = (lv, a) => {
+        const plate = (lv: number, a: any) => {
           if (a <= 0) return;
           if (!solid) { c.globalAlpha = (1 - ashF) * a; TileArt.drawThin(c, id, v, sx, sy, 0, lv); }
           c.globalAlpha = ashF * a; TileArt.drawThin(c, id, v, sx, sy, 1, lv);

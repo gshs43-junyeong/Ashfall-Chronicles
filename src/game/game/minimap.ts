@@ -13,7 +13,7 @@ import { Game } from '../game.js';
 export const MinimapPart: Bag = {
 
   /* ---- 지도 색 (미니맵 · 전체 지도 공용) ---- */
-  mapColorAt(tx, ty, id, wl) { const { WW } = dimsOf(this.world);
+  mapColorAt(tx: any, ty: any, id: any, wl: any) { const { WW } = dimsOf(this.world);
     const w = this.world, k = ty * WW + tx;
     if (id === undefined) { id = w.tiles[k]; wl = w.walls[k]; }
     if (id === T.AIR) return wl ? '#20202c' : '#141620';
@@ -21,7 +21,7 @@ export const MinimapPart: Bag = {
     return d.ore ? d.c : shade(d.c || '#333', 0.65);
   },
   /** 눈(ex, ey)에서 칸(tx, ty)이 보이는가 — 가는 길이 트여 있어야 하고, 과녁 앞 세 칸 안의 바위만 봐준다(벽 두께가 지도에 남게). */
-  seesTile(ex, ey, tx, ty) {
+  seesTile(ex: number, ey: number, tx: number, ty: number) {
     const w = this.world, dx = tx - ex, dy = ty - ey, n = Math.max(Math.abs(dx), Math.abs(dy));
     for (let i = 1; i < n - 3; i++) {
       const x = Math.round(ex + dx * i / n), y = Math.round(ey + dy * i / n);
@@ -52,12 +52,12 @@ export const MinimapPart: Bag = {
   /* ---- 미니맵 ---- */
   /* 탐지기 소리 — 잡힌 것이 **없다가 생겼을 때만** 한 번 운다. */
   _detPrev: 0,
-  detBeep(n) {
+  detBeep(n: number) {
     if (n > 0 && this._detPrev === 0) this.sfx('detector');
     this._detPrev = n;
   },
   /** 유틸리티 칸에 낀 탐지기 종류 — 'ore' | 'mob'. 없으면 false */
-  hasDetector(kind) {
+  hasDetector(kind: string) {
     const eq = this.player && this.player.equip;
     if (!eq) return false;
     return (eq.util1 && idef(eq.util1).det === kind) || (eq.util2 && idef(eq.util2).det === kind);

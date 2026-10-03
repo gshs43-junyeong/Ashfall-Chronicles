@@ -36,40 +36,40 @@ export const RenderPart: Bag = {
   /** 렌더 단계 — 순서가 곧 겹침 순서다(엔진 render/pipeline). */
   buildPipeline() {
     this.pipe = createPipeline(['sky', 'light', 'far', 'tiles', 'machines', 'objects', 'ground', 'drops', 'actors', 'lighting', 'fx', 'screen']);
-    this.pipe.add('sky', f => this.rSky(f));
-    this.pipe.add('light', f => this.rLightCalc(f));
-    this.pipe.add('far', f => this.rFar(f));
-    this.pipe.add('tiles', f => this.rTiles(f));
-    this.pipe.add('tiles', f => this.rFarmWet(f));    // 젖은 밭(game/act)
-    this.pipe.add('machines', f => this.rMachines(f));
-    this.pipe.add('objects', f => this.rObjects(f));
-    this.pipe.add('objects', f => this.rStreaks(f));   // 물줄기(game/act) — 인물 뒤
-    this.pipe.add('ground', f => this.rGround(f));
-    this.pipe.add('drops', f => this.rDrops(f));
-    this.pipe.add('actors', f => this.rActors(f));
-    this.pipe.add('lighting', f => this.rLightOverlay(f));
-    this.pipe.add('fx', f => this.rFx(f));
-    this.pipe.add('fx', f => this.rUtil(f));           // 탐지 파동(game/utility)
-    this.pipe.add('screen', f => this.rScreen(f));
+    this.pipe.add('sky', (f: any) => this.rSky(f));
+    this.pipe.add('light', (f: any) => this.rLightCalc(f));
+    this.pipe.add('far', (f: any) => this.rFar(f));
+    this.pipe.add('tiles', (f: any) => this.rTiles(f));
+    this.pipe.add('tiles', (f: any) => this.rFarmWet(f));    // 젖은 밭(game/act)
+    this.pipe.add('machines', (f: any) => this.rMachines(f));
+    this.pipe.add('objects', (f: any) => this.rObjects(f));
+    this.pipe.add('objects', (f: any) => this.rStreaks(f));   // 물줄기(game/act) — 인물 뒤
+    this.pipe.add('ground', (f: any) => this.rGround(f));
+    this.pipe.add('drops', (f: any) => this.rDrops(f));
+    this.pipe.add('actors', (f: any) => this.rActors(f));
+    this.pipe.add('lighting', (f: any) => this.rLightOverlay(f));
+    this.pipe.add('fx', (f: any) => this.rFx(f));
+    this.pipe.add('fx', (f: any) => this.rUtil(f));           // 탐지 파동(game/utility)
+    this.pipe.add('screen', (f: any) => this.rScreen(f));
   },
   /** 렌더 단계 — 하늘 */
-  rSky(f) {
+  rSky(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     this.drawSky(c, dayF, camX, camY);
   },
   /** 렌더 단계 — 화면 범위 조명 계산 */
-  rLightCalc(f) {
+  rLightCalc(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     const dayLight = lerp(3.0, 15, dayF);
     // 발광 물약 — lit/lit_greater 버프가 있으면 미광 반경을 넓힌다 — 사연: docs/code-history.md#h60
-    const litR = p.buffs.some(b => b.id === 'lit_greater') ? 9.5
-      : p.buffs.some(b => b.id === 'lit') ? 6.8
-      : p.buffs.some(b => b.id === 'lantern') ? 6.0 : 4.6;
+    const litR = p.buffs.some((b: any) => b.id === 'lit_greater') ? 9.5
+      : p.buffs.some((b: any) => b.id === 'lit') ? 6.8
+      : p.buffs.some((b: any) => b.id === 'lantern') ? 6.0 : 4.6;
     w.computeLight(tx0, ty0, tx1, ty1, dayLight,
       [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]]);   // 플레이어 미광
   },
   /** 렌더 단계 — 원경 · 채취탑 */
-  rFar(f) {
+  rFar(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 배경 지형 ----
     this.drawParallax(c, camX, camY, dayF);
@@ -78,7 +78,7 @@ export const RenderPart: Bag = {
     this.drawRigs(c, camX, camY);
   },
   /** 렌더 단계 — 타일 · 벽지 */
-  rTiles(f) { const { WW, WH } = dimsOf(this.world);
+  rTiles(f: any) { const { WW, WH } = dimsOf(this.world);
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 타일 (절차적 텍스처 아틀라스) ----
     const VA = TileArt.V;
@@ -132,14 +132,14 @@ export const RenderPart: Bag = {
     }
   },
   /** 렌더 단계 — 기계 몸체 · 벨트 위 물건 · 놓을 자리 */
-  rMachines(f) {
+  rMachines(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 기계 오버레이 (방향 · 벨트 위 아이템 · 진행/연료 · 상태등) ----
     Factory.render(c, w, camX, camY, tx0, ty0, tx1, ty1, this.time);
     this.drawPlaceGhost(c, camX, camY);
   },
   /** 렌더 단계 — 설치물 · NPC */
-  rObjects(f) {
+  rObjects(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 오브젝트 ----
     for (const o of w.objects) {
@@ -265,13 +265,13 @@ export const RenderPart: Bag = {
     }
   },
   /** 렌더 단계 — 스킬의 바닥 연출 */
-  rGround(f) {
+  rGround(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 특별한 스킬의 바닥 연출 ----
     this.drawSigGround(c, camX, camY);
   },
   /** 렌더 단계 — 시체 · 떨어진 물건 */
-  rDrops(f) {
+  rDrops(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 드롭 ----
     c.textAlign = 'center'; c.textBaseline = 'middle';
@@ -287,7 +287,7 @@ export const RenderPart: Bag = {
     }
   },
   /** 렌더 단계 — 몹 · 비석 · 플레이어 · 펫 */
-  rActors(f) {
+  rActors(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 적 ----
     for (const e of this.ents) {
@@ -333,7 +333,7 @@ export const RenderPart: Bag = {
     this.drawSigSky(c, camX, camY);
   },
   /** 남의 캐릭터 머리 위 이름과 체력 줄. */
-  drawNameTag(c, q, camX, camY) {
+  drawNameTag(c: CanvasRenderingContext2D, q: any, camX: number, camY: number) {
     const x = Math.round(q.cx - camX), y = Math.round(q.y - camY) - 14;
     c.save();
     c.font = '11px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'bottom';
@@ -345,7 +345,7 @@ export const RenderPart: Bag = {
     c.restore();
   },
   /** 렌더 단계 — 어둠 · 빛 색 · 공기색 · 유적 여운 */
-  rLightOverlay(f) {
+  rLightOverlay(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 조명 (부드러운 그라디언트 오버레이) ----
     this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
@@ -375,7 +375,7 @@ export const RenderPart: Bag = {
     this.drawCaves(c, camX, camY);
   },
   /** 렌더 단계 — 폭발 · 투사체 · 링 · 번개 · 입자 · 피해 숫자 */
-  rFx(f) {
+  rFx(f: any) {
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 폭발/타격 이펙트 ----
     if (this.bursts) for (let i = this.bursts.length - 1; i >= 0; i--) {
@@ -452,7 +452,7 @@ export const RenderPart: Bag = {
       for (const [lw, col, al] of [[6, b.c, 0.22 * k], [2.4, b.c, 0.9 * k], [1, '#ffffff', 0.9 * k]]) {
         c.globalAlpha = al; c.strokeStyle = col; c.lineWidth = lw;
         c.beginPath();
-        b.pts.forEach((p, j) => j ? c.lineTo(p[0] - camX, p[1] - camY) : c.moveTo(p[0] - camX, p[1] - camY));
+        b.pts.forEach((p: number[], j: number) => j ? c.lineTo(p[0] - camX, p[1] - camY) : c.moveTo(p[0] - camX, p[1] - camY));
         c.stroke();
       }
       c.globalAlpha = 1; c.lineWidth = 1; c.lineCap = 'butt';
@@ -533,7 +533,7 @@ export const RenderPart: Bag = {
     c.globalAlpha = 1;
   },
   /** 렌더 단계 — 조준 · 비 · 비네트 · 길잡이 */
-  rScreen(f) { const { SURF_BASE } = dimsOf(this.world);
+  rScreen(f: any) { const { SURF_BASE } = dimsOf(this.world);
     const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
     // ---- 조준/채굴 표시 ----
     this.drawCursor(c, camX, camY);

@@ -29,13 +29,13 @@ export const NetUiPart: Bag = {
     const tidy = () => { const v = String(code.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
       if (code.value !== v) code.value = v; this.mpCodeCells(); };
     const toEnd = () => { const l = code.value.length; try { code.setSelectionRange(l, l); } catch (e) { } this.mpCodeCells(); };
-    code.oninput = e => { if (!e.isComposing) tidy(); };
+    code.oninput = (e: any) => { if (!e.isComposing) tidy(); };
     code.addEventListener('compositionend', tidy);
     code.onfocus = code.onclick = toEnd;
     code.onblur = () => this.mpCodeCells();
-    code.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) this.mpJoinFromTitle(); };
+    code.onkeydown = (e: any) => { if (e.key === 'Enter' && !e.isComposing) this.mpJoinFromTitle(); };
     const el = $('#mp-screen');
-    el.onclick = e => { if (e.target === el) this.closeModal('#mp-screen'); };
+    el.onclick = (e: any) => { if (e.target === el) this.closeModal('#mp-screen'); };
     $('#btn-room-open').onclick = async () => { await this.mpHost('ROOM'); this.refreshPauseMp(); };
     $('#btn-room-close').onclick = () => { this.mpClose(); this.refreshPauseMp(); };
     $('#btn-room-leave').onclick = () => this.mpLeave();
@@ -80,9 +80,9 @@ export const NetUiPart: Bag = {
     return this.settings.mpId;
   },
   /** 호스트 — 그 손님의 기록(없으면 null). */
-  netGuestRec(pid) { return pid && this.mpGuests && this.mpGuests[pid] || null; },
+  netGuestRec(pid: any) { return pid && this.mpGuests && this.mpGuests[pid] || null; },
   /** 호스트 — 손님의 마지막 자리(1초마다 · 나갈 때)와 캐릭터(손님이 보낸 것)를 세계 기록에. */
-  netGuestKeep(peer, char) {
+  netGuestKeep(peer: Bag, char: any) {
     if (!peer || !peer.pid || !peer.rp) return;
     this.mpGuests = this.mpGuests || {};
     const rec = this.mpGuests[peer.pid] || (this.mpGuests[peer.pid] = {});
@@ -107,19 +107,19 @@ export const NetUiPart: Bag = {
     }, 1500);
   },
   /** 참가자 — 캐릭터는 호스트 세계에 맡긴다(15초마다 · 나갈 때 · 저장할 때). */
-  netCharOut(n, save = false) {
+  netCharOut(n: any, save = false) {
     if (!n || n.role !== 'guest' || !n.t || n.id <= 0) return false;
     this.netSend(n.t, 'rel', { k: 'csave', char: this.packChar(n.char), s: save ? 1 : 0 });
     return true;
   },
   /** 참가 창이 열려 있으면 거기에, 아니면 알림으로. */
-  netSay(text, ok = false) {
+  netSay(text: string, ok = false) {
     const box = $('#mp-screen');
     if (box && box.classList.contains('open')) { const el = $('#mp-msg'); el.textContent = text; el.classList.toggle('ok', ok); }
     else if (text) this.toast(text, ok ? 'info' : 'bad');
   },
   /** 슬롯의 세이브를 읽어 지금 판 모양으로 — 손댄 기록이면 null. */
-  async netReadSlot(slot) {
+  async netReadSlot(slot: number) {
     let rec = null;
     try { rec = await SaveStore.get(slot); } catch (e) { console.error(e); }
     if (!rec) return null;
@@ -130,7 +130,7 @@ export const NetUiPart: Bag = {
     return d;
   },
   /** 참가자의 저장 — 제 슬롯에 쓰지 않고 호스트 세계에 맡긴다(그쪽 슬롯에 손님 기록으로 남는다). */
-  netSaveChar(room = null, loud = false) {
+  netSaveChar(room: string | null = null, loud = false) {
     const n = room || this.net;
     if (!n || n.role !== 'guest' || !n.char) return false;
     const ok = this.netCharOut(n, true);
@@ -139,7 +139,7 @@ export const NetUiPart: Bag = {
   },
 
   /* ---- 파티 목록(HUD — 보기만) · 내보내기는 일시정지 창에서 ---- */
-  netPartyTick(dt) {
+  netPartyTick(dt: number) {
     const n = this.net;
     n.partyT = (n.partyT || 0) - dt;
     if (n.partyT > 0) return;
@@ -149,7 +149,7 @@ export const NetUiPart: Bag = {
     if (n.csaveT <= 0) { n.csaveT = 15; this.netCharOut(n); }   // 15초마다 — 갑자기 끊겨도 잃는 것이 적게
   },
   /** 그 플레이어의 왕복 시간(ms) — 호스트 자신은 없다. */
-  netPing(id) {
+  netPing(id: string) {
     const n = this.net;
     if (!n || !id) return null;
     if (n.role === 'host') { const q = n.peers.get(id); return q && q.ping !== undefined ? q.ping : null; }
@@ -159,7 +159,7 @@ export const NetUiPart: Bag = {
     const box = $('#party'), n = this.net;
     if (!box) return;
     if (!n || (n.role === 'guest' && n.id < 0)) { box.hidden = true; return; }
-    const rows = this.players.map(p => {
+    const rows = this.players.map((p: Player) => {
       const id = p === this.me ? (n.role === 'host' ? 0 : n.id) : p.netId;
       const mhp = p.remote ? (p.netMaxHp || p.d.maxHp) : p.d.maxHp, ping = this.netPing(id);
       return `<div class="pt-row${p === this.me ? ' me' : ''}">
@@ -187,12 +187,12 @@ export const NetUiPart: Bag = {
     for (const [id, key] of [['#mp-pvp', 'pvp'], ['#mp-chat', 'chat']]) { const el = $(id); el.checked = !!cfg[key]; el.disabled = !host; }
     $('#ps-cfg-note').hidden = host;
     const list = $('#ps-party');
-    list.innerHTML = this.players.map(p => {
+    list.innerHTML = this.players.map((p: Player) => {
       const id = p === this.me ? (host ? 0 : n.id) : p.netId;
       const kick = host && p.remote ? `<button class="mini-btn" data-kick="${id}">${tr('내보내기')}</button>` : '';
       return `<div class="ps-guest"><span>${id === 0 ? `<i class="pt-host">${tr('호스트')}</i> ` : ''}${escHtml(p.name)} · Lv.${p.level | 0}</span>${kick}</div>`;
     }).join('');
-    list.querySelectorAll('[data-kick]').forEach(b => {
+    list.querySelectorAll('[data-kick]').forEach((b: any) => {
       b.onclick = () => { this.mpKick(+b.dataset.kick); this.refreshPauseMp(); };
     });
   }

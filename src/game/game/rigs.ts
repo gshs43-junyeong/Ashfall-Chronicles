@@ -27,12 +27,12 @@ export const RigsPart: Bag = {
   rigs() {
     const w = this.world;
     if (!w) return [];
-    if (!this._rigs) this._rigs = w.objects.filter(o => o.type === 'rig');
-    return this._rigs.filter(o => !o.gone);
+    if (!this._rigs) this._rigs = w.objects.filter((o: Bag) => o.type === 'rig');
+    return this._rigs.filter((o: Bag) => !o.gone);
   },
 
   /** 채취탑 해체 — 세션 2(공창)가 끝난 뒤에만. 부품(RIG.parts)이 쏟아지고 탑은 사라진다. */
-  useRig(o) {
+  useRig(o: Bag) {
     const done = this.chapter >= SESSIONS[2].ch0;
     if (!done) {
       UI.openLore(tr('채취탑'), this.rigOn(o)
@@ -46,7 +46,7 @@ export const RigsPart: Bag = {
         UI.closeDialogue();
         o.gone = 1;
         const cx = o.tx * TS + TS / 2, cy = (o.ty - 3) * TS;
-        for (const [id, n] of RIG.parts) this.drops.push(new Drop(cx + (Math.random() - 0.5) * 60, cy, makeItem(id, n)));
+        for (const [id, n] of RIG.parts) this.drops.push(new Drop(cx + (Math.random() - 0.5) * 60, cy, makeItem(id, n)!));
         this.matBurst('metal', cx, cy, 30, { spd: 1.4 });
         this.shake = 10;
         this.sfx('break_machine');
@@ -57,9 +57,9 @@ export const RigsPart: Bag = {
   },
 
   /** 이 탑이 지금 도는가. */
-  rigOn(r) { return this.chapter >= r.wake; },
+  rigOn(r: any) { return this.chapter >= r.wake; },
 
-  updateRigs(dt) {
+  updateRigs(dt: number) {
     const p = this.player;
     if (!p || this.chapter < 9) return;
     for (const r of this.rigs()) {
@@ -82,7 +82,7 @@ export const RigsPart: Bag = {
   SMOKE_VENT_Y: 6,          // 굴뚝 꼭대기
 
   /** 이 자리 위로 막힌 칸까지 몇 px인가. */
-  smokeCeil(x, y) { const { WW } = dimsOf(this.world);
+  smokeCeil(x: number, y: number) { const { WW } = dimsOf(this.world);
     const w = this.world;
     const tx = clamp(Math.floor(x / TS), 0, WW - 1);
     const y0 = Math.floor(y / TS);
@@ -94,7 +94,7 @@ export const RigsPart: Bag = {
     return null;
   },
 
-  updateSmoke(dt) { const { WW } = dimsOf(this.world);
+  updateSmoke(dt: number) { const { WW } = dimsOf(this.world);
     const w = this.world, p = this.player;
     if (!w || !p) return;
     if (!this.smokes) this.smokes = [];
@@ -141,10 +141,10 @@ export const RigsPart: Bag = {
   },
 
   /** 채취탑 한 대. */
-  drawRig(c, x, y, on, ph) {
-    const dim = (hex, k) => {
+  drawRig(c: any, x: number, y: number, on: boolean, ph: number) {
+    const dim = (hex: string, k: any) => {
       const n = parseInt(hex.slice(1), 16);
-      const f = (v) => Math.round(v * k);
+      const f = (v: number) => Math.round(v * k);
       return `rgb(${f(n >> 16 & 255)},${f(n >> 8 & 255)},${f(n & 255)})`;
     };
     const k = on ? 1 : 0.52;          // 죽은 것은 같은 색을 어둡게 — 검게 칠하면 실루엣이 된다
@@ -200,7 +200,7 @@ export const RigsPart: Bag = {
     c.restore();
   },
 
-  drawRigs(c, camX, camY) {
+  drawRigs(c: any, camX: number, camY: number) {
     const rs = this.rigs();
     if (!rs.length) return;
     for (const r of rs) {
@@ -210,7 +210,7 @@ export const RigsPart: Bag = {
     }
   },
 
-  drawSmoke(c, camX, camY) {
+  drawSmoke(c: any, camX: number, camY: number) {
     if (!this.smokes || !this.smokes.length) return;
     for (const s of this.smokes) {
       const k = clamp(s.t / s.dur, 0, 1);

@@ -14,13 +14,13 @@ export const TreeUIPart: Bag = {
   /* ★ 세 갈래를 **한 판**에 그린다 — 사연: docs/code-history.md#h90 */
   TREE_TOP: 14, TREE_ROW: 89, TREE_BOX: 44,
   TREE_COLS: 9,                                   // 갈래 셋 × 가로 세 칸
-  _brIdx(br) { return BRANCHES.findIndex(b => b.id === br); },
+  _brIdx(br: any) { return BRANCHES.findIndex(b => b.id === br); },
   /** 가로 자리 — 갈래 순서를 앞에 얹어 아홉 칸 중 하나로 편다 */
-  _nodeX(id) {
+  _nodeX(id: string) {
     const sk = SKILLS[id];
-    return ((this._brIdx(sk.br) * 3 + sk.col + 0.5) / this.TREE_COLS * 100) + '%';
+    return ((this._brIdx(sk.br) * 3 + sk.col! + 0.5) / this.TREE_COLS * 100) + '%';
   },
-  _nodeY(id) { return this.TREE_TOP + SKILLS[id].tier * this.TREE_ROW; },
+  _nodeY(id: string) { return this.TREE_TOP + SKILLS[id].tier! * this.TREE_ROW; },
 
   buildTree() {
     const w = $('#tree-wrap'); if (!w) return;
@@ -43,7 +43,7 @@ export const TreeUIPart: Bag = {
 
     const grid = document.createElement('div');
     grid.className = 'bgrid';
-    const rows = 1 + Math.max(...Object.values(SKILLS).map(s => s.tier));
+    const rows = 1 + Math.max(...Object.values(SKILLS).map(s => s.tier!));
     grid.style.height = (this.TREE_TOP + (rows - 1) * this.TREE_ROW + this.TREE_BOX + 36) + 'px';
 
     // ② 잇는 선 — 칸보다 먼저 넣어야 뒤로 깔린다.
@@ -92,7 +92,7 @@ export const TreeUIPart: Bag = {
       btn.addEventListener('click', () => this.setSkillTab(btn.dataset.sktab));
     });
   },
-  setSkillTab(id) {
+  setSkillTab(id: string) {
     $$('#panel-skill .sk-tab').forEach(b => b.classList.toggle('on', b.dataset.sktab === id));
     $$('#panel-skill .sk-pane').forEach(p => p.classList.toggle('on', p.id === 'sk-pane-' + id));
     this.skillTab = id;
@@ -101,24 +101,24 @@ export const TreeUIPart: Bag = {
 
   /** 이 분기가 단을 여는 데 쓸 수 있는 점수 — 사연: docs/code-history.md#h91 */
   BR_CROSS: 0.5,
-  branchPts(brId) {
+  branchPts(brId: any) {
     const p = G.player;
     let own = 0, other = 0;
     for (const br of BRANCHES) for (const id of br.nodes)
-      (br.id === brId ? (n => own += n) : (n => other += n))(p.skills[id] || 0);
+      (br.id === brId ? ((n: number) => own += n) : ((n: number) => other += n))(p.skills[id] || 0);
     return own + Math.floor(other * this.BR_CROSS);
   },
   /** 이어진 윗칸 중 하나라도 배웠는가. */
-  reqMet(id) {
+  reqMet(id: string) {
     const req = SKILLS[id].req;
     if (!req || !req.length) return true;
     const p = G.player;
     return req.some(r => (p.skills[r] || 0) > 0);
   },
   /** 이 칸이 왜 잠겨 있는지 — 잠겨 있지 않으면 빈 문자열 */
-  lockReason(id) {
+  lockReason(id: string) {
     const sk = SKILLS[id];
-    const need = TIER_REQ[sk.tier], have = this.branchPts(sk.br);
+    const need = TIER_REQ[sk.tier!], have = this.branchPts(sk.br);
     /* 모자란 까닭을 **내역까지** 적는다. */
     if (have < need) {
       let own = 0;
@@ -128,19 +128,19 @@ export const TreeUIPart: Bag = {
       return tr('이 갈래에 {need}점 필요 (지금 {have}', { need, have }) +
         (lend > 0 ? ` ${tr('= 제 갈래 {own} + 다른 갈래 {lend}', { own, lend })}` : '') + ')';
     }
-    if (!this.reqMet(id)) { const nm = sk.req.map(r => SKILLS[r].n).join(` ${tr('또는')} `); return `${tr('윗단계')} ` + eulreul(nm) + ` ${tr('먼저')}`; }
+    if (!this.reqMet(id)) { const nm = sk.req!.map(r => SKILLS[r].n).join(` ${tr('또는')} `); return `${tr('윗단계')} ` + eulreul(nm) + ` ${tr('먼저')}`; }
     return '';
   },
-  skDesc(id, rank) {
+  skDesc(id: string, rank: any) {
     const sk = SKILLS[id];
     const r = Math.max(1, rank);
     let txt = sk.d;
-    if (sk.v) txt = txt.replace(/%d/g, sk.v(r));
-    else if (sk.b) { const b = sk.b(r); const vals = Object.values(b); let i = 0; txt = txt.replace(/%d/g, () => vals[i++] ?? 0); }
-    return txt.replace(/%%/g, '%');
+    if (sk.v) txt = txt!.replace(/%d/g, sk.v(r));
+    else if (sk.b) { const b = sk.b(r); const vals = Object.values(b); let i = 0; txt = txt!.replace(/%d/g, () => vals[i++] ?? 0); }
+    return txt!.replace(/%%/g, '%');
   },
   /** 칸 위에 올렸을 때의 설명. */
-  showSkillTip(id, e) {
+  showSkillTip(id: any, e: any) {
     const p = G.player, sk = SKILLS[id], rank = p.skills[id] || 0;
     const why = this.lockReason(id);
     const kind = sk.type === 'active' ? tr('액티브') : tr('패시브');
@@ -148,10 +148,10 @@ export const TreeUIPart: Bag = {
     h += `<div class="tmeta">${tr('{kind} · {rank}/{max} 랭크', { kind, rank, max: sk.max })}` +
       (sk.type === 'active' ? ` ${tr('· 마나 {mana} · 재사용 {cd}초', { mana: sk.mana, cd: sk.cd })}` : '') + `</div>`;
     h += `<div class="tdesc">${this.skDesc(id, rank)}</div>`;
-    if (rank > 0 && rank < sk.max)
+    if (rank > 0 && rank < sk.max!)
       h += `<div class="tnext">${tr('다음 랭크 — {skDesc}', { skDesc: this.skDesc(id, rank + 1) })}</div>`;
     if (why) h += `<div class="tbad">${why}</div>`;
-    else if (rank >= sk.max) h += `<div class="tdim">${tr('최대 랭크')}</div>`;
+    else if (rank >= sk.max!) h += `<div class="tdim">${tr('최대 랭크')}</div>`;
     else if (p.skillPts <= 0) h += `<div class="tbad">${tr('특성 포인트가 없다')}</div>`;
     else h += `<div class="tgood">${tr('좌클릭으로 습득{v}', { v: sk.type === 'active' ? ` ${tr('· 우클릭으로 슬롯 등록')}` : '' })}</div>`;
     this.tip.show(h, e.clientX, e.clientY);
@@ -162,16 +162,16 @@ export const TreeUIPart: Bag = {
     const p = G.player;
     /* 잠긴 칸은 열린 칸과 선으로 바로 이어진 것만 보인다 — 트리 전체를 처음부터 펼치면
        갈 길보다 못 갈 길이 더 많이 보인다. 열린 칸 = 배웠거나 지금 배울 수 있는 칸. */
-    const open = {};
+    const open: Bag = {};
     for (const id in SKILLS) open[id] = (p.skills[id] || 0) > 0 || !this.lockReason(id);
-    const seen = { ...open };
+    const seen: Bag = { ...open };
     for (const id in SKILLS) for (const r of (SKILLS[id].req || []))
       if (open[r] || open[id]) seen[id] = seen[r] = true;
     $$('#tree-wrap .node').forEach(el => {
       const id = el.dataset.sk, sk = SKILLS[id], rank = p.skills[id] || 0;
       const locked = !!this.lockReason(id);
-      const can = !locked && rank < sk.max && p.skillPts > 0;
-      el.className = 'node' + (rank > 0 ? ' learned' : '') + (rank >= sk.max ? ' maxed' : '') +
+      const can = !locked && rank < sk.max! && p.skillPts > 0;
+      el.className = 'node' + (rank > 0 ? ' learned' : '') + (rank >= sk.max! ? ' maxed' : '') +
         (locked ? ' locked' : '') + (can ? ' can' : '') + (p.slots.includes(id) ? ' active' : '') +
         (seen[id] ? '' : ' unseen');
       el.querySelector('.nrank').textContent = `${rank}/${sk.max}`;
@@ -186,10 +186,10 @@ export const TreeUIPart: Bag = {
     this.refreshStatAlloc();
   },
 
-  learn(id) {
+  learn(id: string) {
     const p = G.player, sk = SKILLS[id];
     if (p.skillPts <= 0) { this.toast(tr('특성 포인트가 없다'), 'bad'); return; }
-    if ((p.skills[id] || 0) >= sk.max) { this.toast(tr('이미 최대 랭크다'), 'bad'); return; }
+    if ((p.skills[id] || 0) >= sk.max!) { this.toast(tr('이미 최대 랭크다'), 'bad'); return; }
     const why = this.lockReason(id);
     if (why) { this.toast(why, 'bad'); return; }
     p.skillPts--; p.skills[id] = (p.skills[id] || 0) + 1;
@@ -205,7 +205,7 @@ export const TreeUIPart: Bag = {
   },
 
   /** 습득 연출 — 찍은 칸이 한 번 부풀고, 그 칸에서 뻗어 나가는 선에 빛이 흐른다. */
-  flashNode(id) {
+  flashNode(id: string) {
     const el = $(`#tree-wrap .node[data-sk="${id}"]`);
     if (el) {
       el.classList.remove('just'); void el.offsetWidth; el.classList.add('just');
@@ -230,7 +230,7 @@ export const TreeUIPart: Bag = {
     });
   },
 
-  assign(id) {
+  assign(id: string) {
     const p = G.player, sk = SKILLS[id];
     if (sk.type !== 'active' || !(p.skills[id] > 0)) return;
     const cur = p.slots.indexOf(id);
@@ -273,7 +273,7 @@ export const TreeUIPart: Bag = {
         `<div class="pbar"><i></i></div><div class="pxp"></div>` +
         `<div class="plin"></div>` +
         `<div class="pperks"></div>`;
-      d.querySelector('.pic').textContent = P.i;   // 그림 아이콘을 따로 굽지 않는다 — 이 둘뿐이라 글자로 충분하다
+      d.querySelector('.pic')!.textContent = P.i;   // 그림 아이콘을 따로 굽지 않는다 — 이 둘뿐이라 글자로 충분하다
       w.appendChild(d);
     }
   },
@@ -291,8 +291,8 @@ export const TreeUIPart: Bag = {
       el.querySelector('.pbar i').style.width = (capped ? 100 : Math.min(100, pr.xp / need * 100)) + '%';
       el.querySelector('.pxp').textContent = capped ? tr('더 오를 곳이 없다') : `${pr.xp} / ${need}`;
       el.querySelector('.plin').innerHTML = P.lin
-        .map(([n, f]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join('');
-      el.querySelector('.pperks').innerHTML = P.perks.map(([at, n, dsc]) =>
+        .map(([n, f]: [string, (lv: number) => any]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join('');
+      el.querySelector('.pperks').innerHTML = P.perks.map(([at, n, dsc]: any[]) =>
         `<div class="perk${pr.lv >= at ? ' on' : ''}"><span class="pk">Lv ${at}</span>` +
         `<span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>`).join('');
     }

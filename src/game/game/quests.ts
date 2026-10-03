@@ -18,14 +18,14 @@ import { Game } from '../game.js';
 export const QuestsPart: Bag = {
 
   /* ================= 의뢰의 목표 ================= */
-  objStart(o) {
+  objStart(o: Bag) {
     const p = this.player;
     if (o.type === 'kill') return p.kills[o.target] || 0;
     if (o.type === 'collect') return p.gathered[o.item] || 0;
     if (o.type === 'mine') return p.mined[o.tile] || 0;
     return 0;
   },
-  objSince(o, start) {
+  objSince(o: Bag, start: any) {
     const cur = clamp(this.objStart(o) - start, 0, o.n);
     return { cur, max: o.n, done: cur >= o.n };
   },
@@ -40,15 +40,15 @@ export const QuestsPart: Bag = {
     side: 0.75                // 부탁 한 건은 게시판 한 장의 4분의 3 (게시판은 하루 석 장뿐이다)
   },
   MAT_VAL: 12,                // 재료 기본값 — price() 는 시세를 타서 값이 흔들린다
-  xpNeed(lv) { return 40 * Math.pow(lv, 1.42); },
-  questPay(obj, mul) {
+  xpNeed(lv: number) { return 40 * Math.pow(lv, 1.42); },
+  questPay(obj: Bag, mul: number) {
     const Q = this.QUEST_PAY, lv = Math.max(1, this.player.level), m = mul || 1;
     const k = m * obj.n / (BOUNTY_UNIT[obj.type] || 12);
     const need = this.xpNeed(lv);
     const e = obj.type === 'kill' ? (ENEMIES[obj.target] || { gold: 0, xp: 0 }) : null;
-    const t = e ? clamp(e.xp * obj.n / need, Q.tMin, Q.tMax) : 1;
+    const t = e ? clamp(e.xp! * obj.n / need, Q.tMin, Q.tMax) : 1;
     let gold = (Q.g0 + Q.gL * lv) * k;
-    if (e) gold += e.gold * obj.n * Q.killG * m;
+    if (e) gold += e.gold! * obj.n * Q.killG * m;
     else {
       const id = obj.type === 'collect' ? obj.item : (TILE_DEF[obj.tile] || {}).drop;
       gold += (id ? (ITEM_VAL[id] || this.MAT_VAL) : 0) * obj.n * Q.matG * m;
@@ -59,20 +59,20 @@ export const QuestsPart: Bag = {
     };
   },
   /** 게시판 한 장의 값. */
-  bountyPay(b) {
+  bountyPay(b: any) {
     if (!b) return { gold: 0, xp: 0 };
     if (b.paid) return b.paid;
     if (!b.obj) return { gold: b.gold || 0, xp: b.xp || 0 };   // 아주 옛 저장
     return this.questPay(b.obj, b.mul === undefined ? 1 : b.mul);
   },
   /** 부탁 하나의 값. */
-  sidePay(sq) {
+  sidePay(sq: any) {
     const p = this.questPay(sq.obj, this.QUEST_PAY.side), r = sq.rw || {};
     return { gold: Math.max(p.gold, r.gold || 0), xp: Math.max(p.xp, r.xp || 0) };
   },
 
   /** 목표를 한 줄로 — "무덤지기 12마리" */
-  objLabel(o) {
+  objLabel(o: Bag) {
     if (o.type === 'kill') return `${ENEMIES[o.target].n} ${o.n}${mobCw(o.target)}`;
     if (o.type === 'collect') return tr('{item} {o}개', { item: ITEMS[o.item].n, o: o.n });
     if (o.type === 'mine') return tr('{tileDef} {o}번', { tileDef: TILE_DEF[o.tile].n, o: o.n });
@@ -80,10 +80,10 @@ export const QuestsPart: Bag = {
   },
 
   /* ---- 의뢰 게시판 ---- */
-  bountyFits(t, ch) {
+  bountyFits(t: any, ch: any) {
     return t && (!t.s || t.s === sessionOf(ch).id) && ch >= t.ch[0] && ch <= t.ch[1];
   },
-  makeBounty(t, r) {
+  makeBounty(t: any, r: any) {
     const obj = t.obj(r, this.chapter);
     return {
       id: t.id, title: t.title, from: t.from, body: t.body,
@@ -94,8 +94,8 @@ export const QuestsPart: Bag = {
   rollBounties() {
     const r = new RNG(this.world.seed + '_b' + this.dayCount);
     const ch = this.chapter || 0;
-    const out = [];
-    const take = t => {
+    const out: Bag[] = [];
+    const take = (t: any) => {
       if (!t || out.length >= 3 || out.some(b => b.id === t.id)) return;
       out.push(this.makeBounty(t, r));
     };
@@ -111,20 +111,20 @@ export const QuestsPart: Bag = {
     while (out.length < 3 && pool.length) take(pool.splice(r.int(0, pool.length - 1), 1)[0]);
     this.bounties = out;
   },
-  bountyProgress(b) {
+  bountyProgress(b: any) {
     /* 옛 저장(잡을 것 하나만 적혀 있던 시절)도 읽을 수 있게 둔다 */
     if (!b.obj) return { cur: 0, max: b.n || 1, done: false };
     return this.objSince(b.obj, b.start);
   },
-  claimBounty(i) {
+  claimBounty(i: number) {
     const b = this.bounties[i]; if (!b || b.done) return;
     if (!this.bountyProgress(b).done) { this.toast(tr('아직 다 하지 못했다'), 'bad'); return; }
     const p = this.player, pay = this.bountyPay(b);
     b.done = 1; b.paid = pay;          // 떼어 간 뒤에도 종이에 받은 값이 남는다
     p.addXp(pay.xp); p.gold += pay.gold;
     for (const [id, n] of (b.items || [])) {
-      const it = ITEMS[id].stack > 1 ? makeItem(id, n) : rollGear(id, this.rng, 1);
-      if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+      const it = ITEMS[id].stack! > 1 ? makeItem(id, n) : rollGear(id, this.rng, 1);
+      if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
     }
     /* 뒷이야기는 오늘 바로 붙지 않는다 — 다음에 게시판이 갈릴 때 붙는다. */
     if (b.next && !(this.bountyNext || []).includes(b.next)) {
@@ -135,8 +135,8 @@ export const QuestsPart: Bag = {
   },
 
   /* ---- 사이드 퀘스트 ---- */
-  sideProgress(sq) { return this.objSince(sq.obj, sq.start); },
-  sideTalk(npcId) {
+  sideProgress(sq: any) { return this.objSince(sq.obj, sq.start); },
+  sideTalk(npcId: string) {
     const active = this.sideActive[npcId];
     if (active) {
       const p = this.sideProgress(active);
@@ -157,18 +157,18 @@ export const QuestsPart: Bag = {
       { t: tr('(다음에 하겠다)'), fn: () => UI.closeDialogue() }
     ]);
   },
-  acceptSideQuest(npcId, tpl) {
+  acceptSideQuest(npcId: string, tpl: any) {
     this.sideActive[npcId] = Object.assign({}, tpl, { start: this.objStart(tpl.obj) });
     this.toast(tr('부탁을 맡았다: {title}', { title: tpl.title }), 'good');
     UI.refreshQuest(); UI.refreshTracker();
   },
-  completeSideQuest(npcId) {
+  completeSideQuest(npcId: string) {
     const sq = this.sideActive[npcId]; if (!sq) return;
     const p = this.player, pay = this.sidePay(sq);
     p.addXp(pay.xp); p.gold += pay.gold;
     for (const [id, n] of (sq.rw.items || [])) {
-      const it = ITEMS[id].stack > 1 ? makeItem(id, n) : rollGear(id, this.rng, 1);
-      if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+      const it = ITEMS[id].stack! > 1 ? makeItem(id, n) : rollGear(id, this.rng, 1);
+      if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
     }
     this.sideDone[npcId] = (this.sideDone[npcId] || 0) + 1;
     delete this.sideActive[npcId];
@@ -185,8 +185,8 @@ export const QuestsPart: Bag = {
     else if (st.ready) this.toast(tr('{session} · 목표 — {v}', { session, v: st.goal ? st.goal.o.t : tr('이 장의 마지막') }));
     else {
       // 아직 준비 중이면 고유 동사 쪽을 먼저 알려 준다 — 그게 이 장의 이야기다
-      const pick = st.basics.find(b => !b.p.done && st.missing.includes(b.o.verb))
-                || st.basics.find(b => !b.p.done);
+      const pick = st.basics.find((b: any) => !b.p.done && st.missing.includes(b.o.verb))
+                || st.basics.find((b: any) => !b.p.done);
       this.toast(tr('{session} · 준비 {done}/{need}', { session, done: st.done, need: st.need }) + (pick ? ` · ${pick.o.t} (${pick.p.label || pick.p.cur + "/" + pick.p.max})` : ''));
     }
     UI.togglePanel('quest');

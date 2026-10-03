@@ -21,7 +21,7 @@ export const VillagePart: Bag = {
     return (d && d.restored) ? (d.lv || 1) : 0;
   },
   /** 지금 여명 마을 안에 있는가 (마을 회관·경비병 판정용) */
-  inDawn(margin) {
+  inDawn(margin: any) {
     const d = this.world && this.world.dawnCity;
     if (!d || !d.restored) return false;
     const p = this.player, m = margin === undefined ? 24 : margin;
@@ -33,18 +33,18 @@ export const VillagePart: Bag = {
     if (!lv) { this.toast(tr('아직 마을이 없다'), 'bad'); return; }
     if (lv >= VILLAGE.length - 1) { this.toast(tr('더 올릴 단계가 없다'), 'bad'); return; }
     const spec = VILLAGE[lv + 1], p = this.player;
-    if (!p.hasAll(spec.need)) { this.toast(tr('재료가 부족하다'), 'bad'); return; }
-    for (const k in spec.need) p.removeItem(k, spec.need[k]);
+    if (!p.hasAll(spec!.need)) { this.toast(tr('재료가 부족하다'), 'bad'); return; }
+    for (const k in spec!.need) p.removeItem(k, spec!.need[k]);
     this.world.upgradeVillage(lv + 1);
     while (this.vault.length < this.vaultCap()) this.vault.push(null);
     // 밭을 내주는 단계 — 연장과 씨앗을 바로 쥐여 준다(밭 한가운데 상자는 뜬금없어 보였다). 가방이 차면 발밑에
     if (lv + 1 === 2) {
-      for (const [id, n] of FARM_KIT) { const it = makeItem(id, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); }
+      for (const [id, n] of FARM_KIT) { const it = makeItem(id, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!)); }
       this.toast(tr('마을 서쪽에 밭을 내주었다 — 괭이·낫·씨앗을 받았다'), 'good');
     }
-    this.toast(tr('마을이 『{spec}』{spec|-이} 되었다', { spec: spec.n }), 'good');
+    this.toast(tr('마을이 『{spec}』{spec|-이} 되었다', { spec: spec!.n }), 'good');
     for (let i = 0; i < 40; i++) this.parts.push(new Part(p.cx + (Math.random() - .5) * 200, p.cy, '#ffe08a', -70, 1.2));
-    UI.chapterCard({ sub: tr('마을 개선'), title: spec.n, line: spec.d });
+    UI.chapterCard({ sub: tr('마을 개선'), title: spec!.n, line: spec!.d });
     UI.refreshBag(); this.sfx('chapter');
   },
   /* 마을 단계가 주는 혜택 — 여러 곳에서 쓰이므로 한군데 모아 둔다 */
@@ -80,13 +80,13 @@ export const VillagePart: Bag = {
   },
 
   /** 이 제작법을 지금 쓸 수 있는가 — 시설 종류와 그 개체의 개조 단계를 함께 본다 */
-  craftOk(r) {
+  craftOk(r: any) {
     if (!r.station) return true;
     const o = this.nearStObj[r.station];
     return !!o && (o.lv || 1) >= (r.lv || 1);
   },
   /** 시설 개조. */
-  upgradeStation(kind) {
+  upgradeStation(kind: string) {
     const o = this.nearStObj[kind];
     if (!o) { this.toast(tr('{stationName} 앞에서만 개조할 수 있다', { stationName: STATION_NAME[kind][1] }), 'bad'); return; }
     const lv = o.lv || 1;
@@ -100,21 +100,21 @@ export const VillagePart: Bag = {
     for (let i = 0; i < 22; i++) this.parts.push(new Part(p.cx, p.cy, kind === 'forge' ? '#ff9a3a' : '#d8b06a', -50, 0.8));
     UI.refreshCraft(); UI.refreshBag(); this.sfx('craft');
   },
-  craft(i) {
+  craft(i: number) {
     const r = RECIPES[i], p = this.player;
     const st = r.station ? this.nearStObj[r.station] : null;
     if (r.station && !st) {
       this.toast(tr('{stationName} 앞에서만 만들 수 있다', { stationName: STATION_NAME[r.station][1] }), 'bad'); return;
     }
     if (r.station && (st.lv || 1) < (r.lv || 1)) {
-      const nm = STATION_NAME[r.station][r.lv];
+      const nm = STATION_NAME[r.station][r.lv!];
       this.toast(tr('{nm|으로} 개조해야 만들 수 있다', { nm }), 'bad'); return;
     }
     if (!p.hasAll(r.need)) { this.toast(tr('재료가 부족하다'), 'bad'); return; }
     for (const k in r.need) p.removeItem(k, r.need[k]);
-    const out = isGear(makeItem(r.out)) ? rollGear(r.out, this.rng, 1) : makeItem(r.out, r.n);
-    if (out.c !== undefined && !isGear(out)) out.c = r.n;
-    if (!p.addItem(out)) { this.drops.push(new Drop(p.cx, p.cy, out)); }
+    const out = isGear(makeItem(r.out)!) ? rollGear(r.out, this.rng, 1) : makeItem(r.out, r.n);
+    if (out!.c !== undefined && !isGear(out!)) out!.c = r.n;
+    if (!p.addItem(out)) { this.drops.push(new Drop(p.cx, p.cy, out!)); }
     this.crafted = this.crafted || {};
     this.crafted[r.out] = (this.crafted[r.out] || 0) + 1;
     this.checkAch();
@@ -125,21 +125,21 @@ export const VillagePart: Bag = {
   /* ---- 강화: 장비 수치를 한 단계씩 올린다 (여명 교역지 4단계, 강화 모루) ---- */
   ENH_MAX: 10,
   /* 실패 확률 — 낮은 단계는 **반드시 성공한다.** */
-  enhFail(e) { return e < 2 ? 0 : Math.min(0.45, (e - 1) * 0.07); },
+  enhFail(e: any) { return e < 2 ? 0 : Math.min(0.45, (e - 1) * 0.07); },
   /* 파괴 확률 — 한 단계 떨어진다. +4 부터 5%씩(+9 에서 30%) — 실패와 따로 굴리지 않고 한 번에 가른다. */
-  enhBreak(e) { return e < 4 ? 0 : (e - 3) * 0.05; },
+  enhBreak(e: any) { return e < 4 ? 0 : (e - 3) * 0.05; },
   /** 단계마다 갈아타는 재료 — 무엇을 캐러 갈 때인지가 재료로 드러난다 */
-  enhMat(e) {
+  enhMat(e: any) {
     return e < 3 ? { id: 'iron_bar', n: 2 + e }
       : e < 6 ? { id: 'steel_plate', n: 2 + e }
         : e < 9 ? { id: 'mythril_bar', n: 2 + e }
           : { id: 'abyss_core', n: e - 6 };
   },
-  enhCost(it) {
+  enhCost(it: Bag) {
     const e = it.e || 0;
     return Math.round((this.price(it) * 0.5 + 300 * this.costMul()) * (1 + e * 0.6));
   },
-  enhanceSlot(i) {
+  enhanceSlot(i: number) {
     const p = this.player, it = p.bag[i];
     if (!it || !isGear(it)) { this.toast(tr('장비만 강화할 수 있다'), 'bad'); return; }
     const d = idef(it);
@@ -175,17 +175,17 @@ export const VillagePart: Bag = {
   },
 
   /* ---- 재련: 금화를 내고 장비의 접사를 다시 굴린다 ---- */
-  reforgeCost(it) { return Math.round((this.price(it) * 0.8 + 120 * this.costMul()) * (this.villageLv() >= 3 ? 0.75 : 1)); },
-  reforgeSlot(i) {
+  reforgeCost(it: Bag) { return Math.round((this.price(it) * 0.8 + 120 * this.costMul()) * (this.villageLv() >= 3 ? 0.75 : 1)); },
+  reforgeSlot(i: number) {
     const p = this.player, it = p.bag[i];
     if (!it || !isGear(it)) { this.toast(tr('장비만 재련할 수 있다'), 'bad'); return; }
     const cost = this.reforgeCost(it);
     if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
     p.gold -= cost;
     const fresh = rollGear(it.id, this.rng, Math.max(1, it.r));
-    fresh.c = it.c;
+    fresh!.c = it.c;
     p.bag[i] = fresh;
-    this.toast(tr('{itemName} — 다시 벼렸다', { itemName: itemName(fresh) }), fresh.r > it.r ? 'good' : '');
+    this.toast(tr('{itemName} — 다시 벼렸다', { itemName: itemName(fresh!) }), fresh!.r > it.r ? 'good' : '');
     UI.refreshReforge(); UI.refreshBag(); this.sfx('craft');
   },
 };

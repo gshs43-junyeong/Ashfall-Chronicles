@@ -10,7 +10,7 @@ import { BEACH_W, DAWN_OBJ, TS, World } from '../world.js';
 export const WorldSea: Bag & ThisType<World> = {
 
   /* ================= 가라앉은 바다 (세션 3) ================= */
-  buildSea(rng, n1) { const { WSX, SX, WW, WH, SEA_X1, GLACIER_X1 } = this.dims;
+  buildSea(rng: RNG, n1: any) { const { WSX, SX, WW, WH, SEA_X1, GLACIER_X1 } = this.dims;
     this.pools = this.pools || [];      // floodCaves보다 먼저 돌 수 있으므로 없으면 만든다
     const shore = SEA_X1;
     this.seaLevel = this.surface[shore] + 1;              // 수면 = 물가 지면 한 칸 아래
@@ -302,8 +302,8 @@ export const WorldSea: Bag & ThisType<World> = {
 
   /** 세계 전체 마무리 검사 — 웅덩이 하나하나를 다듬는 _levelLiquid로는 못 잡는 것이 있다. */
   sealLiquids() { const { WW, WH } = this.dims;
-    const isQ = t => t === T.WATER || t === T.LAVA;
-    let queue = [];
+    const isQ = (t: any) => t === T.WATER || t === T.LAVA;
+    let queue: number[] = [];
     // 바다는 통째로 물이라 이 검사를 태우면 가장자리부터 통째로 말라 버린다 — 건너뛴다
     const sx0 = this.sea ? this.sea.x1 + 2 : 3;
     for (let y = 5; y < WH - 4; y++)
@@ -311,7 +311,7 @@ export const WorldSea: Bag & ThisType<World> = {
         if (isQ(this.get(x, y))) queue.push(y * WW + x);
     let guard = 0;
     while (queue.length && guard++ < 60) {
-      const next = [];
+      const next: number[] = [];
       for (const k of queue) {
         const x = k % WW, y = (k / WW) | 0;
         if (!isQ(this.get(x, y))) continue;
@@ -332,9 +332,9 @@ export const WorldSea: Bag & ThisType<World> = {
   },
 
   /** 액체 덩어리를 "말이 되는 모양"으로 다듬는다. */
-  _levelLiquid(cells, liquid) {
+  _levelLiquid(cells: any, liquid: any) {
     const q = liquid || T.WATER;
-    let live = cells.filter(([x, y]) => this.get(x, y) === q);
+    let live = cells.filter(([x, y]: number[]) => this.get(x, y) === q);
     for (let pass = 0; pass < 8 && live.length; pass++) {
       let changed = false;
 
@@ -349,7 +349,7 @@ export const WorldSea: Bag & ThisType<World> = {
         }
         if (!leak.length) break;
         for (const [x, y] of leak) this.set(x, y, T.AIR);
-        live = live.filter(([x, y]) => this.get(x, y) === q);
+        live = live.filter(([x, y]: number[]) => this.get(x, y) === q);
         changed = true;
       }
 
@@ -360,19 +360,19 @@ export const WorldSea: Bag & ThisType<World> = {
         const below = rows.get(y + 1);
         if (!below) break;
         const here = new Set(rows.get(y));
-        if (!below.some(x => !here.has(x) && this.get(x, y) === T.AIR)) break;
+        if (!below.some((x: number) => !here.has(x) && this.get(x, y) === T.AIR)) break;
         for (const x of rows.get(y)) this.set(x, y, T.AIR);
         rows.delete(y);
         changed = true;
       }
-      live = live.filter(([x, y]) => this.get(x, y) === q);
+      live = live.filter(([x, y]: number[]) => this.get(x, y) === q);
       if (!changed) break;
     }
     return live;
   },
 
   /** 웅덩이 채우기 — (x, y0)를 바닥으로 삼아 물이 새지 않는 만큼만 위로 쌓는다. */
-  _fillBasin(x, y0, maxDepth, maxWidth, commit, liquid) { const { WW } = this.dims;
+  _fillBasin(x: number, y0: number, maxDepth: any, maxWidth: any, commit: any, liquid: any) { const { WW } = this.dims;
     const filled = [];
     const mark = new Set();
     for (let d = 0; d < maxDepth; d++) {
@@ -407,14 +407,14 @@ export const WorldSea: Bag & ThisType<World> = {
   },
 
   /** 이 x열에서 (x, yFrom) 아래로 처음 만나는 "고체 위의 빈칸"을 찾는다 */
-  _floorBelow(x, yFrom, limit) { const { WH } = this.dims;
+  _floorBelow(x: number, yFrom: any, limit: any) { const { WH } = this.dims;
     for (let y = yFrom; y < Math.min(WH - 6, yFrom + limit); y++) {
       if (this.get(x, y) === T.AIR && TILE_DEF[this.get(x, y + 1)].solid) return y;
     }
     return -1;
   },
   /** 같은 열에서 가장 낮은 바닥 — 큰 동굴은 중간에 선반이 여러 겹이라 첫 바닥이 진짜 바닥이 아니다 */
-  _deepFloor(x, yTop, yBot) { const { WH } = this.dims;
+  _deepFloor(x: number, yTop: number, yBot: number) { const { WH } = this.dims;
     let found = -1;
     for (let y = yTop; y < Math.min(WH - 6, yBot); y++) {
       if (this.get(x, y) === T.AIR && TILE_DEF[this.get(x, y + 1)].solid) found = y;
@@ -422,7 +422,7 @@ export const WorldSea: Bag & ThisType<World> = {
     return found;
   },
   /** y 언저리에서 바닥 높이를 찾는다 (평탄한지 재는 데 쓴다) */
-  _floorNear(x, y) { const { WORLD_BOT } = this.dims;
+  _floorNear(x: number, y: number) { const { WORLD_BOT } = this.dims;
     for (let d = -2; d <= 3; d++) {
       const yy = y + d;
       if (yy < 6 || yy >= WORLD_BOT - 6) continue;
@@ -432,7 +432,7 @@ export const WorldSea: Bag & ThisType<World> = {
   },
 
   /** 바닥에 그릇 모양을 파고 물을 채운다. */
-  _carveBasin(cx, floorY, halfW, depth, liquid) { const { WW } = this.dims;
+  _carveBasin(cx: number, floorY: number, halfW: any, depth: number, liquid: any) { const { WW } = this.dims;
     const cells = [];
     for (let dx = -halfW; dx <= halfW; dx++) {
       const x = cx + dx;

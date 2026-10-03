@@ -6,7 +6,7 @@ import { TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
 export const TilePaintVillage: Bag = {
-  glowcap(H) {
+  glowcap(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         const specs = [[TS / 2 + rng.range(-1, 1), 12, 7, 5], [7 + rng.range(-1, 1), 7, 4, 3]];
@@ -26,7 +26,7 @@ export const TilePaintVillage: Bag = {
     }
   },
   /* ---------- 마을 건축 ---------- */
-  thatch(H) {
+  thatch(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, dk);
@@ -42,7 +42,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  rooftile(H) {
+  rooftile(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, dk2);
@@ -59,7 +59,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  timber(H) {
+  timber(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);            // 회반죽
@@ -74,7 +74,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  ashlar(H) {
+  ashlar(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);            // 다듬은 큰 돌
@@ -92,7 +92,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  battlement(H) {
+  battlement(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 흉벽: 아래는 꽉 찬 벽, 위는 이가 빠져 있다 (총안)
@@ -107,7 +107,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  windowtile(H) {
+  windowtile(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         const fr = '#6a4a2a', frl = shade(fr, 1.3);
@@ -123,7 +123,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  fencetile(H) {
+  fencetile(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         R(2, 6, 3, TS - 6, base);               // 기둥 둘
@@ -136,7 +136,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  lamppost(H) {
+  lamppost(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         const pole = '#4a4a52';
@@ -154,7 +154,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  bannertile(H) {
+  bannertile(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         R(1, 0, TS - 2, 2.5, '#6a4a2a');        // 가로대
@@ -169,7 +169,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  hay(H) {
+  hay(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);
@@ -183,7 +183,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  sandbagtile(H) {
+  sandbagtile(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, dk2);
@@ -198,7 +198,7 @@ export const TilePaintVillage: Bag = {
     }
   },
   /* ---------- 농업 ---------- */
-  farmland(H) {
+  farmland(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 옆에서 본 밭 — 세로 줄무늬로 그리면 울타리처럼 보여서, 위에 갈아엎은 흙두둑을 얹는다
@@ -218,7 +218,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  crop(H) {
+  crop(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 줄기를 같은 간격·같은 높이로 세우면 울타리처럼 보인다.
@@ -284,7 +284,7 @@ export const TilePaintVillage: Bag = {
             g.fillStyle = base;
             g.beginPath(); g.ellipse(ox + tx + .9, oy + ty + 3, 5, 4, 0, Math.PI, 2 * Math.PI); g.fill();
             g.fillStyle = shade(base, .72);
-            R(tx - 4, ty + 2.4, 10, 1.4);
+            R(tx - 4, ty + 2.4, 10, 1.4, shade(base, .72));   // ★ 색을 빠뜨리면 바로 위 fillStyle 이 우연히 쓰였다
             R(tx + .2, ty + 3, 1.8, h - 4, '#e8dcc0');
             R(tx - 2, ty + .6, 1.4, 1.4, '#fff2d8');
             R(tx + 2.4, ty + 1.4, 1.2, 1.2, '#fff2d8');
@@ -295,7 +295,7 @@ export const TilePaintVillage: Bag = {
     }
   },
   /* ---------- 마을 기계 ---------- */
-  mk_windmill(H) {
+  mk_windmill(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         R(TS / 2 - 4, 9, 8, TS - 9, base);      // 탑
@@ -317,7 +317,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  mk_mill(H) {
+  mk_mill(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._mkBody(g, ox, oy, base, R);
@@ -336,7 +336,7 @@ export const TilePaintVillage: Bag = {
       }
     }
   },
-  mk_sprinkler(H) {                             // 스프링클러 — 물통 받침 위에 선 관 · 도는 꼭지
+  mk_sprinkler(H: TilePaintKit) {                             // 스프링클러 — 물통 받침 위에 선 관 · 도는 꼭지
     const { g, ox, oy, R, base } = H;
     this._mkBody(g, ox, oy, base, R);
     R(5, 9, TS - 10, TS - 13, '#3a5a78');        // 물통 창

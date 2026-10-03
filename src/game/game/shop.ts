@@ -22,7 +22,7 @@ export const ShopPart: Bag = {
     this.tally.trade = (this.tally.trade || 0) + 1;
     this.checkAch();
   },
-  sellItem(slot) {
+  sellItem(slot: number) {
     const p = this.player, it = p.bag[slot];
     if (!it) return;
     if (it.lk) { this.toast(tr('잠긴 물건은 팔 수 없다 (Ctrl+좌클릭으로 해제)'), 'bad'); return; }
@@ -39,10 +39,10 @@ export const ShopPart: Bag = {
     this.market = {};   // 품목별 시세는 필요할 때(marketRate) 그날 시드로 다시 뽑는다
   },
   /* ---- 떠돌이 상인 재고 ---- */
-  merchantOf(npc) { return MERCHANTS.find(m => m.npc === npc); },
+  merchantOf(npc: any) { return MERCHANTS.find(m => m.npc === npc); },
 
   /** 장비상 후보 — 지금 플레이어가 들 수 있는 것만 고른다. */
-  equipPool(spec) {
+  equipPool(spec: Bag) {
     const lim = this.player.level + (spec.lvSlack || 0);
     const out = [];
     for (const id in ITEMS) {
@@ -59,7 +59,7 @@ export const ShopPart: Bag = {
   },
 
   /** 한 상인의 오늘 재고. */
-  stockOf(npc) {
+  stockOf(npc: any) {
     const m = this.merchantOf(npc); if (!m) return [];
     if (this.shopStockDay !== this.dayCount) { this.shopStock = {}; this.shopStockDay = this.dayCount; }
     if (!this.shopStock[npc]) {
@@ -68,7 +68,7 @@ export const ShopPart: Bag = {
       const sess = sessionOf(this.chapter);
       /* 마을 단계(vlv) 조건은 **마을 상인에게만** 건다. */
       const vlv = m.spot ? this.villageLv() : 99;
-      const bag = (m.pool ? m.pool.filter(e => (e.sess || 1) <= sess && (e.vlv || 1) <= vlv)
+      const bag = (m.pool ? m.pool.filter((e: any) => (e.sess || 1) <= sess && (e.vlv || 1) <= vlv)
                           : this.equipPool(m.equip));
       // 4단계(교역지)가 되면 마을 상인 셋만 재고 칸이 한 칸씩 늘어난다
       const slots = m.slots + (m.spot && this.villageLv() >= 4 ? 1 : 0);
@@ -91,7 +91,7 @@ export const ShopPart: Bag = {
     return this.shopStock[npc];
   },
   /** 떠돌이 상인에게서 산다 — 재고에서 실제로 덜어 낸다(고정 상점의 buy와 다른 점) */
-  buyStock(npc, slotIdx) {
+  buyStock(npc: any, slotIdx: any) {
     const p = this.player, m = this.merchantOf(npc), stock = this.stockOf(npc);
     const row = stock[slotIdx]; if (!row || !m) return;
     const it = makeItem(row.id, row.c, 0);
@@ -104,7 +104,7 @@ export const ShopPart: Bag = {
     UI.refreshChest(); UI.refreshBag(); this.sfx('coin');
     this.tradeDone();
   },
-  marketRate(id) {
+  marketRate(id: string) {
     if (!(id in this.market)) {
       const r = new RNG(this.world.seed + '_m' + this.dayCount + '_' + id);
       this.market[id] = 0.85 + r.next() * 0.3;   // 품목별 0.85~1.15
@@ -113,14 +113,14 @@ export const ShopPart: Bag = {
   },
   /* 상점에서 **사는** 값. */
   SHOP_BUY_MUL: 6,
-  buyPrice(it, markup, npc) {
+  buyPrice(it: Bag, markup: any, npc: any) {
     /* 값이 고정된 물건은 가게 배수도 상인 웃돈도 안 붙인다 — 조련사에게 사는 알이 늘 10,000 / 30,000 / 100,000 이어야 한다. */
     if (idef(it).fixed) return this.price(it);
     // disc — 그 상인만의 할인(베이스캠프 보린).
     const disc = (npc && NPCS[npc] && NPCS[npc].disc) || 1;
     return Math.max(1, Math.round(this.price(it) * this.SHOP_BUY_MUL * (markup || 1) * disc));
   },
-  price(it) {
+  price(it: Bag) {
     const d = idef(it);
     /* 값은 data.js 의 ITEM_VAL 이 한 벌로 매긴다 — 재료는 어디서 나오는지로, 만드는 것은 재료값으로, 못 만드는 장비는 필요 레벨로. */
     let base = ITEM_VAL[it.id];
@@ -137,8 +137,8 @@ export const ShopPart: Bag = {
     return Math.max(1, Math.round(raw));
   },
   /** 가게가 한 번에 파는 묶음 크기. */
-  shopBundle(id) { return ITEMS[id].fixed ? 1 : (ITEMS[id].stack > 1 ? 5 : 1); },
-  buy(id, npc) {
+  shopBundle(id: string) { return ITEMS[id].fixed ? 1 : (ITEMS[id].stack! > 1 ? 5 : 1); },
+  buy(id: string, npc: any) {
     const p = this.player;
     const it = makeItem(id, this.shopBundle(id), 0);
     const cost = this.buyPrice(it, 1, npc);

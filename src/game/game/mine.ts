@@ -21,7 +21,7 @@ import { Game } from '../game.js';
 export const MinePart: Bag = {
 
   /* ================= 좌클릭: 채굴 또는 공격 ================= */
-  leftHold(dt) {
+  leftHold(dt: number) {
     const p = this.player, w = this.world;
     const held = p.held();
     const hd = held && idef(held);
@@ -30,7 +30,7 @@ export const MinePart: Bag = {
     if (hd && hd.type === 'rod') return;
     if (p.attackReady()) p.doAttack(this.input.wx, this.input.wy);
   },
-  mine(dt, tool) { const { WW } = dimsOf(this.world);
+  mine(dt: number, tool: any) { const { WW } = dimsOf(this.world);
     const p = this.player, w = this.world;
     const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
     if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { p.mineTx = -1; return; }
@@ -117,15 +117,15 @@ export const MinePart: Bag = {
   },
 
   /* ================= 농사 숙련 ================= */
-  harvestBonus(tx, ty, def, tool) {
+  harvestBonus(tx: any, ty: any, def: any, tool: any) {
     const p = this.player, lv = p.profLv('farm');
-    const at = (it) => this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it));
+    const at = (it: Bag) => this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it));
     // 별무늬 낫(reap)은 벤 자리마다 한 번 더 여문 것이 딸려 온다
     const reap = !!(tool && tool.reap);
 
     // ① 씨앗 — 3레벨 '고른 씨앗'부터는 반드시 하나 이상 돌아온다
     let seeds = (lv >= 3 ? 1 : 0) + (Math.random() < 0.5 + (lv - 1) * 0.04 ? 1 : 0);
-    if (seeds > 0) at(makeItem(def.crop.seed, seeds));
+    if (seeds > 0) at(makeItem(def.crop.seed, seeds)!);
 
     // ② 수확물 한 번 더 — 레벨마다 5%씩.
     const yieldId = def.drop;
@@ -134,7 +134,7 @@ export const MinePart: Bag = {
       if (Math.random() < (lv - 1) * 0.05) extra++;
       if (lv >= 6 && Math.random() < 0.25) extra++;
       if (reap) extra++;
-      if (extra > 0) at(makeItem(yieldId, extra));
+      if (extra > 0) at(makeItem(yieldId, extra)!);
     }
 
     // ③ 10레벨 '풍요의 손' — 거둔 자리에 저절로 다시 심긴다
@@ -147,27 +147,27 @@ export const MinePart: Bag = {
   },
 
   /** 타일 하나가 부서질 때 떨어질 것을 굴린다. */
-  dropTile(x, y, id) {
+  dropTile(x: number, y: number, id: number) {
     const d = TILE_DEF[id];
     let out = d.drop;
     if (d.leafDrop) { const r = this.rng.weighted(d.leafDrop); out = r === 'none' ? null : r; }
-    if (out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(out, d.dropN && out === d.drop ? this.rng.int(d.dropN[0], d.dropN[1]) : 1)));
+    if (out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(out, d.dropN && out === d.drop ? this.rng.int(d.dropN[0], d.dropN[1]) : 1)!));
     // 장식이면 그 장식도 하나 — 옮겨 놓을 수 있게(data.js 의 deco 절).
     const deco = DECO_OF[id];
-    if (deco && deco !== out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(deco, 1)));
+    if (deco && deco !== out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(deco, 1)!));
   },
 
   /** 벌목 — 기둥을 자르면 그 위 기둥이 무너지고, 살아 있는 기둥에서 떨어져 나간 잎 *덩어리**가 통째로 함께 떨어진다. */
-  fellTree(tx, ty, wasTrunk) { const { WW } = dimsOf(this.world);
+  fellTree(tx: number, ty: number, wasTrunk: any) { const { WW } = dimsOf(this.world);
     const w = this.world;
-    const leafy = id => !!TILE_DEF[id].leaf;
+    const leafy = (id: number) => !!TILE_DEF[id].leaf;
 
     // 1) 기둥 — 잘린 높이(ty)와 그 위쪽만 무너진다.
     if (wasTrunk) {
       const st = [[tx, ty - 1], [tx - 1, ty], [tx + 1, ty]];
       let guard = 0;
       while (st.length && guard++ < 600) {
-        const [x, y] = st.pop();
+        const [x, y] = st.pop()!;
         if (y > ty || Math.abs(x - tx) > 3 || w.get(x, y) !== T.WOOD) continue;
         w.set(x, y, T.AIR);
         this.dropTile(x, y, T.WOOD);
@@ -185,7 +185,7 @@ export const MinePart: Bag = {
         seen.add(y * WW + x);
         let touching = false, guard = 0;
         while (st.length && guard++ < 900) {
-          const [cx, cy] = st.pop();
+          const [cx, cy] = st.pop()!;
           group.push([cx, cy]);
           for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
             const nx = cx + dx, ny = cy + dy, nid = w.get(nx, ny);
@@ -212,7 +212,7 @@ export const MinePart: Bag = {
   },
 
   /** 폭탄 던지기 — 커서 쪽으로. */
-  throwBomb(slot) {
+  throwBomb(slot: number) {
     const p = this.player, it = p.bag[slot], d = idef(it);
     if (!it) return;
     const dx = this.input.wx - p.cx, dy = this.input.wy - p.cy;
@@ -227,7 +227,7 @@ export const MinePart: Bag = {
   },
 
   /** (tx, ty) 바로 위로 전주 기둥이 내려오는가 — factory.js가 기둥을 그리는 규칙 (전주 칸 아래로 첫 고체를 만날 때까지)과 같은 판정이다. */
-  _poleAbove(tx, ty) {
+  _poleAbove(tx: number, ty: number) {
     const w = this.world;
     for (let y = ty - 1; y >= ty - 40 && y > 2; y--) {
       const m = Factory.at(w, tx, y);
@@ -282,8 +282,8 @@ export const MinePart: Bag = {
         if (!Factory.canPlace(w, mtx, mty)) { this.toast(tr('그 자리에는 놓을 수 없다'), 'bad'); return; }
         // 벨트 말고는 몸이 있는 기계다 — 제 몸이나 몹이 선 칸에 놓으면 그 안에 낀다
         const cell = { x: mtx * TS, y: mty * TS, w: TS, h: TS };
-        if (TILE_DEF[MACHINE[idef(hi).mach].tile].solid === 1 &&
-            (aabb(cell, p.rect()) || this.ents.some(e => !e.dead && aabb(cell, e.rect())))) {
+        if (TILE_DEF[MACHINE[idef(hi).mach!].tile!].solid === 1 &&
+            (aabb(cell, p.rect()) || this.ents.some((e: Enemy) => !e.dead && aabb(cell, e.rect())))) {
           this.toast(tr('누가 서 있는 자리다'), 'bad'); return;
         }
         const placed = Factory.place(w, mtx, mty, idef(hi).mach, this.placeDirFor(idef(hi).mach));
@@ -350,9 +350,9 @@ export const MinePart: Bag = {
       if (w.inLockedVault(tx, ty)) { this.toast(tr('잠긴 골방 안에는 놓을 수 없다'), 'bad'); return; }
       if (w.inRig(tx, ty)) { this.toast(tr('채취탑 자리에는 놓을 수 없다'), 'bad'); return; }
       const tileId = idef(held).tile;
-      if (TILE_DEF[tileId].solid === 1 && aabb({ x: tx * TS, y: ty * TS, w: TS, h: TS }, p.rect())) return;
+      if (TILE_DEF[tileId!].solid === 1 && aabb({ x: tx * TS, y: ty * TS, w: TS, h: TS }, p.rect())) return;
       // 장식은 기댈 데가 있어야 한다(data.js DECO_MOUNT) — 같은 장식끼리는 이어 붙는다
-      const mount = DECO_MOUNT[tileId];
+      const mount = DECO_MOUNT[tileId!];
       if (mount === 'water') {
         if (cur !== T.WATER || TILE_DEF[w.get(tx, ty + 1)].solid !== 1) {
           this.toast(tr('고인 물속 바닥에만 놓을 수 있다'), 'bad');
@@ -375,11 +375,11 @@ export const MinePart: Bag = {
   },
   /* ================= 설치물 ================= */
   /** tx,ty 는 발자국의 **왼쪽 아래** 칸. */
-  placeStation(tx, ty) {
+  placeStation(tx: number, ty: number) {
     const p = this.player, w = this.world;
     const it = p.held(), d = idef(it);
     if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast(tr('너무 멀다'), 'bad'); return; }
-    const s = OBJ_SIZE[d.obj];
+    const s = OBJ_SIZE[d.obj!];
     const tw = s.tw || 1, th = s.th || 1;
     const x0 = tx, y0 = ty - th + 1;   // 발자국 좌상단
     for (let yy = y0; yy <= ty; yy++) for (let xx = x0; xx < x0 + tw; xx++) {
@@ -408,7 +408,7 @@ export const MinePart: Bag = {
     UI.refreshBag(); this.sfx('place');
   },
   /* ================= 문 ================= */
-  placeDoor(tx, ty) {
+  placeDoor(tx: number, ty: number) {
     const p = this.player, w = this.world;
     const it = p.held();
     if (dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 6) { this.toast(tr('너무 멀다'), 'bad'); return; }
@@ -435,11 +435,11 @@ export const MinePart: Bag = {
     UI.refreshBag(); this.sfx('place');
   },
   /** 문 회수 — 내가 단 것만. */
-  removeDoor(o) {
+  removeDoor(o: Bag) {
     const p = this.player, w = this.world;
     if (!o.placed) return false;
     const it = makeItem('door_wood', 1);
-    if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y + o.h / 2, it));
+    if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y + o.h / 2, it!));
     let i = w.objects.indexOf(o); if (i >= 0) w.objects.splice(i, 1);
     i = w.doors.indexOf(o); if (i >= 0) w.doors.splice(i, 1);
     if (this.net) this.netObjDel(o);
@@ -449,7 +449,7 @@ export const MinePart: Bag = {
   },
 
   /** 설치물 회수 — 곡괭이 등급과 무관하게 한 번에 걷어낸다(기계와 같은 감각). */
-  removeStation(o) {
+  removeStation(o: Bag) {
     const p = this.player, w = this.world;
     if (!o.placed) return false;
     const back = [];
@@ -471,7 +471,7 @@ export const MinePart: Bag = {
   /* ================= 용광로 굴뚝 연기 ================= */
   /* ================= 기계 놓기 ================= */
   /** 놓을 방향 — 방향 키(T)로 고르지 않았으면 보고 있는 쪽(벨트를 깔며 걸으면 자연히 이어진다). */
-  placeDirFor(key) {
+  placeDirFor(key: string) {
     const n = dirTable(key).length;
     return this.placeDir != null && this.placeDir < n ? this.placeDir : (this.player.facing >= 0 ? 0 : 2);
   },
@@ -496,10 +496,10 @@ export const MinePart: Bag = {
     }
   },
   /** 기계를 들고 있으면 커서 칸에 반투명 미리보기 + 방향 화살표. 못 놓는 자리는 붉게. */
-  drawPlaceGhost(c, camX, camY) {
+  drawPlaceGhost(c: any, camX: number, camY: number) {
     const p = this.player, w = this.world, hi = p && p.held();
     if (!hi || idef(hi).type !== 'machine' || UI.open) return;
-    const key = idef(hi).mach, s = MACHINE[key];
+    const key = idef(hi).mach, s = MACHINE[key!];
     const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
     if (Factory.at(w, tx, ty) || dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 7) return;
     const sx = tx * TS - camX, sy = ty * TS - camY;

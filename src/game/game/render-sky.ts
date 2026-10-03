@@ -17,7 +17,7 @@ export const RenderSkyPart: Bag = {
     if (t >= 20 * 60 || t < 4 * 60) return 0;
     return inv(4 * 60, 7 * 60, t);
   },
-  drawSky(c, f, camX, camY) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
+  drawSky(c: CanvasRenderingContext2D, f: any, camX: number, camY: number) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
     const surfPx = SURF_BASE * TS;
     let top = mixHex('#0a0d1c', '#4a86c8', f);
     let bot = mixHex('#141020', '#a8c8e0', f);
@@ -103,21 +103,21 @@ export const RenderSkyPart: Bag = {
   /** 해(1)·달(0)이 하늘을 건넌 몫 — 0 = 동쪽 지평선(화면 오른쪽), 1 = 서쪽 지평선. 밖이면 지평선 밑(sin 이 음수).
       ★ 뜨고 지는 시각은 dayFactor 가 밝아지고(4~7시) 어두워지는(17~20시) 한가운데여야 한다 — 어긋나면
       밝은 하늘에 해가 없거나, 해가 중천 가까이에서 갑자기 나타나 제멋대로 떠 보인다. */
-  skyArc(sun) {
+  skyArc(sun: any) {
     const RISE = 330, SET = 1110;                         // 5:30 · 18:30
     const t0 = sun ? RISE : SET, dur = sun ? SET - RISE : 1440 - SET + RISE, off = (1440 - dur) / 2;
     return ((((this.dayT - t0 + off) % 1440) + 1440) % 1440 - off) / dur;
   },
   /** 해·달의 화면 자리 — u 0 = 오른쪽(동) → 1 = 왼쪽(서). 노을 빛도 같은 값을 쓴다. */
-  skyX(u) { return this.W / 2 + Math.cos(Math.PI * u) * this.W * .42; },
+  skyX(u: any) { return this.W / 2 + Math.cos(Math.PI * u) * this.W * .42; },
   /* 높이는 √up — 선형이면 아침·저녁 내내 숲 원경(화면 0.15~0.5) 뒤에 숨어 한낮에만 보였다 */
-  skyY(u, skyDy) { const up = Math.sin(Math.PI * u); return this.H * .52 - (up > 0 ? Math.sqrt(up) : up) * this.H * .40 - skyDy; },
+  skyY(u: any, skyDy: any) { const up = Math.sin(Math.PI * u); return this.H * .52 - (up > 0 ? Math.sqrt(up) : up) * this.H * .40 - skyDy; },
   /** 해 — 넓은 햇무리 · 안쪽 광채 · 원반. */
-  drawSun(c, x, y, al, gold) {
+  drawSun(c: CanvasRenderingContext2D, x: number, y: number, al: any, gold: number) {
     const r = 22 * (1 + gold * 0.35);
     const core = mixHex('#fff6d8', '#ffd08a', gold), rim = mixHex('#ffd66a', '#ff7a3a', gold);
     const halo = mixHex('#fff0b8', '#ff9a50', gold);
-    const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+    const rgba = (hex: string, a: any) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
     c.save();
     c.globalAlpha = al;
     // 넓은 햇무리 — 하늘에 녹아드는 빛.
@@ -147,7 +147,7 @@ export const RenderSkyPart: Bag = {
     c.restore();
   },
   /** 달 — 차가운 원반에 옅은 얼룩 셋, 푸른 달무리 */
-  drawMoon(c, x, y, al) {
+  drawMoon(c: CanvasRenderingContext2D, x: number, y: number, al: any) {
     const r = 18;
     c.save();
     c.globalAlpha = al;
@@ -161,7 +161,7 @@ export const RenderSkyPart: Bag = {
     for (const [dx, dy, rr] of [[-5, -3, 4.5], [6, 4, 3.2], [-2, 8, 2.4]]) { c.beginPath(); c.arc(x + dx, y + dy, rr, 0, TAU); c.fill(); }
     c.restore();
   },
-  drawParallax(c, camX, camY, f) { const { SURF_BASE } = dimsOf(this.world);
+  drawParallax(c: CanvasRenderingContext2D, camX: number, camY: number, f: any) { const { SURF_BASE } = dimsOf(this.world);
     // 손그림 원경이 있으면 그것으로
     if (this.spritesOn && this.drawParallaxArt(c, camX, camY, f)) return;
     if (camY > SURF_BASE * TS + 500) return;
@@ -191,7 +191,7 @@ export const RenderSkyPart: Bag = {
   ],
 
   /** 숲 원경을 지금 잿빛 깊이에 맞춰 섞어 둔다. */
-  forestBg(im) {
+  forestBg(im: any) {
     const af = this.ashF();
     const S = this.FOREST_STAGE;
     /* 지금 잿빛 깊이가 어느 두 단계 사이인가. */
@@ -244,9 +244,9 @@ export const RenderSkyPart: Bag = {
 
   /** 손그림 원경 — 두 겹으로 무한 스크롤. */
   /* ================= 원경을 불투명하게 ================= */
-  tintBg(src, slot, ck, haze, hazeAmt, darkAmt) {
+  tintBg(src: any, slot: any, ck: any, haze: any, hazeAmt: any, darkAmt: any) {
     if (hazeAmt <= 0 && darkAmt <= 0) return src;
-    const q = v => Math.round(v * 12) / 12;
+    const q = (v: number) => Math.round(v * 12) / 12;
     /* 색도 **뭉뚱그려서** 열쇠에 넣는다. */
     const n = parseInt(haze.slice(1), 16);
     haze = '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255]
@@ -271,7 +271,7 @@ export const RenderSkyPart: Bag = {
   },
 
   /** 바이옴 → 원경 그림 열쇠. */
-  bgKeyFor(b) {
+  bgKeyFor(b: any) {
     return b === 'ice' ? 'parallax_snow' : b === 'corrupt' ? 'parallax_corrupt' : b === 'desert' ? 'parallax_desert'
       // jungle·glowfen 전용 배경(parallax_jungle·parallax_glowfen)은 아직 그림이 없다.
       : (b === 'jungle' && Sprites.img.parallax_jungle && Sprites.img.parallax_jungle.width) ? 'parallax_jungle'
@@ -283,7 +283,7 @@ export const RenderSkyPart: Bag = {
       : 'parallax_forest';
   },
 
-  drawParallaxArt(c, camX, camY, f) { const { WW, SURF_BASE, BIOMES } = dimsOf(this.world);
+  drawParallaxArt(c: CanvasRenderingContext2D, camX: number, camY: number, f: any) { const { WW, SURF_BASE, BIOMES } = dimsOf(this.world);
     const p = this.player;
     const zone = this.world.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
     let key;

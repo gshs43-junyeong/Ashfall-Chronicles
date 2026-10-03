@@ -10,7 +10,7 @@ import { BoxSet, World } from '../world.js';
 export const WorldDungeon: Bag & ThisType<World> = {
 
   /* ================= 방이 여러 개인 던전 ================= */
-  bspSplit(x, y, w, h, depth, minW, minH, rng, out) {
+  bspSplit(x: any, y: any, w: any, h: any, depth: any, minW: any, minH: any, rng: any, out: any) {
     const canH = h >= minH * 2 + 1, canV = w >= minW * 2 + 1;
     if (depth <= 0 || (!canH && !canV)) { out.push({ x, y, w, h }); return; }
     /* ★ 가로가 세로의 1.6배가 안 되면 가로로 잘라 납작하게 만든다. */
@@ -27,7 +27,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** 두 방 사이 공유 벽에 통로를 뚫는다. */
-  _linkRooms(a, b, floor) {
+  _linkRooms(a: any, b: any, floor: number) {
     const ax1 = a.x + a.w, ay1 = a.y + a.h, bx1 = b.x + b.w, by1 = b.y + b.h;
     /* ★ 옆으로 붙었는지 볼 때 겹치는 높이가 없으면 **돌려주지 말고 아래(위아래로 붙었나)로 넘어간다.** */
     const side = (ax1 === b.x || bx1 === a.x) &&
@@ -59,18 +59,18 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** 방 묶음 던전을 짓고 방 목록을 돌려준다 */
-  carveDungeon(cfg) {
+  carveDungeon(cfg: any) {
     const { x0, y0, w, h, wall, floor, bg, rng } = cfg;
     const minW = cfg.minW || 11, minH = cfg.minH || 9;
     // 1) BSP로 방을 뽑는다
-    const all = [];
+    const all: Bag[] = [];
     this.bspSplit(x0, y0, w, h, cfg.depth || 4, minW, minH, rng, all);
     /* 2) 도면(plan)이 있으면 그 칸에 든 방만 남긴다. */
     let leaves = all;
     const plan = cfg.plan && RUIN_PLANS[cfg.plan];
     /* 삼각형(plan 'tri' — 피라미드). */
     const tri = cfg.plan === 'tri';
-    const inTri = (x, y) => y >= y0 && y < y0 + h &&
+    const inTri = (x: number, y: number) => y >= y0 && y < y0 + h &&
       Math.abs(x + 0.5 - (x0 + w / 2)) <= (y - y0 + 1) * (w / 2) / h;
     if (tri) {
       /* ★ 피라미드는 BSP 로 자르지 않고 **층**으로 쌓는다. */
@@ -105,7 +105,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
       if (rooms.length >= 3) leaves = rooms;
     } else if (plan) {
       const rows = plan.length, cols = plan[0].length;
-      const inPlan = r => {
+      const inPlan = (r: any) => {
         const cxr = clamp(Math.floor((r.x + r.w / 2 - x0) / w * cols), 0, cols - 1);
         const cyr = clamp(Math.floor((r.y + r.h / 2 - y0) / h * rows), 0, rows - 1);
         return plan[cyr][cxr] !== '.';
@@ -116,14 +116,14 @@ export const WorldDungeon: Bag & ThisType<World> = {
     /* 2.5) 방 수를 목표에 맞춘다 — 모자라면 **가장 넓은 방부터 한 번 더 자른다.** */
     const target = tri ? 0 : (cfg.target || 0);                // 피라미드는 층이 곧 방 수다
     if (target) {
-      const splittable = r => r.h >= minH * 2 + 1 || r.w >= minW * 2 + 1;
+      const splittable = (r: any) => r.h >= minH * 2 + 1 || r.w >= minW * 2 + 1;
       let guard = 0;
       while (leaves.length < target && guard++ < 400) {
         let best = null;
         for (const r of leaves)
           if (splittable(r) && (!best || r.w * r.h > best.w * best.h)) best = r;
         if (!best) break;
-        const two = [];
+        const two: Bag[] = [];
         this.bspSplit(best.x, best.y, best.w, best.h, 1, minW, minH, rng, two);
         if (two.length < 2) break;
         leaves.splice(leaves.indexOf(best), 1, ...two);
@@ -150,7 +150,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
         const cand = leaves.filter(r => !r.hall && !r.cell && (r.w >= cw + minW || r.h >= minH + 6));
         if (!cand.length) break;
         const r = rng.pick(cand);
-        let a, b;
+        let a: Bag, b: Bag;
         if (r.w >= cw + minW) {
           const left = rng.chance(0.5);
           const cut = left ? cw : r.w - cw;
@@ -233,11 +233,11 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** 방 하나에서 걸어 닿을 수 있는 칸을 모아 온다 */
-  _walkable(x0, y0, w, h, sx, sy) { const { WW } = this.dims;
+  _walkable(x0: any, y0: any, w: any, h: any, sx: any, sy: any) { const { WW } = this.dims;
     const seen = new Set(), st = [[sx, sy]];
     seen.add(sy * WW + sx);
     while (st.length) {
-      const [x, y] = st.pop();
+      const [x, y] = st.pop()!;
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy;
         if (nx < x0 - 1 || nx > x0 + w || ny < y0 - 1 || ny > y0 + h) continue;
@@ -250,16 +250,16 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** 고립된 방마다 가장 가까운 이미 닿는 방까지 ㄱ자 굴을 판다 */
-  _ensureConnected(x0, y0, w, h, rooms) { const { WW } = this.dims;
-    const spot = r => [r.x + 2, r.y + r.h - 3];
+  _ensureConnected(x0: number, y0: number, w: any, h: number, rooms: any) { const { WW } = this.dims;
+    const spot = (r: any) => [r.x + 2, r.y + r.h - 3];
     let guard = 0;
     while (guard++ < rooms.length + 2) {
       const [bx, by] = spot(rooms[0]);
       const seen = this._walkable(x0, y0, w, h, bx, by);
-      const lost = rooms.filter(r => { const [sx, sy] = spot(r); return !seen.has(sy * WW + sx); });
+      const lost = rooms.filter((r: any) => { const [sx, sy] = spot(r); return !seen.has(sy * WW + sx); });
       if (!lost.length) return;
       // 닿는 방 중 가장 가까운 것과 잇는다
-      const ok = rooms.filter(r => { const [sx, sy] = spot(r); return seen.has(sy * WW + sx); });
+      const ok = rooms.filter((r: any) => { const [sx, sy] = spot(r); return seen.has(sy * WW + sx); });
       const a = lost[0];
       let best = ok[0], bd = 1e9;
       for (const r of ok) {
@@ -268,8 +268,8 @@ export const WorldDungeon: Bag & ThisType<World> = {
       }
       const [ax, ay] = spot(a), [tx, ty] = spot(best);
       /* 잠긴 돌(암호석·봉인석)은 뚫지 않는다 — 뚫으면 자물쇠가 무의미해진다 */
-      const lk = (x, y) => this.locked(x, y);
-      const dig = (x, y) => { if (!lk(x, y)) this.set(x, y, T.AIR); };
+      const lk = (x: number, y: number) => this.locked(x, y);
+      const dig = (x: number, y: number) => { if (!lk(x, y)) this.set(x, y, T.AIR); };
       // 세로로 먼저 파고 (발판을 놓아 올라갈 수 있게) 가로로 잇는다
       const y1 = Math.min(ay, ty), y2 = Math.max(ay, ty);
       for (let y = y1; y <= y2; y++) {
@@ -286,16 +286,16 @@ export const WorldDungeon: Bag & ThisType<World> = {
   /** 한 자리에서 뛰어서 닿는 "설 수 있는 칸"을 모아 온다 */
   /** 걸음 판정에 쓰는 칸 물음들. */
   _standFns() {
-    const sup = (x, y) => { const s = TILE_DEF[this.get(x, y)].solid; return s === 1 || s === 2; };
+    const sup = (x: number, y: number) => { const s = TILE_DEF[this.get(x, y)].solid; return s === 1 || s === 2; };
     /* ★ 잠긴 돌(암호석·봉인석)은 **지나갈 수 있는 것으로** 본다 — 풀면 열리는 문이다 (tools/ruindiag.py 도 그렇게 잰다). */
-    const free = (x, y) => TILE_DEF[this.get(x, y)].solid !== 1 || this.locked(x, y);
-    const liq = (x, y) => !!TILE_DEF[this.get(x, y)].liquid;  // 물속에서는 뜬다 (Ent.move)
-    const body = (x, y) => free(x, y) && free(x, y - 1);      // 키 두 칸이 들어가는가
-    const stand = (x, y) => body(x, y) && (sup(x, y + 1) || liq(x, y));
+    const free = (x: number, y: number) => TILE_DEF[this.get(x, y)].solid !== 1 || this.locked(x, y);
+    const liq = (x: number, y: number) => !!TILE_DEF[this.get(x, y)].liquid;  // 물속에서는 뜬다 (Ent.move)
+    const body = (x: number, y: number) => free(x, y) && free(x, y - 1);      // 키 두 칸이 들어가는가
+    const stand = (x: number, y: number) => body(x, y) && (sup(x, y + 1) || liq(x, y));
     return { free, body, stand };
   },
   /** (sx, sy) 에 떨어뜨린 몸이 처음 발을 딛는 칸 — 없으면 null */
-  _standSeed(box, f, sx, sy) {
+  _standSeed(box: Bag, f: any, sx: number, sy: number) {
     for (let cy = sy; cy <= box[3]; cy++) {
       if (!f.body(sx, cy)) break;
       if (f.stand(sx, cy)) return [sx, cy];
@@ -304,9 +304,9 @@ export const WorldDungeon: Bag & ThisType<World> = {
     return null;
   },
   /** (x, y) 에 선 몸이 **한 번에** 옮겨 설 수 있는 칸마다 push(nx, ny) — 떨어지기 · 제자리 점프 · 옆으로 한 번에 네 칸까지 뛰어 떨어지기 · 발판 뚫고 내려가기. */
-  _standNext(box, f, x, y, push) {
+  _standNext(box: Bag, f: any, x: number, y: number, push: any) {
     const JUMP = 3, RUN = 4;                                  // 오를 수 있는 높이 · 한 번에 나는 폭
-    const drop = (x, y) => {                                  // 발이 닿을 때까지 떨어진다
+    const drop = (x: number, y: number) => {                                  // 발이 닿을 때까지 떨어진다
       for (let cy = y; cy <= box[3]; cy++) {
         if (!f.body(x, cy)) return;
         if (f.stand(x, cy)) { push(x, cy); return; }
@@ -326,10 +326,10 @@ export const WorldDungeon: Bag & ThisType<World> = {
     }
   },
   /** (sx, sy) 에서 걸어서(뛰고 떨어지며) 닿는 설 자리 전부. */
-  _standSet(box, sx, sy) { const { WW } = this.dims;
+  _standSet(box: Bag, sx: number, sy: number) { const { WW } = this.dims;
     const f = this._standFns();
-    const seen = new BoxSet(box, 10, WW), st = [];
-    const push = (x, y) => { const k = y * WW + x; if (!seen.has(k)) { seen.add(k); st.push(x, y); } };
+    const seen = new BoxSet(box, 10, WW), st: number[] = [];
+    const push = (x: number, y: number) => { const k = y * WW + x; if (!seen.has(k)) { seen.add(k); st.push(x, y); } };
     const s0 = this._standSeed(box, f, sx, sy);
     if (s0) push(s0[0], s0[1]);
     let guard = 0;
@@ -340,14 +340,14 @@ export const WorldDungeon: Bag & ThisType<World> = {
     return seen;
   },
   /** 거꾸로 걷기 — 상자 안 설 자리 가운데 **rootK 까지 걸어 닿을 수 있는** 칸 전부 — 사연: docs/code-history.md#h113 */
-  _returnSet(box, rootK) { const { WW } = this.dims;
+  _returnSet(box: Bag, rootK: any) { const { WW } = this.dims;
     const f = this._standFns();
     const preds = new Map();
     for (let y = box[1] - 8; y <= box[3]; y++)
       for (let x = box[0]; x <= box[2]; x++) {
         if (!f.stand(x, y)) continue;
         const k = y * WW + x;
-        this._standNext(box, f, x, y, (nx, ny) => {
+        this._standNext(box, f, x, y, (nx: number, ny: number) => {
           const nk = ny * WW + nx;
           let a = preds.get(nk);
           if (!a) preds.set(nk, a = []);
@@ -364,13 +364,13 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** 두 자리를 걸어 다닐 수 있게 잇는다 — 가로 굴을 내고 세로로 발판 사다리를 세운다 */
-  _digStair(ax, ay, tx, ty, floor, box, traps, rng) {
+  _digStair(ax: number, ay: number, tx: number, ty: number, floor: number, box: Bag, traps: any, rng: any) {
     const yT = Math.min(ay, ty), yB = Math.max(ay, ty);
     const c = clamp(tx, box[0] + 1, box[2] - 2);
     /* ★ 이미 놓인 발판은 절대 지우지 않는다. */
     /* 발판은 지우지 않고, **잠긴 돌(암호석·봉인석)도 건드리지 않는다.** */
-    const locked = (x, y) => this.locked(x, y);
-    const bore = (x, y) => {
+    const locked = (x: number, y: number) => this.locked(x, y);
+    const bore = (x: number, y: number) => {
       if (locked(x, y) || TILE_DEF[this.get(x, y)].solid === 2) return;
       this.set(x, y, T.AIR);
     };
@@ -383,7 +383,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
       if (s === 0 && !locked(x, ay + 1)) this.set(x, ay + 1, floor);   // 발판(2)이면 그대로 둔다
     }
     // ② t 자리 열에서 위아래를 잇는 두 칸 폭 수직굴.
-    const plat = (x, y) => { if (!locked(x, y)) this.set(x, y, T.PLATFORM); };
+    const plat = (x: number, y: number) => { if (!locked(x, y)) this.set(x, y, T.PLATFORM); };
     for (let y = yT - 2; y <= yB; y++) { bore(c, y); bore(c + 1, y); }
     for (let y = yB - 2; y > yT; y -= 3) { plat(c, y); plat(c + 1, y); }
     if (yB - yT >= 2) { plat(c, yT + 1); plat(c + 1, yT + 1); }
@@ -395,18 +395,18 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** spots 의 모든 자리를 서로 걸어 다닐 수 있게 만든다. */
-  _ensureWalkable(x0, y0, w, h, spots, floor, traps, rng) { const { WW, WH } = this.dims;
+  _ensureWalkable(x0: any, y0: any, w: any, h: any, spots: any, floor: any, traps: any, rng: any) { const { WW, WH } = this.dims;
     if (spots.length < 2) return;
     // 검사 범위는 유적 둘레 열두 칸.
     /* ★ 옆으로도 같다 — 입구 통로는 유적 옆 바깥 열(x0-5)에서 좌우로 서른여섯 칸까지 오르내리며 내려오므로, 통로의 방이 상자(유적 ±12) 밖에 놓일 수 있다. */
-    const top = spots.reduce((m, p) => Math.min(m, p[1] - 3), y0 - 12);
-    const left = spots.reduce((m, p) => Math.min(m, p[0] - 6), x0 - 12);
-    const right = spots.reduce((m, p) => Math.max(m, p[0] + 6), x0 + w + 12);
+    const top = spots.reduce((m: number, p: number[]) => Math.min(m, p[1] - 3), y0 - 12);
+    const left = spots.reduce((m: number, p: number[]) => Math.min(m, p[0] - 6), x0 - 12);
+    const right = spots.reduce((m: number, p: number[]) => Math.max(m, p[0] + 6), x0 + w + 12);
     const box = [Math.max(2, left), Math.max(2, top),
                  Math.min(WW - 3, right), Math.min(WH - 3, y0 + h + 12)];
     /* 오르내림은 대칭이 아니다 — 떨어지는 것은 공짜지만 올라오는 데는 발판이 있어야 한다. */
-    const d0 = p => Math.abs(p[0] - spots[0][0]) + Math.abs(p[1] - spots[0][1]);
-    const far = spots.reduce((b, p) => (d0(p) > d0(b) ? p : b), spots[1]);
+    const d0 = (p: number[]) => Math.abs(p[0] - spots[0][0]) + Math.abs(p[1] - spots[0][1]);
+    const far = spots.reduce((b: any, p: any) => (d0(p) > d0(b) ? p : b), spots[1]);
     for (const anchor of [spots[0], far]) this._walkPass(box, anchor, spots, floor, traps, rng);
     /* 가는 길과 오는 길을 번갈아 손본다. */
     this._walkBack(box, spots, floor, traps, rng);
@@ -415,8 +415,8 @@ export const WorldDungeon: Bag & ThisType<World> = {
   },
 
   /** 자리마다 **기준점으로 돌아올 수 있는지** 하나씩 걸어 보고, 못 돌아오면 길을 낸다. */
-  _walkBack(box, spots, floor, traps, rng) { const { WW } = this.dims;
-    const near = (set, tx, ty) => {
+  _walkBack(box: Bag, spots: any, floor: number, traps: any, rng: any) { const { WW } = this.dims;
+    const near = (set: any, tx: number, ty: number) => {
       let b = null, bd = 1e9;
       for (const k of set) {
         const y = Math.floor(k / WW), x = k - y * WW;
@@ -446,7 +446,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
         for (const kk of home) {
           if (back.has(kk)) continue;
           const y = Math.floor(kk / WW), x = kk - y * WW;
-          const d = Math.abs(x - a[0]) + Math.abs(y - a[1]);
+          const d = Math.abs(x - a![0]) + Math.abs(y - a![1]);
           if (d < bd) { bd = d; b = [x, y]; }
         }
         if (!a || !b) break;
@@ -458,9 +458,9 @@ export const WorldDungeon: Bag & ThisType<World> = {
     }
   },
 
-  _walkPass(box, anchor, spots, floor, traps, rng) { const { WW } = this.dims;
+  _walkPass(box: Bag, anchor: any, spots: any, floor: number, traps: any, rng: any) { const { WW } = this.dims;
     // 넉넉하게 잡으면 "닿은 칸 옆"을 닿았다고 세어 버린다 — 바짝 붙여 본다
-    const hit = (seen, p) => {
+    const hit = (seen: any, p: number[]) => {
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 2; dy++)
         if (seen.has((p[1] + dy) * WW + p[0] + dx)) return true;
       return false;
@@ -470,7 +470,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
     while (guard++ < spots.length * 2 + 4) {                  // 한 번에 한 자리씩 잇는다
       const seen = this._standSet(box, anchor[0], anchor[1]);
       if (!seen.size) return;
-      const lost = spots.filter(p => !hit(seen, p));
+      const lost = spots.filter((p: any) => !hit(seen, p));
       if (!lost.length) return;
       const a = lost[0];
       /* 틈 잇기는 **한 자리에 여섯 번까지** 해 본다 — 사연: docs/code-history.md#h114 */
@@ -510,7 +510,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
           if (d < bd) { bd = d; best = [x, y]; }
         }
       }
-      this._digStair(src[0], src[1], best[0], best[1], floor, box, traps, rng);
+      this._digStair(src[0], src[1], best![0], best![1], floor, box, traps, rng);
     }
   },
 };

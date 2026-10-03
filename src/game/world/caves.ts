@@ -13,14 +13,14 @@ export const WorldCaves: Bag & ThisType<World> = {
 
   /** 큰 동굴을 여러 개 드렁커드 워크로 파낸다. */
   /* ================= 동굴 갈래 (data.js CAVE_TYPES) ================= */
-  caveTypeAt(tx, ty) { const { HELL_Y } = this.dims;
+  caveTypeAt(tx: number, ty: number) { const { HELL_Y } = this.dims;
     if (!this.caveGrid || ty < 0 || ty >= HELL_Y) return 0;
     const gx = Math.floor(tx / CAVE_GW), gy = Math.floor(ty / CAVE_GH);
     return this.caveGrid[gy * this._cgW() + gx] || 0;
   },
   _cgW() { const { WW } = this.dims; return Math.ceil(WW / CAVE_GW); },
   /** 플레이어가 선 자리의 동굴 갈래 — **자연 굴 안**일 때만(지표 12칸 아래 · 지층 벽지 · 유적 밖). */
-  caveKindAt(tx, ty) { const { WW } = this.dims;
+  caveKindAt(tx: number, ty: number) { const { WW } = this.dims;
     if (!this.caveGrid || !this.inB(tx, ty) || ty <= this.surface[tx] + 12) return 0;
     if (!this._natural) {
       this._natural = new Set();
@@ -30,7 +30,7 @@ export const WorldCaves: Bag & ThisType<World> = {
     return this.caveTypeAt(tx, ty);
   },
 
-  buildCaveZones(rng) { const { SY, WW, SURF_BASE, HELL_Y, DEEP_Y, CAMP_X0, CAMP_GX1, SEA_X1 } = this.dims;
+  buildCaveZones(rng: RNG) { const { SY, WW, SURF_BASE, HELL_Y, DEEP_Y, CAMP_X0, CAMP_GX1, SEA_X1 } = this.dims;
     const gW = this._cgW(), gH = Math.ceil(HELL_Y / CAVE_GH);
     this.caveGrid = new Uint8Array(gW * gH);
     const natural = new Set();
@@ -45,15 +45,15 @@ export const WorldCaves: Bag & ThisType<World> = {
           this.caveGrid[gy * gW + gx] = this.caveGrid[gy * gW + gx - 1]; continue;
         }
         if (rng.chance(0.22)) continue;                          // 넷에 하나쯤은 그냥 굴
-        const ws = CAVE_TYPES.map((c, i) => i === 0 ? 0 : lerp(c.w[0], c.w[1], deep));
+        const ws = CAVE_TYPES.map((c, i) => i === 0 ? 0 : lerp(c.w![0], c.w![1], deep));
         let r = rng.range(0, ws.reduce((a, b) => a + b, 0)), k = 1;
         for (let i = 1; i < ws.length; i++) { r -= ws[i]; if (r <= 0) { k = i; break; } }
         this.caveGrid[gy * gW + gx] = k;
       }
     // 2) 꾸민다 — 자연 굴의 빈 칸마다 바닥·천장·옆벽을 보고 장식이 붙을 수 있는 자연 돌 — 이끼·종유석은 흙·돌·지층 돌 위에만
-    const host = t => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE ||
+    const host = (t: any) => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE ||
                       t === T.LIMESTONE || t === T.GRANITE;
-    const hang = (x, y, tile, n) => {                          // 천장에서 아래로 n 칸
+    const hang = (x: number, y: number, tile: any, n: number) => {                          // 천장에서 아래로 n 칸
       for (let k = 0; k < n; k++) { if (this.get(x, y + k) !== T.AIR) break; this.set(x, y + k, tile); }
     };
     for (let x = 4; x < WW - 4; x++) {
@@ -113,7 +113,7 @@ export const WorldCaves: Bag & ThisType<World> = {
   },
 
   /** 금 간 자갈 — 동굴 옆벽에 판 작은 굴(오목한 자리) 안쪽 끝에 박는다. */
-  buildFaults(rng, natural) { const { WSX, WSY, WW, HELL_Y, CAMP_X0, CAMP_GX1, SEA_X1 } = this.dims;
+  buildFaults(rng: RNG, natural: any) { const { WSX, WSY, WW, HELL_Y, CAMP_X0, CAMP_GX1, SEA_X1 } = this.dims;
     this.faults = [];
     let tries = 0;
     while (this.faults.length < Math.round(FAULT.count * WSX * WSY) && tries++ < 6000 * WSX * WSY) {
@@ -157,11 +157,11 @@ export const WorldCaves: Bag & ThisType<World> = {
   },
 
   /** 금 간 자갈이 무너진 뒤 열릴 동굴의 칸들 — 씨앗에서 뽑으므로 세계마다 같고, 저장할 필요가 없다. */
-  faultCells(f) { const { WW, HELL_Y } = this.dims;
-    const rng = new RNG(f.seed), cells = [], seen = new Set();
+  faultCells(f: any) { const { WW, HELL_Y } = this.dims;
+    const rng = new RNG(f.seed), cells: number[][] = [], seen = new Set();
     const natural = new Set();
     for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
-    const dig = (xx, yy) => {
+    const dig = (xx: number, yy: number) => {
       const key = yy * WW + xx;
       if (seen.has(key) || !this.inB(xx, yy)) return;
       seen.add(key);
@@ -186,7 +186,7 @@ export const WorldCaves: Bag & ThisType<World> = {
   },
 
   /** 무너져 열린 칸들을 꾸민다 — 갈래를 하나 골라(이끼·종유·수정) 새 굴에 입히고, 드러난 벽의 몇 군데를 광석으로 바꾼다. */
-  dressFault(f, cells) { const { SY } = this.dims;
+  dressFault(f: any, cells: any) { const { SY } = this.dims;
     const rng = new RNG(f.seed + 7);
     const k = [1, 2, 3][rng.int(0, 2)];
     f.k = k;
@@ -195,7 +195,7 @@ export const WorldCaves: Bag & ThisType<World> = {
     for (const [x, y] of cells) {
       if (this.get(x, y) !== T.AIR) continue;
       const floor = this.solid(x, y + 1), ceil = this.solid(x, y - 1);
-      const stoneAt = (sx, sy) => { const t = this.get(sx, sy); return t === T.STONE || t === T.LIMESTONE || t === T.GRANITE || t === T.DIRT; };
+      const stoneAt = (sx: number, sy: number) => { const t = this.get(sx, sy); return t === T.STONE || t === T.LIMESTONE || t === T.GRANITE || t === T.DIRT; };
       if (id === 'moss') {
         for (const [hx, hy] of [[x, y + 1], [x, y - 1], [x - 1, y], [x + 1, y]])
           if (stoneAt(hx, hy) && rng.chance(0.85)) this.set(hx, hy, T.MOSSSTONE);
@@ -215,9 +215,9 @@ export const WorldCaves: Bag & ThisType<World> = {
     return k;
   },
 
-  buildCaverns(rng) { const { WSX, WSY, SX, WW, WH, WORLD_BOT, HELL_Y, DEEP_Y, SEA_X1 } = this.dims;
+  buildCaverns(rng: RNG) { const { WSX, WSY, SX, WW, WH, WORLD_BOT, HELL_Y, DEEP_Y, SEA_X1 } = this.dims;
     // 구조물 자리(캠프·여명 마을·정글 폭포) — 중형·대형에서는 양 끝을 같이 늘려 넉넉히 비운다
-    const reserved = x => (x > SX(685 + SHIFT) && x < SX(845 + SHIFT)) || (x > SX(1865 + SHIFT) && x < SX(2055 + SHIFT)) || (x > SX(1365 + SHIFT) && x < SX(1445 + SHIFT));
+    const reserved = (x: number) => (x > SX(685 + SHIFT) && x < SX(845 + SHIFT)) || (x > SX(1865 + SHIFT) && x < SX(2055 + SHIFT)) || (x > SX(1365 + SHIFT) && x < SX(1445 + SHIFT));
     this.caverns = [];
     let placed = 0, tries = 0;
     /* 큰 동굴 열여섯 곳 — 멀리서도 큰 줄 알아보게 크게 판다(걸음 150~240, 붓 반지름 4~7). */
@@ -293,7 +293,7 @@ export const WorldCaves: Bag & ThisType<World> = {
   /* ================= 동굴 물 ================= */
 
   /** 물을 채우면 안 되는 자리인가 */
-  _noWater(tx, ty, forLava) { const { WW, WH, HELL_Y, CAMP_X0, CAMP_GX1 } = this.dims;
+  _noWater(tx: number, ty: number, forLava: any) { const { WW, WH, HELL_Y, CAMP_X0, CAMP_GX1 } = this.dims;
     if (tx < 4 || tx >= WW - 4 || ty < 4 || ty >= WH - 6) return true;
     if (this.sea && tx < this.sea.x1 + 4) return true;      // 바다는 buildSea가 따로 만든다
     if (ty < this.surface[clamp(tx, 0, WW - 1)] + 8) return true;   // 지표 근처는 제외

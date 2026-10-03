@@ -11,7 +11,7 @@ import { TS, World } from '../world.js';
 
 export const WorldRuinSite: Bag & ThisType<World> = {
 
-  buildRuinSite(spec, idx, rng) {
+  buildRuinSite(spec: Bag, idx: number, rng: RNG) {
     const y0 = spec.y, x0 = spec.x - (spec.w >> 1);
     /* 유적마다 자르는 깊이와 방 최소 크기를 달리 준다 (RUIN_SPEC[].bsp). */
     const bsp = spec.maze ? [7, 6, 6] : (spec.bsp || [4, 15, 8]);
@@ -21,7 +21,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       target: spec.rooms,                                    // 등급대로 방 수를 맞춘다
       plan: spec.plan                                        // 겉모양이 방 배치를 따라간다
     });
-    rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+    rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
     const boss = rooms[0];                                   // 가장 넓은 방이 보스방
     const site: Bag = { id: spec.id, n: spec.n, x: spec.x, y: y0 + (spec.h >> 1), w: spec.w, h: spec.h, rooms, idx };
 
@@ -35,7 +35,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
     /* 방 성격을 배분한다. */
     const entX = ex === null ? spec.x : ex;
     const rest = rooms.slice(1);
-    rest.sort((a, b) => Math.abs(b.x - entX) - Math.abs(a.x - entX));   // 먼 것부터
+    rest.sort((a: any, b: any) => Math.abs(b.x - entX) - Math.abs(a.x - entX));   // 먼 것부터
     const roles = new Map();
     if (rest[0]) roles.set(rest[0], 'vault');
     if (rest[1]) roles.set(rest[1], 'vault');
@@ -43,17 +43,17 @@ export const WorldRuinSite: Bag & ThisType<World> = {
     for (const r of rest) if (!roles.has(r) && rng.chance(0.3)) roles.set(r, 'gauntlet');
 
     /* 고유 방 — 그 유적에만 있는 방 하나. */
-    const sigRoom = rest.find(r => !roles.has(r)) || rest[2] || rest[0];
+    const sigRoom = rest.find((r: any) => !roles.has(r)) || rest[2] || rest[0];
     if (spec.sig && sigRoom) roles.set(sigRoom, 'sig');
     /* 암호 골방은 자물쇠가 걸린 유적이면 어디든 선다(RUIN_CIPHER). */
     let cipherRoom = null;
     if (RUIN_CIPHER[spec.id]) {
       cipherRoom = (spec.sig === 'sunshaft' && sigRoom) ? sigRoom
-        : (rest.find(r => !roles.has(r) && r.w >= 14) || rest.find(r => r.w >= 14) || sigRoom);
+        : (rest.find((r: any) => !roles.has(r) && r.w >= 14) || rest.find((r: any) => r.w >= 14) || sigRoom);
     }
     /* 신비한 방 — 한 세계에 두세 곳뿐이라 유적마다 후보 하나만 두고, buildRuins 가 미리 뽑아 둔 목록(this._mysticPick)에 든 유적에만 실제로 짓는다. */
     if (spec.mystic) {
-      const mr = rest.find(r => !roles.has(r) && r.w >= 12);
+      const mr = rest.find((r: any) => !roles.has(r) && r.w >= 12);
       if (mr) roles.set(mr, 'mystic');
     }
     /* 미로 유적만 — 방과 방 사이 통로 몇 개를 도로 막아 **막다른 길**을 만든다. */
@@ -193,7 +193,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
   },
 
   /* ---- 숨겨진 유적 3곳 + 심층 봉인실 ---- */
-  buildRuins(rng) { const { SX, SY, WW } = this.dims;
+  buildRuins(rng: RNG) { const { SX, SY, WW } = this.dims;
     this.ruins = [];
     this.ruinEvents = [];
     this.ruinSites = [];                                      // 석판 유적도 같이 담는다 (진단·저장용)
@@ -224,7 +224,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
         rng, depth: 5, minW: st.bsp ? st.bsp[1] : 16, minH: st.bsp ? st.bsp[2] : 8,
         target: st.rooms, plan: st.plan
       });
-      rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+      rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
       const main = rooms[0], fy0 = main.y + main.h - 3;
       for (let x = main.x + 3; x < main.x + main.w - 2; x += 8) this.set(x, main.y + 2, T.RUNESTONE);
       this.objects.push({ type: 'tablet', tablet: i, x: (main.x + (main.w >> 1)) * TS, y: (fy0 + 1) * TS - 48, w: 34, h: 48 });
@@ -234,8 +234,8 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       this._ruinCtx = null;
       const entX = ex === null ? cx : ex;
       // 유물이 들어갈 방과 고유 방 — 통로에서 먼 것부터
-      const rest = rooms.filter(r => r !== main)
-        .sort((a, b) => Math.abs(b.x - entX) - Math.abs(a.x - entX));
+      const rest = rooms.filter((r: any) => r !== main)
+        .sort((a: any, b: any) => Math.abs(b.x - entX) - Math.abs(a.x - entX));
       const far = rest[0], sigRoom = rest[1] || rest[0];
       for (const r of rooms) {
         const fy = r.y + r.h - 3, rcx = r.x + (r.w >> 1);
@@ -259,7 +259,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       }
       // 암호 골방 — 방 손질이 끝난 뒤에 세운다(앞서 세우면 함정이 껍질을 덮어쓴다)
       if (RUIN_CIPHER[spec.id]) {
-        const cr = (st.sig === 'sunshaft' ? sigRoom : rest.find(q => q.w >= 14)) || sigRoom;
+        const cr = (st.sig === 'sunshaft' ? sigRoom : rest.find((q: any) => q.w >= 14)) || sigRoom;
         if (cr) this.buildCipherVault(spec, cr, cr.y + cr.h - 3, rng, rooms);
       }
       // 바닥을 갈아 까는 고유 방이 굴을 메울 수 있으므로 마지막에 연결을 다시 보장한다
@@ -286,7 +286,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
 
     this.ruinSpec.forEach((spec, i) => {
       this.ruinSites.push(this.buildRuinSite(spec, i, rng));
-      this.ruins.push({ id: spec.id, x: spec.x, y: spec.y + (spec.h >> 1), w: spec.w, h: spec.h });
+      this.ruins.push({ id: spec.id, x: spec.x, y: spec.y! + (spec.h! >> 1), w: spec.w, h: spec.h });
     });
 
     // 여명 마을(dawnCity, x 2850~2960) 지하에 둔다 — 사연: docs/code-history.md#h122
@@ -351,7 +351,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
   },
 
   /** 위치 지도를 세계에 흩뿌린다 — 입구 없는 유적(arch: 'buried')마다 두 군데. */
-  buildRuinCaches(rng) { const { WW, WH } = this.dims;
+  buildRuinCaches(rng: any) { const { WW, WH } = this.dims;
     for (const spec of this.ruinSpec) {
       if (spec.arch !== 'buried') continue;
       const mapId = 'ruinmap_' + spec.id;
@@ -378,7 +378,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       }
 
       // ② 세계 어딘가의 동굴 — 그 유적에서 멀리 떨어진 자리
-      const cav = (this.caverns || []).filter(c => Math.abs(c.cx - spec.x) > 500);
+      const cav = (this.caverns || []).filter(c => Math.abs(c.cx - spec.x!) > 500);
       if (!cav.length) continue;
       const pick = cav[rng.int(0, cav.length - 1)];
       let px = clamp(pick.cx + rng.int(-6, 6), 40, WW - 40), py = pick.cy;
@@ -394,27 +394,27 @@ export const WorldRuinSite: Bag & ThisType<World> = {
   },
 
   /** 좌표가 유적 내부인지 */
-  inRuin(tx, ty) {
+  inRuin(tx: number, ty: number) {
     return !!this.ruinAt(tx, ty);
   },
   /** 이 좌표가 속한 유적 자체를 돌려준다 (id 가 붙어 있으면 어느 유적인지도 안다). */
-  ruinAt(tx, ty) {
+  ruinAt(tx: number, ty: number) {
     if (!this.ruins) return null;
     for (const r of this.ruins)
       if (tx > r.x - r.w / 2 && tx < r.x + r.w / 2 && ty > r.y - r.h / 2 && ty < r.y + r.h / 2) return r;
     return null;
   },
   /** 이 좌표가 속한 바이옴 유적의 잡몹 배율. */
-  ruinMobMul(tx, ty) {
+  ruinMobMul(tx: number, ty: number) {
     for (const spec of this.ruinSpec) {
-      const hw = spec.w / 2, y0 = spec.y, y1 = spec.y + spec.h;
-      if (tx > spec.x - hw && tx < spec.x + hw && ty > y0 - 2 && ty < y1 + 2)
+      const hw = spec.w! / 2, y0 = spec.y, y1 = spec.y! + spec.h!;
+      if (tx > spec.x! - hw && tx < spec.x! + hw && ty > y0! - 2 && ty < y1 + 2)
         return spec.mobMul === undefined ? 1 : spec.mobMul;
     }
     return 1;
   },
 
-  buildAltars(rng) { const { SX, WORLD_BOT } = this.dims;
+  buildAltars(rng: any) { const { SX, WORLD_BOT } = this.dims;
     // 제단 밑면이 바닥 타일 윗면에 정확히 닿도록: y = 바닥행*TS - h 부패 제단
     const cx1 = SX(2500 + SHIFT), sy1 = this.surface[cx1];
     this.clearBox(cx1 - 14, sy1 - 14, 28, 14);
@@ -439,7 +439,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
     for (let x = cx4 - 32; x < cx4 + 33; x += 9) this.set(x, cy4 - 20, T.TORCH);
   },
 
-  clearBox(x0, y0, w, h) {
+  clearBox(x0: any, y0: any, w: any, h: any) {
     for (let x = x0; x < x0 + w; x++) for (let y = y0; y < y0 + h; y++) {
       if (this.get(x, y) === T.LAVA || this.get(x, y) === T.BEDROCK) continue;
       this.set(x, y, T.AIR);

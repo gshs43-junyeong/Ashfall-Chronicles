@@ -50,7 +50,7 @@ export const SHOP_DENY = new Set([
 export const MERCHANTS = [
   /* --- 윤슬 (비밀 상점) --- */
   {
-    npc: 'yunseul', lv: 1, slots: 5, markup: 1.6, spot: null,
+    npc: 'yunseul', lv: 1, slots: 5, markup: 1.6, spot: null as Bag | null,
     pool: [
       // 고유 장신구 — 여기서만 나온다.
       { id: 'amul_scale', w: 3 }, { id: 'charm_bell', w: 3 },
@@ -135,7 +135,7 @@ export const MERCHANTS = [
 
 
 /* ---------------- 마을 단계별 주민 한 마디 ---------------- */
-export const VILLAGE_TALK = {
+export const VILLAGE_TALK: Bag = {
   tamer: [null,
     '짐승들이 아직 이 거리를 못 미더워해. 하긴 나도 그래.',
     '가로등이 서니까 밤에도 알을 돌볼 수 있어. 그전엔 해 지면 그냥 접었거든.',
@@ -176,26 +176,26 @@ export const NAME_CALL: Record<string, string[]> = {
 
 /* ================= 사람들이 지금을 보고 하는 말 ================= */
 export const TALK_MOODS = [
-  { id: 'grave',      when: c => c.grave },                       // 어딘가에 죽은 자리를 두고 왔다
-  { id: 'hurt',       when: c => c.hpr < 0.35 },                   // 피가 3분의 1 아래
-  { id: 'bloodmoon',  when: c => c.ev === 'bloodmoon' },
-  { id: 'sandstorm',  when: c => c.ev === 'sandstorm' },
-  { id: 'sporebloom', when: c => c.ev === 'sporebloom' },
-  { id: 'rain',       when: c => c.ev === 'rain' },
-  { id: 'chdone',     when: c => c.complete },                     // 이 장에서 할 일을 다 했다
-  { id: 'goal',       when: c => c.ready },                        // 준비는 끝났고 마지막 하나만 남았다
-  { id: 'broke',      when: c => c.gold < 40 },
-  { id: 'rich',       when: c => c.gold >= 5000 },
+  { id: 'grave',      when: (c: any) => c.grave },                       // 어딘가에 죽은 자리를 두고 왔다
+  { id: 'hurt',       when: (c: any) => c.hpr < 0.35 },                   // 피가 3분의 1 아래
+  { id: 'bloodmoon',  when: (c: any) => c.ev === 'bloodmoon' },
+  { id: 'sandstorm',  when: (c: any) => c.ev === 'sandstorm' },
+  { id: 'sporebloom', when: (c: any) => c.ev === 'sporebloom' },
+  { id: 'rain',       when: (c: any) => c.ev === 'rain' },
+  { id: 'chdone',     when: (c: any) => c.complete },                     // 이 장에서 할 일을 다 했다
+  { id: 'goal',       when: (c: any) => c.ready },                        // 준비는 끝났고 마지막 하나만 남았다
+  { id: 'broke',      when: (c: any) => c.gold < 40 },
+  { id: 'rich',       when: (c: any) => c.gold >= 5000 },
   /* 세션 2 — 별이 하늘로 돌아간 뒤. */
-  { id: 'night2',     when: c => c.session === 2 && c.night },
-  { id: 'night',      when: c => c.night },
-  { id: 'dawn',       when: c => c.hour >= 5 && c.hour < 8 },
-  { id: 'day2',       when: c => c.session === 2 },
+  { id: 'night2',     when: (c: any) => c.session === 2 && c.night },
+  { id: 'night',      when: (c: any) => c.night },
+  { id: 'dawn',       when: (c: any) => c.hour >= 5 && c.hour < 8 },
+  { id: 'day2',       when: (c: any) => c.session === 2 },
   { id: 'day',        when: () => true }
 ];
 
 /* say: 상황 한 줄(순번으로 돌아간다) · re: 그 상황에서 할 수 있는 대답과 대꾸 대꾸(s)는 한 줄이어도 되고 여러 줄이어도 된다. */
-export const TALK = {
+export const TALK: Bag = {
   /* ---------------- 베이스캠프 ---------------- */
   elara: {
     grave: { say: [

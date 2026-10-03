@@ -6,7 +6,7 @@ import { TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
 export const TilePaintCave: Bag = {
-  mossrock(H) {
+  mossrock(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {            // 이끼 낀 바위 — 돌결 위에 이끼가 얼룩지고 윗면이 두툼하다
         this._fill(g, ox, oy, base);
@@ -26,7 +26,7 @@ export const TilePaintCave: Bag = {
       }
     }
   },
-  hangmoss(H) {
+  hangmoss(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {            // 늘어진 이끼 — 가닥마다 길이가 다르고 끝이 가늘다
         R(0, 0, TS, 2, shade(base, .7));
@@ -40,7 +40,7 @@ export const TilePaintCave: Bag = {
       }
     }
   },
-  dripstone(H) {
+  dripstone(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {           // 종유석(위에 붙어 아래로) · 석순(바닥에서 위로) — 층이 진 원뿔
         const up = !!s.up;
@@ -56,7 +56,7 @@ export const TilePaintCave: Bag = {
       }
     }
   },
-  geode(H) {
+  geode(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {               // 수정 무리 — 바닥에서 여러 갈래로 솟은 결정
         const cols = [base, lt, lt2, shade(base, .8)];
@@ -75,7 +75,7 @@ export const TilePaintCave: Bag = {
       }
     }
   },
-  fault(H) {
+  fault(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {               // 금 간 자갈 — 돌 바탕에 알갱이 결이 옅게, 가는 금 하나
         /* ★ 바탕을 돌과 같은 밝기(base)로 깐다. */
@@ -96,7 +96,7 @@ export const TilePaintCave: Bag = {
       }
     }
   },
-  meteorite(H) {
+  meteorite(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {           // 운석 — 오목 자국 · 쇠 알갱이 · 식다 만 금
         this._fill(g, ox, oy, base);
@@ -120,7 +120,7 @@ export const TilePaintCave: Bag = {
       }
     }
   },
-  starcrystal(H) {
+  starcrystal(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {         // 별빛 수정 — 가늘고 곧은 결정 다발, 끝에 별빛이 맺힌다
         g.globalAlpha = .2; g.fillStyle = lt2;
@@ -147,7 +147,7 @@ export const TilePaintCave: Bag = {
       }
     }
   },
-  fused(H) {
+  fused(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {               // 녹아 굳은 돌 — 검은 유리 바탕, 흘러 굳은 결과 공기 방울, 윤
         this._fill(g, ox, oy, base);
@@ -166,7 +166,7 @@ export const TilePaintCave: Bag = {
       }
     }
   },
-  granite(H) {
+  granite(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {             // 화강암 — 바탕 위에 밝은 알갱이·검은 알갱이가 굵게 박힌다
         this._fill(g, ox, oy, base);
@@ -177,7 +177,7 @@ export const TilePaintCave: Bag = {
       }
     }
   },
-  hyphae(H) {
+  hyphae(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {              // 균사 발 — 천장에서 내린 실이 아래로 갈수록 성글다
         R(0, 0, TS, 2, shade(base, .62));                       // 붙어 있는 자리

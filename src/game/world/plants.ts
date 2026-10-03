@@ -25,7 +25,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 베어낸 나무를 시간이 지나면 되살린다. */
-  regrow(rng, n, centerX) { const { WW } = this.dims;
+  regrow(rng: RNG, n: number, centerX: any) { const { WW } = this.dims;
     for (let k = 0; k < n; k++) {
       const x = clamp(Math.round(centerX + rng.range(-420, 420)), 2, WW - 3);
       if (Math.abs(x - this.spawnX) < 40) continue;   // 마을 안쪽은 피한다
@@ -55,7 +55,7 @@ export const WorldPlants: Bag & ThisType<World> = {
 
   /** 기둥은 x부터 오른쪽으로 wdt칸을 차지한다. occR 를 주면 수관이 그 칸과 빈 칸 둘 이상 떨어질 때만 심고,
       심은 나무가 차지한 가장 오른쪽 칸을 돌려준다(못 심으면 null). 굵은(2칸) 나무는 키가 크고 잎이 많다. */
-  tree(x, s, rng, woodT, leafT, occR) {
+  tree(x: number, s: any, rng: RNG, woodT: any, leafT: any, occR: any) {
     let h = rng.int(5, 11);
     const wdt = h >= 9 && rng.chance(0.55) ? 2 : 1;
     if (wdt > 1) h = rng.int(12, 16);
@@ -74,7 +74,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 눈 지대 소나무 — 곧은 기둥에 **층층이 좁아지는 톱니 원뿔** 수관 — 사연: docs/code-history.md#h105 */
-  pineTree(x, s, rng) {
+  pineTree(x: number, s: any, rng: RNG) {
     // 수관 폭이 9칸까지라 옆 소나무와 붙으면 원뿔 둘이 한 덩어리 톱니 벽이 된다 — 5칸 안에 나무가 있으면 건너뛴다
     for (let dx = -5; dx <= 5; dx++)
       for (const dy of [-1, -3, -6]) {
@@ -101,7 +101,7 @@ export const WorldPlants: Bag & ThisType<World> = {
 
   /** 2칸 이상 폭인 기둥이 비탈에 걸치면 낮은 쪽 바닥까지 기둥을 이어 붙인다 — 기둥은 한 칸의 지표만 기준으로 심으므로, 옆 칸이 낮으면 밑동과 지면 사이가 비어 "바닥에 안 닿은
      나무통"이 된다. */
-  _groundTrunk(x, wdt, s, woodT) {
+  _groundTrunk(x: number, wdt: any, s: any, woodT: any) {
     // 완만한 비탈(몇 칸 차이)만 메운다.
     const CAP = 4;
     for (let dx = 1; dx < wdt; dx++) {
@@ -111,7 +111,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 수관 — 기둥 띠(x..x+wdt-1)에서의 거리로 재서, 굵은 기둥에도 캡슐 모양으로 얹힌다. */
-  _canopy(x, top, r, wdt, leafT, slack) {
+  _canopy(x: number, top: number, r: any, wdt: any, leafT: any, slack: any) {
     for (let dx = -r; dx <= r + wdt - 1; dx++)
       for (let dy = -r; dy <= r - 1; dy++) {
         const hd = dx < 0 ? -dx : (dx > wdt - 1 ? dx - (wdt - 1) : 0);
@@ -121,7 +121,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 그 자리에 원래 있어야 할 지층 타일 (메울 때 쓴다) */
-  _bedAt(x, y) { const { WORLD_BOT, HELL_Y } = this.dims;
+  _bedAt(x: number, y: number) { const { WORLD_BOT, HELL_Y } = this.dims;
     if (y >= WORLD_BOT - 4) return T.BEDROCK;
     if (y >= HELL_Y) return T.ASH;
     const L = MAT_LAYER[this.matId[x]], depth = y - this.surface[x];
@@ -130,7 +130,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 마지막 구멍 메우기 — pruneSmallCaves(생성 초반)가 끝난 **뒤에** 생긴 작은 굴을 메운다. */
-  sweepPockets(maxSize) { const { WW, WH, HELL_Y, SEA_X1 } = this.dims;
+  sweepPockets(maxSize: any) { const { WW, WH, HELL_Y, SEA_X1 } = this.dims;
     const natural = new Set();
     for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
     const busy = new Set();
@@ -141,7 +141,7 @@ export const WorldPlants: Bag & ThisType<World> = {
     }
     for (const k of this.machines.keys()) busy.add(k);
     /* ★ 발판(solid 2)도 **트인 칸**으로 센다. */
-    const open = k => { const t = this.tiles[k], d = TILE_DEF[t]; return t === T.AIR || d.solid === 2 || (!d.solid && !d.liquid); };
+    const open = (k: any) => { const t = this.tiles[k], d = TILE_DEF[t]; return t === T.AIR || d.solid === 2 || (!d.solid && !d.liquid); };
     const seen = new Uint8Array(WW * WH), cells = [];
     let filled = 0;
     for (let sx = 2; sx < WW - 2; sx++) {
@@ -154,19 +154,19 @@ export const WorldPlants: Bag & ThisType<World> = {
         let ok = true;
         while (st.length) {
           const c = st.pop(); cells.push(c);
-          const cx = c % WW, cy = (c / WW) | 0;
+          const cx = c! % WW, cy = (c! / WW) | 0;
           if (cells.length > maxSize || cy <= this.surface[cx] + 9 || cy >= HELL_Y - 2 || inSeaZone(cx, SEA_X1)) ok = false;
-          if (!natural.has(this.walls[c]) || busy.has(c)) ok = false;
+          if (!natural.has(this.walls[c!]) || busy.has(c)) ok = false;
           /* ★ 실격이어도 **끝까지 돈다.** */
-          for (const d of [c - 1, c + 1, c - WW, c + WW]) {
+          for (const d of [c! - 1, c! + 1, c! - WW, c! + WW]) {
             if (d < WW || d >= WW * (HELL_Y + 2)) { ok = false; continue; }
             if (TILE_DEF[this.tiles[d]].liquid) ok = false;
             if (!seen[d] && open(d)) { seen[d] = 1; st.push(d); }
           }
         }
         if (!ok) continue;
-        if (cells.some(c => this.ruinAt(c % WW, (c / WW) | 0))) continue;
-        for (const c of cells) this.set(c % WW, (c / WW) | 0, this._bedAt(c % WW, (c / WW) | 0));
+        if (cells.some(c => this.ruinAt(c! % WW, (c! / WW) | 0))) continue;
+        for (const c of cells) this.set(c! % WW, (c! / WW) | 0, this._bedAt(c! % WW, (c! / WW) | 0));
         filled++;
       }
     }
@@ -174,7 +174,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 이어진 공동을 하나씩 재서, 기준보다 작고 지표와도 통하지 않는 것은 도로 메운다. */
-  pruneSmallCaves(minSize) { const { WW, WH, WORLD_BOT } = this.dims;
+  pruneSmallCaves(minSize: any) { const { WW, WH, WORLD_BOT } = this.dims;
     const N = WW * WH;
     const seen = new Uint8Array(N);
     const stack = new Int32Array(N);      // 한 덩어리가 아무리 커도 넘치지 않게 최대 크기로
@@ -211,7 +211,7 @@ export const WorldPlants: Bag & ThisType<World> = {
 
   /* ================= 농업 ================= */
   /** 씨앗을 심는다. */
-  plantSeed(x, y, seedId) { const { WW } = this.dims;
+  plantSeed(x: number, y: number, seedId: any) { const { WW } = this.dims;
     const tile = SEED_TILE[seedId];
     if (tile === undefined) return false;
     if (this.get(x, y) !== T.AIR || !TILE_DEF[this.get(x, y + 1)].farm) return false;
@@ -221,7 +221,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 밭 칸(x, y)에서 FARM_WET_R 칸 안에 물(민물·바닷물)이 있는가 — 물가 밭은 늘 젖어 있다. */
-  nearWater(x, y) {
+  nearWater(x: number, y: number) {
     for (let dy = -FARM_WET_R; dy <= FARM_WET_R; dy++)
       for (let dx = -FARM_WET_R; dx <= FARM_WET_R; dx++) {
         const k = FLUID_KIND[this.get(x + dx, y + dy)];
@@ -230,11 +230,11 @@ export const WorldPlants: Bag & ThisType<World> = {
     return false;
   },
   /** 밭 칸(x, y)이 day 날 아침에 젖어 있는가. */
-  isWet(x, y, day) { const { WW } = this.dims;
+  isWet(x: number, y: number, day: number) { const { WW } = this.dims;
     return (this.wet[y * WW + x] | 0) >= day || this.nearWater(x, y);
   },
   /** 밭 칸(x, y)에 물을 준다 — day 날부터 FARM_WET_DAYS 번의 아침 동안 젖어 있다. */
-  waterFarm(x, y, day) { const { WW } = this.dims;
+  waterFarm(x: number, y: number, day: number) { const { WW } = this.dims;
     if (!TILE_DEF[this.get(x, y)].farm) return false;
     const k = y * WW + x;
     this.wet[k] = Math.max(this.wet[k] | 0, day + FARM_WET_DAYS);
@@ -245,8 +245,8 @@ export const WorldPlants: Bag & ThisType<World> = {
   /** 작물 한 단계 성장. */
   /** 자란 칸을 돌려준다 — 화면에 보이는 밭이면 게임 쪽에서 티를 낸다. 마른 밭(물 안 준 밭)은 자라지 않고 dry 로 센다. */
   /** speed: 농사 숙련이 얹어 주는 성장 배율(1 = 보정 없음) · day: 오늘(G.dayCount) — 없으면 젖음을 안 본다 */
-  growCrops(rng, dayF, speed, day) { const { WW } = this.dims;
-    const out = { grew: [], ripe: [], dry: [] };
+  growCrops(rng: RNG, dayF: any, speed: number, day: number) { const { WW } = this.dims;
+    const out = { grew: [] as Bag[], ripe: [] as Bag[], dry: [] as Bag[] };
     if (!this.crops.size) return out;
     const sp = speed === undefined ? 1 : speed;
     for (const k of this.crops) {
@@ -267,7 +267,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 부서지는 바닥 — 밟으면 잠깐 뒤 무너지고, 한참 뒤 되돌아온다 */
-  tickCrumble(dt, p) { const { WW } = this.dims;
+  tickCrumble(dt: any, p: any) { const { WW } = this.dims;
     // 발밑을 본다
     const fy = Math.floor((p.y + p.h + 2) / TS);
     for (let x = Math.floor(p.x / TS); x <= Math.floor((p.x + p.w - 1) / TS); x++) {
@@ -294,7 +294,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 퇴비 등으로 즉시 한 단계 키운다 */
-  forceGrow(x, y) {
+  forceGrow(x: number, y: number) {
     const def = TILE_DEF[this.get(x, y)];
     if (!def.crop || !def.crop.next) return false;
     this.set(x, y, def.crop.next);
@@ -302,7 +302,7 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 정글 나무 — 보통 나무보다 높고 수관이 넓다. */
-  jungleTree(x, s, rng) {
+  jungleTree(x: number, s: any, rng: RNG) {
     const h = rng.int(8, 13);
     // 정글 나무는 원래 키가 커서 굵은 쪽이 더 자주 나온다
     const wdt = rng.chance(0.6) ? 2 : 1;
@@ -338,14 +338,14 @@ export const WorldPlants: Bag & ThisType<World> = {
   },
 
   /** 버섯 골짜기의 큰 발광 버섯 — 갓이 스스로 빛나 어두운 골짜기를 밝힌다. */
-  glowStalk(x, s, rng) {
+  glowStalk(x: number, s: any, rng: RNG) {
     const h = rng.int(4, 8);
     for (let y = s - 1; y > s - h; y--) this.set(x, y, T.WOOD);
     this._canopy(x, s - h, rng.int(2, 3), 1, T.GLOWLEAF, 1);
   },
 
   /** 사막의 큰 선인장 — 고체 블록 기둥이라 밟거나 스치면 아프다 */
-  cactusPlant(x, s, rng) {
+  cactusPlant(x: number, s: any, rng: RNG) {
     const h = rng.int(2, 4);
     for (let y = s - 1; y > s - 1 - h; y--) this.set(x, y, T.CACTUS_BLOCK);
     if (h >= 3 && rng.chance(0.5)) {   // 팔 하나
@@ -359,7 +359,7 @@ export const WorldPlants: Bag & ThisType<World> = {
     const { WW, WH } = this.dims;
     const WOOD = new Set([T.WOOD, T.PALMWOOD]);
     const LEAF = new Set([T.LEAF, T.CORRUPTLEAF, T.SKYLEAF, T.JUNGLELEAF, T.GLOWLEAF, T.PALMLEAF, T.PINELEAF]);
-    const isTree = t => WOOD.has(t) || LEAF.has(t);
+    const isTree = (t: any) => WOOD.has(t) || LEAF.has(t);
     let removed = 0;
     /* ① 밑동이 허공인 줄기 토막(굴·방이 밑을 파 갔다) — 옆 줄기에 기대지 않으면 그 열을 잎 밑까지 걷는다 */
     for (let y = WH - 2; y >= 0; y--) for (let x = 1; x < WW - 1; x++) {
@@ -374,7 +374,7 @@ export const WorldPlants: Bag & ThisType<World> = {
       seen[st[0]] = 1;
       let ceil = false, rooted = false, leafRest = false, hasWood = false;
       while (st.length) {
-        const i = st.pop(), cx = i % WW, cy = (i / WW) | 0;
+        const i = st.pop(), cx = i! % WW, cy = (i! / WW) | 0;
         cells.push(i);
         if (cy <= 1) ceil = true;
         const below = this.get(cx, cy + 1), wood = WOOD.has(this.get(cx, cy));
@@ -388,7 +388,7 @@ export const WorldPlants: Bag & ThisType<World> = {
         }
       }
       if ((rooted || (!hasWood && leafRest)) && !ceil) continue;
-      for (const i of cells) this.set(i % WW, (i / WW) | 0, T.AIR);
+      for (const i of cells) this.set(i! % WW, (i! / WW) | 0, T.AIR);
       removed += cells.length;
     }
     return removed;

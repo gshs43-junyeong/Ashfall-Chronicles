@@ -22016,7 +22016,7 @@
               g.ellipse(ox + tx + 0.9, oy + ty + 3, 5, 4, 0, Math.PI, 2 * Math.PI);
               g.fill();
               g.fillStyle = shade(base, 0.72);
-              R(tx - 4, ty + 2.4, 10, 1.4);
+              R(tx - 4, ty + 2.4, 10, 1.4, shade(base, 0.72));
               R(tx + 0.2, ty + 3, 1.8, h - 4, "#e8dcc0");
               R(tx - 2, ty + 0.6, 1.4, 1.4, "#fff2d8");
               R(tx + 2.4, ty + 1.4, 1.2, 1.2, "#fff2d8");
@@ -33315,7 +33315,7 @@
         if (!this.craftShowLocked && locked || this.craftGroup !== "all" && group !== this.craftGroup || !matches) continue;
         rows.push({ i, r, locked, mat: p.hasAll(r.need), group });
       }
-      rows.sort((a, b) => a.locked - b.locked || b.mat - a.mat || (a.r.lv || 1) - (b.r.lv || 1));
+      rows.sort((a, b) => +a.locked - +b.locked || +b.mat - +a.mat || (a.r.lv || 1) - (b.r.lv || 1));
       const groups = [["all", tr("전체")], ["gear", tr("장비")], ["survival", tr("생존")], ["build", tr("건축")], ["factory", tr("자동화")], ["other", tr("기타")]];
       const escapedQuery = this.craftQuery.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       head += `<div class="craft-filter"><input id="craft-search" type="search" value="${escapedQuery}" placeholder="${tr("제작품 검색")}">` + groups.map(([key, label]) => `<button class="cg${this.craftGroup === key ? " on" : ""}" data-cgroup="${key}">${label}</button>`).join("") + `<button class="lock-toggle${this.craftShowLocked ? " on" : ""}" data-lock-toggle>${this.craftShowLocked ? tr("잠긴 제작법 숨기기") : tr("잠긴 제작법 보기")}</button><span class="craft-count">${tr("{rowsCount}개 표시", { rowsCount: rows.length })}</span></div>`;
@@ -33689,7 +33689,7 @@
       this.refreshChest();
     },
     shopTitle() {
-      const rate = app.marketRate ? Math.round((app.goldRate || 1) * 100) : 100;
+      const rate = Math.round((app.goldRate || 1) * 100);
       const arrow = rate > 105 ? " 📈" : rate < 95 ? " 📉" : "";
       return tr("{npc}의 상점 — 🪙 {gold} · 환율 {rate}%{arrow}", { npc: NPCS[this.shopRef].n, gold: fmt(app.player.gold), rate, arrow });
     },
@@ -47138,7 +47138,7 @@
       for (const kind of ["relay", "peer"]) {
         if (!sigs[kind]) continue;
         const sig = kind === "relay" ? createWsSignal(sigs.relay, { role: "host" }) : createPeerSignal(sigs.peer, { role: "host", codeLen: PEER_CODE });
-        let tm = null;
+        let tm;
         const late = new Promise((_, rej) => {
           tm = setTimeout(() => rej(new Error("signal: timeout")), RELAY_WAIT_MS);
         });

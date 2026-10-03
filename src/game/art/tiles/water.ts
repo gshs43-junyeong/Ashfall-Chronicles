@@ -7,7 +7,7 @@ import { ART, TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
 export const TilePaintWater: Bag = {
-  fern(H) {
+  fern(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 잎 여러 장이 바닥에서 부챗살처럼 퍼진다
@@ -28,7 +28,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  orchid(H) {
+  orchid(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         const stem = '#3f7a34';
@@ -49,7 +49,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  kelpplant(H) {
+  kelpplant(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 해초 — 물속이므로 **물을 먼저 깔고** 그 위에 잎을 세운다(수련·공기 주머니와 같은 방식). */
@@ -70,7 +70,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  seashell(H) {
+  seashell(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 조개 — 모래 위에 놓인 부채꼴. */
@@ -91,7 +91,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  tripmine(H) {
+  tripmine(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 바닥에 박힌 원반 — 밟기 전에는 조용하다.
@@ -104,7 +104,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  airpocket(H) {
+  airpocket(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 물속에 갇힌 공기 — 사연: docs/code-history.md#h86 */
@@ -120,7 +120,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  palmwood(H) {
+  palmwood(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 야자 줄기 — 잿빛 숲 나무(trunk)와 달리 **가늘고 마디가 굵다.** */
@@ -133,7 +133,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  palmleaf(H) {
+  palmleaf(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 야자 잎갓 — 여러 칸이 가로로 이어져 하나의 갓이 된다 — 사연: docs/code-history.md#h87 */
@@ -158,7 +158,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  coconut(H) {
+  coconut(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 열매 셋이 줄기 아래 매달린다.
@@ -173,7 +173,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  roomair(H) {
+  roomair(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 방 안의 공기. */
@@ -182,7 +182,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  lily(H) {
+  lily(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 수면에 뜬 얇은 초록 판. */
@@ -224,7 +224,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  spring(H) {
+  spring(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 샘 바위 — 돌 바탕에 젖어 검게 번진 틈 하나와 거기서 새는 물방울. */
@@ -241,7 +241,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  cattail(H) {
+  cattail(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 부들 — 가는 줄기 서너 대에 갈색 이삭. */
@@ -261,7 +261,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  pondweed(H) {
+  pondweed(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 물풀 — 물속 바닥에서 올라온 가는 잎. */
@@ -278,7 +278,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  pebbles(H) {
+  pebbles(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 물가 조약돌 — 바닥에 둥글게 닳은 돌 몇 개. */
@@ -293,7 +293,7 @@ export const TilePaintWater: Bag = {
       }
     }
   },
-  sporestone(H) {
+  sporestone(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         this._fill(g, ox, oy, base);

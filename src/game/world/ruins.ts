@@ -10,7 +10,7 @@ import { TS, World } from '../world.js';
 export const WorldRuins: Bag & ThisType<World> = {
 
   /** 유적 입구를 판다 — 생김새(arch)에 따라 들어가는 방식이 다르다. */
-  carveRuinEntrance(spec, x0, y0, rng) { const { WW } = this.dims;
+  carveRuinEntrance(spec: any, x0: any, y0: any, rng: any) { const { WW } = this.dims;
     this._entranceLandY = undefined;                          // 피라미드만 채운다
     this._entranceSpots = [];                                 // 입구가 없으면 빈 채로 둔다
     this._entranceRooms = [];
@@ -33,7 +33,7 @@ export const WorldRuins: Bag & ThisType<World> = {
       /* 피라미드 — 문은 **빗면**에 난다. */
       const mid = x0 + spec.w / 2;
       const side = rng.chance(0.5) ? -1 : 1;
-      const faceX = y => Math.round(mid + side * ((y - y0 + 1) * (spec.w / 2) / spec.h));
+      const faceX = (y: number) => Math.round(mid + side * ((y - y0 + 1) * (spec.w / 2) / spec.h));
       let yd = y0 + 10;
       for (; yd < y0 + spec.h - 8; yd++)
         if (this.surface[clamp(faceX(yd), 0, WW - 1)] - yd <= 6) break;
@@ -118,10 +118,10 @@ export const WorldRuins: Bag & ThisType<World> = {
   },
 
   /** 입구 통로 — 목(지상에서 땅까지)을 판 뒤 **벽돌로 쌓은 길**(_buildPassage)을 잇는다. */
-  _carveEntranceShaft(ex, yTop, yBot, spec, rng) {
+  _carveEntranceShaft(ex: number, yTop: number, yBot: number, spec: Bag, rng: any) {
     const bg = spec.bg;
-    const solid = (x, y) => TILE_DEF[this.get(x, y)].solid === 1;
-    const dig = (x, y) => {
+    const solid = (x: number, y: number) => TILE_DEF[this.get(x, y)].solid === 1;
+    const dig = (x: number, y: number) => {
       if (this.inB(x, y) && this.get(x, y) !== T.BEDROCK) { this.set(x, y, T.AIR); this.setWall(x, y, bg); }
     };
     this._entranceSpots = [];
@@ -143,7 +143,7 @@ export const WorldRuins: Bag & ThisType<World> = {
   },
 
   /** 유적으로 가는 **쌓아 올린 길** — 테라리아 던전 복도나 마인크래프트 요새처럼 벽돌로 두른 곧은 마디를 이어 붙인다. */
-  _buildPassage(sx, sy, yBot, spec, rng, o) { const { WW } = this.dims;
+  _buildPassage(sx: number, sy: number, yBot: number, spec: Bag, rng: RNG, o: Bag) { const { WW } = this.dims;
     const kind = spec.entryKind || 'foothold';
     const H = 5;                                              // 복도 안 높이
     const span = Math.max(20, Math.round((spec.w || 40) * 0.45));
@@ -151,26 +151,26 @@ export const WorldRuins: Bag & ThisType<World> = {
     let yGuard = yBot;                                        // 이 줄 아래로는 벽돌·바닥을 안 깐다(유적의 몸)
     const bg = spec.bg, wall = spec.wall || T.RUINBRICK, floorT = spec.floor || T.RUINTILE;
     const traps = spec.traps || ['dart', 'crumble'];
-    const K = (x, y) => y * WW + x;
+    const K = (x: number, y: number) => y * WW + x;
     const dug = new Set();
-    const ok = (x, y) => this.inB(x, y) && this.get(x, y) !== T.BEDROCK && !this.locked(x, y);
-    const dig = (x, y) => {
+    const ok = (x: number, y: number) => this.inB(x, y) && this.get(x, y) !== T.BEDROCK && !this.locked(x, y);
+    const dig = (x: number, y: number) => {
       if (!ok(x, y)) return;
       this.set(x, y, T.AIR); this.setWall(x, y, bg); dug.add(K(x, y));
     };
     // 벽돌 — 원래 땅(단단한 칸)만 바꾼다.
-    const brick = (x, y) => {
+    const brick = (x: number, y: number) => {
       if (y < yGuard && ok(x, y) && !dug.has(K(x, y)) && TILE_DEF[this.get(x, y)].solid === 1) this.set(x, y, wall);
     };
     // 발밑 — 비어 있어도 깐다.
-    const floorAt = (x, y) => {
+    const floorAt = (x: number, y: number) => {
       if (y < yGuard && ok(x, y) && !dug.has(K(x, y))) this.set(x, y, floorT);
     };
     /* ★ stopAtAir 는 **벽 속에 한 번 들어간 뒤에만** 본다. */
     let x = sx, f = sy, stop = false, inWall = false, stopAtAir = !!o.stopAtAir;
     let dir = o.dir || (rng.chance(0.5) ? 1 : -1);
-    const cols = [];                                          // 이번 마디의 [x, 바닥]
-    const col = (cx, cf) => {
+    const cols: number[][] = [];                                          // 이번 마디의 [x, 바닥]
+    const col = (cx: number, cf: any) => {
       if (stopAtAir) {
         const open = this.get(cx, cf) === T.AIR && !dug.has(K(cx, cf));
         if (open && inWall) stop = true;
@@ -181,7 +181,7 @@ export const WorldRuins: Bag & ThisType<World> = {
       floorAt(cx, cf + 1); brick(cx, cf + 2);                 // 바닥과 그 밑 한 겹
       cols.push([cx, cf]);
     };
-    const step = dy => { x += dir; f += dy; col(x, f); };
+    const step = (dy: number) => { x += dir; f += dy; col(x, f); };
     const ahead = () => (dir > 0 ? hi - x : x - lo);
     col(x, f);
 
@@ -200,9 +200,9 @@ export const WorldRuins: Bag & ThisType<World> = {
       this._entranceSpots.push([ax + (rw >> 1), f]);
       this._entranceRooms.push([ax - 1, top - 1, rw + 2, rh + 2, f]);
       const box = { x: ax - 1, y: top - 1, w: rw + 2, h: rh + 2 };
-      const pool = traps.filter(t => t !== 'dart' && t !== 'grind').concat(['crumble', 'vent', 'gas']);
+      const pool = traps.filter((t: any) => t !== 'dart' && t !== 'grind').concat(['crumble', 'vent', 'gas']);
       for (let i = pool.length - 1; i > 0; i--) { const j = rng.int(0, i); const t2 = pool[i]; pool[i] = pool[j]; pool[j] = t2; }
-      let placed = 0; const used = {};
+      let placed = 0; const used: Bag = {};
       const want = rng.int(2, 3);
       for (const tk of pool) {
         if (placed >= want) break;
@@ -222,7 +222,7 @@ export const WorldRuins: Bag & ThisType<World> = {
     const well = () => {
       const D = rng.int(9, 11), Ws = D + 1;
       const xw = x, top = f - H + 1;
-      const at = i => xw + dir * i;                           // i = 1..Ws 가 방 속
+      const at = (i: number) => xw + dir * i;                           // i = 1..Ws 가 방 속
       for (let i = 0; i <= Ws + 1; i++) {
         const cx = at(i);
         for (let y = top - 1; y <= f + D; y++) {
@@ -247,7 +247,7 @@ export const WorldRuins: Bag & ThisType<World> = {
     let lastSeg = 'start', lastRoom = f, guard = 0;
     if (o.vestibule) { for (let i = 0; i < o.vestibule && !stop; i++) step(0); lastSeg = 'hall'; }
     /** yT 줄까지 부품을 이어 내려간다. */
-    const run = yT => {
+    const run = (yT: any) => {
       while (!stop && f < yT && guard++ < 120) {
         cols.length = 0;
         const rem = yT - f;
@@ -298,8 +298,8 @@ export const WorldRuins: Bag & ThisType<World> = {
     /* ★ 유적에는 **옆문으로 바닥 높이에서** 들어간다 — 사연: docs/code-history.md#h118 */
     run(ruin.y0 - 3);
     if (stop) return { x, f };
-    const edgeL = r => r.x - ruin.x0, edgeR = r => ruin.x0 + ruin.w - (r.x + r.w);
-    const cands = ruin.rooms.filter(r => Math.min(edgeL(r), edgeR(r)) <= 3 && r.h >= 5);
+    const edgeL = (r: any) => r.x - ruin.x0, edgeR = (r: any) => ruin.x0 + ruin.w - (r.x + r.w);
+    const cands = ruin.rooms.filter((r: any) => Math.min(edgeL(r), edgeR(r)) <= 3 && r.h >= 5);
     const pool = cands.length ? cands : ruin.rooms;
     let T0 = pool[0];
     for (const r of pool)
@@ -321,7 +321,7 @@ export const WorldRuins: Bag & ThisType<World> = {
   },
 
   /** 그 유적에만 놓이는 장식. */
-  putRuinDecor(spec, r, fy, rng) {
+  putRuinDecor(spec: Bag, r: any, fy: number, rng: any) {
     if (!spec.decor) return;
     /* ★ 규칙: 장식은 **걷는 줄(fy · fy-1)을 절대 막지 않는다.** */
     const list = Array.isArray(spec.decor[0]) ? spec.decor : [spec.decor];
@@ -329,9 +329,9 @@ export const WorldRuins: Bag & ThisType<World> = {
   },
 
   /* ★ 장식은 **붙을 데가 있어야 붙는다.** */
-  _canDecor(x, y, side, like) {
+  _canDecor(x: number, y: number, side: any, like: any) {
     if (this.get(x, y) !== T.AIR) return false;
-    const hold = (dx, dy) => {
+    const hold = (dx: number, dy: number) => {
       const t = this.get(x + dx, y + dy);
       return TILE_DEF[t].solid === 1 || (like !== undefined && t === like);
     };
@@ -342,15 +342,15 @@ export const WorldRuins: Bag & ThisType<World> = {
   },
 
   /** 붙을 데가 있을 때만 놓는다. */
-  putDecor(x, y, tile, side, like) {
+  putDecor(x: number, y: number, tile: any, side: any, like: any) {
     if (!this._canDecor(x, y, side, like === undefined ? tile : like)) return false;
     this.set(x, y, tile);
     return true;
   },
 
-  _decorOne(spec, r, fy, kind, tile, dens, rng) {
+  _decorOne(spec: Bag, r: any, fy: number, kind: string, tile: any, dens: any, rng: RNG) {
     const x1 = r.x + r.w - 2;
-    const air = (x, y) => this.get(x, y) === T.AIR;
+    const air = (x: number, y: number) => this.get(x, y) === T.AIR;
     if (kind === 'pillar') {
       // 천장에서 내려오다 두 칸 남기고 멈추는 기둥 — 밑으로 지나다닐 수 있다.
       for (let x = r.x + 3; x < x1 - 1; x += 5) {
@@ -425,7 +425,7 @@ export const WorldRuins: Bag & ThisType<World> = {
   },
 
   /** 암호 골방 — 방 오른쪽 끝에 암호석 문을 세우고 그 너머에 상자를 둔다. */
-  buildCipherVault(spec, r, fy, rng, rooms) {
+  buildCipherVault(spec: Bag, r: any, fy: number, rng: any, rooms: any) {
     const x1 = r.x + r.w - 2, dx0 = x1 - 6;
     for (let y = fy - 6; y <= fy + 2; y++)
       for (let x = dx0 - 1; x <= x1 + 2; x++) {
@@ -442,8 +442,8 @@ export const WorldRuins: Bag & ThisType<World> = {
       x: (x1 - 2) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
 
     /* 쪽지 셋 — 골방 방을 뺀 나머지에서 **서로 멀리** 셋을 고른다. */
-    const pool = (rooms || []).filter(q => q !== r);
-    pool.sort((a, b) => a.x - b.x);
+    const pool = (rooms || []).filter((q: any) => q !== r);
+    pool.sort((a: any, b: any) => a.x - b.x);
     for (let i = 0; i < 3 && pool.length; i++) {
       // 왼쪽 · 가운데 · 오른쪽에서 하나씩.
       const want = Math.round(i * (pool.length - 1) / 2);
@@ -460,7 +460,7 @@ export const WorldRuins: Bag & ThisType<World> = {
   },
 
   /** 그 유적에만 있는 방 하나. */
-  buildSigRoom(spec, r, fy, cx, idx, rng) {
+  buildSigRoom(spec: Bag, r: any, fy: number, cx: number, idx: number, rng: RNG) {
     const x1 = r.x + r.w - 2, sig = spec.sig;
     for (let x = r.x + 2; x < x1; x += 4) this.putDecor(x, r.y + 2, spec.torch, 'any');
 
@@ -510,7 +510,7 @@ export const WorldRuins: Bag & ThisType<World> = {
   },
 
   /** 신비한 방 — 싸움이 아니라 고르는 것이 내용이라 함정도 몹도 두지 않는다. */
-  buildMysticRoom(spec, r, fy, cx, rng) {
+  buildMysticRoom(spec: Bag, r: any, fy: number, cx: number, rng: any) {
     const m = MYSTIC[spec.mystic]; if (!m) return;
     const x1 = r.x + r.w - 2;
     for (let x = r.x + 2; x < x1; x += 3) this.putDecor(x, r.y + 2, spec.torch || T.TORCH, 'any');
@@ -530,9 +530,9 @@ export const WorldRuins: Bag & ThisType<World> = {
 
   /** 유적 하나를 짓는다 — 방·함정·상자·비문·미니보스 둥지까지. */
   /** 피라미드 마무리 — 꼭대기 두 줄을 금으로 덮고, 지표(surface)를 빗면으로 올린다. */
-  _finishPyramid(spec, x0, y0) {
+  _finishPyramid(spec: Bag, x0: number, y0: number) {
     const w = spec.w, h = spec.h, mid = x0 + w / 2;
-    const inTri = (x, y) => y >= y0 && y < y0 + h && Math.abs(x + 0.5 - mid) <= (y - y0 + 1) * (w / 2) / h;
+    const inTri = (x: number, y: number) => y >= y0 && y < y0 + h && Math.abs(x + 0.5 - mid) <= (y - y0 + 1) * (w / 2) / h;
     for (let x = x0; x < x0 + w; x++) {
       for (let y = y0; y < y0 + h; y++) {
         if (!inTri(x, y)) continue;

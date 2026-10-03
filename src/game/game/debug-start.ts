@@ -19,7 +19,7 @@ import { Game } from '../game.js';
 
 export const DebugStartPart: Bag = {
   /** 새 게임을 막 만든 뒤 — ?debug= 시험장으로 옮겨 준다(정상 플레이에는 영향 없음 · 주소 목록 docs/debug-urls.md). */
-  debugStart(qs) {
+  debugStart(qs: any) {
     const p = this.player, { WW, WH, HELL_Y, CAMP_X1, SEA_X1 } = this.world.dims;
     /* ?debug=meteor — 2.5초 뒤 운석. */
     if (qs.get('debug') === 'meteor') {
@@ -62,11 +62,11 @@ export const DebugStartPart: Bag = {
       p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
       p.gold = +qs.get('gold') || 10000000;
       // 되팔 거리 — 알 세 종류와 공장 물건·재료를 한 벌씩 쥐여 준다
-      const give = (id, n) => {
+      const give = (id: string, n: number) => {
         const max = ITEMS[id].stack || 1;
         for (let left = n; left > 0; left -= max) {
           const it = makeItem(id, Math.min(max, left), 0);
-          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
         }
       };
       for (const id of ['egg_common', 'egg_rare', 'egg_epic']) give(id, 3);
@@ -82,11 +82,11 @@ export const DebugStartPart: Bag = {
 
     /* ?debug=sea — 세션 3 확인 자리. */
     if (qs.get('debug') === 'sea') {
-      const give = (id, n) => {
+      const give = (id: string, n: number) => {
         const max = ITEMS[id].stack || 1;
         for (let left = n; left > 0; left -= max) {
           const it = makeItem(id, Math.min(max, left), 0);
-          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
         }
       };
       this.chapter = qs.get('ch') !== null ? +qs.get('ch') : SESSIONS[2].ch0;
@@ -116,11 +116,11 @@ export const DebugStartPart: Bag = {
     /* ?debug=fishfarm — 낚시·농사만 확인하는 자리. */
     if (qs.get('debug') === 'fishfarm') {
       // 한 칸 최대치(stack)를 넘겨 주면 한 슬롯에 몰아 담겨 버린다 — 나눠서 넣는다
-      const give = (id, n) => {
+      const give = (id: string, n: number) => {
         const max = ITEMS[id].stack || 1;
         for (let left = n; left > 0; left -= max) {
           const it = makeItem(id, Math.min(max, left), 0);
-          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
         }
       };
       give('rod_basic', 1); give('rod_adv', 1);
@@ -135,7 +135,7 @@ export const DebugStartPart: Bag = {
       p.gold = +qs.get('gold') || 5000;
       /* 정글 호수 기슭 — 물가 바로 옆의 마른 땅에 세운다. */
       const w = this.world;
-      const lake = (w.pools || []).find(q => q.biome === 'jungle') || (w.pools || []).find(q => q.big);
+      const lake = (w.pools || []).find((q: any) => q.biome === 'jungle') || (w.pools || []).find((q: any) => q.big);
       if (lake) {
         let sx = lake.x;
         // 호수 왼쪽으로 걸어 나가 물이 끝나는 첫 마른 바닥을 찾는다
@@ -168,14 +168,14 @@ export const DebugStartPart: Bag = {
     if (qs.get('debug') === 'ruin') {
       const w = this.world, id = qs.get('id') || 'mine';
       const idx = RUIN_SPEC.findIndex(s => s.id === id);
-      const site = (w.ruinSites || []).find(s => s.id === id);
+      const site = (w.ruinSites || []).find((s: any) => s.id === id);
       if (idx >= 0 && site && site.rooms.length) {
         const plv = +qs.get('plv') || 30;
         while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
         p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-        const give = (iid, n) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+        const give = (iid: any, n: number) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!)); };
         give('tonic_hush', 4); give('drum_pulse', 4); give('pulse_shard', 3); give('potion_hp', 20);
-        const r = site.rooms.slice().sort((a, b) => a.y - b.y)[0];
+        const r = site.rooms.slice().sort((a: any, b: any) => a.y - b.y)[0];
         p.x = (r.x + (r.w >> 1)) * TS; p.y = (r.y + r.h - 3) * TS - p.h + TS; p.vx = p.vy = 0;
         this.seenRuins[id] = 1;
         if (qs.get('boss') === '1') this.lairs[idx] = 1;
@@ -192,15 +192,15 @@ export const DebugStartPart: Bag = {
       const plv = +qs.get('plv') || 30;
       while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
       p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
-      const give = (iid, n) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it)); };
+      const give = (iid: any, n: number) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!)); };
       give('pick_iron', 1); give('potion_hp', 20); give('bomb_small', 10); give('torch', 60);
       let at = null;
       if (kq) {
         const k = CAVE_TYPES.findIndex(c => c.id === kq);
         const cx0 = w.spawnX;
         // 그 갈래의 장식이 **실제로 깔린** 자리여야 한다(캠프 둘레처럼 갈래만 있고 안 꾸민 곳이 있다)
-        const mark = { moss: T.HANGMOSS, drip: T.STALACTITE, geode: T.GEODE, fume: T.GASVENT }[kq];
-        const near = (x, y) => {
+        const mark = ({ moss: T.HANGMOSS, drip: T.STALACTITE, geode: T.GEODE, fume: T.GASVENT } as Bag)[kq];
+        const near = (x: number, y: number) => {
           let n = 0;
           for (let dx = -8; dx <= 8; dx++) for (let dy = -8; dy <= 3; dy++) if (w.get(x + dx, y + dy) === mark) n++;
           return n >= (kq === 'fume' ? 1 : 3);
@@ -212,7 +212,7 @@ export const DebugStartPart: Bag = {
               if (w.caveKindAt(x, y) === k && w.get(x, y) === T.AIR && w.get(x, y - 1) === T.AIR && w.solid(x, y + 1) && near(x, y)) { at = [x, y]; break; }
           }
       } else {
-        const f = (w.faults || []).filter(q => !q.done).sort((a, b) => Math.abs(a.x - w.spawnX) - Math.abs(b.x - w.spawnX))[0];
+        const f = (w.faults || []).filter((q: any) => !q.done).sort((a: any, b: any) => Math.abs(a.x - w.spawnX) - Math.abs(b.x - w.spawnX))[0];
         if (f) at = [f.x - f.dir * 3, f.y + 1];
       }
       if (at) {
@@ -228,11 +228,11 @@ export const DebugStartPart: Bag = {
 
     /* ?debug=bomb — 폭탄만 확인하는 자리. */
     if (qs.get('debug') === 'bomb') {
-      const give = (id, n) => {
+      const give = (id: string, n: number) => {
         const max = ITEMS[id].stack || 1;
         for (let left = n; left > 0; left -= max) {
           const it = makeItem(id, Math.min(max, left), 0);
-          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+          if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
         }
       };
       for (const id of ['bomb_small', 'bomb_big', 'bomb_dig']) give(id, 99);
@@ -299,13 +299,13 @@ export const DebugStartPart: Bag = {
 
   /** ?debug=factory — 캠프 오른쪽을 평평하게 밀고 기계 스물여섯 종을 한 줄로 세운다.
       전주는 10칸마다(반경 5 · 이음 10) 서서 줄 전체가 망 하나다. 몹은 &mobs=1 일 때만 나온다. */
-  buildDebugFactory(qs) { const { WW, WH, WORLD_BOT, CAMP_X1 } = dimsOf(this.world);
+  buildDebugFactory(qs: any) { const { WW, WH, WORLD_BOT, CAMP_X1 } = dimsOf(this.world);
     const p = this.player, w = this.world;
-    const give = (id, n) => {
+    const give = (id: string, n: number) => {
       const max = ITEMS[id].stack || 1;
       for (let left = n; left > 0; left -= max) {
         const it = makeItem(id, Math.min(max, left), 0);
-        if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+        if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
       }
     };
     const plv = +qs.get('plv') || 50;
@@ -314,7 +314,7 @@ export const DebugStartPart: Bag = {
     p.gold = +qs.get('gold') || 200000;
     this.dbgCalm = qs.get('mobs') !== '1';
     this.dayT = 12 * 60;
-    for (const k in MACHINE) give(MACHINE[k].item, 10);   // 가방엔 기계만 — 재료는 줄 왼쪽 끝 자재 상자에
+    for (const k in MACHINE) give(MACHINE[k].item!, 10);   // 가방엔 기계만 — 재료는 줄 왼쪽 끝 자재 상자에
 
     const X0 = CAMP_X1 + 8, LEN = 84, AX = X0 + LEN + 12, BX = AX + 40, XEND = BX + 28;
     let gy = 0;
@@ -339,7 +339,7 @@ export const DebugStartPart: Bag = {
     // 드릴 바로 밑은 광상 — 줄지 않고 계속 나오는 모습을 보인다(기계식 = 철, 전동 = 금 · 등급 3)
     w.set(X0 + 51, gy + 1, T.IRONRICH); w.set(X0 + 55, gy + 1, T.GOLDRICH);
 
-    const put = (dx, key, dir?, fill?) => {
+    const put = (dx: any, key: any, dir?: any, fill?: any) => {
       const m = Factory.place(w, X0 + dx, Y, key, dir || 0);
       if (!m) return null;
       if (MACHINE[key].proj) { m.own = 1; }
@@ -397,8 +397,8 @@ export const DebugStartPart: Bag = {
 
   /** ?debug=factory 의 여러 층 공장 둘 — A: 3층 금속 공장(광석 → 주괴 → 강철판·전선), B: 지하 탄광이 제 발전기를 먹이는 순환 발전소 + 방어 갑판.
       층 사이는 위로 가는 벨트 기둥, 사람은 오른쪽(A)·왼쪽(B) 발판 사다리로 오간다. */
-  buildDebugTowers(w, AX, BX, gy) {
-    const P = (x, y, key, dir?, fill?) => {
+  buildDebugTowers(w: any, AX: any, BX: any, gy: any) {
+    const P = (x: any, y: any, key: any, dir?: any, fill?: any) => {
       const m = Factory.place(w, x, y, key, dir || 0);
       if (!m) return null;
       if (MACHINE[key].proj) m.own = 1;
@@ -408,7 +408,7 @@ export const DebugStartPart: Bag = {
       }
       return m;
     };
-    const shell = (x0, x1, top, holes, ladder, slabs) => {
+    const shell = (x0: any, x1: any, top: any, holes: any, ladder: any, slabs: any) => {
       for (let x = x0; x <= x1; x++) {
         for (let y = top; y < gy; y++) { w.set(x, y, T.AIR); if (x > x0 && x < x1) w.setWall(x, y, 6); }
         w.set(x, top, T.STEELPLATE);
@@ -420,7 +420,7 @@ export const DebugStartPart: Bag = {
       // 층마다 벽 횃불 — 벽지 친 실내라 햇빛이 안 든다
       for (let y = gy - 4; y > top; y -= 5) for (let x = x0 + 3; x < x1; x += 6) if (w.get(x, y) === T.AIR) w.set(x, y, T.TORCH);
     };
-    const feed = (m) => { if (m) m.feed = 1; return m; };
+    const feed = (m: any) => { if (m) m.feed = 1; return m; };
 
     /* ---- A. 3층 금속 공장 ---- */
     const A1 = gy - 1, A2 = gy - 6, A3 = gy - 11;

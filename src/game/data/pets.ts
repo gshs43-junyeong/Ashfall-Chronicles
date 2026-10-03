@@ -73,16 +73,16 @@ export const PET_MOTION: Record<string, { fps?: number; bob?: number; tilt?: num
 /* 펫 피해 배율 — 위 기준 피해는 "펫을 처음 손에 넣는 레벨 44 언저리(세션 2 초입)"에서의 값이다. 레벨 75(세션 3 끝)에 2배. */
 /* 레벨 배수 — 세계의 기본 규칙(몹은 레벨을 안 탄다)에서 **일부러 뺀 것들**만 쓴다 — 사연: docs/code-history.md#h19 */
 export const LV_SCALE_BASE = 2.5;
-export function levelMult(level, pow) { return Math.pow(LV_SCALE_BASE, Math.max(0, level) / 50 * (pow || 1)); }
-export function bloodMult(level) { return levelMult(level, 1); }
+export function levelMult(level: number, pow: number) { return Math.pow(LV_SCALE_BASE, Math.max(0, level) / 50 * (pow || 1)); }
+export function bloodMult(level: number) { return levelMult(level, 1); }
 
-export function petDmgScale(level) { return Math.max(0.45, level * 0.0323 - 0.42); }
+export function petDmgScale(level: number) { return Math.max(0.45, level * 0.0323 - 0.42); }
 
 /* ---------------- 펫 레벨 ---------------- */
 export const PET_LV_MAX = 10;
-export function petLvMul(lv) { return 1 + 0.12 * ((lv || 1) - 1); }   // 패시브 b 배수
-export function petAtkMul(lv) { return 1 + 0.06 * ((lv || 1) - 1); }  // 자동 공격 배수
-export function petXpNext(lv, id?) {
+export function petLvMul(lv: number) { return 1 + 0.12 * ((lv || 1) - 1); }   // 패시브 b 배수
+export function petAtkMul(lv: number) { return 1 + 0.06 * ((lv || 1) - 1); }  // 자동 공격 배수
+export function petXpNext(lv: number, id?: string) {
   if (id && PETS[id] && PETS[id].dragon) return Math.round(320 * Math.pow(1.1, (lv || 1) - 1));   // 드래곤은 30까지 — 완만하게(합 4.7만 ≈ 세션 3 처치 900마리)
   return Math.round(150 * Math.pow(1.5, (lv || 1) - 1));   // 10레벨까지 합 1.1만 ≈ 세션 2 처치 330마리
 }
@@ -92,8 +92,8 @@ export const DRAGON_LV_MAX = 30;
 export const DRAGON_GATES = [10, 20, 30];                   // 이 레벨로 오르려면 그 단계 먹이를 먹어야 한다
 export const DRAGON_FOOD = ['dragon_treat_1', 'dragon_treat_2', 'dragon_treat_3'];
 export const DRAGON_STAGE_N = ['새끼', '어린 용', '성룡', '고룡'];
-export const dragonStage = lv => (lv || 1) >= 30 ? 3 : (lv || 1) >= 20 ? 2 : (lv || 1) >= 10 ? 1 : 0;
-export const petMaxLv = id => (PETS[id] && PETS[id].dragon) ? DRAGON_LV_MAX : PET_LV_MAX;
+export const dragonStage = (lv: number) => (lv || 1) >= 30 ? 3 : (lv || 1) >= 20 ? 2 : (lv || 1) >= 10 ? 1 : 0;
+export const petMaxLv = (id: string) => (PETS[id] && PETS[id].dragon) ? DRAGON_LV_MAX : PET_LV_MAX;
 /* 처치 경험치의 이 비율만큼 낀 펫에게 들어간다. */
 export const PET_XP_SHARE = 0.08;
 /* 펫 아이템 — PETS를 단일 출처로 삼아 ITEMS 항목을 자동으로 만든다. */
@@ -102,11 +102,11 @@ for (const id in PETS) {
   ITEMS['pet_' + id] = {
     n: pt.n, i: pt.i, type: 'pet', pet: id, b: pt.b, stack: 1,
     // 최소 레벨 — 공통·희귀·영웅은 세션 2(마을에 닿는 레벨 40 → 11장 끝 50), 드래곤은 세션 3(15장 도중 — 레벨 60~65)
-    lvReq: pt.dragon ? 62 : [40, 44, 48][pt.r], price: pt.dragon ? 200000 : [9000, 34000, 95000][pt.r], d: pt.d
+    lvReq: pt.dragon ? 62 : [40, 44, 48][pt.r!], price: pt.dragon ? 200000 : [9000, 34000, 95000][pt.r!], d: pt.d
   };
 }
 /* 등급별 알 뽑기 확률 [펫 키, 가중치] — 공통(0)·희귀(1)·영웅(2) */
-export const EGG_POOL = {
+export const EGG_POOL: Bag = {
   common: [['ember_squirrel', 26], ['glass_moth', 26], ['pebble_kin', 22], ['dust_sparrow', 22],
            ['frost_kit', 4], ['ash_owl', 4], ['cinder_toad', 3], ['thorn_wisp', 3],
            ['star_sprite', 0.4], ['ember_drake', 0.4], ['void_hatchling', 0.3], ['storm_falcon', 0.3]],

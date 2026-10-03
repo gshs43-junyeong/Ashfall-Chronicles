@@ -11,14 +11,14 @@ import { TS, World, inSeaZone } from '../world.js';
 export const WorldSky: Bag & ThisType<World> = {
 
   /* ---- 지하 묘실 ---- */
-  buildDungeon(rng, n2) { const { SX, SY } = this.dims;
+  buildDungeon(rng: any, n2: any) { const { SX, SY } = this.dims;
     // 묘실도 방 묶음으로.
     const cx = SX(2300 + SHIFT), cy = SY(240), w = 68, h = 38;   // 사막 지하
     const x0 = cx - (w >> 1), y0 = cy - (h >> 1);
     const rooms = this.carveDungeon({
       x0, y0, w, h, wall: T.BRICK, floor: T.BRICK, bg: 6, rng, depth: 4, minW: 12, minH: 9
     });
-    rooms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+    rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
     const main = rooms[0], mfy = main.y + main.h - 3;
     // 입구 통로
     for (let y = this.surface[cx] + 2; y <= y0 + 1; y++) {
@@ -42,7 +42,7 @@ export const WorldSky: Bag & ThisType<World> = {
   },
 
   /* ---- 하늘 섬 + 지상에서 올라가는 거대 나무 ---- */
-  buildSkyIslands(rng, n1) { const { WSX, SX, SY, WW, SKY_Y, SEA_X1 } = this.dims;
+  buildSkyIslands(rng: RNG, n1: any) { const { WSX, SX, SY, WW, SKY_Y, SEA_X1 } = this.dims;
     this.skyIslands = [];
     const N = Math.round(32 * WSX);     // 세계 폭에 맞춰 — 소형 32개
     /* 높이는 제 난수로 높·중·낮 세 층을 이웃과 다르게 고른다. ★ 본 난수의 cy 는 뽑기만 하고 버린다 —
@@ -94,7 +94,7 @@ export const WorldSky: Bag & ThisType<World> = {
   /** 폭풍 제단의 신전 — 유적은 아니지만 유적처럼: 박공지붕 · 벽돌 벽 · 양쪽 문 · 뒤로 선 기둥 · 위층 회랑 둘.
       ★ gx 칸 가운데를 축으로 좌우가 같다(제단이 반 칸 치우쳤던 적이 있다). 가운데 5칸은 거대 나무가 올라오는
       구멍이라 한쪽으로만 통하는 발판으로 덮는다 — 막으면 나무로는 신전에 못 들어온다. */
-  buildSkyTemple(gx, gy) {
+  buildSkyTemple(gx: any, gy: any) {
     const F = gy, H = 16, R = 16;
     // 터 — 신전과 앞마당을 비우고 바닥을 유적 돌로
     for (let x = gx - R - 5; x <= gx + R + 5; x++) {
@@ -148,7 +148,7 @@ export const WorldSky: Bag & ThisType<World> = {
   /** 잿빛 숲의 채취탑 자리를 골라 object(type 'rig')로 세운다 — 저장되므로 땅을 파도 자리가 옮겨 가지 않는다.
       ★ 자리 고르는 법은 예전 game.js rigs() 그대로다(바이옴 이름으로 묻는다 — 사연: docs/code-history.md#h51 · #h52).
       clear 면 발자국 안의 나무·풀을 걷는다 — 나무가 탑을 뚫고 자라 보였다. */
-  placeRigs(clear) { const { BIOMES } = this.dims;
+  placeRigs(clear: any) { const { BIOMES } = this.dims;
     if (this.objects.some(o => o.type === 'rig')) { for (const o of this.objects) if (o.type === 'rig') this.fitRig(o); return; }
     const LEG = RIG.leg;
     let wake = 9;
@@ -180,13 +180,13 @@ export const WorldSky: Bag & ThisType<World> = {
     }
   },
   /** 우클릭 상자 = 그린 탑(다리·몸통·굴뚝)을 두른 사각형. 옛 세이브의 11×10칸 상자도 불러올 때 여기로 맞춘다. */
-  fitRig(o) {
+  fitRig(o: Bag) {
     o.x = (o.tx - RIG.half) * TS; o.y = (o.ty - RIG.stack) * TS;
     o.w = (RIG.half * 2 + 1) * TS; o.h = RIG.stack * TS;
     return o;
   },
   /** 둘레의 나무를 통째로(기둥이 ±6칸 안이면 수관까지 — 수관 반폭 5칸이 탑에 걸린다) 걷고, 발자국 안의 풀·꽃을 걷는다. */
-  clearRigSite(tx, ty) {
+  clearRigSite(tx: number, ty: number) {
     for (let x = tx - 6; x <= tx + 6; x++)
       for (let y = ty - 26; y < ty; y++) {
         const t = this.get(x, y), d = TILE_DEF[t];
@@ -202,8 +202,8 @@ export const WorldSky: Bag & ThisType<World> = {
     const RICH = { [T.COAL]: T.COALRICH, [T.COPPER]: T.COPPERRICH, [T.IRON]: T.IRONRICH, [T.LEAD]: T.LEADRICH,
       [T.GOLD]: T.GOLDRICH, [T.MYTHRIL]: T.MYTHRILRICH };
     const RICH_TOP = 0.016, MIN = 20, tl = this.tiles, seen = new Uint8Array(WW * WORLD_BOT);
-    const ok = (i, t) => { const x = i % WW; return x > 0 && x < WW - 1 && i >= WW && i < WW * WORLD_BOT && tl[i] === t; };
-    const flood = (i0, t, mk) => {   // 덩어리 칸 목록 — 덩어리끼리 안 겹쳐 두 번째 훑기는 표시만 바꾸면 된다
+    const ok = (i: number, t: any) => { const x = i % WW; return x > 0 && x < WW - 1 && i >= WW && i < WW * WORLD_BOT && tl[i] === t; };
+    const flood = (i0: any, t: any, mk: any) => {   // 덩어리 칸 목록 — 덩어리끼리 안 겹쳐 두 번째 훑기는 표시만 바꾸면 된다
       const st = [i0], cells = []; seen[i0] = mk;
       while (st.length) {
         const i = st.pop(); cells.push(i);
@@ -211,7 +211,7 @@ export const WorldSky: Bag & ThisType<World> = {
       }
       return cells;
     };
-    const found = {};   // 종류 → [[크기, 첫 칸]]
+    const found: Bag = {};   // 종류 → [[크기, 첫 칸]]
     for (let i = WW; i < WW * WORLD_BOT; i++) {
       const t = tl[i]; if (!RICH[t] || seen[i] || !ok(i, t)) continue;
       const n = flood(i, t, 1).length;
@@ -219,7 +219,7 @@ export const WorldSky: Bag & ThisType<World> = {
     }
     let n = 0, sites = 0;
     for (const t of Object.keys(found).map(Number).sort((a, b) => a - b)) {
-      const list = found[t].sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+      const list = found[t].sort((a: any, b: any) => b[0] - a[0] || a[1] - b[1]);
       const take = Math.round(list.length * RICH_TOP);
       for (let k = 0; k < take && list[k][0] >= MIN; k++) {
         const cells = flood(list[k][1], t, 2), dist = new Map();
@@ -248,7 +248,7 @@ export const WorldSky: Bag & ThisType<World> = {
   },
 
   /** 채취탑이 그려진 칸인가 — 플레이어가 아무것도 못 놓는다(해체한 탑은 빼고). */
-  inRig(x, y) {
+  inRig(x: number, y: number) {
     for (const o of this.objects) {
       if (o.type !== 'rig' || o.gone) continue;
       const dx = x - o.tx, up = o.ty - y;
@@ -259,11 +259,11 @@ export const WorldSky: Bag & ThisType<World> = {
   },
 
   /** 하늘 섬 높이 — 0 높은 층 · 1 가운데 · 2 낮은 층. 낮은 층 바닥(SKY_Y-8)은 이중 점프로 지상에서 못 닿게 둔 최소 높이다. */
-  skyAlt(r, tier) { const { SY, SKY_Y } = this.dims;
+  skyAlt(r: any, tier: number) { const { SY, SKY_Y } = this.dims;
     return tier === 0 ? r.int(SY(5), SY(10)) : tier === 1 ? r.int(SY(14), SY(21)) : r.int(SKY_Y - 13, SKY_Y - 8);
   },
   /** 섬 위 나무를 걷는다. */
-  _skyStrip(x0, x1, cy) {
+  _skyStrip(x0: number, x1: number, cy: number) {
     for (let x = x0; x <= x1; x++) for (let y = 0; y < cy; y++) {
       const t = this.get(x, y);
       if (t === T.WOOD || t === T.SKYLEAF) this.set(x, y, T.AIR);
@@ -275,13 +275,13 @@ export const WorldSky: Bag & ThisType<World> = {
       찾아갈 거리가 있는 섬은 위로 13칸이 필요해 SY(14) 아래 두 층, 조각 섬은 SY(5) 까지 — 바닥은 SKY_Y-8 그대로. */
   buildSkyExtras() { const { WSX, SX, SY, WW, SKY_Y, SEA_X1 } = this.dims;
     const r = new RNG(this.seed + '_sky');
-    const occ = [];
-    const hit = (x0, y0, x1, y1) => occ.some(b => x0 < b[2] && b[0] < x1 && y0 < b[3] && b[1] < y1);
+    const occ: number[][] = [];
+    const hit = (x0: number, y0: number, x1: number, y1: number) => occ.some(b => x0 < b[2] && b[0] < x1 && y0 < b[3] && b[1] < y1);
     for (const s of this.skyIslands) occ.push([s.x - s.w - 6, s.y - 14, s.x + s.w + 6, s.y + 14]);
     const g = this.skyGate; occ.push([g.x - 46, 0, g.x + 46, g.y + 16]);
     const cz = SX(3300 + SHIFT); occ.push([cz - 16, 0, cz + 74 + 16, 4 + 30 + 10]);   // 부유 성채(buildCitadel)
     const feat = () => r.chance(0.5) ? r.int(SY(14), SY(20)) : r.int(SKY_Y - 13, SKY_Y - 8);
-    const place = (rw, rh, tries, band) => {
+    const place = (rw: any, rh: any, tries: any, band: any) => {
       for (let t = 0; t < tries; t++) {
         const cx = r.int(40 + rw, WW - 40 - rw), cy = band();
         if (inSeaZone(cx - rw, SEA_X1) || inSeaZone(cx + rw, SEA_X1)) continue;
@@ -344,14 +344,14 @@ export const WorldSky: Bag & ThisType<World> = {
   },
 
   /** 섬 윗면 한 자리를 비운다 — 섬마다 난 나무가 찾아갈 거리를 덮지 않게. */
-  _skyClear(x0, x1, cy, up) {
+  _skyClear(x0: number, x1: number, cy: number, up: any) {
     for (let x = x0; x <= x1; x++) for (let y = cy - up; y < cy; y++) this.set(x, y, T.AIR);
   },
 
   /** 큰 섬 속 굴 — 윗면 한쪽에 난 구멍으로 내려가면 에테르가 박힌 방과 상자. */
-  skyGrotto(cx, cy, cw, rh, side, r) {
+  skyGrotto(cx: any, cy: any, cw: any, rh: any, side: any, r: any) {
     const top = cy + 2, bot = cy + rh - 2, my = (top + bot) / 2, hh = Math.max(2, (bot - top) / 2 + 0.5);
-    const floorOf = {};
+    const floorOf: Bag = {};
     for (let x = cx - cw; x <= cx + cw; x++) {
       let b = cy; while (b < cy + rh + 3 && this.solid(x, b + 1)) b++;   // 이 칸 섬 밑바닥
       for (let y = top; y <= bot; y++) {
@@ -390,7 +390,7 @@ export const WorldSky: Bag & ThisType<World> = {
   },
 
   /** 섬 윗면의 찾아갈 거리 하나 — 섬 표면이 cy 줄로 평평하다는 것(carveIsland)에 기댄다. */
-  skyFeature(k, cx, cy, r, nextHint) {
+  skyFeature(k: any, cx: any, cy: any, r: any, nextHint: any) {
     if (k === 'pond') {
       // 샘 연못 — 윗면을 파서 고인 물 · 수련 · 가장자리 부들과 들꽃
       const b = r.int(4, 6), dep = r.int(2, 3);
@@ -455,7 +455,7 @@ export const WorldSky: Bag & ThisType<World> = {
     }
   },
 
-  carveIsland(cx, cy, rw, rh, rng) {
+  carveIsland(cx: any, cy: any, rw: any, rh: any, rng: any) {
     for (let x = cx - rw; x <= cx + rw; x++) {
       const t = (x - cx) / rw;
       const depth = Math.round(rh * Math.sqrt(Math.max(0, 1 - t * t)) * rng.range(.85, 1.15));

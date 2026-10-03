@@ -6,15 +6,15 @@
 export const SHIFT = 800;
 
 /* ---------------- 세계 크기 ---------------- */
-export const WORLD_SIZES = {
+export const WORLD_SIZES: Bag = {
   s: { n: '소형', k: 1, d: '지금까지의 세계. 5000×720칸.' },
   m: { n: '중형', k: 1.5, d: '가로·세로 1.5배(7500×1080칸). 바이옴이 넓고 땅속이 깊다. 만드는 데 두 배 남짓 걸린다.' },
   l: { n: '대형', k: 2, d: '가로·세로 2배(10000×1440칸). 오래 걸어야 하는 세계. 만드는 데 네 배 남짓 걸린다.' }
 };
 export let WSIZE = 's', WSX = 1, WSY = 1;
-export const SX = x => Math.round(x * WSX);
-export const SY = y => y >= 70 ? Math.round(y * WSY) : y + Math.round(70 * (WSY - 1));
-export const SYB = y => y + Math.round(720 * WSY) - 720;
+export const SX = (x: number) => Math.round(x * WSX);
+export const SY = (y: number) => y >= 70 ? Math.round(y * WSY) : y + Math.round(70 * (WSY - 1));
+export const SYB = (y: number) => y + Math.round(720 * WSY) - 720;
 
 /* ★ 아래 세계 치수는 **세계 크기(소형·중형·대형)마다 다르다** — setWorldSize 가 새 게임·불러오기 때 고쳐 쓴다(let). */
 export let WW = 5000;              // 세계 가로(타일, 소형) — 세션 3 지역(바다·빙하)이 왼쪽 800칸(SHIFT)
@@ -65,9 +65,9 @@ for (const b of BIOMES) { b.bx0 = b.x0; b.bx1 = b.x1; }   // 소형 기준 경�
 /** 그 크기의 세계 치수를 새로 잰다 — 바이옴 표도 제 것(복사본)을 갖는다. */
 export function makeDims(key: string): WorldDims {
   const WSIZE = WORLD_SIZES[key] ? key : 's', k = WORLD_SIZES[WSIZE].k;
-  const SX = x => Math.round(x * k);
-  const SY = y => y >= 70 ? Math.round(y * k) : y + Math.round(70 * (k - 1));
-  const SYB = y => y + Math.round(720 * k) - 720;
+  const SX = (x: number) => Math.round(x * k);
+  const SY = (y: number) => y >= 70 ? Math.round(y * k) : y + Math.round(70 * (k - 1));
+  const SYB = (y: number) => y + Math.round(720 * k) - 720;
   const WW = SX(5000);
   /* 캠프 구역(안전 지대·곡·원경)은 오두막 셋 x0+2~49 · 광장 x0+38~59 에 맞춘 X1 = X0+66. 100 이던 동안 오른쪽 55칸이 빈 안전 지대였다.
      ★ 생성 발자국(CAMP_GX1)은 100 그대로 — 줄이면 지형·난수가 밀려 d3 석판 유적 1 이 방 3/16 만 걸어서 닿았다. */
@@ -81,12 +81,12 @@ export function makeDims(key: string): WorldDims {
   };
 }
 /* 지금 만들거나 불러오는 세계의 치수 — setWorldSize 가 고르고, new World 가 이것을 제 것으로 가져간다. */
-let CUR: WorldDims = null;
+let CUR: WorldDims = null!;
 /** 세계(없으면 지금 고른 크기)의 치수 — 게임·UI·엔티티 쪽은 이것으로 읽는다. */
 export function dimsOf(w?: { dims?: WorldDims } | null): WorldDims { return (w && w.dims) || CUR; }
 
 /** 세계 치수와 바이옴 경계를 그 크기로 다시 잰다 — world.js setWorldSize 가 부른다. */
-export function applyWorldSize(key) {
+export function applyWorldSize(key: string) {
   CUR = makeDims(key);
   WSIZE = CUR.WSIZE; WSX = CUR.WSX; WSY = CUR.WSY;
   WW = CUR.WW; WH = CUR.WH;
