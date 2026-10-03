@@ -45481,6 +45481,15 @@
       c.strokeText(q.name, x, y);
       c.fillStyle = "#e8f0ff";
       c.fillText(q.name, x, y);
+      if (q.hp <= 0) {
+        c.font = "bold 10px " + FONT;
+        c.textBaseline = "top";
+        c.strokeText(tr("쓰러짐"), x, y + 1);
+        c.fillStyle = "#ff7a6a";
+        c.fillText(tr("쓰러짐"), x, y + 1);
+        c.restore();
+        return;
+      }
       const k = clamp(q.hp / (q.netMaxHp || q.d.maxHp || 1), 0, 1);
       c.fillStyle = "rgba(0,0,0,.6)";
       c.fillRect(x - 14, y + 2, 28, 3);
@@ -47149,7 +47158,39 @@
       if (Math.abs(e.vx) > 6) return 2 + Math.floor(this.time * 7) % 2;
       return Math.floor(this.time * 2.4) % 2;
     },
+    /** 쓰러진 플레이어(여럿일 때) — 바닥에 누운 잿빛 몸 + 빠져나가는 넋. 남의 화면에서도 누가 쓰러졌는지 한눈에 보이게
+        (혼자일 때는 죽음 창이 화면을 덮는다). 몸은 판정 상자 가운데를 축으로 눕혀 아래 끝이 바닥에 닿는다. */
+    drawDowned(c, p, sx, sy) {
+      const key = "player_" + CHAR_OF(p.charId).id, dir = p.facing < 0 ? 1 : -1;
+      c.save();
+      c.translate(sx + p.w / 2, sy + p.h - p.w / 2 - 1);
+      c.rotate(dir * Math.PI / 2);
+      c.filter = "grayscale(0.75) brightness(0.7)";
+      if (!(this.spritesOn && Sprites.draw(c, key, 12, -p.w / 2, -p.h / 2, p.facing < 0))) {
+        c.fillStyle = "#5a5e6a";
+        c.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      c.restore();
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      for (let i = 0; i < 3; i++) {
+        const k = (this.time * 0.55 + i / 3) % 1, x = sx + p.w / 2 + Math.sin(this.time * 2.2 + i * 2.1) * 5 * k;
+        const y = sy + p.h - 14 - k * 46, r = 7 - k * 3;
+        const g = c.createRadialGradient(x, y, 0, x, y, r * 2.2);
+        g.addColorStop(0, `rgba(200,215,255,${0.55 * (1 - k)})`);
+        g.addColorStop(1, "rgba(160,180,255,0)");
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(x, y, r * 2.2, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.restore();
+    },
     drawPlayer(c, p, sx, sy) {
+      if (p.hp <= 0 && this.net) {
+        this.drawDowned(c, p, sx, sy);
+        return;
+      }
       c.save();
       if (p.iframe > 0 && Math.floor(this.time * 24) % 2 === 0) c.globalAlpha = 0.45;
       const ch = CHAR_OF(p.charId);
@@ -48973,6 +49014,9 @@
       rp.floating = !!s.flt;
       rp.swimPh = s.sp;
       rp.iframe = s.ifr;
+      if (rp.hp > 0 && s.hp <= 0) this.netDownFx(rp, s);
+      else if (rp.hp <= 0 && s.hp > 0 && rp._seen) this.toast(tr("{name|이} 다시 일어났다", { name: s.n }), "good");
+      rp._seen = true;
       rp.hp = s.hp;
       rp.netMaxHp = s.mhp;
       rp.charId = s.c;
@@ -48997,6 +49041,14 @@
           return pe;
         });
       }
+    },
+    /** 남이 쓰러진 순간 — 이 화면에서도 보이고 들리게(넋이 흩어지는 빛 · 고리 · 낮은 죽는 소리 · 알림) */
+    netDownFx(rp, s) {
+      const x = s.x + rp.w / 2, y = s.y + rp.h - 10;
+      this.burst(x, y, "void", 72, 1.5);
+      this.shapes.ring(x, y, 46, "#c8d4ff", 0.6);
+      this.sfxAt("death", Math.floor(x / TS), Math.floor(y / TS), 1, 0.55);
+      this.toast(tr("{name|이} 쓰러졌다", { name: rp.name }), "bad");
     },
     /** 남의 아바타 — 이 화면에서는 그림자(update 를 안 돌리고 피해는 주인에게 넘긴다). */
     netAvatar(id, s) {

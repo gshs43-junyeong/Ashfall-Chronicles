@@ -286,12 +286,18 @@
    "game/net.netDropPeer",
    "game/net.netOnGuest"
   ],
+  "{name|이} 다시 일어났다": [
+   "game/net.netApply"
+  ],
   "{name|이} 돌아왔다": [
    "game/net.netOnHost"
   ],
   "{name|이} 들어왔다": [
    "game/net.netOnHost",
    "game/net.netOnGuest"
+  ],
+  "{name|이} 쓰러졌다": [
+   "game/net.netDownFx"
   ],
   "{nm|으로} 개조해야 만들 수 있다": [
    "game/village.craft"
@@ -1905,6 +1911,9 @@
   ],
   "쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.": [
    "game/life.onDeath"
+  ],
+  "쓰러짐": [
+   "game/render.drawNameTag"
   ],
   "씨앗": [
    "ui/tip.showTip"

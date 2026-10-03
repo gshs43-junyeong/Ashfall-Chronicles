@@ -965,7 +965,10 @@
   "머리 위 고드름이 갈라진다 — 비켜라!": "Der Eiszapfen über dir bricht — weg da!",
   "같은 것 넣기": "Passende einlagern",
   "모두 가져오기": "Alles nehmen",
-  "모두 꺼내기": "Alles herausnehmen"
+  "모두 꺼내기": "Alles herausnehmen",
+  "쓰러짐": "Am Boden",
+  "{name|이} 쓰러졌다": "{name} ist gefallen",
+  "{name|이} 다시 일어났다": "{name} ist wieder auf den Beinen"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

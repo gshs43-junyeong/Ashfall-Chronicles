@@ -62,6 +62,9 @@ export const NetPart: Bag = {
     rp.swing = s.sw; rp.swingAng = s.sa; rp.swingDir = s.sd; rp.swingReach = s.sr; rp.dashV = s.dv; rp.flash = s.fl;
     rp.channel = s.ch ? (rp.channel || {}) : null;
     rp.swimming = !!s.sm; rp.swimMove = !!s.smv; rp.floating = !!s.flt; rp.swimPh = s.sp; rp.iframe = s.ifr;
+    if (rp.hp > 0 && s.hp <= 0) this.netDownFx(rp, s);
+    else if (rp.hp <= 0 && s.hp > 0 && rp._seen) this.toast(tr('{name|이} 다시 일어났다', { name: s.n }), 'good');
+    rp._seen = true;
     rp.hp = s.hp; rp.netMaxHp = s.mhp; rp.charId = s.c; rp.name = s.n; rp.level = s.lv || 1;
     if (rp._hid !== s.hid) { rp._hid = s.hid; rp.bag[rp.sel] = s.hid ? makeItem(s.hid) : null; }
     if (rp._wid !== s.wid) { rp._wid = s.wid; rp.equip.weapon = s.wid ? makeItem(s.wid) : null; }
@@ -75,6 +78,14 @@ export const NetPart: Bag = {
         return pe;
       });
     }
+  },
+  /** 남이 쓰러진 순간 — 이 화면에서도 보이고 들리게(넋이 흩어지는 빛 · 고리 · 낮은 죽는 소리 · 알림) */
+  netDownFx(rp: any, s: any) {
+    const x = s.x + rp.w / 2, y = s.y + rp.h - 10;   // 받은 자리 — 보간 버퍼는 아직 한 박자 뒤다
+    this.burst(x, y, 'void', 72, 1.5);
+    this.shapes.ring(x, y, 46, '#c8d4ff', 0.6);
+    this.sfxAt('death', Math.floor(x / TS), Math.floor(y / TS), 1, 0.55);
+    this.toast(tr('{name|이} 쓰러졌다', { name: rp.name }), 'bad');
   },
   /** 남의 아바타 — 이 화면에서는 그림자(update 를 안 돌리고 피해는 주인에게 넘긴다). */
   netAvatar(id: string, s: any) {
