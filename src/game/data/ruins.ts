@@ -102,7 +102,7 @@ RUIN_SPEC.push({
 });
 
 /* 도면 — 굵은 격자(가로 4칸 x 세로 3칸). */
-export const RUIN_PLANS = {
+export const RUIN_PLANS: Bag = {
   full:      ['####', '####', '####'],
   ring:      ['####', '#..#', '####'],   // O — 가운데가 통짜 암반으로 남는다
   horseshoe: ['####', '#...', '####'],   // C — 한쪽이 트인 고리
@@ -130,7 +130,7 @@ STORY_RUIN[2].mobs = ['crawler', 'shadoweye', 'skeleton'];  STORY_RUIN[2].rank =
 
 /* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다. */
 /* 신비한 방 — 한 세계에 두세 곳. */
-export const MYSTIC = {
+export const MYSTIC: Bag = {
   well: { n: '가라앉은 우물', tile: 'WATER',
     lines: ['바닥이 안 보이는 우물이다. 물이 아니라 그보다 무거운 것이 담겨 있다.',
             '가장자리에 손자국이 여럿 있다. 전부 안쪽을 향해 나 있다.'],
@@ -153,7 +153,7 @@ export const MYSTIC = {
     got: '발밑이 가벼워졌다 — 공중에서 한 번 더 뛸 수 있다' }
 };
 
-export const RUIN_MAP_IN = {
+export const RUIN_MAP_IN: Record<string, string> = {
   ice: 'mine',        // 광산(입구 있음) → 얼음 던전
   spore: 'pyramid',   // 피라미드(지상에 솟음) → 포자 굴
   blight: 'spore'     // 포자 굴 → 부패한 둥지 (가장 깊은 사슬 끝)
@@ -161,7 +161,7 @@ export const RUIN_MAP_IN = {
 
 /* ---------------- 유적 비문 ---------------- */
 /* 유적마다 하나씩 있는 유물. */
-export const RUIN_RELIC = {
+export const RUIN_RELIC: Record<string, string> = {
   ice: 'relic_frostpane', pyramid: 'relic_sundial', mine: 'relic_lastlamp',
   blight: 'relic_rotcore', spore: 'relic_sporebell',
   story0: 'relic_frostmark', story1: 'relic_mazeeye', story2: 'relic_hollowseed'
@@ -183,7 +183,7 @@ export const PULSE = {
   rageEvery: 24                   // 격노 중 그 유적 고유의 발작 간격(초)
 };
 /* 맥박 사건 — 단계가 오를 때마다 하나(이미 벌어진 사건이 없을 때). */
-export const PULSE_EVENTS = {
+export const PULSE_EVENTS: Bag = {
   hunt:   { n: '표식된 것', i: '🎯', t: 60, stages: [1, 3],
             d: '유적이 하나에 표식을 새겼다 — 달아나기 전에 쓰러뜨려라' },
   stones: { n: '공명석', i: '💠', t: 90, stages: [1, 2],
@@ -194,7 +194,7 @@ export const PULSE_EVENTS = {
             d: '유적이 문을 닫았다 — 세 차례 몰려오는 것을 모두 쓰러뜨려라' }
 };
 /* 격노 발작 — 유적마다 하나. */
-export const PULSE_RAGE = {
+export const PULSE_RAGE: Bag = {
   ice:     { k: 'dark',  t: '얼음 속의 불이 한꺼번에 꺼진다' },
   mine:    { k: 'quake', t: '갱도가 울린다 — 무언가 내려온다' },
   pyramid: { k: 'heat',  t: '벽 틈에서 달군 모래가 쏟아진다' },
@@ -207,19 +207,19 @@ export const PULSE_RAGE = {
 };
 
 /* ---------------- 탐사 기록 ---------------- */
-export const SURVEY_W = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12 };
-export const SURVEY_TIERS = [
+export const SURVEY_W: Record<string, number> = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12 };
+export const SURVEY_TIERS: { r: string; c: string; need: Record<string, number> }[] = [
   { r: 'S', c: '#ffd24a', need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 4, echo: 3 } },
   { r: 'A', c: '#e8a0ff', need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 2, echo: 1 } },
   { r: 'B', c: '#8fd0ff', need: { rooms: 0.65, chests: 0.5, boss: 1, events: 1 } },
   { r: 'C', c: '#9fdc8f', need: { rooms: 0.35, chests: 0.2 } },
   { r: 'D', c: '#9a9a9a', need: {} }
 ];
-export const SURVEY_LABEL = { rooms: '방', chests: '상자', boss: '주인', lore: '비문', code: '골방', rage: '격노',
+export const SURVEY_LABEL: Record<string, string> = { rooms: '방', chests: '상자', boss: '주인', lore: '비문', code: '골방', rage: '격노',
                        events: '사건', kinds: '사건 갈래', echo: '메아리' };
 
 /* ---------------- 메아리 시련 ---------------- */
-export const ECHO = { max: 5, mul: lv => 1 + 0.35 * lv, needStage: 2 };
+export const ECHO = { max: 5, mul: (lv: number) => 1 + 0.35 * lv, needStage: 2 };
 
 /* ---------------- 동굴 갈래 ---------------- */
 export const CAVE_TYPES = [
@@ -237,7 +237,7 @@ export const CAVE_TYPES = [
 export const FAULT = { count: 28, steps: 260, rx: 34, ry: 15 };   // steps 190 이면 열린 굴이 500칸 남짓이라 '확장'으로 안 읽혔다
 
 /* ---------------- 암호문 (잠긴 골방의 자물쇠) ---------------- */
-export const CIPHER_KIND = {
+export const CIPHER_KIND: Bag = {
   digits: {
     n: '숫자 자물쇠', len: 3, numeric: 1,
     door: '홈이 셋. 숫자를 하나씩 맞춰 넣는 자리다.',
@@ -260,14 +260,14 @@ export const CIPHER_WORDS = ['재의문', '별무덤', '잠긴돌', '마른뼈',
                       '첫파수', '깊은잠', '흰재별', '무너짐', '돌의뼈', '마지막'];
 
 /* 어느 유적에 어떤 자물쇠가 걸리는가. */
-export const RUIN_CIPHER = {
+export const RUIN_CIPHER: Record<string, string> = {
   pyramid: 'digits',   // 하늘을 재던 곳 — 수로 잠갔다
   story1: 'word',      // 겹친 길 — 두 사람이 말을 나눠 적었다
   blight: 'decode'     // 가장 깊고 사나운 곳 — 주워 적는 것만으로는 안 열린다
 };
 
 /* 유적에 처음 발을 들일 때 뜨는 카드. */
-export const RUIN_CARD = {
+export const RUIN_CARD: Bag = {
   ice:     { sub: '얼어붙은 골짜기 아래', line: '스스로 골짜기를 얼린 사람들이 있었다. 그 얼음이 지금 녹고 있다.' },
   pyramid: { sub: '모래에 반쯤 잠긴', line: '왕의 무덤이 아니다. 하늘을 감시하려고 세운 눈이다.' },
   mine:    { sub: '베이스캠프 곁의', line: '갱도는 아직 따뜻하다. 마지막 교대가 올라오지 않았다.' },
@@ -278,7 +278,7 @@ export const RUIN_CARD = {
   story2:  { sub: '세 번째 석판', line: '발 디딜 곳이 없다. 여기까지 온 사람은 돌아갈 생각이 없던 사람이다.' }
 };
 
-export const RUIN_LORE = {
+export const RUIN_LORE: Bag = {
   ice: {
     n: '얼어붙은 비문',
     lines: [
@@ -383,7 +383,7 @@ export const RIG: Bag = { in: [['forest', 2], ['forest2', 1]], edge: 40, leg: 2,
 /* 마을 2단계(밭이 생기는 때)에 가방으로 주는 연장·씨앗 한 벌 */
 export const FARM_KIT: [string, number][] = [['hoe_iron', 1], ['scythe_iron', 1], ['watering_can', 1], ['seed_wheat', 12], ['seed_starroot', 8], ['seed_ashcap', 6], ['fertilizer', 6]];
 
-export const RUIN_HINTS = {
+export const RUIN_HINTS: Bag = {
   ice: [
     ['성에 낀 손자국', ['벽 안쪽에 손바닥 자국이 얼어붙어 있다. 안에서 밖으로 밀어낸 자국이다.', '나가려던 게 아니라, 무언가 못 들어오게 막던 손이다.']],
     ['깨진 온기석', ['불을 담아 두던 돌이다. 일부러 깨뜨렸다.', '따뜻한 것부터 먹힌다는 걸 알고 있었다는 뜻이다.']],
@@ -426,7 +426,7 @@ export const RUIN_HINTS = {
 };
 
 /* ---------------- 세계 이벤트 ---------------- */
-export const EVENTS = {
+export const EVENTS: Bag = {
   bloodmoon: {
     n: '붉은 달', i: '🌑',
     d: '달이 붉다. 오늘 밤은 밖에 있으면 안 된다.',

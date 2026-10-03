@@ -19,7 +19,7 @@ export const BossPart: Bag = {
 
   /* ================= 제단 / 보스 ================= */
   /** 이 장의 결전 보스인데 아직 자격이 없으면 막는다 — 소환 아이템만으로 깨울 수 있으면 장 목표를 통째로 건너뛴다. */
-  bossGated(bossId) {
+  bossGated(bossId: any) {
     const ch = CHAPTERS[this.chapter];
     if (!ch || !ch.goal || ch.goal.type !== 'boss' || ch.goal.target !== bossId) return false;
     const st = this.chapterState(ch);
@@ -27,7 +27,7 @@ export const BossPart: Bag = {
     this.toast(this.goalLocked(ch, st), 'bad');
     return true;
   },
-  altar(o) {
+  altar(o: Bag) {
     const p = this.player;
     const need = Object.keys(ITEMS).find(k => ITEMS[k].boss === o.boss);
     if (this.boss) { this.toast(tr('이미 무언가가 깨어 있다'), 'bad'); return; }
@@ -39,7 +39,7 @@ export const BossPart: Bag = {
     this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 60);
     UI.refreshBag();
   },
-  useSummon(slot) {
+  useSummon(slot: number) {
     const p = this.player, it = p.bag[slot];
     const bossId = idef(it).boss;
     if (this.boss) { this.toast(tr('이미 무언가가 깨어 있다'), 'bad'); return; }
@@ -50,13 +50,13 @@ export const BossPart: Bag = {
       frost_witch: ['ice'], void_king: ['hell'], storm_warden: ['sky'], first_keeper: ['ruin'],
       pursuer: ['surface'],  // 하늘이 트인 지상에서만 — 숨는 대신 위치를 알려주는 의식이다
       overseer: ['works']
-    }[bossId];
+    }[bossId!];
     if (req && !req.includes(zone)) { this.toast(tr('여기서는 반응하지 않는다'), 'bad'); return; }
     p.removeItem(it.id, 1);
     this.spawnBoss(bossId, p.cx + 160 * (p.facing || 1), p.cy - 90);
     UI.refreshBag();
   },
-  spawnBoss(id, x, y) {
+  spawnBoss(id: string, x: number, y: number) {
     /* 스토리 보스는 수치를 고정한다. */
     const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
     this.netBossScale(e);                    // 멀티플레이 — 인원만큼 체력
@@ -66,7 +66,7 @@ export const BossPart: Bag = {
     // 등장 효과음을 따로 두지 않고 보스 브금이 바로 치고 들어오게 한다
     if (Music) Music.play('boss', true);
   },
-  onBossDown(id) {
+  onBossDown(id: string) {
     this.boss = null;
     this.pulseBossDown();          // 유적 주인 · 메아리 — 맥박을 가라앉히고 보상을 준다
     // 둥지에서 깨운 것이라면 그 둥지를 비운 것으로 남긴다
@@ -80,7 +80,7 @@ export const BossPart: Bag = {
   },
 
   /* ---- 미니보스 둥지 ---- */
-  wakeLair(o) {
+  wakeLair(o: Bag) {
     this.lairs = this.lairs || {};
     // 바이옴 유적의 빈 둥지는 메아리 시련 자리다(RUIN_SPEC 의 여섯만 — 나머지 둥지는 그대로 빈다)
     if (this.lairs[o.ruin] && RUIN_SPEC[o.ruin] && RUIN_SPEC[o.ruin].id) { this.openEcho(o); return; }
@@ -114,7 +114,7 @@ export const BossPart: Bag = {
 
   /* ================= 특성 연출 ================= */
   /** 보스가 페이즈를 넘기며 던지는 한 줄. */
-  bossLine(who, text) {
+  bossLine(who: any, text: string) {
     this.bossSay = { who, text, t: 3.2 };
   },
   /* 몹의 세기는 **스토리 진행(장)만** 따라간다. */

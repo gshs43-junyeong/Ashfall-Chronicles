@@ -283,7 +283,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
 };
 
 /* ================= 개조 — 세션 2에서 옛 몹이 기계가 되어 돌아온다 ================= */
-export const mobCw = t => (ENEMIES[t] && ENEMIES[t].cw) || tr('마리');
+export const mobCw = (t: any) => (ENEMIES[t] && ENEMIES[t].cw) || tr('마리');
 
 export const MECH_MUL = 1.5;                 // 체력·공격력·방어·보상 모두 원래의 1.5배
 /* ★ 개조된 것에서는 **부품만** 나온다. */
@@ -300,20 +300,20 @@ export const MECH_ORDER = [
 ];
 
 /** 그 장까지 개조가 끝난 몹의 수. */
-export function mechCount(chapter) {
+export function mechCount(chapter: any) {
   if (chapter < MECH_CH0) return 0;
   const t = clamp((chapter - MECH_CH0) / (MECH_CH1 - MECH_CH0), 0, 1);
   return Math.round(4 + t * (MECH_ORDER.length - 4));
 }
 /** 이 장에서 이 몹이 개조되어 나오는가. */
-export function isMech(type, chapter) {
+export function isMech(type: string, chapter: any) {
   const n = mechCount(chapter);
   if (!n) return false;
   const i = MECH_ORDER.indexOf(type);
   return i >= 0 && i < n;
 }
 /** 살아 있는 개체의 이름. */
-export function mobName(type, mech) {
+export function mobName(type: string, mech: any) {
   const n = (ENEMIES[type] || {}).n || type;
   return mech ? `${tr('개조된')} ` + n : n;
 }

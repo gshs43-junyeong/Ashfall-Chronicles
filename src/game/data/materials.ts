@@ -5,7 +5,7 @@ import { ITEMS } from './items.js';
 
 /* c 파편 색 셋(밝은 쪽→어두운 쪽) · n 기본 개수 · g 중력 배수(음수면 위로 뜬다) life 사는 시간(초) · sq 1이면 네모(돌·쇠·유리) 0이면 동그라미(살·젤·연기) glow
    1이면 — 사연: docs/code-history.md#h10 */
-export const MAT = {
+export const MAT: Bag = {
   stone: { c: ['#9a9aa0', '#6a6a70', '#4a4a50'], n: 9, g: 1.0, life: .50, sq: 1, hit: 'hit_stone', brk: 'break_stone' },
   dirt:  { c: ['#8a6a44', '#5d4429', '#40301d'], n: 8, g: 1.25, life: .36, sq: 1, hit: 'hit_stone', brk: 'break_dirt' },
   wood:  { c: ['#a67a44', '#77542d', '#523a1e'], n: 8, g: .95, life: .55, sq: 1, hit: 'hit_wood', brk: 'break_wood' },
@@ -23,8 +23,8 @@ export const MAT_DEF = 'stone';
 
 /* 타일·기계의 재질. */
 export const TILE_MAT = (() => {
-  const m = {};
-  const put = (mat, keys) => keys.split(' ').forEach(k => {
+  const m: Bag = {};
+  const put = (mat: any, keys: any) => keys.split(' ').forEach((k: any) => {
     if (T[k] === undefined) return;      // 오타는 조용히 넘긴다(표가 시트보다 앞설 수 있다)
     m[T[k]] = mat;
   });
@@ -53,9 +53,9 @@ export const TILE_MAT = (() => {
   put('void', 'CORRUPTGRASS');
   return m;
 })();
-export function tileMat(id) { return TILE_MAT[id] || MAT_DEF; }
+export function tileMat(id: number) { return TILE_MAT[id] || MAT_DEF; }
 /* ---------------- 빛 ---------------- */
-export const LIGHT_SPEC = {
+export const LIGHT_SPEC: Bag = {
   LAMPPOST: [14, '#ffe0a0'], TORCH: [13, '#ffb45a'], LAVA: [11, '#ff6a2a'], FLOWLAVA: [10.8, '#ff7a34'],
   ORBITCORE: [10.5, '#7fe0ff'], COREGLASS: [10, '#ffb04a'], GLOWCAP: [9.5, '#6fe0c0'],
   CONDUIT: [9, '#6fd8ff'], RUNESTONE: [8.5, '#b89fff'], CRYSTAL: [8, '#7fd8e8'],
@@ -73,7 +73,7 @@ export const LIGHT_SPEC = {
   STARCRYSTAL: [7.2, '#ffe6a8'], METEORITE: [1.2, '#ff7a3a']
 };
 {
-  const seen = {};
+  const seen: Bag = {};
   for (const k in LIGHT_SPEC) {
     if (T[k] === undefined) continue;
     const [lv, col] = LIGHT_SPEC[k];
@@ -99,13 +99,13 @@ for (const k of ['WATER', 'FALLS', 'FLOWWATER', 'SEAWATER', 'FLOWSEA']) DRAWABLE
 /* 물이 밀고 들어갈 수 있는 칸 — 빈칸과 풀·꽃·고사리·조개(쓸려 간다). */
 export const FLUID_WASH = new Uint8Array(TILE_DEF.length);
 for (const k of ['AIR', 'FLOWER', 'WEED', 'FERN', 'SEASHELL']) FLUID_WASH[T[k]] = 1;
-export const FLUID_OPEN = t => FLUID_WASH[t] === 1;
+export const FLUID_OPEN = (t: any) => FLUID_WASH[t] === 1;
 /** 캐거나 부쉈을 때 그 자리에 남는 것 — 물 위의 수련, 물속의 물풀·해초는 캐도 물칸이 남는다 — 사연: docs/code-history.md#h12 */
 export const LEAVE_OF = { [T.LILY]: T.WATER, [T.PONDWEED]: T.WATER, [T.KELPPLANT]: T.SEAWATER };
 
 /** 장식을 놓을 때 무엇에 기대야 하는가 — 'floor' 바로 아래가 단단해야 · 'ceil' 바로 위가 단단해야. */
 export const DECO_MOUNT = (() => {
-  const m = {};
+  const m: Bag = {};
   for (const k of ['FLOWER', 'WEED', 'CACTUS', 'MUSHROOM', 'FERN', 'ORCHID', 'GLOWCAP', 'STALAGMITE', 'GEODE',
                    'BONEHEAP', 'CANOPIC', 'TOOLPILE', 'SEASHELL', 'CATTAIL', 'PEBBLES']) m[T[k]] = 'floor';
   m[T.PONDWEED] = 'water';   // 고인 물 칸 안, 바닥 위에만 — 물 밖에 놓으면 마른 풀이 된다
@@ -114,15 +114,15 @@ export const DECO_MOUNT = (() => {
 })();
 /** 장식 타일 → 그 장식 아이템(ITEMS 의 deco: 1). */
 export const DECO_OF = (() => {
-  const m = {};
-  for (const k in ITEMS) if (ITEMS[k].deco) m[ITEMS[k].tile] = k;
+  const m: Bag = {};
+  for (const k in ITEMS) if (ITEMS[k].deco) m[ITEMS[k].tile!] = k;
   return m;
 })();
 
 /* 몹의 재질. */
 export const MOB_MAT = (() => {
-  const m = {};
-  const put = (mat, keys) => keys.split(' ').forEach(k => { m[k] = mat; });
+  const m: Bag = {};
+  const put = (mat: any, keys: any) => keys.split(' ').forEach((k: any) => { m[k] = mat; });
   put('bone', 'skeleton archer bone_lord');
   put('gel', 'slime king_slime');
   put('stone', 'golem sandmaw mine_horror sand_guardian storm_warden shaft_maw '
@@ -140,7 +140,7 @@ export const MOB_MAT = (() => {
   put('wood', 'flotsam1 flotsam2 flotsam3');   // 바다 부유물 — 부서지는 소리가 나무라야 한다
   return m;
 })();
-export function mobMat(type, mech) {
+export function mobMat(type: string, mech: any) {
   /* 개조된 것은 무엇이었든 강철이다 — 보이는 것도 강철이니 소리도 강철이라야 한다 */
   if (mech) return 'metal';
   return MOB_MAT[type] || 'flesh';

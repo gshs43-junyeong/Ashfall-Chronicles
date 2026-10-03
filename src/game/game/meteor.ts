@@ -16,7 +16,7 @@ export const MeteorPart: Bag = {
   METEOR: { chance: 0.0018, fall: 5.2, fg: 1.2, rMin: 5, rMax: 8 },
 
   /** 떨어져도 되는 자리인가 — 구덩이 상자(좌우 R+3, 위 18 · 아래 R+2) 안에 지은 것이 하나도 없어야 한다 */
-  meteorSiteOk(cx, R) { const { WW, SEA_X1 } = dimsOf(this.world);
+  meteorSiteOk(cx: number, R: any) { const { WW, SEA_X1 } = dimsOf(this.world);
     const w = this.world;
     if (cx < 40 || cx > WW - 40 || inSeaZone(cx, SEA_X1)) return false;
     const cy = w.surface[cx];
@@ -41,7 +41,7 @@ export const MeteorPart: Bag = {
   },
 
   /** 운석을 띄운다. */
-  startMeteor(at) { const { WW } = dimsOf(this.world);
+  startMeteor(at: any) { const { WW } = dimsOf(this.world);
     if (this.meteor) return false;
     const w = this.world, M = this.METEOR;
     let x = -1, R = M.rMin + Math.floor(Math.random() * (M.rMax - M.rMin + 1));
@@ -59,7 +59,7 @@ export const MeteorPart: Bag = {
     return true;
   },
 
-  updateMeteor(dt) {
+  updateMeteor(dt: number) {
     const m = this.meteor, M = this.METEOR;
     m.t += dt;
     if (!m.hit && m.t >= M.fall) this.meteorImpact();
@@ -113,7 +113,7 @@ export const MeteorPart: Bag = {
   },
 
   /** 운석 구덩이 — 있는 타일로만. */
-  carveCrater(cx, cy, R) { const { WW } = dimsOf(this.world);
+  carveCrater(cx: number, cy: number, R: any) { const { WW } = dimsOf(this.world);
     const w = this.world;
     for (let dx = -R - 3; dx <= R + 3; dx++) {
       const x = cx + dx;
@@ -145,7 +145,7 @@ export const MeteorPart: Bag = {
   },
 
   /** 구덩이 한가운데에 운석 덩이를 반쯤 묻고, 그 둘레 바닥에 별빛 수정을 틔운다. */
-  placeMeteorite(cx, cy, R) {
+  placeMeteorite(cx: number, cy: number, R: any) {
     const w = this.world;
     const floor = cy + Math.round(R * 0.75) + 1;            // 가운데 칸의 바닥(첫 고체) 높이
     const rows = R >= 7 ? [1, 2, 1] : [0, 1, 1], rx = R >= 7 ? 2 : 1;
@@ -173,7 +173,7 @@ export const MeteorPart: Bag = {
   },
 
   /** 하늘 원경의 불덩이 — drawSky 가 부른다(땅 위 하늘을 그릴 때만). */
-  drawMeteorSky(c, camY) {
+  drawMeteorSky(c: any, camY: number) {
     const m = this.meteor;
     if (!m) return;
     const M = this.METEOR;
@@ -219,7 +219,7 @@ export const MeteorPart: Bag = {
   },
 
   /** 가까이 떨어질 때 — 마지막 fg 초 동안 **세계 앞**으로 불덩이가 내리꽂힌다(화면 안이거나 곁이면) */
-  drawMeteorNear(c, camX, camY) {
+  drawMeteorNear(c: any, camX: number, camY: number) {
     const m = this.meteor;
     if (!m) return;
     const M = this.METEOR, ix = (m.x + 0.5) * TS, iy = m.y * TS;

@@ -45,7 +45,7 @@ export const TalkPart: Bag = {
   },
 
   /** 이 사람이 지금 상황에서 들고 있는 칸을 고른다. 없으면 아래 칸으로 내려간다. */
-  talkMood(id, c) {
+  talkMood(id: string, c: any) {
     const pool = TALK[id];
     if (!pool) return null;
     for (const m of TALK_MOODS) if (m.when(c) && pool[m.id]) return m.id;
@@ -55,7 +55,7 @@ export const TalkPart: Bag = {
   /** 상황 한 줄과 그에 딸린 대답을 뽑는다.
       같은 칸을 다시 만나면 다음 말로 넘어간다 — 무작위가 아니라 순번이라 반드시
       다른 말이 나온다. 순번(talkSeq)은 저장에 남아서 불러와도 이어진다. */
-  talkPick(id) {
+  talkPick(id: string) {
     const mood = this.talkMood(id, this.talkCtx());
     if (!mood) return null;
     const b = TALK[id][mood], key = id + '|' + mood;
@@ -70,7 +70,7 @@ export const TalkPart: Bag = {
   },
 
   /** 가끔 모험가를 이름으로 부른다(NAME_CALL_P) — 이름을 비웠으면 캐릭터 이름. 부르는 말은 순번으로 돈다. */
-  nameCall(id) {
+  nameCall(id: string) {
     const a = NAME_CALL[id];
     if (!a || Math.random() >= NAME_CALL_P) return null;
     this.talkSeq = this.talkSeq || {};
@@ -83,19 +83,19 @@ export const TalkPart: Bag = {
   /** 대화창 아래의 선택지 = [상황 대답] + 늘 있는 것들(rest).
       대답을 고르면 대꾸를 보여 주고 rest 로 돌아온다 — 대답 한 번 했다고
       가게나 의뢰가 사라지면 안 되니까. */
-  talkMenu(id, pick, rest) {
+  talkMenu(id: string, pick: any, rest: any) {
     if (!(pick && pick.re)) return rest;
     const re = pick.re;
     return [{ t: re.t, say: 1, fn: () => { UI.closeDialogue(); this.talkAnswer(id, re, rest); } }].concat(rest);
   },
 
-  talkAnswer(id, re, rest) {
+  talkAnswer(id: string, re: any, rest: any) {
     const lines = Array.isArray(re.s) ? re.s.slice() : [re.s];
     UI.openDialogue(id, lines, rest);
     this.sfx('talk');
   },
 
-  talkExtra(id) {
+  talkExtra(id: string) {
     const cs = [];
     if (NPCS[id].shop) cs.push({ t: tr('물건을 보여 달라'), fn: () => { UI.closeDialogue(); UI.openShop(id); } });
     if (id === 'trainer') {
@@ -112,7 +112,7 @@ export const TalkPart: Bag = {
     return cs.length > 1 ? [{ t: tr('볼일이 있다'), sub: cs }] : cs;
   },
 
-  talkTo(id) {
+  talkTo(id: string) {
     this.talked = this.talked || {};
     const first = !this.talked[id];
     this.talked[id] = true;
@@ -131,7 +131,7 @@ export const TalkPart: Bag = {
     if (pick) lines.push(pick.say);
     if (!lines.length) lines.push(story[story.length - 1]);
 
-    const rest = [];
+    const rest: Bag[] = [];
     /* 이야기를 이미 들은 뒤에는 다시 듣는 길을 남겨 둔다 — 놓친 줄이 있을 수 있으니까 */
     if (!fresh) rest.push({ t: tr('다시 듣기'), replay: 1, fn: () => {
       UI.closeDialogue();
@@ -150,7 +150,7 @@ export const TalkPart: Bag = {
   },
 
   /** 그 사람이 이 장에 할 이야기. */
-  storyOf(id, ch) {
+  storyOf(id: string, ch: any) {
     const a = DIALOGUE[id];
     if (!a || !a.length) return null;
     /* 세션 3에서 처음 만나는 사람은 대사 묶음이 15장부터 시작한다 — 앞에 빈 칸 열다섯 개를 채워 넣을 수는 없으니, NPCS[id].from(첫 등장 장)만큼 빼서 센다 — 사연:
@@ -160,7 +160,7 @@ export const TalkPart: Bag = {
   },
 
   /* ---- 여명 마을 주민 (종장 이후에만 세계에 존재한다) ---- */
-  talkVillager(id, first) {
+  talkVillager(id: string, first: boolean) {
     const d = NPCS[id];
     /* ★ 여명 마을 다섯도 캠프 넷과 같은 식으로 장마다 한 번씩 이야기를 한다. */
     const story = this.storyOf(id, this.chapter);

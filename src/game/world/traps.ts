@@ -10,9 +10,9 @@ import { TS, World } from '../world.js';
 export const WorldTraps: Bag & ThisType<World> = {
 
   /** 입구 통로의 작은 방마다 함정이 **하나는 남아 있게** 마무리한다. */
-  ensureEntranceTraps(rng) {
+  ensureEntranceTraps(rng: RNG) {
     /* 어느 타일이 어떤 갈래의 함정인가 — 종류를 세려면 갈래로 묶어야 한다 (화살 구멍 좌·우는 같은 갈래다). */
-    const KIND = {};
+    const KIND: Bag = {};
     KIND[T.SPIKE] = 'spike'; KIND[T.DART_L] = 'dart'; KIND[T.DART_R] = 'dart';
     KIND[T.FLAMEVENT] = 'vent'; KIND[T.CRUMBLE] = 'crumble';
     KIND[T.SPARKCOIL] = 'coil'; KIND[T.GASVENT] = 'gas'; KIND[T.GRINDER] = 'grind';
@@ -64,18 +64,18 @@ export const WorldTraps: Bag & ThisType<World> = {
   },
 
   /** 함정 하나 안 밟고 쭉 걸어가는 **직선 구간**을 끊는다. */
-  breakLongRuns(rng) {
+  breakLongRuns(rng: any) {
     const MAX_RUN = 11;                       // 이보다 길게 뚫려 있으면 끊는다
-    const TRAPT = {};
+    const TRAPT: Bag = {};
     for (const t of [T.SPIKE, T.DART_L, T.DART_R, T.FLAMEVENT, T.CRUMBLE,
                      T.SPARKCOIL, T.GASVENT, T.GRINDER]) TRAPT[t] = 1;
-    const trapNear = (x, y) => TRAPT[this.get(x, y + 1)] || TRAPT[this.get(x, y)] ||
+    const trapNear = (x: number, y: number) => TRAPT[this.get(x, y + 1)] || TRAPT[this.get(x, y)] ||
                                TRAPT[this.get(x, y - 1)] || TRAPT[this.get(x, y - 2)];
-    const walk = (x, y) => this.solid(x, y + 1) &&
+    const walk = (x: number, y: number) => this.solid(x, y + 1) &&
                            this.get(x, y) === T.AIR && this.get(x, y - 1) === T.AIR;
     for (const site of this.ruinSites || []) {
       const boss = (site.rooms || [])[0];
-      const inBoss = (x, y) => boss && x >= boss.x - 1 && x <= boss.x + boss.w + 1 &&
+      const inBoss = (x: number, y: number) => boss && x >= boss.x - 1 && x <= boss.x + boss.w + 1 &&
                                y >= boss.y - 1 && y <= boss.y + boss.h + 1;
       const x0 = site.x - (site.w >> 1), x1 = x0 + site.w;
       const y0 = site.y - (site.h >> 1), y1 = y0 + site.h;
@@ -106,7 +106,7 @@ export const WorldTraps: Bag & ThisType<World> = {
   sweepFloatingDecor() {
     if (!this.ruinSites || !this.ruinSites.length) return;
     const kill = new Set([T.TORCH, T.BANNER]);
-    const add = list => { for (const d of (list || [])) if (TILE_DEF[d[1]] && TILE_DEF[d[1]].solid === 0) kill.add(d[1]); };
+    const add = (list: any) => { for (const d of (list || [])) if (TILE_DEF[d[1]] && TILE_DEF[d[1]].solid === 0) kill.add(d[1]); };
     for (const sp of RUIN_SPEC) add(sp.decor);
     for (const st of (typeof STORY_RUIN !== 'undefined' ? STORY_RUIN : [])) add(st.decor);
     let gone = 0;
@@ -137,7 +137,7 @@ export const WorldTraps: Bag & ThisType<World> = {
   },
 
   /** 이 칸이 **아직 잠긴** 암호 골방 안인가 (블록 설치 금지 판정용). */
-  inLockedVault(x, y) {
+  inLockedVault(x: number, y: number) {
     for (const v of this.ruinVaults || []) {
       if (v[5]) continue;                       // 이미 열린 골방
       if (x >= v[0] && x <= v[2] && y >= v[1] && y <= v[3]) return true;
@@ -146,13 +146,13 @@ export const WorldTraps: Bag & ThisType<World> = {
   },
 
   /** 그 자리의 골방을 열린 것으로 표시한다 (문을 연 뒤 다시 봉하지 않게) */
-  openVaultAt(dx, dy) {
+  openVaultAt(dx: number, dy: number) {
     for (const v of this.ruinVaults || [])
       if (dx >= v[0] - 1 && dx <= v[2] + 1 && dy >= v[1] && dy <= v[3]) v[5] = 1;
   },
 
   /** 암호를 맞힌 뒤 문간을 실제로 뚫는다 — 사람이 걸어 들어갈 수 있게. */
-  openCodeDoorway(dx, dy) {
+  openCodeDoorway(dx: number, dy: number) {
     let n = 0;
     for (let x = dx - 1; x <= dx; x++)
       for (let y = dy - 4; y <= dy; y++)
@@ -161,11 +161,11 @@ export const WorldTraps: Bag & ThisType<World> = {
   },
 
   /** 자물쇠가 걸린 돌 — 암호석·봉인석. */
-  locked(x, y) { const t = this.get(x, y); return t === T.CIPHERSTONE || t === T.SEALSTONE; },
+  locked(x: number, y: number) { const t = this.get(x, y); return t === T.CIPHERSTONE || t === T.SEALSTONE; },
 
   /** 길목(입구 목 · 통행 보수로 판 계단)에 함정을 하나 남긴다. */
-  putPathTrap(cx, fy, rng) {
-    const solid = (x, y) => TILE_DEF[this.get(x, y)].solid === 1;
+  putPathTrap(cx: number, fy: number, rng: RNG) {
+    const solid = (x: number, y: number) => TILE_DEF[this.get(x, y)].solid === 1;
     if (rng.chance(0.5)) {
       let put = 0;
       for (let k = 0; k <= 1; k++)
@@ -190,7 +190,7 @@ export const WorldTraps: Bag & ThisType<World> = {
 
   /** 방 하나에 타일 함정을 놓는다. */
   /* ================= 함정을 놓을 "길목" 고르기 ================= */
-  trapSpot(r, fy, rng) {
+  trapSpot(r: any, fy: number, rng: RNG) {
     const lo = r.x + 2, hi = r.x + r.w - 3;
     if (hi <= lo) return lo;
     let x;
@@ -223,7 +223,7 @@ export const WorldTraps: Bag & ThisType<World> = {
     return x;
   },
 
-  putTileTrap(r, fy, kind, rng) {
+  putTileTrap(r: any, fy: number, kind: string, rng: RNG) {
     if (kind === 'coil') {
       /* 방전 코일 — 마주 보는 두 개를 같은 줄에 세워야 아크가 흐른다. */
       const ty = fy - rng.int(1, 2);          // 아크가 몸을 지나가는 높이
@@ -283,7 +283,7 @@ export const WorldTraps: Bag & ThisType<World> = {
       /* 부서지는 바닥. */
       const cx0 = clamp(this.trapSpot(r, fy, rng) - 1, r.x + 2, Math.max(r.x + 2, r.x + r.w - 6));
       const n = rng.int(3, 5);   // 예전 2~4 — 두 칸짜리는 걷다가 그냥 건너뛰어졌다
-      const hollow = x => TILE_DEF[this.get(x, fy + 2)].solid !== 1 && !this.locked(x, fy + 1);
+      const hollow = (x: number) => TILE_DEF[this.get(x, fy + 2)].solid !== 1 && !this.locked(x, fy + 1);
       // 이미 밑이 빈 자리를 먼저 찾는다 (방 바닥이 갱도나 다른 방 위를 지날 때가 있다)
       let sx = -1;
       for (let x = r.x + 2; x < r.x + r.w - 2 - n; x++) {

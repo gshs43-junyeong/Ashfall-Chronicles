@@ -3,9 +3,9 @@
    위층이 읽힐 때 제 객체를 여기 걸고(bind*), 아래층은 이름을 바꿔 가져다 쓴다 — import { app as G } from './ctx.js'.
    ★ 값은 실행 중에만 있다 — 아래층 파일의 최상위(읽히는 순간)에서 쓰면 null 이다.
    아래층이 G 의 무엇을 쓰는지는 tests/modules.mjs 가 파일마다 적어 두고(tests/baseline/ctx.json), 새로 쓰면 알린다. */
-export let app: AppCtx = null;          // 게임 인스턴스 G (game.js)
-export let ui: UiCtx = null;            // UI (ui.js)
-export let factory: FactoryCtx = null;  // Factory (factory.js)
+export let app: AppCtx = null!;             // 게임 인스턴스 G (game.js)
+export let ui: UiCtx = null!;               // UI (ui.js)
+export let factory: FactoryCtx = null!;     // Factory (factory.js)
 export function bindApp(v: any) { app = v; }
 export function bindUI(v: any) { ui = v; }
 export function bindFactory(v: any) { factory = v; }

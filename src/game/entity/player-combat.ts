@@ -15,7 +15,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
 
   /* ---- 공격 ---- */
   attackReady() { return this.atkTimer <= 0; },
-  doAttack(mx, my) {
+  doAttack(mx: number, my: number) {
     const w = this.weapon();
     if (!w) return this.punch(mx, my);
     const d = idef(w);
@@ -67,7 +67,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       G.sfx('magic');
     }
   },
-  punch(mx, my) {
+  punch(mx: number, my: number) {
     const w = this.weapon();
     const dmg = w ? itemDamage(w) : 4;
     const ang = angleTo(this.cx, this.cy, mx, my);
@@ -77,7 +77,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     this.swingReach = 34 + this.w / 2;
     this._punchDmg = dmg;
   },
-  scaleDmg(base, kind) {
+  scaleDmg(base: any, kind: string) {
     const d = this.d;
     let m = 1 + d.dmgP;
     if (kind === 'str') m *= 1 + d.str * 0.021;
@@ -89,7 +89,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     const c = this.d.crit / 100;
     return Math.random() < c;
   },
-  fireProj(type, ang, base, kind, off) {
+  fireProj(type: string, ang: number, base: any, kind: string, off: any) {
     const dmg = this.scaleDmg(base, kind);
     const crit = this.rollCrit();
     const spd = type === 'arrow' ? 760 : type === 'star' ? 900 : 560;
@@ -118,39 +118,39 @@ export const PlayerCombat: Bag & ThisType<Player> = {
   },
 
   /* ---- 스킬 ---- */
-  useSkill(i, mx, my) {
+  useSkill(i: any, mx: any, my: any) {
     const id = this.slots[i]; if (!id) return;
     const sk = SKILLS[id], r = this.skills[id] || 0;
     if (!r || sk.type !== 'active') return;
     /* 못 쓰는 것을 눌렀을 때도 **대답은 한다.** — 사연: docs/code-history.md#h28 */
     if ((this.cd[id] || 0) > 0) { G.skillDeny(i); return; }
-    if (this.mp < sk.mana) { G.skillDeny(i, tr('마나가 부족하다')); return; }
-    this.mp -= sk.mana;
-    this.cd[id] = sk.cd * (1 - this.d.cdr / 100);
+    if (this.mp < sk.mana!) { G.skillDeny(i, tr('마나가 부족하다')); return; }
+    this.mp -= sk.mana!;
+    this.cd[id] = sk.cd! * (1 - this.d.cdr / 100);
     const w = this.weapon();
     const wdmg = w && idef(w).dmg ? itemDamage(w) : 10;
     const ang = angleTo(this.cx, this.cy, mx, my);
 
     switch (id) {
       case 's_cleave': {
-        const dmg = this.scaleDmg(wdmg * sk.v(r) / 100, 'str');
+        const dmg = this.scaleDmg(wdmg * sk.v!(r) / 100, 'str');
         G.aoe(this.cx, this.cy, 108, dmg, 6, '#ffb24a');
         break;
       }
       case 's_charge': {
         this.vx = Math.cos(ang) * 900; this.vy = -180;
         this.iframe = Math.max(this.iframe, 0.35);
-        this.chargeDmg = this.scaleDmg(wdmg * sk.v(r) / 100, 'str');
+        this.chargeDmg = this.scaleDmg(wdmg * sk.v!(r) / 100, 'str');
         this.chargeT = 0.35; this.chargeHit = new Set();
         break;
       }
       case 's_whirl': {
-        this.channel = { id, t: 2.5, tick: 0, dmg: this.scaleDmg(wdmg * sk.v(r) / 100, 'str') };
+        this.channel = { id, t: 2.5, tick: 0, dmg: this.scaleDmg(wdmg * sk.v!(r) / 100, 'str') };
         // 도는 칼선은 채널이 살아 있는 동안 G.drawWhirlArc 가 그린다(여기서 쌓지 않는다)
         break;
       }
       case 's_volley': {
-        const n = sk.v(r);
+        const n = sk.v!(r);
         for (let i2 = 0; i2 < n; i2++) {
           const a = ang + (i2 - (n - 1) / 2) * 0.14;
           this.fireProj('arrow', a, wdmg * 0.7, 'dex');
@@ -158,7 +158,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         break;
       }
       case 's_rain': {
-        const n = sk.v(r);
+        const n = sk.v!(r);
         /* ★ 실제 퍼지는 폭 (±130)과 같은 띠를 깔아 둔다. */
         G.bandFx(mx, my, 130, n * 0.07 + 0.45, '#9fe07a');
         for (let i2 = 0; i2 < n; i2++) {
@@ -173,23 +173,23 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         break;
       }
       case 's_fireball': {
-        const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 620, Math.sin(ang) * 620, this.scaleDmg(sk.v(r) + this.d.int * 1.6, 'int'), 'player', 'fire');
+        const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 620, Math.sin(ang) * 620, this.scaleDmg(sk.v!(r) + this.d.int * 1.6, 'int'), 'player', 'fire');
         p.explode = 70; p.fire = 2; G.projs.push(p); break;
       }
       case 's_heal': {
-        this.heal(this.d.maxHp * sk.v(r) / 100);
+        this.heal(this.d.maxHp * sk.v!(r) / 100);
         this.addBuff('well', 5);
         for (let k = 0; k < 18; k++) G.parts.push(new Part(this.cx + (Math.random() - 0.5) * 30, this.cy + (Math.random() - 0.5) * 40, '#9ff09f', -60));
         break;
       }
       case 's_nova': {
-        G.aoe(this.cx, this.cy, 160, this.scaleDmg(sk.v(r) + this.d.int * 1.1, 'int'), 4, '#9fe0ff', 'frost');
+        G.aoe(this.cx, this.cy, 160, this.scaleDmg(sk.v!(r) + this.d.int * 1.1, 'int'), 4, '#9fe0ff', 'frost');
         for (let k = 0; k < 26; k++) { const a = Math.random() * TAU; G.parts.push(new Part(this.cx + Math.cos(a) * 60, this.cy + Math.sin(a) * 60, '#9fe0ff')); }
         break;
       }
       case 's_wolf': {
         /* 마나 45에 재사용 30초인데 늑대가 소리 없이 **그냥 나타났다**(잰 입자 3개). */
-        for (let k = 0; k < sk.v(r); k++) {
+        for (let k = 0; k < sk.v!(r); k++) {
           const wx = this.cx + (k - 1) * 26;
           G.ents.push(new Wolf(wx, this.cy, this));
           G.sigilFx(wx, this.y + this.h - 6, 22, '#c8b88a');   // 22 — 늑대 간격이 26이라 30은 셋이 한 덩이로 뭉쳤다
@@ -202,7 +202,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       /* ===== 특성 ===== */
       case 's_guard': {
         // 철벽 — 짧게 굳는다.
-        this.addBuff('bulwark', sk.v(r));
+        this.addBuff('bulwark', sk.v!(r));
         G.ringFx(this.cx, this.cy, 52, '#d8a05a', .45);
         for (let k = 0; k < 16; k++) {
           const a = Math.random() * TAU;
@@ -212,7 +212,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       }
       case 's_quake': {
         // 좌우로 퍼져 나가는 충격파 — 발밑을 따라 두 갈래로 나간다
-        const dmg = this.scaleDmg(wdmg * sk.v(r) / 100, 'str');
+        const dmg = this.scaleDmg(wdmg * sk.v!(r) / 100, 'str');
         const foot = this.y + this.h;
         for (const dir of [-1, 1]) {
           for (let step = 0; step < 5; step++) {
@@ -230,7 +230,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         break;
       }
       case 's_warcry': {
-        const dur = sk.v(r);
+        const dur = sk.v!(r);
         this.addBuff('warcry', dur);
         this.addBuff('iron', dur);
         // 함성 자체는 피해가 아니라 밀어내기다 — 붙어 있던 것들을 떼어 낸다
@@ -246,7 +246,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       }
       case 's_pierce': {
         const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 900, Math.sin(ang) * 900,
-          this.scaleDmg(wdmg * sk.v(r) / 100, 'dex') * (this.rollCrit() ? 1 + this.d.critD / 100 : 1), 'player', 'star');
+          this.scaleDmg(wdmg * sk.v!(r) / 100, 'dex') * (this.rollCrit() ? 1 + this.d.critD / 100 : 1), 'player', 'star');
         p.pierce = 6; p.grav = 0;
         G.projs.push(p);
         for (let k = 0; k < 8; k++) G.parts.push(new Part(this.cx, this.cy - 4, '#9fe07a', -20, .35));
@@ -254,7 +254,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       }
       case 's_smoke': {
         this.iframe = Math.max(this.iframe, 0.8 + r * 0.15);
-        this.addBuff('smokescreen', sk.v(r));
+        this.addBuff('smokescreen', sk.v!(r));
         for (const e of G.ents) {
           if (!(e instanceof Enemy) || e.dead) continue;
           if (dist(this.cx, this.cy, e.cx, e.cy) < 150) e.slow(0.4, 4);
@@ -274,14 +274,14 @@ export const PlayerCombat: Bag & ThisType<Player> = {
           const d2 = dist(mx, my, e.cx, e.cy);
           if (d2 < bd) { bd = d2; best = e; }
         }
-        if (!best) { this.cd[id] = 1; this.mp += sk.mana; G.toast(tr('겨눈 곳에 적이 없다'), 'bad'); return; }
-        best.markT = 10; best.markAmt = sk.v(r) / 100;
+        if (!best) { this.cd[id] = 1; this.mp += sk.mana!; G.toast(tr('겨눈 곳에 적이 없다'), 'bad'); return; }
+        best.markT = 10; best.markAmt = sk.v!(r) / 100;
         G.ringFx(best.cx, best.cy, best.w + 26, '#e8d05a', .5);
         for (let k = 0; k < 12; k++) G.parts.push(new Part(best.cx, best.y, '#e8d05a', -60, .7));
         break;
       }
       case 's_barrier': {
-        this.shieldMax = this.shield = Math.round(sk.v(r) + this.d.int * 3.2);
+        this.shieldMax = this.shield = Math.round(sk.v!(r) + this.d.int * 3.2);
         this.shieldT = 20;
         G.ringFx(this.cx, this.cy, 48, '#6fb8ff', .5);
         for (let k = 0; k < 20; k++) {
@@ -293,7 +293,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       }
       case 's_chain': {
         // 첫 표적에서 시작해 가까운 적으로 옮겨 붙는다.
-        const hops = sk.v(r);
+        const hops = sk.v!(r);
         const base = this.scaleDmg(60 + this.d.int * 2.4, 'int');
         const hit = new Set();
         let fx = this.cx, fy = this.cy - 4, power = base;
@@ -323,12 +323,12 @@ export const PlayerCombat: Bag & ThisType<Player> = {
           if (G.world.hitSolid(this.x + cs * t, this.y + sn * t, this.w, this.h)) break;
           reach = t;
         }
-        if (reach < TS) { this.cd[id] = 1; this.mp += sk.mana; G.toast(tr('그쪽은 막혀 있다'), 'bad'); return; }
+        if (reach < TS) { this.cd[id] = 1; this.mp += sk.mana!; G.toast(tr('그쪽은 막혀 있다'), 'bad'); return; }
         const ox = this.cx, oy = this.cy;
         this.x += cs * reach; this.y += sn * reach;
         this.vy = Math.min(this.vy, 0);
         this.iframe = Math.max(this.iframe, 0.25);
-        G.aoe(ox, oy, 78, this.scaleDmg(sk.v(r) + this.d.int * 1.4, 'int'), 4, '#c08fff');
+        G.aoe(ox, oy, 78, this.scaleDmg(sk.v!(r) + this.d.int * 1.4, 'int'), 4, '#c08fff');
         for (let k = 0; k < 18; k++) {
           G.parts.push(new Part(ox + (Math.random() - .5) * 24, oy + (Math.random() - .5) * 34, '#c08fff', -40, .7));
           G.parts.push(new Part(this.cx + (Math.random() - .5) * 24, this.cy + (Math.random() - .5) * 34, '#c08fff', -40, .7));
@@ -371,7 +371,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
   },
 
   /* ---- 물가로 기어오르기 ---- */
-  climbOut(world, dir) {
+  climbOut(world: any, dir: any) {
     if (!world || !dir) return false;
     const step = Math.sign(dir) * (this.w * 0.75 + 2);
     for (let up = 0; up <= 2; up++) {

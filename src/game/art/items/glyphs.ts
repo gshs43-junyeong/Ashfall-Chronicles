@@ -4,7 +4,7 @@ import { ITEM_PAINT, sh2 } from '../../itemart.js';
 /* itemart.js Art.paint 의 갈래들 — 읽히는 순간 ITEM_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 Art. */
 
 export const ItemPaintGlyphs: Bag = {
-  gl(H) {
+  gl(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const G1 = '#e8dcc0', G2 = '#c8a058', DK = '#4a4238', RD = '#d05a4a', GR = '#6fbf5a';

@@ -164,6 +164,6 @@ if (!lang.I18N.isSource) {
 for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, d_items, d_recipes, d_start, d_enemies, d_materials, d_skills, d_ruins, d_npcs, d_pets, d_story, d_quests, d_values, d_achievements, world, w_plants, w_village, w_sky, w_dungeon, w_traps, w_ruins, w_ruin_site, w_caves, w_sea, w_water, tileart, tp_ground, tp_misc, tp_factory, tp_water, tp_village, tp_ruins, tp_cave, itemart, ip_glyphs, ip_gear, ip_goods, ip_farm, ip_loot, ip_skills, ip_ui, ip_misc, sprites, titlebg, items, entity, e_player_combat, e_player_move, e_enemy_ai, e_boss_ai, factory, f_tick, f_render, ui, u_tree, u_quest, u_craft, u_machine, u_shop, u_tip, u_dialogue, u_hud, music, savefmt, game, g_shell, g_save, g_sound, g_fx, g_mine, g_farm, g_fishing, g_interact, g_talk, g_quests, g_shop, g_village, g_pets, g_boss, g_progress, g_life, g_spawn, g_weather, g_rigs, g_zones, g_caves, g_meteor, g_ruins, g_ruin_pulse, g_minimap, g_render, g_render_sky, g_render_world, g_render_actors, g_utility, g_debug_start, g_net, g_netui, g_netchat, g_netprog]) {
   for (const k of Object.keys(m)) {
     if (k in window) continue;
-    Object.defineProperty(window, k, { get: () => m[k], configurable: true });
+    Object.defineProperty(window, k, { get: () => (m as Bag)[k], configurable: true });
   }
 }

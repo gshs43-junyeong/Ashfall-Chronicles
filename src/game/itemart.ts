@@ -8,10 +8,10 @@ import { ITEMS } from './data/items.js';
 import { PETS } from './data/pets.js';
 
 export const S32 = 32;
-export const sh2 = (c, m) => shade(c, m);
+export const sh2 = (c: any, m: any) => shade(c, m);
 
 /* ---------------- 아이템 명세 ---------------- */
-export const ISPEC = {
+export const ISPEC: Bag = {
   /* 근접 */
   sword_wood: { k: 'sword', c: '#a3814f', g: '#6a4a28', grip: '#4a3122', w: 3 },
   sword_copper: { k: 'sword', c: '#c0762f', g: '#8a5520', grip: '#4a3122', w: 3.5 },
@@ -540,7 +540,7 @@ export const ISPEC = {
 };
 
 /* ---------------- 스킬 아이콘 명세 ---------------- */
-export const SKSPEC = {
+export const SKSPEC: Bag = {
   s_cleave: { k: 'slash', c: '#ff9a4a' },
   s_toughen: { k: 'shield', c: '#c8433c' },
   s_charge: { k: 'impact', c: '#ff6a4a' },
@@ -575,7 +575,7 @@ export const SKSPEC = {
 };
 
 /* ---------------- 버프 / UI / NPC ---------------- */
-export const BFSPEC = {
+export const BFSPEC: Bag = {
   rage: { k: 'impact', c: '#e0603c' },
   iron: { k: 'shield', c: '#a8a49a' },
   well: { k: 'stew' },
@@ -586,12 +586,12 @@ export const BFSPEC = {
 };
 /* 제 그림(BFSPEC)이 없는 버프가 빌려 쓰는 그림 — 없으면 HUD 에 빈 칸만 떴다(32개 중 25개).
    음식·물약처럼 아이템이 거는 버프는 그 아이템 그림을 저절로 쓰고(buffUrl), 나머지만 여기 적는다. */
-export const BUFF_ART = {
+export const BUFF_ART: Record<string, string> = {
   bulwark: 's:s_guard', smokescreen: 's:s_smoke', warcry: 's:s_warcry',
   rested: 'u:moon', starlit: 'g:star', echoed: 's:s_arch', weighed: 's:s_mark', windborne: 's:s_swift',
   pulse_ward: 's:s_barrier', pulse_fury: 's:s_bloodlust'
 };
-export const UISPEC = {
+export const UISPEC: Bag = {
   sun: { k: 'sun' }, moon: { k: 'moon' }, coin: { k: 'coin' }, chat: { k: 'chat' },
   equip: { k: 'equipui' }, trash: { k: 'trashui' },
   /* 장비 칸이 비었을 때 흐리게 깔리는 실루엣 — 어느 칸에 뭘 끼우는지 글자 없이 보이게 */
@@ -623,13 +623,13 @@ export const UISPEC = {
   s_disp: { k: 'ng', g: 'speaker' }, s_noti: { k: 'ng', g: 'bell' }, s_keys: { k: 'ng', g: 'keys' }, s_hud: { k: 'ng', g: 'layout' }
 };
 /* 펫 생김새 — 색은 PETS의 c를 그대로 쓰고, 여기서는 실루엣만 고른다. */
-export const PET_FORM = {
+export const PET_FORM: Record<string, string> = {
   ember_squirrel: 'beast', glass_moth: 'moth', pebble_kin: 'rock', dust_sparrow: 'bird',
   frost_kit: 'beast', ash_owl: 'bird', cinder_toad: 'rock', thorn_wisp: 'wisp',
   star_sprite: 'wisp', ember_drake: 'drake', void_hatchling: 'wisp', storm_falcon: 'bird',
   dragon_fire: 'drake', dragon_earth: 'drake', dragon_storm: 'drake', dragon_dark: 'drake'
 };
-export const NPCSPEC = {
+export const NPCSPEC: Bag = {
   elara: { hair: '#d8c07a', skin: '#e8c39a', cloth: '#c8a06a', long: 1 },
   borin: { hair: '#6a4a2a', skin: '#d8b088', cloth: '#8a6a4a', beard: 1 },
   mira: { hair: '#6a4a92', skin: '#e0bfa0', cloth: '#8f6fd8', long: 1, hat: 1 },
@@ -642,7 +642,7 @@ export const NPCSPEC = {
 };
 
 /* ================= 업적 아이콘 ================= */
-export const GLSPEC = {};
+export const GLSPEC: Bag = {};
 for (const g of ['shard', 'house', 'wall', 'wave', 'crown', 'sword', 'trophy', 'field',
   'factory', 'anvil', 'pit', 'down', 'cloud', 'tablet', 'bubble', 'skull', 'redmoon',
   'key', 'candle', 'bed', 'scroll', 'sun', 'coin', 'coins', 'paw', 'hands', 'receipt',
@@ -658,7 +658,7 @@ for (const k in ITEMS) if (!ISPEC[k] && !ITEMS[k].tile)
   ISPEC[k] = { k: 'shard', c: '#9a9aa2' };
 
 /* 업적 → 그림. */
-export const ACH_ART = {
+export const ACH_ART: Record<string, string> = {
   a_ch1: 'g:shard', a_village: 'g:house', a_session2: 'g:wall', a_session3: 'g:wave',
   a_first_boss: 'g:crown', a_five_hearts: 'g:shard', a_story_bosses: 'g:sword',
   a_all_bosses: 'g:trophy',
@@ -692,7 +692,7 @@ export const ACH_ART = {
 
 /* ================= 아틀라스 ================= */
 /** 그림 갈래(spec.k) → 그리는 법 — art/items/*.js 가 채운다. this 는 Art, H 는 paint 의 인자·도우미 */
-export const ITEM_PAINT = {};
+export const ITEM_PAINT: Bag = {};
 
 export const Art: Bag = {
   atlas: null, cells: {}, urls: {}, ready: false, COLS: 16,
@@ -721,15 +721,15 @@ export const Art: Bag = {
     keys.forEach(([key, spec], n) => {
       const cx = n % cols, cy = (n / cols) | 0;
       this.cells[key] = [cx, cy];
-      g.save();
-      g.translate(cx * S32, cy * S32);
+      g!.save();
+      g!.translate(cx * S32, cy * S32);
       /* ★ 한 칸이 터져도 나머지는 그린다. */
       try {
         this.paint(g, spec, rng);
       } catch (e) {
         console.warn(`${tr('[아이콘]')} ` + key + ` ${tr('를 그리지 못했습니다:')}`, e && (e as Error).message);
       }
-      g.restore();
+      g!.restore();
       // 펫은 형태(네발·새·정령…)마다 그림이 칸 안에서 치우쳐 있어서, 슬롯에 나란히 놓으면 저마다 다른 높이로 떠 보인다.
       if (spec.k === 'pet' || (spec.k === 'slotic' && spec.m === 'pet')) this.centerCell(g, cx * S32, cy * S32);
       this.outline(g, cx * S32, cy * S32);
@@ -742,7 +742,7 @@ export const Art: Bag = {
   /** 손그림 아이콘이 로드되면 절차 생성 아틀라스의 해당 칸을 덮어 그린다. */
   /* ★ file:// 로 열었을 때는 손그림을 아틀라스에 얹지 않는다. */
   noTaint: (typeof location !== 'undefined' && location.protocol === 'file:'),
-  applySprite(key, img) {
+  applySprite(key: string, img: any) {
     if (this.noTaint) return false;
     if (!this.atlas || !img || !img.width) return false;
     const c = this.cells[key];
@@ -756,10 +756,10 @@ export const Art: Bag = {
     delete this.urls[key];
     return true;
   },
-  applyItemSprite(id, img) { return this.applySprite('i:' + id, img); },
+  applyItemSprite(id: string, img: any) { return this.applySprite('i:' + id, img); },
 
   /** 칸 안에서 실제로 칠해진 부분을 재서 한가운데로 옮긴다. */
-  centerCell(g, ox, oy) {
+  centerCell(g: CanvasRenderingContext2D, ox: number, oy: number) {
     const img = g.getImageData(ox, oy, S32, S32), d = img.data;
     let x0 = S32, y0 = S32, x1 = -1, y1 = -1;
     for (let y = 0; y < S32; y++) for (let x = 0; x < S32; x++) {
@@ -779,10 +779,10 @@ export const Art: Bag = {
   },
 
   /** 투명 픽셀 중 불투명과 인접한 곳에 어두운 테두리 — 어두운 UI에서 형태가 살아난다 */
-  outline(g, ox, oy) {
+  outline(g: CanvasRenderingContext2D, ox: number, oy: number) {
     const img = g.getImageData(ox, oy, S32, S32);
     const d = img.data, src = new Uint8ClampedArray(d);
-    const A = (x, y) => (x < 0 || y < 0 || x >= S32 || y >= S32) ? 0 : src[(y * S32 + x) * 4 + 3];
+    const A = (x: number, y: number) => (x < 0 || y < 0 || x >= S32 || y >= S32) ? 0 : src[(y * S32 + x) * 4 + 3];
     for (let y = 0; y < S32; y++) for (let x = 0; x < S32; x++) {
       const k = (y * S32 + x) * 4;
       if (src[k + 3] > 10) continue;
@@ -794,19 +794,19 @@ export const Art: Bag = {
   },
 
   /* ---- 조회 ---- */
-  has(key) { return !!this.cells[key]; },
-  url(key) {
+  has(key: string) { return !!this.cells[key]; },
+  url(key: string) {
     if (this.urls[key]) return this.urls[key];
     const c = this.cells[key];
     if (!c) return '';
     const t = document.createElement('canvas');
     t.width = S32; t.height = S32;
-    t.getContext('2d').drawImage(this.atlas, c[0] * S32, c[1] * S32, S32, S32, 0, 0, S32, S32);
+    t.getContext('2d')!.drawImage(this.atlas, c[0] * S32, c[1] * S32, S32, S32, 0, 0, S32, S32);
     return this.urls[key] = t.toDataURL();
   },
-  itemUrl(id) { return this.url('i:' + id); },
-  skillUrl(id) { return this.url('s:' + id); },
-  buffUrl(id) {
+  itemUrl(id: string) { return this.url('i:' + id); },
+  skillUrl(id: string) { return this.url('s:' + id); },
+  buffUrl(id: string) {
     if (this.cells['b:' + id]) return this.url('b:' + id);
     if (BUFF_ART[id] && this.cells[BUFF_ART[id]]) return this.url(BUFF_ART[id]);
     if (!this._buffItem) {                       // 버프 → 그것을 거는 아이템(처음 한 번만 잰다)
@@ -816,34 +816,34 @@ export const Art: Bag = {
     const it = this._buffItem[id];
     return it ? this.url('i:' + it) : this.url('u:coin');
   },
-  uiUrl(id) { return this.url('u:' + id); },
+  uiUrl(id: string) { return this.url('u:' + id); },
   /** 업적 아이콘 — 아이템 그림이든 새로 그린 것이든 키 하나로 받는다 */
-  achUrl(id) { return this.url(ACH_ART[id] || 'g:star'); },
+  achUrl(id: string) { return this.url(ACH_ART[id] || 'g:star'); },
   achHiddenUrl() { return this.url('g:hidden'); },
-  npcUrl(id) { return this.url('n:' + id); },
+  npcUrl(id: string) { return this.url('n:' + id); },
   /** 캔버스에 직접 그리기 */
-  draw(ctx, key, x, y, size) {
+  draw(ctx: CanvasRenderingContext2D, key: string, x: number, y: number, size: any) {
     const c = this.cells[key];
     if (!c) return;
     ctx.drawImage(this.atlas, c[0] * S32, c[1] * S32, S32, S32, x, y, size, size);
   },
-  drawItem(ctx, id, x, y, size) { this.draw(ctx, 'i:' + id, x, y, size); },
+  drawItem(ctx: any, id: string, x: number, y: number, size: any) { this.draw(ctx, 'i:' + id, x, y, size); },
 
   /* ================= 페인터 ================= */
-  paint(g, s, rng) {
+  paint(g: any, s: any, rng: any) {
     // 공통 도우미 (좌표계 0..32)
-    const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
-    const poly = (pts, c) => {
+    const P = (x: number, y: number, w: number, h: number, c: string) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+    const poly = (pts: any, c: string) => {
       g.fillStyle = c; g.beginPath();
       g.moveTo(pts[0][0], pts[0][1]);
       for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
       g.closePath(); g.fill();
     };
-    const circ = (x, y, r, c) => { g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
-    const ell = (x, y, rx, ry, c) => { g.fillStyle = c; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU); g.fill(); };
-    const stroke = (c, w, fn) => { g.strokeStyle = c; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); fn(); g.stroke(); };
+    const circ = (x: number, y: number, r: any, c: string) => { g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
+    const ell = (x: number, y: number, rx: number, ry: number, c: string) => { g.fillStyle = c; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU); g.fill(); };
+    const stroke = (c: string, w: number, fn: Function) => { g.strokeStyle = c; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); fn(); g.stroke(); };
     // 부드러운 방사형 후광 — 단색 원판은 테두리가 생겨 디스크처럼 보인다
-    const glow = (x, y, r, c, a) => {
+    const glow = (x: any, y: any, r: any, c: any, a: any) => {
       const gr = g.createRadialGradient(x, y, 0, x, y, r);
       gr.addColorStop(0, c);
       gr.addColorStop(.55, c);

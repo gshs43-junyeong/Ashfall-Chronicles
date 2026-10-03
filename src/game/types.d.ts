@@ -61,7 +61,7 @@ interface ChapterDef {
   id: number; title: string; sub?: string; art?: string; line?: string; intro?: string; basics?: any[]; needBasics?: number;
   require?: any[]; goal?: Record<string, any>; rw?: Record<string, any>; outro?: string; hook?: string;
 }
-interface RecipeDef { out: string; n: number; need: Record<string, number>; station?: string; lv?: number; }
+interface RecipeDef { out: string; n: number; need: Record<string, number>; station?: string | null; lv?: number; }
 interface MachineDef {
   n: string; tile?: number; item?: string; d?: string; rot?: number; reach?: number; slots?: number; feed?: number; fuelIn?: number;
   gen?: number; cap?: number; store?: number; proc?: string; power?: number; mine?: number; cycle?: number; range?: number;
@@ -120,3 +120,33 @@ interface FactoryCtx {
 interface Window {
   __acBooting?: number; __acDeadline?: number; __acBooted?: number; SPRITE_MANIFEST?: any; webkitAudioContext?: typeof AudioContext;
 }
+
+/* 클래스 타입 — 인자에 타입을 달 때 import 없이 쓴다(타입만 · 값으로 쓰려면 그 모듈을 import 할 것). */
+type RNG = import('../engine/core/rng.js').RNG;
+type World = import('./world.js').World;
+type Game = import('./game.js').Game;
+type Ent = import('./entity.js').Ent;
+type Player = import('./entity.js').Player;
+type Enemy = import('./entity.js').Enemy;
+type Pet = import('./entity.js').Pet;
+type Proj = import('./entity.js').Proj;
+type Drop = import('./entity.js').Drop;
+
+/** 아이템 그림 갈래가 받는 도우미 묶음(itemart.ts `Art.paint` — 좌표계 0..32, 색은 CSS 글). */
+interface ItemPaintKit {
+  g: CanvasRenderingContext2D; s: Bag; rng: RNG;
+  P(x: number, y: number, w: number, h: number, c: string): void;
+  poly(pts: number[][], c: string): void;
+  circ(x: number, y: number, r: number, c: string): void;
+  ell(x: number, y: number, rx: number, ry: number, c: string): void;
+  stroke(c: string, w: number, fn: () => void): void;
+  glow(x: number, y: number, r: number, c: string, a?: number): void;
+}
+/** 타일 그림 갈래가 받는 도우미 묶음(tileart.ts `TileArt.paint` — ox·oy 는 아틀라스 칸 왼쪽 위, 색은 CSS 글). */
+interface TilePaintKit {
+  g: CanvasRenderingContext2D; ox: number; oy: number; s: Bag; rng: RNG; v: number; seed: string;
+  R(x: number, y: number, w: number, h: number, c: string): void;
+  base: string; dk: string; dk2: string; lt: string; lt2: string;
+}
+/** 공장 기계 제작법(MRECIPES) — m 기계 · in 재료 · out 산출 · t 틱 수. */
+interface MRecipeDef { m: string; in: Record<string, number>; out: Record<string, number>; t: number; [k: string]: any; }

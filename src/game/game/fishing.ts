@@ -45,7 +45,7 @@ export const FishingPart: Bag = {
     this.sfx('splash');
     this.toast(tr('낚싯줄을 드리웠다'));
   },
-  updateFishing(dt) {
+  updateFishing(dt: number) {
     const p = this.player;
     if (!p.fish) return;
     // 손에서 낚싯대를 놓으면(핫바를 바꾸면) 줄도 같이 놓인다
@@ -66,20 +66,20 @@ export const FishingPart: Bag = {
     }
   },
   /** 놓쳤을 때의 뒤처리 — 미끼는 이미 먹혔다(resolveFish에서 뺀다) */
-  _fishLost(msg) {
+  _fishLost(msg: string) {
     this.player.fish = null;
     this.toast(msg, 'bad');
     UI.refreshBag();                // 물 튀김·소리는 resolveFish 가 줄을 걷는 순간 이미 냈다
   },
   /** 줄을 걷는 순간의 물 튀김. */
-  fishSplash(f, n) {
+  fishSplash(f: any, n: number) {
     const wx = (f.tx + .5) * TS, wy = f.ty * TS;
     for (let i = 0; i < n; i++)
       this.parts.push(new Part(wx, wy, i % 3 ? '#cfe8ff' : '#ffffff', -60 - Math.random() * 50, .55));
   },
   /** 낚시 판정 — quality: 'auto'(시간 초과, 기본 확률) | 'reel'(입질 중 즉시 챔질, 보너스) 2단계로 굴린다 */
   /** 낚시 판정 — quality: 'auto'(시간 초과) | 'reel'(입질 중 즉시 챔질, 보너스). */
-  resolveFish(quality) {
+  resolveFish(quality: any) {
     const p = this.player;
     if (!p.fish) return;
     const rod: Bag = ITEMS[p.fish.rodId] || {};
@@ -139,25 +139,25 @@ export const FishingPart: Bag = {
         ['knot_angler', 0.35 + lucky * 0.15]
       ];
       const catchId = this.rng.weighted(itemTable);
-      const stackN = {
+      const stackN = ({
         slime_gel: [2, 5], aether_shard: [1, 2],
         river_scale: [2, 4], tide_pearl: [1, 2], rust_sinker: [1, 3],
         drowned_cell: [1, 2], sunken_coin: [1, 1]
-      }[catchId];
+      } as Bag)[catchId];
       const n = stackN ? this.rng.int(stackN[0], stackN[1]) : 1;
-      const it = isGear(makeItem(catchId)) ? rollGear(catchId, this.rng, 0) : makeItem(catchId, n);
-      if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+      const it = isGear(makeItem(catchId)!) ? rollGear(catchId, this.rng, 0) : makeItem(catchId, n);
+      if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
       /* 한 번 낚으면 기억에 남아야 하는 것 — 물에서만 나오는 무기·장신구 전부와 값나가는 셋. */
-      const rare = isGear(makeItem(catchId))
+      const rare = isGear(makeItem(catchId)!)
         || ['knot_angler', 'sunken_coin', 'tide_pearl'].includes(catchId);
       if (rare) {
         // 이런 건 한 번 낚으면 기억에 남아야 한다
-        this.toast(tr('물속에서 무언가 딸려 올라왔다 — {itemName}', { itemName: itemName(it) }), 'good');
+        this.toast(tr('물속에서 무언가 딸려 올라왔다 — {itemName}', { itemName: itemName(it!) }), 'good');
         this.burst(p.cx, p.cy - 4, 'stargain', 52, 2.0);
         this.ringFx(p.cx, p.cy, 60, '#7fc8e8', .5);
         this.sfx('level');
       } else {
-        this.toast(tr('뭔가 걸렸다 — {itemName}{v}', { itemName: itemName(it), v: n > 1 ? ' ×' + n : '' }), 'good');
+        this.toast(tr('뭔가 걸렸다 — {itemName}{v}', { itemName: itemName(it!), v: n > 1 ? ' ×' + n : '' }), 'good');
         this.sfx('open');
       }
       p.addProf('fish', rare ? 3 : 1);          // 빈 바늘보다 건진 쪽이 더 는다
@@ -178,22 +178,22 @@ export const FishingPart: Bag = {
     // 10레벨 '물때를 안다' — 가끔 한 마리가 더 딸려 온다
     const n = (flv >= PROF_MAX && this.rng.chance(0.25)) ? 2 : 1;
     const it = makeItem(catchId, n);
-    if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-    this.toast(tr('낚았다 — {itemName}{v}', { itemName: itemName(it), v: n > 1 ? ' ×' + n : '' }), 'good');
+    if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
+    this.toast(tr('낚았다 — {itemName}{v}', { itemName: itemName(it!), v: n > 1 ? ' ×' + n : '' }), 'good');
     p.addProf('fish', 1);                      // 빈 바늘보다 건진 쪽이 더 는다
     this.sfx('open');
     UI.refreshBag();
   },
 
   /** 손에 그려지는 낚싯대의 생김새. */
-  rodLook(id) {
+  rodLook(id: string) {
     return ({
       rod_basic: { len: 25, w: 2.2, c: '#a9855a', grip: '#5a4632', tip: '#d8c49a' },
       rod_adv:   { len: 32, w: 2.8, c: '#6d5a42', grip: '#3a3a44', tip: '#8fd0e8' }
     })[id] || { len: 28, w: 2.4, c: '#9a7a4a', grip: '#5a4632', tip: '#cfc2a4' };
   },
   /** 낚싯대 끝의 화면 좌표 — 막대기를 우리가 직접 그리므로 길이만 알면 된다. */
-  rodTip(id, face, sx, sy) {
+  rodTip(id: string, face: any, sx: number, sy: number) {
     const L = this.rodLook(id), A = -0.4;
     // 시트에 손 자리가 적혀 있으면(playerHand) 그 손이 곧 대 손잡이다 — drawHeldWeapon 이 적어 둔 것을 쓴다
     const h = this._rodHand || [sx + 10, sy + 20];
@@ -201,7 +201,7 @@ export const FishingPart: Bag = {
   },
 
   /* 낚싯줄과 찌 — 낚싯대 끝에서 물까지 줄을 잇고 찌를 띄운다. */
-  drawFishLine(c, p, sx, sy, bob) {
+  drawFishLine(c: any, p: any, sx: any, sy: any, bob: any) {
     const f = p.fish;
     const face = p.facing > 0 ? 1 : -1;
     const tip = this.rodTip(f.rodId, face, sx, sy + bob);
@@ -217,7 +217,7 @@ export const FishingPart: Bag = {
     /* 물고기 그림자 — 입질 1.2초 전부터 옆에서 찌 쪽으로 다가온다. */
     if (!f.biting && f.t < this.FISH_SHADOW_T) {
       const k = f.t / this.FISH_SHADOW_T;                    // 1 → 0 으로 다가온다
-      const wet = dx => { let n = 0; for (let i = 1; i <= 3; i++) if (TILE_DEF[this.world.get(f.tx + dx * i, f.ty)].liquid) n++; return n; };
+      const wet = (dx: number) => { let n = 0; for (let i = 1; i <= 3; i++) if (TILE_DEF[this.world.get(f.tx + dx * i, f.ty)].liquid) n++; return n; };
       const side = wet(1) >= wet(-1) ? 1 : -1;
       const sx2 = fx + side * (8 + k * 46) + Math.sin(this.time * 7) * 1.5;
       c.globalAlpha = 0.6 * (1 - k * 0.5);
@@ -256,7 +256,7 @@ export const FishingPart: Bag = {
   },
   FISH_SHADOW_T: 1.2,              // 입질 몇 초 전부터 그림자가 보이는가
   /** 입질 표시 — 느낌표와 **챔질 창 게이지**. 조명 **뒤에** 그린다 — 사연: docs/code-history.md#h77 */
-  drawFishCue(c, camX, camY) {
+  drawFishCue(c: any, camX: number, camY: number) {
     const p = this.player, f = p && p.fish;
     if (!f || !f.biting) return;
     const fx = (f.tx + 0.5) * TS - camX, wy = f.ty * TS - camY;

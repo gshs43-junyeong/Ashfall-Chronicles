@@ -7,12 +7,12 @@ import { idef } from './values.js';
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
 
 /* ---------------- 업적 ---------------- */
-export const ACH_CAT = { story: '여정', farm: '농사', auto: '자동화', gather: '손재주',
+export const ACH_CAT: Record<string, string> = { story: '여정', farm: '농사', auto: '자동화', gather: '손재주',
   explore: '탐험', hunt: '토벌', life: '살림', odd: '별난 것' };
 /* 난이도 — UI가 색으로 가른다. */
-export const ACH_TIER = { easy: ['쉬움', '#6fbf5a'], mid: ['중간', '#d8b048'], hard: ['어려움', '#d05a4a'] };
+export const ACH_TIER: Bag = { easy: ['쉬움', '#6fbf5a'], mid: ['중간', '#d8b048'], hard: ['어려움', '#d05a4a'] };
 /** 숨은 업적인가 — **어려움은 전부 숨긴다.** */
-export function achHidden(a) { return !!a.h || a.t === 'hard'; }
+export function achHidden(a: any) { return !!a.h || a.t === 'hard'; }
 /* h: 1 — **숨은 업적.** */
 
 /* 업적 75개 — 사연: docs/code-history.md#h18 */
@@ -50,13 +50,13 @@ export const ACHIEVEMENTS: AchDef[] = [
   { id: 'a_first_crop', cat: 'farm', i: '🌱', n: '첫 이랑', d: '처음 심은 것을 거뒀다.',
     check: g => ['wheat', 'starroot', 'ashcap'].some(k => (g.player.gathered[k] || 0) >= 1) },
   { id: 'a_first_cook', cat: 'farm', i: '🍞', n: '첫 끼니', d: '불 위에 처음 냄비를 올렸다.',
-    check: g => achCount(ACH_FOODS, k => (g.crafted || {})[k]) >= 1 },
+    check: g => achCount(ACH_FOODS, (k: any) => (g.crafted || {})[k]) >= 1 },
   { id: 'a_harvest', cat: 'farm', i: '🌾', n: '첫 곳간', d: '곳간에 밀 100개가 쌓였다.',
     check: g => (g.player.gathered.wheat || 0) >= 100 },
   { id: 'a_three_crops', cat: 'farm', i: '🧺', n: '세 이랑', d: '밀·별무·잿버섯이 50개씩 쌓였다.',
     check: g => ['wheat', 'starroot', 'ashcap'].every(k => (g.player.gathered[k] || 0) >= 50) },
   { id: 'a_cook', cat: 'farm', i: '🍲', n: '부엌을 아는 사람', d: '여섯 가지 요리를 할 줄 알게 됐다.',
-    check: g => achCount(ACH_FOODS, k => (g.crafted || {})[k]) >= 6 },
+    check: g => achCount(ACH_FOODS, (k: any) => (g.crafted || {})[k]) >= 6 },
   { id: 'a_feast', cat: 'farm', i: '🥘', n: '잔칫상', d: '가장 손이 많이 가는 상을 차렸다.',
     check: g => !!(g.crafted || {}).food_feast },
   { id: 'a_farm_1000', cat: 'farm', i: '🚜', n: '들판을 통째로', d: '땅에서 거둔 것이 1,000개를 넘었다.',
@@ -101,7 +101,7 @@ export const ACHIEVEMENTS: AchDef[] = [
   { id: 'a_mine_2000', cat: 'gather', i: '🪓', n: '파고 또 파고', d: '곡괭이가 2,000번 땅을 물었다.',
     check: g => achSum(g.player.mined) >= 2000 },
   { id: 'a_enh10', cat: 'gather', i: '🔨', n: '열 겹', d: '모루 위에서 열 번을 견딘 물건이 있다.',
-    check: g => achAnyItem(g, it => (it.e || 0) >= 10) },
+    check: g => achAnyItem(g, (it: Bag) => (it.e || 0) >= 10) },
   { id: 'a_mine_20000', h: 1, cat: 'gather', i: '🕳', n: '땅을 뒤집다', d: '20,000번. 땅을 통째로 뒤집었다.',
     check: g => achSum(g.player.mined) >= 20000 },
 
@@ -125,9 +125,9 @@ export const ACHIEVEMENTS: AchDef[] = [
     check: g => dimsOf(g.world).BIOMES.every(b => (g.seenBiomes || {})[b.id]) },
   /* 유적의 맥박 · 탐사 기록 — survey 는 세이브에 담긴다(SAVE_UPGRADES v6). */
   { id: 'a_pulse_rage', cat: 'explore', i: '💓', n: '격노를 견딘 자', d: '유적의 맥박이 격노에 닿았다.',
-    check: g => Object.values(g.survey || {}).some((s: Bag) => (s.peak || 0) >= 3) },
+    check: g => Object.values<Bag>(g.survey || {}).some((s: Bag) => (s.peak || 0) >= 3) },
   { id: 'a_survey_s', cat: 'explore', i: '🏅', n: '샅샅이', d: '유적 하나를 탐사 기록 S로 남겼다.',
-    check: g => Object.values(g.survey || {}).some((s: Bag) => !!s.s) },
+    check: g => Object.values<Bag>(g.survey || {}).some((s: Bag) => !!s.s) },
   /* 동굴 — tally.faults(무너뜨린 자갈 수) · tally.caves(들어가 본 갈래). */
   { id: 'a_fault', cat: 'explore', i: '🪨', n: '무너뜨린 사람', d: '금 간 자갈 셋을 무너뜨려 숨은 동굴을 열었다.',
     check: g => ((g.tally || {}).faults || 0) >= 3 },
@@ -156,7 +156,7 @@ export const ACHIEVEMENTS: AchDef[] = [
   { id: 'a_secret_bosses', h: 1, cat: 'hunt', i: '🕳', n: '아무도 시키지 않은 일', d: '아무도 시키지 않은 둘을 끝냈다.',
     check: g => !!(g.player.bossKilled.restorer && g.player.bossKilled.shaft_maw) },
   { id: 'a_echo5', cat: 'hunt', i: '🌀', n: '마지막 메아리', d: '메아리 시련 다섯째 단계를 넘겼다.',
-    check: g => Object.values(g.survey || {}).some((s: Bag) => (s.echo || 0) >= 5) },
+    check: g => Object.values<Bag>(g.survey || {}).some((s: Bag) => (s.echo || 0) >= 5) },
   { id: 'a_kill_3000', cat: 'hunt', i: '☠', n: '삼천 번', d: '삼천 마리를 넘어뜨렸다.',
     check: g => achSum(g.player.kills) >= 3000 },
 
@@ -172,7 +172,7 @@ export const ACHIEVEMENTS: AchDef[] = [
   { id: 'a_gold', cat: 'life', i: '🪙', n: '금고가 무겁다', d: '금화 100만이 쌓였다.',
     check: g => g.player.gold >= 1000000 },
   { id: 'a_pet_max', cat: 'life', i: '🐾', n: '끝까지 키운 것', d: '한 마리를 끝까지 키웠다.',
-    check: g => achAnyItem(g, it => idef(it).type === 'pet' && (it.lv || 1) >= PET_LV_MAX) },
+    check: g => achAnyItem(g, (it: Bag) => idef(it).type === 'pet' && (it.lv || 1) >= PET_LV_MAX) },
   { id: 'a_gold10m', h: 1, cat: 'life', i: '💰', n: '쓸 데가 없다', d: '금화 1,000만. 쓸 데가 없다.',
     check: g => g.player.gold >= 10000000 },
 
@@ -201,7 +201,7 @@ export const ACHIEVEMENTS: AchDef[] = [
 ];
 /* 업적의 품 — 1(시작하자마자) ~ 10(끝까지 파고든 사람). 닿을 수 있게 되는 때(몇 장 · 어느 세션)와 거기서 드는 시간으로 매겼다.
    ★ 난이도(t)는 손으로 적지 않는다 — 여기 점수에서 나온다(≤3 쉬움 · ≤6 중간 · 7↑ 어려움). 새 업적은 점수만 더할 것. */
-export const ACH_LV = {
+export const ACH_LV: Record<string, number> = {
   a_ch1: 1,
   a_first_boss: 1,
   a_village: 5,
@@ -282,27 +282,27 @@ for (const a of ACHIEVEMENTS) {
   a.lv = ACH_LV[a.id] || 5;
   a.t = a.lv <= 3 ? 'easy' : a.lv <= 6 ? 'mid' : 'hard';
 }
-ACHIEVEMENTS.sort((a, b) => a.lv - b.lv);      // 안정 정렬 — 같은 점수는 적힌 순서대로. 갈래별 목록(ui.js)이 이 순서를 그대로 쓴다
+ACHIEVEMENTS.sort((a, b) => a.lv! - b.lv!);      // 안정 정렬 — 같은 점수는 적힌 순서대로. 갈래별 목록(ui.js)이 이 순서를 그대로 쓴다
 export const ACH_FOODS = ['food_bread', 'food_stew', 'food_soup', 'food_pie', 'food_curry',
   'food_jelly', 'food_mstew', 'food_tea', 'food_feast'];
 /* 바다에서만 나는 것들(ENEMIES 의 biome: 'sea'). */
 export const ACH_SEA_MOBS = ['reef_crab', 'lantern_jelly', 'reef_shark', 'deep_octopus', 'abyss_angler'];
 /* 업적 판정에 쓰는 잔 도구들. */
-export function achSum(o) { let n = 0; for (const k in (o || {})) n += o[k] | 0; return n; }
-export function achCount(list, fn) { let n = 0; for (const k of list) if (fn(k)) n++; return n; }
+export function achSum(o: Bag) { let n = 0; for (const k in (o || {})) n += o[k] | 0; return n; }
+export function achCount(list: any, fn: Function) { let n = 0; for (const k of list) if (fn(k)) n++; return n; }
 /* ★ 세계가 지어 둔 기계(m.gen)는 빼고 센다. */
-export function achMach(g) {
+export function achMach(g: any) {
   if (!g.world || !g.world.machines) return 0;
   let n = 0;
   for (const m of g.world.machines.values()) if (!m.gen) n++;
   return n;
 }
-export function achEquip(g, fn) {
+export function achEquip(g: any, fn: Function) {
   const eq = g.player.equip;
   for (const k in eq) if (eq[k] && fn(eq[k])) return true;
   return false;
 }
-export function achAnyItem(g, fn) {
+export function achAnyItem(g: any, fn: Function) {
   if (achEquip(g, fn)) return true;
   for (const it of g.player.bag) if (it && fn(it)) return true;
   for (const it of (g.vault || [])) if (it && fn(it)) return true;

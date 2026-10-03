@@ -2,7 +2,7 @@
 /* data.js 에서 나눈 표 — data.js 다음 층에서 소스 순서대로 읽힌다 */
 
 /* ================= 보스가 무너지는 방식 ================= */
-export const BOSS_DIE = {
+export const BOSS_DIE: Bag = {
   /* --- 세션 1 --- */
   king_slime:    { mat: 'gel', n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: 'gel', n2: 34, at: .22, shake: 20 },
   bone_lord:     { mat: 'bone', n: 60, spd: 1.7, life: 1.6, mat2: 'void', n2: 20, at: .26, shake: 20 },
@@ -34,7 +34,7 @@ export const BOSS_DIE = {
 };
 
 /* ---------------- 보스 등급 ---------------- */
-export const BOSS_TIER = {
+export const BOSS_TIER: Record<string, string> = {
   mine_horror: 'mini', ice_warden: 'mini', vine_lord: 'mini',
   sand_guardian: 'mini', spore_queen: 'mini', blight_maw: 'mini',
   drowned_keeper: 'mini', isle_keeper: 'mini',
@@ -45,7 +45,7 @@ export const BOSS_TIER = {
 };
 
 /* ---------------- 보스의 힘 축적 ---------------- */
-export const BOSS_SURGE = {
+export const BOSS_SURGE: Bag = {
   bone_lord:   { k: 'ward', t: 1.5, cd: 15, dur: 7, v: 60,  brk: .060, c: '#ded6bd', s: 'sk_guard', n: '뼈를 그러모은다', m: '뼈 갑옷' },
   frost_witch: { k: 'nova', t: 1.4, cd: 13,         v: 16,  brk: .050, c: '#a8dcf0', pj: 'frost', s: 'sk_frost', n: '서리를 모은다' },
   void_king:   { k: 'nova', t: 1.6, cd: 14,         v: 20,  brk: .050, c: '#a06fff', pj: 'void',  s: 'sk_bolt',  n: '공허를 삼킨다' },
@@ -54,7 +54,7 @@ export const BOSS_SURGE = {
   restorer:    { k: 'mend', t: 2.0, cd: 22,         v: .03, brk: .035, c: '#a8c8e8', s: 'sk_heal',  n: '되돌리려 한다' }
 };
 /* 뜨는 보스 — 모으는 동안에도 원래대로 떠 있어야 한다. */
-export const SURGE_FLY = { b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
+export const SURGE_FLY: Record<string, number> = { b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
 
 /* ---------------- 스킬 / 특성 ---------------- */
 export const SKILLS: Record<string, SkillDef> = {
@@ -172,14 +172,14 @@ export const TIER_REQ = [0, 2, 5, 8];
 
 /* ---------------- 생활 숙련 ---------------- */
 export const PROF_MAX = 10;
-export const PROFS = {
+export const PROFS: Bag = {
   farm: {
     n: '농사', i: '🌾', c: '#8fc85a',
     line: '갈고, 심고, 거둔다. 다 여문 칸을 거둘 때마다 는다.',
     lin: [
-      ['성장 속도', lv => Math.round((lv - 1) * 7) + '%'],
-      ['수확량 증가 확률', lv => Math.round((lv - 1) * 5) + '%'],
-      ['씨앗 회수', lv => Math.round((lv - 1) * 4) + '%']
+      ['성장 속도', (lv: number) => Math.round((lv - 1) * 7) + '%'],
+      ['수확량 증가 확률', (lv: number) => Math.round((lv - 1) * 5) + '%'],
+      ['씨앗 회수', (lv: number) => Math.round((lv - 1) * 4) + '%']
     ],
     perks: [
       [3, '고른 씨앗', '거둘 때 씨앗을 반드시 하나 이상 돌려받는다.'],
@@ -191,9 +191,9 @@ export const PROFS = {
     n: '낚시', i: '🎣', c: '#7fc8e8',
     line: '물가에 앉아 기다린 시간만큼 는다. 무엇이든 낚아 올리면 오른다.',
     lin: [
-      ['입질 대기 감소', lv => Math.round((lv - 1) * 4) + '%'],
-      ['상위 어종 확률', lv => '+' + Math.round((lv - 1) * 2) + '%'],
-      ['잡것이 걸릴 확률', lv => '+' + ((lv - 1) * 1.5).toFixed(1) + '%']
+      ['입질 대기 감소', (lv: number) => Math.round((lv - 1) * 4) + '%'],
+      ['상위 어종 확률', (lv: number) => '+' + Math.round((lv - 1) * 2) + '%'],
+      ['잡것이 걸릴 확률', (lv: number) => '+' + ((lv - 1) * 1.5).toFixed(1) + '%']
     ],
     perks: [
       [3, '가벼운 손목', '입질을 챌 수 있는 시간이 1.6초로 늘어난다.'],
@@ -204,11 +204,11 @@ export const PROFS = {
 };
 
 /** 숙련 lv -> 다음 레벨까지 필요한 경험치. */
-export function profNeed(lv) { return Math.round(5 * Math.pow(lv, 1.45)); }
+export function profNeed(lv: number) { return Math.round(5 * Math.pow(lv, 1.45)); }
 
 /* 장의 결전이 되는 보스들. */
 /* 장의 목표로 걸린 보스들. */
-export const STORY_BOSSES = {
+export const STORY_BOSSES: Record<string, number> = {
   king_slime: 1, bone_lord: 1, corrupt_heart: 1, frost_witch: 1, void_king: 1,
   storm_warden: 1, first_keeper: 1, pursuer: 1,
   overseer: 1, proliferator: 1, hepha: 1, archetype: 1,
@@ -217,7 +217,7 @@ export const STORY_BOSSES = {
 
 /* ---------------- 보스 페이즈 대사 ---------------- */
 /* 페이즈가 넘어갈 때 뜨는 한 줄. */
-export const BOSS_LINES = {
+export const BOSS_LINES: Bag = {
   king_slime:   { 1: '갈라져도 갈라져도, 아직 혼자다.', 2: '껍데기가 굳는다 — 안쪽이 뛴다.' },
   bone_lord:    { 1: '뼈가 일어선다.', 2: '기둥이 저를 대신 든다.' },
   corrupt_heart:{ 1: '뿌리가 바닥을 짚는다.', 2: '제단만이 아직 뛰고 있다.' },

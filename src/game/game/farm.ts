@@ -46,7 +46,7 @@ export const FarmPart: Bag = {
   },
 
   /** 물뿌리개 — 물 칸이면 가득 채우고, 밭(또는 작물 밑 밭)이면 물을 한 번 준다. */
-  useWateringCan(w, hi, hd, tx, ty) {
+  useWateringCan(w: World, hi: any, hd: any, tx: number, ty: number) {
     const t = w.get(tx, ty), p = this.player;
     if (FLUID_KIND[t] === 1 || FLUID_KIND[t] === 2) {
       if ((hi.w | 0) >= hd.water) { this.toast(tr('물뿌리개가 이미 가득하다'), 'bad'); return; }
@@ -65,21 +65,21 @@ export const FarmPart: Bag = {
   },
 
   /** 양동이 — 빈 것은 물 칸을 통째로 떠 담고(그 칸의 물이 사라진다), 물 양동이는 빈 칸에 도로 붓는다. */
-  useBucket(w, hi, tx, ty) {
+  useBucket(w: World, hi: any, tx: number, ty: number) {
     const t = w.get(tx, ty), p = this.player, full = hi.id === 'water_bucket';
     if (!full && !DRAWABLE[t]) { this.toast(tr('물 칸을 우클릭해 떠 담는다'), 'bad'); return; }
     if (full && t !== T.AIR) { this.toast(tr('빈 칸에만 부을 수 있다'), 'bad'); return; }
     w.set(tx, ty, full ? T.WATER : T.AIR);
     hi.c--; if (hi.c <= 0) p.bag[p.sel] = null;
     const got = makeItem(full ? 'bucket' : 'water_bucket', 1);
-    if (!p.addItem(got)) this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, got));
+    if (!p.addItem(got)) this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, got!));
     this.splashStreaks((tx + .5) * TS, ty * TS, 8);
     this.sfx('splash');
     UI.refreshBag();
   },
 
   /** 비 오는 아침 — 위로 막힌 것 없이 하늘이 트인 밭만 적신다(지붕 밑·굴 속 밭은 그대로). */
-  rainWater(w, day) { const { WW } = dimsOf(this.world);
+  rainWater(w: World, day: number) { const { WW } = dimsOf(this.world);
     for (const k of w.crops) {
       const x = k % WW, fy = ((k / WW) | 0) + 1;
       let open = true;
@@ -89,16 +89,16 @@ export const FarmPart: Bag = {
   },
 
   /* ================= 물줄기 — 점이 아니라 가는 선(분수대 물줄기처럼). 인물 뒤(objects 단계)에 반투명으로 ================= */
-  streak(x, y, vx, vy, life) {
+  streak(x: number, y: number, vx: number, vy: number, life: number) {
     const a = this.streaks || (this.streaks = []);
     if (a.length < 260) a.push({ x, y, vx, vy, t: life, life });
   },
   /** 물뿌리개로 줄 때 — 주둥이 높이에서 앞으로 흘러 떨어진다. */
-  pourStreaks(x, y, n) {
+  pourStreaks(x: number, y: number, n: number) {
     for (let i = 0; i < n; i++) this.streak(x + (Math.random() - .5) * 10, y, (Math.random() - .5) * 30, 40 + Math.random() * 50, .45);
   },
   /** 물을 뜰 때 — 짧게 튀어 오른다. */
-  splashStreaks(x, y, n) {
+  splashStreaks(x: number, y: number, n: number) {
     for (let i = 0; i < n; i++) {
       const a = -Math.PI / 2 + (Math.random() - .5) * 1.4;
       this.streak(x, y, Math.cos(a) * 90, Math.sin(a) * (110 + Math.random() * 60), .5);
@@ -106,7 +106,7 @@ export const FarmPart: Bag = {
   },
   /** 렌더 단계 — 물줄기. 아침(5~9시)에 전력과 물이 있는 스프링클러는 꼭지에서 양옆으로 뿜는다.
    *  ★ 떨어지는 거리를 1~SPRINKLE_R[0] 칸에서 고르고 속도를 거꾸로 잰다 — 물줄기가 닿는 곳이 실제로 적시는 범위다. */
-  rStreaks(f) {
+  rStreaks(f: any) {
     const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
     const dt = Math.min(0.05, Math.max(0, this.time - (this._stT || this.time))); this._stT = this.time;
     const hour = this.dayT / 60, RX = SPRINKLE_R[0], RY = SPRINKLE_R[1];
@@ -138,7 +138,7 @@ export const FarmPart: Bag = {
   },
 
   /** 렌더 단계 — 젖은 밭은 흙이 짙고 윗면에 물기가 번들거린다. 물가 판정은 칸마다 2초 캐시(121칸을 매 프레임 훑지 않게). */
-  rFarmWet(f) { const { WW, WH } = dimsOf(this.world);
+  rFarmWet(f: any) { const { WW, WH } = dimsOf(this.world);
     const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
     const day = this.dayCount + 1;                     // 다음 아침에도 젖어 있는가 = 지금 젖어 있다
     const nw = this._nearWet || (this._nearWet = new Map());
@@ -160,7 +160,7 @@ export const FarmPart: Bag = {
   },
 
   /** 다 여문 작물에 얹는 반짝임. */
-  drawRipeCrops(c, camX, camY) { const { WW } = dimsOf(this.world);
+  drawRipeCrops(c: any, camX: number, camY: number) { const { WW } = dimsOf(this.world);
     const w = this.world;
     if (!w.crops || !w.crops.size) return;
     c.save();

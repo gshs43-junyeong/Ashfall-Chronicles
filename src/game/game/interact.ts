@@ -17,7 +17,7 @@ import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const InteractPart: Bag = {
-  findObjAt(wx, wy) {
+  findObjAt(wx: number, wy: number) {
     /* 내가 놓은 설치물부터 본다. */
     const tx = Math.floor(wx / TS), ty = Math.floor(wy / TS);
     for (const o of this.world.objects) {
@@ -34,19 +34,19 @@ export const InteractPart: Bag = {
     return null;
   },
   /** 상자 지킴이를 깨운다 — 세계의 몹이라 호스트(혼자면 나)만. */
-  wakeChestGuard(o) {
+  wakeChestGuard(o: Bag) {
     const n = o.guard.n || 2;
     for (let i = 0; i < n; i++) this.ents.push(new Enemy(o.guard.t, o.x + (i - n / 2) * 34, o.y - 40, this.scale()));
     this.toast(tr('상자를 열자 무언가 깨어났다'), 'bad');
     this.shake = 10;
   },
   /** 보스가 달린 상자 — 잡몹 지킴이(o.guard)와 달리 하나가 제대로 깨어난다. */
-  wakeChestBoss(o) {
+  wakeChestBoss(o: Bag) {
     this.spawnBoss(o.boss, o.x + o.w / 2, o.y - 80);
     this.toast(tr('상자를 열자 섬이 흔들렸다'), 'bad');
     this.shake = 20;
   },
-  interact(o) {
+  interact(o: Bag) {
     if (o.type === 'chest') {
       /* ★ 암호 골방의 상자는 그 유적의 암호문이 풀린 뒤에만 열린다. */
       if (o.codeRuin && !this.ruinCodeDone(o.codeRuin)) {
@@ -61,7 +61,7 @@ export const InteractPart: Bag = {
         if (o.relic && ITEMS[o.relic]) {
           const relic = makeItem(o.relic, 1);
           o.items.unshift(relic);
-          this.toast(tr('{itemName} — 이 유적의 것', { itemName: itemName(relic) }), 'good');
+          this.toast(tr('{itemName} — 이 유적의 것', { itemName: itemName(relic!) }), 'good');
         }
         // 다른 유적의 위치 지도 — 입구 없는 유적으로 이어지는 사슬
         if (o.ruinmap && ITEMS[o.ruinmap]) o.items.unshift(makeItem(o.ruinmap, 1));
@@ -142,7 +142,7 @@ export const InteractPart: Bag = {
   },
 
   /** 공창 단말 — 로어를 읽고 설계도 조각을 얻는다 (단말마다 1회) */
-  readTerminal(o) {
+  readTerminal(o: Bag) {
     const t = TERMINALS[o.term];
     this.termsRead = this.termsRead || {};
     const first = !this.termsRead[o.term];
@@ -152,7 +152,7 @@ export const InteractPart: Bag = {
       t: tr('({item|을} 뽑아낸다)', { item: ITEMS[give].n }), quest: 1, fn: () => {
         this.termsRead[o.term] = true;
         const it = makeItem(give, t.it ? 8 : 1);
-        if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it));
+        if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it!));
         this.toast(tr('{item} 획득', { item: ITEMS[give].n }), 'good');
         UI.closeDialogue(); UI.refreshBag(); this.checkChapter();
       }
@@ -162,7 +162,7 @@ export const InteractPart: Bag = {
   },
 
   /** 유적 석판 — 로어를 읽고 룬 조각을 얻는다 (1회) */
-  readTablet(o) {
+  readTablet(o: Bag) {
     const t = TABLETS[o.tablet];
     this.tabletsRead = this.tabletsRead || {};
     const first = !this.tabletsRead[o.tablet];
@@ -171,7 +171,7 @@ export const InteractPart: Bag = {
       t: tr('(룬 조각을 떼어낸다)'), quest: 1, fn: () => {
         this.tabletsRead[o.tablet] = true;
         const it = makeItem('rune_frag', 1);
-        if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it));
+        if (!this.player.addItem(it)) this.drops.push(new Drop(this.player.cx, this.player.cy, it!));
         this.toast(tr('룬 조각 획득'), 'good');
         UI.closeDialogue(); UI.refreshBag(); UI.refreshTracker();
       }
@@ -181,7 +181,7 @@ export const InteractPart: Bag = {
   },
 
   /** 유적 비문 — 본편이 아직 말하지 않은 것을 유적마다 한 조각씩 흘린다 */
-  readRuinLore(o) {
+  readRuinLore(o: Bag) {
     // 흔적(hint)은 보상 없이 읽기만 한다 — 방마다 흩어 둔 짧은 이야기 조각
     if (o.hint !== undefined) {
       const hs = RUIN_HINTS[o.lore];
@@ -203,12 +203,12 @@ export const InteractPart: Bag = {
         const p = this.player;
         p.addXp(Math.round(p.xpNext * 0.4));
         const it = makeItem('aether_shard', 3);
-        if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+        if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
         this.toast(tr('비문을 옮겨 적었다 — 여정의 기록에 남는다'), 'good');
         // 여섯 유적의 비문을 모두 옮겨 적으면 — 탐굴자의 인장은 그런 자에게만 맞는 크기다
         if (Object.keys(RUIN_LORE).every(k => this.loreRead[k])) {
           const seal = rollGear('charm_delver', this.rng, 3);
-          if (!p.addItem(seal)) this.drops.push(new Drop(p.cx, p.cy, seal));
+          if (!p.addItem(seal)) this.drops.push(new Drop(p.cx, p.cy, seal!));
           this.toast(tr('여섯 유적을 모두 뒤졌다 — 탐굴자의 인장을 얻었다'), 'good');
         }
         UI.closeDialogue(); UI.refreshBag();
@@ -219,7 +219,7 @@ export const InteractPart: Bag = {
   },
 
   /** 봉인문 — 유적의 열쇠로 연다 */
-  openSeal(o) {
+  openSeal(o: Bag) {
     const p = this.player, w = this.world;
     if (o.opened) { this.toast(tr('이미 열려 있다')); return; }
     // 봉인문은 두 곳에 있다 — 심층 봉인실(유적의 열쇠)과 설계실(설계실의 인장).
@@ -281,7 +281,7 @@ export const InteractPart: Bag = {
 
   /** 분수대 — 금화를 던져 소원을 빈다. */
   wishCost() { return Math.round(25 + this.player.level * 7); },
-  useFountain(o) {
+  useFountain(o: Bag) {
     const p = this.player, cost = this.wishCost();
     const lines = [tr('물속에 동전이 여럿 가라앉아 있다. 오래된 것도, 어제 것도 있다.')];
     const choices = [];
@@ -327,34 +327,34 @@ export const InteractPart: Bag = {
   },
 
   /* ================= 소비 / 제작 ================= */
-  useConsumable(slot) {
+  useConsumable(slot: number) {
     const p = this.player, it = p.bag[slot], d = idef(it);
-    if (d.use.egg) { this.hatchEgg(d.use.egg); it.c--; if (it.c <= 0) p.bag[slot] = null; UI.refreshBag(); this.sfx('hatch'); return; }
-    if (d.use.dragonFeed) { this.feedDragon(slot, d.use.dragonFeed); return; }
+    if (d.use!.egg) { this.hatchEgg(d.use!.egg); it.c--; if (it.c <= 0) p.bag[slot] = null; UI.refreshBag(); this.sfx('hatch'); return; }
+    if (d.use!.dragonFeed) { this.feedDragon(slot, d.use!.dragonFeed); return; }
     /* 펫 사탕 — 낀 펫이 없으면 그냥 사라지므로, 쓰기 전에 막아 준다 */
-    if (d.use.petXp) {
+    if (d.use!.petXp) {
       if (!p.equip.pet1 && !p.equip.pet2) { this.toast(tr('펫을 끼고 있어야 준다'), 'bad'); return; }
-      p.addPetXp(d.use.petXp);
+      p.addPetXp(d.use!.petXp);
       it.c--; if (it.c <= 0) p.bag[slot] = null;
       UI.refreshBag(); this.sfx('drink'); return;
     }
     // instant(치유·마나 물약)는 공유 재사용 대기시간을 아예 안 걸고 안 본다 — 음식·물고기 등 나머지 회복 소비품끼리는 여전히 potionCd를 공유한다
     /* 맥박을 움직이는 것(고요의 물약 · 맥박 북) — 유적 밖에서는 쓰지 않고 그대로 둔다 */
-    if (d.use.pulse) {
+    if (d.use!.pulse) {
       if (!this.pulseHere) { this.toast(tr('유적 안에서만 듣는다'), 'bad'); return; }
-      this.addPulse(this.pulseHere, d.use.pulse, true);
-      this.toast(d.use.pulse < 0 ? tr('유적의 맥박이 가라앉는다') : tr('유적이 북소리에 뒤척인다'), d.use.pulse < 0 ? 'good' : 'bad');
+      this.addPulse(this.pulseHere, d.use!.pulse, true);
+      this.toast(d.use!.pulse < 0 ? tr('유적의 맥박이 가라앉는다') : tr('유적이 북소리에 뒤척인다'), d.use!.pulse < 0 ? 'good' : 'bad');
       it.c--; if (it.c <= 0) p.bag[slot] = null;
-      UI.refreshBag(); this.sfx(d.use.pulse < 0 ? 'drink' : 'chapter');
+      UI.refreshBag(); this.sfx(d.use!.pulse < 0 ? 'drink' : 'chapter');
       return;
     }
-    if (!d.instant && p.potionCd > 0 && d.use.hp) { this.toast(tr('아직 회복할 수 없다'), 'bad'); return; }
-    if (d.use.hp) { p.heal(d.use.hp); if (!d.instant) p.potionCd = d.cd || 10; }
-    if (d.use.mp) p.mp = Math.min(p.d.maxMp, p.mp + d.use.mp);
-    if (d.use.buff) {
+    if (!d.instant && p.potionCd > 0 && d.use!.hp) { this.toast(tr('아직 회복할 수 없다'), 'bad'); return; }
+    if (d.use!.hp) { p.heal(d.use!.hp); if (!d.instant) p.potionCd = d.cd || 10; }
+    if (d.use!.mp) p.mp = Math.min(p.d.maxMp, p.mp + d.use!.mp);
+    if (d.use!.buff) {
       // 음식(fed_)은 한 가지만 유지된다 — 겹쳐 먹을 수 있으면 요리를 고를 이유가 없어진다
-      if (d.use.buff.startsWith('fed_')) p.buffs = p.buffs.filter(b => !b.id.startsWith('fed_'));
-      p.addBuff(d.use.buff);
+      if (d.use!.buff.startsWith('fed_')) p.buffs = p.buffs.filter((b: any) => !b.id.startsWith('fed_'));
+      p.addBuff(d.use!.buff);
     }
     it.c--; if (it.c <= 0) p.bag[slot] = null;
     UI.refreshBag(); this.sfx('drink');

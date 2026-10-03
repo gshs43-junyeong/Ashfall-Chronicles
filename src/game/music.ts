@@ -118,7 +118,7 @@ export const SFX_FAM: Record<string, [string, number, number]> = {
 };
 
 /* 키별 최소 간격(초). */
-export const SFX_GAP = {
+export const SFX_GAP: Record<string, number> = {
   damage: 0.07, swing: 0.04, mine: 0.05, turret: 0.09, zap: 0.18,
   belt: 0.34, drill: 0.28, smelt: 0.24, cook: 0.3,
   // 스킬 — 막힌 소리는 키를 누르고 있으면 연달아 울린다.
@@ -170,12 +170,12 @@ export const SfxLoop = createSfxLoop({ dir: SFX_DIR, files: SFX_FILES, keys: SFX
 /* sea·glacier는 '가까운 지형까지의 거리'가 아니라 **어느 구역에 있는가**로 켜진다. */
 export const AMBIENT_FILES = { waterfall: 'waterfall_loop', water: 'water_ambient_loop',
   sea: 'amb_sea', glacier: 'amb_glacier' };
-export const AMBIENT_RADIUS = { waterfall: 13 * TS, water: 9 * TS };   // 이 거리 안이면 소리가 들리기 시작한다
+export const AMBIENT_RADIUS: Bag = { waterfall: 13 * TS, water: 9 * TS };   // 이 거리 안이면 소리가 들리기 시작한다
 
 export const Ambient: Bag = createAmbient({ dir: SFX_DIR, files: AMBIENT_FILES });
 Object.assign(Ambient, {
   /** 매 프레임 — 플레이어와 가장 가까운 폭포/큰 웅덩이까지 거리를 재서 음량을 맞춘다. */
-  updateFromWorld(w, p, dt, active) { const { WW } = dimsOf(w);
+  updateFromWorld(w: any, p: any, dt: any, active: any) { const { WW } = dimsOf(w);
     for (const key in AMBIENT_FILES) {
       let target = 0;
       if (active && w && p && (key === 'sea' || key === 'glacier')) {
@@ -186,7 +186,7 @@ Object.assign(Ambient, {
           && !(p.swimming || p.submerged > 0.5)) ? 0.8 : 0;
       } else if (active && w && p) {
         const R = AMBIENT_RADIUS[key];
-        const list = key === 'waterfall' ? (w.falls || []) : (w.pools || []).filter(pl => pl.big);
+        const list = key === 'waterfall' ? (w.falls || []) : (w.pools || []).filter((pl: any) => pl.big);
         let best = Infinity;
         for (const src of list) {
           const dx = p.cx - src.x * TS, dy = p.cy - src.y * TS;

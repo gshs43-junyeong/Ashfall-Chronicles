@@ -20,24 +20,24 @@ export const CraftUIPart: Bag = {
   craftShowLocked: false,
   craftQuery: '',
   /** 제작품의 쓰임새 기준 분류. */
-  craftGroupFor(r) {
+  craftGroupFor(r: any) {
     const id = r.out, type = ITEMS[id].type;
     const factory = new Set(['wire', 'circuit', 'motor', 'machine_frame', 'battery_empty', 'battery_cell', 'fuel_brick', 'refined_oil', 'polymer', 'steel_plate', 'rivet']);
     if (id.startsWith('m_') || factory.has(id)) return 'factory';
-    if (['weapon', 'tool', 'armor', 'acc', 'bag'].includes(type)) return 'gear';
+    if (['weapon', 'tool', 'armor', 'acc', 'bag'].includes(type!)) return 'gear';
     if (type === 'consum' || type === 'summon' || id.startsWith('food_') || id.startsWith('potion_')) return 'survival';
     if (type === 'block') return 'build';
     return 'other';
   },
-  matLine(p, need) {
-    return Object.entries(need).map(([k, v]) => {
+  matLine(p: any, need: any) {
+    return Object.entries(need).map(([k, v]: [string, any]) => {
       const have = p.countItem(k);
       return `<span class="${have < v ? 'lack' : ''}">${ITEMS[k].n} ${have}/${v}</span>`;
     }).join(' · ');
   },
   refreshCraft() {
     const p = G.player, near = G.nearSt;
-    const lv = { work: (G.nearStObj.work && G.nearStObj.work.lv) || 1, forge: (G.nearStObj.forge && G.nearStObj.forge.lv) || 1 };
+    const lv: Bag = { work: (G.nearStObj.work && G.nearStObj.work.lv) || 1, forge: (G.nearStObj.forge && G.nearStObj.forge.lv) || 1 };
     let tab = this.craftTab;
     // 이제는 **지금 이 순간 실제로 근처(70px)에 있는 시설만** 같이 보여준다 — 없으면 맨손 탭 하나뿐 — 사연: docs/code-history.md#h98
     if (tab !== 'hand' && !near[tab]) tab = this.craftTab = 'hand';
@@ -77,7 +77,7 @@ export const CraftUIPart: Bag = {
       if ((!this.craftShowLocked && locked) || (this.craftGroup !== 'all' && group !== this.craftGroup) || !matches) continue;
       rows.push({ i, r, locked, mat: p.hasAll(r.need), group });
     }
-    rows.sort((a, b) => (a.locked - b.locked) || (b.mat - a.mat) || ((a.r.lv || 1) - (b.r.lv || 1)));
+    rows.sort((a, b) => (+a.locked - +b.locked) || (+b.mat - +a.mat) || ((a.r.lv || 1) - (b.r.lv || 1)));
 
     const groups = [['all', tr('전체')], ['gear', tr('장비')], ['survival', tr('생존')], ['build', tr('건축')], ['factory', tr('자동화')], ['other', tr('기타')]];
     const escapedQuery = this.craftQuery.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -92,7 +92,7 @@ export const CraftUIPart: Bag = {
       const d = ITEMS[r.out];
       const ok = !locked && mat && (!r.station || near[r.station]);
       let mats = this.matLine(p, r.need);
-      if (locked) mats = `<span class="lack">${tr('[{stationName} 필요]', { stationName: STATION_NAME[tab][r.lv] })}</span> ` + mats;
+      if (locked) mats = `<span class="lack">${tr('[{stationName} 필요]', { stationName: STATION_NAME[tab][r.lv!] })}</span> ` + mats;
       h += `<div class="recipe ${ok ? '' : 'no'}" data-r="${i}"><div class="ric"></div><div>` +
         `<div class="rname">${d.n}${r.n > 1 ? ' ×' + r.n : ''}</div><div class="rmat">${mats}</div></div></div>`;
     }
@@ -113,7 +113,7 @@ export const CraftUIPart: Bag = {
       const i = +el.dataset.r;
       this.setIcon(el.querySelector('.ric'), Art.itemUrl(RECIPES[i].out));
       el.addEventListener('click', () => G.craft(i));
-      el.addEventListener('mouseenter', e => this.showTip(makeItem(RECIPES[i].out, 1, 0), e));
+      el.addEventListener('mouseenter', (e: any) => this.showTip(makeItem(RECIPES[i].out, 1, 0), e));
       el.addEventListener('mouseleave', () => this.hideTip());
     });
   },
@@ -133,13 +133,13 @@ export const CraftUIPart: Bag = {
       const v = VILLAGE[i];
       const state = i <= lv ? 'done' : i === lv + 1 ? 'next' : 'far';
       h += `<div class="tv ${state}">` +
-        `<div class="tv-head">${tr('<b>{i}단계 · {v}</b>', { i, v: v.n })}` +
+        `<div class="tv-head">${tr('<b>{i}단계 · {v}</b>', { i, v: v!.n })}` +
         `<span class="tv-tag">${state === 'done' ? tr('완료') : state === 'next' ? tr('다음') : tr('잠김')}</span></div>` +
-        `<div class="tv-desc">${v.d}</div>` +
-        '<ul class="tv-gain">' + v.gain.map(g => `<li>${g}</li>`).join('') + '</ul>';
+        `<div class="tv-desc">${v!.d}</div>` +
+        '<ul class="tv-gain">' + v!.gain.map((g: string) => `<li>${g}</li>`).join('') + '</ul>';
       if (state === 'next') {
-        const can = p.hasAll(v.need);
-        h += `<div class="tv-cost">${tr('필요한 것 — {matLine}', { matLine: this.matLine(p, v.need) })}</div>` +
+        const can = p.hasAll(v!.need);
+        h += `<div class="tv-cost">${tr('필요한 것 — {matLine}', { matLine: this.matLine(p, v!.need) })}</div>` +
           `<button class="tv-btn${can ? '' : ' no'}" id="town-up">${tr('이 단계로 올린다')}</button>`;
       }
       h += '</div>';

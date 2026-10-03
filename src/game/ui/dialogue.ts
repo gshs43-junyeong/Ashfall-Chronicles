@@ -13,18 +13,18 @@ export const DialogueUIPart: Bag = {
 
   /* ---------------- 대화 ---------------- */
   /** '다시 듣기'는 이름 옆 작은 단추로 뺀다 (없으면 감춘다) */
-  setReplay(c) {
+  setReplay(c: any) {
     const b = $('#dlg-replay');
     if (!b) return;
     b.style.display = c ? '' : 'none';
-    b.onclick = ev => { ev.stopPropagation(); if (c) c.fn(); };
+    b.onclick = (ev: MouseEvent) => { ev.stopPropagation(); if (c) c.fn(); };
   },
 
-  openDialogue(npcId, lines, choices) {
+  openDialogue(npcId: string, lines: any, choices: any) {
     const d = NPCS[npcId];
     /* 다시 듣기는 고르는 말이 아니라 창의 기능이라 선택지 줄에서 빼낸다 — 선택지가 여섯 줄까지 늘어나 정작 할 말이 어느 것인지 안 보였다. */
     const cs = (choices || []).slice();
-    const ri = cs.findIndex(c => c.replay);
+    const ri = cs.findIndex((c: any) => c.replay);
     this.setReplay(ri >= 0 ? cs.splice(ri, 1)[0] : null);
     this.dlg = { npcId, lines: lines.slice(), i: 0, choices: cs };
     $('#dlg-portrait').textContent = '';
@@ -37,7 +37,7 @@ export const DialogueUIPart: Bag = {
   /* ---- 한 글자씩 흘러나오는 대사 ---- */
   TYPE_MS: 34, TYPE_MIN: 300, TYPE_MAX: 1100,
 
-  typeLine(text, done) {
+  typeLine(text: string, done: Function) {
     const el = $('#dlg-text');
     this.stopType();
     const n = text.length;
@@ -69,7 +69,7 @@ export const DialogueUIPart: Bag = {
     return true;
   },
 
-  nextLine(first) {
+  nextLine(first: boolean) {
     if (!this.dlg) return;
     const prevI = this.dlg.i;
     if (!first) this.dlg.i++;
@@ -85,7 +85,7 @@ export const DialogueUIPart: Bag = {
     });
   },
   /* 한 겹 더 들어가는 선택지(sub)를 받는다. */
-  showChoices(list) {
+  showChoices(list: any) {
     const box = $('#dlg-choices'); box.innerHTML = '';
     const cs = list || (this.dlg && this.dlg.choices) || [];
     for (const c of cs) {
@@ -110,11 +110,11 @@ export const DialogueUIPart: Bag = {
   closeDialogue() { this.stopType(); $('#dialogue').classList.remove('open'); this.dlg = null; G.uiOpen = false; },
 
   /** 장 도입·마무리 이야기. */
-  storyScene(ch, kind, done) {
+  storyScene(ch: any, kind: string, done: Function) {
     const art = $('#cc-art');
     if (G.spritesOn && ch.art) { art.style.backgroundImage = `url(${Sprites.url(`assets/bg/${ch.art}.png`)})`; art.classList.add('show', 'story'); }
     const raw = (kind === 'outro' ? ch.outro : ch.intro) || '';
-    const lines = raw.split('\n\n').map(s => s.trim()).filter(Boolean);
+    const lines = raw.split('\n\n').map((s: any) => s.trim()).filter(Boolean);
     // 장을 끝낼 때는 마지막에 "다음이 궁금해지는 한 줄"을 따로 한 장 더 넘긴다
     if (kind === 'outro' && ch.hook) lines.push('◆  ' + ch.hook);
     if (!lines.length) { if (done) done(); return; }
@@ -127,7 +127,7 @@ export const DialogueUIPart: Bag = {
   },
 
   /** NPC가 아닌 화자(석판·문 등)의 대사창 */
-  openLore(name, lines, choices) {
+  openLore(name: string, lines: any, choices: any) {
     this.setReplay(null);
     this.dlg = { npcId: null, lines: lines.slice(), i: 0, choices };
     $('#dlg-portrait').textContent = '';
@@ -139,7 +139,7 @@ export const DialogueUIPart: Bag = {
   },
 
   /* ---------------- 연출 ---------------- */
-  chapterCard(ch) {
+  chapterCard(ch: any) {
     if (!ch) return;                       // 넘어간 장을 뒤늦게 띄우려는 호출은 무시
     $('#cc-sub').textContent = ch.sub;
     $('#cc-title').textContent = ch.title;
@@ -153,7 +153,7 @@ export const DialogueUIPart: Bag = {
     setTimeout(() => { el.classList.remove('show'); art.classList.remove('show'); }, 3800);
   },
   /* 보스 막대. */
-  bossBar(e) {
+  bossBar(e: Enemy) {
     const el = $('#bossbar');
     if (!e || e.dead) { el.classList.remove('show'); this.bbFor = null; return; }
     el.classList.add('show');

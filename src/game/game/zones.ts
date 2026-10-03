@@ -12,7 +12,7 @@ export const ZonesPart: Bag = {
 
   /** 바이옴에 처음 들어섰을 때 — 그 땅이 어떤 곳인지 한 번 알린다. */
   /** 지금 화면 뒤에 깔린 원경이 무엇인가 — drawParallaxArt 의 고르는 규칙과 같다. */
-  bgId(camX, camY) { const { WW, SURF_BASE, HELL_Y } = dimsOf(this.world);
+  bgId(camX: number, camY: number) { const { WW, SURF_BASE, HELL_Y } = dimsOf(this.world);
     const p = this.player, w = this.world;
     if (!p || !w) return null;
     if (camY > HELL_Y * TS - 700) return 'hell';
@@ -24,7 +24,7 @@ export const ZonesPart: Bag = {
   },
 
   /** 땅·구역의 이름표. */
-  checkBiomeEntry(camX, camY) { const { BIOMES } = dimsOf(this.world);
+  checkBiomeEntry(camX: number, camY: number) { const { BIOMES } = dimsOf(this.world);
     if (this.time < 3) return;                 // 시작 직후엔 장 카드와 겹친다
     const id = this.bgId(camX, camY);
     if (!id) return;                           // 원경이 없는 층 — 기준이 없으니 세지 않는다
@@ -43,11 +43,11 @@ export const ZonesPart: Bag = {
     if (this.time - (this._cardAt[id] || -1e9) < 90) return;
     this._cardAt[id] = this.time;
     /* 소리는 내지 않는다. */
-    UI.chapterCard({ sub: z ? z.sub : b.card.sub, title: z ? z.n : b.n, line: card.line });
+    UI.chapterCard({ sub: z ? z.sub : b!.card.sub, title: z ? z.n : b!.n, line: card.line });
   },
 
   /** 그 땅의 공기색. */
-  biomeAir(camX, camY) { const { WW, SURF_BASE, HELL_Y, BIOMES } = dimsOf(this.world);
+  biomeAir(camX: number, camY: number) { const { WW, SURF_BASE, HELL_Y, BIOMES } = dimsOf(this.world);
     const w = this.world;
     const tx = clamp(Math.floor((camX + this.W / 2) / TS), 0, WW - 1);
     const [i, j, k] = w.biomeMix(tx);
@@ -64,7 +64,7 @@ export const ZonesPart: Bag = {
   },
 
   /** 공기색을 화면에 덮는다. */
-  drawAir(c, air) {
+  drawAir(c: any, air: any) {
     c.save();
     c.globalCompositeOperation = 'soft-light';
     c.globalAlpha = Math.min(0.55, air.a * 2.2);

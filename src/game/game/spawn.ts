@@ -19,7 +19,7 @@ export const SpawnPart: Bag = {
   /* 개조가 걸리는 구역 — 세션 1 바이옴의 지층들. */
   MECH_ZONE: { surface: 1, cave: 1, deep: 1, corrupt: 1, ice: 1, hell: 1, jungle: 1, glowfen: 1 },
 
-  zoneTable(zone, night, tx, ty) { const { WW } = dimsOf(this.world);
+  zoneTable(zone: string, night: any, tx: number, ty: number) { const { WW } = dimsOf(this.world);
     // 사막은 지상/동굴 판정 안에 들어가므로 x로 따로 갈라준다
     const desert = tx !== undefined && this.world.biomeAt(clamp(tx, 0, WW - 1)).id === 'desert';
     switch (zone) {
@@ -86,7 +86,7 @@ export const SpawnPart: Bag = {
     const z = w.zoneAt(tx, Math.floor(p.cy / TS));
     return e.zones.indexOf(z) >= 0;
   },
-  updateEvents(dt) { const { WW } = dimsOf(this.world);
+  updateEvents(dt: number) { const { WW } = dimsOf(this.world);
     const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
     const phase = (this.dayCount * 2) + (night ? 1 : 0);
     /* 운석은 이벤트(this.event)와 따로 굴린다 — 비·붉은 달이 오는 중에도 떨어질 수 있다. */
@@ -126,7 +126,7 @@ export const SpawnPart: Bag = {
   },
 
   /** 근처 웅덩이 한 곳을 골라 물속 생물을 채운다. */
-  trySpawnWater(normal) { const { WSY } = dimsOf(this.world);
+  trySpawnWater(normal: any) { const { WSY } = dimsOf(this.world);
     const p = this.spawnFor || this.player, w = this.world;
     const pools = w.pools;
     if (!pools || !pools.length) return false;
@@ -162,7 +162,7 @@ export const SpawnPart: Bag = {
         ? ['grotto_eel', 'cave_minnow', 'drowned_hand', 'grotto_eel']
         : ['cave_minnow', 'cave_minnow', 'grotto_eel'];
       const type = table[Math.floor(Math.random() * table.length)];
-      if (this.ents.filter(e => e instanceof Enemy && e.def.ai === 'swimmer').length >= 7) return false;
+      if (this.ents.filter((e: Enemy) => e instanceof Enemy && e.def.ai === 'swimmer').length >= 7) return false;
       this.ents.push(new Enemy(type, tx * TS, ty * TS, this.scale()));
       return true;
     }
@@ -175,11 +175,11 @@ export const SpawnPart: Bag = {
     if (!w.sea || Math.random() > 0.012) return false;
     const ptx = Math.floor(p.cx / TS), pty = Math.floor(p.cy / TS), lv = w.sea.level;
     if (ptx >= SEA_X1 + 20 || Math.abs(pty - lv) > 30) return false;
-    const fl = this.ents.filter(e => e instanceof Enemy && e.def.ai === 'flotsam');
-    if (fl.filter(e => Math.abs(e.cx / TS - ptx) < 100).length >= 2) return false;
+    const fl = this.ents.filter((e: Enemy) => e instanceof Enemy && e.def.ai === 'flotsam');
+    if (fl.filter((e: Enemy) => Math.abs(e.cx / TS - ptx) < 100).length >= 2) return false;
     for (let att = 0; att < 10; att++) {
       const tx = clamp(ptx + (Math.random() < 0.5 ? -1 : 1) * (30 + Math.floor(Math.random() * 60)), 4, SEA_X1 - 6);
-      if (fl.some(e => Math.abs(e.cx / TS - tx) < 70)) continue;
+      if (fl.some((e: Enemy) => Math.abs(e.cx / TS - tx) < 70)) continue;
       if (w.get(tx, lv) !== T.SEAWATER || w.get(tx, lv - 1) !== T.AIR) continue;
       const sx = tx * TS - this.cam.x;
       if (sx > -60 && sx < this.W + 60) continue;
@@ -195,7 +195,7 @@ export const SpawnPart: Bag = {
   trySpawn() { const { WW, WH, SEA_X1 } = dimsOf(this.world);
     if (this.dbgCalm) return;                           // 디버그 확인 자리(공장)만 켠다
     const p = this.spawnFor || this.player, w = this.world;
-    const normal = this.ents.filter(e => e instanceof Enemy && !e.boss).length;
+    const normal = this.ents.filter((e: Enemy) => e instanceof Enemy && !e.boss).length;
     const ev = this.eventActive() ? this.eventSpec() : null;
     /* 여럿이면 세계 전체 상한을 인원 × 0.75 까지 올린다(혼자면 그대로) — 멀티플레이 설계 §3-2 */
     if (normal >= (ev ? ev.cap : 22) * Math.max(1, 0.75 * this.players.length) || this.boss) return;

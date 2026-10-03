@@ -792,20 +792,20 @@ export const RUIN_LOOT = {
 export const MULTI_FALLOFF = 0.35;
 
 /* ================= 맞는 순간 — 물리 타격 계열 ================= */
-export const HIT_FAM = {
+export const HIT_FAM: Record<string, string> = {
   sword: 'slash', blade: 'slash', dagger: 'slash', scythe: 'slash', axe: 'slash', saw: 'slash',
   spear: 'pierce', lance: 'pierce', harpoon: 'pierce', bow: 'pierce', crossbow: 'pierce', gun: 'pierce',
   hammer: 'blunt', mace: 'blunt'
 };
 /* 계열마다 크기와 남는 시간이 다르다. */
-export const HIT_FX = {
+export const HIT_FX: Bag = {
   slash: { size: 52, slow: 0.80 },
   pierce: { size: 52, slow: 0.90 },
   blunt: { size: 72, slow: 1.35 }
 };
 
 /** 이 무기로 때렸을 때 어느 타격 그림을 쓰는가. */
-export function hitFam(it) {
+export function hitFam(it: Bag) {
   if (!it || !it.id) return null;
   const f = HIT_FAM[it.id.split('_')[0]];
   if (f) return f;
@@ -817,7 +817,7 @@ export function hitFam(it) {
 /* ---------------- 제작 시설 ---------------- */
 /* 설치물 규격 — 전부 한 타일(TS=22px) 안에 들어가야 한다 — 사연: docs/code-history.md#h6 */
 /* tw/th = 실제로 차지하는 칸 수(충돌 판정용). */
-export const OBJ_SIZE = {
+export const OBJ_SIZE: Bag = {
   // 작업대는 낮고 넓은 상판이라 2×1(가로로 긴 모양)이 실물에 더 가깝다는 판단 — 나머지 둘은 2×2 그대로.
   workbench: { w: 40, h: 20, tw: 2, th: 1 },
   forge: { w: 40, h: 40, tw: 2, th: 2 },
@@ -826,18 +826,18 @@ export const OBJ_SIZE = {
 };
 
 /* 4단계 추가 — 세션 3(바다) 재료로만 올릴 수 있다. */
-export const STATION_NAME = {
+export const STATION_NAME: Bag = {
   work: ['—', '작업대', '정밀 작업대', '자동 조립대', '심해 공작대'],
   forge: ['—', '용광로', '고로', '아크 용광로', '가압 제련로']
 };
-export const STATION_DESC = {
+export const STATION_DESC: Bag = {
   work: ['', '판자와 못으로 되는 것들.', '치수를 재고 깎는다. 부품이 나오기 시작한다.', '설계 핵을 얹었다. 이제 기계를 만드는 기계를 만든다.',
          '심해 노심을 물려 압력으로 눌러 붙인다. 물속에서 쓸 것을 물 밖에서 만드는 자리다.'],
   forge: ['', '광석을 녹여 주괴로.', '풀무를 걸었다. 강철판이 나온다.', '전기로 녹인다. 이제 공장처럼 돌린다.',
           '노를 통째로 가압해 녹인다. 소금과 진주까지 재료가 된다.']
 };
 /* STATION_UP[종류][현재레벨] = 다음 레벨로 올리는 비용 4단계는 **세션 3 재료(심해 노심)를 요구한다** — 바다에 들어가 보지 않으면 못 올린다. */
-export const STATION_UP = {
+export const STATION_UP: Bag = {
   work: [null,
     { need: { plank: 40, iron_bar: 14, gear_basic: 8 } },
     { need: { steel_plate: 30, circuit: 12, motor: 6 } },

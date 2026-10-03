@@ -21,7 +21,7 @@ export const RenderWorldPart: Bag = {
   /** 타일 광원값을 저해상도 알파맵으로 만들어 확대 — 계단 없는 부드러운 명암 */
   /** 바다 수면 한 칸 — 사연: docs/code-history.md#h65 */
   /* 날아가는 폭탄 그림. */
-  drawBomb(c, b, sx, sy) {
+  drawBomb(c: CanvasRenderingContext2D, b: any, sx: number, sy: number) {
     const sp = b.spec, look = sp.look || 'iron';
     const t = clamp(b.life / (sp.fuse || 1.6), 0, 1);        // 1 → 0 으로 탄다
     const lit = Math.sin(this.time * (10 + (1 - t) * 44)) > -0.2;
@@ -66,7 +66,7 @@ export const RenderWorldPart: Bag = {
   },
 
   /** 바다 수면 칸에서 물이 차 있는 높이(0~1, 칸 아래에서부터). */
-  waveFrac(tx) {
+  waveFrac(tx: number) {
     const t = this.time;
     const K = 0.34, W = 1.15;                             // 물결의 공간 주파수 · 진행 속도
     const main = Math.sin(tx * K - t * W);                // 지나가는 큰 물결
@@ -75,14 +75,14 @@ export const RenderWorldPart: Bag = {
     return clamp(0.66 + (main * 0.68 + sub + jit) * 0.32, 0.34, 1);
   },
   /** 이 열의 수면이 화면(세계) 몇 px 에 있나 — 수면 칸 ty 를 알 때. */
-  surfacePx(tx, ty) { const { WW } = dimsOf(this.world);
+  surfacePx(tx: number, ty: number) { const { WW } = dimsOf(this.world);
     const w = this.world, t = w.get(Math.floor(tx), ty);
     if (t === T.SEAWATER) return (ty + 1) * TS - this.waveFrac(tx) * TS;
     if (FLUID_FLOW[t] && w.flv) return (ty + 1) * TS - (w.flv[ty * WW + Math.floor(tx)] || 8) / 8 * TS;
     return ty * TS;
   },
 
-  drawWave(c, tx, ty, sx, sy, wl) {
+  drawWave(c: CanvasRenderingContext2D, tx: number, ty: number, sx: number, sy: number, wl: any) {
     const t = this.time;
     const hFrac = this.waveFrac(tx);
     const h = Math.max(3, Math.round(hFrac * TS));
@@ -105,7 +105,7 @@ export const RenderWorldPart: Bag = {
   },
 
   /** 흐르는 액체 한 칸 — 고인 것과 **같은 그림**을 수위만큼 잘라 그린다. */
-  drawFlow(c, w, id, k, tx, ty, sx, sy) { const { WW } = dimsOf(this.world);
+  drawFlow(c: any, w: any, id: any, k: any, tx: any, ty: any, sx: any, sy: any) { const { WW } = dimsOf(this.world);
     const kind = FLUID_KIND[id], lv = w.flv ? (w.flv[k] || 7) : 7;
     const full = lv >= 8 || FLUID_KIND[w.tiles[k - WW]] === kind;
     const src = kind === 1 ? T.WATER : kind === 2 ? T.SEAWATER : T.LAVA;
@@ -127,7 +127,7 @@ export const RenderWorldPart: Bag = {
 
   /** 폭포 한 칸 — 물줄기를 세계 y 에 걸고 시간만큼 **아래로** 민다(칸 경계에서 이어진다).
       ★ 아틀라스 프레임을 돌리면 안 된다 — 프레임마다 줄기가 제멋대로라 위상(ty*0.4)과 겹쳐 물이 거슬러 오르는 듯 보였다. */
-  drawFallsTile(c, tx, ty, sx, sy) {
+  drawFallsTile(c: CanvasRenderingContext2D, tx: number, ty: number, sx: number, sy: number) {
     const t = this.time, top = ty * TS;
     c.globalAlpha = 0.5; c.fillStyle = ART[T.FALLS].c; c.fillRect(sx, sy, TS, TS);
     for (let i = 0; i < 7; i++) {
@@ -147,7 +147,7 @@ export const RenderWorldPart: Bag = {
   },
 
   /** 폭포 밑 물보라 — 물줄기가 수면·바닥에 닿는 칸에서 물방울이 튄다. */
-  updateFalls(dt) { const { WW, WH } = dimsOf(this.world);
+  updateFalls(dt: number) { const { WW, WH } = dimsOf(this.world);
     this._fallsT = (this._fallsT || 0) - dt;
     if (this._fallsT > 0) return;
     this._fallsT = 0.08;
@@ -170,7 +170,7 @@ export const RenderWorldPart: Bag = {
 
   /** 빛 색 — 빛나는 타일(data.js LIGHT_SPEC) 둘레에 제 색의 번짐을 **더하기**로 얹는다. */
   /** 둥지 빛 — 어둠 **위에** 더한다(둥지 그림은 조명보다 먼저 그려져 어두운 방에서 거의 안 보였다). 비운 둥지는 없다. */
-  drawLairGlow(c, camX, camY) {
+  drawLairGlow(c: CanvasRenderingContext2D, camX: number, camY: number) {
     const w = this.world; if (!w) return;
     const beat = 0.5 + Math.sin(this.time * 2.1) * 0.5;
     c.save(); c.globalCompositeOperation = 'lighter';
@@ -187,12 +187,12 @@ export const RenderWorldPart: Bag = {
     c.restore();
   },
   /** 둥지 빛 색 — 주인 색을 쓰되 너무 어두우면 밝힌다(물에 잠긴 파수꾼처럼 짙은 색은 알이 검게 보였다). */
-  lairCol(o) {
+  lairCol(o: Bag) {
     const c0 = (ENEMIES[o.boss] && ENEMIES[o.boss].c) || '#e0563c';
     const n = parseInt(c0.slice(1), 16), l = ((n >> 16) + ((n >> 8) & 255) + (n & 255)) / 3;
     return l < 120 ? shade(c0, 120 / Math.max(30, l)) : c0;
   },
-  drawGlow(c, camX, camY, tx0, ty0, tx1, ty1) { const { WW, WH } = dimsOf(this.world);
+  drawGlow(c: CanvasRenderingContext2D, camX: number, camY: number, tx0: number, ty0: number, tx1: number, ty1: number) { const { WW, WH } = dimsOf(this.world);
     const w = this.world;
     this._glowC = this._glowC || {};
     c.save();
@@ -201,7 +201,7 @@ export const RenderWorldPart: Bag = {
       for (let tx = Math.max(0, tx0 - 2); tx <= Math.min(WW - 1, tx1 + 2); tx++) {
         const d = TILE_DEF[w.tiles[ty * WW + tx]];
         if (!d.lc) continue;
-        const r = Math.round(10 + d.light * 5);
+        const r = Math.round(10 + d.light! * 5);
         const key = d.lc + r;
         let g = this._glowC[key];
         if (!g) {
@@ -211,12 +211,12 @@ export const RenderWorldPart: Bag = {
           gc.fillStyle = gr; gc.fillRect(0, 0, r * 2, r * 2);
           this._glowC[key] = g;
         }
-        c.globalAlpha = Math.min(1, 0.4 + d.light * 0.03);
+        c.globalAlpha = Math.min(1, 0.4 + d.light! * 0.03);
         c.drawImage(g, tx * TS + TS / 2 - camX - r, ty * TS + TS / 2 - camY - r);
       }
     c.restore();
   },
-  drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
+  drawLightOverlay(c: CanvasRenderingContext2D, camX: number, camY: number, tx0: number, ty0: number, tx1: number, ty1: number) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
     const w = this.world;
     const x0 = tx0 - 1, y0 = ty0 - 1, x1 = tx1 + 1, y1 = ty1 + 1;
     const lw = x1 - x0 + 1, lh = y1 - y0 + 1;
@@ -251,12 +251,12 @@ export const RenderWorldPart: Bag = {
       가장자리는 어둡고 속은 밝고, 왼쪽 위에 창빛 한 점. 결전 중이면 붉게 물든다. */
   /** 둥지 — 제단처럼 손으로 다듬은 한 장. 바이옴 유적은 흙·뼈 둔덕에 갈비가 휘어 감싼 알, 공창 격실(ruin 10+)은
       강철 요람에 박힌 노심. 빛은 주인(보스) 색으로 맥박친다. 비우면 알은 깨진 껍데기, 노심은 꺼진 유리. */
-  drawLair(c, o, sx, sy, f) {
+  drawLair(c: CanvasRenderingContext2D, o: Bag, sx: number, sy: number, f: any) {
     const t = this.time, w = o.w, h = o.h, cx = sx + w / 2;
     const done = !!(this.lairs && this.lairs[o.ruin]);
     const col = this.lairCol(o);
     const beat = done ? 0 : 0.5 + Math.sin(t * 2.1) * 0.5;
-    const S = (hex, k?) => shade(hex, f * (k || 1));
+    const S = (hex: string, k?: any) => shade(hex, f * (k || 1));
     c.save();
     if (o.ruin >= 10) {
       // 강철 요람 — 받침 · 양옆 집게 · 가운데 노심 · 받침관
@@ -301,7 +301,7 @@ export const RenderWorldPart: Bag = {
     c.fillStyle = S('#cfc4a8', .8);
     for (const [dx, dy, l] of [[-15, -4, 5], [-9, -2, 3], [8, -3, 4], [14, -2, 5], [2, -1, 3]]) c.fillRect(cx + dx, sy + h + dy, l, 1.5);
     // 갈비 — 양쪽에서 휘어 올라 알을 감싼다(뒤쪽 셋은 어둡게)
-    const rib = (k, i, back) => {
+    const rib = (k: any, i: number, back: any) => {
       const bx = cx + k * (7 + i * 5), top = sy + 8 + i * 5;
       c.strokeStyle = back ? S('#6a6250') : S('#d8ccb0'); c.lineWidth = back ? 2 : 2.5; c.lineCap = 'round';
       c.beginPath(); c.moveTo(bx, sy + h - 7); c.quadraticCurveTo(bx + k * 6, top + 12, cx + k * (3 + i * 2), top); c.stroke();
@@ -333,11 +333,11 @@ export const RenderWorldPart: Bag = {
     for (let i = 0; i < 3; i++) { rib(-1, i, false); rib(1, i, false); }   // 앞쪽 갈비는 알 위로
     c.restore();
   },
-  drawAltar(c, o, sx, sy, f) {
+  drawAltar(c: CanvasRenderingContext2D, o: Bag, sx: number, sy: number, f: any) {
     const t = this.time, cx = sx + o.w / 2, w = o.w, h = o.h;
     const hot = !!this.boss;
     const [c0, c1, c2] = hot ? ['#ffe0d0', '#e05050', '#4a0d14'] : ['#f2e6ff', '#a06fff', '#1e0f3a'];
-    const S = (hex, k?) => shade(hex, f * (k || 1));
+    const S = (hex: string, k?: any) => shade(hex, f * (k || 1));
     c.save();
     // 받침 — 계단 두 단 · 기둥 · 윗판
     c.fillStyle = S('#241c2e'); c.fillRect(sx - 4, sy + h - 5, w + 8, 5);
@@ -407,7 +407,7 @@ export const RenderWorldPart: Bag = {
   },
 
   /* ================= 문 그리기 ================= */
-  drawDoor(c, o, sx, sy, f) {
+  drawDoor(c: CanvasRenderingContext2D, o: Bag, sx: number, sy: number, f: any) {
     // 성문(gate)은 세로 3칸이라 집 문 그림을 쓰면 늘어난다 — 각자 제 그림이 있다
     const im = this.spritesOn && Sprites.img[o.gate ? 'obj_gate' : 'obj_door'];
     const sw = o.sw === undefined ? (o.closed ? 0 : 1) : o.sw;   // 0 닫힘 → 1 열림
@@ -465,7 +465,7 @@ export const RenderWorldPart: Bag = {
   },
 
   /** 여명 마을 시설물 — 손그림 애셋이 있으면 그것으로, 없으면 절차 렌더로 폴백 */
-  drawFacility(c, o, sx, sy, f) {
+  drawFacility(c: CanvasRenderingContext2D, o: Bag, sx: number, sy: number, f: any) {
     const t = this.time;
     if (o.type === 'door') { this.drawDoor(c, o, sx, sy, f); return; }
     if (o.type === 'furniture') {
@@ -634,7 +634,7 @@ export const RenderWorldPart: Bag = {
     }
   },
   /* 분수 물 — 손그림(정지)이든 절차 생성이든 그 위에 이것만 얹어 움직인다. */
-  drawFountainWater(c, o, sx, sy) {
+  drawFountainWater(c: CanvasRenderingContext2D, o: Bag, sx: number, sy: number) {
     const FR = 3, fr = ((this.time * 6) | 0) % FR;
     const mx = sx + o.w / 2;
     const topY = sy + 8;                       // 물동이 수면
@@ -681,7 +681,7 @@ export const RenderWorldPart: Bag = {
     }
     c.restore();
   },
-  drawCursor(c, camX, camY) {
+  drawCursor(c: CanvasRenderingContext2D, camX: number, camY: number) {
     const p = this.player;
     const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
     const near = dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) <= TS * 6;
@@ -702,12 +702,12 @@ export const RenderWorldPart: Bag = {
         c.strokeStyle = 'rgba(216,169,75,.8)'; c.lineWidth = 1.5;
         c.strokeRect(o.x - camX - 2.5, o.y - camY - 2.5, o.w + 5, o.h + 5);
         c.lineWidth = 1;
-        const label = o.type === 'door' ? (o.closed ? tr('문 열기') : tr('문 닫기')) : {
+        const label = o.type === 'door' ? (o.closed ? tr('문 열기') : tr('문 닫기')) : ({
           chest: tr('상자 열기'), workbench: tr('작업대'), forge: tr('용광로'), npc: tr('대화'), altar: tr('제단'),
           vault: tr('보관고'), board: tr('의뢰 게시판'), reforge: tr('재련대'), waystone: tr('귀환 비석'), inn: tr('여관'),
           terminal: tr('단말 읽기'), lorestone: tr('비문 읽기'), tablet: tr('석판 읽기'), lair: tr('둥지'), seal: tr('봉인문'),
           ciphernote: tr('쪽지 읽기'), codedoor: tr('잠긴 홈')
-        }[o.type];
+        } as Bag)[o.type];
         if (label) {
           c.fillStyle = '#e8dcc0'; c.font = '11px ' + FONT; c.textAlign = 'center';
           c.fillText(label + ` ${tr('(우클릭)')}`, o.x - camX + o.w / 2, o.y - camY - 12);

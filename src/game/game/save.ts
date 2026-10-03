@@ -23,7 +23,7 @@ export const SavePart: Bag = {
 
   /* ================= 저장 ================= */
   /** 그 캐릭터의 새 플레이어(시작 장비·가방) — 새 게임과 멀티플레이 새 참가자가 같이 쓴다. */
-  freshPlayer(x, y, name, charId) {
+  freshPlayer(x: number, y: number, name: string, charId: string) {
     const p = new Player(x, y);
     p.name = (name || '').trim().slice(0, 12) || NONAME;
     const ch = CHAR_OF(charId);
@@ -32,12 +32,12 @@ export const SavePart: Bag = {
     if (ch.weapon) p.equip.weapon = makeItem(ch.weapon);
     p.equip.chest = makeItem('chest_cloth'); p.equip.boots = makeItem('boots_cloth');
     if (ch.gold) p.gold = ch.gold;
-    ch.bag.forEach(([id, n], i) => { p.bag[i] = makeItem(id, ITEMS[id].stack > 1 ? n : 1); });
+    ch.bag.forEach(([id, n]: [string, number], i: number) => { p.bag[i] = makeItem(id, ITEMS[id].stack! > 1 ? n : 1); });
     p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
     return p;
   },
   /** 캐릭터 몫(레벨·가방·장비·스킬·통계…) — 세계와 떼어 들고 다닐 수 있는 덩어리. 멀티플레이 참가자는 이것만 들고 남의 세계에 들어간다. */
-  packChar(p) {
+  packChar(p: Player) {
     return {
       x: p.x, y: p.y, level: p.level, xp: p.xp, xpNext: p.xpNext, statPts: p.statPts, skillPts: p.skillPts,
       base: p.base, hp: p.hp, mp: p.mp, charge: p.charge, gold: p.gold, bag: p.bag, equip: p.equip, sel: p.sel,
@@ -49,7 +49,7 @@ export const SavePart: Bag = {
     };
   },
   /** packChar 로 만든 덩어리에서 플레이어를 되살린다 — chapter 는 옛 기록(별 조각 궤도 없음)을 채울 때만 쓴다. */
-  unpackChar(c, name, chapter) {
+  unpackChar(c: any, name: string, chapter: any) {
     const p = new Player(c.x, c.y);
     p.name = name || NONAME;
     Object.assign(p, {
@@ -80,7 +80,7 @@ export const SavePart: Bag = {
         if (!PETS[id] || !ITEMS['pet_' + id]) continue;
         const it = makeItem('pet_' + id, 1);
         if (id === c.activePet && !p.equip.pet1) p.equip.pet1 = it;
-        else if (!p.addItem(it)) this.drops.push(new Drop(p.x, p.y, it));
+        else if (!p.addItem(it!)) this.drops.push(new Drop(p.x, p.y, it!));
       }
     }
     p.recalc(); p.hp = c.hp; p.mp = c.mp;   // recalc()가 가방 용량도 함께 동기화한다
@@ -148,7 +148,7 @@ export const SavePart: Bag = {
     } catch (e) { this.toast(tr('내보내기 실패'), 'bad'); console.error(e); }
   },
   /** 내보낸 파일을 되돌린다. */
-  async importSaves(text) {
+  async importSaves(text: string) {
     try {
       const d = JSON.parse(text);
       if (!d || d.app !== 'ashfall' || !d.slots) { this.toast(tr('이 게임의 저장 파일이 아니다'), 'bad'); return; }
@@ -168,7 +168,7 @@ export const SavePart: Bag = {
     } catch (e) { this.toast(tr('저장 파일을 읽지 못했다'), 'bad'); console.error(e); }
   },
 
-  async loadGame(slot) {
+  async loadGame(slot: number) {
     let rec = null;
     try { rec = await SaveStore.get(slot); } catch (e) { console.error(e); }
     if (!rec) { this.toast(tr('저장된 기록이 없다'), 'bad'); return; }
@@ -184,7 +184,7 @@ export const SavePart: Bag = {
     this.showLoading(tr('기록을 불러오는 중…'));
     setTimeout(() => { try { this._loadGame(raw); } finally { this.hideLoading(); } }, 40);
   },
-  _loadGame(raw) {
+  _loadGame(raw: any) {
     try {
       const d = JSON.parse(raw);
       upgradeSave(d);   // 옛 판으로 만든 기록을 지금 판 모양으로 올린다
@@ -232,7 +232,7 @@ export const SavePart: Bag = {
       this.bounties = d.bounties || [];
       this.bountyNext = d.bountyNext || [];
       /* 옛 저장에는 "○○ 14마리"만 적힌 종이가 붙어 있다. */
-      if (this.bounties.some(b => !b.obj)) this.bounties = [];
+      if (this.bounties.some((b: any) => !b.obj)) this.bounties = [];
       this.shopStock = d.shopStock || {}; this.shopStockDay = d.shopStockDay === undefined ? -1 : d.shopStockDay;
       this.achievements = d.achievements || {};
       this.mpGuests = d.mpGuests || {};
@@ -273,7 +273,7 @@ export const SavePart: Bag = {
       localStorage.removeItem(SAVE_KEY);
     } catch (e) { console.error(e); }
   },
-  async deleteSlot(i) {
+  async deleteSlot(i: number) {
     if (!await this.askConfirm(tr('이 세이브를 정말 삭제할까요? 되돌릴 수 없습니다.'), tr('삭제'))) return;
     try { await SaveStore.remove(i); } catch (e) { this.toast(tr('삭제하지 못했다'), 'bad'); console.error(e); }
     this.renderSlotScreen();
@@ -304,26 +304,26 @@ export const SavePart: Bag = {
       </div>`;
     }).join('');
     this.fillIcons(box);
-    box.querySelectorAll('.slot-card.filled').forEach(el => {
+    box.querySelectorAll('.slot-card.filled').forEach((el: any) => {
       const i = +el.dataset.slot;
-      el.addEventListener('click', (e) => { if (!e.target.closest('.slot-del-btn')) this.loadGame(i); });
-      el.querySelector('.slot-del-btn').addEventListener('click', (e) => { e.stopPropagation(); this.deleteSlot(i); });
+      el.addEventListener('click', (e: any) => { if (!e.target.closest('.slot-del-btn')) this.loadGame(i); });
+      el.querySelector('.slot-del-btn').addEventListener('click', (e: any) => { e.stopPropagation(); this.deleteSlot(i); });
     });
-    box.querySelectorAll('.slot-new-btn').forEach(btn => {
+    box.querySelectorAll('.slot-new-btn').forEach((btn: any) => {
       btn.addEventListener('click', () => this.showNewGameForm(+btn.dataset.slot));
     });
   },
-  showNewGameForm(slot) {
+  showNewGameForm(slot: any) {
     const box = $('#newgame-box');
     let ci = 0, mi = 0, sz = 's';
-    const kit = ch => {
-      const nameOf = id => (ITEMS[id] && ITEMS[id].n) || id;
+    const kit = (ch: any) => {
+      const nameOf = (id: string) => (ITEMS[id] && ITEMS[id].n) || id;
       const parts = [ch.weapon ? `<b>${escHtml(nameOf(ch.weapon))}</b>` : tr('<b>맨손</b>')];
-      (ch.bag || []).forEach(([id, n]) => parts.push(`${escHtml(nameOf(id))} ×${n}`));
+      (ch.bag || []).forEach(([id, n]: [string, number]) => parts.push(`${escHtml(nameOf(id))} ×${n}`));
       if (ch.gold) parts.push(tr('금화 {gold}', { gold: ch.gold }));
       return parts.join(' · ');
     };
-    const sheet = ch => Sprites.url(`assets/char/player_${ch.id}.png`);
+    const sheet = (ch: any) => Sprites.url(`assets/char/player_${ch.id}.png`);
     box.innerHTML = `
       <div class="ng-sec"><span class="ui-ic" data-ui-icon="ng_char"></span>${tr('캐릭터')}</div>
       <div class="ng-chars">${CHARACTERS.map((ch, i) => `
@@ -374,19 +374,19 @@ export const SavePart: Bag = {
     };
     paint();
 
-    box.querySelectorAll('.ng-char').forEach(b => b.onclick = () => {
+    box.querySelectorAll('.ng-char').forEach((b: any) => b.onclick = () => {
       ci = +b.dataset.i;
-      box.querySelectorAll('.ng-char').forEach(x => x.classList.toggle('on', x === b));
+      box.querySelectorAll('.ng-char').forEach((x: any) => x.classList.toggle('on', x === b));
       paint();
     });
-    box.querySelectorAll('#ng-modes .ng-mode').forEach(b => b.onclick = () => {
+    box.querySelectorAll('#ng-modes .ng-mode').forEach((b: any) => b.onclick = () => {
       mi = +b.dataset.i;
-      box.querySelectorAll('#ng-modes .ng-mode').forEach(x => x.classList.toggle('on', x === b));
+      box.querySelectorAll('#ng-modes .ng-mode').forEach((x: any) => x.classList.toggle('on', x === b));
       $('#ng-mdesc').textContent = MODES[mi].d;
     });
-    box.querySelectorAll('#ng-sizes .ng-mode').forEach(b => b.onclick = () => {
+    box.querySelectorAll('#ng-sizes .ng-mode').forEach((b: any) => b.onclick = () => {
       sz = b.dataset.k;
-      box.querySelectorAll('#ng-sizes .ng-mode').forEach(x => x.classList.toggle('on', x === b));
+      box.querySelectorAll('#ng-sizes .ng-mode').forEach((x: any) => x.classList.toggle('on', x === b));
       $('#ng-sdesc').textContent = WORLD_SIZES[sz].d;
     });
     box.querySelector('.ng-start').onclick = async () => {

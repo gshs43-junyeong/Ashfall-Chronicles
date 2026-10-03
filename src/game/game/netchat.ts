@@ -18,15 +18,15 @@ export const NetChatPart: Bag = {
   bindChat() {
     const inp = $('#chat-input');
     /* ★ 엔진 키 입력은 창(window)에서 받는다 — 여기서 전파를 끊어야 글을 치는 동안 캐릭터가 걷거나 가방이 열리지 않는다 */
-    inp.onkeydown = e => {
+    inp.onkeydown = (e: any) => {
       e.stopPropagation();
       if (e.key === 'Enter') { const s = inp.value; inp.value = ''; this.closeChat(); this.sendChat(s); e.preventDefault(); }
       else if (e.key === 'Escape') { this.closeChat(); e.preventDefault(); }
     };
-    inp.onkeyup = e => e.stopPropagation();
+    inp.onkeyup = (e: any) => e.stopPropagation();
     inp.onblur = () => this.closeChat();
-    $('#mp-pvp').onchange = e => this.mpSetCfg('pvp', e.target.checked);
-    $('#mp-chat').onchange = e => this.mpSetCfg('chat', e.target.checked);
+    $('#mp-pvp').onchange = (e: any) => this.mpSetCfg('pvp', e.target.checked);
+    $('#mp-chat').onchange = (e: any) => this.mpSetCfg('chat', e.target.checked);
   },
 
   /* ---- 호스트 설정 ---- */
@@ -36,7 +36,7 @@ export const NetChatPart: Bag = {
     return n ? (n.cfg || { pvp: false, chat: true }) : null;
   },
   /** 호스트가 바꾼다 — 다음 판에도 쓰게 설정에 남기고 모두에게 알린다. */
-  mpSetCfg(key, v) {
+  mpSetCfg(key: string, v: number) {
     const n = this.net;
     if (!n || n.role !== 'host') return;
     n.cfg = Object.assign({}, this.netCfg(), { [key]: !!v });
@@ -46,13 +46,13 @@ export const NetChatPart: Bag = {
     this.netCfgToast(key, !!v);
   },
   /** 참가자 — 호스트가 보낸 설정. 바뀐 것만 알린다. */
-  netGotCfg(m) {
+  netGotCfg(m: any) {
     const n = this.net, old = this.netCfg();
     n.cfg = { pvp: !!m.pvp, chat: !!m.chat };
     for (const key of ['pvp', 'chat']) if (old[key] !== n.cfg[key]) this.netCfgToast(key, n.cfg[key]);
     if (!n.cfg.chat) this.closeChat();
   },
-  netCfgToast(key, on) {
+  netCfgToast(key: string, on: boolean) {
     if (key === 'pvp') this.toast(on ? tr('플레이어끼리 싸울 수 있다(PvP 켜짐)') : tr('PvP 꺼짐'), on ? 'bad' : 'info');
     else this.toast(on ? tr('채팅이 켜졌다') : tr('호스트가 채팅을 껐다'), 'info');
   },
@@ -76,21 +76,21 @@ export const NetChatPart: Bag = {
     inp.hidden = true; inp.blur();
     this.refreshChat();
   },
-  sendChat(text) {
+  sendChat(text: string) {
     const n = this.net, s = String(text || '').trim().slice(0, CHAT_MAX);
     if (!n || !s) return;
     if (n.role === 'host') this.netChatOut(this.me.name, s);
     else if (n.t) this.netSend(n.t, 'rel', { k: 'chat', s });
   },
   /** 호스트 — 보낸 이 이름을 박아 모두에게(참가자 글은 호스트를 거친다 — 채팅을 껐으면 여기서 막힌다). */
-  netChatOut(name, s) {
+  netChatOut(name: string, s: any) {
     const n = this.net;
     if (!this.netCfg().chat) return;
     const m = { k: 'chat', n: name, s: String(s).slice(0, CHAT_MAX) };
     for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, 'rel', m);
     this.chatLine(m.n, m.s);
   },
-  chatLine(name, s) {
+  chatLine(name: string, s: any) {
     this.chatLog = (this.chatLog || []).concat({ n: String(name || ''), s: String(s || ''), t: performance.now() }).slice(-CHAT_LINES * 4);
     this.refreshChat();
   },
@@ -100,17 +100,17 @@ export const NetChatPart: Bag = {
     if (!box) return;
     if (!this.net) { box.hidden = true; this.chatLog = []; return; }
     const now = performance.now(), log = (this.chatLog || []).slice(-CHAT_LINES);
-    const lines = log.filter(l => this.chatOpen || now - l.t < CHAT_FADE * 1000);
-    $('#chat-log').innerHTML = lines.map(l => `<div class="ch-line"><b>${escHtml(l.n)}</b> ${escHtml(l.s)}</div>`).join('');
+    const lines = log.filter((l: any) => this.chatOpen || now - l.t < CHAT_FADE * 1000);
+    $('#chat-log').innerHTML = lines.map((l: any) => `<div class="ch-line"><b>${escHtml(l.n)}</b> ${escHtml(l.s)}</div>`).join('');
     box.hidden = !this.chatOpen && !lines.length;
   },
 
   /* ---- PvP ---- */
   netPvpOn() { const c = this.netCfg(); return !!(c && c.pvp); },
   /** 이 화면에서 칠 수 있는 남의 아바타 — PvP 가 꺼져 있으면 없다. */
-  pvpTargets() { return this.netPvpOn() ? this.players.filter(p => p.remote && p.hp > 0) : []; },
+  pvpTargets() { return this.netPvpOn() ? this.players.filter((p: Player) => p.remote && p.hp > 0) : []; },
   /** 내 공격이 남의 아바타에 닿았다 — 숫자는 바로 띄우고 피해는 주인 화면으로(호스트를 거친다). */
-  pvpHit(q, dmg, sx) {
+  pvpHit(q: any, dmg: any, sx: any) {
     const n = this.net;
     if (!n || !this.netPvpOn()) return;
     const a = Math.max(1, Math.round(dmg * PVP_SCALE));
@@ -119,7 +119,7 @@ export const NetChatPart: Bag = {
     else if (n.t) this.netSend(n.t, 'rel', { k: 'pvp', id: q.netId, a, sx });
   },
   /** 호스트 — 참가자가 남을 쳤다. PvP 가 켜져 있고 둘이 가까울 때만 맞은 사람에게 넘긴다. */
-  netPvpIn(peer, m) {
+  netPvpIn(peer: Bag, m: any) {
     const n = this.net;
     if (!this.netPvpOn() || !peer.rp) return;
     const tgt = m.id === 0 ? this.me : (n.peers.get(m.id) || {}).rp;

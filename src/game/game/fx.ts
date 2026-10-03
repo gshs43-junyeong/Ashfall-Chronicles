@@ -10,12 +10,12 @@ export const FxPart: Bag = {
 
   /* ================= 광역 피해 ================= */
   /** 폭발/타격 이펙트 등록 (kind: hit / fire / void / stargain / starmerge) slow: 재생을 늘리는 배수(기본 1 = 여섯 프레임 0.24초). */
-  burst(x, y, kind, size, slow) {
+  burst(x: number, y: number, kind: string, size: any, slow: any) {
     if (!this.spritesOn) return;
     (this.bursts = this.bursts || []).push({ x, y, kind, s: size || 64, t: 0, sp: slow || 1 });
   },
 
-  aoe(x, y, r, dmg, kb, color, effect) {
+  aoe(x: number, y: number, r: any, dmg: number, kb: number, color: string, effect: any) {
     for (const e of this.ents) {
       if (!(e instanceof Enemy) || e.dead) continue;
       if (dist(x, y, e.cx, e.cy) > r + e.w / 2) continue;
@@ -29,22 +29,22 @@ export const FxPart: Bag = {
 
   /** 퍼져 나가는 고리. */
   /** 세계를 s초만큼 멈춘다(겹치면 긴 쪽). */
-  hitStop(s) { this.stopT = Math.min(0.12, Math.max(this.stopT || 0, s || 0)); },
+  hitStop(s: any) { this.stopT = Math.min(0.12, Math.max(this.stopT || 0, s || 0)); },
 
   /* ★ 입력을 삼키면 안 된다. */
-  skillDeny(slot, msg) {
+  skillDeny(slot: number, msg: string) {
     this.sfx('sk_deny');
     const el = document.querySelectorAll('#skillbar .sk')[slot];
     if (el) { el.classList.remove('deny'); void (el as HTMLElement).offsetWidth; el.classList.add('deny'); }
     if (msg) this.toast(msg, 'bad');
   },
 
-  ringFx(x, y, r, c, life) {
+  ringFx(x: number, y: number, r: any, c: any, life: number) {
     this.rings = this.rings || [];
     this.rings.push({ x, y, r, t: life || 0.3, max: life || 0.3, c });
   },
   /** 두 점을 잇는 번개. */
-  boltFx(x0, y0, x1, y1, c) {
+  boltFx(x0: number, y0: number, x1: number, y1: number, c: any) {
     this.bolts = this.bolts || [];
     const seg = 7, pts = [];
     for (let i = 0; i <= seg; i++) {
@@ -55,29 +55,29 @@ export const FxPart: Bag = {
     this.bolts.push({ pts, t: 0.22, max: 0.22, c });
   },
   /** 떨어질 자리 예고 — 차오르는 원. */
-  warnFx(x, y, r, dur, c) {
+  warnFx(x: number, y: number, r: any, dur: number, c: any) {
     this.warns = this.warns || [];
     this.warns.push({ x, y, r, t: dur, max: dur, c });
   },
 
   /* ---- 특별한 스킬의 고유 연출 (SIG_FX) ---- */
-  sigFx(o) { (this.sigs = this.sigs || []).push(o); },
+  sigFx(o: Bag) { (this.sigs = this.sigs || []).push(o); },
   /** 유성 화살비가 떨어질 띠. */
-  bandFx(x, y, hw, dur, c) { this.sigFx({ k: 'band', x, y, hw, t: dur, max: dur, c }); },
+  bandFx(x: number, y: number, hw: any, dur: number, c: any) { this.sigFx({ k: 'band', x, y, hw, t: dur, max: dur, c }); },
   /** 소환 문양 — 안으로 조여드는 고리. */
-  sigilFx(x, y, r, c) { this.sigFx({ k: 'sigil', x, y, r, t: SIG_FX.wolf.t, max: SIG_FX.wolf.t, c }); },
+  sigilFx(x: number, y: number, r: any, c: any) { this.sigFx({ k: 'sigil', x, y, r, t: SIG_FX.wolf.t, max: SIG_FX.wolf.t, c }); },
   /** 하늘에서 떨어지는 별. */
-  fallFx(x, y, dur, c) { this.sigFx({ k: 'fall', x, y, t: dur, max: dur, c }); },
+  fallFx(x: number, y: number, dur: number, c: any) { this.sigFx({ k: 'fall', x, y, t: dur, max: dur, c }); },
   /** 착탄 섬광. */
-  flashFx(x, y, r, c) { this.sigFx({ k: 'flash', x, y, r, t: SIG_FX.flash.t, max: SIG_FX.flash.t, c }); },
+  flashFx(x: number, y: number, r: any, c: any) { this.sigFx({ k: 'flash', x, y, r, t: SIG_FX.flash.t, max: SIG_FX.flash.t, c }); },
   /** 화면 테두리가 한 번 물든다. */
-  edgeFx(rgb, dur) { this.edge = { rgb, t: dur, max: dur }; },
+  edgeFx(rgb: any, dur: number) { this.edge = { rgb, t: dur, max: dur }; },
 
   /** '화면 효과' 설정(0~150%)을 1을 넘지 않게 돌려준다 — 0%면 화면을 덮는 연출이 없다 */
   fxScale() { return Math.min(1, (this.settings ? this.settings.shake : 100) / 100); },
 
   /* ================= 특별한 스킬의 고유 연출 ================= */
-  drawSigGround(c, camX, camY) {
+  drawSigGround(c: any, camX: number, camY: number) {
     if (!this.sigs || !this.sigs.length) return;
     const fs = this.fxScale();
     for (let i = this.sigs.length - 1; i >= 0; i--) {
@@ -133,7 +133,7 @@ export const FxPart: Bag = {
   },
 
   /** 떨어지는 별. */
-  drawSigSky(c, camX, camY) {
+  drawSigSky(c: any, camX: number, camY: number) {
     if (!this.sigs) return;
     for (const s of this.sigs) {
       if (s.k !== 'fall') continue;
@@ -155,7 +155,7 @@ export const FxPart: Bag = {
   },
 
   /** 회오리 검무 — 도는 동안 칼선 둘. */
-  drawWhirlArc(c, p, camX, camY) {
+  drawWhirlArc(c: any, p: Player, camX: number, camY: number) {
     const ch = p.channel;
     if (!ch || ch.id !== 's_whirl') return;
     const x = p.cx - camX, y = p.cy - camY, a = this.time * 13;

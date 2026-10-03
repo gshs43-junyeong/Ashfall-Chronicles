@@ -1,7 +1,7 @@
 /* js/titlebg.js — 타이틀 화면 배경. */
 import { Sprites } from './sprites.js';
 export const TitleBG = {
-  cv: null, ctx: null, layers: [], flakes: [], player: null,
+  cv: null as HTMLCanvasElement | null, ctx: null as CanvasRenderingContext2D | null, layers: [] as any[], flakes: [] as any[], player: null as Bag | null,
   t: 0, last: 0, on: false, still: false, raf: 0, w: 0, h: 0, _try: 0,
 
   /* 뒤에서 앞으로. */
@@ -25,7 +25,7 @@ export const TitleBG = {
   },
 
   init() {
-    this.cv = document.getElementById('title-bg');
+    this.cv = document.getElementById('title-bg') as HTMLCanvasElement | null;
     if (!this.cv) return;
     this.ctx = this.cv.getContext('2d');
     this.still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -61,7 +61,7 @@ export const TitleBG = {
     this.w = innerWidth; this.h = innerHeight;
     this.cv.width = Math.round(this.w * dpr);
     this.cv.height = Math.round(this.h * dpr);
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (!this.on) this.frame(0);              // 멈춰 있어도 크기가 바뀌면 다시 그린다
   },
 
@@ -76,7 +76,7 @@ export const TitleBG = {
     if (this.raf) cancelAnimationFrame(this.raf);
     this.raf = 0;
   },
-  tick(now) {
+  tick(now: any) {
     if (!this.on) return;
     const dt = this.last ? Math.min(0.05, (now - this.last) / 1000) : 0.016;
     this.last = now;
@@ -85,7 +85,7 @@ export const TitleBG = {
     this.raf = requestAnimationFrame(t => this.tick(t));
   },
 
-  frame(dt) {
+  frame(dt: number) {
     const c = this.ctx; if (!c) return;
     /* 그림이 아직 안 붙었으면 0.4초마다 다시 두드린다. */
     if (!this.layers.length) {

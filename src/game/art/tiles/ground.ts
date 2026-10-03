@@ -7,7 +7,7 @@ import { TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
 export const TilePaintGround: Bag = {
-  soil(H) {
+  soil(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         this._fill(g, ox, oy, base);
@@ -16,7 +16,7 @@ export const TilePaintGround: Bag = {
         return;
     }
   },
-  grass(H) {
+  grass(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);
@@ -34,7 +34,7 @@ export const TilePaintGround: Bag = {
       }
     }
   },
-  rock(H) {
+  rock(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         this._fill(g, ox, oy, base);
@@ -47,7 +47,7 @@ export const TilePaintGround: Bag = {
         return;
     }
   },
-  sand(H) {
+  sand(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         this._fill(g, ox, oy, base);
@@ -59,7 +59,7 @@ export const TilePaintGround: Bag = {
         return;
     }
   },
-  strata(H) {
+  strata(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);
@@ -71,7 +71,7 @@ export const TilePaintGround: Bag = {
       }
     }
   },
-  snow(H) {
+  snow(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         this._fill(g, ox, oy, base);
@@ -81,7 +81,7 @@ export const TilePaintGround: Bag = {
         return;
     }
   },
-  ice(H) {
+  ice(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         this._fill(g, ox, oy, base);
@@ -97,7 +97,7 @@ export const TilePaintGround: Bag = {
         return;
     }
   },
-  trunk(H) {
+  trunk(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         const w = 16, x0 = Math.round((TS - w) / 2);
@@ -116,13 +116,13 @@ export const TilePaintGround: Bag = {
       }
     }
   },
-  pine(H) {
+  pine(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* 소나무 잎 — 둥근 잎덩이(leaf)가 아니라 **아래로 처진 가지 줄** 위에 짧은 바늘잎을 세운다. */
         const c1 = base, c2 = shade(base, 1.3), c3 = shade(base, .72), c4 = shade(base, .52);
         const lr = new RNG('pine-' + seed);
-        const Rc = (x, y, w, h, col) => { if (y + h > 0 && y < TS) R(x, Math.max(0, y), w, Math.min(h, TS - Math.max(0, y)), col); };
+        const Rc = (x: number, y: number, w: number, h: number, col: string) => { if (y + h > 0 && y < TS) R(x, Math.max(0, y), w, Math.min(h, TS - Math.max(0, y)), col); };
         for (let y = 0; y < TS; y++)
           for (let x = 0; x < TS; x++) if (!lr.chance(.06)) R(x, y, 1, 1, (x + y) % 3 ? c3 : c4);
         const off = lr.int(0, 4);
@@ -141,7 +141,7 @@ export const TilePaintGround: Bag = {
       }
     }
   },
-  leaf(H) {
+  leaf(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         /* ---------- 잎은 **가지에 붙어 있어야 한다** ---------- */
@@ -172,7 +172,7 @@ export const TilePaintGround: Bag = {
         for (let i = 0; i < 10; i++) R(lr.range(1, TS - 2), lr.range(1, TS - 2), 1, 1, c2);
 
         /* 위에 그려야 "이 잎이 저 줄기에 달려 있다"가 눈으로 읽힌다 — 사연: docs/code-history.md#h85 */
-        const twig = s.noTwig ? () => {} : (x0, y0, x1, y1, th, col?) => {
+        const twig = s.noTwig ? () => {} : (x0: number, y0: number, x1: number, y1: number, th: any, col?: string) => {
           const k = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
           for (let i = 0; i <= k; i++) {
             const t = i / k;
@@ -207,7 +207,7 @@ export const TilePaintGround: Bag = {
       }
     }
   },
-  ebon(H) {
+  ebon(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         this._fill(g, ox, oy, base);
@@ -221,7 +221,7 @@ export const TilePaintGround: Bag = {
         return;
     }
   },
-  glass(H) {
+  glass(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         this._fill(g, ox, oy, base);
@@ -234,7 +234,7 @@ export const TilePaintGround: Bag = {
         return;
     }
   },
-  ore(H) {
+  ore(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 돌 베이스
@@ -261,7 +261,7 @@ export const TilePaintGround: Bag = {
       }
     }
   },
-  plank(H) {
+  plank(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         const rows = 3, hgt = TS / rows;
@@ -278,7 +278,7 @@ export const TilePaintGround: Bag = {
       }
     }
   },
-  brick(H) {
+  brick(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, shade(base, .55));
@@ -296,7 +296,7 @@ export const TilePaintGround: Bag = {
       }
     }
   },
-  torch(H) {
+  torch(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         R(TS / 2 - 2, TS * .34, 4, TS * .64, '#6a4a28');

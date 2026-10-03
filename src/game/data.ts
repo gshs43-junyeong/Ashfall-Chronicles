@@ -1,7 +1,7 @@
 /* ===== data.js — 타일 / 아이템 / 적 / 스킬 / 스토리 ===== */
 
 /* ---------------- 타일 ---------------- */
-export const T = {
+export const T: Record<string, number> = {
   AIR: 0, DIRT: 1, GRASS: 2, STONE: 3, SAND: 4, SANDSTONE: 5, SNOW: 6, ICE: 7,
   WOOD: 8, LEAF: 9, EBONSTONE: 10, CORRUPTGRASS: 11, ASH: 12, OBSIDIAN: 13,
   COPPER: 14, IRON: 15, GOLD: 16, MYTHRIL: 17, SOULSTONE: 18, HELLSTONE: 19,
@@ -362,7 +362,7 @@ export const TILE_DEF: TileDef[] = [
 export const FARM_WET_R = 5, FARM_WET_DAYS = 3;
 /* 스프링클러 — 좌우 칸 · 위아래 칸 · 한 대가 맡는 밭 최대 칸 · 양동이 하나로 물 주는 칸(전력 3, 물이 있을 때만). */
 export const SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
-export const SEED_TILE = {
+export const SEED_TILE: Bag = {
   seed_wheat: T.WHEAT0, seed_starroot: T.ROOT0, seed_ashcap: T.CAP0,
   seed_bloodbean: T.BEAN0, seed_bonebloom: T.BLOOM0,
   seed_frostherb: T.HERB0, seed_emberpod: T.POD0
@@ -370,11 +370,11 @@ export const SEED_TILE = {
 
 /* 타일 ID → 기계 키 (data.js 로드 시 1회 구축) */
 /* ★ 기계 타일은 벨트 둘만 통과하고 나머지는 전부 몸이 있다(밟고 서거나 막힌다). */
-export const MACH_OF_TILE = {};
+export const MACH_OF_TILE: Bag = {};
 for (let i = 0; i < TILE_DEF.length; i++) if (TILE_DEF[i].mach) MACH_OF_TILE[i] = TILE_DEF[i].mach;
 
 /* 손그림 타일 애셋 이름 → 타일 ID. manifest.json의 tiles에 이 이름으로 파일을 넣어 두면 절차 생성 텍스처를 자동으로 덮어쓴다. */
-export const TILE_SPRITE = {
+export const TILE_SPRITE: Bag = {
   steelplate: T.STEELPLATE, conduit: T.CONDUIT,
   coal: T.COAL, lead: T.LEAD, oilshale: T.OILSHALE,
   icebrick: T.ICEBRICK, sandbrick: T.SANDBRICK, minewood: T.MINEWOOD,

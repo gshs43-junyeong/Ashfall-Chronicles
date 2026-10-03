@@ -295,7 +295,7 @@ export const RECIPES: RecipeDef[] = [
 ];
 
 /* ---------------- 연료 ---------------- */
-export const FUEL = { wood: 16, plank: 20, ash: 8, coal: 90, fuel_brick: 560, crude_oil: 150, refined_oil: 640 };
+export const FUEL: Record<string, number> = { wood: 16, plank: 20, ash: 8, coal: 90, fuel_brick: 560, crude_oil: 150, refined_oil: 640 };
 
 /* ---------------- 기계 ---------------- */
 export const MACHINE: Record<string, MachineDef> = {
@@ -418,7 +418,7 @@ export const MACHINE: Record<string, MachineDef> = {
 };
 
 /* ---------------- 기계 제작법 ---------------- */
-export const MRECIPES = [
+export const MRECIPES: MRecipeDef[] = [
   /* 자동 용광로 — 연료 */
   { m: 'smelter', in: { copper_ore: 2 }, out: { copper_bar: 1 }, t: 16 },
   { m: 'smelter', in: { iron_ore: 2 }, out: { iron_bar: 1 }, t: 18 },
@@ -490,7 +490,7 @@ export const FACTORY_PRICE_MUL = 4.5;
 export const PRICE_BASE_MUL = 2.2;
 export const PRICE_TIER_STEP = 1.30;
 /* 재료의 티어 — 재료에는 tier도 lvReq도 없다. */
-export const MAT_TIER = {
+export const MAT_TIER: Record<string, number> = {
   coal: 0, copper_bar: 1, gear_basic: 1, bone_frag: 1, spider_silk: 2,
   iron_bar: 2, crystal: 3, gold_bar: 3, circuit: 3, motor: 3, steel_plate: 3,
   soul_shard: 4, hell_ore: 4, power_core: 4, battery_cell: 4,
@@ -503,10 +503,10 @@ export const MAT_TIER = {
   glacium_ore: 7, tide_ore: 7, glacium_bar: 8, tide_bar: 8,
   meteorite: 6, star_crystal: 7, storm_amber: 7, cloud_pearl: 7
 };
-export function priceTier(d, id) {
+export function priceTier(d: any, id: string) {
   if (d.tier !== undefined) return clamp(d.tier, 0, 12);
   if (d.lvReq) return clamp(Math.round(d.lvReq / 4), 0, 12);
   if (id && MAT_TIER[id] !== undefined) return MAT_TIER[id];
   return clamp(Math.round(Math.log2(Math.max(1, d.price || 12) / 10)), 0, 12);
 }
-export function priceTierMulOf(d, id) { return PRICE_BASE_MUL * Math.pow(PRICE_TIER_STEP, priceTier(d, id)); }
+export function priceTierMulOf(d: any, id: string) { return PRICE_BASE_MUL * Math.pow(PRICE_TIER_STEP, priceTier(d, id)); }

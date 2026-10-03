@@ -6,7 +6,7 @@ import { TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
 export const TilePaintMisc: Bag = {
-  platform(H) {
+  platform(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         R(0, 0, TS, 7, base);
@@ -17,7 +17,7 @@ export const TilePaintMisc: Bag = {
         return;
     }
   },
-  spike(H) {
+  spike(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         for (let i = 0; i < 3; i++) {
@@ -29,7 +29,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  flower(H) {
+  flower(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         const fx = ox + TS / 2 + rng.range(-3, 3), fy = oy + TS - 7;
@@ -42,7 +42,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  weed(H) {
+  weed(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         for (let i = 0; i < 3; i++) {
@@ -54,7 +54,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  cactusblock(H) {
+  cactusblock(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 여러 칸을 세로로 쌓았을 때 이음매 없이 이어지도록 칸 전체 높이(0~TS)를 채운다
@@ -73,7 +73,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  cactustile(H) {
+  cactustile(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         const cx = ox + TS / 2 + rng.range(-2, 2), h = rng.int(9, 14);
@@ -86,7 +86,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  mushroomtile(H) {
+  mushroomtile(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 눈에 잘 띄게 큼직한 광대버섯 스타일(붉은 갓 + 흰 반점)로 하나, 옆에 작은 것 하나
@@ -103,7 +103,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  vine(H) {
+  vine(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         let x = TS / 2;
@@ -117,7 +117,7 @@ export const TilePaintMisc: Bag = {
     }
   },
   /* ---------- 설계 유리 ---------- */
-  draftglass(H) {
+  draftglass(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, shade(base, .28));
@@ -140,7 +140,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  crystal(H) {
+  crystal(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, shade(base, .42));
@@ -160,7 +160,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  cloud(H) {
+  cloud(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);
@@ -175,7 +175,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  ruintile(H) {
+  ruintile(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);
@@ -186,7 +186,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  runestone(H) {
+  runestone(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);
@@ -202,7 +202,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  seal(H) {
+  seal(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);
@@ -218,7 +218,7 @@ export const TilePaintMisc: Bag = {
     }
   },
   /* ---------- 동굴 물 ---------- */
-  water(H) {
+  water(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         g.save();
@@ -248,7 +248,7 @@ export const TilePaintMisc: Bag = {
       }
     }
   },
-  lava(H) {
+  lava(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     {
         this._fill(g, ox, oy, base);

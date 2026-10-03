@@ -15,7 +15,7 @@ import { DIR4, FAC_TICK, Factory } from '../factory.js';
 export const FactoryRenderPart: Bag = {
 
   /* ================= 렌더 ================= */
-  render(c, w, camX, camY, tx0, ty0, tx1, ty1, time) { const { WW, WH } = dimsOf(w);
+  render(c: any, w: any, camX: any, camY: any, tx0: any, ty0: any, tx1: any, ty1: any, time: any) { const { WW, WH } = dimsOf(w);
     if (!w.machines.size) return;
     c.save();
     c.imageSmoothingEnabled = false;

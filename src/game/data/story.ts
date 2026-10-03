@@ -491,20 +491,20 @@ export const SESSIONS = [
   { id: 3, n: '세션 3', t: '물이 지운 쪽', ch0: 15 }
 ];
 /** 그 장이 속한 세션. */
-export const sessionOf = (ch) => {
+export const sessionOf = (ch: any) => {
   let s = SESSIONS[0];
   for (const x of SESSIONS) if ((ch || 0) >= x.ch0) s = x;
   return s;
 };
 /** 그 세션의 장 목록 (CHAPTERS 를 훑어 만든다 — 장에 세션을 따로 적지 않는다) */
-export const chaptersOf = (sid) => {
+export const chaptersOf = (sid: any) => {
   const i = SESSIONS.findIndex(x => x.id === sid);
   if (i < 0) return [];
   const lo = SESSIONS[i].ch0, hi = SESSIONS[i + 1] ? SESSIONS[i + 1].ch0 : Infinity;
   return CHAPTERS.filter(c => c.id >= lo && c.id < hi);
 };
 
-export const CHAPTER_HOOK = {
+export const CHAPTER_HOOK: Record<string, string> = {
   0: '별은 무언가로부터 도망치고 있었다. 그렇다면 쫓아온 것은 어디까지 왔을까.',
   1: '엘라라는 잿빛이 "번지고 있다"고 했다. 번진다는 건, 시작점이 있다는 뜻이다.',
   2: '뼈의 군주는 왕이었던 적이 없다. 누군가 그를 여기 묻었고, 다시 일어나게 두었다.',
@@ -609,7 +609,7 @@ export const TABLETS = [
 ];
 
 /* ================= 장마다 듣는 이야기 ================= */
-export const DIALOGUE = {
+export const DIALOGUE: Bag = {
   /* 윤슬 — 15·16·17장. */
   yunseul: [
     ['…사람이네. 진짜 사람.',

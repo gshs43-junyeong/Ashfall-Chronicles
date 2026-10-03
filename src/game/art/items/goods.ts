@@ -8,7 +8,7 @@ import { ITEM_PAINT, sh2 } from '../../itemart.js';
 
 export const ItemPaintGoods: Bag = {
   /* ---------- 소비 ---------- */
-  potion(H) {
+  potion(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const liq = s.c;
@@ -40,7 +40,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  stew(H) {
+  stew(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         g.fillStyle = '#8a6a4a'; g.beginPath();
@@ -58,7 +58,7 @@ export const ItemPaintGoods: Bag = {
     }
   },
   /* ---------- 재료 ---------- */
-  log(H) {
+  log(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.25), dk = sh2(c, .7);
@@ -73,7 +73,7 @@ export const ItemPaintGoods: Bag = {
     }
   },
   /* 장식 아이템 — 타일 그림을 테두리 없이 그대로 키운다. */
-  deco(H) {
+  deco(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 3, 3, 26, 26);
@@ -82,7 +82,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  block(H) {
+  block(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 4, 5, 24, 24);
@@ -95,7 +95,7 @@ export const ItemPaintGoods: Bag = {
     }
   },
   /* ---------- 기계 ---------- */
-  machine(H) {
+  machine(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         if (s.glow) glow(16, 15, 13, s.glow, .24);
@@ -108,7 +108,7 @@ export const ItemPaintGoods: Bag = {
     }
   },
   /* ---------- 자원 · 부품 ---------- */
-  barrel(H) {
+  barrel(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .68);
@@ -122,7 +122,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  bomb(H) {
+  bomb(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         /* 폭탄 — 둥근 몸통 + 심지. */
@@ -138,7 +138,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  pellet(H) {
+  pellet(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -151,7 +151,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  fuelbrick(H) {
+  fuelbrick(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .6);
@@ -164,7 +164,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  wire(H) {
+  wire(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.35);
@@ -177,7 +177,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  circuit(H) {
+  circuit(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, tr = s.trace;
@@ -194,7 +194,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  motor(H) {
+  motor(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.32), dk = sh2(c, .62);
@@ -208,7 +208,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  frame(H) {
+  frame(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, .55), dk2 = sh2(c, .35);
@@ -230,7 +230,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  cell(H) {
+  cell(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -251,7 +251,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  rivet(H) {
+  rivet(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .65);
@@ -265,7 +265,7 @@ export const ItemPaintGoods: Bag = {
       }
     }
   },
-  sawblade(H) {
+  sawblade(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, dk = sh2(c, .6);

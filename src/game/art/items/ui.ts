@@ -5,7 +5,7 @@ import { ITEM_PAINT, sh2 } from '../../itemart.js';
 
 export const ItemPaintUI: Bag = {
   /* ---------- UI ---------- */
-  sun(H) {
+  sun(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         glow(16, 16, 13, '#ffe9a8', .3);
@@ -22,7 +22,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  moon(H) {
+  moon(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         glow(16, 16, 12, '#dfe8f5', .2);
@@ -36,7 +36,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  coin(H) {
+  coin(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         circ(16, 16, 11, '#c8952a');
@@ -49,7 +49,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  chat(H) {
+  chat(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         g.fillStyle = '#e8dcc0'; g.beginPath();
@@ -60,7 +60,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  bagui(H) {
+  bagui(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 소지품 — 열린 자루.
@@ -74,7 +74,7 @@ export const ItemPaintUI: Bag = {
     }
   },
   /* ---- 탭 아이콘 — 금빛(#c8aa70) 밝은 면 · 가죽빛(#8c7651) 그늘 · 짙은 갈색(#5c4930) 선, 은은한 금빛 번짐 ---- */
-  pskill(H) {
+  pskill(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 능력과 특성 — 네 갈래로 빛나는 별(특성 나무의 끝)
@@ -87,7 +87,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  pquest(H) {
+  pquest(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 여정의 기록 — 펼친 책과 책갈피
@@ -101,7 +101,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  pcraft(H) {
+  pcraft(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 제작 — 망치와 톱이 엇갈린 문장
@@ -116,7 +116,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  pchest(H) {
+  pchest(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 상자 — 둥근 뚜껑과 쇠 띠
@@ -129,7 +129,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  pvault(H) {
+  pvault(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 보관고 — 둥근 손잡이가 달린 금고 문
@@ -142,7 +142,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  pboard(H) {
+  pboard(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 의뢰 게시판 — 기둥 둘에 핀으로 꽂힌 쪽지 셋
@@ -155,7 +155,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  ptown(H) {
+  ptown(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 여명 마을 — 지붕과 굴뚝, 불 켜진 창
@@ -168,7 +168,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  pmach(H) {
+  pmach(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 기계 — 톱니바퀴
@@ -179,7 +179,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  preforge(H) {
+  preforge(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 재련대 — 받침 위의 불꽃
@@ -192,7 +192,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  panvil(H) {
+  panvil(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 강화 모루 — 뿔 달린 모루와 불티
@@ -205,7 +205,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  pmap(H) {
+  pmap(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 지도 — 세 번 접힌 종이, 점선 길과 X 표
@@ -218,7 +218,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  ng(H) {
+  ng(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const G1 = '#c8aa70', G2 = '#8c7651', DK = '#5c4930', c = s.c || G1;
@@ -365,7 +365,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  pmenu(H) {
+  pmenu(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 메뉴(일시정지) — 세 줄
@@ -375,7 +375,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  statui(H) {
+  statui(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 능력치 — 올라가는 막대 셋.
@@ -388,7 +388,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  equipui(H) {
+  equipui(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 장비 칸의 빈 상태에서도 역할이 읽히도록, 갑옷과 방패를 겹친 작은 문장으로 그린다.
@@ -403,7 +403,7 @@ export const ItemPaintUI: Bag = {
       }
     }
   },
-  trashui(H) {
+  trashui(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         // 파괴 행동임을 직관적으로 보이되, 공포감을 과하게 주지 않는 오래된 금속 휴지통.

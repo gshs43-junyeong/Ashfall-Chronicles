@@ -5,7 +5,7 @@ import { ITEM_PAINT, sh2 } from '../../itemart.js';
 
 export const ItemPaintLoot: Bag = {
   /* ---------- 소환 ---------- */
-  crown(H) {
+  crown(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -19,7 +19,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  skull(H) {
+  skull(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = '#e8e2cd';
@@ -35,7 +35,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  heart(H) {
+  heart(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -55,7 +55,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  drop(H) {
+  drop(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -75,7 +75,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  sack(H) {
+  sack(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .65);
@@ -103,7 +103,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  hammer(H) {
+  hammer(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .68);
@@ -122,7 +122,7 @@ export const ItemPaintLoot: Bag = {
     }
   },
   /* ---------- 2부 전용 ---------- */
-  feather(H) {
+  feather(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, dk = sh2(c, .72), lt = sh2(c, 1.12);
@@ -141,11 +141,11 @@ export const ItemPaintLoot: Bag = {
     }
   },
   /* 나뭇잎 — 나무마다 모양이 다르다(sh). */
-  leafitem(H) {
+  leafitem(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, dk = sh2(c, .62), lt = sh2(c, 1.22), stem = s.st || sh2(c, .5);
-        const blade = (pts) => { poly(pts, dk); poly(pts.map(([x, y]) => [x + (16 - x) * .12, y + (16 - y) * .12]), c); };
+        const blade = (pts: any) => { poly(pts, dk); poly(pts.map(([x, y]: number[]) => [x + (16 - x) * .12, y + (16 - y) * .12]), c); };
         if (s.sh === 'needle') {
           stroke(stem, 2, () => { g.moveTo(8, 28); g.lineTo(22, 4); });
           for (let i = 0; i < 9; i++) {
@@ -195,7 +195,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  wildflower(H) {
+  wildflower(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -207,7 +207,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  weed_icon(H) {
+  weed_icon(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         for (let i = 0; i < 4; i++) {
@@ -218,7 +218,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  cactus(H) {
+  cactus(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -230,7 +230,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  mushroom(H) {
+  mushroom(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -241,7 +241,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  runefrag(H) {
+  runefrag(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -254,7 +254,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  key(H) {
+  key(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, .7);
@@ -269,7 +269,7 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
-  horn(H) {
+  horn(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .68);

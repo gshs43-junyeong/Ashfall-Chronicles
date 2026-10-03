@@ -19,7 +19,7 @@ export const RenderActorsPart: Bag = {
   /* ---- 프레임 선택 (우리 엔티티 필드 기준) ---- */
   /** 걸을 때 발밑 흙먼지 — 그림만(Part 는 충돌·판정이 없다). 걷기 프레임(9fps)의 발 딛는 두 칸에 맞춰
       절반쯤만 한 톨씩 — 매 프레임 뿌리면 달리기 내내 연기처럼 깔린다. */
-  walkDust(p) {
+  walkDust(p: Player) {
     const st = Math.floor(this.time * 9) % 4;
     const step = st !== this._dustSt && (st === 0 || st === 2);
     this._dustSt = st;
@@ -35,7 +35,7 @@ export const RenderActorsPart: Bag = {
       this.parts.push(new Part(p.cx - Math.sign(p.vx) * 5, fy - 2, mixHex(d.c, '#d2c6a8', 0.75), -22, 0.38,
         { spd: 0.2, r: 1, g: 0.2, drag: 0.9 }));
   },
-  playerFrame(p) {
+  playerFrame(p: Player) {
     if (p.flash > 0.12) return 12;                                  // 피격
     if (p.dashV > 0) return 8;                                      // 대시
     if (p.swing > 0) return 9 + Math.min(2, Math.floor((0.24 - p.swing) / 0.08));
@@ -43,7 +43,7 @@ export const RenderActorsPart: Bag = {
     if (Math.abs(p.vx) > 20) return 2 + (Math.floor(this.time * 9) % 4);
     return Math.floor(this.time * 2) % 2;
   },
-  enemyFrame(e) {
+  enemyFrame(e: Enemy) {
     if (e.boss) {
       /* ★ 체력 문턱(66%/33%)을 여기서 다시 계산하면 안 된다. */
       const m = Sprites.meta && Sprites.meta.bosses.sheets[e.type];
@@ -62,7 +62,7 @@ export const RenderActorsPart: Bag = {
     return Math.floor(this.time * 2.4) % 2;
   },
 
-  drawPlayer(c, p, sx, sy) {
+  drawPlayer(c: CanvasRenderingContext2D, p: Player, sx: number, sy: number) {
     c.save();
     if (p.iframe > 0 && Math.floor(this.time * 24) % 2 === 0) c.globalAlpha = 0.45;
     /* ★ 주인공은 **손그림 시트 한 장이 전부**다(char/player_<id>.png, tools/mkplayer.py) — 사연: docs/code-history.md#h69 */
@@ -101,7 +101,7 @@ export const RenderActorsPart: Bag = {
 
 
   /** 시트에 적힌 이 프레임의 무기 손 — { pt:[x,y] 화면 좌표(손 가운데), box:[x,y,w,h], key, fr, flip } 또는 null. */
-  playerHand(key, fr, sx, sy, flip) {
+  playerHand(key: string, fr: any, sx: number, sy: number, flip: boolean) {
     const m = Sprites.meta && Sprites.meta.characters.sheets[key];
     if (!m || !m.hand || !m.hand[fr]) return null;
     const X0 = Math.round(sx) + m.ox, Y0 = Math.round(sy) + m.oy;
@@ -112,7 +112,7 @@ export const RenderActorsPart: Bag = {
   },
 
   /** 헤엄 — 따로 그린 헤엄 그림 없이 **걷기 네 장을 눕혀서** 돌린다(머리가 나아가는 쪽). */
-  drawSwimPlayer(c, p, sx, sy, key) {
+  drawSwimPlayer(c: CanvasRenderingContext2D, p: Player, sx: number, sy: number, key: string) {
     const im = Sprites.img[key], m = Sprites.meta && Sprites.meta.characters.sheets[key];
     if (!im || !im.width || !m) return false;
     const dir = p.facing < 0 ? -1 : 1;
@@ -133,7 +133,7 @@ export const RenderActorsPart: Bag = {
 
   /** 장착한 펫을 플레이어 뒤에 둥실둥실 띄워 그린다 (별도 물리 없이 위치만 따라감) */
   /** 펫 — 손그림 시트가 있으면 그것으로, 없으면 itemart 의 절차 생성 아이콘으로. */
-  drawPet(c, pet, camX, camY) {
+  drawPet(c: CanvasRenderingContext2D, pet: any, camX: number, camY: number) {
     const sx = Math.round(pet.x - camX), sy = Math.round(pet.y - camY);
     const S = 20;
     c.save();
@@ -166,7 +166,7 @@ export const RenderActorsPart: Bag = {
     c.restore();
   },
 
-  drawEnemy(c, e, sx, sy) {
+  drawEnemy(c: any, e: any, sx: any, sy: any) {
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
     /* 손그림 스프라이트 우선. */
     /* 개조된 개체는 원래 시트를 강철로 눕힌 사본으로 그린다(Sprites.mechSheet). */
@@ -322,7 +322,7 @@ export const RenderActorsPart: Bag = {
     }
   },
   /** 마을 경비병 — 여명 마을의 남색 겉옷에 창과 활 */
-  drawGuard(c, e, sx, sy) {
+  drawGuard(c: any, e: any, sx: any, sy: any) {
     const f = e.face || 1, t = this.time;
     // 손그림 시트가 있으면 그걸로 (일반 몹과 같은 7프레임 규격)
     if (this.spritesOn && Sprites.img.npc_guard) {
@@ -361,7 +361,7 @@ export const RenderActorsPart: Bag = {
     }
     c.restore();
   },
-  drawWolf(c, e, sx, sy) {
+  drawWolf(c: CanvasRenderingContext2D, e: Enemy, sx: number, sy: number) {
     c.save();
     c.globalAlpha = .65 + Math.sin(this.time * 6) * .1;
     c.fillStyle = '#9fd8ff';
@@ -370,7 +370,7 @@ export const RenderActorsPart: Bag = {
     c.fillStyle = '#fff'; c.fillRect(sx + e.w, sy + 4, 3, 3);
     c.restore();
   },
-  drawNpc(c, o, sx, sy, f) {
+  drawNpc(c: CanvasRenderingContext2D, o: Bag, sx: number, sy: number, f: any) {
     const d = NPCS[o.npc], p = this.player;
     /* 1순위 — 손그림 캐릭터 시트(char/npc_*.png, 매니페스트 키 npcw_*). */
     const flip = o.x + o.w / 2 > p.cx;                      // 늘 플레이어 쪽을 본다
@@ -382,7 +382,7 @@ export const RenderActorsPart: Bag = {
     const nside = meta ? (Sprites.sideInset['npcw_' + d.art] || 0) * (flip ? -1 : 1) : 0;
     const dx = meta ? (o.w - meta.frameW) / 2 - nside : 0;
     if (!(this.spritesOn && Sprites.draw(c, 'npcw_' + d.art, fr, sx + dx, sy - dy, flip))) {
-      c.fillStyle = shade(d.c, f);
+      c.fillStyle = shade(d.c!, f);
       c.fillRect(sx + 3, sy + 14, 16, 20);
       c.fillRect(sx + 5, sy + 34, 5, 10); c.fillRect(sx + 13, sy + 34, 5, 10);
       const im = this.spritesOn && Sprites.img['npc_' + d.art];
@@ -406,13 +406,13 @@ export const RenderActorsPart: Bag = {
   },
 
   /** 지금 겨누고 있는 각도 — doAttack 이 화살을 쏘는 각도와 같은 식이다. */
-  aimAngle(p) {
+  aimAngle(p: Player) {
     const i = this.input;
     if (!i || i.wx === undefined || i.wy === undefined) return p.facing > 0 ? 0 : Math.PI;
     return angleTo(p.cx, p.cy, i.wx, i.wy);
   },
 
-  drawHeldWeapon(c, p, sx, sy, bob, hand) {
+  drawHeldWeapon(c: any, p: any, sx: any, sy: any, bob: any, hand: any) {
     /* 손에 그려지는 것은 "지금 실제로 쓰는 것"이어야 한다 — 핫바에 도구·낚싯대가 있으면 그것을, 아니면 장착 무기를. */
     const hi = p.held(), hd = hi && idef(hi);
     const tool = hd && (hd.type === 'tool' || hd.type === 'rod') ? hi : null;
@@ -430,7 +430,7 @@ export const RenderActorsPart: Bag = {
         c.scale(p.facing > 0 ? 1 : -1, 1);
         c.rotate(-0.4);
         c.lineCap = 'round';
-        const line = (col, w) => {
+        const line = (col: string, w: number) => {
           c.strokeStyle = col; c.lineWidth = w;
           c.beginPath(); c.moveTo(-3, 0); c.lineTo(L.len, 0); c.stroke();
         };
@@ -489,7 +489,7 @@ export const RenderActorsPart: Bag = {
   },
 
   /** 손그림 몹 위에 얹는 것들 — 피격 섬광 · 체력 막대 · 페이즈 전환 섬광. */
-  drawEnemyOverlay(c, e, sx, sy, dy, meta, dx) {
+  drawEnemyOverlay(c: CanvasRenderingContext2D, e: Enemy, sx: number, sy: number, dy: number, meta: Bag, dx: number) {
     const w = meta ? meta.frameW : e.w;
     /* 개조된 것의 화로 — 구워 둔 시트에는 고정된 불빛만 들어 있다. */
     if (e.mech) {
@@ -525,7 +525,7 @@ export const RenderActorsPart: Bag = {
   },
 
   /** 바다 부유물 — 구운 그림(obj_flotsamN, tools/mkflotsam.py)을 물결 기울기(e.tilt)만큼 기울여 그린다. */
-  drawFlotsam(c, e, sx, sy) {
+  drawFlotsam(c: CanvasRenderingContext2D, e: Enemy, sx: number, sy: number) {
     const m = Sprites.meta && Sprites.meta.objects && Sprites.meta.objects.files[e.type];
     const w = m ? m.w : e.w, h = m ? m.h : e.h;
     const dx = (e.w - w) / 2, dy = h - e.h;
@@ -540,7 +540,7 @@ export const RenderActorsPart: Bag = {
       c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
     }
     if (!(this.spritesOn && Sprites.drawObj(c, 'obj_' + e.type, sx + dx, sy - dy, w, h, this.time))) {
-      c.fillStyle = e.def.c; c.fillRect(sx, sy, e.w, e.h);
+      c.fillStyle = e.def.c!; c.fillRect(sx, sy, e.w, e.h);
     }
     c.restore();
     this.drawEnemyOverlay(c, e, sx, sy, dy, null, dx);
@@ -548,7 +548,7 @@ export const RenderActorsPart: Bag = {
 
   /* ================= 시체 ================= */
   CORPSE_MAX: 24,
-  addCorpse(e) {
+  addCorpse(e: Enemy) {
     if (!this.spritesOn || !Sprites.meta) return;
     const key = (e.mech && Sprites.mechSheet && Sprites.mechSheet(e.type))
       ? 'mech_' + e.type : e.type;
@@ -563,7 +563,7 @@ export const RenderActorsPart: Bag = {
     });
     if (this.corpses.length > this.CORPSE_MAX) this.corpses.shift();
   },
-  drawCorpses(c, camX, camY) {
+  drawCorpses(c: CanvasRenderingContext2D, camX: number, camY: number) {
     if (!this.corpses.length || !Sprites.meta) return;   // 그림을 끈 뒤에도 안전하게
     for (const q of this.corpses) {
       const sx = q.x - camX, sy = q.y - camY;

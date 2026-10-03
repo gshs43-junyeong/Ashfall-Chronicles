@@ -12,23 +12,23 @@ import { Game } from '../game.js';
 export const PetsPart: Bag = {
 
   /* ================= 펫 ================= */
-  hatchEgg(tier) {
+  hatchEgg(tier: number) {
     const p = this.player;
     const id = PETS[tier] ? tier : this.rng.weighted(EGG_POOL[tier]);   // 드래곤 알은 그 드래곤
     const it = makeItem('pet_' + id, 1);
-    it.lv = 1;
-    if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
+    it!.lv = 1;
+    if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
     this.toast(tr('{pet|을} 얻었다! (장비창의 펫 칸에 끼울 수 있다)', { pet: PETS[id].n }), 'good');
     UI.refreshBag(); UI.refreshChest();
   },
   /** 드래곤 진화 먹이 — 문턱에서 기다리는(경험치가 다 찬) 드래곤만 먹는다. 먹으면 한 레벨 올라 다음 단계로. */
-  feedDragon(slot, stage) {
+  feedDragon(slot: any, stage: any) {
     const p = this.player, it = p.bag[slot];
     const gate = DRAGON_GATES[stage - 1];
     let fed = null, near = null;
     for (const k of ['pet1', 'pet2']) {
       const pe = p.equip[k];
-      if (!pe || !PETS[idef(pe).pet] || !PETS[idef(pe).pet].dragon) continue;
+      if (!pe || !PETS[idef(pe).pet!] || !PETS[idef(pe).pet!].dragon) continue;
       if ((pe.lv || 1) === gate - 1 && pe.hungry) { fed = pe; break; }
       if ((pe.lv || 1) === gate - 1) near = pe;
     }
@@ -39,7 +39,7 @@ export const PetsPart: Bag = {
     fed.lv = gate; fed.xp = 0; fed.hungry = 0;
     it.c--; if (it.c <= 0) p.bag[slot] = null;
     /* 진화 — 새 모습이 빛 속에서 드러나게: 겹 고리 · 속성 빛 파편 · 짧은 흔들림 · 한동안 번쩍임 */
-    const pe = (this.petEnts || []).find(e => e && PETS[e.id] && PETS[e.id].dragon && e.lvOf(p) === gate);
+    const pe = (this.petEnts || []).find((e: any) => e && PETS[e.id] && PETS[e.id].dragon && e.lvOf(p) === gate);
     if (pe) {
       const col = PETS[pe.id].c;
       this.burst(pe.x, pe.y, 'starmerge', 90, 1.6);

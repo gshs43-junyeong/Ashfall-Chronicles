@@ -12,7 +12,7 @@ import { Enemy, Part, Proj } from '../entity.js';
 
 export const EnemyAI: Bag & ThisType<Enemy> = {
 
-  update(dt, world, player) { const { SEA_X1 } = dimsOf(world);
+  update(dt: number, world: World, player: Player) { const { SEA_X1 } = dimsOf(world);
     this.atkPose -= dt;
     this.flash -= dt; this.atkCd -= dt; this.jumpCd -= dt; this.hitCd -= dt;
     if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slowF = 1; }
@@ -33,7 +33,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
     const dd = Math.hypot(dx, dy);
     this.facing = dx >= 0 ? 1 : -1;
     const AI = this.def.ai;
-    const sp = this.spd * this.slowF;
+    const sp = this.spd! * this.slowF;
 
     if (AI === 'walker' || AI === 'jumper' || AI === 'archer') {
       const range = this.def.range || 0;
@@ -85,7 +85,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       this.move(dt, world);
     } else if (AI === 'swimmer') {
       // 물속 생물 — 물 밖으로는 못 나간다.
-      const wet = (x, y) => world.liquid(Math.floor(x / TS), Math.floor(y / TS));
+      const wet = (x: number, y: number) => world.liquid(Math.floor(x / TS), Math.floor(y / TS));
       this.think -= dt;
       if (this.think <= 0) { this.think = 0.7 + Math.random() * 1.1; this.wob = (Math.random() - 0.5) * 70; }
       const chase = !this.def.passive && dd < this.aggro;
@@ -131,7 +131,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
   },
 
   /* ---- 페이즈가 바뀌는 순간 ---- */
-  onPhaseChange(ph, world, p) {
+  onPhaseChange(ph: number, world: any, p: any) {
     this.phaseInv = 0.8;
     this.guard = 0;
     G.shake = Math.max(G.shake, 11);
@@ -181,7 +181,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
   },
 
   /* 서리 마녀 2페이즈 — 발밑에 설 수 있는 자리를 만들어 준다. */
-  layHeat(world, p) {
+  layHeat(world: World, p: any) {
     const fy = Math.floor((this.y + this.h + 4) / TS);
     for (const off of [-9, 0, 9]) {
       const tx = Math.floor(this.cx / TS) + off;
@@ -193,7 +193,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
   },
 
   /** 매 프레임 도는 약점·장판 규칙. */
-  tickWeak(dt, world, p) {
+  tickWeak(dt: number, world: World, p: Player) {
     // 껍데기가 벌어지는 시간 — 그동안만 피해가 제대로 들어간다
     if (this.openT > 0) { this.openT -= dt; if (this.openT <= 0) this.guard = 1; }
     if (!this.iceFloor) return;

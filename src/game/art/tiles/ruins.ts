@@ -6,7 +6,7 @@ import { TILE_PAINT } from '../../tileart.js';
 /* tileart.js TileArt.paint 의 갈래들 — 읽히는 순간 TILE_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 TileArt. */
 
 export const TilePaintRuins: Bag = {
-  mk_oven(H) {
+  mk_oven(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         R(1, TS - 5, TS - 2, 5, shade(base, .6));   // 받침
@@ -25,7 +25,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  darthole(H) {
+  darthole(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 벽에 뚫린 구멍 셋.
@@ -42,7 +42,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  flamevent(H) {
+  flamevent(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, dk);
@@ -55,7 +55,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  crumble(H) {
+  crumble(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 이미 금이 가 있어서 "밟으면 안 되겠다"가 보이게
@@ -71,7 +71,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  slag(H) {
+  slag(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         this._fill(g, ox, oy, base);
@@ -86,7 +86,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  mk_dart(H) {
+  mk_dart(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 벽에 박힌 발사구 — 구멍 셋이 정면을 본다
@@ -99,7 +99,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  mk_jet(H) {
+  mk_jet(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         // 노즐 — 안쪽에서 빛이 새어 나온다
@@ -118,7 +118,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  mk_switch(H) {
+  mk_switch(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
         R(3, 4, TS - 6, TS - 8, shade('#3a3a44', 1));
@@ -132,7 +132,7 @@ export const TilePaintRuins: Bag = {
     }
   },
   /* ---------- 유적 고유 장식 열 ---------- */
-  banner_ice(H) {
+  banner_ice(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {          // 언 깃발 — 위에서 내려와 아래가 찢어져 있다
         R(4, 0, TS - 8, 2, shade(base, .6));                    // 걸린 가로대
@@ -148,7 +148,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  glyph(H) {
+  glyph(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {               // 벽에 돋은 글자 — 서리(찬빛) / 새김(따뜻한 그늘)
         const warm = s.warm;
@@ -165,7 +165,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  canopic(H) {
+  canopic(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {             // 장기 단지 — 어깨가 벌어지고 뚜껑이 얹힌 항아리
         R(8, 1, 6, 2, shade(base, .74));                        // 뚜껑
@@ -180,7 +180,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  minelamp(H) {
+  minelamp(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {            // 매단 갱등 — 고리에 걸려 흔들리다 멈춘 것
         R(TS / 2 - 1, 0, 2, 4, '#4a4038');                      // 매단 줄
@@ -194,7 +194,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  toolpile(H) {
+  toolpile(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {            // 버린 연장 — 곡괭이 자루와 삽날이 겹쳐 있다
         R(3, TS - 4, TS - 6, 3, shade(base, .58));              // 흙에 반쯤 묻혔다
@@ -208,7 +208,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  sac(H) {
+  sac(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {                 // 알주머니 — 천장에서 늘어져 아래가 무겁다
         R(TS / 2 - 1, 0, 2, 3, shade(base, .6));                // 매달린 목
@@ -223,7 +223,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  boneheap(H) {
+  boneheap(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {            // 삭은 뼈 — 바닥에 흩어져 겹쳐 있다
         R(2, TS - 5, TS - 4, 4, shade(base, .5));               // 아래 깔린 것
@@ -237,7 +237,7 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
-  sporevent(H) {
+  sporevent(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {           // 포자 구멍 — 벽에 뚫린 구멍에서 뿜어 나온다
         this._fill(g, ox, oy, dk);

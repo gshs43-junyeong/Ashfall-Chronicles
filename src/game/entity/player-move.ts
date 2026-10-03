@@ -16,7 +16,7 @@ import { DmgText, Enemy, JET_BURN, JET_COOL_AIR, JET_COOL_GROUND, JET_HIGH_FALL,
 export const PlayerMove: Bag & ThisType<Player> = {
 
   /* ---- 산소 ---- */
-  updateOxygen(dt, world) { const { WSY } = dimsOf(world);
+  updateOxygen(dt: any, world: any) { const { WSY } = dimsOf(world);
     const max = this.d.oxyMax;
     if (this.oxygen === undefined || this.oxygen > max) this.oxygen = max;
     // 머리 칸이 액체인가 — 몸 전체 비율(submerged)로 보면 목까지 잠겨도 익사한다
@@ -59,7 +59,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
   },
 
   /* ---- 업데이트 ---- */
-  update(dt, world, input) {
+  update(dt: any, world: any, input: any) {
     const d = this.d;
     // 타이머
     this.atkTimer -= dt; this.swing -= dt; this.dashCd -= dt; this.iframe -= dt;

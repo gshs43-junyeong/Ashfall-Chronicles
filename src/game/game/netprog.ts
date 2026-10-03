@@ -16,9 +16,9 @@ export const BOSS_HP_PER = 0.6;
 
 export const NetProgPart: Bag = {
   /** 이 장의 목표가 보는 숫자 열쇠 — 'k:적' · 'm:타일' · 'c:물건' · 'd' 깊이 · 'h' 높이(음수) · 'b:보스' · 'cr:물건' · 't:npc' · 'z:바이옴' · 'r:유적' */
-  progKeys(ch) {
+  progKeys(ch: any) {
     const out = new Set();
-    const walk = o => {
+    const walk = (o: Bag) => {
       if (!o) return;
       switch (o.type) {
         case 'kill': out.add('k:' + o.target); break;
@@ -37,7 +37,7 @@ export const NetProgPart: Bag = {
     return [...out];
   },
   /** 이 화면 혼자의 값(objProgress 가 보던 것과 같은 원천). */
-  progLocal(key) {
+  progLocal(key: string) {
     const p = this.me, i = key.indexOf(':'), k = i < 0 ? key : key.slice(0, i), v = i < 0 ? '' : key.slice(i + 1);
     switch (k) {
       case 'k': return p.kills[v] || 0;
@@ -54,17 +54,17 @@ export const NetProgPart: Bag = {
     return 0;
   },
   /** 방 모두의 값 중 가장 큰 것(혼자면 null) — objProgress 가 제 값과 견준다. */
-  progShared(key) {
+  progShared(key: string) {
     const n = this.net;
     return n && n.progAll && key in n.progAll ? n.progAll[key] : null;
   },
   /** 1초마다 — 참가자는 제 값을 호스트로, 호스트는 모은 값을 모두에게(바뀌었을 때만). */
-  netProgTick(dt) {
+  netProgTick(dt: number) {
     const n = this.net;
     n.progT = (n.progT || 0) - dt;
     if (n.progT > 0) return;
     n.progT = PROG_EVERY;
-    const ch = CHAPTERS[this.chapter], keys = this.progKeys(ch), mine = {};
+    const ch = CHAPTERS[this.chapter], keys = this.progKeys(ch), mine: Bag = {};
     for (const k of keys) mine[k] = this.progLocal(k);
     if (n.role === 'guest') {
       const s = JSON.stringify(mine);
@@ -83,12 +83,12 @@ export const NetProgPart: Bag = {
     this.checkChapter();
   },
   /** 호스트 — 참가자 값을 받아 둔다(다음 1초 틱에 모은다). */
-  netProgIn(peer, m) {
+  netProgIn(peer: Bag, m: any) {
     if (!m.v || typeof m.v !== 'object') return;
     peer.prog = m.v; peer.progCh = m.ch;
   },
   /** 참가자 — 호스트가 모은 값. 호스트가 앞 장에 있으면(알림을 놓쳤으면) 장 번호만 맞춘다. */
-  netProgsIn(m) {
+  netProgsIn(m: any) {
     const n = this.net;
     if (m.ch > this.chapter) { this.chapter = m.ch; UI.chapterCard(CHAPTERS[this.chapter]); }
     if (m.ch !== this.chapter) return;
@@ -96,7 +96,7 @@ export const NetProgPart: Bag = {
     UI.refreshTracker();
   },
   /** 호스트가 장을 끝냈다 — 참가자도 같은 장이면 제 캐릭터로 보상과 연출을 받는다. */
-  netChapterIn(m) {
+  netChapterIn(m: any) {
     if (m.i !== this.chapter) { if (m.i > this.chapter) this.chapter = m.i + 1; return; }
     const n = this.net;
     if (n) n.progAll = null;
@@ -104,7 +104,7 @@ export const NetProgPart: Bag = {
   },
 
   /** 보스 체력을 방 인원만큼 — 호스트에서 깨울 때 한 번. */
-  netBossScale(e) {
+  netBossScale(e: Enemy) {
     const n = this.net;
     if (!n || n.role !== 'host' || !e) return;
     const k = 1 + BOSS_HP_PER * (this.players.length - 1);
@@ -119,7 +119,7 @@ export const NetProgPart: Bag = {
     const msg = { k: 'meteor', x: m.x, y: m.y, R: m.R };
     for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, 'rel', msg);
   },
-  netMeteorIn(m) {
+  netMeteorIn(m: any) {
     if (this.meteor) return;
     const p = this.me, pd = m.x - Math.floor(p.cx / TS);
     this.meteor = { t: 0, x: m.x, y: m.y, R: m.R, dir: pd >= 0 ? 1 : -1, hit: false, quake: 0, amp: 0, remote: true };

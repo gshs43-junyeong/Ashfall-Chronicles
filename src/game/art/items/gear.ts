@@ -5,7 +5,7 @@ import { ITEM_PAINT, sh2 } from '../../itemart.js';
 
 export const ItemPaintGear: Bag = {
   /* ---------- 무기 ---------- */
-  sword(H) {
+  sword(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const bw = s.w, base = s.c, lt = sh2(base, 1.3), dk = sh2(base, .68);
@@ -29,7 +29,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  scythe(H) {
+  scythe(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         if (s.glow) glow(14, 14, 13, s.glow, .22);
@@ -50,7 +50,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  bow(H) {
+  bow(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         if (s.glow) glow(14, 16, 13, s.glow, .2);
@@ -73,7 +73,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  staff(H) {
+  staff(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const hd = s.head;
@@ -97,7 +97,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  spear(H) {
+  spear(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, .7);
@@ -117,7 +117,7 @@ export const ItemPaintGear: Bag = {
     }
   },
   /* ---------- 낚싯대: 대각선 장대 + 늘어진 줄과 찌 ---------- */
-  fishrod(H) {
+  fishrod(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -131,7 +131,7 @@ export const ItemPaintGear: Bag = {
     }
   },
   /* ---------- 물고기: 타원 몸통 + 꼬리 삼각형 ---------- */
-  fishitem(H) {
+  fishitem(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .7);
@@ -145,7 +145,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  pick(H) {
+  pick(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.4);
@@ -166,7 +166,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  axe(H) {
+  axe(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, .72);
@@ -196,7 +196,7 @@ export const ItemPaintGear: Bag = {
     }
   },
   /* ---------- 방어구 ---------- */
-  helm(H) {
+  helm(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .68);
@@ -213,7 +213,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  chest(H) {
+  chest(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .68);
@@ -230,12 +230,12 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  boots(H) {
+  boots(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, .6);
         if (s.glow) glow(16, 18, 12, s.glow, .18);
-        const boot = (bx) => {
+        const boot = (bx: number) => {
           poly([[bx, 9], [bx + 8, 9], [bx + 8, 21], [bx + 12, 21], [bx + 12, 26], [bx, 26]], c);
           poly([[bx, 9], [bx + 3.5, 9], [bx + 3.5, 26], [bx, 26]], lt);
           P(bx, 23.5, 12, 2.5, dk);
@@ -247,7 +247,7 @@ export const ItemPaintGear: Bag = {
     }
   },
   /* ---------- 장신구 ---------- */
-  ring(H) {
+  ring(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         stroke(s.c, 3.4, () => { g.arc(16, 20, 8, 0, TAU); });
@@ -259,7 +259,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  amulet(H) {
+  amulet(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         stroke(s.c, 1.6, () => { g.arc(16, 15, 10, Math.PI * 1.15, Math.PI * 1.85); });
@@ -279,7 +279,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  cloud(H) {
+  cloud(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         glow(16, 16, 12, '#cfe8ff', .18);
@@ -292,7 +292,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  sigil(H) {
+  sigil(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         glow(16, 16, 11, s.c, .18);
@@ -305,7 +305,7 @@ export const ItemPaintGear: Bag = {
       }
     }
   },
-  star(H) {
+  star(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const R = s.big ? 13 : 11, r = R * .42;

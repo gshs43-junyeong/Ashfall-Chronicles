@@ -5,7 +5,7 @@ import { ITEM_PAINT, sh2 } from '../../itemart.js';
 
 export const ItemPaintSkills: Bag = {
   /* ---------- 스킬 아이콘 ---------- */
-  slash(H) {
+  slash(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -17,7 +17,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  shield(H) {
+  shield(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -29,7 +29,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  impact(H) {
+  impact(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -47,7 +47,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  blood(H) {
+  blood(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -64,7 +64,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  whirl(H) {
+  whirl(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -77,7 +77,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  titan(H) {
+  titan(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -90,7 +90,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  dash(H) {
+  dash(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -104,7 +104,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  target(H) {
+  target(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -119,7 +119,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  volley(H) {
+  volley(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -133,7 +133,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  wind(H) {
+  wind(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -144,7 +144,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  rain(H) {
+  rain(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -158,7 +158,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  eye(H) {
+  eye(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -173,7 +173,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  flame(H) {
+  flame(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -191,7 +191,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  book(H) {
+  book(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -204,7 +204,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  heal(H) {
+  heal(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -218,7 +218,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  snow(H) {
+  snow(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -244,7 +244,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  wolf(H) {
+  wolf(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -259,7 +259,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  rune(H) {
+  rune(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
         const c = s.c;
@@ -277,7 +277,7 @@ export const ItemPaintSkills: Bag = {
     }
   },
   /* ---------- 스킬 아이콘 ---------- */
-  bulwark(H) {
+  bulwark(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {           // 철벽 — 벽돌을 쌓아 올린 방벽
         const c = s.c;
@@ -292,7 +292,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  quake(H) {
+  quake(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {             // 대지 가르기 — 갈라진 땅과 솟는 파편
         const c = s.c;
@@ -306,7 +306,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  shout(H) {
+  shout(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {             // 전투 함성 — 벌린 입에서 퍼져 나가는 파동
         const c = s.c;
@@ -319,7 +319,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  lifebeat(H) {
+  lifebeat(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {          // 불굴 — 심장과 맥박선
         const c = s.c;
@@ -339,7 +339,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  pierce(H) {
+  pierce(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {            // 꿰뚫는 화살 — 과녁을 지나가 버린 한 발
         const c = s.c;
@@ -353,7 +353,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  smoke(H) {
+  smoke(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {             // 연막탄 — 터진 통에서 피어오르는 연기
         const c = s.c;
@@ -369,7 +369,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  mark(H) {
+  mark(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {              // 사냥꾼의 표식 — 적 위에 찍히는 삼각 표식
         const c = s.c;
@@ -382,7 +382,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  tempest(H) {
+  tempest(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {           // 폭풍의 시위 — 활에서 갈라져 나가는 두 발
         const c = s.c;
@@ -397,12 +397,12 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  barrier(H) {
+  barrier(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {           // 비전 방벽 — 육각 결계
         const c = s.c;
         glow(16, 16, 13, c, .26);
-        const hex = (r) => { const pts = []; for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + i * TAU / 6; pts.push([16 + Math.cos(a) * r, 16 + Math.sin(a) * r]); } return pts; };
+        const hex = (r: any) => { const pts = []; for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + i * TAU / 6; pts.push([16 + Math.cos(a) * r, 16 + Math.sin(a) * r]); } return pts; };
         poly(hex(13), 'rgba(120,180,255,.20)');
         stroke(c, 2.2, () => { const p = hex(13); g.moveTo(p[0][0], p[0][1]); for (let i = 1; i < 6; i++) g.lineTo(p[i][0], p[i][1]); g.closePath(); });
         stroke(sh2(c, 1.35), 1.3, () => { const p = hex(7.5); g.moveTo(p[0][0], p[0][1]); for (let i = 1; i < 6; i++) g.lineTo(p[i][0], p[i][1]); g.closePath(); });
@@ -411,7 +411,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  chain(H) {
+  chain(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {             // 사슬 번개 — 갈라져 튀는 번개
         const c = s.c;
@@ -424,7 +424,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  blink(H) {
+  blink(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {             // 차원 도약 — 남은 잔상과 도착한 자리
         const c = s.c;
@@ -440,7 +440,7 @@ export const ItemPaintSkills: Bag = {
       }
     }
   },
-  meteor(H) {
+  meteor(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {            // 별의 낙하 — 꼬리를 끌며 떨어지는 별
         const c = s.c;
