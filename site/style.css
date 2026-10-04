@@ -410,7 +410,7 @@ html:lang(zh-Hans) body,html:lang(zh-Hans) h1,html:lang(zh-Hans) h2,html:lang(zh
 .getit .fine{font-size:.8rem;color:var(--bone-faint);margin-top:20px;}
 
 /* ================= 다운로드 페이지 ================= */
-.page-head{padding:72px 0 0;}
+.page-head{padding-top:72px;}   /* ★ 좌우는 .wrap 여백 그대로 — 0 으로 덮으면 아래 섹션보다 22px 바깥으로 나갔다 */
 .page-head h1{font-size:clamp(2rem,5vw,3rem);}
 .page-head .sec-lede{margin-top:18px;}
 
