@@ -1,6 +1,6 @@
 # 엔진 안내 — `src/engine`
 
-[← 문서 안내](README.md) · 예제: [`examples/sample`](../examples/sample/README.md) · 계획: [v1.1.1 엔진화](v1.1.1-engine-plan.md)
+[← 문서 안내](README.md) · 예제: [`examples/sample`](../examples/sample/README.md) · 계획: [v1.1.1 엔진화](update/v1.1.1-engine-plan.md)
 
 `src/engine` 은 Ashfall Chronicles 에서 떼어 낸 **게임을 모르는** 2D 타일 게임 엔진입니다. TypeScript(strict)이고,
 게임 고유값(타일 표 · 키 · 곡 · DB 이름 …)은 전부 `create*({…})` 설정이나 생성자 인자로 받습니다.

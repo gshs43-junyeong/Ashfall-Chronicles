@@ -1,4 +1,4 @@
-/* ===== game/net.js — 멀티플레이: 호스트 권위 · WebRTC(설계: docs/v1.1.2-multiplayer-plan.md) ===== */
+/* ===== game/net.js — 멀티플레이: 호스트 권위 · WebRTC(설계: docs/update/v1.1.2-multiplayer-plan.md) ===== */
 import { dist2 } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { chunkText, createJoiner, isChunk } from '../../engine/net/chunk.js';

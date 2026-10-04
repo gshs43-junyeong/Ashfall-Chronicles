@@ -245,7 +245,7 @@
 > ⑦ 어디서도 안 나오는 재료는 같은 조리법에 함께 적힌 재료들로 자리를 잡는다.
 >
 > 실측: 조리법 배율 중앙 0.57 → 1.32, 뒤집힌 것 121개 → 19개.
-> 자세한 것은 docs/v1.1-changelog.md 4절.
+> 자세한 것은 docs/update/v1.1-changelog.md 4절.
 
 ## src/legacy/entity.js
 

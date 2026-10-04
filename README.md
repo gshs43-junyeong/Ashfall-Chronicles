@@ -24,9 +24,9 @@ tells you about. The seventy-five achievements are split into eight groups and t
 
 > **v1.1.3 (2026-10-04)** — redrawn skill effects (textured slashes, shockwaves, rune circles, light pillars) · monsters that
 > **catch fire** and freeze along their outline · effects that follow flying monsters · hopping rabbits · no sky islands over the
-> camp and village · a slimmer title logo and the new app icon. Full list: [`docs/v1.1.3-changelog.md`](docs/v1.1.3-changelog.md).
+> camp and village · a slimmer title logo and the new app icon. Full list: [`docs/update/v1.1.3-changelog.md`](docs/update/v1.1.3-changelog.md).
 > v1.1.2 added **multiplayer** (2–4 players), monster skills, the **Ashfall** font and the **app edition** (Electron, unsigned) —
-> [`docs/v1.1.2-changelog.md`](docs/v1.1.2-changelog.md). v1.1.x saves open as they are.
+> [`docs/update/v1.1.2-changelog.md`](docs/update/v1.1.2-changelog.md). v1.1.x saves open as they are.
 >
 > ⚠ **v1.0.x saves do not open from v1.1 onward** — the world grew from 4200 to 5000 tiles wide.
 > Start a new journey; old records stay in their slots.
@@ -130,8 +130,8 @@ git-ignored — edits there are lost on the next build. Release zips are not com
 |---|---|
 | [`README-ko.md`](README-ko.md) | This README in Korean |
 | [`docs/README.md`](docs/README.md) | **Documentation map** — what to read and where to start (Korean) |
-| [`docs/v1.1.3-changelog.md`](docs/v1.1.3-changelog.md) · [`docs/v1.1.2-changelog.md`](docs/v1.1.2-changelog.md) | **What v1.1.3 and v1.1.2 add** (Korean: [`v1.1.3`](docs/v1.1.3-changelog.ko.md) · [`v1.1.2`](docs/v1.1.2-changelog.ko.md)) |
-| [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) · [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | What v1.1.1 and v1.1.0 added (Korean) |
+| [`docs/update/v1.1.3-changelog.md`](docs/update/v1.1.3-changelog.md) · [`docs/update/v1.1.2-changelog.md`](docs/update/v1.1.2-changelog.md) | **What v1.1.3 and v1.1.2 add** (Korean: [`v1.1.3`](docs/update/v1.1.3-changelog.ko.md) · [`v1.1.2`](docs/update/v1.1.2-changelog.ko.md)) |
+| [`docs/update/v1.1.1-changelog.md`](docs/update/v1.1.1-changelog.md) · [`docs/update/v1.1-changelog.md`](docs/update/v1.1-changelog.md) | What v1.1.1 and v1.1.0 added (Korean) |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | Shared rules for adding chapters and sessions (Korean) |
 | [`docs/engine.md`](docs/engine.md) | The engine's public API and the engine-only sample game (Korean) |
 | [`docs/debug-urls.md`](docs/debug-urls.md) | Debug shortcuts that start in front of a region or feature, including `?debug=showcase` for recording footage (Korean) |
@@ -153,7 +153,7 @@ When the tag lands, `.github/workflows/release.yml`:
 1. builds the **browser edition** (Windows and macOS zips) with `tools/build.sh`,
 2. builds the **app edition** (Windows, macOS Intel, macOS Apple silicon, Linux zips) with `tools/build-desktop.sh` — the macOS apps are
    **ad-hoc signed** on a macOS runner so Gatekeeper shows the "unidentified developer" prompt instead of "damaged, move to Trash",
-3. attaches them to the Release with `SHA256SUMS.txt` and `SHA256SUMS-App.txt`. The release body is `docs/v<version>-changelog.md`.
+3. attaches them to the Release with `SHA256SUMS.txt` and `SHA256SUMS-App.txt`. The release body is `docs/update/v<version>-changelog.md`.
 
 To build locally:
 

@@ -25,9 +25,9 @@
 
 > **v1.1.3 (2026-10-04)** — 새로 그린 스킬 연출(결이 살아 있는 칼선 · 충격파 · 룬 마법진 · 빛기둥) · **불이 붙어 타오르고** 윤곽째 얼어붙는
 > 몬스터 · 떠 있는 몬스터를 따라붙는 연출 · 깡충 뛰는 토끼 · 캠프 · 마을 위 하늘 섬 정리 · 가벼워진 타이틀 로고와 새 앱 아이콘.
-> 무엇이 들어갔는지는 [`docs/v1.1.3-changelog.ko.md`](docs/v1.1.3-changelog.ko.md) 에 있습니다.
+> 무엇이 들어갔는지는 [`docs/update/v1.1.3-changelog.ko.md`](docs/update/v1.1.3-changelog.ko.md) 에 있습니다.
 > v1.1.2 에는 **멀티플레이**(2~4명) · 몬스터 스킬 · 게임 글꼴 **Ashfall** · **앱으로 여는 판**(Electron, 서명 없음)이 들어왔습니다 —
-> [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md). v1.1.x 의 저장은 그대로 열립니다.
+> [`docs/update/v1.1.2-changelog.ko.md`](docs/update/v1.1.2-changelog.ko.md). v1.1.x 의 저장은 그대로 열립니다.
 >
 > ⚠ **v1.0.x 의 저장은 v1.1 부터 열리지 않습니다** — 세계 폭이 4200 → 5000 칸으로 넓어졌습니다.
 > 새로 시작해야 하며, 옛 기록은 슬롯에 그대로 남습니다.
@@ -68,10 +68,10 @@
 | [`README.md`](README.md) | 영어 안내(이 문서의 영어판 — 영어가 먼저입니다) |
 | [`docs/about-copy.md`](docs/about-copy.md) | GitHub About · 소개 문구(한국어·영어)의 원본 |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
-| [`docs/v1.1.3-changelog.ko.md`](docs/v1.1.3-changelog.ko.md) · [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md) | **v1.1.3 · v1.1.2 에 무엇이 들어갔는가**(릴리스 본문은 영어판 `docs/v<판>-changelog.md`) |
-| [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) | v1.1.1 에 무엇이 들어갔는가 |
+| [`docs/update/v1.1.3-changelog.ko.md`](docs/update/v1.1.3-changelog.ko.md) · [`docs/update/v1.1.2-changelog.ko.md`](docs/update/v1.1.2-changelog.ko.md) | **v1.1.3 · v1.1.2 에 무엇이 들어갔는가**(릴리스 본문은 영어판 `docs/update/v<판>-changelog.md`) |
+| [`docs/update/v1.1.1-changelog.md`](docs/update/v1.1.1-changelog.md) | v1.1.1 에 무엇이 들어갔는가 |
 | [`docs/debug-urls.md`](docs/debug-urls.md) | 구역 · 기능 앞에서 바로 시작하는 디버그 주소(영상 촬영용 `?debug=showcase` 포함) |
-| [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | v1.1.0 에 무엇이 들어갔는가 |
+| [`docs/update/v1.1-changelog.md`](docs/update/v1.1-changelog.md) | v1.1.0 에 무엇이 들어갔는가 |
 | [`docs/system-requirements.md`](docs/system-requirements.md) | 시스템 요구사항과 그 숫자를 잰 방법 |
 | [`CLAUDE.md`](CLAUDE.md) | 이 저장소에서 코드를 고칠 때의 규칙 — 타일 번호·좌표(`SHIFT`)·세이브처럼 **어기면 조용히 망가지는 것들** |
 | [`docs/deploy-cache.md`](docs/deploy-cache.md) | 배포와 캐시 무효화 |
@@ -90,7 +90,7 @@ git push origin v1.1.3
 1. `tools/build.sh`로 **브라우저로 여는 판**(Windows · macOS zip)을 만들고
 2. `tools/build-desktop.sh`로 **앱으로 여는 판**(Windows · macOS Intel · macOS Apple 실리콘 · Linux zip)을 만들고 —
    macOS 앱은 macOS 러너에서 **임시 서명(ad-hoc)** 을 해 "손상되었으므로 휴지통으로 이동" 대신 "확인되지 않은 개발자" 경고만 뜨게 하고
-3. `SHA256SUMS.txt` · `SHA256SUMS-App.txt`와 함께 Release에 첨부합니다. 본문은 `docs/v<판>-changelog.md`.
+3. `SHA256SUMS.txt` · `SHA256SUMS-App.txt`와 함께 Release에 첨부합니다. 본문은 `docs/update/v<판>-changelog.md`.
 
 로컬에서 직접 만들려면:
 
@@ -232,4 +232,4 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 
 버전별 변경 사항은 [릴리스 목록](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases)과
 [다운로드 페이지의 변경 이력](https://ashfall-chronicles.vercel.app/download#changelog)에 있습니다.
-v1.1.3 · v1.1.2 · v1.1.1 · v1.1.0 의 전체 목록은 [`docs/v1.1.3-changelog.ko.md`](docs/v1.1.3-changelog.ko.md) · [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md) · [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) · [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다.
+v1.1.3 · v1.1.2 · v1.1.1 · v1.1.0 의 전체 목록은 [`docs/update/v1.1.3-changelog.ko.md`](docs/update/v1.1.3-changelog.ko.md) · [`docs/update/v1.1.2-changelog.ko.md`](docs/update/v1.1.2-changelog.ko.md) · [`docs/update/v1.1.1-changelog.md`](docs/update/v1.1.1-changelog.md) · [`docs/update/v1.1-changelog.md`](docs/update/v1.1-changelog.md) 에 있습니다.
