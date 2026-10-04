@@ -5882,6 +5882,7 @@
   // src/game/data/enemies.ts
   var enemies_exports = {};
   __export(enemies_exports, {
+    DIFF_TIER: () => DIFF_TIER,
     ENEMIES: () => ENEMIES,
     MECH_CH0: () => MECH_CH0,
     MECH_CH1: () => MECH_CH1,
@@ -7587,6 +7588,11 @@
     const n = (ENEMIES[type] || {}).n || type;
     return mech ? `${tr("개조된")} ` + n : n;
   }
+  var DIFF_TIER = [
+    { hp: 6, dmg: 4.4, bossHp: 1.7, bossDmg: 2.4 },
+    { hp: 3.9, dmg: 3, bossHp: 1.6, bossDmg: 4 },
+    { hp: 4, dmg: 3.9, bossHp: 1.7, bossDmg: 4.5 }
+  ];
 
   // src/game/data/materials.ts
   var materials_exports = {};
@@ -29306,9 +29312,11 @@
       this.lvFactor = !d.boss && d.lvScale && typeof app !== "undefined" && app.player ? levelMult(app.player.level, d.lvScale) : 1;
       const lf = this.lvFactor;
       const md = typeof app !== "undefined" && app.modeMul ? app.modeMul() : 1;
-      this.maxHp = Math.round(d.hp * sc * lf * md);
+      const dt = d.passive ? null : DIFF_TIER[Math.max(0, Math.min(2, SESSIONS.indexOf(sessionOf(typeof app !== "undefined" && app && app.chapter || 0))))];
+      const th = dt ? d.boss ? dt.bossHp : dt.hp : 1, tdm = dt ? d.boss ? dt.bossDmg : dt.dmg : 1;
+      this.maxHp = Math.round(d.hp * sc * lf * md * th);
       this.hp = this.maxHp;
-      this.dmg = d.dmg * sc * lf * md;
+      this.dmg = d.dmg * sc * lf * md * tdm;
       this.armor = d.def * sc;
       this.spd = d.spd;
       this.xp = Math.round(d.xp * sc * lf);
