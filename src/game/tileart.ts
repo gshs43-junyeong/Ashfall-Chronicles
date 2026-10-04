@@ -515,7 +515,8 @@ export const TileArt: Bag = {
       let i = 0, n = 1;                                    // i: 붙은 쪽에서 몇 번째 칸, n: 줄 길이
       if (!up) { while (i < 6 && w.get(tx, ty - i - 1) === id) i++; n = i + 1; while (n < 8 && w.get(tx, ty - i + n) === id) n++; }
       else { while (i < 6 && w.get(tx, ty + i + 1) === id) i++; n = i + 1; while (n < 8 && w.get(tx, ty + i - n) === id) n++; }
-      c.drawImage(this._drip(id, i, n), sx, sy);
+      const vr = (tileHash(tx, up ? ty + i : ty - i) * 4) | 0;   // 한 줄은 한 모양 — 붙은 칸 자리로 고른다
+      c.drawImage(this._drip(id, i, n, vr), sx, sy);
       return true;
     };
     return {
@@ -897,30 +898,64 @@ export const TileArt: Bag = {
     this._md.set(i, [D, now]);
     return D;
   },
-  /** 종유석(위에 붙음)·석순(바닥에 붙음) 한 줄의 i 번째 칸 — 줄 전체가 원뿔 하나가 되게 */
-  _drip(id: any, i: any, n: any) {
-    const key = id + ':' + i + ':' + n;
+  /** 종유석(위에 붙음)·석순(바닥에 붙음) 한 줄의 i 번째 칸 — 줄 전체가 덩어리 하나가 되게(vr = 모양 갈래 0~3).
+      반듯한 원뿔은 그림 같아서 실제 모양을 따랐다: 종유석은 어깨가 두툼한 당근 몸에 주름진 휘장이 지고 끝은 가는 빨대처럼
+      늘어져 물방울이 맺힌다. 석순은 알을 쌓은 듯 마디가 불룩하고 꼭대기는 둥글다. 좌우 가장자리는 따로 흔들리고,
+      흘러내린 결(세로 줄)과 들쭉날쭉한 자란 테를 넣는다. 빛은 왼쪽 위 — 원통처럼 칠한다. */
+  _drip(id: any, i: any, n: any, vr = 0) {
+    const key = id + ':' + i + ':' + n + ':' + vr;
     this._dc = this._dc || {};
     if (this._dc[key]) return this._dc[key];
     const cv = document.createElement('canvas'); cv.width = cv.height = TS;
-    const g = cv.getContext('2d');
-    const base = TILE_DEF[id].c, dk = shade(base!, .74), lt = shade(base!, 1.2), lt2 = shade(base!, 1.4);
-    const up = id === T.STALAGMITE || id === T.EMBERSPIRE;
+    const g = cv.getContext('2d')!;
+    const base = TILE_DEF[id].c!;
+    const up = id === T.STALAGMITE || id === T.EMBERSPIRE, ice = id === T.ICICLE;
+    const ember = id === T.EMBERDRIP || id === T.EMBERSPIRE;
+    const L = n * TS, R0 = (TS - 2) / 2;
+    const vn = (x: number, sd: number) => { const a = Math.floor(x), f = x - a, w = f * f * (3 - 2 * f);
+      return lerp(tileHash(a, sd), tileHash(a + 1, sd), w); };   // 0~1 부드러운 잡음
+    const sd = vr * 97 + id;
+    const pal = [shade(base, .55), shade(base, .74), base, shade(base, 1.14), shade(base, 1.34)];
     for (let y = 0; y < TS; y++) {
-      const yy = up ? TS - 1 - y : y;                       // 붙은 쪽에서 잰 칸 속 높이
-      const t = (i + (yy + 0.5) / TS) / n;                   // 0(붙은 쪽) → 1(끝)
-      const wdt = Math.max(1, (TS - 3) * (1 - t * 0.9));
-      const gy = i * TS + yy;                                // 줄 전체에서의 높이 — 줄무늬가 칸을 건너 이어진다
-      g!.fillStyle = (gy % 6 === 0 ? dk : gy % 6 === 3 ? lt : base)!;
-      g!.fillRect(TS / 2 - wdt / 2, y, wdt, 1);
-      g!.fillStyle = lt2; g!.fillRect(TS / 2 - wdt / 2, y, Math.max(1, wdt * .22), 1);
-    }
-    if (!up && i === n - 1) { g!.fillStyle = id === T.EMBERDRIP ? '#ff8a3a' : '#9fd0e8'; g!.fillRect(TS / 2 - 0.5, TS - 2, 1, 2); }
-    if (id === T.EMBERDRIP || id === T.EMBERSPIRE) {        // 현무암 속 불씨 금 — 칸을 건너 이어지게 줄 높이로 긋는다
-      for (let y = 0; y < TS; y++) {
-        const yy = up ? TS - 1 - y : y, gy = i * TS + yy, t = (i + (yy + 0.5) / TS) / n;
-        if ((gy * 7 + n * 3) % 11 < 2) { g!.fillStyle = t > 0.6 ? '#ffb05a' : '#c8401a'; g!.fillRect(TS / 2 - 1 + ((gy >> 2) % 3) - 1, y, 1, 1); }
+      const yy = up ? TS - 1 - y : y, gy = i * TS + yy;   // 붙은 쪽에서 잰 줄 전체 높이
+      const t = (gy + 0.5) / L;                            // 0(붙은 쪽) → 1(끝)
+      let r;
+      if (up) {
+        r = R0 * 0.92 * (1 - Math.pow(t, 2.2)) + 1.8 * Math.pow(Math.max(0, Math.sin(t * Math.PI * (1.6 + n * 0.9) + vr)), 2) * (1 - t);
+        if (t > 0.82) r = Math.min(r, 3.4 * Math.sqrt(Math.max(0, 1 - Math.pow((t - 0.82) / 0.18, 2))));   // 둥근 꼭대기
+      } else if (ice) {
+        r = R0 * 0.82 * Math.pow(1 - t, 1.15) + 0.3 + (vn(gy * 0.3, sd) - 0.5) * 0.8 * (1 - t);
+      } else {
+        r = t < 0.7 ? R0 * 0.9 * Math.pow(1 - t / 0.7 * 0.78, 1.3) : Math.max(0.8, R0 * 0.9 * Math.pow(0.22, 1.3) * (1 - (t - 0.7) / 0.3) + 0.6);   // 당근 몸 · 빨대 끝
+        r += Math.sin(t * Math.PI * (3 + vr * 0.5) + vr) * 1.1 * (1 - t);   // 휘장 주름
       }
+      if (gy < 3) r = Math.max(r, TS / 2 - gy * 0.9);      // 붙은 자리는 녹아 붙듯 퍼진다
+      if (r < 0.45) continue;
+      const wob = ice ? 0.35 : 0.9;
+      const cx = TS / 2 + (vn(t * 3, sd + 5) - 0.5) * 2.2 * t;   // 살짝 휜다
+      const rl = r * (1 + (vn(gy * 0.22, sd + 1) - 0.5) * wob * 0.5), rr = r * (1 + (vn(gy * 0.22, sd + 2) - 0.5) * wob * 0.5);
+      const x0 = Math.round(cx - rl), x1 = Math.round(cx + rr) - 1;
+      const band = !ice && vn(gy * 0.31, sd + 3) > 0.72;   // 들쭉날쭉한 자란 테
+      for (let x = Math.max(0, x0); x <= Math.min(TS - 1, x1); x++) {
+        const u = x + 0.5 < cx ? (x + 0.5 - cx) / Math.max(1, rl) : (x + 0.5 - cx) / Math.max(1, rr);   // -1 ~ 1
+        let k = 2.7 - u * 1.4 - (Math.abs(u) > 0.8 ? 0.9 : 0);
+        if (!ice) {
+          k += (band ? -0.7 : 0) + (tileHash(x + vr * 31, gy) - 0.5) * 0.7;
+          if (tileHash(Math.round(x - cx) + 40, sd) > 0.78 && Math.abs(u) < 0.7) k -= 0.6;   // 흘러내린 결
+        } else if (Math.abs(u + 0.25) < 0.18) k += 1;      // 얼음 속 밝은 심
+        g.fillStyle = pal[Math.max(0, Math.min(4, Math.round(k)))];
+        g.globalAlpha = ice ? 0.84 : 1;
+        g.fillRect(x, y, 1, 1);
+        g.globalAlpha = 1;
+        if (ember && Math.abs(u) < 0.4 && vn(gy * 0.5 + x * 1.3, sd + 7) > 0.8) {   // 현무암 속 불씨 금
+          g.fillStyle = t > 0.55 ? '#ffb05a' : '#c8401a'; g.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+    if (!up && i === n - 1) {                               // 끝에 맺힌 물방울 · 불씨
+      const cx = Math.round(TS / 2 + (vn(3, sd + 5) - 0.5) * 2.2 - 0.5);
+      g.fillStyle = ember ? '#ff8a3a' : ice ? '#e8f8ff' : '#9fd0e8';
+      g.fillRect(cx, TS - 2, 1, 2);
     }
     return (this._dc[key] = cv);
   },
