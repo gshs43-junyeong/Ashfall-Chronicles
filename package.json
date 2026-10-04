@@ -22,8 +22,9 @@
     "test:mp": "node tests/mp.mjs",
     "test:relay": "node tests/relay.mjs",
     "test:site": "node tools/site-i18n.mjs check",
+    "test:counts": "node tests/counts.mjs",
     "baseline": "node tests/gen-hash.mjs --update && node tests/shots.mjs --update",
-    "check": "npm run test:syntax && npm run typecheck && npm run test:modules && npm run test:i18n && npm run test:site && npm run test:manifest && npm run test:gen && npm run test:play && npm run test:pseudo && npm run test:sample && npm run test:net && npm run test:mp && npm run test:relay && npm run test:shots"
+    "check": "npm run test:syntax && npm run typecheck && npm run test:modules && npm run test:i18n && npm run test:site && npm run test:counts && npm run test:manifest && npm run test:gen && npm run test:play && npm run test:pseudo && npm run test:sample && npm run test:net && npm run test:mp && npm run test:relay && npm run test:shots"
   },
   "devDependencies": {
     "acorn": "8.18.0",

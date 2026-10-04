@@ -1,6 +1,6 @@
 # 문서 안내 / Documentation map
 
-[← README로 돌아가기](../README.md) · [English project guide](README.en.md)
+[← 한국어 README](../README-ko.md) · [English README](../README.md)
 
 이 폴더에는 지금 쓰는 운영 문서만 있습니다. 처음 읽는 사람은 아래 순서로 시작하세요.
 
@@ -8,10 +8,9 @@
 
 | 문서 | 대상 | 설명 |
 |---|---|---|
-| [README](../README.md) | 플레이어·기여자 | 게임 소개, 실행 방법, 조작, 저장, 저장소 구조 |
+| [README](../README.md) · [README-ko](../README-ko.md) | 플레이어·기여자 | 게임 소개, 실행 방법, 조작, 저장, 저장소 구조 — 영어판이 먼저, 한국어판이 그 짝 |
 | [About 문구](about-copy.md) | 저장소·배포 담당자 | GitHub About과 소개 페이지에 바로 쓸 한국어·영어 문구 |
 | [v1.1 한눈에](v1.1-changelog.md#한눈에) | 플레이어·QA | v1.1 에 들어간 것을 여섯 줄로 |
-| [English project guide](README.en.md) | English readers | 영어권 플레이어·기여자를 위한 빠른 시작과 구조 안내 |
 | [세션과 이야기 공용 규약](story-and-sessions.md) | 콘텐츠 제작자 | 장·세션을 늘릴 때 반드시 확인할 표와 세이브·애셋 규칙 |
 | [v1.1 변경 사항](v1.1-changelog.md) | QA·릴리스 | 개발 중인 웹 빌드에 들어간 변경 기록 |
 
@@ -36,5 +35,5 @@ v1.1 을 만들며 쓴 작업 지시서·계획서·중간 보고(최초 작업 
 - 플레이어용 문서는 “어떻게 시작하고, 무엇이 저장되는가”를 먼저 말합니다.
 - 작업 문서는 원본 경로와 생성물 경로를 분명히 구분합니다.
 - 변경 중인 기능은 릴리스된 기능처럼 쓰지 않고, 버전과 상태를 함께 적습니다.
-- 영어 공개 안내는 [README.en.md](README.en.md)에 모아 유지합니다.
+- 영어 공개 안내는 루트 [README.md](../README.md)(영어 우선)이고 한국어판은 [README-ko.md](../README-ko.md)입니다 — 하나를 고치면 둘 다. 숫자(아이템 · 몬스터 …)는 `node tests/counts.mjs` 가 게임 표와 대조합니다.
 - About·소개 문구는 [about-copy.md](about-copy.md)를 원본으로 삼고, 수정한 뒤 GitHub·사이트에 같은 문구를 반영합니다.
