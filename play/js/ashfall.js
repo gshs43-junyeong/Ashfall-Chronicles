@@ -37852,7 +37852,7 @@
         cam: new Camera({ follow: 2e-3, leadX: 56, leadY: 64, leadSpeed: 320, leadEase: 0.08 }),
         world: null,
         rng: new RNG(1),
-        /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
+        /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/update/v1.1.2-multiplayer-plan.md */
         players: [],
         me: null,
         ents: [],

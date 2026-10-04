@@ -68,7 +68,7 @@ export class Game {
       cv: null, ctx: null, mm: null, mmx: null,
       W: 0, H: 0, cam: new Camera({ follow: 0.002, leadX: 56, leadY: 64, leadSpeed: 320, leadEase: 0.08 }),
       world: null, rng: new RNG(1),
-      /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/v1.1.2-multiplayer-plan.md */
+      /* 플레이어 — players 는 이 세계에 있는 모두, me 는 이 화면의 플레이어(혼자 할 때는 players = [me]). 설계: docs/update/v1.1.2-multiplayer-plan.md */
       players: [], me: null,
       ents: [], projs: [], parts: [], texts: [], drops: [], tweens: new Tweens(), corpses: [],
       time: 0, dayT: 6 * 60, shake: 0, pathBudget: 0, timeScale: new TimeScale(), fade: new ScreenFade(), perf: new PerfPanel(), shapes: new ShapeFx(), vfx: new Vfx(), trail: new Afterimages<Bag>(0.028, 0.2, 7), entHash: new SpatialHash<Enemy>(64),

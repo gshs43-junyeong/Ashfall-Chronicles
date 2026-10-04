@@ -5,7 +5,7 @@ Ashfall Chronicles(별이 잠든 땅)는 순수 HTML5 + JavaScript 게임이다.
 `play/js/ashfall.js` 하나(클래식 스크립트 · IIFE)로 묶는다 — file:// 에서도 돈다. 처음 한 번 `npm ci`, 그다음 **`npm run dev`
 를 켜 두면 고치고 새로고침하는 흐름 그대로다**(소스를 고치면 번들이 다시 만들어진다).
 번들은 커밋한다 — `play/` 만 받아도 빌드 없이 돈다. **소스를 고쳤으면 번들도 같이 커밋할 것**
-(`npm run check` · CI · `build.sh` 가 어긋나면 막는다). 엔진화 계획은 `docs/v1.1.1-engine-plan.md`.
+(`npm run check` · CI · `build.sh` 가 어긋나면 막는다). 엔진화 계획은 `docs/update/v1.1.1-engine-plan.md`.
 
 이 문서는 "어디에 무엇이 있는가"보다 **"무엇을 하면 조용히 망가지는가"**에 무게를
 둔다. 아래 §1의 규칙은 어기면 되돌릴 수 없는 피해(남의 세이브 파괴 등)가 나는
@@ -120,7 +120,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `examples/sample/` | 엔진**만** 쓰는 최소 예제 게임(src/ → `sample.js` 산출물, `tools/bundle.mjs` 가 같이 묶는다) — 엔진 API 는 `docs/engine.md`. 엔진을 고쳐 이것이 깨지면(`npm run test:sample`) 게임 가정이 엔진에 스민 것 |
 | `tools/imports.mjs` | 코드를 옮긴 뒤 `src/game` 의 import 줄을 소스에서 다시 짠다(`--check` 는 test:modules 에 포함) |
 | `tools/bundle.mjs` | 소스 → `play/js/ashfall.js`(+소스맵, esbuild). `--check` 어긋남 검사 · `--watch` |
-| `relay/` | 멀티플레이 방 중개 — Cloudflare Worker(본 중개, 따로 `npm ci` · 배포는 `.github/workflows/relay.yml`). 닿지 않으면 공개 PeerJS 서버(엔진 `createPeerSignal`), Electron 은 LAN. 설계 `docs/v1.1.2-multiplayer-plan.md` §10 |
+| `relay/` | 멀티플레이 방 중개 — Cloudflare Worker(본 중개, 따로 `npm ci` · 배포는 `.github/workflows/relay.yml`). 닿지 않으면 공개 PeerJS 서버(엔진 `createPeerSignal`), Electron 은 LAN. 설계 `docs/update/v1.1.2-multiplayer-plan.md` §10 |
 | `tests/` | 회귀 검사(`npm run check`) — 생성 해시 · 동작 · 스크린샷 기준값은 `tests/baseline/`(Docker 검사 이미지는 `shots-docker`) |
 | `Dockerfile` · `docker-compose.yml` · `docker/` | 컨테이너 — dev(소스 걸고 다시 묶기) · game · site(nginx, `vercel.json` 규칙을 옮김) · check. `vercel.json` 을 고치면 `docker/nginx-site.conf` 도 |
 | `play/assets/fonts/` | 게임 글꼴 Ashfall(Pretendard 고친 판 — 한글 획 14.5% 가늘게 · 모서리 살짝 둥글게 · l·I 대체 · 숫자 고정폭 · **SIL OFL 1.1** — `OFL.txt` · `FONTLOG.txt` 를 같이 둔다). `python3 tools/mkfont.py` 산출물(원본 `tools/art/fonts/`) — 손으로 바꾸지 말 것. 'Pretendard' 는 예약 글꼴 이름이라 고친 판에 쓰지 않는다. 사연: docs/code-history.md#h148 |
@@ -128,7 +128,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 | `play/assets/sprites-manifest.js` | 위의 **자동 생성물** — 손으로 고치지 말 것 |
 | `site/` | 배포 사이트. 빌드하면 `play/`이 `site/play/`로 복사된다. 번역은 `site/i18n.js`(게임과 같은 언어 고르기 · 같은 열쇠 `ashfall.lang` · 한국어 원문이 열쇠라 HTML 에 표시 없음) + `site/i18n/<언어>.json` — 페이지 글을 고치면 `node tools/site-i18n.mjs extract` → 번역 → `build`(`npm run test:site` 가 빠짐·태그 어긋남을 막는다) |
 | `tools/` | zip 빌드·애셋을 굽고 재는 파이썬 도구들 |
-| `docs/` | 변경 사항 · 세션 규약 · 코드의 사연(`code-history.md`) · 배포 캐시 · 시스템 요구사항 |
+| `docs/` | 세션 규약 · 코드의 사연(`code-history.md`) · 배포 캐시 · 시스템 요구사항 · **판마다의 변경 기록 · 계획은 `docs/update/`**(`v<판>-changelog.md` 영어 = 릴리스 본문 · `.ko.md` · `*-plan.md` — 릴리스 워크플로가 이 경로를 읽는다) |
 
 > **리포가 원본이다.** 게임 코드는 `src/game/` 에서 고친다 — `play/js/ashfall.js` 를 손으로 고치면 다음 번들에 지워진다.
 
@@ -316,12 +316,12 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 
 ## 8. 지금 상태 (2026-09-30)
 
-- **v1.1.1 엔진화 끝 · 출시**(`docs/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) · 중국어 간체(zh-Hans) · 독일어(de) · 스페인어(es) 4,020개 끝** — 사이트(site/ home·download) 6개 언어 끝, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 끝 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입(`@ts-nocheck` 0 · 클래스 필드 `any` 0 · 표 타입 `types.d.ts` 닫힘) 끝 — 게임 쪽 strict 는 v1.1.2 에 켰다(2026-10-03). 다국어 UI 검사(`node tests/ui-audit.mjs` — 6개 언어 0건) · 유틸리티 Z·X(탐지 파동, game/utility.ts) · 로고·파비콘(`tools/mklogo.py`)·대표 그림(`tools/mkkeyart.py` → site/keyart.png) 끝. P11 Docker 끝(`docker compose up dev|game|site` · `docker compose run --rm check` — 스크린샷 기준은 `tests/baseline/shots-docker` 따로, 로컬 기준을 다시 찍으면 Docker 것도 다시 찍을 것). P12 마무리(엔진 문서 `docs/engine.md` · 예제 `examples/sample` · `npm run test:sample`) 끝 — 남은 것은 계획서 §9-1 에 모아 둔 수정(v1.1.1 뒤).
+- **v1.1.1 엔진화 끝 · 출시**(`docs/update/v1.1.1-engine-plan.md` §10): P0 안전망 · P1 번들 · P2 ES 모듈(순환 0) · P3 엔진 core(TS) · P4 입력(액션 매핑 · 터치 뼈대 `?touch=1`) · P5 타일맵·렌더 틀 · P6 엔티티·씬·UI 틀 · P7 i18n(ko 추출) 끝. P8 다국어는 바탕·용어집(검수 반영) · **영어(en) · 일본어(ja) · 중국어 간체(zh-Hans) · 독일어(de) · 스페인어(es) 4,020개 끝** — 사이트(site/ home·download) 6개 언어 끝, P9 모바일 끝. **P10 게임 코드 쪼개기 + TS** 끝 — 쪼개기(파일당 1,200줄 · 표 2,000줄) · `src/game/**/*.ts` 로 옮기기 · 느슨한 타입(`@ts-nocheck` 0 · 클래스 필드 `any` 0 · 표 타입 `types.d.ts` 닫힘) 끝 — 게임 쪽 strict 는 v1.1.2 에 켰다(2026-10-03). 다국어 UI 검사(`node tests/ui-audit.mjs` — 6개 언어 0건) · 유틸리티 Z·X(탐지 파동, game/utility.ts) · 로고·파비콘(`tools/mklogo.py`)·대표 그림(`tools/mkkeyart.py` → site/keyart.png) 끝. P11 Docker 끝(`docker compose up dev|game|site` · `docker compose run --rm check` — 스크린샷 기준은 `tests/baseline/shots-docker` 따로, 로컬 기준을 다시 찍으면 Docker 것도 다시 찍을 것). P12 마무리(엔진 문서 `docs/engine.md` · 예제 `examples/sample` · `npm run test:sample`) 끝 — 남은 것은 계획서 §9-1 에 모아 둔 수정(v1.1.1 뒤).
   **화질**(설정 · game.js `QUALITY`): 자동 = 폰 절약(픽셀 밀도 1 · 입자 300) · 태블릿 보통(1.5 · 600) · 컴퓨터 높음(2 · 900). 렌더 단계별 시간은 `G.pipe.profile(true)` → `G.pipe.stats()`. 도중에 찾은 버그는 계획서 §9-1 에 모아 P12 뒤에 고친다.
   **그리기 순서는 `G.buildPipeline()` 의 단계 목록**(sky → light → far → tiles → machines → objects → ground → drops → actors → lighting → fx → screen)이다 —
   새 그림은 알맞은 단계 함수(`rTiles` …)에 넣거나 `this.pipe.add(단계, 함수)` 로 건다. ★ `TileMap.get` 은 `inB` 를 부르지 않는다(생성이 16% 느려졌다).
   도중에 찾은 버그·새 기능 요청은 계획서 §9-1 에 모아 두고 **v1.1.1 이 끝난 뒤** 한꺼번에 한다(사용자 결정).
-- **v1.1.1 출시**(태그 `v1.1.1` — 여섯 언어 · 터치 · 밭 물 · 드래곤 · 레벨 곡선, 변경은 `docs/v1.1.1-changelog.md`). **v1.1.0 출시**(태그 `v1.1.0`). 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
+- **v1.1.1 출시**(태그 `v1.1.1` — 여섯 언어 · 터치 · 밭 물 · 드래곤 · 레벨 곡선, 변경은 `docs/update/v1.1.1-changelog.md`). **v1.1.0 출시**(태그 `v1.1.0`). 세션 3(가라앉은 바다·빙하·3개 장·폭탄·탐지기·설비 4단계)이
   들어가 있고, 업적은 75개다. v1.0.x 세이브는 세계 폭이 달라 열리지 않는다(릴리스 노트·다운로드 페이지에 알림).
 - 세이브는 v13 — v10 에 `world.sea`(바다 수면), v11 에 장비 접사를 번호로(`{k, i}` — entity.js `affixOf`, 옛 `{n, s}` 는 판올림이 번호로 바꾼다), v12 에 밭 젖음 `world.wet`(옛 작물 밑 밭은 사흘 젖게), v13 에 멀티플레이 손님 기록 `mpGuests`(손님 아이디 → 마지막 자리 · 손님 캐릭터 — 손님 캐릭터는 싱글플레이 슬롯과 따로 이 기록에만 있다 · 손님에게 보내는 세계 스냅샷에서는 뺀다). 빠졌던 동안 불러온 세계에서 바다 물고기 생성이 터졌다; sea 없는
   세이브는 `World.deserialize` 가 타일에서 다시 잰다. **생성 때 `this.X =` 로 만든 필드를 런타임이 읽으면 serialize 에도 넣을 것.**
@@ -524,8 +524,8 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   안 열리면 localStorage 로 떨어진다. 세이브를 읽고 쓰는 곳은 **전부 `SaveStore.put/get/remove/list`** 를 거친다 —
   localStorage 를 직접 만지면 IndexedDB 쪽과 어긋난다(설정 `SET_KEY` 만 localStorage). 저장은 비동기라 `saveGame()` 은
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
-- **v1.1.3 출시**(2026-10-04, 태그 `v1.1.3` — 결 그림 스킬 연출 · 불붙는 몹 · 떠 있는 몸 연출 · 깡충 토끼 · 캠프·마을 위 하늘 섬 정리, `docs/v1.1.3-changelog.md` · `.ko.md`). 표시 `v1.1.3` · `?v=258`.
-- **v1.1.2 출시**(2026-10-04, 태그 `v1.1.2` — 멀티플레이 · 앱으로 여는 판 · 몬스터 스킬 · 글꼴 Ashfall, 변경은 `docs/v1.1.2-changelog.md`(영어 · 릴리스 본문) · `.ko.md`).
+- **v1.1.3 출시**(2026-10-04, 태그 `v1.1.3` — 결 그림 스킬 연출 · 불붙는 몹 · 떠 있는 몸 연출 · 깡충 토끼 · 캠프·마을 위 하늘 섬 정리, `docs/update/v1.1.3-changelog.md` · `.ko.md`). 표시 `v1.1.3` · `?v=258`.
+- **v1.1.2 출시**(2026-10-04, 태그 `v1.1.2` — 멀티플레이 · 앱으로 여는 판 · 몬스터 스킬 · 글꼴 Ashfall, 변경은 `docs/update/v1.1.2-changelog.md`(영어 · 릴리스 본문) · `.ko.md`).
   웹과 내려받는 판이 같은 판이다. 다음 개발판을 웹에 먼저 올릴 때는 표시를 `v1.1.4-dev` 로 — 해시가 안 찍힌 판(로컬 · zip)은 `-dev` 일 때만 '개발판'이 붙는다.
   릴리스 워크플로는 macOS 앱을 macOS 러너에서 임시 서명(ad-hoc)한다 — 서명 없는 macOS 앱은 "손상됨 → 휴지통"으로 강제로 버려졌다(`tools/build-desktop.sh` 머리말). 앱 해시(`APP_HASHES`)는 릴리스의 `SHA256SUMS-App.txt` 에서.
 - **로고**(`tools/mklogo.py`): Cinzel Black(ASHFALL — 첫 A · 끝 L 을 1.22배 `BIG`) · Bold(CHRONICLES) 윤곽을 굽는다(글꼴 원본·OFL 전문 `tools/art/fonts/`) —
@@ -534,7 +534,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   탭 아이콘(파비콘)은 휘어 내려온 빛 꼬리를 끄는 별 하나(`favicon`). 로고 윤곽은 pathops 로 합쳐 칠한다(겹친 윤곽을 XOR 하면 획 안에 실금이 그어졌다). 로고를 고치면 `mkkeyart.py` 도 다시.
   사이트 상단 메뉴는 홈·다운로드 둘뿐이다(바로 플레이 링크 · 내려받기 네모 단추는 뺐다).
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 엔진화·모듈 분리·TS·다국어·모바일·Docker — 계획과 단계별 프롬프트는
-  [`docs/v1.1.1-engine-plan.md`](docs/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
+  [`docs/update/v1.1.1-engine-plan.md`](docs/update/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
   `World extends TileMap` · 번역 Claude/검수 Grok · 폰 가로+태블릿) / v1.1.1 뒤 몰아서 할 수정(계획서 §9-1 — 해·비·세이브 삭제 팝업·사이트 재구성·영어 화면 다시 찍기) /
   v1.1.2 엔진화 2차(게임 코드 안의 전역 — 세계 치수 `let` · 단일 `G`·`UI`·`Factory` 정리 · 게임 쪽 strict, 멀티플레이보다 먼저) · 폴더 이름 정리(src · game · examples/sample 이 헷갈리지 않게 — 산출물 커밋은 그대로, 엔진화 2차보다 먼저) · md 문서 전부 영어→한국어 순 · 멀티플레이 · 한글·영문 글꼴 · 무서명 Electron(§9-2) / v1.2.0 데코레이션. 엔진화 도중 게임플레이 개선은 넣어도 된다(따로 '바꾸는 커밋'). 멀티플레이는 지금 구조(전역 `G` 하나 +
-  브라우저 안 세이브 + 절차 생성 월드)와 정면으로 부딪히므로 구조 논의가 먼저다. → 설계 확정: `docs/v1.1.2-multiplayer-plan.md`(WebRTC P2P 호스트 권위 · 2~4명 · 세계 공유/캐릭터 각자 · PvP·채팅 호스트 토글).
+  브라우저 안 세이브 + 절차 생성 월드)와 정면으로 부딪히므로 구조 논의가 먼저다. → 설계 확정: `docs/update/v1.1.2-multiplayer-plan.md`(WebRTC P2P 호스트 권위 · 2~4명 · 세계 공유/캐릭터 각자 · PvP·채팅 호스트 토글).

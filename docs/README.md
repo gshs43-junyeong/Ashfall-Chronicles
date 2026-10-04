@@ -10,15 +10,16 @@
 |---|---|---|
 | [README](../README.md) · [README-ko](../README-ko.md) | 플레이어·기여자 | 게임 소개, 실행 방법, 조작, 저장, 저장소 구조 — 영어판이 먼저, 한국어판이 그 짝 |
 | [About 문구](about-copy.md) | 저장소·배포 담당자 | GitHub About과 소개 페이지에 바로 쓸 한국어·영어 문구 |
-| [v1.1 한눈에](v1.1-changelog.md#한눈에) | 플레이어·QA | v1.1 에 들어간 것을 여섯 줄로 |
+| [v1.1 한눈에](update/v1.1-changelog.md#한눈에) | 플레이어·QA | v1.1 에 들어간 것을 여섯 줄로 |
 | [세션과 이야기 공용 규약](story-and-sessions.md) | 콘텐츠 제작자 | 장·세션을 늘릴 때 반드시 확인할 표와 세이브·애셋 규칙 |
-| [v1.1 변경 사항](v1.1-changelog.md) | QA·릴리스 | 개발 중인 웹 빌드에 들어간 변경 기록 |
+| [v1.1 변경 사항](update/v1.1-changelog.md) | QA·릴리스 | 개발 중인 웹 빌드에 들어간 변경 기록 |
+| [update/](update/) | 플레이어·QA·릴리스 | **판마다의 변경 기록과 계획** — `v<판>-changelog.md`(영어, 릴리스 본문) · `.ko.md` · `v1.1.1-engine-plan.md` · `v1.1.2-multiplayer-plan.md` |
 
 ## 운영 문서
 
 - [system-requirements.md](system-requirements.md): 실행 환경과 기술적 전제
 - [deploy-cache.md](deploy-cache.md): 배포와 캐시 무효화 절차
-- [v1.1.1-engine-plan.md](v1.1.1-engine-plan.md): v1.1.1 엔진화·모듈 분리·TypeScript·다국어(6개)·모바일·Docker 계획과 단계별 작업 프롬프트
+- [update/v1.1.1-engine-plan.md](update/v1.1.1-engine-plan.md): v1.1.1 엔진화·모듈 분리·TypeScript·다국어(6개)·모바일·Docker 계획과 단계별 작업 프롬프트
 - [engine.md](engine.md): 엔진(`src/engine`) 공개 API · 원칙 · 엔진만으로 도는 예제 게임(`examples/sample`)
 - [debug-urls.md](debug-urls.md): 구역·기능 앞에서 바로 시작하는 디버그 주소(`?debug=village` · `factory` · `sea` …)와 옵션
 - [../NOTICE.md](../NOTICE.md): MIT 에서 빠지는 것(음악·효과음)과 사이트 글꼴
