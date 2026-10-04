@@ -30,9 +30,22 @@ GitHub 의 Description 칸은 **350자**까지 들어갑니다. 저장소의 기
 
 | 칸 | 넣을 것 |
 |---|---|
-| Website | `https://ashfall-chronicles.vercel.app/` |
+| Website | `https://ashfall-chronicles.vercel.app/` — GitHub About 의 Website 칸은 **주소 하나만** 받는다(대표 주소) |
+| 두 번째 주소 | `https://ashfall-chronicles.pages.dev/` — Description 끝에 붙이거나 README 첫 줄에(아래 2-1) |
 | Topics | 아래 목록 |
 | Releases · Packages · Deployments | Releases 만 켭니다(태그를 올리면 Actions 가 zip 을 붙입니다) |
+
+### 2-1. 사이트 두 개를 About 에 넣는 법
+
+GitHub 저장소 About 은 Website 칸이 **하나**뿐이라 두 주소를 둘 다 링크로 걸 수는 없다. 이렇게 나눈다:
+
+1. 저장소 첫 화면 오른쪽 **About** 옆 톱니(⚙) → **Website** 에 대표 주소 `https://ashfall-chronicles.vercel.app/`.
+2. 같은 창의 **Description** 끝에 두 번째 주소를 글로 붙인다(링크로는 안 바뀌지만 보이고 복사된다, 350자 안):
+   `… playable in the browser. Mirror: ashfall-chronicles.pages.dev`
+3. README 첫머리에는 둘 다 링크로 있다(▶ Vercel · Cloudflare) — About 아래 README 가 바로 보이므로 여기서 눌러 들어간다.
+4. (선택) 저장소 **Settings → General → Social preview** 그림은 그대로.
+
+대표 주소를 Cloudflare 로 바꾸고 싶으면 1 과 2 의 두 주소를 맞바꾸면 된다.
 
 Topics (GitHub 은 소문자·하이픈만 받습니다):
 
