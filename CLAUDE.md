@@ -300,7 +300,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 
 - **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255 · v1.1.1 = 256 · v1.1.2 = 257 · v1.1.3 = 258). zip 을 낼 때
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
-- **웹에서 `/play/assets/*` 그림은 1년 immutable 캐시다**(vercel.json · `_headers`) — index.html 이 부르는 그림(로고 · 파비콘)에는 반드시 `?v=` 를 단다(배포 때 커밋 해시로 찍힌다). 빠뜨리면 그림을 바꿔도 브라우저가 옛것을 계속 쓴다(타이틀 로고가 그랬다). CSS 의 `url()` 그림은 내용 해시 `?v=<md5 앞 8자>` — 그림을 바꾸면 같이 고칠 것.
+- **웹에서 `/play/assets/*` 그림은 1년 immutable 캐시다**(vercel.json · `_headers`) — index.html 이 부르는 그림(로고 · 파비콘)과 사이트 HTML 의 `../play/assets/` 그림(마을 사람 초상 따위 · 사이트 스크립트는 제 `?v=` 를 물려준다)에는 반드시 `?v=` 를 단다(배포 때 커밋 해시로 찍힌다). 빠뜨리면 그림을 바꿔도 브라우저가 옛것을 계속 쓴다(타이틀 로고가 그랬다). CSS 의 `url()` 그림은 내용 해시 `?v=<md5 앞 8자>` — 그림을 바꾸면 같이 고칠 것.
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
   PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.
 - 사이트는 Vercel(`vercel.json`) · Cloudflare Pages(`site/_redirects` · `site/_headers` · `.github/workflows/pages-cf.yml` — **main 푸시마다 자동 배포** `ashfall-chronicles.pages.dev`, 2026-10-04 연동) · Docker(`docker/nginx-site.conf`) 셋이 같은 규칙을 따로 든다 — 하나를 고치면 셋 다(docs/deploy-cache.md).

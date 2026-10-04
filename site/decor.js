@@ -2,6 +2,8 @@
    자리는 절 id 에서 뽑은 씨앗으로 정해 새로고침해도 같다. 그림이 없으면(빌드 전) 조용히 빠진다. */
 (function () {
   'use strict';
+  /* 판 번호 — /play/assets/ 는 1년 immutable 캐시라 안 붙이면 옛 그림이 남는다(content.js 와 같은 방식) */
+  var VER = (document.currentScript && document.currentScript.src.split('?')[1]) || '';
   function rng(seed) {
     var h = 2166136261;
     for (var i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -15,7 +17,7 @@
     layer.setAttribute('aria-hidden', 'true');
     names.forEach(function (n, i) {
       var img = document.createElement('img');
-      img.src = '../play/assets/item/' + n + '.png';
+      img.src = '../play/assets/item/' + n + '.png' + (VER ? '?' + VER : '');
       img.alt = '';
       img.onerror = function () { img.remove(); };
       var size = 28 + Math.floor(r() * 3) * 12;                  // 28 · 40 · 52px — 원본 32px 를 정수배 가깝게
