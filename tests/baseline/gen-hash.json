@@ -2,55 +2,55 @@
   "d1:s": {
     "ww": 5000,
     "wh": 720,
-    "tiles": "287f0894",
-    "walls": "e2c1f0a6",
-    "objects": "35b2b0e1",
-    "nObjects": 398,
+    "tiles": "cc53d72a",
+    "walls": "33955309",
+    "objects": "90e7874b",
+    "nObjects": 399,
     "ruins": 10
   },
   "d3:s": {
     "ww": 5000,
     "wh": 720,
-    "tiles": "9aa2c082",
-    "walls": "927e76d9",
-    "objects": "e8d19c7e",
-    "nObjects": 413,
+    "tiles": "50fb7284",
+    "walls": "c6af0fa3",
+    "objects": "13001dc3",
+    "nObjects": 422,
     "ruins": 10
   },
   "d1:m": {
     "ww": 7500,
     "wh": 1080,
-    "tiles": "ee4c14ac",
-    "walls": "511aa6eb",
-    "objects": "ec03f7b6",
+    "tiles": "886d184f",
+    "walls": "b6ed2cb8",
+    "objects": "97ddbbac",
     "nObjects": 649,
     "ruins": 10
   },
   "d3:m": {
     "ww": 7500,
     "wh": 1080,
-    "tiles": "3d0fa202",
-    "walls": "ef8b4deb",
-    "objects": "178ceba2",
-    "nObjects": 635,
+    "tiles": "66dcb997",
+    "walls": "71c4e2b0",
+    "objects": "1467637c",
+    "nObjects": 642,
     "ruins": 10
   },
   "d1:l": {
     "ww": 10000,
     "wh": 1440,
-    "tiles": "b1ac1260",
-    "walls": "fa1a03f1",
-    "objects": "c089556f",
-    "nObjects": 957,
+    "tiles": "ecbf33c0",
+    "walls": "a1bfdbce",
+    "objects": "be781cb0",
+    "nObjects": 964,
     "ruins": 10
   },
   "d3:l": {
     "ww": 10000,
     "wh": 1440,
-    "tiles": "0e0268fa",
-    "walls": "813b1786",
-    "objects": "c2b43021",
-    "nObjects": 971,
+    "tiles": "61a70403",
+    "walls": "ec609ef1",
+    "objects": "b1ccb633",
+    "nObjects": 961,
     "ruins": 10
   }
 }

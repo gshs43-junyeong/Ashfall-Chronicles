@@ -203,6 +203,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
           if (open) this.set(x, y, T.AIR);
         }
       for (let x = r.x + 1; x < x1; x++) this.set(x, y1 - 1, floor);
+      if (cfg.worn && !r.cell) this._wearRoom(r, wall, keepY);
     }
     // 5) 맞닿은 방끼리 잇는다
     for (let i = 0; i < leaves.length; i++)
@@ -231,6 +232,37 @@ export const WorldDungeon: Bag & ThisType<World> = {
     // 6) 그래도 못 들어가는 방이 남으면 직접 굴을 뚫는다.
     this._ensureConnected(x0, y0, w, h, leaves);
     return leaves;
+  },
+
+  /** 유적 방을 낡게 — 천장 들쭉날쭉 · 무너진 모서리 · 방마다 한 가지 특색.
+      ★ 난수를 뽑지 않는다(칸 해시) — 뒤따르는 생성이 밀리지 않게. 머리 위(keepY-2 위)만 바꾼다. */
+  _wearRoom(r: Bag, wall: number, keepY: number) {
+    const hs = (a: number, b: number) => { let v = (a * 374761393 + b * 668265263) | 0; v = (v ^ (v >>> 13)) * 1274126177; return ((v ^ (v >>> 16)) >>> 0); };
+    const x1 = r.x + r.w - 1, lim = keepY - 2;
+    const fill = (x: number, y: number) => { if (y <= lim && y > r.y && x > r.x && x < x1) this.set(x, y, wall); };
+    let d = hs(r.x, r.y) % 2;
+    for (let x = r.x + 1; x < x1; x++) {                    // 천장 — 이웃 칸과 한 칸 넘게 안 벌어진다
+      const t = hs(r.x * 7 + ((x - r.x) / 3 | 0), r.y) % 3;     // 세 칸씩 묶어야 톱니로 안 보인다
+      d = Math.max(0, Math.min(2, t > d ? d + 1 : t < d ? d - 1 : d));
+      for (let y = r.y + 1; y <= r.y + d; y++) fill(x, y);
+    }
+    const s0 = 2 + hs(r.x, r.h) % 3, s1 = 2 + hs(x1, r.w) % 3;      // 무너진 위 모서리
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
+      if (i + j < s0) fill(r.x + 1 + i, r.y + 1 + j);
+      if (i + j < s1) fill(x1 - 1 - i, r.y + 1 + j);
+    }
+    if (r.w < 12) return;
+    const k = hs(r.x + r.w, r.y + r.h) % 4;
+    if (k <= 1) {                                            // 부서져 매달린 기둥 (0 하나 · 1 둘)
+      const xs = k ? [r.x + (r.w / 3 | 0), x1 - (r.w / 3 | 0)] : [r.x + (r.w >> 1) + (hs(r.y, r.x) % 5) - 2];
+      for (const px of xs) {
+        const len = lim - r.y - (hs(px, r.y) % 2);
+        for (let y = r.y + 1; y < r.y + len; y++) { fill(px, y); if (y < r.y + len - 1) fill(px + 1, y); }
+      }
+    } else if (k === 2 && lim - r.y >= 5) {                  // 한쪽 벽에 남은 회랑 발판
+      const left = hs(r.w, r.h) % 2 === 0, n = Math.max(3, r.w / 3 | 0);
+      for (let i = 0; i < n; i++) { const x = left ? r.x + 1 + i : x1 - 1 - i; if (this.get(x, lim) === T.AIR) this.set(x, lim, T.PLATFORM); }
+    }
   },
 
   /** 방 하나에서 걸어 닿을 수 있는 칸을 모아 온다 */

@@ -186,8 +186,8 @@ export const WorldRuins: Bag & ThisType<World> = {
     col(x, f);
 
     /* 층계참 — 복도 높이 그대로 가던 쪽으로 붙는 네모난 방. */
-    const landing = () => {
-      const rw = rng.int(7, 11), rh = rng.int(5, 6);
+    const landing = (big = false) => {
+      const rw = big ? rng.int(13, 16) : rng.int(7, 11), rh = big ? rng.int(7, 8) : rng.int(5, 6);
       const ax = dir > 0 ? x + 1 : x - rw;                    // 방 안쪽 왼쪽 끝
       const top = f - rh + 1;
       for (let xx = ax - 1; xx <= ax + rw; xx++) {
@@ -203,7 +203,7 @@ export const WorldRuins: Bag & ThisType<World> = {
       const pool = traps.filter((t: any) => t !== 'dart' && t !== 'grind').concat(['crumble', 'vent', 'gas']);
       for (let i = pool.length - 1; i > 0; i--) { const j = rng.int(0, i); const t2 = pool[i]; pool[i] = pool[j]; pool[j] = t2; }
       let placed = 0; const used: Bag = {};
-      const want = rng.int(2, 3);
+      const want = big ? 1 : rng.int(2, 3);
       for (const tk of pool) {
         if (placed >= want) break;
         if (used[tk]) continue;
@@ -213,8 +213,15 @@ export const WorldRuins: Bag & ThisType<World> = {
       if (kind === 'nofoothold' && rng.chance(0.6)) this.set(ax + rng.int(1, rw - 2), f, T.SPIKE);
       this.putDecor(ax, top + 1, spec.torch || T.TORCH, 'wall');
       if (rh >= 6) this.putDecor(ax + rw - 1, top + 1, T.BANNER, 'wall');
-      if (rng.chance(0.25)) this.objects.push({ type: 'chest', tier: 1,
+      if (big || rng.chance(0.25)) this.objects.push({ type: 'chest', tier: big ? 2 : 1,
         x: (ax + (rw >> 1)) * TS, y: (f - 0.2) * TS, w: 30, h: 26, items: null });
+      if (big) {                                              // 중간방 — 쉬어 가는 곳답게 횃불 둘 · 부서진 기둥 · 발판
+        this.putDecor(ax + rw - 1, top + 1, spec.torch || T.TORCH, 'wall');
+        const px = ax + (rw >> 1) + (rng.chance(0.5) ? -3 : 3);
+        for (let y = top; y <= top + rh - 5; y++) this.set(px, y, wall);
+        const lx = dir > 0 ? ax : ax + rw - 4;
+        for (let i = 0; i < 4; i++) this.set(lx + i, f - 3, T.PLATFORM);
+      }
       x = dir > 0 ? ax + rw - 1 : ax;                         // 다음 마디는 반대쪽 벽을 뚫고 나간다
     };
 
@@ -244,7 +251,9 @@ export const WorldRuins: Bag & ThisType<World> = {
       col(xw, f);                                             // 나가는 문 — 같은 벽의 아래쪽
     };
 
-    let lastSeg = 'start', lastRoom = f, guard = 0;
+    let lastSeg = 'start', lastRoom = f, guard = 0, midDone = false;
+    // 계단 입구는 깊이의 4할쯤에 넓은 중간방을 하나 둔다
+    const depth = (o.ruin ? o.ruin.y0 : yBot) - sy;
     if (o.vestibule) { for (let i = 0; i < o.vestibule && !stop; i++) step(0); lastSeg = 'hall'; }
     /** yT 줄까지 부품을 이어 내려간다. */
     const run = (yT: any) => {
@@ -253,6 +262,9 @@ export const WorldRuins: Bag & ThisType<World> = {
         const rem = yT - f;
         // 옆으로 갈 자리가 모자라면 계단실에서 되돌아 꺾는다(오르막 바로 뒤에는 꺾지 않는다)
         if (ahead() < 14 && rem > 13 && lastSeg !== 'rise') { well(); lastSeg = 'well'; lastRoom = f; continue; }
+        if (!midDone && depth >= 24 && f - sy >= depth * 0.4 && ahead() >= 20 && lastSeg !== 'well' && rem > 4) {
+          landing(true); midDone = true; lastSeg = 'landing'; lastRoom = f; continue;
+        }
         /* 층계참은 한 다리 **중간**에도 선다. */
         if (f - lastRoom >= 8 && ahead() >= 22 && lastSeg !== 'landing' && lastSeg !== 'well' && rem > 4) {
           landing(); lastSeg = 'landing'; lastRoom = f; continue;
