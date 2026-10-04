@@ -41,20 +41,26 @@ export const TilePaintCave: Bag = {
     }
   },
   dripstone(H: TilePaintKit) {
-    const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
-    { {           // 종유석(위에 붙어 아래로) · 석순(바닥에서 위로) — 층이 진 원뿔
-        const up = !!s.up;
-        for (let y = 0; y < TS; y++) {
-          const t = up ? (TS - y) / TS : (y + 1) / TS;           // 0(붙은 쪽) → 1(끝)
-          const w = Math.max(1.2, (TS - 4) * (1 - t * 0.86));
-          const col = (y % 5 === 0) ? dk : (y % 5 === 2 ? lt : base);
-          R(TS / 2 - w / 2, y, w, 1, col);
-          R(TS / 2 - w / 2, y, Math.max(1, w * .25), 1, lt2);    // 한쪽에 비치는 빛
-        }
-        if (!up) R(TS / 2 - .5, TS - 2, 1, 2, '#9fd0e8');        // 끝에 맺힌 물방울
-        return;
+    const { s, v, R, base, dk, dk2, lt, lt2 } = H;
+    // ★ 공유 난수(rng)를 뽑지 않는다 — 뒤 타일들 그림이 통째로 밀린다. 모양 갈래는 변형 번호로.
+    // 종유석(위에 붙어 아래로) · 석순(바닥에서 위로) — 붙은 쪽이 퍼지고 몸은 불룩불룩 · 살짝 휜다(가방 그림 · 한 칸짜리)
+    const up = !!s.up, ice = s.c === '#bfe6f5', ember = s.c === '#4a3c38' || s.c === '#40342f';
+    const pal = [dk2, dk, base, lt, lt2], ph = v * 1.9 + 0.7, R0 = (TS - 2) / 2;
+    for (let y = 0; y < TS; y++) {
+      const yy = up ? TS - 1 - y : y, t = (yy + 0.5) / TS;
+      let r = up ? R0 * (1 - Math.pow(t, 1.7)) * 0.95 + 0.6 : R0 * 0.9 * Math.pow(1 - t, 1.25) + 0.35;
+      if (!ice) r += Math.sin(t * Math.PI * 2.4 + ph) * (1 - t) * 1.3;
+      if (yy < 3) r = Math.max(r, TS / 2 - yy * 0.8);
+      if (r < 0.45) continue;
+      const cx = TS / 2 + Math.sin(t * 2.6 + ph) * 1.4 * t;
+      for (let x = Math.max(0, Math.round(cx - r)); x <= Math.min(TS - 1, Math.round(cx + r) - 1); x++) {
+        const u = (x + 0.5 - cx) / Math.max(1, r);
+        const k = 2.6 - u * 1.35 - (Math.abs(u) > 0.78 ? 0.9 : 0) - (!ice && yy % 7 === 0 ? 0.8 : 0);
+        R(x, y, 1, 1, pal[Math.max(0, Math.min(4, Math.round(k)))]);
+        if (ember && Math.abs(u) < 0.35 && (yy * 7 + x * 3) % 13 < 2) R(x, y, 1, 1, t > 0.55 ? '#ffb05a' : '#c8401a');
       }
     }
+    if (!up) R(TS / 2 - .5, TS - 2, 1, 2, ember ? '#ff8a3a' : ice ? '#e8f8ff' : '#9fd0e8');   // 끝에 맺힌 물방울 · 불씨
   },
   geode(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;

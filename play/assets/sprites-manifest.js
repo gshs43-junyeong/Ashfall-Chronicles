@@ -1094,7 +1094,16 @@ window.SPRITE_MANIFEST = {
         "frameH": 40,
         "count": 7,
         "foot": 2.25,
-        "side": 1
+        "side": 1,
+        "feet": [
+          0,
+          1,
+          -2,
+          -2,
+          0,
+          3,
+          1
+        ]
       },
       "arctic_hare": {
         "file": "char/arctic_hare.png",
@@ -1102,7 +1111,16 @@ window.SPRITE_MANIFEST = {
         "frameH": 40,
         "count": 7,
         "foot": 2.25,
-        "side": 1
+        "side": 1,
+        "feet": [
+          0,
+          1,
+          0,
+          -3,
+          0,
+          3,
+          1
+        ]
       },
       "sand_lizard": {
         "file": "char/sand_lizard.png",

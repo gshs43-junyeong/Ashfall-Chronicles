@@ -69,7 +69,7 @@ export const RenderActorsPart: Bag = {
     if (e.atkPose > 0) return 4;
     /* 말랑한 몹(ENEMIES squish)은 공중에서 걷기 두 장을 번갈아 돌리면 떨어뜨린 상자처럼 보였다 — 오를 땐 늘어난 장, 내릴 땐 둥근 장. */
     if (e.def.squish && !e.onGround) return e.vy < 0 ? 2 : 0;
-    if (e.def.hop) return !e.onGround ? 3 : Math.abs(e.vx) > 6 ? 2 : Math.floor(this.time * 2.4) % 2;   // 깡충 — 뻗은 장은 공중만
+    if (e.def.hop) return !e.onGround ? 3 : Math.abs(e.vx) > 6 ? 2 : 0;   // 깡충 — 뻗은 장은 공중만, 서 있을 땐 한 장(웅크림과 번갈면 들썩였다)
     if (Math.abs(e.vx) > 6) return 2 + (Math.floor(this.time * 7) % 2);
     return Math.floor(this.time * 2.4) % 2;
   },
@@ -218,7 +218,11 @@ export const RenderActorsPart: Bag = {
       (Sprites.meta.characters.sheets[key] || Sprites.meta.bosses.sheets[key]);
     // Sprites.footInset가 실측한 여백이라 그만큼 덜 밀어 올린다.
     /* ★ max(0, …) 를 쓰면 안 된다. */
-    const dy = meta ? meta.frameH - e.h - (Sprites.footInset[key] || 0) - (e.def.hop && !e.onGround ? 3 : 0) : 0;   // 깡충 장은 발이 3px 높다
+    /* 장마다 발 높이가 다른 시트(매니페스트 feet — 0번 장 기준 발끝 차이 px)는 그만큼 내려 발을 한 줄에 맞춘다.
+       토끼는 웅크린 장이 1px 낮고 뻗은 장이 2~3px 높아, 장이 바뀔 때마다 제자리에서 둠칫거렸다. */
+    const m0 = meta && (Sprites.meta.characters.sheets[key0] || Sprites.meta.bosses.sheets[key0]);
+    const feet = m0 && m0.feet ? m0.feet[this.enemyFrame(e)] || 0 : 0;
+    const dy = meta ? meta.frameH - e.h - (Sprites.footInset[key] || 0) + feet : 0;
     /* ★ 가로는 **프레임이 아니라 그림**을 가운데 맞춘다. */
     const side = meta ? (Sprites.sideInset[key] || 0) * (e.facing < 0 ? -1 : 1) : 0;
     const dx = meta ? (e.w - meta.frameW) / 2 - side : 0;
