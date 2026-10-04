@@ -327,7 +327,7 @@ html:lang(zh-Hans) body,html:lang(zh-Hans) h1,html:lang(zh-Hans) h2,html:lang(zh
 .stop-shot img{width:100%;height:auto;display:block;}
 .stop-talk{display:flex;flex-direction:column;gap:14px;}
 .who{display:flex;align-items:center;gap:14px;}
-.who img{width:72px;height:72px;border:1px solid var(--line);background:var(--soot-2);flex:none;}
+.who img{width:64px;height:64px;border:1px solid var(--line);background:var(--soot-2);flex:none;image-rendering:pixelated;}   /* 초상 128px(64칸 2배) — 64px 로 칸 하나 = 1px, 72 처럼 정수배가 아니면 칸 굵기가 들쭉날쭉 */
 .who p{display:flex;flex-direction:column;line-height:1.35;}
 .who b{font-family:Hahmlet,serif;font-size:1.08rem;}
 .who span{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.08em;color:var(--star);}
