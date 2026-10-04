@@ -122,6 +122,13 @@ export const CavesPart: Bag = {
     if (this.quake) this.updateQuake(dt);
     if (this.meteor) this.updateMeteor(dt);
     const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
+    // 지옥 — 불티가 아래에서 피어올라 떠돈다(경계 위 40칸부터 점점 짙게)
+    const hk = clamp((ty - (dimsOf(w).HELL_Y - 40)) / 40, 0, 1);
+    if (hk > 0 && Math.random() < dt * 9 * hk) {
+      const ex = p.cx + (Math.random() - 0.5) * this.W / (this.viewZoom || 1), ey = p.cy + (0.2 + Math.random() * 0.4) * this.H / (this.viewZoom || 1);
+      if (!w.solid(Math.floor(ex / TS), Math.floor(ey / TS)))
+        this.parts.push(new Part(ex, ey, Math.random() < 0.3 ? '#ffc070' : '#ff6a2a', -50, 1.6, { spd: 0.12, g: -0.06, r: 0.45, glow: 1, drag: 0.995 }));
+    }
     this._caveT = (this._caveT || 0) - dt;
     if (this._caveT > 0) return;
     this._caveT = 0.35;
@@ -192,7 +199,7 @@ export const CavesPart: Bag = {
   dropHung(x: number, y: number) {
     const w = this.world, t = w.get(x, y);
     w.set(x, y, LEAVE_OF[t] || T.AIR);
-    if (t === T.STALACTITE || t === T.ICICLE) {
+    if (t === T.STALACTITE || t === T.ICICLE || t === T.EMBERDRIP) {
       const p = this.player;
       this.rocks.push({ x: (x + .5) * TS, y: (y + .5) * TS, vy: 0, t: 0.12, dmg: 14 + (p ? p.level * 0.9 : 0), kind: t === T.ICICLE ? 'ice' : 'drip', drop: t });
       return;

@@ -2408,7 +2408,10 @@
     M_SPRINKLER: 198,
     /* --- 얼음 동굴의 고드름 · 이끼 굴에 늘어진 발광 잎 --- */
     ICICLE: 199,
-    GLOWFROND: 200
+    GLOWFROND: 200,
+    /* --- 지옥 — 현무암 종유석 · 석순(끝에 불씨) --- */
+    EMBERDRIP: 201,
+    EMBERSPIRE: 202
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -2721,7 +2724,9 @@
     { n: "심층 드릴", c: "#3a6a8a", solid: 1, hard: 5, drop: "m_drill_x", mach: "drill_x" },
     { n: "스프링클러", c: "#6a8aa8", solid: 1, hard: 2, drop: "m_sprinkler", mach: "sprinkler" },
     { n: "고드름", c: "#bfe6f5", solid: 0, hard: 1, drop: "ice_shard", a: 1 },
-    { n: "발광 잎", c: "#7fe8c8", solid: 0, hard: 0, drop: "cave_moss", a: 1 }
+    { n: "발광 잎", c: "#7fe8c8", solid: 0, hard: 0, drop: "cave_moss", a: 1 },
+    { n: "현무 종유석", c: "#4a3c38", solid: 0, hard: 1, drop: "ash", a: 1 },
+    { n: "현무 석순", c: "#40342f", solid: 0, hard: 1, drop: "ash", a: 1 }
   ];
   var FARM_WET_R = 5, FARM_WET_DAYS = 3;
   var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
@@ -3521,6 +3526,8 @@
     deco_stalactite: { n: "종유석", i: "🪨", type: "block", tile: T.STALACTITE, stack: 999, deco: 1 },
     deco_icicle: { n: "고드름", i: "🧊", type: "block", tile: T.ICICLE, stack: 999, deco: 1 },
     deco_glowfrond: { n: "발광 잎", i: "🌿", type: "block", tile: T.GLOWFROND, stack: 999, deco: 1 },
+    deco_emberdrip: { n: "현무 종유석", i: "🪨", type: "block", tile: T.EMBERDRIP, stack: 999, deco: 1 },
+    deco_emberspire: { n: "현무 석순", i: "🪨", type: "block", tile: T.EMBERSPIRE, stack: 999, deco: 1 },
     deco_stalagmite: { n: "석순", i: "🪨", type: "block", tile: T.STALAGMITE, stack: 999, deco: 1 },
     deco_geode: { n: "수정 무리", i: "💎", type: "block", tile: T.GEODE, stack: 999, deco: 1 },
     deco_mossstone: { n: "이끼 낀 바위", i: "🪨", type: "block", tile: T.MOSSSTONE, stack: 999, deco: 1 },
@@ -7642,7 +7649,7 @@
     put("plant", "LEAF CORRUPTLEAF SKYLEAF JUNGLELEAF GLOWLEAF PINELEAF VINE WEED FLOWER ORCHID FERN LILY MUSHROOM GLOWCAP GLOWMOSS CACTUS CACTUS_BLOCK JUNGLEGRASS SPOREVENT HYPHAE WHEAT0 WHEAT1 WHEAT2 WHEAT3 ROOT0 ROOT1 ROOT2 ROOT3 CAP0 CAP1 CAP2 CAP3 BEAN0 BEAN1 BEAN2 BEAN3 BLOOM0 BLOOM1 BLOOM2 BLOOM3 HERB0 HERB1 HERB2 HERB3 POD0 POD1 POD2 POD3");
     put("metal", "COPPER IRON GOLD MYTHRIL LEAD STEELPLATE CONDUIT SLAGSTEEL ORBITPLATE SPIKE SPARKCOIL GRINDER DART_L DART_R LAMPPOST MINELAMP TOOLPILE M_BELT M_DRILL M_DRILL_E M_PUMP M_SMELTER M_PRESS M_REFINERY M_ASSEMBLER M_CRATE M_GEN M_BATTERY M_POLE M_SORTER M_TURRET M_TRAP M_SWITCH M_WINDMILL M_MILL M_OVEN M_DART M_FLAME M_FROST M_DRILL_X");
     put("glass", "CRYSTAL AETHER POWERSTONE SOULSTONE COREGLASS DRAFTGLASS ORBITCORE WINDOW");
-    put("ember", "LAVA HELLSTONE FLAMEVENT");
+    put("ember", "LAVA HELLSTONE FLAMEVENT EMBERDRIP EMBERSPIRE");
     put("bone", "BONEHEAP");
     put("stone", "MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE");
     put("plant", "HANGMOSS GLOWFROND");
@@ -7701,7 +7708,9 @@
     HERB3: [1.6, "#bfe8ff"],
     SULFUR: [1.4, "#e8d04a"],
     STARCRYSTAL: [7.2, "#ffe6a8"],
-    METEORITE: [1.2, "#ff7a3a"]
+    METEORITE: [1.2, "#ff7a3a"],
+    EMBERDRIP: [1.1, "#ff6a2a"],
+    EMBERSPIRE: [1.05, "#ff6a2a"]
   };
   {
     const seen = {};
@@ -7746,10 +7755,11 @@
       "TOOLPILE",
       "SEASHELL",
       "CATTAIL",
-      "PEBBLES"
+      "PEBBLES",
+      "EMBERSPIRE"
     ]) m[T[k]] = "floor";
     m[T.PONDWEED] = "water";
-    for (const k of ["STALACTITE", "HANGMOSS", "VINE", "HYPHAE", "MINELAMP", "ICEBANNER", "ICICLE", "GLOWFROND"]) m[T[k]] = "ceil";
+    for (const k of ["STALACTITE", "HANGMOSS", "VINE", "HYPHAE", "MINELAMP", "ICEBANNER", "ICICLE", "GLOWFROND", "EMBERDRIP"]) m[T[k]] = "ceil";
     return m;
   })();
   var DECO_OF = (() => {
@@ -8466,7 +8476,7 @@
       id: "ice",
       n: "얼음 던전",
       x: 180 + SHIFT,
-      y: 150,
+      y: 128,
       w: 88,
       h: 50,
       wall: T.ICEBRICK,
@@ -8510,7 +8520,7 @@
       id: "mine",
       n: "버려진 광산",
       x: 820 + SHIFT,
-      y: 168,
+      y: 186,
       w: 84,
       h: 44,
       wall: T.MINEWOOD,
@@ -8532,7 +8542,7 @@
       id: "blight",
       n: "부패한 둥지",
       x: 4020 + SHIFT,
-      y: 196,
+      y: 216,
       w: 100,
       h: 60,
       wall: T.EBONSTONE,
@@ -8554,7 +8564,7 @@
       id: "spore",
       n: "포자 굴",
       x: 3620 + SHIFT,
-      y: 176,
+      y: 156,
       w: 100,
       h: 52,
       wall: T.SPORESTONE,
@@ -14165,18 +14175,19 @@
         const soilD = 4 + Math.round(n12(x + 3100, 0.09) * 3);
         const subD = 15 + Math.round(n12(x + 5200, 0.07) * 8);
         const L = MAT_LAYER[m];
+        const hb = HELL_Y2 - 4 + Math.round(n12(x + 7700, 0.05) * 5);
         for (let y = s; y < WORLD_BOT2; y++) {
           let t;
           const depth = y - s;
           if (y >= WORLD_BOT2 - 4) t = T.BEDROCK;
-          else if (y >= HELL_Y2) t = T.ASH;
+          else if (y >= hb || y >= hb - 6 && (x * 73 + y * 151) % 7 < y - hb + 7 - 3) t = T.ASH;
           else if (depth === 0) t = L.top;
           else if (depth < soilD) t = L.soil;
           else if (depth < subD) t = L.sub;
           else t = L.deep;
           if (y > DEEP_Y2 && t === T.STONE && n3(x, y, 0.06, 2) > 0.72) t = T.OBSIDIAN;
           this.tiles[this.i(x, y)] = t;
-          this.walls[this.i(x, y)] = y >= HELL_Y2 ? 7 : depth < subD - 3 ? L.wall : L.subWall;
+          this.walls[this.i(x, y)] = t === T.ASH && y >= hb - 6 ? 7 : depth < subD - 3 ? L.wall : L.subWall;
         }
       }
       for (let x = 1; x < WW2 - 1; x++) {
@@ -14314,6 +14325,7 @@
       this.buildRuinCaches(rng);
       this.floodCaves(rng);
       this.floodHell(rng);
+      this.decorateHell();
       this.buildJungleFalls(rng);
       this.buildCaveZones(rng);
       this.scatterChests(rng);
@@ -18435,9 +18447,9 @@
       this.ruinSites = [];
       this._walkJobs = [];
       const spots = [
-        { x: SX2(520 + SHIFT), y: SY2(220), trap: 0.52, spike: 0.24, chest: 0.56, w: 84, h: 44, tier: 2, traps: ["dart", "crumble"], entryKind: "foothold" },
-        { x: SX2(1700 + SHIFT), y: SY2(252), trap: 0.72, spike: 0.38, chest: 0.6, w: 68, h: 40, tier: 3, traps: ["dart", "crumble", "vent"], entryKind: "maze" },
-        { x: SX2(3860 + SHIFT), y: SY2(236), trap: 0.9, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ["dart", "vent", "crumble"], entryKind: "nofoothold" }
+        { x: SX2(520 + SHIFT), y: SY2(200), trap: 0.52, spike: 0.24, chest: 0.56, w: 84, h: 44, tier: 2, traps: ["dart", "crumble"], entryKind: "foothold" },
+        { x: SX2(1700 + SHIFT), y: SY2(256), trap: 0.72, spike: 0.38, chest: 0.6, w: 68, h: 40, tier: 3, traps: ["dart", "crumble", "vent"], entryKind: "maze" },
+        { x: SX2(3860 + SHIFT), y: SY2(240), trap: 0.9, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ["dart", "vent", "crumble"], entryKind: "nofoothold" }
       ];
       spots.forEach((sp, i) => {
         const cx = sp.x, cy = sp.y, w = sp.w, h = sp.h;
@@ -19090,6 +19102,32 @@
       const dc = this.dawnCity;
       if (dc && tx >= dc.x0 - 24 && tx <= dc.x1 + 24) return true;
       return false;
+    },
+    /** 지옥 꾸미기 — 현무암 종유석 · 석순(끝에 불씨), 용암 둘레는 녹아 굳은 돌.
+        ★ 제 난수(seed+'_hell')만 쓴다 — 본 난수를 뽑으면 뒤따르는 생성이 씨앗마다 바뀐다. 유적·잠긴 칸은 건드리지 않는다. */
+    decorateHell() {
+      const { WW: WW2, WORLD_BOT: WORLD_BOT2, HELL_Y: HELL_Y2, SEA_X1: SEA_X12 } = this.dims;
+      const r = new RNG(this.seed + "_hell");
+      const rock = (t) => t === T.ASH || t === T.HELLSTONE || t === T.OBSIDIAN || t === T.STONE;
+      const free = (x, y) => this.get(x, y) === T.AIR && !this.ruinAt(x, y);
+      for (let x = 2; x < WW2 - 2; x++) {
+        if (inSeaZone(x, SEA_X12)) continue;
+        for (let y = HELL_Y2 - 4; y < WORLD_BOT2 - 6; y++) {
+          const t = this.get(x, y);
+          if (t === T.ASH && !this.ruinAt(x, y)) {
+            if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => this.get(x + dx, y + dy) === T.LAVA) && r.chance(0.6)) this.set(x, y, T.FUSEDROCK);
+            continue;
+          }
+          if (!free(x, y)) continue;
+          if (rock(this.get(x, y - 1)) && r.chance(0.07)) {
+            const n = r.chance(0.25) ? r.int(3, 4) : r.int(1, 2);
+            for (let i = 0; i < n && free(x, y + i) && free(x, y + i + 1) && free(x, y + i + 2); i++) this.set(x, y + i, T.EMBERDRIP);
+          } else if (rock(this.get(x, y + 1)) && free(x, y - 1) && r.chance(0.05)) {
+            this.set(x, y, T.EMBERSPIRE);
+            if (r.chance(0.35) && free(x, y - 2)) this.set(x, y - 1, T.EMBERSPIRE);
+          }
+        }
+      }
     }
   };
   mixin(World.prototype, WorldCaves, true);
@@ -20200,6 +20238,8 @@
   ART[T.ICICLE] = { k: "dripstone", c: "#bfe6f5", a: 1, up: 0 };
   ART[T.GLOWFROND] = { k: "hangmoss", c: "#7fe8c8", a: 1 };
   ART[T.STALAGMITE] = { k: "dripstone", c: "#8a8478", a: 1, up: 1 };
+  ART[T.EMBERDRIP] = { k: "dripstone", c: "#4a3c38", a: 1, up: 0 };
+  ART[T.EMBERSPIRE] = { k: "dripstone", c: "#40342f", a: 1, up: 1 };
   ART[T.GEODE] = { k: "geode", c: "#a88fe8", a: 1, glow: 1 };
   ART[T.FAULTSTONE] = { k: "fault", c: "#5f5e62" };
   ART[T.LIMESTONE] = { k: "strata", c: "#9a9486" };
@@ -20236,7 +20276,7 @@
   var BODY_ONLY = {};
   var CONN = {};
   for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS, T.SNOW, T.ICE]) BODY_ONLY[id] = 1;
-  for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.ICICLE, T.GLOWFROND, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
+  for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.ICICLE, T.EMBERDRIP, T.EMBERSPIRE, T.GLOWFROND, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
   var TILE_PAINT = {};
   var TileArt = {
     /* 타일마다 아틀라스에 미리 그려 두는 칸 수. */
@@ -20531,7 +20571,7 @@
     _connDraws() {
       const mossOf = (w, tx) => this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, w.dims.WW - 1)).id] || "#6f9a4a");
       const drip = (c, w, id, tx, ty, sx, sy) => {
-        const up = id === T.STALAGMITE;
+        const up = id === T.STALAGMITE || id === T.EMBERSPIRE;
         let i = 0, n = 1;
         if (!up) {
           while (i < 6 && w.get(tx, ty - i - 1) === id) i++;
@@ -20639,7 +20679,9 @@
         },
         [T.STALACTITE]: drip,
         [T.STALAGMITE]: drip,
-        [T.ICICLE]: drip
+        [T.ICICLE]: drip,
+        [T.EMBERDRIP]: drip,
+        [T.EMBERSPIRE]: drip
       };
     },
     /** 칸 캐시 — 열쇠가 같으면 다시 그리지 않는다 */
@@ -20986,7 +21028,7 @@
       cv.width = cv.height = TS;
       const g = cv.getContext("2d");
       const base = TILE_DEF[id].c, dk = shade(base, 0.74), lt = shade(base, 1.2), lt2 = shade(base, 1.4);
-      const up = id === T.STALAGMITE;
+      const up = id === T.STALAGMITE || id === T.EMBERSPIRE;
       for (let y = 0; y < TS; y++) {
         const yy = up ? TS - 1 - y : y;
         const t = (i + (yy + 0.5) / TS) / n;
@@ -20998,8 +21040,17 @@
         g.fillRect(TS / 2 - wdt / 2, y, Math.max(1, wdt * 0.22), 1);
       }
       if (!up && i === n - 1) {
-        g.fillStyle = "#9fd0e8";
+        g.fillStyle = id === T.EMBERDRIP ? "#ff8a3a" : "#9fd0e8";
         g.fillRect(TS / 2 - 0.5, TS - 2, 1, 2);
+      }
+      if (id === T.EMBERDRIP || id === T.EMBERSPIRE) {
+        for (let y = 0; y < TS; y++) {
+          const yy = up ? TS - 1 - y : y, gy = i * TS + yy, t = (i + (yy + 0.5) / TS) / n;
+          if ((gy * 7 + n * 3) % 11 < 2) {
+            g.fillStyle = t > 0.6 ? "#ffb05a" : "#c8401a";
+            g.fillRect(TS / 2 - 1 + (gy >> 2) % 3 - 1, y, 1, 1);
+          }
+        }
       }
       return this._dc[key] = cv;
     },
@@ -45287,6 +45338,12 @@
       if (this.quake) this.updateQuake(dt);
       if (this.meteor) this.updateMeteor(dt);
       const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
+      const hk = clamp((ty - (dimsOf(w).HELL_Y - 40)) / 40, 0, 1);
+      if (hk > 0 && Math.random() < dt * 9 * hk) {
+        const ex = p.cx + (Math.random() - 0.5) * this.W / (this.viewZoom || 1), ey = p.cy + (0.2 + Math.random() * 0.4) * this.H / (this.viewZoom || 1);
+        if (!w.solid(Math.floor(ex / TS), Math.floor(ey / TS)))
+          this.parts.push(new Part(ex, ey, Math.random() < 0.3 ? "#ffc070" : "#ff6a2a", -50, 1.6, { spd: 0.12, g: -0.06, r: 0.45, glow: 1, drag: 0.995 }));
+      }
       this._caveT = (this._caveT || 0) - dt;
       if (this._caveT > 0) return;
       this._caveT = 0.35;
@@ -45369,7 +45426,7 @@
     dropHung(x, y) {
       const w = this.world, t = w.get(x, y);
       w.set(x, y, LEAVE_OF[t] || T.AIR);
-      if (t === T.STALACTITE || t === T.ICICLE) {
+      if (t === T.STALACTITE || t === T.ICICLE || t === T.EMBERDRIP) {
         const p = this.player;
         this.rocks.push({ x: (x + 0.5) * TS, y: (y + 0.5) * TS, vy: 0, t: 0.12, dmg: 14 + (p ? p.level * 0.9 : 0), kind: t === T.ICICLE ? "ice" : "drip", drop: t });
         return;
@@ -47553,13 +47610,13 @@
         this.drawClouds(c, camX, camY, this.rainT || 0);
         this.drawMeteorSky(c, camY);
       } else {
-        const deep = camY > HELL_Y2 * TS - 400;
+        const deep = clamp((camY / TS - (HELL_Y2 - 100)) / 90, 0, 1);
         const g = c.createLinearGradient(0, 0, 0, this.H);
-        g.addColorStop(0, deep ? "#2a0d08" : "#0a0a10");
-        g.addColorStop(1, deep ? "#4a1408" : "#06060a");
+        g.addColorStop(0, mixHex("#0a0a10", "#2a0d08", deep));
+        g.addColorStop(1, mixHex("#06060a", "#4a1408", deep));
         c.fillStyle = g;
         c.fillRect(0, 0, this.W, this.H);
-        this.skyHaze = deep ? "#4a1408" : "#06060a";
+        this.skyHaze = mixHex("#06060a", "#4a1408", deep);
       }
     },
     /** 해(1)·달(0)이 하늘을 건넌 몫 — 0 = 동쪽 지평선(화면 오른쪽), 1 = 서쪽 지평선. 밖이면 지평선 밑(sin 이 음수).
@@ -48155,7 +48212,8 @@
       const { SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2 } = dimsOf(this.world);
       const w = this.world, L = this.lightOv = this.lightOv || new LightOverlay();
       const mid = (ty0 + ty1) / 2;
-      const rgb = mid > HELL_Y2 - 24 ? [44, 8, 2] : mid > SURF_BASE2 + 24 ? [4, 7, 18] : [0, 0, 0];
+      const u = Math.min(1, Math.max(0, (mid - SURF_BASE2 - 4) / 60)), v = Math.min(1, Math.max(0, (mid - (HELL_Y2 - 100)) / 90));
+      const rgb = [Math.round(4 * u + (44 - 4 * u) * v), Math.round(7 * u + (8 - 7 * u) * v), Math.round(18 * u + (2 - 18 * u) * v)];
       L.drawDark(c, tx0 - 1, ty0 - 1, tx1 + 1, ty1 + 1, TS, camX, camY, (x, y) => w.lightAt(x, y), 15, rgb);
     },
     /** 소환 제단 — 새긴 받침 위 세 갈래 발톱이 구슬을 받친다. 구슬은 빛이 안에서 도는 유리알:

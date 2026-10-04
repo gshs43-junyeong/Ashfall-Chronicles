@@ -162,7 +162,7 @@ export class World extends TileMap {
   declare crumbled: Map<any, any>; declare dawnCity: Record<string, any>; declare dawnY: number; declare decoratePonds: (...a: any[]) => any; declare decorateWater: (...a: any[]) => any;
   declare deepShaft: Record<string, any>; declare doors: any[]; declare dungeon: Record<string, any>; declare ensureEntranceTraps: (...a: any[]) => any; 
   declare falls: any[]; declare faults: any[]; declare fillMossCorners: (...a: any[]) => any; declare fitObjects: (...a: any[]) => any; declare floodCaves: (...a: any[]) => any;
-  declare floodHell: (...a: any[]) => any; declare flv: Uint8Array; declare fq: CellQueue<[number, number, number]> | null; declare hangQ: number[] | null; declare giantTree: Record<string, any>; declare glowStalk: (...a: any[]) => any;
+  declare floodHell: (...a: any[]) => any; declare decorateHell: (...a: any[]) => any; declare flv: Uint8Array; declare fq: CellQueue<[number, number, number]> | null; declare hangQ: number[] | null; declare giantTree: Record<string, any>; declare glowStalk: (...a: any[]) => any;
   declare inAtelier: (...a: any[]) => any; declare inCitadel: (...a: any[]) => any; declare inDeepShaft: (...a: any[]) => any; declare inRuin: (...a: any[]) => any; declare inRunaway: (...a: any[]) => any;
   declare inWorks: (...a: any[]) => any; declare jungleTree: (...a: any[]) => any; declare lavaPools: any[]; declare light: LightField | null;
   declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
@@ -401,18 +401,20 @@ export class World extends TileMap {
       const soilD = 4 + Math.round(n1(x + 3100, 0.09) * 3);
       const subD = 15 + Math.round(n1(x + 5200, 0.07) * 8);
       const L = MAT_LAYER[m];
+      // 지옥 경계는 한 줄이 아니다 — 들쭉날쭉한 선 위 6칸에 재가 점점 섞인다
+      const hb = HELL_Y - 4 + Math.round(n1(x + 7700, 0.05) * 5);
       for (let y = s; y < WORLD_BOT; y++) {
         let t;
         const depth = y - s;
         if (y >= WORLD_BOT - 4) t = T.BEDROCK;
-        else if (y >= HELL_Y) t = T.ASH;
+        else if (y >= hb || (y >= hb - 6 && ((x * 73 + y * 151) % 7) < y - hb + 7 - 3)) t = T.ASH;
         else if (depth === 0) t = L.top;
         else if (depth < soilD) t = L.soil;
         else if (depth < subD) t = L.sub;
         else t = L.deep;
         if (y > DEEP_Y && t === T.STONE && n3(x, y, 0.06, 2) > 0.72) t = T.OBSIDIAN;
         this.tiles[this.i(x, y)] = t;
-        this.walls[this.i(x, y)] = y >= HELL_Y ? 7 : depth < subD - 3 ? L.wall : L.subWall;
+        this.walls[this.i(x, y)] = t === T.ASH && y >= hb - 6 ? 7 : depth < subD - 3 ? L.wall : L.subWall;
       }
     }
 
@@ -562,6 +564,7 @@ export class World extends TileMap {
     this.buildRuinCaches(rng);   // 동굴이 생긴 뒤라야 동굴 상자를 놓을 수 있다
     this.floodCaves(rng);
     this.floodHell(rng);
+    this.decorateHell();
     this.buildJungleFalls(rng);
     this.buildCaveZones(rng);      // 동굴 갈래 · 장식 · 금 간 자갈 — 물이 고인 뒤라야 바닥을 안다
     this.scatterChests(rng);

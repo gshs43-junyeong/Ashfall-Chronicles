@@ -101,7 +101,9 @@ export const T: Record<string, number> = {
   /* --- 스프링클러 — 물 양동이로 둘레 밭에 아침마다 물을 준다 --- */
   M_SPRINKLER: 198,
   /* --- 얼음 동굴의 고드름 · 이끼 굴에 늘어진 발광 잎 --- */
-  ICICLE: 199, GLOWFROND: 200
+  ICICLE: 199, GLOWFROND: 200,
+  /* --- 지옥 — 현무암 종유석 · 석순(끝에 불씨) --- */
+  EMBERDRIP: 201, EMBERSPIRE: 202
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -358,7 +360,9 @@ export const TILE_DEF: TileDef[] = [
   { n: '심층 드릴', c: '#3a6a8a', solid: 1, hard: 5, drop: 'm_drill_x', mach: 'drill_x' },
   { n: '스프링클러', c: '#6a8aa8', solid: 1, hard: 2, drop: 'm_sprinkler', mach: 'sprinkler' },
   { n: '고드름', c: '#bfe6f5', solid: 0, hard: 1, drop: 'ice_shard', a: 1 },
-  { n: '발광 잎', c: '#7fe8c8', solid: 0, hard: 0, drop: 'cave_moss', a: 1 }
+  { n: '발광 잎', c: '#7fe8c8', solid: 0, hard: 0, drop: 'cave_moss', a: 1 },
+  { n: '현무 종유석', c: '#4a3c38', solid: 0, hard: 1, drop: 'ash', a: 1 },
+  { n: '현무 석순', c: '#40342f', solid: 0, hard: 1, drop: 'ash', a: 1 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */

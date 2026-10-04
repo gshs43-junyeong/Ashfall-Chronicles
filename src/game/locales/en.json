@@ -4177,6 +4177,10 @@
   "ITEMS.deco_icicle.n": "Icicle",
   "ITEMS.deco_glowfrond.n": "Glowfrond",
   "TILE_DEF.199.n": "Icicle",
-  "TILE_DEF.200.n": "Glowfrond"
+  "TILE_DEF.200.n": "Glowfrond",
+  "ITEMS.deco_emberdrip.n": "Basalt Stalactite",
+  "ITEMS.deco_emberspire.n": "Basalt Stalagmite",
+  "TILE_DEF.201.n": "Basalt Stalactite",
+  "TILE_DEF.202.n": "Basalt Stalagmite"
  }
 }

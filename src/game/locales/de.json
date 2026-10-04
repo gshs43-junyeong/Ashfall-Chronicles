@@ -4177,6 +4177,10 @@
   "ITEMS.deco_icicle.n": "Eiszapfen",
   "ITEMS.deco_glowfrond.n": "Leuchtwedel",
   "TILE_DEF.199.n": "Eiszapfen",
-  "TILE_DEF.200.n": "Leuchtwedel"
+  "TILE_DEF.200.n": "Leuchtwedel",
+  "ITEMS.deco_emberdrip.n": "Basalt-Stalaktit",
+  "ITEMS.deco_emberspire.n": "Basalt-Stalagmit",
+  "TILE_DEF.201.n": "Basalt-Stalaktit",
+  "TILE_DEF.202.n": "Basalt-Stalagmit"
  }
 }
