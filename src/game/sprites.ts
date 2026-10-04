@@ -25,6 +25,7 @@ export const Sprites: Bag = {
     for (const k in this.meta.fx.bursts.files) add('burst_' + k, this.meta.fx.bursts.files[k]);
     // 연기(용광로 굴뚝) — 투사체·폭발과 규격만 다른 세 번째 이펙트 무리
     if (this.meta.fx.smoke) for (const k in this.meta.fx.smoke.files) add('smoke_' + k, this.meta.fx.smoke.files[k]);
+    if (this.meta.fx.vfx) for (const k in this.meta.fx.vfx.files) add('vfx_' + k, this.meta.fx.vfx.files[k]);   // 스킬 연출 결(tools/mkvfx.py)
     for (const k in this.meta.npc.files) add('npc_' + k, this.meta.npc.files[k]);
     this.meta.backgrounds.parallax.files.forEach((f: any) => add(f.split('/')[1].replace('.png',''), f));
     add('title', this.meta.backgrounds.title.file);
@@ -137,6 +138,45 @@ export const Sprites: Bag = {
     this.footInset[fk] = this.footInset[key] || 0;
     this.sideInset[fk] = this.sideInset[key] || 0;
     return (this.img[fk] = cv);
+  },
+
+  /** 스킬 연출 결 그림을 색 c 로 물들인 한 장(engine Vfx.art) — 흰 모양을 source-in 으로 칠하고 흰 속불을 얹는다.
+      ★ 픽셀을 읽지 않는다(file:// 에서 PNG 캔버스가 더럽혀져 getImageData 가 막힌다). 색마다 한 번 굽고 들고 있는다 */
+  vfxArt(name: string, c: string) {
+    const ck = name + '|' + c, cache = this.vfxCache || (this.vfxCache = new Map());
+    const have = cache.get(ck); if (have) return have;
+    const sh = this.img['vfx_' + name], core = this.img['vfx_' + name + '_core'];
+    if (!sh || !sh.width || !core || !core.width) return null;
+    const cv = document.createElement('canvas'); cv.width = sh.width; cv.height = sh.height;
+    const g = cv.getContext('2d')!;
+    g.drawImage(sh, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = c; g.fillRect(0, 0, cv.width, cv.height);
+    g.globalCompositeOperation = 'source-over'; g.drawImage(core, 0, 0);
+    if (cache.size > 160) cache.clear();
+    cache.set(ck, cv); return cv;
+  },
+
+  /** 불붙은 사본 — 그림 윤곽 안을 아래에서 위로 달군다(발치는 이글대는 주황 · 위는 그을린 검붉음). 키는 'burn_' + key */
+  burnSheet(key: string) {
+    const bk = 'burn_' + key, have = this.img[bk];
+    if (have !== undefined) return have;
+    const im = this.img[key];
+    const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
+    if (!im || !im.width || !m) return (this.img[bk] = null);
+    const cv = document.createElement('canvas');
+    cv.width = im.naturalWidth || im.width; cv.height = im.naturalHeight || im.height;
+    const g = cv.getContext('2d')!, fh = m.frameH * this.scale;
+    g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0);
+    g.globalCompositeOperation = 'source-atop';
+    for (let y0 = 0; y0 < cv.height; y0 += fh) {
+      const grad = g.createLinearGradient(0, y0, 0, y0 + fh);
+      grad.addColorStop(0, 'rgba(40,10,6,0.45)'); grad.addColorStop(0.5, 'rgba(150,40,12,0.35)'); grad.addColorStop(1, 'rgba(255,140,40,0.55)');
+      g.fillStyle = grad; g.fillRect(0, y0, cv.width, fh);
+    }
+    g.globalCompositeOperation = 'source-over';
+    this.meta.characters.sheets[bk] = m;
+    this.footInset[bk] = this.footInset[key] || 0;
+    this.sideInset[bk] = this.sideInset[key] || 0;
+    return (this.img[bk] = cv);
   },
 
   /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다. */

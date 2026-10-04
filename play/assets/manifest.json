@@ -2096,6 +2096,28 @@
       "files": {
         "forge": "fx/smoke_forge.png"
       }
+    },
+    "vfx": {
+      "note": "스킬 연출 결 그림(tools/mkvfx.py) — 흰 모양 + 흰 속불. 게임이 갈래 색으로 물들여 engine Vfx 의 도형 대신 그린다 · fire 는 색을 구운 불길 8장 띠(48×96)",
+      "files": {
+        "shock": "fx/vfx_shock.png",
+        "shock_core": "fx/vfx_shock_core.png",
+        "flare": "fx/vfx_flare.png",
+        "flare_core": "fx/vfx_flare_core.png",
+        "sigil": "fx/vfx_sigil.png",
+        "sigil_core": "fx/vfx_sigil_core.png",
+        "slash": "fx/vfx_slash.png",
+        "slash_core": "fx/vfx_slash_core.png",
+        "column": "fx/vfx_column.png",
+        "column_core": "fx/vfx_column_core.png",
+        "beam": "fx/vfx_beam.png",
+        "beam_core": "fx/vfx_beam_core.png",
+        "puff": "fx/vfx_puff.png",
+        "puff_core": "fx/vfx_puff_core.png",
+        "ring": "fx/vfx_ring.png",
+        "ring_core": "fx/vfx_ring_core.png",
+        "fire": "fx/vfx_fire.png"
+      }
     }
   },
   "objects": {

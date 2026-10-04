@@ -25,6 +25,8 @@ export const MobFxPart: Bag = {
   mfx: null, mfxT: 0,
 
   /** 손 자리 — 몸 앞 · 가슴 높이(시전 빛이 모이는 곳) */
+  /** 발밑에서 오르는 알갱이의 출발 높이 — 떠 있는 몸은 허공에 한 줄로 늘어서지 않게 배 아래쪽 몸 안에서 */
+  mobFootY(e: any) { return e.onGround === false ? e.y + e.h * (0.45 + Math.random() * 0.45) : e.y + e.h - 2; },
   mobHand(e: any) { return [e.cx + (e.facing || 1) * (e.w / 2 + 4), e.y + e.h * 0.35]; },
   mfxAdd(p: Partial<MP>) {
     const L = this.mfx = this.mfx || [];
@@ -54,7 +56,7 @@ export const MobFxPart: Bag = {
     const id = this.mobSkillId(S), L = LOOK[id] || LOOK.heal;
     for (let i = 0; i < this.mfxN(10); i++) {
       const a = Math.random() * TAU;
-      this.mfxAdd({ k: L.k, x: e.cx + Math.cos(a) * e.w * 0.6, y: e.y + e.h - 2, vx: Math.cos(a) * 30, vy: -40 - Math.random() * 60,
+      this.mfxAdd({ k: L.k, x: e.cx + Math.cos(a) * e.w * 0.6, y: this.mobFootY(e), vx: Math.cos(a) * 30, vy: -40 - Math.random() * 60,
         life: 0.5 + Math.random() * 0.4, r: 1.6 + Math.random() * 1.6, c: L.c, c2: L.c2, drag: 0.9 });
     }
     this.sfxAt('magic', e.cx / 22, e.cy / 22, 0.8, 0.45);
@@ -74,9 +76,9 @@ export const MobFxPart: Bag = {
       if (Math.random() < 0.45) {                                  // 몸에서 피어나는 갈래 알갱이
         const bx = e.x + Math.random() * e.w, by = e.y + e.h * (0.4 + Math.random() * 0.6);
         if (L.k === 'smoke') this.mfxAdd({ k: 'smoke', x: bx, y: by, vx: (Math.random() - 0.5) * 20, vy: -18, life: 0.9, r: 5 + Math.random() * 4, c: L.c, c2: L.c2 });
-        else if (L.k === 'bubble') this.mfxAdd({ k: 'bubble', x: bx, y: e.y + e.h - 2, vx: (Math.random() - 0.5) * 12, vy: -30 - Math.random() * 30, life: 0.8, r: 1.5 + Math.random() * 2.5, c: L.c, c2: L.c2 });
+        else if (L.k === 'bubble') this.mfxAdd({ k: 'bubble', x: bx, y: this.mobFootY(e), vx: (Math.random() - 0.5) * 12, vy: -30 - Math.random() * 30, life: 0.8, r: 1.5 + Math.random() * 2.5, c: L.c, c2: L.c2 });
         else if (L.k === 'flake') this.mfxAdd({ k: 'flake', x: bx, y: by, vx: (Math.random() - 0.5) * 30, vy: -20, life: 0.7, r: 2 + Math.random() * 2, c: L.c, c2: L.c2, spin: (Math.random() - 0.5) * 8 });
-        else this.mfxAdd({ k: L.k, x: bx, y: e.y + e.h - 2, vx: (Math.random() - 0.5) * 16, vy: -50 - Math.random() * 50, life: 0.6, r: 1.4 + Math.random() * 1.6, c: L.c, c2: L.c2, drag: 0.97 });
+        else this.mfxAdd({ k: L.k, x: bx, y: this.mobFootY(e), vx: (Math.random() - 0.5) * 16, vy: -50 - Math.random() * 50, life: 0.6, r: 1.4 + Math.random() * 1.6, c: L.c, c2: L.c2, drag: 0.97 });
       }
     }
   },
@@ -100,7 +102,7 @@ export const MobFxPart: Bag = {
         this.mfxAdd({ k: 'ember', x: e.cx, y: e.cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7, life: 0.5 + Math.random() * 0.3, r: 1.6 + Math.random() * 1.8, c: L.c, c2: L.c2, drag: 0.9 });
       }
       for (let i = 0; i < this.mfxN(14); i++)
-        this.mfxAdd({ k: 'ember', x: e.x + Math.random() * e.w, y: e.y + e.h, vy: -120 - Math.random() * 120, life: 0.6, r: 2 + Math.random() * 2, c: L.c, c2: L.c2, drag: 0.95 });
+        this.mfxAdd({ k: 'ember', x: e.x + Math.random() * e.w, y: this.mobFootY(e), vy: -120 - Math.random() * 120, life: 0.6, r: 2 + Math.random() * 2, c: L.c, c2: L.c2, drag: 0.95 });
       v.flare(e.cx, e.cy - 4, 46, '#ff7a4a', 0.28);
       this.shake = Math.max(this.shake || 0, 3);
     } else if (id === 'hex' && tgt) {

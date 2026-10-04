@@ -27908,6 +27908,7 @@
       for (const k in this.meta.fx.projectiles.files) add("proj_" + k, this.meta.fx.projectiles.files[k]);
       for (const k in this.meta.fx.bursts.files) add("burst_" + k, this.meta.fx.bursts.files[k]);
       if (this.meta.fx.smoke) for (const k in this.meta.fx.smoke.files) add("smoke_" + k, this.meta.fx.smoke.files[k]);
+      if (this.meta.fx.vfx) for (const k in this.meta.fx.vfx.files) add("vfx_" + k, this.meta.fx.vfx.files[k]);
       for (const k in this.meta.npc.files) add("npc_" + k, this.meta.npc.files[k]);
       this.meta.backgrounds.parallax.files.forEach((f) => add(f.split("/")[1].replace(".png", ""), f));
       add("title", this.meta.backgrounds.title.file);
@@ -28013,6 +28014,56 @@
       this.footInset[fk] = this.footInset[key] || 0;
       this.sideInset[fk] = this.sideInset[key] || 0;
       return this.img[fk] = cv;
+    },
+    /** 스킬 연출 결 그림을 색 c 로 물들인 한 장(engine Vfx.art) — 흰 모양을 source-in 으로 칠하고 흰 속불을 얹는다.
+        ★ 픽셀을 읽지 않는다(file:// 에서 PNG 캔버스가 더럽혀져 getImageData 가 막힌다). 색마다 한 번 굽고 들고 있는다 */
+    vfxArt(name, c) {
+      const ck = name + "|" + c, cache2 = this.vfxCache || (this.vfxCache = /* @__PURE__ */ new Map());
+      const have = cache2.get(ck);
+      if (have) return have;
+      const sh = this.img["vfx_" + name], core = this.img["vfx_" + name + "_core"];
+      if (!sh || !sh.width || !core || !core.width) return null;
+      const cv = document.createElement("canvas");
+      cv.width = sh.width;
+      cv.height = sh.height;
+      const g = cv.getContext("2d");
+      g.drawImage(sh, 0, 0);
+      g.globalCompositeOperation = "source-in";
+      g.fillStyle = c;
+      g.fillRect(0, 0, cv.width, cv.height);
+      g.globalCompositeOperation = "source-over";
+      g.drawImage(core, 0, 0);
+      if (cache2.size > 160) cache2.clear();
+      cache2.set(ck, cv);
+      return cv;
+    },
+    /** 불붙은 사본 — 그림 윤곽 안을 아래에서 위로 달군다(발치는 이글대는 주황 · 위는 그을린 검붉음). 키는 'burn_' + key */
+    burnSheet(key) {
+      const bk = "burn_" + key, have = this.img[bk];
+      if (have !== void 0) return have;
+      const im = this.img[key];
+      const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
+      if (!im || !im.width || !m) return this.img[bk] = null;
+      const cv = document.createElement("canvas");
+      cv.width = im.naturalWidth || im.width;
+      cv.height = im.naturalHeight || im.height;
+      const g = cv.getContext("2d"), fh = m.frameH * this.scale;
+      g.imageSmoothingEnabled = false;
+      g.drawImage(im, 0, 0);
+      g.globalCompositeOperation = "source-atop";
+      for (let y0 = 0; y0 < cv.height; y0 += fh) {
+        const grad = g.createLinearGradient(0, y0, 0, y0 + fh);
+        grad.addColorStop(0, "rgba(40,10,6,0.45)");
+        grad.addColorStop(0.5, "rgba(150,40,12,0.35)");
+        grad.addColorStop(1, "rgba(255,140,40,0.55)");
+        g.fillStyle = grad;
+        g.fillRect(0, y0, cv.width, fh);
+      }
+      g.globalCompositeOperation = "source-over";
+      this.meta.characters.sheets[bk] = m;
+      this.footInset[bk] = this.footInset[key] || 0;
+      this.sideInset[bk] = this.sideInset[key] || 0;
+      return this.img[bk] = cv;
     },
     /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다. */
     draw(c, key, frame, x, y, flip) {
@@ -36830,10 +36881,12 @@
 
   // src/engine/fx/shapes.ts
   var ShapeFx = class {
+    /** art — 고리 · 예고 원을 결 그림('ring')으로(없으면 선) */
     constructor() {
       this.rings = [];
       this.bolts = [];
       this.warns = [];
+      this.art = null;
     }
     /** 퍼져 나가는 고리 — 반지름 r 까지 1.3배로 벌어지며 흐려진다 */
     ring(x, y, r, c, life = 0.3) {
@@ -36867,12 +36920,17 @@
     draw(c, camX, camY) {
       const TAU3 = Math.PI * 2;
       for (const r of this.rings) {
-        const k = r.t / r.max;
+        const k = r.t / r.max, R = r.r * (1.3 - k * 0.3), im = this.art && this.art("ring", r.c);
+        if (im) {
+          c.globalAlpha = k * 0.9;
+          c.drawImage(im, r.x - camX - R / 0.95, r.y - camY - R / 0.95, R / 0.95 * 2, R / 0.95 * 2);
+          continue;
+        }
         c.strokeStyle = r.c;
         c.globalAlpha = k * 0.8;
         c.lineWidth = 3;
         c.beginPath();
-        c.arc(r.x - camX, r.y - camY, r.r * (1.3 - k * 0.3), 0, TAU3);
+        c.arc(r.x - camX, r.y - camY, R, 0, TAU3);
         c.stroke();
       }
       for (const w of this.warns) {
@@ -36882,6 +36940,16 @@
         c.beginPath();
         c.arc(x, y, w.r * k, 0, TAU3);
         c.fill();
+        const im = this.art && this.art("ring", w.c);
+        if (im) {
+          c.globalAlpha = 0.9;
+          c.save();
+          c.translate(x, y);
+          c.rotate(k * 1.5);
+          c.drawImage(im, -w.r / 0.95, -w.r / 0.95, w.r / 0.95 * 2, w.r / 0.95 * 2);
+          c.restore();
+          continue;
+        }
         c.globalAlpha = 0.85;
         c.strokeStyle = w.c;
         c.lineWidth = 2.5;
@@ -36953,6 +37021,7 @@
       this.density = density;
       this.cap = cap;
       this.rand = rand;
+      this.art = null;
     }
     add(f) {
       if (this.list.length < this.cap) this.list.push(f);
@@ -37069,6 +37138,16 @@
       for (const f of this.list) {
         if (f.k !== "puff") continue;
         const k = f.t / f.max, r = f.r * (1.6 - k * 0.6), x = f.x - camX, y = f.y - camY;
+        const im = this.art && this.art("puff", f.c);
+        if (im) {
+          c.globalAlpha = 0.7 * Math.min(1, k * 1.6);
+          c.save();
+          c.translate(x, y);
+          c.rotate(f.vx * 0.05 + k);
+          c.drawImage(im, -r * 1.3, -r * 1.3, r * 2.6, r * 2.6);
+          c.restore();
+          continue;
+        }
         const g = c.createRadialGradient(x, y, 0, x, y, r);
         g.addColorStop(0, f.c);
         g.addColorStop(1, "rgba(0,0,0,0)");
@@ -37083,6 +37162,7 @@
       c.lineJoin = "round";
       for (const f of this.list) {
         const k = f.t / f.max, p = 1 - k;
+        if (this.art && this.drawArt(c, f, k, p, camX, camY)) continue;
         switch (f.k) {
           case "slash": {
             const x = f.x - camX, y = f.y - camY;
@@ -37271,6 +37351,95 @@
         }
       }
       c.restore();
+    }
+    /** 결 그림으로 그린다 — 그렸으면 true(도형은 건너뛴다). 모양 · 타이밍은 도형과 같은 식을 쓴다 */
+    drawArt(c, f, k, p, camX, camY) {
+      const art = this.art;
+      switch (f.k) {
+        case "slash": {
+          const im = art("slash", f.c);
+          if (!im) return false;
+          const x = f.x - camX, y = f.y - camY;
+          const head = f.a0 + (f.a1 - f.a0) * Math.min(1, p / 0.4), tail = f.a0 + (f.a1 - f.a0) * Math.max(0, (p - 0.25) / 0.75);
+          if (Math.abs(head - tail) < 0.01) return true;
+          const R = (f.r + f.w * 0.45) / 0.975, ccw = f.a1 < f.a0, n = Math.max(4, Math.min(14, Math.ceil(Math.abs(head - tail) * 4)));
+          for (let i = 0; i < n; i++) {
+            const u0 = i / n, u1 = (i + 1) / n, b0 = tail + (head - tail) * u0, b1 = tail + (head - tail) * u1;
+            c.save();
+            c.beginPath();
+            c.moveTo(x, y);
+            c.arc(x, y, R * 1.05, b0, b1 + (ccw ? -0.02 : 0.02), ccw);
+            c.closePath();
+            c.clip();
+            c.globalAlpha = Math.min(1, k * 2.2) * (0.12 + 0.88 * u1);
+            c.translate(x, y);
+            c.rotate(b0 * 1.7);
+            c.drawImage(im, -R, -R, R * 2, R * 2);
+            c.restore();
+          }
+          return true;
+        }
+        case "shock": {
+          const im = art("shock", f.c);
+          if (!im) return false;
+          const r = f.r * easeOut(Math.min(1, p * 1.35)) / 0.86, x = f.x - camX, y = f.y - camY;
+          c.globalAlpha = Math.min(1, k * 1.4);
+          c.save();
+          c.translate(x, y);
+          c.scale(1, f.sy);
+          c.rotate(f.r);
+          c.drawImage(im, -r, -r, r * 2, r * 2);
+          c.restore();
+          return true;
+        }
+        case "flare": {
+          const im = art("flare", f.c);
+          if (!im) return false;
+          const x = f.x - camX, y = f.y - camY, s = f.s * 1.7 * (0.6 + 0.4 * easeOut(Math.min(1, p * 3)));
+          c.globalAlpha = 0.95 * k;
+          c.save();
+          c.translate(x, y);
+          c.rotate(f.rot + p * 0.8);
+          c.drawImage(im, -s, -s, s * 2, s * 2);
+          c.restore();
+          return true;
+        }
+        case "sigil": {
+          const im = art("sigil", f.c);
+          if (!im) return false;
+          const x = f.x - camX, y = f.y - camY, s = f.r * (p < 0.15 ? easeOut(p / 0.15) * 1.08 : 1.08 - 0.08 * Math.min(1, (p - 0.15) * 4));
+          c.globalAlpha = Math.min(1, k * 2) * 0.95;
+          c.save();
+          c.translate(x, y);
+          c.scale(1, f.sy);
+          c.rotate(p * f.spin * TAU2 * 0.25);
+          c.drawImage(im, -s, -s, s * 2, s * 2);
+          c.restore();
+          return true;
+        }
+        case "column": {
+          const im = art("column", f.c);
+          if (!im) return false;
+          const x = f.x - camX, y = f.y - camY, w = f.w * 1.5 * (0.5 + 0.5 * easeOut(Math.min(1, p * 4))) * (0.6 + 0.4 * k);
+          c.globalAlpha = 0.85 * k;
+          c.drawImage(im, x - w / 2, y - f.h, w, f.h);
+          return true;
+        }
+        case "beam": {
+          const im = art("beam", f.c);
+          if (!im) return false;
+          const dx = f.x1 - f.x0, dy = f.y1 - f.y0, L = Math.hypot(dx, dy), h = f.w * 3 * (0.4 + 0.6 * k);
+          if (L < 1) return true;
+          c.globalAlpha = Math.min(1, k * 1.5);
+          c.save();
+          c.translate(f.x0 - camX, f.y0 - camY);
+          c.rotate(Math.atan2(dy, dx));
+          c.drawImage(im, 0, -h / 2, L, h);
+          c.restore();
+          return true;
+        }
+      }
+      return false;
     }
   };
 
@@ -37796,6 +37965,7 @@
       if (Sprites) {
         Sprites.ready().then(() => {
           this.spritesOn = true;
+          this.vfx.art = this.shapes.art = (n, c) => Sprites.vfxArt(n, c);
           UI5.applySpriteOverrides();
           for (const name in TILE_SPRITE) TileArt.applySprite(TILE_SPRITE[name], Sprites.img["tile_" + name]);
           TileArt.buildAsh();
@@ -40148,7 +40318,8 @@
       }
       const dots = e.dots || [];
       return {
-        burn: dots.some((d) => d.kind === "burn"),
+        burn: dots.some((d) => d.kind === "burn" || d.kind === "fire"),
+        // 'fire' = 스킬 불(유성우 따위)
         poison: dots.some((d) => d.kind === "poison"),
         chill: e.chillT > 0,
         empower: e.empT > 0,
@@ -40159,7 +40330,7 @@
     /** 처음 걸리는 순간 — 확 붙는 불 · 얼어붙으며 튀는 조각 · 퍼지는 독 */
     statusOnset(e, kind) {
       const v = this.vfx, x = e.cx, y = e.cy, tx = x / TS, ty = y / TS;
-      if (kind === "burn") {
+      if (kind === "burn" || kind === "fire") {
         v.flare(x, y, 30, "#ff9a3a", 0.22);
         v.sparks(x, y + e.h * 0.3, 12, "#ffb050", 260, -Math.PI / 2, 1.4, 0.5, -300);
         v.puffs(x, y - 4, 3, 10, "rgba(70,60,55,.8)", 0.7, 8);
@@ -40175,7 +40346,8 @@
         this.sfxAt("mat_plant", tx, ty, 0.9, 0.5);
       } else if (kind === "empower") {
         v.flare(x, y, 30, "#ff6a4a", 0.22);
-        v.column(x, e.y + e.h, e.w + 10, e.h * 1.6, "#ff5a3a", 0.45);
+        if (e.onGround !== false) v.column(x, e.y + e.h, e.w + 10, e.h * 1.6, "#ff5a3a", 0.45);
+        else v.shock(x, y, e.w + 16, "#ff5a3a", 0.4, 6);
       } else if (kind === "weak") {
         v.puffs(x, y - 6, 8, 12, "rgba(110,70,160,.8)", 1, 18);
         v.flare(x, y, 24, "#b07aff", 0.2);
@@ -40190,20 +40362,25 @@
       if (!k.burn && !k.poison && !k.chill && !k.empower && !k.weak && !k.cast) return;
       const t = this.time, w = e.w, h = e.h;
       const id = e._sfxId = e._sfxId || Math.floor(Math.random() * 1e6);
+      const air = e.onGround === false;
       c.save();
       c.globalCompositeOperation = "lighter";
       if (k.empower) {
         const pul = 0.5 + 0.5 * Math.sin(t * 6 + id);
-        c.globalAlpha = 0.35 + 0.25 * pul;
-        c.strokeStyle = "#ff5a3a";
-        c.lineWidth = 2;
-        c.beginPath();
-        c.ellipse(sx + w / 2, sy + h, w * 0.7 + 4 * pul, 5, 0, 0, TAU);
-        c.stroke();
+        if (air) this.bodyGlow(c, sx, sy, w, h, "#ff5a3a", 0.25 + 0.2 * pul);
+        else {
+          c.globalAlpha = 0.35 + 0.25 * pul;
+          c.strokeStyle = "#ff5a3a";
+          c.lineWidth = 2;
+          c.beginPath();
+          c.ellipse(sx + w / 2, sy + h, w * 0.7 + 4 * pul, 5, 0, 0, TAU);
+          c.stroke();
+        }
         this.flames(c, sx - 3, sy + h * 0.2, w + 6, h * 0.8, t + id, "rgba(255,60,40,", 0.35, 4);
       }
       if (k.burn) {
-        this.flames(c, sx - 2, sy + h * 0.15, w + 4, h * 0.85, t + id, "rgba(255,110,30,", 0.85, Math.max(3, Math.round(w / 6)));
+        if (!this.fireSprites(c, sx, sy, w, h, t, id, air))
+          this.flames(c, sx - 2, sy + h * 0.15, w + 4, h * 0.85, t + id, "rgba(255,110,30,", 0.85, Math.max(3, Math.round(w / 6)));
         for (let i = 0; i < 4; i++) {
           const ph = (t * 1.1 + i / 4 + tileHash(id, i + 20)) % 1;
           c.globalAlpha = 1 - ph;
@@ -40242,19 +40419,22 @@
       if (k.cast) {
         const S = this.mobSkillDef(k.cast.id), p = 1 - Math.max(0, k.cast.t) / k.cast.max, col = S ? S.c : "#ffffff";
         const fx = sx + w / 2, fy = sy + h, pr = w * 0.9 + 10;
-        const pool = c.createRadialGradient(fx, fy, 0, fx, fy, pr);
-        pool.addColorStop(0, col);
-        pool.addColorStop(1, "rgba(0,0,0,0)");
-        c.save();
-        c.translate(fx, fy);
-        c.scale(1, 0.28);
-        c.translate(-fx, -fy);
-        c.globalAlpha = 0.25 + 0.35 * p;
-        c.fillStyle = pool;
-        c.beginPath();
-        c.arc(fx, fy, pr, 0, TAU);
-        c.fill();
-        c.restore();
+        if (air) this.bodyGlow(c, sx, sy, w, h, col, 0.2 + 0.3 * p);
+        else {
+          const pool = c.createRadialGradient(fx, fy, 0, fx, fy, pr);
+          pool.addColorStop(0, col);
+          pool.addColorStop(1, "rgba(0,0,0,0)");
+          c.save();
+          c.translate(fx, fy);
+          c.scale(1, 0.28);
+          c.translate(-fx, -fy);
+          c.globalAlpha = 0.25 + 0.35 * p;
+          c.fillStyle = pool;
+          c.beginPath();
+          c.arc(fx, fy, pr, 0, TAU);
+          c.fill();
+          c.restore();
+        }
         const ox = sx + w / 2 + (e.facing || 1) * (w / 2 + 4), oy = sy + h * 0.35, r = 3 + p * 8 + Math.sin(t * 30) * 0.8;
         const g = c.createRadialGradient(ox, oy, 0, ox, oy, r * 2.4);
         g.addColorStop(0, "#ffffff");
@@ -40267,8 +40447,36 @@
         c.fill();
       }
       c.globalCompositeOperation = "source-over";
-      if (k.chill) this.iceCrust(c, sx, sy, w, h, id, t);
+      if (k.chill) this.iceCrust(c, sx, sy, w, h, id, t, air);
       c.restore();
+    },
+    /** 몸 둘레에 번지는 빛(떠 있는 몸의 발밑 연출 대신) — 가운데가 짙고 둥글게 사라진다 */
+    bodyGlow(c, sx, sy, w, h, col, a) {
+      const x = sx + w / 2, y = sy + h / 2, r = Math.max(w, h) * 0.75 + 8;
+      const g = c.createRadialGradient(x, y, r * 0.2, x, y, r);
+      g.addColorStop(0, col);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      c.globalAlpha = a;
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(x, y, r, 0, TAU);
+      c.fill();
+    },
+    /** 구운 불길 — 몸 폭에 혀 여럿을 엇갈려 세운다(장 · 키 · 흔들림이 혀마다 다르다). 가운데 혀가 가장 높다. 그림이 없으면 false */
+    fireSprites(c, sx, sy, w, h, t, id, air = false) {
+      const im = this.spritesOn && Sprites.img.vfx_fire;
+      if (!im || !im.width) return false;
+      const F = 8, FW = im.width / F, FH = im.height, n = Math.max(2, Math.round(w / 8));
+      for (let i = 0; i < n; i++) {
+        const u = n === 1 ? 0.5 : i / (n - 1), mid = 1 - Math.abs(u - 0.5) * 1.2;
+        const fh = h * (air ? 0.65 : 0.75 + 0.5 * mid) * (0.9 + 0.12 * Math.sin(t * 9 + i * 2.3 + id)) + (air ? h * 0.35 * mid : 0), fw = Math.max(fh, 16) * FW / FH * 1.25;
+        const fx = sx + w * (0.08 + 0.84 * u) + Math.sin(t * 5 + i) * 1.5, fr = Math.floor(t * 14 + i * 3 + id) % F;
+        const base = air ? sy + h * (0.8 + 0.12 * Math.sin(u * Math.PI)) : sy + h + 2;
+        const fh2 = Math.max(fh, 16);
+        c.globalAlpha = 0.9;
+        c.drawImage(im, fr * FW, 0, FW, FH, fx - fw / 2, base - fh2, fw, fh2);
+      }
+      return true;
     },
     /** 불길 — 바닥(x, y0+hh)에서 위로 일렁이는 혀 n 개. col 은 'rgba(r,g,b,' 꼴 */
     flames(c, x, y0, ww, hh, t, col, a, n) {
@@ -40299,11 +40507,12 @@
     },
     /** 얼음 껍질 — 발밑에서 돋은 서리 조각(자리는 개체마다 고정) + 반짝임. 몸 빛깔은 언 사본(Sprites.frostSheet)이 맡는다 —
         ★ 판정 상자에 칠하거나 상자 옆선에 조각을 박으면 네모 얼음 상자처럼 보인다. */
-    iceCrust(c, sx, sy, w, h, id, t) {
+    iceCrust(c, sx, sy, w, h, id, t, air = false) {
       const n = 4 + Math.round(w / 6);
       for (let i = 0; i < n; i++) {
         const u = (i + 0.2 + 0.6 * tileHash(id, i * 3)) / n;
-        const bx = sx + w * (0.1 + 0.8 * u), by = sy + h, ang = -Math.PI / 2 + (u - 0.5) * 1.8;
+        const bx = sx + w * (0.1 + 0.8 * u), by = air ? sy + h * (0.78 + 0.2 * Math.sin(u * Math.PI)) : sy + h;
+        const ang = air ? Math.PI / 2 + (u - 0.5) * 0.9 : -Math.PI / 2 + (u - 0.5) * 1.8;
         const L = 3 + tileHash(id, i * 3 + 1) * 5, hw = 1.2 + tileHash(id, i * 3 + 2) * 1.2;
         const tx = bx + Math.cos(ang) * L, ty = by + Math.sin(ang) * L, nx = -Math.sin(ang) * hw, ny = Math.cos(ang) * hw;
         c.globalAlpha = 0.85;
@@ -40434,6 +40643,10 @@
     mfx: null,
     mfxT: 0,
     /** 손 자리 — 몸 앞 · 가슴 높이(시전 빛이 모이는 곳) */
+    /** 발밑에서 오르는 알갱이의 출발 높이 — 떠 있는 몸은 허공에 한 줄로 늘어서지 않게 배 아래쪽 몸 안에서 */
+    mobFootY(e) {
+      return e.onGround === false ? e.y + e.h * (0.45 + Math.random() * 0.45) : e.y + e.h - 2;
+    },
     mobHand(e) {
       return [e.cx + (e.facing || 1) * (e.w / 2 + 4), e.y + e.h * 0.35];
     },
@@ -40469,7 +40682,7 @@
         this.mfxAdd({
           k: L.k,
           x: e.cx + Math.cos(a) * e.w * 0.6,
-          y: e.y + e.h - 2,
+          y: this.mobFootY(e),
           vx: Math.cos(a) * 30,
           vy: -40 - Math.random() * 60,
           life: 0.5 + Math.random() * 0.4,
@@ -40509,9 +40722,9 @@
         if (Math.random() < 0.45) {
           const bx = e.x + Math.random() * e.w, by = e.y + e.h * (0.4 + Math.random() * 0.6);
           if (L.k === "smoke") this.mfxAdd({ k: "smoke", x: bx, y: by, vx: (Math.random() - 0.5) * 20, vy: -18, life: 0.9, r: 5 + Math.random() * 4, c: L.c, c2: L.c2 });
-          else if (L.k === "bubble") this.mfxAdd({ k: "bubble", x: bx, y: e.y + e.h - 2, vx: (Math.random() - 0.5) * 12, vy: -30 - Math.random() * 30, life: 0.8, r: 1.5 + Math.random() * 2.5, c: L.c, c2: L.c2 });
+          else if (L.k === "bubble") this.mfxAdd({ k: "bubble", x: bx, y: this.mobFootY(e), vx: (Math.random() - 0.5) * 12, vy: -30 - Math.random() * 30, life: 0.8, r: 1.5 + Math.random() * 2.5, c: L.c, c2: L.c2 });
           else if (L.k === "flake") this.mfxAdd({ k: "flake", x: bx, y: by, vx: (Math.random() - 0.5) * 30, vy: -20, life: 0.7, r: 2 + Math.random() * 2, c: L.c, c2: L.c2, spin: (Math.random() - 0.5) * 8 });
-          else this.mfxAdd({ k: L.k, x: bx, y: e.y + e.h - 2, vx: (Math.random() - 0.5) * 16, vy: -50 - Math.random() * 50, life: 0.6, r: 1.4 + Math.random() * 1.6, c: L.c, c2: L.c2, drag: 0.97 });
+          else this.mfxAdd({ k: L.k, x: bx, y: this.mobFootY(e), vx: (Math.random() - 0.5) * 16, vy: -50 - Math.random() * 50, life: 0.6, r: 1.4 + Math.random() * 1.6, c: L.c, c2: L.c2, drag: 0.97 });
         }
       }
     },
@@ -40554,7 +40767,7 @@
           this.mfxAdd({ k: "ember", x: e.cx, y: e.cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7, life: 0.5 + Math.random() * 0.3, r: 1.6 + Math.random() * 1.8, c: L.c, c2: L.c2, drag: 0.9 });
         }
         for (let i = 0; i < this.mfxN(14); i++)
-          this.mfxAdd({ k: "ember", x: e.x + Math.random() * e.w, y: e.y + e.h, vy: -120 - Math.random() * 120, life: 0.6, r: 2 + Math.random() * 2, c: L.c, c2: L.c2, drag: 0.95 });
+          this.mfxAdd({ k: "ember", x: e.x + Math.random() * e.w, y: this.mobFootY(e), vy: -120 - Math.random() * 120, life: 0.6, r: 2 + Math.random() * 2, c: L.c, c2: L.c2, drag: 0.95 });
         v.flare(e.cx, e.cy - 4, 46, "#ff7a4a", 0.28);
         this.shake = Math.max(this.shake || 0, 3);
       } else if (id === "hex" && tgt) {
@@ -48751,7 +48964,8 @@
         return;
       }
       const key0 = e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type) ? "mech_" + e.type : e.type;
-      const key = e.chillT > 0 && this.spritesOn && Sprites.frostSheet(key0) ? "frost_" + key0 : key0;
+      const burning = e.dots && e.dots.some((d) => d.kind === "burn" || d.kind === "fire");
+      const key = !this.spritesOn ? key0 : burning && Sprites.burnSheet(key0) ? "burn_" + key0 : e.chillT > 0 && Sprites.frostSheet(key0) ? "frost_" + key0 : key0;
       const meta = this.spritesOn && Sprites.meta && (Sprites.meta.characters.sheets[key] || Sprites.meta.bosses.sheets[key]);
       const dy = meta ? meta.frameH - e.h - (Sprites.footInset[key] || 0) - (e.def.hop && !e.onGround ? 3 : 0) : 0;
       const side = meta ? (Sprites.sideInset[key] || 0) * (e.facing < 0 ? -1 : 1) : 0;

@@ -211,7 +211,9 @@ export const RenderActorsPart: Bag = {
     /* 개조된 개체는 원래 시트를 강철로 눕힌 사본으로 그린다(Sprites.mechSheet). */
     const key0 = (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type))
       ? 'mech_' + e.type : e.type;
-    const key = e.chillT > 0 && this.spritesOn && Sprites.frostSheet(key0) ? 'frost_' + key0 : key0;   // 얼면 윤곽째 언 사본
+    const burning = e.dots && e.dots.some((d: any) => d.kind === 'burn' || d.kind === 'fire');
+    const key = !this.spritesOn ? key0 : burning && Sprites.burnSheet(key0) ? 'burn_' + key0
+      : e.chillT > 0 && Sprites.frostSheet(key0) ? 'frost_' + key0 : key0;   // 타면 달군 사본 · 얼면 언 사본(윤곽째)
     const meta = this.spritesOn && Sprites.meta &&
       (Sprites.meta.characters.sheets[key] || Sprites.meta.bosses.sheets[key]);
     // Sprites.footInset가 실측한 여백이라 그만큼 덜 밀어 올린다.

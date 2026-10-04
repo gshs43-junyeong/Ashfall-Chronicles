@@ -494,6 +494,9 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   레벨업 0.75배. 유적 맥박 단계·사건은 `chapter` 그대로.
 - 포탑은 받침만 타일 그림, 머리·총열은 `drawTurret` 가 `m.aim`(장전 중에도 목표를 찾는다)으로 돌린다. 캔버스 조준 원은 시야 배율로 나눈다.
   쏘는 것은 `'bullet'`(entity.js `PROJ_STYLE.tracer` — 예광 꼬리) · 총구에서 별 모양 불꽃(`m.fx` 0.2씩 줄어 오래 남는다) · 탄피 · 연기.
+- **스킬 연출 결 그림**(`python3 tools/mkvfx.py` → sync, numpy 필요): 흰 모양 + 흰 속불 두 장(`fx/vfx_*`)을 `Sprites.vfxArt` 가 갈래 색으로 물들여
+  엔진 `Vfx.art`·`ShapeFx.art` 에 건다 — 픽셀을 읽지 않고 합성만(file://). 불길 `vfx_fire` 만 색을 구운 8장 띠. 불붙은 몹은 `burnSheet`(달군 사본) + 구운 불길(`fireSprites`),
+  언 몹은 `frostSheet`. 지속 피해 갈래 `'fire'`(스킬 불)도 `'burn'` 처럼 탄다. ★ 떠 있는 몸(`onGround === false`)은 발밑 연출(고리 · 불 밑동 · 서리 · 오르는 알갱이)을 몸 안 · 둘레로 옮긴다.
 - **둥지 그림**은 game.js `drawLair`(바이옴 유적: 흙 둔덕·갈비뼈·맥동하는 알 · 공장 유적(ruin ≥ 10): 강철 요람·핵) — 어둠 밑에 묻혀 안
   보여서 `drawLairGlow` 가 빛 뒤에 한 겹 더 칠한다. 보스 색이 어두우면 `lairCol` 이 밝힌다.
 - **스토리 목표 `and`**(game.js `objProgress`): 이어서 하는 일(모으기 → 만들기)은 한 칸 — 칸을 차례로 세고 `label`('1/2단계 · 7/10')을

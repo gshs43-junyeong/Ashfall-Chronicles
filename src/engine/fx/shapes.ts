@@ -5,9 +5,12 @@ interface Ring { x: number; y: number; r: number; t: number; max: number; c: str
 interface Bolt { pts: number[][]; t: number; max: number; c: string }
 interface Warn { x: number; y: number; r: number; t: number; max: number; c: string }
 
+import type { VfxArt } from './vfx.js';
+
 export class ShapeFx {
-  declare rings: Ring[]; declare bolts: Bolt[]; declare warns: Warn[];
-  constructor() { this.rings = []; this.bolts = []; this.warns = []; }
+  declare rings: Ring[]; declare bolts: Bolt[]; declare warns: Warn[]; declare art: VfxArt | null;
+  /** art — 고리 · 예고 원을 결 그림('ring')으로(없으면 선) */
+  constructor() { this.rings = []; this.bolts = []; this.warns = []; this.art = null; }
 
   /** 퍼져 나가는 고리 — 반지름 r 까지 1.3배로 벌어지며 흐려진다 */
   ring(x: number, y: number, r: number, c: string, life = 0.3): void { this.rings.push({ x, y, r, t: life, max: life, c }); }
@@ -32,14 +35,17 @@ export class ShapeFx {
   draw(c: CanvasRenderingContext2D, camX: number, camY: number): void {
     const TAU = Math.PI * 2;
     for (const r of this.rings) {
-      const k = r.t / r.max;
+      const k = r.t / r.max, R = r.r * (1.3 - k * 0.3), im = this.art && this.art('ring', r.c);
+      if (im) { c.globalAlpha = k * .9; c.drawImage(im, r.x - camX - R / 0.95, r.y - camY - R / 0.95, R / 0.95 * 2, R / 0.95 * 2); continue; }
       c.strokeStyle = r.c; c.globalAlpha = k * .8; c.lineWidth = 3;
-      c.beginPath(); c.arc(r.x - camX, r.y - camY, r.r * (1.3 - k * 0.3), 0, TAU); c.stroke();
+      c.beginPath(); c.arc(r.x - camX, r.y - camY, R, 0, TAU); c.stroke();
     }
     for (const w of this.warns) {
       const k = 1 - w.t / w.max, x = w.x - camX, y = w.y - camY;
       c.globalAlpha = 0.22 + 0.2 * Math.sin(k * 18);
       c.fillStyle = w.c; c.beginPath(); c.arc(x, y, w.r * k, 0, TAU); c.fill();
+      const im = this.art && this.art('ring', w.c);
+      if (im) { c.globalAlpha = 0.9; c.save(); c.translate(x, y); c.rotate(k * 1.5); c.drawImage(im, -w.r / 0.95, -w.r / 0.95, w.r / 0.95 * 2, w.r / 0.95 * 2); c.restore(); continue; }
       c.globalAlpha = 0.85; c.strokeStyle = w.c; c.lineWidth = 2.5;
       c.beginPath(); c.arc(x, y, w.r, 0, TAU); c.stroke();
     }
