@@ -58,7 +58,7 @@ export const HudUIPart: Bag = {
     $('#gold-text').innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl('coin')})"></span>${fmt(p.gold)}`;
     // 발밑 지형이 아니라 세계 공통 고도(altOf)로 잰다 — 발밑 기준이면 어디를 걷든 늘 비슷한 값(예: 항상 5m)이 나왔다
     const ty = Math.floor(p.cy / TS);
-    $('#depth-text').textContent = tr('고도 {alt}m', { alt: fmt(altOf(dimsOf(G.world), ty)) });
+    $('#depth-text').textContent = tr('고도 {alt}m', { alt: fmt(altOf(G.world, ty)) });
     const hh = Math.floor(G.dayT / 60), mm = Math.floor(G.dayT % 60);
     $('#clock-text').textContent = `${pad2(hh)}:${pad2(mm)}`;
     $('#clock-icon').textContent = '';

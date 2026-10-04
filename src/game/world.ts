@@ -369,6 +369,15 @@ export class World extends TileMap {
       const a = rawH[Math.max(0, x - 1)], b2 = rawH[x], c2 = rawH[Math.min(WW - 1, x + 1)];
       this.surface[x] = Math.round((a + b2 * 2 + c2) / 4);
     }
+    /* 해수면이 고도 0m 이고 땅은 그 밑으로 안 내려간다 — 수면은 물가 지면에서 정해지므로(buildSea), 물가 쪽 땅을
+       뭍에서 가장 낮은 골(가장 큰 y)까지 천천히 내려 바다를 세계에서 가장 낮은 곳에 앉힌다. 사연: docs/code-history.md#h164 */
+    let low = 0;
+    for (let x = SEA_X1 + 1; x < WW; x++) if (this.surface[x] > low) low = this.surface[x];
+    const COAST = SX(220);
+    for (let x = 0; x < Math.min(WW, SEA_X1 + COAST); x++) {
+      const t = clamp((x - SEA_X1) / COAST, 0, 1), k = t * t * (3 - 2 * t);
+      this.surface[x] = Math.round(lerp(low, this.surface[x], k));
+    }
     // 마을 부지 평탄화
     const vx0 = CAMP_X0, vx1 = CAMP_GX1;   // 베이스캠프 — 잿빛 숲 (생성 발자국)
     let vh = this.surface[(vx0 + vx1) >> 1];
