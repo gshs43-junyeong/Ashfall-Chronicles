@@ -19,6 +19,7 @@
 
 - [system-requirements.md](system-requirements.md): 실행 환경과 기술적 전제
 - [deploy-cache.md](deploy-cache.md): 배포와 캐시 무효화 절차
+- [update/v1.1.4-plan.md](update/v1.1.4-plan.md): **다음 판 v1.1.4 할 일**(착수 전) — 눈 지역 유적 거리 · 탈 것 · 탭 UI 역동화 · 보스 공략 틈
 - [update/v1.1.1-engine-plan.md](update/v1.1.1-engine-plan.md): v1.1.1 엔진화·모듈 분리·TypeScript·다국어(6개)·모바일·Docker 계획과 단계별 작업 프롬프트
 - [engine.md](engine.md): 엔진(`src/engine`) 공개 API · 원칙 · 엔진만으로 도는 예제 게임(`examples/sample`)
 - [debug-urls.md](debug-urls.md): 구역·기능 앞에서 바로 시작하는 디버그 주소(`?debug=village` · `factory` · `sea` …)와 옵션
