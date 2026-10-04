@@ -21,7 +21,8 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       x0, y0, w: spec.w, h: spec.h, wall: spec.wall, floor: spec.floor, bg: spec.bg,
       rng, depth: bsp[0], minW: bsp[1], minH: bsp[2],
       target: spec.rooms,                                    // 등급대로 방 수를 맞춘다
-      plan: spec.plan                                        // 겉모양이 방 배치를 따라간다
+      plan: spec.plan,                                       // 겉모양이 방 배치를 따라간다
+      worn: 1
     });
     rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
     const boss = rooms[0];                                   // 가장 넓은 방이 보스방
@@ -224,7 +225,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       const rooms = this.carveDungeon({
         x0, y0, w, h, wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10,
         rng, depth: 5, minW: st.bsp ? st.bsp[1] : 16, minH: st.bsp ? st.bsp[2] : 8,
-        target: st.rooms, plan: st.plan
+        target: st.rooms, plan: st.plan, worn: 1
       });
       rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
       const main = rooms[0], fy0 = main.y + main.h - 3;

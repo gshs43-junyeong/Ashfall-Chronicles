@@ -16884,6 +16884,7 @@
             if (open) this.set(x, y, T.AIR);
           }
         for (let x = r.x + 1; x < x1; x++) this.set(x, y1 - 1, floor);
+        if (cfg.worn && !r.cell) this._wearRoom(r, wall, keepY);
       }
       for (let i = 0; i < leaves.length; i++)
         for (let j = i + 1; j < leaves.length; j++) this._linkRooms(leaves[i], leaves[j], floor);
@@ -16915,6 +16916,48 @@
       }
       this._ensureConnected(x0, y0, w, h, leaves);
       return leaves;
+    },
+    /** 유적 방을 낡게 — 천장 들쭉날쭉 · 무너진 모서리 · 방마다 한 가지 특색.
+        ★ 난수를 뽑지 않는다(칸 해시) — 뒤따르는 생성이 밀리지 않게. 머리 위(keepY-2 위)만 바꾼다. */
+    _wearRoom(r, wall, keepY) {
+      const hs = (a, b) => {
+        let v = a * 374761393 + b * 668265263 | 0;
+        v = (v ^ v >>> 13) * 1274126177;
+        return (v ^ v >>> 16) >>> 0;
+      };
+      const x1 = r.x + r.w - 1, lim = keepY - 2;
+      const fill = (x, y) => {
+        if (y <= lim && y > r.y && x > r.x && x < x1) this.set(x, y, wall);
+      };
+      let d = hs(r.x, r.y) % 2;
+      for (let x = r.x + 1; x < x1; x++) {
+        const t = hs(r.x * 7 + ((x - r.x) / 3 | 0), r.y) % 3;
+        d = Math.max(0, Math.min(2, t > d ? d + 1 : t < d ? d - 1 : d));
+        for (let y = r.y + 1; y <= r.y + d; y++) fill(x, y);
+      }
+      const s0 = 2 + hs(r.x, r.h) % 3, s1 = 2 + hs(x1, r.w) % 3;
+      for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
+        if (i + j < s0) fill(r.x + 1 + i, r.y + 1 + j);
+        if (i + j < s1) fill(x1 - 1 - i, r.y + 1 + j);
+      }
+      if (r.w < 12) return;
+      const k = hs(r.x + r.w, r.y + r.h) % 4;
+      if (k <= 1) {
+        const xs = k ? [r.x + (r.w / 3 | 0), x1 - (r.w / 3 | 0)] : [r.x + (r.w >> 1) + hs(r.y, r.x) % 5 - 2];
+        for (const px of xs) {
+          const len = lim - r.y - hs(px, r.y) % 2;
+          for (let y = r.y + 1; y < r.y + len; y++) {
+            fill(px, y);
+            if (y < r.y + len - 1) fill(px + 1, y);
+          }
+        }
+      } else if (k === 2 && lim - r.y >= 5) {
+        const left = hs(r.w, r.h) % 2 === 0, n = Math.max(3, r.w / 3 | 0);
+        for (let i = 0; i < n; i++) {
+          const x = left ? r.x + 1 + i : x1 - 1 - i;
+          if (this.get(x, lim) === T.AIR) this.set(x, lim, T.PLATFORM);
+        }
+      }
     },
     /** 방 하나에서 걸어 닿을 수 있는 칸을 모아 온다 */
     _walkable(x0, y0, w, h, sx, sy) {
@@ -17752,8 +17795,8 @@
       };
       const ahead = () => dir > 0 ? hi - x : x - lo;
       col(x, f);
-      const landing = () => {
-        const rw = rng.int(7, 11), rh = rng.int(5, 6);
+      const landing = (big = false) => {
+        const rw = big ? rng.int(13, 16) : rng.int(7, 11), rh = big ? rng.int(7, 8) : rng.int(5, 6);
         const ax = dir > 0 ? x + 1 : x - rw;
         const top = f - rh + 1;
         for (let xx = ax - 1; xx <= ax + rw; xx++) {
@@ -17778,7 +17821,7 @@
         }
         let placed = 0;
         const used = {};
-        const want = rng.int(2, 3);
+        const want = big ? 1 : rng.int(2, 3);
         for (const tk of pool2) {
           if (placed >= want) break;
           if (used[tk]) continue;
@@ -17791,15 +17834,22 @@
         if (kind === "nofoothold" && rng.chance(0.6)) this.set(ax + rng.int(1, rw - 2), f, T.SPIKE);
         this.putDecor(ax, top + 1, spec.torch || T.TORCH, "wall");
         if (rh >= 6) this.putDecor(ax + rw - 1, top + 1, T.BANNER, "wall");
-        if (rng.chance(0.25)) this.objects.push({
+        if (big || rng.chance(0.25)) this.objects.push({
           type: "chest",
-          tier: 1,
+          tier: big ? 2 : 1,
           x: (ax + (rw >> 1)) * TS,
           y: (f - 0.2) * TS,
           w: 30,
           h: 26,
           items: null
         });
+        if (big) {
+          this.putDecor(ax + rw - 1, top + 1, spec.torch || T.TORCH, "wall");
+          const px = ax + (rw >> 1) + (rng.chance(0.5) ? -3 : 3);
+          for (let y = top; y <= top + rh - 5; y++) this.set(px, y, wall);
+          const lx = dir > 0 ? ax : ax + rw - 4;
+          for (let i = 0; i < 4; i++) this.set(lx + i, f - 3, T.PLATFORM);
+        }
         x = dir > 0 ? ax + rw - 1 : ax;
       };
       const well = () => {
@@ -17829,7 +17879,8 @@
         f += D;
         col(xw, f);
       };
-      let lastSeg = "start", lastRoom = f, guard = 0;
+      let lastSeg = "start", lastRoom = f, guard = 0, midDone = false;
+      const depth = (o.ruin ? o.ruin.y0 : yBot) - sy;
       if (o.vestibule) {
         for (let i = 0; i < o.vestibule && !stop; i++) step(0);
         lastSeg = "hall";
@@ -17841,6 +17892,13 @@
           if (ahead() < 14 && rem > 13 && lastSeg !== "rise") {
             well();
             lastSeg = "well";
+            lastRoom = f;
+            continue;
+          }
+          if (!midDone && depth >= 24 && f - sy >= depth * 0.4 && ahead() >= 20 && lastSeg !== "well" && rem > 4) {
+            landing(true);
+            midDone = true;
+            lastSeg = "landing";
             lastRoom = f;
             continue;
           }
@@ -18180,8 +18238,9 @@
         minH: bsp[2],
         target: spec.rooms,
         // 등급대로 방 수를 맞춘다
-        plan: spec.plan
+        plan: spec.plan,
         // 겉모양이 방 배치를 따라간다
+        worn: 1
       });
       rooms.sort((a, b) => b.w * b.h - a.w * a.h);
       const boss = rooms[0];
@@ -18406,7 +18465,8 @@
           minW: st.bsp ? st.bsp[1] : 16,
           minH: st.bsp ? st.bsp[2] : 8,
           target: st.rooms,
-          plan: st.plan
+          plan: st.plan,
+          worn: 1
         });
         rooms.sort((a, b) => b.w * b.h - a.w * a.h);
         const main = rooms[0], fy0 = main.y + main.h - 3;
