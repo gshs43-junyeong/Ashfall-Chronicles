@@ -2115,8 +2115,9 @@
     };
   }
   var CUR = null;
-  function altOf(d, ty) {
-    return Math.round((d.WH - 5 - ty) * 5);
+  function altOf(w, ty) {
+    const lv = w && w.sea ? w.sea.level : dimsOf(w).SURF_BASE;
+    return Math.round((lv - ty) * 5);
   }
   function dimsOf(w) {
     return w && w.dims || CUR;
@@ -14154,6 +14155,13 @@
       for (let x = 0; x < WW2; x++) {
         const a = rawH[Math.max(0, x - 1)], b2 = rawH[x], c2 = rawH[Math.min(WW2 - 1, x + 1)];
         this.surface[x] = Math.round((a + b2 * 2 + c2) / 4);
+      }
+      let low = 0;
+      for (let x = SEA_X12 + 1; x < WW2; x++) if (this.surface[x] > low) low = this.surface[x];
+      const COAST = SX2(220);
+      for (let x = 0; x < Math.min(WW2, SEA_X12 + COAST); x++) {
+        const t = clamp((x - SEA_X12) / COAST, 0, 1), k = t * t * (3 - 2 * t);
+        this.surface[x] = Math.round(lerp(low, this.surface[x], k));
       }
       const vx0 = CAMP_X02, vx1 = CAMP_GX12;
       let vh = this.surface[vx0 + vx1 >> 1];
@@ -36331,7 +36339,7 @@
       }
       $("#gold-text").innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl("coin")})"></span>${fmt(p.gold)}`;
       const ty = Math.floor(p.cy / TS);
-      $("#depth-text").textContent = tr("고도 {alt}m", { alt: fmt(altOf(dimsOf(app.world), ty)) });
+      $("#depth-text").textContent = tr("고도 {alt}m", { alt: fmt(altOf(app.world, ty)) });
       const hh = Math.floor(app.dayT / 60), mm = Math.floor(app.dayT % 60);
       $("#clock-text").textContent = `${pad2(hh)}:${pad2(mm)}`;
       $("#clock-icon").textContent = "";
@@ -43813,7 +43821,7 @@
       const t = o && o.task || "";
       if (!o || o.type !== "depth" || o.up || !/[0-9]+ ?m/.test(t)) return t;
       const d = dimsOf(this.world);
-      return tr("고도 {alt}m 아래", { alt: fmt(altOf(d, d.SY(o.y))) });
+      return tr("고도 {alt}m 아래", { alt: fmt(altOf(this.world, d.SY(o.y))) });
     },
     objProgress(o) {
       const { SURF_BASE: SURF_BASE2, SY: SY2 } = dimsOf(this.world);

@@ -26,7 +26,7 @@ export const ProgressPart: Bag = {
     const t = (o && o.task) || '';
     if (!o || o.type !== 'depth' || o.up || !/[0-9]+ ?m/.test(t)) return t;
     const d = dimsOf(this.world);
-    return tr('고도 {alt}m 아래', { alt: fmt(altOf(d, d.SY(o.y))) });
+    return tr('고도 {alt}m 아래', { alt: fmt(altOf(this.world, d.SY(o.y))) });
   },
   objProgress(o: Bag) { const { SURF_BASE, SY } = dimsOf(this.world);
     const p = this.player;
