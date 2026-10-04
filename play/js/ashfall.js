@@ -8465,7 +8465,7 @@
     {
       id: "ice",
       n: "얼음 던전",
-      x: 300 + SHIFT,
+      x: 180 + SHIFT,
       y: 150,
       w: 88,
       h: 50,
@@ -16858,7 +16858,7 @@
             this.set(x, y, wall);
             this.setWall(x, y, bg);
           }
-      const shapes = cfg.shapes || (tri ? ["rect", "rect", "rect", "pillars"] : ["rect", "rect", "round", "octagon", "pillars"]);
+      const shapes = cfg.shapes || (tri ? ["rect", "rect", "rect", cfg.worn ? "rect" : "pillars"] : ["rect", "rect", "round", "octagon", cfg.worn ? "octagon" : "pillars"]);
       for (const r of leaves) {
         const shape = r.cell ? "rect" : rng ? rng.pick(shapes) : "rect";
         r.shape = shape;
@@ -16931,7 +16931,7 @@
       };
       let d = hs(r.x, r.y) % 2;
       for (let x = r.x + 1; x < x1; x++) {
-        const t = hs(r.x * 7 + ((x - r.x) / 3 | 0), r.y) % 3;
+        const t = hs(r.x * 7 + ((x - r.x) / 4 | 0), r.y) % 3;
         d = Math.max(0, Math.min(2, t > d ? d + 1 : t < d ? d - 1 : d));
         for (let y = r.y + 1; y <= r.y + d; y++) fill(x, y);
       }
@@ -16940,6 +16940,17 @@
         if (i + j < s0) fill(r.x + 1 + i, r.y + 1 + j);
         if (i + j < s1) fill(x1 - 1 - i, r.y + 1 + j);
       }
+      for (let y = r.y + 1; y <= lim; y++)
+        for (let x = r.x + 1; x < x1; ) {
+          if (this.get(x, y) !== T.AIR) {
+            x++;
+            continue;
+          }
+          let e = x;
+          while (e < x1 && this.get(e, y) === T.AIR) e++;
+          if (e - x <= 2) for (let i = x; i < e; i++) fill(i, y);
+          x = e;
+        }
       if (r.w < 12) return;
       const k = hs(r.x + r.w, r.y + r.h) % 4;
       if (k <= 1) {
@@ -18424,7 +18435,7 @@
       this.ruinSites = [];
       this._walkJobs = [];
       const spots = [
-        { x: SX2(420 + SHIFT), y: SY2(220), trap: 0.52, spike: 0.24, chest: 0.56, w: 84, h: 44, tier: 2, traps: ["dart", "crumble"], entryKind: "foothold" },
+        { x: SX2(520 + SHIFT), y: SY2(220), trap: 0.52, spike: 0.24, chest: 0.56, w: 84, h: 44, tier: 2, traps: ["dart", "crumble"], entryKind: "foothold" },
         { x: SX2(1700 + SHIFT), y: SY2(252), trap: 0.72, spike: 0.38, chest: 0.6, w: 68, h: 40, tier: 3, traps: ["dart", "crumble", "vent"], entryKind: "maze" },
         { x: SX2(3860 + SHIFT), y: SY2(236), trap: 0.9, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ["dart", "vent", "crumble"], entryKind: "nofoothold" }
       ];

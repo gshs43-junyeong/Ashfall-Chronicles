@@ -8,7 +8,7 @@ import { T } from '../data.js';
 /* 난이도 등급(rank) — 기준은 "플레이어가 실제로 언제 여기 닿는가"다. */
 export const RUIN_SPEC: RuinDef[] = [
   {
-    id: 'ice', n: '얼음 던전', x: 300 + SHIFT, y: 150, w: 88, h: 50,
+    id: 'ice', n: '얼음 던전', x: 180 + SHIFT, y: 150, w: 88, h: 50,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
     traps: ['dart', 'crumble', 'grind'], boss: 'ice_warden',
     mobs: ['frostling', 'icewolf', 'frostbound'],

@@ -174,7 +174,9 @@ export const WorldDungeon: Bag & ThisType<World> = {
         for (let y = r.y - 1; y <= r.y + r.h; y++) { this.set(x, y, wall); this.setWall(x, y, bg); }
     /* 4) 각 방 속을 판다 (테두리 1칸은 벽으로 남긴다). */
     // 피라미드는 네모와 기둥 홀만 — 둥근 방·팔각 방은 돌을 쌓은 무덤으로 안 읽힌다
-    const shapes = cfg.shapes || (tri ? ['rect', 'rect', 'rect', 'pillars'] : ['rect', 'rect', 'round', 'octagon', 'pillars']);
+    // 낡은 유적은 기둥 홀 대신 네모 — 기둥 사이 세 칸 틈이 위로 길쭉한 구멍으로 보였다(매달린 기둥은 _wearRoom 이 준다)
+    const shapes = cfg.shapes || (tri ? ['rect', 'rect', 'rect', cfg.worn ? 'rect' : 'pillars']
+                                      : ['rect', 'rect', 'round', 'octagon', cfg.worn ? 'octagon' : 'pillars']);
     for (const r of leaves) {
       // 골방은 좁아서 둥글게 깎으면 걸을 자리가 없다 — 네모로만
       const shape = r.cell ? 'rect' : rng ? rng.pick(shapes) : 'rect';
@@ -242,7 +244,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
     const fill = (x: number, y: number) => { if (y <= lim && y > r.y && x > r.x && x < x1) this.set(x, y, wall); };
     let d = hs(r.x, r.y) % 2;
     for (let x = r.x + 1; x < x1; x++) {                    // 천장 — 이웃 칸과 한 칸 넘게 안 벌어진다
-      const t = hs(r.x * 7 + ((x - r.x) / 3 | 0), r.y) % 3;     // 세 칸씩 묶어야 톱니로 안 보인다
+      const t = hs(r.x * 7 + ((x - r.x) / 4 | 0), r.y) % 3;     // 네 칸씩 묶어야 톱니로 안 보인다
       d = Math.max(0, Math.min(2, t > d ? d + 1 : t < d ? d - 1 : d));
       for (let y = r.y + 1; y <= r.y + d; y++) fill(x, y);
     }
@@ -251,6 +253,14 @@ export const WorldDungeon: Bag & ThisType<World> = {
       if (i + j < s0) fill(r.x + 1 + i, r.y + 1 + j);
       if (i + j < s1) fill(x1 - 1 - i, r.y + 1 + j);
     }
+    /* ★ 위로 길쭉한 틈(폭 2칸 이하)은 위에서부터 메운다 — 천장 홈 · 모서리 사이에 좁은 굴뚝이 남았다. */
+    for (let y = r.y + 1; y <= lim; y++)
+      for (let x = r.x + 1; x < x1;) {
+        if (this.get(x, y) !== T.AIR) { x++; continue; }
+        let e = x; while (e < x1 && this.get(e, y) === T.AIR) e++;
+        if (e - x <= 2) for (let i = x; i < e; i++) fill(i, y);
+        x = e;
+      }
     if (r.w < 12) return;
     const k = hs(r.x + r.w, r.y + r.h) % 4;
     if (k <= 1) {                                            // 부서져 매달린 기둥 (0 하나 · 1 둘)
