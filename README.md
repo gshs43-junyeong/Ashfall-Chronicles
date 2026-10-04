@@ -22,10 +22,11 @@ tells you about. The seventy-five achievements are split into eight groups and t
 **[Download](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)** ·
 **[한국어 README](README-ko.md)**
 
-> **v1.1.2 (2026-10-04)** — **Multiplayer** (2–4 players sharing one world through a room code) · monster skills and status effects
-> (burn, frostbite, poison, curse) · the **Ashfall** game font · redrawn skill effects · light and shadow · ice caves · an ash forest that
-> regains its leaves once session 1 ends. There are now **two downloads**: a small browser edition and an **app edition** (Electron, unsigned).
-> Full list: [`docs/v1.1.2-changelog.md`](docs/v1.1.2-changelog.md). v1.1.x saves open as they are.
+> **v1.1.3 (2026-10-04)** — redrawn skill effects (textured slashes, shockwaves, rune circles, light pillars) · monsters that
+> **catch fire** and freeze along their outline · effects that follow flying monsters · hopping rabbits · no sky islands over the
+> camp and village · a slimmer title logo and the new app icon. Full list: [`docs/v1.1.3-changelog.md`](docs/v1.1.3-changelog.md).
+> v1.1.2 added **multiplayer** (2–4 players), monster skills, the **Ashfall** font and the **app edition** (Electron, unsigned) —
+> [`docs/v1.1.2-changelog.md`](docs/v1.1.2-changelog.md). v1.1.x saves open as they are.
 >
 > ⚠ **v1.0.x saves do not open from v1.1 onward** — the world grew from 4200 to 5000 tiles wide.
 > Start a new journey; old records stay in their slots.
@@ -129,7 +130,7 @@ git-ignored — edits there are lost on the next build. Release zips are not com
 |---|---|
 | [`README-ko.md`](README-ko.md) | This README in Korean |
 | [`docs/README.md`](docs/README.md) | **Documentation map** — what to read and where to start (Korean) |
-| [`docs/v1.1.2-changelog.md`](docs/v1.1.2-changelog.md) | **What v1.1.2 adds** (Korean: [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md)) |
+| [`docs/v1.1.3-changelog.md`](docs/v1.1.3-changelog.md) · [`docs/v1.1.2-changelog.md`](docs/v1.1.2-changelog.md) | **What v1.1.3 and v1.1.2 add** (Korean: [`v1.1.3`](docs/v1.1.3-changelog.ko.md) · [`v1.1.2`](docs/v1.1.2-changelog.ko.md)) |
 | [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) · [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | What v1.1.1 and v1.1.0 added (Korean) |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | Shared rules for adding chapters and sessions (Korean) |
 | [`docs/engine.md`](docs/engine.md) | The engine's public API and the engine-only sample game (Korean) |
@@ -143,8 +144,8 @@ git-ignored — edits there are lost on the next build. Release zips are not com
 ## Releasing a new version
 
 ```bash
-git tag v1.1.2
-git push origin v1.1.2
+git tag v1.1.3
+git push origin v1.1.3
 ```
 
 When the tag lands, `.github/workflows/release.yml`:
@@ -157,8 +158,8 @@ When the tag lands, `.github/workflows/release.yml`:
 To build locally:
 
 ```bash
-bash tools/build.sh 1.1.2
-(cd desktop && npm ci) && bash tools/build-desktop.sh 1.1.2
+bash tools/build.sh 1.1.3
+(cd desktop && npm ci) && bash tools/build-desktop.sh 1.1.3
 ```
 
 Output goes to `dist/`.

@@ -23,10 +23,11 @@
 **[내려받기](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)** ·
 **[English README](README.md)**
 
-> **v1.1.2 (2026-10-04)** — **멀티플레이**(2~4명 · 방 코드로 모여 한 세계를 함께) · 몬스터 스킬과 상태 이상(불 · 동상 · 독 · 저주) ·
-> 게임 글꼴 **Ashfall** · 새로 그린 스킬 연출 · 빛과 그늘 · 얼음 동굴 · 세션 1 을 끝내면 잎을 되찾는 잿빛 숲.
-> 내려받는 판이 **둘**이 됐습니다 — 브라우저로 여는 판(작다)과 **앱으로 여는 판**(Electron, 서명 없음). 무엇이 들어갔는지는
-> [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md) 에 있습니다. v1.1.x 의 저장은 그대로 열립니다.
+> **v1.1.3 (2026-10-04)** — 새로 그린 스킬 연출(결이 살아 있는 칼선 · 충격파 · 룬 마법진 · 빛기둥) · **불이 붙어 타오르고** 윤곽째 얼어붙는
+> 몬스터 · 떠 있는 몬스터를 따라붙는 연출 · 깡충 뛰는 토끼 · 캠프 · 마을 위 하늘 섬 정리 · 가벼워진 타이틀 로고와 새 앱 아이콘.
+> 무엇이 들어갔는지는 [`docs/v1.1.3-changelog.ko.md`](docs/v1.1.3-changelog.ko.md) 에 있습니다.
+> v1.1.2 에는 **멀티플레이**(2~4명) · 몬스터 스킬 · 게임 글꼴 **Ashfall** · **앱으로 여는 판**(Electron, 서명 없음)이 들어왔습니다 —
+> [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md). v1.1.x 의 저장은 그대로 열립니다.
 >
 > ⚠ **v1.0.x 의 저장은 v1.1 부터 열리지 않습니다** — 세계 폭이 4200 → 5000 칸으로 넓어졌습니다.
 > 새로 시작해야 하며, 옛 기록은 슬롯에 그대로 남습니다.
@@ -67,7 +68,7 @@
 | [`README.md`](README.md) | 영어 안내(이 문서의 영어판 — 영어가 먼저입니다) |
 | [`docs/about-copy.md`](docs/about-copy.md) | GitHub About · 소개 문구(한국어·영어)의 원본 |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
-| [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md) | **v1.1.2 에 무엇이 들어갔는가**(릴리스 본문은 영어판 `docs/v1.1.2-changelog.md`) |
+| [`docs/v1.1.3-changelog.ko.md`](docs/v1.1.3-changelog.ko.md) · [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md) | **v1.1.3 · v1.1.2 에 무엇이 들어갔는가**(릴리스 본문은 영어판 `docs/v<판>-changelog.md`) |
 | [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) | v1.1.1 에 무엇이 들어갔는가 |
 | [`docs/debug-urls.md`](docs/debug-urls.md) | 구역 · 기능 앞에서 바로 시작하는 디버그 주소(영상 촬영용 `?debug=showcase` 포함) |
 | [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) | v1.1.0 에 무엇이 들어갔는가 |
@@ -80,8 +81,8 @@
 ## 새 버전 내보내기
 
 ```bash
-git tag v1.1.2
-git push origin v1.1.2
+git tag v1.1.3
+git push origin v1.1.3
 ```
 
 태그가 올라가면 `.github/workflows/release.yml`이 자동으로:
@@ -94,8 +95,8 @@ git push origin v1.1.2
 로컬에서 직접 만들려면:
 
 ```bash
-bash tools/build.sh 1.1.2
-(cd desktop && npm ci) && bash tools/build-desktop.sh 1.1.2
+bash tools/build.sh 1.1.3
+(cd desktop && npm ci) && bash tools/build-desktop.sh 1.1.3
 ```
 
 결과물은 `dist/`에 생깁니다.
@@ -231,4 +232,4 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 
 버전별 변경 사항은 [릴리스 목록](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases)과
 [다운로드 페이지의 변경 이력](https://ashfall-chronicles.vercel.app/download#changelog)에 있습니다.
-v1.1.2 · v1.1.1 · v1.1.0 의 전체 목록은 [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md) · [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) · [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다.
+v1.1.3 · v1.1.2 · v1.1.1 · v1.1.0 의 전체 목록은 [`docs/v1.1.3-changelog.ko.md`](docs/v1.1.3-changelog.ko.md) · [`docs/v1.1.2-changelog.ko.md`](docs/v1.1.2-changelog.ko.md) · [`docs/v1.1.1-changelog.md`](docs/v1.1.1-changelog.md) · [`docs/v1.1-changelog.md`](docs/v1.1-changelog.md) 에 있습니다.
