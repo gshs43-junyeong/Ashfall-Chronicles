@@ -48248,7 +48248,7 @@
       const mid = (ty0 + ty1) / 2;
       const u = Math.min(1, Math.max(0, (mid - SURF_BASE2 - 4) / 60)), v = Math.min(1, Math.max(0, (mid - (HELL_Y2 - 100)) / 90));
       const rgb = [Math.round(4 * u + (44 - 4 * u) * v), Math.round(7 * u + (8 - 7 * u) * v), Math.round(18 * u + (2 - 18 * u) * v)];
-      L.drawDark(c, tx0 - 1, ty0 - 1, tx1 + 1, ty1 + 1, TS, camX, camY, (x, y) => w.lightAt(x, y), 15, rgb);
+      L.drawDark(c, tx0 - 1, ty0 - 1, tx1 + 1, ty1 + 1, TS, camX, camY, (x, y) => w.lightAt(x, y), 15, rgb, 0.022 + 0.2 * v);
     },
     /** 소환 제단 — 새긴 받침 위 세 갈래 발톱이 구슬을 받친다. 구슬은 빛이 안에서 도는 유리알:
         가장자리는 어둡고 속은 밝고, 왼쪽 위에 창빛 한 점. 결전 중이면 붉게 물든다. */

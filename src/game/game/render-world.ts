@@ -213,7 +213,8 @@ export const RenderWorldPart: Bag = {
     const u = Math.min(1, Math.max(0, (mid - SURF_BASE - 4) / 60)), v = Math.min(1, Math.max(0, (mid - (HELL_Y - 100)) / 90));
     const rgb: [number, number, number] = [Math.round(4 * u + (44 - 4 * u) * v), Math.round(7 * u + (8 - 7 * u) * v), Math.round(18 * u + (2 - 18 * u) * v)];
     // 하한을 조금 남겨 완전한 암흑에서도 블록 실루엣은 읽히게
-    L.drawDark(c, tx0 - 1, ty0 - 1, tx1 + 1, ty1 + 1, TS, camX, camY, (x: number, y: number) => w.lightAt(x, y), 15, rgb);
+    // 지옥은 용암 열기로 늘 어스름하다 — 바닥 밝기를 붉은 색조와 같은 비로 올린다(안 그러면 불씨 끝만 보이는 암흑이었다)
+    L.drawDark(c, tx0 - 1, ty0 - 1, tx1 + 1, ty1 + 1, TS, camX, camY, (x: number, y: number) => w.lightAt(x, y), 15, rgb, 0.022 + 0.2 * v);
   },
 
   /** 소환 제단 — 새긴 받침 위 세 갈래 발톱이 구슬을 받친다. 구슬은 빛이 안에서 도는 유리알:
