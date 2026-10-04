@@ -245,6 +245,7 @@ export const RenderActorsPart: Bag = {
       c.scale(1 / k, k);
       c.translate(-(sx + e.w / 2), -(sy + e.h));
       const ok = Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0);
+      if (ok) this.enemyFlash(c, e, key, sx + dx, sy - dy);
       c.restore();
       if (ok) { this.drawEnemyOverlay(c, e, sx, sy, dy, meta, dx); return; }
     }
@@ -267,11 +268,13 @@ export const RenderActorsPart: Bag = {
         c.translate(0, br);
       }
       const ok = Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0);
+      if (ok) this.enemyFlash(c, e, key, sx + dx, sy - dy);
       c.restore();
       if (ok) { this.drawEnemyOverlay(c, e, sx, sy, dy, meta, dx); return; }
     }
 
     if (this.spritesOn && Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0)) {
+      this.enemyFlash(c, e, key, sx + dx, sy - dy);
       this.drawEnemyOverlay(c, e, sx, sy, dy, meta, dx);
       return;
     }
@@ -517,6 +520,15 @@ export const RenderActorsPart: Bag = {
   },
 
   /** 손그림 몹 위에 얹는 것들 — 피격 섬광 · 체력 막대 · 페이즈 전환 섬광. */
+  /** 피격 섬광(흰빛) · 페이즈 전환(금빛) — 방금 그린 그림과 같은 자리 · 같은 변형 안에서 실루엣 사본으로 */
+  enemyFlash(c: CanvasRenderingContext2D, e: Enemy, key: string, x: number, y: number) {
+    if (!(e.flash > 0) && !(e.phaseT > 0)) return;
+    const fr = this.enemyFrame(e), fl = e.facing < 0;
+    for (const [on, col, a] of [[e.flash > 0, '#ffffff', Math.min(.75, e.flash * 6)], [e.phaseT > 0, '#ffe08a', Math.min(.55, e.phaseT * 0.8)]] as [boolean, string, number][]) {
+      const tk = on && Sprites.tintSheet(key, col); if (!tk) continue;
+      c.save(); c.globalAlpha = a; Sprites.draw(c, tk, fr, x, y, fl); c.restore();
+    }
+  },
   drawEnemyOverlay(c: CanvasRenderingContext2D, e: Enemy, sx: number, sy: number, dy: number, meta: Bag, dx: number) {
     const w = meta ? meta.frameW : e.w;
     /* 개조된 것의 화로 — 구워 둔 시트에는 고정된 불빛만 들어 있다. */
@@ -534,13 +546,12 @@ export const RenderActorsPart: Bag = {
       c.beginPath(); c.arc(gx, gy, r * 2.6, 0, TAU); c.fill();
       c.restore();
     }
-    if (e.flash > 0) {
-      /* 피격 섬광 — 판정 박스가 아니라 **실제로 그려진 그림**을 덮는다 — 사연: docs/code-history.md#h75 */
+    /* 손그림 몹의 섬광 · 금빛은 enemyFlash 가 그림 윤곽대로 얹는다 — 여기 네모는 절차 그림(meta 없음)에만. 사연: docs/code-history.md#h156 */
+    if (e.flash > 0 && !meta) {
       c.save(); c.globalAlpha = Math.min(.75, e.flash * 6); c.fillStyle = '#fff';
       c.fillRect(sx + (dx || 0), sy - dy, w, e.h + dy); c.restore();
     }
-    /* 페이즈가 막 넘어간 보스를 금빛으로 덮는다. */
-    if (e.phaseT > 0) {
+    if (e.phaseT > 0 && !meta) {
       c.save(); c.globalAlpha = Math.min(.55, e.phaseT * 0.8); c.fillStyle = '#ffe08a';
       c.fillRect(sx, sy - dy, w, e.h + dy); c.restore();
     }

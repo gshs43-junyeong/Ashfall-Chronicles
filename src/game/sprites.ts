@@ -179,6 +179,25 @@ export const Sprites: Bag = {
     return (this.img[bk] = cv);
   },
 
+  /** 한 색으로 칠한 실루엣 사본(피격 섬광 · 페이즈 금빛) — 그림 윤곽 안만 col 로. 키는 'tint' + col + '_' + key
+      ★ 프레임 칸을 fillRect 로 덮으면 투명 여백까지 칠해져 몹 둘레에 회색 네모가 떴다 */
+  tintSheet(key: string, col: string) {
+    const tk = 'tint' + col + '_' + key, have = this.img[tk];
+    if (have !== undefined) return have ? tk : null;
+    const im = this.img[key];
+    const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
+    if (!im || !im.width || !m) { this.img[tk] = null; return null; }
+    const cv = document.createElement('canvas');
+    cv.width = im.naturalWidth || im.width; cv.height = im.naturalHeight || im.height;
+    const g = cv.getContext('2d')!;
+    g.drawImage(im, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = col; g.fillRect(0, 0, cv.width, cv.height);
+    this.meta.characters.sheets[tk] = m;
+    this.footInset[tk] = this.footInset[key] || 0;
+    this.sideInset[tk] = this.sideInset[key] || 0;
+    this.img[tk] = cv;
+    return tk;
+  },
+
   /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다. */
   draw(c: CanvasRenderingContext2D, key: string, frame: number, x: number, y: number, flip: boolean) {
     const im = this.img[key]; if (!im || !im.width) return false;
