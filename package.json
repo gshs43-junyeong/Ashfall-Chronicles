@@ -1,7 +1,7 @@
 {
   "name": "ashfall-chronicles",
   "private": true,
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Ashfall Chronicles — 별이 잠든 땅. 원본은 src/, play/ 는 실행 폴더(번들을 커밋해 빌드 없이 돈다). 이 파일은 묶기·검사 도구만 싣는다.",
   "type": "module",
   "scripts": {

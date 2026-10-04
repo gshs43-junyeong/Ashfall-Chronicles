@@ -1,24 +1,28 @@
 name: Release
 
-# v1.0.6 같은 태그를 push하면 zip(브라우저로 여는 판 둘 + 앱으로 여는 판 넷)을 만들어 Release에 첨부한다.
+# v1.1.2 같은 태그를 push하면 zip(브라우저로 여는 판 둘 + 앱으로 여는 판 넷)을 만들어 Release에 첨부한다.
+# ★ macOS 앱은 macOS 러너에서 임시 서명(ad-hoc)까지 해서 만든다 — 서명이 깨진 앱은 Apple 실리콘에서
+#   "손상되었기 때문에 열 수 없습니다 — 휴지통으로 이동"만 떠서 사용자가 열 길이 없다(tools/build-desktop.sh 머리말).
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
-        description: '버전 (예: 1.0.5)'
+        description: '버전 (예: 1.1.2)'
         required: true
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  # 브라우저로 여는 판(Windows · macOS zip) + 앱으로 여는 판 중 Windows · Linux
+  web:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.value }}
     steps:
       - uses: actions/checkout@v4
-
       - name: 버전 결정
         id: ver
         run: |
@@ -27,39 +31,83 @@ jobs:
           else
             echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
           fi
-
       # 번들 대조(build.sh)에 esbuild 가 필요하다 — 없으면 대조를 건너뛰고 커밋된 번들로 묶는다.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm ci
-
-      - name: zip 빌드
+      - name: zip 빌드(브라우저로 여는 판)
         run: bash tools/build.sh "${{ steps.ver.outputs.value }}"
-
-      # 앱으로 여는 판(Electron · 서명 없음) — Windows 아이콘(rcedit)은 wine 이 있어야 박힌다. 못 깔면 기본 아이콘으로.
+      # Windows 아이콘(rcedit)은 wine 이 있어야 박힌다. 못 깔면 기본 아이콘으로.
       - name: wine (Windows 앱 아이콘)
         run: |
           sudo dpkg --add-architecture i386 && sudo apt-get update -qq && sudo apt-get install -y -qq wine wine64 wine32 || echo "wine 없음 — Windows 앱은 기본 아이콘"
-      - name: 앱 zip 빌드
+      - name: 앱 zip 빌드(Windows · Linux)
         run: |
           (cd desktop && npm ci)
-          bash tools/build-desktop.sh "${{ steps.ver.outputs.value }}"
+          APP_TARGETS="win linux" bash tools/build-desktop.sh "${{ steps.ver.outputs.value }}"
+          mv dist/SHA256SUMS-App.txt dist/SHA256SUMS-App.web.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-web
+          path: |
+            dist/AshfallChronicles-*.zip
+            dist/SHA256SUMS.txt
+            dist/SHA256SUMS-App.web.txt
 
-      # 릴리스 본문 = docs/v<버전>-changelog.md(있으면) + 자동 커밋 목록
-      - name: 릴리스 노트
+  # 앱으로 여는 판 중 macOS 둘(Intel · Apple 실리콘) — codesign 이 있는 macOS 러너에서 임시 서명까지
+  mac:
+    runs-on: macos-latest
+    needs: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: 앱 zip 빌드(macOS · ad-hoc 서명)
         run: |
-          f="docs/v${{ steps.ver.outputs.value }}-changelog.md"
-          if [ -f "$f" ]; then cp "$f" dist/NOTES.md; else : > dist/NOTES.md; fi
+          (cd desktop && npm ci)
+          APP_TARGETS="mac" bash tools/build-desktop.sh "${{ needs.web.outputs.version }}"
+          mv dist/SHA256SUMS-App.txt dist/SHA256SUMS-App.mac.txt
+      # 풀어서 서명이 살아 있는지 한 번 더 — zip 이 심볼릭 링크 · 서명 파일을 망가뜨리지 않았는지
+      - name: 서명 확인
+        run: |
+          for z in dist/AshfallChronicles-*-App-macOS-*.zip; do
+            d="$(mktemp -d)"; ditto -x -k "$z" "$d"
+            codesign --verify --deep --strict --verbose=2 "$d/Ashfall Chronicles.app"
+            spctl --assess --type execute -vv "$d/Ashfall Chronicles.app" || echo "(spctl: 서명자 없음 — ad-hoc 이라 예상대로 '확인되지 않은 개발자')"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-mac
+          path: |
+            dist/AshfallChronicles-*-App-macOS-*.zip
+            dist/SHA256SUMS-App.mac.txt
 
+  release:
+    runs-on: ubuntu-latest
+    needs: [web, mac]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: 해시 모으기 · 릴리스 노트
+        run: |
+          cat dist/SHA256SUMS-App.web.txt dist/SHA256SUMS-App.mac.txt | sort -k2 > dist/SHA256SUMS-App.txt
+          cat dist/SHA256SUMS-App.txt
+          # 릴리스 본문 = docs/v<버전>-changelog.md(있으면) + 자동 커밋 목록
+          f="docs/v${{ needs.web.outputs.version }}-changelog.md"
+          if [ -f "$f" ]; then cp "$f" dist/NOTES.md; else : > dist/NOTES.md; fi
       - name: Release에 첨부
         uses: softprops/action-gh-release@v2
         with:
           # 수동 실행(workflow_dispatch)에는 태그가 없다 — 이름을 주면 지금 커밋에 태그를 만들어 붙인다.
-          # (Google 로그인 계정은 터미널에서 태그를 push 할 비밀번호가 없어, 웹의 Run workflow 로 낸다)
-          tag_name: v${{ steps.ver.outputs.value }}
+          tag_name: v${{ needs.web.outputs.version }}
           target_commitish: ${{ github.sha }}
-          name: v${{ steps.ver.outputs.value }}
+          name: v${{ needs.web.outputs.version }}
           files: |
             dist/AshfallChronicles-*.zip
             dist/SHA256SUMS.txt
