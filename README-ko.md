@@ -19,7 +19,7 @@
 아무도 말해 주지 않는 자리에 있습니다. 업적 일흔다섯 개는 갈래 여덟에 난이도 셋으로
 나뉘고, 어려움 갈래는 달성하기 전까지 무엇인지도 보이지 않습니다.
 
-**[▶ 브라우저에서 바로 플레이](https://ashfall-chronicles.vercel.app/)** ·
+**▶ 브라우저에서 바로 플레이 — [Vercel](https://ashfall-chronicles.vercel.app/) · [Cloudflare](https://ashfall-chronicles.pages.dev/)** ·
 **[내려받기](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)** ·
 **[English README](README.md)**
 
@@ -231,5 +231,8 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 음악 [Suno](https://suno.com) · 효과음 [ElevenLabs](https://elevenlabs.io).
 
 버전별 변경 사항은 [릴리스 목록](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases)과
-[다운로드 페이지의 변경 이력](https://ashfall-chronicles.vercel.app/download#changelog)에 있습니다.
+[다운로드 페이지의 변경 이력](https://ashfall-chronicles.vercel.app/download#changelog)(같은 판: [pages.dev](https://ashfall-chronicles.pages.dev/download#changelog))에 있습니다.
+
+사이트와 웹 게임은 **같은 빌드를 두 곳에** 올립니다 — `ashfall-chronicles.vercel.app` 과 `ashfall-chronicles.pages.dev`(Cloudflare Pages).
+어느 쪽이든 같지만 저장은 주소마다 따로라, 옮겨 가려면 **설정 → 저장 내보내기 / 가져오기**를 쓰세요.
 v1.1.3 · v1.1.2 · v1.1.1 · v1.1.0 의 전체 목록은 [`docs/update/v1.1.3-changelog.ko.md`](docs/update/v1.1.3-changelog.ko.md) · [`docs/update/v1.1.2-changelog.ko.md`](docs/update/v1.1.2-changelog.ko.md) · [`docs/update/v1.1.1-changelog.md`](docs/update/v1.1.1-changelog.md) · [`docs/update/v1.1-changelog.md`](docs/update/v1.1-changelog.md) 에 있습니다.

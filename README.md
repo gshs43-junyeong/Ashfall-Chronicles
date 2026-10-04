@@ -18,7 +18,7 @@ Each new game picks a **small · medium (1.5×) · large (2×)** world.
 Of the twenty-three bosses, **thirteen are where the story takes you**; the other ten wait deep inside ruins and in places nobody
 tells you about. The seventy-five achievements are split into eight groups and three difficulties, and the hard ones stay hidden until you earn them.
 
-**[▶ Play in your browser](https://ashfall-chronicles.vercel.app/)** ·
+**▶ Play in your browser — [Vercel](https://ashfall-chronicles.vercel.app/) · [Cloudflare](https://ashfall-chronicles.pages.dev/)** ·
 **[Download](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)** ·
 **[한국어 README](README-ko.md)**
 
@@ -216,4 +216,8 @@ Concept `gshs43-junyeong` · Production Claude Code + Codex · Art assets Claude
 Music [Suno](https://suno.com) · Sound effects [ElevenLabs](https://elevenlabs.io).
 
 Per-version changes are on the [releases page](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases) and in the
-[download page changelog](https://ashfall-chronicles.vercel.app/download#changelog).
+[download page changelog](https://ashfall-chronicles.vercel.app/download#changelog) (mirror: [pages.dev](https://ashfall-chronicles.pages.dev/download#changelog)).
+
+The site and the web game are published to **two hosts with the same build** — `ashfall-chronicles.vercel.app` and
+`ashfall-chronicles.pages.dev` (Cloudflare Pages). Either one works; saves are stored per address, so moving between them
+needs **Settings → Export / Import save**.
