@@ -22,7 +22,7 @@ tells you about. The seventy-five achievements are split into eight groups and t
 **[Download](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases/latest)** ·
 **[한국어 README](README-ko.md)**
 
-> **v1.1.2 (2026-10-03)** — **Multiplayer** (2–4 players sharing one world through a room code) · monster skills and status effects
+> **v1.1.2 (2026-10-04)** — **Multiplayer** (2–4 players sharing one world through a room code) · monster skills and status effects
 > (burn, frostbite, poison, curse) · the **Ashfall** game font · redrawn skill effects · light and shadow · ice caves · an ash forest that
 > regains its leaves once session 1 ends. There are now **two downloads**: a small browser edition and an **app edition** (Electron, unsigned).
 > Full list: [`docs/v1.1.2-changelog.md`](docs/v1.1.2-changelog.md). v1.1.x saves open as they are.

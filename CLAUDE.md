@@ -288,7 +288,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 ## 7. 배포
 
 ```bash
-bash tools/build.sh 1.1.1        # dist/ 에 Windows·macOS zip + SHA256SUMS
+bash tools/build.sh 1.1.2        # dist/ 에 Windows·macOS zip + SHA256SUMS
 bash tools/build-site.sh         # play/ → site/play/ 복사 + 매니페스트 검사
 bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없음) — dist/ 에 Windows · macOS(Intel · Apple) · Linux zip + SHA256SUMS-App.txt
 ```
@@ -298,7 +298,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   다운로드 페이지는 `site/download` 의 '여는 방법' 단추로 고르고, 앱 판을 처음 릴리스하면 그 스크립트의 `APP_VERSION` · `APP_HASHES` 를 채운다
   (null 이면 단추가 잠기고 "다음 릴리스부터" 안내). 아이콘은 `python3 tools/mkappicon.py`(파비콘 512 → desktop/icon.*).
 
-- **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255 · v1.1.1 = 256). zip 을 낼 때
+- **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255 · v1.1.1 = 256 · v1.1.2 = 257). zip 을 낼 때
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
   PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.
@@ -521,8 +521,9 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   안 열리면 localStorage 로 떨어진다. 세이브를 읽고 쓰는 곳은 **전부 `SaveStore.put/get/remove/list`** 를 거친다 —
   localStorage 를 직접 만지면 IndexedDB 쪽과 어긋난다(설정 `SET_KEY` 만 localStorage). 저장은 비동기라 `saveGame()` 은
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
-- `play/index.html`의 브라우저 빌드 버전 표시는 `v1.1.2-dev` 다 — v1.1.1 출시 뒤 **웹(/play)만 v1.1.2 개발판**으로 돈다(사용자 결정 2026-09-30).
-  사이트 홈·다운로드는 "웹 = v1.1.2 개발판 · 내려받는 판 = v1.1.1" 로 적는다. 다음 zip 을 낼 때 판 번호로 바꾼다.
+- **v1.1.2 출시**(2026-10-04, 태그 `v1.1.2` — 멀티플레이 · 앱으로 여는 판 · 몬스터 스킬 · 글꼴 Ashfall, 변경은 `docs/v1.1.2-changelog.md`(영어 · 릴리스 본문) · `.ko.md`).
+  웹과 내려받는 판이 같은 판이다(`play/index.html` 표시 `v1.1.2` · `?v=257`). 다음 개발판을 웹에 먼저 올릴 때는 표시를 `v1.1.3-dev` 로 — 해시가 안 찍힌 판(로컬 · zip)은 `-dev` 일 때만 '개발판'이 붙는다.
+  릴리스 워크플로는 macOS 앱을 macOS 러너에서 임시 서명(ad-hoc)한다 — 서명 없는 macOS 앱은 "손상됨 → 휴지통"으로 강제로 버려졌다(`tools/build-desktop.sh` 머리말). 앱 해시(`APP_HASHES`)는 릴리스의 `SHA256SUMS-App.txt` 에서.
 - **로고**(`tools/mklogo.py`): Cinzel Black(ASHFALL — 첫 A · 끝 L 을 1.22배 `BIG`) · Bold(CHRONICLES) 윤곽을 굽는다(글꼴 원본·OFL 전문 `tools/art/fonts/`) —
   사용자가 고른 글꼴(2026-09-30): 아래로 민 두께(`DEPTH`) · 검은 윤곽 · 양옆 마름모 금줄로 제목답게. 게임 = 잔불빛 글자 PNG(`ui/logo.png` 2배 · `logo_small.png`) · 타이틀 화면은 둘레 장식(별자리 눈금 하늘 아치 — ★ 별·꼬리보다 높게 · 양옆 금빛 덩굴 · 아래 늘어진 마름모 — `ornament`)을 더한 `logo_title.png`,
   사이트 홈 히어로 = **같은 그림**(`site/wordmark*.png` — 별 없는 몸 + 별까지 다 있는 판)을 `<!-- wordmark -->` 자리에 끼우고 hero.js 가 별똥별을 한 번 떨어뜨려 앉힌다(앉은 별은 움직이지 않는다).
