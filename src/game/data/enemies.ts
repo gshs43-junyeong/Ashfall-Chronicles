@@ -317,3 +317,12 @@ export function mobName(type: string, mech: any) {
   const n = (ENEMIES[type] || {}).n || type;
   return mech ? `${tr('개조된')} ` + n : n;
 }
+
+/** 세션마다의 몹 세기 배율 — 그 세션을 시작할 때 맞는 장비(?debug=showcase 의 갖춤)로 잰 값에 맞췄다.
+    목표: 일반 몹 처치 2.5 · 3.5 · 4.5초, 몹에게 죽기까지 14 · 11 · 8대 / 보스 45 · 70 · 100초, 9 · 7 · 5대 — 갈수록 버티고 아프다.
+    장 배율(G.scale — 장마다 +9%)은 그대로 곱해져 세션 안에서도 조금씩 오른다. 사연: docs/code-history.md#h157 */
+export const DIFF_TIER: { hp: number; dmg: number; bossHp: number; bossDmg: number }[] = [
+  { hp: 6.0, dmg: 4.4, bossHp: 1.7, bossDmg: 2.4 },
+  { hp: 3.9, dmg: 3.0, bossHp: 1.6, bossDmg: 4.0 },
+  { hp: 4.0, dmg: 3.9, bossHp: 1.7, bossDmg: 4.5 }
+];

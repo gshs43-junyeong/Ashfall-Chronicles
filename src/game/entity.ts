@@ -11,11 +11,12 @@ import { fmt, tr } from './lang.js';
 import { dimsOf } from './size.js';
 import { MACH_OF_TILE, T, TILE_DEF } from './data.js';
 import { HIT_FX, ITEMS, MULTI_FALLOFF } from './data/items.js';
-import { ENEMIES, MECH_PART } from './data/enemies.js';
+import { DIFF_TIER, ENEMIES, MECH_PART } from './data/enemies.js';
 import { BOSS_SURGE, BUFFS, PROF_MAX, SKILLS, SURGE_FLY, profNeed } from './data/skills.js';
 import { CELL_CHARGE } from './data/ruins.js';
 import { DRAGON_FOOD, DRAGON_GATES, PETS, PET_XP_SHARE, dragonStage, levelMult, petAtkMul, petDmgScale, petMaxLv,
   petXpNext } from './data/pets.js';
+import { SESSIONS, sessionOf } from './data/story.js';
 import { SIG_FX, idef } from './data/values.js';
 import { PROJ_INFLICT } from './data/mobskills.js';
 import { TS } from './world.js';
@@ -415,8 +416,10 @@ export class Enemy extends Ent {
       ? levelMult(G.player.level, d.lvScale) : 1;
     const lf = this.lvFactor;
     const md = (typeof G !== 'undefined' && G.modeMul) ? G.modeMul() : 1;
-    this.maxHp = Math.round(d.hp * sc * lf * md); this.hp = this.maxHp;
-    this.dmg = d.dmg * sc * lf * md; this.armor = d.def! * sc;
+    const dt = d.passive ? null : DIFF_TIER[Math.max(0, Math.min(2, SESSIONS.indexOf(sessionOf((typeof G !== 'undefined' && G && G.chapter) || 0))))];
+    const th = dt ? (d.boss ? dt.bossHp : dt.hp) : 1, tdm = dt ? (d.boss ? dt.bossDmg : dt.dmg) : 1;
+    this.maxHp = Math.round(d.hp * sc * lf * md * th); this.hp = this.maxHp;
+    this.dmg = d.dmg * sc * lf * md * tdm; this.armor = d.def! * sc;
     this.spd = d.spd; this.xp = Math.round(d.xp! * sc * lf); this.gold = Math.round(d.gold! * sc * lf);
     this.boss = !!d.boss;
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
