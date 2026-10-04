@@ -416,8 +416,12 @@ export class Enemy extends Ent {
       ? levelMult(G.player.level, d.lvScale) : 1;
     const lf = this.lvFactor;
     const md = (typeof G !== 'undefined' && G.modeMul) ? G.modeMul() : 1;
-    const dt = d.passive ? null : DIFF_TIER[Math.max(0, Math.min(2, SESSIONS.indexOf(sessionOf((typeof G !== 'undefined' && G && G.chapter) || 0))))];
-    const th = dt ? (d.boss ? dt.bossHp : dt.hp) : 1, tdm = dt ? (d.boss ? dt.bossDmg : dt.dmg) : 1;
+    const ch = (typeof G !== 'undefined' && G && G.chapter) || 0;
+    const si = Math.max(0, Math.min(2, SESSIONS.indexOf(sessionOf(ch))));
+    const dt = d.passive ? null : DIFF_TIER[si];
+    /* 세션 1 배율은 4장(레벨 24 갖춤)에서 잰 값이라 서장부터 걸면 맨손 1레벨에 몹이 6배였다 — 0장 1배 → 4장 전부로 오른다. 사연: docs/code-history.md#h162 */
+    const ramp = si === 0 ? Math.min(1, ch / 4) : 1;
+    const th = dt ? 1 + ((d.boss ? dt.bossHp : dt.hp) - 1) * ramp : 1, tdm = dt ? 1 + ((d.boss ? dt.bossDmg : dt.dmg) - 1) * ramp : 1;
     this.maxHp = Math.round(d.hp * sc * lf * md * th); this.hp = this.maxHp;
     this.dmg = d.dmg * sc * lf * md * tdm; this.armor = d.def! * sc;
     this.spd = d.spd; this.xp = Math.round(d.xp! * sc * lf); this.gold = Math.round(d.gold! * sc * lf);

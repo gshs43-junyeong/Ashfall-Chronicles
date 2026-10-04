@@ -74,6 +74,77 @@ export const RenderActorsPart: Bag = {
     return Math.floor(this.time * 2.4) % 2;
   },
 
+  /** 비석 — 쓰러진 발밑 땅에 박힌 낡은 돌. 흙 둔덕 · 살짝 기운 아치 돌(왼쪽 빛 · 오른쪽 그늘 · 금 · 이끼) · 새긴 별 표식 ·
+      발치의 꺼져 가는 초. 남은 시간이 줄면 돌이 바래고, 막 섰을 땐 땅에서 솟는다(t0). 넋불은 어둠 위에 따로(drawGraveGlow). */
+  drawGrave(c: CanvasRenderingContext2D, dm: Bag, camX: number, camY: number) {
+    const gx = Math.round(dm.x - camX), gy = Math.round(dm.y - camY);
+    if (gx < -60 || gx > this.W + 60 || gy < -90 || gy > this.H + 60) return;
+    const left = clamp(1 - (this.dayCount * 1440 + this.dayT - (dm.at || 0)) / 720, 0, 1);
+    const rise = dm.t0 !== undefined ? clamp((this.time - dm.t0) / 0.8, 0, 1) : 1;
+    const sink = Math.round((1 - rise * rise * (3 - 2 * rise)) * 30);
+    const tilt = ((Math.floor(dm.x / TS) * 7) % 5 - 2) * 0.03;
+    const R = (x: number, y: number, w: number, h: number, col: string) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+    c.save();
+    // 흙 둔덕 — 돌이 솟을 때도 그대로
+    R(gx - 15, gy - 3, 30, 3, '#3a2e24'); R(gx - 12, gy - 5, 24, 2, '#4a3a2c'); R(gx - 8, gy - 6, 16, 1, '#57452f');
+    c.beginPath(); c.rect(gx - 30, gy - 80, 60, 77); c.clip();        // 땅 밑으로 들어간 몫은 안 보이게
+    c.translate(gx, gy - 4 + sink); c.rotate(tilt);
+    c.globalAlpha = 0.55 + 0.45 * left;
+    const W = 9, H = 26;                                                // 반폭 · 높이
+    // 몸 — 아치 머리 + 곧은 몸, 왼쪽은 빛 · 오른쪽은 그늘
+    for (let y = -H; y <= 0; y++) {
+      const ay = y + H, half = ay < W ? Math.round(Math.sqrt(W * W - (W - ay) * (W - ay))) : W;
+      for (let x = -half; x < half; x++) {
+        const u = (x + 0.5) / half;
+        const n = ((x * 13 + y * 7) & 7);
+        const col = u < -0.55 ? '#8f897b' : u < 0.25 ? (n === 0 ? '#6f6a5e' : '#7a7468') : u < 0.7 ? '#625d52' : '#4c4840';
+        R(x, y, 1, 1, col);
+      }
+      R(-half - 1, y, 1, 1, '#2a2722'); R(half, y, 1, 1, '#2a2722');     // 윤곽
+    }
+    for (let x = -W + 2; x < W - 2; x++) { const ay = W - Math.round(Math.sqrt(W * W - x * x)); R(x, -H + ay - 1, 1, 1, '#2a2722'); }
+    // 새긴 별 표식(별이 잠든 땅) — 파인 홈은 어둡고 아랫변에 빛 한 줄
+    const star: number[][] = [[0, -19], [0, -18], [-1, -17], [0, -17], [1, -17], [-3, -16], [-2, -16], [-1, -16], [0, -16], [1, -16], [2, -16], [3, -16],
+      [-1, -15], [0, -15], [1, -15], [-2, -14], [2, -14], [-2, -13], [2, -13]];
+    for (const [x, y] of star) R(x, y + 1, 1, 1, '#9a9484');
+    for (const [x, y] of star) R(x, y, 1, 1, '#2e2b25');
+    // 가로 홈 두 줄(이름이 닳아 지워진 자리)
+    R(-5, -9, 10, 1, '#4a463d'); R(-4, -6, 8, 1, '#4a463d'); R(-5, -8, 10, 1, '#8a8477');
+    // 금 · 이끼
+    R(4, -22, 1, 3, '#3a362f'); R(5, -19, 1, 2, '#3a362f'); R(4, -17, 1, 2, '#3a362f');
+    R(-9, -3, 4, 3, '#5d6b42'); R(-8, -5, 2, 2, '#6f7f4c'); R(6, -2, 3, 2, '#55613c'); R(-7, -24, 2, 1, '#6a7848');
+    c.restore();
+    // 발치의 초 — 꺼져 가는 불(남은 시간만큼 키)
+    if (rise >= 1) {
+      const cx = gx + 12, h = 3 + Math.round(left * 4);
+      R(cx - 1, gy - 4 - h, 3, h, '#d8cfb8'); R(cx - 1, gy - 4 - h, 1, h, '#f0e8d4'); R(cx - 2, gy - 4, 5, 1, '#6a5a44');
+      if (left > 0) {
+        const fl = Math.sin(this.time * 9 + dm.x) * 0.6;
+        R(cx + Math.round(fl), gy - 6 - h, 1, 2, '#ffd27a'); R(cx, gy - 5 - h, 1, 1, '#fff2c0');
+      }
+    }
+    if (sink > 2 && Math.random() < 0.6)                                   // 솟을 때 흙먼지
+      this.parts.push(new Part(dm.x + (Math.random() - 0.5) * 22, dm.y - 2, '#6a5642', -60, 0.35, { spd: 0.4, r: 0.7 }));
+  },
+  /** 비석의 넋불 — 어둠을 덮은 뒤에 얹어 굴 속 · 밤에도 보인다. 돌 위에서 숨 쉬듯 오르내리고 작은 불티가 피어오른다. */
+  drawGraveGlow(c: CanvasRenderingContext2D, dm: Bag, camX: number, camY: number) {
+    const left = clamp(1 - (this.dayCount * 1440 + this.dayT - (dm.at || 0)) / 720, 0, 1);
+    if (left <= 0 || (dm.t0 !== undefined && this.time - dm.t0 < 0.8)) return;
+    const gx = dm.x - camX, gy = dm.y - camY - 44 + Math.sin(this.time * 1.7) * 3;
+    if (gx < -80 || gx > this.W + 80 || gy < -80 || gy > this.H + 80) return;
+    const a = (0.55 + 0.25 * Math.sin(this.time * 2.3)) * (0.4 + 0.6 * left);
+    c.save(); c.globalCompositeOperation = 'lighter';
+    const g = c.createRadialGradient(gx, gy, 0, gx, gy, 26);
+    g.addColorStop(0, `rgba(255,236,170,${a})`); g.addColorStop(0.25, `rgba(255,200,110,${a * 0.5})`); g.addColorStop(1, 'rgba(255,170,80,0)');
+    c.fillStyle = g; c.fillRect(gx - 26, gy - 26, 52, 52);
+    c.fillStyle = `rgba(255,248,220,${Math.min(1, a + 0.3)})`; c.fillRect(Math.round(gx) - 1, Math.round(gy) - 1, 3, 3);
+    for (let i = 0; i < 4; i++) {                                         // 오르는 불티 — 시간으로 정한 자리라 입자를 안 쌓는다
+      const ph = (this.time * 0.45 + i / 4) % 1;
+      const mx = gx + Math.sin((ph + i) * 6.3) * 6, my = gy + 6 - ph * 30;
+      c.fillStyle = `rgba(255,214,130,${(1 - ph) * a})`; c.fillRect(Math.round(mx), Math.round(my), 1, 1);
+    }
+    c.restore();
+  },
   /** 쓰러진 플레이어(여럿일 때) — 바닥에 누운 잿빛 몸 + 빠져나가는 넋. 남의 화면에서도 누가 쓰러졌는지 한눈에 보이게
       (혼자일 때는 죽음 창이 화면을 덮는다). 몸은 판정 상자 가운데를 축으로 눕혀 아래 끝이 바닥에 닿는다. */
   drawDowned(c: CanvasRenderingContext2D, p: Player, sx: number, sy: number) {

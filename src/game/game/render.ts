@@ -316,27 +316,7 @@ export const RenderPart: Bag = {
 
     // ---- 플레이어 ----
     /* 비석 — 쓰러진 자리에 실제로 세워 둔다. */
-    if (this.deathMark) {
-      const dm = this.deathMark;
-      const left = 1 - (this.dayCount * 1440 + this.dayT - (dm.at || 0)) / 720;
-      const gx = Math.round(dm.x - camX), gy = Math.round(dm.y - camY);
-      if (gx > -60 && gx < this.W + 60 && gy > -80 && gy < this.H + 80) {
-        c.save();
-        c.globalAlpha = clamp(0.35 + left * 0.65, 0.2, 1);
-        c.fillStyle = '#6a6458';
-        c.fillRect(gx - 9, gy - 20, 18, 22);                 // 비석 몸
-        c.fillRect(gx - 13, gy + 1, 26, 4);                  // 받침
-        c.fillStyle = '#4a463c';
-        c.beginPath(); c.arc(gx, gy - 20, 9, Math.PI, 0); c.fill();   // 둥근 윗머리
-        c.fillStyle = '#2a2620';
-        c.fillRect(gx - 1.5, gy - 16, 3, 11);                // 십자
-        c.fillRect(gx - 5, gy - 13, 10, 3);
-        c.globalAlpha = clamp(left, 0, 1) * (0.5 + 0.5 * Math.sin(this.time * 2.2));
-        c.fillStyle = '#ffe08a';
-        c.beginPath(); c.arc(gx, gy - 26, 2.6, 0, TAU); c.fill();     // 남아 있다는 불빛
-        c.restore();
-      }
-    }
+    if (this.deathMark && this.deathMark.g) this.drawGrave(c, this.deathMark, camX, camY);
     this.drawRipeCrops(c, camX, camY);
     this.drawStarOrbit(c, p, camX, camY);
     if (this.spritesOn) this.trail.draw((s: any, a: number) => {                // 대시 잔상 — 몸보다 먼저(뒤에)
@@ -378,6 +358,7 @@ export const RenderPart: Bag = {
     this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
     this.drawGlow(c, camX, camY, tx0, ty0, tx1, ty1);   // 빛 색 — 어둠 위에 더한다
     this.drawLairGlow(c, camX, camY);                  // 깨어 있는 둥지의 알·노심 — 어두운 유적에서도 보이게
+    if (this.deathMark && this.deathMark.g) this.drawGraveGlow(c, this.deathMark, camX, camY);   // 비석 넋불 — 굴 속에서도 찾게
     this.drawFishCue(c, camX, camY);   // 입질 알림은 밤에도 보여야 한다 — 조명 위에
     /* 유적 고유 이벤트의 여운을 화면에 덮는다. */
     // 이름표는 원경이 바뀌는 자리에서 — 그리는 김에 같은 카메라 값으로 본다
