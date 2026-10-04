@@ -403,10 +403,12 @@ export class World extends TileMap {
       const L = MAT_LAYER[m];
       // 지옥 경계는 한 줄이 아니다 — 들쭉날쭉한 선 위 6칸에 재가 점점 섞인다
       const hb = HELL_Y - 4 + Math.round(n1(x + 7700, 0.05) * 5);
+      // 땅 밑 기반암도 한 줄로 자르지 않는다 — 두께 3~7칸으로 출렁인다
+      const bt = 3 + Math.round(Math.abs(n1(x + 9100, 0.06)) * 4);
       for (let y = s; y < WORLD_BOT; y++) {
         let t;
         const depth = y - s;
-        if (y >= WORLD_BOT - 4) t = T.BEDROCK;
+        if (y >= WORLD_BOT - bt) t = T.BEDROCK;
         else if (y >= hb || (y >= hb - 6 && ((x * 73 + y * 151) % 7) < y - hb + 7 - 3)) t = T.ASH;
         else if (depth === 0) t = L.top;
         else if (depth < soilD) t = L.soil;
@@ -423,6 +425,7 @@ export class World extends TileMap {
     for (let x = 1; x < WW - 1; x++) {
       const s = this.surface[x];
       for (let y = s + 4; y < WORLD_BOT - 5; y++) {
+        if (this.tiles[this.i(x, y)] === T.BEDROCK) break;   // 출렁이는 기반암(3~7칸)은 파지 않는다
         const scale = y > DEEP_Y - 36 ? 0.045 : 0.058;
         let v = n2(x, y, scale, 3);
         // 깊을수록 큰 공동.

@@ -778,10 +778,8 @@
   "지능": "INT",
   "지도": "Map",
   "지붕과 바닥": "A Roof and a Floor",
-  "지상 {n}m": "{n}m above ground",
   "지어 올린 것은 되돌릴 수 없다. 베이스캠프는 이 개선의 대상이 아니다 —": "What's been built can't be undone. Base Camp isn't covered by these improvements —",
   "지표 0m": "Surface 0m",
-  "지하 {depth}m": "{depth}m underground",
   "진행 중": "In progress",
   "짠물이 폐를 채운다 — 숨이 줄었다": "Brine fills your lungs — your breath dropped",
   "쪽지 읽기": "Read note",
@@ -968,7 +966,9 @@
   "모두 꺼내기": "Take all out",
   "쓰러짐": "Down",
   "{name|이} 쓰러졌다": "{name} went down",
-  "{name|이} 다시 일어났다": "{name} is back on their feet"
+  "{name|이} 다시 일어났다": "{name} is back on their feet",
+  "고도 {alt}m": "Altitude {alt}m",
+  "고도 {alt}m 아래": "Below {alt}m altitude"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

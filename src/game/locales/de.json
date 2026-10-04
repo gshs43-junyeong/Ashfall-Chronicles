@@ -778,10 +778,8 @@
   "지능": "INT",
   "지도": "Karte",
   "지붕과 바닥": "Dach und Boden",
-  "지상 {n}m": "{n} m über dem Boden",
   "지어 올린 것은 되돌릴 수 없다. 베이스캠프는 이 개선의 대상이 아니다 —": "Gebautes lässt sich nicht zurücknehmen. Das Basislager ist von diesem Ausbau nicht betroffen —",
   "지표 0m": "Oberfläche 0 m",
-  "지하 {depth}m": "{depth} m unter der Erde",
   "진행 중": "Aktiv",
   "짠물이 폐를 채운다 — 숨이 줄었다": "Salzwasser füllt die Lunge — Atem verloren",
   "쪽지 읽기": "Zettel lesen",
@@ -968,7 +966,9 @@
   "모두 꺼내기": "Alles herausnehmen",
   "쓰러짐": "Am Boden",
   "{name|이} 쓰러졌다": "{name} ist gefallen",
-  "{name|이} 다시 일어났다": "{name} ist wieder auf den Beinen"
+  "{name|이} 다시 일어났다": "{name} ist wieder auf den Beinen",
+  "고도 {alt}m": "Höhe {alt} m",
+  "고도 {alt}m 아래": "Unter {alt} m Höhe"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
