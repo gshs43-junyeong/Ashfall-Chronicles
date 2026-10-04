@@ -10,6 +10,7 @@
 사이트 홈 히어로는 같은 그림을 쓴다(site/wordmark*.png) — 별똥별이 떨어져 앉는 움직임만 site/hero.js 가 더한다.
 파비콘 = 네 갈래 별(별 조각) — 16px 에서도 읽히게 칸을 손으로 찍었다.
 ★ 게임 폴더의 로고를 이 도구에 다시 먹이지 말 것 — 원본은 글꼴 윤곽이다."""
+import subprocess
 import os, sys, math, random
 from PIL import Image, ImageFilter
 
@@ -127,10 +128,12 @@ def star(size, core=(255, 252, 232), glow=(255, 196, 92)):
             w = max(0.5, (c - m) * 0.16)                               # 갈래 굵기 — 가운데로 올수록 굵다
             if (min(dx, dy) <= w and m < c) or dx + dy <= size * .12:
                 P[x, y] = lerp(core, glow, min(1, m / c * 1.3)) + (255,)
-    halo = im.filter(ImageFilter.GaussianBlur(size / 8))
-    out = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    # ★ 번짐은 여백을 둔 판에서 — 별 칸 그대로 흐리면 번짐이 칸 끝에서 잘려 별 뒤에 네모 자국이 남았다
+    pad = size // 2; big = Image.new('RGBA', (size + pad * 2, size + pad * 2), (0, 0, 0, 0)); big.alpha_composite(im, (pad, pad))
+    halo = big.filter(ImageFilter.GaussianBlur(size / 8))
+    out = Image.new('RGBA', big.size, (0, 0, 0, 0))
     for _ in range(3): out.alpha_composite(halo)
-    out.alpha_composite(im)
+    out.alpha_composite(big)
     return out
 
 
@@ -171,8 +174,8 @@ def ornament(g, W, H, k, ox, oy, ss=3):
         X, Y = P(x, y); R = r * u; w = R * .22
         d.polygon([(X, Y - R), (X + w, Y - w), (X + R, Y), (X + w, Y + w), (X, Y + R), (X - w, Y + w), (X - R, Y), (X - w, Y - w)], fill=PALE + (int(255 * a),))
     ay = 58                                         # 덩굴 높이(로고 글자 가운데쯤)
-    # 별자리 — 양옆 덩굴 위 · 큰 A · L 어깨 바깥에 한 무리씩(옅은 선으로 잇는다). ★ 별(A 꼭짓점) 쪽으로 들이지 말 것
-    for grp in (((-112, 34), (-92, 2), (-58, -14), (-40, -46)), ((wA + 40, -46), (wA + 58, -14), (wA + 92, 2), (wA + 112, 34))):
+    # 별자리 — 큰 A · L 어깨 바깥 높이 한 무리씩(옅은 선으로 잇는다). ★ 덩굴(ay)에 가까우면 줄과 이어져 보인다 · 별(A 꼭짓점) 쪽으로 들이지 말 것
+    for grp in (((-118, -18), (-94, -46), (-62, -36), (-42, -68)), ((wA + 42, -68), (wA + 62, -36), (wA + 94, -46), (wA + 118, -18))):
         line(list(grp), .6, GOLD, .4)
         for j, (x, y) in enumerate(grp): spark(x, y, 4.5 if j % 2 else 3.2, .85)
     # 양옆 덩굴 장식 — 글자 쪽이 굵고 바깥으로 가늘어지는 금줄 + 끝의 소용돌이 + 마름모
@@ -369,6 +372,8 @@ def main():
     ico.save(os.path.join(ROOT, 'play', 'favicon.ico'), sizes=[(16, 16), (32, 32), (48, 48)])
     ico.save(os.path.join(ROOT, 'site', 'favicon.ico'), sizes=[(16, 16), (32, 32), (48, 48)])
     print('logo', big.size, 'small', small.size)
+    # 앱 아이콘(desktop/icon.*)도 같은 파비콘에서 — 따로 돌리는 걸 잊어 v1.1.2 앱이 옛 아이콘으로 나갔다
+    subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'mkappicon.py')], check=True)
     if '--preview' in sys.argv:
         bg = Image.new('RGBA', (big.width + 80, big.height + 80), (14, 12, 18, 255)); bg.alpha_composite(big, (40, 40))
         bg.save('/tmp/logo_preview.png')
