@@ -29468,8 +29468,11 @@
       this.lvFactor = !d.boss && d.lvScale && typeof app !== "undefined" && app.player ? levelMult(app.player.level, d.lvScale) : 1;
       const lf = this.lvFactor;
       const md = typeof app !== "undefined" && app.modeMul ? app.modeMul() : 1;
-      const dt = d.passive ? null : DIFF_TIER[Math.max(0, Math.min(2, SESSIONS.indexOf(sessionOf(typeof app !== "undefined" && app && app.chapter || 0))))];
-      const th = dt ? d.boss ? dt.bossHp : dt.hp : 1, tdm = dt ? d.boss ? dt.bossDmg : dt.dmg : 1;
+      const ch = typeof app !== "undefined" && app && app.chapter || 0;
+      const si = Math.max(0, Math.min(2, SESSIONS.indexOf(sessionOf(ch))));
+      const dt = d.passive ? null : DIFF_TIER[si];
+      const ramp = si === 0 ? Math.min(1, ch / 4) : 1;
+      const th = dt ? 1 + ((d.boss ? dt.bossHp : dt.hp) - 1) * ramp : 1, tdm = dt ? 1 + ((d.boss ? dt.bossDmg : dt.dmg) - 1) * ramp : 1;
       this.maxHp = Math.round(d.hp * sc * lf * md * th);
       this.hp = this.maxHp;
       this.dmg = d.dmg * sc * lf * md * tdm;
@@ -38857,11 +38860,17 @@
       }
       if (this.deathMark && this.player.hp > 0 && !this.scenes.has("death") && !this.scenes.has("mdeath")) {
         const dm = this.deathMark;
+        if (!dm.g) {
+          const g = this.graveGround(dm.x, dm.y + 16);
+          dm.x = g.x;
+          dm.y = g.y;
+          dm.g = 1;
+        }
         const now2 = this.dayCount * 1440 + this.dayT;
         if (now2 - (dm.at || 0) >= 720) {
           this.deathMark = null;
           this.toast(tr("비석이 잿빛에 삼켜졌다"), "bad");
-        } else if (dist(p.cx, p.cy, dm.x, dm.y) < 70) {
+        } else if (dist(p.cx, p.cy, dm.x, dm.y - 16) < 70) {
           const gxp = Math.floor((dm.xp || 0) / 2), ggold = Math.floor((dm.gold || 0) / 2);
           if (gxp) p.addXp(gxp);
           if (ggold) p.gold += ggold;
@@ -44324,9 +44333,12 @@
         }
         UI5.refreshBag();
       }
+      const gs = this.graveGround(p.cx, p.y + p.h - 4);
       this.deathMark = {
-        x: p.cx,
-        y: p.cy,
+        x: gs.x,
+        y: gs.y,
+        g: 1,
+        t0: this.time,
         gold: lostG,
         xp: lostXp,
         items: lostItems,
@@ -44350,6 +44362,27 @@
       $("#death-screen").classList.add("open");
       this.scenes.open(this.net ? "mdeath" : "death");
       this.sfx("death");
+    },
+    /** 비석 자리 — 쓰러진 발밑에서 아래로 내려가 처음 닿는 땅 위(px, 바닥 윗면). 공중·물속에서 쓰러져도 땅에 선다.
+        용암 웅덩이 속이면 옆으로 가장 가까운 마른 땅을 찾는다(용암에 잠기면 비석이 안 보였다). */
+    graveGround(px, py) {
+      const w = this.world, tx0 = Math.floor(px / TS);
+      const lava = (t) => t === T.LAVA || t === T.FLOWLAVA;
+      const down = (tx) => {
+        let ty = Math.floor(py / TS);
+        for (let i = 0; i < 10 && w.solid(tx, ty); i++) ty--;
+        for (let i = 0; i < 80; i++, ty++) {
+          if (!w.solid(tx, ty) && w.solid(tx, ty + 1)) return lava(w.get(tx, ty)) ? -1 : ty;
+          if (lava(w.get(tx, ty + 1))) return -1;
+        }
+        return -2;
+      };
+      for (let d = 0; d <= 14; d++)
+        for (const tx of d ? [tx0 - d, tx0 + d] : [tx0]) {
+          const ty = down(tx);
+          if (ty >= 0) return { x: (tx + 0.5) * TS, y: (ty + 1) * TS };
+        }
+      return { x: px, y: py };
     },
     respawn() {
       const p = this.player, w = this.world;
@@ -47271,31 +47304,7 @@
         if (posed) c.restore();
         if (e instanceof Enemy) this.drawStatus(c, e, sx, sy);
       }
-      if (this.deathMark) {
-        const dm = this.deathMark;
-        const left = 1 - (this.dayCount * 1440 + this.dayT - (dm.at || 0)) / 720;
-        const gx = Math.round(dm.x - camX), gy = Math.round(dm.y - camY);
-        if (gx > -60 && gx < this.W + 60 && gy > -80 && gy < this.H + 80) {
-          c.save();
-          c.globalAlpha = clamp(0.35 + left * 0.65, 0.2, 1);
-          c.fillStyle = "#6a6458";
-          c.fillRect(gx - 9, gy - 20, 18, 22);
-          c.fillRect(gx - 13, gy + 1, 26, 4);
-          c.fillStyle = "#4a463c";
-          c.beginPath();
-          c.arc(gx, gy - 20, 9, Math.PI, 0);
-          c.fill();
-          c.fillStyle = "#2a2620";
-          c.fillRect(gx - 1.5, gy - 16, 3, 11);
-          c.fillRect(gx - 5, gy - 13, 10, 3);
-          c.globalAlpha = clamp(left, 0, 1) * (0.5 + 0.5 * Math.sin(this.time * 2.2));
-          c.fillStyle = "#ffe08a";
-          c.beginPath();
-          c.arc(gx, gy - 26, 2.6, 0, TAU);
-          c.fill();
-          c.restore();
-        }
-      }
+      if (this.deathMark && this.deathMark.g) this.drawGrave(c, this.deathMark, camX, camY);
       this.drawRipeCrops(c, camX, camY);
       this.drawStarOrbit(c, p, camX, camY);
       if (this.spritesOn) this.trail.draw((s, a) => {
@@ -47353,6 +47362,7 @@
       this.drawLightOverlay(c, camX, camY, tx0, ty0, tx1, ty1);
       this.drawGlow(c, camX, camY, tx0, ty0, tx1, ty1);
       this.drawLairGlow(c, camX, camY);
+      if (this.deathMark && this.deathMark.g) this.drawGraveGlow(c, this.deathMark, camX, camY);
       this.drawFishCue(c, camX, camY);
       this.checkBiomeEntry(camX, camY);
       const air = this.biomeAir(camX, camY);
@@ -49013,6 +49023,118 @@
       if (e.def.hop) return !e.onGround ? 3 : Math.abs(e.vx) > 6 ? 2 : 0;
       if (Math.abs(e.vx) > 6) return 2 + Math.floor(this.time * 7) % 2;
       return Math.floor(this.time * 2.4) % 2;
+    },
+    /** 비석 — 쓰러진 발밑 땅에 박힌 낡은 돌. 흙 둔덕 · 살짝 기운 아치 돌(왼쪽 빛 · 오른쪽 그늘 · 금 · 이끼) · 새긴 별 표식 ·
+        발치의 꺼져 가는 초. 남은 시간이 줄면 돌이 바래고, 막 섰을 땐 땅에서 솟는다(t0). 넋불은 어둠 위에 따로(drawGraveGlow). */
+    drawGrave(c, dm, camX, camY) {
+      const gx = Math.round(dm.x - camX), gy = Math.round(dm.y - camY);
+      if (gx < -60 || gx > this.W + 60 || gy < -90 || gy > this.H + 60) return;
+      const left = clamp(1 - (this.dayCount * 1440 + this.dayT - (dm.at || 0)) / 720, 0, 1);
+      const rise = dm.t0 !== void 0 ? clamp((this.time - dm.t0) / 0.8, 0, 1) : 1;
+      const sink = Math.round((1 - rise * rise * (3 - 2 * rise)) * 30);
+      const tilt = (Math.floor(dm.x / TS) * 7 % 5 - 2) * 0.03;
+      const R = (x, y, w, h, col) => {
+        c.fillStyle = col;
+        c.fillRect(x, y, w, h);
+      };
+      c.save();
+      R(gx - 15, gy - 3, 30, 3, "#3a2e24");
+      R(gx - 12, gy - 5, 24, 2, "#4a3a2c");
+      R(gx - 8, gy - 6, 16, 1, "#57452f");
+      c.beginPath();
+      c.rect(gx - 30, gy - 80, 60, 77);
+      c.clip();
+      c.translate(gx, gy - 4 + sink);
+      c.rotate(tilt);
+      c.globalAlpha = 0.55 + 0.45 * left;
+      const W = 9, H = 26;
+      for (let y = -H; y <= 0; y++) {
+        const ay = y + H, half = ay < W ? Math.round(Math.sqrt(W * W - (W - ay) * (W - ay))) : W;
+        for (let x = -half; x < half; x++) {
+          const u = (x + 0.5) / half;
+          const n = x * 13 + y * 7 & 7;
+          const col = u < -0.55 ? "#8f897b" : u < 0.25 ? n === 0 ? "#6f6a5e" : "#7a7468" : u < 0.7 ? "#625d52" : "#4c4840";
+          R(x, y, 1, 1, col);
+        }
+        R(-half - 1, y, 1, 1, "#2a2722");
+        R(half, y, 1, 1, "#2a2722");
+      }
+      for (let x = -W + 2; x < W - 2; x++) {
+        const ay = W - Math.round(Math.sqrt(W * W - x * x));
+        R(x, -H + ay - 1, 1, 1, "#2a2722");
+      }
+      const star = [
+        [0, -19],
+        [0, -18],
+        [-1, -17],
+        [0, -17],
+        [1, -17],
+        [-3, -16],
+        [-2, -16],
+        [-1, -16],
+        [0, -16],
+        [1, -16],
+        [2, -16],
+        [3, -16],
+        [-1, -15],
+        [0, -15],
+        [1, -15],
+        [-2, -14],
+        [2, -14],
+        [-2, -13],
+        [2, -13]
+      ];
+      for (const [x, y] of star) R(x, y + 1, 1, 1, "#9a9484");
+      for (const [x, y] of star) R(x, y, 1, 1, "#2e2b25");
+      R(-5, -9, 10, 1, "#4a463d");
+      R(-4, -6, 8, 1, "#4a463d");
+      R(-5, -8, 10, 1, "#8a8477");
+      R(4, -22, 1, 3, "#3a362f");
+      R(5, -19, 1, 2, "#3a362f");
+      R(4, -17, 1, 2, "#3a362f");
+      R(-9, -3, 4, 3, "#5d6b42");
+      R(-8, -5, 2, 2, "#6f7f4c");
+      R(6, -2, 3, 2, "#55613c");
+      R(-7, -24, 2, 1, "#6a7848");
+      c.restore();
+      if (rise >= 1) {
+        const cx = gx + 12, h = 3 + Math.round(left * 4);
+        R(cx - 1, gy - 4 - h, 3, h, "#d8cfb8");
+        R(cx - 1, gy - 4 - h, 1, h, "#f0e8d4");
+        R(cx - 2, gy - 4, 5, 1, "#6a5a44");
+        if (left > 0) {
+          const fl = Math.sin(this.time * 9 + dm.x) * 0.6;
+          R(cx + Math.round(fl), gy - 6 - h, 1, 2, "#ffd27a");
+          R(cx, gy - 5 - h, 1, 1, "#fff2c0");
+        }
+      }
+      if (sink > 2 && Math.random() < 0.6)
+        this.parts.push(new Part(dm.x + (Math.random() - 0.5) * 22, dm.y - 2, "#6a5642", -60, 0.35, { spd: 0.4, r: 0.7 }));
+    },
+    /** 비석의 넋불 — 어둠을 덮은 뒤에 얹어 굴 속 · 밤에도 보인다. 돌 위에서 숨 쉬듯 오르내리고 작은 불티가 피어오른다. */
+    drawGraveGlow(c, dm, camX, camY) {
+      const left = clamp(1 - (this.dayCount * 1440 + this.dayT - (dm.at || 0)) / 720, 0, 1);
+      if (left <= 0 || dm.t0 !== void 0 && this.time - dm.t0 < 0.8) return;
+      const gx = dm.x - camX, gy = dm.y - camY - 44 + Math.sin(this.time * 1.7) * 3;
+      if (gx < -80 || gx > this.W + 80 || gy < -80 || gy > this.H + 80) return;
+      const a = (0.55 + 0.25 * Math.sin(this.time * 2.3)) * (0.4 + 0.6 * left);
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      const g = c.createRadialGradient(gx, gy, 0, gx, gy, 26);
+      g.addColorStop(0, `rgba(255,236,170,${a})`);
+      g.addColorStop(0.25, `rgba(255,200,110,${a * 0.5})`);
+      g.addColorStop(1, "rgba(255,170,80,0)");
+      c.fillStyle = g;
+      c.fillRect(gx - 26, gy - 26, 52, 52);
+      c.fillStyle = `rgba(255,248,220,${Math.min(1, a + 0.3)})`;
+      c.fillRect(Math.round(gx) - 1, Math.round(gy) - 1, 3, 3);
+      for (let i = 0; i < 4; i++) {
+        const ph = (this.time * 0.45 + i / 4) % 1;
+        const mx = gx + Math.sin((ph + i) * 6.3) * 6, my = gy + 6 - ph * 30;
+        c.fillStyle = `rgba(255,214,130,${(1 - ph) * a})`;
+        c.fillRect(Math.round(mx), Math.round(my), 1, 1);
+      }
+      c.restore();
     },
     /** 쓰러진 플레이어(여럿일 때) — 바닥에 누운 잿빛 몸 + 빠져나가는 넋. 남의 화면에서도 누가 쓰러졌는지 한눈에 보이게
         (혼자일 때는 죽음 창이 화면을 덮는다). 몸은 판정 상자 가운데를 축으로 눕혀 아래 끝이 바닥에 닿는다. */

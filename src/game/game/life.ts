@@ -2,6 +2,7 @@
 import { TAU } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { fmt, tr } from '../lang.js';
+import { T } from '../data.js';
 import { MODE_OF } from '../data/start.js';
 import { PROFS } from '../data/skills.js';
 import { TS } from '../world.js';
@@ -202,8 +203,9 @@ export const LifePart: Bag = {
       }
       UI.refreshBag();
     }
+    const gs = this.graveGround(p.cx, p.y + p.h - 4);
     this.deathMark = {
-      x: p.cx, y: p.cy, gold: lostG, xp: lostXp, items: lostItems,
+      x: gs.x, y: gs.y, g: 1, t0: this.time, gold: lostG, xp: lostXp, items: lostItems,
       // 게임 시간 12시간이 지나면 사라진다.
       at: this.dayCount * 1440 + this.dayT
     };
@@ -225,6 +227,27 @@ export const LifePart: Bag = {
     $('#death-screen').classList.add('open');
     this.scenes.open(this.net ? 'mdeath' : 'death');
     this.sfx('death');
+  },
+  /** 비석 자리 — 쓰러진 발밑에서 아래로 내려가 처음 닿는 땅 위(px, 바닥 윗면). 공중·물속에서 쓰러져도 땅에 선다.
+      용암 웅덩이 속이면 옆으로 가장 가까운 마른 땅을 찾는다(용암에 잠기면 비석이 안 보였다). */
+  graveGround(px: number, py: number) {
+    const w = this.world, tx0 = Math.floor(px / TS);
+    const lava = (t: number) => t === T.LAVA || t === T.FLOWLAVA;
+    const down = (tx: number) => {
+      let ty = Math.floor(py / TS);
+      for (let i = 0; i < 10 && w.solid(tx, ty); i++) ty--;        // 벽 속이면 위로 빠져나온다
+      for (let i = 0; i < 80; i++, ty++) {
+        if (!w.solid(tx, ty) && w.solid(tx, ty + 1)) return lava(w.get(tx, ty)) ? -1 : ty;
+        if (lava(w.get(tx, ty + 1))) return -1;
+      }
+      return -2;
+    };
+    for (let d = 0; d <= 14; d++)
+      for (const tx of d ? [tx0 - d, tx0 + d] : [tx0]) {
+        const ty = down(tx);
+        if (ty >= 0) return { x: (tx + 0.5) * TS, y: (ty + 1) * TS };
+      }
+    return { x: px, y: py };
   },
   respawn() {
     const p = this.player, w = this.world;

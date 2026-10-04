@@ -712,11 +712,12 @@ export const GameCore: Bag = {
        (안 막으면 죽는 그 프레임에 되찾아 죽는 소리 위에 'chapter' 팡파르가 겹쳤다. 사연: docs/code-history.md#h149) */
     if (this.deathMark && this.player.hp > 0 && !this.scenes.has('death') && !this.scenes.has('mdeath')) {
       const dm = this.deathMark;
+      if (!dm.g) { const g = this.graveGround(dm.x, dm.y + 16); dm.x = g.x; dm.y = g.y; dm.g = 1; }   // 옛 세이브는 몸 가운데였다
       const now = this.dayCount * 1440 + this.dayT;
       if (now - (dm.at || 0) >= 720) {          // 12시간 = 720분
         this.deathMark = null;
         this.toast(tr('비석이 잿빛에 삼켜졌다'), 'bad');
-      } else if (dist(p.cx, p.cy, dm.x, dm.y) < 70) {
+      } else if (dist(p.cx, p.cy, dm.x, dm.y - 16) < 70) {
         const gxp = Math.floor((dm.xp || 0) / 2), ggold = Math.floor((dm.gold || 0) / 2);
         if (gxp) p.addXp(gxp);
         if (ggold) p.gold += ggold;
