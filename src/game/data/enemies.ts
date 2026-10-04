@@ -7,9 +7,9 @@ import { tr } from '../lang.js';
 // ai: walker / jumper / flyer / archer / caster / boss별 전용 stiff: 그림이 거의 안 움직이는 개체를 렌더러가 절차적으로 흔들어 주는 값.
 export const ENEMIES: Record<string, EnemyDef> = {
   /* --- 순한 동물: 적대하지 않고 어슬렁거리다 맞으면 도망친다. 잡으면 생고기를 준다 --- */
-  rabbit:      { n: '들토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', w: 16, h: 12, c: '#ad9678', xp: 2, gold: 0, passive: 1,
+  rabbit:      { n: '들토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', w: 16, h: 12, c: '#ad9678', xp: 2, gold: 0, passive: 1, hop: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
-  arctic_hare: { n: '눈산토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', w: 16, h: 12, c: '#e8eef2', xp: 2, gold: 0, passive: 1,
+  arctic_hare: { n: '눈산토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', w: 16, h: 12, c: '#e8eef2', xp: 2, gold: 0, passive: 1, hop: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
   sand_lizard: { n: '모래 도마뱀', hp: 10, dmg: 0, def: 0, spd: 60, ai: 'critter', w: 18, h: 10, c: '#c8a45a', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },

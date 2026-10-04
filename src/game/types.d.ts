@@ -41,7 +41,7 @@ interface EnemyDef {
   n: string; hp: number; dmg: number; def?: number; spd?: number; ai: string;
   w: number; h: number; c?: string; xp?: number; gold?: number;
   drops?: [string, number, number, number][];
-  passive?: number; squish?: number; biome?: string; aggro?: number; lvScale?: number; range?: number; cw?: string; d?: string;
+  passive?: number; squish?: number; hop?: number; biome?: string; aggro?: number; lvScale?: number; range?: number; cw?: string; d?: string;
   proj?: string; tier?: number; ph?: number; boss?: number; minion?: string;
 }
 

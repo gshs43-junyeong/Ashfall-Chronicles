@@ -185,13 +185,30 @@ export const WorldSky: Bag & ThisType<World> = {
     o.w = (RIG.half * 2 + 1) * TS; o.h = RIG.stack * TS;
     return o;
   },
-  /** 둘레의 나무를 통째로(기둥이 ±6칸 안이면 수관까지 — 수관 반폭 5칸이 탑에 걸린다) 걷고, 발자국 안의 풀·꽃을 걷는다. */
+  /** 탑 자리의 나무는 **덩어리째** — 기둥이 ±6칸 안이면 수관까지 통째로 걷고, 기둥이 밖이면 잎 한 칸도 자르지 않는다(탑 그림이 덮는다).
+      칸 띠로 자르면 기둥 없는 잎이 뜨고, 이웃 나무 수관이 한쪽만 잘려 남았다 — 사연: docs/code-history.md#h153. 발자국 안의 풀 · 꽃은 걷는다. */
   clearRigSite(tx: number, ty: number) {
+    const { WW } = this.dims;
+    const isTree = (t: number) => t === T.WOOD || t === T.VINE || !!(TILE_DEF[t] && (TILE_DEF[t].leaf || TILE_DEF[t].tree));
+    const isWood = (t: number) => t === T.WOOD || t === T.PALMWOOD;
+    const seen = new Set<number>();
     for (let x = tx - 6; x <= tx + 6; x++)
       for (let y = ty - 26; y < ty; y++) {
         const t = this.get(x, y), d = TILE_DEF[t];
-        if (t === T.WOOD || d.leaf || d.tree || t === T.VINE || (this.inRig(x, y) && !d.solid && t !== T.AIR && !d.liquid))
-          this.set(x, y, T.AIR);
+        if (isTree(t) && !seen.has(x + y * WW)) {
+          const cells: number[] = [], st = [x + y * WW]; let inside = false;
+          seen.add(st[0]);
+          while (st.length) {
+            const c = st.pop()!, cx = c % WW, cy = (c / WW) | 0;
+            cells.push(c);
+            if (isWood(this.get(cx, cy)) && Math.abs(cx - tx) <= 6) inside = true;
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+              const n = cx + dx + (cy + dy) * WW;
+              if (!seen.has(n) && isTree(this.get(cx + dx, cy + dy))) { seen.add(n); st.push(n); }
+            }
+          }
+          if (inside) for (const c of cells) this.set(c % WW, (c / WW) | 0, T.AIR);
+        } else if (this.inRig(x, y) && !d.solid && t !== T.AIR && !d.liquid && !isTree(t)) this.set(x, y, T.AIR);
       }
   },
   /** 광상 — 같은 종류 광맥 덩어리(4방향) 중 종류마다 큰 것 상위 `RICH_TOP`(20칸 이상)만 골라, 가장자리에서 가장 먼 칸과
@@ -261,6 +278,43 @@ export const WorldSky: Bag & ThisType<World> = {
   /** 하늘 섬 높이 — 0 높은 층 · 1 가운데 · 2 낮은 층. 낮은 층 바닥(SKY_Y-8)은 이중 점프로 지상에서 못 닿게 둔 최소 높이다. */
   skyAlt(r: any, tier: number) { const { SY, SKY_Y } = this.dims;
     return tier === 0 ? r.int(SY(5), SY(10)) : tier === 1 ? r.int(SY(14), SY(21)) : r.int(SKY_Y - 13, SKY_Y - 8);
+  },
+  /** 베이스캠프 · 여명 마을 위에는 하늘 섬을 두지 않는다 — 그 띠에 걸친 섬은 칸 · 벽지 · 물건까지 덩어리째 지운다.
+      걸친 칸만 지우면 반쪽짜리 잘린 섬이 남았다. 땅 · 거대 나무와 이어진 덩어리(SKY_Y 아래까지 닿는 것)는 두고,
+      생성 끝에 따로 돌아 난수를 뽑지 않는다(뒤따르는 유적 · 동굴이 그대로). */
+  clearSkyOverSettlements() { const { WW, SKY_Y, CAMP_X0, CAMP_GX1 } = this.dims;
+    const zones: number[][] = [[CAMP_X0 - 16, CAMP_GX1 + 16]];
+    if (this.dawnCity) zones.push([this.dawnCity.x0 - 16, this.dawnCity.x1 + 16]);
+    const floor = SKY_Y + 4, seen = new Uint8Array(WW * floor), gone: number[][] = [];
+    for (const [a, b] of zones) for (let x = Math.max(0, a); x <= Math.min(WW - 1, b); x++) for (let y = 0; y < SKY_Y; y++) {
+      const k = y * WW + x;
+      if (seen[k] || this.get(x, y) === T.AIR) continue;
+      const cells: number[] = [], st = [k]; let ground = false;   // 이어진 덩어리를 모은다(대각선 포함)
+      seen[k] = 1;
+      while (st.length) {
+        const c = st.pop()!, cx = c % WW, cy = (c / WW) | 0;
+        cells.push(c);
+        if (cy >= floor - 1) ground = true;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = cx + dx, ny = cy + dy;
+          if (nx < 0 || nx >= WW || ny < 0 || ny >= floor) continue;
+          const n = ny * WW + nx;
+          if (!seen[n] && this.get(nx, ny) !== T.AIR) { seen[n] = 1; st.push(n); }
+        }
+      }
+      if (ground) continue;
+      let x0 = WW, x1 = 0, y0 = floor, y1 = 0;
+      for (const c of cells) {
+        const cx = c % WW, cy = (c / WW) | 0;
+        this.set(cx, cy, T.AIR); this.walls[this.i(cx, cy)] = 0;
+        x0 = Math.min(x0, cx); x1 = Math.max(x1, cx); y0 = Math.min(y0, cy); y1 = Math.max(y1, cy);
+      }
+      gone.push([x0, y0 - 3, x1, y1]);
+    }
+    if (!gone.length) return;
+    const inGone = (tx: number, ty: number) => gone.some(([a, b, c, d]) => tx >= a && tx <= c && ty >= b && ty <= d);
+    this.objects = this.objects.filter((o: Bag) => !inGone(Math.floor((o.x + (o.w || 0) / 2) / TS), Math.floor((o.y + (o.h || 0) - 1) / TS)));
+    this.skyIslands = (this.skyIslands || []).filter((s: Bag) => !inGone(s.x, s.y));
   },
   /** 섬 위 나무를 걷는다. */
   _skyStrip(x0: number, x1: number, cy: number) {

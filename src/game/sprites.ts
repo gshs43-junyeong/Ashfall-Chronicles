@@ -112,6 +112,33 @@ export const Sprites: Bag = {
     return (this.img['mech_' + key] = cv);
   },
 
+  /** 얼어붙은 사본 — 그림 윤곽 안에만 서리를 입힌다(발에서 짙고 위로 옅게 + 흰 얼음 알갱이).
+      판정 상자에 칠하면 몸이 네모 얼음에 갇혀 보였다. 키는 'frost_' + key(개조 몹은 frost_mech_*) */
+  frostSheet(key: string) {
+    const fk = 'frost_' + key, have = this.img[fk];
+    if (have !== undefined) return have;
+    const im = this.img[key];
+    const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
+    if (!im || !im.width || !m) return (this.img[fk] = null);
+    const cv = document.createElement('canvas');
+    cv.width = im.naturalWidth || im.width; cv.height = im.naturalHeight || im.height;
+    const g = cv.getContext('2d')!, S = this.scale, W = cv.width, H = cv.height, fh = m.frameH * S;
+    g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0);
+    g.globalCompositeOperation = 'source-atop';
+    for (let y0 = 0; y0 < H; y0 += fh) {                     // 프레임 줄마다 같은 결
+      const grad = g.createLinearGradient(0, y0, 0, y0 + fh);
+      grad.addColorStop(0, 'rgba(200,236,255,0.30)'); grad.addColorStop(0.55, 'rgba(170,222,255,0.50)'); grad.addColorStop(1, 'rgba(225,246,255,0.72)');
+      g.fillStyle = grad; g.fillRect(0, y0, W, fh);
+    }
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    for (let y = 0; y < H; y += S * 3) for (let x = (y / S) % 5 * S; x < W; x += S * 5) if (((x * 7 + y * 13) / S) % 11 < 3) g.fillRect(x, y, S, S);
+    g.globalCompositeOperation = 'source-over';
+    this.meta.characters.sheets[fk] = m;
+    this.footInset[fk] = this.footInset[key] || 0;
+    this.sideInset[fk] = this.sideInset[key] || 0;
+    return (this.img[fk] = cv);
+  },
+
   /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다. */
   draw(c: CanvasRenderingContext2D, key: string, frame: number, x: number, y: number, flip: boolean) {
     const im = this.img[key]; if (!im || !im.width) return false;

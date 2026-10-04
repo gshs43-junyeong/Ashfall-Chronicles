@@ -155,7 +155,7 @@ export class World extends TileMap {
   declare dims: WorldDims; declare ruinSpec: RuinDef[]; declare netLog: Set<number> | null; declare netMute: boolean;
   declare _ensureWalkable: (...a: any[]) => any; declare _walkJobs: any[]; declare atelier: Record<string, any>; declare beach: Record<string, any>; declare breakLongRuns: (...a: any[]) => any;
   declare buildAltars: (...a: any[]) => any; declare buildAtelier: (...a: any[]) => any; declare buildCaveZones: (...a: any[]) => any; declare buildCaverns: (...a: any[]) => any;
-  declare buildCitadel: (...a: any[]) => any; declare buildDawnCity: (...a: any[]) => any; declare buildDeepShaft: (...a: any[]) => any; declare buildDungeon: (...a: any[]) => any;
+  declare buildCitadel: (...a: any[]) => any; declare buildDawnCity: (...a: any[]) => any; declare clearSkyOverSettlements: () => void; declare buildDeepShaft: (...a: any[]) => any; declare buildDungeon: (...a: any[]) => any;
   declare buildJungleFalls: (...a: any[]) => any; declare buildRuinCaches: (...a: any[]) => any; declare buildRuins: (...a: any[]) => any; declare buildRunaway: (...a: any[]) => any;
   declare buildSea: (...a: any[]) => any; declare buildSkyIslands: (...a: any[]) => any; declare buildVillage: (...a: any[]) => any; declare buildWorks: (...a: any[]) => any;
   declare cactusPlant: (...a: any[]) => any; declare caveGrid: Uint8Array | null; declare caverns: any[]; declare citadel: Record<string, any>; declare crops: Set<any>; declare wet: Record<string, any>; declare isWet: (...a: any[]) => any; declare waterFarm: (...a: any[]) => any; declare nearWater: (...a: any[]) => any;
@@ -574,6 +574,7 @@ export class World extends TileMap {
     this.sealCipherVaults();         // 암호 골방의 껍질을 한 번 더 세운다
     this.sweepFloatingDecor();       // 뒷공사가 받침을 헐고 간 장식을 걷어낸다
     this.pruneBrokenTrees();         // 천장에 잘리거나 밑동이 날아가 뜬 나무를 통째로 걷는다
+    this.clearSkyOverSettlements();  // 캠프 · 여명 마을 위 하늘 섬은 덩어리째 지운다(잘린 섬을 남기지 않게)
     /* 액체 마무리는 **지형을 건드리는 마지막 단계 뒤**에 와야 한다. */
     this.sweepPockets(60);           // 뒷공사가 남긴 한두 칸짜리 구멍을 메운다 — 물을 고치기 전에
     this.sealLiquids();
@@ -589,6 +590,7 @@ export class World extends TileMap {
     this.spawnY = vh - 3;
     this.fitObjects();
     this.placeRigs(true);        // 채취탑 자리 — 물건을 다 맞춘 뒤(지면·유적이 확정된 뒤)
+    this.pruneBrokenTrees();     // 한 번 더 — 채취탑 · 물가 손질이 남긴 줄기 없는 잎 덩어리(나중 단계라 앞의 정리가 못 봤다)
     this.fluidInit();            // 여기서부터 물이 흐른다 — 생성 중에는 꺼 둔다(set 이 수백만 번 불린다)
     this.fluidSettle();          // 샘에서 폭포·물길이 흘러 자리 잡을 때까지 미리 돌린다
     return this;

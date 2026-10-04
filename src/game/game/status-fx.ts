@@ -120,16 +120,14 @@ export const StatusFxPart: Bag = {
       c.beginPath(); c.moveTo(fx - fw * 0.35, base); c.quadraticCurveTo(fx, base - fh * 0.5, fx + fw * 0.35, base); c.fill();
     }
   },
-  /** 얼음 껍질 — 발부터 몸을 타고 오른 서리 조각(자리는 개체마다 고정) + 반짝임 */
+  /** 얼음 껍질 — 발밑에서 돋은 서리 조각(자리는 개체마다 고정) + 반짝임. 몸 빛깔은 언 사본(Sprites.frostSheet)이 맡는다 —
+      ★ 판정 상자에 칠하거나 상자 옆선에 조각을 박으면 네모 얼음 상자처럼 보인다. */
   iceCrust(c: CanvasRenderingContext2D, sx: number, sy: number, w: number, h: number, id: number, t: number) {
-    const n = 6 + Math.round(w / 5);
-    c.globalAlpha = 0.18; c.fillStyle = '#cfefff';
-    c.fillRect(sx + 1, sy + h * 0.45, w - 2, h * 0.55);                 // 얼어붙은 아랫몸
+    const n = 4 + Math.round(w / 6);
     for (let i = 0; i < n; i++) {
-      const u = tileHash(id, i * 3), side = i % 3;                       // 0 바닥 · 1 왼쪽 · 2 오른쪽
-      const bx = side === 0 ? sx + u * w : side === 1 ? sx : sx + w, by = side === 0 ? sy + h : sy + h * (0.4 + 0.6 * u);
-      const ang = side === 0 ? -Math.PI / 2 + (u - 0.5) * 1.6 : side === 1 ? Math.PI + (u - 0.5) * 1.2 : (u - 0.5) * 1.2;
-      const L = 4 + tileHash(id, i * 3 + 1) * 6, hw = 1.6 + tileHash(id, i * 3 + 2) * 1.6;
+      const u = (i + 0.2 + 0.6 * tileHash(id, i * 3)) / n;               // 발 폭에 고르게
+      const bx = sx + w * (0.1 + 0.8 * u), by = sy + h, ang = -Math.PI / 2 + (u - 0.5) * 1.8;
+      const L = 3 + tileHash(id, i * 3 + 1) * 5, hw = 1.2 + tileHash(id, i * 3 + 2) * 1.2;
       const tx = bx + Math.cos(ang) * L, ty = by + Math.sin(ang) * L, nx = -Math.sin(ang) * hw, ny = Math.cos(ang) * hw;
       c.globalAlpha = 0.85; c.fillStyle = '#d8f4ff';
       c.beginPath(); c.moveTo(bx + nx, by + ny); c.lineTo(tx, ty); c.lineTo(bx - nx, by - ny); c.closePath(); c.fill();

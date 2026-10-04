@@ -5908,6 +5908,7 @@
       xp: 2,
       gold: 0,
       passive: 1,
+      hop: 1,
       drops: [["raw_meat", 1, 1, 1]]
     },
     arctic_hare: {
@@ -5923,6 +5924,7 @@
       xp: 2,
       gold: 0,
       passive: 1,
+      hop: 1,
       drops: [["raw_meat", 1, 1, 1]]
     },
     sand_lizard: {
@@ -14317,6 +14319,7 @@
       this.sealCipherVaults();
       this.sweepFloatingDecor();
       this.pruneBrokenTrees();
+      this.clearSkyOverSettlements();
       this.sweepPockets(60);
       this.sealLiquids();
       this.decorateWater(rng);
@@ -14329,6 +14332,7 @@
       this.spawnY = vh - 3;
       this.fitObjects();
       this.placeRigs(true);
+      this.pruneBrokenTrees();
       this.fluidInit();
       this.fluidSettle();
       return this;
@@ -16134,13 +16138,34 @@
       o.h = RIG.stack * TS;
       return o;
     },
-    /** 둘레의 나무를 통째로(기둥이 ±6칸 안이면 수관까지 — 수관 반폭 5칸이 탑에 걸린다) 걷고, 발자국 안의 풀·꽃을 걷는다. */
+    /** 탑 자리의 나무는 **덩어리째** — 기둥이 ±6칸 안이면 수관까지 통째로 걷고, 기둥이 밖이면 잎 한 칸도 자르지 않는다(탑 그림이 덮는다).
+        칸 띠로 자르면 기둥 없는 잎이 뜨고, 이웃 나무 수관이 한쪽만 잘려 남았다 — 사연: docs/code-history.md#h153. 발자국 안의 풀 · 꽃은 걷는다. */
     clearRigSite(tx, ty) {
+      const { WW: WW2 } = this.dims;
+      const isTree = (t) => t === T.WOOD || t === T.VINE || !!(TILE_DEF[t] && (TILE_DEF[t].leaf || TILE_DEF[t].tree));
+      const isWood = (t) => t === T.WOOD || t === T.PALMWOOD;
+      const seen = /* @__PURE__ */ new Set();
       for (let x = tx - 6; x <= tx + 6; x++)
         for (let y = ty - 26; y < ty; y++) {
           const t = this.get(x, y), d = TILE_DEF[t];
-          if (t === T.WOOD || d.leaf || d.tree || t === T.VINE || this.inRig(x, y) && !d.solid && t !== T.AIR && !d.liquid)
-            this.set(x, y, T.AIR);
+          if (isTree(t) && !seen.has(x + y * WW2)) {
+            const cells = [], st = [x + y * WW2];
+            let inside = false;
+            seen.add(st[0]);
+            while (st.length) {
+              const c = st.pop(), cx = c % WW2, cy = c / WW2 | 0;
+              cells.push(c);
+              if (isWood(this.get(cx, cy)) && Math.abs(cx - tx) <= 6) inside = true;
+              for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+                const n = cx + dx + (cy + dy) * WW2;
+                if (!seen.has(n) && isTree(this.get(cx + dx, cy + dy))) {
+                  seen.add(n);
+                  st.push(n);
+                }
+              }
+            }
+            if (inside) for (const c of cells) this.set(c % WW2, c / WW2 | 0, T.AIR);
+          } else if (this.inRig(x, y) && !d.solid && t !== T.AIR && !d.liquid && !isTree(t)) this.set(x, y, T.AIR);
         }
     },
     /** 광상 — 같은 종류 광맥 덩어리(4방향) 중 종류마다 큰 것 상위 `RICH_TOP`(20칸 이상)만 골라, 가장자리에서 가장 먼 칸과
@@ -16232,6 +16257,52 @@
     skyAlt(r, tier) {
       const { SY: SY2, SKY_Y: SKY_Y2 } = this.dims;
       return tier === 0 ? r.int(SY2(5), SY2(10)) : tier === 1 ? r.int(SY2(14), SY2(21)) : r.int(SKY_Y2 - 13, SKY_Y2 - 8);
+    },
+    /** 베이스캠프 · 여명 마을 위에는 하늘 섬을 두지 않는다 — 그 띠에 걸친 섬은 칸 · 벽지 · 물건까지 덩어리째 지운다.
+        걸친 칸만 지우면 반쪽짜리 잘린 섬이 남았다. 땅 · 거대 나무와 이어진 덩어리(SKY_Y 아래까지 닿는 것)는 두고,
+        생성 끝에 따로 돌아 난수를 뽑지 않는다(뒤따르는 유적 · 동굴이 그대로). */
+    clearSkyOverSettlements() {
+      const { WW: WW2, SKY_Y: SKY_Y2, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12 } = this.dims;
+      const zones = [[CAMP_X02 - 16, CAMP_GX12 + 16]];
+      if (this.dawnCity) zones.push([this.dawnCity.x0 - 16, this.dawnCity.x1 + 16]);
+      const floor = SKY_Y2 + 4, seen = new Uint8Array(WW2 * floor), gone = [];
+      for (const [a, b] of zones) for (let x = Math.max(0, a); x <= Math.min(WW2 - 1, b); x++) for (let y = 0; y < SKY_Y2; y++) {
+        const k = y * WW2 + x;
+        if (seen[k] || this.get(x, y) === T.AIR) continue;
+        const cells = [], st = [k];
+        let ground = false;
+        seen[k] = 1;
+        while (st.length) {
+          const c = st.pop(), cx = c % WW2, cy = c / WW2 | 0;
+          cells.push(c);
+          if (cy >= floor - 1) ground = true;
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            const nx = cx + dx, ny = cy + dy;
+            if (nx < 0 || nx >= WW2 || ny < 0 || ny >= floor) continue;
+            const n = ny * WW2 + nx;
+            if (!seen[n] && this.get(nx, ny) !== T.AIR) {
+              seen[n] = 1;
+              st.push(n);
+            }
+          }
+        }
+        if (ground) continue;
+        let x0 = WW2, x1 = 0, y0 = floor, y1 = 0;
+        for (const c of cells) {
+          const cx = c % WW2, cy = c / WW2 | 0;
+          this.set(cx, cy, T.AIR);
+          this.walls[this.i(cx, cy)] = 0;
+          x0 = Math.min(x0, cx);
+          x1 = Math.max(x1, cx);
+          y0 = Math.min(y0, cy);
+          y1 = Math.max(y1, cy);
+        }
+        gone.push([x0, y0 - 3, x1, y1]);
+      }
+      if (!gone.length) return;
+      const inGone = (tx, ty) => gone.some(([a, b, c, d]) => tx >= a && tx <= c && ty >= b && ty <= d);
+      this.objects = this.objects.filter((o) => !inGone(Math.floor((o.x + (o.w || 0) / 2) / TS), Math.floor((o.y + (o.h || 0) - 1) / TS)));
+      this.skyIslands = (this.skyIslands || []).filter((s) => !inGone(s.x, s.y));
     },
     /** 섬 위 나무를 걷는다. */
     _skyStrip(x0, x1, cy) {
@@ -27912,6 +27983,37 @@
       this.sideInset["mech_" + key] = this.sideInset[key] || 0;
       return this.img["mech_" + key] = cv;
     },
+    /** 얼어붙은 사본 — 그림 윤곽 안에만 서리를 입힌다(발에서 짙고 위로 옅게 + 흰 얼음 알갱이).
+        판정 상자에 칠하면 몸이 네모 얼음에 갇혀 보였다. 키는 'frost_' + key(개조 몹은 frost_mech_*) */
+    frostSheet(key) {
+      const fk = "frost_" + key, have = this.img[fk];
+      if (have !== void 0) return have;
+      const im = this.img[key];
+      const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
+      if (!im || !im.width || !m) return this.img[fk] = null;
+      const cv = document.createElement("canvas");
+      cv.width = im.naturalWidth || im.width;
+      cv.height = im.naturalHeight || im.height;
+      const g = cv.getContext("2d"), S = this.scale, W = cv.width, H = cv.height, fh = m.frameH * S;
+      g.imageSmoothingEnabled = false;
+      g.drawImage(im, 0, 0);
+      g.globalCompositeOperation = "source-atop";
+      for (let y0 = 0; y0 < H; y0 += fh) {
+        const grad = g.createLinearGradient(0, y0, 0, y0 + fh);
+        grad.addColorStop(0, "rgba(200,236,255,0.30)");
+        grad.addColorStop(0.55, "rgba(170,222,255,0.50)");
+        grad.addColorStop(1, "rgba(225,246,255,0.72)");
+        g.fillStyle = grad;
+        g.fillRect(0, y0, W, fh);
+      }
+      g.fillStyle = "rgba(255,255,255,0.85)";
+      for (let y = 0; y < H; y += S * 3) for (let x = y / S % 5 * S; x < W; x += S * 5) if ((x * 7 + y * 13) / S % 11 < 3) g.fillRect(x, y, S, S);
+      g.globalCompositeOperation = "source-over";
+      this.meta.characters.sheets[fk] = m;
+      this.footInset[fk] = this.footInset[key] || 0;
+      this.sideInset[fk] = this.sideInset[key] || 0;
+      return this.img[fk] = cv;
+    },
     /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다. */
     draw(c, key, frame, x, y, flip) {
       const im = this.img[key];
@@ -31195,6 +31297,9 @@
         if (this.onGround && this.hitWall && this.jumpCd <= 0) {
           this.vy = -300;
           this.jumpCd = 0.5;
+        } else if (this.def.hop && this.onGround && Math.abs(this.vx) > 10 && this.jumpCd <= 0) {
+          this.vy = -150;
+          this.jumpCd = 0.42;
         }
         this.move(dt, world);
       } else if (AI === "swimmer") {
@@ -40192,17 +40297,14 @@
         c.fill();
       }
     },
-    /** 얼음 껍질 — 발부터 몸을 타고 오른 서리 조각(자리는 개체마다 고정) + 반짝임 */
+    /** 얼음 껍질 — 발밑에서 돋은 서리 조각(자리는 개체마다 고정) + 반짝임. 몸 빛깔은 언 사본(Sprites.frostSheet)이 맡는다 —
+        ★ 판정 상자에 칠하거나 상자 옆선에 조각을 박으면 네모 얼음 상자처럼 보인다. */
     iceCrust(c, sx, sy, w, h, id, t) {
-      const n = 6 + Math.round(w / 5);
-      c.globalAlpha = 0.18;
-      c.fillStyle = "#cfefff";
-      c.fillRect(sx + 1, sy + h * 0.45, w - 2, h * 0.55);
+      const n = 4 + Math.round(w / 6);
       for (let i = 0; i < n; i++) {
-        const u = tileHash(id, i * 3), side = i % 3;
-        const bx = side === 0 ? sx + u * w : side === 1 ? sx : sx + w, by = side === 0 ? sy + h : sy + h * (0.4 + 0.6 * u);
-        const ang = side === 0 ? -Math.PI / 2 + (u - 0.5) * 1.6 : side === 1 ? Math.PI + (u - 0.5) * 1.2 : (u - 0.5) * 1.2;
-        const L = 4 + tileHash(id, i * 3 + 1) * 6, hw = 1.6 + tileHash(id, i * 3 + 2) * 1.6;
+        const u = (i + 0.2 + 0.6 * tileHash(id, i * 3)) / n;
+        const bx = sx + w * (0.1 + 0.8 * u), by = sy + h, ang = -Math.PI / 2 + (u - 0.5) * 1.8;
+        const L = 3 + tileHash(id, i * 3 + 1) * 5, hw = 1.2 + tileHash(id, i * 3 + 2) * 1.2;
         const tx = bx + Math.cos(ang) * L, ty = by + Math.sin(ang) * L, nx = -Math.sin(ang) * hw, ny = Math.cos(ang) * hw;
         c.globalAlpha = 0.85;
         c.fillStyle = "#d8f4ff";
@@ -48499,6 +48601,7 @@
       }
       if (e.atkPose > 0) return 4;
       if (e.def.squish && !e.onGround) return e.vy < 0 ? 2 : 0;
+      if (e.def.hop) return !e.onGround ? 3 : Math.abs(e.vx) > 6 ? 2 : Math.floor(this.time * 2.4) % 2;
       if (Math.abs(e.vx) > 6) return 2 + Math.floor(this.time * 7) % 2;
       return Math.floor(this.time * 2.4) % 2;
     },
@@ -48647,9 +48750,10 @@
         this.drawFlotsam(c, e, sx, sy);
         return;
       }
-      const key = e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type) ? "mech_" + e.type : e.type;
+      const key0 = e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type) ? "mech_" + e.type : e.type;
+      const key = e.chillT > 0 && this.spritesOn && Sprites.frostSheet(key0) ? "frost_" + key0 : key0;
       const meta = this.spritesOn && Sprites.meta && (Sprites.meta.characters.sheets[key] || Sprites.meta.bosses.sheets[key]);
-      const dy = meta ? meta.frameH - e.h - (Sprites.footInset[key] || 0) : 0;
+      const dy = meta ? meta.frameH - e.h - (Sprites.footInset[key] || 0) - (e.def.hop && !e.onGround ? 3 : 0) : 0;
       const side = meta ? (Sprites.sideInset[key] || 0) * (e.facing < 0 ? -1 : 1) : 0;
       const dx = meta ? (e.w - meta.frameW) / 2 - side : 0;
       const wet = e.type === "grotto_eel" && this.world.liquid(Math.floor(e.cx / TS), Math.floor(e.cy / TS));

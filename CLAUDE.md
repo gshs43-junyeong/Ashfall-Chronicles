@@ -525,7 +525,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   웹과 내려받는 판이 같은 판이다(`play/index.html` 표시 `v1.1.2` · `?v=257`). 다음 개발판을 웹에 먼저 올릴 때는 표시를 `v1.1.3-dev` 로 — 해시가 안 찍힌 판(로컬 · zip)은 `-dev` 일 때만 '개발판'이 붙는다.
   릴리스 워크플로는 macOS 앱을 macOS 러너에서 임시 서명(ad-hoc)한다 — 서명 없는 macOS 앱은 "손상됨 → 휴지통"으로 강제로 버려졌다(`tools/build-desktop.sh` 머리말). 앱 해시(`APP_HASHES`)는 릴리스의 `SHA256SUMS-App.txt` 에서.
 - **로고**(`tools/mklogo.py`): Cinzel Black(ASHFALL — 첫 A · 끝 L 을 1.22배 `BIG`) · Bold(CHRONICLES) 윤곽을 굽는다(글꼴 원본·OFL 전문 `tools/art/fonts/`) —
-  사용자가 고른 글꼴(2026-09-30): 아래로 민 두께(`DEPTH`) · 검은 윤곽 · 양옆 마름모 금줄로 제목답게. 게임 = 잔불빛 글자 PNG(`ui/logo.png` 2배 · `logo_small.png`) · 타이틀 화면은 둘레 장식(별자리 눈금 하늘 아치 — ★ 별·꼬리보다 높게 · 양옆 금빛 덩굴 · 아래 늘어진 마름모 — `ornament`)을 더한 `logo_title.png`,
+  사용자가 고른 글꼴(2026-09-30): 아래로 민 두께(`DEPTH`) · 검은 윤곽 · 양옆 마름모 금줄로 제목답게. 게임 = 잔불빛 글자 PNG(`ui/logo.png` 2배 · `logo_small.png`) · 타이틀 화면은 둘레 장식(양옆 금빛 덩굴과 그 위 별자리 · 아래 늘어진 마름모 — `ornament`, 하늘 아치는 부피가 커서 뺐다)을 더한 `logo_title.png`,
   사이트 홈 히어로 = **같은 그림**(`site/wordmark*.png` — 별 없는 몸 + 별까지 다 있는 판)을 `<!-- wordmark -->` 자리에 끼우고 hero.js 가 별똥별을 한 번 떨어뜨려 앉힌다(앉은 별은 움직이지 않는다).
   탭 아이콘(파비콘)은 휘어 내려온 빛 꼬리를 끄는 별 하나(`favicon`). 로고 윤곽은 pathops 로 합쳐 칠한다(겹친 윤곽을 XOR 하면 획 안에 실금이 그어졌다). 로고를 고치면 `mkkeyart.py` 도 다시.
   사이트 상단 메뉴는 홈·다운로드 둘뿐이다(바로 플레이 링크 · 내려받기 네모 단추는 뺐다).
