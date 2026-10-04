@@ -69,6 +69,7 @@ export const RenderActorsPart: Bag = {
     if (e.atkPose > 0) return 4;
     /* 말랑한 몹(ENEMIES squish)은 공중에서 걷기 두 장을 번갈아 돌리면 떨어뜨린 상자처럼 보였다 — 오를 땐 늘어난 장, 내릴 땐 둥근 장. */
     if (e.def.squish && !e.onGround) return e.vy < 0 ? 2 : 0;
+    if (e.def.hop) return !e.onGround ? 3 : Math.abs(e.vx) > 6 ? 2 : Math.floor(this.time * 2.4) % 2;   // 깡충 — 뻗은 장은 공중만
     if (Math.abs(e.vx) > 6) return 2 + (Math.floor(this.time * 7) % 2);
     return Math.floor(this.time * 2.4) % 2;
   },
@@ -208,13 +209,14 @@ export const RenderActorsPart: Bag = {
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
     /* 손그림 스프라이트 우선. */
     /* 개조된 개체는 원래 시트를 강철로 눕힌 사본으로 그린다(Sprites.mechSheet). */
-    const key = (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type))
+    const key0 = (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type))
       ? 'mech_' + e.type : e.type;
+    const key = e.chillT > 0 && this.spritesOn && Sprites.frostSheet(key0) ? 'frost_' + key0 : key0;   // 얼면 윤곽째 언 사본
     const meta = this.spritesOn && Sprites.meta &&
       (Sprites.meta.characters.sheets[key] || Sprites.meta.bosses.sheets[key]);
     // Sprites.footInset가 실측한 여백이라 그만큼 덜 밀어 올린다.
     /* ★ max(0, …) 를 쓰면 안 된다. */
-    const dy = meta ? meta.frameH - e.h - (Sprites.footInset[key] || 0) : 0;
+    const dy = meta ? meta.frameH - e.h - (Sprites.footInset[key] || 0) - (e.def.hop && !e.onGround ? 3 : 0) : 0;   // 깡충 장은 발이 3px 높다
     /* ★ 가로는 **프레임이 아니라 그림**을 가운데 맞춘다. */
     const side = meta ? (Sprites.sideInset[key] || 0) * (e.facing < 0 ? -1 : 1) : 0;
     const dx = meta ? (e.w - meta.frameW) / 2 - side : 0;

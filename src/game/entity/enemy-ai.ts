@@ -147,6 +147,9 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
         this.vx = lerp(this.vx, this.wDir * sp * 0.5, dt * 2);
       }
       if (this.onGround && this.hitWall && this.jumpCd <= 0) { this.vy = -300; this.jumpCd = 0.5; }
+      /* 토끼는 깡충 뛰어 간다 — 시트의 걷기 두 장(웅크림 · 뻗음)은 발 높이가 3px 달라, 땅에서 번갈아 돌리면 제자리에서 둠칫거렸다.
+         뻗은 장은 공중에서만(enemyFrame) 쓰고 몸은 실제 포물선을 탄다. */
+      else if (this.def.hop && this.onGround && Math.abs(this.vx) > 10 && this.jumpCd <= 0) { this.vy = -150; this.jumpCd = 0.42; }
       this.move(dt, world);
     } else if (AI === 'swimmer') {
       // 물속 생물 — 물 밖으로는 못 나간다.

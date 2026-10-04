@@ -109,8 +109,8 @@ def geometry(sub=None):
     lines = [(wA * 0.06, cx - wC / 2 - gapL), (cx + wC / 2 + gapL, wA * 0.94)]   # 바깥 끝은 마름모
     # 별 — 첫 'A' 꼭짓점 왼쪽 위에서 반짝이고, 꼬리는 오른쪽 위 하늘로 길게(떨어져 내려온 길)
     apex = min(polygons(MAIN, a_glyphs[:1])[0], key=lambda p: p[1])
-    star_c = (apex[0] - 3, -BIG[0] * CAP + CAP - 30)
-    tail = (star_c[0] + wA * 0.58, star_c[1] - wA * 0.07)
+    star_c = (apex[0] - 3, -BIG[0] * CAP + CAP - 24)
+    tail = (star_c[0] + wA * 0.52, star_c[1] - wA * 0.035)       # 낮게 눕혀 — 위로 솟으면 그만큼 로고가 높아진다
     return dict(a=a_glyphs, c=c_glyphs, wA=wA, wC=wC, lineY=lineY, lines=lines, star=star_c, tail=tail,
                 box=(-30, -84, wA + 30, yC + SUB_CAP + 26))
 
@@ -150,12 +150,12 @@ def gradient(W, H, stops, y0, y1):
 def DECO_BOX(g):
     """장식 판의 상자 — 로고 상자보다 양옆 · 위 · 아래로 넓다"""
     x0, y0, x1, y1 = g['box']
-    return (x0 - 120, y0 - 92, x1 + 120, y1 + 34)
+    return (x0 - 120, y0, x1 + 120, y1 + 34)
 
 
 def ornament(g, W, H, k, ox, oy, ss=3):
-    """타이틀 화면 로고의 둘레 — 별자리 눈금을 새긴 하늘 아치(별똥별이 뚫고 내려온 자리) · 양옆 금빛 덩굴 장식 ·
-    아치 위 작은 별들 · CHRONICLES 아래 늘어진 마름모. 글자 뒤에 깔리므로 옅게(잔불 금색 한 가지)"""
+    """타이틀 화면 로고의 둘레 — 양옆 금빛 덩굴 장식 · 그 위 별자리 · CHRONICLES 아래 늘어진 마름모.
+    글자 뒤에 깔리므로 옅게(잔불 금색 한 가지). 하늘 아치는 부피가 커서 뺐다(사용자 결정 2026-10-04)"""
     L = Image.new('RGBA', (W * ss, H * ss), (0, 0, 0, 0)); d = ImageDraw.Draw(L)
     P = lambda x, y: ((x + ox) * k * ss, (y + oy) * k * ss)
     u = k * ss
@@ -170,23 +170,9 @@ def ornament(g, W, H, k, ox, oy, ss=3):
     def spark(x, y, r, a):
         X, Y = P(x, y); R = r * u; w = R * .22
         d.polygon([(X, Y - R), (X + w, Y - w), (X + R, Y), (X + w, Y + w), (X, Y + R), (X - w, Y + w), (X - R, Y), (X - w, Y - w)], fill=PALE + (int(255 * a),))
-    # 하늘 아치 — 양옆 덩굴 끝에서 솟아 로고 위를 넘는 반타원, 바깥 줄 · 안쪽 줄 사이에 별자리 눈금
-    ay = 58; rx = wA / 2 + 96; ry = 205            # ★ 별(A 꼭짓점)과 꼬리 끝보다 높게 — 낮으면 아치가 별을 꿰뚫었다
-    def arc(r_off, w, a, t0=0, t1=math.pi):
-        pts = [(cx - (rx + r_off) * math.cos(t), ay - (ry + r_off) * math.sin(t)) for t in [t0 + (t1 - t0) * i / 160 for i in range(161)]]
-        line(pts, w, GOLD, a)
-    arc(0, 1.6, .75); arc(-9, .9, .5)
-    for i in range(1, 60):
-        t = math.pi * i / 60; long_ = i % 5 == 0
-        c, s_ = math.cos(t), math.sin(t)
-        p0 = (cx - rx * c, ay - ry * s_); r1 = -9 if long_ else -4.5
-        p1 = (cx - (rx + r1) * c, ay - (ry + r1) * s_)
-        line([p0, p1], 1 if long_ else .7, GOLD, .7 if long_ else .45)
-    # 아치 꼭대기 · 4분점의 마름모와 별
-    for t, r in ((math.pi / 2, 4.2), (math.pi / 4, 2.6), (3 * math.pi / 4, 2.6)):
-        diamond(cx - (rx + 4.5) * math.cos(t), ay - (ry + 4.5) * math.sin(t), r, PALE, .9)
-    # 아치 위 별자리 — 몇 개의 별을 옅은 선으로 잇는다(왼쪽 · 오른쪽 한 무리씩)
-    for grp in (((-92, -62), (-64, -100), (-20, -116), (14, -150)), ((wA - 40, -150), (wA + 6, -126), (wA + 52, -96), (wA + 84, -58))):
+    ay = 58                                         # 덩굴 높이(로고 글자 가운데쯤)
+    # 별자리 — 양옆 덩굴 위 · 큰 A · L 어깨 바깥에 한 무리씩(옅은 선으로 잇는다). ★ 별(A 꼭짓점) 쪽으로 들이지 말 것
+    for grp in (((-112, 34), (-92, 2), (-58, -14), (-40, -46)), ((wA + 40, -46), (wA + 58, -14), (wA + 92, 2), (wA + 112, 34))):
         line(list(grp), .6, GOLD, .4)
         for j, (x, y) in enumerate(grp): spark(x, y, 4.5 if j % 2 else 3.2, .85)
     # 양옆 덩굴 장식 — 글자 쪽이 굵고 바깥으로 가늘어지는 금줄 + 끝의 소용돌이 + 마름모
