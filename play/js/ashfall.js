@@ -28065,6 +28065,31 @@
       this.sideInset[bk] = this.sideInset[key] || 0;
       return this.img[bk] = cv;
     },
+    /** 한 색으로 칠한 실루엣 사본(피격 섬광 · 페이즈 금빛) — 그림 윤곽 안만 col 로. 키는 'tint' + col + '_' + key
+        ★ 프레임 칸을 fillRect 로 덮으면 투명 여백까지 칠해져 몹 둘레에 회색 네모가 떴다 */
+    tintSheet(key, col) {
+      const tk = "tint" + col + "_" + key, have = this.img[tk];
+      if (have !== void 0) return have ? tk : null;
+      const im = this.img[key];
+      const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
+      if (!im || !im.width || !m) {
+        this.img[tk] = null;
+        return null;
+      }
+      const cv = document.createElement("canvas");
+      cv.width = im.naturalWidth || im.width;
+      cv.height = im.naturalHeight || im.height;
+      const g = cv.getContext("2d");
+      g.drawImage(im, 0, 0);
+      g.globalCompositeOperation = "source-atop";
+      g.fillStyle = col;
+      g.fillRect(0, 0, cv.width, cv.height);
+      this.meta.characters.sheets[tk] = m;
+      this.footInset[tk] = this.footInset[key] || 0;
+      this.sideInset[tk] = this.sideInset[key] || 0;
+      this.img[tk] = cv;
+      return tk;
+    },
     /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다. */
     draw(c, key, frame, x, y, flip) {
       const im = this.img[key];
@@ -48988,6 +49013,7 @@
         c.scale(1 / k, k);
         c.translate(-(sx + e.w / 2), -(sy + e.h));
         const ok = Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0);
+        if (ok) this.enemyFlash(c, e, key, sx + dx, sy - dy);
         c.restore();
         if (ok) {
           this.drawEnemyOverlay(c, e, sx, sy, dy, meta, dx);
@@ -49011,6 +49037,7 @@
           c.translate(0, br);
         }
         const ok = Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0);
+        if (ok) this.enemyFlash(c, e, key, sx + dx, sy - dy);
         c.restore();
         if (ok) {
           this.drawEnemyOverlay(c, e, sx, sy, dy, meta, dx);
@@ -49018,6 +49045,7 @@
         }
       }
       if (this.spritesOn && Sprites.draw(c, key, this.enemyFrame(e), sx + dx, sy - dy, e.facing < 0)) {
+        this.enemyFlash(c, e, key, sx + dx, sy - dy);
         this.drawEnemyOverlay(c, e, sx, sy, dy, meta, dx);
         return;
       }
@@ -49321,6 +49349,19 @@
       }
     },
     /** 손그림 몹 위에 얹는 것들 — 피격 섬광 · 체력 막대 · 페이즈 전환 섬광. */
+    /** 피격 섬광(흰빛) · 페이즈 전환(금빛) — 방금 그린 그림과 같은 자리 · 같은 변형 안에서 실루엣 사본으로 */
+    enemyFlash(c, e, key, x, y) {
+      if (!(e.flash > 0) && !(e.phaseT > 0)) return;
+      const fr = this.enemyFrame(e), fl = e.facing < 0;
+      for (const [on, col, a] of [[e.flash > 0, "#ffffff", Math.min(0.75, e.flash * 6)], [e.phaseT > 0, "#ffe08a", Math.min(0.55, e.phaseT * 0.8)]]) {
+        const tk = on && Sprites.tintSheet(key, col);
+        if (!tk) continue;
+        c.save();
+        c.globalAlpha = a;
+        Sprites.draw(c, tk, fr, x, y, fl);
+        c.restore();
+      }
+    },
     drawEnemyOverlay(c, e, sx, sy, dy, meta, dx) {
       const w = meta ? meta.frameW : e.w;
       if (e.mech) {
@@ -49341,14 +49382,14 @@
         c.fill();
         c.restore();
       }
-      if (e.flash > 0) {
+      if (e.flash > 0 && !meta) {
         c.save();
         c.globalAlpha = Math.min(0.75, e.flash * 6);
         c.fillStyle = "#fff";
         c.fillRect(sx + (dx || 0), sy - dy, w, e.h + dy);
         c.restore();
       }
-      if (e.phaseT > 0) {
+      if (e.phaseT > 0 && !meta) {
         c.save();
         c.globalAlpha = Math.min(0.55, e.phaseT * 0.8);
         c.fillStyle = "#ffe08a";
