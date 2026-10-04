@@ -108,7 +108,7 @@
     <div class="alert dl-app-note" data-mode="app" hidden>
       <b class="h">서명하지 않은 앱입니다</b>
       처음 열 때 운영체제가 한 번 묻습니다 — 악성이라서가 아니라 서명한 회사가 없다는 경고입니다.
-      Windows 는 <strong>추가 정보 → 실행</strong>. macOS 는 한 번 열어 경고를 닫은 뒤 <strong>시스템 설정 → 개인정보 보호 및 보안 → 그래도 열기</strong>(macOS 13 이하는 오른쪽 클릭 → 열기) — 임시 서명을 해 두어 "손상되었으므로 휴지통으로 이동"은 뜨지 않습니다. 압축을 풀어 바로 실행하며 설치하지 않습니다.
+      Windows 는 <strong>추가 정보 → 실행</strong>. macOS 는 "악성 코드가 없음을 확인할 수 없습니다" 창에서 <strong>완료</strong>를 누른 뒤(휴지통으로 이동 아님) <strong>시스템 설정 → 개인정보 보호 및 보안 → 그래도 열기</strong>. 자세한 순서는 아래 <a href="#run">실행 방법</a>에 있습니다. 압축을 풀어 바로 실행하며 설치하지 않습니다.
       세이브는 앱 안에 따로 저장됩니다(브라우저 판과 옮길 때는 게임 설정의 내보내기 · 가져오기).
       <span class="dl-app-wait" hidden>앱 판은 다음 릴리스(v1.1.2)부터 받을 수 있습니다 — 그때까지는 브라우저로 여는 판을 받아 주세요.</span>
     </div>
@@ -126,6 +126,11 @@
   <div class="wrap">
     <div class="sec-head"><p class="eyebrow">압축을 푼 다음</p></div>
     <h2>실행 방법</h2>
+    <div class="dl-mode run-mode" role="group" aria-label="판 고르기">
+      <button type="button" class="dl-mode-btn" data-mode="browser" aria-pressed="true"><b>브라우저로 여는 판</b></button>
+      <button type="button" class="dl-mode-btn" data-mode="app" aria-pressed="false"><b>앱으로 여는 판</b></button>
+    </div>
+    <div data-mode="browser">
     <p class="sec-lede">런처는 게임 폴더의 <code>index.html</code>을 기본 브라우저로 여는 것이 전부입니다. 서버도 인터넷 연결도 필요 없고, 게임은 그 브라우저 창 안에서 돌아갑니다.</p>
 
     <div class="tabs" role="tablist">
@@ -166,6 +171,59 @@ bash launch.sh</code></pre>
         터미널에서 격리 속성을 지우고 다시 시도하세요.
         <pre class="cmd" style="margin-top:10px"><code>xattr -dr com.apple.quarantine AshfallChronicles-1.1.2/</code></pre>
       </div>
+    </div>
+    </div>
+
+    <div data-mode="app" hidden>
+    <p class="sec-lede">앱은 설치하지 않습니다. 압축을 풀고 안의 앱을 열면 브라우저 없이 제 창으로 게임이 뜹니다. 서명비를 낸 인증서가 없어 처음 한 번은 운영체제가 확인을 받습니다.</p>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-awin" aria-controls="panel-awin" aria-selected="true">Windows</button>
+      <button class="tab" role="tab" id="tab-amac" aria-controls="panel-amac" aria-selected="false">macOS</button>
+      <button class="tab" role="tab" id="tab-alinux" aria-controls="panel-alinux" aria-selected="false">Linux</button>
+    </div>
+
+    <div class="panel" id="panel-awin" role="tabpanel" aria-labelledby="tab-awin">
+      <ol>
+        <li>zip 을 오른쪽 클릭 → <strong>압축 풀기</strong>로 폴더에 풉니다(zip 안에서 바로 열면 게임 파일을 못 찾습니다).</li>
+        <li>풀린 폴더의 <strong>Ashfall Chronicles.exe</strong> 를 더블클릭합니다.</li>
+        <li>"Windows의 PC 보호" 창이 뜨면 <strong>추가 정보 → 실행</strong>. 다음부터는 묻지 않습니다.</li>
+      </ol>
+      <div class="alert">
+        <b class="h">바탕 화면에서 열고 싶다면</b>
+        <code>Ashfall Chronicles.exe</code> 를 오른쪽 클릭 → <strong>바로 가기 만들기</strong>로 바로 가기를 옮기세요. exe 만 따로 옮기면 열리지 않습니다.
+      </div>
+    </div>
+
+    <div class="panel" id="panel-amac" role="tabpanel" aria-labelledby="tab-amac" hidden>
+      <ol>
+        <li>zip 을 더블클릭해 풀고, 나온 <strong>Ashfall Chronicles.app</strong> 을 <strong>응용 프로그램</strong> 폴더로 끌어 놓습니다.</li>
+        <li>앱을 더블클릭하면 <strong>"Apple은 'Ashfall Chronicles'에 악성 코드가 없음을 확인할 수 없습니다"</strong> 창이 뜹니다.
+          여기서 <strong>완료</strong>를 누르세요 — <strong>휴지통으로 이동을 누르면 앱이 지워집니다.</strong></li>
+        <li><strong>시스템 설정 → 개인정보 보호 및 보안</strong>을 열고 맨 아래 <em>"Ashfall Chronicles"이(가) 차단되었습니다</em> 옆의 <strong>그래도 열기</strong>를 누릅니다.</li>
+        <li>다시 뜨는 창에서 <strong>그래도 열기</strong> → 암호(또는 Touch ID). 그 뒤로는 경고 없이 열립니다.</li>
+      </ol>
+      <div class="alert hot">
+        <b class="h">왜 이 창이 뜨나요</b>
+        macOS 는 Apple 에 돈을 내고 공증(notarization)을 받은 앱이 아니면 모두 이 창을 띄웁니다. 앱을 검사해 무언가를 찾았다는 뜻이 아닙니다.
+        받은 파일이 릴리스와 같은지는 위의 SHA-256 으로 대조할 수 있습니다. macOS 13 이하는 앱을 <strong>오른쪽 클릭 → 열기</strong>로 한 번에 열립니다.
+      </div>
+      <div class="alert">
+        <b class="h">창을 건너뛰고 바로 열려면</b>
+        터미널에 아래를 붙여 넣고 실행한 뒤 앱을 여세요(응용 프로그램 폴더로 옮긴 경우).
+        <pre class="cmd" style="margin-top:10px"><code>xattr -dr com.apple.quarantine "/Applications/Ashfall Chronicles.app"</code></pre>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-alinux" role="tabpanel" aria-labelledby="tab-alinux" hidden>
+      <ol>
+        <li>zip 을 풉니다.</li>
+        <li>풀린 폴더에서 터미널로 아래를 실행합니다(첫 줄은 처음 한 번 실행 권한을 주는 것).
+          <pre class="cmd"><code>chmod +x ashfall-chronicles
+./ashfall-chronicles</code></pre>
+        </li>
+      </ol>
+    </div>
     </div>
   </div>
 </section>
@@ -474,9 +532,9 @@ bash launch.sh</code></pre>
 
   /* ---- 여는 방법 고르기(브라우저 · 앱) — 고른 것은 주소 #app 으로도 연다 ---- */
   var modeBtns = Array.prototype.slice.call(document.querySelectorAll('.dl-mode-btn'));
-  function mode(m) {
+  function mode(m) {   // 받기 · 실행 방법 둘이 같은 판을 본다
     modeBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.mode === m)); });
-    document.querySelectorAll('#get [data-mode]:not(.dl-mode-btn)').forEach(function (el) { el.hidden = el.dataset.mode !== m; });
+    document.querySelectorAll('#get [data-mode]:not(.dl-mode-btn), #run [data-mode]:not(.dl-mode-btn)').forEach(function (el) { el.hidden = el.dataset.mode !== m; });
   }
   modeBtns.forEach(function (b) { b.addEventListener('click', function () { mode(b.dataset.mode); }); });
   if (location.hash === '#app') mode('app');
@@ -493,28 +551,30 @@ bash launch.sh</code></pre>
   }
 
   /* ---- 실행 방법 탭 ---- */
-  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
-
-  function select(tab) {
-    tabs.forEach(function (t) {
+  function select(tab) {   // 탭 묶음(브라우저 판 · 앱 판)마다 따로
+    Array.prototype.forEach.call(tab.parentNode.querySelectorAll('.tab'), function (t) {
       var on = t === tab;
       t.setAttribute('aria-selected', String(on));
       document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
     });
   }
 
-  tabs.forEach(function (tab, i) {
-    tab.addEventListener('click', function () { select(tab); });
-    tab.addEventListener('keydown', function (e) {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-      e.preventDefault();
-      var next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
-      select(next);
-      next.focus();
+  document.querySelectorAll('.tabs').forEach(function (list) {
+    var tabs = Array.prototype.slice.call(list.querySelectorAll('.tab'));
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener('click', function () { select(tab); });
+      tab.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        var next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        select(next);
+        next.focus();
+      });
     });
   });
 
-  if (guess === 'macos') select(document.getElementById('tab-mac'));
+  if (guess === 'macos') { select(document.getElementById('tab-mac')); select(document.getElementById('tab-amac')); }
+  if (guess === 'linux') select(document.getElementById('tab-alinux'));
 })();
 </script>
 </body>

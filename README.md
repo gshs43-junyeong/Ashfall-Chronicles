@@ -46,8 +46,10 @@ first time you open it (the files are not damaged or dangerous):
 
 - **Windows** — when "Windows protected your PC" appears, choose **More info → Run anyway**.
 - **macOS 13 or earlier** — **right-click → Open → Open**.
-- **macOS 14 / 15** — open it once and dismiss the warning, then go to **System Settings → Privacy & Security** and click **Open Anyway** at the bottom.
-  If it is still blocked, run `xattr -dr com.apple.quarantine "Ashfall Chronicles.app"` in Terminal (for the browser edition, use the extracted folder name).
+- **macOS 14 / 15** — the first launch shows "Apple could not verify … is free of malware". Click **Done** (**Move to Trash deletes it**),
+  then go to **System Settings → Privacy & Security** and click **Open Anyway** at the bottom. macOS shows this for every app that is not
+  notarized through a paid Apple account; it does not mean anything was found.
+  To skip it, run `xattr -dr com.apple.quarantine "/Applications/Ashfall Chronicles.app"` in Terminal (for the browser edition, use the extracted folder name).
 - **Linux (app edition)** — extract and run `./ashfall-chronicles`.
 
 No install, no server and no Python are needed. Do not play in a private window — saves vanish when it closes.

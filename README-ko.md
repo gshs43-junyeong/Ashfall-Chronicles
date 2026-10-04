@@ -116,8 +116,9 @@ bash tools/build.sh 1.1.2
 
 - **Windows** — "Windows의 PC 보호" 창이 뜨면 **추가 정보 → 실행**.
 - **macOS 13 이하** — **우클릭 → 열기 → 열기**.
-- **macOS 14 · 15** — 한 번 열어 경고를 닫은 뒤 **시스템 설정 → 개인정보 보호 및 보안 → 맨 아래 "그래도 열기"**.
-  그래도 막히면 터미널에서 `xattr -dr com.apple.quarantine "Ashfall Chronicles.app"` (브라우저 판은 받은 폴더 이름으로).
+- **macOS 14 · 15** — 처음 열면 "악성 코드가 없음을 확인할 수 없습니다" 창이 뜹니다. **완료**를 누르고(**휴지통으로 이동은 앱을 지웁니다**)
+  **시스템 설정 → 개인정보 보호 및 보안 → 맨 아래 "그래도 열기"**. Apple 공증(유료)을 받지 않은 앱이면 모두 뜨는 창이고, 무언가를 찾았다는 뜻이 아닙니다.
+  창 없이 열려면 터미널에서 `xattr -dr com.apple.quarantine "/Applications/Ashfall Chronicles.app"` (브라우저 판은 받은 폴더 이름으로).
 - **Linux(앱 판)** — 풀어서 `./ashfall-chronicles`.
 
 | 판 | 크기 | 여는 법 |

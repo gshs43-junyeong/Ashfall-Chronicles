@@ -296,7 +296,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 - **여는 방법 둘**: 브라우저로 여는 판(`build.sh` — 런처가 index.html 을 기본 브라우저로)과 앱으로 여는 판(`desktop/` — Electron 껍데기가
   **같은 play/ 를 그대로** 연다, 처음 한 번 `cd desktop && npm ci`). 앱은 노드를 게임에 들이지 않는다(문맥 분리 · 샌드박스) — 게임 코드는 둘 다 같다.
   다운로드 페이지는 `site/download` 의 '여는 방법' 단추로 고르고, 앱 판을 처음 릴리스하면 그 스크립트의 `APP_VERSION` · `APP_HASHES` 를 채운다
-  (null 이면 단추가 잠기고 "다음 릴리스부터" 안내). 아이콘은 `python3 tools/mkappicon.py`(파비콘 512 → desktop/icon.*).
+  (null 이면 단추가 잠기고 "다음 릴리스부터" 안내). 아이콘은 `python3 tools/mkappicon.py`(파비콘 512 → desktop/icon.*, `mklogo.py` 가 끝에 같이 돌린다).
 
 - **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255 · v1.1.1 = 256 · v1.1.2 = 257). zip 을 낼 때
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
