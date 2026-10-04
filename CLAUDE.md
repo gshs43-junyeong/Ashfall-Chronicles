@@ -300,6 +300,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 
 - **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255 · v1.1.1 = 256 · v1.1.2 = 257 · v1.1.3 = 258). zip 을 낼 때
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
+- **웹에서 `/play/assets/*` 그림은 1년 immutable 캐시다**(vercel.json · `_headers`) — index.html 이 부르는 그림(로고 · 파비콘)에는 반드시 `?v=` 를 단다(배포 때 커밋 해시로 찍힌다). 빠뜨리면 그림을 바꿔도 브라우저가 옛것을 계속 쓴다(타이틀 로고가 그랬다). CSS 의 `url()` 그림은 내용 해시 `?v=<md5 앞 8자>` — 그림을 바꾸면 같이 고칠 것.
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
   PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.
 - 사이트는 Vercel(`vercel.json`) · Cloudflare Pages(`site/_redirects` · `site/_headers` · `.github/workflows/pages-cf.yml`) · Docker(`docker/nginx-site.conf`) 셋이 같은 규칙을 따로 든다 — 하나를 고치면 셋 다(docs/deploy-cache.md).
@@ -533,7 +534,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   사이트 홈 히어로 = **같은 그림**(`site/wordmark*.png` — 별 없는 몸 + 별까지 다 있는 판)을 `<!-- wordmark -->` 자리에 끼우고 hero.js 가 별똥별을 한 번 떨어뜨려 앉힌다(앉은 별은 움직이지 않는다).
   탭 아이콘(파비콘)은 휘어 내려온 빛 꼬리를 끄는 별 하나(`favicon`). 로고 윤곽은 pathops 로 합쳐 칠한다(겹친 윤곽을 XOR 하면 획 안에 실금이 그어졌다). 로고를 고치면 `mkkeyart.py` 도 다시.
   사이트 상단 메뉴는 홈·다운로드 둘뿐이다(바로 플레이 링크 · 내려받기 네모 단추는 뺐다).
-- **v1.1.4 할 일(아직 안 함 — 착수 전 사용자 확인)**: [`docs/update/v1.1.4-plan.md`](docs/update/v1.1.4-plan.md) — ① 눈 지역 유적 거리 띄우기 ② 탈 것(말 · 보트 · 광산열차) ③ **메인** 제작대 · 강화 모루 · 공장 탭 UI 역동화 ④ **메인** 보스 공략 틈(미스 · 반동 디버프 · 방어 자세).
+- **v1.1.4 할 일(아직 안 함 — 착수 전 사용자 확인)**: [`docs/update/v1.1.4-plan.md`](docs/update/v1.1.4-plan.md) — ① 눈 지역 유적 거리 띄우기 ② 탈 것(말 · 보트 · 광산열차) ③ **메인** 제작대 · 강화 모루 · 공장 탭 UI 역동화 ④ **메인** 보스 공략 틈(미스 · 반동 디버프 · 방어 자세) ⑤ 낚시를 osu! 식 겨루기로(히트 서클 · 슬라이더 · 스피너 · HP 게이지 · 등급별 AR/CS/OD/HP · 판 회전 따위 변주) ⑥ **메인** 유적 개편(유적마다 고유 사건 · 갇힌 방 퍼즐 · 체류 15분 — 기능을 더 얹지 말고 바꾼다).
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 엔진화·모듈 분리·TS·다국어·모바일·Docker — 계획과 단계별 프롬프트는
   [`docs/update/v1.1.1-engine-plan.md`](docs/update/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
   `World extends TileMap` · 번역 Claude/검수 Grok · 폰 가로+태블릿) / v1.1.1 뒤 몰아서 할 수정(계획서 §9-1 — 해·비·세이브 삭제 팝업·사이트 재구성·영어 화면 다시 찍기) /
