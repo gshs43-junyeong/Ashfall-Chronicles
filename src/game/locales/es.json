@@ -778,10 +778,8 @@
   "지능": "INT",
   "지도": "Mapa",
   "지붕과 바닥": "Un techo y un suelo",
-  "지상 {n}m": "{n} m sobre el suelo",
   "지어 올린 것은 되돌릴 수 없다. 베이스캠프는 이 개선의 대상이 아니다 —": "Lo construido no se puede deshacer. El Campamento base no está incluido en estas mejoras —",
   "지표 0m": "Superficie 0 m",
-  "지하 {depth}m": "{depth} m bajo tierra",
   "진행 중": "En curso",
   "짠물이 폐를 채운다 — 숨이 줄었다": "La salmuera te llena los pulmones: tu aliento bajó",
   "쪽지 읽기": "Leer nota",
@@ -968,7 +966,9 @@
   "모두 꺼내기": "Sacar todo",
   "쓰러짐": "Caído",
   "{name|이} 쓰러졌다": "{name} ha caído",
-  "{name|이} 다시 일어났다": "{name} se ha levantado"
+  "{name|이} 다시 일어났다": "{name} se ha levantado",
+  "고도 {alt}m": "Altitud {alt} m",
+  "고도 {alt}m 아래": "Por debajo de {alt} m de altitud"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

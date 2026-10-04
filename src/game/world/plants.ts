@@ -122,7 +122,7 @@ export const WorldPlants: Bag & ThisType<World> = {
 
   /** 그 자리에 원래 있어야 할 지층 타일 (메울 때 쓴다) */
   _bedAt(x: number, y: number) { const { WORLD_BOT, HELL_Y } = this.dims;
-    if (y >= WORLD_BOT - 4) return T.BEDROCK;
+    if (y >= WORLD_BOT - 4) return T.BEDROCK;   // 메울 때만 — 생성의 출렁이는 기반암 위쪽 칸은 재로 메운다
     if (y >= HELL_Y) return T.ASH;
     const L = MAT_LAYER[this.matId[x]], depth = y - this.surface[x];
     if (depth < 20) return L.sub;

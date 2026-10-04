@@ -705,6 +705,12 @@
   "계속하기": [
    "index.html"
   ],
+  "고도 {alt}m": [
+   "ui/hud.updateHUD"
+  ],
+  "고도 {alt}m 아래": [
+   "game/progress.objTask"
+  ],
   "고유 공격 <b>{v}</b> · 피해 <b>{dmg}</b>": [
    "ui/tip.showTip"
   ],
@@ -2619,17 +2625,11 @@
   "지붕과 바닥": [
    "data/quests"
   ],
-  "지상 {n}m": [
-   "ui/hud.updateHUD"
-  ],
   "지어 올린 것은 되돌릴 수 없다. 베이스캠프는 이 개선의 대상이 아니다 —": [
    "ui/craft.refreshTownhall"
   ],
   "지표 0m": [
    "index.html"
-  ],
-  "지하 {depth}m": [
-   "ui/hud.updateHUD"
   ],
   "직업": [
    "index.html"

@@ -275,9 +275,9 @@ export const WorldSky: Bag & ThisType<World> = {
     return false;
   },
 
-  /** 하늘 섬 높이 — 0 높은 층 · 1 가운데 · 2 낮은 층. 낮은 층 바닥(SKY_Y-8)은 이중 점프로 지상에서 못 닿게 둔 최소 높이다. */
+  /** 하늘 섬 높이 — 0 높은 층 · 1 가운데 · 2 낮은 층. 섬 밑동(+8칸)까지 SKY_Y 위에 들어야 해를 안 가린다(그 위만 햇빛이 통과). 사연: docs/code-history.md#h163 */
   skyAlt(r: any, tier: number) { const { SY, SKY_Y } = this.dims;
-    return tier === 0 ? r.int(SY(5), SY(10)) : tier === 1 ? r.int(SY(14), SY(21)) : r.int(SKY_Y - 13, SKY_Y - 8);
+    return tier === 0 ? r.int(SY(4), SY(8)) : tier === 1 ? r.int(SY(11), SY(16)) : r.int(SKY_Y - 20, SKY_Y - 15);
   },
   /** 베이스캠프 · 여명 마을 위에는 하늘 섬을 두지 않는다 — 그 띠에 걸친 섬은 칸 · 벽지 · 물건까지 덩어리째 지운다.
       걸친 칸만 지우면 반쪽짜리 잘린 섬이 남았다. 땅 · 거대 나무와 이어진 덩어리(SKY_Y 아래까지 닿는 것)는 두고,
@@ -326,7 +326,7 @@ export const WorldSky: Bag & ThisType<World> = {
 
   /** 하늘 섬을 더 — 큰 섬 · 작은 섬 · 조각 섬, 그리고 상자 말고도 찾아갈 거리.
       ★ 제 난수(seed+'_sky')를 쓴다. 본 난수를 더 뽑으면 뒤따르는 유적·동굴·성채가 씨앗마다 통째로 바뀐다.
-      찾아갈 거리가 있는 섬은 위로 13칸이 필요해 SY(14) 아래 두 층, 조각 섬은 SY(5) 까지 — 바닥은 SKY_Y-8 그대로. */
+      찾아갈 거리가 있는 섬은 위로 13칸이 필요해 SY(14) 아래 두 층, 조각 섬은 SY(5) 까지 — 바닥은 SKY_Y-15(밑동까지 SKY_Y 위 — 해를 안 가린다). */
   buildSkyExtras() { const { WSX, SX, SY, WW, SKY_Y, SEA_X1 } = this.dims;
     const r = new RNG(this.seed + '_sky');
     const occ: number[][] = [];
@@ -334,7 +334,7 @@ export const WorldSky: Bag & ThisType<World> = {
     for (const s of this.skyIslands) occ.push([s.x - s.w - 6, s.y - 14, s.x + s.w + 6, s.y + 14]);
     const g = this.skyGate; occ.push([g.x - 46, 0, g.x + 46, g.y + 16]);
     const cz = SX(3300 + SHIFT); occ.push([cz - 16, 0, cz + 74 + 16, 4 + 30 + 10]);   // 부유 성채(buildCitadel)
-    const feat = () => r.chance(0.5) ? r.int(SY(14), SY(20)) : r.int(SKY_Y - 13, SKY_Y - 8);
+    const feat = () => r.chance(0.5) ? r.int(SY(14), SY(17)) : r.int(SKY_Y - 20, SKY_Y - 15);   // 큰 섬 밑동(+13)도 SKY_Y 위
     const place = (rw: any, rh: any, tries: any, band: any) => {
       for (let t = 0; t < tries; t++) {
         const cx = r.int(40 + rw, WW - 40 - rw), cy = band();
@@ -375,7 +375,7 @@ export const WorldSky: Bag & ThisType<World> = {
     }
     // 조각 섬 — 건너뛰는 디딤돌. 구름 덩이 · 들꽃 · 에테르 한 알 · 드물게 별빛 수정
     for (let i = 0; i < Math.round(30 * WSX); i++) {
-      const rw = r.int(3, 7), rh = r.int(2, 4), at = place(rw, rh, 30, () => r.int(SY(5), SKY_Y - 8));
+      const rw = r.int(3, 7), rh = r.int(2, 4), at = place(rw, rh, 30, () => r.int(SY(5), SKY_Y - 15));
       if (!at) continue;
       const cloud = r.chance(0.3);
       for (let x = at.cx - rw; x <= at.cx + rw; x++) {

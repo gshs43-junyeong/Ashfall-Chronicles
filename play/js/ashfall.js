@@ -1980,6 +1980,7 @@
     WSX: () => WSX,
     WSY: () => WSY,
     WW: () => WW,
+    altOf: () => altOf,
     applyWorldSize: () => applyWorldSize,
     dimsOf: () => dimsOf,
     makeDims: () => makeDims
@@ -2114,6 +2115,9 @@
     };
   }
   var CUR = null;
+  function altOf(d, ty) {
+    return Math.round((d.WH - 5 - ty) * 5);
+  }
   function dimsOf(w) {
     return w && w.dims || CUR;
   }
@@ -14176,10 +14180,11 @@
         const subD = 15 + Math.round(n12(x + 5200, 0.07) * 8);
         const L = MAT_LAYER[m];
         const hb = HELL_Y2 - 4 + Math.round(n12(x + 7700, 0.05) * 5);
+        const bt = 3 + Math.round(Math.abs(n12(x + 9100, 0.06)) * 4);
         for (let y = s; y < WORLD_BOT2; y++) {
           let t;
           const depth = y - s;
-          if (y >= WORLD_BOT2 - 4) t = T.BEDROCK;
+          if (y >= WORLD_BOT2 - bt) t = T.BEDROCK;
           else if (y >= hb || y >= hb - 6 && (x * 73 + y * 151) % 7 < y - hb + 7 - 3) t = T.ASH;
           else if (depth === 0) t = L.top;
           else if (depth < soilD) t = L.soil;
@@ -14193,6 +14198,7 @@
       for (let x = 1; x < WW2 - 1; x++) {
         const s = this.surface[x];
         for (let y = s + 4; y < WORLD_BOT2 - 5; y++) {
+          if (this.tiles[this.i(x, y)] === T.BEDROCK) break;
           const scale = y > DEEP_Y2 - 36 ? 0.045 : 0.058;
           let v = n2(x, y, scale, 3);
           const bias = y > DEEP_Y2 ? 0.06 : y > SY2(180) ? 0.03 : 0;
@@ -16271,10 +16277,10 @@
       }
       return false;
     },
-    /** 하늘 섬 높이 — 0 높은 층 · 1 가운데 · 2 낮은 층. 낮은 층 바닥(SKY_Y-8)은 이중 점프로 지상에서 못 닿게 둔 최소 높이다. */
+    /** 하늘 섬 높이 — 0 높은 층 · 1 가운데 · 2 낮은 층. 섬 밑동(+8칸)까지 SKY_Y 위에 들어야 해를 안 가린다(그 위만 햇빛이 통과). 사연: docs/code-history.md#h163 */
     skyAlt(r, tier) {
       const { SY: SY2, SKY_Y: SKY_Y2 } = this.dims;
-      return tier === 0 ? r.int(SY2(5), SY2(10)) : tier === 1 ? r.int(SY2(14), SY2(21)) : r.int(SKY_Y2 - 13, SKY_Y2 - 8);
+      return tier === 0 ? r.int(SY2(4), SY2(8)) : tier === 1 ? r.int(SY2(11), SY2(16)) : r.int(SKY_Y2 - 20, SKY_Y2 - 15);
     },
     /** 베이스캠프 · 여명 마을 위에는 하늘 섬을 두지 않는다 — 그 띠에 걸친 섬은 칸 · 벽지 · 물건까지 덩어리째 지운다.
         걸친 칸만 지우면 반쪽짜리 잘린 섬이 남았다. 땅 · 거대 나무와 이어진 덩어리(SKY_Y 아래까지 닿는 것)는 두고,
@@ -16331,7 +16337,7 @@
     },
     /** 하늘 섬을 더 — 큰 섬 · 작은 섬 · 조각 섬, 그리고 상자 말고도 찾아갈 거리.
         ★ 제 난수(seed+'_sky')를 쓴다. 본 난수를 더 뽑으면 뒤따르는 유적·동굴·성채가 씨앗마다 통째로 바뀐다.
-        찾아갈 거리가 있는 섬은 위로 13칸이 필요해 SY(14) 아래 두 층, 조각 섬은 SY(5) 까지 — 바닥은 SKY_Y-8 그대로. */
+        찾아갈 거리가 있는 섬은 위로 13칸이 필요해 SY(14) 아래 두 층, 조각 섬은 SY(5) 까지 — 바닥은 SKY_Y-15(밑동까지 SKY_Y 위 — 해를 안 가린다). */
     buildSkyExtras() {
       const { WSX: WSX2, SX: SX2, SY: SY2, WW: WW2, SKY_Y: SKY_Y2, SEA_X1: SEA_X12 } = this.dims;
       const r = new RNG(this.seed + "_sky");
@@ -16342,7 +16348,7 @@
       occ.push([g.x - 46, 0, g.x + 46, g.y + 16]);
       const cz = SX2(3300 + SHIFT);
       occ.push([cz - 16, 0, cz + 74 + 16, 4 + 30 + 10]);
-      const feat = () => r.chance(0.5) ? r.int(SY2(14), SY2(20)) : r.int(SKY_Y2 - 13, SKY_Y2 - 8);
+      const feat = () => r.chance(0.5) ? r.int(SY2(14), SY2(17)) : r.int(SKY_Y2 - 20, SKY_Y2 - 15);
       const place = (rw, rh, tries, band) => {
         for (let t = 0; t < tries; t++) {
           const cx = r.int(40 + rw, WW2 - 40 - rw), cy = band();
@@ -16382,7 +16388,7 @@
         this.skyFeature(k, at.cx, at.cy, r, () => hint++);
       }
       for (let i = 0; i < Math.round(30 * WSX2); i++) {
-        const rw = r.int(3, 7), rh = r.int(2, 4), at = place(rw, rh, 30, () => r.int(SY2(5), SKY_Y2 - 8));
+        const rw = r.int(3, 7), rh = r.int(2, 4), at = place(rw, rh, 30, () => r.int(SY2(5), SKY_Y2 - 15));
         if (!at) continue;
         const cloud = r.chance(0.3);
         for (let x = at.cx - rw; x <= at.cx + rw; x++) {
@@ -36325,8 +36331,7 @@
       }
       $("#gold-text").innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl("coin")})"></span>${fmt(p.gold)}`;
       const ty = Math.floor(p.cy / TS);
-      const depth = Math.round((ty - SURF_BASE2) * 5);
-      $("#depth-text").textContent = depth > 0 ? tr("지하 {depth}m", { depth }) : tr("지상 {n}m", { n: -depth });
+      $("#depth-text").textContent = tr("고도 {alt}m", { alt: fmt(altOf(dimsOf(app.world), ty)) });
       const hh = Math.floor(app.dayT / 60), mm = Math.floor(app.dayT % 60);
       $("#clock-text").textContent = `${pad2(hh)}:${pad2(mm)}`;
       $("#clock-icon").textContent = "";
@@ -43803,10 +43808,12 @@
   var ProgressPart = {
     /* ================= 진행 ================= */
     /* 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은 목록에 없거나 있어도 순서가 강제됐다 — 사연: docs/code-history.md#h54 */
-    /** 목표 글 — 깊이 목표에 적힌 '지하 ○○m' 은 세계 크기 배수로 고쳐 읽는다(표는 소형 기준). */
+    /** 목표 글 — 깊이 목표('지하 ○○m')는 그 세계의 고도로 고쳐 쓴다(표는 소형 기준 줄 o.y · 고도 0m 은 가장 깊은 지형). */
     objTask(o) {
       const t = o && o.task || "";
-      return o && o.type === "depth" ? t.replace(/([0-9]+)m/, (_, n) => Math.round(+n * dimsOf(this.world).WSY) + "m") : t;
+      if (!o || o.type !== "depth" || o.up || !/[0-9]+ ?m/.test(t)) return t;
+      const d = dimsOf(this.world);
+      return tr("고도 {alt}m 아래", { alt: fmt(altOf(d, d.SY(o.y))) });
     },
     objProgress(o) {
       const { SURF_BASE: SURF_BASE2, SY: SY2 } = dimsOf(this.world);

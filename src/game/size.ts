@@ -83,6 +83,8 @@ export function makeDims(key: string): WorldDims {
 /* 지금 만들거나 불러오는 세계의 치수 — setWorldSize 가 고르고, new World 가 이것을 제 것으로 가져간다. */
 let CUR: WorldDims = null!;
 /** 세계(없으면 지금 고른 크기)의 치수 — 게임·UI·엔티티 쪽은 이것으로 읽는다. */
+/** 고도(m) — 0m 은 가장 깊은 지형 줄(바다 밑바닥 · 그 아래는 기반암), 한 칸 5m. 위로 갈수록 커지고 지형에서는 0 밑으로 안 내려간다. */
+export function altOf(d: WorldDims, ty: number) { return Math.round((d.WH - 5 - ty) * 5); }
 export function dimsOf(w?: { dims?: WorldDims } | null): WorldDims { return (w && w.dims) || CUR; }
 
 /** 세계 치수와 바이옴 경계를 그 크기로 다시 잰다 — world.js setWorldSize 가 부른다. */

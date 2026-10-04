@@ -3,7 +3,7 @@ import { checkUnlocks } from '../../engine/core/achieve.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT_UI, fmt, tr } from '../lang.js';
-import { dimsOf } from '../size.js';
+import { altOf, dimsOf } from '../size.js';
 import { ITEMS } from '../data/items.js';
 import { PULSE, RUIN_SPEC } from '../data/ruins.js';
 import { CHAPTERS } from '../data/story.js';
@@ -21,10 +21,12 @@ export const ProgressPart: Bag = {
 
   /* ================= 진행 ================= */
   /* 정작 하고 싶은 것(내려가 보기, 유적 들어가 보기)은 목록에 없거나 있어도 순서가 강제됐다 — 사연: docs/code-history.md#h54 */
-  /** 목표 글 — 깊이 목표에 적힌 '지하 ○○m' 은 세계 크기 배수로 고쳐 읽는다(표는 소형 기준). */
+  /** 목표 글 — 깊이 목표('지하 ○○m')는 그 세계의 고도로 고쳐 쓴다(표는 소형 기준 줄 o.y · 고도 0m 은 가장 깊은 지형). */
   objTask(o: Bag) {
     const t = (o && o.task) || '';
-    return o && o.type === 'depth' ? t.replace(/([0-9]+)m/, (_: any, n: number) => Math.round(+n * dimsOf(this.world).WSY) + 'm') : t;
+    if (!o || o.type !== 'depth' || o.up || !/[0-9]+ ?m/.test(t)) return t;
+    const d = dimsOf(this.world);
+    return tr('고도 {alt}m 아래', { alt: fmt(altOf(d, d.SY(o.y))) });
   },
   objProgress(o: Bag) { const { SURF_BASE, SY } = dimsOf(this.world);
     const p = this.player;
