@@ -512,6 +512,10 @@ footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--bone-fai
 .foot-credit{flex-basis:100%;order:3;margin:14px 0 0;opacity:.62;font-size:.9em;}
 .foot-credit a{color:inherit;text-decoration:underline;text-underline-offset:2px;}
 .foot-credit a:hover{color:var(--bone);}
+/* 같은 빌드를 올린 두 주소(Vercel · Cloudflare Pages) — 어느 하나를 앞세우지 않고 같은 모양으로 나란히 */
+.foot-hosts{flex-basis:100%;order:4;margin:6px 0 0;opacity:.62;font-size:.9em;}
+.foot-hosts a{white-space:nowrap;color:inherit;text-decoration:underline;text-underline-offset:2px;font-family:"IBM Plex Mono",monospace;font-size:.95em;}
+.foot-hosts a:hover{color:var(--bone);}
 
 /* ================= 스크롤 등장 =================
    기본은 "보이는" 상태다. 스크립트가 관찰자를 실제로 띄웠을 때만 html.anim 이 붙어
