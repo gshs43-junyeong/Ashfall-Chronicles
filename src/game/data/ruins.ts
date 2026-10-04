@@ -8,7 +8,7 @@ import { T } from '../data.js';
 /* 난이도 등급(rank) — 기준은 "플레이어가 실제로 언제 여기 닿는가"다. */
 export const RUIN_SPEC: RuinDef[] = [
   {
-    id: 'ice', n: '얼음 던전', x: 180 + SHIFT, y: 150, w: 88, h: 50,
+    id: 'ice', n: '얼음 던전', x: 180 + SHIFT, y: 128, w: 88, h: 50,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
     traps: ['dart', 'crumble', 'grind'], boss: 'ice_warden',
     mobs: ['frostling', 'icewolf', 'frostbound'],
@@ -24,7 +24,7 @@ export const RUIN_SPEC: RuinDef[] = [
     rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.20, mobMul: 1.35
   },
   {
-    id: 'mine', n: '버려진 광산', x: 820 + SHIFT, y: 168, w: 84, h: 44,
+    id: 'mine', n: '버려진 광산', x: 820 + SHIFT, y: 186, w: 84, h: 44,
     wall: T.MINEWOOD, floor: T.PLANK, bg: 4, torch: T.TORCH,
     traps: ['dart', 'crumble', 'gas'], boss: 'mine_horror',
     mobs: ['minerghost', 'spider', 'bat', 'cartwraith'],
@@ -32,7 +32,7 @@ export const RUIN_SPEC: RuinDef[] = [
     rank: 1, tier: 2, trapRate: 0.32, spikeRate: 0.16, chestRate: 0.14, mobMul: 0.85
   },
   {
-    id: 'blight', n: '부패한 둥지', x: 4020 + SHIFT, y: 196, w: 100, h: 60,
+    id: 'blight', n: '부패한 둥지', x: 4020 + SHIFT, y: 216, w: 100, h: 60,
     wall: T.EBONSTONE, floor: T.EBONSTONE, bg: 3, torch: T.TORCH,
     traps: ['dart', 'vent', 'gas', 'coil'], boss: 'blight_maw',
     mobs: ['crawler', 'shadoweye', 'sacling'],
@@ -40,7 +40,7 @@ export const RUIN_SPEC: RuinDef[] = [
     rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.24, mobMul: 1.85
   },
   {
-    id: 'spore', n: '포자 굴', x: 3620 + SHIFT, y: 176, w: 100, h: 52,
+    id: 'spore', n: '포자 굴', x: 3620 + SHIFT, y: 156, w: 100, h: 52,
     wall: T.SPORESTONE, floor: T.GLOWMOSS, bg: 12, torch: T.GLOWCAP,
     traps: ['vent', 'dart', 'gas', 'coil'], boss: 'spore_queen',
     mobs: ['sporeling', 'capbeast', 'ventspitter'], arch: 'buried',

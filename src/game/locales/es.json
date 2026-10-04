@@ -4177,6 +4177,10 @@
   "ITEMS.deco_icicle.n": "Carámbano",
   "ITEMS.deco_glowfrond.n": "Fronda luminosa",
   "TILE_DEF.199.n": "Carámbano",
-  "TILE_DEF.200.n": "Fronda luminosa"
+  "TILE_DEF.200.n": "Fronda luminosa",
+  "ITEMS.deco_emberdrip.n": "Estalactita de basalto",
+  "ITEMS.deco_emberspire.n": "Estalagmita de basalto",
+  "TILE_DEF.201.n": "Estalactita de basalto",
+  "TILE_DEF.202.n": "Estalagmita de basalto"
  }
 }

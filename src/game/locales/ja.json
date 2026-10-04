@@ -4177,6 +4177,10 @@
   "ITEMS.deco_icicle.n": "つらら",
   "ITEMS.deco_glowfrond.n": "光る葉",
   "TILE_DEF.199.n": "つらら",
-  "TILE_DEF.200.n": "光る葉"
+  "TILE_DEF.200.n": "光る葉",
+  "ITEMS.deco_emberdrip.n": "玄武岩の鍾乳石",
+  "ITEMS.deco_emberspire.n": "玄武岩の石筍",
+  "TILE_DEF.201.n": "玄武岩の鍾乳石",
+  "TILE_DEF.202.n": "玄武岩の石筍"
  }
 }

@@ -201,6 +201,8 @@ ART[T.STALACTITE] = { k: 'dripstone', c: '#9a9488', a: 1, up: 0 };
 ART[T.ICICLE] = { k: 'dripstone', c: '#bfe6f5', a: 1, up: 0 };
 ART[T.GLOWFROND] = { k: 'hangmoss', c: '#7fe8c8', a: 1 };
 ART[T.STALAGMITE] = { k: 'dripstone', c: '#8a8478', a: 1, up: 1 };
+ART[T.EMBERDRIP] = { k: 'dripstone', c: '#4a3c38', a: 1, up: 0 };
+ART[T.EMBERSPIRE] = { k: 'dripstone', c: '#40342f', a: 1, up: 1 };
 ART[T.GEODE] = { k: 'geode', c: '#a88fe8', a: 1, glow: 1 };
 ART[T.FAULTSTONE] = { k: 'fault', c: '#5f5e62' };   // 돌과 거의 같은 색 — 알갱이 결과 가는 금으로만 알아본다
 ART[T.LIMESTONE] = { k: 'strata', c: '#9a9486' };    // 석회암 — 밝고 결이 가로로 진다
@@ -235,7 +237,7 @@ export const MOSS_COL: Record<string, string> = {
 export const BODY_ONLY: Bag = {};   // 위가 막히면 몸통만 그리는 타일(①)
 export const CONN: Bag = {};        // 이웃을 보고 통째로 그리는 타일(②)
 for (const id of [T.GRASS, T.CORRUPTGRASS, T.JUNGLEGRASS, T.GLOWMOSS, T.SNOW, T.ICE]) BODY_ONLY[id] = 1;
-for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.ICICLE, T.GLOWFROND, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
+for (const id of [T.MOSSSTONE, T.HANGMOSS, T.STALACTITE, T.STALAGMITE, T.ICICLE, T.EMBERDRIP, T.EMBERSPIRE, T.GLOWFROND, T.PINELEAF, T.WOOD, T.PALMWOOD, T.PALMLEAF]) CONN[id] = 1;
 
 /** 질감 갈래(ART[id].k) → 그리는 법 — art/tiles/*.js 가 채운다. this 는 TileArt, H 는 paint 의 인자·도우미 */
 export const TILE_PAINT: Bag = {};
@@ -509,7 +511,7 @@ export const TileArt: Bag = {
   _connDraws() {
     const mossOf = (w: any, tx: any) => this.mossCol(MOSS_COL[w.biomeAt(clamp(tx, 0, w.dims.WW - 1)).id] || '#6f9a4a');
     const drip = (c: any, w: any, id: any, tx: any, ty: any, sx: any, sy: any) => {
-      const up = id === T.STALAGMITE;
+      const up = id === T.STALAGMITE || id === T.EMBERSPIRE;
       let i = 0, n = 1;                                    // i: 붙은 쪽에서 몇 번째 칸, n: 줄 길이
       if (!up) { while (i < 6 && w.get(tx, ty - i - 1) === id) i++; n = i + 1; while (n < 8 && w.get(tx, ty - i + n) === id) n++; }
       else { while (i < 6 && w.get(tx, ty + i + 1) === id) i++; n = i + 1; while (n < 8 && w.get(tx, ty + i - n) === id) n++; }
@@ -584,7 +586,7 @@ export const TileArt: Bag = {
         }
         return true;
       },
-      [T.STALACTITE]: drip, [T.STALAGMITE]: drip, [T.ICICLE]: drip
+      [T.STALACTITE]: drip, [T.STALAGMITE]: drip, [T.ICICLE]: drip, [T.EMBERDRIP]: drip, [T.EMBERSPIRE]: drip
     };
   },
   /** 칸 캐시 — 열쇠가 같으면 다시 그리지 않는다 */
@@ -903,7 +905,7 @@ export const TileArt: Bag = {
     const cv = document.createElement('canvas'); cv.width = cv.height = TS;
     const g = cv.getContext('2d');
     const base = TILE_DEF[id].c, dk = shade(base!, .74), lt = shade(base!, 1.2), lt2 = shade(base!, 1.4);
-    const up = id === T.STALAGMITE;
+    const up = id === T.STALAGMITE || id === T.EMBERSPIRE;
     for (let y = 0; y < TS; y++) {
       const yy = up ? TS - 1 - y : y;                       // 붙은 쪽에서 잰 칸 속 높이
       const t = (i + (yy + 0.5) / TS) / n;                   // 0(붙은 쪽) → 1(끝)
@@ -913,7 +915,13 @@ export const TileArt: Bag = {
       g!.fillRect(TS / 2 - wdt / 2, y, wdt, 1);
       g!.fillStyle = lt2; g!.fillRect(TS / 2 - wdt / 2, y, Math.max(1, wdt * .22), 1);
     }
-    if (!up && i === n - 1) { g!.fillStyle = '#9fd0e8'; g!.fillRect(TS / 2 - 0.5, TS - 2, 1, 2); }
+    if (!up && i === n - 1) { g!.fillStyle = id === T.EMBERDRIP ? '#ff8a3a' : '#9fd0e8'; g!.fillRect(TS / 2 - 0.5, TS - 2, 1, 2); }
+    if (id === T.EMBERDRIP || id === T.EMBERSPIRE) {        // 현무암 속 불씨 금 — 칸을 건너 이어지게 줄 높이로 긋는다
+      for (let y = 0; y < TS; y++) {
+        const yy = up ? TS - 1 - y : y, gy = i * TS + yy, t = (i + (yy + 0.5) / TS) / n;
+        if ((gy * 7 + n * 3) % 11 < 2) { g!.fillStyle = t > 0.6 ? '#ffb05a' : '#c8401a'; g!.fillRect(TS / 2 - 1 + ((gy >> 2) % 3) - 1, y, 1, 1); }
+      }
+    }
     return (this._dc[key] = cv);
   },
   drawWall(c: any, wl: any, v: number, sx: number, sy: number) { blitCell(c, this.wallAtlas, TS, v, wl, sx, sy); },

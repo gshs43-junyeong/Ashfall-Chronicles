@@ -86,13 +86,14 @@ export const RenderSkyPart: Bag = {
       this.drawClouds(c, camX, camY, this.rainT || 0);
       this.drawMeteorSky(c, camY);                     // 운석 — 구름 앞, 원경 능선 뒤
     } else {
-      const deep = camY > HELL_Y * TS - 400;
+      /* 지옥 위 90칸에 걸쳐 서서히 붉어진다 — 한 줄 문턱이면 내려가다 화면이 한순간에 바뀌었다 */
+      const deep = clamp((camY / TS - (HELL_Y - 100)) / 90, 0, 1);
       const g = c.createLinearGradient(0, 0, 0, this.H);
-      g.addColorStop(0, deep ? '#2a0d08' : '#0a0a10');
-      g.addColorStop(1, deep ? '#4a1408' : '#06060a');
+      g.addColorStop(0, mixHex('#0a0a10', '#2a0d08', deep));
+      g.addColorStop(1, mixHex('#06060a', '#4a1408', deep));
       c.fillStyle = g; c.fillRect(0, 0, this.W, this.H);
       /* 땅속에서는 원경이 씻길 색도 땅속 색이다 — 하늘색을 그대로 두면 지옥의 먼 바위가 파랗게 물든다 */
-      this.skyHaze = deep ? '#4a1408' : '#06060a';
+      this.skyHaze = mixHex('#06060a', '#4a1408', deep);
     }
   },
   /** 해(1)·달(0)이 하늘을 건넌 몫 — 0 = 동쪽 지평선(화면 오른쪽), 1 = 서쪽 지평선. 밖이면 지평선 밑(sin 이 음수).

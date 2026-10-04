@@ -209,7 +209,9 @@ export const RenderWorldPart: Bag = {
   drawLightOverlay(c: CanvasRenderingContext2D, camX: number, camY: number, tx0: number, ty0: number, tx1: number, ty1: number) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
     const w = this.world, L = this.lightOv = this.lightOv || new LightOverlay();
     const mid = (ty0 + ty1) / 2;
-    const rgb: [number, number, number] = mid > HELL_Y - 24 ? [44, 8, 2] : mid > SURF_BASE + 24 ? [4, 7, 18] : [0, 0, 0];
+    // 색조도 깊이를 따라 섞는다 — 지표 아래 60칸에 걸쳐 남색, 지옥 위 90칸에 걸쳐 붉게(문턱이면 화면이 툭 바뀌었다)
+    const u = Math.min(1, Math.max(0, (mid - SURF_BASE - 4) / 60)), v = Math.min(1, Math.max(0, (mid - (HELL_Y - 100)) / 90));
+    const rgb: [number, number, number] = [Math.round(4 * u + (44 - 4 * u) * v), Math.round(7 * u + (8 - 7 * u) * v), Math.round(18 * u + (2 - 18 * u) * v)];
     // 하한을 조금 남겨 완전한 암흑에서도 블록 실루엣은 읽히게
     L.drawDark(c, tx0 - 1, ty0 - 1, tx1 + 1, ty1 + 1, TS, camX, camY, (x: number, y: number) => w.lightAt(x, y), 15, rgb);
   },

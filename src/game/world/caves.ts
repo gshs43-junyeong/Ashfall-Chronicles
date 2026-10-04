@@ -321,5 +321,31 @@ export const WorldCaves: Bag & ThisType<World> = {
     if (dc && tx >= dc.x0 - 24 && tx <= dc.x1 + 24) return true;
     return false;
   },
+
+  /** 지옥 꾸미기 — 현무암 종유석 · 석순(끝에 불씨), 용암 둘레는 녹아 굳은 돌.
+      ★ 제 난수(seed+'_hell')만 쓴다 — 본 난수를 뽑으면 뒤따르는 생성이 씨앗마다 바뀐다. 유적·잠긴 칸은 건드리지 않는다. */
+  decorateHell() { const { WW, WORLD_BOT, HELL_Y, SEA_X1 } = this.dims;
+    const r = new RNG(this.seed + '_hell');
+    const rock = (t: number) => t === T.ASH || t === T.HELLSTONE || t === T.OBSIDIAN || t === T.STONE;
+    const free = (x: number, y: number) => this.get(x, y) === T.AIR && !this.ruinAt(x, y);
+    for (let x = 2; x < WW - 2; x++) {
+      if (inSeaZone(x, SEA_X1)) continue;
+      for (let y = HELL_Y - 4; y < WORLD_BOT - 6; y++) {
+        const t = this.get(x, y);
+        if (t === T.ASH && !this.ruinAt(x, y)) {              // 용암에 닿은 재는 녹아 굳는다
+          if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => this.get(x + dx, y + dy) === T.LAVA) && r.chance(0.6)) this.set(x, y, T.FUSEDROCK);
+          continue;
+        }
+        if (!free(x, y)) continue;
+        if (rock(this.get(x, y - 1)) && r.chance(0.07)) {     // 천장 — 밑으로 두 칸은 비워 둔다
+          const n = r.chance(0.25) ? r.int(3, 4) : r.int(1, 2);
+          for (let i = 0; i < n && free(x, y + i) && free(x, y + i + 1) && free(x, y + i + 2); i++) this.set(x, y + i, T.EMBERDRIP);
+        } else if (rock(this.get(x, y + 1)) && free(x, y - 1) && r.chance(0.05)) {   // 바닥 — 위로 한두 칸
+          this.set(x, y, T.EMBERSPIRE);
+          if (r.chance(0.35) && free(x, y - 2)) this.set(x, y - 1, T.EMBERSPIRE);
+        }
+      }
+    }
+  }
 };
 mixin(World.prototype, WorldCaves, true);

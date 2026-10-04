@@ -305,6 +305,8 @@ export const ITEMS: Record<string, ItemDef> = {
   deco_stalactite: { n: '종유석', i: '🪨', type: 'block', tile: T.STALACTITE, stack: 999, deco: 1 },
   deco_icicle:     { n: '고드름', i: '🧊', type: 'block', tile: T.ICICLE, stack: 999, deco: 1 },
   deco_glowfrond:  { n: '발광 잎', i: '🌿', type: 'block', tile: T.GLOWFROND, stack: 999, deco: 1 },
+  deco_emberdrip:  { n: '현무 종유석', i: '🪨', type: 'block', tile: T.EMBERDRIP, stack: 999, deco: 1 },
+  deco_emberspire: { n: '현무 석순', i: '🪨', type: 'block', tile: T.EMBERSPIRE, stack: 999, deco: 1 },
   deco_stalagmite: { n: '석순', i: '🪨', type: 'block', tile: T.STALAGMITE, stack: 999, deco: 1 },
   deco_geode:      { n: '수정 무리', i: '💎', type: 'block', tile: T.GEODE, stack: 999, deco: 1 },
   deco_mossstone:  { n: '이끼 낀 바위', i: '🪨', type: 'block', tile: T.MOSSSTONE, stack: 999, deco: 1 },

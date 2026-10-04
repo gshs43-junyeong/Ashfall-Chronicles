@@ -4177,6 +4177,10 @@
   "ITEMS.deco_icicle.n": "冰锥",
   "ITEMS.deco_glowfrond.n": "荧光叶",
   "TILE_DEF.199.n": "冰锥",
-  "TILE_DEF.200.n": "荧光叶"
+  "TILE_DEF.200.n": "荧光叶",
+  "ITEMS.deco_emberdrip.n": "玄武岩钟乳石",
+  "ITEMS.deco_emberspire.n": "玄武岩石笋",
+  "TILE_DEF.201.n": "玄武岩钟乳石",
+  "TILE_DEF.202.n": "玄武岩石笋"
  }
 }
