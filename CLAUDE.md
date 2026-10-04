@@ -303,7 +303,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 - **웹에서 `/play/assets/*` 그림은 1년 immutable 캐시다**(vercel.json · `_headers`) — index.html 이 부르는 그림(로고 · 파비콘)에는 반드시 `?v=` 를 단다(배포 때 커밋 해시로 찍힌다). 빠뜨리면 그림을 바꿔도 브라우저가 옛것을 계속 쓴다(타이틀 로고가 그랬다). CSS 의 `url()` 그림은 내용 해시 `?v=<md5 앞 8자>` — 그림을 바꾸면 같이 고칠 것.
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
   PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.
-- 사이트는 Vercel(`vercel.json`) · Cloudflare Pages(`site/_redirects` · `site/_headers` · `.github/workflows/pages-cf.yml`) · Docker(`docker/nginx-site.conf`) 셋이 같은 규칙을 따로 든다 — 하나를 고치면 셋 다(docs/deploy-cache.md).
+- 사이트는 Vercel(`vercel.json`) · Cloudflare Pages(`site/_redirects` · `site/_headers` · `.github/workflows/pages-cf.yml` — **main 푸시마다 자동 배포** `ashfall-chronicles.pages.dev`, 2026-10-04 연동) · Docker(`docker/nginx-site.conf`) 셋이 같은 규칙을 따로 든다 — 하나를 고치면 셋 다(docs/deploy-cache.md).
 - `tools/build.sh` 는 재현 가능한 zip 을 만든다(두 번 빌드해 해시가 같다) — 다운로드 페이지 `HASHES` 는 그 앞 8자리.
 - **버전 문자열**이 박힌 곳: `play/index.html`(타이틀 표시) · `README.md`(영어 — 먼저) · `README-ko.md`(한국어 — 짝, 하나를 고치면 둘 다 · 숫자는 `npm run test:counts` 가 게임 표와 대조) ·
   `site/download/index.html` · `tools/build.sh` 인자 · `docs/*`.

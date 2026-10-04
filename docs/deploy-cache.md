@@ -60,10 +60,12 @@
 
 셋 중 무엇이 문제인지(캐시 / 배포 실패 / 코드)를 구별할 데가 여태 없어서 붙였다.
 
-## Cloudflare Pages (사이트 예비 배포)
+## Cloudflare Pages (사이트 두 번째 배포 — 연동됨)
 
-본 사이트는 `vercel.app` 그대로다(사용자 결정 2026-10-02). 아래는 Vercel 대역폭이 모자랄 때 옮길 자리로 준비만 해 둔 것 —
-워크플로는 손으로만 돈다(Actions → Cloudflare Pages → Run workflow).
+**연동 2026-10-04**: 저장소 Secrets(`CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID`)가 걸려 있고 첫 배포가 성공했다(프로젝트 `ashfall-chronicles`).
+이제 `main` 에 `site/` · `play/` · `tools/build-site.sh` 가 바뀌어 올라오면 저절로 올라간다(손으로도 Actions → Cloudflare Pages → Run workflow).
+주소 `https://ashfall-chronicles.pages.dev`. Vercel(`vercel.app`)도 그대로 돈다 — 둘 다 같은 `build-site.sh` 산출물이다.
+★ 대시보드에서 Git 을 **또** 잇지 말 것(같은 커밋이 두 번 올라간다) — 배포는 이 워크플로 하나가 맡는다.
 
 Vercel 무료 대역폭(월 100GB)은 웹 한 판에 30MB 남짓 받으므로 하루 100명쯤에서 찬다. Cloudflare Pages 는 대역폭이 무제한이라
 사이트를 그쪽으로 옮길 수 있게 해 두었다(Vercel 배포는 그대로 — 둘 다 돌아도 된다).
@@ -73,7 +75,7 @@ Vercel 무료 대역폭(월 100GB)은 웹 한 판에 30MB 남짓 받으므로 �
 - 배포: `.github/workflows/pages-cf.yml` — 돌리면 `build-site.sh` 로 굽고 `wrangler pages deploy site` 로 올린다.
   비밀값이 없으면 건너뛴다. 커밋 해시는 `CF_PAGES_COMMIT_SHA`(대시보드에서 Git 을 직접 이었을 때) → `GITHUB_SHA` 순.
 
-켜는 법(한 번만):
+처음 켤 때 한 일(다시 할 때 — 토큰을 바꾸거나 다른 계정으로 옮길 때):
 1. Cloudflare 대시보드 → 오른쪽 위 계정 → **My Profile → API Tokens → Create Token** → 템플릿 *Edit Cloudflare Workers* 를 고르고
    권한에 **Account · Cloudflare Pages · Edit** 를 더한다(중개 `relay.yml` 과 같은 토큰을 써도 된다).
 2. 계정 ID: 대시보드 **Workers & Pages** 오른쪽 칸의 *Account ID*.
