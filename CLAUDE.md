@@ -304,7 +304,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   PNG 를 그린 캔버스의 픽셀을 읽으려면 try/catch 와 대체 그림을 둘 것(`forestBg` 가 매 프레임 터졌다). 확인: zip 을 풀어 file:// 로 연다.
 - 사이트는 Vercel(`vercel.json`) · Cloudflare Pages(`site/_redirects` · `site/_headers` · `.github/workflows/pages-cf.yml`) · Docker(`docker/nginx-site.conf`) 셋이 같은 규칙을 따로 든다 — 하나를 고치면 셋 다(docs/deploy-cache.md).
 - `tools/build.sh` 는 재현 가능한 zip 을 만든다(두 번 빌드해 해시가 같다) — 다운로드 페이지 `HASHES` 는 그 앞 8자리.
-- **버전 문자열**이 박힌 곳: `play/index.html`(타이틀 표시) · `README.md` ·
+- **버전 문자열**이 박힌 곳: `play/index.html`(타이틀 표시) · `README.md`(영어 — 먼저) · `README-ko.md`(한국어 — 짝, 하나를 고치면 둘 다 · 숫자는 `npm run test:counts` 가 게임 표와 대조) ·
   `site/download/index.html` · `tools/build.sh` 인자 · `docs/*`.
 - **커밋 메시지는 영어로 쓴다**(사용자 결정 2026-09-27). 코드 주석·문서는 그대로 한국어.
 - zip은 커밋하지 않는다(`.gitignore`). 태그를 push하면 Actions가 만들어 Release에
