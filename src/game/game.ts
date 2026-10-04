@@ -133,6 +133,7 @@ export const GameCore: Bag = {
     if (Sprites) {
       Sprites.ready().then(() => {
         this.spritesOn = true;
+        this.vfx.art = this.shapes.art = (n: string, c: string) => Sprites.vfxArt(n, c);   // 스킬 연출 — 도형 대신 결 그림
         UI.applySpriteOverrides();
         // 손그림 타일 텍스처가 있으면 절차 생성 아틀라스의 해당 칸을 덮어 그린다
         for (const name in TILE_SPRITE) TileArt.applySprite(TILE_SPRITE[name], Sprites.img['tile_' + name]);

@@ -19,13 +19,17 @@ interface Reticle extends Base { k: 'reticle'; at: () => Pt | null; r: number }
 interface Beam extends Base { k: 'beam'; x0: number; y0: number; x1: number; y1: number; w: number }
 type Fx = Slash | Shock | Flare | Spark | Sigil | Shard | Crack | Column | Puff | Reticle | Beam;
 
+/** 결 그림 — 이름('slash' · 'shock' · 'flare' · 'sigil' · 'column' · 'beam' · 'puff')과 색으로 물들인 그림 한 장(속불까지 얹은 것).
+    없으면(아직 안 읽힘 · 게임이 안 걸었음) null → 도형으로 그린다. 그림은 가운데가 원점, 원 그림은 반지름 = 폭/2 */
+export type VfxArt = (name: string, c: string) => CanvasImageSource | null;
+
 const TAU = Math.PI * 2;
 const easeOut = (k: number) => 1 - (1 - k) * (1 - k);
 
 export class Vfx {
-  declare list: Fx[]; declare density: number; declare rand: () => number; declare cap: number;
+  declare list: Fx[]; declare density: number; declare rand: () => number; declare cap: number; declare art: VfxArt | null;
   /** density — 불티 · 조각 수 배율(화질 설정) · cap — 한꺼번에 남는 도형 상한 */
-  constructor(density = 1, cap = 600, rand: () => number = Math.random) { this.list = []; this.density = density; this.cap = cap; this.rand = rand; }
+  constructor(density = 1, cap = 600, rand: () => number = Math.random) { this.list = []; this.density = density; this.cap = cap; this.rand = rand; this.art = null; }
 
   private add(f: Fx): void { if (this.list.length < this.cap) this.list.push(f); }
   private n(k: number): number { return Math.max(1, Math.round(k * this.density)); }
@@ -111,6 +115,12 @@ export class Vfx {
     for (const f of this.list) {
       if (f.k !== 'puff') continue;
       const k = f.t / f.max, r = f.r * (1.6 - k * 0.6), x = f.x - camX, y = f.y - camY;
+      const im = this.art && this.art('puff', f.c);
+      if (im) {                                    // 울퉁불퉁한 구름 — 덩이마다 돌려 같은 모양이 안 겹쳐 보이게
+        c.globalAlpha = 0.7 * Math.min(1, k * 1.6);
+        c.save(); c.translate(x, y); c.rotate(f.vx * 0.05 + k); c.drawImage(im, -r * 1.3, -r * 1.3, r * 2.6, r * 2.6); c.restore();
+        continue;
+      }
       const g = c.createRadialGradient(x, y, 0, x, y, r);
       g.addColorStop(0, f.c); g.addColorStop(1, 'rgba(0,0,0,0)');
       c.globalAlpha = 0.55 * Math.min(1, k * 1.6); c.fillStyle = g;
@@ -120,6 +130,7 @@ export class Vfx {
     c.lineCap = 'round'; c.lineJoin = 'round';
     for (const f of this.list) {
       const k = f.t / f.max, p = 1 - k;
+      if (this.art && this.drawArt(c, f, k, p, camX, camY)) continue;
       switch (f.k) {
         case 'slash': {
           const x = f.x - camX, y = f.y - camY;
@@ -233,5 +244,62 @@ export class Vfx {
       }
     }
     c.restore();
+  }
+
+  /** 결 그림으로 그린다 — 그렸으면 true(도형은 건너뛴다). 모양 · 타이밍은 도형과 같은 식을 쓴다 */
+  private drawArt(c: CanvasRenderingContext2D, f: Fx, k: number, p: number, camX: number, camY: number): boolean {
+    const art = this.art!;
+    switch (f.k) {
+      case 'slash': {
+        const im = art('slash', f.c); if (!im) return false;
+        const x = f.x - camX, y = f.y - camY;
+        const head = f.a0 + (f.a1 - f.a0) * Math.min(1, p / 0.4), tail = f.a0 + (f.a1 - f.a0) * Math.max(0, (p - 0.25) / 0.75);
+        if (Math.abs(head - tail) < 0.01) return true;
+        const R = (f.r + f.w * 0.45) / 0.975, ccw = f.a1 < f.a0, n = Math.max(4, Math.min(14, Math.ceil(Math.abs(head - tail) * 4)));
+        for (let i = 0; i < n; i++) {            // 꼬리 쪽은 옅게 — 조각마다 부채꼴로 잘라 그린다
+          const u0 = i / n, u1 = (i + 1) / n, b0 = tail + (head - tail) * u0, b1 = tail + (head - tail) * u1;
+          c.save(); c.beginPath(); c.moveTo(x, y); c.arc(x, y, R * 1.05, b0, b1 + (ccw ? -0.02 : 0.02), ccw); c.closePath(); c.clip();
+          c.globalAlpha = Math.min(1, k * 2.2) * (0.12 + 0.88 * u1);
+          c.translate(x, y); c.rotate(b0 * 1.7); c.drawImage(im, -R, -R, R * 2, R * 2); c.restore();
+        }
+        return true;
+      }
+      case 'shock': {
+        const im = art('shock', f.c); if (!im) return false;
+        const r = f.r * easeOut(Math.min(1, p * 1.35)) / 0.86, x = f.x - camX, y = f.y - camY;
+        c.globalAlpha = Math.min(1, k * 1.4);
+        c.save(); c.translate(x, y); c.scale(1, f.sy); c.rotate(f.r); c.drawImage(im, -r, -r, r * 2, r * 2); c.restore();
+        return true;
+      }
+      case 'flare': {
+        const im = art('flare', f.c); if (!im) return false;
+        const x = f.x - camX, y = f.y - camY, s = f.s * 1.7 * (0.6 + 0.4 * easeOut(Math.min(1, p * 3)));
+        c.globalAlpha = 0.95 * k;
+        c.save(); c.translate(x, y); c.rotate(f.rot + p * 0.8); c.drawImage(im, -s, -s, s * 2, s * 2); c.restore();
+        return true;
+      }
+      case 'sigil': {
+        const im = art('sigil', f.c); if (!im) return false;
+        const x = f.x - camX, y = f.y - camY, s = f.r * (p < 0.15 ? easeOut(p / 0.15) * 1.08 : 1.08 - 0.08 * Math.min(1, (p - 0.15) * 4));
+        c.globalAlpha = Math.min(1, k * 2) * 0.95;
+        c.save(); c.translate(x, y); c.scale(1, f.sy); c.rotate(p * f.spin * TAU * 0.25); c.drawImage(im, -s, -s, s * 2, s * 2); c.restore();
+        return true;
+      }
+      case 'column': {
+        const im = art('column', f.c); if (!im) return false;
+        const x = f.x - camX, y = f.y - camY, w = f.w * 1.5 * (0.5 + 0.5 * easeOut(Math.min(1, p * 4))) * (0.6 + 0.4 * k);
+        c.globalAlpha = 0.85 * k; c.drawImage(im, x - w / 2, y - f.h, w, f.h);
+        return true;
+      }
+      case 'beam': {
+        const im = art('beam', f.c); if (!im) return false;
+        const dx = f.x1 - f.x0, dy = f.y1 - f.y0, L = Math.hypot(dx, dy), h = f.w * 3 * (0.4 + 0.6 * k);
+        if (L < 1) return true;
+        c.globalAlpha = Math.min(1, k * 1.5);
+        c.save(); c.translate(f.x0 - camX, f.y0 - camY); c.rotate(Math.atan2(dy, dx)); c.drawImage(im, 0, -h / 2, L, h); c.restore();
+        return true;
+      }
+    }
+    return false;
   }
 }
