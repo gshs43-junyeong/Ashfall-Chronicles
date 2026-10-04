@@ -433,9 +433,9 @@ export const NetPart: Bag = {
       /* 다시 온 손님이면(아이디 · 이 세계의 mpGuests) 지난 자리와 이 세계에서 쓰던 캐릭터를 돌려준다 */
       peer.pid = typeof m.pid === 'string' ? m.pid.slice(0, 24) : null;
       const me = this.me, rec = this.netGuestRec(peer.pid);
-      const back = rec && !this.world.hitSolid(rec.x, rec.y, me.w, me.h);
+      const spot = rec ? this.netFreeSpot(rec.x, rec.y, me.w, me.h) : null, back = !!spot;
       const char = rec && rec.char ? rec.char : null, name = char && rec.n ? rec.n : m.n;
-      const s = Object.assign(this.netState(me), back ? { x: rec.x, y: rec.y } : { x: me.x + 24 }, { n: name, c: char ? char.charId : m.c });
+      const s = Object.assign(this.netState(me), back ? spot : { x: me.x + 24 }, { n: name, c: char ? char.charId : m.c });
       peer.rp = this.netAvatar(peer.id, s);
       const roster = [[0, this.netState(me)]];
       for (const q of n.peers.values()) if (q.rp && q !== peer) roster.push([q.id, this.netState(q.rp)]);
@@ -703,6 +703,12 @@ export const NetPart: Bag = {
     const list = [[0, this.netState(this.me)]];
     for (const q of n.peers.values()) if (q.last) list.push([q.id, q.last]);
     for (const q of n.peers.values()) if (q.rp) q.t.send('fast', JSON.stringify({ k: 'ps', list: list.filter(e => e[0] !== q.id) }));
+  },
+  /** 다시 온 손님의 지난 자리 — 그새 누가 블록을 놓아 막혔으면 바로 위 빈 칸(8칸까지). 그래도 없으면 null(호스트 곁으로).
+      ★ 막혔다고 곧장 호스트 곁으로 보내면 지난 자리와 먼 곳(남이 싸우던 자리)에 떨어졌다 — 사연: docs/code-history.md#h152 */
+  netFreeSpot(x: number, y: number, w: number, h: number) {
+    for (let dy = 0; dy <= 8; dy++) if (!this.world.hitSolid(x, y - dy * TS, w, h)) return { x, y: y - dy * TS };
+    return null;
   },
   /** 호스트의 몹이 남의 아바타를 쳤다 — 피해는 그 주인 화면에서 계산한다(무적 시간도 거기 것). */
   netRemoteHurt(rp: Bag, amount: number, srcX: any) {
