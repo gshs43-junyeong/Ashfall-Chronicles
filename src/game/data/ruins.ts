@@ -16,7 +16,7 @@ export const RUIN_SPEC: RuinDef[] = [
   },
   {
     /* ★ 피라미드는 **반쯤 묻힌 삼각형**이다(plan 'tri') — 사연: docs/code-history.md#h14 */
-    id: 'pyramid', n: '피라미드', x: 2180 + SHIFT, y: 50, w: 96, h: 52,
+    id: 'pyramid', n: '피라미드', x: 2180 + SHIFT, y: 50, w: 116, h: 62,
     wall: T.SANDBRICK, floor: T.SANDSTONE, bg: 8, torch: T.TORCH,
     traps: ['dart', 'vent', 'crumble', 'gas'], boss: 'sand_guardian',
     mobs: ['scorpion', 'sandmaw', 'skeleton', 'jarhusk'],
@@ -24,7 +24,7 @@ export const RUIN_SPEC: RuinDef[] = [
     rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.20, mobMul: 1.35
   },
   {
-    id: 'mine', n: '버려진 광산', x: 820 + SHIFT, y: 186, w: 84, h: 44,
+    id: 'mine', n: '버려진 광산', x: 820 + SHIFT, y: 186, w: 104, h: 52,
     wall: T.MINEWOOD, floor: T.PLANK, bg: 4, torch: T.TORCH,
     traps: ['dart', 'crumble', 'gas'], boss: 'mine_horror',
     mobs: ['minerghost', 'spider', 'bat', 'cartwraith'],
@@ -51,11 +51,11 @@ export const RUIN_SPEC: RuinDef[] = [
 /* 유적 생김새(arch) — 같은 방 생성기를 쓰되 "어떻게 발견되는가"를 갈랐다. */
 /* 입구 통로 자체의 성격(entryKind) — arch(바깥 생김새)와는 별개 축이다. */
 /* ★ `rooms` 가 **목표 방 수**다(carveDungeon 의 target). */
-RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].bsp = [5, 14, 10]; RUIN_SPEC[0].rooms = 11;  // 얼음 (rank 2)
-RUIN_SPEC[1].plan = 'tri';     RUIN_SPEC[1].arch = 'pyramid'; RUIN_SPEC[1].bsp = [6, 9, 6]; RUIN_SPEC[1].rooms = 18;  // 피라미드 (rank 4) — 삼각형 안에 든 방만
-RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].bsp = [5, 14, 10]; RUIN_SPEC[2].rooms = 9;   // 광산 (rank 1 — 가장 작다)
-RUIN_SPEC[3].plan = 'warren'; RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].bsp = [6, 14, 10]; RUIN_SPEC[3].rooms = 19;  // 부패한 둥지 (rank 6 — 가장 크다)
-RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp = [5, 14, 10]; RUIN_SPEC[4].rooms = 16; // 포자 굴 (rank 5)
+RUIN_SPEC[0].plan = 'ring';   RUIN_SPEC[0].arch = 'buried';  RUIN_SPEC[0].bsp = [6, 12, 9]; RUIN_SPEC[0].rooms = 16;  // 얼음 (rank 2)
+RUIN_SPEC[1].plan = 'tri';     RUIN_SPEC[1].arch = 'pyramid'; RUIN_SPEC[1].bsp = [6, 9, 6]; RUIN_SPEC[1].rooms = 16;  // 피라미드 (rank 4) — 층으로 쌓은 방 수의 바닥
+RUIN_SPEC[2].plan = 'spine';  RUIN_SPEC[2].arch = 'gated';   RUIN_SPEC[2].bsp = [6, 12, 9]; RUIN_SPEC[2].rooms = 16;   // 광산 (rank 1 — 가장 작다)
+RUIN_SPEC[3].plan = 'warren'; RUIN_SPEC[3].arch = 'buried';  RUIN_SPEC[3].bsp = [6, 12, 9]; RUIN_SPEC[3].rooms = 22;  // 부패한 둥지 (rank 6 — 가장 크다)
+RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp = [6, 12, 9]; RUIN_SPEC[4].rooms = 19; // 포자 굴 (rank 5)
 
 /* 겉으로 보이는 재질을 유적마다 갈랐다 — 나무 · 돌 · 구리 · 얼음 · 유기물. */
 /* 앞의 셋은 그 유적의 '재질'이고(다른 데서도 보는 것), 뒤의 둘이 *그곳에서만 보는 것**이다. */
@@ -111,7 +111,7 @@ export const RUIN_PLANS: Bag = {
   steps:     ['##..', '.##.', '..##'],   // 계단식
   pyramid:   ['#...', '##..', '###.', '####'],   // 삼각형 — 진짜 피라미드 단면
   warren:    ['####', '#.##', '####', '.###'],   // 잔방 투성이 (구멍 몇 개 뚫린 벌집)
-  hook:      ['#...', '#...', '####'],   // ㄴ
+  hook:      ['##..', '##..', '####'],   // ㄴ (기둥을 두 칸 폭으로 — 방 15개가 들어가게)
   tee:       ['####', '.##.', '.##.'],   // T
   hall:      ['#..#', '####', '#..#']    // H
 };
@@ -119,9 +119,9 @@ export const RUIN_PLANS: Bag = {
 /* 스토리 유적 셋(석판)의 도면·입구·고유 요소. */
 /* 석판 유적 셋도 같은 규칙이다 — rooms 가 목표 방 수, bsp 가 [깊이, 최소 가로, 최소 세로]. */
 export const STORY_RUIN: RuinDef[] = [
-  { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', rooms: 8, bsp: [5, 14, 10], decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
-  { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 9, bsp: [5, 14, 10], decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
-  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 11, bsp: [5, 14, 10], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
+  { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', rooms: 16, bsp: [6, 12, 9], decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
+  { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 16, bsp: [6, 12, 9], decor: [['statue', T.RUINBRICK, 0.45], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
+  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 16, bsp: [6, 12, 9], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
 ];
 /* 석판 유적에도 맥박 · 사건 · 탐사 기록이 뛴다. */
 STORY_RUIN[0].mobs = ['frostling', 'icewolf', 'skeleton']; STORY_RUIN[0].rank = 2;
