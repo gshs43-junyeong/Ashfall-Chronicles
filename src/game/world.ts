@@ -163,7 +163,7 @@ export class World extends TileMap {
   declare deepShaft: Record<string, any>; declare doors: any[]; declare dungeon: Record<string, any>; declare ensureEntranceTraps: (...a: any[]) => any; 
   declare falls: any[]; declare faults: any[]; declare fillMossCorners: (...a: any[]) => any; declare fitObjects: (...a: any[]) => any; declare floodCaves: (...a: any[]) => any;
   declare floodHell: (...a: any[]) => any; declare decorateHell: (...a: any[]) => any; declare flv: Uint8Array; declare fq: CellQueue<[number, number, number]> | null; declare hangQ: number[] | null; declare giantTree: Record<string, any>; declare glowStalk: (...a: any[]) => any;
-  declare inAtelier: (...a: any[]) => any; declare inCitadel: (...a: any[]) => any; declare inDeepShaft: (...a: any[]) => any; declare inRuin: (...a: any[]) => any; declare ruinInside: (...a: any[]) => any; declare inRunaway: (...a: any[]) => any;
+  declare inAtelier: (...a: any[]) => any; declare inCitadel: (...a: any[]) => any; declare inDeepShaft: (...a: any[]) => any; declare inRuin: (...a: any[]) => any; declare ruinInside: (...a: any[]) => any; declare storyTheme: (...a: any[]) => any; declare inRunaway: (...a: any[]) => any;
   declare inWorks: (...a: any[]) => any; declare jungleTree: (...a: any[]) => any; declare lavaPools: any[]; declare light: LightField | null;
   declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
   declare objects: any[]; declare openCodeDoorway: (...a: any[]) => any; declare oreHits: Record<string, any>; declare pineTree: (...a: any[]) => any; declare placeRichOres: (...a: any[]) => any;
