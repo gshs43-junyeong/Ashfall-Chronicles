@@ -13184,8 +13184,8 @@
       cat: "explore",
       i: "🕯",
       n: "첫 동굴",
-      d: "지하 60칸 아래를 봤다.",
-      check: (g) => g.player.deepest >= 120
+      d: "처음으로 땅속의 트인 굴에 들어섰다.",
+      check: (g) => !!(g.tally && g.tally.caveIn)
     },
     {
       id: "a_deep",
@@ -18734,7 +18734,23 @@
     },
     /** 좌표가 유적 내부인지 */
     inRuin(tx, ty) {
-      return !!this.ruinAt(tx, ty);
+      return !!this.ruinInside(tx, ty);
+    },
+    /** 플레이어가 **유적 안**에 있는가 — 방(벽 한 칸 포함) · 입구의 층계참 · 계단실만. 둘레 상자(ruinAt)로 재면 상자를 지나는
+        자연 굴 · 바위를 판 굴까지 유적이 되어 맥박 · 유적 몹 · 입장 카드가 엉뚱한 데서 떴다. 방 기록이 없는 곳(봉인실 · 옛 세이브)은 상자로. 사연: docs/code-history.md#h165 */
+    ruinInside(tx, ty) {
+      if (!this.ruins) return null;
+      for (const r of this.ruins) {
+        const site = this.ruinSites && this.ruinSites.find((s) => s.id === r.id && s.rooms && s.rooms.length);
+        if (!site) {
+          if (tx > r.x - r.w / 2 && tx < r.x + r.w / 2 && ty > r.y - r.h / 2 && ty < r.y + r.h / 2) return r;
+          continue;
+        }
+        if (Math.abs(tx - site.x) > site.w / 2 + 60 || Math.abs(ty - site.y) > site.h / 2 + 60) continue;
+        for (const m of site.rooms) if (tx >= m.x - 1 && tx <= m.x + m.w && ty >= m.y - 1 && ty <= m.y + m.h) return r;
+        for (const e of site.ent || []) if (tx >= e[0] && tx < e[0] + e[2] && ty >= e[1] && ty < e[1] + e[3]) return r;
+      }
+      return null;
     },
     /** 이 좌표가 속한 유적 자체를 돌려준다 (id 가 붙어 있으면 어느 유적인지도 안다). */
     ruinAt(tx, ty) {
@@ -18812,6 +18828,13 @@
       const { WW: WW2 } = this.dims;
       return Math.ceil(WW2 / CAVE_GW);
     },
+    /** 정말 트인 자연 굴인가 — 둘레 11×11 칸 중 45칸 넘게 비어 있어야 한다. 판 굴(폭 1~3칸 · 11~33칸)은 아니다.
+        갈래 구역(60×55)만 보면 바위를 파고 지나가도 '그 굴에 들어가 봤다'가 되었다(업적). 사연: docs/code-history.md#h165 */
+    openCave(tx, ty) {
+      let n = 0;
+      for (let y = ty - 5; y <= ty + 5; y++) for (let x = tx - 5; x <= tx + 5; x++) if (!this.solid(x, y) && !this.liquid(x, y)) n++;
+      return n > 45;
+    },
     /** 플레이어가 선 자리의 동굴 갈래 — **자연 굴 안**일 때만(지표 12칸 아래 · 지층 벽지 · 유적 밖). */
     caveKindAt(tx, ty) {
       const { WW: WW2 } = this.dims;
@@ -18823,7 +18846,7 @@
           this._natural.add(MAT_LAYER[k].subWall);
         }
       }
-      if (!this._natural.has(this.walls[ty * WW2 + tx]) || this.ruinAt(tx, ty)) return 0;
+      if (!this._natural.has(this.walls[ty * WW2 + tx]) || this.ruinInside(tx, ty)) return 0;
       return this.caveTypeAt(tx, ty);
     },
     buildCaveZones(rng) {
@@ -44482,7 +44505,7 @@
         case "sky":
           return ["gale", "sky_sentry", "cloudjelly", "gale"];
         case "ruin": {
-          const r = ty !== void 0 && this.world.ruinAt(tx, ty);
+          const r = ty !== void 0 && this.world.ruinInside(tx, ty);
           const sp = r && r.id && RUIN_SPEC.find((q) => q.id === r.id);
           if (sp && sp.mobs) {
             return night ? [...sp.mobs, ...sp.mobs, "ruin_guard"] : [...sp.mobs, "ruin_guard", "lantern"];
@@ -45423,6 +45446,12 @@
     },
     /* 갈래(CAVE_TYPES)마다 몸에 오는 것이 다르게 했다: 이끼 굴은 아물고, 종유 동굴은 머리 위를 봐야 하고, 독기 굴은 숨이 따갑고, 금 간 자갈은 무너뜨리면 숨은 동굴이 열린다 —
        사연: docs/code-history.md#h72 */
+    /** 갈래 없는 맨 굴도 자연 굴인가 — 지표 12칸 아래 · 지층 벽지 · 유적 밖(caveKindAt 과 같은 조건, 갈래만 안 본다) */
+    caveNat(tx, ty) {
+      const w = this.world, { WW: WW2, HELL_Y: HELL_Y2 } = dimsOf(w);
+      if (!w.inB(tx, ty) || ty <= w.surface[tx] + 12 || ty >= HELL_Y2) return false;
+      return w.walls[ty * WW2 + tx] !== 0 && !w.ruinInside(tx, ty);
+    },
     updateCaves(dt) {
       const p = this.player, w = this.world;
       if (!p || !w || p.dead) return;
@@ -45443,12 +45472,14 @@
       this._caveT = 0.35;
       const k = w.caveKindAt(tx, ty), C = CAVE_TYPES[k];
       this.caveHere = k;
-      if (k && k !== this._caveLast) {
+      const seen = (k || this.caveNat(tx, ty)) && w.openCave(tx, ty) ? k || -1 : 0;
+      if (seen && seen !== this._caveLast) {
         this.tally = this.tally || {};
-        (this.tally.caves = this.tally.caves || {})[C.id] = 1;
+        if (!this.tally.caveIn) this.tally.caveIn = 1;
+        if (k) (this.tally.caves = this.tally.caves || {})[C.id] = 1;
         this.checkAch();
       }
-      this._caveLast = k;
+      this._caveLast = seen;
       this._caveTick = (this._caveTick || 0) - 0.35;
       if (this._caveTick <= 0 && k) {
         this._caveTick = 1;
@@ -46156,7 +46187,7 @@
     /** 유적에 처음 발을 들였을 때 — 그 유적만의 카드를 한 번 띄운다. */
     checkRuinEntry() {
       const p = this.player, w = this.world;
-      const r = w.ruinAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
+      const r = w.ruinInside(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
       if (!r || !r.id) return;
       if (!this.seenRuins) this.seenRuins = {};
       this.seenRuins[r.id] = 1;
@@ -46184,7 +46215,7 @@
     /* ================= 유적의 맥박 · 탐사 기록 · 메아리 시련 ================= */
     /** 그 자리의 바이옴 유적 — { r, spec, idx, id } 또는 null. */
     pulseRuinAt(tx, ty) {
-      const r = this.world.ruinAt(tx, ty);
+      const r = this.world.ruinInside(tx, ty);
       if (!r || !r.id) return null;
       const spec = this.ruinSpec(r.id);
       if (!spec) return null;
@@ -46324,7 +46355,7 @@
         const ty = pty + Math.floor(Math.random() * 11) - 6;
         if (w.solid(tx, ty) || w.solid(tx, ty - 1) || w.solid(tx + 1, ty) || w.solid(tx + 1, ty - 1)) continue;
         if (!w.solid(tx, ty + 1) || TILE_DEF[w.get(tx, ty)].liquid) continue;
-        if (w.ruinAt(tx, ty) !== here.r) continue;
+        if (w.ruinInside(tx, ty) !== here.r) continue;
         return [tx, ty];
       }
       return null;

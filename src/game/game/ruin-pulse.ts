@@ -21,7 +21,7 @@ export const RuinPulsePart: Bag = {
 
   /** 그 자리의 바이옴 유적 — { r, spec, idx, id } 또는 null. */
   pulseRuinAt(tx: number, ty: number) {
-    const r = this.world.ruinAt(tx, ty);
+    const r = this.world.ruinInside(tx, ty);
     if (!r || !r.id) return null;
     const spec = this.ruinSpec(r.id);
     if (!spec) return null;
@@ -153,7 +153,7 @@ export const RuinPulsePart: Bag = {
       const ty = pty + Math.floor(Math.random() * 11) - 6;
       if (w.solid(tx, ty) || w.solid(tx, ty - 1) || w.solid(tx + 1, ty) || w.solid(tx + 1, ty - 1)) continue;
       if (!w.solid(tx, ty + 1) || TILE_DEF[w.get(tx, ty)].liquid) continue;
-      if (w.ruinAt(tx, ty) !== here.r) continue;
+      if (w.ruinInside(tx, ty) !== here.r) continue;
       return [tx, ty];
     }
     return null;

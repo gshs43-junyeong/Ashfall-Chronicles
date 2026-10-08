@@ -50,7 +50,7 @@ export const SpawnPart: Bag = {
       case 'sky': return ['gale', 'sky_sentry', 'cloudjelly', 'gale'];
       case 'ruin': {
         /* 유적마다 매긴 무리(RUIN_SPEC[].mobs)를 쓴다 — 셋으로 다 같으면 어디를 들어가도 같은 곳처럼 느껴진다. */
-        const r = ty !== undefined && this.world.ruinAt(tx, ty);
+        const r = ty !== undefined && this.world.ruinInside(tx, ty);
         const sp = r && r.id && RUIN_SPEC.find(q => q.id === r.id);
         if (sp && sp.mobs) {
           // 유적 지킴이(ruin_guard)는 어디에나 한 자리 섞는다 — 여덟 곳을 잇는 공통 설정이다

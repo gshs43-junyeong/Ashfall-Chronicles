@@ -405,7 +405,20 @@ export const WorldRuinSite: Bag & ThisType<World> = {
 
   /** 좌표가 유적 내부인지 */
   inRuin(tx: number, ty: number) {
-    return !!this.ruinAt(tx, ty);
+    return !!this.ruinInside(tx, ty);
+  },
+  /** 플레이어가 **유적 안**에 있는가 — 방(벽 한 칸 포함) · 입구의 층계참 · 계단실만. 둘레 상자(ruinAt)로 재면 상자를 지나는
+      자연 굴 · 바위를 판 굴까지 유적이 되어 맥박 · 유적 몹 · 입장 카드가 엉뚱한 데서 떴다. 방 기록이 없는 곳(봉인실 · 옛 세이브)은 상자로. 사연: docs/code-history.md#h165 */
+  ruinInside(tx: number, ty: number) {
+    if (!this.ruins) return null;
+    for (const r of this.ruins) {
+      const site = this.ruinSites && this.ruinSites.find((s: Bag) => s.id === r.id && s.rooms && s.rooms.length);
+      if (!site) { if (tx > r.x - r.w / 2 && tx < r.x + r.w / 2 && ty > r.y - r.h / 2 && ty < r.y + r.h / 2) return r; continue; }
+      if (Math.abs(tx - site.x) > site.w / 2 + 60 || Math.abs(ty - site.y) > site.h / 2 + 60) continue;
+      for (const m of site.rooms) if (tx >= m.x - 1 && tx <= m.x + m.w && ty >= m.y - 1 && ty <= m.y + m.h) return r;
+      for (const e of site.ent || []) if (tx >= e[0] && tx < e[0] + e[2] && ty >= e[1] && ty < e[1] + e[3]) return r;
+    }
+    return null;
   },
   /** 이 좌표가 속한 유적 자체를 돌려준다 (id 가 붙어 있으면 어느 유적인지도 안다). */
   ruinAt(tx: number, ty: number) {

@@ -113,6 +113,12 @@ export const CavesPart: Bag = {
 
   /* 갈래(CAVE_TYPES)마다 몸에 오는 것이 다르게 했다: 이끼 굴은 아물고, 종유 동굴은 머리 위를 봐야 하고, 독기 굴은 숨이 따갑고, 금 간 자갈은 무너뜨리면 숨은 동굴이 열린다 —
      사연: docs/code-history.md#h72 */
+  /** 갈래 없는 맨 굴도 자연 굴인가 — 지표 12칸 아래 · 지층 벽지 · 유적 밖(caveKindAt 과 같은 조건, 갈래만 안 본다) */
+  caveNat(tx: number, ty: number) {
+    const w = this.world, { WW, HELL_Y } = dimsOf(w);
+    if (!w.inB(tx, ty) || ty <= w.surface[tx] + 12 || ty >= HELL_Y) return false;
+    return w.walls[ty * WW + tx] !== 0 && !w.ruinInside(tx, ty);
+  },
   updateCaves(dt: number) {
     const p = this.player, w = this.world;
     if (!p || !w || p.dead) return;
@@ -135,12 +141,15 @@ export const CavesPart: Bag = {
     const k = w.caveKindAt(tx, ty), C = CAVE_TYPES[k];
     this.caveHere = k;
     /* 갈래가 바뀌면 업적용으로만 센다 — 알림은 띄우지 않는다(구역이 60×55칸이라 굴 근처만 지나가도 떴다) */
-    if (k && k !== this._caveLast) {
+    /* 업적은 **트인 자연 굴**에 섰을 때만 센다 — 판 굴로 구역을 지나가는 것은 들어가 본 것이 아니다 */
+    const seen = (k || this.caveNat(tx, ty)) && w.openCave(tx, ty) ? k || -1 : 0;
+    if (seen && seen !== this._caveLast) {
       this.tally = this.tally || {};
-      (this.tally.caves = this.tally.caves || {})[C.id] = 1;
+      if (!this.tally.caveIn) this.tally.caveIn = 1;
+      if (k) (this.tally.caves = this.tally.caves || {})[C.id] = 1;
       this.checkAch();
     }
-    this._caveLast = k;
+    this._caveLast = seen;
     // 갈래마다 몸에 오는 것 — 1초에 한 번
     this._caveTick = (this._caveTick || 0) - 0.35;
     if (this._caveTick <= 0 && k) {

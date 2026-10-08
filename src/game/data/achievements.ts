@@ -106,8 +106,8 @@ export const ACHIEVEMENTS: AchDef[] = [
     check: g => achSum(g.player.mined) >= 20000 },
 
   // ---------------- 탐험 ----------------
-  { id: 'a_cave', cat: 'explore', i: '🕯', n: '첫 동굴', d: '지하 60칸 아래를 봤다.',
-    check: g => g.player.deepest >= 120 },
+  { id: 'a_cave', cat: 'explore', i: '🕯', n: '첫 동굴', d: '처음으로 땅속의 트인 굴에 들어섰다.',
+    check: g => !!(g.tally && g.tally.caveIn) },
   { id: 'a_deep', cat: 'explore', i: '⬇', n: '심층', d: '심층까지 내려갔다.',
     check: g => g.player.deepest >= dimsOf(g.world).DEEP_Y },
   { id: 'a_hell', cat: 'explore', i: '🔥', n: '가장 아래', d: '가장 아래에 발을 디뎠다.',
