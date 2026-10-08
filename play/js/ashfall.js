@@ -923,6 +923,7 @@
       /** 창에 키보드를 건다. */
       bindKeyboard(hooks) {
         addEventListener("keydown", (e) => {
+          if (typing(e.target) && e.key !== "Escape") return;
           if (e.repeat) {
             keys[e.code] = 1;
             return;
@@ -937,6 +938,9 @@
         addEventListener("keyup", (e) => {
           keys[e.code] = 0;
         });
+        addEventListener("focusin", (e) => {
+          if (typing(e.target)) for (const k in keys) keys[k] = 0;
+        });
         addEventListener("blur", () => {
           for (const k in keys) keys[k] = 0;
           if (hooks.blur) hooks.blur();
@@ -944,6 +948,14 @@
       }
     };
     return input;
+  }
+  function typing(t) {
+    const el = t;
+    if (!el || !el.tagName) return false;
+    if (el.isContentEditable || el.tagName === "TEXTAREA") return true;
+    if (el.tagName !== "INPUT") return false;
+    const ty = (el.type || "text").toLowerCase();
+    return ["text", "search", "email", "number", "password", "url", "tel"].indexOf(ty) >= 0;
   }
 
   // src/engine/input/pointer.ts
