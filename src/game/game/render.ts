@@ -366,13 +366,7 @@ export const RenderPart: Bag = {
     /* 그 땅의 공기색 — 아주 옅게. */
     const air = this.biomeAir(camX, camY);
     if (air) this.drawAir(c, air);
-    if (this.ruinDark > 0) {
-      c.save();
-      c.globalAlpha = Math.min(1, this.ruinDark / 2) * 0.72;
-      c.fillStyle = '#04050a';
-      c.fillRect(0, 0, this.W, this.H);
-      c.restore();
-    }
+    if (this.ruinDark > 0) this.drawRuinDark(c);   // 플레이어 둘레 · 사건의 불빛만 뚫린 어둠(game/ruin-events-draw)
     if (this.ruinSpore > 0) {
       c.save();
       c.globalAlpha = Math.min(1, this.ruinSpore / 2) * 0.26;

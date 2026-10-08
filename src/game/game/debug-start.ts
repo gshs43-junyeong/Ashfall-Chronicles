@@ -170,7 +170,7 @@ export const DebugStartPart: Bag = {
       const w = this.world, id = qs.get('id') || 'mine';
       const idx = RUIN_SPEC.findIndex(s => s.id === id);
       const site = (w.ruinSites || []).find((s: any) => s.id === id);
-      if (idx >= 0 && site && site.rooms.length) {
+      if ((idx >= 0 || /^story\d$/.test(id)) && site && site.rooms.length) {
         const plv = +qs.get('plv') || 30;
         while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
         p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
@@ -179,8 +179,11 @@ export const DebugStartPart: Bag = {
         const r = site.rooms.slice().sort((a: any, b: any) => a.y - b.y)[0];
         p.x = (r.x + (r.w >> 1)) * TS; p.y = (r.y + r.h - 3) * TS - p.h + TS; p.vx = p.vy = 0;
         this.seenRuins[id] = 1;
-        if (qs.get('boss') === '1') this.lairs[idx] = 1;
+        if (qs.get('boss') === '1' && idx >= 0) this.lairs[idx] = 1;
         this.ruinPulse = { [id]: clamp(+qs.get('pulse') || 0, 0, 100) };
+        /* &ev=<사건> — 그 유적의 맥박 사건을 2초 뒤에 바로 세운다(data/ruins.ts PULSE_EVENTS) */
+        const evk = qs.get('ev');
+        if (evk) this.after(2, () => { this.ruinPulse[id] = Math.max(this.pulseOf(id), 26); this.startPulseEvent(id, 1, evk); });
         this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
         UI.refreshBag();

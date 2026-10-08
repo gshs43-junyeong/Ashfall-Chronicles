@@ -11,7 +11,7 @@ export const RUIN_SPEC: RuinDef[] = [
     id: 'ice', n: '얼음 던전', x: 180 + SHIFT, y: 128, w: 88, h: 50,
     wall: T.ICEBRICK, floor: T.ICE, bg: 5, torch: T.TORCH,
     traps: ['dart', 'crumble', 'grind'], boss: 'ice_warden',
-    mobs: ['frostling', 'icewolf', 'frostbound'],
+    mobs: ['frostling', 'icewolf', 'frostbound', 'rimeguard'],
     rank: 2, tier: 3, trapRate: 0.46, spikeRate: 0.26, chestRate: 0.16, mobMul: 1.0
   },
   {
@@ -19,7 +19,7 @@ export const RUIN_SPEC: RuinDef[] = [
     id: 'pyramid', n: '피라미드', x: 2180 + SHIFT, y: 50, w: 116, h: 62,
     wall: T.SANDBRICK, floor: T.SANDSTONE, bg: 8, torch: T.TORCH,
     traps: ['dart', 'vent', 'crumble', 'gas'], boss: 'sand_guardian',
-    mobs: ['scorpion', 'sandmaw', 'skeleton', 'jarhusk'],
+    mobs: ['scorpion', 'sandmaw', 'skeleton', 'jarhusk', 'sunscarab'],
     // 지상으로 튀어나온 데다 얕아서 일찍 눈에 띄지만, 안은 함정이 가장 촘촘하다 — "보이는 것과 실제 난이도가 다른" 유적 하나는 있어야 한다
     rank: 4, tier: 4, trapRate: 0.78, spikeRate: 0.46, chestRate: 0.20, mobMul: 1.35
   },
@@ -27,7 +27,7 @@ export const RUIN_SPEC: RuinDef[] = [
     id: 'mine', n: '버려진 광산', x: 820 + SHIFT, y: 186, w: 104, h: 52,
     wall: T.MINEWOOD, floor: T.PLANK, bg: 4, torch: T.TORCH,
     traps: ['dart', 'crumble', 'gas'], boss: 'mine_horror',
-    mobs: ['minerghost', 'spider', 'bat', 'cartwraith'],
+    mobs: ['minerghost', 'spider', 'bat', 'cartwraith', 'lampthief'],
     // 베이스캠프 바로 옆.
     rank: 1, tier: 2, trapRate: 0.32, spikeRate: 0.16, chestRate: 0.14, mobMul: 0.85
   },
@@ -35,7 +35,7 @@ export const RUIN_SPEC: RuinDef[] = [
     id: 'blight', n: '부패한 둥지', x: 4020 + SHIFT, y: 216, w: 100, h: 60,
     wall: T.EBONSTONE, floor: T.EBONSTONE, bg: 3, torch: T.TORCH,
     traps: ['dart', 'vent', 'gas', 'coil'], boss: 'blight_maw',
-    mobs: ['crawler', 'shadoweye', 'sacling'],
+    mobs: ['crawler', 'shadoweye', 'sacling', 'blightleech'],
     // 동쪽 끝 + 가장 깊다.
     rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.24, mobMul: 1.85
   },
@@ -43,7 +43,7 @@ export const RUIN_SPEC: RuinDef[] = [
     id: 'spore', n: '포자 굴', x: 3620 + SHIFT, y: 156, w: 100, h: 52,
     wall: T.SPORESTONE, floor: T.GLOWMOSS, bg: 12, torch: T.GLOWCAP,
     traps: ['vent', 'dart', 'gas', 'coil'], boss: 'spore_queen',
-    mobs: ['sporeling', 'capbeast', 'ventspitter'], arch: 'buried',
+    mobs: ['sporeling', 'capbeast', 'ventspitter', 'sporegnaw'], arch: 'buried',
     // 입구가 없어 우연히 뚫고 들어가는 곳.
     rank: 5, tier: 5, trapRate: 0.50, spikeRate: 0.30, chestRate: 0.22, mobMul: 1.6
   }
@@ -94,7 +94,7 @@ RUIN_SPEC.push({
   id: 'abyss', n: '가라앉은 유적', x: 210, y: 600, w: 92, h: 60,
   wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10, torch: T.GLOWCAP,
   traps: ['brine', 'dart', 'crumble', 'mine'], boss: 'drowned_keeper',
-  mobs: ['ruin_guard', 'archivist', 'lantern'],
+  mobs: ['ruin_guard', 'archivist', 'lantern', 'pagewisp'],
   rank: 7, tier: 5, trapRate: 1.0, spikeRate: 0.5, chestRate: 0.24, mobMul: 1.25,
   arch: 'seabed', plan: 'warren', rooms: 32, maze: 1, entryKind: 'maze',
   decor: [['growth', T.KELPPLANT, 0.5], ['stalac', T.RUINBRICK, 0.35], ['brazier', T.GLOWCAP, 0.4]],
@@ -124,9 +124,9 @@ export const STORY_RUIN: RuinDef[] = [
   { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 16, bsp: [6, 12, 9], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
 ];
 /* 석판 유적에도 맥박 · 사건 · 탐사 기록이 뛴다. */
-STORY_RUIN[0].mobs = ['frostling', 'icewolf', 'skeleton']; STORY_RUIN[0].rank = 2;
-STORY_RUIN[1].mobs = ['skeleton', 'spider', 'bat'];         STORY_RUIN[1].rank = 3;
-STORY_RUIN[2].mobs = ['crawler', 'shadoweye', 'skeleton'];  STORY_RUIN[2].rank = 5;
+STORY_RUIN[0].mobs = ['frostling', 'icewolf', 'froststatue']; STORY_RUIN[0].rank = 2;
+STORY_RUIN[1].mobs = ['skeleton', 'spider', 'mazeshade'];       STORY_RUIN[1].rank = 3;
+STORY_RUIN[2].mobs = ['crawler', 'shadoweye', 'hollowling'];  STORY_RUIN[2].rank = 5;
 
 /* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다. */
 /* 신비한 방 — 한 세계에 두세 곳. */
@@ -185,16 +185,55 @@ export const PULSE = {
   waveN: [0, 1, 1, 2],            // 한 번에 몇
   rageEvery: 24                   // 격노 중 그 유적 고유의 발작 간격(초)
 };
-/* 맥박 사건 — 단계가 오를 때마다 하나(이미 벌어진 사건이 없을 때). */
+/* 맥박 사건 — **유적마다 제 것 둘**(ruin). 단계가 오를 때 하나, 앞의 것과 번갈아. 모든 유적에 같은 사건(표식 · 공명석 · 탐욕 · 포위)이
+   돌던 때는 한 곳을 겪으면 나머지가 같은 일의 되풀이라 다른 유적을 찾아갈 이유가 줄었다 — 사건마다 **하는 일(동사)이 다르다**.
+   d 는 처음 알릴 글(무엇을 하면 되는지), t 는 제한 시간(초). 구현은 game/ruin-events.ts. 사연: docs/code-history.md#h169 */
 export const PULSE_EVENTS: Bag = {
-  hunt:   { n: '표식된 것', i: '🎯', t: 60, stages: [1, 3],
-            d: '유적이 하나에 표식을 새겼다 — 달아나기 전에 쓰러뜨려라' },
-  stones: { n: '공명석', i: '💠', t: 90, stages: [1, 2],
-            d: '다른 방 셋에서 돌이 울린다 — 셋을 다 만지면 맥박이 흩어진다' },
-  greed:  { n: '탐욕의 상자', i: '🪙', t: 60, stages: [2, 3],
-            d: '황금 상자가 떠올랐다 — 가라앉기 전에 열어라. 지키는 것이 깨어난다' },
-  siege:  { n: '포위', i: '⚔', t: 75, stages: [2, 3],
-            d: '유적이 문을 닫았다 — 세 차례 몰려오는 것을 모두 쓰러뜨려라' }
+  /* 얼음 던전 — 깨기 전에 · 불씨 따라가기 */
+  thaw:     { ruin: 'ice', n: '녹는 순례자들', i: '🧊', t: 70,
+              d: '언 것들이 하나씩 녹는다 — 깨어나기 전에 부숴라. 언 몸은 세 배로 부서진다' },
+  ember:    { ruin: 'ice', n: '마지막 불씨', i: '🔥', t: 90,
+              d: '불이 꺼지고 불씨 하나가 떠났다 — 빛 밖은 얼어붙는다. 불씨가 멈추는 곳까지 따라가라' },
+  /* 피라미드 — 저울 · 해시계 */
+  scale:    { ruin: 'pyramid', n: '심장의 저울', i: '⚖', t: 45,
+              d: '저울이 떠올랐다 — 무엇을 올릴지 골라라(우클릭). 무거운 것일수록 크게 받거나 크게 잃는다' },
+  sundial:  { ruin: 'pyramid', n: '해시계의 순서', i: '☀', t: 75,
+              d: '바닥 판 넷에 햇빛이 차례로 든다 — 본 순서대로 밟아라. 세 번 틀리면 모래가 덮친다' },
+  /* 버려진 광산 — 도둑 쫓기 · 무너지는 갱도 */
+  thief:    { ruin: 'mine', n: '등불 도둑', i: '🏮', t: 45,
+              d: '무언가 불을 낚아채 달아났다 — 어둠 속 훔친 불빛을 쫓아가 잡아라' },
+  cavein:   { ruin: 'mine', n: '무너지는 갱도', i: '⛏', t: 50,
+              d: '갱도가 한쪽 끝부터 무너진다 — 먼지 벽에 먹히기 전에 승강기까지 달려라' },
+  /* 부패한 둥지 — 옮겨 붙는 것 · 박동 */
+  host:     { ruin: 'blight', n: '옮겨 붙는 것', i: '🪱', t: 80,
+              d: '빛나는 것이 몸을 옮겨 다닌다 — 붙어 있는 몸을 넷 쓰러뜨려라. 다른 몸은 소용없다' },
+  heartbeat:{ ruin: 'blight', n: '둥지의 박동', i: '💗', t: 70,
+              d: '알주머니가 박동에 맞춰 부푼다 — 고리가 닫히는 순간에 쳐야 터진다. 엇박이면 새끼가 쏟아진다' },
+  /* 포자 굴 — 왕관 지키기 · 맑은 숨 */
+  crown:    { ruin: 'spore', n: '버섯 왕관', i: '🍄', t: 50,
+              d: '거대한 버섯이 자란다 — 다 자랄 때까지 갉아 먹으러 오는 것들을 막아라' },
+  clearair: { ruin: 'spore', n: '맑은 숨', i: '🫧', t: 60,
+              d: '포자가 굴을 채운다 — 떠도는 맑은 공기 방울 안에서만 숨이 쉬어진다. 방울 안에서 스무 숨을 채워라' },
+  /* 가라앉은 유적 — 차오르는 물 · 침묵 */
+  tide:     { ruin: 'abyss', n: '차오르는 물', i: '🌊', t: 60,
+              d: '아래에서부터 물이 차오른다 — 잠기기 전에 유적 꼭대기의 숨구멍까지 올라가라' },
+  hush:     { ruin: 'abyss', n: '기록관의 침묵', i: '🤫', t: 40,
+              d: '낱장들이 읽는 중이다 — 끝날 때까지 치지도, 쓰지도, 내달리지도 마라. 소리를 내면 깨어난다' },
+  /* 서리 밑 석실 — 얼음 속 소리 · 숨 멈추기 */
+  buried:   { ruin: 'story0', n: '얼음 속의 소리', i: '🔔', t: 80,
+              d: '벽 속 어딘가에서 종이 운다 — 가까울수록 맑게 운다. 찾아서 파내라' },
+  statues:  { ruin: 'story0', n: '숨 멈추기', i: '🗿', t: 70,
+              d: '석상들은 네가 움직일 때만 다가온다 — 멈춰 서면 굳어 두 배로 부서진다' },
+  /* 겹친 길 — 뒤따르는 발자국 · 깜빡이는 길 */
+  shadow:   { ruin: 'story1', n: '뒤따르는 발자국', i: '👣', t: 32,
+              d: '네 그림자가 네 걸음을 그대로 밟아 온다 — 닿지 않게 계속 움직여라. 점점 빨라진다' },
+  phase:    { ruin: 'story1', n: '깜빡이는 길', i: '✨', t: 45,
+              d: '천장 가까이 상자가 떠올랐다 — 번갈아 나타나는 발판을 밟고 올라가 열어라' },
+  /* 발 디딜 곳 없는 방 — 꺼지는 바닥 · 빈 씨앗 */
+  sink:     { ruin: 'story2', n: '꺼지는 바닥', i: '🕳', t: 30,
+              d: '디딘 바닥이 곧 꺼진다 — 멈추지 말고 버텨라. 껍질들이 밑에서 덮친다' },
+  seed:     { ruin: 'story2', n: '빈 씨앗', i: '🌰', t: 60,
+              d: '빈 씨앗이 떨어졌다 — 들어서(우클릭) 큰 방 한가운데에 묻어라. 맞으면 떨어뜨린다' }
 };
 /* 격노 발작 — 유적마다 하나. */
 export const PULSE_RAGE: Bag = {
@@ -212,8 +251,8 @@ export const PULSE_RAGE: Bag = {
 /* ---------------- 탐사 기록 ---------------- */
 export const SURVEY_W: Record<string, number> = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12 };
 export const SURVEY_TIERS: { r: string; c: string; need: Record<string, number> }[] = [
-  { r: 'S', c: '#ffd24a', need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 4, echo: 3 } },
-  { r: 'A', c: '#e8a0ff', need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 2, echo: 1 } },
+  { r: 'S', c: '#ffd24a', need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 2, echo: 3 } },
+  { r: 'A', c: '#e8a0ff', need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 1, echo: 1 } },
   { r: 'B', c: '#8fd0ff', need: { rooms: 0.65, chests: 0.5, boss: 1, events: 1 } },
   { r: 'C', c: '#9fdc8f', need: { rooms: 0.35, chests: 0.2 } },
   { r: 'D', c: '#9a9a9a', need: {} }

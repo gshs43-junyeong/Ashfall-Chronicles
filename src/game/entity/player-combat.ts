@@ -16,6 +16,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
   /* ---- 공격 ---- */
   attackReady() { return this.atkTimer <= 0; },
   doAttack(mx: number, my: number) {
+    if (this === G.player) G.noiseT = G.time;          // 소리 — 떠도는 낱장이 깬다(entity/enemy-traits)
     const w = this.weapon();
     if (!w) return this.punch(mx, my);
     const d = idef(w);
@@ -126,6 +127,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     if ((this.cd[id] || 0) > 0) { G.skillDeny(i); return; }
     if (this.mp < sk.mana!) { G.skillDeny(i, tr('마나가 부족하다')); return; }
     this.mp -= sk.mana!;
+    if (this === G.player) G.noiseT = G.time;
     this.cd[id] = sk.cd! * (1 - this.d.cdr / 100);
     const w = this.weapon();
     const wdmg = w && idef(w).dmg ? itemDamage(w) : 10;

@@ -1695,6 +1695,86 @@ window.SPRITE_MANIFEST = {
         "frameH": 46,
         "count": 7,
         "flap": 6
+      },
+      "rimeguard": {
+        "file": "char/rimeguard.png",
+        "frameW": 32,
+        "frameH": 44,
+        "count": 7,
+        "foot": -0.75,
+        "side": 0.5
+      },
+      "sunscarab": {
+        "file": "char/sunscarab.png",
+        "frameW": 32,
+        "frameH": 20,
+        "count": 7,
+        "foot": -0.75,
+        "side": -0.5
+      },
+      "lampthief": {
+        "file": "char/lampthief.png",
+        "frameW": 30,
+        "frameH": 32,
+        "count": 7,
+        "foot": -0.75,
+        "side": -2.5
+      },
+      "blightleech": {
+        "file": "char/blightleech.png",
+        "frameW": 41,
+        "frameH": 20,
+        "count": 7,
+        "foot": 0.25,
+        "side": -1
+      },
+      "sporegnaw": {
+        "file": "char/sporegnaw.png",
+        "frameW": 33,
+        "frameH": 26,
+        "count": 7,
+        "foot": -0.75,
+        "side": -0.5
+      },
+      "pagewisp": {
+        "file": "char/pagewisp.png",
+        "frameW": 26,
+        "frameH": 28,
+        "count": 7,
+        "foot": 4.25,
+        "side": 0
+      },
+      "froststatue": {
+        "file": "char/froststatue.png",
+        "frameW": 32,
+        "frameH": 46,
+        "count": 7,
+        "foot": -0.75,
+        "side": -3.5
+      },
+      "mazeshade": {
+        "file": "char/mazeshade.png",
+        "frameW": 26,
+        "frameH": 44,
+        "count": 7,
+        "foot": -0.75,
+        "side": 0
+      },
+      "hollowling": {
+        "file": "char/hollowling.png",
+        "frameW": 26,
+        "frameH": 34,
+        "count": 7,
+        "foot": -0.75,
+        "side": -0.5
+      },
+      "nestsac": {
+        "file": "char/nestsac.png",
+        "frameW": 26,
+        "frameH": 28,
+        "count": 7,
+        "foot": -0.75,
+        "side": 0.5
       }
     }
   },

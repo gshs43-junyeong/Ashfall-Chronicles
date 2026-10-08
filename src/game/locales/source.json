@@ -62,6 +62,9 @@
   "(수락한다)": [
    "game/quests.sideTalk"
   ],
+  "(아무것도 올리지 않고 물러난다)": [
+   "game/ruin-events.openScale"
+  ],
   "(여정을 시작한다)": [
    "game/talk.talkTo"
   ],
@@ -308,11 +311,17 @@
   "{npc}의 상점 — 🪙 {gold} · 환율 {rate}%{arrow}": [
    "ui/shop.shopTitle"
   ],
+  "{n}/{max} · 언 채로 {s}": [
+   "game/ruin-events.evProgress"
+  ],
   "{n}/{max}단계": [
    "game/progress.objProgress"
   ],
   "{n}초": [
    "game/ruin-pulse.drawPulse"
+  ],
+  "{n}칸": [
+   "game/ruin-events.evProgress"
   ],
   "{n}칸을 되돌렸다 — 이어하기에서 고르면 된다": [
    "game/save.importSaves"
@@ -394,9 +403,6 @@
   ],
   "{v}의 자리를 알았다 — 나침반을 보라": [
    "game/ruins.useRuinMap"
-  ],
-  "{wave}/3 무리": [
-   "game/ruin-pulse.drawPulse"
   ],
   "· <b>{clearedN}개</b> 완료": [
    "ui/quest.refreshQuest"
@@ -663,6 +669,9 @@
   "거꾸로 읽어 낸 수가 아직 답은 아니다.": [
    "game/ruins.ruinCipher"
   ],
+  "거머리가 붙었다 — 내달려 떼어 내라": [
+   "entity/enemy-traits.traitContact"
+  ],
   "거짓으로 새긴 것": [
    "game/ruins.ruinCipher"
   ],
@@ -735,9 +744,6 @@
   ],
   "공격력도 방어력도 없는 것은 벼릴 데가 없다": [
    "game/village.enhanceSlot"
-  ],
-  "공명석 — {n}/3": [
-   "game/ruin-pulse.updatePulseEvent"
   ],
   "공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다": [
    "game/debug-start.buildDebugFactory"
@@ -815,6 +821,7 @@
    "game/save.kit"
   ],
   "금화가 모자란다": [
+   "game/ruin-events.fn",
    "game/ruins.fn"
   ],
   "금화가 부족하다": [
@@ -825,6 +832,9 @@
    "game/village.trainXp",
    "game/village.enhanceSlot",
    "game/village.reforgeSlot"
+  ],
+  "금화를 올린다 ({n})": [
+   "game/ruin-events.openScale"
   ],
   "기계": [
    "ui/tip.showTip",
@@ -886,6 +896,9 @@
   ],
   "낮추면 화면 픽셀이 줄어 폰에서 더 부드럽게 돕니다. 자동은 폰 절약 · 태블릿 보통 · 컴퓨터 높음입니다.": [
    "index.html"
+  ],
+  "낱장이 넘어간다 — {n}/4": [
+   "game/ruin-events.evTick"
   ],
   "내가 정련법을 가르쳐줄 테니, {item} {n}개를 직접 만들어 와 봐.": [
    "data/quests"
@@ -1093,11 +1106,23 @@
   "둥지가 깨어났다": [
    "game/ruins.fireRuinEvent"
   ],
+  "들고 있다": [
+   "game/ruin-events.evProgress"
+  ],
+  "등불 도둑이 불을 채 갔다 — 잡으면 돌아온다": [
+   "entity/enemy-traits.traitContact"
+  ],
   "따뜻하게 날 수 있겠어. 고맙다.": [
    "data/quests"
   ],
+  "따뜻하다": [
+   "game/ruin-events.evProgress"
+  ],
   "땔감 모으기": [
    "data/quests"
+  ],
+  "떨어졌다": [
+   "entity/enemy-traits.traitTick"
   ],
   "떨어진 별이 대지를 갈랐다. 잿빛이 번지기 전에, 다섯 개의 심장을 되찾아라.": [
    "index.html"
@@ -1107,6 +1132,9 @@
   ],
   "또는": [
    "ui/tree.lockReason"
+  ],
+  "뜨겁다": [
+   "game/ruin-events.evProgress"
   ],
   "뜯어 봐야 안다": [
    "data/quests"
@@ -1381,6 +1409,9 @@
   "바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수": [
    "ui/tip.showTip"
   ],
+  "바닥에": [
+   "game/ruin-events.evProgress"
+  ],
   "바닥이 언다 — 불 옆에 서라": [
    "entity/enemy-ai.layHeat"
   ],
@@ -1481,6 +1512,9 @@
    "factory/tick.runTrap",
    "factory/tick.runWildTrap"
   ],
+  "방패": [
+   "entity/enemy-traits.traitHurt"
+  ],
   "방향이 없는 기계다": [
    "game/mine.rotatePlace"
   ],
@@ -1570,6 +1604,9 @@
   "보관된 금화가 없다": [
    "ui.withdrawGold"
   ],
+  "보는 중": [
+   "game/ruin-events.evProgress"
+  ],
   "보는 쪽": [
    "game/mine.rotatePlace"
   ],
@@ -1638,6 +1675,9 @@
   ],
   "불에 넣을 것": [
    "data/quests"
+  ],
+  "불이 돌아왔다 — 도둑의 자루에서 금화 {n}": [
+   "entity/enemy-traits.traitDie"
   ],
   "불이 한꺼번에 꺼졌다": [
    "game/ruins.fireRuinEvent"
@@ -1723,7 +1763,6 @@
    "ui/machine.refreshMachine"
   ],
   "상자": [
-   "game/ruin-pulse.drawPulse",
    "ui/quest.renderRuins",
    "ui/shop.openChest",
    "index.html"
@@ -1775,6 +1814,9 @@
   ],
   "생활 숙련": [
    "index.html"
+  ],
+  "서늘하다": [
+   "game/ruin-events.evProgress"
   ],
   "서쪽": [
    "game/meteor.meteorImpact"
@@ -1903,6 +1945,18 @@
   "신발": [
    "index.html"
   ],
+  "심장을 올린다 (지금 체력의 절반)": [
+   "game/ruin-events.openScale"
+  ],
+  "심장의 저울": [
+   "game/ruin-events.openScale"
+  ],
+  "심장이 깃털보다 가볍다 — 저울이 길을 연다": [
+   "game/ruin-events.fn"
+  ],
+  "심장이 무겁다 — 삼키는 것들이 깨어난다": [
+   "game/ruin-events.fn"
+  ],
   "싱글플레이": [
    "index.html"
   ],
@@ -1923,6 +1977,12 @@
   ],
   "씨앗": [
    "ui/tip.showTip"
+  ],
+  "씨앗을 들었다 — 큰 방 한가운데로": [
+   "game/ruin-events.ruinEvClick"
+  ],
+  "씨앗을 떨어뜨렸다": [
+   "game/ruin-events.evTick"
   ],
   "아궁이": [
    "data/quests"
@@ -1975,6 +2035,9 @@
   "어제 나간 사람이 안 돌아왔어. {enemy} {n}{mobCw}만 걷어 주면 내가 찾으러 나갈 수 있어.": [
    "data/quests"
   ],
+  "언 채로 부쉈다": [
+   "game/ruin-events.evTick"
+  ],
   "언어": [
    "index.html"
   ],
@@ -1986,6 +2049,9 @@
   ],
   "없음 (전부 통과)": [
    "ui/machine.refreshMachine"
+  ],
+  "엇박 — 주머니가 새끼를 뱉었다": [
+   "game/ruin-events.sacStrike"
   ],
   "엘라라가 거긴 그냥 두라고 했다.": [
    "ui/craft.refreshTownhall"
@@ -2075,6 +2141,9 @@
   ],
   "오래된 빚": [
    "data/quests"
+  ],
+  "옮겨 붙는 것 — {n}/{need}": [
+   "game/ruin-events.evTick"
   ],
   "완료": [
    "ui/craft.refreshTownhall",
@@ -2417,6 +2486,12 @@
   "저 아래 {enemy}에게 진 빚이 있다. {n}마리를 대신 갚아 다오.": [
    "data/quests"
   ],
+  "저울대에 글이 새겨져 있다 — 「가벼운 것만 지나간다」.": [
+   "game/ruin-events.openScale"
+  ],
+  "저울이 수평을 이뤘다 — 올린 금화가 두 배로 돌아왔다": [
+   "game/ruin-events.fn"
+  ],
   "저장 내보내기": [
    "index.html"
   ],
@@ -2647,6 +2722,9 @@
   "쪽지 읽기": [
    "game/render-world.drawCursor"
   ],
+  "차갑다": [
+   "game/ruin-events.evProgress"
+  ],
   "차고 있는 것과 큰 차이 없다": [
    "ui/tip.compareLine"
   ],
@@ -2846,6 +2924,9 @@
    "ui/tree.showSkillTip",
    "ui/tree.learn"
   ],
+  "틀렸다 — 해가 순서를 다시 보여 준다 ({n}/3)": [
+   "game/ruin-events.evTick"
+  ],
   "파동이 잦아들었어. 역시 네 덕분이야.": [
    "data/quests"
   ],
@@ -2877,9 +2958,6 @@
   ],
   "펫을 끼고 있어야 준다": [
    "game/interact.useConsumable"
-  ],
-  "포위 — {wave}/3 무리": [
-   "game/ruin-pulse.updatePulseEvent"
   ],
   "폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳": [
    "game/debug-start.debugStart"
@@ -2935,6 +3013,9 @@
   ],
   "한계 높이": [
    "ui/hud.updateHUD"
+  ],
+  "한쪽 접시에는 깃털이 놓여 있다. 다른 쪽은 비어 있다.": [
+   "game/ruin-events.openScale"
   ],
   "할 일은 모두 끝냈다.": [
    "game/quests.tellQuest"
@@ -4026,6 +4107,27 @@
   "ENEMIES.ventspitter.d": "포자 구멍에 살던 것. 구멍이 벌레의 집인지 벌레가 구멍인지는 모른다.",
   "ENEMIES.sacling.n": "주머니의 것",
   "ENEMIES.sacling.d": "알주머니에서 나온 것. 아직 다 자라지 않았다.",
+  "ENEMIES.rimeguard.n": "서리 방패병",
+  "ENEMIES.rimeguard.d": "얼음 탑방패를 앞에 세우고 걷는다. 방패는 돌아설 줄 모른다 — 뒤나 위에서 쳐라.",
+  "ENEMIES.sunscarab.n": "태양 풍뎅이",
+  "ENEMIES.sunscarab.d": "등에 해를 지고 모래 속을 헤엄친다. 숨은 동안에는 닿지 않는다 — 솟는 자리를 노려라.",
+  "ENEMIES.lampthief.n": "등불 도둑",
+  "ENEMIES.lampthief.d": "광부가 두고 간 불을 모으는 것. 치고 나면 불을 들고 달아난다.",
+  "ENEMIES.blightleech.n": "옮는 거머리",
+  "ENEMIES.blightleech.d": "몸에 붙어 빤다. 붙은 것은 내달리면 떨어진다.",
+  "ENEMIES.sporegnaw.n": "포자갉이",
+  "ENEMIES.sporegnaw.d": "등에 버섯을 기르는 짐승. 잠깐만 놓아 줘도 상처가 다시 자란다 — 불은 자라지 못하게 한다.",
+  "ENEMIES.pagewisp.n": "떠도는 낱장",
+  "ENEMIES.pagewisp.d": "찢긴 책장이 모여 읽는다. 소리를 내기 전에는 눈도 주지 않는다.",
+  "ENEMIES.froststatue.n": "서리 석상",
+  "ENEMIES.froststatue.cw": "기",
+  "ENEMIES.froststatue.d": "얼굴을 가린 돌 수호상. 보는 앞에서는 움직이지 않는다 — 움직이는 것은 언제나 네 쪽이다.",
+  "ENEMIES.mazeshade.n": "갈림길 그림자",
+  "ENEMIES.mazeshade.d": "얼굴이 앞뒤로 둘이다. 길이 갈리는 곳마다 등 뒤로 건너온다.",
+  "ENEMIES.hollowling.n": "빈 껍질",
+  "ENEMIES.hollowling.d": "속이 빈 씨앗 껍질. 바닥 밑에 묻혀 발소리를 기다린다.",
+  "ENEMIES.nestsac.n": "둥지 알주머니",
+  "ENEMIES.nestsac.d": "둥지의 박동에 맞춰 부푼다. 박동이 닫히는 순간에만 터진다.",
   "ENEMIES.scrapcrawler.n": "고철 기어다니개",
   "ENEMIES.scrapcrawler.cw": "기",
   "ENEMIES.sparkwisp.n": "불티 정령",
@@ -5194,14 +5296,42 @@
   "PULSE.stages.1.n": "뒤척임",
   "PULSE.stages.2.n": "깨어남",
   "PULSE.stages.3.n": "격노",
-  "PULSE_EVENTS.hunt.n": "표식된 것",
-  "PULSE_EVENTS.hunt.d": "유적이 하나에 표식을 새겼다 — 달아나기 전에 쓰러뜨려라",
-  "PULSE_EVENTS.stones.n": "공명석",
-  "PULSE_EVENTS.stones.d": "다른 방 셋에서 돌이 울린다 — 셋을 다 만지면 맥박이 흩어진다",
-  "PULSE_EVENTS.greed.n": "탐욕의 상자",
-  "PULSE_EVENTS.greed.d": "황금 상자가 떠올랐다 — 가라앉기 전에 열어라. 지키는 것이 깨어난다",
-  "PULSE_EVENTS.siege.n": "포위",
-  "PULSE_EVENTS.siege.d": "유적이 문을 닫았다 — 세 차례 몰려오는 것을 모두 쓰러뜨려라",
+  "PULSE_EVENTS.thaw.n": "녹는 순례자들",
+  "PULSE_EVENTS.thaw.d": "언 것들이 하나씩 녹는다 — 깨어나기 전에 부숴라. 언 몸은 세 배로 부서진다",
+  "PULSE_EVENTS.ember.n": "마지막 불씨",
+  "PULSE_EVENTS.ember.d": "불이 꺼지고 불씨 하나가 떠났다 — 빛 밖은 얼어붙는다. 불씨가 멈추는 곳까지 따라가라",
+  "PULSE_EVENTS.scale.n": "심장의 저울",
+  "PULSE_EVENTS.scale.d": "저울이 떠올랐다 — 무엇을 올릴지 골라라(우클릭). 무거운 것일수록 크게 받거나 크게 잃는다",
+  "PULSE_EVENTS.sundial.n": "해시계의 순서",
+  "PULSE_EVENTS.sundial.d": "바닥 판 넷에 햇빛이 차례로 든다 — 본 순서대로 밟아라. 세 번 틀리면 모래가 덮친다",
+  "PULSE_EVENTS.thief.n": "등불 도둑",
+  "PULSE_EVENTS.thief.d": "무언가 불을 낚아채 달아났다 — 어둠 속 훔친 불빛을 쫓아가 잡아라",
+  "PULSE_EVENTS.cavein.n": "무너지는 갱도",
+  "PULSE_EVENTS.cavein.d": "갱도가 한쪽 끝부터 무너진다 — 먼지 벽에 먹히기 전에 승강기까지 달려라",
+  "PULSE_EVENTS.host.n": "옮겨 붙는 것",
+  "PULSE_EVENTS.host.d": "빛나는 것이 몸을 옮겨 다닌다 — 붙어 있는 몸을 넷 쓰러뜨려라. 다른 몸은 소용없다",
+  "PULSE_EVENTS.heartbeat.n": "둥지의 박동",
+  "PULSE_EVENTS.heartbeat.d": "알주머니가 박동에 맞춰 부푼다 — 고리가 닫히는 순간에 쳐야 터진다. 엇박이면 새끼가 쏟아진다",
+  "PULSE_EVENTS.crown.n": "버섯 왕관",
+  "PULSE_EVENTS.crown.d": "거대한 버섯이 자란다 — 다 자랄 때까지 갉아 먹으러 오는 것들을 막아라",
+  "PULSE_EVENTS.clearair.n": "맑은 숨",
+  "PULSE_EVENTS.clearair.d": "포자가 굴을 채운다 — 떠도는 맑은 공기 방울 안에서만 숨이 쉬어진다. 방울 안에서 스무 숨을 채워라",
+  "PULSE_EVENTS.tide.n": "차오르는 물",
+  "PULSE_EVENTS.tide.d": "아래에서부터 물이 차오른다 — 잠기기 전에 유적 꼭대기의 숨구멍까지 올라가라",
+  "PULSE_EVENTS.hush.n": "기록관의 침묵",
+  "PULSE_EVENTS.hush.d": "낱장들이 읽는 중이다 — 끝날 때까지 치지도, 쓰지도, 내달리지도 마라. 소리를 내면 깨어난다",
+  "PULSE_EVENTS.buried.n": "얼음 속의 소리",
+  "PULSE_EVENTS.buried.d": "벽 속 어딘가에서 종이 운다 — 가까울수록 맑게 운다. 찾아서 파내라",
+  "PULSE_EVENTS.statues.n": "숨 멈추기",
+  "PULSE_EVENTS.statues.d": "석상들은 네가 움직일 때만 다가온다 — 멈춰 서면 굳어 두 배로 부서진다",
+  "PULSE_EVENTS.shadow.n": "뒤따르는 발자국",
+  "PULSE_EVENTS.shadow.d": "네 그림자가 네 걸음을 그대로 밟아 온다 — 닿지 않게 계속 움직여라. 점점 빨라진다",
+  "PULSE_EVENTS.phase.n": "깜빡이는 길",
+  "PULSE_EVENTS.phase.d": "천장 가까이 상자가 떠올랐다 — 번갈아 나타나는 발판을 밟고 올라가 열어라",
+  "PULSE_EVENTS.sink.n": "꺼지는 바닥",
+  "PULSE_EVENTS.sink.d": "디딘 바닥이 곧 꺼진다 — 멈추지 말고 버텨라. 껍질들이 밑에서 덮친다",
+  "PULSE_EVENTS.seed.n": "빈 씨앗",
+  "PULSE_EVENTS.seed.d": "빈 씨앗이 떨어졌다 — 들어서(우클릭) 큰 방 한가운데에 묻어라. 맞으면 떨어뜨린다",
   "PULSE_RAGE.ice.t": "얼음 속의 불이 한꺼번에 꺼진다",
   "PULSE_RAGE.mine.t": "갱도가 울린다 — 무언가 내려온다",
   "PULSE_RAGE.pyramid.t": "벽 틈에서 달군 모래가 쏟아진다",
