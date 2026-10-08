@@ -217,8 +217,8 @@ export const WorldRuinSite: Bag & ThisType<World> = {
     /* 입구 성격(entryKind)도 난이도 계단을 따라간다 — 서리는 발판형, 가운데는 미로형, 부패지대는 무발판형. */
     /* ★ 나중에 지어지는 쪽이 먼저 지은 쪽의 방을 덮어써서, 겹친 자리의 방이 통째로 사라지거나 벽이 어긋났다. */
     const spots = [
-      { x: SX(520 + SHIFT),  y: SY(200), trap: 0.52, spike: 0.24, chest: 0.56, w: 84, h: 44, tier: 2, traps: ['dart', 'crumble'], entryKind: 'foothold' },
-      { x: SX(1700 + SHIFT), y: SY(256), trap: 0.72, spike: 0.38, chest: 0.60, w: 68, h: 40, tier: 3, traps: ['dart', 'crumble', 'vent'], entryKind: 'maze' },
+      { x: SX(520 + SHIFT),  y: SY(200), trap: 0.52, spike: 0.24, chest: 0.56, w: 96, h: 52, tier: 2, traps: ['dart', 'crumble'], entryKind: 'foothold' },
+      { x: SX(1700 + SHIFT), y: SY(256), trap: 0.72, spike: 0.38, chest: 0.60, w: 92, h: 52, tier: 3, traps: ['dart', 'crumble', 'vent'], entryKind: 'maze' },
       { x: SX(3860 + SHIFT), y: SY(240), trap: 0.90, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ['dart', 'vent', 'crumble'], entryKind: 'nofoothold' }
     ];
     /* ★ 도면(hook, ㄴ 자)이 격자 열둘 중 다섯만 쓰는 데다 상자가 작아서, 방 목표를 12 로 올려도 9~10 에서 더 못 잘랐다(d1 9 · d3 10). */

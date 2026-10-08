@@ -99,7 +99,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
           /* ★ 좁은 곁방과 넓은 전실이 섞여야 무덤의 방 배치로 읽힌다. */
           for (let x = xl; x + 6 <= xr;) {
             let rw = rng.chance(0.3) ? rng.int(14, 18) : rng.int(7, 10);
-            if (cfg.worn) rw += 4;
+            if (cfg.worn) rw += 1;
             if (xr - (x + rw) + 1 < 7) rw = xr - x + 1;       // 남는 폭이 방 하나가 안 되면 붙인다
             row.push({ x, y: by, w: rw, h: bh }); x += rw;
           }
@@ -109,6 +109,13 @@ export const WorldDungeon: Bag & ThisType<World> = {
               inTri(r.x - 1, r.y + r.h) && inTri(r.x + r.w, r.y + r.h)) rooms.push(r);
       }
       if (rooms.length >= 3) leaves = rooms;
+      // 낡은 피라미드도 방 수 바닥(목표)을 지킨다 — 층 안에서 가장 넓은 방을 세로로 반 가른다(층 줄은 그대로)
+      for (let guard = 0; cfg.worn && leaves.length < (cfg.target || 0) && guard < 30; guard++) {
+        const r = leaves.filter(q => !q.grand && q.w >= 16).sort((p, q) => q.w - p.w)[0];
+        if (!r) break;
+        const half = r.w >> 1;
+        leaves.splice(leaves.indexOf(r), 1, { x: r.x, y: r.y, w: half, h: r.h }, { x: r.x + half, y: r.y, w: r.w - half, h: r.h });
+      }
     } else if (plan) {
       const rows = plan.length, cols = plan[0].length;
       const inPlan = (r: any) => {
@@ -150,6 +157,34 @@ export const WorldDungeon: Bag & ThisType<World> = {
         leaves = next;
       }
     }
+    /* 2.45) 낡은 유적 — 이웃 방을 삼켜 **큰 홀 하나 · 곁채 둘**로 키운다(작은 방이 고르게 깔리면 '방이 많다'로만 읽혔다).
+       방 수를 맞추기(2.5 · 골방) **전에** 한다 — 뒤에 하면 다 맞춘 방을 도로 삼켜 광산이 8칸이 됐다.
+       난수를 쓰지 않는다 — 고르는 순서가 정해져 있어 뒤따르는 생성이 밀리지 않는다. 사연: docs/code-history.md#h167 */
+    if (cfg.worn && !cfg.maze && !tri && leaves.length > 4 && !leaves.some(r => r.grand)) {
+      const cx = x0 + w / 2, cy = y0 + h * 0.6;
+      const near = (r: Bag) => Math.abs(r.x + r.w / 2 - cx) + Math.abs(r.y + r.h / 2 - cy) * 1.5;
+      const mW = Math.min(44, w * 0.55), mH = Math.min(22, h * 0.6);
+      // 가운데 가까운 후보 여섯을 미리 키워 보고 가장 크게 자라는 것을 고른다(합칠 수 있는 이웃은 자리마다 다르다)
+      let grand = leaves[0], gs = -1e9;
+      for (const c of leaves.slice().sort((a, b) => near(a) - near(b)).slice(0, 6)) {
+        const copy = leaves.map(q => ({ ...q })), hc = copy[leaves.indexOf(c)];
+        this._growHall(copy, hc, 30, 16, mW, mH);
+        const sc = Math.min(1, hc.w / 30) + Math.min(1, hc.h / 16) - near(c) * 0.004;
+        if (sc > gs) { gs = sc; grand = c; }
+      }
+      this._growHall(leaves, grand, 30, 16, mW, mH);
+      grand.grand = 1; grand.hall = 1; grand.cell = 0;
+    }
+    if (cfg.worn && !cfg.maze && !tri && leaves.length > 4) {
+      for (let k = 0; k < 2; k++) {
+        const left = k === 0;
+        const wing = leaves.filter(r => !r.hall && r.w * r.h >= 100)
+          .sort((a, b) => (left ? a.x - b.x : b.x + b.w - a.x - a.w) || b.w * b.h - a.w * a.h)[0];
+        if (!wing) break;
+        this._growHall(leaves, wing, 20, 12, 30, 16);
+        wing.hall = 1; wing.cell = 0;
+      }
+    }
     /* 2.5) 방 수를 목표에 맞춘다 — 모자라면 **가장 넓은 방부터 한 번 더 자른다.** */
     const target = tri ? 0 : (cfg.target || 0);                // 피라미드는 층이 곧 방 수다
     if (target) {
@@ -158,7 +193,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
       while (leaves.length < target && guard++ < 400) {
         let best = null;
         for (const r of leaves)
-          if (splittable(r) && !r.grand && (!best || r.w * r.h > best.w * best.h)) best = r;
+          if (splittable(r) && !r.hall && (!best || r.w * r.h > best.w * best.h)) best = r;
         if (!best) break;
         const two: Bag[] = [];
         this.bspSplit(best.x, best.y, best.w, best.h, 1, minW, minH, rng, two);
@@ -168,7 +203,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
     }
     /* 2.6) 방 크기를 **눈에 띄게** 가른다 — 큰 홀 · 보통 방 · 골방. */
     if (target && rng) {
-      const halls = Math.max(1, Math.round(leaves.length * 0.10));
+      const halls = cfg.worn ? 0 : Math.max(1, Math.round(leaves.length * 0.10));   // 낡은 유적은 큰 홀 · 곁채가 이미 있다
       for (let k = 0; k < halls; k++) {
         const pairs = [];
         for (const a of leaves) for (const b of leaves)
@@ -199,32 +234,17 @@ export const WorldDungeon: Bag & ThisType<World> = {
         }
         leaves.splice(leaves.indexOf(r), 1, a, b);
       }
-    }
-    /* 2.7) 낡은 유적 — 이웃 방을 삼켜 **큰 홀 하나 · 곁채 둘**로 키운다(작은 방이 고르게 깔리면 '방이 많다'로만 읽혔다).
-       난수를 쓰지 않는다 — 고르는 순서가 정해져 있어 뒤따르는 생성이 밀리지 않는다. 사연: docs/code-history.md#h167 */
-    if (cfg.worn && !cfg.maze && !tri && leaves.length > 4 && !leaves.some(r => r.grand)) {
-      const cx = x0 + w / 2, cy = y0 + h * 0.6;
-      const near = (r: Bag) => Math.abs(r.x + r.w / 2 - cx) + Math.abs(r.y + r.h / 2 - cy) * 1.5;
-      const mW = Math.min(44, w * 0.55), mH = Math.min(22, h * 0.6);
-      // 가운데 가까운 후보 여섯을 미리 키워 보고 가장 크게 자라는 것을 고른다(합칠 수 있는 이웃은 자리마다 다르다)
-      let grand = leaves[0], gs = -1e9;
-      for (const c of leaves.slice().sort((a, b) => near(a) - near(b)).slice(0, 6)) {
-        const copy = leaves.map(q => ({ ...q })), hc = copy[leaves.indexOf(c)];
-        this._growHall(copy, hc, 30, 16, mW, mH);
-        const sc = Math.min(1, hc.w / 30) + Math.min(1, hc.h / 16) - near(c) * 0.004;
-        if (sc > gs) { gs = sc; grand = c; }
-      }
-      this._growHall(leaves, grand, 30, 16, mW, mH);
-      grand.grand = 1; grand.hall = 1; grand.cell = 0;
-    }
-    if (cfg.worn && !cfg.maze && !tri && leaves.length > 4) {
-      for (let k = 0; k < 2; k++) {
-        const left = k === 0;
-        const wing = leaves.filter(r => !r.hall && r.w * r.h >= 100)
-          .sort((a, b) => (left ? a.x - b.x : b.x + b.w - a.x - a.w) || b.w * b.h - a.w * a.h)[0];
-        if (!wing) break;
-        this._growHall(leaves, wing, 20, 12, 30, 16);
-        wing.hall = 1; wing.cell = 0;
+      /* 그래도 모자라면(낡은 유적 — 최소 15칸) 가장 넓은 방을 반으로 — 반쪽이 8×8 은 남게. 곁채는 보통 방이 다 떨어졌을 때만. */
+      for (let guard = 0; cfg.worn && leaves.length < target && guard < 60; guard++) {
+        const ok = (r: Bag) => !r.grand && !r.cell && (r.w >= 16 || r.h >= 16);
+        const pool = leaves.filter(r => ok(r) && !r.hall);
+        const r = (pool.length ? pool : leaves.filter(ok)).sort((p, q) => q.w * q.h - p.w * p.h)[0];
+        if (!r) break;
+        const vert = r.w >= 16 && (r.w * 0.8 >= r.h || r.h < 16);
+        const half = vert ? r.w >> 1 : r.h >> 1;
+        const a: Bag = vert ? { x: r.x, y: r.y, w: half, h: r.h } : { x: r.x, y: r.y, w: r.w, h: half };
+        const b: Bag = vert ? { x: r.x + half, y: r.y, w: r.w - half, h: r.h } : { x: r.x, y: r.y + half, w: r.w, h: r.h - half };
+        leaves.splice(leaves.indexOf(r), 1, a, b);
       }
     }
     if (tri)                                                   // 삼각형 전체를 먼저 벽돌 덩어리로
@@ -558,8 +578,18 @@ export const WorldDungeon: Bag & ThisType<World> = {
     if (TILE_DEF[this.get(c, yB + 1)].solid === 0 && !locked(c, yB + 1)) {
       this.set(c, yB + 1, floor); this.set(c + 1, yB + 1, floor);
     }
-    /* ★ 이 계단에도 함정을 하나 심는다. */
-    if (rng) this.putPathTrap(Math.round((ax + c) / 2), ay, rng);
+    /* ★ 이 계단에도 함정을 하나 심는다 — 주인 방은 빼고(둥지 옆 가시가 결전 내내 찔렀다). 사연: docs/code-history.md#h168 */
+    const tx0 = Math.round((ax + c) / 2);
+    if (rng && !this._inBossRoom(tx0, ay)) this.putPathTrap(tx0, ay, rng);
+  },
+
+  /** 유적 주인 방(석판 방) 안인가 — 방 목록은 큰 홀 · 가장 넓은 방이 맨 앞이다 */
+  _inBossRoom(x: number, y: number) {
+    for (const s of this.ruinSites || []) {
+      const b = (s.rooms || [])[0];
+      if (b && x >= b.x - 1 && x <= b.x + b.w && y >= b.y - 1 && y <= b.y + b.h) return true;
+    }
+    return false;
   },
 
   /** spots 의 모든 자리를 서로 걸어 다닐 수 있게 만든다. */

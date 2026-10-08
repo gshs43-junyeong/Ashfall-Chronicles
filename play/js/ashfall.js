@@ -8519,8 +8519,8 @@
       n: "피라미드",
       x: 2180 + SHIFT,
       y: 50,
-      w: 96,
-      h: 52,
+      w: 116,
+      h: 62,
       wall: T.SANDBRICK,
       floor: T.SANDSTONE,
       bg: 8,
@@ -8541,8 +8541,8 @@
       n: "버려진 광산",
       x: 820 + SHIFT,
       y: 186,
-      w: 84,
-      h: 44,
+      w: 104,
+      h: 52,
       wall: T.MINEWOOD,
       floor: T.PLANK,
       bg: 4,
@@ -8606,24 +8606,24 @@
   ];
   RUIN_SPEC[0].plan = "ring";
   RUIN_SPEC[0].arch = "buried";
-  RUIN_SPEC[0].bsp = [5, 14, 10];
-  RUIN_SPEC[0].rooms = 11;
+  RUIN_SPEC[0].bsp = [6, 12, 9];
+  RUIN_SPEC[0].rooms = 16;
   RUIN_SPEC[1].plan = "tri";
   RUIN_SPEC[1].arch = "pyramid";
   RUIN_SPEC[1].bsp = [6, 9, 6];
-  RUIN_SPEC[1].rooms = 18;
+  RUIN_SPEC[1].rooms = 16;
   RUIN_SPEC[2].plan = "spine";
   RUIN_SPEC[2].arch = "gated";
-  RUIN_SPEC[2].bsp = [5, 14, 10];
-  RUIN_SPEC[2].rooms = 9;
+  RUIN_SPEC[2].bsp = [6, 12, 9];
+  RUIN_SPEC[2].rooms = 16;
   RUIN_SPEC[3].plan = "warren";
   RUIN_SPEC[3].arch = "buried";
-  RUIN_SPEC[3].bsp = [6, 14, 10];
-  RUIN_SPEC[3].rooms = 19;
+  RUIN_SPEC[3].bsp = [6, 12, 9];
+  RUIN_SPEC[3].rooms = 22;
   RUIN_SPEC[4].plan = "horseshoe";
   RUIN_SPEC[4].arch = "buried";
-  RUIN_SPEC[4].bsp = [5, 14, 10];
-  RUIN_SPEC[4].rooms = 16;
+  RUIN_SPEC[4].bsp = [6, 12, 9];
+  RUIN_SPEC[4].rooms = 19;
   RUIN_SPEC[0].decor = [
     ["pillar", T.ICE, 0.5],
     ["stalac", T.ICE, 0.5],
@@ -8724,17 +8724,17 @@
     // 삼각형 — 진짜 피라미드 단면
     warren: ["####", "#.##", "####", ".###"],
     // 잔방 투성이 (구멍 몇 개 뚫린 벌집)
-    hook: ["#...", "#...", "####"],
-    // ㄴ
+    hook: ["##..", "##..", "####"],
+    // ㄴ (기둥을 두 칸 폭으로 — 방 15개가 들어가게)
     tee: ["####", ".##.", ".##."],
     // T
     hall: ["#..#", "####", "#..#"]
     // H
   };
   var STORY_RUIN = [
-    { n: "서리 밑 석실", plan: "hook", arch: "sunken", rooms: 8, bsp: [5, 14, 10], decor: [["pillar", T.ICE, 0.4], ["stalac", T.ICE, 0.45]], sig: "frozen", event: "blackout", bonus: "ice_shard" },
-    { n: "겹친 길", plan: "tee", arch: "sunken", rooms: 9, bsp: [5, 14, 10], decor: [["statue", T.RUINBRICK, 0.45], ["pipe", T.COPPER, 0.5], ["frieze", T.RUNESTONE, 0.3]], sig: "sunshaft", event: "password", bonus: "aether_shard" },
-    { n: "발 디딜 곳 없는 방", plan: "hall", arch: "sunken", rooms: 11, bsp: [5, 14, 10], decor: [["growth", T.CORRUPTLEAF, 0.5], ["web", T.VINE, 0.4], ["pipe", T.LEAD, 0.35]], sig: "heart", event: "swarm", bonus: "corrupt_ess" }
+    { n: "서리 밑 석실", plan: "hook", arch: "sunken", rooms: 16, bsp: [6, 12, 9], decor: [["pillar", T.ICE, 0.4], ["stalac", T.ICE, 0.45]], sig: "frozen", event: "blackout", bonus: "ice_shard" },
+    { n: "겹친 길", plan: "tee", arch: "sunken", rooms: 16, bsp: [6, 12, 9], decor: [["statue", T.RUINBRICK, 0.45], ["pipe", T.COPPER, 0.5], ["frieze", T.RUNESTONE, 0.3]], sig: "sunshaft", event: "password", bonus: "aether_shard" },
+    { n: "발 디딜 곳 없는 방", plan: "hall", arch: "sunken", rooms: 16, bsp: [6, 12, 9], decor: [["growth", T.CORRUPTLEAF, 0.5], ["web", T.VINE, 0.4], ["pipe", T.LEAD, 0.35]], sig: "heart", event: "swarm", bonus: "corrupt_ess" }
   ];
   STORY_RUIN[0].mobs = ["frostling", "icewolf", "skeleton"];
   STORY_RUIN[0].rank = 2;
@@ -16820,7 +16820,7 @@
           } else {
             for (let x = xl; x + 6 <= xr; ) {
               let rw = rng.chance(0.3) ? rng.int(14, 18) : rng.int(7, 10);
-              if (cfg.worn) rw += 4;
+              if (cfg.worn) rw += 1;
               if (xr - (x + rw) + 1 < 7) rw = xr - x + 1;
               row.push({ x, y: by, w: rw, h: bh });
               x += rw;
@@ -16830,6 +16830,12 @@
             if (inTri(r.x - 1, r.y - 1) && inTri(r.x + r.w, r.y - 1) && inTri(r.x - 1, r.y + r.h) && inTri(r.x + r.w, r.y + r.h)) rooms.push(r);
         }
         if (rooms.length >= 3) leaves = rooms;
+        for (let guard = 0; cfg.worn && leaves.length < (cfg.target || 0) && guard < 30; guard++) {
+          const r = leaves.filter((q) => !q.grand && q.w >= 16).sort((p, q) => q.w - p.w)[0];
+          if (!r) break;
+          const half = r.w >> 1;
+          leaves.splice(leaves.indexOf(r), 1, { x: r.x, y: r.y, w: half, h: r.h }, { x: r.x + half, y: r.y, w: r.w - half, h: r.h });
+        }
       } else if (plan) {
         const rows = plan.length, cols = plan[0].length;
         const inPlan = (r) => {
@@ -16882,6 +16888,35 @@
           leaves = next;
         }
       }
+      if (cfg.worn && !cfg.maze && !tri && leaves.length > 4 && !leaves.some((r) => r.grand)) {
+        const cx = x0 + w / 2, cy = y0 + h * 0.6;
+        const near = (r) => Math.abs(r.x + r.w / 2 - cx) + Math.abs(r.y + r.h / 2 - cy) * 1.5;
+        const mW = Math.min(44, w * 0.55), mH = Math.min(22, h * 0.6);
+        let grand = leaves[0], gs = -1e9;
+        for (const c of leaves.slice().sort((a, b) => near(a) - near(b)).slice(0, 6)) {
+          const copy = leaves.map((q) => ({ ...q })), hc = copy[leaves.indexOf(c)];
+          this._growHall(copy, hc, 30, 16, mW, mH);
+          const sc = Math.min(1, hc.w / 30) + Math.min(1, hc.h / 16) - near(c) * 4e-3;
+          if (sc > gs) {
+            gs = sc;
+            grand = c;
+          }
+        }
+        this._growHall(leaves, grand, 30, 16, mW, mH);
+        grand.grand = 1;
+        grand.hall = 1;
+        grand.cell = 0;
+      }
+      if (cfg.worn && !cfg.maze && !tri && leaves.length > 4) {
+        for (let k = 0; k < 2; k++) {
+          const left = k === 0;
+          const wing = leaves.filter((r) => !r.hall && r.w * r.h >= 100).sort((a, b) => (left ? a.x - b.x : b.x + b.w - a.x - a.w) || b.w * b.h - a.w * a.h)[0];
+          if (!wing) break;
+          this._growHall(leaves, wing, 20, 12, 30, 16);
+          wing.hall = 1;
+          wing.cell = 0;
+        }
+      }
       const target = tri ? 0 : cfg.target || 0;
       if (target) {
         const splittable = (r) => r.h >= minH * 2 + 1 || r.w >= minW * 2 + 1;
@@ -16889,7 +16924,7 @@
         while (leaves.length < target && guard++ < 400) {
           let best = null;
           for (const r of leaves)
-            if (splittable(r) && !r.grand && (!best || r.w * r.h > best.w * best.h)) best = r;
+            if (splittable(r) && !r.hall && (!best || r.w * r.h > best.w * best.h)) best = r;
           if (!best) break;
           const two = [];
           this.bspSplit(best.x, best.y, best.w, best.h, 1, minW, minH, rng, two);
@@ -16898,7 +16933,7 @@
         }
       }
       if (target && rng) {
-        const halls = Math.max(1, Math.round(leaves.length * 0.1));
+        const halls = cfg.worn ? 0 : Math.max(1, Math.round(leaves.length * 0.1));
         for (let k = 0; k < halls; k++) {
           const pairs = [];
           for (const a2 of leaves) for (const b2 of leaves)
@@ -16929,34 +16964,16 @@
           }
           leaves.splice(leaves.indexOf(r), 1, a, b);
         }
-      }
-      if (cfg.worn && !cfg.maze && !tri && leaves.length > 4 && !leaves.some((r) => r.grand)) {
-        const cx = x0 + w / 2, cy = y0 + h * 0.6;
-        const near = (r) => Math.abs(r.x + r.w / 2 - cx) + Math.abs(r.y + r.h / 2 - cy) * 1.5;
-        const mW = Math.min(44, w * 0.55), mH = Math.min(22, h * 0.6);
-        let grand = leaves[0], gs = -1e9;
-        for (const c of leaves.slice().sort((a, b) => near(a) - near(b)).slice(0, 6)) {
-          const copy = leaves.map((q) => ({ ...q })), hc = copy[leaves.indexOf(c)];
-          this._growHall(copy, hc, 30, 16, mW, mH);
-          const sc = Math.min(1, hc.w / 30) + Math.min(1, hc.h / 16) - near(c) * 4e-3;
-          if (sc > gs) {
-            gs = sc;
-            grand = c;
-          }
-        }
-        this._growHall(leaves, grand, 30, 16, mW, mH);
-        grand.grand = 1;
-        grand.hall = 1;
-        grand.cell = 0;
-      }
-      if (cfg.worn && !cfg.maze && !tri && leaves.length > 4) {
-        for (let k = 0; k < 2; k++) {
-          const left = k === 0;
-          const wing = leaves.filter((r) => !r.hall && r.w * r.h >= 100).sort((a, b) => (left ? a.x - b.x : b.x + b.w - a.x - a.w) || b.w * b.h - a.w * a.h)[0];
-          if (!wing) break;
-          this._growHall(leaves, wing, 20, 12, 30, 16);
-          wing.hall = 1;
-          wing.cell = 0;
+        for (let guard = 0; cfg.worn && leaves.length < target && guard < 60; guard++) {
+          const ok = (r2) => !r2.grand && !r2.cell && (r2.w >= 16 || r2.h >= 16);
+          const pool = leaves.filter((r2) => ok(r2) && !r2.hall);
+          const r = (pool.length ? pool : leaves.filter(ok)).sort((p, q) => q.w * q.h - p.w * p.h)[0];
+          if (!r) break;
+          const vert = r.w >= 16 && (r.w * 0.8 >= r.h || r.h < 16);
+          const half = vert ? r.w >> 1 : r.h >> 1;
+          const a = vert ? { x: r.x, y: r.y, w: half, h: r.h } : { x: r.x, y: r.y, w: r.w, h: half };
+          const b = vert ? { x: r.x + half, y: r.y, w: r.w - half, h: r.h } : { x: r.x, y: r.y + half, w: r.w, h: r.h - half };
+          leaves.splice(leaves.indexOf(r), 1, a, b);
         }
       }
       if (tri) {
@@ -17349,7 +17366,16 @@
         this.set(c, yB + 1, floor);
         this.set(c + 1, yB + 1, floor);
       }
-      if (rng) this.putPathTrap(Math.round((ax + c) / 2), ay, rng);
+      const tx0 = Math.round((ax + c) / 2);
+      if (rng && !this._inBossRoom(tx0, ay)) this.putPathTrap(tx0, ay, rng);
+    },
+    /** 유적 주인 방(석판 방) 안인가 — 방 목록은 큰 홀 · 가장 넓은 방이 맨 앞이다 */
+    _inBossRoom(x, y) {
+      for (const s of this.ruinSites || []) {
+        const b = (s.rooms || [])[0];
+        if (b && x >= b.x - 1 && x <= b.x + b.w && y >= b.y - 1 && y <= b.y + b.h) return true;
+      }
+      return false;
     },
     /** spots 의 모든 자리를 서로 걸어 다닐 수 있게 만든다. */
     _ensureWalkable(x0, y0, w, h, spots, floor, traps, rng) {
@@ -18632,8 +18658,8 @@
       this.ruinSites = [];
       this._walkJobs = [];
       const spots = [
-        { x: SX2(520 + SHIFT), y: SY2(200), trap: 0.52, spike: 0.24, chest: 0.56, w: 84, h: 44, tier: 2, traps: ["dart", "crumble"], entryKind: "foothold" },
-        { x: SX2(1700 + SHIFT), y: SY2(256), trap: 0.72, spike: 0.38, chest: 0.6, w: 68, h: 40, tier: 3, traps: ["dart", "crumble", "vent"], entryKind: "maze" },
+        { x: SX2(520 + SHIFT), y: SY2(200), trap: 0.52, spike: 0.24, chest: 0.56, w: 96, h: 52, tier: 2, traps: ["dart", "crumble"], entryKind: "foothold" },
+        { x: SX2(1700 + SHIFT), y: SY2(256), trap: 0.72, spike: 0.38, chest: 0.6, w: 92, h: 52, tier: 3, traps: ["dart", "crumble", "vent"], entryKind: "maze" },
         { x: SX2(3860 + SHIFT), y: SY2(240), trap: 0.9, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ["dart", "vent", "crumble"], entryKind: "nofoothold" }
       ];
       spots.forEach((sp, i) => {
