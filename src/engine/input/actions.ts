@@ -38,15 +38,27 @@ export function createInput({ actions, custom }: InputConfig) {
     /** 창에 키보드를 건다. */
     bindKeyboard(hooks: KeyHooks): void {
       addEventListener('keydown', e => {
+        /* 글 칸(검색 · 채팅 · 이름)에 치는 글자는 조작키가 아니다 — 안 막으면 I · J 따위가 다른 창을 열었다. Esc 만 통과(창 닫기) */
+        if (typing(e.target) && e.key !== 'Escape') return;
         if (e.repeat) { keys[e.code] = 1; return; }
         if (hooks.capture && hooks.capture(e)) { e.preventDefault(); return; }
         keys[e.code] = 1;
         if (hooks.down) hooks.down(e);
       });
       addEventListener('keyup', e => { keys[e.code] = 0; });
+      addEventListener('focusin', e => { if (typing(e.target)) for (const k in keys) keys[k] = 0; });   // 칸에 들어가면 누르던 이동키를 놓는다
       addEventListener('blur', () => { for (const k in keys) keys[k] = 0; if (hooks.blur) hooks.blur(); });
     }
   };
   return input;
+}
+/** 글자를 받는 칸인가 — 단추 · 체크 칸 · 슬라이더는 아니다 */
+function typing(t: EventTarget | null): boolean {
+  const el = t as HTMLElement | null;
+  if (!el || !el.tagName) return false;
+  if (el.isContentEditable || el.tagName === 'TEXTAREA') return true;
+  if (el.tagName !== 'INPUT') return false;
+  const ty = ((el as HTMLInputElement).type || 'text').toLowerCase();
+  return ['text', 'search', 'email', 'number', 'password', 'url', 'tel'].indexOf(ty) >= 0;
 }
 export type Input = ReturnType<typeof createInput>;
