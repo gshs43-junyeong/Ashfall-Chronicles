@@ -4,7 +4,7 @@ import { clamp, lerp } from '../engine/core/math.js';
 import { RNG, tileHash } from '../engine/core/rng.js';
 import { bakeAtlas, blitCell, cacheGet } from '../engine/render/atlas.js';
 import { createConnTiles } from '../engine/render/conn.js';
-import { MACH_OF_TILE, T, TILE_DEF, WALL_COLOR } from './data.js';
+import { COLUMN_WALL, MACH_OF_TILE, T, TILE_DEF, WALL_COLOR } from './data.js';
 import { FLUID_KIND } from './data/materials.js';
 import { CAVE_TYPES } from './data/ruins.js';
 import { TS } from './world.js';
@@ -277,6 +277,7 @@ export const TileArt: Bag = {
     });
     this.wallAtlas = bakeAtlas(TS, this.V, WALL_COLOR.length, (g, ox, oy, i) => {
       if (i === 0) return;                                  // 0 = 벽지 없음
+      if (i === COLUMN_WALL) { this.paintColumnWall(g, ox, oy, WALL_COLOR[i]!); return; }   // 공유 난수를 안 뽑는다
       (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, g, ox, oy, WALL_COLOR[i], rng);
     });
 
@@ -1009,6 +1010,14 @@ export const TileArt: Bag = {
     g.globalAlpha = .16;
     this._r(g, ox, oy, 0, 0, TS, 2, '#000');
     g.globalAlpha = 1;
+  },
+
+  /** 큰 홀 기둥 — 세로 홈. 두 칸이 한 기둥이라 가운데 이음매도 홈으로 읽힌다. 변형마다 같아야 위아래로 이어진다. */
+  paintColumnWall(g: CanvasRenderingContext2D, ox: number, oy: number, col: string) {
+    this._fill(g, ox, oy, shade(col, .7));
+    for (let x = 3; x < TS - 2; x += 6) { this._r(g, ox, oy, x, 0, 2, TS, shade(col, .5)); this._r(g, ox, oy, x + 2, 0, 1, TS, shade(col, .92)); }
+    this._r(g, ox, oy, 0, 0, 1, TS, shade(col, .38));
+    this._r(g, ox, oy, TS - 1, 0, 1, TS, shade(col, .38));
   },
 
   paintWall(g: CanvasRenderingContext2D, ox: number, oy: number, col: string, rng: RNG) {

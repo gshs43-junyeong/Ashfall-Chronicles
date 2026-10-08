@@ -22,9 +22,9 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       rng, depth: bsp[0], minW: bsp[1], minH: bsp[2],
       target: spec.rooms,                                    // 등급대로 방 수를 맞춘다
       plan: spec.plan,                                       // 겉모양이 방 배치를 따라간다
-      worn: 1
+      worn: 1, maze: spec.maze                               // 미로는 잔방이 정체성이라 큰 홀을 안 뗀다
     });
-    rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
+    rooms.sort((a: any, b: any) => (b.grand | 0) - (a.grand | 0) || (b.w * b.h) - (a.w * a.h));   // 큰 홀이 주인 방
     const boss = rooms[0];                                   // 가장 넓은 방이 보스방
     const site: Bag = { id: spec.id, n: spec.n, x: spec.x, y: y0 + (spec.h >> 1), w: spec.w, h: spec.h, rooms, idx };
 
@@ -91,6 +91,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
         this.objects.push({ type: 'lair', boss: spec.boss, ruin: idx,
           x: cx * TS, y: (fy + 1) * TS - 48, w: 40, h: 48 });
         for (let x = r.x + 2; x < r.x + r.w - 2; x += 5) this.putDecor(x, r.y + 2, spec.torch, 'any');
+        this.grandLights(r, fy, spec.torch, spec.wall);
         this.objects.push({ type: 'chest', tier: clamp(spec.tier, 1, 4),
           x: (r.x + 3) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
         continue;
@@ -195,6 +196,16 @@ export const WorldRuinSite: Bag & ThisType<World> = {
     return site;
   },
 
+  /** 큰 홀 기둥의 받침돌과 불 — 천장 횃불은 둥근 천장에 걸리지 않아 홀 가운데가 캄캄했다.
+      ★ 받침돌(벽 타일 두 칸)이 있어야 한다 — 허공의 횃불은 sweepFloatingDecor 가 걷는다. 지나는 길(fy-3 아래)은 비운다. */
+  grandLights(r: Bag, fy: number, torch: number, wall: number) {
+    for (const px of r.cols || []) for (const y of [fy - 4, fy - 9]) {
+      if (y - 1 <= r.y + 1 || [0, 1].some(k => this.get(px + k, y) !== T.AIR || this.get(px + k, y - 1) !== T.AIR)) continue;
+      this.set(px, y, wall); this.set(px + 1, y, wall);
+      this.set(px, y - 1, torch);
+    }
+  },
+
   /* ---- 숨겨진 유적 3곳 + 심층 봉인실 ---- */
   buildRuins(rng: RNG) { const { SX, SY, WW } = this.dims;
     this.ruins = [];
@@ -227,8 +238,9 @@ export const WorldRuinSite: Bag & ThisType<World> = {
         rng, depth: 5, minW: st.bsp ? st.bsp[1] : 16, minH: st.bsp ? st.bsp[2] : 8,
         target: st.rooms, plan: st.plan, worn: 1
       });
-      rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
+      rooms.sort((a: any, b: any) => (b.grand | 0) - (a.grand | 0) || (b.w * b.h) - (a.w * a.h));   // 큰 홀이 주인 방
       const main = rooms[0], fy0 = main.y + main.h - 3;
+      this.grandLights(main, fy0, T.TORCH, T.RUINBRICK);
       for (let x = main.x + 3; x < main.x + main.w - 2; x += 8) this.set(x, main.y + 2, T.RUNESTONE);
       this.objects.push({ type: 'tablet', tablet: i, x: (main.x + (main.w >> 1)) * TS, y: (fy0 + 1) * TS - 48, w: 34, h: 48 });
       // 지상에서 내려오는 통로 — 이제 지표 아래에 묻는다(sunken).
