@@ -265,6 +265,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
         const cr = (st.sig === 'sunshaft' ? sigRoom : rest.find((q: any) => q.w >= 14)) || sigRoom;
         if (cr) this.buildCipherVault(spec, cr, cr.y + cr.h - 3, rng, rooms);
       }
+      this.storyTheme(i, rooms, main, sigRoom, sp, x0, w);
       // 바닥을 갈아 까는 고유 방이 굴을 메울 수 있으므로 마지막에 연결을 다시 보장한다
       this._ensureConnected(x0, y0, w, h, rooms);
       const wsp = [];
@@ -404,6 +405,76 @@ export const WorldRuinSite: Bag & ThisType<World> = {
   },
 
   /** 좌표가 유적 내부인지 */
+  /** 석판 유적 셋의 얼굴 — 셋 다 같은 벽돌 · 횃불 · 함정이라 이름만 달랐다. 비문이 말하는 대로 판다. 사연: docs/code-history.md#h166
+      0 서리 밑 석실: 서리가 벽을 먹어 들어오고(얼음 벽돌 · 언 바닥 · 눈) 천장에 고드름, 불 대신 서리 글자, 얼음 벽 뒤에 묻힌 보물 칸.
+      1 겹친 길: 높은 방은 두 층 — 위로 가로지르는 발판 길이 아래 길과 겹치고, 위 길 끝에 상자.
+      2 발 디딜 곳 없는 방: 방 바닥이 가시 고랑으로 꺼지고 무너지는 디딤돌 · 드문 쉼돌만 남는다.
+      ★ 제 난수(seed+'_story'+i)만 쓴다 — 본 난수를 뽑으면 뒤 유적 · 동굴이 씨앗마다 바뀐다. 걷는 줄 위(fy-2~fy)는 막지 않는다. */
+  storyTheme(i: number, rooms: any[], main: Bag, sigRoom: Bag, sp: Bag, x0: number, w: number) {
+    const r = new RNG(this.seed + '_story' + i);
+    const inRoom = (x: number, y: number) => rooms.some((q: any) => x > q.x && x < q.x + q.w - 1 && y > q.y && y < q.y + q.h - 1);
+    const chest = (cx: number, fy: number, tier: number, bonus?: string, hidden?: number) =>
+      this.objects.push({ type: 'chest', tier, x: cx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null, bonus, cave: hidden });
+    if (i === 0) {
+      for (const q of rooms) {
+        const fy = q.y + q.h - 3;
+        for (let x = q.x - 1; x <= q.x + q.w; x++) for (let y = q.y - 1; y <= q.y + q.h; y++) {   // 서리가 벽을 먹는다
+          if (this.get(x, y) === T.RUINBRICK && r.chance(0.42)) this.set(x, y, T.ICEBRICK);
+        }
+        const iceFloor = r.chance(0.5);
+        for (let x = q.x + 1; x < q.x + q.w - 1; x++) {
+          if (this.get(x, fy + 1) === T.RUINTILE && (iceFloor || r.chance(0.3))) this.set(x, fy + 1, iceFloor ? T.ICE : T.SNOW);
+          let y = q.y + 1; while (y < fy - 3 && this.get(x, y) !== T.AIR) y++;   // 천장 바로 밑 첫 빈 칸
+          if (y < fy - 3 && this.solid(x, y - 1) && r.chance(0.2))
+            for (let k = 0, n = r.int(1, 2); k < n && y + k < fy - 2 && this.get(x, y + k) === T.AIR; k++) this.set(x, y + k, T.ICICLE);
+          for (let yy = q.y + 1; yy < fy; yy++) if (this.get(x, yy) === T.TORCH && r.chance(0.6)) this.set(x, yy, T.FROSTGLYPH);
+        }
+      }
+      // 얼음 벽 뒤 보물 칸 — 방 옆 바위를 파고 벽을 얼음으로 봉한다. 벽에 서리 글자 하나가 자리를 일러 준다
+      for (const q of rooms.filter(q => q !== main && q !== sigRoom).sort(() => r.next() - 0.5)) {
+        const fy = q.y + q.h - 3, side = r.chance(0.5) ? -1 : 1;
+        const wx = side < 0 ? q.x : q.x + q.w - 1, nx0 = side < 0 ? q.x - 5 : q.x + q.w + 1;
+        let ok = nx0 > x0 + 1 && nx0 + 4 < x0 + w - 1;
+        for (let x = nx0 - 1; ok && x <= nx0 + 4; x++) for (let y = fy - 3; ok && y <= fy + 1; y++)
+          if (!this.solid(x, y) || inRoom(x, y) || this.get(x, y) === T.BEDROCK) ok = false;
+        if (!ok) continue;
+        for (let x = nx0; x < nx0 + 4; x++) { for (let y = fy - 2; y <= fy; y++) { this.set(x, y, T.AIR); this.setWall(x, y, 10); } this.set(x, fy + 1, T.ICE); }
+        for (const x of [wx, wx + side]) for (let y = fy - 2; y <= fy; y++) this.set(x, y, T.ICE);   // 얼음(단단함 1) — 첫 곡괭이로 깬다
+        this.set(wx - side, fy - 4, T.FROSTGLYPH);
+        chest(nx0 + 2, fy, sp.tier + 1, 'ice_shard', 1);   // 숨은 덤 — 탐사 100% 의 상자 수에는 안 든다(cave)
+        break;
+      }
+    } else if (i === 1) {
+      let gave = false;
+      for (const q of rooms) {
+        if (q === main || q === sigRoom || q.h < 9 || q.w < 12) continue;
+        const fy = q.y + q.h - 3, P = fy - 2;        // 발판 줄 — 머리 위 한 칸, 그 위에 서면 발이 fy-3(점프 3칸 · 실제 4.4칸)
+        let built = 0;
+        for (let x = q.x + 2; x < q.x + q.w - 2; x++) {
+          if ((x - q.x) % 7 === 5 || this.get(x, P) !== T.AIR || this.get(x, P - 1) !== T.AIR) continue;   // 일곱 칸마다 틈
+          this.set(x, P, T.PLATFORM); built++;
+        }
+        if (built < 6) continue;
+        if (!gave && r.chance(0.7)) { chest(q.x + (q.w >> 1) + (r.chance(0.5) ? 2 : -2), P - 1, sp.tier); gave = true; }
+        if (r.chance(0.5)) { const dx = r.chance(0.5) ? q.x + 1 : q.x + q.w - 2; if (this.solid(dx + (dx === q.x + 1 ? -1 : 1), P - 2)) this.set(dx, P - 2, dx === q.x + 1 ? T.DART_R : T.DART_L); }
+      }
+    } else {
+      for (const q of rooms) {
+        if (q === main || q === sigRoom || q.w < 12) continue;
+        const fy = q.y + q.h - 3;
+        if (!r.chance(0.65)) continue;
+        for (let x = q.x + 3; x <= q.x + q.w - 4; x++) {
+          if (this.get(x, fy + 1) !== T.RUINTILE && this.get(x, fy + 1) !== T.CRUMBLE) continue;
+          if (this.get(x, fy) !== T.AIR) continue;
+          const k = x - q.x - 3;
+          if (k % 9 === 8) continue;                                  // 쉼돌 — 무너지지 않는다
+          if (k % 3 === 1) { this.set(x, fy + 1, T.CRUMBLE); continue; }   // 무너지는 디딤돌
+          this.set(x, fy + 1, T.AIR);
+          if (this.solid(x, fy + 2)) this.set(x, fy + 2, T.SPIKE);
+        }
+      }
+    }
+  },
   inRuin(tx: number, ty: number) {
     return !!this.ruinInside(tx, ty);
   },
