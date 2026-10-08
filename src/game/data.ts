@@ -414,7 +414,8 @@ for (let i = 0; i < 4; i++) {
 for (const id in MACH_OF_TILE) TILE_SPRITE['m_' + MACH_OF_TILE[id]] = +id;
 
 export const WALL_COLOR = [null, '#3a2a1a', '#33333a', '#241c2e', '#402d1a', '#4a5f6e', '#32323c', '#2a2018', '#6b5a34',
-  '#3f5266', '#332f26', '#23301f', '#22322e', '#3c3a34', '#4a3520', '#5a4128'];
+  '#3f5266', '#332f26', '#23301f', '#22322e', '#3c3a34', '#4a3520', '#5a4128', '#4c463c'];
+export const COLUMN_WALL = 16;          // 큰 홀 뒷벽의 기둥 — 세로 홈 결(paintColumnWall). ★ 벽지 번호도 끝에만 붙인다
 // 9: 하늘돌, 10: 유적, 11: 정글, 12: 버섯 골짜기, 13: 성벽(WALLSTONE을 어둡게 — 성문 안쪽 배경) 15: 나무 판자 벽지 — 벽돌결이 아니라 세로 판자결로
 // 그린다(paintWoodWall)
 

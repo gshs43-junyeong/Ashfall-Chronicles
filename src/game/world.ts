@@ -143,7 +143,7 @@ export class World extends TileMap {
   declare _walkBack: (...a: any[]) => any; declare _walkPass: (...a: any[]) => any; declare _walkable: (...a: any[]) => any;
   declare bspSplit: (...a: any[]) => any; declare buildCipherVault: (...a: any[]) => any; declare buildFaults: (...a: any[]) => any;
   declare buildMysticRoom: (...a: any[]) => any; declare buildRuinSite: (...a: any[]) => any; declare buildSigRoom: (...a: any[]) => any;
-  declare buildSkyExtras: (...a: any[]) => any; declare buildSkyTemple: (...a: any[]) => any; declare carveDungeon: (...a: any[]) => any; declare _wearRoom: (...a: any[]) => any;
+  declare buildSkyExtras: (...a: any[]) => any; declare buildSkyTemple: (...a: any[]) => any; declare carveDungeon: (...a: any[]) => any; declare _wearRoom: (...a: any[]) => any; declare _growHall: (...a: any[]) => any; declare _carveGrand: (...a: any[]) => any; declare _tallLink: boolean; declare grandLights: (...a: any[]) => any;
   declare carveIsland: (...a: any[]) => any; declare carveRuinEntrance: (...a: any[]) => any; declare caveTypeAt: (...a: any[]) => any;
   declare checkDawnLayout: (...a: any[]) => any; declare clearBox: (...a: any[]) => any; declare clearRigSite: (...a: any[]) => any;
   declare dawnPlace: (...a: any[]) => any; declare dawnPlazaSpan: (...a: any[]) => any; declare faultCells: (...a: any[]) => any;

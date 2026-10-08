@@ -2161,6 +2161,7 @@
   // src/game/data.ts
   var data_exports = {};
   __export(data_exports, {
+    COLUMN_WALL: () => COLUMN_WALL,
     FARM_WET_DAYS: () => FARM_WET_DAYS,
     FARM_WET_R: () => FARM_WET_R,
     MACH_OF_TILE: () => MACH_OF_TILE,
@@ -2853,8 +2854,10 @@
     "#22322e",
     "#3c3a34",
     "#4a3520",
-    "#5a4128"
+    "#5a4128",
+    "#4c463c"
   ];
+  var COLUMN_WALL = 16;
   var RARITY = ["일반", "고급", "희귀", "영웅", "전설", "신화"];
   var RARITY_COLOR = ["#b8b8b8", "#5fc45f", "#4f9cf0", "#a866e8", "#e8912a", "#e8484f"];
   var RARITY_MULT = [1, 1.12, 1.28, 1.5, 1.8, 2.2];
@@ -8603,24 +8606,24 @@
   ];
   RUIN_SPEC[0].plan = "ring";
   RUIN_SPEC[0].arch = "buried";
-  RUIN_SPEC[0].bsp = [5, 12, 7];
-  RUIN_SPEC[0].rooms = 18;
+  RUIN_SPEC[0].bsp = [5, 14, 10];
+  RUIN_SPEC[0].rooms = 11;
   RUIN_SPEC[1].plan = "tri";
   RUIN_SPEC[1].arch = "pyramid";
   RUIN_SPEC[1].bsp = [6, 9, 6];
   RUIN_SPEC[1].rooms = 18;
   RUIN_SPEC[2].plan = "spine";
   RUIN_SPEC[2].arch = "gated";
-  RUIN_SPEC[2].bsp = [5, 10, 7];
-  RUIN_SPEC[2].rooms = 15;
+  RUIN_SPEC[2].bsp = [5, 14, 10];
+  RUIN_SPEC[2].rooms = 9;
   RUIN_SPEC[3].plan = "warren";
   RUIN_SPEC[3].arch = "buried";
-  RUIN_SPEC[3].bsp = [6, 10, 7];
-  RUIN_SPEC[3].rooms = 36;
+  RUIN_SPEC[3].bsp = [6, 14, 10];
+  RUIN_SPEC[3].rooms = 19;
   RUIN_SPEC[4].plan = "horseshoe";
   RUIN_SPEC[4].arch = "buried";
-  RUIN_SPEC[4].bsp = [5, 10, 7];
-  RUIN_SPEC[4].rooms = 32;
+  RUIN_SPEC[4].bsp = [5, 14, 10];
+  RUIN_SPEC[4].rooms = 16;
   RUIN_SPEC[0].decor = [
     ["pillar", T.ICE, 0.5],
     ["stalac", T.ICE, 0.5],
@@ -8729,9 +8732,9 @@
     // H
   };
   var STORY_RUIN = [
-    { n: "서리 밑 석실", plan: "hook", arch: "sunken", rooms: 12, bsp: [5, 10, 7], decor: [["pillar", T.ICE, 0.4], ["stalac", T.ICE, 0.45]], sig: "frozen", event: "blackout", bonus: "ice_shard" },
-    { n: "겹친 길", plan: "tee", arch: "sunken", rooms: 14, bsp: [5, 10, 7], decor: [["statue", T.RUINBRICK, 0.45], ["pipe", T.COPPER, 0.5], ["frieze", T.RUNESTONE, 0.3]], sig: "sunshaft", event: "password", bonus: "aether_shard" },
-    { n: "발 디딜 곳 없는 방", plan: "hall", arch: "sunken", rooms: 18, bsp: [5, 10, 7], decor: [["growth", T.CORRUPTLEAF, 0.5], ["web", T.VINE, 0.4], ["pipe", T.LEAD, 0.35]], sig: "heart", event: "swarm", bonus: "corrupt_ess" }
+    { n: "서리 밑 석실", plan: "hook", arch: "sunken", rooms: 8, bsp: [5, 14, 10], decor: [["pillar", T.ICE, 0.4], ["stalac", T.ICE, 0.45]], sig: "frozen", event: "blackout", bonus: "ice_shard" },
+    { n: "겹친 길", plan: "tee", arch: "sunken", rooms: 9, bsp: [5, 14, 10], decor: [["statue", T.RUINBRICK, 0.45], ["pipe", T.COPPER, 0.5], ["frieze", T.RUNESTONE, 0.3]], sig: "sunshaft", event: "password", bonus: "aether_shard" },
+    { n: "발 디딜 곳 없는 방", plan: "hall", arch: "sunken", rooms: 11, bsp: [5, 14, 10], decor: [["growth", T.CORRUPTLEAF, 0.5], ["web", T.VINE, 0.4], ["pipe", T.LEAD, 0.35]], sig: "heart", event: "swarm", bonus: "corrupt_ess" }
   ];
   STORY_RUIN[0].mobs = ["frostling", "icewolf", "skeleton"];
   STORY_RUIN[0].rank = 2;
@@ -16754,7 +16757,7 @@
         const y0 = Math.max(a.y, b.y) + 1, y1 = Math.min(ay1, by1) - 2;
         if (y1 < y0) return false;
         const dy = y1;
-        for (let k = 0; k < 2; k++) {
+        for (let k = 0; k < (this._tallLink ? 3 : 2); k++) {
           this.set(wx, dy - k, T.AIR);
           this.set(wx + 1, dy - k, T.AIR);
           this.set(wx - 1, dy - k, T.AIR);
@@ -16771,7 +16774,8 @@
           this.set(dx + k, wy + 1, T.AIR);
         }
         for (let k = -1; k <= 1; k++) this.set(dx + k, wy - 1, T.PLATFORM);
-        for (let yy = wy + 1; yy < wy + 5 && yy < by1 + a.h; yy++) this.set(dx, yy, T.PLATFORM);
+        const lo = ay1 === b.y ? b : a, end = this._tallLink ? Math.max(wy + 4, lo.y + lo.h - 5) : wy + 4;
+        for (let yy = wy + 1; yy <= end && yy < by1 + a.h; yy++) this.set(dx, yy, T.PLATFORM);
         this.set(dx, wy, T.PLATFORM);
         return true;
       }
@@ -16791,17 +16795,18 @@
         const rooms = [];
         const mid = x0 + w / 2;
         const top0 = y0 + 7;
-        for (let by = top0; by + 8 <= y0 + h; by += 8) {
-          const last = by + 16 > y0 + h;
-          const bh = last ? Math.min(12, y0 + h - by) : 8;
+        const LH = cfg.worn ? 10 : 8;
+        for (let by = top0; by + LH <= y0 + h; by += LH) {
+          const last = by + LH * 2 > y0 + h;
+          const bh = last ? cfg.worn ? Math.min(16, y0 + h - by - 1) : Math.min(12, y0 + h - by) : LH;
           const half = Math.floor((by - y0) * (w / 2) / h) - 2;
           if (half < 5) continue;
           let xl = Math.ceil(mid - half), xr = Math.floor(mid + half);
           const row = [];
           if (last) {
-            const kw = Math.min(22, xr - xl + 1);
+            const kw = Math.min(cfg.worn ? 28 : 22, xr - xl + 1);
             const kx = Math.round(mid - kw / 2);
-            row.push({ x: kx, y: by, w: kw, h: bh });
+            row.push({ x: kx, y: by, w: kw, h: bh, grand: cfg.worn ? 1 : 0 });
             for (let x = kx - 1; x - 8 >= xl; ) {
               const rw = Math.min(rng.int(9, 13), x - xl + 1);
               row.push({ x: x - rw + 1, y: by, w: rw, h: bh });
@@ -16815,6 +16820,7 @@
           } else {
             for (let x = xl; x + 6 <= xr; ) {
               let rw = rng.chance(0.3) ? rng.int(14, 18) : rng.int(7, 10);
+              if (cfg.worn) rw += 4;
               if (xr - (x + rw) + 1 < 7) rw = xr - x + 1;
               row.push({ x, y: by, w: rw, h: bh });
               x += rw;
@@ -16834,6 +16840,48 @@
         const kept = all.filter(inPlan);
         if (kept.length >= 3) leaves = kept;
       }
+      if (cfg.worn && !cfg.maze && !tri && leaves.length > 4) {
+        const HW = clamp(Math.round(w * 0.4), 28, 40), HH = clamp(Math.round(h * 0.4), 16, 22);
+        const ok = (r) => !plan || [[0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]].every(([fx, fy]) => {
+          const c = clamp(Math.floor((r.x + r.w * fx * 0.98 - x0) / w * plan[0].length), 0, plan[0].length - 1);
+          const q = clamp(Math.floor((r.y + r.h * fy * 0.98 - y0) / h * plan.length), 0, plan.length - 1);
+          return plan[q][c] !== ".";
+        });
+        const xs = [0.5, 0.3, 0.7, 0.15, 0.85], ys = [1, 0.5, 0];
+        let hall = null;
+        for (const fy of ys) {
+          for (const fx of xs) {
+            const r = { x: Math.round(x0 + 1 + (w - 2 - HW) * fx), y: Math.round(y0 + 1 + (h - 2 - HH) * fy), w: HW, h: HH };
+            if (ok(r)) {
+              hall = r;
+              break;
+            }
+          }
+          if (hall) break;
+        }
+        if (hall) {
+          const next = [];
+          for (const r of leaves) {
+            const ox = Math.min(r.x + r.w, hall.x + hall.w) - Math.max(r.x, hall.x), oy = Math.min(r.y + r.h, hall.y + hall.h) - Math.max(r.y, hall.y);
+            if (ox <= 0 || oy <= 0) {
+              next.push(r);
+              continue;
+            }
+            const ty = Math.max(r.y, hall.y), by = Math.min(r.y + r.h, hall.y + hall.h);
+            const parts = [
+              { x: r.x, y: r.y, w: r.w, h: hall.y - r.y },
+              { x: r.x, y: hall.y + hall.h, w: r.w, h: r.y + r.h - hall.y - hall.h },
+              { x: r.x, y: ty, w: hall.x - r.x, h: by - ty },
+              { x: hall.x + hall.w, y: ty, w: r.x + r.w - hall.x - hall.w, h: by - ty }
+            ];
+            for (const p of parts) if (p.w >= 9 && p.h >= 8) next.push(p);
+          }
+          hall.grand = 1;
+          hall.hall = 1;
+          next.push(hall);
+          leaves = next;
+        }
+      }
       const target = tri ? 0 : cfg.target || 0;
       if (target) {
         const splittable = (r) => r.h >= minH * 2 + 1 || r.w >= minW * 2 + 1;
@@ -16841,7 +16889,7 @@
         while (leaves.length < target && guard++ < 400) {
           let best = null;
           for (const r of leaves)
-            if (splittable(r) && (!best || r.w * r.h > best.w * best.h)) best = r;
+            if (splittable(r) && !r.grand && (!best || r.w * r.h > best.w * best.h)) best = r;
           if (!best) break;
           const two = [];
           this.bspSplit(best.x, best.y, best.w, best.h, 1, minW, minH, rng, two);
@@ -16862,7 +16910,7 @@
           a.hall = 1;
         }
         const cw = Math.max(7, minW - 4);
-        const cells = Math.max(Math.round(leaves.length * 0.22), target - leaves.length);
+        const cells = Math.max(Math.round(leaves.length * (cfg.worn ? 0.12 : 0.22)), target - leaves.length);
         for (let k = 0; k < cells || leaves.length < target; k++) {
           const cand = leaves.filter((r2) => !r2.hall && !r2.cell && (r2.w >= cw + minW || r2.h >= minH + 6));
           if (!cand.length) break;
@@ -16882,6 +16930,35 @@
           leaves.splice(leaves.indexOf(r), 1, a, b);
         }
       }
+      if (cfg.worn && !cfg.maze && !tri && leaves.length > 4 && !leaves.some((r) => r.grand)) {
+        const cx = x0 + w / 2, cy = y0 + h * 0.6;
+        const near = (r) => Math.abs(r.x + r.w / 2 - cx) + Math.abs(r.y + r.h / 2 - cy) * 1.5;
+        const mW = Math.min(44, w * 0.55), mH = Math.min(22, h * 0.6);
+        let grand = leaves[0], gs = -1e9;
+        for (const c of leaves.slice().sort((a, b) => near(a) - near(b)).slice(0, 6)) {
+          const copy = leaves.map((q) => ({ ...q })), hc = copy[leaves.indexOf(c)];
+          this._growHall(copy, hc, 30, 16, mW, mH);
+          const sc = Math.min(1, hc.w / 30) + Math.min(1, hc.h / 16) - near(c) * 4e-3;
+          if (sc > gs) {
+            gs = sc;
+            grand = c;
+          }
+        }
+        this._growHall(leaves, grand, 30, 16, mW, mH);
+        grand.grand = 1;
+        grand.hall = 1;
+        grand.cell = 0;
+      }
+      if (cfg.worn && !cfg.maze && !tri && leaves.length > 4) {
+        for (let k = 0; k < 2; k++) {
+          const left = k === 0;
+          const wing = leaves.filter((r) => !r.hall && r.w * r.h >= 100).sort((a, b) => (left ? a.x - b.x : b.x + b.w - a.x - a.w) || b.w * b.h - a.w * a.h)[0];
+          if (!wing) break;
+          this._growHall(leaves, wing, 20, 12, 30, 16);
+          wing.hall = 1;
+          wing.cell = 0;
+        }
+      }
       if (tri) {
         for (let y = y0; y < y0 + h; y++)
           for (let x = x0; x < x0 + w; x++)
@@ -16899,6 +16976,10 @@
       const shapes = cfg.shapes || (tri ? ["rect", "rect", "rect", cfg.worn ? "rect" : "pillars"] : ["rect", "rect", "round", "octagon", cfg.worn ? "octagon" : "pillars"]);
       for (const r of leaves) {
         const shape = r.cell ? "rect" : rng ? rng.pick(shapes) : "rect";
+        if (r.grand) {
+          this._carveGrand(r, wall, floor, bg);
+          continue;
+        }
         r.shape = shape;
         const x1 = r.x + r.w - 1, y1 = r.y + r.h - 1;
         const cx = (r.x + x1) / 2, cy = (r.y + y1) / 2;
@@ -16924,8 +17005,10 @@
         for (let x = r.x + 1; x < x1; x++) this.set(x, y1 - 1, floor);
         if (cfg.worn && !r.cell) this._wearRoom(r, wall, keepY);
       }
+      this._tallLink = !!cfg.worn;
       for (let i = 0; i < leaves.length; i++)
         for (let j = i + 1; j < leaves.length; j++) this._linkRooms(leaves[i], leaves[j], floor);
+      this._tallLink = false;
       if (tri) {
         for (const r of leaves) {
           let best = null, bo = 0;
@@ -16955,9 +17038,72 @@
       this._ensureConnected(x0, y0, w, h, leaves);
       return leaves;
     },
+    /** 홀을 키운다 — 이웃 방을 합친 상자가 **방들로 빈틈없이 채워질 때만** 삼킨다(도면 밖 암반을 파지 않게). */
+    _growHall(leaves, hall, wantW, wantH, maxW, maxH) {
+      for (let guard = 0; guard < 16 && (hall.w < wantW || hall.h < wantH); guard++) {
+        let best = null, bestS = 1e9;
+        for (const n of leaves) {
+          if (n === hall || n.hall) continue;
+          const bx = Math.min(hall.x, n.x), by = Math.min(hall.y, n.y);
+          const bw = Math.max(hall.x + hall.w, n.x + n.w) - bx, bh = Math.max(hall.y + hall.h, n.y + n.h) - by;
+          if (bw > maxW || bh > maxH || bw === hall.w && bh === hall.h) continue;
+          let area = 0, bad = false;
+          const mem = [];
+          for (const q of leaves) {
+            const ox = Math.min(q.x + q.w, bx + bw) - Math.max(q.x, bx), oy = Math.min(q.y + q.h, by + bh) - Math.max(q.y, by);
+            if (ox <= 0 || oy <= 0) continue;
+            if (ox !== q.w || oy !== q.h || q !== hall && q.hall) {
+              bad = true;
+              break;
+            }
+            area += q.w * q.h;
+            mem.push(q);
+          }
+          if (bad || area !== bw * bh) continue;
+          const need = (hall.w < wantW && bw > hall.w ? -1e3 : 0) + (hall.h < wantH && bh > hall.h ? -1e3 : 0);
+          const s = need + bw * bh;
+          if (s < bestS) {
+            bestS = s;
+            best = { bx, by, bw, bh, mem };
+          }
+        }
+        if (!best) break;
+        for (const q of best.mem) if (q !== hall) leaves.splice(leaves.indexOf(q), 1);
+        hall.x = best.bx;
+        hall.y = best.by;
+        hall.w = best.bw;
+        hall.h = best.bh;
+      }
+    },
+    /** 큰 홀 — 모서리를 크게 깎은 둥근 천장 · 뒷벽의 기둥 줄 · 양쪽 벽에 층층이 붙은 회랑 발판. ★ 난수를 쓰지 않는다. */
+    _carveGrand(r, wall, floor, bg) {
+      const x1 = r.x + r.w - 1, y1 = r.y + r.h - 1, fy = y1 - 2, keepY = y1 - 3;
+      const cut = Math.min(r.w, r.h) * 0.4 | 0;
+      r.shape = "grand";
+      for (let x = r.x + 1; x < x1; x++)
+        for (let y = r.y + 1; y < y1; y++) {
+          const ex = Math.min(x - r.x, x1 - x), ey = y - r.y;
+          if (y >= keepY || ex > cut || ey > cut || (ex - cut) ** 2 + (ey - cut) ** 2 <= cut * cut) this.set(x, y, T.AIR);
+        }
+      for (let x = r.x + 1; x < x1; x++) this.set(x, y1 - 1, floor);
+      const n = Math.max(2, Math.round((r.w - 6) / 8)), step = (r.w - 6) / n;
+      r.cols = [];
+      for (let i = 0; i <= n; i++) {
+        const px = Math.round(r.x + 3 + i * step) - 1;
+        r.cols.push(px);
+        for (let y = r.y + 1; y < y1; y++)
+          for (let k = 0; k < 2; k++) if (this.get(px + k, y) === T.AIR) this.setWall(px + k, y, COLUMN_WALL);
+      }
+      this._wearRoom(r, wall, keepY, true);
+      for (let t = 0, py = fy - 2; py > r.y + cut - 1 && t < 4; t++, py -= 3) {
+        const len = 3 + t * 2;
+        for (let i = 0; i < len; i++) for (const x of [r.x + 1 + i, x1 - 1 - i])
+          if (this.get(x, py) === T.AIR && this.get(x, py - 1) === T.AIR) this.set(x, py, T.PLATFORM);
+      }
+    },
     /** 유적 방을 낡게 — 천장 들쭉날쭉 · 무너진 모서리 · 방마다 한 가지 특색.
         ★ 난수를 뽑지 않는다(칸 해시) — 뒤따르는 생성이 밀리지 않게. 머리 위(keepY-2 위)만 바꾼다. */
-    _wearRoom(r, wall, keepY) {
+    _wearRoom(r, wall, keepY, plain) {
       const hs = (a, b) => {
         let v = a * 374761393 + b * 668265263 | 0;
         v = (v ^ v >>> 13) * 1274126177;
@@ -16989,7 +17135,7 @@
           if (e - x <= 2) for (let i = x; i < e; i++) fill(i, y);
           x = e;
         }
-      if (r.w < 12) return;
+      if (r.w < 12 || plain) return;
       const k = hs(r.x + r.w, r.y + r.h) % 4;
       if (k <= 1) {
         const xs = k ? [r.x + (r.w / 3 | 0), x1 - (r.w / 3 | 0)] : [r.x + (r.w >> 1) + hs(r.y, r.x) % 5 - 2];
@@ -18289,9 +18435,11 @@
         // 등급대로 방 수를 맞춘다
         plan: spec.plan,
         // 겉모양이 방 배치를 따라간다
-        worn: 1
+        worn: 1,
+        maze: spec.maze
+        // 미로는 잔방이 정체성이라 큰 홀을 안 뗀다
       });
-      rooms.sort((a, b) => b.w * b.h - a.w * a.h);
+      rooms.sort((a, b) => (b.grand | 0) - (a.grand | 0) || b.w * b.h - a.w * a.h);
       const boss = rooms[0];
       const site = { id: spec.id, n: spec.n, x: spec.x, y: y0 + (spec.h >> 1), w: spec.w, h: spec.h, rooms, idx };
       this._ruinCtx = { x0, y0, w: spec.w, rooms };
@@ -18352,6 +18500,7 @@
             h: 48
           });
           for (let x = r.x + 2; x < r.x + r.w - 2; x += 5) this.putDecor(x, r.y + 2, spec.torch, "any");
+          this.grandLights(r, fy, spec.torch, spec.wall);
           this.objects.push({
             type: "chest",
             tier: clamp(spec.tier, 1, 4),
@@ -18465,6 +18614,16 @@
       this._walkJobs.push([x0, y0, spec.w, spec.h, spots, spec.floor, spec.traps]);
       return site;
     },
+    /** 큰 홀 기둥의 받침돌과 불 — 천장 횃불은 둥근 천장에 걸리지 않아 홀 가운데가 캄캄했다.
+        ★ 받침돌(벽 타일 두 칸)이 있어야 한다 — 허공의 횃불은 sweepFloatingDecor 가 걷는다. 지나는 길(fy-3 아래)은 비운다. */
+    grandLights(r, fy, torch, wall) {
+      for (const px of r.cols || []) for (const y of [fy - 4, fy - 9]) {
+        if (y - 1 <= r.y + 1 || [0, 1].some((k) => this.get(px + k, y) !== T.AIR || this.get(px + k, y - 1) !== T.AIR)) continue;
+        this.set(px, y, wall);
+        this.set(px + 1, y, wall);
+        this.set(px, y - 1, torch);
+      }
+    },
     /* ---- 숨겨진 유적 3곳 + 심층 봉인실 ---- */
     buildRuins(rng) {
       const { SX: SX2, SY: SY2, WW: WW2 } = this.dims;
@@ -18517,8 +18676,9 @@
           plan: st.plan,
           worn: 1
         });
-        rooms.sort((a, b) => b.w * b.h - a.w * a.h);
+        rooms.sort((a, b) => (b.grand | 0) - (a.grand | 0) || b.w * b.h - a.w * a.h);
         const main = rooms[0], fy0 = main.y + main.h - 3;
+        this.grandLights(main, fy0, T.TORCH, T.RUINBRICK);
         for (let x = main.x + 3; x < main.x + main.w - 2; x += 8) this.set(x, main.y + 2, T.RUNESTONE);
         this.objects.push({ type: "tablet", tablet: i, x: (main.x + (main.w >> 1)) * TS, y: (fy0 + 1) * TS - 48, w: 34, h: 48 });
         this._ruinCtx = { x0, y0, w, rooms };
@@ -20455,6 +20615,10 @@
       });
       this.wallAtlas = bakeAtlas(TS, this.V, WALL_COLOR.length, (g, ox, oy, i) => {
         if (i === 0) return;
+        if (i === COLUMN_WALL) {
+          this.paintColumnWall(g, ox, oy, WALL_COLOR[i]);
+          return;
+        }
         (i === WOOD_WALL ? this.paintWoodWall : this.paintWall).call(this, g, ox, oy, WALL_COLOR[i], rng);
       });
       this.conn = createConnTiles({ ts: TS, bodyOnly: BODY_ONLY, solid: (id) => TILE_DEF[id].solid === 1 });
@@ -21270,6 +21434,16 @@
       g.globalAlpha = 0.16;
       this._r(g, ox, oy, 0, 0, TS, 2, "#000");
       g.globalAlpha = 1;
+    },
+    /** 큰 홀 기둥 — 세로 홈. 두 칸이 한 기둥이라 가운데 이음매도 홈으로 읽힌다. 변형마다 같아야 위아래로 이어진다. */
+    paintColumnWall(g, ox, oy, col) {
+      this._fill(g, ox, oy, shade(col, 0.7));
+      for (let x = 3; x < TS - 2; x += 6) {
+        this._r(g, ox, oy, x, 0, 2, TS, shade(col, 0.5));
+        this._r(g, ox, oy, x + 2, 0, 1, TS, shade(col, 0.92));
+      }
+      this._r(g, ox, oy, 0, 0, 1, TS, shade(col, 0.38));
+      this._r(g, ox, oy, TS - 1, 0, 1, TS, shade(col, 0.38));
     },
     paintWall(g, ox, oy, col, rng) {
       const base = shade(col, 0.66), dk = shade(col, 0.44), lt = shade(col, 0.86);
