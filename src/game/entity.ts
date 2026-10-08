@@ -405,6 +405,12 @@ export class Enemy extends Ent {
   declare chillT: number; declare empT: number; declare baseDmg: number; declare cast: Bag | null; declare mskCd: Bag | null; declare skillIds: string[] | null; declare castKick: number;
   declare chill: (t: number) => void; declare empower: (dur: number, mult: number) => void; declare mobSkills: (dt: number, player: any, seen: boolean, dd: number) => void;
   declare allyTarget: (id: string, S: Bag) => any; declare fireSkill: (id: string, player: any, tgt: any) => void;
+  /* 유적 고유 몬스터의 규칙 · 사건이 다는 표(entity/enemy-traits) */
+  declare frozenT: number; declare shT: number; declare shFace: number; declare burT: number; declare hide: number; declare lampT: number;
+  declare evLamp: boolean; declare latchT: number; declare latchOx: number; declare drainT: number; declare lastHitT: number; declare awake: number;
+  declare still: boolean; declare blinkT: number; declare amb: number; declare goal: { x: number; y: number } | null; declare evTag: string;
+  declare traitTick: (dt: number, world: World, p: Player) => boolean; declare traitHurt: (amount: number, src: any) => number;
+  declare traitContact: (p: Player) => void; declare allyIgnore: () => boolean; declare wakeDeaf: (spread: boolean) => void; declare traitDie: () => void;
 
   constructor(type: string, x: number, y: number, scale = 1) {
     const d = ENEMIES[type];
@@ -587,6 +593,7 @@ export class Enemy extends Ent {
       amount *= 0.12;
       if (Math.random() < 0.5) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, tr('막혔다'), '#8d8874', 0));
     }
+    if (this.def.trait || this.frozenT > 0) { amount = this.traitHurt(amount, src); if (amount <= 0 || this.dead) return; }
     const red = this.armor / (this.armor + 70);
     // 사냥꾼의 표식 — 출처를 가리지 않는다.
     if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
@@ -655,6 +662,7 @@ export class Enemy extends Ent {
     G.deathBurst(this);
     if (this.boss) { G.shake = 18; if (!(G.net && G.net.role === 'guest')) G.onBossDown(this.type); }   // 세계 진행은 호스트 것
     if (p.skills.s_hunter) p.addBuff('swift_kill', 3);
+    if (this.def.trait) this.traitDie();
     G.onKill(this.type);
     G.sfx(this.boss ? 'bossdie' : 'die');
   }
@@ -681,7 +689,7 @@ export class Guard extends Ent {
     this.atkCd -= dt; this.shootCd -= dt;
     let target = null, best = 520 * 520;
     for (const e of G.ents) {
-      if (!(e instanceof Enemy) || e.dead || e.def.passive) continue;
+      if (!(e instanceof Enemy) || e.dead || e.def.passive || e.allyIgnore()) continue;
       const d = dist2(this.cx, this.cy, e.cx, e.cy);
       if (d < best) { best = d; target = e; }
     }
@@ -729,7 +737,7 @@ export class Wolf extends Ent {
     if (this.life <= 0) { this.dead = true; return; }
     let target = null, best = 460 * 460;
     for (const e of G.ents) {
-      if (!(e instanceof Enemy) || e.dead) continue;
+      if (!(e instanceof Enemy) || e.dead || e.allyIgnore()) continue;
       const d = dist2(this.cx, this.cy, e.cx, e.cy);
       if (d < best) { best = d; target = e; }
     }
@@ -786,7 +794,7 @@ export class Pet {
     if (!a) return;
     let target = null, best = a.range * a.range;
     for (const e of G.ents) {
-      if (!(e instanceof Enemy) || e.dead) continue;
+      if (!(e instanceof Enemy) || e.dead || e.allyIgnore()) continue;
       const d2 = dist2(this.x, this.y, e.cx, e.cy);
       if (d2 < best) { best = d2; target = e; }
     }

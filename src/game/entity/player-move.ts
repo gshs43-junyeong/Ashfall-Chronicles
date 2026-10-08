@@ -225,6 +225,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
     if (input.dash && this.dashCd <= 0) {
       const dir = want !== 0 ? want : this.facing;
       this.vx = dir * 720; this.dashV = 0.22;
+      if (this === G.player) G.noiseT = G.time;
       this.iframe = d.dashI / 1000; this.dashCd = d.dashCd;
       for (let i = 0; i < 12; i++) G.parts.push(new Part(this.cx, this.cy, '#cfd8ff'));
       G.sfx('dash');

@@ -4,7 +4,7 @@
     "wh": 720,
     "tiles": "3d55cc55",
     "walls": "bbe9fed7",
-    "objects": "dadb400e",
+    "objects": "eca6de97",
     "nObjects": 406,
     "ruins": 10
   },
@@ -13,7 +13,7 @@
     "wh": 720,
     "tiles": "5f6a7aa8",
     "walls": "4619a1a3",
-    "objects": "f95400b7",
+    "objects": "ea19786d",
     "nObjects": 384,
     "ruins": 10
   },
@@ -22,7 +22,7 @@
     "wh": 1080,
     "tiles": "b2e8eb1e",
     "walls": "11f28cf9",
-    "objects": "684e57e4",
+    "objects": "77c53676",
     "nObjects": 637,
     "ruins": 10
   },
@@ -31,7 +31,7 @@
     "wh": 1080,
     "tiles": "d854d40d",
     "walls": "2c0f113e",
-    "objects": "19118b72",
+    "objects": "c7a9cde0",
     "nObjects": 643,
     "ruins": 10
   },
@@ -40,7 +40,7 @@
     "wh": 1440,
     "tiles": "ae7b3a31",
     "walls": "6f3e0c26",
-    "objects": "f7fdf2d8",
+    "objects": "f2cad3df",
     "nObjects": 984,
     "ruins": 10
   },
@@ -49,7 +49,7 @@
     "wh": 1440,
     "tiles": "121624bd",
     "walls": "5966a4be",
-    "objects": "a912e095",
+    "objects": "fac6fd74",
     "nObjects": 965,
     "ruins": 10
   }

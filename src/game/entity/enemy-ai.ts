@@ -76,6 +76,8 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
     });
     if (this.hp <= 0) { this.die(null); return; }
 
+    /* 유적 고유 규칙(entity/enemy-traits) — 언 것 · 숨은 것 · 붙은 것은 갈래 움직임도 접촉 피해도 쉰다 */
+    if ((this.def.trait || this.frozenT > 0) && this.traitTick(dt, world, player)) return;
     const AI = this.def.ai;
     const sp = this.spd! * this.slowF;
     /* 알아차림 — 보스·순한 동물·떠다니는 것 말고는 눈(시선)과 귀(가까움)와 기억으로 쫓는다(engine entity/sense).
@@ -91,6 +93,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       engaged = this.sense.engaged || this.sense.state === 'alert';
       if (!seen) { tx = this.sense.lastX; ty = this.sense.lastY; }
     }
+    if (this.goal) { tx = this.goal.x; ty = this.goal.y; seen = true; engaged = true; }   // 사건이 준 과녁(버섯 왕관 따위)
     const dx = tx - this.cx, dy = ty - this.cy;
     const dd = engaged ? Math.hypot(dx, dy) : Infinity;
     if (engaged || real < this.aggro) this.facing = dx >= 0 ? 1 : -1;
@@ -195,6 +198,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       player.hurt(this.dmg * (this.boss ? 1 : 0.9), this.cx);
       this.hitCd = 0.7;
       this.atkPose = 0.22;
+      if (this.def.trait) this.traitContact(player);
     }
   },
 

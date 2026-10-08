@@ -241,6 +241,8 @@ export const MinePart: Bag = {
   rightClick() {
     if (this.state !== 'play' || this.uiOpen) return;
     const p = this.player, w = this.world;
+    // 0) 유적 사건의 것(저울 · 씨앗)
+    if (this.pulseEvent && this.ruinEvClick(this.input.wx, this.input.wy)) return;
     // 1) 상호작용 대상
     const o = this.findObjAt(this.input.wx, this.input.wy);
     if (o && dist(p.cx, p.cy, o.x + o.w / 2, o.y + o.h / 2) < TS * 7) { this.interact(o); return; }
