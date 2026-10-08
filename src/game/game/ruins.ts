@@ -277,7 +277,7 @@ export const RuinsPart: Bag = {
   /** 유적에 처음 발을 들였을 때 — 그 유적만의 카드를 한 번 띄운다. */
   checkRuinEntry() {
     const p = this.player, w = this.world;
-    const r = w.ruinAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
+    const r = w.ruinInside(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
     if (!r || !r.id) return;
     if (!this.seenRuins) this.seenRuins = {};
     this.seenRuins[r.id] = 1;                  // 기록은 늘 남긴다(탐험 목표·지도가 읽는다)

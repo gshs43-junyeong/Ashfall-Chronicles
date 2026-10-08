@@ -19,6 +19,13 @@ export const WorldCaves: Bag & ThisType<World> = {
     return this.caveGrid[gy * this._cgW() + gx] || 0;
   },
   _cgW() { const { WW } = this.dims; return Math.ceil(WW / CAVE_GW); },
+  /** 정말 트인 자연 굴인가 — 둘레 11×11 칸 중 45칸 넘게 비어 있어야 한다. 판 굴(폭 1~3칸 · 11~33칸)은 아니다.
+      갈래 구역(60×55)만 보면 바위를 파고 지나가도 '그 굴에 들어가 봤다'가 되었다(업적). 사연: docs/code-history.md#h165 */
+  openCave(tx: number, ty: number) {
+    let n = 0;
+    for (let y = ty - 5; y <= ty + 5; y++) for (let x = tx - 5; x <= tx + 5; x++) if (!this.solid(x, y) && !this.liquid(x, y)) n++;
+    return n > 45;
+  },
   /** 플레이어가 선 자리의 동굴 갈래 — **자연 굴 안**일 때만(지표 12칸 아래 · 지층 벽지 · 유적 밖). */
   caveKindAt(tx: number, ty: number) { const { WW } = this.dims;
     if (!this.caveGrid || !this.inB(tx, ty) || ty <= this.surface[tx] + 12) return 0;
@@ -26,7 +33,7 @@ export const WorldCaves: Bag & ThisType<World> = {
       this._natural = new Set();
       for (const k in MAT_LAYER) { this._natural.add(MAT_LAYER[k].wall); this._natural.add(MAT_LAYER[k].subWall); }
     }
-    if (!this._natural.has(this.walls[ty * WW + tx]) || this.ruinAt(tx, ty)) return 0;
+    if (!this._natural.has(this.walls[ty * WW + tx]) || this.ruinInside(tx, ty)) return 0;
     return this.caveTypeAt(tx, ty);
   },
 
