@@ -91,7 +91,7 @@ export class Player extends Ent {
   declare level: number; declare mineProg: number; declare mineTx: number; declare mineTy: number; declare mined: Record<string, any>; declare mp: number;
   declare name: string; declare potionCd: number; declare prof: Record<string, any>; declare sel: number; declare shield: number; declare shieldMax: number;
   declare shieldT: number; declare skillPts: number; declare skills: Record<string, any>; declare slots: any[]; declare starFade: number;
-  declare starLit: number; declare starOrbits: number; declare statPts: number; declare swing: number; declare swingDir: number;
+  declare starLit: number; declare starOrbits: number; declare statPts: number; declare swing: number; declare swingDir: number; declare swingSide: number; declare combo: number; declare lastSwingT: number;
   declare swingHit: Set<any> | null; declare undyingCd: number; declare xp: number; declare xpNext: number;
 
   constructor(x: number, y: number) {

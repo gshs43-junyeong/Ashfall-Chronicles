@@ -48,9 +48,11 @@ export const RenderPart: Bag = {
     this.pipe.add('drops', (f: any) => this.rDrops(f));
     this.pipe.add('actors', (f: any) => this.rActors(f));
     this.pipe.add('lighting', (f: any) => this.rLightOverlay(f));
+    this.pipe.add('lighting', (f: any) => this.drawStageDim(f));   // 스킬 무대 어둠 — 빛 다음 · 연출 앞(game/stage-fx)
     this.pipe.add('fx', (f: any) => this.rFx(f));
     this.pipe.add('fx', (f: any) => this.rUtil(f));           // 탐지 파동(game/utility)
     this.pipe.add('screen', (f: any) => this.rScreen(f));
+    this.pipe.add('screen', (f: any) => this.drawStage(f));       // 스킬 무대 — 집중선 · 화면 섬광
     this.pipe.add('screen', (f: any) => this.fade.draw(f.c, this.W, this.H));   // 잠 · 되살아남 — 화면 맨 위(engine render/fade)
     this.pipe.add('screen', (f: any) => {                                       // F3 성능 판(engine ui/perf)
       if (!this.perf.on) return;
@@ -385,6 +387,10 @@ export const RenderPart: Bag = {
       b.t += 1 / 60;
       const fr = Math.floor(b.t / (0.04 * (b.sp || 1)));
       if (fr >= 6) { this.bursts.splice(i, 1); continue; }
+      if (b.rot !== undefined) {                     // 베기 자국은 돌리고 뒤집어 같은 그림이 되풀이돼 보이지 않게
+        c.save(); c.translate(b.x - camX, b.y - camY); c.rotate(b.rot); c.scale(b.fl, 1);
+        Sprites.drawFx(c, 'burst_' + b.kind, fr, -b.s / 2, -b.s / 2, b.s); c.restore(); continue;
+      }
       Sprites.drawFx(c, 'burst_' + b.kind, fr, b.x - camX - b.s / 2, b.y - camY - b.s / 2, b.s);
     }
 

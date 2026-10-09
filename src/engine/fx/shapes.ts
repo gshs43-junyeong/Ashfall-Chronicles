@@ -9,7 +9,7 @@ import type { VfxArt } from './vfx.js';
 
 export class ShapeFx {
   declare rings: Ring[]; declare bolts: Bolt[]; declare warns: Warn[]; declare art: VfxArt | null;
-  /** art — 고리 · 예고 원을 결 그림('ring')으로(없으면 선) */
+  /** art — 고리 · 예고 원을 결 그림('ring'), 번개를 마디 그림('bolt0~3')으로(없으면 선) */
   constructor() { this.rings = []; this.bolts = []; this.warns = []; this.art = null; }
 
   /** 퍼져 나가는 고리 — 반지름 r 까지 1.3배로 벌어지며 흐려진다 */
@@ -51,6 +51,17 @@ export class ShapeFx {
     }
     for (const b of this.bolts) {
       const k = b.t / b.max;
+      if (this.art && this.art('bolt0', b.c)) {   // 번개 마디 그림(bolt0~3)을 마디마다 늘여 붙이고 장을 바꿔 깜빡인다
+        const fr = Math.floor(b.t * 40), op = c.globalCompositeOperation;
+        c.globalAlpha = Math.min(1, k * 1.6); c.globalCompositeOperation = 'lighter';
+        for (let j = 1; j < b.pts.length; j++) {
+          const p0 = b.pts[j - 1], p1 = b.pts[j], L = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), im = this.art('bolt' + ((fr + j) % 4), b.c) || this.art('bolt0', b.c)!;
+          c.save(); c.translate(p0[0] - camX, p0[1] - camY); c.rotate(Math.atan2(p1[1] - p0[1], p1[0] - p0[0]));
+          c.drawImage(im, -2, -11, L + 4, 22); c.restore();
+        }
+        c.globalCompositeOperation = op;
+        continue;
+      }
       c.lineCap = 'round'; c.lineJoin = 'round';
       for (const [lw, col, al] of [[6, b.c, 0.22 * k], [2.4, b.c, 0.9 * k], [1, '#ffffff', 0.9 * k]] as [number, string, number][]) {
         c.globalAlpha = al; c.strokeStyle = col; c.lineWidth = lw;

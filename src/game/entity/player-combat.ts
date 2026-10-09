@@ -33,6 +33,9 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     if (d.wc === 'melee') {
       this.swing = 0.24; this.swingDir = this.facing; this.swingAng = ang; this.swingHit = new Set();
       this.swingReach = (d.reach || 42) + this.w / 2;
+      this.combo = G.time - (this.lastSwingT || -9) < 0.9 ? (this.combo || 0) + 1 : 0; this.lastSwingT = G.time;
+      this.swingSide = this.combo % 2 ? -1 : 1;       // 연타는 올려 베기 · 내려 베기를 번갈아
+      G.swingFx(this);
       G.sfx('swing');
     } else if (d.wc === 'ranged') {
       const n = d.multi || 1;
@@ -74,7 +77,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     const ang = angleTo(this.cx, this.cy, mx, my);
     this.facing = Math.cos(ang) >= 0 ? 1 : -1;
     this.atkTimer = 1 / (w ? itemSpeed(w) : 2.4);
-    this.swing = 0.2; this.swingDir = this.facing; this.swingAng = ang; this.swingHit = new Set();
+    this.swing = 0.2; this.swingDir = this.facing; this.swingAng = ang; this.swingHit = new Set(); this.swingSide = 1;
     this.swingReach = 34 + this.w / 2;
     this._punchDmg = dmg;
   },
@@ -195,7 +198,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         for (let k = 0; k < sk.v!(r); k++) {
           const wx = this.cx + (k - 1) * 26;
           G.ents.push(new Wolf(wx, this.cy, this));
-          G.sigilFx(wx, this.y + this.h - 6, 22, '#c8b88a');
+          G.sigilFx(wx, this.y + this.h - 6, 22, '#c8b88a', 'sigil_beast');
           G.skillVfx('s_wolf', { ...fo, wx });   // 22 — 늑대 간격이 26이라 30은 셋이 한 덩이로 뭉쳤다
           for (let j = 0; j < SIG_FX.wolf.n; j++)
             G.parts.push(new Part(wx + (Math.random() - .5) * 26, this.y + this.h - 8, '#c8b88a', -70, .8));
@@ -369,6 +372,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       }
     }
     if (GEN.includes(id)) G.skillVfx(id, fo);
+    G.stageFx(id, this);
     /* 시전의 끝맺음 — 소리·흔들림·멈춤·고리를 SKILL_FX 한 표에서 가져온다. */
     const fx = SKILL_FX[id] || {};
     if (fx.c) G.ringFx(this.cx, this.cy, fx.r || 44, fx.c, .26);

@@ -220,6 +220,357 @@ def fire(W=48, H=96, F=8):
     print('vfx_fire', (W * F, H), F, '장')
 
 
+def xy(W, H):
+    """가로 u 0~1 · 세로 v −1~1(가운데 0)"""
+    y, x = np.mgrid[0:H, 0:W]
+    return x / (W - 1), (y - (H - 1) / 2) / ((H - 1) / 2)
+
+
+def spark(W=96, H=16):
+    """불티 줄기 — 오른쪽 끝이 머리(둥글고 짙다), 왼쪽으로 가늘어지는 꼬리. 속도 방향으로 늘여 쓴다"""
+    u, v = xy(W, H)
+    wid = 0.12 + 0.88 * u ** 1.6
+    body = np.exp(-(v / (0.55 * wid)) ** 2) * u ** 0.9 * np.clip((1 - u) / 0.06, 0, 1) ** 0.5
+    core = np.exp(-(v / (0.2 * wid)) ** 2) * np.clip((u - 0.35) / 0.4, 0, 1) * np.clip((1 - u) / 0.08, 0, 1)
+    save('spark', np.clip(body * 1.2, 0, 1), np.clip(core, 0, 1))
+
+
+def mote(N=48):
+    """빛 알갱이 — 둥근 빛 + 가는 네 갈래 반짝임(오르는 치유 알갱이 · 별가루)"""
+    r, a = polar(N)
+    glow = (np.exp(-(r / 0.32) ** 2) + 0.3 * np.exp(-(r / 0.7) ** 2)) * np.clip((1 - r) / 0.35, 0, 1)
+    cross = sum(np.exp(-(np.abs(np.angle(np.exp(1j * (a - t)))) * np.maximum(r, 0.04) / 0.035) ** 2) for t in (0, math.pi / 2, math.pi, -math.pi / 2)) * np.clip(1 - r, 0, 1) ** 1.5
+    save('mote', np.clip(glow + cross * 0.8, 0, 1) * (r < 1), np.clip(np.exp(-(r / 0.13) ** 2) * 1.3 + cross * 0.5 * np.exp(-(r / 0.5) ** 2), 0, 1))
+
+
+def _ss(S):
+    im = Image.new('L', (S, S) if isinstance(S, int) else S, 0)
+    return im, ImageDraw.Draw(im)
+
+
+def _down(im, size, blur=0):
+    out = im.resize(size, Image.LANCZOS)
+    if blur: out = out.filter(ImageFilter.GaussianBlur(blur))
+    return np.asarray(out, float) / 255
+
+
+def shard(W=64, H=32):
+    """얼음 · 수정 조각 — 깎인 면이 셋인 쐐기(오른쪽이 뾰족). 면마다 세기가 달라 돌 때 반짝인다"""
+    K = 6; im, d = _ss((W * K, H * K)); co, dc = _ss((W * K, H * K))
+    P = lambda x, y: (x * (W - 1) * K, (0.5 + y * 0.5) * (H - 1) * K)
+    tip, top, bot, back_t, back_b = P(1, 0), P(0.42, -0.86), P(0.36, 0.8), P(0.02, -0.34), P(0.06, 0.38)
+    mid = P(0.48, 0.04)
+    d.polygon([tip, top, back_t, back_b, bot], fill=150)
+    d.polygon([tip, top, mid], fill=235); d.polygon([back_t, top, mid, back_b], fill=120); d.polygon([tip, mid, bot], fill=190)
+    for a_, b_ in ((tip, top), (top, back_t), (back_t, back_b), (back_b, bot), (bot, tip)): d.line([a_, b_], fill=255, width=K * 2)
+    dc.line([tip, mid, back_b], fill=255, width=K); dc.line([tip, top], fill=200, width=K)
+    shape = _down(im, (W, H)); glow = _down(im, (W, H), 1.6)
+    save('shard', np.clip(shape + glow * 0.35, 0, 1), _down(co, (W, H)))
+
+
+def _jag(n, amp, seed, rough=0.55):
+    """끝이 0 에 붙는 지그재그(가운데 점 흔들기) — 0~1 길이 n 칸"""
+    r = np.random.default_rng(seed); pts = np.zeros(2 ** n + 1); step = amp; L = 1
+    while L < 2 ** n:
+        seg = (2 ** n) // L
+        for i in range(L): pts[i * seg + seg // 2] = (pts[i * seg] + pts[(i + 1) * seg]) / 2 + (r.random() - 0.5) * step
+        L *= 2; step *= rough
+    return pts
+
+
+def crack(W=512, H=48):
+    """땅 금 — 가로로 이어 쓰는 띠. 굵은 본 금이 지그재그로 달리고 짧은 잔금이 갈라진다 · 금 둘레는 달아오른 빛"""
+    K = 3; im, d = _ss((W * K, H * K)); co, dc = _ss((W * K, H * K)); c = H * K / 2
+    j = _jag(7, 0.9, 41); xs = np.linspace(0, W * K, len(j)); ys = c + j * H * K * 0.32
+    line = list(zip(xs, ys)); d.line(line, fill=255, width=4 * K, joint='curve'); dc.line(line, fill=255, width=K + 1)
+    r = np.random.default_rng(43)
+    for i in range(14):
+        k = int(r.integers(4, len(line) - 6)); x0, y0 = line[k]; ang = (r.random() - 0.5) * 2.2 + (math.pi if r.random() < 0.5 else 0) * 0
+        ang = math.pi / 2 * (1 if r.random() < 0.5 else -1) + (r.random() - 0.5) * 1.3
+        L = (8 + r.random() * 14) * K; pts = [(x0, y0)]
+        for s in range(3): x0 += math.cos(ang) * L / 3 + (r.random() - 0.5) * 3 * K; y0 += math.sin(ang) * L / 3; pts.append((x0, y0))
+        d.line(pts, fill=200, width=2 * K)
+    shape = _down(im, (W, H)); glow = _down(im, (W, H), 3)
+    save('crack', np.clip(shape + glow * 0.9, 0, 1), _down(co, (W, H)))
+
+
+def bolt(W=256, H=48, F=4):
+    """번개 마디 — F 장(bolt0~3, 장마다 다른 지그재그 · 곁가지). 두 점 사이에 늘여 쓰고 장을 바꿔 깜빡인다"""
+    K = 3
+    for f in range(F):
+        im, d = _ss((W * K, H * K)); co, dc = _ss((W * K, H * K)); c = H * K / 2
+        j = _jag(6, 0.75, 60 + f, 0.6); xs = np.linspace(0, W * K, len(j)); ys = c + j * H * K * 0.42
+        line = list(zip(xs, ys)); d.line(line, fill=255, width=3 * K); dc.line(line, fill=255, width=K + 1)
+        r = np.random.default_rng(70 + f)
+        for b in range(2):
+            k = int(r.integers(8, len(line) - 16)); x0, y0 = line[k]; s = 1 if r.random() < 0.5 else -1; pts = [(x0, y0)]
+            for q in range(5): x0 += (8 + r.random() * 8) * K; y0 += s * (2 + r.random() * 5) * K; pts.append((x0, y0))
+            d.line(pts, fill=170, width=2 * K)
+        shape = _down(im, (W, H)); glow = _down(im, (W, H), 3.5)
+        u, _ = xy(W, H); ends = np.clip(np.minimum(u, 1 - u) / 0.04, 0, 1)
+        save(f'bolt{f}', np.clip((shape + glow * 0.8) * ends, 0, 1), _down(co, (W, H)) * ends)
+
+
+def meteor(W=96, H=320):
+    """떨어지는 별 — 아래쪽이 머리(둥근 불덩이), 위로 길게 흩어지는 꼬리 · 꼬리를 따라 떨어져 나간 불씨"""
+    y, x = np.mgrid[0:H, 0:W]; u = (x - (W - 1) / 2) / ((W - 1) / 2); hy = H - W / 2
+    t = np.clip((hy - y) / (hy - 4), 0, 1)                                   # 0 = 머리 · 1 = 꼬리 끝
+    nz = noise2(H, 10, 8, 3, 91); nz = np.asarray(Image.fromarray((nz * 255).astype(np.uint8)).resize((W, H), Image.BICUBIC), float) / 255
+    hr = np.hypot(u, (y - hy) / ((W - 1) / 2))
+    head = (np.exp(-(hr / 0.42) ** 2) * 1.3 + 0.45 * np.exp(-(hr / 0.8) ** 2)) * np.clip((1 - hr) / 0.3, 0, 1)
+    wid = 0.42 + 0.25 * t
+    tail = np.exp(-(u / wid) ** 2) * (1 - t) ** 1.3 * (0.45 + 0.55 * nz) * (y < hy + 4)
+    em = np.zeros_like(u)
+    for i in range(26):
+        tt = rng.random() ** 0.7; my = hy - tt * (hy - 10); mx = (W - 1) / 2 + (rng.random() - 0.5) * W * 0.55 * (0.4 + tt); mr = 1.2 + rng.random() * 1.6
+        em += np.exp(-(((x - mx) ** 2 + (y - my) ** 2) / mr ** 2)) * (1 - tt * 0.7)
+    shape = np.clip(head + tail + em * 0.9, 0, 1)
+    core = np.clip(np.exp(-(hr / 0.17) ** 2) * 1.4 + np.exp(-(u / (wid * 0.3)) ** 2) * (1 - t) ** 3 * 0.8 + em * 0.4, 0, 1)
+    save('meteor', shape, core)
+
+
+def impact(N=256):
+    """충격 별 — 길이 · 굵기가 제각각인 뾰족한 가시 열여섯 + 가운데 빛(부딪힌 순간 · 큰 타격)"""
+    r, a = polar(N); spk = np.zeros_like(r); cs = np.zeros_like(r)
+    gr = np.random.default_rng(17)
+    for i in range(16):
+        t = i / 16 * 2 * math.pi + gr.random() * 0.25; L = 0.45 + gr.random() * 0.53 if i % 2 == 0 else 0.25 + gr.random() * 0.3
+        w0 = 0.09 + gr.random() * 0.07; d = np.abs(np.angle(np.exp(1j * (a - t))))
+        tri = np.clip(1 - d / (w0 * np.clip(1 - r / L, 0, 1) + 1e-4), 0, 1) * (r < L)
+        spk = np.maximum(spk, tri * (1 - r / L * 0.5)); cs = np.maximum(cs, tri * (r < L * 0.55))
+    glow = np.exp(-(r / 0.2) ** 2) * 1.2 + 0.25 * np.exp(-(r / 0.55) ** 2)
+    save('impact', np.clip(spk + glow, 0, 1) * (r < 1), np.clip(cs * 0.8 + np.exp(-(r / 0.1) ** 2) * 1.3, 0, 1))
+
+
+def swirl(N=256):
+    """회오리 — 안에서 밖으로 감기는 바람 결 셋(끝이 가늘게 흩어진다). 돌려 쓰면 몸을 감는 칼바람"""
+    r, a = polar(N); shape = np.zeros_like(r); core = np.zeros_like(r)
+    for arm in range(3):
+        for sub, (w, al) in enumerate(((0.05, 1.0), (0.025, 0.6))):
+            ph = arm * 2 * math.pi / 3 + sub * 0.35
+            th = np.angle(np.exp(1j * (a - ph - r * 4.2)))                    # 나선 위 거리(각)
+            line = np.exp(-((th * np.maximum(r, 0.1)) / w) ** 2)
+            fade = np.clip((r - 0.22) / 0.2, 0, 1) * np.clip((1 - r) / 0.12, 0, 1) * (0.35 + 0.65 * r)
+            shape += line * fade * al; core += np.exp(-((th * np.maximum(r, 0.1)) / (w * 0.3)) ** 2) * fade * al * (r > 0.5)
+    shape += band(r, 0.9, 0.05) * 0.25
+    save('swirl', np.clip(shape, 0, 1) * (r < 1), np.clip(core, 0, 1))
+
+
+def _hexgrid(S, cell, w, d, fill=255, clip=None):
+    """S×S 판에 육각 격자 선"""
+    hh = cell * math.sqrt(3) / 2
+    for row in range(-1, int(S / hh) + 2):
+        for col in range(-1, int(S / (cell * 1.5)) + 2):
+            cx = col * cell * 1.5; cy = row * hh * 2 + (hh if col % 2 else 0)
+            pts = [(cx + math.cos(k * math.pi / 3) * cell, cy + math.sin(k * math.pi / 3) * cell) for k in range(7)]
+            d.line(pts, fill=fill, width=w)
+
+
+def dome(N=256):
+    """결계 구 — 가장자리로 갈수록 짙은 막(프레넬) · 안에 비치는 육각 격자 · 왼쪽 위 반사광"""
+    K = 2; S = N * K; im, d = _ss(S); _hexgrid(S, S / 11, 2 * K, d)
+    hexa = _down(im, (N, N), 0.6); r, a = polar(N)
+    fres = np.clip(r, 0, 1) ** 3
+    shell = band(r, 0.96, 0.03) + fres * 0.22                                 # 안쪽은 비친다 — 막이 몸을 가리지 않게
+    shape = np.clip(shell + hexa * (0.06 + 0.5 * fres ** 1.5), 0, 1) * (r < 0.99)
+    hl = band(r, 0.8, 0.035) * np.exp(-(np.angle(np.exp(1j * (a + 2.3))) / 0.38) ** 2) + band(r, 0.72, 0.02) * np.exp(-(np.angle(np.exp(1j * (a + 2.15))) / 0.15) ** 2) * 0.6
+    save('dome', shape, np.clip(hl * 0.9 + band(r, 0.965, 0.008) * 0.8, 0, 1))
+
+
+def _sigil_finish(name, im, co, N, inner=0.14):
+    shape = _down(im, (N, N)); blur = _down(im, (N, N), N / 90); r, a = polar(N)
+    fill = np.clip((r - 0.84) / 0.16, 0, 1) * (r < 1) * 0.14 + np.exp(-(r / 0.3) ** 2) * inner
+    save(name, np.clip(shape * 0.95 + blur * 0.55 + fill, 0, 1), _down(co, (N, N)))
+
+
+def _sig_base(N):
+    S = N * 2; im, d = _ss(S); co, dc = _ss(S); c = S / 2; R = lambda f: f * S / 2 * 0.96
+    def ring(f, w, dr, v=255): dr.ellipse([c - R(f), c - R(f), c + R(f), c + R(f)], outline=v, width=max(1, int(w)))
+    def P(f, t): return (c + math.cos(t) * R(f), c + math.sin(t) * R(f))
+    return S, im, d, co, dc, c, R, ring, P
+
+
+def sigil_hex(N=512):
+    """방패진(전사 · 방어) — 육각 테 두 겹 · 테 사이 쐐기 눈금 · 안쪽 육각 격자 · 가운데 방패 문장"""
+    S, im, d, co, dc, c, R, ring, P = _sig_base(N)
+    for f, w in ((1.0, 8), (0.86, 5)):
+        pts = [P(f, -math.pi / 2 + k * math.pi / 3) for k in range(7)]; d.line(pts, fill=255, width=w, joint='curve')
+    dc.line([P(0.985, -math.pi / 2 + k * math.pi / 3) for k in range(7)], fill=255, width=3)
+    for k in range(6):
+        for s in range(1, 5):
+            t = -math.pi / 2 + k * math.pi / 3 + s * math.pi / 15; d.line([P(0.885, t), P(0.95, t)], fill=255, width=4)
+        x, y = P(0.93, -math.pi / 2 + k * math.pi / 3); rr = R(0.05); d.ellipse([x - rr, y - rr, x + rr, y + rr], outline=255, width=5)
+        dc.ellipse([x - rr * .4, y - rr * .4, x + rr * .4, y + rr * .4], fill=255)
+    g, gd = _ss(S); _hexgrid(S, R(0.13), 3, gd, 150)
+    m, md = _ss(S); md.polygon([P(0.8, -math.pi / 2 + k * math.pi / 3) for k in range(6)], fill=255)
+    im.paste(255, (0, 0), Image.fromarray(np.minimum(np.asarray(g), np.asarray(m))))
+    sh = [P(0.34, -math.pi / 2), (c + R(0.26), c - R(0.2)), (c + R(0.22), c + R(0.14)), (c, c + R(0.36)), (c - R(0.22), c + R(0.14)), (c - R(0.26), c - R(0.2))]
+    d.line(sh + [sh[0]], fill=255, width=7, joint='curve'); dc.line(sh + [sh[0]], fill=255, width=2)
+    d.line([P(0.3, -math.pi / 2), (c, c + R(0.3))], fill=255, width=4)
+    _sigil_finish('sigil_hex', im, co, N)
+
+
+def sigil_frost(N=512):
+    """서리진(마법사 · 얼음) — 여섯 갈래 눈꽃(가지마다 잔가지 둘) · 가는 바깥 고리 둘 · 고리 사이 결정 점"""
+    S, im, d, co, dc, c, R, ring, P = _sig_base(N)
+    ring(1.0, 5, d); ring(0.98, 2, dc); ring(0.9, 3, d)
+    for k in range(36):
+        t = k / 36 * 2 * math.pi; x, y = P(0.95, t); rr = R(0.012 if k % 3 else 0.022); d.polygon([(x, y - rr * 2), (x + rr, y), (x, y + rr * 2), (x - rr, y)], fill=255)
+    for k in range(6):
+        t = -math.pi / 2 + k * math.pi / 3; d.line([P(0.08, t), P(0.84, t)], fill=255, width=6); dc.line([P(0.1, t), P(0.8, t)], fill=255, width=2)
+        for f, L in ((0.36, 0.17), (0.6, 0.13)):
+            base = P(f, t)
+            for s in (-1, 1):
+                tt = t + s * math.pi / 3; end = (base[0] + math.cos(tt) * R(L), base[1] + math.sin(tt) * R(L)); d.line([base, end], fill=255, width=5)
+        tip = P(0.84, t); rr = R(0.035); d.polygon([(tip[0] + math.cos(t) * rr * 1.6, tip[1] + math.sin(t) * rr * 1.6), (tip[0] + math.cos(t + 1.6) * rr, tip[1] + math.sin(t + 1.6) * rr), (tip[0] - math.cos(t) * rr * 0.6, tip[1] - math.sin(t) * rr * 0.6), (tip[0] + math.cos(t - 1.6) * rr, tip[1] + math.sin(t - 1.6) * rr)], outline=255, width=4)
+    d.line([P(0.16, -math.pi / 2 + k * math.pi / 3) for k in range(7)], fill=255, width=4)
+    _sigil_finish('sigil_frost', im, co, N, 0.2)
+
+
+def sigil_leaf(N=512):
+    """사냥진(궁수) — 고리 두 겹 · 안쪽을 겨눈 화살촉 여덟 · 그 사이 잎맥 · 가운데 과녁"""
+    S, im, d, co, dc, c, R, ring, P = _sig_base(N)
+    ring(1.0, 6, d); ring(0.985, 2, dc); ring(0.78, 4, d); ring(0.2, 4, d); ring(0.08, 3, d); ring(0.2, 2, dc)
+    for k in range(8):
+        t = -math.pi / 2 + k * math.pi / 4
+        tip, l, rgt = P(0.8, t), P(0.95, t - 0.09), P(0.95, t + 0.09); d.line([l, tip, rgt], fill=255, width=6, joint='curve'); dc.line([l, tip, rgt], fill=255, width=2)
+        d.line([P(0.95, t), P(0.99, t)], fill=255, width=4)
+        tm = t + math.pi / 8                                                    # 잎 — 가운데 맥 + 곁맥
+        d.line([P(0.3, tm), P(0.7, tm)], fill=255, width=4)
+        for f in (0.4, 0.5, 0.6):
+            b = P(f, tm)
+            for s in (-1, 1): d.line([b, (b[0] + math.cos(tm + s * 0.9) * R(0.06), b[1] + math.sin(tm + s * 0.9) * R(0.06))], fill=255, width=3)
+        lf = [P(0.3, tm)] + [P(0.3 + 0.4 * q, tm + 0.16 * math.sin(math.pi * q)) for q in np.linspace(0, 1, 9)] + [P(0.3 + 0.4 * q, tm - 0.16 * math.sin(math.pi * q)) for q in np.linspace(1, 0, 9)]
+        d.line(lf, fill=255, width=4, joint='curve')
+    for k in range(4):
+        t = k * math.pi / 2; d.line([P(0.22, t), P(0.36, t)], fill=255, width=4)
+    _sigil_finish('sigil_leaf', im, co, N)
+
+
+def sigil_life(N=512):
+    """생명진(치유) — 여덟 꽃잎이 겹친 연꽃 · 꽃잎 끝마다 작은 점 · 바깥 고리에 덩굴 물결"""
+    S, im, d, co, dc, c, R, ring, P = _sig_base(N)
+    ring(1.0, 5, d); ring(0.985, 2, dc); ring(0.86, 3, d)
+    wave = [P(0.93 + 0.035 * math.sin(q * 24), q) for q in np.linspace(0, 2 * math.pi, 400)]
+    d.line(wave, fill=255, width=4)
+    for k in range(8):
+        t = -math.pi / 2 + k * math.pi / 4
+        for f0, f1, wd, wid in ((0.12, 0.8, 0.3, 6), (0.12, 0.55, 0.2, 4)):
+            pet = [P(f0 + (f1 - f0) * q, t + wd * math.sin(math.pi * q) ** 0.8 * (1 - q * 0.35)) for q in np.linspace(0, 1, 16)] + \
+                  [P(f0 + (f1 - f0) * q, t - wd * math.sin(math.pi * q) ** 0.8 * (1 - q * 0.35)) for q in np.linspace(1, 0, 16)]
+            d.line(pet, fill=255, width=wid, joint='curve')
+        x, y = P(0.82, t); rr = R(0.022); dc.ellipse([x - rr, y - rr, x + rr, y + rr], fill=255); d.ellipse([x - rr * 1.6, y - rr * 1.6, x + rr * 1.6, y + rr * 1.6], fill=255)
+    ring(0.12, 5, d); ring(0.12, 2, dc)
+    _sigil_finish('sigil_life', im, co, N, 0.22)
+
+
+def sigil_beast(N=512):
+    """짐승진(소환) — 이빨처럼 안으로 물린 톱니 고리 · 세 줄 발톱 자국 · 바깥 고리의 매듭 넷"""
+    S, im, d, co, dc, c, R, ring, P = _sig_base(N)
+    ring(1.0, 7, d); ring(0.985, 2, dc); ring(0.82, 4, d)
+    teeth = []
+    for k in range(48):
+        t = k / 48 * 2 * math.pi; teeth.append(P(0.82 if k % 2 == 0 else 0.68, t))
+    d.line(teeth + [teeth[0]], fill=255, width=4, joint='curve')
+    for k in range(4):
+        t = -math.pi / 4 + k * math.pi / 2; x, y = P(0.91, t); rr = R(0.06)
+        d.ellipse([x - rr, y - rr, x + rr, y + rr], outline=255, width=6); d.line([P(0.84, t), P(0.98, t)], fill=255, width=4); dc.ellipse([x - rr * .35, y - rr * .35, x + rr * .35, y + rr * .35], fill=255)
+    for s in (-1, 0, 1):                                                        # 발톱 자국 — 비스듬히 휜 세 줄
+        pts = [(c + R(0.16) * s + R(0.12) * (q - 0.5) * 2 * 0.5, c + R(0.42) * (q - 0.5) * 2) for q in np.linspace(0, 1, 12)]
+        pts = [(x + R(0.08) * math.sin(math.pi * q), y) for (x, y), q in zip(pts, np.linspace(0, 1, 12))]
+        for i in range(len(pts) - 1):
+            w = int(3 + 9 * math.sin(math.pi * (i + 0.5) / (len(pts) - 1))); d.line([pts[i], pts[i + 1]], fill=255, width=w)
+        dc.line(pts[2:-2], fill=255, width=2)
+    _sigil_finish('sigil_beast', im, co, N)
+
+
+def sigil_void(N=512):
+    """공허진(순간이동 · 비전) — 엇갈려 끊긴 고리 셋 · 안으로 말려 드는 나선 둘 · 고리 위 점 무리"""
+    S, im, d, co, dc, c, R, ring, P = _sig_base(N)
+    gr = np.random.default_rng(23)
+    for f, w, n in ((1.0, 6, 5), (0.8, 4, 7), (0.6, 3, 4)):
+        off = gr.random() * 360; span = 360 / n
+        for k in range(n):
+            a0 = off + k * span; a1 = a0 + span * (0.55 + gr.random() * 0.3)
+            d.arc([c - R(f), c - R(f), c + R(f), c + R(f)], a0, a1, fill=255, width=w)
+            if f == 1.0: dc.arc([c - R(0.985), c - R(0.985), c + R(0.985), c + R(0.985)], a0, a1, fill=255, width=2)
+    for s in range(2):
+        sp = [P(0.08 + 0.48 * q, s * math.pi + q * 4.6) for q in np.linspace(0, 1, 120)]; d.line(sp, fill=255, width=5); dc.line(sp[30:], fill=255, width=2)
+    for k in range(40):
+        t = gr.random() * 2 * math.pi; f = 0.66 + gr.random() * 0.12; x, y = P(f, t); rr = R(0.006 + gr.random() * 0.012); d.ellipse([x - rr, y - rr, x + rr, y + rr], fill=255)
+    _sigil_finish('sigil_void', im, co, N)
+
+
+def beam_spiral(W=320, H=64):
+    """감기는 빛줄기(관통 화살 · 바람) — 가는 속 둘레를 세 갈래 결이 꼬며 감는다 · 앞쪽(오른쪽)이 짙다"""
+    u, v = xy(W, H); nz = noise2(H, W, 4, 4, 51)
+    ends = np.clip(u / 0.12, 0, 1) * np.clip((1 - u) / 0.04, 0, 1)
+    body = np.exp(-(v / 0.18) ** 2) * (0.6 + 0.4 * nz)
+    st = sum(np.exp(-((v - 0.62 * np.sin(2 * math.pi * (u * 5 + ph)) * (0.5 + 0.5 * u)) / 0.06) ** 2) * (0.55 + 0.45 * np.cos(2 * math.pi * (u * 5 + ph))) for ph in (0, 1 / 3, 2 / 3))
+    shape = np.clip((body + st * 0.75) * ends * (0.4 + 0.6 * u), 0, 1)
+    save('beam_spiral', shape, np.clip(np.exp(-(v / 0.06) ** 2) * ends * u, 0, 1))
+
+
+def _crescent(r, a, span, rout, thick, skew=0.6):
+    """a 0 을 가운데로 span 만큼 펼친 초승달 — 꼬리(−) 가늘고 머리(+) 쪽이 두껍다. 바깥 날 rout"""
+    t = np.clip((a + span / 2) / span, 0, 1) * (np.abs(a) <= span / 2)
+    th = thick * t ** skew * (1 - t) ** 0.3 * 1.6
+    inner = rout - th
+    body = np.clip((r - inner) / np.maximum(th, 1e-3), 0, 1) ** 0.9 * (r < rout) * (th > 0.004)
+    edge = np.exp(-((r - rout) / 0.012) ** 2) * (t > 0.02) * (t < 0.995) * t ** 0.4
+    return body, edge, t
+
+
+def swipe(N=256):
+    """칼 자국 넷(swipe0~3) — 오른쪽(각 0)을 가운데로 150° 펼친 초승달. 게임이 휘두른 각 · 방향으로 돌리고 뒤집어 섞어 쓴다.
+       0 맑은 초승달 · 1 겹 초승달 · 2 결이 갈라진 바람 베기 · 3 무거운 마무리(넓은 몸 + 날 끝 파편)"""
+    r, a = polar(N); span = math.radians(150); idx = ((a + math.pi) / (2 * math.pi) * 2048).astype(int) % 2048
+    b, e, t = _crescent(r, a, span, 0.95, 0.26)
+    save('swipe0', np.clip(b * 0.75 + e, 0, 1), np.clip(e * 0.9 + np.exp(-((r - 0.935) / 0.008) ** 2) * (b > 0.2) * 0.6, 0, 1))
+    b2, e2, _ = _crescent(r, a + 0.12, math.radians(120), 0.74, 0.11)
+    save('swipe1', np.clip(b * 0.65 + e + b2 * 0.55 + e2 * 0.7, 0, 1), np.clip(e * 0.9 + e2 * 0.5, 0, 1))
+    st = np.zeros_like(r)
+    for i in range(14):
+        rr0 = 0.62 + i * 0.024; ns = noise1(2048, 6, 300 + i)[idx]
+        st += band(r, rr0, 0.007) * (ns > 0.45) * (0.3 + 0.7 * ns)
+    m = (np.abs(a) <= span / 2) * np.clip(t * 3, 0, 1) * (1 - t) ** 0.2
+    save('swipe2', np.clip(st * m * 0.9 + e + b * 0.25, 0, 1), np.clip(e * 0.8 + st * m * 0.3, 0, 1))
+    b3, e3, t3 = _crescent(r, a, math.radians(165), 0.96, 0.42, 0.45)
+    chips = np.zeros_like(r)
+    for i in range(30):
+        ta = (rng.random() - 0.3) * math.radians(80); rr = 0.97 + rng.random() * 0.03
+        d = np.abs(np.angle(np.exp(1j * (a - ta))))
+        chips += np.exp(-(d / 0.01) ** 2) * ((r > rr - 0.02) & (r < 1)) * 0.8
+    save('swipe3', np.clip(b3 * 0.8 + e3 * 1.1 + chips + st * b3 * 0.4, 0, 1) * (r < 1), np.clip(e3 + b3 * 0.25 * (t3 > 0.5), 0, 1))
+
+
+def cut(N=128):
+    """맞은 자리의 베인 자국 셋(cut0~2) — 0 한 줄 · 1 엇갈린 두 줄(X) · 2 나란한 세 줄. 가로(각 0)가 베는 방향"""
+    y, x = np.mgrid[0:N, 0:N]; c = (N - 1) / 2
+    def line(ang, off=0.0, L=0.92, w=0.06):
+        u = ((x - c) * math.cos(ang) + (y - c) * math.sin(ang)) / c; v = (-(x - c) * math.sin(ang) + (y - c) * math.cos(ang)) / c - off
+        tp = np.clip(1 - (u / L) ** 2, 0, 1)                 # 양끝이 뾰족
+        return np.exp(-(v / (w * tp + 1e-3)) ** 2) * (np.abs(u) < L), np.exp(-(v / (w * 0.3 * tp + 1e-3)) ** 2) * (np.abs(u) < L * 0.85)
+    r = np.hypot(x - c, y - c) / c; glow = np.exp(-(r / 0.35) ** 2) * 0.35
+    s0, c0 = line(-0.12); save('cut0', np.clip(s0 + glow, 0, 1), c0)
+    s1, c1 = line(0.42, 0, 0.85); s2, c2 = line(-0.42, 0, 0.85)
+    save('cut1', np.clip(s1 + s2 + glow, 0, 1), np.clip(c1 + c2, 0, 1))
+    acc, acc_c = 0, 0
+    for off, L in ((-0.32, 0.7), (0, 0.9), (0.32, 0.7)):
+        s_, c_ = line(-0.2, off, L, 0.045); acc = acc + s_; acc_c = acc_c + c_
+    save('cut2', np.clip(acc + glow * 0.6, 0, 1), np.clip(acc_c, 0, 1))
+
+
+def lens(W=512, H=32):
+    """가로 빛살(렌즈 섬광) — 가운데 짙고 양끝으로 길게 사라지는 한 줄 + 옅은 띠"""
+    u, v = xy(W, H); d = np.abs(u - 0.5) * 2
+    shape = np.exp(-(v / (0.16 * (1 - d) + 0.04)) ** 2) * (1 - d) ** 1.6 + np.exp(-(v / 0.6) ** 2) * (1 - d) ** 3 * 0.25
+    save('lens', np.clip(shape, 0, 1), np.clip(np.exp(-(v / 0.06) ** 2) * (1 - d) ** 3, 0, 1))
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     shock(); flare(); sigil(); slash(); column(); beam(); puff(); ring(); fire()
+    spark(); mote(); shard(); crack(); bolt(); meteor(); impact(); swirl(); dome()
+    sigil_hex(); sigil_frost(); sigil_leaf(); sigil_life(); sigil_beast(); sigil_void(); beam_spiral()
+    swipe(); cut(); lens()
