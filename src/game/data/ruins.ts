@@ -249,16 +249,16 @@ export const PULSE_RAGE: Bag = {
 };
 
 /* ---------------- 탐사 기록 ---------------- */
-export const SURVEY_W: Record<string, number> = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12, puz: 12 };
+export const SURVEY_W: Record<string, number> = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12, puz: 12, deep: 8 };
 export const SURVEY_TIERS: { r: string; c: string; need: Record<string, number> }[] = [
-  { r: 'S', c: '#ffd24a', need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 2, echo: 3, puz: 1 } },
+  { r: 'S', c: '#ffd24a', need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 2, echo: 3, puz: 1, deep: 1 } },
   { r: 'A', c: '#e8a0ff', need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 1, echo: 1, puz: 0.5 } },
   { r: 'B', c: '#8fd0ff', need: { rooms: 0.65, chests: 0.5, boss: 1, events: 1 } },
   { r: 'C', c: '#9fdc8f', need: { rooms: 0.35, chests: 0.2 } },
   { r: 'D', c: '#9a9a9a', need: {} }
 ];
 export const SURVEY_LABEL: Record<string, string> = { rooms: '방', chests: '상자', boss: '주인', lore: '비문', code: '골방', rage: '격노',
-                       events: '사건', kinds: '사건 갈래', echo: '메아리', puz: '봉인 방' };
+                       events: '사건', kinds: '사건 갈래', echo: '메아리', puz: '봉인 방', deep: '깊은 곳' };
 
 /* ---------------- 봉인 방(갇힌 방 퍼즐 — game/ruin-puzzle) ----------------
    방에 들어서면 출입구가 봉인석으로 막히고, 유적마다 제 퍼즐을 풀어야 열린다. k: 퍼즐 갈래 · n: 장치 수 · rule · m: 갈래별 변수 ·
@@ -283,6 +283,9 @@ export const PUZZLE: Record<string, Bag> = {
   story2:  { n: '석판의 차례', k: 'simon', cnt: 5, len: 6, skin: 'rune', c: '#d8c8ff', rooms: 2,
              hint: '문양이 빛나는 차례를 보고 같은 차례로 짚어라' }
 };
+/* 깊은 곳 단계 수(game/ruin-deep) — 1 = 2단계까지(봉인 방을 다 풀면 열림). 2 이상은 위 단계 홀의 봉인을 풀 때마다 한 층 더.
+   이야기가 이어지는 석판 유적만 3단계까지 — 모든 유적이 깊으면 아래층이 특별하지 않다. 표에 없으면 1 */
+export const DEEP_LEVELS: Record<string, number> = { story0: 2, story1: 2, story2: 2 };
 /* 봉인이 스스로 풀리기까지(초) — 못 풀어도 갇혀 버리지는 않는다 */
 export const PUZZLE_GIVEUP = 150;
 

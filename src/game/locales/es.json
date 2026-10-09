@@ -1001,7 +1001,10 @@
   "봉인 방 — {n} 풀었다 · 금화 {gold}": "Sala sellada — {n} resuelto · {gold} de oro",
   "봉인 방 — {n}. {hint} · 장치는 우클릭": "Sala sellada — {n}. {hint} · Clic derecho en los mecanismos",
   "봉인이 지쳐 풀렸다 — {n}": "El sello se agotó y cedió — {n}",
-  "빛을 이어라": "Une la luz"
+  "빛을 이어라": "Une la luz",
+  "깊은 곳 {L}단계가 열렸다 — {n}": "Se ha abierto la profundidad {L} — {n}",
+  "깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다": "Sello profundo {n}/{m} — se abre al resolver todas las salas selladas",
+  "더 깊은 봉인 — 이 홀의 봉인을 풀면 {L}단계가 열린다": "Un sello más profundo — resuelve el sello de esta sala para abrir la profundidad {L}"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4282,6 +4285,7 @@
   "PUZZLE.story1.hint": "Observa en qué orden se iluminan los glifos y tócalos en ese mismo orden",
   "PUZZLE.story2.n": "Orden de las tablillas",
   "PUZZLE.story2.hint": "Observa en qué orden se iluminan los glifos y tócalos en ese mismo orden",
-  "SURVEY_LABEL.puz": "Salas selladas"
+  "SURVEY_LABEL.puz": "Salas selladas",
+  "SURVEY_LABEL.deep": "Profundidades"
  }
 }

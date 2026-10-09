@@ -64,7 +64,9 @@ export const SAVE_UPGRADES = [
     d.world.wet = wet;
   },
   /* v12 → v13 — 멀티플레이 손님 기록(mpGuests: 손님 아이디 → 마지막 자리 · 새로 만든 손님 캐릭터). 옛 세계엔 손님이 없었다. */
-  (d: any) => { if (!d.mpGuests) d.mpGuests = {}; }
+  (d: any) => { if (!d.mpGuests) d.mpGuests = {}; },
+  /* v13 → v14 — 유적의 깊은 곳(ruinSites[].deep: 봉인 방을 다 풀면 파이는 아래층 자리). 옛 세계는 아직 닫혀 있다. */
+  (d: any) => { for (const s of (d.world && d.world.ruinSites) || []) if (s.deep === undefined) s.deep = null; }
 ];
 export const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 

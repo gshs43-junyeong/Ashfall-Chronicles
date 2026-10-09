@@ -8650,6 +8650,7 @@
     CELL_CHARGE: () => CELL_CHARGE,
     CIPHER_KIND: () => CIPHER_KIND,
     CIPHER_WORDS: () => CIPHER_WORDS,
+    DEEP_LEVELS: () => DEEP_LEVELS,
     ECHO: () => ECHO,
     EVENTS: () => EVENTS,
     FARM_KIT: () => FARM_KIT,
@@ -9166,9 +9167,9 @@
     story1: { k: "quake", t: "겹친 길이 비틀린다 — 무언가 내려온다" },
     story2: { k: "swarm", t: "발밑의 방들이 한꺼번에 깨어난다" }
   };
-  var SURVEY_W = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12, puz: 12 };
+  var SURVEY_W = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12, puz: 12, deep: 8 };
   var SURVEY_TIERS = [
-    { r: "S", c: "#ffd24a", need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 2, echo: 3, puz: 1 } },
+    { r: "S", c: "#ffd24a", need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 2, echo: 3, puz: 1, deep: 1 } },
     { r: "A", c: "#e8a0ff", need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 1, echo: 1, puz: 0.5 } },
     { r: "B", c: "#8fd0ff", need: { rooms: 0.65, chests: 0.5, boss: 1, events: 1 } },
     { r: "C", c: "#9fdc8f", need: { rooms: 0.35, chests: 0.2 } },
@@ -9184,7 +9185,8 @@
     events: "사건",
     kinds: "사건 갈래",
     echo: "메아리",
-    puz: "봉인 방"
+    puz: "봉인 방",
+    deep: "깊은 곳"
   };
   var PUZZLE = {
     ice: {
@@ -9276,6 +9278,7 @@
       hint: "문양이 빛나는 차례를 보고 같은 차례로 짚어라"
     }
   };
+  var DEEP_LEVELS = { story0: 2, story1: 2, story2: 2 };
   var PUZZLE_GIVEUP = 150;
   var ECHO = { max: 5, mul: (lv) => 1 + 0.35 * lv, needStage: 2 };
   var CAVE_TYPES = [
@@ -37886,6 +37889,10 @@
     /* v12 → v13 — 멀티플레이 손님 기록(mpGuests: 손님 아이디 → 마지막 자리 · 새로 만든 손님 캐릭터). 옛 세계엔 손님이 없었다. */
     (d) => {
       if (!d.mpGuests) d.mpGuests = {};
+    },
+    /* v13 → v14 — 유적의 깊은 곳(ruinSites[].deep: 봉인 방을 다 풀면 파이는 아래층 자리). 옛 세계는 아직 닫혀 있다. */
+    (d) => {
+      for (const s of d.world && d.world.ruinSites || []) if (s.deep === void 0) s.deep = null;
     }
   ];
   var SAVE_VERSION = SAVE_UPGRADES.length + 1;
@@ -39712,6 +39719,7 @@
       this.puzzle = null;
       this._puzRooms = null;
       this._pzLeft = null;
+      this._deepFail = null;
       this.guardCd = 0;
       this.facTimer = 0;
       this.cropTimer = 0;
@@ -40850,6 +40858,7 @@
         this.puzzle = null;
         this._puzRooms = null;
         this._pzLeft = null;
+        this._deepFail = null;
         this.guardCd = 0;
         this.facTimer = 0;
         this.cropTimer = 0;
@@ -49276,6 +49285,8 @@
       part.echo = story ? null : [sv.echo || 0, ECHO.max];
       const nPuz = site ? this.puzzleRooms(site).length : 0;
       part.puz = nPuz ? [Object.keys(sv.puz || {}).length, nPuz] : null;
+      const dMax = site ? this.deepMax(site) : 0;
+      part.deep = dMax ? [Math.min(sv.deepDone || 0, dMax), dMax] : null;
       let got = 0, max = 0;
       for (const k in SURVEY_W) {
         if (!part[k]) continue;
@@ -49286,7 +49297,7 @@
       const meets = (k, v) => {
         const q = part[k];
         if (!q) return true;
-        if (k === "rooms" || k === "chests" || k === "puz") return q[0] / q[1] >= v - 1e-9;
+        if (k === "rooms" || k === "chests" || k === "puz" || k === "deep") return q[0] / q[1] >= v - 1e-9;
         if (k === "events" || k === "kinds" || k === "echo") return q[0] >= v;
         return q[0] >= 1;
       };
@@ -49302,7 +49313,7 @@
       const label = (k) => story && k === "boss" ? tr("석판") : SURVEY_LABEL[k];
       if (next) missing = Object.keys(next.need).filter((k) => !meets(k, next.need[k])).map((k) => {
         const v = next.need[k], q = part[k];
-        if (k === "rooms" || k === "chests" || k === "puz") return tr("{label} {n}% (지금 {n2}%)", { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
+        if (k === "rooms" || k === "chests" || k === "puz" || k === "deep") return tr("{label} {n}% (지금 {n2}%)", { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
         if (k === "events" || k === "kinds" || k === "echo") return tr("{label} {v} (지금 {q})", { label: label(k), v, q: q[0] });
         return label(k);
       });
@@ -49567,6 +49578,14 @@
       cand.sort((a, b) => a.h - b.h);
       return C[site.id] = cand.slice(0, P.rooms).map((q) => q.i).sort((a, b) => a - b);
     },
+    /** 방 번호 → 방(깊은 곳 홀은 'deep') */
+    puzRoom(site, ri) {
+      if (typeof ri === "string" && ri.startsWith("deep")) {
+        const d = this.deepLevels(site)[+ri.slice(4)];
+        return d && d.hall;
+      }
+      return site.rooms[ri];
+    },
     /** 막을 칸 — 방 둘레 바로 바깥 줄에서 트인 칸 가운데 방 안의 트인 칸과 맞닿은 것(옆방 홀을 가로지르지 않게) */
     puzzleSealCells(r) {
       const w = this.world, open = (x, y) => TILE_DEF[w.get(x, y)].solid !== 1;
@@ -49615,19 +49634,34 @@
               return;
             }
           }
+          const levels = this.deepLevels(site);
+          if (this.deepReady(site, levels.length) && this.deepOpen(site)) return;
+          for (let L = 0; L < levels.length; L++) {
+            const H = levels[L].hall;
+            if ((sv.deepDone || 0) > L) continue;
+            const key = site.id + ":deep" + L, cool = this._pzLeft || (this._pzLeft = {});
+            const inside = tx > H.x + 1 && tx < H.x + H.w - 1 && ty > H.y + 1 && ty < H.y + H.h;
+            if (!inside) cool[key] = 1;
+            else if (cool[key] !== 0 && this.puzzleBegin(site, "deep" + L)) {
+              cool[key] = 0;
+              return;
+            }
+          }
         }
       }
     },
     /** 닫는다 — 막을 칸에 몸이 걸린 플레이어가 있으면 다음에 */
     puzzleBegin(site, ri) {
-      const P = PUZZLE[site.id], r = site.rooms[ri], w = this.world;
+      const deep = typeof ri === "string" && ri.startsWith("deep"), L = deep ? +ri.slice(4) : -1;
+      const P = deep ? this.deepPuzzleSpec(site.id, L) : PUZZLE[site.id], r = this.puzRoom(site, ri), w = this.world;
+      if (!P || !r) return false;
       const cells = this.puzzleSealCells(r);
       for (const q of this.players) for (const [x, y] of cells)
         if (q.x < (x + 1) * TS && q.x + q.w > x * TS && q.y < (y + 1) * TS && q.y + q.h > y * TS) return false;
       const nodes = this.puzzleNodes(r, P);
       if (!nodes) return false;
       const rnd = lcg(hash(w.seed + ":pz:" + site.id + ":" + ri + ":" + (this.surveyOf(site.id).pzTry || 0)));
-      const pz = { id: site.id, ri, k: P.k, skin: P.skin, c: P.c, n: P.n, nodes, t: 0, flash: 1, seal: [], step: 0, show: 0 };
+      const pz = { id: site.id, ri, deep, L, k: P.k, skin: P.skin, c: P.c, n: P.n, nodes, t: 0, flash: 1, seal: [], step: 0, show: 0 };
       this.puzzleSetup(pz, P, rnd);
       for (const [x, y] of cells) {
         pz.seal.push([x, y, w.get(x, y)]);
@@ -49803,7 +49837,7 @@
         }
       }
       const away = this.players.every((q) => {
-        const site = this.evSite(pz.id), r = site && site.rooms[pz.ri];
+        const site = this.evSite(pz.id), r = site && this.puzRoom(site, pz.ri);
         return !r || q.dead || Math.abs(q.cx / TS - (r.x + r.w / 2)) > r.w || Math.abs(q.cy / TS - (r.y + r.h / 2)) > r.h;
       });
       if (away) {
@@ -49867,21 +49901,24 @@
         return;
       }
       const sv = this.surveyOf(pz.id);
-      (sv.puz = sv.puz || {})[pz.ri] = 1;
+      if (pz.deep) sv.deepDone = Math.max(sv.deepDone || 0, pz.L + 1);
+      else (sv.puz = sv.puz || {})[pz.ri] = 1;
       this.puzzleReward(pz);
-      const site = this.evSite(pz.id), r = site && site.rooms[pz.ri];
+      const site = this.evSite(pz.id), r = site && this.puzRoom(site, pz.ri);
       if (r) {
         const mid = pz.nodes[pz.nodes.length >> 1];
-        this.evChest(Math.floor(mid.x / TS), Math.floor(mid.fy / TS), 0, this.ruinSpec(pz.id) || {});
+        this.evChest(Math.floor(mid.x / TS), Math.floor(mid.fy / TS), pz.deep ? 2 + pz.L : 0, this.ruinSpec(pz.id) || {});
       }
       this.checkSurvey(pz.id);
+      if (site && this.deepReady(site, this.deepLevels(site).length)) this.after(1.4, () => this.deepOpen(site));
     },
     /** 상 — 금화 · 경험치(레벨 곡선을 따른다). 참가자는 'ok' 를 받고 제 몫을 스스로 받는다 */
     puzzleReward(pz) {
       const p = this.me, spec = this.ruinSpec(pz.id), rank = spec && spec.rank || 3;
-      const gold = 90 * rank;
+      const gold = 90 * rank * (pz.deep ? 3 + pz.L : 1);
       p.gold += gold;
-      p.addXp(Math.round(p.xpNext * 0.12));
+      p.addXp(Math.round(p.xpNext * (pz.deep ? 0.3 + 0.15 * pz.L : 0.12)));
+      if (pz.deep) this.evGive("pulse_shard", 2 + pz.L);
       this.toast(tr("봉인 방 — {n} 풀었다 · 금화 {gold}", { n: pz.n, gold: fmt(gold) }), "good");
       this.sfx("chapter");
       this.stageFx && this.stageFx("s_warcry");
@@ -49899,6 +49936,8 @@
       this.netBroadcast({ k: "puz", s: {
         id: pz.id,
         ri: pz.ri,
+        deep: pz.deep,
+        L: pz.L,
         k: pz.k,
         skin: pz.skin,
         c: pz.c,
@@ -50220,6 +50259,210 @@
   };
   mixin(Game.prototype, RuinPuzzleDrawPart, true);
 
+  // src/game/game/ruin-deep.ts
+  var ruin_deep_exports = {};
+  __export(ruin_deep_exports, {
+    RuinDeepPart: () => RuinDeepPart
+  });
+  var HALL_W = 24, HALL_H = 8, WING_W = 10, WING_H = 6;
+  var LAYOUTS = [{ hw: HALL_W, wings: true }, { hw: HALL_W, wings: false }, { hw: 18, wings: false }];
+  var RuinDeepPart = {
+    deepLevels(site) {
+      return Array.isArray(site.deep) ? site.deep : [];
+    },
+    deepMax(site) {
+      return PUZZLE[site.id] ? DEEP_LEVELS[site.id] || 1 : 0;
+    },
+    /** L 단계 문 자리 — 2단계는 가장 깊은 방 바닥 가운데(봉인 방은 뺀다), 그 아래는 위 단계 홀 바닥 오른쪽(사다리 줄을 비켜) */
+    deepGate(site, L = 0) {
+      if (L > 0) {
+        const up = this.deepLevels(site)[L - 1];
+        if (!up) return null;
+        return { x: up.hall.x + up.hall.w - 5, fy: up.hall.y + up.hall.h };
+      }
+      if (site._gate !== void 0) return site._gate;
+      const w = this.world, puz = new Set(this.puzzleRooms(site));
+      let best = null;
+      site.rooms.forEach((r, i) => {
+        if (!puz.has(i) && r.w >= 8 && (!best || r.y + r.h > best.y + best.h)) best = r;
+      });
+      let gate = null;
+      if (best) {
+        const r = best, gx = r.x + (r.w >> 1);
+        for (let y = r.y + 2; y < r.y + r.h + 1; y++)
+          if (TILE_DEF[w.get(gx, y)].solid === 1 && TILE_DEF[w.get(gx, y - 1)].solid !== 1 && TILE_DEF[w.get(gx, y - 2)].solid !== 1) gate = { x: gx, fy: y };
+      }
+      Object.defineProperty(site, "_gate", { value: gate, enumerable: false, writable: true });
+      return gate;
+    },
+    /** L 단계를 열 때가 됐나 */
+    deepReady(site, L = 0) {
+      if (L >= this.deepMax(site)) return false;
+      const sv = this.surveyOf(site.id);
+      if (L > 0) return (sv.deepDone || 0) >= L;
+      const rooms = this.puzzleRooms(site), done = sv.puz || {};
+      return rooms.length > 0 && rooms.every((i) => done[i]);
+    },
+    /** 팔 자리 — 문 아래로 굴(3칸) → 홀 (+ 양옆 곁방). 물 · 기반암 · 봉인 · 다른 유적 · 위 단계 · 물건 · 기계가 걸리면 다른 깊이 · 옆 · 작은 판 */
+    deepPlan(site, gate, L) {
+      const w = this.world, { WW: WW2, WH: WH2 } = w.dims, sb = site.y + (site.h >> 1);
+      const objs = w.objects.map((o) => [Math.floor(o.x / TS), Math.floor(o.y / TS)]);
+      const other = (w.ruinSites || []).filter((s) => s !== site);
+      const mine = this.deepLevels(site).flatMap((d) => [d.hall, d.left, d.right].filter(Boolean));
+      const ok = (x, y) => {
+        if (x < 2 || x >= WW2 - 2 || y < 2 || y >= WH2 - 4) return false;
+        const t = w.get(x, y), d = TILE_DEF[t];
+        if (t === T.BEDROCK || d.liquid || w.locked && w.locked(x, y) || w.machines.has(y * WW2 + x)) return false;
+        return true;
+      };
+      const base = L === 0 ? Math.max(gate.fy + 5, sb + 3) : gate.fy + 5;
+      for (const lay of LAYOUTS) for (let depth = 0; depth <= 18; depth += 3) for (const off of [0, -5, 5, -9, 9]) {
+        const hw = lay.hw, hy = base + depth, hx = gate.x - (hw >> 1) + off;
+        if (gate.x < hx + 2 || gate.x > hx + hw - 3) continue;
+        const ww = lay.wings ? WING_W + 1 : 0;
+        const x0 = hx - ww - 1, x1 = hx + hw + ww, y0 = hy - 1, y1 = hy + HALL_H;
+        let good = true;
+        for (let y = y0 - 1; good && y <= y1 + 1; y++) for (let x = x0 - 1; good && x <= x1 + 1; x++) if (!ok(x, y)) good = false;
+        for (let y = gate.fy + 1; good && y < hy; y++) for (let x = gate.x - 2; x <= gate.x + 2; x++) if (!ok(x, y)) {
+          good = false;
+          break;
+        }
+        if (!good) continue;
+        if (objs.some(([ox, oy]) => ox >= x0 - 1 && ox <= x1 + 1 && oy >= y0 - 1 && oy <= y1 + 1)) continue;
+        if (other.some((s) => x1 >= s.x - (s.w >> 1) - 2 && x0 <= s.x + (s.w >> 1) + 2 && y1 >= s.y - (s.h >> 1) - 2 && y0 <= s.y + (s.h >> 1) + 2)) continue;
+        if (mine.some((r) => x1 >= r.x - 2 && x0 <= r.x + r.w + 1 && y1 >= r.y - 2 && y0 <= r.y + r.h + 1)) continue;
+        const hall = { x: hx, y: hy, w: hw, h: HALL_H };
+        return {
+          gx: gate.x,
+          top: gate.fy,
+          hall,
+          left: lay.wings ? { x: hx - WING_W - 1, y: hy + HALL_H - WING_H, w: WING_W, h: WING_H } : null,
+          right: lay.wings ? { x: hx + hw + 1, y: hy + HALL_H - WING_H, w: WING_W, h: WING_H } : null
+        };
+      }
+      return null;
+    },
+    /** 다음 단계를 연다 — 문 둘레가 흔들리고 바닥이 내려앉으며 아래층이 파인다(호스트 · 혼자). 판 칸은 world.set 으로(빛 · 지도 · 물 · 여럿이) */
+    deepOpen(site) {
+      if (this.net && this.net.role === "guest") return false;
+      const levels = this.deepLevels(site), L = levels.length;
+      if (!this.deepReady(site, L)) return false;
+      const fail = this._deepFail || (this._deepFail = {});
+      if (fail[site.id + L]) return false;
+      const gate = this.deepGate(site, L), plan = gate && this.deepPlan(site, gate, L);
+      if (!plan) {
+        fail[site.id + L] = 1;
+        return false;
+      }
+      const w = this.world, spec = this.ruinSpec(site.id) || {}, RS = this.ruinSpecRaw(site.id);
+      const wall = RS.wall || T.RUINBRICK, floor = RS.floor || T.RUINTILE, bg = RS.bg || 10, torch = RS.torch || T.TORCH;
+      const rooms = [plan.hall, plan.left, plan.right].filter(Boolean);
+      const inside = (x, y) => rooms.some((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
+      for (const r of rooms) for (let y = r.y - 1; y <= r.y + r.h; y++) for (let x = r.x - 1; x <= r.x + r.w; x++) {
+        if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) {
+          w.set(x, y, T.AIR);
+          w.setWall(x, y, bg);
+        } else if (!inside(x, y)) w.set(x, y, y === r.y + r.h ? floor : wall);
+      }
+      for (const [r, dx] of [[plan.left, plan.hall.x - 1], [plan.right, plan.hall.x + plan.hall.w]])
+        if (r) for (let k = 1; k <= 3; k++) {
+          w.set(dx, r.y + r.h - k, T.AIR);
+          w.setWall(dx, r.y + r.h - k, bg);
+        }
+      for (let y = plan.top; y < plan.hall.y; y++) {
+        for (let x = plan.gx - 1; x <= plan.gx + 1; x++) {
+          w.set(x, y, y === plan.top || x === plan.gx ? T.PLATFORM : T.AIR);
+          w.setWall(x, y, bg);
+        }
+        for (const x of [plan.gx - 2, plan.gx + 2]) if (y > plan.top && TILE_DEF[w.get(x, y)].solid !== 1) w.set(x, y, wall);
+      }
+      for (let y = plan.hall.y; y < plan.hall.y + plan.hall.h - 1; y++) w.set(plan.gx, y, T.PLATFORM);
+      const H = plan.hall, fy = H.y + H.h;
+      for (let x = H.x + 3; x < H.x + H.w - 2; x += 6) for (let y = H.y; y < H.y + H.h; y++) if (Math.abs(x - plan.gx) > 1) w.setWall(x, y, COLUMN_WALL);
+      for (const r of rooms) for (const x of [r.x, r.x + r.w - 1]) if (w.get(x, fy - 4) === T.AIR) w.set(x, fy - 4, torch);
+      const a = plan.left || H, b = plan.right || H;
+      this.evChest(a.x + 2, fy, 1 + L, spec);
+      this.evChest(b.x + b.w - 3, fy, 1 + L, spec);
+      levels.push({ gx: plan.gx, top: plan.top, hall: H, left: plan.left, right: plan.right });
+      site.deep = levels;
+      const pool = spec.mobs || [];
+      if (pool.length) for (const r of plan.left ? [plan.left, plan.right] : [H]) for (let i = 0; i < 2; i++)
+        this.evMob(pool[pool.length - 1], [r.x + 3 + i * 4, fy - 1], 1.5 + 0.5 * L);
+      this.shake = Math.max(this.shake, 14);
+      this.sfx("chapter");
+      for (let q = 0; q < 50; q++) this.parts.push(new Part(plan.gx * TS + TS / 2 + (Math.random() - 0.5) * 60, plan.top * TS, "#b8a8ff", -80, 1.1));
+      this.stageFx && this.stageFx("s_quake");
+      this.toast(tr("깊은 곳 {L}단계가 열렸다 — {n}", { L: L + 2, n: spec.n || "" }), "good");
+      this.checkSurvey(site.id);
+      return true;
+    },
+    /** 유적 표의 원래 항목(벽 · 바닥 · 벽지 · 횃불) — 석판 유적은 그 유적 바닥에서 가장 흔한 것 */
+    ruinSpecRaw(id) {
+      const site = this.evSite(id), w = this.world;
+      const spec = this.ruinSpec(id) || {};
+      if (spec.wall) return spec;
+      const cnt = {};
+      if (site) for (const r of site.rooms) for (let x = r.x; x < r.x + r.w; x++) {
+        const t = w.get(x, r.y + r.h);
+        if (TILE_DEF[t].solid === 1) cnt[t] = (cnt[t] || 0) + 1;
+      }
+      const top = Object.keys(cnt).sort((a, b) => cnt[+b] - cnt[+a])[0];
+      return { wall: top ? +top : T.RUINBRICK, floor: top ? +top : T.RUINTILE, bg: 10, torch: T.TORCH };
+    },
+    /** L 단계 홀의 봉인 — 그 유적 퍼즐을 단계만큼 어렵게 */
+    deepPuzzleSpec(id, L = 0) {
+      const P = PUZZLE[id];
+      if (!P) return null;
+      const H = Object.assign({}, P), k = L + 1;
+      if (P.k === "toggle" || P.k === "bloom" || P.k === "dial") H.cnt = P.cnt + k;
+      if (P.k === "simon") {
+        H.cnt = P.cnt + k;
+        H.len = P.len + 2 * k;
+      }
+      if (P.k === "mirror") H.cols = P.cols + k;
+      return H;
+    },
+    /** 세계 위 — 아직 닫힌 다음 단계 문(바닥에 새긴 봉인 · 몇 개 풀었나) */
+    drawDeepGates(c) {
+      const p = this.me;
+      if (!p || !this.world) return;
+      const cx0 = this.cam.x, cy0 = this.cam.y, t = this.time || 0;
+      for (const site of this.world.ruinSites || []) {
+        const L = this.deepLevels(site).length;
+        if (L >= this.deepMax(site)) continue;
+        const g = this.deepGate(site, L);
+        if (!g) continue;
+        const x = (g.x + 0.5) * TS - cx0, y = g.fy * TS - cy0;
+        if (x < -80 || x > this.W + 80 || y < -80 || y > this.H + 80) continue;
+        const sv = this.surveyOf(site.id), rooms = this.puzzleRooms(site), done = sv.puz || {};
+        const m = L ? 1 : rooms.length, n = L ? Math.min(1, (sv.deepDone || 0) - L + 1) : rooms.filter((i) => done[i]).length;
+        c.save();
+        c.globalAlpha = 0.55 + 0.25 * Math.sin(t * 2);
+        c.strokeStyle = "#b8a8ff";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.ellipse(x, y - 1, 28, 6, 0, 0, Math.PI * 2);
+        c.stroke();
+        for (let i = 0; i < m; i++) {
+          const a = Math.PI + (i + 1) / (m + 1) * Math.PI, lx = x + Math.cos(a) * 28, ly = y - 1 + Math.sin(a) * 6 - 6;
+          c.fillStyle = i < n ? "#e8dcff" : "#3a3050";
+          c.beginPath();
+          c.arc(lx, ly, 3.5, 0, Math.PI * 2);
+          c.fill();
+        }
+        if (Math.abs(p.cx - (g.x + 0.5) * TS) < TS * 6 && Math.abs(p.y + p.h - g.fy * TS) < TS * 4) {
+          c.globalAlpha = 0.9;
+          c.fillStyle = "#e8dcff";
+          c.font = "11px " + FONT;
+          c.textAlign = "center";
+          c.fillText(L ? tr("더 깊은 봉인 — 이 홀의 봉인을 풀면 {L}단계가 열린다", { L: L + 2 }) : tr("깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다", { n, m }), x, y - 22);
+        }
+        c.restore();
+      }
+    }
+  };
+  mixin(Game.prototype, RuinDeepPart, true);
+
   // src/game/game/minimap.ts
   var minimap_exports = {};
   __export(minimap_exports, {
@@ -50358,6 +50601,7 @@
       this.pipe.add("fx", (f) => this.rFx(f));
       this.pipe.add("fx", (f) => this.rUtil(f));
       this.pipe.add("fx", (f) => this.drawPuzzle(f.c));
+      this.pipe.add("fx", (f) => this.drawDeepGates(f.c));
       this.pipe.add("screen", (f) => this.rScreen(f));
       this.pipe.add("screen", (f) => this.drawStage(f));
       this.pipe.add("screen", (f) => this.drawPuzzleHud(f.c));
@@ -53493,6 +53737,18 @@
           give("pulse_shard", 3);
           give("potion_hp", 20);
           let r = site.rooms.slice().sort((a, b) => a.y - b.y)[0];
+          if (qs.get("deep")) {
+            const sv = this.surveyOf(id);
+            sv.puz = {};
+            for (const i of this.puzzleRooms(site)) sv.puz[i] = 1;
+            if (+qs.get("deep") > 1) sv.deepDone = +qs.get("deep") - 1;
+            const g = this.deepGate(site);
+            if (g) {
+              p.x = (g.x + 3) * TS;
+              p.y = g.fy * TS - p.h;
+              p.vx = p.vy = 0;
+            }
+          }
           const pzr = qs.get("puz") ? this.puzzleRooms(site)[(+qs.get("puz") || 1) - 1] : void 0;
           if (pzr !== void 0) {
             r = site.rooms[pzr];
@@ -53505,7 +53761,7 @@
             p.x = tx * TS;
             p.y = fy * TS - p.h;
             p.vx = p.vy = 0;
-          } else {
+          } else if (!qs.get("deep")) {
             p.x = (r.x + (r.w >> 1)) * TS;
             p.y = (r.y + r.h - 3) * TS - p.h + TS;
             p.vx = p.vy = 0;
@@ -56059,7 +56315,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

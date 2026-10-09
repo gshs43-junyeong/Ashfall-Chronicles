@@ -1001,7 +1001,10 @@
   "봉인 방 — {n} 풀었다 · 금화 {gold}": "Versiegelte Kammer — {n} gelöst · {gold} Gold",
   "봉인 방 — {n}. {hint} · 장치는 우클릭": "Versiegelte Kammer — {n}. {hint} · Rechtsklick auf die Vorrichtungen",
   "봉인이 지쳐 풀렸다 — {n}": "Das Siegel hat sich erschöpft — {n}",
-  "빛을 이어라": "Verbinde das Licht"
+  "빛을 이어라": "Verbinde das Licht",
+  "깊은 곳 {L}단계가 열렸다 — {n}": "Tiefe {L} hat sich geöffnet — {n}",
+  "깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다": "Tiefes Siegel {n}/{m} — öffnet sich, wenn alle versiegelten Kammern gelöst sind",
+  "더 깊은 봉인 — 이 홀의 봉인을 풀면 {L}단계가 열린다": "Ein tieferes Siegel — löse das Siegel dieser Halle, um Tiefe {L} zu öffnen"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4282,6 +4285,7 @@
   "PUZZLE.story1.hint": "Merk dir, in welcher Reihenfolge die Zeichen aufleuchten, und berühre sie genauso",
   "PUZZLE.story2.n": "Reihenfolge der Tafeln",
   "PUZZLE.story2.hint": "Merk dir, in welcher Reihenfolge die Zeichen aufleuchten, und berühre sie genauso",
-  "SURVEY_LABEL.puz": "Versiegelte Kammern"
+  "SURVEY_LABEL.puz": "Versiegelte Kammern",
+  "SURVEY_LABEL.deep": "Tiefen"
  }
 }

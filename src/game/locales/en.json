@@ -1001,7 +1001,10 @@
   "봉인 방 — {n} 풀었다 · 금화 {gold}": "Sealed Room — {n} solved · {gold} gold",
   "봉인 방 — {n}. {hint} · 장치는 우클릭": "Sealed Room — {n}. {hint} · Right-click the devices",
   "봉인이 지쳐 풀렸다 — {n}": "The seal wore itself out — {n}",
-  "빛을 이어라": "Connect the light"
+  "빛을 이어라": "Connect the light",
+  "깊은 곳 {L}단계가 열렸다 — {n}": "Depth {L} has opened — {n}",
+  "깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다": "Deep seal {n}/{m} — opens when every sealed room is solved",
+  "더 깊은 봉인 — 이 홀의 봉인을 풀면 {L}단계가 열린다": "A deeper seal — solve this hall's seal to open depth {L}"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4282,6 +4285,7 @@
   "PUZZLE.story1.hint": "Watch the order the glyphs light up, then touch them in the same order",
   "PUZZLE.story2.n": "Order of the Tablets",
   "PUZZLE.story2.hint": "Watch the order the glyphs light up, then touch them in the same order",
-  "SURVEY_LABEL.puz": "Sealed rooms"
+  "SURVEY_LABEL.puz": "Sealed rooms",
+  "SURVEY_LABEL.deep": "Depths"
  }
 }

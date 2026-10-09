@@ -409,7 +409,7 @@ export const GameCore: Bag = {
     this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.tweens.clear();
     this.corpses = [];
     this.shapes.clear(); this.vfx.clear(); this.trail.clear(); this.sigs = []; this.edge = null; this.stage = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
-    this.puzzle = null; this._puzRooms = null; this._pzLeft = null;   // 봉인 방은 저장하지 않는다 — 새 판은 열린 방
+    this.puzzle = null; this._puzRooms = null; this._pzLeft = null; this._deepFail = null;   // 봉인 방은 저장하지 않는다 — 새 판은 열린 방
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
     this.talked = {}; this.crafted = {}; this.scenes.close('pause'); this.scenes.close('death'); this.scenes.close('mpause'); this.scenes.close('mdeath');

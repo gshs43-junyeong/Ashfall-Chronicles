@@ -52,6 +52,7 @@ export const RenderPart: Bag = {
     this.pipe.add('fx', (f: any) => this.rFx(f));
     this.pipe.add('fx', (f: any) => this.rUtil(f));           // 탐지 파동(game/utility)
     this.pipe.add('fx', (f: any) => this.drawPuzzle(f.c));    // 봉인 방 장치(game/ruin-puzzle-draw)
+    this.pipe.add('fx', (f: any) => this.drawDeepGates(f.c)); // 닫힌 깊은 문(game/ruin-deep)
     this.pipe.add('screen', (f: any) => this.rScreen(f));
     this.pipe.add('screen', (f: any) => this.drawStage(f));       // 스킬 무대 — 집중선 · 화면 섬광
     this.pipe.add('screen', (f: any) => this.drawPuzzleHud(f.c));  // 봉인 방 띠
