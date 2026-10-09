@@ -399,14 +399,17 @@ export const ItemPaintSkills: Bag = {
   },
   barrier(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
-    { {           // 비전 방벽 — 육각 결계
+    { {           // 비전 방벽 — 유리 공 + 기운 글자 고리 둘(게임 속 방벽 겹과 같은 모양)
         const c = s.c;
         glow(16, 16, 13, c, .26);
-        const hex = (r: any) => { const pts = []; for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + i * TAU / 6; pts.push([16 + Math.cos(a) * r, 16 + Math.sin(a) * r]); } return pts; };
-        poly(hex(13), 'rgba(120,180,255,.20)');
-        stroke(c, 2.2, () => { const p = hex(13); g.moveTo(p[0][0], p[0][1]); for (let i = 1; i < 6; i++) g.lineTo(p[i][0], p[i][1]); g.closePath(); });
-        stroke(sh2(c, 1.35), 1.3, () => { const p = hex(7.5); g.moveTo(p[0][0], p[0][1]); for (let i = 1; i < 6; i++) g.lineTo(p[i][0], p[i][1]); g.closePath(); });
-        for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + i * TAU / 6; circ(16 + Math.cos(a) * 13, 16 + Math.sin(a) * 13, 1.7, '#ffffff'); }
+        circ(16, 16, 10.5, 'rgba(120,180,255,.18)');
+        stroke(sh2(c, .8), 1.1, () => { g.ellipse(16, 16, 5.5, 10.5, 0, 0, TAU); });
+        stroke(sh2(c, .8), 1.1, () => { g.ellipse(16, 16, 10.5, 3.2, 0, 0, TAU); });
+        stroke(c, 1.8, () => { g.arc(16, 16, 10.5, 0, TAU); });
+        stroke(sh2(c, 1.4), 1.6, () => { g.ellipse(16, 16, 14, 4.6, 0.45, 0, TAU); });
+        stroke(sh2(c, 1.2), 1.4, () => { g.ellipse(16, 16, 13.5, 5, -0.95, 0, TAU); });
+        for (const a of [0.45 + 0.6, 0.45 + 3.7, -0.95 + 2.2]) { const ca = Math.cos(a), sa = Math.sin(a); circ(16 + ca * 13 * Math.cos(0.45) - sa * 4.6 * Math.sin(0.45), 16 + ca * 13 * Math.sin(0.45) + sa * 4.6 * Math.cos(0.45), 1.3, '#ffffff'); }
+        ell(12.5, 11.5, 2.6, 1.6, 'rgba(255,255,255,.55)');
         return;
       }
     }

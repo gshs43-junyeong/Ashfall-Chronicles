@@ -48,7 +48,7 @@ export const NetPart: Bag = {
     return { x: Math.round(p.x), y: Math.round(p.y), vx: Math.round(p.vx), vy: Math.round(p.vy), f: p.facing,
       g: p.onGround ? 1 : 0, sw: p.swing || 0, sa: p.swingAng || 0, sd: p.swingDir || 0, ss: p.swingSide || 1, sr: p.swingReach || 0,
       dv: p.dashV || 0, fl: p.flash || 0, ch: p.channel ? 1 : 0, sm: p.swimming ? 1 : 0, smv: p.swimMove ? 1 : 0,
-      flt: p.floating ? 1 : 0, sp: p.swimPh || 0, ifr: p.iframe || 0, hp: Math.round(p.hp), mhp: Math.round(p.d.maxHp),
+      flt: p.floating ? 1 : 0, sp: p.swimPh || 0, ifr: p.iframe || 0, hp: Math.round(p.hp), mhp: Math.round(p.d.maxHp), sh: p.shield > 0 ? Math.round(p.shield / (p.shieldMax || p.shield) * 100) / 100 : 0,
       hid: held ? held.id : '', wid: wep ? wep.id : '', c: p.charId, n: p.name, lv: p.level, pt: this.netPetsOf(p) };
   },
   /** 따라다니는 펫 — 'id:레벨' 을 쉼표로(바뀔 때만 다시 만든다). 남의 아바타는 받은 그대로 되돌려 보낸다. */
@@ -65,7 +65,7 @@ export const NetPart: Bag = {
     if (rp.hp > 0 && s.hp <= 0) this.netDownFx(rp, s);
     else if (rp.hp <= 0 && s.hp > 0 && rp._seen) this.toast(tr('{name|이} 다시 일어났다', { name: s.n }), 'good');
     rp._seen = true;
-    rp.hp = s.hp; rp.netMaxHp = s.mhp; rp.charId = s.c; rp.name = s.n; rp.level = s.lv || 1;
+    rp.hp = s.hp; rp.netMaxHp = s.mhp; rp.netShield = s.sh || 0; rp.charId = s.c; rp.name = s.n; rp.level = s.lv || 1;
     if (rp._hid !== s.hid) { rp._hid = s.hid; rp.bag[rp.sel] = s.hid ? makeItem(s.hid) : null; }
     if (rp._wid !== s.wid) { rp._wid = s.wid; rp.equip.weapon = s.wid ? makeItem(s.wid) : null; }
     if (rp._pt !== (s.pt || '')) {
@@ -595,6 +595,8 @@ export const NetPart: Bag = {
       this.netPutKill(m);
     } else if (m.k === 'tiles') {
       this.netPutTiles(m.l, false);
+    } else if (m.k === 'bhz') {
+      this.netBossHazard(m);
     } else if (m.k === 'puz') {
       this.netPuzzle(m);
     } else if (m.k === 'door') {

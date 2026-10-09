@@ -13226,6 +13226,247 @@
   };
   var DEBUFF_EDGE = { frostbite: "frost", burn: "burn", poison: "poison", weak: "weak" };
 
+  // src/game/data/bossmoves.ts
+  var bossmoves_exports = {};
+  __export(bossmoves_exports, {
+    BOSS_MOVES: () => BOSS_MOVES
+  });
+  var BOSS_MOVES = {
+    /* ---------------- 세션 1 ---------------- */
+    king_slime: {
+      c: "#6fa8ff",
+      every: 7.5,
+      moves: [
+        { k: "leap", n: "왕관 내려찍기", tele: 0.7, waves: 1, wspd: 360, m: 1.1 },
+        { k: "zone", n: "끈적이는 비", tele: 0.6, at: "scatter", n2: 5, r: 46, life: 6, dps: 0.12, slow: 0.45, fx: "gel" },
+        { k: "summon", n: "신하들을 부른다", tele: 0.8, mob: "slime", cnt: 4 }
+      ],
+      ult: { k: "leap", n: "왕의 무게", tele: 0.9, times: 3, waves: 1, wspd: 420, m: 1.2 }
+    },
+    bone_lord: {
+      c: "#ede4c8",
+      every: 7,
+      moves: [
+        { k: "dash", n: "뼈 회전", tele: 0.55, times: 3, spd: 3.4, m: 1 },
+        { k: "homing", n: "울부짖는 해골", tele: 0.6, cnt: 4, spd: 210, turn: 2.2, proj: "bone", m: 0.7 },
+        { k: "rain", n: "뼈 감옥", tele: 0.7, form: "cage", cnt: 9, gapX: 46, delay: 0.9, shape: "col", fx: "bone", m: 0.9 }
+      ],
+      ult: { k: "spiral", n: "뼈 폭풍", tele: 1, arms: 4, dur: 4, every: 0.12, spd: 300, proj: "bone", turn: 2.4, m: 0.5 }
+    },
+    corrupt_heart: {
+      c: "#b07aff",
+      every: 6.5,
+      moves: [
+        { k: "ring", n: "고동 파문", tele: 0.6, times: 3, cnt: 22, gap: 4, spd: 230, every: 0.55, proj: "dark", m: 0.6 },
+        { k: "march", n: "혈관 가시", tele: 0.6, cnt: 7, gap: 54, every: 0.13, h: 90, fx: "flesh", m: 0.9 },
+        { k: "vortex", n: "흡혈 소용돌이", tele: 0.7, life: 2.6, r: 300, pull: 260, burst: 120, m: 1 }
+      ],
+      ult: { k: "ring", n: "터지는 심장", tele: 1, times: 5, cnt: 28, gap: 5, spd: 260, every: 0.42, proj: "dark", zones: 1, m: 0.6 }
+    },
+    frost_witch: {
+      c: "#a8e4ff",
+      every: 6.5,
+      moves: [
+        { k: "clones", n: "거울 분신", tele: 0.8, cnt: 2, ring: 12, proj: "frost", m: 0.55 },
+        { k: "rain", n: "얼음 창 비", tele: 0.6, form: "scatter", cnt: 7, spread: 360, delay: 0.85, shape: "col", fx: "ice", m: 0.9 },
+        { k: "zone", n: "서리 바닥", tele: 0.5, at: "player", n2: 3, r: 70, life: 7, dps: 0.06, slow: 0.55, fx: "frost" }
+      ],
+      ult: { k: "beam", n: "절대 영도", tele: 1.2, cnt: 2, spread: 3.14, dur: 3, w: 26, len: 760, sweep: 1.4, m: 0.35 }
+    },
+    void_king: {
+      c: "#a06fff",
+      every: 6,
+      moves: [
+        { k: "vortex", n: "사건의 지평선", tele: 0.8, life: 3, r: 380, pull: 320, burst: 150, m: 1.1 },
+        { k: "beam", n: "공허 광선", tele: 0.9, cnt: 1, dur: 2.2, w: 30, len: 900, sweep: 2.2, m: 0.35 },
+        { k: "blink", n: "틈새 도약", tele: 0.3, times: 3, r: 90, m: 1 }
+      ],
+      ult: { k: "spiral", n: "왕의 붕괴", tele: 1.2, arms: 6, dur: 5, every: 0.1, spd: 280, proj: "void", turn: -1.8, m: 0.4 }
+    },
+    storm_warden: {
+      c: "#cfe6ff",
+      every: 6,
+      moves: [
+        { k: "march", n: "낙뢰 기둥", tele: 0.5, cnt: 8, gap: 64, every: 0.11, h: 420, from: "sky", fx: "bolt", m: 0.9 },
+        { k: "push", n: "폭풍 밀어내기", tele: 0.6, life: 3.2, force: 520, m: 0 },
+        { k: "dash", n: "급강하", tele: 0.5, times: 3, spd: 3.8, m: 1 }
+      ],
+      ult: { k: "wall", n: "천둥 벽", tele: 1, times: 3, spd: 300, gap: 110, every: 1.4, fx: "bolt", m: 0.8 }
+    },
+    first_keeper: {
+      c: "#e8d8a0",
+      every: 6.5,
+      moves: [
+        { k: "march", n: "룬 기둥", tele: 0.6, cnt: 8, gap: 58, every: 0.14, h: 120, both: 1, fx: "rune", m: 0.9 },
+        { k: "beam", n: "파수 광선", tele: 0.8, cnt: 3, spread: 0.5, dur: 1.2, w: 22, len: 820, sweep: 0, m: 0.45 },
+        { k: "rain", n: "봉인 지뢰", tele: 0.5, form: "scatter", cnt: 6, spread: 420, delay: 2.2, r: 52, shape: "circle", fx: "rune", m: 1 }
+      ],
+      ult: { k: "ring", n: "최초의 판결", tele: 1.2, times: 4, cnt: 26, gap: 4, spd: 260, every: 0.5, proj: "rune", march: 1, m: 0.6 }
+    },
+    pursuer: {
+      c: "#b48aff",
+      every: 5.5,
+      moves: [
+        { k: "rain", n: "별똥 추격", tele: 0.6, form: "trail", cnt: 8, every: 0.22, delay: 0.75, r: 48, shape: "circle", fx: "meteor", m: 1 },
+        { k: "dash", n: "그림자 질주", tele: 0.4, times: 4, spd: 3.6, m: 1 },
+        { k: "vortex", n: "중력 우물", tele: 0.8, life: 3.2, r: 420, pull: 340, burst: 170, m: 1.1 }
+      ],
+      ult: { k: "spiral", n: "종말의 별", tele: 1.4, arms: 5, dur: 5.5, every: 0.09, spd: 300, proj: "void", turn: 2, rain: 1, m: 0.4 }
+    },
+    /* ---------------- 유적의 주인 ---------------- */
+    mine_horror: {
+      c: "#c8a878",
+      every: 7,
+      moves: [
+        { k: "quake", n: "갱도 붕괴", tele: 0.7, cnt: 7, spread: 380, delay: 0.95, fx: "rock", m: 0.9 },
+        { k: "burrow", n: "땅굴 기습", tele: 0.5, under: 1.4, r: 70, m: 1.2 },
+        { k: "summon", n: "광부 망령을 깨운다", tele: 0.8, mob: "minerghost", cnt: 2 }
+      ],
+      ult: { k: "quake", n: "붕락", tele: 1, cnt: 14, spread: 520, delay: 1.1, fx: "rock", m: 1 }
+    },
+    ice_warden: {
+      c: "#9fe0ff",
+      every: 7,
+      moves: [
+        { k: "wall", n: "빙벽 밀기", tele: 0.8, times: 1, spd: 240, gap: 120, fx: "ice", m: 0.9 },
+        { k: "ring", n: "서리 고리", tele: 0.6, times: 2, cnt: 18, gap: 3, spd: 220, every: 0.7, proj: "frost", m: 0.6 },
+        { k: "rain", n: "얼음 감옥", tele: 0.7, form: "cage", cnt: 7, gapX: 50, delay: 1, shape: "col", fx: "ice", m: 0.9 }
+      ],
+      ult: { k: "zone", n: "빙하기", tele: 1, at: "scatter", n2: 7, r: 70, life: 8, dps: 0.07, slow: 0.6, fx: "frost", wall: 1 }
+    },
+    vine_lord: {
+      c: "#7fd06a",
+      every: 6.5,
+      moves: [
+        { k: "march", n: "뿌리 분출", tele: 0.5, cnt: 6, gap: 60, every: 0.18, h: 110, from: "under", fx: "plant", m: 1 },
+        { k: "beam", n: "가시 채찍", tele: 0.55, cnt: 1, dur: 0.6, w: 22, len: 300, sweep: 2.6, m: 0.6 },
+        { k: "rain", n: "씨앗 폭탄", tele: 0.6, form: "scatter", cnt: 5, spread: 340, delay: 1, r: 54, shape: "circle", fx: "seed", zone: { r: 50, life: 4, dps: 0.08, slow: 0.25 }, m: 0.8 }
+      ],
+      ult: { k: "march", n: "숲의 분노", tele: 1, cnt: 9, gap: 60, every: 0.12, h: 130, both: 1, fx: "plant", homing: 4, m: 1 }
+    },
+    sand_guardian: {
+      c: "#f0c870",
+      every: 6.5,
+      moves: [
+        { k: "wall", n: "모래 폭풍", tele: 0.8, times: 2, spd: 260, gap: 120, every: 1.6, fx: "sand", m: 0.8 },
+        { k: "march", n: "태양 광선", tele: 0.6, cnt: 6, gap: 80, every: 0.2, h: 460, from: "sky", fx: "sun", m: 1 },
+        { k: "vortex", n: "유사 늪", tele: 0.6, life: 2.8, r: 260, pull: 220, floor: 1, burst: 0, m: 0 }
+      ],
+      ult: { k: "ring", n: "피라미드의 저주", tele: 1.1, times: 3, cnt: 24, gap: 4, spd: 240, every: 0.6, proj: "fire", wall: 1, m: 0.6 }
+    },
+    spore_queen: {
+      c: "#8ff0c8",
+      every: 6.5,
+      moves: [
+        { k: "zone", n: "포자 구름", tele: 0.6, at: "scatter", n2: 4, r: 64, life: 6, dps: 0.12, fx: "spore", poison: 1 },
+        { k: "rain", n: "꽃 터뜨리기", tele: 0.6, form: "scatter", cnt: 5, spread: 320, delay: 1.1, r: 40, shape: "circle", fx: "spore", burstRing: 8, m: 0.7 },
+        { k: "summon", n: "여왕의 부름", tele: 0.8, mob: "sporeling", cnt: 3 }
+      ],
+      ult: { k: "spiral", n: "포자 폭풍", tele: 1.1, arms: 3, dur: 4.5, every: 0.1, spd: 220, proj: "poison", turn: 1.6, m: 0.45 }
+    },
+    blight_maw: {
+      c: "#c07aff",
+      every: 6,
+      moves: [
+        { k: "vortex", n: "집어삼키기", tele: 0.7, life: 2, r: 300, pull: 380, burst: 110, then: "dash", m: 1.2 },
+        { k: "rain", n: "담즙 비", tele: 0.6, form: "scatter", cnt: 6, spread: 360, delay: 0.9, r: 46, shape: "circle", fx: "bile", zone: { r: 46, life: 5, dps: 0.1 }, m: 0.8 },
+        { k: "dash", n: "이빨 갈기", tele: 0.35, times: 2, spd: 4, m: 1.1 }
+      ],
+      ult: { k: "ring", n: "둥지 개화", tele: 1, times: 4, cnt: 24, gap: 4, spd: 250, every: 0.5, proj: "dark", summon: "sacling", m: 0.6 }
+    },
+    drowned_keeper: {
+      c: "#7fc8e8",
+      every: 7,
+      moves: [
+        { k: "wall", n: "역류", tele: 0.8, times: 1, spd: 300, gap: 110, fx: "water", m: 0.9 },
+        { k: "homing", n: "거품 감옥", tele: 0.6, cnt: 5, spd: 150, turn: 1.6, proj: "frost", slowHit: 1, m: 0.5 },
+        { k: "leap", n: "닻 내려찍기", tele: 0.7, waves: 1, wspd: 330, m: 1.1 }
+      ],
+      ult: { k: "vortex", n: "심연의 물결", tele: 1, life: 3, r: 360, pull: 300, burst: 160, waves: 1, m: 1.1 }
+    },
+    isle_keeper: {
+      c: "#8fc8b8",
+      every: 7,
+      moves: [
+        { k: "rain", n: "바위 던지기", tele: 0.7, form: "scatter", cnt: 4, spread: 360, delay: 1.2, r: 64, shape: "circle", fx: "rock", m: 1.2 },
+        { k: "quake", n: "섬 뒤흔들기", tele: 0.6, cnt: 8, spread: 420, delay: 0.9, fx: "rock", m: 0.8 },
+        { k: "leap", n: "해일 내려찍기", tele: 0.8, waves: 2, wspd: 300, m: 1.1 }
+      ],
+      ult: { k: "rain", n: "섬의 무게", tele: 1.2, form: "trail", cnt: 10, every: 0.2, delay: 0.9, r: 70, shape: "circle", fx: "rock", m: 1.1 }
+    },
+    tide_warden: {
+      c: "#5fb0e8",
+      every: 5.5,
+      moves: [
+        { k: "vortex", n: "소용돌이", tele: 0.8, life: 3, r: 420, pull: 360, burst: 160, m: 1 },
+        { k: "wall", n: "해일", tele: 0.9, times: 2, spd: 320, gap: 120, every: 1.2, fx: "water", m: 0.9 },
+        { k: "beam", n: "심해 광선", tele: 1, cnt: 2, spread: 0.6, dur: 2.4, w: 30, len: 900, sweep: 1.2, m: 0.35 }
+      ],
+      ult: { k: "spiral", n: "물이 지운 것", tele: 1.3, arms: 4, dur: 5, every: 0.1, spd: 290, proj: "frost", turn: 1.4, wall: 1, m: 0.4 }
+    },
+    /* ---------------- 세션 2 ---------------- */
+    proliferator: {
+      c: "#d8c8a8",
+      every: 6,
+      moves: [
+        { k: "ring", n: "리벳 난사", tele: 0.5, times: 4, cnt: 16, gap: 2, spd: 320, every: 0.35, rot: 0.4, proj: "bolt", m: 0.5 },
+        { k: "summon", n: "증식 폭발", tele: 0.8, mob: "splitter", cnt: 2, ring: 18 },
+        { k: "march", n: "압착 행진", tele: 0.6, cnt: 7, gap: 56, every: 0.15, h: 100, fx: "metal", m: 0.9 }
+      ],
+      ult: { k: "spiral", n: "과증식", tele: 1, arms: 6, dur: 4, every: 0.11, spd: 300, proj: "bolt", turn: -2.2, m: 0.4 }
+    },
+    hepha: {
+      c: "#ffb050",
+      every: 6,
+      moves: [
+        { k: "march", n: "화로 분출", tele: 0.6, cnt: 8, gap: 60, every: 0.12, h: 160, both: 1, fx: "fire", m: 1 },
+        { k: "rain", n: "용융 비", tele: 0.6, form: "scatter", cnt: 8, spread: 440, delay: 0.9, r: 44, shape: "circle", fx: "fire", zone: { r: 44, life: 4, dps: 0.12, burn: 1 }, m: 0.8 },
+        { k: "push", n: "역회전 컨베이어", tele: 0.6, life: 3, force: -480, m: 0 }
+      ],
+      ult: { k: "beam", n: "최초의 불", tele: 1.3, cnt: 3, spread: 2.09, dur: 3.4, w: 34, len: 900, sweep: 1.6, m: 0.35 }
+    },
+    overseer: {
+      c: "#d0d0e0",
+      every: 6,
+      moves: [
+        { k: "beam", n: "레이저 격자", tele: 0.9, cnt: 3, from: "grid", dur: 1.6, w: 18, len: 700, sweep: 0, m: 0.45 },
+        { k: "march", n: "압착기 행렬", tele: 0.6, cnt: 8, gap: 58, every: 0.16, h: 140, from: "sky", fx: "metal", m: 1 },
+        { k: "summon", n: "보수 요청", tele: 0.8, mob: "riveter", cnt: 2 }
+      ],
+      ult: { k: "wall", n: "전면 가동", tele: 1, times: 3, spd: 280, gap: 110, every: 1.3, fx: "metal", march: 1, m: 0.8 }
+    },
+    archetype: {
+      c: "#f4ead0",
+      every: 5.5,
+      moves: [
+        { k: "blink", n: "완벽한 연격", tele: 0.25, times: 4, r: 96, m: 1 },
+        { k: "beam", n: "설계선", tele: 0.9, cnt: 2, from: "cross", dur: 1.8, w: 20, len: 900, sweep: 0.6, m: 0.4 },
+        { k: "summon", n: "형상 주조", tele: 0.8, mob: "draft_form", cnt: 2 }
+      ],
+      ult: { k: "spiral", n: "원형의 증명", tele: 1.2, arms: 8, dur: 4.5, every: 0.12, spd: 280, proj: "rune", turn: 1.2, blink: 1, m: 0.38 }
+    },
+    restorer: {
+      c: "#bcd8f4",
+      every: 5.5,
+      moves: [
+        { k: "rewind", n: "되감기", tele: 0.5, back: 3, heal: 0.025 },
+        { k: "beam", n: "궤도 광선", tele: 1, cnt: 2, spread: 3.14, dur: 3, w: 30, len: 960, sweep: 2.4, m: 0.35 },
+        { k: "ring", n: "해체 파동", tele: 0.6, times: 3, cnt: 30, gap: 5, spd: 280, every: 0.5, proj: "star", m: 0.55 }
+      ],
+      ult: { k: "vortex", n: "원점 회귀", tele: 1.2, life: 3.4, r: 460, pull: 380, burst: 190, rewind: 1, m: 1.1 }
+    },
+    shaft_maw: {
+      c: "#a89878",
+      every: 6,
+      moves: [
+        { k: "quake", n: "갱 메우기", tele: 0.8, cnt: 12, spread: 520, delay: 1, fx: "rock", m: 1 },
+        { k: "vortex", n: "삼키는 구멍", tele: 0.7, life: 2.8, r: 400, pull: 360, burst: 170, m: 1.1 },
+        { k: "burrow", n: "굴착", tele: 0.5, under: 1.5, r: 110, m: 1.2 }
+      ],
+      ult: { k: "quake", n: "전부 무너져라", tele: 1.2, cnt: 18, spread: 640, delay: 1.1, fx: "rock", march: 1, m: 1 }
+    }
+  };
+
   // src/game/data/achievements.ts
   var achievements_exports = {};
   __export(achievements_exports, {
@@ -27852,31 +28093,27 @@
         {
           const c = s.c;
           glow(16, 16, 13, c, 0.26);
-          const hex = (r) => {
-            const pts = [];
-            for (let i = 0; i < 6; i++) {
-              const a = -Math.PI / 2 + i * TAU / 6;
-              pts.push([16 + Math.cos(a) * r, 16 + Math.sin(a) * r]);
-            }
-            return pts;
-          };
-          poly(hex(13), "rgba(120,180,255,.20)");
-          stroke(c, 2.2, () => {
-            const p = hex(13);
-            g.moveTo(p[0][0], p[0][1]);
-            for (let i = 1; i < 6; i++) g.lineTo(p[i][0], p[i][1]);
-            g.closePath();
+          circ(16, 16, 10.5, "rgba(120,180,255,.18)");
+          stroke(sh2(c, 0.8), 1.1, () => {
+            g.ellipse(16, 16, 5.5, 10.5, 0, 0, TAU);
           });
-          stroke(sh2(c, 1.35), 1.3, () => {
-            const p = hex(7.5);
-            g.moveTo(p[0][0], p[0][1]);
-            for (let i = 1; i < 6; i++) g.lineTo(p[i][0], p[i][1]);
-            g.closePath();
+          stroke(sh2(c, 0.8), 1.1, () => {
+            g.ellipse(16, 16, 10.5, 3.2, 0, 0, TAU);
           });
-          for (let i = 0; i < 6; i++) {
-            const a = -Math.PI / 2 + i * TAU / 6;
-            circ(16 + Math.cos(a) * 13, 16 + Math.sin(a) * 13, 1.7, "#ffffff");
+          stroke(c, 1.8, () => {
+            g.arc(16, 16, 10.5, 0, TAU);
+          });
+          stroke(sh2(c, 1.4), 1.6, () => {
+            g.ellipse(16, 16, 14, 4.6, 0.45, 0, TAU);
+          });
+          stroke(sh2(c, 1.2), 1.4, () => {
+            g.ellipse(16, 16, 13.5, 5, -0.95, 0, TAU);
+          });
+          for (const a of [0.45 + 0.6, 0.45 + 3.7, -0.95 + 2.2]) {
+            const ca = Math.cos(a), sa = Math.sin(a);
+            circ(16 + ca * 13 * Math.cos(0.45) - sa * 4.6 * Math.sin(0.45), 16 + ca * 13 * Math.sin(0.45) + sa * 4.6 * Math.cos(0.45), 1.3, "#ffffff");
           }
+          ell(12.5, 11.5, 2.6, 1.6, "rgba(255,255,255,.55)");
           return;
         }
       }
@@ -30144,6 +30381,7 @@
           this.shield = 0;
           this.shieldT = 0;
           app.ringFx(this.cx, this.cy, 44, "#8fc8ff", 0.35);
+          app.vfx.shards(this.cx, this.cy, 14, "#bfe0ff", 300, 0.5, 7);
           app.sfx("magic");
         }
         if (dmg <= 0) {
@@ -30404,6 +30642,7 @@
         app.texts.push(new DmgText(this.cx, this.y - 4, tr("전환 중"), "#9fd4ff", 0));
         return;
       }
+      if (this.burrowT > 0) return;
       if (this.guard) {
         amount *= 0.12;
         if (Math.random() < 0.5) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#8d8874", 0));
@@ -30713,7 +30952,7 @@
   };
   var PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1 };
   var Proj = class extends Ent {
-    // 멀티플레이 — 참가자 화면의 그림자 투사체
+    // 쫓는 탄 — 초당 돌 수 있는 각(보스 기술 homing)
     constructor(x, y, vx, vy, dmg, team, type) {
       super(x - 6, y - 6, 12, 12);
       this.vx = vx;
@@ -30742,6 +30981,25 @@
         return;
       }
       this.vy += this.grav * dt;
+      if (this.home && this.team === "enemy") {
+        let best = null, bd = 1e9;
+        for (const q of app.players) {
+          const d = (q.cx - this.cx) ** 2 + (q.cy - this.cy) ** 2;
+          if (!q.dead && d < bd) {
+            bd = d;
+            best = q;
+          }
+        }
+        if (best) {
+          const sp = Math.hypot(this.vx, this.vy), a = Math.atan2(this.vy, this.vx), want = Math.atan2(best.cy - this.cy, best.cx - this.cx);
+          let da = want - a;
+          while (da > Math.PI) da -= Math.PI * 2;
+          while (da < -Math.PI) da += Math.PI * 2;
+          const na = a + Math.max(-this.home * dt, Math.min(this.home * dt, da));
+          this.vx = Math.cos(na) * sp;
+          this.vy = Math.sin(na) * sp;
+        }
+      }
       this.x += this.vx * dt;
       this.y += this.vy * dt;
       const st = PROJ_STYLE[this.type];
@@ -32354,7 +32612,7 @@
       } else {
         this.bossAI(dt, world, player, dx, dy, dd);
       }
-      if (!this.def.passive && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
+      if (!this.def.passive && !(this.burrowT > 0) && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
         player.hurt(this.dmg * (this.boss ? 1 : 0.9), this.cx);
         this.hitCd = 0.7;
         this.atkPose = 0.22;
@@ -32848,6 +33106,10 @@
         this.stateT += dt;
         return;
       }
+      if (this.tickMoves(dt, world, p, dd)) {
+        this.stateT += dt;
+        return;
+      }
       if (AI === "b_slime") {
         if (this.onGround) {
           this.vx *= 0.86;
@@ -33168,7 +33430,8 @@
             const fx = p.cx + (Math.random() - 0.5) * 260;
             app.warnFx(fx, p.cy + 20, 34, 0.6, "#c8843a");
             app.after(0.6, () => {
-              app.aoe(fx, p.cy + 20, 40, this.dmg * 0.6, 6, "#c8843a");
+              app.hitPlayers(fx, p.cy + 20, 40, this.dmg * 0.6);
+              app.ringFx(fx, p.cy + 20, 40, "#c8843a", 0.3);
               for (let k = 0; k < 8; k++) app.parts.push(new Part(fx, p.cy + 20, "#c8843a", -160, 0.6));
             });
           }
@@ -33201,7 +33464,8 @@
             for (const dir of [-1, 1]) for (let k = 0; k < 4; k++) {
               const x = this.cx + dir * (50 + k * 44);
               app.after(k * 0.06, () => {
-                app.aoe(x, this.y + this.h - 12, 34, this.dmg * 0.45, 5, "#c8a05a");
+                app.hitPlayers(x, this.y + this.h - 12, 34, this.dmg * 0.45);
+                app.ringFx(x, this.y + this.h - 12, 34, "#c8a05a", 0.3);
                 for (let i = 0; i < 3; i++) app.parts.push(new Part(x, this.y + this.h - 6, "#c8a05a", -140, 0.5));
               });
             }
@@ -33242,7 +33506,8 @@
           if (this.atkCd <= 0 && this.combo < 3) {
             this.combo++;
             this.atkCd = 0.42;
-            app.aoe(this.cx + Math.sign(dx) * 44, this.cy, 52, this.dmg * 0.8, 7, "#e8dcc0");
+            app.hitPlayers(this.cx + Math.sign(dx) * 44, this.cy, 52, this.dmg * 0.8);
+            app.ringFx(this.cx + Math.sign(dx) * 44, this.cy, 52, "#e8dcc0", 0.3);
             app.shake = Math.max(app.shake, 6);
           }
         } else if (this.state === 0) {
@@ -33319,6 +33584,493 @@
     }
   };
   mixin(Enemy.prototype, BossAI, true);
+
+  // src/game/entity/boss-moves.ts
+  var boss_moves_exports = {};
+  __export(boss_moves_exports, {
+    BossMoves: () => BossMoves
+  });
+  var BossMoves = {
+    /** 매 프레임(호스트) — 기술 중이면 true(몸놀림을 건너뛴다) */
+    tickMoves(dt, world, p, dd) {
+      const K = BOSS_MOVES[this.type];
+      if (!K) return false;
+      this.mvHist(dt);
+      const fly = !!SURGE_FLY[this.def.ai];
+      const mv = this.mv;
+      if (mv) {
+        mv.t += dt;
+        if (!mv.run) {
+          this.vx *= 0.82;
+          if (fly) this.vy *= 0.82;
+          this.move(dt, world, { gravMul: fly ? 0 : 1 });
+          mv.cv = (mv.cv || 0) - dt;
+          if (mv.cv <= 0) {
+            mv.cv = 0.12;
+            app.vfx.converge(this.cx, this.cy, Math.max(this.w, this.h) * 0.9, 5, K.c, 0.3);
+          }
+          if (mv.t >= mv.d.tele) mv.run = this.mvStart(mv.d, p, world, K) || { busy: 0 };
+          return true;
+        }
+        const r = mv.run;
+        r.t = (r.t || 0) + dt;
+        if (r.tick) r.tick(dt, r);
+        else {
+          this.vx *= 0.88;
+          if (fly) this.vy *= 0.88;
+          this.move(dt, world, { gravMul: fly ? 0 : 1 });
+        }
+        if (r.t >= r.busy) {
+          this.mv = null;
+          this.burrowT = 0;
+          this.mvCd = K.every * (1 - this.pf * 0.3) * (0.85 + Math.random() * 0.3);
+        }
+        return true;
+      }
+      if (this.mvCd === void 0) this.mvCd = K.every * 0.5;
+      this.mvCd -= dt;
+      if (this.mvCd > 0 || dd > 900 || p.dead || p.hp <= 0) return false;
+      let d;
+      this.mvN = (this.mvN || 0) + 1;
+      if (K.ult && this.lastPh() && (!this.ultUsed || this.mvN % 3 === 0)) {
+        d = K.ult;
+        this.ultUsed = 1;
+      } else {
+        const pool = K.moves.filter((m) => m !== this.mvLast);
+        d = pool[Math.floor(Math.random() * pool.length)] || K.moves[0];
+      }
+      this.mvLast = d;
+      this.mv = { d, t: 0, run: null };
+      app.bossHazard({ k: "call", txt: d.n, c: K.c, life: Math.max(1.6, d.tele + 0.8), ref: this, nid: this.nid, x: this.cx, y: this.y });
+      app.bossHazard({ k: "aura", c: K.c, life: d.tele, tele: d.tele, ref: this, nid: this.nid });
+      app.sfxAt && app.sfxAt(d === K.ult ? "chapter" : "sk_mark", this.cx / TS, this.cy / TS);
+      return true;
+    },
+    /** 지난 자리(되감기용) — 0.2초마다 하나, 4초 치 */
+    mvHist(dt) {
+      this.histT = (this.histT || 0) - dt;
+      if (this.histT > 0) return;
+      this.histT = 0.2;
+      (this.hist || (this.hist = [])).push([this.x, this.y]);
+      if (this.hist.length > 20) this.hist.shift();
+    },
+    /** 그 자리 아래 바닥(px) — 없으면 조금 아래 */
+    floorY(x, y) {
+      const w = app.world, tx = Math.floor(x / TS);
+      for (let ty = Math.floor(y / TS); ty < Math.floor(y / TS) + 40; ty++) if (w.solid(tx, ty) && !w.solid(tx, ty - 1)) return ty * TS;
+      return y + 40;
+    },
+    hz(h) {
+      return app.bossHazard(h);
+    },
+    strike(x, y, o, K, dm) {
+      const fy = this.floorY(x, y - TS * 3);
+      const zoneDmg = o.zone ? this.dmg * (o.zone.dps || 0) : 0;
+      return this.hz({
+        k: "strike",
+        x,
+        y: fy,
+        r: o.r || 44,
+        shape: o.shape || "circle",
+        w: o.w || 40,
+        hh: o.h || 420,
+        delay: o.delay || 0.8,
+        life: (o.delay || 0.8) + 0.4,
+        dmg: this.dmg * dm,
+        c: K.c,
+        fx: o.fx,
+        zone: o.zone,
+        zoneDmg,
+        burstRing: o.burstRing
+      });
+    },
+    /** 기술 실행 — 돌려준 busy 동안 보스가 묶인다(tick 이 있으면 그 동안 움직임을 그것이 맡는다) */
+    mvStart(d, p, world, K) {
+      const m = d.m ?? 1, fly = !!SURGE_FLY[this.def.ai], E = this;
+      const extra = () => {
+        if (d.march) this.mvStart({ k: "march", cnt: 8, gap: 60, every: 0.12, h: 130, both: 1, fx: d.fx, m: 0.8 }, p, world, K);
+        if (d.wall) this.mvStart({ k: "wall", times: 2, spd: 280, gap: 110, every: 1.4, fx: d.fx, m: 0.7 }, p, world, K);
+        if (d.zones) this.mvStart({ k: "zone", at: "player", n2: 3, r: 60, life: 5, dps: 0.1, fx: "flesh" }, p, world, K);
+        if (d.homing) this.mvStart({ k: "homing", cnt: d.homing, spd: 200, turn: 2, proj: "poison", m: 0.6 }, p, world, K);
+        if (d.rain) this.mvStart({ k: "rain", form: "trail", cnt: 6, every: 0.4, delay: 0.8, r: 50, fx: "meteor", m: 0.8 }, p, world, K);
+        if (d.summon) this.mvStart({ k: "summon", mob: d.summon, cnt: 2 }, p, world, K);
+      };
+      switch (d.k) {
+        case "leap": {
+          const times = d.times || 1;
+          const r = { busy: 99, n: 0, air: 0, wait: 0.05 };
+          r.tick = (dt, r2) => {
+            if (r2.wait > 0) {
+              r2.wait -= dt;
+              this.vx *= 0.8;
+              this.move(dt, world);
+              return;
+            }
+            if (!r2.air) {
+              r2.air = 1;
+              r2.at = 0;
+              const tx = p.cx + p.vx * 0.4;
+              this.vy = -860;
+              this.vx = clamp((tx - this.cx) / 1.05, -720, 720);
+              this.strike(tx, p.y + p.h, { r: 90, delay: 1.05, fx: "rock" }, K, m * 0.9);
+            }
+            r2.at += dt;
+            this.move(dt, world);
+            if (r2.at > 0.3 && this.onGround) {
+              r2.air = 0;
+              r2.n++;
+              r2.wait = 0.35;
+              app.shake = Math.max(app.shake, 12);
+              const fy = this.y + this.h;
+              for (let k = 0; k < (d.waves ? d.waves : 0); k++) for (const s of [-1, 1])
+                this.hz({ k: "wave", x: this.cx + s * (this.w / 2 + k * 40), y: fy, vx: s * (d.wspd || 340) * (1 - k * 0.15), w: 26, hh: 30, life: 2.6, dmg: this.dmg * m * 0.7, c: K.c });
+              app.vfx.shock(this.cx, fy - 4, 140, K.c, 0.4, 10, 0.3);
+              app.vfx.crack(this.cx, fy, -1, 120, K.c, 0.8);
+              app.vfx.crack(this.cx, fy, 1, 120, K.c, 0.8);
+              if (r2.n >= times) r2.busy = r2.t + 0.35;
+            }
+          };
+          return r;
+        }
+        case "rain": {
+          let last = 0;
+          if (d.form === "cage") {
+            const n = d.cnt || 7, gapI = Math.floor(Math.random() * n), gx = d.gapX || 46;
+            for (let i = 0; i < n; i++) if (i !== gapI) this.strike(p.cx + (i - (n - 1) / 2) * gx, p.y + p.h, { shape: "col", w: gx - 6, h: 160, delay: d.delay, fx: d.fx }, K, m);
+            last = d.delay;
+          } else if (d.form === "trail") {
+            for (let i = 0; i < d.cnt; i++) app.after(i * d.every, () => {
+              if (!E.dead) E.strike(p.cx + p.vx * 0.3, p.y + p.h, d, K, m);
+            });
+            last = d.cnt * d.every;
+          } else {
+            for (let i = 0; i < d.cnt; i++) {
+              const x = p.cx + (Math.random() - 0.5) * (d.spread || 360);
+              app.after(i * 0.08, () => {
+                if (!E.dead) E.strike(x, p.y + p.h, d, K, m);
+              });
+            }
+            last = d.cnt * 0.08;
+          }
+          extra();
+          return { busy: Math.min(1.4, last + 0.5) };
+        }
+        case "quake": {
+          app.shake = Math.max(app.shake, 12);
+          for (let i = 0; i < d.cnt; i++) {
+            const x = p.cx + (Math.random() - 0.5) * (d.spread || 400);
+            app.after(i * 0.07, () => {
+              if (!E.dead) E.strike(x, p.y + p.h, { r: 40, delay: d.delay, fx: "rock" }, K, m);
+            });
+          }
+          extra();
+          return { busy: 0.9 };
+        }
+        case "march": {
+          const dirs = d.both ? [-1, 1] : [Math.sign(p.cx - this.cx) || 1];
+          const fromSky = d.from === "sky";
+          for (const s of dirs) for (let i = 0; i < d.cnt; i++) {
+            app.after(i * d.every, () => {
+              if (E.dead) return;
+              const x = d.from === "under" ? p.cx : E.cx + s * (d.gap || 56) * (i + 1);
+              E.strike(x, d.from === "under" ? p.y + p.h : E.y + E.h, { shape: "col", w: 38, h: d.h || 120, delay: 0.45, fx: d.fx }, K, m);
+            });
+          }
+          if (fromSky) app.shake = Math.max(app.shake, 4);
+          extra();
+          return { busy: Math.min(1.6, d.cnt * d.every + 0.4) };
+        }
+        case "beam": {
+          const base = angleTo(this.cx, this.cy, p.cx, p.cy), sgn = Math.random() < 0.5 ? -1 : 1;
+          for (let i = 0; i < (d.cnt || 1); i++) {
+            let x = this.cx, y = this.cy, a = base + (i - ((d.cnt || 1) - 1) / 2) * (d.spread || 0), follow = 1;
+            if (d.from === "grid") {
+              x = p.cx + (i - 1) * 130;
+              y = p.cy - 420;
+              a = Math.PI / 2;
+              follow = 0;
+            }
+            if (d.from === "cross") {
+              follow = 0;
+              if (i === 0) {
+                x = p.cx - 450;
+                y = p.cy;
+                a = 0;
+              } else {
+                x = p.cx;
+                y = p.cy - 450;
+                a = Math.PI / 2;
+              }
+            }
+            this.hz({
+              k: "beam",
+              x,
+              y,
+              a,
+              va: (d.sweep || 0) / (d.dur || 2) * sgn,
+              len: d.len || 800,
+              w: d.w || 24,
+              tele: 0.55,
+              life: 0.55 + (d.dur || 2),
+              dmg: this.dmg * m,
+              c: K.c,
+              ref: follow ? this : void 0,
+              nid: follow ? this.nid : void 0
+            });
+          }
+          return { busy: 0.55 + (d.dur || 2) };
+        }
+        case "ring": {
+          let off = Math.random() * TAU;
+          for (let b = 0; b < (d.times || 1); b++) app.after(b * (d.every || 0.5), () => {
+            if (E.dead) return;
+            const n = d.cnt || 20, g0 = Math.floor(Math.random() * n);
+            off += d.rot || 0;
+            for (let i = 0; i < n; i++) {
+              if ((i - g0 + n) % n < (d.gap || 3)) continue;
+              const a = off + i / n * TAU;
+              app.projs.push(new Proj(E.cx, E.cy, Math.cos(a) * (d.spd || 240), Math.sin(a) * (d.spd || 240), E.dmg * m, "enemy", d.proj || "dark"));
+            }
+            app.vfx.shock(E.cx, E.cy, Math.max(E.w, E.h), K.c, 0.3, 6);
+          });
+          extra();
+          return { busy: (d.times || 1) * (d.every || 0.5) + 0.3 };
+        }
+        case "spiral": {
+          const r = { busy: d.dur || 4, acc: 0, spin: Math.random() * TAU };
+          r.tick = (dt, r2) => {
+            this.vx = lerp(this.vx, Math.sign(p.cx - this.cx) * this.spd * 0.25, dt * 2);
+            if (fly) this.vy = lerp(this.vy, Math.sign(p.cy - 80 - this.cy) * this.spd * 0.2, dt * 2);
+            this.move(dt, world, { gravMul: fly ? 0 : 1 });
+            r2.acc -= dt;
+            r2.spin += (d.turn || 2) * dt;
+            if (r2.acc <= 0) {
+              r2.acc = d.every || 0.1;
+              for (let k = 0; k < (d.arms || 4); k++) {
+                const a = r2.spin + k * TAU / (d.arms || 4);
+                app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * (d.spd || 280), Math.sin(a) * (d.spd || 280), this.dmg * m, "enemy", d.proj || "void"));
+              }
+            }
+          };
+          extra();
+          if (d.blink) app.after(d.dur * 0.5, () => {
+            if (!E.dead) E.mvStart({ k: "blink", times: 2, r: 90, m: 1 }, p, world, K);
+          });
+          return r;
+        }
+        case "dash": {
+          const r = { busy: 99, n: 0, ph: 0, pt: 0 };
+          r.tick = (dt, r2) => {
+            r2.pt += dt;
+            if (r2.ph === 0) {
+              if (!r2.aimed) {
+                r2.aimed = 1;
+                r2.a = angleTo(this.cx, this.cy, p.cx, p.cy);
+                this.hz({ k: "line", x0: this.cx, y0: this.cy, x1: this.cx + Math.cos(r2.a) * 700, y1: this.cy + Math.sin(r2.a) * 700, life: 0.4, c: K.c, w: 3 });
+              }
+              this.vx *= 0.8;
+              if (fly) this.vy *= 0.8;
+              if (r2.pt >= 0.4) {
+                r2.ph = 1;
+                r2.pt = 0;
+              }
+            } else if (r2.ph === 1) {
+              const sp = this.spd * (d.spd || 3.4);
+              this.vx = Math.cos(r2.a) * sp;
+              if (fly) this.vy = Math.sin(r2.a) * sp;
+              if (Math.random() < 0.6) app.parts.push(new Part(this.cx, this.cy, K.c, 0, 0.35));
+              if (r2.pt >= 0.38) {
+                r2.ph = 2;
+                r2.pt = 0;
+              }
+            } else {
+              this.vx *= 0.8;
+              if (fly) this.vy *= 0.8;
+              if (r2.pt >= 0.18) {
+                r2.n++;
+                r2.ph = 0;
+                r2.pt = 0;
+                r2.aimed = 0;
+                if (r2.n >= (d.times || 3)) r2.busy = r2.t + 0.1;
+              }
+            }
+            this.move(dt, world, { gravMul: fly ? 0 : 1 });
+          };
+          return r;
+        }
+        case "blink": {
+          for (let i = 0; i < (d.times || 3); i++) app.after(i * 0.62, () => {
+            if (E.dead) return;
+            const side = p.facing > 0 ? -1 : 1;
+            for (let q = 0; q < 14; q++) app.parts.push(new Part(E.cx, E.cy, K.c, -30, 0.6));
+            E.x = clamp(p.cx + side * 80 - E.w / 2, TS * 2, app.world.dims.WW * TS - TS * 3);
+            E.y = fly ? p.cy - E.h / 2 - 10 : p.y + p.h - E.h;
+            E.vx = E.vy = 0;
+            app.vfx.sigil(E.cx, E.cy, 50, K.c, 0.5, 6, 2, 1, "sigil_void");
+            E.hz({ k: "strike", x: E.cx, y: E.cy + (d.r || 90) * 0.4, r: d.r || 90, shape: "circle", delay: 0.35, life: 0.75, dmg: E.dmg * m, c: K.c });
+          });
+          return { busy: (d.times || 3) * 0.62 + 0.3 };
+        }
+        case "vortex": {
+          const at = d.floor ? { x: p.cx, y: this.floorY(p.cx, p.cy) } : null;
+          this.hz({
+            k: "vortex",
+            x: at ? at.x : this.cx,
+            y: at ? at.y : this.cy,
+            r: d.r || 300,
+            pull: d.pull || 280,
+            life: d.life || 2.6,
+            burst: d.burst || 0,
+            dmg: this.dmg * m,
+            c: K.c,
+            floor: d.floor,
+            fixed: !!at,
+            follow: !at,
+            ref: at ? void 0 : this,
+            nid: at ? void 0 : this.nid
+          });
+          app.after((d.life || 2.6) + 0.05, () => {
+            if (E.dead) return;
+            if (d.then === "dash") E.mv = { d: { k: "dash", n: "", tele: 0, times: 1, spd: 4.2, m }, t: 0, run: E.mvStart({ k: "dash", times: 1, spd: 4.2, m }, p, world, K) };
+            if (d.waves) for (const s of [-1, 1]) E.hz({ k: "wave", x: E.cx, y: E.floorY(E.cx, E.cy), vx: s * 360, w: 28, hh: 32, life: 2.4, dmg: E.dmg * 0.7, c: K.c });
+            if (d.rewind) E.mvStart({ k: "rewind", heal: 0.02 }, p, world, K);
+          });
+          return { busy: (d.life || 2.6) + 0.2 };
+        }
+        case "zone": {
+          for (let i = 0; i < (d.n2 || 3); i++) {
+            const spread = d.at === "player" ? 140 : 440, x = p.cx + (Math.random() - 0.5) * spread;
+            this.hz({ k: "zone", x, y: this.floorY(x, p.y), r: d.r || 60, life: d.life || 6, dmg: this.dmg * (d.dps || 0.1), slow: d.slow, poison: d.poison, burn: d.burn, c: K.c, fx: d.fx });
+          }
+          extra();
+          return { busy: 0.6 };
+        }
+        case "wall": {
+          for (let i = 0; i < (d.times || 1); i++) app.after(i * (d.every || 1.4), () => {
+            if (E.dead) return;
+            const s = Math.sign(p.cx - E.cx) || 1, fy = E.floorY(p.cx, p.y), low = i % 2 === 0;
+            E.hz({
+              k: "wall",
+              x: E.cx,
+              vx: s * (d.spd || 280),
+              top: low ? fy - 52 : fy - 340,
+              bot: low ? fy : fy - 50,
+              w: 34,
+              life: 4.5,
+              dmg: E.dmg * m,
+              c: K.c,
+              fx: d.fx
+            });
+          });
+          extra();
+          return { busy: Math.min(1.6, (d.times || 1) * (d.every || 1.4)) };
+        }
+        case "summon": {
+          for (let i = 0; i < (d.cnt || 2); i++) {
+            const e = new Enemy(d.mob, this.cx + (Math.random() - 0.5) * 220, this.cy - 20, app.scale());
+            e.vy = -260;
+            app.ents.push(e);
+            for (let q = 0; q < 10; q++) app.parts.push(new Part(e.cx, e.cy, K.c, -40, 0.7));
+          }
+          if (d.ring) for (let i = 0; i < d.ring; i++) {
+            const a = i / d.ring * TAU;
+            app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 260, Math.sin(a) * 260, this.dmg * 0.5, "enemy", "bolt"));
+          }
+          app.vfx.sigil(this.cx, this.y + this.h, 80, K.c, 0.8, 6, 1, 0.3, "sigil_beast");
+          return { busy: 0.7 };
+        }
+        case "push": {
+          this.hz({ k: "push", x: this.cx, force: d.force || 500, life: d.life || 3, c: K.c });
+          return { busy: d.life || 3 };
+        }
+        case "burrow": {
+          const r = { busy: 99, ph: 0, pt: 0 };
+          r.tick = (dt, r2) => {
+            r2.pt += dt;
+            if (r2.ph === 0) {
+              this.burrowT = 1;
+              this.guard = 1;
+              for (let q = 0; q < 2; q++) app.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w, this.y + this.h, "#8a7a5a", -120, 0.6));
+              if (r2.pt > 0.35) {
+                r2.ph = 1;
+                r2.pt = 0;
+              }
+            } else if (r2.ph === 1) {
+              this.x = lerp(this.x, p.cx - this.w / 2, dt * 2.2);
+              this.y = this.floorY(this.cx, p.y) - this.h;
+              if (Math.random() < 0.5) app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 30, this.y + this.h, "#8a7a5a", -160, 0.5));
+              if (r2.pt > (d.under || 1.4)) {
+                r2.ph = 2;
+                r2.pt = 0;
+                this.strike(this.cx, this.y + this.h, { r: d.r || 80, delay: 0.55, fx: "rock" }, K, m);
+              }
+            } else if (r2.ph === 2) {
+              if (r2.pt > 0.55) {
+                this.burrowT = 0;
+                this.guard = 0;
+                this.vy = -720;
+                app.shake = Math.max(app.shake, 12);
+                r2.ph = 3;
+                r2.pt = 0;
+              }
+            } else if (r2.pt > 0.5) r2.busy = r2.t;
+            this.move(dt, world, { gravMul: r2.ph >= 3 ? 1 : 0 });
+          };
+          return r;
+        }
+        case "rewind": {
+          const h = this.hist && this.hist[0];
+          if (h) {
+            this.hz({ k: "line", x0: this.cx, y0: this.cy, x1: h[0] + this.w / 2, y1: h[1] + this.h / 2, life: 0.6, c: K.c, w: 4 });
+            for (let q = 0; q < 20; q++) app.parts.push(new Part(this.cx, this.cy, K.c, -20, 0.8));
+            this.x = h[0];
+            this.y = h[1];
+            this.vx = this.vy = 0;
+            this.hp = Math.min(this.maxHp, this.hp + this.maxHp * (d.heal || 0.025));
+            app.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.7, K.c, 0.7, 6, -2, 1, "swirl");
+          }
+          return { busy: 0.6 };
+        }
+        case "clones": {
+          const n = (d.cnt || 2) + 1, a0 = Math.random() * TAU, pts = [];
+          for (let i = 0; i < n; i++) {
+            const a = a0 + i * TAU / n;
+            pts.push([p.cx + Math.cos(a) * 230, p.cy - 40 + Math.sin(a) * 120]);
+          }
+          const real = Math.floor(Math.random() * n);
+          pts.forEach((q, i) => {
+            if (i === real) {
+              this.x = q[0] - this.w / 2;
+              this.y = q[1] - this.h / 2;
+              this.vx = this.vy = 0;
+            } else this.hz({ k: "decoy", x: q[0], y: q[1], r: this.h, life: 1.6, c: K.c });
+            app.after(0.8, () => {
+              if (E.dead) return;
+              const nn = d.ring || 10;
+              for (let k = 0; k < nn; k++) {
+                const a = k / nn * TAU;
+                app.projs.push(new Proj(q[0], q[1], Math.cos(a) * 220, Math.sin(a) * 220, E.dmg * m, "enemy", d.proj || "frost"));
+              }
+            });
+          });
+          for (let q = 0; q < 24; q++) app.parts.push(new Part(this.cx, this.cy, K.c, -20, 0.7));
+          return { busy: 1.2 };
+        }
+        case "homing": {
+          for (let i = 0; i < (d.cnt || 4); i++) {
+            const a = -Math.PI / 2 + (i - ((d.cnt || 4) - 1) / 2) * 0.5;
+            const pr = new Proj(this.cx, this.cy, Math.cos(a) * (d.spd || 200), Math.sin(a) * (d.spd || 200), this.dmg * m, "enemy", d.proj || "dark");
+            pr.home = d.turn || 2;
+            pr.life = 5;
+            app.projs.push(pr);
+          }
+          return { busy: 0.6 };
+        }
+      }
+      return { busy: 0.3 };
+    }
+  };
+  mixin(Enemy.prototype, BossMoves, true);
 
   // src/game/factory.ts
   var factory_exports2 = {};
@@ -39720,6 +40472,7 @@
       this._puzRooms = null;
       this._pzLeft = null;
       this._deepFail = null;
+      this.bhz = null;
       this.guardCd = 0;
       this.facTimer = 0;
       this.cropTimer = 0;
@@ -39976,6 +40729,7 @@
       this.checkRuinEvent();
       this.updatePulse(dt);
       this.updatePuzzle(dt);
+      this.updateBossHazards(dt);
       this.updateCaves(dt);
       if (!guest) this.world.fluidTick(dt);
       this.updateFalls(dt);
@@ -40859,6 +41613,7 @@
         this._puzRooms = null;
         this._pzLeft = null;
         this._deepFail = null;
+        this.bhz = null;
         this.guardCd = 0;
         this.facTimer = 0;
         this.cropTimer = 0;
@@ -41453,7 +42208,7 @@
           v.crack(o.x - 14, foot, 1, 28, "#ff9a4a", 0.5);
           break;
         case "s_guard":
-          v.sigil(x, y, 36, "#e8b86a", 0.6, 6, 0.4, 1.25, "sigil_hex");
+          v.sigil(x, y, 36, "#e8b86a", 0.6, 6, 0.4, 1.25, "sigil_aegis");
           v.shock(x, y, 56, "#d8a05a", 0.35, 6);
           v.sparks(x, y, 10, "#fff0c0", 300, 0, TAU, 0.3, 200);
           break;
@@ -42463,6 +43218,50 @@
       const ang = Math.atan2(dy, dx) - sweep * Math.PI / 2 + (Math.random() - 0.5) * 0.5;
       const art = crit ? "cut1" : CUT_ART[((p.combo || 0) + (Math.random() * 2 | 0)) % 4], s = crit ? 62 : 46;
       this.vfx.mark(e.cx + (Math.random() - 0.5) * 8, e.cy - 2 + (Math.random() - 0.5) * 8, s, s, ang, crit ? "#ffe08a" : "#fff6e0", 0.22, art);
+    },
+    /** 비전 방벽이 남은 동안 몸을 감싸는 겹 — 유리 공 · 기울어 도는 글자 고리 둘(혼천의) · 남은 양이 줄수록 번지는 금.
+        ★ 단순한 육각 테로 되돌리지 말 것 — 다른 스킬 그림에 계속 겹쳐 보여 "스킬마다 육각형"으로 읽혔다. 사연: docs/code-history.md#h174 */
+    drawWard(c, q, camX, camY) {
+      const k = q.remote ? q.netShield || 0 : q.shield > 0 ? q.shield / (q.shieldMax || q.shield) : 0;
+      if (k <= 0 || q.dead) return;
+      const x = q.cx - camX, y = q.cy - camY, R = 32 + Math.sin(this.time * 4) * 1.2, t = this.time;
+      const shell = Sprites.vfxArt("ward_shell", "#8fc8ff"), ring = Sprites.vfxArt("ward_ring", "#bfe0ff");
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      if (!shell || !ring) {
+        c.globalAlpha = 0.25 + 0.35 * k;
+        c.strokeStyle = "#9fd4ff";
+        c.lineWidth = 1.6;
+        c.beginPath();
+        c.ellipse(x, y, R, R * 1.15, 0, 0, TAU);
+        c.stroke();
+        c.restore();
+        return;
+      }
+      c.globalAlpha = 0.3 + 0.35 * k;
+      c.translate(x, y);
+      c.scale(1, 1.12);
+      c.save();
+      c.rotate(Math.sin(t * 0.7) * 0.15);
+      c.drawImage(shell, -R, -R, R * 2, R * 2);
+      c.restore();
+      for (const [tilt, spin, sq] of [[0.42, 0.8, 0.26], [-0.95, -0.55, 0.32]]) {
+        c.save();
+        c.rotate(tilt + Math.sin(t * 0.5 + tilt) * 0.08);
+        c.scale(1, sq);
+        c.rotate(t * spin);
+        c.globalAlpha = 0.35 + 0.45 * k;
+        c.drawImage(ring, -R * 1.18, -R * 1.18, R * 2.36, R * 2.36);
+        c.restore();
+      }
+      if (k < 0.75) {
+        const cr = Sprites.vfxArt("ward_crack", "#dff2ff");
+        if (cr) {
+          c.globalAlpha = Math.min(1, (0.75 - k) / 0.55) * (0.75 + 0.25 * Math.sin(t * 9));
+          c.drawImage(cr, -R, -R, R * 2, R * 2);
+        }
+      }
+      c.restore();
     },
     /** 무대 — 어둠 깔기(빛 다음 · 연출 앞 — 스킬 빛은 어둠 위에서 빛난다) */
     drawStageDim(f) {
@@ -45163,6 +45962,438 @@
   };
   mixin(Game.prototype, BossPart, true);
 
+  // src/game/game/boss-hazards.ts
+  var boss_hazards_exports = {};
+  __export(boss_hazards_exports, {
+    BossHazardPart: () => BossHazardPart
+  });
+  var FX_COL = {
+    gel: "#6fa8ff",
+    bone: "#ede4c8",
+    flesh: "#c04a6a",
+    ice: "#bfefff",
+    frost: "#9fe0ff",
+    rune: "#9fe8d8",
+    meteor: "#ffc070",
+    rock: "#b8a07a",
+    plant: "#7fd06a",
+    seed: "#a8d86a",
+    sun: "#ffe08a",
+    sand: "#e8c070",
+    spore: "#8ff0c8",
+    bile: "#a8c84a",
+    water: "#7fc8ff",
+    fire: "#ff8a3a",
+    metal: "#c8c8d8",
+    bolt: "#cfe6ff"
+  };
+  var BossHazardPart = {
+    /** 위험 지대를 놓는다(호스트) — 참가자에게도 보낸다. ref 는 따라다닐 보스(보내지 않는다) */
+    bossHazard(h) {
+      h.t = 0;
+      (this.bhz || (this.bhz = [])).push(h);
+      if (this.net && this.net.role !== "guest") {
+        const { ref, ...plain } = h;
+        this.netBroadcast({ k: "bhz", h: plain });
+      }
+      return h;
+    },
+    netBossHazard(m) {
+      const h = m.h;
+      h.t = 0;
+      h.ghost = 1;
+      (this.bhz || (this.bhz = [])).push(h);
+    },
+    /** 원 안의 플레이어에게 피해(호스트만) */
+    hitPlayers(x, y, r, dmg, inf) {
+      if (this.net && this.net.role === "guest") return;
+      for (const q of this.players) {
+        if (q.dead || q.hp <= 0) continue;
+        const nx = Math.max(q.x, Math.min(x, q.x + q.w)), ny = Math.max(q.y, Math.min(y, q.y + q.h));
+        if ((nx - x) ** 2 + (ny - y) ** 2 > r * r) continue;
+        const open = !(q.iframe > 0);
+        q.hurt(dmg, x);
+        if (inf && open) q.inflict(inf[0], inf[1], inf[2] ? dmg * inf[2] : 0);
+      }
+    },
+    /** 네모 안의 플레이어에게 피해(호스트만) — 맞은 사람을 돌려준다(한 번만 맞게 거를 때) */
+    hitPlayersRect(x0, y0, x1, y1, dmg, skip) {
+      const hit = [];
+      if (this.net && this.net.role === "guest") return hit;
+      this.players.forEach((q, i) => {
+        if (q.dead || q.hp <= 0 || skip && skip.includes(i)) return;
+        if (q.x + q.w < x0 || q.x > x1 || q.y + q.h < y0 || q.y > y1) return;
+        q.hurt(dmg, (x0 + x1) / 2);
+        hit.push(i);
+      });
+      return hit;
+    },
+    /** 따라다니는 보스 — 호스트는 붙잡아 둔 몸, 참가자는 같은 번호의 그림자 */
+    hzBoss(h) {
+      if (h.ref) return h.ref.dead ? null : h.ref;
+      if (h.nid === void 0) return null;
+      return this.ents.find((e) => e.nid === h.nid && !e.dead) || null;
+    },
+    updateBossHazards(dt) {
+      const L = this.bhz;
+      if (!L || !L.length) return;
+      const host = !(this.net && this.net.role === "guest"), me = this.me, w = this.world;
+      for (let i = L.length - 1; i >= 0; i--) {
+        const h = L[i];
+        h.t += dt;
+        const b = this.hzBoss(h);
+        if (b && h.follow) {
+          h.x = b.cx;
+          h.y = b.cy;
+        }
+        switch (h.k) {
+          case "strike":
+            if (!h.done && h.t >= h.delay) {
+              h.done = 1;
+              const col = FX_COL[h.fx] || h.c;
+              if (h.shape === "col") {
+                if (host) this.hitPlayersRect(h.x - h.w / 2, h.y - h.hh, h.x + h.w / 2, h.y, h.dmg);
+                this.vfx.column(h.x, h.y, h.w * 1.4, h.hh, col, 0.45);
+                this.vfx.sparks(h.x, h.y - 4, 8, col, 380, -Math.PI / 2, 1.2, 0.4, 700);
+              } else {
+                if (host) this.hitPlayers(h.x, h.y - h.r * 0.4, h.r, h.dmg);
+                this.vfx.flare(h.x, h.y - 6, h.r * 1.2, col, 0.25, "impact");
+                this.vfx.shock(h.x, h.y - 4, h.r * 1.3, col, 0.35, 7, 0.4);
+              }
+              if (h.fx === "rock" || h.fx === "meteor") {
+                this.vfx.puffs(h.x, h.y - 8, 4, 16, "rgba(120,100,80,.8)", 0.8, 20);
+                this.shake = Math.max(this.shake, 5);
+              }
+              if (host && h.zone) this.bossHazard(Object.assign({ k: "zone", x: h.x, y: h.y, c: col, fx: h.fx, life: 4, r: 46 }, h.zone, { dmg: h.zoneDmg || 0 }));
+              if (host && h.burstRing) for (let k = 0; k < h.burstRing; k++) {
+                const a = k / h.burstRing * TAU;
+                this.projs.push(new Proj(h.x, h.y - 10, Math.cos(a) * 200, Math.sin(a) * 200, h.dmg * 0.5, "enemy", "poison"));
+              }
+            }
+            break;
+          case "beam":
+            {
+              if (b) {
+                h.x = b.cx;
+                h.y = b.cy;
+              }
+              if (h.t > h.tele) {
+                h.a += h.va * dt;
+                h.tick = (h.tick || 0) - dt;
+                if (host && h.tick <= 0) {
+                  h.tick = 0.25;
+                  const ex = Math.cos(h.a), ey = Math.sin(h.a);
+                  for (const q of this.players) {
+                    if (q.dead || q.hp <= 0) continue;
+                    const px = q.cx - h.x, py = q.cy - h.y, along = px * ex + py * ey;
+                    if (along < 0 || along > h.len) continue;
+                    if (Math.abs(px * ey - py * ex) < h.w / 2 + 10) q.hurt(h.dmg, h.x);
+                  }
+                }
+              }
+            }
+            break;
+          case "wave":
+            {
+              h.x += h.vx * dt;
+              const tx = Math.floor((h.x + Math.sign(h.vx) * h.w / 2) / TS), ty = Math.floor((h.y - 6) / TS);
+              if (w.solid(tx, ty)) {
+                h.t = h.life;
+                break;
+              }
+              if (host) h.hit = (h.hit || []).concat(this.hitPlayersRect(h.x - h.w / 2, h.y - h.hh, h.x + h.w / 2, h.y, h.dmg, h.hit));
+              if (Math.random() < dt * 30) this.parts.push(new Part(h.x, h.y - 4, h.c, -120, 0.4));
+            }
+            break;
+          case "zone":
+            {
+              h.tick = (h.tick || 0) - dt;
+              if (host && h.tick <= 0 && h.dmg) {
+                h.tick = 0.5;
+                const inf = h.poison ? ["poison", 3, 0.3] : h.burn ? ["burn", 3, 0.3] : h.slow ? ["frostbite", 1.5] : void 0;
+                this.hitPlayers(h.x, h.y - 14, h.r, h.dmg, inf);
+              }
+              if (h.slow && me && !me.dead && Math.abs(me.cx - h.x) < h.r && Math.abs(me.y + me.h - h.y) < 40) me.vx *= Math.pow(1 - h.slow, dt * 6);
+            }
+            break;
+          case "wall":
+            {
+              h.x += h.vx * dt;
+              if (host) {
+                const hit = this.players.map((q, j) => {
+                  if (h.hit && h.hit.includes(j)) return -1;
+                  if (q.dead || q.hp <= 0 || q.x + q.w < h.x - h.w / 2 || q.x > h.x + h.w / 2) return -1;
+                  const inWall = q.y + q.h > h.top && q.y < h.bot;
+                  if (!inWall) return -1;
+                  q.hurt(h.dmg, h.x - h.vx);
+                  return j;
+                }).filter((j) => j >= 0);
+                if (hit.length) h.hit = (h.hit || []).concat(hit);
+              }
+              if (Math.random() < dt * 40) this.parts.push(new Part(h.x + (Math.random() - 0.5) * h.w, h.top + Math.random() * (h.bot - h.top), h.c, -20, 0.4));
+            }
+            break;
+          case "vortex":
+            {
+              if (b && !h.fixed) {
+                h.x = b.cx;
+                h.y = b.cy;
+              }
+              if (me && !me.dead && h.t < h.life) {
+                const dx = h.x - me.cx, dy = h.y - me.cy, d = Math.hypot(dx, dy);
+                if (d < h.r && d > 8) {
+                  const f = h.pull * (1 - d / h.r * 0.6) * dt;
+                  me.vx += dx / d * f * 2.2;
+                  if (!h.floor) me.vy += dy / d * f * 1.2;
+                }
+              }
+              if (!h.burstDone && h.t >= h.life - 0.05) {
+                h.burstDone = 1;
+                if (h.burst) {
+                  if (host) this.hitPlayers(h.x, h.y, h.burst, h.dmg);
+                  this.vfx.flare(h.x, h.y, h.burst, h.c, 0.3, "impact");
+                  this.vfx.shock(h.x, h.y, h.burst * 1.4, h.c, 0.4, 9);
+                  this.shake = Math.max(this.shake, 9);
+                }
+              }
+            }
+            break;
+          case "push":
+            {
+              if (me && !me.dead) me.vx += Math.sign(h.force) * Math.sign(me.cx - h.x || 1) * Math.abs(h.force) * dt * 1.6;
+              if (Math.random() < dt * 60) {
+                const cx = this.cam.x + Math.random() * this.W, cy = this.cam.y + Math.random() * this.H;
+                const pt = new Part(cx, cy, h.c, 0, 0.35, { g: 0, drag: 1 });
+                pt.vx = Math.sign(h.force) * Math.sign(cx - h.x || 1) * 520;
+                pt.vy = 0;
+                this.parts.push(pt);
+              }
+            }
+            break;
+        }
+        if (h.t >= h.life) L.splice(i, 1);
+      }
+    },
+    /** 세계 위 — 예고는 또렷하게(피할 자리가 보여야 한다), 터진 뒤는 결 그림이 맡는다 */
+    drawBossHazards(c) {
+      const L = this.bhz;
+      if (!L || !L.length) return;
+      const cx0 = this.cam.x, cy0 = this.cam.y, T0 = this.time || 0;
+      c.save();
+      for (const h of L) {
+        const col = FX_COL[h.fx] || h.c || "#ffb070", k = Math.min(1, h.t / Math.max(0.01, h.delay || h.tele || 0.5));
+        switch (h.k) {
+          case "strike":
+            if (!h.done) {
+              const x = h.x - cx0, y = h.y - cy0;
+              c.globalAlpha = 0.25 + 0.35 * k;
+              c.fillStyle = col;
+              c.strokeStyle = col;
+              c.lineWidth = 2;
+              if (h.shape === "col") {
+                c.globalAlpha = 0.12 + 0.2 * k;
+                c.fillRect(x - h.w / 2, y - h.hh, h.w, h.hh);
+                c.globalAlpha = 0.7;
+                c.strokeRect(x - h.w / 2 + 0.5, y - h.hh, h.w - 1, h.hh);
+                c.globalAlpha = 0.5 + 0.4 * k;
+                c.fillRect(x - h.w / 2, y - 4, h.w * k, 4);
+              } else {
+                c.beginPath();
+                c.ellipse(x, y - 2, h.r, h.r * 0.32, 0, 0, TAU);
+                c.globalAlpha = 0.18 + 0.2 * k;
+                c.fill();
+                c.globalAlpha = 0.8;
+                c.stroke();
+                c.beginPath();
+                c.ellipse(x, y - 2, h.r * k, h.r * 0.32 * k, 0, 0, TAU);
+                c.globalAlpha = 0.45;
+                c.fill();
+                if (h.fx === "meteor" || h.fx === "rock") {
+                  const fy = y - 420 * (1 - k);
+                  c.globalAlpha = 0.9;
+                  c.fillStyle = h.fx === "rock" ? "#7a6a58" : "#ffd08a";
+                  c.beginPath();
+                  c.arc(x, fy, 6 + h.r * 0.12, 0, TAU);
+                  c.fill();
+                }
+              }
+            }
+            break;
+          case "line":
+            {
+              c.globalAlpha = 0.35 + 0.35 * Math.sin(T0 * 30);
+              c.strokeStyle = col;
+              c.lineWidth = h.w || 3;
+              c.setLineDash([10, 8]);
+              c.beginPath();
+              c.moveTo(h.x0 - cx0, h.y0 - cy0);
+              c.lineTo(h.x1 - cx0, h.y1 - cy0);
+              c.stroke();
+              c.setLineDash([]);
+            }
+            break;
+          case "beam":
+            {
+              const x = h.x - cx0, y = h.y - cy0, ex = Math.cos(h.a) * h.len, ey = Math.sin(h.a) * h.len;
+              if (h.t <= h.tele) {
+                c.globalAlpha = 0.3 + 0.4 * Math.abs(Math.sin(T0 * 18));
+                c.strokeStyle = col;
+                c.lineWidth = 2;
+                c.beginPath();
+                c.moveTo(x, y);
+                c.lineTo(x + ex, y + ey);
+                c.stroke();
+              } else {
+                const im = Sprites.vfxArt("beam", col), fade = Math.min(1, (h.life - h.t) * 4);
+                c.globalCompositeOperation = "lighter";
+                c.globalAlpha = fade;
+                if (im) {
+                  c.save();
+                  c.translate(x, y);
+                  c.rotate(h.a);
+                  c.drawImage(im, 0, -h.w * 1.2, h.len, h.w * 2.4);
+                  c.restore();
+                }
+                c.strokeStyle = "#ffffff";
+                c.lineWidth = h.w * 0.25;
+                c.beginPath();
+                c.moveTo(x, y);
+                c.lineTo(x + ex, y + ey);
+                c.stroke();
+                c.globalCompositeOperation = "source-over";
+              }
+            }
+            break;
+          case "wave":
+            {
+              const x = h.x - cx0, y = h.y - cy0, im = Sprites.vfxArt("crack", col);
+              c.globalCompositeOperation = "lighter";
+              c.globalAlpha = 0.9;
+              if (im) c.drawImage(im, x - h.w, y - 10, h.w * 2, 20);
+              c.fillStyle = col;
+              c.globalAlpha = 0.5;
+              c.beginPath();
+              c.moveTo(x - h.w / 2, y);
+              c.quadraticCurveTo(x, y - h.hh * 1.6, x + h.w / 2, y);
+              c.fill();
+              c.globalCompositeOperation = "source-over";
+            }
+            break;
+          case "zone":
+            {
+              const x = h.x - cx0, y = h.y - cy0, f = Math.min(1, h.t * 3, (h.life - h.t) * 2);
+              const g = c.createRadialGradient(x, y - 6, 2, x, y - 6, h.r);
+              g.addColorStop(0, col);
+              g.addColorStop(1, "rgba(0,0,0,0)");
+              c.globalAlpha = 0.45 * f;
+              c.fillStyle = g;
+              c.beginPath();
+              c.ellipse(x, y - 6, h.r, h.r * 0.45, 0, 0, TAU);
+              c.fill();
+              c.globalAlpha = 0.6 * f;
+              c.strokeStyle = col;
+              c.lineWidth = 1.5;
+              c.setLineDash([6, 6]);
+              c.beginPath();
+              c.ellipse(x, y - 4, h.r, h.r * 0.3, 0, 0, TAU);
+              c.stroke();
+              c.setLineDash([]);
+              if (Math.random() < 0.3) this.parts.push(new Part(h.x + (Math.random() - 0.5) * h.r * 1.6, h.y - 6, col, -40, 0.6));
+            }
+            break;
+          case "wall":
+            {
+              const x = h.x - cx0, f = Math.min(1, h.t * 4);
+              const g = c.createLinearGradient(x - h.w / 2, 0, x + h.w / 2, 0);
+              g.addColorStop(0, "rgba(0,0,0,0)");
+              g.addColorStop(0.5, col);
+              g.addColorStop(1, "rgba(0,0,0,0)");
+              c.globalAlpha = 0.75 * f;
+              c.fillStyle = g;
+              c.fillRect(x - h.w / 2, h.top - cy0, h.w, h.bot - h.top);
+              c.globalAlpha = 0.9 * f;
+              c.strokeStyle = "#ffffff";
+              c.lineWidth = 1.5;
+              c.beginPath();
+              c.moveTo(x, h.top - cy0);
+              c.lineTo(x, h.bot - cy0);
+              c.stroke();
+            }
+            break;
+          case "vortex":
+            {
+              const x = h.x - cx0, y = h.y - cy0, im = Sprites.vfxArt("swirl", col), f = Math.min(1, h.t * 3, (h.life - h.t) * 3 + 0.2);
+              c.globalCompositeOperation = "lighter";
+              c.globalAlpha = 0.55 * f;
+              if (im) {
+                c.save();
+                c.translate(x, y);
+                if (h.floor) c.scale(1, 0.35);
+                c.rotate(-h.t * 4);
+                c.drawImage(im, -h.r, -h.r, h.r * 2, h.r * 2);
+                c.restore();
+              }
+              c.globalCompositeOperation = "source-over";
+            }
+            break;
+          case "decoy":
+            {
+              const x = h.x - cx0, y = h.y - cy0, f = Math.min(1, h.t * 4, (h.life - h.t) * 4);
+              const im = Sprites.vfxArt("sigil_void", col);
+              c.globalCompositeOperation = "lighter";
+              c.globalAlpha = 0.6 * f;
+              if (im) {
+                c.save();
+                c.translate(x, y);
+                c.rotate(T0);
+                c.drawImage(im, -40, -40, 80, 80);
+                c.restore();
+              }
+              c.globalCompositeOperation = "source-over";
+              c.globalAlpha = 0.55 * f;
+              c.fillStyle = col;
+              c.beginPath();
+              c.ellipse(x, y, h.r * 0.45, h.r * 0.8, 0, 0, TAU);
+              c.fill();
+            }
+            break;
+          case "aura":
+            {
+              const b = this.hzBoss(h);
+              if (!b) break;
+              const x = b.cx - cx0, y = b.cy - cy0, im = Sprites.vfxArt("sigil", col), R = Math.max(b.w, b.h) * (0.7 + 0.3 * k);
+              c.globalCompositeOperation = "lighter";
+              c.globalAlpha = 0.35 + 0.4 * k;
+              if (im) {
+                c.save();
+                c.translate(x, y);
+                c.rotate(T0 * 2);
+                c.drawImage(im, -R, -R, R * 2, R * 2);
+                c.restore();
+              }
+              c.globalCompositeOperation = "source-over";
+            }
+            break;
+          case "call":
+            {
+              const b = this.hzBoss(h), x = (b ? b.cx : h.x) - cx0, y = (b ? b.y : h.y) - cy0 - 26, f = Math.min(1, h.t * 5, (h.life - h.t) * 3);
+              c.globalAlpha = f;
+              c.font = "bold 15px " + FONT;
+              c.textAlign = "center";
+              c.lineWidth = 4;
+              c.strokeStyle = "rgba(10,8,12,.85)";
+              c.strokeText("『" + h.txt + "』", x, y);
+              c.fillStyle = col;
+              c.fillText("『" + h.txt + "』", x, y);
+            }
+            break;
+        }
+      }
+      c.restore();
+    }
+  };
+  mixin(Game.prototype, BossHazardPart, true);
+
   // src/game/game/progress.ts
   var progress_exports = {};
   __export(progress_exports, {
@@ -45805,6 +47036,7 @@
       this.pendingLair = null;
       this.pendingEcho = null;
       if (this.pulseEvent) this.endPulseEvent(false);
+      this.bhz = null;
       if (this.puzzle && !this.net) this.puzzleEnd(false, true);
       this.rocks = [];
       $("#death-screen").classList.remove("open");
@@ -50602,6 +51834,7 @@
       this.pipe.add("fx", (f) => this.rUtil(f));
       this.pipe.add("fx", (f) => this.drawPuzzle(f.c));
       this.pipe.add("fx", (f) => this.drawDeepGates(f.c));
+      this.pipe.add("fx", (f) => this.drawBossHazards(f.c));
       this.pipe.add("screen", (f) => this.rScreen(f));
       this.pipe.add("screen", (f) => this.drawStage(f));
       this.pipe.add("screen", (f) => this.drawPuzzleHud(f.c));
@@ -51067,30 +52300,7 @@
           c.restore();
         }
       }
-      const pl = this.player;
-      if (pl && pl.shield > 0) {
-        const x = pl.cx - camX, y = pl.cy - camY;
-        const rr = 30 + Math.sin(this.time * 5) * 1.5;
-        const k = pl.shieldMax ? pl.shield / pl.shieldMax : 1;
-        c.save();
-        c.globalAlpha = 0.1 + 0.1 * k;
-        c.fillStyle = "#6fb8ff";
-        c.beginPath();
-        c.arc(x, y, rr, 0, TAU);
-        c.fill();
-        c.globalAlpha = 0.35 + 0.45 * k;
-        c.strokeStyle = "#9fd4ff";
-        c.lineWidth = 1.6;
-        c.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const a = this.time * 0.6 + i * TAU / 6;
-          const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr * 1.15;
-          i ? c.lineTo(px, py) : c.moveTo(px, py);
-        }
-        c.closePath();
-        c.stroke();
-        c.restore();
-      }
+      for (const q of this.players) this.drawWard(c, q, camX, camY);
       this.drawMeteorNear(c, camX, camY);
       this.drawSmoke(c, camX, camY);
       let lit = false;
@@ -52876,6 +54086,7 @@
         this.drawBuried(c, e, sx, sy);
         return;
       }
+      if (e.burrowT > 0) return;
       const key0 = e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type) ? "mech_" + e.type : e.type;
       const burning = e.dots && e.dots.some((d) => d.kind === "burn" || d.kind === "fire");
       const key = !this.spritesOn ? key0 : burning && Sprites.burnSheet(key0) ? "burn_" + key0 : e.chillT > 0 && Sprites.frostSheet(key0) ? "frost_" + key0 : key0;
@@ -54783,6 +55994,7 @@
         ifr: p.iframe || 0,
         hp: Math.round(p.hp),
         mhp: Math.round(p.d.maxHp),
+        sh: p.shield > 0 ? Math.round(p.shield / (p.shieldMax || p.shield) * 100) / 100 : 0,
         hid: held ? held.id : "",
         wid: wep ? wep.id : "",
         c: p.charId,
@@ -54820,6 +56032,7 @@
       rp._seen = true;
       rp.hp = s.hp;
       rp.netMaxHp = s.mhp;
+      rp.netShield = s.sh || 0;
       rp.charId = s.c;
       rp.name = s.n;
       rp.level = s.lv || 1;
@@ -55570,6 +56783,8 @@
         this.netPutKill(m);
       } else if (m.k === "tiles") {
         this.netPutTiles(m.l, false);
+      } else if (m.k === "bhz") {
+        this.netBossHazard(m);
       } else if (m.k === "puz") {
         this.netPuzzle(m);
       } else if (m.k === "door") {
@@ -56315,7 +57530,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

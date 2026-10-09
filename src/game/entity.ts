@@ -81,7 +81,7 @@ export class Player extends Ent {
   declare climbOut: (...a: any[]) => any; declare fireProj: (...a: any[]) => any; declare punch: (...a: any[]) => any;
   declare rollCrit: (...a: any[]) => any; declare scaleDmg: (...a: any[]) => any; declare updateOxygen: (...a: any[]) => any;
   declare volley: number;
-  declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare _hid: string; declare _wid: string; declare _hurtAt: number; declare petEnts: any[]; declare _pt: string;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
+  declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare netShield: number; declare _hid: string; declare _wid: string; declare _hurtAt: number; declare petEnts: any[]; declare _pt: string;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
   declare dotAcc: number; declare dotT: number;
   declare buffs: any[]; declare cd: Record<string, any>; declare channel: Record<string, any> | null; declare charId: string; declare charge: number; declare d: Record<string, any>;
@@ -336,7 +336,7 @@ export class Player extends Ent {
       this.shield -= take; dmg -= take;
       G.texts.push(new DmgText(this.cx, this.y - 12, take, '#8fc8ff', 0));
       for (let i = 0; i < 5; i++) G.parts.push(new Part(this.cx, this.cy, '#8fc8ff'));
-      if (this.shield <= 0) { this.shield = 0; this.shieldT = 0; G.ringFx(this.cx, this.cy, 44, '#8fc8ff', .35); G.sfx('magic'); }
+      if (this.shield <= 0) { this.shield = 0; this.shieldT = 0; G.ringFx(this.cx, this.cy, 44, '#8fc8ff', .35); G.vfx.shards(this.cx, this.cy, 14, '#bfe0ff', 300, 0.5, 7); G.sfx('magic'); }
       if (dmg <= 0) { this.iframe = 0.4; this.flash = 0.18; return; }
     }
     this.hp -= dmg;
@@ -399,6 +399,10 @@ export class Enemy extends Ent {
   declare lastPhase: number; declare lvFactor: number; declare markAmt: number; declare markT: number; declare maxHp: number; declare mech: number;
   declare pedestal: number; declare pf: number; declare phase: number; declare phaseInv: number; declare phases: number; declare sgAmt: number;
   declare sgBuf: number; declare sgCd: number; declare sgKind: string | null; declare sgRing: number; declare sgStun: number; declare sgT: number;
+  declare mv: Bag | null; declare mvCd: number; declare mvN: number; declare mvLast: Bag | null; declare ultUsed: number;   // 고유 기술(entity/boss-moves)
+  declare hist: number[][]; declare histT: number; declare burrowT: number;
+  declare tickMoves: (dt: number, world: World, p: Player, dd: number) => boolean; declare mvHist: (dt: number) => void; declare mvStart: (d: Bag, p: Player, world: World, K: Bag) => any;
+  declare floorY: (x: number, y: number) => number; declare hz: (h: Bag) => Bag; declare strike: (x: number, y: number, o: Bag, K: Bag, dm: number) => Bag;
   declare sgTook: number; declare slowFx: Timed; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
   declare stateT: number; declare think: number; declare type: string; declare weatherBuffed: boolean; declare xp: number;
   /* 몹 스킬 · 걸린 것(entity/enemy-skills) */
@@ -588,6 +592,7 @@ export class Enemy extends Ent {
       G.texts.push(new DmgText(this.cx, this.y - 4, tr('전환 중'), '#9fd4ff', 0));
       return;
     }
+    if (this.burrowT > 0) return;                       // 땅속 — 닿지 않는다(보스 기술 burrow)
     /* 굳어 있을 때(guard) — 약점이 드러나기 전에는 거의 통하지 않는다. */
     if (this.guard) {
       amount *= 0.12;
@@ -874,6 +879,7 @@ export class Proj extends Ent {
   declare crit: boolean; declare dmg: number; declare explode: number; declare fire: number; declare frost: number; declare grav: number;
   declare hitSet: Set<any>; declare life: number; declare pierce: number; declare poison: number; declare team: string; declare type: string;
   declare vol: number; declare ghost: boolean; declare nid: number; declare seenAt: number;   // 멀티플레이 — 참가자 화면의 그림자 투사체
+  declare home: number;   // 쫓는 탄 — 초당 돌 수 있는 각(보스 기술 homing)
 
   constructor(x: number, y: number, vx: number, vy: number, dmg: number, team: any, type: string) {
     super(x - 6, y - 6, 12, 12);
@@ -889,6 +895,16 @@ export class Proj extends Ent {
     this.life -= dt;
     if (this.life <= 0) { this.dead = true; return; }
     this.vy += this.grav * dt;
+    if (this.home && this.team === 'enemy') {             // 가장 가까운 플레이어 쪽으로 조금씩 돈다(속력은 그대로)
+      let best: any = null, bd = 1e9;
+      for (const q of G.players) { const d = (q.cx - this.cx) ** 2 + (q.cy - this.cy) ** 2; if (!q.dead && d < bd) { bd = d; best = q; } }
+      if (best) {
+        const sp = Math.hypot(this.vx, this.vy), a = Math.atan2(this.vy, this.vx), want = Math.atan2(best.cy - this.cy, best.cx - this.cx);
+        let da = want - a; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
+        const na = a + Math.max(-this.home * dt, Math.min(this.home * dt, da));
+        this.vx = Math.cos(na) * sp; this.vy = Math.sin(na) * sp;
+      }
+    }
     this.x += this.vx * dt; this.y += this.vy * dt;
     const st = PROJ_STYLE[this.type];
     if (st && st.glow && Math.random() < dt * 30) G.parts.push(new Part(this.cx, this.cy, st.c, 0, 0.3));

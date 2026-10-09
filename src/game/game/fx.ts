@@ -89,7 +89,7 @@ export const FxPart: Bag = {
         v.crack(o.x - 14, foot, 1, 28, '#ff9a4a', 0.5);
         break;
       case 's_guard':       // 몸 앞에 선 방패진 + 쇳소리 불티
-        v.sigil(x, y, 36, '#e8b86a', 0.6, 6, 0.4, 1.25, 'sigil_hex');
+        v.sigil(x, y, 36, '#e8b86a', 0.6, 6, 0.4, 1.25, 'sigil_aegis');
         v.shock(x, y, 56, '#d8a05a', 0.35, 6);
         v.sparks(x, y, 10, '#fff0c0', 300, 0, TAU, 0.3, 200);
         break;

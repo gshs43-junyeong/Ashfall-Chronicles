@@ -342,6 +342,8 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   꺼진 바닥)은 `evCleanup` 이 되돌린다 — 새 사건도 바꾼 칸을 기억해 둘 것. 사연: docs/code-history.md#h169
 - **봉인 방**(game/ruin-puzzle.ts · data/ruins.ts `PUZZLE`): 유적마다 봉인 방 셋(석판 둘) — 들어서면 출입구를 `T.SEALSTONE` 으로 막고 퍼즐을 풀면 연다. 방은 해시로 고른다(생성 난수 안 뽑음). ★ 봉인은 저장하지 않는다 — `saveData` 의 `withoutSeal`. 여럿이면 호스트 판정(`puz` · `puzc`). 사연: docs/code-history.md#h171
 - **깊은 곳**(game/ruin-deep.ts · data/ruins.ts `DEEP_LEVELS`): 봉인 방을 다 풀면 가장 깊은 방 바닥이 열려 아래층(홀 + 곁방)이 **그때** 파이고, 홀 봉인을 풀면 다음 단계(석판 유적만 3단계까지). ★ 미리 파지 말 것(몰래 캐서 들어간다 · 생성 해시). 단계 자리는 `ruinSites[].deep[]`(세이브 v14). 사연: docs/code-history.md#h172
+- **비전 방벽 겹**(game/stage-fx.ts `drawWard` · 그림 `ward_shell`·`ward_ring`·`ward_crack`): 방벽이 남은 20초 내내 몸에 겹친다 — 단순한 테로 되돌리면 모든 스킬 그림에 같은 모양이 끼어 보인다. 한 모양을 여러 스킬에 겹쳐 쓰지 말 것(사용자 요청). 사연: docs/code-history.md#h174
+- **보스 기술**(data/bossmoves.ts `BOSS_MOVES` · entity/boss-moves.ts `tickMoves` · game/boss-hazards.ts `G.bhz`): 보스마다 기술 셋 + 궁극기, 예고 뒤 위험 칸. ★ 플레이어 피해는 `G.hitPlayers`/`hitPlayersRect`(호스트만) — `G.aoe` 는 플레이어 스킬용이라 몹을 때린다. 사연: docs/code-history.md#h173
 - **유적 큰 홀**(world/dungeon.ts `carveDungeon` 2.4 · `_carveGrand` · `_growHall`): 낡은 유적은 큰 홀 하나(주인 방 · 석판 방) + 곁채 둘을 먼저 잡고 나머지를 BSP 로 나눈다 — 벽지 번호도 타일처럼 **끝에만** 붙인다(16 `COLUMN_WALL` = 홀 기둥). 사연: docs/code-history.md#h167
 - 세계는 `WW 5000 × WH 720`, 타일 번호는 **202까지** 썼다(201·202 현무 종유석·석순(지옥 꾸밈, world/caves.ts `decorateHell`) · 199 고드름 · 200 발광 잎 · 198 스프링클러 · 197 심층 드릴 · 191~196 광상: 석탄·구리·철·납·금·미스릴 · 188~190 운석·별빛 수정·녹아 굳은 돌 · 187 소나무 잎 · 180~183 흐르는 물·바닷물·용암·샘 바위 ·
   184~186 부들·물풀·물가 조약돌 · 172~177 동굴: 이끼 바위·늘어진 이끼·

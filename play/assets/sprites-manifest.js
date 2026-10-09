@@ -2202,7 +2202,7 @@ window.SPRITE_MANIFEST = {
       }
     },
     "vfx": {
-      "note": "스킬 연출 결 그림(tools/mkvfx.py) — 흰 모양 + 흰 속불. 게임이 갈래 색으로 물들여 engine Vfx 의 도형 대신 그린다 · fire 는 색을 구운 불길 8장 띠(48×96) · bolt0~3 은 번개 마디 네 장 · sigil_* 는 갈래별 마법진(방패 · 서리 · 사냥 · 생명 · 짐승 · 공허) · swipe0~3 칼 자국 · cut0~2 베인 자국 · lens 가로 빛살",
+      "note": "스킬 연출 결 그림(tools/mkvfx.py) — 흰 모양 + 흰 속불. 게임이 갈래 색으로 물들여 engine Vfx 의 도형 대신 그린다 · fire 는 색을 구운 불길 8장 띠(48×96) · bolt0~3 은 번개 마디 네 장 · sigil_* 는 갈래별 마법진(방패 sigil_aegis · 서리 · 사냥 · 생명 · 짐승 · 공허) · swipe0~3 칼 자국 · cut0~2 베인 자국 · lens 가로 빛살 · ward_shell/ring/crack 비전 방벽이 남은 동안 몸을 감싸는 겹(유리 공 · 기울어 도는 글자 고리 둘 · 줄수록 짙어지는 금)",
       "files": {
         "shock": "fx/vfx_shock.png",
         "shock_core": "fx/vfx_shock_core.png",
@@ -2245,8 +2245,8 @@ window.SPRITE_MANIFEST = {
         "swirl_core": "fx/vfx_swirl_core.png",
         "dome": "fx/vfx_dome.png",
         "dome_core": "fx/vfx_dome_core.png",
-        "sigil_hex": "fx/vfx_sigil_hex.png",
-        "sigil_hex_core": "fx/vfx_sigil_hex_core.png",
+        "sigil_aegis": "fx/vfx_sigil_aegis.png",
+        "sigil_aegis_core": "fx/vfx_sigil_aegis_core.png",
         "sigil_frost": "fx/vfx_sigil_frost.png",
         "sigil_frost_core": "fx/vfx_sigil_frost_core.png",
         "sigil_leaf": "fx/vfx_sigil_leaf.png",
@@ -2274,7 +2274,13 @@ window.SPRITE_MANIFEST = {
         "cut2": "fx/vfx_cut2.png",
         "cut2_core": "fx/vfx_cut2_core.png",
         "lens": "fx/vfx_lens.png",
-        "lens_core": "fx/vfx_lens_core.png"
+        "lens_core": "fx/vfx_lens_core.png",
+        "ward_shell": "fx/vfx_ward_shell.png",
+        "ward_shell_core": "fx/vfx_ward_shell_core.png",
+        "ward_ring": "fx/vfx_ward_ring.png",
+        "ward_ring_core": "fx/vfx_ward_ring_core.png",
+        "ward_crack": "fx/vfx_ward_crack.png",
+        "ward_crack_core": "fx/vfx_ward_crack_core.png"
       }
     }
   },
