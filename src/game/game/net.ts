@@ -46,7 +46,7 @@ export const NetPart: Bag = {
   netState(p: Player) {
     const held = p.held(), wep = p.equip.weapon;
     return { x: Math.round(p.x), y: Math.round(p.y), vx: Math.round(p.vx), vy: Math.round(p.vy), f: p.facing,
-      g: p.onGround ? 1 : 0, sw: p.swing || 0, sa: p.swingAng || 0, sd: p.swingDir || 0, sr: p.swingReach || 0,
+      g: p.onGround ? 1 : 0, sw: p.swing || 0, sa: p.swingAng || 0, sd: p.swingDir || 0, ss: p.swingSide || 1, sr: p.swingReach || 0,
       dv: p.dashV || 0, fl: p.flash || 0, ch: p.channel ? 1 : 0, sm: p.swimming ? 1 : 0, smv: p.swimMove ? 1 : 0,
       flt: p.floating ? 1 : 0, sp: p.swimPh || 0, ifr: p.iframe || 0, hp: Math.round(p.hp), mhp: Math.round(p.d.maxHp),
       hid: held ? held.id : '', wid: wep ? wep.id : '', c: p.charId, n: p.name, lv: p.level, pt: this.netPetsOf(p) };
@@ -59,7 +59,7 @@ export const NetPart: Bag = {
   /** 받은 상태를 남의 아바타에 — 자리(x·y)는 보간 버퍼가 따로 맞춘다. */
   netApply(rp: any, s: any) {
     rp.vx = s.vx; rp.vy = s.vy; rp.facing = s.f; rp.onGround = !!s.g;
-    rp.swing = s.sw; rp.swingAng = s.sa; rp.swingDir = s.sd; rp.swingReach = s.sr; rp.dashV = s.dv; rp.flash = s.fl;
+    rp.swing = s.sw; rp.swingAng = s.sa; rp.swingDir = s.sd; rp.swingSide = s.ss || 1; rp.swingReach = s.sr; rp.dashV = s.dv; rp.flash = s.fl;
     rp.channel = s.ch ? (rp.channel || {}) : null;
     rp.swimming = !!s.sm; rp.swimMove = !!s.smv; rp.floating = !!s.flt; rp.swimPh = s.sp; rp.iframe = s.ifr;
     if (rp.hp > 0 && s.hp <= 0) this.netDownFx(rp, s);

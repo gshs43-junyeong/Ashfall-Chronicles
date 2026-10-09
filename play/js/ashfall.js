@@ -12839,6 +12839,7 @@
     SIG_FX: () => SIG_FX,
     SKILL_FX: () => SKILL_FX,
     SKILL_HIT: () => SKILL_HIT,
+    SKILL_STAGE: () => SKILL_STAGE,
     VAL_0: () => VAL_0,
     VAL_CAP: () => VAL_CAP,
     VAL_CRAFT: () => VAL_CRAFT,
@@ -13026,6 +13027,28 @@
     // 착탄 섬광. 0.2를 넘기면 적이 흰 바닥에 묻힌다
     undying: { a: 0.34, n: 0, t: 0.55 }
     // 화면 테두리가 한 번 붉게 — 살아남은 그 한 번
+  };
+  var SKILL_STAGE = {
+    s_cleave: { fl: ["255,190,110", 0.08, 0.14], ln: ["255,210,140", 0.22, 26], cv: "#ffd07a" },
+    s_charge: { ln: ["255,224,170", 0.38, 40, 1], lens: "#ffe0a0" },
+    s_whirl: { ob: ["#ffcf6a", 8, 58, 1.6], cv: "#ffd07a", ln: ["255,210,120", 0.3, 22] },
+    s_quake: { fl: ["255,170,100", 0.1, 0.18], dim: [0.32, 0.8], ln: ["255,180,120", 0.3, 34], edge: ["200,120,70", 0.5] },
+    s_guard: { ob: ["#ffe0a0", 6, 30, 1], lens: "#ffe0a0", cv: "#e8b86a" },
+    s_warcry: { fl: ["255,200,120", 0.12, 0.22], dim: [0.3, 0.9], ln: ["255,200,120", 0.5, 56], ob: ["#ffd88a", 10, 46, 1.3], edge: ["232,160,74", 0.7] },
+    s_volley: { lens: "#d8ffb0", cv: "#bff09a" },
+    s_rain: { dim: [0.26, 1.1], fl: ["190,240,150", 0.06, 0.2], cv: "#bff09a" },
+    s_pierce: { lens: "#d8ffb0", ln: ["210,255,180", 0.22, 30], cv: "#bff09a" },
+    s_smoke: { dim: [0.4, 1.2], ob: ["#c8d8c0", 8, 40, 1.2] },
+    s_mark: { dim: [0.28, 0.7], edge: ["255,224,112", 0.5], lens: "#ffe070" },
+    s_fireball: { lens: "#ffb060", cv: "#ffb060" },
+    s_nova: { fl: ["200,240,255", 0.14, 0.2], dim: [0.3, 0.8], ob: ["#bfefff", 10, 42, 1], edge: ["150,210,255", 0.6] },
+    s_heal: { fl: ["170,255,170", 0.08, 0.25], ob: ["#c8ffc0", 12, 30, 1.5], edge: ["120,230,130", 0.6] },
+    s_barrier: { ob: ["#bfe0ff", 10, 36, 1.4], lens: "#bfe0ff", fl: ["170,210,255", 0.06, 0.2] },
+    s_wolf: { dim: [0.24, 0.9], ob: ["#fff0c8", 8, 40, 1.2], cv: "#e8d8a8" },
+    s_chain: { fl: ["255,240,150", 0.1, 0.12], ln: ["255,240,150", 0.2, 30], cv: "#ffe86a" },
+    s_blink: { fl: ["200,160,255", 0.12, 0.14], ln: ["200,160,255", 0.2, 28, 1] },
+    s_meteor: { dim: [0.42, 1.6], edge: ["255,150,60", 1.2], cv: "#ffb04a", ob: ["#ffd07a", 8, 50, 1.2] },
+    s_meteor_hit: { fl: ["255,220,160", 0.18, 0.3], ln: ["255,200,120", 0.45, 60], edge: ["255,140,50", 0.8] }
   };
   var PART_CAP = 900;
   function idef(it) {
@@ -30887,6 +30910,10 @@
         this.swingAng = ang;
         this.swingHit = /* @__PURE__ */ new Set();
         this.swingReach = (d.reach || 42) + this.w / 2;
+        this.combo = app.time - (this.lastSwingT || -9) < 0.9 ? (this.combo || 0) + 1 : 0;
+        this.lastSwingT = app.time;
+        this.swingSide = this.combo % 2 ? -1 : 1;
+        app.swingFx(this);
         app.sfx("swing");
       } else if (d.wc === "ranged") {
         const n = d.multi || 1;
@@ -30934,6 +30961,7 @@
       this.swingDir = this.facing;
       this.swingAng = ang;
       this.swingHit = /* @__PURE__ */ new Set();
+      this.swingSide = 1;
       this.swingReach = 34 + this.w / 2;
       this._punchDmg = dmg;
     },
@@ -31065,7 +31093,7 @@
           for (let k = 0; k < sk.v(r); k++) {
             const wx = this.cx + (k - 1) * 26;
             app.ents.push(new Wolf(wx, this.cy, this));
-            app.sigilFx(wx, this.y + this.h - 6, 22, "#c8b88a");
+            app.sigilFx(wx, this.y + this.h - 6, 22, "#c8b88a", "sigil_beast");
             app.skillVfx("s_wolf", { ...fo, wx });
             for (let j = 0; j < SIG_FX.wolf.n; j++)
               app.parts.push(new Part(wx + (Math.random() - 0.5) * 26, this.y + this.h - 8, "#c8b88a", -70, 0.8));
@@ -31267,6 +31295,7 @@
         }
       }
       if (GEN.includes(id)) app.skillVfx(id, fo);
+      app.stageFx(id, this);
       const fx = SKILL_FX[id] || {};
       if (fx.c) app.ringFx(this.cx, this.cy, fx.r || 44, fx.c, 0.26);
       if (fx.k) app.shake = Math.max(app.shake, fx.k);
@@ -31609,6 +31638,7 @@
           this.swingHit.add(e);
           const crit = this.rollCrit();
           e.hurt(this.scaleDmg(base, "str"), crit, this, kb, hitFam(w));
+          app.cutFx(e, this, crit, hitFam(w));
           if (this.d.fire) e.addDot("burn", this.scaleDmg(base, "str") * 0.12 * this.d.fire, 4);
           if (this.d.frost) e.chill(2.5);
           if (this.d.poison) e.addDot("poison", this.scaleDmg(base, "str") * 0.13 * this.d.poison, 5);
@@ -37949,7 +37979,7 @@
 
   // src/engine/fx/shapes.ts
   var ShapeFx = class {
-    /** art — 고리 · 예고 원을 결 그림('ring')으로(없으면 선) */
+    /** art — 고리 · 예고 원을 결 그림('ring'), 번개를 마디 그림('bolt0~3')으로(없으면 선) */
     constructor() {
       this.rings = [];
       this.bolts = [];
@@ -38027,6 +38057,21 @@
       }
       for (const b of this.bolts) {
         const k = b.t / b.max;
+        if (this.art && this.art("bolt0", b.c)) {
+          const fr = Math.floor(b.t * 40), op = c.globalCompositeOperation;
+          c.globalAlpha = Math.min(1, k * 1.6);
+          c.globalCompositeOperation = "lighter";
+          for (let j = 1; j < b.pts.length; j++) {
+            const p0 = b.pts[j - 1], p1 = b.pts[j], L = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), im = this.art("bolt" + (fr + j) % 4, b.c) || this.art("bolt0", b.c);
+            c.save();
+            c.translate(p0[0] - camX, p0[1] - camY);
+            c.rotate(Math.atan2(p1[1] - p0[1], p1[0] - p0[0]));
+            c.drawImage(im, -2, -11, L + 4, 22);
+            c.restore();
+          }
+          c.globalCompositeOperation = op;
+          continue;
+        }
         c.lineCap = "round";
         c.lineJoin = "round";
         for (const [lw, col, al] of [[6, b.c, 0.22 * k], [2.4, b.c, 0.9 * k], [1, "#ffffff", 0.9 * k]]) {
@@ -38098,16 +38143,16 @@
       return Math.max(1, Math.round(k * this.density));
     }
     /** 칼선 — 각 a0 에서 a1 로 휘둘러 나가는 초승달(반지름 r · 굵기 w). 머리가 수명의 4할에 끝까지 가고 꼬리가 따라 지운다 */
-    slash(x, y, r, a0, a1, c, life = 0.26, w = 14) {
-      this.add({ k: "slash", x, y, r, a0, a1, c, w, t: life, max: life });
+    slash(x, y, r, a0, a1, c, life = 0.26, w = 14, art) {
+      this.add({ k: "slash", x, y, r, a0, a1, c, w, t: life, max: life, art });
     }
     /** 충격파 — 0 에서 r 로 빨리 벌어지다 느려지는 고리, 두께 w 가 얇아지며 사라진다(sy < 1 이면 바닥에 눕힌 타원) */
-    shock(x, y, r, c, life = 0.4, w = 10, sy = 1) {
-      this.add({ k: "shock", x, y, r, c, w, sy, t: life, max: life });
+    shock(x, y, r, c, life = 0.4, w = 10, sy = 1, art) {
+      this.add({ k: "shock", x, y, r, c, w, sy, t: life, max: life, art });
     }
     /** 섬광 — 둥근 빛 + 네 갈래 빛살 */
-    flare(x, y, s, c, life = 0.22) {
-      this.add({ k: "flare", x, y, s, c, rot: this.rand() * 0.6, t: life, max: life });
+    flare(x, y, s, c, life = 0.22, art) {
+      this.add({ k: "flare", x, y, s, c, rot: this.rand() * (art ? TAU2 : 0.6), t: life, max: life, art });
     }
     /** 불티 줄기 — 속도 방향으로 늘어진 선. ang 쪽으로 spread 폭 안에서 n 개 */
     sparks(x, y, n, c, speed = 420, ang = 0, spread = TAU2, life = 0.35, g = 600) {
@@ -38118,8 +38163,8 @@
       }
     }
     /** 마법진 — 겹 원 + n 각 별 + 눈금. 튀어나오듯 커졌다가 돌며 사라진다 */
-    sigil(x, y, r, c, life = 0.7, n = 6, spin = 1.2, sy = 1) {
-      this.add({ k: "sigil", x, y, r, c, n, spin, sy, t: life, max: life });
+    sigil(x, y, r, c, life = 0.7, n = 6, spin = 1.2, sy = 1, art) {
+      this.add({ k: "sigil", x, y, r, c, n, spin, sy, t: life, max: life, art });
     }
     /** 얼음 · 수정 조각 — 돌며 바깥으로 */
     shards(x, y, n, c, speed = 360, life = 0.5, s = 7) {
@@ -38145,6 +38190,24 @@
     column(x, y, w, h, c, life = 0.6) {
       this.add({ k: "column", x, y, w, h, c, t: life, max: life });
     }
+    /** 빛 알갱이 — 둘레 spread 안에서 rise px/s 로 떠오르며 반짝인다(치유 · 축복 · 별가루) */
+    motes(x, y, n, c, spread = 24, rise = 70, life = 0.9, s = 7) {
+      for (let i = 0, m = this.n(n); i < m; i++) {
+        const l = life * (0.6 + this.rand() * 0.6);
+        this.add({
+          k: "mote",
+          x: x + (this.rand() - 0.5) * 2 * spread,
+          y: y + (this.rand() - 0.5) * spread * 0.8,
+          vx: (this.rand() - 0.5) * 30,
+          vy: -rise * (0.5 + this.rand() * 0.8),
+          s: s * (0.6 + this.rand() * 0.7),
+          ph: this.rand() * TAU2,
+          c,
+          t: l,
+          max: l
+        });
+      }
+    }
     /** 연기 덩이 — 부풀며 옅어진다(보통 섞기) */
     puffs(x, y, n, r, c, life = 1.1, spread = 40) {
       for (let i = 0, m = this.n(n); i < m; i++) {
@@ -38162,13 +38225,32 @@
         });
       }
     }
+    /** 칼 자국 — ang 쪽을 가운데로 펼친 초승달이 side(±1) 방향으로 휘둘러 나간다(앞 3할에 다 드러나고 옅어진다). art 로 자국 갈래를 고른다 */
+    swipe(x, y, r, ang, side, c, life = 0.2, art) {
+      this.add({ k: "swipe", x, y, r, ang, side: side < 0 ? -1 : 1, c, t: life, max: life, art });
+    }
+    /** 자국 한 장 — ang 으로 돌린 w×h 그림이 가로로 툭 벌어졌다(베임 · 렌즈 빛살) 옅어진다 */
+    mark(x, y, w, h, ang, c, life = 0.25, art) {
+      this.add({ k: "mark", x, y, w, h, ang, c, t: life, max: life, art });
+    }
+    /** 모여드는 불티 — 반지름 r 둘레에서 가운데로 빨려 든다(시전 · 기 모으기) */
+    converge(x, y, r, n, c, life = 0.3) {
+      for (let i = 0, m = this.n(n); i < m; i++) {
+        const a = this.rand() * TAU2, rr = r * (0.7 + this.rand() * 0.5), l = life * (0.7 + this.rand() * 0.4), v = rr / l;
+        this.add({ k: "spark", x: x + Math.cos(a) * rr, y: y + Math.sin(a) * rr, vx: -Math.cos(a) * v, vy: -Math.sin(a) * v, g: 0, len: 0.05, c, t: l, max: l });
+      }
+    }
+    /** 몸을 도는 빛 — at() 둘레를 기울어진 고리(tilt — 세로 납작함)로 n 개가 돈다. 뒤쪽 반 바퀴는 옅게 */
+    orbit(at, r, n, c, life = 1.2, s = 7, sp = 5, tilt = 0.35) {
+      for (let i = 0; i < n; i++) this.add({ k: "orbit", at, r: r * (0.85 + this.rand() * 0.3), ph: i / n * TAU2, sp: sp * (0.9 + this.rand() * 0.2), s, tilt, c, t: life, max: life });
+    }
     /** 조준 — 네 모서리 괄호가 과녁(at() — 사라지면 null)으로 조여 들며 돈다 */
     reticle(at, r, c, life = 0.8) {
       this.add({ k: "reticle", at, r, c, t: life, max: life });
     }
     /** 빛줄기 — 두 점을 잇는 굵은 빛(관통 화살 · 순간이동 자국) */
-    beam(x0, y0, x1, y1, c, life = 0.25, w = 8) {
-      this.add({ k: "beam", x0, y0, x1, y1, c, w, t: life, max: life });
+    beam(x0, y0, x1, y1, c, life = 0.25, w = 8, art) {
+      this.add({ k: "beam", x0, y0, x1, y1, c, w, t: life, max: life, art });
     }
     update(dt) {
       const L = this.list;
@@ -38194,6 +38276,10 @@
           f.x += f.vx * dt;
           f.y += f.vy * dt;
           f.vx *= 1 - 1.8 * dt;
+        } else if (f.k === "mote") {
+          f.x += f.vx * dt + Math.sin(f.ph + f.t * 9) * 12 * dt;
+          f.y += f.vy * dt;
+          f.vy *= 1 - 0.9 * dt;
         }
       }
     }
@@ -38385,6 +38471,46 @@
             c.fillRect(x - w / 6, y - f.h * 0.9, w / 3, f.h * 0.9);
             break;
           }
+          case "mote": {
+            c.globalAlpha = Math.min(1, k * 2) * (0.6 + 0.4 * Math.sin(f.ph + f.t * 20));
+            c.fillStyle = f.c;
+            c.beginPath();
+            c.arc(f.x - camX, f.y - camY, f.s * 0.35, 0, TAU2);
+            c.fill();
+            break;
+          }
+          case "swipe": {
+            const x = f.x - camX, y = f.y - camY, h = Math.min(1, p / 0.3), a0 = f.ang - f.side * 1.3, a1 = a0 + f.side * 2.6 * h;
+            c.globalAlpha = Math.min(1, k * 2) * 0.8;
+            c.strokeStyle = f.c;
+            c.lineWidth = 4;
+            c.beginPath();
+            c.arc(x, y, f.r, Math.min(a0, a1), Math.max(a0, a1));
+            c.stroke();
+            break;
+          }
+          case "mark": {
+            c.globalAlpha = Math.min(1, k * 2);
+            c.strokeStyle = f.c;
+            c.lineWidth = Math.max(1, f.h * 0.25);
+            const dx = Math.cos(f.ang) * f.w / 2, dy = Math.sin(f.ang) * f.w / 2, x = f.x - camX, y = f.y - camY;
+            c.beginPath();
+            c.moveTo(x - dx, y - dy);
+            c.lineTo(x + dx, y + dy);
+            c.stroke();
+            break;
+          }
+          case "orbit": {
+            const at = f.at();
+            if (!at) break;
+            const a = f.ph + p * f.max * f.sp, x = at[0] + Math.cos(a) * f.r - camX, y = at[1] + Math.sin(a) * f.r * f.tilt - camY;
+            c.globalAlpha = Math.min(1, k * 3, p * 6) * (Math.sin(a) > 0 ? 1 : 0.4);
+            c.fillStyle = f.c;
+            c.beginPath();
+            c.arc(x, y, f.s * 0.35, 0, TAU2);
+            c.fill();
+            break;
+          }
           case "reticle": {
             const at = f.at();
             if (!at) break;
@@ -38422,7 +38548,7 @@
     }
     /** 결 그림으로 그린다 — 그렸으면 true(도형은 건너뛴다). 모양 · 타이밍은 도형과 같은 식을 쓴다 */
     drawArt(c, f, k, p, camX, camY) {
-      const art = this.art;
+      const A = this.art, art = (base, col) => f.art && A(f.art, col) || A(base, col);
       switch (f.k) {
         case "slash": {
           const im = art("slash", f.c);
@@ -38504,6 +38630,92 @@
           c.rotate(Math.atan2(dy, dx));
           c.drawImage(im, 0, -h / 2, L, h);
           c.restore();
+          return true;
+        }
+        case "spark": {
+          const im = art("spark", f.c);
+          if (!im) return false;
+          const v = Math.hypot(f.vx, f.vy), L = Math.max(8, v * f.len * 1.6), h = 5 * (0.5 + 0.5 * k);
+          c.globalAlpha = Math.min(1, k * 1.5);
+          c.save();
+          c.translate(f.x - camX, f.y - camY);
+          c.rotate(Math.atan2(f.vy, f.vx));
+          c.drawImage(im, -L, -h / 2, L * 1.08, h);
+          c.restore();
+          return true;
+        }
+        case "shard": {
+          const im = art("shard", f.c);
+          if (!im) return false;
+          c.globalAlpha = Math.min(1, k * 1.8);
+          c.save();
+          c.translate(f.x - camX, f.y - camY);
+          c.rotate(f.a);
+          c.drawImage(im, -f.s * 1.1, -f.s * 0.5, f.s * 2.4, f.s * 1);
+          c.restore();
+          return true;
+        }
+        case "crack": {
+          const im = art("crack", f.c);
+          if (!im) return false;
+          const n = Math.max(2, Math.ceil(f.pts.length * Math.min(1, p * 5))), iw = im.width || 512, ih = im.height || 48, h = 22;
+          c.globalAlpha = Math.min(1, k * 1.6);
+          for (let i = 1; i < n; i++) {
+            const a = f.pts[i - 1], b = f.pts[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]), sw = Math.min(iw, L * ih / h), sx = i * 97 % Math.max(1, iw - sw);
+            c.save();
+            c.translate(a[0] - camX, a[1] - camY);
+            c.rotate(Math.atan2(b[1] - a[1], b[0] - a[0]));
+            c.drawImage(im, sx, 0, sw, ih, -1, -h / 2, L + 2, h);
+            c.restore();
+          }
+          return true;
+        }
+        case "swipe": {
+          const im = art("swipe0", f.c);
+          if (!im) return false;
+          const x = f.x - camX, y = f.y - camY, R = f.r / 0.95 * (0.92 + 0.08 * easeOut(Math.min(1, p * 3))), h = Math.min(1, p / 0.3);
+          const s0 = -1.35, s1 = s0 + 2.7 * h;
+          c.save();
+          c.translate(x, y);
+          c.rotate(f.ang);
+          c.scale(1, f.side);
+          c.beginPath();
+          c.moveTo(0, 0);
+          c.arc(0, 0, R * 1.05, s0, s1);
+          c.closePath();
+          c.clip();
+          c.globalAlpha = Math.min(1, k * 2.4);
+          c.drawImage(im, -R, -R, R * 2, R * 2);
+          c.restore();
+          return true;
+        }
+        case "mark": {
+          const im = art("mark", f.c);
+          if (!im) return false;
+          const op = easeOut(Math.min(1, p * 5)), w = f.w * (0.3 + 0.7 * op), h = f.h * (1.25 - 0.25 * op) * (0.5 + 0.5 * k);
+          c.globalAlpha = Math.min(1, k * 1.8);
+          c.save();
+          c.translate(f.x - camX, f.y - camY);
+          c.rotate(f.ang);
+          c.drawImage(im, -w / 2, -h / 2, w, h);
+          c.restore();
+          return true;
+        }
+        case "orbit": {
+          const im = art("mote", f.c), at = f.at();
+          if (!im || !at) return !!im;
+          const a = f.ph + p * f.max * f.sp, front = Math.sin(a) > 0, s = f.s * (front ? 1 : 0.7);
+          const x = at[0] + Math.cos(a) * f.r * (1 - 0.3 * p) - camX, y = at[1] + Math.sin(a) * f.r * f.tilt - camY - p * 10;
+          c.globalAlpha = Math.min(1, k * 3, p * 6) * (front ? 1 : 0.45);
+          c.drawImage(im, x - s, y - s, s * 2, s * 2);
+          return true;
+        }
+        case "mote": {
+          const im = art("mote", f.c);
+          if (!im) return false;
+          const s = f.s * (0.75 + 0.35 * Math.sin(f.ph + f.t * 20)) * (0.5 + 0.5 * Math.min(1, p * 6));
+          c.globalAlpha = Math.min(1, k * 2);
+          c.drawImage(im, f.x - camX - s, f.y - camY - s, s * 2, s * 2);
           return true;
         }
       }
@@ -41041,7 +41253,12 @@
     /** 폭발/타격 이펙트 등록 (kind: hit / fire / void / stargain / starmerge) slow: 재생을 늘리는 배수(기본 1 = 여섯 프레임 0.24초). */
     burst(x, y, kind, size, slow) {
       if (!this.spritesOn) return;
-      (this.bursts = this.bursts || []).push({ x, y, kind, s: size || 64, t: 0, sp: slow || 1 });
+      const b = { x, y, kind, s: size || 64, t: 0, sp: slow || 1 };
+      if (kind.startsWith("hit_slash")) {
+        b.rot = (Math.random() - 0.5) * 1.6;
+        b.fl = Math.random() < 0.5 ? -1 : 1;
+      }
+      (this.bursts = this.bursts || []).push(b);
     },
     aoe(x, y, r, dmg, kb, color, effect) {
       for (const e of this.ents) {
@@ -41090,15 +41307,17 @@
           v.slash(x, y, 70, ang - Math.PI * 0.9 * f, ang + Math.PI * 1.1 * f, "#ffb24a", 0.3, 18);
           v.slash(x, y, 98, ang + Math.PI * f, ang - Math.PI * f, "#ffd88a", 0.34, 10);
           v.shock(x, y, 112, "#ffb24a", 0.36, 8);
+          v.flare(x + Math.cos(ang) * 64, y + Math.sin(ang) * 64, 46, "#ffd07a", 0.2, "impact");
           v.sparks(x, y, 18, "#ffd07a", 520, 0, TAU, 0.35, 400);
           break;
         case "s_charge":
           v.puffs(x - f * 14, foot - 6, 5, 16, "rgba(170,150,120,.8)", 0.6, 10);
+          v.beam(x - Math.cos(ang) * 90, y - Math.sin(ang) * 90, x + Math.cos(ang) * 10, y + Math.sin(ang) * 10, "#ffe0a0", 0.3, 7, "beam_spiral");
           v.sparks(x, y, 10, "#ffe0a0", 600, ang + Math.PI, 0.5, 0.25, 0);
           v.flare(x + Math.cos(ang) * 14, y + Math.sin(ang) * 14, 26, "#ffd07a", 0.18);
           break;
         case "s_charge_hit":
-          v.flare(x, y, 40, "#ffd07a", 0.2);
+          v.flare(x, y, 52, "#ffd07a", 0.22, "impact");
           v.shock(x, y, 44, "#ffe0a0", 0.25, 6);
           v.sparks(x, y, 14, "#ffd07a", 560, ang, 1.4, 0.3, 500);
           break;
@@ -41113,88 +41332,98 @@
           v.crack(x, foot, -1, 120, "#ffc07a", 0.7);
           v.crack(x, foot, 1, 120, "#ffc07a", 0.7);
           v.shock(x, foot, 150, "#c8845a", 0.5, 12, 0.3);
-          v.flare(x, foot, 46, "#ffb070", 0.22);
+          v.flare(x, foot, 60, "#ffb070", 0.24, "impact");
           v.puffs(x, foot - 8, 8, 20, "rgba(150,120,90,.85)", 0.9, 60);
           break;
         case "s_quake_step":
           v.sparks(o.x, foot, 5, "#d8a070", 380, -Math.PI / 2, 1.1, 0.45, 900);
           v.shock(o.x, foot - 4, 30, "#ffb070", 0.3, 5, 0.4);
+          v.crack(o.x - 14, foot, 1, 28, "#ff9a4a", 0.5);
           break;
         case "s_guard":
-          v.sigil(x, y, 34, "#e8b86a", 0.55, 6, 0.5, 1.3);
+          v.sigil(x, y, 36, "#e8b86a", 0.6, 6, 0.4, 1.25, "sigil_hex");
           v.shock(x, y, 56, "#d8a05a", 0.35, 6);
           v.sparks(x, y, 10, "#fff0c0", 300, 0, TAU, 0.3, 200);
           break;
         case "s_warcry":
-          v.flare(x, y - 6, 54, "#ffd88a", 0.28);
+          v.flare(x, y - 6, 64, "#ffd88a", 0.3, "impact");
           v.shock(x, y, 200, "#e8a04a", 0.55, 12);
           this.after(0.08, () => v.shock(x, y, 150, "#ffd88a", 0.45, 8));
           this.after(0.16, () => v.shock(x, y, 100, "#fff0c0", 0.35, 5));
           v.sparks(x, y, 16, "#ffb24a", 600, 0, TAU, 0.35, 0);
+          v.motes(x, foot - 10, 14, "#ffd88a", 34, 110, 1, 8);
           break;
         case "s_volley":
-          v.flare(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 30, "#bff09a", 0.16);
+          v.flare(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 30, "#bff09a", 0.16, "impact");
           v.sparks(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 12, "#d8ffb0", 700, ang, 1, 0.22, 0);
           break;
         case "s_rain":
-          v.sigil(o.mx, o.my, 130, "#9fe07a", 1, 8, 0.6, 0.28);
+          v.sigil(o.mx, o.my, 130, "#9fe07a", 1, 8, 0.6, 0.28, "sigil_leaf");
           v.flare(o.mx, o.my - 430, 50, "#d8ffb0", 0.5);
           break;
         case "s_pierce":
-          v.beam(x, y - 4, x + Math.cos(ang) * 620, y - 4 + Math.sin(ang) * 620, "#bff09a", 0.28, 7);
-          v.flare(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 40, "#d8ffb0", 0.2);
+          v.beam(x, y - 4, x + Math.cos(ang) * 620, y - 4 + Math.sin(ang) * 620, "#bff09a", 0.3, 9, "beam_spiral");
+          v.beam(x, y - 4, x + Math.cos(ang) * 620, y - 4 + Math.sin(ang) * 620, "#e8ffd0", 0.18, 3);
+          v.flare(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 44, "#d8ffb0", 0.2, "impact");
           v.sparks(x, y - 4, 10, "#d8ffb0", 800, ang, 0.35, 0.25, 0);
           break;
         case "s_smoke":
           v.puffs(x, y, 16, 34, "rgba(184,200,176,.9)", 1.4, 70);
+          v.sigil(x, y, 110, "#b8c8b0", 0.7, 6, 2.6, 0.7, "swirl");
           v.shock(x, y, 150, "#b8c8b0", 0.45, 6);
           break;
         case "s_mark":
           v.reticle(o.at, o.r, "#ffe070", 0.9);
-          v.flare(o.tx, o.ty, 34, "#ffe070", 0.25);
+          v.flare(o.tx, o.ty, 40, "#ffe070", 0.25, "impact");
           break;
         case "s_fireball":
           v.flare(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 34, "#ffb060", 0.18);
           v.sparks(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 10, "#ffc070", 360, ang, 1.2, 0.3, -200);
+          v.motes(x + Math.cos(ang) * 16, y - 4 + Math.sin(ang) * 16, 5, "#ffb060", 8, 60, 0.5, 6);
           break;
         case "s_nova":
-          v.sigil(x, foot - 2, 150, "#9fe0ff", 0.75, 6, 1, 0.3);
+          v.sigil(x, foot - 2, 150, "#9fe0ff", 0.8, 6, 1, 0.3, "sigil_frost");
           v.shards(x, y, 18, "#bfefff", 420, 0.55, 8);
           v.shock(x, y, 165, "#9fe0ff", 0.45, 10);
           v.flare(x, y, 50, "#dff6ff", 0.24);
           break;
         case "s_heal":
           v.column(x, foot, 46, 150, "#9ff09f", 0.75);
-          v.sigil(x, foot - 2, 44, "#9ff09f", 0.8, 5, 0.8, 0.3);
-          v.sparks(x, foot - 10, 14, "#d8ffd0", 220, -Math.PI / 2, 1.2, 0.8, -60);
+          v.sigil(x, foot - 2, 52, "#9ff09f", 0.85, 5, 0.8, 0.3, "sigil_life");
+          v.motes(x, foot - 14, 16, "#c8ffc0", 22, 90, 1.1, 8);
           break;
         case "s_barrier":
-          v.sigil(x, y, 38, "#8fc8ff", 0.7, 6, 0.6, 1.35);
+          v.sigil(x, y, 40, "#8fc8ff", 0.75, 6, 0.25, 1.3, "dome");
           v.shards(x, y, 10, "#bfe0ff", 220, 0.45, 6);
           v.flare(x, y, 40, "#bfe0ff", 0.22);
           break;
         case "s_wolf":
           v.column(o.wx, foot, 30, 110, "#e8d8a8", 0.6);
           v.flare(o.wx, foot - 14, 30, "#fff0c8", 0.25);
+          v.motes(o.wx, foot - 10, 6, "#fff0c8", 14, 70, 0.8, 6);
           break;
         case "s_chain_hop":
-          v.flare(o.tx, o.ty, 32, "#fff0a0", 0.2);
+          v.flare(o.tx, o.ty, 36, "#fff0a0", 0.2, "impact");
           v.sparks(o.tx, o.ty, 8, "#ffe86a", 420, 0, TAU, 0.25, 0);
           break;
         case "s_blink":
           v.beam(o.ox, o.oy, x, y, "#c08fff", 0.3, 10);
+          v.sigil(o.ox, o.oy, 46, "#c08fff", 0.5, 6, -2, 1, "sigil_void");
+          v.sigil(x, y, 34, "#d8b8ff", 0.4, 6, 2, 1, "sigil_void");
           v.flare(o.ox, o.oy, 44, "#d8b8ff", 0.25);
           v.flare(x, y, 36, "#d8b8ff", 0.22);
-          v.shock(o.ox, o.oy, 80, "#c08fff", 0.35, 7);
           v.shards(o.ox, o.oy, 10, "#d8b8ff", 280, 0.45, 6);
           break;
         case "s_meteor":
-          v.flare(o.tx, o.ty, 120, "#fff0c0", 0.35);
+          v.flare(o.tx, o.ty, 130, "#fff0c0", 0.38, "impact");
+          v.flare(o.tx, o.ty, 90, "#ffd07a", 0.3);
           v.shock(o.tx, o.ty, 170, "#ffb04a", 0.6, 16);
           this.after(0.1, () => v.shock(o.tx, o.ty, 110, "#fff0c0", 0.45, 9));
           for (let i = 0; i < 6; i++) v.crack(o.tx, o.ty + 10, i % 2 ? 1 : -1, 90 + i * 25, "#ff9a3a", 1.1);
           v.sparks(o.tx, o.ty, 34, "#ffc060", 760, -Math.PI / 2, 2.6, 0.7, 900);
+          v.motes(o.tx, o.ty - 6, 12, "#ffb050", 70, 80, 1.2, 7);
           v.puffs(o.tx, o.ty - 10, 12, 40, "rgba(110,90,80,.85)", 1.6, 110);
+          this.stageFx("s_meteor_hit");
           break;
       }
     },
@@ -41206,9 +41435,9 @@
     bandFx(x, y, hw, dur, c) {
       this.sigFx({ k: "band", x, y, hw, t: dur, max: dur, c });
     },
-    /** 소환 문양 — 안으로 조여드는 고리. */
-    sigilFx(x, y, r, c) {
-      this.sigFx({ k: "sigil", x, y, r, t: SIG_FX.wolf.t, max: SIG_FX.wolf.t, c });
+    /** 소환 문양 — 안으로 조여드는 고리(art: 결 그림 갈래 — 없으면 선). */
+    sigilFx(x, y, r, c, art) {
+      this.sigFx({ k: "sigil", x, y, r, t: SIG_FX.wolf.t, max: SIG_FX.wolf.t, c, art: art || "sigil" });
     },
     /** 하늘에서 떨어지는 별. */
     fallFx(x, y, dur, c) {
@@ -41270,7 +41499,18 @@
           line2();
           c.lineCap = "butt";
         } else if (s.k === "sigil") {
-          const a = SIG_FX.wolf.a * Math.min(1, k * 1.6);
+          const a = SIG_FX.wolf.a * Math.min(1, k * 1.6), im = Sprites.vfxArt(s.art || "sigil", s.c);
+          if (im) {
+            const R = s.r * (0.45 + k * 0.6);
+            c.save();
+            c.globalCompositeOperation = "lighter";
+            c.globalAlpha = Math.min(1, a * 1.4);
+            c.translate(x, y);
+            c.rotate((1 - k) * 2.2);
+            c.drawImage(im, -R, -R, R * 2, R * 2);
+            c.restore();
+            continue;
+          }
           const rune = () => {
             c.beginPath();
             c.arc(x, y, s.r * (0.25 + k * 0.75), 0, TAU);
@@ -41320,20 +41560,31 @@
         const k = 1 - s.t / s.max;
         const e = Math.pow(k, 1.5);
         const x = s.x - 150 * (1 - e) - camX, y = s.y - 420 * (1 - e) - camY;
-        const a = SIG_FX.fall.a;
+        const a = SIG_FX.fall.a, im = Sprites.vfxArt("meteor", s.c);
+        if (im) {
+          const sc = 0.9 + k * 0.5, W = 69 * sc, H = 230 * sc;
+          c.save();
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = a;
+          c.translate(x, y);
+          c.rotate(Math.atan2(-150, 420));
+          c.drawImage(im, -W / 2, -H * 0.85, W, H);
+          c.restore();
+          continue;
+        }
         c.save();
         c.globalAlpha = a * 0.5;
         c.strokeStyle = s.c;
         c.lineWidth = 5;
         c.lineCap = "round";
         c.beginPath();
-        c.moveTo(x + 54, y - 150);
+        c.moveTo(x - 54, y - 150);
         c.lineTo(x, y);
         c.stroke();
         c.globalAlpha = a;
         c.lineWidth = 2;
         c.beginPath();
-        c.moveTo(x + 22, y - 62);
+        c.moveTo(x - 22, y - 62);
         c.lineTo(x, y);
         c.stroke();
         c.fillStyle = "#fff6dc";
@@ -41352,6 +41603,21 @@
       if (!ch || ch.id !== "s_whirl") return;
       const x = p.cx - camX, y = p.cy - camY, a = this.time * 13;
       const fade = Math.min(1, ch.t / 0.25);
+      const im = Sprites.vfxArt("swirl", "#ffcf6a");
+      if (im) {
+        c.save();
+        c.globalCompositeOperation = "lighter";
+        c.globalAlpha = SIG_FX.whirl.a * fade * 1.3;
+        c.translate(x, y);
+        c.rotate(a * 0.9);
+        c.drawImage(im, -104, -104, 208, 208);
+        c.globalAlpha *= 0.55;
+        c.rotate(-a * 0.5);
+        c.drawImage(im, -78, -78, 156, 156);
+        c.restore();
+        c.globalAlpha = 1;
+        return;
+      }
       c.save();
       c.lineCap = "round";
       for (let j = 0; j < 2; j++) {
@@ -42038,6 +42304,144 @@
     }
   };
   mixin(Game.prototype, MobFxPart, true);
+
+  // src/game/game/stage-fx.ts
+  var stage_fx_exports = {};
+  __export(stage_fx_exports, {
+    StageFxPart: () => StageFxPart
+  });
+  var SWIPE_SEQ = ["swipe0", "swipe2", "swipe1", "swipe3"];
+  var CUT_ART = ["cut0", "cut2", "cut0", "cut1"];
+  var StageFxPart = {
+    /** 스킬 시전 순간의 무대 — SKILL_STAGE[id] 를 화면 · 시전자 둘레에 편다. who: 시전자(없으면 이 화면 플레이어) */
+    stageFx(id, who) {
+      const S = SKILL_STAGE[id], p = who || this.me;
+      if (!S || !p) return;
+      const fs = this.fxScale(), st = this.stage || (this.stage = { fl: null, dim: null, ln: null });
+      const at = () => p.dead ? null : [p.cx, p.cy];
+      if (fs > 0 && p === this.me) {
+        if (S.fl) st.fl = { rgb: S.fl[0], a: S.fl[1] * fs, t: S.fl[2], max: S.fl[2] };
+        if (S.dim) st.dim = { a: S.dim[0] * fs, t: S.dim[1], max: S.dim[1], p };
+        if (S.ln) st.ln = { rgb: S.ln[0], t: S.ln[1], max: S.ln[1], n: S.ln[2], p, seed: 0, dir: S.ln[3] ? p.facing > 0 ? 0 : Math.PI : null };
+        if (S.edge) this.edgeFx(S.edge[0], S.edge[1]);
+      }
+      const v = this.vfx;
+      if (S.ob) v.orbit(at, S.ob[2], S.ob[1], S.ob[0], S.ob[3], 7, 5.5, 0.38);
+      if (S.cv) v.converge(p.cx, p.cy - 2, 70, 14, S.cv, 0.28);
+      if (S.lens) v.mark(p.cx + p.facing * 14, p.cy - 4, 170, 14, 0, S.lens, 0.28, "lens");
+    },
+    /** 근접 휘두르기 자국 — 연타 차례에 따라 자국 그림을 바꾸고, 올려 베기 · 내려 베기를 번갈아 뒤집는다 */
+    swingFx(p) {
+      const n = p.combo || 0;
+      const col = p.d.fire ? "#ffb070" : p.d.frost ? "#bfefff" : p.d.poison ? "#bff07a" : "#fff2c8";
+      const sweep = p.swingDir * (p.swingSide || 1);
+      const ang = p.swingAng + (Math.random() - 0.5) * 0.25, heavy = n % 4 === 3;
+      this.vfx.swipe(p.cx, p.cy - 2, p.swingReach * (heavy ? 0.95 : 0.82) * (0.94 + Math.random() * 0.12), ang, -sweep, col, heavy ? 0.26 : 0.2, SWIPE_SEQ[n % 4]);
+      if (heavy) {
+        this.vfx.sparks(p.cx + Math.cos(ang) * p.swingReach * 0.8, p.cy + Math.sin(ang) * p.swingReach * 0.8, 6, col, 420, ang, 1.2, 0.22, 300);
+      }
+    },
+    /** 맞은 자리의 베인 자국 — 휘두르는 방향(둘레의 접선)으로 눕히고, 갈래를 섞는다(치명은 X 자) */
+    cutFx(e, p, crit, fam) {
+      if (fam !== "slash") {
+        this.vfx.flare(e.cx, e.cy - 2, crit ? 44 : 30, "#fff0d0", 0.16, "impact");
+        return;
+      }
+      const dx = e.cx - p.cx, dy = e.cy - p.cy, sweep = p.swingDir * (p.swingSide || 1);
+      const ang = Math.atan2(dy, dx) - sweep * Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+      const art = crit ? "cut1" : CUT_ART[((p.combo || 0) + (Math.random() * 2 | 0)) % 4], s = crit ? 62 : 46;
+      this.vfx.mark(e.cx + (Math.random() - 0.5) * 8, e.cy - 2 + (Math.random() - 0.5) * 8, s, s, ang, crit ? "#ffe08a" : "#fff6e0", 0.22, art);
+    },
+    /** 무대 — 어둠 깔기(빛 다음 · 연출 앞 — 스킬 빛은 어둠 위에서 빛난다) */
+    drawStageDim(f) {
+      const st = this.stage, d = st && st.dim;
+      if (!d) return;
+      d.t -= 1 / 60;
+      if (d.t <= 0) {
+        st.dim = null;
+        return;
+      }
+      const { c, camX, camY } = f, k = d.t / d.max, a = d.a * Math.min(1, (1 - k) * 8, k * 2.5);
+      const x = d.p.cx - camX, y = d.p.cy - camY, R = Math.max(this.W, this.H);
+      const g = c.createRadialGradient(x, y, 90, x, y, R * 0.75);
+      g.addColorStop(0, "rgba(6,4,10,0)");
+      g.addColorStop(0.35, "rgba(6,4,10,.75)");
+      g.addColorStop(1, "rgba(6,4,10,1)");
+      c.globalAlpha = a;
+      c.fillStyle = g;
+      c.fillRect(0, 0, this.W, this.H);
+      c.globalAlpha = 1;
+    },
+    /** 무대 — 집중선 · 화면 섬광(화면 맨 위 · UI 아래) */
+    drawStage(f) {
+      const st = this.stage;
+      if (!st) return;
+      const { c, camX, camY } = f, W = this.W, H = this.H;
+      if (st.ln) {
+        const L = st.ln;
+        L.t -= 1 / 60;
+        if (L.t <= 0) st.ln = null;
+        else {
+          const k = L.t / L.max, x = L.p.cx - camX, y = L.p.cy - camY, R = Math.hypot(W, H) * 0.6, im = Sprites.vfxArt("spark", `rgb(${L.rgb})`);
+          if (Math.floor(this.time * 30) !== L.f) L.f = Math.floor(this.time * 30), L.seed = Math.random() * 1e6 | 0;
+          let s = L.seed;
+          const rnd = () => (s = s * 16807 % 2147483647) / 2147483647;
+          c.save();
+          c.globalCompositeOperation = "lighter";
+          if (L.dir !== null) {
+            for (let i = 0; i < L.n; i++) {
+              const off = (rnd() - 0.5) * H * 1.1, along = (rnd() - 0.5) * W * 1.2, len = 80 + rnd() * 220, wdt = 1 + rnd() * 2.5;
+              if (Math.abs(off) < 40) continue;
+              c.globalAlpha = Math.min(1, k * 2.2) * (0.2 + rnd() * 0.35);
+              c.save();
+              c.translate(x + Math.cos(L.dir) * along - Math.sin(L.dir) * off, y + Math.sin(L.dir) * along + Math.cos(L.dir) * off);
+              c.rotate(L.dir + Math.PI);
+              if (im) c.drawImage(im, -len, -wdt / 2, len, wdt * 1.6);
+              c.restore();
+            }
+            c.restore();
+            return this.drawStageFlash(c, W, H);
+          }
+          for (let i = 0; i < L.n; i++) {
+            const a = rnd() * TAU, r0 = R * (0.42 + rnd() * 0.25) * (0.9 + 0.1 * k), len = R * (0.25 + rnd() * 0.35), wdt = 1.5 + rnd() * 3;
+            c.globalAlpha = Math.min(1, k * 2.2) * (0.25 + rnd() * 0.35);
+            c.save();
+            c.translate(x + Math.cos(a) * r0, y + Math.sin(a) * r0);
+            c.rotate(a + Math.PI);
+            if (im) c.drawImage(im, -len, -wdt / 2, len, wdt * 1.6);
+            else {
+              c.strokeStyle = `rgb(${L.rgb})`;
+              c.lineWidth = wdt * 0.5;
+              c.beginPath();
+              c.moveTo(-len, 0);
+              c.lineTo(0, 0);
+              c.stroke();
+            }
+            c.restore();
+          }
+          c.restore();
+        }
+      }
+      this.drawStageFlash(c, W, H);
+    },
+    drawStageFlash(c, W, H) {
+      const st = this.stage, F = st && st.fl;
+      if (!F) return;
+      F.t -= 1 / 60;
+      if (F.t <= 0) {
+        st.fl = null;
+        return;
+      }
+      const k = F.t / F.max;
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      c.globalAlpha = F.a * k * k;
+      c.fillStyle = `rgb(${F.rgb})`;
+      c.fillRect(0, 0, W, H);
+      c.restore();
+    }
+  };
+  mixin(Game.prototype, StageFxPart, true);
 
   // src/game/game/mine.ts
   var mine_exports = {};
@@ -49136,9 +49540,11 @@
       this.pipe.add("drops", (f) => this.rDrops(f));
       this.pipe.add("actors", (f) => this.rActors(f));
       this.pipe.add("lighting", (f) => this.rLightOverlay(f));
+      this.pipe.add("lighting", (f) => this.drawStageDim(f));
       this.pipe.add("fx", (f) => this.rFx(f));
       this.pipe.add("fx", (f) => this.rUtil(f));
       this.pipe.add("screen", (f) => this.rScreen(f));
+      this.pipe.add("screen", (f) => this.drawStage(f));
       this.pipe.add("screen", (f) => this.fade.draw(f.c, this.W, this.H));
       this.pipe.add("screen", (f) => {
         if (!this.perf.on) return;
@@ -49508,6 +49914,15 @@
         const fr = Math.floor(b.t / (0.04 * (b.sp || 1)));
         if (fr >= 6) {
           this.bursts.splice(i, 1);
+          continue;
+        }
+        if (b.rot !== void 0) {
+          c.save();
+          c.translate(b.x - camX, b.y - camY);
+          c.rotate(b.rot);
+          c.scale(b.fl, 1);
+          Sprites.drawFx(c, "burst_" + b.kind, fr, -b.s / 2, -b.s / 2, b.s);
+          c.restore();
           continue;
         }
         Sprites.drawFx(c, "burst_" + b.kind, fr, b.x - camX - b.s / 2, b.y - camY - b.s / 2, b.s);
@@ -51724,7 +52139,7 @@
             c.scale(p.facing > 0 ? 1 : -1, 1);
             c.rotate(-0.4);
           } else {
-            const ang = p.swing > 0 ? p.swingAng + (p.swingDir > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2 : p.facing > 0 ? -0.4 : Math.PI + 0.4;
+            const ang = p.swing > 0 ? p.swingAng + (p.swingDir * (p.swingSide || 1) > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2 : p.facing > 0 ? -0.4 : Math.PI + 0.4;
             c.rotate(ang);
           }
           c.translate(hand ? 12 : 15, 0);
@@ -51732,7 +52147,7 @@
           Art.drawItem(c, wep.id, -13, -13, 26);
           c.restore();
         }
-        if (!tool && p.swing > 0 && d.wc === "melee") {
+        if (!tool && p.swing > 0 && d.wc === "melee" && p !== this.me) {
           c.globalAlpha = p.swing / 0.24 * 0.32;
           c.strokeStyle = "#fff2c8";
           c.lineWidth = 4;
@@ -53270,6 +53685,7 @@
         sw: p.swing || 0,
         sa: p.swingAng || 0,
         sd: p.swingDir || 0,
+        ss: p.swingSide || 1,
         sr: p.swingReach || 0,
         dv: p.dashV || 0,
         fl: p.flash || 0,
@@ -53303,6 +53719,7 @@
       rp.swing = s.sw;
       rp.swingAng = s.sa;
       rp.swingDir = s.sd;
+      rp.swingSide = s.ss || 1;
       rp.swingReach = s.sr;
       rp.dashV = s.dv;
       rp.flash = s.fl;
@@ -54808,7 +55225,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

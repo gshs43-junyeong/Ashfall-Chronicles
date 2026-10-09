@@ -562,7 +562,7 @@ export const RenderActorsPart: Bag = {
           c.rotate(-0.4);
         } else {
           const ang = p.swing > 0
-            ? (p.swingAng + (p.swingDir > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2.0)
+            ? (p.swingAng + (p.swingDir * (p.swingSide || 1) > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2.0)
             : (p.facing > 0 ? -0.4 : Math.PI + 0.4);
           c.rotate(ang);
         }
@@ -572,7 +572,7 @@ export const RenderActorsPart: Bag = {
         c.restore();
       }
       // 스윙 궤적 — 무기를 실제로 휘두를 때만(도구를 들고 있으면 베는 게 아니다)
-      if (!tool && p.swing > 0 && d.wc === 'melee') {
+      if (!tool && p.swing > 0 && d.wc === 'melee' && p !== this.me) {   // 내 칼 자국은 swingFx(결 그림) — 남의 것은 이 선
         c.globalAlpha = p.swing / 0.24 * 0.32;
         c.strokeStyle = '#fff2c8'; c.lineWidth = 4;
         c.beginPath();
