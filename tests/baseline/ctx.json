@@ -7,6 +7,7 @@
       "aoe",
       "bandFx",
       "boltFx",
+      "bossHazard",
       "bossLine",
       "burst",
       "chapter",
@@ -20,6 +21,7 @@
       "fallFx",
       "flashFx",
       "hitFx",
+      "hitPlayers",
       "hitStop",
       "killMult",
       "lootPity",
@@ -67,6 +69,7 @@
       "time",
       "toast",
       "triggerFault",
+      "vfx",
       "warnFx",
       "world"
     ],

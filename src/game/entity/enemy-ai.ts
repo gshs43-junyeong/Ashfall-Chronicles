@@ -194,7 +194,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
     }
 
     // 접촉 피해 (순한 동물은 dmg 0이라 사실상 무해하지만, 명시적으로 건너뛴다)
-    if (!this.def.passive && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
+    if (!this.def.passive && !(this.burrowT > 0) && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
       player.hurt(this.dmg * (this.boss ? 1 : 0.9), this.cx);
       this.hitCd = 0.7;
       this.atkPose = 0.22;

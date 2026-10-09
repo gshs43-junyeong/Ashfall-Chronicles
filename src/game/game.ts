@@ -409,7 +409,7 @@ export const GameCore: Bag = {
     this.ents = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.tweens.clear();
     this.corpses = [];
     this.shapes.clear(); this.vfx.clear(); this.trail.clear(); this.sigs = []; this.edge = null; this.stage = null;   // 특성 연출 — 화면 밖으로 넘어가지 않게 함께 비운다
-    this.puzzle = null; this._puzRooms = null; this._pzLeft = null; this._deepFail = null;   // 봉인 방은 저장하지 않는다 — 새 판은 열린 방
+    this.puzzle = null; this._puzRooms = null; this._pzLeft = null; this._deepFail = null; this.bhz = null;   // 봉인 방은 저장하지 않는다 — 새 판은 열린 방
     this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
     this.chapter = 0; this.dayT = 7 * 60; this.time = 0; this.boss = null;
     this.talked = {}; this.crafted = {}; this.scenes.close('pause'); this.scenes.close('death'); this.scenes.close('mpause'); this.scenes.close('mdeath');
@@ -634,6 +634,7 @@ export const GameCore: Bag = {
     this.checkRuinEvent();
     this.updatePulse(dt);          // 유적의 맥박 · 탐사 기록 (아래 '유적의 맥박' 절)
     this.updatePuzzle(dt);         // 봉인 방(game/ruin-puzzle)
+    this.updateBossHazards(dt);    // 보스 기술이 남긴 것(game/boss-hazards)
     this.updateCaves(dt);          // 동굴 갈래 · 낙석 · 무너지는 자갈 (아래 '동굴' 절)
     if (!guest) this.world.fluidTick(dt);   // 물·바닷물·용암이 흐른다 (world.js '유체' 절) — 참가자는 호스트 것을 받는다
     this.updateFalls(dt);          // 폭포 밑 물보라

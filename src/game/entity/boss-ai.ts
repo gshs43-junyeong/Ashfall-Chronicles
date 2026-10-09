@@ -32,6 +32,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
 
     /* 힘 축적 — 모으는 중이면 여기서 돌아선다. */
     if (this.tickSurge(dt, world, p)) { this.stateT += dt; return; }
+    /* 고유 기술 — 쓰는 동안 몸놀림은 쉰다(entity/boss-moves · data/bossmoves) */
+    if (this.tickMoves(dt, world, p, dd)) { this.stateT += dt; return; }
 
     if (AI === 'b_slime') {
       if (this.onGround) {
@@ -325,7 +327,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
           const fx = p.cx + (Math.random() - 0.5) * 260;
           G.warnFx(fx, p.cy + 20, 34, 0.6, '#c8843a');
           G.after(0.6, () => {
-            G.aoe(fx, p.cy + 20, 40, this.dmg * 0.6, 6, '#c8843a');
+            G.hitPlayers(fx, p.cy + 20, 40, this.dmg * 0.6); G.ringFx(fx, p.cy + 20, 40, '#c8843a', .3);   // ★ G.aoe 는 몹을 때린다 — 보스 공격은 플레이어에게
             for (let k = 0; k < 8; k++) G.parts.push(new Part(fx, p.cy + 20, '#c8843a', -160, .6));
           });
         }
@@ -357,7 +359,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
           for (const dir of [-1, 1]) for (let k = 0; k < 4; k++) {
             const x = this.cx + dir * (50 + k * 44);
             G.after(k * 0.06, () => {
-              G.aoe(x, this.y + this.h - 12, 34, this.dmg * 0.45, 5, '#c8a05a');
+              G.hitPlayers(x, this.y + this.h - 12, 34, this.dmg * 0.45); G.ringFx(x, this.y + this.h - 12, 34, '#c8a05a', .3);
               for (let i = 0; i < 3; i++) G.parts.push(new Part(x, this.y + this.h - 6, '#c8a05a', -140, .5));
             });
           }
@@ -392,7 +394,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
         this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 2.2, dt * 6);
         if (this.atkCd <= 0 && this.combo < 3) {
           this.combo++; this.atkCd = 0.42;
-          G.aoe(this.cx + Math.sign(dx) * 44, this.cy, 52, this.dmg * 0.8, 7, '#e8dcc0');
+          G.hitPlayers(this.cx + Math.sign(dx) * 44, this.cy, 52, this.dmg * 0.8); G.ringFx(this.cx + Math.sign(dx) * 44, this.cy, 52, '#e8dcc0', .3);
           G.shake = Math.max(G.shake, 6);
         }
       } else if (this.state === 0) {             // 겨눔 — 천천히 붙는다

@@ -53,6 +53,7 @@ export const RenderPart: Bag = {
     this.pipe.add('fx', (f: any) => this.rUtil(f));           // 탐지 파동(game/utility)
     this.pipe.add('fx', (f: any) => this.drawPuzzle(f.c));    // 봉인 방 장치(game/ruin-puzzle-draw)
     this.pipe.add('fx', (f: any) => this.drawDeepGates(f.c)); // 닫힌 깊은 문(game/ruin-deep)
+    this.pipe.add('fx', (f: any) => this.drawBossHazards(f.c)); // 보스 기술 예고 · 바닥(game/boss-hazards)
     this.pipe.add('screen', (f: any) => this.rScreen(f));
     this.pipe.add('screen', (f: any) => this.drawStage(f));       // 스킬 무대 — 집중선 · 화면 섬광
     this.pipe.add('screen', (f: any) => this.drawPuzzleHud(f.c));  // 봉인 방 띠
@@ -455,26 +456,8 @@ export const RenderPart: Bag = {
       }
     }
 
-    // ---- 비전 방벽 — 플레이어를 감싼 육각 결계 ----
-    const pl = this.player;
-    if (pl && pl.shield > 0) {
-      const x = pl.cx - camX, y = pl.cy - camY;
-      const rr = 30 + Math.sin(this.time * 5) * 1.5;
-      const k = pl.shieldMax ? pl.shield / pl.shieldMax : 1;
-      c.save();
-      c.globalAlpha = 0.10 + 0.10 * k;
-      c.fillStyle = '#6fb8ff';
-      c.beginPath(); c.arc(x, y, rr, 0, TAU); c.fill();
-      c.globalAlpha = 0.35 + 0.45 * k; c.strokeStyle = '#9fd4ff'; c.lineWidth = 1.6;
-      c.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const a = this.time * 0.6 + i * TAU / 6;
-        const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr * 1.15;
-        i ? c.lineTo(px, py) : c.moveTo(px, py);
-      }
-      c.closePath(); c.stroke();
-      c.restore();
-    }
+    // ---- 비전 방벽 — 유리 공 + 기울어 도는 글자 고리 둘 + 줄수록 번지는 금 ----
+    for (const q of this.players) this.drawWard(c, q, camX, camY);
 
     this.drawMeteorNear(c, camX, camY);                 // 가까이 떨어지는 운석 · 떨어진 순간의 섬광
 

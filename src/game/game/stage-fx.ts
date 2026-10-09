@@ -49,6 +49,32 @@ export const StageFxPart: Bag = {
     this.vfx.mark(e.cx + (Math.random() - 0.5) * 8, e.cy - 2 + (Math.random() - 0.5) * 8, s, s, ang, crit ? '#ffe08a' : '#fff6e0', 0.22, art);
   },
 
+  /** 비전 방벽이 남은 동안 몸을 감싸는 겹 — 유리 공 · 기울어 도는 글자 고리 둘(혼천의) · 남은 양이 줄수록 번지는 금.
+      ★ 단순한 육각 테로 되돌리지 말 것 — 다른 스킬 그림에 계속 겹쳐 보여 "스킬마다 육각형"으로 읽혔다. 사연: docs/code-history.md#h174 */
+  drawWard(c: CanvasRenderingContext2D, q: any, camX: number, camY: number) {
+    const k = q.remote ? (q.netShield || 0) : (q.shield > 0 ? q.shield / (q.shieldMax || q.shield) : 0);
+    if (k <= 0 || q.dead) return;
+    const x = q.cx - camX, y = q.cy - camY, R = 32 + Math.sin(this.time * 4) * 1.2, t = this.time;
+    const shell = Sprites.vfxArt('ward_shell', '#8fc8ff'), ring = Sprites.vfxArt('ward_ring', '#bfe0ff');
+    c.save(); c.globalCompositeOperation = 'lighter';
+    if (!shell || !ring) {                              // 그림이 없으면 둥근 막만
+      c.globalAlpha = 0.25 + 0.35 * k; c.strokeStyle = '#9fd4ff'; c.lineWidth = 1.6;
+      c.beginPath(); c.ellipse(x, y, R, R * 1.15, 0, 0, TAU); c.stroke(); c.restore(); return;
+    }
+    c.globalAlpha = 0.3 + 0.35 * k;
+    c.translate(x, y); c.scale(1, 1.12);
+    c.save(); c.rotate(Math.sin(t * 0.7) * 0.15); c.drawImage(shell, -R, -R, R * 2, R * 2); c.restore();
+    for (const [tilt, spin, sq] of [[0.42, 0.8, 0.26], [-0.95, -0.55, 0.32]]) {   // 고리 둘 — 기운 궤도를 반대로 돈다
+      c.save(); c.rotate(tilt + Math.sin(t * 0.5 + tilt) * 0.08); c.scale(1, sq); c.rotate(t * spin);
+      c.globalAlpha = 0.35 + 0.45 * k; c.drawImage(ring, -R * 1.18, -R * 1.18, R * 2.36, R * 2.36); c.restore();
+    }
+    if (k < 0.75) {                                     // 금 — 0.75 아래부터 번진다
+      const cr = Sprites.vfxArt('ward_crack', '#dff2ff');
+      if (cr) { c.globalAlpha = Math.min(1, (0.75 - k) / 0.55) * (0.75 + 0.25 * Math.sin(t * 9)); c.drawImage(cr, -R, -R, R * 2, R * 2); }
+    }
+    c.restore();
+  },
+
   /** 무대 — 어둠 깔기(빛 다음 · 연출 앞 — 스킬 빛은 어둠 위에서 빛난다) */
   drawStageDim(f: any) {
     const st = this.stage, d = st && st.dim; if (!d) return;

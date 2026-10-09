@@ -278,7 +278,8 @@ export const RenderActorsPart: Bag = {
 
   drawEnemy(c: any, e: any, sx: any, sy: any) {
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
-    if (e.hide > 0 || e.amb) { this.drawBuried(c, e, sx, sy); return; }   // 모래 · 바닥 밑 — 땅만 들썩인다
+    if (e.hide > 0 || e.amb) { this.drawBuried(c, e, sx, sy); return; }
+    if (e.burrowT > 0) return;                                              // 땅속을 기는 보스 — 흙먼지만(entity/boss-moves)   // 모래 · 바닥 밑 — 땅만 들썩인다
     /* 손그림 스프라이트 우선. */
     /* 개조된 개체는 원래 시트를 강철로 눕힌 사본으로 그린다(Sprites.mechSheet). */
     const key0 = (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type))

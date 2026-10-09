@@ -356,25 +356,24 @@ def swirl(N=256):
     save('swirl', np.clip(shape, 0, 1) * (r < 1), np.clip(core, 0, 1))
 
 
-def _hexgrid(S, cell, w, d, fill=255, clip=None):
-    """S×S 판에 육각 격자 선"""
-    hh = cell * math.sqrt(3) / 2
-    for row in range(-1, int(S / hh) + 2):
-        for col in range(-1, int(S / (cell * 1.5)) + 2):
-            cx = col * cell * 1.5; cy = row * hh * 2 + (hh if col % 2 else 0)
-            pts = [(cx + math.cos(k * math.pi / 3) * cell, cy + math.sin(k * math.pi / 3) * cell) for k in range(7)]
-            d.line(pts, fill=fill, width=w)
+def _facets(N, n, seed, w):
+    """구면 보로노이 — 공 앞면에 흩은 점에서 가장 가까운 두 점의 거리 차가 작은 곳이 면 경계. 가장자리로 갈수록 면이 눌린다(공처럼 보인다)"""
+    r_ = np.random.default_rng(seed); v = r_.normal(size=(n, 3)); v /= np.linalg.norm(v, axis=1)[:, None]; v[:, 2] = np.abs(v[:, 2])
+    y, x = np.mgrid[0:N, 0:N]; c = (N - 1) / 2; X, Y = (x - c) / c, (y - c) / c
+    Z = np.sqrt(np.clip(1 - X * X - Y * Y, 0, 1)); p = np.stack([X, Y, Z], -1)
+    dist = np.linalg.norm(p[:, :, None, :] - v[None, None], axis=-1); dist.sort(axis=-1)
+    return np.exp(-((dist[..., 1] - dist[..., 0]) / w) ** 2), dist[..., 0]
 
 
 def dome(N=256):
-    """결계 구 — 가장자리로 갈수록 짙은 막(프레넬) · 안에 비치는 육각 격자 · 왼쪽 위 반사광"""
-    K = 2; S = N * K; im, d = _ss(S); _hexgrid(S, S / 11, 2 * K, d)
-    hexa = _down(im, (N, N), 0.6); r, a = polar(N)
+    """결계 구 — 가장자리로 갈수록 짙은 막(프레넬) · 구면을 따라 깎인 결정면(보로노이) · 왼쪽 위 반사광"""
+    r, a = polar(N); edge, d0 = _facets(N, 46, 21, 0.035)
     fres = np.clip(r, 0, 1) ** 3
     shell = band(r, 0.96, 0.03) + fres * 0.22                                 # 안쪽은 비친다 — 막이 몸을 가리지 않게
-    shape = np.clip(shell + hexa * (0.06 + 0.5 * fres ** 1.5), 0, 1) * (r < 0.99)
+    tint = (np.sin(d0 * 40) * 0.5 + 0.5) * 0.05 * fres                        # 면마다 결이 조금씩 다르다
+    shape = np.clip(shell + edge * (0.08 + 0.55 * fres ** 1.2) + tint, 0, 1) * (r < 0.99)
     hl = band(r, 0.8, 0.035) * np.exp(-(np.angle(np.exp(1j * (a + 2.3))) / 0.38) ** 2) + band(r, 0.72, 0.02) * np.exp(-(np.angle(np.exp(1j * (a + 2.15))) / 0.15) ** 2) * 0.6
-    save('dome', shape, np.clip(hl * 0.9 + band(r, 0.965, 0.008) * 0.8, 0, 1))
+    save('dome', shape, np.clip(hl * 0.9 + band(r, 0.965, 0.008) * 0.8 + edge * fres * 0.25, 0, 1))
 
 
 def _sigil_finish(name, im, co, N, inner=0.14):
@@ -390,24 +389,36 @@ def _sig_base(N):
     return S, im, d, co, dc, c, R, ring, P
 
 
-def sigil_hex(N=512):
-    """방패진(전사 · 방어) — 육각 테 두 겹 · 테 사이 쐐기 눈금 · 안쪽 육각 격자 · 가운데 방패 문장"""
+def sigil_aegis(N=512):
+    """방패진(전사 · 방어) — 사슬 고리 띠 · 바깥을 향한 연 모양 방패 넷(사방 십자) · 그 사이 엇갈린 검 넷 · 가운데 둥근 방패(징 여덟)"""
     S, im, d, co, dc, c, R, ring, P = _sig_base(N)
-    for f, w in ((1.0, 8), (0.86, 5)):
-        pts = [P(f, -math.pi / 2 + k * math.pi / 3) for k in range(7)]; d.line(pts, fill=255, width=w, joint='curve')
-    dc.line([P(0.985, -math.pi / 2 + k * math.pi / 3) for k in range(7)], fill=255, width=3)
-    for k in range(6):
-        for s in range(1, 5):
-            t = -math.pi / 2 + k * math.pi / 3 + s * math.pi / 15; d.line([P(0.885, t), P(0.95, t)], fill=255, width=4)
-        x, y = P(0.93, -math.pi / 2 + k * math.pi / 3); rr = R(0.05); d.ellipse([x - rr, y - rr, x + rr, y + rr], outline=255, width=5)
-        dc.ellipse([x - rr * .4, y - rr * .4, x + rr * .4, y + rr * .4], fill=255)
-    g, gd = _ss(S); _hexgrid(S, R(0.13), 3, gd, 150)
-    m, md = _ss(S); md.polygon([P(0.8, -math.pi / 2 + k * math.pi / 3) for k in range(6)], fill=255)
-    im.paste(255, (0, 0), Image.fromarray(np.minimum(np.asarray(g), np.asarray(m))))
-    sh = [P(0.34, -math.pi / 2), (c + R(0.26), c - R(0.2)), (c + R(0.22), c + R(0.14)), (c, c + R(0.36)), (c - R(0.22), c + R(0.14)), (c - R(0.26), c - R(0.2))]
-    d.line(sh + [sh[0]], fill=255, width=7, joint='curve'); dc.line(sh + [sh[0]], fill=255, width=2)
-    d.line([P(0.3, -math.pi / 2), (c, c + R(0.3))], fill=255, width=4)
-    _sigil_finish('sigil_hex', im, co, N)
+    ring(1.0, 7, d); ring(0.985, 2, dc); ring(0.83, 5, d)
+    for k in range(28):                                                         # 사슬 — 누운 고리와 선 고리(옆에서 본 막대)가 번갈아 맞물린다
+        t = k / 28 * 2 * math.pi; x, y = P(0.915, t); tu = (-math.sin(t), math.cos(t))
+        if k % 2 == 0:
+            a, b = R(0.075), R(0.032)
+            pts = [(x + math.cos(q) * a * tu[0] - math.sin(q) * b * tu[1], y + math.cos(q) * a * tu[1] + math.sin(q) * b * tu[0]) for q in np.linspace(0, 2 * math.pi, 24)]
+            d.line(pts, fill=255, width=5)
+        else:
+            h = R(0.06); d.line([(x - tu[0] * h, y - tu[1] * h), (x + tu[0] * h, y + tu[1] * h)], fill=255, width=9); dc.line([(x - tu[0] * h * .6, y - tu[1] * h * .6), (x + tu[0] * h * .6, y + tu[1] * h * .6)], fill=255, width=2)
+    for k in range(4):                                                          # 연 방패 — 끝이 바깥(0.8)
+        t = -math.pi / 2 + k * math.pi / 2; u = (math.cos(t), math.sin(t)); n = (-u[1], u[0])
+        Q = lambda f, w: (c + u[0] * R(f) + n[0] * R(w), c + u[1] * R(f) + n[1] * R(w))
+        sh = [Q(0.78, 0), Q(0.62, 0.11), Q(0.46, 0.12), Q(0.4, 0.07), Q(0.42, 0), Q(0.4, -0.07), Q(0.46, -0.12), Q(0.62, -0.11)]
+        d.line(sh + [sh[0]], fill=255, width=6, joint='curve'); dc.line(sh + [sh[0]], fill=255, width=2)
+        d.line([Q(0.47, 0), Q(0.72, 0)], fill=255, width=3); d.line([Q(0.56, -0.08), Q(0.56, 0.08)], fill=255, width=3)
+    for k in range(4):                                                          # 검 — 방패 사이 대각선, 칼끝이 바깥
+        t = -math.pi / 4 + k * math.pi / 2; u = (math.cos(t), math.sin(t)); n = (-u[1], u[0])
+        Q = lambda f, w: (c + u[0] * R(f) + n[0] * R(w), c + u[1] * R(f) + n[1] * R(w))
+        d.polygon([Q(0.79, 0), Q(0.7, 0.025), Q(0.4, 0.025), Q(0.4, -0.025), Q(0.7, -0.025)], outline=255)
+        d.line([Q(0.79, 0), Q(0.7, 0.025), Q(0.4, 0.025)], fill=255, width=4); d.line([Q(0.79, 0), Q(0.7, -0.025), Q(0.4, -0.025)], fill=255, width=4)
+        dc.line([Q(0.76, 0), Q(0.44, 0)], fill=255, width=2)
+        d.line([Q(0.4, 0.08), Q(0.4, -0.08)], fill=255, width=6); d.line([Q(0.4, 0), Q(0.33, 0)], fill=255, width=5)
+    ring(0.3, 6, d); ring(0.3, 2, dc); ring(0.22, 3, d)                         # 둥근 방패 · 징 여덟
+    for k in range(8):
+        x, y = P(0.26, k * math.pi / 4); rr = R(0.022); d.ellipse([x - rr, y - rr, x + rr, y + rr], fill=255); dc.ellipse([x - rr * .5, y - rr * .5, x + rr * .5, y + rr * .5], fill=255)
+    rr = R(0.07); d.ellipse([c - rr, c - rr, c + rr, c + rr], outline=255, width=5); dc.ellipse([c - rr * .45, c - rr * .45, c + rr * .45, c + rr * .45], fill=255)
+    _sigil_finish('sigil_aegis', im, co, N)
 
 
 def sigil_frost(N=512):
@@ -568,9 +579,67 @@ def lens(W=512, H=32):
     save('lens', np.clip(shape, 0, 1), np.clip(np.exp(-(v / 0.06) ** 2) * (1 - d) ** 3, 0, 1))
 
 
+def ward_shell(N=256):
+    """방벽 겹 — 유리 공(프레넬) + 비스듬한 경선 · 위선(지구본 결) + 아래쪽 모인 빛. 고리(ward_ring)가 그 둘레를 돈다"""
+    K = 2; S = N * K; im, d = _ss(S); c = S / 2; Rr = S / 2 * 0.95
+    for k in range(1, 4):                                                       # 경선 — 세로로 눌린 타원
+        w = Rr * math.cos(k * math.pi / 8); d.ellipse([c - w, c - Rr, c + w, c + Rr], outline=255, width=2 * K)
+    for f in (-0.55, 0, 0.55):                                                  # 위선
+        yy = c + f * Rr; hw = Rr * math.sqrt(1 - f * f); d.ellipse([c - hw, yy - hw * 0.18, c + hw, yy + hw * 0.18], outline=255, width=2 * K)
+    lines = _down(im.rotate(-18, Image.BICUBIC), (N, N), 0.5); r, a = polar(N)
+    fres = np.clip(r, 0, 1) ** 2.6
+    shape = np.clip(band(r, 0.955, 0.03) + fres * 0.24 + lines * (0.1 + 0.45 * fres) * (r < 0.95), 0, 1) * (r < 0.99)
+    hl = band(r, 0.78, 0.04) * np.exp(-(np.angle(np.exp(1j * (a + 2.2))) / 0.42) ** 2)
+    pool = band(r, 0.86, 0.07) * np.exp(-(np.angle(np.exp(1j * (a - math.pi / 2))) / 0.6) ** 2) * 0.5
+    save('ward_shell', shape, np.clip(hl + pool + band(r, 0.96, 0.008) * 0.7, 0, 1))
+
+
+def ward_ring(N=512):
+    """방벽 고리 — 글자 띠(굵은 획 · 사이사이 마름모) 한 바퀴. 게임이 납작하게 눌러 기울인 궤도로 돌린다(두 개를 엇갈려 혼천의처럼)"""
+    S, im, d, co, dc, c, R, ring, P = _sig_base(N)
+    ring(0.99, 5, d); ring(0.80, 4, d); ring(0.985, 2, dc)
+    gr = np.random.default_rng(31)
+    for i in range(30):
+        t = i / 30 * 2 * math.pi
+        if i % 5 == 0:                                                          # 마름모 매듭
+            pts = [P(0.895 + 0.075, t), P(0.895, t + 0.05), P(0.895 - 0.075, t), P(0.895, t - 0.05)]
+            d.polygon(pts, fill=255); dc.polygon([P(0.92, t), P(0.895, t + 0.02), P(0.87, t), P(0.895, t - 0.02)], fill=255); continue
+        rm = R(0.895); cx, cy = c + math.cos(t) * rm, c + math.sin(t) * rm
+        u = (math.cos(t + math.pi / 2), math.sin(t + math.pi / 2)); n = (math.cos(t), math.sin(t)); h = R(0.06); wd = R(0.03)
+        Q = lambda p, q: (cx + u[0] * p * wd + n[0] * q * h, cy + u[1] * p * wd + n[1] * q * h)
+        pts = [(-1, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (1, 1), (0, -1), (0, 1), (0, 0)]
+        for _ in range(4):
+            p0, p1 = gr.choice(len(pts), 2, replace=False); d.line([Q(*pts[p0]), Q(*pts[p1])], fill=255, width=6)
+    shape = _down(im, (N, N)); blur = _down(im, (N, N), N / 80); r, a = polar(N)
+    save('ward_ring', np.clip(shape + blur * 0.6 + band(r, 0.9, 0.06) * 0.12, 0, 1) * (r < 1), _down(co, (N, N)))
+
+
+def ward_crack(N=256):
+    """방벽 금 — 오른쪽 위 한 점에서 갈라져 나가는 금 + 거미줄처럼 잇는 가로 금. 남은 방벽이 줄수록 짙게 얹는다"""
+    K = 4; S = N * K; im, d = _ss(S); co, dc = _ss(S); c = S / 2; Rr = S / 2 * 0.96
+    ox, oy = c + Rr * 0.32, c - Rr * 0.28; gr = np.random.default_rng(5); arms = []
+    for k in range(9):
+        t = k / 9 * 2 * math.pi + gr.uniform(-0.2, 0.2); L = Rr * gr.uniform(0.7, 1.5); pts = [(ox, oy)]; x, y = ox, oy
+        for q in range(7):
+            t += gr.uniform(-0.35, 0.35); x += math.cos(t) * L / 7; y += math.sin(t) * L / 7; pts.append((x, y))
+        arms.append(pts)
+        for i in range(len(pts) - 1):
+            d.line([pts[i], pts[i + 1]], fill=255, width=int(K * (3.2 - i * 0.38))); dc.line([pts[i], pts[i + 1]], fill=255, width=max(1, int(K * (1.2 - i * 0.15))))
+    for ring_i in (1, 2, 4):                                                     # 거미줄 — 이웃 갈래의 같은 마디를 잇는다
+        for k in range(9):
+            a0, a1 = arms[k], arms[(k + 1) % 9]
+            if ring_i < len(a0) and ring_i < len(a1) and gr.random() < 0.8:
+                m = ((a0[ring_i][0] + a1[ring_i][0]) / 2 + gr.uniform(-1, 1) * K * 6, (a0[ring_i][1] + a1[ring_i][1]) / 2 + gr.uniform(-1, 1) * K * 6)
+                d.line([a0[ring_i], m, a1[ring_i]], fill=255, width=int(K * 1.6))
+    r, a = polar(N); inside = (r < 0.97)
+    shape = (_down(im, (N, N)) + _down(im, (N, N), 1.5) * 0.4) * inside
+    save('ward_crack', np.clip(shape, 0, 1), np.clip(_down(co, (N, N)) * inside, 0, 1))
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     shock(); flare(); sigil(); slash(); column(); beam(); puff(); ring(); fire()
     spark(); mote(); shard(); crack(); bolt(); meteor(); impact(); swirl(); dome()
-    sigil_hex(); sigil_frost(); sigil_leaf(); sigil_life(); sigil_beast(); sigil_void(); beam_spiral()
+    sigil_aegis(); sigil_frost(); sigil_leaf(); sigil_life(); sigil_beast(); sigil_void(); beam_spiral()
     swipe(); cut(); lens()
+    ward_shell(); ward_ring(); ward_crack()
