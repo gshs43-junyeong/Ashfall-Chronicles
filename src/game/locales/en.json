@@ -995,7 +995,13 @@
   "저울이 수평을 이뤘다 — 올린 금화가 두 배로 돌아왔다": "The scale balances — your gold comes back doubled",
   "차갑다": "Cold",
   "틀렸다 — 해가 순서를 다시 보여 준다 ({n}/3)": "Wrong — the sun shows the order again ({n}/3)",
-  "한쪽 접시에는 깃털이 놓여 있다. 다른 쪽은 비어 있다.": "A feather rests on one pan. The other is empty."
+  "한쪽 접시에는 깃털이 놓여 있다. 다른 쪽은 비어 있다.": "A feather rests on one pan. The other is empty.",
+  "보아라…": "Watch…",
+  "봉인 방": "Sealed Room",
+  "봉인 방 — {n} 풀었다 · 금화 {gold}": "Sealed Room — {n} solved · {gold} gold",
+  "봉인 방 — {n}. {hint} · 장치는 우클릭": "Sealed Room — {n}. {hint} · Right-click the devices",
+  "봉인이 지쳐 풀렸다 — {n}": "The seal wore itself out — {n}",
+  "빛을 이어라": "Connect the light"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4257,6 +4263,25 @@
   "PULSE_EVENTS.sink.n": "The Sinking Floor",
   "PULSE_EVENTS.sink.d": "The floor gives way soon after you step on it — keep moving and hold out. Husks lunge from below",
   "PULSE_EVENTS.seed.n": "The Hollow Seed",
-  "PULSE_EVENTS.seed.d": "A hollow seed has fallen — pick it up (right-click) and bury it in the middle of the great room. Get hit and you drop it"
+  "PULSE_EVENTS.seed.d": "A hollow seed has fallen — pick it up (right-click) and bury it in the middle of the great room. Get hit and you drop it",
+  "PUZZLE.ice.n": "Frozen Crystals",
+  "PUZZLE.ice.hint": "Touching a crystal also thaws the one opposite and the one beside it — light all five",
+  "PUZZLE.mine.n": "Dead Mine Lamps",
+  "PUZZLE.mine.hint": "Lighting a lamp flips the lamps on either side — light them all",
+  "PUZZLE.pyramid.n": "Mirrors of the Sun",
+  "PUZZLE.pyramid.hint": "Turn the mirrors to carry the beam to the sun crest",
+  "PUZZLE.spore.n": "Breathing Caps",
+  "PUZZLE.spore.hint": "Touch a cap only while it is wide open — touch a closed one and the spores burst",
+  "PUZZLE.blight.n": "Throbbing Hearts",
+  "PUZZLE.blight.hint": "Watch the order the hearts beat in, then strike them in the same order",
+  "PUZZLE.abyss.n": "Sluice Wheels",
+  "PUZZLE.abyss.hint": "Turning a wheel also turns the wheel to its right — match the notches carved above",
+  "PUZZLE.story0.n": "Order of the Tablets",
+  "PUZZLE.story0.hint": "Watch the order the glyphs light up, then touch them in the same order",
+  "PUZZLE.story1.n": "Order of the Tablets",
+  "PUZZLE.story1.hint": "Watch the order the glyphs light up, then touch them in the same order",
+  "PUZZLE.story2.n": "Order of the Tablets",
+  "PUZZLE.story2.hint": "Watch the order the glyphs light up, then touch them in the same order",
+  "SURVEY_LABEL.puz": "Sealed rooms"
  }
 }

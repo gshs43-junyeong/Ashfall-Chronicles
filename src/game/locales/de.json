@@ -995,7 +995,13 @@
   "저울이 수평을 이뤘다 — 올린 금화가 두 배로 돌아왔다": "Die Waage steht im Gleichgewicht — dein Gold kommt doppelt zurück",
   "차갑다": "Kalt",
   "틀렸다 — 해가 순서를 다시 보여 준다 ({n}/3)": "Falsch — die Sonne zeigt die Reihenfolge erneut ({n}/3)",
-  "한쪽 접시에는 깃털이 놓여 있다. 다른 쪽은 비어 있다.": "Auf einer Schale liegt eine Feder. Die andere ist leer."
+  "한쪽 접시에는 깃털이 놓여 있다. 다른 쪽은 비어 있다.": "Auf einer Schale liegt eine Feder. Die andere ist leer.",
+  "보아라…": "Sieh hin…",
+  "봉인 방": "Versiegelte Kammer",
+  "봉인 방 — {n} 풀었다 · 금화 {gold}": "Versiegelte Kammer — {n} gelöst · {gold} Gold",
+  "봉인 방 — {n}. {hint} · 장치는 우클릭": "Versiegelte Kammer — {n}. {hint} · Rechtsklick auf die Vorrichtungen",
+  "봉인이 지쳐 풀렸다 — {n}": "Das Siegel hat sich erschöpft — {n}",
+  "빛을 이어라": "Verbinde das Licht"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4257,6 +4263,25 @@
   "PULSE_EVENTS.sink.n": "Der sinkende Boden",
   "PULSE_EVENTS.sink.d": "Der Boden gibt kurz nach dem Betreten nach — bleib in Bewegung und halte durch. Hülsen springen von unten heran",
   "PULSE_EVENTS.seed.n": "Der hohle Samen",
-  "PULSE_EVENTS.seed.d": "Ein hohler Samen ist gefallen — heb ihn auf (Rechtsklick) und vergrab ihn in der Mitte des großen Raums. Wirst du getroffen, lässt du ihn fallen"
+  "PULSE_EVENTS.seed.d": "Ein hohler Samen ist gefallen — heb ihn auf (Rechtsklick) und vergrab ihn in der Mitte des großen Raums. Wirst du getroffen, lässt du ihn fallen",
+  "PUZZLE.ice.n": "Gefrorene Kristalle",
+  "PUZZLE.ice.hint": "Berührst du einen Kristall, tauen der gegenüberliegende und der daneben mit — bring alle fünf zum Leuchten",
+  "PUZZLE.mine.n": "Erloschene Grubenlampen",
+  "PUZZLE.mine.hint": "Zündest du eine Lampe an, kippen die Lampen links und rechts um — entzünde sie alle",
+  "PUZZLE.pyramid.n": "Spiegel der Sonne",
+  "PUZZLE.pyramid.hint": "Dreh die Spiegel, bis der Lichtstrahl das Sonnenwappen erreicht",
+  "PUZZLE.spore.n": "Atmende Hüte",
+  "PUZZLE.spore.hint": "Berühre einen Hut nur, wenn er weit offen ist — ein geschlossener lässt die Sporen platzen",
+  "PUZZLE.blight.n": "Pochende Herzen",
+  "PUZZLE.blight.hint": "Merk dir, in welcher Reihenfolge die Herzen schlagen, und triff sie genauso",
+  "PUZZLE.abyss.n": "Schleusenräder",
+  "PUZZLE.abyss.hint": "Drehst du ein Rad, dreht sich das rechte eine Kerbe mit — triff die eingeritzten Marken",
+  "PUZZLE.story0.n": "Reihenfolge der Tafeln",
+  "PUZZLE.story0.hint": "Merk dir, in welcher Reihenfolge die Zeichen aufleuchten, und berühre sie genauso",
+  "PUZZLE.story1.n": "Reihenfolge der Tafeln",
+  "PUZZLE.story1.hint": "Merk dir, in welcher Reihenfolge die Zeichen aufleuchten, und berühre sie genauso",
+  "PUZZLE.story2.n": "Reihenfolge der Tafeln",
+  "PUZZLE.story2.hint": "Merk dir, in welcher Reihenfolge die Zeichen aufleuchten, und berühre sie genauso",
+  "SURVEY_LABEL.puz": "Versiegelte Kammern"
  }
 }

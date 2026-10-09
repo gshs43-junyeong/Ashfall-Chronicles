@@ -176,8 +176,16 @@ export const DebugStartPart: Bag = {
         p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
         const give = (iid: any, n: number) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!)); };
         give('tonic_hush', 4); give('drum_pulse', 4); give('pulse_shard', 3); give('potion_hp', 20);
-        const r = site.rooms.slice().sort((a: any, b: any) => a.y - b.y)[0];
-        p.x = (r.x + (r.w >> 1)) * TS; p.y = (r.y + r.h - 3) * TS - p.h + TS; p.vx = p.vy = 0;
+        let r = site.rooms.slice().sort((a: any, b: any) => a.y - b.y)[0];
+        /* &puz=<1~3> — 그 유적의 봉인 방 안에서 시작(game/ruin-puzzle — 들어서자마자 닫힌다) */
+        const pzr = qs.get('puz') ? this.puzzleRooms(site)[(+qs.get('puz') || 1) - 1] : undefined;
+        if (pzr !== undefined) {
+          r = site.rooms[pzr];
+          const tx = r.x + (r.w >> 1);
+          let fy = r.y + r.h - 2;
+          for (let y = r.y + 2; y < r.y + r.h; y++) if (w.solid(tx, y) && !w.solid(tx, y - 1)) { fy = y; if (y > r.y + r.h / 2) break; }
+          p.x = tx * TS; p.y = fy * TS - p.h; p.vx = p.vy = 0;
+        } else { p.x = (r.x + (r.w >> 1)) * TS; p.y = (r.y + r.h - 3) * TS - p.h + TS; p.vx = p.vy = 0; }
         this.seenRuins[id] = 1;
         if (qs.get('boss') === '1' && idx >= 0) this.lairs[idx] = 1;
         this.ruinPulse = { [id]: clamp(+qs.get('pulse') || 0, 0, 100) };

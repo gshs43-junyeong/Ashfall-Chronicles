@@ -918,7 +918,8 @@
   "너무 멀다": [
    "game/fishing.tryFish",
    "game/mine.placeStation",
-   "game/mine.placeDoor"
+   "game/mine.placeDoor",
+   "game/ruin-puzzle.puzzleClick"
   ],
   "넘긴 메아리 {best} / {max}": [
    "game/ruin-pulse.openEcho"
@@ -1613,6 +1614,9 @@
   "보상 🪙 {gold} · 경험치 {xp}": [
    "ui/shop.refreshBoard"
   ],
+  "보아라…": [
+   "game/ruin-puzzle-draw.drawPuzzleHud"
+  ],
   "보통": [
    "index.html"
   ],
@@ -1625,9 +1629,22 @@
   "볼트를 풀면 강철판과 톱니, 모터까지 건질 수 있겠다.": [
    "game/rigs.useRig"
   ],
+  "봉인 방": [
+   "game/ruin-puzzle-draw.drawPuzzleHud"
+  ],
+  "봉인 방 — {n} 풀었다 · 금화 {gold}": [
+   "game/ruin-puzzle.puzzleReward"
+  ],
+  "봉인 방 — {n}. {hint} · 장치는 우클릭": [
+   "game/ruin-puzzle.puzzleBegin",
+   "game/ruin-puzzle.netPuzzle"
+  ],
   "봉인문": [
    "game/interact.openSeal",
    "game/render-world.drawCursor"
+  ],
+  "봉인이 지쳐 풀렸다 — {n}": [
+   "game/ruin-puzzle.puzzleEnd"
   ],
   "봉인이 풀렸다": [
    "game/interact.openSeal"
@@ -1732,6 +1749,9 @@
   ],
   "빚을 갚았군. 이제 좀 편히 잘 수 있겠어.": [
    "data/quests"
+  ],
+  "빛을 이어라": [
+   "game/ruin-puzzle-draw.drawPuzzleHud"
   ],
   "빼기": [
    "index.html"
@@ -5341,6 +5361,24 @@
   "PULSE_RAGE.story0.t": "석실의 서리가 불을 삼킨다",
   "PULSE_RAGE.story1.t": "겹친 길이 비틀린다 — 무언가 내려온다",
   "PULSE_RAGE.story2.t": "발밑의 방들이 한꺼번에 깨어난다",
+  "PUZZLE.ice.n": "얼어붙은 수정",
+  "PUZZLE.ice.hint": "수정을 건드리면 맞은편 수정과 옆 수정이 같이 녹는다 — 다섯을 모두 밝혀라",
+  "PUZZLE.mine.n": "꺼진 갱도 등불",
+  "PUZZLE.mine.hint": "등불 하나를 켜면 양옆 등불이 뒤집힌다 — 모두 밝혀라",
+  "PUZZLE.pyramid.n": "해의 거울",
+  "PUZZLE.pyramid.hint": "거울을 돌려 빛줄기를 태양 문장까지 이어라",
+  "PUZZLE.spore.n": "숨 쉬는 갓",
+  "PUZZLE.spore.hint": "갓이 활짝 열렸을 때만 건드려라 — 닫힌 갓을 건드리면 포자가 터진다",
+  "PUZZLE.blight.n": "고동치는 심장",
+  "PUZZLE.blight.hint": "심장이 뛰는 차례를 보고 같은 차례로 쳐라",
+  "PUZZLE.abyss.n": "수문 바퀴",
+  "PUZZLE.abyss.hint": "바퀴를 돌리면 오른쪽 바퀴도 한 칸 돈다 — 위에 새긴 눈금에 맞춰라",
+  "PUZZLE.story0.n": "석판의 차례",
+  "PUZZLE.story0.hint": "문양이 빛나는 차례를 보고 같은 차례로 짚어라",
+  "PUZZLE.story1.n": "석판의 차례",
+  "PUZZLE.story1.hint": "문양이 빛나는 차례를 보고 같은 차례로 짚어라",
+  "PUZZLE.story2.n": "석판의 차례",
+  "PUZZLE.story2.hint": "문양이 빛나는 차례를 보고 같은 차례로 짚어라",
   "RARITY.0": "일반",
   "RARITY.1": "고급",
   "RARITY.2": "희귀",
@@ -5598,6 +5636,7 @@
   "SURVEY_LABEL.events": "사건",
   "SURVEY_LABEL.kinds": "사건 갈래",
   "SURVEY_LABEL.echo": "메아리",
+  "SURVEY_LABEL.puz": "봉인 방",
   "TABLETS.0.n": "첫 번째 석판",
   "TABLETS.0.lines.0": "『별은 벌을 주러 오는 것이 아니다. 도망쳐 오는 것이다.』",
   "TABLETS.0.lines.1": "『무엇으로부터 도망치는지는 적지 않겠다. 적으면 그것이 이 글을 읽는다.』",

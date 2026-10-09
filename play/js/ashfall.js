@@ -8659,6 +8659,8 @@
     PULSE: () => PULSE,
     PULSE_EVENTS: () => PULSE_EVENTS,
     PULSE_RAGE: () => PULSE_RAGE,
+    PUZZLE: () => PUZZLE,
+    PUZZLE_GIVEUP: () => PUZZLE_GIVEUP,
     RIG: () => RIG,
     RUIN_CARD: () => RUIN_CARD,
     RUIN_CIPHER: () => RUIN_CIPHER,
@@ -9164,10 +9166,10 @@
     story1: { k: "quake", t: "겹친 길이 비틀린다 — 무언가 내려온다" },
     story2: { k: "swarm", t: "발밑의 방들이 한꺼번에 깨어난다" }
   };
-  var SURVEY_W = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12 };
+  var SURVEY_W = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12, puz: 12 };
   var SURVEY_TIERS = [
-    { r: "S", c: "#ffd24a", need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 2, echo: 3 } },
-    { r: "A", c: "#e8a0ff", need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 1, echo: 1 } },
+    { r: "S", c: "#ffd24a", need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 2, echo: 3, puz: 1 } },
+    { r: "A", c: "#e8a0ff", need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 1, echo: 1, puz: 0.5 } },
     { r: "B", c: "#8fd0ff", need: { rooms: 0.65, chests: 0.5, boss: 1, events: 1 } },
     { r: "C", c: "#9fdc8f", need: { rooms: 0.35, chests: 0.2 } },
     { r: "D", c: "#9a9a9a", need: {} }
@@ -9181,8 +9183,100 @@
     rage: "격노",
     events: "사건",
     kinds: "사건 갈래",
-    echo: "메아리"
+    echo: "메아리",
+    puz: "봉인 방"
   };
+  var PUZZLE = {
+    ice: {
+      n: "얼어붙은 수정",
+      k: "toggle",
+      rule: "mirror",
+      cnt: 5,
+      skin: "crystal",
+      c: "#9fe0ff",
+      rooms: 3,
+      hint: "수정을 건드리면 맞은편 수정과 옆 수정이 같이 녹는다 — 다섯을 모두 밝혀라"
+    },
+    mine: {
+      n: "꺼진 갱도 등불",
+      k: "toggle",
+      rule: "adj",
+      cnt: 5,
+      skin: "lamp",
+      c: "#ffc070",
+      rooms: 3,
+      hint: "등불 하나를 켜면 양옆 등불이 뒤집힌다 — 모두 밝혀라"
+    },
+    pyramid: {
+      n: "해의 거울",
+      k: "mirror",
+      cols: 4,
+      skin: "mirror",
+      c: "#ffe08a",
+      rooms: 3,
+      hint: "거울을 돌려 빛줄기를 태양 문장까지 이어라"
+    },
+    spore: {
+      n: "숨 쉬는 갓",
+      k: "bloom",
+      cnt: 4,
+      skin: "cap",
+      c: "#bff07a",
+      rooms: 3,
+      hint: "갓이 활짝 열렸을 때만 건드려라 — 닫힌 갓을 건드리면 포자가 터진다"
+    },
+    blight: {
+      n: "고동치는 심장",
+      k: "simon",
+      cnt: 4,
+      len: 5,
+      skin: "heart",
+      c: "#ff7a8a",
+      rooms: 3,
+      hint: "심장이 뛰는 차례를 보고 같은 차례로 쳐라"
+    },
+    abyss: {
+      n: "수문 바퀴",
+      k: "dial",
+      cnt: 4,
+      m: 3,
+      skin: "valve",
+      c: "#8fd8ff",
+      rooms: 3,
+      hint: "바퀴를 돌리면 오른쪽 바퀴도 한 칸 돈다 — 위에 새긴 눈금에 맞춰라"
+    },
+    story0: {
+      n: "석판의 차례",
+      k: "simon",
+      cnt: 4,
+      len: 4,
+      skin: "rune",
+      c: "#d8c8ff",
+      rooms: 2,
+      hint: "문양이 빛나는 차례를 보고 같은 차례로 짚어라"
+    },
+    story1: {
+      n: "석판의 차례",
+      k: "simon",
+      cnt: 5,
+      len: 5,
+      skin: "rune",
+      c: "#d8c8ff",
+      rooms: 2,
+      hint: "문양이 빛나는 차례를 보고 같은 차례로 짚어라"
+    },
+    story2: {
+      n: "석판의 차례",
+      k: "simon",
+      cnt: 5,
+      len: 6,
+      skin: "rune",
+      c: "#d8c8ff",
+      rooms: 2,
+      hint: "문양이 빛나는 차례를 보고 같은 차례로 짚어라"
+    }
+  };
+  var PUZZLE_GIVEUP = 150;
   var ECHO = { max: 5, mul: (lv) => 1 + 0.35 * lv, needStage: 2 };
   var CAVE_TYPES = [
     { id: "plain" },
@@ -38016,7 +38110,7 @@
       this.warns.length = 0;
     }
     draw(c, camX, camY) {
-      const TAU3 = Math.PI * 2;
+      const TAU4 = Math.PI * 2;
       for (const r of this.rings) {
         const k = r.t / r.max, R = r.r * (1.3 - k * 0.3), im = this.art && this.art("ring", r.c);
         if (im) {
@@ -38028,7 +38122,7 @@
         c.globalAlpha = k * 0.8;
         c.lineWidth = 3;
         c.beginPath();
-        c.arc(r.x - camX, r.y - camY, R, 0, TAU3);
+        c.arc(r.x - camX, r.y - camY, R, 0, TAU4);
         c.stroke();
       }
       for (const w of this.warns) {
@@ -38036,7 +38130,7 @@
         c.globalAlpha = 0.22 + 0.2 * Math.sin(k * 18);
         c.fillStyle = w.c;
         c.beginPath();
-        c.arc(x, y, w.r * k, 0, TAU3);
+        c.arc(x, y, w.r * k, 0, TAU4);
         c.fill();
         const im = this.art && this.art("ring", w.c);
         if (im) {
@@ -38052,7 +38146,7 @@
         c.strokeStyle = w.c;
         c.lineWidth = 2.5;
         c.beginPath();
-        c.arc(x, y, w.r, 0, TAU3);
+        c.arc(x, y, w.r, 0, TAU4);
         c.stroke();
       }
       for (const b of this.bolts) {
@@ -39614,6 +39708,10 @@
       this.trail.clear();
       this.sigs = [];
       this.edge = null;
+      this.stage = null;
+      this.puzzle = null;
+      this._puzRooms = null;
+      this._pzLeft = null;
       this.guardCd = 0;
       this.facTimer = 0;
       this.cropTimer = 0;
@@ -39869,6 +39967,7 @@
       this.checkRuinEntry();
       this.checkRuinEvent();
       this.updatePulse(dt);
+      this.updatePuzzle(dt);
       this.updateCaves(dt);
       if (!guest) this.world.fluidTick(dt);
       this.updateFalls(dt);
@@ -40516,7 +40615,7 @@
         name: p.name,
         savedAt: Date.now(),
         mode: this.mode,
-        world: this.world.serialize(),
+        world: this.withoutSeal(() => this.world.serialize()),
         chapter: this.chapter,
         dayT: this.dayT,
         talked: this.talked,
@@ -40747,6 +40846,10 @@
         this.trail.clear();
         this.sigs = [];
         this.edge = null;
+        this.stage = null;
+        this.puzzle = null;
+        this._puzRooms = null;
+        this._pzLeft = null;
         this.guardCd = 0;
         this.facTimer = 0;
         this.cropTimer = 0;
@@ -42676,6 +42779,7 @@
     rightClick() {
       if (this.state !== "play" || this.uiOpen) return;
       const p = this.player, w = this.world;
+      if (this.puzzle && this.puzzleClick(this.input.wx, this.input.wy)) return;
       if (this.pulseEvent && this.ruinEvClick(this.input.wx, this.input.wy)) return;
       const o = this.findObjAt(this.input.wx, this.input.wy);
       if (o && dist(p.cx, p.cy, o.x + o.w / 2, o.y + o.h / 2) < TS * 7) {
@@ -45692,6 +45796,7 @@
       this.pendingLair = null;
       this.pendingEcho = null;
       if (this.pulseEvent) this.endPulseEvent(false);
+      if (this.puzzle && !this.net) this.puzzleEnd(false, true);
       this.rocks = [];
       $("#death-screen").classList.remove("open");
       this.scenes.close("death");
@@ -48898,7 +49003,7 @@
           this.checkSurvey(id);
           this.checkAch();
         }
-        if (!this.pulseEvent && this.pulseHere === id) this.startPulseEvent(id, s1);
+        if (!this.pulseEvent && !this.puzzle && this.pulseHere === id) this.startPulseEvent(id, s1);
       } else if (this.pulseHere === id && s1 === 0) {
         this.toast(tr("유적이 다시 잠든다"), "good");
       }
@@ -49169,6 +49274,8 @@
         Object.keys(PULSE_EVENTS).filter((k) => PULSE_EVENTS[k].ruin === id).length
       ];
       part.echo = story ? null : [sv.echo || 0, ECHO.max];
+      const nPuz = site ? this.puzzleRooms(site).length : 0;
+      part.puz = nPuz ? [Object.keys(sv.puz || {}).length, nPuz] : null;
       let got = 0, max = 0;
       for (const k in SURVEY_W) {
         if (!part[k]) continue;
@@ -49179,7 +49286,7 @@
       const meets = (k, v) => {
         const q = part[k];
         if (!q) return true;
-        if (k === "rooms" || k === "chests") return q[0] / q[1] >= v - 1e-9;
+        if (k === "rooms" || k === "chests" || k === "puz") return q[0] / q[1] >= v - 1e-9;
         if (k === "events" || k === "kinds" || k === "echo") return q[0] >= v;
         return q[0] >= 1;
       };
@@ -49195,7 +49302,7 @@
       const label = (k) => story && k === "boss" ? tr("석판") : SURVEY_LABEL[k];
       if (next) missing = Object.keys(next.need).filter((k) => !meets(k, next.need[k])).map((k) => {
         const v = next.need[k], q = part[k];
-        if (k === "rooms" || k === "chests") return tr("{label} {n}% (지금 {n2}%)", { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
+        if (k === "rooms" || k === "chests" || k === "puz") return tr("{label} {n}% (지금 {n2}%)", { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
         if (k === "events" || k === "kinds" || k === "echo") return tr("{label} {v} (지금 {q})", { label: label(k), v, q: q[0] });
         return label(k);
       });
@@ -49406,6 +49513,713 @@
   };
   mixin(Game.prototype, RuinPulsePart, true);
 
+  // src/game/game/ruin-puzzle.ts
+  var ruin_puzzle_exports = {};
+  __export(ruin_puzzle_exports, {
+    RuinPuzzlePart: () => RuinPuzzlePart,
+    beamExit: () => beamExit
+  });
+  var hash = (s) => {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+    return h >>> 0;
+  };
+  var lcg = (seed) => {
+    let s = seed || 1;
+    return () => (s = Math.imul(s, 1664525) + 1013904223 >>> 0) / 4294967296;
+  };
+  var BAR = /* @__PURE__ */ new Set(["tablet", "codedoor", "lair", "mystic"]);
+  function beamExit(st, cols) {
+    let c = 0, r = 0, dx = 1, dy = 0;
+    const path = [[-1, 0]];
+    for (let g = 0; g < 32; g++) {
+      if (c < 0) return { out: "l" + r, path };
+      if (c >= cols) return { out: "r" + r, path };
+      if (r < 0) return { out: "d" + c, path };
+      if (r > 1) return { out: "u" + c, path };
+      path.push([c, r]);
+      const m = st[r * cols + c];
+      if (m === 0) [dx, dy] = [dy, dx];
+      else if (m === 1) [dx, dy] = [-dy, -dx];
+      c += dx;
+      r += dy;
+    }
+    return { out: "?", path };
+  }
+  var RuinPuzzlePart = {
+    /** 그 유적의 봉인 방(방 번호) — 보스 홀 · 석판 · 비밀 문 · 신비한 방 · 문이 걸린 방 · 출입구가 너무 많은 방은 뺀다 */
+    puzzleRooms(site) {
+      const C = this._puzRooms || (this._puzRooms = {});
+      if (C[site.id]) return C[site.id];
+      const P = PUZZLE[site.id], w = this.world;
+      if (!P) return C[site.id] = [];
+      const cand = [];
+      site.rooms.forEach((r, i) => {
+        if (i === 0 || r.w < 10 || r.h < 8) return;
+        for (const o of w.objects) {
+          const ox = o.x / TS, oy = o.y / TS;
+          if (ox >= r.x - 1 && ox <= r.x + r.w && oy >= r.y - 1 && oy <= r.y + r.h && (BAR.has(o.type) || o.type === "door")) return;
+        }
+        const seal = this.puzzleSealCells(r);
+        if (!seal || seal.length < 2 || seal.length > 14 || !this.puzzleNodes(r, P)) return;
+        cand.push({ i, h: hash(w.seed + ":" + site.id + ":" + i) });
+      });
+      cand.sort((a, b) => a.h - b.h);
+      return C[site.id] = cand.slice(0, P.rooms).map((q) => q.i).sort((a, b) => a - b);
+    },
+    /** 막을 칸 — 방 둘레 바로 바깥 줄에서 트인 칸 가운데 방 안의 트인 칸과 맞닿은 것(옆방 홀을 가로지르지 않게) */
+    puzzleSealCells(r) {
+      const w = this.world, open = (x, y) => TILE_DEF[w.get(x, y)].solid !== 1;
+      const out = [];
+      const ring = [];
+      for (let x = r.x - 1; x <= r.x + r.w; x++) ring.push([x, r.y - 1, x, r.y], [x, r.y + r.h, x, r.y + r.h - 1]);
+      for (let y = r.y; y < r.y + r.h; y++) ring.push([r.x - 1, y, r.x, y], [r.x + r.w, y, r.x + r.w - 1, y]);
+      for (const [x, y, ix, iy] of ring) {
+        if (!open(x, y)) continue;
+        if (w.get(x, y) === T.BEDROCK) continue;
+        if (open(ix, iy)) out.push([x, y]);
+      }
+      return out;
+    },
+    /** 매 프레임 — 들어선 봉인 방을 닫고, 퍼즐을 굴린다(호스트 · 혼자). 참가자는 받은 상태로 그림만 */
+    updatePuzzle(dt) {
+      const guest = !!(this.net && this.net.role === "guest");
+      const pz = this.puzzle;
+      if (pz) {
+        if (pz.flash > 0) pz.flash -= dt;
+        if (guest) return;
+        this.puzzleTick(pz, dt);
+        return;
+      }
+      if (guest || this.pulseEvent || this.boss) return;
+      this._pzT = (this._pzT || 0) - dt;
+      if (this._pzT > 0) return;
+      this._pzT = 0.25;
+      for (const q of this.players) {
+        if (q.dead || q.hp <= 0) continue;
+        const tx = q.cx / TS, ty = q.cy / TS;
+        for (const site of this.world.ruinSites || []) {
+          if (tx < site.x - site.w || tx > site.x + site.w || ty < site.y - site.h || ty > site.y + site.h) continue;
+          const sv = this.surveyOf(site.id), done = sv.puz || {};
+          for (const i of this.puzzleRooms(site)) {
+            const r = site.rooms[i], key = site.id + ":" + i;
+            const inside = tx > r.x + 2 && tx < r.x + r.w - 2 && ty > r.y + 1.5 && ty < r.y + r.h - 1;
+            const cool = this._pzLeft || (this._pzLeft = {});
+            if (!inside) {
+              cool[key] = 1;
+              continue;
+            }
+            if (done[i] || cool[key] === 0) continue;
+            if (this.puzzleBegin(site, i)) {
+              cool[key] = 0;
+              return;
+            }
+          }
+        }
+      }
+    },
+    /** 닫는다 — 막을 칸에 몸이 걸린 플레이어가 있으면 다음에 */
+    puzzleBegin(site, ri) {
+      const P = PUZZLE[site.id], r = site.rooms[ri], w = this.world;
+      const cells = this.puzzleSealCells(r);
+      for (const q of this.players) for (const [x, y] of cells)
+        if (q.x < (x + 1) * TS && q.x + q.w > x * TS && q.y < (y + 1) * TS && q.y + q.h > y * TS) return false;
+      const nodes = this.puzzleNodes(r, P);
+      if (!nodes) return false;
+      const rnd = lcg(hash(w.seed + ":pz:" + site.id + ":" + ri + ":" + (this.surveyOf(site.id).pzTry || 0)));
+      const pz = { id: site.id, ri, k: P.k, skin: P.skin, c: P.c, n: P.n, nodes, t: 0, flash: 1, seal: [], step: 0, show: 0 };
+      this.puzzleSetup(pz, P, rnd);
+      for (const [x, y] of cells) {
+        pz.seal.push([x, y, w.get(x, y)]);
+        w.set(x, y, T.SEALSTONE);
+      }
+      this.puzzle = pz;
+      const sv = this.surveyOf(site.id);
+      sv.pzTry = (sv.pzTry || 0) + 1;
+      this.toast(tr("봉인 방 — {n}. {hint} · 장치는 우클릭", { n: P.n, hint: P.hint }), "bad");
+      this.sfx("chapter");
+      this.shake = Math.max(this.shake, 8);
+      for (const [x, y] of cells) for (let q = 0; q < 4; q++) this.parts.push(new Part(x * TS + TS / 2, y * TS + TS / 2, "#b8a8ff", -30, 0.7));
+      const spec = this.ruinSpec(site.id), pool = spec && spec.mobs || [];
+      pz.mobs = [];
+      if (pool.length) for (const side of [0, 1]) {
+        const n = nodes[side ? nodes.length - 1 : 0];
+        pz.mobs.push(this.evMob(pool[pool.length - 1], [Math.floor(n.x / TS) + (side ? 1 : -1), Math.floor(n.fy / TS) - 1]));
+      }
+      this.puzzleSync();
+      return true;
+    },
+    /** 장치 자리 — 방 바닥(가운데 줄에서 아래로 처음 막힌 칸 위)을 고르게 나눈다 */
+    puzzleNodes(r, P) {
+      const w = this.world, cnt = P.k === "mirror" ? P.cols : P.cnt;
+      const x0 = r.x + 2, x1 = r.x + r.w - 3, nodes = [];
+      const floor = (tx) => {
+        let fy = -1;
+        for (let y = r.y + 2; y < r.y + r.h + 1; y++) if (TILE_DEF[w.get(tx, y)].solid === 1 && TILE_DEF[w.get(tx, y - 1)].solid !== 1 && TILE_DEF[w.get(tx, y - 2)].solid !== 1) {
+          fy = y;
+          if (y > r.y + r.h / 2) break;
+        }
+        return fy;
+      };
+      for (let i = 0; i < cnt; i++) {
+        let tx = Math.round(x0 + (x1 - x0) * (cnt === 1 ? 0.5 : i / (cnt - 1))), fy = floor(tx);
+        for (let d = 1; fy < 0 && d <= 2; d++) for (const s of [tx - d, tx + d]) if (fy < 0 && s > r.x && s < r.x + r.w - 1 && floor(s) >= 0) {
+          tx = s;
+          fy = floor(s);
+        }
+        if (fy < 0) return null;
+        nodes.push({ x: tx * TS + TS / 2, y: fy * TS - TS * 1.4, fy: fy * TS, s: 0 });
+      }
+      if (P.k === "mirror") {
+        const base = Math.min(...nodes.map((n) => n.y));
+        for (const n of nodes) n.y = base;
+        for (let i = 0; i < cnt; i++) nodes.push({ x: nodes[i].x, y: base - TS * 4, fy: nodes[i].fy, s: 0 });
+      }
+      return nodes;
+    },
+    /** 처음 모양 — 풀린 모양에서 거꾸로 섞어 늘 풀 수 있게 한다 */
+    puzzleSetup(pz, P, rnd) {
+      const N = pz.nodes, n = N.length;
+      if (pz.k === "toggle") {
+        pz.rule = P.rule;
+        for (const v of N) v.s = 1;
+        do {
+          for (let g = 0; g < 3 + (rnd() * 3 | 0); g++) this.puzzlePress(pz, rnd() * n | 0, true);
+        } while (N.every((v) => v.s === 1));
+      } else if (pz.k === "dial") {
+        pz.m = P.m;
+        for (const v of N) v.s = v.tgt = rnd() * P.m | 0;
+        do {
+          for (let g = 0; g < 3 + (rnd() * 3 | 0); g++) {
+            const i = rnd() * n | 0;
+            N[i].s = (N[i].s + P.m - 1) % P.m;
+            if (i + 1 < n) N[i + 1].s = (N[i + 1].s + P.m - 1) % P.m;
+          }
+        } while (N.every((v) => v.s === v.tgt));
+      } else if (pz.k === "simon") {
+        pz.seq = [];
+        for (let i = 0; i < P.len; i++) pz.seq.push(rnd() * n | 0);
+        this.puzzleShow(pz);
+      } else if (pz.k === "mirror") {
+        pz.cols = P.cols;
+        const sol = N.map(() => rnd() * 3 | 0);
+        let out = beamExit(sol, P.cols).out, g = 0, g2 = 0;
+        while ((out === "l0" || out === "?") && g++ < 40) {
+          sol[rnd() * n | 0] = rnd() * 3 | 0;
+          out = beamExit(sol, P.cols).out;
+        }
+        pz.tgt = out;
+        for (const v of N) v.s = rnd() * 3 | 0;
+        while (beamExit(N.map((v) => v.s), P.cols).out === out && g2++ < 80) N[rnd() * n | 0].s = rnd() * 3 | 0;
+      } else if (pz.k === "bloom") {
+        for (const v of N) {
+          v.per = 2.4 + rnd() * 1.4;
+          v.ph = rnd();
+          v.s = 0;
+        }
+      }
+    },
+    /** 누르기 — 갈래마다 하는 일(quiet: 섞을 때) */
+    puzzlePress(pz, i, quiet) {
+      const N = pz.nodes, n = N.length, flip = (j) => {
+        if (j >= 0 && j < n) N[j].s ^= 1;
+      };
+      if (pz.k === "toggle") {
+        if (pz.rule === "adj") {
+          flip(i - 1);
+          flip(i);
+          flip(i + 1);
+        } else {
+          flip(i);
+          if (n - 1 - i !== i) flip(n - 1 - i);
+          flip(i + 1 < n ? i + 1 : 0);
+        }
+      } else if (pz.k === "dial") {
+        N[i].s = (N[i].s + 1) % pz.m;
+        if (i + 1 < n) N[i + 1].s = (N[i + 1].s + 1) % pz.m;
+      } else if (pz.k === "mirror") {
+        N[i].s = (N[i].s + 1) % 3;
+      } else if (pz.k === "simon") {
+        if (pz.show > 0) return;
+        if (pz.seq[pz.step] === i) pz.step++;
+        else {
+          this.puzzleShow(pz);
+          this.puzzleMistake(pz);
+        }
+      } else if (pz.k === "bloom") {
+        if (N[i].s) return;
+        if (this.puzzleOpen(N[i], pz.t)) N[i].s = 1;
+        else {
+          for (const v of N) v.s = 0;
+          this.puzzleMistake(pz);
+        }
+      }
+      if (quiet) return;
+      N[i].hit = 0.35;
+      this.sfx("coin");
+      for (let q = 0; q < 8; q++) this.parts.push(new Part(N[i].x, N[i].y, pz.c, -40, 0.5));
+    },
+    /** simon — 처음부터 다시 보여 준다(숨 돌릴 1초 + 0.65초마다 하나) */
+    puzzleShow(pz) {
+      pz.step = 0;
+      pz.show = pz.showMax = 1 + pz.seq.length * 0.65;
+      pz.shown = -1;
+    },
+    puzzleOpen(v, t) {
+      return (t / v.per + v.ph) % 1 < 0.38;
+    },
+    /** 틀렸다 — 몹 하나 더(살아 있는 것이 넷 아래일 때) · 포자 갈래는 포자가 터진다 */
+    puzzleMistake(pz) {
+      this.sfx("mine");
+      this.shake = Math.max(this.shake, 5);
+      const spec = this.ruinSpec(pz.id), pool = spec && spec.mobs || [];
+      pz.mobs = (pz.mobs || []).filter((e) => !e.dead);
+      if (pool.length && pz.mobs.length < 4) {
+        const n = pz.nodes[Math.random() * pz.nodes.length | 0];
+        pz.mobs.push(this.evMob(pool[Math.random() * pool.length | 0], [Math.floor(n.x / TS), Math.floor(n.fy / TS) - 1]));
+      }
+      if (pz.k === "bloom") this.ruinSpore = Math.max(this.ruinSpore || 0, 3);
+    },
+    puzzleSolved(pz) {
+      const N = pz.nodes;
+      if (pz.k === "toggle") return N.every((v) => v.s === 1);
+      if (pz.k === "dial") return N.every((v) => v.s === v.tgt);
+      if (pz.k === "simon") return pz.step >= pz.seq.length;
+      if (pz.k === "mirror") return beamExit(N.map((v) => v.s), pz.cols).out === pz.tgt;
+      if (pz.k === "bloom") return N.every((v) => v.s === 1);
+      return false;
+    },
+    puzzleTick(pz, dt) {
+      pz.t += dt;
+      for (const v of pz.nodes) if (v.hit > 0) v.hit -= dt;
+      if (pz.k === "simon" && pz.show > 0) {
+        pz.show = Math.max(0, pz.show - dt);
+        const i = Math.floor((pz.showMax - pz.show - 1) / 0.65);
+        if (i !== pz.shown && i >= 0 && i < pz.seq.length) {
+          pz.shown = i;
+          pz.nodes[pz.seq[i]].hit = 0.5;
+          this.sfx("coin");
+          this.puzzleSync();
+        }
+      }
+      const away = this.players.every((q) => {
+        const site = this.evSite(pz.id), r = site && site.rooms[pz.ri];
+        return !r || q.dead || Math.abs(q.cx / TS - (r.x + r.w / 2)) > r.w || Math.abs(q.cy / TS - (r.y + r.h / 2)) > r.h;
+      });
+      if (away) {
+        this.puzzleEnd(false, true);
+        return;
+      }
+      if (this.puzzleSolved(pz)) {
+        this.puzzleEnd(true);
+        return;
+      }
+      if (pz.t > PUZZLE_GIVEUP) {
+        this.puzzleEnd(false);
+        return;
+      }
+      this._pzSync = (this._pzSync || 0) - dt;
+      if (this._pzSync <= 0) {
+        this._pzSync = 0.5;
+        this.puzzleSync();
+      }
+    },
+    /** 우클릭 — 커서 밑 장치를 누른다(손 닿는 거리 안). 참가자는 호스트에게 보낸다 */
+    puzzleClick(wx, wy) {
+      const pz = this.puzzle;
+      if (!pz) return false;
+      const p = this.me;
+      let best = -1, bd = 30;
+      pz.nodes.forEach((v2, i) => {
+        const d = Math.hypot(v2.x - wx, v2.y - wy);
+        if (d < bd) {
+          bd = d;
+          best = i;
+        }
+      });
+      if (best < 0) return false;
+      const v = pz.nodes[best];
+      if (Math.hypot(v.x - p.cx, v.y - p.cy) > TS * 7) {
+        this.toast(tr("너무 멀다"));
+        return true;
+      }
+      if (this.net && this.net.role === "guest") {
+        this.netBroadcast({ k: "puzc", i: best });
+        v.hit = 0.35;
+        return true;
+      }
+      this.puzzlePress(pz, best);
+      this.puzzleSync();
+      return true;
+    },
+    /** 끝 — 봉인을 거두고(놓기 전 칸으로), 풀었으면 상 */
+    puzzleEnd(ok, quiet) {
+      const pz = this.puzzle;
+      if (!pz) return;
+      this.puzzle = null;
+      const w = this.world;
+      for (const [x, y, t] of pz.seal) if (w.get(x, y) === T.SEALSTONE) w.set(x, y, t);
+      for (const [x, y] of pz.seal) for (let q = 0; q < 5; q++) this.parts.push(new Part(x * TS + TS / 2, y * TS + TS / 2, "#b8a8ff", -60, 0.8));
+      this.puzzleSync(ok ? "ok" : "fail");
+      if (quiet) return;
+      if (!ok) {
+        this.toast(tr("봉인이 지쳐 풀렸다 — {n}", { n: pz.n }), "bad");
+        return;
+      }
+      const sv = this.surveyOf(pz.id);
+      (sv.puz = sv.puz || {})[pz.ri] = 1;
+      this.puzzleReward(pz);
+      const site = this.evSite(pz.id), r = site && site.rooms[pz.ri];
+      if (r) {
+        const mid = pz.nodes[pz.nodes.length >> 1];
+        this.evChest(Math.floor(mid.x / TS), Math.floor(mid.fy / TS), 0, this.ruinSpec(pz.id) || {});
+      }
+      this.checkSurvey(pz.id);
+    },
+    /** 상 — 금화 · 경험치(레벨 곡선을 따른다). 참가자는 'ok' 를 받고 제 몫을 스스로 받는다 */
+    puzzleReward(pz) {
+      const p = this.me, spec = this.ruinSpec(pz.id), rank = spec && spec.rank || 3;
+      const gold = 90 * rank;
+      p.gold += gold;
+      p.addXp(Math.round(p.xpNext * 0.12));
+      this.toast(tr("봉인 방 — {n} 풀었다 · 금화 {gold}", { n: pz.n, gold: fmt(gold) }), "good");
+      this.sfx("chapter");
+      this.stageFx && this.stageFx("s_warcry");
+      UI5.refreshBag();
+    },
+    /* ---- 여럿이 — 호스트가 상태를 보내고 참가자는 누른 것을 보낸다 ---- */
+    puzzleSync(end) {
+      if (!this.net || this.net.role === "guest") return;
+      const pz = this.puzzle;
+      if (end) {
+        this.netBroadcast({ k: "puz", end });
+        return;
+      }
+      if (!pz) return;
+      this.netBroadcast({ k: "puz", s: {
+        id: pz.id,
+        ri: pz.ri,
+        k: pz.k,
+        skin: pz.skin,
+        c: pz.c,
+        n: pz.n,
+        t: pz.t,
+        step: pz.step,
+        show: pz.show,
+        tgt: pz.tgt,
+        cols: pz.cols,
+        m: pz.m,
+        seq: pz.k === "simon" ? pz.seq : void 0,
+        nodes: pz.nodes.map((v) => ({ x: v.x, y: v.y, fy: v.fy, s: v.s, tgt: v.tgt, per: v.per, ph: v.ph, hit: v.hit || 0 }))
+      } });
+    },
+    /** 참가자 — 호스트가 보낸 상태 */
+    netPuzzle(m) {
+      if (m.end) {
+        if (m.end === "ok" && this.puzzle) this.puzzleReward(this.puzzle);
+        this.puzzle = null;
+        return;
+      }
+      const fresh = !this.puzzle;
+      this.puzzle = Object.assign(this.puzzle || { flash: 1 }, m.s);
+      if (fresh) {
+        const P = PUZZLE[m.s.id];
+        if (P) this.toast(tr("봉인 방 — {n}. {hint} · 장치는 우클릭", { n: P.n, hint: P.hint }), "bad");
+      }
+    },
+    /** 호스트 — 참가자가 누른 장치 */
+    netPuzzleClick(m) {
+      const pz = this.puzzle;
+      if (!pz || !(m.i >= 0 && m.i < pz.nodes.length)) return;
+      this.puzzlePress(pz, m.i);
+      this.puzzleSync();
+    },
+    /** 저장 — 봉인석을 놓기 전 칸으로 잠깐 되돌려 세계를 적는다(봉인은 저장되지 않는다 — 불러오면 열린 방).
+        ★ set() 을 거치지 않는다: 같은 줄에서 되돌려 놓으므로 빛 · 지도 · 물이 그 사이를 모른다 */
+    withoutSeal(fn) {
+      const pz = this.puzzle, w = this.world;
+      if (!pz || !pz.seal) return fn();
+      const { WW: WW2 } = w.dims, keep = [];
+      for (const [x, y, t] of pz.seal) {
+        const k = y * WW2 + x;
+        keep.push(w.tiles[k]);
+        w.tiles[k] = t;
+      }
+      try {
+        return fn();
+      } finally {
+        pz.seal.forEach(([x, y], i) => {
+          w.tiles[y * WW2 + x] = keep[i];
+        });
+      }
+    }
+  };
+  mixin(Game.prototype, RuinPuzzlePart, true);
+
+  // src/game/game/ruin-puzzle-draw.ts
+  var ruin_puzzle_draw_exports = {};
+  __export(ruin_puzzle_draw_exports, {
+    RuinPuzzleDrawPart: () => RuinPuzzleDrawPart
+  });
+  var TAU3 = Math.PI * 2;
+  var RuinPuzzleDrawPart = {
+    /** 세계 위 — 장치마다 빛 · 모양. 켜진 것은 빛깔로, 꺼진 것은 어둡게 */
+    drawPuzzle(c) {
+      const pz = this.puzzle;
+      if (!pz || !pz.nodes) return;
+      const cx0 = this.cam.x, cy0 = this.cam.y, t = this.time || 0;
+      c.save();
+      if (pz.k === "mirror") this.drawPuzzleBeam(c, pz, cx0, cy0, t);
+      pz.nodes.forEach((v, i) => {
+        const x = v.x - cx0, y = v.y - cy0, hit = Math.max(0, v.hit || 0);
+        const lit = pz.k === "toggle" || pz.k === "bloom" ? v.s === 1 : pz.k === "dial" ? v.s === v.tgt : hit > 0;
+        const open = pz.k === "bloom" && (pz.t / v.per + v.ph) % 1 < 0.38;
+        const glow = (lit ? 1 : 0.25) + hit * 1.6 + (open ? 0.5 : 0);
+        const im = Sprites.vfxArt("mote", pz.c);
+        if (im) {
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = Math.min(1, glow * 0.7);
+          const R = 34 + hit * 30;
+          c.drawImage(im, x - R, y - R, R * 2, R * 2);
+          c.globalCompositeOperation = "source-over";
+        }
+        c.globalAlpha = 1;
+        c.save();
+        c.translate(x, y);
+        c.scale(1.4, 1.4);
+        this.drawPuzzleNode(c, pz, v, 0, 0, lit, open, hit, t, i);
+        c.restore();
+        c.strokeStyle = "rgba(0,0,0,0.35)";
+        c.lineWidth = 1;
+        c.beginPath();
+        c.moveTo(x, y + 12);
+        c.lineTo(x, v.fy - cy0);
+        c.stroke();
+      });
+      c.restore();
+    },
+    drawPuzzleNode(c, pz, v, x, y, lit, open, hit, t, i) {
+      const col = pz.c, dark = "#2a2632", k = pz.skin;
+      c.lineWidth = 2;
+      c.strokeStyle = "#141018";
+      if (k === "crystal") {
+        c.fillStyle = lit ? col : "#4a5868";
+        c.beginPath();
+        c.moveTo(x, y - 14);
+        c.lineTo(x + 8, y - 2);
+        c.lineTo(x + 5, y + 11);
+        c.lineTo(x - 5, y + 11);
+        c.lineTo(x - 8, y - 2);
+        c.closePath();
+        c.fill();
+        c.stroke();
+        c.fillStyle = lit ? "#ffffff" : "#7a8898";
+        c.globalAlpha = 0.7;
+        c.beginPath();
+        c.moveTo(x, y - 12);
+        c.lineTo(x + 3, y - 2);
+        c.lineTo(x, y + 8);
+        c.closePath();
+        c.fill();
+        c.globalAlpha = 1;
+      } else if (k === "lamp") {
+        c.fillStyle = "#3a2a1c";
+        c.fillRect(x - 7, y - 12, 14, 3);
+        c.fillRect(x - 6, y + 8, 12, 3);
+        c.fillStyle = lit ? "rgba(255,200,110,0.55)" : "rgba(60,50,40,0.6)";
+        c.fillRect(x - 6, y - 9, 12, 17);
+        c.strokeRect(x - 6, y - 9, 12, 17);
+        if (lit) {
+          const f = 1 + Math.sin(t * 14 + i) * 0.15;
+          c.fillStyle = "#fff0b0";
+          c.beginPath();
+          c.ellipse(x, y + 1, 2.5 * f, 5 * f, 0, 0, TAU3);
+          c.fill();
+        }
+      } else if (k === "mirror") {
+        c.fillStyle = dark;
+        c.beginPath();
+        c.arc(x, y, 9, 0, TAU3);
+        c.fill();
+        c.stroke();
+        c.strokeStyle = v.s === 2 ? "#6a6058" : "#fff6d8";
+        c.lineWidth = 3;
+        c.beginPath();
+        if (v.s === 0) {
+          c.moveTo(x - 7, y + 7);
+          c.lineTo(x + 7, y - 7);
+        } else if (v.s === 1) {
+          c.moveTo(x - 7, y - 7);
+          c.lineTo(x + 7, y + 7);
+        } else {
+          c.arc(x, y, 2, 0, TAU3);
+        }
+        c.stroke();
+      } else if (k === "cap") {
+        const up = open ? 1 : 0.55, w = 10 + up * 4;
+        c.fillStyle = "#d8d0b8";
+        c.fillRect(x - 2, y - 2, 4, 13);
+        c.fillStyle = lit ? col : open ? "#8fc860" : "#4a5a38";
+        c.beginPath();
+        c.ellipse(x, y - 2 - up * 4, w, 6 + up * 3, 0, Math.PI, 0);
+        c.closePath();
+        c.fill();
+        c.stroke();
+        c.fillStyle = "rgba(255,255,255,0.5)";
+        for (let q = -1; q <= 1; q++) {
+          c.beginPath();
+          c.arc(x + q * 5, y - 5 - up * 5, 1.5, 0, TAU3);
+          c.fill();
+        }
+      } else if (k === "heart") {
+        const b = 1 + (hit > 0 ? 0.35 * hit / 0.5 : 0.05 * Math.sin(t * 6 + i));
+        c.fillStyle = hit > 0 ? "#ffd0d8" : "#8a2a3a";
+        c.beginPath();
+        c.moveTo(x, y + 10 * b);
+        c.bezierCurveTo(x - 14 * b, y, x - 10 * b, y - 12 * b, x, y - 5 * b);
+        c.bezierCurveTo(x + 10 * b, y - 12 * b, x + 14 * b, y, x, y + 10 * b);
+        c.fill();
+        c.stroke();
+        c.strokeStyle = "rgba(40,10,20,0.6)";
+        c.beginPath();
+        c.moveTo(x - 3, y - 4);
+        c.quadraticCurveTo(x + 2, y + 1, x - 1, y + 6);
+        c.stroke();
+      } else if (k === "valve") {
+        const a = v.s / (pz.m || 3) * TAU3;
+        c.strokeStyle = lit ? col : "#7a8a98";
+        c.lineWidth = 3;
+        c.beginPath();
+        c.arc(x, y, 10, 0, TAU3);
+        c.stroke();
+        for (let q = 0; q < 3; q++) {
+          const aa = a + q * TAU3 / 3;
+          c.beginPath();
+          c.moveTo(x, y);
+          c.lineTo(x + Math.cos(aa) * 10, y + Math.sin(aa) * 10);
+          c.stroke();
+        }
+        c.fillStyle = lit ? "#ffffff" : "#c8d8e8";
+        c.beginPath();
+        c.arc(x + Math.cos(a - Math.PI / 2) * 10, y + Math.sin(a - Math.PI / 2) * 10, 2.5, 0, TAU3);
+        c.fill();
+        for (let q = 0; q < (pz.m || 3); q++) {
+          c.fillStyle = q === v.tgt ? col : "rgba(200,220,240,0.3)";
+          c.fillRect(x - 9 + q * 7, y - 22, 5, 4);
+        }
+        c.fillStyle = "rgba(255,255,255,0.8)";
+        c.fillRect(x - 9 + v.s * 7 + 1, y - 17, 3, 2);
+      } else {
+        c.fillStyle = hit > 0 ? "#3a3050" : dark;
+        c.fillRect(x - 9, y - 12, 18, 24);
+        c.strokeRect(x - 9, y - 12, 18, 24);
+        c.strokeStyle = hit > 0 ? "#ffffff" : col;
+        c.lineWidth = 2;
+        c.beginPath();
+        if (i % 5 === 0) {
+          c.moveTo(x - 4, y - 6);
+          c.lineTo(x + 4, y + 6);
+          c.moveTo(x + 4, y - 6);
+          c.lineTo(x - 4, y + 6);
+        } else if (i % 5 === 1) {
+          c.arc(x, y, 5, 0, TAU3);
+          c.moveTo(x, y - 8);
+          c.lineTo(x, y + 8);
+        } else if (i % 5 === 2) {
+          c.moveTo(x - 5, y + 6);
+          c.lineTo(x, y - 7);
+          c.lineTo(x + 5, y + 6);
+          c.closePath();
+        } else if (i % 5 === 3) {
+          c.moveTo(x - 5, y - 5);
+          c.lineTo(x + 5, y - 5);
+          c.lineTo(x - 5, y + 5);
+          c.lineTo(x + 5, y + 5);
+        } else {
+          c.moveTo(x, y - 7);
+          c.lineTo(x + 6, y);
+          c.lineTo(x, y + 7);
+          c.lineTo(x - 6, y);
+          c.closePath();
+        }
+        c.stroke();
+      }
+    },
+    /** 거울 — 들어오는 해(왼쪽 아래) · 지금 빛줄기 · 이어야 할 태양 문장 */
+    drawPuzzleBeam(c, pz, cx0, cy0, t) {
+      const N = pz.nodes, cols = pz.cols, gap = cols > 1 ? N[1].x - N[0].x : 48, dy = N[0].y - N[cols].y;
+      const at = (cc, r) => [N[0].x + cc * gap - cx0, N[0].y - r * dy - cy0];
+      const { out, path } = beamExit(N.map((v) => v.s), cols);
+      const exitPt = (o) => {
+        const s = o[0], n = +o.slice(1);
+        if (s === "u") return at(n, 1.8);
+        if (s === "d") return at(n, -0.8);
+        if (s === "r") return at(cols - 0.2, n);
+        return at(-0.8, n);
+      };
+      const src = at(-0.8, 0), tg = exitPt(pz.tgt);
+      const sig = Sprites.vfxArt("sigil", pz.c), im = Sprites.vfxArt("flare", "#ffe08a");
+      c.globalCompositeOperation = "lighter";
+      if (sig) {
+        c.globalAlpha = 0.85;
+        c.save();
+        c.translate(tg[0], tg[1]);
+        c.rotate(t * 0.6);
+        c.drawImage(sig, -22, -22, 44, 44);
+        c.restore();
+      }
+      if (im) {
+        c.globalAlpha = 0.9;
+        c.drawImage(im, src[0] - 22, src[1] - 22, 44, 44);
+      }
+      const pts = [src, ...path.slice(1).map(([cc, r]) => at(cc, r)), exitPt(out)];
+      for (const [lw, a] of [[9, 0.25], [3, 0.9]]) {
+        c.globalAlpha = a * (0.85 + 0.15 * Math.sin(t * 9));
+        c.strokeStyle = lw > 5 ? pz.c : "#fffbe8";
+        c.lineWidth = lw;
+        c.lineCap = "round";
+        c.beginPath();
+        pts.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]));
+        c.stroke();
+      }
+      c.globalCompositeOperation = "source-over";
+      c.globalAlpha = 1;
+    },
+    /** 화면 위 — 이름 · 진행 · 봉인이 풀릴 때까지 */
+    drawPuzzleHud(c) {
+      const pz = this.puzzle;
+      if (!pz || !pz.nodes) return;
+      const W = 300, x = (this.W - W) / 2, y = 64;
+      let prog = "";
+      if (pz.k === "toggle" || pz.k === "bloom") prog = `${pz.nodes.filter((v) => v.s === 1).length}/${pz.nodes.length}`;
+      else if (pz.k === "dial") prog = `${pz.nodes.filter((v) => v.s === v.tgt).length}/${pz.nodes.length}`;
+      else if (pz.k === "simon") prog = pz.show > 0 ? tr("보아라…") : `${pz.step}/${pz.seq ? pz.seq.length : 0}`;
+      else prog = tr("빛을 이어라");
+      c.save();
+      c.fillStyle = "rgba(12,9,16,0.75)";
+      c.fillRect(x, y, W, 26);
+      c.strokeStyle = pz.c;
+      c.globalAlpha = 0.6;
+      c.strokeRect(x + 0.5, y + 0.5, W - 1, 25);
+      c.globalAlpha = 1;
+      c.font = "12px " + FONT;
+      c.textBaseline = "middle";
+      c.textAlign = "left";
+      c.fillStyle = pz.c;
+      c.fillText(tr("봉인 방") + " · " + pz.n, x + 9, y + 11);
+      c.textAlign = "right";
+      c.fillStyle = "#e8dcc0";
+      c.fillText(prog, x + W - 9, y + 11);
+      const left = Math.max(0, 1 - pz.t / PUZZLE_GIVEUP);
+      c.fillStyle = "rgba(255,255,255,0.1)";
+      c.fillRect(x + 8, y + 21, W - 16, 2);
+      c.fillStyle = "#b8a8ff";
+      c.fillRect(x + 8, y + 21, (W - 16) * left, 2);
+      c.restore();
+    }
+  };
+  mixin(Game.prototype, RuinPuzzleDrawPart, true);
+
   // src/game/game/minimap.ts
   var minimap_exports = {};
   __export(minimap_exports, {
@@ -49543,8 +50357,10 @@
       this.pipe.add("lighting", (f) => this.drawStageDim(f));
       this.pipe.add("fx", (f) => this.rFx(f));
       this.pipe.add("fx", (f) => this.rUtil(f));
+      this.pipe.add("fx", (f) => this.drawPuzzle(f.c));
       this.pipe.add("screen", (f) => this.rScreen(f));
       this.pipe.add("screen", (f) => this.drawStage(f));
+      this.pipe.add("screen", (f) => this.drawPuzzleHud(f.c));
       this.pipe.add("screen", (f) => this.fade.draw(f.c, this.W, this.H));
       this.pipe.add("screen", (f) => {
         if (!this.perf.on) return;
@@ -52676,10 +53492,24 @@
           give("drum_pulse", 4);
           give("pulse_shard", 3);
           give("potion_hp", 20);
-          const r = site.rooms.slice().sort((a, b) => a.y - b.y)[0];
-          p.x = (r.x + (r.w >> 1)) * TS;
-          p.y = (r.y + r.h - 3) * TS - p.h + TS;
-          p.vx = p.vy = 0;
+          let r = site.rooms.slice().sort((a, b) => a.y - b.y)[0];
+          const pzr = qs.get("puz") ? this.puzzleRooms(site)[(+qs.get("puz") || 1) - 1] : void 0;
+          if (pzr !== void 0) {
+            r = site.rooms[pzr];
+            const tx = r.x + (r.w >> 1);
+            let fy = r.y + r.h - 2;
+            for (let y = r.y + 2; y < r.y + r.h; y++) if (w.solid(tx, y) && !w.solid(tx, y - 1)) {
+              fy = y;
+              if (y > r.y + r.h / 2) break;
+            }
+            p.x = tx * TS;
+            p.y = fy * TS - p.h;
+            p.vx = p.vy = 0;
+          } else {
+            p.x = (r.x + (r.w >> 1)) * TS;
+            p.y = (r.y + r.h - 3) * TS - p.h + TS;
+            p.vx = p.vy = 0;
+          }
           this.seenRuins[id] = 1;
           if (qs.get("boss") === "1" && idx >= 0) this.lairs[idx] = 1;
           this.ruinPulse = { [id]: clamp(+qs.get("pulse") || 0, 0, 100) };
@@ -54321,6 +55151,8 @@
       } else if ((m.k === "oadd" || m.k === "odel" || m.k === "ost") && peer.rp) {
         this.netPutObj(m);
         this.netBroadcast(m, peer);
+      } else if (m.k === "puzc" && peer.rp) {
+        this.netPuzzleClick(m);
       } else if (m.k === "door" && peer.rp) {
         this.netPutDoor(m);
         for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, "rel", m);
@@ -54482,6 +55314,8 @@
         this.netPutKill(m);
       } else if (m.k === "tiles") {
         this.netPutTiles(m.l, false);
+      } else if (m.k === "puz") {
+        this.netPuzzle(m);
       } else if (m.k === "door") {
         this.netPutDoor(m);
       } else if (m.k === "oadd" || m.k === "odel" || m.k === "ost") {
@@ -55225,7 +56059,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

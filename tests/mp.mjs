@@ -335,6 +335,23 @@ await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null
 const back2 = await g2.evaluate(() => [G.me.gold, Math.round(G.me.x)]);
 check(rec2 && rec2[0] === 777 && rec2[2] && back2[0] === 777 && Math.abs(back2[1] - left2[1]) < 3 * 22,
   `다시 온 손님: 호스트 세계가 캐릭터·자리를 기억(금화 ${rec2 && rec2[0]}) → 다시 들어오면 그대로(금화 ${back2[0]} · x ${left2[1]}→${back2[1]}) · 호스트가 다시 저장하지 않아도 호스트 슬롯에 남는다`);
+/* 봉인 방 — 호스트가 닫고 판정하고, 참가자는 상태를 받아 그리며 누른 것을 보낸다 */
+const pzHost = await host.evaluate(() => {
+  const site = G.evSite('ice'), ri = G.puzzleRooms(site)[0], r = site.rooms[ri];
+  G.me.x = (r.x + (r.w >> 1)) * TS; G.me.y = (r.y + 2) * TS; G.me.vx = G.me.vy = 0;
+  return G.puzzleBegin(site, ri) ? G.puzzle.seal.map(([x, y]) => [x, y]) : null;
+});
+await g2.waitForTimeout(1500);
+const pzGuest = await g2.evaluate(cells => [!!(G.puzzle && G.puzzle.nodes && G.puzzle.nodes.length), cells.every(([x, y]) => G.world.get(x, y) === T.SEALSTONE)], pzHost || []);
+const pzS0 = await host.evaluate(() => G.puzzle.nodes.map(v => v.s).join(''));
+await g2.evaluate(() => G.netBroadcast({ k: 'puzc', i: 0 }));
+await host.waitForTimeout(1200);
+const pzS1 = await host.evaluate(() => G.puzzle.nodes.map(v => v.s).join(''));
+await host.evaluate(() => G.puzzleEnd(true));
+await g2.waitForTimeout(1500);
+const pzEnd = await g2.evaluate(cells => [!G.puzzle, cells.every(([x, y]) => G.world.get(x, y) !== T.SEALSTONE)], pzHost || []);
+check(pzHost && pzGuest[0] && pzGuest[1] && pzS1 !== pzS0 && pzEnd[0] && pzEnd[1],
+  `봉인 방: 호스트가 닫은 봉인 · 퍼즐이 참가자에게(${pzGuest}) · 참가자가 누른 장치가 호스트에서 바뀐다(${pzS0}→${pzS1}) · 풀면 양쪽 다 열린다(${pzEnd})`);
 await host.evaluate(() => G.mpClose());
 await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 }).catch(() => {});
 const closed = await Promise.all([g2.evaluate(() => [!G.net, G.state]), host.evaluate(() => [!G.net, G.players.length, G.state])]);
