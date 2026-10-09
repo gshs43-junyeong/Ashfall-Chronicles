@@ -110,7 +110,7 @@ export const SavePart: Bag = {
     const p = this.player;
     const data: Bag = {
       v: SAVE_VERSION, name: p.name, savedAt: Date.now(), mode: this.mode,
-      world: this.world.serialize(), chapter: this.chapter, dayT: this.dayT,
+      world: this.withoutSeal(() => this.world.serialize()), chapter: this.chapter, dayT: this.dayT,
       talked: this.talked, crafted: this.crafted,
       talkSeq: this.talkSeq, storyHeard: this.storyHeard, villageSeen: this.villageSeen,
       sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
@@ -240,7 +240,8 @@ export const SavePart: Bag = {
       this.tally = d.tally || {};
       if (this.villageUnlocked && !this.bounties.length) this.rollBounties();
       this.ents = []; this.corpses = []; this.projs = []; this.parts = []; this.texts = []; this.drops = []; this.tweens.clear(); this.boss = null;
-      this.shapes.clear(); this.vfx.clear(); this.trail.clear(); this.sigs = []; this.edge = null;
+      this.shapes.clear(); this.vfx.clear(); this.trail.clear(); this.sigs = []; this.edge = null; this.stage = null;
+      this.puzzle = null; this._puzRooms = null; this._pzLeft = null;
       this.guardCd = 0; this.facTimer = 0; this.cropTimer = 0;   // 새로 시작할 때 남아 있던 대기 시간을 지운다
       // 카메라를 저장된 위치로 바로 맞춘다 — 안 하면 (0,0) 근처에서 훅 팬 되는 게 첫 프레임에 보인다
       this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);

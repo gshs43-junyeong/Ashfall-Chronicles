@@ -264,6 +264,7 @@ export const LifePart: Bag = {
     /* ★ 깨워 둔 둥지·메아리 표시도 같이 지운다. */
     this.pendingLair = null; this.pendingEcho = null;
     if (this.pulseEvent) this.endPulseEvent(false);   // 쓰러지면 사건도 놓친 것이다
+    if (this.puzzle && !this.net) this.puzzleEnd(false, true);   // 봉인도 풀린다 — 여럿이면 남은 사람이 다 나갈 때(puzzleTick)
     this.rocks = [];
     $('#death-screen').classList.remove('open');
     this.scenes.close('death'); this.scenes.close('mdeath');

@@ -249,16 +249,42 @@ export const PULSE_RAGE: Bag = {
 };
 
 /* ---------------- 탐사 기록 ---------------- */
-export const SURVEY_W: Record<string, number> = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12 };
+export const SURVEY_W: Record<string, number> = { rooms: 30, chests: 15, lore: 8, boss: 12, code: 5, rage: 6, events: 12, echo: 12, puz: 12 };
 export const SURVEY_TIERS: { r: string; c: string; need: Record<string, number> }[] = [
-  { r: 'S', c: '#ffd24a', need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 2, echo: 3 } },
-  { r: 'A', c: '#e8a0ff', need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 1, echo: 1 } },
+  { r: 'S', c: '#ffd24a', need: { rooms: 1, chests: 1, boss: 1, lore: 1, code: 1, rage: 1, events: 5, kinds: 2, echo: 3, puz: 1 } },
+  { r: 'A', c: '#e8a0ff', need: { rooms: 0.9, chests: 0.8, boss: 1, lore: 1, rage: 1, events: 3, kinds: 1, echo: 1, puz: 0.5 } },
   { r: 'B', c: '#8fd0ff', need: { rooms: 0.65, chests: 0.5, boss: 1, events: 1 } },
   { r: 'C', c: '#9fdc8f', need: { rooms: 0.35, chests: 0.2 } },
   { r: 'D', c: '#9a9a9a', need: {} }
 ];
 export const SURVEY_LABEL: Record<string, string> = { rooms: '방', chests: '상자', boss: '주인', lore: '비문', code: '골방', rage: '격노',
-                       events: '사건', kinds: '사건 갈래', echo: '메아리' };
+                       events: '사건', kinds: '사건 갈래', echo: '메아리', puz: '봉인 방' };
+
+/* ---------------- 봉인 방(갇힌 방 퍼즐 — game/ruin-puzzle) ----------------
+   방에 들어서면 출입구가 봉인석으로 막히고, 유적마다 제 퍼즐을 풀어야 열린다. k: 퍼즐 갈래 · n: 장치 수 · rule · m: 갈래별 변수 ·
+   skin: 그림 · c: 빛깔 · rooms: 유적 하나의 봉인 방 수. 방은 세계 씨앗에서 정해지고(난수를 뽑지 않는다) 푼 방은 탐사 기록(survey.puz)에 남는다 */
+export const PUZZLE: Record<string, Bag> = {
+  ice:     { n: '얼어붙은 수정', k: 'toggle', rule: 'mirror', cnt: 5, skin: 'crystal', c: '#9fe0ff', rooms: 3,
+             hint: '수정을 건드리면 맞은편 수정과 옆 수정이 같이 녹는다 — 다섯을 모두 밝혀라' },
+  mine:    { n: '꺼진 갱도 등불', k: 'toggle', rule: 'adj', cnt: 5, skin: 'lamp', c: '#ffc070', rooms: 3,
+             hint: '등불 하나를 켜면 양옆 등불이 뒤집힌다 — 모두 밝혀라' },
+  pyramid: { n: '해의 거울', k: 'mirror', cols: 4, skin: 'mirror', c: '#ffe08a', rooms: 3,
+             hint: '거울을 돌려 빛줄기를 태양 문장까지 이어라' },
+  spore:   { n: '숨 쉬는 갓', k: 'bloom', cnt: 4, skin: 'cap', c: '#bff07a', rooms: 3,
+             hint: '갓이 활짝 열렸을 때만 건드려라 — 닫힌 갓을 건드리면 포자가 터진다' },
+  blight:  { n: '고동치는 심장', k: 'simon', cnt: 4, len: 5, skin: 'heart', c: '#ff7a8a', rooms: 3,
+             hint: '심장이 뛰는 차례를 보고 같은 차례로 쳐라' },
+  abyss:   { n: '수문 바퀴', k: 'dial', cnt: 4, m: 3, skin: 'valve', c: '#8fd8ff', rooms: 3,
+             hint: '바퀴를 돌리면 오른쪽 바퀴도 한 칸 돈다 — 위에 새긴 눈금에 맞춰라' },
+  story0:  { n: '석판의 차례', k: 'simon', cnt: 4, len: 4, skin: 'rune', c: '#d8c8ff', rooms: 2,
+             hint: '문양이 빛나는 차례를 보고 같은 차례로 짚어라' },
+  story1:  { n: '석판의 차례', k: 'simon', cnt: 5, len: 5, skin: 'rune', c: '#d8c8ff', rooms: 2,
+             hint: '문양이 빛나는 차례를 보고 같은 차례로 짚어라' },
+  story2:  { n: '석판의 차례', k: 'simon', cnt: 5, len: 6, skin: 'rune', c: '#d8c8ff', rooms: 2,
+             hint: '문양이 빛나는 차례를 보고 같은 차례로 짚어라' }
+};
+/* 봉인이 스스로 풀리기까지(초) — 못 풀어도 갇혀 버리지는 않는다 */
+export const PUZZLE_GIVEUP = 150;
 
 /* ---------------- 메아리 시련 ---------------- */
 export const ECHO = { max: 5, mul: (lv: number) => 1 + 0.35 * lv, needStage: 2 };

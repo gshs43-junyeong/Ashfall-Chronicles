@@ -473,6 +473,8 @@ export const NetPart: Bag = {
     } else if ((m.k === 'oadd' || m.k === 'odel' || m.k === 'ost') && peer.rp) {
       this.netPutObj(m);
       this.netBroadcast(m, peer);
+    } else if (m.k === 'puzc' && peer.rp) {
+      this.netPuzzleClick(m);
     } else if (m.k === 'door' && peer.rp) {
       this.netPutDoor(m);
       for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, 'rel', m);
@@ -593,6 +595,8 @@ export const NetPart: Bag = {
       this.netPutKill(m);
     } else if (m.k === 'tiles') {
       this.netPutTiles(m.l, false);
+    } else if (m.k === 'puz') {
+      this.netPuzzle(m);
     } else if (m.k === 'door') {
       this.netPutDoor(m);
     } else if (m.k === 'oadd' || m.k === 'odel' || m.k === 'ost') {

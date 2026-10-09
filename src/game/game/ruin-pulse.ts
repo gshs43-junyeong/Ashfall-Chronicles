@@ -81,7 +81,7 @@ export const RuinPulsePart: Bag = {
       this._waveT = PULSE.wave[s1];
       if (s1 >= 3) { this._rageT = 8; this.checkSurvey(id); this.checkAch(); }
       /* 이미 벌어진 사건이 있으면 그것부터 끝내게 둔다(겹치면 둘 다 못 한다). */
-      if (!this.pulseEvent && this.pulseHere === id) this.startPulseEvent(id, s1);
+      if (!this.pulseEvent && !this.puzzle && this.pulseHere === id) this.startPulseEvent(id, s1);
     } else if (this.pulseHere === id && s1 === 0) {
       this.toast(tr('유적이 다시 잠든다'), 'good');
     }
@@ -333,6 +333,8 @@ export const RuinPulsePart: Bag = {
     part.kinds = [Object.keys(sv.evk || {}).filter(k => PULSE_EVENTS[k] && PULSE_EVENTS[k].ruin === id).length,
                   Object.keys(PULSE_EVENTS).filter(k => PULSE_EVENTS[k].ruin === id).length];
     part.echo = story ? null : [sv.echo || 0, ECHO.max];   // 석판 유적에는 메아리가 없다
+    const nPuz = site ? this.puzzleRooms(site).length : 0;
+    part.puz = nPuz ? [Object.keys(sv.puz || {}).length, nPuz] : null;
     /* 점수는 진행 막대용 — 등급은 아래 문턱으로만 정한다(data.js SURVEY_TIERS 의 ★) */
     let got = 0, max = 0;
     for (const k in SURVEY_W) {
@@ -343,7 +345,7 @@ export const RuinPulsePart: Bag = {
     /* 조건 하나의 충족 여부 — rooms·chests 는 비율, events·kinds·echo 는 개수, 나머지는 했나. */
     const meets = (k: any, v: number) => {
       const q = part[k]; if (!q) return true;
-      if (k === 'rooms' || k === 'chests') return q[0] / q[1] >= v - 1e-9;
+      if (k === 'rooms' || k === 'chests' || k === 'puz') return q[0] / q[1] >= v - 1e-9;
       if (k === 'events' || k === 'kinds' || k === 'echo') return q[0] >= v;
       return q[0] >= 1;
     };
@@ -357,7 +359,7 @@ export const RuinPulsePart: Bag = {
     const label = (k: any) => (story && k === 'boss') ? tr('석판') : SURVEY_LABEL[k];
     if (next) missing = Object.keys(next.need).filter(k => !meets(k, next.need[k])).map(k => {
       const v = next.need[k], q = part[k];
-      if (k === 'rooms' || k === 'chests') return tr('{label} {n}% (지금 {n2}%)', { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
+      if (k === 'rooms' || k === 'chests' || k === 'puz') return tr('{label} {n}% (지금 {n2}%)', { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
       if (k === 'events' || k === 'kinds' || k === 'echo') return tr('{label} {v} (지금 {q})', { label: label(k), v, q: q[0] });
       return label(k);
     });

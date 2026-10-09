@@ -340,6 +340,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   **맥박 사건은 유적마다 제 것 둘**(`PULSE_EVENTS[].ruin` · game/ruin-events.ts — 18개, 사건마다 하는 일이 다르다; 공용 사건을 다시 만들지 말 것)이고,
   유적마다 싸우는 법이 다른 몬스터가 하나씩 있다(`ENEMIES[].trait` · entity/enemy-traits.ts · 그림 `tools/mkruinmobs2.py`). 사건이 세계에 놓은 것(깜빡이는 발판 ·
   꺼진 바닥)은 `evCleanup` 이 되돌린다 — 새 사건도 바꾼 칸을 기억해 둘 것. 사연: docs/code-history.md#h169
+- **봉인 방**(game/ruin-puzzle.ts · data/ruins.ts `PUZZLE`): 유적마다 봉인 방 셋(석판 둘) — 들어서면 출입구를 `T.SEALSTONE` 으로 막고 퍼즐을 풀면 연다. 방은 해시로 고른다(생성 난수 안 뽑음). ★ 봉인은 저장하지 않는다 — `saveData` 의 `withoutSeal`. 여럿이면 호스트 판정(`puz` · `puzc`). 사연: docs/code-history.md#h171
 - **유적 큰 홀**(world/dungeon.ts `carveDungeon` 2.4 · `_carveGrand` · `_growHall`): 낡은 유적은 큰 홀 하나(주인 방 · 석판 방) + 곁채 둘을 먼저 잡고 나머지를 BSP 로 나눈다 — 벽지 번호도 타일처럼 **끝에만** 붙인다(16 `COLUMN_WALL` = 홀 기둥). 사연: docs/code-history.md#h167
 - 세계는 `WW 5000 × WH 720`, 타일 번호는 **202까지** 썼다(201·202 현무 종유석·석순(지옥 꾸밈, world/caves.ts `decorateHell`) · 199 고드름 · 200 발광 잎 · 198 스프링클러 · 197 심층 드릴 · 191~196 광상: 석탄·구리·철·납·금·미스릴 · 188~190 운석·별빛 수정·녹아 굳은 돌 · 187 소나무 잎 · 180~183 흐르는 물·바닷물·용암·샘 바위 ·
   184~186 부들·물풀·물가 조약돌 · 172~177 동굴: 이끼 바위·늘어진 이끼·

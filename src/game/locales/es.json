@@ -995,7 +995,13 @@
   "저울이 수평을 이뤘다 — 올린 금화가 두 배로 돌아왔다": "La balanza se equilibra — tu oro vuelve duplicado",
   "차갑다": "Frío",
   "틀렸다 — 해가 순서를 다시 보여 준다 ({n}/3)": "Incorrecto — el sol vuelve a mostrar el orden ({n}/3)",
-  "한쪽 접시에는 깃털이 놓여 있다. 다른 쪽은 비어 있다.": "En un platillo descansa una pluma. El otro está vacío."
+  "한쪽 접시에는 깃털이 놓여 있다. 다른 쪽은 비어 있다.": "En un platillo descansa una pluma. El otro está vacío.",
+  "보아라…": "Observa…",
+  "봉인 방": "Sala sellada",
+  "봉인 방 — {n} 풀었다 · 금화 {gold}": "Sala sellada — {n} resuelto · {gold} de oro",
+  "봉인 방 — {n}. {hint} · 장치는 우클릭": "Sala sellada — {n}. {hint} · Clic derecho en los mecanismos",
+  "봉인이 지쳐 풀렸다 — {n}": "El sello se agotó y cedió — {n}",
+  "빛을 이어라": "Une la luz"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4257,6 +4263,25 @@
   "PULSE_EVENTS.sink.n": "El suelo que se hunde",
   "PULSE_EVENTS.sink.d": "El suelo cede poco después de pisarlo: no te detengas y resiste. Las cáscaras atacan desde abajo",
   "PULSE_EVENTS.seed.n": "La semilla hueca",
-  "PULSE_EVENTS.seed.d": "Ha caído una semilla hueca: recógela (clic derecho) y entiérrala en el centro de la gran sala. Si te golpean, se te cae"
+  "PULSE_EVENTS.seed.d": "Ha caído una semilla hueca: recógela (clic derecho) y entiérrala en el centro de la gran sala. Si te golpean, se te cae",
+  "PUZZLE.ice.n": "Cristales congelados",
+  "PUZZLE.ice.hint": "Al tocar un cristal también se derriten el de enfrente y el de al lado — enciende los cinco",
+  "PUZZLE.mine.n": "Lámparas apagadas de la mina",
+  "PUZZLE.mine.hint": "Al encender una lámpara se invierten las de ambos lados — enciéndelas todas",
+  "PUZZLE.pyramid.n": "Espejos del sol",
+  "PUZZLE.pyramid.hint": "Gira los espejos para llevar el haz hasta el emblema solar",
+  "PUZZLE.spore.n": "Sombreros que respiran",
+  "PUZZLE.spore.hint": "Toca un sombrero solo cuando esté bien abierto — si tocas uno cerrado, estallan las esporas",
+  "PUZZLE.blight.n": "Corazones palpitantes",
+  "PUZZLE.blight.hint": "Observa en qué orden laten los corazones y golpéalos en ese mismo orden",
+  "PUZZLE.abyss.n": "Ruedas de compuerta",
+  "PUZZLE.abyss.hint": "Al girar una rueda, la de su derecha gira una muesca — iguala las marcas grabadas arriba",
+  "PUZZLE.story0.n": "Orden de las tablillas",
+  "PUZZLE.story0.hint": "Observa en qué orden se iluminan los glifos y tócalos en ese mismo orden",
+  "PUZZLE.story1.n": "Orden de las tablillas",
+  "PUZZLE.story1.hint": "Observa en qué orden se iluminan los glifos y tócalos en ese mismo orden",
+  "PUZZLE.story2.n": "Orden de las tablillas",
+  "PUZZLE.story2.hint": "Observa en qué orden se iluminan los glifos y tócalos en ese mismo orden",
+  "SURVEY_LABEL.puz": "Salas selladas"
  }
 }
