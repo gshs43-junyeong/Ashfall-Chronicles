@@ -855,6 +855,12 @@
   "기획": [
    "index.html"
   ],
+  "깊은 곳 {L}단계가 열렸다 — {n}": [
+   "game/ruin-deep.deepOpen"
+  ],
+  "깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다": [
+   "game/ruin-deep.drawDeepGates"
+  ],
   "깬 자리가 고르군. 곡괭이를 아는 손이야.": [
    "data/quests"
   ],
@@ -1037,6 +1043,9 @@
   ],
   "대화": [
    "game/render-world.drawCursor"
+  ],
+  "더 깊은 봉인 — 이 홀의 봉인을 풀면 {L}단계가 열린다": [
+   "game/ruin-deep.drawDeepGates"
   ],
   "더 두들길 데가 없다": [
    "game/village.enhanceSlot",
@@ -5637,6 +5646,7 @@
   "SURVEY_LABEL.kinds": "사건 갈래",
   "SURVEY_LABEL.echo": "메아리",
   "SURVEY_LABEL.puz": "봉인 방",
+  "SURVEY_LABEL.deep": "깊은 곳",
   "TABLETS.0.n": "첫 번째 석판",
   "TABLETS.0.lines.0": "『별은 벌을 주러 오는 것이 아니다. 도망쳐 오는 것이다.』",
   "TABLETS.0.lines.1": "『무엇으로부터 도망치는지는 적지 않겠다. 적으면 그것이 이 글을 읽는다.』",

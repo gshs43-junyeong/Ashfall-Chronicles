@@ -335,6 +335,8 @@ export const RuinPulsePart: Bag = {
     part.echo = story ? null : [sv.echo || 0, ECHO.max];   // 석판 유적에는 메아리가 없다
     const nPuz = site ? this.puzzleRooms(site).length : 0;
     part.puz = nPuz ? [Object.keys(sv.puz || {}).length, nPuz] : null;
+    const dMax = site ? this.deepMax(site) : 0;
+    part.deep = dMax ? [Math.min(sv.deepDone || 0, dMax), dMax] : null;   // 단계마다 깊은 곳 홀의 봉인
     /* 점수는 진행 막대용 — 등급은 아래 문턱으로만 정한다(data.js SURVEY_TIERS 의 ★) */
     let got = 0, max = 0;
     for (const k in SURVEY_W) {
@@ -345,7 +347,7 @@ export const RuinPulsePart: Bag = {
     /* 조건 하나의 충족 여부 — rooms·chests 는 비율, events·kinds·echo 는 개수, 나머지는 했나. */
     const meets = (k: any, v: number) => {
       const q = part[k]; if (!q) return true;
-      if (k === 'rooms' || k === 'chests' || k === 'puz') return q[0] / q[1] >= v - 1e-9;
+      if (k === 'rooms' || k === 'chests' || k === 'puz' || k === 'deep') return q[0] / q[1] >= v - 1e-9;
       if (k === 'events' || k === 'kinds' || k === 'echo') return q[0] >= v;
       return q[0] >= 1;
     };
@@ -359,7 +361,7 @@ export const RuinPulsePart: Bag = {
     const label = (k: any) => (story && k === 'boss') ? tr('석판') : SURVEY_LABEL[k];
     if (next) missing = Object.keys(next.need).filter(k => !meets(k, next.need[k])).map(k => {
       const v = next.need[k], q = part[k];
-      if (k === 'rooms' || k === 'chests' || k === 'puz') return tr('{label} {n}% (지금 {n2}%)', { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
+      if (k === 'rooms' || k === 'chests' || k === 'puz' || k === 'deep') return tr('{label} {n}% (지금 {n2}%)', { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
       if (k === 'events' || k === 'kinds' || k === 'echo') return tr('{label} {v} (지금 {q})', { label: label(k), v, q: q[0] });
       return label(k);
     });

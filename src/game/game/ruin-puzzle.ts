@@ -52,6 +52,11 @@ export const RuinPuzzlePart: Bag = {
     cand.sort((a, b) => a.h - b.h);
     return (C[site.id] = cand.slice(0, P.rooms).map(q => q.i).sort((a, b) => a - b));
   },
+  /** 방 번호 → 방(깊은 곳 홀은 'deep') */
+  puzRoom(site: Bag, ri: any) {
+    if (typeof ri === 'string' && ri.startsWith('deep')) { const d = this.deepLevels(site)[+ri.slice(4)]; return d && d.hall; }
+    return site.rooms[ri];
+  },
   /** 막을 칸 — 방 둘레 바로 바깥 줄에서 트인 칸 가운데 방 안의 트인 칸과 맞닿은 것(옆방 홀을 가로지르지 않게) */
   puzzleSealCells(r: Bag) {
     const w = this.world, open = (x: number, y: number) => TILE_DEF[w.get(x, y)].solid !== 1;
@@ -94,20 +99,32 @@ export const RuinPuzzlePart: Bag = {
           if (done[i] || cool[key] === 0) continue;       // 0 — 이번에 닫혔던 방(나갔다 와야 다시)
           if (this.puzzleBegin(site, i)) { cool[key] = 0; return; }
         }
+        /* 다음 단계를 열 때가 됐으면(여럿이 · 예전 기록) 연다 · 열린 단계 홀은 그 단계의 봉인 */
+        const levels = this.deepLevels(site);
+        if (this.deepReady(site, levels.length) && this.deepOpen(site)) return;
+        for (let L = 0; L < levels.length; L++) {
+          const H = levels[L].hall; if ((sv.deepDone || 0) > L) continue;
+          const key = site.id + ':deep' + L, cool = this._pzLeft || (this._pzLeft = {});
+          const inside = tx > H.x + 1 && tx < H.x + H.w - 1 && ty > H.y + 1 && ty < H.y + H.h;
+          if (!inside) cool[key] = 1;
+          else if (cool[key] !== 0 && this.puzzleBegin(site, 'deep' + L)) { cool[key] = 0; return; }
+        }
       }
     }
   },
 
   /** 닫는다 — 막을 칸에 몸이 걸린 플레이어가 있으면 다음에 */
-  puzzleBegin(site: Bag, ri: number) {
-    const P = PUZZLE[site.id], r = site.rooms[ri], w = this.world;
+  puzzleBegin(site: Bag, ri: any) {
+    const deep = typeof ri === 'string' && ri.startsWith('deep'), L = deep ? +ri.slice(4) : -1;
+    const P = deep ? this.deepPuzzleSpec(site.id, L) : PUZZLE[site.id], r = this.puzRoom(site, ri), w = this.world;
+    if (!P || !r) return false;
     const cells = this.puzzleSealCells(r);
     for (const q of this.players) for (const [x, y] of cells)
       if (q.x < (x + 1) * TS && q.x + q.w > x * TS && q.y < (y + 1) * TS && q.y + q.h > y * TS) return false;
     const nodes = this.puzzleNodes(r, P);
     if (!nodes) return false;
     const rnd = lcg(hash(w.seed + ':pz:' + site.id + ':' + ri + ':' + ((this.surveyOf(site.id).pzTry || 0))));
-    const pz: Bag = { id: site.id, ri, k: P.k, skin: P.skin, c: P.c, n: P.n, nodes, t: 0, flash: 1, seal: [], step: 0, show: 0 };
+    const pz: Bag = { id: site.id, ri, deep, L, k: P.k, skin: P.skin, c: P.c, n: P.n, nodes, t: 0, flash: 1, seal: [], step: 0, show: 0 };
     this.puzzleSetup(pz, P, rnd);
     for (const [x, y] of cells) { pz.seal.push([x, y, w.get(x, y)]); w.set(x, y, T.SEALSTONE); }
     this.puzzle = pz;
@@ -232,7 +249,7 @@ export const RuinPuzzlePart: Bag = {
       if (i !== pz.shown && i >= 0 && i < pz.seq.length) { pz.shown = i; pz.nodes[pz.seq[i]].hit = 0.5; this.sfx('coin'); this.puzzleSync(); }
     }
     const away = this.players.every((q: any) => {
-      const site = this.evSite(pz.id), r = site && site.rooms[pz.ri];
+      const site = this.evSite(pz.id), r = site && this.puzRoom(site, pz.ri);
       return !r || q.dead || Math.abs(q.cx / TS - (r.x + r.w / 2)) > r.w || Math.abs(q.cy / TS - (r.y + r.h / 2)) > r.h;
     });
     if (away) { this.puzzleEnd(false, true); return; }    // 순간이동 따위로 빠져나갔다 — 조용히 연다
@@ -267,21 +284,25 @@ export const RuinPuzzlePart: Bag = {
     this.puzzleSync(ok ? 'ok' : 'fail');
     if (quiet) return;
     if (!ok) { this.toast(tr('봉인이 지쳐 풀렸다 — {n}', { n: pz.n }), 'bad'); return; }
-    const sv = this.surveyOf(pz.id); (sv.puz = sv.puz || {})[pz.ri] = 1;
+    const sv = this.surveyOf(pz.id);
+    if (pz.deep) sv.deepDone = Math.max(sv.deepDone || 0, pz.L + 1); else (sv.puz = sv.puz || {})[pz.ri] = 1;
     this.puzzleReward(pz);
-    const site = this.evSite(pz.id), r = site && site.rooms[pz.ri];
+    const site = this.evSite(pz.id), r = site && this.puzRoom(site, pz.ri);
     if (r) {
       const mid = pz.nodes[pz.nodes.length >> 1];
-      this.evChest(Math.floor(mid.x / TS), Math.floor(mid.fy / TS), 0, this.ruinSpec(pz.id) || {});
+      this.evChest(Math.floor(mid.x / TS), Math.floor(mid.fy / TS), pz.deep ? 2 + pz.L : 0, this.ruinSpec(pz.id) || {});
     }
     this.checkSurvey(pz.id);
+    /* 마지막 봉인 방 · 단계 홀 — 그 아래 단계가 있으면 바닥이 열린다 */
+    if (site && this.deepReady(site, this.deepLevels(site).length)) this.after(1.4, () => this.deepOpen(site));
   },
   /** 상 — 금화 · 경험치(레벨 곡선을 따른다). 참가자는 'ok' 를 받고 제 몫을 스스로 받는다 */
   puzzleReward(pz: Bag) {
     const p = this.me, spec = this.ruinSpec(pz.id), rank = (spec && spec.rank) || 3;
-    const gold = 90 * rank;
+    const gold = 90 * rank * (pz.deep ? 3 + pz.L : 1);
     p.gold += gold;
-    p.addXp(Math.round(p.xpNext * 0.12));
+    p.addXp(Math.round(p.xpNext * (pz.deep ? 0.3 + 0.15 * pz.L : 0.12)));
+    if (pz.deep) this.evGive('pulse_shard', 2 + pz.L);
     this.toast(tr('봉인 방 — {n} 풀었다 · 금화 {gold}', { n: pz.n, gold: fmt(gold) }), 'good');
     this.sfx('chapter');
     this.stageFx && this.stageFx('s_warcry');
@@ -294,7 +315,7 @@ export const RuinPuzzlePart: Bag = {
     const pz = this.puzzle;
     if (end) { this.netBroadcast({ k: 'puz', end }); return; }
     if (!pz) return;
-    this.netBroadcast({ k: 'puz', s: { id: pz.id, ri: pz.ri, k: pz.k, skin: pz.skin, c: pz.c, n: pz.n, t: pz.t, step: pz.step, show: pz.show,
+    this.netBroadcast({ k: 'puz', s: { id: pz.id, ri: pz.ri, deep: pz.deep, L: pz.L, k: pz.k, skin: pz.skin, c: pz.c, n: pz.n, t: pz.t, step: pz.step, show: pz.show,
       tgt: pz.tgt, cols: pz.cols, m: pz.m, seq: pz.k === 'simon' ? pz.seq : undefined,
       nodes: pz.nodes.map((v: Bag) => ({ x: v.x, y: v.y, fy: v.fy, s: v.s, tgt: v.tgt, per: v.per, ph: v.ph, hit: v.hit || 0 })) } });
   },

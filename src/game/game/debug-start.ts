@@ -177,6 +177,13 @@ export const DebugStartPart: Bag = {
         const give = (iid: any, n: number) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!)); };
         give('tonic_hush', 4); give('drum_pulse', 4); give('pulse_shard', 3); give('potion_hp', 20);
         let r = site.rooms.slice().sort((a: any, b: any) => a.y - b.y)[0];
+        /* &deep=1 — 봉인 방을 다 푼 것으로 치고 깊은 문 앞에서 시작(곧 열린다 — game/ruin-deep) */
+        if (qs.get('deep')) {
+          const sv = this.surveyOf(id); sv.puz = {}; for (const i of this.puzzleRooms(site)) sv.puz[i] = 1;
+          if (+qs.get('deep') > 1) sv.deepDone = +qs.get('deep') - 1;   // &deep=2 — 2단계 홀까지 푼 것으로(3단계 문이 바로 열린다)
+          const g = this.deepGate(site);
+          if (g) { p.x = (g.x + 3) * TS; p.y = g.fy * TS - p.h; p.vx = p.vy = 0; }
+        }
         /* &puz=<1~3> — 그 유적의 봉인 방 안에서 시작(game/ruin-puzzle — 들어서자마자 닫힌다) */
         const pzr = qs.get('puz') ? this.puzzleRooms(site)[(+qs.get('puz') || 1) - 1] : undefined;
         if (pzr !== undefined) {
@@ -185,7 +192,7 @@ export const DebugStartPart: Bag = {
           let fy = r.y + r.h - 2;
           for (let y = r.y + 2; y < r.y + r.h; y++) if (w.solid(tx, y) && !w.solid(tx, y - 1)) { fy = y; if (y > r.y + r.h / 2) break; }
           p.x = tx * TS; p.y = fy * TS - p.h; p.vx = p.vy = 0;
-        } else { p.x = (r.x + (r.w >> 1)) * TS; p.y = (r.y + r.h - 3) * TS - p.h + TS; p.vx = p.vy = 0; }
+        } else if (!qs.get('deep')) { p.x = (r.x + (r.w >> 1)) * TS; p.y = (r.y + r.h - 3) * TS - p.h + TS; p.vx = p.vy = 0; }
         this.seenRuins[id] = 1;
         if (qs.get('boss') === '1' && idx >= 0) this.lairs[idx] = 1;
         this.ruinPulse = { [id]: clamp(+qs.get('pulse') || 0, 0, 100) };
