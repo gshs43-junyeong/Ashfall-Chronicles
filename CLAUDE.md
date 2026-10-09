@@ -480,7 +480,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   `drawPet` 이 장 넘김 빠르기 · 위아래 · 기울기 · 크기 숨을 더한다. 뇌운 매 · 유리날개 나방 · 공허의 유생은 그림째 기울이면 이상해서
   **사이 장을 구웠다**(`python3 tools/mkpetidle.py` — 원본 `tools/art/pets/`, 날개 열을 축에서 먼 만큼 오르내리고 · 유생은 몸이 솟고 다리가 모인다 →
   시트 5장, 매니페스트 `idle: 4` 면 drawPet 이 넷을 돌고 공격은 5번째). 공격 순간 근접 펫은 과녁 쪽으로 달려들고(맞는 자리에 `hit_blunt`),
-  쏘는 펫은 반동. 별조각 정령은 제 투사체 `pstar`(별 조각 시트 `proj_starfrag` · 맞으면 `stargain`). 점검판(아티팩트)도 같은 값을 쓴다.
+  쏘는 펫은 반동. 별조각 정령은 제 투사체 `pstar`(별 조각 시트 `proj_starfrag` · 맞으면 `stargain`).
 - **하늘 섬**(world.js `buildSkyIslands` → `buildSkyTemple` · `buildSkyExtras`): 원래 섬 서른둘(섬마다 상자)에 더해 **제 난수**(`seed+'_sky'`)로
   큰 섬(속 빈 굴 `skyGrotto` + 윗면 하나) · 보통 섬(`skyFeature` — 샘 연못 · 바람의 사당 `MYSTIC.gale`(공중 점프 +1) · 별똥 자리(운석·별빛 수정) ·
   지킴이 상자 · 하늘 밭(여문 서리쑥·뼈꽃 — 낫으로 씨앗) · 무너진 열주(비문 `RUIN_HINTS.sky`)) · 조각 섬 · 구름 섬(소형 합 78개).
