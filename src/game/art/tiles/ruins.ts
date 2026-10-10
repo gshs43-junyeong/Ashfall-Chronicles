@@ -255,5 +255,115 @@ export const TilePaintRuins: Bag = {
       }
     }
   },
+  /* --- 유적마다 제 벽돌 · 장식(석판 유적 셋 · 가라앉은 유적) --- */
+  vaultslate(H: TilePaintKit) {
+    const { g, ox, oy, rng, R, base, dk, dk2, lt, lt2 } = H;
+    this._fill(g, ox, oy, shade(base, .55));                     // 석실 판석 — 세워 박은 긴 판 둘, 서리가 핏줄처럼 번진다
+    for (const [x, w] of [[0, 11], [11, 11]]) {
+      R(x + 1, 0, w - 2, TS, rng.chance(.5) ? base : shade(base, 1.08));
+      R(x + 1, 0, 1, TS, lt); R(x + w - 2, 0, 1, TS, dk2);
+      if (rng.chance(.55)) R(x + 2, rng.int(4, TS - 6), w - 4, 1, dk);   // 판의 결
+    }
+    const fr = '#cfe8f5';
+    let fx = rng.int(3, TS - 4), fy = 0;
+    g.globalAlpha = .8;
+    while (fy < TS) { R(fx, fy, 1, 2, fr); fy += 2; fx += rng.int(-1, 1); if (rng.chance(.2)) R(fx + 1, fy, 2, 1, fr); }
+    g.globalAlpha = 1;
+    R(0, 0, TS, 1.5, '#e8f4ff');                                 // 윗줄에 앉은 서리
+    this._speck(g, ox, oy, rng, 8, dk2, lt2);
+  },
+  rimeurn(H: TilePaintKit) {
+    const { g, ox, oy, R, base, dk, dk2, lt2 } = H;              // 서리 단지 — 낮은 항아리, 뚜껑에 서리가 소복하다
+    g.fillStyle = shade(base, .62); g.beginPath(); g.ellipse(ox + TS / 2, oy + TS - 8, 8, 7, 0, 0, TAU); g.fill();
+    g.fillStyle = base; g.beginPath(); g.ellipse(ox + TS / 2 - 1, oy + TS - 9, 6.5, 5.5, 0, 0, TAU); g.fill();
+    R(5, TS - 2, TS - 10, 2, dk2);                               // 받침
+    R(7, 4, TS - 14, 4, shade(base, .78));                       // 목
+    R(5, 3, TS - 10, 2, '#f0f8ff'); R(6, 2, TS - 12, 1, '#ffffff');   // 서리 뚜껑
+    for (const x of [6, 10, 14]) R(x, 8, 1, 2, '#e0f0ff');       // 흘러내린 서리
+    R(8, TS - 11, 5, 1, lt2); R(9, TS - 7, 2, 3, dk);            // 새긴 무늬
+  },
+  mazestone(H: TilePaintKit) {
+    const { g, ox, oy, rng, R, base, dk2, lt, lt2 } = H;
+    this._fill(g, ox, oy, base);                                 // 미로 돌 — 청동을 박아 넣은 굽은 길(칸 경계에서 이어진다)
+    R(0, 0, TS, 1, lt); R(0, TS - 1, TS, 1, dk2);
+    const br = '#c8a04a', bd = '#6a5428';
+    const path = [[0, 5, 6, 1], [5, 5, 1, 7], [5, 11, 11, 1], [15, 5, 1, 7], [15, 5, 7, 1], [0, 16, 22, 1], [10, 11, 1, 6]];
+    for (const [x, y, w, h] of path) { R(x, y + 1, w, h, bd); R(x, y, w, h, br); }
+    this._speck(g, ox, oy, rng, 10, dk2, lt2);
+  },
+  cogwall(H: TilePaintKit) {
+    const { g, ox, oy, s, R, base } = H;
+    this._fill(g, ox, oy, shade('#857a68', .9));                 // 청동 톱니 — 벽에 반쯤 묻힌 바퀴
+    const cx = ox + TS / 2, cy = oy + TS / 2;
+    g.fillStyle = shade(base, .5); g.beginPath();
+    for (let q = 0; q < 20; q++) { const a = q / 20 * TAU, r = q % 2 ? 7.5 : 10; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
+    g.closePath(); g.fill();
+    g.fillStyle = base; g.beginPath();
+    for (let q = 0; q < 20; q++) { const a = q / 20 * TAU + 0.08, r = q % 2 ? 6.5 : 9; g.lineTo(cx - .5 + Math.cos(a) * r, cy - .5 + Math.sin(a) * r); }
+    g.closePath(); g.fill();
+    g.fillStyle = shade(base, 1.35); g.beginPath(); g.arc(cx - 2, cy - 2, 3.5, Math.PI, 1.5 * Math.PI); g.lineTo(cx - 2, cy - 2); g.fill();
+    g.fillStyle = shade(base, .35); g.beginPath(); g.arc(cx, cy, 2.5, 0, TAU); g.fill();
+    for (let q = 0; q < 4; q++) { const a = q * Math.PI / 2 + .4; R(TS / 2 + Math.cos(a) * 5 - .5, TS / 2 + Math.sin(a) * 5 - .5, 1.5, 1.5, shade(base, .4)); }
+  },
+  hollowbrick(H: TilePaintKit) {
+    const { g, ox, oy, rng, R, base, dk2, lt } = H;
+    this._fill(g, ox, oy, '#120e18');                            // 공허 벽돌 — 검은 벽돌 사이 줄눈이 보랏빛으로 비친다
+    const bh = TS / 3, bw = TS / 2;
+    for (let row = 0; row < 3; row++) {
+      const y = row * bh, off = row % 2 ? -bw / 2 : 0;
+      for (let bx = off; bx < TS; bx += bw) {
+        R(bx + 1, y + 1, bw - 2, bh - 2, rng.chance(.5) ? base : shade(base, 1.15));
+        R(bx + 1, y + 1, bw - 2, 1, lt);
+      }
+    }
+    g.globalAlpha = .55;
+    for (let row = 1; row < 3; row++) R(0, row * bh - .5, TS, 1, '#9a6ad8');
+    g.globalAlpha = .3; R(0, 0, TS, 1, '#c8a0ff');
+    g.globalAlpha = 1;
+    if (rng.chance(.35)) { const x = rng.int(3, TS - 5); R(x, rng.int(2, TS - 6), 1, 4, '#b88fff'); }   // 갈라진 틈의 빛
+    this._speck(g, ox, oy, rng, 6, dk2, shade(base, 1.4));
+  },
+  voidcage(H: TilePaintKit) {
+    const { g, ox, oy, R, base } = H;                            // 공허 등롱 — 매단 쇠 우리 속에 떠 있는 보랏빛 구슬
+    R(TS / 2 - .5, 0, 1, 4, '#3a3240');
+    R(6, 4, TS - 12, 1.5, '#4a4050'); R(6, TS - 5, TS - 12, 1.5, '#4a4050');
+    for (const x of [6, 10, TS - 11, TS - 7]) R(x, 4, 1, TS - 8, '#4a4050');
+    const gr = g.createRadialGradient(ox + TS / 2, oy + TS / 2, 1, ox + TS / 2, oy + TS / 2, 6);
+    gr.addColorStop(0, '#ffffff'); gr.addColorStop(.35, '#d8b8ff'); gr.addColorStop(1, 'rgba(120,70,200,0)');
+    g.fillStyle = gr; g.fillRect(ox + 4, oy + 5, TS - 8, TS - 10);
+    R(TS / 2 - 1, TS / 2 - 1, 2, 2, '#ffffff');
+    R(5, TS - 4, TS - 10, 1, shade(base, .6));
+  },
+  coralbrick(H: TilePaintKit) {
+    const { g, ox, oy, rng, R, base, dk, dk2, lt } = H;
+    this._fill(g, ox, oy, shade(base, .6));                      // 산호 벽돌 — 바다가 덮어 버린 벽돌, 산호 혹과 따개비
+    const bh = TS / 2, bw = TS / 2;
+    for (let row = 0; row < 2; row++) {
+      const y = row * bh, off = row ? -bw / 2 : 0;
+      for (let bx = off; bx < TS; bx += bw) { R(bx + 1, y + 1, bw - 2, bh - 2, rng.chance(.5) ? base : shade(base, 1.1)); R(bx + 1, y + 1, bw - 2, 1, lt); }
+    }
+    const corals = ['#e88a8a', '#d86a9a', '#f0b878', '#7fd0b8'];
+    for (let k = 0, n = rng.int(1, 3); k < n; k++) {             // 산호 혹
+      const cx = rng.int(3, TS - 4), cy = rng.int(3, TS - 4), c = corals[rng.int(0, 3)];
+      g.fillStyle = shade(c, .7); g.beginPath(); g.arc(ox + cx, oy + cy + .5, 2.6, 0, TAU); g.fill();
+      g.fillStyle = c; g.beginPath(); g.arc(ox + cx, oy + cy, 2.2, 0, TAU); g.fill();
+      R(cx - 1, cy - 1, 1, 1, '#ffffff');
+    }
+    for (let k = 0; k < 4; k++) { const x = rng.int(1, TS - 3), y = rng.int(1, TS - 3); R(x, y, 2, 2, '#c8c0b0'); R(x + .5, y + .5, 1, 1, dk); }   // 따개비
+    g.globalAlpha = .18; R(0, TS - 6, TS, 6, '#2a6a6a'); g.globalAlpha = 1;   // 아래에 앉은 물때
+    R(0, TS - 1, TS, 1, dk2);
+  },
+  giantclam(H: TilePaintKit) {
+    const { g, ox, oy, R, base, dk2 } = H;                       // 큰 조개 — 반쯤 벌어진 껍데기 안에 진주가 비친다
+    const cx = ox + TS / 2, by = oy + TS - 3;
+    g.fillStyle = shade(base, .7); g.beginPath(); g.ellipse(cx, by - 2, 10, 4.5, 0, 0, Math.PI); g.fill();
+    g.fillStyle = base; g.beginPath(); g.moveTo(cx - 10, by - 3);
+    g.quadraticCurveTo(cx - 9, by - 13, cx, by - 13); g.quadraticCurveTo(cx + 9, by - 13, cx + 10, by - 3); g.closePath(); g.fill();
+    g.strokeStyle = shade(base, .72); g.lineWidth = 1;
+    for (const dx of [-6, -2, 2, 6]) { g.beginPath(); g.moveTo(cx + dx * .5, by - 12); g.lineTo(cx + dx * 1.4, by - 3); g.stroke(); }
+    R(TS / 2 - 7, TS - 6, 14, 2, '#3a2a30');                     // 벌어진 틈
+    g.fillStyle = '#eef4ff'; g.beginPath(); g.arc(cx, by - 4, 2, 0, TAU); g.fill();
+    R(1, TS - 1, TS - 2, 1, dk2);
+  },
 };
 Object.assign(TILE_PAINT, TilePaintRuins);

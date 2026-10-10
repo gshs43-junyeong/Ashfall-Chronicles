@@ -261,6 +261,8 @@ export const ISPEC: Bag = {
   cloud_block: { k: 'block', tile: T.CLOUD },
   skystone: { k: 'block', tile: T.SKYSTONE },
   ruin_brick: { k: 'block', tile: T.RUINBRICK },
+  vault_slate: { k: 'block', tile: T.VAULTSLATE }, maze_stone: { k: 'block', tile: T.MAZESTONE },
+  hollow_brick: { k: 'block', tile: T.HOLLOWBRICK }, coral_brick: { k: 'block', tile: T.CORALBRICK },
   aether_shard: { k: 'shard', c: '#8fe0d8', glow: 1 },
   sky_feather: { k: 'feather', c: '#cfe4f5' },
   rune_frag: { k: 'runefrag', c: '#7fb8d8' },

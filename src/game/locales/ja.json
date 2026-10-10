@@ -4403,6 +4403,22 @@
   "ITEMS.maze_cog.n": "迷宮の歯車",
   "ITEMS.maze_cog.d": "この歯車が回ると、どこかの道が移る。どの道かは誰も知らない。",
   "ITEMS.hollow_eye.n": "虚ろな目",
-  "ITEMS.hollow_eye.d": "覗き込むと、内側ではなく裏側が見える。"
+  "ITEMS.hollow_eye.d": "覗き込むと、内側ではなく裏側が見える。",
+  "ITEMS.deco_rimeurn.n": "霜の壺",
+  "ITEMS.deco_bronzecog.n": "青銅の歯車",
+  "ITEMS.deco_voidcage.n": "虚ろの吊り灯籠",
+  "ITEMS.deco_giantclam.n": "大きな貝",
+  "ITEMS.vault_slate.n": "石室の板石",
+  "ITEMS.maze_stone.n": "迷宮石",
+  "ITEMS.hollow_brick.n": "虚ろの煉瓦",
+  "ITEMS.coral_brick.n": "珊瑚の煉瓦",
+  "TILE_DEF.203.n": "石室の板石",
+  "TILE_DEF.204.n": "霜の壺",
+  "TILE_DEF.205.n": "迷宮石",
+  "TILE_DEF.206.n": "青銅の歯車",
+  "TILE_DEF.207.n": "虚ろの煉瓦",
+  "TILE_DEF.208.n": "虚ろの吊り灯籠",
+  "TILE_DEF.209.n": "珊瑚の煉瓦",
+  "TILE_DEF.210.n": "大きな貝"
  }
 }

@@ -11,7 +11,7 @@ Each new game picks a **small · medium (1.5×) · large (2×)** world.
 
 | | | | | | |
 |---|---|---|---|---|---|
-| Items **499** | Monsters **85** | Bosses **23** | Achievements **75** | Machines **28** | Recipes **230** |
+| Items **507** | Monsters **85** | Bosses **23** | Achievements **75** | Machines **28** | Recipes **230** |
 
 <sub>How these are counted: items are every entry in the item table (blocks, decorations and pets included); monsters exclude bosses (sea flotsam and passive critters included). `node tests/counts.mjs` checks these numbers against the game tables.</sub>
 

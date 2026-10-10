@@ -22,7 +22,7 @@ export const MeteorPart: Bag = {
     const cy = w.surface[cx];
     const x0 = cx - R - 3, x1 = cx + R + 3, y0 = cy - 18, y1 = cy + R + 2;
     if (w.giantTree && x1 >= w.giantTree.x - 24 && x0 <= w.giantTree.x + 24) return false;
-    const built = new Set([T.PLANK, T.BRICK, T.PLATFORM, T.TORCH, T.RUINBRICK, T.RUINTILE, T.ALTARSTONE]);
+    const built = new Set([T.PLANK, T.BRICK, T.PLATFORM, T.TORCH, T.RUINBRICK, T.RUINTILE, T.ALTARSTONE, T.VAULTSLATE, T.MAZESTONE, T.HOLLOWBRICK, T.CORALBRICK]);
     for (let x = x0; x <= x1; x++) {
       if (Math.abs(w.surface[clamp(x, 0, WW - 1)] - cy) > R + 4) return false;     // 절벽 가장자리는 피한다
       for (let y = y0; y <= y1; y++) {

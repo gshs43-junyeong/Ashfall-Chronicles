@@ -52,7 +52,7 @@ interface RuinDef {
   decor?: (string | number)[][]; mobs?: string[]; rank?: number; sig?: string; event?: string;
   x?: number; y?: number; w?: number; h?: number; wall?: number; floor?: number; bg?: number; torch?: number; traps?: string[];
   boss?: string; tier?: number; trapRate?: number; spikeRate?: number; chestRate?: number; mobMul?: number; bonus?: string;
-  bonus2?: string; maze?: number; entryKind?: string;
+  bonus2?: string; maze?: number; entryKind?: string; style?: string; shapes?: string[];
   /** 세계를 만들 때 그 세계의 복사본(`world.ruinSpec`)에 써 넣는다 — 표에는 없다. */
   mystic?: string;
 }

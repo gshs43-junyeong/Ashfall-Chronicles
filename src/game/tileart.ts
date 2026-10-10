@@ -194,6 +194,14 @@ ART[T.BLIGHTSAC] = { k: 'sac', c: '#8a4a80', a: 1, glow: 1 };
 ART[T.BONEHEAP] = { k: 'boneheap', c: '#cfc8b0', a: 1 };
 ART[T.SPOREVENT] = { k: 'sporevent', c: '#5a8a74', glow: 1 };
 ART[T.HYPHAE] = { k: 'hyphae', c: '#8fe0c4', a: 1, glow: 1 };
+ART[T.VAULTSLATE] = { k: 'vaultslate', c: '#5a6878' };
+ART[T.RIMEURN] = { k: 'rimeurn', c: '#a8c4d8', a: 1 };
+ART[T.MAZESTONE] = { k: 'mazestone', c: '#857a68' };
+ART[T.BRONZECOG] = { k: 'cogwall', c: '#b8904a' };
+ART[T.HOLLOWBRICK] = { k: 'hollowbrick', c: '#2e2838' };
+ART[T.VOIDCAGE] = { k: 'voidcage', c: '#6a4a8a', a: 1, glow: 1 };
+ART[T.CORALBRICK] = { k: 'coralbrick', c: '#5a6e6a' };
+ART[T.GIANTCLAM] = { k: 'giantclam', c: '#d8c8b8', a: 1 };
 /* --- 동굴 갈래 — 장식 넷은 a:1(뒤의 벽이 비친다). 이끼 바위와 금 간 자갈은 고체 --- */
 ART[T.MOSSSTONE] = { k: 'mossrock', c: '#5d5d63', g: '#5f8f4a' };
 ART[T.HANGMOSS] = { k: 'hangmoss', c: '#6fa05a', a: 1 };

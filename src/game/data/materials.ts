@@ -51,6 +51,10 @@ export const TILE_MAT = (() => {
   put('metal', 'METEORITE COPPERRICH IRONRICH LEADRICH GOLDRICH MYTHRILRICH');
   put('stone', 'COALRICH');
   put('flesh', 'BLIGHTSAC');
+  put('ice', 'RIMEURN');
+  put('metal', 'BRONZECOG VOIDCAGE');
+  put('void', 'HOLLOWBRICK');
+  put('bone', 'GIANTCLAM');
   put('void', 'CORRUPTGRASS');
   return m;
 })();
@@ -71,7 +75,8 @@ export const LIGHT_SPEC: Bag = {
   GLACIUM: [2.5, '#9fd8e8'], HYPHAE: [2.4, '#8fe0c4'], TIDESTONE: [2.3, '#3fc0a8'],
   BLIGHTSAC: [2.2, '#c060c0'], BLACKDAMP: [2, '#a8c04a'], BLOOM3: [1.8, '#f0e8e0'],
   HERB3: [1.6, '#bfe8ff'], SULFUR: [1.4, '#e8d04a'],
-  STARCRYSTAL: [7.2, '#ffe6a8'], METEORITE: [1.2, '#ff7a3a'], EMBERDRIP: [1.1, '#ff6a2a'], EMBERSPIRE: [1.05, '#ff6a2a']
+  STARCRYSTAL: [7.2, '#ffe6a8'], METEORITE: [1.2, '#ff7a3a'], EMBERDRIP: [1.1, '#ff6a2a'], EMBERSPIRE: [1.05, '#ff6a2a'],
+  VOIDCAGE: [6.4, '#b88fff'], GIANTCLAM: [1.3, '#dfe9ff']
 };
 {
   const seen: Bag = {};
@@ -108,9 +113,9 @@ export const LEAVE_OF = { [T.LILY]: T.WATER, [T.PONDWEED]: T.WATER, [T.KELPPLANT
 export const DECO_MOUNT = (() => {
   const m: Bag = {};
   for (const k of ['FLOWER', 'WEED', 'CACTUS', 'MUSHROOM', 'FERN', 'ORCHID', 'GLOWCAP', 'STALAGMITE', 'GEODE',
-                   'BONEHEAP', 'CANOPIC', 'TOOLPILE', 'SEASHELL', 'CATTAIL', 'PEBBLES', 'EMBERSPIRE']) m[T[k]] = 'floor';
+                   'BONEHEAP', 'CANOPIC', 'TOOLPILE', 'SEASHELL', 'CATTAIL', 'PEBBLES', 'EMBERSPIRE', 'RIMEURN', 'GIANTCLAM']) m[T[k]] = 'floor';
   m[T.PONDWEED] = 'water';   // 고인 물 칸 안, 바닥 위에만 — 물 밖에 놓으면 마른 풀이 된다
-  for (const k of ['STALACTITE', 'HANGMOSS', 'VINE', 'HYPHAE', 'MINELAMP', 'ICEBANNER', 'ICICLE', 'GLOWFROND', 'EMBERDRIP']) m[T[k]] = 'ceil';
+  for (const k of ['STALACTITE', 'HANGMOSS', 'VINE', 'HYPHAE', 'MINELAMP', 'ICEBANNER', 'ICICLE', 'GLOWFROND', 'EMBERDRIP', 'VOIDCAGE']) m[T[k]] = 'ceil';
   return m;
 })();
 /** 장식 타일 → 그 장식 아이템(ITEMS 의 deco: 1). */

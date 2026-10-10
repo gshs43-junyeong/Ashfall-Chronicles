@@ -2429,7 +2429,20 @@
     GLOWFROND: 200,
     /* --- 지옥 — 현무암 종유석 · 석순(끝에 불씨) --- */
     EMBERDRIP: 201,
-    EMBERSPIRE: 202
+    EMBERSPIRE: 202,
+    /* --- 유적마다 제 벽돌 · 장식(석판 유적 셋 · 가라앉은 유적은 원래 유적 벽돌을 같이 썼다) --- */
+    VAULTSLATE: 203,
+    RIMEURN: 204,
+    // 서리 밑 석실 — 석실 판석 · 서리 단지
+    MAZESTONE: 205,
+    BRONZECOG: 206,
+    // 겹친 길 — 미로 돌 · 청동 톱니
+    HOLLOWBRICK: 207,
+    VOIDCAGE: 208,
+    // 발 디딜 곳 없는 방 — 공허 벽돌 · 공허 등롱
+    CORALBRICK: 209,
+    GIANTCLAM: 210
+    // 가라앉은 유적 — 산호 벽돌 · 큰 조개
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -2744,7 +2757,15 @@
     { n: "고드름", c: "#bfe6f5", solid: 0, hard: 1, drop: "ice_shard", a: 1 },
     { n: "발광 잎", c: "#7fe8c8", solid: 0, hard: 0, drop: "cave_moss", a: 1 },
     { n: "현무 종유석", c: "#4a3c38", solid: 0, hard: 1, drop: "ash", a: 1 },
-    { n: "현무 석순", c: "#40342f", solid: 0, hard: 1, drop: "ash", a: 1 }
+    { n: "현무 석순", c: "#40342f", solid: 0, hard: 1, drop: "ash", a: 1 },
+    { n: "석실 판석", c: "#5a6878", solid: 1, hard: 3, drop: "vault_slate" },
+    { n: "서리 단지", c: "#a8c4d8", solid: 0, hard: 0, drop: "deco_rimeurn", a: 1 },
+    { n: "미로 돌", c: "#857a68", solid: 1, hard: 3, drop: "maze_stone" },
+    { n: "청동 톱니", c: "#b8904a", solid: 1, hard: 2, drop: "deco_bronzecog" },
+    { n: "공허 벽돌", c: "#2e2838", solid: 1, hard: 3, drop: "hollow_brick" },
+    { n: "공허 등롱", c: "#6a4a8a", solid: 0, hard: 0, drop: "deco_voidcage", a: 1 },
+    { n: "산호 벽돌", c: "#5a6e6a", solid: 1, hard: 3, drop: "coral_brick" },
+    { n: "큰 조개", c: "#d8c8b8", solid: 0, hard: 0, drop: "deco_giantclam", a: 1 }
   ];
   var FARM_WET_R = 5, FARM_WET_DAYS = 3;
   var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
@@ -3542,6 +3563,10 @@
     deco_tools: { n: "버린 연장 더미", i: "🛠", type: "block", tile: T.TOOLPILE, stack: 999, deco: 1 },
     deco_minelamp: { n: "매단 갱등", i: "🏮", type: "block", tile: T.MINELAMP, stack: 999, deco: 1 },
     deco_icebanner: { n: "언 깃발", i: "🚩", type: "block", tile: T.ICEBANNER, stack: 999, deco: 1 },
+    deco_rimeurn: { n: "서리 단지", i: "🏺", type: "block", tile: T.RIMEURN, stack: 999, deco: 1 },
+    deco_bronzecog: { n: "청동 톱니", i: "⚙", type: "block", tile: T.BRONZECOG, stack: 999, deco: 1 },
+    deco_voidcage: { n: "공허 등롱", i: "🏮", type: "block", tile: T.VOIDCAGE, stack: 999, deco: 1 },
+    deco_giantclam: { n: "큰 조개", i: "🐚", type: "block", tile: T.GIANTCLAM, stack: 999, deco: 1 },
     deco_hangmoss: { n: "늘어진 이끼", i: "🌿", type: "block", tile: T.HANGMOSS, stack: 999, deco: 1 },
     deco_stalactite: { n: "종유석", i: "🪨", type: "block", tile: T.STALACTITE, stack: 999, deco: 1 },
     deco_icicle: { n: "고드름", i: "🧊", type: "block", tile: T.ICICLE, stack: 999, deco: 1 },
@@ -3689,6 +3714,10 @@
     cloud_block: { n: "구름 덩이", i: "☁", type: "block", tile: T.CLOUD, stack: 999 },
     skystone: { n: "하늘돌", i: "🪨", type: "block", tile: T.SKYSTONE, stack: 999 },
     ruin_brick: { n: "유적 벽돌", i: "🧱", type: "block", tile: T.RUINBRICK, stack: 999 },
+    vault_slate: { n: "석실 판석", i: "🧱", type: "block", tile: T.VAULTSLATE, stack: 999 },
+    maze_stone: { n: "미로 돌", i: "🧱", type: "block", tile: T.MAZESTONE, stack: 999 },
+    hollow_brick: { n: "공허 벽돌", i: "🧱", type: "block", tile: T.HOLLOWBRICK, stack: 999 },
+    coral_brick: { n: "산호 벽돌", i: "🧱", type: "block", tile: T.CORALBRICK, stack: 999 },
     aether_shard: { n: "에테르 파편", i: "💠", type: "mat", stack: 999 },
     sky_feather: { n: "하늘 깃털", i: "🪶", type: "mat", stack: 999 },
     /* 하늘 섬에서만 — 쓰임은 다음 판. 폭풍 호박은 큰 섬 굴·신전 상자, 구름 진주는 지킴이 상자·구름 해파리 */
@@ -7887,6 +7916,10 @@
     put("metal", "METEORITE COPPERRICH IRONRICH LEADRICH GOLDRICH MYTHRILRICH");
     put("stone", "COALRICH");
     put("flesh", "BLIGHTSAC");
+    put("ice", "RIMEURN");
+    put("metal", "BRONZECOG VOIDCAGE");
+    put("void", "HOLLOWBRICK");
+    put("bone", "GIANTCLAM");
     put("void", "CORRUPTGRASS");
     return m;
   })();
@@ -7940,7 +7973,9 @@
     STARCRYSTAL: [7.2, "#ffe6a8"],
     METEORITE: [1.2, "#ff7a3a"],
     EMBERDRIP: [1.1, "#ff6a2a"],
-    EMBERSPIRE: [1.05, "#ff6a2a"]
+    EMBERSPIRE: [1.05, "#ff6a2a"],
+    VOIDCAGE: [6.4, "#b88fff"],
+    GIANTCLAM: [1.3, "#dfe9ff"]
   };
   {
     const seen = {};
@@ -7986,10 +8021,12 @@
       "SEASHELL",
       "CATTAIL",
       "PEBBLES",
-      "EMBERSPIRE"
+      "EMBERSPIRE",
+      "RIMEURN",
+      "GIANTCLAM"
     ]) m[T[k]] = "floor";
     m[T.PONDWEED] = "water";
-    for (const k of ["STALACTITE", "HANGMOSS", "VINE", "HYPHAE", "MINELAMP", "ICEBANNER", "ICICLE", "GLOWFROND", "EMBERDRIP"]) m[T[k]] = "ceil";
+    for (const k of ["STALACTITE", "HANGMOSS", "VINE", "HYPHAE", "MINELAMP", "ICEBANNER", "ICICLE", "GLOWFROND", "EMBERDRIP", "VOIDCAGE"]) m[T[k]] = "ceil";
     return m;
   })();
   var DECO_OF = (() => {
@@ -8755,8 +8792,8 @@
       n: "버려진 광산",
       x: 820 + SHIFT,
       y: 186,
-      w: 104,
-      h: 52,
+      w: 132,
+      h: 44,
       wall: T.MINEWOOD,
       floor: T.PLANK,
       bg: 4,
@@ -8777,8 +8814,8 @@
       n: "부패한 둥지",
       x: 4020 + SHIFT,
       y: 216,
-      w: 100,
-      h: 60,
+      w: 128,
+      h: 72,
       wall: T.EBONSTONE,
       floor: T.EBONSTONE,
       bg: 3,
@@ -8828,16 +8865,19 @@
   RUIN_SPEC[1].rooms = 16;
   RUIN_SPEC[2].plan = "spine";
   RUIN_SPEC[2].arch = "gated";
-  RUIN_SPEC[2].bsp = [6, 12, 9];
+  RUIN_SPEC[2].bsp = [6, 18, 7];
   RUIN_SPEC[2].rooms = 16;
   RUIN_SPEC[3].plan = "warren";
   RUIN_SPEC[3].arch = "buried";
-  RUIN_SPEC[3].bsp = [6, 12, 9];
-  RUIN_SPEC[3].rooms = 22;
+  RUIN_SPEC[3].bsp = [6, 18, 13];
+  RUIN_SPEC[3].rooms = 16;
   RUIN_SPEC[4].plan = "horseshoe";
   RUIN_SPEC[4].arch = "buried";
   RUIN_SPEC[4].bsp = [6, 12, 9];
   RUIN_SPEC[4].rooms = 19;
+  RUIN_SPEC[2].style = "wide";
+  RUIN_SPEC[3].style = "sparse";
+  RUIN_SPEC[4].shapes = ["round", "round", "octagon", "round", "rect"];
   RUIN_SPEC[0].decor = [
     ["pillar", T.ICE, 0.5],
     ["stalac", T.ICE, 0.5],
@@ -8900,7 +8940,7 @@
     y: 600,
     w: 92,
     h: 60,
-    wall: T.RUINBRICK,
+    wall: T.CORALBRICK,
     floor: T.RUINTILE,
     bg: 10,
     torch: T.GLOWCAP,
@@ -8918,7 +8958,7 @@
     rooms: 32,
     maze: 1,
     entryKind: "maze",
-    decor: [["growth", T.KELPPLANT, 0.5], ["stalac", T.RUINBRICK, 0.35], ["brazier", T.GLOWCAP, 0.4]],
+    decor: [["growth", T.KELPPLANT, 0.5], ["stalac", T.CORALBRICK, 0.35], ["brazier", T.GLOWCAP, 0.4], ["floorpile", T.GIANTCLAM, 0.45]],
     bonus: "sunken_coin",
     bonus2: "abyss_pearl"
   });
@@ -8946,9 +8986,9 @@
     // H
   };
   var STORY_RUIN = [
-    { n: "서리 밑 석실", plan: "hook", arch: "sunken", rooms: 16, bsp: [6, 12, 9], decor: [["pillar", T.ICE, 0.4], ["stalac", T.ICE, 0.45]], sig: "frozen", event: "blackout", bonus: "ice_shard" },
-    { n: "겹친 길", plan: "tee", arch: "sunken", rooms: 16, bsp: [6, 12, 9], decor: [["statue", T.RUINBRICK, 0.45], ["pipe", T.COPPER, 0.5], ["frieze", T.RUNESTONE, 0.3]], sig: "sunshaft", event: "password", bonus: "aether_shard" },
-    { n: "발 디딜 곳 없는 방", plan: "hall", arch: "sunken", rooms: 16, bsp: [6, 12, 9], decor: [["growth", T.CORRUPTLEAF, 0.5], ["web", T.VINE, 0.4], ["pipe", T.LEAD, 0.35]], sig: "heart", event: "swarm", bonus: "corrupt_ess" }
+    { n: "서리 밑 석실", plan: "hook", arch: "sunken", rooms: 16, bsp: [6, 12, 9], wall: T.VAULTSLATE, decor: [["pillar", T.ICE, 0.4], ["stalac", T.ICE, 0.45], ["floorpile", T.RIMEURN, 0.5]], sig: "frozen", event: "blackout", bonus: "ice_shard" },
+    { n: "겹친 길", plan: "tee", arch: "sunken", rooms: 24, bsp: [6, 8, 7], style: "maze", wall: T.MAZESTONE, decor: [["wallmark", T.BRONZECOG, 0.55], ["pipe", T.COPPER, 0.5], ["frieze", T.RUNESTONE, 0.3]], sig: "sunshaft", event: "password", bonus: "aether_shard" },
+    { n: "발 디딜 곳 없는 방", plan: "hall", arch: "sunken", rooms: 16, bsp: [6, 10, 14], style: "tall", wall: T.HOLLOWBRICK, decor: [["growth", T.CORRUPTLEAF, 0.5], ["web", T.VINE, 0.4], ["frieze", T.VOIDCAGE, 0.3]], sig: "heart", event: "swarm", bonus: "corrupt_ess" }
   ];
   STORY_RUIN[0].mobs = ["frostling", "icewolf", "froststatue"];
   STORY_RUIN[0].rank = 2;
@@ -17499,6 +17539,7 @@
     carveDungeon(cfg) {
       const { x0, y0, w, h, wall, floor, bg, rng } = cfg;
       const minW = cfg.minW || 11, minH = cfg.minH || 9;
+      const ST = cfg.style || "";
       const all = [];
       this.bspSplit(x0, y0, w, h, cfg.depth || 4, minW, minH, rng, all);
       let leaves = all;
@@ -17561,7 +17602,8 @@
         if (kept.length >= 3) leaves = kept;
       }
       if (cfg.worn && !cfg.maze && !tri && leaves.length > 4) {
-        const HW = clamp(Math.round(w * 0.4), 28, 40), HH = clamp(Math.round(h * 0.4), 16, 22);
+        const HW = ST === "wide" ? clamp(Math.round(w * 0.42), 34, 52) : clamp(Math.round(w * 0.4), 28, 40);
+        const HH = ST === "wide" ? clamp(Math.round(h * 0.28), 11, 13) : clamp(Math.round(h * 0.4), 16, 22);
         const ok = (r) => !plan || [[0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]].every(([fx, fy]) => {
           const c = clamp(Math.floor((r.x + r.w * fx * 0.98 - x0) / w * plan[0].length), 0, plan[0].length - 1);
           const q = clamp(Math.floor((r.y + r.h * fy * 0.98 - y0) / h * plan.length), 0, plan.length - 1);
@@ -17626,7 +17668,8 @@
           const left = k === 0;
           const wing = leaves.filter((r) => !r.hall && r.w * r.h >= 100).sort((a, b) => (left ? a.x - b.x : b.x + b.w - a.x - a.w) || b.w * b.h - a.w * a.h)[0];
           if (!wing) break;
-          this._growHall(leaves, wing, 20, 12, 30, 16);
+          if (ST === "wide") this._growHall(leaves, wing, 28, 8, 40, 10);
+          else this._growHall(leaves, wing, 20, 12, 30, 16);
           wing.hall = 1;
           wing.cell = 0;
         }
@@ -17690,6 +17733,15 @@
           leaves.splice(leaves.indexOf(r), 1, a, b);
         }
       }
+      if (ST === "sparse")
+        for (const r of leaves) {
+          if (r.grand) continue;
+          const mx = r.w >= 18 ? 3 : r.w >= 12 ? 2 : 0, my = r.h >= 13 ? 3 : r.h >= 10 ? 1 : 0;
+          r.x += mx;
+          r.w -= mx * 2;
+          r.y += my;
+          r.h -= my;
+        }
       if (tri) {
         for (let y = y0; y < y0 + h; y++)
           for (let x = x0; x < x0 + w; x++)
@@ -19176,8 +19228,11 @@
         plan: spec.plan,
         // 겉모양이 방 배치를 따라간다
         worn: 1,
-        maze: spec.maze
+        maze: spec.maze,
         // 미로는 잔방이 정체성이라 큰 홀을 안 뗀다
+        style: spec.style,
+        shapes: spec.shapes
+        // 유적마다 구조 경향 · 방 모양
       });
       rooms.sort((a, b) => (b.grand | 0) - (a.grand | 0) || b.w * b.h - a.w * a.h);
       const boss = rooms[0];
@@ -19388,7 +19443,7 @@
           w,
           h,
           tier: sp.tier,
-          wall: T.RUINBRICK,
+          wall: st.wall || T.RUINBRICK,
           floor: T.RUINTILE,
           bg: 10,
           torch: T.TORCH,
@@ -19405,7 +19460,7 @@
           y0,
           w,
           h,
-          wall: T.RUINBRICK,
+          wall: spec.wall,
           floor: T.RUINTILE,
           bg: 10,
           rng,
@@ -19414,11 +19469,12 @@
           minH: st.bsp ? st.bsp[2] : 8,
           target: st.rooms,
           plan: st.plan,
-          worn: 1
+          worn: 1,
+          style: st.style
         });
         rooms.sort((a, b) => (b.grand | 0) - (a.grand | 0) || b.w * b.h - a.w * a.h);
         const main = rooms[0], fy0 = main.y + main.h - 3;
-        this.grandLights(main, fy0, T.TORCH, T.RUINBRICK);
+        this.grandLights(main, fy0, T.TORCH, spec.wall);
         for (let x = main.x + 3; x < main.x + main.w - 2; x += 8) this.set(x, main.y + 2, T.RUNESTONE);
         this.objects.push({ type: "tablet", tablet: i, x: (main.x + (main.w >> 1)) * TS, y: (fy0 + 1) * TS - 48, w: 34, h: 48 });
         this._ruinCtx = { x0, y0, w, rooms };
@@ -19640,14 +19696,14 @@
         2 발 디딜 곳 없는 방: 방 바닥이 가시 고랑으로 꺼지고 무너지는 디딤돌 · 드문 쉼돌만 남는다.
         ★ 제 난수(seed+'_story'+i)만 쓴다 — 본 난수를 뽑으면 뒤 유적 · 동굴이 씨앗마다 바뀐다. 걷는 줄 위(fy-2~fy)는 막지 않는다. */
     storyTheme(i, rooms, main, sigRoom, sp, x0, w) {
-      const r = new RNG(this.seed + "_story" + i);
+      const r = new RNG(this.seed + "_story" + i), wall = (STORY_RUIN[i] || {}).wall || T.RUINBRICK;
       const inRoom = (x, y) => rooms.some((q) => x > q.x && x < q.x + q.w - 1 && y > q.y && y < q.y + q.h - 1);
       const chest = (cx, fy, tier, bonus, hidden) => this.objects.push({ type: "chest", tier, x: cx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null, bonus, cave: hidden });
       if (i === 0) {
         for (const q of rooms) {
           const fy = q.y + q.h - 3;
           for (let x = q.x - 1; x <= q.x + q.w; x++) for (let y = q.y - 1; y <= q.y + q.h; y++) {
-            if (this.get(x, y) === T.RUINBRICK && r.chance(0.42)) this.set(x, y, T.ICEBRICK);
+            if (this.get(x, y) === wall && r.chance(0.42)) this.set(x, y, T.ICEBRICK);
           }
           const iceFloor = r.chance(0.5);
           for (let x = q.x + 1; x < q.x + q.w - 1; x++) {
@@ -21267,6 +21323,14 @@
   ART[T.BONEHEAP] = { k: "boneheap", c: "#cfc8b0", a: 1 };
   ART[T.SPOREVENT] = { k: "sporevent", c: "#5a8a74", glow: 1 };
   ART[T.HYPHAE] = { k: "hyphae", c: "#8fe0c4", a: 1, glow: 1 };
+  ART[T.VAULTSLATE] = { k: "vaultslate", c: "#5a6878" };
+  ART[T.RIMEURN] = { k: "rimeurn", c: "#a8c4d8", a: 1 };
+  ART[T.MAZESTONE] = { k: "mazestone", c: "#857a68" };
+  ART[T.BRONZECOG] = { k: "cogwall", c: "#b8904a" };
+  ART[T.HOLLOWBRICK] = { k: "hollowbrick", c: "#2e2838" };
+  ART[T.VOIDCAGE] = { k: "voidcage", c: "#6a4a8a", a: 1, glow: 1 };
+  ART[T.CORALBRICK] = { k: "coralbrick", c: "#5a6e6a" };
+  ART[T.GIANTCLAM] = { k: "giantclam", c: "#d8c8b8", a: 1 };
   ART[T.MOSSSTONE] = { k: "mossrock", c: "#5d5d63", g: "#5f8f4a" };
   ART[T.HANGMOSS] = { k: "hangmoss", c: "#6fa05a", a: 1 };
   ART[T.STALACTITE] = { k: "dripstone", c: "#9a9488", a: 1, up: 0 };
@@ -24202,6 +24266,194 @@
           return;
         }
       }
+    },
+    /* --- 유적마다 제 벽돌 · 장식(석판 유적 셋 · 가라앉은 유적) --- */
+    vaultslate(H) {
+      const { g, ox, oy, rng, R, base, dk, dk2, lt, lt2 } = H;
+      this._fill(g, ox, oy, shade(base, 0.55));
+      for (const [x, w] of [[0, 11], [11, 11]]) {
+        R(x + 1, 0, w - 2, TS, rng.chance(0.5) ? base : shade(base, 1.08));
+        R(x + 1, 0, 1, TS, lt);
+        R(x + w - 2, 0, 1, TS, dk2);
+        if (rng.chance(0.55)) R(x + 2, rng.int(4, TS - 6), w - 4, 1, dk);
+      }
+      const fr = "#cfe8f5";
+      let fx = rng.int(3, TS - 4), fy = 0;
+      g.globalAlpha = 0.8;
+      while (fy < TS) {
+        R(fx, fy, 1, 2, fr);
+        fy += 2;
+        fx += rng.int(-1, 1);
+        if (rng.chance(0.2)) R(fx + 1, fy, 2, 1, fr);
+      }
+      g.globalAlpha = 1;
+      R(0, 0, TS, 1.5, "#e8f4ff");
+      this._speck(g, ox, oy, rng, 8, dk2, lt2);
+    },
+    rimeurn(H) {
+      const { g, ox, oy, R, base, dk, dk2, lt2 } = H;
+      g.fillStyle = shade(base, 0.62);
+      g.beginPath();
+      g.ellipse(ox + TS / 2, oy + TS - 8, 8, 7, 0, 0, TAU);
+      g.fill();
+      g.fillStyle = base;
+      g.beginPath();
+      g.ellipse(ox + TS / 2 - 1, oy + TS - 9, 6.5, 5.5, 0, 0, TAU);
+      g.fill();
+      R(5, TS - 2, TS - 10, 2, dk2);
+      R(7, 4, TS - 14, 4, shade(base, 0.78));
+      R(5, 3, TS - 10, 2, "#f0f8ff");
+      R(6, 2, TS - 12, 1, "#ffffff");
+      for (const x of [6, 10, 14]) R(x, 8, 1, 2, "#e0f0ff");
+      R(8, TS - 11, 5, 1, lt2);
+      R(9, TS - 7, 2, 3, dk);
+    },
+    mazestone(H) {
+      const { g, ox, oy, rng, R, base, dk2, lt, lt2 } = H;
+      this._fill(g, ox, oy, base);
+      R(0, 0, TS, 1, lt);
+      R(0, TS - 1, TS, 1, dk2);
+      const br = "#c8a04a", bd = "#6a5428";
+      const path = [[0, 5, 6, 1], [5, 5, 1, 7], [5, 11, 11, 1], [15, 5, 1, 7], [15, 5, 7, 1], [0, 16, 22, 1], [10, 11, 1, 6]];
+      for (const [x, y, w, h] of path) {
+        R(x, y + 1, w, h, bd);
+        R(x, y, w, h, br);
+      }
+      this._speck(g, ox, oy, rng, 10, dk2, lt2);
+    },
+    cogwall(H) {
+      const { g, ox, oy, s, R, base } = H;
+      this._fill(g, ox, oy, shade("#857a68", 0.9));
+      const cx = ox + TS / 2, cy = oy + TS / 2;
+      g.fillStyle = shade(base, 0.5);
+      g.beginPath();
+      for (let q = 0; q < 20; q++) {
+        const a = q / 20 * TAU, r = q % 2 ? 7.5 : 10;
+        g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+      }
+      g.closePath();
+      g.fill();
+      g.fillStyle = base;
+      g.beginPath();
+      for (let q = 0; q < 20; q++) {
+        const a = q / 20 * TAU + 0.08, r = q % 2 ? 6.5 : 9;
+        g.lineTo(cx - 0.5 + Math.cos(a) * r, cy - 0.5 + Math.sin(a) * r);
+      }
+      g.closePath();
+      g.fill();
+      g.fillStyle = shade(base, 1.35);
+      g.beginPath();
+      g.arc(cx - 2, cy - 2, 3.5, Math.PI, 1.5 * Math.PI);
+      g.lineTo(cx - 2, cy - 2);
+      g.fill();
+      g.fillStyle = shade(base, 0.35);
+      g.beginPath();
+      g.arc(cx, cy, 2.5, 0, TAU);
+      g.fill();
+      for (let q = 0; q < 4; q++) {
+        const a = q * Math.PI / 2 + 0.4;
+        R(TS / 2 + Math.cos(a) * 5 - 0.5, TS / 2 + Math.sin(a) * 5 - 0.5, 1.5, 1.5, shade(base, 0.4));
+      }
+    },
+    hollowbrick(H) {
+      const { g, ox, oy, rng, R, base, dk2, lt } = H;
+      this._fill(g, ox, oy, "#120e18");
+      const bh = TS / 3, bw = TS / 2;
+      for (let row = 0; row < 3; row++) {
+        const y = row * bh, off = row % 2 ? -bw / 2 : 0;
+        for (let bx = off; bx < TS; bx += bw) {
+          R(bx + 1, y + 1, bw - 2, bh - 2, rng.chance(0.5) ? base : shade(base, 1.15));
+          R(bx + 1, y + 1, bw - 2, 1, lt);
+        }
+      }
+      g.globalAlpha = 0.55;
+      for (let row = 1; row < 3; row++) R(0, row * bh - 0.5, TS, 1, "#9a6ad8");
+      g.globalAlpha = 0.3;
+      R(0, 0, TS, 1, "#c8a0ff");
+      g.globalAlpha = 1;
+      if (rng.chance(0.35)) {
+        const x = rng.int(3, TS - 5);
+        R(x, rng.int(2, TS - 6), 1, 4, "#b88fff");
+      }
+      this._speck(g, ox, oy, rng, 6, dk2, shade(base, 1.4));
+    },
+    voidcage(H) {
+      const { g, ox, oy, R, base } = H;
+      R(TS / 2 - 0.5, 0, 1, 4, "#3a3240");
+      R(6, 4, TS - 12, 1.5, "#4a4050");
+      R(6, TS - 5, TS - 12, 1.5, "#4a4050");
+      for (const x of [6, 10, TS - 11, TS - 7]) R(x, 4, 1, TS - 8, "#4a4050");
+      const gr = g.createRadialGradient(ox + TS / 2, oy + TS / 2, 1, ox + TS / 2, oy + TS / 2, 6);
+      gr.addColorStop(0, "#ffffff");
+      gr.addColorStop(0.35, "#d8b8ff");
+      gr.addColorStop(1, "rgba(120,70,200,0)");
+      g.fillStyle = gr;
+      g.fillRect(ox + 4, oy + 5, TS - 8, TS - 10);
+      R(TS / 2 - 1, TS / 2 - 1, 2, 2, "#ffffff");
+      R(5, TS - 4, TS - 10, 1, shade(base, 0.6));
+    },
+    coralbrick(H) {
+      const { g, ox, oy, rng, R, base, dk, dk2, lt } = H;
+      this._fill(g, ox, oy, shade(base, 0.6));
+      const bh = TS / 2, bw = TS / 2;
+      for (let row = 0; row < 2; row++) {
+        const y = row * bh, off = row ? -bw / 2 : 0;
+        for (let bx = off; bx < TS; bx += bw) {
+          R(bx + 1, y + 1, bw - 2, bh - 2, rng.chance(0.5) ? base : shade(base, 1.1));
+          R(bx + 1, y + 1, bw - 2, 1, lt);
+        }
+      }
+      const corals = ["#e88a8a", "#d86a9a", "#f0b878", "#7fd0b8"];
+      for (let k = 0, n = rng.int(1, 3); k < n; k++) {
+        const cx = rng.int(3, TS - 4), cy = rng.int(3, TS - 4), c = corals[rng.int(0, 3)];
+        g.fillStyle = shade(c, 0.7);
+        g.beginPath();
+        g.arc(ox + cx, oy + cy + 0.5, 2.6, 0, TAU);
+        g.fill();
+        g.fillStyle = c;
+        g.beginPath();
+        g.arc(ox + cx, oy + cy, 2.2, 0, TAU);
+        g.fill();
+        R(cx - 1, cy - 1, 1, 1, "#ffffff");
+      }
+      for (let k = 0; k < 4; k++) {
+        const x = rng.int(1, TS - 3), y = rng.int(1, TS - 3);
+        R(x, y, 2, 2, "#c8c0b0");
+        R(x + 0.5, y + 0.5, 1, 1, dk);
+      }
+      g.globalAlpha = 0.18;
+      R(0, TS - 6, TS, 6, "#2a6a6a");
+      g.globalAlpha = 1;
+      R(0, TS - 1, TS, 1, dk2);
+    },
+    giantclam(H) {
+      const { g, ox, oy, R, base, dk2 } = H;
+      const cx = ox + TS / 2, by = oy + TS - 3;
+      g.fillStyle = shade(base, 0.7);
+      g.beginPath();
+      g.ellipse(cx, by - 2, 10, 4.5, 0, 0, Math.PI);
+      g.fill();
+      g.fillStyle = base;
+      g.beginPath();
+      g.moveTo(cx - 10, by - 3);
+      g.quadraticCurveTo(cx - 9, by - 13, cx, by - 13);
+      g.quadraticCurveTo(cx + 9, by - 13, cx + 10, by - 3);
+      g.closePath();
+      g.fill();
+      g.strokeStyle = shade(base, 0.72);
+      g.lineWidth = 1;
+      for (const dx of [-6, -2, 2, 6]) {
+        g.beginPath();
+        g.moveTo(cx + dx * 0.5, by - 12);
+        g.lineTo(cx + dx * 1.4, by - 3);
+        g.stroke();
+      }
+      R(TS / 2 - 7, TS - 6, 14, 2, "#3a2a30");
+      g.fillStyle = "#eef4ff";
+      g.beginPath();
+      g.arc(cx, by - 4, 2, 0, TAU);
+      g.fill();
+      R(1, TS - 1, TS - 2, 1, dk2);
     }
   };
   Object.assign(TILE_PAINT, TilePaintRuins);
@@ -24722,6 +24974,10 @@
     cloud_block: { k: "block", tile: T.CLOUD },
     skystone: { k: "block", tile: T.SKYSTONE },
     ruin_brick: { k: "block", tile: T.RUINBRICK },
+    vault_slate: { k: "block", tile: T.VAULTSLATE },
+    maze_stone: { k: "block", tile: T.MAZESTONE },
+    hollow_brick: { k: "block", tile: T.HOLLOWBRICK },
+    coral_brick: { k: "block", tile: T.CORALBRICK },
     aether_shard: { k: "shard", c: "#8fe0d8", glow: 1 },
     sky_feather: { k: "feather", c: "#cfe4f5" },
     rune_frag: { k: "runefrag", c: "#7fb8d8" },
@@ -48253,7 +48509,7 @@
       const cy = w.surface[cx];
       const x0 = cx - R - 3, x1 = cx + R + 3, y0 = cy - 18, y1 = cy + R + 2;
       if (w.giantTree && x1 >= w.giantTree.x - 24 && x0 <= w.giantTree.x + 24) return false;
-      const built = /* @__PURE__ */ new Set([T.PLANK, T.BRICK, T.PLATFORM, T.TORCH, T.RUINBRICK, T.RUINTILE, T.ALTARSTONE]);
+      const built = /* @__PURE__ */ new Set([T.PLANK, T.BRICK, T.PLATFORM, T.TORCH, T.RUINBRICK, T.RUINTILE, T.ALTARSTONE, T.VAULTSLATE, T.MAZESTONE, T.HOLLOWBRICK, T.CORALBRICK]);
       for (let x = x0; x <= x1; x++) {
         if (Math.abs(w.surface[clamp(x, 0, WW2 - 1)] - cy) > R + 4) return false;
         for (let y = y0; y <= y1; y++) {
@@ -50268,7 +50524,11 @@
           tier: 3,
           bonus: st.bonus,
           bonus2: st.bonus2,
-          story: +m[1]
+          story: +m[1],
+          wall: st.wall || T.RUINBRICK,
+          floor: T.RUINTILE,
+          bg: 10,
+          torch: T.TORCH
         };
       }
       return this._storySpec[id];
