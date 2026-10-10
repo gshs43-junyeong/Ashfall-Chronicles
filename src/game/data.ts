@@ -108,7 +108,9 @@ export const T: Record<string, number> = {
   VAULTSLATE: 203, RIMEURN: 204,        // 서리 밑 석실 — 석실 판석 · 서리 단지
   MAZESTONE: 205, BRONZECOG: 206,       // 겹친 길 — 미로 돌 · 청동 톱니
   HOLLOWBRICK: 207, VOIDCAGE: 208,      // 발 디딜 곳 없는 방 — 공허 벽돌 · 공허 등롱
-  CORALBRICK: 209, GIANTCLAM: 210       // 가라앉은 유적 — 산호 벽돌 · 큰 조개
+  CORALBRICK: 209, GIANTCLAM: 210,      // 가라앉은 유적 — 산호 벽돌 · 큰 조개
+  /* --- 깊이층 — 지하와 지옥 사이: 심층암 지대 · 작열 지대(현무암 + 마그마 맥) --- */
+  DEEPSLATE: 211, BASALT: 212, MAGMAVEIN: 213
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -375,7 +377,11 @@ export const TILE_DEF: TileDef[] = [
   { n: '공허 벽돌', c: '#2e2838', solid: 1, hard: 3, drop: 'hollow_brick' },
   { n: '공허 등롱', c: '#6a4a8a', solid: 0, hard: 0, drop: 'deco_voidcage', a: 1 },
   { n: '산호 벽돌', c: '#5a6e6a', solid: 1, hard: 3, drop: 'coral_brick' },
-  { n: '큰 조개', c: '#d8c8b8', solid: 0, hard: 0, drop: 'deco_giantclam', a: 1 }
+  { n: '큰 조개', c: '#d8c8b8', solid: 0, hard: 0, drop: 'deco_giantclam', a: 1 },
+  /* 깊이층 돌 — 심층암은 돌처럼 캐지고(1), 작열층은 재와 같은 등급(2)이라 지옥 문턱과 같은 곡괭이가 필요하다 */
+  { n: '심층암', c: '#3d404c', solid: 1, hard: 1, drop: 'deepslate' },
+  { n: '현무암', c: '#3a3333', solid: 1, hard: 2, drop: 'basalt' },
+  { n: '마그마 맥', c: '#5a2a1e', solid: 1, hard: 2, drop: 'basalt' }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -427,8 +433,9 @@ for (let i = 0; i < 4; i++) {
 for (const id in MACH_OF_TILE) TILE_SPRITE['m_' + MACH_OF_TILE[id]] = +id;
 
 export const WALL_COLOR = [null, '#3a2a1a', '#33333a', '#241c2e', '#402d1a', '#4a5f6e', '#32323c', '#2a2018', '#6b5a34',
-  '#3f5266', '#332f26', '#23301f', '#22322e', '#3c3a34', '#4a3520', '#5a4128', '#4c463c'];
+  '#3f5266', '#332f26', '#23301f', '#22322e', '#3c3a34', '#4a3520', '#5a4128', '#4c463c', '#2c2f3a', '#302826'];
 export const COLUMN_WALL = 16;          // 큰 홀 뒷벽의 기둥 — 세로 홈 결(paintColumnWall). ★ 벽지 번호도 끝에만 붙인다
+// 17: 심층암 벽지, 18: 현무암 벽지(world/strata.ts applyStrata 가 자연 벽지만 갈아 끼운다)
 // 9: 하늘돌, 10: 유적, 11: 정글, 12: 버섯 골짜기, 13: 성벽(WALLSTONE을 어둡게 — 성문 안쪽 배경) 15: 나무 판자 벽지 — 벽돌결이 아니라 세로 판자결로
 // 그린다(paintWoodWall)
 

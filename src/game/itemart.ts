@@ -190,6 +190,7 @@ export const ISPEC: Bag = {
   stone: { k: 'block', tile: T.STONE },
   limestone: { k: 'block', tile: T.LIMESTONE },
   granite: { k: 'block', tile: T.GRANITE },
+  deepslate: { k: 'block', tile: T.DEEPSLATE }, basalt: { k: 'block', tile: T.BASALT },
   dirt: { k: 'block', tile: T.DIRT },
   sand: { k: 'block', tile: T.SAND },
   ash: { k: 'block', tile: T.ASH },

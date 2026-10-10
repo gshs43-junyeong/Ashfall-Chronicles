@@ -214,7 +214,11 @@ export const DebugStartPart: Bag = {
       const give = (iid: any, n: number) => { const it = makeItem(iid, n); if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!)); };
       give('pick_iron', 1); give('potion_hp', 20); give('bomb_small', 10); give('torch', 60);
       let at = null;
-      if (kq) {
+      const tun = kq && (w.tunnels || []).filter((q: Bag) => q.k === kq).sort((a: Bag, b: Bag) => Math.abs(a.cx - w.spawnX) - Math.abs(b.cx - w.spawnX))[0];
+      if (tun) {                                   // 큰 굴 갈래 — hall(대공동) · cross(엇갈린 굴) · long(긴 굴)
+        const fy = w._tunFloor(tun.cx, tun.cy, 40);
+        if (fy > 0) at = [tun.cx, fy];
+      } else if (kq) {
         const k = CAVE_TYPES.findIndex(c => c.id === (kq === 'frond' ? 'moss' : kq));   // frond = 발광 잎이 달린 이끼 굴
         const cx0 = w.spawnX;
         // 그 갈래의 장식이 **실제로 깔린** 자리여야 한다(캠프 둘레처럼 갈래만 있고 안 꾸민 곳이 있다)

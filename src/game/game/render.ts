@@ -369,6 +369,7 @@ export const RenderPart: Bag = {
     /* 유적 고유 이벤트의 여운을 화면에 덮는다. */
     // 이름표는 원경이 바뀌는 자리에서 — 그리는 김에 같은 카메라 값으로 본다
     this.checkBiomeEntry(camX, camY);
+    this.checkDepthEntry();
     /* 그 땅의 공기색 — 아주 옅게. */
     const air = this.biomeAir(camX, camY);
     if (air) this.drawAir(c, air);

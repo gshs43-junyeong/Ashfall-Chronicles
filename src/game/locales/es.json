@@ -4419,6 +4419,25 @@
   "TILE_DEF.207.n": "Ladrillo del vacío",
   "TILE_DEF.208.n": "Farol del vacío",
   "TILE_DEF.209.n": "Ladrillo de coral",
-  "TILE_DEF.210.n": "Almeja gigante"
+  "TILE_DEF.210.n": "Almeja gigante",
+  "ITEMS.deepslate.n": "Pizarra profunda",
+  "ITEMS.deepslate.d": "Piedra negra prensada por las profundidades. Sus finas capas están muy apretadas.",
+  "ITEMS.basalt.n": "Basalto",
+  "ITEMS.basalt.d": "Lava enfriada y endurecida. Se parte en columnas.",
+  "TILE_DEF.211.n": "Pizarra profunda",
+  "TILE_DEF.212.n": "Basalto",
+  "TILE_DEF.213.n": "Veta de magma",
+  "DEPTH_LAYER.surface.s": "Superficie",
+  "DEPTH_LAYER.sky.s": "Cielo",
+  "DEPTH_LAYER.under.s": "Subsuelo",
+  "DEPTH_LAYER.hell.s": "Infierno",
+  "DEPTH_LAYER.slate.s": "Pizarra",
+  "DEPTH_LAYER.slate.n": "Zona de pizarra profunda",
+  "DEPTH_LAYER.slate.sub": "Capas de piedra negra prensada",
+  "DEPTH_LAYER.slate.card.line": "La piedra se traga cada sonido. Largos túneles se pierden sin fin en la oscuridad.",
+  "DEPTH_LAYER.ember.s": "Capa ígnea",
+  "DEPTH_LAYER.ember.n": "Zona ígnea",
+  "DEPTH_LAYER.ember.sub": "Basalto y vetas de magma",
+  "DEPTH_LAYER.ember.card.line": "Vetas rojas laten en las grietas. En algún lugar bajo tus pies, el infierno respira."
  }
 }

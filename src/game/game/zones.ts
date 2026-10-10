@@ -3,7 +3,7 @@ import { mixHex } from '../../engine/core/color.js';
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { dimsOf } from '../size.js';
-import { TS, ZONE_CARD } from '../world.js';
+import { DEPTH_LAYER, TS, ZONE_CARD } from '../world.js';
 import { UI } from '../ui.js';
 import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
@@ -44,6 +44,21 @@ export const ZonesPart: Bag = {
     this._cardAt[id] = this.time;
     /* 소리는 내지 않는다. */
     UI.chapterCard({ sub: z ? z.sub : b!.card.sub, title: z ? z.n : b!.n, line: card.line });
+  },
+
+  /** 깊이층에 들어섰을 때 — 심층암 · 작열 지대는 처음 내려설 때(90초 안에는 다시 안 띄운다) 이름표를 띄운다. */
+  checkDepthEntry() {
+    const p = this.player, w = this.world;
+    if (!p || !w || this.time < 3) return;
+    const id = w.depthLayer(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
+    if (id === this._layerId) return;
+    const prev = this._layerId; this._layerId = id;
+    const L = DEPTH_LAYER[id];
+    if (prev === undefined || !L || !L.card || (prev === 'ember' && id === 'slate') || prev === 'hell') return;   // 올라가며 지나칠 때는 조용히
+    this._cardAt = this._cardAt || {};
+    if (this.time - (this._cardAt[id] || -1e9) < 90) return;
+    this._cardAt[id] = this.time;
+    UI.chapterCard({ sub: L.sub, title: L.n, line: L.card.line });
   },
 
   /** 그 땅의 공기색. */

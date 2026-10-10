@@ -2441,8 +2441,12 @@
     VOIDCAGE: 208,
     // 발 디딜 곳 없는 방 — 공허 벽돌 · 공허 등롱
     CORALBRICK: 209,
-    GIANTCLAM: 210
+    GIANTCLAM: 210,
     // 가라앉은 유적 — 산호 벽돌 · 큰 조개
+    /* --- 깊이층 — 지하와 지옥 사이: 심층암 지대 · 작열 지대(현무암 + 마그마 맥) --- */
+    DEEPSLATE: 211,
+    BASALT: 212,
+    MAGMAVEIN: 213
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -2765,7 +2769,11 @@
     { n: "공허 벽돌", c: "#2e2838", solid: 1, hard: 3, drop: "hollow_brick" },
     { n: "공허 등롱", c: "#6a4a8a", solid: 0, hard: 0, drop: "deco_voidcage", a: 1 },
     { n: "산호 벽돌", c: "#5a6e6a", solid: 1, hard: 3, drop: "coral_brick" },
-    { n: "큰 조개", c: "#d8c8b8", solid: 0, hard: 0, drop: "deco_giantclam", a: 1 }
+    { n: "큰 조개", c: "#d8c8b8", solid: 0, hard: 0, drop: "deco_giantclam", a: 1 },
+    /* 깊이층 돌 — 심층암은 돌처럼 캐지고(1), 작열층은 재와 같은 등급(2)이라 지옥 문턱과 같은 곡괭이가 필요하다 */
+    { n: "심층암", c: "#3d404c", solid: 1, hard: 1, drop: "deepslate" },
+    { n: "현무암", c: "#3a3333", solid: 1, hard: 2, drop: "basalt" },
+    { n: "마그마 맥", c: "#5a2a1e", solid: 1, hard: 2, drop: "basalt" }
   ];
   var FARM_WET_R = 5, FARM_WET_DAYS = 3;
   var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
@@ -2876,7 +2884,9 @@
     "#3c3a34",
     "#4a3520",
     "#5a4128",
-    "#4c463c"
+    "#4c463c",
+    "#2c2f3a",
+    "#302826"
   ];
   var COLUMN_WALL = 16;
   var RARITY = ["일반", "고급", "희귀", "영웅", "전설", "신화"];
@@ -3430,6 +3440,8 @@
     stone: { n: "돌", i: "🪨", type: "block", tile: T.STONE, stack: 999 },
     limestone: { n: "석회암", i: "🪨", type: "block", tile: T.LIMESTONE, stack: 999, d: "무르고 밝은 돌. 물이 스민 자리에 종유석이 자란다." },
     granite: { n: "화강암", i: "🪨", type: "block", tile: T.GRANITE, stack: 999, d: "깊은 데서 굳은 돌. 알갱이가 굵고 단단하다." },
+    deepslate: { n: "심층암", i: "🪨", type: "block", tile: T.DEEPSLATE, stack: 999, d: "짓눌려 굳은 검은 돌. 얇은 켜가 촘촘하다." },
+    basalt: { n: "현무암", i: "🪨", type: "block", tile: T.BASALT, stack: 999, d: "식어 굳은 용암. 기둥 모양으로 갈라진다." },
     dirt: { n: "흙", i: "🟤", type: "block", tile: T.DIRT, stack: 999 },
     sand: { n: "모래", i: "🟨", type: "block", tile: T.SAND, stack: 999 },
     ash: { n: "재", i: "⬛", type: "block", tile: T.ASH, stack: 999 },
@@ -7908,9 +7920,9 @@
     put("plant", "LEAF CORRUPTLEAF SKYLEAF JUNGLELEAF GLOWLEAF PINELEAF VINE WEED FLOWER ORCHID FERN LILY MUSHROOM GLOWCAP GLOWMOSS CACTUS CACTUS_BLOCK JUNGLEGRASS SPOREVENT HYPHAE WHEAT0 WHEAT1 WHEAT2 WHEAT3 ROOT0 ROOT1 ROOT2 ROOT3 CAP0 CAP1 CAP2 CAP3 BEAN0 BEAN1 BEAN2 BEAN3 BLOOM0 BLOOM1 BLOOM2 BLOOM3 HERB0 HERB1 HERB2 HERB3 POD0 POD1 POD2 POD3");
     put("metal", "COPPER IRON GOLD MYTHRIL LEAD STEELPLATE CONDUIT SLAGSTEEL ORBITPLATE SPIKE SPARKCOIL GRINDER DART_L DART_R LAMPPOST MINELAMP TOOLPILE M_BELT M_DRILL M_DRILL_E M_PUMP M_SMELTER M_PRESS M_REFINERY M_ASSEMBLER M_CRATE M_GEN M_BATTERY M_POLE M_SORTER M_TURRET M_TRAP M_SWITCH M_WINDMILL M_MILL M_OVEN M_DART M_FLAME M_FROST M_DRILL_X");
     put("glass", "CRYSTAL AETHER POWERSTONE SOULSTONE COREGLASS DRAFTGLASS ORBITCORE WINDOW");
-    put("ember", "LAVA HELLSTONE FLAMEVENT EMBERDRIP EMBERSPIRE");
+    put("ember", "LAVA HELLSTONE FLAMEVENT EMBERDRIP EMBERSPIRE MAGMAVEIN");
     put("bone", "BONEHEAP");
-    put("stone", "MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE");
+    put("stone", "MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE DEEPSLATE BASALT");
     put("plant", "HANGMOSS GLOWFROND");
     put("glass", "GEODE STARCRYSTAL FUSEDROCK");
     put("metal", "METEORITE COPPERRICH IRONRICH LEADRICH GOLDRICH MYTHRILRICH");
@@ -7975,7 +7987,8 @@
     EMBERDRIP: [1.1, "#ff6a2a"],
     EMBERSPIRE: [1.05, "#ff6a2a"],
     VOIDCAGE: [6.4, "#b88fff"],
-    GIANTCLAM: [1.3, "#dfe9ff"]
+    GIANTCLAM: [1.3, "#dfe9ff"],
+    MAGMAVEIN: [3.3, "#ff5a1a"]
   };
   {
     const seen = {};
@@ -14406,6 +14419,8 @@
     DAWN_OBJ: () => DAWN_OBJ,
     DAWN_PLAZA: () => DAWN_PLAZA,
     DAWN_WALL: () => DAWN_WALL,
+    DEPTH_LAYER: () => DEPTH_LAYER,
+    DEPTH_WALL: () => DEPTH_WALL,
     LIGHT_BOUNCE: () => LIGHT_BOUNCE,
     LIGHT_FALL: () => LIGHT_FALL,
     LIGHT_OPAQUE: () => LIGHT_OPAQUE,
@@ -14424,6 +14439,7 @@
     ZONE_CARD: () => ZONE_CARD,
     doorEdge: () => doorEdge,
     inSeaZone: () => inSeaZone,
+    naturalWalls: () => naturalWalls,
     ruinSpecFor: () => ruinSpecFor,
     setWorldSize: () => setWorldSize
   });
@@ -14660,6 +14676,25 @@
       card: { line: "재가 내린 뒤에도 굴뚝이 서 있다. 사람이 남긴 마지막 거리." }
     }
   };
+  var DEPTH_LAYER = {
+    surface: { s: "지표" },
+    sky: { s: "하늘" },
+    under: { s: "지하" },
+    hell: { s: "지옥" },
+    slate: {
+      s: "심층암층",
+      n: "심층암 지대",
+      sub: "눌려 굳은 검은 켜",
+      card: { line: "돌이 소리를 삼킨다. 긴 굴이 어둠 속으로 끝없이 뻗어 있다." }
+    },
+    ember: {
+      s: "작열층",
+      n: "작열 지대",
+      sub: "현무암과 마그마 맥",
+      card: { line: "벽 틈으로 붉은 맥이 뛴다. 발밑 어딘가에서 지옥이 숨을 쉰다." }
+    }
+  };
+  var DEPTH_WALL = [17, 18];
   var MAT_LAYER = [
     { top: T.SNOW, soil: T.SNOW, sub: T.ICE, deep: T.STONE, wall: 5, subWall: 2 },
     { top: T.GRASS, soil: T.DIRT, sub: T.DIRT, deep: T.STONE, wall: 1, subWall: 2 },
@@ -14672,6 +14707,14 @@
     // 7 바다 — 지면은 해저 모래다
     { top: T.SAND, soil: T.SAND, sub: T.SANDSTONE, deep: T.STONE, wall: 8, subWall: 2 }
   ];
+  function naturalWalls() {
+    const s = new Set(DEPTH_WALL);
+    for (const L of MAT_LAYER) {
+      s.add(L.wall);
+      s.add(L.subWall);
+    }
+    return s;
+  }
   var MAT_OF = {
     ice: 0,
     forest: 1,
@@ -15108,6 +15151,7 @@
       this.buildCitadel(rng);
       this.buildDeepShaft(rng);
       this.buildCaverns(rng);
+      this.buildTunnels();
       this.buildRuinCaches(rng);
       this.floodCaves(rng);
       this.floodHell(rng);
@@ -15131,6 +15175,7 @@
       this.fillMossCorners();
       this.springFalls();
       this.faults = (this.faults || []).filter((f) => this.get(f.x, f.y) === T.FAULTSTONE);
+      this.applyStrata();
       this.placeRichOres();
       this.spawnX = vx0 + vx1 >> 1;
       this.spawnY = vh - 3;
@@ -15678,11 +15723,7 @@
     /** 마지막 구멍 메우기 — pruneSmallCaves(생성 초반)가 끝난 **뒤에** 생긴 작은 굴을 메운다. */
     sweepPockets(maxSize) {
       const { WW: WW2, WH: WH2, HELL_Y: HELL_Y2, SEA_X1: SEA_X12 } = this.dims;
-      const natural = /* @__PURE__ */ new Set();
-      for (const k in MAT_LAYER) {
-        natural.add(MAT_LAYER[k].wall);
-        natural.add(MAT_LAYER[k].subWall);
-      }
+      const natural = naturalWalls();
       const busy = /* @__PURE__ */ new Set();
       for (const o of this.objects) {
         const x0 = Math.floor(o.x / TS) - 1, x1 = Math.floor((o.x + (o.w || TS)) / TS) + 1;
@@ -19888,11 +19929,7 @@
       const { WW: WW2 } = this.dims;
       if (!this.caveGrid || !this.inB(tx, ty) || ty <= this.surface[tx] + 12) return 0;
       if (!this._natural) {
-        this._natural = /* @__PURE__ */ new Set();
-        for (const k in MAT_LAYER) {
-          this._natural.add(MAT_LAYER[k].wall);
-          this._natural.add(MAT_LAYER[k].subWall);
-        }
+        this._natural = naturalWalls();
       }
       if (!this._natural.has(this.walls[ty * WW2 + tx]) || this.ruinInside(tx, ty)) return 0;
       return this.caveTypeAt(tx, ty);
@@ -19901,11 +19938,7 @@
       const { SY: SY2, WW: WW2, SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2, DEEP_Y: DEEP_Y2, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12, SEA_X1: SEA_X12 } = this.dims;
       const gW = this._cgW(), gH = Math.ceil(HELL_Y2 / CAVE_GH);
       this.caveGrid = new Uint8Array(gW * gH);
-      const natural = /* @__PURE__ */ new Set();
-      for (const k in MAT_LAYER) {
-        natural.add(MAT_LAYER[k].wall);
-        natural.add(MAT_LAYER[k].subWall);
-      }
+      const natural = naturalWalls();
       for (let gy = 0; gy < gH; gy++)
         for (let gx = 0; gx < gW; gx++) {
           const x = gx * CAVE_GW + (CAVE_GW >> 1), y = gy * CAVE_GH + (CAVE_GH >> 1);
@@ -20042,11 +20075,7 @@
     faultCells(f) {
       const { WW: WW2, HELL_Y: HELL_Y2 } = this.dims;
       const rng = new RNG(f.seed), cells = [], seen = /* @__PURE__ */ new Set();
-      const natural = /* @__PURE__ */ new Set();
-      for (const k in MAT_LAYER) {
-        natural.add(MAT_LAYER[k].wall);
-        natural.add(MAT_LAYER[k].subWall);
-      }
+      const natural = naturalWalls();
       const dig = (xx, yy) => {
         const key = yy * WW2 + xx;
         if (seen.has(key) || !this.inB(xx, yy)) return;
@@ -20082,7 +20111,7 @@
         const floor = this.solid(x, y + 1), ceil = this.solid(x, y - 1);
         const stoneAt = (sx, sy) => {
           const t = this.get(sx, sy);
-          return t === T.STONE || t === T.LIMESTONE || t === T.GRANITE || t === T.DIRT;
+          return t === T.STONE || t === T.LIMESTONE || t === T.GRANITE || t === T.DIRT || t === T.DEEPSLATE || t === T.BASALT;
         };
         if (id === "moss") {
           for (const [hx, hy] of [[x, y + 1], [x, y - 1], [x - 1, y], [x + 1, y]])
@@ -20098,7 +20127,7 @@
           } else if (floor && rng.chance(0.22)) this.set(x, y, T.STALAGMITE);
         } else if (floor && rng.chance(0.2)) this.set(x, y, T.GEODE);
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]])
-          if (this.get(x + dx, y + dy) === T.STONE) {
+          if ([T.STONE, T.DEEPSLATE, T.BASALT].includes(this.get(x + dx, y + dy))) {
             if (rng.chance(0.06)) this.set(x + dx, y + dy, ore);
             else if (id === "geode" && rng.chance(0.1)) this.set(x + dx, y + dy, T.CRYSTAL);
           }
@@ -21033,11 +21062,7 @@
     /** 동굴 웅덩이 꾸미기 — 물·지형이 다 정해진 뒤에 한 번. */
     decoratePonds(rng) {
       const { WW: WW2, WH: WH2 } = this.dims;
-      const natural = /* @__PURE__ */ new Set();
-      for (const k in MAT_LAYER) {
-        natural.add(MAT_LAYER[k].wall);
-        natural.add(MAT_LAYER[k].subWall);
-      }
+      const natural = naturalWalls();
       const host = (t) => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE || t === T.LIMESTONE || t === T.GRANITE;
       const wild = (x, y) => natural.has(this.walls[y * WW2 + x]) && !this.ruinAt(x, y);
       const seen = new Uint8Array(WW2 * WH2);
@@ -21153,6 +21178,221 @@
     }
   };
   mixin(World.prototype, WorldWater, true);
+
+  // src/game/world/strata.ts
+  var strata_exports = {};
+  __export(strata_exports, {
+    WorldStrata: () => WorldStrata
+  });
+  var WorldStrata = {
+    /** 층 경계 — 열마다 출렁이는 두 줄(심층암 윗면 · 작열층 윗면). 씨앗에서 뽑으므로 저장하지 않는다. */
+    strataLines(tx) {
+      const { SY: SY2, DEEP_Y: DEEP_Y2 } = this.dims;
+      const p = this._strataPh || (this._strataPh = (() => {
+        const r = new RNG(this.seed + "_strata");
+        return [0, 0, 0, 0].map(() => r.range(0, 6.28));
+      })());
+      const a = Math.round(5 * Math.sin(tx * 0.011 + p[0]) + 3 * Math.sin(tx * 0.031 + p[1]));
+      const b = Math.round(4 * Math.sin(tx * 0.013 + p[2]) + 3 * Math.sin(tx * 0.027 + p[3]));
+      return [SY2(172) + a, DEEP_Y2 + 2 + b];
+    },
+    /** 이 칸의 깊이층 — 'sky' · 'surface' · 'under' · 'slate' · 'ember' · 'hell' (DEPTH_LAYER 의 열쇠) */
+    depthLayer(tx, ty) {
+      const { WW: WW2, SKY_Y: SKY_Y2, HELL_Y: HELL_Y2 } = this.dims;
+      if (ty < SKY_Y2) return "sky";
+      const x = clamp(tx, 0, WW2 - 1);
+      if (ty <= this.surface[x] + 6) return "surface";
+      if (ty >= HELL_Y2) return "hell";
+      const [s, e] = this.strataLines(x);
+      return ty >= e ? "ember" : ty >= s ? "slate" : "under";
+    },
+    /** 지층 갈아 끼우기 — 남은 돌(STONE)만 그 층의 돌로, 자연 벽지만 그 층의 벽지로. 광맥 · 지층 돌 · 장식 · 구조물은 그대로.
+        ★ 생성 맨 끝(광상 앞)에 둔다 — 광맥 · 동굴 장식 · 물이 '돌'을 보고 자리를 고르므로, 먼저 바꾸면 그 단계들이 다 달라진다. */
+    applyStrata() {
+      const { WW: WW2, HELL_Y: HELL_Y2 } = this.dims;
+      const nat = naturalWalls(), r = new RNG(this.seed + "_vein");
+      const mix = (x, y, line2) => {
+        const d = y - line2;
+        if (d >= 3) return true;
+        if (d < -3) return false;
+        return ((x * 73856093 ^ y * 19349663) >>> 0) % 7 < d + 4;
+      };
+      for (let x = 0; x < WW2; x++) {
+        const [s, e] = this.strataLines(x);
+        for (let y = s - 3; y < HELL_Y2; y++) {
+          const k = y * WW2 + x;
+          if (this.ruinAt(x, y)) continue;
+          const deep = mix(x, y, e), slate = deep || mix(x, y, s);
+          if (!slate) continue;
+          if (this.tiles[k] === T.STONE) this.set(x, y, deep ? T.BASALT : T.DEEPSLATE);
+          if (nat.has(this.walls[k]) && this.walls[k] !== 7 && this.walls[k] !== 3 && this.walls[k] !== 5) this.walls[k] = DEPTH_WALL[deep ? 1 : 0];
+        }
+      }
+      const n = Math.round(WW2 / 2800 * 260 * this.dims.WSY);
+      for (let i = 0; i < n; i++) {
+        let x = r.int(4, WW2 - 5);
+        const [, e] = this.strataLines(x);
+        let y = r.int(e + 2, HELL_Y2 - 6), dx = r.chance(0.5) ? 1 : -1;
+        for (let s = r.int(6, 16); s > 0; s--) {
+          if (this.get(x, y) === T.BASALT) this.set(x, y, T.MAGMAVEIN);
+          if (r.chance(0.6)) x += dx;
+          else y += r.chance(0.5) ? 1 : -1;
+          if (r.chance(0.15)) dx = -dx;
+        }
+      }
+    },
+    /* ================= 긴 굴 · 엇갈린 굴 · 대공동 ================= */
+    /** 굴을 팔 수 있는 칸인가 — 유적(그 밑 깊은 곳 자리까지) · 마을 · 공방 · 바다 · 지표 가까이는 비킨다 */
+    _tunOk(x, y) {
+      const { WW: WW2, WORLD_BOT: WORLD_BOT2, HELL_Y: HELL_Y2, SEA_X1: SEA_X12, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12 } = this.dims;
+      if (x < 6 || x >= WW2 - 6 || y >= Math.min(HELL_Y2 - 8, WORLD_BOT2 - 10)) return false;
+      if (y <= this.surface[x] + 16 || inSeaZone(x, SEA_X12)) return false;
+      if (x >= CAMP_X02 - 40 && x <= CAMP_GX12 + 40) return false;
+      const dc = this.dawnCity;
+      if (dc && x >= dc.x0 - 40 && x <= dc.x1 + 40) return false;
+      for (const b of this._tunBoxes) if (x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]) return false;
+      const t = this.get(x, y);
+      if (t === T.BEDROCK || TILE_DEF[t].liquid || this.locked(x, y)) return false;
+      return this._tunNat.has(this.walls[y * WW2 + x]);
+    },
+    /** 타원 한 덩이를 판다 — 하나라도 못 파는 칸이 있으면 아무것도 안 파고 false */
+    _tunBlob(cx, cy, rx, ry, cells) {
+      const x0 = Math.floor(cx - rx), x1 = Math.ceil(cx + rx), y0 = Math.floor(cy - ry), y1 = Math.ceil(cy + ry);
+      const box = [];
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        const dx = (x - cx) / rx, dy = (y - cy) / ry;
+        if (dx * dx + dy * dy > 1) continue;
+        if (!this._tunOk(x, y)) return false;
+        box.push([x, y]);
+      }
+      for (const [x, y] of box) if (this.solid(x, y)) {
+        this.set(x, y, T.AIR);
+        cells.push([x, y]);
+      }
+      return true;
+    },
+    /** 한쪽으로 길게 기어가는 굴 — 기울기는 천천히 바뀌고 수평으로 돌아오려 한다. 끝은 가늘어진다 */
+    _tunWorm(r, x, y, dir, len, slope, rad, keep, cells) {
+      let s = slope, w = rad, done = 0;
+      for (let i = 0; i < len; i++) {
+        const taper = Math.min(1, (len - i) / 14, (i + 6) / 10);
+        const h = Math.max(1.6, w * taper);
+        if (!this._tunBlob(x, y, h * 1.6, h, cells)) break;
+        done++;
+        x += dir;
+        y += s;
+        s = clamp(s + r.range(-0.06, 0.06), -0.5, 0.5) * keep + slope * (1 - keep);
+        w = clamp(w + r.range(-0.22, 0.22), 1.9, 3.4);
+      }
+      return done;
+    },
+    /** 굴 바닥 — 이 열에서 아래로 처음 막힌 칸 바로 위 */
+    _tunFloor(x, y, lim) {
+      for (let fy = y; fy < y + lim; fy++) if (this.get(x, fy) === T.AIR && this.solid(x, fy + 1)) return fy;
+      return -1;
+    },
+    buildTunnels() {
+      const { WSX: WSX2, WSY: WSY2, SX: SX2, SY: SY2, WW: WW2, WH: WH2, DEEP_Y: DEEP_Y2, HELL_Y: HELL_Y2 } = this.dims;
+      const r = new RNG(this.seed + "_tunnel");
+      this._tunNat = naturalWalls();
+      this._tunBoxes = [];
+      for (const q of this.ruins || []) {
+        const x0 = Math.floor(q.x - q.w / 2) - 24, x1 = Math.ceil(q.x + q.w / 2) + 24;
+        this._tunBoxes.push([x0, Math.floor(q.y - q.h / 2) - 60, x1, Math.ceil(q.y + q.h / 2) + 150]);
+      }
+      for (const k of [this.works, this.runaway, this.atelier, this.deepShaft]) if (k && k.x0 !== void 0) this._tunBoxes.push([k.x0 - 12, k.y0 - 12, k.x0 + k.w + 12, k.y0 + k.h + 12]);
+      const d = this.dungeon;
+      if (d) this._tunBoxes.push([d.x - d.w / 2 - 12, d.y - d.h / 2 - 12, d.x + d.w / 2 + 12, d.y + d.h / 2 + 12]);
+      const tier = (fy) => fy < SY2(220) ? 3 : fy < DEEP_Y2 ? 4 : 5;
+      const chestAt = (x, fy, t) => {
+        this.objects.push({ type: "chest", tier: t, x: x * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
+      };
+      this.tunnels = [];
+      let made = 0;
+      for (let t = 0; t < 400 * WSX2 * WSY2 && made < Math.round(3 * WSX2 * WSY2); t++) {
+        const rx = r.int(40, 58), ry = r.int(19, 26), cx = r.int(rx + 20, WW2 - rx - 20), cy = r.int(SY2(215), HELL_Y2 - ry - 14);
+        if (this.tunnels.some((q) => Math.abs(q.cx - cx) < q.rx + rx + 30 && Math.abs(q.cy - cy) < 60)) continue;
+        const ph = r.range(0, 6.28), cols = [];
+        let ok = true;
+        for (let dx = -rx; dx <= rx && ok; dx++) {
+          const k = Math.pow(1 - (dx / rx) ** 2, 0.38), wob = Math.sin(dx * 0.21 + ph) * 1.6 + Math.sin(dx * 0.07 + ph * 2) * 2.2;
+          const top = Math.round(cy - ry * k + wob * k), bot = Math.round(cy + ry * k * 0.5 + Math.sin(dx * 0.17 + ph) * 0.8);
+          if (bot - top < 3) {
+            cols.push([cx + dx, top, top]);
+            continue;
+          }
+          for (let y = top - 1; y <= bot + 1 && ok; y++) if (!this._tunOk(cx + dx, y)) ok = false;
+          cols.push([cx + dx, top, bot]);
+        }
+        if (!ok) continue;
+        const cells = [];
+        for (const [x, top, bot] of cols) for (let y = top; y < bot; y++) if (this.solid(x, y)) {
+          this.set(x, y, T.AIR);
+          cells.push([x, y]);
+        }
+        for (let p = r.int(2, 3), i = 0; i < p; i++) {
+          const px = cx + Math.round((i + 0.5) / p * rx * 1.4 - rx * 0.7) + r.int(-3, 3), c = cols[px - cx + rx];
+          if (!c || c[2] - c[1] < 10) continue;
+          for (let y = c[1]; y < c[2]; y++) {
+            const hw = (y > c[2] - 4 ? 2 : 1) + (y < c[1] + 3 ? 1 : 0);
+            for (let x = px - hw; x <= px + hw - 1; x++) this.set(x, y, T.STONE);
+          }
+        }
+        for (let i = 0; i < 10; i++) {
+          const [px, py] = cells[r.int(0, cells.length - 1)];
+          if (this.get(px, py) === T.AIR && this.solid(px, py + 1)) this.set(px, py, r.chance(0.6) ? T.CRYSTAL : T.TORCH);
+        }
+        const fx = cx + r.int(-rx >> 1, rx >> 1), fy = this._tunFloor(fx, cy, ry + 4);
+        if (fy > 0) {
+          chestAt(fx, fy, tier(fy));
+          this.set(fx - 1, fy, T.TORCH);
+        }
+        this.caverns.push({ cx, cy, x0: cx - rx, x1: cx + rx, y0: cy - ry, y1: cy + Math.ceil(ry * 0.5), tier: tier(cy), hall: 1 });
+        this.tunnels.push({ k: "hall", cx, cy, rx, ry });
+        made++;
+      }
+      made = 0;
+      for (let t = 0; t < 300 * WSX2 * WSY2 && made < Math.round(3 * WSX2 * WSY2); t++) {
+        const jx = r.int(SX2(200), WW2 - SX2(200)), jy = r.int(SY2(175), HELL_Y2 - 40);
+        if (!this._tunOk(jx, jy) || this.tunnels.some((q) => Math.abs(q.cx - jx) < 220 && Math.abs(q.cy - jy) < 80)) continue;
+        const cells = [];
+        if (!this._tunBlob(jx, jy, 11, 6, cells)) continue;
+        const sa = r.range(-0.12, 0.12), sb = (r.chance(0.5) ? 1 : -1) * r.range(0.38, 0.5);
+        let n = 0;
+        for (const dir of [1, -1]) {
+          n += this._tunWorm(r, jx, jy, dir, r.int(140, 230), sa * dir, r.range(2.4, 3.1), 0.9, cells);
+          n += this._tunWorm(r, jx, jy, dir, r.int(90, 150), sb * dir, r.range(2.1, 2.7), 0.9, cells);
+        }
+        const fy = this._tunFloor(jx, jy, 10);
+        if (fy > 0) {
+          chestAt(jx, fy, tier(fy));
+          for (const dx of [-4, 4]) {
+            const ty2 = this._tunFloor(jx + dx, fy - 3, 8);
+            if (ty2 > 0) this.set(jx + dx, ty2, T.TORCH);
+          }
+          const ty = this._tunFloor(jx + 2, fy - 3, 8);
+          if (ty > 0) this.set(jx + 2, ty, T.TOOLPILE);
+        }
+        this.tunnels.push({ k: "cross", cx: jx, cy: jy, n });
+        made++;
+      }
+      made = 0;
+      for (let t = 0; t < 300 * WSX2 * WSY2 && made < Math.round(9 * WSX2 * WSY2); t++) {
+        const x = r.int(SX2(150), WW2 - SX2(150)), y = r.int(SY2(125), HELL_Y2 - 24);
+        if (!this._tunOk(x, y)) continue;
+        const cells = [];
+        const len = r.int(260, 520), dir = r.chance(0.5) ? 1 : -1;
+        const n = this._tunWorm(r, x, y, dir, len, r.range(-0.1, 0.1), r.range(2.2, 3.2), 0.94, cells);
+        if (n < 80) continue;
+        const m = cells[cells.length >> 1] || [x, y];
+        this.tunnels.push({ k: "long", cx: m[0], cy: m[1], n });
+        made++;
+      }
+      this._tunBoxes = null;
+      this._tunNat = null;
+    }
+  };
+  mixin(World.prototype, WorldStrata, true);
 
   // src/game/tileart.ts
   var tileart_exports = {};
@@ -21349,6 +21589,9 @@
   ART[T.FAULTSTONE] = { k: "fault", c: "#5f5e62" };
   ART[T.LIMESTONE] = { k: "strata", c: "#9a9486" };
   ART[T.GRANITE] = { k: "granite", c: "#7a6868" };
+  ART[T.DEEPSLATE] = { k: "deepslate", c: "#3d404c" };
+  ART[T.BASALT] = { k: "basalt", c: "#3a3333" };
+  ART[T.MAGMAVEIN] = { k: "magmavein", c: "#3a3333", glow: 1 };
   ART[T.METEORITE] = { k: "meteorite", c: "#3a3436" };
   ART[T.STARCRYSTAL] = { k: "starcrystal", c: "#ffe6a8", a: 1, glow: 1 };
   ART[T.FUSEDROCK] = { k: "fused", c: "#2e2a2e" };
@@ -24699,6 +24942,50 @@
         }
       }
     },
+    deepslate(H) {
+      const { g, ox, oy, rng, R, base, dk, dk2, lt, lt2 } = H;
+      this._fill(g, ox, oy, base);
+      let y = rng.range(-1, 2);
+      while (y < TS) {
+        const h = rng.range(2.5, 4.5);
+        R(0, y, TS, 1, dk2);
+        for (let x = 0; x < TS; x += rng.range(3, 7)) R(x, y + 1, rng.range(2, 5), Math.max(1, h - 2), rng.chance(0.5) ? lt : dk);
+        y += h;
+      }
+      for (let i = 0; i < 6; i++) R(rng.range(0, TS - 2), rng.range(0, TS - 1), 2, 1, lt2);
+    },
+    basalt(H) {
+      const { g, ox, oy, rng, v, R, base, dk, dk2, lt } = H;
+      this._fill(g, ox, oy, base);
+      const c1 = 5 + v % 3, c2 = 12 + v % 4;
+      for (const [x0, x1] of [[0, c1], [c1 + 1, c2], [c2 + 1, TS]]) {
+        R(x0, 0, 1, TS, lt);
+        const j = rng.range(4, TS - 4);
+        R(x0, j, x1 - x0, 1, dk2);
+        for (let i = 0; i < 3; i++) R(rng.range(x0, x1 - 1), rng.range(0, TS - 1), 1, 1, dk);
+      }
+      R(c1, 0, 1, TS, dk2);
+      R(c2, 0, 1, TS, dk2);
+    },
+    magmavein(H) {
+      const { g, ox, oy, rng, v, R, base, dk2, lt } = H;
+      this._fill(g, ox, oy, base);
+      for (let i = 0; i < 8; i++) R(rng.range(0, TS - 3), rng.range(0, TS - 2), rng.range(2, 4), 1, rng.chance(0.5) ? lt : dk2);
+      let x = v % 2 ? 0 : rng.range(4, TS - 6), y = v % 2 ? rng.range(4, TS - 6) : 0;
+      const horiz = v % 2 === 1;
+      for (let s = 0; s < 12; s++) {
+        R(x - 1, y - 1, 3, 3, "#7a1e0e");
+        R(x, y, 2, 2, "#ff6a1e");
+        if (s % 3 === 1) R(x + 0.5, y + 0.5, 1, 1, "#ffd27a");
+        if (horiz) {
+          x += 2;
+          y = clamp(y + rng.range(-1.6, 1.6), 2, TS - 4);
+        } else {
+          y += 2;
+          x = clamp(x + rng.range(-1.6, 1.6), 2, TS - 4);
+        }
+      }
+    },
     hyphae(H) {
       const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
       {
@@ -24913,6 +25200,8 @@
     stone: { k: "block", tile: T.STONE },
     limestone: { k: "block", tile: T.LIMESTONE },
     granite: { k: "block", tile: T.GRANITE },
+    deepslate: { k: "block", tile: T.DEEPSLATE },
+    basalt: { k: "block", tile: T.BASALT },
     dirt: { k: "block", tile: T.DIRT },
     sand: { k: "block", tile: T.SAND },
     ash: { k: "block", tile: T.ASH },
@@ -38412,7 +38701,8 @@
       }
       $("#gold-text").innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl("coin")})"></span>${fmt(p.gold)}`;
       const ty = Math.floor(p.cy / TS);
-      $("#depth-text").textContent = tr("고도 {alt}m", { alt: fmt(altOf(app.world, ty)) });
+      const lay = DEPTH_LAYER[app.world.depthLayer(Math.floor(p.cx / TS), ty)];
+      $("#depth-text").textContent = tr("고도 {alt}m", { alt: fmt(altOf(app.world, ty)) }) + (lay && lay !== DEPTH_LAYER.surface && lay !== DEPTH_LAYER.sky ? " · " + lay.s : "");
       const hh = Math.floor(app.dayT / 60), mm = Math.floor(app.dayT % 60);
       $("#clock-text").textContent = `${pad2(hh)}:${pad2(mm)}`;
       $("#clock-icon").textContent = "";
@@ -40851,6 +41141,7 @@
       this.seenRuins = {};
       this.seenBiomes = {};
       this._bgId = void 0;
+      this._layerId = void 0;
       this.ruinMarks = {};
       this.ruinEvDone = {};
       this.trapTimer = 0;
@@ -48217,6 +48508,21 @@
       this._cardAt[id] = this.time;
       UI5.chapterCard({ sub: z ? z.sub : b.card.sub, title: z ? z.n : b.n, line: card.line });
     },
+    /** 깊이층에 들어섰을 때 — 심층암 · 작열 지대는 처음 내려설 때(90초 안에는 다시 안 띄운다) 이름표를 띄운다. */
+    checkDepthEntry() {
+      const p = this.player, w = this.world;
+      if (!p || !w || this.time < 3) return;
+      const id = w.depthLayer(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
+      if (id === this._layerId) return;
+      const prev = this._layerId;
+      this._layerId = id;
+      const L = DEPTH_LAYER[id];
+      if (prev === void 0 || !L || !L.card || prev === "ember" && id === "slate" || prev === "hell") return;
+      this._cardAt = this._cardAt || {};
+      if (this.time - (this._cardAt[id] || -1e9) < 90) return;
+      this._cardAt[id] = this.time;
+      UI5.chapterCard({ sub: L.sub, title: L.n, line: L.card.line });
+    },
     /** 그 땅의 공기색. */
     biomeAir(camX, camY) {
       const { WW: WW2, SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2, BIOMES: BIOMES2 } = dimsOf(this.world);
@@ -52667,6 +52973,7 @@
       if (this.deathMark && this.deathMark.g) this.drawGraveGlow(c, this.deathMark, camX, camY);
       this.drawFishCue(c, camX, camY);
       this.checkBiomeEntry(camX, camY);
+      this.checkDepthEntry();
       const air = this.biomeAir(camX, camY);
       if (air) this.drawAir(c, air);
       if (this.ruinDark > 0) this.drawRuinDark(c);
@@ -55492,7 +55799,11 @@
         give("bomb_small", 10);
         give("torch", 60);
         let at = null;
-        if (kq) {
+        const tun = kq && (w.tunnels || []).filter((q) => q.k === kq).sort((a, b) => Math.abs(a.cx - w.spawnX) - Math.abs(b.cx - w.spawnX))[0];
+        if (tun) {
+          const fy = w._tunFloor(tun.cx, tun.cy, 40);
+          if (fy > 0) at = [tun.cx, fy];
+        } else if (kq) {
           const k = CAVE_TYPES.findIndex((c) => c.id === (kq === "frond" ? "moss" : kq));
           const cx0 = w.spawnX;
           const mark = { moss: T.HANGMOSS, drip: T.STALACTITE, geode: T.GEODE, fume: T.GASVENT, frost: T.ICICLE, frond: T.GLOWFROND }[kq];
@@ -58013,7 +58324,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

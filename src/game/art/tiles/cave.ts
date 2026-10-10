@@ -1,4 +1,4 @@
-/* ===== art/tiles/cave.js — 동굴 — 이끼 · 종유 · 수정 · 금 간 자갈 · 운석 · 석회암·화강암 · 균사 ===== */
+/* ===== art/tiles/cave.js — 동굴 — 이끼 · 종유 · 수정 · 금 간 자갈 · 운석 · 석회암·화강암 · 심층암·현무암·마그마 맥 · 균사 ===== */
 import { shade } from '../../../engine/core/color.js';
 import { TAU, clamp } from '../../../engine/core/math.js';
 import { TS } from '../../world.js';
@@ -181,6 +181,43 @@ export const TilePaintCave: Bag = {
         this._speck(g, ox, oy, rng, 16, dk2, lt2);
         return;
       }
+    }
+  },
+  deepslate(H: TilePaintKit) {
+    const { g, ox, oy, rng, R, base, dk, dk2, lt, lt2 } = H;   // 심층암 — 눌려 굳은 얇은 켜가 가로로, 켜 사이 검은 틈
+    this._fill(g, ox, oy, base);
+    let y = rng.range(-1, 2);
+    while (y < TS) {
+      const h = rng.range(2.5, 4.5);
+      R(0, y, TS, 1, dk2);                                          // 켜 사이 틈
+      for (let x = 0; x < TS; x += rng.range(3, 7)) R(x, y + 1, rng.range(2, 5), Math.max(1, h - 2), rng.chance(.5) ? lt : dk);
+      y += h;
+    }
+    for (let i = 0; i < 6; i++) R(rng.range(0, TS - 2), rng.range(0, TS - 1), 2, 1, lt2);   // 반짝이는 운모 조각
+  },
+  basalt(H: TilePaintKit) {
+    const { g, ox, oy, rng, v, R, base, dk, dk2, lt } = H;   // 현무암 — 식으며 갈라진 기둥결: 세로 금 둘 + 엇갈린 가로 마디
+    this._fill(g, ox, oy, base);
+    const c1 = 5 + (v % 3), c2 = 12 + (v % 4);
+    for (const [x0, x1] of [[0, c1], [c1 + 1, c2], [c2 + 1, TS]]) {
+      R(x0, 0, 1, TS, lt);                                          // 기둥 왼쪽 모서리 빛
+      const j = rng.range(4, TS - 4);
+      R(x0, j, x1 - x0, 1, dk2);                                    // 마디
+      for (let i = 0; i < 3; i++) R(rng.range(x0, x1 - 1), rng.range(0, TS - 1), 1, 1, dk);
+    }
+    R(c1, 0, 1, TS, dk2); R(c2, 0, 1, TS, dk2);
+  },
+  magmavein(H: TilePaintKit) {
+    const { g, ox, oy, rng, v, R, base, dk2, lt } = H;   // 마그마 맥 — 현무암 바탕에 붉게 달아오른 금이 꺾이며 지난다
+    this._fill(g, ox, oy, base);
+    for (let i = 0; i < 8; i++) R(rng.range(0, TS - 3), rng.range(0, TS - 2), rng.range(2, 4), 1, rng.chance(.5) ? lt : dk2);
+    let x = v % 2 ? 0 : rng.range(4, TS - 6), y = v % 2 ? rng.range(4, TS - 6) : 0;
+    const horiz = v % 2 === 1;
+    for (let s = 0; s < 12; s++) {
+      R(x - 1, y - 1, 3, 3, '#7a1e0e');                             // 달아오른 둘레
+      R(x, y, 2, 2, '#ff6a1e');
+      if (s % 3 === 1) R(x + .5, y + .5, 1, 1, '#ffd27a');          // 가장 뜨거운 속
+      if (horiz) { x += 2; y = clamp(y + rng.range(-1.6, 1.6), 2, TS - 4); } else { y += 2; x = clamp(x + rng.range(-1.6, 1.6), 2, TS - 4); }
     }
   },
   hyphae(H: TilePaintKit) {
