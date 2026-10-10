@@ -282,9 +282,13 @@ export const WorldSky: Bag & ThisType<World> = {
   /** 베이스캠프 · 여명 마을 위에는 하늘 섬을 두지 않는다 — 그 띠에 걸친 섬은 칸 · 벽지 · 물건까지 덩어리째 지운다.
       걸친 칸만 지우면 반쪽짜리 잘린 섬이 남았다. 땅 · 거대 나무와 이어진 덩어리(SKY_Y 아래까지 닿는 것)는 두고,
       생성 끝에 따로 돌아 난수를 뽑지 않는다(뒤따르는 유적 · 동굴이 그대로). */
-  clearSkyOverSettlements() { const { WW, SKY_Y, CAMP_X0, CAMP_GX1 } = this.dims;
+  clearSkyOverSettlements() { const { CAMP_X0, CAMP_GX1 } = this.dims;
     const zones: number[][] = [[CAMP_X0 - 16, CAMP_GX1 + 16]];
     if (this.dawnCity) zones.push([this.dawnCity.x0 - 16, this.dawnCity.x1 + 16]);
+    this.clearSkyBlobs(zones);
+  },
+  /** 그 x 구간들에 걸친 하늘 덩어리(땅에 안 닿은 것)를 통째로 걷는다 — 위에 놓인 물건 · 섬 기록도 같이 */
+  clearSkyBlobs(zones: number[][]) { const { WW, SKY_Y } = this.dims;
     const floor = SKY_Y + 4, seen = new Uint8Array(WW * floor), gone: number[][] = [];
     for (const [a, b] of zones) for (let x = Math.max(0, a); x <= Math.min(WW - 1, b); x++) for (let y = 0; y < SKY_Y; y++) {
       const k = y * WW + x;
@@ -333,7 +337,7 @@ export const WorldSky: Bag & ThisType<World> = {
     const hit = (x0: number, y0: number, x1: number, y1: number) => occ.some(b => x0 < b[2] && b[0] < x1 && y0 < b[3] && b[1] < y1);
     for (const s of this.skyIslands) occ.push([s.x - s.w - 6, s.y - 14, s.x + s.w + 6, s.y + 14]);
     const g = this.skyGate; occ.push([g.x - 46, 0, g.x + 46, g.y + 16]);
-    const cz = SX(3300 + SHIFT); occ.push([cz - 16, 0, cz + 74 + 16, 4 + 30 + 10]);   // 부유 성채(buildCitadel)
+    const cz = SX(3300 + SHIFT); occ.push([cz - 70, 0, cz + 74 + 16, 4 + 30 + 10]);   // 부유 성채(buildCitadel) — 왼쪽 닻 섬 둘까지
     const feat = () => r.chance(0.5) ? r.int(SY(14), SY(17)) : r.int(SKY_Y - 20, SKY_Y - 15);   // 큰 섬 밑동(+13)도 SKY_Y 위
     const place = (rw: any, rh: any, tries: any, band: any) => {
       for (let t = 0; t < tries; t++) {

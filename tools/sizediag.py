@@ -28,6 +28,7 @@ async def main():
               for (const r of w.ruins) add('ruin:' + r.id, r.x - (r.w >> 1), r.y - (r.h >> 1), r.x + (r.w >> 1), r.y + (r.h >> 1));
               if (w.dungeon) { const d = w.dungeon; add('dungeon', d.x - (d.w >> 1), d.y - (d.h >> 1), d.x + (d.w >> 1), d.y + (d.h >> 1)); }
               for (const k of ['works', 'runaway', 'atelier', 'citadel', 'deepShaft']) { const s = w[k]; if (s) add(k, s.x0, s.y0, s.x0 + s.w, s.y0 + s.h); }
+              if (w.citadel && w.citadel.sat) add('citadel_sat', ...w.citadel.sat);
               if (w.dawnCity) add('dawn', w.dawnCity.x0 - 20, w.dawnCity.gy - 30, w.dawnCity.x1 + 20, w.dawnCity.gy + 4);
               add('camp', CAMP_X0 - 12, w.villageY - 25, CAMP_X1 + 12, w.villageY + 4);
               if (w.jungleLake) add('junglefalls', w.jungleLake.x0 - 2, w.jungleLake.y - 22, w.jungleLake.x1 + 14, w.jungleLake.y + 8);

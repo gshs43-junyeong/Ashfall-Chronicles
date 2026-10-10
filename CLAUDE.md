@@ -257,6 +257,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 | `?debug=ruin&id=mine` | 그 유적 방에서 시작 (`&pulse=` 맥박 · `&boss=1` 주인 처치 = 메아리) |
 | `?debug=cave` | 가장 가까운 금 간 자갈 앞에서 시작 (`&k=moss\|drip\|geode\|fume` 그 갈래 굴 안 · `hall\|cross\|long` 대공동 · 엇갈린 굴 · 긴 굴) |
 | `?debug=meteor` | 2.5초 뒤 운석 (`&at=me` 머리 위 = 즉사 · `&at=<x>` 그 칸 · `&dx=` 오른쪽 몇 칸, 기본 30) |
+| `?debug=citadel` | 부유 성채 선착장 첫 닻 앞 (`&done=1` 닻 셋을 맞춘 채로) |
 | `?debug=factory` | 캠프 오른쪽 예시 공장 — 기계 26종을 재료 채워 한 줄로(`&mobs=1` 몹 켜기) |
 | `?debug=showcase` | 영상 촬영용 — 세션(`&sess=1\|2\|3`)에 맞는 레벨 · 장비 · 특성 · 유틸리티 · 펫을 갖추고 알림 없이 시작(`&at=village`) |
 | `?touch=1` · `?touch=0` | 터치 조작(가상 스틱 · 점프/대시 · 탭 · '사용' 전환 · 스킬 칸 탭 · 전체 화면)을 강제로 켜고 끈다 — 기본은 손가락이 주 포인터인 기기(폰·태블릿)에서 저절로 켜진다 |
@@ -349,10 +350,14 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   경계는 `strataLines`(씨앗에서 뽑아 저장 안 함), `applyStrata` 가 생성 **맨 끝**(광상 앞)에 남은 `T.STONE` 과 자연 벽지만 바꾼다(벽지 17 · 18, `naturalWalls()`) —
   광맥 · 동굴 장식 · 물이 돌을 보고 자리를 고르므로 앞에서 바꾸면 그 단계가 다 달라진다. HUD 고도 옆 층 이름 · 처음 내려설 때 카드(`checkDepthEntry`).
   큰 굴 갈래(`buildTunnels`, 제 난수 `seed+'_tunnel'`): 대공동(caverns 에도 넣어 호수 · 폭포) · 엇갈린 굴(갈림길 야영지 상자) · 긴 굴. 유적 둘레와 그 밑 150칸(깊은 곳 자리)은 피한다. 사연: docs/code-history.md#h178
+- **부유 성채 해금**(world/village.ts `buildCitadel` · game/citadel.ts): 본채 문은 `T.ORBITSEAL`(hard 99 — 저장된다, SEALSTONE 은 저장에서 빠지므로 쓰지 말 것).
+  궤도 닻 셋(`type 'anchor'` · `kind` guard 지킴이 처치 / charge 곁에 10초 / dial 도는 바늘을 꼭대기에서) — 맞출 때마다 `citadel.links[i]` 에 빛다리(`T.LIGHTBRIDGE`),
+  셋이면 `citadel.gate` 가 열린다. 주인(restorer)을 쓰러뜨리면 가장 작은 방(문을 막아도 주인 방까지 길이 남는 방) `citadel.vault` 가 열리고 제트팩 시제품(`relic`).
+  진행은 `world.citadel.anc` · `vaultOpen`(세이브). 여럿이면 호스트 판정(`anc` 메시지). `?debug=citadel`(`&done=1`). 사연: docs/code-history.md#h179
 - **유적 깊이 · 숨은 유적**: 부패한 둥지 y392(지옥 경계 밑) · 포자 굴 270(심층) · 석판 2·3 은 `arch: 'buried'`(지상 입구 없음, SY 300 · 340).
   `RUIN_SPEC[].hidden` 이면 지상 돌무지(buildRuinCaches ①)도 없다 — 지도 상자만 단서. 방은 `_wearRoom` 이 높이 12 아래 한 줄 · 9 아래 안 무너뜨린다. 사연: docs/code-history.md#h177
 - **유적 큰 홀**(world/dungeon.ts `carveDungeon` 2.4 · `_carveGrand` · `_growHall`): 낡은 유적은 큰 홀 하나(주인 방 · 석판 방) + 곁채 둘을 먼저 잡고 나머지를 BSP 로 나눈다 — 벽지 번호도 타일처럼 **끝에만** 붙인다(16 `COLUMN_WALL` = 홀 기둥). 사연: docs/code-history.md#h167
-- 세계는 `WW 5000 × WH 720`, 타일 번호는 **213까지** 썼다(211~213 깊이층: 심층암 · 현무암 · 마그마 맥 · 203~210 유적마다 제 벽돌 · 장식: 석실 판석 · 서리 단지 · 미로 돌 · 청동 톱니 · 공허 벽돌 · 공허 등롱 · 산호 벽돌 · 큰 조개 — 사연 #h176 · 201·202 현무 종유석·석순(지옥 꾸밈, world/caves.ts `decorateHell`) · 199 고드름 · 200 발광 잎 · 198 스프링클러 · 197 심층 드릴 · 191~196 광상: 석탄·구리·철·납·금·미스릴 · 188~190 운석·별빛 수정·녹아 굳은 돌 · 187 소나무 잎 · 180~183 흐르는 물·바닷물·용암·샘 바위 ·
+- 세계는 `WW 5000 × WH 720`, 타일 번호는 **215까지** 썼다(214·215 부유 성채: 궤도 봉인문 · 빛다리 · 211~213 깊이층: 심층암 · 현무암 · 마그마 맥 · 203~210 유적마다 제 벽돌 · 장식: 석실 판석 · 서리 단지 · 미로 돌 · 청동 톱니 · 공허 벽돌 · 공허 등롱 · 산호 벽돌 · 큰 조개 — 사연 #h176 · 201·202 현무 종유석·석순(지옥 꾸밈, world/caves.ts `decorateHell`) · 199 고드름 · 200 발광 잎 · 198 스프링클러 · 197 심층 드릴 · 191~196 광상: 석탄·구리·철·납·금·미스릴 · 188~190 운석·별빛 수정·녹아 굳은 돌 · 187 소나무 잎 · 180~183 흐르는 물·바닷물·용암·샘 바위 ·
   184~186 부들·물풀·물가 조약돌 · 172~177 동굴: 이끼 바위·늘어진 이끼·
   종유석·석순·수정 무리·금 간 자갈 · 178 석회암 · 179 화강암).
 - **이웃을 보고 그리는 타일**(tileart.js `BODY_ONLY` · `CONN` · `drawConn`): 윗면을 제 그림에 그린

@@ -169,6 +169,7 @@ export class World extends TileMap {
   declare putPathTrap: (...a: any[]) => any; declare putRuinDecor: (...a: any[]) => any; declare putTileTrap: (...a: any[]) => any;
   declare skyAlt: (...a: any[]) => any; declare skyFeature: (...a: any[]) => any; declare skyGrotto: (...a: any[]) => any;
   declare trapSpot: (...a: any[]) => any;
+  declare clearSkyBlobs: (zones: number[][]) => void; declare _citadelVault: (...a: any[]) => Bag | null;
   declare applyStrata: () => void; declare buildTunnels: () => void; declare depthLayer: (tx: number, ty: number) => string;
   declare strataLines: (tx: number) => number[]; declare tunnels: Bag[]; declare _strataPh: number[]; declare _tunBoxes: number[][] | null; declare _tunNat: Set<number> | null;
   declare _tunOk: (x: number, y: number) => boolean; declare _tunBlob: (...a: any[]) => boolean; declare _tunWorm: (...a: any[]) => number; declare _tunFloor: (x: number, y: number, lim: number) => number;

@@ -323,6 +323,22 @@ export const TilePaintRuins: Bag = {
     if (rng.chance(.35)) { const x = rng.int(3, TS - 5); R(x, rng.int(2, TS - 6), 1, 4, '#b88fff'); }   // 갈라진 틈의 빛
     this._speck(g, ox, oy, rng, 6, dk2, shade(base, 1.4));
   },
+  orbitseal(H: TilePaintKit) {
+    const { g, ox, oy, R, base, dk2, lt } = H;                   // 궤도 봉인문 — 두꺼운 판에 겹고리 문양이 푸르게 빛난다
+    this._fill(g, ox, oy, base);
+    R(0, 0, TS, 2, lt); R(0, TS - 2, TS, 2, dk2); R(0, 0, 2, TS, dk2); R(TS - 2, 0, 2, TS, dk2);
+    g.strokeStyle = '#7fd0ff'; g.lineWidth = 1.2;
+    g.beginPath(); g.arc(ox + TS / 2, oy + TS / 2, 6.5, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.ellipse(ox + TS / 2, oy + TS / 2, 8.5, 3.2, .5, 0, Math.PI * 2); g.stroke();
+    R(TS / 2 - 1, TS / 2 - 1, 2, 2, '#dff6ff');
+  },
+  lightbridge(H: TilePaintKit) {
+    const { g, ox, oy, R } = H;                                  // 빛다리 — 속이 비치는 빛의 판, 윗면이 가장 밝다
+    g.fillStyle = 'rgba(120,220,255,.28)'; g.fillRect(ox, oy, TS, TS);
+    R(0, 0, TS, 3, '#bff4ff'); R(0, 3, TS, 1, '#7fd8f0');
+    for (let x = 2; x < TS; x += 6) R(x, 6, 2, TS - 9, 'rgba(160,235,255,.35)');
+    R(0, TS - 2, TS, 1, 'rgba(120,220,255,.5)');
+  },
   voidcage(H: TilePaintKit) {
     const { g, ox, oy, R, base } = H;                            // 공허 등롱 — 매단 쇠 우리 속에 떠 있는 보랏빛 구슬
     R(TS / 2 - .5, 0, 1, 4, '#3a3240');

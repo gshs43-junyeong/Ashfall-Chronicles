@@ -246,6 +246,20 @@ export const DebugStartPart: Bag = {
       UI.refreshBag();
     }
 
+    /* ?debug=citadel — 부유 성채 선착장(첫 닻 앞). &done=1 이면 닻 셋을 다 맞춘 채로 */
+    if (qs.get('debug') === 'citadel' && this.world.citadel) {
+      const w = this.world, plv = +qs.get('plv') || 70;
+      while (p.level < plv) { p.level++; p.statPts += 3; p.skillPts++; p.xpNext = Math.round(p.xpNext * 1.18); }
+      p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+      const a = w.objects.find((o: Bag) => o.type === 'anchor' && o.i === 0);
+      if (qs.get('done')) for (const o of w.objects) if (o.type === 'anchor') this.anchorDone(o);
+      if (a) {
+        p.x = a.x + 60; p.y = a.y + a.h - p.h; p.vx = p.vy = 0;
+        this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
+        this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
+      }
+    }
+
     /* ?debug=factory — 기계 화면·애셋 확인 자리. 캠프 오른쪽 평지에 기계 전 종류를 재료를 채워 한 줄로 세운다. */
     if (qs.get('debug') === 'factory') this.buildDebugFactory(qs);
 

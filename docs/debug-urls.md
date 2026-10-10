@@ -33,6 +33,7 @@
 | `?debug=fishfarm` | 정글 호수 기슭. 왼쪽 12칸이 밭 | 낚싯대 둘 · 미끼 · 괭이 · 씨앗 세 종류 · 퇴비 | `plv=`(기본 15) · `gold=` |
 | `?debug=ruin&id=mine` | 그 유적의 가장 위쪽 방 | 맥박 도구(진정 물약·맥박 북·조각) · 물약 | `id=ice·pyramid·mine·blight·spore·abyss·story0·story1·story2` · `pulse=0~100` · `boss=1`(주인을 처치한 상태 = 메아리) · `ev=<사건>`(2초 뒤 그 유적의 맥박 사건 — `thaw`·`ember`·`scale`·`sundial`·`thief`·`cavein`·`host`·`heartbeat`·`crown`·`clearair`·`tide`·`hush`·`buried`·`statues`·`shadow`·`phase`·`sink`·`seed`) · `puz=1~3`(그 유적의 봉인 방 안에서 시작 — 들어서자마자 닫힌다) · `deep=1`(봉인 방을 다 푼 것으로 — 깊은 문 앞, 곧 2단계가 열린다) · `deep=2`(2단계 홀까지 푼 것으로 — 석판 유적은 3단계까지 이어 열린다) · `plv=` |
 | `?debug=cave` | 가장 가까운 금 간 자갈 앞 | 곡괭이 · 폭탄 · 횃불 · 물약 | `k=moss·drip·geode·fume·frost`(그 갈래 굴 안에서 시작 · `frond` = 발광 잎 달린 이끼 굴 · `hall` 대공동 · `cross` 엇갈린 굴 갈림길 · `long` 긴 굴) · `plv=` |
+| `?debug=citadel` | 부유 성채 선착장(첫 궤도 닻 앞) | 레벨(`plv=`, 기본 70) | `done=1` — 닻 셋을 맞춘 채로(빛다리 · 봉인문 열림) |
 | `?debug=bomb` | 캠프 경계의 지하 시험장. 단단하기 시험 기둥 6개 · 물·용암 웅덩이 · 기계 한 줄 | 폭탄 3종 × 99 · 화약 재료 | `plv=` · `gold=` |
 | `?debug=meteor` | 보통 시작 자리. 2.5초 뒤 운석이 떨어진다 | — | `at=me`(머리 위 = 즉사) · `at=<x>`(그 칸) · `dx=`(오른쪽 몇 칸, 기본 30) |
 | `?touch=1` | 어디서든(다른 주소와 함께: `?debug=village&touch=1`) — 새 게임 없이도 켜진다 | 터치 조작 뼈대: 왼쪽 가상 스틱(좌우·아래) · 점프 · 대시 · '사용' 전환(켜면 탭 = 오른쪽 단추) · 화면 탭 = 겨눠서 누르기 | 모양은 뼈대 · 높이 540px 이하(폰 가로)에서는 미니맵·퀘스트 창을 숨기고 단추를 줄인다(지도·일지는 탭 단추 줄로) |

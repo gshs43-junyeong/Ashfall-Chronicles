@@ -846,6 +846,9 @@
    "ui/tip.showTip",
    "index.html"
   ],
+  "기관이 멈추자 발사대 보관고의 봉인이 풀렸다": [
+   "game/citadel.citadelBossDown"
+  ],
   "기록을 불러오는 중…": [
    "game/save.loadGame"
   ],
@@ -1032,6 +1035,15 @@
   ],
   "담이 한쪽으로 주저앉았어. 돌 {n}개면 다시 세울 수 있을 것 같아.": [
    "data/quests"
+  ],
+  "닻이 궤도에 맞춰졌다 ({n}/3) — 빛다리가 펴진다": [
+   "game/citadel.anchorDone"
+  ],
+  "닻이 깨어나며 지킴이를 불렀다 — 모두 쓰러뜨려라": [
+   "game/citadel.anchorUse"
+  ],
+  "닻이 빛을 모은다 — 곁에 머물러라": [
+   "game/citadel.anchorUse"
   ],
   "대기": [
    "factory.stLabel",
@@ -1421,6 +1433,9 @@
    "ui.buildStatAlloc",
    "ui/tip.compareLine",
    "ui/tip.showTip"
+  ],
+  "바늘이 어긋났다 — 꼭대기에 닿을 때 맞춰야 한다": [
+   "game/citadel.anchorUse"
   ],
   "바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수": [
    "ui/tip.showTip"
@@ -1880,6 +1895,9 @@
   ],
   "설치물": [
    "ui/tip.showTip"
+  ],
+  "세 닻이 궤도에 맞춰졌다 — 성채의 봉인문이 열린다": [
+   "game/citadel.anchorDone"
   ],
   "세계 고르고 방 열기": [
    "index.html"
@@ -2361,6 +2379,9 @@
   ],
   "이름 없는 유적": [
    "game/ruins.checkRuinEntry"
+  ],
+  "이미 궤도에 맞춰진 닻이다": [
+   "game/citadel.useAnchor"
   ],
   "이미 기계가 있다": [
    "game/mine.placeStation",
@@ -6536,6 +6557,8 @@
   "TILE_DEF.211.n": "심층암",
   "TILE_DEF.212.n": "현무암",
   "TILE_DEF.213.n": "마그마 맥",
+  "TILE_DEF.214.n": "궤도 봉인문",
+  "TILE_DEF.215.n": "빛다리",
   "VILLAGE.1.n": "되살아난 마을",
   "VILLAGE.1.d": "잿빛이 걷히고 사람이 다시 들어왔다. 아직은 살아남은 자리에 가깝다.",
   "VILLAGE.1.gain.0": "주민 5명 · 여관 · 보관고 · 재련대 · 의뢰 게시판",

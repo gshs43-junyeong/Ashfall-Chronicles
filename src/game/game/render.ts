@@ -223,6 +223,8 @@ export const RenderPart: Bag = {
         c.globalAlpha = .55 + Math.sin(this.time * 2.4 + o.tablet) * .28;
         for (let k = 0; k < 4; k++) c.fillRect(sx + 7, sy + 12 + k * 8, o.w - 14, 3);
         c.globalAlpha = 1;
+      } else if (o.type === 'anchor') {
+        this.drawAnchor(c, o, sx, sy);
       } else if (o.type === 'seal') {
         c.fillStyle = o.opened ? '#2a2634' : '#3a3550';
         c.fillRect(sx, sy, o.w, o.h);

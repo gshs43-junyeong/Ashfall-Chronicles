@@ -2446,7 +2446,10 @@
     /* --- 깊이층 — 지하와 지옥 사이: 심층암 지대 · 작열 지대(현무암 + 마그마 맥) --- */
     DEEPSLATE: 211,
     BASALT: 212,
-    MAGMAVEIN: 213
+    MAGMAVEIN: 213,
+    /* --- 부유 성채의 해금 — 궤도 봉인문(깨지지 않는다) · 닻을 맞추면 깔리는 빛다리 --- */
+    ORBITSEAL: 214,
+    LIGHTBRIDGE: 215
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -2773,7 +2776,9 @@
     /* 깊이층 돌 — 심층암은 돌처럼 캐지고(1), 작열층은 재와 같은 등급(2)이라 지옥 문턱과 같은 곡괭이가 필요하다 */
     { n: "심층암", c: "#3d404c", solid: 1, hard: 1, drop: "deepslate" },
     { n: "현무암", c: "#3a3333", solid: 1, hard: 2, drop: "basalt" },
-    { n: "마그마 맥", c: "#5a2a1e", solid: 1, hard: 2, drop: "basalt" }
+    { n: "마그마 맥", c: "#5a2a1e", solid: 1, hard: 2, drop: "basalt" },
+    { n: "궤도 봉인문", c: "#3a5a7a", solid: 1, hard: 99 },
+    { n: "빛다리", c: "#9fe8ff", solid: 1, hard: 99 }
   ];
   var FARM_WET_R = 5, FARM_WET_DAYS = 3;
   var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
@@ -7929,7 +7934,8 @@
     put("stone", "COALRICH");
     put("flesh", "BLIGHTSAC");
     put("ice", "RIMEURN");
-    put("metal", "BRONZECOG VOIDCAGE");
+    put("metal", "BRONZECOG VOIDCAGE ORBITSEAL");
+    put("glass", "LIGHTBRIDGE");
     put("void", "HOLLOWBRICK");
     put("bone", "GIANTCLAM");
     put("void", "CORRUPTGRASS");
@@ -7988,7 +7994,9 @@
     EMBERSPIRE: [1.05, "#ff6a2a"],
     VOIDCAGE: [6.4, "#b88fff"],
     GIANTCLAM: [1.3, "#dfe9ff"],
-    MAGMAVEIN: [3.3, "#ff5a1a"]
+    MAGMAVEIN: [3.3, "#ff5a1a"],
+    ORBITSEAL: [4.8, "#7fd0ff"],
+    LIGHTBRIDGE: [2.7, "#9fe8ff"]
   };
   {
     const seen = {};
@@ -16351,14 +16359,20 @@
       const k = this.atelier;
       return !!k && tx >= k.x0 - 1 && tx <= k.x0 + k.w && ty >= k.y0 - 1 && ty <= k.y0 + k.h;
     },
-    /* ---- 특별 유적 ① 부유 성채 (하늘) ---- */
+    /* ---- 특별 유적 ① 부유 성채 (하늘) ----
+       본채(봉인문으로 닫힘) + 선착장 다리 + 궤도 닻 섬 둘. 닻 셋(선착장 · 위 섬 · 먼 섬)을 맞추면 빛다리가 차례로 펴지고 봉인문이 열린다.
+       주인(환원기)을 쓰러뜨리면 가장 작은 방 — 발사대 보관고(제트팩 시제품)가 열린다. 런타임은 game/citadel.ts. 사연: docs/code-history.md#h179 */
     buildCitadel(rng) {
       const { SX: SX2, SKY_Y: SKY_Y2 } = this.dims;
       const w = 74, h = 30;
       const x0 = SX2(3300 + SHIFT), y0 = 4;
-      this.citadel = { x0, y0, w, h, cx: x0 + (w >> 1) };
+      this.citadel = { x0, y0, w, h, cx: x0 + (w >> 1), anc: [0, 0, 0], links: [[], [], []], gate: [], vault: [] };
+      const C = this.citadel;
+      this.clearSkyBlobs([[x0 - 66, x0 + w + 4]]);
       for (let x = x0 - 2; x <= x0 + w + 2; x++)
         for (let y = y0 + h - 3; y <= y0 + h; y++) this.set(x, y, T.ORBITPLATE);
+      for (let k = 1; k <= 5 && y0 + h + k < SKY_Y2 - 1; k++)
+        for (let x = x0 + 6 + k * 5; x <= x0 + w - 6 - k * 5; x++) this.set(x, y0 + h + k, (x - x0) % 9 === 4 && k < 4 ? T.ORBITCORE : T.ORBITPLATE);
       const rooms = this.carveDungeon({
         x0,
         y0,
@@ -16374,23 +16388,55 @@
         shapes: ["rect", "octagon", "round"]
       });
       rooms.sort((a, b) => b.w * b.h - a.w * a.h);
-      {
-        let leftRoom = rooms[0];
+      let leftRoom = null;
+      for (const r of rooms) if (r.y + r.h >= y0 + h - 12 && (!leftRoom || r.x < leftRoom.x)) leftRoom = r;
+      if (!leftRoom) {
+        leftRoom = rooms[0];
         for (const r of rooms) if (r.x < leftRoom.x) leftRoom = r;
-        const doorY = leftRoom.y + leftRoom.h - 3;
-        for (let dy = -2; dy <= 0; dy++)
-          for (let x = x0 - 1; x <= leftRoom.x + 1; x++) {
-            this.set(x, doorY + dy, T.AIR);
-            this.setWall(x, doorY + dy, 9);
-          }
-        let by = doorY + 1, bx = x0 - 2;
-        for (let k = 0; k < 46 && bx > 6; k++, bx--) {
-          this.set(bx, by, T.ORBITPLATE);
-          for (let dy = -3; dy <= -1; dy++) this.set(bx, by + dy, T.AIR);
-          if (k % 6 === 5 && by < SKY_Y2 - 4) by++;
-          if (k % 9 === 4) this.set(bx, by - 1, T.TORCH);
+      }
+      const doorY = leftRoom.y + leftRoom.h - 3;
+      for (let dy = -2; dy <= 0; dy++)
+        for (let x = x0 - 1; x <= leftRoom.x + 1; x++) {
+          this.set(x, doorY + dy, T.AIR);
+          this.setWall(x, doorY + dy, 9);
         }
-        this.citadel.bridgeX = bx;
+      for (let dy = -2; dy <= 0; dy++) for (const x of [x0 - 1, x0]) {
+        this.set(x, doorY + dy, T.ORBITSEAL);
+        C.gate.push([x, doorY + dy]);
+      }
+      let by = doorY + 1, bx = x0 - 2;
+      for (let k = 0; k < 62 && bx > 6; k++, bx--) {
+        this.set(bx, by, T.ORBITPLATE);
+        for (let dy = -3; dy <= -1; dy++) this.set(bx, by + dy, T.AIR);
+        if (k > 14 && k % 6 === 5 && by < SKY_Y2 - 4) by++;
+        if (k % 9 === 4) this.set(bx, by - 1, T.TORCH);
+      }
+      C.bridgeX = bx;
+      const anchor = (i, kind, tx, fy) => this.objects.push({ type: "anchor", i, kind, x: tx * TS - 4, y: (fy + 1) * TS - 52, w: 30, h: 52 });
+      anchor(0, "guard", x0 - 9, doorY);
+      const isle = (xa, xb, fy) => {
+        for (let x = xa; x <= xb; x++) {
+          this.set(x, fy, x === xa || x === xb ? T.ORBITCORE : T.ORBITPLATE);
+          this.set(x, fy + 1, T.ORBITPLATE);
+        }
+        for (let x = xa + 2; x <= xb - 2; x++) this.set(x, fy + 2, T.ORBITPLATE);
+        for (let x = xa; x <= xb; x++) for (let y = fy - 4; y < fy; y++) this.set(x, y, T.AIR);
+      };
+      const yB = Math.max(6, doorY - 9), yC = Math.max(3, yB - 6);
+      isle(x0 - 36, x0 - 24, yB + 1);
+      isle(x0 - 60, x0 - 48, yC + 1);
+      anchor(1, "charge", x0 - 31, yB);
+      anchor(2, "dial", x0 - 55, yC);
+      C.sat = [x0 - 62, yC - 4, x0 - 22, yB + 4];
+      this.objects.push({ type: "chest", tier: 6, loot: "session2", x: (x0 - 27) * TS, y: (yB + 0.8) * TS, w: 30, h: 26, items: null });
+      this.objects.push({ type: "chest", tier: 6, loot: "session2", x: (x0 - 51) * TS, y: (yC + 0.8) * TS, w: 30, h: 26, items: null });
+      for (let x = x0 - 13, y = doorY + 1; x > x0 - 24; x--) {
+        if (y > yB + 1) y--;
+        C.links[0].push([x, y]);
+      }
+      for (let x = x0 - 37, y = yB + 1; x > x0 - 48; x--) {
+        if (y > yC + 1) y--;
+        C.links[1].push([x, y]);
       }
       const main = rooms[0], mfy = main.y + main.h - 3;
       for (let x = main.x + 2; x < main.x + main.w - 2; x++)
@@ -16413,6 +16459,31 @@
         w: 26,
         h: 34
       });
+      const vault = this._citadelVault(rooms, main, leftRoom, [leftRoom.x + 1, doorY]);
+      if (vault) {
+        for (let x = vault.x - 1; x <= vault.x + vault.w; x++) for (const y of [vault.y - 1, vault.y + vault.h])
+          if (this.get(x, y) === T.AIR) {
+            this.set(x, y, T.ORBITSEAL);
+            C.vault.push([x, y]);
+          }
+        for (let y = vault.y; y < vault.y + vault.h; y++) for (const x of [vault.x - 1, vault.x + vault.w])
+          if (this.get(x, y) === T.AIR) {
+            this.set(x, y, T.ORBITSEAL);
+            C.vault.push([x, y]);
+          }
+        const vf = vault.y + vault.h - 3;
+        this.objects.push({
+          type: "chest",
+          tier: 6,
+          loot: "session2",
+          relic: "jetpack",
+          x: (vault.x + (vault.w >> 1)) * TS - 15,
+          y: (vf - 0.2) * TS,
+          w: 30,
+          h: 26,
+          items: null
+        });
+      }
       for (const r of rooms) {
         const fy = r.y + r.h - 3, rcx = r.x + (r.w >> 1);
         for (let k = 0; k < rng.int(5, 11); k++) {
@@ -16421,7 +16492,7 @@
           const gy = onSide ? r.y + rng.int(1, Math.max(1, r.h - 2)) : rng.chance(0.5) ? r.y : r.y + r.h - 1;
           if (this.get(gx, gy) === T.ORBITPLATE) this.set(gx, gy, T.ORBITCORE);
         }
-        if (r === main) continue;
+        if (r === main || r === vault) continue;
         if (rng.chance(0.7)) this.putTileTrap(r, fy, rng.pick(["dart", "vent"]), rng);
         if (rng.chance(0.45)) for (let k = 0; k < rng.int(2, 5); k++) this.set(r.x + 3 + k, fy, T.SPIKE);
         if (rng.chance(0.6))
@@ -16436,6 +16507,29 @@
             items: null
           });
       }
+    },
+    /** 보관고로 쓸 방 — 작은 방부터, 그 방 둘레의 빈 칸을 막아도 문에서 주인 방까지 걸어 닿는 첫 방 */
+    _citadelVault(rooms, main, left, door) {
+      const C = this.citadel, inBox = (x, y) => x >= C.x0 - 1 && x <= C.x0 + C.w && y >= C.y0 && y <= C.y0 + C.h;
+      for (const v of rooms.slice().reverse()) {
+        if (v === main || v === left) continue;
+        const shut = /* @__PURE__ */ new Set(), key = (x, y) => y * 1e5 + x;
+        for (let x = v.x - 1; x <= v.x + v.w; x++) for (let y = v.y - 1; y <= v.y + v.h; y++) shut.add(key(x, y));
+        const seen = /* @__PURE__ */ new Set([key(door[0], door[1])]), st = [door];
+        let ok = false;
+        while (st.length && !ok) {
+          const [x, y] = st.pop();
+          if (x >= main.x && x < main.x + main.w && y >= main.y && y < main.y + main.h) ok = true;
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nx = x + dx, ny = y + dy, k = key(nx, ny);
+            if (seen.has(k) || shut.has(k) || !inBox(nx, ny) || this.solid(nx, ny)) continue;
+            seen.add(k);
+            st.push([nx, ny]);
+          }
+        }
+        if (ok) return v;
+      }
+      return null;
     },
     inCitadel(tx, ty) {
       const k = this.citadel;
@@ -17107,9 +17201,14 @@
         걸친 칸만 지우면 반쪽짜리 잘린 섬이 남았다. 땅 · 거대 나무와 이어진 덩어리(SKY_Y 아래까지 닿는 것)는 두고,
         생성 끝에 따로 돌아 난수를 뽑지 않는다(뒤따르는 유적 · 동굴이 그대로). */
     clearSkyOverSettlements() {
-      const { WW: WW2, SKY_Y: SKY_Y2, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12 } = this.dims;
+      const { CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12 } = this.dims;
       const zones = [[CAMP_X02 - 16, CAMP_GX12 + 16]];
       if (this.dawnCity) zones.push([this.dawnCity.x0 - 16, this.dawnCity.x1 + 16]);
+      this.clearSkyBlobs(zones);
+    },
+    /** 그 x 구간들에 걸친 하늘 덩어리(땅에 안 닿은 것)를 통째로 걷는다 — 위에 놓인 물건 · 섬 기록도 같이 */
+    clearSkyBlobs(zones) {
+      const { WW: WW2, SKY_Y: SKY_Y2 } = this.dims;
       const floor = SKY_Y2 + 4, seen = new Uint8Array(WW2 * floor), gone = [];
       for (const [a, b] of zones) for (let x = Math.max(0, a); x <= Math.min(WW2 - 1, b); x++) for (let y = 0; y < SKY_Y2; y++) {
         const k = y * WW2 + x;
@@ -17168,7 +17267,7 @@
       const g = this.skyGate;
       occ.push([g.x - 46, 0, g.x + 46, g.y + 16]);
       const cz = SX2(3300 + SHIFT);
-      occ.push([cz - 16, 0, cz + 74 + 16, 4 + 30 + 10]);
+      occ.push([cz - 70, 0, cz + 74 + 16, 4 + 30 + 10]);
       const feat = () => r.chance(0.5) ? r.int(SY2(14), SY2(17)) : r.int(SKY_Y2 - 20, SKY_Y2 - 15);
       const place = (rw, rh, tries, band) => {
         for (let t = 0; t < tries; t++) {
@@ -21592,6 +21691,8 @@
   ART[T.DEEPSLATE] = { k: "deepslate", c: "#3d404c" };
   ART[T.BASALT] = { k: "basalt", c: "#3a3333" };
   ART[T.MAGMAVEIN] = { k: "magmavein", c: "#3a3333", glow: 1 };
+  ART[T.ORBITSEAL] = { k: "orbitseal", c: "#3a5a7a", glow: 1 };
+  ART[T.LIGHTBRIDGE] = { k: "lightbridge", c: "#9fe8ff", a: 1, glow: 1 };
   ART[T.METEORITE] = { k: "meteorite", c: "#3a3436" };
   ART[T.STARCRYSTAL] = { k: "starcrystal", c: "#ffe6a8", a: 1, glow: 1 };
   ART[T.FUSEDROCK] = { k: "fused", c: "#2e2a2e" };
@@ -24625,6 +24726,32 @@
         R(x, rng.int(2, TS - 6), 1, 4, "#b88fff");
       }
       this._speck(g, ox, oy, rng, 6, dk2, shade(base, 1.4));
+    },
+    orbitseal(H) {
+      const { g, ox, oy, R, base, dk2, lt } = H;
+      this._fill(g, ox, oy, base);
+      R(0, 0, TS, 2, lt);
+      R(0, TS - 2, TS, 2, dk2);
+      R(0, 0, 2, TS, dk2);
+      R(TS - 2, 0, 2, TS, dk2);
+      g.strokeStyle = "#7fd0ff";
+      g.lineWidth = 1.2;
+      g.beginPath();
+      g.arc(ox + TS / 2, oy + TS / 2, 6.5, 0, Math.PI * 2);
+      g.stroke();
+      g.beginPath();
+      g.ellipse(ox + TS / 2, oy + TS / 2, 8.5, 3.2, 0.5, 0, Math.PI * 2);
+      g.stroke();
+      R(TS / 2 - 1, TS / 2 - 1, 2, 2, "#dff6ff");
+    },
+    lightbridge(H) {
+      const { g, ox, oy, R } = H;
+      g.fillStyle = "rgba(120,220,255,.28)";
+      g.fillRect(ox, oy, TS, TS);
+      R(0, 0, TS, 3, "#bff4ff");
+      R(0, 3, TS, 1, "#7fd8f0");
+      for (let x = 2; x < TS; x += 6) R(x, 6, 2, TS - 9, "rgba(160,235,255,.35)");
+      R(0, TS - 2, TS, 1, "rgba(120,220,255,.5)");
     },
     voidcage(H) {
       const { g, ox, oy, R, base } = H;
@@ -41351,6 +41478,7 @@
       this.checkRuinEvent();
       this.updatePulse(dt);
       this.updatePuzzle(dt);
+      this.updateCitadel(dt);
       this.updateBossHazards(dt);
       this.updateCaves(dt);
       if (!guest) this.world.fluidTick(dt);
@@ -45176,6 +45304,8 @@
         this.readTablet(o);
       } else if (o.type === "seal") {
         this.openSeal(o);
+      } else if (o.type === "anchor") {
+        this.useAnchor(o);
       } else if (o.type === "codedoor") {
         this.openCodeDoor(o);
       } else if (o.type === "ciphernote") {
@@ -46516,6 +46646,7 @@
       this.boss = null;
       this.timeScale.slow(1.1, 0.3);
       this.pulseBossDown();
+      this.citadelBossDown(id);
       if (this.pendingLair !== void 0 && this.pendingLair !== null) {
         this.lairs = this.lairs || {};
         this.lairs[this.pendingLair] = 1;
@@ -52482,6 +52613,181 @@
   };
   mixin(Game.prototype, RuinDeepPart, true);
 
+  // src/game/game/citadel.ts
+  var citadel_exports = {};
+  __export(citadel_exports, {
+    CitadelPart: () => CitadelPart
+  });
+  var CHARGE_T = 10;
+  var DIAL_P = 4.2;
+  var DIAL_WIN = 0.32;
+  var CitadelPart = {
+    /** 닻을 건드렸다 — 참가자는 호스트에게 맡긴다(세계를 바꾸는 일이라) */
+    useAnchor(o) {
+      const c = this.world.citadel;
+      if (!c) return;
+      if (c.anc && c.anc[o.i]) {
+        this.toast(tr("이미 궤도에 맞춰진 닻이다"), "good");
+        return;
+      }
+      if (this.net && this.net.role === "guest") {
+        this.netBroadcast({ k: "anc", i: o.i, t: this.time });
+        return;
+      }
+      this.anchorUse(o, this.player);
+    },
+    /** 호스트 · 혼자 — 닻 하나를 깨운다 */
+    anchorUse(o, who) {
+      const run = this.ancRun || (this.ancRun = {});
+      const r = run[o.i];
+      if (o.kind === "dial") {
+        if (r && r.cd > 0) return;
+        const a = this.time / DIAL_P * TAU % TAU, off = Math.min(a, TAU - a);
+        if (off <= DIAL_WIN) {
+          this.anchorDone(o);
+          return;
+        }
+        run[o.i] = { cd: 1 };
+        who.hurt(who.d.maxHp * 0.08, o.x + o.w / 2);
+        this.toast(tr("바늘이 어긋났다 — 꼭대기에 닿을 때 맞춰야 한다"), "bad");
+        for (let k = 0; k < 14; k++) this.parts.push(new Part(o.x + o.w / 2, o.y + 10, "#9fd8ff", -30, 0.6));
+        return;
+      }
+      if (r) return;
+      const cx = o.x + o.w / 2, cy = o.y + o.h;
+      const mobs = (o.kind === "guard" ? ["orbit_sentry", "orbit_sentry", "ballast_form"] : ["meridian_eye", "meridian_eye"]).map((t, k) => {
+        const e = new Enemy(t, cx + (k - 1) * 70, cy - 120, this.scale());
+        this.ents.push(e);
+        return e;
+      });
+      run[o.i] = { kind: o.kind, mobs, t: 0 };
+      this.toast(o.kind === "guard" ? tr("닻이 깨어나며 지킴이를 불렀다 — 모두 쓰러뜨려라") : tr("닻이 빛을 모은다 — 곁에 머물러라"), "bad");
+      this.shake = Math.max(this.shake, 8);
+    },
+    /** 매 프레임(호스트 · 혼자) — 지킴이 · 충전 닻의 진행 */
+    updateCitadel(dt) {
+      const run = this.ancRun, w = this.world, c = w && w.citadel;
+      if (!run || !c || this.net && this.net.role === "guest") return;
+      for (const i in run) {
+        const r = run[i], o = w.objects.find((q) => q.type === "anchor" && q.i === +i);
+        if (!o) {
+          delete run[i];
+          continue;
+        }
+        if (r.cd !== void 0) {
+          r.cd -= dt;
+          if (r.cd <= 0) delete run[i];
+          continue;
+        }
+        if (r.kind === "guard") {
+          if (r.mobs.every((e) => e.dead)) this.anchorDone(o);
+        } else if (r.kind === "charge") {
+          const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+          const near = this.players.some((q) => !q.dead && dist(q.cx, q.cy, cx, cy) < TS * 3.5);
+          r.t = Math.max(0, r.t + (near ? dt : -dt * 0.5));
+          o.prog = r.t / CHARGE_T;
+          if (r.t >= CHARGE_T) this.anchorDone(o);
+        }
+      }
+    },
+    /** 닻 하나가 맞춰졌다 — 다음 빛다리를 펴고, 셋 다면 봉인문을 연다 */
+    anchorDone(o) {
+      const w = this.world, c = w.citadel;
+      c.anc = c.anc || [0, 0, 0];
+      if (c.anc[o.i]) return;
+      c.anc[o.i] = 1;
+      o.done = 1;
+      o.prog = 1;
+      if (this.ancRun) delete this.ancRun[o.i];
+      for (const [x, y] of c.links && c.links[o.i] || []) if (w.get(x, y) === T.AIR) w.set(x, y, T.LIGHTBRIDGE);
+      for (let k = 0; k < 40; k++) this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, "#9fe8ff", -50, 1.1));
+      this.sfx("chapter");
+      const n = c.anc.filter(Boolean).length;
+      if (n >= 3) {
+        for (const [x, y] of c.gate || []) if (w.get(x, y) === T.ORBITSEAL) w.set(x, y, T.AIR);
+        this.toast(tr("세 닻이 궤도에 맞춰졌다 — 성채의 봉인문이 열린다"), "good");
+        this.shake = Math.max(this.shake, 16);
+      } else this.toast(tr("닻이 궤도에 맞춰졌다 ({n}/3) — 빛다리가 펴진다", { n }), "good");
+      if (this.net) this.netBroadcast({ k: "anc", st: c.anc });
+    },
+    /** 성채 주인이 쓰러졌다 — 발사대 보관고가 열린다(제트팩 시제품) */
+    citadelBossDown(id) {
+      const w = this.world, c = w.citadel;
+      if (id !== "restorer" || !c || c.vaultOpen) return;
+      c.vaultOpen = 1;
+      for (const [x, y] of c.vault || []) if (w.get(x, y) === T.ORBITSEAL) w.set(x, y, T.AIR);
+      this.toast(tr("기관이 멈추자 발사대 보관고의 봉인이 풀렸다"), "good");
+      if (this.net) this.netBroadcast({ k: "anc", st: c.anc, v: 1 });
+    },
+    /** 참가자 — 호스트가 보낸 닻 상태를 받아 그림만 맞춘다(타일은 tiles 로 따로 온다) */
+    netAnchor(m) {
+      const c = this.world.citadel;
+      if (!c) return;
+      if (m.st) c.anc = m.st;
+      if (m.v) c.vaultOpen = 1;
+      for (const o of this.world.objects) if (o.type === "anchor" && c.anc && c.anc[o.i]) {
+        o.done = 1;
+        o.prog = 1;
+      }
+    },
+    /** 닻 그림 — 받침 · 떠 있는 고리 · 갈래마다 다른 표시(지킴이 = 칼날 셋 · 충전 = 차오르는 고리 · 눈금 = 도는 바늘) */
+    drawAnchor(c, o, sx, sy) {
+      const t = this.time, cx = sx + o.w / 2, top = sy + 8, done = !!o.done;
+      const col = done ? "#9fe8ff" : o.kind === "guard" ? "#ff9a6a" : o.kind === "charge" ? "#ffd27a" : "#c8a8ff";
+      c.save();
+      c.fillStyle = "#3a4250";
+      c.fillRect(sx + 4, sy + o.h - 8, o.w - 8, 8);
+      c.fillStyle = "#56606e";
+      c.fillRect(cx - 3, top + 14, 6, o.h - 30);
+      c.globalCompositeOperation = "lighter";
+      const R = 13 + Math.sin(t * 2) * 1.2, oy = top + 8 + Math.sin(t * 1.6) * 2;
+      c.strokeStyle = col;
+      c.lineWidth = 2;
+      c.globalAlpha = done ? 0.9 : 0.65;
+      c.beginPath();
+      c.ellipse(cx, oy, R, R * 0.45, Math.sin(t * 0.7) * 0.3, 0, TAU);
+      c.stroke();
+      if (o.kind === "charge" && !done && o.prog) {
+        c.lineWidth = 3;
+        c.globalAlpha = 0.95;
+        c.beginPath();
+        c.arc(cx, oy, R + 5, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, o.prog));
+        c.stroke();
+      }
+      if (o.kind === "dial" && !done) {
+        const a = t / DIAL_P * TAU % TAU;
+        c.globalAlpha = 0.9;
+        c.lineWidth = 2.5;
+        c.beginPath();
+        c.moveTo(cx, oy);
+        c.lineTo(cx + Math.sin(a) * (R + 6), oy - Math.cos(a) * (R + 6));
+        c.stroke();
+        c.globalAlpha = 0.5;
+        c.fillStyle = col;
+        c.fillRect(cx - 2, oy - R - 10, 4, 4);
+      }
+      if (o.kind === "guard" && !done) for (let k = 0; k < 3; k++) {
+        const a = t * 1.4 + k * TAU / 3;
+        c.globalAlpha = 0.8;
+        c.fillStyle = col;
+        c.fillRect(cx + Math.cos(a) * R - 1.5, oy + Math.sin(a) * R * 0.45 - 4, 3, 8);
+      }
+      c.globalAlpha = done ? 0.55 + Math.sin(t * 3) * 0.2 : 0.35;
+      const g = c.createRadialGradient(cx, oy, 1, cx, oy, 9);
+      g.addColorStop(0, "#ffffff");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      c.fillStyle = g;
+      c.fillRect(cx - 9, oy - 9, 18, 18);
+      if (done) {
+        c.globalAlpha = 0.25 + Math.sin(t * 2.5) * 0.1;
+        c.fillStyle = col;
+        c.fillRect(cx - 1.5, oy - 200, 3, 190);
+      }
+      c.restore();
+    }
+  };
+  mixin(Game.prototype, CitadelPart, true);
+
   // src/game/game/minimap.ts
   var minimap_exports = {};
   __export(minimap_exports, {
@@ -52809,6 +53115,8 @@
           c.globalAlpha = 0.55 + Math.sin(this.time * 2.4 + o.tablet) * 0.28;
           for (let k = 0; k < 4; k++) c.fillRect(sx + 7, sy + 12 + k * 8, o.w - 14, 3);
           c.globalAlpha = 1;
+        } else if (o.type === "anchor") {
+          this.drawAnchor(c, o, sx, sy);
         } else if (o.type === "seal") {
           c.fillStyle = o.opened ? "#2a2634" : "#3a3550";
           c.fillRect(sx, sy, o.w, o.h);
@@ -55834,6 +56142,29 @@
         }
         UI5.refreshBag();
       }
+      if (qs.get("debug") === "citadel" && this.world.citadel) {
+        const w = this.world, plv = +qs.get("plv") || 70;
+        while (p.level < plv) {
+          p.level++;
+          p.statPts += 3;
+          p.skillPts++;
+          p.xpNext = Math.round(p.xpNext * 1.18);
+        }
+        p.recalc();
+        p.hp = p.d.maxHp;
+        p.mp = p.d.maxMp;
+        const a = w.objects.find((o) => o.type === "anchor" && o.i === 0);
+        if (qs.get("done")) {
+          for (const o of w.objects) if (o.type === "anchor") this.anchorDone(o);
+        }
+        if (a) {
+          p.x = a.x + 60;
+          p.y = a.y + a.h - p.h;
+          p.vx = p.vy = 0;
+          this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+          this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
+        }
+      }
       if (qs.get("debug") === "factory") this.buildDebugFactory(qs);
       if (qs.get("debug") === "bomb") {
         const give = (id, n) => {
@@ -57416,6 +57747,9 @@
         this.netPuzzleClick(m);
       } else if (m.k === "doff" && peer.rp) {
         this.deepOffered(m.id, m.L);
+      } else if (m.k === "anc" && peer.rp) {
+        const o = this.world.objects.find((q) => q.type === "anchor" && q.i === m.i);
+        if (o && !(this.world.citadel.anc || [])[m.i]) this.anchorUse(o, peer.rp);
       } else if (m.k === "door" && peer.rp) {
         this.netPutDoor(m);
         for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, "rel", m);
@@ -57581,6 +57915,8 @@
         this.netBossHazard(m);
       } else if (m.k === "puz") {
         this.netPuzzle(m);
+      } else if (m.k === "anc") {
+        this.netAnchor(m);
       } else if (m.k === "door") {
         this.netPutDoor(m);
       } else if (m.k === "oadd" || m.k === "odel" || m.k === "ost") {
@@ -58324,7 +58660,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

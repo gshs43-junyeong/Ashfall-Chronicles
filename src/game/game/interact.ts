@@ -104,6 +104,8 @@ export const InteractPart: Bag = {
       this.readTablet(o);
     } else if (o.type === 'seal') {
       this.openSeal(o);
+    } else if (o.type === 'anchor') {
+      this.useAnchor(o);
     } else if (o.type === 'codedoor') {
       this.openCodeDoor(o);
     } else if (o.type === 'ciphernote') {

@@ -634,6 +634,7 @@ export const GameCore: Bag = {
     this.checkRuinEvent();
     this.updatePulse(dt);          // 유적의 맥박 · 탐사 기록 (아래 '유적의 맥박' 절)
     this.updatePuzzle(dt);         // 봉인 방(game/ruin-puzzle)
+    this.updateCitadel(dt);        // 부유 성채 닻(game/citadel)
     this.updateBossHazards(dt);    // 보스 기술이 남긴 것(game/boss-hazards)
     this.updateCaves(dt);          // 동굴 갈래 · 낙석 · 무너지는 자갈 (아래 '동굴' 절)
     if (!guest) this.world.fluidTick(dt);   // 물·바닷물·용암이 흐른다 (world.js '유체' 절) — 참가자는 호스트 것을 받는다

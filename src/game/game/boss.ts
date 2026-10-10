@@ -70,6 +70,7 @@ export const BossPart: Bag = {
     this.boss = null;
     this.timeScale.slow(1.1, 0.3);   // 쓰러지는 순간을 느리게 — 마지막 일격이 눈에 남는다
     this.pulseBossDown();          // 유적 주인 · 메아리 — 맥박을 가라앉히고 보상을 준다
+    this.citadelBossDown(id);      // 성채 주인 — 발사대 보관고가 열린다
     // 둥지에서 깨운 것이라면 그 둥지를 비운 것으로 남긴다
     if (this.pendingLair !== undefined && this.pendingLair !== null) {
       this.lairs = this.lairs || {};
