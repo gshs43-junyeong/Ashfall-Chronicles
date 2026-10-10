@@ -223,7 +223,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
       const cells = Math.max(Math.round(leaves.length * (cfg.worn ? 0.12 : 0.22)), target - leaves.length);
       for (let k = 0; k < cells || leaves.length < target; k++) {
         /* 세로로 가를 폭이 없으면 **가로로**, 위쪽에 낮은 다락(높이 6)을 떼어 낸다. */
-        const cand = leaves.filter(r => !r.hall && !r.cell && (r.w >= cw + minW || r.h >= minH + 6));
+        const cand = leaves.filter(r => !r.hall && !r.cell && (r.w >= cw + minW || r.h >= minH + 7));
         if (!cand.length) break;
         const r = rng.pick(cand);
         let a: Bag, b: Bag;
@@ -233,7 +233,7 @@ export const WorldDungeon: Bag & ThisType<World> = {
           a = { x: r.x, y: r.y, w: cut, h: r.h }; b = { x: r.x + cut, y: r.y, w: r.w - cut, h: r.h };
           (left ? a : b).cell = 1;
         } else {
-          a = { x: r.x, y: r.y, w: r.w, h: 6 }; b = { x: r.x, y: r.y + 6, w: r.w, h: r.h - 6 };
+          a = { x: r.x, y: r.y, w: r.w, h: 7 }; b = { x: r.x, y: r.y + 7, w: r.w, h: r.h - 7 };
           a.cell = 1;
         }
         leaves.splice(leaves.indexOf(r), 1, a, b);
@@ -398,13 +398,15 @@ export const WorldDungeon: Bag & ThisType<World> = {
     const hs = (a: number, b: number) => { let v = (a * 374761393 + b * 668265263) | 0; v = (v ^ (v >>> 13)) * 1274126177; return ((v ^ (v >>> 16)) >>> 0); };
     const x1 = r.x + r.w - 1, lim = keepY - 2;
     const fill = (x: number, y: number) => { if (y <= lim && y > r.y && x > r.x && x < x1) this.set(x, y, wall); };
-    let d = hs(r.x, r.y) % 2;
+    /* 작은 방은 덜 무너뜨린다 — 천장 두 줄 · 모서리 넉 칸이 높이 9 · 폭 10 아래 방을 굴처럼 짓눌렀다. 사연: docs/code-history.md#h177 */
+    const dMax = r.h >= 12 ? 2 : r.h >= 9 ? 1 : 0, big = r.w >= 14 && r.h >= 11;
+    let d = Math.min(dMax, hs(r.x, r.y) % 2);
     for (let x = r.x + 1; x < x1; x++) {                    // 천장 — 이웃 칸과 한 칸 넘게 안 벌어진다
       const t = hs(r.x * 7 + ((x - r.x) / 4 | 0), r.y) % 3;     // 네 칸씩 묶어야 톱니로 안 보인다
-      d = Math.max(0, Math.min(2, t > d ? d + 1 : t < d ? d - 1 : d));
+      d = Math.max(0, Math.min(dMax, t > d ? d + 1 : t < d ? d - 1 : d));
       for (let y = r.y + 1; y <= r.y + d; y++) fill(x, y);
     }
-    const s0 = 2 + hs(r.x, r.h) % 3, s1 = 2 + hs(x1, r.w) % 3;      // 무너진 위 모서리
+    const s0 = big ? 2 + hs(r.x, r.h) % 3 : 1, s1 = big ? 2 + hs(x1, r.w) % 3 : 1;      // 무너진 위 모서리
     for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
       if (i + j < s0) fill(r.x + 1 + i, r.y + 1 + j);
       if (i + j < s1) fill(x1 - 1 - i, r.y + 1 + j);

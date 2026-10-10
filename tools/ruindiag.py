@@ -109,7 +109,8 @@ WALK_JS = r"""
   const out = [];
   for (const r of w.ruins) {
     if (!r.id) continue;
-    const spec = RUIN_SPEC.find(q => q.id === r.id);
+    const stm = /^story(\d)$/.exec(r.id);   // 석판 유적은 STORY_RUIN 의 arch(묻힌 것은 걸어 나갈 필요가 없다)
+    const spec = RUIN_SPEC.find(q => q.id === r.id) || (stm && STORY_RUIN[+stm[1]]);
     const site = w.ruinSites.find(s => s.id === r.id);
     const x0 = r.x - (r.w >> 1), x1 = r.x + (r.w >> 1);
     const y0 = r.y - (r.h >> 1), y1 = r.y + (r.h >> 1);

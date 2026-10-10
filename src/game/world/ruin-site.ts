@@ -16,7 +16,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
   buildRuinSite(spec: Bag, idx: number, rng: RNG) {
     const y0 = spec.y, x0 = spec.x - (spec.w >> 1);
     /* 유적마다 자르는 깊이와 방 최소 크기를 달리 준다 (RUIN_SPEC[].bsp). */
-    const bsp = spec.maze ? [7, 6, 6] : (spec.bsp || [4, 15, 8]);
+    const bsp = spec.maze ? [7, 10, 8] : (spec.bsp || [4, 15, 8]);   // 미로도 방 속이 8×6 은 되게
     const rooms = this.carveDungeon({
       x0, y0, w: spec.w, h: spec.h, wall: spec.wall, floor: spec.floor, bg: spec.bg,
       rng, depth: bsp[0], minW: bsp[1], minH: bsp[2],
@@ -219,8 +219,8 @@ export const WorldRuinSite: Bag & ThisType<World> = {
     /* ★ 나중에 지어지는 쪽이 먼저 지은 쪽의 방을 덮어써서, 겹친 자리의 방이 통째로 사라지거나 벽이 어긋났다. */
     const spots = [
       { x: SX(520 + SHIFT),  y: SY(200), trap: 0.52, spike: 0.24, chest: 0.56, w: 96, h: 52, tier: 2, traps: ['dart', 'crumble'], entryKind: 'foothold' },
-      { x: SX(1700 + SHIFT), y: SY(256), trap: 0.72, spike: 0.38, chest: 0.60, w: 92, h: 52, tier: 3, traps: ['dart', 'crumble', 'vent'], entryKind: 'maze' },
-      { x: SX(3860 + SHIFT), y: SY(240), trap: 0.90, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ['dart', 'vent', 'crumble'], entryKind: 'nofoothold' }
+      { x: SX(1700 + SHIFT), y: SY(300), trap: 0.72, spike: 0.38, chest: 0.60, w: 92, h: 52, tier: 3, traps: ['dart', 'crumble', 'vent'], entryKind: 'maze' },
+      { x: SX(3860 + SHIFT), y: SY(340), trap: 0.90, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ['dart', 'vent', 'crumble'], entryKind: 'nofoothold' }
     ];
     /* ★ 도면(hook, ㄴ 자)이 격자 열둘 중 다섯만 쓰는 데다 상자가 작아서, 방 목표를 12 로 올려도 9~10 에서 더 못 잘랐다(d1 9 · d3 10). */
     spots.forEach((sp, i) => {
@@ -380,8 +380,9 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       if (spec.arch !== 'buried') continue;
       const mapId = 'ruinmap_' + spec.id;
 
-      // ① 유적 바로 위 — 지표 아래 4~7칸에 묻힌 작은 방
+      // ① 유적 바로 위 — 지표 아래 4~7칸에 묻힌 작은 방(hidden 유적은 지상에 흔적을 안 남긴다 — 다른 유적 · 먼 동굴의 지도로만 찾는다)
       const cx = clamp(spec.x + rng.int(-6, 6), 40, WW - 40);
+      if (!spec.hidden) {
       const surf = this.surface[cx];
       const cy = surf + rng.int(4, 7);
       for (let x = cx - 3; x <= cx + 3; x++)
@@ -399,6 +400,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
         const gx = cx + dx, gy = this.surface[clamp(gx, 0, WW - 1)] - 1;
         this.set(gx, gy, T.RUINBRICK);
         if (Math.abs(dx) === 1) this.set(gx, gy - 1, T.RUINBRICK);
+      }
       }
 
       // ② 세계 어딘가의 동굴 — 그 유적에서 멀리 떨어진 자리
