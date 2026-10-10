@@ -169,6 +169,7 @@ export class World extends TileMap {
   declare putPathTrap: (...a: any[]) => any; declare putRuinDecor: (...a: any[]) => any; declare putTileTrap: (...a: any[]) => any;
   declare skyAlt: (...a: any[]) => any; declare skyFeature: (...a: any[]) => any; declare skyGrotto: (...a: any[]) => any;
   declare trapSpot: (...a: any[]) => any;
+  declare storyMemories: (...a: any[]) => void; declare settleMemories: () => void; declare _memEnt: number[][];
   declare clearSkyBlobs: (zones: number[][]) => void; declare _citadelVault: (...a: any[]) => Bag | null;
   declare applyStrata: () => void; declare buildTunnels: () => void; declare depthLayer: (tx: number, ty: number) => string;
   declare strataLines: (tx: number) => number[]; declare tunnels: Bag[]; declare _strataPh: number[]; declare _tunBoxes: number[][] | null; declare _tunNat: Set<number> | null;
@@ -627,6 +628,7 @@ export class World extends TileMap {
     this.spawnX = (vx0 + vx1) >> 1;          // 광장 가운데(x0+50)
     this.spawnY = vh - 3;
     this.fitObjects();
+    this.settleMemories();       // 석판 유적 기억 조각 — 헐린 바닥 위에 뜨지 않게
     this.placeRigs(true);        // 채취탑 자리 — 물건을 다 맞춘 뒤(지면·유적이 확정된 뒤)
     this.pruneBrokenTrees();     // 한 번 더 — 채취탑 · 물가 손질이 남긴 줄기 없는 잎 덩어리(나중 단계라 앞의 정리가 못 봤다)
     this.fluidInit();            // 여기서부터 물이 흐른다 — 생성 중에는 꺼 둔다(set 이 수백만 번 불린다)

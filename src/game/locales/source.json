@@ -473,6 +473,9 @@
   "— {n}% · {n2}초 남음": [
    "ui/machine.machLive"
   ],
+  "— 기억의 조각 {n}/{all} — 금 간 벽 뒤, 높은 턱 위, 유물 곁에 흩어져 있다": [
+   "game/interact.readTablet"
+  ],
   "— 맞는 것은 앞으로, 나머지는 시계 방향 옆으로. 아래 가방 칸을 클릭해 지정": [
    "ui/machine.refreshMachine"
   ],
@@ -857,6 +860,16 @@
   ],
   "기본값으로": [
    "index.html"
+  ],
+  "기억의 조각 {n}/{all}": [
+   "game/memory.memoryGot"
+  ],
+  "기억의 조각 — {name}": [
+   "game/memory.takeMemory",
+   "game/memory.memoryEnd"
+  ],
+  "기억이 이어졌다 — 석판 곁에 무언가가 놓였다": [
+   "game/memory.memoryEnd"
   ],
   "기타": [
    "ui/craft.refreshCraft"
@@ -2675,6 +2688,9 @@
   ],
   "제작품 검색": [
    "ui/craft.refreshCraft"
+  ],
+  "조각을 들자 유적이 깨어났다": [
+   "game/memory.memoryGot"
   ],
   "조작": [
    "index.html"
@@ -5779,6 +5795,21 @@
   "STATION_NAME.forge.2": "고로",
   "STATION_NAME.forge.3": "아크 용광로",
   "STATION_NAME.forge.4": "가압 제련로",
+  "STORY_MEMORY.story0.n": "서리 밑 석실 — 기록관의 글",
+  "STORY_MEMORY.story0.lines.0": "『첫날. 별 조각 하나를 얼음 속에 묻었다. 차갑게 두면 꿈을 덜 꾼다고 했다.』",
+  "STORY_MEMORY.story0.lines.1": "『열흘째. 얼음이 소리를 낸다. 녹는 소리가 아니라 — 숨 쉬는 소리다.』",
+  "STORY_MEMORY.story0.lines.2": "『마지막 날. 문을 서리로 봉한다. 이 글을 찾았다면 너는 추위를 견딘 사람이다. 그렇다면 조각도 견딜 것이다.』",
+  "STORY_MEMORY.story0.end": "— 세 조각이 이어지자 얼음 밑에서 희미한 온기가 올라온다. 누군가 아주 오래 이 자리를 지켰다.",
+  "STORY_MEMORY.story1.n": "겹친 길 — 길잡이의 글",
+  "STORY_MEMORY.story1.lines.0": "『길을 두 겹으로 낸다. 쫓는 것은 한 길만 기억한다고 했다.』",
+  "STORY_MEMORY.story1.lines.1": "『위의 길은 우리가 걷고, 아래 길은 그것이 걷는다. 둘이 만나는 곳마다 톱니를 박았다.』",
+  "STORY_MEMORY.story1.lines.2": "『다 만들고 나서야 알았다. 우리도 이제 어느 길이 우리 것인지 모른다.』",
+  "STORY_MEMORY.story1.end": "— 조각을 맞추자 벽의 톱니가 한 칸씩 돈다. 길은 처음부터 하나였다.",
+  "STORY_MEMORY.story2.n": "발 디딜 곳 없는 방 — 잠든 이의 글",
+  "STORY_MEMORY.story2.lines.0": "『잠들기 전에 바닥을 걷었다. 깨어난 누군가가 우리에게 걸어오지 못하게.』",
+  "STORY_MEMORY.story2.lines.1": "『눈을 감으면 별의 꿈이 들린다. 그 꿈속에서 우리는 아직 이기고 있다.』",
+  "STORY_MEMORY.story2.lines.2": "『여기까지 건너왔다면 — 발 디딜 곳 없는 곳을 건너는 법을 이미 아는 것이다. 우리는 그걸 몰랐다.』",
+  "STORY_MEMORY.story2.end": "— 마지막 조각이 제자리를 찾자 꺼진 바닥 너머에서 오래된 숨이 한 번 내쉬어진다.",
   "STORY_RUIN.0.n": "서리 밑 석실",
   "STORY_RUIN.1.n": "겹친 길",
   "STORY_RUIN.2.n": "발 디딜 곳 없는 방",
@@ -6559,6 +6590,7 @@
   "TILE_DEF.213.n": "마그마 맥",
   "TILE_DEF.214.n": "궤도 봉인문",
   "TILE_DEF.215.n": "빛다리",
+  "TILE_DEF.216.n": "금 간 벽돌",
   "VILLAGE.1.n": "되살아난 마을",
   "VILLAGE.1.d": "잿빛이 걷히고 사람이 다시 들어왔다. 아직은 살아남은 자리에 가깝다.",
   "VILLAGE.1.gain.0": "주민 5명 · 여관 · 보관고 · 재련대 · 의뢰 게시판",

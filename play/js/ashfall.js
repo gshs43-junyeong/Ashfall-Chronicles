@@ -2449,7 +2449,9 @@
     MAGMAVEIN: 213,
     /* --- 부유 성채의 해금 — 궤도 봉인문(깨지지 않는다) · 닻을 맞추면 깔리는 빛다리 --- */
     ORBITSEAL: 214,
-    LIGHTBRIDGE: 215
+    LIGHTBRIDGE: 215,
+    /* --- 석판 유적의 금 간 벽 — 뒤에 기억 조각 골방이 있다(첫 곡괭이로 깬다) --- */
+    CRACKBRICK: 216
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -2778,7 +2780,8 @@
     { n: "현무암", c: "#3a3333", solid: 1, hard: 2, drop: "basalt" },
     { n: "마그마 맥", c: "#5a2a1e", solid: 1, hard: 2, drop: "basalt" },
     { n: "궤도 봉인문", c: "#3a5a7a", solid: 1, hard: 99 },
-    { n: "빛다리", c: "#9fe8ff", solid: 1, hard: 99 }
+    { n: "빛다리", c: "#9fe8ff", solid: 1, hard: 99 },
+    { n: "금 간 벽돌", c: "#6a6458", solid: 1, hard: 1, drop: "stone" }
   ];
   var FARM_WET_R = 5, FARM_WET_DAYS = 3;
   var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
@@ -7927,7 +7930,7 @@
     put("glass", "CRYSTAL AETHER POWERSTONE SOULSTONE COREGLASS DRAFTGLASS ORBITCORE WINDOW");
     put("ember", "LAVA HELLSTONE FLAMEVENT EMBERDRIP EMBERSPIRE MAGMAVEIN");
     put("bone", "BONEHEAP");
-    put("stone", "MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE DEEPSLATE BASALT");
+    put("stone", "MOSSSTONE STALACTITE STALAGMITE FAULTSTONE LIMESTONE GRANITE DEEPSLATE BASALT CRACKBRICK");
     put("plant", "HANGMOSS GLOWFROND");
     put("glass", "GEODE STARCRYSTAL FUSEDROCK");
     put("metal", "METEORITE COPPERRICH IRONRICH LEADRICH GOLDRICH MYTHRILRICH");
@@ -8758,6 +8761,7 @@
     RUIN_PLANS: () => RUIN_PLANS,
     RUIN_RELIC: () => RUIN_RELIC,
     RUIN_SPEC: () => RUIN_SPEC,
+    STORY_MEMORY: () => STORY_MEMORY,
     STORY_RUIN: () => STORY_RUIN,
     SURVEY_LABEL: () => SURVEY_LABEL,
     SURVEY_TIERS: () => SURVEY_TIERS,
@@ -9023,6 +9027,35 @@
   STORY_RUIN[2].mobs = ["crawler", "shadoweye", "hollowling"];
   STORY_RUIN[2].rank = 5;
   STORY_RUIN[2].bonus2 = "hollow_eye";
+  var STORY_MEMORY = {
+    story0: {
+      n: "서리 밑 석실 — 기록관의 글",
+      lines: [
+        "『첫날. 별 조각 하나를 얼음 속에 묻었다. 차갑게 두면 꿈을 덜 꾼다고 했다.』",
+        "『열흘째. 얼음이 소리를 낸다. 녹는 소리가 아니라 — 숨 쉬는 소리다.』",
+        "『마지막 날. 문을 서리로 봉한다. 이 글을 찾았다면 너는 추위를 견딘 사람이다. 그렇다면 조각도 견딜 것이다.』"
+      ],
+      end: "— 세 조각이 이어지자 얼음 밑에서 희미한 온기가 올라온다. 누군가 아주 오래 이 자리를 지켰다."
+    },
+    story1: {
+      n: "겹친 길 — 길잡이의 글",
+      lines: [
+        "『길을 두 겹으로 낸다. 쫓는 것은 한 길만 기억한다고 했다.』",
+        "『위의 길은 우리가 걷고, 아래 길은 그것이 걷는다. 둘이 만나는 곳마다 톱니를 박았다.』",
+        "『다 만들고 나서야 알았다. 우리도 이제 어느 길이 우리 것인지 모른다.』"
+      ],
+      end: "— 조각을 맞추자 벽의 톱니가 한 칸씩 돈다. 길은 처음부터 하나였다."
+    },
+    story2: {
+      n: "발 디딜 곳 없는 방 — 잠든 이의 글",
+      lines: [
+        "『잠들기 전에 바닥을 걷었다. 깨어난 누군가가 우리에게 걸어오지 못하게.』",
+        "『눈을 감으면 별의 꿈이 들린다. 그 꿈속에서 우리는 아직 이기고 있다.』",
+        "『여기까지 건너왔다면 — 발 디딜 곳 없는 곳을 건너는 법을 이미 아는 것이다. 우리는 그걸 몰랐다.』"
+      ],
+      end: "— 마지막 조각이 제자리를 찾자 꺼진 바닥 너머에서 오래된 숨이 한 번 내쉬어진다."
+    }
+  };
   var MYSTIC = {
     well: {
       n: "가라앉은 우물",
@@ -15188,6 +15221,7 @@
       this.spawnX = vx0 + vx1 >> 1;
       this.spawnY = vh - 3;
       this.fitObjects();
+      this.settleMemories();
       this.placeRigs(true);
       this.pruneBrokenTrees();
       this.fluidInit();
@@ -19663,6 +19697,8 @@
           if (cr) this.buildCipherVault(spec, cr, cr.y + cr.h - 3, rng, rooms);
         }
         this.storyTheme(i, rooms, main, sigRoom, sp, x0, w);
+        this._memEnt = [];
+        this.storyMemories(i, rooms, main, sigRoom, far, x0, w, sp.tier);
         this._ensureConnected(x0, y0, w, h, rooms);
         const wsp = [];
         for (const r of rooms) wsp.push([r.x + 2, r.y + r.h - 3, 0], [r.x + (r.w >> 1), r.y + r.h - 3]);
@@ -19682,6 +19718,8 @@
           rooms,
           idx: i,
           ent: (this._entranceRooms || []).slice(),
+          hide: this._memEnt,
+          // hide — 기억 조각 골방(유적 안으로 센다 · 입구 아님)
           traps: (sp.traps || ["dart", "crumble"]).slice()
         });
       });
@@ -19921,6 +19959,134 @@
         }
       }
     },
+    /** 석판 유적의 기억 조각 셋 — ① 금 간 벽 뒤 골방(상자 덤) ② 높은 방 천장 턱(발판 사다리로 오른다) ③ 유물 방 구석(줍는 순간 지킴이).
+        제 난수(seed+'_mem'+i)만 쓴다. 런타임은 game/memory.ts. 사연: docs/code-history.md#h180 */
+    storyMemories(i, rooms, main, sigRoom, far, x0, w, tier) {
+      const r = new RNG(this.seed + "_mem" + i), id = "story" + i;
+      const inRoom = (x, y) => rooms.some((q) => x >= q.x && x <= q.x + q.w - 1 && y >= q.y && y <= q.y + q.h - 1);
+      const shard = (k, tx, footY, guard) => this.objects.push({ type: "memory", ruin: id, k, guard, x: tx * TS + 1, y: (footY + 1) * TS - 24, w: 20, h: 24 });
+      const free = rooms.filter((q) => q !== main && q !== sigRoom && q !== far);
+      const pocket = (q, side, fy) => {
+        const wx = side < 0 ? q.x : q.x + q.w - 1, nx0 = side < 0 ? q.x - 5 : q.x + q.w + 1;
+        if (nx0 <= x0 + 1 || nx0 + 4 >= x0 + w - 1) return false;
+        for (let x = nx0 - 1; x <= nx0 + 4; x++) for (let y = fy - 3; y <= fy + 1; y++)
+          if (!this.solid(x, y) || inRoom(x, y) || this.get(x, y) === T.BEDROCK || this.locked(x, y)) return false;
+        for (let y = fy - 2; y <= fy; y++) if (this.get(wx - side, y) !== T.AIR) return false;
+        if (!this.solid(wx - side, fy + 1)) return false;
+        for (let x = nx0; x < nx0 + 4; x++) for (let y = fy - 2; y <= fy; y++) {
+          this.set(x, y, T.AIR);
+          this.setWall(x, y, 10);
+        }
+        for (const x of [wx, wx + side]) for (let y = fy - 2; y <= fy; y++) this.set(x, y, T.CRACKBRICK);
+        shard(0, nx0 + (side < 0 ? 0 : 3), fy);
+        this._memEnt.push([nx0, fy - 2, 4, 3]);
+        this.objects.push({ type: "chest", tier: Math.min(6, tier + 1), cave: 1, x: (nx0 + (side < 0 ? 2 : 0)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
+        return true;
+      };
+      const under = (q) => {
+        const fy = q.y + q.h - 3;
+        for (let cx = q.x + 3; cx < q.x + q.w - 5; cx++) {
+          let ok = this.get(cx, fy) === T.AIR && this.get(cx + 1, fy) === T.AIR;
+          for (let x = cx - 2; ok && x <= cx + 3; x++) for (let y = fy + 1; y <= fy + 6; y++)
+            if (!this.solid(x, y) || y > fy + 2 && inRoom(x, y) || this.get(x, y) === T.BEDROCK || this.locked(x, y) || this.get(x, y) === T.SPIKE) {
+              ok = false;
+              break;
+            }
+          if (!ok) continue;
+          for (const x of [cx, cx + 1]) for (const y of [fy + 1, fy + 2]) this.set(x, y, T.CRACKBRICK);
+          for (let x = cx - 1; x <= cx + 2; x++) for (let y = fy + 3; y <= fy + 5; y++) {
+            this.set(x, y, T.AIR);
+            this.setWall(x, y, 10);
+          }
+          shard(0, cx - 1, fy + 5);
+          this._memEnt.push([cx - 1, fy + 3, 4, 3]);
+          this.objects.push({ type: "chest", tier: Math.min(6, tier + 1), cave: 1, x: (cx + 1) * TS, y: (fy + 4.8) * TS, w: 30, h: 26, items: null });
+          return true;
+        }
+        return false;
+      };
+      const cand = [...free.slice().sort(() => r.next() - 0.5), sigRoom, main].filter(Boolean);
+      let hid = false;
+      found: for (const q of cand) for (const side of r.chance(0.5) ? [-1, 1] : [1, -1])
+        for (const fy of [q.y + q.h - 3, q.y + q.h - 4, q.y + q.h - 5]) if (pocket(q, side, fy)) {
+          hid = true;
+          break found;
+        }
+      const closet = (q) => {
+        const fy = q.y + q.h - 3;
+        for (const left of [true, false]) {
+          const cx0 = left ? q.x + 1 : q.x + q.w - 3, wx = left ? cx0 + 2 : cx0 - 1;
+          let ok = this.solid(cx0, fy + 1) && this.solid(cx0 + 1, fy + 1);
+          for (let x = Math.min(cx0, wx); ok && x <= Math.max(cx0 + 1, wx); x++) for (let y = fy - 3; y <= fy; y++) if (this.get(x, y) !== T.AIR) {
+            ok = false;
+            break;
+          }
+          if (!ok || this.get(wx + (left ? 1 : -1), fy) !== T.AIR) continue;
+          for (let y = fy - 2; y <= fy; y++) this.set(wx, y, T.CRACKBRICK);
+          for (let x = Math.min(cx0, wx); x <= Math.max(cx0 + 1, wx); x++) this.set(x, fy - 3, T.CRACKBRICK);
+          shard(0, left ? cx0 : cx0 + 1, fy);
+          return true;
+        }
+        return false;
+      };
+      if (!hid) hid = cand.some((q) => under(q));
+      if (!hid) cand.some((q) => closet(q));
+      const ledge = (q) => {
+        const fy = q.y + q.h - 3;
+        for (const left of r.chance(0.5) ? [true, false] : [false, true])
+          for (let ly = q.y + 2; ly <= q.y + 5; ly++) for (let off = 1; off <= 3; off++) {
+            const lx0 = left ? q.x + off : q.x + q.w - 3 - off;
+            if (fy - ly < 6) continue;
+            let ok = true;
+            for (let x = lx0; x < lx0 + 3 && ok; x++) for (let y = ly - 2; y <= ly; y++) if (TILE_DEF[this.get(x, y)].solid === 1 || TILE_DEF[this.get(x, y)].liquid) {
+              ok = false;
+              break;
+            }
+            if (!ok) continue;
+            for (let x = lx0; x < lx0 + 3; x++) for (let y = ly - 2; y <= ly; y++) if (this.get(x, y) !== T.AIR) this.set(x, y, T.AIR);
+            for (let x = lx0; x < lx0 + 3; x++) this.set(x, ly, T.PLATFORM);
+            let alt = 0, top = ly;
+            for (let y = ly + 3; y < fy - 1; y += 3, alt ^= 1) {
+              const sx = left ? lx0 + 3 + alt * 3 : lx0 - 2 - alt * 3;
+              let n = 0;
+              for (let x = sx; x < sx + 2; x++) if (this.get(x, y) === T.AIR && this.get(x, y - 1) === T.AIR) {
+                this.set(x, y, T.PLATFORM);
+                n++;
+              }
+              if (n) top = y;
+            }
+            if (top === ly) continue;
+            shard(1, lx0 + 1, ly - 1);
+            return true;
+          }
+        return false;
+      };
+      for (const q of [...free.filter((q2) => q2.h >= 10).sort((a, b) => b.h - a.h), main]) if (ledge(q)) break;
+      const ch = far && this.objects.find((o) => o.relic && Math.abs(o.x / TS - (far.x + (far.w >> 1))) < far.w);
+      const fromLeft = ch ? ch.x / TS > far.x + (far.w >> 1) : r.chance(0.5);
+      for (const q of [far, ...free].filter(Boolean)) {
+        const fy = q.y + q.h - 3;
+        let done = false;
+        for (let k = 2; k < q.w - 2 && !done; k++) {
+          const tx = fromLeft ? q.x + k : q.x + q.w - 1 - k;
+          if (this.get(tx, fy) === T.AIR && this.get(tx, fy - 1) === T.AIR && this.solid(tx, fy + 1) && this.get(tx, fy + 1) !== T.SPIKE && this.get(tx, fy + 1) !== T.CRUMBLE) {
+            shard(2, tx, fy, 1);
+            done = true;
+          }
+        }
+        if (done) break;
+      }
+    },
+    /** 뒷공사(통행 보수 · 방 잇기)가 바닥을 헐고 간 조각을 아래 첫 바닥으로 내린다 — 공중에 뜬 조각을 남기지 않게 */
+    settleMemories() {
+      for (const o of this.objects) {
+        if (o.type !== "memory") continue;
+        const tx = Math.floor((o.x + o.w / 2) / TS);
+        let ty = Math.floor((o.y + o.h - 1) / TS);
+        for (let k = 0; k < 14 && !this.solid(tx, ty + 1) && this.get(tx, ty + 1) !== T.PLATFORM; k++) ty++;
+        o.y = (ty + 1) * TS - o.h;
+      }
+    },
     inRuin(tx, ty) {
       return !!this.ruinInside(tx, ty);
     },
@@ -19937,6 +20103,7 @@
         if (Math.abs(tx - site.x) > site.w / 2 + 60 || Math.abs(ty - site.y) > site.h / 2 + 60) continue;
         for (const m of site.rooms) if (tx >= m.x - 1 && tx <= m.x + m.w && ty >= m.y - 1 && ty <= m.y + m.h) return r;
         for (const e of site.ent || []) if (tx >= e[0] && tx < e[0] + e[2] && ty >= e[1] && ty < e[1] + e[3]) return r;
+        for (const e of site.hide || []) if (tx >= e[0] && tx < e[0] + e[2] && ty >= e[1] && ty < e[1] + e[3]) return r;
       }
       return null;
     },
@@ -21692,6 +21859,7 @@
   ART[T.BASALT] = { k: "basalt", c: "#3a3333" };
   ART[T.MAGMAVEIN] = { k: "magmavein", c: "#3a3333", glow: 1 };
   ART[T.ORBITSEAL] = { k: "orbitseal", c: "#3a5a7a", glow: 1 };
+  ART[T.CRACKBRICK] = { k: "crackbrick", c: "#6a6458" };
   ART[T.LIGHTBRIDGE] = { k: "lightbridge", c: "#9fe8ff", a: 1, glow: 1 };
   ART[T.METEORITE] = { k: "meteorite", c: "#3a3436" };
   ART[T.STARCRYSTAL] = { k: "starcrystal", c: "#ffe6a8", a: 1, glow: 1 };
@@ -24726,6 +24894,23 @@
         R(x, rng.int(2, TS - 6), 1, 4, "#b88fff");
       }
       this._speck(g, ox, oy, rng, 6, dk2, shade(base, 1.4));
+    },
+    crackbrick(H) {
+      const { g, ox, oy, rng, R, base, dk, dk2, lt } = H;
+      this._fill(g, ox, oy, base);
+      for (const y2 of [0, TS / 2]) {
+        R(0, y2, TS, 1, dk2);
+        R(y2 ? TS / 2 : 0, y2, 1, TS / 2, dk2);
+        R(y2 ? 0 : TS / 2, y2 + 1, TS / 2 - 1, 1, lt);
+      }
+      for (let i = 0; i < 6; i++) R(rng.range(1, TS - 3), rng.range(1, TS - 3), 2, 1, dk);
+      let x = rng.range(5, TS - 6), y = 0;
+      while (y < TS) {
+        R(x, y, 1.6, 2, "#1c1a18");
+        R(x + 1.4, y, 0.8, 2, "rgba(190,220,255,.35)");
+        x += rng.range(-1.6, 1.6);
+        y += 2;
+      }
     },
     orbitseal(H) {
       const { g, ox, oy, R, base, dk2, lt } = H;
@@ -45306,6 +45491,8 @@
         this.openSeal(o);
       } else if (o.type === "anchor") {
         this.useAnchor(o);
+      } else if (o.type === "memory") {
+        this.takeMemory(o);
       } else if (o.type === "codedoor") {
         this.openCodeDoor(o);
       } else if (o.type === "ciphernote") {
@@ -45389,7 +45576,8 @@
           UI5.refreshTracker();
         }
       });
-      UI5.openLore(t.n, t.lines, choices);
+      const [n, all] = this.memoryCount("story" + o.tablet);
+      UI5.openLore(t.n, all ? [...t.lines, tr("— 기억의 조각 {n}/{all} — 금 간 벽 뒤, 높은 턱 위, 유물 곁에 흩어져 있다", { n, all })] : t.lines, choices);
       this.sfx("open");
     },
     /** 유적 비문 — 본편이 아직 말하지 않은 것을 유적마다 한 조각씩 흘린다 */
@@ -52788,6 +52976,119 @@
   };
   mixin(Game.prototype, CitadelPart, true);
 
+  // src/game/game/memory.ts
+  var memory_exports = {};
+  __export(memory_exports, {
+    MemoryPart: () => MemoryPart
+  });
+  var MemoryPart = {
+    /** 그 유적의 조각 — [모은 수, 전체] */
+    memoryCount(ruin) {
+      const all = this.world.objects.filter((o) => o.type === "memory" && o.ruin === ruin);
+      return [all.filter((o) => o.got).length, all.length];
+    },
+    /** 조각을 줍는다 — 읽는 것은 주운 사람, 세계 기록(got)과 보상은 호스트 */
+    takeMemory(o) {
+      if (o.got) return;
+      const M = STORY_MEMORY[o.ruin];
+      if (!M) return;
+      UI5.openLore(tr("기억의 조각 — {name}", { name: M.n }), [M.lines[o.k]]);
+      this.sfx("chapter");
+      for (let k = 0; k < 24; k++) this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, "#cfe8ff", -40, 1));
+      if (this.net && this.net.role === "guest") {
+        o.got = 1;
+        this.netBroadcast({ k: "mem", r: o.ruin, i: o.k });
+        return;
+      }
+      this.memoryGot(o, this.player);
+    },
+    /** 호스트 · 혼자 — 조각 하나를 세계에 적고, 지킴이를 깨우고, 셋이면 끝맺는다 */
+    memoryGot(o, who) {
+      const first = !o.done;
+      o.got = 1;
+      o.done = 1;
+      if (!first) return;
+      if (o.guard) {
+        const sr = STORY_RUIN[+o.ruin.slice(5)], t = sr && sr.mobs || ["skeleton"];
+        for (let k = 0; k < 2; k++) this.ents.push(new Enemy(t[k % t.length], o.x + (k ? 60 : -60), o.y - 30, this.scale()));
+        this.toast(tr("조각을 들자 유적이 깨어났다"), "bad");
+      }
+      const [n, all] = this.memoryCount(o.ruin);
+      if (n < all) {
+        this.toast(tr("기억의 조각 {n}/{all}", { n, all }), "good");
+      } else this.memoryEnd(o.ruin, who);
+      if (this.net) this.netBroadcast({ k: "mem", r: o.ruin, i: o.k });
+    },
+    /** 셋이 다 모였다 — 마지막 줄 · 석판 앞에 상자 · 경험치 */
+    memoryEnd(ruin, who) {
+      const M = STORY_MEMORY[ruin], w = this.world;
+      const tab = w.objects.find((q) => q.type === "tablet" && "story" + q.tablet === ruin);
+      if (tab && !w.objects.some((q) => q.memChest === ruin)) {
+        const sr = STORY_RUIN[+ruin.slice(5)] || {}, tier = clamp(2 + +ruin.slice(5) + 2, 3, 6);
+        w.objects.push({
+          type: "chest",
+          tier,
+          memChest: ruin,
+          cave: 1,
+          bonus: sr.bonus,
+          bonus2: sr.bonus2,
+          x: tab.x + tab.w + 8,
+          y: tab.y + tab.h - 26,
+          w: 30,
+          h: 26,
+          items: null
+        });
+        if (this.net) this.netObjAdd(w.objects[w.objects.length - 1]);
+        for (let k = 0; k < 40; k++) this.parts.push(new Part(tab.x + tab.w + 23, tab.y + tab.h - 13, "#ffe8a0", -50, 1.2));
+      }
+      for (const q of this.players) if (!q.dead && q.addXp) q.addXp(Math.round(q.xpNext * 0.25));
+      this.toast(tr("기억이 이어졌다 — 석판 곁에 무언가가 놓였다"), "good");
+      UI5.openLore(tr("기억의 조각 — {name}", { name: M.n }), [...M.lines, M.end]);
+      this.shake = Math.max(this.shake, 8);
+    },
+    /** 여럿 — 참가자가 주운 것(호스트가 받아 적는다) · 호스트가 적은 것(참가자는 그림만) */
+    netMemory(m, fromGuest, who) {
+      const o = this.world.objects.find((q) => q.type === "memory" && q.ruin === m.r && q.k === m.i);
+      if (!o) return;
+      if (fromGuest) this.memoryGot(o, who);
+      else {
+        o.got = 1;
+        o.done = 1;
+      }
+    },
+    /** 조각 그림 — 떠서 천천히 도는 빛 조각 셋, 아래에 흐린 그림자 */
+    drawMemory(c, o, sx, sy) {
+      if (o.got) return;
+      const t = this.time + o.k * 1.7, cx = sx + o.w / 2, cy = sy + o.h / 2 - 4 + Math.sin(t * 1.8) * 3;
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      const g = c.createRadialGradient(cx, cy, 1, cx, cy, 18);
+      g.addColorStop(0, "rgba(210,235,255,.55)");
+      g.addColorStop(1, "rgba(120,170,255,0)");
+      c.fillStyle = g;
+      c.fillRect(cx - 18, cy - 18, 36, 36);
+      for (let i = 0; i < 3; i++) {
+        const a = t * 0.9 + i * TAU / 3, r = 5 + Math.sin(t * 2 + i) * 1.2;
+        const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * 0.6;
+        c.globalAlpha = 0.85;
+        c.fillStyle = i ? "#bfe0ff" : "#ffffff";
+        c.beginPath();
+        c.moveTo(x, y - 4);
+        c.lineTo(x + 2.2, y);
+        c.lineTo(x, y + 4);
+        c.lineTo(x - 2.2, y);
+        c.closePath();
+        c.fill();
+      }
+      c.restore();
+      c.globalAlpha = 0.25;
+      c.fillStyle = "#000";
+      c.fillRect(cx - 6, sy + o.h - 2, 12, 2);
+      c.globalAlpha = 1;
+    }
+  };
+  mixin(Game.prototype, MemoryPart, true);
+
   // src/game/game/minimap.ts
   var minimap_exports = {};
   __export(minimap_exports, {
@@ -53117,6 +53418,8 @@
           c.globalAlpha = 1;
         } else if (o.type === "anchor") {
           this.drawAnchor(c, o, sx, sy);
+        } else if (o.type === "memory") {
+          this.drawMemory(c, o, sx, sy);
         } else if (o.type === "seal") {
           c.fillStyle = o.opened ? "#2a2634" : "#3a3550";
           c.fillRect(sx, sy, o.w, o.h);
@@ -57747,6 +58050,8 @@
         this.netPuzzleClick(m);
       } else if (m.k === "doff" && peer.rp) {
         this.deepOffered(m.id, m.L);
+      } else if (m.k === "mem" && peer.rp) {
+        this.netMemory(m, true, peer.rp);
       } else if (m.k === "anc" && peer.rp) {
         const o = this.world.objects.find((q) => q.type === "anchor" && q.i === m.i);
         if (o && !(this.world.citadel.anc || [])[m.i]) this.anchorUse(o, peer.rp);
@@ -57917,6 +58222,8 @@
         this.netPuzzle(m);
       } else if (m.k === "anc") {
         this.netAnchor(m);
+      } else if (m.k === "mem") {
+        this.netMemory(m, false);
       } else if (m.k === "door") {
         this.netPutDoor(m);
       } else if (m.k === "oadd" || m.k === "odel" || m.k === "ost") {
@@ -58660,7 +58967,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

@@ -279,6 +279,8 @@ export const WorldRuinSite: Bag & ThisType<World> = {
         if (cr) this.buildCipherVault(spec, cr, cr.y + cr.h - 3, rng, rooms);
       }
       this.storyTheme(i, rooms, main, sigRoom, sp, x0, w);
+      this._memEnt = [];
+      this.storyMemories(i, rooms, main, sigRoom, far, x0, w, sp.tier);
       // 바닥을 갈아 까는 고유 방이 굴을 메울 수 있으므로 마지막에 연결을 다시 보장한다
       this._ensureConnected(x0, y0, w, h, rooms);
       const wsp = [];
@@ -290,7 +292,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       this._walkJobs.push([x0, y0, w, h, wsp, T.RUINTILE, sp.traps]);  // 걸어서 닿는지는 마지막에
       this.ruins.push({ id: 'story' + i, x: cx, y: cy, w, h });
       this.ruinSites.push({ id: 'story' + i, n: spec.n, x: cx, y: cy, w, h, rooms, idx: i,
-                            ent: (this._entranceRooms || []).slice(),
+                            ent: (this._entranceRooms || []).slice(), hide: this._memEnt,   // hide — 기억 조각 골방(유적 안으로 센다 · 입구 아님)
                             traps: (sp.traps || ['dart', 'crumble']).slice() });
     });
 
@@ -490,6 +492,116 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       }
     }
   },
+  /** 석판 유적의 기억 조각 셋 — ① 금 간 벽 뒤 골방(상자 덤) ② 높은 방 천장 턱(발판 사다리로 오른다) ③ 유물 방 구석(줍는 순간 지킴이).
+      제 난수(seed+'_mem'+i)만 쓴다. 런타임은 game/memory.ts. 사연: docs/code-history.md#h180 */
+  storyMemories(i: number, rooms: any[], main: Bag, sigRoom: Bag, far: Bag, x0: number, w: number, tier: number) {
+    const r = new RNG(this.seed + '_mem' + i), id = 'story' + i;
+    const inRoom = (x: number, y: number) => rooms.some((q: any) => x >= q.x && x <= q.x + q.w - 1 && y >= q.y && y <= q.y + q.h - 1);
+    const shard = (k: number, tx: number, footY: number, guard?: number) =>
+      this.objects.push({ type: 'memory', ruin: id, k, guard, x: tx * TS + 1, y: (footY + 1) * TS - 24, w: 20, h: 24 });
+    const free = rooms.filter((q: any) => q !== main && q !== sigRoom && q !== far);
+    // ① 금 간 벽 뒤 — 방 옆 바위에 4×3 골방을 파고, 방 벽 두 겹을 금 간 벽돌로 바꾼다(곡괭이 첫 등급으로 깬다)
+    const pocket = (q: Bag, side: number, fy: number) => {
+      const wx = side < 0 ? q.x : q.x + q.w - 1, nx0 = side < 0 ? q.x - 5 : q.x + q.w + 1;
+      if (nx0 <= x0 + 1 || nx0 + 4 >= x0 + w - 1) return false;
+      for (let x = nx0 - 1; x <= nx0 + 4; x++) for (let y = fy - 3; y <= fy + 1; y++)
+        if (!this.solid(x, y) || inRoom(x, y) || this.get(x, y) === T.BEDROCK || this.locked(x, y)) return false;
+      for (let y = fy - 2; y <= fy; y++) if (this.get(wx - side, y) !== T.AIR) return false;   // 방 안에서 벽이 보여야 한다
+      if (!this.solid(wx - side, fy + 1)) return false;
+      for (let x = nx0; x < nx0 + 4; x++) for (let y = fy - 2; y <= fy; y++) { this.set(x, y, T.AIR); this.setWall(x, y, 10); }
+      for (const x of [wx, wx + side]) for (let y = fy - 2; y <= fy; y++) this.set(x, y, T.CRACKBRICK);
+      shard(0, nx0 + (side < 0 ? 0 : 3), fy);
+      this._memEnt.push([nx0, fy - 2, 4, 3]);
+      this.objects.push({ type: 'chest', tier: Math.min(6, tier + 1), cave: 1, x: (nx0 + (side < 0 ? 2 : 0)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
+      return true;
+    };
+    /* 옆이 막혔으면(미로처럼 방이 빽빽하면) 바닥 밑 — 바닥 두 칸을 금 간 벽돌로, 그 밑 4×3 골방(떨어져 들어가 뛰어 나온다) */
+    const under = (q: Bag) => {
+      const fy = q.y + q.h - 3;
+      for (let cx = q.x + 3; cx < q.x + q.w - 5; cx++) {
+        let ok = this.get(cx, fy) === T.AIR && this.get(cx + 1, fy) === T.AIR;
+        for (let x = cx - 2; ok && x <= cx + 3; x++) for (let y = fy + 1; y <= fy + 6; y++)
+          if (!this.solid(x, y) || (y > fy + 2 && inRoom(x, y)) || this.get(x, y) === T.BEDROCK || this.locked(x, y) || this.get(x, y) === T.SPIKE) { ok = false; break; }
+        if (!ok) continue;
+        for (const x of [cx, cx + 1]) for (const y of [fy + 1, fy + 2]) this.set(x, y, T.CRACKBRICK);
+        for (let x = cx - 1; x <= cx + 2; x++) for (let y = fy + 3; y <= fy + 5; y++) { this.set(x, y, T.AIR); this.setWall(x, y, 10); }
+        shard(0, cx - 1, fy + 5);
+        this._memEnt.push([cx - 1, fy + 3, 4, 3]);
+        this.objects.push({ type: 'chest', tier: Math.min(6, tier + 1), cave: 1, x: (cx + 1) * TS, y: (fy + 4.8) * TS, w: 30, h: 26, items: null });
+        return true;
+      }
+      return false;
+    };
+    const cand = [...free.slice().sort(() => r.next() - 0.5), sigRoom, main].filter(Boolean);
+    let hid = false;
+    found: for (const q of cand) for (const side of r.chance(0.5) ? [-1, 1] : [1, -1])
+      for (const fy of [q.y + q.h - 3, q.y + q.h - 4, q.y + q.h - 5]) if (pocket(q, side, fy)) { hid = true; break found; }
+    /* 그래도 못 팠으면 방 구석에 금 간 벽돌로 쌓은 벽장(2×3) — 방 안이라 늘 놓인다 */
+    const closet = (q: Bag) => {
+      const fy = q.y + q.h - 3;
+      for (const left of [true, false]) {
+        const cx0 = left ? q.x + 1 : q.x + q.w - 3, wx = left ? cx0 + 2 : cx0 - 1;
+        let ok = this.solid(cx0, fy + 1) && this.solid(cx0 + 1, fy + 1);
+        for (let x = Math.min(cx0, wx); ok && x <= Math.max(cx0 + 1, wx); x++) for (let y = fy - 3; y <= fy; y++) if (this.get(x, y) !== T.AIR) { ok = false; break; }
+        if (!ok || this.get(wx + (left ? 1 : -1), fy) !== T.AIR) continue;
+        for (let y = fy - 2; y <= fy; y++) this.set(wx, y, T.CRACKBRICK);
+        for (let x = Math.min(cx0, wx); x <= Math.max(cx0 + 1, wx); x++) this.set(x, fy - 3, T.CRACKBRICK);
+        shard(0, left ? cx0 : cx0 + 1, fy);
+        return true;
+      }
+      return false;
+    };
+    if (!hid) hid = cand.some((q: any) => under(q));
+    if (!hid) cand.some((q: any) => closet(q));
+    // ② 천장 턱 — 높은 방 한쪽 벽 가까이 3칸 턱, 그 밑으로 세 줄마다 엇갈린 발판(점프 3칸으로 오른다)
+    const ledge = (q: Bag) => {
+      const fy = q.y + q.h - 3;
+      for (const left of r.chance(0.5) ? [true, false] : [false, true])
+        for (let ly = q.y + 2; ly <= q.y + 5; ly++) for (let off = 1; off <= 3; off++) {
+          const lx0 = left ? q.x + off : q.x + q.w - 3 - off;
+          if (fy - ly < 6) continue;
+          let ok = true;   // 횃불 · 깃발 같은 안 막는 장식은 걷고 턱을 놓는다
+          for (let x = lx0; x < lx0 + 3 && ok; x++) for (let y = ly - 2; y <= ly; y++) if (TILE_DEF[this.get(x, y)].solid === 1 || TILE_DEF[this.get(x, y)].liquid) { ok = false; break; }
+          if (!ok) continue;
+          for (let x = lx0; x < lx0 + 3; x++) for (let y = ly - 2; y <= ly; y++) if (this.get(x, y) !== T.AIR) this.set(x, y, T.AIR);
+          for (let x = lx0; x < lx0 + 3; x++) this.set(x, ly, T.PLATFORM);
+          let alt = 0, top = ly;
+          for (let y = ly + 3; y < fy - 1; y += 3, alt ^= 1) {
+            const sx = left ? lx0 + 3 + alt * 3 : lx0 - 2 - alt * 3;
+            let n = 0;
+            for (let x = sx; x < sx + 2; x++) if (this.get(x, y) === T.AIR && this.get(x, y - 1) === T.AIR) { this.set(x, y, T.PLATFORM); n++; }
+            if (n) top = y;
+          }
+          if (top === ly) continue;                       // 사다리가 하나도 못 놓였다
+          shard(1, lx0 + 1, ly - 1);
+          return true;
+        }
+      return false;
+    };
+    for (const q of [...free.filter((q: any) => q.h >= 10).sort((a: any, b: any) => b.h - a.h), main]) if (ledge(q)) break;
+    // ③ 유물 방 구석 — 상자 반대쪽부터 바닥이 단단한 빈 칸을 찾는다. 집어 들면 지킴이 둘
+    const ch = far && this.objects.find((o: Bag) => o.relic && Math.abs(o.x / TS - (far.x + (far.w >> 1))) < far.w);
+    const fromLeft = ch ? ch.x / TS > far.x + (far.w >> 1) : r.chance(0.5);
+    for (const q of [far, ...free].filter(Boolean)) {   // 유물 방 바닥이 다 가시 고랑이면 다른 방으로
+      const fy = q.y + q.h - 3;
+      let done = false;
+      for (let k = 2; k < q.w - 2 && !done; k++) {
+        const tx = fromLeft ? q.x + k : q.x + q.w - 1 - k;
+        if (this.get(tx, fy) === T.AIR && this.get(tx, fy - 1) === T.AIR && this.solid(tx, fy + 1) && this.get(tx, fy + 1) !== T.SPIKE && this.get(tx, fy + 1) !== T.CRUMBLE) { shard(2, tx, fy, 1); done = true; }
+      }
+      if (done) break;
+    }
+  },
+  /** 뒷공사(통행 보수 · 방 잇기)가 바닥을 헐고 간 조각을 아래 첫 바닥으로 내린다 — 공중에 뜬 조각을 남기지 않게 */
+  settleMemories() {
+    for (const o of this.objects) {
+      if (o.type !== 'memory') continue;
+      const tx = Math.floor((o.x + o.w / 2) / TS);
+      let ty = Math.floor((o.y + o.h - 1) / TS);
+      for (let k = 0; k < 14 && !this.solid(tx, ty + 1) && this.get(tx, ty + 1) !== T.PLATFORM; k++) ty++;
+      o.y = (ty + 1) * TS - o.h;
+    }
+  },
   inRuin(tx: number, ty: number) {
     return !!this.ruinInside(tx, ty);
   },
@@ -503,6 +615,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       if (Math.abs(tx - site.x) > site.w / 2 + 60 || Math.abs(ty - site.y) > site.h / 2 + 60) continue;
       for (const m of site.rooms) if (tx >= m.x - 1 && tx <= m.x + m.w && ty >= m.y - 1 && ty <= m.y + m.h) return r;
       for (const e of site.ent || []) if (tx >= e[0] && tx < e[0] + e[2] && ty >= e[1] && ty < e[1] + e[3]) return r;
+      for (const e of site.hide || []) if (tx >= e[0] && tx < e[0] + e[2] && ty >= e[1] && ty < e[1] + e[3]) return r;
     }
     return null;
   },

@@ -1013,7 +1013,12 @@
   "닻이 빛을 모은다 — 곁에 머물러라": "El ancla reúne luz: quédate cerca",
   "바늘이 어긋났다 — 꼭대기에 닿을 때 맞춰야 한다": "La aguja no estaba alineada: actívala cuando llegue arriba",
   "세 닻이 궤도에 맞춰졌다 — 성채의 봉인문이 열린다": "Las tres anclas están alineadas: se abre la puerta sellada de la ciudadela",
-  "이미 궤도에 맞춰진 닻이다": "Esta ancla ya está alineada"
+  "이미 궤도에 맞춰진 닻이다": "Esta ancla ya está alineada",
+  "— 기억의 조각 {n}/{all} — 금 간 벽 뒤, 높은 턱 위, 유물 곁에 흩어져 있다": "— Fragmentos de memoria {n}/{all}: repartidos tras un muro agrietado, sobre una cornisa alta y junto a la reliquia",
+  "기억의 조각 {n}/{all}": "Fragmentos de memoria {n}/{all}",
+  "기억의 조각 — {name}": "Fragmento de memoria — {name}",
+  "기억이 이어졌다 — 석판 곁에 무언가가 놓였다": "Los recuerdos se unen: algo ha aparecido junto a la tablilla",
+  "조각을 들자 유적이 깨어났다": "Al levantar el fragmento, la ruina despierta"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4447,6 +4452,22 @@
   "DEPTH_LAYER.ember.sub": "Basalto y vetas de magma",
   "DEPTH_LAYER.ember.card.line": "Vetas rojas laten en las grietas. En algún lugar bajo tus pies, el infierno respira.",
   "TILE_DEF.214.n": "Puerta sellada orbital",
-  "TILE_DEF.215.n": "Puente de luz"
+  "TILE_DEF.215.n": "Puente de luz",
+  "STORY_MEMORY.story0.n": "Cámara bajo la escarcha: notas del archivero",
+  "STORY_MEMORY.story0.lines.0": "«Primer día. Enterramos un fragmento de la estrella en el hielo. Decían que, si se mantiene frío, sueña menos.»",
+  "STORY_MEMORY.story0.lines.1": "«Décimo día. El hielo hace un ruido. No es el ruido de derretirse: es el de respirar.»",
+  "STORY_MEMORY.story0.lines.2": "«Último día. Sellamos la puerta con escarcha. Si encontraste estas palabras, eres alguien que soportó el frío. Entonces el fragmento también lo soportará.»",
+  "STORY_MEMORY.story0.end": "— Al unirse los tres fragmentos, un leve calor asciende bajo el hielo. Alguien vigiló este lugar durante muchísimo tiempo.",
+  "STORY_MEMORY.story1.n": "Los caminos superpuestos: notas del guía",
+  "STORY_MEMORY.story1.lines.0": "«Trazamos el camino en dos capas. Decían que el perseguidor solo recuerda un camino.»",
+  "STORY_MEMORY.story1.lines.1": "«Nosotros recorremos el camino de arriba; él, el de abajo. Donde ambos se cruzan, colocamos un engranaje.»",
+  "STORY_MEMORY.story1.lines.2": "«Solo al terminar nos dimos cuenta: ahora tampoco nosotros sabemos cuál camino es el nuestro.»",
+  "STORY_MEMORY.story1.end": "— Al encajar los fragmentos, los engranajes del muro giran un diente. Siempre hubo un solo camino.",
+  "STORY_MEMORY.story2.n": "La sala sin apoyo: notas del durmiente",
+  "STORY_MEMORY.story2.lines.0": "«Antes de dormir arrancamos el suelo, para que nadie que despertara pudiera caminar hasta nosotros.»",
+  "STORY_MEMORY.story2.lines.1": "«Cuando cierro los ojos, oigo el sueño de la estrella. En ese sueño, seguimos ganando.»",
+  "STORY_MEMORY.story2.lines.2": "«Si cruzaste hasta aquí, ya sabes cruzar donde no hay apoyo. Nosotros nunca lo supimos.»",
+  "STORY_MEMORY.story2.end": "— Cuando el último fragmento encuentra su lugar, al otro lado del suelo hundido se exhala una vez un aliento antiguo.",
+  "TILE_DEF.216.n": "Ladrillo agrietado"
  }
 }

@@ -112,7 +112,9 @@ export const T: Record<string, number> = {
   /* --- 깊이층 — 지하와 지옥 사이: 심층암 지대 · 작열 지대(현무암 + 마그마 맥) --- */
   DEEPSLATE: 211, BASALT: 212, MAGMAVEIN: 213,
   /* --- 부유 성채의 해금 — 궤도 봉인문(깨지지 않는다) · 닻을 맞추면 깔리는 빛다리 --- */
-  ORBITSEAL: 214, LIGHTBRIDGE: 215
+  ORBITSEAL: 214, LIGHTBRIDGE: 215,
+  /* --- 석판 유적의 금 간 벽 — 뒤에 기억 조각 골방이 있다(첫 곡괭이로 깬다) --- */
+  CRACKBRICK: 216
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -385,7 +387,8 @@ export const TILE_DEF: TileDef[] = [
   { n: '현무암', c: '#3a3333', solid: 1, hard: 2, drop: 'basalt' },
   { n: '마그마 맥', c: '#5a2a1e', solid: 1, hard: 2, drop: 'basalt' },
   { n: '궤도 봉인문', c: '#3a5a7a', solid: 1, hard: 99 },
-  { n: '빛다리', c: '#9fe8ff', solid: 1, hard: 99 }
+  { n: '빛다리', c: '#9fe8ff', solid: 1, hard: 99 },
+  { n: '금 간 벽돌', c: '#6a6458', solid: 1, hard: 1, drop: 'stone' }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */

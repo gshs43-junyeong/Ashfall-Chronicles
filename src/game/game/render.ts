@@ -225,6 +225,8 @@ export const RenderPart: Bag = {
         c.globalAlpha = 1;
       } else if (o.type === 'anchor') {
         this.drawAnchor(c, o, sx, sy);
+      } else if (o.type === 'memory') {
+        this.drawMemory(c, o, sx, sy);
       } else if (o.type === 'seal') {
         c.fillStyle = o.opened ? '#2a2634' : '#3a3550';
         c.fillRect(sx, sy, o.w, o.h);
