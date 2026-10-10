@@ -257,6 +257,9 @@
   "{item} {n}개를 가져와 보아라. 무엇에 쓰는지는 나중에 말해주마.": [
    "data/quests"
   ],
+  "{item} {n}개를 바쳤다": [
+   "game/ruin-deep.deepOfferTick"
+  ],
   "{item} {o}개": [
    "game/quests.objLabel"
   ],
@@ -571,6 +574,9 @@
   ],
   "가방 칸": [
    "ui/tip.compareLine"
+  ],
+  "가방에 {have}/{need} — 다가서면 바친다": [
+   "game/ruin-deep.drawDeepGates"
   ],
   "가방에 다시 벼릴 만한 장비가 없다.": [
    "ui/shop.refreshReforge"
@@ -4011,6 +4017,23 @@
   "CIPHER_WORDS.9": "무너짐",
   "CIPHER_WORDS.10": "돌의뼈",
   "CIPHER_WORDS.11": "마지막",
+  "DEEP_KEYS.ice.0.t": "얼어붙은 문 — 둘레에 횃불 셋을 세워 녹여라",
+  "DEEP_KEYS.pyramid.0.t": "해가 정수리에 올 때(11~13시)만 빛이 문까지 내려온다",
+  "DEEP_KEYS.pyramid.1.t": "수로 잠근 문 — 골방의 암호를 풀어라",
+  "DEEP_KEYS.mine.0.t": "멈춘 승강기 — 화실에 석탄 {n}개를 넣어라",
+  "DEEP_KEYS.mine.1.t": "식은 승강기 — 깊은 잉걸 {n}개로 다시 지펴라",
+  "DEEP_KEYS.blight.0.t": "둥지 심장이 굶었다 — 둥지 안에서 {n}마리를 쓰러뜨려라",
+  "DEEP_KEYS.blight.1.t": "사나운 문 — 골방의 글을 풀어 읽어라",
+  "DEEP_KEYS.blight.2.t": "맨 아래 요람 — 부패한 알 {n}개를 돌려놓아라",
+  "DEEP_KEYS.spore.0.t": "포자가 빛나는 밤(20~4시)에만 길이 보인다",
+  "DEEP_KEYS.abyss.0.t": "닫힌 조가비 — 심연 진주 하나를 물려라",
+  "DEEP_KEYS.story0.0.t": "석판을 읽은 사람만 지나간다",
+  "DEEP_KEYS.story0.1.t": "서리 봉인 — 봉인 조각 {n}개를 맞춰라",
+  "DEEP_KEYS.story1.0.t": "겹친 길을 모두 걸어 본 사람만 — 방을 모두 밟아라",
+  "DEEP_KEYS.story1.1.t": "두 사람이 나눠 적은 말 — 골방의 암호를 풀어라",
+  "DEEP_KEYS.story1.2.t": "빠진 톱니 — 미로 톱니 {n}개를 끼워라",
+  "DEEP_KEYS.story2.0.t": "방들이 한꺼번에 깨어나 봐야 바닥이 열린다 — 격노를 한 번 넘겨라",
+  "DEEP_KEYS.story2.1.t": "눈 없는 문 — 텅 빈 눈 하나를 끼워라",
   "DIALOGUE.yunseul.0.0": "…사람이네. 진짜 사람.",
   "DIALOGUE.yunseul.0.1": "놀라진 마. 나도 그쪽이 더 놀라워.",
   "DIALOGUE.yunseul.0.2": "위가 잿더미가 됐다는 소식까지는 들었어. 그 뒤로 아무도 안 내려왔고, 아무도 안 올라갔지.",
@@ -5152,6 +5175,12 @@
   "ITEMS.spore_dust.d": "숨을 참고 담아야 한다. 숨을 쉬면 그때부터 내 안에서 자란다.",
   "ITEMS.cap_signet.n": "갓의 인장",
   "ITEMS.cap_signet.d": "포자 굴에는 문이 없다. 그런데 여는 데 쓰는 물건이 있었다.",
+  "ITEMS.rime_seal.n": "서리 봉인 조각",
+  "ITEMS.rime_seal.d": "석실 문에 박혀 있던 조각. 둘을 맞대면 금이 사라진다.",
+  "ITEMS.maze_cog.n": "미로 톱니",
+  "ITEMS.maze_cog.d": "이 톱니가 돌면 어딘가의 길이 옮겨 간다. 어느 길인지는 아무도 모른다.",
+  "ITEMS.hollow_eye.n": "텅 빈 눈",
+  "ITEMS.hollow_eye.d": "들여다보면 안쪽이 아니라 뒤쪽이 보인다.",
   "ITEMS.pet_ember_squirrel.n": "잿불 다람쥐",
   "ITEMS.pet_ember_squirrel.d": "꼬리에 잿불이 붙어 있어도 태연하다.",
   "ITEMS.pet_glass_moth.n": "유리날개 나방",
@@ -5476,10 +5505,10 @@
   "PUZZLE.abyss.hint": "바퀴를 돌리면 오른쪽 바퀴도 한 칸 돈다 — 위에 새긴 눈금에 맞춰라",
   "PUZZLE.story0.n": "석판의 차례",
   "PUZZLE.story0.hint": "문양이 빛나는 차례를 보고 같은 차례로 짚어라",
-  "PUZZLE.story1.n": "석판의 차례",
-  "PUZZLE.story1.hint": "문양이 빛나는 차례를 보고 같은 차례로 짚어라",
-  "PUZZLE.story2.n": "석판의 차례",
-  "PUZZLE.story2.hint": "문양이 빛나는 차례를 보고 같은 차례로 짚어라",
+  "PUZZLE.story1.n": "맞물린 톱니",
+  "PUZZLE.story1.hint": "톱니를 돌리면 맞물린 오른쪽 톱니가 거꾸로 돈다 — 위에 새긴 눈금에 맞춰라",
+  "PUZZLE.story2.n": "감기는 눈",
+  "PUZZLE.story2.hint": "눈이 감겼을 때만 건드려라 — 뜬 눈을 건드리면 방이 깨어난다",
   "RARITY.0": "일반",
   "RARITY.1": "고급",
   "RARITY.2": "희귀",

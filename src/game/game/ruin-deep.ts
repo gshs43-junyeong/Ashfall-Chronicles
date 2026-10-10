@@ -2,13 +2,14 @@
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT, tr } from '../lang.js';
 import { COLUMN_WALL, T, TILE_DEF } from '../data.js';
-import { DEEP_LEVELS, PUZZLE } from '../data/ruins.js';
+import { ITEMS } from '../data/items.js';
+import { DEEP_KEYS, DEEP_LEVELS, PUZZLE } from '../data/ruins.js';
 import { TS } from '../world.js';
 import { Part } from '../entity.js';
 import { Game } from '../game.js';
 /* ★ 깊은 곳은 세계 생성이 아니라 **열리는 순간** 판다 — 미리 파 두면 둘레를 캐서 몰래 들어가고, 생성 난수 · 해시도 흔들린다.
    판 칸은 타일이라 저장되고, 단계마다 방 자리는 site.deep[] 에 남는다(ruinSites 는 세계와 같이 저장된다). 사연: docs/code-history.md#h172
-   단계 L(0 = 2단계): L=0 은 봉인 방을 다 풀면, L≥1 은 바로 위 단계 홀의 봉인을 풀면 열린다. 몇 단계까지 있는지는 DEEP_LEVELS. */
+   단계 L(0 = 2단계): L=0 은 봉인 방을 다 풀면, L≥1 은 바로 위 단계 홀의 봉인을 풀면 — 거기에 유적마다 제 열쇠 하나(DEEP_KEYS). */
 
 const HALL_W = 24, HALL_H = 8, WING_W = 10, WING_H = 6;
 /* 자리 판 — 곁방 둘이 붙은 것부터, 안 되면 홀만, 그래도 안 되면 좁은 홀 */
@@ -23,7 +24,12 @@ export const RuinDeepPart: Bag = {
   deepGate(site: Bag, L = 0) {
     if (L > 0) {
       const up = this.deepLevels(site)[L - 1]; if (!up) return null;
-      return { x: up.hall.x + up.hall.w - 5, fy: up.hall.y + up.hall.h };
+      /* 위 홀 바닥 오른쪽 · 왼쪽 · 가운데 가운데 아래로 팔 수 있는 첫 자리(바로 밑 웅덩이에 막혀 blight 4단계가 안 열렸다) */
+      const memo = site._gates || (Object.defineProperty(site, '_gates', { value: {}, writable: true }), site._gates);
+      if (memo[L]) return memo[L];
+      const fy = up.hall.y + up.hall.h, xs = [up.hall.x + up.hall.w - 5, up.hall.x + 4, up.hall.x + (up.hall.w >> 1) + 3];
+      const g = xs.map(x => ({ x, fy })).find(c => this.deepPlan(site, c, L)) || { x: xs[0], fy };
+      return (memo[L] = g);
     }
     if (site._gate !== undefined) return site._gate;
     const w = this.world, puz = new Set(this.puzzleRooms(site));
@@ -38,13 +44,69 @@ export const RuinDeepPart: Bag = {
     Object.defineProperty(site, '_gate', { value: gate, enumerable: false, writable: true });   // 저장에 안 섞이게
     return gate;
   },
-  /** L 단계를 열 때가 됐나 */
+  /** L 단계를 열 때가 됐나 — 늘 같이 필요한 것(봉인 방 · 위 홀) + 그 단계 열쇠 */
   deepReady(site: Bag, L = 0) {
+    return this.deepBase(site, L) && this.deepKey(site, L).ok;
+  },
+  deepBase(site: Bag, L = 0) {
     if (L >= this.deepMax(site)) return false;
     const sv = this.surveyOf(site.id);
     if (L > 0) return (sv.deepDone || 0) >= L;
     const rooms = this.puzzleRooms(site), done = sv.puz || {};
     return rooms.length > 0 && rooms.every((i: number) => done[i]);
+  },
+  /** 그 단계 열쇠를 채웠나 · 문 위에 띄울 글(진행까지) */
+  deepKey(site: Bag, L = 0): { ok: boolean; t: string; K: Bag | null } {
+    const K = (DEEP_KEYS[site.id] || [])[L]; if (!K) return { ok: true, t: '', K: null };
+    const sv = this.surveyOf(site.id), spec = this.ruinSpec(site.id) || {};
+    let ok = false, prog = '';
+    if (K.k === 'heat') {
+      const g = this.deepGate(site, L), n = g ? this.deepHeat(g) : 0;
+      if (sv.heat0 === undefined) sv.heat0 = n;              // 처음부터 있던 장식 횃불은 안 친다
+      const got = Math.max(0, n - sv.heat0); ok = got >= K.n; prog = ` (${Math.min(got, K.n)}/${K.n})`;
+    } else if (K.k === 'hour') {
+      const h = (this.dayT || 0) / 60; ok = K.a <= K.b ? h >= K.a && h < K.b : h >= K.a || h < K.b;
+    } else if (K.k === 'offer') ok = !!(sv.off || {})[L];
+    else if (K.k === 'feed') { ok = (sv.feed || 0) >= K.n; prog = ` (${Math.min(sv.feed || 0, K.n)}/${K.n})`; }
+    else if (K.k === 'code') ok = this.ruinCodeDone(site.id);
+    else if (K.k === 'walk') { const n = Object.keys(sv.rooms || {}).length; ok = n >= site.rooms.length; prog = ` (${n}/${site.rooms.length})`; }
+    else if (K.k === 'tablet') ok = !!(this.tabletsRead || {})[spec.story];
+    else if (K.k === 'rage') ok = (sv.peak || 0) >= 3;
+    return { ok, t: tr(K.t, { n: K.n || '' }) + prog, K };
+  },
+  /** 문 둘레(좌우 4칸 · 바닥 위 세 줄)에 선 횃불 수 */
+  deepHeat(g: Bag) {
+    const w = this.world; let n = 0;
+    for (let y = g.fy - 3; y < g.fy; y++) for (let x = g.x - 4; x <= g.x + 4; x++) if (w.get(x, y) === T.TORCH) n++;
+    return n;
+  },
+  /** 바치기 — 이 화면 플레이어가 문 가까이 오면 가방에서 꺼내 바친다(참가자는 호스트에 알린다) */
+  deepOfferTick() {
+    const p = this.me; if (!p || p.dead || !this.world) return;
+    for (const site of this.world.ruinSites || []) {
+      const L = this.deepLevels(site).length, K = (DEEP_KEYS[site.id] || [])[L];
+      if (!K || K.k !== 'offer' || (this.surveyOf(site.id).off || {})[L]) continue;
+      const g = this.deepGate(site, L);
+      if (!g || Math.abs(p.cx - (g.x + 0.5) * TS) > TS * 3 || Math.abs(p.y + p.h - g.fy * TS) > TS * 2) continue;
+      if (p.countItem(K.item) < K.n) continue;
+      p.removeItem(K.item, K.n);
+      this.deepOffered(site.id, L);
+      if (this.net && this.net.role === 'guest') this.netBroadcast({ k: 'doff', id: site.id, L });
+      this.toast(tr('{item} {n}개를 바쳤다', { item: ITEMS[K.item].n, n: K.n }), 'good');
+      this.sfx('chapter');
+      for (let q = 0; q < 30; q++) this.parts.push(new Part((g.x + 0.5) * TS + (Math.random() - 0.5) * 40, g.fy * TS - 6, '#e8dcff', -90, 0.9));
+    }
+  },
+  deepOffered(id: string, L: number) { const sv = this.surveyOf(id); (sv.off || (sv.off = {}))[L] = 1; },
+  /** 처치 — 'feed' 열쇠가 걸린 유적 안에서 쓰러진 몹을 센다(호스트 · 혼자) */
+  ruinFeed(e: Bag) {
+    if (this.net && this.net.role === 'guest') return;
+    const tx = e.cx / TS, ty = e.cy / TS;
+    for (const site of this.world.ruinSites || []) {
+      if (!(DEEP_KEYS[site.id] || []).some((K: Bag) => K.k === 'feed')) continue;
+      if (Math.abs(tx - site.x) > site.w / 2 || Math.abs(ty - site.y) > site.h / 2) continue;
+      const sv = this.surveyOf(site.id); sv.feed = (sv.feed || 0) + 1;
+    }
   },
 
   /** 팔 자리 — 문 아래로 굴(3칸) → 홀 (+ 양옆 곁방). 물 · 기반암 · 봉인 · 다른 유적 · 위 단계 · 물건 · 기계가 걸리면 다른 깊이 · 옆 · 작은 판 */
@@ -60,7 +122,7 @@ export const RuinDeepPart: Bag = {
       return true;
     };
     const base = L === 0 ? Math.max(gate.fy + 5, sb + 3) : gate.fy + 5;
-    for (const lay of LAYOUTS) for (let depth = 0; depth <= 18; depth += 3) for (const off of [0, -5, 5, -9, 9]) {
+    for (const lay of LAYOUTS) for (let depth = 0; depth <= 27; depth += 3) for (const off of [0, -5, 5, -9, 9, -14, 14]) {
       const hw = lay.hw, hy = base + depth, hx = gate.x - (hw >> 1) + off;
       if (gate.x < hx + 2 || gate.x > hx + hw - 3) continue;
       const ww = lay.wings ? WING_W + 1 : 0;
@@ -158,8 +220,9 @@ export const RuinDeepPart: Bag = {
       const g = this.deepGate(site, L); if (!g) continue;
       const x = (g.x + 0.5) * TS - cx0, y = g.fy * TS - cy0;
       if (x < -80 || x > this.W + 80 || y < -80 || y > this.H + 80) continue;
-      const sv = this.surveyOf(site.id), rooms = this.puzzleRooms(site), done = sv.puz || {};
-      const m = L ? 1 : rooms.length, n = L ? Math.min(1, (sv.deepDone || 0) - L + 1) : rooms.filter((i: number) => done[i]).length;
+      const sv = this.surveyOf(site.id), rooms = this.puzzleRooms(site), done = sv.puz || {}, key = this.deepKey(site, L);
+      const m = (L ? 1 : rooms.length) + (key.K ? 1 : 0);
+      const n = (L ? Math.min(1, (sv.deepDone || 0) - L + 1) : rooms.filter((i: number) => done[i]).length) + (key.K && key.ok ? 1 : 0);
       c.save();
       c.globalAlpha = 0.55 + 0.25 * Math.sin(t * 2);
       c.strokeStyle = '#b8a8ff'; c.lineWidth = 2;
@@ -170,8 +233,13 @@ export const RuinDeepPart: Bag = {
       }
       if (Math.abs(p.cx - (g.x + 0.5) * TS) < TS * 6 && Math.abs(p.y + p.h - g.fy * TS) < TS * 4) {
         c.globalAlpha = 0.9; c.fillStyle = '#e8dcff'; c.font = '11px ' + FONT; c.textAlign = 'center';
-        c.fillText(L ? tr('더 깊은 봉인 — 이 홀의 봉인을 풀면 {L}단계가 열린다', { L: L + 2 })
-                     : tr('깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다', { n, m }), x, y - 22);
+        const base = this.deepBase(site, L);
+        c.fillText(!base ? (L ? tr('더 깊은 봉인 — 이 홀의 봉인을 풀면 {L}단계가 열린다', { L: L + 2 })
+                              : tr('깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다', { n, m }))
+                         : key.t, x, y - 22);
+        if (key.K && !key.ok && base && key.K.k === 'offer') {
+          c.globalAlpha = 0.7; c.fillText(tr('가방에 {have}/{need} — 다가서면 바친다', { have: p.countItem(key.K.item), need: key.K.n }), x, y - 8);
+        }
       }
       c.restore();
     }

@@ -4952,6 +4952,31 @@
       stack: 99,
       price: 12500,
       d: "포자 굴에는 문이 없다. 그런데 여는 데 쓰는 물건이 있었다."
+    },
+    /* 석판 유적 셋 — 그 아래층 문을 여는 데 바친다(DEEP_KEYS) */
+    rime_seal: {
+      n: "서리 봉인 조각",
+      i: "❄",
+      type: "mat",
+      stack: 999,
+      price: 640,
+      d: "석실 문에 박혀 있던 조각. 둘을 맞대면 금이 사라진다."
+    },
+    maze_cog: {
+      n: "미로 톱니",
+      i: "⚙",
+      type: "mat",
+      stack: 999,
+      price: 560,
+      d: "이 톱니가 돌면 어딘가의 길이 옮겨 간다. 어느 길인지는 아무도 모른다."
+    },
+    hollow_eye: {
+      n: "텅 빈 눈",
+      i: "👁",
+      type: "mat",
+      stack: 999,
+      price: 1500,
+      d: "들여다보면 안쪽이 아니라 뒤쪽이 보인다."
     }
   };
   var RUIN_LOOT = {
@@ -4959,7 +4984,10 @@
     pyramid: ["sealed_ash", "caged_sun"],
     mine: ["deep_ember", "foreman_tag"],
     blight: ["blight_spawn", "nest_crown"],
-    spore: ["spore_dust", "cap_signet"]
+    spore: ["spore_dust", "cap_signet"],
+    story0: ["rime_seal", "relic_frostmark"],
+    story1: ["maze_cog", "relic_mazeeye"],
+    story2: ["hollow_eye", "relic_hollowseed"]
   };
   var MULTI_FALLOFF = 0.35;
   var HIT_FAM = {
@@ -8650,6 +8678,7 @@
     CELL_CHARGE: () => CELL_CHARGE,
     CIPHER_KIND: () => CIPHER_KIND,
     CIPHER_WORDS: () => CIPHER_WORDS,
+    DEEP_KEYS: () => DEEP_KEYS,
     DEEP_LEVELS: () => DEEP_LEVELS,
     ECHO: () => ECHO,
     EVENTS: () => EVENTS,
@@ -8923,10 +8952,13 @@
   ];
   STORY_RUIN[0].mobs = ["frostling", "icewolf", "froststatue"];
   STORY_RUIN[0].rank = 2;
+  STORY_RUIN[0].bonus2 = "rime_seal";
   STORY_RUIN[1].mobs = ["skeleton", "spider", "mazeshade"];
   STORY_RUIN[1].rank = 3;
+  STORY_RUIN[1].bonus2 = "maze_cog";
   STORY_RUIN[2].mobs = ["crawler", "shadoweye", "hollowling"];
   STORY_RUIN[2].rank = 5;
+  STORY_RUIN[2].bonus2 = "hollow_eye";
   var MYSTIC = {
     well: {
       n: "가라앉은 우물",
@@ -9258,27 +9290,59 @@
       hint: "문양이 빛나는 차례를 보고 같은 차례로 짚어라"
     },
     story1: {
-      n: "석판의 차례",
-      k: "simon",
-      cnt: 5,
-      len: 5,
-      skin: "rune",
-      c: "#d8c8ff",
+      n: "맞물린 톱니",
+      k: "dial",
+      rule: "mesh",
+      cnt: 4,
+      m: 4,
+      skin: "cog",
+      c: "#e0b86a",
       rooms: 2,
-      hint: "문양이 빛나는 차례를 보고 같은 차례로 짚어라"
+      hint: "톱니를 돌리면 맞물린 오른쪽 톱니가 거꾸로 돈다 — 위에 새긴 눈금에 맞춰라"
     },
     story2: {
-      n: "석판의 차례",
-      k: "simon",
+      n: "감기는 눈",
+      k: "bloom",
+      rule: "shut",
       cnt: 5,
-      len: 6,
-      skin: "rune",
-      c: "#d8c8ff",
+      skin: "eye",
+      c: "#c08fff",
       rooms: 2,
-      hint: "문양이 빛나는 차례를 보고 같은 차례로 짚어라"
+      hint: "눈이 감겼을 때만 건드려라 — 뜬 눈을 건드리면 방이 깨어난다"
     }
   };
-  var DEEP_LEVELS = { story0: 2, story1: 2, story2: 2 };
+  var DEEP_KEYS = {
+    ice: [{ k: "heat", n: 3, t: "얼어붙은 문 — 둘레에 횃불 셋을 세워 녹여라" }],
+    pyramid: [
+      { k: "hour", a: 11, b: 13, t: "해가 정수리에 올 때(11~13시)만 빛이 문까지 내려온다" },
+      { k: "code", t: "수로 잠근 문 — 골방의 암호를 풀어라" }
+    ],
+    mine: [
+      { k: "offer", item: "coal", n: 12, t: "멈춘 승강기 — 화실에 석탄 {n}개를 넣어라" },
+      { k: "offer", item: "deep_ember", n: 2, t: "식은 승강기 — 깊은 잉걸 {n}개로 다시 지펴라" }
+    ],
+    blight: [
+      { k: "feed", n: 12, t: "둥지 심장이 굶었다 — 둥지 안에서 {n}마리를 쓰러뜨려라" },
+      { k: "code", t: "사나운 문 — 골방의 글을 풀어 읽어라" },
+      { k: "offer", item: "blight_spawn", n: 3, t: "맨 아래 요람 — 부패한 알 {n}개를 돌려놓아라" }
+    ],
+    spore: [{ k: "hour", a: 20, b: 4, t: "포자가 빛나는 밤(20~4시)에만 길이 보인다" }],
+    abyss: [{ k: "offer", item: "abyss_pearl", n: 1, t: "닫힌 조가비 — 심연 진주 하나를 물려라" }],
+    story0: [
+      { k: "tablet", t: "석판을 읽은 사람만 지나간다" },
+      { k: "offer", item: "rime_seal", n: 2, t: "서리 봉인 — 봉인 조각 {n}개를 맞춰라" }
+    ],
+    story1: [
+      { k: "walk", t: "겹친 길을 모두 걸어 본 사람만 — 방을 모두 밟아라" },
+      { k: "code", t: "두 사람이 나눠 적은 말 — 골방의 암호를 풀어라" },
+      { k: "offer", item: "maze_cog", n: 4, t: "빠진 톱니 — 미로 톱니 {n}개를 끼워라" }
+    ],
+    story2: [
+      { k: "rage", t: "방들이 한꺼번에 깨어나 봐야 바닥이 열린다 — 격노를 한 번 넘겨라" },
+      { k: "offer", item: "hollow_eye", n: 1, t: "눈 없는 문 — 텅 빈 눈 하나를 끼워라" }
+    ]
+  };
+  var DEEP_LEVELS = Object.fromEntries(Object.keys(DEEP_KEYS).map((k) => [k, DEEP_KEYS[k].length]));
   var PUZZLE_GIVEUP = 150;
   var ECHO = { max: 5, mul: (lv) => 1 + 0.35 * lv, needStage: 2 };
   var CAVE_TYPES = [
@@ -24516,6 +24580,10 @@
     /* 유적 재료 열 가지 — 그림이 없어 가방에서 빈 칸으로 나오던 것(CLAUDE.md §1-6). */
     neverthaw: { k: "crystal", c: "#bfe8ff", glow: 1 },
     // 얼음 던전
+    rime_seal: { k: "runefrag", c: "#a8cce8", glow: "#e0f4ff" },
+    // 석판 유적 셋
+    maze_cog: { k: "ring", c: "#b8904a", gem: "#e8c86a" },
+    hollow_eye: { k: "crystal", c: "#6a4a8a", glow: "#c08fff" },
     warden_seal: { k: "sigil", c: "#8fb8d8", glow: "#dff2ff" },
     sealed_ash: { k: "sack", c: "#b89a6a", glow: "#e8d0a0" },
     // 피라미드
@@ -30691,6 +30759,7 @@
     die(src) {
       if (this.dead) return;
       this.dead = true;
+      app.ruinFeed(this);
       if (src && src.remote) {
         app.netKilledBy(src, this);
         app.addCorpse(this);
@@ -50198,6 +50267,7 @@
           rank: st.rank || 3,
           tier: 3,
           bonus: st.bonus,
+          bonus2: st.bonus2,
           story: +m[1]
         };
       }
@@ -50842,6 +50912,11 @@
         this.puzzleTick(pz, dt);
         return;
       }
+      this._doffT = (this._doffT || 0) - dt;
+      if (this._doffT <= 0) {
+        this._doffT = 0.3;
+        this.deepOfferTick();
+      }
       if (guest || this.pulseEvent || this.boss) return;
       this._pzT = (this._pzT || 0) - dt;
       if (this._pzT > 0) return;
@@ -50850,7 +50925,8 @@
         if (q.dead || q.hp <= 0) continue;
         const tx = q.cx / TS, ty = q.cy / TS;
         for (const site of this.world.ruinSites || []) {
-          if (tx < site.x - site.w || tx > site.x + site.w || ty < site.y - site.h || ty > site.y + site.h) continue;
+          const lv = this.deepLevels(site), bot = Math.max(site.y + site.h, ...lv.map((d) => d.hall.y + d.hall.h + 2));
+          if (tx < site.x - site.w || tx > site.x + site.w || ty < site.y - site.h || ty > bot) continue;
           const sv = this.surveyOf(site.id), done = sv.puz || {};
           for (const i of this.puzzleRooms(site)) {
             const r = site.rooms[i], key = site.id + ":" + i;
@@ -50954,12 +51030,14 @@
         } while (N.every((v) => v.s === 1));
       } else if (pz.k === "dial") {
         pz.m = P.m;
+        pz.rule = P.rule;
+        const back = pz.rule === "mesh" ? 1 : P.m - 1;
         for (const v of N) v.s = v.tgt = rnd() * P.m | 0;
         do {
           for (let g = 0; g < 3 + (rnd() * 3 | 0); g++) {
             const i = rnd() * n | 0;
             N[i].s = (N[i].s + P.m - 1) % P.m;
-            if (i + 1 < n) N[i + 1].s = (N[i + 1].s + P.m - 1) % P.m;
+            if (i + 1 < n) N[i + 1].s = (N[i + 1].s + back) % P.m;
           }
         } while (N.every((v) => v.s === v.tgt));
       } else if (pz.k === "simon") {
@@ -50978,6 +51056,7 @@
         for (const v of N) v.s = rnd() * 3 | 0;
         while (beamExit(N.map((v) => v.s), P.cols).out === out && g2++ < 80) N[rnd() * n | 0].s = rnd() * 3 | 0;
       } else if (pz.k === "bloom") {
+        pz.rule = P.rule;
         for (const v of N) {
           v.per = 2.4 + rnd() * 1.4;
           v.ph = rnd();
@@ -51002,7 +51081,7 @@
         }
       } else if (pz.k === "dial") {
         N[i].s = (N[i].s + 1) % pz.m;
-        if (i + 1 < n) N[i + 1].s = (N[i + 1].s + 1) % pz.m;
+        if (i + 1 < n) N[i + 1].s = (N[i + 1].s + (pz.rule === "mesh" ? pz.m - 1 : 1)) % pz.m;
       } else if (pz.k === "mirror") {
         N[i].s = (N[i].s + 1) % 3;
       } else if (pz.k === "simon") {
@@ -51014,7 +51093,7 @@
         }
       } else if (pz.k === "bloom") {
         if (N[i].s) return;
-        if (this.puzzleOpen(N[i], pz.t)) N[i].s = 1;
+        if (this.puzzleOpen(N[i], pz.t) !== (pz.rule === "shut")) N[i].s = 1;
         else {
           for (const v of N) v.s = 0;
           this.puzzleMistake(pz);
@@ -51380,6 +51459,61 @@
         }
         c.fillStyle = "rgba(255,255,255,0.8)";
         c.fillRect(x - 9 + v.s * 7 + 1, y - 17, 3, 2);
+      } else if (k === "cog") {
+        const m = pz.m || 4, a = v.s / m * TAU3 * (i % 2 ? -1 : 1);
+        c.fillStyle = lit ? col : "#6a5a3a";
+        c.beginPath();
+        for (let q = 0; q < 16; q++) {
+          const aa = a + q / 16 * TAU3, r = q % 2 ? 8 : 11;
+          c.lineTo(x + Math.cos(aa) * r, y + Math.sin(aa) * r);
+        }
+        c.closePath();
+        c.fill();
+        c.stroke();
+        c.fillStyle = dark;
+        c.beginPath();
+        c.arc(x, y, 3.5, 0, TAU3);
+        c.fill();
+        c.strokeStyle = "#fff6d8";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(x, y);
+        c.lineTo(x + Math.cos(a - Math.PI / 2) * 8, y + Math.sin(a - Math.PI / 2) * 8);
+        c.stroke();
+        for (let q = 0; q < m; q++) {
+          c.fillStyle = q === v.tgt ? col : "rgba(230,210,160,0.3)";
+          c.fillRect(x - 12 + q * 7, y - 23, 5, 4);
+        }
+        c.fillStyle = "rgba(255,255,255,0.8)";
+        c.fillRect(x - 12 + v.s * 7 + 1, y - 18, 3, 2);
+      } else if (k === "eye") {
+        const o = lit ? 0 : open ? 1 : 0.12;
+        c.fillStyle = "#1a1424";
+        c.beginPath();
+        c.ellipse(x, y, 12, 8, 0, 0, TAU3);
+        c.fill();
+        c.stroke();
+        c.fillStyle = lit ? col : "#e8e0f0";
+        c.beginPath();
+        c.ellipse(x, y, 11, 7 * o + 0.6, 0, 0, TAU3);
+        c.fill();
+        if (o > 0.3) {
+          c.fillStyle = "#5a2a8a";
+          c.beginPath();
+          c.arc(x, y, 4 * o, 0, TAU3);
+          c.fill();
+          c.fillStyle = "#0a0610";
+          c.beginPath();
+          c.arc(x, y, 1.8 * o, 0, TAU3);
+          c.fill();
+        } else {
+          c.strokeStyle = lit ? "#ffffff" : col;
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.moveTo(x - 10, y);
+          c.quadraticCurveTo(x, y + 4, x + 10, y);
+          c.stroke();
+        }
       } else {
         c.fillStyle = hit > 0 ? "#3a3050" : dark;
         c.fillRect(x - 9, y - 12, 18, 24);
@@ -51510,7 +51644,11 @@
       if (L > 0) {
         const up = this.deepLevels(site)[L - 1];
         if (!up) return null;
-        return { x: up.hall.x + up.hall.w - 5, fy: up.hall.y + up.hall.h };
+        const memo = site._gates || (Object.defineProperty(site, "_gates", { value: {}, writable: true }), site._gates);
+        if (memo[L]) return memo[L];
+        const fy = up.hall.y + up.hall.h, xs = [up.hall.x + up.hall.w - 5, up.hall.x + 4, up.hall.x + (up.hall.w >> 1) + 3];
+        const g = xs.map((x) => ({ x, fy })).find((c) => this.deepPlan(site, c, L)) || { x: xs[0], fy };
+        return memo[L] = g;
       }
       if (site._gate !== void 0) return site._gate;
       const w = this.world, puz = new Set(this.puzzleRooms(site));
@@ -51527,13 +51665,84 @@
       Object.defineProperty(site, "_gate", { value: gate, enumerable: false, writable: true });
       return gate;
     },
-    /** L 단계를 열 때가 됐나 */
+    /** L 단계를 열 때가 됐나 — 늘 같이 필요한 것(봉인 방 · 위 홀) + 그 단계 열쇠 */
     deepReady(site, L = 0) {
+      return this.deepBase(site, L) && this.deepKey(site, L).ok;
+    },
+    deepBase(site, L = 0) {
       if (L >= this.deepMax(site)) return false;
       const sv = this.surveyOf(site.id);
       if (L > 0) return (sv.deepDone || 0) >= L;
       const rooms = this.puzzleRooms(site), done = sv.puz || {};
       return rooms.length > 0 && rooms.every((i) => done[i]);
+    },
+    /** 그 단계 열쇠를 채웠나 · 문 위에 띄울 글(진행까지) */
+    deepKey(site, L = 0) {
+      const K = (DEEP_KEYS[site.id] || [])[L];
+      if (!K) return { ok: true, t: "", K: null };
+      const sv = this.surveyOf(site.id), spec = this.ruinSpec(site.id) || {};
+      let ok = false, prog = "";
+      if (K.k === "heat") {
+        const g = this.deepGate(site, L), n = g ? this.deepHeat(g) : 0;
+        if (sv.heat0 === void 0) sv.heat0 = n;
+        const got = Math.max(0, n - sv.heat0);
+        ok = got >= K.n;
+        prog = ` (${Math.min(got, K.n)}/${K.n})`;
+      } else if (K.k === "hour") {
+        const h = (this.dayT || 0) / 60;
+        ok = K.a <= K.b ? h >= K.a && h < K.b : h >= K.a || h < K.b;
+      } else if (K.k === "offer") ok = !!(sv.off || {})[L];
+      else if (K.k === "feed") {
+        ok = (sv.feed || 0) >= K.n;
+        prog = ` (${Math.min(sv.feed || 0, K.n)}/${K.n})`;
+      } else if (K.k === "code") ok = this.ruinCodeDone(site.id);
+      else if (K.k === "walk") {
+        const n = Object.keys(sv.rooms || {}).length;
+        ok = n >= site.rooms.length;
+        prog = ` (${n}/${site.rooms.length})`;
+      } else if (K.k === "tablet") ok = !!(this.tabletsRead || {})[spec.story];
+      else if (K.k === "rage") ok = (sv.peak || 0) >= 3;
+      return { ok, t: tr(K.t, { n: K.n || "" }) + prog, K };
+    },
+    /** 문 둘레(좌우 4칸 · 바닥 위 세 줄)에 선 횃불 수 */
+    deepHeat(g) {
+      const w = this.world;
+      let n = 0;
+      for (let y = g.fy - 3; y < g.fy; y++) for (let x = g.x - 4; x <= g.x + 4; x++) if (w.get(x, y) === T.TORCH) n++;
+      return n;
+    },
+    /** 바치기 — 이 화면 플레이어가 문 가까이 오면 가방에서 꺼내 바친다(참가자는 호스트에 알린다) */
+    deepOfferTick() {
+      const p = this.me;
+      if (!p || p.dead || !this.world) return;
+      for (const site of this.world.ruinSites || []) {
+        const L = this.deepLevels(site).length, K = (DEEP_KEYS[site.id] || [])[L];
+        if (!K || K.k !== "offer" || (this.surveyOf(site.id).off || {})[L]) continue;
+        const g = this.deepGate(site, L);
+        if (!g || Math.abs(p.cx - (g.x + 0.5) * TS) > TS * 3 || Math.abs(p.y + p.h - g.fy * TS) > TS * 2) continue;
+        if (p.countItem(K.item) < K.n) continue;
+        p.removeItem(K.item, K.n);
+        this.deepOffered(site.id, L);
+        if (this.net && this.net.role === "guest") this.netBroadcast({ k: "doff", id: site.id, L });
+        this.toast(tr("{item} {n}개를 바쳤다", { item: ITEMS[K.item].n, n: K.n }), "good");
+        this.sfx("chapter");
+        for (let q = 0; q < 30; q++) this.parts.push(new Part((g.x + 0.5) * TS + (Math.random() - 0.5) * 40, g.fy * TS - 6, "#e8dcff", -90, 0.9));
+      }
+    },
+    deepOffered(id, L) {
+      const sv = this.surveyOf(id);
+      (sv.off || (sv.off = {}))[L] = 1;
+    },
+    /** 처치 — 'feed' 열쇠가 걸린 유적 안에서 쓰러진 몹을 센다(호스트 · 혼자) */
+    ruinFeed(e) {
+      if (this.net && this.net.role === "guest") return;
+      const tx = e.cx / TS, ty = e.cy / TS;
+      for (const site of this.world.ruinSites || []) {
+        if (!(DEEP_KEYS[site.id] || []).some((K) => K.k === "feed")) continue;
+        if (Math.abs(tx - site.x) > site.w / 2 || Math.abs(ty - site.y) > site.h / 2) continue;
+        const sv = this.surveyOf(site.id);
+        sv.feed = (sv.feed || 0) + 1;
+      }
     },
     /** 팔 자리 — 문 아래로 굴(3칸) → 홀 (+ 양옆 곁방). 물 · 기반암 · 봉인 · 다른 유적 · 위 단계 · 물건 · 기계가 걸리면 다른 깊이 · 옆 · 작은 판 */
     deepPlan(site, gate, L) {
@@ -51548,7 +51757,7 @@
         return true;
       };
       const base = L === 0 ? Math.max(gate.fy + 5, sb + 3) : gate.fy + 5;
-      for (const lay of LAYOUTS) for (let depth = 0; depth <= 18; depth += 3) for (const off of [0, -5, 5, -9, 9]) {
+      for (const lay of LAYOUTS) for (let depth = 0; depth <= 27; depth += 3) for (const off of [0, -5, 5, -9, 9, -14, 14]) {
         const hw = lay.hw, hy = base + depth, hx = gate.x - (hw >> 1) + off;
         if (gate.x < hx + 2 || gate.x > hx + hw - 3) continue;
         const ww = lay.wings ? WING_W + 1 : 0;
@@ -51666,8 +51875,9 @@
         if (!g) continue;
         const x = (g.x + 0.5) * TS - cx0, y = g.fy * TS - cy0;
         if (x < -80 || x > this.W + 80 || y < -80 || y > this.H + 80) continue;
-        const sv = this.surveyOf(site.id), rooms = this.puzzleRooms(site), done = sv.puz || {};
-        const m = L ? 1 : rooms.length, n = L ? Math.min(1, (sv.deepDone || 0) - L + 1) : rooms.filter((i) => done[i]).length;
+        const sv = this.surveyOf(site.id), rooms = this.puzzleRooms(site), done = sv.puz || {}, key = this.deepKey(site, L);
+        const m = (L ? 1 : rooms.length) + (key.K ? 1 : 0);
+        const n = (L ? Math.min(1, (sv.deepDone || 0) - L + 1) : rooms.filter((i) => done[i]).length) + (key.K && key.ok ? 1 : 0);
         c.save();
         c.globalAlpha = 0.55 + 0.25 * Math.sin(t * 2);
         c.strokeStyle = "#b8a8ff";
@@ -51687,7 +51897,12 @@
           c.fillStyle = "#e8dcff";
           c.font = "11px " + FONT;
           c.textAlign = "center";
-          c.fillText(L ? tr("더 깊은 봉인 — 이 홀의 봉인을 풀면 {L}단계가 열린다", { L: L + 2 }) : tr("깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다", { n, m }), x, y - 22);
+          const base = this.deepBase(site, L);
+          c.fillText(!base ? L ? tr("더 깊은 봉인 — 이 홀의 봉인을 풀면 {L}단계가 열린다", { L: L + 2 }) : tr("깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다", { n, m }) : key.t, x, y - 22);
+          if (key.K && !key.ok && base && key.K.k === "offer") {
+            c.globalAlpha = 0.7;
+            c.fillText(tr("가방에 {have}/{need} — 다가서면 바친다", { have: p.countItem(key.K.item), need: key.K.n }), x, y - 8);
+          }
         }
         c.restore();
       }
@@ -56622,6 +56837,8 @@
         this.netBroadcast(m, peer);
       } else if (m.k === "puzc" && peer.rp) {
         this.netPuzzleClick(m);
+      } else if (m.k === "doff" && peer.rp) {
+        this.deepOffered(m.id, m.L);
       } else if (m.k === "door" && peer.rp) {
         this.netPutDoor(m);
         for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, "rel", m);

@@ -116,6 +116,9 @@ export const ISPEC: Bag = {
   moss_poultice: { k: 'potion', c: '#7fb86a', sq: 1 },
   /* 유적 재료 열 가지 — 그림이 없어 가방에서 빈 칸으로 나오던 것(CLAUDE.md §1-6). */
   neverthaw:    { k: 'crystal', c: '#bfe8ff', glow: 1 },                 // 얼음 던전
+  rime_seal:    { k: 'runefrag', c: '#a8cce8', glow: '#e0f4ff' },        // 석판 유적 셋
+  maze_cog:     { k: 'ring', c: '#b8904a', gem: '#e8c86a' },
+  hollow_eye:   { k: 'crystal', c: '#6a4a8a', glow: '#c08fff' },
   warden_seal:  { k: 'sigil', c: '#8fb8d8', glow: '#dff2ff' },
   sealed_ash:   { k: 'sack', c: '#b89a6a', glow: '#e8d0a0' },            // 피라미드
   caged_sun:    { k: 'star', c: '#ffd24a', glow: '#fff0a0', big: 1 },

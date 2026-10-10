@@ -634,6 +634,7 @@ export class Enemy extends Ent {
   die(src: any) {
     if (this.dead) return;
     this.dead = true;
+    G.ruinFeed(this);
     /* 남의 아바타가 잡았다(호스트) — 보상은 그 주인 화면에서 굴린다. 보스 토벌(세계 진행)은 여기서. */
     if (src && src.remote) {
       G.netKilledBy(src, this);
