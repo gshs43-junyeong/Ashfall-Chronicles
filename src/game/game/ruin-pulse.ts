@@ -39,7 +39,7 @@ export const RuinPulsePart: Bag = {
     if (!this._storySpec[id]) {
       const st = STORY_RUIN[+m[1]];
       this._storySpec[id] = { id, n: st.n, mobs: st.mobs || ['skeleton'], rank: st.rank || 3,
-        tier: 3, bonus: st.bonus, story: +m[1] };
+        tier: 3, bonus: st.bonus, bonus2: st.bonus2, story: +m[1] };
     }
     return this._storySpec[id];
   },

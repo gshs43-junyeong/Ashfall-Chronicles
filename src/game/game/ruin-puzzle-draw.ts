@@ -78,6 +78,21 @@ export const RuinPuzzleDrawPart: Bag = {
         c.fillRect(x - 9 + q * 7, y - 22, 5, 4);
       }
       c.fillStyle = 'rgba(255,255,255,0.8)'; c.fillRect(x - 9 + v.s * 7 + 1, y - 17, 3, 2);
+    } else if (k === 'cog') {                                // 맞물린 톱니 — 이웃끼리 반대로 돈다
+      const m = pz.m || 4, a = v.s / m * TAU * (i % 2 ? -1 : 1);
+      c.fillStyle = lit ? col : '#6a5a3a'; c.beginPath();
+      for (let q = 0; q < 16; q++) { const aa = a + q / 16 * TAU, r = q % 2 ? 8 : 11; c.lineTo(x + Math.cos(aa) * r, y + Math.sin(aa) * r); }
+      c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = dark; c.beginPath(); c.arc(x, y, 3.5, 0, TAU); c.fill();
+      c.strokeStyle = '#fff6d8'; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a - Math.PI / 2) * 8, y + Math.sin(a - Math.PI / 2) * 8); c.stroke();
+      for (let q = 0; q < m; q++) { c.fillStyle = q === v.tgt ? col : 'rgba(230,210,160,0.3)'; c.fillRect(x - 12 + q * 7, y - 23, 5, 4); }
+      c.fillStyle = 'rgba(255,255,255,0.8)'; c.fillRect(x - 12 + v.s * 7 + 1, y - 18, 3, 2);
+    } else if (k === 'eye') {                                // 감기는 눈 — 감겼을 때 건드린다
+      const o = lit ? 0 : open ? 1 : 0.12;
+      c.fillStyle = '#1a1424'; c.beginPath(); c.ellipse(x, y, 12, 8, 0, 0, TAU); c.fill(); c.stroke();
+      c.fillStyle = lit ? col : '#e8e0f0'; c.beginPath(); c.ellipse(x, y, 11, 7 * o + 0.6, 0, 0, TAU); c.fill();
+      if (o > 0.3) { c.fillStyle = '#5a2a8a'; c.beginPath(); c.arc(x, y, 4 * o, 0, TAU); c.fill(); c.fillStyle = '#0a0610'; c.beginPath(); c.arc(x, y, 1.8 * o, 0, TAU); c.fill(); }
+      else { c.strokeStyle = lit ? '#ffffff' : col; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x - 10, y); c.quadraticCurveTo(x, y + 4, x + 10, y); c.stroke(); }
     } else {                                                 // rune — 문양 돌
       c.fillStyle = hit > 0 ? '#3a3050' : dark; c.fillRect(x - 9, y - 12, 18, 24); c.strokeRect(x - 9, y - 12, 18, 24);
       c.strokeStyle = hit > 0 ? '#ffffff' : col; c.lineWidth = 2;

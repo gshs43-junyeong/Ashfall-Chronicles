@@ -124,9 +124,9 @@ export const STORY_RUIN: RuinDef[] = [
   { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 16, bsp: [6, 12, 9], decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['pipe', T.LEAD, 0.35]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
 ];
 /* 석판 유적에도 맥박 · 사건 · 탐사 기록이 뛴다. */
-STORY_RUIN[0].mobs = ['frostling', 'icewolf', 'froststatue']; STORY_RUIN[0].rank = 2;
-STORY_RUIN[1].mobs = ['skeleton', 'spider', 'mazeshade'];       STORY_RUIN[1].rank = 3;
-STORY_RUIN[2].mobs = ['crawler', 'shadoweye', 'hollowling'];  STORY_RUIN[2].rank = 5;
+STORY_RUIN[0].mobs = ['frostling', 'icewolf', 'froststatue']; STORY_RUIN[0].rank = 2; STORY_RUIN[0].bonus2 = 'rime_seal';
+STORY_RUIN[1].mobs = ['skeleton', 'spider', 'mazeshade'];       STORY_RUIN[1].rank = 3; STORY_RUIN[1].bonus2 = 'maze_cog';
+STORY_RUIN[2].mobs = ['crawler', 'shadoweye', 'hollowling'];  STORY_RUIN[2].rank = 5; STORY_RUIN[2].bonus2 = 'hollow_eye';
 
 /* 입구가 없는 유적(arch: 'buried')은 위치 지도를 구해야 찾는다. */
 /* 신비한 방 — 한 세계에 두세 곳. */
@@ -278,14 +278,35 @@ export const PUZZLE: Record<string, Bag> = {
              hint: '바퀴를 돌리면 오른쪽 바퀴도 한 칸 돈다 — 위에 새긴 눈금에 맞춰라' },
   story0:  { n: '석판의 차례', k: 'simon', cnt: 4, len: 4, skin: 'rune', c: '#d8c8ff', rooms: 2,
              hint: '문양이 빛나는 차례를 보고 같은 차례로 짚어라' },
-  story1:  { n: '석판의 차례', k: 'simon', cnt: 5, len: 5, skin: 'rune', c: '#d8c8ff', rooms: 2,
-             hint: '문양이 빛나는 차례를 보고 같은 차례로 짚어라' },
-  story2:  { n: '석판의 차례', k: 'simon', cnt: 5, len: 6, skin: 'rune', c: '#d8c8ff', rooms: 2,
-             hint: '문양이 빛나는 차례를 보고 같은 차례로 짚어라' }
+  story1:  { n: '맞물린 톱니', k: 'dial', rule: 'mesh', cnt: 4, m: 4, skin: 'cog', c: '#e0b86a', rooms: 2,
+             hint: '톱니를 돌리면 맞물린 오른쪽 톱니가 거꾸로 돈다 — 위에 새긴 눈금에 맞춰라' },
+  story2:  { n: '감기는 눈', k: 'bloom', rule: 'shut', cnt: 5, skin: 'eye', c: '#c08fff', rooms: 2,
+             hint: '눈이 감겼을 때만 건드려라 — 뜬 눈을 건드리면 방이 깨어난다' }
 };
-/* 깊은 곳 단계 수(game/ruin-deep) — 1 = 2단계까지(봉인 방을 다 풀면 열림). 2 이상은 위 단계 홀의 봉인을 풀 때마다 한 층 더.
-   이야기가 이어지는 석판 유적만 3단계까지 — 모든 유적이 깊으면 아래층이 특별하지 않다. 표에 없으면 1 */
-export const DEEP_LEVELS: Record<string, number> = { story0: 2, story1: 2, story2: 2 };
+/* 깊은 곳 열쇠(game/ruin-deep) — 단계마다 그 유적다운 조건 하나. 줄 수가 곧 단계 수다(1줄 = 2단계까지).
+   늘 같이 필요한 것: 2단계는 봉인 방을 모두, 그 아래는 바로 위 홀의 봉인을. 같은 조건을 여러 유적에 되풀이하지 않는다.
+   k: heat(문 둘레 횃불 n개) · hour(그 시각 a~b시, 자정을 넘을 수 있다) · offer(바칠 물건 item n개) · feed(유적 안 처치 n)
+      · code(골방 암호) · walk(방을 모두 밟기) · tablet(석판 읽기) · rage(맥박 격노를 한 번) */
+export const DEEP_KEYS: Record<string, Bag[]> = {
+  ice:     [{ k: 'heat', n: 3, t: '얼어붙은 문 — 둘레에 횃불 셋을 세워 녹여라' }],
+  pyramid: [{ k: 'hour', a: 11, b: 13, t: '해가 정수리에 올 때(11~13시)만 빛이 문까지 내려온다' },
+            { k: 'code', t: '수로 잠근 문 — 골방의 암호를 풀어라' }],
+  mine:    [{ k: 'offer', item: 'coal', n: 12, t: '멈춘 승강기 — 화실에 석탄 {n}개를 넣어라' },
+            { k: 'offer', item: 'deep_ember', n: 2, t: '식은 승강기 — 깊은 잉걸 {n}개로 다시 지펴라' }],
+  blight:  [{ k: 'feed', n: 12, t: '둥지 심장이 굶었다 — 둥지 안에서 {n}마리를 쓰러뜨려라' },
+            { k: 'code', t: '사나운 문 — 골방의 글을 풀어 읽어라' },
+            { k: 'offer', item: 'blight_spawn', n: 3, t: '맨 아래 요람 — 부패한 알 {n}개를 돌려놓아라' }],
+  spore:   [{ k: 'hour', a: 20, b: 4, t: '포자가 빛나는 밤(20~4시)에만 길이 보인다' }],
+  abyss:   [{ k: 'offer', item: 'abyss_pearl', n: 1, t: '닫힌 조가비 — 심연 진주 하나를 물려라' }],
+  story0:  [{ k: 'tablet', t: '석판을 읽은 사람만 지나간다' },
+            { k: 'offer', item: 'rime_seal', n: 2, t: '서리 봉인 — 봉인 조각 {n}개를 맞춰라' }],
+  story1:  [{ k: 'walk', t: '겹친 길을 모두 걸어 본 사람만 — 방을 모두 밟아라' },
+            { k: 'code', t: '두 사람이 나눠 적은 말 — 골방의 암호를 풀어라' },
+            { k: 'offer', item: 'maze_cog', n: 4, t: '빠진 톱니 — 미로 톱니 {n}개를 끼워라' }],
+  story2:  [{ k: 'rage', t: '방들이 한꺼번에 깨어나 봐야 바닥이 열린다 — 격노를 한 번 넘겨라' },
+            { k: 'offer', item: 'hollow_eye', n: 1, t: '눈 없는 문 — 텅 빈 눈 하나를 끼워라' }]
+};
+export const DEEP_LEVELS: Record<string, number> = Object.fromEntries(Object.keys(DEEP_KEYS).map(k => [k, DEEP_KEYS[k].length]));
 /* 봉인이 스스로 풀리기까지(초) — 못 풀어도 갇혀 버리지는 않는다 */
 export const PUZZLE_GIVEUP = 150;
 

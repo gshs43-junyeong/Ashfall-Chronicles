@@ -780,7 +780,14 @@ export const ITEMS: Record<string, ItemDef> = {
   spore_dust:   { n: '포자 가루', i: '🍄', type: 'mat', stack: 999, price: 700,
                   d: '숨을 참고 담아야 한다. 숨을 쉬면 그때부터 내 안에서 자란다.' },
   cap_signet:   { n: '갓의 인장', i: '💍', type: 'mat', stack: 99, price: 12500,
-                  d: '포자 굴에는 문이 없다. 그런데 여는 데 쓰는 물건이 있었다.' }
+                  d: '포자 굴에는 문이 없다. 그런데 여는 데 쓰는 물건이 있었다.' },
+  /* 석판 유적 셋 — 그 아래층 문을 여는 데 바친다(DEEP_KEYS) */
+  rime_seal:    { n: '서리 봉인 조각', i: '❄', type: 'mat', stack: 999, price: 640,
+                  d: '석실 문에 박혀 있던 조각. 둘을 맞대면 금이 사라진다.' },
+  maze_cog:     { n: '미로 톱니', i: '⚙', type: 'mat', stack: 999, price: 560,
+                  d: '이 톱니가 돌면 어딘가의 길이 옮겨 간다. 어느 길인지는 아무도 모른다.' },
+  hollow_eye:   { n: '텅 빈 눈', i: '👁', type: 'mat', stack: 999, price: 1500,
+                  d: '들여다보면 안쪽이 아니라 뒤쪽이 보인다.' }
 };
 
 /* 유적 → 그곳에서만 나오는 전리품 [재료, 유물]. */
@@ -789,7 +796,10 @@ export const RUIN_LOOT = {
   pyramid: ['sealed_ash', 'caged_sun'],
   mine: ['deep_ember', 'foreman_tag'],
   blight: ['blight_spawn', 'nest_crown'],
-  spore: ['spore_dust', 'cap_signet']
+  spore: ['spore_dust', 'cap_signet'],
+  story0: ['rime_seal', 'relic_frostmark'],
+  story1: ['maze_cog', 'relic_mazeeye'],
+  story2: ['hollow_eye', 'relic_hollowseed']
 };
 
 /* ★ 한 번 쏜 것이 **같은 적에게 겹쳐** 맞을 때, 두 번째부터의 몫. */

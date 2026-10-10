@@ -82,6 +82,8 @@ export const RuinPuzzlePart: Bag = {
       this.puzzleTick(pz, dt);
       return;
     }
+    this._doffT = (this._doffT || 0) - dt;
+    if (this._doffT <= 0) { this._doffT = 0.3; this.deepOfferTick(); }   // 바치기 — 참가자도 제 가방에서
     if (guest || this.pulseEvent || this.boss) return;
     this._pzT = (this._pzT || 0) - dt; if (this._pzT > 0) return;
     this._pzT = 0.25;
@@ -89,7 +91,8 @@ export const RuinPuzzlePart: Bag = {
       if (q.dead || q.hp <= 0) continue;
       const tx = q.cx / TS, ty = q.cy / TS;
       for (const site of this.world.ruinSites || []) {
-        if (tx < site.x - site.w || tx > site.x + site.w || ty < site.y - site.h || ty > site.y + site.h) continue;
+        const lv = this.deepLevels(site), bot = Math.max(site.y + site.h, ...lv.map((d: Bag) => d.hall.y + d.hall.h + 2));   // 깊은 곳 홀까지
+        if (tx < site.x - site.w || tx > site.x + site.w || ty < site.y - site.h || ty > bot) continue;
         const sv = this.surveyOf(site.id), done = sv.puz || {};
         for (const i of this.puzzleRooms(site)) {
           const r = site.rooms[i], key = site.id + ':' + i;
@@ -172,10 +175,11 @@ export const RuinPuzzlePart: Bag = {
       for (const v of N) v.s = 1;
       do { for (let g = 0; g < 3 + (rnd() * 3 | 0); g++) this.puzzlePress(pz, rnd() * n | 0, true); } while (N.every((v: Bag) => v.s === 1));
     } else if (pz.k === 'dial') {
-      pz.m = P.m;
+      pz.m = P.m; pz.rule = P.rule;
+      const back = pz.rule === 'mesh' ? 1 : P.m - 1;      // 맞물린 톱니는 오른쪽이 거꾸로 돈다
       for (const v of N) v.s = v.tgt = rnd() * P.m | 0;
       do {
-        for (let g = 0; g < 3 + (rnd() * 3 | 0); g++) { const i = rnd() * n | 0; N[i].s = (N[i].s + P.m - 1) % P.m; if (i + 1 < n) N[i + 1].s = (N[i + 1].s + P.m - 1) % P.m; }
+        for (let g = 0; g < 3 + (rnd() * 3 | 0); g++) { const i = rnd() * n | 0; N[i].s = (N[i].s + P.m - 1) % P.m; if (i + 1 < n) N[i + 1].s = (N[i + 1].s + back) % P.m; }
       } while (N.every((v: Bag) => v.s === v.tgt));
     } else if (pz.k === 'simon') {
       pz.seq = []; for (let i = 0; i < P.len; i++) pz.seq.push(rnd() * n | 0);
@@ -189,6 +193,7 @@ export const RuinPuzzlePart: Bag = {
       for (const v of N) v.s = rnd() * 3 | 0;
       while (beamExit(N.map((v: Bag) => v.s), P.cols).out === out && g2++ < 80) N[rnd() * n | 0].s = rnd() * 3 | 0;
     } else if (pz.k === 'bloom') {
+      pz.rule = P.rule;
       for (const v of N) { v.per = 2.4 + rnd() * 1.4; v.ph = rnd(); v.s = 0; }
     }
   },
@@ -199,7 +204,7 @@ export const RuinPuzzlePart: Bag = {
       if (pz.rule === 'adj') { flip(i - 1); flip(i); flip(i + 1); }
       else { flip(i); if (n - 1 - i !== i) flip(n - 1 - i); flip(i + 1 < n ? i + 1 : 0); }
     } else if (pz.k === 'dial') {
-      N[i].s = (N[i].s + 1) % pz.m; if (i + 1 < n) N[i + 1].s = (N[i + 1].s + 1) % pz.m;
+      N[i].s = (N[i].s + 1) % pz.m; if (i + 1 < n) N[i + 1].s = (N[i + 1].s + (pz.rule === 'mesh' ? pz.m - 1 : 1)) % pz.m;
     } else if (pz.k === 'mirror') {
       N[i].s = (N[i].s + 1) % 3;
     } else if (pz.k === 'simon') {
@@ -208,7 +213,7 @@ export const RuinPuzzlePart: Bag = {
       else { this.puzzleShow(pz); this.puzzleMistake(pz); }
     } else if (pz.k === 'bloom') {
       if (N[i].s) return;
-      if (this.puzzleOpen(N[i], pz.t)) N[i].s = 1;
+      if (this.puzzleOpen(N[i], pz.t) !== (pz.rule === 'shut')) N[i].s = 1;   // 감기는 눈은 감겼을 때만
       else { for (const v of N) v.s = 0; this.puzzleMistake(pz); }
     }
     if (quiet) return;
