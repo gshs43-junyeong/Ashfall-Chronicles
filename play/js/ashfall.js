@@ -8810,10 +8810,11 @@
       mobMul: 0.85
     },
     {
+      /* 지옥 깊이(HELL_Y 390) — 내려가야만 만난다. 사연: docs/code-history.md#h177 */
       id: "blight",
       n: "부패한 둥지",
       x: 4020 + SHIFT,
-      y: 216,
+      y: 392,
       w: 128,
       h: 72,
       wall: T.EBONSTONE,
@@ -8835,7 +8836,7 @@
       id: "spore",
       n: "포자 굴",
       x: 3620 + SHIFT,
-      y: 156,
+      y: 270,
       w: 100,
       h: 52,
       wall: T.SPORESTONE,
@@ -8877,6 +8878,8 @@
   RUIN_SPEC[4].rooms = 19;
   RUIN_SPEC[2].style = "wide";
   RUIN_SPEC[3].style = "sparse";
+  RUIN_SPEC[3].hidden = 1;
+  RUIN_SPEC[4].hidden = 1;
   RUIN_SPEC[4].shapes = ["round", "round", "octagon", "round", "rect"];
   RUIN_SPEC[0].decor = [
     ["pillar", T.ICE, 0.5],
@@ -8987,8 +8990,8 @@
   };
   var STORY_RUIN = [
     { n: "서리 밑 석실", plan: "hook", arch: "sunken", rooms: 16, bsp: [6, 12, 9], wall: T.VAULTSLATE, decor: [["pillar", T.ICE, 0.4], ["stalac", T.ICE, 0.45], ["floorpile", T.RIMEURN, 0.5]], sig: "frozen", event: "blackout", bonus: "ice_shard" },
-    { n: "겹친 길", plan: "tee", arch: "sunken", rooms: 24, bsp: [6, 8, 7], style: "maze", wall: T.MAZESTONE, decor: [["wallmark", T.BRONZECOG, 0.55], ["pipe", T.COPPER, 0.5], ["frieze", T.RUNESTONE, 0.3]], sig: "sunshaft", event: "password", bonus: "aether_shard" },
-    { n: "발 디딜 곳 없는 방", plan: "hall", arch: "sunken", rooms: 16, bsp: [6, 10, 14], style: "tall", wall: T.HOLLOWBRICK, decor: [["growth", T.CORRUPTLEAF, 0.5], ["web", T.VINE, 0.4], ["frieze", T.VOIDCAGE, 0.3]], sig: "heart", event: "swarm", bonus: "corrupt_ess" }
+    { n: "겹친 길", plan: "tee", arch: "buried", rooms: 20, bsp: [6, 10, 8], style: "maze", wall: T.MAZESTONE, decor: [["wallmark", T.BRONZECOG, 0.55], ["pipe", T.COPPER, 0.5], ["frieze", T.RUNESTONE, 0.3]], sig: "sunshaft", event: "password", bonus: "aether_shard" },
+    { n: "발 디딜 곳 없는 방", plan: "hall", arch: "buried", rooms: 16, bsp: [6, 10, 14], style: "tall", wall: T.HOLLOWBRICK, decor: [["growth", T.CORRUPTLEAF, 0.5], ["web", T.VINE, 0.4], ["frieze", T.VOIDCAGE, 0.3]], sig: "heart", event: "swarm", bonus: "corrupt_ess" }
   ];
   STORY_RUIN[0].mobs = ["frostling", "icewolf", "froststatue"];
   STORY_RUIN[0].rank = 2;
@@ -17704,7 +17707,7 @@
         const cw = Math.max(7, minW - 4);
         const cells = Math.max(Math.round(leaves.length * (cfg.worn ? 0.12 : 0.22)), target - leaves.length);
         for (let k = 0; k < cells || leaves.length < target; k++) {
-          const cand = leaves.filter((r2) => !r2.hall && !r2.cell && (r2.w >= cw + minW || r2.h >= minH + 6));
+          const cand = leaves.filter((r2) => !r2.hall && !r2.cell && (r2.w >= cw + minW || r2.h >= minH + 7));
           if (!cand.length) break;
           const r = rng.pick(cand);
           let a, b;
@@ -17715,8 +17718,8 @@
             b = { x: r.x + cut, y: r.y, w: r.w - cut, h: r.h };
             (left ? a : b).cell = 1;
           } else {
-            a = { x: r.x, y: r.y, w: r.w, h: 6 };
-            b = { x: r.x, y: r.y + 6, w: r.w, h: r.h - 6 };
+            a = { x: r.x, y: r.y, w: r.w, h: 7 };
+            b = { x: r.x, y: r.y + 7, w: r.w, h: r.h - 7 };
             a.cell = 1;
           }
           leaves.splice(leaves.indexOf(r), 1, a, b);
@@ -17896,13 +17899,14 @@
       const fill = (x, y) => {
         if (y <= lim && y > r.y && x > r.x && x < x1) this.set(x, y, wall);
       };
-      let d = hs(r.x, r.y) % 2;
+      const dMax = r.h >= 12 ? 2 : r.h >= 9 ? 1 : 0, big = r.w >= 14 && r.h >= 11;
+      let d = Math.min(dMax, hs(r.x, r.y) % 2);
       for (let x = r.x + 1; x < x1; x++) {
         const t = hs(r.x * 7 + ((x - r.x) / 4 | 0), r.y) % 3;
-        d = Math.max(0, Math.min(2, t > d ? d + 1 : t < d ? d - 1 : d));
+        d = Math.max(0, Math.min(dMax, t > d ? d + 1 : t < d ? d - 1 : d));
         for (let y = r.y + 1; y <= r.y + d; y++) fill(x, y);
       }
-      const s0 = 2 + hs(r.x, r.h) % 3, s1 = 2 + hs(x1, r.w) % 3;
+      const s0 = big ? 2 + hs(r.x, r.h) % 3 : 1, s1 = big ? 2 + hs(x1, r.w) % 3 : 1;
       for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
         if (i + j < s0) fill(r.x + 1 + i, r.y + 1 + j);
         if (i + j < s1) fill(x1 - 1 - i, r.y + 1 + j);
@@ -19210,7 +19214,7 @@
   var WorldRuinSite = {
     buildRuinSite(spec, idx, rng) {
       const y0 = spec.y, x0 = spec.x - (spec.w >> 1);
-      const bsp = spec.maze ? [7, 6, 6] : spec.bsp || [4, 15, 8];
+      const bsp = spec.maze ? [7, 10, 8] : spec.bsp || [4, 15, 8];
       const rooms = this.carveDungeon({
         x0,
         y0,
@@ -19428,8 +19432,8 @@
       this._walkJobs = [];
       const spots = [
         { x: SX2(520 + SHIFT), y: SY2(200), trap: 0.52, spike: 0.24, chest: 0.56, w: 96, h: 52, tier: 2, traps: ["dart", "crumble"], entryKind: "foothold" },
-        { x: SX2(1700 + SHIFT), y: SY2(256), trap: 0.72, spike: 0.38, chest: 0.6, w: 92, h: 52, tier: 3, traps: ["dart", "crumble", "vent"], entryKind: "maze" },
-        { x: SX2(3860 + SHIFT), y: SY2(240), trap: 0.9, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ["dart", "vent", "crumble"], entryKind: "nofoothold" }
+        { x: SX2(1700 + SHIFT), y: SY2(300), trap: 0.72, spike: 0.38, chest: 0.6, w: 92, h: 52, tier: 3, traps: ["dart", "crumble", "vent"], entryKind: "maze" },
+        { x: SX2(3860 + SHIFT), y: SY2(340), trap: 0.9, spike: 0.52, chest: 0.64, w: 88, h: 48, tier: 4, traps: ["dart", "vent", "crumble"], entryKind: "nofoothold" }
       ];
       spots.forEach((sp, i) => {
         const cx = sp.x, cy = sp.y, w = sp.w, h = sp.h;
@@ -19642,30 +19646,32 @@
         if (spec.arch !== "buried") continue;
         const mapId = "ruinmap_" + spec.id;
         const cx = clamp(spec.x + rng.int(-6, 6), 40, WW2 - 40);
-        const surf = this.surface[cx];
-        const cy = surf + rng.int(4, 7);
-        for (let x = cx - 3; x <= cx + 3; x++)
-          for (let y = cy - 2; y <= cy + 2; y++) {
-            const edge = x === cx - 3 || x === cx + 3 || y === cy - 2 || y === cy + 2;
-            this.set(x, y, edge ? T.RUINBRICK : T.AIR);
-            this.setWall(x, y, 10);
+        if (!spec.hidden) {
+          const surf = this.surface[cx];
+          const cy = surf + rng.int(4, 7);
+          for (let x = cx - 3; x <= cx + 3; x++)
+            for (let y = cy - 2; y <= cy + 2; y++) {
+              const edge = x === cx - 3 || x === cx + 3 || y === cy - 2 || y === cy + 2;
+              this.set(x, y, edge ? T.RUINBRICK : T.AIR);
+              this.setWall(x, y, 10);
+            }
+          for (let x = cx - 2; x <= cx + 2; x++) this.set(x, cy + 1, T.RUINTILE);
+          this.set(cx - 2, cy - 1, T.TORCH);
+          this.objects.push({
+            type: "chest",
+            tier: 2,
+            ruinmap: mapId,
+            x: cx * TS,
+            y: (cy - 0.2) * TS,
+            w: 30,
+            h: 26,
+            items: null
+          });
+          for (const dx of [-2, -1, 1, 2]) {
+            const gx = cx + dx, gy = this.surface[clamp(gx, 0, WW2 - 1)] - 1;
+            this.set(gx, gy, T.RUINBRICK);
+            if (Math.abs(dx) === 1) this.set(gx, gy - 1, T.RUINBRICK);
           }
-        for (let x = cx - 2; x <= cx + 2; x++) this.set(x, cy + 1, T.RUINTILE);
-        this.set(cx - 2, cy - 1, T.TORCH);
-        this.objects.push({
-          type: "chest",
-          tier: 2,
-          ruinmap: mapId,
-          x: cx * TS,
-          y: (cy - 0.2) * TS,
-          w: 30,
-          h: 26,
-          items: null
-        });
-        for (const dx of [-2, -1, 1, 2]) {
-          const gx = cx + dx, gy = this.surface[clamp(gx, 0, WW2 - 1)] - 1;
-          this.set(gx, gy, T.RUINBRICK);
-          if (Math.abs(dx) === 1) this.set(gx, gy - 1, T.RUINBRICK);
         }
         const cav = (this.caverns || []).filter((c) => Math.abs(c.cx - spec.x) > 500);
         if (!cav.length) continue;

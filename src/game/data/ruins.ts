@@ -32,7 +32,8 @@ export const RUIN_SPEC: RuinDef[] = [
     rank: 1, tier: 2, trapRate: 0.32, spikeRate: 0.16, chestRate: 0.14, mobMul: 0.85
   },
   {
-    id: 'blight', n: '부패한 둥지', x: 4020 + SHIFT, y: 216, w: 128, h: 72,
+    /* 지옥 깊이(HELL_Y 390) — 내려가야만 만난다. 사연: docs/code-history.md#h177 */
+    id: 'blight', n: '부패한 둥지', x: 4020 + SHIFT, y: 392, w: 128, h: 72,
     wall: T.EBONSTONE, floor: T.EBONSTONE, bg: 3, torch: T.TORCH,
     traps: ['dart', 'vent', 'gas', 'coil'], boss: 'blight_maw',
     mobs: ['crawler', 'shadoweye', 'sacling', 'blightleech'],
@@ -40,7 +41,7 @@ export const RUIN_SPEC: RuinDef[] = [
     rank: 6, tier: 6, trapRate: 0.92, spikeRate: 0.58, chestRate: 0.24, mobMul: 1.85
   },
   {
-    id: 'spore', n: '포자 굴', x: 3620 + SHIFT, y: 156, w: 100, h: 52,
+    id: 'spore', n: '포자 굴', x: 3620 + SHIFT, y: 270, w: 100, h: 52,
     wall: T.SPORESTONE, floor: T.GLOWMOSS, bg: 12, torch: T.GLOWCAP,
     traps: ['vent', 'dart', 'gas', 'coil'], boss: 'spore_queen',
     mobs: ['sporeling', 'capbeast', 'ventspitter', 'sporegnaw'], arch: 'buried',
@@ -59,6 +60,8 @@ RUIN_SPEC[4].plan = 'horseshoe'; RUIN_SPEC[4].arch = 'buried'; RUIN_SPEC[4].bsp 
 /* 구조 경향 — 광산은 낮고 긴 갱도(wide), 둥지는 큰 방이 굴로만 이어지는 듬성듬성(sparse), 포자 굴은 둥근 굴방. 얼음(ring) · 피라미드(tri) · 가라앉은 유적(maze)은 도면이 이미 갈랐다 */
 RUIN_SPEC[2].style = 'wide';
 RUIN_SPEC[3].style = 'sparse';
+/* 깊은 둘은 지상 흔적이 없다(유적 위 돌무지 · 얕은 지도 방 없음) — 다른 유적 · 먼 동굴의 지도로만 찾는다 */
+RUIN_SPEC[3].hidden = 1; RUIN_SPEC[4].hidden = 1;
 RUIN_SPEC[4].shapes = ['round', 'round', 'octagon', 'round', 'rect'];
 
 /* 겉으로 보이는 재질을 유적마다 갈랐다 — 나무 · 돌 · 구리 · 얼음 · 유기물. */
@@ -124,8 +127,8 @@ export const RUIN_PLANS: Bag = {
 /* 석판 유적 셋도 같은 규칙이다 — rooms 가 목표 방 수, bsp 가 [깊이, 최소 가로, 최소 세로]. */
 export const STORY_RUIN: RuinDef[] = [
   { n: '서리 밑 석실', plan: 'hook', arch: 'sunken', rooms: 16, bsp: [6, 12, 9], wall: T.VAULTSLATE, decor: [['pillar', T.ICE, 0.4], ['stalac', T.ICE, 0.45], ['floorpile', T.RIMEURN, 0.5]],     sig: 'frozen',  event: 'blackout', bonus: 'ice_shard' },
-  { n: '겹친 길', plan: 'tee',  arch: 'sunken', rooms: 24, bsp: [6, 8, 7], style: 'maze', wall: T.MAZESTONE, decor: [['wallmark', T.BRONZECOG, 0.55], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
-  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'sunken', rooms: 16, bsp: [6, 10, 14], style: 'tall', wall: T.HOLLOWBRICK, decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['frieze', T.VOIDCAGE, 0.3]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
+  { n: '겹친 길', plan: 'tee',  arch: 'buried', rooms: 20, bsp: [6, 10, 8], style: 'maze', wall: T.MAZESTONE, decor: [['wallmark', T.BRONZECOG, 0.55], ['pipe', T.COPPER, 0.5], ['frieze', T.RUNESTONE, 0.3]], sig: 'sunshaft', event: 'password', bonus: 'aether_shard' },
+  { n: '발 디딜 곳 없는 방', plan: 'hall', arch: 'buried', rooms: 16, bsp: [6, 10, 14], style: 'tall', wall: T.HOLLOWBRICK, decor: [['growth', T.CORRUPTLEAF, 0.5], ['web', T.VINE, 0.4], ['frieze', T.VOIDCAGE, 0.3]], sig: 'heart', event: 'swarm',   bonus: 'corrupt_ess' }
 ];
 /* 석판 유적에도 맥박 · 사건 · 탐사 기록이 뛴다. */
 STORY_RUIN[0].mobs = ['frostling', 'icewolf', 'froststatue']; STORY_RUIN[0].rank = 2; STORY_RUIN[0].bonus2 = 'rime_seal';
