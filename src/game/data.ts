@@ -110,7 +110,9 @@ export const T: Record<string, number> = {
   HOLLOWBRICK: 207, VOIDCAGE: 208,      // 발 디딜 곳 없는 방 — 공허 벽돌 · 공허 등롱
   CORALBRICK: 209, GIANTCLAM: 210,      // 가라앉은 유적 — 산호 벽돌 · 큰 조개
   /* --- 깊이층 — 지하와 지옥 사이: 심층암 지대 · 작열 지대(현무암 + 마그마 맥) --- */
-  DEEPSLATE: 211, BASALT: 212, MAGMAVEIN: 213
+  DEEPSLATE: 211, BASALT: 212, MAGMAVEIN: 213,
+  /* --- 부유 성채의 해금 — 궤도 봉인문(깨지지 않는다) · 닻을 맞추면 깔리는 빛다리 --- */
+  ORBITSEAL: 214, LIGHTBRIDGE: 215
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -381,7 +383,9 @@ export const TILE_DEF: TileDef[] = [
   /* 깊이층 돌 — 심층암은 돌처럼 캐지고(1), 작열층은 재와 같은 등급(2)이라 지옥 문턱과 같은 곡괭이가 필요하다 */
   { n: '심층암', c: '#3d404c', solid: 1, hard: 1, drop: 'deepslate' },
   { n: '현무암', c: '#3a3333', solid: 1, hard: 2, drop: 'basalt' },
-  { n: '마그마 맥', c: '#5a2a1e', solid: 1, hard: 2, drop: 'basalt' }
+  { n: '마그마 맥', c: '#5a2a1e', solid: 1, hard: 2, drop: 'basalt' },
+  { n: '궤도 봉인문', c: '#3a5a7a', solid: 1, hard: 99 },
+  { n: '빛다리', c: '#9fe8ff', solid: 1, hard: 99 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */

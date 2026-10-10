@@ -271,15 +271,22 @@ export const WorldVillage: Bag & ThisType<World> = {
     return !!k && tx >= k.x0 - 1 && tx <= k.x0 + k.w && ty >= k.y0 - 1 && ty <= k.y0 + k.h;
   },
 
-  /* ---- 특별 유적 ① 부유 성채 (하늘) ---- */
+  /* ---- 특별 유적 ① 부유 성채 (하늘) ----
+     본채(봉인문으로 닫힘) + 선착장 다리 + 궤도 닻 섬 둘. 닻 셋(선착장 · 위 섬 · 먼 섬)을 맞추면 빛다리가 차례로 펴지고 봉인문이 열린다.
+     주인(환원기)을 쓰러뜨리면 가장 작은 방 — 발사대 보관고(제트팩 시제품)가 열린다. 런타임은 game/citadel.ts. 사연: docs/code-history.md#h179 */
   buildCitadel(rng: any) { const { SX, SKY_Y } = this.dims;
     const w = 74, h = 30;
     const x0 = SX(3300 + SHIFT), y0 = 4;         // 버섯 골짜기 위 하늘 (세션 2 바이옴 상공)
-    this.citadel = { x0, y0, w, h, cx: x0 + (w >> 1) };
+    this.citadel = { x0, y0, w, h, cx: x0 + (w >> 1), anc: [0, 0, 0], links: [[], [], []], gate: [], vault: [] };
+    const C = this.citadel;
+    this.clearSkyBlobs([[x0 - 66, x0 + w + 4]]);  // 닻 섬 자리에 걸친 하늘 섬은 덩어리째 걷는다(잘린 섬을 남기지 않게)
 
     // 성채 바닥판 — 통째로 떠 있는 판이라 아래가 완전히 뚫려 있다
     for (let x = x0 - 2; x <= x0 + w + 2; x++)
       for (let y = y0 + h - 3; y <= y0 + h; y++) this.set(x, y, T.ORBITPLATE);
+    // 용골 — 바닥판 밑으로 좁아지는 쐐기, 궤도핵이 줄지어 빛난다(밑동까지 SKY_Y 위)
+    for (let k = 1; k <= 5 && y0 + h + k < SKY_Y - 1; k++)
+      for (let x = x0 + 6 + k * 5; x <= x0 + w - 6 - k * 5; x++) this.set(x, y0 + h + k, (x - x0) % 9 === 4 && k < 4 ? T.ORBITCORE : T.ORBITPLATE);
 
     const rooms = this.carveDungeon({
       x0, y0, w, h, wall: T.ORBITPLATE, floor: T.ORBITPLATE, bg: 9,
@@ -287,24 +294,44 @@ export const WorldVillage: Bag & ThisType<World> = {
     });
     rooms.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
 
-    /* 진입 다리 — 성채는 통째로 떠 있는 판이라 그냥 두면 들어갈 방법이 제트팩뿐이다. */
-    {
-      // 왼쪽 첫 방의 바닥 높이에 맞춰 문을 낸다
-      let leftRoom = rooms[0];
-      for (const r of rooms) if (r.x < leftRoom.x) leftRoom = r;
-      const doorY = leftRoom.y + leftRoom.h - 3;
-      for (let dy = -2; dy <= 0; dy++)
-        for (let x = x0 - 1; x <= leftRoom.x + 1; x++) { this.set(x, doorY + dy, T.AIR); this.setWall(x, doorY + dy, 9); }
-      // 다리 — 왼쪽으로 뻗어 나가며, 끝에서 가장 가까운 하늘 섬 높이로 계단처럼 내려간다
-      let by = doorY + 1, bx = x0 - 2;
-      for (let k = 0; k < 46 && bx > 6; k++, bx--) {
-        this.set(bx, by, T.ORBITPLATE);
-        for (let dy = -3; dy <= -1; dy++) this.set(bx, by + dy, T.AIR);
-        if (k % 6 === 5 && by < SKY_Y - 4) by++;      // 하늘 섬 높이까지 서서히 내려온다
-        if (k % 9 === 4) this.set(bx, by - 1, T.TORCH);
-      }
-      this.citadel.bridgeX = bx;
+    /* 진입 다리 — 왼쪽 첫 방 바닥 높이의 문으로, 그 문은 궤도 봉인문(ORBITSEAL — 깨지지 않는다)으로 막는다. */
+    let leftRoom: any = null;                     // 아래 절반에 닿은 방 중 가장 왼쪽 — 위층 방이면 닻 섬 둘이 선착장에 붙어 버린다
+    for (const r of rooms) if (r.y + r.h >= y0 + h - 12 && (!leftRoom || r.x < leftRoom.x)) leftRoom = r;
+    if (!leftRoom) { leftRoom = rooms[0]; for (const r of rooms) if (r.x < leftRoom.x) leftRoom = r; }
+    const doorY = leftRoom.y + leftRoom.h - 3;
+    for (let dy = -2; dy <= 0; dy++)
+      for (let x = x0 - 1; x <= leftRoom.x + 1; x++) { this.set(x, doorY + dy, T.AIR); this.setWall(x, doorY + dy, 9); }
+    for (let dy = -2; dy <= 0; dy++) for (const x of [x0 - 1, x0]) { this.set(x, doorY + dy, T.ORBITSEAL); C.gate.push([x, doorY + dy]); }
+    // 다리 — 왼쪽으로 뻗어 나가며, 끝에서 가장 가까운 하늘 섬 높이로 계단처럼 내려간다
+    let by = doorY + 1, bx = x0 - 2;
+    for (let k = 0; k < 62 && bx > 6; k++, bx--) {
+      this.set(bx, by, T.ORBITPLATE);
+      for (let dy = -3; dy <= -1; dy++) this.set(bx, by + dy, T.AIR);
+      if (k > 14 && k % 6 === 5 && by < SKY_Y - 4) by++;   // 선착장(첫 14칸)은 평평하게 — 닻이 선다
+      if (k % 9 === 4) this.set(bx, by - 1, T.TORCH);
     }
+    C.bridgeX = bx;
+    const anchor = (i: number, kind: string, tx: number, fy: number) =>
+      this.objects.push({ type: 'anchor', i, kind, x: tx * TS - 4, y: (fy + 1) * TS - 52, w: 30, h: 52 });
+    anchor(0, 'guard', x0 - 9, doorY);           // ① 선착장 — 깨우면 지킴이가 온다
+
+    /* 닻 섬 — 가로 판 두 줄, 양 끝에 궤도핵. 위 섬(②)은 선착장에서 9칸 위, 먼 섬(③)은 거기서 6칸 더 위 */
+    const isle = (xa: number, xb: number, fy: number) => {
+      for (let x = xa; x <= xb; x++) { this.set(x, fy, x === xa || x === xb ? T.ORBITCORE : T.ORBITPLATE); this.set(x, fy + 1, T.ORBITPLATE); }
+      for (let x = xa + 2; x <= xb - 2; x++) this.set(x, fy + 2, T.ORBITPLATE);
+      for (let x = xa; x <= xb; x++) for (let y = fy - 4; y < fy; y++) this.set(x, y, T.AIR);
+    };
+    const yB = Math.max(6, doorY - 9), yC = Math.max(3, yB - 6);
+    isle(x0 - 36, x0 - 24, yB + 1);
+    isle(x0 - 60, x0 - 48, yC + 1);
+    anchor(1, 'charge', x0 - 31, yB);            // ② 위 섬 — 곁에 머물러 빛을 모은다
+    anchor(2, 'dial', x0 - 55, yC);              // ③ 먼 섬 — 도는 바늘을 꼭대기에서 맞춘다
+    C.sat = [x0 - 62, yC - 4, x0 - 22, yB + 4];   // 닻 섬 둘의 상자(sizediag)
+    this.objects.push({ type: 'chest', tier: 6, loot: 'session2', x: (x0 - 27) * TS, y: (yB + 0.8) * TS, w: 30, h: 26, items: null });
+    this.objects.push({ type: 'chest', tier: 6, loot: 'session2', x: (x0 - 51) * TS, y: (yC + 0.8) * TS, w: 30, h: 26, items: null });
+    /* 빛다리 자리(닻을 맞추면 그때 깔린다) — ①→② 선착장에서 한 칸씩 오르는 계단, ②→③ 위 섬 왼끝에서 오르다 평평하게 */
+    for (let x = x0 - 13, y = doorY + 1; x > x0 - 24; x--) { if (y > yB + 1) y--; C.links[0].push([x, y]); }   // 한 칸씩 오른다 — 섬 오른끝 바로 옆에서 섬 바닥 높이
+    for (let x = x0 - 37, y = yB + 1; x > x0 - 48; x--) { if (y > yC + 1) y--; C.links[1].push([x, y]); }
 
     // 가장 넓은 방이 환원기의 자리.
     const main = rooms[0], mfy = main.y + main.h - 3;
@@ -315,6 +342,18 @@ export const WorldVillage: Bag & ThisType<World> = {
     this.objects.push({ type: 'lorestone', lore: 'citadel',
       x: (main.x + 3) * TS, y: (mfy + 1) * TS - 34, w: 26, h: 34 });
 
+    /* 발사대 보관고 — 문(빈 칸)을 봉인문으로 막아도 문에서 주인 방까지 길이 남는 가장 작은 방 */
+    const vault = this._citadelVault(rooms, main, leftRoom, [leftRoom.x + 1, doorY]);
+    if (vault) {
+      for (let x = vault.x - 1; x <= vault.x + vault.w; x++) for (const y of [vault.y - 1, vault.y + vault.h])
+        if (this.get(x, y) === T.AIR) { this.set(x, y, T.ORBITSEAL); C.vault.push([x, y]); }
+      for (let y = vault.y; y < vault.y + vault.h; y++) for (const x of [vault.x - 1, vault.x + vault.w])
+        if (this.get(x, y) === T.AIR) { this.set(x, y, T.ORBITSEAL); C.vault.push([x, y]); }
+      const vf = vault.y + vault.h - 3;
+      this.objects.push({ type: 'chest', tier: 6, loot: 'session2', relic: 'jetpack',
+        x: (vault.x + (vault.w >> 1)) * TS - 15, y: (vf - 0.2) * TS, w: 30, h: 26, items: null });
+    }
+
     for (const r of rooms) {
       const fy = r.y + r.h - 3, rcx = r.x + (r.w >> 1);
       // 궤도핵 — 벽에 박힌 광맥이자 이 구역의 광원
@@ -324,13 +363,35 @@ export const WorldVillage: Bag & ThisType<World> = {
         const gy = onSide ? r.y + rng.int(1, Math.max(1, r.h - 2)) : (rng.chance(0.5) ? r.y : r.y + r.h - 1);
         if (this.get(gx, gy) === T.ORBITPLATE) this.set(gx, gy, T.ORBITCORE);
       }
-      if (r === main) continue;
+      if (r === main || r === vault) continue;
       if (rng.chance(0.7)) this.putTileTrap(r, fy, rng.pick(['dart', 'vent']), rng);
       if (rng.chance(0.45)) for (let k = 0; k < rng.int(2, 5); k++) this.set(r.x + 3 + k, fy, T.SPIKE);
       if (rng.chance(0.6))
         this.objects.push({ type: 'chest', tier: 6, loot: 'session2',
           x: (rcx + rng.int(-2, 2)) * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null });
     }
+  },
+  /** 보관고로 쓸 방 — 작은 방부터, 그 방 둘레의 빈 칸을 막아도 문에서 주인 방까지 걸어 닿는 첫 방 */
+  _citadelVault(rooms: Bag[], main: Bag, left: Bag, door: number[]) {
+    const C = this.citadel, inBox = (x: number, y: number) => x >= C.x0 - 1 && x <= C.x0 + C.w && y >= C.y0 && y <= C.y0 + C.h;
+    for (const v of rooms.slice().reverse()) {
+      if (v === main || v === left) continue;
+      const shut = new Set<number>(), key = (x: number, y: number) => y * 100000 + x;
+      for (let x = v.x - 1; x <= v.x + v.w; x++) for (let y = v.y - 1; y <= v.y + v.h; y++) shut.add(key(x, y));
+      const seen = new Set<number>([key(door[0], door[1])]), st = [door];
+      let ok = false;
+      while (st.length && !ok) {
+        const [x, y] = st.pop()!;
+        if (x >= main.x && x < main.x + main.w && y >= main.y && y < main.y + main.h) ok = true;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy, k = key(nx, ny);
+          if (seen.has(k) || shut.has(k) || !inBox(nx, ny) || this.solid(nx, ny)) continue;
+          seen.add(k); st.push([nx, ny]);
+        }
+      }
+      if (ok) return v;
+    }
+    return null;
   },
   inCitadel(tx: number, ty: number) {
     const k = this.citadel;

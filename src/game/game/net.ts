@@ -477,6 +477,9 @@ export const NetPart: Bag = {
       this.netPuzzleClick(m);
     } else if (m.k === 'doff' && peer.rp) {
       this.deepOffered(m.id, m.L);
+    } else if (m.k === 'anc' && peer.rp) {
+      const o = this.world.objects.find((q: Bag) => q.type === 'anchor' && q.i === m.i);
+      if (o && !(this.world.citadel.anc || [])[m.i]) this.anchorUse(o, peer.rp);
     } else if (m.k === 'door' && peer.rp) {
       this.netPutDoor(m);
       for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, 'rel', m);
@@ -601,6 +604,8 @@ export const NetPart: Bag = {
       this.netBossHazard(m);
     } else if (m.k === 'puz') {
       this.netPuzzle(m);
+    } else if (m.k === 'anc') {
+      this.netAnchor(m);
     } else if (m.k === 'door') {
       this.netPutDoor(m);
     } else if (m.k === 'oadd' || m.k === 'odel' || m.k === 'ost') {

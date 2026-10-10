@@ -52,7 +52,8 @@ export const TILE_MAT = (() => {
   put('stone', 'COALRICH');
   put('flesh', 'BLIGHTSAC');
   put('ice', 'RIMEURN');
-  put('metal', 'BRONZECOG VOIDCAGE');
+  put('metal', 'BRONZECOG VOIDCAGE ORBITSEAL');
+  put('glass', 'LIGHTBRIDGE');
   put('void', 'HOLLOWBRICK');
   put('bone', 'GIANTCLAM');
   put('void', 'CORRUPTGRASS');
@@ -76,7 +77,8 @@ export const LIGHT_SPEC: Bag = {
   BLIGHTSAC: [2.2, '#c060c0'], BLACKDAMP: [2, '#a8c04a'], BLOOM3: [1.8, '#f0e8e0'],
   HERB3: [1.6, '#bfe8ff'], SULFUR: [1.4, '#e8d04a'],
   STARCRYSTAL: [7.2, '#ffe6a8'], METEORITE: [1.2, '#ff7a3a'], EMBERDRIP: [1.1, '#ff6a2a'], EMBERSPIRE: [1.05, '#ff6a2a'],
-  VOIDCAGE: [6.4, '#b88fff'], GIANTCLAM: [1.3, '#dfe9ff'], MAGMAVEIN: [3.3, '#ff5a1a']
+  VOIDCAGE: [6.4, '#b88fff'], GIANTCLAM: [1.3, '#dfe9ff'], MAGMAVEIN: [3.3, '#ff5a1a'],
+  ORBITSEAL: [4.8, '#7fd0ff'], LIGHTBRIDGE: [2.7, '#9fe8ff']
 };
 {
   const seen: Bag = {};
