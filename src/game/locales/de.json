@@ -4419,6 +4419,25 @@
   "TILE_DEF.207.n": "Leerenziegel",
   "TILE_DEF.208.n": "Leerenlaterne",
   "TILE_DEF.209.n": "Korallenziegel",
-  "TILE_DEF.210.n": "Riesenmuschel"
+  "TILE_DEF.210.n": "Riesenmuschel",
+  "ITEMS.deepslate.n": "Tiefenschiefer",
+  "ITEMS.deepslate.d": "Schwarzer Stein, von der Tiefe zusammengepresst. Dünne Schichten liegen dicht aufeinander.",
+  "ITEMS.basalt.n": "Basalt",
+  "ITEMS.basalt.d": "Abgekühlte, erstarrte Lava. Sie spaltet sich in Säulen.",
+  "TILE_DEF.211.n": "Tiefenschiefer",
+  "TILE_DEF.212.n": "Basalt",
+  "TILE_DEF.213.n": "Magmaader",
+  "DEPTH_LAYER.surface.s": "Oberfläche",
+  "DEPTH_LAYER.sky.s": "Himmel",
+  "DEPTH_LAYER.under.s": "Untergrund",
+  "DEPTH_LAYER.hell.s": "Hölle",
+  "DEPTH_LAYER.slate.s": "Tiefenschiefer",
+  "DEPTH_LAYER.slate.n": "Tiefenschiefer-Zone",
+  "DEPTH_LAYER.slate.sub": "Schichten aus gepresstem schwarzem Stein",
+  "DEPTH_LAYER.slate.card.line": "Der Stein verschluckt jeden Laut. Lange Tunnel ziehen sich endlos ins Dunkel.",
+  "DEPTH_LAYER.ember.s": "Glutschicht",
+  "DEPTH_LAYER.ember.n": "Glutzone",
+  "DEPTH_LAYER.ember.sub": "Basalt und Magmaadern",
+  "DEPTH_LAYER.ember.card.line": "Rote Adern pulsieren in den Spalten. Irgendwo darunter atmet die Hölle."
  }
 }

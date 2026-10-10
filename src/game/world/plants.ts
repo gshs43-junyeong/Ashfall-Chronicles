@@ -5,7 +5,7 @@ import { mixin } from '../../engine/core/mixin.js';
 import { FARM_WET_DAYS, FARM_WET_R, SEED_TILE, T, TILE_DEF } from '../data.js';
 import { OBJ_SIZE } from '../data/items.js';
 import { FLUID_KIND } from '../data/materials.js';
-import { MAT_LAYER, TS, World, inSeaZone } from '../world.js';
+import { MAT_LAYER, TS, World, inSeaZone, naturalWalls } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
 export const WorldPlants: Bag & ThisType<World> = {
@@ -131,8 +131,7 @@ export const WorldPlants: Bag & ThisType<World> = {
 
   /** 마지막 구멍 메우기 — pruneSmallCaves(생성 초반)가 끝난 **뒤에** 생긴 작은 굴을 메운다. */
   sweepPockets(maxSize: any) { const { WW, WH, HELL_Y, SEA_X1 } = this.dims;
-    const natural = new Set();
-    for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
+    const natural = naturalWalls();
     const busy = new Set();
     for (const o of this.objects) {
       const x0 = Math.floor(o.x / TS) - 1, x1 = Math.floor((o.x + (o.w || TS)) / TS) + 1;

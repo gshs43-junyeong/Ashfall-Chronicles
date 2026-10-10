@@ -53,6 +53,17 @@ export const ZONE_CARD: Bag = {
              card: { line: '재가 내린 뒤에도 굴뚝이 서 있다. 사람이 남긴 마지막 거리.' } }
 };
 
+/* 깊이층 — 이름(HUD 고도 옆 s · 처음 들어설 때 카드 n/sub/card). 경계는 world/strata.ts strataLines */
+export const DEPTH_LAYER: Bag = {
+  surface: { s: '지표' }, sky: { s: '하늘' }, under: { s: '지하' }, hell: { s: '지옥' },
+  slate: { s: '심층암층', n: '심층암 지대', sub: '눌려 굳은 검은 켜',
+           card: { line: '돌이 소리를 삼킨다. 긴 굴이 어둠 속으로 끝없이 뻗어 있다.' } },
+  ember: { s: '작열층', n: '작열 지대', sub: '현무암과 마그마 맥',
+           card: { line: '벽 틈으로 붉은 맥이 뛴다. 발밑 어딘가에서 지옥이 숨을 쉰다.' } }
+};
+/* 깊이층 벽지(심층암 · 현무암) — 지층 벽지와 같이 '자연 굴'로 센다 */
+export const DEPTH_WALL = [17, 18];
+
 /* 재질 번호 → 지층 구성 — 사연: docs/code-history.md#h103 */
 export const MAT_LAYER = [
   { top: T.SNOW, soil: T.SNOW, sub: T.ICE, deep: T.STONE, wall: 5, subWall: 2 },
@@ -66,6 +77,12 @@ export const MAT_LAYER = [
   // 7 바다 — 지면은 해저 모래다
   { top: T.SAND, soil: T.SAND, sub: T.SANDSTONE, deep: T.STONE, wall: 8, subWall: 2 }
 ];
+/** 자연 벽지 — 지층 벽지 + 깊이층 벽지. 유적 · 건물 벽지와 가른다 */
+export function naturalWalls() {
+  const s = new Set<number>(DEPTH_WALL);
+  for (const L of MAT_LAYER) { s.add(L.wall); s.add(L.subWall); }
+  return s;
+}
 export const MAT_OF: Record<string, number> = { ice: 0, forest: 1, forest2: 1, desert: 2, corrupt: 3, jungle: 4, glowfen: 5,
                  glacier: 6, sea: 7 };
 
@@ -152,6 +169,9 @@ export class World extends TileMap {
   declare putPathTrap: (...a: any[]) => any; declare putRuinDecor: (...a: any[]) => any; declare putTileTrap: (...a: any[]) => any;
   declare skyAlt: (...a: any[]) => any; declare skyFeature: (...a: any[]) => any; declare skyGrotto: (...a: any[]) => any;
   declare trapSpot: (...a: any[]) => any;
+  declare applyStrata: () => void; declare buildTunnels: () => void; declare depthLayer: (tx: number, ty: number) => string;
+  declare strataLines: (tx: number) => number[]; declare tunnels: Bag[]; declare _strataPh: number[]; declare _tunBoxes: number[][] | null; declare _tunNat: Set<number> | null;
+  declare _tunOk: (x: number, y: number) => boolean; declare _tunBlob: (...a: any[]) => boolean; declare _tunWorm: (...a: any[]) => number; declare _tunFloor: (x: number, y: number, lim: number) => number;
   declare dims: WorldDims; declare ruinSpec: RuinDef[]; declare netLog: Set<number> | null; declare netMute: boolean;
   declare _ensureWalkable: (...a: any[]) => any; declare _walkJobs: any[]; declare atelier: Record<string, any>; declare beach: Record<string, any>; declare breakLongRuns: (...a: any[]) => any;
   declare buildAltars: (...a: any[]) => any; declare buildAtelier: (...a: any[]) => any; declare buildCaveZones: (...a: any[]) => any; declare buildCaverns: (...a: any[]) => any;
@@ -573,6 +593,7 @@ export class World extends TileMap {
     this.buildCitadel(rng);
     this.buildDeepShaft(rng);
     this.buildCaverns(rng);
+    this.buildTunnels();         // 대공동 · 엇갈린 굴 · 긴 굴 — 제 난수, 물을 채우기 전에
     this.buildRuinCaches(rng);   // 동굴이 생긴 뒤라야 동굴 상자를 놓을 수 있다
     this.floodCaves(rng);
     this.floodHell(rng);
@@ -599,6 +620,7 @@ export class World extends TileMap {
     this.springFalls();          // 샘 없는 폭포(정글 절벽)에 샘을 단다 — 유체를 켜기 전에
     /* 뒷공사(상자·제단·통행 보수)가 자갈 칸을 덮어쓴 자리는 목록에서 뺀다 — 남겨 두면 아무것도 없는 벽을 캤을 때 무너질 자리를 찾다가 엉뚱한 곳이 열린다 */
     this.faults = (this.faults || []).filter(f => this.get(f.x, f.y) === T.FAULTSTONE);
+    this.applyStrata();          // 깊이층 — 남은 돌 · 자연 벽지를 층 돌로(장식 · 물 · 광맥이 '돌'을 본 뒤라야 한다)
     this.placeRichOres();        // 광상 — 제 난수, 광맥 칸만 바꾼다
 
     this.spawnX = (vx0 + vx1) >> 1;          // 광장 가운데(x0+50)

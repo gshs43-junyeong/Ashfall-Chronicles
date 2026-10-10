@@ -422,7 +422,7 @@ export const GameCore: Bag = {
     this.survey = {}; this.ruinPulse = {}; this.pendingEcho = null; this.pulseHere = null;
     this.rocks = []; this.quake = null; this.meteor = null; this.meteorRolled = undefined; this.caveHere = 0; this._caveLast = 0;
     this.nearStObj = { work: null, forge: null };
-    this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
+    this.event = null; this.eventRolled = -1; this.lairs = {}; this.seenRuins = {}; this.seenBiomes = {}; this._bgId = undefined; this._layerId = undefined; this.ruinMarks = {}; this.ruinEvDone = {}; this.trapTimer = 0;
     this.rainT = 0; this.precip = null; this.smokes = []; this.smokeT = 0;
     this.vault = new Array(VAULT_SIZE).fill(null); this.vaultGold = 0; this.bounties = []; this.bountyNext = [];
     this.shopStock = {}; this.shopStockDay = -1;

@@ -215,6 +215,9 @@ ART[T.GEODE] = { k: 'geode', c: '#a88fe8', a: 1, glow: 1 };
 ART[T.FAULTSTONE] = { k: 'fault', c: '#5f5e62' };   // 돌과 거의 같은 색 — 알갱이 결과 가는 금으로만 알아본다
 ART[T.LIMESTONE] = { k: 'strata', c: '#9a9486' };    // 석회암 — 밝고 결이 가로로 진다
 ART[T.GRANITE] = { k: 'granite', c: '#7a6868' };      // 화강암 — 굵은 알갱이가 점점이
+ART[T.DEEPSLATE] = { k: 'deepslate', c: '#3d404c' };  // 심층암 — 얇은 켜 · 켜 사이 검은 틈
+ART[T.BASALT] = { k: 'basalt', c: '#3a3333' };        // 현무암 — 세로로 갈라진 기둥결
+ART[T.MAGMAVEIN] = { k: 'magmavein', c: '#3a3333', glow: 1 };
 /* --- 운석 구덩이 --- */
 ART[T.METEORITE] = { k: 'meteorite', c: '#3a3436' };
 ART[T.STARCRYSTAL] = { k: 'starcrystal', c: '#ffe6a8', a: 1, glow: 1 };

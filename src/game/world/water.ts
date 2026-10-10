@@ -5,7 +5,7 @@ import { mixin } from '../../engine/core/mixin.js';
 import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { FLUID_KIND } from '../data/materials.js';
-import { MAT_LAYER, TS, World, inSeaZone } from '../world.js';
+import { TS, World, inSeaZone, naturalWalls } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
 export const WorldWater: Bag & ThisType<World> = {
@@ -338,8 +338,7 @@ export const WorldWater: Bag & ThisType<World> = {
 
   /** 동굴 웅덩이 꾸미기 — 물·지형이 다 정해진 뒤에 한 번. */
   decoratePonds(rng: RNG) { const { WW, WH } = this.dims;
-    const natural = new Set();
-    for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
+    const natural = naturalWalls();
     const host = (t: any) => t === T.STONE || t === T.DIRT || t === T.MOSSSTONE || t === T.SANDSTONE ||
                       t === T.LIMESTONE || t === T.GRANITE;
     const wild = (x: number, y: number) => natural.has(this.walls[y * WW + x]) && !this.ruinAt(x, y);

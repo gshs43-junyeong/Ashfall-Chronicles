@@ -8,7 +8,7 @@ import { fmt, tr } from '../lang.js';
 import { altOf, dimsOf } from '../size.js';
 import { BUFFS } from '../data/skills.js';
 import { idef } from '../data/values.js';
-import { TS } from '../world.js';
+import { DEPTH_LAYER, TS } from '../world.js';
 import { Art } from '../itemart.js';
 import { $, UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
@@ -58,7 +58,8 @@ export const HudUIPart: Bag = {
     $('#gold-text').innerHTML = `<span class="ui-ic" style="background-image:url(${Art.uiUrl('coin')})"></span>${fmt(p.gold)}`;
     // 발밑 지형이 아니라 세계 공통 고도(altOf)로 잰다 — 발밑 기준이면 어디를 걷든 늘 비슷한 값(예: 항상 5m)이 나왔다
     const ty = Math.floor(p.cy / TS);
-    $('#depth-text').textContent = tr('고도 {alt}m', { alt: fmt(altOf(G.world, ty)) });
+    const lay = DEPTH_LAYER[G.world.depthLayer(Math.floor(p.cx / TS), ty)];   // 지표 · 하늘에선 층 이름을 안 붙인다
+    $('#depth-text').textContent = tr('고도 {alt}m', { alt: fmt(altOf(G.world, ty)) }) + (lay && lay !== DEPTH_LAYER.surface && lay !== DEPTH_LAYER.sky ? ' · ' + lay.s : '');
     const hh = Math.floor(G.dayT / 60), mm = Math.floor(G.dayT % 60);
     $('#clock-text').textContent = `${pad2(hh)}:${pad2(mm)}`;
     $('#clock-icon').textContent = '';

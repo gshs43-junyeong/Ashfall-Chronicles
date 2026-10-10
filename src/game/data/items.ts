@@ -212,6 +212,8 @@ export const ITEMS: Record<string, ItemDef> = {
   stone:       { n: '돌', i: '🪨', type: 'block', tile: T.STONE, stack: 999 },
   limestone:   { n: '석회암', i: '🪨', type: 'block', tile: T.LIMESTONE, stack: 999, d: '무르고 밝은 돌. 물이 스민 자리에 종유석이 자란다.' },
   granite:     { n: '화강암', i: '🪨', type: 'block', tile: T.GRANITE, stack: 999, d: '깊은 데서 굳은 돌. 알갱이가 굵고 단단하다.' },
+  deepslate:   { n: '심층암', i: '🪨', type: 'block', tile: T.DEEPSLATE, stack: 999, d: '짓눌려 굳은 검은 돌. 얇은 켜가 촘촘하다.' },
+  basalt:      { n: '현무암', i: '🪨', type: 'block', tile: T.BASALT, stack: 999, d: '식어 굳은 용암. 기둥 모양으로 갈라진다.' },
   dirt:        { n: '흙', i: '🟤', type: 'block', tile: T.DIRT, stack: 999 },
   sand:        { n: '모래', i: '🟨', type: 'block', tile: T.SAND, stack: 999 },
   ash:         { n: '재', i: '⬛', type: 'block', tile: T.ASH, stack: 999 },

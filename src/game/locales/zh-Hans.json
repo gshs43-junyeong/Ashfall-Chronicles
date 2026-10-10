@@ -4419,6 +4419,25 @@
   "TILE_DEF.207.n": "虚空砖",
   "TILE_DEF.208.n": "虚空灯笼",
   "TILE_DEF.209.n": "珊瑚砖",
-  "TILE_DEF.210.n": "巨蚌"
+  "TILE_DEF.210.n": "巨蚌",
+  "ITEMS.deepslate.n": "深板岩",
+  "ITEMS.deepslate.d": "被深处压实的黑色岩石，薄层紧密叠合。",
+  "ITEMS.basalt.n": "玄武岩",
+  "ITEMS.basalt.d": "冷却凝固的熔岩，会裂成柱状。",
+  "TILE_DEF.211.n": "深板岩",
+  "TILE_DEF.212.n": "玄武岩",
+  "TILE_DEF.213.n": "岩浆脉",
+  "DEPTH_LAYER.surface.s": "地表",
+  "DEPTH_LAYER.sky.s": "天空",
+  "DEPTH_LAYER.under.s": "地下",
+  "DEPTH_LAYER.hell.s": "地狱",
+  "DEPTH_LAYER.slate.s": "深板岩层",
+  "DEPTH_LAYER.slate.n": "深板岩地带",
+  "DEPTH_LAYER.slate.sub": "压实的黑色岩层",
+  "DEPTH_LAYER.slate.card.line": "岩石吞没了一切声响。漫长的洞穴向黑暗中无尽延伸。",
+  "DEPTH_LAYER.ember.s": "灼热层",
+  "DEPTH_LAYER.ember.n": "灼热地带",
+  "DEPTH_LAYER.ember.sub": "玄武岩与岩浆脉",
+  "DEPTH_LAYER.ember.card.line": "红色的脉络在岩缝中跳动。脚下某处，地狱正在呼吸。"
  }
 }

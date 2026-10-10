@@ -4419,6 +4419,25 @@
   "TILE_DEF.207.n": "Hollow Brick",
   "TILE_DEF.208.n": "Void Lantern",
   "TILE_DEF.209.n": "Coral Brick",
-  "TILE_DEF.210.n": "Giant Clam"
+  "TILE_DEF.210.n": "Giant Clam",
+  "ITEMS.deepslate.n": "Deepslate",
+  "ITEMS.deepslate.d": "Black stone pressed hard by the depths. Its thin layers are packed tight.",
+  "ITEMS.basalt.n": "Basalt",
+  "ITEMS.basalt.d": "Lava that cooled and hardened. It splits into columns.",
+  "TILE_DEF.211.n": "Deepslate",
+  "TILE_DEF.212.n": "Basalt",
+  "TILE_DEF.213.n": "Magma Vein",
+  "DEPTH_LAYER.surface.s": "Surface",
+  "DEPTH_LAYER.sky.s": "Sky",
+  "DEPTH_LAYER.under.s": "Underground",
+  "DEPTH_LAYER.hell.s": "Hell",
+  "DEPTH_LAYER.slate.s": "Deepslate",
+  "DEPTH_LAYER.slate.n": "Deepslate Reach",
+  "DEPTH_LAYER.slate.sub": "Layers of pressed black stone",
+  "DEPTH_LAYER.slate.card.line": "The stone swallows every sound. Long tunnels stretch endlessly into the dark.",
+  "DEPTH_LAYER.ember.s": "Ember Layer",
+  "DEPTH_LAYER.ember.n": "Ember Depths",
+  "DEPTH_LAYER.ember.sub": "Basalt and magma veins",
+  "DEPTH_LAYER.ember.card.line": "Red veins pulse in the cracks. Somewhere below, hell is breathing."
  }
 }

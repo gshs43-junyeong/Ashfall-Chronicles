@@ -6,7 +6,7 @@ import { RNG } from '../../engine/core/rng.js';
 import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { CAVE_TYPES, FAULT } from '../data/ruins.js';
-import { CAVE_GH, CAVE_GW, MAT_LAYER, TS, World, inSeaZone } from '../world.js';
+import { CAVE_GH, CAVE_GW, TS, World, inSeaZone, naturalWalls } from '../world.js';
 /* world.js 의 World 에서 나눈 조각 — 읽히는 순간 World.prototype 에 붙는다(main.js 가 world.js 다음에 읽는다). */
 
 export const WorldCaves: Bag & ThisType<World> = {
@@ -30,8 +30,7 @@ export const WorldCaves: Bag & ThisType<World> = {
   caveKindAt(tx: number, ty: number) { const { WW } = this.dims;
     if (!this.caveGrid || !this.inB(tx, ty) || ty <= this.surface[tx] + 12) return 0;
     if (!this._natural) {
-      this._natural = new Set();
-      for (const k in MAT_LAYER) { this._natural.add(MAT_LAYER[k].wall); this._natural.add(MAT_LAYER[k].subWall); }
+      this._natural = naturalWalls();
     }
     if (!this._natural.has(this.walls[ty * WW + tx]) || this.ruinInside(tx, ty)) return 0;
     return this.caveTypeAt(tx, ty);
@@ -40,8 +39,7 @@ export const WorldCaves: Bag & ThisType<World> = {
   buildCaveZones(rng: RNG) { const { SY, WW, SURF_BASE, HELL_Y, DEEP_Y, CAMP_X0, CAMP_GX1, SEA_X1 } = this.dims;
     const gW = this._cgW(), gH = Math.ceil(HELL_Y / CAVE_GH);
     this.caveGrid = new Uint8Array(gW * gH);
-    const natural = new Set();
-    for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
+    const natural = naturalWalls();
     // 1) 구역마다 갈래를 굴린다.
     for (let gy = 0; gy < gH; gy++)
       for (let gx = 0; gx < gW; gx++) {
@@ -177,8 +175,7 @@ export const WorldCaves: Bag & ThisType<World> = {
   /** 금 간 자갈이 무너진 뒤 열릴 동굴의 칸들 — 씨앗에서 뽑으므로 세계마다 같고, 저장할 필요가 없다. */
   faultCells(f: any) { const { WW, HELL_Y } = this.dims;
     const rng = new RNG(f.seed), cells: number[][] = [], seen = new Set();
-    const natural = new Set();
-    for (const k in MAT_LAYER) { natural.add(MAT_LAYER[k].wall); natural.add(MAT_LAYER[k].subWall); }
+    const natural = naturalWalls();
     const dig = (xx: number, yy: number) => {
       const key = yy * WW + xx;
       if (seen.has(key) || !this.inB(xx, yy)) return;
@@ -213,7 +210,7 @@ export const WorldCaves: Bag & ThisType<World> = {
     for (const [x, y] of cells) {
       if (this.get(x, y) !== T.AIR) continue;
       const floor = this.solid(x, y + 1), ceil = this.solid(x, y - 1);
-      const stoneAt = (sx: number, sy: number) => { const t = this.get(sx, sy); return t === T.STONE || t === T.LIMESTONE || t === T.GRANITE || t === T.DIRT; };
+      const stoneAt = (sx: number, sy: number) => { const t = this.get(sx, sy); return t === T.STONE || t === T.LIMESTONE || t === T.GRANITE || t === T.DIRT || t === T.DEEPSLATE || t === T.BASALT; };
       if (id === 'moss') {
         for (const [hx, hy] of [[x, y + 1], [x, y - 1], [x - 1, y], [x + 1, y]])
           if (stoneAt(hx, hy) && rng.chance(0.85)) this.set(hx, hy, T.MOSSSTONE);
@@ -225,7 +222,7 @@ export const WorldCaves: Bag & ThisType<World> = {
       } else if (floor && rng.chance(0.2)) this.set(x, y, T.GEODE);
       // 드러난 벽 — 광석이 박히고, 수정 동굴이면 수정이 더 박힌다
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]])
-        if (this.get(x + dx, y + dy) === T.STONE) {
+        if ([T.STONE, T.DEEPSLATE, T.BASALT].includes(this.get(x + dx, y + dy))) {
           if (rng.chance(0.06)) this.set(x + dx, y + dy, ore);
           else if (id === 'geode' && rng.chance(0.1)) this.set(x + dx, y + dy, T.CRYSTAL);
         }

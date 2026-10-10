@@ -4419,6 +4419,25 @@
   "TILE_DEF.207.n": "虚ろの煉瓦",
   "TILE_DEF.208.n": "虚ろの吊り灯籠",
   "TILE_DEF.209.n": "珊瑚の煉瓦",
-  "TILE_DEF.210.n": "大きな貝"
+  "TILE_DEF.210.n": "大きな貝",
+  "ITEMS.deepslate.n": "深層岩",
+  "ITEMS.deepslate.d": "深みに押し固められた黒い石。薄い層がぎっしり重なっている。",
+  "ITEMS.basalt.n": "玄武岩",
+  "ITEMS.basalt.d": "冷えて固まった溶岩。柱状に割れる。",
+  "TILE_DEF.211.n": "深層岩",
+  "TILE_DEF.212.n": "玄武岩",
+  "TILE_DEF.213.n": "マグマ脈",
+  "DEPTH_LAYER.surface.s": "地表",
+  "DEPTH_LAYER.sky.s": "空",
+  "DEPTH_LAYER.under.s": "地下",
+  "DEPTH_LAYER.hell.s": "地獄",
+  "DEPTH_LAYER.slate.s": "深層岩層",
+  "DEPTH_LAYER.slate.n": "深層岩地帯",
+  "DEPTH_LAYER.slate.sub": "押し固められた黒い層",
+  "DEPTH_LAYER.slate.card.line": "石が音を呑み込む。長い洞窟が闇の奥へ果てしなく伸びている。",
+  "DEPTH_LAYER.ember.s": "灼熱層",
+  "DEPTH_LAYER.ember.n": "灼熱地帯",
+  "DEPTH_LAYER.ember.sub": "玄武岩とマグマ脈",
+  "DEPTH_LAYER.ember.card.line": "壁の隙間で赤い脈が脈打つ。足元のどこかで地獄が息をしている。"
  }
 }
