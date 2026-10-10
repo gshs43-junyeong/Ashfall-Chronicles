@@ -323,6 +323,14 @@ export const TilePaintRuins: Bag = {
     if (rng.chance(.35)) { const x = rng.int(3, TS - 5); R(x, rng.int(2, TS - 6), 1, 4, '#b88fff'); }   // 갈라진 틈의 빛
     this._speck(g, ox, oy, rng, 6, dk2, shade(base, 1.4));
   },
+  crackbrick(H: TilePaintKit) {
+    const { g, ox, oy, rng, R, base, dk, dk2, lt } = H;          // 금 간 벽돌 — 두 줄 벽돌 위로 비스듬한 금, 금 속에 희미한 빛
+    this._fill(g, ox, oy, base);
+    for (const y of [0, TS / 2]) { R(0, y, TS, 1, dk2); R(y ? TS / 2 : 0, y, 1, TS / 2, dk2); R(y ? 0 : TS / 2, y + 1, TS / 2 - 1, 1, lt); }
+    for (let i = 0; i < 6; i++) R(rng.range(1, TS - 3), rng.range(1, TS - 3), 2, 1, dk);
+    let x = rng.range(5, TS - 6), y = 0;
+    while (y < TS) { R(x, y, 1.6, 2, '#1c1a18'); R(x + 1.4, y, .8, 2, 'rgba(190,220,255,.35)'); x += rng.range(-1.6, 1.6); y += 2; }
+  },
   orbitseal(H: TilePaintKit) {
     const { g, ox, oy, R, base, dk2, lt } = H;                   // 궤도 봉인문 — 두꺼운 판에 겹고리 문양이 푸르게 빛난다
     this._fill(g, ox, oy, base);

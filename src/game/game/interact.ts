@@ -106,6 +106,8 @@ export const InteractPart: Bag = {
       this.openSeal(o);
     } else if (o.type === 'anchor') {
       this.useAnchor(o);
+    } else if (o.type === 'memory') {
+      this.takeMemory(o);
     } else if (o.type === 'codedoor') {
       this.openCodeDoor(o);
     } else if (o.type === 'ciphernote') {
@@ -178,7 +180,8 @@ export const InteractPart: Bag = {
         UI.closeDialogue(); UI.refreshBag(); UI.refreshTracker();
       }
     });
-    UI.openLore(t.n, t.lines, choices);
+    const [n, all] = this.memoryCount('story' + o.tablet);   // 기억 조각이 흩어진 자리를 석판이 일러 준다
+    UI.openLore(t.n, all ? [...t.lines, tr('— 기억의 조각 {n}/{all} — 금 간 벽 뒤, 높은 턱 위, 유물 곁에 흩어져 있다', { n, all })] : t.lines, choices);
     this.sfx('open');
   },
 

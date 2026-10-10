@@ -1013,7 +1013,12 @@
   "닻이 빛을 모은다 — 곁에 머물러라": "The anchor gathers light — stay close to it",
   "바늘이 어긋났다 — 꼭대기에 닿을 때 맞춰야 한다": "The needle was off — strike when it reaches the top",
   "세 닻이 궤도에 맞춰졌다 — 성채의 봉인문이 열린다": "All three anchors are aligned — the citadel's sealed gate opens",
-  "이미 궤도에 맞춰진 닻이다": "This anchor is already aligned"
+  "이미 궤도에 맞춰진 닻이다": "This anchor is already aligned",
+  "— 기억의 조각 {n}/{all} — 금 간 벽 뒤, 높은 턱 위, 유물 곁에 흩어져 있다": "— Memory shards {n}/{all} — scattered behind a cracked wall, atop a high ledge, and beside the relic",
+  "기억의 조각 {n}/{all}": "Memory shards {n}/{all}",
+  "기억의 조각 — {name}": "Memory Shard — {name}",
+  "기억이 이어졌다 — 석판 곁에 무언가가 놓였다": "The memories connect — something has appeared beside the tablet",
+  "조각을 들자 유적이 깨어났다": "As you lift the shard, the ruin wakes"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4447,6 +4452,22 @@
   "DEPTH_LAYER.ember.sub": "Basalt and magma veins",
   "DEPTH_LAYER.ember.card.line": "Red veins pulse in the cracks. Somewhere below, hell is breathing.",
   "TILE_DEF.214.n": "Orbital Seal Gate",
-  "TILE_DEF.215.n": "Light Bridge"
+  "TILE_DEF.215.n": "Light Bridge",
+  "STORY_MEMORY.story0.n": "Vault Beneath the Frost — The Archivist's Notes",
+  "STORY_MEMORY.story0.lines.0": "“Day one. We buried a shard of the star in the ice. They said it dreams less when kept cold.”",
+  "STORY_MEMORY.story0.lines.1": "“Day ten. The ice makes a sound. Not the sound of melting — the sound of breathing.”",
+  "STORY_MEMORY.story0.lines.2": "“Last day. We seal the door with frost. If you found these words, you are someone who endured the cold. Then the shard will endure, too.”",
+  "STORY_MEMORY.story0.end": "— As the three shards join, a faint warmth rises from beneath the ice. Someone kept watch here for a very long time.",
+  "STORY_MEMORY.story1.n": "The Overlapping Paths — The Pathfinder's Notes",
+  "STORY_MEMORY.story1.lines.0": "“We lay the path in two layers. They said the pursuer remembers only one road.”",
+  "STORY_MEMORY.story1.lines.1": "“We walk the upper path; it walks the lower. Wherever the two meet, we set a cog.”",
+  "STORY_MEMORY.story1.lines.2": "“Only when it was finished did we realize: now we, too, no longer know which path is ours.”",
+  "STORY_MEMORY.story1.end": "— As the shards fit together, the cogs in the wall turn one notch. There was only ever one path.",
+  "STORY_MEMORY.story2.n": "The Room with No Footing — The Sleeper's Notes",
+  "STORY_MEMORY.story2.lines.0": "“Before we slept, we tore up the floor, so that no one who woke could walk to us.”",
+  "STORY_MEMORY.story2.lines.1": "“When I close my eyes, I hear the star's dream. In that dream, we are still winning.”",
+  "STORY_MEMORY.story2.lines.2": "“If you crossed this far, you already know how to cross where there is no footing. We never did.”",
+  "STORY_MEMORY.story2.end": "— As the last shard finds its place, an ancient breath is let out once from beyond the fallen floor.",
+  "TILE_DEF.216.n": "Cracked Brick"
  }
 }

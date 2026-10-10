@@ -219,6 +219,7 @@ ART[T.DEEPSLATE] = { k: 'deepslate', c: '#3d404c' };  // 심층암 — 얇은 �
 ART[T.BASALT] = { k: 'basalt', c: '#3a3333' };        // 현무암 — 세로로 갈라진 기둥결
 ART[T.MAGMAVEIN] = { k: 'magmavein', c: '#3a3333', glow: 1 };
 ART[T.ORBITSEAL] = { k: 'orbitseal', c: '#3a5a7a', glow: 1 };   // 궤도 봉인문 — 판 위 겹고리 문양
+ART[T.CRACKBRICK] = { k: 'crackbrick', c: '#6a6458' };   // 금 간 벽돌 — 벽돌결 위로 갈라진 금, 틈에 희미한 빛
 ART[T.LIGHTBRIDGE] = { k: 'lightbridge', c: '#9fe8ff', a: 1, glow: 1 };   // 비치는 판 — 뒤 벽지가 보인다
 /* --- 운석 구덩이 --- */
 ART[T.METEORITE] = { k: 'meteorite', c: '#3a3436' };
