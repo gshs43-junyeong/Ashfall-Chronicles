@@ -103,7 +103,12 @@ export const T: Record<string, number> = {
   /* --- 얼음 동굴의 고드름 · 이끼 굴에 늘어진 발광 잎 --- */
   ICICLE: 199, GLOWFROND: 200,
   /* --- 지옥 — 현무암 종유석 · 석순(끝에 불씨) --- */
-  EMBERDRIP: 201, EMBERSPIRE: 202
+  EMBERDRIP: 201, EMBERSPIRE: 202,
+  /* --- 유적마다 제 벽돌 · 장식(석판 유적 셋 · 가라앉은 유적은 원래 유적 벽돌을 같이 썼다) --- */
+  VAULTSLATE: 203, RIMEURN: 204,        // 서리 밑 석실 — 석실 판석 · 서리 단지
+  MAZESTONE: 205, BRONZECOG: 206,       // 겹친 길 — 미로 돌 · 청동 톱니
+  HOLLOWBRICK: 207, VOIDCAGE: 208,      // 발 디딜 곳 없는 방 — 공허 벽돌 · 공허 등롱
+  CORALBRICK: 209, GIANTCLAM: 210       // 가라앉은 유적 — 산호 벽돌 · 큰 조개
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -362,7 +367,15 @@ export const TILE_DEF: TileDef[] = [
   { n: '고드름', c: '#bfe6f5', solid: 0, hard: 1, drop: 'ice_shard', a: 1 },
   { n: '발광 잎', c: '#7fe8c8', solid: 0, hard: 0, drop: 'cave_moss', a: 1 },
   { n: '현무 종유석', c: '#4a3c38', solid: 0, hard: 1, drop: 'ash', a: 1 },
-  { n: '현무 석순', c: '#40342f', solid: 0, hard: 1, drop: 'ash', a: 1 }
+  { n: '현무 석순', c: '#40342f', solid: 0, hard: 1, drop: 'ash', a: 1 },
+  { n: '석실 판석', c: '#5a6878', solid: 1, hard: 3, drop: 'vault_slate' },
+  { n: '서리 단지', c: '#a8c4d8', solid: 0, hard: 0, drop: 'deco_rimeurn', a: 1 },
+  { n: '미로 돌', c: '#857a68', solid: 1, hard: 3, drop: 'maze_stone' },
+  { n: '청동 톱니', c: '#b8904a', solid: 1, hard: 2, drop: 'deco_bronzecog' },
+  { n: '공허 벽돌', c: '#2e2838', solid: 1, hard: 3, drop: 'hollow_brick' },
+  { n: '공허 등롱', c: '#6a4a8a', solid: 0, hard: 0, drop: 'deco_voidcage', a: 1 },
+  { n: '산호 벽돌', c: '#5a6e6a', solid: 1, hard: 3, drop: 'coral_brick' },
+  { n: '큰 조개', c: '#d8c8b8', solid: 0, hard: 0, drop: 'deco_giantclam', a: 1 }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */

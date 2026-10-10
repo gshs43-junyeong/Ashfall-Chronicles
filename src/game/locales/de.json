@@ -4403,6 +4403,22 @@
   "ITEMS.maze_cog.n": "Labyrinthzahnrad",
   "ITEMS.maze_cog.d": "Dreht sich dieses Zahnrad, verschiebt sich irgendwo ein Weg. Welcher, weiß niemand.",
   "ITEMS.hollow_eye.n": "Hohles Auge",
-  "ITEMS.hollow_eye.d": "Blickt man hinein, sieht man nicht das Innere, sondern was dahinter liegt."
+  "ITEMS.hollow_eye.d": "Blickt man hinein, sieht man nicht das Innere, sondern was dahinter liegt.",
+  "ITEMS.deco_rimeurn.n": "Reifurne",
+  "ITEMS.deco_bronzecog.n": "Bronzezahnrad",
+  "ITEMS.deco_voidcage.n": "Leerenlaterne",
+  "ITEMS.deco_giantclam.n": "Riesenmuschel",
+  "ITEMS.vault_slate.n": "Gewölbeschiefer",
+  "ITEMS.maze_stone.n": "Labyrinthstein",
+  "ITEMS.hollow_brick.n": "Leerenziegel",
+  "ITEMS.coral_brick.n": "Korallenziegel",
+  "TILE_DEF.203.n": "Gewölbeschiefer",
+  "TILE_DEF.204.n": "Reifurne",
+  "TILE_DEF.205.n": "Labyrinthstein",
+  "TILE_DEF.206.n": "Bronzezahnrad",
+  "TILE_DEF.207.n": "Leerenziegel",
+  "TILE_DEF.208.n": "Leerenlaterne",
+  "TILE_DEF.209.n": "Korallenziegel",
+  "TILE_DEF.210.n": "Riesenmuschel"
  }
 }

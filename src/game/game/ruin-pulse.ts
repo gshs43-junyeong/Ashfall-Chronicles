@@ -2,7 +2,7 @@
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT, fmt, tr } from '../lang.js';
-import { TILE_DEF } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
 import { ITEMS } from '../data/items.js';
 import { ENEMIES } from '../data/enemies.js';
 import { ECHO, PULSE, PULSE_EVENTS, PULSE_RAGE, RUIN_LORE, RUIN_RELIC, RUIN_SPEC, STORY_RUIN, SURVEY_LABEL,
@@ -39,7 +39,8 @@ export const RuinPulsePart: Bag = {
     if (!this._storySpec[id]) {
       const st = STORY_RUIN[+m[1]];
       this._storySpec[id] = { id, n: st.n, mobs: st.mobs || ['skeleton'], rank: st.rank || 3,
-        tier: 3, bonus: st.bonus, bonus2: st.bonus2, story: +m[1] };
+        tier: 3, bonus: st.bonus, bonus2: st.bonus2, story: +m[1],
+        wall: st.wall || T.RUINBRICK, floor: T.RUINTILE, bg: 10, torch: T.TORCH };
     }
     return this._storySpec[id];
   },

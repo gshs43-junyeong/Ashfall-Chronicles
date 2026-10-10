@@ -4403,6 +4403,22 @@
   "ITEMS.maze_cog.n": "Maze Cog",
   "ITEMS.maze_cog.d": "When this cog turns, a path somewhere shifts. Nobody knows which.",
   "ITEMS.hollow_eye.n": "Hollow Eye",
-  "ITEMS.hollow_eye.d": "Look into it and you see not the inside, but what's behind it."
+  "ITEMS.hollow_eye.d": "Look into it and you see not the inside, but what's behind it.",
+  "ITEMS.deco_rimeurn.n": "Rime Urn",
+  "ITEMS.deco_bronzecog.n": "Bronze Cog",
+  "ITEMS.deco_voidcage.n": "Void Lantern",
+  "ITEMS.deco_giantclam.n": "Giant Clam",
+  "ITEMS.vault_slate.n": "Vault Slate",
+  "ITEMS.maze_stone.n": "Maze Stone",
+  "ITEMS.hollow_brick.n": "Hollow Brick",
+  "ITEMS.coral_brick.n": "Coral Brick",
+  "TILE_DEF.203.n": "Vault Slate",
+  "TILE_DEF.204.n": "Rime Urn",
+  "TILE_DEF.205.n": "Maze Stone",
+  "TILE_DEF.206.n": "Bronze Cog",
+  "TILE_DEF.207.n": "Hollow Brick",
+  "TILE_DEF.208.n": "Void Lantern",
+  "TILE_DEF.209.n": "Coral Brick",
+  "TILE_DEF.210.n": "Giant Clam"
  }
 }

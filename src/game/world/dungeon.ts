@@ -65,6 +65,8 @@ export const WorldDungeon: Bag & ThisType<World> = {
   carveDungeon(cfg: any) {
     const { x0, y0, w, h, wall, floor, bg, rng } = cfg;
     const minW = cfg.minW || 11, minH = cfg.minH || 9;
+    /* 구조 경향(cfg.style) — wide: 낮고 긴 갱도 · sparse: 큰 방이 암반을 사이에 두고 듬성듬성(굴로 잇는다) · maze: 잔방 미로 · tall: 높은 방. 사연: docs/code-history.md#h176 */
+    const ST = cfg.style || '';
     // 1) BSP로 방을 뽑는다
     const all: Bag[] = [];
     this.bspSplit(x0, y0, w, h, cfg.depth || 4, minW, minH, rng, all);
@@ -129,7 +131,8 @@ export const WorldDungeon: Bag & ThisType<World> = {
     /* 2.4) 낡은 유적 — **큰 홀 자리를 먼저 떼어 둔다.** 둘레 방은 홀에 깎인 나머지만 남긴다(너무 얇은 조각은 암반).
        BSP 는 납작한 방을 좋아해서, 자라게 두면 높은 홀이 안 나온다. 사연: docs/code-history.md#h167 */
     if (cfg.worn && !cfg.maze && !tri && leaves.length > 4) {
-      const HW = clamp(Math.round(w * 0.4), 28, 40), HH = clamp(Math.round(h * 0.4), 16, 22);
+      const HW = ST === 'wide' ? clamp(Math.round(w * 0.42), 34, 52) : clamp(Math.round(w * 0.4), 28, 40);
+      const HH = ST === 'wide' ? clamp(Math.round(h * 0.28), 11, 13) : clamp(Math.round(h * 0.4), 16, 22);
       const ok = (r: Bag) => !plan || [[0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]].every(([fx, fy]) => {
         const c = clamp(Math.floor((r.x + r.w * fx * 0.98 - x0) / w * plan[0].length), 0, plan[0].length - 1);
         const q = clamp(Math.floor((r.y + r.h * fy * 0.98 - y0) / h * plan.length), 0, plan.length - 1);
@@ -181,7 +184,8 @@ export const WorldDungeon: Bag & ThisType<World> = {
         const wing = leaves.filter(r => !r.hall && r.w * r.h >= 100)
           .sort((a, b) => (left ? a.x - b.x : b.x + b.w - a.x - a.w) || b.w * b.h - a.w * a.h)[0];
         if (!wing) break;
-        this._growHall(leaves, wing, 20, 12, 30, 16);
+        if (ST === 'wide') this._growHall(leaves, wing, 28, 8, 40, 10);
+        else this._growHall(leaves, wing, 20, 12, 30, 16);
         wing.hall = 1; wing.cell = 0;
       }
     }
@@ -247,6 +251,13 @@ export const WorldDungeon: Bag & ThisType<World> = {
         leaves.splice(leaves.indexOf(r), 1, a, b);
       }
     }
+    /* sparse — 큰 홀 말고는 방을 위 · 양옆으로 줄여 사이에 암반을 남긴다(바닥 줄은 그대로라 굴이 곧게 이어진다). 맞닿지 않으니 6) 이 굴로 잇는다 */
+    if (ST === 'sparse')
+      for (const r of leaves) {
+        if (r.grand) continue;
+        const mx = r.w >= 18 ? 3 : r.w >= 12 ? 2 : 0, my = r.h >= 13 ? 3 : r.h >= 10 ? 1 : 0;
+        r.x += mx; r.w -= mx * 2; r.y += my; r.h -= my;
+      }
     if (tri)                                                   // 삼각형 전체를 먼저 벽돌 덩어리로
       for (let y = y0; y < y0 + h; y++)
         for (let x = x0; x < x0 + w; x++)

@@ -22,7 +22,8 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       rng, depth: bsp[0], minW: bsp[1], minH: bsp[2],
       target: spec.rooms,                                    // 등급대로 방 수를 맞춘다
       plan: spec.plan,                                       // 겉모양이 방 배치를 따라간다
-      worn: 1, maze: spec.maze                               // 미로는 잔방이 정체성이라 큰 홀을 안 뗀다
+      worn: 1, maze: spec.maze,                              // 미로는 잔방이 정체성이라 큰 홀을 안 뗀다
+      style: spec.style, shapes: spec.shapes                 // 유적마다 구조 경향 · 방 모양
     });
     rooms.sort((a: any, b: any) => (b.grand | 0) - (a.grand | 0) || (b.w * b.h) - (a.w * a.h));   // 큰 홀이 주인 방
     const boss = rooms[0];                                   // 가장 넓은 방이 보스방
@@ -229,18 +230,18 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       const st: Bag = STORY_RUIN[i] || {};
       const spec = {
         id: 'story' + i, n: `${tr('석판 유적')} ` + (i + 1), x: cx, y: y0, w, h, tier: sp.tier,
-        wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10, torch: T.TORCH,
+        wall: st.wall || T.RUINBRICK, floor: T.RUINTILE, bg: 10, torch: T.TORCH,
         entryKind: sp.entryKind, plan: st.plan, arch: st.arch,
         decor: st.decor, sig: st.sig, event: st.event, bonus: st.bonus
       };
       const rooms = this.carveDungeon({
-        x0, y0, w, h, wall: T.RUINBRICK, floor: T.RUINTILE, bg: 10,
+        x0, y0, w, h, wall: spec.wall, floor: T.RUINTILE, bg: 10,
         rng, depth: 5, minW: st.bsp ? st.bsp[1] : 16, minH: st.bsp ? st.bsp[2] : 8,
-        target: st.rooms, plan: st.plan, worn: 1
+        target: st.rooms, plan: st.plan, worn: 1, style: st.style
       });
       rooms.sort((a: any, b: any) => (b.grand | 0) - (a.grand | 0) || (b.w * b.h) - (a.w * a.h));   // 큰 홀이 주인 방
       const main = rooms[0], fy0 = main.y + main.h - 3;
-      this.grandLights(main, fy0, T.TORCH, T.RUINBRICK);
+      this.grandLights(main, fy0, T.TORCH, spec.wall);
       for (let x = main.x + 3; x < main.x + main.w - 2; x += 8) this.set(x, main.y + 2, T.RUNESTONE);
       this.objects.push({ type: 'tablet', tablet: i, x: (main.x + (main.w >> 1)) * TS, y: (fy0 + 1) * TS - 48, w: 34, h: 48 });
       // 지상에서 내려오는 통로 — 이제 지표 아래에 묻는다(sunken).
@@ -423,7 +424,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       2 발 디딜 곳 없는 방: 방 바닥이 가시 고랑으로 꺼지고 무너지는 디딤돌 · 드문 쉼돌만 남는다.
       ★ 제 난수(seed+'_story'+i)만 쓴다 — 본 난수를 뽑으면 뒤 유적 · 동굴이 씨앗마다 바뀐다. 걷는 줄 위(fy-2~fy)는 막지 않는다. */
   storyTheme(i: number, rooms: any[], main: Bag, sigRoom: Bag, sp: Bag, x0: number, w: number) {
-    const r = new RNG(this.seed + '_story' + i);
+    const r = new RNG(this.seed + '_story' + i), wall = (STORY_RUIN[i] || {}).wall || T.RUINBRICK;
     const inRoom = (x: number, y: number) => rooms.some((q: any) => x > q.x && x < q.x + q.w - 1 && y > q.y && y < q.y + q.h - 1);
     const chest = (cx: number, fy: number, tier: number, bonus?: string, hidden?: number) =>
       this.objects.push({ type: 'chest', tier, x: cx * TS, y: (fy - 0.2) * TS, w: 30, h: 26, items: null, bonus, cave: hidden });
@@ -431,7 +432,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       for (const q of rooms) {
         const fy = q.y + q.h - 3;
         for (let x = q.x - 1; x <= q.x + q.w; x++) for (let y = q.y - 1; y <= q.y + q.h; y++) {   // 서리가 벽을 먹는다
-          if (this.get(x, y) === T.RUINBRICK && r.chance(0.42)) this.set(x, y, T.ICEBRICK);
+          if (this.get(x, y) === wall && r.chance(0.42)) this.set(x, y, T.ICEBRICK);
         }
         const iceFloor = r.chance(0.5);
         for (let x = q.x + 1; x < q.x + q.w - 1; x++) {

@@ -4403,6 +4403,22 @@
   "ITEMS.maze_cog.n": "迷宫齿轮",
   "ITEMS.maze_cog.d": "这个齿轮一转，某处的路就会挪动。没人知道是哪条。",
   "ITEMS.hollow_eye.n": "空洞之眼",
-  "ITEMS.hollow_eye.d": "往里看，看到的不是里面，而是背后。"
+  "ITEMS.hollow_eye.d": "往里看，看到的不是里面，而是背后。",
+  "ITEMS.deco_rimeurn.n": "霜之瓮",
+  "ITEMS.deco_bronzecog.n": "青铜齿轮",
+  "ITEMS.deco_voidcage.n": "虚空灯笼",
+  "ITEMS.deco_giantclam.n": "巨蚌",
+  "ITEMS.vault_slate.n": "石室板岩",
+  "ITEMS.maze_stone.n": "迷宫石",
+  "ITEMS.hollow_brick.n": "虚空砖",
+  "ITEMS.coral_brick.n": "珊瑚砖",
+  "TILE_DEF.203.n": "石室板岩",
+  "TILE_DEF.204.n": "霜之瓮",
+  "TILE_DEF.205.n": "迷宫石",
+  "TILE_DEF.206.n": "青铜齿轮",
+  "TILE_DEF.207.n": "虚空砖",
+  "TILE_DEF.208.n": "虚空灯笼",
+  "TILE_DEF.209.n": "珊瑚砖",
+  "TILE_DEF.210.n": "巨蚌"
  }
 }

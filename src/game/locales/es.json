@@ -4403,6 +4403,22 @@
   "ITEMS.maze_cog.n": "Engranaje del laberinto",
   "ITEMS.maze_cog.d": "Cuando este engranaje gira, un camino en algún lugar se desplaza. Nadie sabe cuál.",
   "ITEMS.hollow_eye.n": "Ojo hueco",
-  "ITEMS.hollow_eye.d": "Si miras dentro, no ves el interior, sino lo que hay detrás."
+  "ITEMS.hollow_eye.d": "Si miras dentro, no ves el interior, sino lo que hay detrás.",
+  "ITEMS.deco_rimeurn.n": "Urna de escarcha",
+  "ITEMS.deco_bronzecog.n": "Engranaje de bronce",
+  "ITEMS.deco_voidcage.n": "Farol del vacío",
+  "ITEMS.deco_giantclam.n": "Almeja gigante",
+  "ITEMS.vault_slate.n": "Pizarra de cripta",
+  "ITEMS.maze_stone.n": "Piedra del laberinto",
+  "ITEMS.hollow_brick.n": "Ladrillo del vacío",
+  "ITEMS.coral_brick.n": "Ladrillo de coral",
+  "TILE_DEF.203.n": "Pizarra de cripta",
+  "TILE_DEF.204.n": "Urna de escarcha",
+  "TILE_DEF.205.n": "Piedra del laberinto",
+  "TILE_DEF.206.n": "Engranaje de bronce",
+  "TILE_DEF.207.n": "Ladrillo del vacío",
+  "TILE_DEF.208.n": "Farol del vacío",
+  "TILE_DEF.209.n": "Ladrillo de coral",
+  "TILE_DEF.210.n": "Almeja gigante"
  }
 }
