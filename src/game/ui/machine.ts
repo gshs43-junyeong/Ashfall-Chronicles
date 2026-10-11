@@ -17,7 +17,7 @@ export const MachineUIPart: Bag = {
   /* ---------------- 기계 ---------------- */
   openMachine(m: any) {
     this.closePanel();
-    this.machRef = m; this._machSig = null;
+    this.machRef = m; this._machSig = null; this._machK = 0;
     this.panels.show('machine'); G.uiOpen = true;
     this.refreshMachine(true);
   },
@@ -53,7 +53,7 @@ export const MachineUIPart: Bag = {
       if (!n) { net.className = 'mach-row lack'; net.textContent = tr('전력망에 이어져 있지 않다 — 반경 5칸 안에 전주를 세워라.'); }
       else {
         const pct = Math.round(n.sat * 100);
-        net.className = 'mach-row';
+        net.className = 'mach-row' + (n.gen > 0 && n.sat > 0 && !n.off ? ' flow' : '');   // 전기가 흐르는 줄은 빛이 지나간다
         net.innerHTML = tr('전력망 #{n} · 발전 <b>{gen}</b> / 수요 <b>{dem}</b>', { n: m.net + 1, gen: n.gen, dem: n.dem }) +
           ` ${tr('· 충족')} <b class="${pct < 100 ? 'lack' : ''}">${pct}%</b>` +
           (n.emax ? ` ${tr('· 축전 <b>{e}</b>/{emax}', { e: Math.round(n.e), emax: n.emax })}` : '') +
@@ -69,9 +69,17 @@ export const MachineUIPart: Bag = {
       fu.textContent = tr('연료 — 타는 중 {n}초 · 넣어 둔 연료로 {n2}초 더', { n: (m.fuel * FAC_TICK).toFixed(1), n2: Math.round(left * FAC_TICK) });
     }
     // 개수 — 칸 구성은 같고 수만 바뀐 경우
+    // 수가 늘면 칸이 한 번 튄다 — 벨트로 들어오고 기계가 뱉는 것이 눈에 보이게
+    const setN = (el: HTMLElement, c: Element | null, v: any) => {
+      if (!c) return;
+      const t = String(v || ''), was = +(c.textContent || 0) || (c.textContent ? 1 : 0);
+      if (c.textContent === t) return;
+      c.textContent = t;
+      if ((+t || (t ? 1 : 0)) > was) this.pop(el, 'bump', 260);
+    };
     for (const [sel, buf] of [['#mg-in', m.in], ['#mg-out', m.out]])
-      if (buf) $$(sel + ' .slot').forEach(el => { const c = el.querySelector('.cnt'); if (c) c.textContent = buf[el.dataset.id] || ''; });
-    const cnt = (sel: string, arr: any) => { const els = $$(sel + ' .slot'); els.forEach(el => { const it = arr[+el.dataset.i]; const c = el.querySelector('.cnt'); if (c && it) c.textContent = it.c > 1 ? it.c : ''; }); };
+      if (buf) $$(sel + ' .slot').forEach(el => setN(el, el.querySelector('.cnt'), buf[el.dataset.id]));
+    const cnt = (sel: string, arr: any) => { const els = $$(sel + ' .slot'); els.forEach(el => { const it = arr[+el.dataset.i]; if (it) setN(el, el.querySelector('.cnt'), it.c > 1 ? it.c : ''); }); };
     if (m.items) cnt('#mg-store', m.items);
     cnt('#mg-bag', G.player.bag);
     const pr = $('#mach-prog');
@@ -79,6 +87,10 @@ export const MachineUIPart: Bag = {
       const r = m.rec >= 0 ? MRECIPES[m.rec] : null;
       const k = r ? clamp(m.prog / r.t, 0, 1) : 0;
       pr.querySelector('i').style.width = (k * 100).toFixed(1) + '%';
+      pr.classList.toggle('run', !!r && m.on && k > 0);
+      // 막대가 차서 처음으로 돌아갔다 = 한 벌 나왔다
+      if (r && this._machK > 0.6 && k < this._machK - 0.4) { this.pop(pr, 'done', 500); this.sparkAt(pr.getBoundingClientRect(), '#bfe07a', 8, 40); }
+      this._machK = k;
       pr.querySelector('span').textContent = r
         ? Object.keys(r.out).map(id => ITEMS[id].n + ' ×' + r.out[id]).join(' · ') + ` ${tr('— {n}% · {n2}초 남음', { n: Math.round(k * 100), n2: ((r.t - m.prog) * FAC_TICK).toFixed(1) })}`
         : tr('만들 것이 없다 — 아래 목록의 재료를 넣어라');

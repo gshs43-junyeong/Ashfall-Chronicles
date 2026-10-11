@@ -66,6 +66,7 @@ export const ShellPart: Bag = {
     /* ★ 퀘스트 추적은 ui.js 가 style.display 를 직접 켜고 끄므로, 숨김은 body 클래스(!important)로 건다 */
     for (const k of ['tabbar', 'quest', 'buffs', 'clock', 'hotbar'])
       document.body.classList.toggle('hide-' + k, !s['hud_' + k]);
+    document.body.classList.toggle('q-low', this.quality() === 'low');   // 절약 화질 — 창의 움직임(ui/motion.ts · style.css)을 끈다
     document.documentElement.style.setProperty('--ui-scale', String((s.uiscale || 100) / 100));
     // 시야 배율은 캔버스 변환에 들어가므로 값이 바뀌면 다시 잡아 준다
     const vq = s.view + '/' + this.quality();

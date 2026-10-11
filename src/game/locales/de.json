@@ -1018,7 +1018,8 @@
   "기억의 조각 {n}/{all}": "Erinnerungssplitter {n}/{all}",
   "기억의 조각 — {name}": "Erinnerungssplitter — {name}",
   "기억이 이어졌다 — 석판 곁에 무언가가 놓였다": "Die Erinnerungen fügen sich zusammen — neben der Tafel liegt nun etwas",
-  "조각을 들자 유적이 깨어났다": "Als du den Splitter aufhebst, erwacht die Ruine"
+  "조각을 들자 유적이 깨어났다": "Als du den Splitter aufhebst, erwacht die Ruine",
+  "두들길 장비를 가리켜라": "Zeig auf ein Ausrüstungsstück zum Schmieden"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

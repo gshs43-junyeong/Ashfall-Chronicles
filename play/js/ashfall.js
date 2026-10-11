@@ -37868,7 +37868,7 @@
     matLine(p, need) {
       return Object.entries(need).map(([k, v]) => {
         const have = p.countItem(k);
-        return `<span class="${have < v ? "lack" : ""}">${ITEMS[k].n} ${have}/${v}</span>`;
+        return `<span class="${have < v ? "lack" : ""}" data-id="${k}"><i class="mic" style="background-image:url(${Art.itemUrl(k)})"></i>${ITEMS[k].n} ${have}/${v}</span>`;
       }).join(" · ");
     },
     refreshCraft() {
@@ -37945,7 +37945,7 @@
       $$("#craft-list .recipe").forEach((el) => {
         const i = +el.dataset.r;
         this.setIcon(el.querySelector(".ric"), Art.itemUrl(RECIPES[i].out));
-        el.addEventListener("click", () => app.craft(i));
+        el.addEventListener("click", () => this.craftWithFx(i, el));
         el.addEventListener("mouseenter", (e) => this.showTip(makeItem(RECIPES[i].out, 1, 0), e));
         el.addEventListener("mouseleave", () => this.hideTip());
       });
@@ -37993,6 +37993,7 @@
       this.closePanel();
       this.machRef = m;
       this._machSig = null;
+      this._machK = 0;
       this.panels.show("machine");
       app.uiOpen = true;
       this.refreshMachine(true);
@@ -38040,7 +38041,7 @@
           net.textContent = tr("전력망에 이어져 있지 않다 — 반경 5칸 안에 전주를 세워라.");
         } else {
           const pct = Math.round(n.sat * 100);
-          net.className = "mach-row";
+          net.className = "mach-row" + (n.gen > 0 && n.sat > 0 && !n.off ? " flow" : "");
           net.innerHTML = tr("전력망 #{n} · 발전 <b>{gen}</b> / 수요 <b>{dem}</b>", { n: m.net + 1, gen: n.gen, dem: n.dem }) + ` ${tr("· 충족")} <b class="${pct < 100 ? "lack" : ""}">${pct}%</b>` + (n.emax ? ` ${tr("· 축전 <b>{e}</b>/{emax}", { e: Math.round(n.e), emax: n.emax })}` : "") + (n.off ? ` · <b class="lack">${tr("정지 스위치 내려짐</b>")}` : "");
         }
       }
@@ -38052,17 +38053,20 @@
         for (const k in m.in) if (FUEL[k]) left += m.in[k] * FUEL[k];
         fu.textContent = tr("연료 — 타는 중 {n}초 · 넣어 둔 연료로 {n2}초 더", { n: (m.fuel * FAC_TICK).toFixed(1), n2: Math.round(left * FAC_TICK) });
       }
+      const setN = (el, c, v) => {
+        if (!c) return;
+        const t = String(v || ""), was = +(c.textContent || 0) || (c.textContent ? 1 : 0);
+        if (c.textContent === t) return;
+        c.textContent = t;
+        if ((+t || (t ? 1 : 0)) > was) this.pop(el, "bump", 260);
+      };
       for (const [sel, buf] of [["#mg-in", m.in], ["#mg-out", m.out]])
-        if (buf) $$(sel + " .slot").forEach((el) => {
-          const c = el.querySelector(".cnt");
-          if (c) c.textContent = buf[el.dataset.id] || "";
-        });
+        if (buf) $$(sel + " .slot").forEach((el) => setN(el, el.querySelector(".cnt"), buf[el.dataset.id]));
       const cnt = (sel, arr) => {
         const els = $$(sel + " .slot");
         els.forEach((el) => {
           const it = arr[+el.dataset.i];
-          const c = el.querySelector(".cnt");
-          if (c && it) c.textContent = it.c > 1 ? it.c : "";
+          if (it) setN(el, el.querySelector(".cnt"), it.c > 1 ? it.c : "");
         });
       };
       if (m.items) cnt("#mg-store", m.items);
@@ -38072,6 +38076,12 @@
         const r = m.rec >= 0 ? MRECIPES[m.rec] : null;
         const k = r ? clamp(m.prog / r.t, 0, 1) : 0;
         pr.querySelector("i").style.width = (k * 100).toFixed(1) + "%";
+        pr.classList.toggle("run", !!r && m.on && k > 0);
+        if (r && this._machK > 0.6 && k < this._machK - 0.4) {
+          this.pop(pr, "done", 500);
+          this.sparkAt(pr.getBoundingClientRect(), "#bfe07a", 8, 40);
+        }
+        this._machK = k;
         pr.querySelector("span").textContent = r ? Object.keys(r.out).map((id) => ITEMS[id].n + " ×" + r.out[id]).join(" · ") + ` ${tr("— {n}% · {n2}초 남음", { n: Math.round(k * 100), n2: ((r.t - m.prog) * FAC_TICK).toFixed(1) })}` : tr("만들 것이 없다 — 아래 목록의 재료를 넣어라");
       }
     },
@@ -38534,12 +38544,13 @@
         const risk = (fail ? ` ${tr("· 실패 {fail}%", { fail })}` : "") + (brk ? ` ${tr("· 파괴 {brk}%", { brk })}` : "");
         makeSlot("slot r" + it.r + (max ? " dim" : ""), {
           fill: { icon: Art.itemUrl(it.id), count: max ? "MAX" : "+" + (e + 1) },
-          click: max ? void 0 : () => app.enhanceSlot(i),
-          enter: (ev) => this.showTip(it, ev, max ? tr("더 두들길 데가 없다") : tr("+{e} → +{n} · 🪙 {cost} · {item} {mat}개", { e, n: e + 1, cost: fmt(cost), item: ITEMS[mat.id].n, mat: mat.n }) + risk),
+          click: max ? void 0 : () => this.anvilStrike(i),
+          enter: (ev) => (this.anvilShow(it), this.showTip(it, ev, max ? tr("더 두들길 데가 없다") : tr("+{e} → +{n} · 🪙 {cost} · {item} {mat}개", { e, n: e + 1, cost: fmt(cost), item: ITEMS[mat.id].n, mat: mat.n }) + risk)),
           leave: () => this.hideTip()
         }, g);
       });
       if (!g.children.length) $("#anvil-note").textContent = tr("가방에 두들길 만한 장비가 없다.");
+      if (!this.anvilBusy) this.anvilShow(null);
     }
   };
   mixin(UI5, ShopUIPart);
@@ -39182,6 +39193,192 @@
     }
   };
   mixin(UI5, HudUIPart);
+
+  // src/game/ui/motion.ts
+  var motion_exports = {};
+  __export(motion_exports, {
+    UIMotionPart: () => UIMotionPart
+  });
+  var UIMotionPart = {
+    anvilBusy: false,
+    motionOn() {
+      if (app && app.quality && app.quality() === "low") return false;
+      try {
+        return !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      } catch (e) {
+        return true;
+      }
+    },
+    fxLayer() {
+      let el = document.getElementById("uifx");
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "uifx";
+        document.body.appendChild(el);
+      }
+      return el;
+    },
+    /** 보이는 칸인가 — 숨긴 탭 단추(설정)처럼 크기가 0 이면 날리지 않는다 */
+    seen(r) {
+      return !!r && r.width > 0 && r.height > 0;
+    },
+    /** 아이콘 하나가 a 에서 b 로 — 위로 휘었다가 작아지며 내려앉는다 */
+    flyIcon(url, a, b, delay = 0, dur = 420, size = 26) {
+      if (!this.motionOn() || !this.seen(a) || !this.seen(b)) return;
+      const el = document.createElement("div");
+      el.className = "uifx-ic";
+      el.style.backgroundImage = `url(${url})`;
+      el.style.width = el.style.height = size + "px";
+      const x0 = a.left + a.width / 2 - size / 2, y0 = a.top + a.height / 2 - size / 2;
+      const dx = b.left + b.width / 2 - size / 2 - x0, dy = b.top + b.height / 2 - size / 2 - y0;
+      const lift = Math.min(90, Math.abs(dx) * 0.3 + 28);
+      el.style.left = x0 + "px";
+      el.style.top = y0 + "px";
+      this.fxLayer().appendChild(el);
+      const an = el.animate([
+        { transform: "translate(0,0) scale(.8)", opacity: 0 },
+        { transform: `translate(${dx * 0.1}px,${dy * 0.1 - lift * 0.4}px) scale(1.15)`, opacity: 1, offset: 0.15 },
+        { transform: `translate(${dx * 0.55}px,${dy * 0.55 - lift}px) scale(.95)`, opacity: 1, offset: 0.55 },
+        { transform: `translate(${dx}px,${dy}px) scale(.45)`, opacity: 0.15 }
+      ], { duration: dur, delay, easing: "cubic-bezier(.45,.05,.55,.95)", fill: "both" });
+      an.onfinish = () => el.remove();
+    },
+    /** 그 자리에서 불꽃 · 빛 알갱이가 사방으로 튄다 */
+    sparkAt(r, color, n = 10, spread = 60, delay = 0) {
+      if (!this.motionOn() || !this.seen(r)) return;
+      const L = this.fxLayer(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      for (let i = 0; i < n; i++) {
+        const s = document.createElement("i");
+        s.className = "uifx-sp";
+        s.style.left = cx + "px";
+        s.style.top = cy + "px";
+        s.style.background = color;
+        s.style.color = color;
+        L.appendChild(s);
+        const a = Math.random() * Math.PI * 2, d = spread * (0.4 + Math.random() * 0.6);
+        const an = s.animate([
+          { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
+          { transform: `translate(calc(-50% + ${(Math.cos(a) * d).toFixed(1)}px),calc(-50% + ${(Math.sin(a) * d + 12).toFixed(1)}px)) scale(.2)`, opacity: 0 }
+        ], { duration: 360 + Math.random() * 260, delay, easing: "cubic-bezier(.2,.7,.4,1)", fill: "both" });
+        an.onfinish = () => s.remove();
+      }
+    },
+    /** 클래스를 다시 걸어 CSS 움직임을 처음부터 돌린다 */
+    pop(el, cls, ms = 900) {
+      if (!el || !this.motionOn()) return;
+      el.classList.remove(cls);
+      void el.offsetWidth;
+      el.classList.add(cls);
+      setTimeout(() => el.classList.remove(cls), ms);
+    },
+    /* ---------------- 제작 ---------------- */
+    /** 재료가 결과 아이콘으로 빨려 들고, 완성되면 아이콘이 튀며 가방 단추로 날아간다. 재료가 모자라면 줄이 흔들린다 */
+    craftWithFx(i, row) {
+      const r = RECIPES[i], n0 = app.crafted && app.crafted[r.out] || 0;
+      const icEl = row.querySelector(".ric"), ic = icEl && icEl.getBoundingClientRect();
+      const mats = Array.from(row.querySelectorAll(".rmat [data-id]")).map((el) => [el.getAttribute("data-id"), el.getBoundingClientRect()]);
+      app.craft(i);
+      const row2 = document.querySelector(`#craft-list .recipe[data-r="${i}"]`);
+      if ((app.crafted && app.crafted[r.out] || 0) === n0) {
+        this.pop(row2, "deny", 400);
+        return;
+      }
+      if (!ic) return;
+      mats.forEach(([id, rc], k) => this.flyIcon(Art.itemUrl(id), rc, ic, k * 70, 380, 20));
+      setTimeout(() => {
+        const ric = document.querySelector(`#craft-list .recipe[data-r="${i}"] .ric`), at = ric ? ric.getBoundingClientRect() : ic;
+        this.pop(ric, "made");
+        this.sparkAt(at, "#ffd27a", 12, 46);
+        const bag = document.querySelector('#tabbar .tb[data-tab="inv"]');
+        if (bag) {
+          this.flyIcon(Art.itemUrl(r.out), at, bag.getBoundingClientRect(), 140, 560, 30);
+          setTimeout(() => this.pop(bag, "got", 600), 700);
+        }
+      }, 380 + mats.length * 70);
+    },
+    /* ---------------- 강화 모루 ---------------- */
+    /** 모루 무대 — 고른(가리킨) 장비 · 이번 망치질의 성공 · 실패 · 파괴 몫 */
+    anvilShow(it) {
+      const st = $("#anvil-stage");
+      if (!st || this.anvilBusy) return;
+      const item = st.querySelector(".as-item");
+      if (!it) {
+        item.style.backgroundImage = "";
+        st.querySelector(".as-line").textContent = tr("두들길 장비를 가리켜라");
+        this.anvilRisk(0, 0, true);
+        return;
+      }
+      item.style.backgroundImage = `url(${Art.itemUrl(it.id)})`;
+      const e = it.e || 0;
+      if (e >= app.ENH_MAX) {
+        st.querySelector(".as-line").textContent = tr("더 두들길 데가 없다");
+        this.anvilRisk(0, 0, true);
+        return;
+      }
+      const cost = app.enhCost(it), mat = app.enhMat(e);
+      st.querySelector(".as-line").textContent = tr("+{e} → +{n} · 🪙 {cost} · {item} {mat}개", { e, n: e + 1, cost: fmt(cost), item: ITEMS[mat.id].n, mat: mat.n });
+      const fail = app.enhFail(e), brk = app.enhBreak(e);
+      if (fail) st.querySelector(".as-line").textContent += " " + tr("· 실패 {fail}%", { fail: Math.round(fail * 100) });
+      if (brk) st.querySelector(".as-line").textContent += " " + tr("· 파괴 {brk}%", { brk: Math.round(brk * 100) });
+      this.anvilRisk(fail, brk);
+    },
+    anvilRisk(fail, brk, none) {
+      const st = $("#anvil-stage");
+      if (!st) return;
+      const ok = none ? 0 : Math.max(0, 1 - fail - brk);
+      const [a, b, c] = [".ok", ".fail", ".brk"].map((s) => st.querySelector(".as-risk " + s));
+      a.style.width = ok * 100 + "%";
+      b.style.width = fail * 100 + "%";
+      c.style.width = brk * 100 + "%";
+      st.querySelector(".as-risk").title = none ? "" : tr("· 실패 {fail}%", { fail: Math.round(fail * 100) }) + " " + tr("· 파괴 {brk}%", { brk: Math.round(brk * 100) });
+    },
+    /** 망치 세 번 — 박자마다 불꽃 · 소리, 그다음 결말(성공 금빛 · 실패 잿빛 흔들림 · 파괴 붉은 금) */
+    anvilStrike(i) {
+      if (this.anvilBusy) return;
+      const p = app.player, it = p.bag[i];
+      if (!it) return;
+      const e = it.e || 0, cost = app.enhCost(it), mat = app.enhMat(e);
+      const st = $("#anvil-stage");
+      if (!st || !this.motionOn() || e >= app.ENH_MAX || p.gold < cost || !p.hasAll({ [mat.id]: mat.n })) {
+        const res = app.enhanceSlot(i);
+        if (st) this.anvilEnd(res, it);
+        return;
+      }
+      this.anvilShow(it);
+      this.anvilBusy = true;
+      st.classList.add("busy");
+      const item = st.querySelector(".as-item"), ham = st.querySelector(".as-ham"), beat = 240;
+      for (let k = 0; k < 3; k++) setTimeout(() => {
+        this.pop(ham, "hit", 240);
+        this.pop(item, "jolt", 200);
+        this.sparkAt(item.getBoundingClientRect(), k === 2 ? "#ffe8a0" : "#ffa040", 6 + k * 3, 38 + k * 10);
+        app.sfx && app.sfx("hit_blunt");
+      }, k * beat);
+      setTimeout(() => {
+        this.anvilBusy = false;
+        st.classList.remove("busy");
+        const j = app.player.bag.indexOf(it);
+        if (j >= 0) this.anvilEnd(app.enhanceSlot(j), it);
+      }, 3 * beat + 60);
+    },
+    anvilEnd(res, it) {
+      const st = $("#anvil-stage");
+      if (!st) return;
+      if (!res) {
+        this.pop(st, "deny", 400);
+        return;
+      }
+      const item = st.querySelector(".as-item"), out = st.querySelector(".as-res"), at = item.getBoundingClientRect();
+      out.textContent = res === "fail" ? "=" : "+" + (it.e || 0);
+      for (const c of ["r-ok", "r-fail", "r-brk"]) st.classList.remove(c);
+      const cls = res === "ok" ? "r-ok" : res === "fail" ? "r-fail" : "r-brk";
+      this.pop(st, cls, 1e3);
+      if (res === "ok") this.sparkAt(at, "#ffd27a", 18, 70);
+      else if (res === "break") this.sparkAt(at, "#e0564c", 14, 54);
+      this.anvilShow(it);
+    }
+  };
+  mixin(UI5, UIMotionPart);
 
   // src/game/music.ts
   var music_exports2 = {};
@@ -42232,6 +42429,7 @@
       if (mm) mm.style.display = s.minimap ? "" : "none";
       for (const k of ["tabbar", "quest", "buffs", "clock", "hotbar"])
         document.body.classList.toggle("hide-" + k, !s["hud_" + k]);
+      document.body.classList.toggle("q-low", this.quality() === "low");
       document.documentElement.style.setProperty("--ui-scale", String((s.uiscale || 100) / 100));
       const vq = s.view + "/" + this.quality();
       if (this._viewApplied !== vq) {
@@ -46780,30 +46978,31 @@
       const e = it.e || 0;
       return Math.round((this.price(it) * 0.5 + 300 * this.costMul()) * (1 + e * 0.6));
     },
+    /** 결과 'ok' · 'fail' · 'break', 못 했으면 null — 모루 무대(ui/motion.ts)가 결말을 그린다 */
     enhanceSlot(i) {
       const p = this.player, it = p.bag[i];
       if (!it || !isGear(it)) {
         this.toast(tr("장비만 강화할 수 있다"), "bad");
-        return;
+        return null;
       }
       const d = idef(it);
       if (!d.dmg && !d.def) {
         this.toast(tr("공격력도 방어력도 없는 것은 벼릴 데가 없다"), "bad");
-        return;
+        return null;
       }
       const e = it.e || 0;
       if (e >= this.ENH_MAX) {
         this.toast(tr("더 두들길 데가 없다"), "bad");
-        return;
+        return null;
       }
       const cost = this.enhCost(it), mat = this.enhMat(e);
       if (p.gold < cost) {
         this.toast(tr("금화가 부족하다"), "bad");
-        return;
+        return null;
       }
       if (!p.hasAll({ [mat.id]: mat.n })) {
         this.toast(tr("{item} {mat}개가 필요하다", { item: ITEMS[mat.id].n, mat: mat.n }), "bad");
-        return;
+        return null;
       }
       p.gold -= cost;
       p.removeItem(mat.id, mat.n);
@@ -46818,7 +47017,7 @@
         UI5.refreshBag();
         UI5.refreshEquip();
         this.sfx("damage");
-        return;
+        return "break";
       }
       if (roll < brk + this.enhFail(e)) {
         this.toast(tr("{itemName} — 결이 어긋났다. 단계는 그대로다", { itemName: itemName(it) }), "bad");
@@ -46827,7 +47026,7 @@
         UI5.refreshAnvil();
         UI5.refreshBag();
         this.sfx("damage");
-        return;
+        return "fail";
       }
       it.e = e + 1;
       this.toast(tr("{itemName} — 한 겹 더 두들겼다", { itemName: itemName(it) }), "good");
@@ -46837,6 +47036,7 @@
       UI5.refreshBag();
       UI5.refreshEquip();
       this.sfx("craft");
+      return "ok";
     },
     /* ---- 재련: 금화를 내고 장비의 접사를 다시 굴린다 ---- */
     reforgeCost(it) {
@@ -59167,7 +59367,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

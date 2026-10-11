@@ -1142,6 +1142,61 @@ body.booting #title-screen{visibility:hidden}
 #anvil-grid .slot.dim{opacity:.42;cursor:default}
 #anvil-grid .slot .cnt{color:#ffd24a}
 
+/* 창의 움직임(ui/motion.ts) — 날아가는 아이콘 · 불꽃은 맨 위 겹에, 클릭은 그대로 아래로 */
+#uifx{position:fixed;inset:0;pointer-events:none;z-index:9000;overflow:hidden}
+.uifx-ic{position:absolute;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 0 4px #ffd27a99) drop-shadow(0 2px 2px #000a);will-change:transform}
+.uifx-sp{position:absolute;width:4px;height:4px;border-radius:50%;box-shadow:0 0 6px currentColor;will-change:transform}
+.rmat .mic{display:inline-block;width:12px;height:12px;margin-right:2px;vertical-align:-2px;background-size:contain;background-repeat:no-repeat;background-position:center}
+.recipe{transition:transform .12s,border-color .12s,background .12s}
+.recipe:not(.no):hover{transform:translateX(3px);border-color:#5a4e30;background:#16140d}
+.recipe:not(.no):active{transform:translateX(3px) scale(.985)}
+.recipe .ric.made{animation:ricMade .7s cubic-bezier(.3,1.6,.5,1)}
+@keyframes ricMade{0%{transform:scale(1);filter:brightness(1)}25%{transform:scale(1.45) rotate(-6deg);filter:brightness(1.9) drop-shadow(0 0 6px #ffd27a)}60%{transform:scale(.92) rotate(2deg)}100%{transform:scale(1);filter:brightness(1)}}
+.recipe.deny,#anvil-stage.deny{animation:uiDeny .36s}
+@keyframes uiDeny{20%{transform:translateX(-5px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+#tabbar .tb.got{animation:tbGot .6s}
+@keyframes tbGot{30%{transform:scale(1.18);border-color:#ffd27a;box-shadow:0 0 12px #ffd27a88}100%{transform:scale(1)}}
+.slot.bump{animation:slotBump .26s}
+@keyframes slotBump{40%{transform:scale(1.12);filter:brightness(1.5)}}
+.mach-prog.run i{background:linear-gradient(90deg,#5a7a3a,#8fbf5a 45%,#d6f29a 50%,#8fbf5a 55%,#5a7a3a);background-size:220% 100%;animation:progRun 1.1s linear infinite}
+@keyframes progRun{from{background-position:110% 0}to{background-position:-110% 0}}
+.mach-prog.done{animation:progDone .5s}
+#mach-net.flow{background:linear-gradient(90deg,transparent 30%,#ffd24a1f 48%,#ffd24a33 50%,#ffd24a1f 52%,transparent 70%) 0 0/250% 100% no-repeat;animation:netFlow 1.8s linear infinite}
+@keyframes netFlow{from{background-position:120% 0}to{background-position:-20% 0}}
+@keyframes progDone{30%{box-shadow:0 0 10px #bfe07a;border-color:#bfe07a}}
+/* 강화 모루 무대 — 모루 위 장비 · 망치 · 이번 망치질의 몫(성공 · 실패 · 파괴) */
+#anvil-stage{display:flex;align-items:center;gap:14px;margin:4px 16px 0;padding:10px 12px;background:#100f0a;border:1px solid #262418;border-radius:4px;transition:border-color .2s,box-shadow .2s}
+#anvil-stage .as-anvil{position:relative;flex:0 0 72px;height:64px;margin-right:12px}
+#anvil-stage .as-anvil::before{content:'';position:absolute;left:4px;right:4px;bottom:2px;height:26px;background:linear-gradient(#5b5b66,#2c2c33);clip-path:polygon(0 0,100% 0,88% 38%,70% 46%,76% 100%,24% 100%,30% 46%,12% 38%);border-radius:2px}
+#anvil-stage .as-item{position:absolute;left:20px;bottom:26px;width:32px;height:32px;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 2px 2px #000a)}
+#anvil-stage .as-ham{position:absolute;right:-16px;top:-8px;width:30px;height:30px;transform:rotate(-35deg);transform-origin:85% 90%;opacity:.55;transition:opacity .15s}
+#anvil-stage .as-ham::before{content:'';position:absolute;left:12px;top:6px;width:4px;height:24px;border-radius:2px;background:linear-gradient(90deg,#8a5a2e,#5e3a1c)}
+#anvil-stage .as-ham::after{content:'';position:absolute;left:4px;top:2px;width:20px;height:9px;border-radius:2px;background:linear-gradient(#b8b8c4,#62626e);box-shadow:0 1px 0 #2a2a30}
+#anvil-stage.busy .as-ham{opacity:1}
+#anvil-stage .as-ham.hit{animation:hamHit .24s cubic-bezier(.6,0,.4,1)}
+@keyframes hamHit{0%{transform:rotate(-35deg)}45%{transform:rotate(-70deg)}70%{transform:rotate(12deg) translate(-4px,4px)}100%{transform:rotate(-35deg)}}
+#anvil-stage .as-item.jolt{animation:itemJolt .2s}
+@keyframes itemJolt{30%{transform:translateY(2px) scaleY(.88);filter:drop-shadow(0 0 6px #ffa040) brightness(1.6)}}
+#anvil-stage .as-res{position:absolute;left:0;right:0;top:-6px;text-align:center;font-weight:700;font-size:15px;opacity:0;text-shadow:0 1px 3px #000}
+#anvil-stage .as-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+#anvil-stage .as-line{font-size:12px;color:var(--ink);overflow-wrap:anywhere}
+#anvil-stage .as-risk{display:flex;height:7px;border-radius:4px;overflow:hidden;background:#1d1b14}
+#anvil-stage .as-risk i{display:block;height:100%;transition:width .25s}
+#anvil-stage .as-risk .ok{background:#8fbf5a}
+#anvil-stage .as-risk .fail{background:#7a7a86}
+#anvil-stage .as-risk .brk{background:#c8443a}
+#anvil-stage.r-ok{border-color:#d8a94b;box-shadow:0 0 14px #ffd27a55 inset}
+#anvil-stage.r-ok .as-res{color:#ffd27a;animation:resUp 1s ease-out}
+#anvil-stage.r-fail{animation:uiDeny .4s}
+#anvil-stage.r-fail .as-res{color:#a8a8b4;animation:resUp 1s ease-out}
+#anvil-stage.r-brk{border-color:#c8443a;box-shadow:0 0 14px #c8443a66 inset;animation:uiDeny .5s}
+#anvil-stage.r-brk .as-res{color:#ff7a6a;animation:resUp 1s ease-out}
+#anvil-stage.r-brk .as-item{animation:itemCrack .6s}
+@keyframes resUp{0%{opacity:0;transform:translateY(8px) scale(.7)}20%{opacity:1;transform:translateY(0) scale(1.2)}70%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+@keyframes itemCrack{20%{filter:brightness(2) sepia(1) hue-rotate(-40deg) saturate(4)}100%{filter:none}}
+body.q-low .mach-prog.run i,body.q-low #mach-net.flow{animation:none}
+@media (prefers-reduced-motion:reduce){.recipe:not(.no):hover{transform:none}.mach-prog.run i,#mach-net.flow{animation:none}}
+
 /* 펫 경험치 막대 — 툴팁 안에 얇게 */
 .petxp{height:4px;margin:3px 0 1px;background:#241f18;border:1px solid var(--frame);border-radius:2px;overflow:hidden}
 .petxp i{display:block;height:100%;background:linear-gradient(90deg,#c8a058,#ffd24a)}

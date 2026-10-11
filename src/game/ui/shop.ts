@@ -247,13 +247,14 @@ export const ShopUIPart: Bag = {
       const fail = Math.round(G.enhFail(e) * 100), brk = Math.round(G.enhBreak(e) * 100);
       const risk = (fail ? ` ${tr('· 실패 {fail}%', { fail })}` : '') + (brk ? ` ${tr('· 파괴 {brk}%', { brk })}` : '');
       makeSlot('slot r' + it.r + (max ? ' dim' : ''), { fill: { icon: Art.itemUrl(it.id), count: max ? 'MAX' : '+' + (e + 1) },
-        click: max ? undefined : () => G.enhanceSlot(i),
-        enter: ev => this.showTip(it, ev, max
+        click: max ? undefined : () => this.anvilStrike(i),
+        enter: ev => (this.anvilShow(it), this.showTip(it, ev, max
           ? tr('더 두들길 데가 없다')
-          : tr('+{e} → +{n} · 🪙 {cost} · {item} {mat}개', { e, n: e + 1, cost: fmt(cost), item: ITEMS[mat.id].n, mat: mat.n }) + risk),
+          : tr('+{e} → +{n} · 🪙 {cost} · {item} {mat}개', { e, n: e + 1, cost: fmt(cost), item: ITEMS[mat.id].n, mat: mat.n }) + risk)),
         leave: () => this.hideTip() }, g);
     });
     if (!g.children.length) $('#anvil-note').textContent = tr('가방에 두들길 만한 장비가 없다.');
+    if (!this.anvilBusy) this.anvilShow(null);
   },
 };
 mixin(UI, ShopUIPart);
