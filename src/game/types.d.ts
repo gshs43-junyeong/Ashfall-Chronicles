@@ -92,7 +92,7 @@ interface AppCtx {
   chapterState: (...a: any[]) => any; objTask: (o: any) => string; checkAch: (...a: any[]) => any; claimBounty: (...a: any[]) => any; craft: (...a: any[]) => any;
   dayCount: number; dayT: number; deathBurst: (...a: any[]) => any; drops: any[]; edgeFx: (...a: any[]) => any;
   enhBreak: (...a: any[]) => any; enhCost: (...a: any[]) => any; enhFail: (...a: any[]) => any; enhMat: (...a: any[]) => any;
-  enhanceSlot: (...a: any[]) => any; ents: any[]; exportSaves: (...a: any[]) => any; fallFx: (...a: any[]) => any;
+  enhanceSlot: (...a: any[]) => any; ents: any[]; quality: () => string; crafted: Bag | null; exportSaves: (...a: any[]) => any; fallFx: (...a: any[]) => any;
   flashFx: (...a: any[]) => any; goldRate: number; hitFx: (...a: any[]) => any; hitStop: (...a: any[]) => any;
   importSaves: (...a: any[]) => any; keysFor: (...a: any[]) => any; killMult: (...a: any[]) => any; mapAtlas: any;
   marketRate: (...a: any[]) => any; merchantOf: (...a: any[]) => any; modeMul: (...a: any[]) => any; nearSt: any; nearStObj: any;

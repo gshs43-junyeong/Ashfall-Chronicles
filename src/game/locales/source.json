@@ -99,6 +99,7 @@
    "game/interact.useInn"
   ],
   "+{e} → +{n} · 🪙 {cost} · {item} {mat}개": [
+   "ui/motion.anvilShow",
    "ui/shop.enter"
   ],
   "+{slots} 가방 칸": [
@@ -441,6 +442,8 @@
    "ui/craft.refreshCraft"
   ],
   "· 실패 {fail}%": [
+   "ui/motion.anvilShow",
+   "ui/motion.anvilRisk",
    "ui/shop.refreshAnvil"
   ],
   "· 완료됨": [
@@ -465,6 +468,8 @@
    "index.html"
   ],
   "· 파괴 {brk}%": [
+   "ui/motion.anvilShow",
+   "ui/motion.anvilRisk",
    "ui/shop.refreshAnvil"
   ],
   "· 호위 {n}": [
@@ -1080,6 +1085,7 @@
   ],
   "더 두들길 데가 없다": [
    "game/village.enhanceSlot",
+   "ui/motion.anvilShow",
    "ui/shop.enter"
   ],
   "더 들어갈 자리가 없다": [
@@ -1136,6 +1142,9 @@
   ],
   "두 방을 더 열었다. 채울 사람은 아직 없지만, 열어는 뒀어.": [
    "data/quests"
+  ],
+  "두들길 장비를 가리켜라": [
+   "ui/motion.anvilShow"
   ],
   "둘째": [
    "game/ruins.ruinCipher"

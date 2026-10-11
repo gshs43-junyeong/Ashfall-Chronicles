@@ -32,7 +32,7 @@ export const CraftUIPart: Bag = {
   matLine(p: any, need: any) {
     return Object.entries(need).map(([k, v]: [string, any]) => {
       const have = p.countItem(k);
-      return `<span class="${have < v ? 'lack' : ''}">${ITEMS[k].n} ${have}/${v}</span>`;
+      return `<span class="${have < v ? 'lack' : ''}" data-id="${k}"><i class="mic" style="background-image:url(${Art.itemUrl(k)})"></i>${ITEMS[k].n} ${have}/${v}</span>`;
     }).join(' · ');
   },
   refreshCraft() {
@@ -112,7 +112,7 @@ export const CraftUIPart: Bag = {
     $$('#craft-list .recipe').forEach(el => {
       const i = +el.dataset.r;
       this.setIcon(el.querySelector('.ric'), Art.itemUrl(RECIPES[i].out));
-      el.addEventListener('click', () => G.craft(i));
+      el.addEventListener('click', () => this.craftWithFx(i, el));
       el.addEventListener('mouseenter', (e: any) => this.showTip(makeItem(RECIPES[i].out, 1, 0), e));
       el.addEventListener('mouseleave', () => this.hideTip());
     });

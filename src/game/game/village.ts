@@ -139,16 +139,17 @@ export const VillagePart: Bag = {
     const e = it.e || 0;
     return Math.round((this.price(it) * 0.5 + 300 * this.costMul()) * (1 + e * 0.6));
   },
-  enhanceSlot(i: number) {
+  /** 결과 'ok' · 'fail' · 'break', 못 했으면 null — 모루 무대(ui/motion.ts)가 결말을 그린다 */
+  enhanceSlot(i: number): string | null {
     const p = this.player, it = p.bag[i];
-    if (!it || !isGear(it)) { this.toast(tr('장비만 강화할 수 있다'), 'bad'); return; }
+    if (!it || !isGear(it)) { this.toast(tr('장비만 강화할 수 있다'), 'bad'); return null; }
     const d = idef(it);
-    if (!d.dmg && !d.def) { this.toast(tr('공격력도 방어력도 없는 것은 벼릴 데가 없다'), 'bad'); return; }
+    if (!d.dmg && !d.def) { this.toast(tr('공격력도 방어력도 없는 것은 벼릴 데가 없다'), 'bad'); return null; }
     const e = it.e || 0;
-    if (e >= this.ENH_MAX) { this.toast(tr('더 두들길 데가 없다'), 'bad'); return; }
+    if (e >= this.ENH_MAX) { this.toast(tr('더 두들길 데가 없다'), 'bad'); return null; }
     const cost = this.enhCost(it), mat = this.enhMat(e);
-    if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return; }
-    if (!p.hasAll({ [mat.id]: mat.n })) { this.toast(tr('{item} {mat}개가 필요하다', { item: ITEMS[mat.id].n, mat: mat.n }), 'bad'); return; }
+    if (p.gold < cost) { this.toast(tr('금화가 부족하다'), 'bad'); return null; }
+    if (!p.hasAll({ [mat.id]: mat.n })) { this.toast(tr('{item} {mat}개가 필요하다', { item: ITEMS[mat.id].n, mat: mat.n }), 'bad'); return null; }
     p.gold -= cost; p.removeItem(mat.id, mat.n);
     const roll = Math.random(), brk = this.enhBreak(e);
     if (roll < brk) {
@@ -158,20 +159,21 @@ export const VillagePart: Bag = {
       this.shake = Math.max(this.shake, 6);
       p.recalc();
       UI.refreshAnvil(); UI.refreshBag(); UI.refreshEquip(); this.sfx('damage');
-      return;
+      return 'break';
     }
     if (roll < brk + this.enhFail(e)) {
       this.toast(tr('{itemName} — 결이 어긋났다. 단계는 그대로다', { itemName: itemName(it) }), 'bad');
       for (let k = 0; k < 12; k++) this.parts.push(new Part(p.cx, p.cy, '#8a8a96', -30, 0.6));
       this.shake = Math.max(this.shake, 3);
       UI.refreshAnvil(); UI.refreshBag(); this.sfx('damage');
-      return;
+      return 'fail';
     }
     it.e = e + 1;
     this.toast(tr('{itemName} — 한 겹 더 두들겼다', { itemName: itemName(it) }), 'good');
     for (let k = 0; k < 18; k++) this.parts.push(new Part(p.cx, p.cy, '#ff9a3a', -50, 0.7));
     p.recalc();
     UI.refreshAnvil(); UI.refreshBag(); UI.refreshEquip(); this.sfx('craft');
+    return 'ok';
   },
 
   /* ---- 재련: 금화를 내고 장비의 접사를 다시 굴린다 ---- */
