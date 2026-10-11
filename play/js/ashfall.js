@@ -33576,17 +33576,17 @@
         }
       }
       this.mpCd = (this.mpCd || 0) - dt;
-      if (this.mpCd <= 0) this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
-      if (this.hurtCd <= 0) {
+      if (this.mpCd > 0 || this.mp >= d.maxMp) this.mpT = 0;
+      else if ((this.mpT = (this.mpT || 0) + dt) >= 1) {
+        this.mpT -= 1;
+        this.mp = Math.min(d.maxMp, this.mp + d.mpreg);
+      }
+      if (this.hurtCd > 0 || this.hp >= d.maxHp) this.regT = 0;
+      else if ((this.regT = (this.regT || 0) + dt) >= 1) {
+        this.regT -= 1;
         const h0 = this.hp;
-        this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
-        this.regAcc = (this.regAcc || 0) + this.hp - h0;
-        this.regT = (this.regT || 0) + dt;
-        if (this.regT >= 2) {
-          if (this.regAcc >= 1 && this === app.me) app.texts.push(new DmgText(this.cx, this.y, "+" + Math.round(this.regAcc), "#7fe07f", 0));
-          this.regAcc = 0;
-          this.regT = 0;
-        }
+        this.hp = Math.min(d.maxHp, this.hp + d.hpreg);
+        if (this.hp - h0 >= 0.5 && this === app.me) app.texts.push(new DmgText(this.cx, this.y, "+" + Math.round(this.hp - h0), "#7fe07f", 0));
       }
       const R = this.ride ? RIDES[this.ride.kind] : null;
       if (R && this.ride.kind !== "horse") {
@@ -46877,6 +46877,38 @@
       else this.duelTone(res === 300 ? 1320 : res === 100 ? 990 : 700, res === 300 ? 1760 : 880, 0.07, 0.14, "triangle");
     },
     /* ---------------- 그리기 ---------------- */
+    /** 둘레를 옅게 어둡게 — 낚시꾼 · 낚싯줄 · 찌 둘레는 밝게 남긴다(어둠을 깔고 그 자리를 부드럽게 도려낸다) */
+    duelScrim(c) {
+      const p = this.player, f = p.fish, z = this.viewZoom();
+      const sx = (x) => (x - this.cam.x) * z, sy = (y) => (y - this.cam.y) * z;
+      c.save();
+      c.fillStyle = "rgba(2,8,14,.62)";
+      c.fillRect(0, 0, innerWidth, innerHeight);
+      c.globalCompositeOperation = "destination-out";
+      const hole = (x, y, r) => {
+        const g = c.createRadialGradient(x, y, r * 0.45, x, y, r);
+        g.addColorStop(0, "rgba(0,0,0,1)");
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        c.fillStyle = g;
+        c.fillRect(x - r, y - r, r * 2, r * 2);
+      };
+      const px = sx(p.cx), py = sy(p.cy);
+      hole(px, py, 72 * z);
+      if (f) {
+        const bx = sx((f.tx + 0.5) * TS), by = sy(f.ty * TS);
+        hole(bx, by, 58 * z);
+        c.lineCap = "round";
+        c.strokeStyle = "rgba(0,0,0,1)";
+        c.lineWidth = 34 * z;
+        c.shadowColor = "rgba(0,0,0,1)";
+        c.shadowBlur = 26 * z;
+        c.beginPath();
+        c.moveTo(px, py - 14 * z);
+        c.quadraticCurveTo((px + bx) / 2, Math.min(py, by) - 30 * z, bx, by);
+        c.stroke();
+      }
+      c.restore();
+    },
     duelDraw() {
       const D = this.duel;
       if (!D || !D.ctx) return;
@@ -46884,12 +46916,7 @@
       const c = D.ctx, d = D.d, r = D.rect;
       c.setTransform(D.dpr, 0, 0, D.dpr, 0, 0);
       c.clearRect(0, 0, innerWidth, innerHeight);
-      const z = this.viewZoom(), px = (this.player.cx - this.cam.x) * z, py = (this.player.cy - this.cam.y) * z, rr = 70 * z;
-      const spot = c.createRadialGradient(px, py, rr * 0.6, px, py, rr * 2.4);
-      spot.addColorStop(0, "rgba(2,8,14,0)");
-      spot.addColorStop(1, "rgba(2,8,14,.62)");
-      c.fillStyle = spot;
-      c.fillRect(0, 0, innerWidth, innerHeight);
+      this.duelScrim(c);
       d.draw(c, r);
       const g = clamp(d.gauge, 0, 1), fx = r.x + r.w * g, fy = r.y - 16 + Math.sin(d.t * 18) * 1.5;
       c.save();

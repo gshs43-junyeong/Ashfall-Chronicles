@@ -77,7 +77,7 @@ export class Ent extends Entity {
 export class Player extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare static _vol: number;   // 한 번 휘두른 공격의 번호(여러 몹이 같은 휘두름에 맞았는지)
-  declare _punchDmg: number; declare chargeDmg: number; declare chargeHit: Set<any>; declare chargeT: number; declare drownT: number; declare regAcc: number; declare regT: number;
+  declare _punchDmg: number; declare chargeDmg: number; declare chargeHit: Set<any>; declare chargeT: number; declare drownT: number; declare regT: number; declare mpT: number;
   declare ride: Bag | null; declare rideK: string;   // 탄 것(game/rides.ts) · 남의 아바타가 탄 갈래
   declare floating: boolean; declare gliding: boolean; declare headUnder: boolean; declare highest: number; declare jetOk: boolean | undefined;
   declare jetT: number; declare jetting: boolean; declare oxyPressure: number; declare oxygen: number; declare swimMove: boolean;

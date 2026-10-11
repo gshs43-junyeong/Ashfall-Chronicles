@@ -7,6 +7,7 @@ import { RhythmDuel } from '../../engine/rhythm/duel.js';
 import { FONT, tr } from '../lang.js';
 import { T } from '../data.js';
 import { idef } from '../data/values.js';
+import { TS } from '../world.js';
 import { UI } from '../ui.js';
 import { Sfx } from '../music.js';
 import { DAY_CYCLE, Game } from '../game.js';
@@ -175,17 +176,37 @@ export const FishDuelPart: Bag = {
   },
 
   /* ---------------- 그리기 ---------------- */
+  /** 둘레를 옅게 어둡게 — 낚시꾼 · 낚싯줄 · 찌 둘레는 밝게 남긴다(어둠을 깔고 그 자리를 부드럽게 도려낸다) */
+  duelScrim(c: CanvasRenderingContext2D) {
+    const p = this.player, f = p.fish, z = this.viewZoom();
+    const sx = (x: number) => (x - this.cam.x) * z, sy = (y: number) => (y - this.cam.y) * z;
+    c.save();
+    c.fillStyle = 'rgba(2,8,14,.62)'; c.fillRect(0, 0, innerWidth, innerHeight);
+    c.globalCompositeOperation = 'destination-out';
+    const hole = (x: number, y: number, r: number) => {
+      const g = c.createRadialGradient(x, y, r * 0.45, x, y, r);
+      g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
+    };
+    const px = sx(p.cx), py = sy(p.cy);
+    hole(px, py, 72 * z);
+    if (f) {
+      const bx = sx((f.tx + 0.5) * TS), by = sy(f.ty * TS);
+      hole(bx, by, 58 * z);
+      // 줄 — 몸에서 찌까지 띠 하나(가장자리는 흐리게)
+      c.lineCap = 'round'; c.strokeStyle = 'rgba(0,0,0,1)'; c.lineWidth = 34 * z;
+      c.shadowColor = 'rgba(0,0,0,1)'; c.shadowBlur = 26 * z;
+      c.beginPath(); c.moveTo(px, py - 14 * z); c.quadraticCurveTo((px + bx) / 2, Math.min(py, by) - 30 * z, bx, by); c.stroke();
+    }
+    c.restore();
+  },
   duelDraw() {
     const D = this.duel; if (!D || !D.ctx) return;
     this.duelLayout();
     const c = D.ctx, d = D.d, r = D.rect;
     c.setTransform(D.dpr, 0, 0, D.dpr, 0, 0);
     c.clearRect(0, 0, innerWidth, innerHeight);
-    // 낚시꾼만 밝게 — 둘레는 옅게 어두운 동그라미 바깥
-    const z = this.viewZoom(), px = (this.player.cx - this.cam.x) * z, py = (this.player.cy - this.cam.y) * z, rr = 70 * z;
-    const spot = c.createRadialGradient(px, py, rr * 0.6, px, py, rr * 2.4);
-    spot.addColorStop(0, 'rgba(2,8,14,0)'); spot.addColorStop(1, 'rgba(2,8,14,.62)');
-    c.fillStyle = spot; c.fillRect(0, 0, innerWidth, innerHeight);
+    this.duelScrim(c);
     d.draw(c, r);
     // 게이지 끝의 물고기 — 끌려오는 쪽으로 퍼덕인다
     const g = clamp(d.gauge, 0, 1), fx = r.x + r.w * g, fy = r.y - 16 + Math.sin(d.t * 18) * 1.5;

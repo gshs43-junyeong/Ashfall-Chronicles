@@ -86,15 +86,15 @@ export const PlayerMove: Bag & ThisType<Player> = {
       if (this.hp <= 0) { this.hp = 0; G.onDeath('dot'); }
     }
 
-    // 재생
+    // 재생 — 1초마다 한 번에 오른다(막대도 1초 계단) · 체력은 오른 만큼 치유 숫자를 띄운다
     this.mpCd = (this.mpCd || 0) - dt;
-    if (this.mpCd <= 0) this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
-    if (this.hurtCd <= 0) {
-      const h0 = this.hp;
-      this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
-      /* 저절로 차는 생명도 보이게 — 프레임마다 띄우면 숫자가 줄줄이 흘러서 2초치를 모아 한 번 */
-      this.regAcc = (this.regAcc || 0) + this.hp - h0; this.regT = (this.regT || 0) + dt;
-      if (this.regT >= 2) { if (this.regAcc >= 1 && this === G.me) G.texts.push(new DmgText(this.cx, this.y, '+' + Math.round(this.regAcc), '#7fe07f', 0)); this.regAcc = 0; this.regT = 0; }
+    if (this.mpCd > 0 || this.mp >= d.maxMp) this.mpT = 0;
+    else if ((this.mpT = (this.mpT || 0) + dt) >= 1) { this.mpT -= 1; this.mp = Math.min(d.maxMp, this.mp + d.mpreg); }
+    if (this.hurtCd > 0 || this.hp >= d.maxHp) this.regT = 0;
+    else if ((this.regT = (this.regT || 0) + dt) >= 1) {
+      this.regT -= 1;
+      const h0 = this.hp; this.hp = Math.min(d.maxHp, this.hp + d.hpreg);
+      if (this.hp - h0 >= 0.5 && this === G.me) G.texts.push(new DmgText(this.cx, this.y, '+' + Math.round(this.hp - h0), '#7fe07f', 0));
     }
 
     /* 배 · 수레는 제 길(수면 · 레일)을 따로 간다 — 헤엄 · 점프 · 중력을 건너뛴다(entity/player-ride.ts) */
