@@ -590,7 +590,6 @@
   "여관": "Inn",
   "여기 사람들은 무엇이든 거꾸로 적는 버릇이 있었다.": "The people here had a habit of writing everything backward.",
   "여기 새긴 것은 문을 여는 수의 한 자리다.": "What's carved here is one digit of the number that opens the door.",
-  "여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다": "You can't climb any higher here — 30 tiles above the ground is the limit",
   "여기서 만들 수 있는 것이 아직 없다.": "Nothing can be made here yet.",
   "여기서는 반응하지 않는다": "It doesn't react here",
   "여기서는 쓸 수 없다": "Can't be used here",
@@ -861,7 +860,6 @@
   "하루가 지나거나 여관에서 자고 나면 새 종이가 붙는다.": "A new sheet goes up after a day passes or you sleep at the inn.",
   "한 단계마다 공격력·방어력이 오른다 (최대 +{ENH_MAX}). +2부터 실패(단계 그대로), +4부터 파괴(한 단계 하락)가 있다.": "Each tier raises attack and defense (max +{ENH_MAX}). From +2 it can fail (tier unchanged); from +4 it can break (drops a tier).",
   "한 번 쓰고 나면 아무 일도 일어나지 않는다.": "Once used, nothing more happens.",
-  "한계 높이": "Height limit",
   "할 일은 모두 끝냈다.": "Everything that needed doing is done.",
   "핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)": "Keep it on your hotbar and right-click a water block — right-click during a bite to strike instantly (bonus)",
   "핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)": "Keep it on your hotbar and right-click an empty spot to place · left-click a placed one to retrieve it (with contents)",
@@ -1032,7 +1030,8 @@
   "말이 물을 싫어한다": "The horse refuses the water",
   "배는 물 위에 띄운다": "A boat must float on water",
   "수레는 레일 위에 놓는다": "A cart must sit on rails",
-  "이미 타고 있다": "You're already riding"
+  "이미 타고 있다": "You're already riding",
+  "배 짐칸": "Boat Hold"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4491,6 +4490,8 @@
   "ITEMS.mount_cart.d": "Place it on rails. Speeds up downhill and stops at the end of the line.",
   "ITEMS.rail.n": "Rail",
   "ITEMS.rail.d": "Connects to neighbouring rails. A one-tile rise or drop becomes a slope.",
-  "TILE_DEF.217.n": "Rail"
+  "TILE_DEF.217.n": "Rail",
+  "ITEMS.mount_boatc.n": "Cargo Skiff",
+  "ITEMS.mount_boatc.d": "A skiff with a crate lashed to the stern. Right-click while aboard to open the hold (16 slots); jump to get off."
  }
 }

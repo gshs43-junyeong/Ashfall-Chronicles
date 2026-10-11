@@ -77,6 +77,16 @@
     pick(arr) {
       return arr[Math.floor(this.next() * arr.length)];
     }
+    /** 제자리 섞기(Fisher–Yates) — ★ sort(() => r.next() - 0.5) 를 쓰지 말 것: 뽑는 수와 결과가 JS 엔진의 정렬 구현을 따라 바뀐다 */
+    shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(this.next() * (i + 1));
+        const t = arr[i];
+        arr[i] = arr[j];
+        arr[j] = t;
+      }
+      return arr;
+    }
     /** 가중치 배열 [[값, 가중치], ...] */
     weighted(pairs) {
       let total = 0;
@@ -4522,6 +4532,15 @@
       stack: 1,
       d: "물 위에 띄운다. 타고 있는 동안은 숨을 쉬지 않아도 된다."
     },
+    mount_boatc: {
+      n: "짐칸 조각배",
+      i: "🛶",
+      type: "mount",
+      mount: "boat",
+      slots: 16,
+      stack: 1,
+      d: "고물에 상자를 묶은 조각배. 타고 있을 때 우클릭하면 짐칸(16칸)이 열리고, 점프로 내린다."
+    },
     mount_cart: {
       n: "광산 수레",
       i: "🛒",
@@ -5836,6 +5855,7 @@
     { out: "door_wood", n: 1, need: { plank: 8, iron_bar: 1 }, station: "work" },
     // 탈 것 — 배는 널판과 덩굴, 수레는 쇠와 톱니, 레일은 쇠 한 줄에 침목
     { out: "mount_boat", n: 1, need: { plank: 30, vine_coil: 4, iron_bar: 2 }, station: "work" },
+    { out: "mount_boatc", n: 1, need: { mount_boat: 1, crate_wood: 1, vine_coil: 2 }, station: "work" },
     { out: "mount_cart", n: 1, need: { iron_bar: 12, plank: 8, gear_basic: 2 }, station: "forge", lv: 2 },
     { out: "rail", n: 8, need: { iron_bar: 1, plank: 2 }, station: "forge" },
     { out: "rod_basic", n: 1, need: { wood: 10, spider_silk: 4 }, station: "work" },
@@ -20631,7 +20651,7 @@
             for (let yy = q.y + 1; yy < fy; yy++) if (this.get(x, yy) === T.TORCH && r.chance(0.6)) this.set(x, yy, T.FROSTGLYPH);
           }
         }
-        for (const q of rooms.filter((q2) => q2 !== main && q2 !== sigRoom).sort(() => r.next() - 0.5)) {
+        for (const q of r.shuffle(rooms.filter((q2) => q2 !== main && q2 !== sigRoom))) {
           const fy = q.y + q.h - 3, side = r.chance(0.5) ? -1 : 1;
           const wx = side < 0 ? q.x : q.x + q.w - 1, nx0 = side < 0 ? q.x - 5 : q.x + q.w + 1;
           let ok = nx0 > x0 + 1 && nx0 + 4 < x0 + w - 1;
@@ -20737,7 +20757,7 @@
         }
         return false;
       };
-      const cand = [...free.slice().sort(() => r.next() - 0.5), sigRoom, main].filter(Boolean);
+      const cand = [...r.shuffle(free.slice()), sigRoom, main].filter(Boolean);
       let hid = false;
       found: for (const q of cand) for (const side of r.chance(0.5) ? [-1, 1] : [1, -1])
         for (const fy of [q.y + q.h - 3, q.y + q.h - 4, q.y + q.h - 5]) if (pocket(q, side, fy)) {
@@ -31332,9 +31352,9 @@
     JET_BURN: () => JET_BURN,
     JET_COOL_AIR: () => JET_COOL_AIR,
     JET_COOL_GROUND: () => JET_COOL_GROUND,
-    JET_HIGH_FALL: () => JET_HIGH_FALL,
-    JET_MAX_UP: () => JET_MAX_UP,
+    JET_DRAIN: () => JET_DRAIN,
     JET_RESUME: () => JET_RESUME,
+    JET_RISE: () => JET_RISE,
     MAX_BAG_SIZE: () => MAX_BAG_SIZE,
     MAX_FALL: () => MAX_FALL,
     PART_WORLD: () => PART_WORLD,
@@ -31345,6 +31365,8 @@
     Pet: () => Pet,
     Player: () => Player,
     Proj: () => Proj,
+    REGEN_DELAY: () => REGEN_DELAY,
+    REGEN_FULL: () => REGEN_FULL,
     SAFE_FALL_TILES: () => SAFE_FALL_TILES,
     SAFE_FALL_VY: () => SAFE_FALL_VY,
     VAULT_SIZE: () => VAULT_SIZE,
@@ -31688,13 +31710,14 @@
   }
 
   // src/game/entity.ts
+  var REGEN_DELAY = 5, REGEN_FULL = 250;
   var GRAV = 2e3, MAX_FALL = 1250;
-  var JET_MAX_UP = 30;
-  var JET_BURN = 4;
-  var JET_COOL_AIR = 3;
-  var JET_COOL_GROUND = 1.2;
+  var JET_BURN = 15;
+  var JET_COOL_AIR = 6;
+  var JET_COOL_GROUND = 2.5;
   var JET_RESUME = 0.3;
-  var JET_HIGH_FALL = 140;
+  var JET_RISE = 260;
+  var JET_DRAIN = CELL_CHARGE / 300;
   var SAFE_FALL_TILES = 10;
   var SAFE_FALL_VY = Math.sqrt(2 * GRAV * SAFE_FALL_TILES * TS);
   var BASE_BAG_SIZE = 40, MAX_BAG_SIZE = 56, HOTBAR = 10;
@@ -31808,14 +31831,15 @@
       }
       acc.def = Math.round(acc.def + s.vit * 0.8);
       const maxHp = Math.round(100 + (this.level - 1) * 12 + s.vit * 6 + acc.hp);
-      const hpreg = maxHp * 4e-3 + (acc.hpreg || 0);
+      const hpreg = maxHp / REGEN_FULL + (acc.hpreg || 0);
+      const maxMp = Math.round(50 + (this.level - 1) * 5 + s.int * 4 + acc.mp);
       this.d = {
         str: s.str,
         dex: s.dex,
         int: s.int,
         vit: s.vit,
         maxHp,
-        maxMp: Math.round(50 + (this.level - 1) * 5 + s.int * 4 + acc.mp),
+        maxMp,
         def: acc.def,
         crit: acc.crit + s.dex * 0.25,
         critD: acc.critD,
@@ -31823,7 +31847,7 @@
         cdr: Math.min(55, acc.cdr),
         lifesteal: acc.lifesteal,
         jumps: 1 + (acc.jump || 0),
-        mpreg: 2.2 * (1 + acc.mpreg / 100),
+        mpreg: maxMp / REGEN_FULL * (1 + acc.mpreg / 100),
         hpreg,
         dmgP: acc.dmgP,
         spdP: acc.spdP,
@@ -31880,7 +31904,7 @@
       if (!world) return 0;
       const fy = Math.floor((this.y + this.h + 1) / TS);
       const x0 = Math.floor(this.x / TS), x1 = Math.floor((this.x + this.w - 1) / TS);
-      let best = JET_MAX_UP + 1;
+      let best = 31;
       for (let x = x0; x <= x1; x++)
         for (let dy = 0; dy < best; dy++) {
           const t = TILE_DEF[world.get(x, fy + dy)];
@@ -32061,6 +32085,7 @@
       this.hp -= dmg;
       this.iframe = 0.5;
       this.flash = 0.25;
+      this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY);
       app.shake = Math.max(app.shake, Math.min(9, dmg * 0.12));
       app.texts.push(new DmgText(this.cx, this.y, dmg, "#ff6b6b", 0));
       if (srcX !== void 0 && !(this.d.dr >= 50)) {
@@ -32965,6 +32990,7 @@
           return;
         }
         this.mp -= cost;
+        this.mpCd = REGEN_DELAY;
         const n = d.multi || 1;
         this.volley = Player._vol = (Player._vol || 0) + 1;
         const pt = d.proj || "bolt";
@@ -33050,6 +33076,7 @@
         return;
       }
       this.mp -= sk.mana;
+      this.mpCd = REGEN_DELAY;
       if (this === app.player) app.noiseT = app.time;
       this.cd[id] = sk.cd * (1 - this.d.cdr / 100);
       const w = this.weapon();
@@ -33408,7 +33435,7 @@
         this.vx = clamp(this.vx, -R.max, R.max);
         let nx = this.cx + this.vx * dt;
         let col = Math.floor(nx / TS), sr = boatRow(world, col, rd.row);
-        const edge = Math.floor((nx + Math.sign(this.vx || 1) * 18) / TS);
+        const edge = Math.floor((nx + Math.sign(this.vx || 1) * 20) / TS);
         if (sr < 0 || boatRow(world, edge, sr) < 0 || world.solid(col, sr - 1) || world.solid(edge, sr - 1)) {
           this.vx = 0;
           nx = this.cx;
@@ -33484,6 +33511,7 @@
             const dmg = Math.max(4, Math.round(this.d.maxHp * 0.06));
             this.hp -= dmg;
             this.flash = 0.25;
+            this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY);
             app.texts.push(new DmgText(this.cx, this.y, dmg, "#ff6b6b", 0));
             app.sfx("drown");
             for (let i = 0; i < 8; i++) app.parts.push(new Part(this.cx, this.y + 6, "#bfe4ff", -50, 0.6));
@@ -33533,6 +33561,7 @@
       for (const b of this.buffs) if (b.dps > 0) dot += b.dps * dt;
       if (dot > 0 && this.hp > 0 && !this.remote) {
         this.hp -= dot;
+        this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY);
         this.dotAcc = (this.dotAcc || 0) + dot;
         this.dotT = (this.dotT || 0) + dt;
         if (this.dotT >= 0.6) {
@@ -33546,7 +33575,8 @@
           app.onDeath("dot");
         }
       }
-      this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
+      this.mpCd = (this.mpCd || 0) - dt;
+      if (this.mpCd <= 0) this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
       if (this.hurtCd <= 0) {
         const h0 = this.hp;
         this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
@@ -33646,40 +33676,29 @@
         if (this.vy < 0 && !input.jump) this.vy += 1400 * dt;
       }
       this.jetting = false;
-      this.jetGap = d.jet ? this.groundGap(world) : 0;
-      const room = d.jet ? clamp((JET_MAX_UP + 1 - this.jetGap) / 4, 0, 1) : 1;
-      const tooHigh = d.jet && this.jetGap >= JET_MAX_UP;
       if (d.jet && input.jump && !this.onGround && !inWater && !this.jetOver) {
         if (this.jetOk === void 0) {
           this.jetT = 0;
-          this.jetOk = this.useCharge(6);
+          this.jetOk = this.useCharge(JET_DRAIN * 0.25);
         } else {
           this.jetT = (this.jetT || 0) + dt;
           if (this.jetT >= 0.25) {
             this.jetT -= 0.25;
-            this.jetOk = this.useCharge(6);
+            this.jetOk = this.useCharge(JET_DRAIN * 0.25);
           }
         }
         if (this.jetOk) {
-          const cap = -330 * room + JET_HIGH_FALL * (1 - room);
-          if (this.vy > cap) this.vy = Math.max(this.vy - 2400 * dt, cap);
+          if (this.vy > -JET_RISE) this.vy = Math.max(this.vy - 2e3 * dt, -JET_RISE);
           this.jetting = true;
           if (Math.random() < dt * 30)
-            app.parts.push(new Part(
-              this.cx + (Math.random() - 0.5) * 10,
-              this.y + this.h,
-              tooHigh ? "#8a7a6a" : "#ffb04a",
-              60,
-              0.35
-            ));
-          if (tooHigh) this.jetNote(tr("여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다"));
+            app.parts.push(new Part(this.cx + (Math.random() - 0.5) * 10, this.y + this.h, "#ffb04a", 60, 0.35));
         }
       } else {
         this.jetT = 0;
         this.jetOk = void 0;
       }
       if (d.jet) {
-        if (this.jetting && !tooHigh) {
+        if (this.jetting) {
           this.jetHeat = Math.min(1, (this.jetHeat || 0) + dt / JET_BURN);
           if (this.jetHeat >= 1 && !this.jetOver) {
             this.jetOver = true;
@@ -39212,7 +39231,7 @@
       const p = app.player;
       const store = this.storeRef ? this.storeRef.items : app.vault;
       const used = store.filter(Boolean).length;
-      const label = this.storeRef ? this.storeRef.gold ? tr("황금 저장 상자") : tr("저장 상자") : tr("보관고");
+      const sr = this.storeRef, label = sr ? sr.type === "mount" ? tr("배 짐칸") : sr.gold ? tr("황금 저장 상자") : tr("저장 상자") : tr("보관고");
       $("#vault-title").textContent = `${label} — ${used} / ${store.length}`;
       const goldRow = $("#vault-gold-row");
       if (goldRow) {
@@ -39929,7 +39948,7 @@
         const jb = $("#jet-bar");
         $("#jet-fill").style.width = Math.round((1 - (p.jetHeat || 0)) * 100) + "%";
         jb.classList.toggle("over", !!p.jetOver);
-        $("#jet-text").textContent = p.jetOver ? tr("과열 — 식는 중") : p.jetGap > 30 ? tr("한계 높이") : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`;
+        $("#jet-text").textContent = p.jetOver ? tr("과열 — 식는 중") : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`;
       }
       const oxy = p.oxygen === void 0 ? d.oxyMax : p.oxygen;
       const showAir = p.headUnder || oxy < d.oxyMax - 0.05;
@@ -42236,8 +42255,9 @@
       return this.tweens.after(sec, fn);
     },
     viewZoom() {
-      return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6);
+      return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6) * (this.duelZoom || 1);
     },
+    // 낚시 겨루기 동안 다가간다(game/fish-duel)
     resize() {
       const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), QUALITY[this.quality()].dpr);
       this.W = v.W;
@@ -42669,6 +42689,10 @@
     update(dt) {
       const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       dt = this.timeScale.step(dt);
+      if (this.duel && !this.net) {
+        this.updateFishing(dt);
+        return;
+      }
       if (this.autosave && !this.net) this.autosave.tick(dt);
       this.time += dt;
       if (this.state === "play" && !this.paused) {
@@ -42821,7 +42845,7 @@
         this.growTimer = 5;
         for (const q of this.players) w.regrow(this.rng, 4, Math.floor(q.cx / TS));
       }
-      this.cam.update(dt, p.cx - this.W / 2, p.cy - this.H / 2 - 30, p.vx, p.vy, WW2 * TS - this.W, WH2 * TS - this.H);
+      if (!this.duel) this.cam.update(dt, p.cx - this.W / 2, p.cy - this.H / 2 - 30, p.vx, p.vy, WW2 * TS - this.W, WH2 * TS - this.H);
       this.shake = Math.max(0, this.shake - dt * 26);
       const heldTool = p.held() && idef(p.held()).type === "tool";
       if (heldTool !== this._mining) {
@@ -46637,6 +46661,7 @@
   // src/game/game/fish-duel.ts
   var fish_duel_exports = {};
   __export(fish_duel_exports, {
+    DUEL_ZOOM: () => DUEL_ZOOM,
     FISH_DUEL: () => FISH_DUEL,
     FishDuelPart: () => FishDuelPart
   });
@@ -46647,8 +46672,10 @@
     { ar: 8, cs: 4.3, od: 6.5, hp: 5, bpm: 132, gap: 0.85, slider: 0.3, spinner: 0.08, repeat: 0.3, stream: 0.2, jump: 1.35, sv: 1.45, spinRps: 1.3, target: 16 },
     { ar: 9, cs: 4.8, od: 7.5, hp: 6, bpm: 148, gap: 0.75, slider: 0.28, spinner: 0.1, repeat: 0.35, stream: 0.28, jump: 1.6, sv: 1.6, spinRps: 1.5, target: 19 }
   ];
+  var DUEL_ZOOM = 1.7;
   var FishDuelPart = {
     duel: null,
+    duelZoom: 1,
     duelOn() {
       const s = this.settings || {};
       return s.fishduel === void 0 ? true : !!s.fishduel;
@@ -46756,8 +46783,8 @@
         el.width = Math.round(W * dpr);
         el.height = Math.round(H * dpr);
       }
-      const h = Math.min(H - 76, H * 0.74, W * 0.66 * 0.75), w = h * 4 / 3;
-      D.rect = { x: (W - w) / 2, y: (H - h) / 2 + 4, w, h };
+      const h = Math.min(H - 76, H * 0.74, W * 0.58 * 0.75), w = h * 4 / 3;
+      D.rect = { x: W - w - Math.max(20, W * 0.03), y: (H - h) / 2 + 4, w, h };
       D.dpr = dpr;
     },
     /* ---------------- 흐름 ---------------- */
@@ -46770,16 +46797,33 @@
       }
       D.wall = performance.now();
       D.intro = Math.max(0, D.intro - dt);
+      this.duelFrame(dt);
       D.d.update(dt);
       this.duelDraw();
       if (D.d.state === "win") this.endDuel("win");
       else if (D.d.state === "lose") this.endDuel("lose");
+    },
+    /** 카메라 — 0.35초에 걸쳐 DUEL_ZOOM 배로 다가가고, 낚시꾼을 판 왼쪽 빈 자리 가운데에 둔다 */
+    duelFrame(dt) {
+      const D = this.duel, p = this.player;
+      D.zt = Math.min(1, (D.zt || 0) + dt / 0.35);
+      const k = 1 + (DUEL_ZOOM - 1) * (1 - Math.pow(1 - D.zt, 3));
+      if (Math.abs(k - (this.duelZoom || 1)) > 2e-3) {
+        this.duelZoom = k;
+        this.resize();
+      }
+      const spot = Math.max(0.18, D.rect.x / 2 / innerWidth);
+      this.cam.x = p.cx - this.W * spot;
+      this.cam.y = p.cy - this.H * 0.55;
+      D.spot = spot;
     },
     endDuel(how) {
       const D = this.duel, p = this.player;
       if (!D) return;
       D.off();
       this.duel = null;
+      this.duelZoom = 1;
+      this.resize();
       const f = p.fish;
       if (f) {
         this.fishSplash(f, how === "win" ? 16 : 8);
@@ -46840,7 +46884,11 @@
       const c = D.ctx, d = D.d, r = D.rect;
       c.setTransform(D.dpr, 0, 0, D.dpr, 0, 0);
       c.clearRect(0, 0, innerWidth, innerHeight);
-      c.fillStyle = "rgba(2,8,14,.5)";
+      const z = this.viewZoom(), px = (this.player.cx - this.cam.x) * z, py = (this.player.cy - this.cam.y) * z, rr = 70 * z;
+      const spot = c.createRadialGradient(px, py, rr * 0.6, px, py, rr * 2.4);
+      spot.addColorStop(0, "rgba(2,8,14,0)");
+      spot.addColorStop(1, "rgba(2,8,14,.62)");
+      c.fillStyle = spot;
       c.fillRect(0, 0, innerWidth, innerHeight);
       d.draw(c, r);
       const g = clamp(d.gauge, 0, 1), fx = r.x + r.w * g, fy = r.y - 16 + Math.sin(d.t * 18) * 1.5;
@@ -46922,8 +46970,10 @@
   };
 
   // src/game/game/rides.ts
-  var MOUNT_BOX = { horse: [34, 30], boat: [48, 14], cart: [30, 20] };
+  var MOUNT_BOX = { horse: [34, 30], boat: [44, 14], cart: [30, 20] };
   var ITEM_OF = { horse: "mount_horse", boat: "mount_boat", cart: "mount_cart" };
+  var BOAT_SINK = 8, BOAT_TOP = 9;
+  var rideArt = (o) => o.kind === "boat" && o.cargo ? "boatc" : o.kind;
   var RidesPart = {
     /* ---------------- 놓기 · 거두기 ---------------- */
     /** 손에 든 탈 것을 겨눈 자리에 — 말은 땅 위, 배는 물 위, 수레는 레일 위 */
@@ -46951,7 +47001,7 @@
           this.toast(tr("배는 물 위에 띄운다"), "bad");
           return;
         }
-        y = (this.surfacePx ? this.surfacePx(tx + 0.5, sr) : sr * TS) - 9;
+        y = (this.surfacePx ? this.surfacePx(tx + 0.5, sr) : sr * TS) - BOAT_TOP;
       } else {
         const r = railRow(w, tx, ty);
         if (r < 0) {
@@ -46961,6 +47011,10 @@
         y = railTop(r) - bh;
       }
       const o = { type: "mount", kind, placed: 1, x: Math.round(x), y: Math.round(y), w: bw, h: bh, f: p.facing >= 0 ? 1 : -1 };
+      if (idef(it).slots) {
+        o.cargo = 1;
+        o.items = new Array(idef(it).slots).fill(null);
+      }
       w.objects.push(o);
       if (this.net) this.netObjAdd(o);
       it.c--;
@@ -46969,10 +47023,11 @@
       UI5.refreshBag();
       this.sfx(kind === "boat" ? "splash" : "place");
     },
-    /** 곡괭이로 거둔다 — 누가 타고 있으면 안 된다 */
+    /** 곡괭이로 거둔다 — 누가 타고 있으면 안 된다. 짐칸의 것은 가방 먼저, 넘치면 그 자리에 떨군다 */
     removeMount(o) {
       if (o.rider) return false;
-      const p = this.player, w = this.world, it = makeItem(ITEM_OF[o.kind], 1);
+      const p = this.player, w = this.world, it = makeItem(o.cargo ? "mount_boatc" : ITEM_OF[o.kind], 1);
+      for (const s of o.items || []) if (s && !p.addItem(s)) this.drops.push(new Drop(o.x + o.w / 2, o.y, s));
       if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y, it));
       const i = w.objects.indexOf(o);
       if (i >= 0) w.objects.splice(i, 1);
@@ -46983,11 +47038,14 @@
       return true;
     },
     /* ---------------- 타기 · 내리기 ---------------- */
-    /** 우클릭 — 내 것이면 내리고, 비어 있으면 탄다 */
+    /** 우클릭 — 내 것이면 내리고(짐칸 배는 짐칸을 연다 — 내리기는 점프), 비어 있으면 탄다 */
     useMount(o) {
       const p = this.player;
       if (p.ride && p.ride.o === o) {
-        this.dismount(p, "click");
+        if (o.cargo && o.items) {
+          UI5.openStore(o);
+          this.sfx("open");
+        } else this.dismount(p, "click");
         return;
       }
       if (p.ride) {
@@ -47047,7 +47105,7 @@
     placeRideObj(o, p) {
       o.x = Math.round(p.cx - o.w / 2);
       if (o.kind === "horse") o.y = Math.round(p.y + p.h - o.h);
-      else if (o.kind === "boat") o.y = Math.round(p.y + p.h - 3 - 9);
+      else if (o.kind === "boat") o.y = Math.round(p.y + p.h - 3 - BOAT_TOP);
       else o.y = Math.round(p.y + p.h + 8 + 4 - o.h);
     },
     /** 매 프레임 — 내 탈 것 따라오기 · 내릴 까닭 · 소리 · 흙먼지 · 빈 배 물결 타기 */
@@ -47086,9 +47144,15 @@
       for (const o of w.objects) {
         if (o.type !== "mount") continue;
         if (o.rider && !(p && p.ride && p.ride.o === o)) o.rider = 0;
+        const B = MOUNT_BOX[o.kind];
+        if (B && o.w !== B[0]) {
+          o.x += Math.round((o.w - B[0]) / 2);
+          o.w = B[0];
+          o.h = B[1];
+        }
         if (o.kind === "boat" && !o.rider && this.surfacePx) {
           const col = Math.floor((o.x + o.w / 2) / TS), sr = boatRow(w, col, Math.floor((o.y + o.h) / TS));
-          if (sr >= 0) o.y = Math.round(this.surfacePx((o.x + o.w / 2) / TS, sr) - 9);
+          if (sr >= 0) o.y = Math.round(this.surfacePx((o.x + o.w / 2) / TS, sr) - BOAT_TOP);
         }
       }
     },
@@ -47163,16 +47227,18 @@
         this.drawRideSprite(c, "horse", 0, fx, sy + o.h + 3, o.f || 1);
       } else if (o.kind === "boat") {
         const tilt = Math.sin(this.time * 1.6 + o.x * 0.05) * 0.04;
-        this.drawRideSprite(c, "boat", 0, fx, sy + o.h + 6, o.f || 1, tilt);
+        this.drawRideSprite(c, rideArt(o), 0, fx, sy + BOAT_TOP + BOAT_SINK, o.f || 1, tilt);
       } else this.drawRideSprite(c, "cart", 0, fx, sy + o.h + 2, o.f || 1);
     },
     /** 탄 사람 — 말은 몸 뒤, 배 · 수레는 몸 앞(다리가 가려진다). 사람은 안장 · 배 · 수레 높이만큼 올려 그린다 */
     drawRider(c, p, sx, sy) {
-      const kind = p.ride ? p.ride.kind : p.rideK;
+      let kind = p.ride ? rideArt(p.ride.o) : p.rideK;
       if (!kind) {
         this.drawPlayer(c, p, sx, sy);
         return;
       }
+      const art = kind;
+      if (kind === "boatc") kind = "boat";
       const fx = sx + p.w / 2, foot = sy + p.h, face = p.facing >= 0 ? 1 : -1;
       if (kind === "horse") {
         const fr = this.horseFrame(p.vx, p.onGround), bob = fr >= 1 && fr <= 4 ? fr % 2 ? -1 : 0 : 0;
@@ -47183,7 +47249,7 @@
       if (kind === "boat") {
         const tilt2 = clamp(p.vx / 900, -0.08, 0.08) + Math.sin(this.time * 1.6) * 0.03;
         this.drawPlayer(c, p, sx, sy + 4);
-        this.drawRideSprite(c, "boat", 0, fx, foot + 12, face, tilt2);
+        this.drawRideSprite(c, art, 0, fx, foot - 3 + BOAT_SINK, face, tilt2);
         return;
       }
       const tilt = p.ride ? p.ride.tilt || 0 : 0;
@@ -47196,8 +47262,12 @@
   // src/game/game/interact.ts
   var interact_exports = {};
   __export(interact_exports, {
-    InteractPart: () => InteractPart
+    InteractPart: () => InteractPart,
+    RUIN_COMMON: () => RUIN_COMMON,
+    RUIN_UNIQUE_SHARE: () => RUIN_UNIQUE_SHARE
   });
+  var RUIN_UNIQUE_SHARE = 0.42;
+  var RUIN_COMMON = /* @__PURE__ */ new Set(["ice_shard", "torch", "gold_ore", "plank", "wood", "dirt", "stone", "glowcap", "kelp", "copper_ore", "coal", "mushroom", "bone", "slime_gel", "corrupt_ess", "aether_shard", "soul_shard", "crystal", "iron_ore", "copper_bar", "spider_silk", "bone_frag", "sand"]);
   var InteractPart = {
     findObjAt(wx, wy) {
       const tx = Math.floor(wx / TS), ty = Math.floor(wy / TS);
@@ -47213,6 +47283,44 @@
         if (wx >= o.x && wx <= o.x + o.w && wy >= o.y && wy <= o.y + o.h) return o;
       }
       return null;
+    },
+    /** 그 유적에서만 나오는 것 — 고유 재료 · 제 벽돌 · 고유 장식 · 그 유적 몬스터의 전리품(흔한 것은 뺀다) */
+    ruinUniquePool(bonus2) {
+      const s = [...RUIN_SPEC, ...STORY_RUIN].find((q) => q.bonus2 === bonus2);
+      if (!s) return [bonus2];
+      const ids = /* @__PURE__ */ new Set([bonus2]);
+      const w = s.wall !== void 0 ? TILE_DEF[s.wall] : null;
+      if (w && w.drop) ids.add(w.drop);
+      for (const d of s.decor || []) {
+        const t = TILE_DEF[d[1]];
+        if (t && t.drop) ids.add(t.drop);
+      }
+      const tiles = new Set((s.decor || []).map((d) => d[1]));
+      for (const id in ITEMS) if (ITEMS[id].deco && tiles.has(ITEMS[id].tile)) ids.add(id);
+      for (const m of s.mobs || []) {
+        const e = ENEMIES[m];
+        if (e) {
+          for (const [id] of e.drops || []) if (ITEMS[id] && ITEMS[id].type === "mat") ids.add(id);
+        }
+      }
+      return [...ids].filter((id) => ITEMS[id] && !RUIN_COMMON.has(id));
+    },
+    /** 유적 상자 — 고유 보상이 묶음의 40% 남짓이 되도록 채운다. 상자 자리로 섞어 상자마다 다른 것이 나온다 */
+    ruinUniqueFill(o, r) {
+      const pool = this.ruinUniquePool(o.bonus2);
+      const isU = (it) => it && pool.includes(it.id);
+      const order = r.shuffle(pool.slice());
+      for (const id of order) {
+        const n = o.items.length, u = o.items.filter(isU).length;
+        if (u / n >= RUIN_UNIQUE_SHARE) break;
+        if (o.items.some((it) => it && it.id === id)) continue;
+        o.items.push(makeItem(id, ITEMS[id].stack && ITEMS[id].stack > 1 ? r.int(1, 3) : 1));
+      }
+      for (let i = o.items.length - 1; i >= 0 && o.items.filter(isU).length / o.items.length < RUIN_UNIQUE_SHARE; i--) {
+        const it = o.items[i];
+        if (!it || isU(it) || ITEMS[it.id].type !== "mat" || it.id === o.bonus) continue;
+        o.items.splice(i, 1);
+      }
     },
     /** 상자 지킴이를 깨운다 — 세계의 몹이라 호스트(혼자면 나)만. */
     wakeChestGuard(o) {
@@ -47246,6 +47354,7 @@
           if (o.bonus && ITEMS[o.bonus]) o.items.push(makeItem(o.bonus, this.rng.int(2, 5)));
           if (o.bonus2 && ITEMS[o.bonus2]) o.items.push(makeItem(o.bonus2, this.rng.int(2, 4)));
           this.pulseChest(o, tx, ty);
+          if (o.bonus2) this.ruinUniqueFill(o, new RNG(hashStr(this.world.seed + ":ru") ^ Math.floor(o.x) * 31 + Math.floor(o.y)));
         }
         UI5.openChest(o);
         this.sfx("open");
@@ -59184,7 +59293,7 @@
         sh: p.shield > 0 ? Math.round(p.shield / (p.shieldMax || p.shield) * 100) / 100 : 0,
         hid: held ? held.id : "",
         wid: wep ? wep.id : "",
-        rd: p.ride ? p.ride.kind : p.remote ? p.rideK || "" : "",
+        rd: p.ride ? p.ride.o.cargo ? "boatc" : p.ride.kind : p.remote ? p.rideK || "" : "",
         c: p.charId,
         n: p.name,
         lv: p.level,

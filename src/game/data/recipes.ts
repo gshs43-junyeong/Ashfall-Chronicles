@@ -24,6 +24,7 @@ export const RECIPES: RecipeDef[] = [
   { out: 'door_wood', n: 1, need: { plank: 8, iron_bar: 1 }, station: 'work' },
   // 탈 것 — 배는 널판과 덩굴, 수레는 쇠와 톱니, 레일은 쇠 한 줄에 침목
   { out: 'mount_boat', n: 1, need: { plank: 30, vine_coil: 4, iron_bar: 2 }, station: 'work' },
+  { out: 'mount_boatc', n: 1, need: { mount_boat: 1, crate_wood: 1, vine_coil: 2 }, station: 'work' },
   { out: 'mount_cart', n: 1, need: { iron_bar: 12, plank: 8, gear_basic: 2 }, station: 'forge', lv: 2 },
   { out: 'rail', n: 8, need: { iron_bar: 1, plank: 2 }, station: 'forge' },
 

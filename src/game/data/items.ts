@@ -451,6 +451,8 @@ export const ITEMS: Record<string, ItemDef> = {
                    d: '땅 위를 빠르게 달리고 높이 뛴다. 물에는 들어가지 않는다.' },
   mount_boat:    { n: '나무 조각배', i: '🛶', type: 'mount', mount: 'boat', stack: 1,
                    d: '물 위에 띄운다. 타고 있는 동안은 숨을 쉬지 않아도 된다.' },
+  mount_boatc:   { n: '짐칸 조각배', i: '🛶', type: 'mount', mount: 'boat', slots: 16, stack: 1,
+                   d: '고물에 상자를 묶은 조각배. 타고 있을 때 우클릭하면 짐칸(16칸)이 열리고, 점프로 내린다.' },
   mount_cart:    { n: '광산 수레', i: '🛒', type: 'mount', mount: 'cart', stack: 1,
                    d: '레일 위에 놓는다. 내리막에서 빨라지고 레일 끝에서 멈춘다.' },
   rail:          { n: '레일', i: '🛤', type: 'block', tile: T.RAIL, stack: 999,

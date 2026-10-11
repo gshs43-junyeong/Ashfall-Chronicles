@@ -25,14 +25,17 @@ import type { Senses } from '../engine/entity/sense.js';
 import type { LootRow } from '../engine/core/loot.js';
 import type { PathFollower } from '../engine/tilemap/path.js';
 
+/* 체력 · 마나 재생 — 깎인(쓴) 뒤 REGEN_DELAY 초가 지나야 차기 시작하고, 빈 칸에서 가득까지 REGEN_FULL 초(초당 최대치/250) */
+export const REGEN_DELAY = 5, REGEN_FULL = 250;
 export const GRAV = 2000, MAX_FALL = 1250;
 /* ================= 제트팩의 두 한계 ================= */
-export const JET_MAX_UP = 30;         // 발밑 지면에서 오를 수 있는 한계 (칸)
-export const JET_BURN = 4.0;          // 이만큼 연속으로 밀면 과열 (초)
-export const JET_COOL_AIR = 3.0;      // 공중에서 다 식는 시간 (초)
-export const JET_COOL_GROUND = 1.2;   // 땅을 밟았을 때 (초)
+/* 제트팩 — 높이 한계 없이 한 번 켜면 JET_BURN 초 밀고 과열, 전력은 배터리 하나(CELL_CHARGE)로 5분 밀 만큼(초당 JET_DRAIN) */
+export const JET_BURN = 15;           // 이만큼 연속으로 밀면 과열 (초)
+export const JET_COOL_AIR = 6.0;      // 공중에서 다 식는 시간 (초)
+export const JET_COOL_GROUND = 2.5;   // 땅을 밟았을 때 (초)
 export const JET_RESUME = 0.3;        // 과열 뒤 열이 이만큼 내려와야 다시 걸린다
-export const JET_HIGH_FALL = 140;     // 한계 높이 위에서는 이 속도로 내려온다 (안전 낙하선 938보다 한참 아래)
+export const JET_RISE = 260;          // 오르는 빠르기(px/초) — 15초면 180칸쯤
+export const JET_DRAIN = CELL_CHARGE / 300;
 export const SAFE_FALL_TILES = 10;                                  // 이만큼까지는 낙하 데미지 없음
 export const SAFE_FALL_VY = Math.sqrt(2 * GRAV * SAFE_FALL_TILES * TS);   // v² = 2·g·d 로 역산한 안전 낙하 속도
 export const BASE_BAG_SIZE = 40, MAX_BAG_SIZE = 56, HOTBAR = 10;
@@ -90,7 +93,7 @@ export class Player extends Ent {
   declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: Record<string, any>; declare facing: number; declare flash: number;
   declare gathered: Record<string, any>; declare gold: number; declare hp: number; declare hurtCd: number; declare iframe: number; declare jetGap: number;
   declare jetHeat: number; declare jetOver: boolean; declare jumpHeld: boolean; declare jumpsLeft: number; declare kills: Record<string, any>;
-  declare level: number; declare mineProg: number; declare mineTx: number; declare mineTy: number; declare mined: Record<string, any>; declare mp: number;
+  declare level: number; declare mineProg: number; declare mineTx: number; declare mineTy: number; declare mined: Record<string, any>; declare mp: number; declare mpCd: number;
   declare name: string; declare potionCd: number; declare prof: Record<string, any>; declare sel: number; declare shield: number; declare shieldMax: number;
   declare shieldT: number; declare skillPts: number; declare skills: Record<string, any>; declare slots: any[]; declare starFade: number;
   declare starLit: number; declare starOrbits: number; declare statPts: number; declare swing: number; declare swingDir: number; declare swingSide: number; declare combo: number; declare lastSwingT: number;
@@ -154,14 +157,15 @@ export class Player extends Ent {
     acc.def = Math.round(acc.def + s.vit * 0.8);
     const maxHp = Math.round(100 + (this.level - 1) * 12 + s.vit * 6 + acc.hp);
     /* ★ 체력 재생은 **최대 체력에 비례하는 몫**을 기본으로 깐다 — 사연: docs/code-history.md#h25 */
-    const hpreg = maxHp * 0.004 + (acc.hpreg || 0);
+    const hpreg = maxHp / REGEN_FULL + (acc.hpreg || 0);
+    const maxMp = Math.round(50 + (this.level - 1) * 5 + s.int * 4 + acc.mp);
     this.d = {
       str: s.str, dex: s.dex, int: s.int, vit: s.vit,
       maxHp,
-      maxMp: Math.round(50 + (this.level - 1) * 5 + s.int * 4 + acc.mp),
+      maxMp,
       def: acc.def, crit: acc.crit + s.dex * 0.25, critD: acc.critD,
       ms: 190 * (1 + acc.ms / 100), cdr: Math.min(55, acc.cdr), lifesteal: acc.lifesteal,
-      jumps: 1 + (acc.jump || 0), mpreg: 2.2 * (1 + acc.mpreg / 100), hpreg,
+      jumps: 1 + (acc.jump || 0), mpreg: maxMp / REGEN_FULL * (1 + acc.mpreg / 100), hpreg,
       dmgP: acc.dmgP, spdP: acc.spdP, magicP: acc.magicP, fire: acc.fire, frost: acc.frost, poison: acc.poison,
       dashCd: Math.max(0.5, 1.6 - acc.dashCd), dashI: 260 + acc.dashI,
       /* dr — 방어(def)와 달리 적 수치를 타지 않고 **최종 피해**를 그대로 깎는다. */
@@ -203,7 +207,7 @@ export class Player extends Ent {
     if (!world) return 0;
     const fy = Math.floor((this.y + this.h + 1) / TS);
     const x0 = Math.floor(this.x / TS), x1 = Math.floor((this.x + this.w - 1) / TS);
-    let best = JET_MAX_UP + 1;
+    let best = 31;                       // 30칸까지만 잰다(그 위는 31)
     for (let x = x0; x <= x1; x++)
       for (let dy = 0; dy < best; dy++) {
         const t = TILE_DEF[world.get(x, fy + dy)];
@@ -343,6 +347,7 @@ export class Player extends Ent {
     }
     this.hp -= dmg;
     this.iframe = 0.5; this.flash = 0.25;
+    this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY);     // 맞으면 5초 동안 저절로 차지 않는다
     G.shake = Math.max(G.shake, Math.min(9, dmg * 0.12));
     G.texts.push(new DmgText(this.cx, this.y, dmg, '#ff6b6b', 0));
     if (srcX !== undefined && !(this.d.dr >= 50)) { this.vx = Math.sign(this.cx - srcX) * 180; this.vy = -180; }

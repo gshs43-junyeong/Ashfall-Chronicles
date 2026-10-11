@@ -2409,8 +2409,13 @@ window.SPRITE_MANIFEST = {
       },
       "ride_boat": {
         "file": "obj/ride_boat.png",
-        "w": 56,
-        "h": 23
+        "w": 48,
+        "h": 24
+      },
+      "ride_boatc": {
+        "file": "obj/ride_boatc.png",
+        "w": 48,
+        "h": 24
       },
       "ride_cart": {
         "file": "obj/ride_cart.png",
@@ -2603,6 +2608,7 @@ window.SPRITE_MANIFEST = {
       "cloud_pearl": "item/cloud_pearl.png",
       "mount_horse": "item/mount_horse.png",
       "mount_boat": "item/mount_boat.png",
+      "mount_boatc": "item/mount_boatc.png",
       "mount_cart": "item/mount_cart.png",
       "rail": "item/rail.png"
     }

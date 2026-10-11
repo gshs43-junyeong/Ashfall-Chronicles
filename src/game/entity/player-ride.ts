@@ -52,8 +52,8 @@ export const PlayerRide: Bag & ThisType<Player> = {
       this.vx = clamp(this.vx, -R.max, R.max);
       let nx = this.cx + this.vx * dt;
       let col = Math.floor(nx / TS), sr = boatRow(world, col, rd.row);
-      // 물이 끝나거나(뭍) 수면 위가 막히면(다리 · 둑) 거기서 멈춘다 — 배 끝 쪽(±18px)까지 본다
-      const edge = Math.floor((nx + Math.sign(this.vx || 1) * 18) / TS);
+      // 물이 끝나거나(뭍) 수면 위가 막히면(다리 · 둑) 거기서 멈춘다 — 배 끝(두 칸 선체의 반, ±20px)까지 본다
+      const edge = Math.floor((nx + Math.sign(this.vx || 1) * 20) / TS);
       if (sr < 0 || boatRow(world, edge, sr) < 0 || world.solid(col, sr - 1) || world.solid(edge, sr - 1)) {
         this.vx = 0; nx = this.cx; col = Math.floor(nx / TS); sr = boatRow(world, col, rd.row);
       }

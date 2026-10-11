@@ -8,7 +8,7 @@ import { SKILLS } from '../data/skills.js';
 import { SIG_FX, SKILL_FX, SKILL_HIT, idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { itemDamage, itemSpeed } from '../items.js';
-import { Enemy, PROJ_STYLE, Part, Player, Proj, Wolf } from '../entity.js';
+import { Enemy, PROJ_STYLE, Part, Player, Proj, REGEN_DELAY, Wolf } from '../entity.js';
 /* entity.js 의 Player 에서 나눈 조각 — 읽히는 순간 Player.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
 export const PlayerCombat: Bag & ThisType<Player> = {
@@ -53,7 +53,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     } else if (d.wc === 'magic') {
       const cost = d.mana || 5;
       if (this.mp < cost) { G.toast(tr('마나가 부족하다'), 'bad'); this.atkTimer = 0.2; return; }
-      this.mp -= cost;
+      this.mp -= cost; this.mpCd = REGEN_DELAY;
       const n = d.multi || 1;
       this.volley = (Player._vol = (Player._vol || 0) + 1);
       const pt = d.proj || 'bolt';
@@ -129,7 +129,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     /* 못 쓰는 것을 눌렀을 때도 **대답은 한다.** — 사연: docs/code-history.md#h28 */
     if ((this.cd[id] || 0) > 0) { G.skillDeny(i); return; }
     if (this.mp < sk.mana!) { G.skillDeny(i, tr('마나가 부족하다')); return; }
-    this.mp -= sk.mana!;
+    this.mp -= sk.mana!; this.mpCd = REGEN_DELAY;
     if (this === G.player) G.noiseT = G.time;
     this.cd[id] = sk.cd! * (1 - this.d.cdr / 100);
     const w = this.weapon();

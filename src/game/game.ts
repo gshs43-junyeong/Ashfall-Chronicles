@@ -206,7 +206,7 @@ export const GameCore: Bag = {
   /** 설정의 시야 배율. */
   /** sec 초 뒤에 fn — 세계 시간으로 흐른다(멈추면 같이 멈춘다) */
   after(sec: number, fn: () => void) { return this.tweens.after(sec, fn); },
-  viewZoom() { return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6); },
+  viewZoom() { return clamp((this.settings && this.settings.view || 100) / 100, 0.6, 1.6) * (this.duelZoom || 1); },   // 낚시 겨루기 동안 다가간다(game/fish-duel)
 
   resize() {
     /* W·H 는 화면 픽셀이 아니라 **월드 좌표계로 본 시야 크기**다. */
@@ -530,6 +530,8 @@ export const GameCore: Bag = {
   update(dt: number) { const { WW, WH } = dimsOf(this.world);
     /* ---- 손이 멈추는 한 박자(히트스톱) ---- */
     dt = this.timeScale.step(dt);   // 히트스톱 · 느린 화면(engine core/timescale)
+    /* 낚시 겨루기 동안 세계는 멈춘다(몹 · 날짜 · 물결) — 여럿이면 남의 세계라 못 멈춘다 */
+    if (this.duel && !this.net) { this.updateFishing(dt); return; }
     if (this.autosave && !this.net) this.autosave.tick(dt);
     this.time += dt;
     /* 플레이 시간(초). */
@@ -681,7 +683,7 @@ export const GameCore: Bag = {
 
     // 카메라
     /* 달리는 쪽 · 떨어지는 아래쪽을 조금 더 보여 준다(engine Camera — 멈추면 천천히 가운데로 돌아온다) */
-    this.cam.update(dt, p.cx - this.W / 2, p.cy - this.H / 2 - 30, p.vx, p.vy, WW * TS - this.W, WH * TS - this.H);
+    if (!this.duel) this.cam.update(dt, p.cx - this.W / 2, p.cy - this.H / 2 - 30, p.vx, p.vy, WW * TS - this.W, WH * TS - this.H);
     this.shake = Math.max(0, this.shake - dt * 26);
 
     // 곡괭이를 들면 채굴 커서로

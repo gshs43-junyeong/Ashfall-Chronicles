@@ -590,7 +590,6 @@
   "여관": "Gasthaus",
   "여기 사람들은 무엇이든 거꾸로 적는 버릇이 있었다.": "Die Leute hier hatten die Angewohnheit, alles rückwärts zu schreiben.",
   "여기 새긴 것은 문을 여는 수의 한 자리다.": "Eingeritzt ist hier eine Stelle der Zahl, die die Tür öffnet.",
-  "여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다": "Höher geht es nicht — 30 Felder über dem Boden sind die Grenze",
   "여기서 만들 수 있는 것이 아직 없다.": "Hier lässt sich noch nichts herstellen.",
   "여기서는 반응하지 않는다": "Hier regt sich nichts",
   "여기서는 쓸 수 없다": "Hier nicht benutzbar",
@@ -861,7 +860,6 @@
   "하루가 지나거나 여관에서 자고 나면 새 종이가 붙는다.": "Nach einem Tag oder einer Nacht im Gasthaus hängen neue Zettel aus.",
   "한 단계마다 공격력·방어력이 오른다 (최대 +{ENH_MAX}). +2부터 실패(단계 그대로), +4부터 파괴(한 단계 하락)가 있다.": "Jede Stufe erhöht Angriff·Verteidigung (max. +{ENH_MAX}). Ab +2 kann es scheitern (Stufe bleibt), ab +4 kann es brechen (eine Stufe zurück).",
   "한 번 쓰고 나면 아무 일도 일어나지 않는다.": "Nach einmaliger Benutzung passiert nichts mehr.",
-  "한계 높이": "Höhengrenze",
   "할 일은 모두 끝냈다.": "Alles ist getan.",
   "핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)": "In die Schnellleiste legen und Wasserblock rechtsklicken — Rechtsklick beim Biss holt sofort ein (Bonus)",
   "핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)": "In die Schnellleiste legen und an freier Stelle rechtsklicken · Platziertes per Linksklick einsammeln (mit Inhalt)",
@@ -1032,7 +1030,8 @@
   "말이 물을 싫어한다": "Das Pferd scheut das Wasser",
   "배는 물 위에 띄운다": "Ein Boot gehört aufs Wasser",
   "수레는 레일 위에 놓는다": "Ein Wagen gehört auf Schienen",
-  "이미 타고 있다": "Du reitest bereits"
+  "이미 타고 있다": "Du reitest bereits",
+  "배 짐칸": "Bootsladeraum"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4491,6 +4490,8 @@
   "ITEMS.mount_cart.d": "Auf Schienen setzen. Wird bergab schneller und hält am Ende der Strecke.",
   "ITEMS.rail.n": "Schiene",
   "ITEMS.rail.d": "Verbindet sich mit benachbarten Schienen. Eine Stufe hoch oder runter wird zur Steigung.",
-  "TILE_DEF.217.n": "Schiene"
+  "TILE_DEF.217.n": "Schiene",
+  "ITEMS.mount_boatc.n": "Lastenkahn",
+  "ITEMS.mount_boatc.d": "Ein Kahn mit einer Kiste am Heck. Rechtsklick an Bord öffnet den Laderaum (16 Plätze); springen, um auszusteigen."
  }
 }

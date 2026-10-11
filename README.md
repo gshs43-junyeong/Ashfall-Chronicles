@@ -11,7 +11,7 @@ Each new game picks a **small · medium (1.5×) · large (2×)** world.
 
 | | | | | | |
 |---|---|---|---|---|---|
-| Items **513** | Monsters **85** | Bosses **23** | Achievements **75** | Machines **28** | Recipes **233** |
+| Items **514** | Monsters **85** | Bosses **23** | Achievements **75** | Machines **28** | Recipes **234** |
 
 <sub>How these are counted: items are every entry in the item table (blocks, decorations and pets included); monsters exclude bosses (sea flotsam and passive critters included). `node tests/counts.mjs` checks these numbers against the game tables.</sub>
 
@@ -196,7 +196,7 @@ npm run check     # the full regression suite (syntax, types, modules, translati
 
 **[MIT](LICENSE)**. Use, change and redistribute the code and the art freely — just keep the copyright notice. Copyright belongs to `gshs43-junyeong`.
 
-**Exactly two folders are exceptions.**
+**The audio folders and the fonts are exceptions.**
 
 | What | Where | Made with |
 |---|---|---|
@@ -204,7 +204,9 @@ npm run check     # the full regression suite (syntax, types, modules, translati
 
 These were made with outside services, so this repository has no right to re-license them under MIT. Playing the game is unrestricted,
 but **if you want to reuse the sound files on their own**, check those services' terms yourself. Details are in [`NOTICE.md`](NOTICE.md).
-The game font **Ashfall** is a modified Pretendard under the **SIL Open Font License 1.1** (`play/assets/fonts/OFL.txt` · `FONTLOG.txt`).
+The fonts are **not MIT**: the game font **Ashfall** (a modified Pretendard, `play/assets/fonts/`) and the font sources in `tools/art/fonts/`
+(Pretendard, Cinzel) are under the **SIL Open Font License 1.1** — keep `OFL.txt` · `FONTLOG.txt` with them, don't sell the font files on their own,
+and rename any modified version. Details are in [`NOTICE.md`](NOTICE.md).
 
 Apart from those, **every image was made in this repository** — nothing was bought or downloaded: hand-drawn sheets, plus what
 `tileart` and `itemart` paint procedurally at runtime.

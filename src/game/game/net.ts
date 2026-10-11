@@ -49,7 +49,7 @@ export const NetPart: Bag = {
       g: p.onGround ? 1 : 0, sw: p.swing || 0, sa: p.swingAng || 0, sd: p.swingDir || 0, ss: p.swingSide || 1, sr: p.swingReach || 0,
       dv: p.dashV || 0, fl: p.flash || 0, ch: p.channel ? 1 : 0, sm: p.swimming ? 1 : 0, smv: p.swimMove ? 1 : 0,
       flt: p.floating ? 1 : 0, sp: p.swimPh || 0, ifr: p.iframe || 0, hp: Math.round(p.hp), mhp: Math.round(p.d.maxHp), sh: p.shield > 0 ? Math.round(p.shield / (p.shieldMax || p.shield) * 100) / 100 : 0,
-      hid: held ? held.id : '', wid: wep ? wep.id : '', rd: p.ride ? p.ride.kind : (p.remote ? p.rideK || '' : ''), c: p.charId, n: p.name, lv: p.level, pt: this.netPetsOf(p) };
+      hid: held ? held.id : '', wid: wep ? wep.id : '', rd: p.ride ? (p.ride.o.cargo ? 'boatc' : p.ride.kind) : (p.remote ? p.rideK || '' : ''), c: p.charId, n: p.name, lv: p.level, pt: this.netPetsOf(p) };
   },
   /** 따라다니는 펫 — 'id:레벨' 을 쉼표로(바뀔 때만 다시 만든다). 남의 아바타는 받은 그대로 되돌려 보낸다. */
   netPetsOf(p: Player) {

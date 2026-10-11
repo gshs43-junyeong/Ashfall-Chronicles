@@ -21,8 +21,12 @@ export const FISH_DUEL: (DuelDiff & { target: number })[] = [
   { ar: 9, cs: 4.8, od: 7.5, hp: 6, bpm: 148, gap: 0.75, slider: 0.28, spinner: 0.1, repeat: 0.35, stream: 0.28, jump: 1.6, sv: 1.6, spinRps: 1.5, target: 19 }
 ];
 
+/* 겨루기 동안 카메라가 다가가는 배율 */
+export const DUEL_ZOOM = 1.7;
+
 export const FishDuelPart: Bag = {
   duel: null,
+  duelZoom: 1,
 
   duelOn() { const s = this.settings || {}; return s.fishduel === undefined ? true : !!s.fishduel; },
 
@@ -98,8 +102,9 @@ export const FishDuelPart: Bag = {
     const W = innerWidth, H = innerHeight;
     if (el.width !== Math.round(W * dpr) || el.height !== Math.round(H * dpr)) { el.width = Math.round(W * dpr); el.height = Math.round(H * dpr); }
     // 위 게이지(28px) · 아래 안내 줄(30px) 자리를 빼고 4:3 — 낮은 폰 가로 화면에서도 원이 손가락보다 작아지지 않게
-    const h = Math.min(H - 76, H * 0.74, W * 0.66 * 0.75), w = h * 4 / 3;
-    D.rect = { x: (W - w) / 2, y: (H - h) / 2 + 4, w, h };
+    // 판은 오른쪽에 — 왼쪽은 다가간 카메라가 비추는 낚시꾼 자리
+    const h = Math.min(H - 76, H * 0.74, W * 0.58 * 0.75), w = h * 4 / 3;
+    D.rect = { x: W - w - Math.max(20, W * 0.03), y: (H - h) / 2 + 4, w, h };
     D.dpr = dpr;
   },
 
@@ -110,14 +115,26 @@ export const FishDuelPart: Bag = {
     if (p.dead || !p.fish || !held || idef(held).type !== 'rod') { this.endDuel('quit'); return; }
     D.wall = performance.now();
     D.intro = Math.max(0, D.intro - dt);
+    this.duelFrame(dt);
     D.d.update(dt);
     this.duelDraw();
     if (D.d.state === 'win') this.endDuel('win');
     else if (D.d.state === 'lose') this.endDuel('lose');
   },
+  /** 카메라 — 0.35초에 걸쳐 DUEL_ZOOM 배로 다가가고, 낚시꾼을 판 왼쪽 빈 자리 가운데에 둔다 */
+  duelFrame(dt: number) {
+    const D = this.duel, p = this.player;
+    D.zt = Math.min(1, (D.zt || 0) + dt / 0.35);
+    const k = 1 + (DUEL_ZOOM - 1) * (1 - Math.pow(1 - D.zt, 3));
+    if (Math.abs(k - (this.duelZoom || 1)) > 0.002) { this.duelZoom = k; this.resize(); }
+    const spot = Math.max(0.18, D.rect.x / 2 / innerWidth);           // 화면 폭에서 낚시꾼이 설 자리
+    this.cam.x = p.cx - this.W * spot; this.cam.y = p.cy - this.H * 0.55;
+    D.spot = spot;
+  },
   endDuel(how: string) {
     const D = this.duel, p = this.player; if (!D) return;
     D.off(); this.duel = null;
+    this.duelZoom = 1; this.resize();
     const f = p.fish;
     if (f) { this.fishSplash(f, how === 'win' ? 16 : 8); this.sfx('splash'); }
     p.fish = null;
@@ -164,7 +181,11 @@ export const FishDuelPart: Bag = {
     const c = D.ctx, d = D.d, r = D.rect;
     c.setTransform(D.dpr, 0, 0, D.dpr, 0, 0);
     c.clearRect(0, 0, innerWidth, innerHeight);
-    c.fillStyle = 'rgba(2,8,14,.5)'; c.fillRect(0, 0, innerWidth, innerHeight);
+    // 낚시꾼만 밝게 — 둘레는 옅게 어두운 동그라미 바깥
+    const z = this.viewZoom(), px = (this.player.cx - this.cam.x) * z, py = (this.player.cy - this.cam.y) * z, rr = 70 * z;
+    const spot = c.createRadialGradient(px, py, rr * 0.6, px, py, rr * 2.4);
+    spot.addColorStop(0, 'rgba(2,8,14,0)'); spot.addColorStop(1, 'rgba(2,8,14,.62)');
+    c.fillStyle = spot; c.fillRect(0, 0, innerWidth, innerHeight);
     d.draw(c, r);
     // 게이지 끝의 물고기 — 끌려오는 쪽으로 퍼덕인다
     const g = clamp(d.gauge, 0, 1), fx = r.x + r.w * g, fy = r.y - 16 + Math.sin(d.t * 18) * 1.5;

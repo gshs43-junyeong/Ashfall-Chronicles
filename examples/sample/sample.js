@@ -1093,6 +1093,16 @@
     pick(arr) {
       return arr[Math.floor(this.next() * arr.length)];
     }
+    /** 제자리 섞기(Fisher–Yates) — ★ sort(() => r.next() - 0.5) 를 쓰지 말 것: 뽑는 수와 결과가 JS 엔진의 정렬 구현을 따라 바뀐다 */
+    shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(this.next() * (i + 1));
+        const t = arr[i];
+        arr[i] = arr[j];
+        arr[j] = t;
+      }
+      return arr;
+    }
     /** 가중치 배열 [[값, 가중치], ...] */
     weighted(pairs) {
       let total = 0;

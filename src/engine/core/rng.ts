@@ -22,6 +22,11 @@ export class RNG {
   int(a: number, b: number): number { return Math.floor(this.range(a, b + 1)); }
   chance(p: number): boolean { return this.next() < p; }
   pick<T>(arr: ArrayLike<T>): T { return arr[Math.floor(this.next() * arr.length)]; }
+  /** 제자리 섞기(Fisher–Yates) — ★ sort(() => r.next() - 0.5) 를 쓰지 말 것: 뽑는 수와 결과가 JS 엔진의 정렬 구현을 따라 바뀐다 */
+  shuffle<T>(arr: T[]): T[] {
+    for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(this.next() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+    return arr;
+  }
   /** 가중치 배열 [[값, 가중치], ...] */
   weighted<T>(pairs: ReadonlyArray<readonly [T, number]>): T {
     let total = 0; for (const p of pairs) total += p[1];

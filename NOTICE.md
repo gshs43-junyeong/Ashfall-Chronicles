@@ -1,8 +1,8 @@
 # NOTICE — 무엇이 MIT 이고 무엇이 아닌가
 
-`LICENSE` 의 MIT 는 **이 저장소에서 만든 것 전부**에 걸립니다. 예외는 **음악과 효과음
-두 폴더뿐**입니다. 그 둘은 바깥 서비스로 만든 것이라, 여기서 MIT 로 다시 내어 줄 권한이
-없습니다.
+`LICENSE` 의 MIT 는 **이 저장소에서 만든 것 전부**에 걸립니다. 예외는 셋입니다 — **음악 · 효과음**
+(바깥 서비스로 만든 것이라 여기서 MIT 로 다시 내어 줄 권한이 없습니다)과 **글꼴**(SIL Open Font License 1.1 —
+OFL 은 글꼴을 고쳐 내어도 OFL 그대로 두라고 요구하므로 MIT 로 바꿀 수 없습니다).
 
 `LICENSE` 파일은 표준 MIT 문구를 그대로 둡니다. 조항에 손을 대면 자동 검사기가
 "고친 MIT"로 읽기 때문에, 무엇이 예외인지는 이 문서에 따로 적습니다.
@@ -27,10 +27,11 @@
 
 | 무엇 | 어디 | 어떻게 만들었나 |
 |---|---|---|
-| 효과음 87개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 효과음 92개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 | 게임 글꼴 Ashfall | `play/assets/fonts/` | Pretendard(SIL OFL 1.1)를 고친 판 — 아래 '글꼴' |
+| 글꼴 원본 | `tools/art/fonts/` | Pretendard · Cinzel 원본과 각각의 OFL 전문(`OFL-*.txt`) |
 
-이 두 폴더의 파일은 **각 서비스의 이용 약관을 따릅니다.**
+음악 · 효과음 두 폴더의 파일은 **각 서비스의 이용 약관을 따르고**, 글꼴 두 폴더는 **SIL OFL 1.1** 을 따릅니다(아래 '글꼴').
 
 - 게임을 받아 즐기는 데에는 아무 제한이 없습니다.
 - **소리 파일만 떼어다 다른 곳에 쓰거나 따로 배포하는 것**은 MIT 가 허락하는 범위가
@@ -54,6 +55,9 @@
   Microsoft YaHei · Noto Sans SC, 그 밖 Pretendard · Apple SD Gothic Neo · 맑은 고딕 · 시스템 글꼴(기기 글꼴은 이름만 부릅니다).
   로고는 글꼴을 싣지 않고 `tools/mklogo.py` 가 Cinzel(SIL OFL 1.1, 파일과 라이선스 전문은 `tools/art/fonts/`)의
   글자 윤곽을 그림(PNG)·경로(SVG)로 구운 것이라 어느 언어에서나 같습니다.
+- **OFL 로 할 수 있는 것 · 지킬 것** — 글꼴을 쓰고 고치고 게임 · 문서에 담아 함께 배포하는 것은 자유롭고(판매하는 게임에 넣는 것도 됩니다),
+  글꼴 파일만 **따로 팔 수는 없습니다.** 고친 글꼴도 OFL 그대로 내야 하고, 원본의 **예약 글꼴 이름**(Pretendard 따위)은 고친 판에 쓰지 못하며,
+  저작권 표시와 라이선스 전문(`OFL.txt`)을 함께 둡니다. 포크에서 글꼴을 고치면 이름을 바꾸고 `FONTLOG.txt` 에 바꾼 것을 적으세요.
 - **사이트**(`site/home` · `site/download`)는 Hahmlet · IBM Plex Sans KR · IBM Plex Mono 를
   **Google Fonts 에서 불러옵니다.** 글꼴 파일은 이 저장소에 없고, 세 글꼴은
   [SIL Open Font License 1.1](https://openfontlicense.org) 을 따릅니다. `site/**` 의 MIT 는
@@ -64,8 +68,9 @@
 # NOTICE (English)
 
 The MIT license in `LICENSE` covers **everything created in this repository**.
-The only exceptions are the **music and sound-effect folders**, which were generated
-with external services and therefore cannot be relicensed here.
+There are three exceptions: the **music and sound-effect folders**, which were generated
+with external services and therefore cannot be relicensed here, and the **fonts**, which are under the
+SIL Open Font License 1.1 — the OFL requires modified fonts to stay under the OFL, so they cannot become MIT.
 
 `LICENSE` keeps the standard MIT text unchanged so that license scanners read it as
 plain MIT; the exceptions are documented here instead.
@@ -85,10 +90,11 @@ purchased or taken from elsewhere.
 
 | What | Where | Made with |
 |---|---|---|
-| 87 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 92 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 | Game font Ashfall | `play/assets/fonts/` | Modified Pretendard (SIL OFL 1.1) — see 'Fonts' |
+| Font sources | `tools/art/fonts/` | Original Pretendard and Cinzel with their OFL texts (`OFL-*.txt`) |
 
-These files are governed by the terms of the respective services.
+The audio files are governed by the terms of the respective services; the two font folders are governed by the SIL OFL 1.1 (see *Fonts*).
 
 - Playing the game is unaffected.
 - Extracting the audio files to use or distribute on their own is **not** granted by
@@ -113,6 +119,10 @@ synthesized tones, so replacing only some of them works.
   Noto Sans JP, PingFang SC / Microsoft YaHei / Noto Sans SC, Pretendard / Apple SD Gothic Neo / Malgun Gothic,
   then the system font). The logo ships no font: `tools/mklogo.py` bakes the glyph outlines of Cinzel
   (SIL OFL 1.1; files and licence text in `tools/art/fonts/`) into a PNG and SVG paths.
+- **What the OFL allows and requires** — you may use, modify, embed and redistribute the fonts with the game or documents
+  (commercial games included), but may not sell the font files on their own. Modified fonts must stay under the OFL,
+  must not use the original **Reserved Font Names** (such as Pretendard), and must ship with the copyright notice and licence text (`OFL.txt`).
+  If you modify the font in a fork, rename it and record the changes in `FONTLOG.txt`.
 - The **website** loads Hahmlet, IBM Plex Sans KR and IBM Plex Mono from Google Fonts.
   They are not stored in this repository and are licensed under the
   [SIL Open Font License 1.1](https://openfontlicense.org), not MIT.

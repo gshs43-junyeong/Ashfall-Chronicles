@@ -4,9 +4,10 @@ import { mixin } from '../../engine/core/mixin.js';
 import { RNG, hashStr } from '../../engine/core/rng.js';
 import { fmt, tr } from '../lang.js';
 import { dimsOf } from '../size.js';
-import { T } from '../data.js';
+import { T, TILE_DEF } from '../data.js';
 import { ITEMS, OBJ_SIZE } from '../data/items.js';
-import { RUIN_HINTS, RUIN_LORE } from '../data/ruins.js';
+import { ENEMIES } from '../data/enemies.js';
+import { RUIN_HINTS, RUIN_LORE, RUIN_SPEC, STORY_RUIN } from '../data/ruins.js';
 import { TABLETS, TERMINALS } from '../data/story.js';
 import { idef } from '../data/values.js';
 import { TS } from '../world.js';
@@ -15,6 +16,10 @@ import { Drop, Enemy, Part } from '../entity.js';
 import { UI } from '../ui.js';
 import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
+
+/* 유적 상자의 고유 보상 몫 · 고유로 치지 않는 흔한 것(여러 유적 · 바깥에서도 나온다) */
+export const RUIN_UNIQUE_SHARE = 0.42;
+export const RUIN_COMMON = new Set(['ice_shard', 'torch', 'gold_ore', 'plank', 'wood', 'dirt', 'stone', 'glowcap', 'kelp', 'copper_ore', 'coal', 'mushroom', 'bone', 'slime_gel', 'corrupt_ess', 'aether_shard', 'soul_shard', 'crystal', 'iron_ore', 'copper_bar', 'spider_silk', 'bone_frag', 'sand']);
 
 export const InteractPart: Bag = {
   findObjAt(wx: number, wy: number) {
@@ -32,6 +37,38 @@ export const InteractPart: Bag = {
       if (wx >= o.x && wx <= o.x + o.w && wy >= o.y && wy <= o.y + o.h) return o;
     }
     return null;
+  },
+  /** 그 유적에서만 나오는 것 — 고유 재료 · 제 벽돌 · 고유 장식 · 그 유적 몬스터의 전리품(흔한 것은 뺀다) */
+  ruinUniquePool(bonus2: string) {
+    const s = [...RUIN_SPEC, ...STORY_RUIN].find((q: Bag) => q.bonus2 === bonus2);
+    if (!s) return [bonus2];
+    const ids = new Set<string>([bonus2]);
+    const w = s.wall !== undefined ? TILE_DEF[s.wall] : null; if (w && w.drop) ids.add(w.drop);
+    for (const d of (s.decor || [])) { const t = TILE_DEF[d[1] as number]; if (t && t.drop) ids.add(t.drop); }
+    // 그 장식을 다시 놓는 장식 아이템(deco_*) — 캐야만 나오던 것을 상자에서도
+    const tiles = new Set((s.decor || []).map((d: any) => d[1]));
+    for (const id in ITEMS) if (ITEMS[id].deco && tiles.has(ITEMS[id].tile)) ids.add(id);
+    // 그 유적 몬스터가 떨구는 재료(장비 · 보스 전리품은 빼고 — 보스를 잡아야 얻는 것은 그대로 둔다)
+    for (const m of (s.mobs || [])) { const e = ENEMIES[m]; if (e) for (const [id] of (e.drops || [])) if (ITEMS[id] && ITEMS[id].type === 'mat') ids.add(id); }
+    return [...ids].filter(id => ITEMS[id] && !RUIN_COMMON.has(id));
+  },
+  /** 유적 상자 — 고유 보상이 묶음의 40% 남짓이 되도록 채운다. 상자 자리로 섞어 상자마다 다른 것이 나온다 */
+  ruinUniqueFill(o: Bag, r: RNG) {
+    const pool: string[] = this.ruinUniquePool(o.bonus2);
+    const isU = (it: Bag) => it && pool.includes(it.id);
+    const order = r.shuffle(pool.slice());
+    for (const id of order) {
+      const n = o.items.length, u = o.items.filter(isU).length;
+      if (u / n >= RUIN_UNIQUE_SHARE) break;
+      if (o.items.some((it: Bag) => it && it.id === id)) continue;
+      o.items.push(makeItem(id, ITEMS[id].stack && ITEMS[id].stack! > 1 ? r.int(1, 3) : 1));
+    }
+    // 고유 갈래가 적은 유적은 흔한 재료 묶음을 덜어 몫을 맞춘다(장비 · 유물 · 지도는 남긴다)
+    for (let i = o.items.length - 1; i >= 0 && o.items.filter(isU).length / o.items.length < RUIN_UNIQUE_SHARE; i--) {
+      const it = o.items[i];
+      if (!it || isU(it) || ITEMS[it.id].type !== 'mat' || it.id === o.bonus) continue;
+      o.items.splice(i, 1);
+    }
   },
   /** 상자 지킴이를 깨운다 — 세계의 몹이라 호스트(혼자면 나)만. */
   wakeChestGuard(o: Bag) {
@@ -70,6 +107,7 @@ export const InteractPart: Bag = {
         // 그 유적에서만 나오는 재료 — 흔한 자원(bonus)과 나란히 넣는다
         if (o.bonus2 && ITEMS[o.bonus2]) o.items.push(makeItem(o.bonus2, this.rng.int(2, 4)));
         this.pulseChest(o, tx, ty);      // 맥박이 뛰는 유적의 상자 — 덤을 얹고 맥박을 올린다
+        if (o.bonus2) this.ruinUniqueFill(o, new RNG(hashStr(this.world.seed + ':ru') ^ (Math.floor(o.x) * 31 + Math.floor(o.y))));
       }
       UI.openChest(o); this.sfx('open');
       if (this.net) this.netWatch(o);

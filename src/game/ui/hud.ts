@@ -43,7 +43,7 @@ export const HudUIPart: Bag = {
       jb.classList.toggle('over', !!p.jetOver);
       /* ★ 평상시에는 **숫자만** 쓴다. */
       $('#jet-text').textContent = p.jetOver ? tr('과열 — 식는 중')
-        : (p.jetGap > 30 ? tr('한계 높이') : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`);
+        : `${Math.round((1 - (p.jetHeat || 0)) * 100)}%`;
     }
     /* 산소 막대 — 물속이거나 아직 덜 찼을 때만 나온다(전하 막대와 같은 방식). */
     const oxy = p.oxygen === undefined ? d.oxyMax : p.oxygen;

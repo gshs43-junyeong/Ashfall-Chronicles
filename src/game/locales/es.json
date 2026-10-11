@@ -590,7 +590,6 @@
   "여관": "Posada",
   "여기 사람들은 무엇이든 거꾸로 적는 버릇이 있었다.": "La gente de aquí tenía la costumbre de escribirlo todo al revés.",
   "여기 새긴 것은 문을 여는 수의 한 자리다.": "Lo tallado aquí es una cifra del número que abre la puerta.",
-  "여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다": "Aquí no puedes subir más: el límite es 30 casillas sobre el suelo",
   "여기서 만들 수 있는 것이 아직 없다.": "Aquí aún no se puede fabricar nada.",
   "여기서는 반응하지 않는다": "Aquí no reacciona",
   "여기서는 쓸 수 없다": "No se puede usar aquí",
@@ -861,7 +860,6 @@
   "하루가 지나거나 여관에서 자고 나면 새 종이가 붙는다.": "Sale una hoja nueva cuando pasa un día o duermes en la posada.",
   "한 단계마다 공격력·방어력이 오른다 (최대 +{ENH_MAX}). +2부터 실패(단계 그대로), +4부터 파괴(한 단계 하락)가 있다.": "Cada nivel sube ataque y defensa (máx. +{ENH_MAX}). Desde +2 puede fallar (el nivel no cambia); desde +4 puede romperse (baja un nivel).",
   "한 번 쓰고 나면 아무 일도 일어나지 않는다.": "Una vez usado, no pasa nada más.",
-  "한계 높이": "Límite de altura",
   "할 일은 모두 끝냈다.": "Todo lo que había que hacer está hecho.",
   "핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)": "Llévala en la barra rápida y haz clic derecho sobre un bloque de agua: clic derecho cuando piquen para tirar al instante (bonificación)",
   "핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)": "Llévalo en la barra rápida y haz clic derecho en un sitio libre para colocarlo · clic izquierdo sobre uno colocado para recuperarlo (con su contenido)",
@@ -1032,7 +1030,8 @@
   "말이 물을 싫어한다": "El caballo se niega a entrar al agua",
   "배는 물 위에 띄운다": "El bote debe flotar en el agua",
   "수레는 레일 위에 놓는다": "La vagoneta debe ir sobre raíles",
-  "이미 타고 있다": "Ya vas montado"
+  "이미 타고 있다": "Ya vas montado",
+  "배 짐칸": "Bodega del bote"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4491,6 +4490,8 @@
   "ITEMS.mount_cart.d": "Colócala sobre raíles. Acelera cuesta abajo y se detiene al final de la vía.",
   "ITEMS.rail.n": "Raíl",
   "ITEMS.rail.d": "Se une a los raíles vecinos. Un desnivel de una casilla se vuelve pendiente.",
-  "TILE_DEF.217.n": "Raíl"
+  "TILE_DEF.217.n": "Raíl",
+  "ITEMS.mount_boatc.n": "Esquife de carga",
+  "ITEMS.mount_boatc.d": "Un esquife con un cajón atado a la popa. Clic derecho a bordo para abrir la bodega (16 casillas); salta para bajar."
  }
 }

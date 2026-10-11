@@ -448,7 +448,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
         }
       }
       // 얼음 벽 뒤 보물 칸 — 방 옆 바위를 파고 벽을 얼음으로 봉한다. 벽에 서리 글자 하나가 자리를 일러 준다
-      for (const q of rooms.filter(q => q !== main && q !== sigRoom).sort(() => r.next() - 0.5)) {
+      for (const q of r.shuffle(rooms.filter(q => q !== main && q !== sigRoom))) {
         const fy = q.y + q.h - 3, side = r.chance(0.5) ? -1 : 1;
         const wx = side < 0 ? q.x : q.x + q.w - 1, nx0 = side < 0 ? q.x - 5 : q.x + q.w + 1;
         let ok = nx0 > x0 + 1 && nx0 + 4 < x0 + w - 1;
@@ -532,7 +532,7 @@ export const WorldRuinSite: Bag & ThisType<World> = {
       }
       return false;
     };
-    const cand = [...free.slice().sort(() => r.next() - 0.5), sigRoom, main].filter(Boolean);
+    const cand = [...r.shuffle(free.slice()), sigRoom, main].filter(Boolean);
     let hid = false;
     found: for (const q of cand) for (const side of r.chance(0.5) ? [-1, 1] : [1, -1])
       for (const fy of [q.y + q.h - 3, q.y + q.h - 4, q.y + q.h - 5]) if (pocket(q, side, fy)) { hid = true; break found; }

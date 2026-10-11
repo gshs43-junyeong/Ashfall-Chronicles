@@ -9,8 +9,8 @@ import { hitFam } from '../data/items.js';
 import { SIG_FX, idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { itemDamage } from '../items.js';
-import { DmgText, Enemy, JET_BURN, JET_COOL_AIR, JET_COOL_GROUND, JET_HIGH_FALL, JET_MAX_UP, JET_RESUME, MAX_FALL,
-  Part, Player, SAFE_FALL_VY } from '../entity.js';
+import { DmgText, Enemy, JET_BURN, JET_COOL_AIR, JET_COOL_GROUND, JET_DRAIN, JET_RESUME, JET_RISE, MAX_FALL, Part,
+  Player, REGEN_DELAY, SAFE_FALL_VY } from '../entity.js';
 import { RIDES } from './player-ride.js';
 /* entity.js 의 Player 에서 나눈 조각 — 읽히는 순간 Player.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
@@ -42,7 +42,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
           this.drownT -= 1;
           /* 익사는 hurt()를 타지 않는다 — 방어력으로 깎이면 안 되고(숨은 갑옷으로 못 막는다), hurt()의 무적 0.5초가 붙으면 물속에서 오히려 무적이 된다. */
           const dmg = Math.max(4, Math.round(this.d.maxHp * 0.06));
-          this.hp -= dmg; this.flash = 0.25;
+          this.hp -= dmg; this.flash = 0.25; this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY);
           // 피해 숫자는 다른 피해와 같은 빨강이어야 한다 — 물빛으로 띄우면 회복처럼 읽힌다
           G.texts.push(new DmgText(this.cx, this.y, dmg, '#ff6b6b', 0));
           G.sfx('drown');   // 익사는 다른 피해음과 갈라야 한다 — 막힌 소리
@@ -77,7 +77,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
     let dot = 0;
     for (const b of this.buffs) if (b.dps > 0) dot += b.dps * dt;
     if (dot > 0 && this.hp > 0 && !this.remote) {
-      this.hp -= dot; this.dotAcc = (this.dotAcc || 0) + dot; this.dotT = (this.dotT || 0) + dt;
+      this.hp -= dot; this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY); this.dotAcc = (this.dotAcc || 0) + dot; this.dotT = (this.dotT || 0) + dt;
       if (this.dotT >= 0.6) {
         const burn = this.buffs.some(b => b.id === 'burn' && b.dps > 0);
         if (this.dotAcc >= 1) G.texts.push(new DmgText(this.cx, this.y, String(Math.round(this.dotAcc)), burn ? '#ff9a4a' : '#9fd86a', 0));
@@ -87,7 +87,8 @@ export const PlayerMove: Bag & ThisType<Player> = {
     }
 
     // 재생
-    this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
+    this.mpCd = (this.mpCd || 0) - dt;
+    if (this.mpCd <= 0) this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
     if (this.hurtCd <= 0) {
       const h0 = this.hp;
       this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
@@ -180,31 +181,23 @@ export const PlayerMove: Bag & ThisType<Player> = {
     }
     /* 제트팩 — 공중에서 점프를 누르고 있는 동안 떠오른다 — 사연: docs/code-history.md#h32 */
     this.jetting = false;
-    /* 발밑 지면에서 얼마나 떠 있나 — 30칸을 넘으면 더 오르지 못한다(위 JET_MAX_UP 주석) */
-    this.jetGap = d.jet ? this.groundGap(world) : 0;
-    /* 한계 높이를 **딱 끊지 않고 서서히 힘이 빠지게** 한다. */
-    const room = d.jet ? clamp((JET_MAX_UP + 1 - this.jetGap) / 4, 0, 1) : 1;
-    const tooHigh = d.jet && this.jetGap >= JET_MAX_UP;
     if (d.jet && input.jump && !this.onGround && !inWater && !this.jetOver) {
-      if (this.jetOk === undefined) { this.jetT = 0; this.jetOk = this.useCharge(6); }
+      // 0.25초마다 그만큼의 전력을 쓴다 — 모자라면 배터리를 갈아 끼운다(useCharge)
+      if (this.jetOk === undefined) { this.jetT = 0; this.jetOk = this.useCharge(JET_DRAIN * 0.25); }
       else {
         this.jetT = (this.jetT || 0) + dt;
-        if (this.jetT >= 0.25) { this.jetT -= 0.25; this.jetOk = this.useCharge(6); }
+        if (this.jetT >= 0.25) { this.jetT -= 0.25; this.jetOk = this.useCharge(JET_DRAIN * 0.25); }
       }
       if (this.jetOk) {
-        /* 오를 수 있는 속도 — 한계 높이에 가까울수록 -330에서 +140(천천히 내려오는 속도)으로 옮겨 간다. */
-        const cap = -330 * room + JET_HIGH_FALL * (1 - room);
-        if (this.vy > cap) this.vy = Math.max(this.vy - 2400 * dt, cap);
+        if (this.vy > -JET_RISE) this.vy = Math.max(this.vy - 2000 * dt, -JET_RISE);
         this.jetting = true;
         if (Math.random() < dt * 30)
-          G.parts.push(new Part(this.cx + (Math.random() - .5) * 10, this.y + this.h,
-                                tooHigh ? '#8a7a6a' : '#ffb04a', 60, 0.35));
-        if (tooHigh) this.jetNote(tr('여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다'));
+          G.parts.push(new Part(this.cx + (Math.random() - .5) * 10, this.y + this.h, '#ffb04a', 60, 0.35));
       }
     } else { this.jetT = 0; this.jetOk = undefined; }
     /* 열 — **밀어 올릴 때만** 오른다. */
     if (d.jet) {
-      if (this.jetting && !tooHigh) {
+      if (this.jetting) {
         this.jetHeat = Math.min(1, (this.jetHeat || 0) + dt / JET_BURN);
         if (this.jetHeat >= 1 && !this.jetOver) {
           this.jetOver = true; this.jetting = false;

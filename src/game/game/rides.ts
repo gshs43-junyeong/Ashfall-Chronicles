@@ -16,9 +16,12 @@ import { boatRow, railAt, railRow, railTop } from '../entity/player-ride.js';
 import { UI } from '../ui.js';
 import { Game } from '../game.js';
 
-/* 물건의 판정 상자(우클릭 · 곡괭이) — 그림은 더 크다(말 54×47 · 배 56×23 · 수레 34×24, obj/ride_*.png) */
-export const MOUNT_BOX: Bag = { horse: [34, 30], boat: [48, 14], cart: [30, 20] };
+/* 물건의 판정 상자(우클릭 · 곡괭이) — 말 · 수레 그림은 더 크다(말 54×47 · 수레 34×24), 배는 두 칸(44px) 선체 그대로(obj/ride_*.png) */
+export const MOUNT_BOX: Bag = { horse: [34, 30], boat: [44, 14], cart: [30, 20] };
 const ITEM_OF: Bag = { horse: 'mount_horse', boat: 'mount_boat', cart: 'mount_cart' };
+/* 배 그림 — 수면(surf)에서 그림 아래끝까지(물에 잠긴 줄 7 + 1), 배 물건 윗변은 수면 9px 위(이물 기둥 끝) */
+const BOAT_SINK = 8, BOAT_TOP = 9;
+const rideArt = (o: Bag) => o.kind === 'boat' && o.cargo ? 'boatc' : o.kind;
 
 export const RidesPart: Bag = {
 
@@ -37,23 +40,25 @@ export const RidesPart: Bag = {
     } else if (kind === 'boat') {
       const sr = boatRow(w, tx, ty);
       if (sr < 0) { this.toast(tr('배는 물 위에 띄운다'), 'bad'); return; }
-      y = (this.surfacePx ? this.surfacePx(tx + .5, sr) : sr * TS) - 9;
+      y = (this.surfacePx ? this.surfacePx(tx + .5, sr) : sr * TS) - BOAT_TOP;
     } else {
       const r = railRow(w, tx, ty);
       if (r < 0) { this.toast(tr('수레는 레일 위에 놓는다'), 'bad'); return; }
       y = railTop(r) - bh;
     }
     const o: Bag = { type: 'mount', kind, placed: 1, x: Math.round(x), y: Math.round(y), w: bw, h: bh, f: p.facing >= 0 ? 1 : -1 };
+    if (idef(it).slots) { o.cargo = 1; o.items = new Array(idef(it).slots).fill(null); }   // 짐칸 배
     w.objects.push(o);
     if (this.net) this.netObjAdd(o);
     it.c--; if (it.c <= 0) p.bag[slot] = null;
     for (let i = 0; i < 8; i++) this.parts.push(new Part(o.x + bw / 2, o.y + bh, kind === 'boat' ? '#cfe8ff' : '#c8a878', -30, .5));
     UI.refreshBag(); this.sfx(kind === 'boat' ? 'splash' : 'place');
   },
-  /** 곡괭이로 거둔다 — 누가 타고 있으면 안 된다 */
+  /** 곡괭이로 거둔다 — 누가 타고 있으면 안 된다. 짐칸의 것은 가방 먼저, 넘치면 그 자리에 떨군다 */
   removeMount(o: Bag) {
     if (o.rider) return false;
-    const p = this.player, w = this.world, it = makeItem(ITEM_OF[o.kind], 1)!;
+    const p = this.player, w = this.world, it = makeItem(o.cargo ? 'mount_boatc' : ITEM_OF[o.kind], 1)!;
+    for (const s of o.items || []) if (s && !p.addItem(s)) this.drops.push(new Drop(o.x + o.w / 2, o.y, s));
     if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y, it));
     const i = w.objects.indexOf(o); if (i >= 0) w.objects.splice(i, 1);
     if (this.net) this.netObjDel(o);
@@ -63,10 +68,14 @@ export const RidesPart: Bag = {
   },
 
   /* ---------------- 타기 · 내리기 ---------------- */
-  /** 우클릭 — 내 것이면 내리고, 비어 있으면 탄다 */
+  /** 우클릭 — 내 것이면 내리고(짐칸 배는 짐칸을 연다 — 내리기는 점프), 비어 있으면 탄다 */
   useMount(o: Bag) {
     const p = this.player;
-    if (p.ride && p.ride.o === o) { this.dismount(p, 'click'); return; }
+    if (p.ride && p.ride.o === o) {
+      if (o.cargo && o.items) { UI.openStore(o); this.sfx('open'); }
+      else this.dismount(p, 'click');
+      return;
+    }
     if (p.ride) { this.toast(tr('이미 타고 있다'), 'bad'); return; }
     if (o.rider) { this.toast(tr('누군가 타고 있다'), 'bad'); return; }
     if (p.dead || p.hp <= 0) return;
@@ -101,7 +110,7 @@ export const RidesPart: Bag = {
   placeRideObj(o: Bag, p: Player) {
     o.x = Math.round(p.cx - o.w / 2);
     if (o.kind === 'horse') o.y = Math.round(p.y + p.h - o.h);
-    else if (o.kind === 'boat') o.y = Math.round(p.y + p.h - 3 - 9);
+    else if (o.kind === 'boat') o.y = Math.round(p.y + p.h - 3 - BOAT_TOP);
     else o.y = Math.round(p.y + p.h + 8 + 4 - o.h);
   },
 
@@ -131,9 +140,11 @@ export const RidesPart: Bag = {
     for (const o of w.objects) {
       if (o.type !== 'mount') continue;
       if (o.rider && !(p && p.ride && p.ride.o === o)) o.rider = 0;
+      const B = MOUNT_BOX[o.kind];
+      if (B && o.w !== B[0]) { o.x += Math.round((o.w - B[0]) / 2); o.w = B[0]; o.h = B[1]; }   // 상자 크기가 바뀐 옛 세이브
       if (o.kind === 'boat' && !o.rider && this.surfacePx) {
         const col = Math.floor((o.x + o.w / 2) / TS), sr = boatRow(w, col, Math.floor((o.y + o.h) / TS));
-        if (sr >= 0) o.y = Math.round(this.surfacePx((o.x + o.w / 2) / TS, sr) - 9);
+        if (sr >= 0) o.y = Math.round(this.surfacePx((o.x + o.w / 2) / TS, sr) - BOAT_TOP);
       }
     }
   },
@@ -191,13 +202,14 @@ export const RidesPart: Bag = {
       this.drawRideSprite(c, 'horse', 0, fx, sy + o.h + 3, o.f || 1);
     } else if (o.kind === 'boat') {
       const tilt = Math.sin(this.time * 1.6 + o.x * 0.05) * 0.04;
-      this.drawRideSprite(c, 'boat', 0, fx, sy + o.h + 6, o.f || 1, tilt);
+      this.drawRideSprite(c, rideArt(o), 0, fx, sy + BOAT_TOP + BOAT_SINK, o.f || 1, tilt);
     } else this.drawRideSprite(c, 'cart', 0, fx, sy + o.h + 2, o.f || 1);
   },
   /** 탄 사람 — 말은 몸 뒤, 배 · 수레는 몸 앞(다리가 가려진다). 사람은 안장 · 배 · 수레 높이만큼 올려 그린다 */
   drawRider(c: CanvasRenderingContext2D, p: Player, sx: number, sy: number) {
-    const kind = p.ride ? p.ride.kind : p.rideK;
+    let kind = p.ride ? rideArt(p.ride.o) : p.rideK;
     if (!kind) { this.drawPlayer(c, p, sx, sy); return; }
+    const art = kind; if (kind === 'boatc') kind = 'boat';
     const fx = sx + p.w / 2, foot = sy + p.h, face = p.facing >= 0 ? 1 : -1;
     if (kind === 'horse') {
       const fr = this.horseFrame(p.vx, p.onGround), bob = fr >= 1 && fr <= 4 ? (fr % 2 ? -1 : 0) : 0;
@@ -208,7 +220,7 @@ export const RidesPart: Bag = {
     if (kind === 'boat') {
       const tilt = clamp(p.vx / 900, -0.08, 0.08) + Math.sin(this.time * 1.6) * 0.03;
       this.drawPlayer(c, p, sx, sy + 4);
-      this.drawRideSprite(c, 'boat', 0, fx, foot + 12, face, tilt);
+      this.drawRideSprite(c, art, 0, fx, foot - 3 + BOAT_SINK, face, tilt);   // foot = 수면 + 3
       return;
     }
     const tilt = p.ride ? (p.ride.tilt || 0) : 0;

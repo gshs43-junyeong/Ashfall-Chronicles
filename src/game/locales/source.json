@@ -1599,6 +1599,9 @@
   "밭이나 작물에 물을 준다 — 물가를 우클릭하면 채운다": [
    "game/farm.useWateringCan"
   ],
+  "배 짐칸": [
+   "ui/shop.refreshVault"
+  ],
   "배는 물 위에 띄운다": [
    "game/rides.placeMount",
    "game/rides.useMount"
@@ -2170,9 +2173,6 @@
   ],
   "여기 새긴 것은 문을 여는 수의 한 자리다.": [
    "game/ruins.ruinCipher"
-  ],
-  "여기서 더 오르지 못한다 — 발밑에서 30칸이 한계다": [
-   "entity/player-move.update"
   ],
   "여기서 만들 수 있는 것이 아직 없다.": [
    "ui/craft.refreshCraft"
@@ -3136,9 +3136,6 @@
   ],
   "한 번 쓰고 나면 아무 일도 일어나지 않는다.": [
    "game/ruins.useMystic"
-  ],
-  "한계 높이": [
-   "ui/hud.updateHUD"
   ],
   "한쪽 접시에는 깃털이 놓여 있다. 다른 쪽은 비어 있다.": [
    "game/ruin-events.openScale"
@@ -4923,6 +4920,8 @@
   "ITEMS.mount_horse.d": "땅 위를 빠르게 달리고 높이 뛴다. 물에는 들어가지 않는다.",
   "ITEMS.mount_boat.n": "나무 조각배",
   "ITEMS.mount_boat.d": "물 위에 띄운다. 타고 있는 동안은 숨을 쉬지 않아도 된다.",
+  "ITEMS.mount_boatc.n": "짐칸 조각배",
+  "ITEMS.mount_boatc.d": "고물에 상자를 묶은 조각배. 타고 있을 때 우클릭하면 짐칸(16칸)이 열리고, 점프로 내린다.",
   "ITEMS.mount_cart.n": "광산 수레",
   "ITEMS.mount_cart.d": "레일 위에 놓는다. 내리막에서 빨라지고 레일 끝에서 멈춘다.",
   "ITEMS.rail.n": "레일",

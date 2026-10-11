@@ -278,6 +278,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 - **`fillRect`에 투명색을 칠해도 아무 일도 안 일어난다.** 지우려면 `clearRect`.
 - **`arch` 이름이 겹치지 않게** — `sunken`(지표 아래 매설)과 `seabed`(해저 갈라진
   틈)가 한때 같은 이름이라 뒤엣것이 앞엣것에 가려졌다.
+- **생성에서 `sort(() => r.next() - 0.5)` 로 섞지 말 것** — 뽑는 난수 수가 JS 엔진의 정렬 구현을 따라 브라우저마다 세계가 달라진다. `r.shuffle(배열)`(엔진 RNG). 사연: docs/code-history.md#h186
 - **물은 지형 작업이 전부 끝난 뒤에 손본다.** `sealLiquids()`·`decorateWater()`는
   `generate()` 맨 끝에 있어야 한다.
 - **수면 정리 패스가 섬을 깎아 먹는다.** 바다에는 "수면 위로 삐져나온 바위를 도로

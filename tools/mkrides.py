@@ -189,36 +189,57 @@ def horse(frame):
 
 
 # ---------------- 조각배 ----------------
-def boat():
-    p = Pix(56, 23)
-    p.oy = 3
-    wood, lit, dk, inner = hexc('#8a6238'), hexc('#b0844e'), hexc('#5e4024'), hexc('#3a2614')
-    for x in range(3, 53):
-        t = (x - 3) / 49
-        top = 6 - (3 if x > 48 else 0) - (2 if x < 6 else 0)        # 이물(오른쪽)이 들린다
-        bot = 6 + int(9 * math.sin(math.pi * min(1, max(0, (t - 0.02) / 0.96))) ** 0.6)
+def boat(cargo=False):
+    """2×1 칸(44×22) 노 젓는 배 — 왼쪽이 고물(평평한 판), 오른쪽이 이물(뾰족하게 들림), 바닥은 곧은 용골.
+    물에 잠기는 아랫줄(16줄부터)을 적신다 — 게임은 그림 16줄을 수면에 맞춘다(game/rides.ts)."""
+    p = Pix(48, 24)
+    p.ox, p.oy = 2, 1
+    wood, lit, dk, dk2 = hexc('#8a6238'), hexc('#b0844e'), hexc('#5e4024'), hexc('#40281a')
+    inner = hexc('#2e1e12')
+    W = 44
+    for x in range(W):
+        # 뱃전(윗선) — 고물 쪽 높이 8, 가운데로 내려가 9, 이물로 갈수록 들려 4
+        sheer = 8 if x < 4 else 9 if x < 32 else 9 - (x - 31) * 0.5
+        # 바닥 — 곧은 용골(20), 이물 쪽은 위로 비스듬히 깎이고 고물은 판으로 선다
+        keel = 20 if x < 30 else 20 - (x - 29) * 0.9
+        if x < 2:
+            keel = 18
+        top, bot = int(round(sheer)), int(round(keel))
+        if bot <= top:
+            continue
         for y in range(top, bot + 1):
             c = wood
             if y == top:
-                c = lit
-            elif y in (top + 4, top + 8):
-                c = dk                                              # 널 이음
+                c = lit                                             # 뱃전 테두리
+            elif y == top + 1:
+                c = dk2                                             # 테두리 밑 그늘
+            elif (y - top) % 4 == 0:
+                c = dk                                              # 널 이음(가로 결)
             elif y >= bot - 1:
                 c = dk
             p.put(x, y, c)
-    for x in range(6, 49):
-        p.put(x, 6, inner)                                         # 안쪽 그늘
-    p.rect(26, 3, 2, 4, dk); p.rect(25, 3, 4, 1, lit)               # 노걸이
-    p.line(27, 3, 38, -1, hexc('#a87a48'), 1)                       # 노(위로 걸쳐 둔)
-    for x in range(5, 51, 7):
-        p.put(x, 8, hexc('#c8a070'))                                # 못
-    # 물에 잠기는 아래 다섯 줄을 적신다
-    for y in range(16, 23):
-        k = (y - 15) / 8
-        for x in range(56):
+    for x in range(3, 33):                                         # 안쪽 바닥 그늘 — 배 속이 비어 보이게
+        p.put(x, 9, inner)
+    p.rect(0, 7, 2, 12, dk); p.rect(0, 7, 2, 1, lit)                # 고물 판
+    p.line(43, 3, 41, 9, dk, 2); p.put(43, 2, lit)                  # 이물 기둥
+    for x in (12, 22):
+        p.rect(x, 7, 2, 3, dk2)                                     # 가로 앉음판 끝
+    p.rect(17, 6, 2, 3, dk); p.rect(16, 6, 4, 1, lit)               # 노걸이
+    p.line(18, 6, 4, 13, hexc('#a87a48'), 1)                        # 노 — 고물 쪽 물로 비스듬히
+    p.rect(2, 13, 3, 3, hexc('#9a7048'))                            # 노 날
+    for x in range(4, 30, 6):
+        p.put(x, 12, hexc('#c8a070'))                               # 못
+    if cargo:                                                       # 짐칸 — 고물 쪽에 묶은 나무 상자
+        cw, cl, cd = hexc('#7a5326'), hexc('#a87a40'), hexc('#4a3218')
+        p.rect(3, 2, 10, 7, cw); p.rect(3, 2, 10, 1, cl); p.rect(3, 5, 10, 1, cd); p.rect(12, 2, 1, 7, cd)
+        p.rect(7, 4, 2, 2, hexc('#d8a94b'))                         # 걸쇠
+        p.line(2, 2, 2, 8, hexc('#5f7a3a'), 1); p.line(13, 2, 13, 8, hexc('#5f7a3a'), 1)   # 밧줄
+    for y in range(17, 24):
+        k = (y - 16) / 7
+        for x in range(p.w):
             r, g, b, a = p.get(x, y)
             if a:
-                m = 0.25 + 0.35 * k
+                m = 0.22 + 0.38 * k
                 p.p[x, y] = (int(r * (1 - m) + 40 * m), int(g * (1 - m) + 90 * m), int(b * (1 - m) + 120 * m), a)
     p.outline(hexc('#24160c'))
     p.check('boat')
@@ -283,12 +304,20 @@ def icon_horse():
 def icon_boat():
     p = Pix(32, 32)
     b = boat()
-    small = b.im.resize((28, 10), Image.NEAREST)
-    p.im.paste(small, (2, 14), small)
+    small = b.im.crop((1, 1, 47, 23)).resize((30, 14), Image.NEAREST)
+    p.im.paste(small, (1, 12), small)
     p.p = p.im.load()
-    p.line(14, 14, 22, 5, hexc('#a87a48'), 1)                       # 노
-    p.rect(21, 4, 3, 2, hexc('#8a6238'))
     p.check('item boat')
+    return p
+
+
+def icon_boatc():
+    p = Pix(32, 32)
+    b = boat(True)
+    small = b.im.crop((1, 1, 47, 23)).resize((30, 14), Image.NEAREST)
+    p.im.paste(small, (1, 12), small)
+    p.p = p.im.load()
+    p.check('item boatc')
     return p
 
 
@@ -317,8 +346,9 @@ def icon_rail():
 if __name__ == '__main__':
     save(sheet([horse(i) for i in range(6)]), os.path.join(ROOT, 'obj', 'ride_horse.png'))
     save(boat().im, os.path.join(ROOT, 'obj', 'ride_boat.png'))
+    save(boat(True).im, os.path.join(ROOT, 'obj', 'ride_boatc.png'))
     save(sheet([cart(0), cart(1)]), os.path.join(ROOT, 'obj', 'ride_cart.png'))
-    for name, fn in (('mount_horse', icon_horse), ('mount_boat', icon_boat), ('mount_cart', icon_cart), ('rail', icon_rail)):
+    for name, fn in (('mount_horse', icon_horse), ('mount_boat', icon_boat), ('mount_boatc', icon_boatc), ('mount_cart', icon_cart), ('rail', icon_rail)):
         im = fn().im
         path = os.path.join(ROOT, 'item', name + '.png')
         im.save(path); print('wrote', os.path.relpath(path, ROOT), im.size)

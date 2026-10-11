@@ -121,7 +121,7 @@ export const ShopUIPart: Bag = {
     const p = G.player;
     const store = this.storeRef ? this.storeRef.items : G.vault;
     const used = store.filter(Boolean).length;
-    const label = this.storeRef ? (this.storeRef.gold ? tr('황금 저장 상자') : tr('저장 상자')) : tr('보관고');
+    const sr = this.storeRef, label = sr ? (sr.type === 'mount' ? tr('배 짐칸') : sr.gold ? tr('황금 저장 상자') : tr('저장 상자')) : tr('보관고');
     $('#vault-title').textContent = `${label} — ${used} / ${store.length}`;
     const goldRow = $('#vault-gold-row');
     if (goldRow) {
