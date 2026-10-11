@@ -420,7 +420,7 @@ export class Enemy extends Ent {
   declare chill: (t: number) => void; declare empower: (dur: number, mult: number) => void; declare mobSkills: (dt: number, player: any, seen: boolean, dd: number) => void;
   declare allyTarget: (id: string, S: Bag) => any; declare fireSkill: (id: string, player: any, tgt: any) => void;
   /* 유적 고유 몬스터의 규칙 · 사건이 다는 표(entity/enemy-traits) */
-  declare frozenT: number; declare shT: number; declare shFace: number; declare burT: number; declare hide: number; declare lampT: number;
+  declare frozenT: number; declare shT: number; declare shFace: number; declare burT: number; declare hide: number; declare lampT: number; declare aff: number; declare eatT: number;   // 야생 말 호감 · 먹는 중
   declare evLamp: boolean; declare latchT: number; declare latchOx: number; declare drainT: number; declare lastHitT: number; declare awake: number;
   declare still: boolean; declare blinkT: number; declare amb: number; declare goal: { x: number; y: number } | null; declare evTag: string;
   declare traitTick: (dt: number, world: World, p: Player) => boolean; declare traitHurt: (amount: number, src: any) => number;
@@ -597,6 +597,7 @@ export class Enemy extends Ent {
     if (this.dead) return;
     /* ★ 그림자 몹(참가자 화면) — 피해는 호스트가 계산한다. 여기서는 맞는 그림만 내고 요청을 보낸다. */
     if (this.ghost) { G.netHitGhost(this, amount, crit, src, kb, fam); return; }
+    if (this.def.tame) this.aff = 0;                                     // 야생 말 — 맞으면 쌓인 정이 사라진다
     /* 페이즈가 넘어가는 0.8초 동안은 피해가 들어가지 않는다. */
     if (this.phaseInv > 0) {
       G.texts.push(new DmgText(this.cx, this.y - 4, tr('전환 중'), '#9fd4ff', 0));

@@ -1,5 +1,5 @@
 /* ===== game/net.js — 멀티플레이: 호스트 권위 · WebRTC(설계: docs/update/v1.1.2-multiplayer-plan.md) ===== */
-import { dist2 } from '../../engine/core/math.js';
+import { clamp, dist2 } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { chunkText, createJoiner, isChunk } from '../../engine/net/chunk.js';
 import { SnapBuffer } from '../../engine/net/interp.js';
@@ -471,6 +471,9 @@ export const NetPart: Bag = {
     } else if (m.k === 'tiles' && peer.rp) {
       this.netPutTiles(m.l, true);
       for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, 'rel', m);   // 다른 참가자에게 그대로
+    } else if (m.k === 'hfeed' && peer.rp) {
+      const e = n.live.get(m.e);
+      if (e && !e.dead && e.def.tame) this.horseGain(e, clamp(m.n | 0, 0, 40), peer.rp);
     } else if (m.k === 'hit' && peer.rp) {
       const e = n.live.get(m.e);
       if (e && !e.dead && Math.abs(e.cx - peer.rp.cx) < 900 && Math.abs(e.cy - peer.rp.cy) < 700) e.hurt(m.a, !!m.c, peer.rp, m.kb, m.f || undefined);

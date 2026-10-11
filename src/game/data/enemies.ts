@@ -11,6 +11,9 @@ export const ENEMIES: Record<string, EnemyDef> = {
                 drops: [['raw_meat', 1, 1, 1]] },
   arctic_hare: { n: '눈산토끼', hp: 8, dmg: 0, def: 0, spd: 70, ai: 'critter', w: 16, h: 12, c: '#e8eef2', xp: 2, gold: 0, passive: 1, hop: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
+  /* 야생 말 — 잿빛 숲 낮에 드물게. 농작물을 먹이면 호감이 차고, 가득이면 탈 수 있는 말이 된다(game/rides.ts) */
+  wild_horse:  { n: '야생 잿빛 말', hp: 260, dmg: 0, def: 4, spd: 120, ai: 'critter', w: 34, h: 30, c: '#8a7a6a', xp: 20, gold: 0, passive: 1, tame: 1,
+                drops: [['raw_meat', 2, 4, 1]] },
   sand_lizard: { n: '모래 도마뱀', hp: 10, dmg: 0, def: 0, spd: 60, ai: 'critter', w: 18, h: 10, c: '#c8a45a', xp: 2, gold: 0, passive: 1,
                 drops: [['raw_meat', 1, 1, 1]] },
   jungle_frog: { n: '정글 개구리', hp: 9, dmg: 0, def: 0, spd: 90, ai: 'critter', w: 14, h: 12, c: '#5ab04a', xp: 2, gold: 0, passive: 1,

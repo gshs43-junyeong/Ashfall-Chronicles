@@ -11,7 +11,7 @@ import { idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Sprites } from '../sprites.js';
 import { makeItem } from '../items.js';
-import { Drop, Part } from '../entity.js';
+import { DmgText, Drop, Part } from '../entity.js';
 import { boatRow, railAt, railRow, railTop } from '../entity/player-ride.js';
 import { UI } from '../ui.js';
 import { Game } from '../game.js';
@@ -23,7 +23,65 @@ const ITEM_OF: Bag = { horse: 'mount_horse', boat: 'mount_boat', cart: 'mount_ca
 const BOAT_SINK = 8, BOAT_TOP = 9;
 const rideArt = (o: Bag) => o.kind === 'boat' && o.cargo ? 'boatc' : o.kind;
 
+/* 야생 말에게 주는 농작물 — 한 번에 오르는 호감(무작위 [최소, 최대]) · 100 이면 길든다 */
+export const HORSE_FOOD: Record<string, [number, number]> = { starroot: [14, 30], wheat: [8, 20], bloodbean: [6, 16], frostherb: [10, 22] };
+
 export const RidesPart: Bag = {
+
+  /* ---------------- 야생 말 — 먹이 · 호감 · 길들이기 ---------------- */
+  /** 커서 밑 야생 말 */
+  horseAt(wx: number, wy: number) {
+    return this.ents.find((e: any) => !e.dead && e.def && e.def.tame && wx >= e.x - 6 && wx <= e.x + e.w + 6 && wy >= e.y - 10 && wy <= e.y + e.h + 4) || null;
+  },
+  /** 우클릭 — 든 것이 농작물이면 먹인다. 참가자는 호스트에게 맡긴다(몹은 호스트 것) */
+  feedHorse(e: any) {
+    const p = this.player, it = p.held(), f = it && HORSE_FOOD[it.id];
+    if (dist(p.cx, p.cy, e.cx, e.cy) > TS * 4) { this.toast(tr('너무 멀다 — 가까이 다가가 먹인다'), 'bad'); return; }
+    if (!f) { this.toast(tr('야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다'), 'info'); return; }
+    it.c--; if (it.c <= 0) p.bag[p.sel] = null;
+    UI.refreshBag();
+    const gain = f[0] + Math.floor(Math.random() * (f[1] - f[0] + 1));
+    if (e.ghost) {
+      e.aff = Math.min(100, (e.aff || 0) + gain); e.eatT = 1.6;      // 보이는 막대만 미리 — 실제 값은 호스트
+      this.horseHearts(e, gain);
+      if (this.net && this.net.t) this.netSend(this.net.t, 'rel', { k: 'hfeed', e: e.nid, n: gain });
+      return;
+    }
+    this.horseGain(e, gain, p);
+  },
+  horseGain(e: any, gain: number, who: any) {
+    e.aff = Math.min(100, (e.aff || 0) + gain); e.eatT = 1.6; e.fleeT = 0;
+    this.horseHearts(e, gain);
+    if (e.aff >= 100) this.tameHorse(e, who);
+  },
+  horseHearts(e: any, gain: number) {
+    this.sfx('harvest', 1.1);
+    this.texts.push(new DmgText(e.cx, e.y - 6, '♥ +' + gain, '#ff9ab0', 0));
+    for (let i = 0; i < 4; i++) this.parts.push(new Part(e.cx + (Math.random() - .5) * 20, e.y + 4, '#ff8aa8', -50 - Math.random() * 40, .8));
+  },
+  /** 호감이 가득 — 몹은 사라지고 그 자리에 탈 수 있는 말(세계 물건)이 선다. 곡괭이로 거두면 아이템이 된다 */
+  tameHorse(e: any, who: any) {
+    const w = this.world, [bw, bh] = MOUNT_BOX.horse;
+    e.dead = true;
+    if (this.net && e.nid) this.net.dead.push(e.nid);
+    const o: Bag = { type: 'mount', kind: 'horse', placed: 1, x: Math.round(e.cx - bw / 2), y: Math.round(e.y + e.h - bh), w: bw, h: bh, f: e.facing >= 0 ? 1 : -1 };
+    w.objects.push(o);
+    if (this.net) this.netObjAdd(o);
+    for (let i = 0; i < 18; i++) this.parts.push(new Part(e.cx + (Math.random() - .5) * 40, e.cy + (Math.random() - .5) * 20, i % 2 ? '#ff9ab0' : '#ffe0a0', -90 - Math.random() * 80, 1));
+    this.sfx('ach');
+    if (!who || who === this.player) this.toast(tr('야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)'), 'good');
+  },
+  /** 야생 말 — 안장 없는 시트 · 호감 막대 */
+  drawWildHorse(c: CanvasRenderingContext2D, e: any, sx: number, sy: number) {
+    const fr = this.horseFrame(e.vx, e.onGround);
+    this.drawRideSprite(c, Sprites.img.obj_ride_horsew ? 'horsew' : 'horse', fr, sx + e.w / 2, sy + e.h + 3, e.facing >= 0 ? 1 : -1);
+    if (e.aff > 0) {
+      const x = sx + e.w / 2 - 14, y = sy - 20;
+      c.fillStyle = 'rgba(10,8,12,.7)'; c.fillRect(x - 1, y - 1, 30, 5);
+      c.fillStyle = '#ff7a9a'; c.fillRect(x, y, 28 * Math.min(1, e.aff / 100), 3);
+      c.fillStyle = '#ff9ab0'; c.font = '9px sans-serif'; c.fillText('♥', x - 9, y + 4);
+    }
+  },
 
   /* ---------------- 놓기 · 거두기 ---------------- */
   /** 손에 든 탈 것을 겨눈 자리에 — 말은 땅 위, 배는 물 위, 수레는 레일 위 */

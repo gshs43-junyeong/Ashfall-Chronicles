@@ -2407,6 +2407,12 @@ window.SPRITE_MANIFEST = {
         "h": 47,
         "frames": 6
       },
+      "ride_horsew": {
+        "file": "obj/ride_horsew.png",
+        "w": 54,
+        "h": 47,
+        "frames": 6
+      },
       "ride_boat": {
         "file": "obj/ride_boat.png",
         "w": 48,

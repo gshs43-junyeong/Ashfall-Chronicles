@@ -6758,6 +6758,23 @@
       hop: 1,
       drops: [["raw_meat", 1, 1, 1]]
     },
+    /* 야생 말 — 잿빛 숲 낮에 드물게. 농작물을 먹이면 호감이 차고, 가득이면 탈 수 있는 말이 된다(game/rides.ts) */
+    wild_horse: {
+      n: "야생 잿빛 말",
+      hp: 260,
+      dmg: 0,
+      def: 4,
+      spd: 120,
+      ai: "critter",
+      w: 34,
+      h: 30,
+      c: "#8a7a6a",
+      xp: 20,
+      gold: 0,
+      passive: 1,
+      tame: 1,
+      drops: [["raw_meat", 2, 4, 1]]
+    },
     sand_lizard: {
       n: "모래 도마뱀",
       hp: 10,
@@ -32356,6 +32373,7 @@
         app.netHitGhost(this, amount, crit, src, kb, fam);
         return;
       }
+      if (this.def.tame) this.aff = 0;
       if (this.phaseInv > 0) {
         app.texts.push(new DmgText(this.cx, this.y - 4, tr("전환 중"), "#9fd4ff", 0));
         return;
@@ -34382,10 +34400,14 @@
         }
         this.move(dt, world, { gravMul: 0 });
       } else if (AI === "critter") {
-        if (this.fleeT > 0) {
+        if (this.def.tame && this.eatT > 0) {
+          this.eatT -= dt;
+          this.vx = lerp(this.vx, 0, dt * 8);
+        } else if (this.fleeT > 0) {
           this.fleeT -= dt;
           this.vx = -Math.sign(dx || 1) * sp * 1.8;
-        } else {
+        } else if (this.def.tame && (this.aff || 0) < 60 && dd < TS * 5) this.vx = lerp(this.vx, -Math.sign(dx || 1) * sp * 0.7, dt * 3);
+        else {
           this.think -= dt;
           if (this.think <= 0) {
             this.think = 1.2 + Math.random() * 2.2;
@@ -45852,6 +45874,11 @@
       const p = this.player, w = this.world;
       if (this.puzzle && this.puzzleClick(this.input.wx, this.input.wy)) return;
       if (this.pulseEvent && this.ruinEvClick(this.input.wx, this.input.wy)) return;
+      const wh = this.horseAt(this.input.wx, this.input.wy);
+      if (wh) {
+        this.feedHorse(wh);
+        return;
+      }
       const o = this.findObjAt(this.input.wx, this.input.wy);
       if (o && dist(p.cx, p.cy, o.x + o.w / 2, o.y + o.h / 2) < TS * 7) {
         this.interact(o);
@@ -47062,6 +47089,7 @@
   // src/game/game/rides.ts
   var rides_exports = {};
   __export(rides_exports, {
+    HORSE_FOOD: () => HORSE_FOOD,
     MOUNT_BOX: () => MOUNT_BOX,
     RidesPart: () => RidesPart
   });
@@ -47113,7 +47141,76 @@
   var ITEM_OF = { horse: "mount_horse", boat: "mount_boat", cart: "mount_cart" };
   var BOAT_SINK = 8, BOAT_TOP = 9;
   var rideArt = (o) => o.kind === "boat" && o.cargo ? "boatc" : o.kind;
+  var HORSE_FOOD = { starroot: [14, 30], wheat: [8, 20], bloodbean: [6, 16], frostherb: [10, 22] };
   var RidesPart = {
+    /* ---------------- 야생 말 — 먹이 · 호감 · 길들이기 ---------------- */
+    /** 커서 밑 야생 말 */
+    horseAt(wx, wy) {
+      return this.ents.find((e) => !e.dead && e.def && e.def.tame && wx >= e.x - 6 && wx <= e.x + e.w + 6 && wy >= e.y - 10 && wy <= e.y + e.h + 4) || null;
+    },
+    /** 우클릭 — 든 것이 농작물이면 먹인다. 참가자는 호스트에게 맡긴다(몹은 호스트 것) */
+    feedHorse(e) {
+      const p = this.player, it = p.held(), f = it && HORSE_FOOD[it.id];
+      if (dist(p.cx, p.cy, e.cx, e.cy) > TS * 4) {
+        this.toast(tr("너무 멀다 — 가까이 다가가 먹인다"), "bad");
+        return;
+      }
+      if (!f) {
+        this.toast(tr("야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다"), "info");
+        return;
+      }
+      it.c--;
+      if (it.c <= 0) p.bag[p.sel] = null;
+      UI5.refreshBag();
+      const gain = f[0] + Math.floor(Math.random() * (f[1] - f[0] + 1));
+      if (e.ghost) {
+        e.aff = Math.min(100, (e.aff || 0) + gain);
+        e.eatT = 1.6;
+        this.horseHearts(e, gain);
+        if (this.net && this.net.t) this.netSend(this.net.t, "rel", { k: "hfeed", e: e.nid, n: gain });
+        return;
+      }
+      this.horseGain(e, gain, p);
+    },
+    horseGain(e, gain, who) {
+      e.aff = Math.min(100, (e.aff || 0) + gain);
+      e.eatT = 1.6;
+      e.fleeT = 0;
+      this.horseHearts(e, gain);
+      if (e.aff >= 100) this.tameHorse(e, who);
+    },
+    horseHearts(e, gain) {
+      this.sfx("harvest", 1.1);
+      this.texts.push(new DmgText(e.cx, e.y - 6, "♥ +" + gain, "#ff9ab0", 0));
+      for (let i = 0; i < 4; i++) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * 20, e.y + 4, "#ff8aa8", -50 - Math.random() * 40, 0.8));
+    },
+    /** 호감이 가득 — 몹은 사라지고 그 자리에 탈 수 있는 말(세계 물건)이 선다. 곡괭이로 거두면 아이템이 된다 */
+    tameHorse(e, who) {
+      const w = this.world, [bw, bh] = MOUNT_BOX.horse;
+      e.dead = true;
+      if (this.net && e.nid) this.net.dead.push(e.nid);
+      const o = { type: "mount", kind: "horse", placed: 1, x: Math.round(e.cx - bw / 2), y: Math.round(e.y + e.h - bh), w: bw, h: bh, f: e.facing >= 0 ? 1 : -1 };
+      w.objects.push(o);
+      if (this.net) this.netObjAdd(o);
+      for (let i = 0; i < 18; i++) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * 40, e.cy + (Math.random() - 0.5) * 20, i % 2 ? "#ff9ab0" : "#ffe0a0", -90 - Math.random() * 80, 1));
+      this.sfx("ach");
+      if (!who || who === this.player) this.toast(tr("야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)"), "good");
+    },
+    /** 야생 말 — 안장 없는 시트 · 호감 막대 */
+    drawWildHorse(c, e, sx, sy) {
+      const fr = this.horseFrame(e.vx, e.onGround);
+      this.drawRideSprite(c, Sprites.img.obj_ride_horsew ? "horsew" : "horse", fr, sx + e.w / 2, sy + e.h + 3, e.facing >= 0 ? 1 : -1);
+      if (e.aff > 0) {
+        const x = sx + e.w / 2 - 14, y = sy - 20;
+        c.fillStyle = "rgba(10,8,12,.7)";
+        c.fillRect(x - 1, y - 1, 30, 5);
+        c.fillStyle = "#ff7a9a";
+        c.fillRect(x, y, 28 * Math.min(1, e.aff / 100), 3);
+        c.fillStyle = "#ff9ab0";
+        c.font = "9px sans-serif";
+        c.fillText("♥", x - 9, y + 4);
+      }
+    },
     /* ---------------- 놓기 · 거두기 ---------------- */
     /** 손에 든 탈 것을 겨눈 자리에 — 말은 땅 위, 배는 물 위, 수레는 레일 위 */
     placeMount(slot) {
@@ -50087,7 +50184,8 @@
       switch (zone) {
         case "surface":
           if (desert) return night ? ["scorpion", "sandmaw", "zombie"] : ["scorpion", "sandmaw", "ashcrow", "sand_lizard"];
-          return night ? [...Array(5).fill("zombie"), ...Array(5).fill("slime"), "ashcrow"] : [...Array(10).fill("slime"), "ashcrow", "rabbit", "rabbit", "rabbit"];
+          if (night) return [...Array(5).fill("zombie"), ...Array(5).fill("slime"), "ashcrow"];
+          return tx !== void 0 && this.world.biomeAt(clamp(tx, 0, WW2 - 1)).id === "forest" ? [...Array(10).fill("slime"), "ashcrow", "rabbit", "rabbit", "rabbit", "wild_horse"] : [...Array(10).fill("slime"), "ashcrow", "rabbit", "rabbit", "rabbit"];
         case "cave":
           return desert ? ["spider", "scorpion", "minerghost", "bat"] : ["bat", "skeleton", "archer", "spider", "minerghost"];
         case "deep":
@@ -50275,6 +50373,7 @@
         const table = evHere && evHere.table ? evHere.table : this.zoneTable(zone, night, tx, ty);
         if (!table.length) continue;
         const type = table[Math.floor(Math.random() * table.length)];
+        if (type === "wild_horse" && (Math.random() > 0.3 || this.ents.some((q) => q.type === "wild_horse" && !q.dead))) continue;
         const flying = ENEMIES[type].ai === "flyer" || ENEMIES[type].ai === "caster";
         let sy2 = ty;
         if (!flying) {
@@ -57530,6 +57629,10 @@
         this.drawFlotsam(c, e, sx, sy);
         return;
       }
+      if (e.def.tame) {
+        this.drawWildHorse(c, e, sx, sy);
+        return;
+      }
       if (e.hide > 0 || e.amb) {
         this.drawBuried(c, e, sx, sy);
         return;
@@ -60192,6 +60295,9 @@
       } else if (m.k === "tiles" && peer.rp) {
         this.netPutTiles(m.l, true);
         for (const q of n.peers.values()) if (q !== peer && q.rp) this.netSend(q.t, "rel", m);
+      } else if (m.k === "hfeed" && peer.rp) {
+        const e = n.live.get(m.e);
+        if (e && !e.dead && e.def.tame) this.horseGain(e, clamp(m.n | 0, 0, 40), peer.rp);
       } else if (m.k === "hit" && peer.rp) {
         const e = n.live.get(m.e);
         if (e && !e.dead && Math.abs(e.cx - peer.rp.cx) < 900 && Math.abs(e.cy - peer.rp.cy) < 700) e.hurt(m.a, !!m.c, peer.rp, m.kb, m.f || void 0);

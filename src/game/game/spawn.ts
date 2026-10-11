@@ -28,7 +28,9 @@ export const SpawnPart: Bag = {
         // 야간에는 등장하지 않는다
         if (desert) return night ? ['scorpion', 'sandmaw', 'zombie']
           : ['scorpion', 'sandmaw', 'ashcrow', 'sand_lizard'];
-        return night ? [...Array(5).fill('zombie'), ...Array(5).fill('slime'), 'ashcrow']
+        if (night) return [...Array(5).fill('zombie'), ...Array(5).fill('slime'), 'ashcrow'];
+        return tx !== undefined && this.world.biomeAt(clamp(tx, 0, WW - 1)).id === 'forest'
+          ? [...Array(10).fill('slime'), 'ashcrow', 'rabbit', 'rabbit', 'rabbit', 'wild_horse']
           : [...Array(10).fill('slime'), 'ashcrow', 'rabbit', 'rabbit', 'rabbit'];
       case 'cave': return desert ? ['spider', 'scorpion', 'minerghost', 'bat']
         : ['bat', 'skeleton', 'archer', 'spider', 'minerghost'];
@@ -231,6 +233,8 @@ export const SpawnPart: Bag = {
       const table = (evHere && evHere.table) ? evHere.table : this.zoneTable(zone, night, tx, ty);
       if (!table.length) continue;            // 그 구역에 지상 몹이 없다(바다)
       const type = table[Math.floor(Math.random() * table.length)];
+      // 야생 말은 드물게 · 한 번에 한 마리만
+      if (type === 'wild_horse' && (Math.random() > 0.3 || this.ents.some((q: any) => q.type === 'wild_horse' && !q.dead))) continue;
       const flying = ENEMIES[type].ai === 'flyer' || ENEMIES[type].ai === 'caster';
       let sy2 = ty;
       if (!flying) {

@@ -977,6 +977,9 @@
    "game/rides.placeMount",
    "game/ruin-puzzle.puzzleClick"
   ],
+  "너무 멀다 — 가까이 다가가 먹인다": [
+   "game/rides.feedHorse"
+  ],
   "넘긴 메아리 {best} / {max}": [
    "game/ruin-pulse.openEcho"
   ],
@@ -2146,6 +2149,12 @@
   ],
   "액티브": [
    "ui/tree.showSkillTip"
+  ],
+  "야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)": [
+   "game/rides.tameHorse"
+  ],
+  "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": [
+   "game/rides.feedHorse"
   ],
   "어깨가 내려앉았군. 내일이면 그 자리에 근육이 붙는다.": [
    "data/quests"
@@ -4315,6 +4324,7 @@
   "DRAGON_STAGE_N.3": "고룡",
   "ENEMIES.rabbit.n": "들토끼",
   "ENEMIES.arctic_hare.n": "눈산토끼",
+  "ENEMIES.wild_horse.n": "야생 잿빛 말",
   "ENEMIES.sand_lizard.n": "모래 도마뱀",
   "ENEMIES.jungle_frog.n": "정글 개구리",
   "ENEMIES.glow_snail.n": "빛달팽이",

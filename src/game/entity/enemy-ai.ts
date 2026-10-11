@@ -143,7 +143,9 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'critter') {
       // 순한 동물 — 플레이어를 무시하고 어슬렁거리다가, 맞으면 잠깐 반대쪽으로 도망친다
-      if (this.fleeT > 0) { this.fleeT -= dt; this.vx = -Math.sign(dx || 1) * sp * 1.8; }
+      if (this.def.tame && this.eatT > 0) { this.eatT -= dt; this.vx = lerp(this.vx, 0, dt * 8); }      // 먹는 동안은 선다
+      else if (this.fleeT > 0) { this.fleeT -= dt; this.vx = -Math.sign(dx || 1) * sp * 1.8; }
+      else if (this.def.tame && (this.aff || 0) < 60 && dd < TS * 5) this.vx = lerp(this.vx, -Math.sign(dx || 1) * sp * 0.7, dt * 3);   // 낯가림 — 정이 들수록 덜 피한다
       else {
         this.think -= dt;
         if (this.think <= 0) { this.think = 1.2 + Math.random() * 2.2; this.wDir = Math.random() < 0.35 ? 0 : (Math.random() < 0.5 ? -1 : 1); }

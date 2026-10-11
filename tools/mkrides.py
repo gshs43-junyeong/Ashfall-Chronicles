@@ -124,8 +124,19 @@ def leg(p, hx, hy, ang, bend, length=13, col=COAT, dk=COAT_D):
     return fx, fy
 
 
-def horse(frame):
-    """frame 0 서기 · 1~4 달리기 · 5 뛰기. 오른쪽을 본다"""
+def tack(p, by):
+    """안장 · 담요 · 등자"""
+    p.rect(19, by - 6, 11, 3, BLANKET)
+    p.rect(19, by - 4, 11, 1, TRIM)
+    p.rect(21, by - 8, 7, 3, SADDLE)
+    p.rect(21, by - 8, 7, 1, SADDLE_L)
+    p.put(20, by - 8, SADDLE); p.put(28, by - 9, SADDLE)       # 앞뒤 턱
+    p.line(25, by - 3, 25, by + 4, SADDLE, 1)                   # 등자끈
+    p.rect(24, by + 4, 3, 1, hexc('#9a9aa4'))
+
+
+def horse(frame, wild=False):
+    """frame 0 서기 · 1~4 달리기 · 5 뛰기. 오른쪽을 본다. wild = 안장 · 담요 없는 야생 말(잿빛 숲 — game/rides.ts)"""
     p = Pix(HW, HH)
     p.ox = 3
     run = 1 <= frame <= 4
@@ -172,14 +183,9 @@ def horse(frame):
         t = i / 8
         x, y = 34 + t * 6, by - 4 - t * 11
         p.line(x - 1, y, x - 3 - (2 if run else 1), y + 1 + (1 if run else 0), MANE if i % 2 else MANE_L, 2)
-    # 안장 · 담요
-    p.rect(19, by - 6, 11, 3, BLANKET)
-    p.rect(19, by - 4, 11, 1, TRIM)
-    p.rect(21, by - 8, 7, 3, SADDLE)
-    p.rect(21, by - 8, 7, 1, SADDLE_L)
-    p.put(20, by - 8, SADDLE); p.put(28, by - 9, SADDLE)       # 앞뒤 턱
-    p.line(25, by - 3, 25, by + 4, SADDLE, 1)                   # 등자끈
-    p.rect(24, by + 4, 3, 1, hexc('#9a9aa4'))
+    # 안장 · 담요(야생 말은 없다)
+    if not wild:
+        tack(p, by)
     # 가까운 다리 둘
     leg(p, hipB, by + 4, legs_near[0][0], legs_near[0][1])
     leg(p, hipF, by + 4, legs_near[1][0], legs_near[1][1])
@@ -345,6 +351,7 @@ def icon_rail():
 
 if __name__ == '__main__':
     save(sheet([horse(i) for i in range(6)]), os.path.join(ROOT, 'obj', 'ride_horse.png'))
+    save(sheet([horse(i, True) for i in range(6)]), os.path.join(ROOT, 'obj', 'ride_horsew.png'))
     save(boat().im, os.path.join(ROOT, 'obj', 'ride_boat.png'))
     save(boat(True).im, os.path.join(ROOT, 'obj', 'ride_boatc.png'))
     save(sheet([cart(0), cart(1)]), os.path.join(ROOT, 'obj', 'ride_cart.png'))

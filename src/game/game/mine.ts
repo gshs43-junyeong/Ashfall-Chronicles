@@ -244,6 +244,9 @@ export const MinePart: Bag = {
     // 0) 유적 사건의 것(저울 · 씨앗)
     if (this.puzzle && this.puzzleClick(this.input.wx, this.input.wy)) return;
     if (this.pulseEvent && this.ruinEvClick(this.input.wx, this.input.wy)) return;
+    // 0.5) 야생 말 — 농작물을 먹인다(game/rides.ts)
+    const wh = this.horseAt(this.input.wx, this.input.wy);
+    if (wh) { this.feedHorse(wh); return; }
     // 1) 상호작용 대상
     const o = this.findObjAt(this.input.wx, this.input.wy);
     if (o && dist(p.cx, p.cy, o.x + o.w / 2, o.y + o.h / 2) < TS * 7) { this.interact(o); return; }

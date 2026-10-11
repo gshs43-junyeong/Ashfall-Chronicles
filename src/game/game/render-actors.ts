@@ -280,6 +280,7 @@ export const RenderActorsPart: Bag = {
 
   drawEnemy(c: any, e: any, sx: any, sy: any) {
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
+    if (e.def.tame) { this.drawWildHorse(c, e, sx, sy); return; }
     if (e.hide > 0 || e.amb) { this.drawBuried(c, e, sx, sy); return; }
     if (e.burrowT > 0) return;                                              // 땅속을 기는 보스 — 흙먼지만(entity/boss-moves)   // 모래 · 바닥 밑 — 땅만 들썩인다
     /* 손그림 스프라이트 우선. */
