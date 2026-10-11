@@ -1031,7 +1031,8 @@
   "배는 물 위에 띄운다": "El bote debe flotar en el agua",
   "수레는 레일 위에 놓는다": "La vagoneta debe ir sobre raíles",
   "이미 타고 있다": "Ya vas montado",
-  "배 짐칸": "Bodega del bote"
+  "배 짐칸": "Bodega del bote",
+  "전력이 없다 — 충전된 배터리가 필요하다": "Sin energía — necesitas una batería cargada"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -2270,9 +2271,9 @@
   "ITEMS.star_crystal.n": "Cristal de luz estelar",
   "ITEMS.star_crystal.d": "Solo crece donde cayó un meteoro. Brilla más de noche.",
   "ITEMS.det_metal.n": "Detector de metales",
-  "ITEMS.det_metal.d": "Las vetas cercanas aparecen en el minimapa (radio de 30 casillas). Pulsa una tecla de utilidad (por defecto Z · X) para lanzar un pulso de detección: durante 10 segundos, el mineral tras las paredes también se ve en pantalla. Algo pesado de llevar.",
+  "ITEMS.det_metal.d": "Las vetas cercanas aparecen en el minimapa (radio de 30 casillas). Pulsa una tecla de utilidad (por defecto Z · X) o haz clic derecho sosteniéndolo para gastar un poco de energía en un pulso de detección: durante 10 segundos, el mineral tras las paredes también se ve en pantalla. Pesa un poco al llevarlo.",
   "ITEMS.det_mob.n": "Detector de monstruos",
-  "ITEMS.det_mob.d": "Las criaturas cercanas aparecen en el minimapa (radio de 30 casillas). Pulsa una tecla de utilidad (por defecto Z · X) para lanzar un pulso de detección: durante 10 segundos, los monstruos tras las paredes también se ven en pantalla. Muestra incluso lo que preferirías no ver.",
+  "ITEMS.det_mob.d": "Las criaturas cercanas aparecen en el minimapa (radio de 30 casillas). Pulsa una tecla de utilidad (por defecto Z · X) o haz clic derecho sosteniéndolo para gastar un poco de energía en un pulso de detección: durante 10 segundos, los monstruos tras las paredes también se ven en pantalla. Verás cosas que preferirías no ver.",
   "ITEMS.coconut.n": "Coco",
   "ITEMS.coconut.d": "La cáscara dura está llena de agua. Solo se encuentra en islas.",
   "ITEMS.pet_candy.n": "Golosina para mascotas",

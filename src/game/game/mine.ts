@@ -266,6 +266,8 @@ export const MinePart: Bag = {
       if (hc && idef(hc).type === 'map') { this.useRuinMap(p.sel); return; }
       // 1.8) 탈 것 — 땅 · 물 · 레일 위에 놓는다(game/rides.ts)
       if (hc && idef(hc).type === 'mount') { this.placeMount(p.sel); return; }
+      // 1.9) 손에 든 탐지기 — 파동(전력을 쓴다 · game/utility.ts)
+      if (hc && idef(hc).act === 'scan') { this.useHeldDetector(hc); return; }
     }
     // 2) 기계: 이미 놓인 것은 열고, 손에 든 것은 설치한다
     const mtx = Math.floor(this.input.wx / TS), mty = Math.floor(this.input.wy / TS);

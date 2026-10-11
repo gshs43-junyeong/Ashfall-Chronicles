@@ -106,7 +106,7 @@ interface AppCtx {
   skillDeny: (...a: any[]) => any; spritesOn: boolean; state: string; stockOf: (...a: any[]) => any; strokeRate: (...a: any[]) => any;
   surfacePx: (...a: any[]) => any; texts: any[]; time: number; toast: (...a: any[]) => any; triggerFault: (...a: any[]) => any;
   uiOpen: boolean; upgradeStation: (...a: any[]) => any; upgradeVillage: (...a: any[]) => any; useConsumable: (...a: any[]) => any;
-  useSummon: (...a: any[]) => any; useUtil: (...a: any[]) => any; utilLeft: (...a: any[]) => any; vault: any[]; vaultGold: number;
+  useSummon: (...a: any[]) => any; useUtil: (...a: any[]) => any; useHeldDetector: (...a: any[]) => any; utilLeft: (...a: any[]) => any; vault: any[]; vaultGold: number;
   villageLv: (...a: any[]) => any; warnFx: (...a: any[]) => any; world: any; achievements: any; ruinSpec: (...a: any[]) => any; surveyScore: (...a: any[]) => any;
 }
 /** 아래층이 쓰는 UI 의 칸. */

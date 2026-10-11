@@ -1031,7 +1031,8 @@
   "배는 물 위에 띄운다": "A boat must float on water",
   "수레는 레일 위에 놓는다": "A cart must sit on rails",
   "이미 타고 있다": "You're already riding",
-  "배 짐칸": "Boat Hold"
+  "배 짐칸": "Boat Hold",
+  "전력이 없다 — 충전된 배터리가 필요하다": "No power — you need a charged battery"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -2270,9 +2271,9 @@
   "ITEMS.star_crystal.n": "Starlight Crystal",
   "ITEMS.star_crystal.d": "Grows only where a meteor fell. Brighter at night.",
   "ITEMS.det_metal.n": "Metal Detector",
-  "ITEMS.det_metal.d": "Nearby ore veins show up on the minimap (30-tile radius). Press a utility key (default Z · X) to send out a detection pulse — for 10 seconds, ore behind walls shows on screen too. A little heavy to carry around.",
+  "ITEMS.det_metal.d": "Nearby ore veins show up on the minimap (30-tile radius). Press a utility key (default Z · X) or right-click while holding it to spend a little power on a detection pulse — for 10 seconds, ore behind walls shows on screen too. A little heavy to carry around.",
   "ITEMS.det_mob.n": "Monster Detector",
-  "ITEMS.det_mob.d": "Nearby creatures show up on the minimap (30-tile radius). Press a utility key (default Z · X) to send out a detection pulse — for 10 seconds, monsters behind walls show on screen too. Shows even what you'd rather not see.",
+  "ITEMS.det_mob.d": "Nearby creatures show up on the minimap (30-tile radius). Press a utility key (default Z · X) or right-click while holding it to spend a little power on a detection pulse — for 10 seconds, monsters behind walls show on screen too. You'll see things you'd rather not.",
   "ITEMS.coconut.n": "Coconut",
   "ITEMS.coconut.d": "Water fills the hard shell. Found only on islands.",
   "ITEMS.pet_candy.n": "Pet Candy",

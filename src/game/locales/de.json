@@ -1031,7 +1031,8 @@
   "배는 물 위에 띄운다": "Ein Boot gehört aufs Wasser",
   "수레는 레일 위에 놓는다": "Ein Wagen gehört auf Schienen",
   "이미 타고 있다": "Du reitest bereits",
-  "배 짐칸": "Bootsladeraum"
+  "배 짐칸": "Bootsladeraum",
+  "전력이 없다 — 충전된 배터리가 필요하다": "Kein Strom — du brauchst eine geladene Batterie"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -2270,9 +2271,9 @@
   "ITEMS.star_crystal.n": "Sternenlichtkristall",
   "ITEMS.star_crystal.d": "Wächst nur, wo Meteore einschlugen. Nachts leuchtet er heller.",
   "ITEMS.det_metal.n": "Metalldetektor",
-  "ITEMS.det_metal.d": "Erzadern in der Nähe erscheinen auf der Minikarte (30 Felder Radius). Drück eine Hilfsmitteltaste (Standard Z · X) für einen Suchimpuls — 10 Sekunden lang zeigen sich Erze hinter Wänden auch auf dem Bildschirm. Etwas schwer zu tragen.",
+  "ITEMS.det_metal.d": "Erzadern in der Nähe erscheinen auf der Minikarte (Radius 30 Felder). Drücke eine Hilfstaste (Standard Z · X) oder klicke mit dem Gerät in der Hand rechts, um mit etwas Strom einen Suchimpuls auszusenden — 10 Sekunden lang wird Erz hinter Wänden auch auf dem Bildschirm sichtbar. Etwas schwer zum Herumtragen.",
   "ITEMS.det_mob.n": "Monsterdetektor",
-  "ITEMS.det_mob.d": "Wesen in der Nähe erscheinen auf der Minikarte (30 Felder Radius). Drück eine Hilfsmitteltaste (Standard Z · X) für einen Suchimpuls — 10 Sekunden lang zeigen sich Monster hinter Wänden auch auf dem Bildschirm. Zeigt auch, was du lieber nicht sehen willst.",
+  "ITEMS.det_mob.d": "Wesen in der Nähe erscheinen auf der Minikarte (Radius 30 Felder). Drücke eine Hilfstaste (Standard Z · X) oder klicke mit dem Gerät in der Hand rechts, um mit etwas Strom einen Suchimpuls auszusenden — 10 Sekunden lang werden Monster hinter Wänden auch auf dem Bildschirm sichtbar. Man sieht auch, was man lieber nicht sähe.",
   "ITEMS.coconut.n": "Kokosnuss",
   "ITEMS.coconut.d": "In der harten Schale ist Wasser. Wächst nur auf Inseln.",
   "ITEMS.pet_candy.n": "Tierbonbon",

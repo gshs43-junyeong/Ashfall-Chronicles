@@ -4051,7 +4051,7 @@
       det: "ore",
       act: "scan",
       b: { ms: -3 },
-      d: "가까운 광맥이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머 광맥이 화면에도 드러난다. 들고 다니면 조금 무겁다."
+      d: "가까운 광맥이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르거나 손에 들고 우클릭하면 전력을 조금 써서 탐지 파동을 퍼뜨리고, 10초 동안 벽 너머 광맥이 화면에도 드러난다. 들고 다니면 조금 무겁다."
     },
     det_mob: {
       n: "몬스터 탐지기",
@@ -4060,7 +4060,7 @@
       det: "mob",
       act: "scan",
       b: { ms: -3 },
-      d: "가까운 것들이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르면 탐지 파동이 퍼져 10초 동안 벽 너머의 몬스터가 화면에도 드러난다. 보고 싶지 않은 것까지 보인다."
+      d: "가까운 것들이 미니맵에 비친다(반경 30칸). 유틸리티 키(기본 Z · X)를 누르거나 손에 들고 우클릭하면 전력을 조금 써서 탐지 파동을 퍼뜨리고, 10초 동안 벽 너머의 몬스터가 화면에도 드러난다. 보고 싶지 않은 것까지 보인다."
     },
     coconut: {
       n: "코코넛",
@@ -45785,6 +45785,10 @@
           this.placeMount(p.sel);
           return;
         }
+        if (hc && idef(hc).act === "scan") {
+          this.useHeldDetector(hc);
+          return;
+        }
       }
       const mtx = Math.floor(this.input.wx / TS), mty = Math.floor(this.input.wy / TS);
       if (dist(p.cx, p.cy, (mtx + 0.5) * TS, (mty + 0.5) * TS) <= TS * 7) {
@@ -57884,8 +57888,14 @@
     SCAN_T: 10,
     SCAN_CD: 8,
     SCAN_GROW: 0.9,
+    SCAN_LIFT: 0.3,
+    // 기계를 들어 올리는 동안(초) — 파동은 그 뒤에 퍼진다
+    SCAN_PW: 6,
+    // 파동 한 번의 전력(배터리 하나 200 = 33번)
     utilReady: null,
     // 칸마다 다시 쓸 수 있는 G.time
+    scanReady: null,
+    // 갈래(ore · mob)마다 — 손에 든 것과 칸에 낀 것이 같이 식는다
     scans: null,
     /** 유틸리티 칸 i(0 = 왼쪽 · 1 = 오른쪽)의 도구를 쓴다 — 키(util1·util2)와 터치 칸이 부른다 */
     useUtil(i) {
@@ -57902,16 +57912,16 @@
         this.toast(tr("{item} — 끼워 두면 저절로 쓰인다", { item: d.n }), "info");
         return;
       }
-      this.utilReady = this.utilReady || [0, 0];
-      if (this.time < this.utilReady[i]) {
-        this.utilDeny(i);
-        return;
-      }
-      if (d.act === "scan") this.scanPulse(d.det, i);
+      if (d.act === "scan" && !this.scanPulse(d.det, it)) this.utilDeny(i);
+    },
+    /** 손에 든 탐지기를 우클릭 — 칸에 끼지 않아도 쓴다 */
+    useHeldDetector(it) {
+      this.scanPulse(idef(it).det, it);
     },
     /** 다시 쓸 때까지 남은 초 */
     utilLeft(i) {
-      return Math.max(0, ((this.utilReady || [0, 0])[i] || 0) - this.time);
+      const it = this.player && this.player.equip["util" + (i + 1)];
+      return it ? Math.max(0, ((this.scanReady || {})[idef(it).det || ""] || 0) - this.time) : 0;
     },
     utilDeny(i) {
       this.sfx("sk_deny");
@@ -57922,9 +57932,20 @@
         el.classList.add("deny");
       }
     },
-    scanPulse(kind, i) {
+    /** 파동 — 식는 중 · 전력이 없으면 false */
+    scanPulse(kind, it) {
       const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const p = this.player, w = this.world, R = this.DET_R, R2 = R * R;
+      this.scanReady = this.scanReady || {};
+      if (this.time < (this.scanReady[kind] || 0)) {
+        this.sfx("sk_deny");
+        return false;
+      }
+      if (!p.useCharge(this.SCAN_PW)) {
+        this.sfx("sk_deny");
+        this.toast(tr("전력이 없다 — 충전된 배터리가 필요하다"), "bad");
+        return false;
+      }
       const px = Math.floor(p.cx / TS), py = Math.floor(p.cy / TS);
       const hits = [];
       if (kind === "ore") {
@@ -57933,20 +57954,63 @@
             const dx = x - px, dy = y - py;
             if (dx * dx + dy * dy > R2) continue;
             const td = TILE_DEF[w.tiles[y * WW2 + x]];
-            if (td && td.ore) hits.push({ x, y, c: td.c, r: Math.sqrt(dx * dx + dy * dy) });
+            if (td && td.ore) hits.push({ x, y, c: td.c, r: Math.sqrt(dx * dx + dy * dy), a: Math.atan2(dy, dx) });
           }
       } else {
         for (const e of this.ents) {
           if (!(e instanceof Enemy) || e.dead) continue;
           const dx = e.cx / TS - px, dy = e.cy / TS - py;
-          if (dx * dx + dy * dy <= R2) hits.push({ e, r: Math.sqrt(dx * dx + dy * dy) });
+          if (dx * dx + dy * dy <= R2) hits.push({ e, r: Math.sqrt(dx * dx + dy * dy), a: Math.atan2(dy, dx) });
         }
       }
       this.scans = (this.scans || []).filter((s) => s.kind !== kind);
-      this.scans.push({ kind, t0: this.time, x: p.cx, y: p.cy, hits });
-      this.utilReady[i] = this.time + this.SCAN_CD;
+      this.scans.push({ kind, t0: this.time + this.SCAN_LIFT, lift: this.time, x: p.cx, y: p.cy, hits, n: 0, id: it && it.id });
+      this.scanReady[kind] = this.time + this.SCAN_CD;
       this.sfx("detector");
       this.toast(kind === "ore" ? tr("탐지 파동 — 광맥 {n}칸", { n: hits.length }) : tr("탐지 파동 — 움직이는 것 {n}", { n: hits.length }), "info");
+      return true;
+    },
+    /** 잡힌 것을 훑고 지날 때의 짧은 삑 — 많으면 처음 몇 개만 */
+    scanBlip(s) {
+      if (s.n++ >= 10 || !this.duelTone) return;
+      const f = s.kind === "ore" ? 1700 : 1150;
+      this.duelTone(f + s.n * 40, f * 0.8, 0.05, 0.05, "triangle");
+    },
+    /** 들어 올린 탐지기 · 안테나에서 퍼지는 전파 — 파동이 퍼지는 동안 손 앞에 */
+    drawDetector(c, s, camX, camY) {
+      const p = this.player, t = this.time - s.lift, life = this.SCAN_LIFT + this.SCAN_GROW + 0.5;
+      if (t > life || !p) return;
+      const col = s.kind === "ore" ? "111,227,255" : "255,107,107";
+      const up = Math.min(1, t / this.SCAN_LIFT), down = Math.min(1, (life - t) / 0.3), k = Math.min(up, down);
+      const face = p.facing >= 0 ? 1 : -1, hx = p.cx - camX + face * 11, hy = p.y - camY + 18 - 9 * (1 - Math.pow(1 - k, 3));
+      c.save();
+      c.globalAlpha = k;
+      c.fillStyle = "#2a3038";
+      c.fillRect(hx - 5, hy - 7, 10, 13);
+      c.fillStyle = "#4a5462";
+      c.fillRect(hx - 5, hy - 7, 10, 2);
+      const blink = 0.55 + 0.45 * Math.sin(this.time * 24);
+      c.fillStyle = `rgba(${col},${0.5 + 0.5 * blink})`;
+      c.fillRect(hx - 3, hy - 4, 6, 5);
+      c.strokeStyle = "#8a96a6";
+      c.lineWidth = 1.2;
+      c.beginPath();
+      c.moveTo(hx + 3, hy - 7);
+      c.lineTo(hx + 5, hy - 16);
+      c.stroke();
+      c.fillStyle = `rgba(${col},${blink})`;
+      c.beginPath();
+      c.arc(hx + 5, hy - 16, 1.8, 0, TAU);
+      c.fill();
+      if (t > this.SCAN_LIFT * 0.6) for (let i = 0; i < 3; i++) {
+        const ph = (this.time * 2.4 + i / 3) % 1, r = 4 + ph * 16;
+        c.strokeStyle = `rgba(${col},${(1 - ph) * 0.8})`;
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.arc(hx + 5, hy - 16, r, -Math.PI * 0.85, -Math.PI * 0.15);
+        c.stroke();
+      }
+      c.restore();
     },
     /** 렌더 단계(fx) — 조명 뒤라 어둠 속에서도 보인다 */
     rUtil(f) {
@@ -57956,23 +58020,56 @@
       this.scans = this.scans.filter((s) => this.time - s.t0 < this.SCAN_T);
       const pulse = 0.65 + 0.35 * Math.sin(this.time * 6);
       for (const s of this.scans) {
+        this.drawDetector(c, s, camX, camY);
         const age = this.time - s.t0, col = s.kind === "ore" ? "111,227,255" : "255,107,107";
+        if (age < 0) continue;
         const front = Math.min(1, age / this.SCAN_GROW) * R;
         const fade = Math.min(1, (this.SCAN_T - age) / 2);
+        const ox = s.x - camX, oy = s.y - camY;
         c.save();
         const ringA = 1 - age / (this.SCAN_GROW + 0.4);
         if (ringA > 0) {
+          const sw = age / this.SCAN_GROW * TAU * 1.5;
+          const g = c.createRadialGradient(ox, oy, 0, ox, oy, Math.max(6, front));
+          g.addColorStop(0, `rgba(${col},0)`);
+          g.addColorStop(1, `rgba(${col},${0.22 * ringA})`);
+          c.fillStyle = g;
           c.beginPath();
-          c.arc(s.x - camX, s.y - camY, Math.max(4, front), 0, TAU);
+          c.moveTo(ox, oy);
+          c.arc(ox, oy, Math.max(6, front), sw - 0.55, sw);
+          c.closePath();
+          c.fill();
+          c.beginPath();
+          c.arc(ox, oy, Math.max(4, front), 0, TAU);
           c.strokeStyle = `rgba(${col},${0.16 * ringA})`;
           c.lineWidth = 14;
           c.stroke();
           c.strokeStyle = `rgba(${col},${0.6 * ringA})`;
           c.lineWidth = 2.5;
           c.stroke();
+          c.strokeStyle = `rgba(${col},${0.25 * ringA})`;
+          c.lineWidth = 1;
+          for (const q of [0.33, 0.66]) if (front > R * q) {
+            c.beginPath();
+            c.arc(ox, oy, R * q, 0, TAU);
+            c.stroke();
+          }
         }
         for (const h of s.hits) {
           if (h.r * TS > front) continue;
+          if (h.ping === void 0) {
+            h.ping = this.time;
+            this.scanBlip(s);
+          }
+          const pa = this.time - h.ping;
+          if (pa < 0.5) {
+            const hx = h.e ? h.e.cx - camX : (h.x + 0.5) * TS - camX, hy = h.e ? h.e.cy - camY : (h.y + 0.5) * TS - camY;
+            c.strokeStyle = `rgba(${col},${1 - pa * 2})`;
+            c.lineWidth = 1.5;
+            c.beginPath();
+            c.arc(hx, hy, 3 + pa * 26, 0, TAU);
+            c.stroke();
+          }
           if (h.e) {
             const e = h.e;
             if (e.dead) continue;
