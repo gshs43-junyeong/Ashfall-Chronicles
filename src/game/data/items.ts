@@ -490,6 +490,8 @@ export const ITEMS: Record<string, ItemDef> = {
   /* --- 농기구 · 씨앗 · 작물 --- */
   hoe_iron:   { n: '강철 괭이', i: '🛠', type: 'tool', power: 0, dmg: 8, spd: 2.0, hoe: 1,
                 d: '흙이나 풀을 우클릭해 밭을 간다. 씨앗은 밭 위에 심는다.' , lvReq: 3},
+  wrench:       { n: '렌치', i: '🔧', type: 'tool', power: 0, dmg: 10, spd: 2.2, wrench: 1,
+                  d: '고장 난 기계를 들고 우클릭하면 톱니바퀴 하나를 갈아 끼워 고친다. 일하는 기계는 아주 드물게 고장 난다.', lvReq: 0 },
   /* --- 물 — 물뿌리개 · 양동이 --- */
   watering_can: { n: '물뿌리개', i: '🚿', type: 'tool', power: 0, dmg: 3, spd: 2.0, water: 20,
                   d: '물가를 우클릭해 가득 채우고(20번), 밭이나 작물을 우클릭해 물을 준다. 물 준 밭은 사흘 아침 동안 젖어 있다.', lvReq: 0 },

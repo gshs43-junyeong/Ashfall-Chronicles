@@ -15,6 +15,9 @@ import { Enemy, Part, Proj } from '../entity.js';
 import { DIR4, FAC_TICK, Factory } from '../factory.js';
 /* factory.ts 의 Factory 에서 나눈 조각 — 읽히는 순간 Factory 에 붙는다(main.js 가 factory.ts 다음에 읽는다). */
 
+/* 고장 — 일하는 동안 틱당 확률. 기계 하나가 쉬지 않고 돌면 평균 3시간에 한 번(0.125초 × 86,400틱) */
+export const BREAK_P = 1 / 86400;
+export const BREAKS = new Set(['drill', 'drill_e', 'drill_x', 'pump', 'gen', 'windmill', 'turret', 'sprinkler', 'smelter', 'press', 'refinery', 'assembler', 'pressor', 'desal', 'battery', 'battery_hi', 'mill', 'oven']);
 export const FactoryTickPart: Bag = {
 
   /* ================= 틱 ================= */
@@ -52,6 +55,7 @@ export const FactoryTickPart: Bag = {
       const s = MACHINE[m.t];
       if (!s.gen) continue;
       const n = m.net >= 0 ? nets[m.net] : null;
+      if (m.broke) { m.st = N_('고장'); m.act = 0; continue; }
       if (!m.on) { m.st = N_('정지'); continue; }
       if (!n) { m.st = N_('망 없음'); continue; }
       if (n.off) { m.st = N_('전면 정지'); continue; }
@@ -60,14 +64,14 @@ export const FactoryTickPart: Bag = {
         let clear = true;
         for (let k = 1; k <= s.sky; k++) if (this.blocksWind(w, m.x, m.y - k)) { clear = false; break; }
         if (!clear) { m.st = N_('바람 막힘'); continue; }
-        n.gen += s.gen; m.st = N_('회전 중');
+        n.gen += s.gen; m.st = N_('회전 중'); this.wear(m);
         continue;
       }
       if (n.dem <= 0 && n.e >= n.emax) { m.st = N_('대기'); continue; }   // 쓸 데가 없으면 연료를 아낀다
       if (m.fuel <= 0) {
         for (const k in m.in) { if (!FUEL[k]) continue; this.bufTake(m.in, k, 1); m.fuel = m.fmax = FUEL[k]; break; }
       }
-      if (m.fuel > 0) { m.fuel--; n.gen += s.gen; m.st = N_('가동'); }
+      if (m.fuel > 0) { m.fuel--; n.gen += s.gen; m.st = N_('가동'); this.wear(m); }
       else m.st = N_('연료 없음');
     }
     for (const n of nets) {
@@ -95,6 +99,7 @@ export const FactoryTickPart: Bag = {
     for (const m of ms.values()) {
       m.just = 0;
       const s = MACHINE[m.t];
+      if (m.broke) { m.st = N_('고장'); m.act = 0; continue; }
       if (!m.on && m.t !== 'switch') { m.st = N_('정지'); m.act = 0; continue; }
       switch (m.t) {
         case 'drill': case 'drill_e': case 'drill_x': this.runDrill(w, m, s); break;
@@ -115,6 +120,7 @@ export const FactoryTickPart: Bag = {
         }
         default: if (s.proc) this.runProc(w, m, s); break;
       }
+      if (m.act && !s.gen) this.wear(m);
     }
 
     /* ---- 3. 물류 ---- */
@@ -157,6 +163,12 @@ export const FactoryTickPart: Bag = {
   },
 
   /* ---- 연료를 태운다. 태울 수 있으면 true ---- */
+  /** 일하는 틱마다 아주 드물게 고장 — 렌치로 고친다(game/mine.ts 우클릭). 세계가 지은 함정 · 벨트 · 전주 따위는 안 망가진다 */
+  wear(m: any) {
+    if (!BREAKS.has(m.t) || (m.gen && !m.own) || Math.random() >= BREAK_P) return;
+    m.broke = 1; m.act = 0; m.st = N_('고장');
+    G.machineBroke(m);
+  },
   burn(m: any) {
     if (m.fuel > 0) { m.fuel--; return true; }
     for (const k in m.in) {

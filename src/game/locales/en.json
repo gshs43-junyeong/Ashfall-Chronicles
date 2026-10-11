@@ -1032,7 +1032,12 @@
   "수레는 레일 위에 놓는다": "A cart must sit on rails",
   "이미 타고 있다": "You're already riding",
   "배 짐칸": "Boat Hold",
-  "전력이 없다 — 충전된 배터리가 필요하다": "No power — you need a charged battery"
+  "전력이 없다 — 충전된 배터리가 필요하다": "No power — you need a charged battery",
+  "{m|을} 고쳤다": "Repaired the {m}",
+  "{m|이} 고장 났다 — 렌치로 고친다": "The {m} broke down — fix it with a wrench",
+  "고장": "Broken",
+  "고장 났다 — 렌치를 들고 우클릭해 고친다": "It's broken — hold a wrench and right-click to fix it",
+  "톱니바퀴가 하나 필요하다": "You need a gear"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4493,6 +4498,8 @@
   "ITEMS.rail.d": "Connects to neighbouring rails. A one-tile rise or drop becomes a slope.",
   "TILE_DEF.217.n": "Rail",
   "ITEMS.mount_boatc.n": "Cargo Skiff",
-  "ITEMS.mount_boatc.d": "A skiff with a crate lashed to the stern. Right-click while aboard to open the hold (16 slots); jump to get off."
+  "ITEMS.mount_boatc.d": "A skiff with a crate lashed to the stern. Right-click while aboard to open the hold (16 slots); jump to get off.",
+  "ITEMS.wrench.n": "Wrench",
+  "ITEMS.wrench.d": "Hold it and right-click a broken machine to swap in one gear and fix it. Working machines break down very rarely."
  }
 }

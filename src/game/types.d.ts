@@ -32,7 +32,7 @@ interface ItemDef {
   fishWait?: number; fishBonus?: number; fishItemChance?: number; use?: Record<string, any>; cd?: number; stack?: number;
   b?: Record<string, any>; price?: number; slot?: string; def?: number; slots?: number; instant?: number; fixed?: number; det?: string;
   act?: string; tile?: number; poison?: number; frost?: number; deco?: number; seal?: string; ruin?: string; boss?: string; mach?: string;
-  obj?: string; mount?: string; gold?: number; pw?: number; hoe?: number; water?: number; scythe?: number; reap?: number; fert?: number; pierce?: number;
+  obj?: string; mount?: string; gold?: number; pw?: number; hoe?: number; water?: number; wrench?: number; scythe?: number; reap?: number; fert?: number; pierce?: number;
   r?: number; mine?: number; fuse?: number; look?: string; pet?: string;
 }
 
@@ -86,6 +86,7 @@ interface PetDef {
 interface AppCtx {
   ruinDark: number; noiseT: number; sacStrike: (e: any) => boolean; onDeafWake: ((e: any) => void) | null;   // 유적 고유 몬스터 · 사건(entity/enemy-traits)
   ENH_MAX: number; ac: AudioContext | null; vfx: import('../engine/fx/vfx').Vfx; skillVfx: (id: string, o: any) => void; stageFx: (id: string, who?: any) => void; bossHazard: (h: any) => any; hitPlayers: (x: number, y: number, r: number, dmg: number, inf?: any) => void; hitPlayersRect: (x0: number, y0: number, x1: number, y1: number, dmg: number, skip?: number[]) => number[]; ruinFeed: (e: any) => void; swingFx: (p: any) => void; cutFx: (e: any, p: any, crit: boolean, fam: string | null) => void; timeScale: { hit(s: number, cap?: number, f?: number): void; slow(s: number, f?: number): void }; fade: { run(mid: (() => void) | null, o?: number, h?: number, i?: number): void; reveal(i?: number): void }; pathBudget: number; lootPity: any; entHash: { query(x: number, y: number, w: number, h: number, fn: (o: any) => boolean | void): void; near(cx: number, cy: number, r: number): any[] }; addCorpse: (...a: any[]) => any; aoe: (...a: any[]) => any; applySettings: (...a: any[]) => any;
+  machineBroke: (m: any) => void;   // 기계 고장 알림(game/repair)
   bandFx: (...a: any[]) => any; boltFx: (...a: any[]) => any; bossLine: (...a: any[]) => any; bounties: any[];
   bountyPay: (...a: any[]) => any; bountyProgress: (...a: any[]) => any; breakFx: (...a: any[]) => any; burst: (...a: any[]) => any;
   buy: (...a: any[]) => any; buyPrice: (...a: any[]) => any; buyStock: (...a: any[]) => any; chapter: number;

@@ -274,6 +274,12 @@ export const MinePart: Bag = {
     if (dist(p.cx, p.cy, (mtx + .5) * TS, (mty + .5) * TS) <= TS * 7) {
       const mac = Factory.at(w, mtx, mty);
       if (mac) {
+        // 고장 — 렌치를 들었으면 고치고, 아니면 알려 주고 창은 그대로 연다
+        if (mac.broke) {
+          const hw = p.held();
+          if (hw && idef(hw).wrench) { this.repairMachine(mac); return; }
+          this.toast(tr('고장 났다 — 렌치를 들고 우클릭해 고친다'), 'bad');
+        }
         // 벨트 위에서 멈춰 버린 물건(3초+)은 창을 열지 않고 바로 집는다
         if (mac.it && Factory.stalled(mac)) {
           const id = mac.it.id;

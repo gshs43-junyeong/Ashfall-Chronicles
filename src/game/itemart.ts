@@ -453,6 +453,7 @@ export const ISPEC: Bag = {
   /* --- 농업 --- */
   hoe_iron: { k: 'hoe', c: '#b8bcc4' },
   watering_can: { k: 'wcan', c: '#9aa6b0' },
+  wrench: { k: 'wrench', c: '#a8b0ba' },
   bucket: { k: 'bucket', c: '#8a8f98' },
   water_bucket: { k: 'bucket', c: '#8a8f98', water: '#4a8fd0' },
   /* 낫 — 이미 있는 낫 그림(scythe_void가 쓰는 것)에 색만 갈아 끼운다 */

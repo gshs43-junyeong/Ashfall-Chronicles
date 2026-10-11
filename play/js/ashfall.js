@@ -4639,6 +4639,17 @@
       d: "흙이나 풀을 우클릭해 밭을 간다. 씨앗은 밭 위에 심는다.",
       lvReq: 3
     },
+    wrench: {
+      n: "렌치",
+      i: "🔧",
+      type: "tool",
+      power: 0,
+      dmg: 10,
+      spd: 2.2,
+      wrench: 1,
+      d: "고장 난 기계를 들고 우클릭하면 톱니바퀴 하나를 갈아 끼워 고친다. 일하는 기계는 아주 드물게 고장 난다.",
+      lvReq: 0
+    },
     /* --- 물 — 물뿌리개 · 양동이 --- */
     watering_can: {
       n: "물뿌리개",
@@ -5988,6 +5999,7 @@
     { out: "gear_basic", n: 4, need: { steel_plate: 3, iron_bar: 2 }, station: "forge" },
     /* 개조된 것에서 나온 녹슨 톱니를 쓸 데. */
     { out: "gear_basic", n: 1, need: { rust_gear: 4 }, station: "forge" },
+    { out: "wrench", n: 1, need: { iron_bar: 6, rust_gear: 2 }, station: "forge" },
     { out: "pick_drill", n: 1, need: { blueprint_core: 1, power_core: 12, gear_basic: 20, mythril_bar: 10 }, station: "forge" },
     /* ========== 용광로 ========== */
     { out: "lead_bar", n: 1, need: { lead_ore: 3 }, station: "forge" },
@@ -26518,6 +26530,7 @@
     /* --- 농업 --- */
     hoe_iron: { k: "hoe", c: "#b8bcc4" },
     watering_can: { k: "wcan", c: "#9aa6b0" },
+    wrench: { k: "wrench", c: "#a8b0ba" },
     bucket: { k: "bucket", c: "#8a8f98" },
     water_bucket: { k: "bucket", c: "#8a8f98", water: "#4a8fd0" },
     /* 낫 — 이미 있는 낫 그림(scythe_void가 쓰는 것)에 색만 갈아 끼운다 */
@@ -28244,6 +28257,18 @@
       poly([[20, 20], [28, 11], [29.6, 12.4], [21, 23]], dk);
       circ(28.6, 11.4, 2.2, lt);
       circ(28.6, 11.4, 1.1, "#5aa0e0");
+    },
+    wrench(H) {
+      const { poly, circ } = H, s = H.s;
+      const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.6);
+      poly([[6, 27], [9, 29], [21, 13], [18, 11]], dk);
+      poly([[7, 26], [8.6, 27.2], [19.6, 12.6], [18.2, 11.6]], c);
+      line(H, [[8, 25], [18, 12.4]], lt, 0.9);
+      poly([[15, 13], [20, 4], [24, 5], [22, 9], [26, 11], [28, 7], [29, 12], [23, 17]], c);
+      line(H, [[16, 13], [20.6, 5]], lt, 0.9);
+      poly([[22, 9], [26, 11], [24.6, 12.6], [21, 10.8]], dk);
+      circ(20.5, 14.5, 1.8, dk);
+      circ(20.5, 14.5, 0.8, lt);
     },
     bucket(H) {
       const { P, poly, ell } = H, s = H.s;
@@ -36281,8 +36306,12 @@
   // src/game/factory/tick.ts
   var tick_exports = {};
   __export(tick_exports, {
+    BREAKS: () => BREAKS,
+    BREAK_P: () => BREAK_P,
     FactoryTickPart: () => FactoryTickPart
   });
+  var BREAK_P = 1 / 86400;
+  var BREAKS = /* @__PURE__ */ new Set(["drill", "drill_e", "drill_x", "pump", "gen", "windmill", "turret", "sprinkler", "smelter", "press", "refinery", "assembler", "pressor", "desal", "battery", "battery_hi", "mill", "oven"]);
   var FactoryTickPart = {
     /* ================= 틱 ================= */
     tick(w, G4) {
@@ -36328,6 +36357,11 @@
         const s = MACHINE[m.t];
         if (!s.gen) continue;
         const n = m.net >= 0 ? nets[m.net] : null;
+        if (m.broke) {
+          m.st = N_("고장");
+          m.act = 0;
+          continue;
+        }
         if (!m.on) {
           m.st = N_("정지");
           continue;
@@ -36352,6 +36386,7 @@
           }
           n.gen += s.gen;
           m.st = N_("회전 중");
+          this.wear(m);
           continue;
         }
         if (n.dem <= 0 && n.e >= n.emax) {
@@ -36370,6 +36405,7 @@
           m.fuel--;
           n.gen += s.gen;
           m.st = N_("가동");
+          this.wear(m);
         } else m.st = N_("연료 없음");
       }
       for (const n of nets) {
@@ -36405,6 +36441,11 @@
       for (const m of ms.values()) {
         m.just = 0;
         const s = MACHINE[m.t];
+        if (m.broke) {
+          m.st = N_("고장");
+          m.act = 0;
+          continue;
+        }
         if (!m.on && m.t !== "switch") {
           m.st = N_("정지");
           m.act = 0;
@@ -36463,6 +36504,7 @@
             if (s.proc) this.runProc(w, m, s);
             break;
         }
+        if (m.act && !s.gen) this.wear(m);
       }
       for (let moved = 1, pass = 0; moved && pass < 16; pass++) {
         moved = 0;
@@ -36513,6 +36555,14 @@
       return w.solid(x, y) || w.machines.has(y * WW2 + x);
     },
     /* ---- 연료를 태운다. 태울 수 있으면 true ---- */
+    /** 일하는 틱마다 아주 드물게 고장 — 렌치로 고친다(game/mine.ts 우클릭). 세계가 지은 함정 · 벨트 · 전주 따위는 안 망가진다 */
+    wear(m) {
+      if (!BREAKS.has(m.t) || m.gen && !m.own || Math.random() >= BREAK_P) return;
+      m.broke = 1;
+      m.act = 0;
+      m.st = N_("고장");
+      app.machineBroke(m);
+    },
     burn(m) {
       if (m.fuel > 0) {
         m.fuel--;
@@ -37168,6 +37218,55 @@
   });
   var FactoryRenderPart = {
     /* ================= 렌더 ================= */
+    /** 고장 — 빨간 경고등 · 피어오르는 연기 · 이따금 튀는 불똥. 막 고친 기계는 렌치가 한 바퀴 돈다 */
+    drawBroken(c, m, sx, sy, time) {
+      c.save();
+      if (m.broke) {
+        const seed = m.x * 7 + m.y * 13;
+        for (let i = 0; i < 3; i++) {
+          const ph = (time * 0.45 + i / 3 + seed * 0.01) % 1;
+          c.globalAlpha = (1 - ph) * 0.45;
+          c.fillStyle = "#5a5a60";
+          c.beginPath();
+          c.arc(sx + TS / 2 + Math.sin(ph * 6 + i) * 4, sy + 4 - ph * 22, 3 + ph * 5, 0, Math.PI * 2);
+          c.fill();
+        }
+        c.globalAlpha = 1;
+        const on = (time * 3 + seed | 0) % 2 === 0;
+        c.fillStyle = on ? "#ff3a2a" : "#5a1810";
+        c.fillRect(sx + TS - 6, sy + 2, 4, 4);
+        if (on) {
+          c.globalAlpha = 0.35;
+          c.fillStyle = "#ff5a3a";
+          c.beginPath();
+          c.arc(sx + TS - 4, sy + 4, 6, 0, Math.PI * 2);
+          c.fill();
+          c.globalAlpha = 1;
+        }
+        if ((time * 7 + seed | 0) % 9 === 0) {
+          c.strokeStyle = "#ffe08a";
+          c.lineWidth = 1.2;
+          c.beginPath();
+          const bx = sx + 4 + seed % 13, by = sy + 8;
+          c.moveTo(bx, by);
+          c.lineTo(bx + 3, by - 4);
+          c.lineTo(bx + 1, by - 6);
+          c.lineTo(bx + 5, by - 10);
+          c.stroke();
+        }
+      } else {
+        const k = (time - m.fixT) / 0.7;
+        c.translate(sx + TS / 2, sy - 6 - k * 8);
+        c.rotate(k * Math.PI * 2);
+        c.globalAlpha = 1 - k;
+        c.fillStyle = "#c8d0da";
+        c.fillRect(-1.5, -7, 3, 12);
+        c.fillRect(-4, -9, 8, 3);
+        c.fillStyle = "#3a4048";
+        c.fillRect(-1, -9, 2, 2);
+      }
+      c.restore();
+    },
     render(c, w, camX, camY, tx0, ty0, tx1, ty1, time) {
       const { WW: WW2, WH: WH2 } = dimsOf(w);
       if (!w.machines.size) return;
@@ -37203,6 +37302,7 @@
             if (m.t === "turret") this.drawTurret(c, m, sx, sy, tileHash(tx, ty) * TileArt.V | 0);
             else TileArt.draw(c, s.tile, tileHash(tx, ty) * TileArt.V | 0, sx + jx, sy + jy);
             this.drawWork(c, w, m, sx, sy, time, camX, camY);
+            if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, sx, sy, time);
           }
           if (m.t === "pole") {
             let by = ty + 1;
@@ -45794,6 +45894,14 @@
       if (dist(p.cx, p.cy, (mtx + 0.5) * TS, (mty + 0.5) * TS) <= TS * 7) {
         const mac = Factory11.at(w, mtx, mty);
         if (mac) {
+          if (mac.broke) {
+            const hw = p.held();
+            if (hw && idef(hw).wrench) {
+              this.repairMachine(mac);
+              return;
+            }
+            this.toast(tr("고장 났다 — 렌치를 들고 우클릭해 고친다"), "bad");
+          }
           if (mac.it && Factory11.stalled(mac)) {
             const id = mac.it.id;
             if (Factory11.takeStalled(mac, p)) {
@@ -47289,6 +47397,46 @@
     }
   };
   mixin(Game.prototype, RidesPart, true);
+
+  // src/game/game/repair.ts
+  var repair_exports = {};
+  __export(repair_exports, {
+    RepairPart: () => RepairPart
+  });
+  var RepairPart = {
+    /** 공장 틱(호스트)이 부른다 — 가까이 있으면 알리고 불똥 */
+    machineBroke(m) {
+      const p = this.player, cx = (m.x + 0.5) * TS, cy = (m.y + 0.5) * TS;
+      this.burstSparks(cx, cy, 14);
+      if (p && Math.abs(p.cx - cx) < TS * 60 && Math.abs(p.cy - cy) < TS * 40) {
+        this.sfxAt("power_off", m.x, m.y);
+        this.toast(tr("{m|이} 고장 났다 — 렌치로 고친다", { m: MACHINE[m.t].n }), "bad");
+      }
+    },
+    /** 렌치 — 톱니바퀴 하나를 갈아 끼운다 */
+    repairMachine(m) {
+      const p = this.player;
+      if (!p.removeItem("gear_basic", 1)) {
+        this.toast(tr("톱니바퀴가 하나 필요하다"), "bad");
+        return false;
+      }
+      m.broke = 0;
+      m.fixT = this.time;
+      m.st = "";
+      this.burstSparks((m.x + 0.5) * TS, (m.y + 0.5) * TS, 10);
+      this.sfx("mat_metal");
+      setTimeout(() => this.sfx("mat_metal", 1.2), 180);
+      this.toast(tr("{m|을} 고쳤다", { m: MACHINE[m.t].n }), "good");
+      if (this.net) this.netMachState(m);
+      UI5.refreshBag();
+      if (UI5.machRef === m && UI5.open === "machine") UI5.refreshMachine();
+      return true;
+    },
+    burstSparks(x, y, n) {
+      for (let i = 0; i < n; i++) this.parts.push(new Part(x + (Math.random() - 0.5) * 16, y + (Math.random() - 0.5) * 12, i % 3 ? "#ffd27a" : "#fff4c0", -140 - Math.random() * 120, 0.35 + Math.random() * 0.3));
+    }
+  };
+  mixin(Game.prototype, RepairPart, true);
 
   // src/game/game/interact.ts
   var interact_exports = {};
@@ -60974,7 +61122,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, repair_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

@@ -82,6 +82,7 @@
   },
   "factory.js": {
     "G": [
+      "machineBroke",
       "parts",
       "player",
       "sfxAt",

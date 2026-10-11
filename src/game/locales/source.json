@@ -289,6 +289,12 @@
   "{label} {v} (지금 {q})": [
    "game/ruin-pulse.surveyScore"
   ],
+  "{m|을} 고쳤다": [
+   "game/repair.repairMachine"
+  ],
+  "{m|이} 고장 났다 — 렌치로 고친다": [
+   "game/repair.machineBroke"
+  ],
   "{name|이} 나갔다": [
    "game/net.netDropPeer",
    "game/net.netOnGuest"
@@ -738,6 +744,13 @@
    "ui/tip.showTip"
   ],
   "고인 물속 바닥에만 놓을 수 있다": [
+   "game/mine.rightClick"
+  ],
+  "고장": [
+   "factory/tick.tick",
+   "factory/tick.wear"
+  ],
+  "고장 났다 — 렌치를 들고 우클릭해 고친다": [
    "game/mine.rightClick"
   ],
   "골방": [
@@ -3030,6 +3043,9 @@
   "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": [
    "game/fish-duel.duelDraw"
   ],
+  "톱니바퀴가 하나 필요하다": [
+   "game/repair.repairMachine"
+  ],
   "통과": [
    "factory",
    "factory/tick.tick"
@@ -4965,6 +4981,8 @@
   "ITEMS.sandbag.d": "급하게 쌓는 방벽.",
   "ITEMS.hoe_iron.n": "강철 괭이",
   "ITEMS.hoe_iron.d": "흙이나 풀을 우클릭해 밭을 간다. 씨앗은 밭 위에 심는다.",
+  "ITEMS.wrench.n": "렌치",
+  "ITEMS.wrench.d": "고장 난 기계를 들고 우클릭하면 톱니바퀴 하나를 갈아 끼워 고친다. 일하는 기계는 아주 드물게 고장 난다.",
   "ITEMS.watering_can.n": "물뿌리개",
   "ITEMS.watering_can.d": "물가를 우클릭해 가득 채우고(20번), 밭이나 작물을 우클릭해 물을 준다. 물 준 밭은 사흘 아침 동안 젖어 있다.",
   "ITEMS.bucket.n": "빈 양동이",

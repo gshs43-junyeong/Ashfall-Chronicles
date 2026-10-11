@@ -1032,7 +1032,12 @@
   "수레는 레일 위에 놓는다": "Ein Wagen gehört auf Schienen",
   "이미 타고 있다": "Du reitest bereits",
   "배 짐칸": "Bootsladeraum",
-  "전력이 없다 — 충전된 배터리가 필요하다": "Kein Strom — du brauchst eine geladene Batterie"
+  "전력이 없다 — 충전된 배터리가 필요하다": "Kein Strom — du brauchst eine geladene Batterie",
+  "{m|을} 고쳤다": "{m} repariert",
+  "{m|이} 고장 났다 — 렌치로 고친다": "{m} ist kaputt — mit einem Schraubenschlüssel reparieren",
+  "고장": "Defekt",
+  "고장 났다 — 렌치를 들고 우클릭해 고친다": "Defekt — mit einem Schraubenschlüssel in der Hand rechtsklicken",
+  "톱니바퀴가 하나 필요하다": "Du brauchst ein Zahnrad"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4493,6 +4498,8 @@
   "ITEMS.rail.d": "Verbindet sich mit benachbarten Schienen. Eine Stufe hoch oder runter wird zur Steigung.",
   "TILE_DEF.217.n": "Schiene",
   "ITEMS.mount_boatc.n": "Lastenkahn",
-  "ITEMS.mount_boatc.d": "Ein Kahn mit einer Kiste am Heck. Rechtsklick an Bord öffnet den Laderaum (16 Plätze); springen, um auszusteigen."
+  "ITEMS.mount_boatc.d": "Ein Kahn mit einer Kiste am Heck. Rechtsklick an Bord öffnet den Laderaum (16 Plätze); springen, um auszusteigen.",
+  "ITEMS.wrench.n": "Schraubenschlüssel",
+  "ITEMS.wrench.d": "In der Hand halten und eine kaputte Maschine rechtsklicken, um ein Zahnrad zu tauschen und sie zu reparieren. Laufende Maschinen fallen sehr selten aus."
  }
 }

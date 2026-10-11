@@ -1032,7 +1032,12 @@
   "수레는 레일 위에 놓는다": "La vagoneta debe ir sobre raíles",
   "이미 타고 있다": "Ya vas montado",
   "배 짐칸": "Bodega del bote",
-  "전력이 없다 — 충전된 배터리가 필요하다": "Sin energía — necesitas una batería cargada"
+  "전력이 없다 — 충전된 배터리가 필요하다": "Sin energía — necesitas una batería cargada",
+  "{m|을} 고쳤다": "{m} reparado",
+  "{m|이} 고장 났다 — 렌치로 고친다": "{m} se averió — repáralo con una llave",
+  "고장": "Averiado",
+  "고장 났다 — 렌치를 들고 우클릭해 고친다": "Está averiado — sostén una llave y haz clic derecho para repararlo",
+  "톱니바퀴가 하나 필요하다": "Necesitas un engranaje"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4493,6 +4498,8 @@
   "ITEMS.rail.d": "Se une a los raíles vecinos. Un desnivel de una casilla se vuelve pendiente.",
   "TILE_DEF.217.n": "Raíl",
   "ITEMS.mount_boatc.n": "Esquife de carga",
-  "ITEMS.mount_boatc.d": "Un esquife con un cajón atado a la popa. Clic derecho a bordo para abrir la bodega (16 casillas); salta para bajar."
+  "ITEMS.mount_boatc.d": "Un esquife con un cajón atado a la popa. Clic derecho a bordo para abrir la bodega (16 casillas); salta para bajar.",
+  "ITEMS.wrench.n": "Llave inglesa",
+  "ITEMS.wrench.d": "Sostenla y haz clic derecho en una máquina averiada para cambiar un engranaje y repararla. Las máquinas en marcha se averían muy rara vez."
  }
 }

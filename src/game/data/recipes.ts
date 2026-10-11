@@ -167,6 +167,7 @@ export const RECIPES: RecipeDef[] = [
   { out: 'gear_basic', n: 4, need: { steel_plate: 3, iron_bar: 2 }, station: 'forge' },
   /* 개조된 것에서 나온 녹슨 톱니를 쓸 데. */
   { out: 'gear_basic', n: 1, need: { rust_gear: 4 }, station: 'forge' },
+  { out: 'wrench', n: 1, need: { iron_bar: 6, rust_gear: 2 }, station: 'forge' },
   { out: 'pick_drill', n: 1, need: { blueprint_core: 1, power_core: 12, gear_basic: 20, mythril_bar: 10 }, station: 'forge' },
 
   /* ========== 용광로 ========== */

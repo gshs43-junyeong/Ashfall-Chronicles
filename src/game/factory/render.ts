@@ -15,6 +15,32 @@ import { DIR4, FAC_TICK, Factory } from '../factory.js';
 export const FactoryRenderPart: Bag = {
 
   /* ================= 렌더 ================= */
+  /** 고장 — 빨간 경고등 · 피어오르는 연기 · 이따금 튀는 불똥. 막 고친 기계는 렌치가 한 바퀴 돈다 */
+  drawBroken(c: any, m: any, sx: number, sy: number, time: number) {
+    c.save();
+    if (m.broke) {
+      const seed = m.x * 7 + m.y * 13;
+      for (let i = 0; i < 3; i++) {                                     // 연기 — 세 줄기가 차례로 오른다
+        const ph = ((time * 0.45 + i / 3 + seed * 0.01) % 1);
+        c.globalAlpha = (1 - ph) * 0.45; c.fillStyle = '#5a5a60';
+        c.beginPath(); c.arc(sx + TS / 2 + Math.sin(ph * 6 + i) * 4, sy + 4 - ph * 22, 3 + ph * 5, 0, Math.PI * 2); c.fill();
+      }
+      c.globalAlpha = 1;
+      const on = ((time * 3 + seed) | 0) % 2 === 0;
+      c.fillStyle = on ? '#ff3a2a' : '#5a1810'; c.fillRect(sx + TS - 6, sy + 2, 4, 4);   // 경고등
+      if (on) { c.globalAlpha = 0.35; c.fillStyle = '#ff5a3a'; c.beginPath(); c.arc(sx + TS - 4, sy + 4, 6, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; }
+      if (((time * 7 + seed) | 0) % 9 === 0) {                           // 불똥
+        c.strokeStyle = '#ffe08a'; c.lineWidth = 1.2; c.beginPath();
+        const bx = sx + 4 + (seed % 13), by = sy + 8;
+        c.moveTo(bx, by); c.lineTo(bx + 3, by - 4); c.lineTo(bx + 1, by - 6); c.lineTo(bx + 5, by - 10); c.stroke();
+      }
+    } else {
+      const k = (time - m.fixT) / 0.7;                                   // 렌치가 한 바퀴 돌며 사라진다
+      c.translate(sx + TS / 2, sy - 6 - k * 8); c.rotate(k * Math.PI * 2); c.globalAlpha = 1 - k;
+      c.fillStyle = '#c8d0da'; c.fillRect(-1.5, -7, 3, 12); c.fillRect(-4, -9, 8, 3); c.fillStyle = '#3a4048'; c.fillRect(-1, -9, 2, 2);
+    }
+    c.restore();
+  },
   render(c: any, w: any, camX: any, camY: any, tx0: any, ty0: any, tx1: any, ty1: any, time: any) { const { WW, WH } = dimsOf(w);
     if (!w.machines.size) return;
     c.save();
@@ -51,6 +77,7 @@ export const FactoryRenderPart: Bag = {
           if (m.t === 'turret') this.drawTurret(c, m, sx, sy, (tileHash(tx, ty) * TileArt.V) | 0);
           else TileArt.draw(c, s.tile, (tileHash(tx, ty) * TileArt.V) | 0, sx + jx, sy + jy);
           this.drawWork(c, w, m, sx, sy, time, camX, camY);
+          if (m.broke || (m.fixT !== undefined && time - m.fixT < 0.7)) this.drawBroken(c, m, sx, sy, time);
         }
 
         /* 전주 몸통 — 타일이 아니라 **그림**이다 — 사연: docs/code-history.md#h39 */
