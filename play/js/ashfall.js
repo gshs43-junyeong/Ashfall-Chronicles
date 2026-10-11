@@ -13390,7 +13390,11 @@
   // src/game/data/bossmoves.ts
   var bossmoves_exports = {};
   __export(bossmoves_exports, {
-    BOSS_MOVES: () => BOSS_MOVES
+    BOSS_GAP: () => BOSS_GAP,
+    BOSS_MOVES: () => BOSS_MOVES,
+    GAP_BRACE: () => GAP_BRACE,
+    GAP_KIND: () => GAP_KIND,
+    GAP_MISS_MUL: () => GAP_MISS_MUL
   });
   var BOSS_MOVES = {
     /* ---------------- 세션 1 ---------------- */
@@ -13627,6 +13631,38 @@
       ult: { k: "quake", n: "전부 무너져라", tele: 1.2, cnt: 18, spread: 640, delay: 1.1, fx: "rock", march: 1, m: 1 }
     }
   };
+  var BOSS_GAP = {
+    king_slime: "stagger",
+    bone_lord: "stagger",
+    first_keeper: "stagger",
+    pursuer: "stagger",
+    mine_horror: "stagger",
+    ice_warden: "stagger",
+    sand_guardian: "stagger",
+    isle_keeper: "stagger",
+    proliferator: "stagger",
+    shaft_maw: "stagger",
+    corrupt_heart: "heat",
+    frost_witch: "heat",
+    void_king: "heat",
+    storm_warden: "heat",
+    spore_queen: "heat",
+    drowned_keeper: "heat",
+    tide_warden: "heat",
+    hepha: "heat",
+    overseer: "heat",
+    vine_lord: "crack",
+    blight_maw: "crack",
+    archetype: "crack",
+    restorer: "crack"
+  };
+  var GAP_KIND = {
+    stagger: { dur: 2, mul: 1.6, miss: 1.2, c: "#ffd27a" },
+    heat: { dur: 2.8, mul: 1.35, miss: 1, slow: 0.5, c: "#ff8a4a" },
+    crack: { dur: 3, mul: 1.05, miss: 1, arm: 0.4, c: "#cfeaff" }
+  };
+  var GAP_BRACE = 0.45;
+  var GAP_MISS_MUL = 0.25;
 
   // src/game/data/achievements.ts
   var achievements_exports = {};
@@ -31574,6 +31610,11 @@
         return;
       }
       if (this.burrowT > 0) return;
+      if (this.boss) {
+        const m = this.gapHurtMul();
+        if (m < 1 && Math.random() < 0.4) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#9fb4c8", 0));
+        amount *= m;
+      }
       if (this.guard) {
         amount *= 0.12;
         if (Math.random() < 0.5) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#8d8874", 0));
@@ -31582,7 +31623,8 @@
         amount = this.traitHurt(amount, src);
         if (amount <= 0 || this.dead) return;
       }
-      const red = this.armor / (this.armor + 70);
+      const arm = this.boss ? this.armor * this.gapArmor() : this.armor;
+      const red = arm / (arm + 70);
       if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
       let dmg = Math.max(1, Math.round(amount * (1 - red)));
       this.hp -= dmg;
@@ -34034,6 +34076,10 @@
       this.phaseT = (this.phaseT || 0) - dt;
       if (this.phaseInv > 0) this.phaseInv -= dt;
       this.tickWeak(dt, world, p);
+      if (this.tickGap(dt, world)) {
+        this.stateT += dt;
+        return;
+      }
       if (this.tickSurge(dt, world, p)) {
         this.stateT += dt;
         return;
@@ -34553,8 +34599,10 @@
           this.move(dt, world, { gravMul: fly ? 0 : 1 });
         }
         if (r.t >= r.busy) {
+          const ult = mv.d === K.ult;
           this.mv = null;
           this.burrowT = 0;
+          this.gapOpen(ult);
           this.mvCd = K.every * (1 - this.pf * 0.3) * (0.85 + Math.random() * 0.3);
         }
         return true;
@@ -34573,6 +34621,7 @@
       }
       this.mvLast = d;
       this.mv = { d, t: 0, run: null };
+      this.gapMark();
       app.bossHazard({ k: "call", txt: d.n, c: K.c, life: Math.max(1.6, d.tele + 0.8), ref: this, nid: this.nid, x: this.cx, y: this.y });
       app.bossHazard({ k: "aura", c: K.c, life: d.tele, tele: d.tele, ref: this, nid: this.nid });
       app.sfxAt && app.sfxAt(d === K.ult ? "chapter" : "sk_mark", this.cx / TS, this.cy / TS);
@@ -35003,6 +35052,57 @@
     }
   };
   mixin(Enemy.prototype, BossMoves, true);
+
+  // src/game/entity/boss-gaps.ts
+  var boss_gaps_exports = {};
+  __export(boss_gaps_exports, {
+    BossGaps: () => BossGaps
+  });
+  var BossGaps = {
+    /** 기술을 고른 순간 — 플레이어 체력 합을 적어 둔다(끝날 때 헛손질이었는지 본다) */
+    gapMark() {
+      this.mvHp0 = app.players.reduce((s, q) => s + (q.dead ? 0 : q.hp), 0);
+    },
+    /** 기술이 끝났다 — 그 보스 갈래의 틈을 연다. 아무도 못 맞혔으면(헛손질) 더 길고 더 아프다 */
+    gapOpen(ult) {
+      const k = BOSS_GAP[this.type], K = k && GAP_KIND[k];
+      if (!K) return;
+      const hp = app.players.reduce((s, q) => s + (q.dead ? 0 : q.hp), 0);
+      const miss = hp >= (this.mvHp0 || 0) - 1;
+      this.gapK = k;
+      this.gapMiss = miss ? 1 : 0;
+      this.gapT = this.gapMax = K.dur * (ult ? 1.5 : 1) + (miss ? K.miss : 0);
+      if (K.slow) this.slow(1 - K.slow, this.gapT);
+      if (app.gapBurst) app.gapBurst(this);
+    },
+    /** 매 프레임(호스트) — 틈 동안은 새 기술을 안 고르고, 비틀거리면 몸놀림도 멈춘다(true) */
+    tickGap(dt, world) {
+      if (!(this.gapT > 0)) return false;
+      this.gapT -= dt;
+      if (this.mvCd !== void 0 && this.mvCd < this.gapT + 0.4) this.mvCd = this.gapT + 0.4;
+      if (this.gapK !== "stagger") return false;
+      const fly = !!SURGE_FLY[this.def.ai];
+      this.vx *= 0.8;
+      if (fly) this.vy = this.vy * 0.85 + 22;
+      this.move(dt, world, { gravMul: fly ? 0 : 1 });
+      return true;
+    },
+    /** 막는 중인가 — 예고(기술 이름을 외치고 기운을 모으는 동안) */
+    bracing() {
+      return this.ghost ? !!this.braceV : !!(this.mv && !this.mv.run);
+    },
+    /** 받는 피해 배수 */
+    gapHurtMul() {
+      if (this.bracing()) return GAP_BRACE;
+      if (this.gapT > 0 && GAP_KIND[this.gapK]) return GAP_KIND[this.gapK].mul + (this.gapMiss ? GAP_MISS_MUL : 0);
+      return 1;
+    },
+    /** 갑옷 배수 — 균열 동안 벌어진다 */
+    gapArmor() {
+      return this.gapT > 0 && this.gapK === "crack" ? GAP_KIND.crack.arm : 1;
+    }
+  };
+  mixin(Enemy.prototype, BossGaps, true);
 
   // src/game/factory.ts
   var factory_exports2 = {};
@@ -38878,6 +38978,8 @@
         $("#bb-name").textContent = e.def.n;
       }
       el.classList.toggle("last", e.lastPh());
+      el.classList.toggle("gap", e.gapT > 0);
+      el.classList.toggle("brace", e.bracing());
       const r = Math.max(0, e.hp / e.maxHp);
       $("#bb-fill").style.width = r * 100 + "%";
       $("#bb-ghost").style.width = r * 100 + "%";
@@ -44288,6 +44390,92 @@
     }
   };
   mixin(Game.prototype, StageFxPart, true);
+
+  // src/game/game/boss-gap-fx.ts
+  var boss_gap_fx_exports = {};
+  __export(boss_gap_fx_exports, {
+    BossGapFxPart: () => BossGapFxPart
+  });
+  var BossGapFxPart = {
+    /** 틈이 열리는 순간 — 갈래 빛깔의 고리 · 흔들림, 헛손질이면 한 겹 더 */
+    gapBurst(e) {
+      const K = GAP_KIND[e.gapK];
+      if (!K) return;
+      this.ringFx(e.cx, e.cy, Math.max(e.w, e.h) * 0.8, K.c, 0.45);
+      if (e.gapMiss) this.ringFx(e.cx, e.y + e.h, Math.max(e.w, e.h) * 1.2, "#ffffff", 0.6);
+      this.shake = Math.max(this.shake || 0, e.gapMiss ? 9 : 5);
+      this.sfxAt && this.sfxAt(e.gapK === "stagger" ? "sk_quake" : e.gapK === "heat" ? "sk_fire" : "hit_crit", e.cx / 22, e.cy / 22);
+    },
+    /** 몸 위의 틈 · 방어 자세 — drawMobFx 다음(같은 카메라) */
+    drawBossGaps(c, camX, camY) {
+      const t = this.time;
+      for (const e of this.ents || []) {
+        if (!(e instanceof Enemy) || e.dead || !e.boss) continue;
+        if (e.ghost && e.gapT > 0) e.gapT -= 1 / 60;
+        const x = e.cx - camX, y = e.cy - camY, R = Math.max(e.w, e.h) * 0.62;
+        if (x < -R * 2 || y < -R * 2 || x > this.W + R * 2 || y > this.H + R * 2) continue;
+        const col = (BOSS_MOVES[e.type] || {}).c || "#bcd8f4";
+        c.save();
+        if (e.bracing()) {
+          const art = Sprites.vfxArt("ward_shell", col), a = 0.32 + Math.sin(t * 9) * 0.08;
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = a;
+          if (art) c.drawImage(art, x - R, y - R, R * 2, R * 2);
+          c.strokeStyle = col;
+          c.lineWidth = 3;
+          c.globalAlpha = a + 0.25;
+          const f = e.facing || 1;
+          c.beginPath();
+          c.arc(x, y, R * 1.02, f > 0 ? -1.1 : Math.PI - 1.1, f > 0 ? 1.1 : Math.PI + 1.1);
+          c.stroke();
+        }
+        if (e.gapT > 0) {
+          const K = GAP_KIND[e.gapK], k = Math.min(1, e.gapT / Math.max(0.3, e.gapMax || 1)), fade = Math.min(1, e.gapT * 3);
+          if (e.gapK === "stagger") {
+            const hy = e.y - camY - 10;
+            for (let i = 0; i < 3; i++) {
+              const a = t * 5 + i * TAU / 3, sx = x + Math.cos(a) * e.w * 0.42, sy = hy + Math.sin(a) * 7;
+              c.globalAlpha = fade * (Math.sin(a) > 0 ? 1 : 0.55);
+              c.fillStyle = i ? "#ffe8a0" : "#ffffff";
+              c.beginPath();
+              for (let j = 0; j < 10; j++) {
+                const r = j % 2 ? 3.2 : 8, b = j * Math.PI / 5 + t * 3;
+                c.lineTo(sx + Math.cos(b) * r, sy + Math.sin(b) * r);
+              }
+              c.closePath();
+              c.fill();
+            }
+          } else if (e.gapK === "heat") {
+            c.globalCompositeOperation = "lighter";
+            const g = c.createRadialGradient(x, y, 2, x, y, R * 1.1);
+            g.addColorStop(0, "rgba(255,150,70," + 0.45 * fade + ")");
+            g.addColorStop(1, "rgba(255,90,30,0)");
+            c.fillStyle = g;
+            c.fillRect(x - R * 1.1, y - R * 1.1, R * 2.2, R * 2.2);
+            if (Math.random() < 0.5) this.mfxAdd({ k: "smoke", x: e.cx + (Math.random() - 0.5) * e.w * 0.7, y: e.y + e.h * 0.2, vx: (Math.random() - 0.5) * 20, vy: -60, life: 0.9, r: 5, c: "200,190,185", c2: "240,235,230" });
+            if (Math.random() < 0.4) this.mfxAdd({ k: "ember", x: e.cx + (Math.random() - 0.5) * e.w, y: e.cy, vx: (Math.random() - 0.5) * 60, vy: -90, life: 0.6, r: 2, c: "255,130,50", c2: "255,226,150" });
+          } else if (e.gapK === "crack") {
+            const art = Sprites.vfxArt("ward_crack", K.c);
+            c.globalCompositeOperation = "lighter";
+            c.globalAlpha = 0.55 + 0.4 * k;
+            if (art) c.drawImage(art, x - R * 0.9, y - R * 0.9, R * 1.8, R * 1.8);
+            if (Math.random() < 0.25) this.mfxAdd({ k: "mote", x: e.cx + (Math.random() - 0.5) * e.w, y: e.cy, vx: (Math.random() - 0.5) * 80, vy: -40, life: 0.7, r: 2.2, c: "200,230,255", c2: "255,255,255" });
+          }
+          if (e.gapMiss) {
+            c.globalCompositeOperation = "source-over";
+            c.globalAlpha = 0.25 * fade;
+            c.strokeStyle = "#fff4d0";
+            c.lineWidth = 2;
+            c.beginPath();
+            c.ellipse(x, e.y + e.h - camY, e.w * (0.6 + (1 - k) * 0.4), 6, 0, 0, TAU);
+            c.stroke();
+          }
+        }
+        c.restore();
+      }
+    }
+  };
+  mixin(Game.prototype, BossGapFxPart, true);
 
   // src/game/game/mine.ts
   var mine_exports = {};
@@ -53677,6 +53865,7 @@
       this.shapes.draw(c, camX, camY);
       this.vfx.draw(c, camX, camY);
       this.drawMobFx(c, camX, camY);
+      this.drawBossGaps(c, camX, camY);
       if (this.bossSay) {
         const bs = this.bossSay;
         bs.t -= 1 / 60;
@@ -57587,7 +57776,9 @@
           Math.round(e.maxHp),
           +(e.flash || 0).toFixed(2),
           e.cast ? [e.cast.id, +e.cast.t.toFixed(2), e.cast.max] : 0,
-          e.castKick > 0 ? 1 : 0
+          e.castKick > 0 ? 1 : 0,
+          // 시전 — 손님 화면도 같은 몸짓 · 알갱이
+          e.boss ? [e.gapT > 0 ? e.gapK : "", +Math.max(0, e.gapT || 0).toFixed(1), e.bracing() ? 1 : 0, e.gapMiss || 0, +(e.gapMax || 0).toFixed(1)] : 0
         ]);
       }
       return out;
@@ -57603,7 +57794,7 @@
     },
     netPutEnemies(list) {
       const n = this.net, t = now();
-      for (const [nid, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck] of list) {
+      for (const [nid, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
         let e = n.ghosts.get(nid);
         if (!e) {
           if (!ENEMIES[type]) continue;
@@ -57626,6 +57817,15 @@
         if (ck && !(e.castKick > 0)) {
           e.castKick = 0.3;
           e.atkPose = 0.3;
+        }
+        if (gp) {
+          const opened = gp[0] && !(e.gapT > 0);
+          e.gapK = gp[0];
+          e.gapT = gp[1];
+          e.braceV = gp[2];
+          e.gapMiss = gp[3];
+          e.gapMax = gp[4];
+          if (opened) this.gapBurst(e);
         }
         e.seenAt = t;
       }
@@ -58967,7 +59167,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

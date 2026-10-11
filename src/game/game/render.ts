@@ -440,6 +440,7 @@ export const RenderPart: Bag = {
     this.shapes.draw(c, camX, camY);
     this.vfx.draw(c, camX, camY);          // 스킬 연출(engine fx/vfx)
     this.drawMobFx(c, camX, camY);         // 몹 스킬 · 원소 탄 꼬리(mob-fx)
+    this.drawBossGaps(c, camX, camY);      // 보스의 틈 · 방어 자세(boss-gap-fx)
 
     // ---- 보스 대사 (화면 아래) ----
     if (this.bossSay) {

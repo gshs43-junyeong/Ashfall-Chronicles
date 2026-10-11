@@ -30,6 +30,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
     if (this.phaseInv > 0) this.phaseInv -= dt;
     this.tickWeak(dt, world, p);
 
+    /* 틈 — 기술 뒤 비틀거리는 동안은 몸놀림을 멈춘다(entity/boss-gaps) */
+    if (this.tickGap(dt, world)) { this.stateT += dt; return; }
     /* 힘 축적 — 모으는 중이면 여기서 돌아선다. */
     if (this.tickSurge(dt, world, p)) { this.stateT += dt; return; }
     /* 고유 기술 — 쓰는 동안 몸놀림은 쉰다(entity/boss-moves · data/bossmoves) */

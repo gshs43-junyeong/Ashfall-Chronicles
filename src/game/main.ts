@@ -96,6 +96,7 @@ import * as e_enemy_skills from './entity/enemy-skills.js';
 import * as e_enemy_traits from './entity/enemy-traits.js';
 import * as e_boss_ai from './entity/boss-ai.js';
 import * as e_boss_moves from './entity/boss-moves.js';
+import * as e_boss_gaps from './entity/boss-gaps.js';
 import * as factory from './factory.js';
 /* factory.js 의 Factory 를 나눈 조각 — 틱 · 그리기 */
 import * as f_tick from './factory/tick.js';
@@ -121,6 +122,7 @@ import * as g_fx from './game/fx.js';
 import * as g_status_fx from './game/status-fx.js';
 import * as g_mob_fx from './game/mob-fx.js';
 import * as g_stage_fx from './game/stage-fx.js';
+import * as g_boss_gap_fx from './game/boss-gap-fx.js';
 import * as g_mine from './game/mine.js';
 import * as g_farm from './game/farm.js';
 import * as g_fishing from './game/fishing.js';
@@ -179,7 +181,7 @@ if (!lang.I18N.isSource) {
 /* 디버그 창구 — 콘솔·?debug 도구·tests·tools/*.py 가 예전처럼 G · World · T · WW … 를 이름으로 읽는다.
    ★ 읽기 전용이고 살아 있는 값이다(WW 는 setWorldSize 뒤에 바뀐 값). 게임 코드는 이것을 읽지 말고 import 할 것.
    브라우저가 이미 가진 이름은 덮지 않는다. */
-for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, d_items, d_recipes, d_start, d_enemies, d_materials, d_skills, d_ruins, d_npcs, d_pets, d_story, d_quests, d_values, d_mobskills, d_bossmoves, d_achievements, world, w_plants, w_village, w_sky, w_dungeon, w_traps, w_ruins, w_ruin_site, w_caves, w_sea, w_water, w_strata, tileart, tp_ground, tp_misc, tp_factory, tp_water, tp_village, tp_ruins, tp_cave, itemart, ip_glyphs, ip_gear, ip_goods, ip_farm, ip_loot, ip_skills, ip_ui, ip_misc, sprites, titlebg, items, entity, e_player_combat, e_player_move, e_enemy_ai, e_enemy_skills, e_enemy_traits, e_boss_ai, e_boss_moves, factory, f_tick, f_render, ui, u_tree, u_quest, u_craft, u_machine, u_shop, u_tip, u_dialogue, u_hud, music, savefmt, game, g_shell, g_save, g_sound, g_fx, g_status_fx, g_mob_fx, g_stage_fx, g_mine, g_farm, g_fishing, g_interact, g_talk, g_quests, g_shop, g_village, g_pets, g_boss, g_boss_hazards, g_progress, g_life, g_spawn, g_weather, g_rigs, g_zones, g_caves, g_meteor, g_ruins, g_ruin_events, g_ruin_events_draw, g_ruin_pulse, g_ruin_puzzle, g_ruin_puzzle_draw, g_ruin_deep, g_citadel, g_memory, g_minimap, g_render, g_render_sky, g_render_world, g_render_actors, g_utility, g_debug_start, g_debug_showcase, g_net, g_netui, g_netchat, g_netprog]) {
+for (const m of [e_math, e_rng, e_noise, e_color, e_rle, e_seal, e_upgrade, e_store, e_aurl, e_music, e_sfx, e_amb, e_image, e_loop, e_view, e_actions, e_pointer, e_touch, e_tilemap, e_light, e_pipeline, e_atlas, e_conn, e_entity, e_scenes, e_panels, e_tooltip, e_slots, e_ko, e_format, e_i18n, e_mixin, util, lang, size, data, d_items, d_recipes, d_start, d_enemies, d_materials, d_skills, d_ruins, d_npcs, d_pets, d_story, d_quests, d_values, d_mobskills, d_bossmoves, d_achievements, world, w_plants, w_village, w_sky, w_dungeon, w_traps, w_ruins, w_ruin_site, w_caves, w_sea, w_water, w_strata, tileart, tp_ground, tp_misc, tp_factory, tp_water, tp_village, tp_ruins, tp_cave, itemart, ip_glyphs, ip_gear, ip_goods, ip_farm, ip_loot, ip_skills, ip_ui, ip_misc, sprites, titlebg, items, entity, e_player_combat, e_player_move, e_enemy_ai, e_enemy_skills, e_enemy_traits, e_boss_ai, e_boss_moves, e_boss_gaps, factory, f_tick, f_render, ui, u_tree, u_quest, u_craft, u_machine, u_shop, u_tip, u_dialogue, u_hud, music, savefmt, game, g_shell, g_save, g_sound, g_fx, g_status_fx, g_mob_fx, g_stage_fx, g_boss_gap_fx, g_mine, g_farm, g_fishing, g_interact, g_talk, g_quests, g_shop, g_village, g_pets, g_boss, g_boss_hazards, g_progress, g_life, g_spawn, g_weather, g_rigs, g_zones, g_caves, g_meteor, g_ruins, g_ruin_events, g_ruin_events_draw, g_ruin_pulse, g_ruin_puzzle, g_ruin_puzzle_draw, g_ruin_deep, g_citadel, g_memory, g_minimap, g_render, g_render_sky, g_render_world, g_render_actors, g_utility, g_debug_start, g_debug_showcase, g_net, g_netui, g_netchat, g_netprog]) {
   for (const k of Object.keys(m)) {
     if (k in window) continue;
     Object.defineProperty(window, k, { get: () => (m as Bag)[k], configurable: true });

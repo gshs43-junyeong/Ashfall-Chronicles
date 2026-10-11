@@ -96,7 +96,7 @@ interface AppCtx {
   flashFx: (...a: any[]) => any; goldRate: number; hitFx: (...a: any[]) => any; hitStop: (...a: any[]) => any;
   importSaves: (...a: any[]) => any; keysFor: (...a: any[]) => any; killMult: (...a: any[]) => any; mapAtlas: any;
   marketRate: (...a: any[]) => any; merchantOf: (...a: any[]) => any; modeMul: (...a: any[]) => any; nearSt: any; nearStObj: any;
-  objLabel: (...a: any[]) => any; onBossDown: (...a: any[]) => any; onDeath: (...a: any[]) => any; onKill: (...a: any[]) => any;
+  objLabel: (...a: any[]) => any; onBossDown: (...a: any[]) => any; gapBurst: (e: any) => void; onDeath: (...a: any[]) => any; onKill: (...a: any[]) => any;
   onLevelUp: (...a: any[]) => any; onPickup: (...a: any[]) => any; onProfUp: (...a: any[]) => any; parts: any[]; after: (sec: number, fn: () => void) => () => void;
   player: any; me: any; players: any[]; netRemoteHurt: (rp: any, amount: number, srcX?: number) => void; netRemoteInflict: (rp: any, id: string, dur: number, dps: number) => void; statusOnset: (e: any, kind: string) => void; mobCastFx: (e: any, S: any) => void; mobSkillFx: (e: any, S: any, id: string, tgt?: any, amt?: number) => void; net: any; pvpTargets: () => any[]; pvpHit: (q: any, dmg: number, srcX: number) => void; netHitGhost: (...a: any[]) => any; netKilledBy: (...a: any[]) => any; price: (...a: any[]) => any; projs: any[]; reforgeCost: (...a: any[]) => any; reforgeSlot: (...a: any[]) => any;
   ringFx: (...a: any[]) => any; rng: any; rollBounties: (...a: any[]) => any; saveSettings: (...a: any[]) => any;

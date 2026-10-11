@@ -159,7 +159,8 @@ export const NetPart: Bag = {
       if (!e.nid) { e.nid = ++n.eid; n.live.set(e.nid, e); }
       out.push([e.nid, e.type, Math.round(e.x), Math.round(e.y), Math.round(e.vx), Math.round(e.vy), e.facing, e.onGround ? 1 : 0,
         Math.round(e.hp), Math.round(e.maxHp), +(e.flash || 0).toFixed(2),
-        e.cast ? [e.cast.id, +e.cast.t.toFixed(2), e.cast.max] : 0, e.castKick > 0 ? 1 : 0]);   // 시전 — 손님 화면도 같은 몸짓 · 알갱이
+        e.cast ? [e.cast.id, +e.cast.t.toFixed(2), e.cast.max] : 0, e.castKick > 0 ? 1 : 0,   // 시전 — 손님 화면도 같은 몸짓 · 알갱이
+        e.boss ? [e.gapT > 0 ? e.gapK : '', +(Math.max(0, e.gapT || 0)).toFixed(1), e.bracing() ? 1 : 0, e.gapMiss || 0, +(e.gapMax || 0).toFixed(1)] : 0]);   // 보스의 틈 · 방어 자세
     }
     return out;
   },
@@ -171,7 +172,7 @@ export const NetPart: Bag = {
   },
   netPutEnemies(list: any) {
     const n = this.net, t = now();
-    for (const [nid, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck] of list) {
+    for (const [nid, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
       let e = n.ghosts.get(nid);
       if (!e) {
         if (!ENEMIES[type]) continue;
@@ -182,6 +183,11 @@ export const NetPart: Bag = {
       if (fl > (e.flash || 0)) e.flash = fl;
       e.cast = ca ? { id: ca[0], t: ca[1], max: ca[2] } : null;
       if (ck && !(e.castKick > 0)) { e.castKick = 0.3; e.atkPose = 0.3; }
+      if (gp) {
+        const opened = gp[0] && !(e.gapT > 0);
+        e.gapK = gp[0]; e.gapT = gp[1]; e.braceV = gp[2]; e.gapMiss = gp[3]; e.gapMax = gp[4];
+        if (opened) this.gapBurst(e);
+      }
       e.seenAt = t;
     }
     for (const [nid, e] of n.ghosts) if (t - e.seenAt > 1) { e.dead = true; n.ghosts.delete(nid); }   // 멀어졌다

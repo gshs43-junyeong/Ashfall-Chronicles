@@ -671,6 +671,10 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 #bossbar.last .bb-fill{background:linear-gradient(#c86ce8,#5a1a7a)}
 #bossbar.last .bb-ghost{background:#e0c0f0}
 #bossbar.last .bb-hp{color:#dcc0ee}
+#bossbar.gap .bb-track{animation:bbgap .45s ease-in-out infinite alternate;border-color:#ffd27a}
+@keyframes bbgap{from{box-shadow:0 0 0 1px #ffd27a,0 0 6px rgba(255,200,90,.45)}to{box-shadow:0 0 0 2px #fff0b8,0 0 18px 4px rgba(255,210,110,.85)}}
+#bossbar.brace .bb-fill{filter:saturate(.2) brightness(.75)}
+#bossbar.brace .bb-track{border-color:#8fa6bd;box-shadow:inset 0 0 0 1px rgba(170,200,230,.5)}
 
 /* ---- 미니보스 — 더 뺄 것이 없는 상태가 기준이다 ---- */
 #bossbar.t-mini{width:min(400px,66vw)}
