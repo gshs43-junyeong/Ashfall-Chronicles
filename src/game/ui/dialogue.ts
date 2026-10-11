@@ -152,6 +152,8 @@ export const DialogueUIPart: Bag = {
     }
     // 마지막 페이즈면 막대가 보라색으로 넘어간다(색은 CSS 의 .last 가 들고 있다)
     el.classList.toggle('last', e.lastPh());
+    el.classList.toggle('gap', e.gapT > 0);             // 틈 — 막대 테두리가 금빛으로 고동친다(글 알림 대신)
+    el.classList.toggle('brace', e.bracing());          // 방어 자세 — 막대가 잿빛으로 식는다
     const r = Math.max(0, e.hp / e.maxHp);
     $('#bb-fill').style.width = r * 100 + '%';
     /* 잔상은 같은 값을 넣고 **느리게 따라오게만** 한다(CSS: 0.18초 늦게 0.5초에 걸쳐). */

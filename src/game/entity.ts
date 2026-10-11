@@ -388,6 +388,9 @@ export class Enemy extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare ghost: boolean; declare nid: number; declare netBuf: any;   // 멀티플레이 — 참가자 화면의 그림자 몹 · 호스트가 매긴 번호
   declare combo: number; declare dashA: number; declare drift: number; declare iceCd: number; declare iceFloor: number; declare landT: number;
+  declare gapT: number; declare gapMax: number; declare gapK: string; declare gapMiss: number; declare braceV: number; declare mvHp0: number;
+  declare gapMark: () => void; declare gapOpen: (ult: boolean) => void; declare tickGap: (dt: number, world: World) => boolean;
+  declare bracing: () => boolean; declare gapHurtMul: () => number; declare gapArmor: () => number;
   declare openT: number; declare phaseT: number; declare spin: number; declare stopT: number; declare term: number; declare tilt: number;
   declare unmakeCd: number; declare wDir: number; declare wob: number; declare bossAI: (...a: any[]) => any; declare layHeat: (...a: any[]) => any;
   declare onPhaseChange: (...a: any[]) => any; declare raisePedestals: (...a: any[]) => any; declare tickWeak: (...a: any[]) => any;
@@ -593,13 +596,20 @@ export class Enemy extends Ent {
       return;
     }
     if (this.burrowT > 0) return;                       // 땅속 — 닿지 않는다(보스 기술 burrow)
+    /* 보스 — 예고 중엔 막고(방어 자세) 기술 뒤 틈엔 더 아프다(entity/boss-gaps) */
+    if (this.boss) {
+      const m = this.gapHurtMul();
+      if (m < 1 && Math.random() < 0.4) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, tr('막혔다'), '#9fb4c8', 0));
+      amount *= m;
+    }
     /* 굳어 있을 때(guard) — 약점이 드러나기 전에는 거의 통하지 않는다. */
     if (this.guard) {
       amount *= 0.12;
       if (Math.random() < 0.5) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, tr('막혔다'), '#8d8874', 0));
     }
     if (this.def.trait || this.frozenT > 0) { amount = this.traitHurt(amount, src); if (amount <= 0 || this.dead) return; }
-    const red = this.armor / (this.armor + 70);
+    const arm = this.boss ? this.armor * this.gapArmor() : this.armor;
+    const red = arm / (arm + 70);
     // 사냥꾼의 표식 — 출처를 가리지 않는다.
     if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
     let dmg = Math.max(1, Math.round(amount * (1 - red)));

@@ -33,7 +33,9 @@ export const BossMoves: Bag & ThisType<Enemy> = {
       if (r.tick) r.tick(dt, r);
       else { this.vx *= 0.88; if (fly) this.vy *= 0.88; this.move(dt, world, { gravMul: fly ? 0 : 1 }); }
       if (r.t >= r.busy) {
+        const ult = mv.d === K.ult;
         this.mv = null; this.burrowT = 0;
+        this.gapOpen(ult);                                    // 기술 뒤 틈(entity/boss-gaps)
         this.mvCd = K.every * (1 - this.pf * 0.3) * (0.85 + Math.random() * 0.3);
       }
       return true;
@@ -51,6 +53,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
     }
     this.mvLast = d;
     this.mv = { d, t: 0, run: null };
+    this.gapMark();
     G.bossHazard({ k: 'call', txt: d.n, c: K.c, life: Math.max(1.6, d.tele + 0.8), ref: this, nid: this.nid, x: this.cx, y: this.y });
     G.bossHazard({ k: 'aura', c: K.c, life: d.tele, tele: d.tele, ref: this, nid: this.nid });
     G.sfxAt && G.sfxAt(d === K.ult ? 'chapter' : 'sk_mark', this.cx / TS, this.cy / TS);

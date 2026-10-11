@@ -129,3 +129,21 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'burrow', n: '굴착', tele: 0.5, under: 1.5, r: 110, m: 1.2 }],
     ult: { k: 'quake', n: '전부 무너져라', tele: 1.2, cnt: 18, spread: 640, delay: 1.1, fx: 'rock', march: 1, m: 1 } }
 };
+
+/* 기술이 끝난 뒤의 틈 — 보스마다 한 갈래. 큰 기술 뒤에 생기는 틈을 때리는 것이 공략이다(entity/boss-gaps).
+   stagger 비틀거림(무거운 몸 — 멈춰 선다) · heat 과열(마법 · 원소 — 느려진다) · crack 균열(갑옷 · 껍데기 — 방어가 벌어진다). 사연: docs/code-history.md#h181 */
+export const BOSS_GAP: Record<string, string> = {
+  king_slime: 'stagger', bone_lord: 'stagger', first_keeper: 'stagger', pursuer: 'stagger', mine_horror: 'stagger', ice_warden: 'stagger',
+  sand_guardian: 'stagger', isle_keeper: 'stagger', proliferator: 'stagger', shaft_maw: 'stagger',
+  corrupt_heart: 'heat', frost_witch: 'heat', void_king: 'heat', storm_warden: 'heat', spore_queen: 'heat', drowned_keeper: 'heat',
+  tide_warden: 'heat', hepha: 'heat', overseer: 'heat',
+  vine_lord: 'crack', blight_maw: 'crack', archetype: 'crack', restorer: 'crack'
+};
+/** dur 초 · mul 받는 피해 배수 · miss 헛손질(아무도 못 맞힘)이면 더하는 초 · slow 이동 배수 · arm 갑옷 배수 */
+export const GAP_KIND: Bag = {
+  stagger: { dur: 2.0, mul: 1.6, miss: 1.2, c: '#ffd27a' },
+  heat: { dur: 2.8, mul: 1.35, miss: 1.0, slow: 0.5, c: '#ff8a4a' },
+  crack: { dur: 3.0, mul: 1.05, miss: 1.0, arm: 0.4, c: '#cfeaff' }
+};
+export const GAP_BRACE = 0.45;     // 예고 중 방어 자세 — 받는 피해(지금은 때리지 말 것이 몸에 보인다)
+export const GAP_MISS_MUL = 0.25;  // 헛손질이면 받는 피해에 더한다
