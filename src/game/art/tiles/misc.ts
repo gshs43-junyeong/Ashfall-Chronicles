@@ -17,6 +17,8 @@ export const TilePaintMisc: Bag = {
         return;
     }
   },
+  /** 레일 — 칸 그림 없음(이웃을 보고 비탈째 이어 그리는 것은 game/rides.ts drawRails) */
+  rail(H: TilePaintKit) { return; },
   spike(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {

@@ -50,6 +50,8 @@ export const RenderActorsPart: Bag = {
     if (p.flash > 0.12) return 12;                                  // 피격
     if (p.dashV > 0) return 8;                                      // 대시
     if (p.swing > 0) return 9 + Math.min(2, Math.floor((0.24 - p.swing) / 0.08));
+    if ((p.ride ? p.ride.kind : p.rideK) === 'horse') return 6;      // 말 위 — 다리를 굽힌 장(안장에 걸터앉은 모양)
+    if (p.ride || p.rideK) return 0;                                // 배 · 수레 — 다리는 몸통에 가린다
     if (!p.onGround) return p.vy < 0 ? 6 : 7;                       // 점프 / 낙하
     if (Math.abs(p.vx) > 20) return cycleFrame(this.time, 9, 4, 2);   // 걷기 네 장
     return cycleFrame(this.time, 2, 2);                                // 서기 두 장

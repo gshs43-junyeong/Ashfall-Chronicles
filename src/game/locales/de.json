@@ -1026,7 +1026,13 @@
   "놓쳤다 — 힘이 센 놈이었다": "Entwischt — das war ein starker Brocken",
   "입질이다 — 박자에 맞춰 당겨라!": "Ein Biss — zieh im Takt!",
   "클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다": "Klick · Z · X zum Treffen · gedrückt halten und dem Ball folgen · Esc lässt los",
-  "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": "Tippen zum Treffen · halten und dem Ball folgen · bei Spinnern halten und kreisen"
+  "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": "Tippen zum Treffen · halten und dem Ball folgen · bei Spinnern halten und kreisen",
+  "누군가 타고 있다": "Jemand reitet bereits darauf",
+  "말은 땅 위에 세운다": "Ein Pferd braucht festen Boden",
+  "말이 물을 싫어한다": "Das Pferd scheut das Wasser",
+  "배는 물 위에 띄운다": "Ein Boot gehört aufs Wasser",
+  "수레는 레일 위에 놓는다": "Ein Wagen gehört auf Schienen",
+  "이미 타고 있다": "Du reitest bereits"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4476,6 +4482,15 @@
   "STORY_MEMORY.story2.lines.1": "„Wenn ich die Augen schließe, höre ich den Traum des Sterns. In diesem Traum gewinnen wir noch immer.“",
   "STORY_MEMORY.story2.lines.2": "„Wenn du bis hierher gelangt bist, weißt du bereits, wie man dort hinüberkommt, wo es keinen Halt gibt. Wir wussten es nie.“",
   "STORY_MEMORY.story2.end": "— Als der letzte Splitter seinen Platz findet, wird jenseits des eingestürzten Bodens ein uralter Atemzug ausgestoßen.",
-  "TILE_DEF.216.n": "Rissiger Ziegel"
+  "TILE_DEF.216.n": "Rissiger Ziegel",
+  "ITEMS.mount_horse.n": "Aschmähnenpferd",
+  "ITEMS.mount_horse.d": "Läuft an Land schnell und springt hoch. Geht nicht ins Wasser.",
+  "ITEMS.mount_boat.n": "Holzkahn",
+  "ITEMS.mount_boat.d": "Setz es aufs Wasser. An Bord musst du nicht die Luft anhalten.",
+  "ITEMS.mount_cart.n": "Grubenwagen",
+  "ITEMS.mount_cart.d": "Auf Schienen setzen. Wird bergab schneller und hält am Ende der Strecke.",
+  "ITEMS.rail.n": "Schiene",
+  "ITEMS.rail.d": "Verbindet sich mit benachbarten Schienen. Eine Stufe hoch oder runter wird zur Steigung.",
+  "TILE_DEF.217.n": "Schiene"
  }
 }

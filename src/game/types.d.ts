@@ -32,7 +32,7 @@ interface ItemDef {
   fishWait?: number; fishBonus?: number; fishItemChance?: number; use?: Record<string, any>; cd?: number; stack?: number;
   b?: Record<string, any>; price?: number; slot?: string; def?: number; slots?: number; instant?: number; fixed?: number; det?: string;
   act?: string; tile?: number; poison?: number; frost?: number; deco?: number; seal?: string; ruin?: string; boss?: string; mach?: string;
-  obj?: string; gold?: number; pw?: number; hoe?: number; water?: number; scythe?: number; reap?: number; fert?: number; pierce?: number;
+  obj?: string; mount?: string; gold?: number; pw?: number; hoe?: number; water?: number; scythe?: number; reap?: number; fert?: number; pierce?: number;
   r?: number; mine?: number; fuse?: number; look?: string; pet?: string;
 }
 

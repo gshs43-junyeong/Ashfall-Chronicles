@@ -1026,7 +1026,13 @@
   "놓쳤다 — 힘이 센 놈이었다": "Se escapó: era uno muy fuerte",
   "입질이다 — 박자에 맞춰 당겨라!": "¡Pican! Tira al ritmo",
   "클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다": "Clic · Z · X para golpear · mantén y sigue la bola · Esc para soltar",
-  "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": "Toca para golpear · mantén y sigue la bola · en los giros, mantén y da vueltas"
+  "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": "Toca para golpear · mantén y sigue la bola · en los giros, mantén y da vueltas",
+  "누군가 타고 있다": "Alguien ya va montado",
+  "말은 땅 위에 세운다": "El caballo debe estar en tierra firme",
+  "말이 물을 싫어한다": "El caballo se niega a entrar al agua",
+  "배는 물 위에 띄운다": "El bote debe flotar en el agua",
+  "수레는 레일 위에 놓는다": "La vagoneta debe ir sobre raíles",
+  "이미 타고 있다": "Ya vas montado"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4476,6 +4482,15 @@
   "STORY_MEMORY.story2.lines.1": "«Cuando cierro los ojos, oigo el sueño de la estrella. En ese sueño, seguimos ganando.»",
   "STORY_MEMORY.story2.lines.2": "«Si cruzaste hasta aquí, ya sabes cruzar donde no hay apoyo. Nosotros nunca lo supimos.»",
   "STORY_MEMORY.story2.end": "— Cuando el último fragmento encuentra su lugar, al otro lado del suelo hundido se exhala una vez un aliento antiguo.",
-  "TILE_DEF.216.n": "Ladrillo agrietado"
+  "TILE_DEF.216.n": "Ladrillo agrietado",
+  "ITEMS.mount_horse.n": "Caballo de crin ceniza",
+  "ITEMS.mount_horse.d": "Corre rápido y salta alto en tierra. No entra en el agua.",
+  "ITEMS.mount_boat.n": "Bote de madera",
+  "ITEMS.mount_boat.d": "Ponlo a flotar en el agua. A bordo no necesitas contener la respiración.",
+  "ITEMS.mount_cart.n": "Vagoneta",
+  "ITEMS.mount_cart.d": "Colócala sobre raíles. Acelera cuesta abajo y se detiene al final de la vía.",
+  "ITEMS.rail.n": "Raíl",
+  "ITEMS.rail.d": "Se une a los raíles vecinos. Un desnivel de una casilla se vuelve pendiente.",
+  "TILE_DEF.217.n": "Raíl"
  }
 }

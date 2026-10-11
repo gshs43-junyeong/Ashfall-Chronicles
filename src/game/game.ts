@@ -551,6 +551,7 @@ export const GameCore: Bag = {
     p.update(dt, w, this.input);
     if (this.net) this.netTick(dt);
     this.updateFishing(dt);
+    this.updateRides(dt);
     if (this.starMerge > 0) this.starMerge = Math.max(0, this.starMerge - dt);
     if (this.starGain) { this.starGain.t += dt; if (this.starGain.t >= this.starGain.dur) this.starGain = null; }
     this.tickStarRise(dt);

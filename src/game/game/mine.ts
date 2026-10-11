@@ -37,11 +37,11 @@ export const MinePart: Bag = {
     /* 내가 놓은 설치물이 겨눈 자리에 있으면 그것부터 걷어낸다 — 타일이 아니라 오브젝트라서 아래의 타일 채굴 로직으로는 잡히지 않는다. */
     {
       const o = this.findObjAt(this.input.wx, this.input.wy);
-      if (o && o.placed && (OBJ_SIZE[o.type] || o.type === 'door')) {
+      if (o && o.placed && (OBJ_SIZE[o.type] || o.type === 'door' || o.type === 'mount')) {
         p.mineTx = -1; p.mineProg = 0;
         if (this.time - (this._stRm || -9) < 0.3) return;
         this._stRm = this.time;
-        if (o.type === 'door') this.removeDoor(o); else this.removeStation(o);
+        if (o.type === 'door') this.removeDoor(o); else if (o.type === 'mount') this.removeMount(o); else this.removeStation(o);
         return;
       }
     }
@@ -264,6 +264,8 @@ export const MinePart: Bag = {
       if (hc && idef(hc).type === 'consum') { this.useConsumable(p.sel); return; }
       // 1.7) 유적 위치 지도 — 펴 보면 그 유적 자리가 나침반에 잡힌다
       if (hc && idef(hc).type === 'map') { this.useRuinMap(p.sel); return; }
+      // 1.8) 탈 것 — 땅 · 물 · 레일 위에 놓는다(game/rides.ts)
+      if (hc && idef(hc).type === 'mount') { this.placeMount(p.sel); return; }
     }
     // 2) 기계: 이미 놓인 것은 열고, 손에 든 것은 설치한다
     const mtx = Math.floor(this.input.wx / TS), mty = Math.floor(this.input.wy / TS);

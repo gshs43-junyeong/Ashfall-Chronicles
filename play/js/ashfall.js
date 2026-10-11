@@ -3103,7 +3103,9 @@
     ORBITSEAL: 214,
     LIGHTBRIDGE: 215,
     /* --- 석판 유적의 금 간 벽 — 뒤에 기억 조각 골방이 있다(첫 곡괭이로 깬다) --- */
-    CRACKBRICK: 216
+    CRACKBRICK: 216,
+    /* --- 탈 것 — 광산 수레가 달리는 레일(그림은 game/rides.ts 가 이웃을 보고 비탈째 그린다) --- */
+    RAIL: 217
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -3433,7 +3435,8 @@
     { n: "마그마 맥", c: "#5a2a1e", solid: 1, hard: 2, drop: "basalt" },
     { n: "궤도 봉인문", c: "#3a5a7a", solid: 1, hard: 99 },
     { n: "빛다리", c: "#9fe8ff", solid: 1, hard: 99 },
-    { n: "금 간 벽돌", c: "#6a6458", solid: 1, hard: 1, drop: "stone" }
+    { n: "금 간 벽돌", c: "#6a6458", solid: 1, hard: 1, drop: "stone" },
+    { n: "레일", c: "#8a8e98", solid: 0, hard: 1, drop: "rail" }
   ];
   var FARM_WET_R = 5, FARM_WET_DAYS = 3;
   var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
@@ -4499,6 +4502,41 @@
       type: "door",
       stack: 20,
       d: "경첩은 다는 사람이 바라본 쪽에 붙는다. 그쪽으로 열린다."
+    },
+    /* --- 탈 것 (type:'mount' — game/rides.ts) — 놓으면 그 자리에 서고, 우클릭으로 타고, 곡괭이로 거둔다 --- */
+    mount_horse: {
+      n: "잿빛 갈기 말",
+      i: "🐎",
+      type: "mount",
+      mount: "horse",
+      price: 8e3,
+      fixed: 1,
+      stack: 1,
+      d: "땅 위를 빠르게 달리고 높이 뛴다. 물에는 들어가지 않는다."
+    },
+    mount_boat: {
+      n: "나무 조각배",
+      i: "🛶",
+      type: "mount",
+      mount: "boat",
+      stack: 1,
+      d: "물 위에 띄운다. 타고 있는 동안은 숨을 쉬지 않아도 된다."
+    },
+    mount_cart: {
+      n: "광산 수레",
+      i: "🛒",
+      type: "mount",
+      mount: "cart",
+      stack: 1,
+      d: "레일 위에 놓는다. 내리막에서 빨라지고 레일 끝에서 멈춘다."
+    },
+    rail: {
+      n: "레일",
+      i: "🛤",
+      type: "block",
+      tile: T.RAIL,
+      stack: 999,
+      d: "이웃한 레일과 이어진다. 한 칸 오르내림은 비탈이 된다."
     },
     /* --- 동력 장비: 전하를 쓴다. 바닥나면 가방의 충전된 배터리를 한 개씩 자동으로 소모 --- */
     pick_arc: {
@@ -5796,6 +5834,10 @@
     { out: "crate_gold", n: 1, need: { gold_bar: 10, plank: 20 }, station: "forge" },
     // 문 — 널판 여덟에 경첩 한 벌.
     { out: "door_wood", n: 1, need: { plank: 8, iron_bar: 1 }, station: "work" },
+    // 탈 것 — 배는 널판과 덩굴, 수레는 쇠와 톱니, 레일은 쇠 한 줄에 침목
+    { out: "mount_boat", n: 1, need: { plank: 30, vine_coil: 4, iron_bar: 2 }, station: "work" },
+    { out: "mount_cart", n: 1, need: { iron_bar: 12, plank: 8, gear_basic: 2 }, station: "forge", lv: 2 },
+    { out: "rail", n: 8, need: { iron_bar: 1, plank: 2 }, station: "forge" },
     { out: "rod_basic", n: 1, need: { wood: 10, spider_silk: 4 }, station: "work" },
     { out: "rod_adv", n: 1, need: { machine_frame: 1, motor: 2, mythril_bar: 4, spider_silk: 14, crystal: 6 }, station: "work", lv: 3 },
     /* --- 바다 계통 (시설 4단계) --- */
@@ -10420,7 +10462,7 @@
       c: "#b8804a",
       role: "조련사",
       art: "rika",
-      shop: ["egg_common", "egg_rare", "egg_epic", "pet_candy"],
+      shop: ["egg_common", "egg_rare", "egg_epic", "pet_candy", "mount_horse"],
       pets: true,
       line: "짐승들이 낯을 좀 가리긴 해도, 알만 있으면 금방 정든다."
     },
@@ -22550,6 +22592,7 @@
   ART[T.MAGMAVEIN] = { k: "magmavein", c: "#3a3333", glow: 1 };
   ART[T.ORBITSEAL] = { k: "orbitseal", c: "#3a5a7a", glow: 1 };
   ART[T.CRACKBRICK] = { k: "crackbrick", c: "#6a6458" };
+  ART[T.RAIL] = { k: "rail", c: "#8a8e98", a: 1 };
   ART[T.LIGHTBRIDGE] = { k: "lightbridge", c: "#9fe8ff", a: 1, glow: 1 };
   ART[T.METEORITE] = { k: "meteorite", c: "#3a3436" };
   ART[T.STARCRYSTAL] = { k: "starcrystal", c: "#ffe6a8", a: 1, glow: 1 };
@@ -23824,6 +23867,10 @@
         R(rng.range(4, TS - 6), 1, 1, 5, shade(base, 0.68));
         return;
       }
+    },
+    /** 레일 — 칸 그림 없음(이웃을 보고 비탈째 이어 그리는 것은 game/rides.ts drawRails) */
+    rail(H) {
+      return;
     },
     spike(H) {
       const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
@@ -33307,6 +33354,106 @@
   };
   mixin(Player.prototype, PlayerCombat, true);
 
+  // src/game/entity/player-ride.ts
+  var player_ride_exports = {};
+  __export(player_ride_exports, {
+    PlayerRide: () => PlayerRide,
+    RIDES: () => RIDES,
+    boatRow: () => boatRow,
+    railAt: () => railAt,
+    railRow: () => railRow,
+    railTop: () => railTop
+  });
+  var RIDES = {
+    horse: { ms: 1.9, acc: 1.5, jump: 760, safeFall: 280 },
+    boat: { max: 240, acc: 520, drag: 1.3 },
+    cart: { max: 620, acc: 360, grav: 1100, fric: 0.18 }
+  };
+  function railRow(w, col, row) {
+    for (const d of [0, -1, 1]) if (w.get(col, row + d) === T.RAIL) return row + d;
+    return -1;
+  }
+  var railTop = (r) => (r + 1) * TS - 4;
+  function railAt(w, x, row) {
+    const col = Math.floor(x / TS), r = railRow(w, col, row);
+    if (r < 0) return null;
+    const yc = railTop(r), mid = (col + 0.5) * TS, side = x >= mid ? 1 : -1;
+    const rn = railRow(w, col + side, r), yn = rn >= 0 ? railTop(rn) : yc;
+    const t = Math.abs(x - mid) / TS;
+    return { y: yc + (yn - yc) * t, slope: (yn - yc) / TS * side, row: r };
+  }
+  function boatRow(w, col, row) {
+    for (const ty of [row, row + 1, row + 2, row - 1])
+      if (TILE_DEF[w.get(col, ty)].liquid) {
+        const s = w.surfaceRow(col, ty, 5);
+        if (s >= 0) return s;
+      }
+    return -1;
+  }
+  var PlayerRide = {
+    /** 배 · 수레 한 걸음 — 점프는 내리기(game/rides.ts 가 ride.off 를 보고 내린다) */
+    rideStep(dt, world, input) {
+      const rd = this.ride, R = RIDES[rd.kind];
+      const want = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+      if (input.jump && !this.jumpHeld) rd.off = "jump";
+      this.jumpHeld = !!input.jump;
+      this.swimming = false;
+      this.floating = false;
+      this.submerged = 0;
+      this.onGround = true;
+      this.vy = 0;
+      if (rd.kind === "boat") {
+        this.vx += want * R.acc * dt;
+        this.vx -= this.vx * R.drag * dt;
+        this.vx = clamp(this.vx, -R.max, R.max);
+        let nx = this.cx + this.vx * dt;
+        let col = Math.floor(nx / TS), sr = boatRow(world, col, rd.row);
+        const edge = Math.floor((nx + Math.sign(this.vx || 1) * 18) / TS);
+        if (sr < 0 || boatRow(world, edge, sr) < 0 || world.solid(col, sr - 1) || world.solid(edge, sr - 1)) {
+          this.vx = 0;
+          nx = this.cx;
+          col = Math.floor(nx / TS);
+          sr = boatRow(world, col, rd.row);
+        }
+        if (sr < 0) {
+          rd.off = "land";
+          return;
+        }
+        rd.row = sr;
+        const surf = app.surfacePx ? app.surfacePx(nx / TS, sr) : sr * TS;
+        this.x = nx - this.w / 2;
+        this.y = surf + 3 - this.h;
+      } else {
+        const here = railAt(world, this.cx, rd.row);
+        if (!here) {
+          rd.off = "rail";
+          return;
+        }
+        rd.v = (rd.v || 0) + want * R.acc * dt + R.grav * here.slope / Math.hypot(1, here.slope) * dt;
+        rd.v -= rd.v * R.fric * dt;
+        rd.v = clamp(rd.v, -R.max, R.max);
+        let nx = this.cx + rd.v * dt;
+        let next = railAt(world, nx, here.row);
+        const body = Math.floor((here.y - 30) / TS);
+        if (!next || world.solid(Math.floor(nx / TS), body)) {
+          if (Math.abs(rd.v) > 160) {
+            rd.bump = Math.abs(rd.v);
+            rd.v = -rd.v * 0.2;
+          } else rd.v = 0;
+          nx = this.cx;
+          next = here;
+        }
+        rd.row = next.row;
+        this.vx = rd.v;
+        this.x = nx - this.w / 2;
+        this.y = next.y - 8 - this.h;
+        rd.tilt = Math.atan(next.slope);
+      }
+      if (Math.abs(this.vx) > 15) this.facing = Math.sign(this.vx);
+    }
+  };
+  mixin(Player.prototype, PlayerRide, true);
+
   // src/game/entity/player-move.ts
   var player_move_exports = {};
   __export(player_move_exports, {
@@ -33401,9 +33548,9 @@
       }
       this.mp = Math.min(d.maxMp, this.mp + d.mpreg * dt);
       if (this.hurtCd <= 0) {
-        const h02 = this.hp;
+        const h0 = this.hp;
         this.hp = Math.min(d.maxHp, this.hp + d.hpreg * dt);
-        this.regAcc = (this.regAcc || 0) + this.hp - h02;
+        this.regAcc = (this.regAcc || 0) + this.hp - h0;
         this.regT = (this.regT || 0) + dt;
         if (this.regT >= 2) {
           if (this.regAcc >= 1 && this === app.me) app.texts.push(new DmgText(this.cx, this.y, "+" + Math.round(this.regAcc), "#7fe07f", 0));
@@ -33411,12 +33558,20 @@
           this.regT = 0;
         }
       }
+      const R = this.ride ? RIDES[this.ride.kind] : null;
+      if (R && this.ride.kind !== "horse") {
+        this.rideStep(dt, world, input);
+        this.updateOxygen(dt, world);
+        this.afterMove(dt, world);
+        return;
+      }
       const sub = this.submerged || 0;
       const wasSwim = this.swimming;
       this.swimming = this.swimming ? sub > 0.25 : sub > 0.35;
       if (this.swimming !== wasSwim && app.sfx) app.sfx("splash");
       this.updateOxygen(dt, world);
-      const acc = this.onGround ? 2400 : 1500;
+      const acc = (this.onGround ? 2400 : 1500) * (R ? R.acc : 1);
+      const ms = d.ms * (R ? R.ms : 1);
       let want = 0;
       if (input.left) want -= 1;
       if (input.right) want += 1;
@@ -33425,7 +33580,7 @@
         if (want !== 0 && (!this.swing || !this.channel)) this.facing = Math.sign(want);
       } else if (want !== 0) {
         this.vx += want * acc * dt;
-        this.vx = clamp(this.vx, -d.ms * (this.dashV > 0 ? 3 : 1), d.ms * (this.dashV > 0 ? 3 : 1));
+        this.vx = clamp(this.vx, -ms * (this.dashV > 0 ? 3 : 1), ms * (this.dashV > 0 ? 3 : 1));
         if (!this.swing || !this.channel) this.facing = want;
       } else {
         const fr = this.onGround ? 2600 : 700;
@@ -33482,7 +33637,7 @@
       } else {
         if (input.jump && !this.jumpHeld && this.jumpsLeft > 0) {
           app.sfx(this.onGround ? "jump" : "jump2", 0.94 + Math.random() * 0.12);
-          this.vy = -620;
+          this.vy = R ? -R.jump : -620;
           this.jumpsLeft--;
           this.jumpHeld = true;
           if (!this.onGround) for (let i = 0; i < 8; i++) app.parts.push(new Part(this.cx, this.y + this.h, "#cfe8ff"));
@@ -33562,8 +33717,9 @@
       this.move(dt, world, { dropThrough: !!input.down, gravMul: this.floating ? 0 : this.swimming ? 0.3 : void 0 });
       if (!wasOnGround && this.onGround && !this.gliding && !this.jetting && (this.submerged || 0) <= 0.2) {
         const bt = world.get(Math.floor(this.cx / TS), Math.floor((this.y + this.h + 2) / TS));
-        if (fallVy > SAFE_FALL_VY && this.iframe <= 0 && !TILE_DEF[bt].soft) {
-          const dmg = Math.round((fallVy - SAFE_FALL_VY) / (MAX_FALL - SAFE_FALL_VY) * 55);
+        const safe = SAFE_FALL_VY + (R ? R.safeFall : 0);
+        if (fallVy > safe && this.iframe <= 0 && !TILE_DEF[bt].soft) {
+          const dmg = Math.round((fallVy - safe) / (MAX_FALL - SAFE_FALL_VY) * 55);
           if (dmg > 0) {
             this.hurt(dmg);
             this.hurtCd = Math.max(this.hurtCd, 0.4);
@@ -33580,6 +33736,10 @@
           }
         }
       }
+      this.afterMove(dt, world);
+    },
+    /** 움직인 뒤 — 돌진 · 회전 · 휘두르기 판정 · 환경 피해 · 깊이 기록(탈 것 위에서도 같다) */
+    afterMove(dt, world) {
       if (this.chargeT > 0) {
         for (const e of app.ents) {
           if (!(e instanceof Enemy) || e.dead || this.chargeHit.has(e)) continue;
@@ -42530,6 +42690,7 @@
       p.update(dt, w, this.input);
       if (this.net) this.netTick(dt);
       this.updateFishing(dt);
+      this.updateRides(dt);
       if (this.starMerge > 0) this.starMerge = Math.max(0, this.starMerge - dt);
       if (this.starGain) {
         this.starGain.t += dt;
@@ -45359,12 +45520,13 @@
       }
       {
         const o = this.findObjAt(this.input.wx, this.input.wy);
-        if (o && o.placed && (OBJ_SIZE[o.type] || o.type === "door")) {
+        if (o && o.placed && (OBJ_SIZE[o.type] || o.type === "door" || o.type === "mount")) {
           p.mineTx = -1;
           p.mineProg = 0;
           if (this.time - (this._stRm || -9) < 0.3) return;
           this._stRm = this.time;
           if (o.type === "door") this.removeDoor(o);
+          else if (o.type === "mount") this.removeMount(o);
           else this.removeStation(o);
           return;
         }
@@ -45593,6 +45755,10 @@
         }
         if (hc && idef(hc).type === "map") {
           this.useRuinMap(p.sel);
+          return;
+        }
+        if (hc && idef(hc).type === "mount") {
+          this.placeMount(p.sel);
           return;
         }
       }
@@ -46706,6 +46872,327 @@
   };
   mixin(Game.prototype, FishDuelPart, true);
 
+  // src/game/game/rides.ts
+  var rides_exports = {};
+  __export(rides_exports, {
+    MOUNT_BOX: () => MOUNT_BOX,
+    RidesPart: () => RidesPart
+  });
+
+  // src/engine/render/anim.ts
+  function cycleFrame(t, fps, n, start = 0, phase = 0) {
+    return start + (Math.floor(t * fps + phase) % n + n) % n;
+  }
+  function onceFrame(elapsed, fps, n, start = 0) {
+    return start + Math.min(n - 1, Math.max(0, Math.floor(elapsed * fps)));
+  }
+  var Beat = class {
+    constructor() {
+      this.last = -1;
+    }
+    hit(frame, beats) {
+      const changed = frame !== this.last;
+      this.last = frame;
+      return changed && beats.indexOf(frame) >= 0;
+    }
+  };
+  var Animator = class {
+    constructor(clips, start) {
+      this.clips = clips;
+      this.cur = start;
+      this.t = 0;
+    }
+    play(k) {
+      if (k !== this.cur) {
+        this.cur = k;
+        this.t = 0;
+      }
+    }
+    update(dt) {
+      this.t += dt;
+    }
+    get frame() {
+      const c = this.clips[this.cur];
+      return c.loop === false ? onceFrame(this.t, c.fps, c.n, c.from) : cycleFrame(this.t, c.fps, c.n, c.from);
+    }
+    get done() {
+      const c = this.clips[this.cur];
+      return c.loop === false && this.t * c.fps >= c.n;
+    }
+  };
+
+  // src/game/game/rides.ts
+  var MOUNT_BOX = { horse: [34, 30], boat: [48, 14], cart: [30, 20] };
+  var ITEM_OF = { horse: "mount_horse", boat: "mount_boat", cart: "mount_cart" };
+  var RidesPart = {
+    /* ---------------- 놓기 · 거두기 ---------------- */
+    /** 손에 든 탈 것을 겨눈 자리에 — 말은 땅 위, 배는 물 위, 수레는 레일 위 */
+    placeMount(slot) {
+      const p = this.player, w = this.world, it = p.bag[slot];
+      if (!it) return;
+      const kind = idef(it).mount || "horse", [bw, bh] = MOUNT_BOX[kind];
+      const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
+      if (dist(p.cx, p.cy, (tx + 0.5) * TS, (ty + 0.5) * TS) > TS * 6) {
+        this.toast(tr("너무 멀다"), "bad");
+        return;
+      }
+      let x = (tx + 0.5) * TS - bw / 2, y = 0;
+      if (kind === "horse") {
+        let gy = ty;
+        while (gy < ty + 4 && !w.solid(tx, gy + 1)) gy++;
+        if (!w.solid(tx, gy + 1) || w.solid(tx, gy) || w.solid(tx, gy - 1) || TILE_DEF[w.get(tx, gy)].liquid) {
+          this.toast(tr("말은 땅 위에 세운다"), "bad");
+          return;
+        }
+        y = (gy + 1) * TS - bh;
+      } else if (kind === "boat") {
+        const sr = boatRow(w, tx, ty);
+        if (sr < 0) {
+          this.toast(tr("배는 물 위에 띄운다"), "bad");
+          return;
+        }
+        y = (this.surfacePx ? this.surfacePx(tx + 0.5, sr) : sr * TS) - 9;
+      } else {
+        const r = railRow(w, tx, ty);
+        if (r < 0) {
+          this.toast(tr("수레는 레일 위에 놓는다"), "bad");
+          return;
+        }
+        y = railTop(r) - bh;
+      }
+      const o = { type: "mount", kind, placed: 1, x: Math.round(x), y: Math.round(y), w: bw, h: bh, f: p.facing >= 0 ? 1 : -1 };
+      w.objects.push(o);
+      if (this.net) this.netObjAdd(o);
+      it.c--;
+      if (it.c <= 0) p.bag[slot] = null;
+      for (let i = 0; i < 8; i++) this.parts.push(new Part(o.x + bw / 2, o.y + bh, kind === "boat" ? "#cfe8ff" : "#c8a878", -30, 0.5));
+      UI5.refreshBag();
+      this.sfx(kind === "boat" ? "splash" : "place");
+    },
+    /** 곡괭이로 거둔다 — 누가 타고 있으면 안 된다 */
+    removeMount(o) {
+      if (o.rider) return false;
+      const p = this.player, w = this.world, it = makeItem(ITEM_OF[o.kind], 1);
+      if (!p.addItem(it)) this.drops.push(new Drop(o.x + o.w / 2, o.y, it));
+      const i = w.objects.indexOf(o);
+      if (i >= 0) w.objects.splice(i, 1);
+      if (this.net) this.netObjDel(o);
+      this.matBurst(o.kind === "cart" ? "metal" : "wood", o.x + o.w / 2, o.y + o.h / 2, 8, { spd: 1 });
+      UI5.refreshBag();
+      this.sfx("place");
+      return true;
+    },
+    /* ---------------- 타기 · 내리기 ---------------- */
+    /** 우클릭 — 내 것이면 내리고, 비어 있으면 탄다 */
+    useMount(o) {
+      const p = this.player;
+      if (p.ride && p.ride.o === o) {
+        this.dismount(p, "click");
+        return;
+      }
+      if (p.ride) {
+        this.toast(tr("이미 타고 있다"), "bad");
+        return;
+      }
+      if (o.rider) {
+        this.toast(tr("누군가 타고 있다"), "bad");
+        return;
+      }
+      if (p.dead || p.hp <= 0) return;
+      if (this.duel) return;
+      const w = this.world, rd = { kind: o.kind, o, row: 0, v: 0 };
+      if (o.kind === "boat") {
+        rd.row = boatRow(w, Math.floor((o.x + o.w / 2) / TS), Math.floor((o.y + o.h) / TS));
+        if (rd.row < 0) {
+          this.toast(tr("배는 물 위에 띄운다"), "bad");
+          return;
+        }
+      } else if (o.kind === "cart") {
+        rd.row = Math.floor((o.y + o.h) / TS);
+        if (!railAt(w, o.x + o.w / 2, rd.row)) {
+          this.toast(tr("수레는 레일 위에 놓는다"), "bad");
+          return;
+        }
+      }
+      p.ride = rd;
+      o.rider = 1;
+      p.x = o.x + o.w / 2 - p.w / 2;
+      p.vx = 0;
+      p.vy = 0;
+      p.facing = o.f || p.facing;
+      if (o.kind === "horse") p.y = o.y + o.h - p.h;
+      else if (p.fish) {
+        p.fish = null;
+      }
+      if (this.net) this.netObjDel(o);
+      this.sfx(o.kind === "boat" ? "splash" : o.kind === "cart" ? "door_shut" : "jump", 0.9);
+    },
+    /** 내리기 — 탈 것은 지금 자리에 남는다. why: click · jump · water · land · rail · dead */
+    dismount(p, why) {
+      const rd = p.ride;
+      if (!rd) return;
+      const o = rd.o;
+      p.ride = null;
+      o.rider = 0;
+      o.f = p.facing >= 0 ? 1 : -1;
+      this.placeRideObj(o, p);
+      if (why === "jump" || why === "land" || why === "rail") {
+        p.vy = -380;
+        p.onGround = false;
+      }
+      if (why === "water") this.toast(tr("말이 물을 싫어한다"), "bad");
+      if (this.net) this.netObjAdd(o);
+    },
+    /** 탄 사람 자리에 물건을 맞춘다 — 탄 동안 매 프레임, 내릴 때 한 번 */
+    placeRideObj(o, p) {
+      o.x = Math.round(p.cx - o.w / 2);
+      if (o.kind === "horse") o.y = Math.round(p.y + p.h - o.h);
+      else if (o.kind === "boat") o.y = Math.round(p.y + p.h - 3 - 9);
+      else o.y = Math.round(p.y + p.h + 8 + 4 - o.h);
+    },
+    /** 매 프레임 — 내 탈 것 따라오기 · 내릴 까닭 · 소리 · 흙먼지 · 빈 배 물결 타기 */
+    updateRides(dt) {
+      const p = this.player, w = this.world, rd = p && p.ride;
+      if (rd) {
+        const o = rd.o;
+        if (p.dead || p.hp <= 0) this.dismount(p, "dead");
+        else if (rd.off) {
+          const why = rd.off;
+          rd.off = null;
+          this.dismount(p, why);
+        } else if (rd.kind === "horse" && p.swimming) this.dismount(p, "water");
+        else {
+          this.placeRideObj(o, p);
+          const sp = Math.abs(p.vx);
+          if (rd.kind === "horse" && p.onGround && sp > 120) {
+            rd.step = (rd.step || 0) - dt * sp / 260;
+            if (rd.step <= 0) {
+              rd.step = 0.5;
+              this.sfx("step", 0.7 + Math.random() * 0.08);
+              for (let i = 0; i < 3; i++) this.parts.push(new Part(p.cx - p.facing * 14, p.y + p.h - 2, "#b8a27a", -25, 0.35));
+            }
+          } else if (rd.kind === "boat" && sp > 60 && Math.random() < dt * sp / 40) {
+            this.parts.push(new Part(p.cx - p.facing * 22, p.y + p.h + 2, "#dff2ff", -30, 0.45));
+          } else if (rd.kind === "cart") {
+            if (rd.bump) {
+              this.sfx("door_shut", 0.8);
+              this.shake = Math.max(this.shake, Math.min(6, rd.bump / 90));
+              rd.bump = 0;
+            }
+            if (sp > 280 && Math.random() < dt * sp / 30) this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 20, p.y + p.h + 10, "#ffd27a", -60, 0.25));
+          }
+        }
+      }
+      for (const o of w.objects) {
+        if (o.type !== "mount") continue;
+        if (o.rider && !(p && p.ride && p.ride.o === o)) o.rider = 0;
+        if (o.kind === "boat" && !o.rider && this.surfacePx) {
+          const col = Math.floor((o.x + o.w / 2) / TS), sr = boatRow(w, col, Math.floor((o.y + o.h) / TS));
+          if (sr >= 0) o.y = Math.round(this.surfacePx((o.x + o.w / 2) / TS, sr) - 9);
+        }
+      }
+    },
+    /* ---------------- 그리기 ---------------- */
+    /** 레일 — 칸마다 침목과 쇠줄, 이웃이 한 칸 위 · 아래면 그쪽으로 비스듬히 잇는다 */
+    drawRails(f) {
+      const { c, w, camX, camY, tx0, ty0, tx1, ty1 } = f;
+      for (let y = ty0 - 1; y <= ty1 + 1; y++) for (let x = tx0 - 1; x <= tx1 + 1; x++) {
+        if (w.get(x, y) !== T.RAIL) continue;
+        const yc = railTop(y) - camY, xc = (x + 0.5) * TS - camX;
+        for (const side of [-1, 1]) {
+          const rn = railRow(w, x + side, y);
+          const yn = rn >= 0 ? railTop(rn) - camY : yc;
+          const ex = xc + side * TS / 2, ey = (yc + yn) / 2;
+          c.fillStyle = "#5a3c24";
+          const mx = (xc + ex) / 2, my = (yc + ey) / 2;
+          c.save();
+          c.translate(mx, my + 2.5);
+          c.rotate(Math.atan2(ey - yc, ex - xc));
+          c.fillRect(-2, -1.5, 4, 5);
+          c.restore();
+          c.strokeStyle = "#3e4048";
+          c.lineWidth = 3;
+          c.beginPath();
+          c.moveTo(xc, yc + 0.5);
+          c.lineTo(ex, ey + 0.5);
+          c.stroke();
+          c.strokeStyle = "#b8c0cc";
+          c.lineWidth = 1;
+          c.beginPath();
+          c.moveTo(xc, yc - 0.5);
+          c.lineTo(ex, ey - 0.5);
+          c.stroke();
+          if (rn < 0) {
+            c.fillStyle = "#8a2a2a";
+            c.fillRect(ex - (side > 0 ? 3 : 0), yc - 6, 3, 7);
+            c.fillStyle = "#d8a94b";
+            c.fillRect(ex - (side > 0 ? 3 : 0), yc - 6, 3, 1);
+          }
+        }
+      }
+    },
+    /** 시트의 한 장을 발밑(fx, fy = 그림 가운데 아래)에 맞춰 — 왼쪽을 보면 뒤집는다 */
+    drawRideSprite(c, kind, fr, fx, fy, face, tilt = 0) {
+      const key = "obj_ride_" + kind, im = Sprites.img[key];
+      const m = Sprites.meta && Sprites.meta.objects && Sprites.meta.objects.files["ride_" + kind];
+      if (!im || !im.width || !m) {
+        c.fillStyle = kind === "cart" ? "#6a6e78" : "#8a5a34";
+        c.fillRect(fx - 16, fy - 18, 32, 18);
+        return;
+      }
+      const n = m.frames || 1, sw = im.width / n;
+      c.save();
+      c.imageSmoothingEnabled = false;
+      c.translate(Math.round(fx), Math.round(fy));
+      if (tilt) c.rotate(tilt);
+      if (face < 0) c.scale(-1, 1);
+      c.drawImage(im, fr % n * sw, 0, sw, im.height, -m.w / 2, -m.h, m.w, m.h);
+      c.restore();
+    },
+    /** 말 그림 장 — 서기 0 · 달리기 1~4(빠를수록 빨리) · 공중 5 */
+    horseFrame(vx, onGround) {
+      if (!onGround) return 5;
+      const sp = Math.abs(vx);
+      return sp > 40 ? 1 + cycleFrame(this.time, 6 + sp / 40, 4) : 0;
+    },
+    /** 서 있는(아무도 안 탄) 탈 것 */
+    drawMountObj(c, o, sx, sy) {
+      if (o.rider) return;
+      const fx = sx + o.w / 2;
+      if (o.kind === "horse") {
+        this.drawRideSprite(c, "horse", 0, fx, sy + o.h + 3, o.f || 1);
+      } else if (o.kind === "boat") {
+        const tilt = Math.sin(this.time * 1.6 + o.x * 0.05) * 0.04;
+        this.drawRideSprite(c, "boat", 0, fx, sy + o.h + 6, o.f || 1, tilt);
+      } else this.drawRideSprite(c, "cart", 0, fx, sy + o.h + 2, o.f || 1);
+    },
+    /** 탄 사람 — 말은 몸 뒤, 배 · 수레는 몸 앞(다리가 가려진다). 사람은 안장 · 배 · 수레 높이만큼 올려 그린다 */
+    drawRider(c, p, sx, sy) {
+      const kind = p.ride ? p.ride.kind : p.rideK;
+      if (!kind) {
+        this.drawPlayer(c, p, sx, sy);
+        return;
+      }
+      const fx = sx + p.w / 2, foot = sy + p.h, face = p.facing >= 0 ? 1 : -1;
+      if (kind === "horse") {
+        const fr = this.horseFrame(p.vx, p.onGround), bob = fr >= 1 && fr <= 4 ? fr % 2 ? -1 : 0 : 0;
+        this.drawRideSprite(c, "horse", fr, fx, foot + 3, face);
+        this.drawPlayer(c, p, sx - face * 1, sy - 22 + bob);
+        return;
+      }
+      if (kind === "boat") {
+        const tilt2 = clamp(p.vx / 900, -0.08, 0.08) + Math.sin(this.time * 1.6) * 0.03;
+        this.drawPlayer(c, p, sx, sy + 4);
+        this.drawRideSprite(c, "boat", 0, fx, foot + 12, face, tilt2);
+        return;
+      }
+      const tilt = p.ride ? p.ride.tilt || 0 : 0;
+      this.drawPlayer(c, p, sx, sy + 2);
+      this.drawRideSprite(c, "cart", Math.abs(p.vx) > 30 ? cycleFrame(this.time, Math.abs(p.vx) / 25, 2) : 0, fx, foot + 12, face, tilt);
+    }
+  };
+  mixin(Game.prototype, RidesPart, true);
+
   // src/game/game/interact.ts
   var interact_exports = {};
   __export(interact_exports, {
@@ -46797,6 +47284,8 @@
         this.openSeal(o);
       } else if (o.type === "anchor") {
         this.useAnchor(o);
+      } else if (o.type === "mount") {
+        this.useMount(o);
       } else if (o.type === "memory") {
         this.takeMemory(o);
       } else if (o.type === "codedoor") {
@@ -54525,6 +55014,7 @@
       this.pipe.add("tiles", (f) => this.rTiles(f));
       this.pipe.add("tiles", (f) => this.rFarmWet(f));
       this.pipe.add("machines", (f) => this.rMachines(f));
+      this.pipe.add("machines", (f) => this.drawRails(f));
       this.pipe.add("objects", (f) => this.rObjects(f));
       this.pipe.add("objects", (f) => this.rStreaks(f));
       this.pipe.add("ground", (f) => this.rGround(f));
@@ -54728,6 +55218,8 @@
           this.drawAnchor(c, o, sx, sy);
         } else if (o.type === "memory") {
           this.drawMemory(c, o, sx, sy);
+        } else if (o.type === "mount") {
+          this.drawMountObj(c, o, sx, sy);
         } else if (o.type === "seal") {
           c.fillStyle = o.opened ? "#2a2634" : "#3a3550";
           c.fillRect(sx, sy, o.w, o.h);
@@ -54842,9 +55334,9 @@
         c.restore();
         c.filter = "none";
       });
-      this.drawPlayer(c, p, p.x - camX, p.y - camY);
+      this.drawRider(c, p, p.x - camX, p.y - camY);
       for (const q of this.players) if (q !== p) {
-        this.drawPlayer(c, q, q.x - camX, q.y - camY);
+        this.drawRider(c, q, q.x - camX, q.y - camY);
         this.drawNameTag(c, q, camX, camY);
       }
       for (const q of this.players) if (!q.downed) this.drawStatus(c, q, q.x - camX, q.y - camY);
@@ -56414,48 +56906,6 @@
     STEP_FEEL: () => STEP_FEEL
   });
 
-  // src/engine/render/anim.ts
-  function cycleFrame(t, fps, n, start = 0, phase = 0) {
-    return start + (Math.floor(t * fps + phase) % n + n) % n;
-  }
-  function onceFrame(elapsed, fps, n, start = 0) {
-    return start + Math.min(n - 1, Math.max(0, Math.floor(elapsed * fps)));
-  }
-  var Beat = class {
-    constructor() {
-      this.last = -1;
-    }
-    hit(frame, beats) {
-      const changed = frame !== this.last;
-      this.last = frame;
-      return changed && beats.indexOf(frame) >= 0;
-    }
-  };
-  var Animator = class {
-    constructor(clips, start) {
-      this.clips = clips;
-      this.cur = start;
-      this.t = 0;
-    }
-    play(k) {
-      if (k !== this.cur) {
-        this.cur = k;
-        this.t = 0;
-      }
-    }
-    update(dt) {
-      this.t += dt;
-    }
-    get frame() {
-      const c = this.clips[this.cur];
-      return c.loop === false ? onceFrame(this.t, c.fps, c.n, c.from) : cycleFrame(this.t, c.fps, c.n, c.from);
-    }
-    get done() {
-      const c = this.clips[this.cur];
-      return c.loop === false && this.t * c.fps >= c.n;
-    }
-  };
-
   // src/engine/render/outline.ts
   var AROUND = [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]];
   function drawOutlined(c, draw, o = {}) {
@@ -56515,6 +56965,8 @@
       if (p.flash > 0.12) return 12;
       if (p.dashV > 0) return 8;
       if (p.swing > 0) return 9 + Math.min(2, Math.floor((0.24 - p.swing) / 0.08));
+      if ((p.ride ? p.ride.kind : p.rideK) === "horse") return 6;
+      if (p.ride || p.rideK) return 0;
       if (!p.onGround) return p.vy < 0 ? 6 : 7;
       if (Math.abs(p.vx) > 20) return cycleFrame(this.time, 9, 4, 2);
       return cycleFrame(this.time, 2, 2);
@@ -58732,6 +59184,7 @@
         sh: p.shield > 0 ? Math.round(p.shield / (p.shieldMax || p.shield) * 100) / 100 : 0,
         hid: held ? held.id : "",
         wid: wep ? wep.id : "",
+        rd: p.ride ? p.ride.kind : p.remote ? p.rideK || "" : "",
         c: p.charId,
         n: p.name,
         lv: p.level,
@@ -58757,6 +59210,7 @@
       rp.dashV = s.dv;
       rp.flash = s.fl;
       rp.channel = s.ch ? rp.channel || {} : null;
+      rp.rideK = s.rd || "";
       rp.swimming = !!s.sm;
       rp.swimMove = !!s.smv;
       rp.floating = !!s.flt;
@@ -60287,7 +60741,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

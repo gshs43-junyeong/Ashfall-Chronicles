@@ -11,6 +11,7 @@ import { TS } from '../world.js';
 import { itemDamage } from '../items.js';
 import { DmgText, Enemy, JET_BURN, JET_COOL_AIR, JET_COOL_GROUND, JET_HIGH_FALL, JET_MAX_UP, JET_RESUME, MAX_FALL,
   Part, Player, SAFE_FALL_VY } from '../entity.js';
+import { RIDES } from './player-ride.js';
 /* entity.js 의 Player 에서 나눈 조각 — 읽히는 순간 Player.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
 /** 이보다 빠르게 떨어져 석순에 닿으면 찔린다 — 제자리 점프의 착지 속도(620)보다 조금 위라 석순 사이를 뛰어다니는 것은 괜찮다 */
@@ -95,6 +96,10 @@ export const PlayerMove: Bag & ThisType<Player> = {
       if (this.regT >= 2) { if (this.regAcc >= 1 && this === G.me) G.texts.push(new DmgText(this.cx, this.y, '+' + Math.round(this.regAcc), '#7fe07f', 0)); this.regAcc = 0; this.regT = 0; }
     }
 
+    /* 배 · 수레는 제 길(수면 · 레일)을 따로 간다 — 헤엄 · 점프 · 중력을 건너뛴다(entity/player-ride.ts) */
+    const R = this.ride ? RIDES[this.ride.kind] : null;
+    if (R && this.ride!.kind !== 'horse') { this.rideStep(dt, world, input); this.updateOxygen(dt, world); this.afterMove(dt, world); return; }
+
     /* 들어가는 값과 나오는 값을 갈라 둔다(히스테리시스) — 사연: docs/code-history.md#h29 */
     const sub = this.submerged || 0;
     /* 물에 들고 나는 순간에만 첨벙. */
@@ -104,7 +109,8 @@ export const PlayerMove: Bag & ThisType<Player> = {
     this.updateOxygen(dt, world);
 
     // 이동 — 물속(헤엄)은 아래 '헤엄' 절이 따로 맡는다
-    const acc = this.onGround ? 2400 : 1500;
+    const acc = (this.onGround ? 2400 : 1500) * (R ? R.acc : 1);
+    const ms = d.ms * (R ? R.ms : 1);                 // 말 위 — 빨리 달린다
     let want = 0;
     if (input.left) want -= 1; if (input.right) want += 1;
     if (this.channel) want *= 0.4;
@@ -112,7 +118,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
       if (want !== 0 && (!this.swing || !this.channel)) this.facing = Math.sign(want);
     } else if (want !== 0) {
       this.vx += want * acc * dt;
-      this.vx = clamp(this.vx, -d.ms * (this.dashV > 0 ? 3 : 1), d.ms * (this.dashV > 0 ? 3 : 1));
+      this.vx = clamp(this.vx, -ms * (this.dashV > 0 ? 3 : 1), ms * (this.dashV > 0 ? 3 : 1));
       if (!this.swing || !this.channel) this.facing = want;
     } else {
       const fr = this.onGround ? 2600 : 700;
@@ -166,7 +172,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
     } else {
       if (input.jump && !this.jumpHeld && this.jumpsLeft > 0) {
         G.sfx(this.onGround ? 'jump' : 'jump2', 0.94 + Math.random() * 0.12);
-        this.vy = -620; this.jumpsLeft--; this.jumpHeld = true;
+        this.vy = R ? -R.jump : -620; this.jumpsLeft--; this.jumpHeld = true;
         if (!this.onGround) for (let i = 0; i < 8; i++) G.parts.push(new Part(this.cx, this.y + this.h, '#cfe8ff'));
       }
       if (!input.jump) this.jumpHeld = false;
@@ -239,8 +245,9 @@ export const PlayerMove: Bag & ThisType<Player> = {
     if (!wasOnGround && this.onGround && !this.gliding && !this.jetting && (this.submerged || 0) <= 0.2) {
       // 건초더미 위로 떨어지면 안 다친다 — 마을에서 지붕을 타고 다니라고 둔 것
       const bt = world.get(Math.floor(this.cx / TS), Math.floor((this.y + this.h + 2) / TS));
-      if (fallVy > SAFE_FALL_VY && this.iframe <= 0 && !TILE_DEF[bt].soft) {
-        const dmg = Math.round((fallVy - SAFE_FALL_VY) / (MAX_FALL - SAFE_FALL_VY) * 55);
+      const safe = SAFE_FALL_VY + (R ? R.safeFall : 0);   // 말이 다리로 받는다
+      if (fallVy > safe && this.iframe <= 0 && !TILE_DEF[bt].soft) {
+        const dmg = Math.round((fallVy - safe) / (MAX_FALL - SAFE_FALL_VY) * 55);
         if (dmg > 0) { this.hurt(dmg); this.hurtCd = Math.max(this.hurtCd, 0.4); }
       }
       /* 석순 위로 떨어지면 찔린다 — 석순은 걸음을 안 막아 발이 그 칸을 지나 바닥에 닿는다. 걸어서 지나가는 것은 괜찮다(빠르게 떨어질 때만). */
@@ -254,7 +261,11 @@ export const PlayerMove: Bag & ThisType<Player> = {
         }
       }
     }
+    this.afterMove(dt, world);
+  },
 
+  /** 움직인 뒤 — 돌진 · 회전 · 휘두르기 판정 · 환경 피해 · 깊이 기록(탈 것 위에서도 같다) */
+  afterMove(dt: number, world: World) {
     // 돌진 타격
     if (this.chargeT > 0) {
       for (const e of G.ents) {

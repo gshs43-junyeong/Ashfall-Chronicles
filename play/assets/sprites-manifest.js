@@ -2400,6 +2400,23 @@ window.SPRITE_MANIFEST = {
         "file": "obj/flotsam3.png",
         "w": 30,
         "h": 24
+      },
+      "ride_horse": {
+        "file": "obj/ride_horse.png",
+        "w": 54,
+        "h": 47,
+        "frames": 6
+      },
+      "ride_boat": {
+        "file": "obj/ride_boat.png",
+        "w": 56,
+        "h": 23
+      },
+      "ride_cart": {
+        "file": "obj/ride_cart.png",
+        "w": 34,
+        "h": 24,
+        "frames": 2
       }
     }
   },
@@ -2583,7 +2600,11 @@ window.SPRITE_MANIFEST = {
       "tide_bar": "item/tide_bar.png",
       "mariner_compass": "item/mariner_compass.png",
       "storm_amber": "item/storm_amber.png",
-      "cloud_pearl": "item/cloud_pearl.png"
+      "cloud_pearl": "item/cloud_pearl.png",
+      "mount_horse": "item/mount_horse.png",
+      "mount_boat": "item/mount_boat.png",
+      "mount_cart": "item/mount_cart.png",
+      "rail": "item/rail.png"
     }
   }
 };

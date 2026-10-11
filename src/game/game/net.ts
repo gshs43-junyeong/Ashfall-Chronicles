@@ -49,7 +49,7 @@ export const NetPart: Bag = {
       g: p.onGround ? 1 : 0, sw: p.swing || 0, sa: p.swingAng || 0, sd: p.swingDir || 0, ss: p.swingSide || 1, sr: p.swingReach || 0,
       dv: p.dashV || 0, fl: p.flash || 0, ch: p.channel ? 1 : 0, sm: p.swimming ? 1 : 0, smv: p.swimMove ? 1 : 0,
       flt: p.floating ? 1 : 0, sp: p.swimPh || 0, ifr: p.iframe || 0, hp: Math.round(p.hp), mhp: Math.round(p.d.maxHp), sh: p.shield > 0 ? Math.round(p.shield / (p.shieldMax || p.shield) * 100) / 100 : 0,
-      hid: held ? held.id : '', wid: wep ? wep.id : '', c: p.charId, n: p.name, lv: p.level, pt: this.netPetsOf(p) };
+      hid: held ? held.id : '', wid: wep ? wep.id : '', rd: p.ride ? p.ride.kind : (p.remote ? p.rideK || '' : ''), c: p.charId, n: p.name, lv: p.level, pt: this.netPetsOf(p) };
   },
   /** 따라다니는 펫 — 'id:레벨' 을 쉼표로(바뀔 때만 다시 만든다). 남의 아바타는 받은 그대로 되돌려 보낸다. */
   netPetsOf(p: Player) {
@@ -61,6 +61,7 @@ export const NetPart: Bag = {
     rp.vx = s.vx; rp.vy = s.vy; rp.facing = s.f; rp.onGround = !!s.g;
     rp.swing = s.sw; rp.swingAng = s.sa; rp.swingDir = s.sd; rp.swingSide = s.ss || 1; rp.swingReach = s.sr; rp.dashV = s.dv; rp.flash = s.fl;
     rp.channel = s.ch ? (rp.channel || {}) : null;
+    rp.rideK = s.rd || '';
     rp.swimming = !!s.sm; rp.swimMove = !!s.smv; rp.floating = !!s.flt; rp.swimPh = s.sp; rp.iframe = s.ifr;
     if (rp.hp > 0 && s.hp <= 0) this.netDownFx(rp, s);
     else if (rp.hp <= 0 && s.hp > 0 && rp._seen) this.toast(tr('{name|이} 다시 일어났다', { name: s.n }), 'good');

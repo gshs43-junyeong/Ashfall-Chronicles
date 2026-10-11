@@ -1026,7 +1026,13 @@
   "놓쳤다 — 힘이 센 놈이었다": "It got away — that one was strong",
   "입질이다 — 박자에 맞춰 당겨라!": "A bite — reel in on the beat!",
   "클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다": "Click · Z · X to hit · hold and follow the ball · Esc to let go",
-  "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": "Tap to hit · hold and follow the ball · hold and circle on spinners"
+  "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": "Tap to hit · hold and follow the ball · hold and circle on spinners",
+  "누군가 타고 있다": "Someone is already riding it",
+  "말은 땅 위에 세운다": "A horse must stand on solid ground",
+  "말이 물을 싫어한다": "The horse refuses the water",
+  "배는 물 위에 띄운다": "A boat must float on water",
+  "수레는 레일 위에 놓는다": "A cart must sit on rails",
+  "이미 타고 있다": "You're already riding"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4476,6 +4482,15 @@
   "STORY_MEMORY.story2.lines.1": "“When I close my eyes, I hear the star's dream. In that dream, we are still winning.”",
   "STORY_MEMORY.story2.lines.2": "“If you crossed this far, you already know how to cross where there is no footing. We never did.”",
   "STORY_MEMORY.story2.end": "— As the last shard finds its place, an ancient breath is let out once from beyond the fallen floor.",
-  "TILE_DEF.216.n": "Cracked Brick"
+  "TILE_DEF.216.n": "Cracked Brick",
+  "ITEMS.mount_horse.n": "Ash-Maned Horse",
+  "ITEMS.mount_horse.d": "Runs fast and leaps high on land. Won't go into water.",
+  "ITEMS.mount_boat.n": "Wooden Skiff",
+  "ITEMS.mount_boat.d": "Float it on water. While aboard you don't need to hold your breath.",
+  "ITEMS.mount_cart.n": "Mine Cart",
+  "ITEMS.mount_cart.d": "Place it on rails. Speeds up downhill and stops at the end of the line.",
+  "ITEMS.rail.n": "Rail",
+  "ITEMS.rail.d": "Connects to neighbouring rails. A one-tile rise or drop becomes a slope.",
+  "TILE_DEF.217.n": "Rail"
  }
 }

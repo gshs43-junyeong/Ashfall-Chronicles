@@ -9,7 +9,7 @@ export const NPCS: Record<string, NpcDef> = {
   mira:   { n: '미라', i: '🧙‍♀️', c: '#8f6fd8', role: '마녀', shop: ['staff_branch', 'potion_mp_small', 'ring_focus', 'potion_str'], art: 'mira' },
   old:    { n: '이름 없는 노인', i: '👴', c: '#9a9a9a', role: '???', art: 'elder' },
   /* --- 여명 마을 주민 (세션 1 종장 이후) --- */
-  tamer:  { n: '리카', i: '🦝', c: '#b8804a', role: '조련사', art: 'rika', shop: ['egg_common', 'egg_rare', 'egg_epic', 'pet_candy'], pets: true,
+  tamer:  { n: '리카', i: '🦝', c: '#b8804a', role: '조련사', art: 'rika', shop: ['egg_common', 'egg_rare', 'egg_epic', 'pet_candy', 'mount_horse'], pets: true,
             line: '짐승들이 낯을 좀 가리긴 해도, 알만 있으면 금방 정든다.' },
   trainer:{ n: '가른', i: '🐺', c: '#5a6a5a', role: '훈련소 교관', art: 'garn',
             line: '잿빛이 걷혔다고 몸이 저절로 강해지진 않아. 굴러야지.' },

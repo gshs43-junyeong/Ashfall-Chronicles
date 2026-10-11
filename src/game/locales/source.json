@@ -961,6 +961,7 @@
    "game/fishing.tryFish",
    "game/mine.placeStation",
    "game/mine.placeDoor",
+   "game/rides.placeMount",
    "game/ruin-puzzle.puzzleClick"
   ],
   "넘긴 메아리 {best} / {max}": [
@@ -995,6 +996,9 @@
   ],
   "누가 세웠는지 아무도 모른다 — 뜯어낼 수 있는 때가 오면 쓸 만한 부품이 많아 보인다.": [
    "game/rigs.useRig"
+  ],
+  "누군가 타고 있다": [
+   "game/rides.useMount"
   ],
   "는 바꿀 수 없습니다.": [
    "index.html"
@@ -1283,6 +1287,12 @@
   ],
   "만들 것이 없다 — 아래 목록의 재료를 넣어라": [
    "ui/machine.machLive"
+  ],
+  "말은 땅 위에 세운다": [
+   "game/rides.placeMount"
+  ],
+  "말이 물을 싫어한다": [
+   "game/rides.dismount"
   ],
   "망": [
    "factory.statusColor"
@@ -1588,6 +1598,10 @@
   ],
   "밭이나 작물에 물을 준다 — 물가를 우클릭하면 채운다": [
    "game/farm.useWateringCan"
+  ],
+  "배는 물 위에 띄운다": [
+   "game/rides.placeMount",
+   "game/rides.useMount"
   ],
   "배출 끄기": [
    "ui/machine.refreshMachine"
@@ -1975,6 +1989,10 @@
   ],
   "손끝이 흔들린다!": [
    "game/fishing.updateFishing"
+  ],
+  "수레는 레일 위에 놓는다": [
+   "game/rides.placeMount",
+   "game/rides.useMount"
   ],
   "수련 · 🪙 {trainCost} · 오늘 {trainedToday}/5": [
    "game/talk.talkExtra"
@@ -2439,6 +2457,9 @@
   ],
   "이미 최대 랭크다": [
    "ui/tree.learn"
+  ],
+  "이미 타고 있다": [
+   "game/rides.useMount"
   ],
   "이속": [
    "ui/tip.compareLine"
@@ -4898,6 +4919,14 @@
   "ITEMS.crate_gold.d": "48칸. 금테를 두른 만큼 두 배로 들어간다.",
   "ITEMS.door_wood.n": "나무 문",
   "ITEMS.door_wood.d": "경첩은 다는 사람이 바라본 쪽에 붙는다. 그쪽으로 열린다.",
+  "ITEMS.mount_horse.n": "잿빛 갈기 말",
+  "ITEMS.mount_horse.d": "땅 위를 빠르게 달리고 높이 뛴다. 물에는 들어가지 않는다.",
+  "ITEMS.mount_boat.n": "나무 조각배",
+  "ITEMS.mount_boat.d": "물 위에 띄운다. 타고 있는 동안은 숨을 쉬지 않아도 된다.",
+  "ITEMS.mount_cart.n": "광산 수레",
+  "ITEMS.mount_cart.d": "레일 위에 놓는다. 내리막에서 빨라지고 레일 끝에서 멈춘다.",
+  "ITEMS.rail.n": "레일",
+  "ITEMS.rail.d": "이웃한 레일과 이어진다. 한 칸 오르내림은 비탈이 된다.",
   "ITEMS.pick_arc.n": "아크 착암기",
   "ITEMS.pick_arc.d": "기반암 말고는 전부 뚫는다. 전하를 먹는다.",
   "ITEMS.saw_auto.n": "회전 톱날",
@@ -6624,6 +6653,7 @@
   "TILE_DEF.214.n": "궤도 봉인문",
   "TILE_DEF.215.n": "빛다리",
   "TILE_DEF.216.n": "금 간 벽돌",
+  "TILE_DEF.217.n": "레일",
   "VILLAGE.1.n": "되살아난 마을",
   "VILLAGE.1.d": "잿빛이 걷히고 사람이 다시 들어왔다. 아직은 살아남은 자리에 가깝다.",
   "VILLAGE.1.gain.0": "주민 5명 · 여관 · 보관고 · 재련대 · 의뢰 게시판",

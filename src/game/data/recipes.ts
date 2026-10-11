@@ -22,6 +22,10 @@ export const RECIPES: RecipeDef[] = [
   { out: 'crate_gold', n: 1, need: { gold_bar: 10, plank: 20 }, station: 'forge' },
   // 문 — 널판 여덟에 경첩 한 벌.
   { out: 'door_wood', n: 1, need: { plank: 8, iron_bar: 1 }, station: 'work' },
+  // 탈 것 — 배는 널판과 덩굴, 수레는 쇠와 톱니, 레일은 쇠 한 줄에 침목
+  { out: 'mount_boat', n: 1, need: { plank: 30, vine_coil: 4, iron_bar: 2 }, station: 'work' },
+  { out: 'mount_cart', n: 1, need: { iron_bar: 12, plank: 8, gear_basic: 2 }, station: 'forge', lv: 2 },
+  { out: 'rail', n: 8, need: { iron_bar: 1, plank: 2 }, station: 'forge' },
 
   { out: 'rod_basic', n: 1, need: { wood: 10, spider_silk: 4 }, station: 'work' },
   { out: 'rod_adv', n: 1, need: { machine_frame: 1, motor: 2, mythril_bar: 4, spider_silk: 14, crystal: 6 }, station: 'work', lv: 3 },

@@ -75,11 +75,13 @@ export class Player extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare static _vol: number;   // 한 번 휘두른 공격의 번호(여러 몹이 같은 휘두름에 맞았는지)
   declare _punchDmg: number; declare chargeDmg: number; declare chargeHit: Set<any>; declare chargeT: number; declare drownT: number; declare regAcc: number; declare regT: number;
+  declare ride: Bag | null; declare rideK: string;   // 탄 것(game/rides.ts) · 남의 아바타가 탄 갈래
   declare floating: boolean; declare gliding: boolean; declare headUnder: boolean; declare highest: number; declare jetOk: boolean | undefined;
   declare jetT: number; declare jetting: boolean; declare oxyPressure: number; declare oxygen: number; declare swimMove: boolean;
   declare swimPh: number; declare swimming: boolean; declare swingAng: number; declare swingReach: number; declare wasInWater: boolean;
   declare climbOut: (...a: any[]) => any; declare fireProj: (...a: any[]) => any; declare punch: (...a: any[]) => any;
   declare rollCrit: (...a: any[]) => any; declare scaleDmg: (...a: any[]) => any; declare updateOxygen: (...a: any[]) => any;
+  declare rideStep: (dt: number, world: World, input: Bag) => void; declare afterMove: (dt: number, world: World) => void;
   declare volley: number;
   declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare netShield: number; declare _hid: string; declare _wid: string; declare _hurtAt: number; declare petEnts: any[]; declare _pt: string;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;

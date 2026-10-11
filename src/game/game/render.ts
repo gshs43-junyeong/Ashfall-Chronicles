@@ -42,6 +42,7 @@ export const RenderPart: Bag = {
     this.pipe.add('tiles', (f: any) => this.rTiles(f));
     this.pipe.add('tiles', (f: any) => this.rFarmWet(f));    // 젖은 밭(game/act)
     this.pipe.add('machines', (f: any) => this.rMachines(f));
+    this.pipe.add('machines', (f: any) => this.drawRails(f));    // 레일 — 이웃을 보고 비탈째(game/rides)
     this.pipe.add('objects', (f: any) => this.rObjects(f));
     this.pipe.add('objects', (f: any) => this.rStreaks(f));   // 물줄기(game/act) — 인물 뒤
     this.pipe.add('ground', (f: any) => this.rGround(f));
@@ -227,6 +228,8 @@ export const RenderPart: Bag = {
         this.drawAnchor(c, o, sx, sy);
       } else if (o.type === 'memory') {
         this.drawMemory(c, o, sx, sy);
+      } else if (o.type === 'mount') {
+        this.drawMountObj(c, o, sx, sy);
       } else if (o.type === 'seal') {
         c.fillStyle = o.opened ? '#2a2634' : '#3a3550';
         c.fillRect(sx, sy, o.w, o.h);
@@ -334,8 +337,8 @@ export const RenderPart: Bag = {
       Sprites.draw(c, s.d.key, s.d.fr, s.x - camX, s.y - camY, s.d.flip);
       c.restore(); c.filter = 'none';
     });
-    this.drawPlayer(c, p, p.x - camX, p.y - camY);
-    for (const q of this.players) if (q !== p) { this.drawPlayer(c, q, q.x - camX, q.y - camY); this.drawNameTag(c, q, camX, camY); }
+    this.drawRider(c, p, p.x - camX, p.y - camY);                                  // 탄 것이 있으면 그 위에(game/rides)
+    for (const q of this.players) if (q !== p) { this.drawRider(c, q, q.x - camX, q.y - camY); this.drawNameTag(c, q, camX, camY); }
     for (const q of this.players) if (!q.downed) this.drawStatus(c, q, q.x - camX, q.y - camY);
     for (const pet of (this.petEnts || [])) if (pet) this.drawPet(c, pet, camX, camY);
     for (const q of this.players) if (q.remote && q.petEnts) for (const pet of q.petEnts) if (pet) this.drawPet(c, pet, camX, camY);

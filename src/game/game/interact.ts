@@ -106,6 +106,8 @@ export const InteractPart: Bag = {
       this.openSeal(o);
     } else if (o.type === 'anchor') {
       this.useAnchor(o);
+    } else if (o.type === 'mount') {
+      this.useMount(o);
     } else if (o.type === 'memory') {
       this.takeMemory(o);
     } else if (o.type === 'codedoor') {

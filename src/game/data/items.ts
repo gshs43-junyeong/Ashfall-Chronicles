@@ -446,6 +446,16 @@ export const ITEMS: Record<string, ItemDef> = {
   door_wood:     { n: '나무 문', i: '🚪', type: 'door', stack: 20,
                    d: '경첩은 다는 사람이 바라본 쪽에 붙는다. 그쪽으로 열린다.' },
 
+  /* --- 탈 것 (type:'mount' — game/rides.ts) — 놓으면 그 자리에 서고, 우클릭으로 타고, 곡괭이로 거둔다 --- */
+  mount_horse:   { n: '잿빛 갈기 말', i: '🐎', type: 'mount', mount: 'horse', price: 8000, fixed: 1, stack: 1,
+                   d: '땅 위를 빠르게 달리고 높이 뛴다. 물에는 들어가지 않는다.' },
+  mount_boat:    { n: '나무 조각배', i: '🛶', type: 'mount', mount: 'boat', stack: 1,
+                   d: '물 위에 띄운다. 타고 있는 동안은 숨을 쉬지 않아도 된다.' },
+  mount_cart:    { n: '광산 수레', i: '🛒', type: 'mount', mount: 'cart', stack: 1,
+                   d: '레일 위에 놓는다. 내리막에서 빨라지고 레일 끝에서 멈춘다.' },
+  rail:          { n: '레일', i: '🛤', type: 'block', tile: T.RAIL, stack: 999,
+                   d: '이웃한 레일과 이어진다. 한 칸 오르내림은 비탈이 된다.' },
+
   /* --- 동력 장비: 전하를 쓴다. 바닥나면 가방의 충전된 배터리를 한 개씩 자동으로 소모 --- */
   pick_arc:    { n: '아크 착암기', i: '🔌', type: 'tool', power: 5, dmg: 60, spd: 4.2, pw: 2.5,
                  d: '기반암 말고는 전부 뚫는다. 전하를 먹는다.' , lvReq: 20},
