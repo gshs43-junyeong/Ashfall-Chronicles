@@ -182,6 +182,7 @@ Ashfall 이 손으로 들고 있던 일 중 다른 게임에도 쓰일 것을 �
 | `audio/spatial.ts` | `spatialMix` · `createPanRouter` | 거리 감쇠 · 좌우 소리 위치 |
 | `input/gamepad.ts` | `createGamepad` | 패드 → 액션 |
 | `save/settings.ts` · `autosave.ts` | `createSettingsStore` · `createAutosave` | 설정 저장 · 자동 저장 타이머 |
+| `rhythm/duel.ts` | `RhythmDuel` · `FIELD_W`/`FIELD_H` | osu! standard 식 박자 겨루기 — 판 생성(AR · CS · OD · HP · BPM · 슬라이더/스피너 몫) · 판정 · HP 게이지 · 변주(돌기 · 숨김 · 꿈틀 · 끌림) · 그리기. 입력은 `move` · `press(id, 시각)` · `release`, 화면 → 판 좌표는 `toField` |
 | `ui/toasts.ts` · `modal.ts` · `typewriter.ts` · `panzoom.ts` · `perf.ts` | `createToasts` · `confirmBox` · `typewrite` · `PanZoom` · `PerfPanel` | 알림 · 확인 창 · 한 글자씩 · 끌고 확대 · 성능 판(F3) |
 
 ## 5. Ashfall 은 엔진을 어떻게 쓰나

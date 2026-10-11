@@ -1019,7 +1019,14 @@
   "기억의 조각 — {name}": "Memory Shard — {name}",
   "기억이 이어졌다 — 석판 곁에 무언가가 놓였다": "The memories connect — something has appeared beside the tablet",
   "조각을 들자 유적이 깨어났다": "As you lift the shard, the ruin wakes",
-  "두들길 장비를 가리켜라": "Point at a piece of gear to hammer"
+  "두들길 장비를 가리켜라": "Point at a piece of gear to hammer",
+  "깔끔한 손놀림 — 정확도 {acc}%": "Clean reeling — {acc}% accuracy",
+  "낚시 겨루기": "Fishing duel",
+  "낚싯줄을 놓았다": "You let the line go",
+  "놓쳤다 — 힘이 센 놈이었다": "It got away — that one was strong",
+  "입질이다 — 박자에 맞춰 당겨라!": "A bite — reel in on the beat!",
+  "클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다": "Click · Z · X to hit · hold and follow the ball · Esc to let go",
+  "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": "Tap to hit · hold and follow the ball · hold and circle on spinners"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

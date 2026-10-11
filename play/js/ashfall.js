@@ -1860,6 +1860,658 @@
     return target;
   }
 
+  // src/engine/rhythm/duel.ts
+  var duel_exports = {};
+  __export(duel_exports, {
+    FIELD_H: () => FIELD_H,
+    FIELD_W: () => FIELD_W,
+    RhythmDuel: () => RhythmDuel
+  });
+  var FIELD_W = 512, FIELD_H = 384;
+  var DEF_THEME = {
+    bg: "rgba(6,14,22,.9)",
+    edge: "rgba(160,210,240,.35)",
+    ink: "#ffffff",
+    font: "sans-serif",
+    body: "#0e1c28",
+    colors: ["#5ec8ff", "#ffd27a", "#8fe08f", "#ff8fb8"],
+    gauge: "#7fe0ff",
+    gaugeLow: "#ff6a5a"
+  };
+  var JUDGE_COL = { 300: "#7fd8ff", 100: "#9ef08a", 50: "#ffd06a", 0: "#ff5a4a" };
+  var RhythmDuel = class {
+    constructor(o) {
+      this.o = o;
+      this.d = o.diff;
+      this.m = o.mods || {};
+      this.th = { ...DEF_THEME, ...o.theme || {} };
+      this.rng = new RNG(o.seed);
+      const { ar, cs, od, hp } = this.d, ease = o.ease || 0;
+      this.r = 54.4 - 4.48 * cs;
+      this.pre = ar < 5 ? 1.2 + 0.6 * (5 - ar) / 5 : 1.2 - 0.75 * (ar - 5) / 5;
+      this.fade = Math.min(0.4, this.pre * 2 / 3);
+      this.w300 = (80 - 6 * od) / 1e3 + ease * 0.5;
+      this.w100 = (140 - 8 * od) / 1e3 + ease * 0.75;
+      this.w50 = (200 - 10 * od) / 1e3 + ease;
+      this.beat = 60 / this.d.bpm;
+      this.t = 0;
+      this.objs = [];
+      this.head = 0;
+      this.state = "play";
+      this.combo = 0;
+      this.best = 0;
+      this.counts = { 300: 0, 100: 0, 50: 0, 0: 0 };
+      this.cx = FIELD_W / 2;
+      this.cy = FIELD_H / 2;
+      this.held = /* @__PURE__ */ new Set();
+      this.beatI = -1;
+      this.pops = [];
+      this.trail = [];
+      this.shake = 0;
+      this.gx = FIELD_W / 2;
+      this.gy = FIELD_H / 2;
+      this.gh = this.rng.range(0, Math.PI * 2);
+      this.gt = Math.ceil((o.lead === void 0 ? 1.6 : o.lead) / this.beat) * this.beat;
+      this.gn = 0;
+      this.gc = 0;
+      this.gLeft = 0;
+      this.mapEnd = 0;
+      const t0 = this.gt;
+      this.gen(t0 + 40);
+      const T2 = o.target || 14, start = o.start === void 0 ? 0.45 : o.start;
+      this.drain = (6e-3 + 4e-3 * hp) * (o.drainMul === void 0 ? 1 : o.drainMul);
+      const n = this.objs.filter((q) => q.t < t0 + T2).length;
+      this.unit = (1 - start + this.drain * T2) / Math.max(4, n);
+      this.gauge = start;
+    }
+    /* ---------------- 판 만들기 ---------------- */
+    gen(until) {
+      const R = this.rng, d = this.d, r = this.r, B = this.beat;
+      const pad = r + 6, inX = (x) => x > pad && x < FIELD_W - pad, inY = (y) => y > pad && y < FIELD_H - pad;
+      const step = (dist3) => {
+        for (let k = 0; k < 12; k++) {
+          const x = this.gx + Math.cos(this.gh) * dist3, y = this.gy + Math.sin(this.gh) * dist3;
+          if (inX(x) && inY(y)) {
+            this.gx = x;
+            this.gy = y;
+            return;
+          }
+          this.gh += R.range(1.2, 2.6);
+        }
+        this.gx = FIELD_W / 2 + R.range(-60, 60);
+        this.gy = FIELD_H / 2 + R.range(-40, 40);
+      };
+      const newObj = (k, t2, x, y) => {
+        if (this.gLeft <= 0 || k === "p") {
+          this.gn = 0;
+          this.gc = (this.gc + 1) % this.th.colors.length;
+          this.gLeft = R.int(3, 6);
+        }
+        this.gLeft--;
+        this.gn++;
+        const o = {
+          k,
+          i: this.objs.length,
+          t: t2,
+          x,
+          y,
+          n: this.gn,
+          col: this.gc,
+          pts: [],
+          acc: [],
+          span: 0,
+          rep: 0,
+          end: t2,
+          ticks: [],
+          ti: 0,
+          need: 0,
+          spun: 0,
+          ang: null,
+          spins: 0,
+          done: false,
+          res: -1,
+          head: false,
+          headT: 0,
+          track: false,
+          got: 0,
+          all: 0
+        };
+        this.objs.push(o);
+        return o;
+      };
+      let t = this.gt, prevSpin = true;
+      while (t < until) {
+        const roll = R.next();
+        if (!prevSpin && this.objs.length > 3 && roll < d.spinner) {
+          const beats = R.int(3, 5), o = newObj("p", t, FIELD_W / 2, FIELD_H / 2);
+          o.end = t + beats * B;
+          o.need = Math.max(1, Math.round((o.end - t) * d.spinRps * 2) / 2);
+          this.gLeft = 0;
+          prevSpin = true;
+          t = o.end + 2 * B;
+          continue;
+        }
+        prevSpin = false;
+        if (roll < d.spinner + d.slider) {
+          const sb = R.chance(0.6) ? 1 : 2, rep = R.chance(d.repeat) ? 1 : 0;
+          const L = Math.min(260, d.sv * 100 * sb), o = newObj("s", t, this.gx, this.gy);
+          let x = this.gx, y = this.gy, h = this.gh + R.range(-0.8, 0.8);
+          const curve = R.chance(0.6) ? R.range(4e-3, 0.012) * (R.chance(0.5) ? 1 : -1) : 0;
+          o.pts.push(x, y);
+          o.acc.push(0);
+          for (let s = 4; s <= L; s += 4) {
+            h += curve * 4;
+            let nx = x + Math.cos(h) * 4, ny = y + Math.sin(h) * 4;
+            if (!inX(nx)) {
+              h = Math.PI - h;
+              nx = x + Math.cos(h) * 4;
+            }
+            if (!inY(ny)) {
+              h = -h;
+              ny = y + Math.sin(h) * 4;
+            }
+            x = nx;
+            y = ny;
+            o.pts.push(x, y);
+            o.acc.push(s);
+          }
+          o.span = sb * B;
+          o.rep = rep;
+          o.end = t + o.span * (rep + 1);
+          for (let k = 1; k <= sb * (rep + 1); k++) o.ticks.push(t + k * B);
+          o.all = o.ticks.length;
+          const ex = rep ? o.pts[0] : o.pts[o.pts.length - 2], ey = rep ? o.pts[1] : o.pts[o.pts.length - 1];
+          this.gx = ex;
+          this.gy = ey;
+          this.gh = h + (rep ? Math.PI : 0);
+          const g2 = this.gapBeats();
+          t = o.end + g2 * B;
+          this.gh += R.range(-2, 2);
+          step(Math.max(r * 1.6, d.jump * g2 * 90));
+          continue;
+        }
+        if (R.chance(d.stream)) {
+          const n = R.int(3, 5), turn = R.range(-0.25, 0.25);
+          for (let k = 0; k < n; k++) {
+            newObj("c", t, this.gx, this.gy);
+            t += B / 2;
+            this.gh += turn;
+            step(r * 1.15);
+          }
+          t += B / 2;
+          this.gh += R.range(-2, 2);
+          step(Math.max(r * 1.6, d.jump * 90));
+          continue;
+        }
+        newObj("c", t, this.gx, this.gy);
+        const g = this.gapBeats();
+        t += g * B;
+        this.gh += R.range(-2.1, 2.1);
+        step(Math.max(r * 1.4, d.jump * g * 90));
+      }
+      this.gt = t;
+      this.mapEnd = until;
+    }
+    /** 다음 물체까지 박 수 — gap 을 반 박 단위로 흔든다 */
+    gapBeats() {
+      const g = this.d.gap, lo = Math.max(0.5, Math.floor(g * 2) / 2);
+      return this.rng.chance((g - lo) * 2) ? lo + 0.5 : lo;
+    }
+    /* ---------------- 자리 ---------------- */
+    /** 꿈틀 변주 — 그림과 판정이 같은 자리를 본다 */
+    wig(o) {
+      const w = this.m.wiggle || 0;
+      return w ? [Math.sin(this.t * 6 + o.i * 1.7) * w, Math.cos(this.t * 5 + o.i * 2.3) * w] : [0, 0];
+    }
+    /** 슬라이더 공 자리(진행 0~1, 되돌아오기 포함) */
+    ballAt(o, t) {
+      const n = o.acc.length, L = o.acc[n - 1] || 1;
+      let p = Math.max(0, t - o.t) / o.span;
+      const lap = Math.floor(p);
+      p -= lap;
+      if (lap >= o.rep + 1) p = 1;
+      else if (lap % 2 === 1) p = 1 - p;
+      if (lap >= o.rep + 1 && o.rep % 2 === 1) p = 0;
+      const s = p * L;
+      let lo = 0, hi = n - 1;
+      while (lo < hi) {
+        const mid = lo + hi >> 1;
+        if (o.acc[mid] < s) lo = mid + 1;
+        else hi = mid;
+      }
+      const [wx, wy] = this.wig(o);
+      return [o.pts[lo * 2] + wx, o.pts[lo * 2 + 1] + wy];
+    }
+    /** 끌림 변주 — 손이 가리킨 자리가 아래(물)로 끌려 내려간 자리 */
+    cursor() {
+      const k = (this.m.pull || 0) * 0.5 * (0.55 + 0.45 * Math.sin(this.t * 1.3));
+      return [this.cx + (FIELD_W / 2 - this.cx) * k * 0.4, this.cy + (FIELD_H + 90 - this.cy) * k];
+    }
+    /** 화면 좌표 → 놀이판 좌표(판 돌기 되돌림) — rect 는 draw 에 준 것과 같아야 한다 */
+    toField(sx, sy, rect) {
+      const k = rect.w / FIELD_W, mx = rect.x + rect.w / 2, my = rect.y + rect.h / 2;
+      let dx = (sx - mx) / k, dy = (sy - my) / k;
+      const a = -(this.m.roll || 0) * this.t;
+      if (a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        [dx, dy] = [dx * c - dy * s, dx * s + dy * c];
+      }
+      return [dx + FIELD_W / 2, dy + FIELD_H / 2];
+    }
+    /* ---------------- 입력 ---------------- */
+    move(x, y) {
+      this.cx = x;
+      this.cy = y;
+    }
+    /** 누름 — id 는 손가락 · 단추 · 키마다 다르게(둘을 번갈아 눌러 연타) · at 은 그 순간의 겨루기 시각 */
+    press(id, at = this.t) {
+      if (this.state !== "play") return;
+      this.held.add(id);
+      for (let i = this.head; i < this.objs.length; i++) {
+        const o = this.objs[i];
+        if (o.t - at > this.pre) break;
+        if (o.done || o.k === "p" || o.head) continue;
+        const dt = at - o.t;
+        if (dt < -this.w50) {
+          if (dt > -this.w50 - 0.25 && this.near(o, this.r)) this.shake = 0.25;
+          return;
+        }
+        if (dt > this.w50) continue;
+        if (!this.near(o, this.r)) return;
+        const a = Math.abs(dt), res = a <= this.w300 ? 300 : a <= this.w100 ? 100 : 50;
+        if (o.k === "c") {
+          o.done = true;
+          o.res = res;
+          this.judge(res, o.x, o.y, "c");
+        } else {
+          o.head = true;
+          o.headT = at;
+          o.track = true;
+          this.score(res === 300 ? 0.5 : 0.25, "tick");
+          this.combo++;
+          this.best = Math.max(this.best, this.combo);
+        }
+        return;
+      }
+    }
+    release(id) {
+      this.held.delete(id);
+    }
+    near(o, r) {
+      const [wx, wy] = this.wig(o), [x, y] = this.cursor();
+      return (x - o.x - wx) ** 2 + (y - o.y - wy) ** 2 <= r * r;
+    }
+    /* ---------------- 판정 · 게이지 ---------------- */
+    score(mul, kind) {
+      this.gauge = Math.min(1, this.gauge + this.unit * mul);
+      this.o.onJudge && this.o.onJudge(300, kind);
+    }
+    /** pen — 실패 몫 배율(슬라이더는 끊김에서 이미 깎였으므로 덜 깎는다) */
+    judge(res, x, y, kind, pen = 1) {
+      this.counts[res]++;
+      if (res) {
+        this.combo++;
+        this.best = Math.max(this.best, this.combo);
+      } else {
+        this.combo = 0;
+        this.shake = 0.3;
+      }
+      const g = res === 300 ? 1 : res === 100 ? 0.45 : res === 50 ? 0.12 : -(0.8 + 0.15 * this.d.hp) * pen;
+      this.gauge = Math.max(0, Math.min(1, this.gauge + this.unit * g));
+      this.pops.push({ x, y, t: 0, s: res ? String(res) : "✕", c: JUDGE_COL[res] });
+      this.o.onJudge && this.o.onJudge(res, kind);
+    }
+    brk(x, y) {
+      if (this.combo > 0) this.shake = 0.2;
+      this.combo = 0;
+      this.gauge = Math.max(0, this.gauge - this.unit * 0.25);
+      this.pops.push({ x, y, t: 0, s: "✕", c: JUDGE_COL[0] });
+      this.o.onJudge && this.o.onJudge(0, "break");
+    }
+    /* ---------------- 흐름 ---------------- */
+    update(dt) {
+      if (this.state !== "play") return;
+      this.t += dt;
+      const t = this.t, B = this.beat;
+      const bi = Math.floor(t / B);
+      if (bi !== this.beatI) {
+        this.beatI = bi;
+        this.o.onBeat && this.o.onBeat(bi);
+      }
+      if (t > this.mapEnd - 8) this.gen(this.mapEnd + 30);
+      if (this.objs.length && t > this.objs[0].t - 0.2) this.gauge -= this.drain * dt;
+      const [cx, cy] = this.cursor();
+      this.trail.push(cx, cy);
+      if (this.trail.length > 16) this.trail.splice(0, 2);
+      for (let i = this.head; i < this.objs.length; i++) {
+        const o = this.objs[i];
+        if (o.t - t > this.pre) break;
+        if (o.done) {
+          if (i === this.head) this.head++;
+          continue;
+        }
+        if (o.k === "c") {
+          if (t > o.t + this.w50) {
+            o.done = true;
+            o.res = 0;
+            this.judge(0, o.x, o.y, "c");
+          }
+          continue;
+        }
+        if (o.k === "s") {
+          if (t < o.t) continue;
+          if (!o.head && t > o.t + this.w50) {
+            o.head = true;
+            o.headT = -1;
+            this.brk(o.x, o.y);
+          }
+          const [bx, by] = this.ballAt(o, t), held = this.held.size > 0;
+          const rr = o.track ? this.r * 2.4 : this.r;
+          o.track = held && (cx - bx) ** 2 + (cy - by) ** 2 <= rr * rr;
+          while (o.ti < o.ticks.length && t >= o.ticks[o.ti] - (o.ti === o.ticks.length - 1 ? 0.036 : 0)) {
+            o.ti++;
+            if (o.track) {
+              o.got++;
+              this.combo++;
+              this.best = Math.max(this.best, this.combo);
+              this.score(0.12, "tick");
+            } else this.brk(bx, by);
+          }
+          if (o.ti >= o.ticks.length) {
+            o.done = true;
+            const k = ((o.headT > 0 ? 1 : 0) + o.got) / (1 + o.all);
+            const [ex, ey] = this.ballAt(o, o.end);
+            o.res = k >= 1 ? 300 : k >= 0.5 ? 100 : k > 0 ? 50 : 0;
+            this.judge(o.res, ex, ey, "s", 0.5);
+          }
+          continue;
+        }
+        if (t < o.t) continue;
+        if (this.held.size) {
+          const a = Math.atan2(cy - FIELD_H / 2, cx - FIELD_W / 2);
+          if (o.ang !== null) {
+            let da = a - o.ang;
+            while (da > Math.PI) da -= Math.PI * 2;
+            while (da < -Math.PI) da += Math.PI * 2;
+            o.spun += Math.min(Math.abs(da), Math.PI * 2 * 8 * dt);
+          }
+          o.ang = a;
+        } else o.ang = null;
+        const full = Math.floor(o.spun / (Math.PI * 2));
+        while (o.spins < full) {
+          o.spins++;
+          this.score(0.15, "spin");
+        }
+        if (t >= o.end) {
+          o.done = true;
+          const k = o.spun / (Math.PI * 2) / o.need;
+          o.res = k >= 1 ? 300 : k >= 0.75 ? 100 : k >= 0.5 ? 50 : 0;
+          this.judge(o.res, FIELD_W / 2, FIELD_H / 2, "p");
+        }
+      }
+      for (let i = this.pops.length - 1; i >= 0; i--) {
+        this.pops[i].t += dt;
+        if (this.pops[i].t > 0.6) this.pops.splice(i, 1);
+      }
+      this.shake = Math.max(0, this.shake - dt);
+      if (this.gauge >= 1) this.state = "win";
+      else if (this.gauge <= 0) this.state = "lose";
+    }
+    /** 맞힌 몫(osu! 정확도) */
+    accuracy() {
+      const c = this.counts, n = c[300] + c[100] + c[50] + c[0];
+      return n ? (c[300] * 300 + c[100] * 100 + c[50] * 50) / (n * 300) : 1;
+    }
+    /* ---------------- 그리기 ---------------- */
+    /** rect — 화면 위 놀이판 자리(가로세로 비 4:3 을 권한다) */
+    draw(c, rect) {
+      const th = this.th, k = rect.w / FIELD_W, t = this.t, r = this.r;
+      const sh = this.shake > 0 ? Math.sin(this.shake * 80) * this.shake * 14 : 0;
+      c.save();
+      c.translate(rect.x + rect.w / 2 + sh, rect.y + rect.h / 2);
+      c.fillStyle = th.bg;
+      c.strokeStyle = th.edge;
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.roundRect(-rect.w / 2 - 14, -rect.h / 2 - 28, rect.w + 28, rect.h + 42, 10);
+      c.fill();
+      c.stroke();
+      this.drawGauge(c, rect.w, rect.h);
+      c.scale(k, k);
+      const roll = (this.m.roll || 0) * t;
+      if (roll) c.rotate(roll);
+      c.translate(-FIELD_W / 2, -FIELD_H / 2);
+      let last = this.head;
+      while (last < this.objs.length && this.objs[last].t - t <= this.pre) last++;
+      for (let i = last - 1; i >= this.head; i--) {
+        const o = this.objs[i];
+        if (o.done) continue;
+        const col = th.colors[o.col];
+        const appear = Math.min(1, (t - (o.t - this.pre)) / this.fade);
+        let alpha = Math.max(0, appear);
+        if (this.m.hidden && o.k === "c") alpha *= Math.max(0, Math.min(1, (o.t - this.pre * 0.3 - t) / (this.pre * 0.3)));
+        if (o.k === "p") {
+          this.drawSpinner(c, o, alpha);
+          continue;
+        }
+        const [wx, wy] = this.wig(o);
+        c.save();
+        c.globalAlpha = alpha;
+        c.translate(wx, wy);
+        if (o.k === "s") this.drawSlider(c, o, col);
+        if (!(o.k === "s" && o.head)) this.drawCircle(c, o.x, o.y, col, String(o.n), r);
+        c.restore();
+        if (!this.m.hidden && t < o.t && !(o.k === "s" && o.head)) {
+          const s = 1 + 3 * Math.max(0, (o.t - t) / this.pre);
+          c.save();
+          c.globalAlpha = alpha * 0.9;
+          c.strokeStyle = col;
+          c.lineWidth = 3;
+          c.beginPath();
+          c.arc(o.x + wx, o.y + wy, r * s, 0, Math.PI * 2);
+          c.stroke();
+          c.restore();
+        }
+      }
+      for (const p of this.pops) {
+        c.save();
+        c.globalAlpha = 1 - p.t / 0.6;
+        c.fillStyle = p.c;
+        c.font = `700 ${p.s === "✕" ? 30 : 24}px ${th.font}`;
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        c.fillText(p.s, p.x, p.y - p.t * 30);
+        c.restore();
+      }
+      const [ex, ey] = this.cursor();
+      if (this.m.pull) {
+        c.strokeStyle = "rgba(230,245,255,.35)";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.moveTo(this.cx, this.cy);
+        c.lineTo(ex, ey);
+        c.stroke();
+      }
+      for (let i = 0; i < this.trail.length; i += 2) {
+        c.globalAlpha = i / this.trail.length * 0.4;
+        c.fillStyle = th.ink;
+        c.beginPath();
+        c.arc(this.trail[i], this.trail[i + 1], 3 + i * 0.25, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.globalAlpha = 1;
+      const g = c.createRadialGradient(ex, ey, 1, ex, ey, 14);
+      g.addColorStop(0, "#ffffff");
+      g.addColorStop(0.45, "rgba(255,230,160,.9)");
+      g.addColorStop(1, "rgba(255,200,120,0)");
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(ex, ey, 14, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+      if (this.combo > 1) {
+        c.save();
+        c.fillStyle = th.ink;
+        c.globalAlpha = 0.9;
+        c.font = `700 20px ${th.font}`;
+        c.textBaseline = "bottom";
+        c.fillText(this.combo + "x", rect.x + 4, rect.y + rect.h + 8);
+        c.restore();
+      }
+    }
+    drawGauge(c, w, h) {
+      const th = this.th, y = -h / 2 - 20, g = Math.max(0, Math.min(1, this.gauge));
+      c.fillStyle = "rgba(0,0,0,.5)";
+      c.beginPath();
+      c.roundRect(-w / 2, y, w, 9, 4);
+      c.fill();
+      const low = g < 0.25 && Math.sin(this.t * 14) > 0;
+      const grad = c.createLinearGradient(-w / 2, 0, w / 2, 0);
+      grad.addColorStop(0, low ? th.gaugeLow : th.gauge);
+      grad.addColorStop(1, "#ffffff");
+      c.fillStyle = grad;
+      c.beginPath();
+      c.roundRect(-w / 2 + 1, y + 1, Math.max(0, (w - 2) * g), 7, 3.5);
+      c.fill();
+    }
+    drawCircle(c, x, y, col, num, r) {
+      const g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+      g.addColorStop(0, "#ffffff");
+      g.addColorStop(0.25, col);
+      g.addColorStop(1, this.th.body);
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(x, y, r * 0.9, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = "#ffffff";
+      c.lineWidth = r * 0.12;
+      c.beginPath();
+      c.arc(x, y, r * 0.92, 0, Math.PI * 2);
+      c.stroke();
+      c.fillStyle = "#ffffff";
+      c.font = `700 ${Math.round(r * 0.75)}px ${this.th.font}`;
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(num, x, y + 1);
+    }
+    drawSlider(c, o, col) {
+      const r = this.r, p = o.pts, t = this.t;
+      const path = () => {
+        c.beginPath();
+        c.moveTo(p[0], p[1]);
+        for (let i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]);
+      };
+      c.lineCap = "round";
+      c.lineJoin = "round";
+      path();
+      c.strokeStyle = "#ffffff";
+      c.lineWidth = r * 2;
+      c.stroke();
+      path();
+      c.strokeStyle = this.th.body;
+      c.lineWidth = r * 1.76;
+      c.stroke();
+      path();
+      c.strokeStyle = col;
+      c.globalAlpha *= 0.35;
+      c.lineWidth = r * 1.2;
+      c.stroke();
+      c.globalAlpha /= 0.35;
+      c.fillStyle = "#ffffff";
+      for (let i = o.ti; i < o.ticks.length - 1; i++) {
+        const [x, y] = this.ballAt(o, o.ticks[i]);
+        const [wx, wy] = this.wig(o);
+        c.beginPath();
+        c.arc(x - wx, y - wy, r * 0.13, 0, Math.PI * 2);
+        c.fill();
+      }
+      const n = p.length;
+      this.drawEnd(c, p[n - 2], p[n - 1], col, o.rep > 0 && t < o.t + o.span);
+      if (t >= o.t) {
+        const [bx, by] = this.ballAt(o, Math.min(t, o.end));
+        const [wx, wy] = this.wig(o);
+        c.fillStyle = col;
+        c.beginPath();
+        c.arc(bx - wx, by - wy, r * 0.82, 0, Math.PI * 2);
+        c.fill();
+        c.strokeStyle = "#ffffff";
+        c.lineWidth = 3;
+        c.stroke();
+        if (o.track) {
+          c.strokeStyle = "rgba(255,255,255,.85)";
+          c.lineWidth = 3;
+          c.beginPath();
+          c.arc(bx - wx, by - wy, r * 2.4, 0, Math.PI * 2);
+          c.stroke();
+        }
+      }
+    }
+    drawEnd(c, x, y, col, arrow) {
+      const r = this.r;
+      c.strokeStyle = "#ffffff";
+      c.lineWidth = r * 0.1;
+      c.beginPath();
+      c.arc(x, y, r * 0.88, 0, Math.PI * 2);
+      c.stroke();
+      if (arrow) {
+        c.fillStyle = "#ffffff";
+        c.font = `700 ${Math.round(r * 0.8)}px ${this.th.font}`;
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        c.fillText("↺", x, y + 1);
+      } else {
+        c.fillStyle = col;
+        c.globalAlpha *= 0.5;
+        c.beginPath();
+        c.arc(x, y, r * 0.5, 0, Math.PI * 2);
+        c.fill();
+        c.globalAlpha /= 0.5;
+      }
+    }
+    drawSpinner(c, o, alpha) {
+      const t = this.t, cx = FIELD_W / 2, cy = FIELD_H / 2, R = 170;
+      const k = Math.min(1, o.spun / (Math.PI * 2) / o.need);
+      c.save();
+      c.globalAlpha = alpha;
+      c.strokeStyle = "rgba(255,255,255,.25)";
+      c.lineWidth = 10;
+      c.beginPath();
+      c.arc(cx, cy, R, 0, Math.PI * 2);
+      c.stroke();
+      c.strokeStyle = k >= 1 ? "#9ef08a" : this.th.colors[o.col];
+      c.lineWidth = 10;
+      c.beginPath();
+      c.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2);
+      c.stroke();
+      if (t >= o.t) {
+        const left = Math.max(0, (o.end - t) / (o.end - o.t));
+        c.strokeStyle = "rgba(255,255,255,.7)";
+        c.lineWidth = 3;
+        c.beginPath();
+        c.arc(cx, cy, R * 0.95 * left + 8, 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.translate(cx, cy);
+      c.rotate(o.spun);
+      c.strokeStyle = "#ffffff";
+      c.lineWidth = 4;
+      for (let i = 0; i < 3; i++) {
+        c.rotate(Math.PI * 2 / 3);
+        c.beginPath();
+        c.moveTo(18, 0);
+        c.lineTo(R * 0.6, 0);
+        c.stroke();
+      }
+      c.rotate(-o.spun);
+      c.fillStyle = "#ffffff";
+      c.font = `700 30px ${this.th.font}`;
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(String(Math.max(0, Math.ceil(o.need - o.spun / (Math.PI * 2)))), 0, 0);
+      c.restore();
+    }
+  };
+
   // src/game/util.ts
   var util_exports = {};
   __export(util_exports, {
@@ -13326,6 +13978,8 @@
     // 화면 구성 — 끄면 body 에 hide-* 를 단다
     dlgtype: 1,
     // 대사가 한 글자씩 흘러나오는 연출 (끄면 한 번에 뜬다)
+    fishduel: 1,
+    // 낚시 겨루기(game/fish-duel.ts) — 끄면 입질에 한 번 누르는 예전 방식
     view: 100,
     uiscale: 100,
     quality: "auto",
@@ -36725,6 +37379,7 @@
         ["dmgnum", "set-dmgnum"],
         ["minimap", "set-minimap"],
         ["dlgtype", "set-dlgtype"],
+        ["fishduel", "set-fishduel"],
         ["hud_tabbar", "set-hud-tabbar"],
         ["hud_quest", "set-hud-quest"],
         ["hud_buffs", "set-hud-buffs"],
@@ -36915,6 +37570,7 @@
       chk("set-minimap", s.minimap);
       for (const k of ["tabbar", "quest", "buffs", "clock", "hotbar"]) chk("set-hud-" + k, s["hud_" + k]);
       chk("set-dlgtype", s.dlgtype === void 0 ? 1 : s.dlgtype);
+      chk("set-fishduel", s.fishduel === void 0 ? 1 : s.fishduel);
       set("set-view", s.view);
       txt("set-view-v", s.view);
       set("set-quality", s.quality || "auto");
@@ -45520,7 +46176,8 @@
       const rod = idef(p.held());
       if (p.fish) {
         if (p.fish.biting) {
-          this.resolveFish("reel");
+          if (this.duelOn()) this.startDuel();
+          else this.resolveFish("reel");
         } else {
           this.fishSplash(p.fish, 3);
           p.fish = null;
@@ -45554,6 +46211,10 @@
     },
     updateFishing(dt) {
       const p = this.player;
+      if (this.duel) {
+        this.tickDuel(dt);
+        return;
+      }
       if (!p.fish) return;
       const held = p.held();
       if (!held || idef(held).type !== "rod") {
@@ -45571,7 +46232,15 @@
         }
       } else {
         f.bite -= dt;
-        if (f.bite <= 0) this.resolveFish("auto");
+        if (f.bite <= 0) {
+          if (!this.duelOn()) this.resolveFish("auto");
+          else {
+            p.removeItem("raw_meat", 1);
+            this.fishSplash(f, 5);
+            this.sfx("splash");
+            this._fishLost(tr("입질을 흘렸다 — 미끼만 털렸다"));
+          }
+        }
       }
     },
     /** 놓쳤을 때의 뒤처리 — 미끼는 이미 먹혔다(resolveFish에서 뺀다) */
@@ -45586,17 +46255,20 @@
       for (let i = 0; i < n; i++)
         this.parts.push(new Part(wx, wy, i % 3 ? "#cfe8ff" : "#ffffff", -60 - Math.random() * 50, 0.55));
     },
-    /** 낚시 판정 — quality: 'auto'(시간 초과, 기본 확률) | 'reel'(입질 중 즉시 챔질, 보너스) 2단계로 굴린다 */
-    /** 낚시 판정 — quality: 'auto'(시간 초과) | 'reel'(입질 중 즉시 챔질, 보너스). */
+    /** 미끼 · 숙련 · 낚싯대가 얹는 몫 — 무엇이 무는가(rollCatch)에 쓴다 */
+    fishOdds(quality, baited) {
+      const p = this.player, rod = ITEMS[p.fish.rodId] || {};
+      const rareMul = p.fish.rareMul === void 0 ? 1 : p.fish.rareMul, flv = p.profLv("fish");
+      const fishBonus = (rod.fishBonus || 0) + (baited ? 0.2 : 0) + (quality === "reel" ? 0.12 : 0) + (flv - 1) * 0.02;
+      const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === "reel" ? 0.05 : 0) + (flv - 1) * 0.015) * rareMul, 0, 0.85);
+      return { rod, flv, fishBonus, itemChance };
+    },
+    /** 낚시 판정(겨루기를 끈 예전 방식) — quality: 'auto'(시간 초과) | 'reel'(입질 중 즉시 챔질, 보너스). */
     resolveFish(quality) {
       const p = this.player;
       if (!p.fish) return;
-      const rod = ITEMS[p.fish.rodId] || {};
-      const rareMul = p.fish.rareMul === void 0 ? 1 : p.fish.rareMul;
       const baited = p.removeItem("raw_meat", 1);
-      const flv = p.profLv("fish");
-      const fishBonus = (rod.fishBonus || 0) + (baited ? 0.2 : 0) + (quality === "reel" ? 0.12 : 0) + (flv - 1) * 0.02;
-      const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === "reel" ? 0.05 : 0) + (flv - 1) * 0.015) * rareMul, 0, 0.85);
+      const { rod, fishBonus, itemChance } = this.fishOdds(quality, baited);
       this.fishSplash(p.fish, quality === "reel" ? 14 : 7);
       this.sfx("splash");
       p.fish = null;
@@ -45607,6 +46279,11 @@
         this._fishLost(quality === "reel" ? this.rng.chance(0.5) ? tr("챘지만 바늘이 빠졌다") : tr("줄이 끊겼다") : tr("입질을 흘렸다 — 미끼만 털렸다"));
         return;
       }
+      this.giveCatch(this.rollCatch(fishBonus, itemChance), baited);
+    },
+    /** 무엇이 물었나 — 굴리기만 하고 주지는 않는다. tier 0~4 는 낚시 겨루기 난이도(화면에 안 보인다) */
+    rollCatch(fishBonus, itemChance) {
+      const flv = this.player.profLv("fish");
       if (this.rng.chance(itemChance)) {
         const lucky = (flv - 1) * 0.9 + fishBonus * 6;
         const s2 = sessionOf(this.chapter).id >= 2;
@@ -45639,7 +46316,7 @@
           // --- 어느 물에서든 드물다 ---
           ["knot_angler", 0.35 + lucky * 0.15]
         ];
-        const catchId2 = this.rng.weighted(itemTable);
+        const id2 = this.rng.weighted(itemTable);
         const stackN = {
           slime_gel: [2, 5],
           aether_shard: [1, 2],
@@ -45648,23 +46325,11 @@
           rust_sinker: [1, 3],
           drowned_cell: [1, 2],
           sunken_coin: [1, 1]
-        }[catchId2];
-        const n2 = stackN ? this.rng.int(stackN[0], stackN[1]) : 1;
-        const it2 = isGear(makeItem(catchId2)) ? rollGear(catchId2, this.rng, 0) : makeItem(catchId2, n2);
-        if (!p.addItem(it2)) this.drops.push(new Drop(p.cx, p.cy, it2));
-        const rare = isGear(makeItem(catchId2)) || ["knot_angler", "sunken_coin", "tide_pearl"].includes(catchId2);
-        if (rare) {
-          this.toast(tr("물속에서 무언가 딸려 올라왔다 — {itemName}", { itemName: itemName(it2) }), "good");
-          this.burst(p.cx, p.cy - 4, "stargain", 52, 2);
-          this.ringFx(p.cx, p.cy, 60, "#7fc8e8", 0.5);
-          this.sfx("level");
-        } else {
-          this.toast(tr("뭔가 걸렸다 — {itemName}{v}", { itemName: itemName(it2), v: n2 > 1 ? " ×" + n2 : "" }), "good");
-          this.sfx("open");
-        }
-        p.addProf("fish", rare ? 3 : 1);
-        UI5.refreshBag();
-        return;
+        }[id2];
+        const gear = isGear(makeItem(id2));
+        const rare = gear || ["knot_angler", "sunken_coin", "tide_pearl"].includes(id2);
+        const tier = id2 === "knot_angler" ? 4 : gear ? 3 : rare ? 2 : ["slime_gel", "potion_hp", "rust_sinker"].includes(id2) ? 0 : 1;
+        return { kind: "item", id: id2, n: stackN ? this.rng.int(stackN[0], stackN[1]) : 1, rare, tier };
       }
       const s2fish = sessionOf(this.chapter).id >= 2;
       const table = [
@@ -45673,18 +46338,35 @@
         ["fish_silver", (s2fish ? 24 : 16) + fishBonus * 26],
         ["fish_deep", ((s2fish ? 15 : 7) + fishBonus * 30) * (flv >= 6 ? 2.2 : 1)]
       ];
-      const catchId = this.rng.weighted(table);
-      if (catchId === "none") {
+      const id = this.rng.weighted(table);
+      const n = flv >= PROF_MAX && this.rng.chance(0.25) ? 2 : 1;
+      return { kind: id === "none" ? "none" : "fish", id, n, rare: false, tier: id === "fish_deep" ? 2 : id === "fish_silver" ? 1 : 0 };
+    },
+    /** 걸린 것을 가방에 — 알림 · 소리 · 숙련 */
+    giveCatch(c, baited) {
+      const p = this.player;
+      if (c.kind === "none") {
         this.toast(baited ? tr("미끼만 사라졌다") : tr("빈 바늘만 올라왔다"), "bad");
         UI5.refreshBag();
         return;
       }
-      const n = flv >= PROF_MAX && this.rng.chance(0.25) ? 2 : 1;
-      const it = makeItem(catchId, n);
+      const it = c.kind === "item" && isGear(makeItem(c.id)) ? rollGear(c.id, this.rng, 0) : makeItem(c.id, c.n);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
-      this.toast(tr("낚았다 — {itemName}{v}", { itemName: itemName(it), v: n > 1 ? " ×" + n : "" }), "good");
-      p.addProf("fish", 1);
-      this.sfx("open");
+      if (c.kind === "fish") {
+        this.toast(tr("낚았다 — {itemName}{v}", { itemName: itemName(it), v: c.n > 1 ? " ×" + c.n : "" }), "good");
+        p.addProf("fish", 1);
+        this.sfx("open");
+      } else if (c.rare) {
+        this.toast(tr("물속에서 무언가 딸려 올라왔다 — {itemName}", { itemName: itemName(it) }), "good");
+        this.burst(p.cx, p.cy - 4, "stargain", 52, 2);
+        this.ringFx(p.cx, p.cy, 60, "#7fc8e8", 0.5);
+        this.sfx("level");
+        p.addProf("fish", 3);
+      } else {
+        this.toast(tr("뭔가 걸렸다 — {itemName}{v}", { itemName: itemName(it), v: c.n > 1 ? " ×" + c.n : "" }), "good");
+        this.sfx("open");
+        p.addProf("fish", 1);
+      }
       UI5.refreshBag();
     },
     /** 손에 그려지는 낚싯대의 생김새. */
@@ -45785,6 +46467,244 @@
     }
   };
   mixin(Game.prototype, FishingPart, true);
+
+  // src/game/game/fish-duel.ts
+  var fish_duel_exports = {};
+  __export(fish_duel_exports, {
+    FISH_DUEL: () => FISH_DUEL,
+    FishDuelPart: () => FishDuelPart
+  });
+  var FISH_DUEL = [
+    { ar: 3.5, cs: 2.5, od: 2, hp: 2, bpm: 92, gap: 1.5, slider: 0.45, spinner: 0, repeat: 0.1, stream: 0, jump: 0.8, sv: 1, spinRps: 0.8, target: 9 },
+    { ar: 5, cs: 3.2, od: 3.5, hp: 3, bpm: 104, gap: 1.25, slider: 0.4, spinner: 0.04, repeat: 0.2, stream: 0.05, jump: 1, sv: 1.15, spinRps: 0.9, target: 11 },
+    { ar: 6.5, cs: 3.8, od: 5, hp: 4, bpm: 118, gap: 1, slider: 0.35, spinner: 0.06, repeat: 0.25, stream: 0.12, jump: 1.15, sv: 1.3, spinRps: 1.1, target: 13 },
+    { ar: 8, cs: 4.3, od: 6.5, hp: 5, bpm: 132, gap: 0.85, slider: 0.3, spinner: 0.08, repeat: 0.3, stream: 0.2, jump: 1.35, sv: 1.45, spinRps: 1.3, target: 16 },
+    { ar: 9, cs: 4.8, od: 7.5, hp: 6, bpm: 148, gap: 0.75, slider: 0.28, spinner: 0.1, repeat: 0.35, stream: 0.28, jump: 1.6, sv: 1.6, spinRps: 1.5, target: 19 }
+  ];
+  var FishDuelPart = {
+    duel: null,
+    duelOn() {
+      const s = this.settings || {};
+      return s.fishduel === void 0 ? true : !!s.fishduel;
+    },
+    /** 입질 중에 챘다 — 무엇이 물었는지 정하고 판을 연다. tierOverride 는 시험용 */
+    startDuel(tierOverride) {
+      const p = this.player, f = p.fish;
+      if (!f || this.duel) return;
+      const baited = p.removeItem("raw_meat", 1);
+      const { rod, flv, fishBonus, itemChance } = this.fishOdds("reel", baited);
+      const c = this.rollCatch(fishBonus, itemChance);
+      this.sfx("splash");
+      this.fishSplash(f, 8);
+      if (c.kind === "none" && tierOverride === void 0) {
+        p.fish = null;
+        p.addProf("fish", 1);
+        this.giveCatch(c, baited);
+        return;
+      }
+      const tier = tierOverride === void 0 ? c.tier : clamp(tierOverride | 0, 0, 4);
+      const base = FISH_DUEL[tier];
+      const sea = this.world.get(f.tx, f.ty) === T.SEAWATER;
+      const bpm = Math.round(base.bpm + (sea ? 4 : 0) + (DAY_CYCLE.isNight(this.dayT) ? -8 : 0) + (this.rainT > 0.5 ? 6 : 0));
+      const R = this.rng, mods = {};
+      if (tier >= 2 && R.chance(0.3 + (tier - 2) * 0.15)) mods.wiggle = 4 + tier * 1.5;
+      if (tier >= 3 && R.chance(0.35)) mods.roll = (R.chance(0.5) ? 1 : -1) * (0.12 + (tier - 3) * 0.08);
+      if (tier >= 3 && R.chance(0.25)) mods.hidden = true;
+      if (tier >= 4 && R.chance(0.5)) mods.pull = 0.45;
+      const d = new RhythmDuel({
+        diff: { ...base, bpm },
+        mods,
+        seed: (this.world.seed || "s") + ":" + this.time.toFixed(3) + ":" + c.id,
+        target: base.target,
+        start: clamp(0.45 + (rod.fishBonus || 0) * 0.5 + (flv - 1) * 0.01, 0.3, 0.7),
+        ease: flv >= 3 ? 0.02 : 0,
+        // 3레벨 '가벼운 손목' — 판정 창이 넓다
+        drainMul: baited ? 0.8 : 1,
+        theme: { font: FONT || "sans-serif" },
+        onBeat: (i) => this.duelBeat(i),
+        onJudge: (res, kind) => this.duelHitSfx(res, kind)
+      });
+      this.duel = { d, c, baited, tier, wall: performance.now(), rect: { x: 0, y: 0, w: 0, h: 0 }, el: null, ctx: null, off: null, intro: 1.6 };
+      this.duelMount();
+    },
+    /* ---------------- 화면 겹 · 입력 ---------------- */
+    duelMount() {
+      const D = this.duel;
+      const el = document.createElement("canvas");
+      el.id = "fishduel";
+      document.body.appendChild(el);
+      D.el = el;
+      D.ctx = el.getContext("2d");
+      const at = () => D.d.t + Math.min(0.05, (performance.now() - D.wall) / 1e3);
+      const move = (e) => {
+        const [x, y] = D.d.toField(e.clientX, e.clientY, D.rect);
+        D.d.move(x, y);
+      };
+      const down = (e) => {
+        e.preventDefault();
+        try {
+          el.setPointerCapture(e.pointerId);
+        } catch (_) {
+        }
+        move(e);
+        D.d.press("p" + e.pointerId + ":" + e.button, at());
+      };
+      const up = (e) => {
+        for (const b of [0, 1, 2]) D.d.release("p" + e.pointerId + ":" + b);
+      };
+      const key = (e) => {
+        if (/^F\d+$/.test(e.key)) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (e.repeat) return;
+        if (e.code === "Escape") {
+          this.endDuel("quit");
+          return;
+        }
+        if (e.code === "KeyZ" || e.code === "KeyX" || e.code === "Space") D.d.press(e.code, at());
+      };
+      const keyUp = (e) => {
+        if (e.code === "KeyZ" || e.code === "KeyX" || e.code === "Space") D.d.release(e.code);
+      };
+      el.addEventListener("pointermove", move);
+      el.addEventListener("pointerdown", down);
+      el.addEventListener("pointerup", up);
+      el.addEventListener("pointercancel", up);
+      el.addEventListener("contextmenu", (e) => e.preventDefault());
+      addEventListener("keydown", key, true);
+      addEventListener("keyup", keyUp, true);
+      const I = this.input;
+      this.duelLayout();
+      const [x0, y0] = D.d.toField(I.mx || innerWidth / 2, I.my || innerHeight / 2, D.rect);
+      D.d.move(x0, y0);
+      D.off = () => {
+        removeEventListener("keydown", key, true);
+        removeEventListener("keyup", keyUp, true);
+        el.remove();
+      };
+    },
+    duelLayout() {
+      const D = this.duel, el = D.el, dpr = Math.min(2, devicePixelRatio || 1);
+      const W = innerWidth, H = innerHeight;
+      if (el.width !== Math.round(W * dpr) || el.height !== Math.round(H * dpr)) {
+        el.width = Math.round(W * dpr);
+        el.height = Math.round(H * dpr);
+      }
+      const h = Math.min(H - 76, H * 0.74, W * 0.66 * 0.75), w = h * 4 / 3;
+      D.rect = { x: (W - w) / 2, y: (H - h) / 2 + 4, w, h };
+      D.dpr = dpr;
+    },
+    /* ---------------- 흐름 ---------------- */
+    tickDuel(dt) {
+      const D = this.duel, p = this.player;
+      const held = p.held();
+      if (p.dead || !p.fish || !held || idef(held).type !== "rod") {
+        this.endDuel("quit");
+        return;
+      }
+      D.wall = performance.now();
+      D.intro = Math.max(0, D.intro - dt);
+      D.d.update(dt);
+      this.duelDraw();
+      if (D.d.state === "win") this.endDuel("win");
+      else if (D.d.state === "lose") this.endDuel("lose");
+    },
+    endDuel(how) {
+      const D = this.duel, p = this.player;
+      if (!D) return;
+      D.off();
+      this.duel = null;
+      const f = p.fish;
+      if (f) {
+        this.fishSplash(f, how === "win" ? 16 : 8);
+        this.sfx("splash");
+      }
+      p.fish = null;
+      p.addProf("fish", 1);
+      if (how === "win") {
+        this.giveCatch(D.c, D.baited);
+        const acc = Math.round(D.d.accuracy() * 1e3) / 10;
+        if (acc >= 95) this.toast(tr("깔끔한 손놀림 — 정확도 {acc}%", { acc }), "good");
+      } else if (how === "lose") {
+        this.toast(D.tier >= 3 ? tr("놓쳤다 — 힘이 센 놈이었다") : this.rng.chance(0.5) ? tr("줄이 끊겼다") : tr("챘지만 바늘이 빠졌다"), "bad");
+        UI5.refreshBag();
+      } else {
+        this.toast(tr("낚싯줄을 놓았다"), "bad");
+        UI5.refreshBag();
+      }
+    },
+    /* ---------------- 소리 — 북(박) · 물방울(엇박) · 판정 ---------------- */
+    duelTone(f0, f1, dur, vol, type = "sine") {
+      const ac = this.ac;
+      if (!ac) return;
+      const v = (Sfx ? Sfx.vol : 0.5) * vol;
+      if (v < 4e-3) return;
+      if (ac.state === "suspended") ac.resume();
+      const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f0, t);
+      o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+      g.gain.setValueAtTime(1e-4, t);
+      g.gain.exponentialRampToValueAtTime(v, t + 5e-3);
+      g.gain.exponentialRampToValueAtTime(1e-4, t + dur);
+      o.connect(g);
+      g.connect(ac.destination);
+      o.start(t);
+      o.stop(t + dur + 0.02);
+    },
+    duelBeat(i) {
+      if (i < 0) return;
+      this.duelTone(i % 4 === 0 ? 120 : 95, 45, 0.16, i % 4 === 0 ? 0.32 : 0.2);
+      if (i % 2 === 1) {
+        const n = [784, 880, 988, 1175][(i >> 1) % 4];
+        this.duelTone(n * 1.5, n, 0.09, 0.07);
+      }
+    },
+    duelHitSfx(res, kind) {
+      if (kind === "tick") this.duelTone(1600, 1400, 0.04, 0.06);
+      else if (kind === "spin") this.duelTone(520, 900, 0.08, 0.08, "triangle");
+      else if (!res || kind === "break") this.duelTone(160, 60, 0.18, 0.25, "triangle");
+      else this.duelTone(res === 300 ? 1320 : res === 100 ? 990 : 700, res === 300 ? 1760 : 880, 0.07, 0.14, "triangle");
+    },
+    /* ---------------- 그리기 ---------------- */
+    duelDraw() {
+      const D = this.duel;
+      if (!D || !D.ctx) return;
+      this.duelLayout();
+      const c = D.ctx, d = D.d, r = D.rect;
+      c.setTransform(D.dpr, 0, 0, D.dpr, 0, 0);
+      c.clearRect(0, 0, innerWidth, innerHeight);
+      c.fillStyle = "rgba(2,8,14,.5)";
+      c.fillRect(0, 0, innerWidth, innerHeight);
+      d.draw(c, r);
+      const g = clamp(d.gauge, 0, 1), fx = r.x + r.w * g, fy = r.y - 16 + Math.sin(d.t * 18) * 1.5;
+      c.save();
+      c.fillStyle = g < 0.25 ? "#ff8a7a" : "#dff4ff";
+      c.beginPath();
+      c.ellipse(fx, fy, 9, 4.5, 0, 0, Math.PI * 2);
+      c.fill();
+      c.beginPath();
+      c.moveTo(fx - 7, fy);
+      c.lineTo(fx - 14, fy - 5 + Math.sin(d.t * 22) * 2);
+      c.lineTo(fx - 14, fy + 5 + Math.sin(d.t * 22) * 2);
+      c.fill();
+      c.restore();
+      c.save();
+      c.textAlign = "center";
+      c.fillStyle = "rgba(230,240,248,.75)";
+      c.font = `12px ${FONT || "sans-serif"}`;
+      const touch = document.body.classList.contains("touch");
+      c.fillText(touch ? tr("탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다") : tr("클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다"), r.x + r.w / 2, r.y + r.h + 26);
+      if (D.intro > 0) {
+        c.globalAlpha = Math.min(1, D.intro * 1.5);
+        c.fillStyle = "#ffe8a0";
+        c.font = `700 22px ${FONT || "sans-serif"}`;
+        c.fillText(tr("입질이다 — 박자에 맞춰 당겨라!"), r.x + r.w / 2, r.y + r.h / 2);
+      }
+      c.restore();
+    }
+  };
+  mixin(Game.prototype, FishDuelPart, true);
 
   // src/game/game/interact.ts
   var interact_exports = {};
@@ -59367,7 +60287,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

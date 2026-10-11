@@ -1142,6 +1142,9 @@ body.booting #title-screen{visibility:hidden}
 #anvil-grid .slot.dim{opacity:.42;cursor:default}
 #anvil-grid .slot .cnt{color:#ffd24a}
 
+/* 낚시 겨루기(game/fish-duel.ts) — 판 위의 누름 · 끌기가 게임 캔버스에 안 가게 덮는다 */
+#fishduel{position:fixed;inset:0;width:100%;height:100%;z-index:9500;touch-action:none;cursor:none}
+
 /* 창의 움직임(ui/motion.ts) — 날아가는 아이콘 · 불꽃은 맨 위 겹에, 클릭은 그대로 아래로 */
 #uifx{position:fixed;inset:0;pointer-events:none;z-index:9000;overflow:hidden}
 .uifx-ic{position:absolute;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 0 4px #ffd27a99) drop-shadow(0 2px 2px #000a);will-change:transform}

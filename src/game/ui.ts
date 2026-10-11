@@ -134,7 +134,7 @@ export const UI: Bag = {
       const el = $('#' + id); if (!el) continue;
       el.addEventListener('input', () => G.setOpt(key, +el.value));
     }
-    for (const [key, id] of [['dmgnum', 'set-dmgnum'], ['minimap', 'set-minimap'], ['dlgtype', 'set-dlgtype'],
+    for (const [key, id] of [['dmgnum', 'set-dmgnum'], ['minimap', 'set-minimap'], ['dlgtype', 'set-dlgtype'], ['fishduel', 'set-fishduel'],
       ['hud_tabbar', 'set-hud-tabbar'], ['hud_quest', 'set-hud-quest'], ['hud_buffs', 'set-hud-buffs'],
       ['hud_clock', 'set-hud-clock'], ['hud_hotbar', 'set-hud-hotbar']]) {
       const el = $('#' + id); if (!el) continue;
@@ -289,6 +289,7 @@ export const UI: Bag = {
     chk('set-dmgnum', s.dmgnum); chk('set-minimap', s.minimap);
     for (const k of ['tabbar', 'quest', 'buffs', 'clock', 'hotbar']) chk('set-hud-' + k, s['hud_' + k]);
     chk('set-dlgtype', s.dlgtype === undefined ? 1 : s.dlgtype);
+    chk('set-fishduel', s.fishduel === undefined ? 1 : s.fishduel);
     set('set-view', s.view); txt('set-view-v', s.view);
     set('set-quality', s.quality || 'auto');
     set('set-uiscale', s.uiscale || 100); txt('set-uiscale-v', s.uiscale || 100);
