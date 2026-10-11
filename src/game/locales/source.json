@@ -888,6 +888,9 @@
   "깊은 봉인 {n}/{m} — 봉인 방을 모두 풀면 열린다": [
    "game/ruin-deep.drawDeepGates"
   ],
+  "깔끔한 손놀림 — 정확도 {acc}%": [
+   "game/fish-duel.endDuel"
+  ],
   "깬 자리가 고르군. 곡괭이를 아는 손이야.": [
    "data/quests"
   ],
@@ -903,6 +906,9 @@
   "나머지는 다른 방에 나누어 적었다 — 한 사람이 다 알면 안 되었으므로.": [
    "game/ruins.ruinCipher"
   ],
+  "낚시 겨루기": [
+   "index.html"
+  ],
   "낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭": [
    "game/debug-start.debugStart"
   ],
@@ -915,11 +921,14 @@
   "낚싯줄을 거두었다": [
    "game/fishing.tryFish"
   ],
+  "낚싯줄을 놓았다": [
+   "game/fish-duel.endDuel"
+  ],
   "낚싯줄을 드리웠다": [
    "game/fishing.tryFish"
   ],
   "낚았다 — {itemName}{v}": [
-   "game/fishing.resolveFish"
+   "game/fishing.giveCatch"
   ],
   "난이도": [
    "game/save.showNewGameForm"
@@ -977,6 +986,9 @@
   ],
   "놓을 방향 —": [
    "game/mine.rotatePlace"
+  ],
+  "놓쳤다 — 힘이 센 놈이었다": [
+   "game/fish-duel.endDuel"
   ],
   "누가 서 있는 자리다": [
    "game/mine.rightClick"
@@ -1435,16 +1447,16 @@
    "game/mine.rightClick"
   ],
   "물속에서 무언가 딸려 올라왔다 — {itemName}": [
-   "game/fishing.resolveFish"
+   "game/fishing.giveCatch"
   ],
   "물어뜯기": [
    "ui/tip.showTip"
   ],
   "뭔가 걸렸다 — {itemName}{v}": [
-   "game/fishing.resolveFish"
+   "game/fishing.giveCatch"
   ],
   "미끼만 사라졌다": [
-   "game/fishing.resolveFish"
+   "game/fishing.giveCatch"
   ],
   "미니맵": [
    "index.html"
@@ -1782,7 +1794,7 @@
    "game/save.showNewGameForm"
   ],
   "빈 바늘만 올라왔다": [
-   "game/fishing.resolveFish"
+   "game/fishing.giveCatch"
   ],
   "빈 슬롯": [
    "game/save.renderSlotScreen"
@@ -2463,7 +2475,11 @@
    "game/ruins.ruinCipher"
   ],
   "입질을 흘렸다 — 미끼만 털렸다": [
+   "game/fishing.updateFishing",
    "game/fishing.resolveFish"
+  ],
+  "입질이다 — 박자에 맞춰 당겨라!": [
+   "game/fish-duel.duelDraw"
   ],
   "자갈이 무너지자 땅이 울린다 — 물러서라!": [
    "game/caves.triggerFault"
@@ -2743,6 +2759,7 @@
    "ui/quest.refreshTracker"
   ],
   "줄이 끊겼다": [
+   "game/fish-duel.endDuel",
    "game/fishing.resolveFish"
   ],
   "중개 서버에 닿지 않는다": [
@@ -2857,6 +2874,7 @@
    "game/netchat.netCfgToast"
   ],
   "챘지만 바늘이 빠졌다": [
+   "game/fish-duel.endDuel",
    "game/fishing.resolveFish"
   ],
   "처음부터 우리 것인 쇠야. 이걸로 만든 건 팔지 말자.": [
@@ -2955,6 +2973,9 @@
   "크레딧": [
    "index.html"
   ],
+  "클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다": [
+   "game/fish-duel.duelDraw"
+  ],
   "클릭하여 계속": [
    "ui/dialogue.nextLine"
   ],
@@ -2981,6 +3002,9 @@
   ],
   "탐지 파동 — 움직이는 것 {n}": [
    "game/utility.scanPulse"
+  ],
+  "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": [
+   "game/fish-duel.duelDraw"
   ],
   "통과": [
    "factory",

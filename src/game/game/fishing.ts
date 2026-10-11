@@ -22,7 +22,7 @@ export const FishingPart: Bag = {
     const rod = idef(p.held());
     if (p.fish) {
       // 이미 드리운 줄 — 입질 중이면 즉시 챔질(보너스), 대기 중이면 거둔다
-      if (p.fish.biting) { this.resolveFish('reel'); }
+      if (p.fish.biting) { if (this.duelOn()) this.startDuel(); else this.resolveFish('reel'); }
       else { this.fishSplash(p.fish, 3); p.fish = null; this.toast(tr('낚싯줄을 거두었다')); }
       return;
     }
@@ -47,6 +47,7 @@ export const FishingPart: Bag = {
   },
   updateFishing(dt: number) {
     const p = this.player;
+    if (this.duel) { this.tickDuel(dt); return; }
     if (!p.fish) return;
     // 손에서 낚싯대를 놓으면(핫바를 바꾸면) 줄도 같이 놓인다
     const held = p.held();
@@ -62,7 +63,11 @@ export const FishingPart: Bag = {
       }
     } else {
       f.bite -= dt;
-      if (f.bite <= 0) this.resolveFish('auto');
+      // 겨루기를 켰으면 입질을 흘린 것은 놓친 것 — 예전 'auto'(가만히 둬도 반은 잡힘)로 겨루기를 건너뛰지 못하게
+      if (f.bite <= 0) {
+        if (!this.duelOn()) this.resolveFish('auto');
+        else { p.removeItem('raw_meat', 1); this.fishSplash(f, 5); this.sfx('splash'); this._fishLost(tr('입질을 흘렸다 — 미끼만 털렸다')); }
+      }
     }
   },
   /** 놓쳤을 때의 뒤처리 — 미끼는 이미 먹혔다(resolveFish에서 뺀다) */
@@ -77,18 +82,21 @@ export const FishingPart: Bag = {
     for (let i = 0; i < n; i++)
       this.parts.push(new Part(wx, wy, i % 3 ? '#cfe8ff' : '#ffffff', -60 - Math.random() * 50, .55));
   },
-  /** 낚시 판정 — quality: 'auto'(시간 초과, 기본 확률) | 'reel'(입질 중 즉시 챔질, 보너스) 2단계로 굴린다 */
-  /** 낚시 판정 — quality: 'auto'(시간 초과) | 'reel'(입질 중 즉시 챔질, 보너스). */
+  /** 미끼 · 숙련 · 낚싯대가 얹는 몫 — 무엇이 무는가(rollCatch)에 쓴다 */
+  fishOdds(quality: string, baited: boolean) {
+    const p = this.player, rod: Bag = ITEMS[p.fish.rodId] || {};
+    const rareMul = p.fish.rareMul === undefined ? 1 : p.fish.rareMul, flv = p.profLv('fish');
+    /* 낚시 숙련 — 상위 어종 확률과 "잡것" 확률을 함께 밀어 올린다. */
+    const fishBonus = (rod.fishBonus || 0) + (baited ? 0.20 : 0) + (quality === 'reel' ? 0.12 : 0) + (flv - 1) * 0.02;
+    const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === 'reel' ? 0.05 : 0) + (flv - 1) * 0.015) * rareMul, 0, 0.85);
+    return { rod, flv, fishBonus, itemChance };
+  },
+  /** 낚시 판정(겨루기를 끈 예전 방식) — quality: 'auto'(시간 초과) | 'reel'(입질 중 즉시 챔질, 보너스). */
   resolveFish(quality: any) {
     const p = this.player;
     if (!p.fish) return;
-    const rod: Bag = ITEMS[p.fish.rodId] || {};
-    const rareMul = p.fish.rareMul === undefined ? 1 : p.fish.rareMul;
     const baited = p.removeItem('raw_meat', 1);
-    /* 낚시 숙련 — 상위 어종 확률과 "잡것" 확률을 함께 밀어 올린다. */
-    const flv = p.profLv('fish');
-    const fishBonus = (rod.fishBonus || 0) + (baited ? 0.20 : 0) + (quality === 'reel' ? 0.12 : 0) + (flv - 1) * 0.02;
-    const itemChance = clamp(((rod.fishItemChance || 0) + (baited ? 0.08 : 0) + (quality === 'reel' ? 0.05 : 0) + (flv - 1) * 0.015) * rareMul, 0, 0.85);
+    const { rod, fishBonus, itemChance } = this.fishOdds(quality, baited);
     // ★ 자리를 지우기 **전에** 튀긴다 — p.fish 가 null 이 되면 어디서 걷었는지 모른다
     this.fishSplash(p.fish, quality === 'reel' ? 14 : 7);
     this.sfx('splash');
@@ -104,7 +112,11 @@ export const FishingPart: Bag = {
         : tr('입질을 흘렸다 — 미끼만 털렸다'));
       return;
     }
-
+    this.giveCatch(this.rollCatch(fishBonus, itemChance), baited);
+  },
+  /** 무엇이 물었나 — 굴리기만 하고 주지는 않는다. tier 0~4 는 낚시 겨루기 난이도(화면에 안 보인다) */
+  rollCatch(fishBonus: number, itemChance: number): Bag {
+    const flv = this.player.profLv('fish');
     if (this.rng.chance(itemChance)) {
       // 1단계 통과 — 물고기 말고 다른 것.
       /* ★ 빼지 않고 **더한다**. 잡템(젤·뼈)이 대부분인 것이 낚시가 "가끔 뭔가 나온다"로 느껴지는 밑바탕이라 그대로 두고, 그 위에 아주 가끔 걸리는 것을 얹는다. */
@@ -138,33 +150,19 @@ export const FishingPart: Bag = {
         // --- 어느 물에서든 드물다 ---
         ['knot_angler', 0.35 + lucky * 0.15]
       ];
-      const catchId = this.rng.weighted(itemTable);
+      const id = this.rng.weighted(itemTable);
       const stackN = ({
         slime_gel: [2, 5], aether_shard: [1, 2],
         river_scale: [2, 4], tide_pearl: [1, 2], rust_sinker: [1, 3],
         drowned_cell: [1, 2], sunken_coin: [1, 1]
-      } as Bag)[catchId];
-      const n = stackN ? this.rng.int(stackN[0], stackN[1]) : 1;
-      const it = isGear(makeItem(catchId)!) ? rollGear(catchId, this.rng, 0) : makeItem(catchId, n);
-      if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
+      } as Bag)[id];
+      const gear = isGear(makeItem(id)!);
       /* 한 번 낚으면 기억에 남아야 하는 것 — 물에서만 나오는 무기·장신구 전부와 값나가는 셋. */
-      const rare = isGear(makeItem(catchId)!)
-        || ['knot_angler', 'sunken_coin', 'tide_pearl'].includes(catchId);
-      if (rare) {
-        // 이런 건 한 번 낚으면 기억에 남아야 한다
-        this.toast(tr('물속에서 무언가 딸려 올라왔다 — {itemName}', { itemName: itemName(it!) }), 'good');
-        this.burst(p.cx, p.cy - 4, 'stargain', 52, 2.0);
-        this.ringFx(p.cx, p.cy, 60, '#7fc8e8', .5);
-        this.sfx('level');
-      } else {
-        this.toast(tr('뭔가 걸렸다 — {itemName}{v}', { itemName: itemName(it!), v: n > 1 ? ' ×' + n : '' }), 'good');
-        this.sfx('open');
-      }
-      p.addProf('fish', rare ? 3 : 1);          // 빈 바늘보다 건진 쪽이 더 는다
-      UI.refreshBag();
-      return;
+      const rare = gear || ['knot_angler', 'sunken_coin', 'tide_pearl'].includes(id);
+      const tier = id === 'knot_angler' ? 4 : gear ? 3 : rare ? 2
+        : ['slime_gel', 'potion_hp', 'rust_sinker'].includes(id) ? 0 : 1;
+      return { kind: 'item', id, n: stackN ? this.rng.int(stackN[0], stackN[1]) : 1, rare, tier };
     }
-
     /* 물고기 자체도 세션마다 다르게 올라온다. */
     const s2fish = sessionOf(this.chapter).id >= 2;
     const table = [
@@ -173,15 +171,33 @@ export const FishingPart: Bag = {
       ['fish_silver', (s2fish ? 24 : 16) + fishBonus * 26],
       ['fish_deep', ((s2fish ? 15 : 7) + fishBonus * 30) * (flv >= 6 ? 2.2 : 1)]
     ];
-    const catchId = this.rng.weighted(table);
-    if (catchId === 'none') { this.toast(baited ? tr('미끼만 사라졌다') : tr('빈 바늘만 올라왔다'), 'bad'); UI.refreshBag(); return; }
+    const id = this.rng.weighted(table);
     // 10레벨 '물때를 안다' — 가끔 한 마리가 더 딸려 온다
     const n = (flv >= PROF_MAX && this.rng.chance(0.25)) ? 2 : 1;
-    const it = makeItem(catchId, n);
+    return { kind: id === 'none' ? 'none' : 'fish', id, n, rare: false, tier: id === 'fish_deep' ? 2 : id === 'fish_silver' ? 1 : 0 };
+  },
+  /** 걸린 것을 가방에 — 알림 · 소리 · 숙련 */
+  giveCatch(c: Bag, baited: boolean) {
+    const p = this.player;
+    if (c.kind === 'none') { this.toast(baited ? tr('미끼만 사라졌다') : tr('빈 바늘만 올라왔다'), 'bad'); UI.refreshBag(); return; }
+    const it = c.kind === 'item' && isGear(makeItem(c.id)!) ? rollGear(c.id, this.rng, 0) : makeItem(c.id, c.n);
     if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
-    this.toast(tr('낚았다 — {itemName}{v}', { itemName: itemName(it!), v: n > 1 ? ' ×' + n : '' }), 'good');
-    p.addProf('fish', 1);                      // 빈 바늘보다 건진 쪽이 더 는다
-    this.sfx('open');
+    if (c.kind === 'fish') {
+      this.toast(tr('낚았다 — {itemName}{v}', { itemName: itemName(it!), v: c.n > 1 ? ' ×' + c.n : '' }), 'good');
+      p.addProf('fish', 1);                      // 빈 바늘보다 건진 쪽이 더 는다
+      this.sfx('open');
+    } else if (c.rare) {
+      // 이런 건 한 번 낚으면 기억에 남아야 한다
+      this.toast(tr('물속에서 무언가 딸려 올라왔다 — {itemName}', { itemName: itemName(it!) }), 'good');
+      this.burst(p.cx, p.cy - 4, 'stargain', 52, 2.0);
+      this.ringFx(p.cx, p.cy, 60, '#7fc8e8', .5);
+      this.sfx('level');
+      p.addProf('fish', 3);
+    } else {
+      this.toast(tr('뭔가 걸렸다 — {itemName}{v}', { itemName: itemName(it!), v: c.n > 1 ? ' ×' + c.n : '' }), 'good');
+      this.sfx('open');
+      p.addProf('fish', 1);
+    }
     UI.refreshBag();
   },
 
