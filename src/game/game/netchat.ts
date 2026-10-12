@@ -5,6 +5,7 @@ import { escHtml } from '../util.js';
 import { tr } from '../lang.js';
 import { DmgText } from '../entity.js';
 import { $ } from '../ui.js';
+import { EMOJI, drawEmoji, emojiHtml, emojify, soloEmoji } from '../ui/emoji.js';
 import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
@@ -25,6 +26,17 @@ export const NetChatPart: Bag = {
     };
     inp.onkeyup = (e: any) => e.stopPropagation();
     inp.onblur = () => this.closeChat();
+    // 그림말 고르기 — 누르는 순간 입력 칸이 초점을 잃지 않게 mousedown 을 막는다(잃으면 채팅이 닫힌다)
+    const emoBtn = $('#chat-emo'), emos = $('#chat-emos');
+    emoBtn.onmousedown = (e: any) => { e.preventDefault(); emos.hidden = !emos.hidden; };
+    emos.innerHTML = EMOJI.map(e => `<button type="button" data-k="${e.k}">${emojiHtml(e.k, 24)}</button>`).join('');
+    emos.onmousedown = (e: any) => {
+      e.preventDefault();
+      const b = e.target.closest('button'); if (!b) return;
+      const at = inp.selectionStart ?? inp.value.length, ins = ':' + b.dataset.k + ':';
+      inp.value = (inp.value.slice(0, at) + ins + inp.value.slice(at)).slice(0, CHAT_MAX);
+      inp.setSelectionRange(at + ins.length, at + ins.length);
+    };
     $('#mp-pvp').onchange = (e: any) => this.mpSetCfg('pvp', e.target.checked);
     $('#mp-chat').onchange = (e: any) => this.mpSetCfg('chat', e.target.checked);
   },
@@ -66,14 +78,14 @@ export const NetChatPart: Bag = {
     this.input.m1 = this.input.m2 = 0;
     $('#chat').hidden = false;
     const inp = $('#chat-input');
-    inp.hidden = false; inp.focus();
+    inp.hidden = false; $('#chat-emo').hidden = false; inp.focus();
     this.chatOpen = true; this.refreshChat();
   },
   closeChat() {
     if (!this.chatOpen) return;
     this.chatOpen = false;
     const inp = $('#chat-input');
-    inp.hidden = true; inp.blur();
+    inp.hidden = true; inp.blur(); $('#chat-emo').hidden = true; $('#chat-emos').hidden = true;
     this.refreshChat();
   },
   sendChat(text: string) {
@@ -91,6 +103,9 @@ export const NetChatPart: Bag = {
     this.chatLine(m.n, m.s);
   },
   chatLine(name: string, s: any) {
+    // 그림말 하나뿐인 글은 보낸 이 머리 위에도 말풍선으로(rEmotes)
+    const k = soloEmoji(String(s || '')), who = k && this.players.find((q: any) => q.name === name);
+    if (who) who.emote = { k, t: this.time };
     this.chatLog = (this.chatLog || []).concat({ n: String(name || ''), s: String(s || ''), t: performance.now() }).slice(-CHAT_LINES * 4);
     this.refreshChat();
   },
@@ -101,8 +116,27 @@ export const NetChatPart: Bag = {
     if (!this.net) { box.hidden = true; this.chatLog = []; return; }
     const now = performance.now(), log = (this.chatLog || []).slice(-CHAT_LINES);
     const lines = log.filter((l: any) => this.chatOpen || now - l.t < CHAT_FADE * 1000);
-    $('#chat-log').innerHTML = lines.map((l: any) => `<div class="ch-line"><b>${escHtml(l.n)}</b> ${escHtml(l.s)}</div>`).join('');
+    $('#chat-log').innerHTML = lines.map((l: any) => `<div class="ch-line"><b>${escHtml(l.n)}</b> ${emojify(escHtml(l.s))}</div>`).join('');
     box.hidden = !this.chatOpen && !lines.length;
+  },
+
+  /** 머리 위 그림말 말풍선 — 3.5초, 처음 0.15초는 부풀며 나온다 */
+  rEmotes(f: any) {
+    const { c, camX, camY } = f;
+    for (const p of this.players) {
+      const em = p.emote; if (!em) continue;
+      const age = this.time - em.t;
+      if (age > 3.5 || age < 0) { p.emote = null; continue; }
+      const k = Math.min(1, age / 0.15) * Math.min(1, (3.5 - age) / 0.3), S = 26 * (0.6 + 0.4 * k);
+      const x = p.cx - camX, y = p.y - camY - 12 - S;
+      c.save(); c.globalAlpha = Math.min(1, k * 1.5);
+      c.fillStyle = '#f4ecd8'; c.strokeStyle = '#2a1a10'; c.lineWidth = 1.5;
+      c.beginPath(); c.roundRect(x - S / 2 - 4, y - 4, S + 8, S + 8, 6); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(x - 4, y + S + 4); c.lineTo(x, y + S + 10); c.lineTo(x + 4, y + S + 4); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(x - 4, y + S + 4.5); c.lineTo(x, y + S + 10); c.lineTo(x + 4, y + S + 4.5); c.stroke();
+      drawEmoji(c, em.k, x - S / 2, y, S, this.time);
+      c.restore();
+    }
   },
 
   /* ---- PvP ---- */

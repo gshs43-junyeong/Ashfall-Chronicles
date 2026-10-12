@@ -52,6 +52,7 @@ export const RenderPart: Bag = {
     this.pipe.add('lighting', (f: any) => this.drawStageDim(f));   // 스킬 무대 어둠 — 빛 다음 · 연출 앞(game/stage-fx)
     this.pipe.add('fx', (f: any) => this.rFx(f));
     this.pipe.add('fx', (f: any) => this.rUtil(f));           // 탐지 파동(game/utility)
+    this.pipe.add('fx', (f: any) => this.rEmotes(f));         // 머리 위 그림말(game/netchat)
     this.pipe.add('fx', (f: any) => this.drawPuzzle(f.c));    // 봉인 방 장치(game/ruin-puzzle-draw)
     this.pipe.add('fx', (f: any) => this.drawDeepGates(f.c)); // 닫힌 깊은 문(game/ruin-deep)
     this.pipe.add('fx', (f: any) => this.drawBossHazards(f.c)); // 보스 기술 예고 · 바닥(game/boss-hazards)

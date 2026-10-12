@@ -1330,8 +1330,18 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .ch-line{background:#0b0a08b0;border-radius:3px;padding:2px 7px;font-size:12px;color:#e0d8c0;
   width:fit-content;max-width:100%;overflow-wrap:anywhere;text-shadow:0 1px 1px #000}
 .ch-line b{color:var(--gold);font-weight:600;margin-right:4px}
-#chat-input{pointer-events:auto;width:100%;margin-top:4px;padding:6px 9px;border-radius:3px;background:#0c0b08e8;
+#chat-row{display:flex;gap:4px;margin-top:4px}
+#chat-input{pointer-events:auto;flex:1;min-width:0;padding:6px 9px;border-radius:3px;background:#0c0b08e8;
   border:1px solid var(--gold);color:var(--ink);font-family:inherit;font-size:12.5px}
+#chat-emo{pointer-events:auto;width:32px;border-radius:3px;background:#0c0b08e8;border:1px solid var(--gold);color:var(--gold);font-size:16px;cursor:pointer}
+#chat-emos{pointer-events:auto;display:grid;grid-template-columns:repeat(10,30px);gap:3px;margin-top:4px;padding:6px;width:fit-content;
+  background:#0c0b08f0;border:1px solid #4a4030;border-radius:4px}
+#chat-emos button{width:30px;height:30px;padding:3px;border:0;border-radius:3px;background:transparent;cursor:pointer}
+#chat-emos button:hover{background:#2a2418}
+/* 그림말 — 움직이는 것은 가로 시트를 steps 로(ui/emoji.ts) */
+.emo{display:inline-block;vertical-align:-5px;image-rendering:pixelated;background-repeat:no-repeat;background-position:0 0}
+.emo.anim{animation:emo-run var(--d) steps(var(--n),jump-none) infinite}
+@keyframes emo-run{from{background-position:0 0}to{background-position:100% 0}}
 .pt-pvp{color:#e07a5a;font-weight:600}
 
 /* 참가 창 — 이름 한 열(max-content) · 입력 한 열. 새 캐릭터 줄도 같은 두 열(subgrid)이라 어느 언어든 입력 칸 끝이 맞는다 */

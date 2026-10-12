@@ -40337,6 +40337,292 @@
   };
   mixin(UI5, UIMotionPart);
 
+  // src/game/ui/emoji.ts
+  var emoji_exports = {};
+  __export(emoji_exports, {
+    EMOJI: () => EMOJI,
+    EMO_KEYS: () => EMO_KEYS,
+    EMO_PX: () => EMO_PX,
+    drawEmoji: () => drawEmoji,
+    emojiHtml: () => emojiHtml,
+    emojiSheet: () => emojiSheet,
+    emojify: () => emojify,
+    soloEmoji: () => soloEmoji
+  });
+  var EMO_PX = 20;
+  var SKIN = "#ffcf5a", SKIN_D = "#d89a2a", INK = "#2a1a10";
+  function faceOf(px, c = SKIN) {
+    const rows = [[6, 8], [4, 12], [3, 14], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [3, 14], [4, 12], [6, 8]];
+    rows.forEach(([x, w], i) => px(x, 2 + i, w, 1, i > 10 ? SKIN_D : c));
+    px(6, 1, 8, 1, INK);
+    px(6, 17, 8, 1, INK);
+    rows.forEach(([x, w], i) => {
+      px(x - 1, 2 + i, 1, 1, INK);
+      px(x + w, 2 + i, 1, 1, INK);
+    });
+    px(5, 4, 2, 1, "#fff1b8");
+    px(4, 5, 1, 2, "#fff1b8");
+  }
+  var EMOJI = [
+    { k: "smile", f: 1, draw: (p) => {
+      p.face();
+      p.eye(7, 7);
+      p.eye(12, 7);
+      p.px(6, 12, 1, 1, INK);
+      p.px(7, 13, 6, 1, INK);
+      p.px(13, 12, 1, 1, INK);
+    } },
+    { k: "grin", f: 1, draw: (p) => {
+      p.face();
+      p.px(6, 7, 3, 1, INK);
+      p.px(11, 7, 3, 1, INK);
+      p.px(5, 11, 10, 3, INK);
+      p.px(6, 11, 8, 1, "#fff");
+      p.px(7, 13, 6, 1, "#e8586a");
+    } },
+    { k: "laugh", f: 4, dur: 0.5, draw: (p) => {
+      const dy = p.t % 2;
+      p.face();
+      p.px(5, 6 + dy, 3, 1, INK);
+      p.px(12, 6 + dy, 3, 1, INK);
+      p.px(5, 10 + dy, 10, 4, INK);
+      p.px(6, 10 + dy, 8, 1, "#fff");
+      p.px(7, 12 + dy, 6, 2, "#e8586a");
+      p.px(2, 8 + p.t * 2 % 6, 2, 2, "#7ad0ff");
+      p.px(16, 8 + (p.t * 2 + 3) % 6, 2, 2, "#7ad0ff");
+    } },
+    { k: "sad", f: 1, draw: (p) => {
+      p.face();
+      p.eye(7, 8);
+      p.eye(12, 8);
+      p.px(6, 6, 2, 1, INK);
+      p.px(12, 6, 2, 1, INK);
+      p.px(7, 13, 6, 1, INK);
+      p.px(6, 14, 1, 1, INK);
+      p.px(13, 14, 1, 1, INK);
+    } },
+    { k: "cry", f: 4, dur: 0.6, draw: (p) => {
+      p.face("#ffd98a");
+      p.px(6, 7, 3, 1, INK);
+      p.px(11, 7, 3, 1, INK);
+      p.px(7, 13, 6, 1, INK);
+      p.px(6, 12, 1, 1, INK);
+      p.px(13, 12, 1, 1, INK);
+      const d = p.t * 3;
+      p.px(7, 8 + d, 1, 2, "#5ab8ff");
+      p.px(12, 8 + (d + 5) % 10, 1, 2, "#5ab8ff");
+    } },
+    { k: "angry", f: 2, dur: 0.4, draw: (p) => {
+      p.face(p.t ? "#ff8a5a" : "#ff6a4a");
+      p.px(5, 6, 3, 1, INK);
+      p.px(8, 7, 1, 1, INK);
+      p.px(11, 7, 1, 1, INK);
+      p.px(12, 6, 3, 1, INK);
+      p.eye(7, 9);
+      p.eye(12, 9);
+      p.px(7, 13, 6, 1, INK);
+      p.px(15, 1 - p.t, 2, 2, "#e04040");
+      p.px(17, 3 - p.t, 2, 2, "#e04040");
+    } },
+    { k: "wow", f: 1, draw: (p) => {
+      p.face();
+      p.px(6, 6, 3, 3, "#fff");
+      p.px(7, 7, 1, 1, INK);
+      p.px(11, 6, 3, 3, "#fff");
+      p.px(12, 7, 1, 1, INK);
+      p.px(8, 11, 4, 4, INK);
+      p.px(9, 12, 2, 2, "#8a2a2a");
+    } },
+    { k: "cool", f: 1, draw: (p) => {
+      p.face();
+      p.px(4, 7, 12, 1, INK);
+      p.px(5, 7, 4, 3, INK);
+      p.px(11, 7, 4, 3, INK);
+      p.px(6, 8, 1, 1, "#9ad8ff");
+      p.px(12, 8, 1, 1, "#9ad8ff");
+      p.px(8, 13, 5, 1, INK);
+      p.px(13, 12, 1, 1, INK);
+    } },
+    { k: "sleepy", f: 4, dur: 1.2, draw: (p) => {
+      p.face();
+      p.px(6, 8, 3, 1, INK);
+      p.px(11, 8, 3, 1, INK);
+      p.px(9, 13, 2, 2, INK);
+      const z = p.t;
+      p.px(14, 6 - z, 3, 1, "#cfe4ff");
+      p.px(15, 7 - z, 1, 1, "#cfe4ff");
+      p.px(14, 8 - z, 3, 1, "#cfe4ff");
+    } },
+    { k: "heart", f: 4, dur: 0.7, draw: (p) => {
+      const s = [0, 1, 0, 0][p.t];
+      const rows = [[4, 4, 12, 4], [3, 6, 11, 6], [2, 16], [2, 16], [3, 14], [4, 12], [5, 10], [6, 8], [7, 6], [8, 4], [9, 2]];
+      rows.forEach((r, i) => {
+        if (r.length === 4) {
+          p.px(r[0] - s, 3 + i - s, r[1] + s, 1, "#e8445a");
+          p.px(r[2], 3 + i - s, r[3] + s, 1, "#e8445a");
+        } else p.px(r[0] - s, 4 + i, r[1] + s * 2, 1, i > 6 ? "#b82a40" : "#e8445a");
+      });
+      p.px(5, 5, 2, 2, "#ffb0c0");
+    } },
+    { k: "thumbs", f: 1, draw: (p) => {
+      p.px(5, 9, 10, 8, SKIN);
+      p.px(4, 9, 1, 8, INK);
+      p.px(15, 9, 1, 8, INK);
+      p.px(5, 17, 10, 1, INK);
+      p.px(8, 3, 4, 6, SKIN);
+      p.px(7, 3, 1, 6, INK);
+      p.px(12, 3, 1, 6, INK);
+      p.px(8, 2, 4, 1, INK);
+      p.px(6, 12, 9, 1, SKIN_D);
+      p.px(6, 14, 9, 1, SKIN_D);
+      p.px(2, 9, 2, 9, "#4a6aa8");
+    } },
+    { k: "wave", f: 4, dur: 0.6, draw: (p) => {
+      const a = [0, 1, 2, 1][p.t];
+      p.px(6 + a, 8, 8, 9, SKIN);
+      p.px(5 + a, 8, 1, 9, INK);
+      p.px(14 + a, 8, 1, 9, INK);
+      for (let i = 0; i < 4; i++) p.px(6 + a + i * 2, 3 + (i === 0 || i === 3 ? 1 : 0), 1, 5, SKIN_D);
+      p.px(4 + a, 11, 2, 3, SKIN);
+      p.px(2 + a, 6, 1, 2, "#ffe08a");
+      p.px(17 - a, 5, 1, 2, "#ffe08a");
+    } },
+    { k: "gg", f: 1, draw: (p) => {
+      p.px(1, 4, 18, 12, "#3a2a5a");
+      p.px(1, 4, 18, 1, "#6a5a9a");
+      for (const ox of [3, 11]) {
+        p.px(ox, 6, 5, 1, "#ffd24a");
+        p.px(ox, 6, 1, 8, "#ffd24a");
+        p.px(ox, 13, 5, 1, "#ffd24a");
+        p.px(ox + 4, 10, 1, 4, "#ffd24a");
+        p.px(ox + 2, 10, 3, 1, "#ffd24a");
+      }
+    } },
+    { k: "question", f: 1, draw: (p) => {
+      p.px(6, 2, 8, 2, "#7ab8ff");
+      p.px(5, 4, 2, 3, "#7ab8ff");
+      p.px(13, 4, 2, 4, "#7ab8ff");
+      p.px(10, 8, 3, 2, "#7ab8ff");
+      p.px(9, 10, 2, 3, "#7ab8ff");
+      p.px(9, 15, 2, 2, "#7ab8ff");
+    } },
+    { k: "alert", f: 1, draw: (p) => {
+      p.px(8, 2, 4, 10, "#ff5a3a");
+      p.px(9, 12, 2, 1, "#ff5a3a");
+      p.px(8, 14, 4, 3, "#ff5a3a");
+      p.px(8, 2, 1, 10, "#ff9a7a");
+    } },
+    { k: "skull", f: 1, draw: (p) => {
+      p.face("#e8e4d8");
+      p.px(5, 7, 4, 4, INK);
+      p.px(11, 7, 4, 4, INK);
+      p.px(9, 11, 2, 2, INK);
+      p.px(6, 14, 8, 1, INK);
+      for (let x = 7; x < 14; x += 2) p.px(x, 13, 1, 3, INK);
+    } },
+    { k: "fire", f: 4, dur: 0.45, draw: (p) => {
+      const w = [0, 1, -1, 0][p.t];
+      p.px(5, 9, 10, 8, "#ff6a2a");
+      p.px(6 + w, 5, 8, 4, "#ff6a2a");
+      p.px(8 + w, 2, 4, 3, "#ff6a2a");
+      p.px(10 - w, 0, 2, 2, "#ff8a3a");
+      p.px(7, 11, 6, 6, "#ffb84a");
+      p.px(8 + w, 8, 4, 3, "#ffb84a");
+      p.px(9, 13, 2, 4, "#fff1a8");
+    } },
+    { k: "star", f: 4, dur: 0.8, draw: (p) => {
+      const c = p.t % 2 ? "#fff1a8" : "#ffd24a";
+      p.px(9, 1, 2, 18, c);
+      p.px(1, 9, 18, 2, c);
+      p.px(7, 5, 6, 10, c);
+      p.px(5, 7, 10, 6, c);
+      if (p.t === 1 || p.t === 2) {
+        p.px(3, 3, 1, 1, "#fff");
+        p.px(16, 15, 1, 1, "#fff");
+        p.px(16, 3, 1, 1, "#fff");
+      }
+      p.px(9, 9, 2, 2, "#fff");
+    } },
+    { k: "coin", f: 4, dur: 0.6, draw: (p) => {
+      const w = [12, 8, 2, 8][p.t], x = 10 - w / 2;
+      p.px(x, 3, w, 14, "#e8b03a");
+      p.px(x, 3, w, 1, INK);
+      p.px(x, 16, w, 1, INK);
+      if (w > 3) {
+        p.px(x + 1, 4, 1, 12, "#ffe08a");
+        p.px(10 - (w > 8 ? 1 : 0), 7, w > 8 ? 2 : 1, 6, "#b8801a");
+      }
+    } },
+    { k: "ember", f: 4, dur: 0.9, draw: (p) => {
+      const g = [0, 1, 2, 1][p.t];
+      const glow = ["#5ad8ff", "#8ae8ff", "#c8f6ff", "#8ae8ff"][p.t];
+      if (g) {
+        p.px(9 - g, 3 - g, 2 + g * 2, 14 + g * 2, "rgba(120,220,255,.25)");
+      }
+      p.px(9, 2, 2, 2, glow);
+      p.px(8, 4, 4, 3, glow);
+      p.px(7, 7, 6, 4, "#3ab0e0");
+      p.px(8, 11, 4, 3, "#2a88b8");
+      p.px(9, 14, 2, 2, "#1a5a80");
+      p.px(9, 5, 1, 5, "#fff");
+    } }
+  ];
+  for (const e of EMOJI) {
+    const d = e.draw;
+    e.draw = (p) => {
+      p.face = (c) => faceOf(p.px, c);
+      p.eye = (x, y, c = INK) => p.px(x, y, 2, 2, c);
+      d(p);
+    };
+  }
+  var EMO_KEYS = new Set(EMOJI.map((e) => e.k));
+  var sheets = {};
+  function emojiSheet(k) {
+    if (sheets[k]) return sheets[k];
+    const e = EMOJI.find((q) => q.k === k);
+    const cv = document.createElement("canvas");
+    cv.width = EMO_PX * e.f;
+    cv.height = EMO_PX;
+    const c = cv.getContext("2d");
+    for (let t = 0; t < e.f; t++) {
+      const pen = { t, px: (x, y, w, h, col) => {
+        if (w > 0 && h > 0) {
+          c.fillStyle = col;
+          c.fillRect(t * EMO_PX + x, y, w, h);
+        }
+      } };
+      c.save();
+      c.beginPath();
+      c.rect(t * EMO_PX, 0, EMO_PX, EMO_PX);
+      c.clip();
+      e.draw(pen);
+      c.restore();
+    }
+    return sheets[k] = { url: cv.toDataURL(), img: cv };
+  }
+  function emojiHtml(k, size = 20) {
+    const e = EMOJI.find((q) => q.k === k);
+    if (!e) return "";
+    const s = emojiSheet(k);
+    return `<i class="emo${e.f > 1 ? " anim" : ""}" title=":${k}:" style="width:${size}px;height:${size}px;background-image:url(${s.url});background-size:${e.f * 100}% 100%;--n:${e.f};--d:${e.dur || 0.6}s"></i>`;
+  }
+  function emojify(html, size = 20) {
+    return html.replace(/:([a-z]+):/g, (m, k) => EMO_KEYS.has(k) ? emojiHtml(k, size) : m);
+  }
+  function soloEmoji(s) {
+    const m = /^\s*:([a-z]+):\s*$/.exec(s || "");
+    return m && EMO_KEYS.has(m[1]) ? m[1] : null;
+  }
+  function drawEmoji(c, k, x, y, size, time) {
+    const e = EMOJI.find((q) => q.k === k);
+    if (!e) return;
+    const s = emojiSheet(k), fr = e.f > 1 ? Math.floor(time / ((e.dur || 0.6) / e.f)) % e.f : 0;
+    c.save();
+    c.imageSmoothingEnabled = false;
+    c.drawImage(s.img, fr * EMO_PX, 0, EMO_PX, EMO_PX, Math.round(x), Math.round(y), size, size);
+    c.restore();
+  }
+
   // src/game/music.ts
   var music_exports2 = {};
   __export(music_exports2, {
@@ -55411,6 +55697,7 @@
       this.pipe.add("lighting", (f) => this.drawStageDim(f));
       this.pipe.add("fx", (f) => this.rFx(f));
       this.pipe.add("fx", (f) => this.rUtil(f));
+      this.pipe.add("fx", (f) => this.rEmotes(f));
       this.pipe.add("fx", (f) => this.drawPuzzle(f.c));
       this.pipe.add("fx", (f) => this.drawDeepGates(f.c));
       this.pipe.add("fx", (f) => this.drawBossHazards(f.c));
@@ -60938,6 +61225,20 @@
       };
       inp.onkeyup = (e) => e.stopPropagation();
       inp.onblur = () => this.closeChat();
+      const emoBtn = $("#chat-emo"), emos = $("#chat-emos");
+      emoBtn.onmousedown = (e) => {
+        e.preventDefault();
+        emos.hidden = !emos.hidden;
+      };
+      emos.innerHTML = EMOJI.map((e) => `<button type="button" data-k="${e.k}">${emojiHtml(e.k, 24)}</button>`).join("");
+      emos.onmousedown = (e) => {
+        e.preventDefault();
+        const b = e.target.closest("button");
+        if (!b) return;
+        const at = inp.selectionStart ?? inp.value.length, ins = ":" + b.dataset.k + ":";
+        inp.value = (inp.value.slice(0, at) + ins + inp.value.slice(at)).slice(0, CHAT_MAX);
+        inp.setSelectionRange(at + ins.length, at + ins.length);
+      };
       $("#mp-pvp").onchange = (e) => this.mpSetCfg("pvp", e.target.checked);
       $("#mp-chat").onchange = (e) => this.mpSetCfg("chat", e.target.checked);
     },
@@ -60982,6 +61283,7 @@
       $("#chat").hidden = false;
       const inp = $("#chat-input");
       inp.hidden = false;
+      $("#chat-emo").hidden = false;
       inp.focus();
       this.chatOpen = true;
       this.refreshChat();
@@ -60992,6 +61294,8 @@
       const inp = $("#chat-input");
       inp.hidden = true;
       inp.blur();
+      $("#chat-emo").hidden = true;
+      $("#chat-emos").hidden = true;
       this.refreshChat();
     },
     sendChat(text) {
@@ -61009,6 +61313,8 @@
       this.chatLine(m.n, m.s);
     },
     chatLine(name, s) {
+      const k = soloEmoji(String(s || "")), who = k && this.players.find((q) => q.name === name);
+      if (who) who.emote = { k, t: this.time };
       this.chatLog = (this.chatLog || []).concat({ n: String(name || ""), s: String(s || ""), t: performance.now() }).slice(-CHAT_LINES * 4);
       this.refreshChat();
     },
@@ -61023,8 +61329,45 @@
       }
       const now2 = performance.now(), log = (this.chatLog || []).slice(-CHAT_LINES);
       const lines = log.filter((l) => this.chatOpen || now2 - l.t < CHAT_FADE * 1e3);
-      $("#chat-log").innerHTML = lines.map((l) => `<div class="ch-line"><b>${escHtml(l.n)}</b> ${escHtml(l.s)}</div>`).join("");
+      $("#chat-log").innerHTML = lines.map((l) => `<div class="ch-line"><b>${escHtml(l.n)}</b> ${emojify(escHtml(l.s))}</div>`).join("");
       box.hidden = !this.chatOpen && !lines.length;
+    },
+    /** 머리 위 그림말 말풍선 — 3.5초, 처음 0.15초는 부풀며 나온다 */
+    rEmotes(f) {
+      const { c, camX, camY } = f;
+      for (const p of this.players) {
+        const em = p.emote;
+        if (!em) continue;
+        const age = this.time - em.t;
+        if (age > 3.5 || age < 0) {
+          p.emote = null;
+          continue;
+        }
+        const k = Math.min(1, age / 0.15) * Math.min(1, (3.5 - age) / 0.3), S = 26 * (0.6 + 0.4 * k);
+        const x = p.cx - camX, y = p.y - camY - 12 - S;
+        c.save();
+        c.globalAlpha = Math.min(1, k * 1.5);
+        c.fillStyle = "#f4ecd8";
+        c.strokeStyle = "#2a1a10";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.roundRect(x - S / 2 - 4, y - 4, S + 8, S + 8, 6);
+        c.fill();
+        c.stroke();
+        c.beginPath();
+        c.moveTo(x - 4, y + S + 4);
+        c.lineTo(x, y + S + 10);
+        c.lineTo(x + 4, y + S + 4);
+        c.closePath();
+        c.fill();
+        c.beginPath();
+        c.moveTo(x - 4, y + S + 4.5);
+        c.lineTo(x, y + S + 10);
+        c.lineTo(x + 4, y + S + 4.5);
+        c.stroke();
+        drawEmoji(c, em.k, x - S / 2, y, S, this.time);
+        c.restore();
+      }
     },
     /* ---- PvP ---- */
     netPvpOn() {
@@ -61228,7 +61571,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, repair_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, repair_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
