@@ -1,5 +1,3 @@
-Copyright (c) 2021, Kil Hyung-jin (https://github.com/orioncactus/pretendard),
-with Reserved Font Name Pretendard.
 Copyright 2026 The Ashfall Chronicles Project Authors (https://github.com/gshs43-junyeong/Ashfall-Chronicles)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.

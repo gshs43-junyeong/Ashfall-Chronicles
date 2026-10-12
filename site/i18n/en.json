@@ -48,16 +48,13 @@
  "<span class=\"n\">18</span><span class=\"l\">개의 장</span>": "<span class=\"n\">18</span><span class=\"l\">chapters</span>",
  "<span class=\"n\">23</span><span class=\"l\">종의 보스</span>": "<span class=\"n\">23</span><span class=\"l\">bosses</span>",
  "<span class=\"n\">28</span><span class=\"l\">종의 기계</span>": "<span class=\"n\">28</span><span class=\"l\">machines</span>",
- "<span class=\"n\">509</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">509</span><span class=\"l\">items</span>",
  "<span class=\"n\">75</span><span class=\"l\">개의 업적</span>": "<span class=\"n\">75</span><span class=\"l\">achievements</span>",
- "<span class=\"n\">85</span><span class=\"l\">종의 몬스터</span>": "<span class=\"n\">85</span><span class=\"l\">monsters</span>",
  "<strong>AshfallChronicles.command</strong>를 더블클릭합니다. 터미널 창이 잠깐 뜨고 기본 브라우저로 게임이 열립니다.": "Double-click <strong>AshfallChronicles.command</strong>. A Terminal window flashes briefly and the game opens in your default browser.",
  "<strong>v1.1.0 의 저장은 그대로 열립니다.</strong> 레벨과 가방은 그대로이고, 밭은 처음 사흘 동안 젖은 채로 시작합니다.": "<strong>v1.1.0 saves open as they are.</strong> Your level and bag stay the same, and farmland starts out wet for its first three days.",
  "<strong>v1.1.x 의 저장은 그대로 열립니다.</strong> 내려받는 판이 둘이 됐습니다 — 브라우저로 여는 판과 앱으로 여는 판.": "<strong>Saves from v1.1.x open as they are.</strong> There are now two downloads — the browser edition and the app edition.",
  "<strong>v1.1.x 의 저장은 그대로 열립니다.</strong> 하늘 섬 · 나무 배치가 조금 바뀌어 새로 만드는 세계만 달라집니다.": "<strong>Saves from v1.1.x open as they are.</strong> Sky islands and trees are placed a little differently, so only newly created worlds change.",
  "<strong>⚠ v1.0.x 의 저장은 열리지 않습니다.</strong> 세계 폭이 4200 → 5000 칸으로 넓어져(왼쪽에 바다와 빙하 지대가 붙었습니다) 옛 세계를 그대로 풀 수 없습니다. 이어하기에서 고르면 \"이전 크기의 세계라 열 수 없다\"가 뜨니 <strong>새 여정으로 시작해 주세요.</strong> 옛 기록은 지워지지 않고 슬롯에 남아 있고, 설정 → 저장 내보내기로 파일로 꺼내 둘 수 있습니다.": "<strong>⚠ v1.0.x saves will not open.</strong> The world grew from 4200 to 5000 tiles wide (a sea and glacier were added on the left), so old worlds can't be unpacked as they are. Picking one from Continue shows \"This world is from an older size and can't be opened\" — <strong>please start a new journey.</strong> Old records aren't deleted; they stay in their slots, and you can export them to a file from Settings → Export saves.",
  "<strong>강화 모루와 펫 레벨.</strong> 장비를 +10까지 두들겨 강화하고, 데리고 다니는 펫이 10레벨까지 자랍니다.": "<strong>Enhancement Anvil and pet levels.</strong> Hammer your gear up to +10, and the pet you bring along grows to level 10.",
- "<strong>게임 글꼴 Ashfall.</strong> Pretendard 를 고친 글꼴(SIL OFL 1.1) — 여섯 언어 어디서나 같은 결로 읽힙니다.": "<strong>The Ashfall font.</strong> A modified Pretendard (SIL OFL 1.1) that reads the same way in all six languages.",
  "<strong>공장.</strong> 옆에서 본 벨트가 물건과 같은 속도로 흐르고, 드릴·피스톤·팔·톱니가 일하는 모습을 보여 줍니다. 드릴 한 칸에 20~29번, 드릴마다 채굴 등급(심층 드릴은 세션 3 광석까지), 드물게 줄지 않는 광상. 자동 포탑은 목표를 향해 돌아 예광탄을 쏩니다.": "<strong>Factories.</strong> Side-view belts flow at the same speed as their cargo, and drills, pistons, arms and gears visibly work. 20–29 hits per ore tile per drill, a mining tier for each drill (the Deep Drill reaches Act 3 ores), and rare deposits that never run out. Auto turrets swivel toward targets and fire tracers.",
  "<strong>금속·몬스터 탐지기.</strong> 유틸리티 칸에 끼우면 벽 너머 광맥이나 움직이는 것이 보입니다. 대신 조금 느려집니다.": "<strong>Metal and monster detectors.</strong> Fit one in a utility slot to see ore veins or moving things through walls. In exchange, you move a little slower.",
  "<strong>깡충 뛰는 토끼.</strong> 토끼가 제자리에서 둠칫거리지 않고 깡충깡충 뛰어 다닙니다.": "<strong>Hopping rabbits.</strong> Rabbits hop along instead of bobbing in place.",
@@ -381,5 +378,8 @@
  "화면이 하얗거나 그림이 안 뜬다": "The screen is white or images don't show",
  "확인할 것": "What to check",
  "회피 대시 (무적 프레임)": "Evasive dash (invincibility frames)",
- "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "Find the scattered shards and put them to sleep, or wake them — that is your task."
+ "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "Find the scattered shards and put them to sleep, or wake them — that is your task.",
+ "<strong>게임 글꼴 Ashfall.</strong> 획 뼈대부터 직접 그린 글꼴(SIL OFL 1.1) — 깎은 모서리의 잿빛 결로 여섯 언어를 함께 씁니다.": "<strong>The Ashfall font.</strong> An original typeface drawn from stroke skeletons (SIL OFL 1.1) — chiselled, ash-grey corners shared across all six languages.",
+ "<span class=\"n\">521</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">521</span><span class=\"l\">items</span>",
+ "<span class=\"n\">86</span><span class=\"l\">종의 몬스터</span>": "<span class=\"n\">86</span><span class=\"l\">monsters</span>"
 }

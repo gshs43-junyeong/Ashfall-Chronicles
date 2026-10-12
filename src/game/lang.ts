@@ -57,7 +57,7 @@ export function fmt(n: number) {
   return t + u;
 }
 
-/** 캔버스 글꼴 — 게임 글꼴 Ashfall(tools/mkfont.py — Pretendard 고친 판)이 덮는 언어는 그것을 맨 앞에, 일본어 · 중국어는 그 언어 글꼴 */
+/** 캔버스 글꼴 — 게임 글꼴 Ashfall(tools/mkfont.py — 자체 제작)이 덮는 언어는 그것을 맨 앞에, 일본어 · 중국어는 그 언어 글꼴 */
 const OWN_FONT = { name: 'Ashfall', langs: ['ko', 'en', 'de', 'es'] };
 export const FONT = fontStack(LANG, 'ko', '"Pretendard",sans-serif', OWN_FONT);
 export const FONT_UI = fontStack(LANG, 'ko', 'system-ui, sans-serif', OWN_FONT);

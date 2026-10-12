@@ -28,8 +28,8 @@ OFL 은 글꼴을 고쳐 내어도 OFL 그대로 두라고 요구하므로 MIT �
 | 무엇 | 어디 | 어떻게 만들었나 |
 |---|---|---|
 | 효과음 92개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
-| 게임 글꼴 Ashfall | `play/assets/fonts/` | Pretendard(SIL OFL 1.1)를 고친 판 — 아래 '글꼴' |
-| 글꼴 원본 | `tools/art/fonts/` | Pretendard · Cinzel 원본과 각각의 OFL 전문(`OFL-*.txt`) |
+| 게임 글꼴 Ashfall | `play/assets/fonts/` | 이 프로젝트가 획 뼈대에서 직접 만든 글꼴(SIL OFL 1.1) — 아래 '글꼴' |
+| 글꼴 원본 | `tools/art/fonts/` | 로고에 쓰는 Cinzel 원본과 OFL 전문(`OFL-Cinzel.txt`) |
 
 음악 · 효과음 두 폴더의 파일은 **각 서비스의 이용 약관을 따르고**, 글꼴 두 폴더는 **SIL OFL 1.1** 을 따릅니다(아래 '글꼴').
 
@@ -46,17 +46,17 @@ OFL 은 글꼴을 고쳐 내어도 OFL 그대로 두라고 요구하므로 MIT �
 
 ## 글꼴
 
-- **게임 글꼴 Ashfall**(`play/assets/fonts/ashfall-*.woff2`)은 [Pretendard](https://github.com/orioncactus/pretendard)
-  (길형진, SIL OFL 1.1)를 고친 판입니다 — 한글 획 14.5% 가늘게 · 모서리를 살짝 둥글게 · l · I 대체 글자 · 숫자 고정폭 · 쓰는 글자만 남기기 · 이름 바꾸기(Pretendard 는 **예약 글꼴 이름**이라
-  고친 판은 그 이름을 쓰지 않습니다). 이 글꼴은 MIT 가 아니라 **SIL OFL 1.1** 을 따르고, 라이선스 전문과 저작권은
-  같은 폴더 `OFL.txt`, 바꾼 내용은 `FONTLOG.txt` 에 있습니다(글꼴 파일 안 이름표에도 저작권 · 라이선스가 들어 있습니다).
-  원본 글꼴과 원본 라이선스는 `tools/art/fonts/`, 굽는 도구는 `tools/mkfont.py`. 글꼴에 없는 글자(드문 한글 음절 ·
+- **게임 글꼴 Ashfall**(`play/assets/fonts/ashfall-*.woff2`)은 이 프로젝트가 직접 만든 글꼴입니다 — 다른 글꼴의 윤곽을 쓰지 않고
+  `tools/mkfont.py` 가 획 뼈대(`tools/font/`)에서 모든 글자를 그립니다(한글은 자모를 짜 맞춘다 · 둥근 글자는 팔각 · 바깥 모서리를 깎은 결).
+  이 글꼴은 MIT 가 아니라 **SIL OFL 1.1** 을 따르고, 라이선스 전문과 저작권은
+  같은 폴더 `OFL.txt`, 만든 방법과 판 기록은 `FONTLOG.txt` 에 있습니다(글꼴 파일 안 이름표에도 저작권 · 라이선스가 들어 있습니다).
+  글꼴에 없는 글자(드문 한글 음절 ·
   일본어 · 중국어)는 기기 글꼴로 나옵니다 — 일본어 Hiragino · Yu Gothic · Meiryo · Noto Sans JP, 중국어 PingFang SC ·
   Microsoft YaHei · Noto Sans SC, 그 밖 Pretendard · Apple SD Gothic Neo · 맑은 고딕 · 시스템 글꼴(기기 글꼴은 이름만 부릅니다).
   로고는 글꼴을 싣지 않고 `tools/mklogo.py` 가 Cinzel(SIL OFL 1.1, 파일과 라이선스 전문은 `tools/art/fonts/`)의
   글자 윤곽을 그림(PNG)·경로(SVG)로 구운 것이라 어느 언어에서나 같습니다.
 - **OFL 로 할 수 있는 것 · 지킬 것** — 글꼴을 쓰고 고치고 게임 · 문서에 담아 함께 배포하는 것은 자유롭고(판매하는 게임에 넣는 것도 됩니다),
-  글꼴 파일만 **따로 팔 수는 없습니다.** 고친 글꼴도 OFL 그대로 내야 하고, 원본의 **예약 글꼴 이름**(Pretendard 따위)은 고친 판에 쓰지 못하며,
+  글꼴 파일만 **따로 팔 수는 없습니다.** 고친 글꼴도 OFL 그대로 내야 하고, 원본에 **예약 글꼴 이름**이 있으면 고친 판에 쓰지 못하며,
   저작권 표시와 라이선스 전문(`OFL.txt`)을 함께 둡니다. 포크에서 글꼴을 고치면 이름을 바꾸고 `FONTLOG.txt` 에 바꾼 것을 적으세요.
 - **사이트**(`site/home` · `site/download`)는 Hahmlet · IBM Plex Sans KR · IBM Plex Mono 를
   **Google Fonts 에서 불러옵니다.** 글꼴 파일은 이 저장소에 없고, 세 글꼴은
@@ -91,8 +91,8 @@ purchased or taken from elsewhere.
 | What | Where | Made with |
 |---|---|---|
 | 92 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
-| Game font Ashfall | `play/assets/fonts/` | Modified Pretendard (SIL OFL 1.1) — see 'Fonts' |
-| Font sources | `tools/art/fonts/` | Original Pretendard and Cinzel with their OFL texts (`OFL-*.txt`) |
+| Game font Ashfall | `play/assets/fonts/` | Original font drawn by this project from stroke skeletons (SIL OFL 1.1) — see 'Fonts' |
+| Font sources | `tools/art/fonts/` | Cinzel (used by the logo) with its OFL text (`OFL-Cinzel.txt`) |
 
 The audio files are governed by the terms of the respective services; the two font folders are governed by the SIL OFL 1.1 (see *Fonts*).
 
@@ -109,19 +109,18 @@ synthesized tones, so replacing only some of them works.
 
 ## Fonts
 
-- The **game font Ashfall** (`play/assets/fonts/ashfall-*.woff2`) is a modified version of
-  [Pretendard](https://github.com/orioncactus/pretendard) by Kil Hyung-jin (SIL OFL 1.1): Hangul strokes 14.5% thinner, slightly rounded corners, alternate l and I, tabular figures,
-  subset to the characters the game uses, and renamed, because "Pretendard" is a Reserved Font Name.
-  It is licensed under the **SIL OFL 1.1**, not MIT; the licence text and copyright are in `OFL.txt` and the
-  changes in `FONTLOG.txt` in the same folder (the font's name table carries them too). The original fonts
-  and licence are in `tools/art/fonts/`; `tools/mkfont.py` builds the font. Characters it does not cover
+- The **game font Ashfall** (`play/assets/fonts/ashfall-*.woff2`) is an original typeface made by this project:
+  no outlines are taken from another font — `tools/mkfont.py` draws every glyph from stroke skeletons in `tools/font/`
+  (Hangul composed from jamo, octagonal round letters, chiselled outer corners).
+  It is licensed under the **SIL OFL 1.1**, not MIT; the licence text and copyright are in `OFL.txt` and how it is
+  made in `FONTLOG.txt` in the same folder (the font's name table carries them too). Characters it does not cover
   (rare Hangul syllables, Japanese, Chinese) use device fonts, named only (Hiragino / Yu Gothic / Meiryo /
   Noto Sans JP, PingFang SC / Microsoft YaHei / Noto Sans SC, Pretendard / Apple SD Gothic Neo / Malgun Gothic,
   then the system font). The logo ships no font: `tools/mklogo.py` bakes the glyph outlines of Cinzel
   (SIL OFL 1.1; files and licence text in `tools/art/fonts/`) into a PNG and SVG paths.
 - **What the OFL allows and requires** — you may use, modify, embed and redistribute the fonts with the game or documents
   (commercial games included), but may not sell the font files on their own. Modified fonts must stay under the OFL,
-  must not use the original **Reserved Font Names** (such as Pretendard), and must ship with the copyright notice and licence text (`OFL.txt`).
+  must not use any **Reserved Font Names** of the original, and must ship with the copyright notice and licence text (`OFL.txt`).
   If you modify the font in a fork, rename it and record the changes in `FONTLOG.txt`.
 - The **website** loads Hahmlet, IBM Plex Sans KR and IBM Plex Mono from Google Fonts.
   They are not stored in this repository and are licensed under the

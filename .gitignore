@@ -24,3 +24,4 @@ tests/out/
 
 # wrangler dev 가 만드는 로컬 상태
 relay/.wrangler/
+__pycache__/

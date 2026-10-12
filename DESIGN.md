@@ -60,7 +60,7 @@
 
 ## 5. 글자 · 로고
 
-- 게임 글꼴 **Ashfall**(Pretendard 고친 판 · OFL) — `tools/mkfont.py`. 'Pretendard' 는 예약 글꼴 이름이라 고친 판에 쓰지 않는다.
+- 게임 글꼴 **Ashfall**(자체 제작 · OFL) — `tools/mkfont.py` 가 획 뼈대(`tools/font/`)에서 굽는다. 결: 고른 획 굵기 · 둥근 글자는 팔각 · 바깥 모서리를 깎은 '잿빛 쇠' 느낌 — 새 글자도 이 결로.
 - 로고 ASHFALL(Cinzel Black · 첫 A · 끝 L 1.22배) · CHRONICLES(Cinzel Bold) — `tools/mklogo.py` 가 게임 PNG 와 사이트 SVG 를 **같은 윤곽**에서 굽는다.
   글꼴 · 색을 바꾸지 말 것(사용자 결정). 장식만 덧붙인다.
 

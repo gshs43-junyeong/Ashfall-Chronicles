@@ -1,55 +1,256 @@
 #!/usr/bin/env python3
-"""게임 글꼴 Ashfall 을 굽는다 — Pretendard(SIL OFL 1.1)에서 갈라 낸 글꼴 → play/assets/fonts/ashfall-{regular,bold}.woff2
+"""게임 글꼴 Ashfall 을 **처음부터** 짓는다 — 획 뼈대(tools/font/)를 굵기 있는 획으로 굽고 바깥 모서리를 깎는다 → play/assets/fonts/ashfall-{regular,bold}.woff2
 
-★ 원본 Pretendard 는 **예약 글꼴 이름(Reserved Font Name) 'Pretendard'** 가 걸려 있다 — 고친 판은 그 이름을 쓰면 안 된다(OFL 3조).
-  그래서 이름표(name)와 CFF 안 이름을 전부 'Ashfall' 로 바꾸고, 저작권 줄에는 원작자 줄을 그대로 두고 우리 줄을 더한다.
-  글꼴 안 저작권(name 0)과 play/assets/fonts/OFL.txt 첫 줄들이 같아야 한다(OFL 배포 관례) — COPYRIGHT 하나에서 둘 다 만든다.
-게임에 맞춘 손질(사용자 결정 2026-10-03 — 느낌은 그대로, 디테일만 아주 약간 다르게):
-  - 한글 획을 14.5% 가늘게(`HANGUL` — 크기 · 글자 폭은 그대로). UI 크기에서 원본과 갈리는 것은 이것뿐이다.
-  - 획 모서리를 살짝 둥글게(`ROUND` — 2048 단위 중 반지름 14, 0.7%). 작은 글씨에선 거의 안 보이고 크게 보면 부드럽다.
-  - 라틴 l 은 꼬리 · 대문자 I 는 세리프(Pretendard 대체 글자 cv05 · cv08) — 방 번호 · 이름에서 I · l · 1 이 갈린다.
-  - 숫자를 기본으로 고정폭(tnum) — 생명 · 금화 · 시계 숫자가 바뀔 때 글자 폭이 달라 흔들리지 않게.
-  - 글자 폭 · 줄 높이는 원본과 같다 — 창 배치가 바뀌지 않게.
-  - 한글은 KS X 1001 완성형 2,350자 + 게임 글에 나오는 글자, 라틴 · 기호는 영어 · 독일어 · 스페인어에 쓰는 것.
-    빠진 글자(드문 음절 · 일본어 · 중국어)는 CSS 다음 글꼴로 넘어간다 — 다 실으면 한 벌 650KB 라 웹 첫 화면이 늦다.
-원본: tools/art/fonts/Pretendard-{Regular,Bold}.otf (Pretendard 1.3.9 — npm 'pretendard' 의 dist/public/static) · 라이선스 OFL-Pretendard.txt
-
-필요: fonttools · brotli (pip install fonttools brotli)
+★ 다른 글꼴의 윤곽을 쓰지 않는다(사용자 결정 2026-10-12 — Pretendard 를 고친 판이 아니라, 참고만 한 제 정체성의 글꼴).
+  한글은 자모 뼈대(초성 19 · 중성 21 · 종성 27)를 모음 갈래(세로 · 가로 · 섞임) × 받침 유무에 따른 자리 상자에 놓아 음절마다 조립한다(조합형).
+  라틴 · 숫자 · 기호도 같은 획 엔진(tools/font/latin.py). 둥근 글자(O · o · 0 · ㅇ)는 팔각으로 — 모든 바깥 모서리는 굵기의 36% 만큼 빗면으로 깎는다.
+  그것이 이 글꼴의 얼굴(벼린 쇠 · 깎은 돌)이다. 안쪽(오목) 모서리는 그대로 둬 이음이 단단해 보이게.
+★ 줄 높이(1950 / 494) · 한글 폭(1770) · 대문자(1448) · 소문자(1086) · 숫자 고정폭(1220)은 예전 글꼴과 같은 수치 — 창 배치가 흔들리지 않게.
+  빠진 글자(드문 기호 · 그림 글자 · 일본어 · 중국어)는 CSS 다음 글꼴로 넘어간다.
+필요: fonttools · skia-pathops · brotli
 쓰기: python3 tools/mkfont.py            → woff2 두 벌 · OFL.txt · FONTLOG.txt + style.css 의 ?v= + tests/out/font-preview.png
       python3 tools/mkfont.py --check    → 굽는 결과가 커밋된 파일과 같은지(다르면 1)
 """
 import glob, hashlib, io, math, os, re, sys
 import pathops
-from fontTools.misc.bezierTools import splitCubicAtT, calcCubicArcLength
-from fontTools.pens.recordingPen import DecomposingRecordingPen
-from fontTools.pens.t2CharStringPen import T2CharStringPen
-from fontTools import subset
-from fontTools.ttLib import TTFont
-
+from fontTools.fontBuilder import FontBuilder
+from fontTools.pens.ttGlyphPen import TTGlyphPen
+from fontTools.pens.recordingPen import RecordingPen
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, 'tools', 'art', 'fonts')
+sys.path.insert(0, os.path.join(ROOT, 'tools', 'font'))
+from latin import L as LATIN
+from hangul import CONS, DOUBLE, VERT, HORZ, MIX, CHO, JUNG, JONG, BOX
+
 OUT = os.path.join(ROOT, 'play', 'assets', 'fonts')
 CSS = os.path.join(ROOT, 'play', 'css', 'style.css')   # @font-face 의 ?v= 를 파일 해시로 맞춘다(오래 두는 캐시)
 FAMILY = 'Ashfall'
-VERSION = '1.000'
-STYLES = {'regular': ('Pretendard-Regular.otf', 'Regular', 400), 'bold': ('Pretendard-Bold.otf', 'Bold', 700)}
+VERSION = '2.000'
 REPO = 'https://github.com/gshs43-junyeong/Ashfall-Chronicles'
-COPYRIGHT = [
-    'Copyright (c) 2021, Kil Hyung-jin (https://github.com/orioncactus/pretendard), with Reserved Font Name Pretendard.',
-    f'Copyright 2026 The Ashfall Chronicles Project Authors ({REPO})',
-]
+COPYRIGHT = f'Copyright 2026 The Ashfall Chronicles Project Authors ({REPO})'
 OFL_DESC = ('This Font Software is licensed under the SIL Open Font License, Version 1.1. '
             'This license is available with a FAQ at: https://openfontlicense.org')
 OFL_URL = 'https://openfontlicense.org'
-ROUND = 14          # 모서리 둥글림 반지름(2048 단위) — 키우면 둥근 고딕이 되어 원래 느낌과 멀어진다
-CORNER = 28         # 이보다 크게 꺾이는 곳(도)만 모서리로 본다 — 곡선 이음매는 건드리지 않게
+UPM, ASC, DSC, HW = 2048, 1950, 494, 1770
+STYLES = {'regular': ('Regular', 400, 150), 'bold': ('Bold', 700, 226)}   # 이름 · 굵기 등급 · 획 굵기(2048 단위)
+CHAMFER = 0.36      # 바깥 모서리 깎기 = 획 굵기 × 이 몫
+
+
+# ---------- 획 → 윤곽 ----------
+def seg_quad(a, b, w, ext):
+    dx, dy = b[0] - a[0], b[1] - a[1]; l = math.hypot(dx, dy) or 1
+    ux, uy = dx / l, dy / l; nx, ny = -uy * w / 2, ux * w / 2
+    a2 = (a[0] - ux * ext[0], a[1] - uy * ext[0]); b2 = (b[0] + ux * ext[1], b[1] + uy * ext[1])
+    return [(a2[0] + nx, a2[1] + ny), (b2[0] + nx, b2[1] + ny), (b2[0] - nx, b2[1] - ny), (a2[0] - nx, a2[1] - ny)]
+
+def add_poly(path, pts):
+    # 반시계로 맞춘다(넓이 부호) — 합칠 때 감김 방향이 섞이지 않게
+    area = sum(pts[i][0] * pts[(i + 1) % len(pts)][1] - pts[(i + 1) % len(pts)][0] * pts[i][1] for i in range(len(pts)))
+    if area < 0: pts = pts[::-1]
+    pen = path.getPen(); pen.moveTo(pts[0])
+    for p in pts[1:]: pen.lineTo(p)
+    pen.closePath()
+
+def offset_loop(pts, d):
+    """닫힌 볼록 다각형을 d 만큼 바깥(+)·안(−)으로 — 변을 밀고 이웃 변과 만나는 점"""
+    n = len(pts)
+    area = sum(pts[i][0] * pts[(i + 1) % n][1] - pts[(i + 1) % n][0] * pts[i][1] for i in range(n))
+    s = 1 if area > 0 else -1
+    lines = []
+    for i in range(n):
+        a, b = pts[i], pts[(i + 1) % n]; dx, dy = b[0] - a[0], b[1] - a[1]; l = math.hypot(dx, dy) or 1
+        nx, ny = dy / l * s, -dx / l * s                     # 바깥 법선
+        lines.append(((a[0] + nx * d, a[1] + ny * d), (dx, dy)))
+    out = []
+    for i in range(n):
+        (p1, d1), (p2, d2) = lines[i - 1], lines[i]
+        den = d1[0] * d2[1] - d1[1] * d2[0]
+        if abs(den) < 1e-9: out.append(p2); continue
+        t = ((p2[0] - p1[0]) * d2[1] - (p2[1] - p1[1]) * d2[0]) / den
+        out.append((p1[0] + d1[0] * t, p1[1] + d1[1] * t))
+    return out
+
+def octagon(cx, cy, rx, ry, k=0.29):
+    return [(cx - rx + 2 * rx * k, cy - ry), (cx + rx - 2 * rx * k, cy - ry), (cx + rx, cy - ry + 2 * ry * k), (cx + rx, cy + ry - 2 * ry * k),
+            (cx + rx - 2 * rx * k, cy + ry), (cx - rx + 2 * rx * k, cy + ry), (cx - rx, cy + ry - 2 * ry * k), (cx - rx, cy - ry + 2 * ry * k)]
+
+def strokes_to_path(strokes, w):
+    """strokes: ('line', pts) · ('loop', pts) · ('fill', pts) — 다 합친다"""
+    path = pathops.Path()
+    for kind, pts in strokes:
+        if kind == 'fill':
+            add_poly(path, list(pts))
+        elif kind == 'loop':
+            outer = offset_loop(pts, w / 2); inner = offset_loop(pts, -w / 2)
+            ring = pathops.Path(); add_poly(ring, outer)
+            hole = pathops.Path(); add_poly(hole, inner)
+            ring = pathops.op(ring, hole, pathops.PathOp.DIFFERENCE)
+            path = pathops.op(path, ring, pathops.PathOp.UNION)
+        else:
+            if len(pts) == 1: pts = [pts[0], (pts[0][0] + 1, pts[0][1])]
+            n = len(pts)
+            for i in range(n - 1):
+                # 끝은 네모 끝(반 굵기 더) · 이음은 서로 반 굵기씩 겹쳐 빈틈이 없게
+                add_poly(path, seg_quad(pts[i], pts[i + 1], w, (w / 2, w / 2)))
+    return pathops.simplify(path, fix_winding=True)
+
+def contours(path):
+    rec = RecordingPen(); path.draw(rec)
+    out, cur = [], []
+    for op, args in rec.value:
+        if op == 'moveTo': cur = [args[0]]
+        elif op == 'lineTo': cur.append(args[0])
+        elif op in ('qCurveTo', 'curveTo'): cur.append(args[-1])
+        elif op in ('closePath', 'endPath'):
+            if len(cur) > 2:
+                if cur[0] == cur[-1]: cur.pop()
+                out.append(cur)
+            cur = []
+    return out
+
+def chamfer(cs, c):
+    """볼록 모서리를 c 만큼 깎는다(빗면) — Ashfall 글꼴의 얼굴. 오목 모서리(이음 안쪽)는 그대로"""
+    out = []
+    for pts in cs:
+        n = len(pts)
+        area = sum(pts[i][0] * pts[(i + 1) % n][1] - pts[(i + 1) % n][0] * pts[i][1] for i in range(n))
+        sgn = 1 if area > 0 else -1
+        new = []
+        for i in range(n):
+            p0, p1, p2 = pts[i - 1], pts[i], pts[(i + 1) % n]
+            ax, ay = p1[0] - p0[0], p1[1] - p0[1]; bx, by = p2[0] - p1[0], p2[1] - p1[1]
+            la, lb = math.hypot(ax, ay), math.hypot(bx, by)
+            if la < 1e-6 or lb < 1e-6: continue
+            cross = (ax * by - ay * bx) * sgn
+            cosang = (ax * bx + ay * by) / (la * lb)
+            turn = math.degrees(math.acos(max(-1, min(1, cosang))))
+            if cross > 0 and turn > 50:
+                d = min(c, la * 0.42, lb * 0.42)
+                new.append((p1[0] - ax / la * d, p1[1] - ay / la * d)); new.append((p1[0] + bx / lb * d, p1[1] + by / lb * d))
+            else:
+                new.append(p1)
+        out.append(new)
+    return out
+
+def to_glyph(cs):
+    pen = TTGlyphPen(None)
+    for pts in cs:
+        pts = [(round(x), round(y)) for x, y in pts]
+        # TrueType 관례 — 바깥 윤곽은 시계 방향
+        pen.moveTo(pts[0])
+        for p in pts[1:]: pen.lineTo(p)
+        pen.closePath()
+    return pen.glyph()
+
+# ---------- 뼈대 → 획 ----------
+def place(strokes, box, fit=None):
+    x0, y0, x1, y1 = box
+    if fit:                                                    # 가로세로 비를 묶는다 — 넓은 받침 칸에서 자음이 납작해지지 않게
+        w, h = x1 - x0, y1 - y0
+        if w / h > fit: nw = h * fit; x0 += (w - nw) / 2; x1 = x0 + nw
+        elif h / w > fit: nh = w * fit; y0 += (h - nh) / 2; y1 = y0 + nh
+    W, H = x1 - x0, y1 - y0
+    tf = lambda p: (x0 + p[0] * W, y0 + p[1] * H)
+    out = []
+    for s in strokes:
+        if isinstance(s, tuple) and s[0] == 'oct':
+            _, cx, cy, r = s; c = tf((cx, cy))
+            out.append(('loop', octagon(c[0], c[1], r * W, r * H)))
+        elif isinstance(s, tuple) and s[0] == 'loop':
+            out.append(('loop', [tf(p) for p in s[1]]))
+        else:
+            out.append(('line', [tf(p) for p in s]))
+    return out
+
+def cons_strokes(j, box, fit, w):
+    if j in DOUBLE:
+        a, b = DOUBLE[j]; x0, y0, x1, y1 = box; gap = w * 0.55; mid = (x0 + x1) / 2
+        return cons_strokes(a, (x0, y0, mid - gap / 2, y1), fit, w) + cons_strokes(b, (mid + gap / 2, y0, x1, y1), fit, w)
+    return place(CONS[j], box, fit)
+
+def inset(box, w):
+    """획 굵기 반만큼 안으로 — 뼈대가 상자 끝에 닿아도 윤곽은 상자 안"""
+    x0, y0, x1, y1 = box; d = w / 2
+    return (x0 + d, y0 + d, x1 - d, y1 - d)
+
+def syllable(code, w):
+    s = code - 0xAC00; li, vi, ti = s // 588, (s % 588) // 28, s % 28
+    l, v, t = CHO[li], JUNG[vi], JONG[ti]
+    kind = 'V' if v in VERT else 'H' if v in HORZ else 'M'
+    B = BOX[(kind, 1 if t else 0)]
+    st = cons_strokes(l, inset(B['L'], w), 1.55, w)
+    if kind == 'V': st += place(VERT[v], inset(B['V'], w))
+    elif kind == 'H': st += place(HORZ[v], inset(B['H'], w))
+    else: h, vv = MIX[v]; st += place(HORZ[h], inset(B['H'], w)) + place(VERT[vv], inset(B['V'], w))
+    if t: st += cons_strokes(t, inset(B['T'], w), 1.65, w)
+    return st
+
+def jamo(ch, w):
+    box = inset((260, 40, 1510, 1420), w)
+    if ch in CONS or ch in DOUBLE: return cons_strokes(ch, box, 1.15, w)
+    if ch in VERT: return place(VERT[ch], inset((560, -60, 1210, 1520), w))
+    if ch in HORZ: return place(HORZ[ch], inset((180, 160, 1590, 1200), w))
+    if ch in MIX: h, v = MIX[ch]; return place(HORZ[h], inset((140, 160, 1080, 1000), w)) + place(VERT[v], inset((1080, -60, 1640, 1520), w))
+    return None
+
+def latin(ch, w):
+    if ch not in LATIN: return None
+    adv, strokes = LATIN[ch]
+    SB = 40 if ch != ' ' else 20                             # 옆 여백 — 작은 글씨에서 글자가 붙지 않게
+    mv = lambda pts: [(x + SB, y) for x, y in pts]
+    out = []
+    for s in strokes:
+        if isinstance(s, tuple) and s[0] == 'loop': out.append(('loop', mv(s[1])))
+        elif isinstance(s, tuple) and s[0] == 'fill': out.append(('fill', mv(s[1])))
+        else: out.append(('line', mv(s)))
+    return adv + SB * 2, out
+
+# 악센트 — 바탕 글자 + 표
+MARKS = {'grave': [(-120, 1660), (80, 1500)], 'acute': [(-80, 1500), (120, 1660)], 'circ': [(-170, 1500), (0, 1660), (170, 1500)],
+         'tilde': [(-200, 1540), (-80, 1640), (80, 1540), (200, 1640)], 'diaer': None, 'ring': None}
+COMP = {'À': 'A grave', 'Á': 'A acute', 'Â': 'A circ', 'Ã': 'A tilde', 'Ä': 'A diaer', 'Å': 'A ring', 'È': 'E grave', 'É': 'E acute',
+        'Ê': 'E circ', 'Ë': 'E diaer', 'Ì': 'I grave', 'Í': 'I acute', 'Î': 'I circ', 'Ï': 'I diaer', 'Ñ': 'N tilde', 'Ò': 'O grave',
+        'Ó': 'O acute', 'Ô': 'O circ', 'Õ': 'O tilde', 'Ö': 'O diaer', 'Ù': 'U grave', 'Ú': 'U acute', 'Û': 'U circ', 'Ü': 'U diaer',
+        'Ý': 'Y acute', 'à': 'a grave', 'á': 'a acute', 'â': 'a circ', 'ã': 'a tilde', 'ä': 'a diaer', 'å': 'a ring', 'è': 'e grave',
+        'é': 'e acute', 'ê': 'e circ', 'ë': 'e diaer', 'ì': 'ı grave', 'í': 'ı acute', 'î': 'ı circ', 'ï': 'ı diaer', 'ñ': 'n tilde',
+        'ò': 'o grave', 'ó': 'o acute', 'ô': 'o circ', 'õ': 'o tilde', 'ö': 'o diaer', 'ù': 'u grave', 'ú': 'u acute', 'û': 'u circ',
+        'ü': 'u diaer', 'ý': 'y acute', 'ÿ': 'y diaer'}
+
+def composed(ch, w):
+    base, mark = COMP[ch].split()
+    dotless = base == 'ı'
+    if dotless: base = 'i'
+    adv, strokes = latin(base, w)
+    if dotless: strokes = strokes[:1]
+    cx = adv / 2
+    up = 0 if base.islower() else 420
+    if mark == 'diaer':
+        ms = [('line', [(cx - 200, 1300 + up), (cx - 200, 1420 + up)]), ('line', [(cx + 200, 1300 + up), (cx + 200, 1420 + up)])]
+    elif mark == 'ring':
+        ms = [('loop', octagon(cx, 1400 + up, 150, 150))]
+    else:
+        ms = [('line', [(cx + x, y - 160 + up) for x, y in MARKS[mark]])]
+    return adv, strokes + ms
+
+def build_glyph(ch, w, chamf):
+    """한 글자 → (너비, 글리프) · 뼈대가 없으면 None"""
+    code = ord(ch)
+    adv = None; st = None
+    if 0xAC00 <= code <= 0xD7A3: adv, st = HW, syllable(code, w)
+    elif 0x3131 <= code <= 0x3163:
+        st = jamo(ch, w); adv = HW
+    elif ch in COMP: adv, st = composed(ch, w)
+    else:
+        r = latin(ch, w)
+        if r: adv, st = r
+    if st is None: return None
+    path = strokes_to_path(st, w) if st else pathops.Path()
+    cs = chamfer(contours(path), chamf) if st else []
+    return adv, to_glyph(cs)
+
 
 def charset():
-    """실을 글자 — 한글 KS X 1001 + 게임 글(일본어 · 중국어 번역은 기기 글꼴이라 뺀다) + 라틴 · 기호"""
-    u = set(range(0x20, 0x7F)) | set(range(0xA0, 0x180)) | set(range(0x2010, 0x2050)) | set(range(0x3131, 0x3164))
-    u |= {0x20AC, 0x2122, 0x2190, 0x2191, 0x2192, 0x2193, 0x2194, 0x21BA, 0x21BB, 0x2212, 0x2715, 0x25A0, 0x25B2,
-          0x25B6, 0x25B8, 0x25BC, 0x25C0, 0x25C2, 0x25CF, 0x2605, 0x2606, 0x3000, 0x3001, 0x3002, 0x300C, 0x300D,
-          0x300E, 0x300F, 0x3010, 0x3011, 0x301C, 0xFF5E}
+    """실을 글자 — 한글 KS X 1001 + 게임 글 + 호환 자모 + 뼈대가 있는 라틴 · 기호"""
+    u = set(range(0x3131, 0x3164)) | {ord(c) for c in LATIN} | {ord(c) for c in COMP}
     for b1 in range(0xB0, 0xC9):
         for b2 in range(0xA1, 0xFF):
             try:
@@ -65,279 +266,69 @@ def charset():
                 u.add(ord(c))
     return u
 
-def default_alternates(font, feats, chars):
-    """cmap 의 chars 를 feats(단일 치환 기능)의 대체 글리프로 — 기능을 켜지 않아도 늘 그 모양"""
-    gsub = font['GSUB'].table
-    alt = {}
-    for fr in gsub.FeatureList.FeatureRecord:
-        if fr.FeatureTag not in feats:
-            continue
-        for li in fr.Feature.LookupListIndex:
-            for st in gsub.LookupList.Lookup[li].SubTable:
-                st = getattr(st, 'ExtSubTable', st)
-                for k, v in (getattr(st, 'mapping', None) or {}).items():
-                    alt.setdefault(k, v)
-    n = 0
-    for t in font['cmap'].tables:
-        for c in chars:
-            g = t.cmap.get(c)
-            if g in alt:
-                t.cmap[c] = alt[g]; n += 1
-    if not n:
-        raise SystemExit(f'{feats} 대체 글자를 못 찾았다 — 원본 글꼴이 바뀌었나')
-
-def _segments(rec):
-    """RecordingPen 기록 → 닫힌 윤곽마다 [(시작점, 종류, 점들)] (종류 'L' 직선 · 'C' 3차 곡선)"""
-    out, cur, start, p = [], None, None, None
-    for op, args in rec:
-        if op == 'moveTo':
-            cur = []; start = p = args[0]
-        elif op == 'lineTo':
-            cur.append((p, 'L', [args[0]])); p = args[0]
-        elif op == 'curveTo':
-            cur.append((p, 'C', list(args))); p = args[-1]
-        elif op in ('closePath', 'endPath'):
-            if p != start:
-                cur.append((p, 'L', [start]))
-            if cur:
-                out.append(cur)
-            cur = None
-    return out
-
-def _dir(a, b):
-    dx, dy = b[0] - a[0], b[1] - a[1]
-    l = math.hypot(dx, dy)
-    return (dx / l, dy / l) if l > 1e-6 else None
-
-def _tangents(seg):
-    p0, k, pts = seg
-    if k == 'L':
-        d = _dir(p0, pts[0]); return d, d
-    c1, c2, p3 = pts
-    tin = _dir(p0, c1) or _dir(p0, c2) or _dir(p0, p3)
-    tout = _dir(c2, p3) or _dir(c1, p3) or _dir(p0, p3)
-    return tin, tout
-
-def _length(seg):
-    p0, k, pts = seg
-    return math.hypot(pts[0][0] - p0[0], pts[0][1] - p0[1]) if k == 'L' else calcCubicArcLength(p0, *pts)
-
-def _trim(seg, head, tail):
-    """선분 앞에서 head, 뒤에서 tail 길이만큼 깎는다"""
-    p0, k, pts = seg
-    L = _length(seg)
-    if L < 1e-6:
-        return seg
-    t0, t1 = head / L, 1 - tail / L
-    if k == 'L':
-        a, b = p0, pts[0]
-        lerp = lambda t: (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
-        return (lerp(t0), 'L', [lerp(t1)])
-    c = (p0, *pts)
-    if t0 > 0:
-        c = splitCubicAtT(*c, t0)[1]
-        t1 = (t1 - t0) / (1 - t0)
-    if t1 < 1:
-        c = splitCubicAtT(*c, t1)[0]
-    return (c[0], 'C', list(c[1:]))
-
-def round_corners(rec, r):
-    """꺾인 모서리마다 반지름 r 쯤의 곡선을 넣는다 — 이웃 선분 길이의 3할을 넘지 않게"""
-    out = []
-    for segs in _segments(rec):
-        n = len(segs)
-        cut = [[0.0, 0.0] for _ in range(n)]     # 선분마다 [앞 깎기, 뒤 깎기]
-        corner = [None] * n                       # i 번 선분 끝(= i+1 앞)의 모서리
-        for i in range(n):
-            a, b = segs[i], segs[(i + 1) % n]
-            ta, tb = _tangents(a)[1], _tangents(b)[0]
-            if not ta or not tb:
-                continue
-            ang = math.degrees(math.acos(max(-1, min(1, ta[0] * tb[0] + ta[1] * tb[1]))))
-            if ang < CORNER:
-                continue
-            d = min(r * math.tan(math.radians(ang) / 2) if ang < 170 else r, _length(a) * 0.3, _length(b) * 0.3)
-            if d < 1:
-                continue
-            cut[i][1] = d; cut[(i + 1) % n][0] = d
-            corner[i] = (ta, tb, d, ang)
-        new = [_trim(segs[i], *cut[i]) if any(cut[i]) else segs[i] for i in range(n)]
-        pen = []
-        pen.append(('moveTo', (new[0][0],)))
-        for i in range(n):
-            p0, k, pts = new[i]
-            pen.append(('lineTo' if k == 'L' else 'curveTo', tuple(pts)))
-            if corner[i]:
-                ta, tb, d, ang = corner[i]
-                q0 = pts[-1]; q3 = new[(i + 1) % n][0]
-                h = 4 / 3 * math.tan(math.radians(ang) / 4) * (d / math.tan(math.radians(ang) / 2) if ang < 170 else d)
-                h = min(h, d)
-                pen.append(('curveTo', ((q0[0] + ta[0] * h, q0[1] + ta[1] * h), (q3[0] - tb[0] * h, q3[1] - tb[1] * h), q3)))
-        pen.append(('closePath', ()))
-        out.extend(pen)
-    return out
-
-def soften(font, r):
-    """모든 글리프의 모서리를 둥글린다(CFF 윤곽을 다시 쓴다 — 힌트는 버린다, 원래 모양에 맞춘 힌트라 어긋난다)"""
-    cff = font['CFF '].cff
-    top = cff.topDictIndex[0]
-    cs = top.CharStrings
-    gs = font.getGlyphSet()
-    for name in font.getGlyphOrder():
-        rec = DecomposingRecordingPen(gs)
-        gs[name].draw(rec)
-        old = cs[name]
-        priv = old.private                       # CID 글꼴이라 Private 는 글리프의 FD 마다 따로
-        nominal, default = getattr(priv, 'nominalWidthX', 0), getattr(priv, 'defaultWidthX', 0)
-        w = font['hmtx'][name][0]
-        pen = T2CharStringPen(None if w == default else w - nominal, None)
-        if rec.value:
-            for op, args in round_corners(rec.value, r):
-                getattr(pen, op)(*args)
-        new = pen.getCharString(private=priv, globalSubrs=cff.GlobalSubrs)
-        if hasattr(cs, 'charStringsIndex'):
-            cs.charStringsIndex[cs.charStrings[name]] = new
-        else:
-            cs[name] = new
-    for fd in (getattr(top, 'FDArray', None) or [top]):
-        p = fd.Private
-        for k in ('BlueValues', 'OtherBlues', 'FamilyBlues', 'FamilyOtherBlues', 'StdHW', 'StdVW', 'StemSnapH', 'StemSnapV'):
-            if k in p.rawDict:
-                del p.rawDict[k]
-            if hasattr(p, k):
-                try: delattr(p, k)
-                except AttributeError: pass
-
-HANGUL = {'round': 0, 'thin': 0.145, 'scale': 1.0}   # 한글만 손질 — 사용자 결정(2026-10-03): 획 굵기만 14.5% 가늘게(4.5% 에서 10% 더) · 크기 그대로
-# (견본: 모서리 둥글기만은 UI 크기에서 차이가 안 보였다 · 굵게 · 작게도 봤다 — tests/out/_fontvar.py)
-
-def _morph(path, d):
-    """d > 0 이면 d 만큼 두껍게, d < 0 이면 얇게 — 둥근 이음(모서리가 둥글어진다)"""
-    s = pathops.Path(); path.draw(s.getPen())
-    s.stroke(abs(d) * 2, pathops.LineCap.ROUND_CAP, pathops.LineJoin.ROUND_JOIN, 4)
-    s.convertConicsToQuads()            # 둥근 이음은 원뿔 곡선(conic)으로 나온다 — 글꼴엔 없는 꼴이라 2차 곡선으로
-    return pathops.op(path, s, pathops.PathOp.UNION if d > 0 else pathops.PathOp.DIFFERENCE, fix_winding=True)
-
-def _stem(font):
-    """한글 세로 획 굵기 — 호환 자모 ㅣ 의 폭"""
-    gs = font.getGlyphSet(); rec = DecomposingRecordingPen(gs); gs[font.getBestCmap()[0x3163]].draw(rec)
-    xs = [p[0] for _, args in rec.value for p in args]
-    return max(xs) - min(xs)
-
-def hangul_style(font, round_r=0, bold=0, scale=1.0):
-    """한글(완성형 · 호환 자모) 글리프만 — 깎았다 되살려 볼록 모서리를 반지름 round_r 로 둥글게(굵기는 그대로),
-       bold 만큼 굵게, scale 로 크기(글자 폭 · 줄 높이는 그대로 — 가운데 기준)."""
-    if not (round_r or bold or scale != 1.0):
-        return
-    cmap = font.getBestCmap()
-    names = {g for c, g in cmap.items() if 0xAC00 <= c <= 0xD7A3 or 0x3131 <= c <= 0x318E}
-    cff = font['CFF '].cff
-    cs = cff.topDictIndex[0].CharStrings
-    gs = font.getGlyphSet()
-    up = font['head'].unitsPerEm
-    for name in names:
-        path = pathops.Path(); gs[name].draw(path.getPen())
-        if scale != 1.0:
-            w = font['hmtx'][name][0]
-            cx, cy = w / 2, up * 0.36
-            rec = DecomposingRecordingPen(gs); path.draw(rec)
-            path = pathops.Path(); pen = path.getPen()
-            tf = lambda p: (cx + (p[0] - cx) * scale, cy + (p[1] - cy) * scale)
-            for op, args in rec.value:
-                getattr(pen, op)(*[tf(a) for a in args])
-        if round_r:
-            path = _morph(_morph(path, -round_r), round_r)
-        if bold:
-            path = _morph(path, bold)
-        old = cs[name]; priv = old.private
-        nominal, default = getattr(priv, 'nominalWidthX', 0), getattr(priv, 'defaultWidthX', 0)
-        w = font['hmtx'][name][0]
-        pen = T2CharStringPen(None if w == default else w - nominal, None)
-        path.draw(pen)
-        new = pen.getCharString(private=priv, globalSubrs=cff.GlobalSubrs)
-        if hasattr(cs, 'charStringsIndex'):
-            cs.charStringsIndex[cs.charStrings[name]] = new
-        else:
-            cs[name] = new
-
-def rename(font, sub, weight):
-    """이름 바꾸기 — 'Pretendard' 가 이름 칸 어디에도 남지 않게(예약 글꼴 이름). 원작자 이름은 저작권 · 디자이너 칸에만."""
-    ps = f'{FAMILY}-{sub}'
-    names = {0: ' '.join(COPYRIGHT), 1: FAMILY, 2: sub, 3: f'{VERSION};ASHF;{ps}', 4: f'{FAMILY} {sub}',
-             5: f'Version {VERSION}; modified from Pretendard 1.309', 6: ps, 8: 'Ashfall Chronicles Project',
-             9: 'Kil Hyung-jin (Pretendard); Ashfall Chronicles Project (modifications)', 11: REPO,
-             13: OFL_DESC, 14: OFL_URL, 16: FAMILY, 17: sub}
-    nt = font['name']
-    nt.names = [n for n in nt.names if n.nameID not in names and n.nameID > 255]
-    for nid, v in names.items():
-        nt.setName(v, nid, 3, 1, 0x409)
-        nt.setName(v, nid, 1, 0, 0)
-    cff = font['CFF '].cff
-    cff.fontNames = [ps]
-    top = cff.topDictIndex[0]
-    top.FullName = f'{FAMILY} {sub}'; top.FamilyName = FAMILY; top.Weight = sub
-    top.Notice = ' '.join(COPYRIGHT)
-    if hasattr(top, 'Copyright'):
-        top.Copyright = ' '.join(COPYRIGHT)
-    font['OS/2'].achVendID = 'ASHF'
-    font['OS/2'].usWeightClass = weight
-    font['head'].fontRevision = float(VERSION)
-
 def build(style, only=None):
-    fn, sub, weight = STYLES[style]
-    font = TTFont(os.path.join(SRC, fn), recalcTimestamp=False)   # 시각을 원본 그대로 — 두 번 구워도 같은 파일
-    stem = _stem(font)                     # 줄이기 전에 잰다(견본처럼 ㅣ 가 빠진 묶음도 있다)
-    default_alternates(font, ('tnum',), range(0x30, 0x3A))
-    default_alternates(font, ('cv05', 'cv08'), (ord('l'), ord('I')))
-    opts = subset.Options()
-    opts.desubroutinize = True             # 윤곽을 다시 쓰므로 공유 조각(subr)을 풀어 둔다
-    opts.layout_features = ['*']
-    opts.name_IDs = ['*']; opts.name_languages = ['*']; opts.notdef_outline = True
-    opts.drop_tables += ['DSIG']
-    s = subset.Subsetter(opts)
-    s.populate(unicodes=only if only is not None else charset())
-    s.subset(font)
-    soften(font, ROUND)
-    hangul_style(font, HANGUL['round'], -HANGUL['thin'] * stem / 2, HANGUL['scale'])
-    rename(font, sub, weight)
-    return font
+    sub, weight, w = STYLES[style]
+    chamf = w * CHAMFER
+    glyphs, adv, cmap, order = {'.notdef': TTGlyphPen(None).glyph(), 'space': TTGlyphPen(None).glyph()}, {'.notdef': 1000, 'space': 560}, {32: 'space'}, ['.notdef', 'space']
+    for code in sorted(only if only is not None else charset()):
+        if code == 32:
+            continue
+        r = build_glyph(chr(code), w, chamf)
+        if not r:
+            continue
+        a, gl = r
+        gn = 'uni%04X' % code
+        glyphs[gn] = gl; adv[gn] = a; cmap[code] = gn; order.append(gn)
+    fb = FontBuilder(UPM, isTTF=True)
+    fb.setupGlyphOrder(order)
+    fb.setupCharacterMap(cmap)
+    fb.setupGlyf(glyphs)
+    gt = fb.font['glyf']; met = {}
+    for gn in order:
+        g = gt[gn]; g.recalcBounds(gt)
+        met[gn] = (adv[gn], g.xMin if g.numberOfContours else 0)
+    fb.setupHorizontalMetrics(met)
+    fb.setupHorizontalHeader(ascent=ASC, descent=-DSC)
+    ps = f'{FAMILY}-{sub}'
+    fb.setupNameTable({'copyright': COPYRIGHT, 'familyName': FAMILY, 'styleName': sub, 'uniqueFontIdentifier': f'{VERSION};ASHF;{ps}',
+                       'fullName': f'{FAMILY} {sub}', 'version': f'Version {VERSION}', 'psName': ps, 'manufacturer': 'Ashfall Chronicles Project',
+                       'designer': 'Ashfall Chronicles Project', 'vendorURL': REPO, 'licenseDescription': OFL_DESC, 'licenseInfoURL': OFL_URL})
+    fb.setupOS2(sTypoAscender=ASC, sTypoDescender=-DSC, sTypoLineGap=0, usWinAscent=ASC, usWinDescent=DSC, sxHeight=1086, sCapHeight=1448,
+                usWeightClass=weight, achVendID='ASHF', fsType=0)
+    fb.setupPost()
+    fb.font['head'].fontRevision = float(VERSION)
+    fb.font['head'].created = fb.font['head'].modified = 3870000000      # 두 번 구워도 같은 파일
+    return fb.font
 
 def license_files():
-    ofl = open(os.path.join(SRC, 'OFL-Pretendard.txt'), encoding='utf8').read()
+    ofl = open(os.path.join(OUT, 'OFL.txt'), encoding='utf8').read()
     body = ofl[ofl.index('This Font Software is licensed'):]
-    head = COPYRIGHT[0].replace(', with Reserved', ',\nwith Reserved') + '\n' + COPYRIGHT[1] + '\n\n'
     log = f"""FONTLOG for Ashfall (game font of Ashfall Chronicles)
 ======================================================
 
-Ashfall is a modified version of Pretendard 1.3.9 (Regular, Bold) by Kil Hyung-jin,
-made for the game Ashfall Chronicles ({REPO}).
-It is licensed under the SIL Open Font License 1.1 (see OFL.txt). Pretendard is
-distributed with the Reserved Font Name "Pretendard", so this modified version is
-named "Ashfall" and does not use the reserved name.
+Ashfall is an original typeface made for the game Ashfall Chronicles ({REPO}).
+It is licensed under the SIL Open Font License 1.1 (see OFL.txt).
 
-Changes from Pretendard
-- Renamed to "Ashfall" (name table and CFF names).
-- Corners of every glyph are slightly rounded (radius 14 of 2048 units); outlines are
-  rewritten without hints.
-- Hangul strokes are 14.5% thinner (outlines eroded evenly); glyph size and advance
-  widths are unchanged.
-- Lowercase l with a tail and capital I with serifs by default (Pretendard's cv05 and
-  cv08 glyphs mapped in cmap), so I, l and 1 are easy to tell apart.
-- Figures 0-9 are tabular by default (the 'tnum' glyphs are mapped in cmap), so
-  numbers in the game HUD keep their width while they change.
-- Subset: Hangul KS X 1001 (2,350 syllables) plus every Hangul syllable used in the
-  game text, Hangul compatibility jamo, Latin-1, Latin Extended-A, general
-  punctuation and a few symbols. OpenType layout features are kept.
-- Built by tools/mkfont.py in the repository above.
+How it is made
+- Every glyph is generated by tools/mkfont.py from stroke skeletons in tools/font/
+  (no outlines are taken from any other font).
+- Hangul syllables are composed from designed jamo: 19 initials, 21 medials and
+  27 finals, placed in layout boxes chosen by vowel shape (vertical, horizontal,
+  mixed) and by whether there is a final consonant.
+- Strokes have a fixed weight per style (Regular 150, Bold 226 of 2048 units).
+  Round letters are octagonal, and every outer corner is cut at 36% of the stroke
+  weight - the chiselled look of the game's ash-and-iron world. Inner corners stay
+  sharp.
+- Vertical metrics, the Hangul advance width (1770) and the tabular figures (1220)
+  match the game's previous font, so the interface layout does not move.
+- Character set: Hangul KS X 1001 (2,350 syllables) plus every syllable used in
+  the game text, Hangul compatibility jamo, Basic Latin, the Latin-1 letters used
+  in German and Spanish, punctuation, and the symbols the game text uses.
 
-Version {VERSION} (2026-10-03)
-- First release.
-
-Acknowledgements
-- Pretendard: Kil Hyung-jin, https://github.com/orioncactus/pretendard
-  (Pretendard is based on Inter, Source Han Sans and M PLUS 1p, all SIL OFL 1.1.)
+Version {VERSION} (2026-10-12)
+- New original design, replacing 1.000 (a modified Pretendard).
 """
-    return {'OFL.txt': head + body, 'FONTLOG.txt': log}
+    return {'OFL.txt': COPYRIGHT + '\n\n' + body, 'FONTLOG.txt': log}
 
 def _stamp(style, data):
     h = hashlib.sha1(data).hexdigest()[:8]
@@ -375,21 +366,23 @@ def main():
     sys.exit(bad)
 
 def preview():
-    """견본 — 줄마다 원본 Pretendard(파랑) 다음 Ashfall(노랑) → tests/out/font-preview.png"""
+    """견본 — 큰 글씨 · UI 크기(13 · 16px) · 굵은꼴 → tests/out/font-preview.png"""
     from PIL import Image, ImageDraw, ImageFont
-    lines = ['별이 잠든 땅 — 잿빛 숲의 오래된 유적', '곡괭이로 광맥을 캐면 철광석 3개를 얻는다.', '다람쥐 헌 쳇바퀴에 타고파',
+    lines = ['별이 잠든 땅 — 잿빛 숲의 오래된 유적', '곡괭이로 광맥을 캐면 철광석 3개를 얻는다.', '다람쥐 헌 쳇바퀴에 타고파 · 꿇어앉은 닭',
              'Ashfall Chronicles: The Land Where Stars Sleep', 'HP 1,111 / 8,888 · 20,000 · 07:06',
-             'Größe · Über · Añadir · ¿Qué? ¡Sí! «Ja» — “Hi” 50% +12 x3 [Lv.45]']
-    img = Image.new('RGB', (1300, 40 + len(lines) * 2 * 96), '#14161c')
-    d = ImageDraw.Draw(img)
-    y = 20
+             'Größe · Über · Añadir · ¿Qué? ¡Sí! «Ja» — “Hi” 50% +12 ×3 [Lv.45]']
+    need = {ord(c) for ln in lines for c in ln} | set(range(0x20, 0x7F))
+    data = {}
     for style in STYLES:
-        f = build(style, {ord(c) for ln in lines for c in ln} | set(range(0x20, 0x7F)))
-        b = io.BytesIO(); f.save(b); b.seek(0)
-        mine = ImageFont.truetype(b, 34)
-        orig = ImageFont.truetype(os.path.join(SRC, STYLES[style][0]), 34)
-        for ln in lines:
-            d.text((20, y), ln, font=orig, fill='#7fa7d8'); d.text((20, y + 44), ln, font=mine, fill='#e8dcc0'); y += 96
+        b = io.BytesIO(); build(style, need).save(b); data[style] = b.getvalue()
+    img = Image.new('RGB', (1300, 40 + len(lines) * 196), '#14161c')
+    d = ImageDraw.Draw(img); y = 20
+    for ln in lines:
+        d.text((20, y), ln, font=ImageFont.truetype(io.BytesIO(data['regular']), 34), fill='#e8dcc0')
+        d.text((20, y + 48), ln, font=ImageFont.truetype(io.BytesIO(data['bold']), 34), fill='#ffd27a')
+        d.text((20, y + 100), ln, font=ImageFont.truetype(io.BytesIO(data['regular']), 13), fill='#e8dcc0')
+        d.text((20, y + 122), ln, font=ImageFont.truetype(io.BytesIO(data['regular']), 16), fill='#e8dcc0')
+        y += 196
     os.makedirs(os.path.join(ROOT, 'tests', 'out'), exist_ok=True)
     img.save(os.path.join(ROOT, 'tests', 'out', 'font-preview.png'))
 

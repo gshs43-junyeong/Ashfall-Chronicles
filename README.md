@@ -204,8 +204,8 @@ npm run check     # the full regression suite (syntax, types, modules, translati
 
 These were made with outside services, so this repository has no right to re-license them under MIT. Playing the game is unrestricted,
 but **if you want to reuse the sound files on their own**, check those services' terms yourself. Details are in [`NOTICE.md`](NOTICE.md).
-The fonts are **not MIT**: the game font **Ashfall** (a modified Pretendard, `play/assets/fonts/`) and the font sources in `tools/art/fonts/`
-(Pretendard, Cinzel) are under the **SIL Open Font License 1.1** — keep `OFL.txt` · `FONTLOG.txt` with them, don't sell the font files on their own,
+The fonts are **not MIT**: the game font **Ashfall** (an original font drawn from stroke skeletons by `tools/mkfont.py`, `play/assets/fonts/`) and the
+logo font source in `tools/art/fonts/` (Cinzel) are under the **SIL Open Font License 1.1** — keep `OFL.txt` · `FONTLOG.txt` with them, don't sell the font files on their own,
 and rename any modified version. Details are in [`NOTICE.md`](NOTICE.md).
 
 Apart from those, **every image was made in this repository** — nothing was bought or downloaded: hand-drawn sheets, plus what
@@ -213,7 +213,7 @@ Apart from those, **every image was made in this repository** — nothing was bo
 
 ## Credits
 
-Concept `gshs43-junyeong` · Production Claude Code + Codex · Art assets Claude Design · Font Ashfall (modified Pretendard, SIL OFL 1.1) ·
+Concept `gshs43-junyeong` · Production Claude Code + Codex · Art assets Claude Design · Font Ashfall (original, SIL OFL 1.1) ·
 Sound effects [ElevenLabs](https://elevenlabs.io).
 
 Per-version changes are on the [releases page](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases) and in the

@@ -221,7 +221,7 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 해당 서비스의 약관을 직접 확인하세요. 자세한 것은 [`NOTICE.md`](NOTICE.md) 에
 적어 두었습니다.
 
-글꼴은 **MIT 가 아닙니다** — 게임 글꼴 **Ashfall**(Pretendard 를 고친 판, `play/assets/fonts/`)과 `tools/art/fonts/` 의 글꼴 원본(Pretendard · Cinzel)은
+글꼴은 **MIT 가 아닙니다** — 게임 글꼴 **Ashfall**(`tools/mkfont.py` 가 획 뼈대에서 직접 그린 글꼴, `play/assets/fonts/`)과 `tools/art/fonts/` 의 로고 글꼴 원본(Cinzel)은
 **SIL Open Font License 1.1** 을 따릅니다. `OFL.txt` · `FONTLOG.txt` 를 함께 두고, 글꼴 파일만 따로 팔지 말고, 고친 판은 이름을 바꿔 주세요.
 
 그 둘을 뺀 **그림은 전부 이 저장소 안에서 만들었습니다.** 사 온 것도 받아 온 것도
@@ -229,7 +229,7 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 
 ## 만든 것
 
-기획 `gshs43-junyeong` · 제작 Claude Code + Codex · 그림 애셋 Claude Design · 글꼴 Ashfall(Pretendard 고친 판, SIL OFL 1.1) ·
+기획 `gshs43-junyeong` · 제작 Claude Code + Codex · 그림 애셋 Claude Design · 글꼴 Ashfall(자체 제작, SIL OFL 1.1) ·
 효과음 [ElevenLabs](https://elevenlabs.io).
 
 버전별 변경 사항은 [릴리스 목록](https://github.com/gshs43-junyeong/Ashfall-Chronicles/releases)과
