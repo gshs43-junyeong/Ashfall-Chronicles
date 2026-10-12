@@ -496,6 +496,9 @@ export const NetPart: Bag = {
       this.deepOffered(m.id, m.L);
     } else if (m.k === 'mem' && peer.rp) {
       this.netMemory(m, true, peer.rp);
+    } else if (m.k === 'stop' && peer.rp) {           // 참가자가 뒤집은 모래시계 — 세계는 호스트가 멈춘다
+      this.startTimeStop(peer.rp.cx, peer.rp.cy);
+      this.netBroadcast({ k: 'stop', x: peer.rp.cx, y: peer.rp.cy });
     } else if (m.k === 'anc' && peer.rp) {
       const o = this.world.objects.find((q: Bag) => q.type === 'anchor' && q.i === m.i);
       if (o && !(this.world.citadel.anc || [])[m.i]) this.anchorUse(o, peer.rp);
@@ -625,6 +628,8 @@ export const NetPart: Bag = {
       this.netPuzzle(m);
     } else if (m.k === 'anc') {
       this.netAnchor(m);
+    } else if (m.k === 'stop') {
+      this.startTimeStop(m.x, m.y);
     } else if (m.k === 'mem') {
       this.netMemory(m, false);
     } else if (m.k === 'door') {

@@ -379,6 +379,11 @@ export const InteractPart: Bag = {
     const p = this.player, it = p.bag[slot], d = idef(it);
     if (d.use!.egg) { this.hatchEgg(d.use!.egg); it.c--; if (it.c <= 0) p.bag[slot] = null; UI.refreshBag(); this.sfx('hatch'); return; }
     if (d.use!.dragonFeed) { this.feedDragon(slot, d.use!.dragonFeed); return; }
+    if (d.use!.recall) {                                  // 못 가면(마을이 아직 · 쓰러진 자리 없음) 구슬을 남긴다
+      if (this.recallTo(d.use!.recall)) { it.c--; if (it.c <= 0) p.bag[slot] = null; UI.refreshBag(); }
+      return;
+    }
+    if (d.use!.stop) { this.useStopGlass(); return; }    // 모래시계는 쓰고도 남는다
     /* 펫 사탕 — 낀 펫이 없으면 그냥 사라지므로, 쓰기 전에 막아 준다 */
     if (d.use!.petXp) {
       if (!p.equip.pet1 && !p.equip.pet2) { this.toast(tr('펫을 끼고 있어야 준다'), 'bad'); return; }

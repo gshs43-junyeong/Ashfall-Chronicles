@@ -1097,7 +1097,10 @@
   "태운다": "Quemar",
   "틀에 붓는다": "Verter en molde",
   "퍼 올린다": "Subir",
-  "흔들대를 움직인다": "Mover el balancín"
+  "흔들대를 움직인다": "Mover el balancín",
+  "모래가 아직 다 차오르지 않았다 ({s}초)": "La arena aún no se ha rellenado ({s} s)",
+  "바늘이 가리킬 곳이 없다 — 쓰러진 자리가 남아 있지 않다": "La aguja no tiene adónde apuntar: no queda ningún lugar donde caíste",
+  "여명 마을이 되살아난 뒤에야 길이 이어진다": "El camino solo se abre cuando la Aldea del Alba renace"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4593,6 +4596,14 @@
   "SKILLS.s_petbond.d": "Desbloquea la segunda ranura de mascota — lleva dos mascotas contigo.",
   "SKILLS.s_quickhands.n": "Manos rápidas",
   "SKILLS.s_quickhands.d": "Desbloquea una ranura de habilidad más (G).",
-  "TILE_DEF.218.n": "Cuerpo de máquina"
+  "TILE_DEF.218.n": "Cuerpo de máquina",
+  "ITEMS.recall_camp.n": "Orbe de regreso de brasa",
+  "ITEMS.recall_camp.d": "Rómpelo para volver al instante a la plaza del campamento base. La ceniza sellada guarda una brasa.",
+  "ITEMS.recall_village.n": "Orbe de regreso del alba",
+  "ITEMS.recall_village.d": "Rómpelo para volver a la plaza de la Aldea del Alba. Solo funciona cuando la aldea ha renacido.",
+  "ITEMS.grave_compass.n": "Brújula del regreso",
+  "ITEMS.grave_compass.d": "La aguja apunta adonde caíste por última vez. Rómpela para ir allí, junto a la lápida con lo que perdiste.",
+  "ITEMS.stop_glass.n": "Reloj de arena detenido",
+  "ITEMS.stop_glass.d": "Al girarlo, el tiempo a tu alrededor se detiene 1 segundo: monstruos y todo lo que vuela hacia ti. La arena tarda un minuto en rellenarse. No se gasta."
  }
 }

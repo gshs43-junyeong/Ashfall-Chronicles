@@ -1097,7 +1097,10 @@
   "태운다": "Verbrennen",
   "틀에 붓는다": "In die Form gießen",
   "퍼 올린다": "Hochpumpen",
-  "흔들대를 움직인다": "Schwinge bewegen"
+  "흔들대를 움직인다": "Schwinge bewegen",
+  "모래가 아직 다 차오르지 않았다 ({s}초)": "Der Sand ist noch nicht nachgelaufen ({s} s)",
+  "바늘이 가리킬 곳이 없다 — 쓰러진 자리가 남아 있지 않다": "Die Nadel zeigt nirgendwohin — es gibt keinen Ort, an dem du gefallen bist",
+  "여명 마을이 되살아난 뒤에야 길이 이어진다": "Der Weg öffnet sich erst, wenn das Morgendorf wiederbelebt ist"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4593,6 +4596,14 @@
   "SKILLS.s_petbond.d": "Schaltet den zweiten Haustierplatz frei — zwei Haustiere begleiten dich.",
   "SKILLS.s_quickhands.n": "Flinke Hände",
   "SKILLS.s_quickhands.d": "Schaltet einen weiteren Fertigkeitsplatz frei (G).",
-  "TILE_DEF.218.n": "Maschinenkörper"
+  "TILE_DEF.218.n": "Maschinenkörper",
+  "ITEMS.recall_camp.n": "Glutkugel der Rückkehr",
+  "ITEMS.recall_camp.d": "Zerbrich sie, um sofort zum Platz des Basislagers zurückzukehren. Versiegelte Asche birgt eine Glut.",
+  "ITEMS.recall_village.n": "Morgendorf-Kugel der Rückkehr",
+  "ITEMS.recall_village.d": "Zerbrich sie, um zum Dorfplatz von Morgendorf zurückzukehren. Wirkt erst, wenn das Dorf wiederbelebt ist.",
+  "ITEMS.grave_compass.n": "Kompass der Umkehr",
+  "ITEMS.grave_compass.d": "Die Nadel zeigt dorthin, wo du zuletzt gefallen bist. Zerbrich ihn, um dorthin zu gehen — neben den Grabstein mit dem, was du verloren hast.",
+  "ITEMS.stop_glass.n": "Angehaltene Sanduhr",
+  "ITEMS.stop_glass.d": "Umgedreht hält sie 1 Sekunde lang die Zeit um dich an — Monster und alles, was heranfliegt. Der Sand braucht eine Minute zum Nachlaufen. Sie wird nicht verbraucht."
  }
 }

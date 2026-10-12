@@ -585,11 +585,13 @@ export const GameCore: Bag = {
 
     // 엔티티 — 길찾기는 프레임마다 몇 번만(몹이 몰려도 한 프레임이 길어지지 않게)
     this.pathBudget = PATH_BUDGET;
+    this.tickTrinkets(dt);
+    const stop = this.stopped();
     for (let i = this.ents.length - 1; i >= 0; i--) {
       const e = this.ents[i];
       const tp = this.nearestPlayer(e.cx, e.cy);
       if (e.ghost) this.netGhostStep(e, dt);   // 참가자 화면의 몹 — 호스트 것을 받아 그린다(AI 없음)
-      else e.update(dt, w, tp);
+      else if (!(stop && e instanceof Enemy)) e.update(dt, w, tp);   // 멈춘 모래시계(game/trinkets)
       // 정예는 은은한 금빛 입자를 계속 흘려 눈에 띄게 한다 (평범한 놈이 아니라는 신호)
       if (e.elite && !e.dead && Math.random() < 0.2) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * e.w, e.cy + (Math.random() - 0.5) * e.h, '#ffd24a', -34, 0.55));
       if (e.dead) this.ents.splice(i, 1);
@@ -597,7 +599,10 @@ export const GameCore: Bag = {
       else if (!e.boss && !e.minion && !e.guard && dist2(e.cx, e.cy, tp.cx, tp.cy) > 2400 * 2400) this.ents.splice(i, 1);
     }
     this.entHash.rebuild(this.ents, (e: any) => e instanceof Enemy && !e.dead);   // 투사체가 근처 몹만 보게
-    for (let i = this.projs.length - 1; i >= 0; i--) { this.projs[i].update(dt, w, p); if (this.projs[i].dead) this.projs.splice(i, 1); }
+    for (let i = this.projs.length - 1; i >= 0; i--) {
+      if (stop && this.projs[i].team === 'enemy') continue;
+      this.projs[i].update(dt, w, p); if (this.projs[i].dead) this.projs.splice(i, 1);
+    }
     for (let i = this.drops.length - 1; i >= 0; i--) { const d = this.drops[i]; d.update(dt, w, this.nearestPlayer(d.x, d.y)); if (this.drops[i].dead) this.drops.splice(i, 1); }
     /* ★ 잰 최고치는 257개라 PART_CAP(900)에 정상 전투로는 닿지 않지만, 난간이 없으면 언젠가 프레임으로 값을 치른다. */
     stepParticles(this.parts, dt, QUALITY[this.quality()].parts);   // engine fx/particles
@@ -640,7 +645,7 @@ export const GameCore: Bag = {
     this.updatePulse(dt);          // 유적의 맥박 · 탐사 기록 (아래 '유적의 맥박' 절)
     this.updatePuzzle(dt);         // 봉인 방(game/ruin-puzzle)
     this.updateCitadel(dt);        // 부유 성채 닻(game/citadel)
-    this.updateBossHazards(dt);    // 보스 기술이 남긴 것(game/boss-hazards)
+    if (!this.stopped()) this.updateBossHazards(dt);    // 보스 기술이 남긴 것(game/boss-hazards)
     this.updateCaves(dt);          // 동굴 갈래 · 낙석 · 무너지는 자갈 (아래 '동굴' 절)
     if (!guest) this.world.fluidTick(dt);   // 물·바닷물·용암이 흐른다 (world.js '유체' 절) — 참가자는 호스트 것을 받는다
     this.updateFalls(dt);          // 폭포 밑 물보라

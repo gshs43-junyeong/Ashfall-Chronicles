@@ -178,6 +178,11 @@ export const RECIPES: RecipeDef[] = [
   { out: 'gold_bar', n: 1, need: { sunken_coin: 10 }, station: 'forge' },
   { out: 'gear_basic', n: 3, need: { maze_cog: 1 }, station: 'forge' },
   { out: 'circuit', n: 1, need: { conduit_part: 3, copper_bar: 2 }, station: 'work' },
+  // 귀환 · 되짚기 · 멈춤 — 유적 몹이 떨구고 쓰임이 없던 재 · 잉걸 · 서리 · 낚시 잡동사니로(game/trinkets)
+  { out: 'recall_camp', n: 2, need: { sealed_ash: 2, deep_ember: 2, crystal: 1 }, station: 'work' },
+  { out: 'recall_village', n: 2, need: { sealed_ash: 1, tide_pearl: 1, river_scale: 3 }, station: 'work' },
+  { out: 'grave_compass', n: 1, need: { rust_sinker: 2, river_scale: 2, neverthaw: 1 }, station: 'work' },
+  { out: 'stop_glass', n: 1, need: { neverthaw: 4, maze_cog: 2, rime_seal: 2, gold_bar: 3, crystal: 4 }, station: 'forge', lv: 2 },
   { out: 'plank', n: 12, need: { heartwood: 1 }, station: 'work' },
   { out: 'fertilizer', n: 4, need: { spore_dust: 3 }, station: 'work' },
   { out: 'fertilizer', n: 3, need: { lily_pad: 6 }, station: 'work' },

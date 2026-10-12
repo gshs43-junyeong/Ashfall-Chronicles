@@ -59,6 +59,7 @@ export const RenderPart: Bag = {
     this.pipe.add('fx', (f: any) => this.drawBossHazards(f.c)); // 보스 기술 예고 · 바닥(game/boss-hazards)
     this.pipe.add('screen', (f: any) => this.rScreen(f));
     this.pipe.add('screen', (f: any) => this.drawStage(f));       // 스킬 무대 — 집중선 · 화면 섬광
+    this.pipe.add('screen', (f: any) => this.rTimeStop(f));       // 멈춘 모래시계(game/trinkets)
     this.pipe.add('screen', (f: any) => this.drawPuzzleHud(f.c));  // 봉인 방 띠
     this.pipe.add('screen', (f: any) => this.fade.draw(f.c, this.W, this.H));   // 잠 · 되살아남 — 화면 맨 위(engine render/fade)
     this.pipe.add('screen', (f: any) => {                                       // F3 성능 판(engine ui/perf)

@@ -1097,7 +1097,10 @@
   "태운다": "Burn",
   "틀에 붓는다": "Pour in mold",
   "퍼 올린다": "Haul up",
-  "흔들대를 움직인다": "Rock the beam"
+  "흔들대를 움직인다": "Rock the beam",
+  "모래가 아직 다 차오르지 않았다 ({s}초)": "The sand hasn't refilled yet ({s}s)",
+  "바늘이 가리킬 곳이 없다 — 쓰러진 자리가 남아 있지 않다": "The needle has nowhere to point — there is no place where you fell",
+  "여명 마을이 되살아난 뒤에야 길이 이어진다": "The way opens only after Dawnhold is restored"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4593,6 +4596,14 @@
   "SKILLS.s_petbond.d": "Unlocks the second pet slot — bring two pets along.",
   "SKILLS.s_quickhands.n": "Quick Hands",
   "SKILLS.s_quickhands.d": "Unlocks one more skill slot (G).",
-  "TILE_DEF.218.n": "Machine body"
+  "TILE_DEF.218.n": "Machine body",
+  "ITEMS.recall_camp.n": "Ember Recall Orb",
+  "ITEMS.recall_camp.d": "Break it to return to the Base Camp square at once. Sealed ash holds an ember inside.",
+  "ITEMS.recall_village.n": "Dawnhold Recall Orb",
+  "ITEMS.recall_village.d": "Break it to return to the Dawnhold square. Works only after the village is restored.",
+  "ITEMS.grave_compass.n": "Retracing Compass",
+  "ITEMS.grave_compass.d": "The needle points to where you last fell. Break it to go there — beside the gravestone holding what you lost.",
+  "ITEMS.stop_glass.n": "Stopped Hourglass",
+  "ITEMS.stop_glass.d": "Turn it over to stop time around you for 1 second — monsters and anything in flight. The sand takes a minute to refill. It is not used up."
  }
 }

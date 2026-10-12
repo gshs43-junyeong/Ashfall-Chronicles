@@ -403,7 +403,8 @@
    "ui/dialogue.storyScene"
   ],
   "{to}에 도착했다": [
-   "game/interact.fn"
+   "game/interact.fn",
+   "game/trinkets.recallTo"
   ],
   "{v}배": [
    "ui.refreshStatSheet"
@@ -1452,6 +1453,9 @@
   "모든 여정이 끝났다.": [
    "game/quests.tellQuest"
   ],
+  "모래가 아직 다 차오르지 않았다 ({s}초)": [
+   "game/trinkets.useStopGlass"
+  ],
   "모으던 것이 흩어졌다": [
    "entity.breakSurge"
   ],
@@ -1564,6 +1568,9 @@
    "ui.buildStatAlloc",
    "ui/tip.compareLine",
    "ui/tip.showTip"
+  ],
+  "바늘이 가리킬 곳이 없다 — 쓰러진 자리가 남아 있지 않다": [
+   "game/trinkets.recallTo"
   ],
   "바늘이 어긋났다 — 꼭대기에 닿을 때 맞춰야 한다": [
    "game/citadel.anchorUse"
@@ -1726,7 +1733,8 @@
    "index.html"
   ],
   "베이스캠프": [
-   "game/interact.useWaystone"
+   "game/interact.useWaystone",
+   "game/trinkets.recallTo"
   ],
   "베이스캠프의 귀환 비석으로 여명 마을에 갈 수 있다.": [
    "game/progress.completeChapter"
@@ -2194,7 +2202,8 @@
    "game.update"
   ],
   "쓰러진 자리": [
-   "game/progress.questTargets"
+   "game/progress.questTargets",
+   "game/trinkets.recallTo"
   ],
   "쓰러진 자리에 비석이 섰다 — 돌아가면 절반을 되찾는다.": [
    "game/life.onDeath"
@@ -2320,10 +2329,14 @@
   "여명 마을": [
    "game/interact.useWaystone",
    "game/progress.completeChapter",
+   "game/trinkets.recallTo",
    "index.html"
   ],
   "여명 마을 — {v}": [
    "ui/craft.refreshTownhall"
+  ],
+  "여명 마을이 되살아난 뒤에야 길이 이어진다": [
+   "game/trinkets.recallTo"
   ],
   "여명의 분수": [
    "game/interact.useFountain"
@@ -5004,6 +5017,14 @@
   "ITEMS.cave_moss.d": "빛이 안 드는 데서 물만 먹고 자랐다. 손에 쥐면 차갑고 축축하다.",
   "ITEMS.moss_poultice.n": "이끼 찜질",
   "ITEMS.moss_poultice.d": "체력 110 회복, 한동안 천천히 아문다. 동굴 이끼 넷을 찧어 만든다.",
+  "ITEMS.recall_camp.n": "잿불 귀환 구슬",
+  "ITEMS.recall_camp.d": "깨뜨리면 그 자리에서 베이스캠프 광장으로 돌아간다. 봉인된 재가 잉걸을 품고 있다.",
+  "ITEMS.recall_village.n": "여명 귀환 구슬",
+  "ITEMS.recall_village.d": "깨뜨리면 여명 마을 광장으로 돌아간다. 마을이 되살아난 뒤에만 길이 이어진다.",
+  "ITEMS.grave_compass.n": "되짚는 나침반",
+  "ITEMS.grave_compass.d": "바늘이 마지막으로 쓰러진 자리를 가리킨다. 깨뜨리면 그곳 — 잃은 것이 묻힌 비석 곁으로 간다.",
+  "ITEMS.stop_glass.n": "멈춘 모래시계",
+  "ITEMS.stop_glass.d": "뒤집으면 1초 동안 둘레의 시간이 멈춘다 — 몹도, 날아오던 것도. 모래가 다시 차오르기까지 1분. 쓰고도 남는다.",
   "ITEMS.pulse_shard.n": "맥박 결정",
   "ITEMS.pulse_shard.d": "깨어난 유적의 벽에서 떨어져 나온 것. 손바닥 위에서 아직 뛴다.",
   "ITEMS.tonic_hush.n": "고요의 물약",

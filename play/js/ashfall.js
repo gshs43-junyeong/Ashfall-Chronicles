@@ -4408,6 +4408,43 @@
       stack: 20,
       d: "체력 110 회복, 한동안 천천히 아문다. 동굴 이끼 넷을 찧어 만든다."
     },
+    /* 잡동사니로 만든 도구 — 귀환 · 되짚기 · 멈춤(game/trinkets) */
+    recall_camp: {
+      n: "잿불 귀환 구슬",
+      i: "🔮",
+      type: "consum",
+      use: { recall: "camp" },
+      stack: 20,
+      price: 600,
+      d: "깨뜨리면 그 자리에서 베이스캠프 광장으로 돌아간다. 봉인된 재가 잉걸을 품고 있다."
+    },
+    recall_village: {
+      n: "여명 귀환 구슬",
+      i: "🔮",
+      type: "consum",
+      use: { recall: "village" },
+      stack: 20,
+      price: 900,
+      d: "깨뜨리면 여명 마을 광장으로 돌아간다. 마을이 되살아난 뒤에만 길이 이어진다."
+    },
+    grave_compass: {
+      n: "되짚는 나침반",
+      i: "🧭",
+      type: "consum",
+      use: { recall: "grave" },
+      stack: 10,
+      price: 700,
+      d: "바늘이 마지막으로 쓰러진 자리를 가리킨다. 깨뜨리면 그곳 — 잃은 것이 묻힌 비석 곁으로 간다."
+    },
+    stop_glass: {
+      n: "멈춘 모래시계",
+      i: "⏳",
+      type: "consum",
+      use: { stop: 1 },
+      stack: 1,
+      price: 4200,
+      d: "뒤집으면 1초 동안 둘레의 시간이 멈춘다 — 몹도, 날아오던 것도. 모래가 다시 차오르기까지 1분. 쓰고도 남는다."
+    },
     pulse_shard: {
       n: "맥박 결정",
       i: "❤",
@@ -6136,6 +6173,11 @@
     { out: "gold_bar", n: 1, need: { sunken_coin: 10 }, station: "forge" },
     { out: "gear_basic", n: 3, need: { maze_cog: 1 }, station: "forge" },
     { out: "circuit", n: 1, need: { conduit_part: 3, copper_bar: 2 }, station: "work" },
+    // 귀환 · 되짚기 · 멈춤 — 유적 몹이 떨구고 쓰임이 없던 재 · 잉걸 · 서리 · 낚시 잡동사니로(game/trinkets)
+    { out: "recall_camp", n: 2, need: { sealed_ash: 2, deep_ember: 2, crystal: 1 }, station: "work" },
+    { out: "recall_village", n: 2, need: { sealed_ash: 1, tide_pearl: 1, river_scale: 3 }, station: "work" },
+    { out: "grave_compass", n: 1, need: { rust_sinker: 2, river_scale: 2, neverthaw: 1 }, station: "work" },
+    { out: "stop_glass", n: 1, need: { neverthaw: 4, maze_cog: 2, rime_seal: 2, gold_bar: 3, crystal: 4 }, station: "forge", lv: 2 },
     { out: "plank", n: 12, need: { heartwood: 1 }, station: "work" },
     { out: "fertilizer", n: 4, need: { spore_dust: 3 }, station: "work" },
     { out: "fertilizer", n: 3, need: { lily_pad: 6 }, station: "work" },
@@ -26415,6 +26457,10 @@
     weird_pan: { k: "pan" },
     weird_umbrella: { k: "umbrella", c: "#5a6a9a" },
     weird_bubble: { k: "bubblewand" },
+    recall_camp: { k: "orb", c: "#ff9a4a", core: "#ffe2a0" },
+    recall_village: { k: "orb", c: "#7fd8e0", core: "#e8fff6" },
+    grave_compass: { k: "compass" },
+    stop_glass: { k: "hourglass" },
     sword_iron: { k: "sword", c: "#b8bcc4", g: "#6a6e76", grip: "#4a3122", w: 4 },
     sword_bone: { k: "sword", c: "#e0d8bd", g: "#9c9280", grip: "#5a4a3a", w: 4, jag: 1 },
     sword_mythril: { k: "sword", c: "#5fd0c0", g: "#2a8a80", grip: "#3a4a52", w: 4, glow: "#5fd0c0" },
@@ -28258,6 +28304,86 @@
     }
   };
   Object.assign(ITEM_PAINT, ItemPaintWeird);
+
+  // src/game/art/items/trinket.ts
+  var trinket_exports = {};
+  __export(trinket_exports, {
+    ItemPaintTrinket: () => ItemPaintTrinket
+  });
+  var ItemPaintTrinket = {
+    orb(H) {
+      const { g, circ: circ2, ell, glow: glow3, stroke, P: P2 } = H, c = H.s.c, core = H.s.core;
+      glow3(16, 14, 13, c, 0.35);
+      P2(9, 24, 14, 3, "#3a3530");
+      P2(11, 22, 10, 2, "#5a524a");
+      P2(9, 24, 14, 1, "#7a7068");
+      circ2(16, 14, 9, sh2(c, 0.45));
+      circ2(16, 14, 8, sh2(c, 0.8));
+      circ2(16, 15, 5, c);
+      circ2(16, 16, 2.6, core);
+      stroke("rgba(255,255,255,.5)", 1, () => {
+        g.moveTo(12, 9);
+        g.lineTo(14, 12);
+        g.lineTo(13, 15);
+      });
+      ell(13, 10, 2.4, 1.4, "rgba(255,255,255,.75)");
+      stroke(sh2(c, 0.35), 1, () => {
+        g.arc(16, 14, 8.5, 0, TAU);
+      });
+    },
+    compass(H) {
+      const { g, circ: circ2, poly, stroke, P: P2 } = H;
+      circ2(16, 17, 11, "#5a4022");
+      circ2(16, 17, 10, "#b08840");
+      circ2(16, 17, 8, "#e8dcc0");
+      P2(14, 4, 4, 3, "#b08840");
+      circ2(16, 4, 2, "#7a5a2a");
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * TAU;
+        P2(16 + Math.cos(a) * 6.5 - 0.5, 17 + Math.sin(a) * 6.5 - 0.5, 1, 1, "#7a6a50");
+      }
+      poly([[16, 17], [21, 11], [17.4, 18.2]], "#c83a2a");
+      poly([[16, 17], [11, 23], [14.6, 15.8]], "#6a6a72");
+      circ2(16, 17, 1.4, "#3a2a1a");
+      stroke("#3a2a1a", 1, () => {
+        g.moveTo(20, 21);
+        g.lineTo(22, 21);
+        g.moveTo(21, 20);
+        g.lineTo(21, 23);
+      });
+    },
+    hourglass(H) {
+      const { g, poly, P: P2, circ: circ2, stroke, glow: glow3 } = H;
+      glow3(16, 16, 12, "#bfe0ff", 0.25);
+      P2(7, 3, 18, 3, "#6a5a3a");
+      P2(7, 26, 18, 3, "#6a5a3a");
+      P2(7, 3, 18, 1, "#a08858");
+      P2(7, 26, 18, 1, "#a08858");
+      P2(8, 6, 2, 20, "#8a7448");
+      P2(22, 6, 2, 20, "#8a7448");
+      poly([[11, 6], [21, 6], [17, 16], [21, 26], [11, 26], [15, 16]], "rgba(200,230,255,.35)");
+      poly([[12, 7], [20, 7], [16.6, 14.4], [15.4, 14.4]], "#e0c27a");
+      poly([[13, 25], [19, 25], [17, 22], [15, 22]], "#c8a860");
+      P2(15.6, 14.4, 0.8, 3, "#e0c27a");
+      stroke("#e8f4ff", 1, () => {
+        g.moveTo(11, 6);
+        g.lineTo(15, 16);
+        g.lineTo(11, 26);
+        g.moveTo(21, 6);
+        g.lineTo(17, 16);
+        g.lineTo(21, 26);
+      });
+      circ2(25, 9, 3, "#9aa4b2");
+      circ2(25, 9, 1.2, "#4a525e");
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6 * TAU;
+        P2(25 + Math.cos(a) * 3.4 - 0.6, 9 + Math.sin(a) * 3.4 - 0.6, 1.2, 1.2, "#9aa4b2");
+      }
+      P2(9, 5, 3, 1, "#ffffff");
+      P2(21, 27, 2, 1, "#ffffff");
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintTrinket);
 
   // src/game/art/items/goods.ts
   var goods_exports = {};
@@ -32254,6 +32380,7 @@
       this.flash = 0;
       this.channel = null;
       this.potionCd = 0;
+      this.stopCd = 0;
       this.shield = 0;
       this.shieldMax = 0;
       this.shieldT = 0;
@@ -44931,17 +45058,20 @@
         p.mineProg = 0;
       }
       this.pathBudget = PATH_BUDGET;
+      this.tickTrinkets(dt);
+      const stop = this.stopped();
       for (let i = this.ents.length - 1; i >= 0; i--) {
         const e = this.ents[i];
         const tp = this.nearestPlayer(e.cx, e.cy);
         if (e.ghost) this.netGhostStep(e, dt);
-        else e.update(dt, w, tp);
+        else if (!(stop && e instanceof Enemy)) e.update(dt, w, tp);
         if (e.elite && !e.dead && Math.random() < 0.2) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * e.w, e.cy + (Math.random() - 0.5) * e.h, "#ffd24a", -34, 0.55));
         if (e.dead) this.ents.splice(i, 1);
         else if (!e.boss && !e.minion && !e.guard && dist2(e.cx, e.cy, tp.cx, tp.cy) > 2400 * 2400) this.ents.splice(i, 1);
       }
       this.entHash.rebuild(this.ents, (e) => e instanceof Enemy && !e.dead);
       for (let i = this.projs.length - 1; i >= 0; i--) {
+        if (stop && this.projs[i].team === "enemy") continue;
         this.projs[i].update(dt, w, p);
         if (this.projs[i].dead) this.projs.splice(i, 1);
       }
@@ -44988,7 +45118,7 @@
       this.updatePulse(dt);
       this.updatePuzzle(dt);
       this.updateCitadel(dt);
-      this.updateBossHazards(dt);
+      if (!this.stopped()) this.updateBossHazards(dt);
       this.updateCaves(dt);
       if (!guest) this.world.fluidTick(dt);
       this.updateFalls(dt);
@@ -50186,6 +50316,138 @@
   };
   mixin(Game.prototype, WeirdFxPart, true);
 
+  // src/game/game/trinkets.ts
+  var trinkets_exports = {};
+  __export(trinkets_exports, {
+    STOP_CD: () => STOP_CD,
+    STOP_T: () => STOP_T,
+    TrinketPart: () => TrinketPart
+  });
+  var STOP_T = 1, STOP_CD = 60;
+  var TrinketPart = {
+    /** 귀환 — 'camp' · 'village' · 'grave'. 옮겼으면 true(구슬을 쓴다), 못 갔으면 false(그대로 둔다) */
+    recallTo(where) {
+      const p = this.player, w = this.world;
+      let tx = 0, ty = 0, to = "";
+      if (where === "camp") {
+        tx = w.spawnX;
+        ty = w.spawnY - 3;
+        to = tr("베이스캠프");
+      } else if (where === "village") {
+        const d = w.dawnCity;
+        if (!this.villageUnlocked || !d) {
+          this.toast(tr("여명 마을이 되살아난 뒤에야 길이 이어진다"), "bad");
+          return false;
+        }
+        tx = d.x0 + d.x1 >> 1;
+        ty = d.gy - 3;
+        to = tr("여명 마을");
+      } else {
+        const m = this.deathMark;
+        if (!m) {
+          this.toast(tr("바늘이 가리킬 곳이 없다 — 쓰러진 자리가 남아 있지 않다"), "bad");
+          return false;
+        }
+        tx = m.x / TS;
+        ty = m.y / TS - 3;
+        to = tr("쓰러진 자리");
+      }
+      if (p.ride) this.dismount(p, "recall");
+      for (let i = 0; i < 26; i++) this.parts.push(new Part(p.cx, p.cy, where === "grave" ? "#c8b07a" : "#9fe8dc", -70, 1));
+      this.placeAt(p, tx, ty);
+      for (let i = 0; i < 34; i++) this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 30, p.cy + (Math.random() - 0.5) * 40, "#ffe6a8", -50, 1.2));
+      this.shake = Math.max(this.shake || 0, 4);
+      this.toast(tr("{to}에 도착했다", { to }), "good");
+      this.sfx("chapter");
+      return true;
+    },
+    /** 플레이어를 칸 (tx, ty) 에 — 카메라도 한 번에 옮긴다(따라가며 휩쓸리지 않게) */
+    placeAt(p, tx, ty) {
+      const { WW: WW2, WH: WH2 } = dimsOf(this.world);
+      p.x = tx * TS - p.w / 2;
+      p.y = ty * TS;
+      p.vx = p.vy = 0;
+      this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
+      this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
+    },
+    /** 멈춘 모래시계 — 몹 · 몹 투사체 · 보스 기술이 STOP_T 초 동안 선다. 쓰는 이는 그대로 움직인다.
+        여럿이면 세계는 호스트가 돌리므로 참가자는 호스트에게 부탁한다(stop). */
+    useStopGlass() {
+      const p = this.player;
+      if ((p.stopCd || 0) > 0) {
+        this.toast(tr("모래가 아직 다 차오르지 않았다 ({s}초)", { s: Math.ceil(p.stopCd) }), "bad");
+        return;
+      }
+      p.stopCd = STOP_CD;
+      if (this.net && this.net.role === "guest") this.netBroadcast({ k: "stop" });
+      this.startTimeStop(p.cx, p.cy);
+      if (this.net && this.net.role === "host") this.netBroadcast({ k: "stop", x: p.cx, y: p.cy });
+      UI5.refreshBag();
+    },
+    startTimeStop(x, y) {
+      this.timeStop = STOP_T;
+      this.stopAt = { x, y, t0: this.time };
+      this.sfx("chapter");
+    },
+    /** 멈춘 동안은 몹 AI · 몹 투사체 · 보스 기술 시계를 건너뛴다(game.ts update 가 묻는다) */
+    stopped() {
+      return (this.timeStop || 0) > 0;
+    },
+    tickTrinkets(dt) {
+      if (this.timeStop > 0) this.timeStop = Math.max(0, this.timeStop - dt);
+      for (const q of this.players) if (q.stopCd > 0) q.stopCd = Math.max(0, q.stopCd - dt);
+    },
+    /** 화면 — 멈춘 동안 푸르스름하게 바래고, 쓴 자리에서 시계 테가 퍼진다 */
+    rTimeStop(f) {
+      const s = this.stopAt;
+      if (!s) return;
+      const age = this.time - s.t0, life = STOP_T + 0.35;
+      if (age > life) {
+        this.stopAt = null;
+        return;
+      }
+      const c = f.c, k = age < 0.12 ? age / 0.12 : age > STOP_T ? 1 - (age - STOP_T) / 0.35 : 1;
+      c.save();
+      c.globalCompositeOperation = "saturation";
+      c.fillStyle = `rgba(0,0,0,${0.85 * k})`;
+      c.fillRect(0, 0, this.W, this.H);
+      c.globalCompositeOperation = "source-over";
+      c.fillStyle = `rgba(70,110,170,${0.18 * k})`;
+      c.fillRect(0, 0, this.W, this.H);
+      const x = s.x - f.camX, y = s.y - f.camY, R = 40 + Math.min(1, age / 0.35) * Math.max(this.W, this.H) * 0.7;
+      c.strokeStyle = `rgba(220,235,255,${0.55 * k})`;
+      c.lineWidth = 3;
+      c.beginPath();
+      c.arc(x, y, R, 0, TAU);
+      c.stroke();
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.arc(x, y, R * 0.6, 0, TAU);
+      c.stroke();
+      c.translate(x, y - 46);
+      c.globalAlpha = k;
+      c.strokeStyle = "#e8f0ff";
+      c.lineWidth = 2;
+      c.beginPath();
+      c.arc(0, 0, 16, 0, TAU);
+      c.stroke();
+      for (let i = 0; i < 12; i++) {
+        const a = i / 12 * TAU;
+        c.beginPath();
+        c.moveTo(Math.cos(a) * 12, Math.sin(a) * 12);
+        c.lineTo(Math.cos(a) * 15, Math.sin(a) * 15);
+        c.stroke();
+      }
+      const hand = -Math.PI / 2 + Math.min(age, STOP_T) / STOP_T * TAU;
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.lineTo(Math.cos(hand) * 11, Math.sin(hand) * 11);
+      c.stroke();
+      c.restore();
+    }
+  };
+  mixin(Game.prototype, TrinketPart, true);
+
   // src/game/game/interact.ts
   var interact_exports = {};
   __export(interact_exports, {
@@ -50596,6 +50858,18 @@
       }
       if (d.use.dragonFeed) {
         this.feedDragon(slot, d.use.dragonFeed);
+        return;
+      }
+      if (d.use.recall) {
+        if (this.recallTo(d.use.recall)) {
+          it.c--;
+          if (it.c <= 0) p.bag[slot] = null;
+          UI5.refreshBag();
+        }
+        return;
+      }
+      if (d.use.stop) {
+        this.useStopGlass();
         return;
       }
       if (d.use.petXp) {
@@ -58069,6 +58343,7 @@
       this.pipe.add("fx", (f) => this.drawBossHazards(f.c));
       this.pipe.add("screen", (f) => this.rScreen(f));
       this.pipe.add("screen", (f) => this.drawStage(f));
+      this.pipe.add("screen", (f) => this.rTimeStop(f));
       this.pipe.add("screen", (f) => this.drawPuzzleHud(f.c));
       this.pipe.add("screen", (f) => this.fade.draw(f.c, this.W, this.H));
       this.pipe.add("screen", (f) => {
@@ -62973,6 +63248,9 @@
         this.deepOffered(m.id, m.L);
       } else if (m.k === "mem" && peer.rp) {
         this.netMemory(m, true, peer.rp);
+      } else if (m.k === "stop" && peer.rp) {
+        this.startTimeStop(peer.rp.cx, peer.rp.cy);
+        this.netBroadcast({ k: "stop", x: peer.rp.cx, y: peer.rp.cy });
       } else if (m.k === "anc" && peer.rp) {
         const o = this.world.objects.find((q) => q.type === "anchor" && q.i === m.i);
         if (o && !(this.world.citadel.anc || [])[m.i]) this.anchorUse(o, peer.rp);
@@ -63143,6 +63421,8 @@
         this.netPuzzle(m);
       } else if (m.k === "anc") {
         this.netAnchor(m);
+      } else if (m.k === "stop") {
+        this.startTimeStop(m.x, m.y);
       } else if (m.k === "mem") {
         this.netMemory(m, false);
       } else if (m.k === "door") {
@@ -63946,7 +64226,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

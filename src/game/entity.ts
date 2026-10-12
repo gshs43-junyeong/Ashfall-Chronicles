@@ -97,7 +97,7 @@ export class Player extends Ent {
   declare gathered: Record<string, any>; declare gold: number; declare hp: number; declare hurtCd: number; declare iframe: number; declare jetGap: number;
   declare jetHeat: number; declare jetOver: boolean; declare jumpHeld: boolean; declare jumpsLeft: number; declare kills: Record<string, any>;
   declare level: number; declare mineProg: number; declare mineTx: number; declare mineTy: number; declare mined: Record<string, any>; declare mp: number; declare mpCd: number;
-  declare name: string; declare potionCd: number; declare prof: Record<string, any>; declare sel: number; declare shield: number; declare shieldMax: number;
+  declare name: string; declare potionCd: number; declare stopCd: number; declare prof: Record<string, any>; declare sel: number; declare shield: number; declare shieldMax: number;
   declare shieldT: number; declare skillPts: number; declare skills: Record<string, any>; declare slots: any[]; declare starFade: number;
   declare starLit: number; declare starOrbits: number; declare statPts: number; declare swing: number; declare swingDir: number; declare swingSide: number; declare combo: number; declare lastSwingT: number;
   declare swingHit: Set<any> | null; declare undyingCd: number; declare xp: number; declare xpNext: number;
@@ -125,7 +125,7 @@ export class Player extends Ent {
     this.mineTx = -1; this.mineTy = -1; this.mineProg = 0;
     this.hurtCd = 0; this.flash = 0;
     this.channel = null;
-    this.potionCd = 0;
+    this.potionCd = 0; this.stopCd = 0;
     /* 특성 — 비전 방벽이 남긴 흡수량과, 불굴이 다시 준비되기까지의 시간 */
     this.shield = 0; this.shieldMax = 0; this.shieldT = 0; this.undyingCd = 0;
     /* 세션 1 진행 표시 — 장을 끝낼 때마다 곁을 도는 조각이 하나씩 는다 */
