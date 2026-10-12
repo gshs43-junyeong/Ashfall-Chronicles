@@ -4504,6 +4504,18 @@
   "ITEMS.mount_boatc.d": "Un esquife con un cajón atado a la popa. Clic derecho a bordo para abrir la bodega (16 casillas); salta para bajar.",
   "ITEMS.wrench.n": "Llave inglesa",
   "ITEMS.wrench.d": "Sostenla y haz clic derecho en una máquina averiada para cambiar un engranaje y repararla. Las máquinas en marcha se averían muy rara vez.",
-  "ENEMIES.wild_horse.n": "Caballo de ceniza salvaje"
+  "ENEMIES.wild_horse.n": "Caballo de ceniza salvaje",
+  "ITEMS.weird_claw.n": "Garra eléctrica",
+  "ITEMS.weird_claw.d": "Al blandirla, el brazo de la garra chisporrotea y se despliega poco a poco hasta diez casillas. Electrocuta todo lo que toca. 1 de carga por golpe.",
+  "ITEMS.weird_boomerang.n": "Bumerán",
+  "ITEMS.weird_boomerang.d": "Lánzalo y vuelve. Golpea todo a la ida y a la vuelta. Rebota antes si choca con una pared.",
+  "ITEMS.weird_leafsword.n": "Espada de hojas",
+  "ITEMS.weird_leafsword.d": "Una espada tejida con hojas. No duele en absoluto. Al blandirla, las hojas revolotean.",
+  "ITEMS.weird_pan.n": "Sartén",
+  "ITEMS.weird_pan.d": "¡CLANG! Lo que golpea sale volando lejos con estrellas girando sobre la cabeza.",
+  "ITEMS.weird_umbrella.n": "Paraguas viejo",
+  "ITEMS.weird_umbrella.d": "Sostenlo al caer y se abre para que bajes despacio. Al blandirlo, pincha.",
+  "ITEMS.weird_bubble.n": "Varita de pompas",
+  "ITEMS.weird_bubble.d": "Sopla pompas que suben despacio. Al tocar algo estallan y salpican alrededor."
  }
 }

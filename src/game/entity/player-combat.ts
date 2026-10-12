@@ -31,6 +31,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     const base = itemDamage(w);
 
     if (d.wc === 'melee') {
+      if (d.sp && this.weirdSwing(d.sp, ang, base)) return;
       this.swing = 0.24; this.swingDir = this.facing; this.swingAng = ang; this.swingHit = new Set();
       this.swingReach = (d.reach || 42) + this.w / 2;
       this.combo = G.time - (this.lastSwingT || -9) < 0.9 ? (this.combo || 0) + 1 : 0; this.lastSwingT = G.time;
@@ -96,7 +97,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
   fireProj(type: string, ang: number, base: any, kind: string, off: any) {
     const dmg = this.scaleDmg(base, kind);
     const crit = this.rollCrit();
-    const spd = type === 'arrow' ? 760 : type === 'star' ? 900 : 560;
+    const spd = type === 'arrow' ? 760 : type === 'star' ? 900 : type === 'bubble' ? 210 : type === 'boomerang' ? 600 : 560;
     /* off 가 있으면 그 거리만큼 겨눈 쪽으로 밀어 낸다 — 활 끝에서 화살이 나가게. */
     let ox = 0, oy = -4;
     if (off) {
@@ -118,6 +119,8 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     if (this.d.poison) p.poison = this.d.poison;
     if (type === 'arrow' || type === 'star') p.grav = type === 'arrow' ? 170 : 60;
     if (type === 'void' || type === 'star') p.pierce = 2;
+    if (type === 'boomerang') { p.pierce = 99; p.life = 3; }
+    if (type === 'bubble') { p.life = 2.6; p.explode = 26; p.dmg *= 0.8; }
     G.projs.push(p);
   },
 

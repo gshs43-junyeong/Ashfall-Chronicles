@@ -52,7 +52,8 @@ export const RenderPart: Bag = {
     this.pipe.add('lighting', (f: any) => this.drawStageDim(f));   // 스킬 무대 어둠 — 빛 다음 · 연출 앞(game/stage-fx)
     this.pipe.add('fx', (f: any) => this.rFx(f));
     this.pipe.add('fx', (f: any) => this.rUtil(f));           // 탐지 파동(game/utility)
-    this.pipe.add('fx', (f: any) => this.rEmotes(f));         // 머리 위 그림말(game/netchat)
+    this.pipe.add('fx', (f: any) => this.rEmotes(f));
+    this.pipe.add('fx', (f: any) => this.rWeird(f));          // 전기 집게 · 우산 · 별(game/weird-fx)         // 머리 위 그림말(game/netchat)
     this.pipe.add('fx', (f: any) => this.drawPuzzle(f.c));    // 봉인 방 장치(game/ruin-puzzle-draw)
     this.pipe.add('fx', (f: any) => this.drawDeepGates(f.c)); // 닫힌 깊은 문(game/ruin-deep)
     this.pipe.add('fx', (f: any) => this.drawBossHazards(f.c)); // 보스 기술 예고 · 바닥(game/boss-hazards)
@@ -411,6 +412,7 @@ export const RenderPart: Bag = {
     for (const pr of this.projs) {
       const st = PROJ_STYLE[pr.type] || PROJ_STYLE.bolt;
       const sx = pr.cx - camX, sy = pr.cy - camY;
+      if (this.drawWeirdProj(c, pr, sx, sy)) continue;             // 부메랑 · 비눗방울(game/weird-fx)
       if (this.spritesOn && PROJ_FX[pr.type]) {
         const fr = Math.floor(this.time * 14) % 4;
         c.save();

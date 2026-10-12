@@ -287,6 +287,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
       }
       if (this.channel.t <= 0) this.channel = null;
     }
+    this.tickWeird(dt);                        // 집게 · 우산(entity/player-weird)
     // 근접 스윙 판정
     if (this.swing > 0 && this.swingHit) {
       const reach = this.swingReach;
@@ -302,6 +303,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
         this.swingHit.add(e);
         const crit = this.rollCrit();
         e.hurt(this.scaleDmg(base, 'str'), crit, this, kb, hitFam(w));
+        if (w && idef(w).sp) this.weirdHit(idef(w).sp!, e);
         G.cutFx(e, this, crit, hitFam(w));
         if (this.d.fire) e.addDot('burn', this.scaleDmg(base, 'str') * 0.12 * this.d.fire, 4);
         if (this.d.frost) e.chill(2.5);

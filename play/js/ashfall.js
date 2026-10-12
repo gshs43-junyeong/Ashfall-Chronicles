@@ -3622,6 +3622,87 @@
     staff_branch: { n: "옹이진 나뭇가지", i: "🪄", type: "weapon", wc: "magic", dmg: 11, spd: 1.8, kb: 2, mana: 4, tier: 0, proj: "bolt", d: "마을 마녀가 쥐여준 물건." },
     staff_flame: { n: "불꽃의 홀", i: "🔥", type: "weapon", wc: "magic", dmg: 26, spd: 1.6, kb: 3, mana: 7, tier: 2, proj: "fire", d: "손잡이가 늘 따뜻하다." },
     staff_frost: { n: "서리 지팡이", i: "❄", type: "weapon", wc: "magic", dmg: 40, spd: 1.9, kb: 2, mana: 8, tier: 3, proj: "frost", d: "맞은 것은 느려진다." },
+    /* --- 특이한 무기 여섯(entity/player-weird) — 잡동사니로 만든다 --- */
+    weird_claw: {
+      n: "전기 집게",
+      i: "🦀",
+      type: "weapon",
+      wc: "melee",
+      sp: "claw",
+      dmg: 30,
+      spd: 1.1,
+      kb: 2,
+      reach: 40,
+      pw: 1,
+      tier: 3,
+      d: "휘두르면 집게 팔이 지지직거리며 서서히 펼쳐져 열 칸까지 뻗는다. 닿는 것마다 감전시킨다. 한 번에 전하 1."
+    },
+    weird_boomerang: {
+      n: "부메랑",
+      i: "🪃",
+      type: "weapon",
+      wc: "ranged",
+      sp: "boomerang",
+      proj: "boomerang",
+      dmg: 20,
+      spd: 1.2,
+      kb: 3,
+      tier: 2,
+      d: "던지면 날아갔다가 돌아온다. 오가며 닿는 것을 다 친다. 벽에 부딪히면 일찍 돌아온다."
+    },
+    weird_leafsword: {
+      n: "잎 검",
+      i: "🍃",
+      type: "weapon",
+      wc: "melee",
+      sp: "leaf",
+      dmg: 1,
+      spd: 2.4,
+      kb: 0,
+      reach: 44,
+      tier: 0,
+      d: "잎을 엮어 만든 검. 하나도 안 아프다. 휘두르면 잎이 흩날린다."
+    },
+    weird_pan: {
+      n: "프라이팬",
+      i: "🍳",
+      type: "weapon",
+      wc: "melee",
+      sp: "pan",
+      dmg: 26,
+      spd: 1.4,
+      kb: 16,
+      reach: 38,
+      tier: 2,
+      d: "쾅! 맞은 것은 멀리 날아가고 머리 위로 별이 돈다."
+    },
+    weird_umbrella: {
+      n: "낡은 우산",
+      i: "☂",
+      type: "weapon",
+      wc: "melee",
+      sp: "umbrella",
+      dmg: 12,
+      spd: 2,
+      kb: 4,
+      reach: 40,
+      tier: 1,
+      d: "손에 들고 떨어지면 펼쳐져 천천히 내려온다. 휘두르면 찌른다."
+    },
+    weird_bubble: {
+      n: "비눗방울 지팡이",
+      i: "🫧",
+      type: "weapon",
+      wc: "magic",
+      sp: "bubble",
+      proj: "bubble",
+      dmg: 16,
+      spd: 2.2,
+      kb: 1,
+      mana: 3,
+      tier: 1,
+      d: "느릿느릿 떠오르는 방울을 분다. 닿으면 톡 터지며 둘레를 적신다."
+    },
     staff_soul: { n: "영혼 수확자", i: "💠", type: "weapon", wc: "magic", dmg: 62, spd: 2.2, kb: 2, mana: 9, tier: 4, proj: "soul", multi: 2 },
     staff_abyss: { n: "심연의 홀", i: "🔮", type: "weapon", wc: "magic", dmg: 110, spd: 2, kb: 4, mana: 14, tier: 6, proj: "void", multi: 2, d: "별이 잠든 자리에서 자란 결정." },
     /* --- 도구 --- */
@@ -6000,6 +6081,19 @@
     /* 개조된 것에서 나온 녹슨 톱니를 쓸 데. */
     { out: "gear_basic", n: 1, need: { rust_gear: 4 }, station: "forge" },
     { out: "wrench", n: 1, need: { iron_bar: 6, rust_gear: 2 }, station: "forge" },
+    /* 특이한 무기 여섯 · 잡동사니 되살리기 — 쓰임 없던 재료(대갈못 · 동력관 조각 · 가라앉은 주화 · 수련잎 · 포자 가루 · 심재 · 미로 톱니) */
+    { out: "weird_claw", n: 1, need: { conduit_part: 6, rivet: 8, copper_bar: 6, battery_cell: 1 }, station: "forge" },
+    { out: "weird_boomerang", n: 1, need: { heartwood: 2, plank: 6, rivet: 2 }, station: "work" },
+    { out: "weird_leafsword", n: 1, need: { leaf_oak: 30, lily_pad: 4, vine_coil: 1 }, station: "work" },
+    { out: "weird_pan", n: 1, need: { iron_bar: 4, rivet: 3, sunken_coin: 5 }, station: "forge" },
+    { out: "weird_umbrella", n: 1, need: { spider_silk: 8, plank: 4, lily_pad: 6 }, station: "work" },
+    { out: "weird_bubble", n: 1, need: { spore_dust: 6, slime_gel: 10, kelp: 6 }, station: "work" },
+    { out: "gold_bar", n: 1, need: { sunken_coin: 10 }, station: "forge" },
+    { out: "gear_basic", n: 3, need: { maze_cog: 1 }, station: "forge" },
+    { out: "circuit", n: 1, need: { conduit_part: 3, copper_bar: 2 }, station: "work" },
+    { out: "plank", n: 12, need: { heartwood: 1 }, station: "work" },
+    { out: "fertilizer", n: 4, need: { spore_dust: 3 }, station: "work" },
+    { out: "fertilizer", n: 3, need: { lily_pad: 6 }, station: "work" },
     { out: "pick_drill", n: 1, need: { blueprint_core: 1, power_core: 12, gear_basic: 20, mythril_bar: 10 }, station: "forge" },
     /* ========== 용광로 ========== */
     { out: "lead_bar", n: 1, need: { lead_ore: 3 }, station: "forge" },
@@ -22284,8 +22378,8 @@
     applyStrata() {
       const { WW: WW2, HELL_Y: HELL_Y2 } = this.dims;
       const nat = naturalWalls(), r = new RNG(this.seed + "_vein");
-      const mix = (x, y, line2) => {
-        const d = y - line2;
+      const mix = (x, y, line3) => {
+        const d = y - line3;
         if (d >= 3) return true;
         if (d < -3) return false;
         return ((x * 73856093 ^ y * 19349663) >>> 0) % 7 < d + 4;
@@ -26152,6 +26246,12 @@
     /* 근접 */
     sword_wood: { k: "sword", c: "#a3814f", g: "#6a4a28", grip: "#4a3122", w: 3 },
     sword_copper: { k: "sword", c: "#c0762f", g: "#8a5520", grip: "#4a3122", w: 3.5 },
+    weird_claw: { k: "claw" },
+    weird_boomerang: { k: "boomerang", c: "#b07a3e" },
+    weird_leafsword: { k: "leafsword" },
+    weird_pan: { k: "pan" },
+    weird_umbrella: { k: "umbrella", c: "#5a6a9a" },
+    weird_bubble: { k: "bubblewand" },
     sword_iron: { k: "sword", c: "#b8bcc4", g: "#6a6e76", grip: "#4a3122", w: 4 },
     sword_bone: { k: "sword", c: "#e0d8bd", g: "#9c9280", grip: "#5a4a3a", w: 4, jag: 1 },
     sword_mythril: { k: "sword", c: "#5fd0c0", g: "#2a8a80", grip: "#3a4a52", w: 4, glow: "#5fd0c0" },
@@ -27902,6 +28002,85 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintGear);
 
+  // src/game/art/items/weird.ts
+  var weird_exports = {};
+  __export(weird_exports, {
+    ItemPaintWeird: () => ItemPaintWeird
+  });
+  function line(H, pts, col, wd) {
+    H.stroke(col, wd, () => {
+      H.g.moveTo(pts[0][0], pts[0][1]);
+      for (const q of pts.slice(1)) H.g.lineTo(q[0], q[1]);
+    });
+  }
+  var ItemPaintWeird = {
+    claw(H) {
+      const { P, poly, circ, glow } = H;
+      glow(16, 7, 8, "#8fd8ff", 0.25);
+      P(13, 22, 6, 8, "#3a3f48");
+      P(13, 22, 6, 1, "#6a7280");
+      P(14, 25, 4, 2, "#ffd24a");
+      line(H, [[16, 22], [11, 16], [17, 11]], "#8a96a6", 2.4);
+      circ(11, 16, 1.6, "#c8d0da");
+      circ(17, 11, 1.6, "#c8d0da");
+      poly([[17, 11], [12, 4], [14, 3], [18, 9]], "#b8c0cc");
+      poly([[17, 11], [22, 4], [20, 3], [16, 9]], "#9aa4b2");
+      line(H, [[13, 5], [16, 7], [15, 8], [18, 6]], "#bff0ff", 1);
+    },
+    boomerang(H) {
+      const c = H.s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.6);
+      line(H, [[6, 26], [16, 16], [27, 9]], dk, 6.5);
+      line(H, [[16, 16], [7, 6]], dk, 6.5);
+      line(H, [[6, 26], [16, 16], [27, 9]], c, 4.5);
+      line(H, [[16, 16], [7, 6]], c, 4.5);
+      line(H, [[7, 24], [15, 16.4], [25, 10]], lt, 1.2);
+      line(H, [[9, 9], [11, 7]], "#e8c060", 2);
+      line(H, [[22, 12], [24, 10.4]], "#e8c060", 2);
+    },
+    leafsword(H) {
+      const { poly, P } = H;
+      const greens = ["#5aa04a", "#6ab85a", "#4a8a3c"];
+      for (let i = 0; i < 4; i++) {
+        const y = 3 + i * 4.5, c = greens[i % 3];
+        poly([[16, y], [20, y + 3], [16, y + 8], [12, y + 3]], c);
+        line(H, [[16, y + 1], [16, y + 7]], "#3a7030", 0.8);
+      }
+      P(15, 22, 2, 8, "#6a4a28");
+      line(H, [[11, 22], [21, 22]], "#4a8a3c", 2);
+    },
+    pan(H) {
+      const { ell, P } = H;
+      P(14.5, 16, 3, 14, "#4a3122");
+      P(14.5, 16, 1, 14, "#6a4a32");
+      ell(16, 9, 9, 8, "#3a3e46");
+      ell(16, 9, 7.4, 6.4, "#22262c");
+      ell(13.5, 7, 2.4, 1.6, "#5a606a");
+    },
+    umbrella(H) {
+      const { poly, P } = H, c = H.s.c;
+      poly([[16, 2], [21, 18], [16, 20], [11, 18]], c);
+      poly([[16, 2], [16, 20], [11, 18]], sh2(c, 1.25));
+      line(H, [[16, 4], [18, 18]], sh2(c, 0.65), 0.8);
+      P(15.4, 19, 1.4, 8, "#5a4030");
+      line(H, [[16, 27], [16, 29], [13, 30], [12, 28]], "#5a4030", 1.6);
+    },
+    bubblewand(H) {
+      const { P, circ, stroke, g } = H;
+      P(15, 13, 2, 17, "#b87ab8");
+      P(15, 13, 1, 17, "#d8a0d8");
+      stroke("#e0b0e8", 2, () => {
+        g.arc(16, 9, 4.6, 0, TAU);
+      });
+      for (const [x, y, r] of [[24, 6, 3], [27, 13, 2], [22, 15, 1.6]]) {
+        stroke("rgba(170,220,255,.9)", 1, () => {
+          g.arc(x, y, r, 0, TAU);
+        });
+        circ(x - r * 0.35, y - r * 0.35, Math.max(0.5, r * 0.3), "#ffffff");
+      }
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintWeird);
+
   // src/game/art/items/goods.ts
   var goods_exports = {};
   __export(goods_exports, {
@@ -28265,9 +28444,9 @@
   var farm_exports = {};
   __export(farm_exports, {
     ItemPaintFarm: () => ItemPaintFarm,
-    line: () => line
+    line: () => line2
   });
-  function line(H, pts, col, wd) {
+  function line2(H, pts, col, wd) {
     H.stroke(col, wd, () => {
       H.g.moveTo(pts[0][0], pts[0][1]);
       for (const q of pts.slice(1)) H.g.lineTo(q[0], q[1]);
@@ -28292,7 +28471,7 @@
     wcan(H) {
       const { P, poly, circ } = H, s = H.s;
       const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.62);
-      line(H, [[9, 12], [9, 7], [18, 7], [18, 12]], dk, 2);
+      line2(H, [[9, 12], [9, 7], [18, 7], [18, 12]], dk, 2);
       poly([[6, 12], [20, 12], [21, 27], [5, 27]], c);
       P(6, 12, 14, 2, lt);
       P(5, 25, 16, 2, dk);
@@ -28306,9 +28485,9 @@
       const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.6);
       poly([[6, 27], [9, 29], [21, 13], [18, 11]], dk);
       poly([[7, 26], [8.6, 27.2], [19.6, 12.6], [18.2, 11.6]], c);
-      line(H, [[8, 25], [18, 12.4]], lt, 0.9);
+      line2(H, [[8, 25], [18, 12.4]], lt, 0.9);
       poly([[15, 13], [20, 4], [24, 5], [22, 9], [26, 11], [28, 7], [29, 12], [23, 17]], c);
-      line(H, [[16, 13], [20.6, 5]], lt, 0.9);
+      line2(H, [[16, 13], [20.6, 5]], lt, 0.9);
       poly([[22, 9], [26, 11], [24.6, 12.6], [21, 10.8]], dk);
       circ(20.5, 14.5, 1.8, dk);
       circ(20.5, 14.5, 0.8, lt);
@@ -28316,7 +28495,7 @@
     bucket(H) {
       const { P, poly, ell } = H, s = H.s;
       const wood = "#8a6440", wlt = "#a67c52", band = s.c;
-      line(H, [[6, 12], [8, 5], [16, 3], [24, 5], [26, 12]], sh2(band, 0.7), 1.6);
+      line2(H, [[6, 12], [8, 5], [16, 3], [24, 5], [26, 12]], sh2(band, 0.7), 1.6);
       poly([[6, 12], [26, 12], [24, 28], [8, 28]], wood);
       for (const x of [11, 16, 21]) P(x, 13, 1, 15, "#6e4e30");
       P(8, 13, 2, 14, wlt);
@@ -31428,7 +31607,9 @@
     PART_WORLD: () => PART_WORLD,
     PHYS_PROJ: () => PHYS_PROJ,
     PROJ_FX: () => PROJ_FX,
+    PROJ_MOVE: () => PROJ_MOVE,
     PROJ_STYLE: () => PROJ_STYLE,
+    PROJ_WALL: () => PROJ_WALL,
     Part: () => Part,
     Pet: () => Pet,
     Player: () => Player,
@@ -32697,7 +32878,9 @@
     wind: { burst: "arcane", ring: "#bcd8f0", rr: 32, parts: 6 },
     star: { burst: "hit", ring: "#ffe08a", rr: 24, parts: 8 },
     pstar: { burst: "stargain", ring: "#ffe08a", rr: 26, parts: 10 },
-    bullet: { burst: "hit", ring: "#ffd86a", rr: 12, parts: 6 }
+    bullet: { burst: "hit", ring: "#ffd86a", rr: 12, parts: 6 },
+    bubble: { burst: "frost", ring: "#bfe6ff", rr: 26, parts: 10 }
+    // 비눗방울 — 톡, 물방울이 튄다(불꽃 폭발로 보였다)
     /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
   };
   var PROJ_STYLE = {
@@ -32715,13 +32898,18 @@
     wind: { c: "#bcd8f0", r: 6, glow: 1 },
     rune: { c: "#9fe8d8", r: 6, glow: 1 },
     void: { c: "#a06fff", r: 7, glow: 1 },
+    boomerang: { c: "#b07a3e", r: 6 },
+    // 그림은 game/weird-fx
+    bubble: { c: "#bfe6ff", r: 7 },
     dark: { c: "#9a5fd8", r: 6, glow: 1 },
     poison: { c: "#8fd06a", r: 5, glow: 1 },
     bone: { c: "#e8e0c8", r: 5 }
   };
   var PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1 };
+  var PROJ_MOVE = {};
+  var PROJ_WALL = {};
   var Proj = class extends Ent {
-    // 쫓는 탄 — 초당 돌 수 있는 각(보스 기술 homing)
+    // 부메랑 · 방울(entity/player-weird)
     constructor(x, y, vx, vy, dmg, team, type) {
       super(x - 6, y - 6, 12, 12);
       this.vx = vx;
@@ -32769,13 +32957,16 @@
           this.vy = Math.sin(na) * sp;
         }
       }
-      this.x += this.vx * dt;
-      this.y += this.vy * dt;
+      const mv = PROJ_MOVE[this.type] && PROJ_MOVE[this.type](this, dt);
+      if (mv === true) return;
+      if (mv !== "hit") this.x += this.vx * dt, this.y += this.vy * dt;
       const st = PROJ_STYLE[this.type];
       if (st && st.glow && Math.random() < dt * 30) app.parts.push(new Part(this.cx, this.cy, st.c, 0, 0.3));
-      if (world.hitSolid(this.x, this.y, this.w, this.h)) {
-        this.impact();
-        return;
+      if (mv !== "hit" && world.hitSolid(this.x, this.y, this.w, this.h)) {
+        if (!(PROJ_WALL[this.type] && PROJ_WALL[this.type](this))) {
+          this.impact();
+          return;
+        }
       }
       if (this.team === "player") {
         let spent = false;
@@ -32831,7 +33022,7 @@
         for (let i = 0; i < 16; i++) app.parts.push(new Part(this.cx, this.cy, st.c, -20, 0.6));
         app.burst(this.cx, this.cy, fx ? fx.burst : "fire", this.explode * 2.2);
         if (fx && fx.ring) app.ringFx(this.cx, this.cy, this.explode, fx.ring, 0.34);
-        app.shake = Math.max(app.shake, 4);
+        if (this.type !== "bubble") app.shake = Math.max(app.shake, 4);
       } else if (this.team === "player" && this.hitSet.size) {
         app.burst(this.cx, this.cy, fx ? fx.burst : "hit", 36);
         if (fx && BURST_SFX[fx.burst]) app.sfxAt(BURST_SFX[fx.burst], this.cx / TS, this.cy / TS);
@@ -33029,6 +33220,7 @@
       this.atkTimer = 1 / itemSpeed(w) / (1 + this.d.spdP);
       const base = itemDamage(w);
       if (d.wc === "melee") {
+        if (d.sp && this.weirdSwing(d.sp, ang, base)) return;
         this.swing = 0.24;
         this.swingDir = this.facing;
         this.swingAng = ang;
@@ -33105,7 +33297,7 @@
     fireProj(type, ang, base, kind, off) {
       const dmg = this.scaleDmg(base, kind);
       const crit = this.rollCrit();
-      const spd = type === "arrow" ? 760 : type === "star" ? 900 : 560;
+      const spd = type === "arrow" ? 760 : type === "star" ? 900 : type === "bubble" ? 210 : type === "boomerang" ? 600 : 560;
       let ox = 0, oy = -4;
       if (off) {
         const cs = Math.cos(ang), sn = Math.sin(ang);
@@ -33128,6 +33320,15 @@
       if (this.d.poison) p.poison = this.d.poison;
       if (type === "arrow" || type === "star") p.grav = type === "arrow" ? 170 : 60;
       if (type === "void" || type === "star") p.pierce = 2;
+      if (type === "boomerang") {
+        p.pierce = 99;
+        p.life = 3;
+      }
+      if (type === "bubble") {
+        p.life = 2.6;
+        p.explode = 26;
+        p.dmg *= 0.8;
+      }
       app.projs.push(p);
     },
     /* ---- 스킬 ---- */
@@ -33550,6 +33751,115 @@
   };
   mixin(Player.prototype, PlayerRide, true);
 
+  // src/game/entity/player-weird.ts
+  var player_weird_exports = {};
+  __export(player_weird_exports, {
+    CLAW_BACK: () => CLAW_BACK,
+    CLAW_MAX: () => CLAW_MAX,
+    CLAW_OUT: () => CLAW_OUT,
+    PlayerWeird: () => PlayerWeird,
+    UMB_FALL: () => UMB_FALL
+  });
+  var CLAW_MAX = 10 * TS, CLAW_OUT = 0.55, CLAW_BACK = 0.3;
+  var UMB_FALL = 90;
+  var PlayerWeird = {
+    /** 휘두르는 순간 — 갈래마다 다른 일(doAttack 이 부른다). true 면 보통 휘두르기를 건너뛴다 */
+    weirdSwing(sp, ang, base) {
+      if (sp === "claw") {
+        this.claw = { t: 0, ang, dmg: this.scaleDmg(base, "str"), hit: /* @__PURE__ */ new Set(), len: 0, max: 0, zap: 0 };
+        this.swing = 0;
+        app.sfx("zap", 0.9);
+        return true;
+      }
+      if (sp === "leaf") for (let i = 0; i < 10; i++)
+        app.parts.push(new Part(this.cx + Math.cos(ang) * 24, this.cy + Math.sin(ang) * 18, i % 2 ? "#6ab85a" : "#4a8a3c", -30, 0.9, { g: 0.25, drag: 0.9, sq: 0.5 }));
+      return false;
+    },
+    /** 근접 판정에 닿은 순간(player-move 의 휘두르기 판정) */
+    weirdHit(sp, e) {
+      if (sp === "pan") {
+        app.sfx("mat_metal", 1.3);
+        app.shake = Math.max(app.shake, 3);
+        e.vy = Math.min(e.vy, -260);
+        e.panT = 1.2;
+        for (let i = 0; i < 6; i++) app.parts.push(new Part(e.cx, e.y, "#ffe08a", -80, 0.5));
+      }
+    },
+    /** 매 프레임 — 펼친 집게 · 우산 활공 */
+    tickWeird(dt) {
+      const w = this.weapon(), sp = w && idef(w).sp;
+      this.umbOpen = false;
+      if (sp === "umbrella" && !this.onGround && !this.swimming && !this.jetting && this.vy > UMB_FALL) {
+        this.vy = UMB_FALL;
+        this.umbOpen = true;
+        if (Math.random() < dt * 6) app.parts.push(new Part(this.cx, this.y - 14, "#c8d4f0", -10, 0.5));
+      }
+      const k = this.claw;
+      if (!k) return;
+      k.t += dt;
+      const cs = Math.cos(k.ang), sn = Math.sin(k.ang), ox = this.cx, oy = this.cy - 4;
+      if (k.t < CLAW_OUT) {
+        const want = CLAW_MAX * (1 - Math.pow(1 - k.t / CLAW_OUT, 2));
+        let L = k.max;
+        for (let d = k.max; d <= want; d += 4) {
+          if (app.world.solid(Math.floor((ox + cs * d) / TS), Math.floor((oy + sn * d) / TS))) break;
+          L = d;
+        }
+        k.max = L;
+        k.len = L;
+      } else k.len = k.max * clamp(1 - (k.t - CLAW_OUT) / CLAW_BACK, 0, 1);
+      if (this === app.me) for (const e of app.ents) {
+        if (!(e instanceof Enemy) || e.dead || k.hit.has(e)) continue;
+        const ex = e.cx - ox, ey = e.cy - oy, along = ex * cs + ey * sn;
+        if (along < 0 || along > k.len + e.w / 2) continue;
+        if (Math.abs(-ex * sn + ey * cs) > e.h / 2 + 8) continue;
+        k.hit.add(e);
+        const crit = this.rollCrit();
+        e.hurt(k.dmg, crit, this, 2, null);
+        e.chill(0.8);
+        for (let i = 0; i < 6; i++) app.parts.push(new Part(e.cx, e.cy, i % 2 ? "#bff0ff" : "#5ad8ff", -20, 0.3, { glow: 1 }));
+        if (k.zap++ < 4) app.sfx("zap", 1.1 + k.zap * 0.08);
+      }
+      if (k.t >= CLAW_OUT + CLAW_BACK) this.claw = null;
+    }
+  };
+  mixin(Player.prototype, PlayerWeird, true);
+  PROJ_MOVE.boomerang = (p, dt) => {
+    p.bt = (p.bt || 0) + dt;
+    const o = app.me;
+    if (p.bt > 0.42 && o) {
+      if (!p.back) {
+        p.back = 1;
+        p.hitSet.clear();
+      }
+      const dx = o.cx - p.cx, dy = o.cy - p.cy, d = Math.hypot(dx, dy) || 1;
+      p.vx = lerp(p.vx, dx / d * 640, dt * 7);
+      p.vy = lerp(p.vy, dy / d * 640, dt * 7);
+      if (d < 22) {
+        p.dead = true;
+        app.sfx("swing", 1.3);
+        return true;
+      }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      return "hit";
+    }
+    p.vx *= 1 - dt * 1.5;
+    p.vy *= 1 - dt * 1.5;
+    return false;
+  };
+  PROJ_WALL.boomerang = (p) => {
+    p.bt = Math.max(p.bt || 0, 0.42);
+    return true;
+  };
+  PROJ_MOVE.bubble = (p, dt) => {
+    p.bt = (p.bt || 0) + dt;
+    p.vx *= 1 - dt * 1.6;
+    p.vy = p.vy * (1 - dt * 1.6) - 46 * dt;
+    p.x += Math.sin(p.bt * 7 + p.vol) * 18 * dt;
+    return false;
+  };
+
   // src/game/entity/player-move.ts
   var player_move_exports = {};
   __export(player_move_exports, {
@@ -33855,6 +34165,7 @@
         }
         if (this.channel.t <= 0) this.channel = null;
       }
+      this.tickWeird(dt);
       if (this.swing > 0 && this.swingHit) {
         const reach = this.swingReach;
         const w = this.weapon();
@@ -33869,6 +34180,7 @@
           this.swingHit.add(e);
           const crit = this.rollCrit();
           e.hurt(this.scaleDmg(base, "str"), crit, this, kb, hitFam(w));
+          if (w && idef(w).sp) this.weirdHit(idef(w).sp, e);
           app.cutFx(e, this, crit, hitFam(w));
           if (this.d.fire) e.addDot("burn", this.scaleDmg(base, "str") * 0.12 * this.d.fire, 4);
           if (this.d.frost) e.chill(2.5);
@@ -34515,8 +34827,8 @@
       }
       app.ringFx(this.cx, this.cy, Math.max(this.w, this.h) * 1.6, "#ffe08a", 0.55);
       app.sfxAt("chapter", this.cx / TS, this.cy / TS);
-      const line2 = (BOSS_LINES[this.type] || {})[ph];
-      if (line2) app.bossLine(this.def.n, line2);
+      const line3 = (BOSS_LINES[this.type] || {})[ph];
+      if (line3) app.bossLine(this.def.n, line3);
       const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
       switch (this.def.ai) {
         case "b_slime":
@@ -44846,7 +45158,7 @@
         const k = s.t / s.max, x = s.x - camX, y = s.y - camY;
         if (s.k === "band") {
           const a = SIG_FX.rain.a * Math.min(1, 0.35 + k);
-          const line2 = () => {
+          const line3 = () => {
             c.beginPath();
             c.moveTo(x - s.hw, y);
             c.lineTo(x + s.hw, y);
@@ -44869,11 +45181,11 @@
           c.globalAlpha = a * 0.8;
           c.strokeStyle = "#12100c";
           c.lineWidth = 4.5;
-          line2();
+          line3();
           c.globalAlpha = a;
           c.strokeStyle = s.c;
           c.lineWidth = 2;
-          line2();
+          line3();
           c.lineCap = "butt";
         } else if (s.k === "sigil") {
           const a = SIG_FX.wolf.a * Math.min(1, k * 1.6), im = Sprites.vfxArt(s.art || "sigil", s.c);
@@ -47846,6 +48158,182 @@
     }
   };
   mixin(Game.prototype, RepairPart, true);
+
+  // src/game/game/weird-fx.ts
+  var weird_fx_exports = {};
+  __export(weird_fx_exports, {
+    WeirdFxPart: () => WeirdFxPart
+  });
+  var WeirdFxPart = {
+    /** 투사체 그림 — 그렸으면 true(render.ts 투사체 고리가 부른다) */
+    drawWeirdProj(c, pr, sx, sy) {
+      if (pr.type === "boomerang") {
+        c.save();
+        c.translate(sx, sy);
+        c.rotate(this.time * 22);
+        c.fillStyle = "#b07a3e";
+        c.strokeStyle = "#5a3a1c";
+        c.lineWidth = 1;
+        c.beginPath();
+        c.moveTo(-9, 2);
+        c.quadraticCurveTo(0, -5, 9, 2);
+        c.lineTo(7, 4);
+        c.quadraticCurveTo(0, -1.5, -7, 4);
+        c.closePath();
+        c.fill();
+        c.stroke();
+        c.fillStyle = "#e8c060";
+        c.fillRect(-6, 1, 2, 1.5);
+        c.fillRect(4, 1, 2, 1.5);
+        c.restore();
+        return true;
+      }
+      if (pr.type === "bubble") {
+        const r = 6 + Math.sin(this.time * 9 + pr.vol) * 0.8;
+        c.save();
+        c.fillStyle = "rgba(170,220,255,.18)";
+        c.beginPath();
+        c.arc(sx, sy, r, 0, TAU);
+        c.fill();
+        c.strokeStyle = "rgba(200,236,255,.85)";
+        c.lineWidth = 1.2;
+        c.stroke();
+        c.strokeStyle = "rgba(255,170,230,.5)";
+        c.beginPath();
+        c.arc(sx, sy, r - 1.5, 0.6, 2.2);
+        c.stroke();
+        c.fillStyle = "#fff";
+        c.beginPath();
+        c.arc(sx - r * 0.4, sy - r * 0.4, 1.4, 0, TAU);
+        c.fill();
+        c.restore();
+        return true;
+      }
+      return false;
+    },
+    /** 연출 단계(fx) — 집게 팔 · 우산 · 별 */
+    rWeird(f) {
+      const { c, camX, camY } = f;
+      for (const p of this.players) {
+        if (p.claw) this.drawClaw(c, p, camX, camY);
+        if (p.umbOpen) this.drawUmbrella(c, p, camX, camY);
+      }
+      for (const e of this.ents) {
+        if (!(e instanceof Enemy) || !(e.panT > 0)) continue;
+        e.panT -= 1 / 60;
+        const x = e.cx - camX, y = e.y - camY - 6;
+        c.save();
+        c.fillStyle = "#ffe08a";
+        for (let i = 0; i < 3; i++) {
+          const a = this.time * 6 + i * TAU / 3, sx = x + Math.cos(a) * 10, sy = y + Math.sin(a) * 3;
+          c.beginPath();
+          for (let k = 0; k < 5; k++) {
+            const b = k * TAU / 5 * 2 - Math.PI / 2;
+            c.lineTo(sx + Math.cos(b) * 3, sy + Math.sin(b) * 3);
+          }
+          c.fill();
+        }
+        c.restore();
+      }
+    },
+    /** 접이식 팔 — 마디마다 꺾여 펼쳐지고, 팔을 따라 전기가 튄다 · 끝에 집게 */
+    drawClaw(c, p, camX, camY) {
+      const k = p.claw, cs = Math.cos(k.ang), sn = Math.sin(k.ang);
+      const ox = p.cx - camX + cs * 8, oy = p.cy - 4 - camY + sn * 8, L = Math.max(4, k.len);
+      const n = Math.max(2, Math.round(L / 26)), seg = L / n;
+      const fold = 1 - Math.min(1, L / 220);
+      const pts = [[ox, oy]];
+      for (let i = 1; i <= n; i++) {
+        const off = (i % 2 ? 1 : -1) * seg * 0.45 * fold * (i < n ? 1 : 0);
+        pts.push([ox + cs * seg * i - sn * off, oy + sn * seg * i + cs * off]);
+      }
+      c.save();
+      c.lineCap = "round";
+      c.strokeStyle = "#3a3f48";
+      c.lineWidth = 5;
+      c.beginPath();
+      pts.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]));
+      c.stroke();
+      c.strokeStyle = "#a8b2c0";
+      c.lineWidth = 2.5;
+      c.stroke();
+      c.fillStyle = "#d8e0ea";
+      for (const q of pts.slice(1, -1)) {
+        c.beginPath();
+        c.arc(q[0], q[1], 2.6, 0, TAU);
+        c.fill();
+      }
+      for (let s = 0; s < 2; s++) {
+        c.strokeStyle = s ? "rgba(191,240,255,.9)" : "rgba(90,216,255,.7)";
+        c.lineWidth = s ? 1 : 2;
+        c.beginPath();
+        for (let i = 0; i <= n * 3; i++) {
+          const t = i / (n * 3), x = ox + cs * L * t, y = oy + sn * L * t, j = (Math.random() - 0.5) * 9;
+          if (i) c.lineTo(x - sn * j, y + cs * j);
+          else c.moveTo(x, y);
+        }
+        c.stroke();
+      }
+      const tx = ox + cs * L, ty = oy + sn * L, open = 0.45 + 0.35 * Math.sin(this.time * 30);
+      c.translate(tx, ty);
+      c.rotate(k.ang);
+      c.fillStyle = "#c8d0da";
+      c.strokeStyle = "#3a3f48";
+      c.lineWidth = 1;
+      for (const s of [-1, 1]) {
+        c.save();
+        c.rotate(s * open);
+        c.beginPath();
+        c.moveTo(0, 0);
+        c.lineTo(11, s * 2);
+        c.lineTo(13, s * 6);
+        c.lineTo(9, s * 4);
+        c.lineTo(2, s * 3);
+        c.closePath();
+        c.fill();
+        c.stroke();
+        c.restore();
+      }
+      c.fillStyle = "rgba(160,230,255,.35)";
+      c.beginPath();
+      c.arc(8, 0, 9, 0, TAU);
+      c.fill();
+      c.restore();
+    },
+    /** 펼친 우산 — 머리 위 반원 천 · 살 */
+    drawUmbrella(c, p, camX, camY) {
+      const x = p.cx - camX + p.facing * 3, y = p.y - camY - 6, R = 18;
+      c.save();
+      c.strokeStyle = "#5a4030";
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.moveTo(x, y);
+      c.lineTo(x - p.facing * 2, y + 22);
+      c.stroke();
+      c.fillStyle = "#5a6a9a";
+      c.beginPath();
+      c.arc(x, y, R, Math.PI, 0);
+      c.lineTo(x + R, y);
+      for (let i = 4; i >= 0; i--) c.quadraticCurveTo(x - R + (i + 0.5) * R * 2 / 5, y - 4, x - R + i * R * 2 / 5, y);
+      c.fill();
+      c.fillStyle = "#7a8ac0";
+      c.beginPath();
+      c.arc(x - 3, y - 2, R - 5, Math.PI * 1.05, Math.PI * 1.55);
+      c.lineTo(x - 3, y - 2);
+      c.fill();
+      c.strokeStyle = "#3a4468";
+      c.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const a = Math.PI + i * Math.PI / 4;
+        c.beginPath();
+        c.moveTo(x, y - 1);
+        c.lineTo(x + Math.cos(a) * R, y + Math.sin(a) * R);
+        c.stroke();
+      }
+      c.restore();
+    }
+  };
+  mixin(Game.prototype, WeirdFxPart, true);
 
   // src/game/game/interact.ts
   var interact_exports = {};
@@ -55724,6 +56212,7 @@
       this.pipe.add("fx", (f) => this.rFx(f));
       this.pipe.add("fx", (f) => this.rUtil(f));
       this.pipe.add("fx", (f) => this.rEmotes(f));
+      this.pipe.add("fx", (f) => this.rWeird(f));
       this.pipe.add("fx", (f) => this.drawPuzzle(f.c));
       this.pipe.add("fx", (f) => this.drawDeepGates(f.c));
       this.pipe.add("fx", (f) => this.drawBossHazards(f.c));
@@ -56122,6 +56611,7 @@
       for (const pr of this.projs) {
         const st = PROJ_STYLE[pr.type] || PROJ_STYLE.bolt;
         const sx = pr.cx - camX, sy = pr.cy - camY;
+        if (this.drawWeirdProj(c, pr, sx, sy)) continue;
         if (this.spritesOn && PROJ_FX[pr.type]) {
           const fr = Math.floor(this.time * 14) % 4;
           c.save();
@@ -58243,7 +58733,7 @@
           c.scale(p.facing > 0 ? 1 : -1, 1);
           c.rotate(-0.4);
           c.lineCap = "round";
-          const line2 = (col, w) => {
+          const line3 = (col, w) => {
             c.strokeStyle = col;
             c.lineWidth = w;
             c.beginPath();
@@ -58251,8 +58741,8 @@
             c.lineTo(L.len, 0);
             c.stroke();
           };
-          line2("#241c14", L.w + 1.6);
-          line2(L.c, L.w);
+          line3("#241c14", L.w + 1.6);
+          line3(L.c, L.w);
           c.strokeStyle = L.grip;
           c.lineWidth = L.w + 1.2;
           c.beginPath();
@@ -61597,7 +62087,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, repair_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

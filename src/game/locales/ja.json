@@ -4504,6 +4504,18 @@
   "ITEMS.mount_boatc.d": "艫に木箱を縛りつけた小舟。乗っている間に右クリックで荷室（16枠）が開き、ジャンプで降りる。",
   "ITEMS.wrench.n": "レンチ",
   "ITEMS.wrench.d": "手に持って故障した機械を右クリックすると、歯車を一つ交換して直す。稼働中の機械はごくまれに故障する。",
-  "ENEMIES.wild_horse.n": "野生の灰色馬"
+  "ENEMIES.wild_horse.n": "野生の灰色馬",
+  "ITEMS.weird_claw.n": "電撃クロー",
+  "ITEMS.weird_claw.d": "振るとアームがバチバチと音を立てながらゆっくり伸び、最大10マスまで届く。触れたものすべてを感電させる。1振りで電荷1。",
+  "ITEMS.weird_boomerang.n": "ブーメラン",
+  "ITEMS.weird_boomerang.d": "投げると戻ってくる。行きも帰りも触れたものを全部打つ。壁に当たると早めに戻る。",
+  "ITEMS.weird_leafsword.n": "葉っぱの剣",
+  "ITEMS.weird_leafsword.d": "葉を編んで作った剣。まったく痛くない。振ると葉が舞い散る。",
+  "ITEMS.weird_pan.n": "フライパン",
+  "ITEMS.weird_pan.d": "ガン！当たったものは遠くへ吹き飛び、頭の上に星が回る。",
+  "ITEMS.weird_umbrella.n": "古い傘",
+  "ITEMS.weird_umbrella.d": "手に持って落ちると開いて、ゆっくり降りられる。振ると突く。",
+  "ITEMS.weird_bubble.n": "シャボン玉の杖",
+  "ITEMS.weird_bubble.d": "ゆっくり浮かぶシャボン玉を吹く。触れるとはじけて周りを濡らす。"
  }
 }

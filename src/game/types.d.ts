@@ -27,7 +27,7 @@ interface TileDef {
 /** ITEMS 한 항목 — type 으로 갈래를 가른다(weapon · armor · tool · block · …). */
 interface ItemDef {
   n: string; i?: string; d?: string; type?: string; tier?: number;
-  dmg?: number; spd?: number; kb?: number; reach?: number; wc?: string;
+  dmg?: number; spd?: number; kb?: number; reach?: number; wc?: string; sp?: string;   // sp — 특이한 무기의 갈래(entity/player-weird)
   lifesteal?: number; fire?: number; proj?: string; multi?: number; mana?: number; power?: number; lvReq?: number; chop?: number;
   fishWait?: number; fishBonus?: number; fishItemChance?: number; use?: Record<string, any>; cd?: number; stack?: number;
   b?: Record<string, any>; price?: number; slot?: string; def?: number; slots?: number; instant?: number; fixed?: number; det?: string;

@@ -4504,6 +4504,18 @@
   "ITEMS.mount_boatc.d": "Ein Kahn mit einer Kiste am Heck. Rechtsklick an Bord öffnet den Laderaum (16 Plätze); springen, um auszusteigen.",
   "ITEMS.wrench.n": "Schraubenschlüssel",
   "ITEMS.wrench.d": "In der Hand halten und eine kaputte Maschine rechtsklicken, um ein Zahnrad zu tauschen und sie zu reparieren. Laufende Maschinen fallen sehr selten aus.",
-  "ENEMIES.wild_horse.n": "Wildes Aschepferd"
+  "ENEMIES.wild_horse.n": "Wildes Aschepferd",
+  "ITEMS.weird_claw.n": "Schockklaue",
+  "ITEMS.weird_claw.d": "Beim Schwingen entfaltet sich der Klauenarm knisternd und reicht bis zu zehn Felder weit. Er schockt alles, was er berührt. 1 Ladung pro Schwung.",
+  "ITEMS.weird_boomerang.n": "Bumerang",
+  "ITEMS.weird_boomerang.d": "Wirf ihn und er kommt zurück. Trifft alles auf dem Hin- und Rückweg. Prallt an Wänden früher zurück.",
+  "ITEMS.weird_leafsword.n": "Blattschwert",
+  "ITEMS.weird_leafsword.d": "Ein aus Blättern geflochtenes Schwert. Es tut überhaupt nicht weh. Beim Schwingen wirbeln Blätter.",
+  "ITEMS.weird_pan.n": "Bratpfanne",
+  "ITEMS.weird_pan.d": "KLONG! Was getroffen wird, fliegt weit weg und sieht Sterne.",
+  "ITEMS.weird_umbrella.n": "Alter Regenschirm",
+  "ITEMS.weird_umbrella.d": "Halte ihn beim Fallen, dann öffnet er sich und du schwebst langsam hinab. Beim Schwingen sticht er.",
+  "ITEMS.weird_bubble.n": "Seifenblasenstab",
+  "ITEMS.weird_bubble.d": "Bläst Blasen, die langsam nach oben treiben. Bei Berührung platzen sie und bespritzen alles ringsum."
  }
 }

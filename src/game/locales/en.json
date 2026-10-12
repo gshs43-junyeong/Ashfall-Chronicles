@@ -4504,6 +4504,18 @@
   "ITEMS.mount_boatc.d": "A skiff with a crate lashed to the stern. Right-click while aboard to open the hold (16 slots); jump to get off.",
   "ITEMS.wrench.n": "Wrench",
   "ITEMS.wrench.d": "Hold it and right-click a broken machine to swap in one gear and fix it. Working machines break down very rarely.",
-  "ENEMIES.wild_horse.n": "Wild Ash Horse"
+  "ENEMIES.wild_horse.n": "Wild Ash Horse",
+  "ITEMS.weird_claw.n": "Shock Claw",
+  "ITEMS.weird_claw.d": "Swing it and the claw arm crackles as it slowly unfolds, reaching up to ten tiles. It shocks everything it touches. 1 charge per swing.",
+  "ITEMS.weird_boomerang.n": "Boomerang",
+  "ITEMS.weird_boomerang.d": "Throw it and it comes back. Hits everything on the way out and on the way back. Bounces back early off walls.",
+  "ITEMS.weird_leafsword.n": "Leaf Sword",
+  "ITEMS.weird_leafsword.d": "A sword woven from leaves. It doesn't hurt at all. Leaves scatter when you swing it.",
+  "ITEMS.weird_pan.n": "Frying Pan",
+  "ITEMS.weird_pan.d": "CLANG! Whatever it hits flies far away with stars circling its head.",
+  "ITEMS.weird_umbrella.n": "Old Umbrella",
+  "ITEMS.weird_umbrella.d": "Hold it while falling and it opens so you drift down slowly. Swing it to poke.",
+  "ITEMS.weird_bubble.n": "Bubble Wand",
+  "ITEMS.weird_bubble.d": "Blows bubbles that drift slowly upward. They pop on contact and splash everything around."
  }
 }

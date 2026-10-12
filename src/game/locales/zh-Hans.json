@@ -4504,6 +4504,18 @@
   "ITEMS.mount_boatc.d": "船尾绑着木箱的小舟。乘坐时右键打开船舱（16格），跳跃即可下船。",
   "ITEMS.wrench.n": "扳手",
   "ITEMS.wrench.d": "手持并右键坏掉的机器，换上一个齿轮即可修好。运转中的机器极少会出故障。",
-  "ENEMIES.wild_horse.n": "野生灰鬃马"
+  "ENEMIES.wild_horse.n": "野生灰鬃马",
+  "ITEMS.weird_claw.n": "电击钳",
+  "ITEMS.weird_claw.d": "挥动时钳臂噼啪作响、缓缓展开，最远可伸到十格。碰到的东西都会被电击。每挥一次消耗电荷1。",
+  "ITEMS.weird_boomerang.n": "回旋镖",
+  "ITEMS.weird_boomerang.d": "扔出去会飞回来。去程和回程都会击中碰到的东西。撞墙会提前返回。",
+  "ITEMS.weird_leafsword.n": "叶之剑",
+  "ITEMS.weird_leafsword.d": "用树叶编成的剑。一点也不疼。挥动时叶片纷飞。",
+  "ITEMS.weird_pan.n": "平底锅",
+  "ITEMS.weird_pan.d": "咣！被打中的东西会飞得老远，头上还冒着星星。",
+  "ITEMS.weird_umbrella.n": "旧雨伞",
+  "ITEMS.weird_umbrella.d": "拿在手上下落时会撑开，让你慢慢飘下。挥动时可以戳刺。",
+  "ITEMS.weird_bubble.n": "泡泡魔杖",
+  "ITEMS.weird_bubble.d": "吹出慢慢上浮的泡泡。碰到就啪地破裂，溅湿周围。"
  }
 }

@@ -168,6 +168,19 @@ export const RECIPES: RecipeDef[] = [
   /* 개조된 것에서 나온 녹슨 톱니를 쓸 데. */
   { out: 'gear_basic', n: 1, need: { rust_gear: 4 }, station: 'forge' },
   { out: 'wrench', n: 1, need: { iron_bar: 6, rust_gear: 2 }, station: 'forge' },
+  /* 특이한 무기 여섯 · 잡동사니 되살리기 — 쓰임 없던 재료(대갈못 · 동력관 조각 · 가라앉은 주화 · 수련잎 · 포자 가루 · 심재 · 미로 톱니) */
+  { out: 'weird_claw', n: 1, need: { conduit_part: 6, rivet: 8, copper_bar: 6, battery_cell: 1 }, station: 'forge' },
+  { out: 'weird_boomerang', n: 1, need: { heartwood: 2, plank: 6, rivet: 2 }, station: 'work' },
+  { out: 'weird_leafsword', n: 1, need: { leaf_oak: 30, lily_pad: 4, vine_coil: 1 }, station: 'work' },
+  { out: 'weird_pan', n: 1, need: { iron_bar: 4, rivet: 3, sunken_coin: 5 }, station: 'forge' },
+  { out: 'weird_umbrella', n: 1, need: { spider_silk: 8, plank: 4, lily_pad: 6 }, station: 'work' },
+  { out: 'weird_bubble', n: 1, need: { spore_dust: 6, slime_gel: 10, kelp: 6 }, station: 'work' },
+  { out: 'gold_bar', n: 1, need: { sunken_coin: 10 }, station: 'forge' },
+  { out: 'gear_basic', n: 3, need: { maze_cog: 1 }, station: 'forge' },
+  { out: 'circuit', n: 1, need: { conduit_part: 3, copper_bar: 2 }, station: 'work' },
+  { out: 'plank', n: 12, need: { heartwood: 1 }, station: 'work' },
+  { out: 'fertilizer', n: 4, need: { spore_dust: 3 }, station: 'work' },
+  { out: 'fertilizer', n: 3, need: { lily_pad: 6 }, station: 'work' },
   { out: 'pick_drill', n: 1, need: { blueprint_core: 1, power_core: 12, gear_basic: 20, mythril_bar: 10 }, station: 'forge' },
 
   /* ========== 용광로 ========== */

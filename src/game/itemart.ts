@@ -15,6 +15,8 @@ export const ISPEC: Bag = {
   /* 근접 */
   sword_wood: { k: 'sword', c: '#a3814f', g: '#6a4a28', grip: '#4a3122', w: 3 },
   sword_copper: { k: 'sword', c: '#c0762f', g: '#8a5520', grip: '#4a3122', w: 3.5 },
+  weird_claw: { k: 'claw' }, weird_boomerang: { k: 'boomerang', c: '#b07a3e' }, weird_leafsword: { k: 'leafsword' },
+  weird_pan: { k: 'pan' }, weird_umbrella: { k: 'umbrella', c: '#5a6a9a' }, weird_bubble: { k: 'bubblewand' },
   sword_iron: { k: 'sword', c: '#b8bcc4', g: '#6a6e76', grip: '#4a3122', w: 4 },
   sword_bone: { k: 'sword', c: '#e0d8bd', g: '#9c9280', grip: '#5a4a3a', w: 4, jag: 1 },
   sword_mythril: { k: 'sword', c: '#5fd0c0', g: '#2a8a80', grip: '#3a4a52', w: 4, glow: '#5fd0c0' },

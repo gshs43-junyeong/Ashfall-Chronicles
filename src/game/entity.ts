@@ -85,6 +85,8 @@ export class Player extends Ent {
   declare climbOut: (...a: any[]) => any; declare fireProj: (...a: any[]) => any; declare punch: (...a: any[]) => any;
   declare rollCrit: (...a: any[]) => any; declare scaleDmg: (...a: any[]) => any; declare updateOxygen: (...a: any[]) => any;
   declare rideStep: (dt: number, world: World, input: Bag) => void; declare afterMove: (dt: number, world: World) => void;
+  declare weirdSwing: (sp: string, ang: number, base: number) => boolean; declare weirdHit: (sp: string, e: any) => void; declare tickWeird: (dt: number) => void;
+  declare claw: Bag | null; declare umbOpen: boolean;   // 전기 집게 · 펼친 우산(entity/player-weird)
   declare volley: number;
   declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare netShield: number; declare _hid: string; declare _wid: string; declare _hurtAt: number; declare petEnts: any[]; declare _pt: string;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
@@ -420,7 +422,7 @@ export class Enemy extends Ent {
   declare chill: (t: number) => void; declare empower: (dur: number, mult: number) => void; declare mobSkills: (dt: number, player: any, seen: boolean, dd: number) => void;
   declare allyTarget: (id: string, S: Bag) => any; declare fireSkill: (id: string, player: any, tgt: any) => void;
   /* 유적 고유 몬스터의 규칙 · 사건이 다는 표(entity/enemy-traits) */
-  declare frozenT: number; declare shT: number; declare shFace: number; declare burT: number; declare hide: number; declare lampT: number; declare aff: number; declare eatT: number;   // 야생 말 호감 · 먹는 중
+  declare frozenT: number; declare shT: number; declare shFace: number; declare burT: number; declare hide: number; declare lampT: number; declare aff: number; declare eatT: number; declare panT: number;   // 야생 말 · 프라이팬 별 호감 · 먹는 중
   declare evLamp: boolean; declare latchT: number; declare latchOx: number; declare drainT: number; declare lastHitT: number; declare awake: number;
   declare still: boolean; declare blinkT: number; declare amb: number; declare goal: { x: number; y: number } | null; declare evTag: string;
   declare traitTick: (dt: number, world: World, p: Player) => boolean; declare traitHurt: (amount: number, src: any) => number;
@@ -869,7 +871,8 @@ export const IMPACT_FX: Bag = {
   wind:  { burst: 'arcane', ring: '#bcd8f0', rr: 32, parts: 6 },
   star:  { burst: 'hit',    ring: '#ffe08a', rr: 24, parts: 8 },
   pstar: { burst: 'stargain', ring: '#ffe08a', rr: 26, parts: 10 },
-  bullet: { burst: 'hit',   ring: '#ffd86a', rr: 12, parts: 6 }
+  bullet: { burst: 'hit',   ring: '#ffd86a', rr: 12, parts: 6 },
+  bubble: { burst: 'frost', ring: '#bfe6ff', rr: 26, parts: 10 }   // 비눗방울 — 톡, 물방울이 튄다(불꽃 폭발로 보였다)
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
 export const PROJ_STYLE: Bag = {
@@ -885,12 +888,18 @@ export const PROJ_STYLE: Bag = {
   wind: { c: '#bcd8f0', r: 6, glow: 1 },
   rune: { c: '#9fe8d8', r: 6, glow: 1 },
   void: { c: '#a06fff', r: 7, glow: 1 },
+  boomerang: { c: '#b07a3e', r: 6 },     // 그림은 game/weird-fx
+  bubble: { c: '#bfe6ff', r: 7 },
   dark: { c: '#9a5fd8', r: 6, glow: 1 },
   poison: { c: '#8fd06a', r: 5, glow: 1 },
   bone: { c: '#e8e0c8', r: 5 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */
 export const PHYS_PROJ: Record<string, number> = { arrow: 1, bone: 1, star: 1, bullet: 1 };
+
+/* 갈래마다 다른 날기 — entity/player-weird 가 채운다. false 면 보통대로 날고, true 면 이 프레임 끝, 'hit' 이면 움직임만 맡기고 맞히기는 그대로 */
+export const PROJ_MOVE: Record<string, (p: Proj, dt: number) => boolean | 'hit'> = {};
+export const PROJ_WALL: Record<string, (p: Proj) => boolean> = {};   // 벽에 닿았을 때 — true 면 터지지 않는다
 
 export class Proj extends Ent {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
@@ -899,6 +908,7 @@ export class Proj extends Ent {
   declare hitSet: Set<any>; declare life: number; declare pierce: number; declare poison: number; declare team: string; declare type: string;
   declare vol: number; declare ghost: boolean; declare nid: number; declare seenAt: number;   // 멀티플레이 — 참가자 화면의 그림자 투사체
   declare home: number;   // 쫓는 탄 — 초당 돌 수 있는 각(보스 기술 homing)
+  declare bt: number; declare back: number;   // 부메랑 · 방울(entity/player-weird)
 
   constructor(x: number, y: number, vx: number, vy: number, dmg: number, team: any, type: string) {
     super(x - 6, y - 6, 12, 12);
@@ -924,10 +934,12 @@ export class Proj extends Ent {
         this.vx = Math.cos(na) * sp; this.vy = Math.sin(na) * sp;
       }
     }
-    this.x += this.vx * dt; this.y += this.vy * dt;
+    const mv = PROJ_MOVE[this.type] && PROJ_MOVE[this.type](this, dt);
+    if (mv === true) return;
+    if (mv !== 'hit') this.x += this.vx * dt, this.y += this.vy * dt;
     const st = PROJ_STYLE[this.type];
     if (st && st.glow && Math.random() < dt * 30) G.parts.push(new Part(this.cx, this.cy, st.c, 0, 0.3));
-    if (world.hitSolid(this.x, this.y, this.w, this.h)) { this.impact(); return; }
+    if (mv !== 'hit' && world.hitSolid(this.x, this.y, this.w, this.h)) { if (!(PROJ_WALL[this.type] && PROJ_WALL[this.type](this))) { this.impact(); return; } }
     if (this.team === 'player') {
       /* 근처 칸 바구니의 몹만 본다(engine core/spatial — 엔티티 갱신 뒤 G.entHash 를 다시 채운다) */
       let spent = false;
@@ -976,7 +988,7 @@ export class Proj extends Ent {
       for (let i = 0; i < 16; i++) G.parts.push(new Part(this.cx, this.cy, st.c, -20, 0.6));
       G.burst(this.cx, this.cy, fx ? fx.burst : 'fire', this.explode * 2.2);
       if (fx && fx.ring) G.ringFx(this.cx, this.cy, this.explode, fx.ring, 0.34);
-      G.shake = Math.max(G.shake, 4);
+      if (this.type !== 'bubble') G.shake = Math.max(G.shake, 4);
     } else if (this.team === 'player' && this.hitSet.size) {
       /* 원소마다 다른 흔적. */
       G.burst(this.cx, this.cy, fx ? fx.burst : 'hit', 36);
