@@ -1657,9 +1657,9 @@
     if (host) host.appendChild(d);
     return d;
   }
-  function paintSlot(el, cls, icon, count) {
+  function paintSlot(el, cls, icon2, count) {
     el.className = cls;
-    setIcon(el.querySelector(".ic"), icon);
+    setIcon(el.querySelector(".ic"), icon2);
     el.querySelector(".cnt").textContent = "" + count;
   }
 
@@ -27386,7 +27386,7 @@
         fn();
         g.stroke();
       };
-      const glow2 = (x, y, r, c, a) => {
+      const glow3 = (x, y, r, c, a) => {
         const gr = g.createRadialGradient(x, y, 0, x, y, r);
         gr.addColorStop(0, c);
         gr.addColorStop(0.55, c);
@@ -27400,7 +27400,7 @@
         g.restore();
       };
       const paint = ITEM_PAINT[s.k];
-      if (paint) paint.call(this, { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 });
+      if (paint) paint.call(this, { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 });
     }
   };
 
@@ -27411,14 +27411,14 @@
   });
   var ItemPaintGlyphs = {
     gl(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const G1 = "#e8dcc0", G22 = "#c8a058", DK = "#4a4238", RD = "#d05a4a", GR = "#6fbf5a";
           const BL = "#6fa8d8", PL = "#b17fe0";
           switch (s.g) {
             case "shard":
-              glow2(16, 16, 12, G22, 0.3);
+              glow3(16, 16, 12, G22, 0.3);
               poly([[16, 3], [23, 16], [16, 29], [9, 16]], G1);
               poly([[16, 3], [23, 16], [16, 16]], G22);
               break;
@@ -27546,7 +27546,7 @@
               for (let i = 0; i < 3; i++) g.fillStyle = DK, g.fillRect(12 + i * 3, 22, 1.5, 3);
               break;
             case "redmoon":
-              glow2(16, 16, 13, RD, 0.38);
+              glow3(16, 16, 13, RD, 0.38);
               circ2(16, 16, 9, RD);
               circ2(13, 13, 1.8, sh2(RD, 0.7));
               circ2(20, 18, 2.4, sh2(RD, 0.7));
@@ -27568,7 +27568,7 @@
               g.fillRect(13, 13, 6, 14);
               g.fillStyle = sh2(G1, 0.8);
               g.fillRect(11, 25, 10, 3);
-              glow2(16, 8, 7, "#ffd24a", 0.5);
+              glow3(16, 8, 7, "#ffd24a", 0.5);
               poly([[16, 3], [19, 9], [16, 12], [13, 9]], "#ffd24a");
               break;
             case "bed":
@@ -27592,7 +27592,7 @@
               for (let i = 0; i < 4; i++) g.fillStyle = "#8a7a58", g.fillRect(11, 10 + i * 4, 10 - i % 2 * 3, 1.4);
               break;
             case "sun":
-              glow2(16, 16, 13, "#ffd24a", 0.4);
+              glow3(16, 16, 13, "#ffd24a", 0.4);
               circ2(16, 16, 6.5, "#ffd24a");
               for (let i = 0; i < 8; i++) {
                 const a = i * TAU / 8;
@@ -27686,7 +27686,7 @@
               g.textBaseline = "alphabetic";
               break;
             default:
-              glow2(16, 16, 12, G22, 0.32);
+              glow3(16, 16, 12, G22, 0.32);
               poly([
                 [16, 3],
                 [19.5, 12.5],
@@ -27715,11 +27715,11 @@
   var ItemPaintGear = {
     /* ---------- 무기 ---------- */
     sword(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const bw = s.w, base = s.c, lt = sh2(base, 1.3), dk = sh2(base, 0.68);
-          if (s.glow) glow2(16, 11, 11, s.glow, 0.22);
+          if (s.glow) glow3(16, 11, 11, s.glow, 0.22);
           poly([[16, 1], [16 + bw, 8], [16 + bw - 0.5, 20], [16 - bw + 0.5, 20], [16 - bw, 8]], base);
           poly([[16, 2], [16, 20], [16 - bw + 1, 20], [16 - bw + 1, 8.5]], lt);
           poly([[16, 2], [16, 20], [16 + bw - 1, 20], [16 + bw - 1, 8.5]], dk);
@@ -27743,10 +27743,10 @@
       }
     },
     scythe(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          if (s.glow) glow2(14, 14, 13, s.glow, 0.22);
+          if (s.glow) glow3(14, 14, 13, s.glow, 0.22);
           g.fillStyle = s.c;
           g.beginPath();
           g.arc(16, 20, 14, Math.PI, Math.PI * 1.61, false);
@@ -27773,10 +27773,10 @@
       }
     },
     bow(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          if (s.glow) glow2(14, 16, 13, s.glow, 0.2);
+          if (s.glow) glow3(14, 16, 13, s.glow, 0.2);
           const a = 1, cxx = 23, r = 15;
           stroke(s.c, 3.4, () => {
             g.arc(cxx, 16, r, Math.PI - a, Math.PI + a);
@@ -27804,11 +27804,11 @@
       }
     },
     staff(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const hd = s.head;
-          if (s.glow) glow2(19, 8, 11, s.glow, 0.26);
+          if (s.glow) glow3(19, 8, 11, s.glow, 0.26);
           stroke(s.c, 3, () => {
             g.moveTo(11, 30);
             g.lineTo(18, 12);
@@ -27846,11 +27846,11 @@
       }
     },
     spear(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.7);
-          if (s.glow) glow2(16, 10, 11, s.glow, 0.22);
+          if (s.glow) glow3(16, 10, 11, s.glow, 0.22);
           stroke("#6a4a28", 2.6, () => {
             g.moveTo(16, 31);
             g.lineTo(16, 10);
@@ -27870,7 +27870,7 @@
     },
     /* ---------- 낚싯대: 대각선 장대 + 늘어진 줄과 찌 ---------- */
     fishrod(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -27887,14 +27887,14 @@
             g.quadraticCurveTo(24, 16, 17, 22);
           });
           circ2(17, 22, 1.6, c);
-          if (s.glow) glow2(27, 4, 6, s.glow, 0.3);
+          if (s.glow) glow3(27, 4, 6, s.glow, 0.3);
           return;
         }
       }
     },
     /* ---------- 물고기: 타원 몸통 + 꼬리 삼각형 ---------- */
     fishitem(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.7);
@@ -27903,17 +27903,17 @@
           poly([[24, 17], [30, 12], [30, 22]], dk);
           poly([[6.5, 17], [2, 14], [2, 20]], dk);
           circ2(9, 15.5, 1, "#1a1a1a");
-          if (s.glow) glow2(15, 17, 10, s.glow, 0.25);
+          if (s.glow) glow3(15, 17, 10, s.glow, 0.25);
           return;
         }
       }
     },
     pick(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4);
-          if (s.glow) glow2(16, 13, 13, s.glow, 0.2);
+          if (s.glow) glow3(16, 13, 13, s.glow, 0.2);
           stroke("#6a4a28", 3.4, () => {
             g.moveTo(16, 30);
             g.lineTo(16, 12);
@@ -27937,7 +27937,7 @@
       }
     },
     axe(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.72);
@@ -27981,11 +27981,11 @@
     },
     /* ---------- 방어구 ---------- */
     helm(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
-          if (s.glow) glow2(16, 15, 12, s.glow, 0.18);
+          if (s.glow) glow3(16, 15, 12, s.glow, 0.18);
           if (s.crest) {
             P2(15, 2, 2, 6, s.crest);
             P2(13.4, 3.5, 5.2, 2, s.crest);
@@ -28014,11 +28014,11 @@
       }
     },
     chest(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
-          if (s.glow) glow2(16, 17, 13, s.glow, 0.18);
+          if (s.glow) glow3(16, 17, 13, s.glow, 0.18);
           poly([[9, 8], [23, 8], [25, 14], [23, 27], [9, 27], [7, 14]], c);
           poly([[9, 8], [16, 8], [16, 27], [9, 27], [7, 14]], lt);
           circ2(8, 10.5, 4, dk);
@@ -28039,11 +28039,11 @@
       }
     },
     boots(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.6);
-          if (s.glow) glow2(16, 18, 12, s.glow, 0.18);
+          if (s.glow) glow3(16, 18, 12, s.glow, 0.18);
           const boot = (bx) => {
             poly([[bx, 9], [bx + 8, 9], [bx + 8, 21], [bx + 12, 21], [bx + 12, 26], [bx, 26]], c);
             poly([[bx, 9], [bx + 3.5, 9], [bx + 3.5, 26], [bx, 26]], lt);
@@ -28058,7 +28058,7 @@
     },
     /* ---------- 장신구 ---------- */
     ring(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           stroke(s.c, 3.4, () => {
@@ -28075,7 +28075,7 @@
       }
     },
     amulet(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           stroke(s.c, 1.6, () => {
@@ -28108,10 +28108,10 @@
       }
     },
     cloud(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 12, "#cfe8ff", 0.18);
+          glow3(16, 16, 12, "#cfe8ff", 0.18);
           circ2(11, 18, 6, "#e0ecfa");
           circ2(20, 18, 7, "#e0ecfa");
           circ2(15.5, 13.5, 6.5, "#f2f7ff");
@@ -28130,10 +28130,10 @@
       }
     },
     sigil(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 11, s.c, 0.18);
+          glow3(16, 16, 11, s.c, 0.18);
           stroke(sh2(s.c, 0.7), 2, () => {
             g.arc(16, 16, 10, 0, TAU);
           });
@@ -28150,11 +28150,11 @@
       }
     },
     star(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const R = s.big ? 13 : 11, r = R * 0.42;
-          if (s.glow) glow2(16, 16, R + 3, s.glow, 0.3);
+          if (s.glow) glow3(16, 16, R + 3, s.glow, 0.3);
           g.fillStyle = s.c;
           g.beginPath();
           for (let i = 0; i < 10; i++) {
@@ -28193,8 +28193,8 @@
   }
   var ItemPaintWeird = {
     claw(H) {
-      const { P: P2, poly, circ: circ2, glow: glow2 } = H;
-      glow2(16, 7, 8, "#8fd8ff", 0.25);
+      const { P: P2, poly, circ: circ2, glow: glow3 } = H;
+      glow3(16, 7, 8, "#8fd8ff", 0.25);
       P2(13, 22, 6, 8, "#3a3f48");
       P2(13, 22, 6, 1, "#6a7280");
       P2(14, 25, 4, 2, "#ffd24a");
@@ -28267,7 +28267,7 @@
   var ItemPaintGoods = {
     /* ---------- 소비 ---------- */
     potion(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const liq = s.c;
@@ -28306,7 +28306,7 @@
       }
     },
     stew(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           g.fillStyle = "#8a6a4a";
@@ -28336,7 +28336,7 @@
     },
     /* ---------- 재료 ---------- */
     log(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.25), dk = sh2(c, 0.7);
@@ -28353,7 +28353,7 @@
     },
     /* 장식 아이템 — 타일 그림을 테두리 없이 그대로 키운다. */
     deco(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 3, 3, 26, 26);
@@ -28363,7 +28363,7 @@
       }
     },
     block(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 4, 5, 24, 24);
@@ -28377,10 +28377,10 @@
     },
     /* ---------- 기계 ---------- */
     machine(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          if (s.glow) glow2(16, 15, 13, s.glow, 0.24);
+          if (s.glow) glow3(16, 15, 13, s.glow, 0.24);
           P2(4, 26, 24, 3, "#3a3a44");
           P2(4, 26, 24, 1, "#5a5a66");
           if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 5, 4, 22, 22);
@@ -28392,7 +28392,7 @@
     },
     /* ---------- 자원 · 부품 ---------- */
     barrel(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
@@ -28409,7 +28409,7 @@
       }
     },
     bomb(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -28422,13 +28422,13 @@
             g.bezierCurveTo(19, 5, 23, 7, 24, 3);
           });
           circ2(24, 3, 2, "#ffd24a");
-          if (s.glow) glow2(24, 3, 7, s.glow, 0.3);
+          if (s.glow) glow3(24, 3, 7, s.glow, 0.3);
           return;
         }
       }
     },
     pellet(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -28442,7 +28442,7 @@
       }
     },
     fuelbrick(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.6);
@@ -28457,7 +28457,7 @@
       }
     },
     wire(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35);
@@ -28477,7 +28477,7 @@
       }
     },
     circuit(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, tr2 = s.trace;
@@ -28503,7 +28503,7 @@
       }
     },
     motor(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.32), dk = sh2(c, 0.62);
@@ -28520,7 +28520,7 @@
       }
     },
     frame(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.55), dk2 = sh2(c, 0.35);
@@ -28548,11 +28548,11 @@
       }
     },
     cell(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          if (s.glow && s.fill) glow2(16, 17, 12, s.glow, 0.26);
+          if (s.glow && s.fill) glow3(16, 17, 12, s.glow, 0.26);
           P2(13, 3, 6, 3, "#8a8a96");
           P2(8, 6, 16, 23, sh2(c, 0.5));
           P2(8, 6, 16, 2, sh2(c, 0.9));
@@ -28575,7 +28575,7 @@
       }
     },
     rivet(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.65);
@@ -28590,11 +28590,11 @@
       }
     },
     sawblade(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.6);
-          if (s.glow) glow2(16, 16, 13, s.glow, 0.22);
+          if (s.glow) glow3(16, 16, 13, s.glow, 0.22);
           for (let k = 0; k < 12; k++) {
             const a = k * TAU / 12;
             poly([
@@ -28633,7 +28633,7 @@
   var ItemPaintFarm = {
     /* ---------- 농업 ---------- */
     hoe(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.65);
@@ -28683,7 +28683,7 @@
       if (s.water) ell(14, 11.6, 5, 1, sh2(s.water, 1.4));
     },
     seed(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -28700,7 +28700,7 @@
       }
     },
     wheatitem(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.7);
@@ -28721,11 +28721,11 @@
       }
     },
     rootitem(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow2(16, 20, 11, s.glow, 0.24);
+          if (s.glow) glow3(16, 20, 11, s.glow, 0.24);
           poly([[16, 30], [11, 16], [16, 11], [21, 16]], c);
           poly([[16, 30], [11, 16], [16, 13]], sh2(c, 1.3));
           for (let k = 0; k < 3; k++) P2(11 + k, 18 + k * 3.4, 10 - k * 2, 1, sh2(c, 0.68));
@@ -28742,7 +28742,7 @@
       }
     },
     flouritem(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.72);
@@ -28757,7 +28757,7 @@
       }
     },
     compost(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -28779,7 +28779,7 @@
     },
     /* ---------- 음식 ---------- */
     bread(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.28), dk = sh2(c, 0.68);
@@ -28796,7 +28796,7 @@
       }
     },
     pie(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.66);
@@ -28811,7 +28811,7 @@
       }
     },
     bowl(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.66);
@@ -28834,7 +28834,7 @@
       }
     },
     teacup(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.7);
@@ -28854,7 +28854,7 @@
       }
     },
     jelly(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.68);
@@ -28868,11 +28868,11 @@
       }
     },
     feast(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow2(16, 18, 13, s.glow, 0.26);
+          if (s.glow) glow3(16, 18, 13, s.glow, 0.26);
           P2(3, 22, 26, 6, "#8a6a44");
           P2(3, 22, 26, 1.6, "#a88a5c");
           ell(10, 19, 6, 4, c);
@@ -28888,11 +28888,11 @@
       }
     },
     stopcore(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 13, c, 0.22);
+          glow3(16, 16, 13, c, 0.22);
           P2(6, 6, 20, 20, "#2a2620");
           P2(6, 6, 20, 2, "#4a4238");
           poly([[11, 5], [21, 5], [27, 11], [27, 21], [21, 27], [11, 27], [5, 21], [5, 11]], c);
@@ -28904,11 +28904,11 @@
       }
     },
     railgun(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.6);
-          if (s.glow) glow2(24, 12, 11, s.glow, 0.26);
+          if (s.glow) glow3(24, 12, 11, s.glow, 0.26);
           P2(4, 16, 22, 6, c);
           P2(4, 16, 22, 1.6, lt);
           P2(4, 20.4, 22, 1.6, dk);
@@ -28923,10 +28923,10 @@
       }
     },
     torchitem(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 9, 9, "#ffb24a", 0.3);
+          glow3(16, 9, 9, "#ffb24a", 0.3);
           P2(14, 13, 4, 17, "#6a4a28");
           P2(14, 13, 1.4, 17, "#8f6740");
           g.fillStyle = "#e06a16";
@@ -28949,7 +28949,7 @@
       }
     },
     platformitem(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           P2(3, 12, 26, 6, "#8a6640");
@@ -28962,11 +28962,11 @@
       }
     },
     ore(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow2(16, 17, 12, c, 0.22);
+          if (s.glow) glow3(16, 17, 12, c, 0.22);
           poly([[8, 12], [13, 6], [21, 7], [26, 14], [23, 24], [12, 25], [6, 19]], "#5d5d63");
           poly([[8, 12], [13, 6], [21, 7], [17, 15], [9, 17]], "#72727a");
           const nug = [[12, 12, 5, 4], [18, 15, 5, 4], [13, 19, 4, 3.4], [20, 20, 4, 3]];
@@ -28980,11 +28980,11 @@
       }
     },
     meteorite(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 17, 12, "#ff7a3a", 0.12);
+          glow3(16, 17, 12, "#ff7a3a", 0.12);
           poly([[7, 13], [12, 7], [20, 6], [26, 11], [27, 19], [22, 26], [12, 26], [6, 20]], c);
           poly([[7, 13], [12, 7], [20, 6], [26, 11], [18, 13], [10, 16]], sh2(c, 1.3));
           poly([[27, 19], [22, 26], [12, 26], [16, 21], [24, 18]], sh2(c, 0.65));
@@ -29004,11 +29004,11 @@
       }
     },
     bar(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
-          if (s.glow) glow2(16, 18, 12, c, 0.2);
+          if (s.glow) glow3(16, 18, 12, c, 0.2);
           poly([[5, 21], [27, 21], [24, 28], [8, 28]], c);
           poly([[5, 21], [27, 21], [25.5, 18.5], [6.5, 18.5]], lt);
           P2(8, 24, 16, 1.2, dk);
@@ -29020,7 +29020,7 @@
       }
     },
     rock(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29034,11 +29034,11 @@
       }
     },
     shard(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow2(16, 16, 12, c, 0.28);
+          if (s.glow) glow3(16, 16, 12, c, 0.28);
           poly([[16, 2], [23, 13], [18, 30], [12, 26], [9, 12]], c);
           poly([[16, 2], [16, 30], [12, 26], [9, 12]], sh2(c, 1.4));
           P2(15, 6, 1.6, 16, sh2(c, 1.75));
@@ -29047,11 +29047,11 @@
       }
     },
     crystal(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow2(16, 17, 13, c, 0.26);
+          if (s.glow) glow3(16, 17, 13, c, 0.26);
           poly([[16, 3], [24, 11], [24, 24], [16, 30], [8, 24], [8, 11]], c);
           poly([[16, 3], [16, 30], [8, 24], [8, 11]], sh2(c, 1.35));
           poly([[16, 3], [24, 11], [16, 15], [8, 11]], sh2(c, 1.6));
@@ -29061,7 +29061,7 @@
       }
     },
     gel(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29088,7 +29088,7 @@
       }
     },
     bone(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = "#e8e2cd", d = "#bdb59c";
@@ -29105,11 +29105,11 @@
       }
     },
     egg(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow2(16, 18, 13, s.glow, 0.32);
+          if (s.glow) glow3(16, 18, 13, s.glow, 0.32);
           ell(16, 19, 8.5, 11.5, c);
           ell(13.4, 13.5, 3, 4, sh2(c, 1.4));
           circ2(13, 17, 1.3, sh2(c, 0.6));
@@ -29121,7 +29121,7 @@
       }
     },
     detector(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.5), lt = sh2(c, 1.3);
@@ -29148,13 +29148,13 @@
           g.closePath();
           g.fill();
           circ2(16, 6.5, 1.6, lt);
-          glow2(16, 6.5, 8, c, 0.3);
+          glow3(16, 6.5, 8, c, 0.3);
           return;
         }
       }
     },
     coconut_i(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, husk = sh2(c, 0.72), meat = "#f0e8d8";
@@ -29173,7 +29173,7 @@
       }
     },
     candy(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.62);
@@ -29204,11 +29204,11 @@
       }
     },
     wisp(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 13, c, 0.3);
+          glow3(16, 16, 13, c, 0.3);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(16, 3);
@@ -29241,11 +29241,11 @@
   var ItemPaintLoot = {
     /* ---------- 소환 ---------- */
     crown(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow2(16, 16, 12, s.glow, 0.24);
+          if (s.glow) glow3(16, 16, 12, s.glow, 0.24);
           poly([[5, 24], [5, 12], [10, 17], [16, 8], [22, 17], [27, 12], [27, 24]], c);
           poly([[5, 24], [5, 12], [10, 17], [16, 8], [16, 24]], sh2(c, 1.3));
           P2(5, 22, 22, 3.4, sh2(c, 0.78));
@@ -29258,7 +29258,7 @@
       }
     },
     skull(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = "#e8e2cd";
@@ -29279,11 +29279,11 @@
       }
     },
     heart(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 17, 13, c, 0.24);
+          glow3(16, 17, 13, c, 0.24);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(16, 28);
@@ -29307,11 +29307,11 @@
       }
     },
     drop(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow2(16, 18, 13, s.glow, 0.3);
+          if (s.glow) glow3(16, 18, 13, s.glow, 0.3);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(16, 3);
@@ -29332,11 +29332,11 @@
       }
     },
     sack(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.65);
-          if (s.glow) glow2(16, 18, 12, s.glow, 0.2);
+          if (s.glow) glow3(16, 18, 12, s.glow, 0.2);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(9, 13);
@@ -29369,11 +29369,11 @@
       }
     },
     hammer(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.68);
-          if (s.glow) glow2(16, 11, 13, s.glow, 0.24);
+          if (s.glow) glow3(16, 11, 13, s.glow, 0.24);
           stroke("#6a4a28", 3.6, () => {
             g.moveTo(16, 30);
             g.lineTo(16, 16);
@@ -29394,11 +29394,11 @@
     },
     /* ---------- 2부 전용 ---------- */
     feather(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.72), lt = sh2(c, 1.12);
-          glow2(16, 16, 12, c, 0.18);
+          glow3(16, 16, 12, c, 0.18);
           stroke(sh2(c, 0.55), 1.6, () => {
             g.moveTo(23, 3);
             g.lineTo(9, 29);
@@ -29422,7 +29422,7 @@
     },
     /* 나뭇잎 — 나무마다 모양이 다르다(sh). */
     leafitem(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.62), lt = sh2(c, 1.22), stem = s.st || sh2(c, 0.5);
@@ -29468,7 +29468,7 @@
               const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 5.5 : 12;
               pts.push([16 + Math.cos(a) * r, 15 + Math.sin(a) * r]);
             }
-            glow2(16, 15, 12, c, 0.2);
+            glow3(16, 15, 12, c, 0.2);
             blade(pts);
             for (let i = 0; i < 5; i++) {
               const a = -Math.PI / 2 + i * TAU / 5;
@@ -29524,7 +29524,7 @@
       }
     },
     wildflower(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29540,7 +29540,7 @@
       }
     },
     weed_icon(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           for (let i = 0; i < 4; i++) {
@@ -29555,7 +29555,7 @@
       }
     },
     cactus(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29569,7 +29569,7 @@
       }
     },
     mushroom(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29586,11 +29586,11 @@
       }
     },
     runefrag(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 11, c, 0.2);
+          glow3(16, 16, 11, c, 0.2);
           poly([[16, 3], [26, 12], [21, 27], [10, 25], [6, 11]], sh2(c, 0.8));
           poly([[16, 3], [16, 26], [10, 25], [6, 11]], c);
           const gl = sh2(c, 1.7);
@@ -29602,11 +29602,11 @@
       }
     },
     key(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.7);
-          if (s.glow) glow2(16, 16, 12, s.glow, 0.22);
+          if (s.glow) glow3(16, 16, 12, s.glow, 0.22);
           stroke(dk, 4.4, () => {
             g.arc(16, 9, 5.6, 0, TAU);
           });
@@ -29625,7 +29625,7 @@
       }
     },
     horn(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
@@ -29665,7 +29665,7 @@
   var ItemPaintSkills = {
     /* ---------- 스킬 아이콘 ---------- */
     slash(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29684,7 +29684,7 @@
       }
     },
     shield(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29697,11 +29697,11 @@
       }
     },
     impact(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 12, c, 0.22);
+          glow3(16, 16, 12, c, 0.22);
           g.fillStyle = c;
           g.beginPath();
           for (let i = 0; i < 12; i++) {
@@ -29718,7 +29718,7 @@
       }
     },
     blood(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29742,7 +29742,7 @@
       }
     },
     whirl(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29758,7 +29758,7 @@
       }
     },
     titan(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29773,7 +29773,7 @@
       }
     },
     dash(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29788,7 +29788,7 @@
       }
     },
     target(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29820,7 +29820,7 @@
       }
     },
     volley(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29838,7 +29838,7 @@
       }
     },
     wind(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29861,7 +29861,7 @@
       }
     },
     rain(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29873,13 +29873,13 @@
             });
             poly([[x, y0 + 18], [x - 3.2, y0 + 13], [x + 3.2, y0 + 13]], sh2(c, 1.35));
           }
-          glow2(16, 28, 8, c, 0.22);
+          glow3(16, 28, 8, c, 0.22);
           return;
         }
       }
     },
     eye(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29902,11 +29902,11 @@
       }
     },
     flame(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 18, 12, c, 0.26);
+          glow3(16, 18, 12, c, 0.26);
           g.fillStyle = sh2(c, 0.8);
           g.beginPath();
           g.moveTo(16, 2);
@@ -29929,7 +29929,7 @@
       }
     },
     book(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -29940,17 +29940,17 @@
             P2(5, 12 + i * 4, 8, 1.2, sh2(c, 1.5));
             P2(19, 12 + i * 4, 8, 1.2, sh2(c, 1.3));
           }
-          glow2(16, 8, 7, "#ffe08a", 0.28);
+          glow3(16, 8, 7, "#ffe08a", 0.28);
           return;
         }
       }
     },
     heal(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 13, c, 0.28);
+          glow3(16, 16, 13, c, 0.28);
           P2(13, 5, 6, 22, c);
           P2(5, 13, 22, 6, c);
           P2(14.2, 5, 1.8, 22, sh2(c, 1.4));
@@ -29962,11 +29962,11 @@
       }
     },
     snow(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 12, c, 0.24);
+          glow3(16, 16, 12, c, 0.24);
           for (let i = 0; i < 3; i++) {
             const a = i * Math.PI / 3;
             const dx = Math.cos(a) * 13, dy = Math.sin(a) * 13;
@@ -29992,11 +29992,11 @@
       }
     },
     wolf(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 17, 12, c, 0.2);
+          glow3(16, 17, 12, c, 0.2);
           poly([[6, 12], [8, 3], [13, 9]], c);
           poly([[26, 12], [24, 3], [19, 9]], c);
           poly([[7, 11], [25, 11], [23, 22], [16, 29], [9, 22]], c);
@@ -30009,11 +30009,11 @@
       }
     },
     rune(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 13, c, 0.26);
+          glow3(16, 16, 13, c, 0.26);
           stroke(c, 2, () => {
             g.arc(16, 16, 12, 0, TAU);
           });
@@ -30032,11 +30032,11 @@
     },
     /* ---------- 스킬 아이콘 ---------- */
     bulwark(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 18, 12, c, 0.18);
+          glow3(16, 18, 12, c, 0.18);
           for (let r = 0; r < 3; r++) {
             const y = 11 + r * 6, off = r % 2 ? -3 : 0;
             for (let i = -1; i <= 1; i++) P2(11 + i * 7 + off, y, 6.2, 5.2, i ? sh2(c, 0.78) : c);
@@ -30051,7 +30051,7 @@
       }
     },
     quake(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -30072,11 +30072,11 @@
       }
     },
     shout(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(11, 16, 11, c, 0.2);
+          glow3(11, 16, 11, c, 0.2);
           poly([[4, 10], [12, 10], [12, 22], [4, 22]], sh2(c, 0.7));
           poly([[12, 6], [12, 26], [17, 22], [17, 10]], c);
           for (let i = 0; i < 3; i++)
@@ -30088,11 +30088,11 @@
       }
     },
     lifebeat(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 12, c, 0.24);
+          glow3(16, 16, 12, c, 0.24);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(16, 27);
@@ -30116,7 +30116,7 @@
       }
     },
     pierce(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -30144,11 +30144,11 @@
       }
     },
     smoke(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 13, 12, c, 0.16);
+          glow3(16, 13, 12, c, 0.16);
           ell(11, 12, 6, 4.6, sh2(c, 0.9));
           ell(19, 10, 7, 5.2, c);
           ell(22, 15, 5.4, 4, sh2(c, 0.78));
@@ -30161,11 +30161,11 @@
       }
     },
     mark(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 12, 11, c, 0.24);
+          glow3(16, 12, 11, c, 0.24);
           poly([[16, 20], [8, 5], [24, 5]], c);
           poly([[16, 16], [11.5, 7.5], [20.5, 7.5]], sh2(c, 1.45));
           stroke(sh2(c, 0.7), 2, () => {
@@ -30177,7 +30177,7 @@
       }
     },
     tempest(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
@@ -30201,11 +30201,11 @@
       }
     },
     barrier(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 13, c, 0.26);
+          glow3(16, 16, 13, c, 0.26);
           circ2(16, 16, 10.5, "rgba(120,180,255,.18)");
           stroke(sh2(c, 0.8), 1.1, () => {
             g.ellipse(16, 16, 5.5, 10.5, 0, 0, TAU);
@@ -30232,11 +30232,11 @@
       }
     },
     chain(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(16, 16, 13, c, 0.3);
+          glow3(16, 16, 13, c, 0.3);
           poly([[15, 2], [7, 16], [13, 16], [10, 30], [21, 13], [15, 13]], c);
           stroke(sh2(c, 1.5), 1.4, () => {
             g.moveTo(14, 5);
@@ -30257,11 +30257,11 @@
       }
     },
     blink(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(22, 16, 12, c, 0.24);
+          glow3(22, 16, 12, c, 0.24);
           g.globalAlpha = 0.38;
           poly([[4, 8], [11, 8], [11, 25], [4, 25]], sh2(c, 0.7));
           g.globalAlpha = 1;
@@ -30277,11 +30277,11 @@
       }
     },
     meteor(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c;
-          glow2(20, 11, 13, c, 0.32);
+          glow3(20, 11, 13, c, 0.32);
           stroke(sh2(c, 0.62), 3.4, () => {
             g.moveTo(2, 29);
             g.lineTo(16, 15);
@@ -30315,10 +30315,10 @@
   var ItemPaintUI = {
     /* ---------- UI ---------- */
     sun(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 13, "#ffe9a8", 0.3);
+          glow3(16, 16, 13, "#ffe9a8", 0.3);
           circ2(16, 16, 8, "#ffdf80");
           circ2(16, 16, 6, "#fff0c0");
           for (let i = 0; i < 8; i++) {
@@ -30333,10 +30333,10 @@
       }
     },
     moon(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 12, "#dfe8f5", 0.2);
+          glow3(16, 16, 12, "#dfe8f5", 0.2);
           circ2(15, 16, 10, "#dfe8f5");
           circ2(20, 13, 9, "rgba(0,0,0,0)");
           g.globalCompositeOperation = "destination-out";
@@ -30349,7 +30349,7 @@
       }
     },
     coin(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           circ2(16, 16, 11, "#c8952a");
@@ -30363,7 +30363,7 @@
       }
     },
     chat(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           g.fillStyle = "#e8dcc0";
@@ -30385,10 +30385,10 @@
       }
     },
     bagui(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 17, 12, "#d8a94b", 0.13);
+          glow3(16, 17, 12, "#d8a94b", 0.13);
           poly([[8, 12], [24, 12], [26, 27], [6, 27]], "#8c7651");
           poly([[8, 12], [16, 12], [16, 27], [6, 27]], "#c8aa70");
           poly([[6, 12], [10, 6], [22, 6], [26, 12]], "#5c4930");
@@ -30399,10 +30399,10 @@
     },
     /* ---- 탭 아이콘 — 금빛(#c8aa70) 밝은 면 · 가죽빛(#8c7651) 그늘 · 짙은 갈색(#5c4930) 선, 은은한 금빛 번짐 ---- */
     pskill(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 13, "#d8a94b", 0.16);
+          glow3(16, 16, 13, "#d8a94b", 0.16);
           poly([[16, 3], [19.5, 12.5], [29, 16], [19.5, 19.5], [16, 29], [12.5, 19.5], [3, 16], [12.5, 12.5]], "#8c7651");
           poly([[16, 3], [19.5, 12.5], [16, 16], [12.5, 12.5]], "#e8cf8e");
           poly([[3, 16], [12.5, 12.5], [16, 16], [12.5, 19.5]], "#c8aa70");
@@ -30412,10 +30412,10 @@
       }
     },
     pquest(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 17, 12, "#d8a94b", 0.13);
+          glow3(16, 17, 12, "#d8a94b", 0.13);
           poly([[4, 9], [16, 11], [16, 27], [4, 25]], "#c8aa70");
           poly([[28, 9], [16, 11], [16, 27], [28, 25]], "#e0c890");
           P2(15, 11, 2, 16, "#5c4930");
@@ -30429,10 +30429,10 @@
       }
     },
     pcraft(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 12, "#d8a94b", 0.13);
+          glow3(16, 16, 12, "#d8a94b", 0.13);
           stroke("#5c4930", 3, () => {
             g.moveTo(8, 26);
             g.lineTo(21, 11);
@@ -30450,10 +30450,10 @@
       }
     },
     pchest(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 17, 12, "#d8a94b", 0.12);
+          glow3(16, 17, 12, "#d8a94b", 0.12);
           P2(5, 14, 22, 13, "#8c7651");
           P2(5, 14, 11, 13, "#a88a5a");
           poly([[5, 14], [7, 8], [25, 8], [27, 14]], "#c8aa70");
@@ -30467,10 +30467,10 @@
       }
     },
     pvault(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 12, "#d8a94b", 0.12);
+          glow3(16, 16, 12, "#d8a94b", 0.12);
           P2(5, 6, 22, 21, "#5c4930");
           P2(6.5, 7.5, 19, 18, "#8c7651");
           circ2(16, 16.5, 6, "#c8aa70");
@@ -30487,10 +30487,10 @@
       }
     },
     pboard(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 12, "#d8a94b", 0.12);
+          glow3(16, 16, 12, "#d8a94b", 0.12);
           P2(7, 6, 2.5, 23, "#5c4930");
           P2(22.5, 6, 2.5, 23, "#5c4930");
           P2(5, 7, 22, 14, "#8c7651");
@@ -30505,10 +30505,10 @@
       }
     },
     ptown(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 17, 12, "#d8a94b", 0.13);
+          glow3(16, 17, 12, "#d8a94b", 0.13);
           P2(7, 15, 18, 12, "#8c7651");
           P2(7, 15, 9, 12, "#a88a5a");
           poly([[4, 16], [16, 5], [28, 16]], "#b8483c");
@@ -30521,10 +30521,10 @@
       }
     },
     pmach(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 12, "#d8a94b", 0.12);
+          glow3(16, 16, 12, "#d8a94b", 0.12);
           for (let i = 0; i < 8; i++) {
             const a = i * Math.PI / 4;
             g.save();
@@ -30543,10 +30543,10 @@
       }
     },
     preforge(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 15, 12, "#ff9a50", 0.2);
+          glow3(16, 15, 12, "#ff9a50", 0.2);
           poly([[16, 3], [22, 12], [21, 19], [11, 19], [10, 12]], "#e0561c");
           poly([[16, 8], [19, 14], [18, 19], [14, 19], [13, 14]], "#ffb24a");
           poly([[16, 12], [17.5, 16], [16, 19], [14.5, 16]], "#fff0c0");
@@ -30557,10 +30557,10 @@
       }
     },
     panvil(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 18, 12, "#d8a94b", 0.13);
+          glow3(16, 18, 12, "#d8a94b", 0.13);
           poly([[5, 12], [24, 12], [27, 15], [22, 17], [9, 17]], "#9fb0bc");
           poly([[5, 12], [24, 12], [24, 14], [7, 14]], "#d8e0e8");
           P2(12, 17, 8, 5, "#6d7a86");
@@ -30573,10 +30573,10 @@
       }
     },
     pmap(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 12, "#d8a94b", 0.12);
+          glow3(16, 16, 12, "#d8a94b", 0.12);
           poly([[4, 8], [12, 6], [20, 8], [28, 6], [28, 25], [20, 27], [12, 25], [4, 27]], "#c8aa70");
           poly([[12, 6], [20, 8], [20, 27], [12, 25]], "#a88a5a");
           for (let i = 0; i < 5; i++) P2(7 + i * 3.4, 20 - i * 1.8, 1.8, 1.4, "#5c4930");
@@ -30591,11 +30591,11 @@
       }
     },
     ng(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const G1 = "#c8aa70", G22 = "#8c7651", DK = "#5c4930", c = s.c || G1;
-          glow2(16, 16, 12, s.c || "#d8a94b", 0.14);
+          glow3(16, 16, 12, s.c || "#d8a94b", 0.14);
           switch (s.g) {
             case "shield":
               poly([[6, 6], [26, 6], [25, 18], [16, 28], [7, 18]], sh2(c, 0.7));
@@ -30861,10 +30861,10 @@
       }
     },
     pmenu(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 12, "#d8a94b", 0.12);
+          glow3(16, 16, 12, "#d8a94b", 0.12);
           for (let i = 0; i < 3; i++) {
             P2(7, 9 + i * 6, 18, 3, "#8c7651");
             P2(7, 9 + i * 6, 18, 1.4, "#c8aa70");
@@ -30874,10 +30874,10 @@
       }
     },
     statui(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 17, 12, "#d8a94b", 0.13);
+          glow3(16, 17, 12, "#d8a94b", 0.13);
           P2(7, 19, 5, 9, "#8c7651");
           P2(13.5, 13, 5, 15, "#c8aa70");
           P2(20, 8, 5, 20, "#8c7651");
@@ -30887,10 +30887,10 @@
       }
     },
     equipui(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
-          glow2(16, 16, 13, "#d8a94b", 0.15);
+          glow3(16, 16, 13, "#d8a94b", 0.15);
           poly([[9, 8], [23, 8], [26, 14], [23, 27], [9, 27], [6, 14]], "#8c7651");
           poly([[9, 8], [16, 8], [16, 27], [9, 27], [6, 14]], "#c8aa70");
           P2(8, 16, 16, 2, "#5c4930");
@@ -30904,7 +30904,7 @@
       }
     },
     trashui(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           P2(8, 10, 16, 18, "#6d4b47");
@@ -30932,7 +30932,7 @@
   var ItemPaintMisc = {
     /* ---------- 장비 칸 실루엣 ---------- */
     slotic(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = "#6a6250", l = "#8e8672";
@@ -31006,7 +31006,7 @@
     },
     /* ---------- 손으로 놓는 설치물 ---------- */
     stationic(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           if (s.m === "work") {
@@ -31020,10 +31020,10 @@
             P2(4, 9, 24, 19, "#4a4a52");
             P2(6, 10, 20, 2, "#5c5c66");
             P2(9, 19, 14, 7, "#ff8a3a");
-            glow2(16, 22, 9, "#ff8a3a", 0.3);
+            glow3(16, 22, 9, "#ff8a3a", 0.3);
           } else {
             const gold = s.gold;
-            if (gold) glow2(16, 18, 13, "#ffd85a", 0.26);
+            if (gold) glow3(16, 18, 13, "#ffd85a", 0.26);
             P2(4, 11, 24, 17, gold ? "#8a6a1a" : "#7a5326");
             P2(4, 7, 24, 5, gold ? "#a8841f" : "#96683a");
             P2(4, 11, 24, 3, gold ? "#ffd85a" : "#c8a04a");
@@ -31036,7 +31036,7 @@
     },
     /* ---------- 문 ---------- */
     doorit(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           P2(4, 2, 24, 28, "#3a2610");
@@ -31054,12 +31054,12 @@
     },
     /* ---------- 펫 ---------- */
     pet(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const c = s.c, dark = sh2(c, 0.62), lite = sh2(c, 1.3);
           const eye = "#1a1a22";
-          if (s.r === 2) glow2(16, 17, 13, c, 0.22);
+          if (s.r === 2) glow3(16, 17, 13, c, 0.22);
           switch (s.form) {
             case "moth":
               ell(10, 13, 6, 5, lite);
@@ -31094,7 +31094,7 @@
               P2(19, 25, 5, 3, dark);
               break;
             case "wisp":
-              glow2(16, 15, 11, c, 0.3);
+              glow3(16, 15, 11, c, 0.3);
               circ2(16, 15, 6, lite);
               circ2(16, 15, 3.4, "#fff");
               for (const [wx, wy, wr] of [[13, 23, 2.6], [18, 26, 2], [15, 29, 1.4]]) circ2(wx, wy, wr, c);
@@ -31132,7 +31132,7 @@
     },
     /* ---------- NPC 초상 ---------- */
     npc(H) {
-      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow3 } = H;
       {
         {
           const p = s.p;
@@ -31590,10 +31590,10 @@
       c.fillStyle = sky;
       c.fillRect(0, 0, W, H);
       const gx = W * 0.74, gy = H * 0.2, gr = Math.max(W, H) * 0.42;
-      const glow2 = c.createRadialGradient(gx, gy, 0, gx, gy, gr);
-      glow2.addColorStop(0, "rgba(249,116,73,0.30)");
-      glow2.addColorStop(1, "rgba(249,116,73,0)");
-      c.fillStyle = glow2;
+      const glow3 = c.createRadialGradient(gx, gy, 0, gx, gy, gr);
+      glow3.addColorStop(0, "rgba(249,116,73,0.30)");
+      glow3.addColorStop(1, "rgba(249,116,73,0)");
+      c.fillStyle = glow3;
       c.fillRect(0, 0, W, H);
       c.imageSmoothingEnabled = false;
       for (const L of this.layers) {
@@ -40149,7 +40149,7 @@
       $$("#craft-list .recipe").forEach((el) => {
         const i = +el.dataset.r;
         this.setIcon(el.querySelector(".ric"), Art.itemUrl(RECIPES[i].out));
-        el.addEventListener("click", () => this.craftWithFx(i, el));
+        el.addEventListener("click", () => this.craftProcess(i, el));
         el.addEventListener("mouseenter", (e) => this.showTip(makeItem(RECIPES[i].out, 1, 0), e));
         el.addEventListener("mouseleave", () => this.hideTip());
       });
@@ -40201,6 +40201,7 @@
       this.panels.show("machine");
       app.uiOpen = true;
       this.refreshMachine(true);
+      this.machViewStart();
     },
     /** id별 개수 묶음을 클릭 가능한 칸으로 */
     bufGrid(buf, cls) {
@@ -40301,7 +40302,7 @@
       }
       this._machSig = sig;
       $("#mach-title").textContent = s.n;
-      let info = `<div class="mach-desc">${s.d}</div><div class="mach-row" id="mach-st"></div>`;
+      let info = `<canvas id="mach-view"></canvas><div class="mach-desc">${s.d}</div><div class="mach-row" id="mach-st"></div>`;
       if (s.power || s.gen || s.store) {
         info += '<div class="mach-row" id="mach-net"></div>';
         if (s.power) info += `<div class="mach-row dim">${tr("소비 {power}/틱 (1틱 = {facTick}초)", { power: s.power, facTick: FAC_TICK })}</div>`;
@@ -41554,19 +41555,32 @@
       this.anvilShow(it);
       this.anvilBusy = true;
       st.classList.add("busy");
-      const item = st.querySelector(".as-item"), ham = st.querySelector(".as-ham"), beat = 240;
+      const item = st.querySelector(".as-item"), ham = st.querySelector(".as-ham"), beat = 240, HEAT = 460, QUENCH = 420;
+      this.anvilSteps(st, 0);
+      item.classList.add("heat");
+      app.sfx && app.sfx("fuse", 1, 0.6);
       for (let k = 0; k < 3; k++) setTimeout(() => {
+        if (k === 0) this.anvilSteps(st, 1);
         this.pop(ham, "hit", 240);
         this.pop(item, "jolt", 200);
         this.sparkAt(item.getBoundingClientRect(), k === 2 ? "#ffe8a0" : "#ffa040", 6 + k * 3, 38 + k * 10);
         app.sfx && app.sfx("hit_blunt");
-      }, k * beat);
+      }, HEAT + k * beat);
+      setTimeout(() => {
+        this.anvilSteps(st, 2);
+        item.classList.remove("heat");
+        item.classList.add("quench");
+        this.sparkAt(item.getBoundingClientRect(), "#d8dce4", 10, 34);
+        app.sfx && app.sfx("splash", 1.3, 0.6);
+      }, HEAT + 3 * beat);
       setTimeout(() => {
         this.anvilBusy = false;
         st.classList.remove("busy");
+        item.classList.remove("quench");
+        this.anvilSteps(st, 3);
         const j = app.player.bag.indexOf(it);
         if (j >= 0) this.anvilEnd(app.enhanceSlot(j), it);
-      }, 3 * beat + 60);
+      }, HEAT + 3 * beat + QUENCH);
     },
     anvilEnd(res, it) {
       const st = $("#anvil-stage");
@@ -41586,6 +41600,516 @@
     }
   };
   mixin(UI5, UIMotionPart);
+
+  // src/game/ui/process.ts
+  var process_exports = {};
+  __export(process_exports, {
+    ProcessUIPart: () => ProcessUIPart,
+    craftSteps: () => craftSteps,
+    machSteps: () => machSteps
+  });
+  function craftSteps(st) {
+    if (st === "work") return { n: [tr("치수를 잰다"), tr("자른다"), tr("맞춰 붙인다"), tr("다듬는다")], dur: 1.5 };
+    if (st === "forge") return { n: [tr("불을 지핀다"), tr("녹인다"), tr("틀에 붓는다"), tr("식힌다")], dur: 1.8 };
+    return { n: [tr("재료를 고른다"), tr("엮는다"), tr("다듬는다")], dur: 1 };
+  }
+  function machSteps(t) {
+    const S = {
+      smelter: () => [tr("연료를 태운다"), tr("광석을 녹인다"), tr("틀에 붓는다"), tr("식혀 내보낸다")],
+      press: () => [tr("재료를 앉힌다"), tr("누른다"), tr("빼낸다")],
+      pressor: () => [tr("재료를 앉힌다"), tr("압력을 올린다"), tr("누른다"), tr("빼낸다")],
+      refinery: () => [tr("원유를 데운다"), tr("끓여 가른다"), tr("층마다 받는다")],
+      assembler: () => [tr("부품을 고른다"), tr("맞춘다"), tr("용접한다"), tr("검사한다")],
+      desal: () => [tr("바닷물을 끓인다"), tr("김을 식힌다"), tr("소금을 거둔다")],
+      battery: () => [tr("전기를 받는다"), tr("칸에 채운다"), tr("내보낸다")],
+      mill: () => [tr("낟알을 넣는다"), tr("간다"), tr("가루를 받는다")],
+      oven: () => [tr("불을 지핀다"), tr("굽는다"), tr("꺼낸다")],
+      drill: () => [tr("비트를 돌린다"), tr("광맥을 깬다"), tr("퍼 올린다")],
+      pump: () => [tr("흔들대를 움직인다"), tr("원유를 퍼 올린다"), tr("내보낸다")],
+      gen: () => [tr("연료를 넣는다"), tr("태운다"), tr("전기를 낸다")],
+      windmill: () => [tr("바람을 받는다"), tr("날개가 돈다"), tr("전기를 낸다")],
+      turret: () => [tr("탄을 먹인다"), tr("겨눈다"), tr("쏜다")],
+      sprinkler: () => [tr("물을 받는다"), tr("아침에 뿌린다")]
+    };
+    const k = t === "battery_hi" ? "battery" : t === "drill_e" || t === "drill_x" ? "drill" : t;
+    return S[k] ? S[k]() : null;
+  }
+  var IMG = {};
+  function icon(id) {
+    if (!IMG[id]) {
+      const im = new Image();
+      im.src = Art.itemUrl(id);
+      IMG[id] = im;
+    }
+    return IMG[id];
+  }
+  function drawIc(c, id, x, y, s) {
+    const im = icon(id);
+    if (im.complete && im.naturalWidth) c.drawImage(im, x, y, s, s);
+  }
+  function glow2(c, x, y, r, col, a) {
+    c.save();
+    c.globalCompositeOperation = "lighter";
+    c.globalAlpha = a;
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, col);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    c.fillStyle = g;
+    c.fillRect(x - r, y - r, r * 2, r * 2);
+    c.restore();
+  }
+  function stepRow(c, names, cur, k, x, y, w) {
+    const n = names.length, cw = w / n;
+    c.save();
+    c.font = `11px ${FONT || "sans-serif"}`;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    for (let i = 0; i < n; i++) {
+      const cx = x + cw * i + cw / 2, on = i === cur, done = i < cur;
+      c.fillStyle = on ? "#3a2e16" : "#16140e";
+      c.strokeStyle = on ? "#d8a94b" : done ? "#6a7a4a" : "#2e2a1e";
+      c.lineWidth = 1;
+      c.beginPath();
+      c.roundRect(cx - cw / 2 + 2, y, cw - 4, 18, 4);
+      c.fill();
+      c.stroke();
+      if (on && k >= 0) {
+        c.fillStyle = "#d8a94b44";
+        c.beginPath();
+        c.roundRect(cx - cw / 2 + 3, y + 1, (cw - 6) * k, 16, 3);
+        c.fill();
+      }
+      c.fillStyle = on ? "#ffe2a0" : done ? "#a8c07a" : "#6b6553";
+      c.fillText((done ? "✓ " : "") + names[i], cx, y + 9.5, cw - 8);
+      if (i < n - 1) {
+        c.fillStyle = "#4a4430";
+        c.fillText("›", x + cw * (i + 1), y + 9);
+      }
+    }
+    c.restore();
+  }
+  var ProcessUIPart = {
+    craftQ: null,
+    craftRun: null,
+    /* ================= 제작 공정 ================= */
+    /** 제작 줄을 눌렀다 — 만들 수 있으면 공정을 줄 세우고, 아니면 예전처럼 바로(거절 흔들림 · 까닭 알림) */
+    craftProcess(i, row) {
+      const r = RECIPES[i], p = app.player;
+      const ok = (!r.station || app.nearStObj[r.station] && (app.nearStObj[r.station].lv || 1) >= (r.lv || 1)) && p.hasAll(r.need);
+      if (!this.motionOn() || !ok) {
+        this.craftWithFx(i, row);
+        return;
+      }
+      (this.craftQ || (this.craftQ = [])).push(i);
+      if (!this.craftRun) this.craftNext();
+      else this.craftStageDraw();
+    },
+    craftStageEl() {
+      let cv = document.getElementById("craft-stage");
+      if (!cv) {
+        cv = document.createElement("canvas");
+        cv.id = "craft-stage";
+        const list = $("#craft-list");
+        list.parentNode.insertBefore(cv, list);
+      }
+      return cv;
+    },
+    craftNext() {
+      const q = this.craftQ;
+      if (!q || !q.length || this.open !== "craft") {
+        this.craftEnd();
+        return;
+      }
+      const i = q.shift(), r = RECIPES[i], st = r.station || "hand", S = craftSteps(st);
+      this.craftRun = { i, r, st, S, t0: performance.now(), step: -1, parts: [] };
+      const cv = this.craftStageEl();
+      cv.classList.add("on");
+      const tick = () => {
+        const R = this.craftRun;
+        if (!R) return;
+        if (this.open !== "craft") {
+          this.craftEnd();
+          return;
+        }
+        const k = (performance.now() - R.t0) / 1e3 / R.S.dur;
+        if (k >= 1) {
+          this.craftFinish(R.i);
+          return;
+        }
+        const step = Math.min(R.S.n.length - 1, Math.floor(k * R.S.n.length));
+        if (step !== R.step) {
+          R.step = step;
+          this.craftStepSfx(R.st, step);
+        }
+        this.craftStageDraw(k);
+        R.raf = requestAnimationFrame(tick);
+      };
+      tick();
+    },
+    craftStepSfx(st, step) {
+      if (st === "work") app.sfx(step === 2 ? "hit_blunt" : "mat_wood", 1.1, 0.7);
+      else if (st === "forge") app.sfx(step === 0 ? "fuse" : step === 3 ? "splash" : "smelt", 1, 0.6);
+      else app.sfx("mat_plant", 1.2, 0.6);
+    },
+    craftFinish(i) {
+      const R = this.craftRun;
+      if (R && R.raf) cancelAnimationFrame(R.raf);
+      this.craftRun = null;
+      const row = document.querySelector(`#craft-list .recipe[data-r="${i}"]`);
+      if (row) this.craftWithFx(i, row);
+      else app.craft(i);
+      if (this.craftQ && this.craftQ.length) this.craftNext();
+      else this.craftEnd();
+    },
+    craftEnd() {
+      const R = this.craftRun;
+      if (R && R.raf) cancelAnimationFrame(R.raf);
+      this.craftRun = null;
+      this.craftQ = null;
+      const cv = document.getElementById("craft-stage");
+      if (cv) cv.classList.remove("on");
+    },
+    /** 무대 — 위에 단계 줄, 아래 작업 자리. k 는 0~1(공정 전체) */
+    craftStageDraw(k = 0) {
+      const R = this.craftRun, cv = document.getElementById("craft-stage");
+      if (!R || !cv) return;
+      const W = cv.clientWidth || 400, H = 112, dpr = Math.min(2, devicePixelRatio || 1);
+      if (cv.width !== Math.round(W * dpr)) {
+        cv.width = Math.round(W * dpr);
+        cv.height = Math.round(H * dpr);
+      }
+      const c = cv.getContext("2d");
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.clearRect(0, 0, W, H);
+      c.imageSmoothingEnabled = false;
+      const n = R.S.n.length, step = Math.min(n - 1, Math.floor(k * n)), sk = k * n - step;
+      stepRow(c, R.S.n, step, sk, 8, 6, W - 16);
+      const y0 = 30, cx = W / 2, cy = y0 + 44, t = performance.now() / 1e3;
+      const mats = Object.keys(R.r.need).slice(0, 4);
+      this["stage_" + R.st](c, W, cx, cy, y0, step, sk, k, t, mats, R.r.out);
+      const left = (this.craftQ || []).length;
+      if (left) {
+        const txt = tr("줄 선 것 {n}", { n: left });
+        c.font = `700 11px ${FONT || "sans-serif"}`;
+        c.textAlign = "right";
+        const tw = c.measureText(txt).width;
+        c.fillStyle = "rgba(12,11,8,.85)";
+        c.fillRect(W - tw - 18, 32, tw + 12, 16);
+        c.fillStyle = "#d8a94b";
+        c.fillText(txt, W - 12, 44);
+      }
+    },
+    /* 작업대 — 판자 위에서 재고(자) · 자르고(톱 · 톱밥) · 망치로 붙이고 · 빛이 쓸고 간다 */
+    stage_work(c, W, cx, cy, y0, step, sk, k, t, mats, out) {
+      const top = cy + 14;
+      c.fillStyle = "#5a3e22";
+      c.fillRect(16, top, W - 32, 10);
+      c.fillStyle = "#7a5630";
+      c.fillRect(16, top, W - 32, 3);
+      for (let x = 30; x < W - 30; x += 46) {
+        c.fillStyle = "#4a321a";
+        c.fillRect(x, top + 3, 1, 7);
+      }
+      c.fillStyle = "#3a2814";
+      c.fillRect(28, top + 10, 8, 18);
+      c.fillRect(W - 36, top + 10, 8, 18);
+      mats.forEach((id, i) => {
+        const sx = 40 + i * 30, tx = cx - 24 + i * 12, m = clamp(k * 2.2, 0, 1);
+        const x = sx + (tx - sx) * m, a = step >= 3 ? 1 - sk : 1;
+        c.globalAlpha = a;
+        drawIc(c, id, x, top - 24, 22);
+        c.globalAlpha = 1;
+      });
+      if (step === 0) {
+        const L = W * 0.36 * sk;
+        c.fillStyle = "#e0c060";
+        c.fillRect(cx - W * 0.18, top - 30, L, 4);
+        for (let x = 0; x < L; x += 8) c.fillRect(cx - W * 0.18 + x, top - 30, 1, x % 32 ? 3 : 6);
+      } else if (step === 1) {
+        const sx = cx + Math.sin(t * 22) * 14;
+        c.fillStyle = "#c8ccd4";
+        c.beginPath();
+        c.moveTo(sx - 26, top - 4);
+        c.lineTo(sx + 14, top - 4);
+        c.lineTo(sx + 14, top - 12);
+        c.lineTo(sx - 22, top - 10);
+        c.fill();
+        c.fillStyle = "#6a4a28";
+        c.fillRect(sx + 12, top - 16, 12, 9);
+        c.fillStyle = "#e8c890";
+        for (let i = 0; i < 6; i++) {
+          const q = (t * 3 + i / 6) % 1;
+          c.fillRect(cx - 4 + (i - 3) * 4 + q * (i - 3) * 6, top - 2 + q * 18, 2, 2);
+        }
+      } else if (step === 2) {
+        const ph = sk * 3 % 1, a = ph < 0.6 ? -0.9 + ph / 0.6 * 1.3 : 0.4 - (ph - 0.6) / 0.4 * 1.3;
+        c.save();
+        c.translate(cx + 30, top - 30);
+        c.rotate(a);
+        c.fillStyle = "#6a4a28";
+        c.fillRect(-2, -2, 26, 4);
+        c.fillStyle = "#9aa0aa";
+        c.fillRect(-6, -7, 8, 14);
+        c.restore();
+        if (ph > 0.55 && ph < 0.7) glow2(c, cx + 4, top - 8, 18, "#ffd27a", 0.6);
+      }
+      if (step >= 3) {
+        drawIc(c, out, cx - 18, top - 38, 36);
+        const gx = cx - 30 + sk * 60;
+        c.save();
+        c.globalCompositeOperation = "lighter";
+        c.globalAlpha = 0.5;
+        const g = c.createLinearGradient(gx - 10, 0, gx + 10, 0);
+        g.addColorStop(0, "rgba(255,255,255,0)");
+        g.addColorStop(0.5, "#fff6d0");
+        g.addColorStop(1, "rgba(255,255,255,0)");
+        c.fillStyle = g;
+        c.fillRect(cx - 20, top - 40, 40, 40);
+        c.restore();
+      }
+    },
+    /* 용광로 — 불 · 도가니에서 녹고 · 기울여 붓고 · 김을 뿜으며 식는다 */
+    stage_forge(c, W, cx, cy, y0, step, sk, k, t, mats, out) {
+      const base = cy + 20;
+      c.fillStyle = "#3a3438";
+      c.fillRect(cx - 70, base, 70, 16);
+      for (let x = cx - 70; x < cx; x += 10) {
+        c.fillStyle = "#4a4248";
+        c.fillRect(x, base, 9, 7);
+      }
+      const heat = clamp(k * 1.6, 0, 1), f = 0.6 + 0.4 * Math.sin(t * 17) * Math.sin(t * 7);
+      for (let i = 0; i < 6; i++) {
+        const h = (6 + heat * 12) * (0.6 + 0.4 * Math.sin(t * 13 + i * 1.7));
+        c.fillStyle = i % 2 ? "#ff9a3a" : "#ffd27a";
+        c.fillRect(cx - 62 + i * 10, base - h, 6, h);
+      }
+      glow2(c, cx - 35, base - 6, 34, "#ff8a2a", 0.25 + heat * 0.35 * f);
+      const tilt = step === 2 ? sk * 0.9 : step > 2 ? 0.9 : 0;
+      c.save();
+      c.translate(cx - 35, base - 18);
+      c.rotate(tilt);
+      c.fillStyle = "#2a2a30";
+      c.beginPath();
+      c.moveTo(-14, -12);
+      c.lineTo(14, -12);
+      c.lineTo(10, 10);
+      c.lineTo(-10, 10);
+      c.fill();
+      const lv = step === 0 ? 0 : step === 1 ? sk : step === 2 ? 1 - sk : 0;
+      if (lv > 0) {
+        c.fillStyle = "#ff9a2a";
+        c.fillRect(-11, -10 + (1 - lv) * 16, 22, lv * 16);
+        c.fillStyle = "#ffe08a";
+        c.fillRect(-11, -10 + (1 - lv) * 16, 22, 2);
+      }
+      c.restore();
+      if (step <= 1) mats.forEach((id, i) => {
+        const m = step === 0 ? 0 : sk, x = 30 + i * 28 + (cx - 46 - (30 + i * 28)) * m, y = base - 46 + m * 20;
+        c.globalAlpha = 1 - m * 0.9;
+        drawIc(c, id, x, y, 22);
+        if (step === 1) glow2(c, x + 11, y + 11, 14, "#ff6a2a", 0.5 * m);
+        c.globalAlpha = 1;
+      });
+      const mx = cx + 10;
+      c.fillStyle = "#4a4a50";
+      c.fillRect(mx, base - 4, 56, 16);
+      c.fillStyle = "#2a2a30";
+      c.fillRect(mx + 6, base - 2, 44, 8);
+      if (step === 2) {
+        c.fillStyle = "#ffb040";
+        c.fillRect(cx - 18, base - 26, 3, 24 + 4);
+        glow2(c, cx - 16, base - 6, 12, "#ff9a2a", 0.5);
+        c.fillStyle = "#ff8a2a";
+        c.fillRect(mx + 6, base + 6 - sk * 8, 44 * sk, sk * 8);
+      }
+      if (step === 3) {
+        const cool = sk;
+        c.fillStyle = `rgb(${Math.round(255 - cool * 150)},${Math.round(138 - cool * 40)},${Math.round(42 + cool * 60)})`;
+        c.fillRect(mx + 6, base - 2, 44, 8);
+        c.globalAlpha = 0.85 * cool;
+        drawIc(c, out, mx + 12, base - 34, 30);
+        c.globalAlpha = 1;
+        for (let i = 0; i < 4; i++) {
+          const q = (t * 0.9 + i / 4) % 1;
+          c.globalAlpha = (1 - q) * 0.75 * (1 - cool * 0.4);
+          c.fillStyle = "#d8dce4";
+          c.beginPath();
+          c.arc(mx + 10 + i * 12 + Math.sin(q * 6 + i) * 3, base - 6 - q * 30, 3 + q * 6, 0, TAU);
+          c.fill();
+        }
+        c.globalAlpha = 1;
+      }
+    },
+    /* 맨손 — 재료가 튀어 모이고 · 끈으로 감기고 · 반짝 */
+    stage_hand(c, W, cx, cy, y0, step, sk, k, t, mats, out) {
+      const top = cy + 16;
+      c.fillStyle = "#4a3a2a";
+      c.beginPath();
+      c.ellipse(cx, top + 6, W * 0.32, 8, 0, 0, TAU);
+      c.fill();
+      c.fillStyle = "#5e4a34";
+      c.beginPath();
+      c.ellipse(cx, top + 4, W * 0.3, 6, 0, 0, TAU);
+      c.fill();
+      mats.forEach((id, i) => {
+        const sx = cx - 70 + i * 40, m = step === 0 ? sk : 1, hop = step === 0 ? Math.abs(Math.sin(sk * Math.PI * 2 + i)) * 8 : 0;
+        const x = sx + (cx - 12 - sx) * m * 0.85, a = step === 2 ? 1 - sk : 1;
+        c.globalAlpha = a;
+        drawIc(c, id, x, top - 22 - hop, 22);
+        c.globalAlpha = 1;
+      });
+      if (step === 1) {
+        c.strokeStyle = "#d8c090";
+        c.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+          c.beginPath();
+          c.ellipse(cx - 2, top - 12, 18, 6, 0.3 * (i - 1), 0, TAU * sk);
+          c.stroke();
+        }
+      }
+      if (step === 2) {
+        drawIc(c, out, cx - 16, top - 34, 32);
+        c.fillStyle = "#fff6d0";
+        for (let i = 0; i < 5; i++) {
+          const a = i / 5 * TAU + t * 3, d = 20 + sk * 10;
+          c.fillRect(cx + Math.cos(a) * d, top - 18 + Math.sin(a) * d * 0.6, 2, 2);
+        }
+      }
+    },
+    /* ================= 기계 가동 과정 ================= */
+    /** 기계 창 맨 위 — 투입 → 확대한 기계 → 산출 · 공정 단계 줄. 창이 열려 있는 동안 매 프레임 */
+    machViewStart() {
+      if (this._mvRaf) return;
+      const loop = () => {
+        this._mvRaf = 0;
+        if (this.open !== "machine" || !this.machRef) return;
+        this.machViewDraw();
+        this._mvRaf = requestAnimationFrame(loop);
+      };
+      this._mvRaf = requestAnimationFrame(loop);
+    },
+    machViewDraw() {
+      const m = this.machRef, cv = document.getElementById("mach-view");
+      if (!m || !cv) return;
+      const s = MACHINE[m.t], steps = machSteps(m.t);
+      const W = cv.clientWidth || 360, H = steps ? 142 : 116, dpr = Math.min(2, devicePixelRatio || 1);
+      if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+        cv.width = Math.round(W * dpr);
+        cv.height = Math.round(H * dpr);
+        cv.style.height = H + "px";
+      }
+      const c = cv.getContext("2d");
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.clearRect(0, 0, W, H);
+      c.imageSmoothingEnabled = false;
+      const t = app.time, run = !!(m.on && m.act && !m.broke);
+      const fy = 104;
+      c.fillStyle = "#16140e";
+      c.fillRect(0, fy, W, 4);
+      const big = Factory11.isBig(m), MW = (m.w || 1) * 22, MH = (m.h || 1) * 22;
+      const sc = Math.min(3, 92 / MH, W * 0.34 / MW), ox = W / 2 - MW * sc / 2, oy = fy - MH * sc;
+      c.save();
+      c.translate(ox, oy);
+      c.scale(sc, sc);
+      if (big) Factory11.drawBig(c, m, 0, (m.h - 1) * 22, t, run);
+      else {
+        TileArt.draw(c, s.tile, 0, 0, 0);
+        if (run && !s.mine) Factory11.drawWork(c, app.world, m, 0, 0, t, 0, 0);
+      }
+      c.restore();
+      if (run) glow2(c, W / 2, fy - MH * sc / 2, MH * sc * 0.8, "#ffd27a", 0.08);
+      const ins = m.in ? Object.keys(m.in).filter((k) => m.in[k] > 0).slice(0, 3) : [];
+      const outs = m.out ? Object.keys(m.out).filter((k) => m.out[k] > 0).slice(0, 3) : [];
+      const r = m.rec >= 0 ? MRECIPES[m.rec] : null;
+      if (!outs.length && r) outs.push(...Object.keys(r.out).slice(0, 2));
+      if (!outs.length && s.mine && m.tgt) {
+        const d = TILE_DEF[app.world.get(m.tgt[0], m.tgt[1])];
+        if (d && d.drop && ITEMS[d.drop]) outs.push(d.drop);
+      }
+      const lane = (x0, x1, y) => {
+        c.strokeStyle = "#3a3424";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(x0, y);
+        c.lineTo(x1, y);
+        c.stroke();
+        c.fillStyle = "#3a3424";
+        c.beginPath();
+        c.moveTo(x1, y - 4);
+        c.lineTo(x1 + 6, y);
+        c.lineTo(x1, y + 4);
+        c.fill();
+        if (run) {
+          c.fillStyle = "#ffd27a";
+          for (let i = 0; i < 3; i++) {
+            const q = (t * 0.9 + i / 3) % 1;
+            c.fillRect(x0 + (x1 - x0) * q - 1, y - 1, 3, 3);
+          }
+        }
+      };
+      const midY = fy - 40, lx = ox - 10, rx = ox + MW * sc + 10;
+      const col = (ids, x, buf, ghost) => ids.forEach((id, i) => {
+        const y = midY - (ids.length - 1) * 15 + i * 30 - 13;
+        c.globalAlpha = ghost ? 0.4 : 1;
+        drawIc(c, id, x, y, 26);
+        c.globalAlpha = 1;
+        const nn = buf && buf[id];
+        if (nn) {
+          c.fillStyle = "#e8dcc0";
+          c.font = `700 10px ${FONT || "sans-serif"}`;
+          c.textAlign = "right";
+          c.fillText(String(nn), x + 28, y + 26);
+        }
+      });
+      if (ins.length) {
+        col(ins, 14, m.in, false);
+        lane(46, lx, midY);
+      }
+      if (outs.length) {
+        lane(rx, W - 52, midY);
+        col(outs, W - 40, m.out, !(m.out && outs.some((k) => m.out[k] > 0)));
+      } else if (s.gen || m.t === "windmill") {
+        lane(rx, W - 52, midY);
+        c.fillStyle = run ? "#ffe08a" : "#5a5440";
+        c.beginPath();
+        c.moveTo(W - 30, midY - 16);
+        c.lineTo(W - 40, midY + 2);
+        c.lineTo(W - 32, midY + 2);
+        c.lineTo(W - 36, midY + 16);
+        c.lineTo(W - 24, midY - 4);
+        c.lineTo(W - 32, midY - 4);
+        c.fill();
+      }
+      if (steps) {
+        let cur = -1, kk = -1;
+        if (r && m.on) {
+          const p = clamp(m.prog / r.t, 0, 0.999);
+          cur = Math.floor(p * steps.length);
+          kk = p * steps.length - cur;
+        } else if (run) {
+          const p = t * 0.6 % 1;
+          cur = Math.floor(p * steps.length);
+          kk = p * steps.length - cur;
+        }
+        stepRow(c, steps, cur, kk, 6, H - 26, W - 12);
+      }
+    },
+    /* ================= 강화 모루 — 가열 → 단조(망치 셋) → 담금질 ================= */
+    anvilSteps(st, cur) {
+      let row = st.querySelector(".as-steps");
+      if (!row) {
+        row = document.createElement("div");
+        row.className = "as-steps";
+        row.innerHTML = [tr("가열"), tr("단조"), tr("담금질")].map((n) => `<i>${n}</i>`).join("");
+        st.querySelector(".as-body").prepend(row);
+      }
+      row.querySelectorAll("i").forEach((el, i) => {
+        el.classList.toggle("on", i === cur);
+        el.classList.toggle("done", i < cur);
+      });
+    }
+  };
+  mixin(UI5, ProcessUIPart);
 
   // src/game/ui/emoji.ts
   var emoji_exports = {};
@@ -41805,12 +42329,12 @@
     } },
     { k: "ember", f: 4, dur: 0.9, draw: (p) => {
       const g = [0, 1, 2, 1][p.t];
-      const glow2 = ["#5ad8ff", "#8ae8ff", "#c8f6ff", "#8ae8ff"][p.t];
+      const glow3 = ["#5ad8ff", "#8ae8ff", "#c8f6ff", "#8ae8ff"][p.t];
       if (g) {
         p.px(9 - g, 3 - g, 2 + g * 2, 14 + g * 2, "rgba(120,220,255,.25)");
       }
-      p.px(9, 2, 2, 2, glow2);
-      p.px(8, 4, 4, 3, glow2);
+      p.px(9, 2, 2, 2, glow3);
+      p.px(8, 4, 4, 3, glow3);
       p.px(7, 7, 6, 4, "#3ab0e0");
       p.px(8, 11, 4, 3, "#2a88b8");
       p.px(9, 14, 2, 2, "#1a5a80");
@@ -56526,11 +57050,11 @@
         const x = v.x - cx0, y = v.y - cy0, hit = Math.max(0, v.hit || 0);
         const lit = pz.k === "toggle" || pz.k === "bloom" ? v.s === 1 : pz.k === "dial" ? v.s === v.tgt : hit > 0;
         const open = pz.k === "bloom" && (pz.t / v.per + v.ph) % 1 < 0.38;
-        const glow2 = (lit ? 1 : 0.25) + hit * 1.6 + (open ? 0.5 : 0);
+        const glow3 = (lit ? 1 : 0.25) + hit * 1.6 + (open ? 0.5 : 0);
         const im = Sprites.vfxArt("mote", pz.c);
         if (im) {
           c.globalCompositeOperation = "lighter";
-          c.globalAlpha = Math.min(1, glow2 * 0.7);
+          c.globalAlpha = Math.min(1, glow3 * 0.7);
           const R = 34 + hit * 30;
           c.drawImage(im, x - R, y - R, R * 2, R * 2);
           c.globalCompositeOperation = "source-over";
@@ -63422,7 +63946,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

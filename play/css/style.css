@@ -1456,3 +1456,13 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 /* 터치 기기는 화면 위 가운데에 전체 화면 단추가 떠 있다 — 멈춤 제목이 그 밑에 깔리지 않게 내린다 */
 @media (max-height:440px){body.touch #pause-screen{padding-top:calc(44px + env(safe-area-inset-top,0px))}}
 #btn-mp-join:disabled{opacity:.45;cursor:default}
+/* ===== 공정(ui/process.ts) — 제작 무대 · 기계 가동 과정 · 모루 단계 ===== */
+#craft-stage{display:none;width:calc(100% - 32px);height:112px;margin:8px 16px 0;background:linear-gradient(#14120ce8,#0c0b08ee);border:1px solid #2e2a1e;border-radius:4px;box-shadow:inset 0 0 18px #000a}
+#craft-stage.on{display:block}
+#mach-view{display:block;width:100%;height:142px;margin:0 0 6px;background:linear-gradient(#12110ce0,#0a0907e8);border:1px solid #262418;border-radius:4px}
+#anvil-stage .as-steps{display:flex;gap:4px}
+#anvil-stage .as-steps i{flex:1;font-style:normal;text-align:center;font-size:10.5px;padding:2px 0;border-radius:3px;background:#16140e;border:1px solid #2e2a1e;color:#6b6553}
+#anvil-stage .as-steps i.on{background:#3a2e16;border-color:#d8a94b;color:#ffe2a0}
+#anvil-stage .as-steps i.done{color:#a8c07a;border-color:#4a5a32}
+#anvil-stage .as-item.heat{filter:drop-shadow(0 0 6px #ff7a2a) sepia(1) saturate(5) hue-rotate(-25deg) brightness(1.25);transition:filter .35s}
+#anvil-stage .as-item.quench{filter:drop-shadow(0 0 3px #bfe8ff) brightness(.9);transition:filter .3s}

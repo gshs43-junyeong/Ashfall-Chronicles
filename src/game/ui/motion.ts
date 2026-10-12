@@ -122,14 +122,24 @@ export const UIMotionPart: Bag = {
       return;
     }
     this.anvilShow(it); this.anvilBusy = true; st.classList.add('busy');
-    const item = st.querySelector('.as-item'), ham = st.querySelector('.as-ham'), beat = 240;
+    /* 가열(벌겋게 달군다) → 단조(망치 셋) → 담금질(김) → 결말 — 실제 벼리는 차례대로 */
+    const item = st.querySelector('.as-item'), ham = st.querySelector('.as-ham'), beat = 240, HEAT = 460, QUENCH = 420;
+    this.anvilSteps(st, 0); item.classList.add('heat'); G.sfx && G.sfx('fuse', 1, 0.6);
     for (let k = 0; k < 3; k++) setTimeout(() => {
+      if (k === 0) this.anvilSteps(st, 1);
       this.pop(ham, 'hit', 240); this.pop(item, 'jolt', 200);
       this.sparkAt(item.getBoundingClientRect(), k === 2 ? '#ffe8a0' : '#ffa040', 6 + k * 3, 38 + k * 10);
       G.sfx && G.sfx('hit_blunt');
-    }, k * beat);
+    }, HEAT + k * beat);
+    setTimeout(() => {
+      this.anvilSteps(st, 2); item.classList.remove('heat'); item.classList.add('quench');
+      this.sparkAt(item.getBoundingClientRect(), '#d8dce4', 10, 34); G.sfx && G.sfx('splash', 1.3, 0.6);
+    }, HEAT + 3 * beat);
     // 박자 사이에 가방이 바뀌었을 수 있다 — 칸 번호가 아니라 그 물건을 다시 찾는다
-    setTimeout(() => { this.anvilBusy = false; st.classList.remove('busy'); const j = G.player.bag.indexOf(it); if (j >= 0) this.anvilEnd(G.enhanceSlot(j), it); }, 3 * beat + 60);
+    setTimeout(() => {
+      this.anvilBusy = false; st.classList.remove('busy'); item.classList.remove('quench'); this.anvilSteps(st, 3);
+      const j = G.player.bag.indexOf(it); if (j >= 0) this.anvilEnd(G.enhanceSlot(j), it);
+    }, HEAT + 3 * beat + QUENCH);
   },
   anvilEnd(res: string | null, it: Bag) {
     const st = $('#anvil-stage'); if (!st) return;

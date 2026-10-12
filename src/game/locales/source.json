@@ -579,6 +579,9 @@
   "가로로 돌려 주세요": [
    "index.html"
   ],
+  "가루를 받는다": [
+   "ui/process.mill"
+  ],
   "가방": [
    "ui/tip.showTip",
    "index.html"
@@ -620,6 +623,9 @@
   "가방이 차서 일부는 바닥에 떨어졌다": [
    "game.update"
   ],
+  "가열": [
+   "ui/process.anvilSteps"
+  ],
   "가운데에 손바닥만 한 홈이 하나 파여 있다 — 안쪽에서 만든 것만 맞는 크기다.": [
    "game/interact.openSeal"
   ],
@@ -631,6 +637,9 @@
   ],
   "가진 금화가 없다": [
    "ui.depositGold"
+  ],
+  "간다": [
+   "ui/process.mill"
   ],
   "갈래": [
    "ui/quest.renderRuins"
@@ -701,6 +710,9 @@
   "건축": [
    "ui/craft.refreshCraft"
   ],
+  "검사한다": [
+   "ui/process.assembler"
+  ],
   "겁을 먹었다": [
    "data/quests"
   ],
@@ -709,6 +721,9 @@
   ],
   "겨눈 곳에 적이 없다": [
    "entity/player-combat.useSkill"
+  ],
+  "겨눈다": [
+   "ui/process.turret"
   ],
   "겨울이 오기 전에 나무 {n}개만 더 모아 주련?": [
    "data/quests"
@@ -796,14 +811,23 @@
   "광맥 없음": [
    "factory/tick.runDrill"
   ],
+  "광맥을 깬다": [
+   "ui/process.drill"
+  ],
   "광맥째로": [
    "data/quests"
   ],
   "광석 배달": [
    "data/quests"
   ],
+  "광석을 녹인다": [
+   "ui/process.smelter"
+  ],
   "광장 밖으로 삐져나감: {slotKey}({tx0}~{tx1}) vs 광장 {plaza}~{plaza2}": [
    "world/village.checkDawnLayout"
+  ],
+  "굽는다": [
+   "ui/process.oven"
   ],
   "귀환 비석": [
    "game/interact.useWaystone",
@@ -898,6 +922,9 @@
   "기획": [
    "index.html"
   ],
+  "김을 식힌다": [
+   "ui/process.desal"
+  ],
   "깊은 곳 {L}단계가 열렸다 — {n}": [
    "game/ruin-deep.deepOpen"
   ],
@@ -913,8 +940,14 @@
   "꺼 둔 갈래는 화면에 뜨지 않습니다. 죽음 · 실패 알림은 끌 수 없습니다.": [
    "index.html"
   ],
+  "꺼낸다": [
+   "ui/process.oven"
+  ],
   "끊긴 선": [
    "data/quests"
+  ],
+  "끓여 가른다": [
+   "ui/process.refinery"
   ],
   "나가기": [
    "index.html"
@@ -949,6 +982,12 @@
   "난이도": [
    "game/save.showNewGameForm"
   ],
+  "낟알을 넣는다": [
+   "ui/process.mill"
+  ],
+  "날개가 돈다": [
+   "ui/process.windmill"
+  ],
   "낫 없이 거두면 다 으스러진다 — 낫이 필요하다": [
    "game/mine.mine"
   ],
@@ -966,6 +1005,10 @@
   ],
   "내보내기 실패": [
    "game/save.exportSaves"
+  ],
+  "내보낸다": [
+   "ui/process.battery",
+   "ui/process.pump"
   ],
   "내보낼 기록이 없다": [
    "game/save.exportSaves"
@@ -998,6 +1041,9 @@
   "녹슨 채취탑이다. 리벳 틈마다 재가 쌓여 있다.": [
    "game/rigs.useRig"
   ],
+  "녹인다": [
+   "ui/process.craftSteps"
+  ],
   "높음": [
    "index.html"
   ],
@@ -1019,6 +1065,10 @@
   "누군가 타고 있다": [
    "game/rides.useMount"
   ],
+  "누른다": [
+   "ui/process.press",
+   "ui/process.pressor"
+  ],
   "는 바꿀 수 없습니다.": [
    "index.html"
   ],
@@ -1036,6 +1086,9 @@
   ],
   "다 자란 작물에는 쓸 수 없다": [
    "game/mine.rightClick"
+  ],
+  "다듬는다": [
+   "ui/process.craftSteps"
   ],
   "다섯 조각이 곁을 떠나 하늘로 돌아갔다": [
    "game/life.gainStarOrbit"
@@ -1077,11 +1130,17 @@
   "단을 여는 점수는 다른 갈래에 찍은 것도 <b>절반</b>이 쌓입니다.": [
    "ui/tree.buildTree"
   ],
+  "단조": [
+   "ui/process.anvilSteps"
+  ],
   "단축 칸": [
    "index.html"
   ],
   "닫기": [
    "index.html"
+  ],
+  "담금질": [
+   "ui/process.anvilSteps"
   ],
   "담이 섰어. 담이 있으면 안쪽이 생기더라. 그게 마을이지.": [
    "data/quests"
@@ -1333,6 +1392,12 @@
   "맞지 않는다 — 홈이 그대로다": [
    "game/ruins.tryCodeDoor"
   ],
+  "맞춘다": [
+   "ui/process.assembler"
+  ],
+  "맞춰 붙인다": [
+   "ui/process.craftSteps"
+  ],
   "맡은 일에 대해 묻는다": [
    "game/talk.talkVillager"
   ],
@@ -1481,6 +1546,9 @@
   "물어뜯기": [
    "ui/tip.showTip"
   ],
+  "물을 받는다": [
+   "ui/process.sprinkler"
+  ],
   "뭔가 걸렸다 — {itemName}{v}": [
    "game/fishing.giveCatch"
   ],
@@ -1515,8 +1583,14 @@
   "바닥이 있어야 문을 단다": [
    "game/mine.placeDoor"
   ],
+  "바닷물을 끓인다": [
+   "ui/process.desal"
+  ],
   "바람 막힘": [
    "factory/tick.tick"
+  ],
+  "바람을 받는다": [
+   "ui/process.windmill"
   ],
   "바로 곁에": [
    "game/meteor.meteorImpact"
@@ -1764,6 +1838,9 @@
   "부탁할 일이 있는지 묻는다": [
    "game/talk.talkTo"
   ],
+  "부품을 고른다": [
+   "ui/process.assembler"
+  ],
   "분기": [
    "factory",
    "factory/tick.tick"
@@ -1792,6 +1869,10 @@
   ],
   "불에 넣을 것": [
    "data/quests"
+  ],
+  "불을 지핀다": [
+   "ui/process.craftSteps",
+   "ui/process.oven"
   ],
   "불이 돌아왔다 — 도둑의 자루에서 금화 {n}": [
    "entity/enemy-traits.traitDie"
@@ -1829,6 +1910,9 @@
   "비워두면 무작위": [
    "game/save.showNewGameForm"
   ],
+  "비트를 돌린다": [
+   "ui/process.drill"
+  ],
   "빈 바늘만 올라왔다": [
    "game/fishing.giveCatch"
   ],
@@ -1855,6 +1939,10 @@
   ],
   "빼기": [
    "index.html"
+  ],
+  "빼낸다": [
+   "ui/process.press",
+   "ui/process.pressor"
   ],
   "뺄 수 없는 금액이다": [
    "ui.withdrawGold"
@@ -1993,6 +2081,9 @@
   "셋째": [
    "game/ruins.ruinCipher"
   ],
+  "소금을 거둔다": [
+   "ui/process.desal"
+  ],
   "소모 마나 <b>{mana}</b>": [
    "ui/tip.showTip"
   ],
@@ -2069,6 +2160,12 @@
   "식는 중": [
    "factory/tick.runWildTrap"
   ],
+  "식혀 내보낸다": [
+   "ui/process.smelter"
+  ],
+  "식힌다": [
+   "ui/process.craftSteps"
+  ],
   "신발": [
    "index.html"
   ],
@@ -2086,6 +2183,9 @@
   ],
   "싱글플레이": [
    "index.html"
+  ],
+  "쏜다": [
+   "ui/process.turret"
   ],
   "쓰러졌다": [
    "index.html"
@@ -2138,6 +2238,9 @@
   "아직 회복할 수 없다": [
    "game/interact.useConsumable"
   ],
+  "아침에 뿌린다": [
+   "ui/process.sprinkler"
+  ],
   "아침을 기다림": [
    "factory/tick.tick"
   ],
@@ -2146,6 +2249,9 @@
   ],
   "알림": [
    "index.html"
+  ],
+  "압력을 올린다": [
+   "ui/process.pressor"
   ],
   "애들이 우리 밖으로 안 나가려 해. {enemy} {n}{mobCw}만 치워 주면 다시 나올 거야.": [
    "data/quests"
@@ -2237,6 +2343,9 @@
   "역시. 조각이 떨어진 자리부터 빛이 스며들고 있어.": [
    "data/quests"
   ],
+  "엮는다": [
+   "ui/process.craftSteps"
+  ],
   "연료": [
    "factory.statusColor"
   ],
@@ -2248,8 +2357,14 @@
    "factory/tick.runProc",
    "factory/tick.runDrill"
   ],
+  "연료를 넣는다": [
+   "ui/process.gen"
+  ],
   "연료를 직접 태운다": [
    "ui/tip.showTip"
+  ],
+  "연료를 태운다": [
+   "ui/process.smelter"
   ],
   "영문과 숫자를 섞어 5~6자 — 예: 7K2QM": [
    "index.html"
@@ -2291,6 +2406,9 @@
   "용광로 Lv.{forge}": [
    "ui/craft.refreshCraft"
   ],
+  "용접한다": [
+   "ui/process.assembler"
+  ],
   "우리는 그 말을 셋으로 끊어 서로 다른 방에 두었다.": [
    "game/ruins.ruinCipher"
   ],
@@ -2320,6 +2438,12 @@
   ],
   "원거리 무기": [
    "ui/tip.showTip"
+  ],
+  "원유를 데운다": [
+   "ui/process.refinery"
+  ],
+  "원유를 퍼 올린다": [
+   "ui/process.pump"
   ],
   "윗단계": [
    "ui/tree.lockReason"
@@ -2539,6 +2663,9 @@
   "자라는 중인 작물에 우클릭": [
    "ui/tip.showTip"
   ],
+  "자른다": [
+   "ui/process.craftSteps"
+  ],
   "작업대": [
    "game/render-world.drawCursor"
   ],
@@ -2614,6 +2741,13 @@
    "game/village.upgradeStation",
    "game/village.craft"
   ],
+  "재료를 고른다": [
+   "ui/process.craftSteps"
+  ],
+  "재료를 앉힌다": [
+   "ui/process.press",
+   "ui/process.pressor"
+  ],
   "재사용 감소": [
    "ui/tip.showTip"
   ],
@@ -2671,6 +2805,13 @@
   ],
   "전 <b>{totalN}개 장</b>": [
    "ui/quest.refreshQuest"
+  ],
+  "전기를 낸다": [
+   "ui/process.gen",
+   "ui/process.windmill"
+  ],
+  "전기를 받는다": [
+   "ui/process.battery"
   ],
   "전력": [
    "factory.statusColor"
@@ -2806,6 +2947,9 @@
   "준비 <b>{done}/{need}</b>": [
    "ui/quest.refreshQuest",
    "ui/quest.refreshTracker"
+  ],
+  "줄 선 것 {n}": [
+   "ui/process.craftStageDraw"
   ],
   "줄이 끊겼다": [
    "game/fish-duel.endDuel",
@@ -2985,6 +3129,9 @@
    "game/save.showNewGameForm",
    "game/shell.askConfirm"
   ],
+  "층마다 받는다": [
+   "ui/process.refinery"
+  ],
   "치명": [
    "game/render.rFx",
    "ui.refreshStatSheet",
@@ -2999,6 +3146,12 @@
   "치명피해": [
    "ui.refreshStatSheet",
    "ui/tip.compareLine"
+  ],
+  "치수를 잰다": [
+   "ui/process.craftSteps"
+  ],
+  "칸에 채운다": [
+   "ui/process.battery"
   ],
   "캐릭터": [
    "game/save.showNewGameForm"
@@ -3046,6 +3199,9 @@
   "탄약 없음": [
    "factory/tick.runTurret"
   ],
+  "탄을 먹인다": [
+   "ui/process.turret"
+  ],
   "탐사 기록 {rank} — {spec} (진행 {score}%)": [
    "game/ruin-pulse.checkSurvey"
   ],
@@ -3057,6 +3213,9 @@
   ],
   "탐험가 갈래에서 이 칸을 열어야 한다": [
    "ui.buildEquipSlots"
+  ],
+  "태운다": [
+   "ui/process.gen"
   ],
   "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": [
    "game/fish-duel.duelDraw"
@@ -3090,6 +3249,10 @@
   "틀렸다 — 해가 순서를 다시 보여 준다 ({n}/3)": [
    "game/ruin-events.evTick"
   ],
+  "틀에 붓는다": [
+   "ui/process.craftSteps",
+   "ui/process.smelter"
+  ],
   "파동이 잦아들었어. 역시 네 덕분이야.": [
    "data/quests"
   ],
@@ -3114,6 +3277,9 @@
   ],
   "패시브 ×{petLvMul} · 공격 ×{petAtkMul}": [
    "ui/tip.showTip"
+  ],
+  "퍼 올린다": [
+   "ui/process.drill"
   ],
   "펫": [
    "ui/tip.showTip",
@@ -3271,6 +3437,9 @@
   ],
   "휴지통": [
    "ui.init"
+  ],
+  "흔들대를 움직인다": [
+   "ui/process.pump"
   ],
   "흙이나 풀 위에서만 밭을 갈 수 있다": [
    "game/mine.rightClick"

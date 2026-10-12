@@ -20,6 +20,7 @@ export const MachineUIPart: Bag = {
     this.machRef = m; this._machSig = null; this._machK = 0;
     this.panels.show('machine'); G.uiOpen = true;
     this.refreshMachine(true);
+    this.machViewStart();
   },
   /** id별 개수 묶음을 클릭 가능한 칸으로 */
   bufGrid(buf: any, cls: string) {
@@ -107,7 +108,7 @@ export const MachineUIPart: Bag = {
     $('#mach-title').textContent = s.n;
 
     // ---- 상태 줄 ----
-    let info = `<div class="mach-desc">${s.d}</div><div class="mach-row" id="mach-st"></div>`;
+    let info = `<canvas id="mach-view"></canvas><div class="mach-desc">${s.d}</div><div class="mach-row" id="mach-st"></div>`;   // 가동 과정(ui/process)
     if (s.power || s.gen || s.store) {
       info += '<div class="mach-row" id="mach-net"></div>';
       if (s.power) info += `<div class="mach-row dim">${tr('소비 {power}/틱 (1틱 = {facTick}초)', { power: s.power, facTick: FAC_TICK })}</div>`;

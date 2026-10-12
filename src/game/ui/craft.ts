@@ -112,7 +112,7 @@ export const CraftUIPart: Bag = {
     $$('#craft-list .recipe').forEach(el => {
       const i = +el.dataset.r;
       this.setIcon(el.querySelector('.ric'), Art.itemUrl(RECIPES[i].out));
-      el.addEventListener('click', () => this.craftWithFx(i, el));
+      el.addEventListener('click', () => this.craftProcess(i, el));   // 공정을 보이고 끝에 만든다(ui/process)
       el.addEventListener('mouseenter', (e: any) => this.showTip(makeItem(RECIPES[i].out, 1, 0), e));
       el.addEventListener('mouseleave', () => this.hideTip());
     });
