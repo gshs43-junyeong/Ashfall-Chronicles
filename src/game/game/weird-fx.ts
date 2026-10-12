@@ -16,12 +16,38 @@ export const WeirdFxPart: Bag = {
       return true;
     }
     if (pr.type === 'bubble') {
-      const r = 6 + Math.sin(this.time * 9 + pr.vol) * 0.8;
+      /* 물속·어두운 굴에서도 보이게 — 어두운 바깥 테 · 밝은 테 · 빛 번짐 · 도는 무지갯빛 · 뒤따르는 작은 방울 */
+      const t = this.time, r = 9 + Math.sin(t * 9 + pr.vol) * 1.1;
+      const sq = 1 + Math.sin(t * 7 + pr.vol * 2) * 0.06;             // 출렁 — 가로세로가 번갈아 늘어난다
       c.save();
-      c.fillStyle = 'rgba(170,220,255,.18)'; c.beginPath(); c.arc(sx, sy, r, 0, TAU); c.fill();
-      c.strokeStyle = 'rgba(200,236,255,.85)'; c.lineWidth = 1.2; c.stroke();
-      c.strokeStyle = 'rgba(255,170,230,.5)'; c.beginPath(); c.arc(sx, sy, r - 1.5, 0.6, 2.2); c.stroke();   // 무지갯빛 한 줄
-      c.fillStyle = '#fff'; c.beginPath(); c.arc(sx - r * 0.4, sy - r * 0.4, 1.4, 0, TAU); c.fill();
+      c.globalCompositeOperation = 'lighter';
+      const gl = c.createRadialGradient(sx, sy, r * 0.6, sx, sy, r * 2);
+      gl.addColorStop(0, 'rgba(150,215,255,.32)'); gl.addColorStop(1, 'rgba(150,215,255,0)');
+      c.fillStyle = gl; c.beginPath(); c.arc(sx, sy, r * 2, 0, TAU); c.fill();
+      c.globalCompositeOperation = 'source-over';
+      c.translate(sx, sy); c.scale(sq, 2 - sq);
+      const fill = c.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
+      fill.addColorStop(0, 'rgba(235,248,255,.22)'); fill.addColorStop(0.7, 'rgba(160,215,255,.28)'); fill.addColorStop(1, 'rgba(200,170,255,.55)');
+      c.fillStyle = fill; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
+      c.strokeStyle = 'rgba(20,40,70,.55)'; c.lineWidth = 3; c.stroke();                  // 밝은 하늘에서도 테가 읽히게
+      c.strokeStyle = 'rgba(225,245,255,.95)'; c.lineWidth = 1.6; c.stroke();
+      c.lineWidth = 1.8;
+      const cols = ['rgba(255,140,220,.85)', 'rgba(255,230,120,.8)', 'rgba(120,255,200,.8)', 'rgba(130,170,255,.85)'];
+      for (let i = 0; i < 4; i++) {                                    // 무지갯빛 — 테를 따라 돈다
+        const a = t * 2.4 + i * TAU / 4;
+        c.strokeStyle = cols[i]; c.beginPath(); c.arc(0, 0, r - 1.6, a, a + 0.9); c.stroke();
+      }
+      c.fillStyle = '#fff';
+      c.beginPath(); c.ellipse(-r * 0.4, -r * 0.42, 2.6, 1.6, -0.7, 0, TAU); c.fill();
+      c.beginPath(); c.arc(r * 0.35, r * 0.4, 1, 0, TAU); c.fill();
+      c.restore();
+      // 뒤따르는 작은 방울 둘 — 날아온 길을 보인다
+      const sp = Math.hypot(pr.vx, pr.vy) || 1, bx = -pr.vx / sp, by = -pr.vy / sp;
+      c.save(); c.strokeStyle = 'rgba(210,240,255,.8)'; c.lineWidth = 1.2;
+      for (const [d, rr, ph] of [[r + 7, 3, 0], [r + 14, 2, 1.7]]) {
+        const w = Math.sin(t * 6 + ph + pr.vol) * 3;
+        c.beginPath(); c.arc(sx + bx * d - by * w, sy + by * d + bx * w, rr, 0, TAU); c.stroke();
+      }
       c.restore();
       return true;
     }

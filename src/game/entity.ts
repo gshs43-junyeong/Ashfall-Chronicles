@@ -87,6 +87,7 @@ export class Player extends Ent {
   declare rideStep: (dt: number, world: World, input: Bag) => void; declare afterMove: (dt: number, world: World) => void;
   declare weirdSwing: (sp: string, ang: number, base: number) => boolean; declare weirdHit: (sp: string, e: any) => void; declare tickWeird: (dt: number) => void;
   declare claw: Bag | null; declare umbOpen: boolean;   // 전기 집게 · 펼친 우산(entity/player-weird)
+  declare handOff: number[] | null; declare castAng: number; declare castAt: number; declare muzzle: (ang: number) => number[];   // 무기 손 자리 · 지팡이 겨눔
   declare volley: number;
   declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare netShield: number; declare _hid: string; declare _wid: string; declare _hurtAt: number; declare petEnts: any[]; declare _pt: string;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
@@ -907,6 +908,7 @@ export class Proj extends Ent {
   declare crit: boolean; declare dmg: number; declare explode: number; declare fire: number; declare frost: number; declare grav: number;
   declare hitSet: Set<any>; declare life: number; declare pierce: number; declare poison: number; declare team: string; declare type: string;
   declare vol: number; declare ghost: boolean; declare nid: number; declare seenAt: number;   // 멀티플레이 — 참가자 화면의 그림자 투사체
+  declare bn: number; declare ox: number; declare oy: number;   // 비눗방울 튄 수 · 지난 자리
   declare home: number;   // 쫓는 탄 — 초당 돌 수 있는 각(보스 기술 homing)
   declare bt: number; declare back: number;   // 부메랑 · 방울(entity/player-weird)
 

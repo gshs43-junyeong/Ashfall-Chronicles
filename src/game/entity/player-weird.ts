@@ -87,8 +87,17 @@ PROJ_MOVE.boomerang = (p: Proj, dt: number) => {
 PROJ_WALL.boomerang = (p: Proj) => { p.bt = Math.max(p.bt || 0, 0.42); return true; };
 /* 비눗방울 — 점점 느려지며 떠오르고 흔들린다 */
 PROJ_MOVE.bubble = (p: Proj, dt: number) => {
-  p.bt = (p.bt || 0) + dt;
+  p.bt = (p.bt || 0) + dt; p.ox = p.x; p.oy = p.y;
   p.vx *= 1 - dt * 1.6; p.vy = p.vy * (1 - dt * 1.6) - 46 * dt;
   p.x += Math.sin(p.bt * 7 + p.vol) * 18 * dt;
   return false;
+};
+/* 땅·벽에 닿으면 두 번까지 통 튄다 — 손이 몸 가운데보다 낮아 아래로 쏘면 발밑에서 바로 터졌다 */
+PROJ_WALL.bubble = (p: Proj) => {
+  if ((p.bn = (p.bn || 0) + 1) > 2) return false;
+  const nx = p.x, ny = p.y;
+  p.x = p.ox; p.y = p.oy;
+  if (G.world.hitSolid(nx, p.oy, p.w, p.h)) p.vx = -p.vx * 0.6;
+  else p.vy = -Math.abs(p.vy) * 0.6 - 40;
+  return true;
 };

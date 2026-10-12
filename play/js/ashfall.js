@@ -6635,7 +6635,6 @@
   var start_exports = {};
   __export(start_exports, {
     BOW_HAND: () => BOW_HAND,
-    BOW_TIP: () => BOW_TIP,
     CHARACTERS: () => CHARACTERS,
     CHAR_OF: () => CHAR_OF,
     KEY_ACTIONS: () => KEY_ACTIONS,
@@ -6774,7 +6773,6 @@
   var MODE_OF = (id) => MODES.find((m) => m.id === id) || MODES[0];
   var CHAR_OF = (id) => CHARACTERS.find((c) => c.id === id) || CHARACTERS[0];
   var BOW_HAND = 18;
-  var BOW_TIP = BOW_HAND + 11.4;
   var KEY_ACTIONS = [
     { id: "left", n: "왼쪽", def: ["KeyA", "ArrowLeft"] },
     { id: "right", n: "오른쪽", def: ["KeyD", "ArrowRight"] },
@@ -33236,11 +33234,12 @@
         this.volley = Player._vol = (Player._vol || 0) + 1;
         for (let i = 0; i < n; i++) {
           const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.09 : 0);
-          this.fireProj(d.proj || "arrow", a, base, "dex", BOW_TIP);
+          this.fireProj(d.proj || "arrow", a, base, "dex");
         }
         if (this.skills.s_tempest && Math.random() < 0.3) {
-          this.fireProj(d.proj || "arrow", ang + (Math.random() - 0.5) * 0.12, base, "dex", BOW_TIP);
-          for (let k = 0; k < 4; k++) app.parts.push(new Part(this.cx, this.cy - 4, "#8fe0c8", -30, 0.3));
+          this.fireProj(d.proj || "arrow", ang + (Math.random() - 0.5) * 0.12, base, "dex");
+          const [tx, ty] = this.muzzle(ang);
+          for (let k = 0; k < 4; k++) app.parts.push(new Part(tx, ty, "#8fe0c8", -30, 0.3));
         }
         app.sfx("bow");
       } else if (d.wc === "magic") {
@@ -33255,13 +33254,15 @@
         const n = d.multi || 1;
         this.volley = Player._vol = (Player._vol || 0) + 1;
         const pt = d.proj || "bolt";
+        this.castAng = ang;
+        this.castAt = app.time;
         for (let i = 0; i < n; i++) {
           const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.07 : 0);
           this.fireProj(pt, a, base, "int");
         }
         {
           const st = PROJ_STYLE[pt] || PROJ_STYLE.bolt;
-          const mx2 = this.cx + Math.cos(ang) * 16, my2 = this.cy - 4 + Math.sin(ang) * 16;
+          const [mx2, my2] = this.muzzle(ang);
           app.ringFx(mx2, my2, 13, st.c, 0.18);
           for (let i = 0; i < 5; i++) app.parts.push(new Part(mx2, my2, st.c, -10, 0.3));
         }
@@ -33294,25 +33295,32 @@
       const c = this.d.crit / 100;
       return Math.random() < c;
     },
-    fireProj(type, ang, base, kind, off) {
+    /** 손에 그려진 무기 끝(세계 좌표) — drawHeldWeapon 이 적어 둔 손 자리(handOff)에서 겨눈 쪽으로.
+        활·총은 겨눈 쪽으로 든 활 끝, 지팡이는 시전 때 겨눈 쪽으로 드는 지팡이 끝. 벽에 막히면 막히기 전까지. */
+    muzzle(ang) {
+      const w = this.weapon(), wc = w ? idef(w).wc : null;
+      const x0 = this.cx, y0 = this.cy - 4;
+      if (wc !== "ranged" && wc !== "magic") return [x0, y0];
+      const h = (this.handOff || [10, 20, 0, this.facing]).slice();
+      if (h[3] !== this.facing) h[0] = this.w - h[0];
+      const len = wc === "ranged" ? (h[2] ? 3 : BOW_HAND) + 11 : (h[2] ? 12 : 15) + 12;
+      const tx = this.x + h[0] + Math.cos(ang) * len, ty = this.y + h[1] + Math.sin(ang) * len;
+      const n = Math.max(1, Math.ceil(Math.hypot(tx - x0, ty - y0) / (TS / 2)));
+      let px = x0, py = y0;
+      for (let i = 1; i <= n; i++) {
+        const x = x0 + (tx - x0) * i / n, y = y0 + (ty - y0) * i / n;
+        if (app.world.solid(Math.floor(x / TS), Math.floor(y / TS))) break;
+        px = x;
+        py = y;
+      }
+      return [px, py];
+    },
+    fireProj(type, ang, base, kind) {
       const dmg = this.scaleDmg(base, kind);
       const crit = this.rollCrit();
       const spd = type === "arrow" ? 760 : type === "star" ? 900 : type === "bubble" ? 210 : type === "boomerang" ? 600 : 560;
-      let ox = 0, oy = -4;
-      if (off) {
-        const cs = Math.cos(ang), sn = Math.sin(ang);
-        let reach = 0;
-        for (let t = TS / 2; t <= off; t += TS / 2) {
-          if (app.world.solid(Math.floor((this.cx + cs * t) / TS), Math.floor((this.cy + sn * t) / TS))) break;
-          reach = t;
-        }
-        if (reach >= off - TS / 2) reach = off;
-        if (reach > 0) {
-          ox = cs * reach;
-          oy = sn * reach;
-        }
-      }
-      const p = new Proj(this.cx + ox, this.cy + oy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), "player", type);
+      const [sx, sy] = this.muzzle(ang);
+      const p = new Proj(sx, sy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), "player", type);
       p.crit = crit;
       p.vol = this.volley;
       if (this.d.fire) p.fire = this.d.fire;
@@ -33328,6 +33336,14 @@
         p.life = 2.6;
         p.explode = 26;
         p.dmg *= 0.8;
+        p.x -= 3;
+        p.y -= 3;
+        p.w = p.h = 18;
+      }
+      for (let k = 0; k < 8 && app.world.hitSolid(p.x, p.y, p.w, p.h); k++) p.y -= 2;
+      if (app.world.hitSolid(p.x, p.y, p.w, p.h)) {
+        p.x = this.cx - p.w / 2;
+        p.y = this.cy - 4 - p.h / 2;
       }
       app.projs.push(p);
     },
@@ -33396,7 +33412,8 @@
           break;
         }
         case "s_fireball": {
-          const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 620, Math.sin(ang) * 620, this.scaleDmg(sk.v(r) + this.d.int * 1.6, "int"), "player", "fire");
+          const [ox, oy] = this.muzzle(ang);
+          const p = new Proj(ox, oy, Math.cos(ang) * 620, Math.sin(ang) * 620, this.scaleDmg(sk.v(r) + this.d.int * 1.6, "int"), "player", "fire");
           p.explode = 70;
           p.fire = 2;
           app.projs.push(p);
@@ -33472,9 +33489,10 @@
           break;
         }
         case "s_pierce": {
+          const [ox, oy] = this.muzzle(ang);
           const p = new Proj(
-            this.cx,
-            this.cy - 4,
+            ox,
+            oy,
             Math.cos(ang) * 900,
             Math.sin(ang) * 900,
             this.scaleDmg(wdmg * sk.v(r) / 100, "dex") * (this.rollCrit() ? 1 + this.d.critD / 100 : 1),
@@ -33484,7 +33502,7 @@
           p.pierce = 6;
           p.grav = 0;
           app.projs.push(p);
-          for (let k = 0; k < 8; k++) app.parts.push(new Part(this.cx, this.cy - 4, "#9fe07a", -20, 0.35));
+          for (let k = 0; k < 8; k++) app.parts.push(new Part(ox, oy, "#9fe07a", -20, 0.35));
           break;
         }
         case "s_smoke": {
@@ -33854,10 +33872,21 @@
   };
   PROJ_MOVE.bubble = (p, dt) => {
     p.bt = (p.bt || 0) + dt;
+    p.ox = p.x;
+    p.oy = p.y;
     p.vx *= 1 - dt * 1.6;
     p.vy = p.vy * (1 - dt * 1.6) - 46 * dt;
     p.x += Math.sin(p.bt * 7 + p.vol) * 18 * dt;
     return false;
+  };
+  PROJ_WALL.bubble = (p) => {
+    if ((p.bn = (p.bn || 0) + 1) > 2) return false;
+    const nx = p.x, ny = p.y;
+    p.x = p.ox;
+    p.y = p.oy;
+    if (app.world.hitSolid(nx, p.oy, p.w, p.h)) p.vx = -p.vx * 0.6;
+    else p.vy = -Math.abs(p.vy) * 0.6 - 40;
+    return true;
   };
 
   // src/game/entity/player-move.ts
@@ -48189,23 +48218,61 @@
         return true;
       }
       if (pr.type === "bubble") {
-        const r = 6 + Math.sin(this.time * 9 + pr.vol) * 0.8;
+        const t = this.time, r = 9 + Math.sin(t * 9 + pr.vol) * 1.1;
+        const sq = 1 + Math.sin(t * 7 + pr.vol * 2) * 0.06;
         c.save();
-        c.fillStyle = "rgba(170,220,255,.18)";
+        c.globalCompositeOperation = "lighter";
+        const gl = c.createRadialGradient(sx, sy, r * 0.6, sx, sy, r * 2);
+        gl.addColorStop(0, "rgba(150,215,255,.32)");
+        gl.addColorStop(1, "rgba(150,215,255,0)");
+        c.fillStyle = gl;
         c.beginPath();
-        c.arc(sx, sy, r, 0, TAU);
+        c.arc(sx, sy, r * 2, 0, TAU);
         c.fill();
-        c.strokeStyle = "rgba(200,236,255,.85)";
-        c.lineWidth = 1.2;
-        c.stroke();
-        c.strokeStyle = "rgba(255,170,230,.5)";
+        c.globalCompositeOperation = "source-over";
+        c.translate(sx, sy);
+        c.scale(sq, 2 - sq);
+        const fill = c.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
+        fill.addColorStop(0, "rgba(235,248,255,.22)");
+        fill.addColorStop(0.7, "rgba(160,215,255,.28)");
+        fill.addColorStop(1, "rgba(200,170,255,.55)");
+        c.fillStyle = fill;
         c.beginPath();
-        c.arc(sx, sy, r - 1.5, 0.6, 2.2);
+        c.arc(0, 0, r, 0, TAU);
+        c.fill();
+        c.strokeStyle = "rgba(20,40,70,.55)";
+        c.lineWidth = 3;
         c.stroke();
+        c.strokeStyle = "rgba(225,245,255,.95)";
+        c.lineWidth = 1.6;
+        c.stroke();
+        c.lineWidth = 1.8;
+        const cols = ["rgba(255,140,220,.85)", "rgba(255,230,120,.8)", "rgba(120,255,200,.8)", "rgba(130,170,255,.85)"];
+        for (let i = 0; i < 4; i++) {
+          const a = t * 2.4 + i * TAU / 4;
+          c.strokeStyle = cols[i];
+          c.beginPath();
+          c.arc(0, 0, r - 1.6, a, a + 0.9);
+          c.stroke();
+        }
         c.fillStyle = "#fff";
         c.beginPath();
-        c.arc(sx - r * 0.4, sy - r * 0.4, 1.4, 0, TAU);
+        c.ellipse(-r * 0.4, -r * 0.42, 2.6, 1.6, -0.7, 0, TAU);
         c.fill();
+        c.beginPath();
+        c.arc(r * 0.35, r * 0.4, 1, 0, TAU);
+        c.fill();
+        c.restore();
+        const sp = Math.hypot(pr.vx, pr.vy) || 1, bx = -pr.vx / sp, by = -pr.vy / sp;
+        c.save();
+        c.strokeStyle = "rgba(210,240,255,.8)";
+        c.lineWidth = 1.2;
+        for (const [d, rr, ph] of [[r + 7, 3, 0], [r + 14, 2, 1.7]]) {
+          const w = Math.sin(t * 6 + ph + pr.vol) * 3;
+          c.beginPath();
+          c.arc(sx + bx * d - by * w, sy + by * d + bx * w, rr, 0, TAU);
+          c.stroke();
+        }
         c.restore();
         return true;
       }
@@ -58724,6 +58791,7 @@
       const wep = tool || p.equip.weapon;
       const piv = hand ? hand.pt : [sx + 10, sy + 20 + bob];
       this._rodHand = hand ? piv : null;
+      p.handOff = [piv[0] - sx, piv[1] - sy, hand ? 1 : 0, p.facing];
       if (wep) {
         const d = idef(wep);
         c.save();
@@ -58764,7 +58832,8 @@
             c.scale(p.facing > 0 ? 1 : -1, 1);
             c.rotate(-0.4);
           } else {
-            const ang = p.swing > 0 ? p.swingAng + (p.swingDir * (p.swingSide || 1) > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2 : p.facing > 0 ? -0.4 : Math.PI + 0.4;
+            const cast = !tool && d.wc === "magic" && this.time - (p.castAt ?? -9) < 0.35;
+            const ang = p.swing > 0 ? p.swingAng + (p.swingDir * (p.swingSide || 1) > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2 : cast ? p.castAng : p.facing > 0 ? -0.4 : Math.PI + 0.4;
             c.rotate(ang);
           }
           c.translate(hand ? 12 : 15, 0);

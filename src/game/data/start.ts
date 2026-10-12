@@ -103,7 +103,6 @@ export const CHAR_OF = (id: string) => CHARACTERS.find(c => c.id === id) || CHAR
 /* ---------------- 활·총을 든 손 ---------------- */
 /* 활은 겨눈 쪽으로 돌려 그리는데, 손 바로 위에 그리면 몸을 파고든다. */
 export const BOW_HAND = 18;
-export const BOW_TIP = BOW_HAND + 11.4;
 
 /* ---------------- 조작키 ---------------- */
 /* 설정에서 바꾼다. */

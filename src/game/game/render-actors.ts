@@ -531,6 +531,7 @@ export const RenderActorsPart: Bag = {
     /* hand(game.js playerHand — 시트에 적힌 이 프레임의 무기 손)가 있으면 **그 손이 곧 자루 자리**다 — 사연: docs/code-history.md#h73 */
     const piv = hand ? hand.pt : [sx + 10, sy + 20 + bob];
     this._rodHand = hand ? piv : null;
+    p.handOff = [piv[0] - sx, piv[1] - sy, hand ? 1 : 0, p.facing];   // 쏠 때 무기 끝을 재는 자리(Player.muzzle)
     if (wep) {
       const d = idef(wep);
       c.save();
@@ -565,9 +566,10 @@ export const RenderActorsPart: Bag = {
           c.scale(p.facing > 0 ? 1 : -1, 1);
           c.rotate(-0.4);
         } else {
+          const cast = !tool && d.wc === 'magic' && this.time - (p.castAt ?? -9) < 0.35;   // 시전 직후엔 겨눈 쪽 — 그 끝에서 마법이 나간다
           const ang = p.swing > 0
             ? (p.swingAng + (p.swingDir * (p.swingSide || 1) > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2.0)
-            : (p.facing > 0 ? -0.4 : Math.PI + 0.4);
+            : cast ? p.castAng : (p.facing > 0 ? -0.4 : Math.PI + 0.4);
           c.rotate(ang);
         }
         // 스프라이트는 위를 향하므로 90° 돌려 자루가 손에 오게 한다 — 손 자리면 자루 끝이 손을 한 칸 지나게(12)

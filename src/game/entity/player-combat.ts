@@ -3,7 +3,7 @@ import { app as G, ui as UI } from '../ctx.js';
 import { TAU, angleTo, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
-import { BOW_TIP } from '../data/start.js';
+import { BOW_HAND } from '../data/start.js';
 import { SKILLS } from '../data/skills.js';
 import { SIG_FX, SKILL_FX, SKILL_HIT, idef } from '../data/values.js';
 import { TS } from '../world.js';
@@ -43,12 +43,13 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       this.volley = (Player._vol = (Player._vol || 0) + 1);
       for (let i = 0; i < n; i++) {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.09 : 0);
-        this.fireProj(d.proj || 'arrow', a, base, 'dex', BOW_TIP);
+        this.fireProj(d.proj || 'arrow', a, base, 'dex');
       }
       /* 폭풍의 시위 — 가끔 한 발이 더 나간다. */
       if (this.skills.s_tempest && Math.random() < 0.3) {
-        this.fireProj(d.proj || 'arrow', ang + (Math.random() - 0.5) * 0.12, base, 'dex', BOW_TIP);
-        for (let k = 0; k < 4; k++) G.parts.push(new Part(this.cx, this.cy - 4, '#8fe0c8', -30, .3));
+        this.fireProj(d.proj || 'arrow', ang + (Math.random() - 0.5) * 0.12, base, 'dex');
+        const [tx, ty] = this.muzzle(ang);
+        for (let k = 0; k < 4; k++) G.parts.push(new Part(tx, ty, '#8fe0c8', -30, .3));
       }
       G.sfx('bow');
     } else if (d.wc === 'magic') {
@@ -58,6 +59,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       const n = d.multi || 1;
       this.volley = (Player._vol = (Player._vol || 0) + 1);
       const pt = d.proj || 'bolt';
+      this.castAng = ang; this.castAt = G.time;         // 지팡이를 겨눈 쪽으로 잠깐 든다(drawHeldWeapon)
       for (let i = 0; i < n; i++) {
         const a = ang + (n > 1 ? (i - (n - 1) / 2) * 0.07 : 0);
         this.fireProj(pt, a, base, 'int');
@@ -65,7 +67,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
       /* 지팡이 끝의 발화 — 사연: docs/code-history.md#h27 */
       {
         const st = PROJ_STYLE[pt] || PROJ_STYLE.bolt;
-        const mx2 = this.cx + Math.cos(ang) * 16, my2 = this.cy - 4 + Math.sin(ang) * 16;
+        const [mx2, my2] = this.muzzle(ang);
         G.ringFx(mx2, my2, 13, st.c, 0.18);
         for (let i = 0; i < 5; i++) G.parts.push(new Part(mx2, my2, st.c, -10, 0.3));
       }
@@ -94,23 +96,31 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     const c = this.d.crit / 100;
     return Math.random() < c;
   },
-  fireProj(type: string, ang: number, base: any, kind: string, off: any) {
+  /** 손에 그려진 무기 끝(세계 좌표) — drawHeldWeapon 이 적어 둔 손 자리(handOff)에서 겨눈 쪽으로.
+      활·총은 겨눈 쪽으로 든 활 끝, 지팡이는 시전 때 겨눈 쪽으로 드는 지팡이 끝. 벽에 막히면 막히기 전까지. */
+  muzzle(ang: number) {
+    const w = this.weapon(), wc = w ? idef(w).wc : null;
+    const x0 = this.cx, y0 = this.cy - 4;
+    if (wc !== 'ranged' && wc !== 'magic') return [x0, y0];
+    const h = (this.handOff || [10, 20, 0, this.facing]).slice();
+    if (h[3] !== this.facing) h[0] = this.w - h[0];    // 이 프레임에 돌아섰으면 손 자리도 거울로
+    const len = wc === 'ranged' ? (h[2] ? 3 : BOW_HAND) + 11 : (h[2] ? 12 : 15) + 12;
+    const tx = this.x + h[0] + Math.cos(ang) * len, ty = this.y + h[1] + Math.sin(ang) * len;
+    const n = Math.max(1, Math.ceil(Math.hypot(tx - x0, ty - y0) / (TS / 2)));
+    let px = x0, py = y0;
+    for (let i = 1; i <= n; i++) {
+      const x = x0 + (tx - x0) * i / n, y = y0 + (ty - y0) * i / n;
+      if (G.world.solid(Math.floor(x / TS), Math.floor(y / TS))) break;
+      px = x; py = y;
+    }
+    return [px, py];
+  },
+  fireProj(type: string, ang: number, base: any, kind: string) {
     const dmg = this.scaleDmg(base, kind);
     const crit = this.rollCrit();
     const spd = type === 'arrow' ? 760 : type === 'star' ? 900 : type === 'bubble' ? 210 : type === 'boomerang' ? 600 : 560;
-    /* off 가 있으면 그 거리만큼 겨눈 쪽으로 밀어 낸다 — 활 끝에서 화살이 나가게. */
-    let ox = 0, oy = -4;
-    if (off) {
-      const cs = Math.cos(ang), sn = Math.sin(ang);
-      let reach = 0;
-      for (let t = TS / 2; t <= off; t += TS / 2) {
-        if (G.world.solid(Math.floor((this.cx + cs * t) / TS), Math.floor((this.cy + sn * t) / TS))) break;
-        reach = t;
-      }
-      if (reach >= off - TS / 2) reach = off;   // 끝까지 뚫려 있으면 활 끝 그대로
-      if (reach > 0) { ox = cs * reach; oy = sn * reach; }
-    }
-    const p = new Proj(this.cx + ox, this.cy + oy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), 'player', type);
+    const [sx, sy] = this.muzzle(ang);
+    const p = new Proj(sx, sy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg * (crit ? 1 + this.d.critD / 100 : 1), 'player', type);
     p.crit = crit;
     /* 한 번의 발사에서 나간 것끼리 같은 표를 단다 — 같은 적에게 겹쳐 박히는 것을 가려내려는 것이다(data.js MULTI_FALLOFF). */
     p.vol = this.volley;
@@ -120,7 +130,10 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     if (type === 'arrow' || type === 'star') p.grav = type === 'arrow' ? 170 : 60;
     if (type === 'void' || type === 'star') p.pierce = 2;
     if (type === 'boomerang') { p.pierce = 99; p.life = 3; }
-    if (type === 'bubble') { p.life = 2.6; p.explode = 26; p.dmg *= 0.8; }
+    if (type === 'bubble') { p.life = 2.6; p.explode = 26; p.dmg *= 0.8; p.x -= 3; p.y -= 3; p.w = p.h = 18; }   // 그림이 커진 만큼 판정도
+    /* 손이 몸 가운데보다 낮아 아래로 겨누면 판정 상자가 바닥에 걸친 채 생긴다 — 조금 들고, 그래도 막히면 몸 가운데에서 */
+    for (let k = 0; k < 8 && G.world.hitSolid(p.x, p.y, p.w, p.h); k++) p.y -= 2;
+    if (G.world.hitSolid(p.x, p.y, p.w, p.h)) { p.x = this.cx - p.w / 2; p.y = this.cy - 4 - p.h / 2; }
     G.projs.push(p);
   },
 
@@ -182,7 +195,8 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         break;
       }
       case 's_fireball': {
-        const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 620, Math.sin(ang) * 620, this.scaleDmg(sk.v!(r) + this.d.int * 1.6, 'int'), 'player', 'fire');
+        const [ox, oy] = this.muzzle(ang);
+        const p = new Proj(ox, oy, Math.cos(ang) * 620, Math.sin(ang) * 620, this.scaleDmg(sk.v!(r) + this.d.int * 1.6, 'int'), 'player', 'fire');
         p.explode = 70; p.fire = 2; G.projs.push(p); break;
       }
       case 's_heal': {
@@ -254,11 +268,12 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         break;
       }
       case 's_pierce': {
-        const p = new Proj(this.cx, this.cy - 4, Math.cos(ang) * 900, Math.sin(ang) * 900,
+        const [ox, oy] = this.muzzle(ang);
+        const p = new Proj(ox, oy, Math.cos(ang) * 900, Math.sin(ang) * 900,
           this.scaleDmg(wdmg * sk.v!(r) / 100, 'dex') * (this.rollCrit() ? 1 + this.d.critD / 100 : 1), 'player', 'star');
         p.pierce = 6; p.grav = 0;
         G.projs.push(p);
-        for (let k = 0; k < 8; k++) G.parts.push(new Part(this.cx, this.cy - 4, '#9fe07a', -20, .35));
+        for (let k = 0; k < 8; k++) G.parts.push(new Part(ox, oy, '#9fe07a', -20, .35));
         break;
       }
       case 's_smoke': {
