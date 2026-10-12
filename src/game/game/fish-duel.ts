@@ -11,6 +11,7 @@ import { TS } from '../world.js';
 import { UI } from '../ui.js';
 import { Sfx } from '../music.js';
 import { DAY_CYCLE, Game } from '../game.js';
+import { FISH_DUEL_ART } from './fish-duel-art.js';
 import type { DuelDiff, DuelMods } from '../../engine/rhythm/duel.js';
 
 /* 등급 0~4 — 잡것 · 흔한 물고기는 느린 고리 · 큰 원 · 슬라이더 위주, 위로 갈수록 빠르고 작고 촘촘하다. target = 실수 없이 칠 때 몇 초에 잡히나 */
@@ -58,7 +59,7 @@ export const FishDuelPart: Bag = {
       start: clamp(0.45 + (rod.fishBonus || 0) * 0.5 + (flv - 1) * 0.01, 0.3, 0.7),
       ease: flv >= 3 ? 0.02 : 0,                                   // 3레벨 '가벼운 손목' — 판정 창이 넓다
       drainMul: baited ? 0.8 : 1,
-      theme: { font: FONT || 'sans-serif' },
+      theme: { font: FONT || 'sans-serif', art: FISH_DUEL_ART, frame: false, colors: ['#4ab8d8', '#e8a840', '#6ac87a', '#d87aa0'] },
       onBeat: (i: number) => this.duelBeat(i),
       onJudge: (res: number, kind: string) => this.duelHitSfx(res, kind)
     });
@@ -72,6 +73,7 @@ export const FishDuelPart: Bag = {
     const el = document.createElement('canvas');
     el.id = 'fishduel';
     document.body.appendChild(el);
+    document.body.classList.add('in-duel');                          // 판이 화면 전체 — 터치 단추 · 핫바 · 탭 줄은 숨긴다(style.css)
     D.el = el; D.ctx = el.getContext('2d');
     const at = () => D.d.t + Math.min(0.05, (performance.now() - D.wall) / 1000);   // 누른 순간의 겨루기 시각
     const move = (e: PointerEvent) => { const [x, y] = D.d.toField(e.clientX, e.clientY, D.rect); D.d.move(x, y); };
@@ -95,17 +97,17 @@ export const FishDuelPart: Bag = {
     this.duelLayout(); const [x0, y0] = D.d.toField(I.mx || innerWidth / 2, I.my || innerHeight / 2, D.rect); D.d.move(x0, y0);
     D.off = () => {
       removeEventListener('keydown', key, true); removeEventListener('keyup', keyUp, true);
-      el.remove();
+      el.remove(); document.body.classList.remove('in-duel');
     };
   },
   duelLayout() {
     const D = this.duel, el = D.el, dpr = Math.min(2, devicePixelRatio || 1);
     const W = innerWidth, H = innerHeight;
     if (el.width !== Math.round(W * dpr) || el.height !== Math.round(H * dpr)) { el.width = Math.round(W * dpr); el.height = Math.round(H * dpr); }
-    // 위 게이지(28px) · 아래 안내 줄(30px) 자리를 빼고 4:3 — 낮은 폰 가로 화면에서도 원이 손가락보다 작아지지 않게
-    // 판은 오른쪽에 — 왼쪽은 다가간 카메라가 비추는 낚시꾼 자리
-    const h = Math.min(H - 76, H * 0.74, W * 0.58 * 0.75), w = h * 4 / 3;
-    D.rect = { x: W - w - Math.max(20, W * 0.03), y: (H - h) / 2 + 4, w, h };
+    /* 판은 화면 전체 — 테두리 없이 위 게이지(40px) · 아래 안내 줄(34px)만 비우고 가장 큰 4:3 을 가운데에.
+       낚시꾼 · 줄 · 찌는 어둠에 뚫린 자리(duelScrim)로 판 아래에서 보인다 */
+    const h = Math.min(H - 84, (W - 24) * 0.75), w = h * 4 / 3;
+    D.rect = { x: (W - w) / 2, y: 44 + (H - 84 - h) / 2, w, h };
     D.dpr = dpr;
   },
 
@@ -128,7 +130,7 @@ export const FishDuelPart: Bag = {
     D.zt = Math.min(1, (D.zt || 0) + dt / 0.35);
     const k = 1 + (DUEL_ZOOM - 1) * (1 - Math.pow(1 - D.zt, 3));
     if (Math.abs(k - (this.duelZoom || 1)) > 0.002) { this.duelZoom = k; this.resize(); }
-    const spot = Math.max(0.18, D.rect.x / 2 / innerWidth);           // 화면 폭에서 낚시꾼이 설 자리
+    const spot = 0.5;                                                 // 판이 화면 전체라 낚시꾼은 가운데
     this.cam.x = p.cx - this.W * spot; this.cam.y = p.cy - this.H * 0.55;
     D.spot = spot;
   },
@@ -208,15 +210,23 @@ export const FishDuelPart: Bag = {
     c.clearRect(0, 0, innerWidth, innerHeight);
     this.duelScrim(c);
     d.draw(c, r);
-    // 게이지 끝의 물고기 — 끌려오는 쪽으로 퍼덕인다
-    const g = clamp(d.gauge, 0, 1), fx = r.x + r.w * g, fy = r.y - 16 + Math.sin(d.t * 18) * 1.5;
+    // 게이지 — 화면 위 끝에서 끝까지 팽팽한 낚싯줄 · 끝의 물고기가 끌려온다
+    const W = innerWidth, gx0 = Math.max(24, W * 0.08), gw = W - gx0 * 2, gy = 20, g = clamp(d.gauge, 0, 1);
+    c.save();
+    c.fillStyle = 'rgba(4,14,20,.7)'; c.beginPath(); c.roundRect(gx0 - 6, gy - 7, gw + 12, 14, 7); c.fill();
+    const low = g < 0.25 && Math.sin(d.t * 14) > 0, gr = c.createLinearGradient(gx0, 0, gx0 + gw, 0);
+    gr.addColorStop(0, low ? '#ff6a5a' : '#2a8ab0'); gr.addColorStop(1, low ? '#ffb0a0' : '#bfeaff');
+    c.fillStyle = gr; c.beginPath(); c.roundRect(gx0, gy - 3, Math.max(0, gw * g), 6, 3); c.fill();
+    c.strokeStyle = 'rgba(244,251,255,.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(gx0 + gw * g, gy); c.lineTo(gx0 + gw, gy); c.stroke();
+    c.restore();
+    const fx = gx0 + gw * g, fy = gy + Math.sin(d.t * 18) * 1.5;
     c.save(); c.fillStyle = g < 0.25 ? '#ff8a7a' : '#dff4ff';
     c.beginPath(); c.ellipse(fx, fy, 9, 4.5, 0, 0, Math.PI * 2); c.fill();
     c.beginPath(); c.moveTo(fx - 7, fy); c.lineTo(fx - 14, fy - 5 + Math.sin(d.t * 22) * 2); c.lineTo(fx - 14, fy + 5 + Math.sin(d.t * 22) * 2); c.fill();
     c.restore();
     c.save(); c.textAlign = 'center'; c.fillStyle = 'rgba(230,240,248,.75)'; c.font = `12px ${FONT || 'sans-serif'}`;
     const touch = document.body.classList.contains('touch');
-    c.fillText(touch ? tr('탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다') : tr('클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다'), r.x + r.w / 2, r.y + r.h + 26);
+    c.fillText(touch ? tr('탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다') : tr('클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다'), innerWidth / 2, innerHeight - 14);
     if (D.intro > 0) {
       c.globalAlpha = Math.min(1, D.intro * 1.5); c.fillStyle = '#ffe8a0'; c.font = `700 22px ${FONT || 'sans-serif'}`;
       c.fillText(tr('입질이다 — 박자에 맞춰 당겨라!'), r.x + r.w / 2, r.y + r.h / 2);

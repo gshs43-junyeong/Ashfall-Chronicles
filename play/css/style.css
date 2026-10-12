@@ -53,8 +53,48 @@ button{
 body.touch #skillbar{pointer-events:auto}
 body.ctl-off #touchpad .ti-stick,body.ctl-off #touchpad .ti-btns,body.ctl-off #touchpad .ti-alt{visibility:hidden}
 body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
-#touchpad .ti-fs{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:32px;border-radius:8px;
-  display:grid;place-items:center;font:16px system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);pointer-events:auto}
+#touchpad .ti-fs{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:34px;border-radius:10px;
+  display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#2a2216e8,#0e0b07e8);border:1.5px solid #c8aa70a0;box-shadow:0 2px 8px #000a;pointer-events:auto}
+#touchpad .ti-fs .ti-ic{width:22px;height:22px}
+/* 낚시 겨루기 — 판이 화면 전체라 손에 걸리는 것들은 잠시 숨긴다(체력 · 마나는 남긴다) */
+body.in-duel #touchpad,body.in-duel #hotbar,body.in-duel #tabbar,body.in-duel #skillbar,body.in-duel #quest-tracker,body.in-duel #minimap{visibility:hidden}
+/* ===== 터치 조작의 옷 — 엔진은 모양 없는 뼈대만, 게임이 금빛 테 · 가죽 · 잿불 보석으로 입힌다(아이콘은 itemart UISPEC tc_*) =====
+   ★ 엔진 CSS 가 이 파일보다 늦게 붙는다 — 같은 무게면 엔진이 이긴다. 그래서 body.touch 를 앞에 붙여 무게를 올린다. */
+body.touch #touchpad .ti-ic{display:block;width:30px;height:30px;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 1px 1px #000c)}
+/* 스틱 — 나침반 눈금을 두른 가죽 원판 · 손잡이는 잿불 보석 */
+body.touch #touchpad .ti-base{border:2px solid #c8aa70b0;
+  background:radial-gradient(circle,#1a140ccc 0 52%,#2a2216cc 53% 58%,#120e08cc 59%),
+    repeating-conic-gradient(from -3deg,#c8aa7080 0 6deg,transparent 6deg 45deg);
+  box-shadow:0 0 0 3px #0008,0 4px 14px #000a,inset 0 0 18px #000c}
+body.touch #touchpad .ti-base::before,body.touch #touchpad .ti-base::after{content:'';position:absolute;top:50%;width:0;height:0;margin-top:-7px;
+  border-top:7px solid transparent;border-bottom:7px solid transparent;opacity:.75}
+body.touch #touchpad .ti-base::before{left:8px;border-right:10px solid #e8c478}
+body.touch #touchpad .ti-base::after{right:8px;border-left:10px solid #e8c478}
+body.touch #touchpad .ti-knob{width:50px;height:50px;margin:-25px 0 0 -25px;border:2px solid #2a1a0a;
+  background:radial-gradient(circle at 36% 30%,#fff0c0 0 8%,#f0a848 26%,#b8601c 58%,#4a2008 92%);
+  box-shadow:0 0 14px #ff9a3a90,0 3px 8px #000c,inset 0 -4px 6px #0006}
+/* 단추 — 금빛 테 메달 · 아이콘이 주인공, 글은 아래에 작게 */
+body.touch #touchpad .ti-btn{width:66px;height:66px;border:2px solid #c8aa70c0;color:#f0e4c8;
+  background:radial-gradient(circle at 50% 32%,#3a2e1ee6,#120e08ee 70%);
+  box-shadow:inset 0 0 0 3px #0007,inset 0 2px 0 #ffffff14,0 4px 12px #000b;transition:transform .08s,box-shadow .12s}
+body.touch #touchpad .ti-btn.has-ic,body.touch #touchpad .ti-alt.has-ic{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+body.touch #touchpad .ti-lb{font:600 10px system-ui,sans-serif;letter-spacing:.02em;color:#e8dcc0;white-space:nowrap;line-height:1.1;text-shadow:0 1px 2px #000}
+body.touch #touchpad .ti-btn.on{transform:scale(.92);border-color:#ffd27a;background:radial-gradient(circle at 50% 32%,#6a5228ee,#1a140cee 70%);
+  box-shadow:inset 0 0 0 3px #0007,0 0 16px #ffc86a90}
+body.touch #touchpad .ti-btn[data-id="jump"]{border-color:#9fd0e8c0}
+body.touch #touchpad .ti-btn[data-id="dash"]{border-color:#e8a86ac0}
+/* 전환 — 곡괭이(캐기 · 공격) ↔ 손(사용). 켜진 쪽 그림이 밝고 크다 */
+body.touch #touchpad .ti-alt{width:84px;height:48px;border-radius:14px;border:2px solid #c8aa70a0;background:linear-gradient(#2a2216e8,#100c07ee);box-shadow:0 3px 10px #000b}
+body.touch #touchpad .ti-alt.has-ic{flex-direction:row;flex-wrap:wrap;gap:0 6px;align-content:center}
+body.touch #touchpad .ti-alt .ti-ic{width:22px;height:22px;transition:opacity .12s,transform .12s}
+body.touch #touchpad .ti-alt .a0{opacity:1;transform:scale(1.12)} body.touch #touchpad .ti-alt .a1{opacity:.32;transform:scale(.85)}
+body.touch #touchpad .ti-alt.on .a0{opacity:.32;transform:scale(.85)} body.touch #touchpad .ti-alt.on .a1{opacity:1;transform:scale(1.12)}
+body.touch #touchpad .ti-alt .ti-lb{flex-basis:100%;text-align:center;font-size:9px}
+body.touch #touchpad .ti-alt.on{border-color:#ffd27a;box-shadow:0 0 12px #ffc86a80,0 3px 10px #000b}
+@media (max-height:540px){
+  body.touch #touchpad .ti-btn{width:54px;height:54px} body.touch #touchpad .ti-ic{width:24px;height:24px}
+  body.touch #touchpad .ti-alt{width:72px;height:42px} body.touch #touchpad .ti-alt .ti-ic{width:18px;height:18px}
+}
 #hud-left{position:absolute;left:14px;top:12px;width:280px}
 .orb-row{background:linear-gradient(#14130fee,#0c0b09ee);border:1px solid var(--frame);
   border-radius:5px;padding:10px 11px 9px;box-shadow:0 4px 18px #000b,inset 0 0 0 1px #00000050;

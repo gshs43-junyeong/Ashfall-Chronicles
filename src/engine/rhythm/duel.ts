@@ -18,7 +18,17 @@ export interface DuelDiff {
 }
 /** 변주 — 판 돌기(rad/s) · 숨김 · 꿈틀(px) · 끌림(0~1, 커서가 아래로 당겨진다) */
 export interface DuelMods { roll?: number; hidden?: boolean; wiggle?: number; pull?: number }
-export interface DuelTheme { bg: string; edge: string; ink: string; font: string; body: string; colors: string[]; gauge: string; gaugeLow: string }
+export interface DuelTheme { bg: string; edge: string; ink: string; font: string; body: string; colors: string[]; gauge: string; gaugeLow: string; art?: DuelArt; frame?: boolean }
+/** 그림 갈래 — 게임이 제 모양으로 바꿔 그린다(없는 것은 기본 그림). 좌표는 놀이판(512×384) · r 은 원 반지름 · t 는 겨루기 시각 */
+export interface DuelArt {
+  circle?(c: CanvasRenderingContext2D, x: number, y: number, col: string, n: number, r: number, t: number): void;
+  approach?(c: CanvasRenderingContext2D, x: number, y: number, r: number, k: number, col: string, t: number): void;
+  sliderBody?(c: CanvasRenderingContext2D, pts: number[], r: number, col: string, t: number): void;
+  ball?(c: CanvasRenderingContext2D, x: number, y: number, r: number, col: string, ang: number, track: boolean, t: number): void;
+  spinner?(c: CanvasRenderingContext2D, cx: number, cy: number, R: number, spun: number, k: number, left: number, need: number, col: string, t: number): void;
+  cursor?(c: CanvasRenderingContext2D, x: number, y: number, t: number): void;
+  pop?(c: CanvasRenderingContext2D, x: number, y: number, res: number, k: number, t: number): void;
+}
 export interface DuelOpts {
   diff: DuelDiff; mods?: DuelMods; seed: string | number;
   /** 게이지 시작값 · 실수 없이 치면 몇 초에 차는가 · 첫 물체까지 · 판정 창 넓힘(초) · 게이지 새는 빠르기 배율 */
@@ -37,7 +47,7 @@ interface Obj {
   need: number; spun: number; ang: number | null; spins: number;
   done: boolean; res: number; head: boolean; headT: number; track: boolean; got: number; all: number;
 }
-interface Pop { x: number; y: number; t: number; s: string; c: string }
+interface Pop { x: number; y: number; t: number; s: string; c: string; res: number }
 
 const DEF_THEME: DuelTheme = { bg: 'rgba(6,14,22,.9)', edge: 'rgba(160,210,240,.35)', ink: '#ffffff',
   font: 'sans-serif', body: '#0e1c28', colors: ['#5ec8ff', '#ffd27a', '#8fe08f', '#ff8fb8'], gauge: '#7fe0ff', gaugeLow: '#ff6a5a' };
@@ -210,13 +220,13 @@ export class RhythmDuel {
     else { this.combo = 0; this.shake = 0.3; }
     const g = res === 300 ? 1 : res === 100 ? 0.45 : res === 50 ? 0.12 : -(0.8 + 0.15 * this.d.hp) * pen;
     this.gauge = Math.max(0, Math.min(1, this.gauge + this.unit * g));
-    this.pops.push({ x, y, t: 0, s: res ? String(res) : '✕', c: JUDGE_COL[res] });
+    this.pops.push({ x, y, t: 0, s: res ? String(res) : '✕', c: JUDGE_COL[res], res });
     this.o.onJudge && this.o.onJudge(res, kind);
   }
   private brk(x: number, y: number): void {
     if (this.combo > 0) this.shake = 0.2;
     this.combo = 0; this.gauge = Math.max(0, this.gauge - this.unit * 0.25);
-    this.pops.push({ x, y, t: 0, s: '✕', c: JUDGE_COL[0] });
+    this.pops.push({ x, y, t: 0, s: '✕', c: JUDGE_COL[0], res: 0 });
     this.o.onJudge && this.o.onJudge(0, 'break');
   }
 
@@ -293,9 +303,11 @@ export class RhythmDuel {
     const sh = this.shake > 0 ? Math.sin(this.shake * 80) * this.shake * 14 : 0;
     c.save();
     c.translate(rect.x + rect.w / 2 + sh, rect.y + rect.h / 2);
-    c.fillStyle = th.bg; c.strokeStyle = th.edge; c.lineWidth = 1.5;
-    c.beginPath(); c.roundRect(-rect.w / 2 - 14, -rect.h / 2 - 28, rect.w + 28, rect.h + 42, 10); c.fill(); c.stroke();
-    this.drawGauge(c, rect.w, rect.h);
+    if (th.frame !== false) {                                  // 판 테두리 — 화면 전체를 쓰는 게임은 끈다(frame: false)
+      c.fillStyle = th.bg; c.strokeStyle = th.edge; c.lineWidth = 1.5;
+      c.beginPath(); c.roundRect(-rect.w / 2 - 14, -rect.h / 2 - 28, rect.w + 28, rect.h + 42, 10); c.fill(); c.stroke();
+      this.drawGauge(c, rect.w, rect.h);
+    }
     c.scale(k, k);
     const roll = (this.m.roll || 0) * t;
     if (roll) c.rotate(roll);
@@ -314,15 +326,20 @@ export class RhythmDuel {
       const [wx, wy] = this.wig(o);
       c.save(); c.globalAlpha = alpha; c.translate(wx, wy);
       if (o.k === 's') this.drawSlider(c, o, col);
-      if (!(o.k === 's' && o.head)) this.drawCircle(c, o.x, o.y, col, String(o.n), r);
+      if (!(o.k === 's' && o.head)) {
+        if (th.art && th.art.circle) th.art.circle(c, o.x, o.y, col, o.n, r, t); else this.drawCircle(c, o.x, o.y, col, String(o.n), r);
+      }
       c.restore();
       if (!this.m.hidden && t < o.t && !(o.k === 's' && o.head)) {          // 다가오는 고리
         const s = 1 + 3 * Math.max(0, (o.t - t) / this.pre);
-        c.save(); c.globalAlpha = alpha * 0.9; c.strokeStyle = col; c.lineWidth = 3;
-        c.beginPath(); c.arc(o.x + wx, o.y + wy, r * s, 0, Math.PI * 2); c.stroke(); c.restore();
+        c.save(); c.globalAlpha = alpha * 0.9;
+        if (th.art && th.art.approach) th.art.approach(c, o.x + wx, o.y + wy, r, s, col, t);
+        else { c.strokeStyle = col; c.lineWidth = 3; c.beginPath(); c.arc(o.x + wx, o.y + wy, r * s, 0, Math.PI * 2); c.stroke(); }
+        c.restore();
       }
     }
     for (const p of this.pops) {
+      if (th.art && th.art.pop) { c.save(); th.art.pop(c, p.x, p.y, p.res, p.t / 0.6, t); c.restore(); continue; }
       c.save(); c.globalAlpha = 1 - p.t / 0.6; c.fillStyle = p.c; c.font = `700 ${p.s === '✕' ? 30 : 24}px ${th.font}`;
       c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(p.s, p.x, p.y - p.t * 30); c.restore();
     }
@@ -337,9 +354,12 @@ export class RhythmDuel {
       c.beginPath(); c.arc(this.trail[i], this.trail[i + 1], 3 + i * 0.25, 0, Math.PI * 2); c.fill();
     }
     c.globalAlpha = 1;
-    const g = c.createRadialGradient(ex, ey, 1, ex, ey, 14);
-    g.addColorStop(0, '#ffffff'); g.addColorStop(0.45, 'rgba(255,230,160,.9)'); g.addColorStop(1, 'rgba(255,200,120,0)');
-    c.fillStyle = g; c.beginPath(); c.arc(ex, ey, 14, 0, Math.PI * 2); c.fill();
+    if (th.art && th.art.cursor) th.art.cursor(c, ex, ey, t);
+    else {
+      const g = c.createRadialGradient(ex, ey, 1, ex, ey, 14);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(0.45, 'rgba(255,230,160,.9)'); g.addColorStop(1, 'rgba(255,200,120,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(ex, ey, 14, 0, Math.PI * 2); c.fill();
+    }
     c.restore();
     // 콤보 — 놀이판 왼쪽 아래(돌지 않는다)
     if (this.combo > 1) {
@@ -347,7 +367,7 @@ export class RhythmDuel {
       c.fillText(this.combo + 'x', rect.x + 4, rect.y + rect.h + 8); c.restore();
     }
   }
-  private drawGauge(c: CanvasRenderingContext2D, w: number, h: number): void {
+  drawGauge(c: CanvasRenderingContext2D, w: number, h: number): void {
     const th = this.th, y = -h / 2 - 20, g = Math.max(0, Math.min(1, this.gauge));
     c.fillStyle = 'rgba(0,0,0,.5)'; c.beginPath(); c.roundRect(-w / 2, y, w, 9, 4); c.fill();
     const low = g < 0.25 && Math.sin(this.t * 14) > 0;
@@ -367,9 +387,13 @@ export class RhythmDuel {
     const r = this.r, p = o.pts, t = this.t;
     const path = () => { c.beginPath(); c.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); };
     c.lineCap = 'round'; c.lineJoin = 'round';
-    path(); c.strokeStyle = '#ffffff'; c.lineWidth = r * 2; c.stroke();
-    path(); c.strokeStyle = this.th.body; c.lineWidth = r * 1.76; c.stroke();
-    path(); c.strokeStyle = col; c.globalAlpha *= 0.35; c.lineWidth = r * 1.2; c.stroke(); c.globalAlpha /= 0.35;
+    const art = this.th.art;
+    if (art && art.sliderBody) art.sliderBody(c, p, r, col, t);
+    else {
+      path(); c.strokeStyle = '#ffffff'; c.lineWidth = r * 2; c.stroke();
+      path(); c.strokeStyle = this.th.body; c.lineWidth = r * 1.76; c.stroke();
+      path(); c.strokeStyle = col; c.globalAlpha *= 0.35; c.lineWidth = r * 1.2; c.stroke(); c.globalAlpha /= 0.35;
+    }
     // 박 점 — 아직 안 지난 것만
     c.fillStyle = '#ffffff';
     for (let i = o.ti; i < o.ticks.length - 1; i++) {
@@ -380,10 +404,15 @@ export class RhythmDuel {
     const n = p.length;
     this.drawEnd(c, p[n - 2], p[n - 1], col, o.rep > 0 && t < o.t + o.span);
     if (t >= o.t) {                                           // 굴러가는 공 · 따라잡기 원
-      const [bx, by] = this.ballAt(o, Math.min(t, o.end)); const [wx, wy] = this.wig(o);
-      c.fillStyle = col; c.beginPath(); c.arc(bx - wx, by - wy, r * 0.82, 0, Math.PI * 2); c.fill();
-      c.strokeStyle = '#ffffff'; c.lineWidth = 3; c.stroke();
-      if (o.track) { c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 3; c.beginPath(); c.arc(bx - wx, by - wy, r * 2.4, 0, Math.PI * 2); c.stroke(); }
+      const tt = Math.min(t, o.end), [bx, by] = this.ballAt(o, tt); const [wx, wy] = this.wig(o);
+      if (art && art.ball) {
+        const [qx, qy] = this.ballAt(o, Math.min(tt + 0.03, o.end + 0.03));   // 가는 쪽 — 물고기가 그쪽을 본다
+        art.ball(c, bx - wx, by - wy, r, col, Math.atan2(qy - by, qx - bx), o.track, t);
+      } else {
+        c.fillStyle = col; c.beginPath(); c.arc(bx - wx, by - wy, r * 0.82, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = '#ffffff'; c.lineWidth = 3; c.stroke();
+        if (o.track) { c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 3; c.beginPath(); c.arc(bx - wx, by - wy, r * 2.4, 0, Math.PI * 2); c.stroke(); }
+      }
     }
   }
   private drawEnd(c: CanvasRenderingContext2D, x: number, y: number, col: string, arrow: boolean): void {
@@ -395,6 +424,12 @@ export class RhythmDuel {
   private drawSpinner(c: CanvasRenderingContext2D, o: Obj, alpha: number): void {
     const t = this.t, cx = FIELD_W / 2, cy = FIELD_H / 2, R = 170;
     const k = Math.min(1, o.spun / (Math.PI * 2) / o.need);
+    if (this.th.art && this.th.art.spinner) {
+      c.save(); c.globalAlpha = alpha;
+      const left = t >= o.t ? Math.max(0, (o.end - t) / (o.end - o.t)) : 1;
+      this.th.art.spinner(c, cx, cy, R, o.spun, k, left, Math.max(0, Math.ceil(o.need - o.spun / (Math.PI * 2))), this.th.colors[o.col], t);
+      c.restore(); return;
+    }
     c.save(); c.globalAlpha = alpha;
     c.strokeStyle = 'rgba(255,255,255,.25)'; c.lineWidth = 10; c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.stroke();
     c.strokeStyle = k >= 1 ? '#9ef08a' : this.th.colors[o.col]; c.lineWidth = 10;

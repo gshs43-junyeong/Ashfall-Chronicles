@@ -240,7 +240,8 @@ export const GameCore: Bag = {
     /* 터치 조작 — 손가락이 주 포인터인 기기면 켠다(?touch=1 / 0 으로 강제) */
     if (TOUCH)
       this.touch = mountTouch({ input: this.inp, ptr: this.input, surface: this.cv, rightDown: () => this.rightClick(),
-        buttons: [{ id: 'jump', label: tr('점프') }, { id: 'dash', label: tr('대시') }], altLabel: tr('사용') });
+        buttons: [{ id: 'jump', label: tr('점프'), icon: Art.uiUrl('tc_jump') }, { id: 'dash', label: tr('대시'), icon: Art.uiUrl('tc_dash') }],
+        altLabel: tr('사용'), altIcons: [Art.uiUrl('tc_dig'), Art.uiUrl('tc_use')] });
     /* 자동 저장 — 5분마다 · 탭을 내리거나 닫을 때(engine save/autosave). 결전 중 · 쓰러진 동안 · 남의 세계(손님)에서는 세계를 저장하지 않는다 */
     this.autosave = createAutosave({ every: AUTOSAVE_SEC,
       can: () => this.state === 'play' && this.currentSlot !== null && !!this.player && this.player.hp > 0 && !this.boss && !(this.net && this.net.role === 'guest'),
@@ -265,7 +266,7 @@ export const GameCore: Bag = {
       }));
       /* 전체 화면(안드로이드 · 태블릿) — 아이폰 사파리는 요소 전체 화면이 없어 단추를 안 둔다 */
       if (document.fullscreenEnabled) {
-        const fs = document.createElement('div'); fs.className = 'ti-fs'; fs.textContent = '⛶';
+        const fs = document.createElement('div'); fs.className = 'ti-fs'; fs.innerHTML = `<i class="ti-ic" style="background-image:url(${Art.uiUrl('tc_full')})"></i>`;
         fs.addEventListener('pointerdown', e => {
           e.preventDefault();
           if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => { });

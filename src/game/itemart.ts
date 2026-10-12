@@ -635,6 +635,8 @@ export const UISPEC: Bag = {
   t_quit: { k: 'ng', g: 'door' }, t_multi: { k: 'ng', g: 'swords' },
   u_room: { k: 'ng', g: 'globe' }, u_leave: { k: 'ng', g: 'door' },
   u_resume: { k: 'ng', g: 'play' }, u_save: { k: 'ng', g: 'disk' }, u_export: { k: 'ng', g: 'export' }, u_title: { k: 'ng', g: 'home' },
+  /* 터치 조작 — 스틱 옆 단추 · 전환 · 전체 화면 */
+  tc_jump: { k: 'ng', g: 'jump' }, tc_dash: { k: 'ng', g: 'dash' }, tc_use: { k: 'ng', g: 'hand' }, tc_dig: { k: 'ng', g: 'pick' }, tc_full: { k: 'ng', g: 'expand' },
   s_disp: { k: 'ng', g: 'speaker' }, s_noti: { k: 'ng', g: 'bell' }, s_keys: { k: 'ng', g: 'keys' }, s_hud: { k: 'ng', g: 'layout' }
 };
 /* 펫 생김새 — 색은 PETS의 c를 그대로 쓰고, 여기서는 실루엣만 고른다. */

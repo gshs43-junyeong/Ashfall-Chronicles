@@ -11,9 +11,10 @@ export interface TouchConfig {
   /** 탭·길게 누르기를 받을 면(게임 캔버스) */
   surface: HTMLElement;
   /** 단추로 둘 지속 액션(누르는 동안 켜짐) */
-  buttons: ReadonlyArray<{ id: string; label: string }>;
-  /** 전환 단추 이름 — 켜 두면 탭이 오른쪽 단추(설치·상호작용)가 된다 */
+  buttons: ReadonlyArray<{ id: string; label: string; icon?: string }>;
+  /** 전환 단추 이름 — 켜 두면 탭이 오른쪽 단추(설치·상호작용)가 된다 · altIcons = [꺼짐, 켜짐] 그림(있으면) */
   altLabel: string;
+  altIcons?: [string, string];
   /** 오른쪽 단추를 누른 순간 — 마우스와 같은 자리 */
   rightDown?(): void;
 }
@@ -41,7 +42,7 @@ const CSS = `
 `;
 
 /** 터치 조작을 붙인다. 떼어 낼 때는 돌려준 destroy(). */
-export function mountTouch({ input, ptr, surface, buttons, altLabel, rightDown }: TouchConfig): { el: HTMLElement; destroy(): void } {
+export function mountTouch({ input, ptr, surface, buttons, altLabel, altIcons, rightDown }: TouchConfig): { el: HTMLElement; destroy(): void } {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const el = document.createElement('div'); el.id = 'touchpad';
   el.innerHTML = '<div class="ti-stick"><div class="ti-base"></div><div class="ti-knob"></div></div><div class="ti-btns"></div><div class="ti-alt"></div>';
@@ -72,7 +73,9 @@ export function mountTouch({ input, ptr, surface, buttons, altLabel, rightDown }
   /* ---- 단추: 누르는 동안 그 액션이 켜진다 ---- */
   const box = el.querySelector('.ti-btns') as HTMLElement;
   for (const b of buttons) {
-    const btn = document.createElement('div'); btn.className = 'ti-btn'; btn.dataset.id = b.id; btn.textContent = b.label;
+    const btn = document.createElement('div'); btn.className = 'ti-btn'; btn.dataset.id = b.id;
+    if (b.icon) { btn.classList.add('has-ic'); btn.innerHTML = `<i class="ti-ic" style="background-image:url(${b.icon})"></i><b class="ti-lb"></b>`; (btn.querySelector('.ti-lb') as HTMLElement).textContent = b.label; }
+    else btn.textContent = b.label;
     box.appendChild(btn);
     on(btn, 'pointerdown', e => { e.preventDefault(); btn.setPointerCapture(e.pointerId); V[b.id] = 1; btn.classList.add('on'); });
     const up = () => { V[b.id] = 0; btn.classList.remove('on'); };
@@ -81,12 +84,17 @@ export function mountTouch({ input, ptr, surface, buttons, altLabel, rightDown }
 
   /* ---- 전환: 켜 두면 탭이 오른쪽 단추 ---- */
   /* ★ 길게 누르기로 오른쪽 단추를 내지 않는다 — 캐기는 오래 누르고 있어야 해서, 캐는 중에 설치로 바뀌어 버렸다. */
-  const alt = el.querySelector('.ti-alt') as HTMLElement; alt.textContent = altLabel;
+  const alt = el.querySelector('.ti-alt') as HTMLElement;
+  if (altIcons) {                                       // 두 그림 — 켜진 쪽이 밝다(어느 쪽인지 글 없이 보이게)
+    alt.classList.add('has-ic');
+    alt.innerHTML = `<i class="ti-ic a0" style="background-image:url(${altIcons[0]})"></i><i class="ti-ic a1" style="background-image:url(${altIcons[1]})"></i><b class="ti-lb"></b>`;
+    (alt.querySelector('.ti-lb') as HTMLElement).textContent = altLabel;
+  } else alt.textContent = altLabel;
   let altOn = false;
   on(alt, 'pointerdown', e => { e.preventDefault(); altOn = !altOn; alt.classList.toggle('on', altOn); });
 
   /* ---- 글자 맞추기 — 동그란 단추 안에서 두 줄로 꺾이지 않게(일본어 'ジャンプ'가 'ジャン/プ'로 꺾였다) ---- */
-  const labels = [...box.querySelectorAll('.ti-btn'), alt] as HTMLElement[];
+  const labels = [...box.querySelectorAll('.ti-btn'), alt].map(l => (l.querySelector('.ti-lb') || l) as HTMLElement);
   const fit = () => { for (const l of labels) { l.style.fontSize = ''; let px = parseFloat(getComputedStyle(l).fontSize);
     while (px > 9 && l.scrollWidth > l.clientWidth - 6) { px -= 1; l.style.fontSize = px + 'px'; } } };
   fit(); requestAnimationFrame(fit);

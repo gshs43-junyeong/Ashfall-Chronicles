@@ -1019,7 +1019,7 @@
   #touchpad .ti-alt{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 66px);width:56px;height:34px;font-size:12px}
 }
 `;
-  function mountTouch({ input, ptr, surface, buttons, altLabel, rightDown }) {
+  function mountTouch({ input, ptr, surface, buttons, altLabel, altIcons, rightDown }) {
     const st = document.createElement("style");
     st.textContent = CSS;
     document.head.appendChild(st);
@@ -1066,7 +1066,11 @@
       const btn = document.createElement("div");
       btn.className = "ti-btn";
       btn.dataset.id = b.id;
-      btn.textContent = b.label;
+      if (b.icon) {
+        btn.classList.add("has-ic");
+        btn.innerHTML = `<i class="ti-ic" style="background-image:url(${b.icon})"></i><b class="ti-lb"></b>`;
+        btn.querySelector(".ti-lb").textContent = b.label;
+      } else btn.textContent = b.label;
       box.appendChild(btn);
       on(btn, "pointerdown", (e) => {
         e.preventDefault();
@@ -1082,14 +1086,18 @@
       on(btn, "pointercancel", up);
     }
     const alt = el.querySelector(".ti-alt");
-    alt.textContent = altLabel;
+    if (altIcons) {
+      alt.classList.add("has-ic");
+      alt.innerHTML = `<i class="ti-ic a0" style="background-image:url(${altIcons[0]})"></i><i class="ti-ic a1" style="background-image:url(${altIcons[1]})"></i><b class="ti-lb"></b>`;
+      alt.querySelector(".ti-lb").textContent = altLabel;
+    } else alt.textContent = altLabel;
     let altOn = false;
     on(alt, "pointerdown", (e) => {
       e.preventDefault();
       altOn = !altOn;
       alt.classList.toggle("on", altOn);
     });
-    const labels = [...box.querySelectorAll(".ti-btn"), alt];
+    const labels = [...box.querySelectorAll(".ti-btn"), alt].map((l) => l.querySelector(".ti-lb") || l);
     const fit = () => {
       for (const l of labels) {
         l.style.fontSize = "";
@@ -2168,14 +2176,14 @@
       }
       const g = res === 300 ? 1 : res === 100 ? 0.45 : res === 50 ? 0.12 : -(0.8 + 0.15 * this.d.hp) * pen;
       this.gauge = Math.max(0, Math.min(1, this.gauge + this.unit * g));
-      this.pops.push({ x, y, t: 0, s: res ? String(res) : "✕", c: JUDGE_COL[res] });
+      this.pops.push({ x, y, t: 0, s: res ? String(res) : "✕", c: JUDGE_COL[res], res });
       this.o.onJudge && this.o.onJudge(res, kind);
     }
     brk(x, y) {
       if (this.combo > 0) this.shake = 0.2;
       this.combo = 0;
       this.gauge = Math.max(0, this.gauge - this.unit * 0.25);
-      this.pops.push({ x, y, t: 0, s: "✕", c: JUDGE_COL[0] });
+      this.pops.push({ x, y, t: 0, s: "✕", c: JUDGE_COL[0], res: 0 });
       this.o.onJudge && this.o.onJudge(0, "break");
     }
     /* ---------------- 흐름 ---------------- */
@@ -2279,14 +2287,16 @@
       const sh = this.shake > 0 ? Math.sin(this.shake * 80) * this.shake * 14 : 0;
       c.save();
       c.translate(rect.x + rect.w / 2 + sh, rect.y + rect.h / 2);
-      c.fillStyle = th.bg;
-      c.strokeStyle = th.edge;
-      c.lineWidth = 1.5;
-      c.beginPath();
-      c.roundRect(-rect.w / 2 - 14, -rect.h / 2 - 28, rect.w + 28, rect.h + 42, 10);
-      c.fill();
-      c.stroke();
-      this.drawGauge(c, rect.w, rect.h);
+      if (th.frame !== false) {
+        c.fillStyle = th.bg;
+        c.strokeStyle = th.edge;
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.roundRect(-rect.w / 2 - 14, -rect.h / 2 - 28, rect.w + 28, rect.h + 42, 10);
+        c.fill();
+        c.stroke();
+        this.drawGauge(c, rect.w, rect.h);
+      }
       c.scale(k, k);
       const roll = (this.m.roll || 0) * t;
       if (roll) c.rotate(roll);
@@ -2309,21 +2319,33 @@
         c.globalAlpha = alpha;
         c.translate(wx, wy);
         if (o.k === "s") this.drawSlider(c, o, col);
-        if (!(o.k === "s" && o.head)) this.drawCircle(c, o.x, o.y, col, String(o.n), r);
+        if (!(o.k === "s" && o.head)) {
+          if (th.art && th.art.circle) th.art.circle(c, o.x, o.y, col, o.n, r, t);
+          else this.drawCircle(c, o.x, o.y, col, String(o.n), r);
+        }
         c.restore();
         if (!this.m.hidden && t < o.t && !(o.k === "s" && o.head)) {
           const s = 1 + 3 * Math.max(0, (o.t - t) / this.pre);
           c.save();
           c.globalAlpha = alpha * 0.9;
-          c.strokeStyle = col;
-          c.lineWidth = 3;
-          c.beginPath();
-          c.arc(o.x + wx, o.y + wy, r * s, 0, Math.PI * 2);
-          c.stroke();
+          if (th.art && th.art.approach) th.art.approach(c, o.x + wx, o.y + wy, r, s, col, t);
+          else {
+            c.strokeStyle = col;
+            c.lineWidth = 3;
+            c.beginPath();
+            c.arc(o.x + wx, o.y + wy, r * s, 0, Math.PI * 2);
+            c.stroke();
+          }
           c.restore();
         }
       }
       for (const p of this.pops) {
+        if (th.art && th.art.pop) {
+          c.save();
+          th.art.pop(c, p.x, p.y, p.res, p.t / 0.6, t);
+          c.restore();
+          continue;
+        }
         c.save();
         c.globalAlpha = 1 - p.t / 0.6;
         c.fillStyle = p.c;
@@ -2350,14 +2372,17 @@
         c.fill();
       }
       c.globalAlpha = 1;
-      const g = c.createRadialGradient(ex, ey, 1, ex, ey, 14);
-      g.addColorStop(0, "#ffffff");
-      g.addColorStop(0.45, "rgba(255,230,160,.9)");
-      g.addColorStop(1, "rgba(255,200,120,0)");
-      c.fillStyle = g;
-      c.beginPath();
-      c.arc(ex, ey, 14, 0, Math.PI * 2);
-      c.fill();
+      if (th.art && th.art.cursor) th.art.cursor(c, ex, ey, t);
+      else {
+        const g = c.createRadialGradient(ex, ey, 1, ex, ey, 14);
+        g.addColorStop(0, "#ffffff");
+        g.addColorStop(0.45, "rgba(255,230,160,.9)");
+        g.addColorStop(1, "rgba(255,200,120,0)");
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(ex, ey, 14, 0, Math.PI * 2);
+        c.fill();
+      }
       c.restore();
       if (this.combo > 1) {
         c.save();
@@ -2413,20 +2438,24 @@
       };
       c.lineCap = "round";
       c.lineJoin = "round";
-      path();
-      c.strokeStyle = "#ffffff";
-      c.lineWidth = r * 2;
-      c.stroke();
-      path();
-      c.strokeStyle = this.th.body;
-      c.lineWidth = r * 1.76;
-      c.stroke();
-      path();
-      c.strokeStyle = col;
-      c.globalAlpha *= 0.35;
-      c.lineWidth = r * 1.2;
-      c.stroke();
-      c.globalAlpha /= 0.35;
+      const art = this.th.art;
+      if (art && art.sliderBody) art.sliderBody(c, p, r, col, t);
+      else {
+        path();
+        c.strokeStyle = "#ffffff";
+        c.lineWidth = r * 2;
+        c.stroke();
+        path();
+        c.strokeStyle = this.th.body;
+        c.lineWidth = r * 1.76;
+        c.stroke();
+        path();
+        c.strokeStyle = col;
+        c.globalAlpha *= 0.35;
+        c.lineWidth = r * 1.2;
+        c.stroke();
+        c.globalAlpha /= 0.35;
+      }
       c.fillStyle = "#ffffff";
       for (let i = o.ti; i < o.ticks.length - 1; i++) {
         const [x, y] = this.ballAt(o, o.ticks[i]);
@@ -2438,21 +2467,26 @@
       const n = p.length;
       this.drawEnd(c, p[n - 2], p[n - 1], col, o.rep > 0 && t < o.t + o.span);
       if (t >= o.t) {
-        const [bx, by] = this.ballAt(o, Math.min(t, o.end));
+        const tt = Math.min(t, o.end), [bx, by] = this.ballAt(o, tt);
         const [wx, wy] = this.wig(o);
-        c.fillStyle = col;
-        c.beginPath();
-        c.arc(bx - wx, by - wy, r * 0.82, 0, Math.PI * 2);
-        c.fill();
-        c.strokeStyle = "#ffffff";
-        c.lineWidth = 3;
-        c.stroke();
-        if (o.track) {
-          c.strokeStyle = "rgba(255,255,255,.85)";
-          c.lineWidth = 3;
+        if (art && art.ball) {
+          const [qx, qy] = this.ballAt(o, Math.min(tt + 0.03, o.end + 0.03));
+          art.ball(c, bx - wx, by - wy, r, col, Math.atan2(qy - by, qx - bx), o.track, t);
+        } else {
+          c.fillStyle = col;
           c.beginPath();
-          c.arc(bx - wx, by - wy, r * 2.4, 0, Math.PI * 2);
+          c.arc(bx - wx, by - wy, r * 0.82, 0, Math.PI * 2);
+          c.fill();
+          c.strokeStyle = "#ffffff";
+          c.lineWidth = 3;
           c.stroke();
+          if (o.track) {
+            c.strokeStyle = "rgba(255,255,255,.85)";
+            c.lineWidth = 3;
+            c.beginPath();
+            c.arc(bx - wx, by - wy, r * 2.4, 0, Math.PI * 2);
+            c.stroke();
+          }
         }
       }
     }
@@ -2481,6 +2515,14 @@
     drawSpinner(c, o, alpha) {
       const t = this.t, cx = FIELD_W / 2, cy = FIELD_H / 2, R = 170;
       const k = Math.min(1, o.spun / (Math.PI * 2) / o.need);
+      if (this.th.art && this.th.art.spinner) {
+        c.save();
+        c.globalAlpha = alpha;
+        const left = t >= o.t ? Math.max(0, (o.end - t) / (o.end - o.t)) : 1;
+        this.th.art.spinner(c, cx, cy, R, o.spun, k, left, Math.max(0, Math.ceil(o.need - o.spun / (Math.PI * 2))), this.th.colors[o.col], t);
+        c.restore();
+        return;
+      }
       c.save();
       c.globalAlpha = alpha;
       c.strokeStyle = "rgba(255,255,255,.25)";
@@ -27007,6 +27049,12 @@
     u_save: { k: "ng", g: "disk" },
     u_export: { k: "ng", g: "export" },
     u_title: { k: "ng", g: "home" },
+    /* 터치 조작 — 스틱 옆 단추 · 전환 · 전체 화면 */
+    tc_jump: { k: "ng", g: "jump" },
+    tc_dash: { k: "ng", g: "dash" },
+    tc_use: { k: "ng", g: "hand" },
+    tc_dig: { k: "ng", g: "pick" },
+    tc_full: { k: "ng", g: "expand" },
     s_disp: { k: "ng", g: "speaker" },
     s_noti: { k: "ng", g: "bell" },
     s_keys: { k: "ng", g: "keys" },
@@ -30646,6 +30694,51 @@
               ell(21, 7.5, 4, 2.2, "#8fbf5a");
               ell(12.5, 10, 3.4, 2, "#6f9a4a");
               break;
+            case "jump":
+              for (const d of [1, -1]) poly([[16, 14], [16 + 12 * d, 10], [16 + 13 * d, 14], [16 + 9 * d, 18], [16 + 4 * d, 20]], d > 0 ? G22 : G1);
+              poly([[16, 3], [24, 12], [19, 12], [19, 28], [13, 28], [13, 12], [8, 12]], "#e8dcc0");
+              poly([[16, 3], [16, 28], [13, 28], [13, 12], [8, 12]], "#fff6e0");
+              break;
+            case "dash":
+              for (let i = 0; i < 3; i++) P2(2 + i * 2, 9 + i * 6, 9 - i * 2, 2, i === 1 ? "#e8dcc0" : G22);
+              poly([[14, 5], [21, 5], [21, 18], [29, 21], [29, 26], [12, 26], [12, 18]], G22);
+              poly([[14, 5], [17, 5], [17, 26], [12, 26], [12, 18]], G1);
+              P2(12, 24, 17, 2.4, DK);
+              P2(14, 9, 7, 1.6, DK);
+              break;
+            case "hand":
+              for (let i = 0; i < 4; i++) {
+                P2(9 + i * 4, 5 + Math.abs(1.5 - i) * 2, 3.2, 12, i % 2 ? G1 : "#e8dcc0");
+                circ2(10.6 + i * 4, 5 + Math.abs(1.5 - i) * 2, 1.6, i % 2 ? G1 : "#e8dcc0");
+              }
+              poly([[8, 15], [25, 15], [25, 23], [20, 29], [11, 29], [8, 23]], "#e8dcc0");
+              poly([[8, 15], [5, 10], [3, 12], [7, 21]], G1);
+              P2(10, 24, 13, 1.4, G22);
+              break;
+            case "pick":
+              stroke("#8a6a40", 2.8, () => {
+                g.moveTo(8, 27);
+                g.lineTo(22, 8);
+              });
+              poly([[13, 4], [28, 9], [27, 12], [20, 9], [14, 7]], "#c8ccd4");
+              stroke("#d8dce4", 2.4, () => {
+                g.moveTo(6, 6);
+                g.lineTo(24, 26);
+              });
+              P2(20, 21, 6, 2, G22);
+              P2(23, 24, 3, 4, DK);
+              break;
+            case "expand":
+              for (const [x, y, dx, dy] of [[5, 5, 1, 1], [27, 5, -1, 1], [5, 27, 1, -1], [27, 27, -1, -1]])
+                stroke(G1, 3, () => {
+                  g.moveTo(x, y + 8 * dy);
+                  g.lineTo(x, y);
+                  g.lineTo(x + 8 * dx, y);
+                });
+              stroke(G22, 1.4, () => {
+                g.rect(11, 11, 10, 10);
+              });
+              break;
             case "play":
               poly([[9, 5], [26, 16], [9, 27]], G22);
               poly([[9, 5], [26, 16], [9, 16]], G1);
@@ -33435,7 +33528,7 @@
       if (wc !== "ranged" && wc !== "magic") return [x0, y0];
       const h = (this.handOff || [10, 20, 0, this.facing]).slice();
       if (h[3] !== this.facing) h[0] = this.w - h[0];
-      const len = wc === "ranged" ? (h[2] ? 3 : BOW_HAND) + 11 : (h[2] ? 12 : 15) + 12;
+      const len = wc === "ranged" ? (h[2] ? 3 : BOW_HAND) + 11 : (h[2] ? 6 : 9) + 12;
       const tx = this.x + h[0] + Math.cos(ang) * len, ty = this.y + h[1] + Math.sin(ang) * len;
       const n = Math.max(1, Math.ceil(Math.hypot(tx - x0, ty - y0) / (TS / 2)));
       let px = x0, py = y0;
@@ -41345,14 +41438,14 @@
       el.style.width = el.style.height = size + "px";
       const x0 = a.left + a.width / 2 - size / 2, y0 = a.top + a.height / 2 - size / 2;
       const dx = b.left + b.width / 2 - size / 2 - x0, dy = b.top + b.height / 2 - size / 2 - y0;
-      const lift = Math.min(90, Math.abs(dx) * 0.3 + 28);
+      const lift2 = Math.min(90, Math.abs(dx) * 0.3 + 28);
       el.style.left = x0 + "px";
       el.style.top = y0 + "px";
       this.fxLayer().appendChild(el);
       const an = el.animate([
         { transform: "translate(0,0) scale(.8)", opacity: 0 },
-        { transform: `translate(${dx * 0.1}px,${dy * 0.1 - lift * 0.4}px) scale(1.15)`, opacity: 1, offset: 0.15 },
-        { transform: `translate(${dx * 0.55}px,${dy * 0.55 - lift}px) scale(.95)`, opacity: 1, offset: 0.55 },
+        { transform: `translate(${dx * 0.1}px,${dy * 0.1 - lift2 * 0.4}px) scale(1.15)`, opacity: 1, offset: 0.15 },
+        { transform: `translate(${dx * 0.55}px,${dy * 0.55 - lift2}px) scale(.95)`, opacity: 1, offset: 0.55 },
         { transform: `translate(${dx}px,${dy}px) scale(.45)`, opacity: 0.15 }
       ], { duration: dur, delay, easing: "cubic-bezier(.45,.05,.55,.95)", fill: "both" });
       an.onfinish = () => el.remove();
@@ -43865,8 +43958,9 @@
           ptr: this.input,
           surface: this.cv,
           rightDown: () => this.rightClick(),
-          buttons: [{ id: "jump", label: tr("점프") }, { id: "dash", label: tr("대시") }],
-          altLabel: tr("사용")
+          buttons: [{ id: "jump", label: tr("점프"), icon: Art.uiUrl("tc_jump") }, { id: "dash", label: tr("대시"), icon: Art.uiUrl("tc_dash") }],
+          altLabel: tr("사용"),
+          altIcons: [Art.uiUrl("tc_dig"), Art.uiUrl("tc_use")]
         });
       this.autosave = createAutosave({
         every: AUTOSAVE_SEC,
@@ -43890,12 +43984,12 @@
       });
       if (this.touch) document.body.classList.add("touch");
       if (this.touch) {
-        const lift = () => {
+        const lift2 = () => {
           const bar = $("#tabbar"), r = bar && bar.getBoundingClientRect();
           this.touch.el.style.setProperty("--ti-bottom", (r && r.height ? innerHeight - r.top + 14 : 24) + "px");
         };
-        lift();
-        addEventListener("resize", lift);
+        lift2();
+        addEventListener("resize", lift2);
         $$("#skillbar .sk").forEach((el, i) => el.addEventListener("pointerdown", (e) => {
           e.preventDefault();
           if (this.state === "play" && !UI5.dlg && !UI5.open) this.player.useSkill(i, this.input.wx, this.input.wy);
@@ -43903,7 +43997,7 @@
         if (document.fullscreenEnabled) {
           const fs = document.createElement("div");
           fs.className = "ti-fs";
-          fs.textContent = "⛶";
+          fs.innerHTML = `<i class="ti-ic" style="background-image:url(${Art.uiUrl("tc_full")})"></i>`;
           fs.addEventListener("pointerdown", (e) => {
             e.preventDefault();
             if (document.fullscreenElement) document.exitFullscreen();
@@ -48288,6 +48382,312 @@
   };
   mixin(Game.prototype, FishingPart, true);
 
+  // src/game/game/fish-duel-art.ts
+  var fish_duel_art_exports = {};
+  __export(fish_duel_art_exports, {
+    FISH_DUEL_ART: () => FISH_DUEL_ART
+  });
+  var DEEP = "#08202c";
+  var lift = (hex, k) => {
+    const n = parseInt(hex.slice(1), 16), f = (v) => Math.max(0, Math.min(255, Math.round(k > 1 ? v + (255 - v) * (k - 1) : v * k)));
+    return `rgb(${f(n >> 16)},${f(n >> 8 & 255)},${f(n & 255)})`;
+  };
+  function fish(c, L, col, flap) {
+    c.fillStyle = col;
+    c.beginPath();
+    c.ellipse(0, 0, L * 0.5, L * 0.22, 0, 0, TAU);
+    c.fill();
+    c.beginPath();
+    c.moveTo(-L * 0.42, 0);
+    c.lineTo(-L * 0.75, -L * 0.22 + flap);
+    c.lineTo(-L * 0.75, L * 0.22 + flap);
+    c.closePath();
+    c.fill();
+  }
+  function ripple(c, x, y, R, t, lobes, amp) {
+    c.beginPath();
+    for (let i = 0; i <= 48; i++) {
+      const a = i / 48 * TAU, rr = R + Math.sin(a * lobes + t * 5) * amp;
+      if (i) c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+      else c.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    c.closePath();
+    c.stroke();
+  }
+  var FISH_DUEL_ART = {
+    circle(c, x, y, col, n, r, t) {
+      const gl = c.createRadialGradient(x, y, r * 0.6, x, y, r * 1.35);
+      gl.addColorStop(0, lift(col, 0.8));
+      gl.addColorStop(1, "rgba(0,0,0,0)");
+      c.save();
+      c.globalAlpha *= 0.45;
+      c.fillStyle = gl;
+      c.beginPath();
+      c.arc(x, y, r * 1.35, 0, TAU);
+      c.fill();
+      c.restore();
+      const g = c.createRadialGradient(x - r * 0.25, y - r * 0.3, r * 0.08, x, y, r * 0.88);
+      g.addColorStop(0, lift(col, 1.55));
+      g.addColorStop(0.45, col);
+      g.addColorStop(1, DEEP);
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(x, y, r * 0.86, 0, TAU);
+      c.fill();
+      c.save();
+      c.beginPath();
+      c.arc(x, y, r * 0.8, 0, TAU);
+      c.clip();
+      const a = t * 1.8 + n * 1.7;
+      c.translate(x + Math.cos(a) * r * 0.32, y + Math.sin(a) * r * 0.22);
+      c.rotate(a + Math.PI / 2);
+      fish(c, r * 0.7, "rgba(4,16,24,.55)", Math.sin(t * 12) * r * 0.05);
+      c.restore();
+      c.lineWidth = r * 0.13;
+      c.lineCap = "round";
+      for (let i = 0; i < 12; i++) {
+        const b = i / 12 * TAU + t * 0.6;
+        c.strokeStyle = i % 2 ? "#f4fbff" : lift(col, 1.3);
+        c.beginPath();
+        c.arc(x, y, r * 0.9, b, b + TAU / 12 * 0.78);
+        c.stroke();
+      }
+      c.strokeStyle = "rgba(255,255,255,.75)";
+      c.lineWidth = r * 0.07;
+      c.beginPath();
+      c.arc(x, y, r * 0.62, Math.PI * 1.1, Math.PI * 1.45);
+      c.stroke();
+      const by = y + r * 0.62, bw = r * 0.44;
+      c.fillStyle = "#e8a840";
+      c.beginPath();
+      c.ellipse(x, by, bw, r * 0.27, 0, 0, TAU);
+      c.fill();
+      c.fillStyle = "#c23a2a";
+      c.beginPath();
+      c.ellipse(x, by - r * 0.08, bw, r * 0.15, 0, Math.PI, TAU);
+      c.fill();
+      c.fillStyle = "#1a1208";
+      c.font = `700 ${Math.round(r * 0.36)}px ${FONT || "sans-serif"}`;
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(String(n), x, by + r * 0.04);
+    },
+    approach(c, x, y, r, k, col, t) {
+      c.strokeStyle = col;
+      c.lineWidth = 2.6;
+      ripple(c, x, y, r * k, t, 6, Math.min(1.6, (k - 1) * 0.8));
+      c.globalAlpha *= 0.45;
+      c.lineWidth = 1.6;
+      ripple(c, x, y, r * (1 + (k - 1) * 1.25), t + 0.4, 5, 1.2);
+    },
+    sliderBody(c, p, r, col, t) {
+      const path = () => {
+        c.beginPath();
+        c.moveTo(p[0], p[1]);
+        for (let i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]);
+      };
+      c.lineCap = "round";
+      c.lineJoin = "round";
+      path();
+      c.strokeStyle = "rgba(200,236,255,.55)";
+      c.lineWidth = r * 1.9;
+      c.stroke();
+      path();
+      c.strokeStyle = "rgba(8,32,44,.88)";
+      c.lineWidth = r * 1.66;
+      c.stroke();
+      const a0 = c.globalAlpha;
+      path();
+      c.strokeStyle = col;
+      c.globalAlpha = a0 * 0.35;
+      c.lineWidth = r * 1.1;
+      c.stroke();
+      c.globalAlpha = a0 * 0.5;
+      c.strokeStyle = lift(col, 1.5);
+      c.lineWidth = 2;
+      c.setLineDash([6, 14]);
+      c.lineDashOffset = -t * 60;
+      path();
+      c.stroke();
+      c.setLineDash([]);
+      c.globalAlpha = a0 * 0.9;
+      c.strokeStyle = "#f4fbff";
+      c.lineWidth = 1.2;
+      path();
+      c.stroke();
+      c.globalAlpha = a0;
+    },
+    ball(c, x, y, r, col, ang, track, t) {
+      if (track) {
+        c.save();
+        c.strokeStyle = "rgba(244,251,255,.85)";
+        c.lineWidth = 2.4;
+        c.setLineDash([8, 7]);
+        c.lineDashOffset = -t * 40;
+        c.beginPath();
+        c.arc(x, y, r * 2.2, 0, TAU);
+        c.stroke();
+        c.restore();
+      }
+      c.save();
+      c.translate(x, y);
+      c.rotate(ang);
+      const gl = c.createRadialGradient(0, 0, 0, 0, 0, r * 1.2);
+      gl.addColorStop(0, lift(col, 1.2));
+      gl.addColorStop(1, "rgba(0,0,0,0)");
+      c.globalAlpha *= 0.5;
+      c.fillStyle = gl;
+      c.beginPath();
+      c.arc(0, 0, r * 1.2, 0, TAU);
+      c.fill();
+      c.globalAlpha /= 0.5;
+      const flap = Math.sin(t * 16) * r * 0.12;
+      fish(c, r * 1.7, "#f4fbff", flap);
+      fish(c, r * 1.5, col, flap);
+      c.fillStyle = lift(col, 0.55);
+      c.beginPath();
+      c.ellipse(-r * 0.05, -r * 0.12, r * 0.55, r * 0.12, 0, 0, TAU);
+      c.fill();
+      c.fillStyle = "#081018";
+      c.beginPath();
+      c.arc(r * 0.45, -r * 0.06, r * 0.09, 0, TAU);
+      c.fill();
+      c.restore();
+    },
+    spinner(c, cx, cy, R, spun, k, left, need, col, t) {
+      c.fillStyle = "rgba(8,24,32,.72)";
+      c.beginPath();
+      c.arc(cx, cy, R + 8, 0, TAU);
+      c.fill();
+      c.strokeStyle = "#8a6a3a";
+      c.lineWidth = 10;
+      c.beginPath();
+      c.arc(cx, cy, R, 0, TAU);
+      c.stroke();
+      c.strokeStyle = "#c8a060";
+      c.lineWidth = 3;
+      c.beginPath();
+      c.arc(cx, cy, R - 3, 0, TAU);
+      c.stroke();
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6 * TAU;
+        c.fillStyle = "#e8d090";
+        c.beginPath();
+        c.arc(cx + Math.cos(a) * R, cy + Math.sin(a) * R, 3, 0, TAU);
+        c.fill();
+      }
+      const sp = 30 + k * 70;
+      c.fillStyle = k >= 1 ? "#9ef08a" : col;
+      c.globalAlpha *= 0.85;
+      c.beginPath();
+      c.arc(cx, cy, sp, 0, TAU);
+      c.fill();
+      c.globalAlpha /= 0.85;
+      c.strokeStyle = "rgba(255,255,255,.35)";
+      c.lineWidth = 1;
+      for (let rr = 26; rr < sp; rr += 6) {
+        c.beginPath();
+        c.arc(cx, cy, rr, spun, spun + 4.5);
+        c.stroke();
+      }
+      c.strokeStyle = "rgba(255,255,255,.6)";
+      c.lineWidth = 3;
+      ripple(c, cx, cy, Math.max(10, (R - 14) * left), t, 9, 2);
+      c.save();
+      c.translate(cx, cy);
+      c.rotate(spun);
+      c.fillStyle = "#5a4428";
+      c.fillRect(-4, -R * 0.8, 8, R * 0.8);
+      c.fillStyle = "#e8c070";
+      c.beginPath();
+      c.arc(0, -R * 0.8, 11, 0, TAU);
+      c.fill();
+      c.fillStyle = "#5a4428";
+      c.beginPath();
+      c.arc(0, -R * 0.8, 4, 0, TAU);
+      c.fill();
+      c.restore();
+      c.fillStyle = "#2a1a0a";
+      c.beginPath();
+      c.arc(cx, cy, 20, 0, TAU);
+      c.fill();
+      c.fillStyle = "#ffe8a0";
+      c.font = `700 22px ${FONT || "sans-serif"}`;
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(String(need), cx, cy + 1);
+    },
+    cursor(c, x, y, t) {
+      const g = c.createRadialGradient(x, y, 1, x, y, 16);
+      g.addColorStop(0, "rgba(255,240,190,.9)");
+      g.addColorStop(1, "rgba(255,200,120,0)");
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(x, y, 16, 0, TAU);
+      c.fill();
+      c.save();
+      c.translate(x, y);
+      c.rotate(Math.sin(t * 3) * 0.15);
+      c.strokeStyle = "#2a1a0a";
+      c.lineWidth = 4;
+      c.lineCap = "round";
+      c.beginPath();
+      c.moveTo(0, -11);
+      c.lineTo(0, 4);
+      c.arc(-4, 4, 4, 0, Math.PI * 0.95);
+      c.stroke();
+      c.strokeStyle = "#ffd27a";
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(0, -11);
+      c.lineTo(0, 4);
+      c.arc(-4, 4, 4, 0, Math.PI * 0.95);
+      c.stroke();
+      c.fillStyle = "#ffd27a";
+      c.beginPath();
+      c.arc(0, -12, 2.2, 0, TAU);
+      c.fill();
+      c.restore();
+    },
+    pop(c, x, y, res, k, t) {
+      c.globalAlpha = 1 - k;
+      if (!res) {
+        c.strokeStyle = "#ff6a5a";
+        c.lineWidth = 3;
+        c.lineCap = "round";
+        c.beginPath();
+        c.moveTo(x - 16, y - 4 - k * 8);
+        c.quadraticCurveTo(x - 6, y - 12, x - 3, y - 2 + k * 10);
+        c.stroke();
+        c.beginPath();
+        c.moveTo(x + 16, y + 4 - k * 8);
+        c.quadraticCurveTo(x + 6, y - 8, x + 3, y + 2 + k * 10);
+        c.stroke();
+        return;
+      }
+      const n = res === 300 ? 10 : res === 100 ? 7 : 4, d = (res === 300 ? 34 : 24) * (0.3 + k);
+      const col = res === 300 ? "#bfeaff" : res === 100 ? "#a8f0a0" : "#ffd890";
+      c.fillStyle = col;
+      for (let i = 0; i < n; i++) {
+        const a = i / n * TAU + res, px = x + Math.cos(a) * d, py = y + Math.sin(a) * d * 0.8 + k * k * 18;
+        c.beginPath();
+        c.ellipse(px, py, 3.2 * (1 - k * 0.5), 4.4 * (1 - k * 0.5), a + Math.PI / 2, 0, TAU);
+        c.fill();
+      }
+      c.strokeStyle = col;
+      c.lineWidth = 2;
+      c.beginPath();
+      c.arc(x, y, 8 + k * 26, 0, TAU);
+      c.stroke();
+      if (res === 300) {
+        c.fillStyle = "#ffffff";
+        c.font = `700 15px ${FONT || "sans-serif"}`;
+        c.textAlign = "center";
+        c.fillText("✦", x, y + 5 - k * 10);
+      }
+    }
+  };
+
   // src/game/game/fish-duel.ts
   var fish_duel_exports = {};
   __export(fish_duel_exports, {
@@ -48343,7 +48743,7 @@
         ease: flv >= 3 ? 0.02 : 0,
         // 3레벨 '가벼운 손목' — 판정 창이 넓다
         drainMul: baited ? 0.8 : 1,
-        theme: { font: FONT || "sans-serif" },
+        theme: { font: FONT || "sans-serif", art: FISH_DUEL_ART, frame: false, colors: ["#4ab8d8", "#e8a840", "#6ac87a", "#d87aa0"] },
         onBeat: (i) => this.duelBeat(i),
         onJudge: (res, kind) => this.duelHitSfx(res, kind)
       });
@@ -48356,6 +48756,7 @@
       const el = document.createElement("canvas");
       el.id = "fishduel";
       document.body.appendChild(el);
+      document.body.classList.add("in-duel");
       D.el = el;
       D.ctx = el.getContext("2d");
       const at = () => D.d.t + Math.min(0.05, (performance.now() - D.wall) / 1e3);
@@ -48404,6 +48805,7 @@
         removeEventListener("keydown", key, true);
         removeEventListener("keyup", keyUp, true);
         el.remove();
+        document.body.classList.remove("in-duel");
       };
     },
     duelLayout() {
@@ -48413,8 +48815,8 @@
         el.width = Math.round(W * dpr);
         el.height = Math.round(H * dpr);
       }
-      const h = Math.min(H - 76, H * 0.74, W * 0.58 * 0.75), w = h * 4 / 3;
-      D.rect = { x: W - w - Math.max(20, W * 0.03), y: (H - h) / 2 + 4, w, h };
+      const h = Math.min(H - 84, (W - 24) * 0.75), w = h * 4 / 3;
+      D.rect = { x: (W - w) / 2, y: 44 + (H - 84 - h) / 2, w, h };
       D.dpr = dpr;
     },
     /* ---------------- 흐름 ---------------- */
@@ -48442,7 +48844,7 @@
         this.duelZoom = k;
         this.resize();
       }
-      const spot = Math.max(0.18, D.rect.x / 2 / innerWidth);
+      const spot = 0.5;
       this.cam.x = p.cx - this.W * spot;
       this.cam.y = p.cy - this.H * 0.55;
       D.spot = spot;
@@ -48548,7 +48950,27 @@
       c.clearRect(0, 0, innerWidth, innerHeight);
       this.duelScrim(c);
       d.draw(c, r);
-      const g = clamp(d.gauge, 0, 1), fx = r.x + r.w * g, fy = r.y - 16 + Math.sin(d.t * 18) * 1.5;
+      const W = innerWidth, gx0 = Math.max(24, W * 0.08), gw = W - gx0 * 2, gy = 20, g = clamp(d.gauge, 0, 1);
+      c.save();
+      c.fillStyle = "rgba(4,14,20,.7)";
+      c.beginPath();
+      c.roundRect(gx0 - 6, gy - 7, gw + 12, 14, 7);
+      c.fill();
+      const low = g < 0.25 && Math.sin(d.t * 14) > 0, gr = c.createLinearGradient(gx0, 0, gx0 + gw, 0);
+      gr.addColorStop(0, low ? "#ff6a5a" : "#2a8ab0");
+      gr.addColorStop(1, low ? "#ffb0a0" : "#bfeaff");
+      c.fillStyle = gr;
+      c.beginPath();
+      c.roundRect(gx0, gy - 3, Math.max(0, gw * g), 6, 3);
+      c.fill();
+      c.strokeStyle = "rgba(244,251,255,.5)";
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(gx0 + gw * g, gy);
+      c.lineTo(gx0 + gw, gy);
+      c.stroke();
+      c.restore();
+      const fx = gx0 + gw * g, fy = gy + Math.sin(d.t * 18) * 1.5;
       c.save();
       c.fillStyle = g < 0.25 ? "#ff8a7a" : "#dff4ff";
       c.beginPath();
@@ -48565,7 +48987,7 @@
       c.fillStyle = "rgba(230,240,248,.75)";
       c.font = `12px ${FONT || "sans-serif"}`;
       const touch = document.body.classList.contains("touch");
-      c.fillText(touch ? tr("탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다") : tr("클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다"), r.x + r.w / 2, r.y + r.h + 26);
+      c.fillText(touch ? tr("탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다") : tr("클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다"), innerWidth / 2, innerHeight - 14);
       if (D.intro > 0) {
         c.globalAlpha = Math.min(1, D.intro * 1.5);
         c.fillStyle = "#ffe8a0";
@@ -53793,18 +54215,18 @@
         if (!site) return false;
         const x0 = (site.x - (site.w >> 1)) * TS, x1 = (site.x + (site.w >> 1)) * TS;
         const fromLeft = p.cx - x0 < x1 - p.cx;
-        let lift = null, ld = -1;
+        let lift2 = null, ld = -1;
         for (const r of site.rooms) {
           const s = this.evStand(r);
           if (!s) continue;
           const d = fromLeft ? s[0] * TS - p.cx : p.cx - s[0] * TS;
           if (d > ld) {
             ld = d;
-            lift = s;
+            lift2 = s;
           }
         }
-        if (!lift || ld < 12 * TS) return false;
-        ev.lift = { x: (lift[0] + 0.5) * TS, y: lift[1] * TS };
+        if (!lift2 || ld < 12 * TS) return false;
+        ev.lift = { x: (lift2[0] + 0.5) * TS, y: lift2[1] * TS };
         ev.dir = fromLeft ? 1 : -1;
         ev.front = fromLeft ? x0 : x1;
         ev.speed = Math.abs(ev.lift.x - ev.front) / (ev.t * 0.8);
@@ -59674,7 +60096,7 @@
             const ang = p.swing > 0 ? p.swingAng + (p.swingDir * (p.swingSide || 1) > 0 ? 1 : -1) * (p.swing / 0.24 - 0.5) * 2 : cast ? p.castAng : p.facing > 0 ? -0.4 : Math.PI + 0.4;
             c.rotate(ang);
           }
-          c.translate(hand ? 12 : 15, 0);
+          c.translate(!tool && d.wc === "magic" ? hand ? 6 : 9 : hand ? 12 : 15, 0);
           c.rotate(Math.PI / 2);
           Art.drawItem(c, wep.id, -13, -13, 26);
           c.restore();
@@ -63000,7 +63422,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

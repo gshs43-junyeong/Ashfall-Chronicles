@@ -241,7 +241,7 @@
   #touchpad .ti-alt{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(var(--ti-bottom) + 66px);width:56px;height:34px;font-size:12px}
 }
 `;
-  function mountTouch({ input: input2, ptr: ptr2, surface, buttons, altLabel, rightDown }) {
+  function mountTouch({ input: input2, ptr: ptr2, surface, buttons, altLabel, altIcons, rightDown }) {
     const st = document.createElement("style");
     st.textContent = CSS;
     document.head.appendChild(st);
@@ -288,7 +288,11 @@
       const btn = document.createElement("div");
       btn.className = "ti-btn";
       btn.dataset.id = b.id;
-      btn.textContent = b.label;
+      if (b.icon) {
+        btn.classList.add("has-ic");
+        btn.innerHTML = `<i class="ti-ic" style="background-image:url(${b.icon})"></i><b class="ti-lb"></b>`;
+        btn.querySelector(".ti-lb").textContent = b.label;
+      } else btn.textContent = b.label;
       box.appendChild(btn);
       on(btn, "pointerdown", (e) => {
         e.preventDefault();
@@ -304,14 +308,18 @@
       on(btn, "pointercancel", up);
     }
     const alt = el.querySelector(".ti-alt");
-    alt.textContent = altLabel;
+    if (altIcons) {
+      alt.classList.add("has-ic");
+      alt.innerHTML = `<i class="ti-ic a0" style="background-image:url(${altIcons[0]})"></i><i class="ti-ic a1" style="background-image:url(${altIcons[1]})"></i><b class="ti-lb"></b>`;
+      alt.querySelector(".ti-lb").textContent = altLabel;
+    } else alt.textContent = altLabel;
     let altOn = false;
     on(alt, "pointerdown", (e) => {
       e.preventDefault();
       altOn = !altOn;
       alt.classList.toggle("on", altOn);
     });
-    const labels = [...box.querySelectorAll(".ti-btn"), alt];
+    const labels = [...box.querySelectorAll(".ti-btn"), alt].map((l) => l.querySelector(".ti-lb") || l);
     const fit = () => {
       for (const l of labels) {
         l.style.fontSize = "";

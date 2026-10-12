@@ -573,7 +573,8 @@ export const RenderActorsPart: Bag = {
           c.rotate(ang);
         }
         // 스프라이트는 위를 향하므로 90° 돌려 자루가 손에 오게 한다 — 손 자리면 자루 끝이 손을 한 칸 지나게(12)
-        c.translate(hand ? 12 : 15, 0); c.rotate(Math.PI / 2);
+        // 지팡이는 자루 밑동이 아니라 아래쪽 1/4 을 쥔다 — 밑동을 쥐면 지팡이가 손 위에 얹혀 찍힌 것처럼 보였다
+        c.translate(!tool && d.wc === 'magic' ? (hand ? 6 : 9) : (hand ? 12 : 15), 0); c.rotate(Math.PI / 2);
         Art.drawItem(c, wep.id, -13, -13, 26);
         c.restore();
       }

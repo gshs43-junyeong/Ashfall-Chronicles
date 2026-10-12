@@ -104,7 +104,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     if (wc !== 'ranged' && wc !== 'magic') return [x0, y0];
     const h = (this.handOff || [10, 20, 0, this.facing]).slice();
     if (h[3] !== this.facing) h[0] = this.w - h[0];    // 이 프레임에 돌아섰으면 손 자리도 거울로
-    const len = wc === 'ranged' ? (h[2] ? 3 : BOW_HAND) + 11 : (h[2] ? 12 : 15) + 12;
+    const len = wc === 'ranged' ? (h[2] ? 3 : BOW_HAND) + 11 : (h[2] ? 6 : 9) + 12;   // 지팡이 쥔 자리(drawHeldWeapon) + 끝까지
     const tx = this.x + h[0] + Math.cos(ang) * len, ty = this.y + h[1] + Math.sin(ang) * len;
     const n = Math.max(1, Math.ceil(Math.hypot(tx - x0, ty - y0) / (TS / 2)));
     let px = x0, py = y0;

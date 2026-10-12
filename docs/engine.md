@@ -106,7 +106,7 @@ e.keepIn(x0, x1, yMax)                 // 세계 안에 가둔다
 - `createInput({ actions: [{ id, def: ['KeyA', …] }], custom: () => 사용자 키 })` → `held(id)` · `isKey(id, code)` · `keysFor(id)` · `keys` · `virt` · `bindKeyboard({ capture?, down?, blur? })`.
   **게임은 키가 아니라 액션을 묻습니다** — 키는 사용자가 다시 매기고, 터치 단추는 `virt[액션] = 1` 로 켭니다.
 - `bindPointer(canvas, st, { rightDown?, wheel? })` — `st = { m1, m2, mx, my }`(화면 CSS px)에 적는다. 누름은 캔버스에서, 뗌 · 이동은 창 전체에서.
-- `mountTouch({ input, ptr, surface, buttons: [{ id, label }], altLabel, rightDown? })` → `{ el, destroy() }` — 가상 스틱(left/right/down) · 단추 · 탭(= 마우스 칸) · 전환 단추(탭을 오른쪽 단추로). 오른쪽 단추 높이는 CSS 변수 `--ti-bottom`.
+- `mountTouch({ input, ptr, surface, buttons: [{ id, label, icon? }], altLabel, altIcons?, rightDown? })` → `{ el, destroy() }` — 가상 스틱(left/right/down) · 단추 · 탭(= 마우스 칸) · 전환 단추(탭을 오른쪽 단추로). 오른쪽 단추 높이는 CSS 변수 `--ti-bottom`. 아이콘을 주면 단추 안에 그림 + 작은 글(`.ti-ic` · `.ti-lb`), 전환은 `altIcons` 두 장 중 켜진 쪽이 밝다 — 모양(테 · 바탕)은 게임 CSS 가 입힌다.
 
 ### scene · platform
 
@@ -182,7 +182,7 @@ Ashfall 이 손으로 들고 있던 일 중 다른 게임에도 쓰일 것을 �
 | `audio/spatial.ts` | `spatialMix` · `createPanRouter` | 거리 감쇠 · 좌우 소리 위치 |
 | `input/gamepad.ts` | `createGamepad` | 패드 → 액션 |
 | `save/settings.ts` · `autosave.ts` | `createSettingsStore` · `createAutosave` | 설정 저장 · 자동 저장 타이머 |
-| `rhythm/duel.ts` | `RhythmDuel` · `FIELD_W`/`FIELD_H` | osu! standard 식 박자 겨루기 — 판 생성(AR · CS · OD · HP · BPM · 슬라이더/스피너 몫) · 판정 · HP 게이지 · 변주(돌기 · 숨김 · 꿈틀 · 끌림) · 그리기. 입력은 `move` · `press(id, 시각)` · `release`, 화면 → 판 좌표는 `toField` |
+| `rhythm/duel.ts` | `RhythmDuel` · `FIELD_W`/`FIELD_H` | osu! standard 식 박자 겨루기 — 판 생성(AR · CS · OD · HP · BPM · 슬라이더/스피너 몫) · 판정 · HP 게이지 · 변주(돌기 · 숨김 · 꿈틀 · 끌림) · 그리기. 입력은 `move` · `press(id, 시각)` · `release`, 화면 → 판 좌표는 `toField`. 모양은 `theme.art`(`DuelArt` — circle · approach · sliderBody · ball · spinner · cursor · pop, 없는 것은 기본 osu 그림)로 바꾸고 `theme.frame: false` 면 판 테두리 · 게이지를 안 그린다(화면 전체를 쓰는 게임용) |
 | `ui/toasts.ts` · `modal.ts` · `typewriter.ts` · `panzoom.ts` · `perf.ts` | `createToasts` · `confirmBox` · `typewrite` · `PanZoom` · `PerfPanel` | 알림 · 확인 창 · 한 글자씩 · 끌고 확대 · 성능 판(F3) |
 
 ## 5. Ashfall 은 엔진을 어떻게 쓰나
