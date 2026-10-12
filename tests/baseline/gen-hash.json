@@ -2,7 +2,7 @@
   "d1:s": {
     "ww": 5000,
     "wh": 720,
-    "tiles": "9c841531",
+    "tiles": "cd45c060",
     "walls": "dc45785e",
     "objects": "16db8212",
     "nObjects": 424,
@@ -11,7 +11,7 @@
   "d3:s": {
     "ww": 5000,
     "wh": 720,
-    "tiles": "80b6b6bc",
+    "tiles": "b178cfa1",
     "walls": "813e4b4d",
     "objects": "b7d6a439",
     "nObjects": 413,
@@ -20,7 +20,7 @@
   "d1:m": {
     "ww": 7500,
     "wh": 1080,
-    "tiles": "da537cf1",
+    "tiles": "1167042b",
     "walls": "b0942ea9",
     "objects": "e75e350c",
     "nObjects": 656,
@@ -29,7 +29,7 @@
   "d3:m": {
     "ww": 7500,
     "wh": 1080,
-    "tiles": "dcf02cae",
+    "tiles": "d2ca9985",
     "walls": "e9ff1374",
     "objects": "0409ec00",
     "nObjects": 651,
@@ -38,7 +38,7 @@
   "d1:l": {
     "ww": 10000,
     "wh": 1440,
-    "tiles": "3986c89e",
+    "tiles": "8484db10",
     "walls": "20a60ba1",
     "objects": "4830f76f",
     "nObjects": 994,
@@ -47,7 +47,7 @@
   "d3:l": {
     "ww": 10000,
     "wh": 1440,
-    "tiles": "30b77959",
+    "tiles": "3078bb6f",
     "walls": "1ff39a6a",
     "objects": "4c843479",
     "nObjects": 991,

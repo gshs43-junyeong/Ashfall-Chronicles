@@ -15779,6 +15779,7 @@
     generate() {
       const { WSX: WSX2, WSY: WSY2, SX: SX2, SY: SY2, WW: WW2, WORLD_BOT: WORLD_BOT2, SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2, DEEP_Y: DEEP_Y2, CAMP_X0: CAMP_X02, CAMP_GX1: CAMP_GX12, SEA_X1: SEA_X12, BIOMES: BIOMES2 } = this.dims;
       const rng = this.rng;
+      this._canopyLog = [];
       const n12 = makeNoise1D(new RNG(rng.next() * 1e9), 4);
       const n2 = makeNoise2D(new RNG(rng.next() * 1e9));
       const n3 = makeNoise2D(new RNG(rng.next() * 1e9));
@@ -16004,6 +16005,7 @@
       this.fitObjects();
       this.settleMemories();
       this.placeRigs(true);
+      this.restoreCanopies();
       this.pruneBrokenTrees();
       this.fluidInit();
       this.fluidSettle();
@@ -16527,12 +16529,36 @@
     },
     /** 수관 — 기둥 띠(x..x+wdt-1)에서의 거리로 재서, 굵은 기둥에도 캡슐 모양으로 얹힌다. */
     _canopy(x, top, r, wdt, leafT, slack) {
+      const rec = this._canopyLog && { a: (top + 1) * this.dims.WW + x, t: leafT, c: [] };
       for (let dx = -r; dx <= r + wdt - 1; dx++)
         for (let dy = -r; dy <= r - 1; dy++) {
           const hd = dx < 0 ? -dx : dx > wdt - 1 ? dx - (wdt - 1) : 0;
           if (hd * hd + dy * dy > r * r + slack) continue;
-          if (this.get(x + dx, top + dy) === T.AIR) this.set(x + dx, top + dy, leafT);
+          if (this.get(x + dx, top + dy) === T.AIR) {
+            this.set(x + dx, top + dy, leafT);
+            if (rec) rec.c.push((top + dy) * this.dims.WW + x + dx);
+          }
         }
+      if (rec) this._canopyLog.push(rec);
+    },
+    /** 뒷공사(제단 · 호수 · 채취탑 · 마을 손질 …)가 깎아 낸 수관을 되채운다 — 기둥이 그대로인 나무만, 지금 빈 하늘 칸(벽지 없음 · 채취탑 그림 밖)에만.
+        난수를 안 뽑는다. 사연: docs/code-history.md#h187 */
+    restoreCanopies() {
+      const { WW: WW2 } = this.dims, log = this._canopyLog || [];
+      let n = 0;
+      for (const r of log) {
+        const at = this.tiles[r.a];
+        if (at !== T.WOOD && at !== r.t) continue;
+        for (const k of r.c) {
+          if (this.tiles[k] !== T.AIR || this.walls[k]) continue;
+          const x = k % WW2, y = k / WW2 | 0;
+          if (this.inRig(x, y)) continue;
+          this.set(x, y, r.t);
+          n++;
+        }
+      }
+      this._canopyLog = null;
+      return n;
     },
     /** 그 자리에 원래 있어야 할 지층 타일 (메울 때 쓴다) */
     _bedAt(x, y) {

@@ -193,7 +193,7 @@ export class World extends TileMap {
   declare ruinAt: (...a: any[]) => any; declare ruinEvents: any[]; declare ruinSites: any[]; declare ruins: any[]; declare runaway: Record<string, any>;
   declare scatterChests: (...a: any[]) => any; declare sea: Record<string, any>; declare seaLevel: number; declare sealCipherVaults: (...a: any[]) => any; declare sealLiquids: (...a: any[]) => any;
   declare sealRoom: Record<string, any>; declare seed: string; declare shoreY: number; declare skyGate: Record<string, any>; declare skyIslands: any[];
-  declare spawnX: number; declare spawnY: number; declare surface: Int16Array; declare sweepFloatingDecor: (...a: any[]) => any; declare pruneBrokenTrees: () => number; declare sweepPockets: (...a: any[]) => any;
+  declare spawnX: number; declare spawnY: number; declare surface: Int16Array; declare sweepFloatingDecor: (...a: any[]) => any; declare pruneBrokenTrees: () => number; declare restoreCanopies: () => number; declare _canopyLog: any[] | null; declare sweepPockets: (...a: any[]) => any;
   declare tree: (...a: any[]) => any; declare villageY: number; declare works: Record<string, any>;
 
   constructor(seed: string) {
@@ -373,6 +373,7 @@ export class World extends TileMap {
   /* ================= 생성 ================= */
   generate() { const { WSX, WSY, SX, SY, WW, WORLD_BOT, SURF_BASE, HELL_Y, DEEP_Y, CAMP_X0, CAMP_GX1, SEA_X1, BIOMES } = this.dims;
     const rng = this.rng;
+    this._canopyLog = [];            // 수관 기록 — 끝에서 깎인 잎을 되채운다(restoreCanopies)
     const n1 = makeNoise1D(new RNG(rng.next() * 1e9), 4);
     const n2 = makeNoise2D(new RNG(rng.next() * 1e9));
     const n3 = makeNoise2D(new RNG(rng.next() * 1e9));
@@ -630,6 +631,7 @@ export class World extends TileMap {
     this.fitObjects();
     this.settleMemories();       // 석판 유적 기억 조각 — 헐린 바닥 위에 뜨지 않게
     this.placeRigs(true);        // 채취탑 자리 — 물건을 다 맞춘 뒤(지면·유적이 확정된 뒤)
+    this.restoreCanopies();      // 뒷공사에 반쯤 깎인 수관을 되채운다 — 기둥이 남은 나무만
     this.pruneBrokenTrees();     // 한 번 더 — 채취탑 · 물가 손질이 남긴 줄기 없는 잎 덩어리(나중 단계라 앞의 정리가 못 봤다)
     this.fluidInit();            // 여기서부터 물이 흐른다 — 생성 중에는 꺼 둔다(set 이 수백만 번 불린다)
     this.fluidSettle();          // 샘에서 폭포·물길이 흘러 자리 잡을 때까지 미리 돌린다
