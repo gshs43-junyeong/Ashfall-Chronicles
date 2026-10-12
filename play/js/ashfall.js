@@ -134,7 +134,7 @@
     };
   }
   function makeNoise2D(rng) {
-    const P = new Uint8Array(512);
+    const P2 = new Uint8Array(512);
     const perm = new Uint8Array(256);
     for (let i = 0; i < 256; i++) perm[i] = i;
     for (let i = 255; i > 0; i--) {
@@ -143,7 +143,7 @@
       perm[i] = perm[j];
       perm[j] = t;
     }
-    for (let i = 0; i < 512; i++) P[i] = perm[i & 255];
+    for (let i = 0; i < 512; i++) P2[i] = perm[i & 255];
     const grad = (h, x, y) => {
       switch (h & 3) {
         case 0:
@@ -160,7 +160,7 @@
       const X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
       const xf = x - Math.floor(x), yf = y - Math.floor(y);
       const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
-      const aa = P[P[X] + Y], ab = P[P[X] + Y + 1], ba = P[P[X + 1] + Y], bb = P[P[X + 1] + Y + 1];
+      const aa = P2[P2[X] + Y], ab = P2[P2[X] + Y + 1], ba = P2[P2[X + 1] + Y], bb = P2[P2[X + 1] + Y + 1];
       const x1 = lerp(grad(aa, xf, yf), grad(ba, xf - 1, yf), u);
       const x2 = lerp(grad(ab, xf, yf - 1), grad(bb, xf - 1, yf - 1), u);
       return (lerp(x1, x2, v) + 1) * 0.5;
@@ -1294,7 +1294,7 @@
     return { r, v };
   }
   function castSunlight(R, w, h, x0, y0, trans, sx, sy, sky) {
-    const P = (x, y) => {
+    const P2 = (x, y) => {
       if (x < 0 || x >= w || y < 0 || y >= h) return sky(x0 + x, y0 + y);
       const k = y * w + x;
       return R[k] * trans[k];
@@ -1307,7 +1307,7 @@
     if (Math.abs(s) <= 1) {
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         const fx = x + s, ix = Math.floor(fx), f = fx - ix;
-        R[y * w + x] = P(ix, y - 1) * (1 - f) + P(ix + 1, y - 1) * f;
+        R[y * w + x] = P2(ix, y - 1) * (1 - f) + P2(ix + 1, y - 1) * f;
       }
     } else {
       const dir = s > 0 ? 1 : -1, t = 1 / Math.abs(s);
@@ -1315,7 +1315,7 @@
         const x = dir > 0 ? w - 1 - i : i;
         for (let y = 0; y < h; y++) {
           const fy = y - t, iy = Math.floor(fy), f = fy - iy;
-          R[y * w + x] = P(x + dir, iy) * (1 - f) + P(x + dir, iy + 1) * f;
+          R[y * w + x] = P2(x + dir, iy) * (1 - f) + P2(x + dir, iy + 1) * f;
         }
       }
     }
@@ -3115,7 +3115,9 @@
     /* --- 석판 유적의 금 간 벽 — 뒤에 기억 조각 골방이 있다(첫 곡괭이로 깬다) --- */
     CRACKBRICK: 216,
     /* --- 탈 것 — 광산 수레가 달리는 레일(그림은 game/rides.ts 가 이웃을 보고 비탈째 그린다) --- */
-    RAIL: 217
+    RAIL: 217,
+    /* --- 여러 칸 기계의 몸 칸 — 닻 칸(왼쪽 아래)이 아닌 나머지. 그림은 Factory.render 가 닻에서 통째로 --- */
+    M_PART: 218
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -3446,7 +3448,8 @@
     { n: "궤도 봉인문", c: "#3a5a7a", solid: 1, hard: 99 },
     { n: "빛다리", c: "#9fe8ff", solid: 1, hard: 99 },
     { n: "금 간 벽돌", c: "#6a6458", solid: 1, hard: 1, drop: "stone" },
-    { n: "레일", c: "#8a8e98", solid: 0, hard: 1, drop: "rail" }
+    { n: "레일", c: "#8a8e98", solid: 0, hard: 1, drop: "rail" },
+    { n: "기계 몸", c: "#4a4f5a", solid: 1, hard: 3, drop: "", mach: "part" }
   ];
   var FARM_WET_R = 5, FARM_WET_DAYS = 3;
   var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
@@ -3539,7 +3542,7 @@
     TILE_SPRITE["starroot" + i] = T.ROOT0 + i;
     TILE_SPRITE["ashcap" + i] = T.CAP0 + i;
   }
-  for (const id in MACH_OF_TILE) TILE_SPRITE["m_" + MACH_OF_TILE[id]] = +id;
+  for (const id in MACH_OF_TILE) if (MACH_OF_TILE[id] !== "part") TILE_SPRITE["m_" + MACH_OF_TILE[id]] = +id;
   var WALL_COLOR = [
     null,
     "#3a2a1a",
@@ -6297,6 +6300,7 @@
       n: "심층 드릴",
       tile: T.M_DRILL_X,
       item: "m_drill_x",
+      size: [1, 2],
       power: 40,
       rot: 1,
       mine: 5,
@@ -6309,6 +6313,7 @@
       n: "시추 펌프",
       tile: T.M_PUMP,
       item: "m_pump",
+      size: [2, 2],
       power: 16,
       rot: 1,
       cycle: 14,
@@ -6320,6 +6325,7 @@
       n: "자동 용광로",
       tile: T.M_SMELTER,
       item: "m_smelter",
+      size: [1, 2],
       fuelIn: 1,
       rot: 1,
       proc: "smelter",
@@ -6340,6 +6346,7 @@
       n: "정제기",
       tile: T.M_REFINERY,
       item: "m_refinery",
+      size: [1, 2],
       power: 28,
       rot: 1,
       proc: "refinery",
@@ -6350,6 +6357,7 @@
       n: "조립기",
       tile: T.M_ASSEMBLER,
       item: "m_assembler",
+      size: [2, 2],
       power: 26,
       rot: 1,
       proc: "assembler",
@@ -6432,6 +6440,7 @@
       n: "가압기",
       tile: T.M_PRESSOR,
       item: "m_pressor",
+      size: [2, 2],
       power: 34,
       rot: 1,
       proc: "pressor",
@@ -6442,6 +6451,7 @@
       n: "염수 증류기",
       tile: T.M_DESAL,
       item: "m_desal",
+      size: [2, 1],
       power: 20,
       rot: 1,
       proc: "desal",
@@ -6460,6 +6470,7 @@
       n: "강화 축전지",
       tile: T.M_BATTERY_HI,
       item: "m_battery_hi",
+      size: [1, 2],
       store: 14e3,
       proc: "battery",
       power: 6,
@@ -15815,6 +15826,7 @@
       this.objects = [];
       this.doors = [];
       this.machines = /* @__PURE__ */ new Map();
+      this.mpart = /* @__PURE__ */ new Map();
       this.oreHits = {};
       this.netDirty = true;
       this.nets = [];
@@ -16241,9 +16253,9 @@
         ★ 두 겹 다 막힌 칸은 빛을 받되 트인 칸으로 넘기지 않는다(sweepLightGrid op) — 벽 한두 칸 뒤의 빈 방이 밝던 것. 사연: docs/code-history.md#h142 */
     computeLight(tx0, ty0, tx1, ty1, dayLight, extra, sun, leafKeep) {
       const { WW: WW2, WH: WH2, SKY_Y: SKY_Y2 } = this.dims;
-      const P = 14;
-      const x0 = clamp(tx0 - P, 0, WW2 - 1), x1 = clamp(tx1 + P, 0, WW2 - 1);
-      const y0 = clamp(ty0 - P, 0, WH2 - 1), y1 = clamp(ty1 + P, 0, WH2 - 1);
+      const P2 = 14;
+      const x0 = clamp(tx0 - P2, 0, WW2 - 1), x1 = clamp(tx1 + P2, 0, WW2 - 1);
+      const y0 = clamp(ty0 - P2, 0, WH2 - 1), y1 = clamp(ty1 + P2, 0, WH2 - 1);
       const w = x1 - x0 + 1, h = y1 - y0 + 1;
       const F = this.light = this.light || new LightField({
         fall: LIGHT_FALL,
@@ -16566,6 +16578,8 @@
           delete m.it.fy;
         }
         w.machines.set(m.y * WW2 + m.x, m);
+        for (let dy = 0; dy < (m.h || 1); dy++) for (let dx = 0; dx < (m.w || 1); dx++)
+          if (dx || dy) w.mpart.set((m.y - dy) * WW2 + m.x + dx, m.y * WW2 + m.x);
       }
       for (const k of d.crops || []) w.crops.add(k);
       w.wet = d.wet || {};
@@ -17782,7 +17796,7 @@
       const { x0, x1, gy, blocks } = d;
       const cx = x0 + x1 >> 1;
       const rng = new RNG(this.seed + "_v" + lv);
-      const P = (o) => this.objects.push(o);
+      const P2 = (o) => this.objects.push(o);
       const mach = (tx, ty, key, dir) => {
         if (factory && factory.canPlace(this, tx, ty)) factory.place(this, tx, ty, key, dir || 0, 1);
       };
@@ -17812,7 +17826,7 @@
           const stairX = b.x + 8;
           for (let y = gy - 4; y > by; y -= 4) this.set(stairX, y, T.PLATFORM);
           const shS = DAWN_OBJ.shelf;
-          P({ type: "furniture", kind: "shelf", x: (b.x + b.w - 5) * TS - shS.w, y: by * TS - shS.h, w: shS.w, h: shS.h });
+          P2({ type: "furniture", kind: "shelf", x: (b.x + b.w - 5) * TS - shS.w, y: by * TS - shS.h, w: shS.w, h: shS.h });
         }
         for (let x = x0 - 6; x < x1 + 6; x++)
           if (this.get(x, gy - 1) === T.TORCH) this.set(x, gy - 1, T.LAMPPOST);
@@ -17905,7 +17919,7 @@
             const av = this.dawnPlace(rb.x + DAWN_INSIDE.anvil, 2, DAWN_OBJ.anvil, gy, "anvil");
             const hit = this.objects.find((o) => o.w && aabb(av, o));
             if (hit) console.warn("강화 모루 자리 겹침:", hit.type);
-            else P(av);
+            else P2(av);
           }
         }
         this.placeMerchants(4);
@@ -20930,21 +20944,21 @@
         let gave = false;
         for (const q of rooms) {
           if (q === main || q === sigRoom || q.h < 9 || q.w < 12) continue;
-          const fy = q.y + q.h - 3, P = fy - 2;
+          const fy = q.y + q.h - 3, P2 = fy - 2;
           let built = 0;
           for (let x = q.x + 2; x < q.x + q.w - 2; x++) {
-            if ((x - q.x) % 7 === 5 || this.get(x, P) !== T.AIR || this.get(x, P - 1) !== T.AIR) continue;
-            this.set(x, P, T.PLATFORM);
+            if ((x - q.x) % 7 === 5 || this.get(x, P2) !== T.AIR || this.get(x, P2 - 1) !== T.AIR) continue;
+            this.set(x, P2, T.PLATFORM);
             built++;
           }
           if (built < 6) continue;
           if (!gave && r.chance(0.7)) {
-            chest(q.x + (q.w >> 1) + (r.chance(0.5) ? 2 : -2), P - 1, sp.tier);
+            chest(q.x + (q.w >> 1) + (r.chance(0.5) ? 2 : -2), P2 - 1, sp.tier);
             gave = true;
           }
           if (r.chance(0.5)) {
             const dx = r.chance(0.5) ? q.x + 1 : q.x + q.w - 2;
-            if (this.solid(dx + (dx === q.x + 1 ? -1 : 1), P - 2)) this.set(dx, P - 2, dx === q.x + 1 ? T.DART_R : T.DART_L);
+            if (this.solid(dx + (dx === q.x + 1 ? -1 : 1), P2 - 2)) this.set(dx, P2 - 2, dx === q.x + 1 ? T.DART_R : T.DART_L);
           }
         }
       } else {
@@ -22485,8 +22499,8 @@
     applyStrata() {
       const { WW: WW2, HELL_Y: HELL_Y2 } = this.dims;
       const nat = naturalWalls(), r = new RNG(this.seed + "_vein");
-      const mix = (x, y, line3) => {
-        const d = y - line3;
+      const mix = (x, y, line4) => {
+        const d = y - line4;
         if (d >= 3) return true;
         if (d < -3) return false;
         return ((x * 73856093 ^ y * 19349663) >>> 0) % 7 < d + 4;
@@ -23952,7 +23966,7 @@
         {
           const c1 = base, c2 = shade(base, 1.32), c3 = shade(base, 0.66);
           const tw = s.tw || shade(base, 0.4), tw2 = shade(tw, 1.4);
-          const M = TS / 2 - 1;
+          const M2 = TS / 2 - 1;
           const lr = new RNG("leaf-" + seed);
           const STEP = 4;
           for (let gy = -2; gy < TS + 2; gy += STEP) {
@@ -23982,24 +23996,24 @@
             }
           };
           if (v === 0) {
-            twig(-1, M + 2, M + 3, M, 3);
-            twig(0, M + 2, M + 2, M, 1, tw2);
-            twig(M - 3, M + 1, M + 4, M - 5, 2);
+            twig(-1, M2 + 2, M2 + 3, M2, 3);
+            twig(0, M2 + 2, M2 + 2, M2, 1, tw2);
+            twig(M2 - 3, M2 + 1, M2 + 4, M2 - 5, 2);
           }
           if (v === 1) {
-            twig(TS, M - 1, M - 4, M + 1, 3);
-            twig(TS - 1, M - 1, M - 3, M + 1, 1, tw2);
-            twig(M + 2, M, M - 5, M - 5, 2);
+            twig(TS, M2 - 1, M2 - 4, M2 + 1, 3);
+            twig(TS - 1, M2 - 1, M2 - 3, M2 + 1, 1, tw2);
+            twig(M2 + 2, M2, M2 - 5, M2 - 5, 2);
           }
           if (v === 2) {
-            twig(M, TS, M, M - 3, 3);
-            twig(M, TS - 1, M, M - 2, 1, tw2);
-            twig(M, M + 1, M - 6, M - 4, 2);
-            twig(M + 1, M + 3, M + 6, M - 1, 2);
+            twig(M2, TS, M2, M2 - 3, 3);
+            twig(M2, TS - 1, M2, M2 - 2, 1, tw2);
+            twig(M2, M2 + 1, M2 - 6, M2 - 4, 2);
+            twig(M2 + 1, M2 + 3, M2 + 6, M2 - 1, 2);
           }
           if (!s.noTwig && v !== 3) {
-            const ex = v === 0 ? M + 3 : v === 1 ? M - 4 : M;
-            const ey = v === 2 ? M - 3 : M;
+            const ex = v === 0 ? M2 + 3 : v === 1 ? M2 - 4 : M2;
+            const ey = v === 2 ? M2 - 3 : M2;
             R(ex - 2, ey - 3, 5, 4, c1);
             R(ex - 1, ey - 4, 3, 6, c2);
           }
@@ -27292,7 +27306,7 @@
     },
     /* ================= 페인터 ================= */
     paint(g, s, rng) {
-      const P = (x, y, w, h, c) => {
+      const P2 = (x, y, w, h, c) => {
         g.fillStyle = c;
         g.fillRect(x, y, w, h);
       };
@@ -27304,7 +27318,7 @@
         g.closePath();
         g.fill();
       };
-      const circ = (x, y, r, c) => {
+      const circ2 = (x, y, r, c) => {
         g.fillStyle = c;
         g.beginPath();
         g.arc(x, y, r, 0, TAU);
@@ -27324,7 +27338,7 @@
         fn();
         g.stroke();
       };
-      const glow = (x, y, r, c, a) => {
+      const glow2 = (x, y, r, c, a) => {
         const gr = g.createRadialGradient(x, y, 0, x, y, r);
         gr.addColorStop(0, c);
         gr.addColorStop(0.55, c);
@@ -27338,7 +27352,7 @@
         g.restore();
       };
       const paint = ITEM_PAINT[s.k];
-      if (paint) paint.call(this, { g, s, rng, P, poly, circ, ell, stroke, glow });
+      if (paint) paint.call(this, { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 });
     }
   };
 
@@ -27349,14 +27363,14 @@
   });
   var ItemPaintGlyphs = {
     gl(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const G1 = "#e8dcc0", G22 = "#c8a058", DK = "#4a4238", RD = "#d05a4a", GR = "#6fbf5a";
           const BL = "#6fa8d8", PL = "#b17fe0";
           switch (s.g) {
             case "shard":
-              glow(16, 16, 12, G22, 0.3);
+              glow2(16, 16, 12, G22, 0.3);
               poly([[16, 3], [23, 16], [16, 29], [9, 16]], G1);
               poly([[16, 3], [23, 16], [16, 16]], G22);
               break;
@@ -27387,7 +27401,7 @@
               poly([[5, 24], [5, 10], [11, 16], [16, 7], [21, 16], [27, 10], [27, 24]], G22);
               g.fillStyle = sh2(G22, 0.68);
               g.fillRect(5, 22, 22, 3);
-              circ(16, 7, 2, G1);
+              circ2(16, 7, 2, G1);
               break;
             case "sword":
               poly([[16, 3], [19, 8], [19, 20], [13, 20], [13, 8]], G1);
@@ -27426,8 +27440,8 @@
               g.fillStyle = DK;
               g.fillRect(4, 16, 24, 12);
               for (let i = 0; i < 3; i++) g.fillStyle = sh2(G1, 0.74), g.fillRect(6 + i * 8, 9 + i * 2, 5, 8);
-              circ(9, 6, 2.4, "rgba(200,190,170,.5)");
-              circ(14, 4, 1.8, "rgba(200,190,170,.35)");
+              circ2(9, 6, 2.4, "rgba(200,190,170,.5)");
+              circ2(14, 4, 1.8, "rgba(200,190,170,.35)");
               break;
             case "anvil":
               g.fillStyle = "#5d5d68";
@@ -27454,9 +27468,9 @@
               poly([[16, 28], [8, 17], [24, 17]], G1);
               break;
             case "cloud":
-              circ(11, 18, 6, G1);
-              circ(19, 17, 7, G1);
-              circ(24, 20, 5, G1);
+              circ2(11, 18, 6, G1);
+              circ2(19, 17, 7, G1);
+              circ2(24, 20, 5, G1);
               g.fillStyle = G1;
               g.fillRect(11, 18, 14, 6);
               break;
@@ -27468,30 +27482,30 @@
               for (let i = 0; i < 4; i++) g.fillStyle = "#a8a094", g.fillRect(10, 10 + i * 4, 12 - i % 2 * 4, 1.5);
               break;
             case "bubble":
-              circ(12, 20, 5.5, "rgba(160,215,240,.85)");
-              circ(10.3, 18.3, 1.8, "#fff");
-              circ(21, 13, 3.6, "rgba(160,215,240,.7)");
-              circ(17, 7, 2.2, "rgba(160,215,240,.55)");
+              circ2(12, 20, 5.5, "rgba(160,215,240,.85)");
+              circ2(10.3, 18.3, 1.8, "#fff");
+              circ2(21, 13, 3.6, "rgba(160,215,240,.7)");
+              circ2(17, 7, 2.2, "rgba(160,215,240,.55)");
               break;
             case "skull":
-              circ(16, 14, 9, G1);
+              circ2(16, 14, 9, G1);
               g.fillStyle = G1;
               g.fillRect(11, 20, 10, 5);
-              circ(12.5, 13, 2.6, DK);
-              circ(19.5, 13, 2.6, DK);
+              circ2(12.5, 13, 2.6, DK);
+              circ2(19.5, 13, 2.6, DK);
               g.fillStyle = DK;
               g.fillRect(15, 17, 2, 3);
               for (let i = 0; i < 3; i++) g.fillStyle = DK, g.fillRect(12 + i * 3, 22, 1.5, 3);
               break;
             case "redmoon":
-              glow(16, 16, 13, RD, 0.38);
-              circ(16, 16, 9, RD);
-              circ(13, 13, 1.8, sh2(RD, 0.7));
-              circ(20, 18, 2.4, sh2(RD, 0.7));
+              glow2(16, 16, 13, RD, 0.38);
+              circ2(16, 16, 9, RD);
+              circ2(13, 13, 1.8, sh2(RD, 0.7));
+              circ2(20, 18, 2.4, sh2(RD, 0.7));
               break;
             case "key":
-              circ(10, 11, 5.5, G22);
-              circ(10, 11, 2.2, "#171410");
+              circ2(10, 11, 5.5, G22);
+              circ2(10, 11, 2.2, "#171410");
               stroke(G22, 3, () => {
                 g.moveTo(13, 14);
                 g.lineTo(24, 25);
@@ -27506,7 +27520,7 @@
               g.fillRect(13, 13, 6, 14);
               g.fillStyle = sh2(G1, 0.8);
               g.fillRect(11, 25, 10, 3);
-              glow(16, 8, 7, "#ffd24a", 0.5);
+              glow2(16, 8, 7, "#ffd24a", 0.5);
               poly([[16, 3], [19, 9], [16, 12], [13, 9]], "#ffd24a");
               break;
             case "bed":
@@ -27530,8 +27544,8 @@
               for (let i = 0; i < 4; i++) g.fillStyle = "#8a7a58", g.fillRect(11, 10 + i * 4, 10 - i % 2 * 3, 1.4);
               break;
             case "sun":
-              glow(16, 16, 13, "#ffd24a", 0.4);
-              circ(16, 16, 6.5, "#ffd24a");
+              glow2(16, 16, 13, "#ffd24a", 0.4);
+              circ2(16, 16, 6.5, "#ffd24a");
               for (let i = 0; i < 8; i++) {
                 const a = i * TAU / 8;
                 stroke("#ffd24a", 2, () => {
@@ -27541,23 +27555,23 @@
               }
               break;
             case "coin":
-              circ(16, 16, 9, G22);
-              circ(16, 16, 6.5, sh2(G22, 1.25));
+              circ2(16, 16, 9, G22);
+              circ2(16, 16, 6.5, sh2(G22, 1.25));
               g.fillStyle = sh2(G22, 0.6);
               g.fillRect(15, 11, 2, 10);
               break;
             case "coins":
-              circ(11, 21, 7, sh2(G22, 0.82));
-              circ(21, 19, 7, sh2(G22, 0.9));
-              circ(16, 12, 7.5, G22);
-              circ(16, 12, 5, sh2(G22, 1.3));
+              circ2(11, 21, 7, sh2(G22, 0.82));
+              circ2(21, 19, 7, sh2(G22, 0.9));
+              circ2(16, 12, 7.5, G22);
+              circ2(16, 12, 5, sh2(G22, 1.3));
               break;
             case "paw":
               ell(16, 21, 6.5, 5.5, G1);
-              circ(9.5, 13, 3, G1);
-              circ(14, 10, 3, G1);
-              circ(19, 10, 3, G1);
-              circ(23, 14, 3, G1);
+              circ2(9.5, 13, 3, G1);
+              circ2(14, 10, 3, G1);
+              circ2(19, 10, 3, G1);
+              circ2(23, 14, 3, G1);
               break;
             case "hands":
               stroke(G1, 4, () => {
@@ -27568,7 +27582,7 @@
                 g.moveTo(28, 12);
                 g.lineTo(17, 17);
               });
-              circ(16, 18, 4.5, G1);
+              circ2(16, 18, 4.5, G1);
               break;
             case "receipt":
               g.fillStyle = "#e0d4b0";
@@ -27580,8 +27594,8 @@
             case "clock2":
             case "clock3": {
               const rings = s.g === "clock" ? 1 : s.g === "clock2" ? 2 : 3;
-              circ(16, 16, 11, G1);
-              circ(16, 16, 9, "#171410");
+              circ2(16, 16, 11, G1);
+              circ2(16, 16, 9, "#171410");
               const ang = [-Math.PI / 2 + 0.5, -Math.PI / 2 + 2.6, -Math.PI / 2 + 4.7][rings - 1];
               stroke(G22, 2.4, () => {
                 g.moveTo(16, 16);
@@ -27591,7 +27605,7 @@
                 g.moveTo(16, 16);
                 g.lineTo(16, 9);
               });
-              for (let i = 0; i < rings; i++) circ(16, 29 - i * 0, 0, G22);
+              for (let i = 0; i < rings; i++) circ2(16, 29 - i * 0, 0, G22);
               g.fillStyle = G22;
               for (let i = 0; i < rings; i++) g.fillRect(11 + i * 5, 28, 3, 3);
               break;
@@ -27601,8 +27615,8 @@
               ell(21, 19, 5, 7, sh2(RD, 0.95));
               g.fillStyle = sh2(RD, 0.7);
               g.fillRect(15, 8, 2, 9);
-              circ(24, 8, 2.4, "rgba(160,215,240,.8)");
-              circ(27, 4, 1.5, "rgba(160,215,240,.6)");
+              circ2(24, 8, 2.4, "rgba(160,215,240,.8)");
+              circ2(27, 4, 1.5, "rgba(160,215,240,.6)");
               break;
             case "grave":
               g.fillStyle = "#7a7268";
@@ -27614,7 +27628,7 @@
               g.fillRect(4, 27, 24, 3);
               break;
             case "hidden":
-              circ(16, 16, 11, "rgba(120,112,96,.22)");
+              circ2(16, 16, 11, "rgba(120,112,96,.22)");
               g.fillStyle = "#8a8271";
               g.font = "bold 19px sans-serif";
               g.textAlign = "center";
@@ -27624,7 +27638,7 @@
               g.textBaseline = "alphabetic";
               break;
             default:
-              glow(16, 16, 12, G22, 0.32);
+              glow2(16, 16, 12, G22, 0.32);
               poly([
                 [16, 3],
                 [19.5, 12.5],
@@ -27653,38 +27667,38 @@
   var ItemPaintGear = {
     /* ---------- 무기 ---------- */
     sword(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const bw = s.w, base = s.c, lt = sh2(base, 1.3), dk = sh2(base, 0.68);
-          if (s.glow) glow(16, 11, 11, s.glow, 0.22);
+          if (s.glow) glow2(16, 11, 11, s.glow, 0.22);
           poly([[16, 1], [16 + bw, 8], [16 + bw - 0.5, 20], [16 - bw + 0.5, 20], [16 - bw, 8]], base);
           poly([[16, 2], [16, 20], [16 - bw + 1, 20], [16 - bw + 1, 8.5]], lt);
           poly([[16, 2], [16, 20], [16 + bw - 1, 20], [16 + bw - 1, 8.5]], dk);
-          P(15.4, 3, 1.2, 17, sh2(base, 1.5));
+          P2(15.4, 3, 1.2, 17, sh2(base, 1.5));
           if (s.jag) for (let y = 9; y < 20; y += 3.4) {
             poly([[16 - bw, y], [16 - bw - 2, y + 1], [16 - bw, y + 2]], base);
             poly([[16 + bw, y + 1.7], [16 + bw + 2, y + 2.7], [16 + bw, y + 3.7]], base);
           }
           const gd = s.g;
-          P(6.5, 20, 19, 3, gd);
-          P(6.5, 20, 19, 1, sh2(gd, 1.35));
+          P2(6.5, 20, 19, 3, gd);
+          P2(6.5, 20, 19, 1, sh2(gd, 1.35));
           poly([[6.5, 20], [4, 21.5], [6.5, 23]], gd);
           poly([[25.5, 20], [28, 21.5], [25.5, 23]], gd);
-          P(14, 23, 4, 6, s.grip);
-          P(14, 24.5, 4, 1, sh2(s.grip, 0.55));
-          P(14, 26.5, 4, 1, sh2(s.grip, 0.55));
-          circ(16, 29.6, 2.3, gd);
-          circ(15.4, 29, 0.8, sh2(gd, 1.4));
+          P2(14, 23, 4, 6, s.grip);
+          P2(14, 24.5, 4, 1, sh2(s.grip, 0.55));
+          P2(14, 26.5, 4, 1, sh2(s.grip, 0.55));
+          circ2(16, 29.6, 2.3, gd);
+          circ2(15.4, 29, 0.8, sh2(gd, 1.4));
           return;
         }
       }
     },
     scythe(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          if (s.glow) glow(14, 14, 13, s.glow, 0.22);
+          if (s.glow) glow2(14, 14, 13, s.glow, 0.22);
           g.fillStyle = s.c;
           g.beginPath();
           g.arc(16, 20, 14, Math.PI, Math.PI * 1.61, false);
@@ -27705,16 +27719,16 @@
             g.moveTo(25.1, 29.4);
             g.lineTo(18.7, 8.6);
           });
-          circ(20, 7.6, 2.4, sh2(s.shaft, 2));
+          circ2(20, 7.6, 2.4, sh2(s.shaft, 2));
           return;
         }
       }
     },
     bow(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          if (s.glow) glow(14, 16, 13, s.glow, 0.2);
+          if (s.glow) glow2(14, 16, 13, s.glow, 0.2);
           const a = 1, cxx = 23, r = 15;
           stroke(s.c, 3.4, () => {
             g.arc(cxx, 16, r, Math.PI - a, Math.PI + a);
@@ -27728,9 +27742,9 @@
             g.moveTo(ex, ey1);
             g.lineTo(ex, ey2);
           });
-          circ(ex, ey1, 1.3, sh2(s.c, 0.7));
-          circ(ex, ey2, 1.3, sh2(s.c, 0.7));
-          P(cxx - r - 1.4, 13, 3.4, 6, "#4a3122");
+          circ2(ex, ey1, 1.3, sh2(s.c, 0.7));
+          circ2(ex, ey2, 1.3, sh2(s.c, 0.7));
+          P2(cxx - r - 1.4, 13, 3.4, 6, "#4a3122");
           stroke("#8a6a45", 1.8, () => {
             g.moveTo(ex - 1, 16);
             g.lineTo(27, 16);
@@ -27742,11 +27756,11 @@
       }
     },
     staff(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const hd = s.head;
-          if (s.glow) glow(19, 8, 11, s.glow, 0.26);
+          if (s.glow) glow2(19, 8, 11, s.glow, 0.26);
           stroke(s.c, 3, () => {
             g.moveTo(11, 30);
             g.lineTo(18, 12);
@@ -27758,7 +27772,7 @@
           if (s.style === "crystal") {
             poly([[19, 2], [23, 9], [19, 15], [15, 9]], hd);
             poly([[19, 2], [19, 15], [15, 9]], sh2(hd, 1.4));
-            P(18.3, 4, 1.2, 7, sh2(hd, 1.7));
+            P2(18.3, 4, 1.2, 7, sh2(hd, 1.7));
           } else if (s.style === "claw") {
             stroke(sh2(s.c, 1.6), 2, () => {
               g.moveTo(14, 12);
@@ -27768,13 +27782,13 @@
               g.moveTo(23, 11);
               g.lineTo(25, 4);
             });
-            circ(19, 8, 4.6, hd);
-            circ(19, 8, 3, sh2(hd, 1.4));
-            circ(17.6, 6.6, 1.2, "#ffffff");
+            circ2(19, 8, 4.6, hd);
+            circ2(19, 8, 3, sh2(hd, 1.4));
+            circ2(17.6, 6.6, 1.2, "#ffffff");
           } else {
-            circ(19, 8, 5, hd);
-            circ(19, 8, 3.4, sh2(hd, 1.35));
-            circ(17.4, 6.4, 1.4, "#ffffff");
+            circ2(19, 8, 5, hd);
+            circ2(19, 8, 3.4, sh2(hd, 1.35));
+            circ2(17.4, 6.4, 1.4, "#ffffff");
             stroke(sh2(s.c, 1.3), 1.6, () => {
               g.arc(19, 8, 6.4, 2.2, 4.6);
             });
@@ -27784,11 +27798,11 @@
       }
     },
     spear(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.7);
-          if (s.glow) glow(16, 10, 11, s.glow, 0.22);
+          if (s.glow) glow2(16, 10, 11, s.glow, 0.22);
           stroke("#6a4a28", 2.6, () => {
             g.moveTo(16, 31);
             g.lineTo(16, 10);
@@ -27808,7 +27822,7 @@
     },
     /* ---------- 낚싯대: 대각선 장대 + 늘어진 줄과 찌 ---------- */
     fishrod(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -27824,15 +27838,15 @@
             g.moveTo(27, 4);
             g.quadraticCurveTo(24, 16, 17, 22);
           });
-          circ(17, 22, 1.6, c);
-          if (s.glow) glow(27, 4, 6, s.glow, 0.3);
+          circ2(17, 22, 1.6, c);
+          if (s.glow) glow2(27, 4, 6, s.glow, 0.3);
           return;
         }
       }
     },
     /* ---------- 물고기: 타원 몸통 + 꼬리 삼각형 ---------- */
     fishitem(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.7);
@@ -27840,18 +27854,18 @@
           ell(13, 15, 4, 2.2, lt);
           poly([[24, 17], [30, 12], [30, 22]], dk);
           poly([[6.5, 17], [2, 14], [2, 20]], dk);
-          circ(9, 15.5, 1, "#1a1a1a");
-          if (s.glow) glow(15, 17, 10, s.glow, 0.25);
+          circ2(9, 15.5, 1, "#1a1a1a");
+          if (s.glow) glow2(15, 17, 10, s.glow, 0.25);
           return;
         }
       }
     },
     pick(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4);
-          if (s.glow) glow(16, 13, 13, s.glow, 0.2);
+          if (s.glow) glow2(16, 13, 13, s.glow, 0.2);
           stroke("#6a4a28", 3.4, () => {
             g.moveTo(16, 30);
             g.lineTo(16, 12);
@@ -27868,14 +27882,14 @@
           });
           poly([[3.6, 14.2], [1, 17.6], [6, 17.4]], c);
           poly([[28.4, 14.2], [31, 17.6], [26, 17.4]], sh2(c, 0.78));
-          P(13.4, 10.6, 5.2, 5.4, sh2(c, 0.82));
-          P(13.4, 10.6, 5.2, 1.4, lt);
+          P2(13.4, 10.6, 5.2, 5.4, sh2(c, 0.82));
+          P2(13.4, 10.6, 5.2, 1.4, lt);
           return;
         }
       }
     },
     axe(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.72);
@@ -27919,74 +27933,74 @@
     },
     /* ---------- 방어구 ---------- */
     helm(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
-          if (s.glow) glow(16, 15, 12, s.glow, 0.18);
+          if (s.glow) glow2(16, 15, 12, s.glow, 0.18);
           if (s.crest) {
-            P(15, 2, 2, 6, s.crest);
-            P(13.4, 3.5, 5.2, 2, s.crest);
+            P2(15, 2, 2, 6, s.crest);
+            P2(13.4, 3.5, 5.2, 2, s.crest);
           }
           g.fillStyle = c;
           g.beginPath();
           g.arc(16, 16, 10, Math.PI, 0);
           g.fill();
-          P(6, 16, 20, 6, c);
+          P2(6, 16, 20, 6, c);
           g.fillStyle = lt;
           g.beginPath();
           g.arc(16, 16, 10, Math.PI, Math.PI * 1.45);
           g.fill();
-          P(6, 16, 5, 6, lt);
+          P2(6, 16, 5, 6, lt);
           if (s.soft) {
-            P(6, 20, 20, 2, dk);
-            P(9, 13, 14, 2.4, dk);
+            P2(6, 20, 20, 2, dk);
+            P2(9, 13, 14, 2.4, dk);
           } else {
-            P(8, 13.5, 16, 3.2, "#1a1a22");
-            P(15.2, 13.5, 1.6, 3.2, c);
-            P(6, 21, 20, 1.6, dk);
+            P2(8, 13.5, 16, 3.2, "#1a1a22");
+            P2(15.2, 13.5, 1.6, 3.2, c);
+            P2(6, 21, 20, 1.6, dk);
           }
-          P(6, 16, 20, 1, sh2(c, 1.5));
+          P2(6, 16, 20, 1, sh2(c, 1.5));
           return;
         }
       }
     },
     chest(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
-          if (s.glow) glow(16, 17, 13, s.glow, 0.18);
+          if (s.glow) glow2(16, 17, 13, s.glow, 0.18);
           poly([[9, 8], [23, 8], [25, 14], [23, 27], [9, 27], [7, 14]], c);
           poly([[9, 8], [16, 8], [16, 27], [9, 27], [7, 14]], lt);
-          circ(8, 10.5, 4, dk);
-          circ(24, 10.5, 4, dk);
-          circ(8, 10.5, 4, s.soft ? dk : c);
-          circ(24, 10.5, 4, s.soft ? dk : sh2(c, 0.8));
-          circ(7.2, 9.4, 1.6, lt);
-          P(15.4, 9, 1.2, 18, dk);
+          circ2(8, 10.5, 4, dk);
+          circ2(24, 10.5, 4, dk);
+          circ2(8, 10.5, 4, s.soft ? dk : c);
+          circ2(24, 10.5, 4, s.soft ? dk : sh2(c, 0.8));
+          circ2(7.2, 9.4, 1.6, lt);
+          P2(15.4, 9, 1.2, 18, dk);
           if (s.soft) {
-            P(9, 20, 14, 1.6, dk);
-            P(9, 23.5, 14, 1.6, dk);
+            P2(9, 20, 14, 1.6, dk);
+            P2(9, 23.5, 14, 1.6, dk);
           } else {
-            P(8, 17, 16, 1.4, dk);
-            P(8, 22, 16, 1.4, dk);
+            P2(8, 17, 16, 1.4, dk);
+            P2(8, 22, 16, 1.4, dk);
           }
           return;
         }
       }
     },
     boots(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.6);
-          if (s.glow) glow(16, 18, 12, s.glow, 0.18);
+          if (s.glow) glow2(16, 18, 12, s.glow, 0.18);
           const boot = (bx) => {
             poly([[bx, 9], [bx + 8, 9], [bx + 8, 21], [bx + 12, 21], [bx + 12, 26], [bx, 26]], c);
             poly([[bx, 9], [bx + 3.5, 9], [bx + 3.5, 26], [bx, 26]], lt);
-            P(bx, 23.5, 12, 2.5, dk);
-            P(bx, 12.5, 8, 1.6, dk);
+            P2(bx, 23.5, 12, 2.5, dk);
+            P2(bx, 12.5, 8, 1.6, dk);
           };
           boot(2);
           boot(17);
@@ -27996,7 +28010,7 @@
     },
     /* ---------- 장신구 ---------- */
     ring(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           stroke(s.c, 3.4, () => {
@@ -28007,13 +28021,13 @@
           });
           poly([[16, 4], [21, 9.5], [16, 15], [11, 9.5]], s.gem);
           poly([[16, 4], [16, 15], [11, 9.5]], sh2(s.gem, 1.45));
-          P(14.6, 7, 1.4, 1.4, "#ffffff");
+          P2(14.6, 7, 1.4, 1.4, "#ffffff");
           return;
         }
       }
     },
     amulet(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           stroke(s.c, 1.6, () => {
@@ -28038,23 +28052,23 @@
             g.quadraticCurveTo(9, 22, 16, 16);
             g.closePath();
             g.fill();
-            circ(14.2, 23, 1.6, sh2(s.gem, 1.5));
+            circ2(14.2, 23, 1.6, sh2(s.gem, 1.5));
           }
-          P(14.8, 16.5, 2.4, 2.4, sh2(s.c, 1.2));
+          P2(14.8, 16.5, 2.4, 2.4, sh2(s.c, 1.2));
           return;
         }
       }
     },
     cloud(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 12, "#cfe8ff", 0.18);
-          circ(11, 18, 6, "#e0ecfa");
-          circ(20, 18, 7, "#e0ecfa");
-          circ(15.5, 13.5, 6.5, "#f2f7ff");
-          P(6, 18, 20, 5, "#e0ecfa");
-          circ(13, 12, 3, "#ffffff");
+          glow2(16, 16, 12, "#cfe8ff", 0.18);
+          circ2(11, 18, 6, "#e0ecfa");
+          circ2(20, 18, 7, "#e0ecfa");
+          circ2(15.5, 13.5, 6.5, "#f2f7ff");
+          P2(6, 18, 20, 5, "#e0ecfa");
+          circ2(13, 12, 3, "#ffffff");
           stroke("#9fc0e8", 1.4, () => {
             g.moveTo(11, 25);
             g.lineTo(9, 29);
@@ -28068,10 +28082,10 @@
       }
     },
     sigil(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 11, s.c, 0.18);
+          glow2(16, 16, 11, s.c, 0.18);
           stroke(sh2(s.c, 0.7), 2, () => {
             g.arc(16, 16, 10, 0, TAU);
           });
@@ -28082,17 +28096,17 @@
           g.quadraticCurveTo(9, 15, 16, 7);
           g.closePath();
           g.fill();
-          circ(14, 16, 1.8, sh2(s.c, 1.6));
+          circ2(14, 16, 1.8, sh2(s.c, 1.6));
           return;
         }
       }
     },
     star(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const R = s.big ? 13 : 11, r = R * 0.42;
-          if (s.glow) glow(16, 16, R + 3, s.glow, 0.3);
+          if (s.glow) glow2(16, 16, R + 3, s.glow, 0.3);
           g.fillStyle = s.c;
           g.beginPath();
           for (let i = 0; i < 10; i++) {
@@ -28131,14 +28145,14 @@
   }
   var ItemPaintWeird = {
     claw(H) {
-      const { P, poly, circ, glow } = H;
-      glow(16, 7, 8, "#8fd8ff", 0.25);
-      P(13, 22, 6, 8, "#3a3f48");
-      P(13, 22, 6, 1, "#6a7280");
-      P(14, 25, 4, 2, "#ffd24a");
+      const { P: P2, poly, circ: circ2, glow: glow2 } = H;
+      glow2(16, 7, 8, "#8fd8ff", 0.25);
+      P2(13, 22, 6, 8, "#3a3f48");
+      P2(13, 22, 6, 1, "#6a7280");
+      P2(14, 25, 4, 2, "#ffd24a");
       line(H, [[16, 22], [11, 16], [17, 11]], "#8a96a6", 2.4);
-      circ(11, 16, 1.6, "#c8d0da");
-      circ(17, 11, 1.6, "#c8d0da");
+      circ2(11, 16, 1.6, "#c8d0da");
+      circ2(17, 11, 1.6, "#c8d0da");
       poly([[17, 11], [12, 4], [14, 3], [18, 9]], "#b8c0cc");
       poly([[17, 11], [22, 4], [20, 3], [16, 9]], "#9aa4b2");
       line(H, [[13, 5], [16, 7], [15, 8], [18, 6]], "#bff0ff", 1);
@@ -28154,36 +28168,36 @@
       line(H, [[22, 12], [24, 10.4]], "#e8c060", 2);
     },
     leafsword(H) {
-      const { poly, P } = H;
+      const { poly, P: P2 } = H;
       const greens = ["#5aa04a", "#6ab85a", "#4a8a3c"];
       for (let i = 0; i < 4; i++) {
         const y = 3 + i * 4.5, c = greens[i % 3];
         poly([[16, y], [20, y + 3], [16, y + 8], [12, y + 3]], c);
         line(H, [[16, y + 1], [16, y + 7]], "#3a7030", 0.8);
       }
-      P(15, 22, 2, 8, "#6a4a28");
+      P2(15, 22, 2, 8, "#6a4a28");
       line(H, [[11, 22], [21, 22]], "#4a8a3c", 2);
     },
     pan(H) {
-      const { ell, P } = H;
-      P(14.5, 16, 3, 14, "#4a3122");
-      P(14.5, 16, 1, 14, "#6a4a32");
+      const { ell, P: P2 } = H;
+      P2(14.5, 16, 3, 14, "#4a3122");
+      P2(14.5, 16, 1, 14, "#6a4a32");
       ell(16, 9, 9, 8, "#3a3e46");
       ell(16, 9, 7.4, 6.4, "#22262c");
       ell(13.5, 7, 2.4, 1.6, "#5a606a");
     },
     umbrella(H) {
-      const { poly, P } = H, c = H.s.c;
+      const { poly, P: P2 } = H, c = H.s.c;
       poly([[16, 2], [21, 18], [16, 20], [11, 18]], c);
       poly([[16, 2], [16, 20], [11, 18]], sh2(c, 1.25));
       line(H, [[16, 4], [18, 18]], sh2(c, 0.65), 0.8);
-      P(15.4, 19, 1.4, 8, "#5a4030");
+      P2(15.4, 19, 1.4, 8, "#5a4030");
       line(H, [[16, 27], [16, 29], [13, 30], [12, 28]], "#5a4030", 1.6);
     },
     bubblewand(H) {
-      const { P, circ, stroke, g } = H;
-      P(15, 13, 2, 17, "#b87ab8");
-      P(15, 13, 1, 17, "#d8a0d8");
+      const { P: P2, circ: circ2, stroke, g } = H;
+      P2(15, 13, 2, 17, "#b87ab8");
+      P2(15, 13, 1, 17, "#d8a0d8");
       stroke("#e0b0e8", 2, () => {
         g.arc(16, 9, 4.6, 0, TAU);
       });
@@ -28191,7 +28205,7 @@
         stroke("rgba(170,220,255,.9)", 1, () => {
           g.arc(x, y, r, 0, TAU);
         });
-        circ(x - r * 0.35, y - r * 0.35, Math.max(0.5, r * 0.3), "#ffffff");
+        circ2(x - r * 0.35, y - r * 0.35, Math.max(0.5, r * 0.3), "#ffffff");
       }
     }
   };
@@ -28205,7 +28219,7 @@
   var ItemPaintGoods = {
     /* ---------- 소비 ---------- */
     potion(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const liq = s.c;
@@ -28216,35 +28230,35 @@
             g.scale(scale, scale);
             g.translate(-16, -29);
           }
-          P(13, 4, 6, 4, "#7a5734");
-          P(13, 4, 6, 1.4, "#9c7248");
-          P(13.5, 8, 5, 5, "#b9cede");
+          P2(13, 4, 6, 4, "#7a5734");
+          P2(13, 4, 6, 1.4, "#9c7248");
+          P2(13.5, 8, 5, 5, "#b9cede");
           if (s.sq) {
-            P(8, 13, 16, 15, "#b9cede");
-            P(9.4, 17, 13.2, 9.6, liq);
-            P(9.4, 17, 13.2, 1.4, sh2(liq, 1.4));
-            P(10, 14, 2.4, 12, "rgba(255,255,255,.35)");
+            P2(8, 13, 16, 15, "#b9cede");
+            P2(9.4, 17, 13.2, 9.6, liq);
+            P2(9.4, 17, 13.2, 1.4, sh2(liq, 1.4));
+            P2(10, 14, 2.4, 12, "rgba(255,255,255,.35)");
           } else {
-            circ(16, 20, 8.4, "#b9cede");
+            circ2(16, 20, 8.4, "#b9cede");
             g.save();
             g.beginPath();
             g.arc(16, 20, 7.2, 0, TAU);
             g.clip();
-            P(8, 14.6, 16, 14, liq);
+            P2(8, 14.6, 16, 14, liq);
             ell(16, 14.6, 6.4, 2.2, sh2(liq, 1.35));
             g.restore();
             ell(12.4, 17.4, 2, 3, "rgba(255,255,255,.4)");
-            circ(19, 23, 1.4, sh2(liq, 1.5));
-            circ(14.5, 25, 1, sh2(liq, 1.5));
+            circ2(19, 23, 1.4, sh2(liq, 1.5));
+            circ2(14.5, 25, 1, sh2(liq, 1.5));
           }
-          if (s.sz === "lg") P(9, 19, 14, 2, "rgba(0,0,0,.18)");
+          if (s.sz === "lg") P2(9, 19, 14, 2, "rgba(0,0,0,.18)");
           if (scale !== 1) g.restore();
           return;
         }
       }
     },
     stew(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           g.fillStyle = "#8a6a4a";
@@ -28259,7 +28273,7 @@
           ell(16, 15, 12, 3.4, "#b8632e");
           ell(13, 14.2, 2.4, 1.2, "#e0a050");
           ell(19, 15.6, 2, 1, "#8fbf5a");
-          P(4, 17, 24, 1.6, "#6a4a2a");
+          P2(4, 17, 24, 1.6, "#6a4a2a");
           stroke("#c8c0b0", 1.4, () => {
             g.moveTo(12, 9);
             g.quadraticCurveTo(14, 6, 12, 3);
@@ -28274,14 +28288,14 @@
     },
     /* ---------- 재료 ---------- */
     log(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.25), dk = sh2(c, 0.7);
-          P(7, 10, 20, 13, c);
-          P(7, 10, 20, 2.4, lt);
-          P(7, 20.6, 20, 2.4, dk);
-          for (let i = 0; i < 4; i++) P(10 + i * 4, 13, 1, 6, dk);
+          P2(7, 10, 20, 13, c);
+          P2(7, 10, 20, 2.4, lt);
+          P2(7, 20.6, 20, 2.4, dk);
+          for (let i = 0; i < 4; i++) P2(10 + i * 4, 13, 1, 6, dk);
           ell(7, 16.5, 3.2, 6.5, sh2(c, 1.15));
           ell(7, 16.5, 2.1, 4.3, sh2(c, 0.85));
           ell(7, 16.5, 1, 2, sh2(c, 1.3));
@@ -28291,111 +28305,111 @@
     },
     /* 장식 아이템 — 타일 그림을 테두리 없이 그대로 키운다. */
     deco(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 3, 3, 26, 26);
-          else P(8, 8, 16, 16, TILE_DEF[s.tile].c || "#666");
+          else P2(8, 8, 16, 16, TILE_DEF[s.tile].c || "#666");
           return;
         }
       }
     },
     block(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 4, 5, 24, 24);
-          else P(4, 5, 24, 24, TILE_DEF[s.tile].c || "#666");
-          P(4, 5, 24, 2, "rgba(255,255,255,.22)");
-          P(4, 27, 24, 2, "rgba(0,0,0,.3)");
-          P(26, 5, 2, 24, "rgba(0,0,0,.22)");
+          else P2(4, 5, 24, 24, TILE_DEF[s.tile].c || "#666");
+          P2(4, 5, 24, 2, "rgba(255,255,255,.22)");
+          P2(4, 27, 24, 2, "rgba(0,0,0,.3)");
+          P2(26, 5, 2, 24, "rgba(0,0,0,.22)");
           return;
         }
       }
     },
     /* ---------- 기계 ---------- */
     machine(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          if (s.glow) glow(16, 15, 13, s.glow, 0.24);
-          P(4, 26, 24, 3, "#3a3a44");
-          P(4, 26, 24, 1, "#5a5a66");
+          if (s.glow) glow2(16, 15, 13, s.glow, 0.24);
+          P2(4, 26, 24, 3, "#3a3a44");
+          P2(4, 26, 24, 1, "#5a5a66");
           if (TileArt.ready) g.drawImage(TileArt.atlas, 0, s.tile * TS, TS, TS, 5, 4, 22, 22);
-          else P(5, 4, 22, 22, TILE_DEF[s.tile].c || "#666");
-          P(3, 28, 26, 2, "rgba(0,0,0,.35)");
+          else P2(5, 4, 22, 22, TILE_DEF[s.tile].c || "#666");
+          P2(3, 28, 26, 2, "rgba(0,0,0,.35)");
           return;
         }
       }
     },
     /* ---------- 자원 · 부품 ---------- */
     barrel(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
-          P(7, 7, 18, 21, c);
-          P(7, 7, 2.4, 21, lt);
-          P(22.6, 7, 2.4, 21, dk);
+          P2(7, 7, 18, 21, c);
+          P2(7, 7, 2.4, 21, lt);
+          P2(22.6, 7, 2.4, 21, dk);
           ell(16, 7, 9, 3.2, lt);
           ell(16, 7, 6.4, 2.1, s.fluid);
-          P(7, 12, 18, 2, dk);
-          P(7, 21, 18, 2, dk);
-          P(11, 16, 10, 4, s.fluid);
+          P2(7, 12, 18, 2, dk);
+          P2(7, 21, 18, 2, dk);
+          P2(11, 16, 10, 4, s.fluid);
           return;
         }
       }
     },
     bomb(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          circ(15, 20, 9, sh2(c, 0.7));
-          circ(15, 20, 8, c);
-          circ(12, 17, 3, sh2(c, 1.6));
-          P(13.5, 9, 3.5, 4, sh2(c, 0.55));
+          circ2(15, 20, 9, sh2(c, 0.7));
+          circ2(15, 20, 8, c);
+          circ2(12, 17, 3, sh2(c, 1.6));
+          P2(13.5, 9, 3.5, 4, sh2(c, 0.55));
           stroke(s.fuse, 2, () => {
             g.moveTo(15.5, 9);
             g.bezierCurveTo(19, 5, 23, 7, 24, 3);
           });
-          circ(24, 3, 2, "#ffd24a");
-          if (s.glow) glow(24, 3, 7, s.glow, 0.3);
+          circ2(24, 3, 2, "#ffd24a");
+          if (s.glow) glow2(24, 3, 7, s.glow, 0.3);
           return;
         }
       }
     },
     pellet(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
           for (const [x, y, r] of [[12, 14, 4.4], [21, 12, 3.8], [17, 21, 4.6], [10, 22, 3.4], [23, 20, 3.2]]) {
-            circ(x, y, r, c);
-            circ(x - r * 0.3, y - r * 0.35, r * 0.38, sh2(c, 1.25));
-            circ(x + r * 0.35, y + r * 0.4, r * 0.3, sh2(c, 0.7));
+            circ2(x, y, r, c);
+            circ2(x - r * 0.3, y - r * 0.35, r * 0.38, sh2(c, 1.25));
+            circ2(x + r * 0.35, y + r * 0.4, r * 0.3, sh2(c, 0.7));
           }
           return;
         }
       }
     },
     fuelbrick(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.6);
           poly([[5, 12], [27, 12], [27, 25], [5, 25]], c);
           poly([[5, 12], [27, 12], [24, 8], [8, 8]], lt);
-          P(5, 22, 22, 3, dk);
-          for (let i = 0; i < 3; i++) P(8 + i * 7, 14, 4, 7, sh2(c, 0.78));
-          P(9, 15, 2, 2, "#e8842a");
-          P(23, 18, 2, 2, "#e8842a");
+          P2(5, 22, 22, 3, dk);
+          for (let i = 0; i < 3; i++) P2(8 + i * 7, 14, 4, 7, sh2(c, 0.78));
+          P2(9, 15, 2, 2, "#e8842a");
+          P2(23, 18, 2, 2, "#e8842a");
           return;
         }
       }
     },
     wire(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35);
@@ -28415,13 +28429,13 @@
       }
     },
     circuit(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, tr2 = s.trace;
-          P(5, 6, 22, 21, sh2(c, 0.72));
-          P(5, 6, 22, 2, sh2(c, 1.3));
-          P(5, 6, 2, 21, sh2(c, 1.1));
+          P2(5, 6, 22, 21, sh2(c, 0.72));
+          P2(5, 6, 22, 2, sh2(c, 1.3));
+          P2(5, 6, 2, 21, sh2(c, 1.1));
           stroke(tr2, 1.4, () => {
             g.moveTo(9, 10);
             g.lineTo(9, 18);
@@ -28433,74 +28447,74 @@
             g.lineTo(14, 10);
             g.lineTo(14, 14);
           });
-          for (const [x, y] of [[9, 10], [18, 24], [23, 10], [14, 14]]) circ(x, y, 1.5, tr2);
-          P(19, 13, 6, 6, "#1a1a1f");
-          P(20, 14, 4, 4, "#33333d");
+          for (const [x, y] of [[9, 10], [18, 24], [23, 10], [14, 14]]) circ2(x, y, 1.5, tr2);
+          P2(19, 13, 6, 6, "#1a1a1f");
+          P2(20, 14, 4, 4, "#33333d");
           return;
         }
       }
     },
     motor(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.32), dk = sh2(c, 0.62);
-          P(8, 9, 16, 15, c);
-          P(8, 9, 16, 2, lt);
-          P(8, 22, 16, 2, dk);
-          for (let i = 0; i < 4; i++) P(10 + i * 4, 11, 1.6, 11, dk);
-          P(24, 14, 5, 5, s.trim);
-          P(3, 14, 5, 5, sh2(c, 0.8));
-          circ(16, 16.5, 3, sh2(c, 1.5));
-          circ(16, 16.5, 1.2, dk);
+          P2(8, 9, 16, 15, c);
+          P2(8, 9, 16, 2, lt);
+          P2(8, 22, 16, 2, dk);
+          for (let i = 0; i < 4; i++) P2(10 + i * 4, 11, 1.6, 11, dk);
+          P2(24, 14, 5, 5, s.trim);
+          P2(3, 14, 5, 5, sh2(c, 0.8));
+          circ2(16, 16.5, 3, sh2(c, 1.5));
+          circ2(16, 16.5, 1.2, dk);
           return;
         }
       }
     },
     frame(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.55), dk2 = sh2(c, 0.35);
           const off = 5;
-          P(9, 4, 19, 3, dk);
-          P(9, 21, 19, 3, dk2);
-          P(9, 4, 3, 20, dk);
-          P(25, 4, 3, 20, dk2);
+          P2(9, 4, 19, 3, dk);
+          P2(9, 21, 19, 3, dk2);
+          P2(9, 4, 3, 20, dk);
+          P2(25, 4, 3, 20, dk2);
           for (const [x, y] of [[5, 9], [22, 9], [5, 26], [22, 26]])
             stroke(dk, 2.4, () => {
               g.moveTo(x + 1.5, y + 1.5);
               g.lineTo(x + off, y - off + 1.5);
             });
-          P(4, 9, 19, 3.4, c);
-          P(4, 9, 19, 1.3, lt);
-          P(4, 25, 19, 3.4, c);
-          P(4, 27.4, 19, 1, dk);
-          P(4, 9, 3.4, 20, c);
-          P(4, 9, 1.3, 20, lt);
-          P(19.6, 9, 3.4, 20, c);
-          P(21.8, 9, 1.2, 20, dk);
-          for (const [x, y] of [[5.7, 10.7], [21.3, 10.7], [5.7, 26.7], [21.3, 26.7]]) circ(x, y, 1.4, dk2);
+          P2(4, 9, 19, 3.4, c);
+          P2(4, 9, 19, 1.3, lt);
+          P2(4, 25, 19, 3.4, c);
+          P2(4, 27.4, 19, 1, dk);
+          P2(4, 9, 3.4, 20, c);
+          P2(4, 9, 1.3, 20, lt);
+          P2(19.6, 9, 3.4, 20, c);
+          P2(21.8, 9, 1.2, 20, dk);
+          for (const [x, y] of [[5.7, 10.7], [21.3, 10.7], [5.7, 26.7], [21.3, 26.7]]) circ2(x, y, 1.4, dk2);
           return;
         }
       }
     },
     cell(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          if (s.glow && s.fill) glow(16, 17, 12, s.glow, 0.26);
-          P(13, 3, 6, 3, "#8a8a96");
-          P(8, 6, 16, 23, sh2(c, 0.5));
-          P(8, 6, 16, 2, sh2(c, 0.9));
-          P(10, 9, 12, 17, "#14161a");
+          if (s.glow && s.fill) glow2(16, 17, 12, s.glow, 0.26);
+          P2(13, 3, 6, 3, "#8a8a96");
+          P2(8, 6, 16, 23, sh2(c, 0.5));
+          P2(8, 6, 16, 2, sh2(c, 0.9));
+          P2(10, 9, 12, 17, "#14161a");
           if (s.fill) {
-            P(11, 11, 10, 13, c);
-            P(11, 11, 10, 2, sh2(c, 1.5));
-            P(14, 14, 4, 7, sh2(c, 1.8));
+            P2(11, 11, 10, 13, c);
+            P2(11, 11, 10, 2, sh2(c, 1.5));
+            P2(14, 14, 4, 7, sh2(c, 1.8));
           } else {
-            P(11, 21, 10, 3, sh2(c, 1.1));
+            P2(11, 21, 10, 3, sh2(c, 1.1));
             stroke(sh2(c, 1.3), 1.6, () => {
               g.moveTo(12, 13);
               g.lineTo(20, 19);
@@ -28513,14 +28527,14 @@
       }
     },
     rivet(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.65);
           for (const [x, y] of [[10, 8], [21, 13], [12, 21]]) {
             ell(x, y, 4.2, 2.2, lt);
-            P(x - 1.6, y, 3.2, 9, c);
-            P(x - 1.6, y, 1.2, 9, lt);
+            P2(x - 1.6, y, 3.2, 9, c);
+            P2(x - 1.6, y, 1.2, 9, lt);
             poly([[x - 1.6, y + 9], [x + 1.6, y + 9], [x, y + 12]], dk);
           }
           return;
@@ -28528,11 +28542,11 @@
       }
     },
     sawblade(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.6);
-          if (s.glow) glow(16, 16, 13, s.glow, 0.22);
+          if (s.glow) glow2(16, 16, 13, s.glow, 0.22);
           for (let k = 0; k < 12; k++) {
             const a = k * TAU / 12;
             poly([
@@ -28541,13 +28555,13 @@
               [16 + Math.cos(a - 0.22) * 10, 16 + Math.sin(a - 0.22) * 10]
             ], c);
           }
-          circ(16, 16, 10.5, c);
-          circ(16, 16, 9, sh2(c, 1.3));
-          circ(16, 16, 4.5, dk);
-          circ(16, 16, 2.4, "#1a1a1f");
+          circ2(16, 16, 10.5, c);
+          circ2(16, 16, 9, sh2(c, 1.3));
+          circ2(16, 16, 4.5, dk);
+          circ2(16, 16, 2.4, "#1a1a1f");
           for (let k = 0; k < 4; k++) {
             const a = k * TAU / 4 + 0.4;
-            circ(16 + Math.cos(a) * 6.6, 16 + Math.sin(a) * 6.6, 1.2, dk);
+            circ2(16 + Math.cos(a) * 6.6, 16 + Math.sin(a) * 6.6, 1.2, dk);
           }
           return;
         }
@@ -28571,33 +28585,33 @@
   var ItemPaintFarm = {
     /* ---------- 농업 ---------- */
     hoe(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.65);
-          P(17, 4, 3, 22, "#6a4a28");
-          P(17, 4, 1.2, 22, "#8f6740");
+          P2(17, 4, 3, 22, "#6a4a28");
+          P2(17, 4, 1.2, 22, "#8f6740");
           poly([[6, 5], [19, 5], [19, 9], [10, 9], [10, 13], [6, 13]], c);
           poly([[6, 5], [19, 5], [19, 6.4], [7.4, 6.4]], lt);
-          P(7, 11, 3, 2, dk);
+          P2(7, 11, 3, 2, dk);
           return;
         }
       }
     },
     wcan(H) {
-      const { P, poly, circ } = H, s = H.s;
+      const { P: P2, poly, circ: circ2 } = H, s = H.s;
       const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.62);
       line2(H, [[9, 12], [9, 7], [18, 7], [18, 12]], dk, 2);
       poly([[6, 12], [20, 12], [21, 27], [5, 27]], c);
-      P(6, 12, 14, 2, lt);
-      P(5, 25, 16, 2, dk);
-      P(8, 15, 2, 9, lt);
+      P2(6, 12, 14, 2, lt);
+      P2(5, 25, 16, 2, dk);
+      P2(8, 15, 2, 9, lt);
       poly([[20, 20], [28, 11], [29.6, 12.4], [21, 23]], dk);
-      circ(28.6, 11.4, 2.2, lt);
-      circ(28.6, 11.4, 1.1, "#5aa0e0");
+      circ2(28.6, 11.4, 2.2, lt);
+      circ2(28.6, 11.4, 1.1, "#5aa0e0");
     },
     wrench(H) {
-      const { poly, circ } = H, s = H.s;
+      const { poly, circ: circ2 } = H, s = H.s;
       const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.6);
       poly([[6, 27], [9, 29], [21, 13], [18, 11]], dk);
       poly([[7, 26], [8.6, 27.2], [19.6, 12.6], [18.2, 11.6]], c);
@@ -28605,30 +28619,30 @@
       poly([[15, 13], [20, 4], [24, 5], [22, 9], [26, 11], [28, 7], [29, 12], [23, 17]], c);
       line2(H, [[16, 13], [20.6, 5]], lt, 0.9);
       poly([[22, 9], [26, 11], [24.6, 12.6], [21, 10.8]], dk);
-      circ(20.5, 14.5, 1.8, dk);
-      circ(20.5, 14.5, 0.8, lt);
+      circ2(20.5, 14.5, 1.8, dk);
+      circ2(20.5, 14.5, 0.8, lt);
     },
     bucket(H) {
-      const { P, poly, ell } = H, s = H.s;
+      const { P: P2, poly, ell } = H, s = H.s;
       const wood = "#8a6440", wlt = "#a67c52", band = s.c;
       line2(H, [[6, 12], [8, 5], [16, 3], [24, 5], [26, 12]], sh2(band, 0.7), 1.6);
       poly([[6, 12], [26, 12], [24, 28], [8, 28]], wood);
-      for (const x of [11, 16, 21]) P(x, 13, 1, 15, "#6e4e30");
-      P(8, 13, 2, 14, wlt);
-      P(6.4, 15, 19.2, 2, band);
-      P(7.4, 24, 17.2, 2, band);
+      for (const x of [11, 16, 21]) P2(x, 13, 1, 15, "#6e4e30");
+      P2(8, 13, 2, 14, wlt);
+      P2(6.4, 15, 19.2, 2, band);
+      P2(7.4, 24, 17.2, 2, band);
       ell(16, 12, 10, 2.4, s.water || "#3a2a1a");
       if (s.water) ell(14, 11.6, 5, 1, sh2(s.water, 1.4));
     },
     seed(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          P(6, 12, 20, 14, "#7a5a3a");
-          P(6, 12, 20, 2, "#9a7a52");
+          P2(6, 12, 20, 14, "#7a5a3a");
+          P2(6, 12, 20, 2, "#9a7a52");
           poly([[6, 12], [26, 12], [23, 7], [9, 7]], "#8a6a44");
-          P(13, 5, 6, 3, "#5a4028");
+          P2(13, 5, 6, 3, "#5a4028");
           for (const [x, y] of [[11, 17], [16, 20], [21, 17], [14, 24], [19, 24]]) {
             ell(x, y, 2.6, 1.8, c);
             ell(x - 0.7, y - 0.5, 1, 0.8, sh2(c, 1.4));
@@ -28638,7 +28652,7 @@
       }
     },
     wheatitem(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.7);
@@ -28649,24 +28663,24 @@
             });
             for (let k = 0; k < 5; k++) {
               const y = 11 + k * 3.4;
-              P(x - 3.4 - tilt * 4, y, 7, 2.6, c);
-              P(x - 3.4 - tilt * 4, y, 7, 1, lt);
+              P2(x - 3.4 - tilt * 4, y, 7, 2.6, c);
+              P2(x - 3.4 - tilt * 4, y, 7, 1, lt);
             }
-            P(x - 1 - tilt * 4, 7, 2, 5, dk);
+            P2(x - 1 - tilt * 4, 7, 2, 5, dk);
           }
           return;
         }
       }
     },
     rootitem(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow(16, 20, 11, s.glow, 0.24);
+          if (s.glow) glow2(16, 20, 11, s.glow, 0.24);
           poly([[16, 30], [11, 16], [16, 11], [21, 16]], c);
           poly([[16, 30], [11, 16], [16, 13]], sh2(c, 1.3));
-          for (let k = 0; k < 3; k++) P(11 + k, 18 + k * 3.4, 10 - k * 2, 1, sh2(c, 0.68));
+          for (let k = 0; k < 3; k++) P2(11 + k, 18 + k * 3.4, 10 - k * 2, 1, sh2(c, 0.68));
           for (const a of [-0.7, 0, 0.7]) {
             poly([
               [16, 12],
@@ -28674,34 +28688,34 @@
               [16 + Math.sin(a) * 7 + 3, 12 - Math.cos(a) * 6]
             ], "#5fa85a");
           }
-          P(15, 8, 2, 5, "#4a8a48");
+          P2(15, 8, 2, 5, "#4a8a48");
           return;
         }
       }
     },
     flouritem(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.72);
-          P(8, 9, 16, 20, "#d8cbaa");
+          P2(8, 9, 16, 20, "#d8cbaa");
           poly([[8, 9], [24, 9], [21, 5], [11, 5]], "#c8bb9a");
-          P(8, 9, 16, 1.4, sh2("#d8cbaa", 1.2));
-          P(11, 3, 10, 3, "#b8ab8a");
-          P(11, 14, 10, 8, sh2("#d8cbaa", 0.84));
-          for (let i = 0; i < 12; i++) P(9 + i * 7 % 14, 24 + i % 3, 2, 1, c);
+          P2(8, 9, 16, 1.4, sh2("#d8cbaa", 1.2));
+          P2(11, 3, 10, 3, "#b8ab8a");
+          P2(11, 14, 10, 8, sh2("#d8cbaa", 0.84));
+          for (let i = 0; i < 12; i++) P2(9 + i * 7 % 14, 24 + i % 3, 2, 1, c);
           return;
         }
       }
     },
     compost(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
           for (const [x, y, r] of [[12, 20, 6], [20, 19, 5.5], [16, 24, 5]]) {
-            circ(x, y, r, c);
-            circ(x - r * 0.3, y - r * 0.35, r * 0.4, sh2(c, 1.3));
+            circ2(x, y, r, c);
+            circ2(x - r * 0.3, y - r * 0.35, r * 0.4, sh2(c, 1.3));
           }
           for (const [x, y] of [[10, 15], [18, 13], [22, 16]]) {
             stroke("#9a8a5a", 1.4, () => {
@@ -28709,15 +28723,15 @@
               g.lineTo(x + 2, y);
             });
           }
-          circ(14, 19, 1.2, "#6a8a4a");
-          circ(19, 22, 1, "#6a8a4a");
+          circ2(14, 19, 1.2, "#6a8a4a");
+          circ2(19, 22, 1, "#6a8a4a");
           return;
         }
       }
     },
     /* ---------- 음식 ---------- */
     bread(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.28), dk = sh2(c, 0.68);
@@ -28734,22 +28748,22 @@
       }
     },
     pie(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.66);
           ell(16, 25, 13, 4, dk);
           poly([[3, 25], [29, 25], [26, 14], [6, 14]], c);
-          P(6, 12, 20, 3, s.fill);
+          P2(6, 12, 20, 3, s.fill);
           poly([[3, 25], [29, 25], [29, 22], [3, 22]], lt);
-          for (let k = 0; k < 4; k++) P(7 + k * 5, 14, 2.4, 8, lt);
+          for (let k = 0; k < 4; k++) P2(7 + k * 5, 14, 2.4, 8, lt);
           ell(16, 13, 10, 3, lt);
           return;
         }
       }
     },
     bowl(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.66);
@@ -28772,7 +28786,7 @@
       }
     },
     teacup(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.7);
@@ -28792,7 +28806,7 @@
       }
     },
     jelly(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.68);
@@ -28800,73 +28814,73 @@
           poly([[10, 10], [22, 10], [21, 14], [11, 14]], lt);
           poly([[7, 27], [25, 27], [24, 24], [8, 24]], dk);
           ell(16, 10, 6, 2.4, lt);
-          P(12, 15, 2.4, 8, sh2(c, 1.6));
+          P2(12, 15, 2.4, 8, sh2(c, 1.6));
           return;
         }
       }
     },
     feast(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow(16, 18, 13, s.glow, 0.26);
-          P(3, 22, 26, 6, "#8a6a44");
-          P(3, 22, 26, 1.6, "#a88a5c");
+          if (s.glow) glow2(16, 18, 13, s.glow, 0.26);
+          P2(3, 22, 26, 6, "#8a6a44");
+          P2(3, 22, 26, 1.6, "#a88a5c");
           ell(10, 19, 6, 4, c);
           ell(10, 17.5, 5, 3, sh2(c, 1.25));
           ell(22, 20, 6, 3.4, "#c8ccd4");
           ell(22, 19, 5, 2.4, "#8fd0a0");
           poly([[13, 21], [21, 21], [19, 12], [15, 12]], "#b8583c");
           ell(17, 12, 2.4, 1.6, "#d8734c");
-          P(16.4, 6, 1.2, 6, "#c8c8d0");
+          P2(16.4, 6, 1.2, 6, "#c8c8d0");
           ell(17, 6, 1.6, 2.4, "#ffd88a");
           return;
         }
       }
     },
     stopcore(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 13, c, 0.22);
-          P(6, 6, 20, 20, "#2a2620");
-          P(6, 6, 20, 2, "#4a4238");
+          glow2(16, 16, 13, c, 0.22);
+          P2(6, 6, 20, 20, "#2a2620");
+          P2(6, 6, 20, 2, "#4a4238");
           poly([[11, 5], [21, 5], [27, 11], [27, 21], [21, 27], [11, 27], [5, 21], [5, 11]], c);
           poly([[12, 7], [20, 7], [25, 12], [25, 20], [20, 25], [12, 25], [7, 20], [7, 12]], sh2(c, 1.25));
-          P(10, 14, 12, 4, "#f0e0d0");
-          for (const [x, y] of [[9, 9], [21, 9], [9, 21], [21, 21]]) circ(x, y, 1.3, "#3a2622");
+          P2(10, 14, 12, 4, "#f0e0d0");
+          for (const [x, y] of [[9, 9], [21, 9], [9, 21], [21, 21]]) circ2(x, y, 1.3, "#3a2622");
           return;
         }
       }
     },
     railgun(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.6);
-          if (s.glow) glow(24, 12, 11, s.glow, 0.26);
-          P(4, 16, 22, 6, c);
-          P(4, 16, 22, 1.6, lt);
-          P(4, 20.4, 22, 1.6, dk);
-          P(9, 10, 16, 4, c);
-          P(9, 10, 16, 1.4, lt);
-          P(24, 11, 6, 10, dk);
-          P(26, 13, 3, 6, s.glow || "#9fd8ff");
+          if (s.glow) glow2(24, 12, 11, s.glow, 0.26);
+          P2(4, 16, 22, 6, c);
+          P2(4, 16, 22, 1.6, lt);
+          P2(4, 20.4, 22, 1.6, dk);
+          P2(9, 10, 16, 4, c);
+          P2(9, 10, 16, 1.4, lt);
+          P2(24, 11, 6, 10, dk);
+          P2(26, 13, 3, 6, s.glow || "#9fd8ff");
           poly([[6, 22], [12, 22], [10, 29], [5, 29]], sh2(c, 0.78));
-          P(14, 22, 3, 4, dk);
+          P2(14, 22, 3, 4, dk);
           return;
         }
       }
     },
     torchitem(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 9, 9, "#ffb24a", 0.3);
-          P(14, 13, 4, 17, "#6a4a28");
-          P(14, 13, 1.4, 17, "#8f6740");
+          glow2(16, 9, 9, "#ffb24a", 0.3);
+          P2(14, 13, 4, 17, "#6a4a28");
+          P2(14, 13, 1.4, 17, "#8f6740");
           g.fillStyle = "#e06a16";
           g.beginPath();
           g.moveTo(16, 2);
@@ -28887,119 +28901,119 @@
       }
     },
     platformitem(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          P(3, 12, 26, 6, "#8a6640");
-          P(3, 12, 26, 1.4, "#b08a58");
-          P(3, 16.6, 26, 1.4, "#5a4028");
-          P(9, 18, 2.4, 8, "#6a4a28");
-          P(21, 18, 2.4, 8, "#6a4a28");
+          P2(3, 12, 26, 6, "#8a6640");
+          P2(3, 12, 26, 1.4, "#b08a58");
+          P2(3, 16.6, 26, 1.4, "#5a4028");
+          P2(9, 18, 2.4, 8, "#6a4a28");
+          P2(21, 18, 2.4, 8, "#6a4a28");
           return;
         }
       }
     },
     ore(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow(16, 17, 12, c, 0.22);
+          if (s.glow) glow2(16, 17, 12, c, 0.22);
           poly([[8, 12], [13, 6], [21, 7], [26, 14], [23, 24], [12, 25], [6, 19]], "#5d5d63");
           poly([[8, 12], [13, 6], [21, 7], [17, 15], [9, 17]], "#72727a");
           const nug = [[12, 12, 5, 4], [18, 15, 5, 4], [13, 19, 4, 3.4], [20, 20, 4, 3]];
           for (const [x, y, w, h] of nug) {
-            P(x, y, w, h, c);
-            P(x, y, w - 1, 1.2, sh2(c, 1.45));
-            P(x + 1, y + h - 1, w - 1, 1, sh2(c, 0.6));
+            P2(x, y, w, h, c);
+            P2(x, y, w - 1, 1.2, sh2(c, 1.45));
+            P2(x + 1, y + h - 1, w - 1, 1, sh2(c, 0.6));
           }
           return;
         }
       }
     },
     meteorite(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 17, 12, "#ff7a3a", 0.12);
+          glow2(16, 17, 12, "#ff7a3a", 0.12);
           poly([[7, 13], [12, 7], [20, 6], [26, 11], [27, 19], [22, 26], [12, 26], [6, 20]], c);
           poly([[7, 13], [12, 7], [20, 6], [26, 11], [18, 13], [10, 16]], sh2(c, 1.3));
           poly([[27, 19], [22, 26], [12, 26], [16, 21], [24, 18]], sh2(c, 0.65));
           for (const [x, y, r] of [[13, 14, 3], [20, 12, 2.4], [18, 20, 3.2]]) {
-            circ(x, y, r, sh2(c, 0.6));
-            circ(x + 0.7, y + 0.8, r * 0.7, sh2(c, 0.8));
+            circ2(x, y, r, sh2(c, 0.6));
+            circ2(x + 0.7, y + 0.8, r * 0.7, sh2(c, 0.8));
           }
-          P(11, 9, 5, 1.2, "#c8ccd4");
-          P(22, 16, 2, 1, "#c8ccd4");
-          P(9, 20, 1.5, 1, "#9aa0aa");
-          P(15, 23, 1, 1, "#ff7a3a");
-          P(16, 22, 1, 1, "#ff7a3a");
-          P(17, 22, 1, 1, "#ffb070");
-          P(18, 21, 1, 1, "#ff7a3a");
+          P2(11, 9, 5, 1.2, "#c8ccd4");
+          P2(22, 16, 2, 1, "#c8ccd4");
+          P2(9, 20, 1.5, 1, "#9aa0aa");
+          P2(15, 23, 1, 1, "#ff7a3a");
+          P2(16, 22, 1, 1, "#ff7a3a");
+          P2(17, 22, 1, 1, "#ffb070");
+          P2(18, 21, 1, 1, "#ff7a3a");
           return;
         }
       }
     },
     bar(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
-          if (s.glow) glow(16, 18, 12, c, 0.2);
+          if (s.glow) glow2(16, 18, 12, c, 0.2);
           poly([[5, 21], [27, 21], [24, 28], [8, 28]], c);
           poly([[5, 21], [27, 21], [25.5, 18.5], [6.5, 18.5]], lt);
-          P(8, 24, 16, 1.2, dk);
+          P2(8, 24, 16, 1.2, dk);
           poly([[9, 12.5], [23, 12.5], [21, 18.5], [11, 18.5]], c);
           poly([[9, 12.5], [23, 12.5], [21.8, 10.5], [10.2, 10.5]], lt);
-          P(12, 15, 8, 1.2, dk);
+          P2(12, 15, 8, 1.2, dk);
           return;
         }
       }
     },
     rock(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
           poly([[8, 11], [14, 5], [23, 8], [26, 17], [20, 26], [10, 24], [5, 16]], c);
           poly([[8, 11], [14, 5], [23, 8], [18, 15], [10, 17]], sh2(c, 1.3));
           poly([[20, 26], [26, 17], [22, 16], [17, 24]], sh2(c, 0.7));
-          P(12, 13, 2, 2, sh2(c, 1.5));
-          P(19, 19, 2, 2, sh2(c, 1.5));
+          P2(12, 13, 2, 2, sh2(c, 1.5));
+          P2(19, 19, 2, 2, sh2(c, 1.5));
           return;
         }
       }
     },
     shard(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow(16, 16, 12, c, 0.28);
+          if (s.glow) glow2(16, 16, 12, c, 0.28);
           poly([[16, 2], [23, 13], [18, 30], [12, 26], [9, 12]], c);
           poly([[16, 2], [16, 30], [12, 26], [9, 12]], sh2(c, 1.4));
-          P(15, 6, 1.6, 16, sh2(c, 1.75));
+          P2(15, 6, 1.6, 16, sh2(c, 1.75));
           return;
         }
       }
     },
     crystal(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow(16, 17, 13, c, 0.26);
+          if (s.glow) glow2(16, 17, 13, c, 0.26);
           poly([[16, 3], [24, 11], [24, 24], [16, 30], [8, 24], [8, 11]], c);
           poly([[16, 3], [16, 30], [8, 24], [8, 11]], sh2(c, 1.35));
           poly([[16, 3], [24, 11], [16, 15], [8, 11]], sh2(c, 1.6));
-          P(12, 14, 1.6, 9, sh2(c, 1.8));
+          P2(12, 14, 1.6, 9, sh2(c, 1.8));
           return;
         }
       }
     },
     gel(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29020,46 +29034,46 @@
           g.closePath();
           g.fill();
           ell(11.5, 14.5, 3, 2, "rgba(255,255,255,.55)");
-          circ(21, 21, 1.6, sh2(c, 0.7));
+          circ2(21, 21, 1.6, sh2(c, 0.7));
           return;
         }
       }
     },
     bone(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = "#e8e2cd", d = "#bdb59c";
-          P(13, 9, 6, 15, c);
-          circ(11, 9, 4, c);
-          circ(21, 9, 4, c);
-          circ(11, 24, 4, c);
-          circ(21, 24, 4, c);
-          P(13, 9, 2, 15, "#f5f1e4");
-          circ(21, 9, 2, d);
-          circ(21, 24, 2, d);
+          P2(13, 9, 6, 15, c);
+          circ2(11, 9, 4, c);
+          circ2(21, 9, 4, c);
+          circ2(11, 24, 4, c);
+          circ2(21, 24, 4, c);
+          P2(13, 9, 2, 15, "#f5f1e4");
+          circ2(21, 9, 2, d);
+          circ2(21, 24, 2, d);
           return;
         }
       }
     },
     egg(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow(16, 18, 13, s.glow, 0.32);
+          if (s.glow) glow2(16, 18, 13, s.glow, 0.32);
           ell(16, 19, 8.5, 11.5, c);
           ell(13.4, 13.5, 3, 4, sh2(c, 1.4));
-          circ(13, 17, 1.3, sh2(c, 0.6));
-          circ(19, 15, 1.1, sh2(c, 0.6));
-          circ(18, 23, 1.3, sh2(c, 0.6));
-          circ(12.5, 24, 1, sh2(c, 0.6));
+          circ2(13, 17, 1.3, sh2(c, 0.6));
+          circ2(19, 15, 1.1, sh2(c, 0.6));
+          circ2(18, 23, 1.3, sh2(c, 0.6));
+          circ2(12.5, 24, 1, sh2(c, 0.6));
           return;
         }
       }
     },
     detector(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.5), lt = sh2(c, 1.3);
@@ -29085,33 +29099,33 @@
           g.arc(16, 10, 4.4, Math.PI, 0);
           g.closePath();
           g.fill();
-          circ(16, 6.5, 1.6, lt);
-          glow(16, 6.5, 8, c, 0.3);
+          circ2(16, 6.5, 1.6, lt);
+          glow2(16, 6.5, 8, c, 0.3);
           return;
         }
       }
     },
     coconut_i(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, husk = sh2(c, 0.72), meat = "#f0e8d8";
-          circ(16, 17, 11, husk);
+          circ2(16, 17, 11, husk);
           for (let i = 0; i < 26; i++) {
             const a = rng.range(0, TAU), r = rng.range(6, 10.5);
             g.fillStyle = sh2(c, rng.chance(0.5) ? 1.25 : 0.55);
             g.fillRect(16 + Math.cos(a) * r, 17 + Math.sin(a) * r, 1.4, 1.4);
           }
-          circ(16, 17, 7.6, meat);
-          circ(16, 17, 5.4, sh2("#cfc4ae", 1));
+          circ2(16, 17, 7.6, meat);
+          circ2(16, 17, 5.4, sh2("#cfc4ae", 1));
           for (const [dx, dy] of [[-2.6, -1.6], [2.6, -1.6], [0, 2.6]])
-            circ(16 + dx, 17 + dy, 1.15, sh2(c, 0.5));
+            circ2(16 + dx, 17 + dy, 1.15, sh2(c, 0.5));
           return;
         }
       }
     },
     candy(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.62);
@@ -29128,7 +29142,7 @@
           g.lineTo(28, 21);
           g.closePath();
           g.fill();
-          circ(16, 16, 6.5, c);
+          circ2(16, 16, 6.5, c);
           g.strokeStyle = lt;
           g.lineWidth = 2;
           g.beginPath();
@@ -29136,17 +29150,17 @@
           g.quadraticCurveTo(16, 12, 20, 15);
           g.stroke();
           g.lineWidth = 1;
-          circ(13.6, 13.4, 1.8, sh2(c, 1.6));
+          circ2(13.6, 13.4, 1.8, sh2(c, 1.6));
           return;
         }
       }
     },
     wisp(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 13, c, 0.3);
+          glow2(16, 16, 13, c, 0.3);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(16, 3);
@@ -29161,9 +29175,9 @@
           g.quadraticCurveTo(12, 14, 16, 7);
           g.closePath();
           g.fill();
-          circ(16, 15, 2.2, "#ffffff");
-          circ(23, 8, 1.4, c);
-          circ(9, 22, 1.2, c);
+          circ2(16, 15, 2.2, "#ffffff");
+          circ2(23, 8, 1.4, c);
+          circ2(9, 22, 1.2, c);
           return;
         }
       }
@@ -29179,49 +29193,49 @@
   var ItemPaintLoot = {
     /* ---------- 소환 ---------- */
     crown(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow(16, 16, 12, s.glow, 0.24);
+          if (s.glow) glow2(16, 16, 12, s.glow, 0.24);
           poly([[5, 24], [5, 12], [10, 17], [16, 8], [22, 17], [27, 12], [27, 24]], c);
           poly([[5, 24], [5, 12], [10, 17], [16, 8], [16, 24]], sh2(c, 1.3));
-          P(5, 22, 22, 3.4, sh2(c, 0.78));
-          P(5, 22, 22, 1, sh2(c, 1.4));
-          circ(16, 12, 2.2, s.gem);
-          circ(8, 15, 1.6, s.gem);
-          circ(24, 15, 1.6, s.gem);
+          P2(5, 22, 22, 3.4, sh2(c, 0.78));
+          P2(5, 22, 22, 1, sh2(c, 1.4));
+          circ2(16, 12, 2.2, s.gem);
+          circ2(8, 15, 1.6, s.gem);
+          circ2(24, 15, 1.6, s.gem);
           return;
         }
       }
     },
     skull(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = "#e8e2cd";
-          circ(16, 14, 10, c);
-          P(9, 18, 14, 7, c);
+          circ2(16, 14, 10, c);
+          P2(9, 18, 14, 7, c);
           poly([[11, 24], [21, 24], [20, 29], [12, 29]], c);
-          circ(11.6, 13, 3.4, "#1a1620");
-          circ(20.4, 13, 3.4, "#1a1620");
-          circ(10.8, 12.2, 1, "#c8433c");
-          circ(19.6, 12.2, 1, "#c8433c");
+          circ2(11.6, 13, 3.4, "#1a1620");
+          circ2(20.4, 13, 3.4, "#1a1620");
+          circ2(10.8, 12.2, 1, "#c8433c");
+          circ2(19.6, 12.2, 1, "#c8433c");
           poly([[16, 17], [18.4, 21], [13.6, 21]], "#1a1620");
-          P(12, 25.5, 1.4, 3.5, "#1a1620");
-          P(15.3, 25.5, 1.4, 3.5, "#1a1620");
-          P(18.6, 25.5, 1.4, 3.5, "#1a1620");
-          circ(12, 9, 3, "#f5f1e4");
+          P2(12, 25.5, 1.4, 3.5, "#1a1620");
+          P2(15.3, 25.5, 1.4, 3.5, "#1a1620");
+          P2(18.6, 25.5, 1.4, 3.5, "#1a1620");
+          circ2(12, 9, 3, "#f5f1e4");
           return;
         }
       }
     },
     heart(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 17, 13, c, 0.24);
+          glow2(16, 17, 13, c, 0.24);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(16, 28);
@@ -29245,11 +29259,11 @@
       }
     },
     drop(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          if (s.glow) glow(16, 18, 13, s.glow, 0.3);
+          if (s.glow) glow2(16, 18, 13, s.glow, 0.3);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(16, 3);
@@ -29270,11 +29284,11 @@
       }
     },
     sack(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.65);
-          if (s.glow) glow(16, 18, 12, s.glow, 0.2);
+          if (s.glow) glow2(16, 18, 12, s.glow, 0.2);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(9, 13);
@@ -29291,8 +29305,8 @@
           g.quadraticCurveTo(13, 20, 13, 14);
           g.closePath();
           g.fill();
-          P(8, 10, 16, 6, dk);
-          P(8, 10, 16, 2, s.strap);
+          P2(8, 10, 16, 6, dk);
+          P2(8, 10, 16, 2, s.strap);
           stroke(s.strap, 2, () => {
             g.moveTo(11, 10);
             g.quadraticCurveTo(6, 4, 12, 2);
@@ -29301,17 +29315,17 @@
             g.moveTo(21, 10);
             g.quadraticCurveTo(26, 4, 20, 2);
           });
-          P(14, 15, 4, 3, s.strap);
+          P2(14, 15, 4, 3, s.strap);
           return;
         }
       }
     },
     hammer(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.68);
-          if (s.glow) glow(16, 11, 13, s.glow, 0.24);
+          if (s.glow) glow2(16, 11, 13, s.glow, 0.24);
           stroke("#6a4a28", 3.6, () => {
             g.moveTo(16, 30);
             g.lineTo(16, 16);
@@ -29320,23 +29334,23 @@
             g.moveTo(15, 29);
             g.lineTo(15, 17);
           });
-          P(5, 5, 22, 12, c);
-          P(5, 5, 22, 3, lt);
-          P(5, 14, 22, 3, dk);
-          P(5, 5, 3, 12, sh2(c, 1.15));
-          P(24, 5, 3, 12, dk);
-          for (let i = 0; i < 5; i++) P(rng.range(7, 24), rng.range(7, 14), 2, 2, rng.chance(0.5) ? lt : dk);
+          P2(5, 5, 22, 12, c);
+          P2(5, 5, 22, 3, lt);
+          P2(5, 14, 22, 3, dk);
+          P2(5, 5, 3, 12, sh2(c, 1.15));
+          P2(24, 5, 3, 12, dk);
+          for (let i = 0; i < 5; i++) P2(rng.range(7, 24), rng.range(7, 14), 2, 2, rng.chance(0.5) ? lt : dk);
           return;
         }
       }
     },
     /* ---------- 2부 전용 ---------- */
     feather(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.72), lt = sh2(c, 1.12);
-          glow(16, 16, 12, c, 0.18);
+          glow2(16, 16, 12, c, 0.18);
           stroke(sh2(c, 0.55), 1.6, () => {
             g.moveTo(23, 3);
             g.lineTo(9, 29);
@@ -29360,7 +29374,7 @@
     },
     /* 나뭇잎 — 나무마다 모양이 다르다(sh). */
     leafitem(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, dk = sh2(c, 0.62), lt = sh2(c, 1.22), stem = s.st || sh2(c, 0.5);
@@ -29406,7 +29420,7 @@
               const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 5.5 : 12;
               pts.push([16 + Math.cos(a) * r, 15 + Math.sin(a) * r]);
             }
-            glow(16, 15, 12, c, 0.2);
+            glow2(16, 15, 12, c, 0.2);
             blade(pts);
             for (let i = 0; i < 5; i++) {
               const a = -Math.PI / 2 + i * TAU / 5;
@@ -29462,7 +29476,7 @@
       }
     },
     wildflower(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29470,15 +29484,15 @@
             g.moveTo(16, 28);
             g.lineTo(16, 16);
           });
-          P(14, 22, 2, 5, sh2("#4a7a34", 0.8));
-          for (const [dx, dy] of [[0, -4], [4, 0], [0, 4], [-4, 0]]) circ(16 + dx, 13 + dy, 3.2, c);
-          circ(16, 13, 2, "#ffe58a");
+          P2(14, 22, 2, 5, sh2("#4a7a34", 0.8));
+          for (const [dx, dy] of [[0, -4], [4, 0], [0, 4], [-4, 0]]) circ2(16 + dx, 13 + dy, 3.2, c);
+          circ2(16, 13, 2, "#ffe58a");
           return;
         }
       }
     },
     weed_icon(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           for (let i = 0; i < 4; i++) {
@@ -29493,58 +29507,58 @@
       }
     },
     cactus(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          P(13, 8, 6, 20, c);
-          P(6, 14, 5, 10, c);
-          P(21, 12, 5, 12, c);
-          P(13, 8, 2, 20, sh2(c, 1.3));
-          for (let i = 0; i < 5; i++) circ(13 + i % 2 * 6, 10 + i * 4, 0.8, "#e8dcc0");
+          P2(13, 8, 6, 20, c);
+          P2(6, 14, 5, 10, c);
+          P2(21, 12, 5, 12, c);
+          P2(13, 8, 2, 20, sh2(c, 1.3));
+          for (let i = 0; i < 5; i++) circ2(13 + i % 2 * 6, 10 + i * 4, 0.8, "#e8dcc0");
           return;
         }
       }
     },
     mushroom(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          P(14, 16, 4, 12, "#e8dcc0");
+          P2(14, 16, 4, 12, "#e8dcc0");
           g.fillStyle = c;
           g.beginPath();
           g.ellipse(16, 14, 10, 7, 0, Math.PI, 2 * Math.PI);
           g.fill();
-          circ(11, 11, 1.4, "#fff");
-          circ(19, 10, 1.6, "#fff");
-          circ(16, 8, 1.2, "#fff");
+          circ2(11, 11, 1.4, "#fff");
+          circ2(19, 10, 1.6, "#fff");
+          circ2(16, 8, 1.2, "#fff");
           return;
         }
       }
     },
     runefrag(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 11, c, 0.2);
+          glow2(16, 16, 11, c, 0.2);
           poly([[16, 3], [26, 12], [21, 27], [10, 25], [6, 11]], sh2(c, 0.8));
           poly([[16, 3], [16, 26], [10, 25], [6, 11]], c);
           const gl = sh2(c, 1.7);
-          P(12, 10, 1.6, 10, gl);
-          P(12, 10, 7, 1.6, gl);
-          P(12, 15, 5, 1.6, gl);
+          P2(12, 10, 1.6, 10, gl);
+          P2(12, 10, 7, 1.6, gl);
+          P2(12, 15, 5, 1.6, gl);
           return;
         }
       }
     },
     key(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.7);
-          if (s.glow) glow(16, 16, 12, s.glow, 0.22);
+          if (s.glow) glow2(16, 16, 12, s.glow, 0.22);
           stroke(dk, 4.4, () => {
             g.arc(16, 9, 5.6, 0, TAU);
           });
@@ -29554,16 +29568,16 @@
           stroke(lt, 1.2, () => {
             g.arc(16, 9, 5.6, 2.4, 4.2);
           });
-          P(14.6, 14, 2.8, 15, c);
-          P(14.6, 14, 1, 15, lt);
-          P(17.4, 22, 4.4, 2.4, c);
-          P(17.4, 26, 3.2, 2.4, c);
+          P2(14.6, 14, 2.8, 15, c);
+          P2(14.6, 14, 1, 15, lt);
+          P2(17.4, 22, 4.4, 2.4, c);
+          P2(17.4, 26, 3.2, 2.4, c);
           return;
         }
       }
     },
     horn(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.68);
@@ -29583,7 +29597,7 @@
           g.bezierCurveTo(17, 11.5, 23, 10.5, 27, 10.5);
           g.closePath();
           g.fill();
-          P(26, 5, 4, 8, dk);
+          P2(26, 5, 4, 8, dk);
           stroke(dk, 1.4, () => {
             g.moveTo(10, 21);
             g.lineTo(13, 24);
@@ -29603,7 +29617,7 @@
   var ItemPaintSkills = {
     /* ---------- 스킬 아이콘 ---------- */
     slash(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29622,24 +29636,24 @@
       }
     },
     shield(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
           poly([[16, 3], [27, 8], [26, 20], [16, 29], [6, 20], [5, 8]], c);
           poly([[16, 3], [16, 29], [6, 20], [5, 8]], sh2(c, 1.3));
           poly([[16, 8], [22, 11], [21, 19], [16, 24], [11, 19], [10, 11]], sh2(c, 0.65));
-          P(15.2, 10, 1.6, 12, sh2(c, 1.6));
+          P2(15.2, 10, 1.6, 12, sh2(c, 1.6));
           return;
         }
       }
     },
     impact(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 12, c, 0.22);
+          glow2(16, 16, 12, c, 0.22);
           g.fillStyle = c;
           g.beginPath();
           for (let i = 0; i < 12; i++) {
@@ -29649,14 +29663,14 @@
           }
           g.closePath();
           g.fill();
-          circ(16, 16, 5, sh2(c, 1.45));
-          circ(16, 16, 2.2, "#ffffff");
+          circ2(16, 16, 5, sh2(c, 1.45));
+          circ2(16, 16, 2.2, "#ffffff");
           return;
         }
       }
     },
     blood(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29680,7 +29694,7 @@
       }
     },
     whirl(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29690,34 +29704,34 @@
               g.arc(16, 16, 6 + i * 3.6, a0, a0 + 2.1);
             });
           }
-          circ(16, 16, 2.6, sh2(c, 1.5));
+          circ2(16, 16, 2.6, sh2(c, 1.5));
           return;
         }
       }
     },
     titan(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
           poly([[8, 10], [24, 10], [26, 28], [6, 28]], c);
           poly([[8, 10], [16, 10], [16, 28], [6, 28]], sh2(c, 1.25));
           poly([[10, 4], [22, 4], [24, 10], [8, 10]], sh2(c, 0.75));
-          circ(12, 17, 2, sh2(c, 0.55));
-          circ(20, 17, 2, sh2(c, 0.55));
-          P(11, 23, 10, 1.6, sh2(c, 0.55));
+          circ2(12, 17, 2, sh2(c, 0.55));
+          circ2(20, 17, 2, sh2(c, 0.55));
+          P2(11, 23, 10, 1.6, sh2(c, 0.55));
           return;
         }
       }
     },
     dash(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
           for (let i = 0; i < 3; i++) {
             const y = 10 + i * 6, w = 16 - i * 3;
-            P(4, y, w, 2.6, i === 1 ? c : sh2(c, 0.72));
+            P2(4, y, w, 2.6, i === 1 ? c : sh2(c, 0.72));
           }
           poly([[20, 6], [30, 16], [20, 26], [20, 20], [24, 16], [20, 12]], c);
           poly([[20, 6], [30, 16], [24, 16], [20, 12]], sh2(c, 1.35));
@@ -29726,7 +29740,7 @@
       }
     },
     target(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29736,7 +29750,7 @@
           stroke(sh2(c, 0.75), 2, () => {
             g.arc(16, 16, 6, 0, TAU);
           });
-          circ(16, 16, 2.4, c);
+          circ2(16, 16, 2.4, c);
           stroke(c, 2, () => {
             g.moveTo(16, 1);
             g.lineTo(16, 6);
@@ -29758,7 +29772,7 @@
       }
     },
     volley(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29776,7 +29790,7 @@
       }
     },
     wind(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29799,7 +29813,7 @@
       }
     },
     rain(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29811,13 +29825,13 @@
             });
             poly([[x, y0 + 18], [x - 3.2, y0 + 13], [x + 3.2, y0 + 13]], sh2(c, 1.35));
           }
-          glow(16, 28, 8, c, 0.22);
+          glow2(16, 28, 8, c, 0.22);
           return;
         }
       }
     },
     eye(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -29828,9 +29842,9 @@
           g.quadraticCurveTo(16, 28, 2, 16);
           g.closePath();
           g.fill();
-          circ(16, 16, 6.4, c);
-          circ(16, 16, 3, "#1a1620");
-          circ(13.8, 13.6, 1.6, "#ffffff");
+          circ2(16, 16, 6.4, c);
+          circ2(16, 16, 3, "#1a1620");
+          circ2(13.8, 13.6, 1.6, "#ffffff");
           stroke(sh2(c, 0.6), 1.6, () => {
             g.moveTo(2, 16);
             g.quadraticCurveTo(16, 4, 30, 16);
@@ -29840,11 +29854,11 @@
       }
     },
     flame(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 18, 12, c, 0.26);
+          glow2(16, 18, 12, c, 0.26);
           g.fillStyle = sh2(c, 0.8);
           g.beginPath();
           g.moveTo(16, 2);
@@ -29867,44 +29881,44 @@
       }
     },
     book(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
           poly([[3, 8], [15, 6], [15, 26], [3, 27]], c);
           poly([[29, 8], [17, 6], [17, 26], [29, 27]], sh2(c, 0.78));
-          P(15, 6, 2, 20, sh2(c, 0.5));
+          P2(15, 6, 2, 20, sh2(c, 0.5));
           for (let i = 0; i < 3; i++) {
-            P(5, 12 + i * 4, 8, 1.2, sh2(c, 1.5));
-            P(19, 12 + i * 4, 8, 1.2, sh2(c, 1.3));
+            P2(5, 12 + i * 4, 8, 1.2, sh2(c, 1.5));
+            P2(19, 12 + i * 4, 8, 1.2, sh2(c, 1.3));
           }
-          glow(16, 8, 7, "#ffe08a", 0.28);
+          glow2(16, 8, 7, "#ffe08a", 0.28);
           return;
         }
       }
     },
     heal(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 13, c, 0.28);
-          P(13, 5, 6, 22, c);
-          P(5, 13, 22, 6, c);
-          P(14.2, 5, 1.8, 22, sh2(c, 1.4));
-          P(5, 14.2, 22, 1.8, sh2(c, 1.4));
-          circ(26, 6, 2, "#ffffff");
-          circ(6, 25, 1.5, "#ffffff");
+          glow2(16, 16, 13, c, 0.28);
+          P2(13, 5, 6, 22, c);
+          P2(5, 13, 22, 6, c);
+          P2(14.2, 5, 1.8, 22, sh2(c, 1.4));
+          P2(5, 14.2, 22, 1.8, sh2(c, 1.4));
+          circ2(26, 6, 2, "#ffffff");
+          circ2(6, 25, 1.5, "#ffffff");
           return;
         }
       }
     },
     snow(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 12, c, 0.24);
+          glow2(16, 16, 12, c, 0.24);
           for (let i = 0; i < 3; i++) {
             const a = i * Math.PI / 3;
             const dx = Math.cos(a) * 13, dy = Math.sin(a) * 13;
@@ -29924,34 +29938,34 @@
               });
             }
           }
-          circ(16, 16, 2.4, "#ffffff");
+          circ2(16, 16, 2.4, "#ffffff");
           return;
         }
       }
     },
     wolf(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 17, 12, c, 0.2);
+          glow2(16, 17, 12, c, 0.2);
           poly([[6, 12], [8, 3], [13, 9]], c);
           poly([[26, 12], [24, 3], [19, 9]], c);
           poly([[7, 11], [25, 11], [23, 22], [16, 29], [9, 22]], c);
           poly([[7, 11], [16, 11], [16, 29], [9, 22]], sh2(c, 1.25));
-          circ(12, 17, 1.8, "#1a2230");
-          circ(20, 17, 1.8, "#1a2230");
+          circ2(12, 17, 1.8, "#1a2230");
+          circ2(20, 17, 1.8, "#1a2230");
           poly([[16, 22], [18.4, 25], [13.6, 25]], "#1a2230");
           return;
         }
       }
     },
     rune(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 13, c, 0.26);
+          glow2(16, 16, 13, c, 0.26);
           stroke(c, 2, () => {
             g.arc(16, 16, 12, 0, TAU);
           });
@@ -29960,26 +29974,26 @@
           });
           for (let i = 0; i < 6; i++) {
             const a = i * TAU / 6;
-            P(16 + Math.cos(a) * 12 - 1.2, 16 + Math.sin(a) * 12 - 1.2, 2.4, 2.4, sh2(c, 1.4));
+            P2(16 + Math.cos(a) * 12 - 1.2, 16 + Math.sin(a) * 12 - 1.2, 2.4, 2.4, sh2(c, 1.4));
           }
           poly([[16, 8], [21, 16], [16, 24], [11, 16]], sh2(c, 1.3));
-          circ(16, 16, 2, "#ffffff");
+          circ2(16, 16, 2, "#ffffff");
           return;
         }
       }
     },
     /* ---------- 스킬 아이콘 ---------- */
     bulwark(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 18, 12, c, 0.18);
+          glow2(16, 18, 12, c, 0.18);
           for (let r = 0; r < 3; r++) {
             const y = 11 + r * 6, off = r % 2 ? -3 : 0;
-            for (let i = -1; i <= 1; i++) P(11 + i * 7 + off, y, 6.2, 5.2, i ? sh2(c, 0.78) : c);
+            for (let i = -1; i <= 1; i++) P2(11 + i * 7 + off, y, 6.2, 5.2, i ? sh2(c, 0.78) : c);
           }
-          P(4, 8, 24, 2.2, sh2(c, 1.35));
+          P2(4, 8, 24, 2.2, sh2(c, 1.35));
           stroke(sh2(c, 1.5), 1.4, () => {
             g.moveTo(6, 10.4);
             g.lineTo(26, 10.4);
@@ -29989,11 +30003,11 @@
       }
     },
     quake(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          P(2, 20, 28, 3, sh2(c, 0.68));
+          P2(2, 20, 28, 3, sh2(c, 0.68));
           poly([[16, 30], [12, 21], [15, 21], [13, 14], [20, 22], [17, 22], [19, 30]], sh2(c, 1.4));
           for (const [x, h] of [[6, 6], [10, 9], [22, 9], [26, 6]])
             poly([[x, 20], [x + 2.4, 20 - h], [x + 4.8, 20]], c);
@@ -30010,11 +30024,11 @@
       }
     },
     shout(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(11, 16, 11, c, 0.2);
+          glow2(11, 16, 11, c, 0.2);
           poly([[4, 10], [12, 10], [12, 22], [4, 22]], sh2(c, 0.7));
           poly([[12, 6], [12, 26], [17, 22], [17, 10]], c);
           for (let i = 0; i < 3; i++)
@@ -30026,11 +30040,11 @@
       }
     },
     lifebeat(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 12, c, 0.24);
+          glow2(16, 16, 12, c, 0.24);
           g.fillStyle = c;
           g.beginPath();
           g.moveTo(16, 27);
@@ -30054,7 +30068,7 @@
       }
     },
     pierce(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -30082,40 +30096,40 @@
       }
     },
     smoke(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 13, 12, c, 0.16);
+          glow2(16, 13, 12, c, 0.16);
           ell(11, 12, 6, 4.6, sh2(c, 0.9));
           ell(19, 10, 7, 5.2, c);
           ell(22, 15, 5.4, 4, sh2(c, 0.78));
           ell(9, 17, 4.6, 3.4, sh2(c, 0.7));
-          P(13, 21, 6, 8, sh2(c, 0.5));
-          P(13, 21, 6, 2, sh2(c, 1.3));
-          P(12, 28.4, 8, 2, sh2(c, 0.42));
+          P2(13, 21, 6, 8, sh2(c, 0.5));
+          P2(13, 21, 6, 2, sh2(c, 1.3));
+          P2(12, 28.4, 8, 2, sh2(c, 0.42));
           return;
         }
       }
     },
     mark(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 12, 11, c, 0.24);
+          glow2(16, 12, 11, c, 0.24);
           poly([[16, 20], [8, 5], [24, 5]], c);
           poly([[16, 16], [11.5, 7.5], [20.5, 7.5]], sh2(c, 1.45));
           stroke(sh2(c, 0.7), 2, () => {
             g.arc(16, 25, 6, -2.9, -0.25);
           });
-          P(15.2, 22, 1.6, 8, sh2(c, 0.65));
+          P2(15.2, 22, 1.6, 8, sh2(c, 0.65));
           return;
         }
       }
     },
     tempest(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
@@ -30139,12 +30153,12 @@
       }
     },
     barrier(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 13, c, 0.26);
-          circ(16, 16, 10.5, "rgba(120,180,255,.18)");
+          glow2(16, 16, 13, c, 0.26);
+          circ2(16, 16, 10.5, "rgba(120,180,255,.18)");
           stroke(sh2(c, 0.8), 1.1, () => {
             g.ellipse(16, 16, 5.5, 10.5, 0, 0, TAU);
           });
@@ -30162,7 +30176,7 @@
           });
           for (const a of [0.45 + 0.6, 0.45 + 3.7, -0.95 + 2.2]) {
             const ca = Math.cos(a), sa = Math.sin(a);
-            circ(16 + ca * 13 * Math.cos(0.45) - sa * 4.6 * Math.sin(0.45), 16 + ca * 13 * Math.sin(0.45) + sa * 4.6 * Math.cos(0.45), 1.3, "#ffffff");
+            circ2(16 + ca * 13 * Math.cos(0.45) - sa * 4.6 * Math.sin(0.45), 16 + ca * 13 * Math.sin(0.45) + sa * 4.6 * Math.cos(0.45), 1.3, "#ffffff");
           }
           ell(12.5, 11.5, 2.6, 1.6, "rgba(255,255,255,.55)");
           return;
@@ -30170,11 +30184,11 @@
       }
     },
     chain(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(16, 16, 13, c, 0.3);
+          glow2(16, 16, 13, c, 0.3);
           poly([[15, 2], [7, 16], [13, 16], [10, 30], [21, 13], [15, 13]], c);
           stroke(sh2(c, 1.5), 1.4, () => {
             g.moveTo(14, 5);
@@ -30195,17 +30209,17 @@
       }
     },
     blink(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(22, 16, 12, c, 0.24);
+          glow2(22, 16, 12, c, 0.24);
           g.globalAlpha = 0.38;
           poly([[4, 8], [11, 8], [11, 25], [4, 25]], sh2(c, 0.7));
           g.globalAlpha = 1;
           poly([[19, 6], [27, 6], [27, 27], [19, 27]], c);
           poly([[19, 6], [23, 6], [23, 27], [19, 27]], sh2(c, 1.3));
-          for (let i = 0; i < 3; i++) P(12.5 + i * 1.8, 13 + i * 2, 2.2, 2.2, sh2(c, 1.45));
+          for (let i = 0; i < 3; i++) P2(12.5 + i * 1.8, 13 + i * 2, 2.2, 2.2, sh2(c, 1.45));
           stroke(sh2(c, 1.5), 1.6, () => {
             g.moveTo(13, 16.5);
             g.lineTo(18, 16.5);
@@ -30215,11 +30229,11 @@
       }
     },
     meteor(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c;
-          glow(20, 11, 13, c, 0.32);
+          glow2(20, 11, 13, c, 0.32);
           stroke(sh2(c, 0.62), 3.4, () => {
             g.moveTo(2, 29);
             g.lineTo(16, 15);
@@ -30237,7 +30251,7 @@
           }
           g.closePath();
           g.fill();
-          circ(21, 11, 3.4, "#fff2c8");
+          circ2(21, 11, 3.4, "#fff2c8");
           return;
         }
       }
@@ -30253,12 +30267,12 @@
   var ItemPaintUI = {
     /* ---------- UI ---------- */
     sun(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 13, "#ffe9a8", 0.3);
-          circ(16, 16, 8, "#ffdf80");
-          circ(16, 16, 6, "#fff0c0");
+          glow2(16, 16, 13, "#ffe9a8", 0.3);
+          circ2(16, 16, 8, "#ffdf80");
+          circ2(16, 16, 6, "#fff0c0");
           for (let i = 0; i < 8; i++) {
             const a = i * TAU / 8;
             stroke("#ffdf80", 2.2, () => {
@@ -30271,37 +30285,37 @@
       }
     },
     moon(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 12, "#dfe8f5", 0.2);
-          circ(15, 16, 10, "#dfe8f5");
-          circ(20, 13, 9, "rgba(0,0,0,0)");
+          glow2(16, 16, 12, "#dfe8f5", 0.2);
+          circ2(15, 16, 10, "#dfe8f5");
+          circ2(20, 13, 9, "rgba(0,0,0,0)");
           g.globalCompositeOperation = "destination-out";
-          circ(21, 13, 9, "#000");
+          circ2(21, 13, 9, "#000");
           g.globalCompositeOperation = "source-over";
-          circ(11, 19, 1.8, "#c2cddd");
-          circ(14, 12, 1.3, "#c2cddd");
+          circ2(11, 19, 1.8, "#c2cddd");
+          circ2(14, 12, 1.3, "#c2cddd");
           return;
         }
       }
     },
     coin(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          circ(16, 16, 11, "#c8952a");
-          circ(16, 16, 9, "#e8c04a");
-          circ(16, 16, 6.5, "#d8a93a");
-          P(14.6, 10, 2.8, 12, "#f5deA0");
-          P(11, 14.6, 10, 2.8, "#f5dea0");
+          circ2(16, 16, 11, "#c8952a");
+          circ2(16, 16, 9, "#e8c04a");
+          circ2(16, 16, 6.5, "#d8a93a");
+          P2(14.6, 10, 2.8, 12, "#f5deA0");
+          P2(11, 14.6, 10, 2.8, "#f5dea0");
           ell(12, 11, 2.6, 1.6, "rgba(255,255,255,.45)");
           return;
         }
       }
     },
     chat(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           g.fillStyle = "#e8dcc0";
@@ -30315,51 +30329,51 @@
           g.lineTo(5, 21);
           g.closePath();
           g.fill();
-          circ(11, 13.5, 1.8, "#4a4438");
-          circ(16, 13.5, 1.8, "#4a4438");
-          circ(21, 13.5, 1.8, "#4a4438");
+          circ2(11, 13.5, 1.8, "#4a4438");
+          circ2(16, 13.5, 1.8, "#4a4438");
+          circ2(21, 13.5, 1.8, "#4a4438");
           return;
         }
       }
     },
     bagui(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 17, 12, "#d8a94b", 0.13);
+          glow2(16, 17, 12, "#d8a94b", 0.13);
           poly([[8, 12], [24, 12], [26, 27], [6, 27]], "#8c7651");
           poly([[8, 12], [16, 12], [16, 27], [6, 27]], "#c8aa70");
           poly([[6, 12], [10, 6], [22, 6], [26, 12]], "#5c4930");
-          P(13, 17, 6, 5, "#5c4930");
+          P2(13, 17, 6, 5, "#5c4930");
           return;
         }
       }
     },
     /* ---- 탭 아이콘 — 금빛(#c8aa70) 밝은 면 · 가죽빛(#8c7651) 그늘 · 짙은 갈색(#5c4930) 선, 은은한 금빛 번짐 ---- */
     pskill(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 13, "#d8a94b", 0.16);
+          glow2(16, 16, 13, "#d8a94b", 0.16);
           poly([[16, 3], [19.5, 12.5], [29, 16], [19.5, 19.5], [16, 29], [12.5, 19.5], [3, 16], [12.5, 12.5]], "#8c7651");
           poly([[16, 3], [19.5, 12.5], [16, 16], [12.5, 12.5]], "#e8cf8e");
           poly([[3, 16], [12.5, 12.5], [16, 16], [12.5, 19.5]], "#c8aa70");
-          circ(16, 16, 3, "#fff0c0");
+          circ2(16, 16, 3, "#fff0c0");
           return;
         }
       }
     },
     pquest(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 17, 12, "#d8a94b", 0.13);
+          glow2(16, 17, 12, "#d8a94b", 0.13);
           poly([[4, 9], [16, 11], [16, 27], [4, 25]], "#c8aa70");
           poly([[28, 9], [16, 11], [16, 27], [28, 25]], "#e0c890");
-          P(15, 11, 2, 16, "#5c4930");
+          P2(15, 11, 2, 16, "#5c4930");
           for (let i = 0; i < 4; i++) {
-            P(6.5, 14 + i * 3, 7, 1.2, "#8c7651");
-            P(18.5, 14 + i * 3, 7, 1.2, "#a88a5a");
+            P2(6.5, 14 + i * 3, 7, 1.2, "#8c7651");
+            P2(18.5, 14 + i * 3, 7, 1.2, "#a88a5a");
           }
           poly([[22, 9.5], [25, 9.2], [25, 18], [23.5, 16.5], [22, 18]], "#b8483c");
           return;
@@ -30367,10 +30381,10 @@
       }
     },
     pcraft(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 12, "#d8a94b", 0.13);
+          glow2(16, 16, 12, "#d8a94b", 0.13);
           stroke("#5c4930", 3, () => {
             g.moveTo(8, 26);
             g.lineTo(21, 11);
@@ -30382,87 +30396,87 @@
             g.lineTo(11, 11);
           });
           poly([[6, 8], [12, 5], [15, 12], [9, 15]], "#9fb0bc");
-          for (let i = 0; i < 3; i++) P(6.5 + i * 2.2, 13.5 - i * 1.1, 1.3, 1.3, "#5d7892");
+          for (let i = 0; i < 3; i++) P2(6.5 + i * 2.2, 13.5 - i * 1.1, 1.3, 1.3, "#5d7892");
           return;
         }
       }
     },
     pchest(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 17, 12, "#d8a94b", 0.12);
-          P(5, 14, 22, 13, "#8c7651");
-          P(5, 14, 11, 13, "#a88a5a");
+          glow2(16, 17, 12, "#d8a94b", 0.12);
+          P2(5, 14, 22, 13, "#8c7651");
+          P2(5, 14, 11, 13, "#a88a5a");
           poly([[5, 14], [7, 8], [25, 8], [27, 14]], "#c8aa70");
-          P(5, 13.2, 22, 2, "#5c4930");
-          P(9, 8, 2, 19, "#5c4930");
-          P(21, 8, 2, 19, "#5c4930");
-          P(14, 15, 4, 5, "#e8cf8e");
-          P(15.2, 17, 1.6, 2, "#5c4930");
+          P2(5, 13.2, 22, 2, "#5c4930");
+          P2(9, 8, 2, 19, "#5c4930");
+          P2(21, 8, 2, 19, "#5c4930");
+          P2(14, 15, 4, 5, "#e8cf8e");
+          P2(15.2, 17, 1.6, 2, "#5c4930");
           return;
         }
       }
     },
     pvault(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 12, "#d8a94b", 0.12);
-          P(5, 6, 22, 21, "#5c4930");
-          P(6.5, 7.5, 19, 18, "#8c7651");
-          circ(16, 16.5, 6, "#c8aa70");
-          circ(16, 16.5, 3.5, "#5c4930");
-          circ(16, 16.5, 1.5, "#e8cf8e");
+          glow2(16, 16, 12, "#d8a94b", 0.12);
+          P2(5, 6, 22, 21, "#5c4930");
+          P2(6.5, 7.5, 19, 18, "#8c7651");
+          circ2(16, 16.5, 6, "#c8aa70");
+          circ2(16, 16.5, 3.5, "#5c4930");
+          circ2(16, 16.5, 1.5, "#e8cf8e");
           for (let i = 0; i < 4; i++) {
             const a = i * Math.PI / 2 + 0.6;
-            P(16 + Math.cos(a) * 6.5 - 0.8, 16.5 + Math.sin(a) * 6.5 - 0.8, 1.6, 1.6, "#e8cf8e");
+            P2(16 + Math.cos(a) * 6.5 - 0.8, 16.5 + Math.sin(a) * 6.5 - 0.8, 1.6, 1.6, "#e8cf8e");
           }
-          P(8, 27, 3, 2, "#5c4930");
-          P(21, 27, 3, 2, "#5c4930");
+          P2(8, 27, 3, 2, "#5c4930");
+          P2(21, 27, 3, 2, "#5c4930");
           return;
         }
       }
     },
     pboard(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 12, "#d8a94b", 0.12);
-          P(7, 6, 2.5, 23, "#5c4930");
-          P(22.5, 6, 2.5, 23, "#5c4930");
-          P(5, 7, 22, 14, "#8c7651");
-          P(7, 9, 7, 8, "#e8dcc0");
-          P(15.5, 8.5, 8, 6, "#e0c890");
-          P(16, 15.5, 7, 4, "#e8dcc0");
-          circ(10.5, 9.5, 1, "#b8483c");
-          circ(19.5, 9, 1, "#b8483c");
-          circ(19.5, 16, 1, "#b8483c");
+          glow2(16, 16, 12, "#d8a94b", 0.12);
+          P2(7, 6, 2.5, 23, "#5c4930");
+          P2(22.5, 6, 2.5, 23, "#5c4930");
+          P2(5, 7, 22, 14, "#8c7651");
+          P2(7, 9, 7, 8, "#e8dcc0");
+          P2(15.5, 8.5, 8, 6, "#e0c890");
+          P2(16, 15.5, 7, 4, "#e8dcc0");
+          circ2(10.5, 9.5, 1, "#b8483c");
+          circ2(19.5, 9, 1, "#b8483c");
+          circ2(19.5, 16, 1, "#b8483c");
           return;
         }
       }
     },
     ptown(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 17, 12, "#d8a94b", 0.13);
-          P(7, 15, 18, 12, "#8c7651");
-          P(7, 15, 9, 12, "#a88a5a");
+          glow2(16, 17, 12, "#d8a94b", 0.13);
+          P2(7, 15, 18, 12, "#8c7651");
+          P2(7, 15, 9, 12, "#a88a5a");
           poly([[4, 16], [16, 5], [28, 16]], "#b8483c");
           poly([[4, 16], [16, 5], [16, 16]], "#d0685a");
-          P(21, 7, 3, 6, "#5c4930");
-          P(10, 18, 4, 4, "#ffd98a");
-          P(18, 19, 4, 8, "#5c4930");
+          P2(21, 7, 3, 6, "#5c4930");
+          P2(10, 18, 4, 4, "#ffd98a");
+          P2(18, 19, 4, 8, "#5c4930");
           return;
         }
       }
     },
     pmach(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 12, "#d8a94b", 0.12);
+          glow2(16, 16, 12, "#d8a94b", 0.12);
           for (let i = 0; i < 8; i++) {
             const a = i * Math.PI / 4;
             g.save();
@@ -30472,52 +30486,52 @@
             g.fillRect(-2.5, -2.5, 5, 5);
             g.restore();
           }
-          circ(16, 16, 10, "#8c7651");
-          circ(16, 16, 8.5, "#c8aa70");
-          circ(16, 16, 4, "#5c4930");
-          circ(16, 16, 2, "#e8cf8e");
+          circ2(16, 16, 10, "#8c7651");
+          circ2(16, 16, 8.5, "#c8aa70");
+          circ2(16, 16, 4, "#5c4930");
+          circ2(16, 16, 2, "#e8cf8e");
           return;
         }
       }
     },
     preforge(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 15, 12, "#ff9a50", 0.2);
+          glow2(16, 15, 12, "#ff9a50", 0.2);
           poly([[16, 3], [22, 12], [21, 19], [11, 19], [10, 12]], "#e0561c");
           poly([[16, 8], [19, 14], [18, 19], [14, 19], [13, 14]], "#ffb24a");
           poly([[16, 12], [17.5, 16], [16, 19], [14.5, 16]], "#fff0c0");
-          P(7, 20, 18, 3, "#8c7651");
-          P(10, 23, 12, 5, "#5c4930");
+          P2(7, 20, 18, 3, "#8c7651");
+          P2(10, 23, 12, 5, "#5c4930");
           return;
         }
       }
     },
     panvil(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 18, 12, "#d8a94b", 0.13);
+          glow2(16, 18, 12, "#d8a94b", 0.13);
           poly([[5, 12], [24, 12], [27, 15], [22, 17], [9, 17]], "#9fb0bc");
           poly([[5, 12], [24, 12], [24, 14], [7, 14]], "#d8e0e8");
-          P(12, 17, 8, 5, "#6d7a86");
-          P(9, 22, 14, 5, "#5c6670");
-          circ(22, 7, 1.2, "#ffb24a");
-          circ(18, 5, 0.9, "#ffd98a");
-          circ(25, 9, 0.8, "#ffd98a");
+          P2(12, 17, 8, 5, "#6d7a86");
+          P2(9, 22, 14, 5, "#5c6670");
+          circ2(22, 7, 1.2, "#ffb24a");
+          circ2(18, 5, 0.9, "#ffd98a");
+          circ2(25, 9, 0.8, "#ffd98a");
           return;
         }
       }
     },
     pmap(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 12, "#d8a94b", 0.12);
+          glow2(16, 16, 12, "#d8a94b", 0.12);
           poly([[4, 8], [12, 6], [20, 8], [28, 6], [28, 25], [20, 27], [12, 25], [4, 27]], "#c8aa70");
           poly([[12, 6], [20, 8], [20, 27], [12, 25]], "#a88a5a");
-          for (let i = 0; i < 5; i++) P(7 + i * 3.4, 20 - i * 1.8, 1.8, 1.4, "#5c4930");
+          for (let i = 0; i < 5; i++) P2(7 + i * 3.4, 20 - i * 1.8, 1.8, 1.4, "#5c4930");
           stroke("#b8483c", 1.8, () => {
             g.moveTo(22, 10);
             g.lineTo(26, 14);
@@ -30529,17 +30543,17 @@
       }
     },
     ng(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const G1 = "#c8aa70", G22 = "#8c7651", DK = "#5c4930", c = s.c || G1;
-          glow(16, 16, 12, s.c || "#d8a94b", 0.14);
+          glow2(16, 16, 12, s.c || "#d8a94b", 0.14);
           switch (s.g) {
             case "shield":
               poly([[6, 6], [26, 6], [25, 18], [16, 28], [7, 18]], sh2(c, 0.7));
               poly([[6, 6], [16, 6], [16, 28], [7, 18]], c);
-              P(15, 9, 2, 15, sh2(c, 1.35));
-              P(10, 14, 12, 2, sh2(c, 1.35));
+              P2(15, 9, 2, 15, sh2(c, 1.35));
+              P2(10, 14, 12, 2, sh2(c, 1.35));
               break;
             case "swords":
               for (const d of [1, -1]) stroke("#d8dce4", 2.4, () => {
@@ -30547,27 +30561,27 @@
                 g.lineTo(16 + 10 * d, 26);
               });
               for (const d of [1, -1]) {
-                P(16 + 8 * d - 2, 22, 4, 2, DK);
+                P2(16 + 8 * d - 2, 22, 4, 2, DK);
               }
               poly([[10, 11], [22, 11], [21.5, 19], [16, 25], [10.5, 19]], sh2(c, 0.7));
               poly([[10, 11], [16, 11], [16, 25], [10.5, 19]], c);
               break;
             case "skull":
               ell(16, 13, 10, 9, "#e8e0cc");
-              P(10, 18, 12, 8, "#e8e0cc");
+              P2(10, 18, 12, 8, "#e8e0cc");
               ell(12, 14, 2.8, 3.2, c);
               ell(20, 14, 2.8, 3.2, c);
               poly([[16, 17], [17.6, 20.5], [14.4, 20.5]], DK);
-              for (let i = 0; i < 4; i++) P(11.5 + i * 2.6, 23, 1.2, 3, DK);
-              P(10, 18, 12, 1, sh2("#e8e0cc", 0.8));
+              for (let i = 0; i < 4; i++) P2(11.5 + i * 2.6, 23, 1.2, 3, DK);
+              P2(10, 18, 12, 1, sh2("#e8e0cc", 0.8));
               break;
             case "land": {
               g.save();
               g.beginPath();
               g.arc(16, 16, 13, 0, TAU);
               g.clip();
-              P(0, 0, 32, 32, "#9fc4dc");
-              P(0, 19, 32, 13, "#3f6f94");
+              P2(0, 0, 32, 32, "#9fc4dc");
+              P2(0, 19, 32, 13, "#3f6f94");
               const hw = [0, 5, 9.5, 16][s.n], top = [0, 13, 10, 5][s.n];
               poly([[16 - hw, 21], [16 - hw * 0.55, 16], [16, top], [16 + hw * 0.55, 16], [16 + hw, 21], [16 + hw, 32], [16 - hw, 32]], "#6f9a4a");
               poly([[16 - hw, 21], [16 - hw * 0.55, 16], [16, top], [16, 32], [16 - hw, 32]], "#8fbf5a");
@@ -30576,7 +30590,7 @@
                 poly([[5, 21], [8.5, 11], [12, 21]], "#5f8a40");
                 poly([[20, 21], [24, 12], [28, 21]], "#5f8a40");
               }
-              P(16 - hw - 1, 21, hw * 2 + 2, 1.6, "#c8ab6a");
+              P2(16 - hw - 1, 21, hw * 2 + 2, 1.6, "#c8ab6a");
               g.restore();
               stroke(G22, 1.8, () => {
                 g.arc(16, 16, 13, 0, TAU);
@@ -30587,20 +30601,20 @@
               poly([[16, 4], [26, 14], [25, 28], [7, 28], [6, 14]], G22);
               poly([[16, 4], [16, 28], [7, 28], [6, 14]], G1);
               ell(16, 17, 5.5, 6.5, "#2a2218");
-              P(13, 16, 2, 1.6, "#e8dcc0");
-              P(17.5, 16, 2, 1.6, "#e8dcc0");
+              P2(13, 16, 2, 1.6, "#e8dcc0");
+              P2(17.5, 16, 2, 1.6, "#e8dcc0");
               break;
             case "sword":
               poly([[16, 3], [19, 7], [19, 21], [13, 21], [13, 7]], "#d8dce4");
               poly([[16, 3], [16, 21], [13, 21], [13, 7]], "#f2f4f8");
-              P(9, 21, 14, 3, G22);
-              P(9, 21, 14, 1.2, G1);
-              P(14.5, 24, 3, 5, DK);
-              circ(16, 29.5, 1.8, G1);
+              P2(9, 21, 14, 3, G22);
+              P2(9, 21, 14, 1.2, G1);
+              P2(14.5, 24, 3, 5, DK);
+              circ2(16, 29.5, 1.8, G1);
               break;
             case "globe":
-              circ(16, 16, 12, "#5a86a8");
-              circ(16, 16, 10.6, "#7fb0d0");
+              circ2(16, 16, 12, "#5a86a8");
+              circ2(16, 16, 10.6, "#7fb0d0");
               poly([[9, 10], [15, 8], [17, 13], [13, 17], [8, 15]], "#8fbf5a");
               poly([[18, 17], [24, 16], [25, 21], [19, 24]], "#8fbf5a");
               stroke("#5a86a8", 1, () => {
@@ -30620,7 +30634,7 @@
                 g.lineTo(11, 21);
               });
               poly([[10, 22], [6, 28], [8, 23]], "#3a3228");
-              P(5, 28, 16, 1.6, G22);
+              P2(5, 28, 16, 1.6, G22);
               break;
             case "seed":
               ell(16, 21, 7, 6, G22);
@@ -30647,14 +30661,14 @@
               });
               break;
             case "compass": {
-              circ(16, 16, 12, G22);
-              circ(16, 16, 10, "#2a2218");
+              circ2(16, 16, 12, G22);
+              circ2(16, 16, 10, "#2a2218");
               poly([[16, 6], [19, 16], [13, 16]], "#d0564c");
               poly([[16, 26], [19, 16], [13, 16]], "#e8e0cc");
-              circ(16, 16, 1.6, G1);
+              circ2(16, 16, 1.6, G1);
               for (let i = 0; i < 4; i++) {
                 const a = i * Math.PI / 2;
-                P(16 + Math.cos(a) * 11 - 1, 16 + Math.sin(a) * 11 - 1, 2, 2, G1);
+                P2(16 + Math.cos(a) * 11 - 1, 16 + Math.sin(a) * 11 - 1, 2, 2, G1);
               }
               break;
             }
@@ -30664,31 +30678,31 @@
                 g.save();
                 g.translate(16, 16);
                 g.rotate(a);
-                P(-2.5, -14, 5, 6, G22);
+                P2(-2.5, -14, 5, 6, G22);
                 g.restore();
               }
-              circ(16, 16, 10, G22);
-              circ(16, 16, 8.4, G1);
-              circ(16, 16, 3.6, "#2a2218");
+              circ2(16, 16, 10, G22);
+              circ2(16, 16, 8.4, G1);
+              circ2(16, 16, 3.6, "#2a2218");
               break;
             }
             case "scroll":
-              P(8, 7, 16, 18, "#e8dcc0");
-              for (let i = 0; i < 4; i++) P(11, 11 + i * 3.5, 10 - i % 2 * 3, 1.3, "#8c7651");
+              P2(8, 7, 16, 18, "#e8dcc0");
+              for (let i = 0; i < 4; i++) P2(11, 11 + i * 3.5, 10 - i % 2 * 3, 1.3, "#8c7651");
               ell(8, 7, 3, 2.4, G22);
-              P(5, 5, 22, 4, G22);
-              P(5, 5, 22, 1.4, G1);
-              P(5, 24, 22, 4, G22);
-              P(5, 24, 22, 1.4, G1);
+              P2(5, 5, 22, 4, G22);
+              P2(5, 5, 22, 1.4, G1);
+              P2(5, 24, 22, 4, G22);
+              P2(5, 24, 22, 1.4, G1);
               break;
             case "door":
-              P(7, 4, 16, 25, "#2a2218");
-              P(7, 4, 16, 2, G22);
-              P(7, 4, 2, 25, G22);
-              P(21, 4, 2, 25, G22);
+              P2(7, 4, 16, 25, "#2a2218");
+              P2(7, 4, 16, 2, G22);
+              P2(7, 4, 2, 25, G22);
+              P2(21, 4, 2, 25, G22);
               poly([[9, 6], [17, 9], [17, 30], [9, 27]], G1);
               poly([[13, 9], [17, 9], [17, 30], [13, 28]], G22);
-              circ(15, 19, 1.1, DK);
+              circ2(15, 19, 1.1, DK);
               stroke("#e8dcc0", 2, () => {
                 g.moveTo(22, 16);
                 g.lineTo(29, 16);
@@ -30698,16 +30712,16 @@
               });
               break;
             case "disk":
-              P(5, 5, 22, 22, G22);
-              P(5, 5, 22, 1.4, G1);
-              P(10, 5, 12, 8, "#d8dce4");
-              P(18, 6.5, 2.4, 5, "#5a6470");
-              P(8, 17, 16, 10, "#e8dcc0");
-              for (let i = 0; i < 2; i++) P(10, 20 + i * 3, 12, 1.2, "#8c7651");
+              P2(5, 5, 22, 22, G22);
+              P2(5, 5, 22, 1.4, G1);
+              P2(10, 5, 12, 8, "#d8dce4");
+              P2(18, 6.5, 2.4, 5, "#5a6470");
+              P2(8, 17, 16, 10, "#e8dcc0");
+              for (let i = 0; i < 2; i++) P2(10, 20 + i * 3, 12, 1.2, "#8c7651");
               break;
             case "export":
-              P(5, 12, 16, 16, G22);
-              P(7, 14, 12, 12, "#2a2218");
+              P2(5, 12, 16, 16, G22);
+              P2(7, 14, 12, 12, "#2a2218");
               stroke("#e8dcc0", 2.6, () => {
                 g.moveTo(12, 20);
                 g.lineTo(25, 7);
@@ -30717,12 +30731,12 @@
             case "home":
               poly([[16, 4], [29, 15], [3, 15]], G22);
               poly([[16, 4], [16, 15], [3, 15]], G1);
-              P(6, 15, 20, 13, G22);
-              P(6, 15, 10, 13, G1);
-              P(13, 19, 6, 9, "#2a2218");
+              P2(6, 15, 20, 13, G22);
+              P2(6, 15, 10, 13, G1);
+              P2(13, 19, 6, 9, "#2a2218");
               break;
             case "speaker":
-              P(4, 12, 6, 8, G1);
+              P2(4, 12, 6, 8, G1);
               poly([[10, 12], [17, 6], [17, 26], [10, 20]], G22);
               for (const r of [5, 9]) stroke(G1, 1.8, () => {
                 g.arc(18, 16, r, -0.8, 0.8);
@@ -30731,22 +30745,22 @@
             case "bell":
               poly([[16, 4], [23, 10], [24, 21], [27, 24], [5, 24], [8, 21], [9, 10]], G22);
               poly([[16, 4], [16, 24], [5, 24], [8, 21], [9, 10]], G1);
-              circ(16, 27, 2.6, G22);
-              circ(16, 4, 1.8, G1);
+              circ2(16, 27, 2.6, G22);
+              circ2(16, 4, 1.8, G1);
               break;
             case "keys":
-              P(3, 9, 26, 15, G22);
-              P(3, 9, 26, 1.4, G1);
-              for (let r = 0; r < 2; r++) for (let i = 0; i < 5; i++) P(5.5 + i * 4.6, 12 + r * 4.2, 3.4, 3, "#e8dcc0");
-              P(9, 20.5, 14, 2.4, "#e8dcc0");
+              P2(3, 9, 26, 15, G22);
+              P2(3, 9, 26, 1.4, G1);
+              for (let r = 0; r < 2; r++) for (let i = 0; i < 5; i++) P2(5.5 + i * 4.6, 12 + r * 4.2, 3.4, 3, "#e8dcc0");
+              P2(9, 20.5, 14, 2.4, "#e8dcc0");
               break;
             case "layout":
-              P(3, 5, 26, 22, G22);
-              P(5, 7, 22, 18, "#2a2218");
-              P(6, 8, 8, 3, G1);
-              P(20, 8, 6, 5, "#7fb0d0");
-              P(21, 15, 5, 7, G1);
-              for (let i = 0; i < 4; i++) P(9 + i * 3.4, 22, 2.6, 2.4, "#e8dcc0");
+              P2(3, 5, 26, 22, G22);
+              P2(5, 7, 22, 18, "#2a2218");
+              P2(6, 8, 8, 3, G1);
+              P2(20, 8, 6, 5, "#7fb0d0");
+              P2(21, 15, 5, 7, G1);
+              for (let i = 0; i < 4; i++) P2(9 + i * 3.4, 22, 2.6, 2.4, "#e8dcc0");
               break;
           }
           return;
@@ -30754,62 +30768,62 @@
       }
     },
     pmenu(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 12, "#d8a94b", 0.12);
+          glow2(16, 16, 12, "#d8a94b", 0.12);
           for (let i = 0; i < 3; i++) {
-            P(7, 9 + i * 6, 18, 3, "#8c7651");
-            P(7, 9 + i * 6, 18, 1.4, "#c8aa70");
+            P2(7, 9 + i * 6, 18, 3, "#8c7651");
+            P2(7, 9 + i * 6, 18, 1.4, "#c8aa70");
           }
           return;
         }
       }
     },
     statui(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 17, 12, "#d8a94b", 0.13);
-          P(7, 19, 5, 9, "#8c7651");
-          P(13.5, 13, 5, 15, "#c8aa70");
-          P(20, 8, 5, 20, "#8c7651");
-          P(6, 27.5, 20, 1.6, "#5c4930");
+          glow2(16, 17, 12, "#d8a94b", 0.13);
+          P2(7, 19, 5, 9, "#8c7651");
+          P2(13.5, 13, 5, 15, "#c8aa70");
+          P2(20, 8, 5, 20, "#8c7651");
+          P2(6, 27.5, 20, 1.6, "#5c4930");
           return;
         }
       }
     },
     equipui(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          glow(16, 16, 13, "#d8a94b", 0.15);
+          glow2(16, 16, 13, "#d8a94b", 0.15);
           poly([[9, 8], [23, 8], [26, 14], [23, 27], [9, 27], [6, 14]], "#8c7651");
           poly([[9, 8], [16, 8], [16, 27], [9, 27], [6, 14]], "#c8aa70");
-          P(8, 16, 16, 2, "#5c4930");
-          P(15, 9, 2, 17, "#5c4930");
+          P2(8, 16, 16, 2, "#5c4930");
+          P2(15, 9, 2, 17, "#5c4930");
           poly([[20, 5], [28, 8], [27, 17], [24, 22], [20, 17]], "#5d7892");
           poly([[20, 6], [23.8, 8.3], [23.8, 19.8], [20, 17]], "#9fc4dc");
-          P(21.5, 10, 1.5, 7, "#e8dcc0");
-          P(19, 12.5, 6.5, 1.5, "#e8dcc0");
+          P2(21.5, 10, 1.5, 7, "#e8dcc0");
+          P2(19, 12.5, 6.5, 1.5, "#e8dcc0");
           return;
         }
       }
     },
     trashui(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          P(8, 10, 16, 18, "#6d4b47");
-          P(9.5, 11, 13, 16, "#9b6156");
-          P(7, 7, 18, 4, "#b87466");
-          P(9, 5, 14, 2.5, "#7d514a");
-          P(13, 3, 6, 2.5, "#b87466");
-          P(8, 27, 16, 2, "#4a302e");
-          P(12, 13, 2, 10, "#5a3935");
-          P(17, 13, 2, 10, "#5a3935");
-          P(21, 13, 1.5, 10, "#5a3935");
-          P(10.5, 11.5, 2, 1.5, "#e6a28e");
+          P2(8, 10, 16, 18, "#6d4b47");
+          P2(9.5, 11, 13, 16, "#9b6156");
+          P2(7, 7, 18, 4, "#b87466");
+          P2(9, 5, 14, 2.5, "#7d514a");
+          P2(13, 3, 6, 2.5, "#b87466");
+          P2(8, 27, 16, 2, "#4a302e");
+          P2(12, 13, 2, 10, "#5a3935");
+          P2(17, 13, 2, 10, "#5a3935");
+          P2(21, 13, 1.5, 10, "#5a3935");
+          P2(10.5, 11.5, 2, 1.5, "#e6a28e");
           return;
         }
       }
@@ -30825,36 +30839,36 @@
   var ItemPaintMisc = {
     /* ---------- 장비 칸 실루엣 ---------- */
     slotic(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = "#6a6250", l = "#8e8672";
           switch (s.m) {
             case "weapon":
               poly([[16, 3], [19, 9], [19, 21], [13, 21], [13, 9]], c);
-              P(15.2, 4, 1.6, 16, l);
-              P(9, 21, 14, 2.6, c);
-              P(15, 23.6, 2, 6, c);
-              P(13.5, 28.5, 5, 2, c);
+              P2(15.2, 4, 1.6, 16, l);
+              P2(9, 21, 14, 2.6, c);
+              P2(15, 23.6, 2, 6, c);
+              P2(13.5, 28.5, 5, 2, c);
               break;
             case "helm":
               poly([[7, 20], [7, 13], [10, 8], [22, 8], [25, 13], [25, 20]], c);
               poly([[9, 19], [9, 14], [11, 10], [16, 10], [16, 19]], l);
-              P(15, 12, 2, 9, "#3d382d");
-              P(7, 20, 18, 2.4, c);
+              P2(15, 12, 2, 9, "#3d382d");
+              P2(7, 20, 18, 2.4, c);
               break;
             case "chest":
               poly([[8, 8], [24, 8], [26, 13], [23, 26], [9, 26], [6, 13]], c);
               poly([[8, 8], [16, 8], [16, 26], [9, 26], [6, 13]], l);
-              P(12, 6, 8, 3, c);
-              P(15.2, 10, 1.6, 15, "#3d382d");
+              P2(12, 6, 8, 3, c);
+              P2(15.2, 10, 1.6, 15, "#3d382d");
               break;
             case "boots":
               for (const bx of [7, 17]) {
-                P(bx, 8, 7, 13, c);
-                P(bx, 8, 2.4, 13, l);
+                P2(bx, 8, 7, 13, c);
+                P2(bx, 8, 2.4, 13, l);
                 poly([[bx, 21], [bx + 9, 21], [bx + 9, 25], [bx, 25]], c);
-                P(bx, 24, 9, 1.6, "#3d382d");
+                P2(bx, 24, 9, 1.6, "#3d382d");
               }
               break;
             case "acc":
@@ -30874,23 +30888,23 @@
                 g.moveTo(11, 11);
                 g.bezierCurveTo(11, 4, 21, 4, 21, 11);
               });
-              P(13, 17, 6, 5, "#3d382d");
+              P2(13, 17, 6, 5, "#3d382d");
               break;
             case "util":
-              P(13.5, 12, 5, 13, c);
-              P(14.5, 13, 1.6, 11, l);
-              P(10.5, 4, 11, 3.2, c);
-              P(10.5, 9.5, 11, 3.2, c);
-              P(18.5, 4, 3, 8.7, c);
-              P(19.2, 5, 1.2, 6.5, l);
-              P(11.5, 5, 6, 1.2, l);
-              circ(16, 26.5, 3.6, c);
-              circ(16, 26.5, 1.5, "#3d382d");
+              P2(13.5, 12, 5, 13, c);
+              P2(14.5, 13, 1.6, 11, l);
+              P2(10.5, 4, 11, 3.2, c);
+              P2(10.5, 9.5, 11, 3.2, c);
+              P2(18.5, 4, 3, 8.7, c);
+              P2(19.2, 5, 1.2, 6.5, l);
+              P2(11.5, 5, 6, 1.2, l);
+              circ2(16, 26.5, 3.6, c);
+              circ2(16, 26.5, 1.5, "#3d382d");
               break;
             case "pet":
               ell(12, 20, 5.5, 6.5, c);
               for (const [tx, ty, r] of [[7, 11, 2.4], [12, 8.5, 2.6], [17.5, 10, 2.4], [21.5, 14, 2.2]])
-                circ(tx, ty, r, l);
+                circ2(tx, ty, r, l);
               break;
           }
           return;
@@ -30899,29 +30913,29 @@
     },
     /* ---------- 손으로 놓는 설치물 ---------- */
     stationic(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           if (s.m === "work") {
-            P(3, 9, 26, 4, "#9c7a4a");
-            P(3, 13, 26, 3, "#7a5734");
-            P(6, 16, 5, 12, "#7a5734");
-            P(21, 16, 5, 12, "#7a5734");
-            P(6, 25, 20, 3, "#5c4026");
+            P2(3, 9, 26, 4, "#9c7a4a");
+            P2(3, 13, 26, 3, "#7a5734");
+            P2(6, 16, 5, 12, "#7a5734");
+            P2(21, 16, 5, 12, "#7a5734");
+            P2(6, 25, 20, 3, "#5c4026");
           } else if (s.m === "forge") {
-            P(4, 4, 24, 5, "#33333a");
-            P(4, 9, 24, 19, "#4a4a52");
-            P(6, 10, 20, 2, "#5c5c66");
-            P(9, 19, 14, 7, "#ff8a3a");
-            glow(16, 22, 9, "#ff8a3a", 0.3);
+            P2(4, 4, 24, 5, "#33333a");
+            P2(4, 9, 24, 19, "#4a4a52");
+            P2(6, 10, 20, 2, "#5c5c66");
+            P2(9, 19, 14, 7, "#ff8a3a");
+            glow2(16, 22, 9, "#ff8a3a", 0.3);
           } else {
             const gold = s.gold;
-            if (gold) glow(16, 18, 13, "#ffd85a", 0.26);
-            P(4, 11, 24, 17, gold ? "#8a6a1a" : "#7a5326");
-            P(4, 7, 24, 5, gold ? "#a8841f" : "#96683a");
-            P(4, 11, 24, 3, gold ? "#ffd85a" : "#c8a04a");
-            P(13, 10, 6, 7, gold ? "#ffd85a" : "#c8a04a");
-            P(14.5, 13, 3, 3, "#3a2610");
+            if (gold) glow2(16, 18, 13, "#ffd85a", 0.26);
+            P2(4, 11, 24, 17, gold ? "#8a6a1a" : "#7a5326");
+            P2(4, 7, 24, 5, gold ? "#a8841f" : "#96683a");
+            P2(4, 11, 24, 3, gold ? "#ffd85a" : "#c8a04a");
+            P2(13, 10, 6, 7, gold ? "#ffd85a" : "#c8a04a");
+            P2(14.5, 13, 3, 3, "#3a2610");
           }
           return;
         }
@@ -30929,30 +30943,30 @@
     },
     /* ---------- 문 ---------- */
     doorit(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
-          P(4, 2, 24, 28, "#3a2610");
-          P(5.5, 3.5, 21, 25, "#6f4c2c");
-          for (let i = 0; i < 4; i++) P(9.5 + i * 4.2, 3.5, 1, 25, "#4a3018");
-          P(5.5, 9, 21, 1.6, "#4a3018");
-          P(5.5, 21, 21, 1.6, "#4a3018");
-          P(6.5, 8.4, 4.5, 2.8, "#8a8a94");
-          P(6.5, 20.4, 4.5, 2.8, "#8a8a94");
-          P(21, 14, 3.4, 5, "#d8a94b");
-          P(22.1, 15.6, 1.4, 2, "#3a2610");
+          P2(4, 2, 24, 28, "#3a2610");
+          P2(5.5, 3.5, 21, 25, "#6f4c2c");
+          for (let i = 0; i < 4; i++) P2(9.5 + i * 4.2, 3.5, 1, 25, "#4a3018");
+          P2(5.5, 9, 21, 1.6, "#4a3018");
+          P2(5.5, 21, 21, 1.6, "#4a3018");
+          P2(6.5, 8.4, 4.5, 2.8, "#8a8a94");
+          P2(6.5, 20.4, 4.5, 2.8, "#8a8a94");
+          P2(21, 14, 3.4, 5, "#d8a94b");
+          P2(22.1, 15.6, 1.4, 2, "#3a2610");
           return;
         }
       }
     },
     /* ---------- 펫 ---------- */
     pet(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const c = s.c, dark = sh2(c, 0.62), lite = sh2(c, 1.3);
           const eye = "#1a1a22";
-          if (s.r === 2) glow(16, 17, 13, c, 0.22);
+          if (s.r === 2) glow2(16, 17, 13, c, 0.22);
           switch (s.form) {
             case "moth":
               ell(10, 13, 6, 5, lite);
@@ -30960,45 +30974,45 @@
               ell(11, 20, 4.5, 4, c);
               ell(21, 20, 4.5, 4, c);
               ell(16, 17, 2.6, 8, dark);
-              circ(16, 10, 2.6, dark);
+              circ2(16, 10, 2.6, dark);
               stroke(dark, 1.2, () => {
                 g.moveTo(15, 8);
                 g.lineTo(12, 4);
                 g.moveTo(17, 8);
                 g.lineTo(20, 4);
               });
-              circ(15, 10, 0.9, eye);
-              circ(17.2, 10, 0.9, eye);
+              circ2(15, 10, 0.9, eye);
+              circ2(17.2, 10, 0.9, eye);
               break;
             case "bird":
               ell(16, 19, 7.5, 8, c);
               ell(11.5, 19, 4, 6, dark);
-              circ(17, 11, 5.5, lite);
+              circ2(17, 11, 5.5, lite);
               poly([[22, 11], [28, 13], [22, 14.5]], "#e0a848");
-              circ(19, 10, 1.3, eye);
+              circ2(19, 10, 1.3, eye);
               poly([[13, 26], [19, 26], [16, 30]], dark);
               break;
             case "rock":
               ell(16, 20, 11, 8.5, c);
               ell(16, 16.5, 8, 5, lite);
-              circ(12, 16, 1.7, eye);
-              circ(20, 16, 1.7, eye);
-              P(8, 25, 5, 3, dark);
-              P(19, 25, 5, 3, dark);
+              circ2(12, 16, 1.7, eye);
+              circ2(20, 16, 1.7, eye);
+              P2(8, 25, 5, 3, dark);
+              P2(19, 25, 5, 3, dark);
               break;
             case "wisp":
-              glow(16, 15, 11, c, 0.3);
-              circ(16, 15, 6, lite);
-              circ(16, 15, 3.4, "#fff");
-              for (const [wx, wy, wr] of [[13, 23, 2.6], [18, 26, 2], [15, 29, 1.4]]) circ(wx, wy, wr, c);
+              glow2(16, 15, 11, c, 0.3);
+              circ2(16, 15, 6, lite);
+              circ2(16, 15, 3.4, "#fff");
+              for (const [wx, wy, wr] of [[13, 23, 2.6], [18, 26, 2], [15, 29, 1.4]]) circ2(wx, wy, wr, c);
               break;
             case "drake":
               ell(15, 20, 8, 7, c);
               poly([[20, 12], [29, 15], [21, 19]], dark);
-              circ(13, 13, 5.5, lite);
+              circ2(13, 13, 5.5, lite);
               poly([[10, 9], [12, 4], [13.5, 9]], dark);
               poly([[15, 9], [17, 5], [18, 9]], dark);
-              circ(11.5, 13, 1.4, eye);
+              circ2(11.5, 13, 1.4, eye);
               stroke(dark, 2.2, () => {
                 g.moveTo(21, 23);
                 g.quadraticCurveTo(28, 25, 26, 30);
@@ -31006,13 +31020,13 @@
               break;
             default:
               ell(15, 20, 8.5, 6.5, c);
-              circ(22, 15, 5.5, lite);
+              circ2(22, 15, 5.5, lite);
               poly([[19, 11], [21, 6], [23, 11]], dark);
               poly([[23, 11], [25, 7], [26.5, 11]], dark);
-              circ(23.5, 15, 1.4, eye);
-              P(9, 25, 3.4, 4, dark);
-              P(15, 25, 3.4, 4, dark);
-              P(20, 25, 3.4, 4, dark);
+              circ2(23.5, 15, 1.4, eye);
+              P2(9, 25, 3.4, 4, dark);
+              P2(15, 25, 3.4, 4, dark);
+              P2(20, 25, 3.4, 4, dark);
               stroke(lite, 3, () => {
                 g.moveTo(8, 19);
                 g.quadraticCurveTo(2, 16, 5, 10);
@@ -31025,40 +31039,40 @@
     },
     /* ---------- NPC 초상 ---------- */
     npc(H) {
-      const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
+      const { g, s, rng, P: P2, poly, circ: circ2, ell, stroke, glow: glow2 } = H;
       {
         {
           const p = s.p;
-          P(4, 24, 24, 8, p.cloth);
-          P(4, 24, 24, 1.6, sh2(p.cloth, 1.3));
-          circ(16, 15, 9, p.skin);
-          P(7, 15, 18, 8, p.skin);
+          P2(4, 24, 24, 8, p.cloth);
+          P2(4, 24, 24, 1.6, sh2(p.cloth, 1.3));
+          circ2(16, 15, 9, p.skin);
+          P2(7, 15, 18, 8, p.skin);
           if (p.long) {
-            P(4, 10, 5, 16, p.hair);
-            P(23, 10, 5, 16, p.hair);
+            P2(4, 10, 5, 16, p.hair);
+            P2(23, 10, 5, 16, p.hair);
           }
           g.fillStyle = p.hair;
           g.beginPath();
           g.arc(16, 14, 9.4, Math.PI, 0);
           g.fill();
-          P(6.6, 11, 18.8, 3.2, p.hair);
+          P2(6.6, 11, 18.8, 3.2, p.hair);
           if (p.hat) {
             poly([[16, 0], [27, 12], [5, 12]], sh2(p.cloth, 0.7));
-            P(3, 11, 26, 2.6, sh2(p.cloth, 0.55));
+            P2(3, 11, 26, 2.6, sh2(p.cloth, 0.55));
           }
-          circ(12.6, 16.5, 1.5, "#2a2028");
-          circ(19.4, 16.5, 1.5, "#2a2028");
+          circ2(12.6, 16.5, 1.5, "#2a2028");
+          circ2(19.4, 16.5, 1.5, "#2a2028");
           if (p.old) {
-            P(9, 14.6, 6, 1, "#8a8a8a");
-            P(17, 14.6, 6, 1, "#8a8a8a");
+            P2(9, 14.6, 6, 1, "#8a8a8a");
+            P2(17, 14.6, 6, 1, "#8a8a8a");
           }
           if (p.beard) {
             g.fillStyle = p.hair;
             g.beginPath();
             g.arc(16, 21, 7, 0, Math.PI);
             g.fill();
-            P(9, 20, 14, 4, p.hair);
-          } else P(14, 20.5, 4, 1.2, sh2(p.skin, 0.72));
+            P2(9, 20, 14, 4, p.hair);
+          } else P2(14, 20.5, 4, 1.2, sh2(p.skin, 0.72));
           return;
         }
       }
@@ -31483,10 +31497,10 @@
       c.fillStyle = sky;
       c.fillRect(0, 0, W, H);
       const gx = W * 0.74, gy = H * 0.2, gr = Math.max(W, H) * 0.42;
-      const glow = c.createRadialGradient(gx, gy, 0, gx, gy, gr);
-      glow.addColorStop(0, "rgba(249,116,73,0.30)");
-      glow.addColorStop(1, "rgba(249,116,73,0)");
-      c.fillStyle = glow;
+      const glow2 = c.createRadialGradient(gx, gy, 0, gx, gy, gr);
+      glow2.addColorStop(0, "rgba(249,116,73,0.30)");
+      glow2.addColorStop(1, "rgba(249,116,73,0)");
+      c.fillStyle = glow2;
       c.fillRect(0, 0, W, H);
       c.imageSmoothingEnabled = false;
       for (const L of this.layers) {
@@ -31498,10 +31512,10 @@
         for (let x = off; x < W; x += w) c.drawImage(im, Math.round(x), Math.round(y), w, h);
         c.globalAlpha = 1;
       }
-      const P = this.player;
-      if (P) {
+      const P2 = this.player;
+      if (P2) {
         const k = Math.max(1, Math.min(3, Math.round(H / 820)));
-        const ph = P.fh * k, pw = P.fw * k;
+        const ph = P2.fh * k, pw = P2.fw * k;
         const fr = this.WALK[Math.floor(t * this.FPS) % this.WALK.length];
         const bob = Math.sin(t * this.FPS * Math.PI) * (ph * 0.012);
         const x = W * (W < 900 ? 0.8 : 0.76), y = ground - ph + 4 * k + bob;
@@ -31512,7 +31526,7 @@
         c.ellipse(x + pw / 2, ground + ph * 0.03, pw * 0.34, ph * 0.028, 0, 0, Math.PI * 2);
         c.fill();
         c.restore();
-        c.drawImage(P.im, fr * P.fw, 0, P.fw, P.fh, Math.round(x), Math.round(y), Math.round(pw), Math.round(ph));
+        c.drawImage(P2.im, fr * P2.fw, 0, P2.fw, P2.fh, Math.round(x), Math.round(y), Math.round(pw), Math.round(ph));
       }
       c.imageSmoothingEnabled = true;
       c.fillStyle = "#c9bdb0";
@@ -34975,8 +34989,8 @@
       }
       app.ringFx(this.cx, this.cy, Math.max(this.w, this.h) * 1.6, "#ffe08a", 0.55);
       app.sfxAt("chapter", this.cx / TS, this.cy / TS);
-      const line3 = (BOSS_LINES[this.type] || {})[ph];
-      if (line3) app.bossLine(this.def.n, line3);
+      const line4 = (BOSS_LINES[this.type] || {})[ph];
+      if (line4) app.bossLine(this.def.n, line4);
       const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
       switch (this.def.ai) {
         case "b_slime":
@@ -36516,18 +36530,50 @@
     at(w, tx, ty) {
       const { WW: WW2, WH: WH2 } = dimsOf(w);
       if (tx < 0 || ty < 0 || tx >= WW2 || ty >= WH2) return null;
-      return w.machines.get(ty * WW2 + tx) || null;
+      const k = ty * WW2 + tx, m = w.machines.get(k);
+      if (m) return m;
+      const a = w.mpart.get(k);
+      return a === void 0 ? null : w.machines.get(a) || null;
     },
-    /** 이 칸에 기계를 놓을 수 있는가 — 빈 칸이어야 한다 */
-    canPlace(w, tx, ty) {
+    /** 기계가 차지하는 칸 — 닻(m.x, m.y)이 왼쪽 아래, 오른쪽 · 위로 m.w × m.h(옛 세이브 · 작은 기계는 1×1) */
+    cells(m) {
+      const out = [], W = m.w || 1, H = m.h || 1;
+      for (let dy = 0; dy < H; dy++) for (let dx = 0; dx < W; dx++) out.push([m.x + dx, m.y - dy]);
+      return out;
+    },
+    /** 몸 칸을 점유 표(w.mpart)에 건다 · 푼다 — 불러올 때 · 참가자가 받을 때도 다시 건다 */
+    claim(w, m) {
       const { WW: WW2 } = dimsOf(w);
-      return w.inB(tx, ty) && w.get(tx, ty) === T.AIR && !w.machines.has(ty * WW2 + tx);
+      for (const [x, y] of this.cells(m)) if (x !== m.x || y !== m.y) w.mpart.set(y * WW2 + x, m.y * WW2 + m.x);
+    },
+    release(w, m) {
+      const { WW: WW2 } = dimsOf(w);
+      for (const [x, y] of this.cells(m)) if (x !== m.x || y !== m.y) w.mpart.delete(y * WW2 + x);
+    },
+    claimAll(w) {
+      w.mpart.clear();
+      for (const m of w.machines.values()) if ((m.w || 1) * (m.h || 1) > 1) this.claim(w, m);
+    },
+    /** 이 기계 갈래의 크기 */
+    sizeOf(key) {
+      const s = MACHINE[key];
+      return s && s.size || [1, 1];
+    },
+    /** 이 칸에 기계를 놓을 수 있는가 — 발자국이 모두 빈 칸이어야 한다(key 를 주면 그 기계 크기로) */
+    canPlace(w, tx, ty, key) {
+      const { WW: WW2 } = dimsOf(w);
+      const [W, H] = key ? this.sizeOf(key) : [1, 1];
+      for (let dy = 0; dy < H; dy++) for (let dx = 0; dx < W; dx++) {
+        const x = tx + dx, y = ty - dy, k = y * WW2 + x;
+        if (!w.inB(x, y) || w.get(x, y) !== T.AIR || w.machines.has(k) || w.mpart.has(k)) return false;
+      }
+      return true;
     },
     /** gen 을 주면 "세계가 지어 둔 기계"로 표시한다. */
     place(w, tx, ty, key, dir, gen) {
       const { WW: WW2 } = dimsOf(w);
       const s = MACHINE[key];
-      if (!s || !this.canPlace(w, tx, ty)) return null;
+      if (!s || !this.canPlace(w, tx, ty, key)) return null;
       const m = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: "" };
       if (gen) m.gen = 1;
       if (key === "belt" || key === "belt_fast" || key === "sorter") m.it = null;
@@ -36548,8 +36594,14 @@
       }
       if (s.store) m.e = 0;
       if (s.mine || key === "pump" || s.ammo || key === "trap" || s.proj) m.cd = 0;
+      if (s.size) {
+        m.w = s.size[0];
+        m.h = s.size[1];
+      }
       w.set(tx, ty, s.tile);
       w.machines.set(ty * WW2 + tx, m);
+      for (const [x, y] of this.cells(m)) if (x !== tx || y !== ty) w.set(x, y, T.M_PART);
+      this.claim(w, m);
       w.netDirty = true;
       return m;
     },
@@ -36573,9 +36625,11 @@
       if (m.items) {
         for (const it of m.items) if (it) back.push(it);
       }
-      w.machines.delete(ty * WW2 + tx);
-      w.set(tx, ty, T.AIR);
+      this.release(w, m);
+      w.machines.delete(m.y * WW2 + m.x);
+      for (const [x, y] of this.cells(m)) w.set(x, y, T.AIR);
       w.netDirty = true;
+      this.lastRemoved = m;
       return back;
     },
     rotate(m) {
@@ -36753,12 +36807,14 @@
     /** 앞칸(또는 지정 방향)의 기계에 아이템 하나를 밀어 넣는다 */
     pushTo(w, m, dir, id) {
       const [dx, dy] = dirTable(m.t)[dir] || DIR4[dir & 3];
-      const t = this.at(w, m.x + dx, m.y + dy);
+      const ex = dx > 0 ? m.x + (m.w || 1) - 1 : m.x, ey = dy < 0 ? m.y - (m.h || 1) + 1 : m.y;
+      const t = this.at(w, ex + dx, ey + dy);
+      if (t === m) return false;
       if (!t) return false;
       if (this.insert(w, t, id, 1) <= 0) return false;
       if (t.it) {
-        t.it.fx = m.x;
-        t.it.fy = m.y;
+        t.it.fx = ex;
+        t.it.fy = ey;
         t.it.fo = this.itemOff(m);
         t.it.t0 = this.now;
       }
@@ -37780,8 +37836,8 @@
       if (!w.machines.size) return;
       c.save();
       c.imageSmoothingEnabled = false;
-      const y0 = Math.max(0, ty0), y1 = Math.min(WH2 - 1, ty1);
-      const x0 = Math.max(0, tx0), x1 = Math.min(WW2 - 1, tx1);
+      const y0 = Math.max(0, ty0), y1 = Math.min(WH2 - 1, ty1 + 1);
+      const x0 = Math.max(0, tx0 - 1), x1 = Math.min(WW2 - 1, tx1);
       if (w.wires && w.wires.length) {
         c.strokeStyle = "rgba(28,26,22,.85)";
         c.lineWidth = 1.4;
@@ -37801,8 +37857,12 @@
         for (let tx = x0; tx <= x1; tx++) {
           const m = w.machines.get(ty * WW2 + tx);
           if (!m) continue;
-          const sx = tx * TS - camX, sy = ty * TS - camY;
+          let sx = tx * TS - camX, sy = ty * TS - camY;
           const s = MACHINE[m.t];
+          if (this.isBig(m)) {
+            this.renderBig(c, w, m, sx, sy, time, camX, camY);
+            continue;
+          }
           if (m.t !== "belt" && m.t !== "belt_fast") {
             const busy = m.on && m.act && this.SHAKE[m.t];
             const jx = busy ? Math.round(Math.sin(time * 53 + tx) * this.SHAKE[m.t]) : 0;
@@ -37960,9 +38020,576 @@
       }
       for (const [id, ix, iy] of items) Art.drawItem(c, id, ix, iy, 14);
       c.restore();
+    },
+    /** 여러 칸 기계 — 몸체 · 움직임(factory/big) 다음에 고장 표시 · 배출구 · 연료 · 진행 · 상태 점을 발자국 가장자리에 */
+    renderBig(c, w, m, ax, ay, time, camX, camY) {
+      const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t];
+      const jx = busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0;
+      const [X, Y, PW, PH] = this.drawBig(c, m, ax + jx, ay, time);
+      if (m.t === "drill_x") this.drawWork(c, w, m, ax, ay, time, camX, camY);
+      if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW - TS, Y, time);
+      if (s.rot) {
+        const [dx, dy] = DIR4[m.dir & 3];
+        const ex = dx > 0 ? X + PW : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH : Y + PH - TS / 2;
+        c.fillStyle = "rgba(255,214,120,.9)";
+        c.fillRect(ex + dx * 2 - 2 - (dx > 0 ? 2 : 0), ey + dy * 2 - 2 - (dy > 0 ? 2 : 0), 4, 4);
+      }
+      if (m.fmax && m.fuel > 0) {
+        const h = Math.round(m.fuel / m.fmax * (PH - 8));
+        c.fillStyle = "#e8842a";
+        c.fillRect(X + 1, Y + PH - 4 - h, 2, h);
+      }
+      if (m.rec >= 0 && MRECIPES[m.rec]) {
+        const p = clamp(m.prog / MRECIPES[m.rec].t, 0, 1);
+        c.fillStyle = "#2a2a32";
+        c.fillRect(X + 4, Y + PH - 3, PW - 8, 2);
+        c.fillStyle = "#5fc45f";
+        c.fillRect(X + 4, Y + PH - 3, Math.round((PW - 8) * p), 2);
+      }
+      c.fillStyle = this.statusColor(m);
+      c.fillRect(X + PW - 4, Y + 2, 2, 2);
     }
   };
   mixin(Factory11, FactoryRenderPart);
+
+  // src/game/factory/big.ts
+  var big_exports = {};
+  __export(big_exports, {
+    BIG_ART: () => BIG_ART,
+    FactoryBigPart: () => FactoryBigPart
+  });
+  var M = 12;
+  var OUT = "#15171d", ST0 = "#2e333d", ST1 = "#4a5160", ST2 = "#6a7384", ST3 = "#9aa3b2", HI = "#c4ccd8";
+  var P = (c, x, y, w, h, col) => {
+    c.fillStyle = col;
+    c.fillRect(x, y, w, h);
+  };
+  function panel(c, x, y, w, h, base, lt, dk) {
+    P(c, x, y, w, h, OUT);
+    P(c, x + 1, y + 1, w - 2, h - 2, base);
+    P(c, x + 1, y + 1, w - 2, 1, lt);
+    P(c, x + 1, y + 1, 1, h - 2, lt);
+    P(c, x + 1, y + h - 2, w - 2, 1, dk);
+    P(c, x + w - 2, y + 1, 1, h - 2, dk);
+  }
+  var rivet = (c, x, y) => {
+    P(c, x, y, 1, 1, HI);
+    P(c, x + 1, y + 1, 1, 1, OUT);
+  };
+  function hazard(c, x, y, w, h) {
+    P(c, x, y, w, h, "#d8b040");
+    c.save();
+    c.beginPath();
+    c.rect(x, y, w, h);
+    c.clip();
+    c.fillStyle = "#22201a";
+    for (let k = -h; k < w; k += 6) {
+      c.beginPath();
+      c.moveTo(x + k, y + h);
+      c.lineTo(x + k + h, y);
+      c.lineTo(x + k + h + 3, y);
+      c.lineTo(x + k + 3, y + h);
+      c.fill();
+    }
+    c.restore();
+  }
+  function circ(c, x, y, r, col) {
+    c.fillStyle = col;
+    c.beginPath();
+    c.arc(x, y, r, 0, TAU);
+    c.fill();
+  }
+  function line3(c, x0, y0, x1, y1, col, w) {
+    c.strokeStyle = col;
+    c.lineWidth = w;
+    c.beginPath();
+    c.moveTo(x0, y0);
+    c.lineTo(x1, y1);
+    c.stroke();
+  }
+  function glow(c, x, y, r, col, a) {
+    c.save();
+    c.globalCompositeOperation = "lighter";
+    c.globalAlpha = a;
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, col);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    c.fillStyle = g;
+    c.fillRect(x - r, y - r, r * 2, r * 2);
+    c.restore();
+  }
+  function gauge(c, x, y, r, v) {
+    circ(c, x, y, r + 1, OUT);
+    circ(c, x, y, r, "#d8d2c0");
+    P(c, x - r + 1, y, 2, 1, "#a04030");
+    const a = Math.PI * (0.8 + 1.4 * clamp(v, 0, 1));
+    line3(c, x, y, x + Math.cos(a) * (r - 1), y + Math.sin(a) * (r - 1), "#a02a20", 1);
+    P(c, x - 0.5, y - 0.5, 1, 1, OUT);
+  }
+  var BIG_ART = {
+    /* 조립기 2×2 — 유리창 안에서 두 마디 팔이 부품을 집어 옮기고 용접한다 · 아래 조작판 불이 깜빡인다 */
+    assembler: {
+      body(c) {
+        P(c, 0, 38, 44, 6, OUT);
+        hazard(c, 1, 39, 42, 4);
+        panel(c, 0, 3, 44, 36, "#4a5468", "#66728a", "#323a4a");
+        P(c, 4, 7, 36, 22, OUT);
+        P(c, 5, 8, 34, 20, "#16202a");
+        P(c, 6, 9, 32, 2, "#22303c");
+        for (let x = 8; x < 38; x += 6) P(c, x, 11, 1, 14, "#1c2834");
+        P(c, 5, 24, 34, 4, ST1);
+        for (let x = 6; x < 39; x += 4) P(c, x, 25, 2, 2, ST3);
+        P(c, 5, 8, 34, 1, "#4a7a90");
+        P(c, 21, 8, 3, 3, ST3);
+        panel(c, 4, 30, 36, 7, "#3a4252", "#525c70", "#2a303c");
+        P(c, 0, 18, 3, 10, OUT);
+        P(c, 1, 19, 2, 8, "#20242c");
+        P(c, 41, 18, 3, 10, OUT);
+        P(c, 41, 19, 2, 8, "#20242c");
+        P(c, 8, 0, 28, 4, OUT);
+        P(c, 9, 1, 26, 2, ST1);
+        for (let x = 11; x < 34; x += 5) P(c, x, 1, 2, 2, "#2a2e36");
+        for (const [x, y] of [[2, 5], [41, 5], [2, 35], [41, 35]]) rivet(c, x, y);
+      },
+      live(c, m, t, run) {
+        const r = m.rec >= 0 ? MRECIPES[m.rec] : null, cyc = run ? t * 0.55 % 1 : 0;
+        const px = run ? 6 + cyc * 30 : 20;
+        if (r) Art.drawItem(c, Object.keys(r.out)[0], Math.round(px), 17, 8);
+        else if (run) P(c, Math.round(px), 20, 6, 4, "#8a7a5a");
+        const reach = run ? Math.sin(cyc * Math.PI) : 0.2;
+        const tx = run ? px + 4 : 22, ty = 13 + reach * 6;
+        const bx = 22.5, by = 10, L1 = 7, L2 = 7;
+        const dx = tx - bx, dy = ty - by, d = clamp(Math.hypot(dx, dy), 1, L1 + L2 - 0.5);
+        const a0 = Math.atan2(dy, dx), k = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
+        const ex = bx + Math.cos(a0 - k) * L1, ey = by + Math.sin(a0 - k) * L1;
+        line3(c, bx, by, ex, ey, "#d8b46a", 2.2);
+        line3(c, ex, ey, tx, ty, "#c8a45a", 1.8);
+        circ(c, ex, ey, 1.3, HI);
+        P(c, tx - 2, ty, 1, 2, ST3);
+        P(c, tx + 1, ty, 1, 2, ST3);
+        if (run && Math.abs(cyc - 0.5) < 0.18) {
+          const f = t * 40 | 0;
+          glow(c, tx, ty + 3, 9, "#9fd8ff", 0.55);
+          c.fillStyle = "#e8f6ff";
+          for (let i = 0; i < 4; i++) {
+            const a = (f * 1.7 + i * 1.9) % TAU;
+            c.fillRect(tx + Math.cos(a) * (2 + i), ty + 3 + Math.sin(a) * 2 - i * 0.5, 1, 1);
+          }
+        }
+        for (let i = 0; i < 6; i++) {
+          const on = run ? (t * 4 + i * 1.3 | 0) % 3 !== 0 : i === 0;
+          P(c, 7 + i * 5, 32, 3, 2, on ? ["#5fc45f", "#e0b23c", "#5fc45f", "#8fd8ff", "#e0563c", "#5fc45f"][i] : "#2a2e36");
+        }
+        if (run) for (let i = 0; i < 3; i++) P(c, 0, 20 + (t * 8 + i * 2.6) % 6 | 0, 2, 1, "#d8b46a");
+      }
+    },
+    /* 가압기 2×2 — 기둥 둘과 위 들보 · 유압 실린더가 판을 천천히 내려 꽝 찍고 빠르게 올라간다 · 압력계 바늘이 튄다 */
+    pressor: {
+      body(c) {
+        panel(c, 0, 33, 44, 11, "#3a3f4a", "#5a616e", "#252a32");
+        P(c, 2, 42, 40, 2, OUT);
+        for (const x of [3, 39]) {
+          rivet(c, x, 36);
+          rivet(c, x, 40);
+        }
+        panel(c, 12, 29, 20, 5, "#5a5e66", "#8a8e99", "#3a3e46");
+        panel(c, 2, 4, 7, 30, ST1, ST2, ST0);
+        panel(c, 35, 4, 7, 30, ST1, ST2, ST0);
+        for (let y = 8; y < 32; y += 6) {
+          P(c, 3, y, 5, 1, ST0);
+          P(c, 36, y, 5, 1, ST0);
+        }
+        panel(c, 0, 1, 44, 9, "#4a4f5a", "#6a7080", "#2e323a");
+        panel(c, 16, 0, 12, 12, "#7a3a2a", "#a05040", "#5a2a1e");
+        P(c, 18, 2, 8, 1, "#c07060");
+        c.strokeStyle = "#1e1e22";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.moveTo(16, 6);
+        c.quadraticCurveTo(10, 8, 8, 14);
+        c.stroke();
+        c.beginPath();
+        c.moveTo(28, 6);
+        c.quadraticCurveTo(34, 8, 36, 14);
+        c.stroke();
+        hazard(c, 3, 26, 5, 3);
+        hazard(c, 36, 26, 5, 3);
+      },
+      live(c, m, t, run) {
+        const ph = run ? t * 0.7 % 1 : 0.95;
+        const d = ph < 0.55 ? Math.pow(ph / 0.55, 1.6) : ph < 0.62 ? 1 : 1 - (ph - 0.62) / 0.38;
+        const y = 11 + Math.round(d * 13), hit = run && ph >= 0.55 && ph < 0.62;
+        P(c, 20, 10, 4, y - 10, "#c8ccd4");
+        P(c, 20, 10, 1, y - 10, "#eef0f4");
+        panel(c, 10, y, 24, 6, "#6a6e78", "#9aa0aa", "#454850");
+        const r = m.rec >= 0 ? MRECIPES[m.rec] : null;
+        if (r) Art.drawItem(c, Object.keys(r.in)[0], 18, 21 + (hit ? 2 : 0), 8);
+        if (hit) {
+          glow(c, 22, 29, 14, "#ffd27a", 0.45);
+          for (let i = 0; i < 5; i++) {
+            const k = (t * 30 + i * 2.3) % 6;
+            P(c, 10 - k * 1.4, 27 - k * 0.6, 1, 1, "#a09888");
+            P(c, 33 + k * 1.4, 27 - k * 0.6, 1, 1, "#a09888");
+          }
+        }
+        gauge(c, 5.5, 17, 3, run ? hit ? 0.95 : 0.25 + d * 0.5 : 0.05);
+        gauge(c, 38.5, 17, 3, run ? 0.4 + Math.sin(t * 9) * 0.05 : 0.05);
+      }
+    },
+    /* 시추 펌프 2×2 — 흔들대(머리 달린 들보)가 A 틀 위에서 끄덕이고, 왼쪽 크랭크 추가 돌며, 머리의 줄이 우물 막대를 오르내린다 */
+    pump: {
+      body(c) {
+        panel(c, 0, 38, 44, 6, "#5a5850", "#7a786e", "#3a3a34");
+        c.fillStyle = OUT;
+        c.beginPath();
+        c.moveTo(14, 39);
+        c.lineTo(21, 14);
+        c.lineTo(24, 14);
+        c.lineTo(31, 39);
+        c.lineTo(28, 39);
+        c.lineTo(22.5, 19);
+        c.lineTo(17, 39);
+        c.fill();
+        c.fillStyle = "#7a6a4a";
+        c.beginPath();
+        c.moveTo(15.5, 38);
+        c.lineTo(21.5, 15);
+        c.lineTo(23, 15);
+        c.lineTo(29.5, 38);
+        c.lineTo(28.5, 38);
+        c.lineTo(22.3, 18);
+        c.lineTo(16.5, 38);
+        c.fill();
+        line3(c, 18, 30, 27, 30, "#5a4a32", 1.2);
+        panel(c, 2, 30, 12, 9, "#4a4f5a", "#6a7080", "#2e323a");
+        panel(c, 3, 26, 6, 5, "#3a5a3a", "#5a7a5a", "#2a3a2a");
+        panel(c, 34, 30, 8, 9, ST1, ST2, ST0);
+        P(c, 36, 26, 4, 5, ST2);
+        circ(c, 38, 33, 2.5, "#a03a2a");
+        circ(c, 38, 33, 1, "#e06a5a");
+        P(c, 14, 40, 20, 2, "#2a2620");
+      },
+      live(c, m, t, run) {
+        const phi = run ? t * 2.2 : 1.2, a = Math.sin(phi) * 0.26;
+        const cx0 = 8, cy0 = 34, pinX = cx0 + Math.cos(phi) * 4.5, pinY = cy0 + Math.sin(phi) * 4.5;
+        c.save();
+        c.translate(cx0, cy0);
+        c.rotate(phi);
+        P(c, -1, -1, 6, 2, ST3);
+        panel(c, 3, -3, 5, 6, "#5a5e66", "#8a8e99", "#3a3e46");
+        c.restore();
+        const bx = 22.5, by = 14, cs = Math.cos(a), sn = Math.sin(a);
+        const L = [bx - cs * 17, by - sn * 17], R = [bx + cs * 17, by + sn * 17];
+        line3(c, pinX, pinY, L[0], L[1] + 2, "#3a3a40", 1.6);
+        c.save();
+        c.translate(bx, by);
+        c.rotate(a);
+        P(c, -18, -2, 36, 4, OUT);
+        P(c, -17, -1, 34, 2, "#c8a040");
+        P(c, -17, -1, 34, 1, "#e8c060");
+        c.fillStyle = OUT;
+        c.beginPath();
+        c.moveTo(16, -4);
+        c.quadraticCurveTo(23, -2, 21, 7);
+        c.lineTo(17, 6);
+        c.quadraticCurveTo(18, 0, 15, -2);
+        c.fill();
+        c.fillStyle = "#b08a3a";
+        c.beginPath();
+        c.moveTo(16.5, -3);
+        c.quadraticCurveTo(21.5, -1.5, 20, 6);
+        c.lineTo(18, 5.5);
+        c.quadraticCurveTo(18.5, 0, 16, -1.5);
+        c.fill();
+        c.restore();
+        circ(c, bx, by, 1.6, ST3);
+        const hx = R[0] + cs * 2, hy = R[1] + 7;
+        line3(c, hx, hy, 38, hy + 4, "#1e1e22", 1);
+        P(c, 37.5, hy + 4, 1, Math.max(0, 30 - hy - 4), "#d8dce4");
+        if (run && (t * 3 | 0) % 2 === 0) for (let i = 0; i < 3; i++) P(c, 33 - (t * 14 + i * 7) % 20, 40, 2, 1, "#1a1612");
+      }
+    },
+    /* 정제기 1×2 — 증류탑의 창 셋에 원유 · 호박색 · 맑은 기름 층이 끓고, 왼쪽 굴뚝 끝에서 불꽃이 탄다 */
+    refinery: {
+      body(c) {
+        panel(c, 0, 40, 22, 4, "#4a4a44", "#6a6a62", "#33332e");
+        P(c, 1, 0, 3, 18, OUT);
+        P(c, 2, 1, 1, 17, ST2);
+        panel(c, 5, 4, 12, 37, "#8a8e96", "#b8bcc4", "#5a5e66");
+        c.fillStyle = OUT;
+        c.beginPath();
+        c.arc(11, 5, 6, Math.PI, 0);
+        c.fill();
+        c.fillStyle = "#9a9ea6";
+        c.beginPath();
+        c.arc(11, 5, 5, Math.PI, 0);
+        c.fill();
+        for (let y = 9; y < 40; y += 6) P(c, 5, y, 12, 1, "#5a5e66");
+        for (const y of [11, 21, 31]) {
+          P(c, 8, y, 6, 5, OUT);
+          P(c, 9, y + 1, 4, 3, "#1a1a1e");
+        }
+        for (const y of [13, 23, 33]) {
+          P(c, 17, y, 4, 2, OUT);
+          P(c, 19, y, 2, 8, OUT);
+          P(c, 19, y + 1, 1, 6, ST3);
+        }
+        P(c, 18, 38, 3, 3, "#a03a2a");
+      },
+      live(c, m, t, run) {
+        const cols = [["#e8d080", "#fff0b0"], ["#c88a30", "#e8b050"], ["#3a2a1a", "#5a4428"]];
+        [11, 21, 31].forEach((y, i) => {
+          const lv = run ? 2 + Math.round(Math.sin(t * 2 + i) * 0.6) : 1;
+          P(c, 9, y + 4 - lv, 4, lv, cols[i][0]);
+          if (run && (t * 6 + i * 2 | 0) % 3 === 0) P(c, 9 + ((t * 5 + i) % 3 | 0), y + 3 - lv, 1, 1, cols[i][1]);
+        });
+        if (run) {
+          const f = 0.6 + 0.4 * Math.sin(t * 17) * Math.sin(t * 6.1);
+          glow(c, 2.5, -2, 8, "#ffa040", 0.55 * f + 0.25);
+          c.fillStyle = "#ffd27a";
+          c.beginPath();
+          c.moveTo(1, 0);
+          c.quadraticCurveTo(2.5 + Math.sin(t * 13), -6 - f * 4, 4, 0);
+          c.fill();
+          c.fillStyle = "#fff0c0";
+          c.fillRect(2, -2, 1, 2);
+          for (const y of [13, 23, 33]) P(c, 19, y + 1 + (t * 10 % 6 | 0), 1, 1, "#e8c060");
+        }
+      }
+    },
+    /* 자동 용광로 1×2 — 벽돌 화로 · 굴뚝 · 아궁이 불이 일렁이고, 녹으면 오른쪽 주둥이에서 쇳물이 틀로 흐른다 */
+    smelter: {
+      body(c) {
+        P(c, 0, 17, 22, 27, OUT);
+        P(c, 1, 18, 20, 25, "#8a5a3a");
+        c.save();
+        c.beginPath();
+        c.rect(1, 18, 20, 25);
+        c.clip();
+        for (let y = 18; y < 43; y += 4) for (let x = -2 + y / 4 % 2 * 3; x < 21; x += 6) {
+          P(c, x, y, 5, 3, "#9a6a44");
+          P(c, x, y, 5, 1, "#b07e54");
+        }
+        c.restore();
+        P(c, 5, 0, 12, 18, OUT);
+        P(c, 6, 1, 10, 17, "#7a4e32");
+        c.save();
+        c.beginPath();
+        c.rect(6, 1, 10, 17);
+        c.clip();
+        for (let y = 1; y < 17; y += 4) for (let x = 4 + y / 4 % 2 * 2; x < 16; x += 5) P(c, x, y, 4, 3, "#8a5a3a");
+        c.restore();
+        P(c, 4, 0, 14, 3, OUT);
+        P(c, 5, 1, 12, 1, ST2);
+        P(c, 4, 30, 12, 12, OUT);
+        c.fillStyle = OUT;
+        c.beginPath();
+        c.arc(10, 30, 6, Math.PI, 0);
+        c.fill();
+        P(c, 5, 31, 10, 10, "#1a0e08");
+        c.fillStyle = "#1a0e08";
+        c.beginPath();
+        c.arc(10, 31, 5, Math.PI, 0);
+        c.fill();
+        P(c, 16, 26, 6, 2, OUT);
+        P(c, 17, 26, 4, 1, ST2);
+        P(c, 15, 40, 7, 4, OUT);
+        P(c, 16, 41, 5, 2, "#3a3a40");
+      },
+      live(c, m, t, run) {
+        const lit = run || m.fuel > 0, f = 0.55 + 0.45 * Math.sin(t * 13) * Math.sin(t * 7.3);
+        if (lit) {
+          glow(c, 10, 37, 14, "#ff9a3a", 0.35 + f * 0.3);
+          c.fillStyle = f > 0.6 ? "#ffe08a" : "#ff9a3a";
+          for (let i = 0; i < 4; i++) {
+            const h = 3 + (Math.sin(t * 11 + i * 2) + 1) * 2.5;
+            c.fillRect(6 + i * 2.4, 41 - h, 2, h);
+          }
+          P(c, 7, 39, 6, 2, "#ffd27a");
+        }
+        if (run) {
+          P(c, 19, 28, 1, 12, "#ffb040");
+          P(c, 19, 28 + (t * 20 % 12 | 0), 1, 2, "#fff0b0");
+          P(c, 16, 41, 5, 2, "#ff8a2a");
+          glow(c, 19, 41, 6, "#ff8a2a", 0.5);
+          for (let i = 0; i < 3; i++) {
+            const q = (t * 0.5 + i / 3) % 1;
+            c.globalAlpha = (1 - q) * 0.4;
+            circ(c, 11 + Math.sin(q * 6 + i) * 3, -2 - q * 18, 2.5 + q * 4, "#5a5a60");
+            c.globalAlpha = 1;
+          }
+        }
+      }
+    },
+    /* 강화 축전지 1×2 — 칸 여덟이 잔량만큼 켜지고, 충전 중이면 위 단자 사이로 번개가 튄다 */
+    battery_hi: {
+      body(c) {
+        panel(c, 0, 40, 22, 4, ST1, ST2, ST0);
+        panel(c, 2, 5, 18, 36, "#2e3a3a", "#4a5a5a", "#1e2626");
+        for (let y = 8; y < 38; y += 3) {
+          P(c, 0, y, 2, 1, ST2);
+          P(c, 20, y, 2, 1, ST2);
+        }
+        P(c, 5, 9, 12, 30, OUT);
+        for (let i = 0; i < 8; i++) P(c, 6, 10 + i * 3.6, 10, 2.6, "#1a2422");
+        P(c, 4, 1, 4, 5, OUT);
+        P(c, 5, 1, 2, 2, "#c04030");
+        P(c, 14, 1, 4, 5, OUT);
+        P(c, 15, 1, 2, 2, "#30303a");
+      },
+      live(c, m, t, run) {
+        const s = MACHINE[m.t], e = clamp((m.e || 0) / (s.store || 1), 0, 1), n = Math.round(e * 8);
+        for (let i = 0; i < n; i++) {
+          const y = 10 + (7 - i) * 3.6;
+          P(c, 6, y, 10, 2.6, i >= 6 ? "#9ff0d0" : "#4ac8a0");
+          if (i === n - 1 && run) {
+            c.globalAlpha = 0.5 + 0.5 * Math.sin(t * 8);
+            P(c, 6, y, 10, 2.6, "#e8fff4");
+            c.globalAlpha = 1;
+          }
+        }
+        if (run && (t * 9 | 0) % 3 !== 0) {
+          c.strokeStyle = "#bff0ff";
+          c.lineWidth = 1;
+          c.beginPath();
+          c.moveTo(7, 2);
+          for (let x = 8; x < 15; x += 2) c.lineTo(x, 1 - (x * 7 + (t * 30 | 0)) % 3);
+          c.lineTo(15, 2);
+          c.stroke();
+          glow(c, 11, 1, 6, "#8fd8ff", 0.4);
+        }
+      }
+    },
+    /* 염수 증류기 2×1 — 왼쪽 솥이 불 위에서 끓고, 김이 오른쪽 냉각 관을 지나 물방울로 떨어져 소금판에 고인다 */
+    desal: {
+      body(c) {
+        P(c, 0, 4, 22, 13, OUT);
+        c.fillStyle = OUT;
+        c.beginPath();
+        c.arc(5, 10.5, 6.5, 0, TAU);
+        c.arc(17, 10.5, 6.5, 0, TAU);
+        c.fill();
+        P(c, 5, 5, 12, 11, "#6a8a9a");
+        circ(c, 5, 10.5, 5.5, "#6a8a9a");
+        circ(c, 17, 10.5, 5.5, "#6a8a9a");
+        P(c, 3, 6, 16, 1, "#9ab8c8");
+        for (const x of [6, 11, 16]) P(c, x, 5, 1, 11, "#4a6a7a");
+        P(c, 8, 9, 6, 4, OUT);
+        P(c, 9, 10, 4, 2, "#1a2a34");
+        P(c, 2, 17, 18, 5, OUT);
+        P(c, 3, 18, 16, 3, "#2a1a12");
+        P(c, 18, 1, 8, 3, OUT);
+        P(c, 19, 2, 6, 1, ST3);
+        c.strokeStyle = OUT;
+        c.lineWidth = 3;
+        c.beginPath();
+        c.moveTo(25, 3);
+        for (let i = 0; i < 4; i++) {
+          c.lineTo(41, 3 + i * 3);
+          c.lineTo(41, 4.5 + i * 3);
+          c.lineTo(25, 4.5 + i * 3);
+        }
+        c.stroke();
+        c.strokeStyle = "#b87a4a";
+        c.lineWidth = 1.2;
+        c.stroke();
+        P(c, 24, 16, 19, 6, OUT);
+        P(c, 25, 17, 17, 4, "#4a4a50");
+        P(c, 26, 19, 15, 2, "#e8e4dc");
+      },
+      live(c, m, t, run) {
+        if (!run) return;
+        const f = 0.55 + 0.45 * Math.sin(t * 12) * Math.sin(t * 6.7);
+        glow(c, 11, 20, 10, "#ff9a3a", 0.3 + f * 0.3);
+        for (let i = 0; i < 4; i++) P(c, 4 + i * 4, 21 - (Math.sin(t * 10 + i) + 1) * 1.5, 2, 2, f > 0.5 ? "#ffd27a" : "#ff8a2a");
+        P(c, 9 + (t * 7 % 4 | 0), 11 - (t * 9 % 2 | 0), 1, 1, "#c8f0ff");
+        for (let i = 0; i < 2; i++) {
+          const q = (t * 0.8 + i / 2) % 1;
+          c.globalAlpha = (1 - q) * 0.5;
+          circ(c, 21 + q * 3, 0 - q * 8, 1.5 + q * 3, "#dce8ee");
+          c.globalAlpha = 1;
+        }
+        for (let i = 0; i < 3; i++) {
+          const q = (t * 1.4 + i / 3) % 1;
+          P(c, 29 + i * 5, 14 + q * 4, 1, 1.5, "#9fd8ff");
+        }
+      }
+    },
+    /* 심층 드릴 1×2 — 철탑 안에서 윗구동기가 눌러 내리며 드릴대가 돈다(줄무늬가 흐른다) · 청록 가압판 불 */
+    drill_x: {
+      body(c) {
+        panel(c, 0, 38, 22, 6, "#2e4a4a", "#4a6a6a", "#1e3232");
+        c.strokeStyle = OUT;
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(2, 39);
+        c.lineTo(8, 4);
+        c.moveTo(20, 39);
+        c.lineTo(14, 4);
+        c.stroke();
+        c.strokeStyle = "#5a7a7a";
+        c.lineWidth = 1;
+        c.beginPath();
+        c.moveTo(2.5, 38);
+        c.lineTo(8.3, 5);
+        c.moveTo(19.5, 38);
+        c.lineTo(13.7, 5);
+        for (let y = 10; y < 38; y += 7) {
+          const k = (y - 4) / 35, xl = 8 - k * 6, xr = 14 + k * 6, k2 = (y + 7 - 4) / 35;
+          c.moveTo(xl, y);
+          c.lineTo(14 + k2 * 6, y + 7);
+          c.moveTo(xr, y);
+          c.lineTo(8 - k2 * 6, y + 7);
+        }
+        c.stroke();
+        P(c, 6, 0, 10, 3, OUT);
+        P(c, 7, 1, 8, 1, "#6a8a8a");
+        P(c, 9, 34, 4, 5, OUT);
+        P(c, 10, 35, 2, 4, "#3a3e46");
+      },
+      live(c, m, t, run) {
+        const bob = run ? Math.round(Math.sin(t * 3) * 1.5 + 1.5) : 0, y0 = 6 + bob;
+        P(c, 10, y0 + 6, 2, 34 - y0 - 6, "#8a8e96");
+        if (run) for (let y = y0 + 6 + t * 24 % 4; y < 34; y += 4) P(c, 10, y, 2, 1, "#c8ccd4");
+        panel(c, 5, y0, 12, 7, "#2e5a5a", "#4a8a8a", "#1e3a3a");
+        P(c, 7, y0 + 2, 2, 2, run ? "#7fe8e0" : "#2a4a4a");
+        P(c, 13, y0 + 2, 2, 2, run ? "#7fe8e0" : "#2a4a4a");
+        if (run) glow(c, 11, y0 + 3, 7, "#6fe0d8", 0.3 + 0.2 * Math.sin(t * 7));
+      }
+    }
+  };
+  var FactoryBigPart = {
+    _bigCache: null,
+    /** 여러 칸 기계인가 */
+    isBig(m) {
+      return (m.w || 1) * (m.h || 1) > 1 && !!BIG_ART[m.t];
+    },
+    /** 몸체 캐시 — 갈래마다 한 번 */
+    bigBody(key, W, H) {
+      const cache2 = this._bigCache || (this._bigCache = {});
+      if (cache2[key]) return cache2[key];
+      const cv = document.createElement("canvas");
+      cv.width = W * TS + M * 2;
+      cv.height = H * TS + M * 2;
+      const g = cv.getContext("2d");
+      g.imageSmoothingEnabled = false;
+      g.translate(M, M);
+      BIG_ART[key].body(g, W, H);
+      return cache2[key] = cv;
+    },
+    /** 그린다 — (ax, ay) 는 닻 칸(왼쪽 아래)의 화면 자리. run 이 없으면 기계 상태로 정한다(미리보기는 false) */
+    drawBig(c, m, ax, ay, time, run) {
+      const W = m.w || 1, H = m.h || 1, X = Math.round(ax), Y = Math.round(ay - (H - 1) * TS);
+      const on = run === void 0 ? !!(m.on && m.act && !m.broke) : run;
+      c.drawImage(this.bigBody(m.t, W, H), X - M, Y - M);
+      c.save();
+      c.translate(X, Y);
+      BIG_ART[m.t].live(c, m, time + m.x * 0.37, on);
+      c.restore();
+      return [X, Y, W * TS, H * TS];
+    }
+  };
+  mixin(Factory11, FactoryBigPart);
 
   // src/game/ui.ts
   var ui_exports2 = {};
@@ -38790,7 +39417,7 @@
       grid.style.setProperty("--cy", this.TREE_CY + "px");
       const svg = document.createElementNS(NS, "svg");
       svg.setAttribute("class", "blines");
-      const line3 = (a, b, cls, c) => {
+      const line4 = (a, b, cls, c) => {
         const ln = document.createElementNS(NS, "line");
         ln.setAttribute("x1", String(a[0]));
         ln.setAttribute("y1", String(a[1]));
@@ -38801,10 +39428,10 @@
         svg.appendChild(ln);
         return ln;
       };
-      for (const id in SKILLS) if (SKILLS[id].tier === 0) line3([0, 0], this._nodeXY(id), "broot", byId(SKILLS[id].br).c);
+      for (const id in SKILLS) if (SKILLS[id].tier === 0) line4([0, 0], this._nodeXY(id), "broot", byId(SKILLS[id].br).c);
       for (const id in SKILLS) for (const rq of SKILLS[id].req || []) {
         const cross = SKILLS[rq].br !== SKILLS[id].br;
-        const ln = line3(this._nodeXY(rq), this._nodeXY(id), "bline" + (cross ? " cross" : ""), byId(SKILLS[id].br).c);
+        const ln = line4(this._nodeXY(rq), this._nodeXY(id), "bline" + (cross ? " cross" : ""), byId(SKILLS[id].br).c);
         ln.dataset.from = rq;
         ln.dataset.to = id;
       }
@@ -39056,13 +39683,13 @@
       if (!w) return;
       w.innerHTML = "";
       for (const k in PROFS) {
-        const P = PROFS[k];
+        const P2 = PROFS[k];
         const d = document.createElement("div");
         d.className = "prof";
         d.dataset.pf = k;
-        d.style.setProperty("--pc", P.c);
-        d.innerHTML = `<div class="phead"><span class="pic"></span><span class="pn">${P.n}</span><span class="plv">Lv 1</span></div><div class="pline">${P.line}</div><div class="pbar"><i></i></div><div class="pxp"></div><div class="plin"></div><div class="pperks"></div>`;
-        d.querySelector(".pic").textContent = P.i;
+        d.style.setProperty("--pc", P2.c);
+        d.innerHTML = `<div class="phead"><span class="pic"></span><span class="pn">${P2.n}</span><span class="plv">Lv 1</span></div><div class="pline">${P2.line}</div><div class="pbar"><i></i></div><div class="pxp"></div><div class="plin"></div><div class="pperks"></div>`;
+        d.querySelector(".pic").textContent = P2.i;
         w.appendChild(d);
       }
     },
@@ -39072,7 +39699,7 @@
       if (!w.firstChild) this.buildProf();
       const p = app.player;
       for (const k in PROFS) {
-        const P = PROFS[k], el = w.querySelector(`.prof[data-pf="${k}"]`);
+        const P2 = PROFS[k], el = w.querySelector(`.prof[data-pf="${k}"]`);
         if (!el) continue;
         const pr = p.prof && p.prof[k] || { lv: 1, xp: 0 };
         const capped = pr.lv >= PROF_MAX;
@@ -39080,8 +39707,8 @@
         el.querySelector(".plv").textContent = capped ? tr("Lv {profMax} · 끝", { profMax: PROF_MAX }) : `Lv ${pr.lv}`;
         el.querySelector(".pbar i").style.width = (capped ? 100 : Math.min(100, pr.xp / need * 100)) + "%";
         el.querySelector(".pxp").textContent = capped ? tr("더 오를 곳이 없다") : `${pr.xp} / ${need}`;
-        el.querySelector(".plin").innerHTML = P.lin.map(([n, f]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join("");
-        el.querySelector(".pperks").innerHTML = P.perks.map(([at, n, dsc]) => `<div class="perk${pr.lv >= at ? " on" : ""}"><span class="pk">Lv ${at}</span><span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>`).join("");
+        el.querySelector(".plin").innerHTML = P2.lin.map(([n, f]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join("");
+        el.querySelector(".pperks").innerHTML = P2.perks.map(([at, n, dsc]) => `<div class="perk${pr.lv >= at ? " on" : ""}"><span class="pk">Lv ${at}</span><span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>`).join("");
       }
     }
   };
@@ -39220,12 +39847,12 @@
       let h = topTabs + `<div class="rv-note">${tr("유적은 들어온 사람을 알아챈다. 머물수록 · 상자를 열수록 <b>맥박</b>이 오르고,\n      쓰러뜨릴수록 가라앉는다. 깨어난 유적은 더 몰려오고 더 준다. 주인을 잡은 둥지는 유적이\n      <b>「{stages}」</b> 이상일 때 <b>메아리</b>를 다시 부른다.\n      맥박이 한 단계 오를 때마다 <b>사건</b>(표식된 것 · 공명석 · 탐욕의 상자 · 포위)이 하나 터진다.\n      등급은 조건을 <b>모두</b> 채워야 오른다 — 아래에 다음 등급까지 남은 것을 적었다.\n      기록이 <b>A</b> 면 금화, <b>S</b> 면 그 유적의 인장.", { stages: PULSE.stages[ECHO.needStage].n })}</div>`;
       const list = RUIN_SPEC.concat(STORY_RUIN.map((_, i) => g.ruinSpec("story" + i)).filter(Boolean)).sort((a, b) => (a.rank || 0) - (b.rank || 0));
       for (const spec of list) {
-        const sc = g.surveyScore(spec.id), P = sc.part, sv = sc.sv;
+        const sc = g.surveyScore(spec.id), P2 = sc.part, sv = sc.sv;
         const cell = (label, q) => !q ? "" : `<span class="${q[0] >= q[1] ? "ok" : ""}">${label} <b>${q[1] === 1 ? q[0] ? "✔" : "—" : q[0] + "/" + q[1]}</b></span>`;
         const seal = ITEMS["seal_" + spec.id];
         h += `<div class="rv${sc.seen ? "" : " off"}"><div class="rv-rank" style="color:${sc.seen ? sc.col : "#5a5448"}">${sc.seen ? sc.rank : "?"}<small>${sc.seen ? sc.score + "%" : ""}</small></div><div class="rv-body"><h4>${sc.seen ? spec.n : tr("아직 발을 들이지 않은 유적")}</h4>`;
         if (sc.seen) {
-          h += `<div class="rv-grid">` + cell(tr("방"), P.rooms) + cell(tr("상자"), P.chests) + cell(tr("비문"), P.lore) + cell(sc.story ? tr("석판") : tr("주인"), P.boss) + cell(tr("골방"), P.code) + cell(tr("격노"), P.rage) + cell(tr("사건"), P.events) + cell(tr("갈래"), P.kinds) + cell(tr("메아리"), P.echo) + `</div>`;
+          h += `<div class="rv-grid">` + cell(tr("방"), P2.rooms) + cell(tr("상자"), P2.chests) + cell(tr("비문"), P2.lore) + cell(sc.story ? tr("석판") : tr("주인"), P2.boss) + cell(tr("골방"), P2.code) + cell(tr("격노"), P2.rage) + cell(tr("사건"), P2.events) + cell(tr("갈래"), P2.kinds) + cell(tr("메아리"), P2.echo) + `</div>`;
           if (sc.next) h += `<div class="rv-next">${tr("다음 {next} 까지 — {join}", { next: sc.next, join: sc.missing.join(" · ") })}</div>`;
           if (seal) h += `<div class="rv-seal">${sv.s ? "✔ " + seal.n + " — " + seal.d.replace(/^[^.]*\.\s*/, "") : `${tr("S 등급 보상 ·")} ` + seal.n}</div>`;
         }
@@ -40141,13 +40768,13 @@
       if (d.water) h += `<div class="tstat">${tr("물 <b>{n}</b> / {max}", { n: it.w | 0, max: d.water })}</div>`;
       if (d.pw) h += `<div class="tstat">${tr("전하 소모 <b>{pw}</b> / 사용", { pw: d.pw })}</div>`;
       if (d.mach) {
-        const M = MACHINE[d.mach];
-        if (M.power) h += `<div class="tstat">${tr("전력 <b>{power}</b>/틱", { power: M.power })}</div>`;
-        if (M.gen) h += `<div class="tstat">${tr("발전 <b>{gen}</b>/틱", { gen: M.gen })}</div>`;
-        if (M.store) h += `<div class="tstat">${tr("축전 <b>{store}</b>", { store: M.store })}</div>`;
-        if (M.fuelIn) h += `<div class="tstat">${tr("연료를 직접 태운다")}</div>`;
-        if (M.mine) h += `<div class="tstat">${tr("채굴 등급 <b>{mine}</b> · 반경 <b>{range}</b>칸", { mine: M.mine, range: M.range })}</div>`;
-        h += `<div class="tdesc">"${M.d}"</div>`;
+        const M2 = MACHINE[d.mach];
+        if (M2.power) h += `<div class="tstat">${tr("전력 <b>{power}</b>/틱", { power: M2.power })}</div>`;
+        if (M2.gen) h += `<div class="tstat">${tr("발전 <b>{gen}</b>/틱", { gen: M2.gen })}</div>`;
+        if (M2.store) h += `<div class="tstat">${tr("축전 <b>{store}</b>", { store: M2.store })}</div>`;
+        if (M2.fuelIn) h += `<div class="tstat">${tr("연료를 직접 태운다")}</div>`;
+        if (M2.mine) h += `<div class="tstat">${tr("채굴 등급 <b>{mine}</b> · 반경 <b>{range}</b>칸", { mine: M2.mine, range: M2.range })}</div>`;
+        h += `<div class="tdesc">"${M2.d}"</div>`;
       }
       if (d.pet && PETS[d.pet] && PETS[d.pet].atk) {
         const a = PETS[d.pet].atk;
@@ -40205,8 +40832,11 @@
       else if (d.type === "door") h += `<div class="thint">${tr("바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수")}</div>`;
       else if (isGear(it)) h += `<div class="thint">${tr("우클릭으로 장착")}</div>`;
       else if (d.type === "consum" || d.type === "summon") h += `<div class="thint">${tr("우클릭으로 사용")}</div>`;
-      else if (d.type === "machine") h += `<div class="thint">${tr("우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정")}</div>`;
-      else if (d.type === "seed") h += `<div class="thint">${d.fert ? tr("자라는 중인 작물에 우클릭") : tr("갈아 둔 밭 위에 우클릭해 심기")}</div>`;
+      else if (d.type === "machine") {
+        const [mw, mh] = Factory11.sizeOf(d.mach);
+        if (mw * mh > 1) h += `<div class="thint">${tr("크기 {w}×{h}칸 — 고른 칸이 왼쪽 아래", { w: mw, h: mh })}</div>`;
+        h += `<div class="thint">${tr("우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정")}</div>`;
+      } else if (d.type === "seed") h += `<div class="thint">${d.fert ? tr("자라는 중인 작물에 우클릭") : tr("갈아 둔 밭 위에 우클릭해 심기")}</div>`;
       else if (d.hoe) h += `<div class="thint">${tr("흙이나 풀에 우클릭해 밭 갈기")}</div>`;
       else if (d.scythe) h += `<div class="thint">${tr("다 여문 작물을 좌클릭해 거두기 — 다른 연장으로 치면 아무것도 안 나온다")}</div>`;
       this.tip.show(h, e.clientX, e.clientY);
@@ -41082,12 +41712,12 @@
     } },
     { k: "ember", f: 4, dur: 0.9, draw: (p) => {
       const g = [0, 1, 2, 1][p.t];
-      const glow = ["#5ad8ff", "#8ae8ff", "#c8f6ff", "#8ae8ff"][p.t];
+      const glow2 = ["#5ad8ff", "#8ae8ff", "#c8f6ff", "#8ae8ff"][p.t];
       if (g) {
         p.px(9 - g, 3 - g, 2 + g * 2, 14 + g * 2, "rgba(120,220,255,.25)");
       }
-      p.px(9, 2, 2, 2, glow);
-      p.px(8, 4, 4, 3, glow);
+      p.px(9, 2, 2, 2, glow2);
+      p.px(8, 4, 4, 3, glow2);
       p.px(7, 7, 6, 4, "#3ab0e0");
       p.px(8, 11, 4, 3, "#2a88b8");
       p.px(9, 14, 2, 2, "#1a5a80");
@@ -45349,7 +45979,7 @@
         const k = s.t / s.max, x = s.x - camX, y = s.y - camY;
         if (s.k === "band") {
           const a = SIG_FX.rain.a * Math.min(1, 0.35 + k);
-          const line3 = () => {
+          const line4 = () => {
             c.beginPath();
             c.moveTo(x - s.hw, y);
             c.lineTo(x + s.hw, y);
@@ -45372,11 +46002,11 @@
           c.globalAlpha = a * 0.8;
           c.strokeStyle = "#12100c";
           c.lineWidth = 4.5;
-          line3();
+          line4();
           c.globalAlpha = a;
           c.strokeStyle = s.c;
           c.lineWidth = 2;
-          line3();
+          line4();
           c.lineCap = "butt";
         } else if (s.k === "sigil") {
           const a = SIG_FX.wolf.a * Math.min(1, k * 1.6), im = Sprites.vfxArt(s.art || "sigil", s.c);
@@ -46494,7 +47124,11 @@
           return;
         }
       }
-      const id = w.get(tx, ty);
+      let id = w.get(tx, ty);
+      if (id === T.M_PART) {
+        const pm = Factory11.at(w, tx, ty);
+        id = pm ? MACHINE[pm.t].tile : T.AIR;
+      }
       const def = TILE_DEF[id];
       if (id === T.AIR || !def.drop) {
         p.mineTx = -1;
@@ -46535,7 +47169,8 @@
         p.mineProg = 0;
         if (MACH_OF_TILE[id]) {
           const back = Factory11.remove(w, tx, ty);
-          if (back && this.net) this.netBroadcast({ k: "mrem", x: tx, y: ty });
+          const gone = Factory11.lastRemoved;
+          if (back && this.net) this.netBroadcast({ k: "mrem", x: gone.x, y: gone.y });
           let spill = 0;
           if (back) {
             for (const it of back) if (!p.addItem(it)) {
@@ -46797,11 +47432,12 @@
             this.toast(tr("채취탑 자리에는 놓을 수 없다"), "bad");
             return;
           }
-          if (!Factory11.canPlace(w, mtx, mty)) {
-            this.toast(tr("그 자리에는 놓을 수 없다"), "bad");
+          const [MW, MH] = Factory11.sizeOf(idef(hi).mach);
+          if (!Factory11.canPlace(w, mtx, mty, idef(hi).mach)) {
+            this.toast(MW * MH > 1 ? tr("그 자리에는 놓을 수 없다 — {w}×{h}칸이 비어 있어야 한다", { w: MW, h: MH }) : tr("그 자리에는 놓을 수 없다"), "bad");
             return;
           }
-          const cell = { x: mtx * TS, y: mty * TS, w: TS, h: TS };
+          const cell = { x: mtx * TS, y: (mty - MH + 1) * TS, w: MW * TS, h: MH * TS };
           if (TILE_DEF[MACHINE[idef(hi).mach].tile].solid === 1 && (aabb(cell, p.rect()) || this.ents.some((e) => !e.dead && aabb(cell, e.rect())))) {
             this.toast(tr("누가 서 있는 자리다"), "bad");
             return;
@@ -47102,19 +47738,20 @@
       const key = idef(hi).mach, s = MACHINE[key];
       const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
       if (Factory11.at(w, tx, ty) || dist(p.cx, p.cy, (tx + 0.5) * TS, (ty + 0.5) * TS) > TS * 7) return;
-      const sx = tx * TS - camX, sy = ty * TS - camY;
-      const ok = Factory11.canPlace(w, tx, ty) && !w.inRig(tx, ty);
+      const sx = tx * TS - camX, sy = ty * TS - camY, [MW, MH] = Factory11.sizeOf(key);
+      const ok = Factory11.canPlace(w, tx, ty, key) && !w.inRig(tx, ty);
       c.save();
       c.globalAlpha = 0.45;
       if (key === "belt" || key === "belt_fast") Factory11.drawBelt(c, sx, sy, key, this.placeDirFor(key), 0);
+      else if (MW * MH > 1) Factory11.drawBig(c, { t: key, x: tx, y: ty, w: MW, h: MH }, sx, sy, this.time, false);
       else TileArt.draw(c, s.tile, 0, sx, sy);
       c.globalAlpha = 1;
       c.strokeStyle = ok ? "rgba(160,230,140,.9)" : "rgba(230,90,70,.9)";
       c.lineWidth = 1;
-      c.strokeRect(sx + 0.5, sy + 0.5, TS - 1, TS - 1);
+      c.strokeRect(sx + 0.5, sy - (MH - 1) * TS + 0.5, MW * TS - 1, MH * TS - 1);
       if (s.rot) {
         const [dx, dy] = dirTable(key)[this.placeDirFor(key)];
-        const cx = sx + TS / 2, cy = sy + TS / 2, ang = Math.atan2(dy, dx);
+        const cx = sx + TS / 2 + (dx > 0 ? (MW - 1) * TS : 0), cy = sy + TS / 2 - (dy < 0 ? (MH - 1) * TS : 0), ang = Math.atan2(dy, dx);
         c.translate(cx, cy);
         c.rotate(ang);
         c.fillStyle = "rgba(255,230,150,.95)";
@@ -51115,16 +51752,16 @@
     },
     /** 생활 숙련이 한 단계 올랐다. */
     onProfUp(kind, lv) {
-      const P = PROFS[kind];
-      if (!P) return;
-      const perk = P.perks.find(([at]) => at === lv);
-      this.toast(tr("{P} {P2} 숙련 {lv}{v}", { P: P.i, P2: P.n, lv, v: perk ? ` — ${perk[1]}` : "" }), "good");
+      const P2 = PROFS[kind];
+      if (!P2) return;
+      const perk = P2.perks.find(([at]) => at === lv);
+      this.toast(tr("{P} {P2} 숙련 {lv}{v}", { P: P2.i, P2: P2.n, lv, v: perk ? ` — ${perk[1]}` : "" }), "good");
       const p = this.player;
-      this.ringFx(p.cx, p.cy, perk ? 74 : 46, P.c, perk ? 0.55 : 0.35);
+      this.ringFx(p.cx, p.cy, perk ? 74 : 46, P2.c, perk ? 0.55 : 0.35);
       for (let i = 0; i < (perk ? 26 : 12); i++)
-        this.parts.push(new Part(p.cx, p.cy, P.c, -70, 0.8));
+        this.parts.push(new Part(p.cx, p.cy, P2.c, -70, 0.8));
       this.sfx(perk ? "level" : "learn");
-      if (perk) UI5.chapterCard({ sub: tr("{P} 숙련 {lv}", { P: P.n, lv }), title: perk[1], line: perk[2] });
+      if (perk) UI5.chapterCard({ sub: tr("{P} 숙련 {lv}", { P: P2.n, lv }), title: perk[1], line: perk[2] });
       if (UI5.open === "skill") UI5.refreshProf();
     },
     onDeath(cause) {
@@ -52413,8 +53050,8 @@
     startMeteor(at) {
       const { WW: WW2 } = dimsOf(this.world);
       if (this.meteor) return false;
-      const w = this.world, M = this.METEOR;
-      let x = -1, R = M.rMin + Math.floor(Math.random() * (M.rMax - M.rMin + 1));
+      const w = this.world, M2 = this.METEOR;
+      let x = -1, R = M2.rMin + Math.floor(Math.random() * (M2.rMax - M2.rMin + 1));
       if (at !== void 0) x = clamp(Math.round(at), 40, WW2 - 40);
       else for (let i = 0; i < 400 && x < 0; i++) {
         const c = 40 + Math.floor(Math.random() * (WW2 - 80));
@@ -52429,15 +53066,15 @@
       return true;
     },
     updateMeteor(dt) {
-      const m = this.meteor, M = this.METEOR;
+      const m = this.meteor, M2 = this.METEOR;
       m.t += dt;
-      if (!m.hit && m.t >= M.fall) this.meteorImpact();
+      if (!m.hit && m.t >= M2.fall) this.meteorImpact();
       if (m.hit) {
         if (m.quake > 0) {
           m.quake -= dt;
           this.shake = Math.max(this.shake, m.amp * clamp(m.quake / m.quakeMax, 0.25, 1));
         }
-        if (m.t > M.fall + Math.max(4, m.quakeMax || 0)) this.meteor = null;
+        if (m.t > M2.fall + Math.max(4, m.quakeMax || 0)) this.meteor = null;
       }
     },
     meteorImpact() {
@@ -52553,9 +53190,9 @@
     drawMeteorSky(c, camY) {
       const m = this.meteor;
       if (!m) return;
-      const M = this.METEOR;
+      const M2 = this.METEOR;
       if (!m.hit) {
-        const u = clamp(m.t / M.fall, 0, 1);
+        const u = clamp(m.t / M2.fall, 0, 1);
         const hx = this.W * (0.5 - m.dir * 0.42 + m.dir * 0.8 * u), hy = this.H * (0.04 + 0.62 * Math.pow(u, 1.3)) - camY * 0.05;
         const L = 90 + 240 * u, ang = Math.atan2(0.62 * this.H, m.dir * 0.8 * this.W);
         const tx = hx - Math.cos(ang) * L, ty = hy - Math.sin(ang) * L;
@@ -52600,7 +53237,7 @@
         c.fill();
         c.restore();
       } else {
-        const k = clamp(1 - (m.t - M.fall) / 2.5, 0, 1);
+        const k = clamp(1 - (m.t - M2.fall) / 2.5, 0, 1);
         if (k > 0) {
           const hx = this.W * (0.5 + m.dir * 0.38), hy = this.H * 0.7 - camY * 0.05;
           const hg = c.createRadialGradient(hx, hy, 0, hx, hy, this.W * 0.35);
@@ -52615,9 +53252,9 @@
     drawMeteorNear(c, camX, camY) {
       const m = this.meteor;
       if (!m) return;
-      const M = this.METEOR, ix = (m.x + 0.5) * TS, iy = m.y * TS;
+      const M2 = this.METEOR, ix = (m.x + 0.5) * TS, iy = m.y * TS;
       if (m.hit) {
-        const k = clamp(1 - (m.t - M.fall) / 0.35, 0, 1);
+        const k = clamp(1 - (m.t - M2.fall) / 0.35, 0, 1);
         if (k > 0 && Math.abs(ix - camX - this.W / 2) < this.W) {
           c.save();
           c.globalAlpha = 0.8 * k;
@@ -52627,9 +53264,9 @@
         }
         return;
       }
-      const left = M.fall - m.t;
-      if (left > M.fg || Math.abs(ix - camX - this.W / 2) > this.W * 1.2) return;
-      const u = 1 - left / M.fg;
+      const left = M2.fall - m.t;
+      if (left > M2.fg || Math.abs(ix - camX - this.W / 2) > this.W * 1.2) return;
+      const u = 1 - left / M2.fg;
       const sx = ix - m.dir * 420 * (1 - u) - camX, sy = iy - 900 * (1 - u) - camY;
       const nim = Sprites.img.sky_meteor_near;
       if (nim && nim.width) {
@@ -55007,8 +55644,8 @@
     puzzleRooms(site) {
       const C = this._puzRooms || (this._puzRooms = {});
       if (C[site.id]) return C[site.id];
-      const P = PUZZLE[site.id], w = this.world;
-      if (!P) return C[site.id] = [];
+      const P2 = PUZZLE[site.id], w = this.world;
+      if (!P2) return C[site.id] = [];
       const cand = [];
       site.rooms.forEach((r, i) => {
         if (i === 0 || r.w < 10 || r.h < 8) return;
@@ -55017,11 +55654,11 @@
           if (ox >= r.x - 1 && ox <= r.x + r.w && oy >= r.y - 1 && oy <= r.y + r.h && (BAR.has(o.type) || o.type === "door")) return;
         }
         const seal = this.puzzleSealCells(r);
-        if (!seal || seal.length < 2 || seal.length > 14 || !this.puzzleNodes(r, P)) return;
+        if (!seal || seal.length < 2 || seal.length > 14 || !this.puzzleNodes(r, P2)) return;
         cand.push({ i, h: hash(w.seed + ":" + site.id + ":" + i) });
       });
       cand.sort((a, b) => a.h - b.h);
-      return C[site.id] = cand.slice(0, P.rooms).map((q) => q.i).sort((a, b) => a - b);
+      return C[site.id] = cand.slice(0, P2.rooms).map((q) => q.i).sort((a, b) => a - b);
     },
     /** 방 번호 → 방(깊은 곳 홀은 'deep') */
     puzRoom(site, ri) {
@@ -55104,16 +55741,16 @@
     /** 닫는다 — 막을 칸에 몸이 걸린 플레이어가 있으면 다음에 */
     puzzleBegin(site, ri) {
       const deep = typeof ri === "string" && ri.startsWith("deep"), L = deep ? +ri.slice(4) : -1;
-      const P = deep ? this.deepPuzzleSpec(site.id, L) : PUZZLE[site.id], r = this.puzRoom(site, ri), w = this.world;
-      if (!P || !r) return false;
+      const P2 = deep ? this.deepPuzzleSpec(site.id, L) : PUZZLE[site.id], r = this.puzRoom(site, ri), w = this.world;
+      if (!P2 || !r) return false;
       const cells = this.puzzleSealCells(r);
       for (const q of this.players) for (const [x, y] of cells)
         if (q.x < (x + 1) * TS && q.x + q.w > x * TS && q.y < (y + 1) * TS && q.y + q.h > y * TS) return false;
-      const nodes = this.puzzleNodes(r, P);
+      const nodes = this.puzzleNodes(r, P2);
       if (!nodes) return false;
       const rnd = lcg(hash(w.seed + ":pz:" + site.id + ":" + ri + ":" + (this.surveyOf(site.id).pzTry || 0)));
-      const pz = { id: site.id, ri, deep, L, k: P.k, skin: P.skin, c: P.c, n: P.n, nodes, t: 0, flash: 1, seal: [], step: 0, show: 0 };
-      this.puzzleSetup(pz, P, rnd);
+      const pz = { id: site.id, ri, deep, L, k: P2.k, skin: P2.skin, c: P2.c, n: P2.n, nodes, t: 0, flash: 1, seal: [], step: 0, show: 0 };
+      this.puzzleSetup(pz, P2, rnd);
       for (const [x, y] of cells) {
         pz.seal.push([x, y, w.get(x, y)]);
         w.set(x, y, T.SEALSTONE);
@@ -55121,7 +55758,7 @@
       this.puzzle = pz;
       const sv = this.surveyOf(site.id);
       sv.pzTry = (sv.pzTry || 0) + 1;
-      this.toast(tr("봉인 방 — {n}. {hint} · 장치는 우클릭", { n: P.n, hint: P.hint }), "bad");
+      this.toast(tr("봉인 방 — {n}. {hint} · 장치는 우클릭", { n: P2.n, hint: P2.hint }), "bad");
       this.sfx("chapter");
       this.shake = Math.max(this.shake, 8);
       for (const [x, y] of cells) for (let q = 0; q < 4; q++) this.parts.push(new Part(x * TS + TS / 2, y * TS + TS / 2, "#b8a8ff", -30, 0.7));
@@ -55135,8 +55772,8 @@
       return true;
     },
     /** 장치 자리 — 방 바닥(가운데 줄에서 아래로 처음 막힌 칸 위)을 고르게 나눈다 */
-    puzzleNodes(r, P) {
-      const w = this.world, cnt = P.k === "mirror" ? P.cols : P.cnt;
+    puzzleNodes(r, P2) {
+      const w = this.world, cnt = P2.k === "mirror" ? P2.cols : P2.cnt;
       const x0 = r.x + 2, x1 = r.x + r.w - 3, nodes = [];
       const floor = (tx) => {
         let fy = -1;
@@ -55155,7 +55792,7 @@
         if (fy < 0) return null;
         nodes.push({ x: tx * TS + TS / 2, y: fy * TS - TS * 1.4, fy: fy * TS, s: 0 });
       }
-      if (P.k === "mirror") {
+      if (P2.k === "mirror") {
         const base = Math.min(...nodes.map((n) => n.y));
         for (const n of nodes) n.y = base;
         for (let i = 0; i < cnt; i++) nodes.push({ x: nodes[i].x, y: base - TS * 4, fy: nodes[i].fy, s: 0 });
@@ -55163,43 +55800,43 @@
       return nodes;
     },
     /** 처음 모양 — 풀린 모양에서 거꾸로 섞어 늘 풀 수 있게 한다 */
-    puzzleSetup(pz, P, rnd) {
+    puzzleSetup(pz, P2, rnd) {
       const N = pz.nodes, n = N.length;
       if (pz.k === "toggle") {
-        pz.rule = P.rule;
+        pz.rule = P2.rule;
         for (const v of N) v.s = 1;
         do {
           for (let g = 0; g < 3 + (rnd() * 3 | 0); g++) this.puzzlePress(pz, rnd() * n | 0, true);
         } while (N.every((v) => v.s === 1));
       } else if (pz.k === "dial") {
-        pz.m = P.m;
-        pz.rule = P.rule;
-        const back = pz.rule === "mesh" ? 1 : P.m - 1;
-        for (const v of N) v.s = v.tgt = rnd() * P.m | 0;
+        pz.m = P2.m;
+        pz.rule = P2.rule;
+        const back = pz.rule === "mesh" ? 1 : P2.m - 1;
+        for (const v of N) v.s = v.tgt = rnd() * P2.m | 0;
         do {
           for (let g = 0; g < 3 + (rnd() * 3 | 0); g++) {
             const i = rnd() * n | 0;
-            N[i].s = (N[i].s + P.m - 1) % P.m;
-            if (i + 1 < n) N[i + 1].s = (N[i + 1].s + back) % P.m;
+            N[i].s = (N[i].s + P2.m - 1) % P2.m;
+            if (i + 1 < n) N[i + 1].s = (N[i + 1].s + back) % P2.m;
           }
         } while (N.every((v) => v.s === v.tgt));
       } else if (pz.k === "simon") {
         pz.seq = [];
-        for (let i = 0; i < P.len; i++) pz.seq.push(rnd() * n | 0);
+        for (let i = 0; i < P2.len; i++) pz.seq.push(rnd() * n | 0);
         this.puzzleShow(pz);
       } else if (pz.k === "mirror") {
-        pz.cols = P.cols;
+        pz.cols = P2.cols;
         const sol = N.map(() => rnd() * 3 | 0);
-        let out = beamExit(sol, P.cols).out, g = 0, g2 = 0;
+        let out = beamExit(sol, P2.cols).out, g = 0, g2 = 0;
         while ((out === "l0" || out === "?") && g++ < 40) {
           sol[rnd() * n | 0] = rnd() * 3 | 0;
-          out = beamExit(sol, P.cols).out;
+          out = beamExit(sol, P2.cols).out;
         }
         pz.tgt = out;
         for (const v of N) v.s = rnd() * 3 | 0;
-        while (beamExit(N.map((v) => v.s), P.cols).out === out && g2++ < 80) N[rnd() * n | 0].s = rnd() * 3 | 0;
+        while (beamExit(N.map((v) => v.s), P2.cols).out === out && g2++ < 80) N[rnd() * n | 0].s = rnd() * 3 | 0;
       } else if (pz.k === "bloom") {
-        pz.rule = P.rule;
+        pz.rule = P2.rule;
         for (const v of N) {
           v.per = 2.4 + rnd() * 1.4;
           v.ph = rnd();
@@ -55416,8 +56053,8 @@
       const fresh = !this.puzzle;
       this.puzzle = Object.assign(this.puzzle || { flash: 1 }, m.s);
       if (fresh) {
-        const P = PUZZLE[m.s.id];
-        if (P) this.toast(tr("봉인 방 — {n}. {hint} · 장치는 우클릭", { n: P.n, hint: P.hint }), "bad");
+        const P2 = PUZZLE[m.s.id];
+        if (P2) this.toast(tr("봉인 방 — {n}. {hint} · 장치는 우클릭", { n: P2.n, hint: P2.hint }), "bad");
       }
     },
     /** 호스트 — 참가자가 누른 장치 */
@@ -55467,11 +56104,11 @@
         const x = v.x - cx0, y = v.y - cy0, hit = Math.max(0, v.hit || 0);
         const lit = pz.k === "toggle" || pz.k === "bloom" ? v.s === 1 : pz.k === "dial" ? v.s === v.tgt : hit > 0;
         const open = pz.k === "bloom" && (pz.t / v.per + v.ph) % 1 < 0.38;
-        const glow = (lit ? 1 : 0.25) + hit * 1.6 + (open ? 0.5 : 0);
+        const glow2 = (lit ? 1 : 0.25) + hit * 1.6 + (open ? 0.5 : 0);
         const im = Sprites.vfxArt("mote", pz.c);
         if (im) {
           c.globalCompositeOperation = "lighter";
-          c.globalAlpha = Math.min(1, glow * 0.7);
+          c.globalAlpha = Math.min(1, glow2 * 0.7);
           const R = 34 + hit * 30;
           c.drawImage(im, x - R, y - R, R * 2, R * 2);
           c.globalCompositeOperation = "source-over";
@@ -55995,15 +56632,15 @@
     },
     /** L 단계 홀의 봉인 — 그 유적 퍼즐을 단계만큼 어렵게 */
     deepPuzzleSpec(id, L = 0) {
-      const P = PUZZLE[id];
-      if (!P) return null;
-      const H = Object.assign({}, P), k = L + 1;
-      if (P.k === "toggle" || P.k === "bloom" || P.k === "dial") H.cnt = P.cnt + k;
-      if (P.k === "simon") {
-        H.cnt = P.cnt + k;
-        H.len = P.len + 2 * k;
+      const P2 = PUZZLE[id];
+      if (!P2) return null;
+      const H = Object.assign({}, P2), k = L + 1;
+      if (P2.k === "toggle" || P2.k === "bloom" || P2.k === "dial") H.cnt = P2.cnt + k;
+      if (P2.k === "simon") {
+        H.cnt = P2.cnt + k;
+        H.len = P2.len + 2 * k;
       }
-      if (P.k === "mirror") H.cols = P.cols + k;
+      if (P2.k === "mirror") H.cols = P2.cols + k;
       return H;
     },
     /** 세계 위 — 아직 닫힌 다음 단계 문(바닥에 새긴 봉인 · 몇 개 풀었나) */
@@ -56242,9 +56879,9 @@
     /** 조각을 줍는다 — 읽는 것은 주운 사람, 세계 기록(got)과 보상은 호스트 */
     takeMemory(o) {
       if (o.got) return;
-      const M = STORY_MEMORY[o.ruin];
-      if (!M) return;
-      UI5.openLore(tr("기억의 조각 — {name}", { name: M.n }), [M.lines[o.k]]);
+      const M2 = STORY_MEMORY[o.ruin];
+      if (!M2) return;
+      UI5.openLore(tr("기억의 조각 — {name}", { name: M2.n }), [M2.lines[o.k]]);
       this.sfx("chapter");
       for (let k = 0; k < 24; k++) this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, "#cfe8ff", -40, 1));
       if (this.net && this.net.role === "guest") {
@@ -56273,7 +56910,7 @@
     },
     /** 셋이 다 모였다 — 마지막 줄 · 석판 앞에 상자 · 경험치 */
     memoryEnd(ruin, who) {
-      const M = STORY_MEMORY[ruin], w = this.world;
+      const M2 = STORY_MEMORY[ruin], w = this.world;
       const tab = w.objects.find((q) => q.type === "tablet" && "story" + q.tablet === ruin);
       if (tab && !w.objects.some((q) => q.memChest === ruin)) {
         const sr = STORY_RUIN[+ruin.slice(5)] || {}, tier = clamp(2 + +ruin.slice(5) + 2, 3, 6);
@@ -56295,7 +56932,7 @@
       }
       for (const q of this.players) if (!q.dead && q.addXp) q.addXp(Math.round(q.xpNext * 0.25));
       this.toast(tr("기억이 이어졌다 — 석판 곁에 무언가가 놓였다"), "good");
-      UI5.openLore(tr("기억의 조각 — {name}", { name: M.n }), [...M.lines, M.end]);
+      UI5.openLore(tr("기억의 조각 — {name}", { name: M2.n }), [...M2.lines, M2.end]);
       this.shake = Math.max(this.shake, 8);
     },
     /** 여럿 — 참가자가 주운 것(호스트가 받아 적는다) · 호스트가 적은 것(참가자는 그림만) */
@@ -56560,7 +57197,7 @@
             continue;
           }
           if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
-          if (MACH_OF_TILE[id] && w.machines.has(k)) continue;
+          if (MACH_OF_TILE[id] && (w.machines.has(k) || w.mpart.has(k))) continue;
           if (FLUID_FLOW[id]) {
             this.drawFlow(c, w, id, k, tx, ty, sx, sy);
             continue;
@@ -57637,11 +58274,11 @@
         const h1 = tileHash(tx, i * 131 + 7), h2 = tileHash(tx, i * 131 + 8), h3 = tileHash(tx, i * 131 + 9);
         const drop = i >= 5;
         const x = Math.round(h1 * (TS - 2)), wd = drop ? 1 : 1 + (h2 * 2 | 0);
-        const P = drop ? 22 + h3 * 14 : 26 + h2 * 18, L = drop ? 3 + h3 * 2 : 9 + h3 * 12;
-        const off = ((t * (drop ? 190 : 120 + h3 * 50) + h2 * P) % P + P) % P;
+        const P2 = drop ? 22 + h3 * 14 : 26 + h2 * 18, L = drop ? 3 + h3 * 2 : 9 + h3 * 12;
+        const off = ((t * (drop ? 190 : 120 + h3 * 50) + h2 * P2) % P2 + P2) % P2;
         c.globalAlpha = drop ? 0.55 : 0.28 + h2 * 0.3;
         c.fillStyle = drop ? "#eaf6ff" : "#bfe3fa";
-        for (let y = off + Math.floor((top - L - off) / P) * P; y < top + TS; y += P) {
+        for (let y = off + Math.floor((top - L - off) / P2) * P2; y < top + TS; y += P2) {
           const y0 = Math.max(y, top), y1 = Math.min(y + L, top + TS);
           if (y1 > y0) c.fillRect(sx + x, sy + y0 - top, wd, y1 - y0);
         }
@@ -59002,7 +59639,7 @@
           c.scale(p.facing > 0 ? 1 : -1, 1);
           c.rotate(-0.4);
           c.lineCap = "round";
-          const line3 = (col, w) => {
+          const line4 = (col, w) => {
             c.strokeStyle = col;
             c.lineWidth = w;
             c.beginPath();
@@ -59010,8 +59647,8 @@
             c.lineTo(L.len, 0);
             c.stroke();
           };
-          line3("#241c14", L.w + 1.6);
-          line3(L.c, L.w);
+          line4("#241c14", L.w + 1.6);
+          line4(L.c, L.w);
           c.strokeStyle = L.grip;
           c.lineWidth = L.w + 1.2;
           c.beginPath();
@@ -59968,17 +60605,17 @@
       if (so) so.f = "fuel_brick";
       put(26, "crate");
       put(31, "pump");
-      put(32, "refinery", 0, { crude_oil: 20 });
-      put(33, "belt");
-      put(34, "crate");
+      put(33, "refinery", 0, { crude_oil: 20 });
+      put(34, "belt");
+      put(35, "crate");
       put(36, "turret", 0, { rivet: 100 });
       put(38, "trap");
       const c3 = put(41, "crate", 0, { copper_bar: 60 });
       if (c3) c3.feed = 1;
       put(42, "belt");
       put(43, "assembler", 0, { polymer: 40, wire: 6, gold_bar: 4 });
-      put(44, "belt");
-      put(45, "crate");
+      put(45, "belt");
+      put(46, "crate");
       put(51, "drill", 0, { coal: 30 });
       put(52, "crate");
       put(55, "drill_e");
@@ -59987,9 +60624,9 @@
       put(58, "drill_x");
       put(59, "crate");
       put(61, "pressor", 0, { steel_plate: 12, crab_shell: 16, sea_salt: 8 });
-      put(62, "crate");
+      put(63, "crate");
       put(64, "desal", 0, { sand: 40, kelp: 30 });
-      put(65, "crate");
+      put(66, "crate");
       put(67, "mill", 0, { wheat: 30 });
       put(68, "crate");
       put(71, "oven", 0, { wood: 30, flour: 20, raw_meat: 10 });
@@ -60012,7 +60649,7 @@
     /** ?debug=factory 의 여러 층 공장 둘 — A: 3층 금속 공장(광석 → 주괴 → 강철판·전선), B: 지하 탄광이 제 발전기를 먹이는 순환 발전소 + 방어 갑판.
         층 사이는 위로 가는 벨트 기둥, 사람은 오른쪽(A)·왼쪽(B) 발판 사다리로 오간다. */
     buildDebugTowers(w, AX, BX, gy) {
-      const P = (x, y, key, dir, fill) => {
+      const P2 = (x, y, key, dir, fill) => {
         const m = Factory11.place(w, x, y, key, dir || 0);
         if (!m) return null;
         if (MACHINE[key].proj) m.own = 1;
@@ -60044,47 +60681,47 @@
       };
       const A1 = gy - 1, A2 = gy - 6, A3 = gy - 11;
       shell(AX, AX + 31, gy - 15, [AX + 14, AX + 16], [AX + 28, AX + 29], [gy - 5, gy - 10]);
-      P(AX + 2, A1, "gen", 0, { coal: 60 });
-      P(AX + 3, A1, "gen", 0, { fuel_brick: 30 });
-      const ab = P(AX + 4, A1, "battery_hi");
+      P2(AX + 2, A1, "gen", 0, { coal: 60 });
+      P2(AX + 3, A1, "gen", 0, { fuel_brick: 30 });
+      const ab = P2(AX + 4, A1, "battery_hi");
       if (ab) ab.e = 6e3;
-      P(AX + 6, A1, "pole");
-      P(AX + 22, A1, "pole");
-      feed(P(AX + 8, A1, "crate", 0, { iron_ore: 99 }));
-      P(AX + 9, A1, "belt");
-      P(AX + 10, A1, "smelter", 0, { coal: 60 });
-      P(AX + 11, A1, "belt");
-      P(AX + 12, A1, "belt");
-      P(AX + 13, A1, "belt");
-      feed(P(AX + 20, A1, "crate", 2, { copper_ore: 99 }));
-      P(AX + 19, A1, "belt", 2);
-      P(AX + 18, A1, "smelter", 2, { coal: 60 });
-      P(AX + 17, A1, "belt", 2);
-      P(AX + 16, A1, "belt_fast", 2);
-      P(AX + 15, A1, "belt", 2);
-      for (let y = A1; y > A2; y--) P(AX + 14, y, "belt", 3);
-      P(AX + 14, A2, "belt");
-      P(AX + 15, A2, "belt");
-      const sA = P(AX + 16, A2, "sorter", 3);
+      P2(AX + 6, A1, "pole");
+      P2(AX + 22, A1, "pole");
+      feed(P2(AX + 8, A1, "crate", 0, { iron_ore: 99 }));
+      P2(AX + 9, A1, "belt");
+      P2(AX + 10, A1, "smelter", 0, { coal: 60 });
+      P2(AX + 11, A1, "belt");
+      P2(AX + 12, A1, "belt");
+      P2(AX + 13, A1, "belt");
+      feed(P2(AX + 20, A1, "crate", 2, { copper_ore: 99 }));
+      P2(AX + 19, A1, "belt", 2);
+      P2(AX + 18, A1, "smelter", 2, { coal: 60 });
+      P2(AX + 17, A1, "belt", 2);
+      P2(AX + 16, A1, "belt_fast", 2);
+      P2(AX + 15, A1, "belt", 2);
+      for (let y = A1; y > A2; y--) P2(AX + 14, y, "belt", 3);
+      P2(AX + 14, A2, "belt");
+      P2(AX + 15, A2, "belt");
+      const sA = P2(AX + 16, A2, "sorter", 3);
       if (sA) sA.f = "copper_bar";
-      P(AX + 17, A2, "belt");
-      P(AX + 18, A2, "press");
-      P(AX + 19, A2, "belt");
-      P(AX + 20, A2, "belt_fast");
-      P(AX + 21, A2, "crate");
-      P(AX + 8, A2, "pole");
-      P(AX + 13, A2, "pole");
-      P(AX + 24, A2, "pole");
-      P(AX + 26, A2, "battery", 0, { battery_empty: 5 });
-      for (let y = A2 - 1; y > A3; y--) P(AX + 16, y, "belt", 3);
-      P(AX + 16, A3, "belt");
-      P(AX + 17, A3, "belt");
-      P(AX + 18, A3, "assembler", 0, { polymer: 60 });
-      P(AX + 19, A3, "belt");
-      P(AX + 20, A3, "crate");
-      P(AX + 10, A3, "pole");
-      P(AX + 22, A3, "pole");
-      P(AX + 6, gy - 16, "windmill");
+      P2(AX + 17, A2, "belt");
+      P2(AX + 18, A2, "press");
+      P2(AX + 19, A2, "belt");
+      P2(AX + 20, A2, "belt_fast");
+      P2(AX + 21, A2, "crate");
+      P2(AX + 8, A2, "pole");
+      P2(AX + 13, A2, "pole");
+      P2(AX + 24, A2, "pole");
+      P2(AX + 26, A2, "battery", 0, { battery_empty: 5 });
+      for (let y = A2 - 1; y > A3; y--) P2(AX + 16, y, "belt", 3);
+      P2(AX + 16, A3, "belt");
+      P2(AX + 17, A3, "belt");
+      P2(AX + 18, A3, "assembler", 0, { polymer: 60 });
+      P2(AX + 20, A3, "belt");
+      P2(AX + 21, A3, "crate");
+      P2(AX + 10, A3, "pole");
+      P2(AX + 22, A3, "pole");
+      P2(AX + 6, gy - 16, "windmill");
       const B0 = gy + 4, B1 = gy - 1, B2 = gy - 7;
       shell(BX, BX + 23, gy - 12, [], [BX + 2, BX + 3], [gy - 6]);
       for (let x = BX; x <= BX + 23; x++) {
@@ -60096,30 +60733,30 @@
       w.set(BX + 4, gy + 6, T.COALRICH);
       for (const x of [BX + 2, BX + 3]) w.set(x, gy + 2, T.PLATFORM);
       for (let x = BX + 5; x < BX + 23; x += 6) w.set(x, gy + 1, T.TORCH);
-      P(BX + 4, B0, "drill_e");
-      for (let x = BX + 5; x <= BX + 8; x++) P(x, B0, "belt");
-      for (let y = B0; y > B1; y--) P(BX + 9, y, "belt", 3);
-      P(BX + 6, gy + 1, "pole");
-      P(BX + 9, B1, "belt");
-      P(BX + 10, B1, "press");
-      P(BX + 11, B1, "belt");
-      P(BX + 12, B1, "belt");
-      P(BX + 13, B1, "belt_fast");
-      P(BX + 14, B1, "gen", 0, { fuel_brick: 4 });
-      const bb = P(BX + 16, B1, "battery_hi");
+      P2(BX + 4, B0, "drill_e");
+      for (let x = BX + 5; x <= BX + 8; x++) P2(x, B0, "belt");
+      for (let y = B0; y > B1; y--) P2(BX + 9, y, "belt", 3);
+      P2(BX + 6, gy + 1, "pole");
+      P2(BX + 9, B1, "belt");
+      P2(BX + 10, B1, "press");
+      P2(BX + 11, B1, "belt");
+      P2(BX + 12, B1, "belt");
+      P2(BX + 13, B1, "belt_fast");
+      P2(BX + 14, B1, "gen", 0, { fuel_brick: 4 });
+      const bb = P2(BX + 16, B1, "battery_hi");
       if (bb) bb.e = 2e3;
-      P(BX + 6, B1, "pole");
-      P(BX + 18, B1, "pole");
-      feed(P(BX + 6, B2, "crate", 0, { rivet: 200 }));
-      P(BX + 7, B2, "belt");
-      P(BX + 8, B2, "belt");
-      P(BX + 9, B2, "turret");
-      feed(P(BX + 18, B2, "crate", 2, { rivet: 200 }));
-      P(BX + 17, B2, "belt", 2);
-      P(BX + 16, B2, "turret");
-      P(BX + 12, B2, "trap");
-      P(BX + 12, gy - 9, "pole");
-      P(BX + 12, gy - 13, "windmill");
+      P2(BX + 6, B1, "pole");
+      P2(BX + 18, B1, "pole");
+      feed(P2(BX + 6, B2, "crate", 0, { rivet: 200 }));
+      P2(BX + 7, B2, "belt");
+      P2(BX + 8, B2, "belt");
+      P2(BX + 9, B2, "turret");
+      feed(P2(BX + 18, B2, "crate", 2, { rivet: 200 }));
+      P2(BX + 17, B2, "belt", 2);
+      P2(BX + 16, B2, "turret");
+      P2(BX + 12, B2, "trap");
+      P2(BX + 12, gy - 9, "pole");
+      P2(BX + 12, gy - 13, "windmill");
     }
   };
   mixin(Game.prototype, DebugStartPart, true);
@@ -61160,6 +61797,7 @@
         Object.assign(cur, data);
       } else w.machines.set(key, data);
       const m = w.machines.get(key);
+      if (!cur && (m.w || 1) * (m.h || 1) > 1) Factory11.claim(w, m);
       this.net.objJ.set(m, JSON.stringify(m));
       w.netDirty = true;
       if (UI5.machRef === m && UI5.open === "machine") UI5.refreshMachine();
@@ -61173,18 +61811,21 @@
         w.netMute = true;
         try {
           w.set(m.x, m.y, MACHINE[m.m.t] ? MACHINE[m.m.t].tile : w.get(m.x, m.y));
+          for (const [x, y] of Factory11.cells(m.m)) if (x !== m.x || y !== m.y) w.set(x, y, T.M_PART);
         } finally {
           w.netMute = false;
         }
         this.netMachPut(key, m.m);
       } else if (m.k === "mrem") {
         const key = m.y * WW2 + m.x;
-        if (!w.machines.has(key)) return;
+        const mm = w.machines.get(key);
+        if (!mm) return;
+        Factory11.release(w, mm);
         w.machines.delete(key);
         w.netDirty = true;
         w.netMute = true;
         try {
-          w.set(m.x, m.y, T.AIR);
+          for (const [x, y] of Factory11.cells(mm)) w.set(x, y, T.AIR);
         } finally {
           w.netMute = false;
         }
@@ -61567,6 +62208,8 @@
       } else if (m.k === "ms") {
         for (const [key, d] of m.l) this.netMachPut(key, d);
         for (const key of m.g) {
+          const mm = this.world.machines.get(key);
+          if (mm) Factory11.release(this.world, mm);
           this.world.machines.delete(key);
           this.world.netDirty = true;
         }
@@ -62357,7 +63000,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

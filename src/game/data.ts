@@ -116,7 +116,9 @@ export const T: Record<string, number> = {
   /* --- 석판 유적의 금 간 벽 — 뒤에 기억 조각 골방이 있다(첫 곡괭이로 깬다) --- */
   CRACKBRICK: 216,
   /* --- 탈 것 — 광산 수레가 달리는 레일(그림은 game/rides.ts 가 이웃을 보고 비탈째 그린다) --- */
-  RAIL: 217
+  RAIL: 217,
+  /* --- 여러 칸 기계의 몸 칸 — 닻 칸(왼쪽 아래)이 아닌 나머지. 그림은 Factory.render 가 닻에서 통째로 --- */
+  M_PART: 218
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -391,7 +393,8 @@ export const TILE_DEF: TileDef[] = [
   { n: '궤도 봉인문', c: '#3a5a7a', solid: 1, hard: 99 },
   { n: '빛다리', c: '#9fe8ff', solid: 1, hard: 99 },
   { n: '금 간 벽돌', c: '#6a6458', solid: 1, hard: 1, drop: 'stone' },
-  { n: '레일', c: '#8a8e98', solid: 0, hard: 1, drop: 'rail' }
+  { n: '레일', c: '#8a8e98', solid: 0, hard: 1, drop: 'rail' },
+  { n: '기계 몸', c: '#4a4f5a', solid: 1, hard: 3, drop: '', mach: 'part' }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */
@@ -440,7 +443,7 @@ for (let i = 0; i < 4; i++) {
   TILE_SPRITE['starroot' + i] = T.ROOT0 + i;
   TILE_SPRITE['ashcap' + i] = T.CAP0 + i;
 }
-for (const id in MACH_OF_TILE) TILE_SPRITE['m_' + MACH_OF_TILE[id]] = +id;
+for (const id in MACH_OF_TILE) if (MACH_OF_TILE[id] !== 'part') TILE_SPRITE['m_' + MACH_OF_TILE[id]] = +id;
 
 export const WALL_COLOR = [null, '#3a2a1a', '#33333a', '#241c2e', '#402d1a', '#4a5f6e', '#32323c', '#2a2018', '#6b5a34',
   '#3f5266', '#332f26', '#23301f', '#22322e', '#3c3a34', '#4a3520', '#5a4128', '#4c463c', '#2c2f3a', '#302826'];

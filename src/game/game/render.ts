@@ -130,7 +130,7 @@ export const RenderPart: Bag = {
         if (id === T.SEAWATER && w.tiles[k - WW] === T.AIR) { this.drawWave(c, tx, ty, sx, sy, wl); continue; }
         if (ALPHA_TILE[id] && wl) TileArt.drawWall(c, wl, v, sx, sy);
         // 기계 몸체는 Factory.render 가 그린다(떨림·동작) — 여기서도 그리면 흔들 때 두 겹으로 보인다
-        if (MACH_OF_TILE[id] && w.machines.has(k)) continue;
+        if (MACH_OF_TILE[id] && (w.machines.has(k) || w.mpart.has(k))) continue;
         // 흐르는 액체 — 수위만큼만 (world.js '유체' 절)
         if (FLUID_FLOW[id]) { this.drawFlow(c, w, id, k, tx, ty, sx, sy); continue; }
         if (id === T.FALLS) { this.drawFallsTile(c, tx, ty, sx, sy); continue; }

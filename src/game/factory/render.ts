@@ -45,8 +45,9 @@ export const FactoryRenderPart: Bag = {
     if (!w.machines.size) return;
     c.save();
     c.imageSmoothingEnabled = false;
-    const y0 = Math.max(0, ty0), y1 = Math.min(WH - 1, ty1);
-    const x0 = Math.max(0, tx0), x1 = Math.min(WW - 1, tx1);
+    /* 닻은 여러 칸 기계의 왼쪽 아래 — 화면 왼쪽 · 아래 밖에 있어도 몸이 보이면 그린다(가장 큰 것 2칸) */
+    const y0 = Math.max(0, ty0), y1 = Math.min(WH - 1, ty1 + 1);
+    const x0 = Math.max(0, tx0 - 1), x1 = Math.min(WW - 1, tx1);
 
     // 전주 사이의 전선 — 이걸 안 그리면 공중에 뜬 전주가 그냥 떠 있는 기둥으로 보인다.
     if (w.wires && w.wires.length) {
@@ -68,8 +69,9 @@ export const FactoryRenderPart: Bag = {
       for (let tx = x0; tx <= x1; tx++) {
         const m = w.machines.get(ty * WW + tx);
         if (!m) continue;
-        const sx = tx * TS - camX, sy = ty * TS - camY;
+        let sx = tx * TS - camX, sy = ty * TS - camY;
         const s = MACHINE[m.t];
+        if (this.isBig(m)) { this.renderBig(c, w, m, sx, sy, time, camX, camY); continue; }
         if (m.t !== 'belt' && m.t !== 'belt_fast') {                  // 몸체(타일 그리기는 기계 칸을 건너뛴다) + 일하는 모습
           const busy = m.on && m.act && this.SHAKE[m.t];
           const jx = busy ? Math.round(Math.sin(time * 53 + tx) * this.SHAKE[m.t]) : 0;
@@ -206,6 +208,26 @@ export const FactoryRenderPart: Bag = {
     }
     for (const [id, ix, iy] of items) Art.drawItem(c, id, ix, iy, 14);
     c.restore();
+  },
+  /** 여러 칸 기계 — 몸체 · 움직임(factory/big) 다음에 고장 표시 · 배출구 · 연료 · 진행 · 상태 점을 발자국 가장자리에 */
+  renderBig(c: any, w: World, m: any, ax: number, ay: number, time: number, camX: number, camY: number) {
+    const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t];
+    const jx = busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0;
+    const [X, Y, PW, PH] = this.drawBig(c, m, ax + jx, ay, time);
+    if (m.t === 'drill_x') this.drawWork(c, w, m, ax, ay, time, camX, camY);   // 비트 · 광맥 점선은 닻 칸에서
+    if (m.broke || (m.fixT !== undefined && time - m.fixT < 0.7)) this.drawBroken(c, m, X + PW - TS, Y, time);
+    if (s.rot) {
+      const [dx, dy] = DIR4[m.dir & 3];
+      const ex = dx > 0 ? X + PW : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH : Y + PH - TS / 2;
+      c.fillStyle = 'rgba(255,214,120,.9)'; c.fillRect(ex + dx * 2 - 2 - (dx > 0 ? 2 : 0), ey + dy * 2 - 2 - (dy > 0 ? 2 : 0), 4, 4);
+    }
+    if (m.fmax && m.fuel > 0) { const h = Math.round((m.fuel / m.fmax) * (PH - 8)); c.fillStyle = '#e8842a'; c.fillRect(X + 1, Y + PH - 4 - h, 2, h); }
+    if (m.rec >= 0 && MRECIPES[m.rec]) {
+      const p = clamp(m.prog / MRECIPES[m.rec].t, 0, 1);
+      c.fillStyle = '#2a2a32'; c.fillRect(X + 4, Y + PH - 3, PW - 8, 2);
+      c.fillStyle = '#5fc45f'; c.fillRect(X + 4, Y + PH - 3, Math.round((PW - 8) * p), 2);
+    }
+    c.fillStyle = this.statusColor(m); c.fillRect(X + PW - 4, Y + 2, 2, 2);
   }
 };
 mixin(Factory, FactoryRenderPart);

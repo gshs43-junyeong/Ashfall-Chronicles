@@ -347,15 +347,15 @@ export const MACHINE: Record<string, MachineDef> = {
     d: '전력으로 도는 드릴. 기계식보다 세 배 빠르고 반경도 넓다(채굴 등급 3 — 영혼석·지옥석·에테르·동력석·운석과 금·미스릴 광상까지). 등급 4 넘는 것(세션 3 광석·유적 유리)은 못 캔다.'
   },
   drill_x: {
-    n: '심층 드릴', tile: T.M_DRILL_X, item: 'm_drill_x', power: 40, rot: 1, mine: 5, cycle: 6, range: 8, cap: 80,
+    n: '심층 드릴', tile: T.M_DRILL_X, item: 'm_drill_x', size: [1, 2], power: 40, rot: 1, mine: 5, cycle: 6, range: 8, cap: 80,
     d: '가압판으로 감싼 전동 드릴의 윗단. 채굴 등급 5 — 빙정석·조수석 같은 세션 3 광석과 노심·설계 유리까지 캔다. 전동 드릴보다 빠르고 반경이 넓지만 전기를 두 배 가까이 먹는다.'
   },
   pump: {
-    n: '시추 펌프', tile: T.M_PUMP, item: 'm_pump', power: 16, rot: 1, cycle: 14, range: 4, cap: 60,
+    n: '시추 펌프', tile: T.M_PUMP, item: 'm_pump', size: [2, 2], power: 16, rot: 1, cycle: 14, range: 4, cap: 60,
     d: '반경 4칸에 유혈암이 있으면 원유를 뽑는다. 유혈암을 소모하지 않아 마르지 않는다.'
   },
   smelter: {
-    n: '자동 용광로', tile: T.M_SMELTER, item: 'm_smelter', fuelIn: 1, rot: 1, proc: 'smelter', cap: 40,
+    n: '자동 용광로', tile: T.M_SMELTER, item: 'm_smelter', size: [1, 2], fuelIn: 1, rot: 1, proc: 'smelter', cap: 40,
     d: '연료를 태워 광석을 주괴로 녹인다. 전기가 없어도 도는 1세대 설비다.'
   },
   press: {
@@ -363,11 +363,11 @@ export const MACHINE: Record<string, MachineDef> = {
     d: '눌러서 밀도를 올린다. 석탄을 압축 연료로, 주괴를 강철판으로.'
   },
   refinery: {
-    n: '정제기', tile: T.M_REFINERY, item: 'm_refinery', power: 28, rot: 1, proc: 'refinery', cap: 40,
+    n: '정제기', tile: T.M_REFINERY, item: 'm_refinery', size: [1, 2], power: 28, rot: 1, proc: 'refinery', cap: 40,
     d: '원유를 정제유와 합성수지로 쪼갠다. 손으로 하는 것보다 세 배는 남는다.'
   },
   assembler: {
-    n: '조립기', tile: T.M_ASSEMBLER, item: 'm_assembler', power: 26, rot: 1, proc: 'assembler', cap: 40,
+    n: '조립기', tile: T.M_ASSEMBLER, item: 'm_assembler', size: [2, 2], power: 26, rot: 1, proc: 'assembler', cap: 40,
     d: '부품을 맞춰 붙인다. 넣어 준 재료로 만들 수 있는 것을 알아서 골라 만든다.'
   },
   sorter: {
@@ -401,11 +401,11 @@ export const MACHINE: Record<string, MachineDef> = {
   },
   /* --- 4단계 설비 --- */
   pressor: {
-    n: '가압기', tile: T.M_PRESSOR, item: 'm_pressor', power: 34, rot: 1, proc: 'pressor', cap: 40,
+    n: '가압기', tile: T.M_PRESSOR, item: 'm_pressor', size: [2, 2], power: 34, rot: 1, proc: 'pressor', cap: 40,
     d: '압축기보다 한참 센 힘으로 누른다. 내압판과 심해 노심은 여기서만 나온다.'
   },
   desal: {
-    n: '염수 증류기', tile: T.M_DESAL, item: 'm_desal', power: 20, rot: 1, proc: 'desal', cap: 60,
+    n: '염수 증류기', tile: T.M_DESAL, item: 'm_desal', size: [2, 1], power: 20, rot: 1, proc: 'desal', cap: 60,
     d: '해저 모래와 해초를 졸여 소금·밧줄을 뽑는다.'
   },
   belt_fast: {
@@ -413,7 +413,7 @@ export const MACHINE: Record<string, MachineDef> = {
     d: '1초에 두 칸을 나른다. 일반 벨트와 섞어 깔아도 되고, 병목이 생기는 구간만 갈아 끼워도 된다.'
   },
   battery_hi: {
-    n: '강화 축전지', tile: T.M_BATTERY_HI, item: 'm_battery_hi', store: 14000, proc: 'battery', power: 6, cap: 60,
+    n: '강화 축전지', tile: T.M_BATTERY_HI, item: 'm_battery_hi', size: [1, 2], store: 14000, proc: 'battery', power: 6, cap: 60,
     d: '축전지 네 대 몫을 한 칸에 담는다. 해가 지고 바람이 멎어도 공장이 안 선다.'
   },
 

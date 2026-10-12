@@ -47,7 +47,8 @@ export const MinePart: Bag = {
         return;
       }
     }
-    const id = w.get(tx, ty);
+    let id = w.get(tx, ty);
+    if (id === T.M_PART) { const pm = Factory.at(w, tx, ty); id = pm ? MACHINE[pm.t].tile! : T.AIR; }   // 몸 칸은 그 기계의 단단함으로
     const def = TILE_DEF[id];
     if (id === T.AIR || !def.drop) { p.mineTx = -1; return; }
     if (def.hard > (tool.power || 1) + (def.tree ? 2 : 0)) {
@@ -78,7 +79,8 @@ export const MinePart: Bag = {
          (바닥에 떨군 것은 5분 뒤 사라지고 저장도 안 된다) */
       if (MACH_OF_TILE[id]) {
         const back = Factory.remove(w, tx, ty);
-        if (back && this.net) this.netBroadcast({ k: 'mrem', x: tx, y: ty });   // 안에 든 것은 캔 사람 가방으로 — 남은 지우기만
+        const gone = Factory.lastRemoved;                                    // 몸 칸을 캤어도 닻 자리로 알린다
+        if (back && this.net) this.netBroadcast({ k: 'mrem', x: gone.x, y: gone.y });   // 안에 든 것은 캔 사람 가방으로 — 남은 지우기만
         let spill = 0;
         if (back) for (const it of back) if (!p.addItem(it)) { this.drops.push(new Drop((tx + .5) * TS, (ty + .5) * TS, it)); spill++; }
         if (spill) this.toast(tr('가방이 가득 차 일부를 바닥에 떨궜다 — 5분 안에 주워라'), 'bad');
@@ -325,9 +327,10 @@ export const MinePart: Bag = {
       const hi = p.held();
       if (hi && idef(hi).type === 'machine') {
         if (w.inRig(mtx, mty)) { this.toast(tr('채취탑 자리에는 놓을 수 없다'), 'bad'); return; }
-        if (!Factory.canPlace(w, mtx, mty)) { this.toast(tr('그 자리에는 놓을 수 없다'), 'bad'); return; }
-        // 벨트 말고는 몸이 있는 기계다 — 제 몸이나 몹이 선 칸에 놓으면 그 안에 낀다
-        const cell = { x: mtx * TS, y: mty * TS, w: TS, h: TS };
+        const [MW, MH] = Factory.sizeOf(idef(hi).mach!);
+        if (!Factory.canPlace(w, mtx, mty, idef(hi).mach)) { this.toast(MW * MH > 1 ? tr('그 자리에는 놓을 수 없다 — {w}×{h}칸이 비어 있어야 한다', { w: MW, h: MH }) : tr('그 자리에는 놓을 수 없다'), 'bad'); return; }
+        // 벨트 말고는 몸이 있는 기계다 — 제 몸이나 몹이 선 칸에 놓으면 그 안에 낀다(여러 칸 기계는 발자국 전체)
+        const cell = { x: mtx * TS, y: (mty - MH + 1) * TS, w: MW * TS, h: MH * TS };
         if (TILE_DEF[MACHINE[idef(hi).mach!].tile!].solid === 1 &&
             (aabb(cell, p.rect()) || this.ents.some((e: Enemy) => !e.dead && aabb(cell, e.rect())))) {
           this.toast(tr('누가 서 있는 자리다'), 'bad'); return;
@@ -548,18 +551,20 @@ export const MinePart: Bag = {
     const key = idef(hi).mach, s = MACHINE[key!];
     const tx = Math.floor(this.input.wx / TS), ty = Math.floor(this.input.wy / TS);
     if (Factory.at(w, tx, ty) || dist(p.cx, p.cy, (tx + .5) * TS, (ty + .5) * TS) > TS * 7) return;
-    const sx = tx * TS - camX, sy = ty * TS - camY;
-    const ok = Factory.canPlace(w, tx, ty) && !w.inRig(tx, ty);
+    const sx = tx * TS - camX, sy = ty * TS - camY, [MW, MH] = Factory.sizeOf(key!);
+    const ok = Factory.canPlace(w, tx, ty, key) && !w.inRig(tx, ty);
     c.save();
     c.globalAlpha = 0.45;
     if (key === 'belt' || key === 'belt_fast') Factory.drawBelt(c, sx, sy, key, this.placeDirFor(key), 0);
+    else if (MW * MH > 1) Factory.drawBig(c, { t: key, x: tx, y: ty, w: MW, h: MH }, sx, sy, this.time, false);
     else TileArt.draw(c, s.tile, 0, sx, sy);
     c.globalAlpha = 1;
     c.strokeStyle = ok ? 'rgba(160,230,140,.9)' : 'rgba(230,90,70,.9)';
-    c.lineWidth = 1; c.strokeRect(sx + .5, sy + .5, TS - 1, TS - 1);
+    c.lineWidth = 1; c.strokeRect(sx + .5, sy - (MH - 1) * TS + .5, MW * TS - 1, MH * TS - 1);
     if (s.rot) {
       const [dx, dy] = dirTable(key)[this.placeDirFor(key)];
-      const cx = sx + TS / 2, cy = sy + TS / 2, ang = Math.atan2(dy, dx);
+      /* 화살은 배출구 쪽 가장자리에 — 여러 칸 기계는 오른쪽 · 왼쪽이 아랫줄, 위가 왼쪽 열(Factory.pushTo) */
+      const cx = sx + TS / 2 + (dx > 0 ? (MW - 1) * TS : 0), cy = sy + TS / 2 - (dy < 0 ? (MH - 1) * TS : 0), ang = Math.atan2(dy, dx);
       c.translate(cx, cy); c.rotate(ang);
       c.fillStyle = 'rgba(255,230,150,.95)';
       c.beginPath(); c.moveTo(TS / 2 + 5, 0); c.lineTo(TS / 2 - 3, -5); c.lineTo(TS / 2 - 3, 5); c.closePath(); c.fill();

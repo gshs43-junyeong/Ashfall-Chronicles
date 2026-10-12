@@ -405,18 +405,18 @@ export const DebugStartPart: Bag = {
     const so = put(25, 'sorter'); if (so) so.f = 'fuel_brick';
     put(26, 'crate');
     // 4. 원유: 유혈암 위 시추 펌프 → 정제기 → 벨트 → 상자
-    put(31, 'pump'); put(32, 'refinery', 0, { crude_oil: 20 }); put(33, 'belt'); put(34, 'crate');
+    put(31, 'pump'); put(33, 'refinery', 0, { crude_oil: 20 }); put(34, 'belt'); put(35, 'crate');   // 펌프 2×2 · 정제기 1×2
     put(36, 'turret', 0, { rivet: 100 }); put(38, 'trap');
     // 5. 조립 줄
     const c3 = put(41, 'crate', 0, { copper_bar: 60 }); if (c3) c3.feed = 1;   // 상자는 한 가지만 흘리니 수지는 조립기에 미리
-    put(42, 'belt'); put(43, 'assembler', 0, { polymer: 40, wire: 6, gold_bar: 4 }); put(44, 'belt'); put(45, 'crate');
+    put(42, 'belt'); put(43, 'assembler', 0, { polymer: 40, wire: 6, gold_bar: 4 }); put(45, 'belt'); put(46, 'crate');   // 조립기 2×2
     // 6. 광맥 위 드릴
     put(51, 'drill', 0, { coal: 30 }); put(52, 'crate');
     put(55, 'drill_e'); put(56, 'crate');
     w.set(X0 + 58, gy + 1, T.GLACIUM); put(58, 'drill_x'); put(59, 'crate');   // 심층 드릴 — 세션 3 빙정석(등급 5)
     // 7. 4단계 설비 · 마을 설비
-    put(61, 'pressor', 0, { steel_plate: 12, crab_shell: 16, sea_salt: 8 }); put(62, 'crate');
-    put(64, 'desal', 0, { sand: 40, kelp: 30 }); put(65, 'crate');
+    put(61, 'pressor', 0, { steel_plate: 12, crab_shell: 16, sea_salt: 8 }); put(63, 'crate');
+    put(64, 'desal', 0, { sand: 40, kelp: 30 }); put(66, 'crate');
     put(67, 'mill', 0, { wheat: 30 }); put(68, 'crate');
     put(71, 'oven', 0, { wood: 30, flour: 20, raw_meat: 10 }); put(72, 'crate');
     // 8. 함정(위를 보게 — 줄을 따라 쏘지 않는다)
@@ -479,7 +479,7 @@ export const DebugStartPart: Bag = {
     P(AX + 8, A2, 'pole'); P(AX + 13, A2, 'pole'); P(AX + 24, A2, 'pole'); P(AX + 26, A2, 'battery', 0, { battery_empty: 5 });
     for (let y = A2 - 1; y > A3; y--) P(AX + 16, y, 'belt', 3);
     // 3층 — 조립기(수지 미리)로 전선 → 상자, 지붕 위 풍차
-    P(AX + 16, A3, 'belt'); P(AX + 17, A3, 'belt'); P(AX + 18, A3, 'assembler', 0, { polymer: 60 }); P(AX + 19, A3, 'belt'); P(AX + 20, A3, 'crate');
+    P(AX + 16, A3, 'belt'); P(AX + 17, A3, 'belt'); P(AX + 18, A3, 'assembler', 0, { polymer: 60 }); P(AX + 20, A3, 'belt'); P(AX + 21, A3, 'crate');
     P(AX + 10, A3, 'pole'); P(AX + 22, A3, 'pole');
     P(AX + 6, gy - 16, 'windmill');
 

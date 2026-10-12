@@ -1041,7 +1041,9 @@
   "너무 멀다 — 가까이 다가가 먹인다": "Too far — get closer to feed it",
   "야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)": "The wild horse trusts you now — you can ride it (gather it with a pickaxe to carry it as an item)",
   "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": "A wild horse — feed it Wheat, Starroot, Bloodbean or Frostherb to win its trust",
-  "탐험가 갈래에서 이 칸을 열어야 한다": "Unlock this slot in the Explorer branch first"
+  "탐험가 갈래에서 이 칸을 열어야 한다": "Unlock this slot in the Explorer branch first",
+  "그 자리에는 놓을 수 없다 — {w}×{h}칸이 비어 있어야 한다": "Can't place it there — needs {w}×{h} empty tiles",
+  "크기 {w}×{h}칸 — 고른 칸이 왼쪽 아래": "Size {w}×{h} tiles — the chosen tile is the bottom-left"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4536,6 +4538,7 @@
   "SKILLS.s_petbond.n": "Tamer's Hand",
   "SKILLS.s_petbond.d": "Unlocks the second pet slot — bring two pets along.",
   "SKILLS.s_quickhands.n": "Quick Hands",
-  "SKILLS.s_quickhands.d": "Unlocks one more skill slot (G)."
+  "SKILLS.s_quickhands.d": "Unlocks one more skill slot (G).",
+  "TILE_DEF.218.n": "Machine body"
  }
 }

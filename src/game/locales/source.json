@@ -817,6 +817,9 @@
    "game/mine.placeStation",
    "game/mine.placeDoor"
   ],
+  "그 자리에는 놓을 수 없다 — {w}×{h}칸이 비어 있어야 한다": [
+   "game/mine.rightClick"
+  ],
   "그러면 우리가 원래 적으려 한 수가 나온다.": [
    "game/ruins.ruinCipher"
   ],
@@ -3015,6 +3018,9 @@
   ],
   "퀘스트 추적": [
    "index.html"
+  ],
+  "크기 {w}×{h}칸 — 고른 칸이 왼쪽 아래": [
+   "ui/tip.showTip"
   ],
   "크레딧": [
    "index.html"
@@ -6718,6 +6724,7 @@
   "TILE_DEF.215.n": "빛다리",
   "TILE_DEF.216.n": "금 간 벽돌",
   "TILE_DEF.217.n": "레일",
+  "TILE_DEF.218.n": "기계 몸",
   "VILLAGE.1.n": "되살아난 마을",
   "VILLAGE.1.d": "잿빛이 걷히고 사람이 다시 들어왔다. 아직은 살아남은 자리에 가깝다.",
   "VILLAGE.1.gain.0": "주민 5명 · 여관 · 보관고 · 재련대 · 의뢰 게시판",

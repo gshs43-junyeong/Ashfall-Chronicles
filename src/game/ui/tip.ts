@@ -12,6 +12,7 @@ import { idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { Art } from '../itemart.js';
 import { enhMul, equipReqLv, isGear, itemDamage, itemName, itemSpeed, itemStats } from '../items.js';
+import { Factory } from '../factory.js';
 import { UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
 
@@ -155,7 +156,11 @@ export const TipUIPart: Bag = {
     else if (d.type === 'door') h += `<div class="thint">${tr('바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수')}</div>`;
     else if (isGear(it)) h += `<div class="thint">${tr('우클릭으로 장착')}</div>`;
     else if (d.type === 'consum' || d.type === 'summon') h += `<div class="thint">${tr('우클릭으로 사용')}</div>`;
-    else if (d.type === 'machine') h += `<div class="thint">${tr('우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정')}</div>`;
+    else if (d.type === 'machine') {
+      const [mw, mh] = Factory.sizeOf(d.mach!);
+      if (mw * mh > 1) h += `<div class="thint">${tr('크기 {w}×{h}칸 — 고른 칸이 왼쪽 아래', { w: mw, h: mh })}</div>`;
+      h += `<div class="thint">${tr('우클릭으로 설치 (보는 방향으로) · 설치된 것을 우클릭하면 설정')}</div>`;
+    }
     else if (d.type === 'seed') h += `<div class="thint">${d.fert ? tr('자라는 중인 작물에 우클릭') : tr('갈아 둔 밭 위에 우클릭해 심기')}</div>`;
     else if (d.hoe) h += `<div class="thint">${tr('흙이나 풀에 우클릭해 밭 갈기')}</div>`;
     else if (d.scythe) h += `<div class="thint">${tr('다 여문 작물을 좌클릭해 거두기 — 다른 연장으로 치면 아무것도 안 나온다')}</div>`;

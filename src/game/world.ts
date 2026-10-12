@@ -187,7 +187,7 @@ export class World extends TileMap {
   declare floodHell: (...a: any[]) => any; declare decorateHell: (...a: any[]) => any; declare flv: Uint8Array; declare fq: CellQueue<[number, number, number]> | null; declare hangQ: number[] | null; declare giantTree: Record<string, any>; declare glowStalk: (...a: any[]) => any;
   declare inAtelier: (...a: any[]) => any; declare inCitadel: (...a: any[]) => any; declare inDeepShaft: (...a: any[]) => any; declare inRuin: (...a: any[]) => any; declare ruinInside: (...a: any[]) => any; declare storyTheme: (...a: any[]) => any; declare inRunaway: (...a: any[]) => any;
   declare inWorks: (...a: any[]) => any; declare jungleTree: (...a: any[]) => any; declare lavaPools: any[]; declare light: LightField | null;
-  declare machines: Map<any, any>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
+  declare machines: Map<any, any>; declare mpart: Map<number, number>; declare matId: Uint8Array; declare netDirty: boolean; declare nets: any[];
   declare objects: any[]; declare openCodeDoorway: (...a: any[]) => any; declare oreHits: Record<string, any>; declare pineTree: (...a: any[]) => any; declare placeRichOres: (...a: any[]) => any;
   declare placeRigs: (...a: any[]) => any; declare pools: any[]; declare pruneSmallCaves: (...a: any[]) => any; declare restoreSealRoom: (...a: any[]) => any; declare rng: RNG;
   declare ruinAt: (...a: any[]) => any; declare ruinEvents: any[]; declare ruinSites: any[]; declare ruins: any[]; declare runaway: Record<string, any>;
@@ -208,6 +208,7 @@ export class World extends TileMap {
     this.doors = [];            // objects의 부분집합(같은 참조) — 충돌 판정을 빠르게 하려고 따로 캐싱
     /* 공장 기계. */
     this.machines = new Map();
+    this.mpart = new Map();          // 여러 칸 기계의 몸 칸 → 닻 칸(Factory.claim) — 저장하지 않고 machines 에서 다시 건다
     this.oreHits = {};          // 칸 → 드릴이 더 캘 수 있는 횟수(처음 캘 때 매긴다)
     this.netDirty = true;       // 전력망을 다시 계산해야 하는가 (기계 설치/철거 시 켜진다)
     this.nets = [];
@@ -941,6 +942,8 @@ export class World extends TileMap {
     for (const m of (d.machines || [])) {
       if (m.it) { delete m.it.t0; delete m.it.fx; delete m.it.fy; }   // 미끄러짐 시각은 지난 판의 G.time — 남기면 한 칸 뒤에 얼어붙는다
       w.machines.set(m.y * WW + m.x, m);
+      for (let dy = 0; dy < (m.h || 1); dy++) for (let dx = 0; dx < (m.w || 1); dx++)
+        if (dx || dy) w.mpart.set((m.y - dy) * WW + m.x + dx, m.y * WW + m.x);
     }
     for (const k of (d.crops || [])) w.crops.add(k);
     w.wet = d.wet || {};

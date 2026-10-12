@@ -14,6 +14,7 @@ import { PETS } from '../data/pets.js';
 import { TS } from '../world.js';
 import { makeItem } from '../items.js';
 import { DmgText, Enemy, Pet, Proj } from '../entity.js';
+import { Factory } from '../factory.js';
 import { UI } from '../ui.js';
 import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
@@ -325,6 +326,7 @@ export const NetPart: Bag = {
     if (cur) { for (const k in cur) if (!(k in data)) delete cur[k]; Object.assign(cur, data); }
     else w.machines.set(key, data);
     const m = w.machines.get(key);
+    if (!cur && (m.w || 1) * (m.h || 1) > 1) Factory.claim(w, m);   // 여러 칸 기계 — 몸 칸이 닻을 찾게
     this.net.objJ.set(m, JSON.stringify(m));                // 되돌려 보내지 않게
     w.netDirty = true;
     if (UI.machRef === m && UI.open === 'machine') UI.refreshMachine();
@@ -336,14 +338,19 @@ export const NetPart: Bag = {
       const key = m.y * WW + m.x;
       if (w.machines.has(key)) return;
       w.netMute = true;
-      try { w.set(m.x, m.y, MACHINE[m.m.t] ? MACHINE[m.m.t].tile : w.get(m.x, m.y)); } finally { w.netMute = false; }
+      try {
+        w.set(m.x, m.y, MACHINE[m.m.t] ? MACHINE[m.m.t].tile : w.get(m.x, m.y));
+        for (const [x, y] of Factory.cells(m.m)) if (x !== m.x || y !== m.y) w.set(x, y, T.M_PART);
+      } finally { w.netMute = false; }
       this.netMachPut(key, m.m);
     } else if (m.k === 'mrem') {
       const key = m.y * WW + m.x;
-      if (!w.machines.has(key)) return;
+      const mm = w.machines.get(key);
+      if (!mm) return;
+      Factory.release(w, mm);
       w.machines.delete(key); w.netDirty = true;
       w.netMute = true;
-      try { w.set(m.x, m.y, T.AIR); } finally { w.netMute = false; }
+      try { for (const [x, y] of Factory.cells(mm)) w.set(x, y, T.AIR); } finally { w.netMute = false; }
       if (UI.machRef && !w.machines.has(this.netMachKey(UI.machRef)) && UI.open === 'machine') UI.closePanel();
     } else if (m.k === 'mst') {
       if (fromGuest && !w.machines.has(m.key)) return;
@@ -628,7 +635,11 @@ export const NetPart: Bag = {
       this.netPutMach(m, false);
     } else if (m.k === 'ms') {
       for (const [key, d] of m.l) this.netMachPut(key, d);
-      for (const key of m.g) { this.world.machines.delete(key); this.world.netDirty = true; }
+      for (const key of m.g) {
+        const mm = this.world.machines.get(key);
+        if (mm) Factory.release(this.world, mm);
+        this.world.machines.delete(key); this.world.netDirty = true;
+      }
     }
   },
   /** 호스트를 잃었다(끊김 · 방 닫힘 · 내쫓김) — 타이틀로. 캐릭터는 호스트가 마지막으로 받은 것(15초마다)이 남는다. */

@@ -30,18 +30,42 @@ export const Factory: Bag = {
   at(w: World, tx: number, ty: number) { const { WW, WH } = dimsOf(w);
     // x가 범위를 벗어나면 y*WW+x가 이웃 행으로 감겨 엉뚱한 기계를 집게 된다 — 먼저 막는다
     if (tx < 0 || ty < 0 || tx >= WW || ty >= WH) return null;
-    return w.machines.get(ty * WW + tx) || null;
+    const k = ty * WW + tx, m = w.machines.get(k);
+    if (m) return m;
+    const a = w.mpart.get(k);                                   // 여러 칸 기계의 몸 칸 → 닻
+    return a === undefined ? null : w.machines.get(a) || null;
   },
+  /** 기계가 차지하는 칸 — 닻(m.x, m.y)이 왼쪽 아래, 오른쪽 · 위로 m.w × m.h(옛 세이브 · 작은 기계는 1×1) */
+  cells(m: any) {
+    const out: number[][] = [], W = m.w || 1, H = m.h || 1;
+    for (let dy = 0; dy < H; dy++) for (let dx = 0; dx < W; dx++) out.push([m.x + dx, m.y - dy]);
+    return out;
+  },
+  /** 몸 칸을 점유 표(w.mpart)에 건다 · 푼다 — 불러올 때 · 참가자가 받을 때도 다시 건다 */
+  claim(w: World, m: any) { const { WW } = dimsOf(w);
+    for (const [x, y] of this.cells(m)) if (x !== m.x || y !== m.y) w.mpart.set(y * WW + x, m.y * WW + m.x);
+  },
+  release(w: World, m: any) { const { WW } = dimsOf(w);
+    for (const [x, y] of this.cells(m)) if (x !== m.x || y !== m.y) w.mpart.delete(y * WW + x);
+  },
+  claimAll(w: World) { w.mpart.clear(); for (const m of w.machines.values()) if ((m.w || 1) * (m.h || 1) > 1) this.claim(w, m); },
+  /** 이 기계 갈래의 크기 */
+  sizeOf(key: string) { const s = MACHINE[key]; return (s && s.size) || [1, 1]; },
 
-  /** 이 칸에 기계를 놓을 수 있는가 — 빈 칸이어야 한다 */
-  canPlace(w: World, tx: number, ty: number) { const { WW } = dimsOf(w);
-    return w.inB(tx, ty) && w.get(tx, ty) === T.AIR && !w.machines.has(ty * WW + tx);
+  /** 이 칸에 기계를 놓을 수 있는가 — 발자국이 모두 빈 칸이어야 한다(key 를 주면 그 기계 크기로) */
+  canPlace(w: World, tx: number, ty: number, key?: string) { const { WW } = dimsOf(w);
+    const [W, H] = key ? this.sizeOf(key) : [1, 1];
+    for (let dy = 0; dy < H; dy++) for (let dx = 0; dx < W; dx++) {
+      const x = tx + dx, y = ty - dy, k = y * WW + x;
+      if (!w.inB(x, y) || w.get(x, y) !== T.AIR || w.machines.has(k) || w.mpart.has(k)) return false;
+    }
+    return true;
   },
 
   /** gen 을 주면 "세계가 지어 둔 기계"로 표시한다. */
   place(w: World, tx: number, ty: number, key: string, dir: number, gen: any) { const { WW } = dimsOf(w);
     const s = MACHINE[key];
-    if (!s || !this.canPlace(w, tx, ty)) return null;
+    if (!s || !this.canPlace(w, tx, ty, key)) return null;
     const m: Bag = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: '' };
     if (gen) m.gen = 1;
     if (key === 'belt' || key === 'belt_fast' || key === 'sorter') m.it = null;    // 물고 있는 아이템 1개
@@ -53,14 +77,17 @@ export const Factory: Bag = {
     if (s.proc) { m.prog = 0; m.rec = -1; }
     if (s.store) m.e = 0;
     if (s.mine || key === 'pump' || s.ammo || key === 'trap' || s.proj) m.cd = 0;
+    if (s.size) { m.w = s.size[0]; m.h = s.size[1]; }
     w.set(tx, ty, s.tile);
     w.machines.set(ty * WW + tx, m);
+    for (const [x, y] of this.cells(m)) if (x !== tx || y !== ty) w.set(x, y, T.M_PART);
+    this.claim(w, m);
     w.netDirty = true;
     return m;
   },
 
   /** 철거 — 기계 아이템과 안에 든 것 전부를 돌려준다 */
-  remove(w: World, tx: number, ty: number) { const { WW } = dimsOf(w);
+  remove(w: World, tx: number, ty: number) { const { WW } = dimsOf(w);   // 몸 칸을 줘도 된다 — 걷힌 기계는 lastRemoved
     const m = this.at(w, tx, ty);
     if (!m) return null;
     const s = MACHINE[m.t];
@@ -71,9 +98,11 @@ export const Factory: Bag = {
     if (m.rec >= 0) { const r = MRECIPES[m.rec]; for (const k in r.in) add(k, r.in[k]); }   // 착수 때 잡아 둔 재료
     if (m.out) for (const k in m.out) add(k, m.out[k]);
     if (m.items) for (const it of m.items) if (it) back.push(it);
-    w.machines.delete(ty * WW + tx);
-    w.set(tx, ty, T.AIR);
+    this.release(w, m);
+    w.machines.delete(m.y * WW + m.x);
+    for (const [x, y] of this.cells(m)) w.set(x, y, T.AIR);   // 몸 칸을 캐도 닻째 걷힌다
     w.netDirty = true;
+    this.lastRemoved = m;
     return back;
   },
 
@@ -229,12 +258,15 @@ export const Factory: Bag = {
   /** 앞칸(또는 지정 방향)의 기계에 아이템 하나를 밀어 넣는다 */
   pushTo(w: any, m: any, dir: number, id: string) {
     const [dx, dy] = dirTable(m.t)[dir] || DIR4[dir & 3];
-    const t = this.at(w, m.x + dx, m.y + dy);
+    /* 여러 칸 기계는 발자국 가장자리에서 — 오른쪽 · 왼쪽은 아랫줄(바닥 벨트), 위는 왼쪽 열 */
+    const ex = dx > 0 ? m.x + (m.w || 1) - 1 : m.x, ey = dy < 0 ? m.y - (m.h || 1) + 1 : m.y;
+    const t = this.at(w, ex + dx, ey + dy);
+    if (t === m) return false;
     if (!t) return false;
     if (this.insert(w, t, id, 1) <= 0) return false;
     /* 벨트 위 물건은 어디서 언제 왔는지 적어 두고 render 가 머무는 시간(DWELL)에 걸쳐 미끄러뜨린다 —
        tick 도 그 시간이 지나야 다음 칸으로 넘긴다. 그림과 물류가 같은 시계를 본다. */
-    if (t.it) { t.it.fx = m.x; t.it.fy = m.y; t.it.fo = this.itemOff(m); t.it.t0 = this.now; }
+    if (t.it) { t.it.fx = ex; t.it.fy = ey; t.it.fo = this.itemOff(m); t.it.t0 = this.now; }
     return true;
   },
 
