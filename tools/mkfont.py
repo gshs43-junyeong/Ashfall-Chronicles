@@ -2,7 +2,8 @@
 """게임 글꼴 Ashfall 을 **처음부터** 짓는다 — 획 뼈대(tools/font/)를 굵기 있는 획으로 굽고 바깥 모서리를 깎는다 → play/assets/fonts/ashfall-{regular,bold}.woff2
 
 ★ 다른 글꼴의 윤곽을 쓰지 않는다(사용자 결정 2026-10-12 — Pretendard 를 고친 판이 아니라, 참고만 한 제 정체성의 글꼴).
-  한글은 자모 뼈대(초성 19 · 중성 21 · 종성 27)를 모음 갈래(세로 · 가로 · 섞임) × 받침 유무에 따른 자리 상자에 놓아 음절마다 조립한다(조합형).
+  한글은 자모 뼈대(초성 19 · 중성 21 · 종성 27)를 모음마다 · 받침 높이마다 정한 자리에 놓아 음절마다 조립한다(조합형).
+  자리(어디에 · 얼마나 크게)는 시중 고딕(Pretendard, OFL)의 자모 상자를 재어 맞췄다 — 윤곽은 가져오지 않는다(tools/font/hangul.py).
   라틴 · 숫자 · 기호도 같은 획 엔진(tools/font/latin.py). 둥근 글자(O · o · 0 · ㅇ)는 팔각으로 — 모든 바깥 모서리는 굵기의 36% 만큼 빗면으로 깎는다.
   그것이 이 글꼴의 얼굴(벼린 쇠 · 깎은 돌)이다. 안쪽(오목) 모서리는 그대로 둬 이음이 단단해 보이게.
 ★ 줄 높이(1950 / 494) · 한글 폭(1770) · 대문자(1448) · 소문자(1086) · 숫자 고정폭(1220)은 예전 글꼴과 같은 수치 — 창 배치가 흔들리지 않게.
@@ -19,12 +20,12 @@ from fontTools.pens.recordingPen import RecordingPen
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'font'))
 from latin import L as LATIN
-from hangul import CONS, DOUBLE, VERT, HORZ, MIX, CHO, JUNG, JONG, BOX
+from hangul import CONS, CONS_V, DOUBLE, VV, HV, MV, CHO, JUNG, JONG, LV, L_ADJ, T_V, T_H, T_SHIFT
 
 OUT = os.path.join(ROOT, 'play', 'assets', 'fonts')
 CSS = os.path.join(ROOT, 'play', 'css', 'style.css')   # @font-face 의 ?v= 를 파일 해시로 맞춘다(오래 두는 캐시)
 FAMILY = 'Ashfall'
-VERSION = '2.000'
+VERSION = '2.100'
 REPO = 'https://github.com/gshs43-junyeong/Ashfall-Chronicles'
 COPYRIGHT = f'Copyright 2026 The Ashfall Chronicles Project Authors ({REPO})'
 OFL_DESC = ('This Font Software is licensed under the SIL Open Font License, Version 1.1. '
@@ -142,54 +143,154 @@ def to_glyph(cs):
     return pen.glyph()
 
 # ---------- 뼈대 → 획 ----------
-def place(strokes, box, fit=None):
+def place(strokes, box):
     x0, y0, x1, y1 = box
-    if fit:                                                    # 가로세로 비를 묶는다 — 넓은 받침 칸에서 자음이 납작해지지 않게
-        w, h = x1 - x0, y1 - y0
-        if w / h > fit: nw = h * fit; x0 += (w - nw) / 2; x1 = x0 + nw
-        elif h / w > fit: nh = w * fit; y0 += (h - nh) / 2; y1 = y0 + nh
     W, H = x1 - x0, y1 - y0
     tf = lambda p: (x0 + p[0] * W, y0 + p[1] * H)
     out = []
     for s in strokes:
         if isinstance(s, tuple) and s[0] == 'oct':
-            _, cx, cy, r = s; c = tf((cx, cy))
-            out.append(('loop', octagon(c[0], c[1], r * W, r * H)))
+            _, cx, cy, rx, ry = s; c = tf((cx, cy))
+            out.append(('loop', octagon(c[0], c[1], rx * W, ry * H)))
         elif isinstance(s, tuple) and s[0] == 'loop':
             out.append(('loop', [tf(p) for p in s[1]]))
         else:
             out.append(('line', [tf(p) for p in s]))
     return out
 
-def cons_strokes(j, box, fit, w):
-    if j in DOUBLE:
-        a, b = DOUBLE[j]; x0, y0, x1, y1 = box; gap = w * 0.55; mid = (x0 + x1) / 2
-        return cons_strokes(a, (x0, y0, mid - gap / 2, y1), fit, w) + cons_strokes(b, (mid + gap / 2, y0, x1, y1), fit, w)
-    return place(CONS[j], box, fit)
-
 def inset(box, w):
     """획 굵기 반만큼 안으로 — 뼈대가 상자 끝에 닿아도 윤곽은 상자 안"""
     x0, y0, x1, y1 = box; d = w / 2
     return (x0 + d, y0 + d, x1 - d, y1 - d)
 
+def cons_strokes(j, box, w, form='base'):
+    if j in DOUBLE:
+        a, b = DOUBLE[j]; x0, y0, x1, y1 = box; gap = w * 0.45; mid = (x0 + x1) / 2
+        fa = 'base' if a in 'ㄱㅋ' else form                    # 겹기역의 앞 것은 곧은 다리(쓸어내리면 뒤 것과 엉킨다)
+        return cons_strokes(a, (x0, y0, mid - gap / 2, y1), w, fa) + cons_strokes(b, (mid + gap / 2, y0, x1, y1), w, form)
+    sk = CONS_V.get(j) if form == 'V' else None
+    return place(sk or CONS[j], inset(box, w))
+
+def adj(box, l, kx, ky):
+    """초성마다 상자 크기를 고친다 — 겹자음은 앞 자음 값에 폭을 더한다"""
+    base = DOUBLE[l][0] if l in DOUBLE else l
+    a = L_ADJ[base]; x0, y0, x1, y1 = box
+    x0, y0, x1, y1 = x0 + a[0] * kx, y0 + a[1] * ky, x1 + a[2] * kx, y1 + a[3] * ky
+    if l in DOUBLE: x0 -= 40 * kx; x1 += 90 * kx
+    return (x0, y0, x1, y1)
+
+def vert_strokes(v, ybr, top, bot, w, stem_x=None, br_from=None):
+    """세로 모음 — 줄기(위 top · 아래 bot, 바깥 끝)와 가지(ybr 높이)"""
+    spec = VV[v]; h = w / 2; st = list(spec['st'])
+    if stem_x is not None: st[0] = stem_x
+    out = []
+    for i, x in enumerate(st):
+        tp, b = top, bot
+        if spec.get('short') == i: tp -= 44; b += 92                 # ㅔ 의 앞 줄기는 조금 짧다
+        out.append(('line', [(x, tp - h), (x, b + h)]))
+    for a, b, dy in spec['br']:
+        ax = st[int(a[1])] if isinstance(a, str) else (br_from if br_from is not None else a) + h
+        bx = st[int(b[1])] if isinstance(b, str) else b - h
+        out.append(('line', [(ax, ybr + dy), (bx, ybr + dy)]))
+    return out
+
+def horz_strokes(v, bar_c, x0, x1, reach, w, xs=None):
+    """가로 모음 — 막대(바깥 x0~x1)와 짧은 획(위로면 reach 까지 · 아래로면 reach 까지, 바깥 끝)"""
+    h = w / 2; kind, sx = HV[v]
+    if xs is not None: sx = xs
+    out = [('line', [(x0 + h, bar_c), (x1 - h, bar_c)])]
+    for x in sx:
+        if kind == 'up': out.append(('line', [(x, bar_c), (x, reach - h)]))
+        elif kind == 'down': out.append(('line', [(x, bar_c), (x, reach + h)]))
+    return out
+
+def tbox(t, table, v):
+    x0, y0, x1, y1 = table[t]; dx = T_SHIFT.get(v, (0, 0))
+    return (x0 + dx[0], y0, x1 + dx[1], y1)
+
 def syllable(code, w):
+    """음절 짜임 — 자리 상자는 모음 갈래(세로 · 가로 · 섞임)와 받침 높이로 정한다. 사연: docs/code-history.md#h187"""
     s = code - 0xAC00; li, vi, ti = s // 588, (s % 588) // 28, s % 28
     l, v, t = CHO[li], JUNG[vi], JONG[ti]
-    kind = 'V' if v in VERT else 'H' if v in HORZ else 'M'
-    B = BOX[(kind, 1 if t else 0)]
-    st = cons_strokes(l, inset(B['L'], w), 1.55, w)
-    if kind == 'V': st += place(VERT[v], inset(B['V'], w))
-    elif kind == 'H': st += place(HORZ[v], inset(B['H'], w))
-    else: h, vv = MIX[v]; st += place(HORZ[h], inset(B['H'], w)) + place(VERT[vv], inset(B['V'], w))
-    if t: st += cons_strokes(t, inset(B['T'], w), 1.65, w)
+    h = w / 2; st = []
+    if v in VV:
+        Lb = LV[v]
+        if t:
+            T = tbox(t, T_V, v); tt = T[3]
+            Lb = (Lb[0], max(tt + 170, 620), Lb[2], 1500 + max(0, tt - 520) * 0.25)
+            sb = tt - 140 if t == 'ㄴ' else tt + 95               # 니은 받침은 열린 위쪽으로 줄기가 내려간다
+        else:
+            sb = -162
+        ybr = (Lb[1] + Lb[3]) / 2
+        st += cons_strokes(l, adj(Lb, l, 1, 0.6 if t else 1), w, 'V')
+        st += vert_strokes(v, ybr, 1616, sb, w)
+        if t: st += cons_strokes(t, T, w)
+    elif v in HV:
+        up, dn = v in 'ㅗㅛ', v in 'ㅜㅠ'
+        if t:
+            T = tbox(t, T_H, v); tt = T[3]
+            if up: bc = tt + 250; Lb = (270, bc + 360, 1500, 1540)
+            elif dn: bc = tt + 290; Lb = (278, bc + 236, 1508, 1546)
+            else: bc = tt + 262; Lb = (278, bc + 246, 1508, 1556)
+            low = tt + 70
+        else:
+            if up: bc = 135; Lb = (260, 600, 1500, 1440)
+            elif dn: bc = 522; Lb = (296, 824, 1490, 1510)
+            else: bc = 146; Lb = (280, 630, 1508, 1450)
+            low = -156
+        L = adj(Lb, l, 0.3, 0.3)
+        st += cons_strokes(l, L, w)
+        xs = [800] if v == 'ㅗ' and (DOUBLE.get(l, l)[-1] in 'ㄱㅋ') else None   # 기역 밑은 왼쪽이 비어 짧은 획이 그리로 간다
+        st += horz_strokes(v, bc, 72, 1700, L[1] - 36 if up else low, w, xs=xs)
+        if t: st += cons_strokes(t, T, w)
+    else:
+        hv, (bx0, bx1), vv, vx = MV[v]
+        up, dn = hv == 'ㅗ', hv == 'ㅜ'
+        if t:
+            T = tbox(t, T_V, v); tt = T[3]
+            if up: bc = tt + 230; Lb = (bx0 + 110, bc + 330, bx1 - 110, 1516)
+            elif dn: bc = tt + 450; Lb = (bx0 + 180, bc + 165, bx1 - 150, 1562)
+            else: bc = tt + 230; Lb = (bx0 + 146, bc + 270, bx1 - 144, 1498)
+            vb = tt + 30; low = tt + 60
+        else:
+            if up: bc = 290; Lb = (bx0 + 110, 640, bx1 - 110, 1436)
+            elif dn: bc = 655; Lb = (bx0 + 170, 880, bx1 - 140, 1515)
+            else: bc = 350; Lb = (bx0 + 146, 736, bx1 - 144, 1442)
+            vb = -162; low = -108
+        L = adj(Lb, l, 0.5, 0.4)
+        k = DOUBLE.get(l, l)[-1] in 'ㄱㅋ'
+        cx = Lb[0] + (Lb[2] - Lb[0]) * (0.4 if k else 0.5)
+        st += cons_strokes(l, L, w)                                # 가로 막대 위라 기역도 곧은 다리
+        st += horz_strokes(hv, bc, bx0, bx1, L[1] - 36 if up else low, w, xs=[cx] if hv != 'ㅡ' else [])
+        if vv in ('ㅓ', 'ㅔ'):
+            ybr = (bc - h + (tt if t else -108)) / 2 + (90 if t else 190)
+            st += vert_strokes(vv, ybr, 1616, vb, w, br_from=vx)
+        else:
+            ybr = (bc + Lb[3]) / 2 - (0 if t else 100)
+            st += vert_strokes(vv, ybr, 1616, vb, w, stem_x=vx)
+        if t: st += cons_strokes(t, T, w)
     return st
 
+def _shift(st, dx):
+    out = []
+    for kind, pts in st: out.append((kind, [(x + dx, y) for x, y in pts]))
+    return out
+
 def jamo(ch, w):
-    box = inset((260, 40, 1510, 1420), w)
-    if ch in CONS or ch in DOUBLE: return cons_strokes(ch, box, 1.15, w)
-    if ch in VERT: return place(VERT[ch], inset((560, -60, 1210, 1520), w))
-    if ch in HORZ: return place(HORZ[ch], inset((180, 160, 1590, 1200), w))
-    if ch in MIX: h, v = MIX[ch]; return place(HORZ[h], inset((140, 160, 1080, 1000), w)) + place(VERT[v], inset((1080, -60, 1640, 1520), w))
+    """호환 자모(ㄱ ㅏ …) — 홀로 선 꼴"""
+    if ch in CONS or ch in DOUBLE: return cons_strokes(ch, (252, 258, 1582, 1188) if ch in DOUBLE else (328, 258, 1442, 1184), w)
+    if ch in VV:
+        st = vert_strokes(ch, 710, 1582, -162, w); xs = [x for _, pts in st for x, _ in pts]
+        return _shift(st, 960 - (min(xs) + max(xs)) / 2)
+    if ch in HV:
+        bc, reach = {'ㅗ': (437, 1248), 'ㅛ': (437, 1248), 'ㅜ': (944, 114), 'ㅠ': (944, 114), 'ㅡ': (755, 0)}[ch]
+        return horz_strokes(ch, bc, 76, 1690, reach, w)
+    if ch in MV:
+        hv, (bx0, bx1), vv, vx = MV[ch]
+        bc, reach = {'ㅗ': (345, 1036), 'ㅜ': (760, 0), 'ㅡ': (496, 0)}[hv]
+        st = horz_strokes(hv, bc, bx0, bx1, reach, w, xs=[(bx0 + bx1) / 2] if hv != 'ㅡ' else [])
+        st += vert_strokes(vv, 330 if vv in 'ㅓㅔ' else 710, 1582, -162, w, stem_x=vx if vv == 'ㅣ' else None, br_from=vx if vv in 'ㅓㅔ' else None)
+        return st
     return None
 
 def latin(ch, w):
@@ -313,8 +414,12 @@ How it is made
 - Every glyph is generated by tools/mkfont.py from stroke skeletons in tools/font/
   (no outlines are taken from any other font).
 - Hangul syllables are composed from designed jamo: 19 initials, 21 medials and
-  27 finals, placed in layout boxes chosen by vowel shape (vertical, horizontal,
-  mixed) and by whether there is a final consonant.
+  27 finals. Where each jamo sits and how large it is depends on the vowel and on
+  the height of the final consonant; initials before vertical vowels use their
+  own forms (the sweeping leg of giyeok, the split strokes of siot and jieut).
+- The jamo placement (positions and sizes only) was studied from Pretendard
+  (Kil Hyung-jin, SIL OFL 1.1) by measuring its jamo bounding boxes. No glyph
+  outlines were taken from it.
 - Strokes have a fixed weight per style (Regular 150, Bold 226 of 2048 units).
   Round letters are octagonal, and every outer corner is cut at 36% of the stroke
   weight - the chiselled look of the game's ash-and-iron world. Inner corners stay
@@ -326,6 +431,10 @@ How it is made
   in German and Spanish, punctuation, and the symbols the game text uses.
 
 Version {VERSION} (2026-10-12)
+- Hangul structure reworked: jamo placement per vowel and per final height,
+  positional consonant forms, larger initials and finals.
+
+Version 2.000 (2026-10-12)
 - New original design, replacing 1.000 (a modified Pretendard).
 """
     return {'OFL.txt': COPYRIGHT + '\n\n' + body, 'FONTLOG.txt': log}
