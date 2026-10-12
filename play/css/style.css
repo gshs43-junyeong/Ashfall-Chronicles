@@ -186,6 +186,7 @@ body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 /* 유틸리티 칸(Z · X) — 스킬 칸과 같은 판, 사이를 조금 띄운다. 산소통처럼 저절로 쓰이는 도구는 키 없이 흐리게 */
 .usl{width:46px;height:46px;border:1px solid #4d6b73;background:#0f1416d8;border-radius:4px;position:relative;display:flex;align-items:center;justify-content:center}
 #skillbar .sk + .usl{margin-left:12px}
+#skillbar .sk[hidden],#skill-slots [hidden]{display:none}   /* 다섯째 칸 — 재빠른 손 전엔 숨김(.sk 의 display 가 hidden 을 이긴다) */
 .usl[hidden]{display:none}
 .usl .key{position:absolute;top:-1px;left:3px;font-size:9px;color:#8fb6bf}
 .usl .cdnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;text-shadow:0 1px 3px #000}
@@ -263,6 +264,8 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
   /* '유틸리티'처럼 네 글자가 넘어가면 칸(46px) 밖으로 삐져나가 잘려 보였다 */
   white-space:nowrap;letter-spacing:-.04em;transform:scale(.94);transform-origin:bottom center}
 .slot.equip.filled .eqtag{display:none}
+.slot.equip.locked{opacity:.38}
+.slot.equip.locked::after{content:'🔒';position:absolute;top:2px;right:3px;font-size:10px}   /* 탐험가 갈래가 연다 */
 /* 빈 장비 칸의 실루엣 — 아이템이 들어오면 가려진다 */
 /* 버리기(휴지통) 아이콘과 같은 밀도로: 위쪽에 작게, 아래는 eqtag 라벨을 위해 비워 둔다 */
 .eqic{position:absolute;top:3px;left:50%;transform:translateX(-50%);width:27px;height:27px;
@@ -308,15 +311,23 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
    갈래를 가로지르는 선을 그을 자리가 없다. 갈래는 위쪽 머리글과 칸 색으로만 남는다. */
 #tree-wrap{background:#100f0a;border:1px solid #262418;border-radius:4px;
   padding:12px 12px 6px;margin:14px 16px 4px}
-.bheads{display:grid;grid-template-columns:repeat(3,1fr);margin-bottom:8px}
+.bheads{display:grid;grid-template-columns:1fr 1fr;margin-bottom:8px}
+.bgrid+.bheads{margin:4px 0 2px}
 .bhead{--hi:var(--bc);padding-left:9px;border-left:3px solid var(--bc)}   /* 글자가 색 막대에 붙지 않게 */
 .bhead h3{font-size:12.5px;letter-spacing:.08em;margin-bottom:3px;color:var(--bc)}
 .bhead .btag{font-size:10px;color:#65614f;margin-bottom:2px}
+.bhead.r{text-align:right;padding:0 9px 0 0;border-left:0;border-right:3px solid var(--bc);justify-self:end}
 .bnote{font-size:10.5px;color:#6b6553;margin:0 0 4px;padding:3px 8px;
   background:#0d0c08;border:1px solid #221f15;border-radius:3px}
 .bnote b{color:#9a9079;font-weight:600}
 .bgrid{position:relative}
-.blines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.blines{position:absolute;left:50%;top:var(--cy);width:1px;height:1px;pointer-events:none;overflow:visible}   /* 원점 = 판 가운데 */
+.broot{stroke:var(--bc);stroke-width:1.4;opacity:.22;stroke-dasharray:2 5}
+/* 가운데 핵 — 네 갈래 색을 두른 돌 */
+.bcore{position:absolute;left:50%;top:var(--cy);width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;
+  background:radial-gradient(circle,#2a2516 0 55%,transparent 56%),conic-gradient(from 0deg,var(--c2) 0 25%,var(--c3) 0 50%,var(--c4) 0 75%,var(--c1) 0);
+  box-shadow:0 0 14px #d8a94b40;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.bcore span{color:#e8d49a;font-size:13px;text-shadow:0 0 6px #ffcf6a}
 .bline{stroke:#2a2719;stroke-width:2;stroke-linecap:round}
 .bline.on{stroke:var(--bc);opacity:.42}
 .bline.full{opacity:.85;stroke-width:2.6;filter:drop-shadow(0 0 3px var(--bc))}
@@ -1047,7 +1058,7 @@ body.booting #title-screen{visibility:hidden}
   #chest-grid{grid-template-columns:repeat(6,46px)}
   /* 좁은 화면에서는 아홉 칸이 뭉개진다 — 가로로 밀어 보게 둔다(칸 크기는 지킨다) */
   #tree-wrap{overflow-x:auto}
-  .bgrid,.bheads{min-width:660px}
+  .bgrid,.bheads{min-width:680px}
   #prof-wrap{grid-template-columns:1fr}
   #craft-list{grid-template-columns:1fr}
   #quest-tracker{width:190px;font-size:11px}

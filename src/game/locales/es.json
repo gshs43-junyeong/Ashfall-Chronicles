@@ -1040,7 +1040,8 @@
   "톱니바퀴가 하나 필요하다": "Necesitas un engranaje",
   "너무 멀다 — 가까이 다가가 먹인다": "Demasiado lejos — acércate para alimentarlo",
   "야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)": "El caballo salvaje confía en ti — ya puedes montarlo (recógelo con el pico para llevarlo como objeto)",
-  "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": "Un caballo salvaje — dale Trigo, Raíz estelar, Judía de sangre o Hierba de escarcha para ganarte su confianza"
+  "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": "Un caballo salvaje — dale Trigo, Raíz estelar, Judía de sangre o Hierba de escarcha para ganarte su confianza",
+  "탐험가 갈래에서 이 칸을 열어야 한다": "Primero desbloquea esta ranura en la rama de Explorador"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4516,6 +4517,25 @@
   "ITEMS.weird_umbrella.n": "Paraguas viejo",
   "ITEMS.weird_umbrella.d": "Sostenlo al caer y se abre para que bajes despacio. Al blandirlo, pincha.",
   "ITEMS.weird_bubble.n": "Varita de pompas",
-  "ITEMS.weird_bubble.d": "Sopla pompas que suben despacio. Al tocar algo estallan y salpican alrededor."
+  "ITEMS.weird_bubble.d": "Sopla pompas que suben despacio. Al tocar algo estallan y salpican alrededor.",
+  "BRANCHES.3.n": "Explorador",
+  "BRANCHES.3.tag": "Minería · Suerte · Ranuras extra",
+  "KEY_ACTIONS.18.n": "Habilidad 5",
+  "SKILLS.s_mole.n": "Topo",
+  "SKILLS.s_mole.d": "Velocidad de minado +%d%%. En rango 3, la tierra, la arena y la grava se rompen de un golpe.",
+  "SKILLS.s_luck.n": "Suerte",
+  "SKILLS.s_luck.d": "%d%% de probabilidad de obtener dos al minar o pescar mineral o chatarra.",
+  "SKILLS.s_bombpick.n": "Pico explosivo",
+  "SKILLS.s_bombpick.d": "Al minar una casilla con el pico, %d%% de probabilidad de romper también el 3×3 de alrededor (solo tierra, piedra y mineral que un pico pueda minar).",
+  "SKILLS.s_scout.n": "Ojo de explorador",
+  "SKILLS.s_scout.d": "Los monstruos cercanos (30 casillas) aparecen en el minimapa — sin detector de monstruos.",
+  "SKILLS.s_packrat.n": "Porteador",
+  "SKILLS.s_packrat.d": "Huecos de la bolsa +%d.",
+  "SKILLS.s_toolbelt.n": "Cinturón de herramientas",
+  "SKILLS.s_toolbelt.d": "Desbloquea la segunda ranura de utilidad (X).",
+  "SKILLS.s_petbond.n": "Mano domadora",
+  "SKILLS.s_petbond.d": "Desbloquea la segunda ranura de mascota — lleva dos mascotas contigo.",
+  "SKILLS.s_quickhands.n": "Manos rápidas",
+  "SKILLS.s_quickhands.d": "Desbloquea una ranura de habilidad más (G)."
  }
 }

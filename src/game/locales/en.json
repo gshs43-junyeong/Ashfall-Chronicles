@@ -1040,7 +1040,8 @@
   "톱니바퀴가 하나 필요하다": "You need a gear",
   "너무 멀다 — 가까이 다가가 먹인다": "Too far — get closer to feed it",
   "야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)": "The wild horse trusts you now — you can ride it (gather it with a pickaxe to carry it as an item)",
-  "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": "A wild horse — feed it Wheat, Starroot, Bloodbean or Frostherb to win its trust"
+  "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": "A wild horse — feed it Wheat, Starroot, Bloodbean or Frostherb to win its trust",
+  "탐험가 갈래에서 이 칸을 열어야 한다": "Unlock this slot in the Explorer branch first"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4516,6 +4517,25 @@
   "ITEMS.weird_umbrella.n": "Old Umbrella",
   "ITEMS.weird_umbrella.d": "Hold it while falling and it opens so you drift down slowly. Swing it to poke.",
   "ITEMS.weird_bubble.n": "Bubble Wand",
-  "ITEMS.weird_bubble.d": "Blows bubbles that drift slowly upward. They pop on contact and splash everything around."
+  "ITEMS.weird_bubble.d": "Blows bubbles that drift slowly upward. They pop on contact and splash everything around.",
+  "BRANCHES.3.n": "Explorer",
+  "BRANCHES.3.tag": "Mining · Luck · Extra slots",
+  "KEY_ACTIONS.18.n": "Skill 5",
+  "SKILLS.s_mole.n": "Mole",
+  "SKILLS.s_mole.d": "Mining speed +%d%%. At rank 3, dirt, sand and gravel break in one hit.",
+  "SKILLS.s_luck.n": "Luck",
+  "SKILLS.s_luck.d": "%d%% chance to get two when mining or fishing up ore or junk.",
+  "SKILLS.s_bombpick.n": "Bomb Pick",
+  "SKILLS.s_bombpick.d": "When you mine a tile with a pickaxe, %d%% chance to break the 3×3 around it too (only dirt, stone and ore a pickaxe can mine).",
+  "SKILLS.s_scout.n": "Scout's Eye",
+  "SKILLS.s_scout.d": "Nearby monsters (within 30 tiles) show on the minimap — no monster detector needed.",
+  "SKILLS.s_packrat.n": "Packrat",
+  "SKILLS.s_packrat.d": "Bag slots +%d.",
+  "SKILLS.s_toolbelt.n": "Tool Belt",
+  "SKILLS.s_toolbelt.d": "Unlocks the second utility slot (X).",
+  "SKILLS.s_petbond.n": "Tamer's Hand",
+  "SKILLS.s_petbond.d": "Unlocks the second pet slot — bring two pets along.",
+  "SKILLS.s_quickhands.n": "Quick Hands",
+  "SKILLS.s_quickhands.d": "Unlocks one more skill slot (G)."
  }
 }

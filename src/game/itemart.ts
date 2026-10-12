@@ -580,7 +580,11 @@ export const SKSPEC: Bag = {
   s_barrier: { k: 'barrier', c: '#6fb8ff' },
   s_chain: { k: 'chain', c: '#ffe86a' },
   s_blink: { k: 'blink', c: '#c08fff' },
-  s_meteor: { k: 'meteor', c: '#ffb04a' }
+  s_meteor: { k: 'meteor', c: '#ffb04a' },
+  /* 탐험가 — 흙빛 */
+  s_mole: { k: 'pick', c: '#c89a5a' }, s_luck: { k: 'coin', c: '#8fd06a' }, s_bombpick: { k: 'bomb', c: '#4a4a52', fuse: '#e8b04a', glow: '#ffb04a' },
+  s_scout: { k: 'eye', c: '#c89a5a' }, s_packrat: { k: 'sack', c: '#a07a50', strap: '#5a4430' }, s_toolbelt: { k: 'detector', c: '#d8b07a' },
+  s_petbond: { k: 'wolf', c: '#e0b880' }, s_quickhands: { k: 'blink', c: '#e8c890' }
 };
 
 /* ---------------- 버프 / UI / NPC ---------------- */

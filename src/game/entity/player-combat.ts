@@ -4,7 +4,7 @@ import { TAU, angleTo, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
 import { BOW_HAND } from '../data/start.js';
-import { SKILLS } from '../data/skills.js';
+import { SKILLS, skillSlotN } from '../data/skills.js';
 import { SIG_FX, SKILL_FX, SKILL_HIT, idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { itemDamage, itemSpeed } from '../items.js';
@@ -139,6 +139,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
 
   /* ---- 스킬 ---- */
   useSkill(i: any, mx: any, my: any) {
+    if (i >= skillSlotN(this)) return;               // 다섯째 칸은 '재빠른 손'을 배워야
     const id = this.slots[i]; if (!id) return;
     const sk = SKILLS[id], r = this.skills[id] || 0;
     if (!r || sk.type !== 'active') return;

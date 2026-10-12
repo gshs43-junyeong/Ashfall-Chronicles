@@ -1040,7 +1040,8 @@
   "톱니바퀴가 하나 필요하다": "需要一个齿轮",
   "너무 멀다 — 가까이 다가가 먹인다": "太远了 — 靠近些再喂",
   "야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)": "野马对你敞开了心扉 — 现在可以骑了（用镐回收可变为物品）",
-  "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": "是野马 — 喂它小麦、星根、血豆或霜艾就能赢得信任"
+  "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": "是野马 — 喂它小麦、星根、血豆或霜艾就能赢得信任",
+  "탐험가 갈래에서 이 칸을 열어야 한다": "需要先在探险家分支中解锁此栏位"
  },
  "tables": {
   "BIOMES.0.n": "沉没之海",
@@ -4516,6 +4517,25 @@
   "ITEMS.weird_umbrella.n": "旧雨伞",
   "ITEMS.weird_umbrella.d": "拿在手上下落时会撑开，让你慢慢飘下。挥动时可以戳刺。",
   "ITEMS.weird_bubble.n": "泡泡魔杖",
-  "ITEMS.weird_bubble.d": "吹出慢慢上浮的泡泡。碰到就啪地破裂，溅湿周围。"
+  "ITEMS.weird_bubble.d": "吹出慢慢上浮的泡泡。碰到就啪地破裂，溅湿周围。",
+  "BRANCHES.3.n": "探险家",
+  "BRANCHES.3.tag": "采掘 · 幸运 · 解锁栏位",
+  "KEY_ACTIONS.18.n": "技能 5",
+  "SKILLS.s_mole.n": "鼹鼠",
+  "SKILLS.s_mole.d": "采掘速度 +%d%%。3级时泥土 · 沙子 · 砾石一击即碎。",
+  "SKILLS.s_luck.n": "幸运",
+  "SKILLS.s_luck.d": "采掘或钓起矿石 · 杂物时,有 %d%% 的几率得到两个。",
+  "SKILLS.s_bombpick.n": "爆破镐",
+  "SKILLS.s_bombpick.d": "用镐挖一格时,有 %d%% 的几率连同周围 3×3 一起碎掉(仅限镐能挖的泥土 · 石头 · 矿石)。",
+  "SKILLS.s_scout.n": "斥候之眼",
+  "SKILLS.s_scout.d": "附近的怪物(半径 30 格)会显示在小地图上 — 无需怪物探测器。",
+  "SKILLS.s_packrat.n": "搬运工",
+  "SKILLS.s_packrat.d": "背包格子 +%d。",
+  "SKILLS.s_toolbelt.n": "工具带",
+  "SKILLS.s_toolbelt.d": "解锁第二个辅助栏(X)。",
+  "SKILLS.s_petbond.n": "驯兽之手",
+  "SKILLS.s_petbond.d": "解锁第二个宠物栏 — 可以同时带两只宠物。",
+  "SKILLS.s_quickhands.n": "快手",
+  "SKILLS.s_quickhands.d": "再解锁一个技能栏(G)。"
  }
 }

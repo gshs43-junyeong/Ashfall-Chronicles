@@ -63,7 +63,7 @@ export const ShowcasePart: Bag = {
     for (const k in share) { const n = Math.floor(pts * share[k]); p.base[k] += n; left -= n; }
     p.base[main] += left; p.statPts = 0;
     // 특성 — 제 갈래를 위에서부터 채우고, 남으면 이웃 갈래의 밑동. 1점은 남긴다(막 레벨 올린 사람처럼)
-    p.skills = {}; p.slots = [null, null, null, null];
+    p.skills = {}; p.slots = [null, null, null, null, null];
     const learn = (ids: string[]) => {                      // 배울 수 있는 칸을 한 랭크씩 — 더 못 배울 때까지 되풀이
       for (let more = true; more && p.skillPts > 1;) {
         more = false;

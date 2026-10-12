@@ -7,7 +7,7 @@ import { createToasts } from '../engine/ui/toasts.js';
 import { createTooltip } from '../engine/ui/tooltip.js';
 import { LANG, LANGS, LANG_KEY, LANG_NAMES, fmt, setLang, tr } from './lang.js';
 import { KEY_ACTIONS, NOTICE_KINDS } from './data/start.js';
-import { SKILLS } from './data/skills.js';
+import { SKILLS, petSlotN, skillSlotN, utilSlotN } from './data/skills.js';
 import { NPCS } from './data/npcs.js';
 import { SET_DEFAULT, idef } from './data/values.js';
 import { Art } from './itemart.js';
@@ -458,6 +458,7 @@ export const UI: Bag = {
             (d.type === 'util' && key.startsWith('util')) ||
             (d.type === 'bag' && key === 'bag');
           if (!ok) return;
+          if (this.slotLocked(key)) { G.toast(tr('탐험가 갈래에서 이 칸을 열어야 한다'), 'bad'); return; }
           if (p.level < equipReqLv(this.cursor.id)) { G.toast(tr('레벨 {equipReqLv} 필요', { equipReqLv: equipReqLv(this.cursor.id) }), 'bad'); return; }
           const old = p.equip[key]; p.equip[key] = this.cursor; this.setCursor(old);
         } else {
@@ -471,12 +472,17 @@ export const UI: Bag = {
       el.addEventListener('mouseleave', () => this.hideTip());
     });
   },
+  /** 탐험가 갈래가 아직 안 연 칸(둘째 유틸리티 · 둘째 펫) — 이미 낀 것은 그대로 둔다 */
+  slotLocked(key: string) {
+    const p = G.player;
+    return (key === 'util2' && utilSlotN(p) < 2) || (key === 'pet2' && petSlotN(p) < 2);
+  },
   refreshEquip() {
     if (!G.player) return;
     const p = G.player;
     $$('.slot.equip').forEach(el => {
       const it = p.equip[el.dataset.eq];
-      el.className = 'slot equip' + (it ? ' filled r' + it.r : '');
+      el.className = 'slot equip' + (it ? ' filled r' + it.r : '') + (!it && this.slotLocked(el.dataset.eq) ? ' locked' : '');
       this.setIcon(el.querySelector('.ic'), it ? Art.itemUrl(it.id) : '');
     });
   },
@@ -504,8 +510,8 @@ export const UI: Bag = {
   /* ---------------- 스킬바 ---------------- */
   buildSkillbar() {
     const bar = $('#skillbar'); bar.innerHTML = '';
-    const keys = ['Q', 'E', 'R', 'F'];
-    for (let i = 0; i < 4; i++) {
+    const keys = ['Q', 'E', 'R', 'F', 'G'];
+    for (let i = 0; i < 5; i++) {                // 다섯째는 탐험가 '재빠른 손'이 연다
       const d = document.createElement('div');
       d.className = 'sk empty';
       d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span><span class="cdnum"></span>`;
@@ -537,7 +543,9 @@ export const UI: Bag = {
   },
   refreshSkillbar() {
     const p = G.player;
+    const n = skillSlotN(p);
     $$('#skillbar .sk').forEach((el, i) => {
+      el.hidden = i >= n;
       const id = p.slots[i];
       if (!id) { el.className = 'sk empty'; this.setIcon(el.querySelector('.ic'), ''); el.querySelector('.cdnum').textContent = ''; return; }
       const sk = SKILLS[id], cd = p.cd[id] || 0;

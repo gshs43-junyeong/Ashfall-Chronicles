@@ -12,7 +12,7 @@ import { dimsOf } from './size.js';
 import { MACH_OF_TILE, T, TILE_DEF } from './data.js';
 import { HIT_FX, ITEMS, MULTI_FALLOFF } from './data/items.js';
 import { DIFF_TIER, ENEMIES, MECH_PART } from './data/enemies.js';
-import { BOSS_SURGE, BUFFS, PROF_MAX, SKILLS, SURGE_FLY, profNeed } from './data/skills.js';
+import { BOSS_SURGE, BUFFS, PROF_MAX, SKILLS, SURGE_FLY, petSlotN, profNeed, utilSlotN } from './data/skills.js';
 import { CELL_CHARGE } from './data/ruins.js';
 import { DRAGON_FOOD, DRAGON_GATES, PETS, PET_XP_SHARE, dragonStage, levelMult, petAtkMul, petDmgScale, petMaxLv,
   petXpNext } from './data/pets.js';
@@ -115,7 +115,7 @@ export class Player extends Ent {
     this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
     this.sel = 0;
     this.skills = {};              // id -> rank
-    this.slots = [null, null, null, null];
+    this.slots = [null, null, null, null, null];   // 다섯째는 탐험가 '재빠른 손'이 연다
     this.cd = {};                  // 스킬 쿨다운
     this.buffs = [];
     this.facing = 1;
@@ -229,7 +229,7 @@ export class Player extends Ent {
   /* ---- 가방 용량 (가방 장신구로 확장) ---- */
   bagCapacity() {
     const b = this.equip.bag;
-    return BASE_BAG_SIZE + (b ? (idef(b).slots || 0) : 0);
+    return BASE_BAG_SIZE + (b ? (idef(b).slots || 0) : 0) + (this.skills.s_packrat || 0) * 4;   // 짐꾼 — 랭크마다 네 칸
   }
   syncBagCapacity() {
     const cap = this.bagCapacity();
@@ -259,8 +259,9 @@ export class Player extends Ent {
     else if (d.type === 'armor') key = d.slot;
     else if (d.type === 'bag') key = 'bag';
     else if (d.type === 'acc') key = this.equip.acc1 ? (this.equip.acc2 ? 'acc1' : 'acc2') : 'acc1';
-    else if (d.type === 'util') key = this.equip.util1 ? (this.equip.util2 ? 'util1' : 'util2') : 'util1';
-    else if (d.type === 'pet') key = this.equip.pet1 ? (this.equip.pet2 ? 'pet1' : 'pet2') : 'pet1';
+    /* 둘째 칸은 탐험가 갈래(도구 띠 · 길들이는 손)가 연다 — 안 열렸으면 첫 칸과 바꾼다 */
+    else if (d.type === 'util') key = this.equip.util1 && !this.equip.util2 && utilSlotN(this) > 1 ? 'util2' : 'util1';
+    else if (d.type === 'pet') key = this.equip.pet1 && !this.equip.pet2 && petSlotN(this) > 1 ? 'pet2' : 'pet1';
     if (!key) return false;
     const old = this.equip[key];
     this.equip[key] = it; this.bag[slotIdx] = old || null;

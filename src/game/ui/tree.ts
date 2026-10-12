@@ -3,7 +3,7 @@ import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { eulreul } from '../../engine/i18n/ko.js';
 import { tr } from '../lang.js';
-import { BRANCHES, PROFS, PROF_MAX, SKILLS, TIER_REQ, profNeed } from '../data/skills.js';
+import { BRANCHES, PROFS, PROF_MAX, SKILLS, TIER_REQ, profNeed, skillSlotN } from '../data/skills.js';
 import { Art } from '../itemart.js';
 import { $, $$, UI } from '../ui.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
@@ -11,28 +11,31 @@ import { $, $$, UI } from '../ui.js';
 export const TreeUIPart: Bag = {
 
   /* ---------------- 특성 트리 ---------------- */
-  /* ★ 세 갈래를 **한 판**에 그린다 — 사연: docs/code-history.md#h90 */
-  TREE_TOP: 14, TREE_ROW: 89, TREE_BOX: 44,
-  TREE_COLS: 9,                                   // 갈래 셋 × 가로 세 칸
+  /* ★ 갈래를 **한 판**에 그린다 — 사연: docs/code-history.md#h90 · 가운데 핵에서 네 갈래가 대각선으로 뻗는다(#h187) */
+  TREE_BOX: 44,
+  /* 칸 하나 86×80(이름 두 줄 · 랭크) — 단 간격 86 · 열 간격 92 · 단마다 바깥으로 26 비껴 뻗는다. 둥근 고리로 놓으면
+     안쪽 단이 좁아 880 창에 안 들어간다(겹치지 않으려면 1010×770 — 잰 값). */
+  TREE_GX: 46, TREE_GY: 52, TREE_ROW: 86, TREE_COL: 92, TREE_SKEW: 26, TREE_H: 716, TREE_CY: 344,
+  /** 갈래가 뻗는 쪽 — 검투사 왼위 · 유격 오른위 · 비전 오른아래 · 탐험 왼아래(이어지는 갈래끼리 이웃) */
+  TREE_DIR: { blade: [-1, -1], ranger: [1, -1], arcane: [1, 1], explore: [-1, 1] } as Record<string, number[]>,
   _brIdx(br: any) { return BRANCHES.findIndex(b => b.id === br); },
-  /** 가로 자리 — 갈래 순서를 앞에 얹어 아홉 칸 중 하나로 편다 */
-  _nodeX(id: string) {
-    const sk = SKILLS[id];
-    return ((this._brIdx(sk.br) * 3 + sk.col! + 0.5) / this.TREE_COLS * 100) + '%';
+  /** 칸 가운데 — 판 가운데에서 잰 px. 열 0 이 안쪽(이웃 갈래 쪽) */
+  _nodeXY(id: string) {
+    const sk = SKILLS[id], [sx, sy] = this.TREE_DIR[sk.br!] || [1, 1], t = sk.tier!;
+    return [sx * (this.TREE_GX + t * this.TREE_SKEW + sk.col! * this.TREE_COL), sy * (this.TREE_GY + t * this.TREE_ROW)];
   },
-  _nodeY(id: string) { return this.TREE_TOP + SKILLS[id].tier! * this.TREE_ROW; },
 
   buildTree() {
     const w = $('#tree-wrap'); if (!w) return;
     w.innerHTML = '';
     const NS = 'http://www.w3.org/2000/svg';
-
-    // ① 갈래 머리글 — 아홉 칸 중 제 셋 위에 걸린다
+    const bhead = (br: any, right: boolean) => `<div class="bhead${right ? ' r' : ''}" style="--bc:${br.c}">` +
+      `<h3>${br.n}</h3><div class="btag">${br.tag}</div></div>`;
+    const byId = (id: string) => BRANCHES[this._brIdx(id)];
+    // ① 갈래 머리글 — 제 갈래가 뻗는 귀퉁이 쪽(위 둘 · 아래 둘)
     const head = document.createElement('div');
     head.className = 'bheads';
-    for (const br of BRANCHES)
-      head.innerHTML += `<div class="bhead" style="--bc:${br.c}">` +
-        `<h3>${br.n}</h3><div class="btag">${br.tag}</div></div>`;
+    head.innerHTML = bhead(byId('blade'), false) + bhead(byId('ranger'), true);
     w.appendChild(head);
     /* 규칙을 한 줄로 적어 둔다. */
     const note = document.createElement('div');
@@ -43,33 +46,44 @@ export const TreeUIPart: Bag = {
 
     const grid = document.createElement('div');
     grid.className = 'bgrid';
-    const rows = 1 + Math.max(...Object.values(SKILLS).map(s => s.tier!));
-    grid.style.height = (this.TREE_TOP + (rows - 1) * this.TREE_ROW + this.TREE_BOX + 36) + 'px';
+    grid.style.height = this.TREE_H + 'px';
+    grid.style.setProperty('--cy', this.TREE_CY + 'px');
 
-    // ② 잇는 선 — 칸보다 먼저 넣어야 뒤로 깔린다.
+    // ② 잇는 선 — 칸보다 먼저 넣어야 뒤로 깔린다. 좌표는 판 가운데가 원점(svg 를 가운데에 0×0 으로 둔다)
     const svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('class', 'blines');
+    const line = (a: number[], b: number[], cls: string, c: string) => {
+      const ln = document.createElementNS(NS, 'line');
+      ln.setAttribute('x1', String(a[0])); ln.setAttribute('y1', String(a[1]));
+      ln.setAttribute('x2', String(b[0])); ln.setAttribute('y2', String(b[1]));
+      ln.setAttribute('class', cls); ln.style.setProperty('--bc', c);
+      svg.appendChild(ln); return ln;
+    };
+    /* 핵에서 각 갈래 첫 단으로 — 늘 옅게 깔린 뿌리 */
+    for (const id in SKILLS) if (SKILLS[id].tier === 0) line([0, 0], this._nodeXY(id), 'broot', byId(SKILLS[id].br!).c);
     for (const id in SKILLS) for (const rq of (SKILLS[id].req || [])) {
       const cross = SKILLS[rq].br !== SKILLS[id].br;
-      const ln = document.createElementNS(NS, 'line');
-      ln.setAttribute('x1', this._nodeX(rq)); ln.setAttribute('y1', this._nodeY(rq) + this.TREE_BOX / 2);
-      ln.setAttribute('x2', this._nodeX(id)); ln.setAttribute('y2', this._nodeY(id) + this.TREE_BOX / 2);
-      ln.setAttribute('class', 'bline' + (cross ? ' cross' : ''));
       /* 선 색은 **도착하는 칸**의 갈래를 쓴다. */
-      ln.style.setProperty('--bc', BRANCHES[this._brIdx(SKILLS[id].br)].c);
+      const ln = line(this._nodeXY(rq), this._nodeXY(id), 'bline' + (cross ? ' cross' : ''), byId(SKILLS[id].br!).c);
       ln.dataset.from = rq; ln.dataset.to = id;
-      svg.appendChild(ln);
     }
     grid.appendChild(svg);
+    const core = document.createElement('div');
+    core.className = 'bcore';
+    core.style.setProperty('--c1', byId('blade').c); core.style.setProperty('--c2', byId('ranger').c);
+    core.style.setProperty('--c3', byId('arcane').c); core.style.setProperty('--c4', byId('explore').c);
+    core.innerHTML = '<span>✦</span>';
+    grid.appendChild(core);
 
     // ③ 칸
     for (const id in SKILLS) {
       const sk = SKILLS[id];
+      const [x, y] = this._nodeXY(id);
       const n = document.createElement('div');
       n.className = 'node'; n.dataset.sk = id; n.dataset.br = sk.br;
-      n.style.setProperty('--bc', BRANCHES[this._brIdx(sk.br)].c);
-      n.style.left = this._nodeX(id);
-      n.style.top = this._nodeY(id) + 'px';
+      n.style.setProperty('--bc', byId(sk.br!).c);
+      n.style.left = `calc(50% + ${x}px)`;
+      n.style.top = `calc(var(--cy) + ${y - this.TREE_BOX / 2}px)`;
       n.innerHTML = `<div class="nbox"><span class="nic"></span><span class="nlock">🔒</span></div>` +
         `<div class="nname">${sk.n}</div><div class="nrank"></div>`;
       this.setIcon(n.querySelector('.nic'), Art.skillUrl(id));
@@ -81,6 +95,10 @@ export const TreeUIPart: Bag = {
       grid.appendChild(n);
     }
     w.appendChild(grid);
+    const foot = document.createElement('div');
+    foot.className = 'bheads';
+    foot.innerHTML = bhead(byId('explore'), false) + bhead(byId('arcane'), true);
+    w.appendChild(foot);
     this.bindSkillTabs();
   },
 
@@ -194,10 +212,11 @@ export const TreeUIPart: Bag = {
     if (why) { this.toast(why, 'bad'); return; }
     p.skillPts--; p.skills[id] = (p.skills[id] || 0) + 1;
     if (sk.type === 'active' && !p.slots.includes(id)) {
-      const empty = p.slots.indexOf(null);
+      const empty = p.slots.slice(0, skillSlotN(p)).indexOf(null);
       if (empty >= 0) p.slots[empty] = id;
     }
-    p.recalc();
+    p.recalc(); p.syncBagCapacity();
+    if (sk.br === 'explore') { this.refreshEquip(); this.refreshBag(); }
     this.toast(tr('{sk} 습득 ({skills}/{max})', { sk: sk.n, skills: p.skills[id], max: sk.max }), 'good');
     G.sfx('learn');
     this.refreshTree(); this.refreshSkillSlots(); this.refreshSkillbar(); this.refreshStatSheet();
@@ -235,13 +254,13 @@ export const TreeUIPart: Bag = {
     if (sk.type !== 'active' || !(p.skills[id] > 0)) return;
     const cur = p.slots.indexOf(id);
     if (cur >= 0) { p.slots[cur] = null; }
-    else { const e = p.slots.indexOf(null); p.slots[e >= 0 ? e : 0] = id; }
+    else { const e = p.slots.slice(0, skillSlotN(p)).indexOf(null); p.slots[e >= 0 ? e : 0] = id; }
     this.refreshTree(); this.refreshSkillSlots(); this.refreshSkillbar();
   },
   buildSkillSlots() {
     const box = $('#skill-slots'); box.innerHTML = '';
-    const keys = ['Q', 'E', 'R', 'F'];
-    for (let i = 0; i < 4; i++) {
+    const keys = ['Q', 'E', 'R', 'F', 'G'];
+    for (let i = 0; i < 5; i++) {
       const d = document.createElement('div');
       d.className = 'ss'; d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span>`;
       d.addEventListener('click', () => { G.player.slots[i] = null; this.refreshSkillSlots(); this.refreshTree(); this.refreshSkillbar(); });
@@ -250,7 +269,9 @@ export const TreeUIPart: Bag = {
   },
   refreshSkillSlots() {
     const p = G.player;
+    const n = skillSlotN(p);
     $$('#skill-slots .ss').forEach((el, i) => {
+      el.hidden = i >= n;
       const id = p.slots[i];
       el.className = 'ss' + (id ? ' filled' : '');
       this.setIcon(el.querySelector('.ic'), id ? Art.skillUrl(id) : '');

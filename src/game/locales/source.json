@@ -3049,6 +3049,9 @@
   "탐지 파동 — 움직이는 것 {n}": [
    "game/utility.scanPulse"
   ],
+  "탐험가 갈래에서 이 칸을 열어야 한다": [
+   "ui.buildEquipSlots"
+  ],
   "탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다": [
    "game/fish-duel.duelDraw"
   ],
@@ -3769,6 +3772,8 @@
   "BRANCHES.1.tag": "원거리 · 기동 · 치명타",
   "BRANCHES.2.n": "비전",
   "BRANCHES.2.tag": "마법 · 제어 · 소환",
+  "BRANCHES.3.n": "탐험가",
+  "BRANCHES.3.tag": "채굴 · 행운 · 칸 열기",
   "BUFFS.rage.n": "분노",
   "BUFFS.rage_greater.n": "상급 분노",
   "BUFFS.iron.n": "무쇠 피부",
@@ -5384,6 +5389,7 @@
   "KEY_ACTIONS.15.n": "저장",
   "KEY_ACTIONS.16.n": "유틸리티 (왼쪽 칸)",
   "KEY_ACTIONS.17.n": "유틸리티 (오른쪽 칸)",
+  "KEY_ACTIONS.18.n": "스킬 5",
   "MACHINE.belt.n": "컨베이어 벨트",
   "MACHINE.belt.d": "아이템을 1초에 한 칸씩 앞으로 나른다. 동력이 필요 없다. 앞이 막히면 그 자리에서 기다린다.",
   "MACHINE.pole.n": "전주",
@@ -5883,6 +5889,22 @@
   "SKILLS.s_arch.d": "모든 스킬 재사용 대기 -20%, 마법 피해 +30%.",
   "SKILLS.s_meteor.n": "별의 낙하",
   "SKILLS.s_meteor.d": "겨눈 자리에 별을 떨어뜨린다. 넓은 범위에 큰 피해와 화상.",
+  "SKILLS.s_mole.n": "두더지",
+  "SKILLS.s_mole.d": "채굴 속도 +%d%%. 3랭크면 흙 · 모래 · 자갈은 한 번에 판다.",
+  "SKILLS.s_luck.n": "행운",
+  "SKILLS.s_luck.d": "광석 · 잡동사니를 캐거나 낚을 때 %d%% 확률로 두 개가 나온다.",
+  "SKILLS.s_bombpick.n": "폭탄 곡괭이",
+  "SKILLS.s_bombpick.d": "곡괭이로 한 칸을 캘 때 %d%% 확률로 둘레 3×3이 함께 부서진다(곡괭이로 캘 수 있는 흙 · 돌 · 광석만).",
+  "SKILLS.s_scout.n": "정찰병의 눈",
+  "SKILLS.s_scout.d": "미니맵에 가까운 몬스터(반경 30칸)가 비친다 — 몬스터 탐지기 없이도.",
+  "SKILLS.s_packrat.n": "짐꾼",
+  "SKILLS.s_packrat.d": "가방 칸 +%d.",
+  "SKILLS.s_toolbelt.n": "도구 띠",
+  "SKILLS.s_toolbelt.d": "두 번째 유틸리티 칸(X)이 열린다.",
+  "SKILLS.s_petbond.n": "길들이는 손",
+  "SKILLS.s_petbond.d": "두 번째 펫 칸이 열린다 — 펫 둘을 함께 데리고 다닌다.",
+  "SKILLS.s_quickhands.n": "재빠른 손",
+  "SKILLS.s_quickhands.d": "스킬 칸이 하나 더 열린다(G).",
   "STATION_DESC.work.1": "판자와 못으로 되는 것들.",
   "STATION_DESC.work.2": "치수를 재고 깎는다. 부품이 나오기 시작한다.",
   "STATION_DESC.work.3": "설계 핵을 얹었다. 이제 기계를 만드는 기계를 만든다.",

@@ -155,8 +155,30 @@ export const SKILLS: Record<string, SkillDef> = {
                 d: '모든 스킬 재사용 대기 -20%, 마법 피해 +30%.', b: () => ({ cdr: 20, magicP: 30 }) },
   s_meteor:   { n: '별의 낙하', i: '🌠', br: 'arcane', tier: 3, col: 1.5, max: 1, type: 'active', mana: 60, cd: 45,
                 req: ['s_chain', 's_blink'],
-                d: '겨눈 자리에 별을 떨어뜨린다. 넓은 범위에 큰 피해와 화상.', v: () => 0 }
+                d: '겨눈 자리에 별을 떨어뜨린다. 넓은 범위에 큰 피해와 화상.', v: () => 0 },
+
+  /* ===== 탐험가 — 캐고 줍고 더 들고 다닌다(효과는 game/mine.ts · minimap.ts · entity.ts 가 skills 를 직접 본다) ===== */
+  s_mole:      { n: '두더지', i: '⛏', br: 'explore', tier: 0, col: 0.5, max: 3, type: 'passive',
+                 d: '채굴 속도 +%d%%. 3랭크면 흙 · 모래 · 자갈은 한 번에 판다.', v: r => r * 15 },
+  s_luck:      { n: '행운', i: '🍀', br: 'explore', tier: 0, col: 1.5, max: 4, type: 'passive',
+                 d: '광석 · 잡동사니를 캐거나 낚을 때 %d%% 확률로 두 개가 나온다.', v: r => r * 6 },
+  s_bombpick:  { n: '폭탄 곡괭이', i: '💣', br: 'explore', tier: 1, col: 0, max: 3, type: 'passive', req: ['s_mole'],
+                 d: '곡괭이로 한 칸을 캘 때 %d%% 확률로 둘레 3×3이 함께 부서진다(곡괭이로 캘 수 있는 흙 · 돌 · 광석만).', v: r => r * 7 },
+  s_scout:     { n: '정찰병의 눈', i: '👣', br: 'explore', tier: 1, col: 1, max: 1, type: 'passive', req: ['s_mole', 's_luck'],
+                 d: '미니맵에 가까운 몬스터(반경 30칸)가 비친다 — 몬스터 탐지기 없이도.', v: () => 0 },
+  s_packrat:   { n: '짐꾼', i: '🎒', br: 'explore', tier: 1, col: 2, max: 2, type: 'passive', req: ['s_luck'],
+                 d: '가방 칸 +%d.', v: r => r * 4 },
+  s_toolbelt:  { n: '도구 띠', i: '🧰', br: 'explore', tier: 2, col: 0.5, max: 1, type: 'passive', req: ['s_bombpick', 's_scout'],
+                 d: '두 번째 유틸리티 칸(X)이 열린다.', v: () => 0 },
+  s_petbond:   { n: '길들이는 손', i: '🐾', br: 'explore', tier: 2, col: 1.5, max: 1, type: 'passive', req: ['s_scout', 's_packrat'],
+                 d: '두 번째 펫 칸이 열린다 — 펫 둘을 함께 데리고 다닌다.', v: () => 0 },
+  s_quickhands: { n: '재빠른 손', i: '✋', br: 'explore', tier: 3, col: 1, max: 1, type: 'passive', req: ['s_toolbelt', 's_petbond'],
+                 d: '스킬 칸이 하나 더 열린다(G).', v: () => 0 }
 };
+/** 탐험가 갈래가 여는 칸 — 옛 세이브에 이미 낀 것은 그대로 둔다(장착을 새로 막을 뿐) */
+export const skillSlotN = (p: any) => 4 + (p.skills.s_quickhands ? 1 : 0);
+export const utilSlotN = (p: any) => p.skills.s_toolbelt ? 2 : 1;
+export const petSlotN = (p: any) => p.skills.s_petbond ? 2 : 1;
 
 export const BRANCHES = [
   { id: 'blade', n: '검투사', tag: '근접 · 생존 · 압박', c: '#c8433c',
@@ -164,7 +186,9 @@ export const BRANCHES = [
   { id: 'ranger', n: '유격', tag: '원거리 · 기동 · 치명타', c: '#5fc45f',
     nodes: ['s_dash', 's_eagle', 's_volley', 's_swift', 's_pierce', 's_rain', 's_smoke', 's_mark', 's_hunter', 's_tempest'] },
   { id: 'arcane', n: '비전', tag: '마법 · 제어 · 소환', c: '#4f9cf0',
-    nodes: ['s_fireball', 's_wisdom', 's_nova', 's_heal', 's_barrier', 's_wolf', 's_chain', 's_blink', 's_arch', 's_meteor'] }
+    nodes: ['s_fireball', 's_wisdom', 's_nova', 's_heal', 's_barrier', 's_wolf', 's_chain', 's_blink', 's_arch', 's_meteor'] },
+  { id: 'explore', n: '탐험가', tag: '채굴 · 행운 · 칸 열기', c: '#c89a5a',
+    nodes: ['s_mole', 's_luck', 's_bombpick', 's_scout', 's_packrat', 's_toolbelt', 's_petbond', 's_quickhands'] }
 ];
 
 /* 특성 티어 해금에 필요한 해당 분기 누적 포인트 */

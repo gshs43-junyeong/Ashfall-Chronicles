@@ -51,7 +51,7 @@ export const MinimapPart: Bag = {
     const c = this.mmx, w = this.world, p = this.player;
     const MW = this.mm.width, MH = this.mm.height, S = 2;
     /* 탐지기 — **안개를 뚫고** 보여 준다. */
-    const detOre = this.hasDetector('ore'), detMob = this.hasDetector('mob');
+    const detOre = this.hasDetector('ore'), detMob = this.hasDetector('mob') || !!(p.skills && p.skills.s_scout);   // 정찰병의 눈(탐험가)
     const DR = this.DET_R, DR2 = DR * DR;
     let detHit = 0;                                  // 이번 갱신에 잡힌 것 수 (소리용)
     c.fillStyle = '#07080c'; c.fillRect(0, 0, MW, MH);

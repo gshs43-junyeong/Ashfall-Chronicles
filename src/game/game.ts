@@ -312,6 +312,7 @@ export const GameCore: Bag = {
       else if (this.isKey('skill2', k)) this.player.useSkill(1, this.input.wx, this.input.wy);
       else if (this.isKey('skill3', k)) this.player.useSkill(2, this.input.wx, this.input.wy);
       else if (this.isKey('skill4', k)) this.player.useSkill(3, this.input.wx, this.input.wy);
+      else if (this.isKey('skill5', k)) this.player.useSkill(4, this.input.wx, this.input.wy);
       else if (this.isKey('util1', k)) this.useUtil(0);
       else if (this.isKey('util2', k)) this.useUtil(1);
     }

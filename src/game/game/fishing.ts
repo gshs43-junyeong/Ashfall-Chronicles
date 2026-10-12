@@ -180,7 +180,9 @@ export const FishingPart: Bag = {
   giveCatch(c: Bag, baited: boolean) {
     const p = this.player;
     if (c.kind === 'none') { this.toast(baited ? tr('미끼만 사라졌다') : tr('빈 바늘만 올라왔다'), 'bad'); UI.refreshBag(); return; }
-    const it = c.kind === 'item' && isGear(makeItem(c.id)!) ? rollGear(c.id, this.rng, 0) : makeItem(c.id, c.n);
+    const gear = c.kind === 'item' && isGear(makeItem(c.id)!);
+    if (c.kind === 'item' && !gear && this.rng.chance((p.skills.s_luck || 0) * 0.06)) { c.n = (c.n || 1) * 2; this.luckyFx(p.cx / TS - .5, p.cy / TS); }   // 행운 — 잡동사니 두 배
+    const it = gear ? rollGear(c.id, this.rng, 0) : makeItem(c.id, c.n);
     if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it!));
     if (c.kind === 'fish') {
       this.toast(tr('낚았다 — {itemName}{v}', { itemName: itemName(it!), v: c.n > 1 ? ' ×' + c.n : '' }), 'good');

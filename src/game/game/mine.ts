@@ -12,12 +12,14 @@ import { idef } from '../data/values.js';
 import { TS } from '../world.js';
 import { TileArt } from '../tileart.js';
 import { makeItem } from '../items.js';
-import { Bomb, Drop, Part } from '../entity.js';
+import { Bomb, DmgText, Drop, Part } from '../entity.js';
 import { DIR_NAME, Factory, dirTable } from '../factory.js';
 import { UI } from '../ui.js';
 import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
+/* 두더지 3랭크가 한 번에 파는 무른 흙 */
+export const SOFT_DIG = new Set([T.DIRT, T.GRASS, T.SAND, T.MUD, T.SNOW, T.ASH, T.JUNGLEGRASS, T.CORRUPTGRASS]);
 export const MinePart: Bag = {
 
   /* ================= 좌클릭: 채굴 또는 공격 ================= */
@@ -54,8 +56,10 @@ export const MinePart: Bag = {
       return;
     }
     if (p.mineTx !== tx || p.mineTy !== ty) { p.mineTx = tx; p.mineTy = ty; p.mineProg = 0; p.mineBeat = 0; }
-    const rate = (0.6 + (tool.power || 1) * 0.55 + (tool.chop && def.tree ? 2 : 0)) / (0.45 + def.hard * 0.5);
+    const mole = p.skills.s_mole || 0;                                 // 두더지 — 랭크마다 15% · 3랭크면 무른 흙은 한 번에
+    const rate = (0.6 + (tool.power || 1) * 0.55 + (tool.chop && def.tree ? 2 : 0)) / (0.45 + def.hard * 0.5) * (1 + mole * 0.15);
     p.mineProg += rate * dt;
+    if (mole >= 3 && SOFT_DIG.has(id)) p.mineProg = 1;
     /* ★ 캐는 소리는 **박자**로 친다. */
     p.mineBeat = (p.mineBeat || 0) - dt;
     if (p.mineBeat <= 0) {
@@ -102,6 +106,7 @@ export const MinePart: Bag = {
         return;
       }
       this.dropTile(tx, ty, id);
+      if (!def.tree && !def.crop) this.bombPick(tx, ty, tool);         // 폭탄 곡괭이 — 둘레 3×3(탐험가)
       // 다 여문 작물은 씨앗을 함께 돌려준다 — 한 번 시작하면 밭이 저절로 이어지도록
       if (def.crop) {
         w.crops.delete(ty * WW + tx);
@@ -151,10 +156,35 @@ export const MinePart: Bag = {
     const d = TILE_DEF[id];
     let out = d.drop;
     if (d.leafDrop) { const r = this.rng.weighted(d.leafDrop); out = r === 'none' ? null : r; }
-    if (out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(out, d.dropN && out === d.drop ? this.rng.int(d.dropN[0], d.dropN[1]) : 1)!));
+    if (out) {
+      let n = d.dropN && out === d.drop ? this.rng.int(d.dropN[0], d.dropN[1]) : 1;
+      const luck = this.player ? (this.player.skills.s_luck || 0) * 0.06 : 0;   // 행운 — 광석은 두 배
+      if (luck && d.ore && this.rng.chance(luck)) { n *= 2; this.luckyFx(x, y); }
+      this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(out, n)!));
+    }
     // 장식이면 그 장식도 하나 — 옮겨 놓을 수 있게(data.js 의 deco 절).
     const deco = DECO_OF[id];
     if (deco && deco !== out) this.drops.push(new Drop((x + .5) * TS, (y + .5) * TS, makeItem(deco, 1)!));
+  },
+
+  /** 폭탄 곡괭이 — 랭크마다 7% 로 둘레 여덟 칸도 함께(곡괭이가 캘 수 있는 맨 흙 · 돌 · 광석만 · 기계 · 유적 벽 · 기반암 · 장식 · 물은 안 건드린다) */
+  bombPick(tx: number, ty: number, tool: Bag) {
+    const p = this.player, w = this.world, r = p.skills.s_bombpick || 0;
+    if (!r || !this.rng.chance(r * 0.07)) return;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const x = tx + dx, y = ty + dy, id = w.get(x, y), d = TILE_DEF[id];
+      if ((!dx && !dy) || id === T.AIR || !d || d.solid !== 1 || !d.drop || d.tree || d.crop || d.hard > (tool.power || 1)) continue;
+      if (id === T.BEDROCK || MACH_OF_TILE[id] || DECO_OF[id] || w.ruinInside(x, y)) continue;
+      w.set(x, y, T.AIR); p.mined[id] = (p.mined[id] || 0) + 1;
+      this.dropTile(x, y, id);
+    }
+    this.burst((tx + .5) * TS, (ty + .5) * TS, 'fire', 70);
+    this.sfx('boom_small', 1.2); this.shake = Math.max(this.shake, 4);
+  },
+  /** 행운 — 두 개가 나온 순간 작은 클로버 빛 */
+  luckyFx(x: number, y: number) {
+    for (let i = 0; i < 6; i++) this.parts.push(new Part((x + .5) * TS, (y + .5) * TS, '#8fd06a', -60, .6, { glow: 1 }));
+    this.texts.push(new DmgText((x + .5) * TS, y * TS, '×2', '#8fd06a', 0));
   },
 
   /** 벌목 — 기둥을 자르면 그 위 기둥이 무너지고, 살아 있는 기둥에서 떨어져 나간 잎 *덩어리**가 통째로 함께 떨어진다. */

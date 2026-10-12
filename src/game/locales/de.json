@@ -1040,7 +1040,8 @@
   "톱니바퀴가 하나 필요하다": "Du brauchst ein Zahnrad",
   "너무 멀다 — 가까이 다가가 먹인다": "Zu weit — geh näher heran, um es zu füttern",
   "야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)": "Das Wildpferd vertraut dir jetzt — du kannst es reiten (mit der Spitzhacke einsammeln, um es als Gegenstand mitzunehmen)",
-  "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": "Ein Wildpferd — füttere es mit Weizen, Sternwurzel, Blutbohne oder Frostbeifuß, um sein Vertrauen zu gewinnen"
+  "야생 말이다 — 밀 · 별무 · 핏빛 콩 · 서리쑥을 먹이면 마음을 연다": "Ein Wildpferd — füttere es mit Weizen, Sternwurzel, Blutbohne oder Frostbeifuß, um sein Vertrauen zu gewinnen",
+  "탐험가 갈래에서 이 칸을 열어야 한다": "Diesen Platz musst du zuerst im Entdecker-Zweig freischalten"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4516,6 +4517,25 @@
   "ITEMS.weird_umbrella.n": "Alter Regenschirm",
   "ITEMS.weird_umbrella.d": "Halte ihn beim Fallen, dann öffnet er sich und du schwebst langsam hinab. Beim Schwingen sticht er.",
   "ITEMS.weird_bubble.n": "Seifenblasenstab",
-  "ITEMS.weird_bubble.d": "Bläst Blasen, die langsam nach oben treiben. Bei Berührung platzen sie und bespritzen alles ringsum."
+  "ITEMS.weird_bubble.d": "Bläst Blasen, die langsam nach oben treiben. Bei Berührung platzen sie und bespritzen alles ringsum.",
+  "BRANCHES.3.n": "Entdecker",
+  "BRANCHES.3.tag": "Abbau · Glück · Zusatzplätze",
+  "KEY_ACTIONS.18.n": "Fertigkeit 5",
+  "SKILLS.s_mole.n": "Maulwurf",
+  "SKILLS.s_mole.d": "Abbaugeschwindigkeit +%d%%. Ab Rang 3 brechen Erde, Sand und Kies mit einem Schlag.",
+  "SKILLS.s_luck.n": "Glück",
+  "SKILLS.s_luck.d": "%d%% Chance auf zwei Stück, wenn du Erz oder Krempel abbaust oder angelst.",
+  "SKILLS.s_bombpick.n": "Sprengspitzhacke",
+  "SKILLS.s_bombpick.d": "Beim Abbau eines Felds mit der Spitzhacke brechen mit %d%% Chance auch die 3×3 Felder ringsum (nur Erde, Stein und Erz, die eine Spitzhacke abbauen kann).",
+  "SKILLS.s_scout.n": "Späherauge",
+  "SKILLS.s_scout.d": "Monster in der Nähe (30 Felder) erscheinen auf der Minikarte — auch ohne Monsterdetektor.",
+  "SKILLS.s_packrat.n": "Packesel",
+  "SKILLS.s_packrat.d": "Taschenplätze +%d.",
+  "SKILLS.s_toolbelt.n": "Werkzeuggürtel",
+  "SKILLS.s_toolbelt.d": "Schaltet den zweiten Hilfsmittelplatz (X) frei.",
+  "SKILLS.s_petbond.n": "Zähmende Hand",
+  "SKILLS.s_petbond.d": "Schaltet den zweiten Haustierplatz frei — zwei Haustiere begleiten dich.",
+  "SKILLS.s_quickhands.n": "Flinke Hände",
+  "SKILLS.s_quickhands.d": "Schaltet einen weiteren Fertigkeitsplatz frei (G)."
  }
 }

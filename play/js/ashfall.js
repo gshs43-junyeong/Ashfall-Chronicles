@@ -6792,7 +6792,8 @@
     { id: "save", n: "저장", def: ["F5"] },
     /* ★ 새 액션은 맨 끝에 — 번역 열쇠가 번호(KEY_ACTIONS.16.n)라 가운데 끼우면 뒤 이름이 한 칸씩 밀린다 */
     { id: "util1", n: "유틸리티 (왼쪽 칸)", def: ["KeyZ"] },
-    { id: "util2", n: "유틸리티 (오른쪽 칸)", def: ["KeyX"] }
+    { id: "util2", n: "유틸리티 (오른쪽 칸)", def: ["KeyX"] },
+    { id: "skill5", n: "스킬 5", def: ["KeyG"] }
   ];
   var NOTICE_KINDS = [
     { id: "good", n: "획득 · 성공", def: 1 },
@@ -8930,7 +8931,10 @@
     STORY_BOSSES: () => STORY_BOSSES,
     SURGE_FLY: () => SURGE_FLY,
     TIER_REQ: () => TIER_REQ,
-    profNeed: () => profNeed
+    petSlotN: () => petSlotN,
+    profNeed: () => profNeed,
+    skillSlotN: () => skillSlotN,
+    utilSlotN: () => utilSlotN
   });
   var BOSS_DIE = {
     /* --- 세션 1 --- */
@@ -9399,8 +9403,106 @@
       req: ["s_chain", "s_blink"],
       d: "겨눈 자리에 별을 떨어뜨린다. 넓은 범위에 큰 피해와 화상.",
       v: () => 0
+    },
+    /* ===== 탐험가 — 캐고 줍고 더 들고 다닌다(효과는 game/mine.ts · minimap.ts · entity.ts 가 skills 를 직접 본다) ===== */
+    s_mole: {
+      n: "두더지",
+      i: "⛏",
+      br: "explore",
+      tier: 0,
+      col: 0.5,
+      max: 3,
+      type: "passive",
+      d: "채굴 속도 +%d%%. 3랭크면 흙 · 모래 · 자갈은 한 번에 판다.",
+      v: (r) => r * 15
+    },
+    s_luck: {
+      n: "행운",
+      i: "🍀",
+      br: "explore",
+      tier: 0,
+      col: 1.5,
+      max: 4,
+      type: "passive",
+      d: "광석 · 잡동사니를 캐거나 낚을 때 %d%% 확률로 두 개가 나온다.",
+      v: (r) => r * 6
+    },
+    s_bombpick: {
+      n: "폭탄 곡괭이",
+      i: "💣",
+      br: "explore",
+      tier: 1,
+      col: 0,
+      max: 3,
+      type: "passive",
+      req: ["s_mole"],
+      d: "곡괭이로 한 칸을 캘 때 %d%% 확률로 둘레 3×3이 함께 부서진다(곡괭이로 캘 수 있는 흙 · 돌 · 광석만).",
+      v: (r) => r * 7
+    },
+    s_scout: {
+      n: "정찰병의 눈",
+      i: "👣",
+      br: "explore",
+      tier: 1,
+      col: 1,
+      max: 1,
+      type: "passive",
+      req: ["s_mole", "s_luck"],
+      d: "미니맵에 가까운 몬스터(반경 30칸)가 비친다 — 몬스터 탐지기 없이도.",
+      v: () => 0
+    },
+    s_packrat: {
+      n: "짐꾼",
+      i: "🎒",
+      br: "explore",
+      tier: 1,
+      col: 2,
+      max: 2,
+      type: "passive",
+      req: ["s_luck"],
+      d: "가방 칸 +%d.",
+      v: (r) => r * 4
+    },
+    s_toolbelt: {
+      n: "도구 띠",
+      i: "🧰",
+      br: "explore",
+      tier: 2,
+      col: 0.5,
+      max: 1,
+      type: "passive",
+      req: ["s_bombpick", "s_scout"],
+      d: "두 번째 유틸리티 칸(X)이 열린다.",
+      v: () => 0
+    },
+    s_petbond: {
+      n: "길들이는 손",
+      i: "🐾",
+      br: "explore",
+      tier: 2,
+      col: 1.5,
+      max: 1,
+      type: "passive",
+      req: ["s_scout", "s_packrat"],
+      d: "두 번째 펫 칸이 열린다 — 펫 둘을 함께 데리고 다닌다.",
+      v: () => 0
+    },
+    s_quickhands: {
+      n: "재빠른 손",
+      i: "✋",
+      br: "explore",
+      tier: 3,
+      col: 1,
+      max: 1,
+      type: "passive",
+      req: ["s_toolbelt", "s_petbond"],
+      d: "스킬 칸이 하나 더 열린다(G).",
+      v: () => 0
     }
   };
+  var skillSlotN = (p) => 4 + (p.skills.s_quickhands ? 1 : 0);
+  var utilSlotN = (p) => p.skills.s_toolbelt ? 2 : 1;
+  var petSlotN = (p) => p.skills.s_petbond ? 2 : 1;
   var BRANCHES = [
     {
       id: "blade",
@@ -9422,6 +9524,13 @@
       tag: "마법 · 제어 · 소환",
       c: "#4f9cf0",
       nodes: ["s_fireball", "s_wisdom", "s_nova", "s_heal", "s_barrier", "s_wolf", "s_chain", "s_blink", "s_arch", "s_meteor"]
+    },
+    {
+      id: "explore",
+      n: "탐험가",
+      tag: "채굴 · 행운 · 칸 열기",
+      c: "#c89a5a",
+      nodes: ["s_mole", "s_luck", "s_bombpick", "s_scout", "s_packrat", "s_toolbelt", "s_petbond", "s_quickhands"]
     }
   ];
   var TIER_REQ = [0, 2, 5, 8];
@@ -26791,7 +26900,16 @@
     s_barrier: { k: "barrier", c: "#6fb8ff" },
     s_chain: { k: "chain", c: "#ffe86a" },
     s_blink: { k: "blink", c: "#c08fff" },
-    s_meteor: { k: "meteor", c: "#ffb04a" }
+    s_meteor: { k: "meteor", c: "#ffb04a" },
+    /* 탐험가 — 흙빛 */
+    s_mole: { k: "pick", c: "#c89a5a" },
+    s_luck: { k: "coin", c: "#8fd06a" },
+    s_bombpick: { k: "bomb", c: "#4a4a52", fuse: "#e8b04a", glow: "#ffb04a" },
+    s_scout: { k: "eye", c: "#c89a5a" },
+    s_packrat: { k: "sack", c: "#a07a50", strap: "#5a4430" },
+    s_toolbelt: { k: "detector", c: "#d8b07a" },
+    s_petbond: { k: "wolf", c: "#e0b880" },
+    s_quickhands: { k: "blink", c: "#e8c890" }
   };
   var BFSPEC = {
     rage: { k: "impact", c: "#e0603c" },
@@ -32009,7 +32127,7 @@
       this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
       this.sel = 0;
       this.skills = {};
-      this.slots = [null, null, null, null];
+      this.slots = [null, null, null, null, null];
       this.cd = {};
       this.buffs = [];
       this.facing = 1;
@@ -32171,7 +32289,7 @@
     /* ---- 가방 용량 (가방 장신구로 확장) ---- */
     bagCapacity() {
       const b = this.equip.bag;
-      return BASE_BAG_SIZE + (b ? idef(b).slots || 0 : 0);
+      return BASE_BAG_SIZE + (b ? idef(b).slots || 0 : 0) + (this.skills.s_packrat || 0) * 4;
     }
     syncBagCapacity() {
       const cap = this.bagCapacity();
@@ -32212,8 +32330,8 @@
       else if (d.type === "armor") key = d.slot;
       else if (d.type === "bag") key = "bag";
       else if (d.type === "acc") key = this.equip.acc1 ? this.equip.acc2 ? "acc1" : "acc2" : "acc1";
-      else if (d.type === "util") key = this.equip.util1 ? this.equip.util2 ? "util1" : "util2" : "util1";
-      else if (d.type === "pet") key = this.equip.pet1 ? this.equip.pet2 ? "pet1" : "pet2" : "pet1";
+      else if (d.type === "util") key = this.equip.util1 && !this.equip.util2 && utilSlotN(this) > 1 ? "util2" : "util1";
+      else if (d.type === "pet") key = this.equip.pet1 && !this.equip.pet2 && petSlotN(this) > 1 ? "pet2" : "pet1";
       if (!key) return false;
       const old = this.equip[key];
       this.equip[key] = it;
@@ -33349,6 +33467,7 @@
     },
     /* ---- 스킬 ---- */
     useSkill(i, mx, my) {
+      if (i >= skillSlotN(this)) return;
       const id = this.slots[i];
       if (!id) return;
       const sk = SKILLS[id], r = this.skills[id] || 0;
@@ -38466,6 +38585,10 @@
             const d = idef(this.cursor);
             const ok = key === "weapon" && d.type === "weapon" || d.type === "armor" && d.slot === key || d.type === "acc" && key.startsWith("acc") || d.type === "util" && key.startsWith("util") || d.type === "bag" && key === "bag";
             if (!ok) return;
+            if (this.slotLocked(key)) {
+              app.toast(tr("탐험가 갈래에서 이 칸을 열어야 한다"), "bad");
+              return;
+            }
             if (p.level < equipReqLv(this.cursor.id)) {
               app.toast(tr("레벨 {equipReqLv} 필요", { equipReqLv: equipReqLv(this.cursor.id) }), "bad");
               return;
@@ -38490,12 +38613,17 @@
         el.addEventListener("mouseleave", () => this.hideTip());
       });
     },
+    /** 탐험가 갈래가 아직 안 연 칸(둘째 유틸리티 · 둘째 펫) — 이미 낀 것은 그대로 둔다 */
+    slotLocked(key) {
+      const p = app.player;
+      return key === "util2" && utilSlotN(p) < 2 || key === "pet2" && petSlotN(p) < 2;
+    },
     refreshEquip() {
       if (!app.player) return;
       const p = app.player;
       $$(".slot.equip").forEach((el) => {
         const it = p.equip[el.dataset.eq];
-        el.className = "slot equip" + (it ? " filled r" + it.r : "");
+        el.className = "slot equip" + (it ? " filled r" + it.r : "") + (!it && this.slotLocked(el.dataset.eq) ? " locked" : "");
         this.setIcon(el.querySelector(".ic"), it ? Art.itemUrl(it.id) : "");
       });
     },
@@ -38523,8 +38651,8 @@
     buildSkillbar() {
       const bar = $("#skillbar");
       bar.innerHTML = "";
-      const keys = ["Q", "E", "R", "F"];
-      for (let i = 0; i < 4; i++) {
+      const keys = ["Q", "E", "R", "F", "G"];
+      for (let i = 0; i < 5; i++) {
         const d = document.createElement("div");
         d.className = "sk empty";
         d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span><span class="cdnum"></span>`;
@@ -38562,7 +38690,9 @@
     },
     refreshSkillbar() {
       const p = app.player;
+      const n = skillSlotN(p);
       $$("#skillbar .sk").forEach((el, i) => {
+        el.hidden = i >= n;
         const id = p.slots[i];
         if (!id) {
           el.className = "sk empty";
@@ -38618,32 +38748,37 @@
   });
   var TreeUIPart = {
     /* ---------------- 특성 트리 ---------------- */
-    /* ★ 세 갈래를 **한 판**에 그린다 — 사연: docs/code-history.md#h90 */
-    TREE_TOP: 14,
-    TREE_ROW: 89,
+    /* ★ 갈래를 **한 판**에 그린다 — 사연: docs/code-history.md#h90 · 가운데 핵에서 네 갈래가 대각선으로 뻗는다(#h187) */
     TREE_BOX: 44,
-    TREE_COLS: 9,
-    // 갈래 셋 × 가로 세 칸
+    /* 칸 하나 86×80(이름 두 줄 · 랭크) — 단 간격 86 · 열 간격 92 · 단마다 바깥으로 26 비껴 뻗는다. 둥근 고리로 놓으면
+       안쪽 단이 좁아 880 창에 안 들어간다(겹치지 않으려면 1010×770 — 잰 값). */
+    TREE_GX: 46,
+    TREE_GY: 52,
+    TREE_ROW: 86,
+    TREE_COL: 92,
+    TREE_SKEW: 26,
+    TREE_H: 716,
+    TREE_CY: 344,
+    /** 갈래가 뻗는 쪽 — 검투사 왼위 · 유격 오른위 · 비전 오른아래 · 탐험 왼아래(이어지는 갈래끼리 이웃) */
+    TREE_DIR: { blade: [-1, -1], ranger: [1, -1], arcane: [1, 1], explore: [-1, 1] },
     _brIdx(br) {
       return BRANCHES.findIndex((b) => b.id === br);
     },
-    /** 가로 자리 — 갈래 순서를 앞에 얹어 아홉 칸 중 하나로 편다 */
-    _nodeX(id) {
-      const sk = SKILLS[id];
-      return (this._brIdx(sk.br) * 3 + sk.col + 0.5) / this.TREE_COLS * 100 + "%";
-    },
-    _nodeY(id) {
-      return this.TREE_TOP + SKILLS[id].tier * this.TREE_ROW;
+    /** 칸 가운데 — 판 가운데에서 잰 px. 열 0 이 안쪽(이웃 갈래 쪽) */
+    _nodeXY(id) {
+      const sk = SKILLS[id], [sx, sy] = this.TREE_DIR[sk.br] || [1, 1], t = sk.tier;
+      return [sx * (this.TREE_GX + t * this.TREE_SKEW + sk.col * this.TREE_COL), sy * (this.TREE_GY + t * this.TREE_ROW)];
     },
     buildTree() {
       const w = $("#tree-wrap");
       if (!w) return;
       w.innerHTML = "";
       const NS = "http://www.w3.org/2000/svg";
+      const bhead = (br, right) => `<div class="bhead${right ? " r" : ""}" style="--bc:${br.c}"><h3>${br.n}</h3><div class="btag">${br.tag}</div></div>`;
+      const byId = (id) => BRANCHES[this._brIdx(id)];
       const head = document.createElement("div");
       head.className = "bheads";
-      for (const br of BRANCHES)
-        head.innerHTML += `<div class="bhead" style="--bc:${br.c}"><h3>${br.n}</h3><div class="btag">${br.tag}</div></div>`;
+      head.innerHTML = bhead(byId("blade"), false) + bhead(byId("ranger"), true);
       w.appendChild(head);
       const note = document.createElement("div");
       note.className = "bnote";
@@ -38651,33 +38786,47 @@
       w.appendChild(note);
       const grid = document.createElement("div");
       grid.className = "bgrid";
-      const rows = 1 + Math.max(...Object.values(SKILLS).map((s) => s.tier));
-      grid.style.height = this.TREE_TOP + (rows - 1) * this.TREE_ROW + this.TREE_BOX + 36 + "px";
+      grid.style.height = this.TREE_H + "px";
+      grid.style.setProperty("--cy", this.TREE_CY + "px");
       const svg = document.createElementNS(NS, "svg");
       svg.setAttribute("class", "blines");
+      const line3 = (a, b, cls, c) => {
+        const ln = document.createElementNS(NS, "line");
+        ln.setAttribute("x1", String(a[0]));
+        ln.setAttribute("y1", String(a[1]));
+        ln.setAttribute("x2", String(b[0]));
+        ln.setAttribute("y2", String(b[1]));
+        ln.setAttribute("class", cls);
+        ln.style.setProperty("--bc", c);
+        svg.appendChild(ln);
+        return ln;
+      };
+      for (const id in SKILLS) if (SKILLS[id].tier === 0) line3([0, 0], this._nodeXY(id), "broot", byId(SKILLS[id].br).c);
       for (const id in SKILLS) for (const rq of SKILLS[id].req || []) {
         const cross = SKILLS[rq].br !== SKILLS[id].br;
-        const ln = document.createElementNS(NS, "line");
-        ln.setAttribute("x1", this._nodeX(rq));
-        ln.setAttribute("y1", this._nodeY(rq) + this.TREE_BOX / 2);
-        ln.setAttribute("x2", this._nodeX(id));
-        ln.setAttribute("y2", this._nodeY(id) + this.TREE_BOX / 2);
-        ln.setAttribute("class", "bline" + (cross ? " cross" : ""));
-        ln.style.setProperty("--bc", BRANCHES[this._brIdx(SKILLS[id].br)].c);
+        const ln = line3(this._nodeXY(rq), this._nodeXY(id), "bline" + (cross ? " cross" : ""), byId(SKILLS[id].br).c);
         ln.dataset.from = rq;
         ln.dataset.to = id;
-        svg.appendChild(ln);
       }
       grid.appendChild(svg);
+      const core = document.createElement("div");
+      core.className = "bcore";
+      core.style.setProperty("--c1", byId("blade").c);
+      core.style.setProperty("--c2", byId("ranger").c);
+      core.style.setProperty("--c3", byId("arcane").c);
+      core.style.setProperty("--c4", byId("explore").c);
+      core.innerHTML = "<span>✦</span>";
+      grid.appendChild(core);
       for (const id in SKILLS) {
         const sk = SKILLS[id];
+        const [x, y] = this._nodeXY(id);
         const n = document.createElement("div");
         n.className = "node";
         n.dataset.sk = id;
         n.dataset.br = sk.br;
-        n.style.setProperty("--bc", BRANCHES[this._brIdx(sk.br)].c);
-        n.style.left = this._nodeX(id);
-        n.style.top = this._nodeY(id) + "px";
+        n.style.setProperty("--bc", byId(sk.br).c);
+        n.style.left = `calc(50% + ${x}px)`;
+        n.style.top = `calc(var(--cy) + ${y - this.TREE_BOX / 2}px)`;
         n.innerHTML = `<div class="nbox"><span class="nic"></span><span class="nlock">🔒</span></div><div class="nname">${sk.n}</div><div class="nrank"></div>`;
         this.setIcon(n.querySelector(".nic"), Art.skillUrl(id));
         n.addEventListener("click", () => this.learn(id));
@@ -38691,6 +38840,10 @@
         grid.appendChild(n);
       }
       w.appendChild(grid);
+      const foot = document.createElement("div");
+      foot.className = "bheads";
+      foot.innerHTML = bhead(byId("explore"), false) + bhead(byId("arcane"), true);
+      w.appendChild(foot);
       this.bindSkillTabs();
     },
     /** 팝업 위쪽 두 갈래 — 특성 트리 / 생활 숙련 */
@@ -38811,10 +38964,15 @@
       p.skillPts--;
       p.skills[id] = (p.skills[id] || 0) + 1;
       if (sk.type === "active" && !p.slots.includes(id)) {
-        const empty = p.slots.indexOf(null);
+        const empty = p.slots.slice(0, skillSlotN(p)).indexOf(null);
         if (empty >= 0) p.slots[empty] = id;
       }
       p.recalc();
+      p.syncBagCapacity();
+      if (sk.br === "explore") {
+        this.refreshEquip();
+        this.refreshBag();
+      }
       this.toast(tr("{sk} 습득 ({skills}/{max})", { sk: sk.n, skills: p.skills[id], max: sk.max }), "good");
       app.sfx("learn");
       this.refreshTree();
@@ -38858,7 +39016,7 @@
       if (cur >= 0) {
         p.slots[cur] = null;
       } else {
-        const e = p.slots.indexOf(null);
+        const e = p.slots.slice(0, skillSlotN(p)).indexOf(null);
         p.slots[e >= 0 ? e : 0] = id;
       }
       this.refreshTree();
@@ -38868,8 +39026,8 @@
     buildSkillSlots() {
       const box = $("#skill-slots");
       box.innerHTML = "";
-      const keys = ["Q", "E", "R", "F"];
-      for (let i = 0; i < 4; i++) {
+      const keys = ["Q", "E", "R", "F", "G"];
+      for (let i = 0; i < 5; i++) {
         const d = document.createElement("div");
         d.className = "ss";
         d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span>`;
@@ -38884,7 +39042,9 @@
     },
     refreshSkillSlots() {
       const p = app.player;
+      const n = skillSlotN(p);
       $$("#skill-slots .ss").forEach((el, i) => {
+        el.hidden = i >= n;
         const id = p.slots[i];
         el.className = "ss" + (id ? " filled" : "");
         this.setIcon(el.querySelector(".ic"), id ? Art.skillUrl(id) : "");
@@ -43191,6 +43351,7 @@
         else if (this.isKey("skill2", k)) this.player.useSkill(1, this.input.wx, this.input.wy);
         else if (this.isKey("skill3", k)) this.player.useSkill(2, this.input.wx, this.input.wy);
         else if (this.isKey("skill4", k)) this.player.useSkill(3, this.input.wx, this.input.wy);
+        else if (this.isKey("skill5", k)) this.player.useSkill(4, this.input.wx, this.input.wy);
         else if (this.isKey("util1", k)) this.useUtil(0);
         else if (this.isKey("util2", k)) this.useUtil(1);
       }
@@ -44163,6 +44324,7 @@
         gathered: c.gathered || {}
       });
       p.charId = CHAR_OF(c.charId).id;
+      while (p.slots.length < 5) p.slots.push(null);
       if (c.prof) {
         for (const k in p.prof) if (c.prof[k]) Object.assign(p.prof[k], c.prof[k]);
       }
@@ -46294,8 +46456,10 @@
   // src/game/game/mine.ts
   var mine_exports = {};
   __export(mine_exports, {
-    MinePart: () => MinePart
+    MinePart: () => MinePart,
+    SOFT_DIG: () => SOFT_DIG
   });
+  var SOFT_DIG = /* @__PURE__ */ new Set([T.DIRT, T.GRASS, T.SAND, T.MUD, T.SNOW, T.ASH, T.JUNGLEGRASS, T.CORRUPTGRASS]);
   var MinePart = {
     /* ================= 좌클릭: 채굴 또는 공격 ================= */
     leftHold(dt) {
@@ -46350,8 +46514,10 @@
         p.mineProg = 0;
         p.mineBeat = 0;
       }
-      const rate = (0.6 + (tool.power || 1) * 0.55 + (tool.chop && def.tree ? 2 : 0)) / (0.45 + def.hard * 0.5);
+      const mole = p.skills.s_mole || 0;
+      const rate = (0.6 + (tool.power || 1) * 0.55 + (tool.chop && def.tree ? 2 : 0)) / (0.45 + def.hard * 0.5) * (1 + mole * 0.15);
       p.mineProg += rate * dt;
+      if (mole >= 3 && SOFT_DIG.has(id)) p.mineProg = 1;
       p.mineBeat = (p.mineBeat || 0) - dt;
       if (p.mineBeat <= 0) {
         p.mineBeat = clamp(0.34 - (tool.power || 1) * 0.025, 0.18, 0.34);
@@ -46399,6 +46565,7 @@
           return;
         }
         this.dropTile(tx, ty, id);
+        if (!def.tree && !def.crop) this.bombPick(tx, ty, tool);
         if (def.crop) {
           w.crops.delete(ty * WW2 + tx);
           if (def.crop.ripe) this.harvestBonus(tx, ty, def, tool);
@@ -46439,9 +46606,38 @@
         const r = this.rng.weighted(d.leafDrop);
         out = r === "none" ? null : r;
       }
-      if (out) this.drops.push(new Drop((x + 0.5) * TS, (y + 0.5) * TS, makeItem(out, d.dropN && out === d.drop ? this.rng.int(d.dropN[0], d.dropN[1]) : 1)));
+      if (out) {
+        let n = d.dropN && out === d.drop ? this.rng.int(d.dropN[0], d.dropN[1]) : 1;
+        const luck = this.player ? (this.player.skills.s_luck || 0) * 0.06 : 0;
+        if (luck && d.ore && this.rng.chance(luck)) {
+          n *= 2;
+          this.luckyFx(x, y);
+        }
+        this.drops.push(new Drop((x + 0.5) * TS, (y + 0.5) * TS, makeItem(out, n)));
+      }
       const deco = DECO_OF[id];
       if (deco && deco !== out) this.drops.push(new Drop((x + 0.5) * TS, (y + 0.5) * TS, makeItem(deco, 1)));
+    },
+    /** 폭탄 곡괭이 — 랭크마다 7% 로 둘레 여덟 칸도 함께(곡괭이가 캘 수 있는 맨 흙 · 돌 · 광석만 · 기계 · 유적 벽 · 기반암 · 장식 · 물은 안 건드린다) */
+    bombPick(tx, ty, tool) {
+      const p = this.player, w = this.world, r = p.skills.s_bombpick || 0;
+      if (!r || !this.rng.chance(r * 0.07)) return;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const x = tx + dx, y = ty + dy, id = w.get(x, y), d = TILE_DEF[id];
+        if (!dx && !dy || id === T.AIR || !d || d.solid !== 1 || !d.drop || d.tree || d.crop || d.hard > (tool.power || 1)) continue;
+        if (id === T.BEDROCK || MACH_OF_TILE[id] || DECO_OF[id] || w.ruinInside(x, y)) continue;
+        w.set(x, y, T.AIR);
+        p.mined[id] = (p.mined[id] || 0) + 1;
+        this.dropTile(x, y, id);
+      }
+      this.burst((tx + 0.5) * TS, (ty + 0.5) * TS, "fire", 70);
+      this.sfx("boom_small", 1.2);
+      this.shake = Math.max(this.shake, 4);
+    },
+    /** 행운 — 두 개가 나온 순간 작은 클로버 빛 */
+    luckyFx(x, y) {
+      for (let i = 0; i < 6; i++) this.parts.push(new Part((x + 0.5) * TS, (y + 0.5) * TS, "#8fd06a", -60, 0.6, { glow: 1 }));
+      this.texts.push(new DmgText((x + 0.5) * TS, y * TS, "×2", "#8fd06a", 0));
     },
     /** 벌목 — 기둥을 자르면 그 위 기둥이 무너지고, 살아 있는 기둥에서 떨어져 나간 잎 *덩어리**가 통째로 함께 떨어진다. */
     fellTree(tx, ty, wasTrunk) {
@@ -47332,7 +47528,12 @@
         UI5.refreshBag();
         return;
       }
-      const it = c.kind === "item" && isGear(makeItem(c.id)) ? rollGear(c.id, this.rng, 0) : makeItem(c.id, c.n);
+      const gear = c.kind === "item" && isGear(makeItem(c.id));
+      if (c.kind === "item" && !gear && this.rng.chance((p.skills.s_luck || 0) * 0.06)) {
+        c.n = (c.n || 1) * 2;
+        this.luckyFx(p.cx / TS - 0.5, p.cy / TS);
+      }
+      const it = gear ? rollGear(c.id, this.rng, 0) : makeItem(c.id, c.n);
       if (!p.addItem(it)) this.drops.push(new Drop(p.cx, p.cy, it));
       if (c.kind === "fish") {
         this.toast(tr("낚았다 — {itemName}{v}", { itemName: itemName(it), v: c.n > 1 ? " ×" + c.n : "" }), "good");
@@ -56198,7 +56399,7 @@
       const { WW: WW2, WH: WH2 } = dimsOf(this.world);
       const c = this.mmx, w = this.world, p = this.player;
       const MW = this.mm.width, MH = this.mm.height, S = 2;
-      const detOre = this.hasDetector("ore"), detMob = this.hasDetector("mob");
+      const detOre = this.hasDetector("ore"), detMob = this.hasDetector("mob") || !!(p.skills && p.skills.s_scout);
       const DR = this.DET_R, DR2 = DR * DR;
       let detHit = 0;
       c.fillStyle = "#07080c";
@@ -60016,7 +60217,7 @@
       p.base[main] += left;
       p.statPts = 0;
       p.skills = {};
-      p.slots = [null, null, null, null];
+      p.slots = [null, null, null, null, null];
       const learn = (ids) => {
         for (let more = true; more && p.skillPts > 1; ) {
           more = false;
