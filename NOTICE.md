@@ -48,6 +48,7 @@ OFL 은 글꼴을 고쳐 내어도 OFL 그대로 두라고 요구하므로 MIT �
 
 - **게임 글꼴 Ashfall**(`play/assets/fonts/ashfall-*.woff2`)은 이 프로젝트가 직접 만든 글꼴입니다 — 다른 글꼴의 윤곽을 쓰지 않고
   `tools/mkfont.py` 가 획 뼈대(`tools/font/`)에서 모든 글자를 그립니다(한글은 자모를 짜 맞춘다 · 둥근 글자는 팔각 · 바깥 모서리를 깎은 결).
+  한글 자모의 **자리**(위치 · 크기)만 [Pretendard](https://github.com/orioncactus/pretendard)(길형진, SIL OFL 1.1)의 자모 상자를 재어 참고했습니다 — 글자 윤곽은 가져오지 않았습니다.
   이 글꼴은 MIT 가 아니라 **SIL OFL 1.1** 을 따르고, 라이선스 전문과 저작권은
   같은 폴더 `OFL.txt`, 만든 방법과 판 기록은 `FONTLOG.txt` 에 있습니다(글꼴 파일 안 이름표에도 저작권 · 라이선스가 들어 있습니다).
   글꼴에 없는 글자(드문 한글 음절 ·
@@ -112,6 +113,8 @@ synthesized tones, so replacing only some of them works.
 - The **game font Ashfall** (`play/assets/fonts/ashfall-*.woff2`) is an original typeface made by this project:
   no outlines are taken from another font — `tools/mkfont.py` draws every glyph from stroke skeletons in `tools/font/`
   (Hangul composed from jamo, octagonal round letters, chiselled outer corners).
+  Only the Hangul jamo **placement** (positions and sizes) was studied by measuring the jamo boxes of
+  [Pretendard](https://github.com/orioncactus/pretendard) (Kil Hyung-jin, SIL OFL 1.1); no glyph outlines were taken.
   It is licensed under the **SIL OFL 1.1**, not MIT; the licence text and copyright are in `OFL.txt` and how it is
   made in `FONTLOG.txt` in the same folder (the font's name table carries them too). Characters it does not cover
   (rare Hangul syllables, Japanese, Chinese) use device fonts, named only (Hiragino / Yu Gothic / Meiryo /
