@@ -414,6 +414,7 @@ export class Enemy extends Ent {
   declare pedestal: number; declare pf: number; declare phase: number; declare phaseInv: number; declare phases: number; declare sgAmt: number;
   declare sgBuf: number; declare sgCd: number; declare sgKind: string | null; declare sgRing: number; declare sgStun: number; declare sgT: number;
   declare mv: Bag | null; declare mvCd: number; declare mvN: number; declare mvLast: Bag | null; declare ultUsed: number;   // 고유 기술(entity/boss-moves)
+  declare poseNet: number; declare _poseFr: number;   // 기술 자세 — 손님 화면이 받은 번호 · 그릴 칸(game/render-actors)
   declare hist: number[][]; declare histT: number; declare burrowT: number;
   declare tickMoves: (dt: number, world: World, p: Player, dd: number) => boolean; declare mvHist: (dt: number) => void; declare mvStart: (d: Bag, p: Player, world: World, K: Bag) => any;
   declare floorY: (x: number, y: number) => number; declare hz: (h: Bag) => Bag; declare strike: (x: number, y: number, o: Bag, K: Bag, dm: number) => Bag;
@@ -453,7 +454,7 @@ export class Enemy extends Ent {
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
     this.flash = 0; this.atkCd = 0; this.jumpCd = 0; this.think = 0;
     /* 공격 포즈를 띄워 둘 시간 — 사연: docs/code-history.md#h33 */
-    this.atkPose = 0;
+    this.atkPose = 0; this.poseNet = -1; this._poseFr = -1;
     this.lastPhase = 0;
     this.slowT = 0; this.slowF = 1; this.dots = []; this.slowFx = new Timed(1, 'min');
     this.chillT = 0; this.empT = 0; this.cast = null; this.mskCd = null; this.skillIds = null;

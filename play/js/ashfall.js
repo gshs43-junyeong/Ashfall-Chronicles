@@ -8165,8 +8165,8 @@
       def: 16,
       spd: 96,
       ai: "b_slime",
-      w: 60,
-      h: 52,
+      w: 180,
+      h: 156,
       c: "#6a5a4a",
       xp: 1100,
       gold: 620,
@@ -8182,8 +8182,8 @@
       def: 24,
       spd: 74,
       ai: "b_witch",
-      w: 40,
-      h: 54,
+      w: 80,
+      h: 108,
       c: "#9fd8f0",
       xp: 1600,
       gold: 950,
@@ -8199,8 +8199,8 @@
       def: 34,
       spd: 80,
       ai: "b_bone",
-      w: 50,
-      h: 74,
+      w: 100,
+      h: 148,
       c: "#3f7a34",
       xp: 2300,
       gold: 1500,
@@ -8216,8 +8216,8 @@
       def: 46,
       spd: 66,
       ai: "b_bone",
-      w: 54,
-      h: 70,
+      w: 108,
+      h: 140,
       c: "#d8b878",
       xp: 3100,
       gold: 2100,
@@ -8233,8 +8233,8 @@
       def: 42,
       spd: 92,
       ai: "b_heart",
-      w: 50,
-      h: 72,
+      w: 100,
+      h: 144,
       c: "#6fe0c0",
       xp: 3600,
       gold: 2800,
@@ -8250,8 +8250,8 @@
       def: 58,
       spd: 88,
       ai: "b_heart",
-      w: 66,
-      h: 58,
+      w: 198,
+      h: 174,
       c: "#7a3f9c",
       xp: 4200,
       gold: 4e3,
@@ -8333,8 +8333,8 @@
       def: 6,
       spd: 60,
       ai: "b_slime",
-      w: 76,
-      h: 58,
+      w: 152,
+      h: 116,
       c: "#4f7fc0",
       xp: 590,
       gold: 200,
@@ -8348,8 +8348,8 @@
       def: 14,
       spd: 70,
       ai: "b_bone",
-      w: 52,
-      h: 68,
+      w: 104,
+      h: 136,
       c: "#ded6bd",
       xp: 1100,
       gold: 480,
@@ -8363,8 +8363,8 @@
       def: 18,
       spd: 105,
       ai: "b_heart",
-      w: 54,
-      h: 54,
+      w: 108,
+      h: 108,
       c: "#7a3f9c",
       xp: 2e3,
       gold: 900,
@@ -8378,8 +8378,8 @@
       def: 24,
       spd: 90,
       ai: "b_witch",
-      w: 34,
-      h: 56,
+      w: 68,
+      h: 112,
       c: "#a8dcf0",
       xp: 3100,
       gold: 1600,
@@ -8393,8 +8393,8 @@
       def: 32,
       spd: 110,
       ai: "b_void",
-      w: 66,
-      h: 88,
+      w: 132,
+      h: 176,
       c: "#5e3fa8",
       xp: 4500,
       gold: 5e3,
@@ -8408,8 +8408,8 @@
       def: 38,
       spd: 150,
       ai: "b_storm",
-      w: 66,
-      h: 70,
+      w: 132,
+      h: 140,
       c: "#bcd8f0",
       xp: 6500,
       gold: 8e3,
@@ -31373,7 +31373,11 @@
     },
     /** 시트 프레임 0의 알파 채널을 한 번 훑어 두 가지를 잰다(engine/assets/image.js). */
     _measurePad(im, m) {
-      return measurePad(im, m.frameW, m.frameH, this.scale);
+      return measurePad(im, m.frameW, m.frameH, this.sc(m));
+    },
+    /** 시트의 배율 — 키운 보스 · 자세 시트는 1(그림 한 칸 = 게임 1px), 나머지는 무리 기본 4 */
+    sc(m) {
+      return m && m.scale || this.scale;
     },
     /* ================= 개조 시트 ================= */
     mechSheet(key) {
@@ -31388,7 +31392,7 @@
       const g = cv.getContext("2d");
       g.imageSmoothingEnabled = false;
       g.drawImage(im, 0, 0);
-      const S = this.scale, W = cv.width, H = cv.height;
+      const S = this.sc(m), W = cv.width, H = cv.height;
       g.globalCompositeOperation = "source-atop";
       const grad = g.createLinearGradient(0, 0, 0, H);
       grad.addColorStop(0, "#7d8896");
@@ -31422,7 +31426,7 @@
       const cv = document.createElement("canvas");
       cv.width = im.naturalWidth || im.width;
       cv.height = im.naturalHeight || im.height;
-      const g = cv.getContext("2d"), S = this.scale, W = cv.width, H = cv.height, fh = m.frameH * S;
+      const g = cv.getContext("2d"), S = this.sc(m), W = cv.width, H = cv.height, fh = m.frameH * S;
       g.imageSmoothingEnabled = false;
       g.drawImage(im, 0, 0);
       g.globalCompositeOperation = "source-atop";
@@ -31474,7 +31478,7 @@
       const cv = document.createElement("canvas");
       cv.width = im.naturalWidth || im.width;
       cv.height = im.naturalHeight || im.height;
-      const g = cv.getContext("2d"), fh = m.frameH * this.scale;
+      const g = cv.getContext("2d"), fh = m.frameH * this.sc(m);
       g.imageSmoothingEnabled = false;
       g.drawImage(im, 0, 0);
       g.globalCompositeOperation = "source-atop";
@@ -31523,24 +31527,24 @@
       if (!im || !im.width) return false;
       const m = this.meta.characters.sheets[key] || this.meta.bosses.sheets[key];
       if (!m) return false;
-      const S = this.scale;
+      const S = this.sc(m), cols = m.cols || 0;
       const isBoss = !!this.meta.bosses.sheets[key];
       const gap = m.gap !== void 0 ? m.gap : isBoss ? this.meta.bosses.gap : 0;
       let fw = m.frameW, fh = m.frameH, ox = m.ox || 0, oy = m.oy || 0;
-      if (!gap && im.naturalWidth && m.count && Math.round(im.naturalWidth / S / m.count) !== fw) {
-        fw = Math.round(im.naturalWidth / S / m.count);
+      if (!gap && im.naturalWidth && m.count && Math.round(im.naturalWidth / S / (cols || m.count)) !== fw) {
+        fw = Math.round(im.naturalWidth / S / (cols || m.count));
         fh = Math.round(im.naturalHeight / S);
         ox = oy = 0;
       }
       const sw = fw * S, sh = fh * S;
-      const sx = frame * (sw + gap);
+      const sx = (cols ? frame % cols : frame) * (sw + gap), sy = cols ? Math.floor(frame / cols) * (sh + gap) : 0;
       c.save();
       c.imageSmoothingEnabled = false;
       if (flip) {
         c.translate(Math.round(x) + ox + fw, Math.round(y) + oy);
         c.scale(-1, 1);
       } else c.translate(Math.round(x) + ox, Math.round(y) + oy);
-      c.drawImage(im, sx, 0, sw, sh, 0, 0, fw, fh);
+      c.drawImage(im, sx, sy, sw, sh, 0, 0, fw, fh);
       c.restore();
       return true;
     },
@@ -32761,6 +32765,8 @@
       this.jumpCd = 0;
       this.think = 0;
       this.atkPose = 0;
+      this.poseNet = -1;
+      this._poseFr = -1;
       this.lastPhase = 0;
       this.slowT = 0;
       this.slowF = 1;
@@ -52541,6 +52547,8 @@
     },
     spawnBoss(id, x, y) {
       const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
+      e.x = x - e.w / 2;
+      for (let i = 0; i < 12 && this.world.hitSolid(e.x, e.y, e.w, e.h); i++) e.y -= TS;
       this.netBossScale(e);
       this.ents.push(e);
       this.boss = e;
@@ -60898,7 +60906,29 @@
       if (Math.abs(p.vx) > 20) return cycleFrame(this.time, 9, 4, 2);
       return cycleFrame(this.time, 2, 2);
     },
+    /** 보스 기술 자세 — 예고 · 내지르기 동안은 자세 시트(<보스>_pose, tools/mkbossart.py)의 그 칸. 아니면 null.
+        한 줄 = 한 마디 · 칸 0 은 손대지 않은 그림, 1 + 기술 번호×2 + (내지르기면 1). 기술 번호 3 = 필살기 */
+    bossPose(e) {
+      const K = BOSS_MOVES[e.type];
+      let code = -1;
+      if (e.mv && K) {
+        const i = e.mv.d === K.ult ? 3 : K.moves.indexOf(e.mv.d);
+        if (i >= 0) code = i * 2 + (e.mv.run ? 1 : 0);
+      } else if (e.ghost && e.poseNet >= 0) code = e.poseNet;
+      return code;
+    },
+    poseKey(e) {
+      e._poseFr = -1;
+      if (!e.boss || !this.spritesOn || !Sprites.meta) return null;
+      const code = this.bossPose(e), pk = e.type + "_pose", m = Sprites.meta.bosses.sheets[pk];
+      if (code < 0 || !m || !Sprites.img[pk] || !Sprites.img[pk].width) return null;
+      const rows = Math.max(1, Math.floor(m.count / 9));
+      const row = Math.min(rows - 1, Math.round((e.pf || 0) * (rows - 1)));
+      e._poseFr = row * 9 + 1 + code;
+      return pk;
+    },
     enemyFrame(e) {
+      if (e._poseFr >= 0) return e._poseFr;
       if (e.boss) {
         const m = Sprites.meta && Sprites.meta.bosses.sheets[e.type];
         const idle = m ? m.count - (m.death || 0) : 6;
@@ -61178,7 +61208,8 @@
         return;
       }
       if (e.burrowT > 0) return;
-      const key0 = e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type) ? "mech_" + e.type : e.type;
+      const pose = this.poseKey(e);
+      const key0 = pose || (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type) ? "mech_" + e.type : e.type);
       const burning = e.dots && e.dots.some((d) => d.kind === "burn" || d.kind === "fire");
       const key = !this.spritesOn ? key0 : burning && Sprites.burnSheet(key0) ? "burn_" + key0 : e.chillT > 0 && Sprites.frostSheet(key0) ? "frost_" + key0 : key0;
       const meta = this.spritesOn && Sprites.meta && (Sprites.meta.characters.sheets[key] || Sprites.meta.bosses.sheets[key]);
@@ -63378,7 +63409,7 @@
           e.cast ? [e.cast.id, +e.cast.t.toFixed(2), e.cast.max] : 0,
           e.castKick > 0 ? 1 : 0,
           // 시전 — 손님 화면도 같은 몸짓 · 알갱이
-          e.boss ? [e.gapT > 0 ? e.gapK : "", +Math.max(0, e.gapT || 0).toFixed(1), e.bracing() ? 1 : 0, e.gapMiss || 0, +(e.gapMax || 0).toFixed(1)] : 0
+          e.boss ? [e.gapT > 0 ? e.gapK : "", +Math.max(0, e.gapT || 0).toFixed(1), e.bracing() ? 1 : 0, e.gapMiss || 0, +(e.gapMax || 0).toFixed(1), this.bossPose(e)] : 0
         ]);
       }
       return out;
@@ -63425,6 +63456,7 @@
           e.braceV = gp[2];
           e.gapMiss = gp[3];
           e.gapMax = gp[4];
+          e.poseNet = gp[5] === void 0 ? -1 : gp[5];
           if (opened) this.gapBurst(e);
         }
         e.seenAt = t;

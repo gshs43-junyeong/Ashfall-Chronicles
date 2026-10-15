@@ -10,6 +10,7 @@ import { tileMat } from '../data/materials.js';
 import { NPCS } from '../data/npcs.js';
 import { PET_MOTION, dragonStage } from '../data/pets.js';
 import { idef } from '../data/values.js';
+import { BOSS_MOVES } from '../data/bossmoves.js';
 import { TS } from '../world.js';
 import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';
@@ -56,7 +57,26 @@ export const RenderActorsPart: Bag = {
     if (Math.abs(p.vx) > 20) return cycleFrame(this.time, 9, 4, 2);   // 걷기 네 장
     return cycleFrame(this.time, 2, 2);                                // 서기 두 장
   },
+  /** 보스 기술 자세 — 예고 · 내지르기 동안은 자세 시트(<보스>_pose, tools/mkbossart.py)의 그 칸. 아니면 null.
+      한 줄 = 한 마디 · 칸 0 은 손대지 않은 그림, 1 + 기술 번호×2 + (내지르기면 1). 기술 번호 3 = 필살기 */
+  bossPose(e: Enemy): number {
+    const K = BOSS_MOVES[e.type]; let code = -1;
+    if (e.mv && K) { const i = e.mv.d === K.ult ? 3 : K.moves.indexOf(e.mv.d); if (i >= 0) code = i * 2 + (e.mv.run ? 1 : 0); }
+    else if (e.ghost && e.poseNet >= 0) code = e.poseNet;
+    return code;
+  },
+  poseKey(e: Enemy) {
+    e._poseFr = -1;
+    if (!e.boss || !this.spritesOn || !Sprites.meta) return null;
+    const code = this.bossPose(e), pk = e.type + '_pose', m = Sprites.meta.bosses.sheets[pk];
+    if (code < 0 || !m || !Sprites.img[pk] || !Sprites.img[pk].width) return null;
+    const rows = Math.max(1, Math.floor(m.count / 9));
+    const row = Math.min(rows - 1, Math.round((e.pf || 0) * (rows - 1)));   // 마디 — 시트의 줄(enemyFrame 과 같은 비율)
+    e._poseFr = row * 9 + 1 + code;
+    return pk;
+  },
   enemyFrame(e: Enemy) {
+    if (e._poseFr >= 0) return e._poseFr;
     if (e.boss) {
       /* ★ 체력 문턱(66%/33%)을 여기서 다시 계산하면 안 된다. */
       const m = Sprites.meta && Sprites.meta.bosses.sheets[e.type];
@@ -285,8 +305,9 @@ export const RenderActorsPart: Bag = {
     if (e.burrowT > 0) return;                                              // 땅속을 기는 보스 — 흙먼지만(entity/boss-moves)   // 모래 · 바닥 밑 — 땅만 들썩인다
     /* 손그림 스프라이트 우선. */
     /* 개조된 개체는 원래 시트를 강철로 눕힌 사본으로 그린다(Sprites.mechSheet). */
-    const key0 = (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type))
-      ? 'mech_' + e.type : e.type;
+    const pose = this.poseKey(e);                                           // 보스 기술 자세(있으면 그 시트)
+    const key0 = pose || ((e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type))
+      ? 'mech_' + e.type : e.type);
     const burning = e.dots && e.dots.some((d: any) => d.kind === 'burn' || d.kind === 'fire');
     const key = !this.spritesOn ? key0 : burning && Sprites.burnSheet(key0) ? 'burn_' + key0
       : e.chillT > 0 && Sprites.frostSheet(key0) ? 'frost_' + key0 : key0;   // 타면 달군 사본 · 얼면 언 사본(윤곽째)

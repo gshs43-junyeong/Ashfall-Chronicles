@@ -69,7 +69,9 @@ export const Sprites: Bag = {
   },
 
   /** 시트 프레임 0의 알파 채널을 한 번 훑어 두 가지를 잰다(engine/assets/image.js). */
-  _measurePad(im: any, m: any) { return measurePad(im, m.frameW, m.frameH, this.scale); },
+  _measurePad(im: any, m: any) { return measurePad(im, m.frameW, m.frameH, this.sc(m)); },
+  /** 시트의 배율 — 키운 보스 · 자세 시트는 1(그림 한 칸 = 게임 1px), 나머지는 무리 기본 4 */
+  sc(m: any) { return (m && m.scale) || this.scale; },
 
 
   /* ================= 개조 시트 ================= */
@@ -86,7 +88,7 @@ export const Sprites: Bag = {
     g!.imageSmoothingEnabled = false;
     g!.drawImage(im, 0, 0);
 
-    const S = this.scale, W = cv.width, H = cv.height;
+    const S = this.sc(m), W = cv.width, H = cv.height;
     g!.globalCompositeOperation = 'source-atop';
 
     // 1.
@@ -123,7 +125,7 @@ export const Sprites: Bag = {
     if (!im || !im.width || !m) return (this.img[fk] = null);
     const cv = document.createElement('canvas');
     cv.width = im.naturalWidth || im.width; cv.height = im.naturalHeight || im.height;
-    const g = cv.getContext('2d')!, S = this.scale, W = cv.width, H = cv.height, fh = m.frameH * S;
+    const g = cv.getContext('2d')!, S = this.sc(m), W = cv.width, H = cv.height, fh = m.frameH * S;
     g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0);
     g.globalCompositeOperation = 'source-atop';
     for (let y0 = 0; y0 < H; y0 += fh) {                     // 프레임 줄마다 같은 결
@@ -164,7 +166,7 @@ export const Sprites: Bag = {
     if (!im || !im.width || !m) return (this.img[bk] = null);
     const cv = document.createElement('canvas');
     cv.width = im.naturalWidth || im.width; cv.height = im.naturalHeight || im.height;
-    const g = cv.getContext('2d')!, fh = m.frameH * this.scale;
+    const g = cv.getContext('2d')!, fh = m.frameH * this.sc(m);
     g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0);
     g.globalCompositeOperation = 'source-atop';
     for (let y0 = 0; y0 < cv.height; y0 += fh) {
@@ -204,24 +206,25 @@ export const Sprites: Bag = {
     const m = (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
     if (!m) return false;
     /* 시트가 제 gap을 들고 있으면 그것을 쓰고, 없을 때만 무리 기본값으로 떨어진다 — 사연: docs/code-history.md#h139 */
-    const S = this.scale;
+    const S = this.sc(m), cols = m.cols || 0;
     const isBoss = !!this.meta.bosses.sheets[key];
     const gap = m.gap !== undefined ? m.gap : (isBoss ? this.meta.bosses.gap : 0);
     let fw = m.frameW, fh = m.frameH, ox = m.ox || 0, oy = m.oy || 0;
     /* 시트를 다시 구워 프레임 크기가 바뀌었는데 브라우저가 옛 그림을 캐시에서 내주면 (매니페스트는 no-cache라 새것, 그림은 ?v= 그대로라 옛것) 칸이 어긋나 그림이 썰려 보인다. */
     if (!gap && im.naturalWidth && m.count &&
-        Math.round(im.naturalWidth / S / m.count) !== fw) {
-      fw = Math.round(im.naturalWidth / S / m.count);
+        Math.round(im.naturalWidth / S / (cols || m.count)) !== fw) {
+      fw = Math.round(im.naturalWidth / S / (cols || m.count));
       fh = Math.round(im.naturalHeight / S);
       ox = oy = 0;
     }
     const sw = fw * S, sh = fh * S;
-    const sx = frame * (sw + gap);
+    // 칸 — 여러 줄 시트(cols · 보스 자세)는 줄을 바꿔 읽는다
+    const sx = (cols ? frame % cols : frame) * (sw + gap), sy = cols ? Math.floor(frame / cols) * (sh + gap) : 0;
     c.save();
     c.imageSmoothingEnabled = false;
     if (flip) { c.translate(Math.round(x) + ox + fw, Math.round(y) + oy); c.scale(-1, 1); }
     else c.translate(Math.round(x) + ox, Math.round(y) + oy);
-    c.drawImage(im, sx, 0, sw, sh, 0, 0, fw, fh);
+    c.drawImage(im, sx, sy, sw, sh, 0, 0, fw, fh);
     c.restore();
     return true;
   },

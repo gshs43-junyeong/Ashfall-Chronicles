@@ -162,7 +162,7 @@ export const NetPart: Bag = {
       out.push([e.nid, e.type, Math.round(e.x), Math.round(e.y), Math.round(e.vx), Math.round(e.vy), e.facing, e.onGround ? 1 : 0,
         Math.round(e.hp), Math.round(e.maxHp), +(e.flash || 0).toFixed(2),
         e.cast ? [e.cast.id, +e.cast.t.toFixed(2), e.cast.max] : 0, e.castKick > 0 ? 1 : 0,   // 시전 — 손님 화면도 같은 몸짓 · 알갱이
-        e.boss ? [e.gapT > 0 ? e.gapK : '', +(Math.max(0, e.gapT || 0)).toFixed(1), e.bracing() ? 1 : 0, e.gapMiss || 0, +(e.gapMax || 0).toFixed(1)] : 0]);   // 보스의 틈 · 방어 자세
+        e.boss ? [e.gapT > 0 ? e.gapK : '', +(Math.max(0, e.gapT || 0)).toFixed(1), e.bracing() ? 1 : 0, e.gapMiss || 0, +(e.gapMax || 0).toFixed(1), this.bossPose(e)] : 0]);   // 보스의 틈 · 방어 자세 · 기술 자세
     }
     return out;
   },
@@ -187,7 +187,7 @@ export const NetPart: Bag = {
       if (ck && !(e.castKick > 0)) { e.castKick = 0.3; e.atkPose = 0.3; }
       if (gp) {
         const opened = gp[0] && !(e.gapT > 0);
-        e.gapK = gp[0]; e.gapT = gp[1]; e.braceV = gp[2]; e.gapMiss = gp[3]; e.gapMax = gp[4];
+        e.gapK = gp[0]; e.gapT = gp[1]; e.braceV = gp[2]; e.gapMiss = gp[3]; e.gapMax = gp[4]; e.poseNet = gp[5] === undefined ? -1 : gp[5];
         if (opened) this.gapBurst(e);
       }
       e.seenAt = t;

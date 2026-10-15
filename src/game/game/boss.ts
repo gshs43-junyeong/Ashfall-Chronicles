@@ -59,6 +59,9 @@ export const BossPart: Bag = {
   spawnBoss(id: string, x: number, y: number) {
     /* 스토리 보스는 수치를 고정한다. */
     const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
+    /* 큰 보스(2~3배)는 정해 둔 자리에 두면 몸이 바닥 · 천장에 박힌다 — 가운데를 맞추고, 벽 속이면 한 칸씩 올린다(최대 12칸) */
+    e.x = x - e.w / 2;
+    for (let i = 0; i < 12 && this.world.hitSolid(e.x, e.y, e.w, e.h); i++) e.y -= TS;
     this.netBossScale(e);                    // 멀티플레이 — 인원만큼 체력
     this.ents.push(e); this.boss = e;
     this.toast(tr('{enemy|이} 깨어났다!', { enemy: ENEMIES[id].n }), 'bad');

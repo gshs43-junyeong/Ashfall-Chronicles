@@ -348,6 +348,9 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 - **탈 것**(game/rides.ts · entity/player-ride.ts `RIDES` · 그림 `tools/mkrides.py`): 말 · 조각배 · 광산 수레는 세계 물건 `type 'mount'` — 타는 동안에도 세계에 남아 따라간다(`o.rider` · 빼면 자동 저장이 잃는다). 판정 상자는 20×40 그대로, 그림만 앉힌다(`drawRider`). 레일(217)은 아틀라스를 비우고 `drawRails` 가 비탈째 그린다. 사연: docs/code-history.md#h184
 - **낚시 겨루기**(game/fish-duel.ts `FISH_DUEL` · 엔진 rhythm/duel.ts `RhythmDuel`): 입질에 챔질하면 무엇이 물었는지(`rollCatch`) 먼저 정하고 그 등급으로 osu! 판을 짠다 — 게이지가 차면 잡힘 · 바닥나면 놓침. 주는 것은 `giveCatch`. 겨루는 동안 `#fishduel` 겹이 입력을 다 받는다(키는 capture 로 잡음). 설정 `fishduel` 0 = 예전 방식. 시험: 입질 중 `G.startDuel(등급)`. 사연: docs/code-history.md#h183
 - **창의 움직임**(ui/motion.ts · style.css `#uifx`): 제작(재료가 결과로 · 완성품이 가방 단추로) · 모루 무대(망치 세 박자 → `enhanceSlot` 의 'ok'·'fail'·'break') · 기계 칸 튀기기. 움직임은 맨 위 겹에 — 줄 안에 붙이면 `refreshCraft` 가 다시 짜며 지운다. 화질 절약(`body.q-low`)·움직임 줄이기면 건너뛴다. 사연: docs/code-history.md#h182
+- **보스 그림 · 기술 자세**(`python3 tools/mkbossart.py` → sync): 키운 보스 열둘의 원본은 `tools/art/boss_src/`(게임 폴더 시트를 다시 먹이지 말 것 — 두 번 커진다),
+  배수는 도구의 `BIG` · 판정 상자는 data/enemies.ts 의 w · h(같은 배수로 고칠 것). 키운 시트와 `<id>_pose` 시트는 배율 1(`manifest scale`) · 자세 시트는 9칸 줄(`cols`).
+  보스에 기술을 더하거나 k 를 바꾸면 도구를 다시 돌린다(자세가 기술 순서를 따른다). 사연: docs/code-history.md#h187
 - **보스 기술**(data/bossmoves.ts `BOSS_MOVES` · entity/boss-moves.ts `tickMoves` · game/boss-hazards.ts `G.bhz`): 보스마다 기술 셋 + 궁극기, 예고 뒤 위험 칸. ★ 플레이어 피해는 `G.hitPlayers`/`hitPlayersRect`(호스트만) — `G.aoe` 는 플레이어 스킬용이라 몹을 때린다. 사연: docs/code-history.md#h173
   **틈**(entity/boss-gaps.ts · data/bossmoves.ts `BOSS_GAP` · `GAP_KIND` · 그림 game/boss-gap-fx.ts): 기술이 끝나면 보스 갈래의 틈(비틀거림 멈춤 · 과열 느려짐 · 균열 갑옷↓, 받는 피해↑),
   아무도 못 맞혔으면 헛손질(더 길고 더 아프게). 예고 중은 방어 자세(받는 피해 `GAP_BRACE`). 글 알림 없이 몸 · 체력 막대(`#bossbar.gap` · `.brace`)로만. 사연: docs/code-history.md#h181
