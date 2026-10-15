@@ -6,6 +6,9 @@ import { TS } from '../world.js';
 import { Sprites } from '../sprites.js';
 import { Part, Proj } from '../entity.js';
 import { Game } from '../game.js';
+import { STRIKE_ART } from './boss-hazard-art.js';
+import { BEAM_ART, VORTEX_ART, WALL_ART, WAVE_ART, ZONE_ART, drawPush } from './boss-field-art.js';
+import { drawDecoy, drawTell } from './boss-tell-art.js';
 /* ★ 피해는 호스트(혼자면 나)만 매기고, 끌림 · 밀림 · 느려짐은 화면마다 제 플레이어(me)에게만 건다 — 남의 몸은 그 사람 화면이 움직인다.
    그래서 위험 지대는 만들어질 때 참가자에게 그대로 보낸다(bhz) — 같은 시각에 같은 예고를 보고 같은 때 피한다. */
 
@@ -67,16 +70,17 @@ export const BossHazardPart: Bag = {
         case 'strike': if (!h.done && h.t >= h.delay) {
           h.done = 1;
           const col = FX_COL[h.fx] || h.c;
+          const art = !!STRIKE_ART[h.fx];
           if (h.shape === 'col') {
             if (host) this.hitPlayersRect(h.x - h.w / 2, h.y - h.hh, h.x + h.w / 2, h.y, h.dmg);
-            this.vfx.column(h.x, h.y, h.w * 1.4, h.hh, col, 0.45);
-            this.vfx.sparks(h.x, h.y - 4, 8, col, 380, -Math.PI / 2, 1.2, 0.4, 700);
+            if (!art) this.vfx.column(h.x, h.y, h.w * 1.4, h.hh, col, 0.45);
+            this.vfx.sparks(h.x, h.y - 4, art ? 4 : 8, col, 300, -Math.PI / 2, 1.2, 0.4, 700);
           } else {
             if (host) this.hitPlayers(h.x, h.y - h.r * 0.4, h.r, h.dmg);
-            this.vfx.flare(h.x, h.y - 6, h.r * 1.2, col, 0.25, 'impact');
-            this.vfx.shock(h.x, h.y - 4, h.r * 1.3, col, 0.35, 7, 0.4);
+            if (!art) this.vfx.flare(h.x, h.y - 6, h.r * 1.2, col, 0.25, 'impact');
+            this.vfx.shock(h.x, h.y - 4, h.r * 1.1, col, 0.3, 5, 0.3);
           }
-          if (h.fx === 'rock' || h.fx === 'meteor') { this.vfx.puffs(h.x, h.y - 8, 4, 16, 'rgba(120,100,80,.8)', 0.8, 20); this.shake = Math.max(this.shake, 5); }
+          if (h.fx === 'rock' || h.fx === 'meteor' || h.fx === 'boulder' || h.fx === 'metal') { this.vfx.puffs(h.x, h.y - 8, 4, 16, 'rgba(120,100,80,.8)', 0.8, 20); this.shake = Math.max(this.shake, 5); }
           if (host && h.zone) this.bossHazard(Object.assign({ k: 'zone', x: h.x, y: h.y, c: col, fx: h.fx, life: 4, r: 46 }, h.zone, { dmg: h.zoneDmg || 0 }));
           if (host && h.burstRing) for (let k = 0; k < h.burstRing; k++) {
             const a = k / h.burstRing * TAU;
@@ -102,6 +106,7 @@ export const BossHazardPart: Bag = {
         } break;
         case 'wave': {
           h.x += h.vx * dt;
+          if (h.grow) { h.hh = Math.min(h.grow, h.hh + dt * 16); h.w = h.hh; }          // 눈사태 — 구르며 커진다
           const tx = Math.floor((h.x + Math.sign(h.vx) * h.w / 2) / TS), ty = Math.floor((h.y - 6) / TS);
           if (w.solid(tx, ty)) { h.t = h.life; break; }                     // 벽에 부딪혀 꺼진다
           if (host) h.hit = (h.hit || []).concat(this.hitPlayersRect(h.x - h.w / 2, h.y - h.hh, h.x + h.w / 2, h.y, h.dmg, h.hit));
@@ -128,7 +133,7 @@ export const BossHazardPart: Bag = {
             }).filter((j: number) => j >= 0);
             if (hit.length) h.hit = (h.hit || []).concat(hit);
           }
-          if (Math.random() < dt * 40) this.parts.push(new Part(h.x + (Math.random() - .5) * h.w, h.top + Math.random() * (h.bot - h.top), h.c, -20, .4));
+          if (!WALL_ART[h.fx] && Math.random() < dt * 40) this.parts.push(new Part(h.x + (Math.random() - .5) * h.w, h.top + Math.random() * (h.bot - h.top), h.c, -20, .4));
         } break;
         case 'vortex': {
           if (b && !h.fixed) { h.x = b.cx; h.y = b.cy; }
@@ -150,115 +155,116 @@ export const BossHazardPart: Bag = {
         } break;
         case 'push': {
           if (me && !me.dead) me.vx += Math.sign(h.force) * Math.sign(me.cx - h.x || 1) * Math.abs(h.force) * dt * 1.6;
-          if (Math.random() < dt * 60) {
-            const cx = this.cam.x + Math.random() * this.W, cy = this.cam.y + Math.random() * this.H;
-            const pt = new Part(cx, cy, h.c, 0, .35, { g: 0, drag: 1 }); pt.vx = Math.sign(h.force) * Math.sign(cx - h.x || 1) * 520; pt.vy = 0;
-            this.parts.push(pt);
-          }
         } break;
+        default: this.sigUpdate(h, dt, host, me);                       // 고유 기술이 놓은 것(game/boss-sig)
       }
       if (h.t >= h.life) L.splice(i, 1);
     }
   },
 
-  /** 세계 위 — 예고는 또렷하게(피할 자리가 보여야 한다), 터진 뒤는 결 그림이 맡는다 */
+  /** 세계 위 — 예고는 또렷하게(피할 자리가 보여야 한다). 그림은 기술 결(fx)마다 제 것(game/boss-hazard-art · boss-field-art · boss-tell-art) */
   drawBossHazards(c: CanvasRenderingContext2D) {
     const L = this.bhz; if (!L || !L.length) return;
     const cx0 = this.cam.x, cy0 = this.cam.y, T0 = this.time || 0;
     c.save();
     for (const h of L) {
       const col = FX_COL[h.fx] || h.c || '#ffb070', k = Math.min(1, h.t / Math.max(0.01, h.delay || h.tele || 0.5));
+      if (h.sd === undefined) h.sd = (h.x || 0) * 0.013 + (h.y || 0) * 0.007;
       switch (h.k) {
-        case 'strike': if (!h.done) {
-          const x = h.x - cx0, y = h.y - cy0;
-          c.globalAlpha = 0.25 + 0.35 * k; c.fillStyle = col; c.strokeStyle = col; c.lineWidth = 2;
-          if (h.shape === 'col') {
-            c.globalAlpha = 0.12 + 0.2 * k; c.fillRect(x - h.w / 2, y - h.hh, h.w, h.hh);
-            c.globalAlpha = 0.7; c.strokeRect(x - h.w / 2 + 0.5, y - h.hh, h.w - 1, h.hh);
-            c.globalAlpha = 0.5 + 0.4 * k; c.fillRect(x - h.w / 2, y - 4, h.w * k, 4);   // 차오르는 띠 — 언제 떨어지는지
-          } else {
-            c.beginPath(); c.ellipse(x, y - 2, h.r, h.r * 0.32, 0, 0, TAU); c.globalAlpha = 0.18 + 0.2 * k; c.fill();
-            c.globalAlpha = 0.8; c.stroke();
-            c.beginPath(); c.ellipse(x, y - 2, h.r * k, h.r * 0.32 * k, 0, 0, TAU); c.globalAlpha = 0.45; c.fill();
-            if (h.fx === 'meteor' || h.fx === 'rock') {                          // 떨어지는 덩이 — 하늘(천장)에서 내려온다
-              const fy = y - 420 * (1 - k);
-              c.globalAlpha = 0.9; c.fillStyle = h.fx === 'rock' ? '#7a6a58' : '#ffd08a';
-              c.beginPath(); c.arc(x, fy, 6 + h.r * 0.12, 0, TAU); c.fill();
-            }
-          }
+        case 'strike': {
+          const x = h.x - cx0, y = h.y - cy0, art = STRIKE_ART[h.fx];
+          if (!art) { if (!h.done) this.drawPlainTell(c, h, x, y, col, k); break; }
+          if (!h.done) {
+            /* 예고 바닥 — 맞을 자리는 늘 옅게 짚어 준다(그림이 작아도 피할 칸이 보이게) */
+            c.globalAlpha = 0.18 + 0.22 * k; c.strokeStyle = col; c.lineWidth = 1.5; c.setLineDash([5, 5]);
+            if (h.shape === 'col') c.strokeRect(x - h.w / 2 + 0.5, y - 3, h.w - 1, 3);
+            else { c.beginPath(); c.ellipse(x, y - 1, h.r, h.r * 0.26, 0, 0, TAU); c.stroke(); }
+            c.setLineDash([]); c.globalAlpha = 1;
+            art.tell(c, h, x, y, k, T0);
+          } else art.hit(c, h, x, y, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);
         } break;
         case 'line': {
           c.globalAlpha = 0.35 + 0.35 * Math.sin(T0 * 30); c.strokeStyle = col; c.lineWidth = h.w || 3; c.setLineDash([10, 8]);
           c.beginPath(); c.moveTo(h.x0 - cx0, h.y0 - cy0); c.lineTo(h.x1 - cx0, h.y1 - cy0); c.stroke(); c.setLineDash([]);
+          c.globalAlpha = 1;
         } break;
         case 'beam': {
           const x = h.x - cx0, y = h.y - cy0, ex = Math.cos(h.a) * h.len, ey = Math.sin(h.a) * h.len;
           if (h.t <= h.tele) {
             c.globalAlpha = 0.3 + 0.4 * Math.abs(Math.sin(T0 * 18)); c.strokeStyle = col; c.lineWidth = 2;
-            c.beginPath(); c.moveTo(x, y); c.lineTo(x + ex, y + ey); c.stroke();
+            c.beginPath(); c.moveTo(x, y); c.lineTo(x + ex, y + ey); c.stroke(); c.globalAlpha = 1;
           } else {
-            const im = Sprites.vfxArt('beam', col), fade = Math.min(1, (h.life - h.t) * 4);
-            c.globalCompositeOperation = 'lighter'; c.globalAlpha = fade;
-            if (im) { c.save(); c.translate(x, y); c.rotate(h.a); c.drawImage(im, 0, -h.w * 1.2, h.len, h.w * 2.4); c.restore(); }
-            c.strokeStyle = '#ffffff'; c.lineWidth = h.w * 0.25; c.beginPath(); c.moveTo(x, y); c.lineTo(x + ex, y + ey); c.stroke();
-            c.globalCompositeOperation = 'source-over';
+            const fade = Math.min(1, (h.life - h.t) * 4, (h.t - h.tele) * 8), art = BEAM_ART[h.fx];
+            c.save(); c.translate(x, y); c.rotate(h.a);
+            if (art) art(c, h, x, y, h.len, h.w, fade, T0);
+            else {
+              const im = Sprites.vfxArt('beam', col);
+              c.globalCompositeOperation = 'lighter'; c.globalAlpha = fade;
+              if (im) c.drawImage(im, 0, -h.w * 1.2, h.len, h.w * 2.4);
+              c.fillStyle = '#ffffff'; c.fillRect(0, -h.w * 0.12, h.len, h.w * 0.25);
+            }
+            c.restore();
           }
         } break;
         case 'wave': {
-          const x = h.x - cx0, y = h.y - cy0, im = Sprites.vfxArt('crack', col);
-          c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.9;
-          if (im) c.drawImage(im, x - h.w, y - 10, h.w * 2, 20);
-          c.fillStyle = col; c.globalAlpha = 0.5;
-          c.beginPath(); c.moveTo(x - h.w / 2, y); c.quadraticCurveTo(x, y - h.hh * 1.6, x + h.w / 2, y); c.fill();
-          c.globalCompositeOperation = 'source-over';
+          const x = h.x - cx0, y = h.y - cy0, art = WAVE_ART[h.fx] || WAVE_ART.rock;
+          art(c, h, x, y, T0);
         } break;
         case 'zone': {
-          const x = h.x - cx0, y = h.y - cy0, f = Math.min(1, h.t * 3, (h.life - h.t) * 2);
+          const x = h.x - cx0, y = h.y - cy0, f = Math.min(1, h.t * 3, (h.life - h.t) * 2), art = ZONE_ART[h.fx];
+          if (art) { art(c, h, x, y, f, T0); break; }
           const g = c.createRadialGradient(x, y - 6, 2, x, y - 6, h.r);
           g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
           c.globalAlpha = 0.45 * f; c.fillStyle = g; c.beginPath(); c.ellipse(x, y - 6, h.r, h.r * 0.45, 0, 0, TAU); c.fill();
-          c.globalAlpha = 0.6 * f; c.strokeStyle = col; c.lineWidth = 1.5; c.setLineDash([6, 6]);
-          c.beginPath(); c.ellipse(x, y - 4, h.r, h.r * 0.3, 0, 0, TAU); c.stroke(); c.setLineDash([]);
-          if (Math.random() < 0.3) this.parts.push(new Part(h.x + (Math.random() - .5) * h.r * 1.6, h.y - 6, col, -40, .6));
+          c.globalAlpha = 1;
         } break;
         case 'wall': {
-          const x = h.x - cx0, f = Math.min(1, h.t * 4);
+          const x = h.x - cx0, f = Math.min(1, h.t * 4, (h.life - h.t) * 3), art = WALL_ART[h.fx];
+          if (art) { art(c, h, x, h.top - cy0, h.bot - cy0, f, T0); break; }
           const g = c.createLinearGradient(x - h.w / 2, 0, x + h.w / 2, 0);
           g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.5, col); g.addColorStop(1, 'rgba(0,0,0,0)');
-          c.globalAlpha = 0.75 * f; c.fillStyle = g; c.fillRect(x - h.w / 2, h.top - cy0, h.w, h.bot - h.top);
-          c.globalAlpha = 0.9 * f; c.strokeStyle = '#ffffff'; c.lineWidth = 1.5;
-          c.beginPath(); c.moveTo(x, h.top - cy0); c.lineTo(x, h.bot - cy0); c.stroke();
+          c.globalAlpha = 0.75 * f; c.fillStyle = g; c.fillRect(x - h.w / 2, h.top - cy0, h.w, h.bot - h.top); c.globalAlpha = 1;
         } break;
         case 'vortex': {
-          const x = h.x - cx0, y = h.y - cy0, im = Sprites.vfxArt('swirl', col), f = Math.min(1, h.t * 3, (h.life - h.t) * 3 + 0.2);
+          const x = h.x - cx0, y = h.y - cy0, f = Math.min(1, h.t * 3, (h.life - h.t) * 3 + 0.2), art = VORTEX_ART[h.fx];
+          if (art) { art(c, h, x, y, f, T0); break; }
+          const im = Sprites.vfxArt('swirl', col);
           c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.55 * f;
           if (im) { c.save(); c.translate(x, y); if (h.floor) c.scale(1, 0.35); c.rotate(-h.t * 4); c.drawImage(im, -h.r, -h.r, h.r * 2, h.r * 2); c.restore(); }
-          c.globalCompositeOperation = 'source-over';
+          c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
         } break;
-        case 'decoy': {
-          const x = h.x - cx0, y = h.y - cy0, f = Math.min(1, h.t * 4, (h.life - h.t) * 4);
-          const im = Sprites.vfxArt('sigil_void', col);
-          c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.6 * f;
-          if (im) { c.save(); c.translate(x, y); c.rotate(T0); c.drawImage(im, -40, -40, 80, 80); c.restore(); }
-          c.globalCompositeOperation = 'source-over'; c.globalAlpha = 0.55 * f; c.fillStyle = col;
-          c.beginPath(); c.ellipse(x, y, h.r * 0.45, h.r * 0.8, 0, 0, TAU); c.fill();
-        } break;
+        case 'push': drawPush(c, h, cx0, cy0, this.W, this.H, T0, Math.min(1, h.t * 4, (h.life - h.t) * 3)); break;
+        case 'decoy': drawDecoy(c, h, h.x - cx0, h.y - cy0, Math.min(1, h.t * 4, (h.life - h.t) * 4), T0); break;
         case 'aura': {
           const b = this.hzBoss(h); if (!b) break;
-          const x = b.cx - cx0, y = b.cy - cy0, im = Sprites.vfxArt('sigil', col), R = Math.max(b.w, b.h) * (0.7 + 0.3 * k);
-          c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.35 + 0.4 * k;
-          if (im) { c.save(); c.translate(x, y); c.rotate(T0 * 2); c.drawImage(im, -R, -R, R * 2, R * 2); c.restore(); }
-          c.globalCompositeOperation = 'source-over';
+          const box = { x: b.x - cx0, y: b.y - cy0, w: b.w, h: b.h, cx: b.cx - cx0, cy: b.cy - cy0, feet: b.y + b.h - cy0, face: b.facing < 0 ? -1 : 1 };
+          drawTell(c, h, box, k, T0);
         } break;
+        default: this.drawSig(c, h, cx0, cy0, T0); break;              // 고유 기술(game/boss-sig-art)
         case 'call': {
-          const b = this.hzBoss(h), x = (b ? b.cx : h.x) - cx0, y = (b ? b.y : h.y) - cy0 - 26, f = Math.min(1, h.t * 5, (h.life - h.t) * 3);
+          const b = this.hzBoss(h), x = (b ? b.cx : h.x) - cx0, y = (b ? b.y : h.y) - cy0 - 26 - (b ? Math.min(70, b.w * 0.45) : 0), f = Math.min(1, h.t * 5, (h.life - h.t) * 3);   // 이름은 예고 소품(머리 위)보다 위에
           c.globalAlpha = f; c.font = 'bold 15px ' + FONT; c.textAlign = 'center';
           c.lineWidth = 4; c.strokeStyle = 'rgba(10,8,12,.85)'; c.strokeText('『' + h.txt + '』', x, y);
           c.fillStyle = col; c.fillText('『' + h.txt + '』', x, y);
+          c.globalAlpha = 1;
         } break;
       }
     }
     c.restore();
+  },
+  /** 결 그림이 없는 위험 지대(예전 · 몹 스킬이 빌려 쓰는 것) — 기둥 · 타원 */
+  drawPlainTell(c: CanvasRenderingContext2D, h: Bag, x: number, y: number, col: string, k: number) {
+    c.globalAlpha = 0.25 + 0.35 * k; c.fillStyle = col; c.strokeStyle = col; c.lineWidth = 2;
+    if (h.shape === 'col') {
+      c.globalAlpha = 0.12 + 0.2 * k; c.fillRect(x - h.w / 2, y - h.hh, h.w, h.hh);
+      c.globalAlpha = 0.7; c.strokeRect(x - h.w / 2 + 0.5, y - h.hh, h.w - 1, h.hh);
+      c.globalAlpha = 0.5 + 0.4 * k; c.fillRect(x - h.w / 2, y - 4, h.w * k, 4);
+    } else {
+      c.beginPath(); c.ellipse(x, y - 2, h.r, h.r * 0.32, 0, 0, TAU); c.globalAlpha = 0.18 + 0.2 * k; c.fill();
+      c.globalAlpha = 0.8; c.stroke();
+      c.beginPath(); c.ellipse(x, y - 2, h.r * k, h.r * 0.32 * k, 0, 0, TAU); c.globalAlpha = 0.45; c.fill();
+    }
+    c.globalAlpha = 1;
   },
 };
 

@@ -418,6 +418,8 @@ export class Enemy extends Ent {
   declare hist: number[][]; declare histT: number; declare burrowT: number;
   declare tickMoves: (dt: number, world: World, p: Player, dd: number) => boolean; declare mvHist: (dt: number) => void; declare mvStart: (d: Bag, p: Player, world: World, K: Bag) => any;
   declare floorY: (x: number, y: number) => number; declare hz: (h: Bag) => Bag; declare strike: (x: number, y: number, o: Bag, K: Bag, dm: number) => Bag;
+  declare ceilY: (x: number, fy: number) => number | undefined; declare mvFx: (d: Bag) => string;
+  declare sigStart: (d: Bag, p: Player, world: World, K: Bag) => any; declare sigHide: (dt: number, world: World, r: any, toX: () => number, under: number, rise: number, onRise: () => void) => void;
   declare sgTook: number; declare slowFx: Timed; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
   declare stateT: number; declare think: number; declare type: string; declare weatherBuffed: boolean; declare xp: number;
   /* 몹 스킬 · 걸린 것(entity/enemy-skills) */
@@ -875,7 +877,9 @@ export const IMPACT_FX: Bag = {
   star:  { burst: 'hit',    ring: '#ffe08a', rr: 24, parts: 8 },
   pstar: { burst: 'stargain', ring: '#ffe08a', rr: 26, parts: 10 },
   bullet: { burst: 'hit',   ring: '#ffd86a', rr: 12, parts: 6 },
-  bubble: { burst: 'frost', ring: '#bfe6ff', rr: 26, parts: 10 }   // 비눗방울 — 톡, 물방울이 튄다(불꽃 폭발로 보였다)
+  bubble: { burst: 'frost', ring: '#bfe6ff', rr: 26, parts: 10 },  // 비눗방울 — 톡, 물방울이 튄다(불꽃 폭발로 보였다)
+  skull: { burst: 'soul',   ring: '#bfe8ff', rr: 26, parts: 8 },
+  cagebub: { burst: 'frost', ring: '#bfe6ff', rr: 28, parts: 10 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
 export const PROJ_STYLE: Bag = {
@@ -895,10 +899,13 @@ export const PROJ_STYLE: Bag = {
   bubble: { c: '#bfe6ff', r: 7 },
   dark: { c: '#9a5fd8', r: 6, glow: 1 },
   poison: { c: '#8fd06a', r: 5, glow: 1 },
-  bone: { c: '#e8e0c8', r: 5 }
+  bone: { c: '#e8e0c8', r: 5 },
+  skull: { c: '#efe6cc', r: 7 },         // 보스 탄 — 그림은 game/boss-tell-art
+  rivet: { c: '#9aa0ac', r: 4 },
+  cagebub: { c: '#bfe6ff', r: 9 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */
-export const PHYS_PROJ: Record<string, number> = { arrow: 1, bone: 1, star: 1, bullet: 1 };
+export const PHYS_PROJ: Record<string, number> = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1 };
 
 /* 갈래마다 다른 날기 — entity/player-weird 가 채운다. false 면 보통대로 날고, true 면 이 프레임 끝, 'hit' 이면 움직임만 맡기고 맞히기는 그대로 */
 export const PROJ_MOVE: Record<string, (p: Proj, dt: number) => boolean | 'hit'> = {};

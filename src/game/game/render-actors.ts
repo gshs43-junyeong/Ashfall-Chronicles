@@ -61,7 +61,7 @@ export const RenderActorsPart: Bag = {
       한 줄 = 한 마디 · 칸 0 은 손대지 않은 그림, 1 + 기술 번호×2 + (내지르기면 1). 기술 번호 3 = 필살기 */
   bossPose(e: Enemy): number {
     const K = BOSS_MOVES[e.type]; let code = -1;
-    if (e.mv && K) { const i = e.mv.d === K.ult ? 3 : K.moves.indexOf(e.mv.d); if (i >= 0) code = i * 2 + (e.mv.run ? 1 : 0); }
+    if (e.mv && K) { const i = e.mv.d === K.ult ? 3 : e.mv.d.pose ?? K.moves.indexOf(e.mv.d); if (i >= 0) code = i * 2 + (e.mv.run ? 1 : 0); }   // 고유 기술(pose)은 닮은 기술의 자세를 빌린다
     else if (e.ghost && e.poseNet >= 0) code = e.poseNet;
     return code;
   },

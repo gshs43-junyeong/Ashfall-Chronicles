@@ -624,6 +624,8 @@ export const NetPart: Bag = {
       this.netPutTiles(m.l, false);
     } else if (m.k === 'bhz') {
       this.netBossHazard(m);
+    } else if (m.k === 'bhzp') {
+      this.netHzPatch(m);
     } else if (m.k === 'puz') {
       this.netPuzzle(m);
     } else if (m.k === 'anc') {

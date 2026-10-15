@@ -3,7 +3,7 @@ import { app as G } from '../ctx.js';
 import { TAU, angleTo, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { SURGE_FLY } from '../data/skills.js';
-import { BOSS_MOVES } from '../data/bossmoves.js';
+import { ARC_FX, BOSS_MOVES, DOWN_COL, XFX_OF } from '../data/bossmoves.js';
 import { TS } from '../world.js';
 import { Enemy, Part, Proj } from '../entity.js';
 /* 기술을 쓰는 동안은 몸놀림(boss-ai)이 쉰다 — 한꺼번에 둘이 겹치면 피할 자리가 사라진다.
@@ -24,8 +24,6 @@ export const BossMoves: Bag & ThisType<Enemy> = {
       if (!mv.run) {                                          // 예고 — 멈춰 서서 기운을 모은다
         this.vx *= 0.82; if (fly) this.vy *= 0.82;
         this.move(dt, world, { gravMul: fly ? 0 : 1 });
-        mv.cv = (mv.cv || 0) - dt;
-        if (mv.cv <= 0) { mv.cv = 0.12; G.vfx.converge(this.cx, this.cy, Math.max(this.w, this.h) * 0.9, 5, K.c, 0.3); }
         if (mv.t >= mv.d.tele) mv.run = this.mvStart(mv.d, p, world, K) || { busy: 0 };
         return true;
       }
@@ -55,7 +53,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
     this.mv = { d, t: 0, run: null };
     this.gapMark();
     G.bossHazard({ k: 'call', txt: d.n, c: K.c, life: Math.max(1.6, d.tele + 0.8), ref: this, nid: this.nid, x: this.cx, y: this.y });
-    G.bossHazard({ k: 'aura', c: K.c, life: d.tele, tele: d.tele, ref: this, nid: this.nid });
+    G.bossHazard({ k: 'aura', c: K.c, life: d.tele, tele: d.tele, ref: this, nid: this.nid, mk: d.k, sig: d.sig, fx: this.mvFx(d), proj: d.proj, cnt: d.cnt, sd: Math.random() * 99 });
     G.sfxAt && G.sfxAt(d === K.ult ? 'chapter' : 'sk_mark', this.cx / TS, this.cy / TS);
     return true;
   },
@@ -74,25 +72,42 @@ export const BossMoves: Bag & ThisType<Enemy> = {
     return y + 40;
   },
   hz(h: Bag) { return G.bossHazard(h); },
+  /** 그 자리 위 천장(px) — 위에서 떨어지는 것의 출발점. 없으면 undefined(하늘에서) */
+  ceilY(x: number, fy: number) {
+    const w = G.world, tx = Math.floor(x / TS);
+    for (let ty = Math.floor(fy / TS) - 2; ty > Math.floor(fy / TS) - 22; ty--) if (w.solid(tx, ty)) return (ty + 1) * TS;
+    return undefined;
+  },
+  /** 그 기술의 결 — 그림이 무엇을 그릴지(data 의 fx · 없으면 갈래로) */
+  mvFx(d: Bag) {
+    if (d.fx) return d.fx;
+    return d.k === 'quake' ? 'rock' : d.k === 'leap' ? d.wfx || '' : '';
+  },
   strike(x: number, y: number, o: Bag, K: Bag, dm: number) {
     const fy = this.floorY(x, y - TS * 3);
-    const zoneDmg = o.zone ? this.dmg * (o.zone.dps || 0) : 0;
-    return this.hz({ k: 'strike', x, y: fy, r: o.r || 44, shape: o.shape || 'circle', w: o.w || 40, hh: o.h || 420, delay: o.delay || 0.8,
-      life: (o.delay || 0.8) + 0.4, dmg: this.dmg * dm, c: K.c, fx: o.fx, zone: o.zone, zoneDmg, burstRing: o.burstRing });
+    const zoneDmg = o.zone ? this.dmg * (o.zone.dps || 0) : 0, fx = o.fx, shape = o.shape || 'circle';
+    /* 어디서 오는가 — 솟는 것(up) · 떨어지는 것(down) · 던진 것(arc) · 바닥 진(mine). 그림(game/boss-hazard-art)이 이것으로 갈린다 */
+    const dir = o.dir || (shape === 'col' ? (DOWN_COL[fx] ? 'down' : 'up')
+      : ARC_FX[fx] ? 'arc' : fx === 'spore' || fx === 'burrow' ? 'up' : fx === 'rune' ? 'mine' : 'down');
+    return this.hz({ k: 'strike', x, y: fy, r: o.r || 44, shape, w: o.w || 40, hh: o.h || 420, delay: o.delay || 0.8,
+      life: (o.delay || 0.8) + 0.6, dmg: this.dmg * dm, c: K.c, fx, zone: o.zone, zoneDmg, burstRing: o.burstRing,
+      dir, top: dir === 'down' ? this.ceilY(x, fy) : undefined, sx: o.sx ?? this.cx, sy: o.sy ?? this.cy - this.h * 0.2, sd: Math.random() * 99 });
   },
 
   /** 기술 실행 — 돌려준 busy 동안 보스가 묶인다(tick 이 있으면 그 동안 움직임을 그것이 맡는다) */
   mvStart(d: Bag, p: Player, world: World, K: Bag): Run {
     const m = d.m ?? 1, fly = !!SURGE_FLY[this.def.ai!], E = this;
+    const xf = d.fx || XFX_OF[d.proj] || 'rock';                  // 덧붙임의 결 — 탄 갈래를 따른다(룬 탄 → 룬 기둥)
     const extra = () => {                                         // 필살기 덧붙임 — 한 기술에 다른 결을 하나 더
-      if (d.march) this.mvStart({ k: 'march', cnt: 8, gap: 60, every: 0.12, h: 130, both: 1, fx: d.fx, m: 0.8 }, p, world, K);
-      if (d.wall) this.mvStart({ k: 'wall', times: 2, spd: 280, gap: 110, every: 1.4, fx: d.fx, m: 0.7 }, p, world, K);
+      if (d.march) this.mvStart({ k: 'march', cnt: 8, gap: 60, every: 0.12, h: 130, both: 1, fx: xf, m: 0.8 }, p, world, K);
+      if (d.wall) this.mvStart({ k: 'wall', times: 2, spd: 280, gap: 110, every: 1.4, fx: xf, m: 0.7 }, p, world, K);
       if (d.zones) this.mvStart({ k: 'zone', at: 'player', n2: 3, r: 60, life: 5, dps: 0.1, fx: 'flesh' }, p, world, K);
       if (d.homing) this.mvStart({ k: 'homing', cnt: d.homing, spd: 200, turn: 2, proj: 'poison', m: 0.6 }, p, world, K);
       if (d.rain) this.mvStart({ k: 'rain', form: 'trail', cnt: 6, every: 0.4, delay: 0.8, r: 50, fx: 'meteor', m: 0.8 }, p, world, K);
       if (d.summon) this.mvStart({ k: 'summon', mob: d.summon, cnt: 2 }, p, world, K);
     };
     switch (d.k) {
+      case 'sig': return this.sigStart(d, p, world, K);                 // 그 보스만의 기술(entity/boss-signature)
       case 'leap': {                                              // 높이 뛰어 겨눈 자리로 — 내려앉으면 양옆으로 충격파
         const times = d.times || 1;
         const r: Run = { busy: 99, n: 0, air: 0, wait: 0.05 };
@@ -102,7 +117,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
             r.air = 1; r.at = 0;
             const tx = p.cx + p.vx * 0.4;
             this.vy = -860; this.vx = clamp((tx - this.cx) / 1.05, -720, 720);
-            this.strike(tx, p.y + p.h, { r: 90, delay: 1.05, fx: 'rock' }, K, m * 0.9);
+            this.strike(tx, p.y + p.h, { r: Math.max(90, this.w * 0.6), delay: 1.05, fx: 'shadow' }, K, m * 0.9);
           }
           r.at += dt;
           this.move(dt, world);
@@ -111,7 +126,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
             G.shake = Math.max(G.shake, 12);
             const fy = this.y + this.h;
             for (let k = 0; k < (d.waves ? d.waves : 0); k++) for (const s of [-1, 1])
-              this.hz({ k: 'wave', x: this.cx + s * (this.w / 2 + k * 40), y: fy, vx: s * (d.wspd || 340) * (1 - k * 0.15), w: 26, hh: 30, life: 2.6, dmg: this.dmg * m * 0.7, c: K.c });
+              this.hz({ k: 'wave', x: this.cx + s * (this.w / 2 + k * 40), y: fy, vx: s * (d.wspd || 340) * (1 - k * 0.15), w: 26, hh: 30, life: 2.6, dmg: this.dmg * m * 0.7, c: K.c, fx: d.wfx || 'rock', sd: Math.random() * 99 });
             G.vfx.shock(this.cx, fy - 4, 140, K.c, 0.4, 10, 0.3); G.vfx.crack(this.cx, fy, -1, 120, K.c, 0.8); G.vfx.crack(this.cx, fy, 1, 120, K.c, 0.8);
             if (r.n >= times) r.busy = r.t! + 0.35;
           }
@@ -122,7 +137,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
         let last = 0;
         if (d.form === 'cage') {                                  // 둘레를 기둥으로 막고 한 칸만 비운다
           const n = d.cnt || 7, gapI = Math.floor(Math.random() * n), gx = d.gapX || 46;
-          for (let i = 0; i < n; i++) if (i !== gapI) this.strike(p.cx + (i - (n - 1) / 2) * gx, p.y + p.h, { shape: 'col', w: gx - 6, h: 160, delay: d.delay, fx: d.fx }, K, m);
+          for (let i = 0; i < n; i++) if (i !== gapI) this.strike(p.cx + (i - (n - 1) / 2) * gx, p.y + p.h, { shape: 'col', w: gx - 6, h: 160, delay: d.delay, fx: d.fx, dir: 'up' }, K, m);
           last = d.delay;
         } else if (d.form === 'trail') {                          // 걸음마다 쫓아온다 — 멈추면 맞는다
           for (let i = 0; i < d.cnt; i++) G.after(i * d.every, () => { if (!E.dead) E.strike(p.cx + p.vx * 0.3, p.y + p.h, d, K, m); });
@@ -141,7 +156,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
         G.shake = Math.max(G.shake, 12);
         for (let i = 0; i < d.cnt; i++) {
           const x = p.cx + (Math.random() - 0.5) * (d.spread || 400);
-          G.after(i * 0.07, () => { if (!E.dead) E.strike(x, p.y + p.h, { r: 40, delay: d.delay, fx: 'rock' }, K, m); });
+          G.after(i * 0.07, () => { if (!E.dead) E.strike(x, p.y + p.h, { r: 40, delay: d.delay, fx: d.fx || 'rock', dir: 'down' }, K, m); });
         }
         extra();
         return { busy: 0.9 };
@@ -167,7 +182,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
           if (d.from === 'grid') { x = p.cx + (i - 1) * 130; y = p.cy - 420; a = Math.PI / 2; follow = 0; }
           if (d.from === 'cross') { follow = 0; if (i === 0) { x = p.cx - 450; y = p.cy; a = 0; } else { x = p.cx; y = p.cy - 450; a = Math.PI / 2; } }
           this.hz({ k: 'beam', x, y, a, va: (d.sweep || 0) / (d.dur || 2) * sgn, len: d.len || 800, w: d.w || 24, tele: 0.55,
-            life: 0.55 + (d.dur || 2), dmg: this.dmg * m, c: K.c, ref: follow ? this : undefined, nid: follow ? this.nid : undefined });
+            life: 0.55 + (d.dur || 2), dmg: this.dmg * m, c: K.c, fx: d.fx, sd: Math.random() * 99, ref: follow ? this : undefined, nid: follow ? this.nid : undefined });
         }
         return { busy: 0.55 + (d.dur || 2) };
       }
@@ -239,18 +254,18 @@ export const BossMoves: Bag & ThisType<Enemy> = {
           E.y = fly ? p.cy - E.h / 2 - 10 : p.y + p.h - E.h;
           E.vx = E.vy = 0;
           G.vfx.sigil(E.cx, E.cy, 50, K.c, 0.5, 6, 2, 1, 'sigil_void');
-          E.hz({ k: 'strike', x: E.cx, y: E.cy + (d.r || 90) * 0.4, r: d.r || 90, shape: 'circle', delay: 0.35, life: 0.75, dmg: E.dmg * m, c: K.c });
+          E.hz({ k: 'strike', x: E.cx, y: E.cy + (d.r || 90) * 0.4, r: d.r || 90, shape: 'circle', delay: 0.35, life: 0.75, dmg: E.dmg * m, c: K.c, fx: d.fx || 'rift', sd: Math.random() * 99 });
         });
         return { busy: (d.times || 3) * 0.62 + 0.3 };
       }
       case 'vortex': {
         const at = d.floor ? { x: p.cx, y: this.floorY(p.cx, p.cy) } : null;
         this.hz({ k: 'vortex', x: at ? at.x : this.cx, y: at ? at.y : this.cy, r: d.r || 300, pull: d.pull || 280, life: d.life || 2.6,
-          burst: d.burst || 0, dmg: this.dmg * m, c: K.c, floor: d.floor, fixed: !!at, follow: !at, ref: at ? undefined : this, nid: at ? undefined : this.nid });
+          burst: d.burst || 0, dmg: this.dmg * m, c: K.c, floor: d.floor, fixed: !!at, follow: !at, ref: at ? undefined : this, nid: at ? undefined : this.nid, fx: d.fx, sd: Math.random() * 99 });
         G.after((d.life || 2.6) + 0.05, () => {
           if (E.dead) return;
           if (d.then === 'dash') E.mv = { d: { k: 'dash', n: '', tele: 0, times: 1, spd: 4.2, m }, t: 0, run: E.mvStart({ k: 'dash', times: 1, spd: 4.2, m }, p, world, K) };
-          if (d.waves) for (const s of [-1, 1]) E.hz({ k: 'wave', x: E.cx, y: E.floorY(E.cx, E.cy), vx: s * 360, w: 28, hh: 32, life: 2.4, dmg: E.dmg * 0.7, c: K.c });
+          if (d.waves) for (const s of [-1, 1]) E.hz({ k: 'wave', x: E.cx, y: E.floorY(E.cx, E.cy), vx: s * 360, w: 28, hh: 32, life: 2.4, dmg: E.dmg * 0.7, c: K.c, fx: 'water', sd: Math.random() * 99 });
           if (d.rewind) E.mvStart({ k: 'rewind', heal: 0.02 }, p, world, K);
         });
         return { busy: (d.life || 2.6) + 0.2 };
@@ -258,7 +273,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
       case 'zone': {
         for (let i = 0; i < (d.n2 || 3); i++) {
           const spread = d.at === 'player' ? 140 : 440, x = p.cx + (Math.random() - 0.5) * spread;
-          this.hz({ k: 'zone', x, y: this.floorY(x, p.y), r: d.r || 60, life: d.life || 6, dmg: this.dmg * (d.dps || 0.1), slow: d.slow, poison: d.poison, burn: d.burn, c: K.c, fx: d.fx });
+          this.hz({ k: 'zone', x, y: this.floorY(x, p.y), r: d.r || 60, life: d.life || 6, dmg: this.dmg * (d.dps || 0.1), slow: d.slow, poison: d.poison, burn: d.burn, c: K.c, fx: d.fx, wallZ: d.wall, sd: Math.random() * 99 });
         }
         extra();
         return { busy: 0.6 };
@@ -268,7 +283,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
           if (E.dead) return;
           const s = Math.sign(p.cx - E.cx) || 1, fy = E.floorY(p.cx, p.y), low = i % 2 === 0;
           E.hz({ k: 'wall', x: E.cx, vx: s * (d.spd || 280), top: low ? fy - 52 : fy - 340, bot: low ? fy : fy - 50, w: 34,
-            life: 4.5, dmg: E.dmg * m, c: K.c, fx: d.fx });
+            life: 4.5, dmg: E.dmg * m, c: K.c, fx: d.fx, sd: Math.random() * 99 });
         });
         extra();
         return { busy: Math.min(1.6, (d.times || 1) * (d.every || 1.4)) };
@@ -287,7 +302,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
         return { busy: 0.7 };
       }
       case 'push': {
-        this.hz({ k: 'push', x: this.cx, force: d.force || 500, life: d.life || 3, c: K.c });
+        this.hz({ k: 'push', x: this.cx, fy: this.y + this.h, force: d.force || 500, life: d.life || 3, c: K.c, fx: d.fx, sd: Math.random() * 99 });
         return { busy: d.life || 3 };
       }
       case 'burrow': {                                            // 땅속으로 — 발밑을 따라오다 솟는다
@@ -304,7 +319,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
             if (Math.random() < 0.5) G.parts.push(new Part(this.cx + (Math.random() - .5) * 30, this.y + this.h, '#8a7a5a', -160, .5));
             if (r.pt > (d.under || 1.4)) {
               r.ph = 2; r.pt = 0;
-              this.strike(this.cx, this.y + this.h, { r: d.r || 80, delay: 0.55, fx: 'rock' }, K, m);
+              this.strike(this.cx, this.y + this.h, { r: d.r || 80, delay: 0.55, fx: 'burrow' }, K, m);
             }
           } else if (r.ph === 2) {
             if (r.pt > 0.55) {                                     // 솟는다
@@ -334,7 +349,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
         const real = Math.floor(Math.random() * n);
         pts.forEach((q, i) => {
           if (i === real) { this.x = q[0] - this.w / 2; this.y = q[1] - this.h / 2; this.vx = this.vy = 0; }
-          else this.hz({ k: 'decoy', x: q[0], y: q[1], r: this.h, life: 1.6, c: K.c });
+          else this.hz({ k: 'decoy', x: q[0], y: q[1], r: this.h, life: 1.6, c: K.c, type: this.type, flip: p.cx < q[0] });
           G.after(0.8, () => {
             if (E.dead) return;
             const nn = d.ring || 10;

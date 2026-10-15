@@ -174,52 +174,13 @@ def pose(f, PW, PH, fam, var, strike, col, ult):
     body = aura(body, rgb, (2 if ult else 1) + lw) if (strike or ult) else body
     im = Image.fromarray(np.zeros((PH, PW, 4), np.uint8)); x0, y0, x1, y1 = bbox(body)
     cx, w, h = (x0 + x1) / 2, x1 - x0, y1 - y0
-    d = ImageDraw.Draw(im, 'RGBA'); C = lambda a: (*rgb, a)
-    if fam == 'lunge' and strike:                                # 잔상 · 바람줄
+    if fam == 'lunge' and strike:                                # 돌진 잔상
         ghost = tint(body, rgb, 0.6)
         im = Image.fromarray(paste_over(np.array(im), ghost, 0.35, -int(w * 0.18)))
         im = Image.fromarray(paste_over(np.array(im), ghost, 0.18, -int(w * 0.34)))
-        d = ImageDraw.Draw(im, 'RGBA')
-        for i in range(5): yy = y0 + h * (0.2 + 0.15 * i); d.line([(max(0, x0 - w * 0.5), yy), (x0 - 2, yy)], fill=C(170), width=lw)
-    if fam == 'lunge' and not strike:
-        d.arc([x0 - 4, y1 - 6, x1 + 4, y1 + 4], 180, 360, fill=C(180), width=lw)
-        for sgn in (-1, 1): d.line([(cx + sgn * w * 0.55, y0 + h * 0.3), (cx + sgn * w * 0.7, y0 + h * 0.3)], fill=C(170), width=lw)
-    if fam == 'slam':
-        if strike:                                               # 흙먼지 · 금
-            for i in range(7):
-                ex = x0 - w * 0.25 + i * w * 0.25; d.ellipse([ex - 3, y1 - 4, ex + 3, y1 + 1], fill=(150, 130, 110, 150))
-            d.line([(cx - w * 0.4, y1), (cx - w * 0.2, y1 - 3), (cx, y1), (cx + w * 0.2, y1 - 3), (cx + w * 0.45, y1)], fill=C(230), width=lw + 1)
-        else:
-            for xx in (-0.45, -0.15, 0.15, 0.45): d.line([(cx + w * xx, y0 + h * 0.1), (cx + w * xx * 1.2, y0 - h * 0.12)], fill=C(190), width=lw)   # 솟구치는 줄
-    if fam == 'cast':
-        if var == 0:                                             # 머리 위 진
-            r = max(4, w * 0.2); yy = y0 - r - 3
-            d.ellipse([cx - r * 1.3, yy - r * 1.3, cx + r * 1.3, yy + r * 1.3], fill=C(50))
-            d.ellipse([cx - r, yy - r, cx + r, yy + r], outline=C(240), width=lw)
-            for i in range(6):
-                a = i / 6 * math.tau + (0.4 if strike else 0); d.line([(cx, yy), (cx + math.cos(a) * r, yy + math.sin(a) * r)], fill=C(190), width=max(1, lw - 1))
-        elif var == 1:                                           # 가슴 앞 구슬
-            r = max(3, w * 0.12) * (1.3 if strike else 1); ex, ey = x1 + r * 0.6, y0 + h * 0.4
-            d.ellipse([ex - r * 1.8, ey - r * 1.8, ex + r * 1.8, ey + r * 1.8], fill=C(60))
-            d.ellipse([ex - r, ey - r, ex + r, ey + r], fill=C(220)); d.ellipse([ex - r * 0.4, ey - r * 0.6, ex, ey - r * 0.2], fill=(255, 255, 255, 220))
-        else:                                                    # 발밑 고리
-            d.ellipse([cx - w * 0.75, y1 - 5, cx + w * 0.75, y1 + 4], outline=C(230), width=lw + 1)
-            d.ellipse([cx - w * 0.5, y1 - 3, cx + w * 0.5, y1 + 2], outline=C(160), width=lw)
-        if strike:                                               # 빛살
-            ex, ey = x1, y0 + h * 0.4
-            for i in range(7):
-                a = -0.9 + i * 0.3; d.line([(ex, ey), (ex + math.cos(a) * w * 0.5, ey + math.sin(a) * w * 0.5)], fill=C(220), width=lw)
-    if fam == 'pull':                                            # 소용돌이 — 펼칠 땐 밖으로, 오므릴 땐 안으로
-        for i in range(3):
-            r = w * (0.45 + 0.2 * i) * (1.0 if not strike else 0.75); a0 = i * 50 + (0 if not strike else 90)
-            d.arc([cx - r, y0 + h * 0.5 - r * 0.7, cx + r, y0 + h * 0.5 + r * 0.7], a0, a0 + 120, fill=C(220 - 40 * i), width=lw + (1 if i == 0 else 0))
-    if ult:                                                      # 필살기 — 바닥 진 하나 더
-        d.ellipse([cx - w * 0.9, y1 - 6, cx + w * 0.9, y1 + 5], outline=C(190), width=lw + 2)
-    out = paste_over(np.array(im), body, 1.0)
-    # 덧그림이 몸을 가리지 않게 — 몸을 마지막에 얹고, 진 · 구슬 · 빛살은 그 위에 한 번 더(몸 바깥만)
-    over = np.array(im); keep = body[..., 3] == 0
-    out[keep] = paste_over(out, over, 1.0)[keep]
-    return out
+    # ★ 진 · 구슬 · 빛살 같은 공용 덧그림은 굽지 않는다 — 기술마다의 소품(고드름 · 해골 · 시계 …)은 게임이 그 기술을 보고 그린다
+    #   (game/boss-tell-art). 여기는 몸짓만: 틀(fam)에 따른 휨 · 내지르기의 물든 윤곽 · 돌진 잔상.
+    return paste_over(np.array(im), body, 1.0)
 
 def build_pose(bid, frames, meta, mv):
     col, ks, uk = mv

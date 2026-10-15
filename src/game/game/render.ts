@@ -17,6 +17,7 @@ import { Sprites } from '../sprites.js';
 import { Bomb, Enemy, Guard, PROJ_FX, PROJ_STYLE, Wolf } from '../entity.js';
 import { Factory } from '../factory.js';
 import { DAY_CYCLE, Game, MAP_REVEAL_LIGHT, PATH_BUDGET } from '../game.js';
+import { BOSS_PROJ, drawBossProjAt } from './boss-tell-art.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const RenderPart: Bag = {
@@ -414,6 +415,7 @@ export const RenderPart: Bag = {
       const st = PROJ_STYLE[pr.type] || PROJ_STYLE.bolt;
       const sx = pr.cx - camX, sy = pr.cy - camY;
       if (this.drawWeirdProj(c, pr, sx, sy)) continue;             // 부메랑 · 비눗방울(game/weird-fx)
+      if (BOSS_PROJ[pr.type] && drawBossProjAt(c, pr.type, sx, sy, Math.atan2(pr.vy, pr.vx), this.time, pr.nid || 0)) continue;   // 해골 · 뼈 · 리벳 · 포자 · 거품 감옥(game/boss-tell-art)
       if (this.spritesOn && PROJ_FX[pr.type]) {
         const fr = Math.floor(this.time * 14) % 4;
         c.save();
