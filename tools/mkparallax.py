@@ -8,6 +8,7 @@
   bg/parallax_forest_thin.png   가지 끝에만 남은 것   (5~7장)
   bg/parallax_forest.png        죽은 나무만           (8장 · 타이틀 · 캠프 · 마을)
   bg/parallax_jungle.png        울림 정글
+  그 밖의 바이옴(서리 · 빙하 · 부패 · 사구 · 버섯 · 바다 · 하늘 · 마을 · 지옥 · 유적 · 공장)은 parallax_biomes.py — 같은 결로 굽는다
 
 ■ 왜 다시 굽나
   예전 숲 원경은 손그림(죽은 나무) 위에 잎을 **찾아 얹었다**(mkforestbg.py). 줄기를 그림에서 찾는 일이 늘 몇 그루를 놓쳐
@@ -90,19 +91,35 @@ def canopy(cv, cx, cy, rx, ry, col, rng, ragged=0.2, clumps=30):
         cv.ell(bx, by, r, r * 0.9, c)
 
 
+def _limb(cv, x, y, a, L, bw, col, rng, depth):
+    """가지 하나 — 살짝 굽어 뻗고 끝에서 둘(가끔 셋)로 갈라진다. a 는 수직에서 기운 각(라디안, 오른쪽 +)"""
+    bend = rng.uniform(-0.25, 0.25)
+    xm, ym = x + math.sin(a) * L * 0.5, y - math.cos(a) * L * 0.5
+    x1, y1 = xm + math.sin(a + bend) * L * 0.5, ym - math.cos(a + bend) * L * 0.5
+    cv.line([(x, y), (xm, ym), (x1, y1)], col, bw)
+    if depth <= 0 or L < 4:
+        return
+    k = 3 if rng.random() < 0.3 else 2
+    for j in range(k):
+        da = (j - (k - 1) / 2) * rng.uniform(0.45, 0.75) + rng.uniform(-0.12, 0.12)
+        _limb(cv, x1, y1, max(-1.45, min(1.45, a + bend + da)), L * rng.uniform(0.5, 0.68), max(1, bw - 1), col, rng, depth - 1)
+    if rng.random() < 0.55:                                              # 곁가지 — 중간에서 바깥으로 짧게
+        s = 1 if a >= 0 else -1
+        _limb(cv, xm, ym, a + s * rng.uniform(0.5, 0.9), L * 0.38, max(1, bw - 1), col, rng, depth - 2)
+
+
 def branches(cv, x, top, h, wdt, col, rng, n, reach):
-    """맨 가지 — 줄기 위쪽에서 비스듬히 뻗고 한 번 갈라진다. 끝은 갓 반지름(reach) 안 — 우거진 장에서 가지가 갓 밖으로 삐죽 나오면 맨 나무로 읽혔다"""
-    for i in range(n):
-        y0 = top + min(h * 0.45, reach * rng.uniform(0.15, 0.6))
+    """맨 가지 — 줄기 위쪽 여러 높이에서 갈래 가지가 부채처럼 뻗는다. 끝은 갓 반지름(reach) 안 — 우거진 장에서 가지가 갓 밖으로 삐죽 나오면 맨 나무로 읽혔다
+    ★ 가지 둘 · 한 번 갈래면 Y 자 장대로 읽혀 숲이 허전했다(사용자 지적 2026-10-15) — 줄기 끝 갈래 + 좌우 가지 n+2, 두세 번 갈라진다"""
+    bw = max(1, int(wdt * 0.45))
+    depth = 3 if reach > 25 else 2
+    _limb(cv, x, top + 2, rng.uniform(-0.15, 0.15), reach * 0.36, max(1, bw), col, rng, depth)   # 줄기 끝 갈래
+    m = n + 2
+    for i in range(m):
+        y0 = top + min(h * 0.5, reach * (0.12 + 0.6 * (i + rng.uniform(0, 0.8)) / m))
         s = -1 if i % 2 == 0 else 1
-        L = reach * rng.uniform(0.55, 0.8)
-        a = math.radians(rng.uniform(30, 62))
-        x1, y1 = x + s * math.sin(a) * L, y0 - math.cos(a) * L
-        bw = max(1, int(wdt * 0.45))
-        cv.line([(x, y0), (x1, y1)], col, bw)
-        a2 = a + math.radians(rng.uniform(-35, -10))
-        cv.line([(x1, y1), (x1 + s * math.sin(a2) * L * 0.5, y1 - math.cos(a2) * L * 0.5)], col, max(1, bw - 1))
-        cv.line([((x + x1) / 2, (y0 + y1) / 2), ((x + x1) / 2 + s * L * 0.3, (y0 + y1) / 2 - L * 0.12)], col, max(1, bw - 1))
+        a = s * math.radians(rng.uniform(32, 66))
+        _limb(cv, x, y0, a, reach * rng.uniform(0.38, 0.55), bw, col, rng, depth - (1 if i >= m - 2 else 0))
 
 
 # ---------------- 잿빛 숲 ----------------
@@ -266,6 +283,14 @@ def main():
     check_wrap(im, 'jungle')
     im.save(os.path.join(ROOT, 'parallax_jungle.png'))
     print('wrote parallax_jungle.png')
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from parallax_biomes import BIOMES
+    for name, fn in BIOMES:
+        im = fn()
+        check_wrap(im, name)
+        im.save(os.path.join(ROOT, name), optimize=True)
+        print('wrote', name)
 
 
 if __name__ == '__main__':

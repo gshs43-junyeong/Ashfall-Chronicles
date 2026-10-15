@@ -314,6 +314,7 @@ export const RenderSkyPart: Bag = {
     const refCamY = ref - this.H / 2;
     c.save();
     c.imageSmoothingEnabled = false;
+    const S = c.getTransform().a || 1, snap = (v: number) => Math.round(v * S) / S;   // 화면 픽셀 → 기기 픽셀
     const haze = this.skyHaze || '#a8c8e0';
     const dark = (1 - f) * 0.58;          // 밤에는 어두워진다 — 옅어지는 게 아니라
     /* ★ 먼 층은 지평선 하늘색(낮 #a8c8e0)으로 55% 씻기는데, 숲 원경은 그림 자체가 옅은 회색이라 씻고 나면 흰 종이처럼 떴다. */
@@ -323,16 +324,17 @@ export const RenderSkyPart: Bag = {
         const forest = pt.key === 'parallax_forest';
         const hz = slot === 0 ? (forest ? .40 : .55) : 0;
         const tint = slot === 0 && forest ? mixHex(haze, '#4f7a6a', 0.5) : haze;
-        const IW = pt.im.width, IH = pt.im.height, w = IW * sc, h = IH * sc;
-        const baseY = restY + (refCamY - camY) * spd;
+        /* ★ 자리 · 폭을 기기 픽셀에 맞춘다 — 소수 자리(1.15배 · 화질 1.5배 · 확대)로 그리면 장마다 표본이 달라 이음매가 한 픽셀 꺾였다 */
+        const IW = pt.im.width, IH = pt.im.height, w = Math.round(IW * sc * S) / S, h = Math.round(IH * sc * S) / S;
+        const baseY = snap(restY + (refCamY - camY) * spd);
         const img = this.tintBg(pt.src, slot + 2 * n, pt.key + af, tint, hz, dark);
-        let ox = -((camX * spd) % w);
+        let ox = snap(-((camX * spd) % w));
         if (ox > 0) ox -= w;
         c.globalAlpha = pt.a;
-        for (let x = ox; x < this.W; x += w) c.drawImage(img, x, baseY - h + dy, w, h);
+        for (let k = 0, x = ox; x < this.W; k++, x = ox + k * w) c.drawImage(img, x, baseY - h + dy, w, h);
         // 사막 분지 같은 저지대에서는 카메라가 내려가면서 근경 이미지의 바닥이 화면 바닥보다 위로 올라와, 그 아래로 빈 캔버스가 그대로 드러나는 틈이 생긴다.
         if (slot === 1 && baseY + dy < this.H) {
-          for (let x = ox; x < this.W; x += w) c.drawImage(img, 0, IH - 1, IW, 1, x, baseY + dy, w, this.H - baseY - dy);
+          for (let k = 0, x = ox; x < this.W; k++, x = ox + k * w) c.drawImage(img, 0, IH - 1, IW, 1, x, baseY + dy, w, this.H - baseY - dy);
         }
       });
     }

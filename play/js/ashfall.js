@@ -63501,6 +63501,7 @@
       const refCamY = ref - this.H / 2;
       c.save();
       c.imageSmoothingEnabled = false;
+      const S = c.getTransform().a || 1, snap = (v) => Math.round(v * S) / S;
       const haze = this.skyHaze || "#a8c8e0";
       const dark = (1 - f) * 0.58;
       for (const [slot, spd, dy, sc] of [[0, 0.16, -54, 1.15], [1, 0.34, 0, 1]]) {
@@ -63508,15 +63509,15 @@
           const forest = pt.key === "parallax_forest";
           const hz = slot === 0 ? forest ? 0.4 : 0.55 : 0;
           const tint = slot === 0 && forest ? mixHex(haze, "#4f7a6a", 0.5) : haze;
-          const IW = pt.im.width, IH = pt.im.height, w = IW * sc, h = IH * sc;
-          const baseY = restY + (refCamY - camY) * spd;
+          const IW = pt.im.width, IH = pt.im.height, w = Math.round(IW * sc * S) / S, h = Math.round(IH * sc * S) / S;
+          const baseY = snap(restY + (refCamY - camY) * spd);
           const img = this.tintBg(pt.src, slot + 2 * n, pt.key + af, tint, hz, dark);
-          let ox = -(camX * spd % w);
+          let ox = snap(-(camX * spd % w));
           if (ox > 0) ox -= w;
           c.globalAlpha = pt.a;
-          for (let x = ox; x < this.W; x += w) c.drawImage(img, x, baseY - h + dy, w, h);
+          for (let k = 0, x = ox; x < this.W; k++, x = ox + k * w) c.drawImage(img, x, baseY - h + dy, w, h);
           if (slot === 1 && baseY + dy < this.H) {
-            for (let x = ox; x < this.W; x += w) c.drawImage(img, 0, IH - 1, IW, 1, x, baseY + dy, w, this.H - baseY - dy);
+            for (let k = 0, x = ox; x < this.W; k++, x = ox + k * w) c.drawImage(img, 0, IH - 1, IW, 1, x, baseY + dy, w, this.H - baseY - dy);
           }
         });
       }
