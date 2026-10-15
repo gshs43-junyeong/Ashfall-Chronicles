@@ -180,7 +180,7 @@ export const StatusFxPart: Bag = {
     const me = this.me; if (!me) return;
     const fs = this.fxScale(); if (fs <= 0) return;
     const now = this.time, dt = Math.min(0.1, Math.max(0, now - (this.edgeT || now))); this.edgeT = now;
-    const A = this.edgeA = this.edgeA || { frost: 0, burn: 0, poison: 0, weak: 0 };
+    const A = this.edgeA = this.edgeA || { frost: 0, burn: 0, poison: 0, weak: 0, web: 0, ink: 0, grab: 0 };
     const on: Bag = {};
     for (const b of me.buffs || []) { const k = DEBUFF_EDGE[b.id]; if (k) on[k] = 1; }
     let any = false;
@@ -215,6 +215,20 @@ export const StatusFxPart: Bag = {
       vign('80,160,50', 0.45 * A.poison * pu * fs, 0.38);
     }
     if (A.weak) vign('50,25,80', 0.5 * A.weak * (0.85 + 0.15 * Math.sin(now * 1.7)) * fs, 0.4);
+    if (A.ink) {              // 먹물 — 가장자리부터 시커멓게, 가운데 좁은 틈만 보인다(설정 배율과 상관없이 가린다)
+      vign('8,6,16', 0.96 * A.ink, 0.12);
+      c.fillStyle = `rgba(8,6,16,${0.72 * A.ink})`;
+      for (let i = 0; i < 7; i++) { const a = i * 0.9 + now * 0.2, r = Math.min(W, H) * (0.24 + 0.05 * Math.sin(now + i)); c.beginPath(); c.arc(cx + Math.cos(a) * W * 0.42, cy + Math.sin(a) * H * 0.42, r, 0, TAU); c.fill(); }
+    }
+    if (A.web) {              // 거미줄 — 네 모서리에 걸린 실
+      c.strokeStyle = `rgba(236,238,244,${0.55 * A.web * fs})`; c.lineWidth = 1.2;
+      for (const [x0, y0, sx, sy] of [[0, 0, 1, 1], [W, 0, -1, 1], [0, H, 1, -1], [W, H, -1, -1]]) {
+        const L = Math.min(W, H) * 0.32;
+        for (let i = 0; i < 5; i++) { const a = (i / 4) * Math.PI / 2; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + sx * Math.cos(a) * L, y0 + sy * Math.sin(a) * L); c.stroke(); }
+        for (const k of [0.35, 0.6, 0.85]) { c.beginPath(); for (let i = 0; i <= 4; i++) { const a = (i / 4) * Math.PI / 2; c[i ? 'lineTo' : 'moveTo'](x0 + sx * Math.cos(a) * L * k, y0 + sy * Math.sin(a) * L * k); } c.stroke(); }
+      }
+    }
+    if (A.grab) vign('120,60,30', 0.3 * A.grab * fs, 0.45);
     c.restore();
   },
   /** 서리 결 — 가장자리에서 안으로 갈라져 들어오는 가지(화면 크기마다 한 번) */

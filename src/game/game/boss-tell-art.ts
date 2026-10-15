@@ -181,7 +181,7 @@ export function drawDecoy(c: C2, h: Bag, x: number, y: number, f: number, T: num
 }
 
 /** 제 그림이 있는 탄 */
-export const BOSS_PROJ: Record<string, number> = { skull: 1, bone: 1, rivet: 1, poison: 1, cagebub: 1 };
+export const BOSS_PROJ: Record<string, number> = { skull: 1, bone: 1, rivet: 1, poison: 1, cagebub: 1, web: 1, fruit: 1 };
 /** 보스 탄 — 이름 그대로의 물건(울부짖는 해골 · 뼈 · 리벳 · 포자 · 거품 감옥). 그렸으면 true */
 export function drawBossProjAt(c: C2, type: string, x: number, y: number, a: number, T: number, sd: number, col?: string) {
   switch (type) {
@@ -221,6 +221,23 @@ export function drawBossProjAt(c: C2, type: string, x: number, y: number, a: num
       for (let i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(x + i * r * 0.5, y - r * 0.85); c.lineTo(x + i * r * 0.5, y + r * 0.85); c.stroke(); }
       c.fillStyle = '#ffffff'; c.fillRect(x - r * 0.45, y - r * 0.5, 2, 2);
       return true;
+    }
+    case 'web': {                                                      // 거미줄 덩이 — 바퀴살 + 동심 줄, 꽁무니에 실
+      c.save(); c.translate(x, y); c.rotate(T * 2 + sd);
+      c.strokeStyle = 'rgba(240,242,248,.9)'; c.lineWidth = 1;
+      for (let i = 0; i < 6; i++) { const aa = i / 6 * TAU; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(aa) * 8, Math.sin(aa) * 8); c.stroke(); }
+      for (const r of [3, 6]) { c.beginPath(); for (let i = 0; i <= 6; i++) { const aa = i / 6 * TAU; c[i ? 'lineTo' : 'moveTo'](Math.cos(aa) * r, Math.sin(aa) * r); } c.stroke(); }
+      c.restore();
+      c.strokeStyle = 'rgba(240,242,248,.45)'; c.beginPath(); c.moveTo(x, y); c.lineTo(x - Math.cos(a) * 26, y - Math.sin(a) * 26); c.stroke();
+      return true;
+    }
+    case 'fruit': {                                                    // 열매 — 돌며 날아간다(꼭지 잎)
+      c.save(); c.translate(x, y); c.rotate(T * 9 + sd);
+      c.fillStyle = '#c8641e'; c.strokeStyle = '#5a2a0a'; c.lineWidth = 1;
+      c.beginPath(); c.arc(0, 0, 5.5, 0, TAU); c.fill(); c.stroke();
+      c.fillStyle = '#f0a050'; c.beginPath(); c.arc(-1.8, -1.8, 1.8, 0, TAU); c.fill();
+      c.fillStyle = '#4a8a2a'; c.beginPath(); c.ellipse(1, -6, 3, 1.4, -0.5, 0, TAU); c.fill();
+      c.restore(); return true;
     }
   }
   if (col) { hzGlow(c, x, y, 10, col, 0.6); c.fillStyle = col; c.beginPath(); c.arc(x, y, 4, 0, TAU); c.fill(); return true; }

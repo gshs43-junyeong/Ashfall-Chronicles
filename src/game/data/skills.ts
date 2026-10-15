@@ -276,6 +276,10 @@ export const BUFFS: Record<string, BuffDef> = {
   burn: { n: '화상', i: '🔥', dur: 4, debuff: 1 },
   poison: { n: '중독', i: '🤢', dur: 5, debuff: 1 },             // 초당 피해는 건 쪽이 정한다(buff.dps)
   weak: { n: '쇠약', i: '💀', dur: 6, debuff: 1, b: { dmgP: -0.25 } },   // 몹의 저주 — 주는 피해 -25%
+  /* 몬스터 고유 기술(entity/enemy-kits)이 거는 것 */
+  grabbed: { n: '붙잡힘', i: '🦂', dur: 0.9, debuff: 1, b: { ms: -85 } },   // 전갈 집게 · 부패한 나무 뿌리 — 내달리면 빠진다
+  webbed: { n: '거미줄', i: '🕸', dur: 2, debuff: 1, b: { ms: -55 } },
+  inked: { n: '먹물', i: '🐙', dur: 3, debuff: 1 },                         // 앞이 안 보인다(화면 가장자리가 먹으로 덮인다)
   swift_kill: { n: '추격', i: '💨', dur: 3, b: { ms: 30 } },
   /* 특성으로만 붙는 것들 — 지속 시간은 스킬 랭크가 정하므로 여기 dur 은 기본값일 뿐이다 */
   bulwark: { n: '철벽', i: '🧱', dur: 3, b: { dr: 55 } },

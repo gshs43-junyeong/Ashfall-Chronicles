@@ -4678,6 +4678,9 @@
   "ITEM_CATS.3.1": "Comida",
   "ITEM_CATS.4.1": "Bloques",
   "ITEM_CATS.5.1": "Semillas",
-  "ITEM_CATS.6.1": "Materiales · Piezas"
+  "ITEM_CATS.6.1": "Materiales · Piezas",
+  "BUFFS.grabbed.n": "Atrapado",
+  "BUFFS.webbed.n": "Enredado",
+  "BUFFS.inked.n": "Tinta"
  }
 }

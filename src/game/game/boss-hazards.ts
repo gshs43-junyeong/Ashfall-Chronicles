@@ -72,11 +72,11 @@ export const BossHazardPart: Bag = {
           const col = FX_COL[h.fx] || h.c;
           const art = !!STRIKE_ART[h.fx];
           if (h.shape === 'col') {
-            if (host) this.hitPlayersRect(h.x - h.w / 2, h.y - h.hh, h.x + h.w / 2, h.y, h.dmg);
+            if (host) for (const i of this.hitPlayersRect(h.x - h.w / 2, h.y - h.hh, h.x + h.w / 2, h.y, h.dmg)) if (h.inf) this.players[i].inflict(h.inf[0], h.inf[1]);
             if (!art) this.vfx.column(h.x, h.y, h.w * 1.4, h.hh, col, 0.45);
             this.vfx.sparks(h.x, h.y - 4, art ? 4 : 8, col, 300, -Math.PI / 2, 1.2, 0.4, 700);
           } else {
-            if (host) this.hitPlayers(h.x, h.y - h.r * 0.4, h.r, h.dmg);
+            if (host) this.hitPlayers(h.x, h.y - h.r * 0.4, h.r, h.dmg, h.inf);
             if (!art) this.vfx.flare(h.x, h.y - 6, h.r * 1.2, col, 0.25, 'impact');
             this.vfx.shock(h.x, h.y - 4, h.r * 1.1, col, 0.3, 5, 0.3);
           }
@@ -118,6 +118,10 @@ export const BossHazardPart: Bag = {
             h.tick = 0.5;
             const inf: any = h.poison ? ['poison', 3, 0.3] : h.burn ? ['burn', 3, 0.3] : h.slow ? ['frostbite', 1.5] : undefined;
             this.hitPlayers(h.x, h.y - 14, h.r, h.dmg, inf);
+          }
+          if (host && h.ink && h.tick <= 0) {                     // 먹물 구름 — 피해 없이 앞만 가린다
+            h.tick = 0.5;
+            for (const q of this.players) if (!q.dead && q.hp > 0 && Math.hypot(q.cx - h.x, q.cy - (h.y - 14)) < h.r) q.inflict('inked', 2.5);
           }
           if (h.slow && me && !me.dead && Math.abs(me.cx - h.x) < h.r && Math.abs(me.y + me.h - h.y) < 40) me.vx *= Math.pow(1 - h.slow, dt * 6);
         } break;

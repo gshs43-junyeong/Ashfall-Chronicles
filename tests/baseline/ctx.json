@@ -24,6 +24,8 @@
       "hitFx",
       "hitPlayers",
       "hitStop",
+      "hzFloor",
+      "hzNear",
       "killMult",
       "lootPity",
       "me",

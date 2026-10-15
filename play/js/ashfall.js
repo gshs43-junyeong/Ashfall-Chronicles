@@ -7254,6 +7254,7 @@
     },
     /* --- 지역별 추가 몬스터 --- */
     ashcrow: {
+      kit: "swoop",
       n: "잿빛 까마귀",
       hp: 42,
       dmg: 11,
@@ -7270,6 +7271,7 @@
       drops: [["ash_feather", 0.7, 1, 2]]
     },
     spider: {
+      kit: "web",
       n: "동굴 거미",
       hp: 70,
       dmg: 16,
@@ -7302,6 +7304,7 @@
       drops: [["iron_ore", 0.6, 2, 4], ["gold_ore", 0.25, 1, 3], ["lost_lamp", 0.12, 1, 1]]
     },
     scorpion: {
+      kit: "grab",
       n: "사막 전갈",
       hp: 100,
       dmg: 30,
@@ -7334,6 +7337,7 @@
       drops: [["sand", 0.8, 3, 8], ["venom_sting", 0.3, 1, 2], ["spear_venom", 0.025, 1, 1], ["bow_venom", 0.025, 1, 1]]
     },
     icewolf: {
+      kit: "pack",
       n: "얼음 늑대",
       hp: 165,
       dmg: 34,
@@ -7350,6 +7354,7 @@
       drops: [["ice_fang", 0.6, 1, 3], ["ice_shard", 0.7, 2, 4], ["dagger_frost", 0.03, 1, 1], ["charm_hawk", 0.06, 1, 1]]
     },
     corrupttree: {
+      kit: "roots",
       n: "부패한 나무",
       hp: 260,
       dmg: 40,
@@ -7382,6 +7387,7 @@
       drops: [["crystal_claw", 0.6, 1, 2], ["crystal", 0.7, 2, 5], ["dagger_void", 0.025, 1, 1], ["tome_void", 0.02, 1, 1]]
     },
     lavaslug: {
+      kit: "trail",
       n: "용암 슬러그",
       hp: 340,
       dmg: 52,
@@ -7873,6 +7879,7 @@
       drops: [["orchid", 0.6, 1, 2], ["vine_coil", 0.4, 1, 2]]
     },
     canopy_ape: {
+      kit: "lob",
       n: "수관 원숭이",
       hp: 196,
       dmg: 34,
@@ -7906,6 +7913,7 @@
       drops: [["spore_sac", 0.7, 1, 3], ["glowcap", 0.5, 1, 2]]
     },
     capbeast: {
+      kit: "puff",
       n: "갓짐승",
       hp: 280,
       dmg: 44,
@@ -8124,6 +8132,7 @@
       drops: [["shark_tooth", 0.7, 1, 3], ["raw_meat", 0.6, 1, 3]]
     },
     deep_octopus: {
+      kit: "ink",
       n: "심해 문어",
       hp: 2900,
       dmg: 146,
@@ -9782,6 +9791,12 @@
     // 초당 피해는 건 쪽이 정한다(buff.dps)
     weak: { n: "쇠약", i: "💀", dur: 6, debuff: 1, b: { dmgP: -0.25 } },
     // 몹의 저주 — 주는 피해 -25%
+    /* 몬스터 고유 기술(entity/enemy-kits)이 거는 것 */
+    grabbed: { n: "붙잡힘", i: "🦂", dur: 0.9, debuff: 1, b: { ms: -85 } },
+    // 전갈 집게 · 부패한 나무 뿌리 — 내달리면 빠진다
+    webbed: { n: "거미줄", i: "🕸", dur: 2, debuff: 1, b: { ms: -55 } },
+    inked: { n: "먹물", i: "🐙", dur: 3, debuff: 1 },
+    // 앞이 안 보인다(화면 가장자리가 먹으로 덮인다)
     swift_kill: { n: "추격", i: "💨", dur: 3, b: { ms: 30 } },
     /* 특성으로만 붙는 것들 — 지속 시간은 스킬 랭크가 정하므로 여기 dur 은 기본값일 뿐이다 */
     bulwark: { n: "철벽", i: "🧱", dur: 3, b: { dr: 55 } },
@@ -14470,9 +14485,10 @@
     frost: ["frostbite", 2],
     poison: ["poison", 4, 0.08],
     dark: ["weak", 3],
-    void: ["weak", 4]
+    void: ["weak", 4],
+    web: ["webbed", 2]
   };
-  var DEBUFF_EDGE = { frostbite: "frost", burn: "burn", poison: "poison", weak: "weak" };
+  var DEBUFF_EDGE = { frostbite: "frost", burn: "burn", poison: "poison", weak: "weak", webbed: "web", inked: "ink", grabbed: "grab" };
 
   // src/game/data/bossmoves.ts
   var bossmoves_exports = {};
@@ -33257,6 +33273,7 @@
         amount = this.traitHurt(amount, src);
         if (amount <= 0 || this.dead) return;
       }
+      if (this.def.kit) amount = this.kitHurt(amount);
       const arm = this.boss ? this.armor * this.gapArmor() : this.armor;
       const red = arm / (arm + 70);
       if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
@@ -33540,7 +33557,9 @@
     bubble: { burst: "frost", ring: "#bfe6ff", rr: 26, parts: 10 },
     // 비눗방울 — 톡, 물방울이 튄다(불꽃 폭발로 보였다)
     skull: { burst: "soul", ring: "#bfe8ff", rr: 26, parts: 8 },
-    cagebub: { burst: "frost", ring: "#bfe6ff", rr: 28, parts: 10 }
+    cagebub: { burst: "frost", ring: "#bfe6ff", rr: 28, parts: 10 },
+    web: { burst: "frost", ring: "#eef0f4", rr: 22, parts: 6 },
+    fruit: { burst: "hit", ring: "#e8783a", rr: 20, parts: 9 }
     /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
   };
   var PROJ_STYLE = {
@@ -33567,9 +33586,13 @@
     skull: { c: "#efe6cc", r: 7 },
     // 보스 탄 — 그림은 game/boss-tell-art
     rivet: { c: "#9aa0ac", r: 4 },
-    cagebub: { c: "#bfe6ff", r: 9 }
+    cagebub: { c: "#bfe6ff", r: 9 },
+    web: { c: "#eef0f4", r: 6 },
+    // 거미줄 덩이 — 그림은 game/boss-tell-art
+    fruit: { c: "#c8641e", r: 6 }
+    // 원숭이가 던지는 열매
   };
-  var PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1 };
+  var PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1, fruit: 1 };
   var PROJ_MOVE = {};
   var PROJ_WALL = {};
   var Proj = class extends Ent {
@@ -35361,6 +35384,7 @@
       const dd = engaged ? Math.hypot(dx, dy) : Infinity;
       if (engaged || real < this.aggro) this.facing = dx >= 0 ? 1 : -1;
       this.mobSkills(dt, player, seen, dd);
+      if (this.def.kit && this.kitTick(dt, world, player, seen, dd)) return;
       if (AI === "walker" || AI === "jumper" || AI === "archer") {
         const range = this.def.range || 0;
         const step = dd < this.aggro ? this.walkPath(dt, world, tx, ty, AI === "jumper" ? 3 : 2) : null;
@@ -35966,6 +35990,266 @@
     }
   };
   mixin(Enemy.prototype, EnemyTraits, true);
+
+  // src/game/entity/enemy-kits.ts
+  var enemy_kits_exports = {};
+  __export(enemy_kits_exports, {
+    EnemyKits: () => EnemyKits
+  });
+  var EnemyKits = {
+    /** 매 프레임 — true 면 이번 프레임 움직임 · 접촉 피해를 기술이 맡는다 */
+    kitTick(dt, world, p, seen, dd) {
+      this.kCd = (this.kCd === void 0 ? 0.4 + Math.random() * 0.8 : this.kCd) - dt;
+      if (this.kT > 0) this.kT -= dt;
+      const dx = p.cx - this.cx, dy = p.cy - this.cy, adx = Math.abs(dx);
+      const touch = (k, cd = 0.8) => {
+        if (this.hitCd <= 0 && aabb(this.rect(), p.rect())) {
+          p.hurt(this.dmg * k, this.cx);
+          this.hitCd = cd;
+          return true;
+        }
+        return false;
+      };
+      switch (this.def.kit) {
+        case "swoop": {
+          if (this.kSt === "aim") {
+            this.vx *= 0.9;
+            this.vy = -30;
+            this.atkPose = 0.2;
+            if (this.kT <= 0) {
+              this.kSt = "dive";
+              this.kT = 0.75;
+              const a = Math.atan2(this.ky - this.cy, this.kx - this.cx);
+              this.vx = Math.cos(a) * 560;
+              this.vy = Math.sin(a) * 560;
+              app.sfxAt("dash", this.cx / TS, this.cy / TS);
+            }
+            this.move(dt, world, { gravMul: 0 });
+            return true;
+          }
+          if (this.kSt === "dive") {
+            if (Math.random() < dt * 30) app.parts.push(new Part(this.cx, this.cy, "#5a5a62", -10, 0.35));
+            touch(1.4);
+            this.move(dt, world, { gravMul: 0 });
+            if (this.kT <= 0 || this.hitWall || this.onGround || this.cy > this.ky + 10) {
+              this.kSt = "climb";
+              this.kT = 0.6;
+            }
+            return true;
+          }
+          if (this.kSt === "climb") {
+            this.vy = -280;
+            this.vx *= 0.97;
+            this.move(dt, world, { gravMul: 0 });
+            if (this.kT <= 0) this.kSt = "";
+            return true;
+          }
+          if (seen && this.kCd <= 0 && dy > 40 && dd < 380 && adx < 300) {
+            this.kSt = "aim";
+            this.kT = 0.5;
+            this.kCd = 4 + Math.random() * 2;
+            this.kx = p.cx + p.vx * 0.35;
+            this.ky = p.y + p.h - 6;
+            app.bossHazard({ k: "line", x0: this.cx, y0: this.cy, x1: this.kx, y1: this.ky, life: 0.5, c: "#d8d0c0", w: 2 });
+            app.sfxAt("swing", this.cx / TS, this.cy / TS);
+            return true;
+          }
+          return false;
+        }
+        case "pack": {
+          if (this.goalT > 0) {
+            this.goalT -= dt;
+            if (this.goalT <= 0) this.goal = null;
+          }
+          if (seen && !this.howled && dd < this.aggro) {
+            this.howled = 1;
+            let side = dx > 0 ? 1 : -1;
+            for (const e of app.ents) {
+              if (e === this || e.dead || e.type !== this.type || Math.hypot(e.cx - this.cx, e.cy - this.cy) > 520) continue;
+              e.goal = { x: p.cx + side * 120, y: p.cy };
+              e.goalT = 2.6;
+              e.howled = 1;
+              side = -side;
+            }
+            for (let i = 0; i < 12; i++) app.parts.push(new Part(this.cx, this.y, "#cfe8ff", -50, 0.8));
+            app.sfxAt("sk_shout", this.cx / TS, this.cy / TS);
+          }
+          if (this.kSt === "crouch") {
+            this.vx = 0;
+            this.atkPose = 0.2;
+            if (this.kT <= 0) {
+              this.kSt = "leap";
+              this.kT = 0.9;
+              this.vx = Math.sign(this.kx - this.cx || 1) * 430;
+              this.vy = -330;
+            }
+            this.move(dt, world);
+            return true;
+          }
+          if (this.kSt === "leap") {
+            touch(1.35);
+            this.move(dt, world);
+            if (this.onGround && this.kT < 0.75 || this.kT <= 0) this.kSt = "";
+            return true;
+          }
+          if (seen && this.kCd <= 0 && this.onGround && adx > 60 && adx < 210 && Math.abs(dy) < 60) {
+            this.kSt = "crouch";
+            this.kT = 0.42;
+            this.kCd = 3.5 + Math.random() * 1.5;
+            this.kx = p.cx;
+            for (let i = 0; i < 5; i++) app.parts.push(new Part(this.cx, this.y + this.h, "#e8f4ff", -20, 0.4));
+            return true;
+          }
+          return false;
+        }
+        case "grab": {
+          if (this.kSt === "hold") {
+            this.vx = 0;
+            this.atkPose = 0.2;
+            const near = Math.abs(p.cx - this.cx) < 46 && Math.abs(p.cy - this.cy) < 40;
+            if ((p.dashV || 0) > 0 || !near) {
+              this.kSt = "";
+              this.kCd = 3;
+              this.move(dt, world);
+              return true;
+            }
+            if (Math.random() < dt * 8) app.parts.push(new Part(this.cx + this.facing * 10, this.y - 4, "#e8c060", -20, 0.3));
+            if (this.kT <= 0) {
+              this.kSt = "";
+              p.hurt(this.dmg * 1.25, this.cx);
+              p.inflict("poison", 5, this.dmg * 0.1);
+              for (let i = 0; i < 8; i++) app.parts.push(new Part(p.cx, p.y + 6, "#8fd06a", -60, 0.5));
+              app.sfxAt("hit_blunt", this.cx / TS, this.cy / TS);
+            }
+            this.move(dt, world);
+            return true;
+          }
+          if (this.kCd <= 0 && adx < 34 && Math.abs(dy) < 30) {
+            this.kSt = "hold";
+            this.kT = 0.85;
+            this.kCd = 5 + Math.random() * 2;
+            p.hurt(this.dmg * 0.4, this.cx);
+            p.inflict("grabbed", 0.9);
+            app.sfxAt("mine", this.cx / TS, this.cy / TS);
+            return true;
+          }
+          return false;
+        }
+        case "lob": {
+          if (this.kSt === "wind") {
+            this.vx = 0;
+            this.atkPose = 0.25;
+            if (this.kT <= 0) {
+              this.kSt = "";
+              const sx = this.cx, sy = this.y + 4, T2 = clamp(dd / 300, 0.55, 1.1), g = 600;
+              const pr = new Proj(sx, sy, (p.cx - sx) / T2, (p.cy - sy) / T2 - 0.5 * g * T2, this.dmg * 0.8, "enemy", "fruit");
+              pr.grav = g;
+              app.projs.push(pr);
+            }
+            this.move(dt, world);
+            return true;
+          }
+          if (seen && this.kCd <= 0 && this.onGround && dd > 70 && dd < 430) {
+            this.kSt = "wind";
+            this.kT = 0.38;
+            this.kCd = 2.6 + Math.random() * 1.6;
+            return true;
+          }
+          return false;
+        }
+        case "roots": {
+          if (this.kSt === "cast") {
+            this.vx = 0;
+            this.atkPose = 0.25;
+            if (Math.random() < dt * 14) app.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w, this.y + this.h, "#6a3a7a", -40, 0.5));
+            if (this.kT <= 0) this.kSt = "";
+            this.move(dt, world);
+            return true;
+          }
+          if (seen && this.kCd <= 0 && this.onGround && dd < 380) {
+            this.kSt = "cast";
+            this.kT = 0.6;
+            this.kCd = 5 + Math.random() * 1.5;
+            const fy = app.hzFloor(p.cx, p.y + p.h - 6);
+            app.bossHazard({ k: "strike", shape: "col", x: p.cx, y: fy, w: 34, hh: 58, delay: 0.85, life: 1.4, dmg: this.dmg * 1.1, c: "#8a5a9a", fx: "plant", inf: ["grabbed", 1], sd: Math.random() * 99 });
+            return true;
+          }
+          return false;
+        }
+        case "web": {
+          if (this.kSt === "spin") {
+            this.vx = 0;
+            this.atkPose = 0.2;
+            if (this.kT <= 0) {
+              this.kSt = "";
+              const a = Math.atan2(p.cy - this.cy, p.cx - this.cx);
+              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 300, Math.sin(a) * 300, this.dmg * 0.35, "enemy", "web"));
+            }
+            this.move(dt, world);
+            return true;
+          }
+          if (seen && this.kCd <= 0 && this.onGround && dd > 50 && dd < 360) {
+            this.kSt = "spin";
+            this.kT = 0.35;
+            this.kCd = 4 + Math.random() * 2;
+            return true;
+          }
+          return false;
+        }
+        case "ink": {
+          if (this.kSt === "jet") {
+            this.vx *= Math.pow(0.3, dt);
+            this.vy *= Math.pow(0.3, dt);
+            this.move(dt, world, { gravMul: 0, aquatic: 1 });
+            if (this.kT <= 0) this.kSt = "";
+            return true;
+          }
+          if (this.kCd <= 0 && dd < 110) {
+            this.inkOut(p);
+            return true;
+          }
+          return false;
+        }
+        case "trail": {
+          this.kT2 = (this.kT2 || 0) - dt;
+          if (this.kT2 <= 0 && this.onGround && Math.abs(this.vx) > 8 && dd < this.aggro) {
+            this.kT2 = 0.45;
+            app.bossHazard({ k: "zone", x: this.cx, y: this.y + this.h, r: 14, life: 3.5, dmg: this.dmg * 0.25, burn: 1, c: "#ff7a2a", fx: "lava", sd: Math.random() * 99 });
+          }
+          return false;
+        }
+      }
+      return false;
+    },
+    /** 문어 먹물 — 구름 + 반대쪽으로 분사 */
+    inkOut(p) {
+      this.kSt = "jet";
+      this.kT = 0.7;
+      this.kCd = 7 + Math.random() * 2;
+      app.bossHazard({ k: "zone", x: this.cx, y: this.cy + 14, r: 86, life: 4, dmg: 0, ink: 1, c: "#140c20", fx: "ink", sd: Math.random() * 99 });
+      const a = Math.atan2(this.cy - p.cy, this.cx - p.cx);
+      this.vx = Math.cos(a) * 430;
+      this.vy = Math.sin(a) * 430;
+      app.sfxAt("splash", this.cx / TS, this.cy / TS);
+    },
+    /** 맞았을 때 — 갓짐승은 포자를 터뜨리고(말불버섯), 문어는 먹물을 뿜는다. 받는 피해를 돌려준다 */
+    kitHurt(amount) {
+      const k = this.def.kit;
+      if (k === "puff" && app.time >= (this.puffT || 0)) {
+        this.puffT = app.time + 4;
+        this.atkPose = 0.3;
+        app.bossHazard({ k: "zone", x: this.cx, y: this.y + this.h, r: 56, life: 3.2, dmg: this.dmg * 0.2, poison: 1, c: "#8fe0c0", fx: "spore", sd: Math.random() * 99 });
+        for (let i = 0; i < 14; i++) app.parts.push(new Part(this.cx, this.y + 4, "#a8f0d0", -70, 0.7));
+        app.sfxAt("mat_plant", this.cx / TS, this.cy / TS);
+      }
+      if (k === "ink" && !(this.kCd > 0)) {
+        const q = app.hzNear(this.cx, this.cy) || app.me;
+        if (q) this.inkOut(q);
+      }
+      return amount;
+    }
+  };
+  mixin(Enemy.prototype, EnemyKits, true);
 
   // src/game/entity/boss-ai.ts
   var boss_ai_exports = {};
@@ -48709,7 +48993,7 @@
       if (fs <= 0) return;
       const now2 = this.time, dt = Math.min(0.1, Math.max(0, now2 - (this.edgeT || now2)));
       this.edgeT = now2;
-      const A = this.edgeA = this.edgeA || { frost: 0, burn: 0, poison: 0, weak: 0 };
+      const A = this.edgeA = this.edgeA || { frost: 0, burn: 0, poison: 0, weak: 0, web: 0, ink: 0, grab: 0 };
       const on = {};
       for (const b of me.buffs || []) {
         const k = DEBUFF_EDGE[b.id];
@@ -48760,6 +49044,39 @@
         vign("80,160,50", 0.45 * A.poison * pu * fs, 0.38);
       }
       if (A.weak) vign("50,25,80", 0.5 * A.weak * (0.85 + 0.15 * Math.sin(now2 * 1.7)) * fs, 0.4);
+      if (A.ink) {
+        vign("8,6,16", 0.96 * A.ink, 0.12);
+        c.fillStyle = `rgba(8,6,16,${0.72 * A.ink})`;
+        for (let i = 0; i < 7; i++) {
+          const a = i * 0.9 + now2 * 0.2, r = Math.min(W, H) * (0.24 + 0.05 * Math.sin(now2 + i));
+          c.beginPath();
+          c.arc(cx + Math.cos(a) * W * 0.42, cy + Math.sin(a) * H * 0.42, r, 0, TAU);
+          c.fill();
+        }
+      }
+      if (A.web) {
+        c.strokeStyle = `rgba(236,238,244,${0.55 * A.web * fs})`;
+        c.lineWidth = 1.2;
+        for (const [x0, y0, sx, sy] of [[0, 0, 1, 1], [W, 0, -1, 1], [0, H, 1, -1], [W, H, -1, -1]]) {
+          const L = Math.min(W, H) * 0.32;
+          for (let i = 0; i < 5; i++) {
+            const a = i / 4 * Math.PI / 2;
+            c.beginPath();
+            c.moveTo(x0, y0);
+            c.lineTo(x0 + sx * Math.cos(a) * L, y0 + sy * Math.sin(a) * L);
+            c.stroke();
+          }
+          for (const k of [0.35, 0.6, 0.85]) {
+            c.beginPath();
+            for (let i = 0; i <= 4; i++) {
+              const a = i / 4 * Math.PI / 2;
+              c[i ? "lineTo" : "moveTo"](x0 + sx * Math.cos(a) * L * k, y0 + sy * Math.sin(a) * L * k);
+            }
+            c.stroke();
+          }
+        }
+      }
+      if (A.grab) vign("120,60,30", 0.3 * A.grab * fs, 0.45);
       c.restore();
     },
     /** 서리 결 — 가장자리에서 안으로 갈라져 들어오는 가지(화면 크기마다 한 번) */
@@ -54641,6 +54958,30 @@
     c.stroke();
   }
   var ZONE_ART = {
+    lava(c, h, x, y, f, T2) {
+      const k = Math.min(1, h.t * 4), cool = Math.max(0, (h.t - h.life * 0.5) / (h.life * 0.5));
+      c.globalAlpha = f;
+      puddle(c, h.sd, x, y, h.r * k, T2, `rgba(255,${120 - cool * 60 | 0},40,.75)`, `rgba(90,${30 + cool * 10 | 0},20,.9)`);
+      c.fillStyle = `rgba(255,220,120,${0.6 * (1 - cool)})`;
+      for (let i = 0; i < 2; i++) {
+        const u = (T2 * 0.9 + hs(h.sd, i)) % 1;
+        c.fillRect(x + (hs(h.sd, i + 2) - 0.5) * h.r, y - 2 - u * 8, 1.5, 1.5);
+      }
+      c.globalAlpha = 1;
+    },
+    ink(c, h, x, y, f, T2) {
+      for (let i = 0; i < 8; i++) {
+        const a = hs(h.sd, i) * TAU + T2 * 0.25, d = h.r * 0.55 * hs(h.sd, i + 3) * Math.min(1, h.t * 2.5);
+        const px = x + Math.cos(a) * d, py = y - 14 + Math.sin(a) * d * 0.8, r = h.r * (0.3 + hs(h.sd, i + 6) * 0.25) * Math.min(1, 0.4 + h.t * 2);
+        const g = c.createRadialGradient(px, py, 1, px, py, r);
+        g.addColorStop(0, `rgba(12,8,22,${0.85 * f})`);
+        g.addColorStop(1, "rgba(12,8,22,0)");
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(px, py, r, 0, TAU);
+        c.fill();
+      }
+    },
     gel(c, h, x, y, f, T2) {
       const t = h.t;
       if (t < 0.45) {
@@ -55787,7 +56128,7 @@
     c.stroke();
     c.globalAlpha = 1;
   }
-  var BOSS_PROJ = { skull: 1, bone: 1, rivet: 1, poison: 1, cagebub: 1 };
+  var BOSS_PROJ = { skull: 1, bone: 1, rivet: 1, poison: 1, cagebub: 1, web: 1, fruit: 1 };
   function drawBossProjAt(c, type, x, y, a, T2, sd, col) {
     switch (type) {
       case "skull": {
@@ -55886,6 +56227,57 @@
         }
         c.fillStyle = "#ffffff";
         c.fillRect(x - r * 0.45, y - r * 0.5, 2, 2);
+        return true;
+      }
+      case "web": {
+        c.save();
+        c.translate(x, y);
+        c.rotate(T2 * 2 + sd);
+        c.strokeStyle = "rgba(240,242,248,.9)";
+        c.lineWidth = 1;
+        for (let i = 0; i < 6; i++) {
+          const aa = i / 6 * TAU;
+          c.beginPath();
+          c.moveTo(0, 0);
+          c.lineTo(Math.cos(aa) * 8, Math.sin(aa) * 8);
+          c.stroke();
+        }
+        for (const r of [3, 6]) {
+          c.beginPath();
+          for (let i = 0; i <= 6; i++) {
+            const aa = i / 6 * TAU;
+            c[i ? "lineTo" : "moveTo"](Math.cos(aa) * r, Math.sin(aa) * r);
+          }
+          c.stroke();
+        }
+        c.restore();
+        c.strokeStyle = "rgba(240,242,248,.45)";
+        c.beginPath();
+        c.moveTo(x, y);
+        c.lineTo(x - Math.cos(a) * 26, y - Math.sin(a) * 26);
+        c.stroke();
+        return true;
+      }
+      case "fruit": {
+        c.save();
+        c.translate(x, y);
+        c.rotate(T2 * 9 + sd);
+        c.fillStyle = "#c8641e";
+        c.strokeStyle = "#5a2a0a";
+        c.lineWidth = 1;
+        c.beginPath();
+        c.arc(0, 0, 5.5, 0, TAU);
+        c.fill();
+        c.stroke();
+        c.fillStyle = "#f0a050";
+        c.beginPath();
+        c.arc(-1.8, -1.8, 1.8, 0, TAU);
+        c.fill();
+        c.fillStyle = "#4a8a2a";
+        c.beginPath();
+        c.ellipse(1, -6, 3, 1.4, -0.5, 0, TAU);
+        c.fill();
+        c.restore();
         return true;
       }
     }
@@ -57026,11 +57418,13 @@
               const col = FX_COL[h.fx] || h.c;
               const art = !!STRIKE_ART[h.fx];
               if (h.shape === "col") {
-                if (host) this.hitPlayersRect(h.x - h.w / 2, h.y - h.hh, h.x + h.w / 2, h.y, h.dmg);
+                if (host) {
+                  for (const i2 of this.hitPlayersRect(h.x - h.w / 2, h.y - h.hh, h.x + h.w / 2, h.y, h.dmg)) if (h.inf) this.players[i2].inflict(h.inf[0], h.inf[1]);
+                }
                 if (!art) this.vfx.column(h.x, h.y, h.w * 1.4, h.hh, col, 0.45);
                 this.vfx.sparks(h.x, h.y - 4, art ? 4 : 8, col, 300, -Math.PI / 2, 1.2, 0.4, 700);
               } else {
-                if (host) this.hitPlayers(h.x, h.y - h.r * 0.4, h.r, h.dmg);
+                if (host) this.hitPlayers(h.x, h.y - h.r * 0.4, h.r, h.dmg, h.inf);
                 if (!art) this.vfx.flare(h.x, h.y - 6, h.r * 1.2, col, 0.25, "impact");
                 this.vfx.shock(h.x, h.y - 4, h.r * 1.1, col, 0.3, 5, 0.3);
               }
@@ -57090,6 +57484,10 @@
                 h.tick = 0.5;
                 const inf = h.poison ? ["poison", 3, 0.3] : h.burn ? ["burn", 3, 0.3] : h.slow ? ["frostbite", 1.5] : void 0;
                 this.hitPlayers(h.x, h.y - 14, h.r, h.dmg, inf);
+              }
+              if (host && h.ink && h.tick <= 0) {
+                h.tick = 0.5;
+                for (const q of this.players) if (!q.dead && q.hp > 0 && Math.hypot(q.cx - h.x, q.cy - (h.y - 14)) < h.r) q.inflict("inked", 2.5);
               }
               if (h.slow && me && !me.dead && Math.abs(me.cx - h.x) < h.r && Math.abs(me.y + me.h - h.y) < 40) me.vx *= Math.pow(1 - h.slow, dt * 6);
             }
@@ -69253,7 +69651,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

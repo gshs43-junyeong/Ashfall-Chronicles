@@ -4678,6 +4678,9 @@
   "ITEM_CATS.3.1": "食物",
   "ITEM_CATS.4.1": "方块",
   "ITEM_CATS.5.1": "种子",
-  "ITEM_CATS.6.1": "材料 · 零件"
+  "ITEM_CATS.6.1": "材料 · 零件",
+  "BUFFS.grabbed.n": "被抓住",
+  "BUFFS.webbed.n": "蛛网",
+  "BUFFS.inked.n": "墨汁"
  }
 }

@@ -4678,6 +4678,9 @@
   "ITEM_CATS.3.1": "Food",
   "ITEM_CATS.4.1": "Blocks",
   "ITEM_CATS.5.1": "Seeds",
-  "ITEM_CATS.6.1": "Materials · Parts"
+  "ITEM_CATS.6.1": "Materials · Parts",
+  "BUFFS.grabbed.n": "Grabbed",
+  "BUFFS.webbed.n": "Webbed",
+  "BUFFS.inked.n": "Inked"
  }
 }

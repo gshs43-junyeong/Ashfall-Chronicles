@@ -24,8 +24,8 @@ export const MOB_SKILLSET: Record<string, string[]> = {
 
 /** 원소 탄이 플레이어를 맞히면 거는 것 — [버프 id, 초, 초당 피해(탄 피해의 몫 · 없으면 피해 없음)] */
 export const PROJ_INFLICT: Record<string, [string, number, number?]> = {
-  fire: ['burn', 3, 0.08], frost: ['frostbite', 2], poison: ['poison', 4, 0.08], dark: ['weak', 3], void: ['weak', 4]
+  fire: ['burn', 3, 0.08], frost: ['frostbite', 2], poison: ['poison', 4, 0.08], dark: ['weak', 3], void: ['weak', 4], web: ['webbed', 2]
 };
 
 /** 화면 가장자리 연출 — 디버프 갈래마다 한 겹(다시 걸려도 겹치지 않는다) */
-export const DEBUFF_EDGE: Record<string, string> = { frostbite: 'frost', burn: 'burn', poison: 'poison', weak: 'weak' };
+export const DEBUFF_EDGE: Record<string, string> = { frostbite: 'frost', burn: 'burn', poison: 'poison', weak: 'weak', webbed: 'web', inked: 'ink', grabbed: 'grab' };

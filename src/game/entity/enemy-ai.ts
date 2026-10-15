@@ -98,6 +98,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
     const dd = engaged ? Math.hypot(dx, dy) : Infinity;
     if (engaged || real < this.aggro) this.facing = dx >= 0 ? 1 : -1;
     this.mobSkills(dt, player, seen, dd);      // 몹 스킬(entity/enemy-skills) — 시전 예고 중엔 멈칫한다
+    if (this.def.kit && this.kitTick(dt, world, player, seen, dd)) return;   // 바이옴 몬스터 고유 기술(entity/enemy-kits)
 
     if (AI === 'walker' || AI === 'jumper' || AI === 'archer') {
       const range = this.def.range || 0;

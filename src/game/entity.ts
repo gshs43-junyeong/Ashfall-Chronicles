@@ -431,6 +431,8 @@ export class Enemy extends Ent {
   declare evLamp: boolean; declare latchT: number; declare latchOx: number; declare drainT: number; declare lastHitT: number; declare awake: number;
   declare still: boolean; declare blinkT: number; declare amb: number; declare goal: { x: number; y: number } | null; declare evTag: string;
   declare traitTick: (dt: number, world: World, p: Player) => boolean; declare traitHurt: (amount: number, src: any) => number;
+  declare kCd: number; declare kT: number; declare kT2: number; declare kSt: string; declare kx: number; declare ky: number; declare goalT: number; declare howled: number; declare puffT: number;   // 고유 기술(entity/enemy-kits)
+  declare kitTick: (dt: number, world: World, p: Player, seen: boolean, dd: number) => boolean; declare kitHurt: (amount: number) => number; declare inkOut: (p: Player) => void;
   declare traitContact: (p: Player) => void; declare allyIgnore: () => boolean; declare wakeDeaf: (spread: boolean) => void; declare traitDie: () => void;
 
   constructor(type: string, x: number, y: number, scale = 1) {
@@ -623,6 +625,7 @@ export class Enemy extends Ent {
       if (Math.random() < 0.5) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, tr('막혔다'), '#8d8874', 0));
     }
     if (this.def.trait || this.frozenT > 0) { amount = this.traitHurt(amount, src); if (amount <= 0 || this.dead) return; }
+    if (this.def.kit) amount = this.kitHurt(amount);
     const arm = this.boss ? this.armor * this.gapArmor() : this.armor;
     const red = arm / (arm + 70);
     // 사냥꾼의 표식 — 출처를 가리지 않는다.
@@ -879,7 +882,9 @@ export const IMPACT_FX: Bag = {
   bullet: { burst: 'hit',   ring: '#ffd86a', rr: 12, parts: 6 },
   bubble: { burst: 'frost', ring: '#bfe6ff', rr: 26, parts: 10 },  // 비눗방울 — 톡, 물방울이 튄다(불꽃 폭발로 보였다)
   skull: { burst: 'soul',   ring: '#bfe8ff', rr: 26, parts: 8 },
-  cagebub: { burst: 'frost', ring: '#bfe6ff', rr: 28, parts: 10 }
+  cagebub: { burst: 'frost', ring: '#bfe6ff', rr: 28, parts: 10 },
+  web: { burst: 'frost', ring: '#eef0f4', rr: 22, parts: 6 },
+  fruit: { burst: 'hit', ring: '#e8783a', rr: 20, parts: 9 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
 export const PROJ_STYLE: Bag = {
@@ -902,10 +907,12 @@ export const PROJ_STYLE: Bag = {
   bone: { c: '#e8e0c8', r: 5 },
   skull: { c: '#efe6cc', r: 7 },         // 보스 탄 — 그림은 game/boss-tell-art
   rivet: { c: '#9aa0ac', r: 4 },
-  cagebub: { c: '#bfe6ff', r: 9 }
+  cagebub: { c: '#bfe6ff', r: 9 },
+  web: { c: '#eef0f4', r: 6 },           // 거미줄 덩이 — 그림은 game/boss-tell-art
+  fruit: { c: '#c8641e', r: 6 }          // 원숭이가 던지는 열매
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */
-export const PHYS_PROJ: Record<string, number> = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1 };
+export const PHYS_PROJ: Record<string, number> = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1, fruit: 1 };
 
 /* 갈래마다 다른 날기 — entity/player-weird 가 채운다. false 면 보통대로 날고, true 면 이 프레임 끝, 'hit' 이면 움직임만 맡기고 맞히기는 그대로 */
 export const PROJ_MOVE: Record<string, (p: Proj, dt: number) => boolean | 'hit'> = {};

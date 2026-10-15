@@ -4678,6 +4678,9 @@
   "ITEM_CATS.3.1": "Essen",
   "ITEM_CATS.4.1": "Blöcke",
   "ITEM_CATS.5.1": "Samen",
-  "ITEM_CATS.6.1": "Material · Teile"
+  "ITEM_CATS.6.1": "Material · Teile",
+  "BUFFS.grabbed.n": "Gepackt",
+  "BUFFS.webbed.n": "Eingesponnen",
+  "BUFFS.inked.n": "Tinte"
  }
 }

@@ -31,6 +31,22 @@ function puddle(c: C2, sd: number, x: number, y: number, r: number, T: number, f
 }
 
 export const ZONE_ART: Record<string, (c: C2, h: Bag, x: number, y: number, f: number, T: number) => void> = {
+  lava(c, h, x, y, f, T) {                                               // 용암 슬러그 자국 — 굳어 가는 붉은 웅덩이
+    const k = Math.min(1, h.t * 4), cool = Math.max(0, (h.t - h.life * 0.5) / (h.life * 0.5));
+    c.globalAlpha = f; puddle(c, h.sd, x, y, h.r * k, T, `rgba(255,${120 - cool * 60 | 0},40,.75)`, `rgba(90,${30 + cool * 10 | 0},20,.9)`);
+    c.fillStyle = `rgba(255,220,120,${0.6 * (1 - cool)})`;
+    for (let i = 0; i < 2; i++) { const u = (T * 0.9 + hs(h.sd, i)) % 1; c.fillRect(x + (hs(h.sd, i + 2) - 0.5) * h.r, y - 2 - u * 8, 1.5, 1.5); }
+    c.globalAlpha = 1;
+  },
+  ink(c, h, x, y, f, T) {                                                // 먹물 구름 — 물속에 퍼지는 검은 덩이
+    for (let i = 0; i < 8; i++) {
+      const a = hs(h.sd, i) * TAU + T * 0.25, d = h.r * 0.55 * hs(h.sd, i + 3) * Math.min(1, h.t * 2.5);
+      const px = x + Math.cos(a) * d, py = y - 14 + Math.sin(a) * d * 0.8, r = h.r * (0.3 + hs(h.sd, i + 6) * 0.25) * Math.min(1, 0.4 + h.t * 2);
+      const g = c.createRadialGradient(px, py, 1, px, py, r);
+      g.addColorStop(0, `rgba(12,8,22,${0.85 * f})`); g.addColorStop(1, 'rgba(12,8,22,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(px, py, r, 0, TAU); c.fill();
+    }
+  },
   gel(c, h, x, y, f, T) {                                                // 끈적이는 비 — 젤 방울이 떨어져 웅덩이가 된다
     const t = h.t;
     if (t < 0.45) { const u = t / 0.45; glob(c, x, y - 200 * (1 - u * u) - 8, 8, '#8fbaff', '#1e3a7a'); }

@@ -4678,6 +4678,9 @@
   "ITEM_CATS.3.1": "食べ物",
   "ITEM_CATS.4.1": "ブロック",
   "ITEM_CATS.5.1": "種",
-  "ITEM_CATS.6.1": "素材・部品"
+  "ITEM_CATS.6.1": "素材・部品",
+  "BUFFS.grabbed.n": "捕まった",
+  "BUFFS.webbed.n": "クモの糸",
+  "BUFFS.inked.n": "墨"
  }
 }
