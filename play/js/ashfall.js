@@ -23118,7 +23118,14 @@
       if (!this.atlas || !img || !img.width) return;
       const g = this.atlas.getContext("2d");
       g.imageSmoothingEnabled = false;
-      for (let v = 0; v < this.V; v++) g.drawImage(img, v * TS, id * TS, TS, TS);
+      const strip = img.width >= TS * this.V && img.width >= img.height * this.V;
+      for (let v = 0; v < this.V; v++) {
+        if (strip) {
+          const fw = img.width / this.V;
+          g.clearRect(v * TS, id * TS, TS, TS);
+          g.drawImage(img, v * fw, 0, fw, img.height, v * TS, id * TS, TS, TS);
+        } else g.drawImage(img, v * TS, id * TS, TS, TS);
+      }
     },
     /* ---------- 잿빛 판 ---------- */
     ASH_TILE: [
@@ -25224,31 +25231,66 @@
   });
   var TilePaintVillage = {
     glowcap(H) {
-      const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
-      {
-        {
-          const specs = [[TS / 2 + rng.range(-1, 1), 12, 7, 5], [7 + rng.range(-1, 1), 7, 4, 3]];
-          for (const [bx, h, capW, capH] of specs) {
-            R(bx - 1.6, TS - h, 3.2, h, "#dff0e8");
-            g.fillStyle = base;
-            g.beginPath();
-            g.ellipse(ox + bx, oy + TS - h + 1, capW, capH, 0, Math.PI, 2 * Math.PI);
-            g.fill();
-            g.fillStyle = shade(base, 1.35);
-            g.beginPath();
-            g.ellipse(ox + bx, oy + TS - h, capW * 0.62, capH * 0.6, 0, Math.PI, 2 * Math.PI);
-            g.fill();
-            R(bx - capW, TS - h + 1, capW * 2, 1.2, shade(base, 0.7));
-          }
-          g.globalAlpha = 0.26;
-          g.fillStyle = base;
-          g.beginPath();
-          g.arc(ox + TS / 2, oy + TS - 12, 10, 0, TAU);
-          g.fill();
-          g.globalAlpha = 1;
-          return;
+      const { g, ox, oy, rng, v, R, base } = H;
+      const stem = "#dff0e8", stemDk = "#a9c8bc", gill = shade(base, 0.62), hi = shade(base, 1.35);
+      const cap = (bx, h, w, ch, lean = 0, bell = false) => {
+        const sw = Math.max(1.4, w * 0.32), top = TS - h;
+        g.fillStyle = stem;
+        g.beginPath();
+        g.moveTo(ox + bx - sw / 2, oy + TS);
+        g.lineTo(ox + bx - sw / 2 + lean, oy + top + 1);
+        g.lineTo(ox + bx + sw / 2 + lean, oy + top + 1);
+        g.lineTo(ox + bx + sw / 2, oy + TS);
+        g.fill();
+        R(bx + sw / 2 - 0.9 + lean * 0.5, top + 2, 0.9, h - 2, stemDk);
+        const cx = ox + bx + lean, cy = oy + top + 1;
+        g.fillStyle = base;
+        g.beginPath();
+        if (bell) {
+          g.moveTo(cx - w, cy);
+          g.quadraticCurveTo(cx - w * 0.9, cy - ch * 1.6, cx, cy - ch * 1.7);
+          g.quadraticCurveTo(cx + w * 0.9, cy - ch * 1.6, cx + w, cy);
+          g.closePath();
+        } else g.ellipse(cx, cy, w, ch, 0, Math.PI, 2 * Math.PI);
+        g.fill();
+        g.fillStyle = hi;
+        g.beginPath();
+        g.ellipse(cx - w * 0.25, cy - ch * (bell ? 1.05 : 0.55), w * 0.42, ch * 0.38, -0.2, 0, TAU);
+        g.fill();
+        g.fillStyle = gill;
+        g.fillRect(cx - w, cy - 0.2, w * 2, 1.3);
+        g.fillStyle = "rgba(240,255,250,.85)";
+        for (let i = 0; i < 2 + (w > 5 ? 1 : 0); i++) {
+          const px = cx + rng.range(-w * 0.55, w * 0.55);
+          g.fillRect(px, cy - rng.range(ch * 0.35, ch * (bell ? 1.2 : 0.75)), 1, 1);
         }
+      };
+      const k = v % 6;
+      if (k === 0) {
+        cap(TS / 2 + rng.range(-1, 1), 12, 7, 5);
+        cap(7 + rng.range(-1, 1), 7, 4, 3);
+      } else if (k === 1) {
+        cap(TS / 2 + rng.range(-2, 2), 18, 3.6, 3.2, rng.range(-1.5, 1.5), true);
+      } else if (k === 2) {
+        const n = 4 + rng.int(0, 1);
+        for (let i = 0; i < n; i++) cap(3.5 + i * (TS - 7) / (n - 1) + rng.range(-0.8, 0.8), rng.range(3.5, 7.5), rng.range(2, 3), rng.range(1.6, 2.2));
+      } else if (k === 3) {
+        cap(TS / 2 + rng.range(-1, 1), 8, 9.5, 4.5);
+        cap(TS - 4, 4, 2.2, 1.8);
+      } else if (k === 4) {
+        cap(TS / 2 - 3 + rng.range(-1, 1), 11, 5, 3.6, 0, true);
+        cap(TS / 2 + 5, 6, 3, 2.4, 0, true);
+      } else {
+        cap(8 + rng.range(-1, 1), 16, 4.4, 3.4, rng.range(-1, 1));
+        cap(16, 5, 2.6, 2);
+        cap(TS - 3.5, 3.5, 1.8, 1.4);
       }
+      g.globalAlpha = 0.24;
+      g.fillStyle = base;
+      g.beginPath();
+      g.arc(ox + TS / 2, oy + TS - 10, 10, 0, TAU);
+      g.fill();
+      g.globalAlpha = 1;
     },
     /* ---------- 마을 건축 ---------- */
     thatch(H) {

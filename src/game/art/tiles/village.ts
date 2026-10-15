@@ -7,23 +7,39 @@ import { TILE_PAINT } from '../../tileart.js';
 
 export const TilePaintVillage: Bag = {
   glowcap(H: TilePaintKit) {
-    const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
-    { {
-        const specs = [[TS / 2 + rng.range(-1, 1), 12, 7, 5], [7 + rng.range(-1, 1), 7, 4, 3]];
-        for (const [bx, h, capW, capH] of specs) {
-          R(bx - 1.6, TS - h, 3.2, h, '#dff0e8');     // 자루
-          g.fillStyle = base;
-          g.beginPath(); g.ellipse(ox + bx, oy + TS - h + 1, capW, capH, 0, Math.PI, 2 * Math.PI); g.fill();
-          g.fillStyle = shade(base, 1.35);
-          g.beginPath(); g.ellipse(ox + bx, oy + TS - h, capW * .62, capH * .6, 0, Math.PI, 2 * Math.PI); g.fill();
-          R(bx - capW, TS - h + 1, capW * 2, 1.2, shade(base, .7));
-        }
-        g.globalAlpha = .26; g.fillStyle = base;      // 스스로 내는 빛
-        g.beginPath(); g.arc(ox + TS / 2, oy + TS - 12, 10, 0, TAU); g.fill();
-        g.globalAlpha = 1;
-        return;
-      }
+    /* ★ 한 모양만 되풀이되면 골짜기가 도장 찍은 듯했다(사용자 지적 2026-10-15) — 칸 갈래(v 0~5)마다 다른 버섯:
+       쌍 · 길쭉한 외대 · 작은 무리 · 넓은 우산 · 종 · 키 큰 것과 작은 것. 같은 타일이라 포자 굴 유적의 버섯도 함께 바뀐다 */
+    const { g, ox, oy, rng, v, R, base } = H;
+    const stem = '#dff0e8', stemDk = '#a9c8bc', gill = shade(base, .62), hi = shade(base, 1.35);
+    /** 자루 + 갓 하나 — bx 가운데 · h 갓 밑까지 높이 · w · ch 갓 반폭 · 높이 · lean 기울기 · bell 이면 종 모양 */
+    const cap = (bx: number, h: number, w: number, ch: number, lean = 0, bell = false) => {
+      const sw = Math.max(1.4, w * .32), top = TS - h;
+      g.fillStyle = stem; g.beginPath();
+      g.moveTo(ox + bx - sw / 2, oy + TS); g.lineTo(ox + bx - sw / 2 + lean, oy + top + 1); g.lineTo(ox + bx + sw / 2 + lean, oy + top + 1); g.lineTo(ox + bx + sw / 2, oy + TS); g.fill();
+      R(bx + sw / 2 - .9 + lean * .5, top + 2, .9, h - 2, stemDk);
+      const cx = ox + bx + lean, cy = oy + top + 1;
+      g.fillStyle = base; g.beginPath();
+      if (bell) { g.moveTo(cx - w, cy); g.quadraticCurveTo(cx - w * .9, cy - ch * 1.6, cx, cy - ch * 1.7); g.quadraticCurveTo(cx + w * .9, cy - ch * 1.6, cx + w, cy); g.closePath(); }
+      else g.ellipse(cx, cy, w, ch, 0, Math.PI, 2 * Math.PI);
+      g.fill();
+      g.fillStyle = hi; g.beginPath(); g.ellipse(cx - w * .25, cy - ch * (bell ? 1.05 : .55), w * .42, ch * .38, -.2, 0, TAU); g.fill();
+      g.fillStyle = gill; g.fillRect(cx - w, cy - .2, w * 2, 1.3);          // 갓 밑 주름
+      g.fillStyle = 'rgba(240,255,250,.85)';                                // 갓 위 빛 점
+      for (let i = 0; i < 2 + (w > 5 ? 1 : 0); i++) { const px = cx + rng.range(-w * .55, w * .55); g.fillRect(px, cy - rng.range(ch * .35, ch * (bell ? 1.2 : .75)), 1, 1); }
+    };
+    const k = v % 6;
+    if (k === 0) { cap(TS / 2 + rng.range(-1, 1), 12, 7, 5); cap(7 + rng.range(-1, 1), 7, 4, 3); }
+    else if (k === 1) { cap(TS / 2 + rng.range(-2, 2), 18, 3.6, 3.2, rng.range(-1.5, 1.5), true); }          // 길쭉한 외대
+    else if (k === 2) {                                                                                     // 작은 무리
+      const n = 4 + rng.int(0, 1);
+      for (let i = 0; i < n; i++) cap(3.5 + i * (TS - 7) / (n - 1) + rng.range(-.8, .8), rng.range(3.5, 7.5), rng.range(2, 3), rng.range(1.6, 2.2));
     }
+    else if (k === 3) { cap(TS / 2 + rng.range(-1, 1), 8, 9.5, 4.5); cap(TS - 4, 4, 2.2, 1.8); }            // 넓은 우산
+    else if (k === 4) { cap(TS / 2 - 3 + rng.range(-1, 1), 11, 5, 3.6, 0, true); cap(TS / 2 + 5, 6, 3, 2.4, 0, true); }   // 종 둘
+    else { cap(8 + rng.range(-1, 1), 16, 4.4, 3.4, rng.range(-1, 1)); cap(16, 5, 2.6, 2); cap(TS - 3.5, 3.5, 1.8, 1.4); } // 큰 것 + 작은 것
+    g.globalAlpha = .24; g.fillStyle = base;      // 스스로 내는 빛
+    g.beginPath(); g.arc(ox + TS / 2, oy + TS - 10, 10, 0, TAU); g.fill();
+    g.globalAlpha = 1;
   },
   /* ---------- 마을 건축 ---------- */
   thatch(H: TilePaintKit) {

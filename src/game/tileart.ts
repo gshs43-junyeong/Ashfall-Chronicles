@@ -334,7 +334,12 @@ export const TileArt: Bag = {
     if (!this.atlas || !img || !img.width) return;
     const g = this.atlas.getContext('2d');
     g.imageSmoothingEnabled = false;
-    for (let v = 0; v < this.V; v++) g.drawImage(img, v * TS, id * TS, TS, TS);
+    // 가로 띠(칸 × 갈래 수)면 갈래마다 제 칸을 — 한 장이면 모든 갈래에 같은 그림
+    const strip = img.width >= TS * this.V && img.width >= img.height * this.V;
+    for (let v = 0; v < this.V; v++) {
+      if (strip) { const fw = img.width / this.V; g.clearRect(v * TS, id * TS, TS, TS); g.drawImage(img, v * fw, 0, fw, img.height, v * TS, id * TS, TS, TS); }
+      else g.drawImage(img, v * TS, id * TS, TS, TS);
+    }
   },
 
   /* ---------- 잿빛 판 ---------- */
