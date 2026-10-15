@@ -171,6 +171,7 @@ export class World extends TileMap {
   declare trapSpot: (...a: any[]) => any;
   declare storyMemories: (...a: any[]) => void; declare settleMemories: () => void; declare _memEnt: number[][];
   declare clearSkyBlobs: (zones: number[][]) => void; declare _citadelVault: (...a: any[]) => Bag | null;
+  declare sculptGlacier: () => void; declare softenFrost: () => void; declare _coldFree: (x: number, pad?: number) => boolean; declare _resurf: (x: number) => void;
   declare applyStrata: () => void; declare buildTunnels: () => void; declare depthLayer: (tx: number, ty: number) => string;
   declare strataLines: (tx: number) => number[]; declare tunnels: Bag[]; declare _strataPh: number[]; declare _tunBoxes: number[][] | null; declare _tunNat: Set<number> | null;
   declare _tunOk: (x: number, y: number) => boolean; declare _tunBlob: (...a: any[]) => boolean; declare _tunWorm: (...a: any[]) => number; declare _tunFloor: (x: number, y: number, lim: number) => number;
@@ -615,6 +616,8 @@ export class World extends TileMap {
     this.sweepFloatingDecor();       // 뒷공사가 받침을 헐고 간 장식을 걷어낸다
     this.pruneBrokenTrees();         // 천장에 잘리거나 밑동이 날아가 뜬 나무를 통째로 걷는다
     this.clearSkyOverSettlements();  // 캠프 · 여명 마을 위 하늘 섬은 덩어리째 지운다(잘린 섬을 남기지 않게)
+    this.sculptGlacier();            // 빙하 — 나무 없는 맨얼음 · 얼음 탑 · 크레바스 · 압력 능선(제 난수)
+    this.softenFrost();              // 서리 지대 — 눈 둔덕 · 눈 덮인 바위(제 난수)
     /* 액체 마무리는 **지형을 건드리는 마지막 단계 뒤**에 와야 한다. */
     this.sweepPockets(60);           // 뒷공사가 남긴 한두 칸짜리 구멍을 메운다 — 물을 고치기 전에
     this.sealLiquids();
