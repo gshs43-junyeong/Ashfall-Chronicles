@@ -12,7 +12,7 @@ import { TS } from '../world.js';
 import { TileArt } from '../tileart.js';
 import { makeItem } from '../items.js';
 import { Enemy, Part, Proj } from '../entity.js';
-import { DIR4, FAC_TICK, Factory } from '../factory.js';
+import { DIR4, FAC_TICK, Factory, HOLDS_ONE, itemCat } from '../factory.js';
 /* factory.ts 의 Factory 에서 나눈 조각 — 읽히는 순간 Factory 에 붙는다(main.js 가 factory.ts 다음에 읽는다). */
 
 /* 고장 — 일하는 동안 틱당 확률. 기계 하나가 쉬지 않고 돌면 평균 3시간에 한 번(0.125초 × 86,400틱) */
@@ -109,7 +109,8 @@ export const FactoryTickPart: Bag = {
         case 'dart': case 'flamejet': case 'frostjet': this.runShooter(w, m, s, G); break;
         case 'switch': m.st = m.on ? N_('가동 중') : N_('전면 정지'); m.act = 0; break;
         case 'belt': case 'belt_fast': m.st = m.it ? N_('이송') : N_('대기'); m.act = 0; break;
-        case 'sorter': m.act = m.it ? 1 : 0; break;
+        case 'sorter': case 'gate_if': case 'gate_or': m.act = m.it ? 1 : 0; break;
+        case 'converter': m.act = this.bufTotal(m.in) > 0 ? 1 : 0; break;
         case 'pole': m.st = m.net >= 0 ? N_('망 #{n}') : '—'; m.act = 0; break;
         case 'crate': m.st = m.feed ? N_('배출 중') : N_('보관'); m.act = 0; break;
         case 'gen': case 'windmill': break;   // 전력 정산에서 이미 처리했다
@@ -139,6 +140,14 @@ export const FactoryTickPart: Bag = {
           const match = !m.f || m.f === m.it.id;
           m.st = match ? N_('통과') : N_('분기');
           if (this.pushTo(w, m, match ? m.dir : (m.dir + 1) & 3, m.it.id)) { m.it = null; moved++; }
+        } else if (m.t === 'gate_if' || m.t === 'gate_or') {
+          if (!m.it || m.just) continue;
+          if (this.sat(w, m) <= 0) { m.st = N_('전력 없음'); continue; }
+          if (this.runGate(w, m)) moved++;
+        } else if (m.t === 'converter') {
+          if (m.lt === this.now || !this.bufTotal(m.in)) continue;   // 한 틱에 하나 — 받는 쪽이 버퍼 기계여도 쏟아붓지 않게
+          if (this.sat(w, m) <= 0) { m.st = m.net < 0 ? N_('망 없음') : N_('전력 없음'); continue; }
+          if (this.runConverter(w, m)) moved++;
         }
       }
     }
@@ -155,6 +164,46 @@ export const FactoryTickPart: Bag = {
         }
       }
     }
+  },
+
+  /** 분기기 한 번 — 조건이 참이면 앞(m.dir), 거짓이면 옆((dir + els) & 3). 보냈으면 true
+      ★ '앞이 막히면 옆으로'(full)는 참 · 거짓이 아니라 넘침 — 앞을 먼저 밀어 보고 안 되면 옆. 앞이 빈 동안은 옆으로 안 샌다 */
+  runGate(w: World, m: any) {
+    const id = m.it.id, side = (m.dir + (m.els || 1)) & 3;
+    let yes = true;
+    if (m.t === 'gate_or') yes = !m.fs.length || m.fs.some((f: string) => f === id || f === 'cat:' + itemCat(id));
+    else if (m.ck === 'item') yes = !m.cv || m.cv === id;
+    else if (m.ck === 'cat') yes = !m.cv || itemCat(id) === m.cv;
+    else if (m.ck === 'every') yes = (m.k | 0) % Math.max(1, m.cn | 0) === 0;
+    else if (m.ck === 'full') {
+      if (this.pushTo(w, m, m.dir, id)) { m.st = N_('참 → 앞'); m.it = null; return true; }
+      yes = false;
+    }
+    if (!this.pushTo(w, m, yes ? m.dir : side, id)) { m.st = N_('출력 막힘'); return false; }
+    m.st = yes ? N_('참 → 앞') : N_('거짓 → 옆');
+    if (m.ck === 'every') m.k = (m.k | 0) + 1;
+    m.it = null;
+    return true;
+  },
+  /** 컨버터 한 번 — 비율 차례의 물건을 하나 앞으로. 차례 물건이 없으면 기다린다(그래야 비율이 지켜진다).
+      비율이 비었으면 들어온 물건을 이름 순으로 돌아가며 내보내는 합류기. 보냈으면 true */
+  runConverter(w: World, m: any) {
+    let id: string;
+    if (m.r.length) {
+      const e = m.r[m.ri % m.r.length];
+      if (!(m.in[e.id] > 0)) { m.st = N_('재료 기다림'); return false; }
+      id = e.id;
+    } else {
+      const ks = Object.keys(m.in).filter(k => m.in[k] > 0).sort();
+      id = ks[(m.ri | 0) % ks.length];
+    }
+    if (!this.pushTo(w, m, m.dir, id)) { m.st = N_('출력 막힘'); return false; }
+    this.bufTake(m.in, id, 1);
+    m.lt = this.now; m.st = N_('합류 중');
+    if (m.r.length) {
+      if (++m.rc >= Math.max(1, m.r[m.ri % m.r.length].n | 0)) { m.rc = 0; m.ri = (m.ri + 1) % m.r.length; }
+    } else m.ri = (m.ri | 0) + 1;
+    return true;
   },
 
   /** 풍차 위를 막는가 — 고체 타일과 다른 기계 둘 다 바람을 가린다 */
@@ -217,7 +266,7 @@ export const FactoryTickPart: Bag = {
 
   /** 벨트·분류기 위에서 3초 넘게 멈춘 물건인가 — 플레이어가 집어 갈 수 있다(불러온 뒤 시각이 없는 것도 멈춘 것으로 본다) */
   stalled(m: any) {
-    if (!m.it || !(m.t === 'belt' || m.t === 'belt_fast' || m.t === 'sorter')) return false;
+    if (!m.it || !HOLDS_ONE.has(m.t)) return false;
     const t0 = m.it.t0 !== undefined ? m.it.t0 : -1e9;
     return G.time - t0 >= (this.DWELL[m.t] || FAC_TICK) + 3;
   },

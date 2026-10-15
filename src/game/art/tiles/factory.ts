@@ -189,6 +189,24 @@ export const TilePaintFactory: Bag = {
       }
     }
   },
+  /** 컨버터 — 깔때기 셋이 한 입으로 모인다(비율 눈금) */
+  mk_converter(H: TilePaintKit) {
+    const { R, base, g, ox, oy } = H;
+    this._mkBody(g, ox, oy, base, R);
+    R(3, 6, 4, 10, '#2a2a30'); R(15, 6, 4, 10, '#2a2a30'); R(9, 3, 4, 5, '#2a2a30');   // 들어오는 입 셋
+    R(4, 8, 2, 2, '#8fd8ff'); R(16, 8, 2, 2, '#e0a03c'); R(10, 4, 2, 2, '#9fe07a');
+    R(7, 10, 8, 6, shade(base, .55));                                                  // 섞는 통
+    R(8, 11, 1, 4, '#cfd8e0'); R(10, 12, 1, 3, '#cfd8e0'); R(12, 11, 1, 4, '#cfd8e0');   // 비율 눈금
+    R(9, 16, 4, 3, shade(base, 1.4));                                                  // 나가는 입
+  },
+  /** 분기기 — 갈라지는 길 하나 + 판단 등(색은 기계마다 base) */
+  mk_gate(H: TilePaintKit) {
+    const { R, base, g, ox, oy } = H;
+    this._mkBody(g, ox, oy, base, R);
+    R(3, 10, 8, 3, '#2a2620'); R(11, 10, 8, 3, '#2a2620'); R(11, 4, 3, 7, '#2a2620');   // ┴ 갈림길
+    R(4, 11, 6, 1, '#8fd8ff'); R(12, 11, 6, 1, '#8fd8ff'); R(12, 5, 1, 5, '#e0a03c');
+    R(7, 15, 8, 4, shade(base, .5)); R(8, 16, 2, 2, '#5fc45f'); R(12, 16, 2, 2, '#e0563c');   // 참 · 거짓 등
+  },
   mk_turret(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {

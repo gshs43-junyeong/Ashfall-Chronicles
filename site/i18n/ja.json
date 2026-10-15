@@ -47,7 +47,7 @@
  "<span class=\"k\">크기</span> 81.8 MiB": "<span class=\"k\">サイズ</span> 81.8 MiB",
  "<span class=\"n\">18</span><span class=\"l\">개의 장</span>": "<span class=\"n\">18</span><span class=\"l\">の章</span>",
  "<span class=\"n\">23</span><span class=\"l\">종의 보스</span>": "<span class=\"n\">23</span><span class=\"l\">種のボス</span>",
- "<span class=\"n\">28</span><span class=\"l\">종의 기계</span>": "<span class=\"n\">28</span><span class=\"l\">種の機械</span>",
+ "<span class=\"n\">31</span><span class=\"l\">종의 기계</span>": "<span class=\"n\">31</span><span class=\"l\">種の機械</span>",
  "<span class=\"n\">75</span><span class=\"l\">개의 업적</span>": "<span class=\"n\">75</span><span class=\"l\">の実績</span>",
  "<strong>AshfallChronicles.command</strong>를 더블클릭합니다. 터미널 창이 잠깐 뜨고 기본 브라우저로 게임이 열립니다.": "<strong>AshfallChronicles.command</strong> をダブルクリックします。ターミナルが一瞬開き、既定のブラウザでゲームが開きます。",
  "<strong>v1.1.0 의 저장은 그대로 열립니다.</strong> 레벨과 가방은 그대로이고, 밭은 처음 사흘 동안 젖은 채로 시작합니다.": "<strong>v1.1.0 のセーブはそのまま開けます。</strong>レベルとかばんはそのままで、畑は最初の三日間ぬれた状態で始まります。",
@@ -162,7 +162,7 @@
  "그리고 그 일은 결국 손으로 하는 일이다. 땅을 파고, 쓸 것을 만들고, 길을 막는 것과 싸운다.": "そして、その仕事は結局のところ手でする仕事だ。土を掘り、使うものを作り、道を塞ぐものと戦う。",
  "그림: 애셋 백여 종 교체·추가(바다 몹 아홉, 보스 셋, 야자수와 광물 타일), 몹·보스 그림을 판정 상자에 맞춤, 제자리에서 미끄러지기만 하던 숨쉬기·걷기 동작 129칸을 다시 움직이게 함.": "グラフィック：アセット約 100 種を差し替え・追加（海のモンスター 9 体、ボス 3 体、ヤシの木と鉱物タイル）、モンスター・ボスの絵を当たり判定に合わせ、その場で滑るだけだった呼吸・歩行モーション 129 コマを動くように直しました。",
  "그림이 안 보이고 검은 화면만": "絵が出ず真っ黒な画面だけ",
- "기계 스물여덟 종": "機械28種",
+ "기계 서른한 종": "機械31種",
  "길에서 마주치는 것들": "道で出くわすものたち",
  "길을 막고 선 것들": "道を塞いで立つものたち",
  "꿈꿀 필요가 없었던 조각": "夢見る必要のなかった欠片",
@@ -381,5 +381,5 @@
  "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "散らばった欠片を探して眠らせるか、目覚めさせること — それがあなたの仕事だ。",
  "<strong>게임 글꼴 Ashfall.</strong> 획 뼈대부터 직접 그린 글꼴(SIL OFL 1.1) — 깎은 모서리의 잿빛 결로 여섯 언어를 함께 씁니다.": "<strong>ゲームフォント Ashfall。</strong> 骨格の線から描き起こした独自フォント(SIL OFL 1.1) — 角を削った灰色の手ざわりで六つの言語をそろえます。",
  "<span class=\"n\">86</span><span class=\"l\">종의 몬스터</span>": "<span class=\"n\">86</span><span class=\"l\">種のモンスター</span>",
- "<span class=\"n\">525</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">525</span><span class=\"l\">種のアイテム</span>"
+ "<span class=\"n\">528</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">528</span><span class=\"l\">種のアイテム</span>"
 }

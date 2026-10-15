@@ -137,6 +137,10 @@ export const FactoryRenderPart: Bag = {
           const [dx, dy] = DIR4[m.dir & 3];
           c.fillStyle = 'rgba(255,214,120,.85)';
           c.fillRect(sx + TS / 2 + dx * 8 - 2, sy + TS / 2 + dy * 8 - 2, 4, 4);
+          if (s.gate) {                                              // 분기기 — ELSE(거짓) 쪽 출구는 주황 작은 점
+            const [ex, ey] = DIR4[(m.dir + (m.els || 1)) & 3];
+            c.fillStyle = 'rgba(232,140,60,.9)'; c.fillRect(sx + TS / 2 + ex * 8 - 1.5, sy + TS / 2 + ey * 8 - 1.5, 3, 3);
+          }
         }
 
         // 벨트/분류기가 물고 있는 아이템 — 들어온 칸에서 지금 칸까지 DWELL 에 걸쳐 미끄러진다(pushTo).

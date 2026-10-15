@@ -3164,7 +3164,11 @@
     /* --- 탈 것 — 광산 수레가 달리는 레일(그림은 game/rides.ts 가 이웃을 보고 비탈째 그린다) --- */
     RAIL: 217,
     /* --- 여러 칸 기계의 몸 칸 — 닻 칸(왼쪽 아래)이 아닌 나머지. 그림은 Factory.render 가 닻에서 통째로 --- */
-    M_PART: 218
+    M_PART: 218,
+    /* --- 공장 물류 — 비율 합류(컨버터) · 조건 분기(IF/ELSE) · 논리합 분기(OR) --- */
+    M_CONVERTER: 219,
+    M_GATE_IF: 220,
+    M_GATE_OR: 221
   };
   var TILE_DEF = [
     { n: "공기", c: null, solid: 0, hard: 0 },
@@ -3496,7 +3500,10 @@
     { n: "빛다리", c: "#9fe8ff", solid: 1, hard: 99 },
     { n: "금 간 벽돌", c: "#6a6458", solid: 1, hard: 1, drop: "stone" },
     { n: "레일", c: "#8a8e98", solid: 0, hard: 1, drop: "rail" },
-    { n: "기계 몸", c: "#4a4f5a", solid: 1, hard: 3, drop: "", mach: "part" }
+    { n: "기계 몸", c: "#4a4f5a", solid: 1, hard: 3, drop: "", mach: "part" },
+    { n: "컨버터", c: "#6a7a8a", solid: 1, hard: 2, drop: "m_converter", mach: "converter" },
+    { n: "조건 분기기", c: "#7a6a9a", solid: 1, hard: 2, drop: "m_gate_if", mach: "gate_if" },
+    { n: "논리합 분기기", c: "#5a8a7a", solid: 1, hard: 2, drop: "m_gate_or", mach: "gate_or" }
   ];
   var FARM_WET_R = 5, FARM_WET_DAYS = 3;
   var SPRINKLE_R = [25, 6], SPRINKLE_MAX = 500, SPRINKLE_PER_BUCKET = 50;
@@ -4634,6 +4641,9 @@
     m_battery: { n: "축전지", i: "🔋", type: "machine", mach: "battery", stack: 99 },
     m_pole: { n: "전주", i: "🗼", type: "machine", mach: "pole", stack: 999 },
     m_sorter: { n: "분류기", i: "🔀", type: "machine", mach: "sorter", stack: 99 },
+    m_converter: { n: "컨버터", i: "⇉", type: "machine", mach: "converter", stack: 99 },
+    m_gate_if: { n: "조건 분기기", i: "⑂", type: "machine", mach: "gate_if", stack: 99 },
+    m_gate_or: { n: "논리합 분기기", i: "∨", type: "machine", mach: "gate_or", stack: 99 },
     m_turret: { n: "자동 포탑", i: "🔫", type: "machine", mach: "turret", stack: 99 },
     m_trap: { n: "전격 함정", i: "⚡", type: "machine", mach: "trap", stack: 99 },
     m_switch: { n: "정지 스위치", i: "🛑", type: "machine", mach: "switch", stack: 99 },
@@ -6224,6 +6234,9 @@
     { out: "m_assembler", n: 1, need: { machine_frame: 2, motor: 2, circuit: 6 }, station: "work", lv: 3 },
     { out: "m_battery", n: 1, need: { lead_bar: 12, circuit: 6, wire: 20 }, station: "work", lv: 3 },
     { out: "m_sorter", n: 1, need: { circuit: 3, wire: 8, gear_basic: 4 }, station: "work", lv: 3 },
+    { out: "m_converter", n: 1, need: { circuit: 4, wire: 10, gear_basic: 6, steel_plate: 2 }, station: "work", lv: 3 },
+    { out: "m_gate_if", n: 1, need: { circuit: 4, wire: 8, gear_basic: 3 }, station: "work", lv: 3 },
+    { out: "m_gate_or", n: 1, need: { circuit: 4, wire: 8, gear_basic: 3 }, station: "work", lv: 3 },
     { out: "m_turret", n: 1, need: { machine_frame: 1, motor: 1, circuit: 4, steel_plate: 12 }, station: "work", lv: 3 },
     { out: "m_trap", n: 1, need: { circuit: 2, wire: 10, lead_bar: 6 }, station: "work", lv: 3 },
     { out: "m_switch", n: 1, need: { circuit: 1, wire: 4, iron_bar: 4 }, station: "work", lv: 3 },
@@ -6461,6 +6474,34 @@
       rot: 1,
       filter: 1,
       d: "지정한 아이템만 앞으로 보내고, 나머지는 시계 방향 옆으로 흘린다. 섞인 광석 줄기를 가른다."
+    },
+    converter: {
+      n: "컨버터",
+      tile: T.M_CONVERTER,
+      item: "m_converter",
+      power: 4,
+      rot: 1,
+      cap: 8,
+      mix: 1,
+      d: "두세 벨트가 모이는 자리에 둔다. 정한 비율(예: 철광석 2 : 석탄 1)대로 섞어 앞으로 내보낸다. 비율을 정하면 그 밖의 물건은 받지 않는다."
+    },
+    gate_if: {
+      n: "조건 분기기",
+      tile: T.M_GATE_IF,
+      item: "m_gate_if",
+      power: 2,
+      rot: 1,
+      gate: 1,
+      d: "조건이 맞으면(IF) 앞으로, 아니면(ELSE) 옆으로 보낸다. 조건은 같은 물건 · 같은 갈래 · 앞이 막혔을 때 · N개마다 하나."
+    },
+    gate_or: {
+      n: "논리합 분기기",
+      tile: T.M_GATE_OR,
+      item: "m_gate_or",
+      power: 2,
+      rot: 1,
+      gate: 1,
+      d: "고른 것들 중 하나라도 맞으면(OR) 앞으로, 아니면 옆으로 보낸다. 물건과 갈래를 셋까지 섞어 고른다."
     },
     turret: {
       n: "자동 포탑",
@@ -8862,7 +8903,7 @@
     put("ice", "SNOW ICE ICEBRICK FROSTGLYPH ICEBANNER ICICLE");
     put("wood", "WOOD PLANK PLATFORM TIMBERWALL FENCE THATCH HAYBALE MINEWOOD BANNER TORCH");
     put("plant", "LEAF CORRUPTLEAF SKYLEAF JUNGLELEAF GLOWLEAF PINELEAF VINE WEED FLOWER ORCHID FERN LILY MUSHROOM GLOWCAP GLOWMOSS CACTUS CACTUS_BLOCK JUNGLEGRASS SPOREVENT HYPHAE WHEAT0 WHEAT1 WHEAT2 WHEAT3 ROOT0 ROOT1 ROOT2 ROOT3 CAP0 CAP1 CAP2 CAP3 BEAN0 BEAN1 BEAN2 BEAN3 BLOOM0 BLOOM1 BLOOM2 BLOOM3 HERB0 HERB1 HERB2 HERB3 POD0 POD1 POD2 POD3");
-    put("metal", "COPPER IRON GOLD MYTHRIL LEAD STEELPLATE CONDUIT SLAGSTEEL ORBITPLATE SPIKE SPARKCOIL GRINDER DART_L DART_R LAMPPOST MINELAMP TOOLPILE M_BELT M_DRILL M_DRILL_E M_PUMP M_SMELTER M_PRESS M_REFINERY M_ASSEMBLER M_CRATE M_GEN M_BATTERY M_POLE M_SORTER M_TURRET M_TRAP M_SWITCH M_WINDMILL M_MILL M_OVEN M_DART M_FLAME M_FROST M_DRILL_X");
+    put("metal", "COPPER IRON GOLD MYTHRIL LEAD STEELPLATE CONDUIT SLAGSTEEL ORBITPLATE SPIKE SPARKCOIL GRINDER DART_L DART_R LAMPPOST MINELAMP TOOLPILE M_BELT M_DRILL M_DRILL_E M_PUMP M_SMELTER M_PRESS M_REFINERY M_ASSEMBLER M_CRATE M_GEN M_BATTERY M_POLE M_SORTER M_CONVERTER M_GATE_IF M_GATE_OR M_TURRET M_TRAP M_SWITCH M_WINDMILL M_MILL M_OVEN M_DART M_FLAME M_FROST M_DRILL_X");
     put("glass", "CRYSTAL AETHER POWERSTONE SOULSTONE COREGLASS DRAFTGLASS ORBITCORE WINDOW");
     put("ember", "LAVA HELLSTONE FLAMEVENT EMBERDRIP EMBERSPIRE MAGMAVEIN");
     put("bone", "BONEHEAP");
@@ -23038,6 +23079,9 @@
   ART[T.M_BATTERY] = { k: "mk_battery", c: "#4a7a6a", a: 1 };
   ART[T.M_POLE] = { k: "mk_pole", c: "#7a6a4a", a: 1 };
   ART[T.M_SORTER] = { k: "mk_sorter", c: "#8a7a4a", a: 1 };
+  ART[T.M_CONVERTER] = { k: "mk_converter", c: "#6a7a8a", a: 1 };
+  ART[T.M_GATE_IF] = { k: "mk_gate", c: "#7a6a9a", a: 1 };
+  ART[T.M_GATE_OR] = { k: "mk_gate", c: "#5a8a7a", a: 1 };
   ART[T.M_TURRET] = { k: "mk_turret", c: "#55555f", a: 1 };
   ART[T.M_TRAP] = { k: "mk_trap", c: "#4a6a8a", a: 1 };
   ART[T.M_SWITCH] = { k: "mk_switch", c: "#a03a30", a: 1 };
@@ -24951,6 +24995,36 @@
           return;
         }
       }
+    },
+    /** 컨버터 — 깔때기 셋이 한 입으로 모인다(비율 눈금) */
+    mk_converter(H) {
+      const { R, base, g, ox, oy } = H;
+      this._mkBody(g, ox, oy, base, R);
+      R(3, 6, 4, 10, "#2a2a30");
+      R(15, 6, 4, 10, "#2a2a30");
+      R(9, 3, 4, 5, "#2a2a30");
+      R(4, 8, 2, 2, "#8fd8ff");
+      R(16, 8, 2, 2, "#e0a03c");
+      R(10, 4, 2, 2, "#9fe07a");
+      R(7, 10, 8, 6, shade(base, 0.55));
+      R(8, 11, 1, 4, "#cfd8e0");
+      R(10, 12, 1, 3, "#cfd8e0");
+      R(12, 11, 1, 4, "#cfd8e0");
+      R(9, 16, 4, 3, shade(base, 1.4));
+    },
+    /** 분기기 — 갈라지는 길 하나 + 판단 등(색은 기계마다 base) */
+    mk_gate(H) {
+      const { R, base, g, ox, oy } = H;
+      this._mkBody(g, ox, oy, base, R);
+      R(3, 10, 8, 3, "#2a2620");
+      R(11, 10, 8, 3, "#2a2620");
+      R(11, 4, 3, 7, "#2a2620");
+      R(4, 11, 6, 1, "#8fd8ff");
+      R(12, 11, 6, 1, "#8fd8ff");
+      R(12, 5, 1, 5, "#e0a03c");
+      R(7, 15, 8, 4, shade(base, 0.5));
+      R(8, 16, 2, 2, "#5fc45f");
+      R(12, 16, 2, 2, "#e0563c");
     },
     mk_turret(H) {
       const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
@@ -26985,6 +27059,9 @@
     m_battery: { k: "machine", tile: T.M_BATTERY, glow: "#6fe0c0" },
     m_pole: { k: "machine", tile: T.M_POLE },
     m_sorter: { k: "machine", tile: T.M_SORTER },
+    m_converter: { k: "machine", tile: T.M_CONVERTER },
+    m_gate_if: { k: "machine", tile: T.M_GATE_IF },
+    m_gate_or: { k: "machine", tile: T.M_GATE_OR },
     m_turret: { k: "machine", tile: T.M_TURRET },
     m_trap: { k: "machine", tile: T.M_TRAP, glow: "#9fd8ff" },
     m_switch: { k: "machine", tile: T.M_SWITCH, glow: "#e0563c" },
@@ -37278,8 +37355,12 @@
     DIR_NAME: () => DIR_NAME,
     FAC_TICK: () => FAC_TICK,
     Factory: () => Factory11,
+    GATE_CONDS: () => GATE_CONDS,
+    HOLDS_ONE: () => HOLDS_ONE,
+    ITEM_CATS: () => ITEM_CATS,
     ST_RUN: () => ST_RUN,
-    dirTable: () => dirTable
+    dirTable: () => dirTable,
+    itemCat: () => itemCat
   });
   var FAC_TICK = 0.125;
   var DIR4 = [[1, 0], [0, 1], [-1, 0], [0, -1]];
@@ -37300,11 +37381,36 @@
     N_("배출 중"),
     N_("가동 중"),
     N_("축전 중"),
-    N_("가득 참")
+    N_("가득 참"),
+    N_("합류 중"),
+    N_("참 → 앞"),
+    N_("거짓 → 옆")
   ]);
+  var ITEM_CATS = [
+    ["ore", N_("광석")],
+    ["bar", N_("주괴 · 판")],
+    ["fuel", N_("연료")],
+    ["food", N_("먹거리")],
+    ["block", N_("블록")],
+    ["seed", N_("씨앗")],
+    ["part", N_("재료 · 부품")]
+  ];
+  function itemCat(id) {
+    const d = ITEMS[id];
+    if (FUEL[id]) return "fuel";
+    if (/_ore$/.test(id)) return "ore";
+    if (/_(bar|plate)$/.test(id)) return "bar";
+    if (!d) return "part";
+    if (d.type === "consum") return "food";
+    if (d.type === "block") return "block";
+    if (d.type === "seed") return "seed";
+    return "part";
+  }
+  var GATE_CONDS = [["item", N_("같은 물건이면 앞")], ["cat", N_("같은 갈래면 앞")], ["full", N_("앞이 막히면 옆(넘침)")], ["every", N_("N개마다 하나만 앞")]];
+  var HOLDS_ONE = /* @__PURE__ */ new Set(["belt", "belt_fast", "sorter", "gate_if", "gate_or"]);
   var Factory11 = {
     /* 벨트 한 칸에 머무는 시간(초) — 물건도 벨트 무늬도 이 속도로 간다(일반 1칸/초 · 고속 2칸/초) */
-    DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK },
+    DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK, gate_if: FAC_TICK, gate_or: FAC_TICK },
     ORE_HITS: 20,
     // 드릴이 광맥 한 칸에서 캐는 최소 횟수
     CHARGE_TICK: 6,
@@ -37362,8 +37468,25 @@
       if (!s || !this.canPlace(w, tx, ty, key)) return null;
       const m = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: "" };
       if (gen) m.gen = 1;
-      if (key === "belt" || key === "belt_fast" || key === "sorter") m.it = null;
+      if (HOLDS_ONE.has(key)) m.it = null;
       if (key === "sorter") m.f = null;
+      if (key === "converter") {
+        m.in = {};
+        m.r = [];
+        m.ri = 0;
+        m.rc = 0;
+      }
+      if (key === "gate_if") {
+        m.ck = "item";
+        m.cv = null;
+        m.cn = 2;
+        m.k = 0;
+        m.els = 1;
+      }
+      if (key === "gate_or") {
+        m.fs = [];
+        m.els = 1;
+      }
       if (s.slots) {
         m.items = new Array(s.slots).fill(null);
         m.feed = 0;
@@ -37518,7 +37641,8 @@
     /** 이 기계가 이 아이템을 받는가(자리 여부는 안 본다) — insert 와 기계 창의 가방 정렬이 같이 쓴다 */
     accepts(m, id) {
       const s = MACHINE[m.t];
-      if (m.t === "belt" || m.t === "belt_fast" || m.t === "sorter" || s.slots) return true;
+      if (HOLDS_ONE.has(m.t) || s.slots) return true;
+      if (m.t === "converter") return !m.r.length || m.r.some((e) => e.id === id);
       if (!m.in) return false;
       return !!(s.fuelIn && FUEL[id] || s.ammo === id || s.proc && this.isInput(s.proc, id));
     },
@@ -37556,7 +37680,7 @@
     insert(w, m, id, n) {
       if (!m || !m.on || n <= 0) return 0;
       const s = MACHINE[m.t];
-      if (m.t === "belt" || m.t === "belt_fast" || m.t === "sorter") {
+      if (HOLDS_ONE.has(m.t)) {
         if (m.it || m.just) return 0;
         m.it = { id, c: 1 };
         m.just = 1;
@@ -37831,7 +37955,12 @@
             m.act = 0;
             break;
           case "sorter":
+          case "gate_if":
+          case "gate_or":
             m.act = m.it ? 1 : 0;
+            break;
+          case "converter":
+            m.act = this.bufTotal(m.in) > 0 ? 1 : 0;
             break;
           case "pole":
             m.st = m.net >= 0 ? N_("망 #{n}") : "—";
@@ -37879,6 +38008,20 @@
               m.it = null;
               moved++;
             }
+          } else if (m.t === "gate_if" || m.t === "gate_or") {
+            if (!m.it || m.just) continue;
+            if (this.sat(w, m) <= 0) {
+              m.st = N_("전력 없음");
+              continue;
+            }
+            if (this.runGate(w, m)) moved++;
+          } else if (m.t === "converter") {
+            if (m.lt === this.now || !this.bufTotal(m.in)) continue;
+            if (this.sat(w, m) <= 0) {
+              m.st = m.net < 0 ? N_("망 없음") : N_("전력 없음");
+              continue;
+            }
+            if (this.runConverter(w, m)) moved++;
           }
         }
       }
@@ -37898,6 +38041,62 @@
           }
         }
       }
+    },
+    /** 분기기 한 번 — 조건이 참이면 앞(m.dir), 거짓이면 옆((dir + els) & 3). 보냈으면 true
+        ★ '앞이 막히면 옆으로'(full)는 참 · 거짓이 아니라 넘침 — 앞을 먼저 밀어 보고 안 되면 옆. 앞이 빈 동안은 옆으로 안 샌다 */
+    runGate(w, m) {
+      const id = m.it.id, side = m.dir + (m.els || 1) & 3;
+      let yes = true;
+      if (m.t === "gate_or") yes = !m.fs.length || m.fs.some((f) => f === id || f === "cat:" + itemCat(id));
+      else if (m.ck === "item") yes = !m.cv || m.cv === id;
+      else if (m.ck === "cat") yes = !m.cv || itemCat(id) === m.cv;
+      else if (m.ck === "every") yes = (m.k | 0) % Math.max(1, m.cn | 0) === 0;
+      else if (m.ck === "full") {
+        if (this.pushTo(w, m, m.dir, id)) {
+          m.st = N_("참 → 앞");
+          m.it = null;
+          return true;
+        }
+        yes = false;
+      }
+      if (!this.pushTo(w, m, yes ? m.dir : side, id)) {
+        m.st = N_("출력 막힘");
+        return false;
+      }
+      m.st = yes ? N_("참 → 앞") : N_("거짓 → 옆");
+      if (m.ck === "every") m.k = (m.k | 0) + 1;
+      m.it = null;
+      return true;
+    },
+    /** 컨버터 한 번 — 비율 차례의 물건을 하나 앞으로. 차례 물건이 없으면 기다린다(그래야 비율이 지켜진다).
+        비율이 비었으면 들어온 물건을 이름 순으로 돌아가며 내보내는 합류기. 보냈으면 true */
+    runConverter(w, m) {
+      let id;
+      if (m.r.length) {
+        const e = m.r[m.ri % m.r.length];
+        if (!(m.in[e.id] > 0)) {
+          m.st = N_("재료 기다림");
+          return false;
+        }
+        id = e.id;
+      } else {
+        const ks = Object.keys(m.in).filter((k) => m.in[k] > 0).sort();
+        id = ks[(m.ri | 0) % ks.length];
+      }
+      if (!this.pushTo(w, m, m.dir, id)) {
+        m.st = N_("출력 막힘");
+        return false;
+      }
+      this.bufTake(m.in, id, 1);
+      m.lt = this.now;
+      m.st = N_("합류 중");
+      if (m.r.length) {
+        if (++m.rc >= Math.max(1, m.r[m.ri % m.r.length].n | 0)) {
+          m.rc = 0;
+          m.ri = (m.ri + 1) % m.r.length;
+        }
+      } else m.ri = (m.ri | 0) + 1;
+      return true;
     },
     /** 풍차 위를 막는가 — 고체 타일과 다른 기계 둘 다 바람을 가린다 */
     blocksWind(w, x, y) {
@@ -37999,7 +38198,7 @@
     },
     /** 벨트·분류기 위에서 3초 넘게 멈춘 물건인가 — 플레이어가 집어 갈 수 있다(불러온 뒤 시각이 없는 것도 멈춘 것으로 본다) */
     stalled(m) {
-      if (!m.it || !(m.t === "belt" || m.t === "belt_fast" || m.t === "sorter")) return false;
+      if (!m.it || !HOLDS_ONE.has(m.t)) return false;
       const t0 = m.it.t0 !== void 0 ? m.it.t0 : -1e9;
       return app.time - t0 >= (this.DWELL[m.t] || FAC_TICK) + 3;
     },
@@ -38718,6 +38917,11 @@
             const [dx, dy] = DIR4[m.dir & 3];
             c.fillStyle = "rgba(255,214,120,.85)";
             c.fillRect(sx + TS / 2 + dx * 8 - 2, sy + TS / 2 + dy * 8 - 2, 4, 4);
+            if (s.gate) {
+              const [ex, ey] = DIR4[m.dir + (m.els || 1) & 3];
+              c.fillStyle = "rgba(232,140,60,.9)";
+              c.fillRect(sx + TS / 2 + ex * 8 - 1.5, sy + TS / 2 + ey * 8 - 1.5, 3, 3);
+            }
           }
           if (m.it) {
             const off = this.itemOff(m);
@@ -40910,6 +41114,7 @@
     machSig(m, p) {
       const j = (b) => b ? Object.keys(b).filter((k) => b[k] > 0).join(",") : "";
       const ok = m.in && MACHINE[m.t].proc ? MRECIPES.map((r) => r.m === MACHINE[m.t].proc && Object.keys(r.in).every((k) => (m.in[k] || 0) >= r.in[k]) ? 1 : 0).join("") : "";
+      const cfg = m.t === "converter" ? JSON.stringify([m.r, m.ri]) : m.t === "gate_if" ? [m.ck, m.cv, m.cn, m.els].join() : m.t === "gate_or" ? [m.fs.join(), m.els].join() : "";
       return [
         m.t,
         m.on,
@@ -40921,6 +41126,7 @@
         j(m.out),
         ok,
         m.it ? m.it.id : "",
+        cfg,
         m.items ? m.items.map((it) => it ? it.id : "").join(",") : "",
         p.bag.map((it) => it ? it.id : "").join(","),
         m.net
@@ -41006,6 +41212,7 @@
       if (m.t === "sorter") {
         info += `<div class="mach-row">${tr("필터: <b>{v}</b>", { v: m.f ? ITEMS[m.f].n : tr("없음 (전부 통과)") })} <span class="dim">${tr("— 맞는 것은 앞으로, 나머지는 시계 방향 옆으로. 아래 가방 칸을 클릭해 지정")}</span></div>`;
       }
+      if (s.mix || s.gate) info += this.logicCfg(m);
       if (s.proc) info += '<div class="mach-prog" id="mach-prog"><i></i><span></span></div>';
       let btns = `<button class="mbtn" data-act="power">${m.on ? tr("■ 정지") : tr("▶ 가동")}</button>`;
       if (s.rot) btns += `<button class="mbtn" data-act="rot">${tr("↻ 방향 돌리기")}</button>`;
@@ -41036,7 +41243,8 @@
         if (m.it) body += `<div class="mach-sec">${tr("이송 중")} <small>${tr("(3초 넘게 멈춘 물건은 클릭해서 가방으로)")}</small></div><div class="mach-grid"><div class="slot" id="mg-it"><span class="ic" style="background-image:url(${Art.itemUrl(m.it.id)})"></span></div></div>`;
       }
       if (recs) body += `<div class="mach-sec">${tr("만드는 것")} <small>${tr("(재료가 다 들어 있으면 초록 · 지금 만드는 것은 금색)")}</small></div><div class="mrecs">${recs}</div>`;
-      body += `<div class="mach-sec">${tr("소지품")} <small>(${m.t === "sorter" ? tr("클릭해서 필터 지정") : tr("클릭해서 기계에 넣기 · 흐린 것은 이 기계가 안 받는다")})</small></div><div class="mach-grid" id="mg-bag"></div>`;
+      const bagHint = m.t === "sorter" ? tr("클릭해서 필터 지정") : m.t === "converter" ? tr("클릭해서 비율에 더하기 · 또 누르면 몫이 는다") : m.t === "gate_if" ? tr("클릭해서 조건 물건 지정") : m.t === "gate_or" ? tr("클릭해서 고른 것에 더하기(셋까지)") : tr("클릭해서 기계에 넣기 · 흐린 것은 이 기계가 안 받는다");
+      body += `<div class="mach-sec">${tr("소지품")} <small>(${bagHint})</small></div><div class="mach-grid" id="mg-bag"></div>`;
       $("#mach-body").innerHTML = info + '<div class="mach-btns">' + btns + "</div>" + body;
       this.machLive(m);
       const press = (el, fn) => el.addEventListener("mousedown", (e) => {
@@ -41057,7 +41265,8 @@
         } else if (a === "rot") Factory11.rotate(m);
         else if (a === "feed") m.feed = m.feed ? 0 : 1;
         else if (a === "clearf") m.f = null;
-        else if (a === "takeall") {
+        else if (this.logicAct(m, a)) {
+        } else if (a === "takeall") {
           let full = false;
           if (m.out) {
             for (const k of Object.keys(m.out)) if (Factory11.playerTake(w, m, "out", k, p) < 1) full = true;
@@ -41120,7 +41329,8 @@
       }
       const bag = $("#mg-bag");
       const order = p.bag.map((it, i) => i).filter((i) => p.bag[i]);
-      const yes = (i) => m.t === "sorter" || Factory11.accepts(m, p.bag[i].id);
+      const pick = m.t === "sorter" || m.t === "converter" || m.t === "gate_if" || m.t === "gate_or";
+      const yes = (i) => pick || Factory11.accepts(m, p.bag[i].id);
       order.sort((a2, b2) => (yes(b2) ? 1 : 0) - (yes(a2) ? 1 : 0) || a2 - b2);
       for (const i of order) {
         const it = p.bag[i];
@@ -41137,6 +41347,12 @@
             app.sfx("place");
             return;
           }
+          if (pick) {
+            if (!this.logicPick(m, it.id)) this.toast(tr("셋까지만 고를 수 있다"), "bad");
+            this.refreshMachine(true);
+            app.sfx("place");
+            return;
+          }
           if (Factory11.playerInsert(w, m, i, p) > 0) {
             this.refreshMachine(true);
             this.refreshBag();
@@ -41144,6 +41360,96 @@
           } else this.toast(yes(i) ? m.on ? tr("더 들어갈 자리가 없다") : tr("멈춘 기계에는 넣을 수 없다") : tr("이 기계가 받지 않는 물건이다"), "bad");
         });
       }
+    },
+    /* ---------------- 컨버터 · 분기기 설정 ---------------- */
+    /** 설정 줄 — 단추는 mbtn(data-act)이라 위 press 가 받는다 */
+    logicCfg(m) {
+      const ic = (id) => `<span class="ri" style="background-image:url(${Art.itemUrl(id)})"></span>`;
+      const nm = (f) => f.startsWith("cat:") ? tr(ITEM_CATS.find((c) => c[0] === f.slice(4))[1]) : ITEMS[f] ? ITEMS[f].n : f;
+      const chip = (f) => f.startsWith("cat:") ? `<b class="lg-cat">${nm(f)}</b>` : `${ic(f)}<b>${nm(f)}</b>`;
+      const els = `<button class="mbtn sm" data-act="els">${tr("ELSE 쪽: {side}", { side: (m.els || 1) === 1 ? tr("시계 방향 옆") : tr("반시계 방향 옆") })}</button>`;
+      let h = '<div class="mach-logic">';
+      if (m.t === "converter") {
+        const next = m.r.length ? m.r[m.ri % m.r.length].id : null;
+        h += `<div class="lg-head">${tr("비율")} <small>${m.r.length ? m.r.map((e) => e.n).join(" : ") : tr("없음 — 들어온 것을 번갈아 합류")}</small></div>`;
+        m.r.forEach((e, i) => {
+          h += `<div class="lg-row${e.id === next ? " cur" : ""}">${chip(e.id)}<span class="lg-n">${e.n}</span><button class="mbtn sm" data-act="rdec:${i}">−</button><button class="mbtn sm" data-act="rinc:${i}">+</button><button class="mbtn sm" data-act="rdel:${i}">✕</button></div>`;
+        });
+        if (m.r.length) h += `<div class="lg-row dim">${tr("다음 차례: {item}", { item: nm(next) })} <button class="mbtn sm" data-act="clearr">${tr("비율 비우기")}</button></div>`;
+      } else if (m.t === "gate_if") {
+        h += `<div class="lg-head">IF</div><div class="lg-row">` + GATE_CONDS.map(([k, n]) => `<button class="mbtn sm${m.ck === k ? " on" : ""}" data-act="ck:${k}">${tr(n)}</button>`).join("") + "</div>";
+        if (m.ck === "item") h += `<div class="lg-row">${m.cv ? chip(m.cv) : `<span class="dim">${tr("물건 없음 — 아래 가방에서 고른다(고르기 전엔 전부 앞)")}</span>`}</div>`;
+        if (m.ck === "cat") h += '<div class="lg-row">' + ITEM_CATS.map(([k, n]) => `<button class="mbtn sm${m.cv === k ? " on" : ""}" data-act="cv:${k}">${tr(n)}</button>`).join("") + "</div>";
+        if (m.ck === "every") h += `<div class="lg-row">${tr("{n}개마다 하나만 앞으로, 나머지는 옆으로", { n: m.cn })} <button class="mbtn sm" data-act="cn-">−</button><button class="mbtn sm" data-act="cn+">+</button></div>`;
+        h += `<div class="lg-row"><span class="lg-tf t">${tr("참 → 앞")}</span><span class="lg-tf f">${tr("거짓 → 옆")}</span>${els}</div>`;
+      } else {
+        h += `<div class="lg-head">OR <small>${tr("하나라도 맞으면 앞으로")}</small></div>`;
+        h += '<div class="lg-row">' + (m.fs.length ? m.fs.map((f, i) => `<span class="lg-or">${i ? "<i>OR</i>" : ""}${chip(f)}<button class="mbtn sm" data-act="fsdel:${i}">✕</button></span>`).join("") : `<span class="dim">${tr("고른 것 없음 — 전부 앞으로")}</span>`) + "</div>";
+        h += '<div class="lg-row">' + ITEM_CATS.map(([k, n]) => `<button class="mbtn sm" data-act="fscat:${k}">+ ${tr(n)}</button>`).join("") + "</div>";
+        h += `<div class="lg-row"><span class="lg-tf t">${tr("참 → 앞")}</span><span class="lg-tf f">${tr("거짓 → 옆")}</span>${els}</div>`;
+      }
+      return h + "</div>";
+    },
+    /** 설정 단추 — 처리했으면 true */
+    logicAct(m, a) {
+      const [k, v] = a.split(":"), i = +v;
+      if (m.t === "converter") {
+        if (k === "rinc") m.r[i].n = Math.min(9, m.r[i].n + 1);
+        else if (k === "rdec") m.r[i].n = Math.max(1, m.r[i].n - 1);
+        else if (k === "rdel") m.r.splice(i, 1);
+        else if (k === "clearr") m.r.length = 0;
+        else return false;
+        m.ri = 0;
+        m.rc = 0;
+        return true;
+      }
+      if (k === "els") {
+        m.els = (m.els || 1) === 1 ? 3 : 1;
+        return true;
+      }
+      if (m.t === "gate_if") {
+        if (k === "ck") {
+          m.ck = v;
+          m.cv = null;
+          m.k = 0;
+        } else if (k === "cv") m.cv = v;
+        else if (k === "cn+") m.cn = Math.min(9, (m.cn | 0) + 1);
+        else if (k === "cn-") m.cn = Math.max(2, (m.cn | 0) - 1);
+        else return false;
+        return true;
+      }
+      if (m.t === "gate_or") {
+        if (k === "fsdel") m.fs.splice(i, 1);
+        else if (k === "fscat") {
+          if (!m.fs.includes("cat:" + v) && m.fs.length < 3) m.fs.push("cat:" + v);
+        } else return false;
+        return true;
+      }
+      return false;
+    },
+    /** 가방 칸으로 고르기 — 셋을 넘으면 false */
+    logicPick(m, id) {
+      if (m.t === "converter") {
+        const e = m.r.find((q) => q.id === id);
+        if (e) {
+          e.n = Math.min(9, e.n + 1);
+          return true;
+        }
+        if (m.r.length >= 3) return false;
+        m.r.push({ id, n: 1 });
+        m.ri = 0;
+        m.rc = 0;
+        return true;
+      }
+      if (m.t === "gate_if") {
+        m.ck = "item";
+        m.cv = id;
+        return true;
+      }
+      if (m.fs.includes(id)) return true;
+      if (m.fs.length >= 3) return false;
+      m.fs.push(id);
+      return true;
     }
   };
   mixin(UI5, MachineUIPart);
@@ -43414,6 +43720,64 @@
             const k = (t + i / 5) % 1;
             c.fillStyle = "#a8d8ff";
             c.fillRect(x + w * 0.6 + k * w * 0.35, y + 10 + Math.sin(k * Math.PI) * -6 + k * 20, 2, 2);
+          }
+          break;
+        }
+        case "converter": {
+          const seq = [];
+          if (m.r && m.r.length) for (const e of m.r) for (let i = 0; i < e.n; i++) seq.push(e.id);
+          else for (const k in m.in || {}) if (m.in[k] > 0) seq.push(k);
+          const mx = x + w * 0.45, my = y + h / 2;
+          c.strokeStyle = "#3a3a44";
+          c.lineWidth = 4;
+          for (const ly of [y + 7, my, bot - 7]) {
+            c.beginPath();
+            c.moveTo(x + 2, ly);
+            c.lineTo(mx, my);
+            c.stroke();
+          }
+          c.beginPath();
+          c.moveTo(mx, my);
+          c.lineTo(x + w - 2, my);
+          c.stroke();
+          c.fillStyle = "#5a5a66";
+          c.beginPath();
+          c.arc(mx, my, 5, 0, TAU);
+          c.fill();
+          seq.slice(0, 8).forEach((id, i, a) => {
+            const k = run ? (t * 0.5 + i / a.length) % 1 : i / a.length;
+            drawIc(c, id, mx + 3 + k * (x + w - mx - 14), my - 6, 11);
+          });
+          break;
+        }
+        case "gate_if":
+        case "gate_or": {
+          const gx = x + w * 0.42, gy = y + h * 0.4, yes = m.st !== N_("거짓 → 옆");
+          c.lineWidth = 4;
+          c.strokeStyle = "#3a3a44";
+          c.beginPath();
+          c.moveTo(x + 2, gy);
+          c.lineTo(gx, gy);
+          c.stroke();
+          c.strokeStyle = yes && run ? "#5ac46a" : "#2e4a32";
+          c.beginPath();
+          c.moveTo(gx, gy);
+          c.lineTo(x + w - 2, gy);
+          c.stroke();
+          c.strokeStyle = !yes && run ? "#e88c3c" : "#4a3424";
+          c.beginPath();
+          c.moveTo(gx, gy);
+          c.lineTo(gx, bot - 2);
+          c.stroke();
+          c.fillStyle = "#8a7ab8";
+          c.fillRect(gx - 5, gy - 5, 10, 10);
+          c.fillStyle = "#16151a";
+          c.font = `bold 7px ${FONT || "sans-serif"}`;
+          c.textAlign = "center";
+          c.fillText(m.t === "gate_or" ? "OR" : "IF", gx, gy + 2.5);
+          if (m.it) {
+            const k = run ? t * 1.6 % 1 : 0, px = k < 0.5 ? lerp2(x + 4, gx, k * 2) : yes ? lerp2(gx, x + w - 10, k * 2 - 1) : gx, py = k < 0.5 ? gy : yes ? gy : lerp2(gy, bot - 8, k * 2 - 1);
+            drawIc(c, m.it.id, px - 5, py - 11, 10);
           }
           break;
         }
@@ -66067,7 +66431,26 @@
           p.vx = p.vy = 0;
           this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
           this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
-          this.toast(tr("낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭"), "good");
+          const ri = p.bag.findIndex((it) => it && it.id === "rod_basic");
+          if (ri >= 0 && ri < 10) p.sel = ri;
+          this.toast(tr("낚시·농사 확인 자리 — 오른쪽이 호수(낚싯대를 든 채), 왼쪽 12칸이 갈 수 있는 풀밭 · &duel=0~4 면 그 등급 겨루기로 바로"), "good");
+          const dq = qs.get("duel");
+          if (dq !== null) {
+            let wx = sx, wy = 0;
+            for (let k = 1; k < 30 && !wy; k++) for (let y = w.surface[clamp(sx + k, 0, WW2 - 1)] - 2; y < w.surface[clamp(sx + k, 0, WW2 - 1)] + 3; y++)
+              if (TILE_DEF[w.get(sx + k, y)].liquid) {
+                wx = sx + k;
+                wy = y;
+                break;
+              }
+            setTimeout(() => {
+              UI5.closeDialogue();
+              const held = p.held();
+              if (!wy || !held || ITEMS[held.id].type !== "rod") return;
+              p.fish = { tx: wx, ty: wy, t: 0, biting: true, bite: 1, rodId: held.id, rareMul: 1 };
+              this.startDuel(clamp(+dq | 0, 0, 4));
+            }, 1500);
+          }
         }
         UI5.refreshBag();
         UI5.refreshEquip();
@@ -66290,7 +66673,7 @@
         this.toast(tr("폭탄 시험장 — 기반암 기둥 왼쪽이 안전 지대, 오른쪽이 부술 수 있는 곳"), "good");
       }
     },
-    /** ?debug=factory — 캠프 오른쪽을 평평하게 밀고 기계 스물여섯 종을 한 줄로 세운다.
+    /** ?debug=factory — 캠프 오른쪽을 평평하게 밀고 기계 전 종류를 한 줄로 세운다(컨버터 · 분기기는 물류 연산실에).
         전주는 10칸마다(반경 5 · 이음 10) 서서 줄 전체가 망 하나다. 몹은 &mobs=1 일 때만 나온다. */
     buildDebugFactory(qs) {
       const { WW: WW2, WH: WH2, WORLD_BOT: WORLD_BOT2, CAMP_X1: CAMP_X12 } = dimsOf(this.world);
@@ -66316,7 +66699,7 @@
       this.dbgCalm = qs.get("mobs") !== "1";
       this.dayT = 12 * 60;
       for (const k in MACHINE) give(MACHINE[k].item, 10);
-      const X0 = CAMP_X12 + 8, LEN = 84, AX = X0 + LEN + 12, BX = AX + 40, XEND = BX + 28;
+      const X0 = CAMP_X12 + 8, LEN = 84, AX = X0 + LEN + 12, BX = AX + 40, CX = BX + 34, XEND = CX + 34;
       let gy = 0;
       for (let x = X0 - 8; x <= XEND; x++) gy = Math.max(gy, w.surface[clamp(x, 0, WW2 - 1)]);
       gy = Math.min(gy, WORLD_BOT2 - 20);
@@ -66430,6 +66813,7 @@
       put(78, "frostjet", 3);
       put(81, "battery", 0, { battery_empty: 4 });
       this.buildDebugTowers(w, AX, BX, gy);
+      this.buildDebugLogic(w, CX, gy);
       Factory11.buildNets(w);
       p.x = (X0 - 5) * TS;
       p.y = (gy - 3) * TS;
@@ -66438,7 +66822,74 @@
       this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
       UI5.refreshBag();
       UI5.refreshEquip();
-      this.toast(tr("공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다"), "good");
+      this.toast(tr("공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘과 물류 연산실(컨버터 · 분기기). 기계를 우클릭하면 기계 화면이 열린다"), "good");
+    },
+    /** ?debug=factory 의 C. 물류 연산실 — 옆으로 빠지는 출구는 위(ELSE 반시계)라 땅에 막히지 않는다.
+        ① 철광석 · 석탄 두 줄 → 컨버터 2:1 → 용광로(석탄은 연료) → 조건 분기기(3개마다 하나만 앞) → 앞 상자 · 위 상자
+        ② 동광석 · 나무 두 줄 → 컨버터(비율 없음 = 합류) → 논리합 분기기(광석 OR 석탄이면 앞) → 앞 상자 · 위 상자
+        ③ 철 주괴 → 조건 분기기(앞이 막히면 옆) — 앞 상자를 꺼 두어 넘친 것이 위로 */
+    buildDebugLogic(w, CX, gy) {
+      const Y = gy - 1;
+      const P2 = (x, y, key, dir, fill) => {
+        const m = Factory11.place(w, x, y, key, dir || 0);
+        if (m && fill) for (const id in fill) {
+          if (m.items) Factory11.insert(w, m, id, fill[id]);
+          else if (m.in) Factory11.bufAdd(m.in, id, fill[id]);
+        }
+        return m;
+      };
+      const feed = (m) => {
+        if (m) m.feed = 1;
+        return m;
+      };
+      P2(CX - 2, Y, "gen", 0, { fuel_brick: 99 });
+      P2(CX - 3, Y, "gen", 0, { fuel_brick: 99 });
+      for (const dx of [2, 12, 22, 32]) P2(CX + dx, Y - 5, "pole");
+      feed(P2(CX, Y, "crate", 0, { iron_ore: 99 }));
+      P2(CX + 1, Y, "belt");
+      P2(CX + 2, Y, "belt");
+      feed(P2(CX + 3, Y - 3, "crate", 1, { coal: 99 }));
+      P2(CX + 3, Y - 2, "belt", 1);
+      P2(CX + 3, Y - 1, "belt", 1);
+      const cv = P2(CX + 3, Y, "converter");
+      if (cv) cv.r = [{ id: "iron_ore", n: 2 }, { id: "coal", n: 1 }];
+      P2(CX + 4, Y, "belt");
+      P2(CX + 5, Y, "smelter");
+      P2(CX + 6, Y, "belt");
+      const g1 = P2(CX + 7, Y, "gate_if");
+      if (g1) {
+        g1.ck = "every";
+        g1.cn = 3;
+        g1.els = 3;
+      }
+      P2(CX + 8, Y, "belt");
+      P2(CX + 9, Y, "crate");
+      P2(CX + 7, Y - 1, "crate");
+      feed(P2(CX + 13, Y, "crate", 0, { copper_ore: 99 }));
+      P2(CX + 14, Y, "belt");
+      feed(P2(CX + 15, Y - 3, "crate", 1, { wood: 99, coal: 40 }));
+      P2(CX + 15, Y - 2, "belt", 1);
+      P2(CX + 15, Y - 1, "belt", 1);
+      P2(CX + 15, Y, "converter");
+      P2(CX + 16, Y, "belt");
+      const g2 = P2(CX + 17, Y, "gate_or");
+      if (g2) {
+        g2.fs = ["cat:ore", "coal"];
+        g2.els = 3;
+      }
+      P2(CX + 18, Y, "belt");
+      P2(CX + 19, Y, "crate");
+      P2(CX + 17, Y - 1, "crate");
+      feed(P2(CX + 24, Y, "crate", 0, { iron_bar: 99 }));
+      P2(CX + 25, Y, "belt");
+      const g3 = P2(CX + 26, Y, "gate_if");
+      if (g3) {
+        g3.ck = "full";
+        g3.els = 3;
+      }
+      const off = P2(CX + 27, Y, "crate");
+      if (off) off.on = 0;
+      P2(CX + 26, Y - 1, "crate");
     },
     /** ?debug=factory 의 여러 층 공장 둘 — A: 3층 금속 공장(광석 → 주괴 → 강철판·전선), B: 지하 탄광이 제 발전기를 먹이는 순환 발전소 + 방어 갑판.
         층 사이는 위로 가는 벨트 기둥, 사람은 오른쪽(A)·왼쪽(B) 발판 사다리로 오간다. */

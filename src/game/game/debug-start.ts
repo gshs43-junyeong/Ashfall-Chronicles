@@ -160,7 +160,24 @@ export const DebugStartPart: Bag = {
         p.vx = p.vy = 0;
         this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
         this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
-        this.toast(tr('낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭'), 'good');
+        // 낚싯대를 든 채로 — 호수에 우클릭하면 바로 드리운다
+        const ri = p.bag.findIndex((it: Bag) => it && it.id === 'rod_basic');
+        if (ri >= 0 && ri < 10) p.sel = ri;
+        this.toast(tr('낚시·농사 확인 자리 — 오른쪽이 호수(낚싯대를 든 채), 왼쪽 12칸이 갈 수 있는 풀밭 · &duel=0~4 면 그 등급 겨루기로 바로'), 'good');
+        /* &duel=등급 — 물가 첫 물 칸에 줄을 드리운 채로 겨루기를 연다(장 이야기 창은 닫고) */
+        const dq = qs.get('duel');
+        if (dq !== null) {
+          let wx = sx, wy = 0;
+          for (let k = 1; k < 30 && !wy; k++) for (let y = w.surface[clamp(sx + k, 0, WW - 1)] - 2; y < w.surface[clamp(sx + k, 0, WW - 1)] + 3; y++)
+            if (TILE_DEF[w.get(sx + k, y)].liquid) { wx = sx + k; wy = y; break; }
+          setTimeout(() => {
+            UI.closeDialogue();
+            const held = p.held();
+            if (!wy || !held || ITEMS[held.id].type !== 'rod') return;
+            p.fish = { tx: wx, ty: wy, t: 0, biting: true, bite: 1, rodId: held.id, rareMul: 1 };
+            this.startDuel(clamp(+dq | 0, 0, 4));
+          }, 1500);
+        }
       }
       UI.refreshBag(); UI.refreshEquip();
     }
@@ -334,7 +351,7 @@ export const DebugStartPart: Bag = {
     }
   },
 
-  /** ?debug=factory — 캠프 오른쪽을 평평하게 밀고 기계 스물여섯 종을 한 줄로 세운다.
+  /** ?debug=factory — 캠프 오른쪽을 평평하게 밀고 기계 전 종류를 한 줄로 세운다(컨버터 · 분기기는 물류 연산실에).
       전주는 10칸마다(반경 5 · 이음 10) 서서 줄 전체가 망 하나다. 몹은 &mobs=1 일 때만 나온다. */
   buildDebugFactory(qs: any) { const { WW, WH, WORLD_BOT, CAMP_X1 } = dimsOf(this.world);
     const p = this.player, w = this.world;
@@ -353,7 +370,7 @@ export const DebugStartPart: Bag = {
     this.dayT = 12 * 60;
     for (const k in MACHINE) give(MACHINE[k].item!, 10);   // 가방엔 기계만 — 재료는 줄 왼쪽 끝 자재 상자에
 
-    const X0 = CAMP_X1 + 8, LEN = 84, AX = X0 + LEN + 12, BX = AX + 40, XEND = BX + 28;
+    const X0 = CAMP_X1 + 8, LEN = 84, AX = X0 + LEN + 12, BX = AX + 40, CX = BX + 34, XEND = CX + 34;
     let gy = 0;
     for (let x = X0 - 8; x <= XEND; x++) gy = Math.max(gy, w.surface[clamp(x, 0, WW - 1)]);
     gy = Math.min(gy, WORLD_BOT - 20);
@@ -423,13 +440,48 @@ export const DebugStartPart: Bag = {
     put(74, 'dart', 3); put(76, 'flamejet', 3); put(78, 'frostjet', 3);
     put(81, 'battery', 0, { battery_empty: 4 });
     this.buildDebugTowers(w, AX, BX, gy);
+    this.buildDebugLogic(w, CX, gy);
     Factory.buildNets(w);
 
     p.x = (X0 - 5) * TS; p.y = (gy - 3) * TS; p.vx = p.vy = 0;
     this.cam.x = clamp(p.cx - this.W / 2, 0, WW * TS - this.W);
     this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
     UI.refreshBag(); UI.refreshEquip();
-    this.toast(tr('공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다'), 'good');
+    this.toast(tr('공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘과 물류 연산실(컨버터 · 분기기). 기계를 우클릭하면 기계 화면이 열린다'), 'good');
+  },
+
+  /** ?debug=factory 의 C. 물류 연산실 — 옆으로 빠지는 출구는 위(ELSE 반시계)라 땅에 막히지 않는다.
+      ① 철광석 · 석탄 두 줄 → 컨버터 2:1 → 용광로(석탄은 연료) → 조건 분기기(3개마다 하나만 앞) → 앞 상자 · 위 상자
+      ② 동광석 · 나무 두 줄 → 컨버터(비율 없음 = 합류) → 논리합 분기기(광석 OR 석탄이면 앞) → 앞 상자 · 위 상자
+      ③ 철 주괴 → 조건 분기기(앞이 막히면 옆) — 앞 상자를 꺼 두어 넘친 것이 위로 */
+  buildDebugLogic(w: any, CX: any, gy: any) {
+    const Y = gy - 1;
+    const P = (x: any, y: any, key: any, dir?: any, fill?: any) => {
+      const m = Factory.place(w, x, y, key, dir || 0);
+      if (m && fill) for (const id in fill) { if (m.items) Factory.insert(w, m, id, fill[id]); else if (m.in) Factory.bufAdd(m.in, id, fill[id]); }
+      return m;
+    };
+    const feed = (m: any) => { if (m) m.feed = 1; return m; };
+    P(CX - 2, Y, 'gen', 0, { fuel_brick: 99 }); P(CX - 3, Y, 'gen', 0, { fuel_brick: 99 });
+    for (const dx of [2, 12, 22, 32]) P(CX + dx, Y - 5, 'pole');
+    // ①
+    feed(P(CX, Y, 'crate', 0, { iron_ore: 99 })); P(CX + 1, Y, 'belt'); P(CX + 2, Y, 'belt');
+    feed(P(CX + 3, Y - 3, 'crate', 1, { coal: 99 })); P(CX + 3, Y - 2, 'belt', 1); P(CX + 3, Y - 1, 'belt', 1);
+    const cv = P(CX + 3, Y, 'converter'); if (cv) cv.r = [{ id: 'iron_ore', n: 2 }, { id: 'coal', n: 1 }];
+    P(CX + 4, Y, 'belt'); P(CX + 5, Y, 'smelter'); P(CX + 6, Y, 'belt');
+    const g1 = P(CX + 7, Y, 'gate_if'); if (g1) { g1.ck = 'every'; g1.cn = 3; g1.els = 3; }
+    P(CX + 8, Y, 'belt'); P(CX + 9, Y, 'crate'); P(CX + 7, Y - 1, 'crate');
+    // ②
+    feed(P(CX + 13, Y, 'crate', 0, { copper_ore: 99 })); P(CX + 14, Y, 'belt');
+    feed(P(CX + 15, Y - 3, 'crate', 1, { wood: 99, coal: 40 })); P(CX + 15, Y - 2, 'belt', 1); P(CX + 15, Y - 1, 'belt', 1);
+    P(CX + 15, Y, 'converter'); P(CX + 16, Y, 'belt');
+    const g2 = P(CX + 17, Y, 'gate_or'); if (g2) { g2.fs = ['cat:ore', 'coal']; g2.els = 3; }
+    P(CX + 18, Y, 'belt'); P(CX + 19, Y, 'crate'); P(CX + 17, Y - 1, 'crate');
+    // ③
+    feed(P(CX + 24, Y, 'crate', 0, { iron_bar: 99 })); P(CX + 25, Y, 'belt');
+    const g3 = P(CX + 26, Y, 'gate_if'); if (g3) { g3.ck = 'full'; g3.els = 3; }
+    const off = P(CX + 27, Y, 'crate'); if (off) off.on = 0;
+    P(CX + 26, Y - 1, 'crate');
   },
 
   /** ?debug=factory 의 여러 층 공장 둘 — A: 3층 금속 공장(광석 → 주괴 → 강철판·전선), B: 지하 탄광이 제 발전기를 먹이는 순환 발전소 + 방어 갑판.

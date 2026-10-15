@@ -66,7 +66,7 @@ interface RecipeDef { out: string; n: number; need: Record<string, number>; stat
 interface MachineDef {
   n: string; tile?: number; size?: number[]; item?: string; d?: string; rot?: number; reach?: number; slots?: number; feed?: number; fuelIn?: number;
   gen?: number; cap?: number; store?: number; proc?: string; power?: number; mine?: number; cycle?: number; range?: number;
-  filter?: number; ammo?: string; dmg?: number; proj?: string; burn?: number; slow?: number; fast?: number; sky?: number; wetR?: any[];
+  filter?: number; mix?: number; gate?: number; ammo?: string; dmg?: number; proj?: string; burn?: number; slow?: number; fast?: number; sky?: number; wetR?: any[];
   wetMax?: number;
 }
 interface SkillDef {

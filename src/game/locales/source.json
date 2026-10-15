@@ -135,11 +135,17 @@
   "Ctrl(왼)": [
    "ui.keyLabel"
   ],
+  "ELSE 쪽: {side}": [
+   "ui/machine.logicCfg"
+  ],
   "Enter 보내기 · Esc 닫기": [
    "index.html"
   ],
   "Lv {profMax} · 끝": [
    "ui/tree.refreshProf"
+  ],
+  "N개마다 하나만 앞": [
+   "factory"
   ],
   "PvP 꺼짐": [
    "game/netchat.netCfgToast"
@@ -326,6 +332,9 @@
   ],
   "{n}/{max}단계": [
    "game/progress.objProgress"
+  ],
+  "{n}개마다 하나만 앞으로, 나머지는 옆으로": [
+   "ui/machine.logicCfg"
   ],
   "{n}초": [
    "game/ruin-pulse.drawPulse"
@@ -675,6 +684,9 @@
   "강화 모루 — 🪙 {gold}": [
    "ui/shop.refreshAnvil"
   ],
+  "같은 갈래면 앞": [
+   "factory"
+  ],
   "같은 것 넣기": [
    "index.html"
   ],
@@ -683,6 +695,9 @@
   ],
   "같은 모양이지? 누가 한 번에 다 끊은 거야. 왜 끊었는지가 다음 문제고.": [
    "data/quests"
+  ],
+  "같은 물건이면 앞": [
+   "factory"
   ],
   "같은 판인데 두들기면 다른 게 돼. 그래서 이 일을 그만 못 둬.": [
    "data/quests"
@@ -701,6 +716,12 @@
   ],
   "거머리가 붙었다 — 내달려 떼어 내라": [
    "entity/enemy-traits.traitContact"
+  ],
+  "거짓 → 옆": [
+   "factory",
+   "factory/tick.runGate",
+   "ui/mach-view.mvInside",
+   "ui/machine.logicCfg"
   ],
   "거짓으로 새긴 것": [
    "game/ruins.ruinCipher"
@@ -756,6 +777,9 @@
   "고도 {alt}m 아래": [
    "game/progress.objTask"
   ],
+  "고른 것 없음 — 전부 앞으로": [
+   "ui/machine.logicCfg"
+  ],
   "고유 공격 <b>{v}</b> · 피해 <b>{dmg}</b>": [
    "ui/tip.showTip"
   ],
@@ -788,7 +812,7 @@
   "공격력도 방어력도 없는 것은 벼릴 데가 없다": [
    "game/village.enhanceSlot"
   ],
-  "공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘. 기계를 우클릭하면 기계 화면이 열린다": [
+  "공장 확인 자리 — 오른쪽으로 기계 전 종류, 그 너머에 여러 층 공장 둘과 물류 연산실(컨버터 · 분기기). 기계를 우클릭하면 기계 화면이 열린다": [
    "game/debug-start.buildDebugFactory"
   ],
   "공창의 채취탑이 아직 땅을 두드리고 있다. 다리 하나가 사람 몸통보다 굵다.": [
@@ -817,6 +841,9 @@
   ],
   "광맥째로": [
    "data/quests"
+  ],
+  "광석": [
+   "factory"
   ],
   "광석 배달": [
    "data/quests"
@@ -959,7 +986,7 @@
   "낚시 겨루기": [
    "index.html"
   ],
-  "낚시·농사 확인 자리 — 오른쪽이 호수, 왼쪽 12칸이 갈 수 있는 풀밭": [
+  "낚시·농사 확인 자리 — 오른쪽이 호수(낚싯대를 든 채), 왼쪽 12칸이 갈 수 있는 풀밭 · &duel=0~4 면 그 등급 겨루기로 바로": [
    "game/debug-start.debugStart"
   ],
   "낚싯대": [
@@ -1115,6 +1142,9 @@
   ],
   "다음 레벨까지 {n}": [
    "ui/tip.showTip"
+  ],
+  "다음 차례: {item}": [
+   "ui/machine.logicCfg"
   ],
   "다음에 켤 때부터 이 언어로 나온다": [
    "ui.bindSettings"
@@ -1414,6 +1444,9 @@
   "머리 위 종유석이 흔들린다 — 비켜라!": [
    "game/caves.updateCaves"
   ],
+  "먹거리": [
+   "factory"
+  ],
   "먹일 것": [
    "data/quests"
   ],
@@ -1523,6 +1556,9 @@
   "물건 {backCount}칸": [
    "game.update"
   ],
+  "물건 없음 — 아래 가방에서 고른다(고르기 전엔 전부 앞)": [
+   "ui/machine.logicCfg"
+  ],
   "물건을 보여 달라": [
    "game/talk.talkExtra"
   ],
@@ -1601,6 +1637,9 @@
   ],
   "바로 곁에": [
    "game/meteor.meteorImpact"
+  ],
+  "반시계 방향 옆": [
+   "ui/machine.logicCfg"
   ],
   "받침대 넷이 그것을 붙들고 있다": [
    "entity/enemy-ai.raisePedestals"
@@ -1888,6 +1927,9 @@
   "불이 한꺼번에 꺼졌다": [
    "game/ruins.fireRuinEvent"
   ],
+  "블록": [
+   "factory"
+  ],
   "블록 설치 · NPC/상자 상호작용": [
    "index.html"
   ],
@@ -1917,6 +1959,12 @@
   ],
   "비워두면 무작위": [
    "game/save.showNewGameForm"
+  ],
+  "비율": [
+   "ui/machine.logicCfg"
+  ],
+  "비율 비우기": [
+   "ui/machine.logicCfg"
   ],
   "비트를 돌린다": [
    "ui/process.drill"
@@ -2086,6 +2134,9 @@
   "세었군. 이제 네가 뭘 할 수 있는지 너도 안다.": [
    "data/quests"
   ],
+  "셋까지만 고를 수 있다": [
+   "ui/machine.refreshMachine"
+  ],
   "셋째": [
    "game/ruins.ruinCipher"
   ],
@@ -2152,6 +2203,9 @@
   "시계 · 깊이": [
    "index.html"
   ],
+  "시계 방향 옆": [
+   "ui/machine.logicCfg"
+  ],
   "시설 없이 만들 수 있는 것들이다.": [
    "ui/craft.refreshCraft"
   ],
@@ -2212,6 +2266,7 @@
    "game/render.drawNameTag"
   ],
   "씨앗": [
+   "factory",
    "ui/tip.showTip"
   ],
   "씨앗을 들었다 — 큰 방 한가운데로": [
@@ -2262,6 +2317,9 @@
   "압력을 올린다": [
    "ui/process.pressor"
   ],
+  "앞이 막히면 옆(넘침)": [
+   "factory"
+  ],
   "애들이 우리 밖으로 안 나가려 해. {enemy} {n}{mobCw}만 치워 주면 다시 나올 거야.": [
    "data/quests"
   ],
@@ -2297,6 +2355,9 @@
   ],
   "없음 (전부 통과)": [
    "ui/machine.refreshMachine"
+  ],
+  "없음 — 들어온 것을 번갈아 합류": [
+   "ui/machine.logicCfg"
   ],
   "엇박 — 주머니가 새끼를 뱉었다": [
    "game/ruin-events.sacStrike"
@@ -2360,6 +2421,7 @@
    "ui/process.craftSteps"
   ],
   "연료": [
+   "factory",
    "factory.statusColor"
   ],
   "연료 — 타는 중 {n}초 · 넣어 둔 연료로 {n2}초 더": [
@@ -2746,6 +2808,12 @@
   "재료": [
    "ui/tip.showTip"
   ],
+  "재료 · 부품": [
+   "factory"
+  ],
+  "재료 기다림": [
+   "factory/tick.runConverter"
+  ],
   "재료 없음": [
    "factory/tick.runProc"
   ],
@@ -2944,6 +3012,9 @@
   "좌클릭으로 습득{v}": [
    "ui/tree.showSkillTip"
   ],
+  "주괴 · 판": [
+   "factory"
+  ],
   "주괴 시험": [
    "data/quests"
   ],
@@ -3031,6 +3102,11 @@
   ],
   "차고 있는 것과 큰 차이 없다": [
    "ui/tip.compareLine"
+  ],
+  "참 → 앞": [
+   "factory",
+   "factory/tick.runGate",
+   "ui/machine.logicCfg"
   ],
   "참가": [
    "index.html"
@@ -3135,6 +3211,10 @@
    "factory/tick.runDrill",
    "factory/tick.runPump"
   ],
+  "출력 막힘": [
+   "factory/tick.runGate",
+   "factory/tick.runConverter"
+  ],
   "충전": [
    "factory/tick.runWildTrap"
   ],
@@ -3197,7 +3277,16 @@
   "클릭하여 계속": [
    "ui/dialogue.nextLine"
   ],
+  "클릭해서 고른 것에 더하기(셋까지)": [
+   "ui/machine.refreshMachine"
+  ],
   "클릭해서 기계에 넣기 · 흐린 것은 이 기계가 안 받는다": [
+   "ui/machine.refreshMachine"
+  ],
+  "클릭해서 비율에 더하기 · 또 누르면 몫이 는다": [
+   "ui/machine.refreshMachine"
+  ],
+  "클릭해서 조건 물건 지정": [
    "ui/machine.refreshMachine"
   ],
   "클릭해서 필터 지정": [
@@ -3341,6 +3430,9 @@
   "필터: <b>{v}</b>": [
    "ui/machine.refreshMachine"
   ],
+  "하나라도 맞으면 앞으로": [
+   "ui/machine.logicCfg"
+  ],
   "하란: \"한숨 자고 가. 아침까진 봐 줄게. 🪙 {cost}.\"": [
    "game/interact.useInn"
   ],
@@ -3361,6 +3453,10 @@
   ],
   "함께하는 사람": [
    "index.html"
+  ],
+  "합류 중": [
+   "factory",
+   "factory/tick.runConverter"
   ],
   "핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)": [
    "ui/tip.showTip"
@@ -5167,6 +5263,9 @@
   "ITEMS.m_battery.n": "축전지",
   "ITEMS.m_pole.n": "전주",
   "ITEMS.m_sorter.n": "분류기",
+  "ITEMS.m_converter.n": "컨버터",
+  "ITEMS.m_gate_if.n": "조건 분기기",
+  "ITEMS.m_gate_or.n": "논리합 분기기",
   "ITEMS.m_turret.n": "자동 포탑",
   "ITEMS.m_trap.n": "전격 함정",
   "ITEMS.m_switch.n": "정지 스위치",
@@ -5636,6 +5735,12 @@
   "MACHINE.assembler.d": "부품을 맞춰 붙인다. 넣어 준 재료로 만들 수 있는 것을 알아서 골라 만든다.",
   "MACHINE.sorter.n": "분류기",
   "MACHINE.sorter.d": "지정한 아이템만 앞으로 보내고, 나머지는 시계 방향 옆으로 흘린다. 섞인 광석 줄기를 가른다.",
+  "MACHINE.converter.n": "컨버터",
+  "MACHINE.converter.d": "두세 벨트가 모이는 자리에 둔다. 정한 비율(예: 철광석 2 : 석탄 1)대로 섞어 앞으로 내보낸다. 비율을 정하면 그 밖의 물건은 받지 않는다.",
+  "MACHINE.gate_if.n": "조건 분기기",
+  "MACHINE.gate_if.d": "조건이 맞으면(IF) 앞으로, 아니면(ELSE) 옆으로 보낸다. 조건은 같은 물건 · 같은 갈래 · 앞이 막혔을 때 · N개마다 하나.",
+  "MACHINE.gate_or.n": "논리합 분기기",
+  "MACHINE.gate_or.d": "고른 것들 중 하나라도 맞으면(OR) 앞으로, 아니면 옆으로 보낸다. 물건과 갈래를 셋까지 섞어 고른다.",
   "MACHINE.turret.n": "자동 포탑",
   "MACHINE.turret.d": "대갈못을 먹고 사거리 안의 적을 알아서 쏜다. 벨트로 탄약을 물려 두면 손이 갈 일이 없다.",
   "MACHINE.trap.n": "전격 함정",
@@ -6937,6 +7042,9 @@
   "TILE_DEF.216.n": "금 간 벽돌",
   "TILE_DEF.217.n": "레일",
   "TILE_DEF.218.n": "기계 몸",
+  "TILE_DEF.219.n": "컨버터",
+  "TILE_DEF.220.n": "조건 분기기",
+  "TILE_DEF.221.n": "논리합 분기기",
   "VILLAGE.1.n": "되살아난 마을",
   "VILLAGE.1.d": "잿빛이 걷히고 사람이 다시 들어왔다. 아직은 살아남은 자리에 가깝다.",
   "VILLAGE.1.gain.0": "주민 5명 · 여관 · 보관고 · 재련대 · 의뢰 게시판",
@@ -7000,6 +7108,17 @@
   "DIR_NAME.2": "왼쪽",
   "DIR_NAME.3": "위",
   "DIR_NAME.4": "오른쪽 위",
-  "DIR_NAME.5": "왼쪽 위"
+  "DIR_NAME.5": "왼쪽 위",
+  "GATE_CONDS.0.1": "같은 물건이면 앞",
+  "GATE_CONDS.1.1": "같은 갈래면 앞",
+  "GATE_CONDS.2.1": "앞이 막히면 옆(넘침)",
+  "GATE_CONDS.3.1": "N개마다 하나만 앞",
+  "ITEM_CATS.0.1": "광석",
+  "ITEM_CATS.1.1": "주괴 · 판",
+  "ITEM_CATS.2.1": "연료",
+  "ITEM_CATS.3.1": "먹거리",
+  "ITEM_CATS.4.1": "블록",
+  "ITEM_CATS.5.1": "씨앗",
+  "ITEM_CATS.6.1": "재료 · 부품"
  }
 }

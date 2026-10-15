@@ -17,11 +17,31 @@ export const DIR_NAME = ['오른쪽', '아래', '왼쪽', '위', '오른쪽 위'
 
 /** 초록 점(일하는 중)인 상태 */
 export const ST_RUN = new Set([N_('가동'), N_('채굴 중'), N_('시추 중'), N_('이송'), N_('사격'), N_('방전'), N_('통과'), N_('분기'),
-  N_('배출 중'), N_('가동 중'), N_('축전 중'), N_('가득 참')]);
+  N_('배출 중'), N_('가동 중'), N_('축전 중'), N_('가득 참'), N_('합류 중'), N_('참 → 앞'), N_('거짓 → 옆')]);
+
+/** 분기기가 보는 물건 갈래 — [열쇠, 이름]. 이름은 보일 때 tr */
+export const ITEM_CATS: [string, string][] = [['ore', N_('광석')], ['bar', N_('주괴 · 판')], ['fuel', N_('연료')], ['food', N_('먹거리')],
+  ['block', N_('블록')], ['seed', N_('씨앗')], ['part', N_('재료 · 부품')]];
+/** 물건 하나의 갈래 */
+export function itemCat(id: string) {
+  const d = ITEMS[id];
+  if (FUEL[id]) return 'fuel';
+  if (/_ore$/.test(id)) return 'ore';
+  if (/_(bar|plate)$/.test(id)) return 'bar';
+  if (!d) return 'part';
+  if (d.type === 'consum') return 'food';
+  if (d.type === 'block') return 'block';
+  if (d.type === 'seed') return 'seed';
+  return 'part';
+}
+/** 분기기 조건 갈래 — IF/ELSE 의 조건 */
+export const GATE_CONDS: [string, string][] = [['item', N_('같은 물건이면 앞')], ['cat', N_('같은 갈래면 앞')], ['full', N_('앞이 막히면 옆(넘침)')], ['every', N_('N개마다 하나만 앞')]];
+/** 옆으로 보내는 물건을 가볍게 들고 가는 기계(한 칸 보관) */
+export const HOLDS_ONE = new Set(['belt', 'belt_fast', 'sorter', 'gate_if', 'gate_or']);
 
 export const Factory: Bag = {
   /* 벨트 한 칸에 머무는 시간(초) — 물건도 벨트 무늬도 이 속도로 간다(일반 1칸/초 · 고속 2칸/초) */
-  DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK },
+  DWELL: { belt: 1, belt_fast: 0.5, sorter: FAC_TICK, gate_if: FAC_TICK, gate_or: FAC_TICK },
   ORE_HITS: 20,            // 드릴이 광맥 한 칸에서 캐는 최소 횟수
   CHARGE_TICK: 6,          // 플레이어 전주 충전 — 한 틱(0.125초)에 6 = 초당 48
 
@@ -68,8 +88,11 @@ export const Factory: Bag = {
     if (!s || !this.canPlace(w, tx, ty, key)) return null;
     const m: Bag = { t: key, x: tx, y: ty, dir: s.rot ? (dir | 0) % dirTable(key).length : 0, on: 1, net: -1, act: 1, st: '' };
     if (gen) m.gen = 1;
-    if (key === 'belt' || key === 'belt_fast' || key === 'sorter') m.it = null;    // 물고 있는 아이템 1개
+    if (HOLDS_ONE.has(key)) m.it = null;                    // 물고 있는 아이템 1개
     if (key === 'sorter') m.f = null;                       // 통과시킬 아이템 id
+    if (key === 'converter') { m.in = {}; m.r = []; m.ri = 0; m.rc = 0; }   // 비율 [{id, n}] · 지금 차례 · 그 차례에 낸 수
+    if (key === 'gate_if') { m.ck = 'item'; m.cv = null; m.cn = 2; m.k = 0; m.els = 1; }   // 조건 갈래 · 값 · N · 센 수 · ELSE 쪽(1 시계 · 3 반시계)
+    if (key === 'gate_or') { m.fs = []; m.els = 1; }         // 고른 것 — 물건 id 또는 'cat:갈래'
     if (s.slots) { m.items = new Array(s.slots).fill(null); m.feed = 0; }
     if (s.fuelIn) { m.fuel = 0; m.fmax = 1; }
     if (s.fuelIn || s.proc || s.ammo) m.in = {};
@@ -195,7 +218,8 @@ export const Factory: Bag = {
   /** 이 기계가 이 아이템을 받는가(자리 여부는 안 본다) — insert 와 기계 창의 가방 정렬이 같이 쓴다 */
   accepts(m: any, id: string) {
     const s = MACHINE[m.t];
-    if (m.t === 'belt' || m.t === 'belt_fast' || m.t === 'sorter' || s.slots) return true;
+    if (HOLDS_ONE.has(m.t) || s.slots) return true;
+    if (m.t === 'converter') return !m.r.length || m.r.some((e: Bag) => e.id === id);   // 비율을 정했으면 그 물건만
     if (!m.in) return false;
     return !!((s.fuelIn && FUEL[id]) || s.ammo === id || (s.proc && this.isInput(s.proc, id)));
   },
@@ -229,7 +253,7 @@ export const Factory: Bag = {
   insert(w: any, m: any, id: string, n: number) {
     if (!m || !m.on || n <= 0) return 0;
     const s = MACHINE[m.t];
-    if (m.t === 'belt' || m.t === 'belt_fast' || m.t === 'sorter') {
+    if (HOLDS_ONE.has(m.t)) {
       if (m.it || m.just) return 0;
       m.it = { id, c: 1 }; m.just = 1;
       return 1;

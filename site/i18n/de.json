@@ -47,7 +47,7 @@
  "<span class=\"k\">크기</span> 81.8 MiB": "<span class=\"k\">Größe</span> 81.8 MiB",
  "<span class=\"n\">18</span><span class=\"l\">개의 장</span>": "<span class=\"n\">18</span><span class=\"l\">Kapitel</span>",
  "<span class=\"n\">23</span><span class=\"l\">종의 보스</span>": "<span class=\"n\">23</span><span class=\"l\">Bosse</span>",
- "<span class=\"n\">28</span><span class=\"l\">종의 기계</span>": "<span class=\"n\">28</span><span class=\"l\">Maschinen</span>",
+ "<span class=\"n\">31</span><span class=\"l\">종의 기계</span>": "<span class=\"n\">31</span><span class=\"l\">Maschinen</span>",
  "<span class=\"n\">75</span><span class=\"l\">개의 업적</span>": "<span class=\"n\">75</span><span class=\"l\">Erfolge</span>",
  "<strong>AshfallChronicles.command</strong>를 더블클릭합니다. 터미널 창이 잠깐 뜨고 기본 브라우저로 게임이 열립니다.": "Doppelklicke auf <strong>AshfallChronicles.command</strong>. Ein Terminalfenster blitzt kurz auf, und das Spiel öffnet sich im Standardbrowser.",
  "<strong>v1.1.0 의 저장은 그대로 열립니다.</strong> 레벨과 가방은 그대로이고, 밭은 처음 사흘 동안 젖은 채로 시작합니다.": "<strong>Spielstände aus v1.1.0 lassen sich unverändert öffnen.</strong> Stufe und Tasche bleiben erhalten, und Ackerland startet die ersten drei Tage feucht.",
@@ -162,7 +162,7 @@
  "그리고 그 일은 결국 손으로 하는 일이다. 땅을 파고, 쓸 것을 만들고, 길을 막는 것과 싸운다.": "Und am Ende ist diese Arbeit Handarbeit. Du gräbst die Erde, baust, was du brauchst, und kämpfst gegen das, was den Weg versperrt.",
  "그림: 애셋 백여 종 교체·추가(바다 몹 아홉, 보스 셋, 야자수와 광물 타일), 몹·보스 그림을 판정 상자에 맞춤, 제자리에서 미끄러지기만 하던 숨쉬기·걷기 동작 129칸을 다시 움직이게 함.": "Grafik: rund hundert Assets ersetzt oder ergänzt (neun Meeresmonster, drei Bosse, Palmen und Mineralfelder), Monster- und Bossbilder an ihre Trefferboxen angepasst, und 129 Bilder Atmen und Gehen, die nur auf der Stelle rutschten, bewegen sich wieder.",
  "그림이 안 보이고 검은 화면만": "Keine Bilder, nur ein schwarzer Bildschirm",
- "기계 스물여덟 종": "28 Maschinen",
+ "기계 서른한 종": "31 Maschinen",
  "길에서 마주치는 것들": "Was dir unterwegs begegnet",
  "길을 막고 선 것들": "Was dir im Weg steht",
  "꿈꿀 필요가 없었던 조각": "Der Splitter, der nicht träumen musste",
@@ -381,5 +381,5 @@
  "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "Die verstreuten Splitter finden und schlafen legen oder wecken — das ist deine Aufgabe.",
  "<strong>게임 글꼴 Ashfall.</strong> 획 뼈대부터 직접 그린 글꼴(SIL OFL 1.1) — 깎은 모서리의 잿빛 결로 여섯 언어를 함께 씁니다.": "<strong>Die Schrift Ashfall.</strong> Eine eigene Schrift, aus Strichskeletten gezeichnet (SIL OFL 1.1) — mit gemeißelten, aschgrauen Ecken in allen sechs Sprachen.",
  "<span class=\"n\">86</span><span class=\"l\">종의 몬스터</span>": "<span class=\"n\">86</span><span class=\"l\">Monster</span>",
- "<span class=\"n\">525</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">525</span><span class=\"l\">Gegenstände</span>"
+ "<span class=\"n\">528</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">528</span><span class=\"l\">Gegenstände</span>"
 }

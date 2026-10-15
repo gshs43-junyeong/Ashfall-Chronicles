@@ -5,7 +5,7 @@
 import { app as G } from '../ctx.js';
 import { TAU, clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
-import { FONT, tr } from '../lang.js';
+import { FONT, N_, tr } from '../lang.js';
 import { TILE_DEF } from '../data.js';
 import { ITEMS } from '../data/items.js';
 import { FUEL, MACHINE, MRECIPES } from '../data/recipes.js';
@@ -353,6 +353,35 @@ export const MachViewPart: Bag = {
         c.fillStyle = '#2a2a2e'; c.fillRect(x + 8, y + 8, w * 0.4, h - 14);
         c.fillStyle = '#5a8ab8'; const f = m.in && m.in.water_bucket ? clamp(m.in.water_bucket / 10, 0.1, 1) : 0; c.fillRect(x + 10, bot - 6 - (h - 18) * f, w * 0.4 - 4, (h - 18) * f);
         if (run) for (let i = 0; i < 5; i++) { const k = (t + i / 5) % 1; c.fillStyle = '#a8d8ff'; c.fillRect(x + w * 0.6 + k * w * 0.35, y + 10 + Math.sin(k * Math.PI) * -6 + k * 20, 2, 2); }
+        break;
+      }
+      case 'converter': {                                                // 들어오는 줄 셋이 한 입으로 — 비율 차례대로 줄지어 나간다
+        const seq: string[] = [];
+        if (m.r && m.r.length) for (const e of m.r) for (let i = 0; i < e.n; i++) seq.push(e.id);
+        else for (const k in m.in || {}) if (m.in[k] > 0) seq.push(k);
+        const mx = x + w * 0.45, my = y + h / 2;
+        c.strokeStyle = '#3a3a44'; c.lineWidth = 4;
+        for (const ly of [y + 7, my, bot - 7]) { c.beginPath(); c.moveTo(x + 2, ly); c.lineTo(mx, my); c.stroke(); }
+        c.beginPath(); c.moveTo(mx, my); c.lineTo(x + w - 2, my); c.stroke();
+        c.fillStyle = '#5a5a66'; c.beginPath(); c.arc(mx, my, 5, 0, TAU); c.fill();
+        seq.slice(0, 8).forEach((id, i, a) => {                          // 차례 — 같은 박자로 오른쪽으로 흐른다
+          const k = run ? (t * 0.5 + i / a.length) % 1 : i / a.length;
+          drawIc(c, id, mx + 3 + k * (x + w - mx - 14), my - 6, 11);
+        });
+        break;
+      }
+      case 'gate_if': case 'gate_or': {                                  // 갈림길 — 참은 앞(초록), 거짓은 옆(주황)
+        const gx = x + w * 0.42, gy = y + h * 0.4, yes = m.st !== N_('거짓 → 옆');
+        c.lineWidth = 4;
+        c.strokeStyle = '#3a3a44'; c.beginPath(); c.moveTo(x + 2, gy); c.lineTo(gx, gy); c.stroke();
+        c.strokeStyle = yes && run ? '#5ac46a' : '#2e4a32'; c.beginPath(); c.moveTo(gx, gy); c.lineTo(x + w - 2, gy); c.stroke();
+        c.strokeStyle = !yes && run ? '#e88c3c' : '#4a3424'; c.beginPath(); c.moveTo(gx, gy); c.lineTo(gx, bot - 2); c.stroke();
+        c.fillStyle = '#8a7ab8'; c.fillRect(gx - 5, gy - 5, 10, 10);
+        c.fillStyle = '#16151a'; c.font = `bold 7px ${FONT || 'sans-serif'}`; c.textAlign = 'center'; c.fillText(m.t === 'gate_or' ? 'OR' : 'IF', gx, gy + 2.5);
+        if (m.it) {
+          const k = run ? (t * 1.6) % 1 : 0, px = k < 0.5 ? lerp(x + 4, gx, k * 2) : yes ? lerp(gx, x + w - 10, k * 2 - 1) : gx, py = k < 0.5 ? gy : yes ? gy : lerp(gy, bot - 8, k * 2 - 1);
+          drawIc(c, m.it.id, px - 5, py - 11, 10);
+        }
         break;
       }
       default: {                                                         // 그 밖 — 맞물린 톱니 둘

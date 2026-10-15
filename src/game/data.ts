@@ -118,7 +118,9 @@ export const T: Record<string, number> = {
   /* --- 탈 것 — 광산 수레가 달리는 레일(그림은 game/rides.ts 가 이웃을 보고 비탈째 그린다) --- */
   RAIL: 217,
   /* --- 여러 칸 기계의 몸 칸 — 닻 칸(왼쪽 아래)이 아닌 나머지. 그림은 Factory.render 가 닻에서 통째로 --- */
-  M_PART: 218
+  M_PART: 218,
+  /* --- 공장 물류 — 비율 합류(컨버터) · 조건 분기(IF/ELSE) · 논리합 분기(OR) --- */
+  M_CONVERTER: 219, M_GATE_IF: 220, M_GATE_OR: 221
 };
 
 // solid: 충돌, hard: 필요 곡괭이 등급, light: 발광, drop: 채굴 시 아이템
@@ -394,7 +396,10 @@ export const TILE_DEF: TileDef[] = [
   { n: '빛다리', c: '#9fe8ff', solid: 1, hard: 99 },
   { n: '금 간 벽돌', c: '#6a6458', solid: 1, hard: 1, drop: 'stone' },
   { n: '레일', c: '#8a8e98', solid: 0, hard: 1, drop: 'rail' },
-  { n: '기계 몸', c: '#4a4f5a', solid: 1, hard: 3, drop: '', mach: 'part' }
+  { n: '기계 몸', c: '#4a4f5a', solid: 1, hard: 3, drop: '', mach: 'part' },
+  { n: '컨버터', c: '#6a7a8a', solid: 1, hard: 2, drop: 'm_converter', mach: 'converter' },
+  { n: '조건 분기기', c: '#7a6a9a', solid: 1, hard: 2, drop: 'm_gate_if', mach: 'gate_if' },
+  { n: '논리합 분기기', c: '#5a8a7a', solid: 1, hard: 2, drop: 'm_gate_or', mach: 'gate_or' }
 ];
 
 /* 씨앗 아이템 → 심었을 때의 첫 단계 타일 */

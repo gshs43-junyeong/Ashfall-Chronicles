@@ -226,6 +226,9 @@ export const RECIPES: RecipeDef[] = [
   { out: 'm_assembler', n: 1, need: { machine_frame: 2, motor: 2, circuit: 6 }, station: 'work', lv: 3 },
   { out: 'm_battery', n: 1, need: { lead_bar: 12, circuit: 6, wire: 20 }, station: 'work', lv: 3 },
   { out: 'm_sorter', n: 1, need: { circuit: 3, wire: 8, gear_basic: 4 }, station: 'work', lv: 3 },
+  { out: 'm_converter', n: 1, need: { circuit: 4, wire: 10, gear_basic: 6, steel_plate: 2 }, station: 'work', lv: 3 },
+  { out: 'm_gate_if', n: 1, need: { circuit: 4, wire: 8, gear_basic: 3 }, station: 'work', lv: 3 },
+  { out: 'm_gate_or', n: 1, need: { circuit: 4, wire: 8, gear_basic: 3 }, station: 'work', lv: 3 },
   { out: 'm_turret', n: 1, need: { machine_frame: 1, motor: 1, circuit: 4, steel_plate: 12 }, station: 'work', lv: 3 },
   { out: 'm_trap', n: 1, need: { circuit: 2, wire: 10, lead_bar: 6 }, station: 'work', lv: 3 },
   { out: 'm_switch', n: 1, need: { circuit: 1, wire: 4, iron_bar: 4 }, station: 'work', lv: 3 },
@@ -378,6 +381,18 @@ export const MACHINE: Record<string, MachineDef> = {
   sorter: {
     n: '분류기', tile: T.M_SORTER, item: 'm_sorter', power: 3, rot: 1, filter: 1,
     d: '지정한 아이템만 앞으로 보내고, 나머지는 시계 방향 옆으로 흘린다. 섞인 광석 줄기를 가른다.'
+  },
+  converter: {
+    n: '컨버터', tile: T.M_CONVERTER, item: 'm_converter', power: 4, rot: 1, cap: 8, mix: 1,
+    d: '두세 벨트가 모이는 자리에 둔다. 정한 비율(예: 철광석 2 : 석탄 1)대로 섞어 앞으로 내보낸다. 비율을 정하면 그 밖의 물건은 받지 않는다.'
+  },
+  gate_if: {
+    n: '조건 분기기', tile: T.M_GATE_IF, item: 'm_gate_if', power: 2, rot: 1, gate: 1,
+    d: '조건이 맞으면(IF) 앞으로, 아니면(ELSE) 옆으로 보낸다. 조건은 같은 물건 · 같은 갈래 · 앞이 막혔을 때 · N개마다 하나.'
+  },
+  gate_or: {
+    n: '논리합 분기기', tile: T.M_GATE_OR, item: 'm_gate_or', power: 2, rot: 1, gate: 1,
+    d: '고른 것들 중 하나라도 맞으면(OR) 앞으로, 아니면 옆으로 보낸다. 물건과 갈래를 셋까지 섞어 고른다.'
   },
   turret: {
     n: '자동 포탑', tile: T.M_TURRET, item: 'm_turret', power: 14, ammo: 'rivet', cap: 200, range: 340, cycle: 5, dmg: 46,
