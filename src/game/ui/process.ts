@@ -2,18 +2,14 @@
 /* 누르면 바로 생기던 것을 "만드는 과정"으로 보인다(사용자 요청 — 현실적인 제작 · 강화 · 가동 과정).
    제작: 시설마다 단계(재고 · 자르고 · 붙이고 · 다듬는다 / 지피고 · 녹이고 · 붓고 · 식힌다 / 고르고 · 엮고 · 다듬는다)를 무대 캔버스에
    그리고, 끝나는 순간에 재료를 쓴다 — 도중에 창을 닫으면 아무것도 안 잃는다. 연달아 누르면 줄을 선다.
-   기계: 투입 → 확대한 기계(실제 그림 · 움직임) → 산출 흐름과 공정 단계 줄, 지금 단계가 빛난다.
+   기계: 그리는 것은 ui/mach-view.ts(투입 통 → 컨베이어 → 들여다보는 창 → 산출 상자).
    화질 절약 · 움직임 줄이기면 예전처럼 바로 만든다(motionOn). */
 import { app as G } from '../ctx.js';
 import { TAU, clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT, tr } from '../lang.js';
-import { TILE_DEF } from '../data.js';
-import { ITEMS } from '../data/items.js';
-import { MACHINE, MRECIPES, RECIPES } from '../data/recipes.js';
-import { TileArt } from '../tileart.js';
+import { RECIPES } from '../data/recipes.js';
 import { Art } from '../itemart.js';
-import { Factory } from '../factory.js';
 import { $, UI } from '../ui.js';
 
 type C2 = CanvasRenderingContext2D;
@@ -52,16 +48,16 @@ function icon(id: string) {
   if (!IMG[id]) { const im = new Image(); im.src = Art.itemUrl(id); IMG[id] = im; }
   return IMG[id];
 }
-function drawIc(c: C2, id: string, x: number, y: number, s: number) {
+export function drawIc(c: C2, id: string, x: number, y: number, s: number) {
   const im = icon(id); if (im.complete && im.naturalWidth) c.drawImage(im, x, y, s, s);
 }
-function glow(c: C2, x: number, y: number, r: number, col: string, a: number) {
+export function glow(c: C2, x: number, y: number, r: number, col: string, a: number) {
   c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = a;
   const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
   c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2); c.restore();
 }
 /** 단계 줄 — 칸마다 이름, 지난 것은 ✓, 지금 것은 금빛 */
-function stepRow(c: C2, names: string[], cur: number, k: number, x: number, y: number, w: number) {
+export function stepRow(c: C2, names: string[], cur: number, k: number, x: number, y: number, w: number) {
   const n = names.length, cw = w / n;
   c.save(); c.font = `11px ${FONT || 'sans-serif'}`; c.textAlign = 'center'; c.textBaseline = 'middle';
   for (let i = 0; i < n; i++) {
@@ -263,60 +259,6 @@ export const ProcessUIPart: Bag = {
     };
     this._mvRaf = requestAnimationFrame(loop);
   },
-  machViewDraw() {
-    const m = this.machRef, cv = document.getElementById('mach-view') as HTMLCanvasElement | null;
-    if (!m || !cv) return;
-    const s = MACHINE[m.t], steps = machSteps(m.t);
-    const W = cv.clientWidth || 360, H = steps ? 142 : 116, dpr = Math.min(2, devicePixelRatio || 1);
-    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px'; }
-    const c = cv.getContext('2d')!; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
-    c.imageSmoothingEnabled = false;
-    const t = G.time, run = !!(m.on && m.act && !m.broke);
-    // 바닥 띠
-    const fy = 104;
-    c.fillStyle = '#16140e'; c.fillRect(0, fy, W, 4);
-    // 확대한 기계 — 큰 기계는 factory/big, 작은 것은 아틀라스 칸 + 일하는 모습
-    const big = Factory.isBig(m), MW = (m.w || 1) * 22, MH = (m.h || 1) * 22;
-    const sc = Math.min(3, 92 / MH, (W * 0.34) / MW), ox = W / 2 - MW * sc / 2, oy = fy - MH * sc;
-    c.save(); c.translate(ox, oy); c.scale(sc, sc);
-    if (big) Factory.drawBig(c, m, 0, (m.h - 1) * 22, t, run);
-    else {
-      TileArt.draw(c, s.tile, 0, 0, 0);
-      if (run && !(s.mine)) Factory.drawWork(c, G.world, m, 0, 0, t, 0, 0);
-    }
-    c.restore();
-    if (run) glow(c, W / 2, fy - MH * sc / 2, MH * sc * 0.8, '#ffd27a', 0.08);
-    // 흐름 — 왼쪽 투입 · 오른쪽 산출, 일할 때 점이 흐른다
-    const ins = m.in ? Object.keys(m.in).filter(k => m.in[k] > 0).slice(0, 3) : [];
-    const outs = m.out ? Object.keys(m.out).filter(k => m.out[k] > 0).slice(0, 3) : [];
-    const r = m.rec >= 0 ? MRECIPES[m.rec] : null;
-    if (!outs.length && r) outs.push(...Object.keys(r.out).slice(0, 2));
-    if (!outs.length && s.mine && m.tgt) { const d = TILE_DEF[G.world.get(m.tgt[0], m.tgt[1])]; if (d && d.drop && ITEMS[d.drop]) outs.push(d.drop); }   // 드릴 — 지금 캐는 광맥
-    const lane = (x0: number, x1: number, y: number) => {
-      c.strokeStyle = '#3a3424'; c.lineWidth = 2; c.beginPath(); c.moveTo(x0, y); c.lineTo(x1, y); c.stroke();
-      c.fillStyle = '#3a3424'; c.beginPath(); c.moveTo(x1, y - 4); c.lineTo(x1 + 6, y); c.lineTo(x1, y + 4); c.fill();
-      if (run) { c.fillStyle = '#ffd27a'; for (let i = 0; i < 3; i++) { const q = (t * 0.9 + i / 3) % 1; c.fillRect(x0 + (x1 - x0) * q - 1, y - 1, 3, 3); } }
-    };
-    const midY = fy - 40, lx = ox - 10, rx = ox + MW * sc + 10;
-    const col = (ids: string[], x: number, buf: Bag | null, ghost: boolean) => ids.forEach((id, i) => {
-      const y = midY - (ids.length - 1) * 15 + i * 30 - 13;
-      c.globalAlpha = ghost ? 0.4 : 1; drawIc(c, id, x, y, 26); c.globalAlpha = 1;
-      const nn = buf && buf[id]; if (nn) { c.fillStyle = '#e8dcc0'; c.font = `700 10px ${FONT || 'sans-serif'}`; c.textAlign = 'right'; c.fillText(String(nn), x + 28, y + 26); }
-    });
-    if (ins.length) { col(ins, 14, m.in, false); lane(46, lx, midY); }
-    if (outs.length) { lane(rx, W - 52, midY); col(outs, W - 40, m.out, !(m.out && outs.some(k => m.out[k] > 0))); }
-    else if (s.gen || m.t === 'windmill') {                              // 전기 — 번개
-      lane(rx, W - 52, midY);
-      c.fillStyle = run ? '#ffe08a' : '#5a5440'; c.beginPath(); c.moveTo(W - 30, midY - 16); c.lineTo(W - 40, midY + 2); c.lineTo(W - 32, midY + 2); c.lineTo(W - 36, midY + 16); c.lineTo(W - 24, midY - 4); c.lineTo(W - 32, midY - 4); c.fill();
-    }
-    if (steps) {
-      let cur = -1, kk = -1;
-      if (r && m.on) { const p = clamp(m.prog / r.t, 0, 0.999); cur = Math.floor(p * steps.length); kk = p * steps.length - cur; }
-      else if (run) { const p = (t * 0.6) % 1; cur = Math.floor(p * steps.length); kk = p * steps.length - cur; }
-      stepRow(c, steps, cur, kk, 6, H - 26, W - 12);
-    }
-  },
-
   /* ================= 강화 모루 — 가열 → 단조(망치 셋) → 담금질 ================= */
   anvilSteps(st: HTMLElement, cur: number) {
     let row = st.querySelector('.as-steps') as HTMLElement | null;
