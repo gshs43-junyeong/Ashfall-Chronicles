@@ -28,6 +28,8 @@ export interface DuelArt {
   spinner?(c: CanvasRenderingContext2D, cx: number, cy: number, R: number, spun: number, k: number, left: number, need: number, col: string, t: number): void;
   cursor?(c: CanvasRenderingContext2D, x: number, y: number, t: number): void;
   pop?(c: CanvasRenderingContext2D, x: number, y: number, res: number, k: number, t: number): void;
+  /** 슬라이더 끝 — arrow 면 되돌아오는 끝 */
+  end?(c: CanvasRenderingContext2D, x: number, y: number, r: number, col: string, arrow: boolean, t: number): void;
 }
 export interface DuelOpts {
   diff: DuelDiff; mods?: DuelMods; seed: string | number;
@@ -417,6 +419,7 @@ export class RhythmDuel {
   }
   private drawEnd(c: CanvasRenderingContext2D, x: number, y: number, col: string, arrow: boolean): void {
     const r = this.r;
+    const art = this.th.art; if (art && art.end) { art.end(c, x, y, r, col, arrow, this.t); return; }
     c.strokeStyle = '#ffffff'; c.lineWidth = r * 0.1; c.beginPath(); c.arc(x, y, r * 0.88, 0, Math.PI * 2); c.stroke();
     if (arrow) { c.fillStyle = '#ffffff'; c.font = `700 ${Math.round(r * 0.8)}px ${this.th.font}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('↺', x, y + 1); }
     else { c.fillStyle = col; c.globalAlpha *= 0.5; c.beginPath(); c.arc(x, y, r * 0.5, 0, Math.PI * 2); c.fill(); c.globalAlpha /= 0.5; }
