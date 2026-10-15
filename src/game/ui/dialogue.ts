@@ -31,9 +31,21 @@ export const DialogueUIPart: Bag = {
     $('#dlg-portrait').textContent = '';
     this.setIcon($('#dlg-portrait'), this.npcPortrait(npcId));
     $('#dlg-name').textContent = `${d.n} · ${d.role}`;
-    $('#dialogue').classList.add('open');
+    this.popBubble(false);
     G.uiOpen = true;
     this.nextLine(true);
+  },
+  /** 말풍선을 연다 — 돌 판(lore)이면 꼬리 없는 석판. 이미 열려 있어도 처음부터 튀어나오게 애니메이션을 다시 건다 */
+  popBubble(lore: boolean) {
+    const el = $('#dialogue'), m = $('.dlg-main');
+    el.classList.toggle('lore', lore);
+    el.classList.add('open');
+    m.classList.remove('bump'); m.style.animation = 'none'; void m.offsetWidth; m.style.animation = '';
+  },
+  /** 대사가 흐르는 동안 초상이 들썩인다(말하는 중) — 돌 판은 말하지 않는다 */
+  setTalk(on: boolean) {
+    const p = $('#dlg-portrait');
+    if (p) p.classList.toggle('talk', on && !!this.dlg && !!this.dlg.npcId);
   },
   /* ---- 한 글자씩 흘러나오는 대사 ---- */
   TYPE_MS: 34, TYPE_MIN: 300, TYPE_MAX: 1100,
@@ -43,11 +55,13 @@ export const DialogueUIPart: Bag = {
     const el = $('#dlg-text');
     this.stopType();
     if (!text.length || !(G.settings ? G.settings.dlgtype : 1)) { el.textContent = text; done(); return; }
-    this.typing = typewrite(el, text, { msPer: this.TYPE_MS, min: this.TYPE_MIN, max: this.TYPE_MAX, done: () => { this.typing = null; done(); } });
+    this.setTalk(true);
+    this.typing = typewrite(el, text, { msPer: this.TYPE_MS, min: this.TYPE_MIN, max: this.TYPE_MAX, done: () => { this.typing = null; this.setTalk(false); done(); } });
   },
   stopType() {
     if (this.typing) this.typing.stop();
     this.typing = null;
+    this.setTalk(false);
   },
   /** 타자가 도는 중이면 끝까지 펼치고 true. */
   finishType() {
@@ -63,6 +77,7 @@ export const DialogueUIPart: Bag = {
     const last = this.dlg.i >= this.dlg.lines.length - 1;
     $('#dlg-choices').innerHTML = '';
     if (this.dlg.i !== prevI || first) G.sfx('talk');
+    if (!first) { const m = $('.dlg-main'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); }
     const at = this.dlg.i;
     this.typeLine(this.dlg.lines[at], () => {
       if (!this.dlg || this.dlg.i !== at) return;      // 그 사이 창이 바뀌었으면 버린다
@@ -78,7 +93,7 @@ export const DialogueUIPart: Bag = {
       const b = document.createElement('button');
       b.className = 'dchoice' + (c.quest ? ' quest' : '') + (c.say ? ' say' : '')
         + (c.back ? ' meta' : '');
-      b.textContent = c.t;
+      b.textContent = c.say ? `“${c.t}”` : c.t;   // 내가 하는 말 — 따옴표로 기능 단추와 가른다
       b.addEventListener('click', ev => {
         ev.stopPropagation();
         if (c.back) { this.showChoices(); return; }
@@ -119,7 +134,7 @@ export const DialogueUIPart: Bag = {
     $('#dlg-portrait').textContent = '';
     this.setIcon($('#dlg-portrait'), Art.itemUrl('rune_frag'));
     $('#dlg-name').textContent = name;
-    $('#dialogue').classList.add('open');
+    this.popBubble(true);
     G.uiOpen = true;
     this.nextLine(true);
   },

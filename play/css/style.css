@@ -657,33 +657,79 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 #reforge-grid,#anvil-grid{padding:16px;display:grid;grid-template-columns:repeat(8,46px);gap:5px}
 
 /* ================= 대화 ================= */
-#dialogue{position:absolute;left:0;right:0;bottom:0;display:none;justify-content:center;padding:0 0 26px;pointer-events:auto}
+/* ★ 말풍선 — 네모 상자는 딱딱해 픽셀 그림과 따로 놀았다(사용자 지적 2026-10-15). 초상은 상자 밖 왼쪽 아래에 서서 말하고,
+   양피지 말풍선(돌 판 = 비석 · 석판 · 장 이야기)의 꼬리가 초상 쪽으로 휜다. 틀 그림은 tools/mkbubble.py — 9조각 16px(8칸 × 2) */
+#dialogue{position:absolute;left:0;right:0;bottom:0;display:none;justify-content:center;padding:0 0 14px;pointer-events:auto}
 #dialogue.open{display:flex}
-.dlg-box{width:min(860px,92vw);background:linear-gradient(#14130ef2,#0b0a08f2);border:1px solid var(--frame);
-  border-top:2px solid var(--gold);border-radius:4px;padding:18px 20px;display:flex;gap:16px;box-shadow:0 16px 50px #000c}
-.dlg-portrait{width:62px;height:62px;flex:0 0 62px;border:1px solid var(--frame);border-radius:4px;
-  display:flex;align-items:center;justify-content:center;font-size:30px;background:#0a0906}
-.dlg-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-.dlg-name{font-size:13px;color:var(--gold);letter-spacing:.06em}
+.dlg-box{width:min(900px,94vw);display:flex;align-items:flex-end;gap:26px}
+.dlg-pwrap{position:relative;flex:0 0 128px;height:128px;margin-bottom:-14px}
+.dlg-pwrap::before{content:'';position:absolute;inset:-14px -18px 0;border-radius:50% 50% 0 0;
+  background:radial-gradient(closest-side at 50% 62%,#f3d79a38,#f3d79a12 62%,transparent)}
+.dlg-portrait{position:relative;width:128px;height:128px;display:flex;align-items:center;justify-content:center;font-size:30px;
+  filter:drop-shadow(0 3px 0 #0007)}
+#dlg-portrait{background-size:100%}
+.dlg-portrait.talk{animation:dlgTalk .26s steps(2,end) infinite}
+@keyframes dlgTalk{50%{transform:translateY(-2px)}}
+.dlg-main{position:relative;flex:1;min-width:0;margin-bottom:22px;padding:4px 10px 6px;color:#33281b;
+  border:16px solid transparent;border-image:url(../assets/ui/bubble.png?v=a39091d9) 16 fill / 16px stretch;image-rendering:pixelated;
+  transform-origin:0 100%;animation:dlgPop .34s cubic-bezier(.2,1.45,.45,1)}
+/* 꼬리 — 오른쪽 두 칸이 말풍선 왼쪽 테를 덮는다 */
+.dlg-main::before{content:'';position:absolute;left:-42px;bottom:2px;width:30px;height:32px;
+  background:url(../assets/ui/bubble_tail.png?v=e7c0d738) 0 0/100% 100% no-repeat;image-rendering:pixelated}
+.dlg-main.bump{animation:dlgBump .2s ease-out}
+@keyframes dlgPop{0%{opacity:0;transform:scale(.82) translate(-10px,10px)}100%{opacity:1;transform:none}}
+@keyframes dlgBump{40%{transform:translateY(-2px) scale(1.008)}}
+.dlg-head{position:absolute;left:-2px;right:-2px;top:-36px;display:flex;align-items:flex-end;gap:10px}
+/* 이름표 — 말풍선 위 모서리에 걸린 금빛 띠 */
+.dlg-name{font-size:12.5px;font-weight:700;letter-spacing:.05em;color:#2a1c0b;background:#d8a94b;padding:3px 12px 2px;
+  border:2px solid #4b3415;border-radius:4px 4px 4px 0;box-shadow:inset 0 2px 0 #f1cd7c,inset 0 -2px 0 #b07f2a,0 2px 0 #0006;
+  transform:rotate(-1.5deg);transform-origin:0 100%}
 /* 다시 듣기는 대화가 아니라 창의 기능이다 — 선택지 줄에서 빼내 이름 옆에 둔다 */
-.dlg-replay{margin-left:auto;font-size:10.5px;padding:3px 8px;color:#77725f;
-  background:#13120d;border:1px solid #262418;border-radius:3px;line-height:1.3}
-.dlg-replay:hover{color:#c8c2ac;border-color:#3a3626}
-.dlg-text{font-size:14px;line-height:1.85;color:#ddd7c4;min-height:52px;white-space:pre-line}
-.dlg-choices{margin-top:11px;display:flex;flex-direction:column;gap:4px}
+.dlg-replay{margin-left:auto;font-size:10.5px;padding:2px 9px;color:#e9dcbc;
+  background:#2b241a;border:1px solid #6b5636;border-radius:10px;line-height:1.3}
+.dlg-replay:hover{color:#fff;border-color:var(--gold)}
+.dlg-text{font-size:14.5px;line-height:1.8;color:inherit;min-height:52px;white-space:pre-line}
+.dlg-choices{margin-top:8px;display:flex;flex-direction:column;gap:1px}
+.dlg-choices:has(.dchoice){border-top:2px dashed #c4b08a;padding-top:7px}
 /* 대화 진행 화살표 — 이모지 대신 CSS로 직접 그린 삼각형 아이콘(시스템 폰트 의존 없음) */
-.dlg-next{font-size:11px;color:#5f5b4d;display:flex;align-items:center;gap:6px}
+.dlg-next{font-size:11px;color:#8d7a58;display:flex;align-items:center;justify-content:flex-end;gap:6px}
 .dlg-next-ic{width:0;height:0;flex:0 0 auto;border-top:5px solid transparent;border-bottom:5px solid transparent;
-  border-left:7px solid #8a8468;animation:dlgNextPulse 1.1s ease-in-out infinite}
+  border-left:7px solid #8a6634;animation:dlgNextPulse 1.1s ease-in-out infinite}
 @keyframes dlgNextPulse{0%,100%{opacity:.45;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
-.dchoice{text-align:left;font-size:12.5px;padding:6px 12px;background:#15140e;border:1px solid #2b2818}
-/* 대화를 마치는 것과 되돌아가는 것은 고르는 말이 아니다 — 눈이 안 가게 낮춘다 */
-.dchoice.meta{font-size:11.5px;padding:5px 12px;color:#77725f;background:#110f0b}
-.dchoice.quest{border-left:2px solid var(--gold)}
-/* 내가 하는 말 — 기능 버튼(가게·의뢰)과 한눈에 갈라 보이게 따옴표를 두르고 색을 낮춘다 */
-.dchoice.say{border-left:2px solid #6a6a8a;color:#cfcfe0;font-style:italic}
-.dchoice.say::before{content:'“'}
-.dchoice.say::after{content:'”'}
+/* 고르는 말 — 종이 위 잉크 줄. 앞 점이 갈래(의뢰 금 · 내 말 남빛 · 마치기 없음) */
+#dialogue .dchoice{position:relative;text-align:left;font-size:13px;padding:5px 12px 5px 24px;color:#4a3a25;
+  background:transparent;border:0;border-radius:8px;box-shadow:none}
+#dialogue .dchoice::before{content:'';position:absolute;left:10px;top:50%;width:6px;height:6px;margin-top:-3px;background:#9a7d4e;transform:rotate(45deg)}
+#dialogue .dchoice.quest{color:#5a3a0a;font-weight:700}
+#dialogue .dchoice.quest::before{background:#d08a1c;box-shadow:0 0 0 1px #6b4410}
+#dialogue .dchoice.say{color:#3c4064;font-style:italic}
+#dialogue .dchoice.say::before{background:#6f74a8}
+#dialogue .dchoice.meta{font-size:11.5px;color:#8d7a58}
+#dialogue .dchoice.meta::before{display:none}
+#dialogue .dchoice:hover:not(.no){background:#d8c69c;color:#1c140a;box-shadow:none;border-color:transparent}
+#dialogue .dchoice:hover:not(.no)::before{background:#c0461e}
+#dialogue .dchoice:focus-visible{outline:2px solid #8a6634;outline-offset:-2px}
+/* 돌 판(비석 · 석판 · 문 · 장 이야기) — 말하는 것은 돌이라 꼬리가 없고 초상 대신 작은 룬 조각 */
+#dialogue.lore .dlg-main{color:#dfe5dd;border-image-source:url(../assets/ui/bubble_lore.png?v=2449e105)}
+#dialogue.lore .dlg-main::before{display:none}
+#dialogue.lore .dlg-pwrap{flex-basis:76px;height:76px;margin-bottom:34px}
+#dialogue.lore .dlg-pwrap::before{inset:-12px;border-radius:50%;background:radial-gradient(closest-side,#6ed6c444,transparent)}
+#dialogue.lore .dlg-portrait{width:76px;height:76px}
+#dialogue.lore .dlg-name{background:#3c414b;color:#bff0e4;border-color:#14161b;box-shadow:inset 0 2px 0 #59606c,inset 0 -2px 0 #2a2e35,0 2px 0 #0006}
+#dialogue.lore .dlg-choices:has(.dchoice){border-top-color:#59606c}
+#dialogue.lore .dlg-next{color:#8e9a97}
+#dialogue.lore .dlg-next-ic{border-left-color:#6ed6c4}
+#dialogue.lore .dchoice{color:#cfd7d1}
+#dialogue.lore .dchoice::before{background:#7c8592}
+#dialogue.lore .dchoice.quest{color:#bff0e4}
+#dialogue.lore .dchoice.quest::before{background:#6ed6c4;box-shadow:none}
+#dialogue.lore .dchoice.meta{color:#8e9a97}
+#dialogue.lore .dchoice:hover:not(.no){background:#4a505c;color:#fff}
+#dialogue.lore .dchoice:hover:not(.no)::before{background:#6ed6c4}
+@media (max-width:700px){.dlg-pwrap{flex-basis:84px;height:84px}.dlg-portrait{width:84px;height:84px}.dlg-box{gap:18px}
+  #dialogue.lore .dlg-pwrap{flex-basis:56px;height:56px}#dialogue.lore .dlg-portrait{width:56px;height:56px}}
+body.q-low .dlg-main,body.q-low .dlg-portrait.talk{animation:none}
+@media (prefers-reduced-motion:reduce){.dlg-main,.dlg-portrait.talk{animation:none}}
 
 /* ================= 연출 ================= */
 #chapter-card{position:absolute;left:0;right:0;top:26%;text-align:center;opacity:0;pointer-events:none;transition:opacity .8s}
@@ -959,7 +1005,6 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 .tip-ic{width:26px;height:26px;vertical-align:middle;margin-right:7px;flex:0 0 26px}
 .ui-ic{width:15px;height:15px;vertical-align:-3px;margin-right:3px}
 #clock-icon{width:16px;height:16px;vertical-align:-3px}
-#dlg-portrait{background-size:88%}
 #tooltip .thead{display:flex;align-items:center;margin-bottom:2px}
 #tooltip .tname{font-size:13.5px;font-weight:600}
 .sk.empty .ic{background-image:none !important}

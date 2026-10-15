@@ -41532,9 +41532,24 @@
       $("#dlg-portrait").textContent = "";
       this.setIcon($("#dlg-portrait"), this.npcPortrait(npcId));
       $("#dlg-name").textContent = `${d.n} · ${d.role}`;
-      $("#dialogue").classList.add("open");
+      this.popBubble(false);
       app.uiOpen = true;
       this.nextLine(true);
+    },
+    /** 말풍선을 연다 — 돌 판(lore)이면 꼬리 없는 석판. 이미 열려 있어도 처음부터 튀어나오게 애니메이션을 다시 건다 */
+    popBubble(lore) {
+      const el = $("#dialogue"), m = $(".dlg-main");
+      el.classList.toggle("lore", lore);
+      el.classList.add("open");
+      m.classList.remove("bump");
+      m.style.animation = "none";
+      void m.offsetWidth;
+      m.style.animation = "";
+    },
+    /** 대사가 흐르는 동안 초상이 들썩인다(말하는 중) — 돌 판은 말하지 않는다 */
+    setTalk(on) {
+      const p = $("#dlg-portrait");
+      if (p) p.classList.toggle("talk", on && !!this.dlg && !!this.dlg.npcId);
     },
     /* ---- 한 글자씩 흘러나오는 대사 ---- */
     TYPE_MS: 34,
@@ -41549,14 +41564,17 @@
         done();
         return;
       }
+      this.setTalk(true);
       this.typing = typewrite(el, text, { msPer: this.TYPE_MS, min: this.TYPE_MIN, max: this.TYPE_MAX, done: () => {
         this.typing = null;
+        this.setTalk(false);
         done();
       } });
     },
     stopType() {
       if (this.typing) this.typing.stop();
       this.typing = null;
+      this.setTalk(false);
     },
     /** 타자가 도는 중이면 끝까지 펼치고 true. */
     finishType() {
@@ -41575,6 +41593,12 @@
       const last = this.dlg.i >= this.dlg.lines.length - 1;
       $("#dlg-choices").innerHTML = "";
       if (this.dlg.i !== prevI || first) app.sfx("talk");
+      if (!first) {
+        const m = $(".dlg-main");
+        m.classList.remove("bump");
+        void m.offsetWidth;
+        m.classList.add("bump");
+      }
       const at = this.dlg.i;
       this.typeLine(this.dlg.lines[at], () => {
         if (!this.dlg || this.dlg.i !== at) return;
@@ -41590,7 +41614,7 @@
       for (const c of cs) {
         const b2 = document.createElement("button");
         b2.className = "dchoice" + (c.quest ? " quest" : "") + (c.say ? " say" : "") + (c.back ? " meta" : "");
-        b2.textContent = c.t;
+        b2.textContent = c.say ? `“${c.t}”` : c.t;
         b2.addEventListener("click", (ev) => {
           ev.stopPropagation();
           if (c.back) {
@@ -41654,7 +41678,7 @@
       $("#dlg-portrait").textContent = "";
       this.setIcon($("#dlg-portrait"), Art.itemUrl("rune_frag"));
       $("#dlg-name").textContent = name;
-      $("#dialogue").classList.add("open");
+      this.popBubble(true);
       app.uiOpen = true;
       this.nextLine(true);
     },

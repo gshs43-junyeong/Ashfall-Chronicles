@@ -332,12 +332,92 @@ def P_yunseul():
 PEOPLE = {'rika': P_rika, 'garn': P_garn, 'haran': P_haran, 'seira': P_seira, 'kade': P_kade,
           'pedlar': P_pedlar, 'oreman': P_oreman, 'armsman': P_armsman, 'yunseul': P_yunseul}
 
+# ---------------------------------------------------------------- 윤곽 다듬기
+REFS = ['elara', 'borin', 'mira', 'elder']               # 손그림 기준 — 원본은 tools/art/portrait_src/
+SRC = os.path.join(ROOT, 'tools', 'art', 'portrait_src')
+
+def _lum(c):
+    return c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11
+
+def soften(im):
+    """★ 검은 윤곽 + 계단 모서리가 얼굴을 딱딱하게 보이게 했다(사용자 지적 2026-10-15) — 칸(64) 단위로
+    ① 윤곽을 맞닿은 덩어리의 가장 어두운 색으로 물들이고(셀아웃 — 얼굴은 짙은 살색, 머리는 짙은 머리색)
+    ② 계단의 바깥 모서리 칸은 덩어리 색과 윤곽 색 사이로, 안쪽 홈(투명)은 반투명 윤곽으로 메워 선을 둥글린다.
+    눈 · 코 · 입은 바깥에 닿지 않아 그대로다. 두 번 돌려도 같지 않으니 늘 원본(도구 · portrait_src)에서 굽는다."""
+    s = im.convert('RGBA').resize((N, N), Image.NEAREST)
+    px = s.load()
+    get = lambda x, y: px[x, y] if 0 <= x < N and 0 <= y < N else (0, 0, 0, 0)
+    out = lambda c: c[3] == 0
+    D4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
+    def is_line(x, y):
+        c = get(x, y)
+        return c[3] == 255 and _lum(c) < 34 and max(c[:3]) < 48 and any(out(get(x + dx, y + dy)) for dx in (-1, 0, 1) for dy in (-1, 0, 1))
+    line = {(x, y) for y in range(N) for x in range(N) if is_line(x, y)}
+    tint = {}
+    for (x, y) in line:
+        nb = [get(x + dx, y + dy) for dx, dy in D4 if (x + dx, y + dy) not in line and not out(get(x + dx, y + dy))]
+        if not nb:
+            continue
+        base = max(nb, key=_lum)                         # 밝은 쪽 덩어리 색을 따른다 — 그늘 칸에 붙어도 덩어리 색으로
+        k = 0.36 if _lum(base) > 90 else 0.5
+        tint[(x, y)] = (int(base[0] * k * 0.9 + 6), int(base[1] * k * 0.9 + 5), int(base[2] * k * 0.9 + 8), 255)
+    for p, c in tint.items():
+        px[p] = c
+    soft = []
+    for y in range(N):
+        for x in range(N):
+            c = get(x, y)
+            if out(c) or (x, y) in line:
+                continue
+            for (ax, ay), (bx, by) in (((-1, 0), (0, -1)), ((1, 0), (0, -1)), ((-1, 0), (0, 1)), ((1, 0), (0, 1))):
+                a, b = (x + ax, y + ay), (x + bx, y + by)
+                if a in line and b in line and (x - ax, y) not in line and (x, y - by) not in line:
+                    lc = px[a]
+                    soft.append(((x, y), tuple((c[i] * 3 + lc[i] * 2) // 5 for i in range(3)) + (255,)))
+                    break
+    for y in range(N):
+        for x in range(N):
+            if not out(get(x, y)):
+                continue
+            for (ax, ay), (bx, by) in (((-1, 0), (0, -1)), ((1, 0), (0, -1)), ((-1, 0), (0, 1)), ((1, 0), (0, 1))):
+                a, b = (x + ax, y + ay), (x + bx, y + by)
+                if a in line and b in line and not out(get(x + ax + bx, y + ay + by)):
+                    lc = px[a]
+                    soft.append(((x, y), lc[:3] + (120,)))
+                    break
+    for p, c in soft:
+        px[p] = c
+    # ③ 턱선 — 살과 머리 · 옷이 맞닿는 계단 모서리 칸을 둘 사이 색으로(윤곽이 없는 안쪽 경계)
+    skin = px[27, 36]
+    def is_skin(c):
+        if c[3] < 255:
+            return False
+        k = _lum(c) / max(1, _lum(skin))
+        return 0.6 < k < 1.25 and all(abs(c[i] - skin[i] * k) < 16 for i in range(3))
+    jaw = []
+    for y in range(36, 47):
+        for x in range(14, 50):
+            c = px[x, y]
+            if not is_skin(c):
+                continue
+            for (ax, ay), (bx, by) in (((-1, 0), (0, 1)), ((1, 0), (0, 1)), ((-1, 0), (0, -1)), ((1, 0), (0, -1))):
+                a, b = get(x + ax, y + ay), get(x + bx, y + by)
+                if a[3] == 255 and b[3] == 255 and not is_skin(a) and not is_skin(b) and is_skin(get(x - ax, y)) and is_skin(get(x, y - by)):
+                    o = a if _lum(a) < _lum(b) else b
+                    jaw.append(((x, y), tuple((c[i] * 3 + o[i] * 2) // 5 for i in range(3)) + (255,)))
+                    break
+    for p, c in jaw:
+        px[p] = c
+    return s.resize((N * 2, N * 2), Image.NEAREST)
+
 def main():
     out = {}
     for k, fn in PEOPLE.items():
-        im = fn().image()
+        im = soften(fn().image())
         im.save(os.path.join(NPC, f'portrait_{k}.png'))
         out[k] = im
+    for k in REFS:
+        soften(Image.open(os.path.join(SRC, f'{k}.png'))).save(os.path.join(NPC, f'portrait_{k}.png'))
     # 기준 4장과 나란히 — 눈높이 · 크기 · 윤곽이 맞는지 한눈에
     refs = ['elara', 'borin', 'mira', 'elder']
     S = 160
