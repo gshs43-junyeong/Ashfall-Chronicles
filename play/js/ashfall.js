@@ -38411,9 +38411,11 @@
   __export(tick_exports, {
     BREAKS: () => BREAKS,
     BREAK_P: () => BREAK_P,
+    DRILL_TIP: () => DRILL_TIP,
     FactoryTickPart: () => FactoryTickPart
   });
   var BREAK_P = 1 / 86400;
+  var DRILL_TIP = { drill: [16, 20], drill_e: [21, 5] };
   var BREAKS = /* @__PURE__ */ new Set(["drill", "drill_e", "drill_x", "pump", "gen", "windmill", "turret", "sprinkler", "smelter", "press", "refinery", "assembler", "pressor", "desal", "battery", "battery_hi", "mill", "oven"]);
   var FactoryTickPart = {
     /* ================= 틱 ================= */
@@ -38853,31 +38855,33 @@
           if (!m.tgt) break;
           const elec = m.t !== "drill";
           const gx = (m.tgt[0] + 0.5) * TS - camX, gy = (m.tgt[1] + 0.5) * TS - camY;
-          const ang = Math.atan2(gy - cy, gx - cx);
+          const tip = DRILL_TIP[m.t], ox = tip ? sx + tip[0] : cx, oy = tip ? sy + tip[1] : cy;
+          const ang = Math.atan2(gy - oy, gx - ox);
           c.globalAlpha = 0.3;
           c.strokeStyle = elec ? "#8fd0ff" : "#e8b060";
           c.lineWidth = 1;
           c.setLineDash([2, 3]);
           c.lineDashOffset = -t * 24;
           c.beginPath();
-          c.moveTo(cx, cy);
+          c.moveTo(ox, oy);
           c.lineTo(gx, gy);
           c.stroke();
           c.setLineDash([]);
           c.globalAlpha = 1;
-          c.translate(cx, cy);
+          c.translate(ox, oy);
           c.rotate(ang);
-          const L = 8, ph = t * (elec ? 44 : 20) % 3;
-          c.fillStyle = "#6a6e76";
-          c.fillRect(7, -2.5, L, 5);
+          const L = 9 + Math.sin(t * (elec ? 40 : 22)) * 1.2, ph = t * (elec ? 44 : 20) % 3;
+          c.fillStyle = "#7a7e86";
+          c.fillRect(0, -1.5, L, 3);
           c.fillStyle = "#c8ccd4";
-          for (let x = 7 + ph; x < 7 + L; x += 3) c.fillRect(x, -2.5, 1, 5);
-          c.fillStyle = "#e0e4ea";
-          c.beginPath();
-          c.moveTo(7 + L, -2.5);
-          c.lineTo(7 + L + 4, 0);
-          c.lineTo(7 + L, 2.5);
-          c.fill();
+          for (let x = ph; x < L; x += 3) c.fillRect(x, -1.5, 1, 3);
+          c.fillStyle = "#4a4e56";
+          c.fillRect(L, -3, 4, 6);
+          c.fillStyle = Math.sin(t * 50) > 0 ? "#f0f4fa" : "#a8b0bc";
+          c.fillRect(L + 4, -2, 1, 1);
+          c.fillRect(L + 4, 1, 1, 1);
+          c.fillStyle = Math.sin(t * 50) > 0 ? "#a8b0bc" : "#f0f4fa";
+          c.fillRect(L + 4, -0.5, 1, 1);
           c.restore();
           c.save();
           const k = m.tgt[1] * WW2 + m.tgt[0], left = w.oreHits[k];

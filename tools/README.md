@@ -29,7 +29,7 @@
 | `mkdragons.py` | 드래곤 펫 4속성 × 4단계 |
 | `mkpetidle.py` | 매 · 나방 · 공허의 유생 떠 있기 사이 장(원본 `art/pets/`) |
 | `mkruinmobs.py` · `mkarchetype.py` | 유적 고유 몹 · 원형 |
-| `mkdeepdrill.py` · `mkflotsam.py` · `mkskyitems.py` | 심층 드릴 · 바다 부유물 · 하늘 섬 재료 |
+| `mkdrills.py` · `mkflotsam.py` · `mkskyitems.py` | 드릴 셋(천공기 · 점보 · 시추탑) · 바다 부유물 · 하늘 섬 재료 |
 | `mksky.py` · `mkclouds.py` · `mkparallax.py` · `mksmoke.py` | 해·운석 · 먹구름 · 잿빛 숲(네 장)·울림 정글 원경 · 굴뚝 연기 |
 | `mkhitfx.py` · `mkhitphys.py` · `mkstarfx.py` | 마법 · 물리 타격 · 별 조각 효과 |
 | `mklogo.py` · `mkkeyart.py` + `keyart-capture.mjs` | 로고(글꼴 윤곽 `art/fonts/` → 게임 PNG · 사이트 SVG)·파비콘 · 대표 그림(장면 찍기) |

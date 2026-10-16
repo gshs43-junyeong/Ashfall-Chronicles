@@ -17,6 +17,8 @@ import { DIR4, FAC_TICK, Factory, HOLDS_ONE, itemCat } from '../factory.js';
 
 /* 고장 — 일하는 동안 틱당 확률. 기계 하나가 쉬지 않고 돌면 평균 3시간에 한 번(0.125초 × 86,400틱) */
 export const BREAK_P = 1 / 86400;
+/** 드릴 비트가 나오는 자리(칸 왼쪽 위 기준 px) — tools/mkdrills.py 의 로드 끝 */
+export const DRILL_TIP: Record<string, [number, number]> = { drill: [16, 20], drill_e: [21, 5] };
 export const BREAKS = new Set(['drill', 'drill_e', 'drill_x', 'pump', 'gen', 'windmill', 'turret', 'sprinkler', 'smelter', 'press', 'refinery', 'assembler', 'pressor', 'desal', 'battery', 'battery_hi', 'mill', 'oven']);
 export const FactoryTickPart: Bag = {
 
@@ -290,18 +292,22 @@ export const FactoryTickPart: Bag = {
         if (!m.tgt) break;
         const elec = m.t !== 'drill';
         const gx = (m.tgt[0] + .5) * TS - camX, gy = (m.tgt[1] + .5) * TS - camY;
-        const ang = Math.atan2(gy - cy, gx - cx);
+        /* 비트는 기계의 연장 끝에서 나온다(tools/mkdrills.py 그림 — 천공기는 마스트 밑 로드 끝 · 점보는 피드 빔 앞 끝) */
+        const tip = DRILL_TIP[m.t], ox = tip ? sx + tip[0] : cx, oy = tip ? sy + tip[1] : cy;
+        const ang = Math.atan2(gy - oy, gx - ox);
         // 어느 광맥을 캐는지 — 옅은 점선이 흘러간다
         c.globalAlpha = .3; c.strokeStyle = elec ? '#8fd0ff' : '#e8b060'; c.lineWidth = 1;
         c.setLineDash([2, 3]); c.lineDashOffset = -t * 24;
-        c.beginPath(); c.moveTo(cx, cy); c.lineTo(gx, gy); c.stroke(); c.setLineDash([]);
+        c.beginPath(); c.moveTo(ox, oy); c.lineTo(gx, gy); c.stroke(); c.setLineDash([]);
         c.globalAlpha = 1;
-        // 나사 비트 — 광맥 쪽으로 튀어나와 돈다(줄무늬가 뒤로 흐른다)
-        c.translate(cx, cy); c.rotate(ang);
-        const L = 8, ph = (t * (elec ? 44 : 20)) % 3;
-        c.fillStyle = '#6a6e76'; c.fillRect(7, -2.5, L, 5);
-        c.fillStyle = '#c8ccd4'; for (let x = 7 + ph; x < 7 + L; x += 3) c.fillRect(x, -2.5, 1, 5);
-        c.fillStyle = '#e0e4ea'; c.beginPath(); c.moveTo(7 + L, -2.5); c.lineTo(7 + L + 4, 0); c.lineTo(7 + L, 2.5); c.fill();
+        // 드릴 로드 + 버튼 비트 — 광맥 쪽으로 뻗어 돈다(로드 마디가 흐르고 비트 날이 번갈아 빛난다) · 착암기라 앞뒤로 친다
+        c.translate(ox, oy); c.rotate(ang);
+        const L = 9 + Math.sin(t * (elec ? 40 : 22)) * 1.2, ph = (t * (elec ? 44 : 20)) % 3;
+        c.fillStyle = '#7a7e86'; c.fillRect(0, -1.5, L, 3);
+        c.fillStyle = '#c8ccd4'; for (let x = ph; x < L; x += 3) c.fillRect(x, -1.5, 1, 3);
+        c.fillStyle = '#4a4e56'; c.fillRect(L, -3, 4, 6);
+        c.fillStyle = Math.sin(t * 50) > 0 ? '#f0f4fa' : '#a8b0bc'; c.fillRect(L + 4, -2, 1, 1); c.fillRect(L + 4, 1, 1, 1);
+        c.fillStyle = Math.sin(t * 50) > 0 ? '#a8b0bc' : '#f0f4fa'; c.fillRect(L + 4, -0.5, 1, 1);
         c.restore(); c.save();                                         // 회전을 풀고 광맥 쪽을 그린다
         // 광맥의 금 — 남은 횟수가 줄수록 늘어난다(광상은 줄지 않으니 가는 금만)
         const k = m.tgt[1] * WW + m.tgt[0], left = w.oreHits[k];
