@@ -83,7 +83,8 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
     /* 알아차림 — 보스·순한 동물·떠다니는 것 말고는 눈(시선)과 귀(가까움)와 기억으로 쫓는다(engine entity/sense).
        보이면 플레이어를, 놓쳤으면 마지막으로 본 자리를 과녁으로 삼는다. 쏘는 몹은 보일 때만 쏜다. */
     const real = Math.hypot(player.cx - this.cx, player.cy - this.cy);
-    let tx = player.cx, ty = player.cy, seen = true, engaged = real < this.aggro;
+    /* 깨운 보스는 결전 상대를 쉽게 놓지 않는다 — 물러서며 싸우는 관리자가 460px 밖으로 나가자 기술을 한 번도 안 썼다 */
+    let tx = player.cx, ty = player.cy, seen = true, engaged = real < (this.boss ? Math.max(this.aggro, 1100) : this.aggro);
     if (SENSING[AI] && !this.boss && !this.def.passive) {
       if (!this.sense) this.sense = new Senses({ sight: this.aggro, hearing: Math.min(150, this.aggro * 0.35), memory: 5, react: 0.18 });
       const ex = this.cx / TS, ey = (this.y + Math.min(10, this.h * 0.3)) / TS;
@@ -240,6 +241,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
         break;
       case 'b_overseer': if (ph >= 1) this.term = 0; break;
     }
+    this.formPhase(ph);                                 // 날아오르기 · 둘로 갈라지기(entity/boss-forms)
   },
 
   /** 원형 2페이즈 — 받침대 넷. */

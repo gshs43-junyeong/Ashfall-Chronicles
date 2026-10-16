@@ -169,11 +169,18 @@ export const DialogueUIPart: Bag = {
     el.classList.toggle('last', e.lastPh());
     el.classList.toggle('gap', e.gapT > 0);             // 틈 — 막대 테두리가 금빛으로 고동친다(글 알림 대신)
     el.classList.toggle('brace', e.bracing());          // 방어 자세 — 막대가 잿빛으로 식는다
-    const r = Math.max(0, e.hp / e.maxHp);
+    /* 갈라진 둘은 합쳐 하나의 막대로 · 방어막은 체력 끝에 파랗게 이어 붙인다(entity/boss-forms — 손님은 net 이 준 값) */
+    const tw = e.ghost ? null : e.twinLive(), pn = e.ghost ? e.poolNet : null;
+    const hp = pn ? pn[0] : Math.max(0, e.hp) + (tw ? Math.max(0, tw.hp) : 0), mx = pn ? pn[1] : (e.poolMax || e.maxHp);
+    const sh = (e.shield || 0) + (tw ? tw.shield || 0 : 0), r = Math.max(0, hp / mx);
     $('#bb-fill').style.width = r * 100 + '%';
     /* 잔상은 같은 값을 넣고 **느리게 따라오게만** 한다(CSS: 0.18초 늦게 0.5초에 걸쳐). */
     $('#bb-ghost').style.width = r * 100 + '%';
-    $('#bb-hp').textContent = `${fmt(Math.ceil(e.hp))} / ${fmt(e.maxHp)}`;
+    const sb = $('#bb-shield'); sb.style.left = r * 100 + '%'; sb.style.width = (sh > 0 ? sh / mx * 100 : 0) + '%';
+    const wd = e.ward > 0 ? e : tw && tw.ward > 0 ? tw : null;
+    el.classList.toggle('ward', !!wd);
+    $('#bb-hp').textContent = `${fmt(Math.ceil(hp))} / ${fmt(mx)}` + (sh > 0 ? ` + ${fmt(Math.ceil(sh))}` : '')
+      + (wd ? ' · ' + tr('결계 {n}', { n: wd.ward }) : '');
   },
 };
 mixin(UI, DialogueUIPart);

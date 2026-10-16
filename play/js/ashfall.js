@@ -14494,13 +14494,17 @@
   var bossmoves_exports = {};
   __export(bossmoves_exports, {
     ARC_FX: () => ARC_FX,
+    BOSS_FORM: () => BOSS_FORM,
     BOSS_GAP: () => BOSS_GAP,
     BOSS_MOVES: () => BOSS_MOVES,
     DOWN_COL: () => DOWN_COL,
     GAP_BRACE: () => GAP_BRACE,
     GAP_KIND: () => GAP_KIND,
     GAP_MISS_MUL: () => GAP_MISS_MUL,
-    XFX_OF: () => XFX_OF
+    GROUND_MOVE: () => GROUND_MOVE,
+    MOVE_FAM: () => MOVE_FAM,
+    XFX_OF: () => XFX_OF,
+    movePose: () => movePose
   });
   var BOSS_MOVES = {
     /* ---------------- 세션 1 ---------------- */
@@ -14511,7 +14515,9 @@
         { k: "leap", n: "왕관 내려찍기", tele: 0.7, waves: 1, wspd: 360, wfx: "gel", m: 1.1 },
         { k: "zone", n: "끈적이는 비", tele: 0.6, at: "scatter", n2: 5, r: 46, life: 6, dps: 0.12, slow: 0.45, fx: "gel" },
         { k: "summon", n: "신하들을 부른다", tele: 0.8, mob: "slime", cnt: 4 },
-        { k: "sig", sig: "melt", n: "녹아드는 왕관", tele: 0.8, pose: 0, m: 1 }
+        { k: "sig", sig: "melt", n: "녹아드는 왕관", tele: 0.8, pose: 0, m: 1 },
+        { k: "ring", n: "젤리 파문", tele: 0.5, times: 2, cnt: 16, gap: 3, spd: 200, every: 0.6, proj: "gel", m: 0.5, pw: [1, 1, 0.8] },
+        { k: "homing", n: "튀는 젤리", tele: 0.6, cnt: 4, spd: 200, turn: 1.6, proj: "gel", m: 0.6, ph: 1, pw: [0, 1, 1.5] }
       ],
       ult: { k: "leap", n: "왕의 무게", tele: 0.9, times: 3, waves: 1, wspd: 420, wfx: "gel", m: 1.2 }
     },
@@ -14522,7 +14528,10 @@
         { k: "dash", n: "뼈 회전", tele: 0.55, times: 3, spd: 3.4, m: 1 },
         { k: "homing", n: "울부짖는 해골", tele: 0.6, cnt: 4, spd: 210, turn: 2.2, proj: "skull", m: 0.7 },
         { k: "rain", n: "뼈 감옥", tele: 0.7, form: "cage", cnt: 9, gapX: 46, delay: 0.9, shape: "col", fx: "bone", m: 0.9 },
-        { k: "sig", sig: "reform", n: "흩어졌다 맞추기", tele: 0.6, pose: 0, m: 1 }
+        { k: "sig", sig: "reform", n: "흩어졌다 맞추기", tele: 0.6, pose: 0, m: 1 },
+        { k: "march", n: "뼈 창 줄", tele: 0.6, cnt: 7, gap: 56, every: 0.13, h: 110, fx: "bone", m: 0.9, pw: [1, 1, 1] },
+        { k: "shield", n: "뼈 방패", tele: 0.7, v: 0.12, life: 12, fx: "bone", ph: 1, pw: [0, 1.2, 1] },
+        { k: "summon", n: "해골 궁수대", tele: 0.8, mob: "archer", cnt: 3, ph: 2, pw: [0, 0, 1.3] }
       ],
       ult: { k: "spiral", n: "뼈 폭풍", tele: 1, arms: 4, dur: 4, every: 0.12, spd: 300, proj: "bone", turn: 2.4, m: 0.5 }
     },
@@ -14533,7 +14542,10 @@
         { k: "ring", n: "고동 파문", tele: 0.6, times: 3, cnt: 22, gap: 4, spd: 230, every: 0.55, proj: "dark", m: 0.6 },
         { k: "march", n: "혈관 가시", tele: 0.6, cnt: 7, gap: 54, every: 0.13, h: 90, fx: "flesh", m: 0.9 },
         { k: "vortex", n: "흡혈 소용돌이", tele: 0.7, life: 2.6, r: 300, pull: 260, burst: 120, fx: "flesh", m: 1 },
-        { k: "sig", sig: "beat", n: "박동", tele: 0.7, pose: 0, m: 1 }
+        { k: "sig", sig: "beat", n: "박동", tele: 0.7, pose: 0, m: 1 },
+        { k: "heal", n: "흡혈 박동", tele: 0.6, dur: 3, v: 0.08, brk: 0.035, fx: "flesh", ph: 1, pw: [0, 1, 1.4] },
+        { k: "beam", n: "핏줄 광선", tele: 0.8, cnt: 2, spread: 3.14, dur: 2.2, w: 24, len: 700, sweep: 1.6, fx: "void", m: 0.35, ph: 1, pw: [0, 1, 1] },
+        { k: "homing", n: "검은 피 방울", tele: 0.6, cnt: 5, spd: 200, turn: 2, proj: "dark", m: 0.5, ph: 2, pw: [0, 0, 1.4] }
       ],
       ult: { k: "ring", n: "터지는 심장", tele: 1, times: 5, cnt: 28, gap: 5, spd: 260, every: 0.42, proj: "dark", zones: 1, m: 0.6 }
     },
@@ -14544,7 +14556,10 @@
         { k: "clones", n: "거울 분신", tele: 0.8, cnt: 2, ring: 12, proj: "frost", m: 0.55 },
         { k: "rain", n: "얼음 창 비", tele: 0.6, form: "scatter", cnt: 7, spread: 360, delay: 0.85, shape: "col", fx: "ice", m: 0.9 },
         { k: "zone", n: "서리 바닥", tele: 0.5, at: "player", n2: 3, r: 70, life: 7, dps: 0.06, slow: 0.55, fx: "frost" },
-        { k: "sig", sig: "mirrors", n: "얼음 거울 감옥", tele: 0.8, pose: 0, m: 1 }
+        { k: "sig", sig: "mirrors", n: "얼음 거울 감옥", tele: 0.8, pose: 0, m: 1 },
+        { k: "shield", n: "얼음 거울 갑옷", tele: 0.7, v: 0.14, life: 12, fx: "ice", ph: 1, pw: [0, 1, 1.3] },
+        { k: "wall", n: "눈보라 벽", tele: 0.8, times: 2, spd: 260, every: 1.3, fx: "ice", m: 0.8, ph: 1, pw: [0, 1, 1] },
+        { k: "homing", n: "서리 정령", tele: 0.6, cnt: 4, spd: 180, turn: 2.2, proj: "frost", m: 0.5, ph: 2, pw: [0, 0, 1.4] }
       ],
       ult: { k: "beam", n: "절대 영도", tele: 1.2, cnt: 2, spread: 3.14, dur: 3, w: 26, len: 760, sweep: 1.4, fx: "frost", m: 0.35 }
     },
@@ -14555,7 +14570,10 @@
         { k: "vortex", n: "사건의 지평선", tele: 0.8, life: 3, r: 380, pull: 320, burst: 150, fx: "void", m: 1.1 },
         { k: "beam", n: "공허 광선", tele: 0.9, cnt: 1, dur: 2.2, w: 30, len: 900, sweep: 2.2, fx: "void", m: 0.35 },
         { k: "blink", n: "틈새 도약", tele: 0.3, times: 3, r: 90, fx: "rift", m: 1 },
-        { k: "sig", sig: "veil", n: "어둠 장막", tele: 0.9, pose: 0, m: 1 }
+        { k: "sig", sig: "veil", n: "어둠 장막", tele: 0.9, pose: 0, m: 1 },
+        { k: "ring", n: "공허 파문", tele: 0.6, times: 3, cnt: 24, gap: 4, spd: 250, every: 0.5, rot: 0.3, proj: "void", m: 0.5, pw: [1, 1, 1] },
+        { k: "ward", n: "공허의 결계", tele: 0.8, hits: 12, life: 9, fx: "void", ph: 1, pw: [0, 0.9, 1.2] },
+        { k: "rain", n: "별 없는 비", tele: 0.6, form: "trail", cnt: 7, every: 0.25, delay: 0.8, r: 46, shape: "circle", fx: "rift", m: 0.9, ph: 2, pw: [0, 0, 1.4] }
       ],
       ult: { k: "spiral", n: "왕의 붕괴", tele: 1.2, arms: 6, dur: 5, every: 0.1, spd: 280, proj: "void", turn: -1.8, m: 0.4 }
     },
@@ -14566,7 +14584,10 @@
         { k: "march", n: "낙뢰 기둥", tele: 0.5, cnt: 8, gap: 64, every: 0.11, h: 420, from: "sky", fx: "bolt", m: 0.9 },
         { k: "push", n: "폭풍 밀어내기", tele: 0.6, life: 3.2, force: 520, fx: "wind", m: 0 },
         { k: "dash", n: "급강하", tele: 0.5, times: 3, spd: 3.8, m: 1 },
-        { k: "sig", sig: "rods", n: "피뢰침", tele: 0.7, pose: 0, m: 1 }
+        { k: "sig", sig: "rods", n: "피뢰침", tele: 0.7, pose: 0, m: 1 },
+        { k: "rain", n: "뇌우", tele: 0.6, form: "scatter", cnt: 8, spread: 460, delay: 0.8, shape: "col", fx: "bolt", m: 0.9, pw: [1, 1, 1] },
+        { k: "homing", n: "구전", tele: 0.6, cnt: 4, spd: 220, turn: 2.4, proj: "bolt", m: 0.5, ph: 1, pw: [0, 1.2, 1] },
+        { k: "shield", n: "폭풍의 눈", tele: 0.7, v: 0.12, life: 10, fx: "wind", ph: 2, pw: [0, 0, 1.3] }
       ],
       ult: { k: "wall", n: "천둥 벽", tele: 1, times: 3, spd: 300, gap: 110, every: 1.4, fx: "bolt", m: 0.8 }
     },
@@ -14577,7 +14598,10 @@
         { k: "march", n: "룬 기둥", tele: 0.6, cnt: 8, gap: 58, every: 0.14, h: 120, both: 1, fx: "rune", m: 0.9 },
         { k: "beam", n: "파수 광선", tele: 0.8, cnt: 3, spread: 0.5, dur: 1.2, w: 22, len: 820, sweep: 0, fx: "rune", m: 0.45 },
         { k: "rain", n: "봉인 지뢰", tele: 0.5, form: "scatter", cnt: 6, spread: 420, delay: 2.2, r: 52, shape: "circle", fx: "rune", m: 1 },
-        { k: "sig", sig: "scales", n: "판결의 저울", tele: 0.8, pose: 0, m: 1 }
+        { k: "sig", sig: "scales", n: "판결의 저울", tele: 0.8, pose: 0, m: 1 },
+        { k: "homing", n: "룬 추적탄", tele: 0.6, cnt: 5, spd: 200, turn: 2, proj: "rune", m: 0.55, pw: [1, 1, 1] },
+        { k: "ward", n: "판결의 결계", tele: 0.8, hits: 14, life: 10, fx: "rune", ph: 1, pw: [0, 1, 1.2] },
+        { k: "blink", n: "파수 강림", tele: 0.3, times: 2, r: 90, fx: "slash", m: 1, ph: 2, pw: [0, 0, 1.3] }
       ],
       ult: { k: "ring", n: "최초의 판결", tele: 1.2, times: 4, cnt: 26, gap: 4, spd: 260, every: 0.5, proj: "rune", march: 1, m: 0.6 }
     },
@@ -14588,7 +14612,10 @@
         { k: "rain", n: "별똥 추격", tele: 0.6, form: "trail", cnt: 8, every: 0.22, delay: 0.75, r: 48, shape: "circle", fx: "meteor", m: 1 },
         { k: "dash", n: "그림자 질주", tele: 0.4, times: 4, spd: 3.6, m: 1 },
         { k: "vortex", n: "중력 우물", tele: 0.8, life: 3.2, r: 420, pull: 340, burst: 170, fx: "grav", m: 1.1 },
-        { k: "sig", sig: "gaze", n: "응시", tele: 0.8, pose: 0, m: 1 }
+        { k: "sig", sig: "gaze", n: "응시", tele: 0.8, pose: 0, m: 1 },
+        { k: "beam", n: "별을 꿰는 선", tele: 0.9, cnt: 1, dur: 2, w: 26, len: 900, sweep: 2, fx: "star", m: 0.35, ph: 1, pw: [0, 1, 1, 1, 1] },
+        { k: "homing", n: "떠도는 별", tele: 0.6, cnt: 6, spd: 210, turn: 2, proj: "void", m: 0.5, ph: 2, pw: [0, 0, 1.2, 1, 1] },
+        { k: "blink", n: "그림자 건너기", tele: 0.3, times: 3, r: 90, fx: "rift", m: 1, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }
       ],
       ult: { k: "spiral", n: "종말의 별", tele: 1.4, arms: 5, dur: 5.5, every: 0.09, spd: 300, proj: "void", turn: 2, rain: 1, m: 0.4 }
     },
@@ -14600,7 +14627,9 @@
         { k: "quake", n: "갱도 붕괴", tele: 0.7, cnt: 7, spread: 380, delay: 0.95, fx: "rock", m: 0.9 },
         { k: "burrow", n: "땅굴 기습", tele: 0.5, under: 1.4, r: 70, m: 1.2 },
         { k: "summon", n: "광부 망령을 깨운다", tele: 0.8, mob: "minerghost", cnt: 2 },
-        { k: "sig", sig: "cart", n: "광차 돌진", tele: 0.6, pose: 1, m: 1 }
+        { k: "sig", sig: "cart", n: "광차 돌진", tele: 0.6, pose: 1, m: 1 },
+        { k: "homing", n: "녹슨 못 세례", tele: 0.6, cnt: 5, spd: 220, turn: 1.8, proj: "rivet", m: 0.6, pw: [0.6, 1] },
+        { k: "leap", n: "갱도 짓누르기", tele: 0.7, times: 2, waves: 1, wspd: 330, wfx: "rock", m: 1, ph: 1, pw: [0, 1.6] }
       ],
       ult: { k: "quake", n: "붕락", tele: 1, cnt: 14, spread: 520, delay: 1.1, fx: "rock", m: 1 }
     },
@@ -14611,7 +14640,9 @@
         { k: "wall", n: "빙벽 밀기", tele: 0.8, times: 1, spd: 240, gap: 120, fx: "ice", m: 0.9 },
         { k: "ring", n: "서리 고리", tele: 0.6, times: 2, cnt: 18, gap: 3, spd: 220, every: 0.7, proj: "frost", m: 0.6 },
         { k: "rain", n: "얼음 감옥", tele: 0.7, form: "cage", cnt: 7, gapX: 50, delay: 1, shape: "col", fx: "ice", m: 0.9 },
-        { k: "sig", sig: "snowball", n: "눈사태", tele: 0.7, pose: 0, m: 1 }
+        { k: "sig", sig: "snowball", n: "눈사태", tele: 0.7, pose: 0, m: 1 },
+        { k: "beam", n: "얼음 광선", tele: 0.8, cnt: 1, dur: 1.6, w: 22, len: 700, sweep: 1.2, fx: "frost", m: 0.4, pw: [0.8, 1] },
+        { k: "shield", n: "서리 갑주", tele: 0.7, v: 0.12, life: 12, fx: "ice", ph: 1, pw: [0, 1.4] }
       ],
       ult: { k: "zone", n: "빙하기", tele: 1, at: "scatter", n2: 7, r: 70, life: 8, dps: 0.07, slow: 0.6, fx: "frost", wall: 1 }
     },
@@ -14622,7 +14653,9 @@
         { k: "march", n: "뿌리 분출", tele: 0.5, cnt: 6, gap: 60, every: 0.18, h: 110, from: "under", fx: "plant", m: 1 },
         { k: "beam", n: "가시 채찍", tele: 0.55, cnt: 1, dur: 0.6, w: 22, len: 300, sweep: 2.6, fx: "thorn", m: 0.6 },
         { k: "rain", n: "씨앗 폭탄", tele: 0.6, form: "scatter", cnt: 5, spread: 340, delay: 1, r: 54, shape: "circle", fx: "seed", zone: { r: 50, life: 4, dps: 0.08, slow: 0.25 }, m: 0.8 },
-        { k: "sig", sig: "grapple", n: "갈고리 덩굴", tele: 0.5, pose: 1, m: 1 }
+        { k: "sig", sig: "grapple", n: "갈고리 덩굴", tele: 0.5, pose: 1, m: 1 },
+        { k: "zone", n: "가시덤불", tele: 0.5, at: "player", n2: 3, r: 60, life: 6, dps: 0.08, slow: 0.4, fx: "seed", pw: [0.8, 1] },
+        { k: "heal", n: "광합성", tele: 0.6, dur: 3, v: 0.08, brk: 0.04, fx: "leaf", ph: 1, pw: [0, 1.3] }
       ],
       ult: { k: "march", n: "숲의 분노", tele: 1, cnt: 9, gap: 60, every: 0.12, h: 130, both: 1, fx: "plant", homing: 4, m: 1 }
     },
@@ -14633,7 +14666,9 @@
         { k: "wall", n: "모래 폭풍", tele: 0.8, times: 2, spd: 260, gap: 120, every: 1.6, fx: "sand", m: 0.8 },
         { k: "march", n: "태양 광선", tele: 0.6, cnt: 6, gap: 80, every: 0.2, h: 460, from: "sky", fx: "sun", m: 1 },
         { k: "vortex", n: "유사 늪", tele: 0.6, life: 2.8, r: 260, pull: 220, floor: 1, burst: 0, fx: "sand", m: 0 },
-        { k: "sig", sig: "dune", n: "사구 해일", tele: 0.7, pose: 0, m: 1 }
+        { k: "sig", sig: "dune", n: "사구 해일", tele: 0.7, pose: 0, m: 1 },
+        { k: "burrow", n: "모래 잠행", tele: 0.5, under: 1.3, r: 80, m: 1.1, pw: [0.7, 1] },
+        { k: "homing", n: "스카라브 떼", tele: 0.6, cnt: 6, spd: 190, turn: 2, proj: "dark", m: 0.5, ph: 1, pw: [0, 1.5] }
       ],
       ult: { k: "ring", n: "피라미드의 저주", tele: 1.1, times: 3, cnt: 24, gap: 4, spd: 240, every: 0.6, proj: "fire", wall: 1, fx: "sand", m: 0.6 }
     },
@@ -14644,7 +14679,9 @@
         { k: "zone", n: "포자 구름", tele: 0.6, at: "scatter", n2: 4, r: 64, life: 6, dps: 0.12, fx: "spore", poison: 1 },
         { k: "rain", n: "꽃 터뜨리기", tele: 0.6, form: "scatter", cnt: 5, spread: 320, delay: 1.1, r: 40, shape: "circle", fx: "spore", burstRing: 8, m: 0.7 },
         { k: "summon", n: "여왕의 부름", tele: 0.8, mob: "sporeling", cnt: 3 },
-        { k: "sig", sig: "garden", n: "버섯 정원", tele: 0.8, pose: 0, m: 1 }
+        { k: "sig", sig: "garden", n: "버섯 정원", tele: 0.8, pose: 0, m: 1 },
+        { k: "ring", n: "포자 고리", tele: 0.5, times: 2, cnt: 20, gap: 4, spd: 200, every: 0.6, proj: "poison", m: 0.5, pw: [1, 0.8] },
+        { k: "heal", n: "균사 흡수", tele: 0.6, dur: 2.6, v: 0.07, brk: 0.04, fx: "spore", ph: 1, pw: [0, 1.3] }
       ],
       ult: { k: "spiral", n: "포자 폭풍", tele: 1.1, arms: 3, dur: 4.5, every: 0.1, spd: 220, proj: "poison", turn: 1.6, m: 0.45 }
     },
@@ -14655,7 +14692,9 @@
         { k: "vortex", n: "집어삼키기", tele: 0.7, life: 2, r: 300, pull: 380, burst: 110, then: "dash", fx: "maw", m: 1.2 },
         { k: "rain", n: "담즙 비", tele: 0.6, form: "scatter", cnt: 6, spread: 360, delay: 0.9, r: 46, shape: "circle", fx: "bile", zone: { r: 46, life: 5, dps: 0.1 }, m: 0.8 },
         { k: "dash", n: "이빨 갈기", tele: 0.35, times: 2, spd: 4, m: 1.1 },
-        { k: "sig", sig: "tongue", n: "포식자의 혀", tele: 0.5, pose: 0, m: 1 }
+        { k: "sig", sig: "tongue", n: "포식자의 혀", tele: 0.5, pose: 0, m: 1 },
+        { k: "march", n: "썩은 송곳니 줄", tele: 0.5, cnt: 7, gap: 56, every: 0.13, h: 100, fx: "flesh", m: 0.9, pw: [1, 1] },
+        { k: "summon", n: "구더기 토하기", tele: 0.7, mob: "sacling", cnt: 3, ring: 12, ph: 1, pw: [0, 1.4] }
       ],
       ult: { k: "ring", n: "둥지 개화", tele: 1, times: 4, cnt: 24, gap: 4, spd: 250, every: 0.5, proj: "dark", summon: "sacling", m: 0.6 }
     },
@@ -14666,7 +14705,9 @@
         { k: "wall", n: "역류", tele: 0.8, times: 1, spd: 300, gap: 110, fx: "water", m: 0.9 },
         { k: "homing", n: "거품 감옥", tele: 0.6, cnt: 5, spd: 150, turn: 1.6, proj: "cagebub", m: 0.5 },
         { k: "leap", n: "닻 내려찍기", tele: 0.7, waves: 1, wspd: 330, wfx: "water", m: 1.1 },
-        { k: "sig", sig: "anchor", n: "닻 사슬", tele: 0.6, pose: 2, m: 1 }
+        { k: "sig", sig: "anchor", n: "닻 사슬", tele: 0.6, pose: 2, m: 1 },
+        { k: "ring", n: "물방울 고리", tele: 0.5, times: 2, cnt: 18, gap: 3, spd: 220, every: 0.6, proj: "drop", m: 0.5, pw: [1, 1, 1] },
+        { k: "shield", n: "거품 껍질", tele: 0.7, v: 0.14, life: 12, fx: "water", ph: 1, pw: [0, 1.2, 1.3] }
       ],
       ult: { k: "vortex", n: "심연의 물결", tele: 1, life: 3, r: 360, pull: 300, burst: 160, waves: 1, fx: "water", m: 1.1 }
     },
@@ -14677,7 +14718,9 @@
         { k: "rain", n: "바위 던지기", tele: 0.7, form: "scatter", cnt: 4, spread: 360, delay: 1.2, r: 64, shape: "circle", fx: "boulder", m: 1.2 },
         { k: "quake", n: "섬 뒤흔들기", tele: 0.6, cnt: 8, spread: 420, delay: 0.9, fx: "rock", m: 0.8 },
         { k: "leap", n: "해일 내려찍기", tele: 0.8, waves: 2, wspd: 300, wfx: "water", m: 1.1 },
-        { k: "sig", sig: "islet", n: "섬 던지기", tele: 0.9, pose: 0, m: 1 }
+        { k: "sig", sig: "islet", n: "섬 던지기", tele: 0.9, pose: 0, m: 1 },
+        { k: "march", n: "산호 솟기", tele: 0.6, cnt: 7, gap: 60, every: 0.14, h: 110, both: 1, fx: "plant", m: 0.9, pw: [1, 1, 1] },
+        { k: "shield", n: "바위 껍질", tele: 0.8, v: 0.16, life: 14, fx: "rock", ph: 1, pw: [0, 1.2, 1.3] }
       ],
       ult: { k: "rain", n: "섬의 무게", tele: 1.2, form: "trail", cnt: 10, every: 0.2, delay: 0.9, r: 70, shape: "circle", fx: "rock", m: 1.1 }
     },
@@ -14688,7 +14731,10 @@
         { k: "vortex", n: "소용돌이", tele: 0.8, life: 3, r: 420, pull: 360, burst: 160, fx: "water", m: 1 },
         { k: "wall", n: "해일", tele: 0.9, times: 2, spd: 320, gap: 120, every: 1.2, fx: "water", m: 0.9 },
         { k: "beam", n: "심해 광선", tele: 1, cnt: 2, spread: 0.6, dur: 2.4, w: 30, len: 900, sweep: 1.2, fx: "water", m: 0.35 },
-        { k: "sig", sig: "flood", n: "밀물", tele: 0.9, pose: 1, m: 1 }
+        { k: "sig", sig: "flood", n: "밀물", tele: 0.9, pose: 1, m: 1 },
+        { k: "leap", n: "파도 내려찍기", tele: 0.7, waves: 2, wspd: 360, wfx: "water", m: 1.1, pw: [1.2, 0, 0] },
+        { k: "homing", n: "거품 감옥", tele: 0.6, cnt: 5, spd: 150, turn: 1.6, proj: "cagebub", m: 0.5, ph: 1, pw: [0, 1.2, 1] },
+        { k: "wall", n: "겹파도", tele: 0.8, times: 3, spd: 340, every: 1.1, fx: "water", m: 0.8, ph: 2, pw: [0, 0, 1.4] }
       ],
       ult: { k: "spiral", n: "물이 지운 것", tele: 1.3, arms: 4, dur: 5, every: 0.1, spd: 290, proj: "frost", turn: 1.4, wall: 1, fx: "water", m: 0.4 }
     },
@@ -14700,7 +14746,9 @@
         { k: "ring", n: "리벳 난사", tele: 0.5, times: 4, cnt: 16, gap: 2, spd: 320, every: 0.35, rot: 0.4, proj: "rivet", m: 0.5 },
         { k: "summon", n: "증식 폭발", tele: 0.8, mob: "splitter", cnt: 2, ring: 18 },
         { k: "march", n: "압착 행진", tele: 0.6, cnt: 7, gap: 56, every: 0.15, h: 100, fx: "metal", m: 0.9 },
-        { k: "sig", sig: "turrets", n: "리벳 포탑", tele: 0.7, pose: 1, m: 1 }
+        { k: "sig", sig: "turrets", n: "리벳 포탑", tele: 0.7, pose: 1, m: 1 },
+        { k: "homing", n: "추적 리벳", tele: 0.6, cnt: 6, spd: 220, turn: 2, proj: "rivet", m: 0.5, pw: [1, 1, 1] },
+        { k: "zone", n: "기름 웅덩이", tele: 0.5, at: "player", n2: 3, r: 60, life: 6, dps: 0.06, slow: 0.45, fx: "ink", ph: 1, pw: [0, 1.2, 1.2] }
       ],
       ult: { k: "spiral", n: "과증식", tele: 1, arms: 6, dur: 4, every: 0.11, spd: 300, proj: "rivet", turn: -2.2, m: 0.4 }
     },
@@ -14711,7 +14759,10 @@
         { k: "march", n: "화로 분출", tele: 0.6, cnt: 8, gap: 60, every: 0.12, h: 160, both: 1, fx: "fire", m: 1 },
         { k: "rain", n: "용융 비", tele: 0.6, form: "scatter", cnt: 8, spread: 440, delay: 0.9, r: 44, shape: "circle", fx: "fire", zone: { r: 44, life: 4, dps: 0.12, burn: 1 }, m: 0.8 },
         { k: "push", n: "역회전 컨베이어", tele: 0.6, life: 3, force: -480, fx: "conveyor", m: 0 },
-        { k: "sig", sig: "pour", n: "쇳물 붓기", tele: 0.7, pose: 1, m: 1 }
+        { k: "sig", sig: "pour", n: "쇳물 붓기", tele: 0.7, pose: 1, m: 1 },
+        { k: "homing", n: "불꽃 탄", tele: 0.6, cnt: 5, spd: 220, turn: 2, proj: "fire", m: 0.5, ph: 1, pw: [0, 1, 1, 1, 1] },
+        { k: "shield", n: "열 차폐", tele: 0.7, v: 0.1, life: 12, fx: "fire", ph: 2, pw: [0, 0, 1.3, 1, 0.8] },
+        { k: "rain", n: "불똥 비", tele: 0.6, form: "trail", cnt: 8, every: 0.22, delay: 0.75, r: 46, shape: "circle", fx: "fire", m: 0.9, ph: 3, pw: [0, 0, 0, 1.4, 1.6] }
       ],
       ult: { k: "beam", n: "최초의 불", tele: 1.3, cnt: 3, spread: 2.09, dur: 3.4, w: 34, len: 900, sweep: 1.6, fx: "fire", m: 0.35 }
     },
@@ -14722,7 +14773,10 @@
         { k: "beam", n: "레이저 격자", tele: 0.9, cnt: 3, from: "grid", dur: 1.6, w: 18, len: 700, sweep: 0, fx: "laser", m: 0.45 },
         { k: "march", n: "압착기 행렬", tele: 0.6, cnt: 8, gap: 58, every: 0.16, h: 140, from: "sky", fx: "metal", m: 1 },
         { k: "summon", n: "보수 요청", tele: 0.8, mob: "riveter", cnt: 2 },
-        { k: "sig", sig: "drones", n: "점검 드론", tele: 0.8, pose: 2, m: 1 }
+        { k: "sig", sig: "drones", n: "점검 드론", tele: 0.8, pose: 2, m: 1 },
+        { k: "homing", n: "유도 미사일", tele: 0.6, cnt: 4, spd: 240, turn: 2.4, proj: "rivet", m: 0.55, pw: [1, 1, 1] },
+        { k: "shield", n: "역장 방벽", tele: 0.7, v: 0.15, life: 12, fx: "metal", ph: 1, pw: [0, 1.2, 1] },
+        { k: "rain", n: "압착기 낙하", tele: 0.6, form: "trail", cnt: 6, every: 0.3, delay: 0.8, shape: "col", fx: "metal", m: 0.9, ph: 2, pw: [0, 0, 1.4] }
       ],
       ult: { k: "wall", n: "전면 가동", tele: 1, times: 3, spd: 280, gap: 110, every: 1.3, fx: "metal", march: 1, m: 0.8 }
     },
@@ -14733,7 +14787,10 @@
         { k: "blink", n: "완벽한 연격", tele: 0.25, times: 4, r: 96, fx: "slash", m: 1 },
         { k: "beam", n: "설계선", tele: 0.9, cnt: 2, from: "cross", dur: 1.8, w: 20, len: 900, sweep: 0.6, fx: "blueprint", m: 0.4 },
         { k: "summon", n: "형상 주조", tele: 0.8, mob: "draft_form", cnt: 2 },
-        { k: "sig", sig: "project", n: "설계도 투영", tele: 0.5, pose: 0, m: 1 }
+        { k: "sig", sig: "project", n: "설계도 투영", tele: 0.5, pose: 0, m: 1 },
+        { k: "march", n: "설계 기둥", tele: 0.6, cnt: 8, gap: 58, every: 0.12, h: 140, both: 1, fx: "rune", m: 0.9, ph: 1, pw: [0, 1.2, 1, 1, 1] },
+        { k: "ward", n: "완성의 결계", tele: 0.8, hits: 20, life: 10, fx: "rune", ph: 2, pw: [0, 0, 1.2, 1, 1] },
+        { k: "homing", n: "초안 탄", tele: 0.6, cnt: 6, spd: 220, turn: 2.2, proj: "rune", m: 0.5, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }
       ],
       ult: { k: "spiral", n: "원형의 증명", tele: 1.2, arms: 8, dur: 4.5, every: 0.12, spd: 280, proj: "rune", turn: 1.2, blink: 1, m: 0.38 }
     },
@@ -14743,7 +14800,10 @@
       moves: [
         { k: "rewind", n: "되감기", tele: 0.5, back: 3, heal: 0.025 },
         { k: "beam", n: "궤도 광선", tele: 1, cnt: 2, spread: 3.14, dur: 3, w: 30, len: 960, sweep: 2.4, fx: "star", m: 0.35 },
-        { k: "ring", n: "해체 파동", tele: 0.6, times: 3, cnt: 30, gap: 5, spd: 280, every: 0.5, proj: "star", m: 0.55 }
+        { k: "ring", n: "해체 파동", tele: 0.6, times: 3, cnt: 30, gap: 5, spd: 280, every: 0.5, proj: "star", m: 0.55 },
+        { k: "heal", n: "복원", tele: 0.6, dur: 3.2, v: 0.05, brk: 0.03, fx: "clock", ph: 1, pw: [0, 1, 1, 1.2, 1.2] },
+        { k: "clones", n: "과거의 잔상", tele: 0.8, cnt: 2, ring: 12, proj: "star", m: 0.5, ph: 2, pw: [0, 0, 1.2, 1, 1] },
+        { k: "march", n: "빛바늘 낙하", tele: 0.6, cnt: 8, gap: 60, every: 0.11, h: 420, from: "sky", fx: "sun", m: 0.9, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }
       ],
       ult: { k: "vortex", n: "원점 회귀", tele: 1.2, life: 3.4, r: 460, pull: 380, burst: 190, rewind: 1, fx: "clock", m: 1.1 }
     },
@@ -14754,7 +14814,10 @@
         { k: "quake", n: "갱 메우기", tele: 0.8, cnt: 12, spread: 520, delay: 1, fx: "rock", m: 1 },
         { k: "vortex", n: "삼키는 구멍", tele: 0.7, life: 2.8, r: 400, pull: 360, burst: 170, fx: "pit", m: 1.1 },
         { k: "burrow", n: "굴착", tele: 0.5, under: 1.5, r: 110, m: 1.2 },
-        { k: "sig", sig: "veins", n: "광맥 폭발", tele: 0.7, pose: 0, m: 1 }
+        { k: "sig", sig: "veins", n: "광맥 폭발", tele: 0.7, pose: 0, m: 1 },
+        { k: "march", n: "석순 솟기", tele: 0.6, cnt: 8, gap: 58, every: 0.13, h: 120, both: 1, fx: "bone", m: 0.9, ph: 1, pw: [0, 1.2, 1, 1, 1] },
+        { k: "heal", n: "광석 삼키기", tele: 0.6, dur: 2.8, v: 0.05, brk: 0.035, fx: "rock", ph: 2, pw: [0, 0, 1.2, 1, 1] },
+        { k: "wall", n: "흙더미 밀기", tele: 0.8, times: 2, spd: 280, every: 1.3, fx: "sand", m: 0.8, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }
       ],
       ult: { k: "quake", n: "전부 무너져라", tele: 1.2, cnt: 18, spread: 640, delay: 1.1, fx: "rock", march: 1, m: 1 }
     }
@@ -14794,6 +14857,45 @@
   };
   var GAP_BRACE = 0.45;
   var GAP_MISS_MUL = 0.25;
+  var BOSS_FORM = {
+    king_slime: { split: 2, n: "왕관이 둘로 쪼개진다" },
+    proliferator: { split: 1, n: "스스로를 복제한다" },
+    pursuer: { split: 3, n: "그림자가 떨어져 나온다" },
+    tide_warden: { fly: 1, k: "spout", n: "물기둥을 타고 오른다" },
+    hepha: { fly: 2, k: "jets", n: "분사구에 불이 붙는다" },
+    archetype: { fly: 3, k: "wings", n: "설계선이 날개가 된다" }
+  };
+  var GROUND_MOVE = { leap: 1, burrow: 1 };
+  var MOVE_FAM = {
+    leap: "slam",
+    quake: "slam",
+    march: "slam",
+    rain: "cast",
+    ring: "cast",
+    spiral: "cast",
+    homing: "cast",
+    beam: "cast",
+    wall: "cast",
+    zone: "cast",
+    clones: "cast",
+    rewind: "cast",
+    shield: "cast",
+    ward: "cast",
+    vortex: "pull",
+    push: "pull",
+    summon: "pull",
+    heal: "pull",
+    dash: "lunge",
+    blink: "lunge",
+    burrow: "lunge"
+  };
+  function movePose(K, d) {
+    if (d.pose !== void 0) return d.pose;
+    const i = K.moves.indexOf(d);
+    if (i >= 0 && i < 3) return i;
+    const f = MOVE_FAM[d.k], j = K.moves.slice(0, 3).findIndex((m) => MOVE_FAM[m.k] === f);
+    return j >= 0 ? j : 0;
+  }
 
   // src/game/data/achievements.ts
   var achievements_exports = {};
@@ -19262,7 +19364,7 @@
     /** 유적 방을 낡게 — 천장 들쭉날쭉 · 무너진 모서리 · 방마다 한 가지 특색.
         ★ 난수를 뽑지 않는다(칸 해시) — 뒤따르는 생성이 밀리지 않게. 머리 위(keepY-2 위)만 바꾼다. */
     _wearRoom(r, wall, keepY, plain) {
-      const hs3 = (a, b) => {
+      const hs4 = (a, b) => {
         let v = a * 374761393 + b * 668265263 | 0;
         v = (v ^ v >>> 13) * 1274126177;
         return (v ^ v >>> 16) >>> 0;
@@ -19272,13 +19374,13 @@
         if (y <= lim && y > r.y && x > r.x && x < x1) this.set(x, y, wall);
       };
       const dMax = r.h >= 12 ? 2 : r.h >= 9 ? 1 : 0, big = r.w >= 14 && r.h >= 11;
-      let d = Math.min(dMax, hs3(r.x, r.y) % 2);
+      let d = Math.min(dMax, hs4(r.x, r.y) % 2);
       for (let x = r.x + 1; x < x1; x++) {
-        const t = hs3(r.x * 7 + ((x - r.x) / 4 | 0), r.y) % 3;
+        const t = hs4(r.x * 7 + ((x - r.x) / 4 | 0), r.y) % 3;
         d = Math.max(0, Math.min(dMax, t > d ? d + 1 : t < d ? d - 1 : d));
         for (let y = r.y + 1; y <= r.y + d; y++) fill(x, y);
       }
-      const s0 = big ? 2 + hs3(r.x, r.h) % 3 : 1, s1 = big ? 2 + hs3(x1, r.w) % 3 : 1;
+      const s0 = big ? 2 + hs4(r.x, r.h) % 3 : 1, s1 = big ? 2 + hs4(x1, r.w) % 3 : 1;
       for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
         if (i + j < s0) fill(r.x + 1 + i, r.y + 1 + j);
         if (i + j < s1) fill(x1 - 1 - i, r.y + 1 + j);
@@ -19295,18 +19397,18 @@
           x = e;
         }
       if (r.w < 12 || plain) return;
-      const k = hs3(r.x + r.w, r.y + r.h) % 4;
+      const k = hs4(r.x + r.w, r.y + r.h) % 4;
       if (k <= 1) {
-        const xs = k ? [r.x + (r.w / 3 | 0), x1 - (r.w / 3 | 0)] : [r.x + (r.w >> 1) + hs3(r.y, r.x) % 5 - 2];
+        const xs = k ? [r.x + (r.w / 3 | 0), x1 - (r.w / 3 | 0)] : [r.x + (r.w >> 1) + hs4(r.y, r.x) % 5 - 2];
         for (const px of xs) {
-          const len = lim - r.y - hs3(px, r.y) % 2;
+          const len = lim - r.y - hs4(px, r.y) % 2;
           for (let y = r.y + 1; y < r.y + len; y++) {
             fill(px, y);
             if (y < r.y + len - 1) fill(px + 1, y);
           }
         }
       } else if (k === 2 && lim - r.y >= 5) {
-        const left = hs3(r.w, r.h) % 2 === 0, n = Math.max(3, r.w / 3 | 0);
+        const left = hs4(r.w, r.h) % 2 === 0, n = Math.max(3, r.w / 3 | 0);
         for (let i = 0; i < n; i++) {
           const x = left ? r.x + 1 + i : x1 - 1 - i;
           if (this.get(x, lim) === T.AIR) this.set(x, lim, T.PLATFORM);
@@ -32651,6 +32753,7 @@
       this.submerged = liq.f;
       this.moveX(world, this.x + (this.vx + (liq.cur || 0) * 70) * dt, opts.noStep ? 0 : TS * 0.75, this.x + this.vx * dt);
       let gm = opts.gravMul === void 0 ? 1 : opts.gravMul;
+      if (this.airborne) gm = 0;
       let cap = MAX_FALL;
       if (liq.f > 0) {
         gm *= 1 - 0.72 * liq.f;
@@ -33132,7 +33235,7 @@
     tickSurge(dt, world, p) {
       const S = BOSS_SURGE[this.type];
       if (!S) return false;
-      const fly = SURGE_FLY[this.def.ai] ? { gravMul: 0 } : void 0;
+      const fly = this.flies() ? { gravMul: 0 } : void 0;
       if (this.sgBuf > 0) {
         this.sgBuf -= dt;
         if (this.sgBuf <= 0) this.endBuff();
@@ -33260,6 +33363,7 @@
         return;
       }
       if (this.burrowT > 0) return;
+      if (this.boss && this.formBlock()) return;
       if (this.boss) {
         const m = this.gapHurtMul();
         if (m < 1 && Math.random() < 0.4) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#9fb4c8", 0));
@@ -33278,6 +33382,13 @@
       const red = arm / (arm + 70);
       if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
       let dmg = Math.max(1, Math.round(amount * (1 - red)));
+      if (this.boss) {
+        dmg = this.formHurt(dmg);
+        if (dmg <= 0) {
+          this.flash = 0.08;
+          return;
+        }
+      }
       this.hp -= dmg;
       this.flash = 0.12;
       if (this.sense) {
@@ -33315,6 +33426,14 @@
     die(src) {
       if (this.dead) return;
       this.dead = true;
+      if (this.boss && this.twinLive()) {
+        app.addCorpse(this);
+        app.deathBurst(this);
+        app.sfx("die");
+        if (app.boss === this) app.boss = this.twin;
+        app.toast(tr("하나가 쓰러졌다 — 남은 것이 날뛴다"), "good");
+        return;
+      }
       app.ruinFeed(this);
       if (src && src.remote) {
         app.netKilledBy(src, this);
@@ -33559,7 +33678,9 @@
     skull: { burst: "soul", ring: "#bfe8ff", rr: 26, parts: 8 },
     cagebub: { burst: "frost", ring: "#bfe6ff", rr: 28, parts: 10 },
     web: { burst: "frost", ring: "#eef0f4", rr: 22, parts: 6 },
-    fruit: { burst: "hit", ring: "#e8783a", rr: 20, parts: 9 }
+    fruit: { burst: "hit", ring: "#e8783a", rr: 20, parts: 9 },
+    gel: { burst: "frost", ring: "#6fa8ff", rr: 22, parts: 8 },
+    drop: { burst: "frost", ring: "#7fc8e8", rr: 20, parts: 8 }
     /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
   };
   var PROJ_STYLE = {
@@ -33589,8 +33710,11 @@
     cagebub: { c: "#bfe6ff", r: 9 },
     web: { c: "#eef0f4", r: 6 },
     // 거미줄 덩이 — 그림은 game/boss-tell-art
-    fruit: { c: "#c8641e", r: 6 }
+    fruit: { c: "#c8641e", r: 6 },
     // 원숭이가 던지는 열매
+    gel: { c: "#6fa8ff", r: 7 },
+    // 슬라임 왕의 젤리 덩이 · 지킴이의 물방울 — 그림은 game/boss-tell-art
+    drop: { c: "#7fc8e8", r: 6 }
   };
   var PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1, fruit: 1 };
   var PROJ_MOVE = {};
@@ -35356,7 +35480,7 @@
       const AI = this.def.ai;
       const sp = this.spd * this.slowF;
       const real = Math.hypot(player.cx - this.cx, player.cy - this.cy);
-      let tx = player.cx, ty = player.cy, seen = true, engaged = real < this.aggro;
+      let tx = player.cx, ty = player.cy, seen = true, engaged = real < (this.boss ? Math.max(this.aggro, 1100) : this.aggro);
       if (SENSING[AI] && !this.boss && !this.def.passive) {
         if (!this.sense) this.sense = new Senses({ sight: this.aggro, hearing: Math.min(150, this.aggro * 0.35), memory: 5, react: 0.18 });
         const ex = this.cx / TS, ey = (this.y + Math.min(10, this.h * 0.3)) / TS;
@@ -35581,6 +35705,7 @@
           if (ph >= 1) this.term = 0;
           break;
       }
+      this.formPhase(ph);
     },
     /** 원형 2페이즈 — 받침대 넷. */
     raisePedestals() {
@@ -36262,9 +36387,9 @@
       const { WW: WW2, WH: WH2 } = dimsOf(world);
       const AI = this.def.ai;
       this.stateT -= dt;
-      const hpr = this.hp / this.maxHp;
+      const hpr = this.poolRatio();
       const nph = this.phases;
-      this.phase = Math.min(nph - 1, Math.floor((1 - hpr) * nph));
+      this.phase = Math.max(this.lastPhase || 0, Math.min(nph - 1, Math.floor((1 - hpr) * nph)));
       this.pf = nph > 1 ? this.phase / (nph - 1) : 0;
       if (this.phase > this.lastPhase) {
         this.lastPhase = this.phase;
@@ -36274,6 +36399,7 @@
       this.phaseT = (this.phaseT || 0) - dt;
       if (this.phaseInv > 0) this.phaseInv -= dt;
       this.tickWeak(dt, world, p);
+      this.formTick(dt, p);
       if (this.tickGap(dt, world)) {
         this.stateT += dt;
         return;
@@ -36772,7 +36898,7 @@
       const K = BOSS_MOVES[this.type];
       if (!K) return false;
       this.mvHist(dt);
-      const fly = !!SURGE_FLY[this.def.ai];
+      const fly = this.flies();
       const mv = this.mv;
       if (mv) {
         mv.t += dt;
@@ -36796,7 +36922,7 @@
           this.mv = null;
           this.burrowT = 0;
           this.gapOpen(ult);
-          this.mvCd = K.every * (1 - this.pf * 0.3) * (0.85 + Math.random() * 0.3);
+          this.mvCd = K.every * (1 - this.pf * 0.3) * (0.85 + Math.random() * 0.3) * (this.twinLive() ? 1.6 : 1);
         }
         return true;
       }
@@ -36809,8 +36935,7 @@
         d = K.ult;
         this.ultUsed = 1;
       } else {
-        const pool = K.moves.filter((m) => m !== this.mvLast);
-        d = pool[Math.floor(Math.random() * pool.length)] || K.moves[0];
+        d = this.mvPick(K) || K.moves[0];
       }
       this.mvLast = d;
       this.mv = { d, t: 0, run: null };
@@ -36819,6 +36944,20 @@
       app.bossHazard({ k: "aura", c: K.c, life: d.tele, tele: d.tele, ref: this, nid: this.nid, mk: d.k, sig: d.sig, fx: this.mvFx(d), proj: d.proj, cnt: d.cnt, sd: Math.random() * 99 });
       app.sfxAt && app.sfxAt(d === K.ult ? "chapter" : "sk_mark", this.cx / TS, this.cy / TS);
       return true;
+    },
+    /** 마디에 맞춰 고른다 — ph 마디부터 열리고 pw[마디] 가 무게(없으면 1). 날아오른 몸은 땅 기술을 건너뛴다 · 막이 남아 있으면 또 걸지 않는다 */
+    mvPick(K) {
+      const ph = this.phase || 0, air = !!this.airborne;
+      const pool = K.moves.filter((m) => m !== this.mvLast && ph >= (m.ph || 0) && !(air && GROUND_MOVE[m.k]) && !(m.k === "shield" && this.shield > 0 || m.k === "ward" && this.ward > 0 || m.k === "heal" && this.hp > this.maxHp * 0.9));
+      const wt = (m) => m.pw ? m.pw[Math.min(ph, m.pw.length - 1)] : 1;
+      let sum = 0;
+      for (const m of pool) sum += wt(m);
+      let r = Math.random() * sum;
+      for (const m of pool) {
+        r -= wt(m);
+        if (r < 0 && wt(m) > 0) return m;
+      }
+      return pool.find((m) => wt(m) > 0) || null;
     },
     /** 지난 자리(되감기용) — 0.2초마다 하나, 4초 치 */
     mvHist(dt) {
@@ -36877,7 +37016,7 @@
     },
     /** 기술 실행 — 돌려준 busy 동안 보스가 묶인다(tick 이 있으면 그 동안 움직임을 그것이 맡는다) */
     mvStart(d, p, world, K) {
-      const m = d.m ?? 1, fly = !!SURGE_FLY[this.def.ai], E = this;
+      const m = d.m ?? 1, fly = this.flies(), E = this;
       const xf = d.fx || XFX_OF[d.proj] || "rock";
       const extra = () => {
         if (d.march) this.mvStart({ k: "march", cnt: 8, gap: 60, every: 0.12, h: 130, both: 1, fx: xf, m: 0.8 }, p, world, K);
@@ -36891,6 +37030,11 @@
         case "sig":
           return this.sigStart(d, p, world, K);
         // 그 보스만의 기술(entity/boss-signature)
+        case "heal":
+        case "shield":
+        case "ward":
+          return this.formMove(d, p, world, K);
+        // 치유 · 방어막 · 결계(entity/boss-forms)
         case "leap": {
           const times = d.times || 1;
           const r = { busy: 99, n: 0, air: 0, wait: 0.05 };
@@ -37608,7 +37752,7 @@
       this.gapT -= dt;
       if (this.mvCd !== void 0 && this.mvCd < this.gapT + 0.4) this.mvCd = this.gapT + 0.4;
       if (this.gapK !== "stagger") return false;
-      const fly = !!SURGE_FLY[this.def.ai];
+      const fly = this.flies();
       this.vx *= 0.8;
       if (fly) this.vy = this.vy * 0.85 + 22;
       this.move(dt, world, { gravMul: fly ? 0 : 1 });
@@ -37630,6 +37774,188 @@
     }
   };
   mixin(Enemy.prototype, BossGaps, true);
+
+  // src/game/entity/boss-forms.ts
+  var boss_forms_exports = {};
+  __export(boss_forms_exports, {
+    BossForms: () => BossForms
+  });
+  var BossForms = {
+    /** 나는 몸인가 — 본래 나는 갈래이거나 마디를 넘어 날아올랐다 */
+    flies() {
+      return !!SURGE_FLY[this.def.ai] || !!this.airborne;
+    },
+    /** 둘로 갈라진 짝이 살아 있으면 그것 */
+    twinLive() {
+      const t = this.twin;
+      return t && !t.dead ? t : null;
+    },
+    /** 마디를 재는 체력 몫 — 갈라진 뒤엔 둘을 합쳐 본래 최대 체력에 댄다(한쪽이 쓰러져도 마디가 되돌지 않게) */
+    poolRatio() {
+      if (!this.poolMax) return this.hp / this.maxHp;
+      const t = this.twinLive();
+      return (Math.max(0, this.hp) + (t ? Math.max(0, t.hp) : 0)) / this.poolMax;
+    },
+    /** 치유 · 방어막 · 결계 기술(entity/boss-moves mvStart 가 부른다) */
+    formMove(d, p, world, K) {
+      const fly = this.flies();
+      if (d.k === "heal") {
+        const total = this.maxHp * (d.v || 0.06), dur = d.dur || 3;
+        this.healRun = 1;
+        this.healTook = 0;
+        const r = { busy: dur, acc: 0, given: 0 };
+        r.tick = (dt, r2) => {
+          this.vx *= 0.85;
+          if (fly) this.vy *= 0.85;
+          this.move(dt, world, { gravMul: fly ? 0 : 1 });
+          if (!this.healRun) {
+            r2.busy = r2.t;
+            return;
+          }
+          const amt = total * dt / dur;
+          this.hp = Math.min(this.maxHp, this.hp + amt);
+          r2.given += amt;
+          r2.acc += dt;
+          if (r2.acc >= 0.5) {
+            r2.acc = 0;
+            app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 30, this.y - 6, "+" + Math.round(r2.given), "#7dff9a", 0));
+            r2.given = 0;
+          }
+          if (Math.random() < dt * 30) {
+            const a = Math.random() * TAU, R = Math.max(this.w, this.h) * 0.9 + 40;
+            const pt = new Part(this.cx + Math.cos(a) * R, this.cy + Math.sin(a) * R, Math.random() < 0.5 ? "#7dff9a" : K.c, 0, 0.45, { g: 0, glow: 1, drag: 1 });
+            pt.vx = -Math.cos(a) * R * 2;
+            pt.vy = -Math.sin(a) * R * 2;
+            app.parts.push(pt);
+          }
+          if (r2.t >= dur - 0.02) this.healRun = 0;
+        };
+        return r;
+      }
+      if (d.k === "shield") {
+        this.shieldMax = this.shield = Math.round(this.maxHp * (d.v || 0.12));
+        this.shieldT = d.life || 12;
+        this.shFx = d.fx || "";
+        app.texts.push(new DmgText(this.cx, this.y - 18, tr("방어막"), "#8fd0ff", 1));
+        app.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.7, "#8fd0ff", 0.6, 6, 1, 0.6, "sigil_aegis");
+        return { busy: 0.5 };
+      }
+      if (d.k === "ward") {
+        this.ward = this.wardMax = d.hits || 12;
+        this.wardT = d.life || 10;
+        this.shFx = d.fx || "";
+        app.texts.push(new DmgText(this.cx, this.y - 18, tr("결계"), "#ffe08a", 1));
+        app.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.8, K.c, 0.7, 8, 2, 0.6, "sigil_aegis");
+        return { busy: 0.6 };
+      }
+      return { busy: 0.3 };
+    },
+    /** 맞기 전(entity.ts hurt) — 결계면 0 을 돌려준다(막았다) */
+    formBlock() {
+      if (!(this.ward > 0)) return false;
+      this.ward--;
+      this.flash = 0.06;
+      app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 24, this.y - 8, tr("무효"), "#ffe08a", 0));
+      for (let i = 0; i < 4; i++) app.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w, this.cy + (Math.random() - 0.5) * this.h, "#ffe8a0", -40, 0.3, { glow: 1 }));
+      if (this.ward <= 0) this.formBreak("ward");
+      return true;
+    },
+    /** 맞은 뒤(armor 를 뺀 피해) — 방어막이 먼저 받고 남은 것만 돌려준다. 치유 중이면 끊길 만큼 쌓는다 */
+    formHurt(dmg) {
+      if (this.healRun) {
+        this.healTook = (this.healTook || 0) + dmg;
+        const d = this.mv && this.mv.d;
+        if (d && this.healTook >= this.maxHp * (d.brk || 0.04)) {
+          this.healRun = 0;
+          app.texts.push(new DmgText(this.cx, this.y - 20, tr("치유가 끊겼다"), "#ffd27a", 1));
+          if (this.gapOpen) {
+            this.mv = null;
+            this.gapOpen(false);
+            this.mvCd = 3;
+          }
+        }
+      }
+      if (!(this.shield > 0)) return dmg;
+      const take = Math.min(this.shield, dmg);
+      this.shield -= take;
+      if (take > 0) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 14, this.y - 4, take, "#8fd0ff", 0));
+      if (this.shield <= 0) this.formBreak("shield");
+      return dmg - take;
+    },
+    formBreak(k) {
+      app.shake = Math.max(app.shake, 10);
+      for (let i = 0; i < 26; i++) app.parts.push(new Part(this.cx, this.cy, k === "ward" ? "#ffe08a" : "#8fd0ff", -60, 0.7, { glow: 1, spd: 1.6 }));
+      app.ringFx(this.cx, this.cy, Math.max(this.w, this.h) * 1.1, k === "ward" ? "#ffe08a" : "#8fd0ff", 0.45);
+      app.texts.push(new DmgText(this.cx, this.y - 22, k === "ward" ? tr("결계가 깨졌다") : tr("방어막이 깨졌다"), "#fff0b0", 1));
+      app.sfxAt && app.sfxAt("break_glass", this.cx / 22, this.cy / 22);
+      if (k === "ward") {
+        this.ward = 0;
+        this.wardT = 0;
+        if (this.gapOpen) {
+          this.mv = null;
+          this.gapOpen(true);
+        }
+      } else {
+        this.shield = 0;
+        this.shieldT = 0;
+      }
+    },
+    /** 매 프레임(호스트, bossAI 맨 앞) — 막의 남은 시간 · 날아오른 몸의 높이 */
+    formTick(dt, p) {
+      if (this.shieldT > 0 && (this.shieldT -= dt) <= 0) this.shield = 0;
+      if (this.wardT > 0 && (this.wardT -= dt) <= 0) this.ward = 0;
+      if (this.airborne && !SURGE_FLY[this.def.ai]) {
+        const ty = p.cy - 150 - this.h * 0.3 + Math.sin(app.time * 1.3 + (this.nid || 0)) * 30;
+        this.vy = lerp(this.vy, clamp((ty - this.cy) * 2.2, -(this.spd || 100) * 1.6, (this.spd || 100) * 1.6), Math.min(1, dt * 3));
+        if (Math.random() < dt * 20) app.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w * 0.5, this.y + this.h, this.airK === "jets" ? "#ffb050" : this.airK === "spout" ? "#bfe6ff" : "#fff4d0", 120, 0.4, { g: 0.4, glow: 1 }));
+      }
+    },
+    /** 마디를 넘었다(enemy-ai onPhaseChange) — 날아오르거나 갈라진다 */
+    formPhase(ph) {
+      const F = BOSS_FORM[this.type];
+      if (!F || this.ghost) return;
+      if (F.fly !== void 0 && ph >= F.fly && !this.airborne) {
+        this.airborne = 1;
+        this.airK = F.k || "wings";
+        this.vy = -420;
+        if (F.n) app.bossLine(this.def.n, F.n);
+        app.vfx.shock(this.cx, this.y + this.h, Math.max(this.w, this.h) * 1.4, "#fff4d0", 0.5, 10);
+      }
+      if (F.split !== void 0 && ph >= F.split && !this.poolMax && !this.twin) this.splitBoss(F.n);
+    },
+    splitBoss(line4) {
+      const t = new Enemy(this.type, this.x, this.y, 1);
+      this.poolMax = t.poolMax = this.maxHp;
+      const half = Math.max(1, Math.round(this.hp / 2));
+      this.maxHp = t.maxHp = Math.round(this.maxHp / 2);
+      this.hp = t.hp = half;
+      t.dmg = this.dmg;
+      t.armor = this.armor;
+      t.xp = this.xp;
+      t.gold = this.gold;
+      t.spd = this.spd;
+      t.phases = this.phases;
+      t.phase = t.lastPhase = this.lastPhase;
+      t.pf = this.pf;
+      t.phaseInv = 0.8;
+      t.twin = this;
+      this.twin = t;
+      t.mvCd = 3.5;
+      t.sgCd = 8;
+      t.airborne = this.airborne;
+      t.airK = this.airK;
+      t.shade = 1;
+      this.vx = -320;
+      t.vx = 320;
+      this.vy = t.vy = -380;
+      app.ents.push(t);
+      if (line4) app.bossLine(this.def.n, line4);
+      app.vfx.shock(this.cx, this.cy, Math.max(this.w, this.h) * 1.6, (BOSS_MOVES[this.type] || {}).c || "#fff", 0.5, 10);
+      for (let i = 0; i < 30; i++) app.parts.push(new Part(this.cx, this.cy, i % 2 ? this.def.c : "#ffffff", -80, 0.8, { spd: 1.5 }));
+      app.toast(tr("{enemy|이} 둘로 갈라졌다 — 둘 다 쓰러뜨려야 한다", { enemy: ENEMIES[this.type].n }), "bad");
+    }
+  };
+  mixin(Enemy.prototype, BossForms, true);
 
   // src/game/factory.ts
   var factory_exports2 = {};
@@ -42506,10 +42832,17 @@
       el.classList.toggle("last", e.lastPh());
       el.classList.toggle("gap", e.gapT > 0);
       el.classList.toggle("brace", e.bracing());
-      const r = Math.max(0, e.hp / e.maxHp);
+      const tw = e.ghost ? null : e.twinLive(), pn = e.ghost ? e.poolNet : null;
+      const hp = pn ? pn[0] : Math.max(0, e.hp) + (tw ? Math.max(0, tw.hp) : 0), mx = pn ? pn[1] : e.poolMax || e.maxHp;
+      const sh = (e.shield || 0) + (tw ? tw.shield || 0 : 0), r = Math.max(0, hp / mx);
       $("#bb-fill").style.width = r * 100 + "%";
       $("#bb-ghost").style.width = r * 100 + "%";
-      $("#bb-hp").textContent = `${fmt(Math.ceil(e.hp))} / ${fmt(e.maxHp)}`;
+      const sb = $("#bb-shield");
+      sb.style.left = r * 100 + "%";
+      sb.style.width = (sh > 0 ? sh / mx * 100 : 0) + "%";
+      const wd = e.ward > 0 ? e : tw && tw.ward > 0 ? tw : null;
+      el.classList.toggle("ward", !!wd);
+      $("#bb-hp").textContent = `${fmt(Math.ceil(hp))} / ${fmt(mx)}` + (sh > 0 ? ` + ${fmt(Math.ceil(sh))}` : "") + (wd ? " · " + tr("결계 {n}", { n: wd.ward }) : "");
     }
   };
   mixin(UI5, DialogueUIPart);
@@ -50298,6 +50631,179 @@
   };
   mixin(Game.prototype, BossGapFxPart, true);
 
+  // src/game/game/boss-form-fx.ts
+  var boss_form_fx_exports = {};
+  __export(boss_form_fx_exports, {
+    BossFormFx: () => BossFormFx
+  });
+  var hs2 = (s, i) => {
+    const v = Math.sin(s * 127.1 + i * 311.7) * 43758.5453;
+    return v - Math.floor(v);
+  };
+  var BossFormFx = {
+    bossesOnScreen() {
+      return this.ents.filter((e) => e instanceof Enemy && e.boss && !e.dead && (e.airborne || e.shield > 0 || e.ward > 0 || e.healRun));
+    },
+    /** 몸 뒤 — 날아오른 보스를 받치는 것 */
+    drawFormBack(c) {
+      const T2 = this.time, cx0 = this.cam.x, cy0 = this.cam.y;
+      for (const e of this.bossesOnScreen()) {
+        if (!e.airborne) continue;
+        const x = e.cx - cx0, y = e.cy - cy0, foot = e.y + e.h - cy0, W = e.w, H = e.h;
+        c.save();
+        if (e.airK === "jets") {
+          for (const s of [-1, 1]) {
+            const nx = x + s * W * 0.28, L = 46 + Math.sin(T2 * 40 + s) * 8 + hs2(Math.floor(T2 * 30), s + 2) * 10;
+            c.fillStyle = "#3a3430";
+            c.fillRect(nx - 9, foot - 14, 18, 14);
+            c.fillStyle = "#6a5a48";
+            c.fillRect(nx - 7, foot - 2, 14, 4);
+            const g = c.createLinearGradient(0, foot, 0, foot + L);
+            g.addColorStop(0, "rgba(255,250,220,.95)");
+            g.addColorStop(0.35, "rgba(255,170,60,.85)");
+            g.addColorStop(1, "rgba(255,80,20,0)");
+            c.fillStyle = g;
+            c.beginPath();
+            c.moveTo(nx - 7, foot + 2);
+            c.quadraticCurveTo(nx, foot + L * 1.1, nx + 7, foot + 2);
+            c.fill();
+          }
+        } else if (e.airK === "wings") {
+          const flap = Math.sin(T2 * 3) * 0.25;
+          for (const s of [-1, 1]) {
+            c.save();
+            c.translate(x + s * W * 0.18, y - H * 0.18);
+            c.scale(s, 1);
+            c.rotate(-0.35 + flap);
+            c.shadowColor = "rgba(170,210,255,.9)";
+            c.shadowBlur = 10;
+            c.strokeStyle = "rgba(250,244,224,.95)";
+            c.lineWidth = 3;
+            c.fillStyle = "rgba(170,210,255,.34)";
+            c.beginPath();
+            c.moveTo(0, 0);
+            for (let i = 0; i <= 5; i++) {
+              const a = -0.9 + i * 0.32, L = W * (0.9 - Math.abs(i - 2) * 0.08);
+              c.lineTo(Math.cos(a) * L, Math.sin(a) * L);
+            }
+            c.closePath();
+            c.fill();
+            c.stroke();
+            c.lineWidth = 1;
+            c.strokeStyle = "rgba(160,210,255,.7)";
+            for (let i = 0; i <= 5; i++) {
+              const a = -0.9 + i * 0.32, L = W * (0.9 - Math.abs(i - 2) * 0.08);
+              c.beginPath();
+              c.moveTo(0, 0);
+              c.lineTo(Math.cos(a) * L, Math.sin(a) * L);
+              c.stroke();
+            }
+            c.restore();
+          }
+        } else {
+          const by = Math.min(foot + 260, (e.floorY ? e.floorY(e.cx, e.y + e.h) : e.y + e.h + 200) - cy0);
+          for (let i = 0; i < 3; i++) {
+            const w = W * (0.42 - i * 0.1);
+            c.fillStyle = ["rgba(60,140,200,.55)", "rgba(120,190,235,.6)", "rgba(220,245,255,.7)"][i];
+            c.beginPath();
+            c.moveTo(x - w, foot - 6);
+            for (let yy = foot; yy <= by; yy += 10) c.lineTo(x - w * (1 + (yy - foot) / 300) + Math.sin(yy * 0.05 - T2 * 8 + i) * 5, yy);
+            for (let yy = by; yy >= foot; yy -= 10) c.lineTo(x + w * (1 + (yy - foot) / 300) + Math.sin(yy * 0.05 - T2 * 8 + i + 2) * 5, yy);
+            c.closePath();
+            c.fill();
+          }
+          c.fillStyle = "rgba(230,250,255,.8)";
+          for (let i = 0; i < 6; i++) {
+            const u = (T2 * 1.4 + hs2(e.nid || 1, i)) % 1;
+            c.beginPath();
+            c.arc(x + (hs2(3, i) - 0.5) * W * 0.8, foot + u * (by - foot), 2.5, 0, TAU);
+            c.fill();
+          }
+        }
+        c.restore();
+      }
+    },
+    /** 몸 앞 — 방어막(푸른 육각 껍질) · 결계(금빛 룬 고리, 남은 칸만큼) · 치유(초록 숨) */
+    drawFormFront(c) {
+      const T2 = this.time, cx0 = this.cam.x, cy0 = this.cam.y;
+      for (const e of this.bossesOnScreen()) {
+        const x = e.cx - cx0, y = e.cy - cy0, R = Math.max(e.w, e.h) * 0.62 + 14;
+        c.save();
+        if (e.shield > 0) {
+          const g = c.createRadialGradient(x, y, R * 0.6, x, y, R);
+          g.addColorStop(0, "rgba(120,190,255,0)");
+          g.addColorStop(1, "rgba(140,210,255,.32)");
+          c.fillStyle = g;
+          c.beginPath();
+          c.ellipse(x, y, R, R * 1.05, 0, 0, TAU);
+          c.fill();
+          c.strokeStyle = "rgba(190,230,255,.75)";
+          c.lineWidth = 1.2;
+          const n = 14;
+          for (let i = 0; i < n; i++) {
+            const a = i / n * TAU + T2 * 0.4, px = x + Math.cos(a) * R * 0.94, py = y + Math.sin(a) * R * 0.98, r = 9;
+            c.globalAlpha = 0.4 + 0.5 * Math.max(0, Math.sin(T2 * 3 + i * 1.3));
+            c.beginPath();
+            for (let j = 0; j < 6; j++) {
+              const b = j * TAU / 6 + a;
+              c[j ? "lineTo" : "moveTo"](px + Math.cos(b) * r, py + Math.sin(b) * r);
+            }
+            c.closePath();
+            c.stroke();
+          }
+          c.globalAlpha = 1;
+        }
+        if (e.ward > 0) {
+          const wm = e.wardMax || 12, col = (BOSS_MOVES[e.type] || {}).c || "#ffe08a";
+          c.strokeStyle = "rgba(255,224,138,.25)";
+          c.lineWidth = 10;
+          c.beginPath();
+          c.arc(x, y, R + 6, 0, TAU);
+          c.stroke();
+          for (let i = 0; i < wm; i++) {
+            const a0 = -Math.PI / 2 + i / wm * TAU + T2 * 0.3, a1 = a0 + TAU / wm * 0.8, on = i < e.ward;
+            c.strokeStyle = on ? "#ffe08a" : "rgba(120,100,60,.5)";
+            c.lineWidth = on ? 5 : 3;
+            c.beginPath();
+            c.arc(x, y, R + 6, a0, a1);
+            c.stroke();
+          }
+          c.globalAlpha = 0.15 + 0.1 * Math.sin(T2 * 5);
+          c.fillStyle = col;
+          c.beginPath();
+          c.arc(x, y, R, 0, TAU);
+          c.fill();
+          c.globalAlpha = 1;
+        }
+        if (e.healRun) {
+          const g = c.createRadialGradient(x, y, 0, x, y, R * 1.2);
+          g.addColorStop(0, "rgba(140,255,160,.35)");
+          g.addColorStop(1, "rgba(140,255,160,0)");
+          c.globalAlpha = 0.6 + 0.4 * Math.sin(T2 * 8);
+          c.fillStyle = g;
+          c.beginPath();
+          c.arc(x, y, R * 1.2, 0, TAU);
+          c.fill();
+          c.globalAlpha = 1;
+          c.strokeStyle = "#b0ffbe";
+          c.lineWidth = 3;
+          for (let i = 0; i < 4; i++) {
+            const u = (T2 * 0.8 + i / 4) % 1, px = x + (hs2(i, 9) - 0.5) * e.w, py = y + e.h * 0.4 - u * e.h;
+            c.globalAlpha = Math.sin(u * Math.PI);
+            c.beginPath();
+            c.moveTo(px - 5, py);
+            c.lineTo(px + 5, py);
+            c.moveTo(px, py - 5);
+            c.lineTo(px, py + 5);
+            c.stroke();
+          }
+        }
+        c.restore();
+      }
+    }
+  };
+  mixin(Game.prototype, BossFormFx, true);
+
   // src/game/game/mine.ts
   var mine_exports = {};
   __export(mine_exports, {
@@ -53211,8 +53717,8 @@
     /** 유적 비문 — 본편이 아직 말하지 않은 것을 유적마다 한 조각씩 흘린다 */
     readRuinLore(o) {
       if (o.hint !== void 0) {
-        const hs3 = RUIN_HINTS[o.lore];
-        const h = hs3 && hs3[o.hint];
+        const hs4 = RUIN_HINTS[o.lore];
+        const h = hs4 && hs4[o.hint];
         if (!h) return;
         UI5.openLore(h[0], h[1], []);
         this.sfx("open");
@@ -54524,6 +55030,7 @@
     /** 쓰러지면 싸움은 없던 일 — 깨운 보스는 조용히 사라지고(처치 아님 · 보상 없음) 제단·둥지·메아리는 다시 깨울 수 있다. */
     endBossFight() {
       if (this.boss) {
+        if (this.boss.twin) this.boss.twin.dead = true;
         this.boss.dead = true;
         this.boss = null;
       }
@@ -54558,7 +55065,7 @@
     floorMark: () => floorMark,
     glob: () => glob,
     glyph: () => glyph,
-    hs: () => hs2,
+    hs: () => hs3,
     hzGlow: () => hzGlow,
     iceCluster: () => iceCluster,
     icicle: () => icicle,
@@ -54575,7 +55082,7 @@
     seedPod: () => seedPod,
     strokePath: () => strokePath
   });
-  var hs2 = (s, i) => {
+  var hs3 = (s, i) => {
     const v = Math.sin(s * 127.1 + i * 311.7) * 43758.5453;
     return v - Math.floor(v);
   };
@@ -54614,7 +55121,7 @@
     const p = [x0, y0];
     for (let i = 1; i < n; i++) {
       const u = i / n, nx = -(y1 - y0), ny = x1 - x0, L = Math.hypot(nx, ny) || 1;
-      const o = (hs2(sd, i) - 0.5) * 2 * amp;
+      const o = (hs3(sd, i) - 0.5) * 2 * amp;
       p.push(x0 + (x1 - x0) * u + nx / L * o, y0 + (y1 - y0) * u + ny / L * o);
     }
     p.push(x1, y1);
@@ -54632,8 +55139,8 @@
   }
   function cracks(c, sd, x, y, R, col, k, n = 5) {
     for (let i = 0; i < n; i++) {
-      const s = i % 2 ? 1 : -1, L = R * (0.5 + hs2(sd, i) * 0.5) * k;
-      strokePath(c, jag(sd + i * 7, x, y, x + s * L, y - 1 - hs2(sd, i + 9) * 3, 3, 2.5), col, 1.5);
+      const s = i % 2 ? 1 : -1, L = R * (0.5 + hs3(sd, i) * 0.5) * k;
+      strokePath(c, jag(sd + i * 7, x, y, x + s * L, y - 1 - hs3(sd, i + 9) * 3, 3, 2.5), col, 1.5);
     }
   }
   function icicle(c, x, y, len, w, up = false) {
@@ -54656,7 +55163,7 @@
   }
   function iceCluster(c, sd, x, y, w, hgt) {
     for (const [ox, hk, wk] of [[-0.32, 0.62, 0.42], [0.3, 0.74, 0.44], [0, 1, 0.56]]) {
-      const ww = w * wk, hh = hgt * hk * (0.9 + hs2(sd, ox * 10 + 3) * 0.1), cx = x + ox * w;
+      const ww = w * wk, hh = hgt * hk * (0.9 + hs3(sd, ox * 10 + 3) * 0.1), cx = x + ox * w;
       poly(c, [cx - ww / 2, y, cx - ww / 2, y - hh * 0.8, cx, y - hh, cx + ww / 2, y - hh * 0.8, cx + ww / 2, y]);
       const g = c.createLinearGradient(cx - ww / 2, 0, cx + ww / 2, 0);
       g.addColorStop(0, "#8fd0f0");
@@ -54763,7 +55270,7 @@
   function rock(c, sd, x, y, r, rot = 0) {
     const p = [];
     for (let i = 0; i < 7; i++) {
-      const a = rot + i / 7 * TAU, rr = r * (0.75 + hs2(sd, i) * 0.3);
+      const a = rot + i / 7 * TAU, rr = r * (0.75 + hs3(sd, i) * 0.3);
       p.push(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.85);
     }
     poly(c, p);
@@ -54801,7 +55308,7 @@
     c.strokeStyle = "#2e5a24";
     c.stroke();
     c.fillStyle = "#8ad06a";
-    for (let i = 0; i < 4; i++) c.fillRect(-r * 0.7 + i * r * 0.45, -r * 0.48 - hs2(sd, i) * 3, 2, 3);
+    for (let i = 0; i < 4; i++) c.fillRect(-r * 0.7 + i * r * 0.45, -r * 0.48 - hs3(sd, i) * 3, 2, 3);
     c.restore();
   }
   function rootSpear(c, sd, x, y, hgt, w, T2) {
@@ -54928,14 +55435,14 @@
     c.beginPath();
     c.moveTo(x, y - s);
     c.lineTo(x, y + s);
-    const a = hs2(sd, 1) > 0.5 ? 1 : -1;
+    const a = hs3(sd, 1) > 0.5 ? 1 : -1;
     c.moveTo(x, y - s * 0.4);
     c.lineTo(x + a * s * 0.7, y - s * 0.9);
-    if (hs2(sd, 2) > 0.4) {
+    if (hs3(sd, 2) > 0.4) {
       c.moveTo(x, y + s * 0.2);
       c.lineTo(x - a * s * 0.6, y - s * 0.2);
     }
-    if (hs2(sd, 3) > 0.5) {
+    if (hs3(sd, 3) > 0.5) {
       c.moveTo(x - s * 0.5, y + s * 0.7);
       c.lineTo(x + s * 0.5, y + s * 0.7);
     }
@@ -54994,7 +55501,7 @@
       tell(c, h, x, y, k, T2) {
         if (h.dir === "up") {
           cracks(c, h.sd, x, y, h.w * 0.7, "rgba(190,240,255,.9)", k);
-          for (let i = 0; i < 3; i++) icicle(c, x + (i - 1) * h.w * 0.28, y, 3 + k * 10 * (0.7 + hs2(h.sd, i) * 0.5), 5, true);
+          for (let i = 0; i < 3; i++) icicle(c, x + (i - 1) * h.w * 0.28, y, 3 + k * 10 * (0.7 + hs3(h.sd, i) * 0.5), 5, true);
           return;
         }
         const ty = topOf(h, y), fall = k > 0.78 ? ((k - 0.78) / 0.22) ** 2 : 0, len = 18 + Math.min(1, k * 1.4) * 32;
@@ -55015,7 +55522,7 @@
         }
         const u = (f - 0.5) / 0.5;
         for (let i = 0; i < 6; i++) {
-          const a = -Math.PI * (0.15 + 0.7 * hs2(h.sd, i)), d = u * (30 + hs2(h.sd, i + 4) * 26);
+          const a = -Math.PI * (0.15 + 0.7 * hs3(h.sd, i)), d = u * (30 + hs3(h.sd, i + 4) * 26);
           c.globalAlpha = 1 - u;
           icicle(c, x + Math.cos(a) * d, y - 10 + Math.sin(a) * d + u * u * 30, 8, 4);
         }
@@ -55068,7 +55575,7 @@
           c.fill();
         }
         c.globalAlpha = 1;
-        if (Math.sin(T2 * 40 + h.sd) > 0.3) strokePath(c, jag(h.sd + Math.floor(T2 * 20), x, y, x + (hs2(h.sd, Math.floor(T2 * 20)) - 0.5) * h.w, y - 6 - k * 10, 3, 3), "rgba(220,240,255,.9)", 1);
+        if (Math.sin(T2 * 40 + h.sd) > 0.3) strokePath(c, jag(h.sd + Math.floor(T2 * 20), x, y, x + (hs3(h.sd, Math.floor(T2 * 20)) - 0.5) * h.w, y - 6 - k * 10, 3, 3), "rgba(220,240,255,.9)", 1);
         if (k > 0.6 && Math.sin(T2 * 50) > 0) {
           c.setLineDash([4, 10]);
           strokePath(c, jag(h.sd, x, ty + 8, x, y, 8, 8), "rgba(200,230,255,.45)", 1);
@@ -55083,7 +55590,7 @@
         c.globalAlpha = a;
         strokePath(c, p, "rgba(120,180,255,.8)", 9);
         strokePath(c, p, "#ffffff", 3);
-        for (let i = 2; i < 8; i += 3) strokePath(c, jag(h.sd + i, p[i * 2], p[i * 2 + 1], p[i * 2] + (hs2(h.sd, i) - 0.5) * 50, p[i * 2 + 1] + 30, 4, 5), "#dff0ff", 1.5);
+        for (let i = 2; i < 8; i += 3) strokePath(c, jag(h.sd + i, p[i * 2], p[i * 2 + 1], p[i * 2] + (hs3(h.sd, i) - 0.5) * 50, p[i * 2 + 1] + 30, 4, 5), "#dff0ff", 1.5);
         c.globalCompositeOperation = op;
         c.globalAlpha = 1;
         hzGlow(c, x, y - 6, 40 * a + 6, "#cfe6ff", 0.7 * a);
@@ -55099,8 +55606,8 @@
         c.fillRect(x - 1 - k * 2, ty, 2 + k * 4, y - ty);
         c.globalAlpha = 1;
         for (let i = 0; i < 3; i++) {
-          const u = (T2 * 0.8 + hs2(h.sd, i)) % 1;
-          hzGlow(c, x + (hs2(h.sd, i + 3) - 0.5) * h.w, ty + (y - ty) * u, 3, "#fff0b0", 0.8);
+          const u = (T2 * 0.8 + hs3(h.sd, i)) % 1;
+          hzGlow(c, x + (hs3(h.sd, i + 3) - 0.5) * h.w, ty + (y - ty) * u, 3, "#fff0b0", 0.8);
         }
       },
       hit(c, h, x, y, f, T2) {
@@ -55201,8 +55708,8 @@
         floorMark(c, x, y, h.r * (0.35 + k * 0.6), "#1a140e", 0.25 + k * 0.4);
         c.fillStyle = "rgba(150,130,105,.8)";
         for (let i = 0; i < 5; i++) {
-          const u = (T2 * 1.6 + hs2(h.sd, i)) % 1;
-          c.fillRect(x + (hs2(h.sd, i + 2) - 0.5) * r * 1.6, ty + (y - ty) * u * k, 2, 2 + u * 3);
+          const u = (T2 * 1.6 + hs3(h.sd, i)) % 1;
+          c.fillRect(x + (hs3(h.sd, i + 2) - 0.5) * r * 1.6, ty + (y - ty) * u * k, 2, 2 + u * 3);
         }
         if (k > 0.4) rock(c, h.sd, x + (fall ? 0 : Math.sin(T2 * 50) * 1.2), ty + r + (y - r * 1.6 - ty) * fall, r);
       },
@@ -55215,7 +55722,7 @@
         const u = (f - 0.35) / 0.65;
         c.globalAlpha = 1 - u;
         for (let i = 0; i < 5; i++) {
-          const a = -Math.PI * (0.1 + 0.8 * hs2(h.sd, i)), d = u * (20 + r * 2 * hs2(h.sd, i + 7));
+          const a = -Math.PI * (0.1 + 0.8 * hs3(h.sd, i)), d = u * (20 + r * 2 * hs3(h.sd, i + 7));
           rock(c, h.sd + i, x + Math.cos(a) * d, y - r * 0.4 + Math.sin(a) * d + u * u * 40, r * 0.35, u * 6);
         }
         c.globalAlpha = 1;
@@ -55258,15 +55765,15 @@
         cracks(c, h.sd, x, y - b * 0.4, h.r * 0.8, "#2a2014", k, 6);
         c.fillStyle = "#8a7050";
         for (let i = 0; i < 4; i++) {
-          const u = (T2 * 2 + hs2(h.sd, i)) % 1;
-          c.fillRect(x + (hs2(h.sd, i + 5) - 0.5) * h.r, y - b - u * 18 * k, 3, 3);
+          const u = (T2 * 2 + hs3(h.sd, i)) % 1;
+          c.fillRect(x + (hs3(h.sd, i + 5) - 0.5) * h.r, y - b - u * 18 * k, 3, 3);
         }
       },
       hit(c, h, x, y, f) {
         c.globalAlpha = 1 - f;
         for (let i = 0; i < 8; i++) {
-          const a = -Math.PI * (0.1 + 0.8 * hs2(h.sd, i)), d = f * (30 + h.r * hs2(h.sd, i + 3));
-          rock(c, h.sd + i, x + Math.cos(a) * d, y + Math.sin(a) * d + f * f * 50, 4 + hs2(h.sd, i) * 4, f * 5);
+          const a = -Math.PI * (0.1 + 0.8 * hs3(h.sd, i)), d = f * (30 + h.r * hs3(h.sd, i + 3));
+          rock(c, h.sd + i, x + Math.cos(a) * d, y + Math.sin(a) * d + f * f * 50, 4 + hs3(h.sd, i) * 4, f * 5);
         }
         c.globalAlpha = 1;
       }
@@ -55294,7 +55801,7 @@
         floorMark(c, x, y, h.r * 0.8, "#2a1810", 0.6 * (1 - f * 0.6));
         c.fillStyle = "#ffd08a";
         for (let i = 0; i < 8; i++) {
-          const a = -Math.PI * hs2(h.sd, i), d = f * (30 + 50 * hs2(h.sd, i + 4));
+          const a = -Math.PI * hs3(h.sd, i), d = f * (30 + 50 * hs3(h.sd, i + 4));
           c.globalAlpha = 1 - f;
           c.fillRect(x + Math.cos(a) * d, y - 6 + Math.sin(a) * d + f * f * 30, 3, 3);
         }
@@ -55329,7 +55836,7 @@
         c.globalAlpha = 1 - f;
         c.fillStyle = "#e8e0b0";
         for (let i = 0; i < 10; i++) {
-          const a = -Math.PI * hs2(h.sd, i), d = f * h.r * 1.2;
+          const a = -Math.PI * hs3(h.sd, i), d = f * h.r * 1.2;
           c.save();
           c.translate(x + Math.cos(a) * d, y - 8 + Math.sin(a) * d);
           c.rotate(a);
@@ -55339,7 +55846,7 @@
         }
         c.fillStyle = "#7fd06a";
         for (let i = 0; i < 5; i++) {
-          const a = -Math.PI * hs2(h.sd, i + 20), d = f * h.r;
+          const a = -Math.PI * hs3(h.sd, i + 20), d = f * h.r;
           c.beginPath();
           c.ellipse(x + Math.cos(a) * d, y - 8 + Math.sin(a) * d + f * 20, 4, 2, a, 0, TAU);
           c.fill();
@@ -55405,7 +55912,7 @@
       hit(c, h, x, y, f) {
         c.globalAlpha = 1 - f;
         for (let i = 0; i < 9; i++) {
-          const a = -Math.PI * (0.1 + 0.8 * hs2(h.sd, i)), d = f * (20 + h.r * hs2(h.sd, i + 2));
+          const a = -Math.PI * (0.1 + 0.8 * hs3(h.sd, i)), d = f * (20 + h.r * hs3(h.sd, i + 2));
           glob(c, x + Math.cos(a) * d, y - 6 + Math.sin(a) * d + f * f * 30, 3, "#b8d050", "#3a4a10");
         }
         c.globalAlpha = 1;
@@ -55421,9 +55928,9 @@
           hzGlow(c, x, y - 2, h.w * 0.4 + k * 10, "#ff8a3a", 0.3 + k * 0.5);
           c.fillStyle = "rgba(70,60,60,.45)";
           for (let i = 0; i < 3; i++) {
-            const u = (T2 * 1.2 + hs2(h.sd, i)) % 1;
+            const u = (T2 * 1.2 + hs3(h.sd, i)) % 1;
             c.beginPath();
-            c.arc(x + (hs2(h.sd, i + 1) - 0.5) * 12, y - 6 - u * 40 * k, 3 + u * 6, 0, TAU);
+            c.arc(x + (hs3(h.sd, i + 1) - 0.5) * 12, y - 6 - u * 40 * k, 3 + u * 6, 0, TAU);
             c.fill();
           }
           if (k > 0.7) flame(c, h.sd, x, y, h.w * 0.3, 8 + (k - 0.7) * 40, T2);
@@ -55443,7 +55950,7 @@
         }
         c.globalAlpha = 1 - f;
         for (let i = 0; i < 8; i++) {
-          const a = -Math.PI * (0.1 + 0.8 * hs2(h.sd, i)), d = f * (16 + h.r * hs2(h.sd, i + 3));
+          const a = -Math.PI * (0.1 + 0.8 * hs3(h.sd, i)), d = f * (16 + h.r * hs3(h.sd, i + 3));
           glob(c, x + Math.cos(a) * d, y - 4 + Math.sin(a) * d + f * f * 30, 2.5, "#ffd080", "#7a2a08");
         }
         c.globalAlpha = 1;
@@ -55530,7 +56037,7 @@
   function puddle(c, sd, x, y, r, T2, fill, edge) {
     c.beginPath();
     for (let i = 0; i <= 16; i++) {
-      const a = i / 16 * TAU, rr = r * (0.85 + hs2(sd, i % 16) * 0.2 + Math.sin(T2 * 3 + i) * 0.03);
+      const a = i / 16 * TAU, rr = r * (0.85 + hs3(sd, i % 16) * 0.2 + Math.sin(T2 * 3 + i) * 0.03);
       const px = x + Math.cos(a) * rr, py = y - 2 + Math.sin(a) * rr * 0.22;
       if (i) c.lineTo(px, py);
       else c.moveTo(px, py);
@@ -55549,15 +56056,15 @@
       puddle(c, h.sd, x, y, h.r * k, T2, `rgba(255,${120 - cool * 60 | 0},40,.75)`, `rgba(90,${30 + cool * 10 | 0},20,.9)`);
       c.fillStyle = `rgba(255,220,120,${0.6 * (1 - cool)})`;
       for (let i = 0; i < 2; i++) {
-        const u = (T2 * 0.9 + hs2(h.sd, i)) % 1;
-        c.fillRect(x + (hs2(h.sd, i + 2) - 0.5) * h.r, y - 2 - u * 8, 1.5, 1.5);
+        const u = (T2 * 0.9 + hs3(h.sd, i)) % 1;
+        c.fillRect(x + (hs3(h.sd, i + 2) - 0.5) * h.r, y - 2 - u * 8, 1.5, 1.5);
       }
       c.globalAlpha = 1;
     },
     ink(c, h, x, y, f, T2) {
       for (let i = 0; i < 8; i++) {
-        const a = hs2(h.sd, i) * TAU + T2 * 0.25, d = h.r * 0.55 * hs2(h.sd, i + 3) * Math.min(1, h.t * 2.5);
-        const px = x + Math.cos(a) * d, py = y - 14 + Math.sin(a) * d * 0.8, r = h.r * (0.3 + hs2(h.sd, i + 6) * 0.25) * Math.min(1, 0.4 + h.t * 2);
+        const a = hs3(h.sd, i) * TAU + T2 * 0.25, d = h.r * 0.55 * hs3(h.sd, i + 3) * Math.min(1, h.t * 2.5);
+        const px = x + Math.cos(a) * d, py = y - 14 + Math.sin(a) * d * 0.8, r = h.r * (0.3 + hs3(h.sd, i + 6) * 0.25) * Math.min(1, 0.4 + h.t * 2);
         const g = c.createRadialGradient(px, py, 1, px, py, r);
         g.addColorStop(0, `rgba(12,8,22,${0.85 * f})`);
         g.addColorStop(1, "rgba(12,8,22,0)");
@@ -55576,7 +56083,7 @@
       c.globalAlpha = f;
       puddle(c, h.sd, x, y, h.r * Math.min(1, t * 3), T2, "rgba(111,168,255,.55)", "rgba(30,58,122,.8)");
       for (let i = 0; i < 4; i++) {
-        const u = (T2 * 0.7 + hs2(h.sd, i)) % 1, bx = x + (hs2(h.sd, i + 3) - 0.5) * h.r * 1.3;
+        const u = (T2 * 0.7 + hs3(h.sd, i)) % 1, bx = x + (hs3(h.sd, i + 3) - 0.5) * h.r * 1.3;
         c.strokeStyle = "rgba(220,235,255,.8)";
         c.lineWidth = 1;
         c.beginPath();
@@ -55595,21 +56102,21 @@
       c.strokeStyle = "rgba(255,255,255,.55)";
       c.lineWidth = 1;
       for (let i = 0; i < 4; i++) strokePath(c, jag(h.sd + i, x - h.r * 0.7 + i * h.r * 0.35, y - 1, x - h.r * 0.5 + i * h.r * 0.38, y - 4, 3, 1.5), "rgba(255,255,255,.55)", 1);
-      for (let i = 0; i < 3; i++) frostFlower(c, x + (hs2(h.sd, i) - 0.5) * h.r * 1.4, y - 7 - hs2(h.sd, i + 5) * 6, 4 + Math.min(1, h.t * 2) * 3);
+      for (let i = 0; i < 3; i++) frostFlower(c, x + (hs3(h.sd, i) - 0.5) * h.r * 1.4, y - 7 - hs3(h.sd, i + 5) * 6, 4 + Math.min(1, h.t * 2) * 3);
       if (h.wallZ) iceCluster(c, h.sd, x, y, 26, 34 * Math.min(1, h.t * 4));
       c.fillStyle = "rgba(230,250,255,.35)";
       for (let i = 0; i < 3; i++) {
-        const u = (T2 * 0.4 + hs2(h.sd, i + 9)) % 1;
+        const u = (T2 * 0.4 + hs3(h.sd, i + 9)) % 1;
         c.beginPath();
-        c.arc(x + (hs2(h.sd, i + 2) - 0.5) * h.r * 1.6, y - 6 - u * 20, 5 + u * 6, 0, TAU);
+        c.arc(x + (hs3(h.sd, i + 2) - 0.5) * h.r * 1.6, y - 6 - u * 20, 5 + u * 6, 0, TAU);
         c.fill();
       }
       c.globalAlpha = 1;
     },
     spore(c, h, x, y, f, T2) {
       for (let i = 0; i < 9; i++) {
-        const a = hs2(h.sd, i) * TAU + T2 * 0.4 * (i % 2 ? 1 : -1), d = h.r * 0.6 * hs2(h.sd, i + 3);
-        const px = x + Math.cos(a) * d, py = y - 18 + Math.sin(a) * d * 0.35 + Math.sin(T2 * 2 + i) * 3, r = h.r * (0.28 + hs2(h.sd, i + 6) * 0.2);
+        const a = hs3(h.sd, i) * TAU + T2 * 0.4 * (i % 2 ? 1 : -1), d = h.r * 0.6 * hs3(h.sd, i + 3);
+        const px = x + Math.cos(a) * d, py = y - 18 + Math.sin(a) * d * 0.35 + Math.sin(T2 * 2 + i) * 3, r = h.r * (0.28 + hs3(h.sd, i + 6) * 0.2);
         const g = c.createRadialGradient(px, py, 1, px, py, r);
         g.addColorStop(0, `rgba(160,240,200,${0.5 * f})`);
         g.addColorStop(1, "rgba(120,200,160,0)");
@@ -55620,8 +56127,8 @@
       }
       c.fillStyle = `rgba(220,255,230,${0.8 * f})`;
       for (let i = 0; i < 6; i++) {
-        const u = (T2 * 0.5 + hs2(h.sd, i + 11)) % 1;
-        c.fillRect(x + (hs2(h.sd, i + 12) - 0.5) * h.r * 1.6, y - 4 - u * 40, 2, 2);
+        const u = (T2 * 0.5 + hs3(h.sd, i + 11)) % 1;
+        c.fillRect(x + (hs3(h.sd, i + 12) - 0.5) * h.r * 1.6, y - 4 - u * 40, 2, 2);
       }
     },
     flesh(c, h, x, y, f, T2) {
@@ -55629,7 +56136,7 @@
       c.globalAlpha = f;
       puddle(c, h.sd, x, y, h.r * b, T2, "rgba(120,20,40,.6)", "rgba(60,8,20,.9)");
       for (let i = 0; i < 5; i++) {
-        const a = hs2(h.sd, i) * Math.PI + Math.PI, L = h.r * (0.9 + hs2(h.sd, i + 4) * 0.5) * b;
+        const a = hs3(h.sd, i) * Math.PI + Math.PI, L = h.r * (0.9 + hs3(h.sd, i + 4) * 0.5) * b;
         strokePath(c, jag(h.sd + i, x, y - 2, x + Math.cos(a) * L, y - 2 + Math.sin(a) * L * 0.18, 4, 3), "rgba(200,60,90,.8)", 1.6);
       }
       c.globalAlpha = 1;
@@ -55638,7 +56145,7 @@
       c.globalAlpha = f;
       puddle(c, h.sd, x, y, h.r, T2, "rgba(168,200,74,.55)", "rgba(60,80,16,.9)");
       for (let i = 0; i < 3; i++) {
-        const u = (T2 * 0.9 + hs2(h.sd, i)) % 1, bx = x + (hs2(h.sd, i + 1) - 0.5) * h.r;
+        const u = (T2 * 0.9 + hs3(h.sd, i)) % 1, bx = x + (hs3(h.sd, i + 1) - 0.5) * h.r;
         c.fillStyle = "rgba(210,230,120,.8)";
         c.beginPath();
         c.arc(bx, y - 3, 1 + u * 3, Math.PI, TAU);
@@ -55656,23 +56163,23 @@
       c.fillStyle = "rgba(60,24,10,.85)";
       for (let i = 0; i < 4; i++) {
         c.beginPath();
-        c.ellipse(x + (hs2(h.sd, i) - 0.5) * h.r * 1.3, y - 2, 4 + hs2(h.sd, i + 2) * 6, 1.6, 0, 0, TAU);
+        c.ellipse(x + (hs3(h.sd, i) - 0.5) * h.r * 1.3, y - 2, 4 + hs3(h.sd, i + 2) * 6, 1.6, 0, 0, TAU);
         c.fill();
       }
       c.globalAlpha = 1;
       hzGlow(c, x, y - 3, h.r * 1.1, "#ff8a3a", 0.35 * f);
       c.fillStyle = "#ffd080";
       for (let i = 0; i < 3; i++) {
-        const u = (T2 * 1.3 + hs2(h.sd, i + 5)) % 1;
+        const u = (T2 * 1.3 + hs3(h.sd, i + 5)) % 1;
         c.globalAlpha = f * (1 - u);
-        c.fillRect(x + (hs2(h.sd, i + 6) - 0.5) * h.r, y - 4 - u * 24, 2, 2);
+        c.fillRect(x + (hs3(h.sd, i + 6) - 0.5) * h.r, y - 4 - u * 24, 2, 2);
       }
       c.globalAlpha = 1;
     },
     seed(c, h, x, y, f, T2) {
       c.globalAlpha = f;
       for (let i = 0; i < 5; i++) {
-        const x0 = x - h.r + hs2(h.sd, i) * h.r * 0.6, x1 = x0 + h.r * (0.8 + hs2(h.sd, i + 3) * 0.8);
+        const x0 = x - h.r + hs3(h.sd, i) * h.r * 0.6, x1 = x0 + h.r * (0.8 + hs3(h.sd, i + 3) * 0.8);
         const p = [];
         for (let j = 0; j <= 6; j++) {
           const u = j / 6;
@@ -55692,7 +56199,7 @@
   var WALL_ART = {
     ice(c, h, x, top, bot, f) {
       const w = h.w, s = Math.sign(h.vx) || 1, p = [x - w / 2, bot, x - w / 2, top + 6];
-      for (let i = 0; i <= 4; i++) p.push(x - w / 2 + w * i / 4, top + (i % 2 ? 0 : 8) + hs2(h.sd, i) * 5);
+      for (let i = 0; i <= 4; i++) p.push(x - w / 2 + w * i / 4, top + (i % 2 ? 0 : 8) + hs3(h.sd, i) * 5);
       p.push(x + w / 2, bot);
       c.globalAlpha = f;
       poly(c, p);
@@ -55739,7 +56246,7 @@
       }
       c.fillStyle = `rgba(250,220,150,${0.9 * f})`;
       for (let i = 0; i < 14; i++) {
-        const u = (T2 * 1.5 + hs2(h.sd, i)) % 1;
+        const u = (T2 * 1.5 + hs3(h.sd, i)) % 1;
         c.fillRect(x + Math.sin(T2 * 7 + i) * h.w * 0.7, bot - (bot - top) * u, 2, 1.5);
       }
     },
@@ -55857,7 +56364,7 @@
       }
       c.restore();
       for (let i = 0; i < 22; i++) {
-        const u = (T2 * 0.6 + hs2(h.sd, i)) % 1, a = hs2(h.sd, i + 3) * TAU + u * 4, d = h.r * 0.75 * (1 - u);
+        const u = (T2 * 0.6 + hs3(h.sd, i)) % 1, a = hs3(h.sd, i + 3) * TAU + u * 4, d = h.r * 0.75 * (1 - u);
         c.globalAlpha = f * (0.5 + u * 0.5);
         c.fillStyle = "#d0304a";
         c.beginPath();
@@ -55894,7 +56401,7 @@
       c.restore();
       c.globalAlpha = 1;
       for (let i = 0; i < 10; i++) {
-        const u = (T2 * 0.5 + hs2(h.sd, i)) % 1, a = hs2(h.sd, i + 5) * TAU + u * 3, d = h.r * 0.7 * (1 - u) + R;
+        const u = (T2 * 0.5 + hs3(h.sd, i)) % 1, a = hs3(h.sd, i + 5) * TAU + u * 3, d = h.r * 0.7 * (1 - u) + R;
         c.fillStyle = `rgba(220,200,255,${f * u})`;
         c.fillRect(x + Math.cos(a) * d, y + Math.sin(a) * d * 0.5, 2, 2);
       }
@@ -55917,7 +56424,7 @@
         c.stroke();
       }
       for (let i = 0; i < 12; i++) {
-        const u = (T2 * 0.4 + hs2(h.sd, i)) % 1, a = hs2(h.sd, i + 2) * TAU + u * 5, d = h.r * 0.8 * (1 - u);
+        const u = (T2 * 0.4 + hs3(h.sd, i)) % 1, a = hs3(h.sd, i + 2) * TAU + u * 5, d = h.r * 0.8 * (1 - u);
         c.fillStyle = "#fff0c0";
         c.fillRect(x + Math.cos(a) * d, y + Math.sin(a) * d * 0.35 + u * 16, 2, 2);
       }
@@ -55950,7 +56457,7 @@
       c.strokeStyle = "rgba(220,200,255,.7)";
       c.lineWidth = 1.5;
       for (let i = 0; i < 14; i++) {
-        const u = (T2 * 1.4 + hs2(h.sd, i)) % 1, a = (hs2(h.sd, i + 1) - 0.5) * 1.6 + (hs2(h.sd, i + 7) > 0.5 ? 0 : Math.PI), d = h.r * 0.9 * (1 - u);
+        const u = (T2 * 1.4 + hs3(h.sd, i)) % 1, a = (hs3(h.sd, i + 1) - 0.5) * 1.6 + (hs3(h.sd, i + 7) > 0.5 ? 0 : Math.PI), d = h.r * 0.9 * (1 - u);
         const sx = x + Math.cos(a) * d, sy = y + Math.sin(a) * d * 0.5;
         c.beginPath();
         c.moveTo(sx, sy);
@@ -56022,8 +56529,8 @@
       c.ellipse(x, y + 4, 28, 9, 0, 0, TAU);
       c.fill();
       for (let i = 0; i < 12; i++) {
-        const u = (T2 * 0.5 + hs2(h.sd, i)) % 1, a = hs2(h.sd, i + 3) * TAU + u * 3, d = h.r * 0.7 * (1 - u) + 20;
-        rock(c, h.sd + i, x + Math.cos(a) * d, y + Math.sin(a) * d * 0.35, 2 + hs2(h.sd, i) * 3, u * 6);
+        const u = (T2 * 0.5 + hs3(h.sd, i)) % 1, a = hs3(h.sd, i + 3) * TAU + u * 3, d = h.r * 0.7 * (1 - u) + 20;
+        rock(c, h.sd + i, x + Math.cos(a) * d, y + Math.sin(a) * d * 0.35, 2 + hs3(h.sd, i) * 3, u * 6);
       }
       c.globalAlpha = 1;
     }
@@ -56042,7 +56549,7 @@
       c.globalCompositeOperation = op;
       for (let s = 30; s < len; s += 46) {
         c.save();
-        c.translate(s, (hs2(h.sd, s) - 0.5) * w);
+        c.translate(s, (hs3(h.sd, s) - 0.5) * w);
         c.rotate(T2 + s);
         for (let i = 0; i < 3; i++) {
           c.rotate(Math.PI / 3);
@@ -56123,9 +56630,9 @@
       c.strokeStyle = "rgba(255,255,255,.8)";
       c.lineWidth = 1;
       for (let i = 0; i < 12; i++) {
-        const s = (T2 * 300 + hs2(h.sd, i) * len) % len;
+        const s = (T2 * 300 + hs3(h.sd, i) * len) % len;
         c.beginPath();
-        c.arc(s, (hs2(h.sd, i + 1) - 0.5) * w, 2 + hs2(h.sd, i + 2) * 3, 0, TAU);
+        c.arc(s, (hs3(h.sd, i + 1) - 0.5) * w, 2 + hs3(h.sd, i + 2) * 3, 0, TAU);
         c.stroke();
       }
       c.globalAlpha = 1;
@@ -56200,7 +56707,7 @@
       c.fillRect(0, -w, len, w * 2);
       c.fillStyle = "#ffffff";
       for (let i = 0; i < 14; i++) {
-        const s = (hs2(h.sd, i) * len + T2 * 80) % len, yy = (hs2(h.sd, i + 3) - 0.5) * w * 1.6, r = 1 + Math.abs(Math.sin(T2 * 9 + i)) * 2.5;
+        const s = (hs3(h.sd, i) * len + T2 * 80) % len, yy = (hs3(h.sd, i + 3) - 0.5) * w * 1.6, r = 1 + Math.abs(Math.sin(T2 * 9 + i)) * 2.5;
         c.fillRect(s - r, yy - 0.5, r * 2, 1);
         c.fillRect(s - 0.5, yy - r, 1, r * 2);
       }
@@ -56228,8 +56735,8 @@
     c.strokeStyle = `rgba(230,240,255,${0.8 * f})`;
     c.lineWidth = 2;
     for (let i = 0; i < 26; i++) {
-      const yy = hs2(h.sd || 1, i) * H, u = (T2 * (1.4 + hs2(h.sd || 1, i + 1)) + hs2(h.sd || 1, i + 2)) % 1;
-      const wx = camX + W / 2, d = dirAt(wx + (u - 0.5) * W), xx = d > 0 ? u * W : (1 - u) * W, L = 30 + hs2(h.sd || 1, i + 3) * 40;
+      const yy = hs3(h.sd || 1, i) * H, u = (T2 * (1.4 + hs3(h.sd || 1, i + 1)) + hs3(h.sd || 1, i + 2)) % 1;
+      const wx = camX + W / 2, d = dirAt(wx + (u - 0.5) * W), xx = d > 0 ? u * W : (1 - u) * W, L = 30 + hs3(h.sd || 1, i + 3) * 40;
       c.beginPath();
       c.moveTo(xx, yy);
       c.lineTo(xx - d * L, yy - 3);
@@ -56304,7 +56811,7 @@
       case "bolt":
         {
           const hx = b.cx + b.face * b.w * 0.3, hy = b.y + 4;
-          for (let i = 0; i < 3; i++) strokePath(c, jag(sd + i + Math.floor(T2 * 20), hx, hy, hx + (hs2(sd, i + Math.floor(T2 * 20)) - 0.5) * 30, hy - 20 - k * 20, 4, 4), "rgba(220,240,255,.9)", 1.3);
+          for (let i = 0; i < 3; i++) strokePath(c, jag(sd + i + Math.floor(T2 * 20), hx, hy, hx + (hs3(sd, i + Math.floor(T2 * 20)) - 0.5) * 30, hy - 20 - k * 20, 4, 4), "rgba(220,240,255,.9)", 1.3);
           hzGlow(c, hx, hy, 14 + k * 10, "#cfe6ff", 0.6);
         }
         break;
@@ -56368,13 +56875,13 @@
         }
         break;
       case "ice":
-        for (let i = 0; i < 5; i++) icicle(c, x + (i - 2) * b.w * 0.22, y, 4 + k * 10 * hs2(sd, i), 5, true);
+        for (let i = 0; i < 5; i++) icicle(c, x + (i - 2) * b.w * 0.22, y, 4 + k * 10 * hs3(sd, i), 5, true);
         break;
       case "sand":
         for (let i = 0; i < 10; i++) {
-          const u = (T2 * 2 + hs2(sd, i)) % 1;
+          const u = (T2 * 2 + hs3(sd, i)) % 1;
           c.fillStyle = rgba("#e8c070", 0.7 * (1 - u));
-          c.fillRect(x + (hs2(sd, i + 2) - 0.5) * b.w * 1.4, y - u * 30 * k, 2, 2);
+          c.fillRect(x + (hs3(sd, i + 2) - 0.5) * b.w * 1.4, y - u * 30 * k, 2, 2);
         }
         break;
       case "water":
@@ -56390,7 +56897,7 @@
         break;
       default: {
         cracks(c, sd, x, y - 1, b.w * 0.5 + k * 30, "rgba(40,30,20,.9)", 1, 6);
-        for (let i = 0; i < 4; i++) rock(c, sd + i, x + (hs2(sd, i) - 0.5) * b.w * 1.2, y - 3 - Math.abs(Math.sin(T2 * 12 + i)) * 6 * k, 2 + hs2(sd, i + 4) * 2);
+        for (let i = 0; i < 4; i++) rock(c, sd + i, x + (hs3(sd, i) - 0.5) * b.w * 1.2, y - 3 - Math.abs(Math.sin(T2 * 12 + i)) * 6 * k, 2 + hs3(sd, i + 4) * 2);
       }
     }
   }
@@ -56535,7 +57042,7 @@
           c.strokeStyle = rgba(col, 0.7);
           c.lineWidth = 2;
           for (let i = 0; i < 5; i++) {
-            const yy = b.y + b.h * (0.2 + i * 0.15), L = 20 + k * 30 + hs2(sd, i) * 10;
+            const yy = b.y + b.h * (0.2 + i * 0.15), L = 20 + k * 30 + hs3(sd, i) * 10;
             c.beginPath();
             c.moveTo(b.cx - b.face * b.w * 0.5, yy);
             c.lineTo(b.cx - b.face * (b.w * 0.5 + L), yy);
@@ -56553,7 +57060,7 @@
       case "blink":
         {
           for (let i = 0; i < 3; i++) {
-            const p = jag(sd + i + Math.floor(T2 * 12), b.cx + (hs2(sd, i) - 0.5) * b.w, b.y, b.cx + (hs2(sd, i + 3) - 0.5) * b.w, b.feet, 5, 6);
+            const p = jag(sd + i + Math.floor(T2 * 12), b.cx + (hs3(sd, i) - 0.5) * b.w, b.y, b.cx + (hs3(sd, i + 3) - 0.5) * b.w, b.feet, 5, 6);
             strokePath(c, p, rgba(col, 0.8), 1.5);
           }
         }
@@ -56562,7 +57069,7 @@
         {
           const R = Math.max(b.w, b.h) * 1.4;
           for (let i = 0; i < 14; i++) {
-            const u = (T2 * 0.9 + hs2(sd, i)) % 1, a = hs2(sd, i + 4) * TAU + u * 3, d = R * (1 - u) + b.w * 0.2;
+            const u = (T2 * 0.9 + hs3(sd, i)) % 1, a = hs3(sd, i + 4) * TAU + u * 3, d = R * (1 - u) + b.w * 0.2;
             const px = b.cx + Math.cos(a) * d, py = b.cy + Math.sin(a) * d * 0.7;
             if (fx === "pit" || fx === "sand") {
               c.fillStyle = rgba(fx === "sand" ? "#e8c070" : "#8a7a5a", u);
@@ -56588,7 +57095,7 @@
       case "zone":
         {
           for (let i = 0; i < 4; i++) {
-            const u = (T2 * 1.2 + i / 4) % 1, px = b.cx + (hs2(sd, i) - 0.5) * b.w * 0.8, py = b.y + b.h * 0.6 + u * b.h * 0.45;
+            const u = (T2 * 1.2 + i / 4) % 1, px = b.cx + (hs3(sd, i) - 0.5) * b.w * 0.8, py = b.y + b.h * 0.6 + u * b.h * 0.45;
             if (fx === "gel") glob(c, px, py, 3 + k * 2, "#8fbaff", "#1e3a7a");
             else if (fx === "spore") {
               c.fillStyle = rgba("#8ff0c8", 0.5 * (1 - u));
@@ -56713,7 +57220,7 @@
     c.stroke();
     c.globalAlpha = 1;
   }
-  var BOSS_PROJ = { skull: 1, bone: 1, rivet: 1, poison: 1, cagebub: 1, web: 1, fruit: 1 };
+  var BOSS_PROJ = { skull: 1, bone: 1, rivet: 1, poison: 1, cagebub: 1, web: 1, fruit: 1, gel: 1, drop: 1 };
   function drawBossProjAt(c, type, x, y, a, T2, sd, col) {
     switch (type) {
       case "skull": {
@@ -56841,6 +57348,53 @@
         c.moveTo(x, y);
         c.lineTo(x - Math.cos(a) * 26, y - Math.sin(a) * 26);
         c.stroke();
+        return true;
+      }
+      case "gel": {
+        const r = 7, sq = 1 + Math.sin(T2 * 10 + sd) * 0.12;
+        c.save();
+        c.translate(x, y);
+        c.rotate(a);
+        c.scale(sq, 2 - sq);
+        c.fillStyle = "rgba(111,168,255,.75)";
+        c.strokeStyle = "#1e3a78";
+        c.lineWidth = 1.4;
+        c.beginPath();
+        c.arc(0, 0, r, 0, TAU);
+        c.fill();
+        c.stroke();
+        c.fillStyle = "rgba(220,240,255,.9)";
+        c.beginPath();
+        c.ellipse(-2.5, -2.5, 2.6, 1.6, -0.6, 0, TAU);
+        c.fill();
+        c.fillStyle = "rgba(200,230,255,.6)";
+        c.beginPath();
+        c.arc(Math.cos(T2 * 4 + sd) * 3, Math.sin(T2 * 4 + sd) * 3, 1.5, 0, TAU);
+        c.fill();
+        c.restore();
+        return true;
+      }
+      case "drop": {
+        c.save();
+        c.translate(x, y);
+        c.rotate(a);
+        c.fillStyle = "rgba(127,200,232,.85)";
+        c.strokeStyle = "#1a4a68";
+        c.lineWidth = 1.2;
+        c.beginPath();
+        c.moveTo(9, 0);
+        c.quadraticCurveTo(0, -7, -5, -4);
+        c.arc(-4, 0, 4, -Math.PI / 2, Math.PI / 2, true);
+        c.quadraticCurveTo(0, 7, 9, 0);
+        c.fill();
+        c.stroke();
+        c.fillStyle = "#e8f8ff";
+        c.fillRect(-3, -3, 2, 2);
+        c.fillStyle = "rgba(160,220,245,.6)";
+        c.beginPath();
+        c.arc(-12, Math.sin(T2 * 12 + sd) * 2, 2, 0, TAU);
+        c.fill();
+        c.restore();
         return true;
       }
       case "fruit": {
@@ -56987,10 +57541,10 @@
         c.fill();
         c.stroke();
         for (let i = 0; i < 4; i++) {
-          const u = (T2 * 2 + hs2(h.sd, i)) % 1;
+          const u = (T2 * 2 + hs3(h.sd, i)) % 1;
           c.strokeStyle = "rgba(220,235,255,.8)";
           c.beginPath();
-          c.arc(x + (hs2(h.sd, i + 2) - 0.5) * h.r, y - 4 - u * 10, 2 + u * 3, 0, TAU);
+          c.arc(x + (hs3(h.sd, i + 2) - 0.5) * h.r, y - 4 - u * 10, 2 + u * 3, 0, TAU);
           c.stroke();
         }
       },
@@ -57008,7 +57562,7 @@
         c.fill();
         c.stroke();
         for (let i = 0; i < 6; i++) {
-          const a = -Math.PI * (0.15 + 0.7 * hs2(h.sd, i)), d = f * 90;
+          const a = -Math.PI * (0.15 + 0.7 * hs3(h.sd, i)), d = f * 90;
           glob(c, x + Math.cos(a) * d, y - hh + Math.sin(a) * d * 0.5 + f * f * 60, 4, "#8fbaff", "#1e3a7a");
         }
       }
@@ -57048,7 +57602,7 @@
         cracks(c, h.sd, x, y - 1, h.r, rgba("#ffd060", 0.4 + k * 0.6), 1, 6);
         const p = Math.abs(Math.sin(T2 * (4 + k * 18)));
         for (let i = 0; i < 4; i++) {
-          const px = x + (hs2(h.sd, i) - 0.5) * h.r * 1.4, s = 3 + hs2(h.sd, i + 3) * 3;
+          const px = x + (hs3(h.sd, i) - 0.5) * h.r * 1.4, s = 3 + hs3(h.sd, i + 3) * 3;
           poly(c, [px, y - 2 - s * 2, px + s, y - 2, px - s, y - 2]);
           c.fillStyle = i % 2 ? "#ffd060" : "#80e0ff";
           c.fill();
@@ -57062,7 +57616,7 @@
         const a = 1 - f;
         hzGlow(c, x, y - 10, h.r * 1.4 * (1 - f * 0.5), "#ffd060", 0.8 * a);
         for (let i = 0; i < 9; i++) {
-          const ang = -Math.PI * (0.05 + 0.9 * hs2(h.sd, i)), d = f * (30 + 60 * hs2(h.sd, i + 5)), s = 3 + hs2(h.sd, i + 9) * 3;
+          const ang = -Math.PI * (0.05 + 0.9 * hs3(h.sd, i)), d = f * (30 + 60 * hs3(h.sd, i + 5)), s = 3 + hs3(h.sd, i + 9) * 3;
           const px = x + Math.cos(ang) * d, py = y - 8 + Math.sin(ang) * d + f * f * 40;
           c.globalAlpha = a;
           poly(c, [px, py - s, px + s * 0.6, py, px, py + s, px - s * 0.6, py]);
@@ -57159,7 +57713,7 @@
       c.stroke();
       c.fillStyle = "#9ab8d0";
       for (let i = 0; i < 5; i++) {
-        const a = hs2(h.sd, i) * TAU;
+        const a = hs3(h.sd, i) * TAU;
         c.beginPath();
         c.arc(Math.cos(a) * r * 0.6, Math.sin(a) * r * 0.6, r * 0.12, 0, TAU);
         c.fill();
@@ -57216,8 +57770,8 @@
       }
       c.fillStyle = `rgba(250,220,150,${0.8 * f})`;
       for (let i = 0; i < 8; i++) {
-        const u = (T2 * 2 + hs2(h.sd, i)) % 1;
-        c.fillRect(x + s * w * 0.2 + s * u * 20, top + 4 + hs2(h.sd, i + 3) * (bot - top) - u * 12, 2, 2);
+        const u = (T2 * 2 + hs3(h.sd, i)) % 1;
+        c.fillRect(x + s * w * 0.2 + s * u * 20, top + 4 + hs3(h.sd, i + 3) * (bot - top) - u * 12, 2, 2);
       }
       c.globalAlpha = 1;
     }
@@ -57256,8 +57810,8 @@
           const x = b.cx - cx0, y = b.y + b.h - cy0, up = b.burrowT > 0 ? 0 : 1;
           c.globalAlpha = f;
           for (let i = 0; i < 12; i++) {
-            const a = hs2(h.sd, i) * TAU, rr = 6 + hs2(h.sd, i + 2) * b.w * 0.4;
-            bone(c, x + Math.cos(a) * rr, y - 4 - Math.abs(Math.sin(a)) * 8 - up * 20 * hs2(h.sd, i + 5), 12 + hs2(h.sd, i + 7) * 8, a + T2 * (b.vx ? 6 : 0), 3);
+            const a = hs3(h.sd, i) * TAU, rr = 6 + hs3(h.sd, i + 2) * b.w * 0.4;
+            bone(c, x + Math.cos(a) * rr, y - 4 - Math.abs(Math.sin(a)) * 8 - up * 20 * hs3(h.sd, i + 5), 12 + hs3(h.sd, i + 7) * 8, a + T2 * (b.vx ? 6 : 0), 3);
           }
           c.fillStyle = "#efe6cc";
           c.beginPath();
@@ -64226,6 +64780,7 @@
       this.pipe.add("objects", (f) => this.rStreaks(f));
       this.pipe.add("ground", (f) => this.rGround(f));
       this.pipe.add("drops", (f) => this.rDrops(f));
+      this.pipe.add("drops", (f) => this.drawFormBack(f.c));
       this.pipe.add("actors", (f) => this.rActors(f));
       this.pipe.add("lighting", (f) => this.rLightOverlay(f));
       this.pipe.add("lighting", (f) => this.drawStageDim(f));
@@ -64236,6 +64791,7 @@
       this.pipe.add("fx", (f) => this.drawPuzzle(f.c));
       this.pipe.add("fx", (f) => this.drawDeepGates(f.c));
       this.pipe.add("fx", (f) => this.drawSkillArt(f.c));
+      this.pipe.add("fx", (f) => this.drawFormFront(f.c));
       this.pipe.add("fx", (f) => this.drawBossHazards(f.c));
       this.pipe.add("screen", (f) => this.rScreen(f));
       this.pipe.add("screen", (f) => this.drawStage(f));
@@ -66191,7 +66747,7 @@
       const K = BOSS_MOVES[e.type];
       let code = -1;
       if (e.mv && K) {
-        const i = e.mv.d === K.ult ? 3 : e.mv.d.pose ?? K.moves.indexOf(e.mv.d);
+        const i = e.mv.d === K.ult ? 3 : movePose(K, e.mv.d);
         if (i >= 0) code = i * 2 + (e.mv.run ? 1 : 0);
       } else if (e.ghost && e.poseNet >= 0) code = e.poseNet;
       return code;
@@ -66474,6 +67030,18 @@
       c.restore();
     },
     drawEnemy(c, e, sx, sy) {
+      if (e.shade && !e._shading) {
+        c.save();
+        c.filter = "brightness(.6) saturate(.65)";
+        e._shading = 1;
+        try {
+          this.drawEnemy(c, e, sx, sy);
+        } finally {
+          e._shading = 0;
+          c.restore();
+        }
+        return;
+      }
       if (e.def.ai === "flotsam") {
         this.drawFlotsam(c, e, sx, sy);
         return;
@@ -68775,7 +69343,20 @@
           e.cast ? [e.cast.id, +e.cast.t.toFixed(2), e.cast.max] : 0,
           e.castKick > 0 ? 1 : 0,
           // 시전 — 손님 화면도 같은 몸짓 · 알갱이
-          e.boss ? [e.gapT > 0 ? e.gapK : "", +Math.max(0, e.gapT || 0).toFixed(1), e.bracing() ? 1 : 0, e.gapMiss || 0, +(e.gapMax || 0).toFixed(1), this.bossPose(e)] : 0
+          e.boss ? [
+            e.gapT > 0 ? e.gapK : "",
+            +Math.max(0, e.gapT || 0).toFixed(1),
+            e.bracing() ? 1 : 0,
+            e.gapMiss || 0,
+            +(e.gapMax || 0).toFixed(1),
+            this.bossPose(e),
+            Math.round(e.shield || 0),
+            e.ward || 0,
+            e.airborne ? e.airK : "",
+            e.healRun ? 1 : 0,
+            e.shade || 0,
+            e.poolMax ? [Math.round(Math.max(0, e.hp) + (e.twinLive() ? Math.max(0, e.twinLive().hp) : 0)), e.poolMax] : 0
+          ] : 0
         ]);
       }
       return out;
@@ -68823,6 +69404,14 @@
           e.gapMiss = gp[3];
           e.gapMax = gp[4];
           e.poseNet = gp[5] === void 0 ? -1 : gp[5];
+          e.shield = gp[6] || 0;
+          e.ward = gp[7] || 0;
+          e.airborne = gp[8] ? 1 : 0;
+          e.airK = gp[8] || "";
+          e.healRun = gp[9] || 0;
+          e.shade = gp[10] || 0;
+          e.poolNet = gp[11] || null;
+          if (!this.boss || this.boss.dead) this.boss = e;
           if (opened) this.gapBurst(e);
         }
         e.seenAt = t;
@@ -70237,7 +70826,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

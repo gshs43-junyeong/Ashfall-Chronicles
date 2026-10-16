@@ -12,7 +12,7 @@ import { dimsOf } from './size.js';
 import { MACH_OF_TILE, T, TILE_DEF } from './data.js';
 import { HIT_FX, ITEMS, MULTI_FALLOFF } from './data/items.js';
 import { DIFF_TIER, ENEMIES, MECH_PART } from './data/enemies.js';
-import { BOSS_SURGE, BUFFS, PROF_MAX, SKILLS, SURGE_FLY, petSlotN, profNeed, utilSlotN } from './data/skills.js';
+import { BOSS_SURGE, BUFFS, PROF_MAX, SKILLS, petSlotN, profNeed, utilSlotN } from './data/skills.js';
 import { CELL_CHARGE } from './data/ruins.js';
 import { DRAGON_FOOD, DRAGON_GATES, PETS, PET_XP_SHARE, dragonStage, levelMult, petAtkMul, petDmgScale, petMaxLv,
   petXpNext } from './data/pets.js';
@@ -58,6 +58,7 @@ export class Ent extends Entity {
 
     // Y
     let gm = opts.gravMul === undefined ? 1 : opts.gravMul;
+    if ((this as any).airborne) gm = 0;                // 날아오른 보스 — 땅을 걷던 몸놀림이 불러도 떨어지지 않는다(entity/boss-forms)
     let cap = MAX_FALL;
     if (liq.f > 0) {
       gm *= 1 - 0.72 * liq.f;                       // 부력
@@ -413,6 +414,11 @@ export class Enemy extends Ent {
   declare lastPhase: number; declare lvFactor: number; declare markAmt: number; declare markT: number; declare maxHp: number; declare mech: number;
   declare pedestal: number; declare pf: number; declare phase: number; declare phaseInv: number; declare phases: number; declare sgAmt: number;
   declare sgBuf: number; declare sgCd: number; declare sgKind: string | null; declare sgRing: number; declare sgStun: number; declare sgT: number;
+  declare shield: number; declare shieldMax: number; declare shieldT: number; declare ward: number; declare wardMax: number; declare wardT: number; declare shFx: string;   // 막(entity/boss-forms)
+  declare healRun: number; declare healTook: number; declare airborne: number; declare airK: string; declare twin: Enemy | null; declare poolMax: number; declare shade: number; declare poolNet: number[] | null;
+  declare formBreak: (k: string) => void; declare splitBoss: (line?: string) => void;
+  declare flies: () => boolean; declare twinLive: () => Enemy | null; declare poolRatio: () => number; declare formMove: (d: Bag, p: Player, world: World, K: Bag) => any;
+  declare formBlock: () => boolean; declare formHurt: (dmg: number) => number; declare formTick: (dt: number, p: Player) => void; declare formPhase: (ph: number) => void; declare mvPick: (K: Bag) => Bag | null;
   declare mv: Bag | null; declare mvCd: number; declare mvN: number; declare mvLast: Bag | null; declare ultUsed: number;   // 고유 기술(entity/boss-moves)
   declare poseNet: number; declare _poseFr: number;   // 기술 자세 — 손님 화면이 받은 번호 · 그릴 칸(game/render-actors)
   declare hist: number[][]; declare histT: number; declare burrowT: number;
@@ -489,7 +495,7 @@ export class Enemy extends Ent {
   tickSurge(dt: number, world: any, p: Player) {
     const S = BOSS_SURGE[this.type];
     if (!S) return false;
-    const fly = SURGE_FLY[this.def.ai] ? { gravMul: 0 } : undefined;
+    const fly = this.flies() ? { gravMul: 0 } : undefined;
 
     // 버프가 걸려 있는 동안 — 시간이 다 되면 올려 둔 수치를 **정확히 되돌린다**
     if (this.sgBuf > 0) {
@@ -613,6 +619,7 @@ export class Enemy extends Ent {
       return;
     }
     if (this.burrowT > 0) return;                       // 땅속 — 닿지 않는다(보스 기술 burrow)
+    if (this.boss && this.formBlock()) return;          // 결계 — 맞은 횟수만 센다(entity/boss-forms)
     /* 보스 — 예고 중엔 막고(방어 자세) 기술 뒤 틈엔 더 아프다(entity/boss-gaps) */
     if (this.boss) {
       const m = this.gapHurtMul();
@@ -631,6 +638,7 @@ export class Enemy extends Ent {
     // 사냥꾼의 표식 — 출처를 가리지 않는다.
     if (this.markT > 0) amount *= 1 + (this.markAmt || 0);
     let dmg = Math.max(1, Math.round(amount * (1 - red)));
+    if (this.boss) { dmg = this.formHurt(dmg); if (dmg <= 0) { this.flash = 0.08; return; } }   // 방어막이 먼저 받는다
     this.hp -= dmg; this.flash = 0.12;
     /* 맞으면 누가 쳤는지 안다 — 벽 너머에서 쏘아도 그쪽을 찾아 나선다 */
     if (this.sense) { const s = src && src.cx !== undefined ? src : G.player; if (s) this.sense.alarm(s.cx, s.cy); }
@@ -662,6 +670,13 @@ export class Enemy extends Ent {
   die(src: any) {
     if (this.dead) return;
     this.dead = true;
+    /* 갈라진 둘 중 먼저 쓰러진 쪽 — 보상 · 토벌은 마지막 하나에서(entity/boss-forms) */
+    if (this.boss && this.twinLive()) {
+      G.addCorpse(this); G.deathBurst(this); G.sfx('die');
+      if (G.boss === this) G.boss = this.twin;
+      G.toast(tr('하나가 쓰러졌다 — 남은 것이 날뛴다'), 'good');
+      return;
+    }
     G.ruinFeed(this);
     /* 남의 아바타가 잡았다(호스트) — 보상은 그 주인 화면에서 굴린다. 보스 토벌(세계 진행)은 여기서. */
     if (src && src.remote) {
@@ -884,7 +899,9 @@ export const IMPACT_FX: Bag = {
   skull: { burst: 'soul',   ring: '#bfe8ff', rr: 26, parts: 8 },
   cagebub: { burst: 'frost', ring: '#bfe6ff', rr: 28, parts: 10 },
   web: { burst: 'frost', ring: '#eef0f4', rr: 22, parts: 6 },
-  fruit: { burst: 'hit', ring: '#e8783a', rr: 20, parts: 9 }
+  fruit: { burst: 'hit', ring: '#e8783a', rr: 20, parts: 9 },
+  gel: { burst: 'frost', ring: '#6fa8ff', rr: 22, parts: 8 },
+  drop: { burst: 'frost', ring: '#7fc8e8', rr: 20, parts: 8 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
 export const PROJ_STYLE: Bag = {
@@ -909,7 +926,9 @@ export const PROJ_STYLE: Bag = {
   rivet: { c: '#9aa0ac', r: 4 },
   cagebub: { c: '#bfe6ff', r: 9 },
   web: { c: '#eef0f4', r: 6 },           // 거미줄 덩이 — 그림은 game/boss-tell-art
-  fruit: { c: '#c8641e', r: 6 }          // 원숭이가 던지는 열매
+  fruit: { c: '#c8641e', r: 6 },         // 원숭이가 던지는 열매
+  gel: { c: '#6fa8ff', r: 7 },           // 슬라임 왕의 젤리 덩이 · 지킴이의 물방울 — 그림은 game/boss-tell-art
+  drop: { c: '#7fc8e8', r: 6 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */
 export const PHYS_PROJ: Record<string, number> = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1, fruit: 1 };

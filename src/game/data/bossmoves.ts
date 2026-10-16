@@ -13,49 +13,72 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'leap', n: '왕관 내려찍기', tele: 0.7, waves: 1, wspd: 360, wfx: 'gel', m: 1.1 },
     { k: 'zone', n: '끈적이는 비', tele: 0.6, at: 'scatter', n2: 5, r: 46, life: 6, dps: 0.12, slow: 0.45, fx: 'gel' },
     { k: 'summon', n: '신하들을 부른다', tele: 0.8, mob: 'slime', cnt: 4 },
-    { k: 'sig', sig: 'melt', n: '녹아드는 왕관', tele: 0.8, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'melt', n: '녹아드는 왕관', tele: 0.8, pose: 0, m: 1 },
+    { k: 'ring', n: '젤리 파문', tele: 0.5, times: 2, cnt: 16, gap: 3, spd: 200, every: 0.6, proj: 'gel', m: 0.5, pw: [1, 1, 0.8] },
+    { k: 'homing', n: '튀는 젤리', tele: 0.6, cnt: 4, spd: 200, turn: 1.6, proj: 'gel', m: 0.6, ph: 1, pw: [0, 1, 1.5] }],
     ult: { k: 'leap', n: '왕의 무게', tele: 0.9, times: 3, waves: 1, wspd: 420, wfx: 'gel', m: 1.2 } },
   bone_lord: { c: '#ede4c8', every: 7, moves: [
     { k: 'dash', n: '뼈 회전', tele: 0.55, times: 3, spd: 3.4, m: 1 },
     { k: 'homing', n: '울부짖는 해골', tele: 0.6, cnt: 4, spd: 210, turn: 2.2, proj: 'skull', m: 0.7 },
     { k: 'rain', n: '뼈 감옥', tele: 0.7, form: 'cage', cnt: 9, gapX: 46, delay: 0.9, shape: 'col', fx: 'bone', m: 0.9 },
-    { k: 'sig', sig: 'reform', n: '흩어졌다 맞추기', tele: 0.6, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'reform', n: '흩어졌다 맞추기', tele: 0.6, pose: 0, m: 1 },
+    { k: 'march', n: '뼈 창 줄', tele: 0.6, cnt: 7, gap: 56, every: 0.13, h: 110, fx: 'bone', m: 0.9, pw: [1, 1, 1] },
+    { k: 'shield', n: '뼈 방패', tele: 0.7, v: 0.12, life: 12, fx: 'bone', ph: 1, pw: [0, 1.2, 1] },
+    { k: 'summon', n: '해골 궁수대', tele: 0.8, mob: 'archer', cnt: 3, ph: 2, pw: [0, 0, 1.3] }],
     ult: { k: 'spiral', n: '뼈 폭풍', tele: 1, arms: 4, dur: 4, every: 0.12, spd: 300, proj: 'bone', turn: 2.4, m: 0.5 } },
   corrupt_heart: { c: '#b07aff', every: 6.5, moves: [
     { k: 'ring', n: '고동 파문', tele: 0.6, times: 3, cnt: 22, gap: 4, spd: 230, every: 0.55, proj: 'dark', m: 0.6 },
     { k: 'march', n: '혈관 가시', tele: 0.6, cnt: 7, gap: 54, every: 0.13, h: 90, fx: 'flesh', m: 0.9 },
     { k: 'vortex', n: '흡혈 소용돌이', tele: 0.7, life: 2.6, r: 300, pull: 260, burst: 120, fx: 'flesh', m: 1 },
-    { k: 'sig', sig: 'beat', n: '박동', tele: 0.7, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'beat', n: '박동', tele: 0.7, pose: 0, m: 1 },
+    { k: 'heal', n: '흡혈 박동', tele: 0.6, dur: 3, v: 0.08, brk: 0.035, fx: 'flesh', ph: 1, pw: [0, 1, 1.4] },
+    { k: 'beam', n: '핏줄 광선', tele: 0.8, cnt: 2, spread: 3.14, dur: 2.2, w: 24, len: 700, sweep: 1.6, fx: 'void', m: 0.35, ph: 1, pw: [0, 1, 1] },
+    { k: 'homing', n: '검은 피 방울', tele: 0.6, cnt: 5, spd: 200, turn: 2, proj: 'dark', m: 0.5, ph: 2, pw: [0, 0, 1.4] }],
     ult: { k: 'ring', n: '터지는 심장', tele: 1, times: 5, cnt: 28, gap: 5, spd: 260, every: 0.42, proj: 'dark', zones: 1, m: 0.6 } },
   frost_witch: { c: '#a8e4ff', every: 6.5, moves: [
     { k: 'clones', n: '거울 분신', tele: 0.8, cnt: 2, ring: 12, proj: 'frost', m: 0.55 },
     { k: 'rain', n: '얼음 창 비', tele: 0.6, form: 'scatter', cnt: 7, spread: 360, delay: 0.85, shape: 'col', fx: 'ice', m: 0.9 },
     { k: 'zone', n: '서리 바닥', tele: 0.5, at: 'player', n2: 3, r: 70, life: 7, dps: 0.06, slow: 0.55, fx: 'frost' },
-    { k: 'sig', sig: 'mirrors', n: '얼음 거울 감옥', tele: 0.8, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'mirrors', n: '얼음 거울 감옥', tele: 0.8, pose: 0, m: 1 },
+    { k: 'shield', n: '얼음 거울 갑옷', tele: 0.7, v: 0.14, life: 12, fx: 'ice', ph: 1, pw: [0, 1, 1.3] },
+    { k: 'wall', n: '눈보라 벽', tele: 0.8, times: 2, spd: 260, every: 1.3, fx: 'ice', m: 0.8, ph: 1, pw: [0, 1, 1] },
+    { k: 'homing', n: '서리 정령', tele: 0.6, cnt: 4, spd: 180, turn: 2.2, proj: 'frost', m: 0.5, ph: 2, pw: [0, 0, 1.4] }],
     ult: { k: 'beam', n: '절대 영도', tele: 1.2, cnt: 2, spread: 3.14, dur: 3, w: 26, len: 760, sweep: 1.4, fx: 'frost', m: 0.35 } },
   void_king: { c: '#a06fff', every: 6, moves: [
     { k: 'vortex', n: '사건의 지평선', tele: 0.8, life: 3, r: 380, pull: 320, burst: 150, fx: 'void', m: 1.1 },
     { k: 'beam', n: '공허 광선', tele: 0.9, cnt: 1, dur: 2.2, w: 30, len: 900, sweep: 2.2, fx: 'void', m: 0.35 },
     { k: 'blink', n: '틈새 도약', tele: 0.3, times: 3, r: 90, fx: 'rift', m: 1 },
-    { k: 'sig', sig: 'veil', n: '어둠 장막', tele: 0.9, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'veil', n: '어둠 장막', tele: 0.9, pose: 0, m: 1 },
+    { k: 'ring', n: '공허 파문', tele: 0.6, times: 3, cnt: 24, gap: 4, spd: 250, every: 0.5, rot: 0.3, proj: 'void', m: 0.5, pw: [1, 1, 1] },
+    { k: 'ward', n: '공허의 결계', tele: 0.8, hits: 12, life: 9, fx: 'void', ph: 1, pw: [0, 0.9, 1.2] },
+    { k: 'rain', n: '별 없는 비', tele: 0.6, form: 'trail', cnt: 7, every: 0.25, delay: 0.8, r: 46, shape: 'circle', fx: 'rift', m: 0.9, ph: 2, pw: [0, 0, 1.4] }],
     ult: { k: 'spiral', n: '왕의 붕괴', tele: 1.2, arms: 6, dur: 5, every: 0.1, spd: 280, proj: 'void', turn: -1.8, m: 0.4 } },
   storm_warden: { c: '#cfe6ff', every: 6, moves: [
     { k: 'march', n: '낙뢰 기둥', tele: 0.5, cnt: 8, gap: 64, every: 0.11, h: 420, from: 'sky', fx: 'bolt', m: 0.9 },
     { k: 'push', n: '폭풍 밀어내기', tele: 0.6, life: 3.2, force: 520, fx: 'wind', m: 0 },
     { k: 'dash', n: '급강하', tele: 0.5, times: 3, spd: 3.8, m: 1 },
-    { k: 'sig', sig: 'rods', n: '피뢰침', tele: 0.7, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'rods', n: '피뢰침', tele: 0.7, pose: 0, m: 1 },
+    { k: 'rain', n: '뇌우', tele: 0.6, form: 'scatter', cnt: 8, spread: 460, delay: 0.8, shape: 'col', fx: 'bolt', m: 0.9, pw: [1, 1, 1] },
+    { k: 'homing', n: '구전', tele: 0.6, cnt: 4, spd: 220, turn: 2.4, proj: 'bolt', m: 0.5, ph: 1, pw: [0, 1.2, 1] },
+    { k: 'shield', n: '폭풍의 눈', tele: 0.7, v: 0.12, life: 10, fx: 'wind', ph: 2, pw: [0, 0, 1.3] }],
     ult: { k: 'wall', n: '천둥 벽', tele: 1, times: 3, spd: 300, gap: 110, every: 1.4, fx: 'bolt', m: 0.8 } },
   first_keeper: { c: '#e8d8a0', every: 6.5, moves: [
     { k: 'march', n: '룬 기둥', tele: 0.6, cnt: 8, gap: 58, every: 0.14, h: 120, both: 1, fx: 'rune', m: 0.9 },
     { k: 'beam', n: '파수 광선', tele: 0.8, cnt: 3, spread: 0.5, dur: 1.2, w: 22, len: 820, sweep: 0, fx: 'rune', m: 0.45 },
     { k: 'rain', n: '봉인 지뢰', tele: 0.5, form: 'scatter', cnt: 6, spread: 420, delay: 2.2, r: 52, shape: 'circle', fx: 'rune', m: 1 },
-    { k: 'sig', sig: 'scales', n: '판결의 저울', tele: 0.8, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'scales', n: '판결의 저울', tele: 0.8, pose: 0, m: 1 },
+    { k: 'homing', n: '룬 추적탄', tele: 0.6, cnt: 5, spd: 200, turn: 2, proj: 'rune', m: 0.55, pw: [1, 1, 1] },
+    { k: 'ward', n: '판결의 결계', tele: 0.8, hits: 14, life: 10, fx: 'rune', ph: 1, pw: [0, 1, 1.2] },
+    { k: 'blink', n: '파수 강림', tele: 0.3, times: 2, r: 90, fx: 'slash', m: 1, ph: 2, pw: [0, 0, 1.3] }],
     ult: { k: 'ring', n: '최초의 판결', tele: 1.2, times: 4, cnt: 26, gap: 4, spd: 260, every: 0.5, proj: 'rune', march: 1, m: 0.6 } },
   pursuer: { c: '#b48aff', every: 5.5, moves: [
     { k: 'rain', n: '별똥 추격', tele: 0.6, form: 'trail', cnt: 8, every: 0.22, delay: 0.75, r: 48, shape: 'circle', fx: 'meteor', m: 1 },
     { k: 'dash', n: '그림자 질주', tele: 0.4, times: 4, spd: 3.6, m: 1 },
     { k: 'vortex', n: '중력 우물', tele: 0.8, life: 3.2, r: 420, pull: 340, burst: 170, fx: 'grav', m: 1.1 },
-    { k: 'sig', sig: 'gaze', n: '응시', tele: 0.8, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'gaze', n: '응시', tele: 0.8, pose: 0, m: 1 },
+    { k: 'beam', n: '별을 꿰는 선', tele: 0.9, cnt: 1, dur: 2, w: 26, len: 900, sweep: 2, fx: 'star', m: 0.35, ph: 1, pw: [0, 1, 1, 1, 1] },
+    { k: 'homing', n: '떠도는 별', tele: 0.6, cnt: 6, spd: 210, turn: 2, proj: 'void', m: 0.5, ph: 2, pw: [0, 0, 1.2, 1, 1] },
+    { k: 'blink', n: '그림자 건너기', tele: 0.3, times: 3, r: 90, fx: 'rift', m: 1, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }],
     ult: { k: 'spiral', n: '종말의 별', tele: 1.4, arms: 5, dur: 5.5, every: 0.09, spd: 300, proj: 'void', turn: 2, rain: 1, m: 0.4 } },
 
   /* ---------------- 유적의 주인 ---------------- */
@@ -63,55 +86,74 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'quake', n: '갱도 붕괴', tele: 0.7, cnt: 7, spread: 380, delay: 0.95, fx: 'rock', m: 0.9 },
     { k: 'burrow', n: '땅굴 기습', tele: 0.5, under: 1.4, r: 70, m: 1.2 },
     { k: 'summon', n: '광부 망령을 깨운다', tele: 0.8, mob: 'minerghost', cnt: 2 },
-    { k: 'sig', sig: 'cart', n: '광차 돌진', tele: 0.6, pose: 1, m: 1 }],
+    { k: 'sig', sig: 'cart', n: '광차 돌진', tele: 0.6, pose: 1, m: 1 },
+    { k: 'homing', n: '녹슨 못 세례', tele: 0.6, cnt: 5, spd: 220, turn: 1.8, proj: 'rivet', m: 0.6, pw: [0.6, 1] },
+    { k: 'leap', n: '갱도 짓누르기', tele: 0.7, times: 2, waves: 1, wspd: 330, wfx: 'rock', m: 1, ph: 1, pw: [0, 1.6] }],
     ult: { k: 'quake', n: '붕락', tele: 1, cnt: 14, spread: 520, delay: 1.1, fx: 'rock', m: 1 } },
   ice_warden: { c: '#9fe0ff', every: 7, moves: [
     { k: 'wall', n: '빙벽 밀기', tele: 0.8, times: 1, spd: 240, gap: 120, fx: 'ice', m: 0.9 },
     { k: 'ring', n: '서리 고리', tele: 0.6, times: 2, cnt: 18, gap: 3, spd: 220, every: 0.7, proj: 'frost', m: 0.6 },
     { k: 'rain', n: '얼음 감옥', tele: 0.7, form: 'cage', cnt: 7, gapX: 50, delay: 1, shape: 'col', fx: 'ice', m: 0.9 },
-    { k: 'sig', sig: 'snowball', n: '눈사태', tele: 0.7, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'snowball', n: '눈사태', tele: 0.7, pose: 0, m: 1 },
+    { k: 'beam', n: '얼음 광선', tele: 0.8, cnt: 1, dur: 1.6, w: 22, len: 700, sweep: 1.2, fx: 'frost', m: 0.4, pw: [0.8, 1] },
+    { k: 'shield', n: '서리 갑주', tele: 0.7, v: 0.12, life: 12, fx: 'ice', ph: 1, pw: [0, 1.4] }],
     ult: { k: 'zone', n: '빙하기', tele: 1, at: 'scatter', n2: 7, r: 70, life: 8, dps: 0.07, slow: 0.6, fx: 'frost', wall: 1 } },
   vine_lord: { c: '#7fd06a', every: 6.5, moves: [
     { k: 'march', n: '뿌리 분출', tele: 0.5, cnt: 6, gap: 60, every: 0.18, h: 110, from: 'under', fx: 'plant', m: 1 },
     { k: 'beam', n: '가시 채찍', tele: 0.55, cnt: 1, dur: 0.6, w: 22, len: 300, sweep: 2.6, fx: 'thorn', m: 0.6 },
     { k: 'rain', n: '씨앗 폭탄', tele: 0.6, form: 'scatter', cnt: 5, spread: 340, delay: 1, r: 54, shape: 'circle', fx: 'seed', zone: { r: 50, life: 4, dps: 0.08, slow: 0.25 }, m: 0.8 },
-    { k: 'sig', sig: 'grapple', n: '갈고리 덩굴', tele: 0.5, pose: 1, m: 1 }],
+    { k: 'sig', sig: 'grapple', n: '갈고리 덩굴', tele: 0.5, pose: 1, m: 1 },
+    { k: 'zone', n: '가시덤불', tele: 0.5, at: 'player', n2: 3, r: 60, life: 6, dps: 0.08, slow: 0.4, fx: 'seed', pw: [0.8, 1] },
+    { k: 'heal', n: '광합성', tele: 0.6, dur: 3, v: 0.08, brk: 0.04, fx: 'leaf', ph: 1, pw: [0, 1.3] }],
     ult: { k: 'march', n: '숲의 분노', tele: 1, cnt: 9, gap: 60, every: 0.12, h: 130, both: 1, fx: 'plant', homing: 4, m: 1 } },
   sand_guardian: { c: '#f0c870', every: 6.5, moves: [
     { k: 'wall', n: '모래 폭풍', tele: 0.8, times: 2, spd: 260, gap: 120, every: 1.6, fx: 'sand', m: 0.8 },
     { k: 'march', n: '태양 광선', tele: 0.6, cnt: 6, gap: 80, every: 0.2, h: 460, from: 'sky', fx: 'sun', m: 1 },
     { k: 'vortex', n: '유사 늪', tele: 0.6, life: 2.8, r: 260, pull: 220, floor: 1, burst: 0, fx: 'sand', m: 0 },
-    { k: 'sig', sig: 'dune', n: '사구 해일', tele: 0.7, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'dune', n: '사구 해일', tele: 0.7, pose: 0, m: 1 },
+    { k: 'burrow', n: '모래 잠행', tele: 0.5, under: 1.3, r: 80, m: 1.1, pw: [0.7, 1] },
+    { k: 'homing', n: '스카라브 떼', tele: 0.6, cnt: 6, spd: 190, turn: 2, proj: 'dark', m: 0.5, ph: 1, pw: [0, 1.5] }],
     ult: { k: 'ring', n: '피라미드의 저주', tele: 1.1, times: 3, cnt: 24, gap: 4, spd: 240, every: 0.6, proj: 'fire', wall: 1, fx: 'sand', m: 0.6 } },
   spore_queen: { c: '#8ff0c8', every: 6.5, moves: [
     { k: 'zone', n: '포자 구름', tele: 0.6, at: 'scatter', n2: 4, r: 64, life: 6, dps: 0.12, fx: 'spore', poison: 1 },
     { k: 'rain', n: '꽃 터뜨리기', tele: 0.6, form: 'scatter', cnt: 5, spread: 320, delay: 1.1, r: 40, shape: 'circle', fx: 'spore', burstRing: 8, m: 0.7 },
     { k: 'summon', n: '여왕의 부름', tele: 0.8, mob: 'sporeling', cnt: 3 },
-    { k: 'sig', sig: 'garden', n: '버섯 정원', tele: 0.8, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'garden', n: '버섯 정원', tele: 0.8, pose: 0, m: 1 },
+    { k: 'ring', n: '포자 고리', tele: 0.5, times: 2, cnt: 20, gap: 4, spd: 200, every: 0.6, proj: 'poison', m: 0.5, pw: [1, 0.8] },
+    { k: 'heal', n: '균사 흡수', tele: 0.6, dur: 2.6, v: 0.07, brk: 0.04, fx: 'spore', ph: 1, pw: [0, 1.3] }],
     ult: { k: 'spiral', n: '포자 폭풍', tele: 1.1, arms: 3, dur: 4.5, every: 0.1, spd: 220, proj: 'poison', turn: 1.6, m: 0.45 } },
   blight_maw: { c: '#c07aff', every: 6, moves: [
     { k: 'vortex', n: '집어삼키기', tele: 0.7, life: 2, r: 300, pull: 380, burst: 110, then: 'dash', fx: 'maw', m: 1.2 },
     { k: 'rain', n: '담즙 비', tele: 0.6, form: 'scatter', cnt: 6, spread: 360, delay: 0.9, r: 46, shape: 'circle', fx: 'bile', zone: { r: 46, life: 5, dps: 0.1 }, m: 0.8 },
     { k: 'dash', n: '이빨 갈기', tele: 0.35, times: 2, spd: 4, m: 1.1 },
-    { k: 'sig', sig: 'tongue', n: '포식자의 혀', tele: 0.5, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'tongue', n: '포식자의 혀', tele: 0.5, pose: 0, m: 1 },
+    { k: 'march', n: '썩은 송곳니 줄', tele: 0.5, cnt: 7, gap: 56, every: 0.13, h: 100, fx: 'flesh', m: 0.9, pw: [1, 1] },
+    { k: 'summon', n: '구더기 토하기', tele: 0.7, mob: 'sacling', cnt: 3, ring: 12, ph: 1, pw: [0, 1.4] }],
     ult: { k: 'ring', n: '둥지 개화', tele: 1, times: 4, cnt: 24, gap: 4, spd: 250, every: 0.5, proj: 'dark', summon: 'sacling', m: 0.6 } },
   drowned_keeper: { c: '#7fc8e8', every: 7, moves: [
     { k: 'wall', n: '역류', tele: 0.8, times: 1, spd: 300, gap: 110, fx: 'water', m: 0.9 },
     { k: 'homing', n: '거품 감옥', tele: 0.6, cnt: 5, spd: 150, turn: 1.6, proj: 'cagebub', m: 0.5 },
     { k: 'leap', n: '닻 내려찍기', tele: 0.7, waves: 1, wspd: 330, wfx: 'water', m: 1.1 },
-    { k: 'sig', sig: 'anchor', n: '닻 사슬', tele: 0.6, pose: 2, m: 1 }],
+    { k: 'sig', sig: 'anchor', n: '닻 사슬', tele: 0.6, pose: 2, m: 1 },
+    { k: 'ring', n: '물방울 고리', tele: 0.5, times: 2, cnt: 18, gap: 3, spd: 220, every: 0.6, proj: 'drop', m: 0.5, pw: [1, 1, 1] },
+    { k: 'shield', n: '거품 껍질', tele: 0.7, v: 0.14, life: 12, fx: 'water', ph: 1, pw: [0, 1.2, 1.3] }],
     ult: { k: 'vortex', n: '심연의 물결', tele: 1, life: 3, r: 360, pull: 300, burst: 160, waves: 1, fx: 'water', m: 1.1 } },
   isle_keeper: { c: '#8fc8b8', every: 7, moves: [
     { k: 'rain', n: '바위 던지기', tele: 0.7, form: 'scatter', cnt: 4, spread: 360, delay: 1.2, r: 64, shape: 'circle', fx: 'boulder', m: 1.2 },
     { k: 'quake', n: '섬 뒤흔들기', tele: 0.6, cnt: 8, spread: 420, delay: 0.9, fx: 'rock', m: 0.8 },
     { k: 'leap', n: '해일 내려찍기', tele: 0.8, waves: 2, wspd: 300, wfx: 'water', m: 1.1 },
-    { k: 'sig', sig: 'islet', n: '섬 던지기', tele: 0.9, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'islet', n: '섬 던지기', tele: 0.9, pose: 0, m: 1 },
+    { k: 'march', n: '산호 솟기', tele: 0.6, cnt: 7, gap: 60, every: 0.14, h: 110, both: 1, fx: 'plant', m: 0.9, pw: [1, 1, 1] },
+    { k: 'shield', n: '바위 껍질', tele: 0.8, v: 0.16, life: 14, fx: 'rock', ph: 1, pw: [0, 1.2, 1.3] }],
     ult: { k: 'rain', n: '섬의 무게', tele: 1.2, form: 'trail', cnt: 10, every: 0.2, delay: 0.9, r: 70, shape: 'circle', fx: 'rock', m: 1.1 } },
   tide_warden: { c: '#5fb0e8', every: 5.5, moves: [
     { k: 'vortex', n: '소용돌이', tele: 0.8, life: 3, r: 420, pull: 360, burst: 160, fx: 'water', m: 1 },
     { k: 'wall', n: '해일', tele: 0.9, times: 2, spd: 320, gap: 120, every: 1.2, fx: 'water', m: 0.9 },
     { k: 'beam', n: '심해 광선', tele: 1, cnt: 2, spread: 0.6, dur: 2.4, w: 30, len: 900, sweep: 1.2, fx: 'water', m: 0.35 },
-    { k: 'sig', sig: 'flood', n: '밀물', tele: 0.9, pose: 1, m: 1 }],
+    { k: 'sig', sig: 'flood', n: '밀물', tele: 0.9, pose: 1, m: 1 },
+    { k: 'leap', n: '파도 내려찍기', tele: 0.7, waves: 2, wspd: 360, wfx: 'water', m: 1.1, pw: [1.2, 0, 0] },
+    { k: 'homing', n: '거품 감옥', tele: 0.6, cnt: 5, spd: 150, turn: 1.6, proj: 'cagebub', m: 0.5, ph: 1, pw: [0, 1.2, 1] },
+    { k: 'wall', n: '겹파도', tele: 0.8, times: 3, spd: 340, every: 1.1, fx: 'water', m: 0.8, ph: 2, pw: [0, 0, 1.4] }],
     ult: { k: 'spiral', n: '물이 지운 것', tele: 1.3, arms: 4, dur: 5, every: 0.1, spd: 290, proj: 'frost', turn: 1.4, wall: 1, fx: 'water', m: 0.4 } },
 
   /* ---------------- 세션 2 ---------------- */
@@ -119,36 +161,53 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'ring', n: '리벳 난사', tele: 0.5, times: 4, cnt: 16, gap: 2, spd: 320, every: 0.35, rot: 0.4, proj: 'rivet', m: 0.5 },
     { k: 'summon', n: '증식 폭발', tele: 0.8, mob: 'splitter', cnt: 2, ring: 18 },
     { k: 'march', n: '압착 행진', tele: 0.6, cnt: 7, gap: 56, every: 0.15, h: 100, fx: 'metal', m: 0.9 },
-    { k: 'sig', sig: 'turrets', n: '리벳 포탑', tele: 0.7, pose: 1, m: 1 }],
+    { k: 'sig', sig: 'turrets', n: '리벳 포탑', tele: 0.7, pose: 1, m: 1 },
+    { k: 'homing', n: '추적 리벳', tele: 0.6, cnt: 6, spd: 220, turn: 2, proj: 'rivet', m: 0.5, pw: [1, 1, 1] },
+    { k: 'zone', n: '기름 웅덩이', tele: 0.5, at: 'player', n2: 3, r: 60, life: 6, dps: 0.06, slow: 0.45, fx: 'ink', ph: 1, pw: [0, 1.2, 1.2] }],
     ult: { k: 'spiral', n: '과증식', tele: 1, arms: 6, dur: 4, every: 0.11, spd: 300, proj: 'rivet', turn: -2.2, m: 0.4 } },
   hepha: { c: '#ffb050', every: 6, moves: [
     { k: 'march', n: '화로 분출', tele: 0.6, cnt: 8, gap: 60, every: 0.12, h: 160, both: 1, fx: 'fire', m: 1 },
     { k: 'rain', n: '용융 비', tele: 0.6, form: 'scatter', cnt: 8, spread: 440, delay: 0.9, r: 44, shape: 'circle', fx: 'fire', zone: { r: 44, life: 4, dps: 0.12, burn: 1 }, m: 0.8 },
     { k: 'push', n: '역회전 컨베이어', tele: 0.6, life: 3, force: -480, fx: 'conveyor', m: 0 },
-    { k: 'sig', sig: 'pour', n: '쇳물 붓기', tele: 0.7, pose: 1, m: 1 }],
+    { k: 'sig', sig: 'pour', n: '쇳물 붓기', tele: 0.7, pose: 1, m: 1 },
+    { k: 'homing', n: '불꽃 탄', tele: 0.6, cnt: 5, spd: 220, turn: 2, proj: 'fire', m: 0.5, ph: 1, pw: [0, 1, 1, 1, 1] },
+    { k: 'shield', n: '열 차폐', tele: 0.7, v: 0.1, life: 12, fx: 'fire', ph: 2, pw: [0, 0, 1.3, 1, 0.8] },
+    { k: 'rain', n: '불똥 비', tele: 0.6, form: 'trail', cnt: 8, every: 0.22, delay: 0.75, r: 46, shape: 'circle', fx: 'fire', m: 0.9, ph: 3, pw: [0, 0, 0, 1.4, 1.6] }],
     ult: { k: 'beam', n: '최초의 불', tele: 1.3, cnt: 3, spread: 2.09, dur: 3.4, w: 34, len: 900, sweep: 1.6, fx: 'fire', m: 0.35 } },
   overseer: { c: '#d0d0e0', every: 6, moves: [
     { k: 'beam', n: '레이저 격자', tele: 0.9, cnt: 3, from: 'grid', dur: 1.6, w: 18, len: 700, sweep: 0, fx: 'laser', m: 0.45 },
     { k: 'march', n: '압착기 행렬', tele: 0.6, cnt: 8, gap: 58, every: 0.16, h: 140, from: 'sky', fx: 'metal', m: 1 },
     { k: 'summon', n: '보수 요청', tele: 0.8, mob: 'riveter', cnt: 2 },
-    { k: 'sig', sig: 'drones', n: '점검 드론', tele: 0.8, pose: 2, m: 1 }],
+    { k: 'sig', sig: 'drones', n: '점검 드론', tele: 0.8, pose: 2, m: 1 },
+    { k: 'homing', n: '유도 미사일', tele: 0.6, cnt: 4, spd: 240, turn: 2.4, proj: 'rivet', m: 0.55, pw: [1, 1, 1] },
+    { k: 'shield', n: '역장 방벽', tele: 0.7, v: 0.15, life: 12, fx: 'metal', ph: 1, pw: [0, 1.2, 1] },
+    { k: 'rain', n: '압착기 낙하', tele: 0.6, form: 'trail', cnt: 6, every: 0.3, delay: 0.8, shape: 'col', fx: 'metal', m: 0.9, ph: 2, pw: [0, 0, 1.4] }],
     ult: { k: 'wall', n: '전면 가동', tele: 1, times: 3, spd: 280, gap: 110, every: 1.3, fx: 'metal', march: 1, m: 0.8 } },
   archetype: { c: '#f4ead0', every: 5.5, moves: [
     { k: 'blink', n: '완벽한 연격', tele: 0.25, times: 4, r: 96, fx: 'slash', m: 1 },
     { k: 'beam', n: '설계선', tele: 0.9, cnt: 2, from: 'cross', dur: 1.8, w: 20, len: 900, sweep: 0.6, fx: 'blueprint', m: 0.4 },
     { k: 'summon', n: '형상 주조', tele: 0.8, mob: 'draft_form', cnt: 2 },
-    { k: 'sig', sig: 'project', n: '설계도 투영', tele: 0.5, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'project', n: '설계도 투영', tele: 0.5, pose: 0, m: 1 },
+    { k: 'march', n: '설계 기둥', tele: 0.6, cnt: 8, gap: 58, every: 0.12, h: 140, both: 1, fx: 'rune', m: 0.9, ph: 1, pw: [0, 1.2, 1, 1, 1] },
+    { k: 'ward', n: '완성의 결계', tele: 0.8, hits: 20, life: 10, fx: 'rune', ph: 2, pw: [0, 0, 1.2, 1, 1] },
+    { k: 'homing', n: '초안 탄', tele: 0.6, cnt: 6, spd: 220, turn: 2.2, proj: 'rune', m: 0.5, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }],
     ult: { k: 'spiral', n: '원형의 증명', tele: 1.2, arms: 8, dur: 4.5, every: 0.12, spd: 280, proj: 'rune', turn: 1.2, blink: 1, m: 0.38 } },
   restorer: { c: '#bcd8f4', every: 5.5, moves: [
     { k: 'rewind', n: '되감기', tele: 0.5, back: 3, heal: 0.025 },
     { k: 'beam', n: '궤도 광선', tele: 1, cnt: 2, spread: 3.14, dur: 3, w: 30, len: 960, sweep: 2.4, fx: 'star', m: 0.35 },
-    { k: 'ring', n: '해체 파동', tele: 0.6, times: 3, cnt: 30, gap: 5, spd: 280, every: 0.5, proj: 'star', m: 0.55 }],
+    { k: 'ring', n: '해체 파동', tele: 0.6, times: 3, cnt: 30, gap: 5, spd: 280, every: 0.5, proj: 'star', m: 0.55 },
+    { k: 'heal', n: '복원', tele: 0.6, dur: 3.2, v: 0.05, brk: 0.03, fx: 'clock', ph: 1, pw: [0, 1, 1, 1.2, 1.2] },
+    { k: 'clones', n: '과거의 잔상', tele: 0.8, cnt: 2, ring: 12, proj: 'star', m: 0.5, ph: 2, pw: [0, 0, 1.2, 1, 1] },
+    { k: 'march', n: '빛바늘 낙하', tele: 0.6, cnt: 8, gap: 60, every: 0.11, h: 420, from: 'sky', fx: 'sun', m: 0.9, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }],
     ult: { k: 'vortex', n: '원점 회귀', tele: 1.2, life: 3.4, r: 460, pull: 380, burst: 190, rewind: 1, fx: 'clock', m: 1.1 } },
   shaft_maw: { c: '#a89878', every: 6, moves: [
     { k: 'quake', n: '갱 메우기', tele: 0.8, cnt: 12, spread: 520, delay: 1, fx: 'rock', m: 1 },
     { k: 'vortex', n: '삼키는 구멍', tele: 0.7, life: 2.8, r: 400, pull: 360, burst: 170, fx: 'pit', m: 1.1 },
     { k: 'burrow', n: '굴착', tele: 0.5, under: 1.5, r: 110, m: 1.2 },
-    { k: 'sig', sig: 'veins', n: '광맥 폭발', tele: 0.7, pose: 0, m: 1 }],
+    { k: 'sig', sig: 'veins', n: '광맥 폭발', tele: 0.7, pose: 0, m: 1 },
+    { k: 'march', n: '석순 솟기', tele: 0.6, cnt: 8, gap: 58, every: 0.13, h: 120, both: 1, fx: 'bone', m: 0.9, ph: 1, pw: [0, 1.2, 1, 1, 1] },
+    { k: 'heal', n: '광석 삼키기', tele: 0.6, dur: 2.8, v: 0.05, brk: 0.035, fx: 'rock', ph: 2, pw: [0, 0, 1.2, 1, 1] },
+    { k: 'wall', n: '흙더미 밀기', tele: 0.8, times: 2, spd: 280, every: 1.3, fx: 'sand', m: 0.8, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }],
     ult: { k: 'quake', n: '전부 무너져라', tele: 1.2, cnt: 18, spread: 640, delay: 1.1, fx: 'rock', march: 1, m: 1 } }
 };
 
@@ -175,3 +234,27 @@ export const GAP_KIND: Bag = {
 };
 export const GAP_BRACE = 0.45;     // 예고 중 방어 자세 — 받는 피해(지금은 때리지 말 것이 몸에 보인다)
 export const GAP_MISS_MUL = 0.25;  // 헛손질이면 받는 피해에 더한다
+
+/* 마디를 넘는 순간 몸이 바뀌는 보스(entity/boss-forms) — fly 그 마디부터 날아오른다(k 날개 그림 · game/boss-form-fx) ·
+   split 그 마디에서 둘로 갈라진다(남은 체력을 반씩, 둘 다 쓰러져야 끝). 3 · 5 마디 보스만 — 두 마디는 바뀔 틈이 없다 */
+export const BOSS_FORM: Record<string, { fly?: number; k?: string; split?: number; n?: string }> = {
+  king_slime: { split: 2, n: '왕관이 둘로 쪼개진다' },
+  proliferator: { split: 1, n: '스스로를 복제한다' },
+  pursuer: { split: 3, n: '그림자가 떨어져 나온다' },
+  tide_warden: { fly: 1, k: 'spout', n: '물기둥을 타고 오른다' },
+  hepha: { fly: 2, k: 'jets', n: '분사구에 불이 붙는다' },
+  archetype: { fly: 3, k: 'wings', n: '설계선이 날개가 된다' }
+};
+/* 하늘에서는 못 쓰는 기술 — 땅을 디뎌야 끝난다(leap 은 내려앉아야 · burrow 는 파고들어야) */
+export const GROUND_MOVE: Record<string, number> = { leap: 1, burrow: 1 };
+/* 기술 자세의 틀(tools/mkbossart.py FAMILY 와 같은 묶음) — 넷째 칸부터 더한 기술은 자세 시트에 칸이 없어, 앞 셋 중 같은 틀의 자세를 빌린다 */
+export const MOVE_FAM: Record<string, string> = { leap: 'slam', quake: 'slam', march: 'slam',
+  rain: 'cast', ring: 'cast', spiral: 'cast', homing: 'cast', beam: 'cast', wall: 'cast', zone: 'cast', clones: 'cast', rewind: 'cast', shield: 'cast', ward: 'cast',
+  vortex: 'pull', push: 'pull', summon: 'pull', heal: 'pull', dash: 'lunge', blink: 'lunge', burrow: 'lunge' };
+/** 그 기술이 빌려 쓸 자세 칸(0~2) */
+export function movePose(K: Bag, d: Bag) {
+  if (d.pose !== undefined) return d.pose;
+  const i = K.moves.indexOf(d); if (i >= 0 && i < 3) return i;
+  const f = MOVE_FAM[d.k], j = K.moves.slice(0, 3).findIndex((m: Bag) => MOVE_FAM[m.k] === f);
+  return j >= 0 ? j : 0;
+}

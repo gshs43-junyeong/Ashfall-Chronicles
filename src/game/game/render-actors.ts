@@ -10,7 +10,7 @@ import { tileMat } from '../data/materials.js';
 import { NPCS } from '../data/npcs.js';
 import { PET_MOTION, dragonStage } from '../data/pets.js';
 import { idef } from '../data/values.js';
-import { BOSS_MOVES } from '../data/bossmoves.js';
+import { BOSS_MOVES, movePose } from '../data/bossmoves.js';
 import { TS } from '../world.js';
 import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';
@@ -61,7 +61,7 @@ export const RenderActorsPart: Bag = {
       한 줄 = 한 마디 · 칸 0 은 손대지 않은 그림, 1 + 기술 번호×2 + (내지르기면 1). 기술 번호 3 = 필살기 */
   bossPose(e: Enemy): number {
     const K = BOSS_MOVES[e.type]; let code = -1;
-    if (e.mv && K) { const i = e.mv.d === K.ult ? 3 : e.mv.d.pose ?? K.moves.indexOf(e.mv.d); if (i >= 0) code = i * 2 + (e.mv.run ? 1 : 0); }   // 고유 기술(pose)은 닮은 기술의 자세를 빌린다
+    if (e.mv && K) { const i = e.mv.d === K.ult ? 3 : movePose(K, e.mv.d); if (i >= 0) code = i * 2 + (e.mv.run ? 1 : 0); }   // 고유 기술(pose)은 닮은 기술의 자세를 빌린다
     else if (e.ghost && e.poseNet >= 0) code = e.poseNet;
     return code;
   },
@@ -299,6 +299,11 @@ export const RenderActorsPart: Bag = {
   },
 
   drawEnemy(c: any, e: any, sx: any, sy: any) {
+    if (e.shade && !e._shading) {                                           // 갈라져 나온 짝 — 한 톤 어둡게(entity/boss-forms)
+      c.save(); c.filter = 'brightness(.6) saturate(.65)'; e._shading = 1;
+      try { this.drawEnemy(c, e, sx, sy); } finally { e._shading = 0; c.restore(); }
+      return;
+    }
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
     if (e.def.tame) { this.drawWildHorse(c, e, sx, sy); return; }
     if (e.hide > 0 || e.amb) { this.drawBuried(c, e, sx, sy); return; }

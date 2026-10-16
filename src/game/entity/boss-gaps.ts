@@ -1,7 +1,6 @@
 /* ===== entity/boss-gaps.js — 보스의 틈 — 기술 뒤 비틀거림 · 과열 · 균열, 예고 중 방어 자세. 그림은 game/boss-gap-fx ===== */
 import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
-import { SURGE_FLY } from '../data/skills.js';
 import { BOSS_GAP, GAP_BRACE, GAP_KIND, GAP_MISS_MUL } from '../data/bossmoves.js';
 import { Enemy } from '../entity.js';
 /* ★ 틈 · 방어 자세는 호스트가 정하고(기술을 돌리는 쪽) 손님은 받은 값으로 그림만 — game/net.ts netEnemyList 의 gp 칸. 사연: docs/code-history.md#h181 */
@@ -26,7 +25,7 @@ export const BossGaps: Bag & ThisType<Enemy> = {
     this.gapT -= dt;
     if (this.mvCd !== undefined && this.mvCd < this.gapT + 0.4) this.mvCd = this.gapT + 0.4;
     if (this.gapK !== 'stagger') return false;
-    const fly = !!SURGE_FLY[this.def.ai!];
+    const fly = this.flies();
     this.vx *= 0.8;
     if (fly) this.vy = this.vy * 0.85 + 22;                 // 나는 보스는 힘이 빠져 조금 가라앉는다
     this.move(dt, world, { gravMul: fly ? 0 : 1 });

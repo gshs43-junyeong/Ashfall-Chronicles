@@ -181,7 +181,7 @@ export function drawDecoy(c: C2, h: Bag, x: number, y: number, f: number, T: num
 }
 
 /** 제 그림이 있는 탄 */
-export const BOSS_PROJ: Record<string, number> = { skull: 1, bone: 1, rivet: 1, poison: 1, cagebub: 1, web: 1, fruit: 1 };
+export const BOSS_PROJ: Record<string, number> = { skull: 1, bone: 1, rivet: 1, poison: 1, cagebub: 1, web: 1, fruit: 1, gel: 1, drop: 1 };
 /** 보스 탄 — 이름 그대로의 물건(울부짖는 해골 · 뼈 · 리벳 · 포자 · 거품 감옥). 그렸으면 true */
 export function drawBossProjAt(c: C2, type: string, x: number, y: number, a: number, T: number, sd: number, col?: string) {
   switch (type) {
@@ -230,6 +230,23 @@ export function drawBossProjAt(c: C2, type: string, x: number, y: number, a: num
       c.restore();
       c.strokeStyle = 'rgba(240,242,248,.45)'; c.beginPath(); c.moveTo(x, y); c.lineTo(x - Math.cos(a) * 26, y - Math.sin(a) * 26); c.stroke();
       return true;
+    }
+    case 'gel': {                                                      // 젤리 덩이 — 출렁이며 날고 속에 기포가 돈다
+      const r = 7, sq = 1 + Math.sin(T * 10 + sd) * 0.12;
+      c.save(); c.translate(x, y); c.rotate(a); c.scale(sq, 2 - sq);
+      c.fillStyle = 'rgba(111,168,255,.75)'; c.strokeStyle = '#1e3a78'; c.lineWidth = 1.4;
+      c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(220,240,255,.9)'; c.beginPath(); c.ellipse(-2.5, -2.5, 2.6, 1.6, -0.6, 0, TAU); c.fill();
+      c.fillStyle = 'rgba(200,230,255,.6)'; c.beginPath(); c.arc(Math.cos(T * 4 + sd) * 3, Math.sin(T * 4 + sd) * 3, 1.5, 0, TAU); c.fill();
+      c.restore(); return true;
+    }
+    case 'drop': {                                                     // 물방울 — 나는 쪽으로 뾰족한 방울, 뒤로 잔물방울
+      c.save(); c.translate(x, y); c.rotate(a);
+      c.fillStyle = 'rgba(127,200,232,.85)'; c.strokeStyle = '#1a4a68'; c.lineWidth = 1.2;
+      c.beginPath(); c.moveTo(9, 0); c.quadraticCurveTo(0, -7, -5, -4); c.arc(-4, 0, 4, -Math.PI / 2, Math.PI / 2, true); c.quadraticCurveTo(0, 7, 9, 0); c.fill(); c.stroke();
+      c.fillStyle = '#e8f8ff'; c.fillRect(-3, -3, 2, 2);
+      c.fillStyle = 'rgba(160,220,245,.6)'; c.beginPath(); c.arc(-12, Math.sin(T * 12 + sd) * 2, 2, 0, TAU); c.fill();
+      c.restore(); return true;
     }
     case 'fruit': {                                                    // 열매 — 돌며 날아간다(꼭지 잎)
       c.save(); c.translate(x, y); c.rotate(T * 9 + sd);

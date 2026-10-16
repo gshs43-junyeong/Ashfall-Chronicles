@@ -15,10 +15,10 @@ export const BossAI: Bag & ThisType<Enemy> = {
   bossAI(dt: number, world: World, p: Player, dx: number, dy: number, dd: any) { const { WW, WH } = dimsOf(world);
     const AI = this.def.ai;
     this.stateT -= dt;
-    const hpr = this.hp / this.maxHp;
+    const hpr = this.poolRatio();                     // 갈라진 둘은 합쳐서 잰다(entity/boss-forms)
     /* ★ pf 를 같이 둔다 — 0(첫 페이즈)에서 1(마지막)까지의 **비율**이다 — 사연: docs/code-history.md#h36 */
     const nph = this.phases;
-    this.phase = Math.min(nph - 1, Math.floor((1 - hpr) * nph));
+    this.phase = Math.max(this.lastPhase || 0, Math.min(nph - 1, Math.floor((1 - hpr) * nph)));
     this.pf = nph > 1 ? this.phase / (nph - 1) : 0;
     /* 페이즈가 올라가는 순간을 연출로 알린다. */
     if (this.phase > this.lastPhase) {
@@ -29,6 +29,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
     this.phaseT = (this.phaseT || 0) - dt;
     if (this.phaseInv > 0) this.phaseInv -= dt;
     this.tickWeak(dt, world, p);
+    this.formTick(dt, p);                              // 막의 시간 · 날아오른 몸의 높이
 
     /* 틈 — 기술 뒤 비틀거리는 동안은 몸놀림을 멈춘다(entity/boss-gaps) */
     if (this.tickGap(dt, world)) { this.stateT += dt; return; }

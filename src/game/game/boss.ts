@@ -112,7 +112,7 @@ export const BossPart: Bag = {
 
   /** 쓰러지면 싸움은 없던 일 — 깨운 보스는 조용히 사라지고(처치 아님 · 보상 없음) 제단·둥지·메아리는 다시 깨울 수 있다. */
   endBossFight() {
-    if (this.boss) { this.boss.dead = true; this.boss = null; }       // die() 를 거치지 않는다
+    if (this.boss) { if (this.boss.twin) this.boss.twin.dead = true; this.boss.dead = true; this.boss = null; }       // die() 를 거치지 않는다 · 갈라진 짝도
     this.pendingLair = null; this.pendingEcho = null;
     UI.bossBar(null);
   },

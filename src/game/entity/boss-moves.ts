@@ -2,8 +2,7 @@
 import { app as G } from '../ctx.js';
 import { TAU, angleTo, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
-import { SURGE_FLY } from '../data/skills.js';
-import { ARC_FX, BOSS_MOVES, DOWN_COL, XFX_OF } from '../data/bossmoves.js';
+import { ARC_FX, BOSS_MOVES, DOWN_COL, GROUND_MOVE, XFX_OF } from '../data/bossmoves.js';
 import { TS } from '../world.js';
 import { Enemy, Part, Proj } from '../entity.js';
 /* 기술을 쓰는 동안은 몸놀림(boss-ai)이 쉰다 — 한꺼번에 둘이 겹치면 피할 자리가 사라진다.
@@ -17,7 +16,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
   tickMoves(dt: number, world: World, p: Player, dd: number) {
     const K = BOSS_MOVES[this.type]; if (!K) return false;
     this.mvHist(dt);
-    const fly = !!SURGE_FLY[this.def.ai!];
+    const fly = this.flies();
     const mv = this.mv;
     if (mv) {
       mv.t += dt;
@@ -34,7 +33,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
         const ult = mv.d === K.ult;
         this.mv = null; this.burrowT = 0;
         this.gapOpen(ult);                                    // 기술 뒤 틈(entity/boss-gaps)
-        this.mvCd = K.every * (1 - this.pf * 0.3) * (0.85 + Math.random() * 0.3);
+        this.mvCd = K.every * (1 - this.pf * 0.3) * (0.85 + Math.random() * 0.3) * (this.twinLive() ? 1.6 : 1);   // 갈라진 둘이 번갈아 쓰게
       }
       return true;
     }
@@ -46,8 +45,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
     this.mvN = (this.mvN || 0) + 1;
     if (K.ult && this.lastPh() && (!this.ultUsed || this.mvN % 3 === 0)) { d = K.ult; this.ultUsed = 1; }
     else {
-      const pool = K.moves.filter((m: Bag) => m !== this.mvLast);
-      d = pool[Math.floor(Math.random() * pool.length)] || K.moves[0];
+      d = this.mvPick(K) || K.moves[0];
     }
     this.mvLast = d;
     this.mv = { d, t: 0, run: null };
@@ -56,6 +54,17 @@ export const BossMoves: Bag & ThisType<Enemy> = {
     G.bossHazard({ k: 'aura', c: K.c, life: d.tele, tele: d.tele, ref: this, nid: this.nid, mk: d.k, sig: d.sig, fx: this.mvFx(d), proj: d.proj, cnt: d.cnt, sd: Math.random() * 99 });
     G.sfxAt && G.sfxAt(d === K.ult ? 'chapter' : 'sk_mark', this.cx / TS, this.cy / TS);
     return true;
+  },
+  /** 마디에 맞춰 고른다 — ph 마디부터 열리고 pw[마디] 가 무게(없으면 1). 날아오른 몸은 땅 기술을 건너뛴다 · 막이 남아 있으면 또 걸지 않는다 */
+  mvPick(K: Bag) {
+    const ph = this.phase || 0, air = !!this.airborne;     // 본래 나는 보스는 그대로 — 땅굴 기습도 원래 쓰던 것
+    const pool = K.moves.filter((m: Bag) => m !== this.mvLast && ph >= (m.ph || 0) && !(air && GROUND_MOVE[m.k])
+      && !((m.k === 'shield' && this.shield > 0) || (m.k === 'ward' && this.ward > 0) || (m.k === 'heal' && this.hp > this.maxHp * 0.9)));
+    const wt = (m: Bag) => m.pw ? m.pw[Math.min(ph, m.pw.length - 1)] : 1;
+    let sum = 0; for (const m of pool) sum += wt(m);
+    let r = Math.random() * sum;
+    for (const m of pool) { r -= wt(m); if (r < 0 && wt(m) > 0) return m; }
+    return pool.find((m: Bag) => wt(m) > 0) || null;
   },
   /** 지난 자리(되감기용) — 0.2초마다 하나, 4초 치 */
   mvHist(dt: number) {
@@ -96,7 +105,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
 
   /** 기술 실행 — 돌려준 busy 동안 보스가 묶인다(tick 이 있으면 그 동안 움직임을 그것이 맡는다) */
   mvStart(d: Bag, p: Player, world: World, K: Bag): Run {
-    const m = d.m ?? 1, fly = !!SURGE_FLY[this.def.ai!], E = this;
+    const m = d.m ?? 1, fly = this.flies(), E = this;
     const xf = d.fx || XFX_OF[d.proj] || 'rock';                  // 덧붙임의 결 — 탄 갈래를 따른다(룬 탄 → 룬 기둥)
     const extra = () => {                                         // 필살기 덧붙임 — 한 기술에 다른 결을 하나 더
       if (d.march) this.mvStart({ k: 'march', cnt: 8, gap: 60, every: 0.12, h: 130, both: 1, fx: xf, m: 0.8 }, p, world, K);
@@ -108,6 +117,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
     };
     switch (d.k) {
       case 'sig': return this.sigStart(d, p, world, K);                 // 그 보스만의 기술(entity/boss-signature)
+      case 'heal': case 'shield': case 'ward': return this.formMove(d, p, world, K);   // 치유 · 방어막 · 결계(entity/boss-forms)
       case 'leap': {                                              // 높이 뛰어 겨눈 자리로 — 내려앉으면 양옆으로 충격파
         const times = d.times || 1;
         const r: Run = { busy: 99, n: 0, air: 0, wait: 0.05 };

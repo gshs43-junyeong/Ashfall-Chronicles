@@ -787,6 +787,15 @@ body.q-low .dlg-main,body.q-low .dlg-portrait.talk{animation:none}
 #bossbar.gap .bb-track{animation:bbgap .45s ease-in-out infinite alternate;border-color:#ffd27a}
 @keyframes bbgap{from{box-shadow:0 0 0 1px #ffd27a,0 0 6px rgba(255,200,90,.45)}to{box-shadow:0 0 0 2px #fff0b8,0 0 18px 4px rgba(255,210,110,.85)}}
 #bossbar.brace .bb-fill{filter:saturate(.2) brightness(.75)}
+/* 방어막 — 체력 끝에 파랗게 이어 붙고, 넘치면 막대 밖으로 늘어난다(그래서 트랙은 자르지 않는다) */
+#bossbar .bb-track{overflow:visible}
+.bb-shield{position:absolute;top:-2px;bottom:-2px;left:0;width:0;z-index:3;border-radius:2px;pointer-events:none;
+  background:linear-gradient(#d8f2ff,#4aa0f0 55%,#2a68c0);box-shadow:0 0 8px #6ab8ffcc;transition:width .2s,left .2s}
+/* 결계 — 막대 위로 금빛 빗금이 덮인다(피해가 들지 않는다는 것이 막대에서 보인다) */
+.bb-ward{position:absolute;inset:0;z-index:2;display:none;pointer-events:none;
+  background:repeating-linear-gradient(-45deg,#ffe08a66 0 4px,transparent 4px 9px)}
+#bossbar.ward .bb-ward{display:block}
+#bossbar.ward .bb-track{border-color:#ffe08a;box-shadow:0 0 10px #ffe08a99}
 #bossbar.brace .bb-track{border-color:#8fa6bd;box-shadow:inset 0 0 0 1px rgba(170,200,230,.5)}
 
 /* ---- 미니보스 — 더 뺄 것이 없는 상태가 기준이다 ---- */

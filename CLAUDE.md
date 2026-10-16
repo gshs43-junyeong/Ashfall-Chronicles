@@ -354,6 +354,8 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 - **보스 기술**(data/bossmoves.ts `BOSS_MOVES` · entity/boss-moves.ts `tickMoves` · game/boss-hazards.ts `G.bhz`): 보스마다 기술 셋 + 궁극기, 예고 뒤 위험 칸. ★ 플레이어 피해는 `G.hitPlayers`/`hitPlayersRect`(호스트만) — `G.aoe` 는 플레이어 스킬용이라 몹을 때린다. 사연: docs/code-history.md#h173
   **틈**(entity/boss-gaps.ts · data/bossmoves.ts `BOSS_GAP` · `GAP_KIND` · 그림 game/boss-gap-fx.ts): 기술이 끝나면 보스 갈래의 틈(비틀거림 멈춤 · 과열 느려짐 · 균열 갑옷↓, 받는 피해↑),
   아무도 못 맞혔으면 헛손질(더 길고 더 아프게). 예고 중은 방어 자세(받는 피해 `GAP_BRACE`). 글 알림 없이 몸 · 체력 막대(`#bossbar.gap` · `.brace`)로만. 사연: docs/code-history.md#h181
+  **기술 확장 · 막 · 변신**(entity/boss-forms · game/boss-form-fx): 기술은 칸 **끝에만** 더한다(번역 열쇠 · 자세 번호) — `ph` 열림 마디 · `pw` 마디별 무게 · 넷째 칸부터 자세는 `movePose` 가 빌린다.
+  heal · shield(막대에 파랗게) · ward(횟수로 깨지는 완전 막기) · `BOSS_FORM` 날아오르기(`airborne`) · 둘로 갈라지기(`twin` · `poolMax`, 먼저 쓰러진 쪽은 보상 없음). 사연: docs/code-history.md#h187
 - **유적 구조 경향**(`RUIN_SPEC[].style` · `STORY_RUIN[].style` → `carveDungeon` cfg.style): 광산 wide · 둥지 sparse(방 사이 암반, 굴로 잇는다) · 석판 2 잔방 미로 · 석판 3 높은 방 · 포자 굴 둥근 방. 바꾸면 sizediag · ruindiag · 봉인 방 · 깊은 곳을 다시 볼 것. 사연: docs/code-history.md#h176
 - **깊이층**(world/strata.ts · world.ts `DEPTH_LAYER`): 지표 → 지하 → 심층암 지대(SY172 ±) → 작열 지대(DEEP_Y ±, 현무암 + 마그마 맥) → 지옥.
   경계는 `strataLines`(씨앗에서 뽑아 저장 안 함), `applyStrata` 가 생성 **맨 끝**(광상 앞)에 남은 `T.STONE` 과 자연 벽지만 바꾼다(벽지 17 · 18, `naturalWalls()`) —
