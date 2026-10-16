@@ -196,7 +196,7 @@ export const EnemyTraits: Bag & ThisType<Enemy> = {
   wakeDeaf(spread: boolean) {
     if (this.awake) return;
     this.awake = 1;
-    G.texts.push(new DmgText(this.cx, this.y - 10, '!', '#ff6a5a', 1));
+    G.texts.push(new DmgText(this.cx, this.y - 10, '!', '#ff6a5a', 2));
     for (let i = 0; i < 10; i++) G.parts.push(new Part(this.cx, this.cy, '#ff8a6a', -40, .6));
     if (spread) for (const e of G.ents) if (e instanceof Enemy && e !== this && e.def.trait === 'deaf' && !e.awake &&
       Math.abs(e.cx - this.cx) < 420 && Math.abs(e.cy - this.cy) < 300) e.wakeDeaf(false);
@@ -209,7 +209,7 @@ export const EnemyTraits: Bag & ThisType<Enemy> = {
       G.ruinDark = 0;
       const bonus = Math.round(this.gold * 2);
       G.player.gold += bonus;
-      G.texts.push(new DmgText(this.cx, this.y - 12, '+' + bonus, '#ffd24a', 1));
+      G.texts.push(new DmgText(this.cx, this.y - 12, '+' + bonus, '#ffd24a', 2));
       G.toast(tr('불이 돌아왔다 — 도둑의 자루에서 금화 {n}', { n: bonus }), 'good');
     }
   }

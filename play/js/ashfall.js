@@ -32659,7 +32659,8 @@
       this.y = y;
       this.v = v;
       this.c = c;
-      this.crit = !!crit;
+      this.crit = crit === 1 || crit === true;
+      this.big = !!crit;
       this.life = life;
       this.max = life;
       this.vy = -70;
@@ -32674,11 +32675,17 @@
   function drawFloatTexts(c, list, camX, camY, st) {
     for (const t of list) {
       c.globalAlpha = Math.max(0, Math.min(1, t.life / t.max));
-      const k = pop(1 - t.life / t.max, t.crit ? 1.7 : 1.35, 0.12);
+      const k = pop(1 - t.life / t.max, t.crit ? 1.9 : t.big ? 1.6 : 1.35, 0.12);
       c.save();
       c.translate(t.x - camX, t.y - camY);
       c.scale(k, k);
-      c.font = st.font(t.crit);
+      c.font = st.font(t.big);
+      if (t.crit && st.critOutline) {
+        c.strokeStyle = st.critOutline;
+        c.lineWidth = 3;
+        c.lineJoin = "round";
+        c.strokeText(String(t.v), 0, 0);
+      }
       c.fillStyle = st.outline || "#000";
       c.fillText(String(t.v), 1, 1);
       c.fillStyle = t.c;
@@ -36148,7 +36155,7 @@
     wakeDeaf(spread) {
       if (this.awake) return;
       this.awake = 1;
-      app.texts.push(new DmgText(this.cx, this.y - 10, "!", "#ff6a5a", 1));
+      app.texts.push(new DmgText(this.cx, this.y - 10, "!", "#ff6a5a", 2));
       for (let i = 0; i < 10; i++) app.parts.push(new Part(this.cx, this.cy, "#ff8a6a", -40, 0.6));
       if (spread) {
         for (const e of app.ents) if (e instanceof Enemy && e !== this && e.def.trait === "deaf" && !e.awake && Math.abs(e.cx - this.cx) < 420 && Math.abs(e.cy - this.cy) < 300) e.wakeDeaf(false);
@@ -36161,7 +36168,7 @@
         app.ruinDark = 0;
         const bonus = Math.round(this.gold * 2);
         app.player.gold += bonus;
-        app.texts.push(new DmgText(this.cx, this.y - 12, "+" + bonus, "#ffd24a", 1));
+        app.texts.push(new DmgText(this.cx, this.y - 12, "+" + bonus, "#ffd24a", 2));
         app.toast(tr("불이 돌아왔다 — 도둑의 자루에서 금화 {n}", { n: bonus }), "good");
       }
     }
@@ -37888,7 +37895,7 @@
         this.shieldMax = this.shield = Math.round(this.maxHp * (d.v || 0.12));
         this.shieldT = d.life || 12;
         this.shFx = d.fx || "";
-        app.texts.push(new DmgText(this.cx, this.y - 18, tr("방어막"), "#8fd0ff", 1));
+        app.texts.push(new DmgText(this.cx, this.y - 18, tr("방어막"), "#8fd0ff", 2));
         app.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.7, "#8fd0ff", 0.6, 6, 1, 0.6, "sigil_aegis");
         return { busy: 0.5 };
       }
@@ -37896,7 +37903,7 @@
         this.ward = this.wardMax = d.hits || 12;
         this.wardT = d.life || 10;
         this.shFx = d.fx || "";
-        app.texts.push(new DmgText(this.cx, this.y - 18, tr("결계"), "#ffe08a", 1));
+        app.texts.push(new DmgText(this.cx, this.y - 18, tr("결계"), "#ffe08a", 2));
         app.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.8, K.c, 0.7, 8, 2, 0.6, "sigil_aegis");
         return { busy: 0.6 };
       }
@@ -37919,7 +37926,7 @@
         const d = this.mv && this.mv.d;
         if (d && this.healTook >= this.maxHp * (d.brk || 0.04)) {
           this.healRun = 0;
-          app.texts.push(new DmgText(this.cx, this.y - 20, tr("치유가 끊겼다"), "#ffd27a", 1));
+          app.texts.push(new DmgText(this.cx, this.y - 20, tr("치유가 끊겼다"), "#ffd27a", 2));
           if (this.gapOpen) {
             this.mv = null;
             this.gapOpen(false);
@@ -37938,7 +37945,7 @@
       app.shake = Math.max(app.shake, 10);
       for (let i = 0; i < 26; i++) app.parts.push(new Part(this.cx, this.cy, k === "ward" ? "#ffe08a" : "#8fd0ff", -60, 0.7, { glow: 1, spd: 1.6 }));
       app.ringFx(this.cx, this.cy, Math.max(this.w, this.h) * 1.1, k === "ward" ? "#ffe08a" : "#8fd0ff", 0.45);
-      app.texts.push(new DmgText(this.cx, this.y - 22, k === "ward" ? tr("결계가 깨졌다") : tr("방어막이 깨졌다"), "#fff0b0", 1));
+      app.texts.push(new DmgText(this.cx, this.y - 22, k === "ward" ? tr("결계가 깨졌다") : tr("방어막이 깨졌다"), "#fff0b0", 2));
       app.sfxAt && app.sfxAt("break_glass", this.cx / 22, this.cy / 22);
       if (k === "ward") {
         this.ward = 0;
@@ -65434,7 +65441,7 @@
       if (lit) c.globalCompositeOperation = "source-over";
       c.globalAlpha = 1;
       if (!this.settings || this.settings.dmgnum)
-        drawFloatTexts(c, this.texts, camX, camY, { font: (crit) => (crit ? "bold 19px" : "14px") + " " + FONT, critLabel: tr("치명"), critFont: "10px " + FONT_PLAIN });
+        drawFloatTexts(c, this.texts, camX, camY, { font: (big) => (big ? "bold 20px" : "14px") + " " + FONT, critLabel: tr("치명"), critFont: "bold 10px " + FONT_PLAIN, critOutline: "#6a2200" });
       c.globalAlpha = 1;
     },
     /** 렌더 단계 — 조준 · 비 · 비네트 · 길잡이 */

@@ -504,7 +504,7 @@ export const RenderPart: Bag = {
 
     // ---- 피해 숫자 ----
     if (!this.settings || this.settings.dmgnum)
-      drawFloatTexts(c, this.texts, camX, camY, { font: crit => (crit ? 'bold 19px' : '14px') + ' ' + FONT, critLabel: tr('치명'), critFont: '10px ' + FONT_PLAIN });
+      drawFloatTexts(c, this.texts, camX, camY, { font: big => (big ? 'bold 20px' : '14px') + ' ' + FONT, critLabel: tr('치명'), critFont: 'bold 10px ' + FONT_PLAIN, critOutline: '#6a2200' });
     c.globalAlpha = 1;
   },
   /** 렌더 단계 — 조준 · 비 · 비네트 · 길잡이 */

@@ -50,14 +50,14 @@ export const BossForms: Bag & ThisType<Enemy> = {
     if (d.k === 'shield') {                                   // 체력 위에 얹는 막 — 다 깎거나 시간이 지나면 걷힌다
       this.shieldMax = this.shield = Math.round(this.maxHp * (d.v || 0.12));
       this.shieldT = d.life || 12; this.shFx = d.fx || '';
-      G.texts.push(new DmgText(this.cx, this.y - 18, tr('방어막'), '#8fd0ff', 1));
+      G.texts.push(new DmgText(this.cx, this.y - 18, tr('방어막'), '#8fd0ff', 2));
       G.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.7, '#8fd0ff', 0.6, 6, 1, 0.6, 'sigil_aegis');
       return { busy: 0.5 };
     }
     if (d.k === 'ward') {                                     // 완전 결계 — 피해가 들지 않고, 정해진 횟수를 맞아야 깨진다
       this.ward = this.wardMax = d.hits || 12;
       this.wardT = d.life || 10; this.shFx = d.fx || '';
-      G.texts.push(new DmgText(this.cx, this.y - 18, tr('결계'), '#ffe08a', 1));
+      G.texts.push(new DmgText(this.cx, this.y - 18, tr('결계'), '#ffe08a', 2));
       G.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.8, K.c, 0.7, 8, 2, 0.6, 'sigil_aegis');
       return { busy: 0.6 };
     }
@@ -80,7 +80,7 @@ export const BossForms: Bag & ThisType<Enemy> = {
       const d = this.mv && this.mv.d;
       if (d && this.healTook >= this.maxHp * (d.brk || 0.04)) {
         this.healRun = 0;
-        G.texts.push(new DmgText(this.cx, this.y - 20, tr('치유가 끊겼다'), '#ffd27a', 1));
+        G.texts.push(new DmgText(this.cx, this.y - 20, tr('치유가 끊겼다'), '#ffd27a', 2));
         if (this.gapOpen) { this.mv = null; this.gapOpen(false); this.mvCd = 3; }
       }
     }
@@ -95,7 +95,7 @@ export const BossForms: Bag & ThisType<Enemy> = {
     G.shake = Math.max(G.shake, 10);
     for (let i = 0; i < 26; i++) G.parts.push(new Part(this.cx, this.cy, k === 'ward' ? '#ffe08a' : '#8fd0ff', -60, .7, { glow: 1, spd: 1.6 }));
     G.ringFx(this.cx, this.cy, Math.max(this.w, this.h) * 1.1, k === 'ward' ? '#ffe08a' : '#8fd0ff', .45);
-    G.texts.push(new DmgText(this.cx, this.y - 22, k === 'ward' ? tr('결계가 깨졌다') : tr('방어막이 깨졌다'), '#fff0b0', 1));
+    G.texts.push(new DmgText(this.cx, this.y - 22, k === 'ward' ? tr('결계가 깨졌다') : tr('방어막이 깨졌다'), '#fff0b0', 2));
     G.sfxAt && G.sfxAt('break_glass', this.cx / 22, this.cy / 22);
     if (k === 'ward') { this.ward = 0; this.wardT = 0; if (this.gapOpen) { this.mv = null; this.gapOpen(true); } }   // 깨면 크게 비틀거린다
     else { this.shield = 0; this.shieldT = 0; }
