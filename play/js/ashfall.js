@@ -16818,14 +16818,14 @@
         if (kd !== 1 && kd !== 2) return false;
         return !(t === T.FALLS || FLUID_FLOW[t] && this.flv[n] === 8);
       };
-      let seg = [];
+      let seg2 = [];
       const flush = () => {
-        const want = seg.length >= 4 ? T.FALLS : T.FLOWWATER;
-        for (const n of seg) if (this.tiles[n] !== want) {
+        const want = seg2.length >= 4 ? T.FALLS : T.FLOWWATER;
+        for (const n of seg2) if (this.tiles[n] !== want) {
           this.set(n % WW2, n / WW2 | 0, want);
           this.flv[n] = 8;
         }
-        seg = [];
+        seg2 = [];
       };
       for (let n = top; n <= bot; n += WW2) {
         if (still(n - 1) || still(n + 1)) {
@@ -16834,7 +16834,7 @@
             this.set(n % WW2, n / WW2 | 0, T.FLOWWATER);
             this.flv[n] = 8;
           }
-        } else seg.push(n);
+        } else seg2.push(n);
       }
       flush();
     }
@@ -16945,6 +16945,7 @@
           delete m.it.t0;
           delete m.it.fx;
           delete m.it.fy;
+          delete m.it.src;
         }
         w.machines.set(m.y * WW2 + m.x, m);
         for (let dy = 0; dy < (m.h || 1); dy++) for (let dx = 0; dx < (m.w || 1); dx++)
@@ -20464,15 +20465,15 @@
             lastRoom = f;
             continue;
           }
-          let seg = rng.weighted([
+          let seg2 = rng.weighted([
             ["flight", 5],
             ["hall", kind === "maze" ? 3 : 2],
             ["rise", kind === "maze" ? 1.6 : 1]
           ]);
-          if (seg === "rise" && (lastSeg === "well" || lastSeg === "rise" || rem < 12 || ahead() < 30)) seg = "flight";
-          if (seg === "hall" && (ahead() < 18 || !(lastSeg === "landing" || lastSeg === "well" || lastSeg === "start")))
-            seg = "flight";
-          if (seg === "flight") {
+          if (seg2 === "rise" && (lastSeg === "well" || lastSeg === "rise" || rem < 12 || ahead() < 30)) seg2 = "flight";
+          if (seg2 === "hall" && (ahead() < 18 || !(lastSeg === "landing" || lastSeg === "well" || lastSeg === "start")))
+            seg2 = "flight";
+          if (seg2 === "flight") {
             const n = Math.max(3, Math.min(rng.int(5, 12), ahead() - 12));
             for (let i = 1; i <= n && !stop && f < yT; i++) step(1);
             if (cols.length > 3 && rng.chance(0.45)) {
@@ -20483,7 +20484,7 @@
               const c = cols[cols.length - 1];
               if (TILE_DEF[this.get(c[0], c[1] + 1)].solid === 1) this.set(c[0], c[1], T.SPIKE);
             }
-          } else if (seg === "hall") {
+          } else if (seg2 === "hall") {
             const n = rng.int(3, 8);
             const x0h = x;
             for (let i = 0; i < n && !stop; i++) step(0);
@@ -20500,7 +20501,7 @@
             const n = rng.int(2, 3);
             for (let i = 0; i < n && !stop; i++) step(-1);
           }
-          lastSeg = seg;
+          lastSeg = seg2;
         }
       };
       const ruin = o.ruin;
@@ -38467,13 +38468,27 @@
       if (t === m) return false;
       if (!t) return false;
       if (this.insert(w, t, id, 1) <= 0) return false;
+      const from = HOLDS_ONE.has(m.t) ? null : this.boxOf(m);
       if (t.it) {
         t.it.fx = ex;
         t.it.fy = ey;
         t.it.fo = this.itemOff(m);
         t.it.t0 = this.now;
-      }
+        t.it.src = from;
+      } else this.feedFx(m, ex, ey, ex + dx, ey + dy, id, t, from);
       return true;
+    },
+    /** 기계의 발자국(칸) — [왼쪽, 위, 너비, 높이]. 닻은 왼쪽 아래 */
+    boxOf(m) {
+      const h = m.h || 1;
+      return [m.x, m.y - h + 1, m.w || 1, h];
+    },
+    /** 버퍼 기계로 들어간 물건 — 받는 쪽은 물건을 칸에 물고 있지 않아 그림이 그 자리에서 사라졌다.
+        그림만 한 칸 더 미끄러뜨려 몸체 가장자리에서 잘리며 들어가게 한다(저장 안 함 · 호스트 그림만) */
+    feedFx(m, fx, fy, tx, ty, id, t, from) {
+      if (!this.feeds) this.feeds = [];
+      if (this.feeds.length > 96) this.feeds = this.feeds.filter((f) => this.now - f.t0 < f.d);
+      this.feeds.push({ id, fx, fy, tx, ty, fo: this.itemOff(m), t0: this.now, d: this.DWELL[m.t] || 0.5, box: this.boxOf(t), src: from });
     },
     /* ================= 플레이어 조작 ================= */
     /** 가방의 한 칸을 통째로 기계에 넣는다 */
@@ -39603,13 +39618,67 @@
       }
       c.restore();
     },
+    /** 고장 난 몸의 덜컹임(px) — 늘 떠는 게 아니라 몇 초마다 털털거리다 멎는다(멀쩡히 일하는 떨림과 다르게 읽히게) */
+    brokeJolt(m, time) {
+      if (!m.broke) return [0, 0];
+      const seed = m.x * 7 + m.y * 13, ph = (time * 0.55 + seed * 0.071) % 1;
+      if (ph < 0.3) {
+        const a = 1 - ph / 0.3;
+        return [Math.round(Math.sin(time * 61 + seed) * 2.2 * a), Math.round(Math.abs(Math.sin(time * 37 + seed)) * 1.6 * a)];
+      }
+      return [(time * 11 + seed | 0) % 13 === 0 ? 1 : 0, 0];
+    },
+    /** 고장 표시 — 기계 한 칸 위에 통통 뛰는 느낌표 풍선. 빛 **뒤에** 그려 어두운 굴에서도 보인다(rFx) */
+    drawBrokeMarks(c, w, camX, camY, time, tx0, ty0, tx1, ty1) {
+      for (const m of w.machines.values()) {
+        if (!m.broke) continue;
+        const [bx, by, bw] = this.boxOf(m);
+        if (bx + bw < tx0 - 1 || bx > tx1 + 1 || by < ty0 - 1 || by > ty1 + 2) continue;
+        const cx = (bx + bw / 2) * TS - camX, cy = by * TS - camY - 12;
+        const seed = m.x * 7 + m.y * 13, bob = Math.abs(Math.sin(time * 4 + seed)) * 3, hot = (time * 2.5 + seed | 0) % 2 === 0;
+        const y = Math.round(cy - bob), x = Math.round(cx);
+        c.save();
+        c.fillStyle = "rgba(20,10,8,.85)";
+        c.beginPath();
+        c.arc(x, y, 7.5, 0, TAU);
+        c.fill();
+        c.beginPath();
+        c.moveTo(x - 3, y + 5);
+        c.lineTo(x + 3, y + 5);
+        c.lineTo(x, y + 11);
+        c.closePath();
+        c.fill();
+        c.fillStyle = hot ? "#ff5a3a" : "#ffc23a";
+        c.beginPath();
+        c.arc(x, y, 6, 0, TAU);
+        c.fill();
+        c.beginPath();
+        c.moveTo(x - 2, y + 4);
+        c.lineTo(x + 2, y + 4);
+        c.lineTo(x, y + 9);
+        c.closePath();
+        c.fill();
+        c.fillStyle = "#2a120c";
+        c.fillRect(x - 1, y - 4, 2, 5);
+        c.fillRect(x - 1, y + 2, 2, 2);
+        if (hot) {
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = 0.35;
+          c.fillStyle = "#ff6a3a";
+          c.beginPath();
+          c.arc(x, y, 11, 0, TAU);
+          c.fill();
+        }
+        c.restore();
+      }
+    },
     render(c, w, camX, camY, tx0, ty0, tx1, ty1, time) {
       const { WW: WW2, WH: WH2 } = dimsOf(w);
       if (!w.machines.size) return;
       c.save();
       c.imageSmoothingEnabled = false;
-      const y0 = Math.max(0, ty0), y1 = Math.min(WH2 - 1, ty1 + 1);
-      const x0 = Math.max(0, tx0 - 1), x1 = Math.min(WW2 - 1, tx1);
+      const y0 = Math.max(0, ty0 - 1), y1 = Math.min(WH2 - 1, ty1 + 2);
+      const x0 = Math.max(0, tx0 - 2), x1 = Math.min(WW2 - 1, tx1 + 1);
       if (w.wires && w.wires.length) {
         c.strokeStyle = "rgba(28,26,22,.85)";
         c.lineWidth = 1.4;
@@ -39637,8 +39706,9 @@
           }
           if (m.t !== "belt" && m.t !== "belt_fast") {
             const busy = m.on && m.act && this.SHAKE[m.t];
-            const jx = busy ? Math.round(Math.sin(time * 53 + tx) * this.SHAKE[m.t]) : 0;
-            const jy = busy && m.hitT !== void 0 && time - m.hitT < 0.09 ? 1 : 0;
+            const [bx, by] = this.brokeJolt(m, time);
+            const jx = (busy ? Math.round(Math.sin(time * 53 + tx) * this.SHAKE[m.t]) : 0) + bx;
+            const jy = (busy && m.hitT !== void 0 && time - m.hitT < 0.09 ? 1 : 0) + by;
             if (m.t === "turret") this.drawTurret(c, m, sx, sy, tileHash(tx, ty) * TileArt.V | 0);
             else TileArt.draw(c, s.tile, tileHash(tx, ty) * TileArt.V | 0, sx + jx, sy + jy);
             this.drawWork(c, w, m, sx, sy, time, camX, camY);
@@ -39719,7 +39789,7 @@
               ix = (m.it.fx + (m.x - m.it.fx) * k) * TS - camX;
               iy = (m.it.fy + (m.y - m.it.fy) * k) * TS - camY + fo + (off - fo) * k;
             }
-            items.push([m.it.id, Math.round(ix) + 4, Math.round(iy)]);
+            items.push([m.it.id, Math.round(ix) + 4, Math.round(iy), m.it.src]);
           }
           if (m.fmax && m.fuel > 0) {
             const h = Math.round(m.fuel / m.fmax * (TS - 6));
@@ -39795,14 +39865,40 @@
           }
         }
       }
-      for (const [id, ix, iy] of items) Art.drawItem(c, id, ix, iy, 14);
+      const fd = this.feeds;
+      if (fd && fd.length) {
+        let n = 0;
+        for (const f of fd) {
+          const k = (time - f.t0) / f.d;
+          if (k >= 1 || k < 0) continue;
+          fd[n++] = f;
+          const ix = (f.fx + (f.tx - f.fx) * k) * TS - camX, iy = (f.fy + (f.ty - f.fy) * k) * TS - camY + f.fo + (4 - f.fo) * k;
+          items.push([f.id, Math.round(ix) + 4, Math.round(iy), f.box]);
+        }
+        fd.length = n;
+      }
+      for (const [id, ix, iy, box] of items) {
+        if (!box) {
+          Art.drawItem(c, id, ix, iy, 14);
+          continue;
+        }
+        const bx = box[0] * TS - camX, by = box[1] * TS - camY, bw = box[2] * TS, bh = box[3] * TS;
+        if (ix >= bx && ix + 14 <= bx + bw && iy >= by && iy + 14 <= by + bh) continue;
+        c.save();
+        c.beginPath();
+        c.rect(ix - 1, iy - 1, 16, 16);
+        c.rect(bx, by, bw, bh);
+        c.clip("evenodd");
+        Art.drawItem(c, id, ix, iy, 14);
+        c.restore();
+      }
       c.restore();
     },
     /** 여러 칸 기계 — 몸체 · 움직임(factory/big) 다음에 고장 표시 · 배출구 · 연료 · 진행 · 상태 점을 발자국 가장자리에 */
     renderBig(c, w, m, ax, ay, time, camX, camY) {
-      const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t];
-      const jx = busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0;
-      const [X, Y, PW, PH] = this.drawBig(c, m, ax + jx, ay, time);
+      const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t], [bx, by] = this.brokeJolt(m, time);
+      const jx = (busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0) + bx;
+      const [X, Y, PW, PH] = this.drawBig(c, m, ax + jx, ay + by, time);
       if (m.t === "drill_x") this.drawWork(c, w, m, ax, ay, time, camX, camY);
       if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW - TS, Y, time);
       if (s.rot) {
@@ -43932,14 +44028,1367 @@
   };
   mixin(UI5, ProcessUIPart);
 
+  // src/game/ui/mach-kit.ts
+  var mach_kit_exports = {};
+  __export(mach_kit_exports, {
+    bolt: () => bolt,
+    cable: () => cable,
+    chevron: () => chevron,
+    ease: () => ease,
+    firebox: () => firebox,
+    flames: () => flames,
+    hash: () => hash,
+    hotCol: () => hotCol,
+    ik2: () => ik2,
+    matCol: () => matCol,
+    minipole: () => minipole,
+    motor: () => motor,
+    puffs: () => puffs,
+    seg: () => seg,
+    sparks: () => sparks
+  });
+  var ease = (k) => k * k * (3 - 2 * k);
+  var hash = (n) => {
+    const s = Math.sin(n * 12.9898) * 43758.5453;
+    return s - Math.floor(s);
+  };
+  var seg = (q, a, b) => clamp((q - a) / (b - a), 0, 1);
+  function hotCol(k, metal) {
+    const S = ["#fff4c0", "#ffb030", "#e05020", "#702818", metal];
+    const f = clamp(k, 0, 1) * (S.length - 1), i = Math.min(S.length - 2, Math.floor(f));
+    return mixHex(S[i], S[i + 1], f - i);
+  }
+  function matCol(id) {
+    if (!id) return "#8a8070";
+    if (/copper/.test(id)) return "#c87a3a";
+    if (/gold/.test(id)) return "#e8c050";
+    if (/iron|steel/.test(id)) return "#9aa0aa";
+    if (/mythril/.test(id)) return "#5fd0c0";
+    if (/lead/.test(id)) return "#6a7080";
+    if (/glacium/.test(id)) return "#a8e0ff";
+    if (/oil|crude/.test(id)) return "#2a2420";
+    if (/sand|salt/.test(id)) return "#e0d6b8";
+    return "#a89878";
+  }
+  function flames(c, x, y, w, k, t) {
+    if (k <= 0) return;
+    const n = Math.max(3, Math.round(w / 7));
+    for (let i = 0; i < n; i++) {
+      const fx = x + w * (i + 0.5) / n, h = (6 + 5 * Math.sin(t * 13 + i * 2.1) + 3 * Math.sin(t * 29 + i)) * k;
+      c.fillStyle = "#c8401a";
+      c.beginPath();
+      c.moveTo(fx - 4, y);
+      c.quadraticCurveTo(fx + Math.sin(t * 9 + i) * 2, y - h * 1.4, fx + 4, y);
+      c.fill();
+      c.fillStyle = "#ff8a2a";
+      c.beginPath();
+      c.moveTo(fx - 3, y);
+      c.quadraticCurveTo(fx, y - h * 1.1, fx + 3, y);
+      c.fill();
+      c.fillStyle = "#ffd24a";
+      c.beginPath();
+      c.moveTo(fx - 1.5, y);
+      c.quadraticCurveTo(fx, y - h * 0.6, fx + 1.5, y);
+      c.fill();
+    }
+    glow2(c, x + w / 2, y - 4, w * 0.6, "#ff8a3a", 0.28 * k);
+  }
+  function firebox(c, x, y, w, h, k, t) {
+    c.fillStyle = "#1a1210";
+    c.fillRect(x, y, w, h);
+    c.fillStyle = k > 0 ? `rgba(255,${90 + 40 * Math.sin(t * 5)},30,${0.35 + 0.25 * k})` : "#2a1a14";
+    c.fillRect(x + 1, y + h - 3, w - 2, 2);
+    flames(c, x + 1, y + h - 3, w - 2, k, t);
+    c.fillStyle = "#4a4440";
+    for (let gx = x + 2; gx < x + w - 1; gx += 4) c.fillRect(gx, y + h - 4, 2, 1);
+  }
+  function sparks(c, ox, oy, floor, n, t, rate, bias, spd = 1) {
+    c.save();
+    c.lineCap = "round";
+    for (let i = 0; i < n; i++) {
+      const u = t * rate + i / n, gen = Math.floor(u), ph = u - gen, life = 0.55 + hash(i * 3 + gen) * 0.35;
+      if (ph > life) continue;
+      const vx = ((hash(i * 131 + gen * 17) - 0.5) * 50 + bias * 22) * spd, vy = (-14 - hash(i * 71 + gen * 29 + 5) * 34) * spd;
+      const at = (tt2) => {
+        let x2 = ox + vx * tt2, y2 = oy + vy * tt2 + 70 * tt2 * tt2;
+        if (y2 > floor) {
+          y2 = floor - (y2 - floor) * 0.3;
+          x2 = ox + vx * tt2 * 0.9;
+        }
+        return [x2, y2];
+      };
+      const tt = ph, [x, y] = at(tt), [px, py] = at(Math.max(0, tt - 0.035));
+      const k = ph / life;
+      c.globalAlpha = 1 - k * 0.7;
+      c.strokeStyle = k < 0.2 ? "#fffbe0" : k < 0.5 ? "#ffd060" : "#ff7a2a";
+      c.lineWidth = k < 0.3 ? 1.1 : 0.8;
+      c.beginPath();
+      c.moveTo(px, py);
+      c.lineTo(x, y);
+      c.stroke();
+    }
+    c.restore();
+  }
+  function puffs(c, x, y, n, t, rate, rise, col, a = 0.45) {
+    for (let i = 0; i < n; i++) {
+      const k = (t * rate + i / n) % 1;
+      c.fillStyle = `rgba(${col},${a * (1 - k)})`;
+      c.beginPath();
+      c.arc(x + Math.sin(t * 2 + i * 2.3) * 2 + k * 3, y - k * rise, 1.5 + k * 3.5, 0, TAU);
+      c.fill();
+    }
+  }
+  function ik2(sx, sy, tx, ty, L1, L2, bend = 1) {
+    const dx = tx - sx, dy = ty - sy, d = Math.max(0.01, Math.min(Math.hypot(dx, dy), L1 + L2 - 0.01));
+    const A = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1)), a = Math.atan2(dy, dx) - bend * A;
+    return [sx + Math.cos(a) * L1, sy + Math.sin(a) * L1];
+  }
+  function motor(c, x, y, on, t) {
+    c.fillStyle = "#3e4a56";
+    c.fillRect(x, y, 13, 9);
+    c.fillStyle = "#56636f";
+    for (let i = 0; i < 4; i++) c.fillRect(x + 1 + i * 3, y, 1.5, 9);
+    c.fillStyle = on > 0 ? mixHex("#5a3020", "#e08030", on * (0.6 + 0.4 * Math.sin(t * 9))) : "#3a2a22";
+    c.fillRect(x + 4, y + 3, 6, 3);
+    c.save();
+    c.translate(x + 15, y + 4.5);
+    c.rotate(on > 0 ? t * 30 : 0);
+    c.fillStyle = "#8a96a2";
+    for (let i = 0; i < 3; i++) {
+      c.rotate(TAU / 3);
+      c.fillRect(-0.8, -4, 1.6, 4);
+    }
+    c.restore();
+    c.fillStyle = "#2a323a";
+    c.fillRect(x - 1, y + 8, 15, 2);
+  }
+  function cable(c, pts, on, t, w = 1.6) {
+    c.save();
+    c.lineJoin = "round";
+    c.strokeStyle = "#141416";
+    c.lineWidth = w + 1;
+    c.beginPath();
+    pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y));
+    c.stroke();
+    c.strokeStyle = on > 0 ? "#5a4a22" : "#2e2e34";
+    c.lineWidth = w;
+    c.stroke();
+    if (on > 0) {
+      let L = 0;
+      const seglen = [];
+      for (let i = 1; i < pts.length; i++) {
+        const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+        seglen.push(d);
+        L += d;
+      }
+      const n = Math.max(2, Math.round(L / 9));
+      c.fillStyle = "#ffe890";
+      c.globalCompositeOperation = "lighter";
+      for (let j = 0; j < n; j++) {
+        let d = (t * 22 * (0.5 + on) + j * L / n) % L, i = 0;
+        while (i < seglen.length - 1 && d > seglen[i]) {
+          d -= seglen[i];
+          i++;
+        }
+        const k = seglen[i] ? d / seglen[i] : 0, x = lerp(pts[i][0], pts[i + 1][0], k), y = lerp(pts[i][1], pts[i + 1][1], k);
+        c.globalAlpha = 0.9;
+        c.fillRect(x - 1, y - 1, 2, 2);
+        c.globalAlpha = 0.25;
+        c.fillRect(x - 2.5, y - 2.5, 5, 5);
+      }
+    }
+    c.restore();
+  }
+  function bolt(c, x, y, s, col) {
+    c.fillStyle = col;
+    c.beginPath();
+    c.moveTo(x + s * 0.2, y - s);
+    c.lineTo(x - s * 0.5, y + s * 0.15);
+    c.lineTo(x, y + s * 0.15);
+    c.lineTo(x - s * 0.2, y + s);
+    c.lineTo(x + s * 0.5, y - s * 0.15);
+    c.lineTo(x, y - s * 0.15);
+    c.closePath();
+    c.fill();
+  }
+  function chevron(c, x, y, dir, col, t, on) {
+    for (let i = 0; i < 2; i++) {
+      const ph = on ? (t * 1.6 + i * 0.5) % 1 : 0.3 + i * 0.4;
+      c.globalAlpha = on ? 0.35 + 0.65 * Math.sin(ph * Math.PI) : 0.45;
+      c.strokeStyle = col;
+      c.lineWidth = 2;
+      c.beginPath();
+      const ox = x + i * 6 * dir;
+      c.moveTo(ox - 2.5 * dir, y - 4);
+      c.lineTo(ox + 2.5 * dir, y);
+      c.lineTo(ox - 2.5 * dir, y + 4);
+      c.stroke();
+    }
+    c.globalAlpha = 1;
+  }
+  function minipole(c, x, top, bot) {
+    c.fillStyle = "#6a5a40";
+    c.fillRect(x - 1.5, top, 3, bot - top);
+    c.fillStyle = "#4a3e2c";
+    c.fillRect(x - 8, top + 3, 16, 2);
+    c.fillStyle = "#b8d0e0";
+    c.fillRect(x - 7, top, 2, 3);
+    c.fillRect(x + 5, top, 2, 3);
+    return [[x - 6, top], [x + 6, top]];
+  }
+
+  // src/game/ui/mach-inside.ts
+  var mach_inside_exports = {};
+  __export(mach_inside_exports, {
+    IN: () => IN,
+    IN_Y: () => IN_Y,
+    OUT: () => OUT2,
+    OUT_Y: () => OUT_Y,
+    PIN: () => PIN,
+    drawInside: () => drawInside
+  });
+  var IN = 0.16, OUT2 = 0.86;
+  var PIN = {
+    press: 0.34,
+    pressor: 0.34,
+    mill: 0.36,
+    refinery: 0.34,
+    desal: 0.34,
+    assembler: 0.62,
+    drill: 0.42,
+    pump: 0.36,
+    battery: 0.5,
+    turret: 0.36,
+    sprinkler: 0.5
+  };
+  var IN_Y = 22, OUT_Y = 26;
+  function comeIn(c, o, ex, ey, s = 12) {
+    if (!o.inId || !o.run || o.p >= IN) return;
+    const k = ease(o.p / IN);
+    drawIc(c, o.inId, lerp(-s, ex, k), lerp(IN_Y - s / 2, ey, k), s);
+  }
+  function goOut(c, o, sx, sy, s = 12) {
+    if (!o.outId || !o.run || o.p <= OUT2) return;
+    const k = ease((o.p - OUT2) / (1 - OUT2));
+    drawIc(c, o.outId, lerp(sx, o.w + 2, k), lerp(sy, OUT_Y - s / 2, k), s);
+  }
+  function feedFuel(c, o, fx, fy) {
+    if (!o.fuelId || !o.run) return;
+    const k = o.t * 0.35 % 1;
+    if (k > 0.3) return;
+    const e = ease(k / 0.3);
+    drawIc(c, o.fuelId, lerp(-4, fx - 5, e), lerp(IN_Y - 5, fy - 10, e) + Math.sin(e * Math.PI) * -5, 10 * (1 - e * 0.4));
+  }
+  function feedPower(c, o, kind, tx, ty) {
+    const x = (PIN[kind] || 0.5) * o.w;
+    cable(c, [[x, -2], [x, Math.min(ty, 4)], [tx, Math.min(ty, 4)], [tx, ty]], o.pw * (o.run ? 1 : 0.15), o.t);
+  }
+  function drawInside(c, kind, o) {
+    const { m, s, w, h, q, p, run, t, inId, outId } = o, cx = w / 2, bot = h;
+    const busy = run && p >= IN && p <= OUT2;
+    c.fillStyle = "#121116";
+    c.fillRect(0, bot - 3, w, 3);
+    switch (kind) {
+      case "smelter": {
+        firebox(c, 2, 26, w * 0.46, 12, run ? 1 : 0.15, t);
+        feedFuel(c, o, w * 0.2, 30);
+        c.fillStyle = "#3a3630";
+        c.beginPath();
+        c.moveTo(0, 18);
+        c.lineTo(w * 0.13, 12);
+        c.lineTo(w * 0.13, 14);
+        c.lineTo(0, 20);
+        c.fill();
+        comeIn(c, o, w * 0.1, 3, 9);
+        const pour = seg(q, 0.5, 0.62) * (1 - seg(q, 0.74, 0.8)), lx = w * 0.42, ly = 11;
+        const melt = seg(q, 0, 0.45), level = p < IN ? 0 : q < 0.6 ? 0.35 + melt * 0.5 : 0.85 * (1 - seg(q, 0.6, 0.76)) + 0.06;
+        c.save();
+        c.translate(lx, ly);
+        c.rotate(pour * 0.95);
+        const cw = w * 0.26;
+        c.fillStyle = "#5a524a";
+        c.beginPath();
+        c.moveTo(-cw, 0);
+        c.lineTo(1, 0);
+        c.lineTo(-2, 16);
+        c.lineTo(-cw + 3, 16);
+        c.closePath();
+        c.fill();
+        c.save();
+        c.beginPath();
+        c.moveTo(-cw + 1.5, 1);
+        c.lineTo(-0.5, 1);
+        c.lineTo(-3, 15);
+        c.lineTo(-cw + 4, 15);
+        c.closePath();
+        c.clip();
+        c.fillStyle = "#1a1612";
+        c.fillRect(-cw, 0, cw + 2, 16);
+        if (p >= IN) {
+          const top = 15 - 14 * level, hot = melt > 0.25;
+          c.fillStyle = hot ? hotCol(0.15 + 0.1 * Math.sin(t * 6), matCol(inId)) : matCol(inId);
+          c.fillRect(-cw, top, cw + 2, 16);
+          if (hot) {
+            c.fillStyle = "rgba(255,250,210,.7)";
+            c.fillRect(-cw, top, cw + 2, 1);
+          }
+          for (let i = 0; i < 3 && melt < 1; i++) {
+            const r = 3.2 * (1 - melt * 0.85);
+            c.fillStyle = mixHex("#7a7064", "#ff9a40", melt);
+            c.fillRect(-cw + 4 + i * cw * 0.27, top - r + melt * 3, r * 1.7, r * 1.5);
+          }
+          if (busy && melt > 0.3 && pour < 0.1) for (let i = 0; i < 3; i++) {
+            const k = (t * 1.7 + i / 3) % 1;
+            c.strokeStyle = `rgba(255,240,180,${1 - k})`;
+            c.lineWidth = 0.7;
+            c.beginPath();
+            c.arc(-cw + 5 + hash(i + Math.floor(t * 1.7 + i / 3)) * (cw - 9), top, 0.6 + k * 1.8, Math.PI, 0);
+            c.stroke();
+          }
+        }
+        c.restore();
+        c.restore();
+        c.strokeStyle = "#2a2622";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.moveTo(lx, ly);
+        c.lineTo(lx, bot - 3);
+        c.stroke();
+        const mx = w * 0.56, mw = w * 0.3, my = 30, fill = seg(q, 0.53, 0.78), cool = seg(q, 0.78, 0.94), eject = seg(q, 0.94, 1);
+        if (pour > 0.15) {
+          const sx = lx + 1, sy = ly + 2, ex = mx + mw * 0.45, ey = my - 5 + (1 - fill) * 3;
+          c.strokeStyle = "#ff9a30";
+          c.lineWidth = 2.6 + Math.sin(t * 23) * 0.6;
+          c.lineCap = "round";
+          c.beginPath();
+          c.moveTo(sx, sy);
+          c.bezierCurveTo(sx + 6, sy, ex - 1, sy + 4, ex, ey);
+          c.stroke();
+          c.strokeStyle = "#fff2b0";
+          c.lineWidth = 1;
+          c.stroke();
+          glow2(c, ex, ey, 10, "#ff8a2a", 0.6);
+          sparks(c, ex, ey, my - 2, 5, t, 3.5, 0, 0.5);
+        }
+        c.fillStyle = "#3a3a40";
+        c.fillRect(mx - 2, my - 4, mw + 4, 9);
+        c.fillStyle = "#16151a";
+        c.beginPath();
+        c.moveTo(mx, my - 4);
+        c.lineTo(mx + mw, my - 4);
+        c.lineTo(mx + mw - 2, my + 2);
+        c.lineTo(mx + 2, my + 2);
+        c.fill();
+        if (fill > 0 && eject < 0.05) {
+          const col = hotCol(0.1 + cool * 0.9, matCol(outId || inId)), top = my + 2 - 6 * fill;
+          c.fillStyle = col;
+          c.fillRect(mx + 1, top, mw - 2, my + 2 - top);
+          if (cool < 0.6) {
+            c.fillStyle = `rgba(255,250,200,${0.6 * (1 - cool)})`;
+            c.fillRect(mx + 1, top, mw - 2, 1);
+            glow2(c, mx + mw / 2, top, 10, "#ff7a2a", 0.5 * (1 - cool));
+          }
+        }
+        if (cool > 0 && cool < 1) {
+          c.fillStyle = "rgba(160,200,230,.8)";
+          for (let i = 0; i < 4; i++) c.fillRect(mx + 3 + i * mw / 4 + Math.sin(t * 30 + i) * 1, my - 13 + (t * 40 + i * 5) % 7, 1, 2);
+          c.fillStyle = "#5a6068";
+          c.fillRect(mx + 2, my - 16, mw - 4, 2);
+          puffs(c, mx + mw / 2, my - 6, 4, t, 1.6, 14, "220,225,230", 0.55 * (1 - cool));
+        }
+        goOut(c, o, mx + 2, my - 8, 12);
+        break;
+      }
+      case "oven": {
+        firebox(c, 2, 28, w - 4, 10, run ? 1 : 0.15, t);
+        feedFuel(c, o, w * 0.3, 32);
+        c.strokeStyle = "#7a3a24";
+        c.lineWidth = 3;
+        c.beginPath();
+        c.arc(cx, 28, w * 0.36, Math.PI, 0);
+        c.stroke();
+        c.strokeStyle = "#5a2a1a";
+        c.lineWidth = 1;
+        for (let i = 1; i < 7; i++) {
+          const a = Math.PI + i / 7 * Math.PI;
+          c.beginPath();
+          c.moveTo(cx + Math.cos(a) * (w * 0.36 - 1.5), 28 + Math.sin(a) * (w * 0.36 - 1.5));
+          c.lineTo(cx + Math.cos(a) * (w * 0.36 + 1.5), 28 + Math.sin(a) * (w * 0.36 + 1.5));
+          c.stroke();
+        }
+        c.fillStyle = "#6a6058";
+        c.fillRect(cx - 14, 24, 28, 2);
+        comeIn(c, o, cx - 8, 10, 14);
+        if (inId && p >= IN && p <= OUT2) {
+          drawIc(c, q < 0.85 ? inId : outId || inId, cx - 8, 9, 15);
+          c.fillStyle = `rgba(70,32,10,${q * 0.3})`;
+          c.fillRect(cx - 8, 9, 15, 15);
+          if (busy) puffs(c, cx, 9, 3, t, 0.8, 12, "230,230,230", 0.5);
+          glow2(c, cx, 20, 18, "#ff9a4a", 0.15);
+        }
+        if (p > OUT2) {
+          const k = ease((p - OUT2) / (1 - OUT2));
+          c.fillStyle = "#8a6a40";
+          c.fillRect(lerp(cx, w, k) - 10, 24, w, 1.5);
+        }
+        goOut(c, o, cx - 8, 10, 14);
+        break;
+      }
+      case "press":
+      case "pressor": {
+        const big = kind === "pressor", down = q < 0.45 ? ease(q / 0.45) : q < 0.62 ? 1 : 1 - ease(seg(q, 0.62, 0.8));
+        const on = o.pw * (run ? 1 : 0);
+        motor(c, 2, 4, on, t);
+        feedPower(c, o, kind, 8, 4);
+        const cyl = big ? [cx - 18, cx + 6] : [cx];
+        const hoseOn = busy && q < 0.62 ? 1 : 0;
+        for (const x of cyl) cable(c, [[17, 8], [x - 4, 8], [x - 4, 2]], 0, t, 2.2);
+        if (hoseOn) for (const x of cyl) for (let i = 0; i < 3; i++) {
+          const k = (t * 2 + i / 3) % 1;
+          c.fillStyle = "#c89a3a";
+          c.fillRect(lerp(17, x - 4, k) - 1, 7, 2, 2);
+        }
+        const dieY = 31, ramY = lerp(9, dieY - 8 - (big ? 1 : 0), down);
+        for (const x of cyl) {
+          c.fillStyle = "#4a5058";
+          c.fillRect(x - 6, 0, 12, 10);
+          c.fillStyle = "#6a7078";
+          c.fillRect(x - 6, 0, 2, 10);
+          c.fillStyle = "#c8ccd4";
+          c.fillRect(x - 2, 10, 4, ramY - 10);
+        }
+        const rx0 = big ? cx - 26 : cx - 15, rw = big ? 40 : 30;
+        c.fillStyle = "#7a8088";
+        c.fillRect(rx0, ramY, rw, 6);
+        c.fillStyle = "#9aa0a8";
+        c.fillRect(rx0, ramY, rw, 1.5);
+        c.fillStyle = "#3a3a40";
+        c.fillRect(rx0 - 2, dieY, rw + 4, bot - 3 - dieY);
+        comeIn(c, o, cx - 7, dieY - 14, 14);
+        if (inId && p >= IN && p <= OUT2) {
+          const squash = down > 0.85 ? seg(down, 0.85, 1) : 0, prod = q > 0.62 && outId ? outId : inId;
+          const sh = 14 * (1 - squash * 0.5), sw = 14 * (1 + squash * 0.35);
+          c.save();
+          c.translate(cx - sw / 2, dieY - sh);
+          c.scale(sw / 14, sh / 14);
+          drawIc(c, prod, 0, 0, 14);
+          c.restore();
+          if (q > 0.4 && q < 0.62 && busy) {
+            glow2(c, cx, dieY - 2, 14, big ? "#ff9a4a" : "#ffe08a", 0.5);
+            sparks(c, cx, dieY - 2, dieY, 6, t, 2.2, 0, 0.6);
+          }
+        }
+        if (q > 0.62 && q < 0.75 && busy) puffs(c, cyl[0] + 6, 4, 3, t, 2.5, 8, "230,235,240", 0.6);
+        const gx = w - 9, gy = 8;
+        c.fillStyle = "#1a1814";
+        c.beginPath();
+        c.arc(gx, gy, 6, 0, TAU);
+        c.fill();
+        c.strokeStyle = "#8a8478";
+        c.lineWidth = 1;
+        c.stroke();
+        const a = Math.PI * 0.8 + down * Math.PI * 1.4 + (down > 0.95 ? Math.sin(t * 40) * 0.05 : 0);
+        c.strokeStyle = down > 0.9 ? "#ff5a3a" : "#e8dcc0";
+        c.beginPath();
+        c.moveTo(gx, gy);
+        c.lineTo(gx + Math.cos(a) * 5, gy + Math.sin(a) * 5);
+        c.stroke();
+        if (p > OUT2) {
+          const k = ease((p - OUT2) / (1 - OUT2));
+          c.fillStyle = "#5a5e66";
+          c.fillRect(lerp(rx0 - 8, cx - 6, k), dieY - 4, 4, 4);
+        }
+        goOut(c, o, cx - 7, dieY - 12, 13);
+        break;
+      }
+      case "mill": {
+        const on = o.pw * (run ? 1 : 0), spin = on ? t * 3 : 0;
+        motor(c, 2, 2, on, t);
+        feedPower(c, o, kind, 8, 2);
+        const sx = w * 0.55, sy = 21, R = w * 0.2;
+        c.strokeStyle = "#1e1c18";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.moveTo(17, 6);
+        c.lineTo(sx, 4);
+        c.moveTo(17, 3);
+        c.lineTo(sx, 1.5);
+        c.stroke();
+        c.fillStyle = "#6a6458";
+        c.fillRect(sx - 1.5, 1, 3, sy - 6);
+        c.fillStyle = "#8a8478";
+        c.fillRect(sx - R, sy - 5, R * 2, 5);
+        c.fillStyle = "#5a5448";
+        for (let i = 0; i < 6; i++) {
+          const k = (spin * 0.15 + i / 6) % 1;
+          c.fillRect(sx - R + k * R * 2, sy - 5, 1.2, 5);
+        }
+        c.fillStyle = "#7a7468";
+        c.fillRect(sx - R, sy, R * 2, 5);
+        const ax0 = 2, ay0 = 30, ax1 = sx - 4, ay1 = 9;
+        c.strokeStyle = "#4a4438";
+        c.lineWidth = 4;
+        c.beginPath();
+        c.moveTo(ax0, ay0);
+        c.lineTo(ax1, ay1);
+        c.stroke();
+        c.strokeStyle = "#9a9078";
+        c.lineWidth = 1;
+        for (let i = 0; i < 8; i++) {
+          const k = (i / 8 + (on ? t * 0.6 : 0)) % 1, x = lerp(ax0, ax1, k), y = lerp(ay0, ay1, k);
+          c.beginPath();
+          c.moveTo(x - 1.5, y - 2);
+          c.lineTo(x + 1.5, y + 2);
+          c.stroke();
+        }
+        comeIn(c, o, 0, 26, 9);
+        if (busy) {
+          for (let i = 0; i < 5; i++) {
+            const k = (t * 0.6 + i / 5) % 1;
+            c.fillStyle = "#d8b860";
+            c.fillRect(lerp(ax0, ax1, k) - 1, lerp(ay0, ay1, k) - 3, 2, 2);
+          }
+          for (let i = 0; i < 6; i++) {
+            const k = (t * 1.4 + i / 6) % 1;
+            c.fillStyle = `rgba(240,232,212,${1 - k * 0.5})`;
+            c.fillRect(sx + R - 2 + Math.sin(i) * 1.5, sy + 5 + k * 9, 1.5, 1.5);
+          }
+        }
+        const fill = p < IN ? 0 : q;
+        c.fillStyle = "#b8a070";
+        c.beginPath();
+        c.moveTo(sx + R - 6, 27);
+        c.lineTo(sx + R + 4, 27);
+        c.quadraticCurveTo(sx + R + 6 + fill * 3, bot - 3, sx + R, bot - 3);
+        c.quadraticCurveTo(sx + R - 8 - fill * 3, bot - 3, sx + R - 6, 27);
+        c.fill();
+        c.fillStyle = "#e8e0cc";
+        c.fillRect(sx + R - 5, bot - 4 - fill * 9, 8, 1 + fill * 9 * 0.2);
+        goOut(c, o, sx + R - 6, 26, 12);
+        break;
+      }
+      case "refinery":
+      case "desal": {
+        const on = o.pw * (run ? 1 : 0), ref = kind === "refinery";
+        const bx = 3, bw = w * 0.3, top = 14;
+        feedPower(c, o, kind, bx + bw / 2, 34);
+        comeIn(c, o, bx + 3, top + 2, 9);
+        c.fillStyle = "#3a3a40";
+        c.fillRect(bx, top, bw, bot - 6 - top);
+        const lv = (bot - 8 - top) * (0.35 + 0.35 * (1 - q));
+        c.fillStyle = ref ? "#2a2420" : "#4a7aa8";
+        c.fillRect(bx + 1.5, bot - 7 - lv, bw - 3, lv);
+        c.strokeStyle = on > 0 ? mixHex("#5a2a1a", "#ff6a2a", 0.6 + 0.4 * Math.sin(t * 8)) : "#3a2420";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        for (let i = 0; i <= 8; i++) c.lineTo(bx + 2 + i * (bw - 4) / 8, bot - 5 + (i % 2 ? -1.5 : 1.5));
+        c.stroke();
+        if (on > 0) glow2(c, bx + bw / 2, bot - 5, bw * 0.6, "#ff6a2a", 0.3);
+        if (busy) for (let i = 0; i < 5; i++) {
+          const k = (t * 1.3 + i / 5) % 1;
+          c.fillStyle = "rgba(255,255,255,.55)";
+          c.beginPath();
+          c.arc(bx + 3 + i * 7 % (bw - 6), bot - 7 - k * lv, 0.6 + k, 0, TAU);
+          c.fill();
+        }
+        const tx = w * 0.46, tw = 10;
+        c.fillStyle = "#4a4e56";
+        c.fillRect(tx, 2, tw, bot - 5);
+        c.fillStyle = "#5a5e66";
+        c.fillRect(tx, 2, 2, bot - 5);
+        c.strokeStyle = "#2a2a2e";
+        c.lineWidth = 1;
+        for (let y = 8; y < bot - 5; y += 7) {
+          c.beginPath();
+          c.moveTo(tx + 1, y);
+          c.lineTo(tx + tw - 1, y);
+          c.stroke();
+        }
+        cable(c, [[bx + bw / 2, top], [bx + bw / 2, top - 4], [tx, top - 4]], 0, t, 2);
+        if (busy) for (let i = 0; i < 6; i++) {
+          const k = (t * 0.9 + i / 6) % 1;
+          c.fillStyle = `rgba(255,${ref ? 210 : 240},150,${0.7 * (1 - k)})`;
+          c.fillRect(tx + 3 + i % 3 * 2, bot - 8 - k * (bot - 14), 1.5, 1.5);
+        }
+        const cols = ref ? ["#e8c060", "#c88a3a", "#6a4a2a"] : ["#f0f0f0", "#d8e8f0", "#b0d0e8"];
+        for (let i = 0; i < 3; i++) {
+          const y = 8 + i * 9, rx = w * 0.66 + i * 8;
+          cable(c, [[tx + tw, y], [rx + 3, y], [rx + 3, bot - 16]], 0, t, 1.6);
+          if (busy && seg(q, i * 0.25, i * 0.25 + 0.3) > 0) {
+            const k = (t * 1.5 + i * 0.3) % 1;
+            c.fillStyle = cols[i];
+            c.beginPath();
+            c.arc(rx + 3, lerp(bot - 15, bot - 8, k), 1, 0, TAU);
+            c.fill();
+          }
+          c.fillStyle = "#2a2a2e";
+          c.fillRect(rx, bot - 13, 7, 10);
+          const f = clamp(q * 3 - i, 0, 1);
+          c.fillStyle = cols[i];
+          c.fillRect(rx + 1, bot - 4 - 8 * f, 5, 8 * f);
+        }
+        goOut(c, o, w * 0.82, 20, 11);
+        break;
+      }
+      case "assembler": {
+        const on = o.pw * (run ? 1 : 0);
+        const ins = m.in ? Object.keys(m.in).filter((k) => m.in[k] > 0) : [];
+        const a = ins[0] || inId, b = ins[1] || a;
+        const bed = 30, join = seg(q, 0, 0.18), weld = seg(q, 0.2, 0.74), done = q >= 0.86;
+        c.fillStyle = "#2e2e34";
+        c.fillRect(6, bed, w - 12, 4);
+        c.fillStyle = "#44444c";
+        for (let x = 8; x < w - 8; x += 6) c.fillRect(x, bed, 3, 1);
+        const jaw = 1 - seg(q, 0.04, 0.18) + seg(q, 0.82, 0.9);
+        c.fillStyle = "#c8a050";
+        c.fillRect(cx - 24 - jaw * 4, bed - 10, 4, 10);
+        c.fillRect(cx + 20 + jaw * 4, bed - 10, 4, 10);
+        comeIn(c, o, cx - 18, bed - 12, 12);
+        const seamTop = bed - 15, seamBot = bed - 1;
+        if (a && p >= IN && !done) {
+          drawIc(c, a, lerp(4, cx - 16, join), bed - 16, 16);
+          if (b) drawIc(c, b, lerp(w - 20, cx, join), bed - 16, 16);
+          if (weld > 0) {
+            const n = 12, cur = weld * n;
+            for (let i = 0; i < Math.min(n, cur); i++) {
+              const age = (cur - i) / n + (q > 0.74 ? seg(q, 0.74, 0.86) : 0);
+              c.fillStyle = hotCol(age * 1.4, "#6a6e76");
+              c.fillRect(cx - 1.2, lerp(seamTop, seamBot, i / n), 2.4, (seamBot - seamTop) / n + 0.4);
+            }
+          }
+        }
+        if (done && outId) drawIc(c, outId, cx - 8 + (p > OUT2 ? 0 : 0), bed - 16, 16);
+        const shX = w - 10, shY = 4;
+        feedPower(c, o, kind, shX, shY);
+        const tipX = weld > 0 && weld < 1 ? cx + 1.5 : q < 0.2 ? lerp(w - 24, cx + 4, join) : cx + 8;
+        const tipY = weld > 0 && weld < 1 ? lerp(seamTop, seamBot, weld) - 1 : q < 0.2 ? 12 : lerp(seamBot, 10, seg(q, 0.74, 0.86));
+        const [ex, ey] = ik2(shX, shY, tipX + 4, tipY - 5, 27, 24, 1);
+        c.strokeStyle = "#d8a94b";
+        c.lineWidth = 3;
+        c.lineCap = "round";
+        c.beginPath();
+        c.moveTo(shX, shY);
+        c.lineTo(ex, ey);
+        c.lineTo(tipX + 4, tipY - 5);
+        c.stroke();
+        c.strokeStyle = "#7a6a40";
+        c.lineWidth = 1;
+        c.stroke();
+        c.fillStyle = "#5a5e66";
+        c.beginPath();
+        c.arc(ex, ey, 2.4, 0, TAU);
+        c.fill();
+        c.fillRect(shX - 4, 0, 8, shY + 2);
+        c.strokeStyle = "#3a3e46";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(tipX + 4, tipY - 5);
+        c.lineTo(tipX, tipY);
+        c.stroke();
+        if (busy && weld > 0 && weld < 1 && on > 0) {
+          const fl = 0.6 + 0.4 * hash(Math.floor(t * 30));
+          c.save();
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = 0.08 * fl;
+          c.fillStyle = "#9fd8ff";
+          c.fillRect(0, 0, w, h);
+          c.restore();
+          glow2(c, tipX, tipY, 16, "#8fd0ff", 0.7 * fl);
+          glow2(c, tipX, tipY, 6, "#ffffff", 0.9);
+          c.strokeStyle = "#ffffff";
+          c.lineWidth = 0.8;
+          c.beginPath();
+          c.moveTo(tipX, tipY);
+          c.lineTo(tipX - 1 + hash(t * 60) * 2, tipY + 1.5);
+          c.stroke();
+          sparks(c, tipX - 1, tipY, bed, 10, t, 3, -0.4, 1);
+          puffs(c, tipX, tipY - 3, 3, t, 0.9, 14, "160,170,180", 0.35);
+        }
+        if (q > 0.74 && q < 0.86) {
+          const k = seg(q, 0.74, 0.86);
+          c.fillStyle = "rgba(90,208,106,.55)";
+          c.fillRect(cx - 16, lerp(seamTop - 4, seamBot, k), 32, 1.2);
+        }
+        goOut(c, o, cx - 8, bed - 16, 14);
+        break;
+      }
+      case "drill": {
+        const fuel = m.t === "drill", on = fuel ? run ? 1 : 0 : o.pw * (run ? 1 : 0), gy = 13;
+        c.fillStyle = "#3a2c20";
+        c.fillRect(0, gy, w, bot - gy);
+        c.fillStyle = "#4a3828";
+        for (let i = 0; i < 4; i++) c.fillRect(0, gy + 3 + i * 7, w, 3);
+        const vein = outId ? matCol(outId) : "#8a7a60";
+        for (let i = 0; i < 9; i++) {
+          c.fillStyle = vein;
+          c.fillRect(cx - 18 + hash(i) * 36, bot - 10 + hash(i + 9) * 6, 3, 2);
+        }
+        const sx = w * 0.42;
+        if (fuel) {
+          c.fillStyle = "#5a4a3a";
+          c.fillRect(sx - 12, 1, 14, 10);
+          const pz = on ? Math.sin(t * 18) * 2 : 0;
+          c.fillStyle = "#9a9080";
+          c.fillRect(sx - 10, 3 + pz, 3, 4);
+          c.fillStyle = "#3a3a3e";
+          c.fillRect(sx - 4, -2, 3, 4);
+          if (on) puffs(c, sx - 2.5, -1, 3, t, 1.2, 8, "90,90,96", 0.6);
+          feedFuel(c, o, sx - 8, 10);
+        } else {
+          motor(c, sx - 14, 2, on, t);
+          feedPower(c, o, "drill", sx - 8, 2);
+        }
+        c.fillStyle = "#6a6458";
+        c.fillRect(sx + 2, 3, 8, 9);
+        c.save();
+        c.translate(sx + 6, 7.5);
+        c.rotate(on ? t * 6 : 0);
+        c.fillStyle = "#9a9488";
+        for (let i = 0; i < 6; i++) {
+          c.rotate(TAU / 6);
+          c.fillRect(-0.8, -3.5, 1.6, 2);
+        }
+        c.restore();
+        const depth = lerp(gy + 6, bot - 9, ease(clamp(p * 1.1, 0, 1))), dx0 = sx + 6;
+        c.fillStyle = "#1a140e";
+        c.fillRect(dx0 - 4, gy, 8, depth - gy + 2);
+        c.fillStyle = "#7a7e86";
+        c.fillRect(dx0 - 1.5, 12, 3, depth - 12);
+        c.strokeStyle = "#c8ccd4";
+        c.lineWidth = 1;
+        for (let y = 13 + (on ? t * 24 % 4 : 0); y < depth; y += 4) {
+          c.beginPath();
+          c.moveTo(dx0 - 3.5, y);
+          c.lineTo(dx0 + 3.5, y + 2);
+          c.stroke();
+        }
+        c.fillStyle = "#e0e4ea";
+        c.beginPath();
+        c.moveTo(dx0 - 3.5, depth);
+        c.lineTo(dx0, depth + 5);
+        c.lineTo(dx0 + 3.5, depth);
+        c.fill();
+        if (on) {
+          sparks(c, dx0, depth + 3, bot - 3, 5, t, 2.5, 0, 0.5);
+          for (let i = 0; i < 5; i++) {
+            const k = (t * 0.9 + i / 5) % 1;
+            c.fillStyle = vein;
+            c.fillRect(dx0 + (i % 2 ? 1 : -2), lerp(depth, 12, k), 1.6, 1.6);
+          }
+        }
+        c.fillStyle = "#5a5e66";
+        c.beginPath();
+        c.moveTo(dx0 + 3, 11);
+        c.lineTo(w, OUT_Y - 6);
+        c.lineTo(w, OUT_Y - 3);
+        c.lineTo(dx0 + 3, 13);
+        c.fill();
+        goOut(c, o, dx0 + 2, 6, 11);
+        break;
+      }
+      case "pump": {
+        const on = o.pw * (run ? 1 : 0), ang = on ? t * 2.4 : 0, gy = 28;
+        c.fillStyle = "#3a2c20";
+        c.fillRect(0, gy, w, bot - gy);
+        c.fillStyle = "#1a1410";
+        c.beginPath();
+        c.ellipse(w * 0.72, bot - 2, w * 0.16, 2.5, 0, 0, TAU);
+        c.fill();
+        motor(c, 2, gy - 10, on, t);
+        feedPower(c, o, kind, 8, gy - 10);
+        const ckx = w * 0.26, cky = gy - 8, cr = 5;
+        c.fillStyle = "#7a6a50";
+        c.beginPath();
+        c.arc(ckx, cky, cr + 2, 0, TAU);
+        c.fill();
+        const px = ckx + Math.cos(ang) * cr, py = cky + Math.sin(ang) * cr;
+        c.fillStyle = "#4a4038";
+        c.save();
+        c.translate(ckx, cky);
+        c.rotate(ang);
+        c.fillRect(-2, -2, cr + 4, 4);
+        c.restore();
+        const pvx = w * 0.5, pvy = 6, nod = (py - cky) / cr * 0.22;
+        c.fillStyle = "#5a5048";
+        c.beginPath();
+        c.moveTo(pvx - 6, gy);
+        c.lineTo(pvx, pvy);
+        c.lineTo(pvx + 6, gy);
+        c.fill();
+        const bl = w * 0.28, tailX = pvx - Math.cos(nod) * bl, tailY = pvy - Math.sin(nod) * bl, headX = pvx + Math.cos(nod) * bl, headY = pvy + Math.sin(nod) * bl;
+        c.strokeStyle = "#d8a94b";
+        c.lineWidth = 3;
+        c.beginPath();
+        c.moveTo(tailX, tailY);
+        c.lineTo(headX, headY);
+        c.stroke();
+        c.strokeStyle = "#6a6e76";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.moveTo(tailX, tailY);
+        c.lineTo(px, py);
+        c.stroke();
+        c.fillStyle = "#c89a3a";
+        c.beginPath();
+        c.moveTo(headX, headY - 3);
+        c.quadraticCurveTo(headX + 6, headY, headX, headY + 6);
+        c.lineTo(headX - 1, headY - 3);
+        c.fill();
+        const rodX = headX + 2;
+        c.strokeStyle = "#c8ccd4";
+        c.lineWidth = 1;
+        c.beginPath();
+        c.moveTo(rodX, headY + 6);
+        c.lineTo(rodX, gy + 2);
+        c.stroke();
+        c.fillStyle = "#4a4e56";
+        c.fillRect(rodX - 3, gy - 3, 6, 5);
+        c.fillRect(rodX - 1, gy + 2, 2, bot - gy - 4);
+        cable(c, [[rodX + 3, gy - 1], [w + 2, gy - 1]], 0, t, 2.5);
+        if (on) for (let i = 0; i < 4; i++) {
+          const k = (t * 0.9 + i / 4) % 1;
+          c.fillStyle = "#2a2018";
+          c.fillRect(lerp(rodX + 3, w, k), gy - 2.2, 2.5, 2.4);
+        }
+        if (on) for (let i = 0; i < 3; i++) {
+          const k = (t * 0.7 + i / 3) % 1;
+          c.fillStyle = "#2a2018";
+          c.fillRect(rodX - 0.8, lerp(bot - 3, gy, k), 1.6, 2.5);
+        }
+        goOut(c, o, rodX + 2, gy - 12, 11);
+        break;
+      }
+      case "gen": {
+        const on = run ? 1 : 0;
+        firebox(c, 2, 26, w * 0.34, 12, on ? 1 : 0.1, t);
+        feedFuel(c, o, w * 0.16, 30);
+        const bx = 3, by = 10, bw = w * 0.32;
+        c.fillStyle = "#6a5040";
+        c.fillRect(bx, by, bw, 14);
+        c.fillStyle = "#8a6a50";
+        c.fillRect(bx, by, bw, 2);
+        for (let i = 0; i < 3; i++) {
+          c.fillStyle = "#4a3a2e";
+          c.fillRect(bx + 3 + i * bw / 3, by + 3, 1.5, 9);
+        }
+        const cyX = w * 0.42, cyY = 12;
+        cable(c, [[bx + bw / 2, by], [bx + bw / 2, 5], [cyX + 6, 5], [cyX + 6, cyY - 3]], 0, t, 2.2);
+        if (on) puffs(c, bx + bw * 0.8, by - 1, 2, t, 1.4, 6, "230,230,235", 0.4);
+        const ang = on ? t * 7 : 0, fx = w * 0.66, fy = 18, r = 9;
+        const cxk = fx + Math.cos(ang) * 4, cyk = fy + Math.sin(ang) * 4, pist = cxk - 15;
+        c.fillStyle = "#4a4e56";
+        c.fillRect(cyX, cyY - 3, 14, 7);
+        c.fillStyle = "#c8ccd4";
+        c.fillRect(cyX + 2 + clamp(pist - cyX, 0, 8), cyY - 2, 3, 5);
+        c.strokeStyle = "#9aa0a8";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.moveTo(cyX + 4 + clamp(pist - cyX, 0, 8), cyY + 0.5);
+        c.lineTo(cxk, cyk);
+        c.stroke();
+        c.save();
+        c.translate(fx, fy);
+        c.rotate(ang);
+        c.strokeStyle = "#7a7e86";
+        c.lineWidth = 2.5;
+        c.beginPath();
+        c.arc(0, 0, r, 0, TAU);
+        c.stroke();
+        c.lineWidth = 1;
+        for (let i = 0; i < 4; i++) {
+          c.rotate(TAU / 4);
+          c.beginPath();
+          c.moveTo(0, 0);
+          c.lineTo(r, 0);
+          c.stroke();
+        }
+        c.restore();
+        const gx = w * 0.8, gw = w * 0.14;
+        c.fillStyle = "#3e4a56";
+        c.fillRect(gx, fy - 7, gw, 14);
+        c.fillStyle = on ? mixHex("#6a4020", "#ffb050", 0.5 + 0.5 * Math.sin(t * 20)) : "#4a3020";
+        for (let i = 0; i < 3; i++) c.fillRect(gx + 2 + i * (gw - 4) / 3, fy - 5, (gw - 4) / 3 - 1, 10);
+        if (on) {
+          glow2(c, gx + gw / 2, fy, 12, "#ffe08a", 0.35);
+          c.strokeStyle = "#bfe8ff";
+          c.lineWidth = 0.8;
+          const a2 = hash(Math.floor(t * 12)) * TAU;
+          c.beginPath();
+          c.moveTo(gx + gw / 2, fy);
+          c.lineTo(gx + gw / 2 + Math.cos(a2) * 6, fy + Math.sin(a2) * 6);
+          c.stroke();
+        }
+        cable(c, [[gx + gw, fy - 4], [w + 2, fy - 4]], on, t);
+        bolt(c, w - 4, fy - 10, 3, on ? "#ffe08a" : "#5a5440");
+        break;
+      }
+      case "windmill": {
+        const on = run ? 1 : 0, ang = on ? t * 3 : 0;
+        c.fillStyle = "#7a6a50";
+        c.fillRect(cx - 1.5, 0, 3, 16);
+        c.save();
+        c.translate(cx, 18);
+        c.rotate(ang);
+        c.fillStyle = "#9a9488";
+        c.beginPath();
+        c.arc(0, 0, 5, 0, TAU);
+        c.fill();
+        c.fillStyle = "#6a6458";
+        for (let i = 0; i < 8; i++) {
+          c.rotate(TAU / 8);
+          c.fillRect(-0.8, 4, 1.6, 2.2);
+        }
+        c.restore();
+        c.fillStyle = "#6a6458";
+        c.fillRect(cx + 5, 17, w * 0.2, 2.5);
+        const gx = w * 0.72;
+        c.fillStyle = "#3e4a56";
+        c.fillRect(gx, 11, w * 0.16, 14);
+        c.fillStyle = on ? mixHex("#6a4020", "#ffb050", 0.5 + 0.5 * Math.sin(t * 14)) : "#4a3020";
+        c.fillRect(gx + 2, 13, w * 0.16 - 4, 10);
+        cable(c, [[gx + w * 0.16, 14], [w + 2, 14]], on, t);
+        bolt(c, w - 4, 8, 3, on ? "#ffe08a" : "#5a5440");
+        break;
+      }
+      case "battery": {
+        const k = s.store ? clamp((m.e || 0) / s.store, 0, 1) : q, fl = o.flow;
+        const n = 5, x0 = 6, cw = (w - 12) / n;
+        cable(c, [[w * 0.5, -2], [w * 0.5, 5], [x0 + 2, 5]], fl !== 0 ? 1 : 0, fl < 0 ? -t : t);
+        cable(c, [[w * 0.5, 5], [w - 6, 5]], fl !== 0 ? 1 : 0, fl < 0 ? -t : t);
+        for (let i = 0; i < n; i++) {
+          const bx = x0 + i * cw, bw = cw - 4;
+          c.fillStyle = "#5a5a64";
+          c.fillRect(bx + bw / 2 - 2, 6, 4, 3);
+          c.fillStyle = "#24242a";
+          c.fillRect(bx, 9, bw, h - 14);
+          c.strokeStyle = "#5a5a64";
+          c.lineWidth = 1;
+          c.strokeRect(bx + 0.5, 9.5, bw - 1, h - 15);
+          const f = clamp(k * n - i, 0, 1);
+          c.fillStyle = f > 0.99 ? "#5ad06a" : "#c8e060";
+          c.fillRect(bx + 1, 9 + (h - 14) * (1 - f), bw - 2, (h - 14) * f);
+          if (fl !== 0 && f > 0 && f < 1) {
+            c.fillStyle = "rgba(255,255,255,.5)";
+            c.fillRect(bx + 1, 9 + (h - 14) * (1 - f), bw - 2, 1);
+          }
+        }
+        c.fillStyle = fl > 0 ? "#5ad06a" : fl < 0 ? "#ff9a3a" : "#5a5a64";
+        const ay = fl < 0 ? 2 : 0;
+        c.beginPath();
+        c.moveTo(w * 0.5 - 3, 2 - ay);
+        c.lineTo(w * 0.5 + 3, 2 - ay);
+        c.lineTo(w * 0.5, fl < 0 ? -2 : 6);
+        c.fill();
+        if (inId && p >= IN) drawIc(c, inId, 2, bot - 14, 11);
+        break;
+      }
+      case "turret": {
+        const fire = s.cycle ? 1 - clamp((m.cd || 0) / s.cycle, 0, 1) : 0, on = o.pw * (run ? 1 : 0);
+        const rec = fire > 0.9 ? (fire - 0.9) * 40 : 0, by = 18;
+        motor(c, 2, 2, on, t);
+        feedPower(c, o, kind, 8, 2);
+        c.fillStyle = "#4a4030";
+        c.fillRect(3, 24, 16, 12);
+        c.fillStyle = "#6a5a40";
+        c.fillRect(3, 24, 16, 2);
+        for (let i = 0; i < 7; i++) {
+          const k = (i / 7 + (run ? t * 0.8 : 0)) % 1;
+          c.fillStyle = "#c8a050";
+          c.fillRect(lerp(12, w * 0.36, k), lerp(26, by + 3, k), 2, 4);
+        }
+        c.fillStyle = "#4a4e56";
+        c.fillRect(w * 0.34 - rec * 0.3, by - 4, 18, 12);
+        c.fillStyle = "#5a5e66";
+        c.fillRect(w * 0.34 + 18 - rec, by - 1, w * 0.5, 5);
+        c.fillStyle = "#7a7e86";
+        c.fillRect(w * 0.34 + 18 - rec, by - 1, w * 0.5, 1.2);
+        if (rec > 0) {
+          glow2(c, w - 4, by + 1.5, 14, "#ffe08a", 0.9);
+          c.fillStyle = "#c8a050";
+          c.fillRect(w * 0.4, by + 10 + rec, 2, 3);
+        } else if (fire > 0.5) {
+          c.fillStyle = "#a88a40";
+          c.fillRect(w * 0.42, bot - 5, 3, 2);
+        }
+        break;
+      }
+      case "sprinkler": {
+        const on = o.pw * (run ? 1 : 0);
+        feedPower(c, o, kind, cx + 4, 22);
+        const f = m.in && m.in.water_bucket ? clamp(m.in.water_bucket / 10, 0.15, 1) : m.wl > 0 ? 0.15 : 0;
+        c.fillStyle = "#2a2a2e";
+        c.fillRect(4, 10, w * 0.38, bot - 13);
+        c.fillStyle = "#4a7aa8";
+        c.fillRect(6, bot - 4 - (bot - 16) * f, w * 0.38 - 4, (bot - 16) * f);
+        comeIn(c, o, 6, 4, 11);
+        motor(c, cx - 2, 22, on, t);
+        cable(c, [[w * 0.38 + 4, bot - 6], [cx - 2, bot - 6], [cx + 14, bot - 6], [w * 0.8, bot - 6], [w * 0.8, -2]], 0, t, 2.5);
+        if (on && run) for (let i = 0; i < 5; i++) {
+          const k = (t * 1.6 + i / 5) % 1;
+          c.fillStyle = "#a8d8ff";
+          c.fillRect(w * 0.8 - 1, lerp(bot - 6, 0, k), 2, 2);
+        }
+        break;
+      }
+      default: {
+        for (const [gx, gy, r, dir] of [[cx - 8, h / 2, 10, 1], [cx + 9, h / 2 + 4, 7, -1]]) {
+          c.save();
+          c.translate(gx, gy);
+          c.rotate(run ? t * 3 * dir : 0);
+          c.fillStyle = "#8a8478";
+          c.beginPath();
+          c.arc(0, 0, r, 0, TAU);
+          c.fill();
+          c.fillStyle = "#6a6458";
+          for (let i = 0; i < 8; i++) {
+            c.rotate(TAU / 8);
+            c.fillRect(-1.5, r - 1, 3, 3);
+          }
+          c.restore();
+        }
+      }
+    }
+  }
+
+  // src/game/ui/mach-scene.ts
+  var mach_scene_exports = {};
+  __export(mach_scene_exports, {
+    drawScene: () => drawScene
+  });
+  function rail(c, x0, y0, x1, y1, run, t) {
+    c.save();
+    c.lineCap = "round";
+    c.strokeStyle = "#2a2620";
+    c.lineWidth = 7;
+    c.beginPath();
+    c.moveTo(x0, y0);
+    c.lineTo(x1, y1);
+    c.stroke();
+    c.strokeStyle = "#3c362c";
+    c.lineWidth = 5;
+    c.stroke();
+    c.setLineDash([2, 5]);
+    c.lineDashOffset = run ? -t * 26 : 0;
+    c.strokeStyle = "#16140e";
+    c.lineWidth = 5;
+    c.stroke();
+    c.restore();
+  }
+  function ride(c, id, a, b, k, s = 14) {
+    if (!id) return;
+    const e = ease(clamp(k, 0, 1));
+    drawIc(c, id, lerp(a[0], b[0], e) - s / 2, lerp(a[1], b[1], e) - s + 2, s);
+  }
+  function drawScene(c, m, W, H, t, run) {
+    const s = MACHINE[m.t], fy = 132;
+    const net = m.net >= 0 && app.world.nets ? app.world.nets[m.net] : null, sat = Factory11.sat(app.world, m);
+    const sock = (x, y) => {
+      const [, r] = minipole(c, x, 10, 30);
+      cable(c, [r, [r[0] + 8, r[1] + 3], [r[0] + 8, y]], sat > 0 && run ? 1 : 0, t);
+      bolt(c, r[0] + 14, y - 4, 3, sat > 0 ? "#ffe08a" : "#6a5440");
+    };
+    c.fillStyle = "#16140e";
+    c.fillRect(0, fy, W, 4);
+    switch (m.t) {
+      case "pole": {
+        const px = W / 2, top = 26;
+        const links = (app.world.wires || []).filter((e) => e[0] === m.x && e[1] === m.y || e[2] === m.x && e[3] === m.y);
+        const on = net && !net.off && net.gen > 0 ? 1 : 0;
+        c.fillStyle = "#6a5a40";
+        c.fillRect(px - 3, top, 6, fy - top);
+        c.fillStyle = "#8a7a58";
+        c.fillRect(px - 3, top, 2, fy - top);
+        c.fillStyle = "#4a3e2c";
+        c.fillRect(px - 26, top + 6, 52, 4);
+        const ins = [[px - 22, top + 2], [px - 8, top + 2], [px + 8, top + 2], [px + 22, top + 2]];
+        for (const [x, y] of ins) {
+          c.fillStyle = "#b8d0e0";
+          c.fillRect(x - 2, y, 4, 5);
+          c.fillStyle = "#7a98a8";
+          c.fillRect(x - 2, y + 4, 4, 1);
+        }
+        links.slice(0, 4).forEach((e, i) => {
+          const ox = e[0] === m.x && e[1] === m.y ? e[2] : e[0], dir = ox < m.x ? -1 : 1, [ix, iy] = ins[dir < 0 ? i % 2 : 2 + i % 2];
+          const ex = dir < 0 ? 0 : W, ey = iy + 14 + i % 2 * 8;
+          c.strokeStyle = "rgba(28,26,22,.95)";
+          c.lineWidth = 1.6;
+          c.beginPath();
+          c.moveTo(ix, iy);
+          c.quadraticCurveTo((ix + ex) / 2, Math.max(iy, ey) + 10, ex, ey);
+          c.stroke();
+          if (on) for (let j = 0; j < 3; j++) {
+            const k = (t * 0.7 + j / 3) % 1, x = lerp(ix, ex, k), y = lerp(iy, ey, k) + Math.sin(k * Math.PI) * 9;
+            c.fillStyle = "#ffe890";
+            c.fillRect(x - 1, y - 1, 2, 2);
+          }
+        });
+        if (on && (t * 9 | 0) % 4 !== 3) {
+          c.strokeStyle = "#bfe8ff";
+          c.lineWidth = 1;
+          const q = t * 9 | 0;
+          c.beginPath();
+          c.moveTo(ins[q % 4][0], ins[q % 4][1]);
+          c.lineTo(ins[q % 4][0] + 3, ins[q % 4][1] - 4);
+          c.lineTo(ins[q % 4][0] - 1, ins[q % 4][1] - 7);
+          c.stroke();
+        }
+        c.strokeStyle = "rgba(143,216,255,.35)";
+        c.setLineDash([3, 4]);
+        c.beginPath();
+        c.arc(px, fy, 92, Math.PI, 0);
+        c.stroke();
+        c.setLineDash([]);
+        let n = 0;
+        for (const o of app.world.machines.values()) if (o !== m && o.t !== "pole" && o.net === m.net && Math.abs(o.x - m.x) <= (s.reach || 5) && Math.abs(o.y - m.y) <= (s.reach || 5)) n++;
+        c.font = `11px ${FONT || "sans-serif"}`;
+        c.textAlign = "left";
+        c.fillStyle = "#d8cfb4";
+        if (net) {
+          const ok = net.gen >= net.dem;
+          bolt(c, 14, 20, 5, "#ffe08a");
+          c.fillText(`${Math.round(net.gen)}`, 22, 24);
+          c.fillStyle = ok ? "#8fd88f" : "#e88a5a";
+          c.fillText(`▼ ${Math.round(net.dem)}`, 14, 40);
+          c.fillStyle = "#8fd8ff";
+          c.fillText(`⌂ ${n}`, W - 46, 24);
+        }
+        return true;
+      }
+      case "crate": {
+        const bx = W / 2 - 70, bw = 140, by = 56, bh = fy - by;
+        c.fillStyle = "#5a3e22";
+        c.fillRect(bx, by, bw, bh);
+        c.fillStyle = "#7a5630";
+        for (let y = by + 4; y < fy; y += 12) c.fillRect(bx + 2, y, bw - 4, 7);
+        c.fillStyle = "#3a2814";
+        c.fillRect(bx, by, 4, bh);
+        c.fillRect(bx + bw - 4, by, 4, bh);
+        c.save();
+        c.translate(bx, by);
+        c.rotate(-0.5);
+        c.fillStyle = "#6a4a28";
+        c.fillRect(-2, -8, bw * 0.5, 6);
+        c.restore();
+        const its = (m.items || []).filter(Boolean);
+        its.slice(0, 16).forEach((it, i) => drawIc(c, it.id, bx + 8 + i % 8 * 16, by + 8 + Math.floor(i / 8) * 22 - i % 3, 15));
+        const used = its.length, cap = (m.items || []).length || 1;
+        c.fillStyle = "#2a2a32";
+        c.fillRect(bx, fy + 5, bw, 3);
+        c.fillStyle = "#d8b06a";
+        c.fillRect(bx, fy + 5, bw * used / cap, 3);
+        if (m.feed) {
+          rail(c, bx + bw, fy - 8, W - 8, fy - 8, run, t);
+          chevron(c, bx + bw + 14, fy - 22, 1, "#e8a050", t, !!its.length);
+          if (its.length) ride(c, its[0].id, [bx + bw - 6, fy - 8], [W - 14, fy - 8], t * 0.8 % 1, 12);
+        }
+        return true;
+      }
+      case "sorter":
+      case "gate_if":
+      case "gate_or": {
+        const gx = W / 2, gy = fy - 46, yes = m.t === "sorter" ? !m.f || !m.it || m.f === m.it.id : m.st !== N_("거짓 → 옆");
+        rail(c, 10, gy, gx - 16, gy, run, t);
+        rail(c, gx + 16, gy, W - 10, gy, run && yes, t);
+        rail(c, gx, gy + 16, gx, fy - 2, run && !yes, t);
+        c.fillStyle = "#3a3a40";
+        c.fillRect(gx - 16, gy - 16, 32, 32);
+        c.fillStyle = "#4a4a52";
+        c.fillRect(gx - 16, gy - 16, 32, 4);
+        c.save();
+        c.translate(gx, gy);
+        c.rotate(yes ? 0 : Math.PI / 2);
+        c.fillStyle = "#c8a050";
+        c.fillRect(-2, -12, 4, 12);
+        c.restore();
+        c.fillStyle = yes ? "#5ac46a" : "#2e4a32";
+        c.beginPath();
+        c.arc(W - 22, gy - 14, 4, 0, TAU);
+        c.fill();
+        c.fillStyle = !yes ? "#e88c3c" : "#4a3424";
+        c.beginPath();
+        c.arc(gx + 18, fy - 14, 4, 0, TAU);
+        c.fill();
+        if (m.t === "sorter" && m.f) {
+          c.fillStyle = "#1a1814";
+          c.fillRect(gx - 9, gy - 40, 18, 18);
+          drawIc(c, m.f, gx - 8, gy - 39, 16);
+        } else {
+          c.fillStyle = "#8a7ab8";
+          c.fillRect(gx - 10, gy - 34, 20, 12);
+          c.fillStyle = "#16151a";
+          c.font = `bold 9px ${FONT || "sans-serif"}`;
+          c.textAlign = "center";
+          c.fillText(m.t === "gate_or" ? "OR" : m.t === "gate_if" ? "IF" : "⇄", gx, gy - 25);
+        }
+        const id = m.it ? m.it.id : null, k = run ? t * 0.9 % 1 : 0.3;
+        if (id) {
+          if (k < 0.5) ride(c, id, [16, gy], [gx, gy], k * 2);
+          else if (yes) ride(c, id, [gx, gy], [W - 16, gy], k * 2 - 1);
+          else ride(c, id, [gx, gy + 6], [gx, fy - 4], k * 2 - 1);
+        }
+        chevron(c, 22, gy - 16, 1, "#7ad08a", t, !!id);
+        sock(36, gy - 16);
+        return true;
+      }
+      case "converter": {
+        const mx = W / 2, my = fy - 44;
+        for (const [x0, y0] of [[10, my - 30], [10, my], [10, my + 30]]) rail(c, x0, y0, mx - 14, my, run, t);
+        rail(c, mx + 14, my, W - 10, my, run, t);
+        c.fillStyle = "#3a3a40";
+        c.beginPath();
+        c.arc(mx, my, 16, 0, TAU);
+        c.fill();
+        c.fillStyle = "#5a5a66";
+        c.beginPath();
+        c.arc(mx, my, 7, 0, TAU);
+        c.fill();
+        const seq = [];
+        if (m.r && m.r.length) for (const e of m.r) for (let i = 0; i < e.n; i++) seq.push(e.id);
+        else for (const k in m.in || {}) if (m.in[k] > 0) seq.push(k);
+        seq.slice(0, 6).forEach((id, i, a) => ride(c, id, [mx + 12, my], [W - 12, my], run ? (t * 0.45 + i / a.length) % 1 : i / a.length, 12));
+        Object.keys(m.in || {}).slice(0, 3).forEach((id, i) => ride(c, id, [10, my - 30 + i * 30], [mx - 14, my], run ? (t * 0.5 + i / 3) % 1 : 0.5, 12));
+        sock(W - 44, my - 16);
+        return true;
+      }
+      case "switch": {
+        const off = !!(net && net.off), cx = W / 2, cy = fy - 50;
+        cable(c, [[0, cy], [cx - 26, cy]], net && net.gen > 0 ? 1 : 0, t, 2.5);
+        cable(c, [[cx + 26, cy], [W, cy]], !off && net && net.gen > 0 ? 1 : 0, t, 2.5);
+        c.fillStyle = "#2a2a30";
+        c.fillRect(cx - 30, cy - 26, 60, 52);
+        c.strokeStyle = "#5a5a64";
+        c.lineWidth = 2;
+        c.strokeRect(cx - 30, cy - 26, 60, 52);
+        c.fillStyle = "#b8b0a0";
+        c.fillRect(cx - 24, cy - 3, 6, 6);
+        c.fillRect(cx + 18, cy - 3, 6, 6);
+        c.save();
+        c.translate(cx - 21, cy);
+        c.rotate(off ? -1.1 : 0);
+        c.fillStyle = "#c8ccd4";
+        c.fillRect(0, -2, 44, 4);
+        c.fillStyle = "#c84a3a";
+        c.fillRect(30, -7, 8, 14);
+        c.restore();
+        if (!off && net && net.gen > 0) glow2(c, cx + 21, cy, 10, "#ffe08a", 0.4);
+        else if (off) {
+          c.strokeStyle = "#bfe8ff";
+          c.lineWidth = 1;
+          const k = hash(Math.floor(t * 6));
+          if (k > 0.6) {
+            c.beginPath();
+            c.moveTo(cx + 12, cy - 8);
+            c.lineTo(cx + 16, cy - 2);
+            c.lineTo(cx + 19, cy - 4);
+            c.stroke();
+          }
+        }
+        return true;
+      }
+      case "trap": {
+        const cx = W / 2, py = fy - 8, chg = sat > 0 ? 0.5 + 0.5 * Math.sin(t * 2) : 0;
+        sock(30, py - 30);
+        c.fillStyle = "#3a3a40";
+        c.fillRect(cx - 50, py, 100, 8);
+        c.fillStyle = "#6a7078";
+        for (let x = cx - 46; x < cx + 46; x += 8) c.fillRect(x, py, 5, 2);
+        c.fillStyle = "#24242a";
+        c.fillRect(cx + 56, py - 26, 14, 26);
+        c.fillStyle = "#6fe0c0";
+        c.fillRect(cx + 58, py - 2 - 22 * chg, 10, 22 * chg);
+        cable(c, [[46, py - 30], [46, py + 4], [cx - 50, py + 4]], sat, t);
+        if ((m.fx || 0) > 0 || sat > 0 && hash(Math.floor(t * 5)) > 0.85) {
+          c.strokeStyle = "#bfe8ff";
+          c.lineWidth = 1.2;
+          for (let i = 0; i < 3; i++) {
+            const x0 = cx - 30 + i * 30;
+            c.beginPath();
+            c.moveTo(x0, py);
+            for (let k = 1; k <= 4; k++) c.lineTo(x0 + (hash(i * 9 + k + Math.floor(t * 20)) - 0.5) * 10, py - k * 8);
+            c.stroke();
+          }
+          glow2(c, cx, py - 12, 40, "#8fd8ff", 0.4);
+        }
+        return true;
+      }
+      case "dart":
+      case "flamejet":
+      case "frostjet": {
+        const cy = fy - 46, ph = s.cycle ? 1 - clamp((m.cd || 0) / s.cycle, 0, 1) : t * 0.5 % 1, shot = ph > 0.75 && run;
+        c.fillStyle = "#4a4440";
+        c.fillRect(0, cy - 40, 60, 80);
+        c.fillStyle = "#5a544e";
+        for (let y = cy - 40; y < cy + 40; y += 10) c.fillRect(0, y, 60, 1);
+        c.fillStyle = "#2a2622";
+        c.fillRect(52, cy - 8, 14, 16);
+        c.fillStyle = "#0c0b09";
+        c.fillRect(62, cy - 4, 4, 8);
+        if (m.t === "dart") {
+          const pull = ph < 0.75 ? ph / 0.75 : 0;
+          c.strokeStyle = "#c8b890";
+          c.lineWidth = 1;
+          c.beginPath();
+          c.moveTo(30, cy - 16);
+          c.lineTo(30 - pull * 14, cy);
+          c.lineTo(30, cy + 16);
+          c.stroke();
+          if (shot) {
+            const k = (ph - 0.75) / 0.25, x = 66 + k * (W - 80);
+            c.strokeStyle = "#a88a60";
+            c.lineWidth = 1.5;
+            c.beginPath();
+            c.moveTo(x - 16, cy);
+            c.lineTo(x, cy);
+            c.stroke();
+            c.fillStyle = "#c8ccd4";
+            c.beginPath();
+            c.moveTo(x, cy - 3);
+            c.lineTo(x + 5, cy);
+            c.lineTo(x, cy + 3);
+            c.fill();
+          }
+        } else {
+          const fire = m.t === "flamejet", col = fire ? ["#ff7a2a", "#ffd24a"] : ["#8fd0ff", "#e8f8ff"];
+          c.fillStyle = fire ? "#7a3020" : "#2a4a6a";
+          c.fillRect(8, cy - 30, 18, 60);
+          c.fillStyle = fire ? "#c8501a" : "#5a9ac8";
+          c.fillRect(10, cy + 28 - 50 * (0.5 + 0.5 * Math.cos(ph * TAU)), 14, 4);
+          if (shot) {
+            const k = (ph - 0.75) / 0.25;
+            for (let i = 0; i < 14; i++) {
+              const d = i / 14 * (s.range || 6) * 14 * (0.4 + k), r = 3 + i * 0.8;
+              c.globalAlpha = 0.7 * (1 - i / 14);
+              c.fillStyle = col[i % 2];
+              c.beginPath();
+              c.arc(66 + d, cy + Math.sin(t * 20 + i) * i * 0.4, r, 0, TAU);
+              c.fill();
+            }
+            c.globalAlpha = 1;
+            glow2(c, 90, cy, 30, col[0], 0.5);
+          }
+        }
+        return true;
+      }
+      case "belt":
+      case "belt_fast": {
+        const y = fy - 30, sc = 2;
+        c.save();
+        c.scale(sc, sc);
+        for (let i = 0; i < Math.ceil(W / (22 * sc)) + 1; i++) Factory11.drawBelt(c, i * 22 - 11, y / sc - 11, m.t, 0, m.on ? t / Factory11.DWELL[m.t] % 1 : 0);
+        c.restore();
+        if (m.it) ride(c, m.it.id, [10, y + 4], [W - 10, y + 4], t / (Factory11.DWELL[m.t] * 6) % 1, 18);
+        TileArt.draw(c, s.tile, 0, W - 34, 12);
+        return true;
+      }
+    }
+    return false;
+  }
+
   // src/game/ui/mach-view.ts
   var mach_view_exports = {};
   __export(mach_view_exports, {
     MachViewPart: () => MachViewPart
   });
-  var lerp2 = (a, b, k) => a + (b - a) * k;
-  var ease = (k) => k * k * (3 - 2 * k);
-  var IN = 0.16, OUT2 = 0.86;
   function belt(c, x0, x1, y, run, t) {
     if (x1 - x0 < 8) return;
     const ph = run ? t * 26 % 8 : 0;
@@ -44048,35 +45497,6 @@
     c.lineTo(x + Math.cos(a) * 9, y + Math.sin(a) * 9);
     c.stroke();
   }
-  function flames(c, x, y, w, k, t) {
-    if (k <= 0) return;
-    for (let i = 0; i < 5; i++) {
-      const fx = x + w * (i + 0.5) / 5, h = (8 + 6 * Math.sin(t * 13 + i * 2.1)) * k;
-      c.fillStyle = "#ff7a2a";
-      c.beginPath();
-      c.moveTo(fx - 4, y);
-      c.quadraticCurveTo(fx, y - h * 1.3, fx + 4, y);
-      c.fill();
-      c.fillStyle = "#ffd24a";
-      c.beginPath();
-      c.moveTo(fx - 2, y);
-      c.quadraticCurveTo(fx, y - h * 0.7, fx + 2, y);
-      c.fill();
-    }
-    glow2(c, x + w / 2, y - 4, w * 0.6, "#ff8a3a", 0.25 * k);
-  }
-  function matCol(id) {
-    if (!id) return "#8a8070";
-    if (/copper/.test(id)) return "#c87a3a";
-    if (/gold/.test(id)) return "#e8c050";
-    if (/iron|steel/.test(id)) return "#9aa0aa";
-    if (/mythril/.test(id)) return "#5fd0c0";
-    if (/lead/.test(id)) return "#6a7080";
-    if (/glacium/.test(id)) return "#a8e0ff";
-    if (/oil|crude/.test(id)) return "#2a2420";
-    if (/sand|salt/.test(id)) return "#e0d6b8";
-    return "#a89878";
-  }
   function kindOf(t) {
     if (t === "drill" || t === "drill_e" || t === "drill_x") return "drill";
     if (t === "battery" || t === "battery_hi") return "battery";
@@ -44098,6 +45518,16 @@
       c.clearRect(0, 0, W, H);
       c.imageSmoothingEnabled = false;
       const t = app.time, run = !!(m.on && m.act && !m.broke);
+      const sat = Factory11.sat(app.world, m);
+      const jolt = m.broke ? Factory11.brokeJolt(m, t) : [0, 0];
+      c.save();
+      c.translate(jolt[0], jolt[1]);
+      if (drawScene(c, m, W, H, t, run)) {
+        c.restore();
+        this.mvHead(c, m, W / 2 - 80, 20, 160, run, t);
+        this.mvBroke(c, m, W, H, t);
+        return;
+      }
       const r = m.rec >= 0 ? MRECIPES[m.rec] : null;
       let target = -1, dur = 1;
       if (r) {
@@ -44107,41 +45537,49 @@
         target = clamp(1 - (m.cd || 0) / s.cycle, 0, 1);
         dur = s.cycle * FAC_TICK;
       }
-      const mv = this._mvP && this._mvP.m === m ? this._mvP : this._mvP = { m, p: target < 0 ? 0 : target, at: t };
+      const mv = this._mvP && this._mvP.m === m ? this._mvP : this._mvP = { m, p: target < 0 ? 0 : target, at: t, e: m.e || 0, fl: 0 };
       const dt = Math.min(0.1, t - mv.at);
       mv.at = t;
       if (target < 0) mv.p = run ? (mv.p + dt / 2.4) % 1 : mv.p;
       else if (target < mv.p - 0.3) mv.p = target;
       else if (run) mv.p = Math.min(target + 1 / Math.max(1, dur / FAC_TICK), mv.p + dt / Math.max(0.2, dur), 1);
       else mv.p = target;
+      if (s.store) {
+        const de = (m.e || 0) - mv.e;
+        mv.e = m.e || 0;
+        if (Math.abs(de) > 0.01) mv.fl = de > 0 ? 1 : -1;
+        else if (dt > 0) mv.fl *= 0.98;
+      }
       const p = mv.p;
-      const fy = 132;
-      const by = fy - 20;
+      const fy = 132, by = fy - 20;
       const binW = 46, lx0 = 10 + binW, rx1 = W - 10 - binW;
       const hw = Math.min(W * 0.44, 200), hh = 84, hx = W / 2 - hw / 2, hy = fy - hh;
       c.fillStyle = "#16140e";
       c.fillRect(0, fy, W, 4);
-      const ins = m.in ? Object.keys(m.in).filter((k) => m.in[k] > 0) : [];
-      const outs = m.out ? Object.keys(m.out).filter((k) => m.out[k] > 0) : [];
-      let inId = r ? Object.keys(r.in)[0] : ins[0] || null;
+      const ins = m.in ? Object.keys(m.in).filter((k2) => m.in[k2] > 0) : [];
+      const outs = m.out ? Object.keys(m.out).filter((k2) => m.out[k2] > 0) : [];
+      let inId = r ? Object.keys(r.in)[0] : ins.find((k2) => !FUEL[k2]) || ins[0] || null;
       let outId = r ? Object.keys(r.out)[0] : outs[0] || null;
-      if (s.fuelIn && !r) inId = ins.find((k) => FUEL[k]) || inId;
+      const fuelId = s.fuelIn ? ins.find((k2) => FUEL[k2]) || null : null;
       if (kind === "drill" && m.tgt) {
         const d = TILE_DEF[app.world.get(m.tgt[0], m.tgt[1])];
         if (d && d.drop && ITEMS[d.drop]) outId = d.drop;
       }
       if (kind === "pump") outId = outId || "crude_oil";
-      const hasBeltIn = kind !== "drill" && kind !== "pump" && kind !== "windmill";
-      const elecOut = !!s.gen || kind === "windmill";
-      const hasBeltOut = !elecOut && kind !== "turret" && kind !== "sprinkler";
-      if (hasBeltIn) {
+      if (kind === "gen") inId = fuelId;
+      const hasBeltIn = kind !== "drill" && kind !== "pump" && kind !== "windmill" && kind !== "gen";
+      const elecOut = !!s.gen || kind === "windmill" || kind === "battery";
+      const hasBeltOut = !s.gen && kind !== "windmill" && kind !== "battery" && kind !== "turret" && kind !== "sprinkler";
+      const anyIn = hasBeltIn || kind === "gen" && !!s.fuelIn;
+      if (anyIn) {
         hopper(c, 10, by - 52, binW, 40);
         ins.slice(0, 3).forEach((id, i) => pile(c, id, m.in[id], 14 + i * 12 - (ins.length > 1 ? 6 : 0), by - 50 + i * 3, 16));
         belt(c, lx0 - 8, hx + 2, by, run, t);
-        if (inId && run && p < IN) {
-          const k = ease(p / IN);
-          drawIc(c, inId, lerp2(lx0 - 4, hx - 8, k), by - 15, 16);
-        } else if (inId && (ins.length || r)) drawIc(c, inId, lx0 - 4, by - 15, 16);
+        const nid2 = inId || fuelId;
+        if (nid2 && run && p < IN) {
+          const k2 = ease(p / IN);
+          drawIc(c, nid2, lerp(lx0 - 4, hx - 8, k2), by - 15, 16);
+        } else if (nid2) drawIc(c, nid2, lx0 - 4, by - 15, 16);
       } else if (kind === "drill" && outId) {
         c.fillStyle = "#3a2c20";
         c.fillRect(10, by - 30, binW, 50);
@@ -44171,44 +45609,103 @@
         c.fillRect(hx + 3 + i * (hw - 8) / 5, hy + 6, 2, 2);
         c.fillRect(hx + 3 + i * (hw - 8) / 5, hy + hh - 8, 2, 2);
       }
-      if (hasBeltIn) {
-        c.fillStyle = "#0c0b09";
-        c.fillRect(hx - 2, by - 18, 8, 22);
-      }
-      if (hasBeltOut) {
-        c.fillStyle = "#0c0b09";
-        c.fillRect(hx + hw - 6, by - 18, 8, 22);
-      }
       const ww = hw - 26, wh = hh - 22, wx = hx + 13, wy = hy + 12;
+      const VH = 40, k = wh / VH, VW = ww / k, ox = wx + (ww - VW * k) / 2, oy = wy + (wh - VH * k) / 2;
+      const toY = (ly) => oy + ly * k;
+      const port = (x, ly, dir, col, busy) => {
+        const y = toY(ly);
+        c.fillStyle = "#0c0b09";
+        c.fillRect(x - 4, y - 11, 8, 18);
+        c.fillStyle = "#2a2a2e";
+        for (let i = 0; i < 3; i++) {
+          const sw = busy ? Math.sin(t * 14 + i) * 1.5 : 0;
+          c.fillRect(x - 3 + i * 2.2 + sw * 0.4, y - 10, 1.4, 16);
+        }
+        c.fillStyle = "#5a5a64";
+        c.fillRect(x - 5, y - 12, 10, 2);
+        c.fillRect(x - 5, y + 7, 10, 2);
+        chevron(c, x + dir * 2, y - 18, dir, col, t, busy);
+      };
+      if (anyIn) port(hx + 2, IN_Y, 1, "#7ad08a", run && p < IN + 0.05);
+      if (hasBeltOut) port(hx + hw - 2, OUT_Y, 1, "#e8a050", run && p > OUT2 - 0.05);
       const q = clamp((p - IN) / (OUT2 - IN), 0, 1);
       windowFrame(c, wx, wy, ww, wh, () => {
-        const VH = 40, k = wh / VH, VW = ww / k;
         c.fillStyle = "#16151a";
         c.fillRect(wx, wy, ww, wh);
         c.fillStyle = "#1e1d22";
         for (let xx = wx + 6; xx < wx + ww; xx += 24) c.fillRect(xx, wy, 1, wh);
-        c.translate(wx + (ww - VW * k) / 2, wy + (wh - VH * k) / 2);
+        c.translate(ox, oy);
         c.scale(k, k);
-        this.mvInside(c, kind, m, s, 0, 0, VW, VH, q, p, run, t, inId, outId);
+        drawInside(c, kind, { m, s, w: VW, h: VH, q, p, run, t, inId, outId, fuelId, pw: sat, flow: mv.fl || 0 });
       });
-      if (run) glow2(c, W / 2, wy + wh / 2, ww * 0.6, "#ffd27a", 0.06);
+      if (s.fuelIn) {
+        const dx = hx + 4, dy = hy + hh - 20, burn = run && (m.fuel > 0 || !!fuelId);
+        c.fillStyle = "#26221e";
+        c.fillRect(dx, dy, 10, 14);
+        for (let i = 0; i < 3; i++) {
+          c.fillStyle = burn ? `rgba(255,${120 + 60 * Math.sin(t * 7 + i)},40,.9)` : "#3a2a22";
+          c.fillRect(dx + 2, dy + 3 + i * 4, 6, 1.5);
+        }
+        if (burn) glow2(c, dx + 5, dy + 7, 12, "#ff8a3a", 0.35);
+      }
       c.restore();
+      if (s.power) {
+        const px = ox + (PIN[kind] ?? 0.5) * VW * k, on = sat > 0 ? 1 : 0;
+        c.strokeStyle = "rgba(28,26,22,.95)";
+        c.lineWidth = 1.6;
+        c.beginPath();
+        c.moveTo(0, 6);
+        c.quadraticCurveTo(px / 2, 12, px, 8);
+        c.quadraticCurveTo((px + W) / 2, 12, W, 6);
+        c.stroke();
+        c.fillStyle = "#b8d0e0";
+        c.fillRect(px - 2, 6, 4, 5);
+        cable(c, [[px, 11], [px, hy - 4]], on * (run ? 1 : 0.2), t, 2);
+        c.fillStyle = "#26262a";
+        c.fillRect(px - 7, hy - 6, 14, 8);
+        bolt(c, px, hy - 2, 3, on ? "#ffe08a" : "#7a3a2a");
+        cable(c, [[px, hy + 2], [px, wy]], on * (run ? 1 : 0.2), t, 2);
+      }
+      if (elecOut) {
+        const ty = toY(kind === "windmill" ? 14 : kind === "battery" ? 5 : 14), tx = hx + hw;
+        const [pl] = minipole(c, W - 22, hy - 4, fy);
+        const flowOut = kind === "battery" ? mv.fl < 0 ? 1 : 0 : run ? 1 : 0;
+        c.fillStyle = "#26262a";
+        c.fillRect(tx - 2, ty - 5, 7, 10);
+        cable(c, [[tx + 5, ty], [pl[0] - 10, ty], [pl[0], pl[1] + 1]], flowOut, kind === "battery" && mv.fl > 0 ? -t : t, 2);
+        if (kind === "windmill") {
+          c.save();
+          c.translate(hx + hw / 2, hy - 16);
+          c.rotate(run ? t * 3 : 0);
+          c.fillStyle = "#e8dcc0";
+          for (let i = 0; i < 4; i++) {
+            c.rotate(TAU / 4);
+            c.fillRect(-2, 0, 4, 24);
+            c.fillStyle = "#cfc2a4";
+            c.fillRect(-6, 4, 4, 18);
+            c.fillStyle = "#e8dcc0";
+          }
+          c.restore();
+        }
+      }
       {
         const big = Factory11.isBig(m), MW = (m.w || 1) * 22, MH = (m.h || 1) * 22, sc = Math.min(1.6, 40 / MH, 56 / MW);
         const px = hx + hw - MW * sc - 4, py = hy - MH * sc + 6;
-        c.save();
-        c.translate(px, py);
-        c.scale(sc, sc);
-        if (big) Factory11.drawBig(c, m, 0, (m.h - 1) * 22, t, run);
-        else TileArt.draw(c, s.tile, 0, 0, 0);
-        c.restore();
+        if (kind !== "windmill") {
+          c.save();
+          c.translate(px, py);
+          c.scale(sc, sc);
+          if (big) Factory11.drawBig(c, m, 0, (m.h - 1) * 22, t, run);
+          else TileArt.draw(c, s.tile, 0, 0, 0);
+          c.restore();
+        }
       }
       if (hasBeltOut) {
         belt(c, hx + hw - 2, rx1 + 8, by, run, t);
         crate(c, rx1 + 2, by - 22, binW, 30);
         if (outId && run && p > OUT2) {
-          const k = ease((p - OUT2) / (1 - OUT2));
-          drawIc(c, outId, lerp2(hx + hw - 6, rx1 - 2, k), by - 15, 16);
+          const kk = ease((p - OUT2) / (1 - OUT2));
+          drawIc(c, outId, lerp(hx + hw - 6, rx1 - 2, kk), by - 15, 16);
         }
         outs.slice(0, 2).forEach((id, i) => pile(c, id, m.out[id], rx1 + 8 + i * 14, by - 40 + i * 2, 18));
         if (!outs.length && outId) {
@@ -44216,66 +45713,16 @@
           drawIc(c, outId, rx1 + 14, by - 40, 18);
           c.globalAlpha = 1;
         }
-      } else if (elecOut || s.power) {
-        const cy0 = hy + 22, x0 = elecOut ? hx + hw : W - 12, x1 = elecOut ? W - 30 : hx + hw;
-        c.strokeStyle = "#2a2a2e";
-        c.lineWidth = 3;
-        c.beginPath();
-        c.moveTo(x0, cy0);
-        c.lineTo(x1, cy0);
-        c.stroke();
-        if (run) {
-          c.fillStyle = "#ffe08a";
-          for (let i = 0; i < 4; i++) {
-            const k = (t * 1.4 + i / 4) % 1;
-            c.fillRect(lerp2(x0, x1, k) - 2, cy0 - 2, 4, 4);
-          }
-        }
-        if (elecOut) {
-          c.fillStyle = run ? "#ffe08a" : "#5a5440";
-          c.beginPath();
-          c.moveTo(W - 18, cy0 - 14);
-          c.lineTo(W - 28, cy0 + 2);
-          c.lineTo(W - 20, cy0 + 2);
-          c.lineTo(W - 24, cy0 + 16);
-          c.lineTo(W - 12, cy0 - 4);
-          c.lineTo(W - 20, cy0 - 4);
-          c.fill();
-        }
       }
-      if (s.power && !elecOut) {
-        const sat = Factory11.sat(app.world, m) > 0;
-        c.strokeStyle = "#2a2a2e";
-        c.lineWidth = 2.5;
-        c.beginPath();
-        c.moveTo(hx + hw * 0.3, 0);
-        c.lineTo(hx + hw * 0.3, hy);
-        c.stroke();
-        if (sat && run) {
-          c.fillStyle = "#ffe08a";
-          for (let i = 0; i < 3; i++) {
-            const k = (t * 1.6 + i / 3) % 1;
-            c.fillRect(hx + hw * 0.3 - 1.5, lerp2(0, hy, k), 3, 3);
-          }
-        }
-      }
-      const lamp = run ? "#5ad06a" : m.broke || !m.on ? "#e05040" : "#e8b040";
-      c.fillStyle = lamp;
-      c.beginPath();
-      c.arc(hx + 6, hy - 10, 4, 0, TAU);
-      c.fill();
-      glow2(c, hx + 6, hy - 10, 14, lamp, run ? 0.5 + 0.3 * Math.sin(t * 6) : 0.35);
-      c.fillStyle = "#d8cfb4";
-      c.font = `11px ${FONT || "sans-serif"}`;
-      c.textAlign = "left";
-      if (m.st) c.fillText(tr(m.st, { n: m.net }), hx + 14, hy - 6, hw - 70);
+      c.restore();
+      this.mvHead(c, m, hx, hy, hw, run, t);
       if (target >= 0) gauge2(c, hx - 16, hy + 16, p, run ? "#ffd27a" : "#8a8070");
       if (s.fuelIn) {
         const fk = m.fmax ? clamp(m.fuel / m.fmax, 0, 1) : 0;
         c.fillStyle = "#1a1814";
-        c.fillRect(hx + 4, hy + 14, 5, hh - 28);
+        c.fillRect(hx - 22, hy + 34, 5, hh - 40);
         c.fillStyle = fk > 0.25 ? "#ff9a3a" : "#c84a2a";
-        c.fillRect(hx + 5, hy + 15 + (hh - 30) * (1 - fk), 3, (hh - 30) * fk);
+        c.fillRect(hx - 21, hy + 35 + (hh - 42) * (1 - fk), 3, (hh - 42) * fk);
       }
       if (steps) {
         let cur = -1, kk = -1;
@@ -44290,416 +45737,46 @@
         }
         stepRow(c, steps, cur, kk, 6, H - 26, W - 12);
       }
+      this.mvBroke(c, m, W, H, t);
     },
-    /** 창 안 — 기계마다 속에서 일어나는 일. q = 속 공정 몫(0~1), p = 전체 진행 */
-    mvInside(c, kind, m, s, x, y, w, h, q, p, run, t, inId, outId) {
-      const cx = x + w / 2, bot = y + h;
-      const busy = run && p >= IN && p <= OUT2;
-      switch (kind) {
-        case "smelter": {
-          flames(c, x + 4, bot - 2, w * 0.5, run ? 1 : 0.2, t);
-          const tilt = q > 0.55 ? Math.min(1, (q - 0.55) / 0.15) * (q < 0.8 ? 1 : 1 - (q - 0.8) / 0.2) : 0;
-          c.save();
-          c.translate(x + w * 0.3, bot - 18);
-          c.rotate(tilt * 0.9);
-          c.fillStyle = "#4a4440";
-          c.beginPath();
-          c.moveTo(-11, -12);
-          c.lineTo(11, -12);
-          c.lineTo(8, 4);
-          c.lineTo(-8, 4);
-          c.closePath();
-          c.fill();
-          const melt = clamp(q / 0.55, 0, 1), fill = p < IN ? 0 : q < 0.8 ? 1 - Math.max(0, (q - 0.6) / 0.2) * 0.9 : 0.1;
-          if (p >= IN) {
-            if (melt < 1) for (let i = 0; i < 3; i++) {
-              const r = 3.4 * (1 - melt * 0.8);
-              c.fillStyle = matCol(inId);
-              c.fillRect(-7 + i * 5, -9 + (1 - r / 3.4) * 4, r * 1.6, r * 1.6);
-            }
-            c.fillStyle = melt > 0.3 ? "#ff8a2a" : matCol(inId);
-            c.fillRect(-9, 2 - 12 * fill * melt, 18, 12 * fill * melt);
-          }
-          c.restore();
-          if (tilt > 0.2) {
-            c.strokeStyle = "#ff9a3a";
-            c.lineWidth = 2.5;
-            c.beginPath();
-            c.moveTo(x + w * 0.42, bot - 26);
-            c.quadraticCurveTo(x + w * 0.55, bot - 24, x + w * 0.62, bot - 10);
-            c.stroke();
-            glow2(c, x + w * 0.6, bot - 12, 14, "#ff8a2a", 0.4);
-          }
-          const mold = clamp((q - 0.6) / 0.2, 0, 1), cool = clamp((q - 0.8) / 0.2, 0, 1);
-          c.fillStyle = "#2a2622";
-          c.fillRect(x + w * 0.56, bot - 10, w * 0.36, 8);
-          if (mold > 0) {
-            c.fillStyle = cool > 0 ? matCol(outId) : "#ff8a2a";
-            c.globalAlpha = 1;
-            c.fillRect(x + w * 0.58, bot - 8, w * 0.32 * mold, 4);
-            if (cool < 1) {
-              c.fillStyle = `rgba(255,120,40,${(1 - cool) * 0.8})`;
-              c.fillRect(x + w * 0.58, bot - 8, w * 0.32 * mold, 4);
-            }
-          }
-          break;
-        }
-        case "oven": {
-          flames(c, x + 6, bot - 2, w - 12, run ? 1 : 0.2, t);
-          c.fillStyle = "#5a5048";
-          c.fillRect(x + 8, bot - 20, w - 16, 3);
-          if (inId && p >= IN) {
-            drawIc(c, q < 0.9 ? inId : outId || inId, cx - 9, bot - 37, 18);
-            c.fillStyle = `rgba(60,30,10,${q * 0.35})`;
-            c.fillRect(cx - 9, bot - 37, 18, 18);
-          }
-          if (busy) for (let i = 0; i < 3; i++) {
-            const k = (t * 0.8 + i / 3) % 1;
-            c.fillStyle = `rgba(220,220,220,${0.5 * (1 - k)})`;
-            c.beginPath();
-            c.arc(cx - 6 + i * 6 + Math.sin(t * 3 + i) * 2, bot - 38 - k * 14, 2 + k * 3, 0, TAU);
-            c.fill();
-          }
-          break;
-        }
-        case "press":
-        case "pressor": {
-          const down = q < 0.5 ? ease(q / 0.5) : q < 0.7 ? 1 : 1 - ease((q - 0.7) / 0.3);
-          const ramY = lerp2(y + 4, bot - 22, down);
-          c.fillStyle = "#5a5e66";
-          c.fillRect(cx - 3, y, 6, ramY - y);
-          c.fillStyle = "#8a8e96";
-          c.fillRect(cx - 16, ramY, 32, 6);
-          c.fillStyle = "#3a3a40";
-          c.fillRect(cx - 18, bot - 8, 36, 8);
-          if (inId && p >= IN) {
-            const sq = q < 0.5 ? 1 : 0.5;
-            const ih = 14 * (down > 0.9 ? sq : 1);
-            drawIc(c, q > 0.7 && outId ? outId : inId, cx - 8, bot - 8 - ih, 16);
-          }
-          if (busy && down > 0.95) for (let i = 0; i < 4; i++) {
-            c.fillStyle = "#ffe08a";
-            c.fillRect(cx + (i % 2 ? 1 : -1) * (18 + Math.random() * 6), bot - 12 - Math.random() * 6, 2, 2);
-          }
-          if (kind === "pressor") gauge2(c, x + w - 13, y + 14, down, "#e05040");
-          break;
-        }
-        case "mill": {
-          c.save();
-          c.translate(cx, y + h * 0.48);
-          c.rotate(run ? t * 2.2 : 0);
-          c.fillStyle = "#8a8478";
-          c.beginPath();
-          c.arc(0, 0, h * 0.28, 0, TAU);
-          c.fill();
-          c.strokeStyle = "#5a5448";
-          c.lineWidth = 1;
-          for (let i = 0; i < 6; i++) {
-            const a = i / 6 * TAU;
-            c.beginPath();
-            c.moveTo(0, 0);
-            c.lineTo(Math.cos(a) * h * 0.28, Math.sin(a) * h * 0.28);
-            c.stroke();
-          }
-          c.restore();
-          if (busy) for (let i = 0; i < 4; i++) {
-            const k = (t * 1.5 + i / 4) % 1;
-            c.fillStyle = "#d8b860";
-            c.fillRect(cx - 2 + i % 2 * 3, y + k * h * 0.2, 2, 3);
-          }
-          c.fillStyle = "#e8e0cc";
-          const ph = 3 + q * 8;
-          c.beginPath();
-          c.moveTo(cx - 16, bot);
-          c.quadraticCurveTo(cx, bot - ph * 2, cx + 16, bot);
-          c.fill();
-          break;
-        }
-        case "refinery":
-        case "desal": {
-          const lvl = kind === "refinery" ? "#2a2420" : "#5a8ab8";
-          c.fillStyle = "#3a3a40";
-          c.fillRect(x + 6, y + 10, w * 0.32, h - 14);
-          c.fillStyle = lvl;
-          c.fillRect(x + 8, bot - 6 - (h - 18) * (0.4 + 0.3 * (1 - q)), w * 0.32 - 4, (h - 18) * (0.4 + 0.3 * (1 - q)));
-          if (busy) for (let i = 0; i < 5; i++) {
-            const k = (t * 1.3 + i / 5) % 1;
-            c.fillStyle = "rgba(255,255,255,.5)";
-            c.beginPath();
-            c.arc(x + 12 + i * 7 % (w * 0.28), bot - 8 - k * (h - 24) * 0.5, 1.5, 0, TAU);
-            c.fill();
-          }
-          flames(c, x + 6, bot, w * 0.32, run ? 0.7 : 0, t);
-          c.strokeStyle = "#6a6e76";
-          c.lineWidth = 3;
-          c.beginPath();
-          c.moveTo(x + 6 + w * 0.16, y + 10);
-          c.lineTo(x + 6 + w * 0.16, y + 5);
-          c.lineTo(x + w * 0.7, y + 5);
-          c.lineTo(x + w * 0.7, y + h * 0.45);
-          c.stroke();
-          if (busy) {
-            const k = t * 1.1 % 1;
-            c.fillStyle = kind === "refinery" ? "#e8c060" : "#a8d8ff";
-            c.beginPath();
-            c.arc(x + w * 0.7, y + h * 0.45 + k * h * 0.3, 2, 0, TAU);
-            c.fill();
-          }
-          const cols = kind === "refinery" ? ["#e8c060", "#c88a3a", "#6a4a2a"] : ["#f0f0f0", "#d8e8f0", "#f0f0f0"];
-          for (let i = 0; i < 3; i++) {
-            c.fillStyle = "#2a2a2e";
-            c.fillRect(x + w * 0.58 + i * 9, bot - 14, 7, 12);
-            c.fillStyle = cols[i];
-            const f = clamp(q * 3 - i, 0, 1);
-            c.fillRect(x + w * 0.58 + i * 9 + 1, bot - 3 - 10 * f, 5, 10 * f);
-          }
-          break;
-        }
-        case "assembler": {
-          const ins = m.in ? Object.keys(m.in).filter((k) => m.in[k] > 0) : [];
-          const a = ins[0] || inId, b = ins[1] || a;
-          const join = clamp((q - 0.15) / 0.3, 0, 1);
-          if (a && p >= IN && q < 0.85) {
-            drawIc(c, a, lerp2(x + 6, cx - 14, join), bot - 18, 14);
-            if (b) drawIc(c, b, lerp2(x + w - 20, cx, join), bot - 18, 14);
-          }
-          if (q >= 0.85 && outId) drawIc(c, outId, cx - 9, bot - 20, 18);
-          const tx = q < 0.45 ? lerp2(x + 10, cx, join) : cx + Math.sin(t * 8) * 3, ty = bot - 20;
-          const sx = cx + 18, sy = y + 4, ex = (sx + tx) / 2 + 10, ey = (sy + ty) / 2 - 6;
-          c.strokeStyle = "#d8a94b";
-          c.lineWidth = 3;
-          c.beginPath();
-          c.moveTo(sx, sy);
-          c.lineTo(ex, ey);
-          c.lineTo(tx, ty);
-          c.stroke();
-          c.fillStyle = "#8a8e96";
-          c.beginPath();
-          c.arc(ex, ey, 2.5, 0, TAU);
-          c.fill();
-          if (busy && q > 0.5 && q < 0.82) {
-            for (let i = 0; i < 5; i++) {
-              const an = Math.random() * TAU, d = Math.random() * 8;
-              c.fillStyle = i % 2 ? "#ffffff" : "#8fd8ff";
-              c.fillRect(tx + Math.cos(an) * d, ty + Math.sin(an) * d, 2, 2);
-            }
-            glow2(c, tx, ty, 16, "#8fd8ff", 0.5);
-          }
-          if (q > 0.82) {
-            const k = (q - 0.82) / 0.18;
-            c.fillStyle = "rgba(90,208,106,.5)";
-            c.fillRect(x + 2, lerp2(y + 2, bot - 4, k), w - 4, 2);
-          }
-          break;
-        }
-        case "drill": {
-          c.fillStyle = "#3a2c20";
-          c.fillRect(x, y + h * 0.3, w, h);
-          c.fillStyle = "#4a3828";
-          for (let i = 0; i < 4; i++) c.fillRect(x, y + h * 0.3 + i * 8, w, 4);
-          if (outId) drawIc(c, outId, cx - 8, bot - 18, 16);
-          const depth = lerp2(y + 4, bot - 22, ease(clamp(p * 1.1, 0, 1)));
-          c.fillStyle = "#6a6e76";
-          c.fillRect(cx - 3, y, 6, depth - y);
-          const ph = run ? t * 40 % 4 : 0;
-          c.fillStyle = "#c8ccd4";
-          for (let yy = y + ph; yy < depth; yy += 4) c.fillRect(cx - 3, yy, 6, 1);
-          c.fillStyle = "#e0e4ea";
-          c.beginPath();
-          c.moveTo(cx - 4, depth);
-          c.lineTo(cx, depth + 6);
-          c.lineTo(cx + 4, depth);
-          c.fill();
-          if (run) for (let i = 0; i < 4; i++) {
-            const k = (t * 2 + i / 4) % 1;
-            c.fillStyle = "#8a6a48";
-            c.fillRect(cx + (i % 2 ? 1 : -1) * (4 + k * 12), depth - k * 10, 2, 2);
-          }
-          break;
-        }
-        case "pump": {
-          const nod = Math.sin(run ? t * 2.4 : 0);
-          c.fillStyle = "#3a2c20";
-          c.fillRect(x, y + h * 0.55, w, h);
-          c.fillStyle = "#1a1612";
-          c.beginPath();
-          c.ellipse(cx, bot - 4, w * 0.3, 5, 0, 0, TAU);
-          c.fill();
-          c.fillStyle = "#5a5e66";
-          c.fillRect(cx - 2, y + h * 0.2 + nod * 4, 4, h * 0.7);
-          c.strokeStyle = "#d8a94b";
-          c.lineWidth = 3;
-          c.beginPath();
-          c.moveTo(x + 6, y + 10 - nod * 6);
-          c.lineTo(x + w - 6, y + 10 + nod * 6);
-          c.stroke();
-          if (run) for (let i = 0; i < 3; i++) {
-            const k = (t * 0.9 + i / 3) % 1;
-            c.fillStyle = "#2a2420";
-            c.fillRect(cx - 1.5, lerp2(bot - 6, y + h * 0.2, k), 3, 4);
-          }
-          break;
-        }
-        case "gen": {
-          flames(c, x + 4, bot - 2, w * 0.45, run ? 1 : 0, t);
-          if (inId && run) drawIc(c, inId, x + w * 0.12, bot - 18, 12);
-          c.save();
-          c.translate(x + w * 0.72, y + h * 0.45);
-          c.rotate(run ? t * 9 : 0);
-          c.strokeStyle = "#9aa0aa";
-          c.lineWidth = 2;
-          for (let i = 0; i < 6; i++) {
-            const a = i / 6 * TAU;
-            c.beginPath();
-            c.moveTo(0, 0);
-            c.lineTo(Math.cos(a) * 12, Math.sin(a) * 12);
-            c.stroke();
-          }
-          c.restore();
-          if (run) glow2(c, x + w * 0.72, y + h * 0.45, 18, "#ffe08a", 0.3 + 0.2 * Math.sin(t * 20));
-          break;
-        }
-        case "windmill": {
-          c.save();
-          c.translate(cx, y + h * 0.5);
-          c.rotate(run ? t * 3 : 0);
-          c.fillStyle = "#d8d0b8";
-          for (let i = 0; i < 4; i++) {
-            c.rotate(TAU / 4);
-            c.fillRect(-2, 0, 4, h * 0.42);
-          }
-          c.restore();
-          c.fillStyle = "#6a6458";
-          c.beginPath();
-          c.arc(cx, y + h * 0.5, 3, 0, TAU);
-          c.fill();
-          break;
-        }
-        case "battery": {
-          const k = s.store ? clamp((m.e || 0) / s.store, 0, 1) : q;
-          for (let i = 0; i < 5; i++) {
-            const bx = x + 8 + i * (w - 16) / 5, bw = (w - 16) / 5 - 4;
-            c.fillStyle = "#24242a";
-            c.fillRect(bx, y + 8, bw, h - 16);
-            c.strokeStyle = "#5a5a64";
-            c.lineWidth = 1;
-            c.strokeRect(bx + 0.5, y + 8.5, bw - 1, h - 17);
-            c.fillStyle = "#5a5a64";
-            c.fillRect(bx + bw / 2 - 2, y + 5, 4, 3);
-            const f = clamp(k * 5 - i, 0, 1);
-            c.fillStyle = f > 0.99 ? "#5ad06a" : "#c8e060";
-            c.fillRect(bx + 1, y + 8 + (h - 16) * (1 - f), bw - 2, (h - 16) * f);
-          }
-          if (run) {
-            const a = t * 1.5 % 1;
-            c.fillStyle = "#ffe08a";
-            c.beginPath();
-            c.moveTo(x + 4 + a * (w - 12), y + 4);
-            c.lineTo(x + 8 + a * (w - 12), y + 6);
-            c.lineTo(x + 4 + a * (w - 12), y + 8);
-            c.fill();
-          }
-          break;
-        }
-        case "turret": {
-          const fire = s.cycle ? 1 - clamp((m.cd || 0) / s.cycle, 0, 1) : 0;
-          const rec = fire > 0.9 ? (fire - 0.9) * 40 : 0;
-          c.fillStyle = "#5a5e66";
-          c.fillRect(x + 10 - rec, y + h * 0.4, w * 0.7, 8);
-          c.fillStyle = "#c8a050";
-          for (let i = 0; i < 6; i++) c.fillRect(x + 6 + (i * 7 + (run ? t * 20 : 0)) % (w * 0.5), bot - 10, 4, 6);
-          if (rec > 0) glow2(c, x + w * 0.85, y + h * 0.44, 12, "#ffe08a", 0.8);
-          break;
-        }
-        case "sprinkler": {
-          c.fillStyle = "#2a2a2e";
-          c.fillRect(x + 8, y + 8, w * 0.4, h - 14);
-          c.fillStyle = "#5a8ab8";
-          const f = m.in && m.in.water_bucket ? clamp(m.in.water_bucket / 10, 0.1, 1) : 0;
-          c.fillRect(x + 10, bot - 6 - (h - 18) * f, w * 0.4 - 4, (h - 18) * f);
-          if (run) for (let i = 0; i < 5; i++) {
-            const k = (t + i / 5) % 1;
-            c.fillStyle = "#a8d8ff";
-            c.fillRect(x + w * 0.6 + k * w * 0.35, y + 10 + Math.sin(k * Math.PI) * -6 + k * 20, 2, 2);
-          }
-          break;
-        }
-        case "converter": {
-          const seq = [];
-          if (m.r && m.r.length) for (const e of m.r) for (let i = 0; i < e.n; i++) seq.push(e.id);
-          else for (const k in m.in || {}) if (m.in[k] > 0) seq.push(k);
-          const mx = x + w * 0.45, my = y + h / 2;
-          c.strokeStyle = "#3a3a44";
-          c.lineWidth = 4;
-          for (const ly of [y + 7, my, bot - 7]) {
-            c.beginPath();
-            c.moveTo(x + 2, ly);
-            c.lineTo(mx, my);
-            c.stroke();
-          }
-          c.beginPath();
-          c.moveTo(mx, my);
-          c.lineTo(x + w - 2, my);
-          c.stroke();
-          c.fillStyle = "#5a5a66";
-          c.beginPath();
-          c.arc(mx, my, 5, 0, TAU);
-          c.fill();
-          seq.slice(0, 8).forEach((id, i, a) => {
-            const k = run ? (t * 0.5 + i / a.length) % 1 : i / a.length;
-            drawIc(c, id, mx + 3 + k * (x + w - mx - 14), my - 6, 11);
-          });
-          break;
-        }
-        case "gate_if":
-        case "gate_or": {
-          const gx = x + w * 0.42, gy = y + h * 0.4, yes = m.st !== N_("거짓 → 옆");
-          c.lineWidth = 4;
-          c.strokeStyle = "#3a3a44";
-          c.beginPath();
-          c.moveTo(x + 2, gy);
-          c.lineTo(gx, gy);
-          c.stroke();
-          c.strokeStyle = yes && run ? "#5ac46a" : "#2e4a32";
-          c.beginPath();
-          c.moveTo(gx, gy);
-          c.lineTo(x + w - 2, gy);
-          c.stroke();
-          c.strokeStyle = !yes && run ? "#e88c3c" : "#4a3424";
-          c.beginPath();
-          c.moveTo(gx, gy);
-          c.lineTo(gx, bot - 2);
-          c.stroke();
-          c.fillStyle = "#8a7ab8";
-          c.fillRect(gx - 5, gy - 5, 10, 10);
-          c.fillStyle = "#16151a";
-          c.font = `bold 7px ${FONT || "sans-serif"}`;
-          c.textAlign = "center";
-          c.fillText(m.t === "gate_or" ? "OR" : "IF", gx, gy + 2.5);
-          if (m.it) {
-            const k = run ? t * 1.6 % 1 : 0, px = k < 0.5 ? lerp2(x + 4, gx, k * 2) : yes ? lerp2(gx, x + w - 10, k * 2 - 1) : gx, py = k < 0.5 ? gy : yes ? gy : lerp2(gy, bot - 8, k * 2 - 1);
-            drawIc(c, m.it.id, px - 5, py - 11, 10);
-          }
-          break;
-        }
-        default: {
-          for (const [gx, gy, r, dir] of [[cx - 8, y + h / 2, 10, 1], [cx + 9, y + h / 2 + 4, 7, -1]]) {
-            c.save();
-            c.translate(gx, gy);
-            c.rotate(run ? t * 3 * dir : 0);
-            c.fillStyle = "#8a8478";
-            c.beginPath();
-            c.arc(0, 0, r, 0, TAU);
-            c.fill();
-            c.fillStyle = "#6a6458";
-            for (let i = 0; i < 8; i++) {
-              c.rotate(TAU / 8);
-              c.fillRect(-1.5, r - 1, 3, 3);
-            }
-            c.restore();
-          }
-        }
+    /** 상태 등 · 상태 글 */
+    mvHead(c, m, hx, hy, hw, run, t) {
+      const lamp = run ? "#5ad06a" : m.broke || !m.on ? "#e05040" : "#e8b040";
+      c.fillStyle = lamp;
+      c.beginPath();
+      c.arc(hx + 6, hy - 10, 4, 0, TAU);
+      c.fill();
+      glow2(c, hx + 6, hy - 10, 14, lamp, run ? 0.5 + 0.3 * Math.sin(t * 6) : 0.35);
+      c.fillStyle = "#d8cfb4";
+      c.font = `11px ${FONT || "sans-serif"}`;
+      c.textAlign = "left";
+      if (m.st) {
+        const txt = tr(m.st, { n: m.net }), tw = Math.min(hw - 70, c.measureText(txt).width);
+        c.fillStyle = "rgba(12,11,9,.8)";
+        c.fillRect(hx + 11, hy - 17, tw + 6, 15);
+        c.fillStyle = "#d8cfb4";
+        c.fillText(txt, hx + 14, hy - 6, hw - 70);
       }
+    },
+    /** 고장 — 붉은 깜빡임 · 연기 · 가운데 느낌표 */
+    mvBroke(c, m, W, H, t) {
+      if (!m.broke) return;
+      const hot = (t * 2.5 | 0) % 2 === 0;
+      c.fillStyle = hot ? "rgba(220,60,40,.12)" : "rgba(220,60,40,.04)";
+      c.fillRect(0, 0, W, H);
+      puffs(c, W / 2 + 30, 60, 5, t, 0.5, 40, "90,90,96", 0.5);
+      const x = W / 2, y = 34 - Math.abs(Math.sin(t * 4)) * 4;
+      c.fillStyle = "rgba(20,10,8,.9)";
+      c.beginPath();
+      c.arc(x, y, 13, 0, TAU);
+      c.fill();
+      c.fillStyle = hot ? "#ff5a3a" : "#ffc23a";
+      c.beginPath();
+      c.arc(x, y, 11, 0, TAU);
+      c.fill();
+      c.fillStyle = "#2a120c";
+      c.fillRect(x - 2, y - 7, 4, 9);
+      c.fillRect(x - 2, y + 4, 4, 3);
     }
   };
   mixin(UI5, MachViewPart);
@@ -45687,10 +46764,10 @@
       this.rings.push({ x, y, r, t: life, max: life, c });
     }
     /** 두 점을 잇는 번개 — 마디 seg 개, 옆으로 jitter px 까지 흔들린다 */
-    bolt(x0, y0, x1, y1, c, life = 0.22, seg = 7, jitter = 26, rand = Math.random) {
+    bolt(x0, y0, x1, y1, c, life = 0.22, seg2 = 7, jitter = 26, rand = Math.random) {
       const pts = [], nx = -(y1 - y0), ny = x1 - x0, L = Math.hypot(nx, ny) || 1;
-      for (let i = 0; i <= seg; i++) {
-        const k = i / seg, j = i === 0 || i === seg ? 0 : (rand() - 0.5) * jitter;
+      for (let i = 0; i <= seg2; i++) {
+        const k = i / seg2, j = i === 0 || i === seg2 ? 0 : (rand() - 0.5) * jitter;
         pts.push([x0 + (x1 - x0) * k + nx / L * j, y0 + (y1 - y0) * k + ny / L * j]);
       }
       this.bolts.push({ pts, t: life, max: life, c });
@@ -53603,12 +54680,12 @@
     drawClaw(c, p, camX, camY) {
       const k = p.claw, cs = Math.cos(k.ang), sn = Math.sin(k.ang);
       const ox = p.cx - camX + cs * 8, oy = p.cy - 4 - camY + sn * 8, L = Math.max(4, k.len);
-      const n = Math.max(2, Math.round(L / 26)), seg = L / n;
+      const n = Math.max(2, Math.round(L / 26)), seg2 = L / n;
       const fold = 1 - Math.min(1, L / 220);
       const pts = [[ox, oy]];
       for (let i = 1; i <= n; i++) {
-        const off = (i % 2 ? 1 : -1) * seg * 0.45 * fold * (i < n ? 1 : 0);
-        pts.push([ox + cs * seg * i - sn * off, oy + sn * seg * i + cs * off]);
+        const off = (i % 2 ? 1 : -1) * seg2 * 0.45 * fold * (i < n ? 1 : 0);
+        pts.push([ox + cs * seg2 * i - sn * off, oy + sn * seg2 * i + cs * off]);
       }
       c.save();
       c.lineCap = "round";
@@ -63620,7 +64697,7 @@
     RuinPuzzlePart: () => RuinPuzzlePart,
     beamExit: () => beamExit
   });
-  var hash = (s) => {
+  var hash2 = (s) => {
     let h = 2166136261;
     for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
     return h >>> 0;
@@ -63663,7 +64740,7 @@
         }
         const seal = this.puzzleSealCells(r);
         if (!seal || seal.length < 2 || seal.length > 14 || !this.puzzleNodes(r, P2)) return;
-        cand.push({ i, h: hash(w.seed + ":" + site.id + ":" + i) });
+        cand.push({ i, h: hash2(w.seed + ":" + site.id + ":" + i) });
       });
       cand.sort((a, b) => a.h - b.h);
       return C[site.id] = cand.slice(0, P2.rooms).map((q) => q.i).sort((a, b) => a - b);
@@ -63756,7 +64833,7 @@
         if (q.x < (x + 1) * TS && q.x + q.w > x * TS && q.y < (y + 1) * TS && q.y + q.h > y * TS) return false;
       const nodes = this.puzzleNodes(r, P2);
       if (!nodes) return false;
-      const rnd = lcg(hash(w.seed + ":pz:" + site.id + ":" + ri + ":" + (this.surveyOf(site.id).pzTry || 0)));
+      const rnd = lcg(hash2(w.seed + ":pz:" + site.id + ":" + ri + ":" + (this.surveyOf(site.id).pzTry || 0)));
       const pz = { id: site.id, ri, deep, L, k: P2.k, skin: P2.skin, c: P2.c, n: P2.n, nodes, t: 0, flash: 1, seal: [], step: 0, show: 0 };
       this.puzzleSetup(pz, P2, rnd);
       for (const [x, y] of cells) {
@@ -65124,6 +66201,7 @@
       this.pipe.add("lighting", (f) => this.rLightOverlay(f));
       this.pipe.add("lighting", (f) => this.drawStageDim(f));
       this.pipe.add("fx", (f) => this.rFx(f));
+      this.pipe.add("fx", (f) => Factory11.drawBrokeMarks(f.c, f.w, f.camX, f.camY, this.time, f.tx0, f.ty0, f.tx1, f.ty1));
       this.pipe.add("fx", (f) => this.rUtil(f));
       this.pipe.add("fx", (f) => this.rEmotes(f));
       this.pipe.add("fx", (f) => this.rWeird(f));
@@ -70104,6 +71182,7 @@
         delete data.it.t0;
         delete data.it.fx;
         delete data.it.fy;
+        delete data.it.src;
       }
       if (cur) {
         for (const k in cur) if (!(k in data)) delete cur[k];
@@ -71366,7 +72445,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

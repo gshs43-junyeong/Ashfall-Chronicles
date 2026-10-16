@@ -53,6 +53,7 @@ export const RenderPart: Bag = {
     this.pipe.add('lighting', (f: any) => this.rLightOverlay(f));
     this.pipe.add('lighting', (f: any) => this.drawStageDim(f));   // 스킬 무대 어둠 — 빛 다음 · 연출 앞(game/stage-fx)
     this.pipe.add('fx', (f: any) => this.rFx(f));
+    this.pipe.add('fx', (f: any) => Factory.drawBrokeMarks(f.c, f.w, f.camX, f.camY, this.time, f.tx0, f.ty0, f.tx1, f.ty1));   // 고장 느낌표 — 빛 뒤
     this.pipe.add('fx', (f: any) => this.rUtil(f));           // 탐지 파동(game/utility)
     this.pipe.add('fx', (f: any) => this.rEmotes(f));
     this.pipe.add('fx', (f: any) => this.rWeird(f));          // 전기 집게 · 우산 · 별(game/weird-fx)         // 머리 위 그림말(game/netchat)

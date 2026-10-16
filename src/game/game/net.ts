@@ -326,7 +326,7 @@ export const NetPart: Bag = {
   /** 기계 하나를 받은 상태로 — 같은 객체를 고쳐 쓴다(기계 창이 붙들고 있는 참조가 끊기지 않게). */
   netMachPut(key: string, data: Bag) {
     const w = this.world, cur = w.machines.get(key);
-    if (data.it) { delete data.it.t0; delete data.it.fx; delete data.it.fy; }   // 미끄러짐 시각은 보낸 쪽 시계 — 여기서는 새로 잰다
+    if (data.it) { delete data.it.t0; delete data.it.fx; delete data.it.fy; delete data.it.src; }   // 미끄러짐 시각은 보낸 쪽 시계 — 여기서는 새로 잰다
     if (cur) { for (const k in cur) if (!(k in data)) delete cur[k]; Object.assign(cur, data); }
     else w.machines.set(key, data);
     const m = w.machines.get(key);

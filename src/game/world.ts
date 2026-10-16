@@ -964,7 +964,7 @@ export class World extends TileMap {
       if (o.type === 'codedoor' && o.opened) w.openCodeDoorway(o.dx, o.dy);
     w.doors = w.objects.filter(o => o.type === 'door');   // objects와 같은 참조로 다시 캐싱
     for (const m of (d.machines || [])) {
-      if (m.it) { delete m.it.t0; delete m.it.fx; delete m.it.fy; }   // 미끄러짐 시각은 지난 판의 G.time — 남기면 한 칸 뒤에 얼어붙는다
+      if (m.it) { delete m.it.t0; delete m.it.fx; delete m.it.fy; delete m.it.src; }   // 미끄러짐 시각은 지난 판의 G.time — 남기면 한 칸 뒤에 얼어붙는다
       w.machines.set(m.y * WW + m.x, m);
       for (let dy = 0; dy < (m.h || 1); dy++) for (let dx = 0; dx < (m.w || 1); dx++)
         if (dx || dy) w.mpart.set((m.y - dy) * WW + m.x + dx, m.y * WW + m.x);

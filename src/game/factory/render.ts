@@ -41,13 +41,48 @@ export const FactoryRenderPart: Bag = {
     }
     c.restore();
   },
+  /** 고장 난 몸의 덜컹임(px) — 늘 떠는 게 아니라 몇 초마다 털털거리다 멎는다(멀쩡히 일하는 떨림과 다르게 읽히게) */
+  brokeJolt(m: any, time: number) {
+    if (!m.broke) return [0, 0];
+    const seed = m.x * 7 + m.y * 13, ph = (time * 0.55 + seed * 0.071) % 1;
+    if (ph < 0.3) {                                                      // 털털 — 크게 흔들리고 주저앉는다
+      const a = 1 - ph / 0.3;
+      return [Math.round(Math.sin(time * 61 + seed) * 2.2 * a), Math.round(Math.abs(Math.sin(time * 37 + seed)) * 1.6 * a)];
+    }
+    return [((time * 11 + seed) | 0) % 13 === 0 ? 1 : 0, 0];            // 쉬는 동안에도 가끔 한 번 꿈틀
+  },
+  /** 고장 표시 — 기계 한 칸 위에 통통 뛰는 느낌표 풍선. 빛 **뒤에** 그려 어두운 굴에서도 보인다(rFx) */
+  drawBrokeMarks(c: any, w: any, camX: number, camY: number, time: number, tx0: number, ty0: number, tx1: number, ty1: number) {
+    for (const m of w.machines.values()) {
+      if (!m.broke) continue;
+      const [bx, by, bw] = this.boxOf(m);
+      if (bx + bw < tx0 - 1 || bx > tx1 + 1 || by < ty0 - 1 || by > ty1 + 2) continue;
+      const cx = (bx + bw / 2) * TS - camX, cy = by * TS - camY - 12;
+      const seed = m.x * 7 + m.y * 13, bob = Math.abs(Math.sin(time * 4 + seed)) * 3, hot = ((time * 2.5 + seed) | 0) % 2 === 0;
+      const y = Math.round(cy - bob), x = Math.round(cx);
+      c.save();
+      c.fillStyle = 'rgba(20,10,8,.85)';                                 // 윤곽 + 꼬리
+      c.beginPath(); c.arc(x, y, 7.5, 0, TAU); c.fill();
+      c.beginPath(); c.moveTo(x - 3, y + 5); c.lineTo(x + 3, y + 5); c.lineTo(x, y + 11); c.closePath(); c.fill();
+      c.fillStyle = hot ? '#ff5a3a' : '#ffc23a';
+      c.beginPath(); c.arc(x, y, 6, 0, TAU); c.fill();
+      c.beginPath(); c.moveTo(x - 2, y + 4); c.lineTo(x + 2, y + 4); c.lineTo(x, y + 9); c.closePath(); c.fill();
+      c.fillStyle = '#2a120c'; c.fillRect(x - 1, y - 4, 2, 5); c.fillRect(x - 1, y + 2, 2, 2);
+      if (hot) {                                                         // 깜빡일 때 번지는 빛
+        c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.35; c.fillStyle = '#ff6a3a';
+        c.beginPath(); c.arc(x, y, 11, 0, TAU); c.fill();
+      }
+      c.restore();
+    }
+  },
   render(c: any, w: any, camX: any, camY: any, tx0: any, ty0: any, tx1: any, ty1: any, time: any) { const { WW, WH } = dimsOf(w);
     if (!w.machines.size) return;
     c.save();
     c.imageSmoothingEnabled = false;
     /* 닻은 여러 칸 기계의 왼쪽 아래 — 화면 왼쪽 · 아래 밖에 있어도 몸이 보이면 그린다(가장 큰 것 2칸) */
-    const y0 = Math.max(0, ty0), y1 = Math.min(WH - 1, ty1 + 1);
-    const x0 = Math.max(0, tx0 - 1), x1 = Math.min(WW - 1, tx1);
+    /* 한 칸씩 더 — 화면 밖 칸의 물건도 화면 안 칸에서 미끄러져 나가는 중이면 보여야 가장자리에서 안 끊긴다 */
+    const y0 = Math.max(0, ty0 - 1), y1 = Math.min(WH - 1, ty1 + 2);
+    const x0 = Math.max(0, tx0 - 2), x1 = Math.min(WW - 1, tx1 + 1);
 
     // 전주 사이의 전선 — 이걸 안 그리면 공중에 뜬 전주가 그냥 떠 있는 기둥으로 보인다.
     if (w.wires && w.wires.length) {
@@ -74,8 +109,9 @@ export const FactoryRenderPart: Bag = {
         if (this.isBig(m)) { this.renderBig(c, w, m, sx, sy, time, camX, camY); continue; }
         if (m.t !== 'belt' && m.t !== 'belt_fast') {                  // 몸체(타일 그리기는 기계 칸을 건너뛴다) + 일하는 모습
           const busy = m.on && m.act && this.SHAKE[m.t];
-          const jx = busy ? Math.round(Math.sin(time * 53 + tx) * this.SHAKE[m.t]) : 0;
-          const jy = busy && m.hitT !== undefined && time - m.hitT < 0.09 ? 1 : 0;   // 드릴이 한 번 캘 때마다 쿵
+          const [bx, by] = this.brokeJolt(m, time);
+          const jx = (busy ? Math.round(Math.sin(time * 53 + tx) * this.SHAKE[m.t]) : 0) + bx;
+          const jy = (busy && m.hitT !== undefined && time - m.hitT < 0.09 ? 1 : 0) + by;   // 드릴이 한 번 캘 때마다 쿵
           if (m.t === 'turret') this.drawTurret(c, m, sx, sy, (tileHash(tx, ty) * TileArt.V) | 0);
           else TileArt.draw(c, s.tile, (tileHash(tx, ty) * TileArt.V) | 0, sx + jx, sy + jy);
           this.drawWork(c, w, m, sx, sy, time, camX, camY);
@@ -154,7 +190,7 @@ export const FactoryRenderPart: Bag = {
             ix = (m.it.fx + (m.x - m.it.fx) * k) * TS - camX;
             iy = (m.it.fy + (m.y - m.it.fy) * k) * TS - camY + fo + (off - fo) * k;
           }
-          items.push([m.it.id, Math.round(ix) + 4, Math.round(iy)]);
+          items.push([m.it.id, Math.round(ix) + 4, Math.round(iy), m.it.src]);
         }
 
         // 연료 막대 (왼쪽 세로)
@@ -210,14 +246,34 @@ export const FactoryRenderPart: Bag = {
         }
       }
     }
-    for (const [id, ix, iy] of items) Art.drawItem(c, id, ix, iy, 14);
+    /* 버퍼 기계로 들어가는 물건 — 받는 칸까지 한 칸 더 가며 몸체 가장자리에서 잘린다(pushTo · feedFx) */
+    const fd = this.feeds;
+    if (fd && fd.length) {
+      let n = 0;
+      for (const f of fd) {
+        const k = (time - f.t0) / f.d;
+        if (k >= 1 || k < 0) continue;
+        fd[n++] = f;
+        const ix = (f.fx + (f.tx - f.fx) * k) * TS - camX, iy = (f.fy + (f.ty - f.fy) * k) * TS - camY + f.fo + (4 - f.fo) * k;
+        items.push([f.id, Math.round(ix) + 4, Math.round(iy), f.box]);
+      }
+      fd.length = n;
+    }
+    for (const [id, ix, iy, box] of items) {
+      if (!box) { Art.drawItem(c, id, ix, iy, 14); continue; }
+      /* 기계 몸체 안쪽은 지우고 그린다 — 나오는 물건은 배출구에서 돋고, 들어가는 물건은 투입구로 빨려 든다 */
+      const bx = box[0] * TS - camX, by = box[1] * TS - camY, bw = box[2] * TS, bh = box[3] * TS;
+      if (ix >= bx && ix + 14 <= bx + bw && iy >= by && iy + 14 <= by + bh) continue;
+      c.save(); c.beginPath(); c.rect(ix - 1, iy - 1, 16, 16); c.rect(bx, by, bw, bh); c.clip('evenodd');
+      Art.drawItem(c, id, ix, iy, 14); c.restore();
+    }
     c.restore();
   },
   /** 여러 칸 기계 — 몸체 · 움직임(factory/big) 다음에 고장 표시 · 배출구 · 연료 · 진행 · 상태 점을 발자국 가장자리에 */
   renderBig(c: any, w: World, m: any, ax: number, ay: number, time: number, camX: number, camY: number) {
-    const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t];
-    const jx = busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0;
-    const [X, Y, PW, PH] = this.drawBig(c, m, ax + jx, ay, time);
+    const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t], [bx, by] = this.brokeJolt(m, time);
+    const jx = (busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0) + bx;
+    const [X, Y, PW, PH] = this.drawBig(c, m, ax + jx, ay + by, time);
     if (m.t === 'drill_x') this.drawWork(c, w, m, ax, ay, time, camX, camY);   // 비트 · 광맥 점선은 닻 칸에서
     if (m.broke || (m.fixT !== undefined && time - m.fixT < 0.7)) this.drawBroken(c, m, X + PW - TS, Y, time);
     if (s.rot) {

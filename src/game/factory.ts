@@ -290,8 +290,19 @@ export const Factory: Bag = {
     if (this.insert(w, t, id, 1) <= 0) return false;
     /* 벨트 위 물건은 어디서 언제 왔는지 적어 두고 render 가 머무는 시간(DWELL)에 걸쳐 미끄러뜨린다 —
        tick 도 그 시간이 지나야 다음 칸으로 넘긴다. 그림과 물류가 같은 시계를 본다. */
-    if (t.it) { t.it.fx = ex; t.it.fy = ey; t.it.fo = this.itemOff(m); t.it.t0 = this.now; }
+    const from = HOLDS_ONE.has(m.t) ? null : this.boxOf(m);
+    if (t.it) { t.it.fx = ex; t.it.fy = ey; t.it.fo = this.itemOff(m); t.it.t0 = this.now; t.it.src = from; }
+    else this.feedFx(m, ex, ey, ex + dx, ey + dy, id, t, from);
     return true;
+  },
+  /** 기계의 발자국(칸) — [왼쪽, 위, 너비, 높이]. 닻은 왼쪽 아래 */
+  boxOf(m: any) { const h = m.h || 1; return [m.x, m.y - h + 1, m.w || 1, h]; },
+  /** 버퍼 기계로 들어간 물건 — 받는 쪽은 물건을 칸에 물고 있지 않아 그림이 그 자리에서 사라졌다.
+      그림만 한 칸 더 미끄러뜨려 몸체 가장자리에서 잘리며 들어가게 한다(저장 안 함 · 호스트 그림만) */
+  feedFx(m: any, fx: number, fy: number, tx: number, ty: number, id: string, t: any, from: any) {
+    if (!this.feeds) this.feeds = [];
+    if (this.feeds.length > 96) this.feeds = this.feeds.filter((f: any) => this.now - f.t0 < f.d);
+    this.feeds.push({ id, fx, fy, tx, ty, fo: this.itemOff(m), t0: this.now, d: this.DWELL[m.t] || 0.5, box: this.boxOf(t), src: from });
   },
 
   /* ================= 플레이어 조작 ================= */

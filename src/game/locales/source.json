@@ -732,7 +732,7 @@
   "거짓 → 옆": [
    "factory",
    "factory/tick.runGate",
-   "ui/mach-view.mvInside",
+   "ui/mach-scene.drawScene",
    "ui/machine.logicCfg"
   ],
   "거짓으로 새긴 것": [
