@@ -2320,7 +2320,7 @@
         c.translate(wx, wy);
         if (o.k === "s") this.drawSlider(c, o, col);
         if (!(o.k === "s" && o.head)) {
-          if (th.art && th.art.circle) th.art.circle(c, o.x, o.y, col, o.n, r, t);
+          if (th.art && th.art.circle) th.art.circle(c, o.x, o.y, col, o.n, r, t, this.kindOf(i));
           else this.drawCircle(c, o.x, o.y, col, String(o.n), r);
         }
         c.restore();
@@ -2393,6 +2393,13 @@
         c.fillText(this.combo + "x", rect.x + 4, rect.y + rect.h + 8);
         c.restore();
       }
+    }
+    /** 물체 갈래 — 그림이 기믹마다 다르게 칠하도록(슬라이더 · 되돌아오기 · 연타) */
+    kindOf(i) {
+      const o = this.objs[i];
+      if (o.k === "s") return o.rep > 0 ? "r" : "s";
+      const half = 60 / this.d.bpm * 0.75, a = this.objs[i - 1], b = this.objs[i + 1];
+      return a && o.t - a.t < half || b && b.t - o.t < half ? "q" : "c";
     }
     drawGauge(c, w, h) {
       const th = this.th, y = -h / 2 - 20, g = Math.max(0, Math.min(1, this.gauge));
@@ -52174,11 +52181,22 @@
     c.closePath();
     c.stroke();
   }
+  var STAR_COL = {
+    c: ["#7a4e0c", "#ffd84a", "#fffbe6", "255,214,100"],
+    // 단타 — 금
+    s: ["#0c3a5a", "#6fd0ff", "#eafaff", "120,210,255"],
+    // 슬라이더 — 물길을 따라 끈다
+    r: ["#3a1a6a", "#c39bff", "#f6eeff", "190,150,255"],
+    // 되돌아오는 슬라이더 — 갔다 온다
+    q: ["#6a1a14", "#ff8a6a", "#fff0ea", "255,140,110"]
+    // 연타 — 반 박 안쪽으로 몰아친다
+  };
   var FISH_DUEL_ART = {
-    circle(c, x, y, col, n, r, t) {
+    circle(c, x, y, col, n, r, t, kind) {
+      const S = STAR_COL[kind || "c"] || STAR_COL.c;
       const gl = c.createRadialGradient(x, y, r * 0.55, x, y, r * 1.4);
-      gl.addColorStop(0, "rgba(255,214,100,.45)");
-      gl.addColorStop(1, "rgba(255,200,80,0)");
+      gl.addColorStop(0, `rgba(${S[3]},.45)`);
+      gl.addColorStop(1, `rgba(${S[3]},0)`);
       c.fillStyle = gl;
       c.beginPath();
       c.arc(x, y, r * 1.4, 0, TAU);
@@ -52222,8 +52240,8 @@
       c.stroke();
       const pulse = 1 + Math.sin(t * 5 + n) * 0.06, rot = -Math.PI / 2 + Math.sin(t * 0.8 + n) * 0.12;
       const sg = c.createRadialGradient(x, y, 0, x, y, r * 0.62);
-      sg.addColorStop(0, "rgba(255,248,210,.95)");
-      sg.addColorStop(1, "rgba(255,210,90,0)");
+      sg.addColorStop(0, "rgba(255,248,230,.95)");
+      sg.addColorStop(1, `rgba(${S[3]},0)`);
       c.fillStyle = sg;
       c.beginPath();
       c.arc(x, y, r * 0.62, 0, TAU);
@@ -52237,9 +52255,9 @@
         c.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L);
         c.stroke();
       }
-      star2(c, x, y, r * 0.46 * pulse, r * 0.2 * pulse, rot, "#7a4e0c");
-      star2(c, x, y, r * 0.4 * pulse, r * 0.17 * pulse, rot, "#ffd84a");
-      star2(c, x - r * 0.03, y - r * 0.04, r * 0.2 * pulse, r * 0.09 * pulse, rot, "#fffbe6");
+      star2(c, x, y, r * 0.46 * pulse, r * 0.2 * pulse, rot, S[0]);
+      star2(c, x, y, r * 0.4 * pulse, r * 0.17 * pulse, rot, S[1]);
+      star2(c, x - r * 0.03, y - r * 0.04, r * 0.2 * pulse, r * 0.09 * pulse, rot, S[2]);
       const by = y + r * 0.9, bw = r * 0.3;
       c.fillStyle = "#2a1a06";
       c.beginPath();
@@ -52267,11 +52285,11 @@
       c.stroke();
       if (!arrow2) {
         c.globalAlpha *= 0.7;
-        star2(c, x, y, r * 0.3, r * 0.13, -Math.PI / 2, "#ffd84a");
+        star2(c, x, y, r * 0.3, r * 0.13, -Math.PI / 2, STAR_COL.s[1]);
         c.globalAlpha /= 0.7;
         return;
       }
-      c.strokeStyle = "#fff2b0";
+      c.strokeStyle = STAR_COL.r[2];
       c.lineWidth = r * 0.1;
       c.lineCap = "round";
       for (let i = 0; i < 2; i++) {
@@ -52280,7 +52298,7 @@
         c.arc(x, y, R, a1, a0);
         c.stroke();
         const hx = x + Math.cos(a1) * R, hy = y + Math.sin(a1) * R, d = a1 - Math.PI / 2;
-        c.fillStyle = "#fff2b0";
+        c.fillStyle = STAR_COL.r[2];
         c.beginPath();
         c.moveTo(hx + Math.cos(d) * r * 0.2, hy + Math.sin(d) * r * 0.2);
         c.lineTo(hx + Math.cos(a1) * r * 0.14, hy + Math.sin(a1) * r * 0.14);

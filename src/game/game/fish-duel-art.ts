@@ -1,6 +1,6 @@
 /* ===== game/fish-duel-art.js — 낚시 겨루기의 그림 갈래 — osu! 원 대신 별 구슬 · 낚싯줄 물길 · 물고기 공 · 릴 스피너 · 미끼 커서 ===== */
 /* engine/rhythm 의 DuelArt 를 채운다. 판정 · 박자 · 크기는 엔진 그대로, 모양만 Ashfall 낚시로 —
-   구슬 = 밤하늘 유리 가운데 금빛 별 · 노란 테 · 번호는 테 아래 금 표 */
+   구슬 = 밤하늘 유리 가운데 별(기믹마다 색 — STAR_COL) · 노란 테 · 번호는 테 아래 금 표 */
 import { TAU } from '../../engine/core/math.js';
 import { FONT } from '../lang.js';
 import type { DuelArt } from '../../engine/rhythm/duel.js';
@@ -33,12 +33,20 @@ function ripple(c: C2, x: number, y: number, R: number, t: number, lobes: number
   c.closePath(); c.stroke();
 }
 
+/** 기믹마다 별 색 [테두리 · 몸 · 속빛 · 번짐] — 치는 법이 다르면 별 색이 다르다(사용자 요청). 테는 늘 금빛 그대로 */
+const STAR_COL: Record<string, string[]> = {
+  c: ['#7a4e0c', '#ffd84a', '#fffbe6', '255,214,100'],   // 단타 — 금
+  s: ['#0c3a5a', '#6fd0ff', '#eafaff', '120,210,255'],   // 슬라이더 — 물길을 따라 끈다
+  r: ['#3a1a6a', '#c39bff', '#f6eeff', '190,150,255'],   // 되돌아오는 슬라이더 — 갔다 온다
+  q: ['#6a1a14', '#ff8a6a', '#fff0ea', '255,140,110']    // 연타 — 반 박 안쪽으로 몰아친다
+};
 export const FISH_DUEL_ART: DuelArt = {
-  circle(c, x, y, col, n, r, t) {
+  circle(c, x, y, col, n, r, t, kind) {
+    const S = STAR_COL[kind || 'c'] || STAR_COL.c;
     /* ★ 별 구슬 — 가운데 별 · 노란 테(사용자 요청 2026-10-15). 구슬 속 빛깔만 등급색을 따르고 별 · 테는 늘 같은 금빛이라
        등급이 바뀌어도 "치는 것"이 한눈에 같다 */
     const gl = c.createRadialGradient(x, y, r * 0.55, x, y, r * 1.4);         // 금빛 번짐
-    gl.addColorStop(0, 'rgba(255,214,100,.45)'); gl.addColorStop(1, 'rgba(255,200,80,0)');
+    gl.addColorStop(0, `rgba(${S[3]},.45)`); gl.addColorStop(1, `rgba(${S[3]},0)`);
     c.fillStyle = gl; c.beginPath(); c.arc(x, y, r * 1.4, 0, TAU); c.fill();
     // 밤하늘 유리 — 가운데 등급색이 옅게 비치고 가장자리는 깊은 밤
     const g = c.createRadialGradient(x, y - r * 0.1, r * 0.05, x, y, r * 0.86);
@@ -62,16 +70,16 @@ export const FISH_DUEL_ART: DuelArt = {
     // 가운데 별 — 다섯 갈래 + 가는 빛살 넷, 숨 쉬듯 반짝이며 천천히 돈다
     const pulse = 1 + Math.sin(t * 5 + n) * 0.06, rot = -Math.PI / 2 + Math.sin(t * 0.8 + n) * 0.12;
     const sg = c.createRadialGradient(x, y, 0, x, y, r * 0.62);
-    sg.addColorStop(0, 'rgba(255,248,210,.95)'); sg.addColorStop(1, 'rgba(255,210,90,0)');
+    sg.addColorStop(0, 'rgba(255,248,230,.95)'); sg.addColorStop(1, `rgba(${S[3]},0)`);
     c.fillStyle = sg; c.beginPath(); c.arc(x, y, r * 0.62, 0, TAU); c.fill();
     c.strokeStyle = 'rgba(255,246,200,.7)'; c.lineWidth = r * 0.03;
     for (let i = 0; i < 4; i++) {
       const a = i * Math.PI / 2 + Math.PI / 4 + rot, L = r * 0.62 * pulse;
       c.beginPath(); c.moveTo(x + Math.cos(a) * r * 0.16, y + Math.sin(a) * r * 0.16); c.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); c.stroke();
     }
-    star(c, x, y, r * 0.46 * pulse, r * 0.2 * pulse, rot, '#7a4e0c');
-    star(c, x, y, r * 0.4 * pulse, r * 0.17 * pulse, rot, '#ffd84a');
-    star(c, x - r * 0.03, y - r * 0.04, r * 0.2 * pulse, r * 0.09 * pulse, rot, '#fffbe6');
+    star(c, x, y, r * 0.46 * pulse, r * 0.2 * pulse, rot, S[0]);
+    star(c, x, y, r * 0.4 * pulse, r * 0.17 * pulse, rot, S[1]);
+    star(c, x - r * 0.03, y - r * 0.04, r * 0.2 * pulse, r * 0.09 * pulse, rot, S[2]);
     // 번호 — 테 아래 작은 금 표
     const by = y + r * 0.9, bw = r * 0.3;
     c.fillStyle = '#2a1a06'; c.beginPath(); c.ellipse(x, by, bw, r * 0.2, 0, 0, TAU); c.fill();
@@ -83,13 +91,13 @@ export const FISH_DUEL_ART: DuelArt = {
     // 물길 끝 — 옅은 금 테 + 작은 별. 되돌아오는 끝이면 테를 도는 화살 둘
     c.strokeStyle = 'rgba(122,78,12,.9)'; c.lineWidth = r * 0.16; c.beginPath(); c.arc(x, y, r * 0.84, 0, TAU); c.stroke();
     c.strokeStyle = '#ffcf3a'; c.lineWidth = r * 0.09; c.beginPath(); c.arc(x, y, r * 0.84, 0, TAU); c.stroke();
-    if (!arrow) { c.globalAlpha *= 0.7; star(c, x, y, r * 0.3, r * 0.13, -Math.PI / 2, '#ffd84a'); c.globalAlpha /= 0.7; return; }
-    c.strokeStyle = '#fff2b0'; c.lineWidth = r * 0.1; c.lineCap = 'round';
+    if (!arrow) { c.globalAlpha *= 0.7; star(c, x, y, r * 0.3, r * 0.13, -Math.PI / 2, STAR_COL.s[1]); c.globalAlpha /= 0.7; return; }
+    c.strokeStyle = STAR_COL.r[2]; c.lineWidth = r * 0.1; c.lineCap = 'round';
     for (let i = 0; i < 2; i++) {
       const a0 = t * -3 + i * Math.PI, a1 = a0 - 2.1, R = r * 0.45;
       c.beginPath(); c.arc(x, y, R, a1, a0); c.stroke();
       const hx = x + Math.cos(a1) * R, hy = y + Math.sin(a1) * R, d = a1 - Math.PI / 2;   // 화살촉 — 도는 쪽(시계 반대)
-      c.fillStyle = '#fff2b0'; c.beginPath();
+      c.fillStyle = STAR_COL.r[2]; c.beginPath();
       c.moveTo(hx + Math.cos(d) * r * 0.2, hy + Math.sin(d) * r * 0.2);
       c.lineTo(hx + Math.cos(a1) * r * 0.14, hy + Math.sin(a1) * r * 0.14); c.lineTo(hx - Math.cos(a1) * r * 0.14, hy - Math.sin(a1) * r * 0.14);
       c.closePath(); c.fill();

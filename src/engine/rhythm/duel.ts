@@ -21,7 +21,8 @@ export interface DuelMods { roll?: number; hidden?: boolean; wiggle?: number; pu
 export interface DuelTheme { bg: string; edge: string; ink: string; font: string; body: string; colors: string[]; gauge: string; gaugeLow: string; art?: DuelArt; frame?: boolean }
 /** 그림 갈래 — 게임이 제 모양으로 바꿔 그린다(없는 것은 기본 그림). 좌표는 놀이판(512×384) · r 은 원 반지름 · t 는 겨루기 시각 */
 export interface DuelArt {
-  circle?(c: CanvasRenderingContext2D, x: number, y: number, col: string, n: number, r: number, t: number): void;
+  /** kind — 'c' 단타 · 's' 슬라이더 머리 · 'r' 되돌아오는 슬라이더 머리 · 'q' 연타(반 박 안쪽) */
+  circle?(c: CanvasRenderingContext2D, x: number, y: number, col: string, n: number, r: number, t: number, kind?: 'c' | 's' | 'r' | 'q'): void;
   approach?(c: CanvasRenderingContext2D, x: number, y: number, r: number, k: number, col: string, t: number): void;
   sliderBody?(c: CanvasRenderingContext2D, pts: number[], r: number, col: string, t: number): void;
   ball?(c: CanvasRenderingContext2D, x: number, y: number, r: number, col: string, ang: number, track: boolean, t: number): void;
@@ -329,7 +330,7 @@ export class RhythmDuel {
       c.save(); c.globalAlpha = alpha; c.translate(wx, wy);
       if (o.k === 's') this.drawSlider(c, o, col);
       if (!(o.k === 's' && o.head)) {
-        if (th.art && th.art.circle) th.art.circle(c, o.x, o.y, col, o.n, r, t); else this.drawCircle(c, o.x, o.y, col, String(o.n), r);
+        if (th.art && th.art.circle) th.art.circle(c, o.x, o.y, col, o.n, r, t, this.kindOf(i)); else this.drawCircle(c, o.x, o.y, col, String(o.n), r);
       }
       c.restore();
       if (!this.m.hidden && t < o.t && !(o.k === 's' && o.head)) {          // 다가오는 고리
@@ -368,6 +369,13 @@ export class RhythmDuel {
       c.save(); c.fillStyle = th.ink; c.globalAlpha = 0.9; c.font = `700 20px ${th.font}`; c.textBaseline = 'bottom';
       c.fillText(this.combo + 'x', rect.x + 4, rect.y + rect.h + 8); c.restore();
     }
+  }
+  /** 물체 갈래 — 그림이 기믹마다 다르게 칠하도록(슬라이더 · 되돌아오기 · 연타) */
+  kindOf(i: number): 'c' | 's' | 'r' | 'q' {
+    const o = this.objs[i];
+    if (o.k === 's') return o.rep > 0 ? 'r' : 's';
+    const half = 60 / this.d.bpm * 0.75, a = this.objs[i - 1], b = this.objs[i + 1];
+    return (a && o.t - a.t < half) || (b && b.t - o.t < half) ? 'q' : 'c';
   }
   drawGauge(c: CanvasRenderingContext2D, w: number, h: number): void {
     const th = this.th, y = -h / 2 - 20, g = Math.max(0, Math.min(1, this.gauge));
