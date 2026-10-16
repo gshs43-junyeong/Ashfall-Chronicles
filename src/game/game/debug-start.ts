@@ -7,6 +7,7 @@ import { T, TILE_DEF } from '../data.js';
 import { ITEMS } from '../data/items.js';
 import { MACHINE } from '../data/recipes.js';
 import { VILLAGE } from '../data/start.js';
+import { PROF_MAX, SKILLS } from '../data/skills.js';
 import { CAVE_TYPES, RUIN_SPEC } from '../data/ruins.js';
 import { SESSIONS } from '../data/story.js';
 import { DAWN_WALL, TS } from '../world.js';
@@ -22,6 +23,20 @@ export const DebugStartPart: Bag = {
   debugStart(qs: any) {
     const p = this.player, { WW, WH, HELL_Y, CAMP_X1, SEA_X1 } = this.world.dims;
     if (qs.get('debug') === 'showcase') this.showcaseStart(qs);   // 영상 촬영용(game/debug-showcase.ts)
+    /* ?debug=skills — 플레이어 기술 전부 시험: 레벨 75 · 특성 트리 전부 최대 랭크 · 칸 다 열림 · 생활 숙련 끝 · 마나 넉넉히(&pts=N 남길 점수) */
+    if (qs.get('debug') === 'skills') {
+      while (p.level < 75) { p.level++; p.statPts += 3; p.xpNext = Math.round(p.xpNext * 1.18); }
+      p.skills = {}; p.slots = [null, null, null, null, null];
+      for (const id in SKILLS) p.skills[id] = SKILLS[id].max!;
+      p.skillPts = +qs.get('pts') || 0;
+      const act = Object.keys(SKILLS).filter(id => SKILLS[id].type === 'active');
+      act.slice(0, p.slots.length).forEach((id, i) => { p.slots[i] = id; });
+      p.prof = p.prof || {};
+      for (const k of ['farm', 'fish']) p.prof[k] = { lv: PROF_MAX, xp: 0 };
+      p.base.int += 40; p.base.vit += 20; p.statPts = Math.max(0, p.statPts - 60);
+      p.recalc(); p.syncBagCapacity(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
+      UI.refreshSkillSlots(); UI.refreshSkillbar(); UI.refreshEquip(); UI.refreshBag(); UI.refreshStatAlloc();
+    }
     /* ?debug=meteor — 2.5초 뒤 운석. */
     if (qs.get('debug') === 'meteor') {
       const at = qs.get('at'), me = Math.floor(this.player.cx / TS);

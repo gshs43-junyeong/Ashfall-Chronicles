@@ -117,9 +117,6 @@
   "<em>{n}초</em>": [
    "ui/machine.refreshMachine"
   ],
-  "= 제 갈래 {own} + 다른 갈래 {lend}": [
-   "ui/tree.lockReason"
-  ],
   "Alt(오)": [
    "ui.keyLabel"
   ],
@@ -188,6 +185,9 @@
   ],
   "{buff} 효과": [
    "ui/tip.showTip"
+  ],
+  "{b|을} 쓰러뜨렸다": [
+   "game/netchat"
   ],
   "{desc}\n(보상은 🪙 {gold} · 경험치 {xp})": [
    "game/quests.sideTalk"
@@ -298,6 +298,12 @@
   "{label} {v} (지금 {q})": [
    "game/ruin-pulse.surveyScore"
   ],
+  "{lv}레벨이 되면 드러난다": [
+   "ui/tree.refreshProf"
+  ],
+  "{lv}레벨이 되었다": [
+   "game/netchat"
+  ],
   "{m|을} 고쳤다": [
    "game/repair.repairMachine"
   ],
@@ -338,6 +344,9 @@
   ],
   "{n}개마다 하나만 앞으로, 나머지는 옆으로": [
    "ui/machine.logicCfg"
+  ],
+  "{n}점": [
+   "ui/tree.buildTree"
   ],
   "{n}초": [
    "game/ruin-pulse.drawPulse"
@@ -946,6 +955,9 @@
   "기본값으로": [
    "index.html"
   ],
+  "기술": [
+   "ui/tree.buildTree"
+  ],
   "기억의 조각 {n}/{all}": [
    "game/memory.memoryGot"
   ],
@@ -982,6 +994,12 @@
   ],
   "꺼낸다": [
    "ui/process.oven"
+  ],
+  "꾹 눌러 배운다 · 배운 칸과 이어진 칸만 드러난다 · 우클릭으로 스킬 칸 등록": [
+   "ui/tree.buildTree"
+  ],
+  "꾹 눌러 습득{v}": [
+   "ui/tree.showSkillTip"
   ],
   "끊긴 선": [
    "data/quests"
@@ -1170,9 +1188,6 @@
   "단말 읽기": [
    "game/render-world.drawCursor"
   ],
-  "단을 여는 점수는 다른 갈래에 찍은 것도 <b>절반</b>이 쌓입니다.": [
-   "ui/tree.buildTree"
-  ],
   "단조": [
    "ui/process.anvilSteps"
   ],
@@ -1317,9 +1332,6 @@
   "떼어 간다": [
    "ui/shop.refreshBoard"
   ],
-  "또는": [
-   "ui/tree.lockReason"
-  ],
   "뜨겁다": [
    "game/ruin-events.evProgress"
   ],
@@ -1462,9 +1474,6 @@
   "먹일 것": [
    "data/quests"
   ],
-  "먼저": [
-   "ui/tree.lockReason"
-  ],
   "멀티플레이": [
    "index.html"
   ],
@@ -1497,6 +1506,9 @@
   ],
   "모든 여정이 끝났다.": [
    "game/quests.tellQuest"
+  ],
+  "모든 칸은 여기서 뻗어 나간다": [
+   "ui/tree.buildTree"
   ],
   "모래가 아직 다 차오르지 않았다 ({s}초)": [
    "game/trinkets.useStopGlass"
@@ -2271,6 +2283,7 @@
    "ui/process.turret"
   ],
   "쓰러졌다": [
+   "game/netchat",
    "index.html"
   ],
   "쓰러졌던 자리로 돌아왔다": [
@@ -2333,6 +2346,7 @@
    "data/quests"
   ],
   "알림": [
+   "game/netchat.refreshChat",
    "index.html"
   ],
   "압력을 올린다": [
@@ -2372,6 +2386,7 @@
    "ui/quest.refreshQuest"
   ],
   "업적 달성 — {a}": [
+   "game/netchat",
    "game/progress.onAchieved"
   ],
   "없음 (전부 통과)": [
@@ -2523,7 +2538,7 @@
   "우클릭으로 장착": [
    "ui/tip.showTip"
   ],
-  "우클릭으로 펫 칸에 장착 — 두 마리까지 데리고 다닐 수 있다": [
+  "우클릭으로 펫 칸에 장착 — 펫 칸은 특성 트리에서 늘어난다": [
    "ui/tip.showTip"
   ],
   "움직이는 중이다 — 3초 넘게 멈춘 것만 꺼낼 수 있다": [
@@ -2540,9 +2555,6 @@
   ],
   "원유를 퍼 올린다": [
    "ui/process.pump"
-  ],
-  "윗단계": [
-   "ui/tree.lockReason"
   ],
   "유적": [
    "game/progress.questTargets",
@@ -2613,9 +2625,6 @@
   ],
   "의뢰에 대해 묻는다": [
    "game/talk.talkTo"
-  ],
-  "이 갈래에 {need}점 필요 (지금 {have}": [
-   "ui/tree.lockReason"
   ],
   "이 게임의 저장 파일이 아니다": [
    "game/save.importSaves"
@@ -2701,6 +2710,7 @@
    "game/ruins.useRuinMap"
   ],
   "이미 최대 랭크다": [
+   "ui/tree.holdStart",
    "ui/tree.learn"
   ],
   "이미 타고 있다": [
@@ -2721,6 +2731,9 @@
   ],
   "이어 할 세계를 고르거나 새로 시작하면 방이 열리고 방 코드가 뜬다. 코드를 친구에게 알려 주면 된다.": [
    "index.html"
+  ],
+  "이어진 칸을 먼저 배워야 한다": [
+   "ui/tree.lockReason"
   ],
   "이어하기": [
    "game/save.renderSlotScreen"
@@ -2971,9 +2984,6 @@
   "절약": [
    "index.html"
   ],
-  "점선은 <b>갈래를 건너는 길</b> — 이어진 칸을 하나라도 배우면 열립니다.": [
-   "ui/tree.buildTree"
-  ],
   "점프": [
    "game.bindInput",
    "ui/tip.compareLine"
@@ -3029,9 +3039,6 @@
   ],
   "좌클릭": [
    "index.html"
-  ],
-  "좌클릭으로 습득{v}": [
-   "ui/tree.showSkillTip"
   ],
   "주괴 · 판": [
    "factory"
@@ -3117,6 +3124,12 @@
   ],
   "쪽지 읽기": [
    "game/render-world.drawCursor"
+  ],
+  "찍은 점수 {have} · 다음 단까지 {left}점": [
+   "ui/tree.buildTree"
+  ],
+  "찍은 점수 {have} · 모든 단이 열렸다": [
+   "ui/tree.buildTree"
   ],
   "차갑다": [
    "game/ruin-events.evProgress"
@@ -3267,6 +3280,10 @@
   "치유가 끊겼다": [
    "entity/boss-forms.formHurt"
   ],
+  "칸 열기": [
+   "ui/tree.buildTree",
+   "ui/tree.showSkillTip"
+  ],
   "칸에 채운다": [
    "ui/process.battery"
   ],
@@ -3337,9 +3354,6 @@
   "탐지 파동 — 움직이는 것 {n}": [
    "game/utility.scanPulse"
   ],
-  "탐험가 갈래에서 이 칸을 열어야 한다": [
-   "ui.buildEquipSlots"
-  ],
   "태운다": [
    "ui/process.gen"
   ],
@@ -3365,11 +3379,21 @@
   "투입": [
    "ui/machine.refreshMachine"
   ],
+  "트리에 {need}점을 찍으면 열린다 (지금 {have}점)": [
+   "ui/tree.lockReason"
+  ],
+  "트리의 심장": [
+   "ui/tree.buildTree"
+  ],
   "특성 트리": [
    "index.html"
   ],
+  "특성 트리에서 이 칸을 열어야 한다": [
+   "ui.buildEquipSlots"
+  ],
   "특성 포인트가 없다": [
    "ui/tree.showSkillTip",
+   "ui/tree.holdStart",
    "ui/tree.learn"
   ],
   "틀렸다 — 해가 순서를 다시 보여 준다 ({n}/3)": [
@@ -3593,7 +3617,8 @@
    "ui.refreshStatSheet",
    "ui.buildStatAlloc",
    "ui/tip.compareLine",
-   "ui/tip.showTip"
+   "ui/tip.showTip",
+   "ui/tree.buildTree"
   ],
   "🪙 {gold} · 경험치 {xp}": [
    "ui/quest.refreshQuest"
@@ -6323,6 +6348,12 @@
   "SKILLS.s_petbond.d": "두 번째 펫 칸이 열린다 — 펫 둘을 함께 데리고 다닌다.",
   "SKILLS.s_quickhands.n": "재빠른 손",
   "SKILLS.s_quickhands.d": "스킬 칸이 하나 더 열린다(G).",
+  "SKILLS.s_ringbearer.n": "반지 고리",
+  "SKILLS.s_ringbearer.d": "세 번째 장신구 칸이 열린다.",
+  "SKILLS.s_beastkin.n": "무리의 우두머리",
+  "SKILLS.s_beastkin.d": "세 번째 펫 칸이 열린다 — 펫 셋이 함께 따라다닌다.",
+  "SKILLS.s_deeppack.n": "깊은 주머니",
+  "SKILLS.s_deeppack.d": "가방 칸 +%d.",
   "STATION_DESC.work.1": "판자와 못으로 되는 것들.",
   "STATION_DESC.work.2": "치수를 재고 깎는다. 부품이 나오기 시작한다.",
   "STATION_DESC.work.3": "설계 핵을 얹었다. 이제 기계를 만드는 기계를 만든다.",

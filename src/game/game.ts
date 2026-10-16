@@ -439,7 +439,7 @@ export const GameCore: Bag = {
     this.petEnts = []; this.syncPets();
     UI.refreshBag(); UI.refreshEquip(); UI.refreshTracker(); UI.refreshSkillbar(); UI.refreshStatAlloc();
     /* 영상 촬영용 바로가기(?debug=showcase)는 장 카드 · 서장 · 알림 없이 바로 논다 — game/debug-showcase.ts */
-    const quiet = new URLSearchParams(location.search).get('debug') === 'showcase';
+    const quiet = ['showcase', 'skills'].includes(new URLSearchParams(location.search).get('debug') || '');
     if (!quiet) {
       UI.chapterCard(CHAPTERS[0]);
       setTimeout(() => UI.storyScene(CHAPTERS[0], 'intro'), 4000);   // 서장 도입부를 실제로 읽힌다

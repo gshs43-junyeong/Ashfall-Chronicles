@@ -182,6 +182,7 @@ export const ProgressPart: Bag = {
   },
   onAchieved(a: any) {
     this.toast(tr('업적 달성 — {a}', { a: a.n }), 'good');
+    this.netNote('ach', { a: a.n });
     for (let i = 0; i < 24; i++)
       this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 1.0));
     this.sfx('ach');

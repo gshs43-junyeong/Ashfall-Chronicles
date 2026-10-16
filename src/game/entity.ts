@@ -12,7 +12,7 @@ import { dimsOf } from './size.js';
 import { MACH_OF_TILE, T, TILE_DEF } from './data.js';
 import { HIT_FX, ITEMS, MULTI_FALLOFF } from './data/items.js';
 import { DIFF_TIER, ENEMIES, MECH_PART } from './data/enemies.js';
-import { BOSS_SURGE, BUFFS, PROF_MAX, SKILLS, petSlotN, profNeed, utilSlotN } from './data/skills.js';
+import { BOSS_SURGE, BUFFS, PET_KEYS, PROF_MAX, SKILLS, accSlotN, petSlotN, profNeed, utilSlotN } from './data/skills.js';
 import { CELL_CHARGE } from './data/ruins.js';
 import { DRAGON_FOOD, DRAGON_GATES, PETS, PET_XP_SHARE, dragonStage, levelMult, petAtkMul, petDmgScale, petMaxLv,
   petXpNext } from './data/pets.js';
@@ -113,7 +113,7 @@ export class Player extends Ent {
     this.gold = 0;
     this.bag = new Array(BASE_BAG_SIZE).fill(null);
     /* util(유틸리티) 칸 — 산소통처럼 "싸우는 데 쓰는 물건이 아닌데 몸에 지녀야 하는 것"의 자리다 — 사연: docs/code-history.md#h24 */
-    this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
+    this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, acc3: null, util1: null, util2: null, bag: null, pet1: null, pet2: null, pet3: null };
     this.sel = 0;
     this.skills = {};              // id -> rank
     this.slots = [null, null, null, null, null];   // 다섯째는 탐험가 '재빠른 손'이 연다
@@ -230,7 +230,7 @@ export class Player extends Ent {
   /* ---- 가방 용량 (가방 장신구로 확장) ---- */
   bagCapacity() {
     const b = this.equip.bag;
-    return BASE_BAG_SIZE + (b ? (idef(b).slots || 0) : 0) + (this.skills.s_packrat || 0) * 4;   // 짐꾼 — 랭크마다 네 칸
+    return BASE_BAG_SIZE + (b ? (idef(b).slots || 0) : 0) + (this.skills.s_packrat || 0) * 4 + (this.skills.s_deeppack || 0) * 5;   // 짐꾼 — 랭크마다 네 칸 · 깊은 주머니 다섯 칸
   }
   syncBagCapacity() {
     const cap = this.bagCapacity();
@@ -259,10 +259,10 @@ export class Player extends Ent {
     if (d.type === 'weapon') key = 'weapon';
     else if (d.type === 'armor') key = d.slot;
     else if (d.type === 'bag') key = 'bag';
-    else if (d.type === 'acc') key = this.equip.acc1 ? (this.equip.acc2 ? 'acc1' : 'acc2') : 'acc1';
+    else if (d.type === 'acc') { const ks = ['acc1', 'acc2', 'acc3'].slice(0, accSlotN(this)); key = ks.find(k => !this.equip[k]) || 'acc1'; }
     /* 둘째 칸은 탐험가 갈래(도구 띠 · 길들이는 손)가 연다 — 안 열렸으면 첫 칸과 바꾼다 */
     else if (d.type === 'util') key = this.equip.util1 && !this.equip.util2 && utilSlotN(this) > 1 ? 'util2' : 'util1';
-    else if (d.type === 'pet') key = this.equip.pet1 && !this.equip.pet2 && petSlotN(this) > 1 ? 'pet2' : 'pet1';
+    else if (d.type === 'pet') { const ks = PET_KEYS.slice(0, petSlotN(this)); key = ks.find(k => !this.equip[k]) || 'pet1'; }
     if (!key) return false;
     const old = this.equip[key];
     this.equip[key] = it; this.bag[slotIdx] = old || null;
@@ -279,7 +279,7 @@ export class Player extends Ent {
   addPetXp(n: number) {
     if (n <= 0) return;
     let up = false;
-    for (const k of ['pet1', 'pet2']) {
+    for (const k of PET_KEYS) {
       const it = this.equip[k];
       if (!it || idef(it).type !== 'pet') continue;
       it.lv = it.lv || 1; it.xp = (it.xp || 0) + n;
@@ -696,7 +696,7 @@ export class Enemy extends Ent {
     p.addXp(Math.round(this.xp * mult)); p.gold += Math.round(this.gold * mult);
     p.addPetXp(Math.round(this.xp * mult * PET_XP_SHARE));
     p.kills[this.type] = (p.kills[this.type] || 0) + 1;
-    if (this.boss) p.bossKilled[this.type] = true;
+    if (this.boss) { p.bossKilled[this.type] = true; G.netNote('boss', { b: this.type }); }
     const rng = G.rng;
     /* 드문 떨굼(10% 미만)은 못 얻을수록 확률이 오른다(engine core/loot — 판 동안만 기억한다) */
     G.lootPity = G.lootPity || mapPity();
@@ -823,8 +823,9 @@ export class Pet {
   lvOf(p: Player) { if (this.lv) return this.lv; const it = p.equip['pet' + (this.slot + 1)]; return it ? (it.lv || 1) : 1; }
   /** 플레이어 기준 떠 있을 자리 — 슬롯마다 반대쪽 어깨 뒤에 선다 */
   anchor(p: any) {
-    const side = this.slot === 0 ? -1 : 1;
     const ex = this.def.dragon ? [0, 4, 10, 16][dragonStage(this.lvOf(p))] : 0;   // 큰 드래곤은 조금 더 떨어져 뜬다
+    if (this.slot === 2) return [p.cx - p.facing * 6, p.cy - 50 - ex + Math.sin(this.t * 2.2 + 2) * 4];   // 셋째 — 머리 위
+    const side = this.slot === 0 ? -1 : 1;
     return [p.cx - p.facing * side * (26 + ex), p.cy - 16 - ex * 0.6 + Math.sin(this.t * 2.2 + this.slot) * 4];
   }
   /** 따라다니기만 — 남의 펫은 이것만 돈다(치는 것은 주인 화면이 하고 피해만 호스트로 간다). */

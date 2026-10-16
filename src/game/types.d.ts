@@ -71,7 +71,7 @@ interface MachineDef {
 }
 interface SkillDef {
   n: string; i: string; br?: string; tier?: number; max?: number; type?: string; col?: number; mana?: number; cd?: number; d?: string;
-  v?: (r: number) => any; b?: (r: number) => Record<string, any>; req?: any[];
+  v?: (r: number) => any; b?: (r: number) => Record<string, any>; req?: any[]; unlock?: number;
 }
 interface BuffDef { n: string; i: string; dur?: number; b?: Record<string, number>; debuff?: number; }
 interface NpcDef {
@@ -87,6 +87,7 @@ interface AppCtx {
   ruinDark: number; noiseT: number; sacStrike: (e: any) => boolean; onDeafWake: ((e: any) => void) | null;   // 유적 고유 몬스터 · 사건(entity/enemy-traits)
   ENH_MAX: number; ac: AudioContext | null; vfx: import('../engine/fx/vfx').Vfx; skillVfx: (id: string, o: any) => void; stageFx: (id: string, who?: any) => void; bossHazard: (h: any) => any; hzFloor: (x: number, y: number) => number; hzNear: (x: number, y: number) => any; hitPlayers: (x: number, y: number, r: number, dmg: number, inf?: any) => void; hitPlayersRect: (x0: number, y0: number, x1: number, y1: number, dmg: number, skip?: number[]) => number[]; ruinFeed: (e: any) => void; swingFx: (p: any) => void; cutFx: (e: any, p: any, crit: boolean, fam: string | null) => void; timeScale: { hit(s: number, cap?: number, f?: number): void; slow(s: number, f?: number): void }; fade: { run(mid: (() => void) | null, o?: number, h?: number, i?: number): void; reveal(i?: number): void }; pathBudget: number; lootPity: any; entHash: { query(x: number, y: number, w: number, h: number, fn: (o: any) => boolean | void): void; near(cx: number, cy: number, r: number): any[] }; addCorpse: (...a: any[]) => any; aoe: (...a: any[]) => any; applySettings: (...a: any[]) => any;
   machineBroke: (m: any) => void;   // 기계 고장 알림(game/repair)
+  chatOpen: boolean; openChat: () => void; closeChat: () => void; netNote: (key: string, p?: any) => void;   // 멀티 채팅(game/netchat) — 탭 줄 단추가 연다
   boss: any;   // 지금 결전 중인 보스 — 갈라진 짝이 이어받는다(entity/boss-forms)
   bandFx: (...a: any[]) => any; boltFx: (...a: any[]) => any; bossLine: (...a: any[]) => any; bounties: any[];
   bountyPay: (...a: any[]) => any; bountyProgress: (...a: any[]) => any; breakFx: (...a: any[]) => any; burst: (...a: any[]) => any;

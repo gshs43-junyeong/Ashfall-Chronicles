@@ -473,6 +473,8 @@ export const NetPart: Bag = {
       this.netProgIn(peer, m);
     } else if (m.k === 'chat' && peer.rp) {
       this.netChatOut(peer.rp.name, m.s);
+    } else if (m.k === 'note' && peer.rp) {
+      this.netNoteOut(peer.rp.name, m.key, m.p, peer.id);
     } else if (m.k === 'pvp') {
       this.netPvpIn(peer, m);
     } else if (m.k === 'po') {
@@ -606,6 +608,8 @@ export const NetPart: Bag = {
       if (m.p) this.netPutProjs(m.p);
     } else if (m.k === 'chat') {
       this.chatLine(m.n, m.s);
+    } else if (m.k === 'note') {
+      this.noteIn(m);
     } else if (m.k === 'progs') {
       this.netProgsIn(m);
     } else if (m.k === 'chap') {

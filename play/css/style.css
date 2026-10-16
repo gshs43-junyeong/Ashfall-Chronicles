@@ -212,6 +212,7 @@ body.touch #touchpad .ti-alt.on{border-color:#ffd27a;box-shadow:0 0 12px #ffc86a
 #tabbar .tb.on{border-color:#d8a94b;box-shadow:0 0 0 1px #d8a94b66 inset;color:#fff}
 #tabbar .tb-ic{width:22px;height:22px;background-size:contain;background-repeat:no-repeat;image-rendering:auto}
 #tabbar .tb-n{line-height:1}
+#tabbar .tb[hidden]{display:none}                    /* 채팅 단추는 함께하는 판에서만 — .tb 의 display:flex 가 hidden 을 덮었다 */
 #tabbar kbd{position:absolute;top:1px;right:2px;font:9px/1 monospace;color:#b8a888;background:none;border:0;padding:0}
 /* 패널 제목 앞 아이콘 */
 .panel header h2,.panel header .title-ic{vertical-align:middle}
@@ -348,81 +349,116 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 .sk-pane{display:none}
 .sk-pane.on{display:block}
 
-/* ★ 판 하나에 서른 칸. 갈래마다 테두리를 두르던 판 셋을 걷어냈다 — 벽이 있으면
-   갈래를 가로지르는 선을 그을 자리가 없다. 갈래는 위쪽 머리글과 칸 색으로만 남는다. */
-#tree-wrap{background:#100f0a;border:1px solid #262418;border-radius:4px;
-  padding:12px 12px 6px;margin:14px 16px 4px}
-.bheads{display:grid;grid-template-columns:1fr 1fr;margin-bottom:8px}
-.bgrid+.bheads{margin:4px 0 2px}
-.bhead{--hi:var(--bc);padding-left:9px;border-left:3px solid var(--bc)}   /* 글자가 색 막대에 붙지 않게 */
-.bhead h3{font-size:12.5px;letter-spacing:.08em;margin-bottom:3px;color:var(--bc)}
-.bhead .btag{font-size:10px;color:#65614f;margin-bottom:2px}
-.bhead.r{text-align:right;padding:0 9px 0 0;border-left:0;border-right:3px solid var(--bc);justify-self:end}
-.bnote{font-size:10.5px;color:#6b6553;margin:0 0 4px;padding:3px 8px;
-  background:#0d0c08;border:1px solid #221f15;border-radius:3px}
-.bnote b{color:#9a9079;font-weight:600}
-.bgrid{position:relative}
-.blines{position:absolute;left:50%;top:var(--cy);width:1px;height:1px;pointer-events:none;overflow:visible}   /* 원점 = 판 가운데 */
-.broot{stroke:var(--bc);stroke-width:1.4;opacity:.22;stroke-dasharray:2 5}
-/* 가운데 핵 — 네 갈래 색을 두른 돌 */
-.bcore{position:absolute;left:50%;top:var(--cy);width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;
-  background:radial-gradient(circle,#2a2516 0 55%,transparent 56%),conic-gradient(from 0deg,var(--c2) 0 25%,var(--c3) 0 50%,var(--c4) 0 75%,var(--c1) 0);
-  box-shadow:0 0 14px #d8a94b40;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.bcore span{color:#e8d49a;font-size:13px;text-shadow:0 0 6px #ffcf6a}
-.bline{stroke:#2a2719;stroke-width:2;stroke-linecap:round}
-.bline.on{stroke:var(--bc);opacity:.42}
-.bline.full{opacity:.85;stroke-width:2.6;filter:drop-shadow(0 0 3px var(--bc))}
-/* 갈래를 건너는 선 — 점선이라 "여기서 넘어올 수 있다"가 한눈에 갈린다. 실선으로 두면
-   같은 갈래 안의 선과 구별이 안 되어 트리가 그냥 빽빽해 보인다. */
-.bline.cross{stroke-dasharray:5 7;stroke-width:1.6;opacity:.85}
-.bline.cross.on{opacity:.55}
-.bline.cross.full{stroke-width:2.2;opacity:.95}
-/* 습득한 순간 그 칸에 닿는 선으로 빛이 한 번 흐른다 */
-.bline.flow{stroke:#fff6d8;opacity:1;stroke-width:3;stroke-dasharray:10 12;animation:blineflow .9s linear}
-@keyframes blineflow{from{stroke-dashoffset:44;opacity:1}to{stroke-dashoffset:0;opacity:.55}}
+/* ★ 판 하나 · 분야 머리글 없음 — 칸 색은 무엇을 주는가(기술 주황 · 힘 하늘 · 칸 열기 연두). 배운 칸과 이어진 칸만 드러난다(ui/tree.ts) */
+#tree-wrap{background:#0c0b08;border:1px solid #262418;border-radius:4px;padding:10px 12px 6px;margin:14px 16px 4px}
+.tlegend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:10.5px;color:#8a8470;margin:0 2px 6px}
+.tlegend .tk{display:inline-flex;align-items:center;gap:5px;color:color-mix(in srgb,var(--bc) 70%,#d8d0b8)}
+.tlegend .tk i{width:9px;height:9px;border-radius:2px;background:var(--bc);box-shadow:0 0 6px var(--bc)}
+.tlegend .thint{margin-left:auto;color:#5f5a49}
+/* 밤하늘 — 별가루 두 겹이 아주 천천히 흐른다(트리가 별자리처럼 읽히게) */
+.bgrid{position:relative;border-radius:4px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% var(--cy),#1a1710 0,#0c0b08 62%),#0c0b08}
+.bgrid::before,.bgrid::after{content:'';position:absolute;inset:-40px;pointer-events:none;opacity:.55;
+  background-image:radial-gradient(1px 1px at 12% 18%,#e8dcb8 50%,transparent 51%),radial-gradient(1px 1px at 37% 72%,#c8d8e8 50%,transparent 51%),
+    radial-gradient(1px 1px at 68% 31%,#e8dcb8 50%,transparent 51%),radial-gradient(1.5px 1.5px at 83% 84%,#fff2c8 50%,transparent 51%),
+    radial-gradient(1px 1px at 55% 9%,#c8d8e8 50%,transparent 51%),radial-gradient(1px 1px at 91% 47%,#e8dcb8 50%,transparent 51%),
+    radial-gradient(1px 1px at 24% 53%,#fff2c8 50%,transparent 51%),radial-gradient(1px 1px at 7% 88%,#c8d8e8 50%,transparent 51%);
+  background-size:260px 220px;animation:tdrift 90s linear infinite}
+.bgrid::after{background-size:410px 330px;opacity:.35;animation-duration:150s;animation-direction:reverse}
+@keyframes tdrift{to{transform:translate(260px,110px)}}
+.bgrid.thump{animation:tthump .28s ease-out}
+@keyframes tthump{25%{transform:translate(1.5px,-1px) scale(1.004)}55%{transform:translate(-1px,1px)}100%{transform:none}}
+.blines{position:absolute;left:50%;top:var(--cy);width:1px;height:1px;pointer-events:none;overflow:visible;z-index:1}
+.broot{stroke:var(--bc);stroke-width:1.4;opacity:.28;stroke-dasharray:2 5}
+.bcore{position:absolute;left:50%;top:var(--cy);width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;z-index:2;flex-direction:column;
+  background:radial-gradient(circle,#2a2516 0 52%,transparent 54%),conic-gradient(from 0deg,#e8964a,#7fb4d8,#9ad86a,#e8964a);
+  box-shadow:0 0 22px #d8a94b66,0 0 0 4px #0c0b08,0 0 0 5px #3a3524;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:help;animation:tcore 3.2s ease-in-out infinite}
+.bcore .cst{font-size:12px;line-height:1}
+.bcore .cpts{color:#fff1c8;font-size:15px;line-height:1;text-shadow:0 0 6px #ffcf6a;font-variant-numeric:tabular-nums}
+/* 단 고리 — 핵을 둘러 단마다 하나. 점수가 차면 켜진다 */
+.bring{fill:none;stroke:#3a3524;stroke-width:1.2;stroke-dasharray:3 7;opacity:.7;transition:stroke .4s,opacity .4s}
+.bring.lit{stroke:#d8a94b;stroke-dasharray:none;opacity:.32;filter:drop-shadow(0 0 4px #d8a94b)}
+.bringlb{fill:#5f5a49;font-size:10px;text-anchor:middle;letter-spacing:.06em;paint-order:stroke;stroke:#0c0b08;stroke-width:3px}
+.bringlb.lit{fill:#d8a94b}
+.broot.on{opacity:.9;stroke-width:2.4;stroke-dasharray:6 6;animation:tsap 1.4s linear infinite;filter:drop-shadow(0 0 3px var(--bc))}
+@keyframes tsap{to{stroke-dashoffset:-24}}
+.bline.full{animation:tsap 2.6s linear infinite;stroke-dasharray:14 4}
+@keyframes tcore{50%{box-shadow:0 0 30px #ffd27a88;transform:scale(1.05)}}
+.bcore .cst{color:#ffe7a8;text-shadow:0 0 8px #ffcf6a}
+.bline{stroke:#3a3524;stroke-width:1.8;stroke-linecap:round;opacity:.55;transition:opacity .3s,stroke-width .2s}
+.bline.on{stroke:var(--bc);opacity:.5;stroke-dasharray:4 6}
+.bline.full{opacity:.9;stroke-width:2.6;stroke-dasharray:none;filter:drop-shadow(0 0 3px var(--bc))}
+.bline.hid{visibility:hidden}
+.bline.hi{opacity:1;stroke-width:3;stroke:#fff1c8;filter:drop-shadow(0 0 5px var(--bc))}
+/* 새로 드러난 칸에 닿는 선 — 윗칸에서 그어 나간다 */
+.bline.draw{stroke-dasharray:var(--len) var(--len);stroke-dashoffset:var(--len);animation:tdraw .55s ease-out forwards}
+@keyframes tdraw{to{stroke-dashoffset:0}}
+/* 습득한 순간 그 칸에 닿는 선으로 빛이 흐른다 */
+.bline.flow{stroke:#fff6d8;opacity:1;stroke-width:3.4;stroke-dasharray:10 12;animation:blineflow .9s linear}
+@keyframes blineflow{from{stroke-dashoffset:44;opacity:1}to{stroke-dashoffset:0;opacity:.6}}
 
-.node{position:absolute;width:86px;margin-left:-43px;text-align:center;cursor:pointer;user-select:none}
-.node .nbox{position:relative;width:44px;height:44px;margin:0 auto;border-radius:6px;
-  background:#16150e;border:1px solid #322e1e;display:flex;align-items:center;justify-content:center;
+.node{position:absolute;width:86px;margin-left:-43px;text-align:center;cursor:pointer;user-select:none;z-index:3;touch-action:none}
+.node.hid{visibility:hidden;pointer-events:none}
+.node .nbox{position:relative;width:44px;height:44px;margin:0 auto;border-radius:7px;
+  background:#141209;border:1px solid #3a3524;display:flex;align-items:center;justify-content:center;
   transition:transform .12s,box-shadow .18s,border-color .18s}
-.node .nic{width:28px;height:28px;display:block;filter:grayscale(.75) brightness(.62)}
-.node .nlock{position:absolute;right:-3px;bottom:-3px;font-size:9px;opacity:0}
-.node .nname{font-size:9.5px;color:#6f6b5c;margin-top:3px;line-height:1.25;
-  /* 두 줄까지 접힌다 — 한 줄로 잘라 두었더니 '사냥꾼의 표식'이 '사냥꾼의 표'가 되었다 */
-  height:2.5em;overflow:hidden;word-break:keep-all}
-.node .nrank{font-size:9px;color:#514e42;letter-spacing:.04em}
-.node:hover .nname{color:#cfc9b6}
-.node.can .nbox{border-color:#6a5f33;box-shadow:0 0 0 1px #6a5f3355,0 0 10px #d8a94b26}
-.node.can .nic{filter:grayscale(.35) brightness(.9)}
+.node[data-kind=unlock] .nbox{border-radius:50%}           /* 칸 열기 = 둥근 자물쇠 */
+.node[data-kind=active] .nbox{border-radius:4px;transform:rotate(0)}
+.node .nic{width:28px;height:28px;display:block;filter:grayscale(.6) brightness(.7)}
+.node .nlock{position:absolute;right:-4px;bottom:-4px;font-size:9px;opacity:0}
+.node .nname{font-size:9.5px;color:#7a7462;margin-top:3px;line-height:1.25;height:2.5em;overflow:hidden;word-break:keep-all}
+.node .npips{display:flex;justify-content:center;gap:3px;height:6px}
+.node .npips i{width:5px;height:5px;transform:rotate(45deg);background:#2a2619;border:1px solid #4a4430}
+.node .npips i.on{background:var(--bc);border-color:var(--bc);box-shadow:0 0 5px var(--bc)}
+.node:hover .nname{color:#e0d8c0}
+.node:hover .nbox{transform:translateY(-2px)}
+/* 배울 수 있는 칸 — 손짓하듯 숨 쉰다 */
+.node.can .nbox{border-color:color-mix(in srgb,var(--bc) 70%,#000);animation:tbeckon 1.8s ease-in-out infinite}
+@keyframes tbeckon{50%{box-shadow:0 0 0 2px color-mix(in srgb,var(--bc) 35%,transparent),0 0 16px color-mix(in srgb,var(--bc) 45%,transparent)}}
+.node.can .nic{filter:grayscale(.2) brightness(.95)}
 .node.learned .nbox{border-color:var(--bc);background:#1b1810;
   box-shadow:0 0 0 1px color-mix(in srgb,var(--bc) 45%,transparent),0 0 12px color-mix(in srgb,var(--bc) 30%,transparent)}
 .node.learned .nic{filter:none}
-.node.learned .nname{color:#d6cfb8}
-.node.learned .nrank{color:var(--gold)}
-.node.maxed .nbox{background:#221d0e;box-shadow:0 0 0 1px var(--bc),0 0 16px color-mix(in srgb,var(--bc) 42%,transparent)}
-.node.locked{opacity:.4}
-/* 아직 먼 칸 — 무엇인지는 숨기고 '여기에 칸이 있다'는 빈 틀만 남긴다 */
-.bline.unseen{visibility:hidden}
-.node.unseen{opacity:1;pointer-events:none}
-.node.unseen .nbox{background:transparent;border:1px dashed #3a3524;box-shadow:none}
-.node.unseen .nic,.node.unseen .nlock,.node.unseen .nname,.node.unseen .nrank{visibility:hidden}
+.node.learned .nname{color:#e0d8bf}
+.node.maxed .nbox{background:#221d0e;box-shadow:0 0 0 1px var(--bc),0 0 18px color-mix(in srgb,var(--bc) 50%,transparent)}
+.node.maxed .nbox::before{content:'';position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,#fff6d855 50%,transparent 65%) -60px 0/200% 100% no-repeat;animation:tsheen 4.5s ease-in-out infinite}
+@keyframes tsheen{0%,70%{background-position:-60px 0}100%{background-position:60px 0}}
+.node.locked:not(.learned){opacity:.62}
 .node.locked .nlock{opacity:.9}
-.node.active .nbox::after{content:'';position:absolute;inset:-4px;border-radius:8px;
-  border:1px solid var(--gold);opacity:.75;pointer-events:none}
+.node.active .nbox::after{content:'';position:absolute;inset:-4px;border-radius:9px;border:1px solid var(--gold);opacity:.75;pointer-events:none}
+/* 꾹 누르기 — 테두리를 도는 고리가 차오른다 */
+.node .nhold{position:absolute;inset:-4px;width:52px;height:52px;pointer-events:none;overflow:visible}
+.node .nhold rect{fill:none;stroke:#fff1c8;stroke-width:3;stroke-dasharray:100;stroke-dashoffset:calc(100 - var(--hold,0) * 100);
+  opacity:0;filter:drop-shadow(0 0 4px var(--bc))}
+.node[data-kind=unlock] .nhold rect{rx:26px}
+.node.holding .nhold rect{opacity:1}
+.node.holding .nbox{transform:scale(calc(1 - var(--hold,0) * .08));box-shadow:0 0 calc(var(--hold,0) * 22px) color-mix(in srgb,var(--bc) 70%,transparent)}
+.node.deny .nbox{animation:tdeny .32s}
+@keyframes tdeny{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+/* 드러남 — 어둠에서 별처럼 켜진다 */
+.node.reveal{animation:treveal .7s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes treveal{0%{opacity:0;transform:scale(.3);filter:brightness(3)}60%{opacity:1;filter:brightness(1.8)}100%{transform:none;filter:none}}
 
-/* 습득 연출 — 칸이 한 번 부풀고 둘레로 불티가 튄다 */
+/* 습득 연출 — 칸이 부풀고, 충격파 · 불티 */
 .node.just .nbox{animation:nodepop .9s cubic-bezier(.2,1.4,.4,1)}
 @keyframes nodepop{
-  0%{transform:scale(1)}
-  22%{transform:scale(1.32);box-shadow:0 0 0 3px #fff6d8aa,0 0 26px #ffe08a}
+  0%{transform:scale(.88)}
+  20%{transform:scale(1.34);box-shadow:0 0 0 3px #fff6d8cc,0 0 30px #ffe08a}
   100%{transform:scale(1)}
 }
+.nwave{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;pointer-events:none;
+  border:2px solid var(--bc);animation:nwave .7s ease-out forwards}
+@keyframes nwave{from{transform:scale(.6);opacity:1}to{transform:scale(2.6);opacity:0;border-width:1px}}
 .nspark{position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;
-  background:#ffe9a8;pointer-events:none;animation:nspark .62s ease-out forwards}
+  background:#ffe9a8;box-shadow:0 0 4px var(--bc);pointer-events:none;animation:nspark .62s ease-out forwards}
 @keyframes nspark{
   from{transform:translate(-50%,-50%);opacity:1}
   to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.4);opacity:0}
 }
+#skill-pts.bump{display:inline-block;animation:tbump .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes tbump{30%{transform:scale(1.6);color:#fff6d8;text-shadow:0 0 8px #ffcf6a}}
+@media (prefers-reduced-motion:reduce){.bgrid::before,.bgrid::after,.bcore,.node.can .nbox,.node.maxed .nbox::before{animation:none}}
 
 /* ===== 생활 숙련 ===== */
 #prof-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 16px 16px}
@@ -449,6 +485,9 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 .prof .perk.on .pk{color:var(--pc)}
 .prof .perk.on .pkn{color:#e6dcc0}
 .prof .perk.on .pkd{color:#8d8874}
+.prof .perk.soon .pkn{color:#c8b88a}                      /* 다음 레벨에 열린다 — 이름만 먼저 드러남 */
+.prof .perk.sealed .pkn{color:#3e3b30;letter-spacing:.2em}
+.prof .perk.sealed .pkd{color:#3e3b30;font-style:italic}
 
 .skill-assign{padding:0 16px 16px}
 #skill-slots{display:flex;gap:8px}
@@ -1159,7 +1198,7 @@ body.booting #title-screen{visibility:hidden}
 
 /* 제 색이 있는 자리 — 모양은 위 그대로, 색만 갈아 끼운다 */
 .ng-mode { --hi: var(--mc); }          /* 난이도색 */
-.bhead, .node { --hi: var(--bc); }     /* 특성 분기색 (머리글 · 트리 칸) */
+.node { --hi: var(--bc); }     /* 트리 칸 갈래색(기술 · 힘 · 칸 열기) */
 .slot.trash-zone { --hi: var(--hp); }  /* 버리기 = 위험 */
 .slot-del-btn    { --hi: #c8635a; }    /* 슬롯 지우기 = 위험 */
 
@@ -1169,7 +1208,7 @@ body.booting #title-screen{visibility:hidden}
   #chest-grid{grid-template-columns:repeat(6,46px)}
   /* 좁은 화면에서는 아홉 칸이 뭉개진다 — 가로로 밀어 보게 둔다(칸 크기는 지킨다) */
   #tree-wrap{overflow-x:auto}
-  .bgrid,.bheads{min-width:680px}
+  .bgrid,.tlegend{min-width:680px}
   #prof-wrap{grid-template-columns:1fr}
   #craft-list{grid-template-columns:1fr}
   #quest-tracker{width:190px;font-size:11px}
@@ -1448,16 +1487,27 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .pt-hp i{display:block;height:100%;background:#b8433c}
 /* 채팅 — 핫바 위 왼쪽. HUD 는 클릭을 안 받으니 입력 칸만 받는다 */
 #chat{position:absolute;left:14px;bottom:96px;width:380px;max-width:calc(100% - 28px)}
+/* 연 채팅 — 다른 창과 같은 틀(테두리 · 어두운 판)을 두른다 */
+#chat.open{padding:8px;border:1px solid var(--frame);border-radius:5px;background:linear-gradient(#16150fe6,#0e0d0ae6);box-shadow:0 10px 30px #000a}
+#chat.open .ch-line{background:transparent;padding:1px 2px}
+#tabbar .tb-badge{position:absolute;top:-5px;left:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#c8433c;
+  color:#fff;font:700 10px/16px sans-serif;font-style:normal;text-align:center;box-shadow:0 0 0 2px #0e0d0a;animation:tbGot .6s}
 #chat-log{display:flex;flex-direction:column;gap:2px}
 .ch-line{background:#0b0a08b0;border-radius:3px;padding:2px 7px;font-size:12px;color:#e0d8c0;
   width:fit-content;max-width:100%;overflow-wrap:anywhere;text-shadow:0 1px 1px #000}
 .ch-line b{color:var(--gold);font-weight:600;margin-right:4px}
+/* 공지 — 남의 소식은 하늘빛 이름 · 내 알림은 옅게(채팅 글과 한눈에 갈리게) */
+.ch-line.ch-sys{color:#c8d8e0;font-style:italic}
+.ch-line.ch-sys b{color:#8fc8e8;font-style:normal}
+.ch-line.ch-sys.mine{color:#a8a08a}
+.ch-line.ch-sys.mine b{color:#7a7462}
 #chat-row{display:flex;gap:4px;margin-top:4px}
 #chat-input{pointer-events:auto;flex:1;min-width:0;padding:6px 9px;border-radius:3px;background:#0c0b08e8;
   border:1px solid var(--gold);color:var(--ink);font-family:inherit;font-size:12.5px}
 #chat-emo{pointer-events:auto;width:32px;border-radius:3px;background:#0c0b08e8;border:1px solid var(--gold);color:var(--gold);font-size:16px;cursor:pointer}
 #chat-emos{pointer-events:auto;display:grid;grid-template-columns:repeat(10,30px);gap:3px;margin-top:4px;padding:6px;width:fit-content;
   background:#0c0b08f0;border:1px solid #4a4030;border-radius:4px}
+#chat-emos[hidden],#chat[hidden]{display:none}           /* display:grid 가 hidden 을 덮어 그림말 판이 늘 떠 있었다 */
 #chat-emos button{width:30px;height:30px;padding:3px;border:0;border-radius:3px;background:transparent;cursor:pointer}
 #chat-emos button:hover{background:#2a2418}
 /* 그림말 — 움직이는 것은 가로 시트를 steps 로(ui/emoji.ts) */

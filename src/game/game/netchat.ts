@@ -2,7 +2,8 @@
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { escHtml } from '../util.js';
-import { tr } from '../lang.js';
+import { N_, tr } from '../lang.js';
+import { ENEMIES } from '../data/enemies.js';
 import { DmgText } from '../entity.js';
 import { $ } from '../ui.js';
 import { EMOJI, drawEmoji, emojiHtml, emojify, soloEmoji } from '../ui/emoji.js';
@@ -14,6 +15,10 @@ export const CHAT_LINES = 6;       // 화면에 남기는 줄
 export const CHAT_FADE = 12;       // 이 초가 지나면 흐려진다(입력 중에는 다 보인다)
 /* 플레이어끼리는 몹이 칠 때보다 덜 아프게 — 레벨 차가 큰 둘이 한 방에 끝나지 않게(M5 에서 실측으로 고친다) */
 export const PVP_SCALE = 0.5;
+/* 남에게 알리는 공지 — 중요한 것만(사용자 결정 2026-10-16: 내 알림은 전부, 남의 것은 중요한 것만). 열쇠와 값만 보내 받는 쪽이 제 말로 옮긴다 */
+export const NOTE_MSG: Record<string, string> = {
+  lv: N_('{lv}레벨이 되었다'), ach: N_('업적 달성 — {a}'), boss: N_('{b|을} 쓰러뜨렸다'), die: N_('쓰러졌다')
+};
 
 export const NetChatPart: Bag = {
   bindChat() {
@@ -79,7 +84,7 @@ export const NetChatPart: Bag = {
     $('#chat').hidden = false;
     const inp = $('#chat-input');
     inp.hidden = false; $('#chat-emo').hidden = false; inp.focus();
-    this.chatOpen = true; this.refreshChat();
+    this.chatOpen = true; this.chatUnread = 0; this.refreshChat();
   },
   closeChat() {
     if (!this.chatOpen) return;
@@ -102,21 +107,56 @@ export const NetChatPart: Bag = {
     for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, 'rel', m);
     this.chatLine(m.n, m.s);
   },
+  /** 공지 한 줄 — mine 이면 내 알림(모두), 아니면 남의 중요한 소식 */
+  noteLine(name: string, s: any, mine: boolean) {
+    if (!this.net) return;
+    this.chatLog = (this.chatLog || []).concat({ n: String(name || ''), s: String(s || ''), t: performance.now(), sys: mine ? 2 : 1 }).slice(-CHAT_LINES * 4);
+    this.refreshChat();
+  },
+  /** 중요한 소식을 다른 플레이어에게 — 참가자는 호스트에게, 호스트는 모두에게(보낸 이 빼고) */
+  netNote(key: string, p: Bag = {}) {
+    const n = this.net; if (!n || !NOTE_MSG[key]) return;
+    if (n.role === 'host') this.netNoteOut(this.me.name, key, p, -1);
+    else if (n.t) this.netSend(n.t, 'rel', { k: 'note', key, p });
+  },
+  netNoteOut(name: string, key: string, p: Bag, from: number) {
+    const n = this.net, m = { k: 'note', n: name, key, p };
+    for (const [id, q] of n.peers) if (q.rp && id !== from) this.netSend(q.t, 'rel', m);
+    if (from >= 0) this.noteIn(m);
+  },
+  noteIn(m: any) {
+    if (!NOTE_MSG[m.key]) return;
+    const p = Object.assign({}, m.p || {});
+    if (p.b) p.b = (ENEMIES[p.b] && ENEMIES[p.b].n) || p.b;      // 보스는 id 로 받아 제 언어 이름으로
+    this.noteLine(m.n, tr(NOTE_MSG[m.key], p), false);
+  },
   chatLine(name: string, s: any) {
     // 그림말 하나뿐인 글은 보낸 이 머리 위에도 말풍선으로(rEmotes)
     const k = soloEmoji(String(s || '')), who = k && this.players.find((q: any) => q.name === name);
     if (who) who.emote = { k, t: this.time };
     this.chatLog = (this.chatLog || []).concat({ n: String(name || ''), s: String(s || ''), t: performance.now() }).slice(-CHAT_LINES * 4);
+    if (!this.chatOpen && name !== (this.me && this.me.name)) this.chatUnread = (this.chatUnread || 0) + 1;
     this.refreshChat();
   },
   /** 대화 줄 — 입력 중이면 최근 것을 다 보이고, 아니면 CHAT_FADE 초 안의 것만. */
   refreshChat() {
     const box = $('#chat');
     if (!box) return;
+    /* 화면 단추(탭 줄의 '채팅') — 함께하는 판에서만 · 안 읽은 글 수를 단다 */
+    const btn = $('#tabbar [data-tab="chat"]');
+    if (btn) {
+      btn.hidden = !this.net || !(this.netCfg() || {}).chat;
+      btn.classList.toggle('on', !!this.chatOpen);
+      const bd = btn.querySelector('.tb-badge'), n = this.chatUnread || 0;
+      bd.hidden = !n || this.chatOpen; bd.textContent = n > 9 ? '9+' : String(n);
+    }
     if (!this.net) { box.hidden = true; this.chatLog = []; return; }
+    box.classList.toggle('open', !!this.chatOpen);
     const now = performance.now(), log = (this.chatLog || []).slice(-CHAT_LINES);
     const lines = log.filter((l: any) => this.chatOpen || now - l.t < CHAT_FADE * 1000);
-    $('#chat-log').innerHTML = lines.map((l: any) => `<div class="ch-line"><b>${escHtml(l.n)}</b> ${emojify(escHtml(l.s))}</div>`).join('');
+    $('#chat-log').innerHTML = lines.map((l: any) => l.sys
+      ? `<div class="ch-line ch-sys${l.sys === 2 ? ' mine' : ''}"><b>${l.sys === 2 ? tr('알림') : escHtml(l.n)}</b> ${escHtml(l.s)}</div>`
+      : `<div class="ch-line"><b>${escHtml(l.n)}</b> ${emojify(escHtml(l.s))}</div>`).join('');
     box.hidden = !this.chatOpen && !lines.length;
   },
 

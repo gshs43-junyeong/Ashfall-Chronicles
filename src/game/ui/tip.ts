@@ -151,7 +151,7 @@ export const TipUIPart: Bag = {
     if (extra) h += `<div class="thint">${extra}</div>`;
     else if (d.type === 'tool') h += `<div class="thint">${tr('핫바에 두고 좌클릭으로 채굴')}</div>`;
     else if (d.type === 'rod') h += `<div class="thint">${tr('핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)')}</div>`;
-    else if (d.type === 'pet') h += `<div class="thint">${tr('우클릭으로 펫 칸에 장착 — 두 마리까지 데리고 다닐 수 있다')}</div>`;
+    else if (d.type === 'pet') h += `<div class="thint">${tr('우클릭으로 펫 칸에 장착 — 펫 칸은 특성 트리에서 늘어난다')}</div>`;
     else if (d.type === 'station') h += `<div class="thint">${tr('핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)')}</div>`;
     else if (d.type === 'door') h += `<div class="thint">${tr('바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수')}</div>`;
     else if (isGear(it)) h += `<div class="thint">${tr('우클릭으로 장착')}</div>`;

@@ -91,6 +91,7 @@ export const ShellPart: Bag = {
       if (n && n[k] === 0) return;
     }
     UI.toast(m, k);
+    if (this.net && this.noteLine) this.noteLine('', m, true);   // 함께하는 판 — 내 알림은 모두 채팅 기록에도
   },
 };
 

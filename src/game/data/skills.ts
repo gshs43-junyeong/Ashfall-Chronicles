@@ -166,19 +166,28 @@ export const SKILLS: Record<string, SkillDef> = {
                  d: '곡괭이로 한 칸을 캘 때 %d%% 확률로 둘레 3×3이 함께 부서진다(곡괭이로 캘 수 있는 흙 · 돌 · 광석만).', v: r => r * 7 },
   s_scout:     { n: '정찰병의 눈', i: '👣', br: 'explore', tier: 1, col: 1, max: 1, type: 'passive', req: ['s_mole', 's_luck'],
                  d: '미니맵에 가까운 몬스터(반경 30칸)가 비친다 — 몬스터 탐지기 없이도.', v: () => 0 },
-  s_packrat:   { n: '짐꾼', i: '🎒', br: 'explore', tier: 1, col: 2, max: 2, type: 'passive', req: ['s_luck'],
+  s_packrat:   { n: '짐꾼', i: '🎒', br: 'explore', tier: 1, col: 2, max: 2, type: 'passive', req: ['s_luck'], unlock: 1,
                  d: '가방 칸 +%d.', v: r => r * 4 },
-  s_toolbelt:  { n: '도구 띠', i: '🧰', br: 'explore', tier: 2, col: 0.5, max: 1, type: 'passive', req: ['s_bombpick', 's_scout'],
+  s_toolbelt:  { n: '도구 띠', i: '🧰', br: 'explore', tier: 2, col: 0.5, max: 1, type: 'passive', req: ['s_bombpick', 's_scout'], unlock: 1,
                  d: '두 번째 유틸리티 칸(X)이 열린다.', v: () => 0 },
-  s_petbond:   { n: '길들이는 손', i: '🐾', br: 'explore', tier: 2, col: 1.5, max: 1, type: 'passive', req: ['s_scout', 's_packrat'],
+  s_petbond:   { n: '길들이는 손', i: '🐾', br: 'explore', tier: 2, col: 1.5, max: 1, type: 'passive', req: ['s_scout', 's_packrat'], unlock: 1,
                  d: '두 번째 펫 칸이 열린다 — 펫 둘을 함께 데리고 다닌다.', v: () => 0 },
-  s_quickhands: { n: '재빠른 손', i: '✋', br: 'explore', tier: 3, col: 1, max: 1, type: 'passive', req: ['s_toolbelt', 's_petbond'],
-                 d: '스킬 칸이 하나 더 열린다(G).', v: () => 0 }
+  s_quickhands: { n: '재빠른 손', i: '✋', br: 'explore', tier: 3, col: 1, max: 1, type: 'passive', req: ['s_toolbelt', 's_petbond'], unlock: 1,
+                 d: '스킬 칸이 하나 더 열린다(G).', v: () => 0 },
+  s_ringbearer: { n: '반지 고리', i: '💍', br: 'explore', tier: 2, col: 2.5, max: 1, type: 'passive', req: ['s_packrat'], unlock: 1,
+                 d: '세 번째 장신구 칸이 열린다.', v: () => 0 },
+  s_beastkin:  { n: '무리의 우두머리', i: '🐺', br: 'explore', tier: 3, col: 0, max: 1, type: 'passive', req: ['s_petbond'], unlock: 1,
+                 d: '세 번째 펫 칸이 열린다 — 펫 셋이 함께 따라다닌다.', v: () => 0 },
+  s_deeppack:  { n: '깊은 주머니', i: '👝', br: 'explore', tier: 3, col: 2, max: 2, type: 'passive', req: ['s_ringbearer', 's_petbond'], unlock: 1,
+                 d: '가방 칸 +%d.', v: r => r * 5 }
 };
 /** 탐험가 갈래가 여는 칸 — 옛 세이브에 이미 낀 것은 그대로 둔다(장착을 새로 막을 뿐) */
 export const skillSlotN = (p: any) => 4 + (p.skills.s_quickhands ? 1 : 0);
 export const utilSlotN = (p: any) => p.skills.s_toolbelt ? 2 : 1;
-export const petSlotN = (p: any) => p.skills.s_petbond ? 2 : 1;
+export const petSlotN = (p: any) => p.skills.s_beastkin ? 3 : p.skills.s_petbond ? 2 : 1;
+export const accSlotN = (p: any) => p.skills.s_ringbearer ? 3 : 2;
+/** 펫 칸 키 — 칸을 늘리면 여기만 */
+export const PET_KEYS = ['pet1', 'pet2', 'pet3'];
 
 export const BRANCHES = [
   { id: 'blade', n: '검투사', tag: '근접 · 생존 · 압박', c: '#c8433c',
@@ -188,11 +197,15 @@ export const BRANCHES = [
   { id: 'arcane', n: '비전', tag: '마법 · 제어 · 소환', c: '#4f9cf0',
     nodes: ['s_fireball', 's_wisdom', 's_nova', 's_heal', 's_barrier', 's_wolf', 's_chain', 's_blink', 's_arch', 's_meteor'] },
   { id: 'explore', n: '탐험가', tag: '채굴 · 행운 · 칸 열기', c: '#c89a5a',
-    nodes: ['s_mole', 's_luck', 's_bombpick', 's_scout', 's_packrat', 's_toolbelt', 's_petbond', 's_quickhands'] }
+    nodes: ['s_mole', 's_luck', 's_bombpick', 's_scout', 's_packrat', 's_toolbelt', 's_petbond', 's_quickhands', 's_ringbearer', 's_beastkin', 's_deeppack'] }
 ];
 
-/* 특성 티어 해금에 필요한 해당 분기 누적 포인트 */
-export const TIER_REQ = [0, 2, 5, 8];
+/* 단을 여는 데 필요한 **트리 전체** 누적 포인트 — 갈래(분야)를 나누지 않는다(사용자 결정 2026-10-16). 사연: docs/code-history.md#h191 */
+export const TIER_REQ = [0, 3, 8, 14];
+
+/* 칸 갈래(색) — 분야가 아니라 **무엇을 주는가**로 나눈다: 쓰는 기술 · 몸에 붙는 힘 · 칸 열기 */
+export const NODE_KIND_COL: Record<string, string> = { active: '#e8964a', passive: '#7fb4d8', unlock: '#9ad86a' };
+export const nodeKind = (id: string) => SKILLS[id].unlock ? 'unlock' : SKILLS[id].type === 'active' ? 'active' : 'passive';
 
 /* ---------------- 생활 숙련 ---------------- */
 export const PROF_MAX = 10;

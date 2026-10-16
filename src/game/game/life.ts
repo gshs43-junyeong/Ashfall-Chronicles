@@ -160,6 +160,7 @@ export const LifePart: Bag = {
 
   onLevelUp(lv: number) {
     this.toast(tr('레벨 {lv} 달성! 스탯 +3, 특성 +1', { lv }), 'good');
+    this.netNote('lv', { lv });
     for (let i = 0; i < 30; i++) this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 0.9));
     UI.refreshStatAlloc(); this.sfx('level');
   },
@@ -184,6 +185,7 @@ export const LifePart: Bag = {
     this.tally.deaths = (this.tally.deaths || 0) + 1;
     if (cause) this.tally[cause] = (this.tally[cause] || 0) + 1;
     this.checkAch();
+    this.netNote('die');
     const p = this.player;
     /* 여럿이면 보스전은 모두 쓰러졌을 때만 끝난다(호스트 판정 — 참가자 화면의 보스는 그림자다). */
     if (!this.net || (this.net.role === 'host' && this.players.every((q: any) => q === p || q.hp <= 0))) this.endBossFight();

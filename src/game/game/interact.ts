@@ -7,6 +7,7 @@ import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { ITEMS, OBJ_SIZE } from '../data/items.js';
 import { ENEMIES } from '../data/enemies.js';
+import { PET_KEYS } from '../data/skills.js';
 import { RUIN_HINTS, RUIN_LORE, RUIN_SPEC, STORY_RUIN } from '../data/ruins.js';
 import { TABLETS, TERMINALS } from '../data/story.js';
 import { idef } from '../data/values.js';
@@ -385,7 +386,7 @@ export const InteractPart: Bag = {
     if (d.use!.stop) { this.useStopGlass(); return; }    // 모래시계는 쓰고도 남는다
     /* 펫 사탕 — 낀 펫이 없으면 그냥 사라지므로, 쓰기 전에 막아 준다 */
     if (d.use!.petXp) {
-      if (!p.equip.pet1 && !p.equip.pet2) { this.toast(tr('펫을 끼고 있어야 준다'), 'bad'); return; }
+      if (!PET_KEYS.some(k => p.equip[k])) { this.toast(tr('펫을 끼고 있어야 준다'), 'bad'); return; }
       p.addPetXp(d.use!.petXp);
       it.c--; if (it.c <= 0) p.bag[slot] = null;
       UI.refreshBag(); this.sfx('drink'); return;

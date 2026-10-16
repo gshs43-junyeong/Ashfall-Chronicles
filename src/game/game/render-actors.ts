@@ -319,7 +319,7 @@ export const RenderActorsPart: Bag = {
         while (y < fy + 10 && !w.solid(x, y)) y++;
         return y * TS - camY + 6; };
       S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.26 * fade, floor, floorStep: TS, floorPhase: -camX });   // 나무 그늘만큼 옅게
-      S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: 1.5 });   // 땅 윗면(풀 띠)에 눕게 4px 내린다
+      S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: 1 });   // 땅 윗면(풀 띠)에 눕게 4px 내린다
     } finally { this.shadowPass = 0; }
   },
   drawEnemy(c: any, e: any, sx: any, sy: any) {

@@ -9082,12 +9082,16 @@
     BOSS_TIER: () => BOSS_TIER,
     BRANCHES: () => BRANCHES,
     BUFFS: () => BUFFS,
+    NODE_KIND_COL: () => NODE_KIND_COL,
+    PET_KEYS: () => PET_KEYS,
     PROFS: () => PROFS,
     PROF_MAX: () => PROF_MAX,
     SKILLS: () => SKILLS,
     STORY_BOSSES: () => STORY_BOSSES,
     SURGE_FLY: () => SURGE_FLY,
     TIER_REQ: () => TIER_REQ,
+    accSlotN: () => accSlotN,
+    nodeKind: () => nodeKind,
     petSlotN: () => petSlotN,
     profNeed: () => profNeed,
     skillSlotN: () => skillSlotN,
@@ -9617,6 +9621,7 @@
       max: 2,
       type: "passive",
       req: ["s_luck"],
+      unlock: 1,
       d: "가방 칸 +%d.",
       v: (r) => r * 4
     },
@@ -9629,6 +9634,7 @@
       max: 1,
       type: "passive",
       req: ["s_bombpick", "s_scout"],
+      unlock: 1,
       d: "두 번째 유틸리티 칸(X)이 열린다.",
       v: () => 0
     },
@@ -9641,6 +9647,7 @@
       max: 1,
       type: "passive",
       req: ["s_scout", "s_packrat"],
+      unlock: 1,
       d: "두 번째 펫 칸이 열린다 — 펫 둘을 함께 데리고 다닌다.",
       v: () => 0
     },
@@ -9653,13 +9660,55 @@
       max: 1,
       type: "passive",
       req: ["s_toolbelt", "s_petbond"],
+      unlock: 1,
       d: "스킬 칸이 하나 더 열린다(G).",
       v: () => 0
+    },
+    s_ringbearer: {
+      n: "반지 고리",
+      i: "💍",
+      br: "explore",
+      tier: 2,
+      col: 2.5,
+      max: 1,
+      type: "passive",
+      req: ["s_packrat"],
+      unlock: 1,
+      d: "세 번째 장신구 칸이 열린다.",
+      v: () => 0
+    },
+    s_beastkin: {
+      n: "무리의 우두머리",
+      i: "🐺",
+      br: "explore",
+      tier: 3,
+      col: 0,
+      max: 1,
+      type: "passive",
+      req: ["s_petbond"],
+      unlock: 1,
+      d: "세 번째 펫 칸이 열린다 — 펫 셋이 함께 따라다닌다.",
+      v: () => 0
+    },
+    s_deeppack: {
+      n: "깊은 주머니",
+      i: "👝",
+      br: "explore",
+      tier: 3,
+      col: 2,
+      max: 2,
+      type: "passive",
+      req: ["s_ringbearer", "s_petbond"],
+      unlock: 1,
+      d: "가방 칸 +%d.",
+      v: (r) => r * 5
     }
   };
   var skillSlotN = (p) => 4 + (p.skills.s_quickhands ? 1 : 0);
   var utilSlotN = (p) => p.skills.s_toolbelt ? 2 : 1;
-  var petSlotN = (p) => p.skills.s_petbond ? 2 : 1;
+  var petSlotN = (p) => p.skills.s_beastkin ? 3 : p.skills.s_petbond ? 2 : 1;
+  var accSlotN = (p) => p.skills.s_ringbearer ? 3 : 2;
+  var PET_KEYS = ["pet1", "pet2", "pet3"];
   var BRANCHES = [
     {
       id: "blade",
@@ -9687,10 +9736,12 @@
       n: "탐험가",
       tag: "채굴 · 행운 · 칸 열기",
       c: "#c89a5a",
-      nodes: ["s_mole", "s_luck", "s_bombpick", "s_scout", "s_packrat", "s_toolbelt", "s_petbond", "s_quickhands"]
+      nodes: ["s_mole", "s_luck", "s_bombpick", "s_scout", "s_packrat", "s_toolbelt", "s_petbond", "s_quickhands", "s_ringbearer", "s_beastkin", "s_deeppack"]
     }
   ];
-  var TIER_REQ = [0, 2, 5, 8];
+  var TIER_REQ = [0, 3, 8, 14];
+  var NODE_KIND_COL = { active: "#e8964a", passive: "#7fb4d8", unlock: "#9ad86a" };
+  var nodeKind = (id) => SKILLS[id].unlock ? "unlock" : SKILLS[id].type === "active" ? "active" : "passive";
   var PROF_MAX = 10;
   var PROFS = {
     farm: {
@@ -27471,7 +27522,10 @@
     s_packrat: { k: "sack", c: "#a07a50", strap: "#5a4430" },
     s_toolbelt: { k: "detector", c: "#d8b07a" },
     s_petbond: { k: "wolf", c: "#e0b880" },
-    s_quickhands: { k: "blink", c: "#e8c890" }
+    s_quickhands: { k: "blink", c: "#e8c890" },
+    s_ringbearer: { k: "ring", c: "#e8c86a" },
+    s_beastkin: { k: "wolf", c: "#c8a070" },
+    s_deeppack: { k: "sack", c: "#8a6a48", strap: "#4a3828" }
   };
   var BFSPEC = {
     rage: { k: "impact", c: "#e0603c" },
@@ -32829,7 +32883,7 @@
       this.mp = 50;
       this.gold = 0;
       this.bag = new Array(BASE_BAG_SIZE).fill(null);
-      this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
+      this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, acc3: null, util1: null, util2: null, bag: null, pet1: null, pet2: null, pet3: null };
       this.sel = 0;
       this.skills = {};
       this.slots = [null, null, null, null, null];
@@ -32995,7 +33049,7 @@
     /* ---- 가방 용량 (가방 장신구로 확장) ---- */
     bagCapacity() {
       const b = this.equip.bag;
-      return BASE_BAG_SIZE + (b ? idef(b).slots || 0 : 0) + (this.skills.s_packrat || 0) * 4;
+      return BASE_BAG_SIZE + (b ? idef(b).slots || 0 : 0) + (this.skills.s_packrat || 0) * 4 + (this.skills.s_deeppack || 0) * 5;
     }
     syncBagCapacity() {
       const cap = this.bagCapacity();
@@ -33035,9 +33089,14 @@
       if (d.type === "weapon") key = "weapon";
       else if (d.type === "armor") key = d.slot;
       else if (d.type === "bag") key = "bag";
-      else if (d.type === "acc") key = this.equip.acc1 ? this.equip.acc2 ? "acc1" : "acc2" : "acc1";
-      else if (d.type === "util") key = this.equip.util1 && !this.equip.util2 && utilSlotN(this) > 1 ? "util2" : "util1";
-      else if (d.type === "pet") key = this.equip.pet1 && !this.equip.pet2 && petSlotN(this) > 1 ? "pet2" : "pet1";
+      else if (d.type === "acc") {
+        const ks = ["acc1", "acc2", "acc3"].slice(0, accSlotN(this));
+        key = ks.find((k) => !this.equip[k]) || "acc1";
+      } else if (d.type === "util") key = this.equip.util1 && !this.equip.util2 && utilSlotN(this) > 1 ? "util2" : "util1";
+      else if (d.type === "pet") {
+        const ks = PET_KEYS.slice(0, petSlotN(this));
+        key = ks.find((k) => !this.equip[k]) || "pet1";
+      }
       if (!key) return false;
       const old = this.equip[key];
       this.equip[key] = it;
@@ -33061,7 +33120,7 @@
     addPetXp(n) {
       if (n <= 0) return;
       let up = false;
-      for (const k of ["pet1", "pet2"]) {
+      for (const k of PET_KEYS) {
         const it = this.equip[k];
         if (!it || idef(it).type !== "pet") continue;
         it.lv = it.lv || 1;
@@ -33500,7 +33559,10 @@
       p.gold += Math.round(this.gold * mult);
       p.addPetXp(Math.round(this.xp * mult * PET_XP_SHARE));
       p.kills[this.type] = (p.kills[this.type] || 0) + 1;
-      if (this.boss) p.bossKilled[this.type] = true;
+      if (this.boss) {
+        p.bossKilled[this.type] = true;
+        app.netNote("boss", { b: this.type });
+      }
       const rng = app.rng;
       app.lootPity = app.lootPity || mapPity();
       for (const { id: id0, n } of rollLoot(this.def.drops || [], () => rng.next(), (a, b) => rng.int(a, b), app.lootPity, { key: this.type })) {
@@ -33641,8 +33703,9 @@
     }
     /** 플레이어 기준 떠 있을 자리 — 슬롯마다 반대쪽 어깨 뒤에 선다 */
     anchor(p) {
-      const side = this.slot === 0 ? -1 : 1;
       const ex = this.def.dragon ? [0, 4, 10, 16][dragonStage(this.lvOf(p))] : 0;
+      if (this.slot === 2) return [p.cx - p.facing * 6, p.cy - 50 - ex + Math.sin(this.t * 2.2 + 2) * 4];
+      const side = this.slot === 0 ? -1 : 1;
       return [p.cx - p.facing * side * (26 + ex), p.cy - 16 - ex * 0.6 + Math.sin(this.t * 2.2 + this.slot) * 4];
     }
     /** 따라다니기만 — 남의 펫은 이것만 돈다(치는 것은 주인 화면이 하고 피해만 호스트로 간다). */
@@ -40628,9 +40691,17 @@
     bindTabBar() {
       const bar = $("#tabbar");
       if (!bar) return;
+      const chatBtn = bar.querySelector('[data-tab="chat"]');
+      if (chatBtn) chatBtn.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (app.chatOpen) app.closeChat();
+        else app.openChat();
+      });
       bar.querySelectorAll(".tb").forEach((b) => b.addEventListener("click", (e) => {
         e.stopPropagation();
         const t = b.dataset.tab;
+        if (t === "chat") return;
         if (t === "inv") this.togglePanel("inv");
         else if (t === "skills") this.togglePanel("skill");
         else if (t === "quest") this.togglePanel("quest");
@@ -40736,6 +40807,8 @@
         this.refreshTree();
         this.refreshSkillSlots();
         this.refreshProf();
+        const core = $("#tree-wrap .bcore");
+        if (core && this.skillTab !== "prof") core.scrollIntoView({ block: "center" });
       }
       if (id === "quest") this.refreshQuest();
       if (id === "craft") this.refreshCraft();
@@ -40913,7 +40986,7 @@
     },
     /* ---------------- 장비 ---------------- */
     buildEquipSlots() {
-      const SLOT_IC = { weapon: "weapon", helm: "helm", chest: "chest", boots: "boots", acc1: "acc", acc2: "acc", util1: "util", util2: "util", bag: "bag", pet1: "pet", pet2: "pet" };
+      const SLOT_IC = { weapon: "weapon", helm: "helm", chest: "chest", boots: "boots", acc1: "acc", acc2: "acc", acc3: "acc", util1: "util", util2: "util", bag: "bag", pet1: "pet", pet2: "pet", pet3: "pet" };
       $$(".slot.equip").forEach((el) => {
         const key = el.dataset.eq;
         el.insertAdjacentHTML("beforeend", '<span class="eqic"></span><span class="ic"></span>');
@@ -40924,10 +40997,10 @@
           const p = app.player;
           if (this.cursor) {
             const d = idef(this.cursor);
-            const ok = key === "weapon" && d.type === "weapon" || d.type === "armor" && d.slot === key || d.type === "acc" && key.startsWith("acc") || d.type === "util" && key.startsWith("util") || d.type === "bag" && key === "bag";
+            const ok = key === "weapon" && d.type === "weapon" || d.type === "armor" && d.slot === key || d.type === "acc" && key.startsWith("acc") || d.type === "util" && key.startsWith("util") || d.type === "pet" && key.startsWith("pet") || d.type === "bag" && key === "bag";
             if (!ok) return;
             if (this.slotLocked(key)) {
-              app.toast(tr("탐험가 갈래에서 이 칸을 열어야 한다"), "bad");
+              app.toast(tr("특성 트리에서 이 칸을 열어야 한다"), "bad");
               return;
             }
             if (p.level < equipReqLv(this.cursor.id)) {
@@ -40954,10 +41027,10 @@
         el.addEventListener("mouseleave", () => this.hideTip());
       });
     },
-    /** 탐험가 갈래가 아직 안 연 칸(둘째 유틸리티 · 둘째 펫) — 이미 낀 것은 그대로 둔다 */
+    /** 특성 트리가 아직 안 연 칸(둘째 유틸리티 · 둘째 · 셋째 펫 · 셋째 장신구) — 이미 낀 것은 그대로 둔다 */
     slotLocked(key) {
       const p = app.player;
-      return key === "util2" && utilSlotN(p) < 2 || key === "pet2" && petSlotN(p) < 2;
+      return key === "util2" && utilSlotN(p) < 2 || key === "pet2" && petSlotN(p) < 2 || key === "pet3" && petSlotN(p) < 3 || key === "acc3" && accSlotN(p) < 3;
     },
     refreshEquip() {
       if (!app.player) return;
@@ -41089,10 +41162,10 @@
   });
   var TreeUIPart = {
     /* ---------------- 특성 트리 ---------------- */
-    /* ★ 갈래를 **한 판**에 그린다 — 사연: docs/code-history.md#h90 · 가운데 핵에서 네 갈래가 대각선으로 뻗는다(#h187) */
+    /* ★ 판 하나 · 분야를 나누지 않는다 — 머리글 · 갈래별 점수를 걷고, 칸 색은 무엇을 주는가(기술 · 힘 · 칸 열기)로만 가른다.
+       ★ 배운 칸과 이어진 칸만 드러난다 — 멀리 있는 칸은 틀도 선도 없다(미리 보이면 길을 고르는 맛이 없다, 사용자 결정 2026-10-16).
+       자리는 예전 그대로 가운데 핵에서 네 쪽으로 뻗는다. 사연: docs/code-history.md#h90 · #h187 · #h191 */
     TREE_BOX: 44,
-    /* 칸 하나 86×80(이름 두 줄 · 랭크) — 단 간격 86 · 열 간격 92 · 단마다 바깥으로 26 비껴 뻗는다. 둥근 고리로 놓으면
-       안쪽 단이 좁아 880 창에 안 들어간다(겹치지 않으려면 1010×770 — 잰 값). */
     TREE_GX: 46,
     TREE_GY: 52,
     TREE_ROW: 86,
@@ -41100,12 +41173,9 @@
     TREE_SKEW: 26,
     TREE_H: 716,
     TREE_CY: 344,
-    /** 갈래가 뻗는 쪽 — 검투사 왼위 · 유격 오른위 · 비전 오른아래 · 탐험 왼아래(이어지는 갈래끼리 이웃) */
     TREE_DIR: { blade: [-1, -1], ranger: [1, -1], arcane: [1, 1], explore: [-1, 1] },
-    _brIdx(br) {
-      return BRANCHES.findIndex((b) => b.id === br);
-    },
-    /** 칸 가운데 — 판 가운데에서 잰 px. 열 0 이 안쪽(이웃 갈래 쪽) */
+    HOLD_T: 0.42,
+    // 꾹 눌러 배우는 시간(초) — 한 번 클릭으로 잘못 찍던 것을 막고 '찍는 손맛'을 준다
     _nodeXY(id) {
       const sk = SKILLS[id], [sx, sy] = this.TREE_DIR[sk.br] || [1, 1], t = sk.tier;
       return [sx * (this.TREE_GX + t * this.TREE_SKEW + sk.col * this.TREE_COL), sy * (this.TREE_GY + t * this.TREE_ROW)];
@@ -41114,17 +41184,12 @@
       const w = $("#tree-wrap");
       if (!w) return;
       w.innerHTML = "";
+      this._treeVis = null;
       const NS = "http://www.w3.org/2000/svg";
-      const bhead = (br, right) => `<div class="bhead${right ? " r" : ""}" style="--bc:${br.c}"><h3>${br.n}</h3><div class="btag">${br.tag}</div></div>`;
-      const byId = (id) => BRANCHES[this._brIdx(id)];
-      const head = document.createElement("div");
-      head.className = "bheads";
-      head.innerHTML = bhead(byId("blade"), false) + bhead(byId("ranger"), true);
-      w.appendChild(head);
-      const note = document.createElement("div");
-      note.className = "bnote";
-      note.innerHTML = `${tr("점선은 <b>갈래를 건너는 길</b> — 이어진 칸을 하나라도 배우면 열립니다.")} ` + tr("단을 여는 점수는 다른 갈래에 찍은 것도 <b>절반</b>이 쌓입니다.");
-      w.appendChild(note);
+      const legend = document.createElement("div");
+      legend.className = "tlegend";
+      legend.innerHTML = ["active", "passive", "unlock"].map((k) => `<span class="tk" style="--bc:${NODE_KIND_COL[k]}"><i></i>${k === "active" ? tr("기술") : k === "passive" ? tr("힘") : tr("칸 열기")}</span>`).join("") + `<span class="thint">${tr("꾹 눌러 배운다 · 배운 칸과 이어진 칸만 드러난다 · 우클릭으로 스킬 칸 등록")}</span>`;
+      w.appendChild(legend);
       const grid = document.createElement("div");
       grid.className = "bgrid";
       grid.style.height = this.TREE_H + "px";
@@ -41139,52 +41204,77 @@
         ln.setAttribute("y2", String(b[1]));
         ln.setAttribute("class", cls);
         ln.style.setProperty("--bc", c);
+        ln.style.setProperty("--len", String(Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]))));
         svg.appendChild(ln);
         return ln;
       };
-      for (const id in SKILLS) if (SKILLS[id].tier === 0) line4([0, 0], this._nodeXY(id), "broot", byId(SKILLS[id].br).c);
+      for (let t = 1; t < TIER_REQ.length; t++) {
+        const ids = Object.keys(SKILLS).filter((id) => SKILLS[id].tier === t);
+        const r = ids.reduce((a, id) => a + Math.hypot(...this._nodeXY(id)), 0) / ids.length - this.TREE_ROW * 0.45;
+        const ring = document.createElementNS(NS, "circle");
+        ring.setAttribute("r", String(Math.round(r)));
+        ring.setAttribute("class", "bring");
+        ring.dataset.t = String(t);
+        svg.appendChild(ring);
+        const lb = document.createElementNS(NS, "text");
+        lb.setAttribute("x", "0");
+        lb.setAttribute("y", String(-Math.round(r) + 4));
+        lb.setAttribute("class", "bringlb");
+        lb.dataset.t = String(t);
+        lb.textContent = tr("{n}점", { n: TIER_REQ[t] });
+        svg.appendChild(lb);
+      }
+      for (const id in SKILLS) if (SKILLS[id].tier === 0) {
+        const ln = line4([0, 0], this._nodeXY(id), "broot", NODE_KIND_COL[nodeKind(id)]);
+        ln.dataset.to = id;
+      }
       for (const id in SKILLS) for (const rq of SKILLS[id].req || []) {
-        const cross = SKILLS[rq].br !== SKILLS[id].br;
-        const ln = line4(this._nodeXY(rq), this._nodeXY(id), "bline" + (cross ? " cross" : ""), byId(SKILLS[id].br).c);
+        const ln = line4(this._nodeXY(rq), this._nodeXY(id), "bline", NODE_KIND_COL[nodeKind(id)]);
         ln.dataset.from = rq;
         ln.dataset.to = id;
       }
       grid.appendChild(svg);
       const core = document.createElement("div");
       core.className = "bcore";
-      core.style.setProperty("--c1", byId("blade").c);
-      core.style.setProperty("--c2", byId("ranger").c);
-      core.style.setProperty("--c3", byId("arcane").c);
-      core.style.setProperty("--c4", byId("explore").c);
-      core.innerHTML = "<span>✦</span>";
+      core.innerHTML = '<span class="cst">✦</span><b class="cpts">0</b>';
+      core.addEventListener("mouseenter", (e) => {
+        const have = this.treePts(), next = TIER_REQ.find((n) => n > have);
+        this.tipText(tr("트리의 심장"), (next !== void 0 ? tr("찍은 점수 {have} · 다음 단까지 {left}점", { have, left: next - have }) : tr("찍은 점수 {have} · 모든 단이 열렸다", { have })) + " — " + tr("모든 칸은 여기서 뻗어 나간다"), e);
+      });
+      core.addEventListener("mouseleave", () => this.hideTip());
       grid.appendChild(core);
       for (const id in SKILLS) {
         const sk = SKILLS[id];
         const [x, y] = this._nodeXY(id);
         const n = document.createElement("div");
-        n.className = "node";
+        n.className = "node hid";
         n.dataset.sk = id;
-        n.dataset.br = sk.br;
-        n.style.setProperty("--bc", byId(sk.br).c);
+        n.dataset.kind = nodeKind(id);
+        n.style.setProperty("--bc", NODE_KIND_COL[nodeKind(id)]);
         n.style.left = `calc(50% + ${x}px)`;
         n.style.top = `calc(var(--cy) + ${y - this.TREE_BOX / 2}px)`;
-        n.innerHTML = `<div class="nbox"><span class="nic"></span><span class="nlock">🔒</span></div><div class="nname">${sk.n}</div><div class="nrank"></div>`;
+        n.innerHTML = `<div class="nbox"><svg class="nhold" viewBox="0 0 52 52"><rect x="2" y="2" width="48" height="48" rx="8" pathLength="100"/></svg><span class="nic"></span><span class="nlock">🔒</span></div><div class="nname">${sk.n}</div><div class="npips">${"<i></i>".repeat(sk.max)}</div>`;
         this.setIcon(n.querySelector(".nic"), Art.skillUrl(id));
-        n.addEventListener("click", () => this.learn(id));
+        n.addEventListener("pointerdown", (e) => {
+          if (e.button === 0) this.holdStart(id, n);
+        });
+        for (const ev of ["pointerup", "pointerleave", "pointercancel"]) n.addEventListener(ev, () => this.holdStop(n));
         n.addEventListener("contextmenu", (e) => {
           e.preventDefault();
           this.assign(id);
         });
-        n.addEventListener("mouseenter", (e) => this.showSkillTip(id, e));
+        n.addEventListener("mouseenter", (e) => {
+          this.showSkillTip(id, e);
+          this.pathHi(id, true);
+        });
         n.addEventListener("mousemove", (e) => this.placeTip(e.clientX, e.clientY));
-        n.addEventListener("mouseleave", () => this.hideTip());
+        n.addEventListener("mouseleave", () => {
+          this.hideTip();
+          this.pathHi(id, false);
+        });
         grid.appendChild(n);
       }
       w.appendChild(grid);
-      const foot = document.createElement("div");
-      foot.className = "bheads";
-      foot.innerHTML = bhead(byId("explore"), false) + bhead(byId("arcane"), true);
-      w.appendChild(foot);
       this.bindSkillTabs();
     },
     /** 팝업 위쪽 두 갈래 — 특성 트리 / 생활 숙련 */
@@ -41202,14 +41292,12 @@
       this.skillTab = id;
       if (id === "prof") this.refreshProf();
     },
-    /** 이 분기가 단을 여는 데 쓸 수 있는 점수 — 사연: docs/code-history.md#h91 */
-    BR_CROSS: 0.5,
-    branchPts(brId) {
+    /** 트리에 찍은 점수 합 — 단을 여는 기준(분야를 가리지 않는다) */
+    treePts() {
+      let n = 0;
       const p = app.player;
-      let own = 0, other = 0;
-      for (const br of BRANCHES) for (const id of br.nodes)
-        (br.id === brId ? ((n) => own += n) : ((n) => other += n))(p.skills[id] || 0);
-      return own + Math.floor(other * this.BR_CROSS);
+      for (const id in SKILLS) n += p.skills[id] || 0;
+      return n;
     },
     /** 이어진 윗칸 중 하나라도 배웠는가. */
     reqMet(id) {
@@ -41218,21 +41306,16 @@
       const p = app.player;
       return req.some((r) => (p.skills[r] || 0) > 0);
     },
+    /** 드러나는가 — 배웠거나, 첫 단이거나, 이어진 윗칸을 배웠다 */
+    nodeVisible(id) {
+      return (app.player.skills[id] || 0) > 0 || SKILLS[id].tier === 0 || this.reqMet(id);
+    },
     /** 이 칸이 왜 잠겨 있는지 — 잠겨 있지 않으면 빈 문자열 */
     lockReason(id) {
       const sk = SKILLS[id];
-      const need = TIER_REQ[sk.tier], have = this.branchPts(sk.br);
-      if (have < need) {
-        let own = 0;
-        for (const br of BRANCHES) if (br.id === sk.br)
-          for (const q of br.nodes) own += app.player.skills[q] || 0;
-        const lend = have - own;
-        return tr("이 갈래에 {need}점 필요 (지금 {have}", { need, have }) + (lend > 0 ? ` ${tr("= 제 갈래 {own} + 다른 갈래 {lend}", { own, lend })}` : "") + ")";
-      }
-      if (!this.reqMet(id)) {
-        const nm = sk.req.map((r) => SKILLS[r].n).join(` ${tr("또는")} `);
-        return `${tr("윗단계")} ` + eulreul(nm) + ` ${tr("먼저")}`;
-      }
+      if (!this.reqMet(id)) return tr("이어진 칸을 먼저 배워야 한다");
+      const need = TIER_REQ[sk.tier], have = this.treePts();
+      if (have < need) return tr("트리에 {need}점을 찍으면 열린다 (지금 {have}점)", { need, have });
       return "";
     },
     skDesc(id, rank) {
@@ -41251,8 +41334,9 @@
     /** 칸 위에 올렸을 때의 설명. */
     showSkillTip(id, e) {
       const p = app.player, sk = SKILLS[id], rank = p.skills[id] || 0;
+      if (!this.nodeVisible(id)) return;
       const why = this.lockReason(id);
-      const kind = sk.type === "active" ? tr("액티브") : tr("패시브");
+      const k = nodeKind(id), kind = k === "active" ? tr("액티브") : k === "unlock" ? tr("칸 열기") : tr("패시브");
       let h = `<div class="tname c${rank > 0 ? 3 : 0}">${sk.n}</div>`;
       h += `<div class="tmeta">${tr("{kind} · {rank}/{max} 랭크", { kind, rank, max: sk.max })}` + (sk.type === "active" ? ` ${tr("· 마나 {mana} · 재사용 {cd}초", { mana: sk.mana, cd: sk.cd })}` : "") + `</div>`;
       h += `<div class="tdesc">${this.skDesc(id, rank)}</div>`;
@@ -41261,31 +41345,94 @@
       if (why) h += `<div class="tbad">${why}</div>`;
       else if (rank >= sk.max) h += `<div class="tdim">${tr("최대 랭크")}</div>`;
       else if (p.skillPts <= 0) h += `<div class="tbad">${tr("특성 포인트가 없다")}</div>`;
-      else h += `<div class="tgood">${tr("좌클릭으로 습득{v}", { v: sk.type === "active" ? ` ${tr("· 우클릭으로 슬롯 등록")}` : "" })}</div>`;
+      else h += `<div class="tgood">${tr("꾹 눌러 습득{v}", { v: sk.type === "active" ? ` ${tr("· 우클릭으로 슬롯 등록")}` : "" })}</div>`;
       this.tip.show(h, e.clientX, e.clientY);
       this.tipTarget = true;
     },
     refreshTree() {
       const p = app.player;
-      const open = {};
-      for (const id in SKILLS) open[id] = (p.skills[id] || 0) > 0 || !this.lockReason(id);
-      const seen = { ...open };
-      for (const id in SKILLS) for (const r of SKILLS[id].req || [])
-        if (open[r] || open[id]) seen[id] = seen[r] = true;
+      const vis = {}, fresh = [];
+      for (const id in SKILLS) vis[id] = this.nodeVisible(id);
+      const was = this._treeVis;
+      if (was) {
+        for (const id in SKILLS) if (vis[id] && !was[id]) fresh.push(id);
+      }
+      this._treeVis = vis;
       $$("#tree-wrap .node").forEach((el) => {
         const id = el.dataset.sk, sk = SKILLS[id], rank = p.skills[id] || 0;
         const locked = !!this.lockReason(id);
         const can = !locked && rank < sk.max && p.skillPts > 0;
-        el.className = "node" + (rank > 0 ? " learned" : "") + (rank >= sk.max ? " maxed" : "") + (locked ? " locked" : "") + (can ? " can" : "") + (p.slots.includes(id) ? " active" : "") + (seen[id] ? "" : " unseen");
-        el.querySelector(".nrank").textContent = `${rank}/${sk.max}`;
+        el.className = "node" + (rank > 0 ? " learned" : "") + (rank >= sk.max ? " maxed" : "") + (locked ? " locked" : "") + (can ? " can" : "") + (p.slots.includes(id) ? " active" : "") + (vis[id] ? "" : " hid");
+        el.querySelectorAll(".npips i").forEach((pip, i) => pip.classList.toggle("on", i < rank));
       });
+      const pts = this.treePts();
+      $$("#tree-wrap .bring, #tree-wrap .bringlb").forEach((r) => r.classList.toggle("lit", pts >= TIER_REQ[+r.dataset.t]));
+      const cp = $("#tree-wrap .cpts");
+      if (cp) cp.textContent = String(pts);
+      $$("#tree-wrap .broot").forEach((ln) => ln.classList.toggle("on", (p.skills[ln.dataset.to] || 0) > 0));
       $$("#tree-wrap .bline").forEach((ln) => {
         const a = (p.skills[ln.dataset.from] || 0) > 0, b = (p.skills[ln.dataset.to] || 0) > 0;
         ln.classList.toggle("on", a);
         ln.classList.toggle("full", a && b);
-        ln.classList.toggle("unseen", !seen[ln.dataset.from] || !seen[ln.dataset.to]);
+        ln.classList.toggle("hid", !vis[ln.dataset.from] || !vis[ln.dataset.to] || !(a || b));
+      });
+      fresh.forEach((id, i) => {
+        const el = $(`#tree-wrap .node[data-sk="${id}"]`);
+        if (!el) return;
+        el.style.animationDelay = 0.32 + i * 0.13 + "s";
+        el.classList.add("reveal");
+        setTimeout(() => {
+          el.classList.remove("reveal");
+          el.style.animationDelay = "";
+        }, 1600 + i * 130);
+        $$(`#tree-wrap .bline[data-to="${id}"]`).forEach((ln) => {
+          if (ln.classList.contains("hid")) return;
+          ln.style.animationDelay = 0.18 + i * 0.13 + "s";
+          ln.classList.add("draw");
+          setTimeout(() => {
+            ln.classList.remove("draw");
+            ln.style.animationDelay = "";
+          }, 1400 + i * 130);
+        });
       });
       this.refreshStatAlloc();
+    },
+    /** 꾹 누르기 — 테두리 고리가 차오르고 다 차면 배운다. 못 배우는 칸은 흔들고 까닭을 알린다 */
+    holdStart(id, el) {
+      const p = app.player, sk = SKILLS[id];
+      if (!this.nodeVisible(id)) return;
+      const why = (p.skills[id] || 0) >= sk.max ? tr("이미 최대 랭크다") : this.lockReason(id) || (p.skillPts <= 0 ? tr("특성 포인트가 없다") : "");
+      if (why) {
+        this.toast(why, "bad");
+        el.classList.remove("deny");
+        void el.offsetWidth;
+        el.classList.add("deny");
+        return;
+      }
+      this.holdStop(el);
+      const t0 = performance.now();
+      el.classList.add("holding");
+      const step = () => {
+        const k = Math.min(1, (performance.now() - t0) / 1e3 / this.HOLD_T);
+        el.style.setProperty("--hold", String(k));
+        if (k >= 1) {
+          this.holdStop(el);
+          this.learn(id);
+          return;
+        }
+        el._hold = requestAnimationFrame(step);
+      };
+      el._hold = requestAnimationFrame(step);
+    },
+    holdStop(el) {
+      if (el._hold) cancelAnimationFrame(el._hold);
+      el._hold = 0;
+      el.classList.remove("holding");
+      el.style.setProperty("--hold", "0");
+    },
+    /** 마우스를 올린 칸까지 이어진 길(배운 윗칸 → 이 칸)을 밝힌다 */
+    pathHi(id, on) {
+      $$(`#tree-wrap .bline[data-to="${id}"], #tree-wrap .bline[data-from="${id}"]`).forEach((ln) => ln.classList.toggle("hi", on));
     },
     learn(id) {
       const p = app.player, sk = SKILLS[id];
@@ -41310,40 +41457,60 @@
       }
       p.recalc();
       p.syncBagCapacity();
-      if (sk.br === "explore") {
+      if (sk.unlock || sk.br === "explore") {
         this.refreshEquip();
         this.refreshBag();
       }
       this.toast(tr("{sk} 습득 ({skills}/{max})", { sk: sk.n, skills: p.skills[id], max: sk.max }), "good");
-      app.sfx("learn");
+      app.sfx("learn", 0.92 + p.skills[id] * 0.07 + (p.skills[id] >= sk.max ? 0.08 : 0));
       this.refreshTree();
       this.refreshSkillSlots();
       this.refreshSkillbar();
       this.refreshStatSheet();
       this.flashNode(id);
     },
-    /** 습득 연출 — 찍은 칸이 한 번 부풀고, 그 칸에서 뻗어 나가는 선에 빛이 흐른다. */
+    /** 습득 연출 — 칸이 부풀고 충격파 · 불티, 판이 한 번 울리고, 그 칸에 닿는 선에 빛이 흐른다 · 점수 숫자가 튄다 */
     flashNode(id) {
       const el = $(`#tree-wrap .node[data-sk="${id}"]`);
       if (el) {
+        const maxed = el.classList.contains("maxed");
         el.classList.remove("just");
         void el.offsetWidth;
         el.classList.add("just");
         setTimeout(() => el.classList.remove("just"), 900);
         const box = el.querySelector(".nbox");
-        for (let i = 0; i < 10; i++) {
+        for (const d of [0, 0.12].slice(0, maxed ? 2 : 1)) {
+          const wv = document.createElement("i");
+          wv.className = "nwave";
+          wv.style.animationDelay = d + "s";
+          box.appendChild(wv);
+          setTimeout(() => wv.remove(), 900 + d * 1e3);
+        }
+        for (let i = 0; i < (maxed ? 18 : 11); i++) {
           const sp = document.createElement("i");
           sp.className = "nspark";
-          const a = Math.random() * Math.PI * 2, d = 26 + Math.random() * 20;
+          const a = Math.random() * Math.PI * 2, d = 26 + Math.random() * (maxed ? 34 : 20);
           sp.style.setProperty("--dx", Math.cos(a) * d + "px");
           sp.style.setProperty("--dy", Math.sin(a) * d + "px");
           sp.style.animationDelay = Math.random() * 0.12 + "s";
           box.appendChild(sp);
           setTimeout(() => sp.remove(), 900);
         }
+        const grid = $("#tree-wrap .bgrid");
+        if (grid) {
+          grid.classList.remove("thump");
+          void grid.offsetWidth;
+          grid.classList.add("thump");
+        }
+      }
+      const pts = $("#skill-pts");
+      if (pts) {
+        pts.classList.remove("bump");
+        void pts.offsetWidth;
+        pts.classList.add("bump");
       }
       $$("#tree-wrap .bline").forEach((ln) => {
-        if (ln.dataset.from !== id && ln.dataset.to !== id) return;
+        if (ln.dataset.to !== id || ln.classList.contains("hid") || !(app.player.skills[ln.dataset.from] > 0)) return;
         ln.classList.remove("flow");
         void ln.getBoundingClientRect();
         ln.classList.add("flow");
@@ -41422,7 +41589,7 @@
         el.querySelector(".pbar i").style.width = (capped ? 100 : Math.min(100, pr.xp / need * 100)) + "%";
         el.querySelector(".pxp").textContent = capped ? tr("더 오를 곳이 없다") : `${pr.xp} / ${need}`;
         el.querySelector(".plin").innerHTML = P2.lin.map(([n, f]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join("");
-        el.querySelector(".pperks").innerHTML = P2.perks.map(([at, n, dsc]) => `<div class="perk${pr.lv >= at ? " on" : ""}"><span class="pk">Lv ${at}</span><span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>`).join("");
+        el.querySelector(".pperks").innerHTML = P2.perks.map(([at, n, dsc]) => pr.lv >= at - 1 ? `<div class="perk${pr.lv >= at ? " on" : " soon"}"><span class="pk">Lv ${at}</span><span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>` : `<div class="perk sealed"><span class="pk">Lv ${at}</span><span class="pkn">???</span><span class="pkd">${tr("{lv}레벨이 되면 드러난다", { lv: at - 1 })}</span></div>`).join("");
       }
     }
   };
@@ -42644,7 +42811,7 @@
       if (extra) h += `<div class="thint">${extra}</div>`;
       else if (d.type === "tool") h += `<div class="thint">${tr("핫바에 두고 좌클릭으로 채굴")}</div>`;
       else if (d.type === "rod") h += `<div class="thint">${tr("핫바에 두고 물 블록에 우클릭 — 입질 중 우클릭하면 즉시 챔질(보너스)")}</div>`;
-      else if (d.type === "pet") h += `<div class="thint">${tr("우클릭으로 펫 칸에 장착 — 두 마리까지 데리고 다닐 수 있다")}</div>`;
+      else if (d.type === "pet") h += `<div class="thint">${tr("우클릭으로 펫 칸에 장착 — 펫 칸은 특성 트리에서 늘어난다")}</div>`;
       else if (d.type === "station") h += `<div class="thint">${tr("핫바에 두고 빈 자리에 우클릭해 설치 · 설치한 것은 좌클릭으로 회수(내용물째)")}</div>`;
       else if (d.type === "door") h += `<div class="thint">${tr("바닥 바로 위 칸에 우클릭 — 위로 두 칸을 쓴다 · <b>바라본 쪽으로 열린다</b> · 좌클릭으로 회수")}</div>`;
       else if (isGear(it)) h += `<div class="thint">${tr("우클릭으로 장착")}</div>`;
@@ -47233,7 +47400,7 @@
       UI5.refreshTracker();
       UI5.refreshSkillbar();
       UI5.refreshStatAlloc();
-      const quiet = new URLSearchParams(location.search).get("debug") === "showcase";
+      const quiet = ["showcase", "skills"].includes(new URLSearchParams(location.search).get("debug") || "");
       if (!quiet) {
         UI5.chapterCard(CHAPTERS[0]);
         setTimeout(() => UI5.storyScene(CHAPTERS[0], "intro"), 4e3);
@@ -47921,6 +48088,7 @@
         if (n && n[k] === 0) return;
       }
       UI5.toast(m, k);
+      if (this.net && this.noteLine) this.noteLine("", m, true);
     }
   };
   mixin(Game.prototype, ShellPart, true);
@@ -54086,7 +54254,7 @@
         return;
       }
       if (d.use.petXp) {
-        if (!p.equip.pet1 && !p.equip.pet2) {
+        if (!PET_KEYS.some((k) => p.equip[k])) {
           this.toast(tr("펫을 끼고 있어야 준다"), "bad");
           return;
         }
@@ -55014,7 +55182,7 @@
       const p = this.player, it = p.bag[slot];
       const gate = DRAGON_GATES[stage - 1];
       let fed = null, near = null;
-      for (const k of ["pet1", "pet2"]) {
+      for (const k of PET_KEYS) {
         const pe2 = p.equip[k];
         if (!pe2 || !PETS[idef(pe2).pet] || !PETS[idef(pe2).pet].dragon) continue;
         if ((pe2.lv || 1) === gate - 1 && pe2.hungry) {
@@ -55052,7 +55220,7 @@
     syncPets() {
       const p = this.player;
       if (!this.petEnts) this.petEnts = [];
-      ["pet1", "pet2"].forEach((key, slot) => {
+      PET_KEYS.forEach((key, slot) => {
         const it = p.equip[key];
         const id = it && idef(it).pet;
         const cur = this.petEnts[slot];
@@ -59282,6 +59450,7 @@
     },
     onAchieved(a) {
       this.toast(tr("업적 달성 — {a}", { a: a.n }), "good");
+      this.netNote("ach", { a: a.n });
       for (let i = 0; i < 24; i++)
         this.parts.push(new Part(this.player.cx, this.player.cy, "#ffe08a", -80, 1));
       this.sfx("ach");
@@ -59583,6 +59752,7 @@
     },
     onLevelUp(lv) {
       this.toast(tr("레벨 {lv} 달성! 스탯 +3, 특성 +1", { lv }), "good");
+      this.netNote("lv", { lv });
       for (let i = 0; i < 30; i++) this.parts.push(new Part(this.player.cx, this.player.cy, "#ffe08a", -80, 0.9));
       UI5.refreshStatAlloc();
       this.sfx("level");
@@ -59608,6 +59778,7 @@
       this.tally.deaths = (this.tally.deaths || 0) + 1;
       if (cause) this.tally[cause] = (this.tally[cause] || 0) + 1;
       this.checkAch();
+      this.netNote("die");
       const p = this.player;
       if (!this.net || this.net.role === "host" && this.players.every((q) => q === p || q.hp <= 0)) this.endBossFight();
       const lostXp = Math.floor(p.xp * 0.15), lostG = Math.floor(p.gold * 0.4);
@@ -67318,7 +67489,7 @@
           return y * TS - camY + 6;
         };
         S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.26 * fade, floor, floorStep: TS, floorPhase: -camX });
-        S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: 1.5 });
+        S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: 1 });
       } finally {
         this.shadowPass = 0;
       }
@@ -68079,6 +68250,35 @@
     debugStart(qs) {
       const p = this.player, { WW: WW2, WH: WH2, HELL_Y: HELL_Y2, CAMP_X1: CAMP_X12, SEA_X1: SEA_X12 } = this.world.dims;
       if (qs.get("debug") === "showcase") this.showcaseStart(qs);
+      if (qs.get("debug") === "skills") {
+        while (p.level < 75) {
+          p.level++;
+          p.statPts += 3;
+          p.xpNext = Math.round(p.xpNext * 1.18);
+        }
+        p.skills = {};
+        p.slots = [null, null, null, null, null];
+        for (const id in SKILLS) p.skills[id] = SKILLS[id].max;
+        p.skillPts = +qs.get("pts") || 0;
+        const act = Object.keys(SKILLS).filter((id) => SKILLS[id].type === "active");
+        act.slice(0, p.slots.length).forEach((id, i) => {
+          p.slots[i] = id;
+        });
+        p.prof = p.prof || {};
+        for (const k of ["farm", "fish"]) p.prof[k] = { lv: PROF_MAX, xp: 0 };
+        p.base.int += 40;
+        p.base.vit += 20;
+        p.statPts = Math.max(0, p.statPts - 60);
+        p.recalc();
+        p.syncBagCapacity();
+        p.hp = p.d.maxHp;
+        p.mp = p.d.maxMp;
+        UI5.refreshSkillSlots();
+        UI5.refreshSkillbar();
+        UI5.refreshEquip();
+        UI5.refreshBag();
+        UI5.refreshStatAlloc();
+      }
       if (qs.get("debug") === "meteor") {
         const at = qs.get("at"), me = Math.floor(this.player.cx / TS);
         setTimeout(() => this.startMeteor(at === "me" ? me : at ? +at : me + (+qs.get("dx") || 30)), 2500);
@@ -70112,6 +70312,8 @@
         this.netProgIn(peer, m);
       } else if (m.k === "chat" && peer.rp) {
         this.netChatOut(peer.rp.name, m.s);
+      } else if (m.k === "note" && peer.rp) {
+        this.netNoteOut(peer.rp.name, m.key, m.p, peer.id);
       } else if (m.k === "pvp") {
         this.netPvpIn(peer, m);
       } else if (m.k === "po") {
@@ -70287,6 +70489,8 @@
         if (m.p) this.netPutProjs(m.p);
       } else if (m.k === "chat") {
         this.chatLine(m.n, m.s);
+      } else if (m.k === "note") {
+        this.noteIn(m);
       } else if (m.k === "progs") {
         this.netProgsIn(m);
       } else if (m.k === "chap") {
@@ -70749,6 +70953,7 @@
     CHAT_FADE: () => CHAT_FADE,
     CHAT_LINES: () => CHAT_LINES,
     CHAT_MAX: () => CHAT_MAX,
+    NOTE_MSG: () => NOTE_MSG,
     NetChatPart: () => NetChatPart,
     PVP_SCALE: () => PVP_SCALE
   });
@@ -70756,6 +70961,12 @@
   var CHAT_LINES = 6;
   var CHAT_FADE = 12;
   var PVP_SCALE = 0.5;
+  var NOTE_MSG = {
+    lv: N_("{lv}레벨이 되었다"),
+    ach: N_("업적 달성 — {a}"),
+    boss: N_("{b|을} 쓰러뜨렸다"),
+    die: N_("쓰러졌다")
+  };
   var NetChatPart = {
     bindChat() {
       const inp = $("#chat-input");
@@ -70835,6 +71046,7 @@
       $("#chat-emo").hidden = false;
       inp.focus();
       this.chatOpen = true;
+      this.chatUnread = 0;
       this.refreshChat();
     },
     closeChat() {
@@ -70861,24 +71073,58 @@
       for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", m);
       this.chatLine(m.n, m.s);
     },
+    /** 공지 한 줄 — mine 이면 내 알림(모두), 아니면 남의 중요한 소식 */
+    noteLine(name, s, mine) {
+      if (!this.net) return;
+      this.chatLog = (this.chatLog || []).concat({ n: String(name || ""), s: String(s || ""), t: performance.now(), sys: mine ? 2 : 1 }).slice(-CHAT_LINES * 4);
+      this.refreshChat();
+    },
+    /** 중요한 소식을 다른 플레이어에게 — 참가자는 호스트에게, 호스트는 모두에게(보낸 이 빼고) */
+    netNote(key, p = {}) {
+      const n = this.net;
+      if (!n || !NOTE_MSG[key]) return;
+      if (n.role === "host") this.netNoteOut(this.me.name, key, p, -1);
+      else if (n.t) this.netSend(n.t, "rel", { k: "note", key, p });
+    },
+    netNoteOut(name, key, p, from) {
+      const n = this.net, m = { k: "note", n: name, key, p };
+      for (const [id, q] of n.peers) if (q.rp && id !== from) this.netSend(q.t, "rel", m);
+      if (from >= 0) this.noteIn(m);
+    },
+    noteIn(m) {
+      if (!NOTE_MSG[m.key]) return;
+      const p = Object.assign({}, m.p || {});
+      if (p.b) p.b = ENEMIES[p.b] && ENEMIES[p.b].n || p.b;
+      this.noteLine(m.n, tr(NOTE_MSG[m.key], p), false);
+    },
     chatLine(name, s) {
       const k = soloEmoji(String(s || "")), who = k && this.players.find((q) => q.name === name);
       if (who) who.emote = { k, t: this.time };
       this.chatLog = (this.chatLog || []).concat({ n: String(name || ""), s: String(s || ""), t: performance.now() }).slice(-CHAT_LINES * 4);
+      if (!this.chatOpen && name !== (this.me && this.me.name)) this.chatUnread = (this.chatUnread || 0) + 1;
       this.refreshChat();
     },
     /** 대화 줄 — 입력 중이면 최근 것을 다 보이고, 아니면 CHAT_FADE 초 안의 것만. */
     refreshChat() {
       const box = $("#chat");
       if (!box) return;
+      const btn = $('#tabbar [data-tab="chat"]');
+      if (btn) {
+        btn.hidden = !this.net || !(this.netCfg() || {}).chat;
+        btn.classList.toggle("on", !!this.chatOpen);
+        const bd = btn.querySelector(".tb-badge"), n = this.chatUnread || 0;
+        bd.hidden = !n || this.chatOpen;
+        bd.textContent = n > 9 ? "9+" : String(n);
+      }
       if (!this.net) {
         box.hidden = true;
         this.chatLog = [];
         return;
       }
+      box.classList.toggle("open", !!this.chatOpen);
       const now2 = performance.now(), log = (this.chatLog || []).slice(-CHAT_LINES);
       const lines = log.filter((l) => this.chatOpen || now2 - l.t < CHAT_FADE * 1e3);
-      $("#chat-log").innerHTML = lines.map((l) => `<div class="ch-line"><b>${escHtml(l.n)}</b> ${emojify(escHtml(l.s))}</div>`).join("");
+      $("#chat-log").innerHTML = lines.map((l) => l.sys ? `<div class="ch-line ch-sys${l.sys === 2 ? " mine" : ""}"><b>${l.sys === 2 ? tr("알림") : escHtml(l.n)}</b> ${escHtml(l.s)}</div>` : `<div class="ch-line"><b>${escHtml(l.n)}</b> ${emojify(escHtml(l.s))}</div>`).join("");
       box.hidden = !this.chatOpen && !lines.length;
     },
     /** 머리 위 그림말 말풍선 — 3.5초, 처음 0.15초는 부풀며 나온다 */

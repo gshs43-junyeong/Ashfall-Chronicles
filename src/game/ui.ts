@@ -7,7 +7,7 @@ import { createToasts } from '../engine/ui/toasts.js';
 import { createTooltip } from '../engine/ui/tooltip.js';
 import { LANG, LANGS, LANG_KEY, LANG_NAMES, fmt, setLang, tr } from './lang.js';
 import { KEY_ACTIONS, NOTICE_KINDS } from './data/start.js';
-import { SKILLS, petSlotN, skillSlotN, utilSlotN } from './data/skills.js';
+import { SKILLS, accSlotN, petSlotN, skillSlotN, utilSlotN } from './data/skills.js';
 import { NPCS } from './data/npcs.js';
 import { SET_DEFAULT, idef } from './data/values.js';
 import { Art } from './itemart.js';
@@ -241,9 +241,13 @@ export const UI: Bag = {
   /* ---- 화면 아래 탭 단추 ---- */
   bindTabBar() {
     const bar = $('#tabbar'); if (!bar) return;
+    /* 채팅 — mousedown 에서 연다/닫는다: click 까지 기다리면 입력 칸이 먼저 초점을 잃어 닫혔다가 다시 열린다 */
+    const chatBtn = bar.querySelector('[data-tab="chat"]');
+    if (chatBtn) chatBtn.addEventListener('mousedown', (e: any) => { e.preventDefault(); e.stopPropagation(); if (G.chatOpen) G.closeChat(); else G.openChat(); });
     bar.querySelectorAll('.tb').forEach((b: any) => b.addEventListener('click', (e: any) => {
       e.stopPropagation();
       const t = b.dataset.tab;
+      if (t === 'chat') return;
       if (t === 'inv') this.togglePanel('inv');
       else if (t === 'skills') this.togglePanel('skill');
       else if (t === 'quest') this.togglePanel('quest');
@@ -314,7 +318,10 @@ export const UI: Bag = {
     this.panels.show(id);
     G.uiOpen = true;
     if (id === 'inv') { this.refreshBag(); this.refreshEquip(); this.refreshStatSheet(); }
-    if (id === 'skill') { this.setSkillTab(this.skillTab || 'tree'); this.refreshTree(); this.refreshSkillSlots(); this.refreshProf(); }
+    if (id === 'skill') {
+      this.setSkillTab(this.skillTab || 'tree'); this.refreshTree(); this.refreshSkillSlots(); this.refreshProf();
+      const core = $('#tree-wrap .bcore'); if (core && this.skillTab !== 'prof') core.scrollIntoView({ block: 'center' });   // 심장이 가운데에 오게
+    }
     if (id === 'quest') this.refreshQuest();
     if (id === 'craft') this.refreshCraft();
     this.refreshTabBar();
@@ -442,7 +449,7 @@ export const UI: Bag = {
   /* ---------------- 장비 ---------------- */
   buildEquipSlots() {
     // 칸마다 비었을 때 깔릴 실루엣.
-    const SLOT_IC: Record<string, string> = { weapon: 'weapon', helm: 'helm', chest: 'chest', boots: 'boots', acc1: 'acc', acc2: 'acc', util1: 'util', util2: 'util', bag: 'bag', pet1: 'pet', pet2: 'pet' };
+    const SLOT_IC: Record<string, string> = { weapon: 'weapon', helm: 'helm', chest: 'chest', boots: 'boots', acc1: 'acc', acc2: 'acc', acc3: 'acc', util1: 'util', util2: 'util', bag: 'bag', pet1: 'pet', pet2: 'pet', pet3: 'pet' };
     $$('.slot.equip').forEach(el => {
       const key = el.dataset.eq;
       el.insertAdjacentHTML('beforeend', '<span class="eqic"></span><span class="ic"></span>');
@@ -455,10 +462,10 @@ export const UI: Bag = {
           const d = idef(this.cursor);
           const ok = (key === 'weapon' && d.type === 'weapon') ||
             (d.type === 'armor' && d.slot === key) || (d.type === 'acc' && key.startsWith('acc')) ||
-            (d.type === 'util' && key.startsWith('util')) ||
+            (d.type === 'util' && key.startsWith('util')) || (d.type === 'pet' && key.startsWith('pet')) ||
             (d.type === 'bag' && key === 'bag');
           if (!ok) return;
-          if (this.slotLocked(key)) { G.toast(tr('탐험가 갈래에서 이 칸을 열어야 한다'), 'bad'); return; }
+          if (this.slotLocked(key)) { G.toast(tr('특성 트리에서 이 칸을 열어야 한다'), 'bad'); return; }
           if (p.level < equipReqLv(this.cursor.id)) { G.toast(tr('레벨 {equipReqLv} 필요', { equipReqLv: equipReqLv(this.cursor.id) }), 'bad'); return; }
           const old = p.equip[key]; p.equip[key] = this.cursor; this.setCursor(old);
         } else {
@@ -472,10 +479,11 @@ export const UI: Bag = {
       el.addEventListener('mouseleave', () => this.hideTip());
     });
   },
-  /** 탐험가 갈래가 아직 안 연 칸(둘째 유틸리티 · 둘째 펫) — 이미 낀 것은 그대로 둔다 */
+  /** 특성 트리가 아직 안 연 칸(둘째 유틸리티 · 둘째 · 셋째 펫 · 셋째 장신구) — 이미 낀 것은 그대로 둔다 */
   slotLocked(key: string) {
     const p = G.player;
-    return (key === 'util2' && utilSlotN(p) < 2) || (key === 'pet2' && petSlotN(p) < 2);
+    return (key === 'util2' && utilSlotN(p) < 2) || (key === 'pet2' && petSlotN(p) < 2) || (key === 'pet3' && petSlotN(p) < 3) ||
+      (key === 'acc3' && accSlotN(p) < 3);
   },
   refreshEquip() {
     if (!G.player) return;

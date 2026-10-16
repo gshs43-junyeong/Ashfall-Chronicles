@@ -30,7 +30,8 @@ const seen = await guest.evaluate(() => ({ seed: G.world.seed, n: G.players.leng
 check(seen.seed === 'd1' && seen.n === 2 && seen.hostName === 'Host', `참가자가 호스트 세계(${seen.seed})에서 호스트를 본다 (${seen.n}명)`);
 
 const x0 = await guest.evaluate(() => G.me.x);
-await guest.keyboard.down('d'); await guest.waitForTimeout(900); await guest.keyboard.up('d');
+// 0.9초는 헤드리스 프레임에 따라 100px 기준선에 걸렸다(같은 판에서 81~101px) — 1.3초 걷는다
+await guest.keyboard.down('d'); await guest.waitForTimeout(1300); await guest.keyboard.up('d');
 await guest.waitForTimeout(700);
 const r = await host.evaluate(() => { const g = G.players.find(p => p.remote); return g ? { x: g.x, name: g.name, n: G.players.length } : null; });
 const gx = await guest.evaluate(() => G.me.x);
@@ -206,6 +207,12 @@ await host.waitForTimeout(500);
 const chat2 = await Promise.all([host.evaluate(() => G.chatLog.some(l => l.s === 'blocked')), guest.evaluate(() => G.net.cfg.chat)]);
 check(!chat2[0] && chat2[1] === false, '채팅: 호스트가 끄면 참가자에게 알리고 글이 막힌다');
 await host.evaluate(() => G.mpSetCfg('chat', true));
+/* 공지 — 참가자의 중요한 소식(레벨업)은 호스트 채팅 기록에 이름과 함께 · 내 알림은 제 기록에 · 화면 채팅 단추 */
+await guest.evaluate(() => G.onLevelUp(7));
+await host.waitForTimeout(600);
+const note = await Promise.all([host.evaluate(() => (G.chatLog || []).some(l => l.sys === 1 && l.n === 'Guest' && /7/.test(l.s))),
+  guest.evaluate(() => (G.chatLog || []).some(l => l.sys === 2)), host.evaluate(() => !document.querySelector('#tabbar [data-tab=chat]').hidden)]);
+check(note[0] && note[1] && note[2], `공지: 참가자 레벨업이 호스트 채팅에(${note[0]}) · 내 알림은 제 기록에(${note[1]}) · 채팅 단추 보임(${note[2]})`);
 /* PvP — 꺼져 있으면 안 아프고, 켜면 반(PVP_SCALE)만큼 주인 화면에서 */
 const hitHost = () => guest.evaluate(() => { const h = G.players.find(p => p.remote && p.netId === 0); G.pvpHit(h, 40, h.cx - 30); });
 await host.evaluate(() => { G.me.iframe = 0; G.me.hp = G.me.d.maxHp; });

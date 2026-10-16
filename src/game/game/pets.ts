@@ -1,6 +1,7 @@
 /* ===== game/pets.js — 펫 — 알 · 드래곤 먹이 · 따라다니기 ===== */
 import { mixin } from '../../engine/core/mixin.js';
 import { tr } from '../lang.js';
+import { PET_KEYS } from '../data/skills.js';
 import { DRAGON_GATES, DRAGON_STAGE_N, EGG_POOL, PETS, dragonStage } from '../data/pets.js';
 import { idef } from '../data/values.js';
 import { makeItem } from '../items.js';
@@ -26,7 +27,7 @@ export const PetsPart: Bag = {
     const p = this.player, it = p.bag[slot];
     const gate = DRAGON_GATES[stage - 1];
     let fed = null, near = null;
-    for (const k of ['pet1', 'pet2']) {
+    for (const k of PET_KEYS) {
       const pe = p.equip[k];
       if (!pe || !PETS[idef(pe).pet!] || !PETS[idef(pe).pet!].dragon) continue;
       if ((pe.lv || 1) === gate - 1 && pe.hungry) { fed = pe; break; }
@@ -54,7 +55,7 @@ export const PetsPart: Bag = {
   syncPets() {
     const p = this.player;
     if (!this.petEnts) this.petEnts = [];
-    ['pet1', 'pet2'].forEach((key, slot) => {
+    PET_KEYS.forEach((key, slot) => {
       const it = p.equip[key];
       const id = it && idef(it).pet;
       const cur = this.petEnts[slot];
