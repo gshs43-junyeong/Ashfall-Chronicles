@@ -44936,13 +44936,8 @@
     dash: "dash",
     skill: "skill",
     chapter: "chapter",
-    /* 대사 — 말하는 쪽마다 다른 소리(ui/dialogue 가 고른다) · 줍기 · 버리기. 파일이 없으면 sfx() 의 합성 톤 */
-    talk_npc: "talk_npc",
-    talk_story: "talk_story",
-    talk_lore: "talk_lore",
-    talk_player: "talk_player",
-    pickup: "pickup",
-    trash: "trash",
+    /* 대사(talk_npc · talk_story · talk_lore · talk_player) · 줍기(pickup) · 버리기(trash)는 파일이 오면 여기에 적는다
+       (docs/audio/sfx-elevenlabs-prompts.md ⏳) — 없는 파일을 적어 두면 불러오다 404 가 나고 test:play 가 멈춘다. 그동안은 sfx() 의 합성 톤 */
     open: "open",
     learn: "learn",
     coin: "coin",
