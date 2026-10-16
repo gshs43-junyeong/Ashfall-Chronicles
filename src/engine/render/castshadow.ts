@@ -15,6 +15,7 @@ export interface SweepOpts {
   alpha?: number;    // 그늘 짙기 — 타일 그늘(castSunlight)과 같은 결로 맞춘다
   step?: number;     // 몇 px 마다 실루엣을 찍어 띠를 만드나
   maxLen?: number;   // 해가 아주 낮을 때 띠의 최대 길이(px)
+  fadeFrom?: number; // 띠가 이 몫(0~1)부터 끝까지 옅어진다
   floor?: (sx: number) => number;   // 화면 x 의 바닥 높이(화면 y) — 주면 floorY 대신 칸마다 그 땅 윗면에서 자른다
   floorStep?: number;               // floor 를 몇 px 마다 재나(타일 폭)
   floorPhase?: number;              // 칸 경계가 놓인 화면 x(타일 격자에 맞추려면 -camX)
@@ -58,6 +59,8 @@ export class CastShadow {
     sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, s.width, s.height);
     const ox = ux < 0 ? -ux * len : 0, step = o.step ?? 2;
     for (let t = 0; t <= len; t += step) sc.drawImage(b, Math.round(ox + ux * t), Math.round(uy * t));   // 겹쳐도 같은 검정 — 짙기는 한 번에
+    /* ★ 끝으로 갈수록 옅어진다 — 그대로 두면 띠 끝에 머리 모양이 둥글게 찍혀 '그림자 끝에 공'처럼 보였다(사용자 지적) */
+    this.fadeAlong(sc, SW, SH, ox + W / 2, H / 2, ox + W / 2 + ux * (len + H * 0.5), H / 2 + uy * (len + H * 0.5), o.fadeFrom ?? 0.25);
     c.save();
     c.beginPath();
     if (o.floor) {                                                       // 땅이 오르내리면 칸마다 그 윗면까지만 — 턱 너머 흙에 그늘이 박히지 않게
@@ -69,6 +72,13 @@ export class CastShadow {
     c.globalAlpha *= (o.alpha ?? 0.3) * sun.k;
     c.drawImage(s, 0, 0, SW, SH, bx - ox, by, SW, SH);
     c.restore();
+  }
+
+  /** 그린 판을 (x0,y0) → (x1,y1) 쪽으로 옅게 — from 몫까지는 그대로, 끝에서 0 */
+  fadeAlong(c: CanvasRenderingContext2D, w: number, h: number, x0: number, y0: number, x1: number, y1: number, from: number): void {
+    const g = c.createLinearGradient(x0, y0, x1, y1);
+    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(Math.max(0, Math.min(0.95, from)), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.save(); c.globalCompositeOperation = 'destination-in'; c.fillStyle = g; c.fillRect(0, 0, w, h); c.restore();
   }
 
   /** 발끝 접지 그림자 — 발끝(footX, footY)을 축으로 해 반대쪽으로 기울이며 위아래로 눌러 바닥에 눕힌다 */
@@ -83,6 +93,8 @@ export class CastShadow {
     if (o.blur) c.filter = `blur(${o.blur}px)`;
     /* 발끝(그림 아랫변 가운데)을 축으로: 머리 쪽이 lean·몸 높이만큼 옆으로 · 높이는 sq 배로 눌린다 */
     c.setTransform(c.getTransform().multiply(new DOMMatrix([1, 0, -lean, sq, footX + lean * H, footY - sq * H])));
+    /* 머리 쪽(판 위)일수록 옅게 — 발끝에서 진하고 끝은 흐려진다 */
+    this.fadeAlong(b.getContext('2d')!, W, H, 0, H, 0, 0, 0.2);
     c.drawImage(b, 0, 0, W, H, -W / 2, 0, W, H);
     c.restore();
   }

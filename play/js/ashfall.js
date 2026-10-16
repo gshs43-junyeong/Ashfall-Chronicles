@@ -66901,6 +66901,7 @@
       sc.clearRect(0, 0, s.width, s.height);
       const ox = ux < 0 ? -ux * len : 0, step = o.step ?? 2;
       for (let t = 0; t <= len; t += step) sc.drawImage(b, Math.round(ox + ux * t), Math.round(uy * t));
+      this.fadeAlong(sc, SW, SH, ox + W / 2, H / 2, ox + W / 2 + ux * (len + H * 0.5), H / 2 + uy * (len + H * 0.5), o.fadeFrom ?? 0.25);
       c.save();
       c.beginPath();
       if (o.floor) {
@@ -66913,6 +66914,18 @@
       c.drawImage(s, 0, 0, SW, SH, bx - ox, by, SW, SH);
       c.restore();
     }
+    /** 그린 판을 (x0,y0) → (x1,y1) 쪽으로 옅게 — from 몫까지는 그대로, 끝에서 0 */
+    fadeAlong(c, w, h, x0, y0, x1, y1, from) {
+      const g = c.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, "rgba(0,0,0,1)");
+      g.addColorStop(Math.max(0, Math.min(0.95, from)), "rgba(0,0,0,1)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      c.save();
+      c.globalCompositeOperation = "destination-in";
+      c.fillStyle = g;
+      c.fillRect(0, 0, w, h);
+      c.restore();
+    }
     /** 발끝 접지 그림자 — 발끝(footX, footY)을 축으로 해 반대쪽으로 기울이며 위아래로 눌러 바닥에 눕힌다 */
     draw(c, w, h, draw, footX, footY, sun, o = {}) {
       if (!sun || sun.k <= 0.02 || typeof document === "undefined") return;
@@ -66923,6 +66936,7 @@
       c.globalAlpha *= (o.alpha ?? 0.34) * sun.k;
       if (o.blur) c.filter = `blur(${o.blur}px)`;
       c.setTransform(c.getTransform().multiply(new DOMMatrix([1, 0, -lean, sq, footX + lean * H, footY - sq * H])));
+      this.fadeAlong(b.getContext("2d"), W, H, 0, H, 0, 0, 0.2);
       c.drawImage(b, 0, 0, W, H, -W / 2, 0, W, H);
       c.restore();
     }
@@ -67303,8 +67317,8 @@
           while (y < fy + 10 && !w.solid(x, y)) y++;
           return y * TS - camY + 6;
         };
-        S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.45 * fade, floor, floorStep: TS, floorPhase: -camX });
-        S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.45 * fade, squash: 0.2, blur: 1 });
+        S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.26 * fade, floor, floorStep: TS, floorPhase: -camX });
+        S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: 1.5 });
       } finally {
         this.shadowPass = 0;
       }
