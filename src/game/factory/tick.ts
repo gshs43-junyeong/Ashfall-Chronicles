@@ -300,14 +300,31 @@ export const FactoryTickPart: Bag = {
         c.setLineDash([2, 3]); c.lineDashOffset = -t * 24;
         c.beginPath(); c.moveTo(ox, oy); c.lineTo(gx, gy); c.stroke(); c.setLineDash([]);
         c.globalAlpha = 1;
-        // 드릴 로드 + 버튼 비트 — 광맥 쪽으로 뻗어 돈다(로드 마디가 흐르고 비트 날이 번갈아 빛난다) · 착암기라 앞뒤로 친다
+        // 드릴 로드 + 큰 나선 원뿔 비트 — 광맥 쪽으로 뻗어 돈다(나선 홈이 앞으로 흐르고 날 끝이 번쩍) · 착암기라 앞뒤로 친다.
+        // ★ 비트가 손톱만 하면 캐는 맛이 안 났다(사용자 지적) — 몸체만 한 크기로, 등급이 오를수록 더 크게
         c.translate(ox, oy); c.rotate(ang);
-        const L = 9 + Math.sin(t * (elec ? 40 : 22)) * 1.2, ph = (t * (elec ? 44 : 20)) % 3;
-        c.fillStyle = '#7a7e86'; c.fillRect(0, -1.5, L, 3);
-        c.fillStyle = '#c8ccd4'; for (let x = ph; x < L; x += 3) c.fillRect(x, -1.5, 1, 3);
-        c.fillStyle = '#4a4e56'; c.fillRect(L, -3, 4, 6);
-        c.fillStyle = Math.sin(t * 50) > 0 ? '#f0f4fa' : '#a8b0bc'; c.fillRect(L + 4, -2, 1, 1); c.fillRect(L + 4, 1, 1, 1);
-        c.fillStyle = Math.sin(t * 50) > 0 ? '#a8b0bc' : '#f0f4fa'; c.fillRect(L + 4, -0.5, 1, 1);
+        const S = m.t === 'drill_x' ? 1.35 : elec ? 1.15 : 1, spin = t * (elec ? 9 : 5);
+        const kick = Math.max(0, Math.sin(t * (elec ? 30 : 18))) * 2.5, R0 = 4, BL = 7 + kick, CL = 15 * S, CW = 6 * S;
+        c.fillStyle = '#5a5e66'; c.fillRect(0, -R0 / 2 - 0.5, BL, R0 + 1);                // 로드
+        c.fillStyle = '#9a9ea8'; c.fillRect(0, -R0 / 2 - 0.5, BL, 1);
+        c.fillStyle = '#3a3e46'; c.fillRect(BL - 1, -CW - 1, 3, CW * 2 + 2);              // 비트 목(칼라)
+        c.save(); c.translate(BL + 2, 0);
+        c.beginPath(); c.moveTo(0, -CW); c.lineTo(CL, 0); c.lineTo(0, CW); c.closePath();
+        const g = c.createLinearGradient(0, -CW, 0, CW);
+        g.addColorStop(0, '#e8ecf2'); g.addColorStop(0.45, '#a8aeb8'); g.addColorStop(1, '#5a606a');
+        c.fillStyle = g; c.fill();
+        c.clip();
+        c.strokeStyle = 'rgba(40,44,52,.85)'; c.lineWidth = 1.6;                           // 나선 홈 — 돌수록 앞으로 흐른다
+        for (let k = -2; k < 6; k++) {
+          const u = ((k + (spin % 1)) / 4) * CL;
+          c.beginPath(); c.moveTo(u - 4 * S, -CW); c.lineTo(u + 4 * S, CW); c.stroke();
+        }
+        c.restore();
+        c.strokeStyle = '#26282e'; c.lineWidth = 1;
+        c.beginPath(); c.moveTo(BL + 2, -CW); c.lineTo(BL + 2 + CL, 0); c.lineTo(BL + 2, CW); c.stroke();
+        const flash = Math.sin(t * 50) > 0.2;                                               // 날 끝 — 광맥을 문 순간 번쩍
+        c.fillStyle = flash ? '#fff8d8' : '#d8dce4'; c.fillRect(BL + 2 + CL - 2, -1, 3, 2);
+        if (flash) { c.globalAlpha = 0.5; c.fillStyle = elec ? '#cfeaff' : '#ffe0a0'; c.beginPath(); c.arc(BL + 2 + CL, 0, 4 * S, 0, TAU); c.fill(); c.globalAlpha = 1; }
         c.restore(); c.save();                                         // 회전을 풀고 광맥 쪽을 그린다
         // 광맥의 금 — 남은 횟수가 줄수록 늘어난다(광상은 줄지 않으니 가는 금만)
         const k = m.tgt[1] * WW + m.tgt[0], left = w.oreHits[k];

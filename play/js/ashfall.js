@@ -38870,18 +38870,56 @@
           c.globalAlpha = 1;
           c.translate(ox, oy);
           c.rotate(ang);
-          const L = 9 + Math.sin(t * (elec ? 40 : 22)) * 1.2, ph = t * (elec ? 44 : 20) % 3;
-          c.fillStyle = "#7a7e86";
-          c.fillRect(0, -1.5, L, 3);
-          c.fillStyle = "#c8ccd4";
-          for (let x = ph; x < L; x += 3) c.fillRect(x, -1.5, 1, 3);
-          c.fillStyle = "#4a4e56";
-          c.fillRect(L, -3, 4, 6);
-          c.fillStyle = Math.sin(t * 50) > 0 ? "#f0f4fa" : "#a8b0bc";
-          c.fillRect(L + 4, -2, 1, 1);
-          c.fillRect(L + 4, 1, 1, 1);
-          c.fillStyle = Math.sin(t * 50) > 0 ? "#a8b0bc" : "#f0f4fa";
-          c.fillRect(L + 4, -0.5, 1, 1);
+          const S = m.t === "drill_x" ? 1.35 : elec ? 1.15 : 1, spin = t * (elec ? 9 : 5);
+          const kick = Math.max(0, Math.sin(t * (elec ? 30 : 18))) * 2.5, R0 = 4, BL = 7 + kick, CL = 15 * S, CW = 6 * S;
+          c.fillStyle = "#5a5e66";
+          c.fillRect(0, -R0 / 2 - 0.5, BL, R0 + 1);
+          c.fillStyle = "#9a9ea8";
+          c.fillRect(0, -R0 / 2 - 0.5, BL, 1);
+          c.fillStyle = "#3a3e46";
+          c.fillRect(BL - 1, -CW - 1, 3, CW * 2 + 2);
+          c.save();
+          c.translate(BL + 2, 0);
+          c.beginPath();
+          c.moveTo(0, -CW);
+          c.lineTo(CL, 0);
+          c.lineTo(0, CW);
+          c.closePath();
+          const g = c.createLinearGradient(0, -CW, 0, CW);
+          g.addColorStop(0, "#e8ecf2");
+          g.addColorStop(0.45, "#a8aeb8");
+          g.addColorStop(1, "#5a606a");
+          c.fillStyle = g;
+          c.fill();
+          c.clip();
+          c.strokeStyle = "rgba(40,44,52,.85)";
+          c.lineWidth = 1.6;
+          for (let k2 = -2; k2 < 6; k2++) {
+            const u = (k2 + spin % 1) / 4 * CL;
+            c.beginPath();
+            c.moveTo(u - 4 * S, -CW);
+            c.lineTo(u + 4 * S, CW);
+            c.stroke();
+          }
+          c.restore();
+          c.strokeStyle = "#26282e";
+          c.lineWidth = 1;
+          c.beginPath();
+          c.moveTo(BL + 2, -CW);
+          c.lineTo(BL + 2 + CL, 0);
+          c.lineTo(BL + 2, CW);
+          c.stroke();
+          const flash = Math.sin(t * 50) > 0.2;
+          c.fillStyle = flash ? "#fff8d8" : "#d8dce4";
+          c.fillRect(BL + 2 + CL - 2, -1, 3, 2);
+          if (flash) {
+            c.globalAlpha = 0.5;
+            c.fillStyle = elec ? "#cfeaff" : "#ffe0a0";
+            c.beginPath();
+            c.arc(BL + 2 + CL, 0, 4 * S, 0, TAU);
+            c.fill();
+            c.globalAlpha = 1;
+          }
           c.restore();
           c.save();
           const k = m.tgt[1] * WW2 + m.tgt[0], left = w.oreHits[k];
@@ -52627,35 +52665,67 @@
       else this.duelTone(res === 300 ? 1320 : res === 100 ? 990 : 700, res === 300 ? 1760 : 880, 0.07, 0.14, "triangle");
     },
     /* ---------------- 그리기 ---------------- */
-    /** 둘레를 옅게 어둡게 — 낚시꾼 · 낚싯줄 · 찌 둘레는 밝게 남긴다(어둠을 깔고 그 자리를 부드럽게 도려낸다) */
+    /** 둘레를 어둡게 — 낚시꾼 · 낚싯대 · 줄은 **윤곽 그대로** 도려내고(둥근 구멍이 아니라 그림째), 찌가 앉은 물가는 둘레까지 넓게 밝힌다.
+        ★ 둥근 구멍으로 두면 사람 둘레의 땅 · 하늘이 같이 떠서 무엇에 눈을 둘지 흐려졌다(사용자 지적) — 사람은 실루엣째, 물은 넓게 */
     duelScrim(c) {
       const p = this.player, f = p.fish, z = this.viewZoom();
       const sx = (x) => (x - this.cam.x) * z, sy = (y) => (y - this.cam.y) * z;
       c.save();
-      c.fillStyle = "rgba(2,8,14,.62)";
+      c.fillStyle = "rgba(2,8,14,.8)";
       c.fillRect(0, 0, innerWidth, innerHeight);
       c.globalCompositeOperation = "destination-out";
-      const hole = (x, y, r) => {
-        const g = c.createRadialGradient(x, y, r * 0.45, x, y, r);
-        g.addColorStop(0, "rgba(0,0,0,1)");
+      const pool = (x, y, rx, ry, a) => {
+        c.save();
+        c.translate(x, y);
+        c.scale(1, ry / rx);
+        const g = c.createRadialGradient(0, 0, rx * 0.35, 0, 0, rx);
+        g.addColorStop(0, `rgba(0,0,0,${a})`);
         g.addColorStop(1, "rgba(0,0,0,0)");
         c.fillStyle = g;
-        c.fillRect(x - r, y - r, r * 2, r * 2);
-      };
-      const px = sx(p.cx), py = sy(p.cy);
-      hole(px, py, 72 * z);
-      if (f) {
-        const bx = sx((f.tx + 0.5) * TS), by = sy(f.ty * TS);
-        hole(bx, by, 58 * z);
-        c.lineCap = "round";
-        c.strokeStyle = "rgba(0,0,0,1)";
-        c.lineWidth = 34 * z;
-        c.shadowColor = "rgba(0,0,0,1)";
-        c.shadowBlur = 26 * z;
         c.beginPath();
-        c.moveTo(px, py - 14 * z);
-        c.quadraticCurveTo((px + bx) / 2, Math.min(py, by) - 30 * z, bx, by);
-        c.stroke();
+        c.arc(0, 0, rx, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      };
+      let bx = 0, by = 0;
+      if (f) {
+        bx = sx((f.tx + 0.5) * TS);
+        by = sy(f.ty * TS);
+        pool(bx, by + 6 * z, 170 * z, 80 * z, 1);
+      }
+      c.save();
+      c.scale(z, z);
+      c.shadowColor = "rgba(0,0,0,.9)";
+      c.shadowBlur = 7 * z;
+      try {
+        this.drawRider(c, p, p.x - this.cam.x, p.y - this.cam.y);
+      } catch (e) {
+        pool(sx(p.cx), sy(p.cy), 40 * z, 60 * z, 1);
+      }
+      c.restore();
+      c.globalCompositeOperation = "lighter";
+      c.save();
+      c.scale(z, z);
+      c.globalAlpha = 0.28;
+      try {
+        this.drawRider(c, p, p.x - this.cam.x, p.y - this.cam.y);
+      } catch (e) {
+      }
+      c.restore();
+      c.globalCompositeOperation = "source-over";
+      if (f) {
+        c.globalCompositeOperation = "lighter";
+        c.save();
+        c.translate(bx, by + 4 * z);
+        c.scale(1, 0.4);
+        const g = c.createRadialGradient(0, 0, 0, 0, 0, 120 * z);
+        g.addColorStop(0, "rgba(110,170,210,.22)");
+        g.addColorStop(1, "rgba(110,170,210,0)");
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(0, 0, 120 * z, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
       }
       c.restore();
     },
