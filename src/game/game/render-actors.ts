@@ -309,12 +309,13 @@ export const RenderActorsPart: Bag = {
     if (!w.solid(tx, gy)) return;
     const air = gy * TS - (p.y + p.h), fade = Math.max(0, 1 - air / (8 * TS));
     if (fade <= 0) return;
-    const W = 96, H = 72;
+    const W = 96, H = 72, S = this.bodyShadow || (this.bodyShadow = new CastShadow());
+    const body = (bc: CanvasRenderingContext2D) => this.drawRider(bc, p, W / 2 - p.w / 2, H - p.h - 2);
     this.shadowPass = 1;
     try {
-      (this.bodyShadow || (this.bodyShadow = new CastShadow())).draw(c, W, H,
-        (bc: CanvasRenderingContext2D) => this.drawRider(bc, p, W / 2 - p.w / 2, H - p.h - 2),
-        p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.55 * fade, squash: 0.2, blur: 1 });   // 땅 윗면(풀 띠)에 눕게 4px 내린다
+      /* 화면 면 그늘(나무 그늘과 같은 결 — 해 각도대로 길이 · 기울기가 바뀐다) + 발끝 접지 그림자 */
+      S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.45 * fade });
+      S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.45 * fade, squash: 0.2, blur: 1 });   // 땅 윗면(풀 띠)에 눕게 4px 내린다
     } finally { this.shadowPass = 0; }
   },
   drawEnemy(c: any, e: any, sx: any, sy: any) {

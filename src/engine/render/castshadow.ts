@@ -1,5 +1,7 @@
-/* ===== engine/render/castshadow.ts — 해가 비추는 몸의 그림자(실루엣을 땅에 눕힌다) ===== */
-/* 몸 그림을 한 번 빈 판에 그려 검게 칠하고(source-in), 발끝을 축으로 해 반대쪽으로 기울이며 위아래로 눌러 바닥에 눕힌다.
+/* ===== engine/render/castshadow.ts — 해가 비추는 몸의 그림자 ===== */
+/* 몸 그림을 빈 판에 한 번 그려 검게 칠한다(source-in). 그 실루엣으로 두 가지를 그린다:
+   sweep — 화면 면에 드리우는 그늘(햇빛 방향으로 밀어 바닥에서 자른다 · 타일 그늘과 같은 결),
+   draw  — 발끝 둘레의 짧은 접지 그림자(바닥에 눕힌다).
    방향은 DayCycle.sunDir 의 {x, y, k} 를 그대로 받는다 — 타일 그늘(castSunlight)과 같은 해를 봐야 몸과 땅의 그림자가 어긋나지 않는다. */
 
 export interface CastShadowOpts {
@@ -9,23 +11,61 @@ export interface CastShadowOpts {
   blur?: number;     // 가장자리 흐림(px)
 }
 
+export interface SweepOpts {
+  alpha?: number;    // 그늘 짙기 — 타일 그늘(castSunlight)과 같은 결로 맞춘다
+  step?: number;     // 몇 px 마다 실루엣을 찍어 띠를 만드나
+  maxLen?: number;   // 해가 아주 낮을 때 띠의 최대 길이(px)
+}
+
+type Sun = { x: number; y: number; k: number } | null;
+type DrawFn = (ctx: CanvasRenderingContext2D, ox: number, oy: number) => void;
+
 export class CastShadow {
   declare buf: HTMLCanvasElement | null; declare bc: CanvasRenderingContext2D | null;
-  constructor() { this.buf = null; this.bc = null; }
+  declare sw: HTMLCanvasElement | null; declare sc: CanvasRenderingContext2D | null;
+  constructor() { this.buf = null; this.bc = null; this.sw = null; this.sc = null; }
 
-  /** draw(ctx, ox, oy) 는 (ox, oy) 를 왼쪽 위로 몸을 한 번 그리는 함수 · w × h 는 그림이 들어갈 칸 · (footX, footY) 는 화면의 발끝 */
-  draw(c: CanvasRenderingContext2D, w: number, h: number, draw: (ctx: CanvasRenderingContext2D, ox: number, oy: number) => void,
-    footX: number, footY: number, sun: { x: number; y: number; k: number } | null, o: CastShadowOpts = {}): void {
-    if (!sun || sun.k <= 0.02 || typeof document === 'undefined') return;
+  /** 몸을 검게 뜬 판 — w × h 칸에 draw(ctx, 0, 0) 로 그린 것 */
+  silhouette(w: number, h: number, draw: DrawFn): HTMLCanvasElement {
     const W = Math.ceil(w), H = Math.ceil(h);
     if (!this.buf) { this.buf = document.createElement('canvas'); this.bc = this.buf.getContext('2d'); }
     const b = this.buf, bc = this.bc!;
-    if (b.width < W || b.height < H) { b.width = Math.max(b.width, W); b.height = Math.max(b.height, H); }
-    bc.setTransform(1, 0, 0, 1, 0, 0); bc.clearRect(0, 0, b.width, b.height);
-    bc.globalCompositeOperation = 'source-over';
-    draw(bc, 0, 0);
+    if (b.width !== W || b.height !== H) { b.width = W; b.height = H; }
+    bc.setTransform(1, 0, 0, 1, 0, 0); bc.clearRect(0, 0, W, H);
+    bc.globalCompositeOperation = 'source-over'; draw(bc, 0, 0);
     bc.globalCompositeOperation = 'source-in'; bc.fillStyle = '#000'; bc.fillRect(0, 0, W, H);
     bc.globalCompositeOperation = 'source-over';
+    return b;
+  }
+
+  /** 화면 면에 드리우는 그늘 — 실루엣을 햇빛 방향으로 밀어 띠를 만들고 바닥(floorY) 아래는 자른다.
+      ★ 타일 그늘이 이 결(빛줄기 뒤 공기 칸이 어두워진다)이라, 몸만 땅에 눕히면 나무 그늘 옆에서 몸 그림자가 안 보였다(사용자 지적).
+      해가 낮으면 길고 얕게, 한낮이면 곧장 땅으로 들어가 거의 사라진다 — 나무와 같다. (bx, by) 는 화면에서 판의 왼쪽 위 */
+  sweep(c: CanvasRenderingContext2D, w: number, h: number, draw: DrawFn, bx: number, by: number, floorY: number, sun: Sun, o: SweepOpts = {}): void {
+    if (!sun || sun.k <= 0.02 || typeof document === 'undefined') return;
+    const dx = -sun.x, dy = Math.max(0.12, -sun.y), n = Math.hypot(dx, dy), ux = dx / n, uy = dy / n;
+    const W = Math.ceil(w), H = Math.ceil(h);
+    const len = Math.min(o.maxLen ?? 220, (floorY - by) / uy);          // 머리 꼭대기가 바닥에 닿을 때까지
+    if (len < 2) return;
+    const b = this.silhouette(w, h, draw);
+    const SW = Math.ceil(W + Math.abs(ux) * len) + 2, SH = Math.ceil(H + uy * len) + 2;
+    if (!this.sw) { this.sw = document.createElement('canvas'); this.sc = this.sw.getContext('2d'); }
+    const s = this.sw, sc = this.sc!;
+    if (s.width < SW || s.height < SH) { s.width = Math.max(s.width, SW); s.height = Math.max(s.height, SH); }
+    sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, s.width, s.height);
+    const ox = ux < 0 ? -ux * len : 0, step = o.step ?? 2;
+    for (let t = 0; t <= len; t += step) sc.drawImage(b, Math.round(ox + ux * t), Math.round(uy * t));   // 겹쳐도 같은 검정 — 짙기는 한 번에
+    c.save();
+    c.beginPath(); c.rect(bx - ox - 2, by - 2, SW + 4, Math.max(0, floorY - by + 2)); c.clip();          // 바닥 위만
+    c.globalAlpha *= (o.alpha ?? 0.3) * sun.k;
+    c.drawImage(s, 0, 0, SW, SH, bx - ox, by, SW, SH);
+    c.restore();
+  }
+
+  /** 발끝 접지 그림자 — 발끝(footX, footY)을 축으로 해 반대쪽으로 기울이며 위아래로 눌러 바닥에 눕힌다 */
+  draw(c: CanvasRenderingContext2D, w: number, h: number, draw: DrawFn, footX: number, footY: number, sun: Sun, o: CastShadowOpts = {}): void {
+    if (!sun || sun.k <= 0.02 || typeof document === 'undefined') return;
+    const W = Math.ceil(w), H = Math.ceil(h), b = this.silhouette(w, h, draw);
     /* 해 반대쪽으로 — 해가 오른쪽(x>0)이면 그림자는 왼쪽. 해가 낮을수록(|y| 작음) 길게 눕는다 */
     const lean = Math.max(-(o.maxLean ?? 1.4), Math.min(o.maxLean ?? 1.4, -sun.x / Math.max(0.25, -sun.y)));
     const sq = o.squash ?? 0.32;

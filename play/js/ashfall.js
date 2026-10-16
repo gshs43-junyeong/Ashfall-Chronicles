@@ -66777,28 +66777,67 @@
     constructor() {
       this.buf = null;
       this.bc = null;
+      this.sw = null;
+      this.sc = null;
     }
-    /** draw(ctx, ox, oy) 는 (ox, oy) 를 왼쪽 위로 몸을 한 번 그리는 함수 · w × h 는 그림이 들어갈 칸 · (footX, footY) 는 화면의 발끝 */
-    draw(c, w, h, draw, footX, footY, sun, o = {}) {
-      if (!sun || sun.k <= 0.02 || typeof document === "undefined") return;
+    /** 몸을 검게 뜬 판 — w × h 칸에 draw(ctx, 0, 0) 로 그린 것 */
+    silhouette(w, h, draw) {
       const W = Math.ceil(w), H = Math.ceil(h);
       if (!this.buf) {
         this.buf = document.createElement("canvas");
         this.bc = this.buf.getContext("2d");
       }
       const b = this.buf, bc = this.bc;
-      if (b.width < W || b.height < H) {
-        b.width = Math.max(b.width, W);
-        b.height = Math.max(b.height, H);
+      if (b.width !== W || b.height !== H) {
+        b.width = W;
+        b.height = H;
       }
       bc.setTransform(1, 0, 0, 1, 0, 0);
-      bc.clearRect(0, 0, b.width, b.height);
+      bc.clearRect(0, 0, W, H);
       bc.globalCompositeOperation = "source-over";
       draw(bc, 0, 0);
       bc.globalCompositeOperation = "source-in";
       bc.fillStyle = "#000";
       bc.fillRect(0, 0, W, H);
       bc.globalCompositeOperation = "source-over";
+      return b;
+    }
+    /** 화면 면에 드리우는 그늘 — 실루엣을 햇빛 방향으로 밀어 띠를 만들고 바닥(floorY) 아래는 자른다.
+        ★ 타일 그늘이 이 결(빛줄기 뒤 공기 칸이 어두워진다)이라, 몸만 땅에 눕히면 나무 그늘 옆에서 몸 그림자가 안 보였다(사용자 지적).
+        해가 낮으면 길고 얕게, 한낮이면 곧장 땅으로 들어가 거의 사라진다 — 나무와 같다. (bx, by) 는 화면에서 판의 왼쪽 위 */
+    sweep(c, w, h, draw, bx, by, floorY, sun, o = {}) {
+      if (!sun || sun.k <= 0.02 || typeof document === "undefined") return;
+      const dx = -sun.x, dy = Math.max(0.12, -sun.y), n = Math.hypot(dx, dy), ux = dx / n, uy = dy / n;
+      const W = Math.ceil(w), H = Math.ceil(h);
+      const len = Math.min(o.maxLen ?? 220, (floorY - by) / uy);
+      if (len < 2) return;
+      const b = this.silhouette(w, h, draw);
+      const SW = Math.ceil(W + Math.abs(ux) * len) + 2, SH = Math.ceil(H + uy * len) + 2;
+      if (!this.sw) {
+        this.sw = document.createElement("canvas");
+        this.sc = this.sw.getContext("2d");
+      }
+      const s = this.sw, sc = this.sc;
+      if (s.width < SW || s.height < SH) {
+        s.width = Math.max(s.width, SW);
+        s.height = Math.max(s.height, SH);
+      }
+      sc.setTransform(1, 0, 0, 1, 0, 0);
+      sc.clearRect(0, 0, s.width, s.height);
+      const ox = ux < 0 ? -ux * len : 0, step = o.step ?? 2;
+      for (let t = 0; t <= len; t += step) sc.drawImage(b, Math.round(ox + ux * t), Math.round(uy * t));
+      c.save();
+      c.beginPath();
+      c.rect(bx - ox - 2, by - 2, SW + 4, Math.max(0, floorY - by + 2));
+      c.clip();
+      c.globalAlpha *= (o.alpha ?? 0.3) * sun.k;
+      c.drawImage(s, 0, 0, SW, SH, bx - ox, by, SW, SH);
+      c.restore();
+    }
+    /** 발끝 접지 그림자 — 발끝(footX, footY)을 축으로 해 반대쪽으로 기울이며 위아래로 눌러 바닥에 눕힌다 */
+    draw(c, w, h, draw, footX, footY, sun, o = {}) {
+      if (!sun || sun.k <= 0.02 || typeof document === "undefined") return;
+      const W = Math.ceil(w), H = Math.ceil(h), b = this.silhouette(w, h, draw);
       const lean = Math.max(-(o.maxLean ?? 1.4), Math.min(o.maxLean ?? 1.4, -sun.x / Math.max(0.25, -sun.y)));
       const sq = o.squash ?? 0.32;
       c.save();
@@ -67175,19 +67214,12 @@
       if (!w.solid(tx, gy)) return;
       const air = gy * TS - (p.y + p.h), fade = Math.max(0, 1 - air / (8 * TS));
       if (fade <= 0) return;
-      const W = 96, H = 72;
+      const W = 96, H = 72, S = this.bodyShadow || (this.bodyShadow = new CastShadow());
+      const body = (bc) => this.drawRider(bc, p, W / 2 - p.w / 2, H - p.h - 2);
       this.shadowPass = 1;
       try {
-        (this.bodyShadow || (this.bodyShadow = new CastShadow())).draw(
-          c,
-          W,
-          H,
-          (bc) => this.drawRider(bc, p, W / 2 - p.w / 2, H - p.h - 2),
-          p.cx - camX,
-          gy * TS - camY + 4,
-          sun,
-          { alpha: 0.55 * fade, squash: 0.2, blur: 1 }
-        );
+        S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.45 * fade });
+        S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.45 * fade, squash: 0.2, blur: 1 });
       } finally {
         this.shadowPass = 0;
       }
