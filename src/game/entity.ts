@@ -84,7 +84,7 @@ export class Player extends Ent {
   declare jetT: number; declare jetting: boolean; declare oxyPressure: number; declare oxygen: number; declare swimMove: boolean;
   declare swimPh: number; declare swimming: boolean; declare swingAng: number; declare swingReach: number; declare wasInWater: boolean;
   declare climbOut: (...a: any[]) => any; declare fireProj: (...a: any[]) => any; declare punch: (...a: any[]) => any;
-  declare rollCrit: (...a: any[]) => any; declare scaleDmg: (...a: any[]) => any; declare updateOxygen: (...a: any[]) => any;
+  declare rollCrit: (...a: any[]) => any; declare critMul: (crit: boolean) => number; declare scaleDmg: (...a: any[]) => any; declare updateOxygen: (...a: any[]) => any;
   declare rideStep: (dt: number, world: World, input: Bag) => void; declare afterMove: (dt: number, world: World) => void;
   declare weirdSwing: (sp: string, ang: number, base: number) => boolean; declare weirdHit: (sp: string, e: any) => void; declare tickWeird: (dt: number) => void;
   declare claw: Bag | null; declare umbOpen: boolean;   // 전기 집게 · 펼친 우산(entity/player-weird)

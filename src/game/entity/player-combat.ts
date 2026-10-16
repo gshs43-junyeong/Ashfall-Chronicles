@@ -96,6 +96,8 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     const c = this.d.crit / 100;
     return Math.random() < c;
   },
+  /** 치명타 배율 — 굴린 결과를 표시만 하고 피해에 안 곱하면 금색 숫자가 일반 타격과 같은 값으로 뜬다(근접 휘두르기가 그랬다) */
+  critMul(crit: boolean) { return crit ? 1 + this.d.critD / 100 : 1; },
   /** 손에 그려진 무기 끝(세계 좌표) — drawHeldWeapon 이 적어 둔 손 자리(handOff)에서 겨눈 쪽으로.
       활·총은 겨눈 쪽으로 든 활 끝, 지팡이는 시전 때 겨눈 쪽으로 드는 지팡이 끝. 벽에 막히면 막히기 전까지. */
   muzzle(ang: number) {
@@ -269,10 +271,10 @@ export const PlayerCombat: Bag & ThisType<Player> = {
         break;
       }
       case 's_pierce': {
-        const [ox, oy] = this.muzzle(ang);
+        const [ox, oy] = this.muzzle(ang), pc = this.rollCrit();
         const p = new Proj(ox, oy, Math.cos(ang) * 900, Math.sin(ang) * 900,
-          this.scaleDmg(wdmg * sk.v!(r) / 100, 'dex') * (this.rollCrit() ? 1 + this.d.critD / 100 : 1), 'player', 'star');
-        p.pierce = 6; p.grav = 0;
+          this.scaleDmg(wdmg * sk.v!(r) / 100, 'dex') * this.critMul(pc), 'player', 'star');
+        p.pierce = 6; p.grav = 0; p.crit = pc;
         G.projs.push(p);
         for (let k = 0; k < 8; k++) G.parts.push(new Part(ox, oy, '#9fe07a', -20, .35));
         break;

@@ -267,7 +267,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
       for (const e of G.ents) {
         if (!(e instanceof Enemy) || e.dead || this.chargeHit.has(e)) continue;
         if (aabb(this.rect(), e.rect())) {
-          this.chargeHit.add(e); e.hurt(this.chargeDmg, this.rollCrit(), this, 14, hitFam(this.weapon()));
+          this.chargeHit.add(e); const cc = this.rollCrit(); e.hurt(this.chargeDmg * this.critMul(cc), cc, this, 14, hitFam(this.weapon()));
           G.skillVfx('s_charge_hit', { x: e.cx, y: e.cy, ang: this.vx >= 0 ? 0 : Math.PI });
           G.hitStop(0.05); G.shake = Math.max(G.shake, 8);      // 부딪는 맛 — 맞은 적마다 한 번
         }
@@ -305,7 +305,7 @@ export const PlayerMove: Bag & ThisType<Player> = {
         if (Math.abs(dy) > reach * 0.85) continue;
         this.swingHit.add(e);
         const crit = this.rollCrit();
-        e.hurt(this.scaleDmg(base, 'str'), crit, this, kb, hitFam(w));
+        e.hurt(this.scaleDmg(base, 'str') * this.critMul(crit), crit, this, kb, hitFam(w));
         if (w && idef(w).sp) this.weirdHit(idef(w).sp!, e);
         G.cutFx(e, this, crit, hitFam(w));
         if (this.d.fire) e.addDot('burn', this.scaleDmg(base, 'str') * 0.12 * this.d.fire, 4);

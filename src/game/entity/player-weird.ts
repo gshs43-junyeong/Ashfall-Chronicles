@@ -59,7 +59,7 @@ export const PlayerWeird: Bag & ThisType<Player> = {
       if (Math.abs(-ex * sn + ey * cs) > e.h / 2 + 8) continue;
       k.hit.add(e);
       const crit = this.rollCrit();
-      e.hurt(k.dmg, crit, this, 2, null);
+      e.hurt(k.dmg * this.critMul(crit), crit, this, 2, null);
       e.chill(0.8);
       for (let i = 0; i < 6; i++) G.parts.push(new Part(e.cx, e.cy, i % 2 ? '#bff0ff' : '#5ad8ff', -20, .3, { glow: 1 }));
       if (k.zap++ < 4) G.sfx('zap', 1.1 + k.zap * 0.08);

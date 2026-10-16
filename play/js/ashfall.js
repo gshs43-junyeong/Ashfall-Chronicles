@@ -34155,6 +34155,10 @@
       const c = this.d.crit / 100;
       return Math.random() < c;
     },
+    /** 치명타 배율 — 굴린 결과를 표시만 하고 피해에 안 곱하면 금색 숫자가 일반 타격과 같은 값으로 뜬다(근접 휘두르기가 그랬다) */
+    critMul(crit) {
+      return crit ? 1 + this.d.critD / 100 : 1;
+    },
     /** 손에 그려진 무기 끝(세계 좌표) — drawHeldWeapon 이 적어 둔 손 자리(handOff)에서 겨눈 쪽으로.
         활·총은 겨눈 쪽으로 든 활 끝, 지팡이는 시전 때 겨눈 쪽으로 드는 지팡이 끝. 벽에 막히면 막히기 전까지. */
     muzzle(ang) {
@@ -34350,18 +34354,19 @@
           break;
         }
         case "s_pierce": {
-          const [ox, oy] = this.muzzle(ang);
+          const [ox, oy] = this.muzzle(ang), pc = this.rollCrit();
           const p = new Proj(
             ox,
             oy,
             Math.cos(ang) * 900,
             Math.sin(ang) * 900,
-            this.scaleDmg(wdmg * sk.v(r) / 100, "dex") * (this.rollCrit() ? 1 + this.d.critD / 100 : 1),
+            this.scaleDmg(wdmg * sk.v(r) / 100, "dex") * this.critMul(pc),
             "player",
             "star"
           );
           p.pierce = 6;
           p.grav = 0;
+          p.crit = pc;
           app.projs.push(p);
           for (let k = 0; k < 8; k++) app.parts.push(new Part(ox, oy, "#9fe07a", -20, 0.35));
           break;
@@ -34694,7 +34699,7 @@
         if (Math.abs(-ex * sn + ey * cs) > e.h / 2 + 8) continue;
         k.hit.add(e);
         const crit = this.rollCrit();
-        e.hurt(k.dmg, crit, this, 2, null);
+        e.hurt(k.dmg * this.critMul(crit), crit, this, 2, null);
         e.chill(0.8);
         for (let i = 0; i < 6; i++) app.parts.push(new Part(e.cx, e.cy, i % 2 ? "#bff0ff" : "#5ad8ff", -20, 0.3, { glow: 1 }));
         if (k.zap++ < 4) app.sfx("zap", 1.1 + k.zap * 0.08);
@@ -35036,7 +35041,8 @@
           if (!(e instanceof Enemy) || e.dead || this.chargeHit.has(e)) continue;
           if (aabb(this.rect(), e.rect())) {
             this.chargeHit.add(e);
-            e.hurt(this.chargeDmg, this.rollCrit(), this, 14, hitFam(this.weapon()));
+            const cc = this.rollCrit();
+            e.hurt(this.chargeDmg * this.critMul(cc), cc, this, 14, hitFam(this.weapon()));
             app.skillVfx("s_charge_hit", { x: e.cx, y: e.cy, ang: this.vx >= 0 ? 0 : Math.PI });
             app.hitStop(0.05);
             app.shake = Math.max(app.shake, 8);
@@ -35072,7 +35078,7 @@
           if (Math.abs(dy) > reach * 0.85) continue;
           this.swingHit.add(e);
           const crit = this.rollCrit();
-          e.hurt(this.scaleDmg(base, "str"), crit, this, kb, hitFam(w));
+          e.hurt(this.scaleDmg(base, "str") * this.critMul(crit), crit, this, kb, hitFam(w));
           if (w && idef(w).sp) this.weirdHit(idef(w).sp, e);
           app.cutFx(e, this, crit, hitFam(w));
           if (this.d.fire) e.addDot("burn", this.scaleDmg(base, "str") * 0.12 * this.d.fire, 4);
