@@ -403,7 +403,7 @@ export const UI: Bag = {
     this.toast(tr('버렸다: {itemName}{v}', { itemName: itemName(it), v: it.c > 1 ? ' ×' + it.c : '' }), 'bad');
     p.bag[i] = null;
     this.refreshBag();
-    G.sfx('place');
+    G.sfx('trash');
   },
   /** 가방 정리 — 같은 것끼리 합치고, 종류·등급 순으로 앞에서부터 채운다. */
   sortBag() {
@@ -428,7 +428,7 @@ export const UI: Bag = {
     if (!this.cursor) return;
     this.toast(tr('버렸다: {itemName}{v}', { itemName: itemName(this.cursor), v: this.cursor.c > 1 ? ' ×' + this.cursor.c : '' }), 'bad');
     this.setCursor(null);
-    G.sfx('place');
+    G.sfx('trash');
   },
   setCursor(it: Bag) {
     this.cursor = it;

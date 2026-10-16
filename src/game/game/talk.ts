@@ -92,7 +92,6 @@ export const TalkPart: Bag = {
   talkAnswer(id: string, re: any, rest: any) {
     const lines = Array.isArray(re.s) ? re.s.slice() : [re.s];
     UI.openDialogue(id, lines, rest);
-    this.sfx('talk');
   },
 
   talkExtra(id: string) {
@@ -136,7 +135,6 @@ export const TalkPart: Bag = {
     if (!fresh) rest.push({ t: tr('다시 듣기'), replay: 1, fn: () => {
       UI.closeDialogue();
       UI.openDialogue(id, story.slice(), rest);
-      this.sfx('talk');
     } });
     rest.push(...this.talkExtra(id));
     if (SIDE_POOL[id]) rest.push({
@@ -146,7 +144,6 @@ export const TalkPart: Bag = {
     rest.push({ t: tr('지금 무엇을 해야 하지?'), quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
     if (id === 'elara' && this.chapter === 0) rest.push({ t: tr('(여정을 시작한다)'), quest: 1, fn: () => { UI.closeDialogue(); } });
     UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
-    this.sfx('talk');
   },
 
   /** 그 사람이 이 장에 할 이야기. */
@@ -184,7 +181,6 @@ export const TalkPart: Bag = {
     if (story && !fresh) rest.push({ t: tr('다시 듣기'), replay: 1, fn: () => {
       UI.closeDialogue();
       UI.openDialogue(id, story.slice(), rest);
-      this.sfx('talk');
     } });
     /* 마을 주민에게도 부탁을 받는다 — 이 다섯에게만 부탁이 없으면 도시가 사람이 사는 곳이 아니라 상점가로 보인다. */
     if (SIDE_POOL[id]) rest.push({
@@ -194,7 +190,6 @@ export const TalkPart: Bag = {
     /* 마을 주민에게도 길을 물을 수 있다 — 세션 2는 대부분의 시간을 여기서 보낸다. */
     rest.push({ t: tr('지금 무엇을 해야 하지?'), quest: 1, fn: () => { UI.closeDialogue(); this.tellQuest(); } });
     UI.openDialogue(id, lines, this.talkMenu(id, pick, rest));
-    this.sfx('talk');
   },
 };
 

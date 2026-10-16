@@ -27,7 +27,7 @@ export const DialogueUIPart: Bag = {
     const cs = (choices || []).slice();
     const ri = cs.findIndex((c: any) => c.replay);
     this.setReplay(ri >= 0 ? cs.splice(ri, 1)[0] : null);
-    this.dlg = { npcId, lines: lines.slice(), i: 0, choices: cs };
+    this.dlg = { npcId, lines: lines.slice(), i: 0, choices: cs, voice: 'talk_npc' };
     $('#dlg-portrait').textContent = '';
     this.setIcon($('#dlg-portrait'), this.npcPortrait(npcId));
     $('#dlg-name').textContent = `${d.n} · ${d.role}`;
@@ -76,7 +76,7 @@ export const DialogueUIPart: Bag = {
     if (this.dlg.i >= this.dlg.lines.length) { this.stopType(); this.showChoices(); return; }
     const last = this.dlg.i >= this.dlg.lines.length - 1;
     $('#dlg-choices').innerHTML = '';
-    if (this.dlg.i !== prevI || first) G.sfx('talk');
+    if (this.dlg.i !== prevI || first) G.sfx(this.dlg.voice || 'talk_npc');   // 말하는 쪽마다 다른 소리 — NPC · 이야기 · 비문
     if (!first) { const m = $('.dlg-main'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); }
     const at = this.dlg.i;
     this.typeLine(this.dlg.lines[at], () => {
@@ -98,6 +98,7 @@ export const DialogueUIPart: Bag = {
         ev.stopPropagation();
         if (c.back) { this.showChoices(); return; }
         if (c.sub) { this.showChoices(c.sub.concat([{ t: tr('(돌아간다)'), back: 1 }])); return; }
+        if (c.say) G.sfx('talk_player');   // 내가 하는 말
         c.fn();
       });
       box.appendChild(b);
@@ -123,14 +124,14 @@ export const DialogueUIPart: Bag = {
     this.openLore(label, lines, [{
       t: kind === 'outro' ? tr('(다음 이야기로)') : tr('(계속한다)'), quest: 1,
       fn: () => { this.closeDialogue(); art.classList.remove('show', 'story'); if (done) done(); }
-    }]);
+    }], 'talk_story');   // 장 도입 · 마무리 — 이야기 목소리
     this._storyArt = true;
   },
 
   /** NPC가 아닌 화자(석판·문 등)의 대사창 */
-  openLore(name: string, lines: any, choices: any) {
+  openLore(name: string, lines: any, choices: any, voice = 'talk_lore') {
     this.setReplay(null);
-    this.dlg = { npcId: null, lines: lines.slice(), i: 0, choices };
+    this.dlg = { npcId: null, lines: lines.slice(), i: 0, choices, voice };   // 비문 · 석판 · 문(이야기 장면은 talk_story)
     $('#dlg-portrait').textContent = '';
     this.setIcon($('#dlg-portrait'), Art.itemUrl('rune_frag'));
     $('#dlg-name').textContent = name;

@@ -144,7 +144,9 @@ export const SoundPart: Bag = {
       bossdie: [90, 40, 'sawtooth', .12], level: [520, 880, 'sine', .08], coin: [880, 1200, 'square', .04],
       craft: [420, 620, 'triangle', .05], equip: [340, 460, 'sine', .04], drink: [300, 520, 'sine', .05],
       dash: [600, 260, 'sine', .04], skill: [420, 760, 'triangle', .06], boss: [70, 40, 'sawtooth', .16],
-      chapter: [400, 720, 'sine', .09], death: [200, 60, 'sawtooth', .12], talk: [420, 460, 'sine', .03],
+      chapter: [400, 720, 'sine', .09], death: [200, 60, 'sawtooth', .12],
+      talk_npc: [420, 460, 'sine', .03], talk_story: [300, 330, 'sine', .03], talk_lore: [200, 240, 'triangle', .03], talk_player: [520, 560, 'sine', .028],
+      pickup: [700, 1100, 'sine', .035], trash: [260, 120, 'square', .035],
       open: [260, 380, 'square', .035], learn: [600, 900, 'triangle', .06],
       // 문 — 여는 쪽은 경첩이 풀리며 올라가고, 닫는 쪽은 문설주에 부딪혀 떨어진다
       door_open: [180, 300, 'triangle', .05, .35], door_shut: [320, 120, 'square', .055, .5],

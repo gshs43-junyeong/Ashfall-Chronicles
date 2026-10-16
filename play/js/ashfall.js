@@ -40820,7 +40820,7 @@
       this.toast(tr("버렸다: {itemName}{v}", { itemName: itemName(it), v: it.c > 1 ? " ×" + it.c : "" }), "bad");
       p.bag[i] = null;
       this.refreshBag();
-      app.sfx("place");
+      app.sfx("trash");
     },
     /** 가방 정리 — 같은 것끼리 합치고, 종류·등급 순으로 앞에서부터 채운다. */
     sortBag() {
@@ -40845,7 +40845,7 @@
       if (!this.cursor) return;
       this.toast(tr("버렸다: {itemName}{v}", { itemName: itemName(this.cursor), v: this.cursor.c > 1 ? " ×" + this.cursor.c : "" }), "bad");
       this.setCursor(null);
-      app.sfx("place");
+      app.sfx("trash");
     },
     setCursor(it) {
       this.cursor = it;
@@ -42702,7 +42702,7 @@
       const cs = (choices || []).slice();
       const ri = cs.findIndex((c) => c.replay);
       this.setReplay(ri >= 0 ? cs.splice(ri, 1)[0] : null);
-      this.dlg = { npcId, lines: lines.slice(), i: 0, choices: cs };
+      this.dlg = { npcId, lines: lines.slice(), i: 0, choices: cs, voice: "talk_npc" };
       $("#dlg-portrait").textContent = "";
       this.setIcon($("#dlg-portrait"), this.npcPortrait(npcId));
       $("#dlg-name").textContent = `${d.n} · ${d.role}`;
@@ -42766,7 +42766,7 @@
       }
       const last = this.dlg.i >= this.dlg.lines.length - 1;
       $("#dlg-choices").innerHTML = "";
-      if (this.dlg.i !== prevI || first) app.sfx("talk");
+      if (this.dlg.i !== prevI || first) app.sfx(this.dlg.voice || "talk_npc");
       if (!first) {
         const m = $(".dlg-main");
         m.classList.remove("bump");
@@ -42799,6 +42799,7 @@
             this.showChoices(c.sub.concat([{ t: tr("(돌아간다)"), back: 1 }]));
             return;
           }
+          if (c.say) app.sfx("talk_player");
           c.fn();
         });
         box.appendChild(b2);
@@ -42842,13 +42843,13 @@
           art.classList.remove("show", "story");
           if (done) done();
         }
-      }]);
+      }], "talk_story");
       this._storyArt = true;
     },
     /** NPC가 아닌 화자(석판·문 등)의 대사창 */
-    openLore(name, lines, choices) {
+    openLore(name, lines, choices, voice = "talk_lore") {
       this.setReplay(null);
-      this.dlg = { npcId: null, lines: lines.slice(), i: 0, choices };
+      this.dlg = { npcId: null, lines: lines.slice(), i: 0, choices, voice };
       $("#dlg-portrait").textContent = "";
       this.setIcon($("#dlg-portrait"), Art.itemUrl("rune_frag"));
       $("#dlg-name").textContent = name;
@@ -44886,7 +44887,13 @@
     dash: "dash",
     skill: "skill",
     chapter: "chapter",
-    talk: "talk",
+    /* 대사 — 말하는 쪽마다 다른 소리(ui/dialogue 가 고른다) · 줍기 · 버리기. 파일이 없으면 sfx() 의 합성 톤 */
+    talk_npc: "talk_npc",
+    talk_story: "talk_story",
+    talk_lore: "talk_lore",
+    talk_player: "talk_player",
+    pickup: "pickup",
+    trash: "trash",
     open: "open",
     learn: "learn",
     coin: "coin",
@@ -48617,7 +48624,12 @@
         boss: [70, 40, "sawtooth", 0.16],
         chapter: [400, 720, "sine", 0.09],
         death: [200, 60, "sawtooth", 0.12],
-        talk: [420, 460, "sine", 0.03],
+        talk_npc: [420, 460, "sine", 0.03],
+        talk_story: [300, 330, "sine", 0.03],
+        talk_lore: [200, 240, "triangle", 0.03],
+        talk_player: [520, 560, "sine", 0.028],
+        pickup: [700, 1100, "sine", 0.035],
+        trash: [260, 120, "square", 0.035],
         open: [260, 380, "square", 0.035],
         learn: [600, 900, "triangle", 0.06],
         // 문 — 여는 쪽은 경첩이 풀리며 올라가고, 닫는 쪽은 문설주에 부딪혀 떨어진다
@@ -53782,7 +53794,6 @@
         }
       });
       UI5.openLore(t.n, t.lines, choices);
-      this.sfx("talk");
     },
     /** 유적 석판 — 로어를 읽고 룬 조각을 얻는다 (1회) */
     readTablet(o) {
@@ -54137,7 +54148,6 @@
     talkAnswer(id, re, rest) {
       const lines = Array.isArray(re.s) ? re.s.slice() : [re.s];
       UI5.openDialogue(id, lines, rest);
-      this.sfx("talk");
     },
     talkExtra(id) {
       const cs = [];
@@ -54194,7 +54204,6 @@
       if (!fresh) rest.push({ t: tr("다시 듣기"), replay: 1, fn: () => {
         UI5.closeDialogue();
         UI5.openDialogue(id, story.slice(), rest);
-        this.sfx("talk");
       } });
       rest.push(...this.talkExtra(id));
       if (SIDE_POOL[id]) rest.push({
@@ -54213,7 +54222,6 @@
         UI5.closeDialogue();
       } });
       UI5.openDialogue(id, lines, this.talkMenu(id, pick, rest));
-      this.sfx("talk");
     },
     /** 그 사람이 이 장에 할 이야기. */
     storyOf(id, ch) {
@@ -54247,7 +54255,6 @@
       if (story && !fresh) rest.push({ t: tr("다시 듣기"), replay: 1, fn: () => {
         UI5.closeDialogue();
         UI5.openDialogue(id, story.slice(), rest);
-        this.sfx("talk");
       } });
       if (SIDE_POOL[id]) rest.push({
         t: this.sideActive[id] ? tr("맡은 일에 대해 묻는다") : tr("도울 일이 있는지 묻는다"),
@@ -54262,7 +54269,6 @@
         this.tellQuest();
       } });
       UI5.openDialogue(id, lines, this.talkMenu(id, pick, rest));
-      this.sfx("talk");
     }
   };
   mixin(Game.prototype, TalkPart, true);
@@ -59219,6 +59225,7 @@
       return ev ? ev.rw : 1;
     },
     onPickup(it) {
+      this.sfx("pickup", 0.94 + Math.random() * 0.12);
       if (it && idef(it).type !== "block" && idef(it).type !== "mat") this.toast(tr("{itemName} 획득", { itemName: itemName(it) }), "good");
       UI5.refreshBag();
     },

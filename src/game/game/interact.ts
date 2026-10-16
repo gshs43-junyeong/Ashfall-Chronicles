@@ -202,7 +202,6 @@ export const InteractPart: Bag = {
       }
     });
     UI.openLore(t.n, t.lines, choices);
-    this.sfx('talk');
   },
 
   /** 유적 석판 — 로어를 읽고 룬 조각을 얻는다 (1회) */

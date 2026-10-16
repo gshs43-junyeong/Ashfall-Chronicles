@@ -47,7 +47,10 @@ export const SFX_DIR = 'assets/sound_effects/';
 export const SFX_FILES = {
   swing: 'swing', bow: 'bow', magic: 'magic', mine: 'mine', place: 'place',
   die: 'die', bossdie: 'bossdie', level: 'level', craft: 'craft', equip: 'equip',
-  drink: 'drink', dash: 'dash', skill: 'skill', chapter: 'chapter', talk: 'talk',
+  drink: 'drink', dash: 'dash', skill: 'skill', chapter: 'chapter',
+  /* 대사 — 말하는 쪽마다 다른 소리(ui/dialogue 가 고른다) · 줍기 · 버리기. 파일이 없으면 sfx() 의 합성 톤 */
+  talk_npc: 'talk_npc', talk_story: 'talk_story', talk_lore: 'talk_lore', talk_player: 'talk_player',
+  pickup: 'pickup', trash: 'trash',
   open: 'open', learn: 'learn',
   coin: 'coin',                 // 상점 매매 등 소액
   manycoins: 'manycoins',       // 퀘스트 보상 등 대량
