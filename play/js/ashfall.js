@@ -64913,6 +64913,7 @@
       const dayLight = lerp(3, 15, dayF);
       const litR = p.buffs.some((b) => b.id === "lit_greater") ? 9.5 : p.buffs.some((b) => b.id === "lit") ? 6.8 : p.buffs.some((b) => b.id === "lantern") ? 6 : 4.6;
       const sun = DAY_CYCLE.sunDir(this.dayT, (this.rainT || 0) * 1.4);
+      this.sunNow = sun;
       const ashF = this.ashF(), keep = (t) => {
         const a = this.ASH_TILE[t];
         return a && a.shed ? clamp(1 - a.shed * ashF * a.fade * 1.15, 0, 1) : 1;
@@ -65194,6 +65195,7 @@
         c.restore();
         c.filter = "none";
       });
+      for (const q of this.players) if (!q.dead) this.drawBodyShadow(c, q, camX, camY);
       this.drawRider(c, p, p.x - camX, p.y - camY);
       for (const q of this.players) if (q !== p) {
         this.drawRider(c, q, q.x - camX, q.y - camY);
@@ -65532,9 +65534,10 @@
     skyArc(sun) {
       return DAY_CYCLE.arc(this.dayT, !!sun);
     },
-    /** 해·달의 화면 자리 — u 0 = 오른쪽(동) → 1 = 왼쪽(서). 노을 빛도 같은 값을 쓴다. */
+    /** 해·달의 화면 자리 — u 0 = 오른쪽(동) → 1 = 왼쪽(서). 노을 빛도 같은 값을 쓴다.
+        ★ 동쪽 끝은 0.81W 에서 멈춘다 — 0.92W 까지 가면 오전 내내 오른쪽 위 지도 · 할 일 창 뒤에 숨어 해가 한낮에 가운데서 나타나 서쪽으로만 가는 듯했다(사용자 지적) */
     skyX(u) {
-      return this.W / 2 + Math.cos(Math.PI * u) * this.W * 0.42;
+      return this.W * 0.43 + Math.cos(Math.PI * u) * this.W * 0.38;
     },
     /* 높이는 √up — 선형이면 아침·저녁 내내 숲 원경(화면 0.15~0.5) 뒤에 숨어 한낮에만 보였다 */
     skyY(u, skyDy) {
@@ -66769,6 +66772,44 @@
     STEP_FEEL: () => STEP_FEEL
   });
 
+  // src/engine/render/castshadow.ts
+  var CastShadow = class {
+    constructor() {
+      this.buf = null;
+      this.bc = null;
+    }
+    /** draw(ctx, ox, oy) 는 (ox, oy) 를 왼쪽 위로 몸을 한 번 그리는 함수 · w × h 는 그림이 들어갈 칸 · (footX, footY) 는 화면의 발끝 */
+    draw(c, w, h, draw, footX, footY, sun, o = {}) {
+      if (!sun || sun.k <= 0.02 || typeof document === "undefined") return;
+      const W = Math.ceil(w), H = Math.ceil(h);
+      if (!this.buf) {
+        this.buf = document.createElement("canvas");
+        this.bc = this.buf.getContext("2d");
+      }
+      const b = this.buf, bc = this.bc;
+      if (b.width < W || b.height < H) {
+        b.width = Math.max(b.width, W);
+        b.height = Math.max(b.height, H);
+      }
+      bc.setTransform(1, 0, 0, 1, 0, 0);
+      bc.clearRect(0, 0, b.width, b.height);
+      bc.globalCompositeOperation = "source-over";
+      draw(bc, 0, 0);
+      bc.globalCompositeOperation = "source-in";
+      bc.fillStyle = "#000";
+      bc.fillRect(0, 0, W, H);
+      bc.globalCompositeOperation = "source-over";
+      const lean = Math.max(-(o.maxLean ?? 1.4), Math.min(o.maxLean ?? 1.4, -sun.x / Math.max(0.25, -sun.y)));
+      const sq = o.squash ?? 0.32;
+      c.save();
+      c.globalAlpha *= (o.alpha ?? 0.34) * sun.k;
+      if (o.blur) c.filter = `blur(${o.blur}px)`;
+      c.setTransform(c.getTransform().multiply(new DOMMatrix([1, 0, -lean, sq, footX + lean * H, footY - sq * H])));
+      c.drawImage(b, 0, 0, W, H, -W / 2, 0, W, H);
+      c.restore();
+    }
+  };
+
   // src/engine/render/outline.ts
   var AROUND = [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]];
   function drawOutlined(c, draw, o = {}) {
@@ -67121,6 +67162,35 @@
       }
       Art.draw(c, "p:" + pet.id, sx - S / 2, sy - S / 2, S);
       c.restore();
+    },
+    /** 몸 그림자 — 바깥(지표 위)에서 해가 떠 있을 때만, 발밑 바닥에 해 반대쪽으로 눕힌다(엔진 render/castshadow).
+        뜬 몸은 바닥까지의 거리만큼 옅어진다. 그림은 drawRider 를 그대로 한 번 더 — 망토 · 무기 · 탈 것까지 같은 모양 */
+    drawBodyShadow(c, p, camX, camY) {
+      const sun = this.sunNow;
+      if (!sun || !this.spritesOn) return;
+      const w = this.world, tx = Math.floor(p.cx / TS), fy = Math.floor((p.y + p.h - 1) / TS);
+      if (fy > w.surface[tx] + 1) return;
+      let gy = fy + 1;
+      while (gy < fy + 9 && !w.solid(tx, gy)) gy++;
+      if (!w.solid(tx, gy)) return;
+      const air = gy * TS - (p.y + p.h), fade = Math.max(0, 1 - air / (8 * TS));
+      if (fade <= 0) return;
+      const W = 96, H = 72;
+      this.shadowPass = 1;
+      try {
+        (this.bodyShadow || (this.bodyShadow = new CastShadow())).draw(
+          c,
+          W,
+          H,
+          (bc) => this.drawRider(bc, p, W / 2 - p.w / 2, H - p.h - 2),
+          p.cx - camX,
+          gy * TS - camY + 4,
+          sun,
+          { alpha: 0.55 * fade, squash: 0.2, blur: 1 }
+        );
+      } finally {
+        this.shadowPass = 0;
+      }
     },
     drawEnemy(c, e, sx, sy) {
       if (e.shade && !e._shading) {
@@ -67501,7 +67571,7 @@
         Sprites.draw(c, hand.key, hand.fr, sx, sy, hand.flip);
         c.restore();
       }
-      if (p.fish) this.drawFishLine(c, p, sx, sy, bob);
+      if (p.fish && !this.shadowPass) this.drawFishLine(c, p, sx, sy, bob);
       if (p.channel) {
         c.globalAlpha = 0.5;
         c.strokeStyle = "#ffcf6a";

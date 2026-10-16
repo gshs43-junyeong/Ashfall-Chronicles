@@ -177,6 +177,7 @@ Ashfall 이 손으로 들고 있던 일 중 다른 게임에도 쓰일 것을 �
 | `entity/sense.ts` · `steer.ts` · `status.ts` | `Senses` · `seek`/`flee`/`separation`/`wander` · `addDot`/`tickDots`/`Timed` | 보고 듣고 기억하기 · 조향 · 지속 피해 |
 | `render/camera.ts` · `fade.ts` · `outline.ts` · `anim.ts` | `Camera` · `ScreenFade` · `drawOutlined` · `Animator`/`cycleFrame` | 따라가는 카메라(흔들림) · 화면 페이드 · 윤곽 · 장 넘김 |
 | `render/minimap.ts` · `lightoverlay.ts` | `MapAtlas` · `drawTileWindow` · `LightOverlay` | 지도 아틀라스 · 빛 덮개 |
+| `render/castshadow.ts` | `CastShadow` | 몸 그림자 — 그림을 검게 떠서 발끝 축으로 해 반대쪽에 눕힌다(`DayCycle.sunDir` 를 그대로 받는다) |
 | `fx/particles.ts` · `floattext.ts` · `shapes.ts` · `trail.ts` · `precip.ts` · `wind.ts` | `Particle` · `FloatText` · `ShapeFx` · `Afterimages` · `Precip` · `Wind` | 입자 · 뜨는 숫자 · 고리/번개 · 잔상 · 비/눈 · 바람 |
 | `fx/vfx.ts` | `Vfx` → `slash` · `shock` · `flare` · `sparks` · `sigil` · `shards` · `crack` · `column` · `puffs` · `motes` · `swipe` · `mark` · `converge` · `orbit` · `reticle` · `beam` | 스킬 연출 도형 — 칼선 · 충격파 · 섬광 · 불티 줄기 · 마법진 · 얼음 조각 · 땅 갈라짐 · 빛기둥 · 연기 · 빛 알갱이 · 칼 자국 · 자국 한 장 · 모여드는 불티 · 몸을 도는 빛 · 조준 · 빛줄기(빛은 더하기로 짧게, 연기만 보통 섞기). `vfx.art = (이름, 색) => 그림 | null` 을 걸면 도형마다 그 이름('slash' · 'spark' · 'shard' · 'crack' · 'mote' …)의 그림으로 그리고, 끝 인자 `art` 로 갈래 그림을 고른다(없으면 기본 이름 → 도형). `ShapeFx.art` 는 고리 · 예고 원 = 'ring', 번개 = 'bolt0~3'. 안 걸면 도형 |
 | `audio/spatial.ts` | `spatialMix` · `createPanRouter` | 거리 감쇠 · 좌우 소리 위치 |

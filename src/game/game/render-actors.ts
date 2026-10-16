@@ -3,6 +3,7 @@ import { mixHex, shade } from '../../engine/core/color.js';
 import { TAU, angleTo, clamp, dist } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { Beat, cycleFrame } from '../../engine/render/anim.js';
+import { CastShadow } from '../../engine/render/castshadow.js';
 import { drawOutlined } from '../../engine/render/outline.js';
 import { TILE_DEF } from '../data.js';
 import { BOW_HAND, CHAR_OF } from '../data/start.js';
@@ -298,6 +299,24 @@ export const RenderActorsPart: Bag = {
     c.restore();
   },
 
+  /** 몸 그림자 — 바깥(지표 위)에서 해가 떠 있을 때만, 발밑 바닥에 해 반대쪽으로 눕힌다(엔진 render/castshadow).
+      뜬 몸은 바닥까지의 거리만큼 옅어진다. 그림은 drawRider 를 그대로 한 번 더 — 망토 · 무기 · 탈 것까지 같은 모양 */
+  drawBodyShadow(c: CanvasRenderingContext2D, p: Player, camX: number, camY: number) {
+    const sun = this.sunNow; if (!sun || !this.spritesOn) return;
+    const w = this.world, tx = Math.floor(p.cx / TS), fy = Math.floor((p.y + p.h - 1) / TS);
+    if (fy > w.surface[tx] + 1) return;                                     // 땅속 · 지붕 밑 — 해가 안 닿는다
+    let gy = fy + 1; while (gy < fy + 9 && !w.solid(tx, gy)) gy++;
+    if (!w.solid(tx, gy)) return;
+    const air = gy * TS - (p.y + p.h), fade = Math.max(0, 1 - air / (8 * TS));
+    if (fade <= 0) return;
+    const W = 96, H = 72;
+    this.shadowPass = 1;
+    try {
+      (this.bodyShadow || (this.bodyShadow = new CastShadow())).draw(c, W, H,
+        (bc: CanvasRenderingContext2D) => this.drawRider(bc, p, W / 2 - p.w / 2, H - p.h - 2),
+        p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.55 * fade, squash: 0.2, blur: 1 });   // 땅 윗면(풀 띠)에 눕게 4px 내린다
+    } finally { this.shadowPass = 0; }
+  },
   drawEnemy(c: any, e: any, sx: any, sy: any) {
     if (e.shade && !e._shading) {                                           // 갈라져 나온 짝 — 한 톤 어둡게(entity/boss-forms)
       c.save(); c.filter = 'brightness(.6) saturate(.65)'; e._shading = 1;
@@ -620,7 +639,7 @@ export const RenderActorsPart: Bag = {
       Sprites.draw(c, hand.key, hand.fr, sx, sy, hand.flip);
       c.restore();
     }
-    if (p.fish) this.drawFishLine(c, p, sx, sy, bob);
+    if (p.fish && !this.shadowPass) this.drawFishLine(c, p, sx, sy, bob);   // 그림자 판에는 줄을 안 그린다(찌 자리는 카메라 기준이라 판 밖으로 샌다)
     if (p.channel) {
       c.globalAlpha = .5; c.strokeStyle = '#ffcf6a'; c.lineWidth = 3;
       c.beginPath(); c.arc(sx + 10, sy + 20, 60 + Math.sin(this.time * 20) * 8, 0, TAU); c.stroke();

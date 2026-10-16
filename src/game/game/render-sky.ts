@@ -100,8 +100,9 @@ export const RenderSkyPart: Bag = {
       ★ 뜨고 지는 시각은 dayFactor 가 밝아지고(4~7시) 어두워지는(17~20시) 한가운데여야 한다 — 어긋나면
       밝은 하늘에 해가 없거나, 해가 중천 가까이에서 갑자기 나타나 제멋대로 떠 보인다. */
   skyArc(sun: any) { return DAY_CYCLE.arc(this.dayT, !!sun); },
-  /** 해·달의 화면 자리 — u 0 = 오른쪽(동) → 1 = 왼쪽(서). 노을 빛도 같은 값을 쓴다. */
-  skyX(u: any) { return this.W / 2 + Math.cos(Math.PI * u) * this.W * .42; },
+  /** 해·달의 화면 자리 — u 0 = 오른쪽(동) → 1 = 왼쪽(서). 노을 빛도 같은 값을 쓴다.
+      ★ 동쪽 끝은 0.81W 에서 멈춘다 — 0.92W 까지 가면 오전 내내 오른쪽 위 지도 · 할 일 창 뒤에 숨어 해가 한낮에 가운데서 나타나 서쪽으로만 가는 듯했다(사용자 지적) */
+  skyX(u: any) { return this.W * .43 + Math.cos(Math.PI * u) * this.W * .38; },
   /* 높이는 √up — 선형이면 아침·저녁 내내 숲 원경(화면 0.15~0.5) 뒤에 숨어 한낮에만 보였다 */
   skyY(u: any, skyDy: any) { const up = Math.sin(Math.PI * u); return this.H * .52 - (up > 0 ? Math.sqrt(up) : up) * this.H * .40 - skyDy; },
   /** 해 — 넓은 햇무리 · 안쪽 광채 · 원반. */
