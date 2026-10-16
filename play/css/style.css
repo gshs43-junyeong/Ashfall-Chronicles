@@ -15,8 +15,8 @@
   --hi:#d8a94b;
 }
 /* 게임 글꼴 Ashfall(자체 제작 · OFL — assets/fonts/OFL.txt) — tools/mkfont.py 가 굽고 ?v= 도 맞춘다. 일본어 · 중국어는 기기 글꼴 */
-@font-face{font-family:"Ashfall";font-weight:400;font-display:swap;src:url("../assets/fonts/ashfall-regular.woff2?v=c768044f") format("woff2")}
-@font-face{font-family:"Ashfall";font-weight:700;font-display:swap;src:url("../assets/fonts/ashfall-bold.woff2?v=30a17d70") format("woff2")}
+@font-face{font-family:"Ashfall";font-weight:400;font-display:swap;src:url("../assets/fonts/ashfall-regular.woff2?v=be5fef39") format("woff2")}
+@font-face{font-family:"Ashfall";font-weight:700;font-display:swap;src:url("../assets/fonts/ashfall-bold.woff2?v=d10e14e5") format("woff2")}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#000;overflow:hidden}
 body{

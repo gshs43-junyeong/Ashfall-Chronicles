@@ -24,6 +24,16 @@ How it is made
   the game text, Hangul compatibility jamo, Basic Latin, the Latin-1 letters used
   in German and Spanish, punctuation, and the symbols the game text uses.
 
+Version 2.200 (2026-10-16)
+- Jamo no longer touch: each syllable is checked for the gap between initial,
+  medial and final, and the branch, initial floor, stem end or final top is
+  moved until the gap is at least half a stroke (tools/fontdiag.py checks all).
+- Stacked horizontals (ㄹ ㄷ ㅌ ㅂ ㅋ in small boxes) thin only the horizontal
+  strokes so the counters stay open, especially in Bold; diagonal legs of ㅅ ㅈ ㅊ
+  in double consonants thin the same way.
+- Initials over ㅗ ㅜ ㅡ with a final get more height; both halves of ㄲ ㅋㅋ use
+  the same leg.
+
 Version 2.100 (2026-10-12)
 - Hangul structure reworked: jamo placement per vowel and per final height,
   positional consonant forms, larger initials and finals.
