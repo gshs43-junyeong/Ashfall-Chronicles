@@ -92,7 +92,7 @@ export class Player extends Ent {
   declare volley: number;
   declare remote: boolean; declare netId: number; declare netBuf: any; declare netMaxHp: number; declare netShield: number; declare _hid: string; declare _wid: string; declare _hurtAt: number; declare petEnts: any[]; declare _pt: string;   // 남의 화면 플레이어(멀티플레이) — 이 화면에서는 그림자일 뿐이다
   declare _jetNoteAt: number; declare atkTimer: number; declare bag: any[]; declare base: Record<string, number>; declare bossKilled: Record<string, any>;
-  declare dotAcc: number; declare dotT: number;
+  declare dotAcc: number; declare dotT: number; declare dotBurn: boolean;
   declare buffs: any[]; declare cd: Record<string, any>; declare channel: Record<string, any> | null; declare charId: string; declare charge: number; declare d: Record<string, any>;
   declare dashCd: number; declare dashV: number; declare deepest: number; declare equip: Record<string, any>; declare facing: number; declare flash: number;
   declare gathered: Record<string, any>; declare gold: number; declare hp: number; declare hurtCd: number; declare iframe: number; declare jetGap: number;
@@ -415,7 +415,8 @@ export class Enemy extends Ent {
   declare pedestal: number; declare pf: number; declare phase: number; declare phaseInv: number; declare phases: number; declare sgAmt: number;
   declare sgBuf: number; declare sgCd: number; declare sgKind: string | null; declare sgRing: number; declare sgStun: number; declare sgT: number;
   declare shield: number; declare shieldMax: number; declare shieldT: number; declare ward: number; declare wardMax: number; declare wardT: number; declare shFx: string;   // 막(entity/boss-forms)
-  declare healRun: number; declare healTook: number; declare airborne: number; declare airK: string; declare twin: Enemy | null; declare poolMax: number; declare shade: number; declare poolNet: number[] | null;
+  declare healRun: number; declare healTook: number; declare airborne: number; declare airK: string; declare twin: Enemy | null; declare poolMax: number; declare dotAcc: number; declare dotT: number; declare dotKind: string;   // 지속 피해 1초 몫(entity/enemy-ai)
+  declare shade: number; declare poolNet: number[] | null;
   declare formBreak: (k: string) => void; declare splitBoss: (line?: string) => void;
   declare flies: () => boolean; declare twinLive: () => Enemy | null; declare poolRatio: () => number; declare formMove: (d: Bag, p: Player, world: World, K: Bag) => any;
   declare formBlock: () => boolean; declare formHurt: (dmg: number) => number; declare formTick: (dt: number, p: Player) => void; declare formPhase: (ph: number) => void; declare mvPick: (K: Bag) => Bag | null;

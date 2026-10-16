@@ -12,9 +12,11 @@ import { dimsOf } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { BOSS_LINES } from '../data/skills.js';
 import { TS } from '../world.js';
-import { Enemy, GRAV, Part, Proj } from '../entity.js';
+import { DmgText, Enemy, GRAV, Part, Proj } from '../entity.js';
 /* entity.js 의 Enemy 에서 나눈 조각 — 읽히는 순간 Enemy.prototype 에 붙는다(main.js 가 entity.js 다음에 읽는다). */
 
+/** 지속 피해 숫자 색 — 불은 주황 · 독은 초록 · 출혈은 붉게 · 그 밖(냉기 · 공허)은 옅은 보라 */
+export const DOT_COL: Record<string, string> = { burn: '#ff9a4a', fire: '#ff9a4a', poison: '#9fd86a', bleed: '#ff6a6a', frost: '#9fe0ff' };
 /** 눈·귀·기억으로 쫓는 갈래 — 순한 동물 · 부유물 · 보스는 따로 */
 export const SENSING: Record<string, 1> = { walker: 1, jumper: 1, archer: 1, flyer: 1, caster: 1, swimmer: 1 };
 
@@ -71,10 +73,22 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       if (this.markT > 0 && Math.random() < dt * 5)
         G.parts.push(new Part(this.cx + (Math.random() - .5) * this.w, this.y - 6, '#e8d05a', -24, .5));
     }
-    this.hp -= tickDots(this.dots, dt, d => {
-      if (Math.random() < dt * 6) G.parts.push(new Part(this.cx, this.cy, d.kind === 'burn' ? '#ff8a3a' : d.kind === 'poison' ? '#8fd06a' : '#9fe0ff'));
-    });
-    if (this.hp <= 0) { this.die(null); return; }
+    /* 지속 피해 — 1초마다 그 1초치를 한꺼번에 깎고 피해 숫자로 띄운다(플레이어와 같은 박자 · player-move). 다 풀리면 남은 몫도 마저 */
+    if (this.dots.length || this.dotAcc > 0) {
+      const kind = this.dots.length ? this.dots[0].kind : this.dotKind;
+      this.dotAcc = (this.dotAcc || 0) + tickDots(this.dots, dt, d => {
+        if (Math.random() < dt * 6) G.parts.push(new Part(this.cx, this.cy, d.kind === 'burn' ? '#ff8a3a' : d.kind === 'poison' ? '#8fd06a' : '#9fe0ff'));
+      });
+      this.dotKind = kind; this.dotT = (this.dotT || 0) + dt;
+      if (this.dotT >= 1 || !this.dots.length) {
+        let acc = this.dotAcc;
+        if (this.boss) acc = this.ward > 0 ? 0 : this.formHurt(acc);   // 결계는 막고 방어막이 먼저 받는다(entity/boss-forms)
+        const n = Math.round(acc);
+        this.hp -= acc; this.dotAcc = 0; this.dotT = 0;
+        if (n >= 1) G.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 14, this.y - 4, n, DOT_COL[kind] || '#d8c8ff', 0));
+        if (this.hp <= 0) { this.die(null); return; }
+      }
+    }
 
     /* 유적 고유 규칙(entity/enemy-traits) — 언 것 · 숨은 것 · 붙은 것은 갈래 움직임도 접촉 피해도 쉰다 */
     if ((this.def.trait || this.frozenT > 0) && this.traitTick(dt, world, player)) return;

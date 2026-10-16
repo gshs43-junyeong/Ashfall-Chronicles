@@ -73,17 +73,20 @@ export const PlayerMove: Bag & ThisType<Player> = {
     for (const k in this.cd) if (this.cd[k] > 0) this.cd[k] = Math.max(0, this.cd[k] - dt);
     for (let i = this.buffs.length - 1; i >= 0; i--) { this.buffs[i].t -= dt; if (this.buffs[i].t <= 0) { this.buffs.splice(i, 1); this.recalc(); } }
 
-    /* 화상 · 중독(몹 스킬 · 원소 탄) — 맞은 게 아니라 타는 것이라 무적 시간과 상관없이 흐른다. 숫자는 0.6초치를 모아 한 번 */
+    /* 화상 · 중독(몹 스킬 · 원소 탄) — 맞은 게 아니라 타는 것이라 무적 시간과 상관없이 흐른다.
+       1초마다 한 번 — 그 1초치를 한꺼번에 깎고 그 값을 피해 숫자로 띄운다(몹과 같은 박자 · enemy-ai) */
     let dot = 0;
     for (const b of this.buffs) if (b.dps > 0) dot += b.dps * dt;
-    if (dot > 0 && this.hp > 0 && !this.remote) {
-      this.hp -= dot; this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY); this.dotAcc = (this.dotAcc || 0) + dot; this.dotT = (this.dotT || 0) + dt;
-      if (this.dotT >= 0.6) {
-        const burn = this.buffs.some(b => b.id === 'burn' && b.dps > 0);
-        if (this.dotAcc >= 1) G.texts.push(new DmgText(this.cx, this.y, String(Math.round(this.dotAcc)), burn ? '#ff9a4a' : '#9fd86a', 0));
+    if (!this.remote && this.hp > 0 && (dot > 0 || this.dotAcc > 0)) {
+      this.dotAcc = (this.dotAcc || 0) + dot; this.dotT = (this.dotT || 0) + dt;
+      if (dot > 0) { this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY); this.dotBurn = this.buffs.some(b => b.id === 'burn' && b.dps > 0); }
+      if (this.dotT >= 1 || dot <= 0) {                       // 걸린 것이 다 풀리면 남은 몫도 마저(색은 마지막에 걸려 있던 것)
+        const burn = this.dotBurn, n = Math.round(this.dotAcc);
+        this.hp -= this.dotAcc;
+        if (n >= 1) G.texts.push(new DmgText(this.cx, this.y, n, burn ? '#ff9a4a' : '#9fd86a', 0));
         this.dotAcc = 0; this.dotT = 0;
+        if (this.hp <= 0) { this.hp = 0; G.onDeath('dot'); }
       }
-      if (this.hp <= 0) { this.hp = 0; G.onDeath('dot'); }
     }
 
     // 재생 — 1초마다 한 번에 오른다(막대도 1초 계단) · 체력은 오른 만큼 치유 숫자를 띄운다

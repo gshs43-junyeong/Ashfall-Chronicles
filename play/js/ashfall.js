@@ -34781,20 +34781,23 @@
       }
       let dot = 0;
       for (const b of this.buffs) if (b.dps > 0) dot += b.dps * dt;
-      if (dot > 0 && this.hp > 0 && !this.remote) {
-        this.hp -= dot;
-        this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY);
+      if (!this.remote && this.hp > 0 && (dot > 0 || this.dotAcc > 0)) {
         this.dotAcc = (this.dotAcc || 0) + dot;
         this.dotT = (this.dotT || 0) + dt;
-        if (this.dotT >= 0.6) {
-          const burn = this.buffs.some((b) => b.id === "burn" && b.dps > 0);
-          if (this.dotAcc >= 1) app.texts.push(new DmgText(this.cx, this.y, String(Math.round(this.dotAcc)), burn ? "#ff9a4a" : "#9fd86a", 0));
+        if (dot > 0) {
+          this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY);
+          this.dotBurn = this.buffs.some((b) => b.id === "burn" && b.dps > 0);
+        }
+        if (this.dotT >= 1 || dot <= 0) {
+          const burn = this.dotBurn, n = Math.round(this.dotAcc);
+          this.hp -= this.dotAcc;
+          if (n >= 1) app.texts.push(new DmgText(this.cx, this.y, n, burn ? "#ff9a4a" : "#9fd86a", 0));
           this.dotAcc = 0;
           this.dotT = 0;
-        }
-        if (this.hp <= 0) {
-          this.hp = 0;
-          app.onDeath("dot");
+          if (this.hp <= 0) {
+            this.hp = 0;
+            app.onDeath("dot");
+          }
         }
       }
       this.mpCd = (this.mpCd || 0) - dt;
@@ -35054,6 +35057,7 @@
   // src/game/entity/enemy-ai.ts
   var enemy_ai_exports = {};
   __export(enemy_ai_exports, {
+    DOT_COL: () => DOT_COL,
     EnemyAI: () => EnemyAI,
     SENSING: () => SENSING
   });
@@ -35406,6 +35410,7 @@
   }
 
   // src/game/entity/enemy-ai.ts
+  var DOT_COL = { burn: "#ff9a4a", fire: "#ff9a4a", poison: "#9fd86a", bleed: "#ff6a6a", frost: "#9fe0ff" };
   var SENSING = { walker: 1, jumper: 1, archer: 1, flyer: 1, caster: 1, swimmer: 1 };
   var EnemyAI = {
     /** 나는 몹이 가고 싶은 속도 — 보이면 곧장, 놓쳤으면 벽을 돌아가는 길(engine tilemap/path findOpenPath)로 마지막 자리까지.
@@ -35469,12 +35474,26 @@
         if (this.markT > 0 && Math.random() < dt * 5)
           app.parts.push(new Part(this.cx + (Math.random() - 0.5) * this.w, this.y - 6, "#e8d05a", -24, 0.5));
       }
-      this.hp -= tickDots(this.dots, dt, (d) => {
-        if (Math.random() < dt * 6) app.parts.push(new Part(this.cx, this.cy, d.kind === "burn" ? "#ff8a3a" : d.kind === "poison" ? "#8fd06a" : "#9fe0ff"));
-      });
-      if (this.hp <= 0) {
-        this.die(null);
-        return;
+      if (this.dots.length || this.dotAcc > 0) {
+        const kind = this.dots.length ? this.dots[0].kind : this.dotKind;
+        this.dotAcc = (this.dotAcc || 0) + tickDots(this.dots, dt, (d) => {
+          if (Math.random() < dt * 6) app.parts.push(new Part(this.cx, this.cy, d.kind === "burn" ? "#ff8a3a" : d.kind === "poison" ? "#8fd06a" : "#9fe0ff"));
+        });
+        this.dotKind = kind;
+        this.dotT = (this.dotT || 0) + dt;
+        if (this.dotT >= 1 || !this.dots.length) {
+          let acc = this.dotAcc;
+          if (this.boss) acc = this.ward > 0 ? 0 : this.formHurt(acc);
+          const n = Math.round(acc);
+          this.hp -= acc;
+          this.dotAcc = 0;
+          this.dotT = 0;
+          if (n >= 1) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 14, this.y - 4, n, DOT_COL[kind] || "#d8c8ff", 0));
+          if (this.hp <= 0) {
+            this.die(null);
+            return;
+          }
+        }
       }
       if ((this.def.trait || this.frozenT > 0) && this.traitTick(dt, world, player)) return;
       const AI = this.def.ai;
