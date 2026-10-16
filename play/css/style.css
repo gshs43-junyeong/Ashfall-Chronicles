@@ -51,7 +51,8 @@ button{
 @media (orientation:portrait) and (max-width:600px){body.touch #rotate-hint{display:flex}body.touch #touchpad{display:none}}
 /* 터치: 스킬 칸을 손가락으로 쓴다 · 누를 곳은 44px 이상 */
 body.touch #skillbar{pointer-events:auto}
-body.ctl-off #touchpad .ti-stick,body.ctl-off #touchpad .ti-btns,body.ctl-off #touchpad .ti-alt{visibility:hidden}
+/* 타이틀 · 창 · 대화 · 멈춤 동안은 조작 패드를 통째로 숨긴다(game.ts syncCtl — in-play 는 첫 플레이 프레임에 붙는다) */
+body.ctl-off #touchpad,body:not(.in-play) #touchpad{visibility:hidden}
 body.touch #skillbar .sk{min-width:44px;min-height:44px;touch-action:none}
 #touchpad .ti-fs{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:34px;border-radius:10px;
   display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#2a2216e8,#0e0b07e8);border:1.5px solid #c8aa70a0;box-shadow:0 2px 8px #000a;pointer-events:auto}

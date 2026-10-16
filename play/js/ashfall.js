@@ -46688,6 +46688,7 @@
         }),
         /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
         _ctlOff: false,
+        _inPlay: false,
         mode: "normal",
         // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
         chapter: 0,
@@ -46736,7 +46737,11 @@
     },
     // ui.js 의 패널·대화가 연다
     syncCtl() {
-      const off = this.uiOpen || this.paused || this.scenes.has("mpause") || this.scenes.has("mdeath") || !!(this.player && this.player.hp <= 0);
+      if (!this._inPlay) {
+        this._inPlay = true;
+        document.body.classList.add("in-play");
+      }
+      const off = this.uiOpen || this.paused || this.scenes.has("mpause") || this.scenes.has("mdeath") || !!(this.player && this.player.hp <= 0) || !!document.querySelector(".modal.open, #settings-screen.open");
       if (off !== this._ctlOff) {
         this._ctlOff = off;
         document.body.classList.toggle("ctl-off", off);
@@ -46839,6 +46844,8 @@
     toTitle() {
       this.setPause(false);
       this.scenes.go("title");
+      this._inPlay = false;
+      document.body.classList.remove("in-play");
       $("#title-screen").style.display = "";
       if (typeof TitleBG !== "undefined") TitleBG.start();
       UI5.bossBar(null);

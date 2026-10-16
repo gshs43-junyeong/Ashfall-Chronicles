@@ -81,7 +81,7 @@ export class Game {
         start: 'title'
       }),
       /* 창·대화·멈춤·쓰러짐 동안 터치 스틱·단추를 숨긴다 — 창 위에 떠서 능력치 칸·메뉴를 가렸다(style.css body.ctl-off) */
-      _ctlOff: false,
+      _ctlOff: false, _inPlay: false,
       mode: 'normal',        // 새 게임에서 정하고 저장에 남는다. 설정에서 못 바꾼다.
       chapter: 0, boss: null,
       /* 제작 시설: nearSt는 지금 어떤 시설 앞에 서 있는가. */
@@ -109,7 +109,9 @@ export const GameCore: Bag = {
   get uiOpen() { return this.scenes.has('ui'); },
   set uiOpen(on) { this.scenes.set('ui', on); },     // ui.js 의 패널·대화가 연다
   syncCtl() {
-    const off = this.uiOpen || this.paused || this.scenes.has('mpause') || this.scenes.has('mdeath') || !!(this.player && this.player.hp <= 0);   // 멀티플레이 멈춤·쓰러짐은 세계를 안 멈추는 층
+    if (!this._inPlay) { this._inPlay = true; document.body.classList.add('in-play'); }   // 타이틀에서는 패드를 안 띄운다(style.css)
+    const off = this.uiOpen || this.paused || this.scenes.has('mpause') || this.scenes.has('mdeath') || !!(this.player && this.player.hp <= 0)   // 멀티플레이 멈춤·쓰러짐은 세계를 안 멈추는 층
+      || !!document.querySelector('.modal.open, #settings-screen.open');   // 확인 창 · 설정처럼 uiOpen 을 안 거는 창
     if (off !== this._ctlOff) { this._ctlOff = off; document.body.classList.toggle('ctl-off', off); }
   },
 
@@ -193,7 +195,7 @@ export const GameCore: Bag = {
   },
   /** 타이틀로 돌아간다(저장은 부르는 쪽이 정한다). */
   toTitle() {
-    this.setPause(false); this.scenes.go('title'); $('#title-screen').style.display = '';
+    this.setPause(false); this.scenes.go('title'); this._inPlay = false; document.body.classList.remove('in-play'); $('#title-screen').style.display = '';
     if (typeof TitleBG !== 'undefined') TitleBG.start();
     UI.bossBar(null); this.renderSlotScreen();
   },
