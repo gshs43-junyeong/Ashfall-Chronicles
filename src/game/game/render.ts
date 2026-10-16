@@ -96,7 +96,8 @@ export const RenderPart: Bag = {
     /* 장이 넘어가며 잿빛에 진 잎만큼 잎 그늘도 옅어진다 — drawAshTile 이 칸을 지우는 평균 비율(shed × 잿빛)을 그대로 쓴다 */
     const ashF = this.ashF(), keep = (t: number) => { const a = this.ASH_TILE[t]; return a && a.shed ? clamp(1 - a.shed * ashF * a.fade * 1.15, 0, 1) : 1; };
     w.computeLight(tx0, ty0, tx1, ty1, dayLight,
-      [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]], sun, keep);   // 플레이어 미광
+      [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]], sun, keep,   // 플레이어 미광
+      this.players.filter((q: Player) => !q.dead).map((q: Player) => [q.x, q.y, q.w, q.h]));   // 몸 그림자 — 나무 그늘과 같은 판
   },
   /** 렌더 단계 — 원경 · 채취탑 */
   rFar(f: any) {

@@ -253,7 +253,7 @@ Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 | 파라미터 | 뜻 |
 |---|---|
 | `?debug=village` | 여명 마을에서 시작 (`&lv=2\|3` 마을 단계) |
-| `?debug=sea` · `bomb` · `price` · `fishfarm` | 그 구역/기능 시험장(`fishfarm&duel=0~4` 그 등급 낚시 겨루기로 바로) |
+| `?debug=sea` · `bomb` · `price` · `fishfarm` · `fishing` | 그 구역/기능 시험장(`fishing` = 낚시 겨루기로 바로 · `&duel=0~4` 등급) |
 | `?debug=ruin&id=mine` | 그 유적 방에서 시작 (`&pulse=` 맥박 · `&boss=1` 주인 처치 = 메아리) |
 | `?debug=cave` | 가장 가까운 금 간 자갈 앞에서 시작 (`&k=moss\|drip\|geode\|fume` 그 갈래 굴 안 · `hall\|cross\|long` 대공동 · 엇갈린 굴 · 긴 굴) |
 | `?debug=meteor` | 2.5초 뒤 운석 (`&at=me` 머리 위 = 즉사 · `&at=<x>` 그 칸 · `&dx=` 오른쪽 몇 칸, 기본 30) |
@@ -364,8 +364,8 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   큰 굴 갈래(`buildTunnels`, 제 난수 `seed+'_tunnel'`): 대공동(caverns 에도 넣어 호수 · 폭포) · 엇갈린 굴(갈림길 야영지 상자) · 긴 굴. 유적 둘레와 그 밑 150칸(깊은 곳 자리)은 피한다. 사연: docs/code-history.md#h178
 - **부유 성채 해금**(world/village.ts `buildCitadel` · game/citadel.ts): 본채 문은 `T.ORBITSEAL`(hard 99 — 저장된다, SEALSTONE 은 저장에서 빠지므로 쓰지 말 것).
   궤도 닻 셋(`type 'anchor'` · `kind` guard 지킴이 처치 / charge 곁에 10초 / dial 도는 바늘을 꼭대기에서) — 맞출 때마다 `citadel.links[i]` 에 빛다리(`T.LIGHTBRIDGE`),
-  셋이면 `citadel.gate` 가 열린다. 주인(restorer)을 쓰러뜨리면 가장 작은 방(문을 막아도 주인 방까지 길이 남는 방) `citadel.vault` 가 열리고 제트팩 시제품(`relic`).
-  진행은 `world.citadel.anc` · `vaultOpen`(세이브). 여럿이면 호스트 판정(`anc` 메시지). `?debug=citadel`(`&done=1`). 사연: docs/code-history.md#h179
+  셋이면 `citadel.gate` 가 열린다. 성은 하늘섬 위의 성문루 → 바깥뜰 → 본성(큰 홀 = 주인 · 2층 보관고) → 안뜰 → 원탑(제 난수 `seed+'_citadel'`, 상자는 `chestOn` 으로 바닥 위에) — 주인(restorer)을 쓰러뜨리면 2층 보관고 `citadel.vault` 가 열리고 제트팩 시제품(`relic`).
+  진행은 `world.citadel.anc` · `vaultOpen`(세이브). 여럿이면 호스트 판정(`anc` 메시지). `?debug=citadel`(`&done=1`). 사연: docs/code-history.md#h179 · #h194
 - **석판 유적 기억 조각**(world/ruin-site.ts `storyMemories` · game/memory.ts · data/ruins.ts `STORY_MEMORY`): 유적마다 셋 — ① 금 간 벽돌(216) 뒤 골방(옆 · 없으면 바닥 밑 · 그래도 없으면 방 구석 벽장, 상자 덤 `cave`)
   ② 높은 방 천장 턱(발판 사다리) ③ 유물 방 구석(줍는 순간 지킴이 둘). 셋이면 끝줄 · 석판 곁 상자(`memChest`) · 경험치. 진행은 물건의 `got`(세계 저장).
   골방은 `ruinSites[].hide` 에 넣어 유적 안으로 센다(ent 는 입구라 함정 검사가 붙는다) — 안 넣으면 floodCaves 가 물을 채운다. 사연: docs/code-history.md#h180

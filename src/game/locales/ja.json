@@ -1144,7 +1144,9 @@
   "찍은 점수 {have} · 모든 단이 열렸다": "振ったポイント{have} · すべての段が開いた",
   "트리의 심장": "ツリーの心臓",
   "{b|을} 쓰러뜨렸다": "{b}を倒した",
-  "{lv}레벨이 되었다": "レベル{lv}になった"
+  "{lv}레벨이 되었다": "レベル{lv}になった",
+  "유틸리티 칸이 아직 없다 — 특성 「도구 띠」를 배울 것": "ユーティリティ枠がまだない — 特性「道具帯」を習得すること",
+  "펫 칸이 아직 없다 — 특성 「길들이는 손」을 배울 것": "ペット枠がまだない — 特性「手なずける手」を習得すること"
  },
  "tables": {
   "BIOMES.0.n": "沈んだ海",
@@ -4635,11 +4637,11 @@
   "SKILLS.s_packrat.n": "荷運び",
   "SKILLS.s_packrat.d": "かばんの枠 +%d。",
   "SKILLS.s_toolbelt.n": "道具帯",
-  "SKILLS.s_toolbelt.d": "2つ目の補助スロット(X)が開く。",
+  "SKILLS.s_toolbelt.d": "ユーティリティ枠が%d個開く(Z・X)。",
   "SKILLS.s_petbond.n": "手なずける手",
-  "SKILLS.s_petbond.d": "2つ目のペットスロットが開く — ペットを2匹連れて歩ける。",
+  "SKILLS.s_petbond.d": "ペット枠が%d個開く — 連れて歩ける。",
   "SKILLS.s_quickhands.n": "素早い手",
-  "SKILLS.s_quickhands.d": "スキルスロットがもう1つ開く(G)。",
+  "SKILLS.s_quickhands.d": "スキル枠がさらに%d個開く(G・V)。",
   "TILE_DEF.218.n": "機械の胴体",
   "ITEMS.recall_camp.n": "残り火の帰還珠",
   "ITEMS.recall_camp.d": "割るとその場からベースキャンプの広場へ戻る。封じられた灰が残り火を抱いている。",
@@ -4764,9 +4766,8 @@
   "BOSS_MOVES.shaft_maw.moves.6.n": "土砂押し",
   "SKILLS.s_deeppack.n": "深いポケット",
   "SKILLS.s_deeppack.d": "バッグ枠+%d。",
-  "SKILLS.s_beastkin.n": "群れの長",
-  "SKILLS.s_beastkin.d": "3つ目のペット枠が開く — ペット3匹が一緒についてくる。",
   "SKILLS.s_ringbearer.n": "指輪掛け",
-  "SKILLS.s_ringbearer.d": "3つ目のアクセサリー枠が開く。"
+  "SKILLS.s_ringbearer.d": "2つ目のアクセサリー枠が開く。",
+  "KEY_ACTIONS.19.n": "スキル6"
  }
 }

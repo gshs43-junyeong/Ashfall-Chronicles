@@ -449,7 +449,7 @@ export const UI: Bag = {
   /* ---------------- 장비 ---------------- */
   buildEquipSlots() {
     // 칸마다 비었을 때 깔릴 실루엣.
-    const SLOT_IC: Record<string, string> = { weapon: 'weapon', helm: 'helm', chest: 'chest', boots: 'boots', acc1: 'acc', acc2: 'acc', acc3: 'acc', util1: 'util', util2: 'util', bag: 'bag', pet1: 'pet', pet2: 'pet', pet3: 'pet' };
+    const SLOT_IC: Record<string, string> = { weapon: 'weapon', helm: 'helm', chest: 'chest', boots: 'boots', acc1: 'acc', acc2: 'acc', util1: 'util', util2: 'util', bag: 'bag', pet1: 'pet', pet2: 'pet' };
     $$('.slot.equip').forEach(el => {
       const key = el.dataset.eq;
       el.insertAdjacentHTML('beforeend', '<span class="eqic"></span><span class="ic"></span>');
@@ -479,11 +479,11 @@ export const UI: Bag = {
       el.addEventListener('mouseleave', () => this.hideTip());
     });
   },
-  /** 특성 트리가 아직 안 연 칸(둘째 유틸리티 · 둘째 · 셋째 펫 · 셋째 장신구) — 이미 낀 것은 그대로 둔다 */
+  /** 특성 트리가 아직 안 연 칸(유틸리티 · 펫 · 둘째 장신구) — 이미 낀 것은 그대로 둔다 */
   slotLocked(key: string) {
     const p = G.player;
-    return (key === 'util2' && utilSlotN(p) < 2) || (key === 'pet2' && petSlotN(p) < 2) || (key === 'pet3' && petSlotN(p) < 3) ||
-      (key === 'acc3' && accSlotN(p) < 3);
+    const n = (k: string) => +k.slice(-1);
+    return (/^util/.test(key) && utilSlotN(p) < n(key)) || (/^pet/.test(key) && petSlotN(p) < n(key)) || (key === 'acc2' && accSlotN(p) < 2);
   },
   refreshEquip() {
     if (!G.player) return;
@@ -518,8 +518,8 @@ export const UI: Bag = {
   /* ---------------- 스킬바 ---------------- */
   buildSkillbar() {
     const bar = $('#skillbar'); bar.innerHTML = '';
-    const keys = ['Q', 'E', 'R', 'F', 'G'];
-    for (let i = 0; i < 5; i++) {                // 다섯째는 탐험가 '재빠른 손'이 연다
+    const keys = ['Q', 'E', 'R', 'F', 'G', 'V'];
+    for (let i = 0; i < 6; i++) {                // 다섯째 · 여섯째는 탐험가 '재빠른 손'이 연다
       const d = document.createElement('div');
       d.className = 'sk empty';
       d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span><span class="cdnum"></span>`;

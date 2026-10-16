@@ -65,7 +65,7 @@ export const ShopPart: Bag = {
     if (!this.shopStock[npc]) {
       const r = new RNG(this.world.seed + '_shop_' + npc + '_' + this.dayCount);
       /* 재고 후보 거르기 — 세션(스토리 진행)과 마을 단계 둘 다 본다. */
-      const sess = sessionOf(this.chapter);
+      const sess = sessionOf(this.chapter).id;
       /* 마을 단계(vlv) 조건은 **마을 상인에게만** 건다. */
       const vlv = m.spot ? this.villageLv() : 99;
       const bag = (m.pool ? m.pool.filter((e: any) => (e.sess || 1) <= sess && (e.vlv || 1) <= vlv)

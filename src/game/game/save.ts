@@ -59,7 +59,7 @@ export const SavePart: Bag = {
       bossKilled: c.bossKilled, deepest: c.deepest, highest: c.highest, gathered: c.gathered || {}
     });
     p.charId = CHAR_OF(c.charId).id;
-    while (p.slots.length < 5) p.slots.push(null);           // 다섯째 스킬 칸(재빠른 손) — 옛 기록은 넷
+    while (p.slots.length < 6) p.slots.push(null);           // 다섯째 · 여섯째 스킬 칸(재빠른 손) — 옛 기록은 넷
     /* 이전 세이브에는 생활 숙련이 없다 — 1레벨로 시작한다. */
     if (c.prof) for (const k in p.prof) if (c.prof[k]) Object.assign(p.prof[k], c.prof[k]);
     /* 별 조각 궤도 — 옛 기록에는 없다. */

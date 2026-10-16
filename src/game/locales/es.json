@@ -1144,7 +1144,9 @@
   "찍은 점수 {have} · 모든 단이 열렸다": "Puntos gastados {have} · todos los niveles abiertos",
   "트리의 심장": "Corazón del árbol",
   "{b|을} 쓰러뜨렸다": "derrotó a {b}",
-  "{lv}레벨이 되었다": "alcanzó el nivel {lv}"
+  "{lv}레벨이 되었다": "alcanzó el nivel {lv}",
+  "유틸리티 칸이 아직 없다 — 특성 「도구 띠」를 배울 것": "Aún no hay ranura de utilidad — aprende el talento «Cinturón de herramientas»",
+  "펫 칸이 아직 없다 — 특성 「길들이는 손」을 배울 것": "Aún no hay ranura de mascota — aprende el talento «Mano domadora»"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4635,11 +4637,11 @@
   "SKILLS.s_packrat.n": "Porteador",
   "SKILLS.s_packrat.d": "Huecos de la bolsa +%d.",
   "SKILLS.s_toolbelt.n": "Cinturón de herramientas",
-  "SKILLS.s_toolbelt.d": "Desbloquea la segunda ranura de utilidad (X).",
+  "SKILLS.s_toolbelt.d": "Abre %d ranura(s) de utilidad (Z · X).",
   "SKILLS.s_petbond.n": "Mano domadora",
-  "SKILLS.s_petbond.d": "Desbloquea la segunda ranura de mascota — lleva dos mascotas contigo.",
+  "SKILLS.s_petbond.d": "Abre %d ranura(s) de mascota — te acompañan.",
   "SKILLS.s_quickhands.n": "Manos rápidas",
-  "SKILLS.s_quickhands.d": "Desbloquea una ranura de habilidad más (G).",
+  "SKILLS.s_quickhands.d": "Abre %d ranura(s) de habilidad más (G · V).",
   "TILE_DEF.218.n": "Cuerpo de máquina",
   "ITEMS.recall_camp.n": "Orbe de regreso de brasa",
   "ITEMS.recall_camp.d": "Rómpelo para volver al instante a la plaza del campamento base. La ceniza sellada guarda una brasa.",
@@ -4764,9 +4766,8 @@
   "BOSS_MOVES.shaft_maw.moves.6.n": "Empuje de escombros",
   "SKILLS.s_deeppack.n": "Bolsillos hondos",
   "SKILLS.s_deeppack.d": "+%d casillas de bolsa.",
-  "SKILLS.s_beastkin.n": "Líder de la manada",
-  "SKILLS.s_beastkin.d": "Abre una tercera casilla de mascota — tres mascotas te siguen a la vez.",
   "SKILLS.s_ringbearer.n": "Aro de anillos",
-  "SKILLS.s_ringbearer.d": "Abre una tercera casilla de accesorio."
+  "SKILLS.s_ringbearer.d": "Abre una segunda ranura de accesorio.",
+  "KEY_ACTIONS.19.n": "Habilidad 6"
  }
 }

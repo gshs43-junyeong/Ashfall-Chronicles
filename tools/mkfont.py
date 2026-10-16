@@ -25,7 +25,7 @@ from hangul import CONS, CONS_V, DOUBLE, VV, HV, MV, CHO, JUNG, JONG, LV, L_ADJ,
 OUT = os.path.join(ROOT, 'play', 'assets', 'fonts')
 CSS = os.path.join(ROOT, 'play', 'css', 'style.css')   # @font-face 의 ?v= 를 파일 해시로 맞춘다(오래 두는 캐시)
 FAMILY = 'Ashfall'
-VERSION = '2.200'
+VERSION = '2.201'
 REPO = 'https://github.com/gshs43-junyeong/Ashfall-Chronicles'
 COPYRIGHT = f'Copyright 2026 The Ashfall Chronicles Project Authors ({REPO})'
 OFL_DESC = ('This Font Software is licensed under the SIL Open Font License, Version 1.1. '
@@ -291,9 +291,10 @@ def syllable(code, w, roles=None, f=None):
             else: bc = tt + 230; Lb = (278, bc + 210, 1508, 1600)
             low = tt + 70
         else:
-            if up: bc = 135; Lb = (260, 600, 1500, 1440)
-            elif dn: bc = 522; Lb = (296, 824, 1490, 1510)
-            else: bc = 146; Lb = (280, 630, 1508, 1450)
+            # ★ 받침 없는 ㅗ · ㅛ · ㅡ 는 글자 키가 다른 글자의 8할(1412 : 1764)이라 줄에서 작아 보였다 — 막대를 내리고 초성을 키운다
+            if up: bc = -20; Lb = (260, 480, 1500, 1590)
+            elif dn: bc = 470; Lb = (296, 780, 1490, 1590)
+            else: bc = -20; Lb = (280, 500, 1508, 1590)
             low = -156
         L0 = adj(Lb, l, 0.3, 0.3); L = Lfix(L0)                 # 짧은 획은 고치기 전 자리까지 — 초성만 올라가 빈틈이 생긴다
         add('L', cons_strokes(l, L, w))
@@ -372,7 +373,16 @@ def fit_syllable(code, w, roles=None):
         if not moved: break
     if roles is not None: syllable(code, w, roles, f)
     fit_syllable.last = f
-    return st
+    return uniform(st, w)
+
+def uniform(st, w):
+    """★ 한 글자 안의 굵기를 고르게 — 좁은 자모만 가늘이면 같은 글자 안에 굵은 줄기와 가는 획이 섞여 굵은꼴이 얼룩져 보였다(사용자 지적).
+       글자 안 세로 · 가로 굵기의 가장 가는 값으로 모든 획을 맞춘다 — 획이 많은 글자는 통째로 조금 가늘어 먹색이 고르다. 사연: docs/code-history.md#h195"""
+    wv = min([s[2] for s in st if s[0] != 'fill' and len(s) > 2] + [w])
+    wh = min([s[3] if len(s) > 3 else s[2] for s in st if s[0] != 'fill' and len(s) > 2] + [w])
+    wv = min(wv, max(wh / 0.72, w * 0.8))                     # 세로 : 가로 대비도 고르게 — 가는 가로획 옆 줄기가 튀지 않되 8할 밑으로는 안 내린다
+    if wv >= w - 0.5 and wh >= w - 0.5: return st
+    return [s if s[0] == 'fill' else (s[0], s[1], wv) + ((wh,) if s[0] == 'line' else ()) for s in st]
 
 def _shift(st, dx):
     return [(s[0], [(x + dx, y) for x, y in s[1]]) + tuple(s[2:]) for s in st]

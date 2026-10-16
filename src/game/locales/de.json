@@ -1144,7 +1144,9 @@
   "찍은 점수 {have} · 모든 단이 열렸다": "Vergebene Punkte {have} · alle Stufen offen",
   "트리의 심장": "Herz des Baumes",
   "{b|을} 쓰러뜨렸다": "hat {b} besiegt",
-  "{lv}레벨이 되었다": "hat Stufe {lv} erreicht"
+  "{lv}레벨이 되었다": "hat Stufe {lv} erreicht",
+  "유틸리티 칸이 아직 없다 — 특성 「도구 띠」를 배울 것": "Noch kein Werkzeugplatz — lerne das Talent „Werkzeuggürtel“",
+  "펫 칸이 아직 없다 — 특성 「길들이는 손」을 배울 것": "Noch kein Begleiterplatz — lerne das Talent „Zähmende Hand“"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4635,11 +4637,11 @@
   "SKILLS.s_packrat.n": "Packesel",
   "SKILLS.s_packrat.d": "Taschenplätze +%d.",
   "SKILLS.s_toolbelt.n": "Werkzeuggürtel",
-  "SKILLS.s_toolbelt.d": "Schaltet den zweiten Hilfsmittelplatz (X) frei.",
+  "SKILLS.s_toolbelt.d": "Öffnet %d Werkzeugplatz/-plätze (Z · X).",
   "SKILLS.s_petbond.n": "Zähmende Hand",
-  "SKILLS.s_petbond.d": "Schaltet den zweiten Haustierplatz frei — zwei Haustiere begleiten dich.",
+  "SKILLS.s_petbond.d": "Öffnet %d Begleiterplatz/-plätze — Begleiter folgen dir.",
   "SKILLS.s_quickhands.n": "Flinke Hände",
-  "SKILLS.s_quickhands.d": "Schaltet einen weiteren Fertigkeitsplatz frei (G).",
+  "SKILLS.s_quickhands.d": "Öffnet %d weitere(n) Fertigkeitsplatz/-plätze (G · V).",
   "TILE_DEF.218.n": "Maschinenkörper",
   "ITEMS.recall_camp.n": "Glutkugel der Rückkehr",
   "ITEMS.recall_camp.d": "Zerbrich sie, um sofort zum Platz des Basislagers zurückzukehren. Versiegelte Asche birgt eine Glut.",
@@ -4764,9 +4766,8 @@
   "BOSS_MOVES.shaft_maw.moves.6.n": "Abraumschub",
   "SKILLS.s_deeppack.n": "Tiefe Taschen",
   "SKILLS.s_deeppack.d": "+%d Taschenplätze.",
-  "SKILLS.s_beastkin.n": "Rudelführer",
-  "SKILLS.s_beastkin.d": "Öffnet einen dritten Begleiterplatz — drei Begleiter folgen dir zugleich.",
   "SKILLS.s_ringbearer.n": "Ringschlaufe",
-  "SKILLS.s_ringbearer.d": "Öffnet einen dritten Schmuckplatz."
+  "SKILLS.s_ringbearer.d": "Öffnet einen zweiten Schmuckplatz.",
+  "KEY_ACTIONS.19.n": "Fertigkeit 6"
  }
 }

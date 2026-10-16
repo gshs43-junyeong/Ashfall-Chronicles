@@ -6941,7 +6941,8 @@
     /* ★ 새 액션은 맨 끝에 — 번역 열쇠가 번호(KEY_ACTIONS.16.n)라 가운데 끼우면 뒤 이름이 한 칸씩 밀린다 */
     { id: "util1", n: "유틸리티 (왼쪽 칸)", def: ["KeyZ"] },
     { id: "util2", n: "유틸리티 (오른쪽 칸)", def: ["KeyX"] },
-    { id: "skill5", n: "스킬 5", def: ["KeyG"] }
+    { id: "skill5", n: "스킬 5", def: ["KeyG"] },
+    { id: "skill6", n: "스킬 6", def: ["KeyV"] }
   ];
   var NOTICE_KINDS = [
     { id: "good", n: "획득 · 성공", def: 1 },
@@ -9629,14 +9630,13 @@
       n: "도구 띠",
       i: "🧰",
       br: "explore",
-      tier: 2,
-      col: 0.5,
-      max: 1,
+      tier: 0,
+      col: 2.5,
+      max: 2,
       type: "passive",
-      req: ["s_bombpick", "s_scout"],
       unlock: 1,
-      d: "두 번째 유틸리티 칸(X)이 열린다.",
-      v: () => 0
+      d: "유틸리티 칸이 %d개 열린다(Z · X).",
+      v: (r) => r
     },
     s_petbond: {
       n: "길들이는 손",
@@ -9644,12 +9644,12 @@
       br: "explore",
       tier: 2,
       col: 1.5,
-      max: 1,
+      max: 2,
       type: "passive",
       req: ["s_scout", "s_packrat"],
       unlock: 1,
-      d: "두 번째 펫 칸이 열린다 — 펫 둘을 함께 데리고 다닌다.",
-      v: () => 0
+      d: "펫 칸이 %d개 열린다 — 데리고 다닐 수 있다.",
+      v: (r) => r
     },
     s_quickhands: {
       n: "재빠른 손",
@@ -9657,12 +9657,12 @@
       br: "explore",
       tier: 3,
       col: 1,
-      max: 1,
+      max: 2,
       type: "passive",
       req: ["s_toolbelt", "s_petbond"],
       unlock: 1,
-      d: "스킬 칸이 하나 더 열린다(G).",
-      v: () => 0
+      d: "스킬 칸이 %d개 더 열린다(G · V).",
+      v: (r) => r
     },
     s_ringbearer: {
       n: "반지 고리",
@@ -9674,20 +9674,7 @@
       type: "passive",
       req: ["s_packrat"],
       unlock: 1,
-      d: "세 번째 장신구 칸이 열린다.",
-      v: () => 0
-    },
-    s_beastkin: {
-      n: "무리의 우두머리",
-      i: "🐺",
-      br: "explore",
-      tier: 3,
-      col: 0,
-      max: 1,
-      type: "passive",
-      req: ["s_petbond"],
-      unlock: 1,
-      d: "세 번째 펫 칸이 열린다 — 펫 셋이 함께 따라다닌다.",
+      d: "두 번째 장신구 칸이 열린다.",
       v: () => 0
     },
     s_deeppack: {
@@ -9704,11 +9691,11 @@
       v: (r) => r * 5
     }
   };
-  var skillSlotN = (p) => 4 + (p.skills.s_quickhands ? 1 : 0);
-  var utilSlotN = (p) => p.skills.s_toolbelt ? 2 : 1;
-  var petSlotN = (p) => p.skills.s_beastkin ? 3 : p.skills.s_petbond ? 2 : 1;
-  var accSlotN = (p) => p.skills.s_ringbearer ? 3 : 2;
-  var PET_KEYS = ["pet1", "pet2", "pet3"];
+  var skillSlotN = (p) => 4 + (p.skills.s_quickhands | 0);
+  var utilSlotN = (p) => p.skills.s_toolbelt | 0;
+  var petSlotN = (p) => p.skills.s_petbond | 0;
+  var accSlotN = (p) => p.skills.s_ringbearer ? 2 : 1;
+  var PET_KEYS = ["pet1", "pet2"];
   var BRANCHES = [
     {
       id: "blade",
@@ -9736,7 +9723,7 @@
       n: "탐험가",
       tag: "채굴 · 행운 · 칸 열기",
       c: "#c89a5a",
-      nodes: ["s_mole", "s_luck", "s_bombpick", "s_scout", "s_packrat", "s_toolbelt", "s_petbond", "s_quickhands", "s_ringbearer", "s_beastkin", "s_deeppack"]
+      nodes: ["s_mole", "s_luck", "s_bombpick", "s_scout", "s_packrat", "s_toolbelt", "s_petbond", "s_quickhands", "s_ringbearer", "s_deeppack"]
     }
   ];
   var TIER_REQ = [0, 3, 8, 14];
@@ -15800,6 +15787,7 @@
     MIN_CAVE: () => MIN_CAVE,
     SOIL_R: () => SOIL_R,
     SUN_AMB: () => SUN_AMB,
+    SUN_BODY: () => SUN_BODY,
     SUN_DEPTH: () => SUN_DEPTH,
     SUN_LEAF: () => SUN_LEAF,
     SUN_PLANT: () => SUN_PLANT,
@@ -15888,6 +15876,8 @@
       this.frame = 0;
       this.x0 = this.y0 = this.w = this.h = this.n = 0;
       this.sunOn = false;
+      this.sunDir = [0, 0];
+      this.sky = null;
       this.alloc(1024);
     }
     alloc(n) {
@@ -15899,6 +15889,9 @@
       this.decP = new Float32Array(n);
       this.sunV = new Float32Array(n);
       this.trans = new Float32Array(n);
+      this.occT = new Float32Array(n);
+      this.occA = new Float32Array(n);
+      this.occB = new Float32Array(n);
     }
     /** 새 창 — (x0, y0) 부터 w×h 칸. 버퍼를 비우고, 바뀐 칸 둘레의 광원 판을 버린다. 칸 번호 k = (y-y0)·w + (x-x0). */
     begin(x0, y0, w, h) {
@@ -15974,6 +15967,8 @@
     sun(sx, sy, sky, level, prep) {
       const S = this.sunV, n = this.n, L = this.L, op = this.op;
       castSunlight(S, this.w, this.h, this.x0, this.y0, this.trans, sx, sy, sky);
+      this.sunDir = [sx, sy];
+      this.sky = sky;
       if (prep) prep(S);
       for (let k = 0; k < n; k++) {
         if (S[k] <= 0.01) {
@@ -15995,6 +15990,17 @@
         const S = this.sunV;
         for (let k = 0; k < n; k++) if (!op[k] && S[k] > L[k]) L[k] = S[k];
       }
+    }
+    /** 움직이는 가림(몸 따위) — finish **뒤에** 곱한다. 한두 칸짜리 그늘은 번지기가 둘레 빛으로 메워 사라지므로,
+        같은 직사광(castSunlight)을 가림 있이 · 없이 두 번 쏘아 그 비만큼 어둡게 한다. cells = [판 칸 번호, 남는 빛(0~1), …] */
+    occlude(cells, strength) {
+      if (!this.sunOn || !cells.length || !this.sky) return;
+      const { n, w, h, x0, y0, L } = this, T2 = this.occT, A = this.occA, B = this.occB, [sx, sy] = this.sunDir;
+      T2.set(this.trans.subarray(0, n));
+      for (let i = 0; i < cells.length; i += 2) T2[cells[i]] *= cells[i + 1];
+      castSunlight(A, w, h, x0, y0, this.trans, sx, sy, this.sky);
+      castSunlight(B, w, h, x0, y0, T2, sx, sy, this.sky);
+      for (let k = 0; k < n; k++) if (A[k] > 0.01 && B[k] < A[k]) L[k] *= 1 - (1 - B[k] / A[k]) * strength;
     }
     /** 세계 칸의 밝기(창 밖은 0) */
     at(x, y) {
@@ -16021,6 +16027,7 @@
   var LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
   var SUN_AMB = 0.4, SUN_SOFT = 0.9, SUN_DEPTH = 10;
   var SUN_PLANT = 0.94, SOIL_R = 5;
+  var SUN_BODY = 0.25;
   var SUN_LEAF = 0.9;
   var LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
   TILE_DEF.forEach((d, i) => {
@@ -16592,7 +16599,7 @@
         ② 강한 점 광원(횃불·등불·수정 …, 세기 LIGHT_POINT 이상)과 플레이어 미광: 칸마다 광선을 쏘아 **가려진 칸은 그늘**(castPointLight),
            그다음 튀는 빛만 조금(LIGHT_BOUNCE 씩) 번진다 — 모서리를 돌아 다 밝아지면 그림자가 사라진다.
         ★ 두 겹 다 막힌 칸은 빛을 받되 트인 칸으로 넘기지 않는다(sweepLightGrid op) — 벽 한두 칸 뒤의 빈 방이 밝던 것. 사연: docs/code-history.md#h142 */
-    computeLight(tx0, ty0, tx1, ty1, dayLight, extra, sun, leafKeep) {
+    computeLight(tx0, ty0, tx1, ty1, dayLight, extra, sun, leafKeep, bodies) {
       const { WW: WW2, WH: WH2, SKY_Y: SKY_Y2 } = this.dims;
       const P2 = 14;
       const x0 = clamp(tx0 - P2, 0, WW2 - 1), x1 = clamp(tx1 + P2, 0, WW2 - 1);
@@ -16643,6 +16650,16 @@
         }, (S) => this._soilSun(S, x0, y0, w, h, top, op, L));
       }
       F.finish(2);
+      if (bodies && sun && sunK > 0) {
+        const cells = [];
+        for (const [bx, by, bw, bh] of bodies)
+          for (let y = Math.floor(by / TS); y <= Math.floor((by + bh - 1) / TS); y++) for (let x = Math.floor(bx / TS); x <= Math.floor((bx + bw - 1) / TS); x++) {
+            if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+            const cov = (Math.min(bx + bw, (x + 1) * TS) - Math.max(bx, x * TS)) * (Math.min(by + bh, (y + 1) * TS) - Math.max(by, y * TS)) / (TS * TS);
+            if (cov > 0) cells.push((y - y0) * w + (x - x0), 1 - (1 - SUN_BODY) * Math.min(1, cov * 1.4));
+          }
+        F.occlude(cells, 0.55 * sunK);
+      }
     }
     /** 그늘은 땅 겉면 한 칸에만 떨어진다 — 그 밑 흙은 둘레 ±SOIL_R 칸 겉면의 평균 햇빛에서 칸마다 2.7씩 줄여 채운다.
         ★ 겉면 칸 하나하나에서 번지게 두면 칸마다 2.7 씩 옆으로도 줄어 흙 속에 그늘 모양 삼각형이 박혔다(사용자 지적). 사연: docs/code-history.md#h188 */
@@ -17788,49 +17805,141 @@
     /* ---- 특별 유적 ① 부유 성채 (하늘) ----
        본채(봉인문으로 닫힘) + 선착장 다리 + 궤도 닻 섬 둘. 닻 셋(선착장 · 위 섬 · 먼 섬)을 맞추면 빛다리가 차례로 펴지고 봉인문이 열린다.
        주인(환원기)을 쓰러뜨리면 가장 작은 방 — 발사대 보관고(제트팩 시제품)가 열린다. 런타임은 game/citadel.ts. 사연: docs/code-history.md#h179 */
+    /** 부유 성채 — 하늘섬 위에 선 성. 왼쪽부터 성문루 → 바깥뜰(성벽 위 보행로) → 본성(큰 홀 · 2층 방 · 보관고 · 3층 · 옥상 망루) → 안뜰 → 원탑.
+        흔한 유적처럼 방을 BSP 로 나누지 않고 성의 짜임 그대로 짓는다(사용자 요청). 상자는 늘 바닥 **위**에(chestOn). 사연: docs/code-history.md#h194 */
     buildCitadel(rng) {
       const { SX: SX2, SKY_Y: SKY_Y2 } = this.dims;
-      const w = 74, h = 30;
-      const x0 = SX2(3300 + SHIFT), y0 = 4;
-      this.citadel = { x0, y0, w, h, cx: x0 + (w >> 1), anc: [0, 0, 0], links: [[], [], []], gate: [], vault: [] };
-      const C = this.citadel;
-      this.clearSkyBlobs([[x0 - 66, x0 + w + 4]]);
-      for (let x = x0 - 2; x <= x0 + w + 2; x++)
-        for (let y = y0 + h - 3; y <= y0 + h; y++) this.set(x, y, T.ORBITPLATE);
-      for (let k = 1; k <= 5 && y0 + h + k < SKY_Y2 - 1; k++)
-        for (let x = x0 + 6 + k * 5; x <= x0 + w - 6 - k * 5; x++) this.set(x, y0 + h + k, (x - x0) % 9 === 4 && k < 4 ? T.ORBITCORE : T.ORBITPLATE);
-      const rooms = this.carveDungeon({
-        x0,
-        y0,
-        w,
-        h,
-        wall: T.ORBITPLATE,
-        floor: T.ORBITPLATE,
-        bg: 9,
-        rng,
-        depth: 4,
-        minW: 12,
-        minH: 8,
-        shapes: ["rect", "octagon", "round"]
-      });
-      rooms.sort((a, b) => b.w * b.h - a.w * a.h);
-      let leftRoom = null;
-      for (const r of rooms) if (r.y + r.h >= y0 + h - 12 && (!leftRoom || r.x < leftRoom.x)) leftRoom = r;
-      if (!leftRoom) {
-        leftRoom = rooms[0];
-        for (const r of rooms) if (r.x < leftRoom.x) leftRoom = r;
-      }
-      const doorY = leftRoom.y + leftRoom.h - 3;
-      for (let dy = -2; dy <= 0; dy++)
-        for (let x = x0 - 1; x <= leftRoom.x + 1; x++) {
-          this.set(x, doorY + dy, T.AIR);
-          this.setWall(x, doorY + dy, 9);
+      const w = 80, gy = SKY_Y2 - 14;
+      const x0 = SX2(3300 + SHIFT), y0 = 1;
+      this.citadel = { x0, y0, w, h: SKY_Y2 - 3 - y0, cx: x0 + (w >> 1), anc: [0, 0, 0], links: [[], [], []], gate: [], vault: [] };
+      const C = this.citadel, r2 = new RNG(this.seed + "_citadel");
+      this.clearSkyBlobs([[x0 - 66, x0 + w + 6]]);
+      const box = (xa, ya, xb, yb, t) => {
+        for (let x = xa; x <= xb; x++) for (let y = Math.max(1, ya); y <= yb; y++) this.set(x, y, t);
+      };
+      const bg = (xa, ya, xb, yb) => {
+        for (let x = xa; x <= xb; x++) for (let y = Math.max(1, ya); y <= yb; y++) this.setWall(x, y, 13);
+      };
+      const crenel = (xa, xb, y) => {
+        if (y >= 1) {
+          for (let x = xa; x <= xb; x++) if ((x - xa) % 2 === 0) this.set(x, y, T.BATTLEMENT);
         }
-      for (let dy = -2; dy <= 0; dy++) for (const x of [x0 - 1, x0]) {
-        this.set(x, doorY + dy, T.ORBITSEAL);
-        C.gate.push([x, doorY + dy]);
+      };
+      const chestOn = (tx, fy, extra) => {
+        for (const x of [tx, tx + 1]) for (const y of [fy - 1, fy - 2]) if (this.solid(x, y)) this.set(x, y, T.AIR);
+        this.objects.push(Object.assign({ type: "chest", tier: 6, loot: "session2", x: tx * TS - 4, y: fy * TS - 26, w: 30, h: 26, items: null }, extra || {}));
+      };
+      const torch = (x, y) => {
+        if (this.get(x, y) === T.AIR) this.set(x, y, T.TORCH);
+      };
+      const ix0 = x0 - 3, ix1 = x0 + w + 3, half = (ix1 - ix0) / 2, icx = (ix0 + ix1) / 2;
+      for (let x = ix0; x <= ix1; x++) {
+        const u = Math.abs(x - icx) / half, d = 2 + Math.round(Math.pow(Math.max(0, 1 - u * u), 0.8) * 10 + r2.int(-1, 1));
+        for (let y = gy; y <= Math.min(gy + d, SKY_Y2 - 2); y++) this.set(x, y, y === gy ? T.SKYGRASS : T.SKYSTONE);
+        if (d > 6 && r2.chance(0.07)) this.set(x, gy + d - r2.int(1, 3), T.ORBITCORE);
       }
-      let by = doorY + 1, bx = x0 - 2;
+      box(ix0, gy - 30, ix1, gy - 1, T.AIR);
+      const F = gy;
+      const g0 = x0, g1 = x0 + 8;
+      box(g0, F - 13, g1, F - 1, T.WALLSTONE);
+      box(g0, F, g1, F, T.WALLSTONE);
+      bg(g0, F - 13, g1, F - 1);
+      box(g0, F - 3, g1, F - 1, T.AIR);
+      box(g0 + 2, F - 9, g1 - 2, F - 6, T.AIR);
+      torch(g0 + 4, F - 8);
+      box(g1 - 1, F - 13, g1 - 1, F - 4, T.AIR);
+      for (const y of [F - 4, F - 7, F - 10, F - 13]) this.set(g1 - 1, y, T.PLATFORM);
+      crenel(g0, g1, F - 14);
+      for (let dy = 1; dy <= 3; dy++) for (const x of [g0, g0 + 1]) {
+        this.set(x, F - dy, T.ORBITSEAL);
+        C.gate.push([x, F - dy]);
+      }
+      this.set(g0 + 3, F - 5, T.WINDOW);
+      this.set(g0 + 5, F - 5, T.WINDOW);
+      const b0 = g1 + 1, b1 = x0 + 30;
+      bg(b0, F - 7, b1, F - 1);
+      for (let x = b0; x <= b1; x++) this.set(x, F - 8, T.PLATFORM);
+      crenel(b0, b1, F - 9);
+      torch(b0 + 3, F - 3);
+      torch(b1 - 2, F - 3);
+      chestOn(b0 + 10, F);
+      const k0 = x0 + 31, k1 = x0 + 60, top = F - 21;
+      box(k0, top, k1, F, T.WALLSTONE);
+      bg(k0, top, k1, F - 1);
+      box(k0 + 2, F - 9, k1 - 2, F - 1, T.AIR);
+      box(k0 + 2, F - 15, k1 - 2, F - 11, T.AIR);
+      box(k0 + 2, F - 20, k1 - 2, F - 17, T.AIR);
+      box(k0, F - 3, k0 + 1, F - 1, T.AIR);
+      for (let x = k0 + 2; x <= k1 - 2; x++) {
+        this.set(x, F - 10, T.ORBITPLATE);
+        this.set(x, F - 16, T.ORBITPLATE);
+      }
+      const sx = k0 + 3;
+      for (let y = F - 3; y >= top; y -= 3) {
+        this.set(sx, y, T.PLATFORM);
+        this.set(sx + 1, y, T.PLATFORM);
+      }
+      for (const y of [F - 10, F - 16, top]) {
+        this.set(sx, y, T.PLATFORM);
+        this.set(sx + 1, y, T.PLATFORM);
+      }
+      crenel(k0, k1, top - 1);
+      for (const tx of [k0, k1 - 3]) {
+        box(tx, top - 5, tx + 3, top - 1, T.WALLSTONE);
+        box(tx + 1, top - 4, tx + 2, top - 1, T.AIR);
+        bg(tx, top - 5, tx + 3, top - 1);
+        this.set(tx + 1, top, T.PLATFORM);
+        this.set(tx + 2, top, T.PLATFORM);
+        this.set(tx + 1, top - 3, T.WINDOW);
+        for (let k = 0; k < 3; k++) box(tx - 1 + k, top - 6 - k, tx + 4 - k, top - 6 - k, T.ROOFTILE);
+      }
+      for (const y of [F - 13, F - 19]) for (const x of [k0 + 9, k0 + 16, k1 - 9]) this.set(x, y, T.WINDOW);
+      for (let x = k0 + 6; x <= k1 - 4; x++) {
+        this.set(x, F, T.ALTARSTONE);
+        this.set(x, F + 1, T.ALTARSTONE);
+      }
+      this.objects.push({ type: "lair", boss: "restorer", ruin: 13, nm: tr("환원 기관"), x: (k0 + 18) * TS, y: F * TS - 60, w: 52, h: 60 });
+      this.objects.push({ type: "lorestone", lore: "citadel", x: (k0 + 6) * TS, y: F * TS - 34, w: 26, h: 34 });
+      for (const x of [k0 + 4, k0 + 12, k1 - 10, k1 - 3]) torch(x, F - 6);
+      for (const x of [k0 + 9, k1 - 7]) for (let y = F - 8; y <= F - 6; y++) this.set(x, y, T.BANNER);
+      const v0 = k1 - 9;
+      for (let y = F - 15; y <= F - 11; y++) this.set(v0, y, T.WALLSTONE);
+      for (let y = F - 13; y <= F - 11; y++) {
+        this.set(v0, y, T.ORBITSEAL);
+        C.vault.push([v0, y]);
+      }
+      chestOn(v0 + 4, F - 10, { relic: "jetpack" });
+      torch(v0 + 2, F - 14);
+      torch(k0 + 7, F - 14);
+      torch(k0 + 18, F - 14);
+      chestOn(k0 + 12, F - 10);
+      this.putTileTrap({ x: k0 + 1, y: F - 15, w: v0 - k0, h: 5 }, F - 11, "dart", r2);
+      chestOn(k0 + 20, F - 16);
+      torch(k0 + 10, F - 19);
+      torch(k1 - 5, F - 19);
+      const i0 = k1 + 1, i1 = x0 + 66;
+      bg(i0, F - 7, i1, F - 1);
+      for (let x = i0; x <= i1; x++) this.set(x, F - 8, T.PLATFORM);
+      crenel(i0, i1, F - 9);
+      const t0 = x0 + 67, t1 = x0 + w - 3, ttop = F - 22;
+      box(t0, ttop, t1, F, T.WALLSTONE);
+      box(t0 + 1, ttop + 1, t1 - 1, F - 1, T.AIR);
+      bg(t0, ttop, t1, F - 1);
+      box(t0, F - 3, t0, F - 1, T.AIR);
+      for (let y = F - 6; y > ttop; y -= 6) {
+        for (let x = t0 + 1; x <= t1 - 1; x++) this.set(x, y, T.WALLSTONE);
+        this.set(t1 - 2, y, T.PLATFORM);
+        this.set(t1 - 1, y, T.PLATFORM);
+        for (let yy = y + 3; yy < y + 6; yy += 3) this.set(t1 - 2, yy, T.PLATFORM);
+        this.set(t0 + 2, y - 3, T.TORCH);
+        this.set(t1, y - 3, T.WINDOW);
+      }
+      chestOn(t0 + 1, F - 6);
+      chestOn(t0 + 1, F - 18);
+      crenel(t0, t1, ttop - 1);
+      for (let k = 0; k < 5; k++) if (ttop - 2 - k >= 1) box(t0 + k, ttop - 2 - k, t1 - k, ttop - 2 - k, T.ROOFTILE);
+      const doorY = F - 1;
+      let by = F, bx = ix0 - 1;
       for (let k = 0; k < 62 && bx > 6; k++, bx--) {
         this.set(bx, by, T.ORBITPLATE);
         for (let dy = -3; dy <= -1; dy++) this.set(bx, by + dy, T.AIR);
@@ -17839,123 +17948,32 @@
       }
       C.bridgeX = bx;
       const anchor = (i, kind, tx, fy) => this.objects.push({ type: "anchor", i, kind, x: tx * TS - 4, y: (fy + 1) * TS - 52, w: 30, h: 52 });
-      anchor(0, "guard", x0 - 9, doorY);
+      anchor(0, "guard", x0 - 10, doorY);
       const isle = (xa, xb, fy) => {
         for (let x = xa; x <= xb; x++) {
           this.set(x, fy, x === xa || x === xb ? T.ORBITCORE : T.ORBITPLATE);
           this.set(x, fy + 1, T.ORBITPLATE);
         }
         for (let x = xa + 2; x <= xb - 2; x++) this.set(x, fy + 2, T.ORBITPLATE);
-        for (let x = xa; x <= xb; x++) for (let y = fy - 4; y < fy; y++) this.set(x, y, T.AIR);
+        for (let x = xa; x <= xb; x++) for (let y = Math.max(1, fy - 4); y < fy; y++) this.set(x, y, T.AIR);
       };
       const yB = Math.max(6, doorY - 9), yC = Math.max(3, yB - 6);
-      isle(x0 - 36, x0 - 24, yB + 1);
-      isle(x0 - 60, x0 - 48, yC + 1);
-      anchor(1, "charge", x0 - 31, yB);
-      anchor(2, "dial", x0 - 55, yC);
-      C.sat = [x0 - 62, yC - 4, x0 - 22, yB + 4];
-      this.objects.push({ type: "chest", tier: 6, loot: "session2", x: (x0 - 27) * TS, y: (yB + 0.8) * TS, w: 30, h: 26, items: null });
-      this.objects.push({ type: "chest", tier: 6, loot: "session2", x: (x0 - 51) * TS, y: (yC + 0.8) * TS, w: 30, h: 26, items: null });
-      for (let x = x0 - 13, y = doorY + 1; x > x0 - 24; x--) {
+      isle(x0 - 37, x0 - 25, yB + 1);
+      isle(x0 - 61, x0 - 49, yC + 1);
+      anchor(1, "charge", x0 - 32, yB);
+      anchor(2, "dial", x0 - 56, yC);
+      C.sat = [x0 - 63, yC - 4, x0 - 23, yB + 4];
+      chestOn(x0 - 28, yB + 1);
+      chestOn(x0 - 52, yC + 1);
+      for (let x = x0 - 14, y = doorY + 1; x > x0 - 25; x--) {
         if (y > yB + 1) y--;
         C.links[0].push([x, y]);
       }
-      for (let x = x0 - 37, y = yB + 1; x > x0 - 48; x--) {
+      for (let x = x0 - 38, y = yB + 1; x > x0 - 49; x--) {
         if (y > yC + 1) y--;
         C.links[1].push([x, y]);
       }
-      const main = rooms[0], mfy = main.y + main.h - 3;
-      for (let x = main.x + 2; x < main.x + main.w - 2; x++)
-        for (let y = mfy + 1; y <= mfy + 2; y++) this.set(x, y, T.ALTARSTONE);
-      this.objects.push({
-        type: "lair",
-        boss: "restorer",
-        ruin: 13,
-        nm: tr("환원 기관"),
-        x: (main.x + (main.w >> 1)) * TS,
-        y: (mfy + 1) * TS - 60,
-        w: 52,
-        h: 60
-      });
-      this.objects.push({
-        type: "lorestone",
-        lore: "citadel",
-        x: (main.x + 3) * TS,
-        y: (mfy + 1) * TS - 34,
-        w: 26,
-        h: 34
-      });
-      const vault = this._citadelVault(rooms, main, leftRoom, [leftRoom.x + 1, doorY]);
-      if (vault) {
-        for (let x = vault.x - 1; x <= vault.x + vault.w; x++) for (const y of [vault.y - 1, vault.y + vault.h])
-          if (this.get(x, y) === T.AIR) {
-            this.set(x, y, T.ORBITSEAL);
-            C.vault.push([x, y]);
-          }
-        for (let y = vault.y; y < vault.y + vault.h; y++) for (const x of [vault.x - 1, vault.x + vault.w])
-          if (this.get(x, y) === T.AIR) {
-            this.set(x, y, T.ORBITSEAL);
-            C.vault.push([x, y]);
-          }
-        const vf = vault.y + vault.h - 3;
-        this.objects.push({
-          type: "chest",
-          tier: 6,
-          loot: "session2",
-          relic: "jetpack",
-          x: (vault.x + (vault.w >> 1)) * TS - 15,
-          y: (vf - 0.2) * TS,
-          w: 30,
-          h: 26,
-          items: null
-        });
-      }
-      for (const r of rooms) {
-        const fy = r.y + r.h - 3, rcx = r.x + (r.w >> 1);
-        for (let k = 0; k < rng.int(5, 11); k++) {
-          const onSide = rng.chance(0.5);
-          const gx = onSide ? rng.chance(0.5) ? r.x : r.x + r.w - 1 : r.x + rng.int(1, Math.max(1, r.w - 2));
-          const gy = onSide ? r.y + rng.int(1, Math.max(1, r.h - 2)) : rng.chance(0.5) ? r.y : r.y + r.h - 1;
-          if (this.get(gx, gy) === T.ORBITPLATE) this.set(gx, gy, T.ORBITCORE);
-        }
-        if (r === main || r === vault) continue;
-        if (rng.chance(0.7)) this.putTileTrap(r, fy, rng.pick(["dart", "vent"]), rng);
-        if (rng.chance(0.45)) for (let k = 0; k < rng.int(2, 5); k++) this.set(r.x + 3 + k, fy, T.SPIKE);
-        if (rng.chance(0.6))
-          this.objects.push({
-            type: "chest",
-            tier: 6,
-            loot: "session2",
-            x: (rcx + rng.int(-2, 2)) * TS,
-            y: (fy - 0.2) * TS,
-            w: 30,
-            h: 26,
-            items: null
-          });
-      }
-    },
-    /** 보관고로 쓸 방 — 작은 방부터, 그 방 둘레의 빈 칸을 막아도 문에서 주인 방까지 걸어 닿는 첫 방 */
-    _citadelVault(rooms, main, left, door) {
-      const C = this.citadel, inBox = (x, y) => x >= C.x0 - 1 && x <= C.x0 + C.w && y >= C.y0 && y <= C.y0 + C.h;
-      for (const v of rooms.slice().reverse()) {
-        if (v === main || v === left) continue;
-        const shut = /* @__PURE__ */ new Set(), key = (x, y) => y * 1e5 + x;
-        for (let x = v.x - 1; x <= v.x + v.w; x++) for (let y = v.y - 1; y <= v.y + v.h; y++) shut.add(key(x, y));
-        const seen = /* @__PURE__ */ new Set([key(door[0], door[1])]), st = [door];
-        let ok = false;
-        while (st.length && !ok) {
-          const [x, y] = st.pop();
-          if (x >= main.x && x < main.x + main.w && y >= main.y && y < main.y + main.h) ok = true;
-          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-            const nx = x + dx, ny = y + dy, k = key(nx, ny);
-            if (seen.has(k) || shut.has(k) || !inBox(nx, ny) || this.solid(nx, ny)) continue;
-            seen.add(k);
-            st.push([nx, ny]);
-          }
-        }
-        if (ok) return v;
-      }
-      return null;
+      void rng;
     },
     inCitadel(tx, ty) {
       const k = this.citadel;
@@ -27524,8 +27542,7 @@
     s_toolbelt: { k: "detector", c: "#d8b07a" },
     s_petbond: { k: "wolf", c: "#e0b880" },
     s_quickhands: { k: "blink", c: "#e8c890" },
-    s_ringbearer: { k: "ring", c: "#e8c86a" },
-    s_beastkin: { k: "wolf", c: "#c8a070" },
+    s_ringbearer: { k: "ring", c: "#e8c86a", gem: "#e05a7a" },
     s_deeppack: { k: "sack", c: "#8a6a48", strap: "#4a3828" }
   };
   var BFSPEC = {
@@ -32884,10 +32901,10 @@
       this.mp = 50;
       this.gold = 0;
       this.bag = new Array(BASE_BAG_SIZE).fill(null);
-      this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, acc3: null, util1: null, util2: null, bag: null, pet1: null, pet2: null, pet3: null };
+      this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
       this.sel = 0;
       this.skills = {};
-      this.slots = [null, null, null, null, null];
+      this.slots = [null, null, null, null, null, null];
       this.cd = {};
       this.buffs = [];
       this.facing = 1;
@@ -33091,11 +33108,20 @@
       else if (d.type === "armor") key = d.slot;
       else if (d.type === "bag") key = "bag";
       else if (d.type === "acc") {
-        const ks = ["acc1", "acc2", "acc3"].slice(0, accSlotN(this));
+        const ks = ["acc1", "acc2"].slice(0, accSlotN(this));
         key = ks.find((k) => !this.equip[k]) || "acc1";
-      } else if (d.type === "util") key = this.equip.util1 && !this.equip.util2 && utilSlotN(this) > 1 ? "util2" : "util1";
-      else if (d.type === "pet") {
+      } else if (d.type === "util") {
+        if (utilSlotN(this) < 1) {
+          app.toast(tr("유틸리티 칸이 아직 없다 — 특성 「도구 띠」를 배울 것"), "bad");
+          return false;
+        }
+        key = this.equip.util1 && !this.equip.util2 && utilSlotN(this) > 1 ? "util2" : "util1";
+      } else if (d.type === "pet") {
         const ks = PET_KEYS.slice(0, petSlotN(this));
+        if (!ks.length) {
+          app.toast(tr("펫 칸이 아직 없다 — 특성 「길들이는 손」을 배울 것"), "bad");
+          return false;
+        }
         key = ks.find((k) => !this.equip[k]) || "pet1";
       }
       if (!key) return false;
@@ -41082,7 +41108,7 @@
     },
     /* ---------------- 장비 ---------------- */
     buildEquipSlots() {
-      const SLOT_IC = { weapon: "weapon", helm: "helm", chest: "chest", boots: "boots", acc1: "acc", acc2: "acc", acc3: "acc", util1: "util", util2: "util", bag: "bag", pet1: "pet", pet2: "pet", pet3: "pet" };
+      const SLOT_IC = { weapon: "weapon", helm: "helm", chest: "chest", boots: "boots", acc1: "acc", acc2: "acc", util1: "util", util2: "util", bag: "bag", pet1: "pet", pet2: "pet" };
       $$(".slot.equip").forEach((el) => {
         const key = el.dataset.eq;
         el.insertAdjacentHTML("beforeend", '<span class="eqic"></span><span class="ic"></span>');
@@ -41123,10 +41149,11 @@
         el.addEventListener("mouseleave", () => this.hideTip());
       });
     },
-    /** 특성 트리가 아직 안 연 칸(둘째 유틸리티 · 둘째 · 셋째 펫 · 셋째 장신구) — 이미 낀 것은 그대로 둔다 */
+    /** 특성 트리가 아직 안 연 칸(유틸리티 · 펫 · 둘째 장신구) — 이미 낀 것은 그대로 둔다 */
     slotLocked(key) {
       const p = app.player;
-      return key === "util2" && utilSlotN(p) < 2 || key === "pet2" && petSlotN(p) < 2 || key === "pet3" && petSlotN(p) < 3 || key === "acc3" && accSlotN(p) < 3;
+      const n = (k) => +k.slice(-1);
+      return /^util/.test(key) && utilSlotN(p) < n(key) || /^pet/.test(key) && petSlotN(p) < n(key) || key === "acc2" && accSlotN(p) < 2;
     },
     refreshEquip() {
       if (!app.player) return;
@@ -41161,8 +41188,8 @@
     buildSkillbar() {
       const bar = $("#skillbar");
       bar.innerHTML = "";
-      const keys = ["Q", "E", "R", "F", "G"];
-      for (let i = 0; i < 5; i++) {
+      const keys = ["Q", "E", "R", "F", "G", "V"];
+      for (let i = 0; i < 6; i++) {
         const d = document.createElement("div");
         d.className = "sk empty";
         d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span><span class="cdnum"></span>`;
@@ -46908,6 +46935,7 @@
       this.cap = cap;
       this.rand = rand;
       this.art = null;
+      this._sc = null;
     }
     add(f) {
       if (this.list.length < this.cap) this.list.push(f);
@@ -47320,6 +47348,15 @@
       c.restore();
     }
     /** 결 그림으로 그린다 — 그렸으면 true(도형은 건너뛴다). 모양 · 타이밍은 도형과 같은 식을 쓴다 */
+    /** 따로 그릴 판 — 한 장을 돌려 쓴다(작으면 키운다) */
+    scratch(S) {
+      if (!this._sc) this._sc = document.createElement("canvas");
+      if (this._sc.width < S) {
+        this._sc.width = S;
+        this._sc.height = S;
+      }
+      return this._sc;
+    }
     drawArt(c, f, k, p, camX, camY) {
       const A = this.art, art = (base, col) => f.art && A(f.art, col) || A(base, col);
       switch (f.k) {
@@ -47448,17 +47485,27 @@
           if (!im) return false;
           const x = f.x - camX, y = f.y - camY, R = f.r / 0.95 * (0.92 + 0.08 * easeOut(Math.min(1, p * 3))), h = Math.min(1, p / 0.3);
           const s0 = -1.35, s1 = s0 + 2.7 * h;
+          const S = Math.ceil(R * 2.2), g = this.scratch(S), q = g.getContext("2d");
+          q.setTransform(1, 0, 0, 1, 0, 0);
+          q.clearRect(0, 0, S, S);
+          q.globalCompositeOperation = "source-over";
+          q.translate(S / 2, S / 2);
+          q.drawImage(im, -R, -R, R * 2, R * 2);
+          const cg = q.createConicGradient(s0 - 0.2, 0, 0), span = (s1 + 0.25 - (s0 - 0.2)) / TAU2, at = (a) => Math.min(1, Math.max(0, (a - (s0 - 0.2)) / TAU2));
+          cg.addColorStop(0, "rgba(0,0,0,0)");
+          cg.addColorStop(at(s0 + 0.55 * h + 0.05), "rgba(0,0,0,1)");
+          cg.addColorStop(at(s1 - 0.08), "rgba(0,0,0,1)");
+          cg.addColorStop(Math.min(1, span), "rgba(0,0,0,0)");
+          cg.addColorStop(1, "rgba(0,0,0,0)");
+          q.globalCompositeOperation = "destination-in";
+          q.fillStyle = cg;
+          q.fillRect(-S / 2, -S / 2, S, S);
           c.save();
           c.translate(x, y);
           c.rotate(f.ang);
           c.scale(1, f.side);
-          c.beginPath();
-          c.moveTo(0, 0);
-          c.arc(0, 0, R * 1.05, s0, s1);
-          c.closePath();
-          c.clip();
           c.globalAlpha = Math.min(1, k * 2.4);
-          c.drawImage(im, -R, -R, R * 2, R * 2);
+          c.drawImage(g, 0, 0, S, S, -S / 2, -S / 2, S, S);
           c.restore();
           return true;
         }
@@ -48278,6 +48325,7 @@
         else if (this.isKey("skill3", k)) this.player.useSkill(2, this.input.wx, this.input.wy);
         else if (this.isKey("skill4", k)) this.player.useSkill(3, this.input.wx, this.input.wy);
         else if (this.isKey("skill5", k)) this.player.useSkill(4, this.input.wx, this.input.wy);
+        else if (this.isKey("skill6", k)) this.player.useSkill(5, this.input.wx, this.input.wy);
         else if (this.isKey("util1", k)) this.useUtil(0);
         else if (this.isKey("util2", k)) this.useUtil(1);
       }
@@ -48522,7 +48570,7 @@
       const tx = Math.floor(p.cx / TS), ty = Math.floor(p.cy / TS);
       const d = w.dawnCity;
       const inDawn = d && tx > d.x0 - 20 && tx < d.x1 + 20 && Math.abs(ty - d.gy) < 20;
-      if (inDawn) return "village";
+      if (inDawn) return sessionOf(this.chapter).id <= 1 ? "lastnote" : "village";
       const zone = w.zoneAt(tx, ty);
       const lowHp = p.hp / p.d.maxHp < 0.3;
       const wx = this.event && this.eventActive() ? this.event.id : null;
@@ -49254,7 +49302,7 @@
         gathered: c.gathered || {}
       });
       p.charId = CHAR_OF(c.charId).id;
-      while (p.slots.length < 5) p.slots.push(null);
+      while (p.slots.length < 6) p.slots.push(null);
       if (c.prof) {
         for (const k in p.prof) if (c.prof[k]) Object.assign(p.prof[k], c.prof[k]);
       }
@@ -55867,7 +55915,7 @@
       }
       if (!this.shopStock[npc]) {
         const r = new RNG(this.world.seed + "_shop_" + npc + "_" + this.dayCount);
-        const sess = sessionOf(this.chapter);
+        const sess = sessionOf(this.chapter).id;
         const vlv = m.spot ? this.villageLv() : 99;
         const bag = m.pool ? m.pool.filter((e) => (e.sess || 1) <= sess && (e.vlv || 1) <= vlv) : this.equipPool(m.equip);
         const slots = m.slots + (m.spot && this.villageLv() >= 4 ? 1 : 0);
@@ -66250,7 +66298,9 @@
         dayLight,
         [[Math.floor(p.cx / TS), Math.floor(p.cy / TS), litR]],
         sun,
-        keep
+        keep,
+        // 플레이어 미광
+        this.players.filter((q) => !q.dead).map((q) => [q.x, q.y, q.w, q.h])
       );
     },
     /** 렌더 단계 — 원경 · 채취탑 */
@@ -68544,8 +68594,7 @@
       Art.draw(c, "p:" + pet.id, sx - S / 2, sy - S / 2, S);
       c.restore();
     },
-    /** 몸 그림자 — 바깥(지표 위)에서 해가 떠 있을 때만, 발밑 바닥에 해 반대쪽으로 눕힌다(엔진 render/castshadow).
-        뜬 몸은 바닥까지의 거리만큼 옅어진다. 그림은 drawRider 를 그대로 한 번 더 — 망토 · 무기 · 탈 것까지 같은 모양 */
+    /** 몸 발끝 접지 그림자 — 바깥(지표 위)에서 해가 떠 있을 때만(엔진 render/castshadow). 뜬 몸은 바닥까지의 거리만큼 옅어진다. 그림은 drawRider 를 그대로 한 번 더 — 망토 · 무기 · 탈 것까지 같은 모양 */
     drawBodyShadow(c, p, camX, camY) {
       const sun = this.sunNow;
       if (!sun || !this.spritesOn) return;
@@ -68560,13 +68609,6 @@
       const body = (bc) => this.drawRider(bc, p, W / 2 - p.w / 2, H - p.h - 2);
       this.shadowPass = 1;
       try {
-        const floor = (sx) => {
-          const x = Math.floor((sx + camX) / TS);
-          let y = fy - 3;
-          while (y < fy + 10 && !w.solid(x, y)) y++;
-          return y * TS - camY + 6;
-        };
-        S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.26 * fade, floor, floorStep: TS, floorPhase: -camX });
         S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: 1 });
       } finally {
         this.shadowPass = 0;
@@ -69335,7 +69377,7 @@
           p.xpNext = Math.round(p.xpNext * 1.18);
         }
         p.skills = {};
-        p.slots = [null, null, null, null, null];
+        p.slots = [null, null, null, null, null, null];
         for (const id in SKILLS) p.skills[id] = SKILLS[id].max;
         p.skillPts = +qs.get("pts") || 0;
         const act = Object.keys(SKILLS).filter((id) => SKILLS[id].type === "active");
@@ -69486,6 +69528,7 @@
           "sea_salt"
         ]) give(id, 40);
         for (const id of ["m_pressor", "m_desal", "m_belt_f", "m_battery_hi", "m_gen", "m_pole"]) give(id, 8);
+        p.skills.s_toolbelt = Math.max(1, p.skills.s_toolbelt | 0);
         p.equip.util1 = makeItem("tank_deep", 1, 0);
         p.recalc();
         p.hp = p.d.maxHp;
@@ -69501,7 +69544,8 @@
         UI5.refreshEquip();
         this.toast(tr("세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급"), "good");
       }
-      if (qs.get("debug") === "fishfarm") {
+      const fishing = qs.get("debug") === "fishing";
+      if (qs.get("debug") === "fishfarm" || fishing) {
         const give = (id, n) => {
           const max = ITEMS[id].stack || 1;
           for (let left = n; left > 0; left -= max) {
@@ -69558,7 +69602,7 @@
           const ri = p.bag.findIndex((it) => it && it.id === "rod_basic");
           if (ri >= 0 && ri < 10) p.sel = ri;
           this.toast(tr("낚시·농사 확인 자리 — 오른쪽이 호수(낚싯대를 든 채), 왼쪽 12칸이 갈 수 있는 풀밭 · &duel=0~4 면 그 등급 겨루기로 바로"), "good");
-          const dq = qs.get("duel");
+          const dq = qs.get("duel") ?? (fishing ? "2" : null);
           if (dq !== null) {
             let wx = sx, wy = 0;
             for (let k = 1; k < 30 && !wy; k++) for (let y = w.surface[clamp(sx + k, 0, WW2 - 1)] - 2; y < w.surface[clamp(sx + k, 0, WW2 - 1)] + 3; y++)
@@ -70223,7 +70267,7 @@
       p.base[main] += left;
       p.statPts = 0;
       p.skills = {};
-      p.slots = [null, null, null, null, null];
+      p.slots = [null, null, null, null, null, null];
       const learn = (ids) => {
         for (let more = true; more && p.skillPts > 1; ) {
           more = false;

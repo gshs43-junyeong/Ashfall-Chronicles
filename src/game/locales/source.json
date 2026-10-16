@@ -2603,6 +2603,9 @@
   "유틸리티 칸이 비어 있다": [
    "game/utility.useUtil"
   ],
+  "유틸리티 칸이 아직 없다 — 특성 「도구 띠」를 배울 것": [
+   "entity.equipFrom"
+  ],
   "유혈암 없음": [
    "factory/tick.runPump"
   ],
@@ -3434,6 +3437,9 @@
   "펫": [
    "ui/tip.showTip",
    "index.html"
+  ],
+  "펫 칸이 아직 없다 — 특성 「길들이는 손」을 배울 것": [
+   "entity.equipFrom"
   ],
   "펫을 끼고 있어야 준다": [
    "game/interact.useConsumable"
@@ -5827,6 +5833,7 @@
   "KEY_ACTIONS.16.n": "유틸리티 (왼쪽 칸)",
   "KEY_ACTIONS.17.n": "유틸리티 (오른쪽 칸)",
   "KEY_ACTIONS.18.n": "스킬 5",
+  "KEY_ACTIONS.19.n": "스킬 6",
   "MACHINE.belt.n": "컨베이어 벨트",
   "MACHINE.belt.d": "아이템을 1초에 한 칸씩 앞으로 나른다. 동력이 필요 없다. 앞이 막히면 그 자리에서 기다린다.",
   "MACHINE.pole.n": "전주",
@@ -6343,15 +6350,13 @@
   "SKILLS.s_packrat.n": "짐꾼",
   "SKILLS.s_packrat.d": "가방 칸 +%d.",
   "SKILLS.s_toolbelt.n": "도구 띠",
-  "SKILLS.s_toolbelt.d": "두 번째 유틸리티 칸(X)이 열린다.",
+  "SKILLS.s_toolbelt.d": "유틸리티 칸이 %d개 열린다(Z · X).",
   "SKILLS.s_petbond.n": "길들이는 손",
-  "SKILLS.s_petbond.d": "두 번째 펫 칸이 열린다 — 펫 둘을 함께 데리고 다닌다.",
+  "SKILLS.s_petbond.d": "펫 칸이 %d개 열린다 — 데리고 다닐 수 있다.",
   "SKILLS.s_quickhands.n": "재빠른 손",
-  "SKILLS.s_quickhands.d": "스킬 칸이 하나 더 열린다(G).",
+  "SKILLS.s_quickhands.d": "스킬 칸이 %d개 더 열린다(G · V).",
   "SKILLS.s_ringbearer.n": "반지 고리",
-  "SKILLS.s_ringbearer.d": "세 번째 장신구 칸이 열린다.",
-  "SKILLS.s_beastkin.n": "무리의 우두머리",
-  "SKILLS.s_beastkin.d": "세 번째 펫 칸이 열린다 — 펫 셋이 함께 따라다닌다.",
+  "SKILLS.s_ringbearer.d": "두 번째 장신구 칸이 열린다.",
   "SKILLS.s_deeppack.n": "깊은 주머니",
   "SKILLS.s_deeppack.d": "가방 칸 +%d.",
   "STATION_DESC.work.1": "판자와 못으로 되는 것들.",

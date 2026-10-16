@@ -20,16 +20,18 @@ export class LightField {
   declare dec: Float32Array; declare decP: Float32Array; declare sunV: Float32Array; declare trans: Float32Array;
   declare x0: number; declare y0: number; declare w: number; declare h: number; declare n: number;
   declare cache: Map<number, Patch>; declare dirty: number[]; declare frame: number; declare sunOn: boolean;
+  declare sunDir: number[]; declare sky: ((x: number, y: number) => number) | null; declare occT: Float32Array; declare occA: Float32Array; declare occB: Float32Array;
 
   constructor(cfg: LightFieldConfig) {
     this.cfg = cfg; this.cache = new Map(); this.dirty = []; this.frame = 0;
-    this.x0 = this.y0 = this.w = this.h = this.n = 0; this.sunOn = false;
+    this.x0 = this.y0 = this.w = this.h = this.n = 0; this.sunOn = false; this.sunDir = [0, 0]; this.sky = null;
     this.alloc(1024);
   }
   alloc(n: number): void {
     this.L = new Float32Array(n); this.Lp = new Float32Array(n); this.col = new Float32Array(n * 3);
     this.op = new Uint8Array(n); this.dec = new Float32Array(n); this.decP = new Float32Array(n);
     this.sunV = new Float32Array(n); this.trans = new Float32Array(n);
+    this.occT = new Float32Array(n); this.occA = new Float32Array(n); this.occB = new Float32Array(n);
   }
 
   /** 새 창 — (x0, y0) 부터 w×h 칸. 버퍼를 비우고, 바뀐 칸 둘레의 광원 판을 버린다. 칸 번호 k = (y-y0)·w + (x-x0). */
@@ -94,6 +96,7 @@ export class LightField {
   sun(sx: number, sy: number, sky: (x: number, y: number) => number, level: (k: number, raw: number) => number, prep?: (S: Float32Array) => void): void {
     const S = this.sunV, n = this.n, L = this.L, op = this.op;
     castSunlight(S, this.w, this.h, this.x0, this.y0, this.trans, sx, sy, sky);
+    this.sunDir = [sx, sy]; this.sky = sky;
     if (prep) prep(S);
     for (let k = 0; k < n; k++) {
       if (S[k] <= 0.01) { S[k] = 0; continue; }
@@ -110,6 +113,18 @@ export class LightField {
     sweepLightGrid(Lp, w, h, 1, this.decP, op);
     for (let k = 0; k < n; k++) if (Lp[k] > L[k]) L[k] = Lp[k];
     if (this.sunOn) { const S = this.sunV; for (let k = 0; k < n; k++) if (!op[k] && S[k] > L[k]) L[k] = S[k]; }
+  }
+
+  /** 움직이는 가림(몸 따위) — finish **뒤에** 곱한다. 한두 칸짜리 그늘은 번지기가 둘레 빛으로 메워 사라지므로,
+      같은 직사광(castSunlight)을 가림 있이 · 없이 두 번 쏘아 그 비만큼 어둡게 한다. cells = [판 칸 번호, 남는 빛(0~1), …] */
+  occlude(cells: number[], strength: number): void {
+    if (!this.sunOn || !cells.length || !this.sky) return;
+    const { n, w, h, x0, y0, L } = this, T = this.occT, A = this.occA, B = this.occB, [sx, sy] = this.sunDir;
+    T.set(this.trans.subarray(0, n));
+    for (let i = 0; i < cells.length; i += 2) T[cells[i]] *= cells[i + 1];
+    castSunlight(A, w, h, x0, y0, this.trans, sx, sy, this.sky);
+    castSunlight(B, w, h, x0, y0, T, sx, sy, this.sky);
+    for (let k = 0; k < n; k++) if (A[k] > 0.01 && B[k] < A[k]) L[k] *= 1 - (1 - B[k] / A[k]) * strength;
   }
 
   /** 세계 칸의 밝기(창 밖은 0) */

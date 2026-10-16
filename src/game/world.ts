@@ -30,6 +30,7 @@ export const LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT 
 /* 해(computeLight sun) — 해가 높이 떠 있을 때 그늘진 바깥이 받는 하늘빛 몫 · 잎이 통과시키는 햇빛 몫(나무 그늘이 얼룩진다) */
 export const SUN_AMB = 0.4, SUN_SOFT = 0.9, SUN_DEPTH = 10;    // SUN_SOFT — 밟을 수 없는 것(기둥 · 장식)을 지나며 남는 햇빛
 export const SUN_PLANT = 0.94, SOIL_R = 5;   // 꽃 · 풀 · 장식이 남기는 햇빛(옅은 그늘) · 흙 속 햇빛을 고르는 반경
+export const SUN_BODY = 0.25;   // 사람 몸이 가린 칸에 남는 햇빛(덮인 넓이만큼) — 몸 그림자도 나무 그늘과 같은 직사광 엔진
 export const SUN_LEAF = 0.9;   // 잎이 다 붙어 있을 때 남는 햇빛 — 잎이 지면(leafKeep) 1 로 다가간다. 사연: docs/code-history.md#h150
 /** 빛을 막는 타일 — 막힌 칸(solid 1) 중 창문(clear)이 아닌 것 */
 export const LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
@@ -668,7 +669,7 @@ export class World extends TileMap {
       ② 강한 점 광원(횃불·등불·수정 …, 세기 LIGHT_POINT 이상)과 플레이어 미광: 칸마다 광선을 쏘아 **가려진 칸은 그늘**(castPointLight),
          그다음 튀는 빛만 조금(LIGHT_BOUNCE 씩) 번진다 — 모서리를 돌아 다 밝아지면 그림자가 사라진다.
       ★ 두 겹 다 막힌 칸은 빛을 받되 트인 칸으로 넘기지 않는다(sweepLightGrid op) — 벽 한두 칸 뒤의 빈 방이 밝던 것. 사연: docs/code-history.md#h142 */
-  computeLight(tx0: number, ty0: number, tx1: number, ty1: number, dayLight: number, extra: number[][] | null, sun?: { x: number; y: number; k: number } | null, leafKeep?: (t: number) => number) { const { WW, WH, SKY_Y } = this.dims;
+  computeLight(tx0: number, ty0: number, tx1: number, ty1: number, dayLight: number, extra: number[][] | null, sun?: { x: number; y: number; k: number } | null, leafKeep?: (t: number) => number, bodies?: number[][]) { const { WW, WH, SKY_Y } = this.dims;
     const P = 14;
     const x0 = clamp(tx0 - P, 0, WW - 1), x1 = clamp(tx1 + P, 0, WW - 1);
     const y0 = clamp(ty0 - P, 0, WH - 1), y1 = clamp(ty1 + P, 0, WH - 1);
@@ -723,6 +724,17 @@ export class World extends TileMap {
       }, S => this._soilSun(S, x0, y0, w, h, top, op, L));
     }
     F.finish(2);
+    /* 몸(px 상자 [x, y, w, h]) 그늘 — 같은 직사광 엔진으로 번지기 뒤에 진다(덮인 넓이만큼 · 칸 사이를 섞어 미끄러진다). 사연: docs/code-history.md#h194 */
+    if (bodies && sun && sunK > 0) {
+      const cells: number[] = [];
+      for (const [bx, by, bw, bh] of bodies)
+        for (let y = Math.floor(by / TS); y <= Math.floor((by + bh - 1) / TS); y++) for (let x = Math.floor(bx / TS); x <= Math.floor((bx + bw - 1) / TS); x++) {
+          if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+          const cov = (Math.min(bx + bw, (x + 1) * TS) - Math.max(bx, x * TS)) * (Math.min(by + bh, (y + 1) * TS) - Math.max(by, y * TS)) / (TS * TS);
+          if (cov > 0) cells.push((y - y0) * w + (x - x0), 1 - (1 - SUN_BODY) * Math.min(1, cov * 1.4));
+        }
+      F.occlude(cells, 0.55 * sunK);
+    }
   }
   /** 그늘은 땅 겉면 한 칸에만 떨어진다 — 그 밑 흙은 둘레 ±SOIL_R 칸 겉면의 평균 햇빛에서 칸마다 2.7씩 줄여 채운다.
       ★ 겉면 칸 하나하나에서 번지게 두면 칸마다 2.7 씩 옆으로도 줄어 흙 속에 그늘 모양 삼각형이 박혔다(사용자 지적). 사연: docs/code-history.md#h188 */

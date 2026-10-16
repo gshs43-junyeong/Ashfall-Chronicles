@@ -32,9 +32,9 @@ const TAU = Math.PI * 2;
 const easeOut = (k: number) => 1 - (1 - k) * (1 - k);
 
 export class Vfx {
-  declare list: Fx[]; declare density: number; declare rand: () => number; declare cap: number; declare art: VfxArt | null;
+  declare list: Fx[]; declare density: number; declare rand: () => number; declare cap: number; declare art: VfxArt | null; declare _sc: HTMLCanvasElement | null;
   /** density — 불티 · 조각 수 배율(화질 설정) · cap — 한꺼번에 남는 도형 상한 */
-  constructor(density = 1, cap = 600, rand: () => number = Math.random) { this.list = []; this.density = density; this.cap = cap; this.rand = rand; this.art = null; }
+  constructor(density = 1, cap = 600, rand: () => number = Math.random) { this.list = []; this.density = density; this.cap = cap; this.rand = rand; this.art = null; this._sc = null; }
 
   private add(f: Fx): void { if (this.list.length < this.cap) this.list.push(f); }
   private n(k: number): number { return Math.max(1, Math.round(k * this.density)); }
@@ -304,6 +304,12 @@ export class Vfx {
   }
 
   /** 결 그림으로 그린다 — 그렸으면 true(도형은 건너뛴다). 모양 · 타이밍은 도형과 같은 식을 쓴다 */
+  /** 따로 그릴 판 — 한 장을 돌려 쓴다(작으면 키운다) */
+  private scratch(S: number): HTMLCanvasElement {
+    if (!this._sc) this._sc = document.createElement('canvas');
+    if (this._sc.width < S) { this._sc.width = S; this._sc.height = S; }
+    return this._sc;
+  }
   private drawArt(c: CanvasRenderingContext2D, f: Fx, k: number, p: number, camX: number, camY: number): boolean {
     const A = this.art!, art = (base: string, col: string) => (f.art && A(f.art, col)) || A(base, col);
     switch (f.k) {
@@ -384,9 +390,16 @@ export class Vfx {
         const im = art('swipe0', f.c); if (!im) return false;
         const x = f.x - camX, y = f.y - camY, R = f.r / 0.95 * (0.92 + 0.08 * easeOut(Math.min(1, p * 3))), h = Math.min(1, p / 0.3);
         const s0 = -1.35, s1 = s0 + 2.7 * h;
+        /* 칼로 자른 듯한 쐐기 끝은 손맛을 끊는다 — 꼬리는 길게, 머리는 짧게 원뿔 그라디언트로 녹인다(따로 그린 판에서) */
+        const S = Math.ceil(R * 2.2), g = this.scratch(S), q = g.getContext('2d')!;
+        q.setTransform(1, 0, 0, 1, 0, 0); q.clearRect(0, 0, S, S); q.globalCompositeOperation = 'source-over';
+        q.translate(S / 2, S / 2); q.drawImage(im, -R, -R, R * 2, R * 2);
+        const cg = q.createConicGradient(s0 - 0.2, 0, 0), span = (s1 + 0.25 - (s0 - 0.2)) / TAU, at = (a: number) => Math.min(1, Math.max(0, (a - (s0 - 0.2)) / TAU));
+        cg.addColorStop(0, 'rgba(0,0,0,0)'); cg.addColorStop(at(s0 + 0.55 * h + 0.05), 'rgba(0,0,0,1)');
+        cg.addColorStop(at(s1 - 0.08), 'rgba(0,0,0,1)'); cg.addColorStop(Math.min(1, span), 'rgba(0,0,0,0)'); cg.addColorStop(1, 'rgba(0,0,0,0)');
+        q.globalCompositeOperation = 'destination-in'; q.fillStyle = cg; q.fillRect(-S / 2, -S / 2, S, S);
         c.save(); c.translate(x, y); c.rotate(f.ang); c.scale(1, f.side);
-        c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, R * 1.05, s0, s1); c.closePath(); c.clip();
-        c.globalAlpha = Math.min(1, k * 2.4); c.drawImage(im, -R, -R, R * 2, R * 2); c.restore();
+        c.globalAlpha = Math.min(1, k * 2.4); c.drawImage(g, 0, 0, S, S, -S / 2, -S / 2, S, S); c.restore();
         return true;
       }
       case 'mark': {

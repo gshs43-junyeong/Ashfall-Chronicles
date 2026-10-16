@@ -27,7 +27,7 @@ import { fmt, tr } from './lang.js';
 import { dimsOf } from './size.js';
 import { T, TILE_DEF, TILE_SPRITE } from './data.js';
 import { CHAR_OF, KEY_ACTIONS, MODE_OF } from './data/start.js';
-import { CHAPTERS } from './data/story.js';
+import { CHAPTERS, sessionOf } from './data/story.js';
 import { PART_CAP, idef } from './data/values.js';
 import { TS, World, setWorldSize } from './world.js';
 import { TileArt } from './tileart.js';
@@ -316,6 +316,7 @@ export const GameCore: Bag = {
       else if (this.isKey('skill3', k)) this.player.useSkill(2, this.input.wx, this.input.wy);
       else if (this.isKey('skill4', k)) this.player.useSkill(3, this.input.wx, this.input.wy);
       else if (this.isKey('skill5', k)) this.player.useSkill(4, this.input.wx, this.input.wy);
+      else if (this.isKey('skill6', k)) this.player.useSkill(5, this.input.wx, this.input.wy);
       else if (this.isKey('util1', k)) this.useUtil(0);
       else if (this.isKey('util2', k)) this.useUtil(1);
     }
@@ -490,7 +491,8 @@ export const GameCore: Bag = {
     // 베이스캠프는 기본 브금을 그대로 쓰고(낮/밤 전환도 평소처럼 적용), 여명 마을에만 승리의 칩튠을 튼다 — 마을에서는 비가 와도 이 곡이 우선한다(보스전 다음으로 높은 우선순위)
     const d = w.dawnCity;
     const inDawn = d && tx > d.x0 - 20 && tx < d.x1 + 20 && Math.abs(ty - d.gy) < 20;
-    if (inDawn) return 'village';
+    /* 세션 1의 마을은 아직 무너진 채 — 쓰러졌을 때와 같은 곡이 흐른다(사용자 결정) */
+    if (inDawn) return sessionOf(this.chapter).id <= 1 ? 'lastnote' : 'village';
 
     const zone = w.zoneAt(tx, ty);
     const lowHp = p.hp / p.d.maxHp < 0.3;

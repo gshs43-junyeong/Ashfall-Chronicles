@@ -113,10 +113,10 @@ export class Player extends Ent {
     this.gold = 0;
     this.bag = new Array(BASE_BAG_SIZE).fill(null);
     /* util(유틸리티) 칸 — 산소통처럼 "싸우는 데 쓰는 물건이 아닌데 몸에 지녀야 하는 것"의 자리다 — 사연: docs/code-history.md#h24 */
-    this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, acc3: null, util1: null, util2: null, bag: null, pet1: null, pet2: null, pet3: null };
+    this.equip = { weapon: null, helm: null, chest: null, boots: null, acc1: null, acc2: null, util1: null, util2: null, bag: null, pet1: null, pet2: null };
     this.sel = 0;
     this.skills = {};              // id -> rank
-    this.slots = [null, null, null, null, null];   // 다섯째는 탐험가 '재빠른 손'이 연다
+    this.slots = [null, null, null, null, null, null];   // 다섯째 · 여섯째는 탐험가 '재빠른 손'이 연다
     this.cd = {};                  // 스킬 쿨다운
     this.buffs = [];
     this.facing = 1;
@@ -259,10 +259,10 @@ export class Player extends Ent {
     if (d.type === 'weapon') key = 'weapon';
     else if (d.type === 'armor') key = d.slot;
     else if (d.type === 'bag') key = 'bag';
-    else if (d.type === 'acc') { const ks = ['acc1', 'acc2', 'acc3'].slice(0, accSlotN(this)); key = ks.find(k => !this.equip[k]) || 'acc1'; }
-    /* 둘째 칸은 탐험가 갈래(도구 띠 · 길들이는 손)가 연다 — 안 열렸으면 첫 칸과 바꾼다 */
-    else if (d.type === 'util') key = this.equip.util1 && !this.equip.util2 && utilSlotN(this) > 1 ? 'util2' : 'util1';
-    else if (d.type === 'pet') { const ks = PET_KEYS.slice(0, petSlotN(this)); key = ks.find(k => !this.equip[k]) || 'pet1'; }
+    else if (d.type === 'acc') { const ks = ['acc1', 'acc2'].slice(0, accSlotN(this)); key = ks.find(k => !this.equip[k]) || 'acc1'; }
+    /* 유틸리티 · 펫 칸은 탐험가 갈래(도구 띠 · 길들이는 손)가 랭크마다 하나씩 연다 */
+    else if (d.type === 'util') { if (utilSlotN(this) < 1) { G.toast(tr('유틸리티 칸이 아직 없다 — 특성 「도구 띠」를 배울 것'), 'bad'); return false; } key = this.equip.util1 && !this.equip.util2 && utilSlotN(this) > 1 ? 'util2' : 'util1'; }
+    else if (d.type === 'pet') { const ks = PET_KEYS.slice(0, petSlotN(this)); if (!ks.length) { G.toast(tr('펫 칸이 아직 없다 — 특성 「길들이는 손」을 배울 것'), 'bad'); return false; } key = ks.find(k => !this.equip[k]) || 'pet1'; }
     if (!key) return false;
     const old = this.equip[key];
     this.equip[key] = it; this.bag[slotIdx] = old || null;

@@ -1144,7 +1144,9 @@
   "찍은 점수 {have} · 모든 단이 열렸다": "Points spent {have} · every tier is open",
   "트리의 심장": "Heart of the Tree",
   "{b|을} 쓰러뜨렸다": "defeated {b}",
-  "{lv}레벨이 되었다": "reached level {lv}"
+  "{lv}레벨이 되었다": "reached level {lv}",
+  "유틸리티 칸이 아직 없다 — 특성 「도구 띠」를 배울 것": "No utility slot yet — learn the talent \"Tool Belt\"",
+  "펫 칸이 아직 없다 — 특성 「길들이는 손」을 배울 것": "No pet slot yet — learn the talent \"Tamer's Hand\""
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4635,11 +4637,11 @@
   "SKILLS.s_packrat.n": "Packrat",
   "SKILLS.s_packrat.d": "Bag slots +%d.",
   "SKILLS.s_toolbelt.n": "Tool Belt",
-  "SKILLS.s_toolbelt.d": "Unlocks the second utility slot (X).",
+  "SKILLS.s_toolbelt.d": "Opens %d utility slot(s) (Z · X).",
   "SKILLS.s_petbond.n": "Tamer's Hand",
-  "SKILLS.s_petbond.d": "Unlocks the second pet slot — bring two pets along.",
+  "SKILLS.s_petbond.d": "Opens %d pet slot(s) — pets can follow you.",
   "SKILLS.s_quickhands.n": "Quick Hands",
-  "SKILLS.s_quickhands.d": "Unlocks one more skill slot (G).",
+  "SKILLS.s_quickhands.d": "Opens %d more skill slot(s) (G · V).",
   "TILE_DEF.218.n": "Machine body",
   "ITEMS.recall_camp.n": "Ember Recall Orb",
   "ITEMS.recall_camp.d": "Break it to return to the Base Camp square at once. Sealed ash holds an ember inside.",
@@ -4764,9 +4766,8 @@
   "BOSS_MOVES.shaft_maw.moves.6.n": "Spoil Heap Shove",
   "SKILLS.s_deeppack.n": "Deep Pockets",
   "SKILLS.s_deeppack.d": "+%d bag slots.",
-  "SKILLS.s_beastkin.n": "Pack Leader",
-  "SKILLS.s_beastkin.d": "Opens a third pet slot — three pets follow you at once.",
   "SKILLS.s_ringbearer.n": "Ring Loop",
-  "SKILLS.s_ringbearer.d": "Opens a third accessory slot."
+  "SKILLS.s_ringbearer.d": "Opens a second accessory slot.",
+  "KEY_ACTIONS.19.n": "Skill 6"
  }
 }

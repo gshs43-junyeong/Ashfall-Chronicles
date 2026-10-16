@@ -126,7 +126,8 @@ export const KEY_ACTIONS = [
   /* ★ 새 액션은 맨 끝에 — 번역 열쇠가 번호(KEY_ACTIONS.16.n)라 가운데 끼우면 뒤 이름이 한 칸씩 밀린다 */
   { id: 'util1', n: '유틸리티 (왼쪽 칸)', def: ['KeyZ'] },
   { id: 'util2', n: '유틸리티 (오른쪽 칸)', def: ['KeyX'] },
-  { id: 'skill5', n: '스킬 5', def: ['KeyG'] }
+  { id: 'skill5', n: '스킬 5', def: ['KeyG'] },
+  { id: 'skill6', n: '스킬 6', def: ['KeyV'] }
 ];
 
 /* ---------------- 알림 갈래 ---------------- */

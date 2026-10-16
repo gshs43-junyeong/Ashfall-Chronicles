@@ -26,7 +26,7 @@ export const DebugStartPart: Bag = {
     /* ?debug=skills — 플레이어 기술 전부 시험: 레벨 75 · 특성 트리 전부 최대 랭크 · 칸 다 열림 · 생활 숙련 끝 · 마나 넉넉히(&pts=N 남길 점수) */
     if (qs.get('debug') === 'skills') {
       while (p.level < 75) { p.level++; p.statPts += 3; p.xpNext = Math.round(p.xpNext * 1.18); }
-      p.skills = {}; p.slots = [null, null, null, null, null];
+      p.skills = {}; p.slots = [null, null, null, null, null, null];
       for (const id in SKILLS) p.skills[id] = SKILLS[id].max!;
       p.skillPts = +qs.get('pts') || 0;
       const act = Object.keys(SKILLS).filter(id => SKILLS[id].type === 'active');
@@ -118,7 +118,7 @@ export const DebugStartPart: Bag = {
       for (const id of ['abyss_core', 'pressure_plate_m', 'abyss_pearl', 'jelly_lamp',
                         'crab_shell', 'shark_tooth', 'ink_sac', 'kelp', 'sea_salt']) give(id, 40);
       for (const id of ['m_pressor', 'm_desal', 'm_belt_f', 'm_battery_hi', 'm_gen', 'm_pole']) give(id, 8);
-      p.equip.util1 = makeItem('tank_deep', 1, 0);
+      p.skills.s_toolbelt = Math.max(1, p.skills.s_toolbelt | 0); p.equip.util1 = makeItem('tank_deep', 1, 0);
       p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
       const w = this.world;
       const sx = SEA_X1 + 6;                                  // 물가 바로 오른쪽(빙하 쪽)
@@ -129,8 +129,9 @@ export const DebugStartPart: Bag = {
       this.toast(tr('세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급'), 'good');
     }
 
-    /* ?debug=fishfarm — 낚시·농사만 확인하는 자리. */
-    if (qs.get('debug') === 'fishfarm') {
+    /* ?debug=fishfarm — 낚시·농사만 확인하는 자리. ?debug=fishing 은 같은 자리에서 겨루기를 바로 연다(&duel 없으면 등급 2) */
+    const fishing = qs.get('debug') === 'fishing';
+    if (qs.get('debug') === 'fishfarm' || fishing) {
       // 한 칸 최대치(stack)를 넘겨 주면 한 슬롯에 몰아 담겨 버린다 — 나눠서 넣는다
       const give = (id: string, n: number) => {
         const max = ITEMS[id].stack || 1;
@@ -180,7 +181,7 @@ export const DebugStartPart: Bag = {
         if (ri >= 0 && ri < 10) p.sel = ri;
         this.toast(tr('낚시·농사 확인 자리 — 오른쪽이 호수(낚싯대를 든 채), 왼쪽 12칸이 갈 수 있는 풀밭 · &duel=0~4 면 그 등급 겨루기로 바로'), 'good');
         /* &duel=등급 — 물가 첫 물 칸에 줄을 드리운 채로 겨루기를 연다(장 이야기 창은 닫고) */
-        const dq = qs.get('duel');
+        const dq = qs.get('duel') ?? (fishing ? '2' : null);
         if (dq !== null) {
           let wx = sx, wy = 0;
           for (let k = 1; k < 30 && !wy; k++) for (let y = w.surface[clamp(sx + k, 0, WW - 1)] - 2; y < w.surface[clamp(sx + k, 0, WW - 1)] + 3; y++)

@@ -1144,7 +1144,9 @@
   "찍은 점수 {have} · 모든 단이 열렸다": "已投入{have}点 · 所有层级已开放",
   "트리의 심장": "天赋之心",
   "{b|을} 쓰러뜨렸다": "击败了{b}",
-  "{lv}레벨이 되었다": "升到了{lv}级"
+  "{lv}레벨이 되었다": "升到了{lv}级",
+  "유틸리티 칸이 아직 없다 — 특성 「도구 띠」를 배울 것": "还没有工具栏位 — 请学习天赋「工具带」",
+  "펫 칸이 아직 없다 — 특성 「길들이는 손」을 배울 것": "还没有宠物栏位 — 请学习天赋「驯兽之手」"
  },
  "tables": {
   "BIOMES.0.n": "沉没之海",
@@ -4635,11 +4637,11 @@
   "SKILLS.s_packrat.n": "搬运工",
   "SKILLS.s_packrat.d": "背包格子 +%d。",
   "SKILLS.s_toolbelt.n": "工具带",
-  "SKILLS.s_toolbelt.d": "解锁第二个辅助栏(X)。",
+  "SKILLS.s_toolbelt.d": "开启 %d 个工具栏位(Z · X)。",
   "SKILLS.s_petbond.n": "驯兽之手",
-  "SKILLS.s_petbond.d": "解锁第二个宠物栏 — 可以同时带两只宠物。",
+  "SKILLS.s_petbond.d": "开启 %d 个宠物栏位 — 可以带着宠物同行。",
   "SKILLS.s_quickhands.n": "快手",
-  "SKILLS.s_quickhands.d": "再解锁一个技能栏(G)。",
+  "SKILLS.s_quickhands.d": "再开启 %d 个技能栏位(G · V)。",
   "TILE_DEF.218.n": "机器机身",
   "ITEMS.recall_camp.n": "余烬归还珠",
   "ITEMS.recall_camp.d": "捏碎后立刻回到营地广场。封印之灰里裹着一点余烬。",
@@ -4764,9 +4766,8 @@
   "BOSS_MOVES.shaft_maw.moves.6.n": "土堆推挤",
   "SKILLS.s_deeppack.n": "深口袋",
   "SKILLS.s_deeppack.d": "背包栏位+%d。",
-  "SKILLS.s_beastkin.n": "兽群首领",
-  "SKILLS.s_beastkin.d": "开启第三个宠物栏 — 三只宠物一同跟随。",
   "SKILLS.s_ringbearer.n": "指环扣",
-  "SKILLS.s_ringbearer.d": "开启第三个饰品栏。"
+  "SKILLS.s_ringbearer.d": "开启第二个饰品栏位。",
+  "KEY_ACTIONS.19.n": "技能 6"
  }
 }
