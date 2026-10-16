@@ -314,7 +314,11 @@ export const RenderActorsPart: Bag = {
     this.shadowPass = 1;
     try {
       /* 화면 면 그늘(나무 그늘과 같은 결 — 해 각도대로 길이 · 기울기가 바뀐다) + 발끝 접지 그림자 */
-      S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.45 * fade });
+      /* 칸마다 그 땅 윗면에서 자른다 — 그늘이 지면 칸 위에 떨어지고(겉면 6px 까지) 턱 너머 흙 속으로는 안 들어간다 */
+      const floor = (sx: number) => { const x = Math.floor((sx + camX) / TS); let y = fy - 3;
+        while (y < fy + 10 && !w.solid(x, y)) y++;
+        return y * TS - camY + 6; };
+      S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.45 * fade, floor, floorStep: TS, floorPhase: -camX });
       S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.45 * fade, squash: 0.2, blur: 1 });   // 땅 윗면(풀 띠)에 눕게 4px 내린다
     } finally { this.shadowPass = 0; }
   },

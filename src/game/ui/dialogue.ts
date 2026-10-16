@@ -109,7 +109,10 @@ export const DialogueUIPart: Bag = {
     b.addEventListener('click', ev => { ev.stopPropagation(); this.closeDialogue(); });
     box.appendChild(b);
   },
-  closeDialogue() { this.stopType(); $('#dialogue').classList.remove('open'); this.dlg = null; G.uiOpen = false; },
+  closeDialogue() { this.stopType(); $('#dialogue').classList.remove('open'); this.dlg = null; G.uiOpen = false;
+    /* ★ 이야기 삽화는 대사창과 함께 걷는다 — 마지막 단추 말고 다른 길로 닫히면 반투명 삽화가 남아 땅속에 그림자처럼 비쳤다 */
+    const art = $('#cc-art'); if (art.classList.contains('story')) art.classList.remove('show', 'story');
+  },
 
   /** 장 도입·마무리 이야기. */
   storyScene(ch: any, kind: string, done: Function) {

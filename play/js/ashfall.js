@@ -15740,9 +15740,11 @@
     MAT_LAYER: () => MAT_LAYER,
     MAT_OF: () => MAT_OF,
     MIN_CAVE: () => MIN_CAVE,
+    SOIL_R: () => SOIL_R,
     SUN_AMB: () => SUN_AMB,
     SUN_DEPTH: () => SUN_DEPTH,
     SUN_LEAF: () => SUN_LEAF,
+    SUN_PLANT: () => SUN_PLANT,
     SUN_SOFT: () => SUN_SOFT,
     TS: () => TS,
     World: () => World,
@@ -15909,10 +15911,12 @@
       }
     }
     /** 방향광 — (sx, sy) 해 쪽 방향 · sky(x, y) 창 밖 칸이 하늘에 트였나 · level(k, 닿는 정도 0~1) 그 칸이 받는 빛.
-        막힌 칸(해 쪽 겉면)은 번지기 전에 L 에 넣어 땅속으로 부드럽게 번지고, 트인 칸은 finish 에서 번진 뒤에 얹는다. */
-    sun(sx, sy, sky, level) {
+        막힌 칸(해 쪽 겉면)은 번지기 전에 L 에 넣어 땅속으로 부드럽게 번지고, 트인 칸은 finish 에서 번진 뒤에 얹는다.
+        prep(S) — 닿는 정도 판을 다 잰 뒤 level 전에 한 번(이웃 칸을 함께 봐야 하는 처리용) */
+    sun(sx, sy, sky, level, prep) {
       const S = this.sunV, n = this.n, L = this.L, op = this.op;
       castSunlight(S, this.w, this.h, this.x0, this.y0, this.trans, sx, sy, sky);
+      if (prep) prep(S);
       for (let k = 0; k < n; k++) {
         if (S[k] <= 0.01) {
           S[k] = 0;
@@ -15958,6 +15962,7 @@
   var BIOME_BAND = 104;
   var LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
   var SUN_AMB = 0.4, SUN_SOFT = 0.9, SUN_DEPTH = 10;
+  var SUN_PLANT = 0.94, SOIL_R = 5;
   var SUN_LEAF = 0.9;
   var LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
   TILE_DEF.forEach((d, i) => {
@@ -16559,7 +16564,7 @@
             if (d.light >= LIGHT_POINT && !d.liquid) pts.push(x, y);
             else L[k] = Math.max(L[k], d.light);
           }
-          trans[k] = y < SKY_Y2 ? 1 : d.solid === 1 ? op[k] ? 0 : 1 : d.liquid ? 0.8 : d.leaf ? 1 - (1 - SUN_LEAF) * (leafKeep ? leafKeep(t) : 1) : op[k] ? SUN_SOFT : 1;
+          trans[k] = y < SKY_Y2 || t === T.AIR ? 1 : d.solid === 1 ? op[k] ? 0 : 1 : d.liquid ? 0.8 : d.leaf ? 1 - (1 - SUN_LEAF) * (leafKeep ? leafKeep(t) : 1) : d.tree ? SUN_SOFT : SUN_PLANT;
           if (t === T.AIR && y <= s && this.walls[y * WW2 + x] === 0) L[k] = Math.max(L[k], skyL);
           else if (d.sea && sea && y > sea.level)
             L[k] = Math.max(L[k], dayLight - (y - sea.level) * 0.42, seaAmb);
@@ -16577,9 +16582,37 @@
         F.sun(sun.x, sun.y, (x, y) => y < 0 || y <= this.surface[clamp(x, 0, WW2 - 1)] ? 1 : 0, (k, raw) => {
           const dd = y0 + (k / w | 0) - this.surface[x0 + k % w];
           return top * raw * (dd <= 0 ? 1 : Math.max(0, 1 - dd / SUN_DEPTH));
-        });
+        }, (S) => this._soilSun(S, x0, y0, w, h, top, op, L));
       }
       F.finish(2);
+    }
+    /** 그늘은 땅 겉면 한 칸에만 떨어진다 — 그 밑 흙은 둘레 ±SOIL_R 칸 겉면의 평균 햇빛에서 칸마다 2.7씩 줄여 채운다.
+        ★ 겉면 칸 하나하나에서 번지게 두면 칸마다 2.7 씩 옆으로도 줄어 흙 속에 그늘 모양 삼각형이 박혔다(사용자 지적). 사연: docs/code-history.md#h188 */
+    _soilSun(S, x0, y0, w, h, top, op, L) {
+      const g = new Float32Array(w), gs = new Float32Array(w);
+      for (let i = 0; i < w; i++) {
+        const gy = this.surface[x0 + i] - y0;
+        g[i] = gy >= 0 && gy < h ? S[gy * w + i] : 1;
+      }
+      for (let i = 0; i < w; i++) {
+        let a = 0, n = 0;
+        for (let j = Math.max(0, i - SOIL_R); j <= Math.min(w - 1, i + SOIL_R); j++) {
+          a += g[j];
+          n++;
+        }
+        gs[i] = a / n;
+      }
+      for (let i = 0; i < w; i++) {
+        const gy = this.surface[x0 + i] - y0;
+        for (let dd = 1; dd <= 6; dd++) {
+          const y = gy + dd;
+          if (y < 0 || y >= h) continue;
+          const k = y * w + i;
+          if (!op[k]) continue;
+          const v = top * (dd === 1 ? (g[i] + gs[i]) / 2 : gs[i]) - 2.7 * dd;
+          if (v > L[k]) L[k] = v;
+        }
+      }
     }
     /** 그 칸이 점 광원의 빛을 막는가(세계 밖은 막힌 것으로) */
     lightBlocks(x, y) {
@@ -42819,6 +42852,8 @@
       $("#dialogue").classList.remove("open");
       this.dlg = null;
       app.uiOpen = false;
+      const art = $("#cc-art");
+      if (art.classList.contains("story")) art.classList.remove("show", "story");
     },
     /** 장 도입·마무리 이야기. */
     storyScene(ch, kind, done) {
@@ -66835,7 +66870,11 @@
       for (let t = 0; t <= len; t += step) sc.drawImage(b, Math.round(ox + ux * t), Math.round(uy * t));
       c.save();
       c.beginPath();
-      c.rect(bx - ox - 2, by - 2, SW + 4, Math.max(0, floorY - by + 2));
+      if (o.floor) {
+        const st = o.floorStep ?? 16, xa = bx - ox - 2, xb = bx - ox + SW + 2;
+        const ph = o.floorPhase ?? 0;
+        for (let x = Math.floor((xa - ph) / st) * st + ph; x < xb; x += st) c.rect(x, by - 2, st, Math.max(0, o.floor(x + st / 2) - by + 2));
+      } else c.rect(bx - ox - 2, by - 2, SW + 4, Math.max(0, floorY - by + 2));
       c.clip();
       c.globalAlpha *= (o.alpha ?? 0.3) * sun.k;
       c.drawImage(s, 0, 0, SW, SH, bx - ox, by, SW, SH);
@@ -67225,7 +67264,13 @@
       const body = (bc) => this.drawRider(bc, p, W / 2 - p.w / 2, H - p.h - 2);
       this.shadowPass = 1;
       try {
-        S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.45 * fade });
+        const floor = (sx) => {
+          const x = Math.floor((sx + camX) / TS);
+          let y = fy - 3;
+          while (y < fy + 10 && !w.solid(x, y)) y++;
+          return y * TS - camY + 6;
+        };
+        S.sweep(c, W, H, body, p.cx - camX - W / 2, p.y + p.h + 2 - H - camY, gy * TS - camY, sun, { alpha: 0.45 * fade, floor, floorStep: TS, floorPhase: -camX });
         S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.45 * fade, squash: 0.2, blur: 1 });
       } finally {
         this.shadowPass = 0;

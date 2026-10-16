@@ -29,7 +29,8 @@ export const BIOME_BAND = 104;     // 바이옴 경계 블렌딩 폭(타일)
 export const LIGHT_POINT = 5, LIGHT_FALL = 1.15, LIGHT_BOUNCE = 3.2, LIGHT_TINT = 0.35;
 /* 해(computeLight sun) — 해가 높이 떠 있을 때 그늘진 바깥이 받는 하늘빛 몫 · 잎이 통과시키는 햇빛 몫(나무 그늘이 얼룩진다) */
 export const SUN_AMB = 0.4, SUN_SOFT = 0.9, SUN_DEPTH = 10;    // SUN_SOFT — 밟을 수 없는 것(기둥 · 장식)을 지나며 남는 햇빛
-export const SUN_LEAF = 0.9;     // 잎이 다 붙어 있을 때 남는 햇빛 — 잎이 지면(leafKeep) 1 로 다가간다. 사연: docs/code-history.md#h150
+export const SUN_PLANT = 0.94, SOIL_R = 5;   // 꽃 · 풀 · 장식이 남기는 햇빛(옅은 그늘) · 흙 속 햇빛을 고르는 반경
+export const SUN_LEAF = 0.9;   // 잎이 다 붙어 있을 때 남는 햇빛 — 잎이 지면(leafKeep) 1 로 다가간다. 사연: docs/code-history.md#h150
 /** 빛을 막는 타일 — 막힌 칸(solid 1) 중 창문(clear)이 아닌 것 */
 export const LIGHT_OPAQUE = new Uint8Array(TILE_DEF.length);
 TILE_DEF.forEach((d, i) => { LIGHT_OPAQUE[i] = d.solid === 1 && !d.clear ? 1 : 0; });
@@ -697,8 +698,8 @@ export class World extends TileMap {
         }
         /* 햇빛 통과 — 밟을 수 없는 것(나무 기둥 · 잎 · 장식)은 그늘이 옅다(SUN_SOFT). 사연: docs/code-history.md#h146 */
         /* ★ 하늘 섬(SKY_Y 위)은 해를 가리지 않는다 — 섬 서른 개 넘게 땅에 그늘을 떨궈 지면이 얼룩덜룩했다 */
-        trans[k] = y < SKY_Y ? 1 : d.solid === 1 ? (op[k] ? 0 : 1) : d.liquid ? 0.8
-          : d.leaf ? 1 - (1 - SUN_LEAF) * (leafKeep ? leafKeep(t) : 1) : op[k] ? SUN_SOFT : 1;
+        trans[k] = y < SKY_Y || t === T.AIR ? 1 : d.solid === 1 ? (op[k] ? 0 : 1) : d.liquid ? 0.8
+          : d.leaf ? 1 - (1 - SUN_LEAF) * (leafKeep ? leafKeep(t) : 1) : d.tree ? SUN_SOFT : SUN_PLANT;
         if (t === T.AIR && y <= s && this.walls[y * WW + x] === 0) L[k] = Math.max(L[k], skyL);
         /* 바닷물은 깊이만큼 햇빛을 잃되 흩어진 빛이 남는다 — 수면이 화면(+14칸) 밖이면 스윕이
            빛을 못 받아 수심 30칸부터 새까매졌고, 그 어둠에 바다 몹이 통째로 묻혔다. */
@@ -719,9 +720,29 @@ export class World extends TileMap {
       F.sun(sun.x, sun.y, (x, y) => y < 0 || y <= this.surface[clamp(x, 0, WW - 1)] ? 1 : 0, (k, raw) => {
         const dd = y0 + ((k / w) | 0) - this.surface[x0 + k % w];
         return top * raw * (dd <= 0 ? 1 : Math.max(0, 1 - dd / SUN_DEPTH));
-      });
+      }, S => this._soilSun(S, x0, y0, w, h, top, op, L));
     }
     F.finish(2);
+  }
+  /** 그늘은 땅 겉면 한 칸에만 떨어진다 — 그 밑 흙은 둘레 ±SOIL_R 칸 겉면의 평균 햇빛에서 칸마다 2.7씩 줄여 채운다.
+      ★ 겉면 칸 하나하나에서 번지게 두면 칸마다 2.7 씩 옆으로도 줄어 흙 속에 그늘 모양 삼각형이 박혔다(사용자 지적). 사연: docs/code-history.md#h188 */
+  _soilSun(S: Float32Array, x0: number, y0: number, w: number, h: number, top: number, op: Uint8Array, L: Float32Array) {
+    const g = new Float32Array(w), gs = new Float32Array(w);
+    for (let i = 0; i < w; i++) { const gy = this.surface[x0 + i] - y0; g[i] = gy >= 0 && gy < h ? S[gy * w + i] : 1; }
+    for (let i = 0; i < w; i++) {
+      let a = 0, n = 0;
+      for (let j = Math.max(0, i - SOIL_R); j <= Math.min(w - 1, i + SOIL_R); j++) { a += g[j]; n++; }
+      gs[i] = a / n;
+    }
+    for (let i = 0; i < w; i++) {
+      const gy = this.surface[x0 + i] - y0;
+      for (let dd = 1; dd <= 6; dd++) {
+        const y = gy + dd; if (y < 0 || y >= h) continue;
+        const k = y * w + i; if (!op[k]) continue;
+        const v = top * (dd === 1 ? (g[i] + gs[i]) / 2 : gs[i]) - 2.7 * dd;   // 겉면 바로 밑 한 칸은 반쯤 이어 그늘 가장자리를 부드럽게
+        if (v > L[k]) L[k] = v;
+      }
+    }
   }
   /** 그 칸이 점 광원의 빛을 막는가(세계 밖은 막힌 것으로) */
   lightBlocks(x: number, y: number) { const { WW, WH } = this.dims;

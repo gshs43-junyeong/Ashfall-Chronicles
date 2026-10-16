@@ -15,6 +15,9 @@ export interface SweepOpts {
   alpha?: number;    // 그늘 짙기 — 타일 그늘(castSunlight)과 같은 결로 맞춘다
   step?: number;     // 몇 px 마다 실루엣을 찍어 띠를 만드나
   maxLen?: number;   // 해가 아주 낮을 때 띠의 최대 길이(px)
+  floor?: (sx: number) => number;   // 화면 x 의 바닥 높이(화면 y) — 주면 floorY 대신 칸마다 그 땅 윗면에서 자른다
+  floorStep?: number;               // floor 를 몇 px 마다 재나(타일 폭)
+  floorPhase?: number;              // 칸 경계가 놓인 화면 x(타일 격자에 맞추려면 -camX)
 }
 
 type Sun = { x: number; y: number; k: number } | null;
@@ -56,7 +59,13 @@ export class CastShadow {
     const ox = ux < 0 ? -ux * len : 0, step = o.step ?? 2;
     for (let t = 0; t <= len; t += step) sc.drawImage(b, Math.round(ox + ux * t), Math.round(uy * t));   // 겹쳐도 같은 검정 — 짙기는 한 번에
     c.save();
-    c.beginPath(); c.rect(bx - ox - 2, by - 2, SW + 4, Math.max(0, floorY - by + 2)); c.clip();          // 바닥 위만
+    c.beginPath();
+    if (o.floor) {                                                       // 땅이 오르내리면 칸마다 그 윗면까지만 — 턱 너머 흙에 그늘이 박히지 않게
+      const st = o.floorStep ?? 16, xa = bx - ox - 2, xb = bx - ox + SW + 2;
+      const ph = o.floorPhase ?? 0;
+      for (let x = Math.floor((xa - ph) / st) * st + ph; x < xb; x += st) c.rect(x, by - 2, st, Math.max(0, o.floor(x + st / 2) - by + 2));
+    } else c.rect(bx - ox - 2, by - 2, SW + 4, Math.max(0, floorY - by + 2));   // 바닥 위만
+    c.clip();
     c.globalAlpha *= (o.alpha ?? 0.3) * sun.k;
     c.drawImage(s, 0, 0, SW, SH, bx - ox, by, SW, SH);
     c.restore();

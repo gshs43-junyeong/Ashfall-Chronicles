@@ -89,10 +89,12 @@ export class LightField {
   }
 
   /** 방향광 — (sx, sy) 해 쪽 방향 · sky(x, y) 창 밖 칸이 하늘에 트였나 · level(k, 닿는 정도 0~1) 그 칸이 받는 빛.
-      막힌 칸(해 쪽 겉면)은 번지기 전에 L 에 넣어 땅속으로 부드럽게 번지고, 트인 칸은 finish 에서 번진 뒤에 얹는다. */
-  sun(sx: number, sy: number, sky: (x: number, y: number) => number, level: (k: number, raw: number) => number): void {
+      막힌 칸(해 쪽 겉면)은 번지기 전에 L 에 넣어 땅속으로 부드럽게 번지고, 트인 칸은 finish 에서 번진 뒤에 얹는다.
+      prep(S) — 닿는 정도 판을 다 잰 뒤 level 전에 한 번(이웃 칸을 함께 봐야 하는 처리용) */
+  sun(sx: number, sy: number, sky: (x: number, y: number) => number, level: (k: number, raw: number) => number, prep?: (S: Float32Array) => void): void {
     const S = this.sunV, n = this.n, L = this.L, op = this.op;
     castSunlight(S, this.w, this.h, this.x0, this.y0, this.trans, sx, sy, sky);
+    if (prep) prep(S);
     for (let k = 0; k < n; k++) {
       if (S[k] <= 0.01) { S[k] = 0; continue; }
       S[k] = level(k, S[k]);
