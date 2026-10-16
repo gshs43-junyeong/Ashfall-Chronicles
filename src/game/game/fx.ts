@@ -52,10 +52,9 @@ export const FxPart: Bag = {
       o: x·y(몸 가운데) · foot(발 높이) · ang(겨눈 각) · f(바라보는 쪽) · mx·my(겨눈 자리) */
   skillVfx(id: string, o: Bag) {
     const v = this.vfx, { x, y, foot, ang, f } = o;
+    this.skillArt(id, o);                                   // 그 스킬의 물건(game/skill-art) — 결 그림은 뒤를 받친다
     switch (id) {
       case 's_cleave':      // 몸을 한 바퀴 도는 두 겹 칼선 + 바깥 충격파 + 앞쪽 충격 별 + 불티
-        v.slash(x, y, 70, ang - Math.PI * 0.9 * f, ang + Math.PI * 1.1 * f, '#ffb24a', 0.3, 18);
-        v.slash(x, y, 98, ang + Math.PI * f, ang - Math.PI * f, '#ffd88a', 0.34, 10);
         v.shock(x, y, 112, '#ffb24a', 0.36, 8);
         v.flare(x + Math.cos(ang) * 64, y + Math.sin(ang) * 64, 46, '#ffd07a', 0.2, 'impact');
         v.sparks(x, y, 18, '#ffd07a', 520, 0, TAU, 0.35, 400);
@@ -89,7 +88,6 @@ export const FxPart: Bag = {
         v.crack(o.x - 14, foot, 1, 28, '#ff9a4a', 0.5);
         break;
       case 's_guard':       // 몸 앞에 선 방패진 + 쇳소리 불티
-        v.sigil(x, y, 36, '#e8b86a', 0.6, 6, 0.4, 1.25, 'sigil_aegis');
         v.shock(x, y, 56, '#d8a05a', 0.35, 6);
         v.sparks(x, y, 10, '#fff0c0', 300, 0, TAU, 0.3, 200);
         break;
@@ -116,8 +114,6 @@ export const FxPart: Bag = {
         v.sparks(x, y - 4, 10, '#d8ffb0', 800, ang, 0.35, 0.25, 0);
         break;
       case 's_smoke':       // 부푸는 연기 덩이 + 휘감는 바람
-        v.puffs(x, y, 16, 34, 'rgba(184,200,176,.9)', 1.4, 70);
-        v.sigil(x, y, 110, '#b8c8b0', 0.7, 6, 2.6, 0.7, 'swirl');
         v.shock(x, y, 150, '#b8c8b0', 0.45, 6);
         break;
       case 's_mark':        // 과녁으로 조여 드는 조준 + 충격 별
@@ -131,7 +127,6 @@ export const FxPart: Bag = {
         break;
       case 's_nova':        // 발밑 서리진 + 바깥으로 튀는 얼음 조각 + 충격파
         v.sigil(x, foot - 2, 150, '#9fe0ff', 0.8, 6, 1, 0.3, 'sigil_frost');
-        v.shards(x, y, 18, '#bfefff', 420, 0.55, 8);
         v.shock(x, y, 165, '#9fe0ff', 0.45, 10);
         v.flare(x, y, 50, '#dff6ff', 0.24);
         break;
@@ -141,7 +136,6 @@ export const FxPart: Bag = {
         v.motes(x, foot - 14, 16, '#c8ffc0', 22, 90, 1.1, 8);
         break;
       case 's_barrier':     // 몸을 감싸는 결계 구 + 조각
-        v.sigil(x, y, 40, '#8fc8ff', 0.75, 6, 0.25, 1.3, 'dome');
         v.shards(x, y, 10, '#bfe0ff', 220, 0.45, 6);
         v.flare(x, y, 40, '#bfe0ff', 0.22);
         break;
@@ -156,8 +150,6 @@ export const FxPart: Bag = {
         break;
       case 's_blink':       // 떠난 자리 · 닿은 자리의 공허진 + 빛줄기 + 조각
         v.beam(o.ox, o.oy, x, y, '#c08fff', 0.3, 10);
-        v.sigil(o.ox, o.oy, 46, '#c08fff', 0.5, 6, -2, 1, 'sigil_void');
-        v.sigil(x, y, 34, '#d8b8ff', 0.4, 6, 2, 1, 'sigil_void');
         v.flare(o.ox, o.oy, 44, '#d8b8ff', 0.25); v.flare(x, y, 36, '#d8b8ff', 0.22);
         v.shards(o.ox, o.oy, 10, '#d8b8ff', 280, 0.45, 6);
         break;

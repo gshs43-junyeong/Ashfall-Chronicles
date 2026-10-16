@@ -57,6 +57,7 @@ export const RenderPart: Bag = {
     this.pipe.add('fx', (f: any) => this.rWeird(f));          // 전기 집게 · 우산 · 별(game/weird-fx)         // 머리 위 그림말(game/netchat)
     this.pipe.add('fx', (f: any) => this.drawPuzzle(f.c));    // 봉인 방 장치(game/ruin-puzzle-draw)
     this.pipe.add('fx', (f: any) => this.drawDeepGates(f.c)); // 닫힌 깊은 문(game/ruin-deep)
+    this.pipe.add('fx', (f: any) => this.drawSkillArt(f.c));    // 스킬마다 제 물건(game/skill-art)
     this.pipe.add('fx', (f: any) => this.drawBossHazards(f.c)); // 보스 기술 예고 · 바닥(game/boss-hazards)
     this.pipe.add('screen', (f: any) => this.rScreen(f));
     this.pipe.add('screen', (f: any) => this.drawStage(f));       // 스킬 무대 — 집중선 · 화면 섬광
