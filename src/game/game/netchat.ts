@@ -6,13 +6,17 @@ import { N_, tr } from '../lang.js';
 import { ENEMIES } from '../data/enemies.js';
 import { DmgText } from '../entity.js';
 import { $ } from '../ui.js';
-import { EMOJI, drawEmoji, emojiHtml, emojify, soloEmoji } from '../ui/emoji.js';
+import { EMOJI, drawEmoji, emojiHtml, emojify, hydrateEmoji, soloEmoji } from '../ui/emoji.js';
 import { Game } from '../game.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 export const CHAT_MAX = 200;       // 글 한 줄 최대 글자
 export const CHAT_LINES = 6;       // 화면에 남기는 줄
 export const CHAT_FADE = 12;       // 이 초가 지나면 흐려진다(입력 중에는 다 보인다)
+export const CHAT_KEEP = 60;       // 연 창에서 거슬러 볼 수 있는 줄
+/* 이름 색 — 같은 사람은 늘 같은 색(이름 해시). 금빛은 나에게만 쓴다 */
+export const CHAT_NAME_COL = ['#e8a87a', '#9ad0a0', '#8ac0e8', '#d8a0d8', '#e8d08a', '#a8c8b8', '#f09a9a', '#b8b0f0'];
+export const EMO_TABS: [string, string][] = [['face', N_('표정')], ['sign', N_('신호')], ['af', N_('잿빛 땅')]];
 /* 플레이어끼리는 몹이 칠 때보다 덜 아프게 — 레벨 차가 큰 둘이 한 방에 끝나지 않게(M5 에서 실측으로 고친다) */
 export const PVP_SCALE = 0.5;
 /* 남에게 알리는 공지 — 중요한 것만(사용자 결정 2026-10-16: 내 알림은 전부, 남의 것은 중요한 것만). 열쇠와 값만 보내 받는 쪽이 제 말로 옮긴다 */
@@ -33,17 +37,35 @@ export const NetChatPart: Bag = {
     inp.onblur = () => this.closeChat();
     // 그림말 고르기 — 누르는 순간 입력 칸이 초점을 잃지 않게 mousedown 을 막는다(잃으면 채팅이 닫힌다)
     const emoBtn = $('#chat-emo'), emos = $('#chat-emos');
-    emoBtn.onmousedown = (e: any) => { e.preventDefault(); emos.hidden = !emos.hidden; };
-    emos.innerHTML = EMOJI.map(e => `<button type="button" data-k="${e.k}">${emojiHtml(e.k, 24)}</button>`).join('');
+    $('#chat-head').innerHTML = `<span class="ch-title">${tr('채팅')}</span><span class="ch-hint">${tr('Enter 보내기 · Esc 닫기')}</span>`;
+    emoBtn.innerHTML = emojiHtml('smile', 20); hydrateEmoji(emoBtn);
+    emoBtn.onmousedown = (e: any) => { e.preventDefault(); emos.hidden = !emos.hidden; emoBtn.classList.toggle('on', !emos.hidden); if (!emos.hidden) this.chatEmoTab(); };
+    emos.innerHTML = `<div class="emo-tabs">${EMO_TABS.map(([g, n]) => `<button type="button" data-g="${g}">${tr(n)}</button>`).join('')}</div>` +
+      '<div class="emo-grid"></div><div class="emo-name">&nbsp;</div>';
     emos.onmousedown = (e: any) => {
       e.preventDefault();
-      const b = e.target.closest('button'); if (!b) return;
+      const tab = e.target.closest('[data-g]'); if (tab) { this.chatEmoTab(tab.dataset.g); return; }
+      const b = e.target.closest('button[data-k]'); if (!b) return;
       const at = inp.selectionStart ?? inp.value.length, ins = ':' + b.dataset.k + ':';
       inp.value = (inp.value.slice(0, at) + ins + inp.value.slice(at)).slice(0, CHAT_MAX);
       inp.setSelectionRange(at + ins.length, at + ins.length);
     };
+    emos.onmouseover = (e: any) => { const b = e.target.closest('button[data-k]'); emos.querySelector('.emo-name').textContent = b ? ':' + b.dataset.k + ':' : '\u00a0'; };
+    this.chatEmoTab();
+    // 연 창의 대화 줄을 눌러도 입력 칸 초점을 지킨다(놓치면 닫힌다) — 굴리기는 휠로
+    $('#chat-log').onmousedown = (e: any) => { if (this.chatOpen) e.preventDefault(); };
     $('#mp-pvp').onchange = (e: any) => this.mpSetCfg('pvp', e.target.checked);
     $('#mp-chat').onchange = (e: any) => this.mpSetCfg('chat', e.target.checked);
+  },
+
+  /** 그림말 판 갈래 — 마지막에 본 갈래를 기억한다 */
+  chatEmoTab(g?: string) {
+    if (g) this.chatTab = g;
+    const tab = this.chatTab || 'face', emos = $('#chat-emos');
+    emos.querySelectorAll('[data-g]').forEach((b: any) => b.classList.toggle('on', b.dataset.g === tab));
+    const grid = emos.querySelector('.emo-grid');
+    grid.innerHTML = EMOJI.filter(e => e.g === tab).map(e => `<button type="button" data-k="${e.k}">${emojiHtml(e.k, 40)}</button>`).join('');
+    hydrateEmoji(grid);
   },
 
   /* ---- 호스트 설정 ---- */
@@ -82,15 +104,15 @@ export const NetChatPart: Bag = {
     for (const k in this.keys) this.keys[k] = 0;  // 누르고 있던 걸음이 글 치는 동안 이어지지 않게
     this.input.m1 = this.input.m2 = 0;
     $('#chat').hidden = false;
+    this.chatOpen = true; this.chatUnread = 0; this.refreshChat();   // ★ open 칸을 먼저 — 닫힌 창은 입력 줄이 display:none 이라 초점이 안 간다
     const inp = $('#chat-input');
     inp.hidden = false; $('#chat-emo').hidden = false; inp.focus();
-    this.chatOpen = true; this.chatUnread = 0; this.refreshChat();
   },
   closeChat() {
     if (!this.chatOpen) return;
     this.chatOpen = false;
     const inp = $('#chat-input');
-    inp.hidden = true; inp.blur(); $('#chat-emo').hidden = true; $('#chat-emos').hidden = true;
+    inp.hidden = true; inp.blur(); $('#chat-emo').hidden = true; $('#chat-emos').hidden = true; $('#chat-emo').classList.remove('on');
     this.refreshChat();
   },
   sendChat(text: string) {
@@ -110,7 +132,7 @@ export const NetChatPart: Bag = {
   /** 공지 한 줄 — mine 이면 내 알림(모두), 아니면 남의 중요한 소식 */
   noteLine(name: string, s: any, mine: boolean) {
     if (!this.net) return;
-    this.chatLog = (this.chatLog || []).concat({ n: String(name || ''), s: String(s || ''), t: performance.now(), sys: mine ? 2 : 1 }).slice(-CHAT_LINES * 4);
+    this.chatLog = (this.chatLog || []).concat({ n: String(name || ''), s: String(s || ''), t: performance.now(), sys: mine ? 2 : 1 }).slice(-CHAT_KEEP);
     this.refreshChat();
   },
   /** 중요한 소식을 다른 플레이어에게 — 참가자는 호스트에게, 호스트는 모두에게(보낸 이 빼고) */
@@ -134,7 +156,7 @@ export const NetChatPart: Bag = {
     // 그림말 하나뿐인 글은 보낸 이 머리 위에도 말풍선으로(rEmotes)
     const k = soloEmoji(String(s || '')), who = k && this.players.find((q: any) => q.name === name);
     if (who) who.emote = { k, t: this.time };
-    this.chatLog = (this.chatLog || []).concat({ n: String(name || ''), s: String(s || ''), t: performance.now() }).slice(-CHAT_LINES * 4);
+    this.chatLog = (this.chatLog || []).concat({ n: String(name || ''), s: String(s || ''), t: performance.now() }).slice(-CHAT_KEEP);
     if (!this.chatOpen && name !== (this.me && this.me.name)) this.chatUnread = (this.chatUnread || 0) + 1;
     this.refreshChat();
   },
@@ -151,23 +173,49 @@ export const NetChatPart: Bag = {
       bd.hidden = !n || this.chatOpen; bd.textContent = n > 9 ? '9+' : String(n);
     }
     if (!this.net) { box.hidden = true; this.chatLog = []; return; }
-    box.classList.toggle('open', !!this.chatOpen);
-    const now = performance.now(), log = (this.chatLog || []).slice(-CHAT_LINES);
-    const lines = log.filter((l: any) => this.chatOpen || now - l.t < CHAT_FADE * 1000);
-    $('#chat-log').innerHTML = lines.map((l: any) => l.sys
-      ? `<div class="ch-line ch-sys${l.sys === 2 ? ' mine' : ''}"><b>${l.sys === 2 ? tr('알림') : escHtml(l.n)}</b> ${escHtml(l.s)}</div>`
-      : `<div class="ch-line"><b>${escHtml(l.n)}</b> ${emojify(escHtml(l.s))}</div>`).join('');
-    box.hidden = !this.chatOpen && !lines.length;
+    const open = !!this.chatOpen;
+    box.classList.toggle('open', open);
+    const now = performance.now(), src = this.chatLog || [], meName = this.me && this.me.name;
+    /* 연 창은 거슬러 올라가 볼 수 있게 CHAT_KEEP 줄 · 닫힌 때는 최근 몇 줄이 CHAT_FADE 초 동안 떠 있다가 2초에 걸쳐 흐려진다 */
+    const log = open ? src.slice(-CHAT_KEEP) : src.slice(-CHAT_LINES).filter((l: any) => now - l.t < CHAT_FADE * 1000);
+    let prev: any = null;
+    const html = log.map((l: any) => {
+      const fade = open ? 1 : clamp((CHAT_FADE * 1000 - (now - l.t)) / 2000, 0, 1);
+      const st = fade < 1 ? `opacity:${fade.toFixed(2)};` : '';
+      if (l.sys) { prev = null; return `<div class="ch-line ch-sys${l.sys === 2 ? ' mine' : ''}" style="${st}"><b>${l.sys === 2 ? tr('알림') : escHtml(l.n)}</b> ${escHtml(l.s)}</div>`; }
+      const me = l.n === meName, solo = soloEmoji(l.s);
+      const cont = prev && prev.n === l.n && l.t - prev.t < 60000;                         // 한 사람이 잇달아 쓴 줄은 이름을 한 번만
+      prev = l;
+      let h = 0; for (const ch of l.n) h = (h * 31 + ch.charCodeAt(0)) | 0;
+      const col = me ? 'var(--gold)' : CHAT_NAME_COL[Math.abs(h) % CHAT_NAME_COL.length];
+      return `<div class="ch-line${me ? ' me' : ''}${cont ? ' cont' : ''}${solo ? ' solo' : ''}" style="${st}--nc:${col}">` +
+        `<b>${escHtml(l.n)}</b><span class="ch-msg">${solo ? emojiHtml(solo, 40) : emojify(escHtml(l.s))}</span></div>`;
+    }).join('');
+    const el = $('#chat-log');
+    if (el._html !== html) {
+      el._html = html; el.innerHTML = html; hydrateEmoji(el);
+      if (open) el.scrollTop = el.scrollHeight;
+    }
+    box.hidden = !open && !log.length;
+    this._chatFadeAt = !open && log.length ? now : 0;
+  },
+  /** 닫힌 채팅의 흐려짐 — 떠 있는 줄이 있을 때만 0.25초마다 다시 칠한다 */
+  chatTick() {
+    if (!this._chatFadeAt || this.chatOpen) return;
+    const now = performance.now();
+    if (now - (this._chatTickAt || 0) < 250) return;
+    this._chatTickAt = now; this.refreshChat();
   },
 
   /** 머리 위 그림말 말풍선 — 3.5초, 처음 0.15초는 부풀며 나온다 */
   rEmotes(f: any) {
     const { c, camX, camY } = f;
+    this.chatTick();
     for (const p of this.players) {
       const em = p.emote; if (!em) continue;
       const age = this.time - em.t;
       if (age > 3.5 || age < 0) { p.emote = null; continue; }
-      const k = Math.min(1, age / 0.15) * Math.min(1, (3.5 - age) / 0.3), S = 26 * (0.6 + 0.4 * k);
+      const k = Math.min(1, age / 0.15) * Math.min(1, (3.5 - age) / 0.3), S = Math.round(40 * (0.6 + 0.4 * k));   // 다 자라면 2배 — 칸이 고르게
       const x = p.cx - camX, y = p.y - camY - 12 - S;
       c.save(); c.globalAlpha = Math.min(1, k * 1.5);
       c.fillStyle = '#f4ecd8'; c.strokeStyle = '#2a1a10'; c.lineWidth = 1.5;

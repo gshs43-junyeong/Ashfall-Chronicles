@@ -1161,7 +1161,10 @@
   "시작 (Space)": "Start (Space)",
   "지니는 힘은 칸에 끼우지 않는다": "Passive powers don't go in slots",
   "처음에 누르고, 떼지 말고 공을 따라간다": "Press at the start and follow the ball without letting go",
-  "칸에서 빼기": "Remove from slot"
+  "칸에서 빼기": "Remove from slot",
+  "표정": "Faces",
+  "신호": "Signs",
+  "잿빛 땅": "Ashlands"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

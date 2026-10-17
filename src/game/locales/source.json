@@ -136,6 +136,7 @@
    "ui/machine.logicCfg"
   ],
   "Enter 보내기 · Esc 닫기": [
+   "game/netchat.bindChat",
    "index.html"
   ],
   "Lv {profMax} · 끝": [
@@ -2302,6 +2303,9 @@
   "신발": [
    "index.html"
   ],
+  "신호": [
+   "game/netchat"
+  ],
   "심장을 올린다 (지금 체력의 절반)": [
    "game/ruin-events.openScale"
   ],
@@ -2910,6 +2914,9 @@
   "재우는 데 쓸 것": [
    "data/quests"
   ],
+  "잿빛 땅": [
+   "game/netchat"
+  ],
   "잿빛이 걷혔다": [
    "game/progress.completeChapter"
   ],
@@ -3228,6 +3235,7 @@
    "game/rigs.fn"
   ],
   "채팅": [
+   "game/netchat.bindChat",
    "index.html"
   ],
   "채팅이 켜졌다": [
@@ -3499,6 +3507,9 @@
   ],
   "표적": [
    "data/quests"
+  ],
+  "표정": [
+   "game/netchat"
   ],
   "푹 잤다 — 아침이다": [
    "game/interact.fn"

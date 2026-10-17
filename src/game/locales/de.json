@@ -1161,7 +1161,10 @@
   "시작 (Space)": "Start (Leertaste)",
   "지니는 힘은 칸에 끼우지 않는다": "Passive Kräfte kommen in keinen Slot",
   "처음에 누르고, 떼지 말고 공을 따라간다": "Am Anfang drücken und dem Ball ohne Loslassen folgen",
-  "칸에서 빼기": "Aus dem Slot nehmen"
+  "칸에서 빼기": "Aus dem Slot nehmen",
+  "표정": "Gesichter",
+  "신호": "Zeichen",
+  "잿빛 땅": "Aschenland"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

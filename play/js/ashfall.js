@@ -1393,12 +1393,12 @@
     fn();
     g.restore();
   }
-  function bakeAtlas(ts, cols, rows, paint) {
+  function bakeAtlas(ts, cols, rows, paint2) {
     const cv = document.createElement("canvas");
     cv.width = cols * ts;
     cv.height = rows * ts;
     const g = cv.getContext("2d");
-    for (let r = 0; r < rows; r++) for (let v = 0; v < cols; v++) clipCell(g, v * ts, r * ts, ts, () => paint(g, v * ts, r * ts, r, v));
+    for (let r = 0; r < rows; r++) for (let v = 0; v < cols; v++) clipCell(g, v * ts, r * ts, ts, () => paint2(g, v * ts, r * ts, r, v));
     return cv;
   }
   function blitCell(c, atlas, ts, col, row, sx, sy, h) {
@@ -22320,12 +22320,12 @@
     /** 액체 덩어리를 "말이 되는 모양"으로 다듬는다. */
     _levelLiquid(cells, liquid) {
       const q = liquid || T.WATER;
-      let live = cells.filter(([x, y]) => this.get(x, y) === q);
-      for (let pass = 0; pass < 8 && live.length; pass++) {
+      let live2 = cells.filter(([x, y]) => this.get(x, y) === q);
+      for (let pass = 0; pass < 8 && live2.length; pass++) {
         let changed = false;
         for (let k = 0; k < 6; k++) {
           const leak = [];
-          for (const [x, y] of live) {
+          for (const [x, y] of live2) {
             if (this.get(x, y) !== q) continue;
             for (const dx of [-1, 1]) {
               if (this.get(x + dx, y) === T.AIR && this.get(x + dx, y + 1) === T.AIR) {
@@ -22336,11 +22336,11 @@
           }
           if (!leak.length) break;
           for (const [x, y] of leak) this.set(x, y, T.AIR);
-          live = live.filter(([x, y]) => this.get(x, y) === q);
+          live2 = live2.filter(([x, y]) => this.get(x, y) === q);
           changed = true;
         }
         const rows = /* @__PURE__ */ new Map();
-        for (const [x, y] of live) {
+        for (const [x, y] of live2) {
           if (!rows.has(y)) rows.set(y, []);
           rows.get(y).push(x);
         }
@@ -22353,10 +22353,10 @@
           rows.delete(y);
           changed = true;
         }
-        live = live.filter(([x, y]) => this.get(x, y) === q);
+        live2 = live2.filter(([x, y]) => this.get(x, y) === q);
         if (!changed) break;
       }
-      return live;
+      return live2;
     },
     /** 웅덩이 채우기 — (x, y0)를 바닥으로 삼아 물이 새지 않는 만큼만 위로 쌓는다. */
     _fillBasin(x, y0, maxDepth, maxWidth, commit, liquid) {
@@ -24098,7 +24098,7 @@
           const a = deg * Math.PI / 180;
           fr.push(frond(O[0], O[1], a, 4e-3 + 0.016 * (1 - Math.sin(a)), 260));
         }
-        const paint = (list) => {
+        const paint2 = (list) => {
           for (const pass of [0, 1])
             for (const pts of list) {
               const n = pts.length;
@@ -24132,7 +24132,7 @@
             }
           }
         };
-        paint(fr);
+        paint2(fr);
         const id = g.getImageData(0, 0, CW, CH).data, extra = [];
         const ai = cl.an[0] - cl.x0, aj = cl.an[1] - cl.y0, par = /* @__PURE__ */ new Map([[aj * W + ai, -1]]), order = [aj * W + ai];
         for (let q = 0; q < order.length; q++) {
@@ -24158,7 +24158,7 @@
           const a = Math.atan2(-(cy - py0), cx - px0);
           for (const da of [-0.3, 0.3]) extra.push(frond(px0, py0, a + da, 6e-3, 90));
         }
-        if (extra.length) paint(extra);
+        if (extra.length) paint2(extra);
         if (cl.an && w.get(cl.an[0], cl.an[1] + 1) === T.PALMWOOD) {
           g.fillStyle = dk2;
           g.beginPath();
@@ -24349,8 +24349,8 @@
       const R = (x, y, w, h, c) => this._r(g, ox, oy, x, y, w, h, c);
       const base = s.c;
       const dk = shade(base, 0.74), dk2 = shade(base, 0.54), lt = shade(base, 1.18), lt2 = shade(base, 1.4);
-      const paint = TILE_PAINT[s.k];
-      if (paint) paint.call(this, { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 });
+      const paint2 = TILE_PAINT[s.k];
+      if (paint2) paint2.call(this, { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 });
     },
     /** 기계 공통 뼈대 — 강철 상자에 볼트 네 개 */
     _mkBody(g, ox, oy, base, R) {
@@ -28168,8 +28168,8 @@
         g.fill();
         g.restore();
       };
-      const paint = ITEM_PAINT[s.k];
-      if (paint) paint.call(this, { g, s, rng, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 });
+      const paint2 = ITEM_PAINT[s.k];
+      if (paint2) paint2.call(this, { g, s, rng, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 });
     }
   };
 
@@ -35194,16 +35194,16 @@
           this.recalc();
         }
       }
-      let dot = 0;
-      for (const b of this.buffs) if (b.dps > 0) dot += b.dps * dt;
-      if (!this.remote && this.hp > 0 && (dot > 0 || this.dotAcc > 0)) {
-        this.dotAcc = (this.dotAcc || 0) + dot;
+      let dot2 = 0;
+      for (const b of this.buffs) if (b.dps > 0) dot2 += b.dps * dt;
+      if (!this.remote && this.hp > 0 && (dot2 > 0 || this.dotAcc > 0)) {
+        this.dotAcc = (this.dotAcc || 0) + dot2;
         this.dotT = (this.dotT || 0) + dt;
-        if (dot > 0) {
+        if (dot2 > 0) {
           this.hurtCd = Math.max(this.hurtCd, REGEN_DELAY);
           this.dotBurn = this.buffs.some((b) => b.id === "burn" && b.dps > 0);
         }
-        if (this.dotT >= 1 || dot <= 0) {
+        if (this.dotT >= 1 || dot2 <= 0) {
           const burn = this.dotBurn, n = Math.round(this.dotAcc);
           this.hp -= this.dotAcc;
           if (n >= 1) app.texts.push(new DmgText(this.cx, this.y, n, burn ? "#ff9a4a" : "#9fd86a", 0));
@@ -43388,15 +43388,15 @@
     at[n] = acc;
     const dur = Math.max(o.min ?? 300, Math.min(o.max ?? 1100, n * (o.msPer ?? 34)));
     const unit = acc > 0 ? dur / acc : 0;
-    let shown = 0, raf = 0, live = true;
+    let shown = 0, raf = 0, live2 = true;
     const t0 = performance.now();
     const end = () => {
-      live = false;
+      live2 = false;
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
     };
     const tick2 = () => {
-      if (!live) return;
+      if (!live2) return;
       const t = (performance.now() - t0) / (unit || 1);
       let k = shown;
       while (k < n && at[k] <= t) k++;
@@ -43414,7 +43414,7 @@
     };
     if (!n) {
       el.textContent = text;
-      live = false;
+      live2 = false;
       o.done();
     } else {
       el.textContent = "";
@@ -43422,7 +43422,7 @@
     }
     return {
       finish() {
-        if (!live) return false;
+        if (!live2) return false;
         end();
         el.textContent = text;
         o.done();
@@ -43432,7 +43432,7 @@
         end();
       },
       get busy() {
-        return live;
+        return live2;
       }
     };
   }
@@ -46825,149 +46825,248 @@
     emojiHtml: () => emojiHtml,
     emojiSheet: () => emojiSheet,
     emojify: () => emojify,
-    soloEmoji: () => soloEmoji
+    hydrateEmoji: () => hydrateEmoji,
+    soloEmoji: () => soloEmoji,
+    tickEmoji: () => tickEmoji
   });
   var EMO_PX = 20;
-  var SKIN = "#ffcf5a", SKIN_D = "#d89a2a", INK = "#2a1a10";
-  function faceOf(px, c = SKIN) {
-    const rows = [[6, 8], [4, 12], [3, 14], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [2, 16], [3, 14], [4, 12], [6, 8]];
-    rows.forEach(([x, w], i) => px(x, 2 + i, w, 1, i > 10 ? SKIN_D : c));
-    px(6, 1, 8, 1, INK);
-    px(6, 17, 8, 1, INK);
-    rows.forEach(([x, w], i) => {
-      px(x - 1, 2 + i, 1, 1, INK);
-      px(x + w, 2 + i, 1, 1, INK);
-    });
-    px(5, 4, 2, 1, "#fff1b8");
-    px(4, 5, 1, 2, "#fff1b8");
+  var SKIN = "#ffcf5a", SKIN_D = "#e2a23a", SKIN_L = "#fff0b0", INK = "#2a1a10", BLUSH = "#f49a7a";
+  var TEAR = "#5ab8ff", TEAR_L = "#bfe6ff", MOUTH = "#8a2a2a", TONGUE = "#e8586a";
+  function faceOf(px, o = {}) {
+    const cx = 10, cy = 10.5 + (o.dy || 0), r = 8.3, c = o.c || SKIN, d = o.d || SKIN_D;
+    const inside = (x, y) => (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= r * r;
+    for (let y = 0; y < EMO_PX; y++) for (let x = 0; x < EMO_PX; x++) {
+      if (!inside(x, y)) continue;
+      const edge = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
+      const u = (x + 0.5 - cx) * 0.45 + (y + 0.5 - cy);
+      px(x, y, 1, 1, edge ? INK : u > 5.2 ? d : c);
+    }
+    const t = cy - 10.5;
+    px(5, 4 + t, 3, 1, SKIN_L);
+    px(4, 5 + t, 1, 2, SKIN_L);
+    if (o.blush) {
+      px(3, 12 + t, 2, 1, BLUSH);
+      px(15, 12 + t, 2, 1, BLUSH);
+    }
   }
+  function blob(p, test) {
+    const at = (x, y) => x < 0 || y < 0 || x >= EMO_PX || y >= EMO_PX ? null : test(x + 0.5, y + 0.5);
+    for (let y = 0; y < EMO_PX; y++) for (let x = 0; x < EMO_PX; x++) {
+      const c = at(x, y);
+      if (!c) continue;
+      p.px(x, y, 1, 1, !at(x - 1, y) || !at(x + 1, y) || !at(x, y - 1) || !at(x, y + 1) ? INK : c);
+    }
+  }
+  var dot = (p, x, y, c = INK) => p.px(x, y, 2, 2, c);
   var EMOJI = [
-    { k: "smile", f: 1, draw: (p) => {
-      p.face();
-      p.eye(7, 7);
-      p.eye(12, 7);
+    /* ---- 표정 ---- */
+    { k: "smile", g: "face", f: 1, draw: (p) => {
+      p.face({ blush: true });
+      dot(p, 6, 8);
+      dot(p, 12, 8);
       p.px(6, 12, 1, 1, INK);
       p.px(7, 13, 6, 1, INK);
       p.px(13, 12, 1, 1, INK);
     } },
-    { k: "grin", f: 1, draw: (p) => {
-      p.face();
-      p.px(6, 7, 3, 1, INK);
-      p.px(11, 7, 3, 1, INK);
-      p.px(5, 11, 10, 3, INK);
-      p.px(6, 11, 8, 1, "#fff");
-      p.px(7, 13, 6, 1, "#e8586a");
+    { k: "grin", g: "face", f: 1, draw: (p) => {
+      p.face({ blush: true });
+      for (const x of [5, 12]) {
+        p.px(x, 9, 1, 1, INK);
+        p.px(x + 1, 8, 1, 1, INK);
+        p.px(x + 2, 9, 1, 1, INK);
+      }
+      p.px(6, 11, 8, 1, INK);
+      p.px(6, 12, 1, 1, INK);
+      p.px(7, 12, 6, 1, "#fff");
+      p.px(13, 12, 1, 1, INK);
+      p.px(7, 13, 1, 1, INK);
+      p.px(8, 13, 4, 1, TONGUE);
+      p.px(12, 13, 1, 1, INK);
+      p.px(8, 14, 4, 1, INK);
     } },
-    { k: "laugh", f: 4, dur: 0.5, draw: (p) => {
+    { k: "laugh", g: "face", f: 4, dur: 0.48, draw: (p) => {
       const dy = p.t % 2;
+      p.face({ dy: -dy, blush: true });
+      const y = -dy;
+      p.px(5, 7 + y, 1, 1, INK);
+      p.px(6, 8 + y, 1, 1, INK);
+      p.px(5, 9 + y, 1, 1, INK);
+      p.px(14, 7 + y, 1, 1, INK);
+      p.px(13, 8 + y, 1, 1, INK);
+      p.px(14, 9 + y, 1, 1, INK);
+      p.px(6, 11 + y, 8, 1, INK);
+      p.px(6, 12 + y, 1, 3, INK);
+      p.px(13, 12 + y, 1, 3, INK);
+      p.px(7, 15 + y, 6, 1, INK);
+      p.px(7, 12 + y, 6, 1, "#fff");
+      p.px(7, 13 + y, 6, 2, MOUTH);
+      p.px(8, 14 + y, 4, 1, TONGUE);
+      const k = p.t;
+      p.px(3 - (k >> 1), 7 + k, 1, 2, TEAR);
+      p.px(16 + (k >> 1), 7 + k, 1, 2, TEAR);
+    } },
+    { k: "sad", g: "face", f: 1, draw: (p) => {
       p.face();
-      p.px(5, 6 + dy, 3, 1, INK);
-      p.px(12, 6 + dy, 3, 1, INK);
-      p.px(5, 10 + dy, 10, 4, INK);
-      p.px(6, 10 + dy, 8, 1, "#fff");
-      p.px(7, 12 + dy, 6, 2, "#e8586a");
-      p.px(2, 8 + p.t * 2 % 6, 2, 2, "#7ad0ff");
-      p.px(16, 8 + (p.t * 2 + 3) % 6, 2, 2, "#7ad0ff");
+      p.px(5, 7, 2, 1, INK);
+      p.px(7, 6, 1, 1, INK);
+      p.px(12, 6, 1, 1, INK);
+      p.px(13, 7, 2, 1, INK);
+      dot(p, 6, 9);
+      dot(p, 12, 9);
+      p.px(7, 14, 6, 1, INK);
+      p.px(6, 15, 1, 1, INK);
+      p.px(13, 15, 1, 1, INK);
     } },
-    { k: "sad", f: 1, draw: (p) => {
+    { k: "cry", g: "face", f: 4, dur: 0.6, draw: (p) => {
       p.face();
-      p.eye(7, 8);
-      p.eye(12, 8);
-      p.px(6, 6, 2, 1, INK);
-      p.px(12, 6, 2, 1, INK);
-      p.px(7, 13, 6, 1, INK);
-      p.px(6, 14, 1, 1, INK);
-      p.px(13, 14, 1, 1, INK);
+      p.px(5, 7, 2, 1, INK);
+      p.px(7, 6, 1, 1, INK);
+      p.px(12, 6, 1, 1, INK);
+      p.px(13, 7, 2, 1, INK);
+      p.px(5, 9, 3, 1, INK);
+      p.px(12, 9, 3, 1, INK);
+      for (const x of [6, 13]) for (let y = 10; y < 16; y++) p.px(x, y, 1, 1, (y + p.t) % 3 === 0 ? TEAR_L : TEAR);
+      p.px(8, 14, 1, 1, INK);
+      p.px(9, 13, 2, 1, INK);
+      p.px(11, 14, 1, 1, INK);
+      p.px(13, 16 + (p.t & 1), 1, 1, TEAR);
     } },
-    { k: "cry", f: 4, dur: 0.6, draw: (p) => {
-      p.face("#ffd98a");
-      p.px(6, 7, 3, 1, INK);
-      p.px(11, 7, 3, 1, INK);
-      p.px(7, 13, 6, 1, INK);
-      p.px(6, 12, 1, 1, INK);
-      p.px(13, 12, 1, 1, INK);
-      const d = p.t * 3;
-      p.px(7, 8 + d, 1, 2, "#5ab8ff");
-      p.px(12, 8 + (d + 5) % 10, 1, 2, "#5ab8ff");
+    { k: "angry", g: "face", f: 2, dur: 0.4, draw: (p) => {
+      p.face({ c: p.t ? "#ff8a5a" : "#ff7048", d: "#d84a30" });
+      p.px(5, 6, 1, 1, INK);
+      p.px(6, 7, 2, 1, INK);
+      p.px(8, 8, 1, 1, INK);
+      p.px(14, 6, 1, 1, INK);
+      p.px(12, 7, 2, 1, INK);
+      p.px(11, 8, 1, 1, INK);
+      p.px(6, 9, 2, 1, INK);
+      p.px(12, 9, 2, 1, INK);
+      p.px(6, 12, 8, 3, INK);
+      p.px(7, 13, 6, 1, "#fff");
+      p.px(9, 13, 1, 1, INK);
+      p.px(11, 13, 1, 1, INK);
+      const v = "#c0201a", s = p.t;
+      p.px(13, 3, 1, 1 + s, v);
+      p.px(14, 3, 1 + s, 1, v);
+      p.px(16 + s, 3, 1, 1 + s, v);
+      p.px(15 + s, 3, 1, 1, v);
+      p.px(13, 6 + s, 1, 1, v);
+      p.px(14, 6 + s, 1, 1, v);
     } },
-    { k: "angry", f: 2, dur: 0.4, draw: (p) => {
-      p.face(p.t ? "#ff8a5a" : "#ff6a4a");
-      p.px(5, 6, 3, 1, INK);
-      p.px(8, 7, 1, 1, INK);
-      p.px(11, 7, 1, 1, INK);
-      p.px(12, 6, 3, 1, INK);
-      p.eye(7, 9);
-      p.eye(12, 9);
-      p.px(7, 13, 6, 1, INK);
-      p.px(15, 1 - p.t, 2, 2, "#e04040");
-      p.px(17, 3 - p.t, 2, 2, "#e04040");
-    } },
-    { k: "wow", f: 1, draw: (p) => {
+    { k: "wow", g: "face", f: 1, draw: (p) => {
       p.face();
-      p.px(6, 6, 3, 3, "#fff");
-      p.px(7, 7, 1, 1, INK);
-      p.px(11, 6, 3, 3, "#fff");
-      p.px(12, 7, 1, 1, INK);
-      p.px(8, 11, 4, 4, INK);
-      p.px(9, 12, 2, 2, "#8a2a2a");
+      p.px(5, 5, 3, 1, INK);
+      p.px(12, 5, 3, 1, INK);
+      for (const x of [5, 12]) {
+        p.px(x, 7, 3, 3, "#fff");
+        p.px(x, 7, 3, 1, INK);
+        p.px(x + 1, 8, 1, 2, INK);
+      }
+      p.px(9, 12, 2, 1, INK);
+      p.px(8, 13, 1, 2, INK);
+      p.px(11, 13, 1, 2, INK);
+      p.px(9, 15, 2, 1, INK);
+      p.px(9, 13, 2, 2, MOUTH);
     } },
-    { k: "cool", f: 1, draw: (p) => {
+    { k: "cool", g: "face", f: 1, draw: (p) => {
       p.face();
-      p.px(4, 7, 12, 1, INK);
-      p.px(5, 7, 4, 3, INK);
-      p.px(11, 7, 4, 3, INK);
-      p.px(6, 8, 1, 1, "#9ad8ff");
+      p.px(3, 7, 14, 1, INK);
+      p.px(4, 7, 5, 3, INK);
+      p.px(11, 7, 5, 3, INK);
+      p.px(5, 10, 3, 1, INK);
+      p.px(12, 10, 3, 1, INK);
+      p.px(5, 8, 1, 1, "#9ad8ff");
       p.px(12, 8, 1, 1, "#9ad8ff");
-      p.px(8, 13, 5, 1, INK);
-      p.px(13, 12, 1, 1, INK);
+      p.px(8, 14, 4, 1, INK);
+      p.px(12, 13, 1, 1, INK);
     } },
-    { k: "sleepy", f: 4, dur: 1.2, draw: (p) => {
+    { k: "sleepy", g: "face", f: 4, dur: 1.4, draw: (p) => {
       p.face();
-      p.px(6, 8, 3, 1, INK);
-      p.px(11, 8, 3, 1, INK);
+      p.px(5, 9, 3, 1, INK);
+      p.px(5, 8, 1, 1, INK);
+      p.px(12, 9, 3, 1, INK);
+      p.px(14, 8, 1, 1, INK);
       p.px(9, 13, 2, 2, INK);
-      const z = p.t;
-      p.px(14, 6 - z, 3, 1, "#cfe4ff");
-      p.px(15, 7 - z, 1, 1, "#cfe4ff");
-      p.px(14, 8 - z, 3, 1, "#cfe4ff");
+      p.px(9, 13, 1, 1, MOUTH);
+      const zy = 5 - p.t, a = ["#e8f2ff", "#cfe4ff", "#a8c8f0", "#7a9ac8"][p.t];
+      p.px(14, zy, 3, 1, a);
+      p.px(15, zy + 1, 1, 1, a);
+      p.px(14, zy + 2, 3, 1, a);
+      if (p.t < 2) {
+        p.px(17, zy + 4, 2, 1, a);
+        p.px(17, zy + 5, 2, 1, a);
+      }
     } },
-    { k: "heart", f: 4, dur: 0.7, draw: (p) => {
-      const s = [0, 1, 0, 0][p.t];
-      const rows = [[4, 4, 12, 4], [3, 6, 11, 6], [2, 16], [2, 16], [3, 14], [4, 12], [5, 10], [6, 8], [7, 6], [8, 4], [9, 2]];
-      rows.forEach((r, i) => {
-        if (r.length === 4) {
-          p.px(r[0] - s, 3 + i - s, r[1] + s, 1, "#e8445a");
-          p.px(r[2], 3 + i - s, r[3] + s, 1, "#e8445a");
-        } else p.px(r[0] - s, 4 + i, r[1] + s * 2, 1, i > 6 ? "#b82a40" : "#e8445a");
+    { k: "skull", g: "face", f: 1, draw: (p) => {
+      const B = "#ece6d6", BD = "#b8ae98";
+      p.face({ c: B, d: BD, dy: -1 });
+      p.px(6, 16, 8, 3, B);
+      p.px(5, 16, 1, 3, INK);
+      p.px(14, 16, 1, 3, INK);
+      p.px(6, 19, 8, 1, INK);
+      for (let x = 7; x < 14; x += 2) p.px(x, 16, 1, 3, INK);
+      p.px(5, 8, 4, 4, INK);
+      p.px(11, 8, 4, 4, INK);
+      p.px(6, 9, 1, 1, "#ff6a4a");
+      p.px(12, 9, 1, 1, "#ff6a4a");
+      p.px(9, 12, 2, 2, INK);
+    } },
+    /* ---- 신호 ---- */
+    { k: "heart", g: "sign", f: 4, dur: 0.7, draw: (p) => {
+      const S = [
+        [[], [], [], [[4, 7], [12, 15]], [[3, 8], [11, 16]], [[2, 17]], [[2, 17]], [[2, 17]], [[2, 17]], [[3, 16]], [[4, 15]], [[5, 14]], [[6, 13]], [[7, 12]], [[8, 11]], [[9, 10]]],
+        [[], [], [[4, 7], [12, 15]], [[3, 8], [11, 16]], [[2, 9], [10, 17]], [[1, 18]], [[1, 18]], [[1, 18]], [[1, 18]], [[2, 17]], [[3, 16]], [[4, 15]], [[5, 14]], [[6, 13]], [[7, 12]], [[8, 11]], [[9, 10]]]
+      ];
+      const big = p.t === 1, T2 = S[big ? 1 : 0], tip = T2.length - 1;
+      blob(p, (x, y) => {
+        const r = T2[Math.floor(y)];
+        if (!r) return null;
+        return r.some(([a, b]) => x >= a && x < b + 1) ? y > tip - 4 ? "#c22a44" : "#e8445a" : null;
       });
-      p.px(5, 5, 2, 2, "#ffb0c0");
+      const o = big ? -1 : 0;
+      p.px(4 + o, 5 + o, 2, 2, "#ffb0c0");
+      p.px(3 + o, 7 + o, 1, 1, "#ffb0c0");
     } },
-    { k: "thumbs", f: 1, draw: (p) => {
-      p.px(5, 9, 10, 8, SKIN);
-      p.px(4, 9, 1, 8, INK);
-      p.px(15, 9, 1, 8, INK);
-      p.px(5, 17, 10, 1, INK);
-      p.px(8, 3, 4, 6, SKIN);
-      p.px(7, 3, 1, 6, INK);
-      p.px(12, 3, 1, 6, INK);
-      p.px(8, 2, 4, 1, INK);
-      p.px(6, 12, 9, 1, SKIN_D);
-      p.px(6, 14, 9, 1, SKIN_D);
-      p.px(2, 9, 2, 9, "#4a6aa8");
+    { k: "thumbs", g: "sign", f: 1, draw: (p) => {
+      blob(p, (x, y) => {
+        if (x >= 7 && x < 11 && y >= 4.5 && y < 10 && !(y < 5.5 && (x < 8 || x >= 10))) return x >= 9.6 ? SKIN_D : SKIN;
+        if (x >= 6 && x < 16 && y >= 9 && y < 18 && !((x < 7 || x >= 15) && (y < 10 || y >= 17))) {
+          if (x >= 9 && x < 16 && Math.floor(y) % 2 === 0 && y >= 11 && y < 17) return SKIN_D;
+          return x >= 14 ? SKIN_D : SKIN;
+        }
+        if (x >= 2 && x < 6 && y >= 10 && y < 18) return y < 11 ? "#7a9ad8" : "#4a6aa8";
+        return null;
+      });
+      p.px(8, 6, 1, 2, SKIN_L);
+      p.px(7, 11, 1, 3, SKIN_L);
     } },
-    { k: "wave", f: 4, dur: 0.6, draw: (p) => {
-      const a = [0, 1, 2, 1][p.t];
-      p.px(6 + a, 8, 8, 9, SKIN);
-      p.px(5 + a, 8, 1, 9, INK);
-      p.px(14 + a, 8, 1, 9, INK);
-      for (let i = 0; i < 4; i++) p.px(6 + a + i * 2, 3 + (i === 0 || i === 3 ? 1 : 0), 1, 5, SKIN_D);
-      p.px(4 + a, 11, 2, 3, SKIN);
-      p.px(2 + a, 6, 1, 2, "#ffe08a");
-      p.px(17 - a, 5, 1, 2, "#ffe08a");
+    { k: "wave", g: "sign", f: 4, dur: 0.8, draw: (p) => {
+      const o = [-1, 0, 1, 0][p.t], ox = 10.5 + o, oy = 18.5;
+      const fing = [[-5.5, -3.5, -14], [-2.5, -0.5, -16], [0.5, 2.5, -15.5], [3.5, 5.5, -13]];
+      blob(p, (X, Y) => {
+        const y = Y - oy, x = X - ox - (y < -8.5 ? o : 0);
+        if (y > -2 && Math.abs(x) <= 4) return y < -1 ? "#7a9ad8" : "#4a6aa8";
+        if (x >= -5.5 && x <= 5.5 && y >= -8.5 && y <= -2 && !(Math.abs(x) > 4.5 && y > -3)) return x > 4 ? SKIN_D : SKIN;
+        if (y < -8.5 && x >= -5.5 && x < 5.5) {
+          for (let i = 0; i < 4; i++) {
+            const [a, b, top] = fing[i];
+            if (x >= a && x < b) return y >= top ? y < top + 1 ? SKIN_L : SKIN : null;
+            if (i < 3 && x >= b && x < fing[i + 1][0]) return y >= Math.max(top, fing[i + 1][2]) + 1 ? INK : null;
+          }
+        }
+        if (y >= -7 && y < -3 && x >= -7.5 + (y + 7) * 0.5 && x < -5.5) return y < -6 ? SKIN_L : SKIN;
+        return null;
+      });
+      if (o) {
+        const x = o < 0 ? 1 : 18;
+        p.px(x, 3, 1, 3, "#ffe08a");
+        p.px(o < 0 ? 2 : 17, 7, 1, 2, "#ffe08a");
+      }
     } },
-    { k: "gg", f: 1, draw: (p) => {
+    { k: "gg", g: "sign", f: 1, draw: (p) => {
       p.px(1, 4, 18, 12, "#3a2a5a");
       p.px(1, 4, 18, 1, "#6a5a9a");
+      p.px(1, 15, 18, 1, "#24183a");
       for (const ox of [3, 11]) {
         p.px(ox, 6, 5, 1, "#ffd24a");
         p.px(ox, 6, 1, 8, "#ffd24a");
@@ -46976,44 +47075,40 @@
         p.px(ox + 2, 10, 3, 1, "#ffd24a");
       }
     } },
-    { k: "question", f: 1, draw: (p) => {
-      p.px(6, 2, 8, 2, "#7ab8ff");
-      p.px(5, 4, 2, 3, "#7ab8ff");
-      p.px(13, 4, 2, 4, "#7ab8ff");
-      p.px(10, 8, 3, 2, "#7ab8ff");
-      p.px(9, 10, 2, 3, "#7ab8ff");
-      p.px(9, 15, 2, 2, "#7ab8ff");
+    { k: "question", g: "sign", f: 1, draw: (p) => {
+      const c = "#7ab8ff";
+      p.px(6, 2, 8, 2, c);
+      p.px(4, 4, 3, 3, c);
+      p.px(13, 4, 3, 4, c);
+      p.px(11, 8, 3, 2, c);
+      p.px(9, 10, 3, 3, c);
+      p.px(9, 15, 3, 3, c);
+      p.px(6, 2, 8, 1, "#bfe0ff");
     } },
-    { k: "alert", f: 1, draw: (p) => {
+    { k: "alert", g: "sign", f: 1, draw: (p) => {
       p.px(8, 2, 4, 10, "#ff5a3a");
       p.px(9, 12, 2, 1, "#ff5a3a");
-      p.px(8, 14, 4, 3, "#ff5a3a");
+      p.px(8, 14, 4, 4, "#ff5a3a");
       p.px(8, 2, 1, 10, "#ff9a7a");
     } },
-    { k: "skull", f: 1, draw: (p) => {
-      p.face("#e8e4d8");
-      p.px(5, 7, 4, 4, INK);
-      p.px(11, 7, 4, 4, INK);
-      p.px(9, 11, 2, 2, INK);
-      p.px(6, 14, 8, 1, INK);
-      for (let x = 7; x < 14; x += 2) p.px(x, 13, 1, 3, INK);
-    } },
-    { k: "fire", f: 4, dur: 0.45, draw: (p) => {
+    { k: "fire", g: "sign", f: 4, dur: 0.45, draw: (p) => {
       const w = [0, 1, -1, 0][p.t];
-      p.px(5, 9, 10, 8, "#ff6a2a");
-      p.px(6 + w, 5, 8, 4, "#ff6a2a");
-      p.px(8 + w, 2, 4, 3, "#ff6a2a");
-      p.px(10 - w, 0, 2, 2, "#ff8a3a");
-      p.px(7, 11, 6, 6, "#ffb84a");
-      p.px(8 + w, 8, 4, 3, "#ffb84a");
-      p.px(9, 13, 2, 4, "#fff1a8");
+      p.px(5, 10, 10, 8, "#ff6a2a");
+      p.px(6 + w, 6, 8, 4, "#ff6a2a");
+      p.px(8 + w, 3, 4, 3, "#ff6a2a");
+      p.px(10 - w, 1, 2, 2, "#ff8a3a");
+      p.px(4, 13, 1, 4, "#ff6a2a");
+      p.px(15, 12, 1, 5, "#ff6a2a");
+      p.px(7, 12, 6, 6, "#ffb84a");
+      p.px(8 + w, 9, 4, 3, "#ffb84a");
+      p.px(9, 14, 2, 4, "#fff1a8");
     } },
-    { k: "star", f: 4, dur: 0.8, draw: (p) => {
+    { k: "star", g: "sign", f: 4, dur: 0.8, draw: (p) => {
       const c = p.t % 2 ? "#fff1a8" : "#ffd24a";
-      p.px(9, 1, 2, 18, c);
-      p.px(1, 9, 18, 2, c);
-      p.px(7, 5, 6, 10, c);
-      p.px(5, 7, 10, 6, c);
+      p.px(9, 2, 2, 16, c);
+      p.px(2, 9, 16, 2, c);
+      p.px(7, 6, 6, 8, c);
+      p.px(6, 7, 8, 6, c);
       if (p.t === 1 || p.t === 2) {
         p.px(3, 3, 1, 1, "#fff");
         p.px(16, 15, 1, 1, "#fff");
@@ -47021,68 +47116,195 @@
       }
       p.px(9, 9, 2, 2, "#fff");
     } },
-    { k: "coin", f: 4, dur: 0.6, draw: (p) => {
+    { k: "coin", g: "sign", f: 4, dur: 0.6, draw: (p) => {
       const w = [12, 8, 2, 8][p.t], x = 10 - w / 2;
       p.px(x, 3, w, 14, "#e8b03a");
       p.px(x, 3, w, 1, INK);
       p.px(x, 16, w, 1, INK);
       if (w > 3) {
+        p.px(x, 4, 1, 12, INK);
+        p.px(x + w - 1, 4, 1, 12, INK);
         p.px(x + 1, 4, 1, 12, "#ffe08a");
         p.px(10 - (w > 8 ? 1 : 0), 7, w > 8 ? 2 : 1, 6, "#b8801a");
       }
     } },
-    { k: "ember", f: 4, dur: 0.9, draw: (p) => {
-      const g = [0, 1, 2, 1][p.t];
-      const glow4 = ["#5ad8ff", "#8ae8ff", "#c8f6ff", "#8ae8ff"][p.t];
-      if (g) {
-        p.px(9 - g, 3 - g, 2 + g * 2, 14 + g * 2, "rgba(120,220,255,.25)");
-      }
+    { k: "ember", g: "sign", f: 4, dur: 0.9, draw: (p) => {
+      const g = [0, 1, 2, 1][p.t], glow4 = ["#5ad8ff", "#8ae8ff", "#c8f6ff", "#8ae8ff"][p.t];
+      if (g) p.px(9 - g, 3 - g, 2 + g * 2, 14 + g * 2, "rgba(120,220,255,.25)");
       p.px(9, 2, 2, 2, glow4);
       p.px(8, 4, 4, 3, glow4);
       p.px(7, 7, 6, 4, "#3ab0e0");
       p.px(8, 11, 4, 3, "#2a88b8");
       p.px(9, 14, 2, 2, "#1a5a80");
       p.px(9, 5, 1, 5, "#fff");
+    } },
+    /* ---- 잿빛 땅 — 이 게임에서만 쓰는 것들 ---- */
+    { k: "starfall", g: "af", f: 6, dur: 0.9, draw: (p) => {
+      const tail = [[17, 2], [16, 3], [15, 4], [14, 5], [13, 6], [12, 7], [11, 8], [10, 9], [9, 10]];
+      tail.forEach(([x, y], i) => {
+        const on = (i + p.t) % 3 === 0;
+        p.px(x, y, 2, 1, on ? "#fff4c8" : i < 3 ? "#5a8ac8" : i < 6 ? "#8ac0f0" : "#d8ecff");
+      });
+      const c = p.t % 3 === 0 ? "#ffffff" : "#ffe08a";
+      p.px(6, 9, 1, 7, c);
+      p.px(3, 12, 7, 1, c);
+      p.px(5, 11, 3, 3, c);
+      p.px(6, 12, 1, 1, "#fff");
+      if (p.t % 2) {
+        p.px(2, 9, 1, 1, "#fff4c8");
+        p.px(10, 15, 1, 1, "#fff4c8");
+      }
+    } },
+    { k: "ashfall", g: "af", f: 4, dur: 1.2, draw: (p) => {
+      const puffs2 = [[6, 5, 3.2], [10, 3.6, 3.6], [14, 5.2, 3]];
+      const inC = (x, y) => y <= 7 && puffs2.some(([cx, cy, r]) => (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= r * r);
+      for (let y = 0; y < 9; y++) for (let x = 0; x < EMO_PX; x++) {
+        if (!inC(x, y)) continue;
+        const edge = !inC(x - 1, y) || !inC(x + 1, y) || !inC(x, y - 1) || !inC(x, y + 1);
+        p.px(x, y, 1, 1, edge ? "#2a2622" : y < 4 ? "#b8b2a6" : y < 6 ? "#8e887c" : "#6a645a");
+      }
+      const fl = [[4, 0], [8, 2], [12, 1], [15, 3], [6, 3], [10, 0], [13, 2]];
+      fl.forEach(([x, o], i) => {
+        const y = 9 + (p.t * 3 + o * 3) % 11;
+        p.px(x + (y >> 2 & 1), y, 1 + (i % 3 === 0 ? 1 : 0), 1, i % 2 ? "#d8d2c4" : "#a8a296");
+      });
+      p.px(9, 9 + (p.t * 3 + 5) % 11, 1, 1, "#ff8a3a");
+    } },
+    // 불씨 한 톨
+    { k: "pick", g: "af", f: 1, draw: (p) => {
+      for (let i = 0; i < 11; i++) p.px(4 + i, 16 - i, 2, 2, i % 3 === 0 ? "#6a4420" : "#8a5a2a");
+      p.px(3, 16, 2, 2, "#4a2e14");
+      const head = [[6, 4], [7, 3], [8, 3], [9, 2], [10, 2], [11, 2], [12, 2], [13, 3], [14, 3], [15, 4], [16, 5], [17, 6], [17, 7]];
+      head.forEach(([x, y]) => {
+        p.px(x, y, 1, 2, "#a8b0b8");
+        p.px(x, y, 1, 1, "#e0e6ea");
+      });
+      p.px(5, 5, 1, 2, "#a8b0b8");
+      p.px(17, 8, 1, 2, "#a8b0b8");
+      p.px(12, 4, 3, 3, "#6a7078");
+    } },
+    { k: "slime", g: "af", f: 4, dur: 0.6, draw: (p) => {
+      const sq = [0, 1, 2, 1][p.t], rx = 7.4 + sq * 0.8, ry = 10 - sq * 1.2, cx = 10, cy = 17;
+      const inS = (x, y) => y < cy && ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1;
+      p.px(3, 17, 14, 1, "rgba(0,0,0,.3)");
+      for (let y = 0; y < 17; y++) for (let x = 0; x < EMO_PX; x++) {
+        if (!inS(x, y)) continue;
+        const edge = !inS(x - 1, y) || !inS(x + 1, y) || !inS(x, y - 1) || y === 16;
+        p.px(x, y, 1, 1, edge ? "#2a2e2a" : y > 14 ? "#626a62" : "#8e968c");
+      }
+      const top = Math.round(cy - ry);
+      p.px(6, top + 2, 2, 1, "#d8dcd2");
+      p.px(5, top + 3, 1, 1, "#d8dcd2");
+      dot(p, 7 - (sq >> 1), top + 4);
+      dot(p, 11 + (sq >> 1), top + 4);
+      p.px(7 - (sq >> 1), top + 4, 1, 1, "#fff");
+      p.px(11 + (sq >> 1), top + 4, 1, 1, "#fff");
+    } },
+    { k: "campfire", g: "af", f: 4, dur: 0.5, draw: (p) => {
+      const w = [0, 1, 0, -1][p.t];
+      p.px(3, 16, 14, 2, "#6a4420");
+      p.px(5, 15, 10, 1, "#8a5a2a");
+      p.px(3, 16, 1, 2, INK);
+      p.px(16, 16, 1, 2, INK);
+      p.px(5, 9, 10, 6, "#ff6a2a");
+      p.px(7 + w, 6, 6, 3, "#ff6a2a");
+      p.px(9 + w, 3, 2, 3, "#ff8a3a");
+      p.px(7, 10, 6, 5, "#ffb84a");
+      p.px(9 - w, 7, 2, 3, "#ffd06a");
+      p.px(9, 12, 2, 3, "#fff1a8");
+      p.px(4 + p.t * 3 % 12, 2 + (p.t & 1), 1, 1, "#ff9a4a");
+      p.px(15 - p.t * 2, 1 + (p.t >> 1), 1, 1, "#ffd06a");
+    } },
+    { k: "rune", g: "af", f: 4, dur: 1, draw: (p) => {
+      const g = ["#3a8aa8", "#5ac8e8", "#a8f0ff", "#5ac8e8"][p.t];
+      p.px(4, 2, 12, 16, "#5a564e");
+      p.px(4, 2, 12, 1, "#7a766c");
+      p.px(3, 3, 1, 15, INK);
+      p.px(16, 3, 1, 15, INK);
+      p.px(4, 1, 12, 1, INK);
+      p.px(3, 18, 14, 1, INK);
+      p.px(5, 16, 10, 2, "#46423c");
+      if (p.t === 2) p.px(5, 4, 10, 11, "rgba(120,220,255,.18)");
+      p.px(9, 4, 2, 10, g);
+      p.px(6, 6, 8, 1, g);
+      p.px(6, 11, 2, 2, g);
+      p.px(12, 11, 2, 2, g);
+      p.px(7, 8, 1, 2, g);
+      p.px(12, 8, 1, 2, g);
+    } },
+    { k: "egg", g: "af", f: 4, dur: 0.8, draw: (p) => {
+      const o = [0, 1, 0, -1][p.t], cx = 10 + o * 0.5, cy = 11;
+      for (let y = 0; y < EMO_PX; y++) for (let x = 0; x < EMO_PX; x++) {
+        const u = (x + 0.5 - cx - (y - cy) * o * 0.08) / 6, v = (y + 0.5 - cy) / (y < cy ? 8.5 : 7);
+        const d = u * u + v * v;
+        if (d > 1) continue;
+        p.px(x, y, 1, 1, d > 0.82 ? INK : (x + y) % 5 === 0 && d < 0.6 ? "#e85a2a" : y > 14 ? "#a83a1a" : "#d8642a");
+      }
+      p.px(8, 5, 2, 2, "#ffb88a");
+      if (p.t >= 2) {
+        p.px(11, 8, 1, 2, INK);
+        p.px(12, 10, 1, 1, INK);
+        p.px(11, 11, 1, 2, INK);
+        p.px(12, 9, 1, 1, "#fff1a8");
+      }
+    } },
+    { k: "fish", g: "af", f: 4, dur: 0.8, draw: (p) => {
+      const ys = [12, 7, 5, 9][p.t], ang = [1, 0, 0, -1][p.t];
+      p.px(1, 16, 18, 3, "#2a6a98");
+      p.px(1, 16, 18, 1, "#6ab8e8");
+      const x0 = 5;
+      p.px(x0 + 2, ys, 6, 4, "#9ac8e0");
+      p.px(x0 + 1, ys + 1, 8, 2, "#9ac8e0");
+      p.px(x0 + 2, ys + 3, 6, 1, "#5a90b0");
+      p.px(x0 + 9, ys + ang, 2, 1, "#5a90b0");
+      p.px(x0 + 9, ys + 3 - ang, 2, 1, "#5a90b0");
+      p.px(x0 + 9, ys + 1, 1, 2, "#5a90b0");
+      p.px(x0 + 2, ys + 1, 1, 1, INK);
+      p.px(x0 + 4, ys, 3, 1, "#d8f0ff");
+      if (p.t === 0 || p.t === 3) {
+        p.px(4, 15, 1, 1, "#d8f0ff");
+        p.px(15, 14, 1, 1, "#d8f0ff");
+      } else {
+        p.px(3, 13, 1, 1, "#d8f0ff");
+        p.px(16, 12, 1, 1, "#d8f0ff");
+      }
     } }
   ];
   for (const e of EMOJI) {
     const d = e.draw;
     e.draw = (p) => {
-      p.face = (c) => faceOf(p.px, c);
-      p.eye = (x, y, c = INK) => p.px(x, y, 2, 2, c);
+      p.face = (o) => faceOf(p.px, o);
       d(p);
     };
   }
   var EMO_KEYS = new Set(EMOJI.map((e) => e.k));
+  var emoOf = (k) => EMOJI.find((q) => q.k === k);
   var sheets = {};
   function emojiSheet(k) {
-    if (sheets[k]) return sheets[k];
-    const e = EMOJI.find((q) => q.k === k);
+    if (sheets[k]) return { img: sheets[k] };
+    const e = emoOf(k);
     const cv = document.createElement("canvas");
     cv.width = EMO_PX * e.f;
     cv.height = EMO_PX;
     const c = cv.getContext("2d");
     for (let t = 0; t < e.f; t++) {
       const pen = { t, px: (x, y, w, h, col) => {
-        if (w > 0 && h > 0) {
+        if (w <= 0 || h <= 0) return;
+        const x0 = Math.max(0, Math.round(x)), y0 = Math.max(0, Math.round(y));
+        const x1 = Math.min(EMO_PX, Math.round(x + w)), y1 = Math.min(EMO_PX, Math.round(y + h));
+        if (x1 > x0 && y1 > y0) {
           c.fillStyle = col;
-          c.fillRect(t * EMO_PX + x, y, w, h);
+          c.fillRect(t * EMO_PX + x0, y0, x1 - x0, y1 - y0);
         }
       } };
-      c.save();
-      c.beginPath();
-      c.rect(t * EMO_PX, 0, EMO_PX, EMO_PX);
-      c.clip();
       e.draw(pen);
-      c.restore();
     }
-    return sheets[k] = { url: cv.toDataURL(), img: cv };
+    sheets[k] = cv;
+    return { img: cv };
   }
+  var frameAt = (e, time) => e.f > 1 ? Math.floor(time / ((e.dur || 0.6) / e.f)) % e.f : 0;
   function emojiHtml(k, size = 20) {
-    const e = EMOJI.find((q) => q.k === k);
-    if (!e) return "";
-    const s = emojiSheet(k);
-    return `<i class="emo${e.f > 1 ? " anim" : ""}" title=":${k}:" style="width:${size}px;height:${size}px;background-image:url(${s.url});background-size:${e.f * 100}% 100%;--n:${e.f};--d:${e.dur || 0.6}s"></i>`;
+    return emoOf(k) ? `<canvas class="emo" data-emo="${k}" width="${EMO_PX}" height="${EMO_PX}" title=":${k}:" style="width:${size}px;height:${size}px"></canvas>` : "";
   }
   function emojify(html, size = 20) {
     return html.replace(/:([a-z]+):/g, (m, k) => EMO_KEYS.has(k) ? emojiHtml(k, size) : m);
@@ -47091,13 +47313,46 @@
     const m = /^\s*:([a-z]+):\s*$/.exec(s || "");
     return m && EMO_KEYS.has(m[1]) ? m[1] : null;
   }
-  function drawEmoji(c, k, x, y, size, time) {
-    const e = EMOJI.find((q) => q.k === k);
+  var live = /* @__PURE__ */ new Set();
+  var ticker = 0;
+  function paint(cv, time) {
+    const k = cv.dataset.emo, e = emoOf(k);
     if (!e) return;
-    const s = emojiSheet(k), fr = e.f > 1 ? Math.floor(time / ((e.dur || 0.6) / e.f)) % e.f : 0;
+    const c = cv.getContext("2d"), fr = frameAt(e, time);
+    if (cv.dataset.fr === String(fr)) return;
+    cv.dataset.fr = String(fr);
+    c.clearRect(0, 0, EMO_PX, EMO_PX);
+    c.drawImage(emojiSheet(k).img, fr * EMO_PX, 0, EMO_PX, EMO_PX, 0, 0, EMO_PX, EMO_PX);
+  }
+  function tickEmoji() {
+    const t = performance.now() / 1e3;
+    for (const cv of live) {
+      if (!cv.isConnected) {
+        live.delete(cv);
+        continue;
+      }
+      paint(cv, t);
+    }
+    if (!live.size && ticker) {
+      clearInterval(ticker);
+      ticker = 0;
+    }
+  }
+  function hydrateEmoji(root) {
+    const t = performance.now() / 1e3;
+    root.querySelectorAll("canvas.emo[data-emo]").forEach((cv) => {
+      paint(cv, t);
+      const e = emoOf(cv.dataset.emo);
+      if (e && e.f > 1) live.add(cv);
+    });
+    if (live.size && !ticker) ticker = window.setInterval(tickEmoji, 50);
+  }
+  function drawEmoji(c, k, x, y, size, time) {
+    const e = emoOf(k);
+    if (!e) return;
     c.save();
     c.imageSmoothingEnabled = false;
-    c.drawImage(s.img, fr * EMO_PX, 0, EMO_PX, EMO_PX, Math.round(x), Math.round(y), size, size);
+    c.drawImage(emojiSheet(k).img, frameAt(e, time) * EMO_PX, 0, EMO_PX, EMO_PX, Math.round(x), Math.round(y), size, size);
     c.restore();
   }
 
@@ -50436,9 +50691,9 @@
           this.toast(tr("내보낼 기록이 없다"), "bad");
           return;
         }
-        const blob = new Blob([JSON.stringify(out)], { type: "application/json" });
+        const blob2 = new Blob([JSON.stringify(out)], { type: "application/json" });
         const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
+        a.href = URL.createObjectURL(blob2);
         a.download = `ashfall-save-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`;
         document.body.appendChild(a);
         a.click();
@@ -50764,7 +51019,7 @@
         <button class="ng-cancel"><span class="ui-ic" data-ui-icon="ng_cancel"></span>${tr("취소")}</button>
       </div>`;
       this.fillIcons(box);
-      const paint = () => {
+      const paint2 = () => {
         const ch = CHARACTERS[ci];
         $("#ng-por").style.backgroundImage = `url(${sheet(ch)})`;
         $("#ng-name").textContent = ch.n;
@@ -50773,11 +51028,11 @@
         $("#ng-stats").innerHTML = [[tr("힘"), "str"], [tr("민첩"), "dex"], [tr("지능"), "int"], [tr("체력"), "vit"]].map(([n, k]) => `<span>${n} <b>${ch.base[k]}</b></span>`).join("");
         $("#ng-kit").innerHTML = kit(ch);
       };
-      paint();
+      paint2();
       box.querySelectorAll(".ng-char").forEach((b) => b.onclick = () => {
         ci = +b.dataset.i;
         box.querySelectorAll(".ng-char").forEach((x) => x.classList.toggle("on", x === b));
-        paint();
+        paint2();
       });
       box.querySelectorAll("#ng-modes .ng-mode").forEach((b) => b.onclick = () => {
         mi = +b.dataset.i;
@@ -73421,8 +73676,11 @@
   var netchat_exports = {};
   __export(netchat_exports, {
     CHAT_FADE: () => CHAT_FADE,
+    CHAT_KEEP: () => CHAT_KEEP,
     CHAT_LINES: () => CHAT_LINES,
     CHAT_MAX: () => CHAT_MAX,
+    CHAT_NAME_COL: () => CHAT_NAME_COL,
+    EMO_TABS: () => EMO_TABS,
     NOTE_MSG: () => NOTE_MSG,
     NetChatPart: () => NetChatPart,
     PVP_SCALE: () => PVP_SCALE
@@ -73430,6 +73688,9 @@
   var CHAT_MAX = 200;
   var CHAT_LINES = 6;
   var CHAT_FADE = 12;
+  var CHAT_KEEP = 60;
+  var CHAT_NAME_COL = ["#e8a87a", "#9ad0a0", "#8ac0e8", "#d8a0d8", "#e8d08a", "#a8c8b8", "#f09a9a", "#b8b0f0"];
+  var EMO_TABS = [["face", N_("표정")], ["sign", N_("신호")], ["af", N_("잿빛 땅")]];
   var PVP_SCALE = 0.5;
   var NOTE_MSG = {
     lv: N_("{lv}레벨이 되었다"),
@@ -73456,21 +73717,48 @@
       inp.onkeyup = (e) => e.stopPropagation();
       inp.onblur = () => this.closeChat();
       const emoBtn = $("#chat-emo"), emos = $("#chat-emos");
+      $("#chat-head").innerHTML = `<span class="ch-title">${tr("채팅")}</span><span class="ch-hint">${tr("Enter 보내기 · Esc 닫기")}</span>`;
+      emoBtn.innerHTML = emojiHtml("smile", 20);
+      hydrateEmoji(emoBtn);
       emoBtn.onmousedown = (e) => {
         e.preventDefault();
         emos.hidden = !emos.hidden;
+        emoBtn.classList.toggle("on", !emos.hidden);
+        if (!emos.hidden) this.chatEmoTab();
       };
-      emos.innerHTML = EMOJI.map((e) => `<button type="button" data-k="${e.k}">${emojiHtml(e.k, 24)}</button>`).join("");
+      emos.innerHTML = `<div class="emo-tabs">${EMO_TABS.map(([g, n]) => `<button type="button" data-g="${g}">${tr(n)}</button>`).join("")}</div><div class="emo-grid"></div><div class="emo-name">&nbsp;</div>`;
       emos.onmousedown = (e) => {
         e.preventDefault();
-        const b = e.target.closest("button");
+        const tab = e.target.closest("[data-g]");
+        if (tab) {
+          this.chatEmoTab(tab.dataset.g);
+          return;
+        }
+        const b = e.target.closest("button[data-k]");
         if (!b) return;
         const at = inp.selectionStart ?? inp.value.length, ins = ":" + b.dataset.k + ":";
         inp.value = (inp.value.slice(0, at) + ins + inp.value.slice(at)).slice(0, CHAT_MAX);
         inp.setSelectionRange(at + ins.length, at + ins.length);
       };
+      emos.onmouseover = (e) => {
+        const b = e.target.closest("button[data-k]");
+        emos.querySelector(".emo-name").textContent = b ? ":" + b.dataset.k + ":" : " ";
+      };
+      this.chatEmoTab();
+      $("#chat-log").onmousedown = (e) => {
+        if (this.chatOpen) e.preventDefault();
+      };
       $("#mp-pvp").onchange = (e) => this.mpSetCfg("pvp", e.target.checked);
       $("#mp-chat").onchange = (e) => this.mpSetCfg("chat", e.target.checked);
+    },
+    /** 그림말 판 갈래 — 마지막에 본 갈래를 기억한다 */
+    chatEmoTab(g) {
+      if (g) this.chatTab = g;
+      const tab = this.chatTab || "face", emos = $("#chat-emos");
+      emos.querySelectorAll("[data-g]").forEach((b) => b.classList.toggle("on", b.dataset.g === tab));
+      const grid = emos.querySelector(".emo-grid");
+      grid.innerHTML = EMOJI.filter((e) => e.g === tab).map((e) => `<button type="button" data-k="${e.k}">${emojiHtml(e.k, 40)}</button>`).join("");
+      hydrateEmoji(grid);
     },
     /* ---- 호스트 설정 ---- */
     /** 방의 설정(PvP · 채팅) — 혼자면 null. 참가자는 호스트가 보낸 것. */
@@ -73511,13 +73799,13 @@
       for (const k in this.keys) this.keys[k] = 0;
       this.input.m1 = this.input.m2 = 0;
       $("#chat").hidden = false;
+      this.chatOpen = true;
+      this.chatUnread = 0;
+      this.refreshChat();
       const inp = $("#chat-input");
       inp.hidden = false;
       $("#chat-emo").hidden = false;
       inp.focus();
-      this.chatOpen = true;
-      this.chatUnread = 0;
-      this.refreshChat();
     },
     closeChat() {
       if (!this.chatOpen) return;
@@ -73527,6 +73815,7 @@
       inp.blur();
       $("#chat-emo").hidden = true;
       $("#chat-emos").hidden = true;
+      $("#chat-emo").classList.remove("on");
       this.refreshChat();
     },
     sendChat(text) {
@@ -73546,7 +73835,7 @@
     /** 공지 한 줄 — mine 이면 내 알림(모두), 아니면 남의 중요한 소식 */
     noteLine(name, s, mine) {
       if (!this.net) return;
-      this.chatLog = (this.chatLog || []).concat({ n: String(name || ""), s: String(s || ""), t: performance.now(), sys: mine ? 2 : 1 }).slice(-CHAT_LINES * 4);
+      this.chatLog = (this.chatLog || []).concat({ n: String(name || ""), s: String(s || ""), t: performance.now(), sys: mine ? 2 : 1 }).slice(-CHAT_KEEP);
       this.refreshChat();
     },
     /** 중요한 소식을 다른 플레이어에게 — 참가자는 호스트에게, 호스트는 모두에게(보낸 이 빼고) */
@@ -73570,7 +73859,7 @@
     chatLine(name, s) {
       const k = soloEmoji(String(s || "")), who = k && this.players.find((q) => q.name === name);
       if (who) who.emote = { k, t: this.time };
-      this.chatLog = (this.chatLog || []).concat({ n: String(name || ""), s: String(s || ""), t: performance.now() }).slice(-CHAT_LINES * 4);
+      this.chatLog = (this.chatLog || []).concat({ n: String(name || ""), s: String(s || ""), t: performance.now() }).slice(-CHAT_KEEP);
       if (!this.chatOpen && name !== (this.me && this.me.name)) this.chatUnread = (this.chatUnread || 0) + 1;
       this.refreshChat();
     },
@@ -73591,15 +73880,48 @@
         this.chatLog = [];
         return;
       }
-      box.classList.toggle("open", !!this.chatOpen);
-      const now2 = performance.now(), log = (this.chatLog || []).slice(-CHAT_LINES);
-      const lines = log.filter((l) => this.chatOpen || now2 - l.t < CHAT_FADE * 1e3);
-      $("#chat-log").innerHTML = lines.map((l) => l.sys ? `<div class="ch-line ch-sys${l.sys === 2 ? " mine" : ""}"><b>${l.sys === 2 ? tr("알림") : escHtml(l.n)}</b> ${escHtml(l.s)}</div>` : `<div class="ch-line"><b>${escHtml(l.n)}</b> ${emojify(escHtml(l.s))}</div>`).join("");
-      box.hidden = !this.chatOpen && !lines.length;
+      const open = !!this.chatOpen;
+      box.classList.toggle("open", open);
+      const now2 = performance.now(), src = this.chatLog || [], meName = this.me && this.me.name;
+      const log = open ? src.slice(-CHAT_KEEP) : src.slice(-CHAT_LINES).filter((l) => now2 - l.t < CHAT_FADE * 1e3);
+      let prev = null;
+      const html = log.map((l) => {
+        const fade = open ? 1 : clamp((CHAT_FADE * 1e3 - (now2 - l.t)) / 2e3, 0, 1);
+        const st = fade < 1 ? `opacity:${fade.toFixed(2)};` : "";
+        if (l.sys) {
+          prev = null;
+          return `<div class="ch-line ch-sys${l.sys === 2 ? " mine" : ""}" style="${st}"><b>${l.sys === 2 ? tr("알림") : escHtml(l.n)}</b> ${escHtml(l.s)}</div>`;
+        }
+        const me = l.n === meName, solo = soloEmoji(l.s);
+        const cont = prev && prev.n === l.n && l.t - prev.t < 6e4;
+        prev = l;
+        let h = 0;
+        for (const ch of l.n) h = h * 31 + ch.charCodeAt(0) | 0;
+        const col = me ? "var(--gold)" : CHAT_NAME_COL[Math.abs(h) % CHAT_NAME_COL.length];
+        return `<div class="ch-line${me ? " me" : ""}${cont ? " cont" : ""}${solo ? " solo" : ""}" style="${st}--nc:${col}"><b>${escHtml(l.n)}</b><span class="ch-msg">${solo ? emojiHtml(solo, 40) : emojify(escHtml(l.s))}</span></div>`;
+      }).join("");
+      const el = $("#chat-log");
+      if (el._html !== html) {
+        el._html = html;
+        el.innerHTML = html;
+        hydrateEmoji(el);
+        if (open) el.scrollTop = el.scrollHeight;
+      }
+      box.hidden = !open && !log.length;
+      this._chatFadeAt = !open && log.length ? now2 : 0;
+    },
+    /** 닫힌 채팅의 흐려짐 — 떠 있는 줄이 있을 때만 0.25초마다 다시 칠한다 */
+    chatTick() {
+      if (!this._chatFadeAt || this.chatOpen) return;
+      const now2 = performance.now();
+      if (now2 - (this._chatTickAt || 0) < 250) return;
+      this._chatTickAt = now2;
+      this.refreshChat();
     },
     /** 머리 위 그림말 말풍선 — 3.5초, 처음 0.15초는 부풀며 나온다 */
     rEmotes(f) {
       const { c, camX, camY } = f;
+      this.chatTick();
       for (const p of this.players) {
         const em = p.emote;
         if (!em) continue;
@@ -73608,7 +73930,7 @@
           p.emote = null;
           continue;
         }
-        const k = Math.min(1, age / 0.15) * Math.min(1, (3.5 - age) / 0.3), S = 26 * (0.6 + 0.4 * k);
+        const k = Math.min(1, age / 0.15) * Math.min(1, (3.5 - age) / 0.3), S = Math.round(40 * (0.6 + 0.4 * k));
         const x = p.cx - camX, y = p.y - camY - 12 - S;
         c.save();
         c.globalAlpha = Math.min(1, k * 1.5);

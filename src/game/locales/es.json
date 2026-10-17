@@ -1161,7 +1161,10 @@
   "시작 (Space)": "Empezar (Espacio)",
   "지니는 힘은 칸에 끼우지 않는다": "Los poderes pasivos no van en ranuras",
   "처음에 누르고, 떼지 말고 공을 따라간다": "Pulsa al inicio y sigue la bola sin soltar",
-  "칸에서 빼기": "Quitar de la ranura"
+  "칸에서 빼기": "Quitar de la ranura",
+  "표정": "Caras",
+  "신호": "Señales",
+  "잿빛 땅": "Tierra gris"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
