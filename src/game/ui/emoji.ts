@@ -38,6 +38,31 @@ function blob(p: Pen, test: (x: number, y: number) => string | null) {
 /** 점 눈 2×2 */
 const dot = (p: Pen, x: number, y: number, c = INK) => p.px(x, y, 2, 2, c);
 
+/* 손 흔들기 격자 — 20×20 */
+const HAND_COL: Record<string, string> = { K: INK, S: SKIN, L: SKIN_L, D: SKIN_D, B: '#4a6aa8', b: '#7a9ad8' };
+const WAVE_HAND = [
+      '....................',
+      '........KK..........',
+      '.....KKKLSKKK.......',
+      '....KLSKSSKLSK......',
+      '....KSSKSSKSSKKK....',
+      '....KSSKSSKSSKLDK...',
+      '....KSSKSSKSSKSDK...',
+      '....KSSKSSKSSKSDK...',
+      '..KKKSSKSSKSSKSDK...',
+      '.KLLKSSDSSDSSDSDK...',
+      '.KSSSSSSSSSSSSSDK...',
+      '.KSSSSSSSSSSSSSDK...',
+      '..KSSSSSDDDDSSSDK...',
+      '...KSSSSSSSSSSSDK...',
+      '.....KSSSSSSSSDK....',
+      '......KSSSSSSSK.....',
+      '......KbbbbbbbK.....',
+      '......KBBBBBBBK.....',
+      '......KKKKKKKKK.....',
+      '....................'
+];
+
 export const EMOJI: EmoDef[] = [
   /* ---- 표정 ---- */
   { k: 'smile', g: 'face', f: 1, draw: p => { p.face({ blush: true }); dot(p, 6, 8); dot(p, 12, 8);
@@ -120,23 +145,10 @@ export const EMOJI: EmoDef[] = [
     });
     p.px(8, 6, 1, 2, SKIN_L); p.px(7, 11, 1, 3, SKIN_L); } },
   { k: 'wave', g: 'sign', f: 4, dur: 0.8, draw: p => {
-    /* 편 손바닥을 좌우로 흔든다 — ★ 기울임 · 회전은 장마다 손가락 모양이 바뀌어 덜덜 떨려 보였다. 손은 한 모양 그대로
-       정수 칸만 옮기고(o), 손가락 줄만 같은 쪽으로 한 칸 더(흔드는 결) */
-    const o = [-1, 0, 1, 0][p.t], ox = 10.5 + o, oy = 18.5;
-    const fing: [number, number, number][] = [[-5.5, -3.5, -14], [-2.5, -0.5, -16], [0.5, 2.5, -15.5], [3.5, 5.5, -13]];   // 두 칸 손가락 · 한 칸 틈
-    blob(p, (X, Y) => {
-      const y = Y - oy, x = X - ox - (y < -8.5 ? o : 0);
-      if (y > -2 && Math.abs(x) <= 4) return y < -1 ? '#7a9ad8' : '#4a6aa8';                 // 소매
-      if (x >= -5.5 && x <= 5.5 && y >= -8.5 && y <= -2 && !(Math.abs(x) > 4.5 && y > -3)) return x > 4 ? SKIN_D : SKIN;   // 손바닥
-      if (y < -8.5 && x >= -5.5 && x < 5.5) {                                                   // 손가락 — 틈 칸은 둘 다 닿는 높이부터 먹선
-        for (let i = 0; i < 4; i++) { const [a, b, top] = fing[i];
-          if (x >= a && x < b) return y >= top ? (y < top + 1 ? SKIN_L : SKIN) : null;
-          if (i < 3 && x >= b && x < fing[i + 1][0]) return y >= Math.max(top, fing[i + 1][2]) + 1 ? INK : null; }
-      }
-      if (y >= -7 && y < -3 && x >= -7.5 + (y + 7) * 0.5 && x < -5.5) return y < -6 ? SKIN_L : SKIN;   // 엄지
-      return null;
-    });
-    /* 흔드는 결 표시(연노란 막대 · 둥근 결)는 넣지 않는다 — 손끝 옆에 떨어진 부스러기처럼 보였다. 좌우 흔들림만으로 읽힌다 */
+    /* 편 손바닥 — 손으로 찍은 격자(K 먹선 · S 살 · L 빛 · D 그늘 · B/b 소매). 장마다 통째로 한 칸씩만 옮긴다.
+       ★ 식으로 그리거나 기울이면 손가락 끝 · 엄지가 장마다 모양이 바뀌어 떨렸고, 칸 끝에서 잘렸다 — 좌우 한 칸 여백을 둔다 */
+    const o = [-1, 0, 1, 0][p.t];
+    WAVE_HAND.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const c = HAND_COL[r[x]]; if (c) p.px(x + o, y, 1, 1, c); } });
   } },
   { k: 'gg', g: 'sign', f: 1, draw: p => { p.px(1, 4, 18, 12, '#3a2a5a'); p.px(1, 4, 18, 1, '#6a5a9a'); p.px(1, 15, 18, 1, '#24183a');
     for (const ox of [3, 11]) { p.px(ox, 6, 5, 1, '#ffd24a'); p.px(ox, 6, 1, 8, '#ffd24a'); p.px(ox, 13, 5, 1, '#ffd24a'); p.px(ox + 4, 10, 1, 4, '#ffd24a'); p.px(ox + 2, 10, 3, 1, '#ffd24a'); } } },

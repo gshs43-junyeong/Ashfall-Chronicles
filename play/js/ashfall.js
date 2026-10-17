@@ -46858,6 +46858,29 @@
     }
   }
   var dot = (p, x, y, c = INK) => p.px(x, y, 2, 2, c);
+  var HAND_COL = { K: INK, S: SKIN, L: SKIN_L, D: SKIN_D, B: "#4a6aa8", b: "#7a9ad8" };
+  var WAVE_HAND = [
+    "....................",
+    "........KK..........",
+    ".....KKKLSKKK.......",
+    "....KLSKSSKLSK......",
+    "....KSSKSSKSSKKK....",
+    "....KSSKSSKSSKLDK...",
+    "....KSSKSSKSSKSDK...",
+    "....KSSKSSKSSKSDK...",
+    "..KKKSSKSSKSSKSDK...",
+    ".KLLKSSDSSDSSDSDK...",
+    ".KSSSSSSSSSSSSSDK...",
+    ".KSSSSSSSSSSSSSDK...",
+    "..KSSSSSDDDDSSSDK...",
+    "...KSSSSSSSSSSSDK...",
+    ".....KSSSSSSSSDK....",
+    "......KSSSSSSSK.....",
+    "......KbbbbbbbK.....",
+    "......KBBBBBBBK.....",
+    "......KKKKKKKKK.....",
+    "...................."
+  ];
   var EMOJI = [
     /* ---- 표정 ---- */
     { k: "smile", g: "face", f: 1, draw: (p) => {
@@ -47041,21 +47064,12 @@
       p.px(7, 11, 1, 3, SKIN_L);
     } },
     { k: "wave", g: "sign", f: 4, dur: 0.8, draw: (p) => {
-      const o = [-1, 0, 1, 0][p.t], ox = 10.5 + o, oy = 18.5;
-      const fing = [[-5.5, -3.5, -14], [-2.5, -0.5, -16], [0.5, 2.5, -15.5], [3.5, 5.5, -13]];
-      blob(p, (X, Y) => {
-        const y = Y - oy, x = X - ox - (y < -8.5 ? o : 0);
-        if (y > -2 && Math.abs(x) <= 4) return y < -1 ? "#7a9ad8" : "#4a6aa8";
-        if (x >= -5.5 && x <= 5.5 && y >= -8.5 && y <= -2 && !(Math.abs(x) > 4.5 && y > -3)) return x > 4 ? SKIN_D : SKIN;
-        if (y < -8.5 && x >= -5.5 && x < 5.5) {
-          for (let i = 0; i < 4; i++) {
-            const [a, b, top] = fing[i];
-            if (x >= a && x < b) return y >= top ? y < top + 1 ? SKIN_L : SKIN : null;
-            if (i < 3 && x >= b && x < fing[i + 1][0]) return y >= Math.max(top, fing[i + 1][2]) + 1 ? INK : null;
-          }
+      const o = [-1, 0, 1, 0][p.t];
+      WAVE_HAND.forEach((r, y) => {
+        for (let x = 0; x < r.length; x++) {
+          const c = HAND_COL[r[x]];
+          if (c) p.px(x + o, y, 1, 1, c);
         }
-        if (y >= -7 && y < -3 && x >= -7.5 + (y + 7) * 0.5 && x < -5.5) return y < -6 ? SKIN_L : SKIN;
-        return null;
       });
     } },
     { k: "gg", g: "sign", f: 1, draw: (p) => {
